@@ -1,0 +1,18 @@
+{
+  "spec": "precise f1 실패 원인 분해(오라클 절제)",
+  "f1_cumulative": {
+    "full": 0.589,
+    "seg": 0.9857,
+    "seg_frame": 0.9857,
+    "seg_frame_snap": 0.9857
+  },
+  "marginal_contribution": {
+    "segmentation": 0.3967,
+    "axis_clustering": 0.0,
+    "ortho_snap": 0.0,
+    "inference_ceiling_residual": 0.0143
+  },
+  "total_gap_from_1.0": 0.411,
+  "dominant_cause": "segmentation",
+  "note": "분할(segmentation)이 최대면 PaleoSketch 인식기 도입 검토(§5.1). user의 3분류: 분할=segmentation, 축클러스터링=axis_clustering(+ortho_snap), 추론=inference_ceiling_residual."
+}

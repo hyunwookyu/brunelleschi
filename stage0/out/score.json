@@ -32,5 +32,34 @@
     "n_examples": 20,
     "note": "발화 anchors 대조는 stage2에서 완결(§6.5)."
   },
-  "camera_fit_error": null
+  "normalize_iou": {
+    "iou_median": 0.8064,
+    "iou_p10": 0.672,
+    "n": 60,
+    "parseable_rate": 1.0,
+    "note": "복원 폴리곤 vs truth 면적 IoU (스케일정규화 후, precise 등급)."
+  },
+  "anchor_dim_error": {
+    "depth_rel_error_median": 0.1588,
+    "depth_rel_error_p90": 0.2573,
+    "n": 40,
+    "note": "width 앵커 주입 후 depth 복원 상대오차 = 폴리곤 종횡비 복원 오차."
+  },
+  "camera_fit_error": {
+    "precise": {
+      "fit_error_median": 0.0056,
+      "fit_error_p95": 0.0144,
+      "approx_rate": 0.0
+    },
+    "medium": {
+      "fit_error_median": 0.0181,
+      "fit_error_p95": 0.1194,
+      "approx_rate": 0.075
+    },
+    "coarse": {
+      "fit_error_median": 0.0147,
+      "fit_error_p95": 0.0715,
+      "approx_rate": 0.033
+    }
+  }
 }

@@ -94,6 +94,87 @@ def m_monotonic() -> dict:
             "pass": t1.superset_of(t0) and not t_bad.superset_of(t0)}
 
 
+def m_normalize_iou() -> dict | None:
+    """1단계: 합성 입력 truth 폴리곤 대비 복원 폴리곤 IoU (§6.5 확장)."""
+    try:
+        from shapely.geometry import Polygon
+    except Exception:
+        return None
+    import importlib.util
+    mfs = importlib.util.spec_from_file_location("mf", ROOT / "stage1" / "make_fixture.py")
+    mf = importlib.util.module_from_spec(mfs); mfs.loader.exec_module(mf)
+    from stage1.normalize import normalize_to_ir
+    ious, parseable = [], 0
+    N = 30
+    for seed in range(N):
+        for kind in ("rect", "L"):
+            cap = mf.make(kind, "precise", seed=seed)
+            truth = Polygon(cap["_truth_poly"]).buffer(0)
+            ir, meta = normalize_to_ir(cap)
+            if not ir.volumes:
+                continue
+            parseable += 1
+            rec = Polygon(ir.volumes[0].footprint).buffer(0)
+            if rec.is_empty or truth.is_empty:
+                continue
+            u = rec.union(truth).area
+            ious.append(rec.intersection(truth).area / u if u else 0.0)
+    if not ious:
+        return None
+    import numpy as np
+    return {"iou_median": round(float(np.median(ious)), 4),
+            "iou_p10": round(float(np.percentile(ious, 10)), 4),
+            "n": len(ious), "parseable_rate": round(parseable / (2 * N), 3),
+            "note": "복원 폴리곤 vs truth 면적 IoU (스케일정규화 후, precise 등급)."}
+
+
+def m_anchor_error() -> dict | None:
+    """2단계: 주입 치수 대비 복원 치수 오차 (§6.5 확장).
+    truth width를 앵커로 주입 → 복원 depth를 truth depth와 대조(종횡비 전파 오차)."""
+    import importlib.util
+    mfs = importlib.util.spec_from_file_location("mf", ROOT / "stage1" / "make_fixture.py")
+    mf = importlib.util.module_from_spec(mfs); mfs.loader.exec_module(mf)
+    from stage1.normalize import normalize_to_ir
+    from stage2.anchor import apply_ops
+    from common.grammar import Op
+    import numpy as np
+    errs = []
+    for seed in range(40):
+        cap = mf.make("rect", "precise", seed=seed)
+        tp = np.array(cap["_truth_poly"], float)
+        tw = float(np.ptp(tp[:, 0])); th = float(np.ptp(tp[:, 1]))
+        if tw < 1 or th < 1:
+            continue
+        ir, meta = normalize_to_ir(cap)
+        if not ir.volumes:
+            continue
+        apply_ops(ir, [Op("set", {"id": ir.volumes[0].id, "prop": "width", "value": tw})])
+        fp = np.array(ir.volumes[0].footprint, float)
+        rw = float(np.ptp(fp[:, 0])); rh = float(np.ptp(fp[:, 1]))
+        if rw < 1e-6:
+            continue
+        # width는 주입값으로 정확 → depth(종횡비 전파) 상대오차
+        errs.append(abs(rh - th) / th)
+    if not errs:
+        return None
+    return {"depth_rel_error_median": round(float(np.median(errs)), 4),
+            "depth_rel_error_p90": round(float(np.percentile(errs, 90)), 4),
+            "n": len(errs),
+            "note": "width 앵커 주입 후 depth 복원 상대오차 = 폴리곤 종횡비 복원 오차."}
+
+
+def m_camera_noise() -> dict | None:
+    """3단계: 노이즈 조건 fit_error 분포 (stage3/noise_eval, §6.5)."""
+    try:
+        from stage3.noise_eval import fit_error_distribution
+    except Exception:
+        return None
+    d = fit_error_distribution(n=120)
+    return {g: {"fit_error_median": d[g]["fit_error_median"],
+                "fit_error_p95": d[g]["fit_error_p95"],
+                "approx_rate": d[g]["approx_mode_rate"]} for g in d}
+
+
 def m_speech() -> dict | None:
     p = OUT / "youtube_dist.json"
     if not p.exists():
@@ -108,11 +189,15 @@ def m_speech() -> dict | None:
 
 def main():
     report = {
+        # stage0
         "normalize_holdout": m_normalize(),
         "noise_model_ks": m_noise_model(),
         "time_monotonic": m_monotonic(),
         "speech_translation": m_speech(),
-        "camera_fit_error": None,  # stage3
+        # stage1~3 (§13 전이 판정 지표)
+        "normalize_iou": m_normalize_iou(),        # 1단계: 폴리곤 IoU
+        "anchor_dim_error": m_anchor_error(),      # 2단계: 치수 복원 오차
+        "camera_fit_error": m_camera_noise(),      # 3단계: 노이즈 fit_error(§task1)
     }
     (ROOT / "stage0" / "out" / "score.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

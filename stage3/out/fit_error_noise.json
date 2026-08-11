@@ -1,0 +1,31 @@
+{
+  "spec": "§6.5 카메라 정합 fit_error(노이즈 조건); 무노이즈(1e-16) 폐기",
+  "noise": "이미지 4점에 등급 노이즈 σ=jitter_ratio×이미지변중앙길이 주입",
+  "fail_threshold": 0.1,
+  "by_grade": {
+    "precise": {
+      "n": 300,
+      "fit_error_median": 0.0049,
+      "fit_error_p95": 0.0126,
+      "fit_error_mean": 0.0056,
+      "approx_mode_rate": 0.0,
+      "noise_sigma_px_ref": 0.0488
+    },
+    "medium": {
+      "n": 300,
+      "fit_error_median": 0.0156,
+      "fit_error_p95": 0.0933,
+      "fit_error_mean": 0.032,
+      "approx_mode_rate": 0.04,
+      "noise_sigma_px_ref": 0.1968
+    },
+    "coarse": {
+      "n": 300,
+      "fit_error_median": 0.0138,
+      "fit_error_p95": 0.1053,
+      "fit_error_mean": 0.0334,
+      "approx_mode_rate": 0.057,
+      "noise_sigma_px_ref": 0.2154
+    }
+  }
+}
