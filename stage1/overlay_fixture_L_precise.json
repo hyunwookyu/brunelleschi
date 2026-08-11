@@ -1,0 +1,19 @@
+{
+  "ir_meta": {
+    "grade": "medium",
+    "straightness_med": 0.1494,
+    "scale": 0.2954,
+    "n_lines": 6,
+    "n_constraints": 22,
+    "parseable": true
+  },
+  "misalign": {
+    "status": "ok",
+    "grade": "medium",
+    "misalign_median": 0.0198,
+    "misalign_p90": 0.0542,
+    "baseline": 0.197,
+    "within_baseline": true,
+    "note": "§8 오버레이 어긋남 판정: median ≤ 등급 baseline(CP-0.6)이면 통과."
+  }
+}

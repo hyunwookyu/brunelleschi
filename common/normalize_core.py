@@ -52,7 +52,8 @@ def douglas_peucker(pts: np.ndarray, eps: float) -> np.ndarray:
     if L < 1e-9:
         d = np.hypot(*(pts - start).T)
     else:
-        d = np.abs(np.cross(line, pts - start)) / L
+        v = pts - start
+        d = np.abs(line[0] * v[:, 1] - line[1] * v[:, 0]) / L    # 2D cross z-성분
     idx = int(np.argmax(d))
     if d[idx] > eps:
         left = douglas_peucker(pts[:idx + 1], eps)

@@ -1,0 +1,13 @@
+{
+  "ir_meta": {
+    "grade": "precise",
+    "straightness_med": 0.1107,
+    "scale": 0.215,
+    "n_lines": 17,
+    "n_constraints": 84,
+    "parseable": false
+  },
+  "misalign": {
+    "status": "no_polygon"
+  }
+}
