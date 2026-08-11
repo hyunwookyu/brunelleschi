@@ -1,0 +1,59 @@
+{
+  "spec": "§6.4 tolerance 그리드 서치(좌표하강); §5.3 파싱가능 경계",
+  "objective": "SketchGraphs-호환 정준제약 f1",
+  "parseable_threshold": 0.35,
+  "by_grade": {
+    "precise": {
+      "best_f1": 0.6055,
+      "holdout_f1": 0.5428,
+      "parseable": true,
+      "tolerance": {
+        "resample_spacing": 5.0,
+        "dp_epsilon": 20.0,
+        "min_segment_len": 22.0,
+        "collinear_merge_deg": 12.0,
+        "axis_cluster_deg": 35.0,
+        "ortho_snap_deg": 20.0,
+        "coincident_dist": 38.0,
+        "parallel_deg": 8.0,
+        "perpendicular_deg": 15.0,
+        "equal_len_ratio": 0.12
+      }
+    },
+    "medium": {
+      "best_f1": 0.3753,
+      "holdout_f1": 0.3832,
+      "parseable": true,
+      "tolerance": {
+        "resample_spacing": 3.0,
+        "dp_epsilon": 6.0,
+        "min_segment_len": 4.0,
+        "collinear_merge_deg": 12.0,
+        "axis_cluster_deg": 25.0,
+        "ortho_snap_deg": 28.0,
+        "coincident_dist": 12.0,
+        "parallel_deg": 8.0,
+        "perpendicular_deg": 15.0,
+        "equal_len_ratio": 0.12
+      }
+    },
+    "coarse": {
+      "best_f1": 0.4086,
+      "holdout_f1": 0.4162,
+      "parseable": true,
+      "tolerance": {
+        "resample_spacing": 5.0,
+        "dp_epsilon": 6.0,
+        "min_segment_len": 4.0,
+        "collinear_merge_deg": 12.0,
+        "axis_cluster_deg": 25.0,
+        "ortho_snap_deg": 36.0,
+        "coincident_dist": 12.0,
+        "parallel_deg": 8.0,
+        "perpendicular_deg": 15.0,
+        "equal_len_ratio": 0.12
+      }
+    }
+  },
+  "boundary_note": "parseable=False 등급은 '기하 불가, 관계만'(§5.3) 정상 동작."
+}

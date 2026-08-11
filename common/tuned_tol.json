@@ -1,0 +1,38 @@
+{
+  "precise": {
+    "resample_spacing": 5.0,
+    "dp_epsilon": 20.0,
+    "min_segment_len": 22.0,
+    "collinear_merge_deg": 12.0,
+    "axis_cluster_deg": 35.0,
+    "ortho_snap_deg": 20.0,
+    "coincident_dist": 38.0,
+    "parallel_deg": 8.0,
+    "perpendicular_deg": 15.0,
+    "equal_len_ratio": 0.12
+  },
+  "medium": {
+    "resample_spacing": 3.0,
+    "dp_epsilon": 6.0,
+    "min_segment_len": 4.0,
+    "collinear_merge_deg": 12.0,
+    "axis_cluster_deg": 25.0,
+    "ortho_snap_deg": 28.0,
+    "coincident_dist": 12.0,
+    "parallel_deg": 8.0,
+    "perpendicular_deg": 15.0,
+    "equal_len_ratio": 0.12
+  },
+  "coarse": {
+    "resample_spacing": 5.0,
+    "dp_epsilon": 6.0,
+    "min_segment_len": 4.0,
+    "collinear_merge_deg": 12.0,
+    "axis_cluster_deg": 25.0,
+    "ortho_snap_deg": 36.0,
+    "coincident_dist": 12.0,
+    "parallel_deg": 8.0,
+    "perpendicular_deg": 15.0,
+    "equal_len_ratio": 0.12
+  }
+}

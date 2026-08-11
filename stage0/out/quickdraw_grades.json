@@ -1,0 +1,64 @@
+{
+  "spec": "§6.1 Quick,Draw 등급/노이즈; 거친 쪽 상한",
+  "categories": [
+    "house",
+    "square",
+    "line",
+    "triangle",
+    "door",
+    "castle",
+    "skyscraper"
+  ],
+  "n_total": 10498,
+  "grades": {
+    "precise": {
+      "n": 3597,
+      "frac": 0.343,
+      "straightness_median": 0.04884,
+      "straightness_p90": 0.11442,
+      "ortho_snap_tol_deg_median": 4.892,
+      "ortho_snap_tol_deg_p90": 11.31,
+      "closure_gap_median": 0.7388,
+      "speed_median": 0.53764
+    },
+    "medium": {
+      "n": 1809,
+      "frac": 0.172,
+      "straightness_median": 0.19676,
+      "straightness_p90": 0.28354,
+      "ortho_snap_tol_deg_median": 21.801,
+      "ortho_snap_tol_deg_p90": 32.005,
+      "closure_gap_median": 0.1335,
+      "speed_median": 0.57237
+    },
+    "coarse": {
+      "n": 5092,
+      "frac": 0.485,
+      "straightness_median": 0.21542,
+      "straightness_p90": 0.29409,
+      "ortho_snap_tol_deg_median": 7.125,
+      "ortho_snap_tol_deg_p90": 11.31,
+      "closure_gap_median": 0.3806,
+      "speed_median": 0.3757
+    }
+  },
+  "noise_params": {
+    "precise": {
+      "jitter_ratio": 0.04884,
+      "angle_sigma_deg": 11.31,
+      "closure_gap_ratio": 0.7388
+    },
+    "medium": {
+      "jitter_ratio": 0.19676,
+      "angle_sigma_deg": 32.005,
+      "closure_gap_ratio": 0.1335
+    },
+    "coarse": {
+      "jitter_ratio": 0.21542,
+      "angle_sigma_deg": 11.31,
+      "closure_gap_ratio": 0.3806
+    }
+  },
+  "overlay_misalign_baseline_note": "오버레이 어긋남 기준(§8) = 등급별 straightness_median. checkpoints CP-0.6.",
+  "caveat": "Quick,Draw: 20s 제한/마우스·손가락 혼재/필압없음 → 정밀 쪽은 SketchGraphs(6.2)로."
+}

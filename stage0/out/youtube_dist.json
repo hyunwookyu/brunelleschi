@@ -1,0 +1,265 @@
+{
+  "spec": "§6.3 유튜브 자막 발화유형 분포",
+  "status": "OK",
+  "n_videos": 22,
+  "n_segments": 3424,
+  "lang_counts": {
+    "en": 1,
+    "ko": 21
+  },
+  "type_distribution": {
+    "dimension": 0.0073,
+    "correction": 0.0123,
+    "relation": 0.0461,
+    "deixis": 0.0616,
+    "naming": 0.0283,
+    "intent": 0.0216,
+    "other": 0.8227
+  },
+  "alignment_window_note": "§3.6 기본 ±3초. 자막 세그먼트 간격 p50/p90(초):",
+  "segment_gap_p50": 2.12,
+  "segment_gap_p90": 4.08,
+  "correction_expressions": [
+    {
+      "vid": "TGYpx9FNzeI",
+      "t": 236.84,
+      "text": "바라보이는 대로 그리는게 아니고 저"
+    },
+    {
+      "vid": "TGYpx9FNzeI",
+      "t": 273.96,
+      "text": "아니고 그거를 추상화된 기호처럼"
+    },
+    {
+      "vid": "TGYpx9FNzeI",
+      "t": 621.56,
+      "text": "거니까 그거에 맞게끔 다시 어저스트를"
+    },
+    {
+      "vid": "TGYpx9FNzeI",
+      "t": 642.76,
+      "text": "다시 한번 리마인드하고 디자인을"
+    },
+    {
+      "vid": "TGYpx9FNzeI",
+      "t": 890.759,
+      "text": "정리되어 있는 것들 말고 완전히 초비"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "t": 230.76,
+      "text": "거예요 이런 걸 왜 그리냐면 아니"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "t": 633.18,
+      "text": "평평하다는 뜻인 거죠 다시 한번"
+    },
+    {
+      "vid": "fYFXgHmnUFU",
+      "t": 15.04,
+      "text": "초기화를 하고 다시 여러분들이"
+    },
+    {
+      "vid": "fYFXgHmnUFU",
+      "t": 142.72,
+      "text": "있겠습니다. 자, 이제 여기에서 다시"
+    },
+    {
+      "vid": "fYFXgHmnUFU",
+      "t": 366.639,
+      "text": "표현하는 것만 있는게 아니고"
+    },
+    {
+      "vid": "fYFXgHmnUFU",
+      "t": 401.88,
+      "text": "그렇게 하는 기능은 아니고 기존에"
+    },
+    {
+      "vid": "FfmNmjRpyYI",
+      "t": 88.439,
+      "text": "다시 뒤로 쭉 잡아당기고 싶을 때"
+    },
+    {
+      "vid": "D2KTe5kRWoM",
+      "t": 420.24,
+      "text": "거예요. 그게 아니고 이걸 이제"
+    },
+    {
+      "vid": "D2KTe5kRWoM",
+      "t": 429.28,
+      "text": "아니고 여러분들의 그 실제 프로젝트와"
+    },
+    {
+      "vid": "D2KTe5kRWoM",
+      "t": 598.0,
+      "text": "단순한 주차장이 아니라 지역 문화의"
+    },
+    {
+      "vid": "D2KTe5kRWoM",
+      "t": 1392.0,
+      "text": "아니고 무슨 발표를 하거나간에 사실"
+    },
+    {
+      "vid": "JjZtNiC9eoc",
+      "t": 22.64,
+      "text": "정점은 화려한 렌더링이 아니라 바로"
+    },
+    {
+      "vid": "JjZtNiC9eoc",
+      "t": 42.239,
+      "text": "이제 더 이상 고민하지 말고 그냥"
+    },
+    {
+      "vid": "JjZtNiC9eoc",
+      "t": 120.84,
+      "text": "말고 파라매트릭 및 알고리즘 변주"
+    },
+    {
+      "vid": "JjZtNiC9eoc",
+      "t": 143.68,
+      "text": "나누는게 아니라 영역의 개방도를 네온"
+    }
+  ],
+  "translation_examples_20": [
+    {
+      "vid": "TGYpx9FNzeI",
+      "lang": "ko",
+      "t": 241.92,
+      "text": "보세요. 3층짜리 건물인데 2층"
+    },
+    {
+      "vid": "TGYpx9FNzeI",
+      "lang": "ko",
+      "t": 245.76,
+      "text": "내려다 보면 그게 2층 평면도가"
+    },
+    {
+      "vid": "TGYpx9FNzeI",
+      "lang": "ko",
+      "t": 552.0,
+      "text": "그래서 1층 부분에서는 제가 좋아하는"
+    },
+    {
+      "vid": "TGYpx9FNzeI",
+      "lang": "ko",
+      "t": 562.64,
+      "text": "20층까지는 그런 유니트가 들어가고"
+    },
+    {
+      "vid": "TGYpx9FNzeI",
+      "lang": "ko",
+      "t": 564.92,
+      "text": "20층부터 50층까지는 파노라마 뷰가"
+    },
+    {
+      "vid": "TGYpx9FNzeI",
+      "lang": "ko",
+      "t": 697.72,
+      "text": "사무실 1층의 회의실 저 유튜브 찍는"
+    },
+    {
+      "vid": "TGYpx9FNzeI",
+      "lang": "ko",
+      "t": 786.16,
+      "text": "주로 1층과 2층 레벨 저층만 있다면"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "lang": "ko",
+      "t": 62.94,
+      "text": "뭔지 뭐 몇 미리 두께로 이걸"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "lang": "ko",
+      "t": 89.159,
+      "text": "4층짜리 집이 있다 이 건물이다"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "lang": "ko",
+      "t": 90.96,
+      "text": "그러면은 1층이 평면도 회의실을"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "lang": "ko",
+      "t": 92.88,
+      "text": "보려면 1층 중간을 한 1점 몇"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "lang": "ko",
+      "t": 285.84,
+      "text": "1.2m 정도에서 딱 자른 다음에"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "lang": "ko",
+      "t": 292.08,
+      "text": "그러면은 어떻게 보이겠어요 2층으로"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "lang": "ko",
+      "t": 332.94,
+      "text": "평면도 1층과 2층을 한번 보겠습니다"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "lang": "ko",
+      "t": 434.46,
+      "text": "두 칸 세 칸 올라가면은 1층 거실"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "lang": "ko",
+      "t": 441.0,
+      "text": "어 이게 2층으로 올라가는 계단이구나"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "lang": "ko",
+      "t": 471.479,
+      "text": "하나는 한 18cm니까 하나 둘 셋"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "lang": "ko",
+      "t": 667.019,
+      "text": "있었죠 그러면 이제 2층으로 가면은"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "lang": "ko",
+      "t": 679.86,
+      "text": "여기서 또 올라가면 3층으로 가는"
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "lang": "ko",
+      "t": 706.44,
+      "text": "cm인지 몇 미터인지 그런 것들을"
+    }
+  ],
+  "classifier": {
+    "order": [
+      "correction",
+      "dimension",
+      "relation",
+      "deixis",
+      "naming",
+      "intent"
+    ],
+    "patterns_keys": [
+      "dimension",
+      "correction",
+      "relation",
+      "deixis",
+      "naming",
+      "intent"
+    ],
+    "caveat": "§9 위임불가: 분류 기준은 사용자 확인 대상(CP-0.3). §3.7 코퍼스 확인용."
+  }
+}
