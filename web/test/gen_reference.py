@@ -61,9 +61,21 @@ def main():
         partials.append({"frac": frac, "capture": pc,
                          "expect": {"n_volumes": len(vols), "n_hints": len(hints)}})
 
+    # 카메라 정합 참조 (무노이즈 → fit_error≈0, DLT 정확 → TS도 0. §1.5 파리티)
+    from stage3.synth import build_synthetic, default_world_quad_irregular
+    from stage3.camera import fit_camera
+    import numpy as np
+    w4, i4, sz, _ = build_synthetic(world4=default_world_quad_irregular())
+    res = fit_camera(w4, i4, sz)
+    camera = {"world4": [[float(x), float(y)] for x, y in w4],
+              "image4": [[float(x), float(y)] for x, y in i4],
+              "img_size": [float(sz[0]), float(sz[1])],
+              "expect": {"fit_error": float(res.fit_error)}}
+
     out2 = Path(__file__).resolve().parent / "reference_multi.json"
-    out2.write_text(json.dumps({"multi": multi, "partials": partials}, ensure_ascii=False, indent=2), encoding="utf-8")
-    print("->", out2)
+    out2.write_text(json.dumps({"multi": multi, "partials": partials, "camera": camera},
+                               ensure_ascii=False, indent=2), encoding="utf-8")
+    print("->", out2, f"| camera fit_error={camera['expect']['fit_error']:.2e}")
     print(f"  multi: vols={multi['expect']['n_volumes']} ids={multi['expect']['ids']} rels={multi['expect']['relation_types']}")
     for p in partials:
         print(f"  partial {int(p['frac']*100)}%: vols={p['expect']['n_volumes']} hints={p['expect']['n_hints']}")

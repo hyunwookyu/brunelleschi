@@ -202,7 +202,7 @@ confidence로 **연속 흐림**(opacity=0.3+0.7·conf), <0.5=점선+"?". 볼륨�
 ### V-1~V-8 (§9 순서) — 진행
 | 단계 | 상태 |
 |---|---|
-| V-1 파서 TS 포팅 (Python parity) | **코어 완료** — geometry/paleosketch/normalize(confidence)/multiplex/relate/tentative 이식+파리티 8/8 TS테스트. 잔여: 카메라(자체 SVD), 발화규칙+앵커적용 |
+| V-1 파서 TS 포팅 (Python parity) | **완료** — 전체 파서 레이어 이식. geometry/paleosketch/normalize(confidence)/multiplex/relate/tentative + 카메라(자체 Jacobi SVD, fit_error<1e-6) + 발화규칙+앵커(S2). **TS 14/14, typecheck 클린**. web/src/parser/, web/test/ |
 | V-2 Three.js 뷰어 | 대기 |
 | V-3 실시간(워커·증분·디바운스) | 대기 |
 | V-4 화면(분할·프레임·터치) | 대기 |

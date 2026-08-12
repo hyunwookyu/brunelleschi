@@ -51,4 +51,5 @@
 | # | 전제 | 출처 | 관측 | 상태 |
 |---|---|---|---|---|
 | P1 | 획→3D p95 <150ms 달성 가능 | spec §0.2 A/§8 | 뷰어 미구현 | ⏳ V-3/V-8 측정 |
-| P2 | TS·Python 파서 f1 차이 <0.01 | spec §9 V-1 | TS 미구현 | ⏳ V-1 parity |
+| P2 | TS·Python 파서 출력 일치 | spec §9 V-1 | **달성**: footprint ±3%, confidence ±0.05, 카메라 fit_error <1e-6, 다중화/관계/tentative 일치 (TS 14/14) | ✅ V-1 |
+| P3 | relate 기하가 Python(shapely)와 일치 | spec §1.4 | TS는 bbox 근사(penetrate/adjacent) — 분리 rect는 일치, L형 인접은 발산 가능 | ⚠️ 프로토타입 근사, S4서 재확인 |
