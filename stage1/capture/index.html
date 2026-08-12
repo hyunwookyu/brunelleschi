@@ -68,10 +68,14 @@ document.querySelectorAll('.pen').forEach(el=>el.onclick=()=>{
 document.getElementById('undo').onclick=()=>{strokes.pop();redraw();};
 document.getElementById('clear').onclick=()=>{strokes=[];redraw();};
 document.getElementById('save').onclick=()=>{
+  const name=`sketch_${frame}_${Date.now()}.json`;
   const blob=new Blob([JSON.stringify({frame,w:c.width,h:c.height,strokes},null,0)],
                       {type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download=`sketch_${frame}_${Date.now()}.json`; a.click();
+  a.download=name; a.click();
+  // §6.5 즉시 IoU 대조: 내보낸 스케치를 도구에 넣으면 실측 vs 합성 예측밴드 판정
+  document.getElementById('stat').textContent =
+    `저장됨 → 즉시 IoU: python stage1/measure_capture.py <다운로드>/${name}`;
 };
 resize();
 </script>

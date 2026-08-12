@@ -1,0 +1,17 @@
+{
+  "total_keys": 3,
+  "total_occurrences": 6,
+  "promotion_candidates(>=3)": {
+    "opening": 3
+  },
+  "note_level(1-2)": {
+    "polygon_unformed": 1,
+    "relation": 2
+  },
+  "projected_root_fields": 6,
+  "root_field_cap": 12,
+  "STOP_if_exceeds": false,
+  "labeler_active": true,
+  "note": "승격 0건이 정상인지(정말 반복 미매핑 없음) vs 라벨러 미작동인지 구분됨. 이 원장이 집계 중이므로 이제 전자.",
+  "recorded_this_run": 6
+}

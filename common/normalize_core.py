@@ -120,37 +120,48 @@ class Graph:
 
 
 # --- 파서: 획들 → 폴리곤 라인 + 추론된 제약 ---------------------------------
-def parse_strokes(strokes: list[np.ndarray], tol: dict = None) -> Graph:
+def parse_strokes(strokes: list[np.ndarray], tol: dict = None, method: str = "paleo") -> Graph:
+    """method: "paleo"(§5.1 코너검출, 기본) | "dp"(Douglas-Peucker, 구 방식/비교용)."""
     t = {**DEFAULT_TOL, **(tol or {})}
-    # 1) 리샘플 + DP 단순화, 한 폴리라인으로 잇기(끝점 근접시)
-    polys = []
-    for s in strokes:
-        s = np.asarray(s, float)
-        if len(s) < 2:
-            continue
-        s = resample(s, t["resample_spacing"])
-        s = douglas_peucker(s, t["dp_epsilon"])
-        polys.append(s)
-    if not polys:
-        return Graph()
-    # 다중 획 병합: 끝점이 가까우면 이어붙임(단순 그리디)
-    merged = list(polys[0])
-    for s in polys[1:]:
-        if np.hypot(*(np.array(merged[-1]) - s[0])) <= t["coincident_dist"]:
-            merged.extend(s[1:])
-        elif np.hypot(*(np.array(merged[-1]) - s[-1])) <= t["coincident_dist"]:
-            merged.extend(s[::-1][1:])
-        else:
-            merged.extend(s)
-    pts = np.array(merged, float)
 
-    # 2) 선분화 + 짧은 선분 제거
-    verts = [pts[0]]
-    for p in pts[1:]:
-        if np.hypot(*(p - verts[-1])) >= t["min_segment_len"]:
-            verts.append(p)
-    verts = np.array(verts, float)
-    closed = len(verts) >= 3 and np.hypot(*(verts[0] - verts[-1])) <= t["coincident_dist"]
+    if method == "paleo":
+        # 1~2) PaleoSketch 분할: 원획 병합 → 직교 폴리라인 인식 → 정점 (§5.1)
+        from common.paleosketch import recognize_rectilinear, merge_polyline, PALEO
+        merged = merge_polyline([np.asarray(s, float) for s in strokes], t["coincident_dist"])
+        if len(merged) < 3:
+            return Graph()
+        cfg = {k: t[k] for k in PALEO if k in t}
+        verts = recognize_rectilinear(merged, cfg)
+        verts = np.asarray(verts, float)[:, :2]
+        closed = len(verts) >= 3 and np.hypot(*(verts[0] - verts[-1])) <= t["coincident_dist"]
+    else:
+        # 1) 리샘플 + DP 단순화, 한 폴리라인으로 잇기(끝점 근접시)
+        polys = []
+        for s in strokes:
+            s = np.asarray(s, float)[:, :2]
+            if len(s) < 2:
+                continue
+            s = resample(s, t["resample_spacing"])
+            s = douglas_peucker(s, t["dp_epsilon"])
+            polys.append(s)
+        if not polys:
+            return Graph()
+        merged = list(polys[0])
+        for s in polys[1:]:
+            if np.hypot(*(np.array(merged[-1]) - s[0])) <= t["coincident_dist"]:
+                merged.extend(s[1:])
+            elif np.hypot(*(np.array(merged[-1]) - s[-1])) <= t["coincident_dist"]:
+                merged.extend(s[::-1][1:])
+            else:
+                merged.extend(s)
+        pts = np.array(merged, float)
+        # 2) 선분화 + 짧은 선분 제거
+        verts = [pts[0]]
+        for p in pts[1:]:
+            if np.hypot(*(p - verts[-1])) >= t["min_segment_len"]:
+                verts.append(p)
+        verts = np.array(verts, float)
+        closed = len(verts) >= 3 and np.hypot(*(verts[0] - verts[-1])) <= t["coincident_dist"]
 
     # 3) 축 클러스터링 → 지배 프레임 → 정점 체인 직교 스냅(연결성 보존)
     tmp = [Line(tuple(verts[i]), tuple(verts[i + 1])) for i in range(len(verts) - 1)]

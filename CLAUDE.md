@@ -118,8 +118,11 @@ SKETCH2SPACE/
   ir/
     schema.py            IR 데이터클래스 + 검증 (단일 소스)
     schema_version.md    스키마 변경 이력 (§10 고정)
+    unmappable.py        unmappable 집계 원장 = 승격 라벨러 (§13)
   common/
     grammar.py           발화 번역 7문법 (§3.6)
+    normalize_core.py    획→폴리곤+제약. parse_strokes(method="paleo"|"dp")
+    paleosketch.py       프리미티브 인식(직교 폴리라인) = 분할 (§5.1, 기본 분할기)
   data/
     quickdraw/           §6.1 프리핸드 노이즈 분포
     sketchgraphs/        §6.2 정규화 정답 라벨

@@ -22,12 +22,30 @@ from ir.schema import IR, Volume, Anchor
 from common.normalize_core import parse_strokes, stroke_straightness  # noqa
 
 
-def m_normalize() -> dict | None:
-    p = OUT / "tolerance.json"
-    if not p.exists():
+def m_normalize(n=150) -> dict | None:
+    """정규화 제약 f1(등급별) — 현행 파서(PaleoSketch, §5.1)로 라이브 측정."""
+    qd = OUT / "quickdraw_grades.json"
+    if not qd.exists():
         return None
-    d = json.loads(p.read_text(encoding="utf-8"))["by_grade"]
-    return {g: {"holdout_f1": d[g]["holdout_f1"], "parseable": d[g]["parseable"]} for g in d}
+    from common.normalize_core import parse_strokes, Graph, compare_matched
+    spec = importlib.util.spec_from_file_location("sg", ROOT / "stage0" / "02_sketchgraphs_render.py")
+    sg = importlib.util.module_from_spec(spec); spec.loader.exec_module(sg)
+    tuned = json.loads((ROOT / "common" / "tuned_tol.json").read_text(encoding="utf-8"))["precise"]
+    QD = json.loads(qd.read_text(encoding="utf-8"))["noise_params"]
+    out = {}
+    for grade in ("precise", "medium", "coarse"):
+        sg.rng = __import__("numpy").random.default_rng(1)
+        gp = QD[grade]; fs = []
+        for _ in range(n):
+            poly = sg.gen_polygon(); tg = sg.truth_graph(poly)
+            st = sg.render_noisy(poly, gp["jitter_ratio"], gp["angle_sigma_deg"], gp["closure_gap_ratio"])
+            g = parse_strokes([__import__("numpy").array(s) for s in st], tuned, method="paleo")
+            ti = Graph(lines=tg.lines, constraints={c for c in tg.constraints if c[0] in sg.CANON})
+            ri = Graph(lines=g.lines, constraints={c for c in g.constraints if c[0] in sg.CANON})
+            fs.append(compare_matched(ti, ri)["f1"])
+        import numpy as _np
+        out[grade] = {"f1": round(float(_np.mean(fs)), 4), "method": "paleo", "parseable": True}
+    return out
 
 
 def m_noise_model() -> dict | None:

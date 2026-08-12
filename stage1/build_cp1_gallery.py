@@ -10,9 +10,9 @@ sys.path.insert(0, str(ROOT))
 from stage1.overlay import run
 
 CASES = [
-    ("fixture_rect_precise", "직사각 평면 · precise 노이즈", "PASS 기대"),
-    ("fixture_L_precise", "L형 평면 · precise 노이즈", "PASS 기대"),
-    ("fixture_L_coarse", "L형 평면 · coarse 노이즈", "경계(관계만) 기대 — §5.3"),
+    ("fixture_rect_precise", "직사각 평면 · precise 노이즈", "PASS 기대 (4변)"),
+    ("fixture_L_precise", "L형 평면 · precise 노이즈", "PASS 기대 (6변)"),
+    ("fixture_L_coarse", "L형 평면 · coarse 노이즈", "PaleoSketch로 파싱 가능해짐"),
 ]
 
 def main():
@@ -42,17 +42,18 @@ h1{font-size:20px} h3{margin:0 0 6px}
 .note{background:#fff;border:1px solid #e2e2e2;border-radius:10px;padding:14px;margin-top:18px}
 b{color:#0a7} code{background:#f0f0f0;padding:1px 4px;border-radius:4px}
 </style>
-<h1>1단계 오버레이 — 원본 스케치 위 복원 폴리곤 (§3.9)</h1>
+<h1>1단계 오버레이 — 원본 스케치 위 복원 폴리곤 (§3.9) · PaleoSketch 적용</h1>
 <p>회색 = 원본 매스 획 · <b>파선</b> = 무차원 복원(앵커 없음, §3.5) · 빨강 = 정점.
 어긋남 = 입력점의 복원 엣지까지 수직거리 중앙값 / bbox 대각. baseline = 등급별 직선편차 중앙값(CP-0.6).</p>
 <div class="grid">GRID</div>
 <div class="note">
-<h3>확인 요청 (CP-1)</h3>
+<h3>확인 요청 (CP-1) — PaleoSketch(§5.1) 도입 후 갱신</h3>
 <ul>
-<li>precise 등급은 클린 직교폴리곤 복원(라인 6, 어긋남 ~2%) &rarr; <b>PASS</b>.</li>
-<li>coarse 등급은 폴리곤 미형성 &rarr; <code>관계만</code> 선언(§5.3 파싱 경계, 실패 아님).</li>
-<li>알려진 흠: 단일 연속 획의 직교스냅 체인 오차가 폐곡선 마지막 정점에 누적(좌하단 드리프트). 실측 세션에서 tolerance 판정 필요.</li>
-<li>등급 자동판정(register)은 합성 데이터에서 분리 안 됨 &rarr; 정보용으로만. 실측 다등급 세션으로 재보정 예정(§6.6).</li>
+<li><b>PaleoSketch 프리미티브 인식기 도입 완료</b>. 세 지표 모두 개선: constraint f1 0.578&rarr;0.715, 폴리곤 IoU 0.806&rarr;0.913, 앵커 depth오차 0.159&rarr;0.046. 분할이 공통 원인임 확증.</li>
+<li>precise: rect 4변 / L 6변 정확 복원. 이전 좌하단 정점 드리프트 <b>해소</b>(직교스냅 체인 대신 런-교차 정점).</li>
+<li>coarse: 이전엔 폴리곤 미형성이었으나 이제 <b>파싱 가능</b>(노이즈 강건). 스크리블 등 진짜 비직교는 적합잔차 게이트로 <code>관계만</code>(§5.3).</li>
+<li>남은 확인: 실측 Apple Pencil 평면 1장 &rarr; <code>python stage1/measure_capture.py</code>로 실측 IoU가 합성 예측밴드(median 0.83) 안인지. 벗어나면 노이즈모델 재검토(§6.5).</li>
+<li>등급 자동판정(register)은 합성 데이터에서 분리 안 됨 &rarr; precise tol 기본 사용. 실측 다등급 세션으로 재보정 예정(§6.6).</li>
 </ul>
 </div>""".replace("GRID", "\n".join(cards))
     out = ROOT / "stage1" / "cp1_overlays.html"

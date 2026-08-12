@@ -1,0 +1,43 @@
+{
+  "dp": {
+    "constraint_f1": {
+      "precise": 0.5784,
+      "medium": 0.2164,
+      "coarse": 0.2624
+    },
+    "polygon_iou_precise": {
+      "iou_median": 0.8064,
+      "iou_p10": 0.672,
+      "n": 60
+    },
+    "anchor_depth_error": {
+      "depth_rel_error_median": 0.1588,
+      "depth_rel_error_p90": 0.2573,
+      "n": 40
+    }
+  },
+  "paleo": {
+    "constraint_f1": {
+      "precise": 0.7052,
+      "medium": 0.6429,
+      "coarse": 0.6726
+    },
+    "polygon_iou_precise": {
+      "iou_median": 0.913,
+      "iou_p10": 0.8489,
+      "n": 60
+    },
+    "anchor_depth_error": {
+      "depth_rel_error_median": 0.0459,
+      "depth_rel_error_p90": 0.0836,
+      "n": 40
+    }
+  },
+  "improved_all_three": true,
+  "improved": {
+    "f1_precise": true,
+    "iou_median": true,
+    "anchor_depth": true
+  },
+  "verdict": "세 지표 모두 개선 → 분할이 공통 원인 확증(§5.1 도입 정당)"
+}
