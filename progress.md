@@ -215,7 +215,7 @@ relate.ts bbox 근사 발산 정량화: L자·凹자·계단형 8케이스에서
 | 단계 | 상태 |
 |---|---|
 | V-1 파서 TS 포팅 (Python parity) | **완료** — 전체 파서 레이어 이식. geometry/paleosketch/normalize(confidence)/multiplex/relate/tentative + 카메라(자체 Jacobi SVD, fit_error<1e-6) + 발화규칙+앵커(S2). **TS 14/14, typecheck 클린**. web/src/parser/, web/test/ |
-| V-2 Three.js 뷰어 | 대기 |
+| V-2 Three.js 뷰어 | **코어 완료(브라우저 독립)** — sceneBuilder(IR→메시스펙, confidence→§3.5 재질), sceneDiff(§2.2 오브젝트풀 add/update/remove), V-c hint→볼륨 전환 씬레벨 검증. TS 27/27. 잔여: 실 Three.js 렌더·카메라적용·배경오버레이·버튼(브라우저, V-8과) |
 | V-3 실시간(워커·증분·디바운스) | 대기 |
 | V-4 화면(분할·프레임·터치) | 대기 |
 | V-5 잉크 보강(팜리젝·coalesced·tilt·seq) | 대기 |
