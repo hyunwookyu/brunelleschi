@@ -1,0 +1,24 @@
+{
+  "note": "지시서 트랙2 2D-a 시드. 각 검색어는 언어변형·동의어·맥락어로 200+ 확장 대상.",
+  "2A_plan_to_perspective": [
+    "one point perspective from floor plan",
+    "평면도 투시도 작도",
+    "measuring point method perspective construction",
+    "two point perspective plan projection tutorial",
+    "建築 パース 平面図から 作図",
+    "perspective grid from plan architectural drawing"
+  ],
+  "2B_perspective_only": [
+    "interior perspective sketch construction lines",
+    "one point perspective room drawing real time",
+    "건축 투시도 그리기",
+    "freehand architectural perspective sketch",
+    "urban sketching architecture buildings",
+    "architectural perspective drawing narrated"
+  ],
+  "expansion_modifiers": {
+    "languages": ["en", "ko", "ja", "fr", "de", "es"],
+    "synonyms": ["construction", "작도", "作図", "layout", "setup", "guide lines", "구축선"],
+    "context": ["tutorial", "real time", "timelapse off", "step by step", "강좌", "실시간", "narrated"]
+  }
+}

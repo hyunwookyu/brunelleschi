@@ -10,3 +10,5 @@ web/node_modules/
 web/dist/
 **/node_modules/
 stage0/out/score_prev.json
+data/perspective/*.db
+data/perspective/*.csv

@@ -203,6 +203,14 @@ confidence로 **연속 흐림**(opacity=0.3+0.7·conf), <0.5=점선+"?". 볼륨�
 relate.ts bbox 근사 발산 정량화: L자·凹자·계단형 8케이스에서 Python(shapely) 대조 **37.5%(3/8) 불일치** — 전부 오목/맞물림에서 **거짓 penetrate**(bbox 겹치나 폴리곤 분리).
 → **폴리곤 기반 교체**(직교 포함 일반 단순폴리곤): 점포함(ray-cast)+변교차로 penetrate, 엣지 구간 최소거리로 adjacent/separated. shapely 불필요. → **불일치 0%(8/8)**. `web/test/reference_relate.json`(shapely 참조), `relate_parity.test.ts`. S4 경로 해소. TS 22/22.
 
+### 트랙2 투시 복원 (V와 병렬, 지시서) — 코어+스캐폴딩 2026-08-13
+`stage_perspective/`. §3.8 "평면 병용 필수" 직접 시험.
+- **2A(대응 있음)**: `reconstruct.py`(카메라→호모그래피역→평면) + `evaluate.py`(노이즈 스윕 n=200). 대응 4점 주어지면 역투영 **plane_iou 중앙 L1 0.99/L2 0.96/L3 0.94**(견고). 무노이즈 round-trip IoU 1.0. → 역경로(투시→평면)는 대응 있으면 실용적.
+- **2B(투시 단독)**: `construction.py`(구축선→소실점). 합성 바닥그리드 → VP 오차 **0px**, support 5. **한계**: VP는 카메라 방향만, **세계 종횡비 미결정** = §3.8 불안정성 실체.
+- **수집 구조(2D)**: `collect.py`(processed.db·자동판정·§14통합·디스크정책) + `seeds.json`. **실 영상 수집은 후속**(yt-dlp+프레임차분 획추출 필요, plan §6이 폐기했던 경로 부활).
+- 보고: `reports/perspective_recovery.md`(실측+2A/2B 정직 구분), `corpus_growth.md`(주기 누적 스켈레톤). 테스트 3/3(전체 Python 39/39).
+- **정직 유의**: L1~L3 IoU는 **2A(대응 supervised)** 값이지 투시단독 답 아님. ortho_residual은 비정형 truth라 의미 제한(직사각 truth 재측정 필요). 전제 V-e(이상선→프리핸드 전이)는 실영상 없이 미검증.
+
 ### V-1~V-8 (§9 순서) — 진행
 | 단계 | 상태 |
 |---|---|

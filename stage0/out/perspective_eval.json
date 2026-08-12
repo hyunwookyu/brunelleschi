@@ -1,0 +1,44 @@
+{
+  "spec": "트랙2 2C — 투시 단독 복원 품질 경계(노이즈=등급 프록시). 전부 측정값.",
+  "note": "2A 정답 대조(plane_iou) + 무정답 지표(reproj/ortho). 작도 영상 이상선 → 노이즈 주입으로 프리핸드 근사.",
+  "by_grade": {
+    "L1_ruler": {
+      "noise_px": 2.0,
+      "n": 200,
+      "fail_rate": 0.0,
+      "plane_iou_median": 0.9893,
+      "plane_iou_p10": 0.9787,
+      "camera_fit_error_median": 0.0014,
+      "camera_fit_error_p95": 0.0026,
+      "reproj_error_median": 0.0014,
+      "ortho_residual_median_deg": 6.4037
+    },
+    "L2_freehand": {
+      "noise_px": 8.0,
+      "n": 200,
+      "fail_rate": 0.0,
+      "plane_iou_median": 0.9619,
+      "plane_iou_p10": 0.9258,
+      "camera_fit_error_median": 0.0046,
+      "camera_fit_error_p95": 0.0101,
+      "reproj_error_median": 0.0046,
+      "ortho_residual_median_deg": 6.2024
+    },
+    "L3_concept": {
+      "noise_px": 20.0,
+      "n": 200,
+      "fail_rate": 0.0,
+      "plane_iou_median": 0.9418,
+      "plane_iou_p10": 0.8443,
+      "camera_fit_error_median": 0.0073,
+      "camera_fit_error_p95": 0.0233,
+      "reproj_error_median": 0.0073,
+      "ortho_residual_median_deg": 6.9534
+    }
+  },
+  "parsing_boundary": "IoU중앙≥0.5 유지 등급: ['L1_ruler', 'L2_freehand', 'L3_concept'] → 그 이하는 복원 무의미(§5.3 경계)",
+  "answers": {
+    "평면없이 투시단독 어디까지": "L1 IoU중앙 0.9893, L2 0.9619, L3 0.9418",
+    "§3.8 평면병용 완화 가능?": "IoU중앙≥0.5 유지 등급: ['L1_ruler', 'L2_freehand', 'L3_concept'] → 그 이하는 복원 무의미(§5.3 경계)"
+  }
+}
