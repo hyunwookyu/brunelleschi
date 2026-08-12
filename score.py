@@ -181,6 +181,27 @@ def m_anchor_error() -> dict | None:
             "note": "width 앵커 주입 후 depth 복원 상대오차 = 폴리곤 종횡비 복원 오차."}
 
 
+def m_multiplex() -> dict | None:
+    """4단계: 다중화 볼륨 수 정확도 + 명명 결합률 (§7 4단계)."""
+    import importlib.util, numpy as np
+    mms = importlib.util.spec_from_file_location("mm", ROOT / "stage4" / "make_multi.py")
+    mm = importlib.util.module_from_spec(mms); mms.loader.exec_module(mm)
+    from stage4.multiplex import multiplex
+    from stage4.naming import extract_naming, assign_names
+    exact, named_ok, n = 0, 0, 20
+    for seed in range(n):
+        cap = mm.make(seed=seed)
+        ir, _ = multiplex(cap)
+        if len(ir.volumes) == cap["_n_volumes"]:
+            exact += 1
+        hints = extract_naming(cap["_naming_utterances"], cap["_stroke_ctx"])
+        assign_names(ir, hints)
+        if ir.volumes and all(v.label for v in ir.volumes):
+            named_ok += 1
+    return {"volume_count_exact_rate": round(exact / n, 3),
+            "all_named_rate": round(named_ok / n, 3), "n": n}
+
+
 def m_camera_noise() -> dict | None:
     """3단계: 노이즈 조건 fit_error 분포 (stage3/noise_eval, §6.5)."""
     try:
@@ -216,6 +237,7 @@ def main():
         "normalize_iou": m_normalize_iou(),        # 1단계: 폴리곤 IoU
         "anchor_dim_error": m_anchor_error(),      # 2단계: 치수 복원 오차
         "camera_fit_error": m_camera_noise(),      # 3단계: 노이즈 fit_error(§task1)
+        "multiplex": m_multiplex(),                # 4단계: 다중화·명명
     }
     (ROOT / "stage0" / "out" / "score.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

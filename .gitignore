@@ -3,3 +3,6 @@ data/youtube/*.json
 __pycache__/
 **/__pycache__/
 .pytest_cache/
+data/tuberlin/*.parquet
+collect/logs/*.jsonl
+ir/unmappable_ledger.json

@@ -50,19 +50,24 @@
   },
   "camera_fit_error": {
     "precise": {
-      "fit_error_median": 0.0051,
-      "fit_error_p95": 0.0125,
+      "fit_error_median": 0.0055,
+      "fit_error_p95": 0.0139,
       "approx_rate": 0.0
     },
     "medium": {
-      "fit_error_median": 0.0134,
-      "fit_error_p95": 0.0842,
-      "approx_rate": 0.025
+      "fit_error_median": 0.0116,
+      "fit_error_p95": 0.0552,
+      "approx_rate": 0.017
     },
     "coarse": {
-      "fit_error_median": 0.0163,
-      "fit_error_p95": 0.0941,
-      "approx_rate": 0.05
+      "fit_error_median": 0.0138,
+      "fit_error_p95": 0.1034,
+      "approx_rate": 0.058
     }
+  },
+  "multiplex": {
+    "volume_count_exact_rate": 0.95,
+    "all_named_rate": 1.0,
+    "n": 20
   }
 }

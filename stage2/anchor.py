@@ -103,6 +103,8 @@ def _apply_dimension(ir: IR, target: str, prop: str, value: float, tol: float,
 def apply_ops(ir: IR, ops: list[Op]) -> IR:
     """ops를 순서대로 ir에 반영하고 ir을 반환한다(제자리 변형).
     §3.5 "앵커 없으면 단위 없이" — 여기서 없는 속성에 기본값을 채우는 코드는 없다."""
+    from collect.logschema import collector             # §14 기록(기본 꺼짐, no-op)
+    collector.log_ir("anchor_before", ir)
     for op in ops:
         a = op.args
         if op.op == "set":
@@ -142,6 +144,7 @@ def apply_ops(ir: IR, ops: list[Op]) -> IR:
 
         elif op.op == "note":
             ir.notes.append(Note(a["id"], a["text"]))
+    collector.log_ir("anchor_after", ir)               # §14 before/after 쌍
     return ir
 
 

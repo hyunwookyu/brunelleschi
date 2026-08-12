@@ -155,12 +155,17 @@ def translate(ir: IR, segments: list[dict], llm: Optional[Callable[[str], list[d
             if d:
                 pairs.append((text, d))
 
+    from collect.logschema import collector           # §14 기록(기본 꺼짐; 발화는 별도 동의)
     ops: list[Op] = []
     errs: list[str] = []
     for i, (text, d) in enumerate(pairs):
         o, e = parse_ops([d])
         if o:
             ops.extend(o)
+            if text is not None:
+                collector.log_utterance(text, o)     # speech_consent True일 때만 기록
+            if o[0].op == "unresolved":
+                collector.log_unmappable(o[0].args.get("prop", "unspecified"))
             if verbose:
                 label = f'"{text}"' if text is not None else "<llm>"
                 print(f'{label}  →  {render_op(o[0])}')

@@ -144,6 +144,8 @@ def fit_camera(world4, image4, img_size: tuple[float, float]) -> FitResult:
 
 def to_view(src: str, result: FitResult) -> View:
     """FitResult → IR View (§3.2 views 스키마). camera 하위값은 JSON 직렬화 가능한 리스트로."""
+    from collect.logschema import collector             # §14 기록(기본 꺼짐, no-op)
+    collector.log_metric("fit_error", None if result.fit_error == float("inf") else round(result.fit_error, 5))
     if result.approximate or not result.ok:
         fe = None if result.fit_error == float("inf") else result.fit_error
         return View(src=src, camera={"mode": "approximate", "reason": result.reason}, fit_error=fe)

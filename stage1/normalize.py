@@ -101,6 +101,8 @@ def normalize_to_ir(capture: dict, vol_id="v1", method="paleo") -> tuple[IR, dic
     meta = {"grade": grade, "straightness_med": round(med, 4), "scale": round(s, 4),
             "n_lines": len(g.lines), "n_constraints": len(g.constraints),
             "fit_residual": round(resid, 4), "parseable": parseable}
+    from collect.logschema import collector          # §14 기록(기본 꺼짐, no-op)
+    collector.log_stroke(capture.get("strokes", []), frame=capture.get("frame", ""))
     if not parseable:
         # §5.3 경계: 기하 불가 → 관계만/미해결. 정상 동작(실패 아님).
         if len(g.lines) < 3:
@@ -110,10 +112,14 @@ def normalize_to_ir(capture: dict, vol_id="v1", method="paleo") -> tuple[IR, dic
         else:
             why = f"적합잔차 {resid:.3f}>{FIT_MAX} (비직교/스크리블)"
         ir = IR(unresolved=[f"폴리곤 미형성({why}, grade≈{grade}) — 관계만 수용(§5.3)"])
+        collector.log_ir("normalize", ir)
+        collector.log_unmappable("polygon_unformed")
         return ir, meta
     vol = Volume(id=vol_id, footprint=[[round(x, 2), round(y, 2)] for x, y in verts],
                  base=0.0, height=None, height_src="unset", confidence=0.9)  # 무차원(§3.5)
-    return IR(volumes=[vol]), meta
+    ir = IR(volumes=[vol])
+    collector.log_ir("normalize", ir)
+    return ir, meta
 
 
 def main(argv):

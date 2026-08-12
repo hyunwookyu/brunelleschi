@@ -1,0 +1,48 @@
+{
+  "spec": "CP-1 대체 — TU-Berlin 외부 실인간 스케치 IoU 게이트",
+  "synthetic_band": {
+    "quantity": "IoU(복원 폴리곤, 원본 잉크 외곽) — precise 합성",
+    "median": 0.8261,
+    "p10": 0.7991,
+    "p90": 0.861,
+    "n": 80
+  },
+  "per_category": {
+    "tv": {
+      "n": 14,
+      "iou_median": 0.9183,
+      "iou_p10": 0.8429
+    },
+    "book": {
+      "n": 14,
+      "iou_median": 0.8803,
+      "iou_p10": 0.7251
+    },
+    "door": {
+      "n": 14,
+      "iou_median": 0.96,
+      "iou_p10": 0.6465
+    },
+    "laptop": {
+      "n": 15,
+      "iou_median": 0.8026,
+      "iou_p10": 0.6788
+    },
+    "envelope": {
+      "n": 14,
+      "iou_median": 0.9609,
+      "iou_p10": 0.9062
+    }
+  },
+  "orthogonal_strict_categories": [
+    "tv",
+    "book",
+    "door",
+    "laptop"
+  ],
+  "real_iou_median": 0.8972,
+  "real_iou_p10": 0.6958,
+  "n_orthogonal": 57,
+  "PASS": true,
+  "verdict": "외부 실측이 합성 예측밴드 내 → 노이즈모델 타당, 게이트 통과 → 4단계 진행"
+}

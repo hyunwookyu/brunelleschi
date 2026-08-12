@@ -39,6 +39,7 @@ class Volume:
     height: float | None = None           # 앵커 없으면 None = 무차원(§3.5)
     height_src: str = "unset"             # utterance | handwritten | vertical_stroke | unset
     confidence: float = 1.0
+    label: str = ""                       # 명명(§7 4단계). 중첩 필드 — 루트 키 수 불변(§13)
 
     def validate(self) -> list[str]:
         e = []

@@ -94,7 +94,10 @@ LLM 역할은 어휘 해석이 아니라 **미지정 항목 식별**(§3.7). 세
 1. IR 최상위 필드 12개 초과
 2. score.py 수치가 이전 단계 대비 하락
 3. 같은 오류로 3회 실패
-4. **4단계 진입 시점 — 오버레이 확인 없이 넘어가지 않는다**
+4. **4단계 진입 — 외부 데이터셋 IoU 게이트 통과 필요** (개정: 구 오버레이 육안. 통과함)
+5. **5단계 진입 — unmappable 원장에 승격 판단용 실세션 데이터 필요** (2026-08-12, 현재 정지 지점)
+
+로깅(§14): `collect/logschema.py`, 옵트인 기본꺼짐. 학습은 7단계. 지금은 기록만.
 
 ### 판정 임계 (§8 공란 → 0단계 잠정 확정, checkpoints.md에서 사용자 확인 대기)
 | 항목 | 잠정 기준 | 근거 |
@@ -137,9 +140,12 @@ SKETCH2SPACE/
     capture/index.html   웹 잉크 캡처 (Pointer Events)
     normalize.py         획→DP→선분적합→축클러스터→직교스냅→폴리곤
     extrude.py  rhino_out.py  overlay.py
-  stage2/  translate.py anchor.py   발화 스케일 앵커 (§7 2단계)
-  stage3/  camera.py                투시 카메라 정합 (§7 3단계)
-  score.py               §6.5 검증 지표 러너
+  stage2/  translate.py anchor.py whisper_align.py   발화 스케일 앵커 (§7 2단계)
+  stage3/  camera.py synth.py noise_eval.py rhino_view.py   카메라 정합 (§7 3단계)
+  stage4/  multiplex.py naming.py overlay_multi.py make_multi.py   볼륨 다중화·명명 (§7 4단계)
+  collect/ logschema.py           지속 수집 로깅 (§14, 옵트인 기본꺼짐, 기록만)
+  stage0/  08_external_validation.py   TU-Berlin 외부 IoU 게이트(4단계 진입, §13 개정)
+  score.py               §6.5 검증 지표 러너 (1~4단계 지표 포함)
   tests/
 ```
 
