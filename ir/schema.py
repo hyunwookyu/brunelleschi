@@ -11,8 +11,20 @@ import json
 SCHEMA_VERSION = "1.0"
 
 # 루트 최상위 키 — §13 12개 초과 시 멈춤 판정 대상
-ROOT_FIELDS = ["volumes", "anchors", "views", "unresolved", "notes"]
+ROOT_FIELDS = ["volumes", "anchors", "views", "unresolved", "notes", "relations"]
 MAX_ROOT_FIELDS = 12
+
+# 관계 유형(5종) — 유튜브 코퍼스 실측(§stage5). 계획의 4종(인접·상하·관입·이격)에
+# aligned(정렬)를 데이터 근거로 추가(13회). above_below는 방향 미분화(기하는 Z 필요).
+RELATION_TYPES = ("adjacent", "above_below", "penetrate", "separated", "aligned")
+# 발화 문법(grammar.RELATE_TYPES) → 5종 정준 매핑
+GRAMMAR_TO_CANON = {
+    "adjacent": "adjacent", "beside": "adjacent",
+    "above": "above_below", "below": "above_below",
+    "inside": "penetrate",
+    "aligned": "aligned", "parallel": "aligned", "orthogonal": "aligned",
+    "separated": "separated",
+}
 
 # 채널 권한 (§3.3) — 무엇을 주장할 자격이 있는가
 CHANNEL_RIGHTS = {
@@ -91,6 +103,23 @@ class Note:
 
 
 @dataclass
+class Relation:
+    """볼륨 간 관계 (§5단계). type ∈ RELATION_TYPES(5종). src=geometry|utterance."""
+    a: str
+    b: str
+    type: str
+    src: str = "geometry"
+
+    def validate(self) -> list[str]:
+        e = []
+        if self.type not in RELATION_TYPES:
+            e.append(f"relation type unknown: {self.type}")
+        if self.a == self.b:
+            e.append(f"relation self-loop: {self.a}")
+        return e
+
+
+@dataclass
 class IR:
     """루트. unresolved가 핵심 필드(§3.2). relations는 1차 제외."""
     volumes: list[Volume] = field(default_factory=list)
@@ -98,6 +127,7 @@ class IR:
     views: list[View] = field(default_factory=list)
     unresolved: list[str] = field(default_factory=list)     # 추정 않고 남기는 항목
     notes: list[Note] = field(default_factory=list)
+    relations: list[Relation] = field(default_factory=list)  # 5단계. 루트 6키(≤12, §13)
 
     def root_field_count(self) -> int:
         return len([f for f in self.__dataclass_fields__])
@@ -118,6 +148,11 @@ class IR:
                 e.append(f"anchor target '{a.target}' not a volume id")
         for vw in self.views:
             e += vw.validate()
+        for r in self.relations:
+            e += r.validate()
+            for t in (r.a, r.b):
+                if t not in ids:
+                    e.append(f"relation target '{t}' not a volume id")
         return e
 
     # 시간 단조성(§6.5): IR(t+1) ⊇ IR(t)  — 볼륨/앵커 집합이 줄지 않아야
@@ -141,6 +176,7 @@ class IR:
             views=[View(**v) for v in d.get("views", [])],
             unresolved=list(d.get("unresolved", [])),
             notes=[Note(**n) for n in d.get("notes", [])],
+            relations=[Relation(**r) for r in d.get("relations", [])],
         )
 
 

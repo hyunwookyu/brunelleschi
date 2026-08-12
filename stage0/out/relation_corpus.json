@@ -1,0 +1,77 @@
+{
+  "spec": "관계 발화 코퍼스(유튜브 22자막) → 원장. 관계 어휘 종수 판정(§13 스키마).",
+  "n_transcripts": 22,
+  "n_segments": 3424,
+  "n_relation_segments": 97,
+  "type_counts": {
+    "above_below(상하)": 36,
+    "separated(이격)": 23,
+    "penetrate(관입)": 18,
+    "aligned(정렬·밖)": 13,
+    "adjacent(인접)": 8
+  },
+  "distinct_relation_types": 5,
+  "within_planned_4types": false,
+  "beyond_4_types": [
+    "aligned(정렬·밖)"
+  ],
+  "examples": {
+    "adjacent(인접)": [
+      "검은색 면에 근접한 곳에 검은 선들이",
+      "것들이 근접한 거리에 있을 때 같은",
+      "부분들 그다음에 그 옆에 있는 계산을",
+      "마당으로 바뀌고 이게 옆에 있는 그",
+      "거예요. 그러면은 옆으로 빠질 수"
+    ],
+    "above_below(상하)": [
+      "사람들이 이제 건축물에 아래다가",
+      "도움이 될 거 같습니다. 아래 고정",
+      "그렇게 본다면 이제 위에 적은이",
+      "영상 발표 팁을 올려 드리는 영상에서",
+      "아래에 링크 확인해 주시면"
+    ],
+    "penetrate(관입)": [
+      "뚫어야 될지 말아야 될지 내부에",
+      "저랑 열심히 학생들 프로젝트는 막 어제 꽂으라고 막 이렇게 먹던 바꿨다",
+      "다시 글보고 때도 손도 막 그러더라 하면 돌아오는 꽃을 꽂을 하고 고민한",
+      "교수님이 팔을 안으로 9푼 스타일이 어떤 거지 져야지 2학년 저번에",
+      "이렇게 간통을 하려고 했으면 적극적으로 여기를 관통해서 했어야 되는데 왜"
+    ],
+    "separated(이격)": [
+      "사이트를 여기로 왜 결정했는지만",
+      "배경이라고 하면 사이트와 만들고자",
+      "조사했던 것들 있죠? 사이트라든지",
+      "먼저 사이트 설명부터 먼저 말씀을",
+      "저처럼 사이트 설명만 수십분하다가"
+    ],
+    "aligned(정렬·밖)": [
+      "화면 가운데로 맞춰 준다. 자, 감이",
+      "포트폴리오 성격에 맞춰서 골라",
+      "겁니다. 그리고 각 사례에 맞춰서",
+      "보면 업무를 하는 거기 때문에 그 스케줄에 맞춰서 작업을 해야 될 필요가",
+      "맞춰서 한 노력의 결과 도 아니고"
+    ]
+  },
+  "verdict": "4종 초과(['aligned(정렬·밖)']) → 스키마를 그에 맞춘다: relations.type 도메인 확장",
+  "ledger_report": {
+    "total_keys": 8,
+    "total_occurrences": 104,
+    "promotion_candidates(>=3)": {
+      "opening": 3,
+      "separated": 23,
+      "above_below": 36,
+      "penetrate": 18,
+      "aligned": 13,
+      "adjacent": 8
+    },
+    "note_level(1-2)": {
+      "polygon_unformed": 1,
+      "relation": 2
+    },
+    "projected_root_fields": 11,
+    "root_field_cap": 12,
+    "STOP_if_exceeds": false,
+    "labeler_active": true,
+    "note": "승격 0건이 정상인지(정말 반복 미매핑 없음) vs 라벨러 미작동인지 구분됨. 이 원장이 집계 중이므로 이제 전자."
+  }
+}

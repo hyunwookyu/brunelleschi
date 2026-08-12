@@ -1,0 +1,58 @@
+{
+  "spec": "부분 획(미완성) 검증 — 5단계 진입 전(그리는 도중 인접 판정 대비)",
+  "fracs_percent": [
+    30,
+    50,
+    70,
+    90,
+    100
+  ],
+  "single_volume": {
+    "crashes": 0,
+    "monotonicity_violations": 11,
+    "n_samples": 60,
+    "by_frac": {
+      "30": {
+        "parseable_rate": 0.017,
+        "n_lines_median": 0,
+        "fit_resid_median": 1.0
+      },
+      "50": {
+        "parseable_rate": 0.233,
+        "n_lines_median": 0,
+        "fit_resid_median": 1.0
+      },
+      "70": {
+        "parseable_rate": 0.6,
+        "n_lines_median": 4,
+        "fit_resid_median": 0.0452
+      },
+      "90": {
+        "parseable_rate": 0.883,
+        "n_lines_median": 6,
+        "fit_resid_median": 0.0215
+      },
+      "100": {
+        "parseable_rate": 0.883,
+        "n_lines_median": 5,
+        "fit_resid_median": 0.0216
+      }
+    }
+  },
+  "multi_volume": {
+    "crashes": 0,
+    "monotonicity_violations": 6,
+    "id_shift_suspected": 1,
+    "n_samples": 30,
+    "vol_count_median_by_frac": {
+      "30": 1,
+      "50": 1,
+      "70": 2,
+      "90": 3,
+      "100": 3
+    }
+  },
+  "open_contour_failure_mode": "n<100(열린 윤곽): recognize_rectilinear가 런-교차로 강제 폐합 → 부분 사각형이 왜곡 폴리곤. fit_residual 게이트(FIT_MAX)로 상당수 '관계만'(§5.3)으로 반려. 완성될수록 parseable↑, n_lines가 정답 변수로 수렴.",
+  "verdict_crash_free": true,
+  "note_id_stability": "multiplex는 절단마다 좌상단 정렬로 id 재부여 → 드로잉 순서≠정렬 순서면 id 이동 가능(단조성 위반의 원인). 증분 드로잉(5·6단계)에서 안정 id 필요 시 보완 대상."
+}

@@ -28,7 +28,8 @@ _이력: 0·1·2·3단계 모두 필드 추가 없음. 2·3단계는 기존 Anch
     {"src": "sk_03", "camera": {}, "fit_error": 0.06}
   ],
   "unresolved": ["deck 높이", "lobby 개구부 위치"],
-  "notes": [{"target": "hall", "text": "..."}]
+  "notes": [{"target": "hall", "text": "..."}],
+  "relations": [{"a": "hall", "b": "lobby", "type": "adjacent", "src": "geometry"}]
 }
 ```
 
@@ -38,8 +39,14 @@ _이력: 0·1·2·3단계 모두 필드 추가 없음. 2·3단계는 기존 Anch
 
 ### 필드 계수 규칙 (§13 "12개 초과 시 멈춤" 해석 — 계획 미정의분 확정)
 - **"필드" = IR 루트 객체의 최상위 키 수.** 중첩 속성은 세지 않는다.
-- 현재 최상위 키 5개: `volumes, anchors, views, unresolved, notes`.
-- 최상위 키가 **12를 초과하면 멈추고 보고**(§13 멈춤 조건).
+- 현재 최상위 키 **6개**: `volumes, anchors, views, unresolved, notes, relations` (relations는 5단계 추가).
+- 최상위 키가 **12를 초과하면 멈추고 보고**(§13 멈춤 조건). 여유 6.
+
+### relations (5단계 추가, 2026-08-12)
+- `Relation{a,b,type,src}`. **유형 5종**: adjacent/above_below/penetrate/separated/aligned.
+  (계획 4종 + aligned — 유튜브 코퍼스 실측 13회 근거). src=geometry|utterance.
+- 기하 추론(XY): adjacent/separated/aligned/penetrate. above_below는 Z 필요 → 발화로만.
+- 부분 획 방어: confidence≥0.5 확정 볼륨만(§task1 단조성 위반 대비).
 
 ### 채널 권한 (§3.3, 고정)
 | 채널 | 절대치수 | 비례 | 관계 | 시점 |
@@ -95,9 +102,11 @@ LLM 역할은 어휘 해석이 아니라 **미지정 항목 식별**(§3.7). 세
 2. score.py 수치가 이전 단계 대비 하락
 3. 같은 오류로 3회 실패
 4. **4단계 진입 — 외부 데이터셋 IoU 게이트 통과 필요** (개정: 구 오버레이 육안. 통과함)
-5. **5단계 진입 — unmappable 원장에 승격 판단용 실세션 데이터 필요** (2026-08-12, 현재 정지 지점)
+5. 5단계 진입 — 관계 어휘 종수 확정(코퍼스) + 부분획 검증 통과 (완료: 5종, 크래시0)
+6. **6단계(질의 루프) 진입 — 정지** (2026-08-12, 현재 정지 지점)
 
 로깅(§14): `collect/logschema.py`, 옵트인 기본꺼짐. 학습은 7단계. 지금은 기록만.
+stage5/: relate.py(관계추론) relation_corpus.py(코퍼스→원장). stage0/09(부분획 검증).
 
 ### 판정 임계 (§8 공란 → 0단계 잠정 확정, checkpoints.md에서 사용자 확인 대기)
 | 항목 | 잠정 기준 | 근거 |

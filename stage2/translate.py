@@ -56,6 +56,7 @@ RELATE_PATTERNS = [  # (regex, RELATE_TYPES 값)
     (r'나란히|평행|parallel', "parallel"),
     (r'직각|수직|perpendicular|orthogonal', "orthogonal"),
     (r'맞춰|정렬|align', "aligned"),
+    (r'사이|떨어|간격|이격|apart|gap between', "separated"),
 ]
 DEIXIS_RE = re.compile(r'여기|이쪽|저기|요기|이거|그거|저거|here|there|this (?:part|spot)', re.I)
 UNRESOLVED_NOUNS = [  # 지시어와 함께 오는 미지정 속성(§3.7 "개구부" 예)

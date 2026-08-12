@@ -2,6 +2,11 @@
   "counts": {
     "polygon_unformed": 1,
     "opening": 3,
-    "relation": 2
+    "relation": 2,
+    "separated": 23,
+    "above_below": 36,
+    "penetrate": 18,
+    "aligned": 13,
+    "adjacent": 8
   }
 }

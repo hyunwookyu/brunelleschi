@@ -38,4 +38,15 @@
 - `Volume.label: str = ""` 추가(명명, §7 4단계). **중첩 필드 — 루트 최상위 키 5개 불변**(§13 계수규칙).
 - 명명은 7문법(§3.6) 밖 IR 조립 메타(§3.7 식별≠기하). 문법·루트 스키마 불변.
 - from_dict 하위호환(label 없는 기존 JSON → 기본 ""). 홀드아웃 f1 불변.
-- **다음 잠재 변경**: 5단계 relations. §3.2가 제외한 필드로, unmappable 승격 규칙(§13, 실세션 데이터) 통과 시에만 루트에 추가. 추가 시 루트 6키(≤12).
+- **다음 잠재 변경**: 5단계 relations. §3.2가 제외한 필드로, unmappable 승격 규칙(§13) 통과 시 루트에 추가.
+
+## 5단계 — relations 필드 추가, 루트 6키 (2026-08-12)
+
+- **`IR.relations: list[Relation]` 추가 → 루트 최상위 키 6개**(≤12, §13). 사용자 승인.
+- 승격 근거: 유튜브 22자막 관계 발화 97건(원장 집계). "relation" 카테고리 3회 훨씬 초과.
+- **관계 유형 5종**(RELATION_TYPES): adjacent/above_below/penetrate/separated/**aligned**.
+  - 계획 4종(인접·상하·관입·이격) → 코퍼스에서 aligned(정렬) 13회 검출 → **데이터 근거로 5종 확장**(사용자 지시 "넘으면 스키마를 그에 맞춘다").
+- `Relation{a,b,type,src}`. src=geometry|utterance. grammar.RELATE_TYPES에 separated 추가, GRAMMAR_TO_CANON 매핑.
+- 기하 추론: adjacent/separated/aligned/penetrate(XY). above_below는 Z 필요 → 발화로만.
+- 부분 획 방어(§task1): confidence≥0.5 볼륨만.
+- from_dict 하위호환(relations 없는 기존 JSON → []). 홀드아웃 불변.

@@ -50,24 +50,33 @@
   },
   "camera_fit_error": {
     "precise": {
-      "fit_error_median": 0.0055,
-      "fit_error_p95": 0.0139,
+      "fit_error_median": 0.0046,
+      "fit_error_p95": 0.0103,
       "approx_rate": 0.0
     },
     "medium": {
       "fit_error_median": 0.0116,
-      "fit_error_p95": 0.0552,
-      "approx_rate": 0.017
+      "fit_error_p95": 0.087,
+      "approx_rate": 0.042
     },
     "coarse": {
-      "fit_error_median": 0.0138,
-      "fit_error_p95": 0.1034,
-      "approx_rate": 0.058
+      "fit_error_median": 0.0174,
+      "fit_error_p95": 0.0674,
+      "approx_rate": 0.042
     }
   },
   "multiplex": {
     "volume_count_exact_rate": 0.95,
     "all_named_rate": 1.0,
     "n": 20
+  },
+  "relations": {
+    "all_ir_valid_rate": 1.0,
+    "avg_relations": 2.07,
+    "type_distribution": {
+      "separated": 24,
+      "aligned": 7
+    },
+    "note": "다중 픽스처(분리 배치) → separated/aligned 위주. adjacent/penetrate는 인접·겹침 배치에서."
   }
 }

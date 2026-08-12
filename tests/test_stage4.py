@@ -16,7 +16,7 @@ def test_multiplex_separates_three_volumes():
     assert len(ir.volumes) == cap["_n_volumes"] == 3
     assert [v.id for v in ir.volumes] == ["v1", "v2", "v3"]
     assert ir.validate() == []
-    assert ir.root_field_count() == 5          # 다중화가 루트 필드 안 늘림(§13)
+    assert ir.root_field_count() == 6          # 다중화가 루트 필드 안 늘림(§13)
 
 
 def test_naming_binds_by_position():

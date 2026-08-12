@@ -92,6 +92,10 @@
 
 `relations`는 1차 범위에서 제외한다. 필요가 확인되면 추가.
 
+> **개정(2026-08-12, 5단계)**: relations 추가됨(루트 6키). 유형은 유튜브 22자막 실측으로
+> 계획 4종(인접·상하·관입·이격) + **aligned(정렬, 13회)** = **5종**. `Relation{a,b,type,src}`.
+> src=geometry|utterance. 상세 `ir/schema_version.md`.
+
 ### 3.3 채널별 권한
 
 각 채널이 무엇을 주장할 자격이 있는지 고정한다.

@@ -202,6 +202,28 @@ def m_multiplex() -> dict | None:
             "all_named_rate": round(named_ok / n, 3), "n": n}
 
 
+def m_relations() -> dict | None:
+    """5단계: 관계 추론 — 유효성·유형 분포 (§7 5단계)."""
+    import importlib.util
+    from collections import Counter
+    mms = importlib.util.spec_from_file_location("mm", ROOT / "stage4" / "make_multi.py")
+    mm = importlib.util.module_from_spec(mms); mms.loader.exec_module(mm)
+    from stage4.multiplex import multiplex
+    from stage5.relate import infer_relations
+    valid, n, counts, total_rel = 0, 15, Counter(), 0
+    for seed in range(n):
+        cap = mm.make(seed=seed)
+        ir, _ = multiplex(cap)
+        infer_relations(ir)
+        if ir.validate() == []:
+            valid += 1
+        for r in ir.relations:
+            counts[r.type] += 1; total_rel += 1
+    return {"all_ir_valid_rate": round(valid / n, 3), "avg_relations": round(total_rel / n, 2),
+            "type_distribution": dict(counts),
+            "note": "다중 픽스처(분리 배치) → separated/aligned 위주. adjacent/penetrate는 인접·겹침 배치에서."}
+
+
 def m_camera_noise() -> dict | None:
     """3단계: 노이즈 조건 fit_error 분포 (stage3/noise_eval, §6.5)."""
     try:
@@ -238,6 +260,7 @@ def main():
         "anchor_dim_error": m_anchor_error(),      # 2단계: 치수 복원 오차
         "camera_fit_error": m_camera_noise(),      # 3단계: 노이즈 fit_error(§task1)
         "multiplex": m_multiplex(),                # 4단계: 다중화·명명
+        "relations": m_relations(),                # 5단계: 관계 추론
     }
     (ROOT / "stage0" / "out" / "score.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

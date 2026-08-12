@@ -21,7 +21,7 @@ OP_SIG: dict[str, list[str]] = {
     "note":       ["id", "text"],                     # note(id, text)
 }
 
-RELATE_TYPES = ("adjacent", "above", "below", "inside", "aligned", "parallel", "orthogonal")
+RELATE_TYPES = ("adjacent", "above", "below", "inside", "aligned", "parallel", "orthogonal", "separated")
 
 
 @dataclass

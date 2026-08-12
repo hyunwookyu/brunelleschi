@@ -11,7 +11,7 @@ from common.normalize_core import parse_strokes
 
 
 def test_ir_root_fields_within_cap():
-    assert IR().root_field_count() == 5 <= MAX_ROOT_FIELDS
+    assert IR().root_field_count() == 6 <= MAX_ROOT_FIELDS
 
 
 def test_ir_validate_and_monotonic():
@@ -50,6 +50,19 @@ def test_coarse_declares_boundary():
     ir, meta = normalize_to_ir(cap)
     if not meta["parseable"]:
         assert ir.unresolved and not ir.volumes
+
+
+def test_partial_strokes_crash_free():
+    """부분 획(미완성)에서도 파서가 죽지 않는다 — 5단계 전제(그리는 도중)."""
+    import json as _json
+    from stage1.normalize import normalize_to_ir
+    cap = _json.loads((ROOT / "stage1" / "fixture_L_precise.json").read_text(encoding="utf-8"))
+    pts = cap["strokes"][0]["points"]
+    for frac in (0.1, 0.3, 0.5, 0.7, 0.9):
+        k = max(2, int(len(pts) * frac))
+        partial = {**cap, "strokes": [{"points": pts[:k], "pen": "mass"}]}
+        ir, meta = normalize_to_ir(partial)      # 예외 없이 반환되어야
+        assert ir.validate() == []               # 어떤 결과든 유효 IR
 
 
 if __name__ == "__main__":
