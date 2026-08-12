@@ -1,0 +1,19 @@
+{
+  "name": "sketch2space-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "iPad 실시간 뷰어 — 파서 TS 포팅 (참조: python/, 지시서 V)",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "build": "vite build",
+    "dev": "vite"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
