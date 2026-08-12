@@ -16,22 +16,41 @@ function sceneScale(vols: Volume[]): number {
 function edges(fp: Pt[]): [Pt, Pt][] {
   const e: [Pt, Pt][] = []; for (let i = 0; i < fp.length; i++) e.push([fp[i], fp[(i + 1) % fp.length]]); return e;
 }
-// SAT 없이 근사: bbox 겹침 면적으로 penetrate 판정 대체는 부정확 → 다각형 교차 필요.
-// 프로토타입: 볼록/직교 가정 하 bbox 교차 면적 비로 근사(참조 Python은 shapely).
-function overlapRatio(a: Pt[], b: Pt[]): number {
-  const bb = (fp: Pt[]) => { const xs = fp.map(p => p[0]), ys = fp.map(p => p[1]); return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; };
-  const A = bb(a), B = bb(b);
-  const ix = Math.max(0, Math.min(A[2], B[2]) - Math.max(A[0], B[0]));
-  const iy = Math.max(0, Math.min(A[3], B[3]) - Math.max(A[1], B[1]));
-  const inter = ix * iy;
-  return inter / Math.max(1e-9, Math.min(polyArea(a), polyArea(b)));
+// --- P3: 폴리곤 기반(직교 포함 일반 단순폴리곤). bbox 근사 폐기. shapely 불필요. ---
+function ptSeg(p: Pt, a: Pt, b: Pt): number {
+  const abx = b[0] - a[0], aby = b[1] - a[1];
+  const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * abx + (p[1] - a[1]) * aby) / (abx * abx + aby * aby + 1e-12)));
+  return hypot(p[0] - (a[0] + t * abx), p[1] - (a[1] + t * aby));
 }
-function bboxDist(a: Pt[], b: Pt[]): number {
-  const bb = (fp: Pt[]) => { const xs = fp.map(p => p[0]), ys = fp.map(p => p[1]); return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; };
-  const A = bb(a), B = bb(b);
-  const dx = Math.max(0, Math.max(A[0] - B[2], B[0] - A[2]));
-  const dy = Math.max(0, Math.max(A[1] - B[3], B[1] - A[3]));
-  return hypot(dx, dy);
+function segsCross(p1: Pt, p2: Pt, p3: Pt, p4: Pt): boolean {
+  const d = (a: Pt, b: Pt, c: Pt) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  const d1 = d(p3, p4, p1), d2 = d(p3, p4, p2), d3 = d(p1, p2, p3), d4 = d(p1, p2, p4);
+  return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+}
+function segSegDist(p1: Pt, p2: Pt, p3: Pt, p4: Pt): number {
+  if (segsCross(p1, p2, p3, p4)) return 0;
+  return Math.min(ptSeg(p1, p3, p4), ptSeg(p2, p3, p4), ptSeg(p3, p1, p2), ptSeg(p4, p1, p2));
+}
+function pointInPoly(pt: Pt, poly: Pt[]): boolean {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+    if (((yi > pt[1]) !== (yj > pt[1])) && (pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi + 1e-12) + xi)) inside = !inside;
+  }
+  return inside;
+}
+// 내부 겹침(penetrate): 정점 포함 또는 변 교차. 단순 접촉(distance 0, 포함 없음)은 인접.
+function polysOverlap(a: Pt[], b: Pt[]): boolean {
+  for (const p of a) if (pointInPoly(p, b)) return true;
+  for (const p of b) if (pointInPoly(p, a)) return true;
+  for (const [a0, a1] of edges(a)) for (const [b0, b1] of edges(b)) if (segsCross(a0, a1, b0, b1)) return true;
+  return false;
+}
+// 폴리곤 경계 최소거리 (shapely .distance()와 동치, 미겹침시).
+function boundaryDist(a: Pt[], b: Pt[]): number {
+  let m = Infinity;
+  for (const [a0, a1] of edges(a)) for (const [b0, b1] of edges(b)) { const d = segSegDist(a0, a1, b0, b1); if (d < m) m = d; }
+  return m;
 }
 function adiff(a: number, b: number) { let d = Math.abs(a - b) % 180; return Math.min(d, 180 - d); }
 // a의 각 변 무한직선에 대해 b의 평행 변이 근접(공선)하면 정렬. python _aligned.
@@ -59,10 +78,10 @@ export function inferGeometric(ir: IR, adjRatio = 0.06, sepRatio = 0.25): Relati
   for (let i = 0; i < vols.length; i++)
     for (let j = i + 1; j < vols.length; j++) {
       const a = vols[i], b = vols[j];
-      if (overlapRatio(a.footprint, b.footprint) > 0.1)
+      if (polysOverlap(a.footprint, b.footprint))
         rels.push({ a: a.id, b: b.id, type: "penetrate", src: "geometry" });
       else {
-        const d = bboxDist(a.footprint, b.footprint);
+        const d = boundaryDist(a.footprint, b.footprint);   // 폴리곤 경계 최소거리
         if (d <= adjRatio * scale) rels.push({ a: a.id, b: b.id, type: "adjacent", src: "geometry" });
         else if (d >= sepRatio * scale) rels.push({ a: a.id, b: b.id, type: "separated", src: "geometry" });
       }

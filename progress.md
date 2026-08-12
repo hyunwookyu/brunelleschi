@@ -199,6 +199,10 @@ confidence로 **연속 흐림**(opacity=0.3+0.7·conf), <0.5=점선+"?". 볼륨�
 - **판정 D 교체**(지시서 정정): 파서 결정적→30%엔 볼륨 없음. 표시층 tentative hint(`stage1/tentative.py`): 미폐합 획뭉치 축정렬 bbox/볼록껍질 파선상자, IR 밖, 폐합시 정식 볼륨 교체. 테스트: 30%→hint, 100%→볼륨. spec D 갱신.
 - **전제 드리프트 반영**: 지시서 6필드/27테스트 → 실제 7필드/**36테스트**(구32+tentative3+naming반례1). 판정 G·§10 갱신.
 
+### P3 해소 (V-2 전, 지시서 Track 1) — 완료 2026-08-13
+relate.ts bbox 근사 발산 정량화: L자·凹자·계단형 8케이스에서 Python(shapely) 대조 **37.5%(3/8) 불일치** — 전부 오목/맞물림에서 **거짓 penetrate**(bbox 겹치나 폴리곤 분리).
+→ **폴리곤 기반 교체**(직교 포함 일반 단순폴리곤): 점포함(ray-cast)+변교차로 penetrate, 엣지 구간 최소거리로 adjacent/separated. shapely 불필요. → **불일치 0%(8/8)**. `web/test/reference_relate.json`(shapely 참조), `relate_parity.test.ts`. S4 경로 해소. TS 22/22.
+
 ### V-1~V-8 (§9 순서) — 진행
 | 단계 | 상태 |
 |---|---|
