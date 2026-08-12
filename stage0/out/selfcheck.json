@@ -1,0 +1,31 @@
+{
+  "n_flags": 5,
+  "flags": [
+    {
+      "path": "normalize_iou.parseable_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "camera_fit_error.precise.approx_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "multiplex.all_named_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "relations.all_ir_valid_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "query_loop.scale_ranked_top_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    }
+  ],
+  "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."
+}

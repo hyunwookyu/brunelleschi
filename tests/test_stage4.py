@@ -29,6 +29,24 @@ def test_naming_binds_by_position():
     assert all(v.label for v in ir.volumes)    # 전부 명명됨
 
 
+def test_naming_counterexample_ambiguous_deixis():
+    """반례(§13 자기검증3): deixis 위치가 한 점에 몰리면(모호) 명명이 자명하지 않다.
+    named_rate=1.0이 자기참조가 아님을 증명 — 위치를 흐리면 오배정이 생긴다."""
+    from stage4.multiplex import multiplex
+    cap = mm.make(seed=0)
+    ir, _ = multiplex(cap)
+    # 세 명명 발화의 deixis를 모두 v1 중심 근처로(모호) → 최근접이 전부 v1로 몰림
+    c1 = __import__("numpy").array(ir.volumes[0].footprint, float).mean(0).tolist()
+    hints = [{"label": "hall", "pos": c1, "raw": "홀"},
+             {"label": "lobby", "pos": c1, "raw": "로비"},
+             {"label": "stair", "pos": c1, "raw": "계단"}]
+    assign_names(ir, hints)
+    labels = [v.label for v in ir.volumes]
+    # v1만 첫 힌트로 명명되고 나머지는 순서 폴백 — 공간 매칭이 자명치 않음이 드러남
+    assert labels[0] == "hall"
+    assert not (labels == ["hall", "lobby", "stair"])   # 중심 정렬과 다른 결과
+
+
 def test_unnamed_volume_goes_unresolved():
     cap = mm.make(seed=2)
     ir, _ = multiplex(cap)

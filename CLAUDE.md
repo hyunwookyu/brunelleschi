@@ -117,6 +117,12 @@ confidence = 둘레지지율(그린비율)²·적합도. 열린/부분 윤곽 �
 stage5/: relate.py relation_corpus.py opening_corpus.py. stage6/query.py(질의루프, 분기영향도). stage0/09(부분획).
 단조성 재정의(§task1): `IR.confident_superset_of`(confidence≥0.5만 철회금지). 질의 임계 ASK_THRESHOLD=0.15 잠정(§14 튜닝).
 
+### 자기검증 규칙 (§13 추가, 지시서 V)
+각 단계 완료 시 자동 점검하고 progress.md에 기록(멈추지 말고 원인 확인 후 보고).
+1. **의심 수치 자동 점검** — `python selfcheck.py` (score.json 스캔): 1e-10 미만 오차 / 정확히 1.0·0.0 비율 / 이전 대비 완전 불변 / 0 고정 카운터. 의심≠오류, 각 플래그 원인(자기참조·무노이즈·측정범위·미작동) 확인.
+2. **assumptions.md** — 계획·지시서 전제 항목화, 매 단계 관측과 대조. 어긋나면 의존 판정도 갱신.
+3. **새 지표엔 반례 테스트** — 그 지표가 의도한 것을 재는지 확인(예: named_rate 1.0 자기참조 → 모호 deixis 반례로 검증).
+
 ### 판정 임계 (§8 공란 → 0단계 잠정 확정, checkpoints.md에서 사용자 확인 대기)
 | 항목 | 잠정 기준 | 근거 |
 |---|---|---|

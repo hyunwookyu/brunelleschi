@@ -6,3 +6,7 @@ __pycache__/
 data/tuberlin/*.parquet
 collect/logs/*.jsonl
 ir/unmappable_ledger.json
+web/node_modules/
+web/dist/
+**/node_modules/
+stage0/out/score_prev.json

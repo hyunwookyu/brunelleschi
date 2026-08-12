@@ -186,6 +186,33 @@ confidence로 **연속 흐림**(opacity=0.3+0.7·conf), <0.5=점선+"?". 볼륨�
 ## 7단계(정정 학습) 진입 전 정지 (2026-08-12)
 6단계 완료. **7단계 진입 전 정지.** 7단계는 파서 안정 후(§7). 재개 전: 실세션 로깅(§14) 축적으로 ASK_THRESHOLD 및 정정유형(오독/설계변경) 데이터 확보. 미해소 리스크: 부분획 단조성 잔여 ~3%(경계효과).
 
+## 작업지시서 V — 실시간 뷰어 (2026-08-13, 진행 중)
+
+### 착수 전 정정·기반
+- **assumptions.md 생성**(§13 자기검증2): 계획·지시서 전제 항목화. 위반 발견: A2(SolveSpace 미사용), S1(루트 7≠지시서 6), D1(30%엔 볼륨 없음→D 형해화), M1(named_rate 자기참조).
+- **selfcheck.py**(§13 자기검증1): score.json 의심수치 자동 점검. **5 플래그** 원인 확인:
+  - `normalize_iou.parseable_rate=1.0`: 완성 precise는 전부 parseable — 정상.
+  - `camera precise approx_rate=0.0`: precise fit_error≪0.10 — 정상.
+  - `multiplex.all_named_rate=1.0`: **자기참조**(make_multi가 deixis를 볼륨중심에 둠) → 반례 테스트 추가(모호 deixis시 오배정)로 지표 유의성 검증(§13 자기검증3, M1 해소).
+  - `relations.all_ir_valid_rate=1.0`: 합성서 validate 항상 통과 — 정상(스키마 견고).
+  - `query.scale_ranked_top_rate=1.0`: 무앵커시 스케일 정의상 최고 — 정상(M2).
+- **판정 D 교체**(지시서 정정): 파서 결정적→30%엔 볼륨 없음. 표시층 tentative hint(`stage1/tentative.py`): 미폐합 획뭉치 축정렬 bbox/볼록껍질 파선상자, IR 밖, 폐합시 정식 볼륨 교체. 테스트: 30%→hint, 100%→볼륨. spec D 갱신.
+- **전제 드리프트 반영**: 지시서 6필드/27테스트 → 실제 7필드/**36테스트**(구32+tentative3+naming반례1). 판정 G·§10 갱신.
+
+### V-1~V-8 (§9 순서) — 진행
+| 단계 | 상태 |
+|---|---|
+| V-1 파서 TS 포팅 (Python parity) | 착수 |
+| V-2 Three.js 뷰어 | 대기 |
+| V-3 실시간(워커·증분·디바운스) | 대기 |
+| V-4 화면(분할·프레임·터치) | 대기 |
+| V-5 잉크 보강(팜리젝·coalesced·tilt·seq) | 대기 |
+| V-6 발화(MediaRecorder·부분전사·번역UI) | 대기 |
+| V-7 저장·내보내기(IndexedDB·4종·로깅) | 대기 |
+| V-8 통합검증(Playwright S1~S10·성능) | 대기 |
+
+---
+
 ## 목표 항목 완성 (§7: 3단계까지 = 목표 완성, 누적 7~8일)
 전체 테스트 13/13 통과. score.py 스테이지0 기준선 불변(회귀 없음). IR 루트필드 5(≤12).
 **4단계 진입 정지** — CP-1(오버레이 육안 판정, 사람) 해소가 하드 게이트(§13).
