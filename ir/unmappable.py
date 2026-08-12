@@ -15,7 +15,15 @@ from collections import Counter
 LEDGER = Path(__file__).resolve().parent / "unmappable_ledger.json"
 PROMOTE_MIN = 3          # §13: 3회 이상 → 승격
 MAX_ROOT = 12            # §13: 초과 시 멈춤
-CURRENT_ROOT = 5         # volumes/anchors/views/unresolved/notes
+CURRENT_ROOT = 6         # volumes/anchors/views/unresolved/notes/relations
+
+# 이미 필드로 실현된 카테고리 — 미매핑 집계엔 잡히나 '신규 필드'로 세면 안 됨.
+# 관계 유형(adjacent 등)은 relations 필드의 type 도메인(값)이지 새 루트 키가 아님.
+try:
+    from ir.schema import RELATION_TYPES as _RT
+    REALIZED_KEYS = set(_RT)
+except Exception:
+    REALIZED_KEYS = {"adjacent", "above_below", "penetrate", "separated", "aligned"}
 
 
 def normalize_key(text: str) -> str:
@@ -57,20 +65,26 @@ class Ledger:
                              encoding="utf-8")
 
     def report(self) -> dict:
-        promote = {k: c for k, c in self.counts.items() if c >= PROMOTE_MIN}
+        def realized(k):
+            return k in REALIZED_KEYS
+        # 승격 후보 = ≥3 반복 중 아직 필드로 실현 안 된 것만(신규 루트 키 후보)
+        pending = {k: c for k, c in self.counts.items() if c >= PROMOTE_MIN and not realized(k)}
+        realized_hits = {k: c for k, c in self.counts.items() if c >= PROMOTE_MIN and realized(k)}
         note_lv = {k: c for k, c in self.counts.items() if 1 <= c < PROMOTE_MIN}
-        projected = CURRENT_ROOT + len(promote)
+        projected = CURRENT_ROOT + len(pending)
         return {
             "total_keys": len(self.counts),
             "total_occurrences": int(sum(self.counts.values())),
-            "promotion_candidates(>=3)": promote,       # → 필드 승격 대상(§13)
-            "note_level(1-2)": note_lv,                 # → note 처리, 목록 보존
+            "promotion_candidates(>=3, pending)": pending,   # → 신규 필드 승격 대상(§13)
+            "realized_categories(>=3, already field)": realized_hits,  # relations 등 이미 실현
+            "note_level(1-2)": note_lv,
+            "current_root_fields": CURRENT_ROOT,
             "projected_root_fields": projected,
             "root_field_cap": MAX_ROOT,
             "STOP_if_exceeds": projected > MAX_ROOT,
             "labeler_active": True,
-            "note": "승격 0건이 정상인지(정말 반복 미매핑 없음) vs 라벨러 미작동인지 구분됨. "
-                    "이 원장이 집계 중이므로 이제 전자.",
+            "note": "rel:* 는 relations 필드의 type 값(이미 실현) → 신규 필드로 안 셈. "
+                    "pending만 새 루트 키 후보.",
         }
 
 
