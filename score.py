@@ -224,6 +224,28 @@ def m_relations() -> dict | None:
             "note": "다중 픽스처(분리 배치) → separated/aligned 위주. adjacent/penetrate는 인접·겹침 배치에서."}
 
 
+def m_query_loop() -> dict | None:
+    """6단계: 질의 루프 — 분기 영향도 랭킹 안정성 (§1)."""
+    import importlib.util
+    mms = importlib.util.spec_from_file_location("mm", ROOT / "stage4" / "make_multi.py")
+    mm = importlib.util.module_from_spec(mms); mms.loader.exec_module(mm)
+    from stage4.multiplex import multiplex
+    from stage6.query import plan_queries, ASK_THRESHOLD
+    scale_top, asks, n = 0, [], 15
+    for seed in range(n):
+        cap = mm.make(seed=seed)
+        ir, _ = multiplex(cap)
+        plan = plan_queries(ir)
+        if plan["queries"] and plan["queries"][0]["kind"] == "scale":
+            scale_top += 1
+        asks.append(plan["n_to_ask"])
+    import numpy as np
+    return {"scale_ranked_top_rate": round(scale_top / n, 3),
+            "avg_questions": round(float(np.mean(asks)), 2),
+            "ask_threshold_provisional": ASK_THRESHOLD,
+            "note": "분기영향도 결정론적. 임계는 잠정(§8) → §14 로깅으로 '뒤집힌 비율'(§1) 보고 튜닝."}
+
+
 def m_camera_noise() -> dict | None:
     """3단계: 노이즈 조건 fit_error 분포 (stage3/noise_eval, §6.5)."""
     try:
@@ -261,6 +283,7 @@ def main():
         "camera_fit_error": m_camera_noise(),      # 3단계: 노이즈 fit_error(§task1)
         "multiplex": m_multiplex(),                # 4단계: 다중화·명명
         "relations": m_relations(),                # 5단계: 관계 추론
+        "query_loop": m_query_loop(),              # 6단계: 질의 루프
     }
     (ROOT / "stage0" / "out" / "score.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

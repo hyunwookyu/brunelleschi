@@ -11,8 +11,11 @@ import json
 SCHEMA_VERSION = "1.0"
 
 # 루트 최상위 키 — §13 12개 초과 시 멈춤 판정 대상
-ROOT_FIELDS = ["volumes", "anchors", "views", "unresolved", "notes", "relations"]
+ROOT_FIELDS = ["volumes", "anchors", "views", "unresolved", "notes", "relations", "openings"]
 MAX_ROOT_FIELDS = 12
+
+# 개구부 하위유형 3종 — 유튜브 코퍼스 실측(door/window/opening 각 ≥3, §stage5).
+OPENING_TYPES = ("window", "door", "opening")
 
 # 관계 유형(5종) — 유튜브 코퍼스 실측(§stage5). 계획의 4종(인접·상하·관입·이격)에
 # aligned(정렬)를 데이터 근거로 추가(13회). above_below는 방향 미분화(기하는 Z 필요).
@@ -120,14 +123,38 @@ class Relation:
 
 
 @dataclass
+class Opening:
+    """개구부 (§3.7, 5단계). type 3종. pos/w/h=None이면 미지정→질의 대상(§6, 6단계)."""
+    target: str                  # 소속 볼륨 id
+    type: str                    # window|door|opening
+    wall: int = -1               # 변 인덱스(-1=미정)
+    pos: float | None = None     # 벽 상 위치 0..1 (None=미정, §3.7)
+    w: float | None = None
+    h: float | None = None
+    src: str = "utterance"
+
+    def validate(self) -> list[str]:
+        e = []
+        if self.type not in OPENING_TYPES:
+            e.append(f"opening type unknown: {self.type}")
+        if not self.target:
+            e.append("opening.target empty")
+        return e
+
+    def unresolved_props(self) -> list[str]:
+        return [k for k in ("pos", "w", "h") if getattr(self, k) is None]
+
+
+@dataclass
 class IR:
-    """루트. unresolved가 핵심 필드(§3.2). relations는 1차 제외."""
+    """루트. unresolved가 핵심 필드(§3.2). relations·openings는 후속 단계 추가."""
     volumes: list[Volume] = field(default_factory=list)
     anchors: list[Anchor] = field(default_factory=list)
     views: list[View] = field(default_factory=list)
     unresolved: list[str] = field(default_factory=list)     # 추정 않고 남기는 항목
     notes: list[Note] = field(default_factory=list)
-    relations: list[Relation] = field(default_factory=list)  # 5단계. 루트 6키(≤12, §13)
+    relations: list[Relation] = field(default_factory=list)  # 5단계. 루트 6키
+    openings: list[Opening] = field(default_factory=list)     # 5단계. 루트 7키(≤12, §13)
 
     def root_field_count(self) -> int:
         return len([f for f in self.__dataclass_fields__])
@@ -153,15 +180,31 @@ class IR:
             for t in (r.a, r.b):
                 if t not in ids:
                     e.append(f"relation target '{t}' not a volume id")
+        for op in self.openings:
+            e += op.validate()
+            if op.target not in ids:
+                e.append(f"opening target '{op.target}' not a volume id")
         return e
 
-    # 시간 단조성(§6.5): IR(t+1) ⊇ IR(t)  — 볼륨/앵커 집합이 줄지 않아야
+    # 시간 단조성(구): IR(t+1) ⊇ IR(t). 볼륨/앵커 집합이 줄지 않아야.
     def superset_of(self, prev: "IR") -> bool:
         pv = {v.id for v in prev.volumes}
         cv = {v.id for v in self.volumes}
         if not pv.issubset(cv):
             return False
         pa = {(a.target, a.prop) for a in prev.anchors}
+        ca = {(a.target, a.prop) for a in self.anchors}
+        return pa.issubset(ca)
+
+    # 시간 단조성(재정의, §task1): 확정(confidence≥min_conf) 볼륨만 철회 금지.
+    # 나중 정보로 저confidence(열린 윤곽 등) 추론을 철회하는 것은 정상 동작.
+    def confident_superset_of(self, prev: "IR", min_conf: float = 0.5) -> bool:
+        conf_prev = {v.id for v in prev.volumes if v.confidence >= min_conf}
+        cur = {v.id for v in self.volumes}
+        if not conf_prev.issubset(cur):
+            return False
+        # 확정 앵커도 유지되어야(발화 확정치는 철회 안 함)
+        pa = {(a.target, a.prop) for a in prev.anchors if a.tol == 0}
         ca = {(a.target, a.prop) for a in self.anchors}
         return pa.issubset(ca)
 
@@ -177,6 +220,7 @@ class IR:
             unresolved=list(d.get("unresolved", [])),
             notes=[Note(**n) for n in d.get("notes", [])],
             relations=[Relation(**r) for r in d.get("relations", [])],
+            openings=[Opening(**o) for o in d.get("openings", [])],
         )
 
 

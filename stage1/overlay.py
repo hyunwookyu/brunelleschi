@@ -59,13 +59,20 @@ def to_svg(capture: dict, ir: IR, meta: dict, path: Path):
             continue
         d = "M " + " L ".join(f"{p[0]:.1f} {p[1]:.1f}" for p in s["points"])
         parts.append(f'<path d="{d}" stroke="#bbb" stroke-width="1.5" fill="none"/>')
-    # 복원 폴리곤
+    # 복원 폴리곤 (§3.5 톤 확장: 미확정 conf<0.5 = 점선+반투명)
     if ir.volumes:
-        fp = ir.volumes[0].footprint
+        v = ir.volumes[0]
+        fp = v.footprint
         d = "M " + " L ".join(f"{x:.1f} {y:.1f}" for x, y in fp) + " Z"
-        parts.append(f'<path d="{d}" style="{stroke_style}"/>')
+        op = round(0.30 + 0.70 * max(0.0, min(1.0, v.confidence)), 2)   # conf 연속 흐림
+        if v.confidence < 0.5:
+            style = f"stroke:#111;stroke-width:1.5;stroke-dasharray:2 4;stroke-opacity:{op};fill:none"
+        else:
+            style = stroke_style + f";stroke-opacity:{op}"
+        parts.append(f'<path d="{d}" style="{style}"/>')
+        r_op = op
         for x, y in fp:
-            parts.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3" fill="#e11"/>')
+            parts.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3" fill="#e11" fill-opacity="{r_op}"/>')
     # 라벨
     m = meta.get("misalign_median")
     tag = f'grade={meta.get("grade")} · lines={meta.get("n_lines")} · ' \

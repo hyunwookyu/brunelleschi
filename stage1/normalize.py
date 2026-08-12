@@ -56,6 +56,29 @@ LINE_CAP = 14        # 이보다 많은 라인 = 직교폴리곤 미형성 → �
 FIT_MAX = 0.06       # 입력점-복원폴리곤 적합 잔차 상한(정준대각 대비). 초과=스크리블/비직교(§5.3)
 
 
+def _perimeter_coverage(scaled_strokes, verts, tol=0.05, n_samples=120) -> float:
+    """복원 폴리곤 둘레를 조밀 샘플, 각 샘플에 입력 획이 근접한 비율(정준대각 대비 tol).
+    부분 획은 강제 폐합변(미그린 구간)에 획이 없어 그 둘레 구간이 비지지 → coverage=그린비율.
+    변 단위 이진 판정과 달리 '미그린 호'를 분수로 잡는다."""
+    if len(verts) < 3:
+        return 0.0
+    pts = np.concatenate([s for s in scaled_strokes])
+    P = np.asarray(verts, float)
+    edges = [(P[i], P[(i + 1) % len(P)]) for i in range(len(P))]
+    lens = [np.hypot(*(b - a)) for a, b in edges]
+    total = sum(lens) or 1.0
+    tol_abs = tol * CANON_DIAG
+    covered = tot = 0
+    for (a, b), L in zip(edges, lens):
+        k = max(1, int(round(n_samples * L / total)))
+        for t in np.linspace(0, 1, k, endpoint=False):
+            sp = a + t * (b - a)
+            tot += 1
+            if np.min(np.hypot(*(pts - sp).T)) < tol_abs:
+                covered += 1
+    return covered / max(1, tot)
+
+
 def _fit_residual(scaled_strokes, verts) -> float:
     """스케일 공간에서 입력점의 복원 폴리곤 엣지까지 중앙 수직거리 / CANON_DIAG.
     paleo가 스크리블도 폴리곤화하므로 §5.3 경계 판정에 적합도 게이트가 필요."""
@@ -98,9 +121,16 @@ def normalize_to_ir(capture: dict, vol_id="v1", method="paleo") -> tuple[IR, dic
                               [[l.p1[0], l.p1[1]] for l in g.lines])], float) if g.lines else np.empty((0, 2))
     resid = _fit_residual(scaled, scaled_verts) if len(g.lines) >= 3 else 1.0
     parseable = (3 <= len(g.lines) <= LINE_CAP) and resid <= FIT_MAX
+    # confidence = 변 지지율(coverage) × 적합도(§task1 단조성 재정의용).
+    # 부분/열린 윤곽은 강제 폐합돼 일부 변만 지지 → coverage↓ → confidence↓ → 자유 철회.
+    coverage = _perimeter_coverage(scaled, scaled_verts) if len(g.lines) >= 3 else 0.0
+    resid_score = max(0.0, min(1.0, 1.0 - resid / FIT_MAX))
+    # 둘레 지지율(그린비율)² × 적합도. 미그린 호가 크면(부분 획) confidence↓ → 자유 철회.
+    confidence = round(coverage ** 2 * (0.6 + 0.4 * resid_score), 3)
     meta = {"grade": grade, "straightness_med": round(med, 4), "scale": round(s, 4),
             "n_lines": len(g.lines), "n_constraints": len(g.constraints),
-            "fit_residual": round(resid, 4), "parseable": parseable}
+            "fit_residual": round(resid, 4), "edge_coverage": round(coverage, 3),
+            "confidence": confidence, "parseable": parseable}
     from collect.logschema import collector          # §14 기록(기본 꺼짐, no-op)
     collector.log_stroke(capture.get("strokes", []), frame=capture.get("frame", ""))
     if not parseable:
@@ -116,7 +146,7 @@ def normalize_to_ir(capture: dict, vol_id="v1", method="paleo") -> tuple[IR, dic
         collector.log_unmappable("polygon_unformed")
         return ir, meta
     vol = Volume(id=vol_id, footprint=[[round(x, 2), round(y, 2)] for x, y in verts],
-                 base=0.0, height=None, height_src="unset", confidence=0.9)  # 무차원(§3.5)
+                 base=0.0, height=None, height_src="unset", confidence=confidence)  # 무차원(§3.5)
     ir = IR(volumes=[vol])
     collector.log_ir("normalize", ir)
     return ir, meta

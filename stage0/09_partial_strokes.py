@@ -54,8 +54,8 @@ def _truncate_capture(cap: dict, frac: int) -> dict:
 def single_volume_partial(n_samples=60):
     """단일 볼륨: 순서 있는 한 획을 앞 n%만. 크래시·복원상태·열린윤곽 실패양상."""
     crashes = 0
-    per_frac = {f: {"parseable": 0, "n_lines": [], "resid": []} for f in FRACS}
-    mono_viol = 0
+    per_frac = {f: {"parseable": 0, "n_lines": [], "resid": [], "conf": []} for f in FRACS}
+    mono_viol_old = mono_viol_new = 0
     sg.rng = np.random.default_rng(0)
     for _ in range(n_samples):
         poly = sg.gen_polygon()
@@ -74,23 +74,28 @@ def single_volume_partial(n_samples=60):
                 per_frac[f]["parseable"] += 1
             per_frac[f]["n_lines"].append(meta.get("n_lines", 0))
             per_frac[f]["resid"].append(meta.get("fit_residual", 1.0))
-        # 단조성: 연속 절단에서 IR이 자라기만(볼륨 집합 축소 없음)
+            per_frac[f]["conf"].append(meta.get("confidence", 0.0))
         for a, b in zip(seq, seq[1:]):
-            if not b.superset_of(a):
-                mono_viol += 1
+            if not b.superset_of(a):                 # 구 불변식(엄격)
+                mono_viol_old += 1
+            if not b.confident_superset_of(a):       # 재정의(확정만 철회금지)
+                mono_viol_new += 1
     summary = {}
     for f in FRACS:
         d = per_frac[f]
         summary[f] = {"parseable_rate": round(d["parseable"] / n_samples, 3),
                       "n_lines_median": int(np.median(d["n_lines"])) if d["n_lines"] else 0,
-                      "fit_resid_median": round(float(np.median(d["resid"])), 4) if d["resid"] else None}
-    return {"crashes": crashes, "monotonicity_violations": mono_viol,
+                      "fit_resid_median": round(float(np.median(d["resid"])), 4) if d["resid"] else None,
+                      "confidence_median": round(float(np.median(d["conf"])), 3) if d["conf"] else None}
+    return {"crashes": crashes,
+            "monotonicity_violations_OLD(superset)": mono_viol_old,
+            "monotonicity_violations_NEW(confident)": mono_viol_new,
             "n_samples": n_samples, "by_frac": summary}
 
 
 def multi_volume_partial(n_samples=30):
     """다중 볼륨 증분 드로잉: 총점 frac%까지. 볼륨 수 증가·단조성·ID 안정성."""
-    crashes, mono_viol, id_shift = 0, 0, 0
+    crashes, mono_viol, mono_viol_new, id_shift = 0, 0, 0, 0
     vol_counts = {f: [] for f in FRACS}
     for seed in range(n_samples):
         cap = mm.make(seed=seed)
@@ -106,10 +111,12 @@ def multi_volume_partial(n_samples=30):
         for a, b in zip(seq, seq[1:]):
             if not b.superset_of(a):
                 mono_viol += 1
-                # ID 이동인지 확인(같은 물리 볼륨이 다른 id)
                 if len(b.volumes) >= len(a.volumes):
                     id_shift += 1
-    return {"crashes": crashes, "monotonicity_violations": mono_viol,
+            if not b.confident_superset_of(a):
+                mono_viol_new += 1
+    return {"crashes": crashes, "monotonicity_violations_OLD": mono_viol,
+            "monotonicity_violations_NEW(confident)": mono_viol_new,
             "id_shift_suspected": id_shift, "n_samples": n_samples,
             "vol_count_median_by_frac": {f: int(np.median(v)) if v else 0 for f, v in vol_counts.items()}}
 

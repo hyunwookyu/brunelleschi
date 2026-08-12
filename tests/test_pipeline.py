@@ -11,7 +11,7 @@ from common.normalize_core import parse_strokes
 
 
 def test_ir_root_fields_within_cap():
-    assert IR().root_field_count() == 6 <= MAX_ROOT_FIELDS
+    assert IR().root_field_count() == 7 <= MAX_ROOT_FIELDS
 
 
 def test_ir_validate_and_monotonic():

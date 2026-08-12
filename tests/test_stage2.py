@@ -52,7 +52,7 @@ def test_range_anchor_scales_footprint_to_width_12():
     ir = apply_ops(ir, ops)
 
     assert ir.validate() == []
-    assert ir.root_field_count() == 6                          # §13 필드 수 불변
+    assert ir.root_field_count() == 7                          # §13 필드 수 불변
     xs = [p[0] for p in ir.volumes[0].footprint]
     width = max(xs) - min(xs)
     assert abs(width - 12.0) <= 1.2                             # tol = (13.2-10.8)/2

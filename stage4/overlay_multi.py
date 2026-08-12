@@ -30,14 +30,26 @@ def build(capture_path: str):
         col = PALETTE[k % len(PALETTE)]
         fp = v.footprint
         d = "M " + " L ".join(f"{x:.1f} {y:.1f}" for x, y in fp) + " Z"
-        parts.append(f'<path d="{d}" stroke="{col}" stroke-width="2.5" '
-                     f'stroke-dasharray="7 5" fill="{col}" fill-opacity="0.06"/>')
+        # §3.5 톤 확장: confidence로 연속 흐림(낮을수록 흐림). conf<0.5=점선(명확히 미확정).
+        # 연속화 목적 — 볼륨이 사라져도 거슬리지 않게(보수적 파서보다 나음).
+        tentative = v.confidence < 0.5
+        dash = "2 4" if tentative else "7 5"
+        width = 1.5 if tentative else 2.5
+        opacity = round(0.30 + 0.70 * max(0.0, min(1.0, v.confidence)), 2)
+        fill_op = round(0.02 + 0.05 * v.confidence, 3)
+        parts.append(f'<path d="{d}" stroke="{col}" stroke-width="{width}" '
+                     f'stroke-dasharray="{dash}" stroke-opacity="{opacity}" '
+                     f'fill="{col}" fill-opacity="{fill_op}"/>')
         c = np.asarray(fp, float).mean(0)
-        tag = f"{v.id}:{v.label}" if v.label else v.id
-        parts.append(f'<text x="{c[0]:.0f}" y="{c[1]:.0f}" fill="{col}" '
+        base = f"{v.id}:{v.label}" if v.label else v.id
+        tag = base + ("?" if tentative else "")     # 미확정 표식
+        parts.append(f'<text x="{c[0]:.0f}" y="{c[1]:.0f}" fill="{col}" fill-opacity="{opacity}" '
                      f'text-anchor="middle" font-weight="bold">{tag}</text>')
+        parts.append(f'<text x="{c[0]:.0f}" y="{c[1]+14:.0f}" fill="{col}" fill-opacity="{opacity*0.7}" '
+                     f'text-anchor="middle" font-size="10">conf {v.confidence:.2f}</text>')
     parts.append(f'<text x="10" y="{H-10}" fill="#333">volumes={len(ir.volumes)} · '
-                 f'named={sum(1 for v in ir.volumes if v.label)} · 파선=무차원 복원(§3.5)</text>')
+                 f'named={sum(1 for v in ir.volumes if v.label)} · '
+                 f'점선흐림=미확정(conf&lt;0.5, §3.5확장) · 파선=무차원 확정</text>')
     parts.append('</svg>')
     out = ROOT / "stage4" / f"overlay_{Path(capture_path).stem}.svg"
     out.write_text("\n".join(parts), encoding="utf-8")

@@ -39,8 +39,13 @@ _이력: 0·1·2·3단계 모두 필드 추가 없음. 2·3단계는 기존 Anch
 
 ### 필드 계수 규칙 (§13 "12개 초과 시 멈춤" 해석 — 계획 미정의분 확정)
 - **"필드" = IR 루트 객체의 최상위 키 수.** 중첩 속성은 세지 않는다.
-- 현재 최상위 키 **6개**: `volumes, anchors, views, unresolved, notes, relations` (relations는 5단계 추가).
-- 최상위 키가 **12를 초과하면 멈추고 보고**(§13 멈춤 조건). 여유 6.
+- 현재 최상위 키 **7개**: `volumes, anchors, views, unresolved, notes, relations, openings` (relations·openings는 5단계 추가).
+- 최상위 키가 **12를 초과하면 멈추고 보고**(§13 멈춤 조건). 여유 5.
+- unmappable 원장: rel_*/opening_* 키는 relations/openings 필드의 값(realized)이지 신규 루트 키 아님(승격 오산 방지, `ir/unmappable.py`).
+
+### openings (5단계 추가, 2026-08-12)
+- `Opening{target,type,wall,pos,w,h,src}`. **type 3종**: window/door/opening (유튜브 코퍼스 실측 door20/window7/opening6).
+- pos/w/h=None → 미지정(§3.7) = 6단계 질의 대상.
 
 ### relations (5단계 추가, 2026-08-12)
 - `Relation{a,b,type,src}`. **유형 5종**: adjacent/above_below/penetrate/separated/aligned.
@@ -67,6 +72,8 @@ LLM 역할은 어휘 해석이 아니라 **미지정 항목 식별**(§3.7). 세
 
 ### 치수 표시 톤 (§3.5, 오버레이)
 명시=실선+숫자 / 범위내확정=실선+`~` / 비례전파=파선.
+**확장(2026-08-12)**: 볼륨 confidence로 **연속 흐림**(opacity=0.3+0.7·conf). confidence<0.5=점선(2 4)+"?"표식(미확정). 목적: 볼륨이 사라져도 거슬리지 않게 → 파서를 보수적으로 만드는 것보다 나음.
+confidence = 둘레지지율(그린비율)²·적합도. 열린/부분 윤곽 → 낮음 → 자유 철회(단조성 재정의, [[task1]]).
 
 ---
 
@@ -103,10 +110,12 @@ LLM 역할은 어휘 해석이 아니라 **미지정 항목 식별**(§3.7). 세
 3. 같은 오류로 3회 실패
 4. **4단계 진입 — 외부 데이터셋 IoU 게이트 통과 필요** (개정: 구 오버레이 육안. 통과함)
 5. 5단계 진입 — 관계 어휘 종수 확정(코퍼스) + 부분획 검증 통과 (완료: 5종, 크래시0)
-6. **6단계(질의 루프) 진입 — 정지** (2026-08-12, 현재 정지 지점)
+6. 6단계 진입 — 단조성 재정의 + 표시정책 + opening 승격 (완료)
+7. **7단계(정정 학습) 진입 — 정지** (2026-08-12, 현재 정지 지점). 파서 안정 후·실세션 로깅 필요.
 
 로깅(§14): `collect/logschema.py`, 옵트인 기본꺼짐. 학습은 7단계. 지금은 기록만.
-stage5/: relate.py(관계추론) relation_corpus.py(코퍼스→원장). stage0/09(부분획 검증).
+stage5/: relate.py relation_corpus.py opening_corpus.py. stage6/query.py(질의루프, 분기영향도). stage0/09(부분획).
+단조성 재정의(§task1): `IR.confident_superset_of`(confidence≥0.5만 철회금지). 질의 임계 ASK_THRESHOLD=0.15 잠정(§14 튜닝).
 
 ### 판정 임계 (§8 공란 → 0단계 잠정 확정, checkpoints.md에서 사용자 확인 대기)
 | 항목 | 잠정 기준 | 근거 |

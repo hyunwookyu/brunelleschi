@@ -1,12 +1,12 @@
 {
   "counts": {
-    "polygon_unformed": 1,
-    "opening": 3,
-    "relation": 2,
-    "separated": 23,
-    "above_below": 36,
-    "penetrate": 18,
-    "aligned": 13,
-    "adjacent": 8
+    "rel_separated": 23,
+    "rel_above_below": 36,
+    "rel_penetrate": 18,
+    "rel_aligned": 13,
+    "rel_adjacent": 8,
+    "opening_opening": 6,
+    "opening_window": 7,
+    "opening_door": 20
   }
 }

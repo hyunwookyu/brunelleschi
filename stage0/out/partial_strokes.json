@@ -9,39 +9,46 @@
   ],
   "single_volume": {
     "crashes": 0,
-    "monotonicity_violations": 11,
+    "monotonicity_violations_OLD(superset)": 11,
+    "monotonicity_violations_NEW(confident)": 7,
     "n_samples": 60,
     "by_frac": {
       "30": {
         "parseable_rate": 0.017,
         "n_lines_median": 0,
-        "fit_resid_median": 1.0
+        "fit_resid_median": 1.0,
+        "confidence_median": 0.0
       },
       "50": {
         "parseable_rate": 0.233,
         "n_lines_median": 0,
-        "fit_resid_median": 1.0
+        "fit_resid_median": 1.0,
+        "confidence_median": 0.0
       },
       "70": {
         "parseable_rate": 0.6,
         "n_lines_median": 4,
-        "fit_resid_median": 0.0452
+        "fit_resid_median": 0.0452,
+        "confidence_median": 0.462
       },
       "90": {
         "parseable_rate": 0.883,
         "n_lines_median": 6,
-        "fit_resid_median": 0.0215
+        "fit_resid_median": 0.0215,
+        "confidence_median": 0.659
       },
       "100": {
         "parseable_rate": 0.883,
         "n_lines_median": 5,
-        "fit_resid_median": 0.0216
+        "fit_resid_median": 0.0216,
+        "confidence_median": 0.806
       }
     }
   },
   "multi_volume": {
     "crashes": 0,
-    "monotonicity_violations": 6,
+    "monotonicity_violations_OLD": 6,
+    "monotonicity_violations_NEW(confident)": 1,
     "id_shift_suspected": 1,
     "n_samples": 30,
     "vol_count_median_by_frac": {

@@ -50,3 +50,15 @@
 - 기하 추론: adjacent/separated/aligned/penetrate(XY). above_below는 Z 필요 → 발화로만.
 - 부분 획 방어(§task1): confidence≥0.5 볼륨만.
 - from_dict 하위호환(relations 없는 기존 JSON → []). 홀드아웃 불변.
+
+## 5단계(2차) — openings 필드 추가, 루트 7키 (2026-08-12)
+
+- **`IR.openings: list[Opening]` 추가 → 루트 최상위 키 7개**(≤12). 사용자 승인("루트 7 허용").
+- 승격 근거: 유튜브 22자막 개구부 발화 63건, **하위유형 3종 각 ≥3**(door 20/window 7/opening 6) → typed 필요.
+- `Opening{target, type, wall, pos, w, h, src}`. **type 3종**: window/door/opening(OPENING_TYPES).
+  pos/w/h=None → 미지정(§3.7) = 질의 대상(§6 6단계). `unresolved_props()`.
+- 원장 정합: opening_* / rel_* 키는 openings/relations 필드의 값(realized), 신규 루트 키 아님. pending 신규필드 0, projected 루트 7/7.
+- Volume.confidence 산출 변경(둘레지지율²·적합도) — 스키마 필드 불변, 값 의미만.
+
+## 필드 현황 (2026-08-12)
+루트 7키: volumes/anchors/views/unresolved/notes/relations/openings. 여유 5. 스키마 하락 없음.

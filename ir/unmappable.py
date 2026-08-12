@@ -15,15 +15,20 @@ from collections import Counter
 LEDGER = Path(__file__).resolve().parent / "unmappable_ledger.json"
 PROMOTE_MIN = 3          # §13: 3회 이상 → 승격
 MAX_ROOT = 12            # §13: 초과 시 멈춤
-CURRENT_ROOT = 6         # volumes/anchors/views/unresolved/notes/relations
+CURRENT_ROOT = 7         # volumes/anchors/views/unresolved/notes/relations/openings
 
 # 이미 필드로 실현된 카테고리 — 미매핑 집계엔 잡히나 '신규 필드'로 세면 안 됨.
-# 관계 유형(adjacent 등)은 relations 필드의 type 도메인(값)이지 새 루트 키가 아님.
+# 관계 유형·개구부 유형은 relations/openings 필드의 값이지 새 루트 키가 아님.
 try:
-    from ir.schema import RELATION_TYPES as _RT
-    REALIZED_KEYS = set(_RT)
+    from ir.schema import RELATION_TYPES as _RT, OPENING_TYPES as _OT
+    REALIZED_KEYS = set(_RT) | {"opening"} | {"opening:" + t for t in _OT} | set(_OT)
 except Exception:
-    REALIZED_KEYS = {"adjacent", "above_below", "penetrate", "separated", "aligned"}
+    REALIZED_KEYS = {"adjacent", "above_below", "penetrate", "separated", "aligned", "opening"}
+
+
+def _is_realized(k):
+    # rel_* → relations 필드, opening_* → openings 필드 (둘 다 실현됨). 값이지 새 키 아님.
+    return k in REALIZED_KEYS or k.startswith("opening_") or k.startswith("rel_")
 
 
 def normalize_key(text: str) -> str:
@@ -66,7 +71,7 @@ class Ledger:
 
     def report(self) -> dict:
         def realized(k):
-            return k in REALIZED_KEYS
+            return _is_realized(k)
         # 승격 후보 = ≥3 반복 중 아직 필드로 실현 안 된 것만(신규 루트 키 후보)
         pending = {k: c for k, c in self.counts.items() if c >= PROMOTE_MIN and not realized(k)}
         realized_hits = {k: c for k, c in self.counts.items() if c >= PROMOTE_MIN and realized(k)}

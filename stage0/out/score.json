@@ -50,19 +50,19 @@
   },
   "camera_fit_error": {
     "precise": {
-      "fit_error_median": 0.0046,
-      "fit_error_p95": 0.0103,
+      "fit_error_median": 0.0051,
+      "fit_error_p95": 0.0127,
       "approx_rate": 0.0
     },
     "medium": {
-      "fit_error_median": 0.0116,
-      "fit_error_p95": 0.087,
-      "approx_rate": 0.042
+      "fit_error_median": 0.0138,
+      "fit_error_p95": 0.0783,
+      "approx_rate": 0.025
     },
     "coarse": {
-      "fit_error_median": 0.0174,
-      "fit_error_p95": 0.0674,
-      "approx_rate": 0.042
+      "fit_error_median": 0.0152,
+      "fit_error_p95": 0.0779,
+      "approx_rate": 0.033
     }
   },
   "multiplex": {
@@ -72,11 +72,17 @@
   },
   "relations": {
     "all_ir_valid_rate": 1.0,
-    "avg_relations": 2.07,
+    "avg_relations": 2.0,
     "type_distribution": {
-      "separated": 24,
+      "separated": 23,
       "aligned": 7
     },
     "note": "다중 픽스처(분리 배치) → separated/aligned 위주. adjacent/penetrate는 인접·겹침 배치에서."
+  },
+  "query_loop": {
+    "scale_ranked_top_rate": 1.0,
+    "avg_questions": 4.0,
+    "ask_threshold_provisional": 0.15,
+    "note": "분기영향도 결정론적. 임계는 잠정(§8) → §14 로깅으로 '뒤집힌 비율'(§1) 보고 튜닝."
   }
 }

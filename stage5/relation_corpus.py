@@ -42,7 +42,7 @@ def main():
     led = Ledger()
     # 원장에서 기존 relation 계열 제거 후 재집계(코퍼스 기반으로 갱신)
     for k in list(led.counts):
-        if k.startswith("rel:"):
+        if k.startswith("rel_"):
             del led.counts[k]
 
     files = sorted(YT.glob("*.json"))
@@ -61,7 +61,7 @@ def main():
                 n_rel += 1
                 for t in types:
                     type_cnt[t] += 1
-                    led.record("rel:" + t.split("(")[0])   # 원장 키: rel:adjacent 등
+                    led.record("rel_" + t.split("(")[0])   # 원장 키: rel:adjacent 등
                     if len(examples[t]) < 5:
                         examples[t].append(txt[:70])
     led.save()

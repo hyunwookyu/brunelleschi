@@ -1,0 +1,63 @@
+{
+  "spec": "개구부 발화 코퍼스(유튜브 22자막) → opening 승격·하위유형 판단(§13)",
+  "n_opening_segments": 30,
+  "total_type_hits": 33,
+  "type_counts": {
+    "door(문)": 20,
+    "window(창)": 7,
+    "opening(개구부/개방부)": 6
+  },
+  "distinct_subtypes": 3,
+  "meaningful_subtypes(>=3)": [
+    "window(창)",
+    "door(문)",
+    "opening(개구부/개방부)"
+  ],
+  "subtypes_diverge": true,
+  "examples": {
+    "window(창)": [
+      "이러한 창이 뜨는 걸 볼 수가 있는데",
+      "욕망을 가지고 있잖아요 학창 시절에",
+      "댓글 창에 달아보자. 다음에는 그",
+      "직관적인 창을 막 들어왔어요 크리티컬 안받은 프로젝트 니까 얼마나 날 것",
+      "아 그렇게 되면 거면 사실은 좀 문제가 있지 않은 창을 없는데 그런 왔어"
+    ],
+    "door(문)": [
+      "쉽게 설명이 되고 읽히기 때문이다.",
+      "결과 문 충분히 남는 정도면 충분하다",
+      "그렇죠 이렇게 얘기해 주시는 경우도 내더라도 였어 제가 천국문 하는",
+      "* 할 때 시각적으로 산이 보여줄 수 있는 게 거의 대문 무용 밖에 없다",
+      "만족스럽지 않기 때문이죠."
+    ],
+    "opening(개구부/개방부)": [
+      "뚫어야 될지 말아야 될지 내부에",
+      "줄이 여러분의 개구부 위치와 크기를",
+      "중간에 아치 뚫린 부분이 있죠? 그",
+      "뚫린 부분에 프라미싱 힐이라고 하는",
+      "그래서 열린 상태로 어떤 모습인지"
+    ]
+  },
+  "schema_decision": "하위유형 2종 이상 유의 → openings를 typed로. 승격 시 루트 7필드 허용. 권고: Volume에 openings:list[{type,pos?}] 중첩 필드(루트 불변) 또는 루트 openings 필드(→7).",
+  "ledger": {
+    "total_keys": 8,
+    "total_occurrences": 131,
+    "promotion_candidates(>=3, pending)": {
+      "rel_separated": 23,
+      "rel_above_below": 36,
+      "rel_penetrate": 18,
+      "rel_aligned": 13,
+      "rel_adjacent": 8,
+      "opening_opening": 6,
+      "opening_window": 7,
+      "opening_door": 20
+    },
+    "realized_categories(>=3, already field)": {},
+    "note_level(1-2)": {},
+    "current_root_fields": 7,
+    "projected_root_fields": 15,
+    "root_field_cap": 12,
+    "STOP_if_exceeds": true,
+    "labeler_active": true,
+    "note": "rel:* 는 relations 필드의 type 값(이미 실현) → 신규 필드로 안 셈. pending만 새 루트 키 후보."
+  }
+}
