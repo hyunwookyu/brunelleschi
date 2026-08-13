@@ -1,0 +1,35 @@
+{
+  "spec": "축 뒤바뀜 성격 판정(지시 D-0 a) — 게이지 자유도인가 실제 형태 오류인가.",
+  "n": 200,
+  "grade": "medium",
+  "corner_err_ratio": 0.0269,
+  "reprojection_error_own_camera": {
+    "A_median": 0.0,
+    "A_p90": 0.0,
+    "B_median": 0.0,
+    "B_p90": 0.0,
+    "note": "⚠ **자기참조라 판정 근거가 아니다.** 복원 평면이 H⁻¹(관측점)이므로 같은 H로 되쏘면 항등이다 — 0.0은 당연한 값이다. selfcheck의 '카운터 0' 플래그로 발견해 판정에서 제외했다. 판정은 아래 상사 비교에만 의존한다."
+  },
+  "similarity_iou_between_solutions": {
+    "median": 0.9998,
+    "p10": 0.96896,
+    "frac_above_0.95": 0.96,
+    "note": "회전+스케일+**정점 대응 탐색**까지 허용해 두 해를 정합. 1에 가까우면 같은 도형(게이지). 대응 탐색을 빼면 같은 도형도 0.45로 나온다 — 1차 측정이 이 함정에 빠졌다.",
+    "optimal_shift_distribution": {
+      "(False, 1)": 106,
+      "(False, 2)": 1,
+      "(False, 3)": 92,
+      "(False, 0)": 1
+    }
+  },
+  "raw_iou_vs_truth_rotation_unnormalized": {
+    "A_median": 0.77865,
+    "B_median": 0.56306,
+    "note": "기존 평가 방식(_norm은 회전을 정규화하지 않는다). 게이지라면 이 낮은 값이 지표의 산물이다."
+  },
+  "control_counterexample": {
+    "median_iou_vs_3x_aspect": 0.34396,
+    "note": "§13 규칙 3 — 지표가 자명하지 않은지 확인. 역수 해가 아니라 **3배 종횡비** 해와 비교하면 IoU가 낮아야 한다. 실제 0.35 vs 역수 해 1.00 → 지표가 변별한다."
+  },
+  "verdict": "gauge"
+}

@@ -1,5 +1,5 @@
 {
-  "n_flags": 71,
+  "n_flags": 77,
   "flags": [
     {
       "path": "aspect_priors.json:2F_a_right_angle.rectangular.coarse.hold_rate",
@@ -30,6 +30,36 @@
       "path": "aspect_priors.json:2F_a_right_angle.irregular.precise.hold_rate",
       "val": 1.0,
       "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "axis_gauge.json:reprojection_error_own_camera.A_median",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "axis_gauge.json:reprojection_error_own_camera.A_p90",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "axis_gauge.json:reprojection_error_own_camera.B_median",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "axis_gauge.json:reprojection_error_own_camera.B_p90",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "axis_gauge.json:similarity_iou_between_solutions.optimal_shift_distribution.(False, 2)",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "axis_gauge.json:similarity_iou_between_solutions.optimal_shift_distribution.(False, 0)",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "axis_probe.json:reproj_rel_diff_between_two_solutions.median",
@@ -363,6 +393,7 @@
   ],
   "scanned": [
     "aspect_priors.json",
+    "axis_gauge.json",
     "axis_probe.json",
     "corner_error.json",
     "corner_error_sessions.json",
