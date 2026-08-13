@@ -1,0 +1,73 @@
+{
+  "spec": "2점 종횡비 불확실성 전파 — 구간 폭 vs 실제 실패(지시 1-bis e).",
+  "n": 200,
+  "grade": "medium",
+  "mc_samples": 80,
+  "corner_err_ratio": 0.0269,
+  "overall_fail_rate": 0.195,
+  "rel_width": {
+    "median_all": 0.8943,
+    "median_fail": 0.8522,
+    "median_ok": 0.8992,
+    "p90_all": 1.4902
+  },
+  "correlation": {
+    "pearson": -0.0359,
+    "spearman": -0.0194,
+    "auc_width_predicts_failure": 0.4959
+  },
+  "coverage_of_true_aspect(ci=0.90)": 0.94,
+  "gates": [
+    {
+      "gate": "rel_width>0.4(잠정)",
+      "flags": 0.975,
+      "n_gated": 195,
+      "n_passed": 5,
+      "recall": 1.0,
+      "precision": 0.2,
+      "passed_fail_rate": 0.0,
+      "passed_iou_median": 0.8716
+    },
+    {
+      "gate": "rel_width>0.2",
+      "flags": 1.0,
+      "n_gated": 200,
+      "n_passed": 0,
+      "recall": 1.0,
+      "precision": 0.195,
+      "passed_fail_rate": null,
+      "passed_iou_median": null
+    },
+    {
+      "gate": "rel_width>0.3",
+      "flags": 0.995,
+      "n_gated": 199,
+      "n_passed": 1,
+      "recall": 1.0,
+      "precision": 0.196,
+      "passed_fail_rate": 0.0,
+      "passed_iou_median": 0.9356
+    },
+    {
+      "gate": "rel_width>0.6",
+      "flags": 0.83,
+      "n_gated": 166,
+      "n_passed": 34,
+      "recall": 0.846,
+      "precision": 0.199,
+      "passed_fail_rate": 0.176,
+      "passed_iou_median": 0.881
+    },
+    {
+      "gate": "rel_width>1.0",
+      "flags": 0.375,
+      "n_gated": 75,
+      "n_passed": 125,
+      "recall": 0.41,
+      "precision": 0.213,
+      "passed_fail_rate": 0.184,
+      "passed_iou_median": 0.8241
+    }
+  ],
+  "note": "구간 폭은 게이트가 아니라 표현이다. 폭이 실패와 상관되면 정량화가 작동하는 것. 임계는 잠정 — §14 로깅 튜닝 대상."
+}

@@ -1,5 +1,5 @@
 {
-  "n_flags": 46,
+  "n_flags": 52,
   "flags": [
     {
       "path": "aspect_priors.json:2F_a_right_angle.rectangular.coarse.hold_rate",
@@ -211,6 +211,36 @@
       "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "uncertainty_eval.json:gates[0].recall",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "uncertainty_eval.json:gates[0].passed_fail_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "uncertainty_eval.json:gates[1].recall",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "uncertainty_eval.json:gates[1].passed_fail_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "uncertainty_eval.json:gates[2].recall",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "uncertainty_eval.json:gates[2].passed_fail_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "viewdist_gate.json:gates[1].precision",
       "val": 1.0,
       "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
@@ -258,6 +288,7 @@
     "score.json",
     "sketchgraphs_check.json",
     "tolerance.json",
+    "uncertainty_eval.json",
     "unmappable_report.json",
     "viewdist_gate.json",
     "youtube_dist.json"
