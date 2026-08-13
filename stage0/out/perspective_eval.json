@@ -6,39 +6,45 @@
       "corner_err_ratio": 0.0421,
       "n": 200,
       "fail_rate": 0.0,
-      "plane_iou_median": 0.9401,
-      "plane_iou_p10": 0.8625,
-      "camera_fit_error_median": 0.0072,
-      "camera_fit_error_p95": 0.0207,
-      "reproj_error_median": 0.0072,
-      "ortho_residual_median_deg": 6.883
+      "plane_iou_median": 0.9444,
+      "plane_iou_p10": 0.8608,
+      "aspect_rel_err_median": 0.0342,
+      "aspect_rel_err_p90": 0.0999,
+      "camera_fit_error_median": 0.0069,
+      "camera_fit_error_p95": 0.0197,
+      "reproj_error_median": 0.0069,
+      "ortho_residual_median_deg": 6.4952
     },
     "medium": {
       "corner_err_ratio": 0.0269,
       "n": 200,
       "fail_rate": 0.0,
-      "plane_iou_median": 0.9585,
-      "plane_iou_p10": 0.9132,
-      "camera_fit_error_median": 0.0052,
-      "camera_fit_error_p95": 0.0132,
-      "reproj_error_median": 0.0052,
-      "ortho_residual_median_deg": 6.047
+      "plane_iou_median": 0.9526,
+      "plane_iou_p10": 0.8979,
+      "aspect_rel_err_median": 0.0247,
+      "aspect_rel_err_p90": 0.08,
+      "camera_fit_error_median": 0.0058,
+      "camera_fit_error_p95": 0.0136,
+      "reproj_error_median": 0.0058,
+      "ortho_residual_median_deg": 6.3562
     },
     "precise": {
       "corner_err_ratio": 0.0168,
       "n": 200,
       "fail_rate": 0.0,
-      "plane_iou_median": 0.9665,
-      "plane_iou_p10": 0.9372,
-      "camera_fit_error_median": 0.0039,
-      "camera_fit_error_p95": 0.0087,
-      "reproj_error_median": 0.0039,
-      "ortho_residual_median_deg": 6.2742
+      "plane_iou_median": 0.9719,
+      "plane_iou_p10": 0.9423,
+      "aspect_rel_err_median": 0.0163,
+      "aspect_rel_err_p90": 0.0515,
+      "camera_fit_error_median": 0.0038,
+      "camera_fit_error_p95": 0.0083,
+      "reproj_error_median": 0.0038,
+      "ortho_residual_median_deg": 5.5416
     }
   },
   "parsing_boundary": "IoU중앙≥0.5 유지 등급: ['coarse', 'medium', 'precise'] → 그 이하는 복원 무의미(§5.3 경계)",
   "answers": {
-    "평면없이 투시단독 어디까지": "coarse IoU중앙 0.9401, medium IoU중앙 0.9585, precise IoU중앙 0.9665",
+    "평면없이 투시단독 어디까지": "coarse IoU중앙 0.9444, medium IoU중앙 0.9526, precise IoU중앙 0.9719",
     "§3.8 평면병용 완화 가능?": "IoU중앙≥0.5 유지 등급: ['coarse', 'medium', 'precise'] → 그 이하는 복원 무의미(§5.3 경계)"
   }
 }

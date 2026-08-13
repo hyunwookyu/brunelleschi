@@ -25,7 +25,7 @@ from stage_perspective.reconstruct import reconstruct, _norm
 # 노이즈 → 등급. **실측 근거판**(stage_perspective/noise.py, 지시 0.4).
 # 구판 GRADE_NOISE={2,8,20}px는 임의 절대픽셀이었다(L1은 파서 달성한계의 1/3.5로 낙관).
 # 이제 등급별 코너오차 비율 × 표본 대각. 등급명도 실측 등급(precise/medium/coarse)으로.
-from stage_perspective.noise import grade_ratios, add_corner_noise
+from stage_perspective.noise import grade_ratios, add_corner_noise, stable_seed
 GRADE_NOISE = grade_ratios()
 
 
@@ -72,8 +72,9 @@ def _ortho_residual(recovered):
 def run(n=200, seed=0):
     out = {}
     for grade, ratio in GRADE_NOISE.items():
-        rng = np.random.default_rng(seed + hash(grade) % 1000)
+        rng = np.random.default_rng(stable_seed(grade, base=seed))
         ious, fiterr, reproj, ortho, fails = [], [], [], [], 0
+        aerr = []   # 종횡비 상대오차(1급 지표, 지시 1-ter A) — 역수 동치
         for _ in range(n):
             quad = _rand_quad(rng); eye, target = _rand_cam(rng, quad)
             w4, img4, sz, _t = build_synthetic(img_size=(800, 600), eye=eye, target=target, world4=quad)
@@ -82,6 +83,10 @@ def run(n=200, seed=0):
             if not r["ok"]:
                 fails += 1; continue
             ious.append(r["plane_iou"]); fiterr.append(r["fit_error"])
+            from stage_perspective.metric_audit import polygon_aspect, aspect_rel_err
+            ae = aspect_rel_err(polygon_aspect(r["recovered_plane"]), polygon_aspect(quad))
+            if np.isfinite(ae):
+                aerr.append(ae)
             re = _reproj_error(quad, noisy, sz)
             if re is not None:
                 reproj.append(re)
@@ -92,6 +97,7 @@ def run(n=200, seed=0):
         out[grade] = {
             "corner_err_ratio": ratio, "n": n, "fail_rate": round(fails / n, 3),
             "plane_iou_median": q(ious, 50), "plane_iou_p10": q(ious, 10),
+            "aspect_rel_err_median": q(aerr, 50), "aspect_rel_err_p90": q(aerr, 90),
             "camera_fit_error_median": q(fiterr, 50), "camera_fit_error_p95": q(fiterr, 95),
             "reproj_error_median": q(reproj, 50), "ortho_residual_median_deg": q(ortho, 50),
         }

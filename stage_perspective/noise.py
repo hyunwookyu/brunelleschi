@@ -48,3 +48,12 @@ def add_corner_noise(img_pts: np.ndarray, ratio: float, rng) -> np.ndarray:
     """코너점에 등방 가우시안. sigma = ratio × 이 표본의 대각(스케일 불변)."""
     a = np.asarray(img_pts, float)
     return a + rng.normal(0, ratio * diag_of(a), a.shape)
+
+
+def stable_seed(*parts, base: int = 0, mod: int = 100000) -> int:
+    """결정론적 시드. `hash(str)`는 PYTHONHASHSEED 무작위화 때문에 **실행마다 달라져**
+    측정이 재현되지 않는다(지시 1-ter 중 발견: 같은 설정 재실행에 2F IoU 0.877↔0.885 표류).
+    zlib.crc32는 프로세스 간 안정적이다."""
+    import zlib
+    key = "|".join(str(p) for p in parts).encode("utf-8")
+    return int(base) + (zlib.crc32(key) % mod)

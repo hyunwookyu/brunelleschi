@@ -110,15 +110,16 @@ def _project_polygon(world2d, eye, target, img_size):
 
 
 def evaluate(n=120, seed=0):
-    from stage_perspective.noise import grade_ratios, add_corner_noise
+    from stage_perspective.noise import grade_ratios, add_corner_noise, stable_seed
     _r = grade_ratios()
     GRADE_NOISE = {k: _r[k] for k in ("precise", "medium") if k in _r}   # 실측(지시 0.4)
     out = {}
     for name, base in _shapes().items():
         out[name] = {}
         for grade, ratio in GRADE_NOISE.items():
-            rng = np.random.default_rng(seed + hash(name + grade) % 9999)
+            rng = np.random.default_rng(stable_seed(name, grade, base=seed))
             ious, holds = [], 0
+            aerr = []   # 종횡비 상대오차(1급 지표, 지시 1-ter A)
             for _ in range(n):
                 truth = base * rng.uniform(3, 8)
                 c = truth.mean(0); diag = float(np.hypot(*(truth.max(0) - truth.min(0))))
@@ -134,9 +135,14 @@ def evaluate(n=120, seed=0):
                 iou = _procrustes_iou(truth, r["recovered"])
                 if iou is not None:
                     ious.append(iou); holds += 1
+                    from stage_perspective.metric_audit import polygon_aspect, aspect_rel_err
+                    ae = aspect_rel_err(polygon_aspect(r["recovered"]), polygon_aspect(truth))
+                    if np.isfinite(ae):
+                        aerr.append(ae)
             def q(x, p): return round(float(np.percentile(x, p)), 4) if x else None
             out[name][grade] = {"corner_err_ratio": ratio, "hold_rate": round(holds / n, 3),
-                                "iou_median": q(ious, 50), "iou_p10": q(ious, 10)}
+                                "iou_median": q(ious, 50), "iou_p10": q(ious, 10),
+                                "aspect_rel_err_median": q(aerr, 50), "aspect_rel_err_p90": q(aerr, 90)}
     return out
 
 

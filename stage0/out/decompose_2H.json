@@ -4,65 +4,77 @@
     "L": {
       "precise": {
         "corner_err_ratio": 0.0168,
-        "hold_rate": 0.825,
-        "iou_median": 0.4686,
-        "iou_p10": 0.3656
+        "hold_rate": 0.817,
+        "iou_median": 0.4918,
+        "iou_p10": 0.4282,
+        "aspect_rel_err_median": 0.0464,
+        "aspect_rel_err_p90": 0.3381
       },
       "medium": {
         "corner_err_ratio": 0.0269,
-        "hold_rate": 0.658,
-        "iou_median": 0.4437,
-        "iou_p10": 0.2397
+        "hold_rate": 0.625,
+        "iou_median": 0.4531,
+        "iou_p10": 0.2375,
+        "aspect_rel_err_median": 0.1484,
+        "aspect_rel_err_p90": 1.6468
       }
     },
     "U": {
       "precise": {
         "corner_err_ratio": 0.0168,
-        "hold_rate": 0.817,
-        "iou_median": 0.4541,
-        "iou_p10": 0.0127
+        "hold_rate": 0.8,
+        "iou_median": 0.4288,
+        "iou_p10": 0.0122,
+        "aspect_rel_err_median": 0.3094,
+        "aspect_rel_err_p90": 5.6465
       },
       "medium": {
         "corner_err_ratio": 0.0269,
-        "hold_rate": 0.658,
-        "iou_median": 0.2997,
-        "iou_p10": 0.0087
+        "hold_rate": 0.7,
+        "iou_median": 0.1853,
+        "iou_p10": 0.0009,
+        "aspect_rel_err_median": 0.9166,
+        "aspect_rel_err_p90": 5.5839
       }
     },
     "stair": {
       "precise": {
         "corner_err_ratio": 0.0168,
-        "hold_rate": 0.767,
-        "iou_median": 0.2901,
-        "iou_p10": 0.0244
+        "hold_rate": 0.725,
+        "iou_median": 0.2897,
+        "iou_p10": 0.0262,
+        "aspect_rel_err_median": 0.4706,
+        "aspect_rel_err_p90": 4.2825
       },
       "medium": {
         "corner_err_ratio": 0.0269,
-        "hold_rate": 0.658,
-        "iou_median": 0.2518,
-        "iou_p10": 0.0134
+        "hold_rate": 0.675,
+        "iou_median": 0.2195,
+        "iou_p10": 0.0134,
+        "aspect_rel_err_median": 1.2682,
+        "aspect_rel_err_p90": 5.1525
       }
     }
   },
   "iou_median_precise": {
-    "L": 0.4686,
-    "U": 0.4541,
-    "stair": 0.2901
+    "L": 0.4918,
+    "U": 0.4288,
+    "stair": 0.2897
   },
   "iou_median_medium": {
-    "L": 0.4437,
-    "U": 0.2997,
-    "stair": 0.2518
+    "L": 0.4531,
+    "U": 0.1853,
+    "stair": 0.2195
   },
   "hold_rate_precise": {
-    "L": 0.825,
-    "U": 0.817,
-    "stair": 0.767
+    "L": 0.817,
+    "U": 0.8,
+    "stair": 0.725
   },
   "note_baseline": "2F irregular은 비뚤어진 4각형(직교 아님)이라 2H 직교폴리곤과 직접 비교 부적절. 2H는 '직교폴리곤을 단일사각형으로 보면 붕괴'하던 것을 다중VP로 복원한 것.",
   "vs_2F": {
-    "2F_irregular_medium_iou": 0.6125,
-    "2H_L_medium_iou": 0.4437
+    "2F_irregular_medium_iou": 0.6097,
+    "2H_L_medium_iou": 0.4531
   },
-  "conclusion": "2H(다중VP, 실측 코너오차 노이즈): 직교폴리곤 precise IoU {'L': 0.4686, 'U': 0.4541, 'stair': 0.2901} (hold {'L': 0.825, 'U': 0.817, 'stair': 0.767}), medium {'L': 0.4437, 'U': 0.2997, 'stair': 0.2518}. precise서도 IoU<0.6 다수. medium에선 저하+hold 감소. 직교성 게이트(dotp≥0→실패)가 실패 일부 사전판정(2I)."
+  "conclusion": "2H(다중VP, 실측 코너오차 노이즈): 직교폴리곤 precise IoU {'L': 0.4918, 'U': 0.4288, 'stair': 0.2897} (hold {'L': 0.817, 'U': 0.8, 'stair': 0.725}), medium {'L': 0.4531, 'U': 0.1853, 'stair': 0.2195}. precise서도 IoU<0.6 다수. medium에선 저하+hold 감소. 직교성 게이트(dotp≥0→실패)가 실패 일부 사전판정(2I)."
 }

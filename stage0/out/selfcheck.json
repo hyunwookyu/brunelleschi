@@ -221,14 +221,14 @@
       "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "uncertainty_eval.json:gates[1].n_passed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "uncertainty_eval.json:gates[1].recall",
       "val": 1.0,
       "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "uncertainty_eval.json:gates[1].passed_fail_rate",
-      "val": 0.0,
-      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "uncertainty_eval.json:gates[2].recall",
@@ -275,6 +275,7 @@
     "failure_decomp.json",
     "failure_gate.json",
     "ink_noise_model.json",
+    "metric_audit.json",
     "mouse_real_vs_synth.json",
     "mouse_tolerance_sweep.json",
     "noise_model_impact.json",

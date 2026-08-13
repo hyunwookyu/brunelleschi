@@ -65,13 +65,13 @@ def _irregular_quad(rng, skew):
 
 def evaluate(n=150, seed=0):
     from stage3.synth import build_synthetic
-    from stage_perspective.noise import grade_ratios, add_corner_noise
+    from stage_perspective.noise import grade_ratios, add_corner_noise, stable_seed
     GRADE_NOISE = grade_ratios()   # 실측 코너오차 비율(지시 0.4)
     out = {}
     for kind, skew in [("rectangular", 0.0), ("irregular", 0.15)]:
         out[kind] = {}
         for grade, ratio in GRADE_NOISE.items():
-            rng = np.random.default_rng(seed + hash(kind + grade) % 9999)
+            rng = np.random.default_rng(stable_seed(kind, grade, base=seed))
             ious, aerr, holds = [], [], 0
             for _ in range(n):
                 truth = _irregular_quad(rng, skew) * rng.uniform(4, 10)
@@ -87,9 +87,12 @@ def evaluate(n=150, seed=0):
                 holds += 1
                 iou = _poly_iou(_norm(truth), _norm(np.array(r["recovered_plane"])))
                 ious.append(iou)
-                # 참 종횡비 대비 복원 종횡비 오차(직사각 truth만 의미)
+                # 참 종횡비 대비 복원 종횡비 오차. **역수 동치**로 잰다(지시 1-ter A):
+                # 종횡비는 width/depth 라벨링 때문에 역수까지만 결정되므로(1-bis 성질 1),
+                # 순진한 차이는 라벨 뒤바뀜(실측 28.75%)을 오차로 잡아 지표를 오염시킨다.
+                from stage_perspective.metric_audit import aspect_rel_err
                 true_a = (np.hypot(*(truth[3] - truth[0]))) / (np.hypot(*(truth[1] - truth[0])) + 1e-9)
-                aerr.append(abs(r["aspect"] - true_a) / true_a)
+                aerr.append(aspect_rel_err(r["aspect"], true_a))
             def q(x, p): return round(float(np.percentile(x, p)), 4) if x else None
             out[kind][grade] = {"corner_err_ratio": ratio, "hold_rate": round(holds / n, 3),
                                 "plane_iou_median": q(ious, 50), "plane_iou_p10": q(ious, 10),

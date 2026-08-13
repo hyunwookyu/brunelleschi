@@ -1,0 +1,84 @@
+{
+  "spec": "plane_iou vs 종횡비 상대오차 (지시 1-ter A). 역수 동치로 오차 산출.",
+  "n": 400,
+  "grade": "medium",
+  "corner_err_ratio": 0.0269,
+  "correlation_iou_vs_aspect_err": {
+    "pearson": -0.441,
+    "spearman": -0.6256
+  },
+  "insensitivity_curve": [
+    {
+      "aspect_err": "0.00~0.05",
+      "n": 72,
+      "iou_median": 0.9229,
+      "iou_p10": 0.3489
+    },
+    {
+      "aspect_err": "0.05~0.10",
+      "n": 70,
+      "iou_median": 0.9097,
+      "iou_p10": 0.6824
+    },
+    {
+      "aspect_err": "0.10~0.20",
+      "n": 109,
+      "iou_median": 0.8519,
+      "iou_p10": 0.5404
+    },
+    {
+      "aspect_err": "0.20~0.35",
+      "n": 81,
+      "iou_median": 0.7617,
+      "iou_p10": 0.2449
+    },
+    {
+      "aspect_err": "0.35~0.60",
+      "n": 52,
+      "iou_median": 0.6551,
+      "iou_p10": 0.2767
+    },
+    {
+      "aspect_err": "0.60~10.00",
+      "n": 16,
+      "iou_median": 0.5174,
+      "iou_p10": 0.2614
+    }
+  ],
+  "iou_threshold_to_aspect_err": [
+    {
+      "iou_threshold": 0.6,
+      "n_pass": 318,
+      "aspect_err_median": 0.1241,
+      "aspect_err_p90": 0.3662
+    },
+    {
+      "iou_threshold": 0.7,
+      "n_pass": 273,
+      "aspect_err_median": 0.1132,
+      "aspect_err_p90": 0.2652
+    },
+    {
+      "iou_threshold": 0.8,
+      "n_pass": 199,
+      "aspect_err_median": 0.0936,
+      "aspect_err_p90": 0.18
+    },
+    {
+      "iou_threshold": 0.9,
+      "n_pass": 90,
+      "aspect_err_median": 0.051,
+      "aspect_err_p90": 0.0935
+    }
+  ],
+  "naive_vs_equivalent_error": {
+    "note": "순진한 오차는 역수 라벨 뒤바뀜을 오차로 잡는다(기존 2F 방식의 오염).",
+    "median_naive": 0.2161,
+    "median_equivalent": 0.1392,
+    "flip_rate": 0.2875
+  },
+  "summary_medians": {
+    "iou_median": 0.7996,
+    "aspect_err_median": 0.1392
+  }
+}
