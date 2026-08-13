@@ -1,30 +1,44 @@
 {
-  "spec": "2J 치수 발화율 — 현 코퍼스(설계/스케치 혼합, 22자막) 영상별 분포",
-  "n_videos": 12,
-  "overall_rate": 0.0075,
-  "per_video_rate_median": 0.0,
-  "per_video_rate_p90": 0.0252,
-  "per_video_rate_max": 0.0455,
-  "n_videos_with_any_dim": 4,
-  "top3_dim_videos": [
-    {
-      "vid": "U9nND_oVZMA",
-      "rate": 0.0455,
-      "n_dim": 1,
-      "n_seg": 22
-    },
-    {
-      "vid": "zce-bbBSXJQ",
-      "rate": 0.0269,
-      "n_dim": 16,
-      "n_seg": 595
-    },
-    {
-      "vid": "TGYpx9FNzeI",
-      "rate": 0.0094,
-      "n_dim": 7,
-      "n_seg": 744
-    }
-  ],
-  "finding": "치수 발화 극히 드묾(중앙 0.00%). 소수 영상에 집중(상위 영상 4.5%). → §3.3 '앵커가 핵심 경로'는 **명시적 치수화 세션에 한정** 유효. 설명·크리틱 나열형은 치수 거의 없음 → 그런 세션은 무차원 유지·비례전파(§3.5)가 주. 작도 교육 영상 분리 측정은 2G 후."
+  "spec": "2J 재측정 — 설계/스케치 자막 치수 발화율 + Wilson CI + 20건-캡 규명",
+  "corpus_clarification": "현 22자막은 **전부 설계/스케치 설명·크리틱** 유형(작도 교육 영상 아님). 구 2J의 '12편'은 22의 ≥20세그 부분집합이지 별개 코퍼스가 아님. **작도 교육(2A) 영상은 미수집(2G 대기)** → 설계 vs 작도 분리 측정은 2G 후에만 가능.",
+  "reconcile_20_examples": "앞선 '치수 예시 20건'은 수집기 하드캡(translation_examples_20, max=20)이지 높은 비율 근거가 아님. 실제 치수 세그 총수 ≈25 (0.73%×3424) → 20건 캡과 정합. **모순 아님.**",
+  "design_corpus": {
+    "label": "설계/스케치 자막 전체(22중 세그>0)",
+    "n_videos": 22,
+    "total_dim_seg": 25,
+    "total_seg": 3424,
+    "overall_rate": 0.0073,
+    "overall_rate_wilson95": [
+      0.005,
+      0.0108
+    ],
+    "videos_with_any_dim": 4,
+    "videos_with_any_dim_frac": 0.182,
+    "videos_with_any_wilson95": [
+      0.0731,
+      0.3852
+    ],
+    "per_video_rate_median": 0.0,
+    "per_video_rate_max": 0.0455
+  },
+  "ge20_subset": {
+    "label": "≥20세그 부분집합(구 2J)",
+    "n_videos": 12,
+    "total_dim_seg": 25,
+    "total_seg": 3313,
+    "overall_rate": 0.0075,
+    "overall_rate_wilson95": [
+      0.0051,
+      0.0111
+    ],
+    "videos_with_any_dim": 4,
+    "videos_with_any_dim_frac": 0.333,
+    "videos_with_any_wilson95": [
+      0.1381,
+      0.6094
+    ],
+    "per_video_rate_median": 0.0,
+    "per_video_rate_max": 0.0455
+  },
+  "finding": "설계 자막 치수 발화율 0.73% (Wilson95 0.50~1.08%), 영상 4/22만 치수 있음(frac95 0.07~0.39). → **설계 세션에서도 치수 발화 드묾**. §3.3 '앵커 핵심 경로'는 명시적 치수화 세션 한정. 표본 얇아(4/12) CI 넓음 — 작도 영상(2G) 확보 후 분리 대조 필요. **결론 무관하게 V-4 수동 치수 입력 유지**(발화 의존 완화)."
 }
