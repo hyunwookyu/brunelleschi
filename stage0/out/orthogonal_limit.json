@@ -1,0 +1,71 @@
+{
+  "spec": "직교 전용 파서의 범위 한계(지시 7). Quick,Draw 건축 계열 실획 외곽.",
+  "angle_tolerance_deg": 25.0,
+  "by_category": {
+    "house": {
+      "n": 244,
+      "nonorthogonal_rate": 0.643,
+      "concave_rate": 0.311,
+      "outside_parser_scope_rate": 0.668,
+      "median_corners": 3
+    },
+    "castle": {
+      "n": 346,
+      "nonorthogonal_rate": 0.717,
+      "concave_rate": 0.841,
+      "outside_parser_scope_rate": 0.902,
+      "median_corners": 7
+    },
+    "skyscraper": {
+      "n": 96,
+      "nonorthogonal_rate": 0.438,
+      "concave_rate": 0.208,
+      "outside_parser_scope_rate": 0.521,
+      "median_corners": 3
+    },
+    "door": {
+      "n": 259,
+      "nonorthogonal_rate": 0.402,
+      "concave_rate": 0.027,
+      "outside_parser_scope_rate": 0.405,
+      "median_corners": 3
+    },
+    "square": {
+      "n": 341,
+      "nonorthogonal_rate": 0.317,
+      "concave_rate": 0.029,
+      "outside_parser_scope_rate": 0.317,
+      "median_corners": 3
+    },
+    "triangle": {
+      "n": 44,
+      "nonorthogonal_rate": 0.932,
+      "concave_rate": 0.136,
+      "outside_parser_scope_rate": 0.932,
+      "median_corners": 3
+    }
+  },
+  "overall": {
+    "n": 1330,
+    "nonorthogonal_rate": 0.526,
+    "concave_rate": 0.308,
+    "outside_parser_scope_rate": 0.586
+  },
+  "detector_calibration": {
+    "floor_categories": [
+      "square",
+      "door"
+    ],
+    "detector_false_positive_rate": 0.354,
+    "adjusted_nonorthogonal_rate": {
+      "house": 0.289,
+      "castle": 0.363,
+      "skyscraper": 0.084,
+      "door": 0.048,
+      "square": 0.0,
+      "triangle": 0.578
+    },
+    "note": "square/door는 의도상 직교이므로 그 비직교율은 검출기 오탐률이다. 코너 중앙값이 4가 아닌 3인 것이 근거 — 폐합 코너를 놓친다. 보정값은 하한 추정이며, 오목(concave) 판정은 방향 부호 기반이라 이 보정과 무관하다."
+  },
+  "note": "해결이 아니라 한계를 아는 것이 목적. 계획 §2 '직교 그리드 + 축 회전으로 제한'의 근거. 비직교(삼각 지붕 계열)와 오목 노치(2H 폐기 계열)를 함께 센다."
+}
