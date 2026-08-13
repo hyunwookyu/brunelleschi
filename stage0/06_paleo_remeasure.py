@@ -9,6 +9,7 @@ from __future__ import annotations
 import json, sys, importlib.util
 from pathlib import Path
 import numpy as np
+from common.inknoise import render_for_grade   # 실획 기반 노이즈(지시 6)
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -32,7 +33,7 @@ def f1_by_grade(method, n=250, seed=1):
         sg.rng = np.random.default_rng(seed); fs = []; gp = QD[grade]
         for _ in range(n):
             poly = sg.gen_polygon(); tg = sg.truth_graph(poly)
-            st = sg.render_noisy(poly, gp["jitter_ratio"], gp["angle_sigma_deg"], gp["closure_gap_ratio"])
+            st = render_for_grade(poly, grade, sg.rng)          # 기준선 재수립(지시 6)
             g = parse_strokes([np.array(s) for s in st], TUNED, method=method)
             tinv = Graph(lines=tg.lines, constraints={c for c in tg.constraints if c[0] in sg.CANON})
             rinv = Graph(lines=g.lines, constraints={c for c in g.constraints if c[0] in sg.CANON})

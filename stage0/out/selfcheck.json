@@ -1,5 +1,5 @@
 {
-  "n_flags": 64,
+  "n_flags": 69,
   "flags": [
     {
       "path": "aspect_priors.json:2F_a_right_angle.rectangular.coarse.hold_rate",
@@ -30,6 +30,21 @@
       "path": "aspect_priors.json:2F_a_right_angle.irregular.precise.hold_rate",
       "val": 1.0,
       "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "axis_probe.json:reproj_rel_diff_between_two_solutions.median",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "axis_probe.json:reproj_rel_diff_between_two_solutions.p90",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "axis_probe.json:reproj_rel_diff_between_two_solutions.max",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "dimension_rate.json:design_corpus.per_video_rate_median",
@@ -75,6 +90,11 @@
       "path": "failure_gate.json:viewdist_gates.viewdist_invalid_only.precision",
       "val": 0.0,
       "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "ink_noise_sessions.json:by_input_kind.mouse.hf_turn_deg_median",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "massvoid_eval.json:cases.frontal_near.correct",
@@ -199,6 +219,11 @@
       "path": "score.json:camera_fit_error.precise.approx_rate",
       "val": 0.0,
       "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "score.json:multiplex.volume_count_exact_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "score.json:multiplex.all_named_rate",
@@ -328,13 +353,16 @@
   ],
   "scanned": [
     "aspect_priors.json",
+    "axis_probe.json",
     "corner_error.json",
+    "corner_error_sessions.json",
     "decompose_2H.json",
     "dimension_rate.json",
     "external_validation.json",
     "failure_decomp.json",
     "failure_gate.json",
     "ink_noise_model.json",
+    "ink_noise_sessions.json",
     "massvoid_eval.json",
     "metric_audit.json",
     "mouse_real_vs_synth.json",

@@ -180,3 +180,13 @@ def load_model() -> dict:
         raise FileNotFoundError(
             f"{MODEL_PATH} 없음 — `python stage0/10_ink_noise_model.py` 먼저 실행")
     return json.loads(MODEL_PATH.read_text(encoding="utf-8"))["grades"]
+
+
+def render_for_grade(poly, grade: str, rng, one_stroke: bool = True):
+    """등급명으로 바로 획 생성 — 구 `sg.render_noisy(poly, jitter_ratio, ...)`의 대체 진입점.
+
+    구 호출부는 `noise_params[grade]`의 세 스칼라를 넘겼는데, 그 `jitter_ratio`가
+    **전체획 straightness를 점별 지터로 쓴** 단위 혼동이었다(V-5c에서 폐기).
+    여기서는 실획 기반 4성분 모델을 쓴다. 호출부는 등급명만 넘기면 된다.
+    """
+    return render_ink(poly, load_model()[grade], rng, one_stroke=one_stroke)

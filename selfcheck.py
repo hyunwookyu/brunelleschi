@@ -119,7 +119,8 @@ def main():
     prev_path = outdir / "score_prev.json"
     prev = json.loads(prev_path.read_text(encoding="utf-8")) if prev_path.exists() else None
 
-    skip = {"score_prev.json", "selfcheck.json"}
+    # 보존용 아카이브(폐기 기준선)는 스캔 대상이 아니다 — 살아있는 측정만 본다.
+    skip = {"score_prev.json", "selfcheck.json", "score_baseline_deprecated.json"}
     flags = []
     for p in sorted(outdir.glob("*.json")):
         if p.name in skip:

@@ -30,6 +30,7 @@ from __future__ import annotations
 import json, sys, importlib.util
 from pathlib import Path
 import numpy as np
+from common.inknoise import render_for_grade   # 실획 기반 노이즈(지시 6)
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "stage0" / "out"
@@ -54,7 +55,7 @@ def m_normalize(n=150) -> dict | None:
         gp = QD[grade]; fs = []
         for _ in range(n):
             poly = sg.gen_polygon(); tg = sg.truth_graph(poly)
-            st = sg.render_noisy(poly, gp["jitter_ratio"], gp["angle_sigma_deg"], gp["closure_gap_ratio"])
+            st = render_for_grade(poly, grade, sg.rng)          # 기준선 재수립(지시 6): 실획 기반 모델
             g = parse_strokes([__import__("numpy").array(s) for s in st], tuned, method="paleo")
             ti = Graph(lines=tg.lines, constraints={c for c in tg.constraints if c[0] in sg.CANON})
             ri = Graph(lines=g.lines, constraints={c for c in g.constraints if c[0] in sg.CANON})
@@ -90,7 +91,7 @@ def m_noise_model() -> dict | None:
     synth = []
     for _ in range(400):
         poly = sg.gen_polygon()
-        strokes = sg.render_noisy(poly, gp["jitter_ratio"], gp["angle_sigma_deg"], gp["closure_gap_ratio"])
+        strokes = render_for_grade(poly, "precise", sg.rng)     # 기준선 재수립(지시 6)
         # 폴리곤 변 단위로 자른 획의 직진성
         for a, b in zip(poly, np.roll(poly, -1, 0)):
             pass

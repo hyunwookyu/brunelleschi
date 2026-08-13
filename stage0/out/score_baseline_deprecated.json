@@ -1,25 +1,25 @@
 {
   "normalize_holdout": {
     "precise": {
-      "f1": 0.9524,
+      "f1": 0.7146,
       "method": "paleo",
       "parseable": true
     },
     "medium": {
-      "f1": 0.9386,
+      "f1": 0.6208,
       "method": "paleo",
       "parseable": true
     },
     "coarse": {
-      "f1": 0.9301,
+      "f1": 0.6609,
       "method": "paleo",
       "parseable": true
     }
   },
   "noise_model_ks": {
-    "ks_stat": 0.3595,
+    "ks_stat": 0.3449,
     "p_value": 0.0,
-    "synth_median": 0.2154,
+    "synth_median": 0.1857,
     "real_median": 0.1732,
     "n_synth": 400,
     "n_real": 2899,
@@ -36,46 +36,46 @@
     "note": "발화 anchors 대조는 stage2에서 완결(§6.5)."
   },
   "normalize_iou": {
-    "iou_median": 0.9409,
-    "iou_p10": 0.9172,
+    "iou_median": 0.913,
+    "iou_p10": 0.8489,
     "n": 60,
     "parseable_rate": 1.0,
     "note": "복원 폴리곤 vs truth 면적 IoU (스케일정규화 후, precise 등급)."
   },
   "anchor_dim_error": {
-    "depth_rel_error_median": 0.0242,
-    "depth_rel_error_p90": 0.0612,
+    "depth_rel_error_median": 0.0459,
+    "depth_rel_error_p90": 0.0836,
     "n": 40,
     "note": "width 앵커 주입 후 depth 복원 상대오차 = 폴리곤 종횡비 복원 오차."
   },
   "camera_fit_error": {
     "precise": {
-      "fit_error_median": 0.0045,
-      "fit_error_p95": 0.012,
+      "fit_error_median": 0.0051,
+      "fit_error_p95": 0.0127,
       "approx_rate": 0.0
     },
     "medium": {
-      "fit_error_median": 0.0131,
-      "fit_error_p95": 0.0677,
-      "approx_rate": 0.033
+      "fit_error_median": 0.0138,
+      "fit_error_p95": 0.0783,
+      "approx_rate": 0.025
     },
     "coarse": {
-      "fit_error_median": 0.0145,
-      "fit_error_p95": 0.0877,
-      "approx_rate": 0.05
+      "fit_error_median": 0.0152,
+      "fit_error_p95": 0.0779,
+      "approx_rate": 0.033
     }
   },
   "multiplex": {
-    "volume_count_exact_rate": 1.0,
+    "volume_count_exact_rate": 0.95,
     "all_named_rate": 1.0,
     "n": 20
   },
   "relations": {
     "all_ir_valid_rate": 1.0,
-    "avg_relations": 3.87,
+    "avg_relations": 2.0,
     "type_distribution": {
-      "separated": 30,
-      "aligned": 28
+      "separated": 23,
+      "aligned": 7
     },
     "note": "다중 픽스처(분리 배치) → separated/aligned 위주. adjacent/penetrate는 인접·겹침 배치에서."
   },

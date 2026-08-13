@@ -22,6 +22,7 @@ from __future__ import annotations
 import json, sys, importlib.util
 from pathlib import Path
 import numpy as np
+from common.inknoise import render_for_grade   # 실획 기반 노이즈(지시 6)
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -69,8 +70,7 @@ def run(grade_params, tol, n=250, seed=0):
     for _ in range(n):
         poly = sg.gen_polygon()
         tg = sg.truth_graph(poly)
-        strokes = sg.render_noisy(poly, grade_params["jitter_ratio"],
-                                  grade_params["angle_sigma_deg"], grade_params["closure_gap_ratio"])
+        strokes = render_for_grade(poly, "precise", sg.rng)  # 기준선 재수립(지시 6)
         # full
         gf = parse_strokes([np.array(s) for s in strokes], tol)
         acc["full"].append(_score(tg, gf))

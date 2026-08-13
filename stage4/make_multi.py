@@ -9,30 +9,20 @@ sys.path.insert(0, str(ROOT))
 
 
 def _noisy_poly(poly, gp, rng):
-    pts = []
-    t = 0.0
-    n = len(poly)
-    for i in range(n):
-        p0, p1 = poly[i], poly[(i + 1) % n]
-        L = float(np.hypot(*(p1 - p0)))
-        k = max(3, int(L / 6))
-        ts = np.linspace(0, 1, k)
-        base = p0[None] * (1 - ts[:, None]) + p1[None] * ts[:, None]
-        d = (p1 - p0) / (L + 1e-9); nrm = np.array([-d[1], d[0]])
-        wob = rng.normal(0, gp["jitter_ratio"] * L, k); wob[0] = wob[-1] = wob[0] * 0.3
-        th = math.radians(rng.normal(0, gp["angle_sigma_deg"]))
-        Rm = np.array([[math.cos(th), -math.sin(th)], [math.sin(th), math.cos(th)]])
-        c = base.mean(0); base = (base - c) @ Rm.T + c
-        seg = base + nrm[None] * wob[:, None]
-        for q in seg:
-            t += rng.uniform(6, 14)
-            pts.append([round(float(q[0]), 2), round(float(q[1]), 2), round(t, 1), 0.6])
+    """기준선 재수립(지시 6): 구 jitter_ratio 모델 폐기 → 실획 기반 4성분 모델.
+    gp는 등급명 문자열을 받는다(구 시그니처의 dict는 더 이상 쓰지 않는다)."""
+    from common.inknoise import render_for_grade
+    grade = gp if isinstance(gp, str) else "precise"
+    stroke = render_for_grade(np.asarray(poly, float), grade, rng)[0]
+    pts, t = [], 0.0
+    for q in stroke:
+        t += rng.uniform(6, 14)
+        pts.append([round(float(q[0]), 2), round(float(q[1]), 2), round(t, 1), 0.6])
     return pts
 
 
 def make(seed=0, grade="precise"):
-    qd = json.loads((ROOT / "stage0" / "out" / "quickdraw_grades.json").read_text(encoding="utf-8"))
-    gp = qd["noise_params"][grade]
+    gp = grade      # 등급명 문자열(실획 기반 모델)
     rng = np.random.default_rng(seed)
     # 3개 볼륨: 분리된 위치 + 라벨
     specs = [   # 분명한 간격(>100)으로 분리 배치

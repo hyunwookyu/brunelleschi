@@ -13,8 +13,6 @@ sys.path.insert(0, str(ROOT))
 
 
 def make(kind="L", grade="precise", seed=2, scale=1.0):
-    qd = json.loads((ROOT / "stage0" / "out" / "quickdraw_grades.json").read_text(encoding="utf-8"))
-    gp = qd["noise_params"][grade]
     r = np.random.default_rng(seed)
     W, H = 380 * scale, 300 * scale
     ox, oy = 120, 120
@@ -25,24 +23,15 @@ def make(kind="L", grade="precise", seed=2, scale=1.0):
         v = [(0, 0), (W, 0), (W, H * b), (W * a, H * b), (W * a, H), (0, H)]
     poly = np.array(v, float) + (ox, oy)
 
+    # 기준선 재수립(지시 6): 구 jitter_ratio 모델 폐기 → 실획 기반 4성분 모델.
+    from common.inknoise import render_for_grade
+    stroke = render_for_grade(poly, grade, r)[0]
     pts = []
     t = 0.0
-    for i in range(len(poly)):
-        p0, p1 = poly[i], poly[(i + 1) % len(poly)]
-        L = float(np.hypot(*(p1 - p0)))
-        k = max(3, int(L / 6))
-        ts = np.linspace(0, 1, k)
-        base = p0[None] * (1 - ts[:, None]) + p1[None] * ts[:, None]
-        d = (p1 - p0) / (L + 1e-9); nrm = np.array([-d[1], d[0]])
-        wob = r.normal(0, gp["jitter_ratio"] * L, k); wob[0] = wob[-1] = wob[0] * 0.3
-        th = math.radians(r.normal(0, gp["angle_sigma_deg"]))
-        Rm = np.array([[math.cos(th), -math.sin(th)], [math.sin(th), math.cos(th)]])
-        c = base.mean(0); base = (base - c) @ Rm.T + c
-        seg = base + nrm[None] * wob[:, None]
-        for q in seg:
-            t += r.uniform(6, 14)
-            pts.append([round(float(q[0]), 2), round(float(q[1]), 2), round(t, 1),
-                        round(float(r.uniform(0.4, 0.8)), 2)])
+    for q in stroke:
+        t += r.uniform(6, 14)
+        pts.append([round(float(q[0]), 2), round(float(q[1]), 2), round(t, 1),
+                    round(float(r.uniform(0.4, 0.8)), 2)])
     cap = {"frame": "fixture", "w": 640, "h": 520,
            "strokes": [{"points": pts, "pen": "mass", "frame": "fixture"}],
            "_truth_poly": poly.tolist(), "_grade": grade, "_kind": kind}
