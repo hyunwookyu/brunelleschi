@@ -6,13 +6,13 @@ import { IncrementalParser } from "./incremental.js";
 let parser: IncrementalParser | null = null;
 
 type Msg =
-  | { type: "init"; w: number; h: number; frame?: string }
+  | { type: "init"; w: number; h: number; frame?: string }   // 처리 후 {type:"ready"} 회신
   | { type: "stroke"; stroke: Stroke; t0: number }   // t0 = 획 종료 시각(지연 계측)
   | { type: "reset" };
 
 self.onmessage = (e: MessageEvent<Msg>) => {
   const m = e.data;
-  if (m.type === "init") { parser = new IncrementalParser(m.w, m.h, 0.05, m.frame ?? ""); return; }
+  if (m.type === "init") { parser = new IncrementalParser(m.w, m.h, 0.05, m.frame ?? ""); (self as any).postMessage({ type: "ready" }); return; }
   if (m.type === "reset") { parser = parser ? new IncrementalParser((parser as any).w, (parser as any).h) : null; return; }
   if (m.type === "stroke" && parser) {
     parser.addStroke(m.stroke);

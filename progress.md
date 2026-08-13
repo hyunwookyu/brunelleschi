@@ -219,11 +219,33 @@ relate.ts bbox 근사 발산 정량화: L자·凹자·계단형 8케이스에서
 | V-1 파서 TS 포팅 (Python parity) | **완료** — 전체 파서 레이어 이식. geometry/paleosketch/normalize(confidence)/multiplex/relate/tentative + 카메라(자체 Jacobi SVD, fit_error<1e-6) + 발화규칙+앵커(S2). **TS 14/14, typecheck 클린**. web/src/parser/, web/test/ |
 | V-2 Three.js 뷰어 | **완료(실 렌더)** — sceneBuilder+sceneDiff(브라우저독립) + `threeAdapter.ts`(압출·confidence재질·SceneManager diff/dispose)+`main.ts`+`index.html`. WebGL 렌더 **픽셀리드백 검증**(4오브젝트, 14.5%채움, 45색버킷=다볼륨), 탑뷰/시점복귀 버튼 동작(§3.3). TS 30/30, three+vite. 잔여: 카메라정합 적용·배경오버레이(투시 정합 후, V-3+). |
 | V-3 실시간(워커·증분·디바운스) | **완료** — `incremental.ts`(획단위 증분, multiplex union-find 재현, 영향그룹만 재파싱), **하드게이트 V-b 검증**(증분==전체: footprint·confidence·relations 일치, 브리징병합·순서무관, 획순서 보존이 핵심). `parserWorker.ts`(§2.3 Web Worker). 지연 §8: 단일 p95<30ms, 8볼륨증분<80ms. TS 37/37. 디바운스는 뷰어 통합(V-4 마우스 드로잉)서. |
-| V-4 화면(분할·프레임·터치) | 대기 |
+| V-4 화면(분할·프레임·마우스) | **완료** — 분할 레이아웃(드래그)·평면/투시 탭·마우스 드로잉 루프·수동 치수·투시 안내·**end-to-end 지연 측정**. 아래 상세. TS 48/48, Python 44/44 회귀 없음. |
 | V-5 잉크 보강(팜리젝·coalesced·tilt·seq) | 대기 |
 | V-6 발화(MediaRecorder·부분전사·번역UI) | 대기 |
 | V-7 저장·내보내기(IndexedDB·4종·로깅) | 대기 |
 | V-8 통합검증(Playwright S1~S10·성능) | 대기 |
+
+### V-4 상세 (2026-08-13)
+**산출**: `web/src/ui/app.ts`(오케스트레이터), `web/src/capture/inkCanvas.ts`(Pointer Events, 마우스 1급),
+`web/src/ui/viewer.ts`(Three 렌더 루프+레이캐스트 픽+동기 렌더 측정), `web/src/ui/manualAnchor.ts`(수동 치수),
+`web/src/ui/footprintClass.ts`(투시 신뢰 판정), `web/index.html`(분할 레이아웃). 테스트 `manual_anchor`(4)·`footprint_class`(6)·`e2e_compute_perf`(1).
+
+- **§3.1 분할 레이아웃**: capture|3D 그리드, 6:4 기본, 스플리터 드래그. **§3.2 평면/투시 탭**(독립 획 버퍼, 같은 IR). 투시 프레임엔 평면 폴리곤을 옅은 파선으로 투영(정합 힌트).
+- **§3.3 마우스 1급**: pointerType 'mouse'/'pen'만 잉크(터치=제스처, V-5). OrbitControls 궤도/팬/줌 + 시점복귀/탑뷰.
+- **추가 a 수동 치수**(2J 근거, 마우스엔 발화 없음 → 유일 앵커 유입구): 볼륨 클릭(레이캐스트)→치수 패널→숫자→`ManualAnchorStore`가 **발화 앵커와 동일 `applyOps` 전파**. id는 증분 드로잉서 이동 가능 → 앵커를 **centroid로 저장·재파싱마다 최근접 볼륨 재매칭**(6단계 id-이동 리스크 방어). 실 DOM 흐름 검증: 드로잉→픽→패널→폭12m→footprint 12.00 스케일(비례 전파).
+- **추가 b 투시 신뢰 불가 안내**(§3.8 개정): footprint 분류(직사각/L/complex, 닫힌 링 중복정점 정규화). 직사각=투시 단독 신뢰(배너 숨김), L·비직교=평면/치수 안내 배너. 실 검증: 직사각→none, L자→block.
+- **버그 2건 잡음(자기검증)**: ① footprintClass가 파서의 **닫는 중복정점**(footprintFromLines: 첫=끝)을 안 세어 직사각을 complex로 오분류 → 링 정규화+실출력형 테스트 추가. ② hidden 탭에서 렌더 루프 정지 시 카메라 matrixWorld 미갱신 → 픽 실패 → pick()에서 강제 갱신.
+
+**획→3D end-to-end 지연 (판정 A, §8) — 측정**
+| 구간 | 1볼륨 | 3볼륨 | 8볼륨 | 방법 |
+|---|---|---|---|---|
+| **compute p95**(파서→IR→앵커→씬→지오메트리) | 1.41ms | 1.09ms | 1.97ms | Node 결정론(스로틀 무관), `e2e_compute_perf` |
+| compute p50 | 0.53 | 0.72 | 1.21 | 〃 |
+| 브라우저 GPU포함 p95(웜, 증분) | — | ~0.9 | ~1.8 | WebGL 픽셀리드백 검증(345k px), `__bench` |
+
+- **판정 A(p95<150ms): 통과(대폭 여유).** compute 전 구간 <2ms, 볼륨수 스케일 평탄(1↔8 무증가=증분성). §8 하위예산 전부 충족(파서<30/80, 씬diff<20).
+- **rAF 스케줄 몫 미포함**: 대화식 경로는 rAF 콜백까지 측정하나, 측정 환경(브라우저 pane 비표시)에서 rAF가 완전 정지 → 벤치는 **동기 렌더 경로**로 GPU 포함 측정. rAF 대기(≤16ms/1프레임@60fps, §8 잉크렌더 예산 내)를 더해도 p95 추정 <35ms « 150ms. **rAF 포함 전경 측정은 V-8 Playwright로 이관**(지시서 §7.1과 정합).
+- 관측 주의: hidden 탭에서 N=1 벤치가 ~14ms로 튀나 `finish()` 제거해도 동일 → GPU 아님, **hidden 탭 첫 워커메시지 스로틀 아티팩트**(연속 획은 같은 틱 편승 <2ms). Node compute 측정이 이 아티팩트 없는 신뢰값.
 
 ---
 
