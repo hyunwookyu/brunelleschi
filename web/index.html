@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>SKETCH2SPACE — V-2 뷰어</title>
+  <style>
+    *{margin:0;box-sizing:border-box;-webkit-user-select:none;user-select:none}
+    html,body{height:100%;font:14px system-ui,sans-serif;background:#f6f6f6;color:#111;overflow:hidden}
+    #app{position:absolute;inset:0 0 44px 0;touch-action:none}
+    #bar{position:absolute;left:0;right:0;bottom:0;height:44px;display:flex;gap:8px;align-items:center;
+         padding:0 10px;background:#fff;border-top:1px solid #ddd}
+    button{height:30px;padding:0 12px;border:1px solid #ccc;background:#fff;border-radius:6px;cursor:pointer}
+    #stat{color:#555;font-size:12px;margin-left:auto}
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="bar">
+    <button id="home">시점 복귀</button>
+    <button id="top">탑뷰</button>
+    <small id="stat"></small>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
