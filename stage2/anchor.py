@@ -58,6 +58,16 @@ def _apply_dimension(ir: IR, target: str, prop: str, value: float, tol: float,
     if vol is None:
         ir.unresolved.append(f"{target}: 알 수 없는 volume (anchor {prop}={value})")
         return
+    # 축 라벨 모호(지시 1-ter B): 투시 복원 볼륨은 폭/깊이를 역수까지만 정한다.
+    # "폭 12미터"의 폭이 어느 축인지 시스템이 모르므로 **추정하지 않고 기록**한다.
+    # height는 축 모호가 없다(화면 수직, 7.7절) → 예외.
+    if prop in DIM_PROPS and isinstance(vol.axis, dict) and vol.axis.get("ambiguous"):
+        from stage_perspective.uncertainty import axis_unresolved_entry
+        msg = axis_unresolved_entry(target, vol.axis, vol.label)
+        note = f"{target}: '{prop} {value}' 적용 — 축 라벨 미확정 상태에서 잠정 축 사용. 확인 필요"
+        if msg and msg not in ir.unresolved:
+            ir.unresolved.append(msg)
+        ir.notes.append(Note(target=target, text=note))
     existing = _find_anchor(ir, target, prop)
 
     def commit(v: float, t: float) -> None:

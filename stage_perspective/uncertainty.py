@@ -100,3 +100,25 @@ def unresolved_entry(vol_id: str, r: dict) -> str | None:
         return f"{vol_id}: 종횡비 복원 실패(투시 단독) — 치수 또는 추가 뷰 필요"
     return (f"{vol_id}: 종횡비 미확정 "
             f"[{r['lo']}~{r['hi']}], 상대폭 {r['rel_width']:.2f} — 치수 또는 추가 뷰 필요")
+
+
+# ---------------------------------------------------------------- 축 라벨 (지시 1-ter B)
+
+def axis_unresolved_entry(vol_id: str, axis: dict | None, label: str = "") -> str | None:
+    """축 라벨 모호를 unresolved 문자열로. 기하가 결정하지 못하므로 **추정하지 않는다**.
+
+    근거: 투시 복원은 종횡비를 역수까지만 정한다(8way 대응 탐색이 두 해를 동점으로 본다).
+    실측 뒤바뀜 **28.75%**, 그 경우 평면 IoU 0.527(정상 0.838) — 2F 최대 식별 오차원이다.
+    라벨만의 문제가 아니라 세계 좌표에서 90° 회전한 형태가 나온다.
+    """
+    if not isinstance(axis, dict) or not axis.get("ambiguous"):
+        return None
+    a = axis.get("aspect"); alt = axis.get("aspect_alt")
+    name = label or vol_id
+    return (f"{name}: 폭/깊이 축 라벨 미확정 — 종횡비 {a:.2f} 또는 {alt:.2f}(역수). "
+            f"어느 변이 폭인지는 투시 기하가 결정하지 못한다(치수 발화·수동 지정·추가 뷰 필요)")
+
+
+def swap_axes(footprint) -> list[list[float]]:
+    """축 뒤바꾼 대안 해 — footprint x/y 교환. 두 해를 모두 보여줄 때 쓴다(지시 1-ter B c)."""
+    return [[float(y), float(x)] for x, y in footprint]

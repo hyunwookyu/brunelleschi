@@ -41,7 +41,14 @@ def recover_aspect_rightangle(image4: np.ndarray, img_size, a_lo=0.2, a_hi=5.0, 
             lo, c, fc = c, d, fd; d = lo + gr * (hi - lo); fd = err(d)
     a = (lo + hi) / 2
     res = fit_camera(rect(a), image4, img_size)
-    return {"aspect": float(a), "fit_error": float(res.fit_error) if res.ok else None, "ok": res.ok, "cam": res}
+    # 축 라벨 모호(지시 1-ter B): rect(a)와 rect(1/a)는 90° 회전한 같은 도형이므로
+    # 8way 대응 탐색이 두 해를 거의 동점으로 본다. 어느 변을 '폭'이라 부를지는
+    # 기하가 정하지 못한다 → 고른 해와 대안을 함께 반환하고, 추정하지 않는다.
+    # 실측: 뒤바뀜 28.75%, 그 경우 IoU 0.527(정상 0.838) — 2F 최대 식별 오차원.
+    return {"aspect": float(a), "aspect_alt": float(1.0 / a) if a > 1e-9 else None,
+            "perm": (list(res.perm) if getattr(res, "perm", None) is not None else None),
+            "axis_ambiguous": True,
+            "fit_error": float(res.fit_error) if res.ok else None, "ok": res.ok, "cam": res}
 
 
 def recover_plane_rightangle(image4: np.ndarray, img_size) -> dict:
@@ -52,7 +59,10 @@ def recover_plane_rightangle(image4: np.ndarray, img_size) -> dict:
     res = rec["cam"]
     H = homography_from_pose(res.K, res.R, res.tvec)
     recovered = inverse_project_plane(H, image4[res.perm])
-    return {"ok": True, "aspect": rec["aspect"], "fit_error": rec["fit_error"], "recovered_plane": recovered}
+    return {"ok": True, "aspect": rec["aspect"], "fit_error": rec["fit_error"],
+            "recovered_plane": recovered,
+            "axis": {"ambiguous": True, "aspect": rec["aspect"],
+                     "aspect_alt": rec["aspect_alt"], "perm": rec["perm"]}}
 
 
 # --- 평가: 직사각 vs 비직교 truth, 등급별, 직각가정 IoU ---

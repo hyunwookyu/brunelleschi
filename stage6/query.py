@@ -50,6 +50,17 @@ def output_signature(ir: IR) -> float:
     return tot
 
 
+def shape_signature(ir: IR) -> float:
+    """형태 서명 — 세계 X방향 폭의 합. **90° 축 뒤바뀜에 민감**하다.
+    부피 서명(output_signature)은 면적×높이라 축이 뒤바뀌어도 불변이므로 축 라벨 모호를
+    영향도 0으로 보는 맹점이 있었다(지시 1-ter B에서 발견. plane_iou 둔감성과 같은 종류)."""
+    tot = 0.0
+    for v in ir.volumes:
+        xs = [p[0] for p in v.footprint]
+        tot += (max(xs) - min(xs)) if xs else 0.0
+    return tot
+
+
 def candidates(ir: IR) -> list[dict]:
     """미결정 항목 + 두 후보값(lo/hi). 분기 영향도 계산 대상."""
     items = []
@@ -60,6 +71,12 @@ def candidates(ir: IR) -> list[dict]:
         if v.height is None:                   # 무차원 높이(§3.5)
             items.append({"kind": "height", "target": v.id, "lo": 0.4, "hi": 1.6,
                           "question": f"{v.label or v.id} 높이?"})
+    for v in ir.volumes:
+        # 축 라벨 모호(지시 1-ter B): 투시 복원은 폭/깊이를 역수까지만 정한다.
+        # 기하가 결정 못 하므로 추정 금지 → 질의 대상. lo/hi = 원해/뒤바꾼 해.
+        if isinstance(v.axis, dict) and v.axis.get("ambiguous"):
+            items.append({"kind": "axis", "target": v.id, "lo": 0.0, "hi": 1.0,
+                          "question": f"{v.label or v.id}: 폭과 깊이 중 어느 쪽이 긴 변입니까?"})
     for i, o in enumerate(ir.openings):
         for prop in o.unresolved_props():      # 개구부 pos/w/h 미정(§3.7)
             lo, hi = (0.1, 0.9) if prop == "pos" else (0.05, 0.25)
@@ -77,6 +94,12 @@ def _apply(ir: IR, item: dict, val: float) -> IR:
         for v in j.volumes:
             if v.id == item["target"]:
                 v.height = val * (_poly_area(v.footprint) ** 0.5)  # 특성길이 배수
+    elif item["kind"] == "axis":
+        # hi(=1.0)면 축을 뒤바꾼 해(footprint x/y 교환), lo(=0.0)면 그대로.
+        if val >= 0.5:
+            for v in j.volumes:
+                if v.id == item["target"]:
+                    v.footprint = [[y, x] for x, y in v.footprint]
     elif item["kind"].startswith("opening_"):
         prop = item["kind"].split("_", 1)[1]
         setattr(j.openings[item["idx"]], prop, val)
@@ -84,12 +107,17 @@ def _apply(ir: IR, item: dict, val: float) -> IR:
 
 
 def branch_impact(ir: IR, item: dict) -> float:
-    """항목을 lo/hi로 풀어 산출물 상대차. 결정론적."""
-    slo = output_signature(_apply(ir, item, item["lo"]))
-    shi = output_signature(_apply(ir, item, item["hi"]))
-    smid = output_signature(_apply(ir, item, 0.5 * (item["lo"] + item["hi"])))
-    denom = abs(smid) + 1e-9
-    return abs(shi - slo) / denom
+    """항목을 lo/hi로 풀어 산출물 상대차. 결정론적.
+    **부피 서명과 형태 서명 중 큰 쪽**을 쓴다 — 부피만 보면 축 뒤바뀜(면적 불변)을
+    영향도 0으로 놓치기 때문이다(지시 1-ter B)."""
+    lo_ir = _apply(ir, item, item["lo"])
+    hi_ir = _apply(ir, item, item["hi"])
+    mid_ir = _apply(ir, item, 0.5 * (item["lo"] + item["hi"]))
+    out = 0.0
+    for sig in (output_signature, shape_signature):
+        slo, shi, smid = sig(lo_ir), sig(hi_ir), sig(mid_ir)
+        out = max(out, abs(shi - slo) / (abs(smid) + 1e-9))
+    return out
 
 
 def plan_queries(ir: IR, threshold: float = ASK_THRESHOLD) -> dict:

@@ -55,6 +55,11 @@ class Volume:
     height_src: str = "unset"             # utterance | handwritten | vertical_stroke | unset
     confidence: float = 1.0
     label: str = ""                       # 명명(§7 4단계). 중첩 필드 — 루트 키 수 불변(§13)
+    # 투시 복원 시 축 라벨 모호(지시 1-ter B). 중첩 필드 — 루트 키 수 불변(§13).
+    # 8way 대응 탐색이 두 해(a, 1/a) 중 하나를 임의로 고른다. 기하는 어느 축이 '폭'인지
+    # 결정하지 못하므로 추정하지 않고 기록만 하고 unresolved에 올린다.
+    # {"ambiguous": bool, "aspect": float, "aspect_alt": float, "perm": int|None}
+    axis: dict | None = None
 
     def validate(self) -> list[str]:
         e = []

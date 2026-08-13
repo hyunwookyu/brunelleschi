@@ -62,3 +62,22 @@
 
 ## 필드 현황 (2026-08-12)
 루트 7키: volumes/anchors/views/unresolved/notes/relations/openings. 여유 5. 스키마 하락 없음.
+
+## 지시 1-ter B — Volume.axis 추가 (중첩), 루트 7키 불변 (2026-08-14)
+
+- **`Volume.axis: dict | None = None`** 추가. **중첩 필드이므로 루트 최상위 키는 7 그대로**(§13).
+  기본값 `None` — 기존 동작(평면 입력 경로) 완전 보존.
+- 내용: `{"ambiguous": bool, "aspect": float, "aspect_alt": float, "perm": list|None}`
+- 근거: 투시 복원(`recover_aspect_rightangle`)은 8way 대응 탐색으로 종횡비를 정하는데,
+  `rect(a)`와 `rect(1/a)`는 90° 회전한 같은 도형이라 **두 해가 거의 동점**이다.
+  어느 변을 '폭'이라 부를지는 기하가 결정하지 못한다.
+- 실측(medium, n=250): 뒤바뀜 **28.75%**, 그 경우 평면 IoU **0.527**(정상 0.838).
+  라벨만의 문제가 아니라 세계 좌표에서 90° 회전한 형태가 나온다 → 2F 최대 식별 오차원.
+- 처리: **추정하지 않는다.** 고른 해와 대안을 함께 기록하고 `unresolved`에 올린 뒤
+  §6 질의 대상으로 삼는다(`stage6/query.py` kind="axis").
+- 부수 수정: §6 `branch_impact`가 부피 서명만 보아 축 뒤바뀜(면적 불변)을 영향도 0으로
+  놓치고 있었다 → `shape_signature`(세계 X폭 합) 병용.
+
+## 필드 현황 (2026-08-14)
+루트 7키: volumes/anchors/views/unresolved/notes/relations/openings. 여유 5. 스키마 하락 없음.
+Volume 중첩 필드: id/footprint/base/height/height_src/confidence/label/**axis**.
