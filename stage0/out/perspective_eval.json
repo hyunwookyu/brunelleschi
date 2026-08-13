@@ -2,43 +2,43 @@
   "spec": "트랙2 2C — 투시 단독 복원 품질 경계(노이즈=등급 프록시). 전부 측정값.",
   "note": "2A 정답 대조(plane_iou) + 무정답 지표(reproj/ortho). 작도 영상 이상선 → 노이즈 주입으로 프리핸드 근사.",
   "by_grade": {
-    "L1_ruler": {
-      "noise_px": 2.0,
+    "coarse": {
+      "corner_err_ratio": 0.0421,
       "n": 200,
       "fail_rate": 0.0,
-      "plane_iou_median": 0.9893,
-      "plane_iou_p10": 0.9787,
-      "camera_fit_error_median": 0.0014,
-      "camera_fit_error_p95": 0.0026,
-      "reproj_error_median": 0.0014,
-      "ortho_residual_median_deg": 6.4037
+      "plane_iou_median": 0.9401,
+      "plane_iou_p10": 0.8625,
+      "camera_fit_error_median": 0.0072,
+      "camera_fit_error_p95": 0.0207,
+      "reproj_error_median": 0.0072,
+      "ortho_residual_median_deg": 6.883
     },
-    "L2_freehand": {
-      "noise_px": 8.0,
+    "medium": {
+      "corner_err_ratio": 0.0269,
       "n": 200,
       "fail_rate": 0.0,
-      "plane_iou_median": 0.9619,
-      "plane_iou_p10": 0.9258,
-      "camera_fit_error_median": 0.0046,
-      "camera_fit_error_p95": 0.0101,
-      "reproj_error_median": 0.0046,
-      "ortho_residual_median_deg": 6.2024
+      "plane_iou_median": 0.9585,
+      "plane_iou_p10": 0.9132,
+      "camera_fit_error_median": 0.0052,
+      "camera_fit_error_p95": 0.0132,
+      "reproj_error_median": 0.0052,
+      "ortho_residual_median_deg": 6.047
     },
-    "L3_concept": {
-      "noise_px": 20.0,
+    "precise": {
+      "corner_err_ratio": 0.0168,
       "n": 200,
       "fail_rate": 0.0,
-      "plane_iou_median": 0.9418,
-      "plane_iou_p10": 0.8443,
-      "camera_fit_error_median": 0.0073,
-      "camera_fit_error_p95": 0.0233,
-      "reproj_error_median": 0.0073,
-      "ortho_residual_median_deg": 6.9534
+      "plane_iou_median": 0.9665,
+      "plane_iou_p10": 0.9372,
+      "camera_fit_error_median": 0.0039,
+      "camera_fit_error_p95": 0.0087,
+      "reproj_error_median": 0.0039,
+      "ortho_residual_median_deg": 6.2742
     }
   },
-  "parsing_boundary": "IoU중앙≥0.5 유지 등급: ['L1_ruler', 'L2_freehand', 'L3_concept'] → 그 이하는 복원 무의미(§5.3 경계)",
+  "parsing_boundary": "IoU중앙≥0.5 유지 등급: ['coarse', 'medium', 'precise'] → 그 이하는 복원 무의미(§5.3 경계)",
   "answers": {
-    "평면없이 투시단독 어디까지": "L1 IoU중앙 0.9893, L2 0.9619, L3 0.9418",
-    "§3.8 평면병용 완화 가능?": "IoU중앙≥0.5 유지 등급: ['L1_ruler', 'L2_freehand', 'L3_concept'] → 그 이하는 복원 무의미(§5.3 경계)"
+    "평면없이 투시단독 어디까지": "coarse IoU중앙 0.9401, medium IoU중앙 0.9585, precise IoU중앙 0.9665",
+    "§3.8 평면병용 완화 가능?": "IoU중앙≥0.5 유지 등급: ['coarse', 'medium', 'precise'] → 그 이하는 복원 무의미(§5.3 경계)"
   }
 }

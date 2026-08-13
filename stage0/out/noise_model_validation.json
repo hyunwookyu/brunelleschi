@@ -1,0 +1,82 @@
+{
+  "spec": "노이즈 모델 검증(지시 0.3). 지표=V-5b와 동일(원점 기준).",
+  "real_ink": {
+    "coarse": {
+      "n": 150,
+      "lowFreq": 0.0755,
+      "highFreq": 3.5763,
+      "parseable": 0.947,
+      "selfIoU": 0.917,
+      "conf": 0.843
+    },
+    "medium": {
+      "n": 150,
+      "lowFreq": 0.0688,
+      "highFreq": 3.3874,
+      "parseable": 0.92,
+      "selfIoU": 0.8524,
+      "conf": 0.713
+    },
+    "precise": {
+      "n": 150,
+      "lowFreq": 0.051,
+      "highFreq": 2.4723,
+      "parseable": 0.913,
+      "selfIoU": 0.93,
+      "conf": 0.924
+    }
+  },
+  "new_synth": {
+    "coarse": {
+      "n": 150,
+      "lowFreq": 0.0784,
+      "highFreq": 2.49,
+      "parseable": 1.0,
+      "selfIoU": 0.8838,
+      "conf": 0.8615
+    },
+    "medium": {
+      "n": 150,
+      "lowFreq": 0.051,
+      "highFreq": 2.8525,
+      "parseable": 1.0,
+      "selfIoU": 0.9253,
+      "conf": 0.9295
+    },
+    "precise": {
+      "n": 150,
+      "lowFreq": 0.0348,
+      "highFreq": 2.5771,
+      "parseable": 1.0,
+      "selfIoU": 0.9558,
+      "conf": 0.958
+    }
+  },
+  "old_synth_DEPRECATED": {
+    "precise": {
+      "n": 150,
+      "lowFreq": 0.0589,
+      "highFreq": 57.9533,
+      "parseable": 0.973,
+      "selfIoU": 0.765,
+      "conf": 0.7215
+    },
+    "medium": {
+      "n": 150,
+      "lowFreq": 0.1935,
+      "highFreq": 115.2442,
+      "parseable": 0.787,
+      "selfIoU": 0.5865,
+      "conf": 0.456
+    },
+    "coarse": {
+      "n": 150,
+      "lowFreq": 0.159,
+      "highFreq": 117.2117,
+      "parseable": 0.893,
+      "selfIoU": 0.5606,
+      "conf": 0.5045
+    }
+  },
+  "note": "새 합성은 실획 spacing까지 맞춰 원점 기준 비교가 공정하다. 구 모델은 폐기."
+}

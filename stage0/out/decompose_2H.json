@@ -2,63 +2,67 @@
   "spec": "트랙2 2H — 직교폴리곤 다중VP 분해 복원(2A 정답 대비, 상사정합 IoU). 전부 측정값.",
   "by_shape": {
     "L": {
-      "L1_ruler": {
-        "noise_px": 2.0,
-        "hold_rate": 0.933,
-        "iou_median": 0.9162,
-        "iou_p10": 0.4776
+      "precise": {
+        "corner_err_ratio": 0.0168,
+        "hold_rate": 0.825,
+        "iou_median": 0.4686,
+        "iou_p10": 0.3656
       },
-      "L2_freehand": {
-        "noise_px": 8.0,
-        "hold_rate": 0.742,
-        "iou_median": 0.4764,
-        "iou_p10": 0.4228
+      "medium": {
+        "corner_err_ratio": 0.0269,
+        "hold_rate": 0.658,
+        "iou_median": 0.4437,
+        "iou_p10": 0.2397
       }
     },
     "U": {
-      "L1_ruler": {
-        "noise_px": 2.0,
-        "hold_rate": 0.958,
-        "iou_median": 0.4882,
-        "iou_p10": 0.4593
+      "precise": {
+        "corner_err_ratio": 0.0168,
+        "hold_rate": 0.817,
+        "iou_median": 0.4541,
+        "iou_p10": 0.0127
       },
-      "L2_freehand": {
-        "noise_px": 8.0,
-        "hold_rate": 0.775,
-        "iou_median": 0.4239,
-        "iou_p10": 0.0113
+      "medium": {
+        "corner_err_ratio": 0.0269,
+        "hold_rate": 0.658,
+        "iou_median": 0.2997,
+        "iou_p10": 0.0087
       }
     },
     "stair": {
-      "L1_ruler": {
-        "noise_px": 2.0,
-        "hold_rate": 0.917,
-        "iou_median": 0.5326,
-        "iou_p10": 0.2993
+      "precise": {
+        "corner_err_ratio": 0.0168,
+        "hold_rate": 0.767,
+        "iou_median": 0.2901,
+        "iou_p10": 0.0244
       },
-      "L2_freehand": {
-        "noise_px": 8.0,
-        "hold_rate": 0.725,
-        "iou_median": 0.3127,
-        "iou_p10": 0.0153
+      "medium": {
+        "corner_err_ratio": 0.0269,
+        "hold_rate": 0.658,
+        "iou_median": 0.2518,
+        "iou_p10": 0.0134
       }
     }
   },
-  "iou_median_L1": {
-    "L": 0.9162,
-    "U": 0.4882,
-    "stair": 0.5326
+  "iou_median_precise": {
+    "L": 0.4686,
+    "U": 0.4541,
+    "stair": 0.2901
   },
-  "iou_median_L2": {
-    "L": 0.4764,
-    "U": 0.4239,
-    "stair": 0.3127
+  "iou_median_medium": {
+    "L": 0.4437,
+    "U": 0.2997,
+    "stair": 0.2518
   },
-  "hold_rate_L1": {
-    "L": 0.933,
-    "U": 0.958,
-    "stair": 0.917
+  "hold_rate_precise": {
+    "L": 0.825,
+    "U": 0.817,
+    "stair": 0.767
   },
   "note_baseline": "2F irregular은 비뚤어진 4각형(직교 아님)이라 2H 직교폴리곤과 직접 비교 부적절. 2H는 '직교폴리곤을 단일사각형으로 보면 붕괴'하던 것을 다중VP로 복원한 것.",
-  "conclusion": "2H(다중VP): 직교폴리곤 L1 IoU {'L': 0.9162, 'U': 0.4882, 'stair': 0.5326} (hold {'L': 0.933, 'U': 0.958, 'stair': 0.917}), L2 {'L': 0.4764, 'U': 0.4239, 'stair': 0.3127}. L1서도 IoU<0.6 다수. L2(프리핸드)에선 저하+hold 감소. 직교성 게이트(dotp≥0→실패)가 실패 일부 사전판정(2I). → **§3.8 최종 개정: 단일 직사각=견고(L2까지). 복합 직교폴리곤=L1에서만 부분 가능. L2+ 또는 비직교=평면/앵커 필요.**"
+  "vs_2F": {
+    "2F_irregular_medium_iou": 0.6125,
+    "2H_L_medium_iou": 0.4437
+  },
+  "conclusion": "2H(다중VP, 실측 코너오차 노이즈): 직교폴리곤 precise IoU {'L': 0.4686, 'U': 0.4541, 'stair': 0.2901} (hold {'L': 0.825, 'U': 0.817, 'stair': 0.767}), medium {'L': 0.4437, 'U': 0.2997, 'stair': 0.2518}. precise서도 IoU<0.6 다수. medium에선 저하+hold 감소. 직교성 게이트(dotp≥0→실패)가 실패 일부 사전판정(2I)."
 }

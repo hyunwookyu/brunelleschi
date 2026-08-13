@@ -65,11 +65,12 @@ def _irregular_quad(rng, skew):
 
 def evaluate(n=150, seed=0):
     from stage3.synth import build_synthetic
-    GRADE_NOISE = {"L1_ruler": 2.0, "L2_freehand": 8.0, "L3_concept": 20.0}
+    from stage_perspective.noise import grade_ratios, add_corner_noise
+    GRADE_NOISE = grade_ratios()   # 실측 코너오차 비율(지시 0.4)
     out = {}
     for kind, skew in [("rectangular", 0.0), ("irregular", 0.15)]:
         out[kind] = {}
-        for grade, npx in GRADE_NOISE.items():
+        for grade, ratio in GRADE_NOISE.items():
             rng = np.random.default_rng(seed + hash(kind + grade) % 9999)
             ious, aerr, holds = [], [], 0
             for _ in range(n):
@@ -79,7 +80,7 @@ def evaluate(n=150, seed=0):
                 dist = diag * rng.uniform(1.3, 2.2)
                 eye = (c[0] + dist * np.cos(az) * np.cos(el), c[1] + dist * np.sin(az) * np.cos(el), dist * np.sin(el) + diag * 0.2)
                 _, img4, sz, _t = build_synthetic(img_size=(800, 600), eye=eye, target=(float(c[0]), float(c[1]), 0.0), world4=truth)
-                noisy = img4 + rng.normal(0, npx, img4.shape)
+                noisy = add_corner_noise(img4, ratio, rng)
                 r = recover_plane_rightangle(noisy, sz)
                 if not r["ok"]:
                     continue
@@ -90,7 +91,7 @@ def evaluate(n=150, seed=0):
                 true_a = (np.hypot(*(truth[3] - truth[0]))) / (np.hypot(*(truth[1] - truth[0])) + 1e-9)
                 aerr.append(abs(r["aspect"] - true_a) / true_a)
             def q(x, p): return round(float(np.percentile(x, p)), 4) if x else None
-            out[kind][grade] = {"noise_px": npx, "hold_rate": round(holds / n, 3),
+            out[kind][grade] = {"corner_err_ratio": ratio, "hold_rate": round(holds / n, 3),
                                 "plane_iou_median": q(ious, 50), "plane_iou_p10": q(ious, 10),
                                 "aspect_rel_err_median": q(aerr, 50)}
     return out
@@ -122,11 +123,12 @@ def main():
 
 
 def _conclude(res):
-    rec = res["rectangular"]["L2_freehand"]["plane_iou_median"]
-    irr = res["irregular"]["L2_freehand"]["plane_iou_median"]
-    return (f"직각가정: 직사각 footprint는 종횡비 복원 IoU중앙 {rec}(L2) → **투시 단독 결정 가능**. "
-            f"비직교는 {irr}로 붕괴 → 직각가정 성립 footprint에 한정. "
-            f"§3.8 개정: '평면 필수' → '직사각(직각) footprint면 투시 단독 가능, 비직교는 평면/앵커 필요'.")
+    # 등급명은 실측 등급(precise/medium/coarse). 대표는 medium(실획 중앙 등급).
+    key = "medium" if "medium" in res["rectangular"] else next(iter(res["rectangular"]))
+    rec = res["rectangular"][key]["plane_iou_median"]
+    irr = res["irregular"][key]["plane_iou_median"]
+    return (f"직각가정(실측 코너오차 노이즈, {key}): 직사각 footprint 종횡비 복원 IoU중앙 {rec}, "
+            f"비직교 {irr}. 두 값의 격차가 직각가정의 유효 범위를 정한다.")
 
 
 if __name__ == "__main__":

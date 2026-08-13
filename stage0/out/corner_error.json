@@ -1,0 +1,31 @@
+{
+  "spec": "코너 국소화 오차 — Track 2 GRADE_NOISE의 실측 근거(지시 0.4).",
+  "finding": "Track 2는 잉크 노이즈 모델 미사용. GRADE_NOISE(2/8/20px)는 임의값이었다.",
+  "source": "새 실획기반 잉크 모델(stage0/10) 합성 + stage1 파서 복원 코너",
+  "grades": {
+    "coarse": {
+      "n_parsed": 299,
+      "n_total": 300,
+      "corner_err_over_diag_median": 0.0421,
+      "corner_err_over_diag_p90": 0.0801,
+      "corner_err_canon_px_median": 5.7438,
+      "note": "정준 대각 180 기준. Track 2 적용 시 noise_px = ratio × (이미지상 도형 대각 px)"
+    },
+    "medium": {
+      "n_parsed": 300,
+      "n_total": 300,
+      "corner_err_over_diag_median": 0.0269,
+      "corner_err_over_diag_p90": 0.0533,
+      "corner_err_canon_px_median": 3.7844,
+      "note": "정준 대각 180 기준. Track 2 적용 시 noise_px = ratio × (이미지상 도형 대각 px)"
+    },
+    "precise": {
+      "n_parsed": 300,
+      "n_total": 300,
+      "corner_err_over_diag_median": 0.0168,
+      "corner_err_over_diag_p90": 0.0322,
+      "corner_err_canon_px_median": 2.3241,
+      "note": "정준 대각 180 기준. Track 2 적용 시 noise_px = ratio × (이미지상 도형 대각 px)"
+    }
+  }
+}

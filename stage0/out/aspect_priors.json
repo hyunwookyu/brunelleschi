@@ -2,49 +2,49 @@
   "spec": "트랙2 2F — 사전지식으로 종횡비 결정 가능성(2A 정답 대비). 전부 측정값.",
   "2F_a_right_angle": {
     "rectangular": {
-      "L1_ruler": {
-        "noise_px": 2.0,
+      "coarse": {
+        "corner_err_ratio": 0.0421,
         "hold_rate": 1.0,
-        "plane_iou_median": 0.9594,
-        "plane_iou_p10": 0.4473,
-        "aspect_rel_err_median": 0.0403
+        "plane_iou_median": 0.7424,
+        "plane_iou_p10": 0.4553,
+        "aspect_rel_err_median": 0.306
       },
-      "L2_freehand": {
-        "noise_px": 8.0,
+      "medium": {
+        "corner_err_ratio": 0.0269,
         "hold_rate": 1.0,
-        "plane_iou_median": 0.8515,
-        "plane_iou_p10": 0.4248,
-        "aspect_rel_err_median": 0.156
+        "plane_iou_median": 0.8463,
+        "plane_iou_p10": 0.5512,
+        "aspect_rel_err_median": 0.1458
       },
-      "L3_concept": {
-        "noise_px": 20.0,
+      "precise": {
+        "corner_err_ratio": 0.0168,
         "hold_rate": 1.0,
-        "plane_iou_median": 0.735,
-        "plane_iou_p10": 0.4677,
-        "aspect_rel_err_median": 0.3456
+        "plane_iou_median": 0.8767,
+        "plane_iou_p10": 0.4436,
+        "aspect_rel_err_median": 0.1328
       }
     },
     "irregular": {
-      "L1_ruler": {
-        "noise_px": 2.0,
+      "coarse": {
+        "corner_err_ratio": 0.0421,
         "hold_rate": 1.0,
-        "plane_iou_median": 0.6351,
-        "plane_iou_p10": 0.384,
-        "aspect_rel_err_median": 0.4828
+        "plane_iou_median": 0.6574,
+        "plane_iou_p10": 0.3526,
+        "aspect_rel_err_median": 0.4348
       },
-      "L2_freehand": {
-        "noise_px": 8.0,
+      "medium": {
+        "corner_err_ratio": 0.0269,
         "hold_rate": 1.0,
-        "plane_iou_median": 0.6156,
-        "plane_iou_p10": 0.3078,
-        "aspect_rel_err_median": 0.5441
+        "plane_iou_median": 0.6125,
+        "plane_iou_p10": 0.3424,
+        "aspect_rel_err_median": 0.5451
       },
-      "L3_concept": {
-        "noise_px": 20.0,
+      "precise": {
+        "corner_err_ratio": 0.0168,
         "hold_rate": 1.0,
-        "plane_iou_median": 0.6346,
-        "plane_iou_p10": 0.3228,
-        "aspect_rel_err_median": 0.5265
+        "plane_iou_median": 0.6797,
+        "plane_iou_p10": 0.4149,
+        "aspect_rel_err_median": 0.4013
       }
     }
   },
@@ -58,5 +58,5 @@
   "2F_c_repeated_module": {
     "status": "구조만 — 창·기둥 등간격 검출 필요(후속). 검출가능 영상비율은 2G"
   },
-  "conclusion": "직각가정: 직사각 footprint는 종횡비 복원 IoU중앙 0.8515(L2) → **투시 단독 결정 가능**. 비직교는 0.6156로 붕괴 → 직각가정 성립 footprint에 한정. §3.8 개정: '평면 필수' → '직사각(직각) footprint면 투시 단독 가능, 비직교는 평면/앵커 필요'."
+  "conclusion": "직각가정(실측 코너오차 노이즈, medium): 직사각 footprint 종횡비 복원 IoU중앙 0.8463, 비직교 0.6125. 두 값의 격차가 직각가정의 유효 범위를 정한다."
 }

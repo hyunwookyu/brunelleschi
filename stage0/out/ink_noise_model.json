@@ -1,0 +1,54 @@
+{
+  "spec": "실획 기반 잉크 노이즈 모델 (V-5c, 지시 0). 구 jitter_ratio 모델 폐기 대체.",
+  "source": "Quick,Draw raw ['square', 'door', 'house', 'castle', 'skyscraper'] (브라우저 마우스/터치 입력), 등급=국소창 직진성",
+  "canon_diag": 180.0,
+  "measure_spacing_ratio": 0.02,
+  "grades": {
+    "coarse": {
+      "n_drawings": 941,
+      "lf_bow": 0.09374,
+      "hf_sigma": 0.0314,
+      "overshoot": 0.16225,
+      "closure_gap": 0.10388,
+      "spacing_ratio": 0.01625,
+      "observed": {
+        "lf_bow_median": 0.06323,
+        "hf_turn_deg_median": 1.8709,
+        "overshoot_median": 0.10944,
+        "closure_gap_median": 0.07007,
+        "n_closure_intent": 290
+      }
+    },
+    "medium": {
+      "n_drawings": 322,
+      "lf_bow": 0.05578,
+      "hf_sigma": 0.03357,
+      "overshoot": 0.11341,
+      "closure_gap": 0.10731,
+      "spacing_ratio": 0.01478,
+      "observed": {
+        "lf_bow_median": 0.03762,
+        "hf_turn_deg_median": 1.8944,
+        "overshoot_median": 0.07649,
+        "closure_gap_median": 0.07238,
+        "n_closure_intent": 92
+      }
+    },
+    "precise": {
+      "n_drawings": 737,
+      "lf_bow": 0.03145,
+      "hf_sigma": 0.03099,
+      "overshoot": 0.12293,
+      "closure_gap": 0.08208,
+      "spacing_ratio": 0.01336,
+      "observed": {
+        "lf_bow_median": 0.02121,
+        "hf_turn_deg_median": 1.6163,
+        "overshoot_median": 0.08292,
+        "closure_gap_median": 0.05537,
+        "n_closure_intent": 228
+      }
+    }
+  },
+  "note": "lf/ov/gap은 |N(0,σ)| 중앙값=0.6745σ로 σ 환산. hf_sigma는 방향각 중앙값 일치로 수치 보정."
+}

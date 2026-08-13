@@ -110,11 +110,13 @@ def _project_polygon(world2d, eye, target, img_size):
 
 
 def evaluate(n=120, seed=0):
-    GRADE_NOISE = {"L1_ruler": 2.0, "L2_freehand": 8.0}
+    from stage_perspective.noise import grade_ratios, add_corner_noise
+    _r = grade_ratios()
+    GRADE_NOISE = {k: _r[k] for k in ("precise", "medium") if k in _r}   # 실측(지시 0.4)
     out = {}
     for name, base in _shapes().items():
         out[name] = {}
-        for grade, npx in GRADE_NOISE.items():
+        for grade, ratio in GRADE_NOISE.items():
             rng = np.random.default_rng(seed + hash(name + grade) % 9999)
             ious, holds = [], 0
             for _ in range(n):
@@ -125,7 +127,7 @@ def evaluate(n=120, seed=0):
                 eye = (c[0] + dist * np.cos(az) * np.cos(el), c[1] + dist * np.sin(az) * np.cos(el), dist * np.sin(el) + diag * 0.3)
                 sz = (800.0, 600.0)
                 img = _project_polygon(truth, eye, (float(c[0]), float(c[1]), 0.0), sz)
-                noisy = img + rng.normal(0, npx, img.shape)
+                noisy = add_corner_noise(img, ratio, rng)
                 r = recover_orthogonal_polygon(noisy, sz)
                 if not r["ok"]:
                     continue
@@ -133,7 +135,7 @@ def evaluate(n=120, seed=0):
                 if iou is not None:
                     ious.append(iou); holds += 1
             def q(x, p): return round(float(np.percentile(x, p)), 4) if x else None
-            out[name][grade] = {"noise_px": npx, "hold_rate": round(holds / n, 3),
+            out[name][grade] = {"corner_err_ratio": ratio, "hold_rate": round(holds / n, 3),
                                 "iou_median": q(ious, 50), "iou_p10": q(ious, 10)}
     return out
 
@@ -144,25 +146,25 @@ def main():
     # 2F 단일사각형 비직교 결과와 대비
     f2 = json.loads((ROOT / "stage0" / "out" / "aspect_priors.json").read_text(encoding="utf-8")) \
         if (ROOT / "stage0" / "out" / "aspect_priors.json").exists() else {}
-    irr_2F = f2.get("2F_a_right_angle", {}).get("irregular", {}).get("L2_freehand", {}).get("plane_iou_median")
-    l_2H = res.get("L", {}).get("L2_freehand", {}).get("iou_median")
-    l1 = {s: res[s]["L1_ruler"]["iou_median"] for s in res}
-    l2 = {s: res[s]["L2_freehand"]["iou_median"] for s in res}
-    hold_l1 = {s: res[s]["L1_ruler"]["hold_rate"] for s in res}
+    GA, GB = "precise", "medium"        # 실측 등급명(구 L1_ruler/L2_freehand)
+    irr_2F = f2.get("2F_a_right_angle", {}).get("irregular", {}).get(GB, {}).get("plane_iou_median")
+    l_2H = res.get("L", {}).get(GB, {}).get("iou_median")
+    l1 = {s: res[s][GA]["iou_median"] for s in res}
+    l2 = {s: res[s][GB]["iou_median"] for s in res}
+    hold_l1 = {s: res[s][GA]["hold_rate"] for s in res}
     ok_l1 = all((v or 0) >= 0.6 for v in l1.values())
     report = {
         "spec": "트랙2 2H — 직교폴리곤 다중VP 분해 복원(2A 정답 대비, 상사정합 IoU). 전부 측정값.",
         "by_shape": res,
-        "iou_median_L1": l1, "iou_median_L2": l2, "hold_rate_L1": hold_l1,
+        "iou_median_precise": l1, "iou_median_medium": l2, "hold_rate_precise": hold_l1,
         "note_baseline": "2F irregular은 비뚤어진 4각형(직교 아님)이라 2H 직교폴리곤과 직접 비교 부적절. "
                          "2H는 '직교폴리곤을 단일사각형으로 보면 붕괴'하던 것을 다중VP로 복원한 것.",
+        "vs_2F": {"2F_irregular_medium_iou": irr_2F, "2H_L_medium_iou": l_2H},
         "conclusion": (
-            f"2H(다중VP): 직교폴리곤 L1 IoU {l1} (hold {hold_l1}), L2 {l2}. "
-            + ("**L1(구축선 명확)에선 직교폴리곤 종횡비 부분 복원 가능**(IoU≥0.6). "
-               if ok_l1 else "L1서도 IoU<0.6 다수. ")
-            + "L2(프리핸드)에선 저하+hold 감소. 직교성 게이트(dotp≥0→실패)가 실패 일부 사전판정(2I). "
-            + "→ **§3.8 최종 개정: 단일 직사각=견고(L2까지). 복합 직교폴리곤=L1에서만 부분 가능. "
-              "L2+ 또는 비직교=평면/앵커 필요.**"),
+            f"2H(다중VP, 실측 코너오차 노이즈): 직교폴리곤 precise IoU {l1} (hold {hold_l1}), medium {l2}. "
+            + ("**precise 등급에선 직교폴리곤 종횡비 부분 복원 가능**(IoU≥0.6). "
+               if ok_l1 else "precise서도 IoU<0.6 다수. ")
+            + "medium에선 저하+hold 감소. 직교성 게이트(dotp≥0→실패)가 실패 일부 사전판정(2I)."),
     }
     (ROOT / "stage0" / "out" / "decompose_2H.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

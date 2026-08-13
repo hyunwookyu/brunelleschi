@@ -22,8 +22,11 @@ from stage3.synth import build_synthetic, _look_at
 from stage3.camera import fit_camera
 from stage_perspective.reconstruct import reconstruct, _norm
 
-# 노이즈(px) → 등급 프록시
-GRADE_NOISE = {"L1_ruler": 2.0, "L2_freehand": 8.0, "L3_concept": 20.0}
+# 노이즈 → 등급. **실측 근거판**(stage_perspective/noise.py, 지시 0.4).
+# 구판 GRADE_NOISE={2,8,20}px는 임의 절대픽셀이었다(L1은 파서 달성한계의 1/3.5로 낙관).
+# 이제 등급별 코너오차 비율 × 표본 대각. 등급명도 실측 등급(precise/medium/coarse)으로.
+from stage_perspective.noise import grade_ratios, add_corner_noise
+GRADE_NOISE = grade_ratios()
 
 
 def _rand_quad(rng):
@@ -68,13 +71,13 @@ def _ortho_residual(recovered):
 
 def run(n=200, seed=0):
     out = {}
-    for grade, npx in GRADE_NOISE.items():
+    for grade, ratio in GRADE_NOISE.items():
         rng = np.random.default_rng(seed + hash(grade) % 1000)
         ious, fiterr, reproj, ortho, fails = [], [], [], [], 0
         for _ in range(n):
             quad = _rand_quad(rng); eye, target = _rand_cam(rng, quad)
             w4, img4, sz, _t = build_synthetic(img_size=(800, 600), eye=eye, target=target, world4=quad)
-            noisy = img4 + rng.normal(0, npx, img4.shape)
+            noisy = add_corner_noise(img4, ratio, rng)
             r = reconstruct(quad, noisy, sz)
             if not r["ok"]:
                 fails += 1; continue
@@ -87,7 +90,7 @@ def run(n=200, seed=0):
                 ortho.append(orr)
         def q(a, p): return round(float(np.percentile(a, p)), 4) if a else None
         out[grade] = {
-            "noise_px": npx, "n": n, "fail_rate": round(fails / n, 3),
+            "corner_err_ratio": ratio, "n": n, "fail_rate": round(fails / n, 3),
             "plane_iou_median": q(ious, 50), "plane_iou_p10": q(ious, 10),
             "camera_fit_error_median": q(fiterr, 50), "camera_fit_error_p95": q(fiterr, 95),
             "reproj_error_median": q(reproj, 50), "ortho_residual_median_deg": q(ortho, 50),
@@ -104,8 +107,8 @@ def main():
         "by_grade": res,
         "parsing_boundary": boundary,
         "answers": {
-            "평면없이 투시단독 어디까지": f"L1 IoU중앙 {res['L1_ruler']['plane_iou_median']}, "
-                f"L2 {res['L2_freehand']['plane_iou_median']}, L3 {res['L3_concept']['plane_iou_median']}",
+            "평면없이 투시단독 어디까지": ", ".join(
+                f"{g} IoU중앙 {d['plane_iou_median']}" for g, d in res.items()),
             "§3.8 평면병용 완화 가능?": boundary,
         },
     }

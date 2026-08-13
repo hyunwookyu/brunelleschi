@@ -12,6 +12,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 import numpy as np
+from stage_perspective.noise import grade_ratios, add_corner_noise
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -64,6 +65,9 @@ def recovery_gate(image4, img_size, vp_far=8.0, min_ang=25.0) -> dict:
     return {"reliable": True, "reason": "ok", "pred": pr}
 
 
+MED_RATIO = grade_ratios().get("medium", 0.0269)   # 구 하드코딩 8px 대체(실측 근거, 지시 0.4)
+
+
 def evaluate(n=400, seed=0):
     """다양(정상+퇴화) 시점에서 게이트가 실패(IoU<0.6)를 잡는지 — recall/precision + 게이트후 IoU."""
     from stage_perspective.decompose import _project_polygon
@@ -78,7 +82,7 @@ def evaluate(n=400, seed=0):
         eye = (c[0] + dist * np.cos(az) * np.cos(el), c[1] + dist * np.sin(az) * np.cos(el), dist * np.sin(el) + diag * 0.2)
         sz = (800.0, 600.0)
         img = _project_polygon(truth, eye, (float(c[0]), float(c[1]), 0.0), sz)
-        noisy = img + rng.normal(0, 8, img.shape)
+        noisy = add_corner_noise(img, MED_RATIO, rng)   # 실측 medium 코너오차(지시 0.4)
         gate = recovery_gate(noisy, sz)
         r = recover_plane_rightangle(noisy, sz)
         iou = _poly_iou(_norm(truth), _norm(np.array(r["recovered_plane"]))) if r["ok"] else 0.0

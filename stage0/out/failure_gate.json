@@ -1,42 +1,42 @@
 {
   "n": 400,
   "overall_fail_rate": 0.205,
-  "overall_iou_median": 0.8202,
+  "overall_iou_median": 0.7996,
   "geometric_gate": {
-    "flags": 0.443,
-    "recall": 0.512,
-    "precision": 0.237,
-    "passed_fail_rate": 0.179,
-    "passed_iou_median": 0.8191
+    "flags": 0.495,
+    "recall": 0.537,
+    "precision": 0.222,
+    "passed_fail_rate": 0.188,
+    "passed_iou_median": 0.7846
   },
   "fit_error_gates": {
     "fit_error>0.01": {
-      "flags": 0.015,
-      "recall": 0.049,
-      "precision": 0.667,
-      "passed_fail_rate": 0.198,
-      "passed_iou_median": 0.8212
+      "flags": 0.065,
+      "recall": 0.061,
+      "precision": 0.192,
+      "passed_fail_rate": 0.206,
+      "passed_iou_median": 0.7993
     },
     "fit_error>0.02": {
-      "flags": 0.003,
+      "flags": 0.005,
       "recall": 0.012,
-      "precision": 1.0,
-      "passed_fail_rate": 0.203,
-      "passed_iou_median": 0.8206
+      "precision": 0.5,
+      "passed_fail_rate": 0.204,
+      "passed_iou_median": 0.7996
     },
     "fit_error>0.03": {
       "flags": 0.0,
       "recall": 0.0,
       "precision": 0.0,
       "passed_fail_rate": 0.205,
-      "passed_iou_median": 0.8202
+      "passed_iou_median": 0.7996
     },
     "fit_error>0.05": {
       "flags": 0.0,
       "recall": 0.0,
       "precision": 0.0,
       "passed_fail_rate": 0.205,
-      "passed_iou_median": 0.8202
+      "passed_iou_median": 0.7996
     }
   },
   "note": "게이트 통과분 fail_rate가 전체보다 유의 낮으면 사전판정 유효(§5.3). fit_error는 복원 직후 저비용."

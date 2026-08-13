@@ -87,8 +87,10 @@ def test_2F_right_angle_collapses_on_irregular():
     """2F-a 반례(§13 자기검증3): 비직교 footprint는 직각가정 IoU 붕괴 — 지표가 자명 1.0 아님."""
     from stage_perspective.priors import evaluate
     res = evaluate(n=40, seed=3)
-    rect_iou = res["rectangular"]["L1_ruler"]["plane_iou_median"]
-    irr_iou = res["irregular"]["L1_ruler"]["plane_iou_median"]
+    # 등급명은 실측 등급(V-5c 지시 0.4). 구 L1_ruler(2px)는 파서 달성한계 밖이라 폐기.
+    g = "precise"
+    rect_iou = res["rectangular"][g]["plane_iou_median"]
+    irr_iou = res["irregular"][g]["plane_iou_median"]
     assert rect_iou > irr_iou + 0.15                      # 직사각이 비직교보다 유의하게 높음
     assert irr_iou < 0.8                                  # 비직교는 붕괴(직각가정 부적합)
 

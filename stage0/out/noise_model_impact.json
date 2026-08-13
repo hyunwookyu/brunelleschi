@@ -1,0 +1,76 @@
+{
+  "spec": "폐기 노이즈 모델 영향 재측정(지시 0.5). 구=jitter_ratio(폐기), 신=실획기반.",
+  "partial_strokes": {
+    "old_model": {
+      "n": 120,
+      "violation_rate": 0.1083,
+      "crashes": 0,
+      "confirmed_rate_by_frac": {
+        "0.3": 0.008,
+        "0.5": 0.0,
+        "0.7": 0.0,
+        "0.9": 0.8,
+        "1.0": 0.867
+      }
+    },
+    "new_model": {
+      "n": 120,
+      "violation_rate": 0.0083,
+      "crashes": 0,
+      "confirmed_rate_by_frac": {
+        "0.3": 0.0,
+        "0.5": 0.0,
+        "0.7": 0.0,
+        "0.9": 0.925,
+        "1.0": 0.992
+      }
+    }
+  },
+  "camera_fit_error": {
+    "old_model": {
+      "precise": {
+        "n": 200,
+        "median": 0.0014,
+        "p95": 0.00309,
+        "approx_rate": 0.0
+      },
+      "medium": {
+        "n": 200,
+        "median": 0.00531,
+        "p95": 0.01231,
+        "approx_rate": 0.0
+      },
+      "coarse": {
+        "n": 200,
+        "median": 0.0057,
+        "p95": 0.01351,
+        "approx_rate": 0.0
+      }
+    },
+    "new_model": {
+      "precise": {
+        "n": 200,
+        "median": 0.00453,
+        "p95": 0.01082,
+        "approx_rate": 0.0
+      },
+      "medium": {
+        "n": 200,
+        "median": 0.00698,
+        "p95": 0.01655,
+        "approx_rate": 0.0
+      },
+      "coarse": {
+        "n": 200,
+        "median": 0.01031,
+        "p95": 0.0237,
+        "approx_rate": 0.0
+      }
+    }
+  },
+  "tolerance_gridsearch": {
+    "status": "구 모델 산출물(common/tuned_tol.json)은 폐기 모델 위에서 튜닝됨",
+    "superseded_by": "V-5b 실획 tolerance 스윕(stage0/out/mouse_tolerance_sweep.json)",
+    "finding": "실획 12종 스윕에서 현행 세트를 개선하는 변형 없음(평탄 최적) → 재튜닝 불요"
+  }
+}
