@@ -1,0 +1,62 @@
+{
+  "spec": "트랙2 2F — 사전지식으로 종횡비 결정 가능성(2A 정답 대비). 전부 측정값.",
+  "2F_a_right_angle": {
+    "rectangular": {
+      "L1_ruler": {
+        "noise_px": 2.0,
+        "hold_rate": 1.0,
+        "plane_iou_median": 0.9594,
+        "plane_iou_p10": 0.4473,
+        "aspect_rel_err_median": 0.0403
+      },
+      "L2_freehand": {
+        "noise_px": 8.0,
+        "hold_rate": 1.0,
+        "plane_iou_median": 0.8515,
+        "plane_iou_p10": 0.4248,
+        "aspect_rel_err_median": 0.156
+      },
+      "L3_concept": {
+        "noise_px": 20.0,
+        "hold_rate": 1.0,
+        "plane_iou_median": 0.735,
+        "plane_iou_p10": 0.4677,
+        "aspect_rel_err_median": 0.3456
+      }
+    },
+    "irregular": {
+      "L1_ruler": {
+        "noise_px": 2.0,
+        "hold_rate": 1.0,
+        "plane_iou_median": 0.6351,
+        "plane_iou_p10": 0.384,
+        "aspect_rel_err_median": 0.4828
+      },
+      "L2_freehand": {
+        "noise_px": 8.0,
+        "hold_rate": 1.0,
+        "plane_iou_median": 0.6156,
+        "plane_iou_p10": 0.3078,
+        "aspect_rel_err_median": 0.5441
+      },
+      "L3_concept": {
+        "noise_px": 20.0,
+        "hold_rate": 1.0,
+        "plane_iou_median": 0.6346,
+        "plane_iou_p10": 0.3228,
+        "aspect_rel_err_median": 0.5265
+      }
+    }
+  },
+  "2F_d_speech_anchor": {
+    "dimension_rate": 0.0073,
+    "note": "치수 발화 있으면 종횡비까지 확정(§3.3). 투시영상 치수발화율은 2G 실영상서 재측정."
+  },
+  "2F_b_vertical_vp": {
+    "status": "구조만 — 수직 획 검출 필요(후속). 2점투시서 수직 VP 무한대 고정"
+  },
+  "2F_c_repeated_module": {
+    "status": "구조만 — 창·기둥 등간격 검출 필요(후속). 검출가능 영상비율은 2G"
+  },
+  "conclusion": "직각가정: 직사각 footprint는 종횡비 복원 IoU중앙 0.8515(L2) → **투시 단독 결정 가능**. 비직교는 0.6156로 붕괴 → 직각가정 성립 footprint에 한정. §3.8 개정: '평면 필수' → '직사각(직각) footprint면 투시 단독 가능, 비직교는 평면/앵커 필요'."
+}

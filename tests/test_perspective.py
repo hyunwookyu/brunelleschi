@@ -53,6 +53,27 @@ def test_2B_vanishing_point_from_perspective_only():
     assert construction_residual(strokes, vps) > 0.9
 
 
+def test_2F_right_angle_recovers_aspect_for_rectangle():
+    """2F-a: 직각가정으로 직사각 footprint 종횡비 복원 — 참값 근접(투시 단독 결정)."""
+    from stage3.synth import build_synthetic
+    from stage_perspective.priors import recover_aspect_rightangle, rect
+    true_a = 1.6
+    _, img4, sz, _ = build_synthetic(world4=rect(true_a) * 8, eye=(-8, -10, 7), target=(4, 6.4, 0))
+    r = recover_aspect_rightangle(img4, sz)
+    assert r["ok"]
+    assert abs(r["aspect"] - true_a) / true_a < 0.15      # 무노이즈 종횡비 <15% 오차
+
+
+def test_2F_right_angle_collapses_on_irregular():
+    """2F-a 반례(§13 자기검증3): 비직교 footprint는 직각가정 IoU 붕괴 — 지표가 자명 1.0 아님."""
+    from stage_perspective.priors import evaluate
+    res = evaluate(n=40, seed=3)
+    rect_iou = res["rectangular"]["L1_ruler"]["plane_iou_median"]
+    irr_iou = res["irregular"]["L1_ruler"]["plane_iou_median"]
+    assert rect_iou > irr_iou + 0.15                      # 직사각이 비직교보다 유의하게 높음
+    assert irr_iou < 0.8                                  # 비직교는 붕괴(직각가정 부적합)
+
+
 if __name__ == "__main__":
     import pytest
     raise SystemExit(pytest.main([str(Path(__file__)), "-q"]))
