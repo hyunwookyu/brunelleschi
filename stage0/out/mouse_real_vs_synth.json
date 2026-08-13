@@ -1,0 +1,94 @@
+{
+  "note": "V-5b 재측정. 합성=직선+점별 독립 균등 jitter(화이트/고주파만). 실획=Quick,Draw raw(마우스/터치).",
+  "real": {
+    "square": {
+      "n": 120,
+      "grades": {
+        "coarse": 47,
+        "medium": 26,
+        "precise": 47
+      },
+      "straightMed": 0.013,
+      "parseableRate": 0.992,
+      "selfIoUMed": 0.928,
+      "confMed": 0.911,
+      "nLinesMed": 4
+    },
+    "door": {
+      "n": 120,
+      "grades": {
+        "coarse": 56,
+        "medium": 22,
+        "precise": 42
+      },
+      "straightMed": 0.015,
+      "parseableRate": 0.792,
+      "selfIoUMed": 0.783,
+      "confMed": 0.605,
+      "nLinesMed": 4
+    },
+    "house": {
+      "n": 120,
+      "grades": {
+        "coarse": 68,
+        "precise": 30,
+        "medium": 22
+      },
+      "straightMed": 0.017,
+      "parseableRate": 0.933,
+      "selfIoUMed": 0.571,
+      "confMed": 0.529,
+      "nLinesMed": 7
+    }
+  },
+  "synth": {
+    "perEdge8_jit0.008": {
+      "n": 120,
+      "grades": {
+        "coarse": 120
+      },
+      "straightMed": 0.101,
+      "parseableRate": 1,
+      "selfIoUMed": 0.984,
+      "confMed": 0.96,
+      "nLinesMed": 4
+    },
+    "perEdge16_jit0.008": {
+      "n": 120,
+      "grades": {
+        "coarse": 119,
+        "medium": 1
+      },
+      "straightMed": 0.02,
+      "parseableRate": 1,
+      "selfIoUMed": 0.982,
+      "confMed": 0.976,
+      "nLinesMed": 4
+    },
+    "perEdge16_jit0.035": {
+      "n": 120,
+      "grades": {
+        "coarse": 120
+      },
+      "straightMed": 0.048,
+      "parseableRate": 1,
+      "selfIoUMed": 0.927,
+      "confMed": 0.898,
+      "nLinesMed": 4
+    }
+  },
+  "noise_spectrum": {
+    "synth_jit0008": {
+      "lowFreq": 0.007,
+      "highFreq": 14.471
+    },
+    "synth_jit0035": {
+      "lowFreq": 0.03,
+      "highFreq": 68.74
+    },
+    "real_square": {
+      "lowFreq": 0.075,
+      "highFreq": 3.366
+    }
+  }
+}

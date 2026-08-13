@@ -31,8 +31,11 @@ export function strokeStraightness(pts: Pt[]): number | null {
   return minorRms / major;
 }
 
-// Quick,Draw 등급 centroid(직진성 중앙값, CP-0.6). Quick,Draw=브라우저 마우스/터치 입력.
-export const GRADE_CENTROID = { precise: 0.049, medium: 0.197, coarse: 0.215 } as const;
+// Quick,Draw 등급 centroid — **국소창(win=12) 직진성 중앙값**. detectGrade와 같은 단위.
+// V-5b 정정: 구 값 {0.049,0.197,0.215}는 **전체획** 직진성 적합값이라 단위 불일치
+// (같은 실획: 전체획 0.210 vs 국소창 0.012) → 무엇이든 precise로 읽히는 편향이었다.
+// 출처: stage0/out/quickdraw_grades.json의 straightness_local_median(동일 클러스터).
+export const GRADE_CENTROID = { precise: 0.0090, medium: 0.0138, coarse: 0.0164 } as const;
 export type Grade = keyof typeof GRADE_CENTROID;
 
 // 국소 창 직진성 중앙값 → 최근접 등급. 전체 폐곡선은 형태 좌우 → 국소 '떨림'만.

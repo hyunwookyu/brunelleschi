@@ -76,9 +76,22 @@ def tilt_residual(angles):
     return np.minimum(a, 90.0 - a)
 
 
+def local_straightness(xs, ys, win=12, step=6) -> list[float]:
+    """국소 창 직진성 — '떨림'만. 전체획 직진성은 형태(폐곡선)에 좌우된다.
+    detect_grade(stage1/normalize)가 쓰는 양과 **같은 단위**. V-5b에서 단위 불일치 발견:
+    등급 centroid는 전체획으로 적합됐는데 detect_grade는 국소창으로 비교 → 항상 precise 편향."""
+    out = []
+    for i in range(0, max(1, len(xs) - win), step):
+        v = stroke_straightness(xs[i:i + win], ys[i:i + win])
+        if v is not None:
+            out.append(v)
+    return out
+
+
 def analyze_drawing(d: dict) -> dict | None:
     strokes = d["drawing"]                 # [[x],[y],[t]]
     straight, speeds, tilts, npts = [], [], [], 0
+    local = []
     for s in strokes:
         xs = np.asarray(s[0], float); ys = np.asarray(s[1], float)
         ts = np.asarray(s[2], float) if len(s) > 2 else None
@@ -86,6 +99,7 @@ def analyze_drawing(d: dict) -> dict | None:
         st = stroke_straightness(xs, ys)
         if st is not None:
             straight.append(st)
+        local.extend(local_straightness(xs, ys))
         ang = seg_angles(xs, ys)
         if ang.size:
             tilts.append(tilt_residual(ang))
@@ -105,6 +119,8 @@ def analyze_drawing(d: dict) -> dict | None:
     return {
         "straightness": float(np.mean(straight)),
         "straightness_max": float(np.max(straight)),
+        # 국소창 직진성 중앙값 — detect_grade와 같은 단위(V-5b 정정)
+        "straightness_local": float(np.median(local)) if local else float("nan"),
         "speed": float(np.median(speeds)) if speeds else float("nan"),
         "tilt_res_med": float(np.median(tilt_all)),
         "n_strokes": len(strokes),
@@ -133,7 +149,8 @@ def main():
     if not rows:
         print("NO DATA", file=sys.stderr); sys.exit(1)
 
-    keys = ["straightness", "speed", "tilt_res_med", "n_strokes", "closure_gap"]
+    # straightness_local은 **끝에** 추가(feat_idx 인덱스 불변 → 클러스터 동일 유지)
+    keys = ["straightness", "speed", "tilt_res_med", "n_strokes", "closure_gap", "straightness_local"]
     X = np.array([[r[k] for k in keys] for r in rows], float)
     # speed NaN → 열 중앙값 대체
     for j in range(X.shape[1]):
@@ -160,6 +177,9 @@ def main():
             # 오버레이 어긋남 기준(§8): 등급별 직선편차 중앙값
             "straightness_median": round(float(np.median(sub[:, 0])), 5),
             "straightness_p90": round(float(np.percentile(sub[:, 0], 90)), 5),
+            # detect_grade가 비교해야 할 **국소창 단위** 기준(V-5b 정정). 위 전체획 값과 단위 다름.
+            "straightness_local_median": round(float(np.median(sub[:, 5])), 5),
+            "straightness_local_p90": round(float(np.percentile(sub[:, 5], 90)), 5),
             # 직교 스냅 tolerance 후보(도): 축 기울기 잔차 분포
             "ortho_snap_tol_deg_median": round(float(np.median(sub[:, 2])), 3),
             "ortho_snap_tol_deg_p90": round(float(np.percentile(sub[:, 2], 90)), 3),

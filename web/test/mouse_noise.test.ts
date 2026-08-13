@@ -1,8 +1,12 @@
-// V-5(c,d) 마우스 획 노이즈 → register 등급·파싱 품질. 가정 V-m 해소.
-// 마우스는 (1) 샘플 희소(coalesced 없음) (2) 필압/기울기 없음(상수). 이 두 차이만 격리해
-// 파싱 품질(parseable·confidence·IoU)과 등급을 측정 → 마우스 전용 tolerance 세트 필요 판단.
-// 참조: Quick,Draw=브라우저 마우스/터치 입력 → 기존 등급 분포가 실마우스 대표(progress CP-0.6).
+// V-5(c,d) **합성** 마우스 모델 특성화. ⚠ V-5b에서 이 합성 모델은 실제 마우스를 대표하지
+// 않음이 확인됐다(V-o 반증): 합성=고주파 화이트 jitter, 실획=저주파 변 휘어짐
+// (스펙트럼 lowFreq 0.007 vs 0.075, highFreq 14.5° vs 3.4°).
+// → **여기 수치로 마우스 현실을 주장하지 말 것.** 실획 판정은 mouse_real_vs_synth /
+//    mouse_tolerance_sweep(Quick,Draw raw)에 있다. 이 파일은 합성 모델의 거동 기록 +
+//    필압 비의존성(d) 검증용으로 유지한다.
 import { describe, it, expect } from "vitest";
+import { readFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
 import type { Pt, Capture } from "../src/parser/types.js";
 import { normalizeToIR } from "../src/parser/normalize.js";
 import { detectGrade, strokeStraightness } from "../src/parser/grade.js";
@@ -90,9 +94,30 @@ describe("V-5 마우스 획 노이즈 → 등급·파싱 품질(V-m)", () => {
     expect(table["jit_0.006"].parseableRate).toBeGreaterThanOrEqual(0.75);
   });
 
-  it("(d) 필압 상수 0.5(마우스)에서도 confidence 정상(기하 기반)", () => {
+  it("(d) 필압 상수 0.5(마우스)에서도 confidence 정상(기하 기반) — 합성", () => {
     const { cap } = mouseRect(240, 180, 20, 0.005, 42);
     const { meta } = normalizeToIR(cap);
     expect(meta.confidence).toBeGreaterThan(0.7);   // 필압 무관, 둘레지지율²·적합도
+  });
+
+  // (d) 실획 검증 — Quick,Draw raw는 필압/기울기 자체가 없다(마우스·손가락 입력).
+  // 필압 경로가 confidence에 개입한다면 여기서 무너져야 한다.
+  it("(d) 실제 마우스 잉크(필압 없음)에서도 confidence 정상", () => {
+    const p = resolve(__dirname, "../../data/quickdraw/square.ndjson");
+    if (!existsSync(p)) return;                     // 데이터 없으면 스킵
+    const confs: number[] = [];
+    for (const ln of readFileSync(p, "utf-8").split("\n").slice(0, 60)) {
+      if (!ln.trim()) continue;
+      const d = JSON.parse(ln);
+      const strokes = d.drawing.map((s: number[][], i: number) => ({
+        points: s[0].map((x: number, k: number) => [x, s[1][k], k, 0.5]), pen: "mass", seq: i,
+      })).filter((s: any) => s.points.length >= 2);
+      if (!strokes.length) continue;
+      const { ir, meta } = normalizeToIR({ frame: "plan", w: 320, h: 320, strokes });
+      if (ir.volumes.length && meta.parseable) confs.push(meta.confidence);
+    }
+    expect(confs.length).toBeGreaterThan(20);
+    const m = [...confs].sort((a, b) => a - b)[confs.length >> 1];
+    expect(m).toBeGreaterThan(0.7);                 // 실획 중앙 confidence (측정 0.91)
   });
 });

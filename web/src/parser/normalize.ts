@@ -52,7 +52,11 @@ export interface NormMeta {
   confidence: number; parseable: boolean; scale: number;
 }
 
-export function normalizeToIR(cap: Capture, volId = "v1"): { ir: IR; meta: NormMeta } {
+// tol override는 튜닝 실험용(V-5b 실획 스윕). 기본은 TUNED_PRECISE(단일 세트).
+// PALEO 키(smooth_sigma·turn_thresh_deg 등)를 함께 넘기면 parseLines가 교집합으로 받는다.
+export type TolOverride = typeof TUNED_PRECISE & Partial<typeof import("./paleosketch.js").PALEO>;
+
+export function normalizeToIR(cap: Capture, volId = "v1", tol: TolOverride = TUNED_PRECISE): { ir: IR; meta: NormMeta } {
   const mass = massStrokes(cap);
   const ir = emptyIR();
   if (mass.length === 0) { ir.unresolved.push("매스(검정) 채널 획 없음"); return { ir, meta: zeroMeta() }; }
@@ -62,7 +66,7 @@ export function normalizeToIR(cap: Capture, volId = "v1"): { ir: IR; meta: NormM
   const s = CANON_DIAG / diag;
   const scaled: Pt[][] = mass.map(st => st.map(p => [(p[0] - cx) * s, (p[1] - cy) * s] as Pt));
 
-  const lines = parseLines(scaled, TUNED_PRECISE);
+  const lines = parseLines(scaled, tol);
   const scaledVerts = footprintFromLines(lines);
   const verts = scaledVerts.map(v => [v[0] / s + cx, v[1] / s + cy] as Pt);
 

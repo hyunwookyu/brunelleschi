@@ -26,8 +26,28 @@ def _walk(obj, path=""):
         yield path, obj
 
 
-def check(report: dict, prev: dict | None = None) -> list[dict]:
+def _degenerate_distributions(obj, path="") -> list[dict]:
+    """축약된 분포(모든 표본이 한 범주) 탐지 — V-5b 교훈.
+    {"precise": 120} 같은 카운트 사전은 비율 키가 아니라 기존 규칙에 안 걸렸다.
+    전 표본 단일 범주 = 측정이 변별하지 못하는 중(단위 불일치·자기참조) 신호."""
     flags = []
+    if isinstance(obj, dict):
+        vals = list(obj.values())
+        if (len(obj) == 1 and vals and isinstance(vals[0], (int, float))
+                and not isinstance(vals[0], bool) and vals[0] >= 10
+                and all(isinstance(k, str) for k in obj)):
+            flags.append({"path": path, "val": obj,
+                          "flag": f"단일 범주 분포(n={vals[0]}) → 변별력 없음/단위 불일치 의심"})
+        for k, v in obj.items():
+            flags += _degenerate_distributions(v, f"{path}.{k}" if path else k)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            flags += _degenerate_distributions(v, f"{path}[{i}]")
+    return flags
+
+
+def check(report: dict, prev: dict | None = None) -> list[dict]:
+    flags = _degenerate_distributions(report)
     prev_flat = dict(_walk(prev)) if prev else {}
     for path, val in _walk(report):
         low = path.lower()
@@ -48,14 +68,31 @@ def check(report: dict, prev: dict | None = None) -> list[dict]:
 
 
 def main():
-    sp = ROOT / "stage0" / "out" / "score.json"
+    """stage0/out의 **모든 측정 산출물**을 스캔한다.
+    V-5b 교훈: 구판은 score.json만 봤다. 마우스 노이즈 측정(parseable 1.0, 전 조건 precise)은
+    vitest에만 있어 원장 밖 → 규칙이 있어도 걸릴 수 없었다. 측정은 원장에 남겨야 검증된다."""
+    outdir = ROOT / "stage0" / "out"
+    sp = outdir / "score.json"
     if not sp.exists():
         print("score.json 없음 — score.py 먼저 실행"); return
-    report = json.loads(sp.read_text(encoding="utf-8"))
-    prev_path = ROOT / "stage0" / "out" / "score_prev.json"
+    prev_path = outdir / "score_prev.json"
     prev = json.loads(prev_path.read_text(encoding="utf-8")) if prev_path.exists() else None
-    flags = check(report, prev)
+
+    skip = {"score_prev.json", "selfcheck.json"}
+    flags = []
+    for p in sorted(outdir.glob("*.json")):
+        if p.name in skip:
+            continue
+        try:
+            report = json.loads(p.read_text(encoding="utf-8"))
+        except Exception as ex:
+            flags.append({"path": p.name, "val": None, "flag": f"JSON 파싱 실패: {ex}"}); continue
+        for f in check(report, prev if p.name == "score.json" else None):
+            f["path"] = f"{p.name}:{f['path']}"
+            flags.append(f)
+
     out = {"n_flags": len(flags), "flags": flags,
+           "scanned": [p.name for p in sorted(outdir.glob("*.json")) if p.name not in skip],
            "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."}
     (ROOT / "stage0" / "out" / "selfcheck.json").write_text(
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")

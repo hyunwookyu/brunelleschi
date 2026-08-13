@@ -1,0 +1,126 @@
+{
+  "note": "실제 마우스 잉크(Quick,Draw raw) 자기정합 IoU. 합성 미사용(V-o 반증).",
+  "n_per_cat": 100,
+  "results": {
+    "base(현행)": {
+      "square": {
+        "parseable": 0.99,
+        "iouMed": 0.9283
+      },
+      "door": {
+        "parseable": 0.77,
+        "iouMed": 0.7535
+      }
+    },
+    "smooth_sigma=2": {
+      "square": {
+        "parseable": 0.99,
+        "iouMed": 0.9283
+      },
+      "door": {
+        "parseable": 0.77,
+        "iouMed": 0.7535
+      }
+    },
+    "smooth_sigma=8": {
+      "square": {
+        "parseable": 0.99,
+        "iouMed": 0.9263
+      },
+      "door": {
+        "parseable": 0.77,
+        "iouMed": 0.7558
+      }
+    },
+    "smooth_sigma=12": {
+      "square": {
+        "parseable": 0.98,
+        "iouMed": 0.9032
+      },
+      "door": {
+        "parseable": 0.76,
+        "iouMed": 0.7258
+      }
+    },
+    "turn_thresh=30": {
+      "square": {
+        "parseable": 0.99,
+        "iouMed": 0.9283
+      },
+      "door": {
+        "parseable": 0.77,
+        "iouMed": 0.7535
+      }
+    },
+    "turn_thresh=50": {
+      "square": {
+        "parseable": 0.99,
+        "iouMed": 0.9283
+      },
+      "door": {
+        "parseable": 0.77,
+        "iouMed": 0.7535
+      }
+    },
+    "resample=3": {
+      "square": {
+        "parseable": 0.99,
+        "iouMed": 0.9283
+      },
+      "door": {
+        "parseable": 0.84,
+        "iouMed": 0.7263
+      }
+    },
+    "resample=8": {
+      "square": {
+        "parseable": 0.98,
+        "iouMed": 0.9275
+      },
+      "door": {
+        "parseable": 0.72,
+        "iouMed": 0.7852
+      }
+    },
+    "min_seg=15": {
+      "square": {
+        "parseable": 0.99,
+        "iouMed": 0.9283
+      },
+      "door": {
+        "parseable": 0.77,
+        "iouMed": 0.7535
+      }
+    },
+    "min_seg=30": {
+      "square": {
+        "parseable": 0.99,
+        "iouMed": 0.9283
+      },
+      "door": {
+        "parseable": 0.78,
+        "iouMed": 0.7488
+      }
+    },
+    "coincident=25": {
+      "square": {
+        "parseable": 0.99,
+        "iouMed": 0.9283
+      },
+      "door": {
+        "parseable": 0.77,
+        "iouMed": 0.7535
+      }
+    },
+    "coincident=50": {
+      "square": {
+        "parseable": 0.99,
+        "iouMed": 0.9283
+      },
+      "door": {
+        "parseable": 0.78,
+        "iouMed": 0.7535
+      }
+    }
+  }
+}

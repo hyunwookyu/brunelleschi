@@ -220,7 +220,7 @@ relate.ts bbox 근사 발산 정량화: L자·凹자·계단형 8케이스에서
 | V-2 Three.js 뷰어 | **완료(실 렌더)** — sceneBuilder+sceneDiff(브라우저독립) + `threeAdapter.ts`(압출·confidence재질·SceneManager diff/dispose)+`main.ts`+`index.html`. WebGL 렌더 **픽셀리드백 검증**(4오브젝트, 14.5%채움, 45색버킷=다볼륨), 탑뷰/시점복귀 버튼 동작(§3.3). TS 30/30, three+vite. 잔여: 카메라정합 적용·배경오버레이(투시 정합 후, V-3+). |
 | V-3 실시간(워커·증분·디바운스) | **완료** — `incremental.ts`(획단위 증분, multiplex union-find 재현, 영향그룹만 재파싱), **하드게이트 V-b 검증**(증분==전체: footprint·confidence·relations 일치, 브리징병합·순서무관, 획순서 보존이 핵심). `parserWorker.ts`(§2.3 Web Worker). 지연 §8: 단일 p95<30ms, 8볼륨증분<80ms. TS 37/37. 디바운스는 뷰어 통합(V-4 마우스 드로잉)서. |
 | V-4 화면(분할·프레임·마우스) | **완료** — 분할 레이아웃(드래그)·평면/투시 탭·마우스 드로잉 루프·수동 치수·투시 안내·**end-to-end 지연 측정**. 아래 상세. TS 48/48, Python 44/44 회귀 없음. |
-| V-5 잉크 보강(팜리젝·coalesced·tilt·seq) | **완료** — 조건부 팜 리젝션(penSeen)·coalesced 분기(pen만)·tilt/seq 저장·Wake Lock·확대 차단 + **마우스 노이즈 측정(V-m 해소)**. 아래 상세. TS 52/52, Python 44/44. |
+| V-5 잉크 보강(팜리젝·coalesced·tilt·seq) | **완료** — 조건부 팜 리젝션(penSeen)·coalesced 분기(pen만)·tilt/seq 저장·Wake Lock·확대 차단. **마우스 등급은 V-5b 실획 재측정으로 정정**(1차 합성 결론 철회). TS 54/54, Python 44/44. |
 | V-6 발화(MediaRecorder·부분전사·번역UI) | 대기 |
 | V-7 저장·내보내기(IndexedDB·4종·로깅) | 대기 |
 | V-8 통합검증(Playwright S1~S10·성능) | 대기 |
@@ -243,17 +243,55 @@ relate.ts bbox 근사 발산 정량화: L자·凹자·계단형 8케이스에서
 - **(b) coalesced 분기**: pen/touch만 `getCoalescedEvents()`(고주파), 마우스는 단일 이벤트(이벤트율 낮아 무의미). 라이브 렌더도 다중점 대응. 실 coalesced 밀도는 하드웨어 필요(합성은 폴백 [e]).
 - **(§5.3) 점 포맷 6튜플** [x,y,t,p,tiltX,tiltY]. 검증: 마우스 tilt 0/필압 0.5, 펜 tilt 15/-10·필압 0.7 저장. seq 프레임별 단조.
 - **(e) Wake Lock**(첫 pointerdown 획득·복귀 재획득), 확대 차단(touch-action none + gesturestart/dblclick preventDefault + viewport user-scalable=no).
-- **(c,d) 마우스 노이즈 측정(V-m 해소)** — `mouse_noise.test`, `grade.ts`(straightness PCA를 Python `common.normalize_core`와 정합, zig 0.234857/L 0.151131 일치):
-  | 조건 | parseable | IoU | conf | 등급 |
-  |---|---|---|---|---|
-  | 밀도 4샘플/변(극희소·빠른플릭) | 1.0 | 0.986 | 0.33 | coarse |
-  | 밀도 8 | 1.0 | 0.99 | 0.96 | **precise** |
-  | 밀도 16 | 1.0 | 1.0 | 0.97 | precise |
-  | jitter 3.5%(밀도16) | 1.0 | 0.974 | 0.89 | precise |
-  - **마우스는 우려(coarse 하향)와 반대로 precise 등급** — 팔 떨림 없어 프리핸드 펜보다 매끄러움. **단일 tolerance 세트로 IoU≥0.97 파싱 → 마우스 전용 tol 불필요.**
-  - **(d) 필압 상수(마우스 0.5)에서 confidence 정상**(둘레지지율²·적합도, 필압 비의존). 밀도≥8서 conf≥0.96.
-  - 유일 열화=undersampling(<8샘플/변): conf 하락·등급 coarse이나 IoU 0.986 유지(형태 복원됨). native pointermove 밀도로 완화. 리스크로 기록.
-  - 교차근거: Quick,Draw=브라우저 마우스/터치 입력 → 기존 3등급 분포(precise 0.049/medium 0.197/coarse 0.215)가 실마우스 대표, paleo f1 0.62~0.72.
+- **(c,d) 마우스 노이즈 측정 1차 — ⚠ 결론 철회됨. V-5b 재측정으로 대체(아래).**
+  1차는 **합성 마우스 획**(직선+점별 독립 균등 jitter)으로만 측정해 "마우스=precise, IoU 0.99, 전용 tol 불필요"로 보고했다. 이 보고는 같은 문서의 "Quick,Draw=실마우스=medium/coarse f1 0.62~0.72"와 **모순**이었고, 사용자 지적으로 재측정했다. 합성 수치(밀도 4/8/16 → IoU 0.986/0.99/1.0)는 **합성 모델 거동 기록**으로만 유지(`mouse_noise.test`).
+  - `grade.ts` straightness PCA는 Python `common.normalize_core`와 정합 확인(zig 0.234857 / L 0.151131 일치) — 포팅 자체는 정확.
+
+### V-5b 마우스 등급 재측정 (2026-08-13, 사용자 지시)
+**모순의 근원 2건을 찾았다. 둘 다 단위 혼동이다.**
+
+**(1) 등급 판정의 단위 불일치 (V-p)** — `GRADE_CENTROID{precise .049, medium .197, coarse .215}`는 `stage0/01`이 **전체획** 직진성으로 적합한 값인데, `detect_grade`(및 TS `detectGrade`)는 **국소창(win=12)** 직진성과 비교하고 있었다. 같은 Quick,Draw square 실획에서 **전체획 0.2099 vs 국소창 0.0122** — 단위가 다르다. 국소창은 항상 더 곧으므로 **무엇을 넣어도 precise**로 읽힌다. "마우스=precise"는 마우스의 성질이 아니라 이 편향의 산물이었다.
+→ `stage0/01_quickdraw_grades.py`에 국소창 통계 추가(클러스터 불변, feat_idx 유지) → **국소창 centroid {precise 0.0090, medium 0.0138, coarse 0.0164}**로 교체(Python `stage1/normalize.py` + TS `grade.ts`). 등급은 **정보용**(tolerance 미선택)이라 파싱 거동·score 지표 불변.
+_주의: 전체획 값(0.049/0.197/0.215)은 CP-0.6 오버레이 어긋남 기준으로 계속 유효 — 그쪽은 단위가 맞다._
+
+**(2) 합성 마우스 모델이 실제를 대표하지 않음 (V-o 반증)** — 노이즈 스펙트럼 분해:
+| | 저주파(변 휘어짐, 현 대비 중점편차) | 고주파(연속 3점 방향급변 중앙) |
+|---|---|---|
+| 실획(Quick,Draw square) | **0.075** | **3.4°** |
+| 합성 jitter 0.008 | 0.007 | 14.5° |
+| 합성 jitter 0.035 | 0.030 | 68.7° |
+→ **양방향으로 틀렸다**: 합성은 고주파 과다·저주파 결여. 합성 노이즈는 화이트라 PaleoSketch 가우시안 평활이 **전량 제거** → parseable 1.0·IoU 0.98의 낙관 편향. 실획의 저주파 휘어짐은 평활로 지워지지 않아 IoU가 실제로 하락한다. (progress §10의 "합성 노이즈 화이트/고주파" 주의가 실데이터로 정량화된 것.)
+_합성 모델 생성식(명시, 지시 a)_: 각 변을 직선 보간 → **점마다 x,y 각각 독립 U(−j,+j)·대각** 가산. 코너 오버슈트·시종점 어긋남·손목 회전 궤적 없음.
+
+**(3) 실획 vs 합성 나란히 (지시 c)** — Quick,Draw **raw**(RDP 미적용, 실제 마우스/터치 샘플링), n=120/범주. 자기정합 IoU(복원, 원본 잉크 외곽) = `stage1/measure_capture.py`와 동일 양. 국소창 centroid 정정 후:
+
+| 구분 | 조건 | 등급 분포 | 국소직진 | parseable | 자기IoU | conf |
+|---|---|---|---|---|---|---|
+| **실획** | square | precise 47 / medium 26 / **coarse 47** | 0.0130 | 0.992 | **0.928** | 0.911 |
+| 실획 | door | precise 42 / medium 22 / coarse 56 | 0.0150 | 0.792 | 0.783 | 0.605 |
+| 실획 | house | precise 30 / medium 22 / coarse 68 | 0.0170 | 0.933 | 0.571 | 0.529 |
+| 합성 | 밀도8 jit.008 | **coarse 120** (단일) | 0.1010 | 1.000 | 0.984 | 0.960 |
+| 합성 | 밀도16 jit.008 | coarse 119 / medium 1 | 0.0200 | 1.000 | 0.982 | 0.976 |
+| 합성 | 밀도16 jit.035 | **coarse 120** (단일) | 0.0480 | 1.000 | 0.927 | 0.898 |
+
+- **실획은 3등급에 고루 분포**(중앙 ≈ medium). V-5 1차의 "전부 precise"는 오판.
+- 합성은 국소 직진성이 실획보다 **나쁜데도**(0.02~0.10 vs 0.013) 파싱은 **완벽**(1.0/0.98) — 화이트 노이즈가 평활로 지워지기 때문. 이 역전이 합성 모델 무효의 결정적 증거.
+- house 저조(0.571)는 **삼각 지붕=비직교**라 직교 파서가 구조적으로 표현 못 하는 것(§5.3 경계, tolerance 무관). door 저조는 손잡이/내부 획이 외곽 비교에 섞인 영향.
+
+**(4) 마우스 전용 tolerance 세트 필요한가 (지시 c 판단)** — **실획으로만** 12종 스윕(`mouse_tolerance_sweep.test`, `stage0/out/mouse_tolerance_sweep.json`, n=100/범주):
+| 변형 | square parse / IoU | door parse / IoU |
+|---|---|---|
+| **base(현행)** | 0.990 / **0.9283** | 0.770 / 0.7535 |
+| smooth_sigma 2 / 8 / 12 | 0.990/0.9283 · 0.990/0.9263 · 0.980/0.9032 | 0.770/0.7535 · 0.770/0.7558 · 0.760/0.7258 |
+| turn_thresh 30 / 50 | 0.990/0.9283 (불변) | 0.770/0.7535 (불변) |
+| resample 3 / 8 | 0.990/0.9283 · 0.980/0.9275 | 0.840/0.7263 · 0.720/0.7852 |
+| min_seg 15 / 30 | 0.990/0.9283 (불변) | 0.770/0.7535 · 0.780/0.7488 |
+| coincident 25 / 50 | 0.990/0.9283 (불변) | 0.770/0.7535 · 0.780/0.7535 |
+→ **square를 개선하는 변형이 하나도 없다**(현행이 평탄 최적). door만 resample에서 parseable↔IoU 상충 이동. → **마우스 전용 tolerance 세트 불필요** — 단, 근거는 이제 "마우스가 precise라서"가 아니라 **실획 0.928 IoU가 외부 게이트(TU-Berlin 0.897)를 상회하고 튜닝 여지가 없어서**다. (`normalize.ts`에 tol override 경로 추가 — 실험용, 기본은 단일 세트.)
+
+**(5) selfcheck가 왜 못 잡았나 (지시 d)** — 규칙이 아니라 **범위** 문제였다. `selfcheck.py`는 `stage0/out/score.json` **한 파일만** 스캔했고, V-5 마우스 측정은 vitest 안에만 있어 원장에 없었다 → 규칙이 옳아도 걸릴 수 없었다.
+→ 보강 2건: ① **stage0/out의 모든 JSON 산출물 스캔**(측정은 원장에 남겨야 검증된다). ② **단일 범주 분포 규칙 추가**(`{"coarse":120}`처럼 전 표본이 한 범주 = 변별력 없음/단위 불일치 신호. 기존 규칙은 비율 키만 봐서 카운트 사전을 못 잡았다).
+→ 검증: 새 selfcheck가 `synth.*.grades={'coarse':120}`(단일 범주)와 `synth.*.parseableRate=1`을 잡고, **실획 행은 3등급 분포라 안 잡는다**(변별력 확인). 플래그 5→29건으로 는 것은 스캔 범위 확대분이며, 신규 24건은 전부 기존 문서에 원인 기록된 항목(2F 직각가정 자기참조 6, 2J 치수율 실측 0% 2, 2I 게이트 무력 5, 부분획 미형성 2, 무노이즈 fail_rate 3, 이번 합성 5, 기타 1).
 
 **획→3D end-to-end 지연 (판정 A, §8) — 측정**
 | 구간 | 1볼륨 | 3볼륨 | 8볼륨 | 방법 |

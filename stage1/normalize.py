@@ -14,8 +14,12 @@ sys.path.insert(0, str(ROOT))
 from common.normalize_core import parse_strokes, stroke_straightness, DEFAULT_TOL
 from ir.schema import IR, Volume
 
-# Quick,Draw 등급 centroid(직진성 중앙값, §6.1 CP-0.6)
-GRADE_CENTROID = {"precise": 0.049, "medium": 0.197, "coarse": 0.215}
+# Quick,Draw 등급 centroid — **국소창(win=12) 직진성 중앙값**. detect_grade와 같은 단위.
+# V-5b 정정(2026-08-13): 구 값 {0.049, 0.197, 0.215}는 **전체획** 직진성으로 적합된 것이라
+# 국소창 값과 단위가 달랐다(같은 Quick,Draw square: 전체획 0.210 vs 국소창 0.012).
+# → 무엇을 넣어도 precise로 읽히는 편향. stage0/01의 straightness_local_median으로 교체.
+# 전체획 값은 CP-0.6(오버레이 어긋남 기준)에서 계속 사용 — 그쪽은 단위가 맞다.
+GRADE_CENTROID = {"precise": 0.0090, "medium": 0.0138, "coarse": 0.0164}
 
 
 def load_tuned() -> dict:
