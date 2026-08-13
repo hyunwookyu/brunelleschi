@@ -1,0 +1,30 @@
+{
+  "spec": "2J 치수 발화율 — 현 코퍼스(설계/스케치 혼합, 22자막) 영상별 분포",
+  "n_videos": 12,
+  "overall_rate": 0.0075,
+  "per_video_rate_median": 0.0,
+  "per_video_rate_p90": 0.0252,
+  "per_video_rate_max": 0.0455,
+  "n_videos_with_any_dim": 4,
+  "top3_dim_videos": [
+    {
+      "vid": "U9nND_oVZMA",
+      "rate": 0.0455,
+      "n_dim": 1,
+      "n_seg": 22
+    },
+    {
+      "vid": "zce-bbBSXJQ",
+      "rate": 0.0269,
+      "n_dim": 16,
+      "n_seg": 595
+    },
+    {
+      "vid": "TGYpx9FNzeI",
+      "rate": 0.0094,
+      "n_dim": 7,
+      "n_seg": 744
+    }
+  ],
+  "finding": "치수 발화 극히 드묾(중앙 0.00%). 소수 영상에 집중(상위 영상 4.5%). → §3.3 '앵커가 핵심 경로'는 **명시적 치수화 세션에 한정** 유효. 설명·크리틱 나열형은 치수 거의 없음 → 그런 세션은 무차원 유지·비례전파(§3.5)가 주. 작도 교육 영상 분리 측정은 2G 후."
+}

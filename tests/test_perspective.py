@@ -93,6 +93,27 @@ def test_2F_right_angle_collapses_on_irregular():
     assert irr_iou < 0.8                                  # 비직교는 붕괴(직각가정 부적합)
 
 
+def test_2H_orthogonal_polygon_recovers_L_at_low_noise():
+    """2H: 다중VP로 L형(단순 직교폴리곤) L1급서 복원 — 무노이즈 IoU 높음."""
+    import numpy as np
+    from stage_perspective.decompose import recover_orthogonal_polygon, _project_polygon, _procrustes_iou
+    L = np.array([[0, 0], [10, 0], [10, 5], [5, 5], [5, 10], [0, 10]], float) * 5
+    c = L.mean(0)
+    img = _project_polygon(L, (c[0] - 30, c[1] - 40, 30), (float(c[0]), float(c[1]), 0.0), (800., 600.))
+    r = recover_orthogonal_polygon(img, (800., 600.))
+    assert r["ok"]
+    assert _procrustes_iou(L, r["recovered"]) > 0.7
+
+
+def test_2I_gate_flags_degenerate_not_fiterror():
+    """2I: 게이트가 퇴화 시점 표시. fit_error는 실패 미예측(정직 — 종횡비 모호는 내재)."""
+    import numpy as np
+    from stage_perspective.failure_gate import recovery_gate
+    # 거의 일직선 4점(퇴화) → 불신뢰
+    degen = np.array([[100, 300], [300, 302], [500, 304], [700, 306]], float)
+    assert recovery_gate(degen, (800., 600.))["reliable"] is False
+
+
 if __name__ == "__main__":
     import pytest
     raise SystemExit(pytest.main([str(Path(__file__)), "-q"]))
