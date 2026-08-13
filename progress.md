@@ -220,7 +220,7 @@ relate.ts bbox 근사 발산 정량화: L자·凹자·계단형 8케이스에서
 | V-2 Three.js 뷰어 | **완료(실 렌더)** — sceneBuilder+sceneDiff(브라우저독립) + `threeAdapter.ts`(압출·confidence재질·SceneManager diff/dispose)+`main.ts`+`index.html`. WebGL 렌더 **픽셀리드백 검증**(4오브젝트, 14.5%채움, 45색버킷=다볼륨), 탑뷰/시점복귀 버튼 동작(§3.3). TS 30/30, three+vite. 잔여: 카메라정합 적용·배경오버레이(투시 정합 후, V-3+). |
 | V-3 실시간(워커·증분·디바운스) | **완료** — `incremental.ts`(획단위 증분, multiplex union-find 재현, 영향그룹만 재파싱), **하드게이트 V-b 검증**(증분==전체: footprint·confidence·relations 일치, 브리징병합·순서무관, 획순서 보존이 핵심). `parserWorker.ts`(§2.3 Web Worker). 지연 §8: 단일 p95<30ms, 8볼륨증분<80ms. TS 37/37. 디바운스는 뷰어 통합(V-4 마우스 드로잉)서. |
 | V-4 화면(분할·프레임·마우스) | **완료** — 분할 레이아웃(드래그)·평면/투시 탭·마우스 드로잉 루프·수동 치수·투시 안내·**end-to-end 지연 측정**. 아래 상세. TS 48/48, Python 44/44 회귀 없음. |
-| V-5 잉크 보강(팜리젝·coalesced·tilt·seq) | 대기 |
+| V-5 잉크 보강(팜리젝·coalesced·tilt·seq) | **완료** — 조건부 팜 리젝션(penSeen)·coalesced 분기(pen만)·tilt/seq 저장·Wake Lock·확대 차단 + **마우스 노이즈 측정(V-m 해소)**. 아래 상세. TS 52/52, Python 44/44. |
 | V-6 발화(MediaRecorder·부분전사·번역UI) | 대기 |
 | V-7 저장·내보내기(IndexedDB·4종·로깅) | 대기 |
 | V-8 통합검증(Playwright S1~S10·성능) | 대기 |
@@ -235,6 +235,25 @@ relate.ts bbox 근사 발산 정량화: L자·凹자·계단형 8케이스에서
 - **추가 a 수동 치수**(2J 근거, 마우스엔 발화 없음 → 유일 앵커 유입구): 볼륨 클릭(레이캐스트)→치수 패널→숫자→`ManualAnchorStore`가 **발화 앵커와 동일 `applyOps` 전파**. id는 증분 드로잉서 이동 가능 → 앵커를 **centroid로 저장·재파싱마다 최근접 볼륨 재매칭**(6단계 id-이동 리스크 방어). 실 DOM 흐름 검증: 드로잉→픽→패널→폭12m→footprint 12.00 스케일(비례 전파).
 - **추가 b 투시 신뢰 불가 안내**(§3.8 개정): footprint 분류(직사각/L/complex, 닫힌 링 중복정점 정규화). 직사각=투시 단독 신뢰(배너 숨김), L·비직교=평면/치수 안내 배너. 실 검증: 직사각→none, L자→block.
 - **버그 2건 잡음(자기검증)**: ① footprintClass가 파서의 **닫는 중복정점**(footprintFromLines: 첫=끝)을 안 세어 직사각을 complex로 오분류 → 링 정규화+실출력형 테스트 추가. ② hidden 탭에서 렌더 루프 정지 시 카메라 matrixWorld 미갱신 → 픽 실패 → pick()에서 강제 갱신.
+
+### V-5 상세 (2026-08-13)
+**산출**: `web/src/capture/inkCanvas.ts`(보강), `web/src/parser/grade.ts`(register 등급 진단), `web/src/ui/app.ts`(Wake Lock·입력모드), 테스트 `mouse_noise`(4).
+
+- **(a) 조건부 팜 리젝션**: pen·mouse 1급 잉크. 터치=제스처(잉크 배제). **펜 감지 시 penSeen→팜 리젝션 정책**(터치=팜 확정 배제). 멀티터치/멀티펜 방어(activeId, 한 번에 한 획). 검증: 펜 전후 penSeen false→true, 둘째 포인터 무시, 터치 잉크 0.
+- **(b) coalesced 분기**: pen/touch만 `getCoalescedEvents()`(고주파), 마우스는 단일 이벤트(이벤트율 낮아 무의미). 라이브 렌더도 다중점 대응. 실 coalesced 밀도는 하드웨어 필요(합성은 폴백 [e]).
+- **(§5.3) 점 포맷 6튜플** [x,y,t,p,tiltX,tiltY]. 검증: 마우스 tilt 0/필압 0.5, 펜 tilt 15/-10·필압 0.7 저장. seq 프레임별 단조.
+- **(e) Wake Lock**(첫 pointerdown 획득·복귀 재획득), 확대 차단(touch-action none + gesturestart/dblclick preventDefault + viewport user-scalable=no).
+- **(c,d) 마우스 노이즈 측정(V-m 해소)** — `mouse_noise.test`, `grade.ts`(straightness PCA를 Python `common.normalize_core`와 정합, zig 0.234857/L 0.151131 일치):
+  | 조건 | parseable | IoU | conf | 등급 |
+  |---|---|---|---|---|
+  | 밀도 4샘플/변(극희소·빠른플릭) | 1.0 | 0.986 | 0.33 | coarse |
+  | 밀도 8 | 1.0 | 0.99 | 0.96 | **precise** |
+  | 밀도 16 | 1.0 | 1.0 | 0.97 | precise |
+  | jitter 3.5%(밀도16) | 1.0 | 0.974 | 0.89 | precise |
+  - **마우스는 우려(coarse 하향)와 반대로 precise 등급** — 팔 떨림 없어 프리핸드 펜보다 매끄러움. **단일 tolerance 세트로 IoU≥0.97 파싱 → 마우스 전용 tol 불필요.**
+  - **(d) 필압 상수(마우스 0.5)에서 confidence 정상**(둘레지지율²·적합도, 필압 비의존). 밀도≥8서 conf≥0.96.
+  - 유일 열화=undersampling(<8샘플/변): conf 하락·등급 coarse이나 IoU 0.986 유지(형태 복원됨). native pointermove 밀도로 완화. 리스크로 기록.
+  - 교차근거: Quick,Draw=브라우저 마우스/터치 입력 → 기존 3등급 분포(precise 0.049/medium 0.197/coarse 0.215)가 실마우스 대표, paleo f1 0.62~0.72.
 
 **획→3D end-to-end 지연 (판정 A, §8) — 측정**
 | 구간 | 1볼륨 | 3볼륨 | 8볼륨 | 방법 |

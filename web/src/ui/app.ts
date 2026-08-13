@@ -47,13 +47,23 @@ worker.onmessage = (e: MessageEvent) => {
   }
 };
 
-// 잉크 캡처(마우스 1급)
+// 잉크 캡처(마우스 1급, 조건부 팜 리젝션)
+let inputMode = "마우스/펜";
 const ink = new InkCanvas(inkHost, {
   onStrokeEnd: (stroke: Stroke, frame: Frame) => {
     if (frame === "plan") worker.postMessage({ type: "stroke", stroke, t0: performance.now() });
     else updatePerspectiveHint();   // 투시 획: 볼륨 파싱 안 함(V-4), 안내만 갱신
   },
+  onInputMode: (penSeen) => { inputMode = penSeen ? "펜(팜 리젝션)" : "마우스/펜"; },
 });
+
+// (e §5.2) Wake Lock — 화면 꺼짐 방지. 사용자 제스처(첫 pointerdown)에서 획득, 복귀 시 재획득.
+let wakeLock: any = null;
+async function acquireWakeLock() {
+  try { if ("wakeLock" in navigator && !wakeLock) wakeLock = await (navigator as any).wakeLock.request("screen"); } catch { /* 미지원/거부 */ }
+}
+inkHost.addEventListener("pointerdown", acquireWakeLock, { once: false });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { wakeLock = null; acquireWakeLock(); } });
 
 // ---- 프레임 탭(§3.2) ----
 function setFrame(f: Frame) {
@@ -151,7 +161,7 @@ function applyManualDimension(id: string, prop: Prop, value: number): boolean {
 function updateStatus(ir: IR, reparsed: number) {
   const confs = ir.volumes.map(v => v.confidence.toFixed(2)).join("/");
   $("stat").textContent =
-    `볼륨 ${ir.volumes.length}${confs ? " (" + confs + ")" : ""} · 앵커 ${anchors.count()} · 관계 ${ir.relations.length} · 재파싱 ${reparsed} · obj ${viewer.objectCount()}`;
+    `[${inputMode}] 볼륨 ${ir.volumes.length}${confs ? " (" + confs + ")" : ""} · 앵커 ${anchors.count()} · 관계 ${ir.relations.length} · 재파싱 ${reparsed} · obj ${viewer.objectCount()}`;
 }
 function lastLatency(ms: number) { $("lat").textContent = `지연 ${ms.toFixed(1)}ms`; }
 
@@ -210,6 +220,7 @@ function submitAndMeasure(stroke: Stroke): Promise<number> {
 };
 
 (window as any).__viewer = viewer;
+(window as any).__ink = ink;
 // 자동화·검증 훅(V-8 Playwright, 스모크). 내부 상태 읽기 + 대화식 액션 재현.
 (window as any).__app = {
   getIR: () => anchors.apply(baseIR),
