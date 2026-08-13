@@ -21,6 +21,7 @@ function bboxDiag(fp: Pt[]): number {
 
 export interface MeshSpec {
   id: string; kind: "volume" | "hint";
+  volumeKind?: "mass" | "room";        // 지시 3.4 — room은 안쪽 면으로 렌더
   footprint: Pt[]; base: number; height: number;   // 무차원 null → vizHeight
   dimensionless: boolean;                            // height 미확정(앵커 부재, §3.5)
   material: Material; label: string;
@@ -30,7 +31,8 @@ export function volumeMesh(v: Volume): MeshSpec {
   const dimensionless = v.height == null;
   const height = v.height ?? +(0.6 * bboxDiag(v.footprint)).toFixed(2);   // extrude.py viz_height
   return {
-    id: v.id, kind: "volume", footprint: v.footprint, base: v.base, height,
+    id: v.id, kind: "volume", volumeKind: v.kind ?? "mass",
+    footprint: v.footprint, base: v.base, height,
     dimensionless, material: confidenceMaterial(v.confidence), label: v.label,
   };
 }

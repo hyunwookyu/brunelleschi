@@ -1,0 +1,29 @@
+{
+  "spec": "매스/실내 판별 정확도(지시 3.2). 애매하면 판정 회피가 정답인 케이스 포함.",
+  "grade": "medium",
+  "corner_err_ratio": 0.0269,
+  "cases": {
+    "interior_1pt": {
+      "n": 200,
+      "truth": "room",
+      "correct": 1.0,
+      "abstain": 0.0,
+      "wrong": 0.0
+    },
+    "exterior_mass": {
+      "n": 200,
+      "truth": "mass",
+      "correct": 0.905,
+      "abstain": 0.0,
+      "wrong": 0.095
+    },
+    "frontal_near": {
+      "n": 200,
+      "truth": null,
+      "correct": 0.0,
+      "abstain": 0.95,
+      "wrong": 0.05
+    }
+  },
+  "note": "frontal_near는 truth=None(애매) — abstain이 높아야 옳다."
+}

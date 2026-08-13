@@ -39,3 +39,31 @@ describe("V-2 Three 어댑터", () => {
     expect(scene.children.filter(c => c.name === "v2").length).toBe(0);   // dispose+remove
   });
 });
+
+// 지시 3.4 — kind=room은 안쪽 면(BackSide)으로 렌더해 매스와 구분한다.
+describe("3.4 매스/실내 렌더 구분", () => {
+  it("room은 BackSide, mass는 DoubleSide", () => {
+    const room = { ...vol("r1", 0.9), kind: "room" as const };
+    const mass = { ...vol("m1", 0.9), kind: "mass" as const };
+    const ro = objectFromSpec(buildScene({ ...emptyIR(), volumes: [room] })[0]) as THREE.Group;
+    const mo = objectFromSpec(buildScene({ ...emptyIR(), volumes: [mass] })[0]) as THREE.Group;
+    const rm = (ro.children[0] as THREE.Mesh).material as THREE.MeshStandardMaterial;
+    const mm = (mo.children[0] as THREE.Mesh).material as THREE.MeshStandardMaterial;
+    expect(rm.side).toBe(THREE.BackSide);
+    expect(mm.side).toBe(THREE.DoubleSide);
+    expect(ro.userData.volumeKind).toBe("room");
+  });
+
+  it("kind 미지정은 mass로 취급(기존 동작 보존)", () => {
+    const o = objectFromSpec(buildScene({ ...emptyIR(), volumes: [vol("v1", 0.9)] })[0]) as THREE.Group;
+    expect(o.userData.volumeKind).toBe("mass");
+  });
+
+  it("kind 변경이 씬 diff에 잡힌다(재질이 바뀌므로)", () => {
+    const scene = new THREE.Scene();
+    const mgr = new SceneManager(scene);
+    mgr.apply(buildScene({ ...emptyIR(), volumes: [{ ...vol("v1", 0.9), kind: "mass" as const }] }));
+    const d = mgr.apply(buildScene({ ...emptyIR(), volumes: [{ ...vol("v1", 0.9), kind: "room" as const }] }));
+    expect(d.updated.length).toBe(1);
+  });
+});

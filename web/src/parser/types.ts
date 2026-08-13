@@ -11,7 +11,14 @@ export interface Volume {
   height_src: string;
   confidence: number;         // 둘레지지율²·적합도 (stage1/normalize)
   label: string;              // 명명(4단계)
+  // 매스/보이드 구분(지시 3.1). 중첩 필드 — 루트 키 수 불변. 기본 "mass"로 기존 동작 보존.
+  kind?: VolumeKind;
+  // 축 라벨 모호(지시 1-ter B). 기하가 폭/깊이를 역수까지만 정한다 → 추정하지 않고 기록.
+  axis?: { ambiguous: boolean; aspect: number; aspect_alt: number; perm?: number[] | null } | null;
 }
+
+export const VOLUME_KINDS = ["mass", "room"] as const;
+export type VolumeKind = typeof VOLUME_KINDS[number];
 
 export interface Anchor {
   target: string;

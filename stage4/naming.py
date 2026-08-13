@@ -70,6 +70,15 @@ def assign_names(ir: IR, hints: list[dict]) -> IR:
     for v in ir.volumes:
         if not v.label:
             ir.unresolved.append(f"{v.id}: 명명 미정")
+    # 발화 보조 kind 판정(지시 3.3): 방 이름이면 room. **애매하면 추정하지 않는다.**
+    # 기하 판별(3.2)이 이미 정한 값은 덮어쓰지 않는다 — 발화는 보조다.
+    from stage_perspective.massvoid import kind_from_label
+    for v in ir.volumes:
+        if not v.label or getattr(v, "_kind_from_geometry", False):
+            continue
+        k = kind_from_label(v.label)
+        if k is not None:
+            v.kind = k
     return ir
 
 

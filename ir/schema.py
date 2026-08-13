@@ -15,6 +15,7 @@ ROOT_FIELDS = ["volumes", "anchors", "views", "unresolved", "notes", "relations"
 MAX_ROOT_FIELDS = 12
 
 # 개구부 하위유형 3종 — 유튜브 코퍼스 실측(door/window/opening 각 ≥3, §stage5).
+VOLUME_KINDS = ("mass", "room")   # 지시 3.1
 OPENING_TYPES = ("window", "door", "opening")
 
 # 관계 유형(5종) — 유튜브 코퍼스 실측(§stage5). 계획의 4종(인접·상하·관입·이격)에
@@ -55,6 +56,10 @@ class Volume:
     height_src: str = "unset"             # utterance | handwritten | vertical_stroke | unset
     confidence: float = 1.0
     label: str = ""                       # 명명(§7 4단계). 중첩 필드 — 루트 키 수 불변(§13)
+    # 매스/보이드 구분(지시 3.1). 중첩 필드 — 루트 키 수 불변(§13). 기본 "mass"로 기존 동작 보존.
+    # room = 내부 공간(한 면이 열린 정육면체 등). 1점투시 실내는 건축의 표준 구도인데
+    # 솔리드 매스로 인식하면 잘못된 기하가 나온다. 투시 전용 입력에서 지배적 결함.
+    kind: str = "mass"                    # mass | room
     # 투시 복원 시 축 라벨 모호(지시 1-ter B). 중첩 필드 — 루트 키 수 불변(§13).
     # 8way 대응 탐색이 두 해(a, 1/a) 중 하나를 임의로 고른다. 기하는 어느 축이 '폭'인지
     # 결정하지 못하므로 추정하지 않고 기록만 하고 unresolved에 올린다.
@@ -72,6 +77,8 @@ class Volume:
                 e.append(f"volume[{self.id}] point not [x,y]: {p}")
         if not (0.0 <= self.confidence <= 1.0):
             e.append(f"volume[{self.id}] confidence out of [0,1]")
+        if self.kind not in VOLUME_KINDS:
+            e.append(f"volume[{self.id}] kind '{self.kind}' not in {VOLUME_KINDS}")
         return e
 
 

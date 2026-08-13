@@ -12,7 +12,7 @@ export interface SceneDiff {
 function specKey(m: MeshSpec): string {
   // geometry+material 지문 — 변경 감지
   const fp = m.footprint.map(p => `${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(";");
-  return `${m.kind}|${fp}|${m.height}|${m.material.mode}|${m.material.opacity}|${m.label}`;
+  return `${m.kind}|${m.volumeKind ?? "mass"}|${fp}|${m.height}|${m.material.mode}|${m.material.opacity}|${m.label}`;
 }
 
 export function diffScene(prev: MeshSpec[], next: MeshSpec[]): SceneDiff {

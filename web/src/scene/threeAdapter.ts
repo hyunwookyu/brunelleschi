@@ -18,9 +18,13 @@ function extrudeGeometry(fp: number[][], height: number): THREE.BufferGeometry {
 function volumeMaterial(spec: MeshSpec, color: number): THREE.Material {
   const m = spec.material;
   if (m.mode === "wire") return new THREE.MeshBasicMaterial({ color, wireframe: true, transparent: true, opacity: m.opacity });
+  // 지시 3.4 — kind=room은 **안쪽 면**(BackSide)으로 렌더한다. 실내 공간이므로 껍질 안에서
+  // 보는 것이 맞고, 매스와 시각적으로 구분된다. confidence 표시 정책(§3.5)은 그대로.
+  const isRoom = spec.volumeKind === "room";
   return new THREE.MeshStandardMaterial({
     color, transparent: m.opacity < 1, opacity: m.opacity,
-    metalness: 0.0, roughness: 0.85, side: THREE.DoubleSide,
+    metalness: 0.0, roughness: isRoom ? 0.95 : 0.85,
+    side: isRoom ? THREE.BackSide : THREE.DoubleSide,
   });
 }
 
@@ -43,7 +47,7 @@ export function objectFromSpec(spec: MeshSpec, index = 0): THREE.Object3D {
   // 엣지(실선/파선은 §3.5 톤이나 여기선 실선 윤곽)
   const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color, transparent: true, opacity: spec.material.opacity }));
   group.add(edges);
-  group.name = spec.id; group.userData = { kind: "volume", label: spec.label, dimensionless: spec.dimensionless };
+  group.name = spec.id; group.userData = { kind: "volume", volumeKind: spec.volumeKind ?? "mass", label: spec.label, dimensionless: spec.dimensionless };
   return group;
 }
 
