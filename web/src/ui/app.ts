@@ -8,6 +8,7 @@ import { Viewer } from "./viewer.js";
 import { InkCanvas, type Frame } from "../capture/inkCanvas.js";
 import { ManualAnchorStore, type Prop, centroid } from "./manualAnchor.js";
 import { needsPlanForPerspective } from "./footprintClass.js";
+import { guidanceFor, type CameraSummary, type AspectSummary } from "./guidance.js";
 
 const $ = (id: string) => document.getElementById(id)!;
 
@@ -76,13 +77,37 @@ function setFrame(f: Frame) {
 ($("tab-plan") as HTMLButtonElement).onclick = () => setFrame("plan");
 ($("tab-persp") as HTMLButtonElement).onclick = () => setFrame("persp");
 
-// 투시 정합 힌트(§3.2): 평면 폴리곤을 투시 캔버스에 옅게. + §3.8 안내 배너(추가 b).
+// 복원 상태 — 투시 경로가 붙기 전까지는 미정(2.2 Python 경로의 TS 대응은 후속).
+let camSummary: CameraSummary = {};
+let aspectSummary: AspectSummary | undefined;
+let axisAmbiguous = false;
+
+// 투시 정합 힌트(§3.2) + §3.8 개정 안내(지시 2.7).
+// 구판은 "평면을 그리거나 치수를 알려주세요"였으나 사용자는 평면을 그리지 않는다(V-v).
+// 이제 **무엇이 왜 미확정인지**를 사유별로 말한다.
 function updatePerspectiveHint() {
   const ir = anchors.apply(baseIR);
   ink.setHints(curFrame === "persp" ? ir.volumes.map(v => v.footprint.map(p => [p[0], p[1]])) : []);
-  const show = curFrame === "persp" &&
-    (ir.volumes.length === 0 || ir.volumes.some(v => needsPlanForPerspective(v.footprint)));
-  ($("persp-hint").style as CSSStyleDeclaration).display = show ? "block" : "none";
+  const el = $("persp-hint");
+  if (curFrame !== "persp") { el.style.display = "none"; return; }
+
+  const items = guidanceFor(camSummary, aspectSummary, axisAmbiguous);
+  // 복원 결과가 아직 없으면(획만 있는 단계) 형태 기반 잠정 안내로 대체
+  if (items.length === 0) {
+    const shapeDoubt = ir.volumes.length === 0 || ir.volumes.some(v => needsPlanForPerspective(v.footprint));
+    if (!shapeDoubt) { el.style.display = "none"; return; }
+    el.textContent = "이 투시만으로는 비례가 확정되지 않습니다. 다른 각도에서 한 장 더 그리거나 치수를 알려주세요.";
+    el.style.display = "block";
+    return;
+  }
+  el.textContent = items.map(i => i.text).join("  ");
+  el.style.display = "block";
+}
+
+// 투시 복원 결과 주입(서버/워커 경로가 붙으면 호출). 테스트·자동화에서도 쓴다.
+function setPerspectiveState(cam: CameraSummary, aspect?: AspectSummary, axisAmb = false) {
+  camSummary = cam; aspectSummary = aspect; axisAmbiguous = axisAmb;
+  updatePerspectiveHint();
 }
 
 // ---- 수동 치수 입력(추가 a) ----
@@ -229,4 +254,6 @@ function submitAndMeasure(stroke: Stroke): Promise<number> {
   pick: (px: number, py: number) => viewer.pick(px, py),
   setFrame,
   anchorCount: () => anchors.count(),
+  setPerspectiveState,
+  guidance: () => guidanceFor(camSummary, aspectSummary, axisAmbiguous),
 };
