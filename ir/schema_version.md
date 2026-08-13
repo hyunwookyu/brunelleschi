@@ -81,3 +81,21 @@
 ## 필드 현황 (2026-08-14)
 루트 7키: volumes/anchors/views/unresolved/notes/relations/openings. 여유 5. 스키마 하락 없음.
 Volume 중첩 필드: id/footprint/base/height/height_src/confidence/label/**axis**.
+
+## 지시 3.1 — Volume.kind 추가 (중첩), 루트 7키 불변 (2026-08-14)
+
+- **`Volume.kind: str = "mass"`** 추가. **중첩 필드이므로 루트 최상위 키는 7 그대로**(§13).
+  기본값 `"mass"` — 기존 동작 완전 보존. `VOLUME_KINDS = ("mass", "room")`, `validate()`가 검사.
+- 근거: 1점투시 실내(한 면이 열린 정육면체, 개구부로 내부를 보는 구도)는 **건축의 표준 구도**인데
+  IR에 공간 개념이 없어 솔리드 매스로 인식되면 잘못된 기하가 나온다. 투시 전용 입력(지시 2)과
+  합치면 지배적 결함.
+- 판별(3.2, `stage_perspective/massvoid.py`): 배면이 개구 안에 포함 → room / 포함 없음 → mass /
+  면적비 1 부근 → **판정하지 않음**. 추가 계산 없음(2.2 소실점 경로의 정보 재사용).
+- 발화 보조(3.3): 방 이름이면 room, 매스 어휘면 mass, **애매하면 None**(추정 금지).
+- 렌더(3.4): room은 `THREE.BackSide`(안쪽 면). confidence 표시 정책(§3.5)은 그대로.
+- 관계(3.5): `penetrate` 의미가 kind 조합에 따라 달라진다. **불명확한 조합은 판정하지 않는다.**
+- TS 파리티: `web/src/parser/types.ts`에 `kind?`, `axis?` 추가(선택 필드, 기존 IR 호환).
+
+## 필드 현황 (2026-08-14, 갱신)
+루트 7키: volumes/anchors/views/unresolved/notes/relations/openings. 여유 5. 스키마 하락 없음.
+Volume 중첩 필드: id/footprint/base/height/height_src/confidence/label/**kind**/**axis**.
