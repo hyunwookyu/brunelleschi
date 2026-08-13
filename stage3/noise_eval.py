@@ -13,6 +13,7 @@ from __future__ import annotations
 import json, sys
 from pathlib import Path
 import numpy as np
+from stage_perspective.noise import stable_seed   # 결정론 시드(B-0c)
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -54,7 +55,7 @@ def run(grade_params: dict, n=300, img_size=(800.0, 600.0), seed=0) -> dict:
     out = {}
     for grade, gp in grade_params.items():
         jr = gp["jitter_ratio"]
-        rng = np.random.default_rng(seed + hash(grade) % 1000)
+        rng = np.random.default_rng(stable_seed(grade, base=seed))
         errs, approx = [], 0
         for _ in range(n):
             world4 = _random_world_quad(rng)

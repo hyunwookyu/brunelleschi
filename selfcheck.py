@@ -67,6 +67,47 @@ def check(report: dict, prev: dict | None = None) -> list[dict]:
     return flags
 
 
+def rerun_determinism(cmds: list[str] | None = None) -> list[dict]:
+    """§13 자기검증 4(B-0 d 추가) — **동일 입력 재실행 시 지표가 변하면 비결정 시드 의심**.
+
+    실제로 걸렸던 결함: `np.random.default_rng(seed + hash(kind+grade) % 9999)`의
+    `hash(str)`가 PYTHONHASHSEED 무작위화로 실행마다 달라, 같은 설정 재실행에
+    2F IoU가 0.877↔0.885로 표류했다. 4자리 보고가 과잉 정밀이었던 원인.
+
+    호출자는 (모듈, 함수, 인자)를 주고 두 번 실행해 결과가 같은지 본다.
+    """
+    import importlib, subprocess
+    flags = []
+    for cmd in (cmds or []):
+        outs = []
+        for _ in range(2):
+            r = subprocess.run([sys.executable, "-c", cmd], capture_output=True, text=True)
+            outs.append(r.stdout.strip())
+        if outs[0] != outs[1]:
+            flags.append({"path": cmd[:80], "val": None,
+                          "flag": "재실행 결과 불일치 → 비결정 시드 의심(hash(str)/시각 의존)"})
+    return flags
+
+
+def scan_nondeterministic_seeds(root: Path) -> list[dict]:
+    """소스에서 비결정 시드 패턴을 정적 탐지(B-0 d). hash(str)를 시드에 쓰면 안 된다."""
+    import re
+    pat = re.compile(r"default_rng\([^)]*hash\(|np\.random\.seed\([^)]*hash\(")
+    flags = []
+    for py in sorted(root.rglob("*.py")):
+        if "__pycache__" in str(py) or py.name == "selfcheck.py":
+            continue
+        try:
+            txt = py.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        for i, line in enumerate(txt.splitlines(), 1):
+            if pat.search(line):
+                flags.append({"path": f"{py.relative_to(root)}:{i}", "val": line.strip()[:80],
+                              "flag": "시드에 hash(str) 사용 → PYTHONHASHSEED로 실행마다 달라짐. stable_seed로 교체"})
+    return flags
+
+
 def main():
     """stage0/out의 **모든 측정 산출물**을 스캔한다.
     V-5b 교훈: 구판은 score.json만 봤다. 마우스 노이즈 측정(parseable 1.0, 전 조건 precise)은
@@ -90,6 +131,8 @@ def main():
         for f in check(report, prev if p.name == "score.json" else None):
             f["path"] = f"{p.name}:{f['path']}"
             flags.append(f)
+
+    flags += scan_nondeterministic_seeds(ROOT)      # B-0 d: 비결정 시드 정적 탐지
 
     out = {"n_flags": len(flags), "flags": flags,
            "scanned": [p.name for p in sorted(outdir.glob("*.json")) if p.name not in skip],

@@ -1,5 +1,5 @@
 {
-  "n_flags": 53,
+  "n_flags": 64,
   "flags": [
     {
       "path": "aspect_priors.json:2F_a_right_angle.rectangular.coarse.hold_rate",
@@ -216,6 +216,61 @@
       "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "seed_variance.json:camera_fit_error.precise.approx_rate.mean",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.precise.approx_rate.std",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.precise.approx_rate.min",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.precise.approx_rate.max",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.precise.approx_rate.range",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.medium.approx_rate.mean",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.medium.approx_rate.std",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.medium.approx_rate.min",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.medium.approx_rate.max",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.medium.approx_rate.range",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.coarse.approx_rate.min",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "uncertainty_eval.json:gates[0].recall",
       "val": 1.0,
       "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
@@ -293,6 +348,7 @@
     "quickdraw_grades.json",
     "relation_corpus.json",
     "score.json",
+    "seed_variance.json",
     "sketchgraphs_check.json",
     "tolerance.json",
     "uncertainty_eval.json",
