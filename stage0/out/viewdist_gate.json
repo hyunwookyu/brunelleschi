@@ -1,0 +1,66 @@
+{
+  "spec": "함의 시거리 게이트 유효 범위(지시 1.4). 1점 정사각 가정 경로.",
+  "n": 600,
+  "aspect_err_threshold": 0.3,
+  "upper_bound_W": 3.0,
+  "base_bad_rate": 0.772,
+  "gates": [
+    {
+      "gate": "not_trust(18.4 하한 0.87W)",
+      "flags": 0.395,
+      "recall": 0.456,
+      "precision": 0.89,
+      "passed_bad_rate": 0.694
+    },
+    {
+      "gate": "unreliable_or_invalid(<0.5W)",
+      "flags": 0.205,
+      "recall": 0.266,
+      "precision": 1.0,
+      "passed_bad_rate": 0.713
+    },
+    {
+      "gate": "upper_only(>3.0W)",
+      "flags": 0.163,
+      "recall": 0.212,
+      "precision": 1.0,
+      "passed_bad_rate": 0.727
+    },
+    {
+      "gate": "both(<0.5W or >3.0W)",
+      "flags": 0.368,
+      "recall": 0.477,
+      "precision": 1.0,
+      "passed_bad_rate": 0.639
+    }
+  ],
+  "ratio_by_outcome": {
+    "bad": {
+      "n": 463,
+      "median": 1.019,
+      "p10": 0.345,
+      "p90": 4.072
+    },
+    "ok": {
+      "n": 137,
+      "median": 1.264,
+      "p10": 0.786,
+      "p90": 2.003
+    }
+  },
+  "note": "정사각 가정이 틀리면 d가 그만큼 틀린다(implied_d/true_d = width/depth). 하한만 있는 18.4는 '가정보다 깊은' 쪽만 잡는다 → 단측. 상한이 반대쪽을 잡는다.",
+  "by_direction": {
+    "deeper_than_square(k>1)": {
+      "n": 238,
+      "caught_by_lower": 0.517,
+      "caught_by_upper": 0.0,
+      "ratio_median": 0.495
+    },
+    "shallower_than_square(k<1)": {
+      "n": 246,
+      "caught_by_lower": 0.0,
+      "caught_by_upper": 0.398,
+      "ratio_median": 2.479
+    }
+  }
+}

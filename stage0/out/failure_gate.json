@@ -39,5 +39,47 @@
       "passed_iou_median": 0.7996
     }
   },
+  "viewdist_gates": {
+    "viewdist_invalid_only": {
+      "flags": 0.0,
+      "recall": 0.0,
+      "precision": 0.0,
+      "passed_fail_rate": 0.205,
+      "passed_iou_median": 0.7996
+    },
+    "viewdist_unreliable_or_invalid": {
+      "flags": 0.18,
+      "recall": 0.22,
+      "precision": 0.25,
+      "passed_fail_rate": 0.195,
+      "passed_iou_median": 0.8193
+    },
+    "viewdist_not_trust": {
+      "flags": 0.398,
+      "recall": 0.439,
+      "precision": 0.226,
+      "passed_fail_rate": 0.191,
+      "passed_iou_median": 0.828
+    }
+  },
+  "viewdist_verdict_distribution": {
+    "unreliable": 72,
+    "trust": 241,
+    "warn": 87
+  },
+  "viewdist_ratio_by_outcome": {
+    "fail": {
+      "n": 82,
+      "median": 1.124,
+      "p10": 0.379,
+      "p90": 40.59
+    },
+    "ok": {
+      "n": 318,
+      "median": 1.131,
+      "p10": 0.392,
+      "p90": 39.26
+    }
+  },
   "note": "게이트 통과분 fail_rate가 전체보다 유의 낮으면 사전판정 유효(§5.3). fit_error는 복원 직후 저비용."
 }

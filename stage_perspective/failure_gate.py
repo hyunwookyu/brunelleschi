@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 import numpy as np
 from stage_perspective.noise import grade_ratios, add_corner_noise
+from stage_perspective.viewdist import evaluate_quad   # 지시 1: 함의 시거리 게이트
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -87,7 +88,10 @@ def evaluate(n=400, seed=0):
         r = recover_plane_rightangle(noisy, sz)
         iou = _poly_iou(_norm(truth), _norm(np.array(r["recovered_plane"]))) if r["ok"] else 0.0
         fe = r["fit_error"] if r["ok"] and r["fit_error"] is not None else 1.0
-        rows.append({"reliable": gate["reliable"], "iou": iou, "fail": iou < 0.6, "fit_error": fe})
+        vd = evaluate_quad(noisy, sz)              # 함의 시거리(이론서 8.8/6.2) + 게이트(18.4)
+        rows.append({"reliable": gate["reliable"], "iou": iou, "fail": iou < 0.6, "fit_error": fe,
+                     "vd_verdict": vd.get("verdict"), "vd_ratio": vd.get("ratio"),
+                     "vd_case": vd.get("case"), "vd_fov": vd.get("fov_deg")})
     fails = [r for r in rows if r["fail"]]
 
     def gate_stats(is_gated):
@@ -100,11 +104,30 @@ def evaluate(n=400, seed=0):
                 "passed_iou_median": round(float(np.median([r["iou"] for r in passed])), 4) if passed else None}
     # fit_error 임계 스윕 → 최적
     fe_gates = {f"fit_error>{th}": gate_stats(lambda r, th=th: r["fit_error"] > th) for th in (0.01, 0.02, 0.03, 0.05)}
+    # 지시 1: 함의 시거리 게이트. invalid/unreliable을 차단, warn 포함 여부도 따로 본다.
+    vd_gates = {
+        "viewdist_invalid_only": gate_stats(lambda r: r["vd_verdict"] == "invalid"),
+        "viewdist_unreliable_or_invalid": gate_stats(lambda r: r["vd_verdict"] in ("invalid", "unreliable")),
+        "viewdist_not_trust": gate_stats(lambda r: r["vd_verdict"] != "trust"),
+    }
+    vd_dist = {}
+    for r in rows:
+        vd_dist[r["vd_verdict"]] = vd_dist.get(r["vd_verdict"], 0) + 1
+    # 실패군/성공군의 함의 시거리 비율 분포 대비(게이트가 무엇을 보는지 드러냄)
+    def ratios(sel):
+        v = [r["vd_ratio"] for r in rows if sel(r) and r["vd_ratio"] is not None]
+        return {"n": len(v), "median": round(float(np.median(v)), 3) if v else None,
+                "p10": round(float(np.percentile(v, 10)), 3) if v else None,
+                "p90": round(float(np.percentile(v, 90)), 3) if v else None}
     return {
         "n": n, "overall_fail_rate": round(len(fails) / n, 3),
         "overall_iou_median": round(float(np.median([r["iou"] for r in rows])), 4),
         "geometric_gate": gate_stats(lambda r: not r["reliable"]),
         "fit_error_gates": fe_gates,
+        "viewdist_gates": vd_gates,
+        "viewdist_verdict_distribution": vd_dist,
+        "viewdist_ratio_by_outcome": {"fail": ratios(lambda r: r["fail"]),
+                                      "ok": ratios(lambda r: not r["fail"])},
         "note": "게이트 통과분 fail_rate가 전체보다 유의 낮으면 사전판정 유효(§5.3). fit_error는 복원 직후 저비용.",
     }
 

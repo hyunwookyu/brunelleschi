@@ -1,5 +1,5 @@
 {
-  "n_flags": 39,
+  "n_flags": 46,
   "flags": [
     {
       "path": "aspect_priors.json:2F_a_right_angle.rectangular.coarse.hold_rate",
@@ -63,6 +63,16 @@
     },
     {
       "path": "failure_gate.json:fit_error_gates.fit_error>0.05.precision",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "failure_gate.json:viewdist_gates.viewdist_invalid_only.recall",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "failure_gate.json:viewdist_gates.viewdist_invalid_only.precision",
       "val": 0.0,
       "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
     },
@@ -199,6 +209,31 @@
       "path": "score.json:query_loop.scale_ranked_top_rate",
       "val": 1.0,
       "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "viewdist_gate.json:gates[1].precision",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "viewdist_gate.json:gates[2].precision",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "viewdist_gate.json:gates[3].precision",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "viewdist_gate.json:by_direction.deeper_than_square(k>1).caught_by_upper",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "viewdist_gate.json:by_direction.shallower_than_square(k<1).caught_by_lower",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     }
   ],
   "scanned": [
@@ -224,6 +259,7 @@
     "sketchgraphs_check.json",
     "tolerance.json",
     "unmappable_report.json",
+    "viewdist_gate.json",
     "youtube_dist.json"
   ],
   "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."
