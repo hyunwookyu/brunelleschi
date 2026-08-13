@@ -64,6 +64,25 @@ def test_2F_right_angle_recovers_aspect_for_rectangle():
     assert abs(r["aspect"] - true_a) / true_a < 0.15      # 무노이즈 종횡비 <15% 오차
 
 
+def test_2G_frame_diff_stroke_extraction():
+    """2G: 프레임차분 획 추출 — 변별로 그린 사각형 → 4획, 순서(seq) 보존."""
+    import cv2
+    from stage_perspective.extract import extract_from_frames
+    H, W = 200, 260
+    corners = [(30, 30), (230, 30), (230, 170), (30, 170)]
+    canvas = np.full((H, W), 255, np.uint8)
+    frames = [canvas.copy()]
+    for i in range(4):
+        cv2.line(canvas, corners[i], corners[(i + 1) % 4], 0, 2)
+        frames.append(canvas.copy())
+    strokes = extract_from_frames(frames)
+    assert len(strokes) == 4
+    assert [s["seq"] for s in strokes] == [0, 1, 2, 3]     # 프레임순=획순
+    # 첫 획은 상단 변(대략 y≈30 수평)
+    p0 = np.array([pt[:2] for pt in strokes[0]["points"]])
+    assert abs(p0[:, 1].mean() - 30) < 10
+
+
 def test_2F_right_angle_collapses_on_irregular():
     """2F-a 반례(§13 자기검증3): 비직교 footprint는 직각가정 IoU 붕괴 — 지표가 자명 1.0 아님."""
     from stage_perspective.priors import evaluate
