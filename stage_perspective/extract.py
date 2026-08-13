@@ -63,12 +63,21 @@ def download_sample(video_id: str, out_dir: Path, seconds=30) -> Path | None:
         return None
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"{video_id}.mp4"
-    opts = {"format": "18", "outtmpl": str(out), "quiet": True, "noplaylist": True}
+    # 전체 format-18(360p, pre-muxed) 받고 cv2서 앞 seconds만 읽음(부분다운로드는 ffmpeg-PATH 필요).
+    opts = {"format": "18/worst[ext=mp4]/worst", "outtmpl": str(out), "quiet": True, "noplaylist": True}
+    try:
+        import os, imageio_ffmpeg
+        ff = imageio_ffmpeg.get_ffmpeg_exe()
+        opts["ffmpeg_location"] = ff
+        os.environ["PATH"] = str(Path(ff).parent) + os.pathsep + os.environ.get("PATH", "")
+    except Exception:
+        pass
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
             ydl.download([f"https://www.youtube.com/watch?v={video_id}"])
-        return out if out.exists() else None
-    except Exception:
+        return out if out.exists() and out.stat().st_size > 10000 else None
+    except Exception as e:
+        print("download fail:", str(e)[:150], file=sys.stderr)
         return None
 
 
