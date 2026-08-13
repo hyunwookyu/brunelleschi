@@ -9,6 +9,22 @@
   카메라정합: 재투영 오차 fit_error                         [stage3]
   시간단조성: IR(t+1) ⊇ IR(t)                               [모든 단계]
   발화번역 : 자막 치수언급 vs 파싱 anchors                  [stage2]
+
+
+지표 둔감성 (지시 B-2, `tests/test_metric_blindspots.py`가 반례로 고정)
+--------------------------------------------------------------------
+각 지표가 **무엇을 놓치는지** 확인했다. 아래는 단독 판정 금지이며 병기 지표를 함께 본다.
+
+| 지표 | 놓치는 것 | 병기해야 할 것 |
+|---|---|---|
+| plane_iou (트랙2) | 종횡비 오차 10~20%(IoU 0.85), 35~60%(IoU 0.655) | 종횡비 상대오차 |
+| 부피 서명(query) | 90° 축 뒤바뀜, 같은 면적의 형태 왜곡 | shape_signature |
+| polygon_aspect | 내부 형태(대칭 노치) — 외곽 비례만 본다 | IoU / 면적 |
+| aspect_rel_err | 절대 크기(100배 차이도 0) | anchor_dim_error |
+| aspect_equiv | 축 라벨(의도적) — 형태 판정엔 쓰지 말 것 | 축 뒤바뀜 여부 |
+| relations.all_ir_valid_rate | 관계가 **틀렸는지** — 스키마 유효성만 본다 | (정답 대비 검증 없음) |
+| multiplex.all_named_rate | 라벨이 **맞게** 붙었는지 — 붙었는지만 센다 | 결합 정확도 |
+| Volume.confidence | 의도한 형태인지 — 입력 획 적합도일 뿐 | 정답 대비 IoU |
 """
 from __future__ import annotations
 import json, sys, importlib.util
