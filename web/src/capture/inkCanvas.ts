@@ -61,6 +61,7 @@ export class InkCanvas {
   setFrame(f: Frame) { this.frame = f; this.redraw(); }
   getFrame() { return this.frame; }
   frameStrokes(f: Frame = this.frame) { return this.strokes[f]; }
+  allStrokes(): Stroke[] { return [...this.strokes.plan, ...this.strokes.persp]; }   // 4.3 내보내기
   setHints(fps: number[][][]) { this.hintFootprints = fps; if (this.frame === "persp") this.redraw(); }
 
   clear() {

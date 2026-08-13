@@ -44,7 +44,42 @@ def match_corners(truth: np.ndarray, rec: np.ndarray) -> list[float]:
     return out
 
 
+def main_sessions(paths):
+    """실측 세션의 코너 오차(지시 4.4).
+    **정답 코너가 없으므로** 합성처럼 직접 잴 수 없다 → 복원 폴리곤과 원본 잉크 외곽의
+    자기정합 거리로 대신한다(stage1/measure_capture와 같은 성격). 절대 비교가 아니라
+    Quick,Draw 기반 값과의 **분포 대조**가 목적이다."""
+    from common.session_io import load_session, to_capture, session_input_kind
+    from stage1.normalize import normalize_to_ir
+    rows = {}
+    for path in paths:
+        sess = load_session(path)
+        kind = session_input_kind(sess)
+        cap = to_capture(sess, frame="plan")
+        ir, meta = normalize_to_ir(cap)
+        if not ir.volumes or not meta.get("parseable"):
+            continue
+        fp = np.asarray(ir.volumes[0].footprint, float)
+        pts = np.asarray([[p[0], p[1]] for s in cap["strokes"] for p in s["points"]], float)
+        diag = math.hypot(*np.ptp(fp, 0)) or 1.0
+        # 복원 코너에서 가장 가까운 입력점까지 거리 / 대각
+        d = [float(np.min(np.hypot(*(pts - c).T))) / diag for c in fp]
+        rows.setdefault(kind, []).extend(d)
+    rep = {"spec": "실측 세션 코너 정합 거리(지시 4.4). 정답 없음 → 자기정합 대용.",
+           "by_input_kind": {k: {"n": len(v),
+                                 "median": round(float(np.median(v)), 4),
+                                 "p90": round(float(np.percentile(v, 90)), 4)}
+                             for k, v in rows.items()},
+           "compare_with": "stage0/out/corner_error.json (Quick,Draw 합성, 정답 있음)",
+           "note": "값의 성격이 달라 직접 비교 불가. 펜/마우스 간 **상대 차이**만 본다."}
+    (OUT / "corner_error_sessions.json").write_text(json.dumps(rep, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(rep, ensure_ascii=False, indent=2))
+
+
 def main():
+    args = [a for a in sys.argv[1:] if not a.startswith("-")]
+    if args:
+        main_sessions(args); return
     OUT.mkdir(parents=True, exist_ok=True)
     model = load_model()
     rng = np.random.default_rng(11)

@@ -10,6 +10,7 @@ import { ManualAnchorStore, type Prop, centroid } from "./manualAnchor.js";
 import { needsPlanForPerspective } from "./footprintClass.js";
 import { guidanceFor, type CameraSummary, type AspectSummary } from "./guidance.js";
 import { applyAxisChoice, hasAmbiguousAxis, previewBothSolutions } from "./axisToggle.js";
+import { buildSession, downloadSession, validateSession } from "./sessionExport.js";
 
 const $ = (id: string) => document.getElementById(id)!;
 
@@ -167,6 +168,16 @@ function applyManualDimension(id: string, prop: Prop, value: number): boolean {
 // ---- 카메라 버튼(§3.3) ----
 ($("home") as HTMLButtonElement).onclick = () => viewer.goHome();
 ($("top") as HTMLButtonElement).onclick = () => viewer.goTop();
+// 4.3 — 스트로크+IR 내보내기. 실획을 stage0/10·12 분석 경로로 넘기는 유일한 통로다.
+function currentSession() {
+  return buildSession({
+    strokes: ink.allStrokes(), ir: currentIR(),
+    canvas: { w: inkHost.clientWidth, h: inkHost.clientHeight },
+    inputMode, penSeen: ink.isPenSession(),
+  });
+}
+($("export") as HTMLButtonElement).onclick = () => downloadSession(currentSession());
+
 ($("axis-toggle") as HTMLButtonElement).onclick = () => {
   useAltAxis = !useAltAxis;
   const ir = currentIR();
@@ -270,6 +281,8 @@ function submitAndMeasure(stroke: Stroke): Promise<number> {
   setPerspectiveState,
   toggleAxis: () => { useAltAxis = !useAltAxis; const ir = currentIR(); viewer.apply(buildScene(ir)); updateStatus(ir, 0); return useAltAxis; },
   axisChoice: () => useAltAxis,
+  session: currentSession,
+  sessionErrors: () => validateSession(currentSession()),
   axisPreviews: (id: string) => { const v = currentIR().volumes.find(x => x.id === id); return v ? previewBothSolutions(v) : null; },
   guidance: () => guidanceFor(camSummary, aspectSummary, axisAmbiguous),
 };

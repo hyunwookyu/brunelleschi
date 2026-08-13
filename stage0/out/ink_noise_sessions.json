@@ -1,0 +1,15 @@
+{
+  "spec": "실측 세션 기반 잉크 노이즈 성분(지시 4.4). Quick,Draw와 동일 측정 함수.",
+  "by_input_kind": {
+    "mouse": {
+      "n_sessions": 1,
+      "lf_bow_median": 0.07957,
+      "hf_turn_deg_median": 0.0,
+      "overshoot_median": 0.03887,
+      "closure_gap_median": 0.02957,
+      "spacing_ratio": 0.04032
+    }
+  },
+  "compare_with": "stage0/out/ink_noise_model.json (Quick,Draw = 마우스·손가락)",
+  "note": "펜 분포가 마우스와 다르면 노이즈 모델을 두 벌로 분리하고 Track 2 임계·1-bis 불확실성 전파 입력을 재산출해야 한다(assumptions V-A)."
+}

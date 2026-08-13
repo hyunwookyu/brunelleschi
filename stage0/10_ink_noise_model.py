@@ -123,7 +123,46 @@ def calibrate_hf(target_turn: float, lf_bow: float, overshoot: float,
     return round((lo + hi) / 2, 5)
 
 
+def main_sessions(paths):
+    """실측 세션에서 같은 4성분을 추출(지시 4.4). Quick,Draw 경로와 **동일 측정 함수**를 쓴다
+    — 그래야 두 분포를 비교해 펜/마우스 분리 필요성을 판단할 수 있다."""
+    from common.session_io import load_session, session_strokes, session_input_kind
+    buckets = {}
+    for path in paths:
+        sess = load_session(path)
+        kind = session_input_kind(sess)
+        strokes = session_strokes(sess, frame="plan")
+        if not strokes:
+            continue
+        cs = to_canon(strokes)
+        m = measure_strokes(cs)
+        b = buckets.setdefault(kind, {"lf": [], "hf": [], "ov": [], "gap": [], "spacing": [], "n": 0})
+        b["lf"] += m["lf"]; b["hf"] += m["hf"]; b["ov"] += m["ov"]
+        if m["gap"] is not None:
+            b["gap"].append(m["gap"])
+        b["spacing"] += m["spacing"]; b["n"] += 1
+    out = {}
+    for kind, b in buckets.items():
+        out[kind] = {"n_sessions": b["n"],
+                     "lf_bow_median": round(agg(b["lf"]), 5),
+                     "hf_turn_deg_median": round(agg(b["hf"]), 4),
+                     "overshoot_median": round(agg(b["ov"]), 5),
+                     "closure_gap_median": round(agg(b["gap"]), 5),
+                     "spacing_ratio": round(agg(b["spacing"]) / CANON_DIAG, 5) if b["spacing"] else None}
+    rep = {"spec": "실측 세션 기반 잉크 노이즈 성분(지시 4.4). Quick,Draw와 동일 측정 함수.",
+           "by_input_kind": out,
+           "compare_with": "stage0/out/ink_noise_model.json (Quick,Draw = 마우스·손가락)",
+           "note": ("펜 분포가 마우스와 다르면 노이즈 모델을 두 벌로 분리하고 "
+                    "Track 2 임계·1-bis 불확실성 전파 입력을 재산출해야 한다(assumptions V-A).")}
+    (OUT / "ink_noise_sessions.json").write_text(json.dumps(rep, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(rep, ensure_ascii=False, indent=2))
+
+
 def main():
+    # 세션 파일이 인자로 오면 실측 경로(4.4), 없으면 Quick,Draw 경로.
+    args = [a for a in sys.argv[1:] if not a.startswith("-")]
+    if args:
+        main_sessions(args); return
     OUT.mkdir(parents=True, exist_ok=True)
     rng = np.random.default_rng(0)
     buckets: dict[str, dict[str, list]] = {}

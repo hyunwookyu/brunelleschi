@@ -1,0 +1,12 @@
+{
+  "spec": "실측 세션 코너 정합 거리(지시 4.4). 정답 없음 → 자기정합 대용.",
+  "by_input_kind": {
+    "mouse": {
+      "n": 5,
+      "median": 0.0001,
+      "p90": 0.0001
+    }
+  },
+  "compare_with": "stage0/out/corner_error.json (Quick,Draw 합성, 정답 있음)",
+  "note": "값의 성격이 달라 직접 비교 불가. 펜/마우스 간 **상대 차이**만 본다."
+}
