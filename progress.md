@@ -218,7 +218,7 @@ relate.ts bbox 근사 발산 정량화: L자·凹자·계단형 8케이스에서
 |---|---|
 | V-1 파서 TS 포팅 (Python parity) | **완료** — 전체 파서 레이어 이식. geometry/paleosketch/normalize(confidence)/multiplex/relate/tentative + 카메라(자체 Jacobi SVD, fit_error<1e-6) + 발화규칙+앵커(S2). **TS 14/14, typecheck 클린**. web/src/parser/, web/test/ |
 | V-2 Three.js 뷰어 | **완료(실 렌더)** — sceneBuilder+sceneDiff(브라우저독립) + `threeAdapter.ts`(압출·confidence재질·SceneManager diff/dispose)+`main.ts`+`index.html`. WebGL 렌더 **픽셀리드백 검증**(4오브젝트, 14.5%채움, 45색버킷=다볼륨), 탑뷰/시점복귀 버튼 동작(§3.3). TS 30/30, three+vite. 잔여: 카메라정합 적용·배경오버레이(투시 정합 후, V-3+). |
-| V-3 실시간(워커·증분·디바운스) | 대기 |
+| V-3 실시간(워커·증분·디바운스) | **완료** — `incremental.ts`(획단위 증분, multiplex union-find 재현, 영향그룹만 재파싱), **하드게이트 V-b 검증**(증분==전체: footprint·confidence·relations 일치, 브리징병합·순서무관, 획순서 보존이 핵심). `parserWorker.ts`(§2.3 Web Worker). 지연 §8: 단일 p95<30ms, 8볼륨증분<80ms. TS 37/37. 디바운스는 뷰어 통합(V-4 마우스 드로잉)서. |
 | V-4 화면(분할·프레임·터치) | 대기 |
 | V-5 잉크 보강(팜리젝·coalesced·tilt·seq) | 대기 |
 | V-6 발화(MediaRecorder·부분전사·번역UI) | 대기 |
