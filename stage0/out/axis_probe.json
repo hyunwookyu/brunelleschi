@@ -1,0 +1,38 @@
+{
+  "spec": "축 뒤바뀜 — 8way가 두 해를 구분하는가(지시 B-1 a).",
+  "n": 300,
+  "grade": "medium",
+  "corner_err_ratio": 0.0269,
+  "flip_rate": 0.3233,
+  "iou_median": {
+    "flipped": 0.563733,
+    "not_flipped": 0.848804
+  },
+  "reproj_rel_diff_between_two_solutions": {
+    "median": 0.0,
+    "p90": 0.0,
+    "max": 0.0,
+    "frac_below_1pct": 1.0,
+    "frac_below_10pct": 1.0
+  },
+  "chose_lower_error_rate": 0.5067,
+  "elevation_of_flipped": {
+    "median": 52.084962,
+    "median_not_flipped": 48.364519
+  },
+  "note": "두 해의 재투영 오차가 사실상 같으면(rel_diff≈0) 기하가 구분하지 못한다는 뜻 → 선택 규칙 개선 불가, 두 해를 남기고 사용자에게 묻는다(B-1 b).",
+  "by_view_type": {
+    "near_1pt(az≈0°)": {
+      "n": 200,
+      "flip_rate": 0.295
+    },
+    "mid(az≈22°)": {
+      "n": 200,
+      "flip_rate": 0.32
+    },
+    "2pt(az≈45°)": {
+      "n": 200,
+      "flip_rate": 0.335
+    }
+  }
+}

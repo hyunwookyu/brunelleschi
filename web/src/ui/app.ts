@@ -9,6 +9,7 @@ import { InkCanvas, type Frame } from "../capture/inkCanvas.js";
 import { ManualAnchorStore, type Prop, centroid } from "./manualAnchor.js";
 import { needsPlanForPerspective } from "./footprintClass.js";
 import { guidanceFor, type CameraSummary, type AspectSummary } from "./guidance.js";
+import { applyAxisChoice, hasAmbiguousAxis, previewBothSolutions } from "./axisToggle.js";
 
 const $ = (id: string) => document.getElementById(id)!;
 
@@ -34,7 +35,7 @@ worker.onmessage = (e: MessageEvent) => {
   if (m.type === "ready") { readyResolver?.(); readyResolver = null; return; }
   if (m.type !== "ir") return;
   baseIR = m.ir as IR;
-  const ir = anchors.apply(baseIR);
+  const ir = currentIR();
   viewer.apply(buildScene(ir));
   updateStatus(ir, m.reparsed);
   updatePerspectiveHint();
@@ -77,6 +78,11 @@ function setFrame(f: Frame) {
 ($("tab-plan") as HTMLButtonElement).onclick = () => setFrame("plan");
 ($("tab-persp") as HTMLButtonElement).onclick = () => setFrame("persp");
 
+// B-1 b — 축 뒤바뀜 두 해 중 어느 쪽을 보고 있는가. 기하가 구분하지 못하므로(재투영 오차
+// 상대차 정확히 0) 사용자가 보고 고른다. 질의(§6)보다 빠르다.
+let useAltAxis = false;
+function currentIR(): IR { return applyAxisChoice(anchors.apply(baseIR), useAltAxis); }
+
 // 복원 상태 — 투시 경로가 붙기 전까지는 미정(2.2 Python 경로의 TS 대응은 후속).
 let camSummary: CameraSummary = {};
 let aspectSummary: AspectSummary | undefined;
@@ -86,7 +92,7 @@ let axisAmbiguous = false;
 // 구판은 "평면을 그리거나 치수를 알려주세요"였으나 사용자는 평면을 그리지 않는다(V-v).
 // 이제 **무엇이 왜 미확정인지**를 사유별로 말한다.
 function updatePerspectiveHint() {
-  const ir = anchors.apply(baseIR);
+  const ir = currentIR();
   ink.setHints(curFrame === "persp" ? ir.volumes.map(v => v.footprint.map(p => [p[0], p[1]])) : []);
   const el = $("persp-hint");
   if (curFrame !== "persp") { el.style.display = "none"; return; }
@@ -129,7 +135,7 @@ viewer.renderer.domElement.addEventListener("pointerup", (e) => {
 
 function openDimPanel(id: string, px: number, py: number) {
   pickedId = id;
-  const v = anchors.apply(baseIR).volumes.find(x => x.id === id);
+  const v = currentIR().volumes.find(x => x.id === id);
   dimPanel.style.display = "block";
   dimPanel.style.left = Math.min(px, viewHost.clientWidth - 220) + "px";
   dimPanel.style.top = Math.min(py, viewHost.clientHeight - 120) + "px";
@@ -143,7 +149,7 @@ function closeDimPanel() { dimPanel.style.display = "none"; pickedId = null; }
 function applyManualDimension(id: string, prop: Prop, value: number): boolean {
   if (!isFinite(value) || value <= 0) return false;
   if (!anchors.add(baseIR, id, prop, value)) return false;
-  const ir = anchors.apply(baseIR);          // 발화 앵커와 동일 로직(applyOps)
+  const ir = currentIR();                    // 발화 앵커와 동일 로직(applyOps)
   viewer.apply(buildScene(ir));
   updateStatus(ir, 0);
   updatePerspectiveHint();
@@ -161,6 +167,13 @@ function applyManualDimension(id: string, prop: Prop, value: number): boolean {
 // ---- 카메라 버튼(§3.3) ----
 ($("home") as HTMLButtonElement).onclick = () => viewer.goHome();
 ($("top") as HTMLButtonElement).onclick = () => viewer.goTop();
+($("axis-toggle") as HTMLButtonElement).onclick = () => {
+  useAltAxis = !useAltAxis;
+  const ir = currentIR();
+  viewer.apply(buildScene(ir));
+  updateStatus(ir, 0); updatePerspectiveHint();
+};
+
 ($("clear") as HTMLButtonElement).onclick = () => {
   ink.clear(); anchors.clear(); baseIR = emptyIR();
   worker.postMessage({ type: "reset" });
@@ -186,7 +199,7 @@ function applyManualDimension(id: string, prop: Prop, value: number): boolean {
 function updateStatus(ir: IR, reparsed: number) {
   const confs = ir.volumes.map(v => v.confidence.toFixed(2)).join("/");
   $("stat").textContent =
-    `[${inputMode}] 볼륨 ${ir.volumes.length}${confs ? " (" + confs + ")" : ""} · 앵커 ${anchors.count()} · 관계 ${ir.relations.length} · 재파싱 ${reparsed} · obj ${viewer.objectCount()}`;
+    `[${inputMode}]${hasAmbiguousAxis(ir) ? ` [축 ${useAltAxis ? "B" : "A"}]` : ""} 볼륨 ${ir.volumes.length}${confs ? " (" + confs + ")" : ""} · 앵커 ${anchors.count()} · 관계 ${ir.relations.length} · 재파싱 ${reparsed} · obj ${viewer.objectCount()}`;
 }
 function lastLatency(ms: number) { $("lat").textContent = `지연 ${ms.toFixed(1)}ms`; }
 
@@ -255,5 +268,8 @@ function submitAndMeasure(stroke: Stroke): Promise<number> {
   setFrame,
   anchorCount: () => anchors.count(),
   setPerspectiveState,
+  toggleAxis: () => { useAltAxis = !useAltAxis; const ir = currentIR(); viewer.apply(buildScene(ir)); updateStatus(ir, 0); return useAltAxis; },
+  axisChoice: () => useAltAxis,
+  axisPreviews: (id: string) => { const v = currentIR().volumes.find(x => x.id === id); return v ? previewBothSolutions(v) : null; },
   guidance: () => guidanceFor(camSummary, aspectSummary, axisAmbiguous),
 };
