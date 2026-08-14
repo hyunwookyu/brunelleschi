@@ -862,3 +862,71 @@ _합성 모델 생성식(명시, 지시 a)_: 각 변을 직선 보간 → **점�
 ### 노이즈 모델 주의(§10 재확인)
 합성 노이즈가 화이트/고주파임이 이번에 확인됨(§6.5 KS 0.34와 정합). 실측 저주파 떨림과
 괴리 가능 → measure_capture 게이트가 실측 시 이를 잡는다. 크게 다르면 render_noisy 저주파화 후 tolerance 재튜닝(§6.5).
+
+---
+
+# W 전환 — 투시 작도 기반 3D 모델러 (2026-08-14~)
+
+> 이 선 위쪽은 **폐기된 접근**(완성 스케치 → 형태 추론)의 기록이다. 지우지 않는다 —
+> 왜 접근을 바꿨는지가 거기 적혀 있다. 계획서는 `docs/wireframe_plan.md`로 교체됐고
+> `stage_v_spec.md`·`prior_fill_plan.md`는 `docs/archive/`에 폐기 사유와 함께 보존.
+
+## W-A. 전환 정리 (완료)
+
+### a. 폐기 항목 제거
+
+계획서 §2.3 표 전체를 기준으로 삼았다(지시문의 8개 열거는 그 부분집합 — DECISIONS D-A1).
+
+**제거된 것**
+| 묶음 | 파일 |
+|---|---|
+| 1-bis 불확실성 전파 | `stage_perspective/uncertainty.py`, `uncertainty_eval.py` |
+| 매스/보이드 분류기 | `massvoid.py`, `massvoid_eval.py`, `ui/footprintClass.ts` |
+| Track 2 형태 추론 판정 | `decompose priors reconstruct evaluate failure_gate construction extract collect axis_probe axis_gauge frame_audit metric_audit rectilinear_split shape_metrics split_eval to_ir` |
+| 2D 각도 축 클러스터링 + footprint 압출 | `stage1/` 전체, `parser/normalize.ts`, `scene/sceneBuilder.ts` |
+| IR 파이프라인 | `ir/`, `stage2/ stage4/ stage5/ stage6/`, `score.py`, `parser/{parse,multiplex,relate,anchor,grammar,tentative,tolerances,camera}.ts` |
+| axisToggle | `ui/axisToggle.ts` |
+| 렌더 계층(압출 전용 자료구조) | `scene/{sceneDiff,threeAdapter}.ts`, `ui/{viewer,app,manualAnchor,guidance,sessionExport}.ts` |
+| 하네스(측정 완료분) | `stage0/{02,05,06,07,08,09,10,11,12,13,14}_*.py` |
+
+**보존된 것**: 측정 산출물 37건 → `stage0/out/archive_pre_W/`. progress.md 위쪽 기록.
+reports/. 접근을 바꾼 근거이므로 코드만 지우고 수치는 남긴다.
+
+**남긴 것(§2.1 유지 항목)**: 카메라 수학(`viewdist.py` 6.2/6.3/18.4, `camera_unified.py` 5.3
+자유도 회계), `repetition.py`(9.5/9.6), 잉크 캡처(`inkCanvas.ts`), 원시 유틸
+(`geometry/linalg/paleosketch/grade.ts`, `common/normalize_core.py`의 리샘플·DP·직진성),
+selfcheck·assumptions·리뷰어.
+
+**새로 만든 것**: `stage_perspective/project.py`(폐기된 `decompose.py`에서 순수 합성 투영
+유틸만 구제 — 형태를 추론하지 않고 합성만 한다), `web/src/data/quickdraw.ts`
+(폐기된 mouse_* 테스트 안에 있던 실획 로더 — W-0의 유일한 재료다).
+
+### b. 카메라 수학 분리 가능성 확인
+
+`viewdist.py`는 numpy 외 의존이 없다. `camera_unified.py`는 `viewdist`만 의존한다.
+→ **완전히 분리 가능**. W-1이 이것을 TS로 이식해 직접 쓴다.
+
+W-1이 쓸 함수: `f_from_two_vps`(6.2), `f_from_three_vps`(6.3, 수심), `line_intersect`,
+`gate`(18.4 화각), `recover_camera`·`direct_scale_axes`(5.3 자유도 회계).
+
+**주의(D-A4)**: `d_from_trapezoid`(8.8)·`d_from_ellipse`(8.7)는 §2.3에서 게이트로서 폐기됐다.
+모듈에는 남지만 W-1은 `gate`만 호출한다. `evaluate_quad`(둘을 함께 쓰는 진입점)는 호출하지 않는다.
+
+### c. assumptions 정리
+
+무효 항목을 삭제하지 않고 "접근 전환으로 무효" 표에 사유와 함께 옮겼다(§10).
+무효 44건 대부분이 **하나의 원인**으로 묶인다 — 미지수가 관측보다 많아서 생긴 것.
+신규 5건(W-1~W-5) 등록. 유지 9건(V-A 실획 대표성, V-z 직교 한계, V-y 주점 가정 등).
+
+### d·e. 리뷰어·분기 규칙
+
+`.claude/agents/reviewer.md`는 이전 세션에서 만들어 둔 것이 지시와 일치한다(코드 안 봄,
+6개 점검 항목, 지적만 출력). 읽기 목록에 `DECISIONS.md`·`DEFERRED.md`·`HANDOFF.md`와
+아카이브 경로를 추가했다. 분기 규칙은 CLAUDE.md §2(A-2/A-3/A-4)로 이관.
+
+### 검증
+- Python 26/26 통과(구 137건 중 폐기 모듈 대상 111건 제거). `stage3/camera.py`의
+  `from ir.schema import View`는 최소 dataclass로 대체.
+- TypeScript 타입체크 통과. vitest는 **테스트 파일 0** — 폐기 대상만 남아 있었다. W-0이 채운다.
+- selfcheck 0건(스캔 대상 0 — 살아있는 측정이 아직 없다. W-0이 첫 산출물을 낸다).
+  `score.json` 필수 게이트를 제거하고 콘솔 인코딩 방어를 넣었다.

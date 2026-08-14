@@ -1,72 +1,10 @@
-// IR 타입 — 참조: python/ir/schema.py (루트 7필드). 지시서 V-1.
-// 두 구현 출력 일치가 검증 기준(§1.3). 어긋나면 TS가 틀린 것.
+// 입력 원시 타입 — 잉크 캡처 포맷과 좌표. 참조: docs/wireframe_plan.md §5.1.
+//
+// **IR(volumes/anchors/openings/…)은 W 전환에서 폐기됐다**(§2.3 footprint 압출·축 클러스터링).
+// 3D 자료구조는 Vertex/Edge/Face/Camera로 대체되며 W-3에서 `wire/model.ts`에 정의한다.
+// 여기 남는 것은 그보다 앞단, 즉 **화면에서 들어온 것**뿐이다.
 
 export type Pt = [number, number];
-
-export interface Volume {
-  id: string;
-  footprint: Pt[];            // world Z=0
-  base: number;
-  height: number | null;      // 앵커 없으면 null = 무차원(§3.5)
-  height_src: string;
-  confidence: number;         // 둘레지지율²·적합도 (stage1/normalize)
-  label: string;              // 명명(4단계)
-  // 매스/보이드 구분(지시 3.1). 중첩 필드 — 루트 키 수 불변. 기본 "mass"로 기존 동작 보존.
-  kind?: VolumeKind;
-  // 축 라벨 모호(지시 1-ter B). 기하가 폭/깊이를 역수까지만 정한다 → 추정하지 않고 기록.
-  axis?: { ambiguous: boolean; aspect: number; aspect_alt: number; perm?: number[] | null } | null;
-}
-
-export const VOLUME_KINDS = ["mass", "room"] as const;
-export type VolumeKind = typeof VOLUME_KINDS[number];
-
-export interface Anchor {
-  target: string;
-  prop: string;               // width|depth|height|...
-  value: number;
-  tol: number;                // >0 = 완화(범위)
-  src: string;
-}
-
-export interface View {
-  src: string;
-  camera: Record<string, unknown>;
-  fit_error: number | null;
-}
-
-export interface Note { target: string; text: string; }
-
-export const RELATION_TYPES = ["adjacent", "above_below", "penetrate", "separated", "aligned"] as const;
-export type RelationType = typeof RELATION_TYPES[number];
-export interface Relation { a: string; b: string; type: RelationType; src: string; }
-
-export const OPENING_TYPES = ["window", "door", "opening"] as const;
-export type OpeningType = typeof OPENING_TYPES[number];
-export interface Opening {
-  target: string; type: OpeningType; wall: number;
-  pos: number | null; w: number | null; h: number | null; src: string;
-}
-
-export interface IR {
-  volumes: Volume[];
-  anchors: Anchor[];
-  views: View[];
-  unresolved: string[];
-  notes: Note[];
-  relations: Relation[];
-  openings: Opening[];
-}
-
-export const ROOT_FIELDS = [
-  "volumes", "anchors", "views", "unresolved", "notes", "relations", "openings",
-] as const;
-export const MAX_ROOT_FIELDS = 12;
-
-export function emptyIR(): IR {
-  return { volumes: [], anchors: [], views: [], unresolved: [], notes: [], relations: [], openings: [] };
-}
-
-export function rootFieldCount(): number { return ROOT_FIELDS.length; }
 
 // --- 캡처 포맷 (§4.1 + §5.3 tiltX/Y, seq) ---
 export interface Stroke {

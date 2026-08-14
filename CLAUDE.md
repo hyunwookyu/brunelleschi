@@ -1,204 +1,158 @@
 # SKETCH2SPACE — 작업 지침 (CLAUDE.md)
 
-스케치·발화 기반 공간 확인 시스템. 사양 원본은 [`sketch2space_plan.md`](sketch2space_plan.md).
-검증 명제: *평면·투시 스케치와 발화가 하나의 IR로 환원되고, 생성 기하가 원본 위에 겹쳐 확인 가능한가.*
+투시 작도 기반 3D 모델러. **현행 계획서는 [`docs/wireframe_plan.md`](docs/wireframe_plan.md)**(코드명 W).
+원 사양 [`sketch2space_plan.md`](sketch2space_plan.md)은 배경 문서로 남되, 충돌하면 계획서가 이긴다.
+이론 근거는 [`docs/perspective_theory.md`](docs/perspective_theory.md).
 
-핵심 분리 원칙(§3.1): **LLM은 IR만 만든다. 기하는 결정론적 솔버가 만든다. 스케치에서 메쉬를 복원하지 않는다.**
+**제품 정의**: 카메라를 먼저 세우고, 그 위에서 투시 작도로 3D를 직접 구축한다.
+SketchUp의 선 도구와 메커니즘이 같다. 유일한 차이는 카메라의 출처 — SketchUp은 3D 앱이라
+처음부터 알고, 여기서는 초반 입력이 그것을 정한다.
+
+**핵심 원리**: 카메라가 확정되면 커서 픽셀 하나가 3D 점 하나를 유일하게 결정한다
+(눈에서 커서로 나가는 광선 ∩ 시작점+t·축방향 직선의 최근접점). **추론이 사라지고 계산만 남는다.**
+
+> 2026-08-14 전환. 이전 접근(완성 스케치 → 형태 추론)은 폐기됐다. 왜 바꿨는지는
+> [`docs/archive/stage_v_spec.md`](docs/archive/stage_v_spec.md) 머리말과 `assumptions.md`
+> "접근 전환으로 무효" 절에 있다. 측정 산출물은 `stage0/out/archive_pre_W/`에 보존.
 
 ---
 
-## 1. IR 스키마 — 현행판 (§3.2)
+## 1. 자료구조 (계획서 §5.1)
 
-**버전: v1.0 — 0~3단계 변경 없음 (루트 5필드 유지). 0단계 말 사용자 확정 대기(CP-0.5).**
-_이력: 0·1·2·3단계 모두 필드 추가 없음. 2·3단계는 기존 Anchor/View 스키마로 충분(승격 0)._
-단일 소스: [`ir/schema.py`](ir/schema.py). 이 문서와 코드가 어긋나면 **코드가 아니라 이 문서를 먼저 고치고** 코드를 맞춘다(§10: 스키마는 문서로 고정).
-
-```json
-{
-  "volumes": [
-    {"id": "hall", "footprint": [[0,0],[12,0],[12,8],[0,8]],
-     "base": 0.0, "height": 9.0,
-     "height_src": "utterance", "confidence": 0.8}
-  ],
-  "anchors": [
-    {"target": "hall", "prop": "width",
-     "value": 12.0, "tol": 1.2, "src": "utterance:t=142.3"}
-  ],
-  "views": [
-    {"src": "sk_03", "camera": {}, "fit_error": 0.06}
-  ],
-  "unresolved": ["deck 높이", "lobby 개구부 위치"],
-  "notes": [{"target": "hall", "text": "..."}],
-  "relations": [{"a": "hall", "b": "lobby", "type": "adjacent", "src": "geometry"}]
-}
+```
+Vertex  { id, position: Vec3, provenance }
+Edge    { id, v0, v1, direction: VP1|VP2|VP3|screen|free }
+Face    { id, edges[], normal, plane }
+Camera  { vps[], principal, f, locked }
 ```
 
-- `unresolved`가 핵심 필드. 추정하지 않고 남긴다. 질의 루프·대안 생성의 축(§3.2).
-- `relations`는 1차 범위 **제외**. 필요 확인 시 추가(§3.2). 5단계 대상.
-- 앵커가 없으면 **단위 없이 세운다. 기본값 금지**(§3.5). → 1단계 높이는 무차원 플레이스홀더.
-
-### 필드 계수 규칙 (§13 "12개 초과 시 멈춤" 해석 — 계획 미정의분 확정)
-- **"필드" = IR 루트 객체의 최상위 키 수.** 중첩 속성은 세지 않는다.
-- 현재 최상위 키 **7개**: `volumes, anchors, views, unresolved, notes, relations, openings` (relations·openings는 5단계 추가).
-- 최상위 키가 **12를 초과하면 멈추고 보고**(§13 멈춤 조건). 여유 5.
-- unmappable 원장: rel_*/opening_* 키는 relations/openings 필드의 값(realized)이지 신규 루트 키 아님(승격 오산 방지, `ir/unmappable.py`).
-
-### openings (5단계 추가, 2026-08-12)
-- `Opening{target,type,wall,pos,w,h,src}`. **type 3종**: window/door/opening (유튜브 코퍼스 실측 door20/window7/opening6).
-- pos/w/h=None → 미지정(§3.7) = 6단계 질의 대상.
-
-### relations (5단계 추가, 2026-08-12)
-- `Relation{a,b,type,src}`. **유형 5종**: adjacent/above_below/penetrate/separated/aligned.
-  (계획 4종 + aligned — 유튜브 코퍼스 실측 13회 근거). src=geometry|utterance.
-- 기하 추론(XY): adjacent/separated/aligned/penetrate. above_below는 Z 필요 → 발화로만.
-- 부분 획 방어: confidence≥0.5 확정 볼륨만(§task1 단조성 위반 대비).
-
-### 채널 권한 (§3.3, 고정)
-| 채널 | 절대치수 | 비례 | 관계 | 시점 |
-|---|---|---|---|---|
-| 손글씨 숫자 | ○ | — | — | — |
-| 발화(확정) | ○ | — | ○ | — |
-| 발화(완화) | 범위 | — | ○ | — |
-| 평면 | × | ○ | ○ | — |
-| 투시 | × | △ | ○ | ○ |
-| 다이어그램 | × | × | ○ | — |
-
-투시는 치수 채널 제외(원근 왜곡). 평면은 비례만 → 앵커 1개로 전체 확정.
-충돌 우선순위 = 위 표 순서. 완화 발화는 범위 내 먼저 조정, 범위 벗어날 때만 충돌 보고(§3.4).
-
-### 발화 번역 출력 문법 — 7개로 닫힘 (§3.6)
-`set / range / min / relate / retract / unresolved / note`. 스키마 검증 실패 시 재시도.
-LLM 역할은 어휘 해석이 아니라 **미지정 항목 식별**(§3.7). 세션 후 일괄 번역(실시간 파싱 금지, §3.6).
-
-### 치수 표시 톤 (§3.5, 오버레이)
-명시=실선+숫자 / 범위내확정=실선+`~` / 비례전파=파선.
-**확장(2026-08-12)**: 볼륨 confidence로 **연속 흐림**(opacity=0.3+0.7·conf). confidence<0.5=점선(2 4)+"?"표식(미확정). 목적: 볼륨이 사라져도 거슬리지 않게 → 파서를 보수적으로 만드는 것보다 나음.
-confidence = 둘레지지율(그린비율)²·적합도. 열린/부분 윤곽 → 낮음 → 자유 철회(단조성 재정의, [[task1]]).
+- 구 IR(volumes/anchors/openings/…)은 **폐기**. 루트 필드 제한 규칙만 유지한다.
+- provenance는 남되 단순해진다: `measured / setting / default`.
+  measured = 사용자가 그은 것에서 나온 값. setting = 슬라이더·프리셋. default = 미조작 기본값.
+- **자료구조 변경은 사람에게 올린다**(A-3 예외 4항 중 하나).
 
 ---
 
-## 2. 자율 운용 규칙 (§13)
+## 2. 진행 규칙 — 무중단 자율 진행
 
-### 전이 판정
-| 전이 | 판정 | 자동 |
-|---|---|---|
-| 정규화 보강 여부 | SketchGraphs 일치율 임계 | ○ |
-| tolerance 수렴 | 그리드 서치 최적값 | ○ |
-| 0→1 (IR 확정) | IR 필드 승격 규칙 | ○ |
-| 1→2 | 오버레이가 의도와 맞는가 | **×(사람)** |
-| 2→3 | 치수 전파 정확도 | 부분 |
-| 3→4 | fit_error 임계 | ○ |
+W-A → W-0 → W-1 → … → W-8까지 멈추지 않고 완주한다. **중간 보고 없음. 확인 요청 없음.**
 
-### IR 필드 승격 규칙
-- `unmappable` 집계 **3회 이상** 반복 → 필드 승격
-- 1~2회 → `note` 처리, 목록 보존
-- 최상위 필드 **12개 초과 → 멈추고 보고**
-
-### 진행 규칙
 ```
 각 단계 완료 시:
-  score.py 실행 → progress.md 기록
-  임계 통과 → 다음 단계
-  미통과 → 3회까지 자동 수정, 실패 시 멈추고 보고
-사람 확인 필요 항목 → checkpoints.md 누적 (확인 안 기다리고 진행 가능한 작업 계속)
+  테스트 실행 → selfcheck 실행 → 리뷰어 호출 → 지적 대응 → 커밋 → 다음 단계
 ```
-2단계(발화 앵커)·3단계(카메라 정합)는 1단계 출력 형식만 알면 **병렬 개발**. 오버레이 확인 밀려도 진행.
 
-### 멈춤 조건 (하드)
-1. IR 최상위 필드 12개 초과
-2. score.py 수치가 이전 단계 대비 하락
-3. 같은 오류로 3회 실패
-4. **4단계 진입 — 외부 데이터셋 IoU 게이트 통과 필요** (개정: 구 오버레이 육안. 통과함)
-5. 5단계 진입 — 관계 어휘 종수 확정(코퍼스) + 부분획 검증 통과 (완료: 5종, 크래시0)
-6. 6단계 진입 — 단조성 재정의 + 표시정책 + opening 승격 (완료)
-7. **7단계(정정 학습) 진입 — 정지** (2026-08-12, 현재 정지 지점). 파서 안정 후·실세션 로깅 필요.
+### A-2. 막혔을 때 — 멈추지 말고 우회한다
+1. **재시도** — 같은 접근으로 최대 3회, 매번 다른 가설로
+2. **우회** — 더 단순한 구현으로 대체(예: 면 생성 경계가 어려우면 사각형 면만 우선).
+   사실과 원래 목표를 `DEFERRED.md`에 기록
+3. **격리** — 해당 기능을 끄고 나머지 진행. 전체가 의존하면 최소 대체물
+4. **다음 단계로** — 어떤 경우에도 다음 W로 넘어간다
 
-로깅(§14): `collect/logschema.py`, 옵트인 기본꺼짐. 학습은 7단계. 지금은 기록만.
-stage5/: relate.py relation_corpus.py opening_corpus.py. stage6/query.py(질의루프, 분기영향도). stage0/09(부분획).
-단조성 재정의(§task1): `IR.confident_superset_of`(confidence≥0.5만 철회금지). 질의 임계 ASK_THRESHOLD=0.15 잠정(§14 튜닝).
+**중단하는 유일한 경우**: W-0에서 획→엣지 매핑 비율이 **0.5 미만**일 때.
+이 방식 전체의 전제가 무너지므로 보고하고 멈춘다. 그 외에는 어떤 이유로도 멈추지 않는다.
 
-### 자기검증 규칙 (§13 추가, 지시서 V)
-각 단계 완료 시 자동 점검하고 progress.md에 기록(멈추지 말고 원인 확인 후 보고).
-1. **의심 수치 자동 점검** — `python selfcheck.py` (score.json 스캔): 1e-10 미만 오차 / 정확히 1.0·0.0 비율 / 이전 대비 완전 불변 / 0 고정 카운터. 의심≠오류, 각 플래그 원인(자기참조·무노이즈·측정범위·미작동) 확인.
-2. **assumptions.md** — 계획·지시서 전제 항목화, 매 단계 관측과 대조. 어긋나면 의존 판정도 갱신.
-3. **새 지표엔 반례 테스트** — 그 지표가 의도한 것을 재는지 확인(예: named_rate 1.0 자기참조 → 모호 deixis 반례로 검증).
+### A-3. 판단 규칙 (사람에게 묻지 않는다)
+- 측정이 가리키는 방향을 우선한다
+- 사전 예상과 어긋나면 **측정을 따르고**, 예상을 `assumptions.md`에 반증으로 기록한다
+- 선택지가 여럿이면 **가장 단순한 것**을 고른다. 복잡한 대안은 `DEFERRED.md`
+- 계획 문서와 실제가 어긋나면 **실제를 따르고 문서를 갱신한다**
+- 범위를 넓히지 않는다. 넓히고 싶으면 `DEFERRED.md`
+- 선택 근거와 **기각 사유**를 `progress.md`에, 잠정 결정은 `DECISIONS.md`에
 
-### 판정 임계 (§8 공란 → 0단계 잠정 확정, checkpoints.md에서 사용자 확인 대기)
-| 항목 | 잠정 기준 | 근거 |
-|---|---|---|
-| 오버레이 어긋남 | 등급별 직선편차 중앙값 이하 | §8 문구, Quick,Draw 실측 |
-| fit_error 실패 | `> 0.10` → 근사 모드 | 노이즈측정 검증: precise p95 0.013, coarse p95 0.105 (progress.md) |
-| 수정 왕복 | `≤ 5회` | 잠정 |
-| 전체 실패 | 수정시간 > 손모델링 시간 | §8 |
-| 중단 조건 | 2주 내 1단계 미성립 시 재검토 | §8 |
+사람에게 올릴 것은 없다. 프로토타입 완성 후 한 번에 검토한다.
+
+### A-4. 품질 하한 (타협하지 않는다)
+- 기존 테스트가 깨진 채로 다음 단계에 가지 않는다
+- 새 기능마다 테스트를 쓴다(반례 테스트 포함 — 아래 §4)
+- selfcheck를 매 단계 돌린다
+- 리뷰어를 매 단계 호출한다. 지적을 2회까지 대응하고 남으면 `DEFERRED.md`로 옮긴 뒤 진행
+- 커밋을 잘게 나눈다. 되돌릴 수 있어야 한다
+- `progress.md`를 매 단계 갱신한다
+
+### A-1. 세션 인계
+컨텍스트가 차면 `HANDOFF.md`를 갱신하고 종료한다. 다음 세션은 그 한 줄로 시작한다:
+`"HANDOFF.md를 읽고 이어서 진행하라."` **이 문장이 유일한 사람 개입이다.**
 
 ---
 
-## 3. 디렉토리 구조
+## 3. 리뷰어 서브에이전트
 
-```
-SKETCH2SPACE/
-  CLAUDE.md              이 문서 (IR 현행판 + 자율규칙 + 구조). 매 단계 갱신.
-  sketch2space_plan.md   사양 원본 (불변)
-  progress.md            단계별 진행·score 기록 (§13)
-  checkpoints.md         사람 확인 필요 항목 누적 (§13)
-  ir/
-    schema.py            IR 데이터클래스 + 검증 (단일 소스)
-    schema_version.md    스키마 변경 이력 (§10 고정)
-    unmappable.py        unmappable 집계 원장 = 승격 라벨러 (§13)
-  common/
-    grammar.py           발화 번역 7문법 (§3.6)
-    normalize_core.py    획→폴리곤+제약. parse_strokes(method="paleo"|"dp")
-    paleosketch.py       프리미티브 인식(직교 폴리라인) = 분할 (§5.1, 기본 분할기)
-  data/
-    quickdraw/           §6.1 프리핸드 노이즈 분포
-    sketchgraphs/        §6.2 정규화 정답 라벨
-    youtube/             §6.3 자막(발화 층)
-  stage0/                착수 전 통계·하네스 (§7)
-    01_quickdraw_grades.py   등급 클러스터링 → 노이즈 파라미터
-    02_sketchgraphs_render.py 제약그래프 렌더 → 노이즈 부여 → 대조
-    03_youtube_captions.py    자막 수집 → 발화유형 분포
-    04_tolerance_gridsearch.py 그리드 서치 하네스
-    out/                     통계 산출 JSON
-  stage1/                평면→압출 (§7 1단계)
-    capture/index.html   웹 잉크 캡처 (Pointer Events)
-    normalize.py         획→DP→선분적합→축클러스터→직교스냅→폴리곤
-    extrude.py  rhino_out.py  overlay.py
-  stage2/  translate.py anchor.py whisper_align.py   발화 스케일 앵커 (§7 2단계)
-  stage3/  camera.py synth.py noise_eval.py rhino_view.py   카메라 정합 (§7 3단계)
-  stage4/  multiplex.py naming.py overlay_multi.py make_multi.py   볼륨 다중화·명명 (§7 4단계)
-  collect/ logschema.py           지속 수집 로깅 (§14, 옵트인 기본꺼짐, 기록만)
-  stage0/  08_external_validation.py   TU-Berlin 외부 IoU 게이트(4단계 진입, §13 개정)
-  score.py               §6.5 검증 지표 러너 (1~4단계 지표 포함)
-  tests/
-```
-
----
-
-## 3.5 분기 결정 규칙 (R-1, 2026-08-14)
-
-선택지가 생기면 **스스로 고른다**. 사람에게 올리는 것은 아래 d항뿐이다.
-
-a. **측정이 가리키는 방향을 우선한다.**
-b. 사전 예상과 어긋나면 **측정을 따르고**, 예상을 `assumptions.md`에 반증으로 기록한다.
-c. 선택 근거와 **기각 사유**를 `progress.md`에 남긴다.
-d. 다음만 사람에게 올린다(`checkpoints.md`):
-   - IR 스키마 **루트 필드** 변경
-   - 프로토타입 **범위**의 축소·확대
-   - 이전 결론이 뒤집혀 **재산출 범위가 한 덩어리를 넘을 때**
-   - **제품 방향** 판단(무엇을 만들 것인가)
-
-## 3.6 리뷰어 서브에이전트 (R-0, 2026-08-14)
-
-`.claude/agents/reviewer.md`. **각 소단계 완료 시** 호출한다: 테스트·selfcheck 실행 → 리뷰어 호출
-→ 지적 대응 → 커밋. 지적이 2회 반복 후에도 남으면 `checkpoints.md`에 올리고 진행한다.
+`.claude/agents/reviewer.md`. **각 W 단계 완료 시** 호출한다. 지적이 나오면 대응 후 재호출,
+2회 반복 후에도 남으면 `DEFERRED.md`에 올리고 진행한다.
 
 리뷰어는 **코드를 보지 않는다**(문서·수치만). 이 프로젝트에서 세션 밖에서 잡힌 결함
 (마우스 precise vs Quick,Draw 대표성 충돌, jitter_ratio 단위 혼동의 Track 2 파급,
 이론서 8.8이 2I 결론을 뒤집은 것, 4.6%가 PCA 프레임 값이었던 것)이 전부
 **"테스트 통과"에 설득당하지 않는 위치**에서 나왔기 때문이다.
 
-## 4. 위임 경계 (§9)
-**위임 불가**: IR 스키마 설계 / tolerance 튜닝 / 발화유형 분류 기준 / 통합 판단 / 정규화 결과 최종 판정.
-→ 이들은 checkpoints.md로 사용자에게 올린다. 나머지는 자율 진행.
-**사용자 개입 지점 2곳(§12)**: ① IR 확정(0단계 말) ② 1단계 오버레이 결과 확인.
+---
+
+## 4. 자기검증 규칙
+
+각 단계 완료 시 자동 점검하고 `progress.md`에 기록한다.
+
+1. **의심 수치 자동 점검** — `python selfcheck.py`가 `stage0/out/*.json`을 스캔한다.
+   1e-10 미만 오차 / 정확히 1.0·0.0 비율 / 이전 대비 완전 불변 / 0 고정 카운터 /
+   단일 범주 분포 / 비결정 시드 정적 탐지. 의심≠오류 — 각 플래그의 원인을 확인한다.
+   **측정은 반드시 `stage0/out/`에 JSON으로 남긴다.** 원장 밖 측정은 규칙이 있어도 안 걸린다.
+2. **assumptions.md** — 매 단계 관측과 대조. 어긋나면 의존 판정도 갱신.
+3. **새 지표엔 반례 테스트** — 그 지표가 의도한 것을 재는지 확인한다.
+   (전례: `named_rate` 1.0이 자기참조였던 것, 재투영 오차 0.0이 항등이었던 것)
+
+**재현성**: 시드에 `hash(str)`를 쓰지 않는다(PYTHONHASHSEED 무작위화). `stable_seed` 사용.
+시드 변동폭 때문에 **유효 자릿수는 2자리**로 본다.
+
+---
+
+## 5. 디렉토리 구조
+
+```
+SKETCH2SPACE/
+  CLAUDE.md                이 문서
+  HANDOFF.md               세션 인계 (A-1) — 매 단계 갱신
+  DECISIONS.md             잠정 결정과 근거 (A-3)
+  DEFERRED.md              우회·단순화·미룬 항목 (A-2)
+  progress.md              단계별 진행·측정 기록
+  assumptions.md           전제 대장
+  checkpoints.md           (구) 사람 확인 항목 — W 전환 후 신규 등록 없음
+  docs/
+    wireframe_plan.md      현행 계획서
+    perspective_theory.md  이론서 (전 구간 참조)
+    archive/               폐기된 계획서 + 폐기 사유
+  web/                     프로토타입 본체 (TypeScript + Vite + Three.js)
+    src/capture/           잉크 캡처 (Pointer Events, 마우스 1급, 팜 리젝션)
+    src/wire/              [W-0~] 획→엣지, 카메라 누산기, 추론 엔진, 기하
+    src/parser/            geometry/linalg/paleosketch/grade — 유지되는 원시 유틸
+    src/data/              Quick,Draw 실획 로더
+    test/                  vitest
+  stage_perspective/       카메라 수학 (Python 기준 구현)
+    viewdist.py            6.2 f²=|PV₁||PV₂|, 6.3 수심, 18.4 화각, 8.7/8.8 시거리
+    camera_unified.py      소실점 개수별 통합 복원 + 자유도 회계(5.3)
+    repetition.py          등간격 반복 (9.5/9.6)
+    project.py             합성 투영 (검증용)
+    noise.py               실측 코너오차 등급 + stable_seed
+  stage3/                  camera.py(4점 적합) synth.py(합성 장면)
+  common/                  normalize_core(획 원시처리) paleosketch inknoise session_io grammar
+  stage0/                  통계 하네스 + out/ (측정 산출물, archive_pre_W/에 구 접근 보존)
+  selfcheck.py
+  tests/                   pytest
+```
+
+---
+
+## 6. 이론서 참조 지도
+
+W-1 이후가 직접 쓰는 절만 추린다.
+
+| 절 | 내용 | 쓰는 곳 |
+|---|---|---|
+| 2.3 | 1/2/3점 투시는 하나의 이론 | W-1 누산기 설계 |
+| 5.3 | 자유도 회계 | W-1 상태 표시 = 자료구조 |
+| 6.2 | f² = \|PV₁\|\|PV₂\| | W-1 2점 해 |
+| 6.3 | 주점 = 수심 | W-1 3점 해 |
+| 6.5 | 예각 조건 (둔각이면 f²<0) | W-1 실시간 유효성 |
+| 7.7 | 실척으로 읽히는 방향 | W-1 부분 확정 상태에서의 작도 |
+| 9.5·9.6 | 등간격 반복 | W-2 스냅 힌트 |
+| 16.2 | 주점 = 이미지 중심 가정 | W-1 2점 경로(가정임을 명시) |
+| 18.4 | 화각 임계 | W-1 구도 경고 |

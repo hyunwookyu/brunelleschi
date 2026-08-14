@@ -113,13 +113,11 @@ def main():
     V-5b 교훈: 구판은 score.json만 봤다. 마우스 노이즈 측정(parseable 1.0, 전 조건 precise)은
     vitest에만 있어 원장 밖 → 규칙이 있어도 걸릴 수 없었다. 측정은 원장에 남겨야 검증된다."""
     outdir = ROOT / "stage0" / "out"
-    sp = outdir / "score.json"
-    if not sp.exists():
-        print("score.json 없음 — score.py 먼저 실행"); return
     prev_path = outdir / "score_prev.json"
     prev = json.loads(prev_path.read_text(encoding="utf-8")) if prev_path.exists() else None
 
-    # 보존용 아카이브(폐기 기준선)는 스캔 대상이 아니다 — 살아있는 측정만 본다.
+    # 보존용 아카이브(폐기 접근의 측정 기록, `archive_pre_W/`)는 하위 디렉토리라 glob에 안 걸린다.
+    # 살아있는 측정만 본다 — W 전환 이후 산출물.
     skip = {"score_prev.json", "selfcheck.json", "score_baseline_deprecated.json"}
     flags = []
     for p in sorted(outdir.glob("*.json")):
@@ -140,9 +138,13 @@ def main():
            "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."}
     (ROOT / "stage0" / "out" / "selfcheck.json").write_text(
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"자기검증 플래그 {len(flags)}건:")
+    try:                                    # 콘솔 코드페이지가 cp949여도 죽지 않게
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+    print(f"자기검증 플래그 {len(flags)}건 (스캔 {len(out['scanned'])}개 산출물):")
     for f in flags:
-        print(f"  ⚠ {f['path']} = {f['val']}  — {f['flag']}")
+        print(f"  ! {f['path']} = {f['val']}  - {f['flag']}")
 
 
 if __name__ == "__main__":

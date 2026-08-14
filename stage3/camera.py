@@ -18,7 +18,17 @@ import cv2
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from ir.schema import View
+# IR(구 평면 파이프라인 자료구조)은 W 전환에서 폐기됐다(wireframe_plan §5.1).
+# 카메라 적합 결과를 담을 최소 구조만 여기에 둔다.
+from dataclasses import dataclass, field
+
+
+@dataclass
+class View:
+    """카메라 적합 결과 1건. 구 IR `views` 항목의 최소 대체물."""
+    src: str
+    camera: dict = field(default_factory=dict)
+    fit_error: float | None = None
 
 FIT_ERROR_FAIL = 0.10   # CP-0.1 (CLAUDE.md §8) — 이 값 초과 시 근사 모드
 

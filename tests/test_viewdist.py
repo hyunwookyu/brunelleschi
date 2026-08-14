@@ -112,8 +112,7 @@ def test_two_point_f_is_independent_of_aspect_error():
     """**게이트 적용 범위의 근거**(지시 1.4 발견): 2점 경로에서 f는 두 VP와 주점만으로
     결정되므로(6.2) 종횡비가 무엇이든 참값이 나온다 → 종횡비 실패를 잡을 수 없다.
     시거리 게이트는 형태 가정에서 d를 역산하는 1점 경로에 속한다."""
-    from stage_perspective.decompose import _project_polygon
-    from stage_perspective.priors import rect
+    from stage_perspective.project import project_polygon as _project_polygon, rect
     sz = (800.0, 600.0)
     ratios = []
     for a in (0.4, 1.0, 2.5):

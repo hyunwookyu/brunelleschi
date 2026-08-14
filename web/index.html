@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <title>SKETCH2SPACE — V-4 화면</title>
+  <title>SKETCH2SPACE — 투시 작도</title>
   <style>
     *{margin:0;box-sizing:border-box;-webkit-user-select:none;user-select:none}
     html,body{height:100%;font:14px system-ui,sans-serif;background:#f6f6f6;color:#111;overflow:hidden}
@@ -11,74 +11,24 @@
     #left{position:relative;background:#fff;overflow:hidden}
     #ink{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
     #split{background:#ddd;cursor:col-resize}
-    #split:hover{background:#bbb}
-    #right{position:relative;overflow:hidden}
+    #right{position:relative;overflow:hidden;background:#eef1f3}
     #view{position:absolute;inset:0;touch-action:none}
-    /* 프레임 탭(§3.2) — 좌상단 */
-    #frametabs{position:absolute;left:8px;top:8px;z-index:5;display:flex;gap:0}
-    #frametabs button{height:28px;padding:0 12px;border:1px solid #bbb;background:#fff;cursor:pointer}
-    #frametabs button:first-child{border-radius:6px 0 0 6px}
-    #frametabs button:last-child{border-radius:0 6px 6px 0;border-left:0}
-    #frametabs button.on{background:#1a99aa;color:#fff;border-color:#1a99aa}
-    /* 투시 안내 배너(추가 b, §3.8) */
-    #persp-hint{position:absolute;left:8px;right:8px;top:44px;z-index:5;display:none;
-      padding:8px 10px;background:#fff6e5;border:1px solid #e8a33a;border-radius:6px;
-      color:#7a4a00;font-size:12px;line-height:1.4}
-    /* 치수 입력 패널(추가 a) */
-    #dim-panel{position:absolute;z-index:8;display:none;width:210px;padding:10px;
-      background:#fff;border:1px solid #999;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.18)}
-    #dim-panel .row{display:flex;gap:6px;margin-top:8px}
-    #dim-title{font-size:12px;font-weight:600}
-    #dim-panel select,#dim-panel input{height:28px;border:1px solid #bbb;border-radius:5px;padding:0 6px}
-    #dim-value{flex:1;width:60px}
-    #dim-panel button{height:28px;padding:0 10px;border:1px solid #bbb;background:#fff;border-radius:5px;cursor:pointer}
-    #dim-apply{background:#1a99aa;color:#fff;border-color:#1a99aa}
     #bar{position:absolute;left:0;right:0;bottom:0;height:46px;display:flex;gap:8px;align-items:center;
          padding:0 10px;background:#fff;border-top:1px solid #ddd}
     #bar button{height:30px;padding:0 12px;border:1px solid #ccc;background:#fff;border-radius:6px;cursor:pointer}
     #stat{color:#555;font-size:12px;margin-left:auto}
-    #lat{color:#1a99aa;font-size:12px;font-weight:600;min-width:80px;text-align:right}
   </style>
 </head>
 <body>
   <div id="panels">
-    <div id="left">
-      <canvas id="ink"></canvas>
-      <div id="frametabs">
-        <button id="tab-plan" class="on">평면</button>
-        <button id="tab-persp">투시</button>
-      </div>
-      <div id="persp-hint">이 투시만으로는 비례가 확정되지 않습니다. 평면을 그리거나 치수를 알려주세요.</div>
-    </div>
+    <div id="left"><canvas id="ink"></canvas></div>
     <div id="split"></div>
-    <div id="right">
-      <div id="view"></div>
-      <div id="dim-panel">
-        <div id="dim-title">치수 입력</div>
-        <div class="row">
-          <select id="dim-prop">
-            <option value="width">폭(width)</option>
-            <option value="depth">깊이(depth)</option>
-            <option value="height">높이(height)</option>
-          </select>
-          <input id="dim-value" type="number" inputmode="decimal" min="0" step="0.1" placeholder="m">
-        </div>
-        <div class="row">
-          <button id="dim-apply">적용</button>
-          <button id="dim-cancel">취소</button>
-        </div>
-      </div>
-    </div>
+    <div id="right"><div id="view"></div></div>
   </div>
   <div id="bar">
-    <button id="home">시점 복귀</button>
-    <button id="top">탑뷰</button>
-    <button id="axis-toggle" title="폭/깊이 두 해 전환(기하가 구분하지 못함)">축 A/B</button>
-    <button id="export" title="스트로크+IR 내보내기(실획 분석용)">내보내기</button>
-    <button id="clear">초기화</button>
-    <small id="lat"></small>
-    <small id="stat"></small>
+    <button id="clear">지우기</button>
+    <span id="stat">W-1 대기 — 카메라 확정 UI 미구현</span>
   </div>
-  <script type="module" src="/src/ui/app.ts"></script>
+  <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

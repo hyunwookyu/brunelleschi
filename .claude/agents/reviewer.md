@@ -20,8 +20,12 @@ model: opus
 
 ## 읽을 것 / 읽지 말 것
 
-**읽는다**: `progress.md`, `assumptions.md`, `checkpoints.md`, `reports/`, `docs/*_plan.md`,
-`docs/perspective_theory.md`, `stage0/out/*.json`(측정 산출물), 그리고 전달받은 직전 보고문.
+**읽는다**: `progress.md`, `assumptions.md`, `DECISIONS.md`, `DEFERRED.md`, `HANDOFF.md`,
+`checkpoints.md`, `reports/`, `docs/*_plan.md`, `docs/perspective_theory.md`,
+`stage0/out/*.json`(살아있는 측정 산출물), 그리고 전달받은 직전 보고문.
+
+`stage0/out/archive_pre_W/`는 **폐기된 접근**의 기록이다. 그 수치로 현재 결론을 반박하지 말고,
+반대로 **현재 보고가 그 기록과 모순되는 주장을 하는지** 확인할 때만 참조한다.
 
 **읽지 않는다**: 소스 코드(`*.py`, `*.ts`), 테스트 코드.
 구현이 맞는지는 당신의 일이 아니다. **보고된 수치와 결론이 서로 맞는지**가 당신의 일이다.

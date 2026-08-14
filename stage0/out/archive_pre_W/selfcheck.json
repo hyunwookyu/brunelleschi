@@ -1,0 +1,432 @@
+{
+  "n_flags": 77,
+  "flags": [
+    {
+      "path": "aspect_priors.json:2F_a_right_angle.rectangular.coarse.hold_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "aspect_priors.json:2F_a_right_angle.rectangular.medium.hold_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "aspect_priors.json:2F_a_right_angle.rectangular.precise.hold_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "aspect_priors.json:2F_a_right_angle.irregular.coarse.hold_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "aspect_priors.json:2F_a_right_angle.irregular.medium.hold_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "aspect_priors.json:2F_a_right_angle.irregular.precise.hold_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "axis_gauge.json:reprojection_error_own_camera.A_median",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "axis_gauge.json:reprojection_error_own_camera.A_p90",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "axis_gauge.json:reprojection_error_own_camera.B_median",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "axis_gauge.json:reprojection_error_own_camera.B_p90",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "axis_gauge.json:similarity_iou_between_solutions.optimal_shift_distribution.(False, 2)",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "axis_gauge.json:similarity_iou_between_solutions.optimal_shift_distribution.(False, 0)",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "axis_probe.json:reproj_rel_diff_between_two_solutions.median",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "axis_probe.json:reproj_rel_diff_between_two_solutions.p90",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "axis_probe.json:reproj_rel_diff_between_two_solutions.max",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "dimension_rate.json:design_corpus.per_video_rate_median",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "dimension_rate.json:design_corpus.per_video_rate_median",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "dimension_rate.json:ge20_subset.per_video_rate_median",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "failure_gate.json:fit_error_gates.fit_error>0.03.recall",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "failure_gate.json:fit_error_gates.fit_error>0.03.precision",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "failure_gate.json:fit_error_gates.fit_error>0.05.recall",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "failure_gate.json:fit_error_gates.fit_error>0.05.precision",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "failure_gate.json:viewdist_gates.viewdist_invalid_only.recall",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "failure_gate.json:viewdist_gates.viewdist_invalid_only.precision",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "ink_noise_sessions.json:by_input_kind.mouse.hf_turn_deg_median",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "massvoid_eval.json:cases.frontal_near.correct",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "mouse_real_vs_synth.json:synth.perEdge8_jit0.008.grades",
+      "val": {
+        "coarse": 120
+      },
+      "flag": "단일 범주 분포(n=120) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "mouse_real_vs_synth.json:synth.perEdge16_jit0.035.grades",
+      "val": {
+        "coarse": 120
+      },
+      "flag": "단일 범주 분포(n=120) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "mouse_real_vs_synth.json:synth.perEdge8_jit0.008.parseableRate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "mouse_real_vs_synth.json:synth.perEdge16_jit0.008.parseableRate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "mouse_real_vs_synth.json:synth.perEdge16_jit0.035.parseableRate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "noise_model_impact.json:partial_strokes.old_model.confirmed_rate_by_frac.0.5",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "noise_model_impact.json:partial_strokes.old_model.confirmed_rate_by_frac.0.7",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "noise_model_impact.json:partial_strokes.new_model.confirmed_rate_by_frac.0.3",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "noise_model_impact.json:partial_strokes.new_model.confirmed_rate_by_frac.0.5",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "noise_model_impact.json:partial_strokes.new_model.confirmed_rate_by_frac.0.7",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "noise_model_impact.json:camera_fit_error.old_model.precise.approx_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "noise_model_impact.json:camera_fit_error.old_model.medium.approx_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "noise_model_impact.json:camera_fit_error.old_model.coarse.approx_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "noise_model_impact.json:camera_fit_error.new_model.precise.approx_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "noise_model_impact.json:camera_fit_error.new_model.medium.approx_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "noise_model_impact.json:camera_fit_error.new_model.coarse.approx_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "orthogonal_limit.json:detector_calibration.adjusted_nonorthogonal_rate.square",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "orthogonal_limit.json:detector_calibration.adjusted_nonorthogonal_rate.square",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "partial_strokes.json:single_volume.by_frac.30.n_lines_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "partial_strokes.json:single_volume.by_frac.50.n_lines_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "perspective_eval.json:by_grade.coarse.fail_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "perspective_eval.json:by_grade.medium.fail_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "perspective_eval.json:by_grade.precise.fail_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "score.json:normalize_iou.parseable_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "score.json:camera_fit_error.precise.approx_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "score.json:multiplex.volume_count_exact_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "score.json:multiplex.all_named_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "score.json:relations.all_ir_valid_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "score.json:query_loop.scale_ranked_top_rate",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.precise.approx_rate.mean",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.precise.approx_rate.std",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.precise.approx_rate.min",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.precise.approx_rate.max",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.precise.approx_rate.range",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.medium.approx_rate.mean",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.medium.approx_rate.std",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.medium.approx_rate.min",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.medium.approx_rate.max",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.medium.approx_rate.range",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "seed_variance.json:camera_fit_error.coarse.approx_rate.min",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "uncertainty_eval.json:gates[0].recall",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "uncertainty_eval.json:gates[0].passed_fail_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "uncertainty_eval.json:gates[1].n_passed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "uncertainty_eval.json:gates[1].recall",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "uncertainty_eval.json:gates[2].recall",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "uncertainty_eval.json:gates[2].passed_fail_rate",
+      "val": 0.0,
+      "flag": "정확히 0.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "viewdist_gate.json:gates[1].precision",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "viewdist_gate.json:gates[2].precision",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "viewdist_gate.json:gates[3].precision",
+      "val": 1.0,
+      "flag": "정확히 1.0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "viewdist_gate.json:by_direction.deeper_than_square(k>1).caught_by_upper",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "viewdist_gate.json:by_direction.shallower_than_square(k<1).caught_by_lower",
+      "val": 0.0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    }
+  ],
+  "scanned": [
+    "aspect_priors.json",
+    "axis_gauge.json",
+    "axis_probe.json",
+    "corner_error.json",
+    "corner_error_sessions.json",
+    "decompose_2H.json",
+    "dimension_rate.json",
+    "external_validation.json",
+    "failure_decomp.json",
+    "failure_gate.json",
+    "frame_audit.json",
+    "ink_noise_model.json",
+    "ink_noise_sessions.json",
+    "massvoid_eval.json",
+    "metric_audit.json",
+    "mouse_real_vs_synth.json",
+    "mouse_tolerance_sweep.json",
+    "noise_model_impact.json",
+    "noise_model_validation.json",
+    "opening_corpus.json",
+    "orthogonal_limit.json",
+    "paleo_remeasure.json",
+    "partial_strokes.json",
+    "perspective_eval.json",
+    "quickdraw_grades.json",
+    "relation_corpus.json",
+    "score.json",
+    "seed_variance.json",
+    "sketchgraphs_check.json",
+    "split_eval.json",
+    "tolerance.json",
+    "uncertainty_eval.json",
+    "unmappable_report.json",
+    "viewdist_gate.json",
+    "youtube_dist.json"
+  ],
+  "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."
+}
