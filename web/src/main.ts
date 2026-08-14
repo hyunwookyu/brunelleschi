@@ -9,8 +9,10 @@ import { CameraPanel, type Tool } from "./ui/cameraPanel.js";
 import { PRESETS } from "./s3d/constraints.js";
 import { AXIS_COLOR } from "./s3d/grid.js";
 import { classifyStroke, type Axis } from "./s3d/axis.js";
-import { newStroke, settle, reprojectAll, type Stroke, type PlaceCtx } from "./s3d/stroke.js";
+import { newStroke, settle, reprojectAll, PLACE_TOL, type Stroke, type PlaceCtx } from "./s3d/stroke.js";
 import { buildSession, downloadSession } from "./ui/sessionExport.js";
+import { viewPlaceCtx, toView, fromView, projectInView } from "./s3d/viewCamera.js";
+import { axisDirection, type Vec3 } from "./s3d/geom3d.js";
 import type { AxisVerdict } from "./s3d/axis.js";
 import type { Pt2 } from "./s3d/camera.js";
 
@@ -98,6 +100,64 @@ function addStroke(pts: Pt2[], raw?: number[][]) {
   lastNote = v.note;
 }
 let lastNote = "";
+
+// ---------------------------------------------------------------- S-5 돌린 시점에서 이어 그리기
+
+/**
+ * **세계 축 방향 셋.** 첫 카메라가 정한 것이고 **시점이 바뀌어도 변하지 않는다** —
+ * 돌린 뒤에 다시 계산되는 것은 소실점뿐이다(§S-5). 소실점이 아직 없으면 그 축은 `null`.
+ */
+function worldAxes(): (Vec3 | null)[] {
+  const ctx = placeCtx();
+  if (!ctx) return [null, null, null];
+  return ctx.vps.map(v => (v ? axisDirection(v, ctx.principal, ctx.f) : null));
+}
+
+/**
+ * 돌린 시점에서 그린 획 하나. **소실점을 다시 찍지 않는다** — 뷰포트 자세가 곧 카메라다.
+ *
+ * 배치는 **새 시점의 좌표계에서** 한다(앵커를 화면에서 찾으므로 기존 획도 그 좌표계로 옮긴다).
+ * 결과만 세계 좌표로 되돌린다 — `Stroke`가 드는 것은 언제나 세계 좌표다.
+ */
+function addStrokeFromView(pts: Pt2[], raw?: number[][]) {
+  const axes = worldAxes();
+  if (!axes.some(Boolean)) { lastNote = "카메라가 아직 확정되지 않았습니다"; return; }
+  const pose = viewport.pose();
+  const ctxV = viewPlaceCtx(pose, axes, viewport.viewSize(), viewport.camera.fov);
+
+  const v = classifyStroke(pts, ctxV.vps, ctxV.imgSize, {},
+                           { principal: ctxV.principal, f: ctxV.f });
+  const s = newStroke(pts, v.axis, v.rep ? { a: v.rep.a, b: v.rep.b } : undefined);
+  drawn.push(s);
+  if (raw) rawPoints.set(s.id, raw);
+  verdicts.set(s.id, v as AxisVerdict);
+  lastNote = v.note;
+
+  // 기존 획을 새 시점 좌표로 옮긴 사본에 붙인다. 원본은 건드리지 않는다.
+  const inView = drawn.map((t, i) => {
+    if (t.id === s.id) return t;
+    if (!t.pts3d.length) return { ...t, pts3d: [] };
+    const p3 = t.pts3d.map(p => toView(pose, p));
+    const p2 = t.pts3d.map(p => projectInView(pose, p, ctxV.principal, ctxV.f));
+    return p2.every(Boolean)
+      ? { ...t, pts3d: p3, pts2d: p2 as Pt2[] }
+      : { ...t, pts3d: [] };            // 새 시점에서 안 보이는 획은 앵커 후보가 아니다
+  });
+  // **가림 방어를 켠다**(S-5). 돌린 시점에서는 앞뒤 획이 화면에서 겹쳐,
+  // 화면 거리만으로 앵커를 고르면 조용히 틀린 깊이에 놓인다(측정: 모서리 오차 p90 0.87).
+  settle(inView, ctxV, { mode: "facing", depthGuard: PLACE_TOL.view_depth_guard });
+
+  const placed = inView.find(t => t.id === s.id);
+  if (placed?.pts3d.length) {
+    s.pts3d = placed.pts3d.map(p => fromView(pose, p));   // **세계 좌표로 되돌린다**
+    s.anchorRef = placed.anchorRef;
+    s.joinShift = placed.joinShift;
+    // 카메라를 잠근다 — 시점이 여럿이 되면 첫 카메라 재조정이 어느 시점의 `pts2d`인지
+    // 알 수 없다(§3.7 소프트 락이 그 자리다). 자료구조를 늘리지 않기 위한 선택이다.
+    if (!panel.locked) { panel.toggleLock(); lockBtn.textContent = "잠금 해제"; }
+  }
+  strokeView.sync(drawn, placeCtx()?.f);
+}
 
 // ---------------------------------------------------------------- 그리기
 
@@ -231,7 +291,39 @@ document.getElementById("export")!.addEventListener("click", () => {
   msgEl.textContent = `획 ${drawn.length}개를 내보냈습니다 — 저장소의 sessions/ 에 넣어 주세요`;
 });
 
-window.addEventListener("resize", () => { fit(); viewport.resize(); });
+// ---- S-5 3D 뷰 위에서 그리기 ----
+const ink3dEl = document.getElementById("ink3d") as HTMLCanvasElement;
+const ink3d = new InkCanvas(ink3dEl, {
+  onStrokeEnd: (stroke) => {
+    const pts = stroke.points.map(p => [p[0], p[1]] as Pt2);
+    if (pts.length >= 2) addStrokeFromView(pts, stroke.points);
+    ink3d.clear();                      // 3D가 그 획을 이미 그리므로 잉크는 지운다
+    refresh();
+  },
+});
+ink3d.setFrame("persp");
+
+function setViewMode(draw: boolean) {
+  ink3dEl.classList.toggle("on", draw);
+  viewport.controls.enabled = !draw;
+  document.getElementById("vt-orbit")!.classList.toggle("on", !draw);
+  document.getElementById("vt-draw")!.classList.toggle("on", draw);
+  document.getElementById("viewlabel")!.textContent = draw
+    ? "3D — **여기서 그리면 그 시점으로 놓인다**" : "3D — 드래그로 회전";
+  refresh();
+}
+document.getElementById("vt-orbit")!.addEventListener("click", () => setViewMode(false));
+document.getElementById("vt-draw")!.addEventListener("click", () => setViewMode(true));
+
+function fit3d() {
+  const [w, h] = viewport.viewSize();
+  const dpr = window.devicePixelRatio || 1;
+  ink3dEl.width = Math.round(w * dpr);
+  ink3dEl.height = Math.round(h * dpr);
+  ink3dEl.getContext("2d")!.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+window.addEventListener("resize", () => { fit(); viewport.resize(); fit3d(); });
 
 // **생성 시점에는 레이아웃이 아직 안 잡혀 있다.** S-0에서 3D 캔버스가 1×24로 굳었던 것과
 // 같은 자리인데 잉크 캔버스에는 적용하지 않았다 — 창 resize만 듣고 있으면 회복되지 않고,
@@ -245,7 +337,8 @@ if (typeof ResizeObserver !== "undefined") {
   new ResizeObserver(() => fit()).observe(canvas.parentElement ?? canvas);
 }
 fit();
-requestAnimationFrame(() => fit());
+fit3d();
+requestAnimationFrame(() => { fit(); fit3d(); });
 
 // PWA — 오프라인 동작(§1.4). dev 서버에서는 등록하지 않는다(HMR과 충돌한다).
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
@@ -257,4 +350,5 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
 // 브라우저 확인용 — 콘솔에서 배치 상태를 그대로 읽을 수 있게 한다(S-3 검증).
 (window as unknown as { s2s: unknown }).s2s = {
   strokes: drawn, panel, addStroke, placeCtx, refresh, viewport, strokeView, exportSession,
+  addStrokeFromView, worldAxes, setViewMode,
 };

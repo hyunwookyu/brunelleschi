@@ -10,6 +10,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Vec3 } from "./geom3d.js";
+import { fFromFov, type ViewPose } from "./viewCamera.js";
 
 export class Viewport {
   readonly scene = new THREE.Scene();
@@ -79,6 +80,39 @@ export class Viewport {
 
   /** 카메라 좌표계 점을 three 오브젝트 좌표로. `world` 그룹 안에 넣을 때 쓴다. */
   static toThree(p: Vec3): THREE.Vector3 { return new THREE.Vector3(p[0], p[1], p[2]); }
+
+  /**
+   * **현재 시점의 자세를 우리 규약으로 낸다**(S-5). `p_view = R·(p_world − C)`.
+   *
+   * `world` 그룹이 x축 180°로 돌아 있으므로(y 아래·z 안쪽 → three의 y 위·z 앞) 그 뒤집기를
+   * 양쪽에서 되돌린다. `M = diag(1,−1,−1)`이라 하면 `R = M·Rc^T·M`, `C = M·Cthree`다.
+   * **뒤집기는 여기 한 군데서만 한다** — S-0이 정한 규칙이고, 두 규약이 섞이면 부호를
+   * 언제 뒤집었는지 아무도 모르게 된다.
+   */
+  pose(): ViewPose {
+    const q = this.camera.getWorldQuaternion(new THREE.Quaternion());
+    const m = new THREE.Matrix4().makeRotationFromQuaternion(q);
+    const e = m.elements;                       // 열 우선. Rc의 열이 카메라 축(세계 좌표)
+    // Rc^T의 행 = Rc의 열 = (e0,e1,e2), (e4,e5,e6), (e8,e9,e10)
+    const flip = (v: Vec3): Vec3 => [v[0], -v[1], -v[2]];
+    const rows: [Vec3, Vec3, Vec3] = [
+      flip([e[0], e[1], e[2]]),                 // 오른쪽
+      flip([e[4], e[5], e[6]]),                 // 위 → 뒤집어 아래
+      flip([e[8], e[9], e[10]]),                // 뒤 → 뒤집어 앞
+    ];
+    // M·Rc^T·M : 행을 뒤집고(위), 각 행의 성분도 뒤집는다(아래)
+    const R: [Vec3, Vec3, Vec3] = [rows[0], [-rows[1][0], -rows[1][1], -rows[1][2]],
+                                   [-rows[2][0], -rows[2][1], -rows[2][2]]];
+    const c = this.camera.position;
+    return { R, C: [c.x, -c.y, -c.z] };
+  }
+
+  /** 현재 시점의 초점거리(px)와 화면 크기 — `viewPlaceCtx`가 쓴다. */
+  viewSize(): [number, number] {
+    const el = this.renderer.domElement;
+    return [Math.max(1, el.clientWidth), Math.max(1, el.clientHeight)];
+  }
+  viewF(): number { return fFromFov(this.camera.fov, this.viewSize()[1]); }
 
   /** 그린 것 전부가 화면에 들어오도록 시점을 맞춘다. */
   frameAll(padding = 1.6) {

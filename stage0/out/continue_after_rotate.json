@@ -1,0 +1,483 @@
+{
+  "spec": "S-5 회전 후 이어 그리기. 첫 시점에서 앞쪽 8모서리를 그려 3D로 올린 뒤, 돌린 시점에서 뒤쪽 4모서리를 그린다.",
+  "constants": {
+    "hash": "b1815380",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "why": "계획서가 **이 도구의 핵심 기능**이라 적은 단계다. 돌린 뒤에는 카메라를 정확히 알므로 소실점을 다시 찍을 필요가 없다 — **축 방향은 그대로이고 소실점만 다시 계산**된다.",
+  "metrics": {
+    "joined_rate": "새 시점에서 그린 획이 **기존 기하에 접합된 비율**(앵커를 찾았다). 지시 1.",
+    "invariant_px": "**회전 판 불변식**(§4.5의 회전 버전). 놓인 3D 점을 새 시점 좌표로 옮겨 투영한 것과 자세 변환으로 직접 투영한 것의 화면 거리. **설계 보장이므로 0이어야 하고 임계를 걸지 않는다** — 0이 아니면 자세 변환이나 f 환산에 부호·규약 오류가 있다는 뜻이다(S-3에서 배운 것).",
+    "silent_wrong_rate": "새 시점에서 **조용히 틀린 축**에 배정된 비율. A-3이 금지하는 것.",
+    "vps_at_infinity": "새 시점에서 **무한원이 된 소실점의 개수**(0~3). 돌리면 축이 화면과 나란해지는 각도가 반드시 생긴다 — 그때 그 축은 `screen`이고 소실점을 지어내지 않는다."
+  },
+  "condition": {
+    "grade": "medium",
+    "skew": 0.12,
+    "end_jitter": 0.01,
+    "mode": "facing",
+    "view_fov_deg": 45,
+    "boxes_per_angle": 40,
+    "seed_base": 9500,
+    "first_view_edges": 8,
+    "second_view_edges": 4
+  },
+  "camera": {
+    "first": {
+      "vps": [
+        [
+          1958.5276134802498,
+          68.05080756887736
+        ],
+        [
+          -244.90818565209554,
+          68.0508075688773
+        ],
+        [
+          480,
+          4068.050807568878
+        ]
+      ],
+      "f": 1000,
+      "principal": [
+        480,
+        336
+      ],
+      "yaw_deg": 35,
+      "pitch_deg": 15
+    }
+  },
+  "caveat": "**합성이다**(V-o·AS-1). 그리고 **구도가 하나뿐**이다 — S-3·S-2b와 같은 한계다. 여기서 재는 것은 '돌린 시점에서 파이프라인이 서는가'이지 '사람이 그렇게 그리는가'가 아니다.",
+  "by_orbit_angle": {
+    "orbit_20deg_elev_35": {
+      "n_boxes": 39,
+      "first_view": {
+        "n": 320,
+        "placed_rate": 0.8938,
+        "unclassified_rate": 0.0844,
+        "silent_wrong_rate": 0.0719
+      },
+      "second_view": {
+        "n": 156,
+        "placed_rate": 0.8526,
+        "joined_rate": 0.8526,
+        "unclassified_rate": 0.0769,
+        "silent_wrong_rate": 0.0513,
+        "by_reason": {
+          "ok": 144,
+          "multi_axis": 6,
+          "ambiguous": 6
+        }
+      },
+      "corner_err_ratio": {
+        "n": 266,
+        "min": 0.0019,
+        "p10": 0.009,
+        "median": 0.0208,
+        "p90": 0.6235,
+        "max": 1.2049
+      },
+      "invariant_px": {
+        "n": 283,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "vps_at_infinity": {
+        "n": 39,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      }
+    },
+    "orbit_45deg_elev_35": {
+      "n_boxes": 38,
+      "first_view": {
+        "n": 320,
+        "placed_rate": 0.8625,
+        "unclassified_rate": 0.1187,
+        "silent_wrong_rate": 0.0406
+      },
+      "second_view": {
+        "n": 152,
+        "placed_rate": 0.8487,
+        "joined_rate": 0.8487,
+        "unclassified_rate": 0.0987,
+        "silent_wrong_rate": 0.125,
+        "by_reason": {
+          "ok": 137,
+          "ambiguous": 9,
+          "multi_axis": 6
+        }
+      },
+      "corner_err_ratio": {
+        "n": 258,
+        "min": 0.002,
+        "p10": 0.0095,
+        "median": 0.0293,
+        "p90": 0.716,
+        "max": 1.3299
+      },
+      "invariant_px": {
+        "n": 270,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "vps_at_infinity": {
+        "n": 38,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      }
+    },
+    "orbit_75deg_elev_35": {
+      "n_boxes": 40,
+      "first_view": {
+        "n": 320,
+        "placed_rate": 0.9156,
+        "unclassified_rate": 0.0688,
+        "silent_wrong_rate": 0.05
+      },
+      "second_view": {
+        "n": 160,
+        "placed_rate": 0.9938,
+        "joined_rate": 0.9938,
+        "unclassified_rate": 0.0063,
+        "silent_wrong_rate": 0,
+        "by_reason": {
+          "ok": 159,
+          "multi_axis": 1
+        }
+      },
+      "corner_err_ratio": {
+        "n": 318,
+        "min": 0.0034,
+        "p10": 0.0135,
+        "median": 0.0333,
+        "p90": 0.9093,
+        "max": 1.9552
+      },
+      "invariant_px": {
+        "n": 293,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "vps_at_infinity": {
+        "n": 40,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      }
+    },
+    "orbit_110deg_elev_35": {
+      "n_boxes": 40,
+      "first_view": {
+        "n": 320,
+        "placed_rate": 0.9187,
+        "unclassified_rate": 0.0594,
+        "silent_wrong_rate": 0.0625
+      },
+      "second_view": {
+        "n": 160,
+        "placed_rate": 0.9125,
+        "joined_rate": 0.9125,
+        "unclassified_rate": 0.0875,
+        "silent_wrong_rate": 0.0563,
+        "by_reason": {
+          "ok": 146,
+          "ambiguous": 8,
+          "multi_axis": 6
+        }
+      },
+      "corner_err_ratio": {
+        "n": 292,
+        "min": 0.0039,
+        "p10": 0.0122,
+        "median": 0.0332,
+        "p90": 0.9249,
+        "max": 1.7096
+      },
+      "invariant_px": {
+        "n": 294,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "vps_at_infinity": {
+        "n": 40,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      }
+    },
+    "orbit_45deg_elev_0": {
+      "n_boxes": 38,
+      "first_view": {
+        "n": 320,
+        "placed_rate": 0.8812,
+        "unclassified_rate": 0.0781,
+        "silent_wrong_rate": 0.0781
+      },
+      "second_view": {
+        "n": 152,
+        "placed_rate": 0.8553,
+        "joined_rate": 0.8553,
+        "unclassified_rate": 0.0987,
+        "silent_wrong_rate": 0.0592,
+        "by_reason": {
+          "ok": 137,
+          "ambiguous": 12,
+          "multi_axis": 3
+        }
+      },
+      "corner_err_ratio": {
+        "n": 260,
+        "min": 0.0033,
+        "p10": 0.011,
+        "median": 0.0397,
+        "p90": 0.5532,
+        "max": 0.8083
+      },
+      "invariant_px": {
+        "n": 279,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "vps_at_infinity": {
+        "n": 38,
+        "min": 1,
+        "p10": 1,
+        "median": 1,
+        "p90": 1,
+        "max": 1
+      }
+    },
+    "orbit_90deg_elev_0": {
+      "n_boxes": 39,
+      "first_view": {
+        "n": 320,
+        "placed_rate": 0.9063,
+        "unclassified_rate": 0.0719,
+        "silent_wrong_rate": 0.075
+      },
+      "second_view": {
+        "n": 156,
+        "placed_rate": 0.9295,
+        "joined_rate": 0.9295,
+        "unclassified_rate": 0.0705,
+        "silent_wrong_rate": 0,
+        "by_reason": {
+          "ok": 145,
+          "multi_axis": 8,
+          "ambiguous": 3
+        }
+      },
+      "corner_err_ratio": {
+        "n": 290,
+        "min": 0.0044,
+        "p10": 0.0109,
+        "median": 0.0287,
+        "p90": 0.0856,
+        "max": 0.941
+      },
+      "invariant_px": {
+        "n": 287,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "vps_at_infinity": {
+        "n": 39,
+        "min": 1,
+        "p10": 1,
+        "median": 1,
+        "p90": 1,
+        "max": 1
+      }
+    },
+    "orbit_45deg_elev_70": {
+      "n_boxes": 40,
+      "first_view": {
+        "n": 320,
+        "placed_rate": 0.9219,
+        "unclassified_rate": 0.075,
+        "silent_wrong_rate": 0.0344
+      },
+      "second_view": {
+        "n": 160,
+        "placed_rate": 0.9187,
+        "joined_rate": 0.9187,
+        "unclassified_rate": 0.0375,
+        "silent_wrong_rate": 0.0187,
+        "by_reason": {
+          "multi_axis": 5,
+          "ok": 154,
+          "ambiguous": 1
+        }
+      },
+      "corner_err_ratio": {
+        "n": 294,
+        "min": 0.0027,
+        "p10": 0.0102,
+        "median": 0.0302,
+        "p90": 0.3931,
+        "max": 0.7904
+      },
+      "invariant_px": {
+        "n": 295,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "vps_at_infinity": {
+        "n": 40,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      }
+    }
+  },
+  "depth_guard_sweep": {
+    "why": "**접합을 화면에서 판정하는 것의 대가**(S-5가 발견). 돌린 시점에서는 앞뒤 획이 화면에서 겹치므로(가림) 화면 거리만으로는 어느 것에 붙일지 못 가른다 — 중앙값은 0.02~0.04로 좋은데 **p90이 상자 대각의 0.4~0.9까지 간다**. 중앙값만 보면 놓친다. 방어는 '화면에서 비슷하게 가까운데 깊이가 크게 다른 후보가 또 있으면 **놓지 않는다**'이고, **조용히 틀린 깊이보다 미배치가 낫다**는 A-3 그대로다. 값은 깊이 비율.",
+    "condition": {
+      "orbit_deg": 75,
+      "elev_deg": 35,
+      "boxes": 40,
+      "seed": 9575
+    },
+    "by_guard": {
+      "guard_0": {
+        "placed_rate": 0.9211,
+        "joined_rate": 0.9211,
+        "corner_err_ratio": {
+          "n": 280,
+          "min": 0.0054,
+          "p10": 0.0142,
+          "median": 0.0378,
+          "p90": 0.8654,
+          "max": 1.6296
+        }
+      },
+      "guard_0.05": {
+        "placed_rate": 0.7303,
+        "joined_rate": 0.7303,
+        "corner_err_ratio": {
+          "n": 222,
+          "min": 0.0054,
+          "p10": 0.0133,
+          "median": 0.0339,
+          "p90": 0.1215,
+          "max": 1.6296
+        }
+      },
+      "guard_0.15": {
+        "placed_rate": 0.7368,
+        "joined_rate": 0.7368,
+        "corner_err_ratio": {
+          "n": 224,
+          "min": 0.0054,
+          "p10": 0.0133,
+          "median": 0.034,
+          "p90": 0.1215,
+          "max": 1.6296
+        }
+      },
+      "guard_0.3": {
+        "placed_rate": 0.875,
+        "joined_rate": 0.875,
+        "corner_err_ratio": {
+          "n": 266,
+          "min": 0.0054,
+          "p10": 0.0145,
+          "median": 0.0368,
+          "p90": 0.8654,
+          "max": 1.6296
+        }
+      }
+    }
+  }
+}

@@ -1,10 +1,160 @@
 {
-  "n_flags": 363,
+  "n_flags": 393,
   "flags": [
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_20deg_elev_35.invariant_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=283) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_20deg_elev_35.vps_at_infinity",
+      "val": 0,
+      "flag": "분포 전체가 0(n=39) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_35.invariant_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=270) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_35.vps_at_infinity",
+      "val": 0,
+      "flag": "분포 전체가 0(n=38) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_75deg_elev_35.invariant_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=293) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_75deg_elev_35.vps_at_infinity",
+      "val": 0,
+      "flag": "분포 전체가 0(n=40) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_110deg_elev_35.invariant_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=294) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_110deg_elev_35.vps_at_infinity",
+      "val": 0,
+      "flag": "분포 전체가 0(n=40) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_0.invariant_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=279) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_0.vps_at_infinity",
+      "val": 1,
+      "flag": "분포 전체가 1(n=38) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_90deg_elev_0.invariant_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=287) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_90deg_elev_0.vps_at_infinity",
+      "val": 1,
+      "flag": "분포 전체가 1(n=39) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_70.invariant_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=295) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_70.vps_at_infinity",
+      "val": 0,
+      "flag": "분포 전체가 0(n=40) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_20deg_elev_35.invariant_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_20deg_elev_35.vps_at_infinity.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_35.invariant_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_35.vps_at_infinity.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_75deg_elev_35.second_view.silent_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_75deg_elev_35.invariant_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_75deg_elev_35.vps_at_infinity.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_110deg_elev_35.invariant_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_110deg_elev_35.vps_at_infinity.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_0.invariant_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_0.vps_at_infinity.median",
+      "val": 1,
+      "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_90deg_elev_0.second_view.silent_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_90deg_elev_0.invariant_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_90deg_elev_0.vps_at_infinity.median",
+      "val": 1,
+      "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_70.invariant_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_70.vps_at_infinity.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
     },
     {
       "path": "one_stroke_one_axis.json:by_word.square.too_bent_rate",
@@ -1812,16 +1962,17 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "web\\src\\s3d\\stroke.ts:246:reprojectionGap",
+      "path": "web\\src\\s3d\\stroke.ts:254:reprojectionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     }
   ],
   "n_stale": 0,
-  "constants_hash": "653c1f62",
+  "constants_hash": "b1815380",
   "scanned": [
     "axis_judgement.json",
     "constants.json",
+    "continue_after_rotate.json",
     "one_stroke_one_axis.json",
     "preview_gap.json",
     "real_ink.json",

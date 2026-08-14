@@ -47,6 +47,14 @@ export interface PlaceCtx {
 
 export const PLACE_TOL = {
   join_ratio: 0.015,
+  /**
+   * **깊이 가림 방어**(S-5). 화면에서 비슷하게 가까운 후보의 깊이가 이 비율을 넘게 다르면
+   * 배치하지 않는다. **돌린 시점에서만 켠다** — 첫 시점은 씨앗에서 바깥으로 자라므로
+   * 앞뒤가 화면에서 겹치는 일이 드물고, 돌리면 가림이 생긴다(측정: 모서리 오차 p90이
+   * 상자 대각의 0.87까지 갔다). 켜면 p90 0.87 → 0.12, 배치율 0.92 → 0.73이다.
+   * **조용히 틀린 깊이보다 미배치가 낫다**(A-3). 값은 잠정 — S-10 실획에서 재정한다.
+   */
+  view_depth_guard: 0.05,
   /** 눈높이 게이지는 `geom3d.EYE_HEIGHT` 한 군데에만 둔다(격자와 씨앗이 같아야 한다). */
   eye_height: EYE_HEIGHT,
 };
@@ -265,12 +273,18 @@ export function reprojectionGap(pts3d: Vec3[], pts2d: Pt2[], ctx: PlaceCtx): num
  * 반환하는 3D 점은 기존 획 위에서 **선분 보간**한 값이다. 가장 가까운 표본점을 쓰면 점 간격의
  * 절반(≈4px)만큼 앵커가 틀어지고, 그 오차가 체인을 타고 깊이로 증폭된다(AS-8).
  */
+export interface Anchor { pos: Vec3; id: string; which: 0 | 1; onBody: boolean;
+  /** 화면에서 비슷하게 가까운데 **깊이가 크게 다른** 후보가 또 있었는가(§S-5 가림). */
+  depthAmbiguous: boolean; }
+
 export function findAnchor(
   strokes: Stroke[], ends: [Pt2, Pt2], radius: number, endpointOnly = false,
-  nearestSample = false,
-): { pos: Vec3; id: string; which: 0 | 1; onBody: boolean } | null {
-  let best: { pos: Vec3; id: string; which: 0 | 1; onBody: boolean } | null = null;
+  nearestSample = false, depthGuard = 0,
+): Anchor | null {
+  let best: Anchor | null = null;
   let bestD = radius;
+  /** 반경 안의 모든 후보(화면 거리, 깊이) — 가림 판정에 쓴다. */
+  const cands: { d: number; z: number }[] = [];
   for (const s of strokes) {
     const m = Math.min(s.pts2d.length, s.pts3d.length);
     if (m < 2) continue;
@@ -293,16 +307,28 @@ export function findAnchor(
         if (nearestSample && !endpointOnly) t = t < 0.5 ? 0 : 1;
         const px = a[0] + ex * t, py = a[1] + ey * t;
         const d = Math.hypot(px - q[0], py - q[1]);
+        if (d > radius) continue;
+        const p0 = s.pts3d[i - 1], p1 = s.pts3d[i];
+        const pos: Vec3 = [p0[0] + (p1[0] - p0[0]) * t, p0[1] + (p1[1] - p0[1]) * t,
+                           p0[2] + (p1[2] - p0[2]) * t];
+        cands.push({ d, z: pos[2] });
         if (d > bestD) continue;
         bestD = d;
-        const p0 = s.pts3d[i - 1], p1 = s.pts3d[i];
         best = {
-          pos: [p0[0] + (p1[0] - p0[0]) * t, p0[1] + (p1[1] - p0[1]) * t, p0[2] + (p1[2] - p0[2]) * t],
-          id: s.id, which: k,
+          pos, id: s.id, which: k,
           onBody: (i > 1 || t > 1e-9) && (i < m - 1 || t < 1 - 1e-9),
+          depthAmbiguous: false,
         };
       }
     }
+  }
+  if (best && depthGuard > 0) {
+    // **화면에서 비슷하게 가까운데 깊이가 크게 다른 후보가 또 있으면 애매하다.**
+    // 돌린 시점에서는 앞뒤 획이 화면에서 겹치므로(가림) 화면 거리만으로는 못 가른다 —
+    // S-5 측정에서 모서리 오차 p90이 상자 대각의 0.4~0.9까지 갔다.
+    const zb = best.pos[2];
+    best.depthAmbiguous = cands.some(c =>
+      c.d <= bestD * 1.5 + 1e-9 && Math.abs(c.z - zb) > depthGuard * Math.max(zb, 1e-6));
   }
   return best;
 }
@@ -326,6 +352,12 @@ export interface PlaceOpts {
   endpointOnly?: boolean;
   /** 몸통 접합에서 선분 보간 대신 **가장 가까운 표본점**에 붙인다. 측정 대조군(S-4 배정). */
   nearestSample?: boolean;
+  /**
+   * **깊이 가림 방어**(S-5). 화면에서 비슷하게 가까운 후보의 깊이가 이 비율을 넘게 다르면
+   * 배치하지 않는다 — 조용히 틀린 깊이에 놓는 것보다 미배치가 낫다(A-3).
+   * 0이면 꺼진다(기존 동작).
+   */
+  depthGuard?: number;
 }
 
 /**
@@ -338,7 +370,9 @@ export function placeInto(
   if (stroke.pts2d.length < 2 || stroke.axis === "free") return false;
   const radius = (ctx.joinRatio ?? PLACE_TOL.join_ratio) * diagOf(ctx.imgSize);
   const ends: [Pt2, Pt2] = [stroke.pts2d[0], stroke.pts2d[stroke.pts2d.length - 1]];
-  const hit = findAnchor(placed, ends, radius, opts.endpointOnly, opts.nearestSample);
+  const hit = findAnchor(placed, ends, radius, opts.endpointOnly, opts.nearestSample, opts.depthGuard);
+  // 가림으로 후보가 갈리지 않으면 **놓지 않는다**. 사용자가 다시 돌리거나 이어 그으면 풀린다.
+  if (hit?.depthAmbiguous) return false;
 
   let anchor: Vec3 | null = hit ? hit.pos : null;
   let joinAt: 0 | 1 | undefined = hit ? hit.which : undefined;
