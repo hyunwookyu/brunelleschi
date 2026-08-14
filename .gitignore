@@ -13,3 +13,4 @@ stage0/out/score_prev.json
 data/perspective/*.db
 data/perspective/*.csv
 data/perspective/probe/
+files.zip
