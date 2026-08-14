@@ -13,10 +13,10 @@
   },
   "chosen": {
     "n": 1819,
-    "optimal_rate": 0.6916,
-    "over_split_rate": 0.0214,
-    "under_fit_rate": 0.1985,
-    "out_of_scope_rate": 0.0885,
+    "optimal_rate": 0.7356,
+    "over_split_rate": 0.0412,
+    "under_fit_rate": 0.1545,
+    "out_of_scope_rate": 0.0687,
     "one_stroke_one_edge": 0.2936,
     "runs_per_stroke": 2.885
   },
@@ -27,13 +27,13 @@
         "corner_deg": 10,
         "smooth_sigma": 0.5
       },
-      "n": 461,
-      "optimal_rate": 0.4512,
-      "over_split_rate": 0.3861,
-      "under_fit_rate": 0.0954,
-      "out_of_scope_rate": 0.0672,
-      "one_stroke_one_edge": 0.2169,
-      "runs_per_stroke": 3.798
+      "n": 932,
+      "optimal_rate": 0.4506,
+      "over_split_rate": 0.4345,
+      "under_fit_rate": 0.0569,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.2082,
+      "runs_per_stroke": 3.884
     },
     {
       "name": "deg10_sig1.5",
@@ -41,13 +41,13 @@
         "corner_deg": 10,
         "smooth_sigma": 1.5
       },
-      "n": 461,
-      "optimal_rate": 0.5965,
-      "over_split_rate": 0.2039,
-      "under_fit_rate": 0.1323,
-      "out_of_scope_rate": 0.0672,
-      "one_stroke_one_edge": 0.2798,
-      "runs_per_stroke": 3.262
+      "n": 932,
+      "optimal_rate": 0.6084,
+      "over_split_rate": 0.2457,
+      "under_fit_rate": 0.088,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.265,
+      "runs_per_stroke": 3.29
     },
     {
       "name": "deg10_sig3",
@@ -55,13 +55,55 @@
         "corner_deg": 10,
         "smooth_sigma": 3
       },
-      "n": 461,
-      "optimal_rate": 0.6963,
-      "over_split_rate": 0.0629,
-      "under_fit_rate": 0.1735,
-      "out_of_scope_rate": 0.0672,
-      "one_stroke_one_edge": 0.3167,
-      "runs_per_stroke": 2.813
+      "n": 932,
+      "optimal_rate": 0.7393,
+      "over_split_rate": 0.0794,
+      "under_fit_rate": 0.1234,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.3112,
+      "runs_per_stroke": 2.855
+    },
+    {
+      "name": "deg15_sig0.5",
+      "cfg": {
+        "corner_deg": 15,
+        "smooth_sigma": 0.5
+      },
+      "n": 932,
+      "optimal_rate": 0.6609,
+      "over_split_rate": 0.1867,
+      "under_fit_rate": 0.0944,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.2747,
+      "runs_per_stroke": 3.176
+    },
+    {
+      "name": "deg15_sig1.5",
+      "cfg": {
+        "corner_deg": 15,
+        "smooth_sigma": 1.5
+      },
+      "n": 932,
+      "optimal_rate": 0.735,
+      "over_split_rate": 0.0858,
+      "under_fit_rate": 0.1212,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.3004,
+      "runs_per_stroke": 2.918
+    },
+    {
+      "name": "deg15_sig3",
+      "cfg": {
+        "corner_deg": 15,
+        "smooth_sigma": 3
+      },
+      "n": 932,
+      "optimal_rate": 0.7575,
+      "over_split_rate": 0.0333,
+      "under_fit_rate": 0.1513,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.3283,
+      "runs_per_stroke": 2.739
     },
     {
       "name": "deg20_sig0.5",
@@ -69,13 +111,13 @@
         "corner_deg": 20,
         "smooth_sigma": 0.5
       },
-      "n": 461,
-      "optimal_rate": 0.6768,
-      "over_split_rate": 0.0716,
-      "under_fit_rate": 0.1844,
-      "out_of_scope_rate": 0.0672,
-      "one_stroke_one_edge": 0.3059,
-      "runs_per_stroke": 2.868
+      "n": 932,
+      "optimal_rate": 0.7221,
+      "over_split_rate": 0.0923,
+      "under_fit_rate": 0.1277,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.2972,
+      "runs_per_stroke": 2.933
     },
     {
       "name": "deg20_sig1.5",
@@ -83,13 +125,13 @@
         "corner_deg": 20,
         "smooth_sigma": 1.5
       },
-      "n": 461,
-      "optimal_rate": 0.6941,
-      "over_split_rate": 0.0304,
-      "under_fit_rate": 0.2082,
-      "out_of_scope_rate": 0.0672,
-      "one_stroke_one_edge": 0.3232,
-      "runs_per_stroke": 2.731
+      "n": 932,
+      "optimal_rate": 0.7393,
+      "over_split_rate": 0.044,
+      "under_fit_rate": 0.1588,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.3197,
+      "runs_per_stroke": 2.788
     },
     {
       "name": "deg20_sig3",
@@ -97,13 +139,55 @@
         "corner_deg": 20,
         "smooth_sigma": 3
       },
-      "n": 461,
-      "optimal_rate": 0.6898,
-      "over_split_rate": 0.0152,
-      "under_fit_rate": 0.2278,
-      "out_of_scope_rate": 0.0672,
-      "one_stroke_one_edge": 0.3341,
-      "runs_per_stroke": 2.584
+      "n": 932,
+      "optimal_rate": 0.7339,
+      "over_split_rate": 0.0236,
+      "under_fit_rate": 0.1845,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.3315,
+      "runs_per_stroke": 2.656
+    },
+    {
+      "name": "deg25_sig0.5",
+      "cfg": {
+        "corner_deg": 25,
+        "smooth_sigma": 0.5
+      },
+      "n": 932,
+      "optimal_rate": 0.7307,
+      "over_split_rate": 0.0536,
+      "under_fit_rate": 0.1577,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.309,
+      "runs_per_stroke": 2.811
+    },
+    {
+      "name": "deg25_sig1.5",
+      "cfg": {
+        "corner_deg": 25,
+        "smooth_sigma": 1.5
+      },
+      "n": 932,
+      "optimal_rate": 0.7339,
+      "over_split_rate": 0.0311,
+      "under_fit_rate": 0.177,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.324,
+      "runs_per_stroke": 2.705
+    },
+    {
+      "name": "deg25_sig3",
+      "cfg": {
+        "corner_deg": 25,
+        "smooth_sigma": 3
+      },
+      "n": 932,
+      "optimal_rate": 0.7114,
+      "over_split_rate": 0.015,
+      "under_fit_rate": 0.2157,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.3358,
+      "runs_per_stroke": 2.569
     },
     {
       "name": "deg30_sig0.5",
@@ -111,13 +195,13 @@
         "corner_deg": 30,
         "smooth_sigma": 0.5
       },
-      "n": 461,
-      "optimal_rate": 0.6746,
-      "over_split_rate": 0.0282,
-      "under_fit_rate": 0.2299,
-      "out_of_scope_rate": 0.0672,
-      "one_stroke_one_edge": 0.3232,
-      "runs_per_stroke": 2.655
+      "n": 932,
+      "optimal_rate": 0.721,
+      "over_split_rate": 0.0408,
+      "under_fit_rate": 0.1803,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.3144,
+      "runs_per_stroke": 2.727
     },
     {
       "name": "deg30_sig1.5",
@@ -125,13 +209,13 @@
         "corner_deg": 30,
         "smooth_sigma": 1.5
       },
-      "n": 461,
-      "optimal_rate": 0.679,
-      "over_split_rate": 0.013,
-      "under_fit_rate": 0.2408,
-      "out_of_scope_rate": 0.0672,
-      "one_stroke_one_edge": 0.3319,
-      "runs_per_stroke": 2.566
+      "n": 932,
+      "optimal_rate": 0.7124,
+      "over_split_rate": 0.0236,
+      "under_fit_rate": 0.206,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.3273,
+      "runs_per_stroke": 2.634
     },
     {
       "name": "deg30_sig3",
@@ -139,13 +223,55 @@
         "corner_deg": 30,
         "smooth_sigma": 3
       },
-      "n": 461,
-      "optimal_rate": 0.6443,
-      "over_split_rate": 0.0043,
-      "under_fit_rate": 0.2842,
-      "out_of_scope_rate": 0.0672,
-      "one_stroke_one_edge": 0.3427,
-      "runs_per_stroke": 2.401
+      "n": 932,
+      "optimal_rate": 0.6674,
+      "over_split_rate": 0.015,
+      "under_fit_rate": 0.2597,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.3358,
+      "runs_per_stroke": 2.476
+    },
+    {
+      "name": "deg35_sig0.5",
+      "cfg": {
+        "corner_deg": 35,
+        "smooth_sigma": 0.5
+      },
+      "n": 932,
+      "optimal_rate": 0.7049,
+      "over_split_rate": 0.0322,
+      "under_fit_rate": 0.2049,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.3176,
+      "runs_per_stroke": 2.652
+    },
+    {
+      "name": "deg35_sig1.5",
+      "cfg": {
+        "corner_deg": 35,
+        "smooth_sigma": 1.5
+      },
+      "n": 932,
+      "optimal_rate": 0.691,
+      "over_split_rate": 0.0182,
+      "under_fit_rate": 0.2328,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.3283,
+      "runs_per_stroke": 2.56
+    },
+    {
+      "name": "deg35_sig3",
+      "cfg": {
+        "corner_deg": 35,
+        "smooth_sigma": 3
+      },
+      "n": 932,
+      "optimal_rate": 0.6094,
+      "over_split_rate": 0.0139,
+      "under_fit_rate": 0.3187,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.3358,
+      "runs_per_stroke": 2.311
     },
     {
       "name": "deg45_sig0.5",
@@ -153,13 +279,13 @@
         "corner_deg": 45,
         "smooth_sigma": 0.5
       },
-      "n": 461,
-      "optimal_rate": 0.6421,
-      "over_split_rate": 0.0108,
-      "under_fit_rate": 0.2798,
-      "out_of_scope_rate": 0.0672,
-      "one_stroke_one_edge": 0.3319,
-      "runs_per_stroke": 2.425
+      "n": 932,
+      "optimal_rate": 0.6631,
+      "over_split_rate": 0.0215,
+      "under_fit_rate": 0.2575,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.3219,
+      "runs_per_stroke": 2.511
     },
     {
       "name": "deg45_sig1.5",
@@ -167,13 +293,13 @@
         "corner_deg": 45,
         "smooth_sigma": 1.5
       },
-      "n": 461,
-      "optimal_rate": 0.6074,
-      "over_split_rate": 0.0065,
-      "under_fit_rate": 0.3189,
-      "out_of_scope_rate": 0.0672,
-      "one_stroke_one_edge": 0.3362,
-      "runs_per_stroke": 2.289
+      "n": 932,
+      "optimal_rate": 0.6212,
+      "over_split_rate": 0.0161,
+      "under_fit_rate": 0.3047,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.3305,
+      "runs_per_stroke": 2.369
     },
     {
       "name": "deg45_sig3",
@@ -181,28 +307,28 @@
         "corner_deg": 45,
         "smooth_sigma": 3
       },
-      "n": 461,
-      "optimal_rate": 0.4772,
-      "over_split_rate": 0.0022,
-      "under_fit_rate": 0.4534,
-      "out_of_scope_rate": 0.0672,
-      "one_stroke_one_edge": 0.3449,
-      "runs_per_stroke": 1.792
+      "n": 932,
+      "optimal_rate": 0.4775,
+      "over_split_rate": 0.0075,
+      "under_fit_rate": 0.4571,
+      "out_of_scope_rate": 0.0579,
+      "one_stroke_one_edge": 0.338,
+      "runs_per_stroke": 1.859
     }
   ],
   "metric_direction": {
     "note": "임계를 낮추면(과민) 1획=1엣지는 내려가고 over_split이 오른다. 높이면(둔감) 반대다.",
     "sharpest": {
       "name": "deg10_sig0.5",
-      "one_stroke_one_edge": 0.2169,
-      "over_split_rate": 0.3861,
-      "optimal_rate": 0.4512
+      "one_stroke_one_edge": 0.2082,
+      "over_split_rate": 0.4345,
+      "optimal_rate": 0.4506
     },
     "bluntest": {
       "name": "deg45_sig3",
-      "one_stroke_one_edge": 0.3449,
-      "under_fit_rate": 0.4534,
-      "optimal_rate": 0.4772
+      "one_stroke_one_edge": 0.338,
+      "under_fit_rate": 0.4571,
+      "optimal_rate": 0.4775
     }
   },
   "reading": [
