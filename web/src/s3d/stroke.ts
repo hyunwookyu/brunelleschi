@@ -56,14 +56,30 @@ export const PLACE_TOL = {
    */
   view_depth_guard: 0.05,
   /**
-   * **돌린 시점의 앵커 검사 둘**(S-6). 하나만으로는 각도에 따라 구멍이 남는다 —
-   * 정합성은 **양 끝에 후보가 있을 때만** 쓸 수 있고(궤도 45°에서 38.5%가 자유단이었다),
-   * 깊이 타당성은 자유단 경로를 막는다. 함께 쓰면 모서리 오차 p90이
-   * **0.72~0.93 → 0.05~0.075**(12~18배)로 떨어진다. 배치율은 0.85~0.99 → 0.65~0.76.
+   * **앵커 정합성 검사**(S-6). 축과 앵커가 정해지면 반대쪽 끝점이 예측되므로, 그 예측이
+   * 반대쪽 끝의 기존 기하와 만나야 한다. **양 끝에 후보가 있을 때만** 쓸 수 있다.
+   *
+   * 돌린 시점(S-6 1): 깊이 타당성과 함께 쓰면 모서리 오차 p90이
+   * **0.72~0.93 → 0.05~0.075**(12~18배). 배치율은 0.85~0.99 → 0.65~0.76.
+   * 궤도 45°에서 38.5%가 자유단이라 이것 하나로는 구멍이 남는다.
+   *
+   * **첫 시점에도 켠다**(S-6 2b, D-S16). `view_` 접두사를 뗀 이유가 그것이다 —
+   * 가림은 시점에 달렸지만(그래서 `view_depth_*`는 그대로다) **틀린 앵커는 아니다**.
+   * 첫 시점에서도 놓인 모서리의 **12%가 상자 대각의 0.2 넘게** 틀려 있었고(그 꼬리는
+   * 이제까지 안 봤다), 검사를 켜니 5.8%가 됐다. 배치율 0.95 → 0.82.
    * 값은 잠정이다(AS-13) — 0.5는 듣고 1.0은 느슨해서 45°가 되돌아간다.
    */
-  view_far_end_check: 1,
+  far_end_check: 1,
   view_depth_envelope: 0.5,
+  /**
+   * **축 오배정 되돌리기**(S-6 2b) — **기본 0(꺼짐)**. 정합성 검사에 실패한 축 획을
+   * 면 위 사선으로 재시도한다. 되돌려진 사선 자체는 정확했지만(34획 중 1획만 오차 0.2 초과)
+   * **같은 경로가 제대로 배정된 모서리 143획을 함께 끌어들였고 그중 46획(32%)이 틀렸다.**
+   * 기저 오류율 6%의 다섯 배이며 **D-S9가 c를 끈 것과 같은 이유**다(구제의 질).
+   * 허용치를 조여도 둘이 갈리지 않는다(1.0/0.5/0.25에서 사선:모서리 = 34:143 / 22:72 / 5:27).
+   * 코드는 남기고 값만 0으로 둔다 — 실획에서 다시 본다(`misassign_retry.json`).
+   */
+  retry_as_face: 0,
   /** **면 위 사선**(§4.3)의 정합성 허용치 배수. 잠정 — 실획에서 재정한다(AS-13). */
   face_far_end: 1,
   /** 눈높이 게이지는 `geom3d.EYE_HEIGHT` 한 군데에만 둔다(격자와 씨앗이 같아야 한다). */
@@ -379,6 +395,13 @@ export const resetResolveStats = () => {
 };
 
 /**
+ * **축 오배정 되돌리기 카운터**(S-6 2b). 재시도가 몇 번 발동했고 몇 번 놓였는지.
+ * `tried − recovered`가 "검사에 걸렸지만 사선으로도 못 놓은 것"이고, 그것은 미배치다.
+ */
+export const RETRY_STATS = { tried: 0, recovered: 0 };
+export const resetRetryStats = () => { RETRY_STATS.tried = 0; RETRY_STATS.recovered = 0; };
+
+/**
  * **획 자신의 축 제약으로 앵커를 고른다**(S-6). S-5가 남긴 가장 큰 결함의 근본 해법이다.
  *
  * 화면 거리만으로 고르면 돌린 시점에서 **가림** 때문에 깊이가 전혀 다른 획에 붙는다
@@ -533,6 +556,15 @@ export interface PlaceOpts {
    */
   facePlanes?: number;
   /**
+   * **축 오배정 되돌리기**(S-6 2b). 축으로 배정된 획이 **정합성 검사에 실패하면**
+   * 그것은 "이 축이 아니다"라는 신호다 — 사선으로 재시도한다(면 위 사선 경로).
+   * 값은 면 경로의 정합성 허용치 배수. 0이면 꺼진다.
+   *
+   * **판정 임계를 건드리지 않는 경로다**(AS-13이 `AXIS_TOL` 조이기를 금지한다).
+   * `farEndCheck`가 켜져 있어야 발동한다 — 검사가 없으면 되돌릴 신호도 없다.
+   */
+  retryAsFace?: number;
+  /**
    * **깊이 타당성**(S-6) — 정합성 검사를 못 쓴 획(한쪽이 자유단)에만 적용한다.
    * 놓인 획이 기존 기하의 깊이 범위를 이 비율만큼 벗어나면 배치하지 않는다.
    * 측정: 궤도 45°에서 **38.5%가 자유단**이라 정합성 검사가 아예 안 걸렸고, 그 경로가 꼬리였다.
@@ -553,14 +585,17 @@ export function placeInto(
 
   // **§4.3 면 위 사선** — 축을 벗어난 획은 축 두 개가 펴는 평면 위에 놓아 본다.
   // 정합성 검사를 통과할 때만 놓는다(검증 없이 놓는 것은 추측이다, A-3).
-  if (stroke.axis === "free") {
-    if (!opts.facePlanes) return false;
-    const fr = placeOnFace(placed, stroke.pts2d, ctx, radius, opts.facePlanes);
+  const onFace = (tol: number): boolean => {
+    const fr = placeOnFace(placed, stroke.pts2d, ctx, radius, tol);
     if (!fr) return false;
     stroke.pts3d = fr.pts3d;
     stroke.anchorRef = fr.id;
     stroke.joinShift = fr.joinShift;
     return true;
+  };
+  if (stroke.axis === "free") {
+    if (!opts.facePlanes) return false;
+    return onFace(opts.facePlanes);
   }
   const ends: [Pt2, Pt2] = [stroke.pts2d[0], stroke.pts2d[stroke.pts2d.length - 1]];
   let hit: { pos: Vec3; id: string; which: 0 | 1 } | null;
@@ -572,6 +607,18 @@ export function placeInto(
     // 후보는 있었는데 어떤 짝도 안 맞으면 `null`이다 — 그때는 **놓지 않는다**.
     if (!r && (anchorCandidates(placed, stroke.pts2d[0], radius).length
                || anchorCandidates(placed, stroke.pts2d[stroke.pts2d.length - 1], radius).length)) {
+      // **축 오배정 되돌리기**(S-6 2b) — 검사에 실패했다는 것은 "이 축이 아니다"이고,
+      // 면 위 사선이 그 다음 가설이다. 판정 임계를 건드리지 않는 경로다(AS-13).
+      if (opts.retryAsFace) {
+        RETRY_STATS.tried += 1;
+        if (onFace(opts.retryAsFace)) {
+          // **판정을 되돌린다.** 축 라벨을 그대로 두면 화면이 축 색으로 칠하고
+          // 재배치 때 다시 축 경로로 들어간다 — 조용히 틀린 축이 남는다(A-3).
+          stroke.axis = "free";
+          RETRY_STATS.recovered += 1;
+          return true;
+        }
+      }
       return false;
     }
     hit = r ? { pos: r.anchor, id: r.id, which: r.which } : null;

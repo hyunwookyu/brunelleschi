@@ -9,7 +9,8 @@ import { CameraPanel, type Tool } from "./ui/cameraPanel.js";
 import { PRESETS } from "./s3d/constraints.js";
 import { AXIS_COLOR } from "./s3d/grid.js";
 import { classifyStroke, type Axis } from "./s3d/axis.js";
-import { newStroke, settle, reprojectAll, PLACE_TOL, type Stroke, type PlaceCtx } from "./s3d/stroke.js";
+import { newStroke, settle, reprojectAll, PLACE_TOL,
+         type Stroke, type PlaceCtx, type PlaceOpts } from "./s3d/stroke.js";
 import { buildSession, downloadSession } from "./ui/sessionExport.js";
 import { viewPlaceCtx, toView, fromView, projectInView } from "./s3d/viewCamera.js";
 import { axisDirection, project, type Vec3 } from "./s3d/geom3d.js";
@@ -59,11 +60,27 @@ function placeCtx(): PlaceCtx | null {
   return { principal: cam.principalPoint, f: cam.f, vps: panel.vps(), imgSize: panel.imgSize };
 }
 
+/**
+ * **첫 시점의 배치 옵션.** 두 호출 자리(그리기 · 사용자 축 지정)가 같아야 한다.
+ *
+ * - `farEndCheck` **첫 시점에도 켠다**(S-6 2b, D-S16). 틀린 앵커는 가림과 달리 시점에
+ *   매이지 않는다 — 검사 없이는 놓인 모서리의 **12%**가 상자 대각의 0.2 넘게 틀려 있었다
+ *   (`misassign_retry.json`). 켜면 5.8%. 대신 배치율이 0.95 → 0.82로 떨어지고,
+ *   남은 것은 미배치로 화면에 남는다(D-S15 — 놓지 않되 버리지 않는다).
+ * - `facePlanes` **면 위 사선**(§4.3, D-S14). 미분류 사선의 84%가 이 경로로 놓인다.
+ * - `retryAsFace` **0이다**(D-S16). 구제 143획 중 46획(32%)이 틀렸다 — D-S9와 같은 이유.
+ */
+const FIRST_VIEW: PlaceOpts = {
+  farEndCheck: PLACE_TOL.far_end_check,
+  facePlanes: PLACE_TOL.face_far_end,
+  retryAsFace: PLACE_TOL.retry_as_face,
+};
+
 /** 카메라가 움직이면 **전부 다시 만든다**(§5 "pts2d를 반드시 보존한다"). */
 function replace() {
   const ctx = placeCtx();
   if (!ctx || !drawn.length) return;
-  reprojectAll(drawn, ctx);
+  reprojectAll(drawn, ctx, FIRST_VIEW);
   strokeView.sync(drawn, ctx.f);
 }
 
@@ -102,7 +119,7 @@ function addStroke(pts: Pt2[], raw?: number[][]) {
   drawn.push(s);
   if (raw) rawPoints.set(s.id, raw);
   verdicts.set(s.id, v as AxisVerdict);
-  if (ctx) settle(drawn, ctx);
+  if (ctx) settle(drawn, ctx, FIRST_VIEW);
   strokeView.sync(drawn, ctx?.f);
   lastNote = v.note;
 }
@@ -155,7 +172,7 @@ function addStrokeFromView(pts: Pt2[], raw?: number[][]) {
   // 고르면 조용히 틀린 깊이에 놓인다. 획 자신의 축 제약으로 반대쪽 끝점을 검사하고(정합성),
   // 그걸 못 쓰는 자유단은 깊이 타당성으로 막는다. p90 0.87 → 0.05.
   settle(inView, ctxV, { mode: "facing",
-    farEndCheck: PLACE_TOL.view_far_end_check,
+    farEndCheck: PLACE_TOL.far_end_check,
     depthEnvelope: PLACE_TOL.view_depth_envelope });
 
   const placed = inView.find(t => t.id === s.id);
@@ -208,19 +225,31 @@ function drawBelowInk(ctx: CanvasRenderingContext2D) {
   panel.drawOffscreenVps(ctx);        // 화면 밖 소실점 (§3.8)
 }
 
-/** 획 상태 — 배치된 것과 남은 것. **미배치의 이유를 나눠 보인다**(미분류 / 앵커 없음). */
+/**
+ * 획 상태 — 배치된 것과 남은 것. **미배치의 이유를 나눠 보인다**(미분류 / 앵커 없음).
+ *
+ * **세는 기준은 배치 여부다.** 미분류(`free`)를 미배치와 같은 것으로 세면 안 된다 —
+ * §4.3 면 위 사선이 켜진 뒤로 미분류도 놓이기 때문이다(그 전에는 둘이 같았다).
+ * 빼기로 세다가 "안 이어짐 −2"가 나왔다.
+ */
 function renderStrokes() {
   const placed = drawn.filter(s => s.pts3d.length).length;
   const free = drawn.filter(s => s.axis === "free").length;
-  const floating = drawn.length - placed - free;
+  const unplaced = drawn.filter(s => !s.pts3d.length);
+  const floating = unplaced.filter(s => s.axis !== "free").length;   // 축은 정해졌는데 못 이었다
+  const freeUnplaced = unplaced.length - floating;
   const rows = [`<div>획 ${drawn.length} · <b>3D ${placed}</b>`
-    + (free ? ` · 미분류 ${free}` : "") + (floating ? ` · 안 이어짐 ${floating}` : "") + "</div>"];
+    + (free ? ` · 미분류 ${free}` : "")
+    + (freeUnplaced ? ` (놓지 못한 것 ${freeUnplaced})` : "")
+    + (floating ? ` · 안 이어짐 ${floating}` : "") + "</div>"];
   if (lastNote) rows.push(`<div class="hint">${lastNote}</div>`);
   if (floating) rows.push('<div class="hint">이어지지 않은 획은 깊이가 정해지지 않습니다 — 기존 획에 닿게 그으면 놓입니다</div>');
   const hidden = drawn.filter(s => !s.pts3d.length && viewOrigin.has(s.id)).length;
   if (hidden) rows.push(`<div class="hint">그 중 ${hidden}획은 <b>돌린 시점에서 그린 미배치 획</b>이라 여기 안 보입니다 — 그 시점으로 돌아가면 보입니다(S-7에서 손봅니다)</div>`);
   strokeEl.innerHTML = rows.join("");
-  pickEl.style.display = free ? "flex" : "none";
+  // **놓지 못한 미분류에만 축 선택을 띄운다.** 면 위 사선으로 이미 놓인 미분류 획에
+  // 축 지정을 권하면 맞게 놓인 것을 축으로 옮기게 된다(A-3: 조용히 틀린 축을 만들지 않는다).
+  pickEl.style.display = freeUnplaced ? "flex" : "none";
 }
 
 function refresh() {
@@ -246,7 +275,8 @@ document.querySelectorAll<HTMLButtonElement>("#tools button").forEach(b => {
 
 /**
  * 미분류 획의 축을 사용자가 고른다(§4.1 "애매하면 미분류로 두고 사용자 지정에 맡긴다").
- * 가장 최근 미분류 획에 적용한다 — 방금 그은 획이 바로 그것이기 때문이다.
+ * 가장 최근 **미배치** 미분류 획에 적용한다 — 방금 그은 획이 바로 그것이고,
+ * **이미 놓인 미분류는 건드리지 않는다**(면 위 사선으로 맞게 놓였을 수 있다).
  */
 for (const [label, axis] of [["축1", 0], ["축2", 1], ["축3", 2], ["화면평행", "screen"]] as [string, Axis][]) {
   const b = document.createElement("button");
@@ -254,10 +284,10 @@ for (const [label, axis] of [["축1", 0], ["축2", 1], ["축3", 2], ["화면평�
   if (typeof axis === "number") b.style.borderColor = AXIS_COLOR[axis];
   b.addEventListener("click", () => {
     for (let i = drawn.length - 1; i >= 0; i--) {
-      if (drawn[i].axis !== "free") continue;
+      if (drawn[i].axis !== "free" || drawn[i].pts3d.length) continue;
       drawn[i].axis = axis;
       const ctx = placeCtx();
-      if (ctx) settle(drawn, ctx);
+      if (ctx) settle(drawn, ctx, FIRST_VIEW);
       strokeView.sync(drawn, ctx?.f);
       lastNote = "";
       break;

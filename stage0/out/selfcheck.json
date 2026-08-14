@@ -1,5 +1,5 @@
 {
-  "n_flags": 393,
+  "n_flags": 664,
   "flags": [
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
@@ -155,6 +155,1361 @@
       "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_70.vps_at_infinity.median",
       "val": 0,
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base.diag_axis_assigned.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base.vs.check.dropped.rate.over_0.1",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base.vs.check.dropped.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base.vs.check.dropped.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base.vs.check.dropped_edges_only.rate.over_0.1",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base.vs.check.dropped_edges_only.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base.vs.check.dropped_edges_only.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base.per_seed[0].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base.per_seed[1].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base.per_seed[2].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.opts.farEndCheck",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.opts.retryAsFace",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.diag_unclassified.placed_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.diag_unclassified.placed_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.diag_unclassified.corner_err_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.diag_unclassified.corner_err_ratio.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.diag_unclassified.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.diag_unclassified.worst_end_ratio.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.diag_unclassified.worst_end_over.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.diag_unclassified.worst_end_over.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.diag_unclassified.worst_end_over.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.diag_axis_assigned.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.unanchored_of_classified",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.recovered.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.vs.base.gained",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].recovered",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].recovered_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].recovered_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].recovered_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].recovered_split.diagonals",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].recovered_split.edges",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].recovered_split.diagonals_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].recovered_split.diagonals_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].recovered_split.diagonals_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].recovered_split.edges_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].recovered_split.edges_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].recovered_split.edges_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].diag_unclassified.placed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].diag_unclassified.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].diag_unclassified.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[0].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].recovered",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].recovered_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].recovered_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].recovered_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].recovered_split.diagonals",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].recovered_split.edges",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].recovered_split.diagonals_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].recovered_split.diagonals_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].recovered_split.diagonals_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].recovered_split.edges_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].recovered_split.edges_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].recovered_split.edges_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].diag_unclassified.placed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].diag_unclassified.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].diag_unclassified.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[1].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].recovered",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].recovered_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].recovered_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].recovered_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].recovered_split.diagonals",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].recovered_split.edges",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].recovered_split.diagonals_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].recovered_split.diagonals_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].recovered_split.diagonals_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].recovered_split.edges_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].recovered_split.edges_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].recovered_split.edges_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].diag_unclassified.placed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].diag_unclassified.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].diag_unclassified.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.base_nofaces.per_seed[2].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.retry.recovered.diagonals.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.retry.recovered.edges.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.retry.per_seed[0].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.retry.per_seed[2].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.retry_0.5.recovered.diagonals.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.retry_0.5.recovered.edges.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.retry_0.25.recovered.diagonals.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.retry_0.25.recovered.edges.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.retry_0.25.vs.check.dropped.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.retry_0.25.vs.check.dropped.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.retry_0.25.vs.check.dropped_edges_only.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.retry_0.25.vs.check.dropped_edges_only.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.005.arms.retry_0.25.vs.check.by_seed[1].dropped_n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base.diag_axis_assigned.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base.vs.check.dropped.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base.vs.check.dropped.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base.vs.check.dropped_edges_only.rate.over_0.1",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base.vs.check.dropped_edges_only.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base.vs.check.dropped_edges_only.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base.per_seed[0].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base.per_seed[1].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base.per_seed[2].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.opts.farEndCheck",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.opts.retryAsFace",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.diag_unclassified.placed_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.diag_unclassified.placed_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.diag_unclassified.corner_err_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.diag_unclassified.corner_err_ratio.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.diag_unclassified.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.diag_unclassified.worst_end_ratio.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.diag_unclassified.worst_end_over.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.diag_unclassified.worst_end_over.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.diag_unclassified.worst_end_over.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.diag_axis_assigned.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.recovered.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.vs.base.gained",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].recovered",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].recovered_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].recovered_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].recovered_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].recovered_split.diagonals",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].recovered_split.edges",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].recovered_split.diagonals_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].recovered_split.diagonals_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].recovered_split.diagonals_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].recovered_split.edges_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].recovered_split.edges_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].recovered_split.edges_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].diag_unclassified.placed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].diag_unclassified.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].diag_unclassified.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[0].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].recovered",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].recovered_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].recovered_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].recovered_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].recovered_split.diagonals",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].recovered_split.edges",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].recovered_split.diagonals_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].recovered_split.diagonals_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].recovered_split.diagonals_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].recovered_split.edges_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].recovered_split.edges_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].recovered_split.edges_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].diag_unclassified.placed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].diag_unclassified.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].diag_unclassified.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[1].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].recovered",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].recovered_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].recovered_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].recovered_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].recovered_split.diagonals",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].recovered_split.edges",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].recovered_split.diagonals_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].recovered_split.diagonals_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].recovered_split.diagonals_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].recovered_split.edges_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].recovered_split.edges_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].recovered_split.edges_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].diag_unclassified.placed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].diag_unclassified.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].diag_unclassified.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.base_nofaces.per_seed[2].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry.recovered.diagonals.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry.recovered.edges.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry.vs.check.dropped.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry.vs.check.dropped.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry.vs.check.dropped_edges_only.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry.vs.check.dropped_edges_only.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.5.recovered.diagonals.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.5.recovered.edges.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.5.vs.check.dropped.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.5.vs.check.dropped.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.5.vs.check.dropped_edges_only.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.5.vs.check.dropped_edges_only.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.25.recovered.diagonals.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.25.recovered.edges.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.25.vs.check.dropped.rate.over_0.1",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.25.vs.check.dropped.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.25.vs.check.dropped.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.25.vs.check.dropped_edges_only.rate.over_0.1",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.25.vs.check.dropped_edges_only.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.25.vs.check.dropped_edges_only.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.01.arms.retry_0.25.vs.check.by_seed[1].dropped_n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base.vs.check.dropped_edges_only.rate.over_0.1",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base.vs.check.dropped_edges_only.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base.vs.check.dropped_edges_only.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base.vs.check.by_seed[1].dropped_n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base.per_seed[0].diag_axis_assigned.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.opts.farEndCheck",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.opts.retryAsFace",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.diag_unclassified.placed_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.diag_unclassified.placed_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.diag_unclassified.corner_err_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.diag_unclassified.corner_err_ratio.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.diag_unclassified.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.diag_unclassified.worst_end_ratio.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.diag_unclassified.worst_end_over.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.diag_unclassified.worst_end_over.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.diag_unclassified.worst_end_over.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.recovered.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.vs.base.gained",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].recovered",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].recovered_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].recovered_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].recovered_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].recovered_split.diagonals",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].recovered_split.edges",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].recovered_split.diagonals_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].recovered_split.diagonals_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].recovered_split.diagonals_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].recovered_split.edges_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].recovered_split.edges_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].recovered_split.edges_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].diag_unclassified.placed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].diag_unclassified.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[0].diag_unclassified.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].recovered",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].recovered_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].recovered_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].recovered_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].recovered_split.diagonals",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].recovered_split.edges",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].recovered_split.diagonals_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].recovered_split.diagonals_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].recovered_split.diagonals_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].recovered_split.edges_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].recovered_split.edges_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].recovered_split.edges_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].diag_unclassified.placed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].diag_unclassified.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[1].diag_unclassified.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].recovered",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].recovered_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].recovered_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].recovered_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].recovered_split.diagonals",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].recovered_split.edges",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].recovered_split.diagonals_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].recovered_split.diagonals_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].recovered_split.diagonals_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].recovered_split.edges_wrong.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].recovered_split.edges_wrong.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].recovered_split.edges_wrong.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].diag_unclassified.placed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].diag_unclassified.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.base_nofaces.per_seed[2].diag_unclassified.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry.recovered.diagonals.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry.recovered.edges.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry.vs.check.dropped.rate.over_0.1",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry.vs.check.dropped.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry.vs.check.dropped.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry.vs.check.dropped_edges_only.rate.over_0.1",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry.vs.check.dropped_edges_only.rate.over_0.2",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry.vs.check.dropped_edges_only.rate.over_0.5",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry.vs.check.by_seed[1].dropped_n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry.vs.check.by_seed[2].dropped_n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.5.recovered.diagonals.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.5.recovered.edges.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.5.vs.check.dropped.rate.over_0.1",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.5.vs.check.dropped.rate.over_0.2",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.5.vs.check.dropped.rate.over_0.5",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.5.vs.check.dropped_edges_only.rate.over_0.1",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.5.vs.check.dropped_edges_only.rate.over_0.2",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.5.vs.check.dropped_edges_only.rate.over_0.5",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.5.vs.check.by_seed[1].dropped_n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.5.vs.check.by_seed[2].dropped_n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.25.recovered.diagonals.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.25.recovered.edges.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.25.vs.check.dropped.rate.over_0.1",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.25.vs.check.dropped.rate.over_0.2",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.25.vs.check.dropped.rate.over_0.5",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.25.vs.check.dropped_edges_only.rate.over_0.1",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.25.vs.check.dropped_edges_only.rate.over_0.2",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.25.vs.check.dropped_edges_only.rate.over_0.5",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.25.vs.check.by_seed[1].dropped_n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.25.vs.check.by_seed[2].dropped_n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "one_stroke_one_axis.json:by_word.square.too_bent_rate",
@@ -1962,18 +3317,19 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "web\\src\\s3d\\stroke.ts:265:reprojectionGap",
+      "path": "web\\src\\s3d\\stroke.ts:281:reprojectionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     }
   ],
   "n_stale": 0,
-  "constants_hash": "ba4ce720",
+  "constants_hash": "272b5143",
   "scanned": [
     "axis_judgement.json",
     "constants.json",
     "continue_after_rotate.json",
     "face_diagonal.json",
+    "misassign_retry.json",
     "one_stroke_one_axis.json",
     "preview_gap.json",
     "real_ink.json",

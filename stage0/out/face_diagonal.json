@@ -1,7 +1,7 @@
 {
   "spec": "S-6 (2) §4.3 면 위 사선. 상자의 두 면에 대각선을 긋고 회수율을 잰다.",
   "constants": {
-    "hash": "ba4ce720",
+    "hash": "272b5143",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -26,8 +26,9 @@
       "PLACE_TOL": {
         "join_ratio": 0.015,
         "view_depth_guard": 0.05,
-        "view_far_end_check": 1,
+        "far_end_check": 1,
         "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
         "face_far_end": 1,
         "eye_height": 1
       },
