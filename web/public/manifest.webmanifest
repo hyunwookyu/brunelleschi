@@ -1,0 +1,14 @@
+{
+  "name": "투시 스케치 3D",
+  "short_name": "Sketch3D",
+  "description": "손으로 그린 투시도가 그대로 3차원이 된다",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f6f6",
+  "theme_color": "#1a99aa",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

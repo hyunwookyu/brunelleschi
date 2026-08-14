@@ -3,11 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <title>SKETCH2SPACE — 투시 작도</title>
+  <title>투시 스케치 3D</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#1a99aa">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <style>
     *{margin:0;box-sizing:border-box;-webkit-user-select:none;user-select:none}
     html,body{height:100%;font:14px system-ui,sans-serif;background:#f6f6f6;color:#111;overflow:hidden}
-    #panels{position:absolute;inset:0 0 48px 0;display:grid;grid-template-columns:1fr 320px}
+    #panels{position:absolute;inset:0 0 48px 0;display:grid;grid-template-columns:1fr 1fr 300px}
+    #view{position:relative;overflow:hidden;background:#f2f4f6;border-left:1px solid #e2e2e2}
+    #view canvas{display:block}
+    #viewlabel{position:absolute;left:10px;top:10px;z-index:2;font-size:12px;color:#6b7780;
+      background:rgba(255,255,255,.82);border-radius:5px;padding:3px 7px;pointer-events:none}
     #left{position:relative;background:#fff;overflow:hidden}
     #ink{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
     #side{position:relative;overflow-y:auto;background:#fbfbfb;border-left:1px solid #e2e2e2;padding:12px}
@@ -67,6 +75,7 @@
         <button data-t="draw">그리기</button>
       </div>
     </div>
+    <div id="view"><div id="viewlabel">3D — 드래그로 회전</div></div>
     <div id="side">
       <div id="status"></div>
       <div class="sec">

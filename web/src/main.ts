@@ -3,6 +3,7 @@
 // 잉크 캔버스 하나에 **가이드 → 확정 제스처 → 사용자 획** 순으로 겹쳐 그린다.
 // 계산은 전부 `s3d/`에 있고 여기는 DOM 배선만 한다.
 import { InkCanvas } from "./capture/inkCanvas.js";
+import { Viewport } from "./s3d/viewport.js";
 import { CameraPanel, type Tool } from "./ui/cameraPanel.js";
 import { PRESETS } from "./s3d/constraints.js";
 import { AXIS_COLOR } from "./s3d/grid.js";
@@ -13,6 +14,9 @@ const statusEl = document.getElementById("status")!;
 const msgEl = document.getElementById("msg")!;
 const lensEl = document.getElementById("lens") as HTMLInputElement;
 const lensVal = document.getElementById("lensval")!;
+
+// 3D 뷰포트 (S-0). 지금은 빈 씬이고, 그린 획이 여기 쌓이는 것은 S-3·S-4가 붙인다.
+const viewport = new Viewport(document.getElementById("view")!);
 
 function cssSize(): [number, number] {
   const r = canvas.getBoundingClientRect();
@@ -119,5 +123,12 @@ document.getElementById("reset")!.addEventListener("click", () => {
   panel.reset(); drawn.length = 0; ink.clear(); refresh();
 });
 
-window.addEventListener("resize", fit);
+window.addEventListener("resize", () => { fit(); viewport.resize(); });
 fit();
+
+// PWA — 오프라인 동작(§1.4). dev 서버에서는 등록하지 않는다(HMR과 충돌한다).
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => { /* 오프라인 없이도 동작한다 */ });
+  });
+}
