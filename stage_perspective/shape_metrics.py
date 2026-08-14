@@ -105,3 +105,51 @@ def best_similarity_iou(a, b):
             if v > best:
                 best, bestk = float(v), (rev, k)
     return best, bestk
+
+
+# ---------------------------------------------------------------- 프레임 (D-1b-3 c·d)
+
+def natural_frame(poly):
+    """**변 방향 정렬** 프레임 — 직교 폴리곤의 자연 좌표계.
+
+    PCA를 쓰면 안 되는 경우가 있다: L자는 질량 분포가 대각이라 주축이 45° 돌아가고,
+    그 프레임의 bbox 종횡비(1.333)는 **건축적 외곽 비례가 아니다**(자연값 1.0).
+    같은 표본에서 프레임만 바꾼 복원 오차가 0.056(PCA) vs 0.167(자연)로 3배 갈렸다(D-1b-2).
+
+    구현: 변 방향을 90° 주기로 접어(각도 ×4) **길이 가중 원형 평균**.
+    최장변 하나만 쓰면 노이즈에 프레임이 흔들린다(외곽오차 0.213 → 0.143로 개선된 이력).
+
+    반환: (정렬 좌표, 회전행렬 R)
+    """
+    import math
+    P = np.asarray(poly, float)
+    Q = P - P.mean(0)
+    acc = 0j
+    for i in range(len(Q)):
+        d = Q[(i + 1) % len(Q)] - Q[i]
+        L = float(np.hypot(*d))
+        if L < 1e-9:
+            continue
+        a = math.atan2(d[1], d[0])
+        acc += L * complex(math.cos(4 * a), math.sin(4 * a))
+    th = (math.atan2(acc.imag, acc.real) / 4.0) % (math.pi / 2) if abs(acc) > 1e-12 else 0.0
+    ct, st = math.cos(-th), math.sin(-th)
+    R = np.array([[ct, -st], [st, ct]])
+    return Q @ R.T, R
+
+
+def pca_frame(poly):
+    """주축(PCA) 정렬 프레임. **일반 폴리곤용**이며 직교 폴리곤에는 자연 프레임을 쓴다."""
+    P = np.asarray(poly, float)
+    Q = P - P.mean(0)
+    _u, _s, vt = np.linalg.svd(Q, full_matrices=False)
+    return Q @ vt.T, vt
+
+
+def bbox_aspect(poly, frame: str = "natural") -> float:
+    """정렬 프레임에서의 bbox 종횡비(장변/단변). frame: "natural" | "pca"."""
+    A, _R = (natural_frame(poly) if frame == "natural" else pca_frame(poly))
+    w = float(np.ptp(A[:, 0])); h = float(np.ptp(A[:, 1]))
+    if min(w, h) < 1e-9:
+        return float("nan")
+    return max(w, h) / min(w, h)

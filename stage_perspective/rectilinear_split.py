@@ -10,8 +10,8 @@
   1개  → L자형. 분할 처리 대상.
   2개+ → U자·계단. 외곽 종횡비 오차마저 0.31~1.27로 크므로 분할이 성립하지 않는다 → 범위 밖.
 
-좌표계: 폴리곤의 **주축 정렬 프레임**에서 다룬다(회전 불변). 세계 방위는 단일 뷰에서
-결정되지 않으므로(D-1 게이지) 외곽 상자도 주축 기준으로 잡는다.
+좌표계: **자연 프레임**(변 방향 정렬, `shape_metrics.natural_frame`)에서 다룬다.
+PCA는 L자에서 주축이 45° 돌아 외곽 상자가 건축적 비례가 아니게 된다(D-1b-2).
 """
 from __future__ import annotations
 import math
@@ -22,32 +22,10 @@ import numpy as np
 REFLEX_TOL_DEG = 15.0
 
 
-def principal_frame(poly) -> tuple[np.ndarray, np.ndarray]:
-    """**변 방향** 정렬 프레임(직교 폴리곤 전용). 반환: (정렬 좌표, 회전행렬 R).
-
-    PCA를 쓰면 안 된다 — L자는 질량 분포가 대각이라 주축이 45° 돌아가고, 외곽 상자가
-    자연 bbox(정사각, aspect 1.0)가 아니라 1.33으로 나온다. 직교 폴리곤에는 변 방향이라는
-    자연 프레임이 있으므로 그것을 쓴다: **가장 긴 변의 방향을 90° 주기로 접어** 기준축으로 삼는다.
-    (metric_audit.polygon_aspect는 일반 폴리곤용이라 PCA를 쓴다 — 용도가 다르다.)
-    """
-    P = np.asarray(poly, float)
-    c = P.mean(0)
-    Q = P - c
-    n = len(Q)
-    # **길이 가중 원형 평균**으로 지배 방향을 잡는다(90° 주기 → 각도 ×4로 접어 평균).
-    # 최장변 하나만 쓰면 노이즈에 프레임이 흔들려 외곽 종횡비 오차가 4.6배로 뛴다(실측).
-    acc = 0j
-    for i in range(n):
-        d = Q[(i + 1) % n] - Q[i]
-        L = float(np.hypot(*d))
-        if L < 1e-9:
-            continue
-        a = math.atan2(d[1], d[0])
-        acc += L * complex(math.cos(4 * a), math.sin(4 * a))
-    th = (math.atan2(acc.imag, acc.real) / 4.0) % (math.pi / 2) if abs(acc) > 1e-12 else 0.0
-    ct, st = math.cos(-th), math.sin(-th)
-    R = np.array([[ct, -st], [st, ct]])    # 프레임 회전
-    return Q @ R.T, R
+def principal_frame(poly):
+    """자연 프레임(변 방향 정렬) — 공용 모듈 `shape_metrics.natural_frame`에 위임한다(D-1b-3 d)."""
+    from stage_perspective.shape_metrics import natural_frame
+    return natural_frame(poly)
 
 
 def signed_area(P: np.ndarray) -> float:
@@ -85,7 +63,7 @@ def notch_count(poly) -> int:
 
 
 def outer_box(poly) -> dict:
-    """외곽 경계 상자 — **주축 정렬** 기준. 종횡비는 여기서 나온다(measured 대상)."""
+    """외곽 경계 상자 — **자연 프레임(변 방향)** 기준."""
     A, R = principal_frame(poly)
     lo, hi = A.min(0), A.max(0)
     w, h = float(hi[0] - lo[0]), float(hi[1] - lo[1])

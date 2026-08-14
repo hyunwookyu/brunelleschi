@@ -1,0 +1,84 @@
+{
+  "spec": "프레임 전수 점검(지시 D-1b-3 c). PCA vs 자연(변 방향) 프레임의 종횡비 오차 대조.",
+  "by_track": {
+    "2F_rect": {
+      "precise": {
+        "n": 150,
+        "aspect_err_pca": 0.0768,
+        "aspect_err_natural": 0.0768
+      },
+      "medium": {
+        "n": 150,
+        "aspect_err_pca": 0.1356,
+        "aspect_err_natural": 0.1362
+      }
+    },
+    "2F_irregular": {
+      "precise": {
+        "n": 150,
+        "aspect_err_pca": 0.3739,
+        "aspect_err_natural": 0.4264
+      },
+      "medium": {
+        "n": 150,
+        "aspect_err_pca": 0.3378,
+        "aspect_err_natural": 0.3349
+      }
+    },
+    "2H_L": {
+      "precise": {
+        "n": 115,
+        "aspect_err_pca": 0.0468,
+        "aspect_err_natural": 0.1625
+      },
+      "medium": {
+        "n": 101,
+        "aspect_err_pca": 0.1723,
+        "aspect_err_natural": 0.3956
+      }
+    },
+    "2H_U": {
+      "precise": {
+        "n": 114,
+        "aspect_err_pca": 0.193,
+        "aspect_err_natural": 0.1787
+      },
+      "medium": {
+        "n": 116,
+        "aspect_err_pca": 0.8992,
+        "aspect_err_natural": 0.672
+      }
+    },
+    "2H_stair": {
+      "precise": {
+        "n": 108,
+        "aspect_err_pca": 0.2128,
+        "aspect_err_natural": 0.2156
+      },
+      "medium": {
+        "n": 82,
+        "aspect_err_pca": 1.0878,
+        "aspect_err_natural": 0.9524
+      }
+    }
+  },
+  "truth_aspect_by_frame": {
+    "L": {
+      "pca": 1.3333,
+      "natural": 1.0
+    },
+    "U": {
+      "pca": 1.2,
+      "natural": 1.2
+    },
+    "stair": {
+      "pca": 1.5023,
+      "natural": 1.3333
+    },
+    "rect_10x6": {
+      "pca": 1.6667,
+      "natural": 1.6667
+    }
+  },
+  "note": "직사각형은 PCA 축이 변 방향과 일치하므로 두 프레임이 같아야 한다. 차이가 나는 것은 질량 분포가 대각인 형태(L·U·계단)뿐이어야 한다 — 그렇지 않으면 프레임 교체 영향이 2H를 넘는다."
+}

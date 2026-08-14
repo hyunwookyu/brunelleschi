@@ -140,8 +140,12 @@ def evaluate(n=120, seed=0):
                 if iou is not None:
                     ious.append(iou); holds += 1
                     oious.append(oriented_iou(truth, r["recovered"]))
-                    from stage_perspective.metric_audit import polygon_aspect, aspect_rel_err
-                    ae = aspect_rel_err(polygon_aspect(r["recovered"]), polygon_aspect(truth))
+                    # D-1b-3 c: 직교 폴리곤은 **자연 프레임**(변 방향)이 건축적 외곽 비례다.
+                    # PCA는 L자에서 주축이 45° 돌아 다른 양을 잰다(참값 1.333 vs 1.000).
+                    from stage_perspective.metric_audit import aspect_rel_err
+                    from stage_perspective.shape_metrics import bbox_aspect
+                    ae = aspect_rel_err(bbox_aspect(r["recovered"], "natural"),
+                                        bbox_aspect(truth, "natural"))
                     if np.isfinite(ae):
                         aerr.append(ae)
             def q(x, p): return round(float(np.percentile(x, p)), 4) if x else None

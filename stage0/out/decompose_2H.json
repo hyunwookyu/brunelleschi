@@ -8,8 +8,8 @@
         "iou_median": 0.8055,
         "iou_p10": 0.5447,
         "oriented_iou_median": 0.4347,
-        "aspect_rel_err_median": 0.0464,
-        "aspect_rel_err_p90": 0.3381
+        "aspect_rel_err_median": 0.1903,
+        "aspect_rel_err_p90": 0.6153
       },
       "medium": {
         "corner_err_ratio": 0.0269,
@@ -17,8 +17,8 @@
         "iou_median": 0.6307,
         "iou_p10": 0.2394,
         "oriented_iou_median": 0.4052,
-        "aspect_rel_err_median": 0.1484,
-        "aspect_rel_err_p90": 1.6468
+        "aspect_rel_err_median": 0.3995,
+        "aspect_rel_err_p90": 1.9294
       }
     },
     "U": {
@@ -28,8 +28,8 @@
         "iou_median": 0.5387,
         "iou_p10": 0.0396,
         "oriented_iou_median": 0.3677,
-        "aspect_rel_err_median": 0.3094,
-        "aspect_rel_err_p90": 5.6465
+        "aspect_rel_err_median": 0.2458,
+        "aspect_rel_err_p90": 4.4202
       },
       "medium": {
         "corner_err_ratio": 0.0269,
@@ -37,8 +37,8 @@
         "iou_median": 0.1853,
         "iou_p10": 0.033,
         "oriented_iou_median": 0.1691,
-        "aspect_rel_err_median": 0.9166,
-        "aspect_rel_err_p90": 5.5839
+        "aspect_rel_err_median": 0.951,
+        "aspect_rel_err_p90": 4.8463
       }
     },
     "stair": {
@@ -48,8 +48,8 @@
         "iou_median": 0.4272,
         "iou_p10": 0.0708,
         "oriented_iou_median": 0.2589,
-        "aspect_rel_err_median": 0.4706,
-        "aspect_rel_err_p90": 4.2825
+        "aspect_rel_err_median": 0.3659,
+        "aspect_rel_err_p90": 4.9852
       },
       "medium": {
         "corner_err_ratio": 0.0269,
@@ -57,8 +57,8 @@
         "iou_median": 0.241,
         "iou_p10": 0.0603,
         "oriented_iou_median": 0.1528,
-        "aspect_rel_err_median": 1.2682,
-        "aspect_rel_err_p90": 5.1525
+        "aspect_rel_err_median": 1.2366,
+        "aspect_rel_err_p90": 5.7535
       }
     }
   },
