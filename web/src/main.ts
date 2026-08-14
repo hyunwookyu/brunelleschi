@@ -1,12 +1,15 @@
-// 엔트리 — W-1 카메라 확정 화면. 계획서 §3.
+// 엔트리 — 계획서 §3(카메라 확정) + §4(획 → 3D).
 //
-// 잉크 캔버스 하나에 **가이드 → 확정 제스처 → 사용자 획** 순으로 겹쳐 그린다.
-// 계산은 전부 `s3d/`에 있고 여기는 DOM 배선만 한다.
+// 잉크 캔버스 하나에 **가이드 → 확정 제스처 → 사용자 획** 순으로 겹쳐 그리고,
+// 확정된 획은 오른쪽 3D 뷰포트에 쌓인다. 계산은 전부 `s3d/`에 있고 여기는 DOM 배선만 한다.
 import { InkCanvas } from "./capture/inkCanvas.js";
 import { Viewport } from "./s3d/viewport.js";
+import { StrokeView } from "./s3d/strokeView.js";
 import { CameraPanel, type Tool } from "./ui/cameraPanel.js";
 import { PRESETS } from "./s3d/constraints.js";
 import { AXIS_COLOR } from "./s3d/grid.js";
+import { classifyStroke, type Axis } from "./s3d/axis.js";
+import { newStroke, settle, reprojectAll, type Stroke, type PlaceCtx } from "./s3d/stroke.js";
 import type { Pt2 } from "./s3d/camera.js";
 
 const canvas = document.getElementById("ink") as HTMLCanvasElement;
@@ -14,19 +17,36 @@ const statusEl = document.getElementById("status")!;
 const msgEl = document.getElementById("msg")!;
 const lensEl = document.getElementById("lens") as HTMLInputElement;
 const lensVal = document.getElementById("lensval")!;
+const strokeEl = document.getElementById("strokes")!;
+const pickEl = document.getElementById("axispick")!;
 
-// 3D 뷰포트 (S-0). 지금은 빈 씬이고, 그린 획이 여기 쌓이는 것은 S-3·S-4가 붙인다.
 const viewport = new Viewport(document.getElementById("view")!);
+const strokeView = new StrokeView(viewport);
 
 function cssSize(): [number, number] {
   const r = canvas.getBoundingClientRect();
   return [Math.max(1, r.width), Math.max(1, r.height)];
 }
 
-const panel = new CameraPanel(cssSize(), () => refresh());
+const panel = new CameraPanel(cssSize(), () => { replace(); refresh(); });
 
-/** 사용자가 그린 획 — **원본 점열 그대로** 보관한다. 3D 배치는 S-3이 붙는다. */
-const drawn: { a: Pt2; b: Pt2; pts: Pt2[] }[] = [];
+/** 사용자가 그린 획 — **원본 점열 그대로** 보관한다(§5). 3D는 여기서 파생된다. */
+const drawn: Stroke[] = [];
+
+/** 지금 카메라로 배치 문맥을 만든다. 카메라가 아직이면 `null`(배치하지 않는다). */
+function placeCtx(): PlaceCtx | null {
+  const cam = panel.acc.solve().camera;
+  if (!cam.ok || cam.f == null || !cam.principalPoint) return null;
+  return { principal: cam.principalPoint, f: cam.f, vps: panel.vps(), imgSize: panel.imgSize };
+}
+
+/** 카메라가 움직이면 **전부 다시 만든다**(§5 "pts2d를 반드시 보존한다"). */
+function replace() {
+  const ctx = placeCtx();
+  if (!ctx || !drawn.length) return;
+  reprojectAll(drawn, ctx);
+  strokeView.sync(drawn);
+}
 
 function fit() {
   const [w, h] = cssSize();
@@ -39,38 +59,50 @@ function fit() {
 }
 
 const ink = new InkCanvas(canvas, {
-  // 잉크 아래에 가이드를 깐다. InkCanvas가 캔버스를 소유하므로 이 훅으로 들어간다.
   onBackground: (ctx) => drawBelowInk(ctx),
   onStrokeEnd: (stroke) => {
     const pts = stroke.points.map(p => [p[0], p[1]] as Pt2);
     if (pts.length < 2) return;
-    const a = pts[0], b = pts[pts.length - 1];
-    if (panel.tool === "draw") {
-      // **획을 쪼개지 않는다**(계획서 §1 "획을 버리지 않는다"). 지금은 화면에만 남기고,
-      // 3D 배치는 S-3(획 → 3D)이 붙는다.
-      drawn.push({ a, b, pts });
-    } else {
-      panel.handleStroke(a, b);
-    }
+    if (panel.tool === "draw") addStroke(pts);
+    else panel.handleStroke(pts[0], pts[pts.length - 1]);
     refresh();
   },
 });
 ink.setFrame("persp");
 
+/** 획 하나 — **판정(§4.1) → 앵커 체인(§4.2) → 역투영**. 획은 쪼개지 않는다(§1). */
+function addStroke(pts: Pt2[]) {
+  const ctx = placeCtx();
+  const v = ctx
+    ? classifyStroke(pts, ctx.vps, ctx.imgSize)
+    : { axis: "free" as Axis, note: "카메라가 아직 확정되지 않았습니다", rep: null };
+  const s = newStroke(pts, v.axis, v.rep ? { a: v.rep.a, b: v.rep.b } : undefined);
+  drawn.push(s);
+  if (ctx) settle(drawn, ctx);
+  strokeView.sync(drawn);
+  lastNote = v.note;
+}
+let lastNote = "";
+
 // ---------------------------------------------------------------- 그리기
 
-/** 잉크 아래 층: 투시 가이드 → 확정된 엣지 → 소실점 표식. */
+/** 잉크 아래 층: 투시 가이드 → 그린 획(축 색) → 소실점 표식. */
 function drawBelowInk(ctx: CanvasRenderingContext2D) {
   const [w, h] = cssSize();
   panel.drawGuides(ctx);
   ctx.save();
   ctx.lineWidth = 2;
-  for (const d of drawn) {
-    ctx.strokeStyle = "#111"; ctx.globalAlpha = 0.85;
+  for (const s of drawn) {
+    // 축이 정해진 획은 축 색, 미분류는 회색 파선 — **어느 쪽인지 화면에서 바로 보인다**
+    const placed = s.pts3d.length > 0;
+    ctx.strokeStyle = typeof s.axis === "number" ? AXIS_COLOR[s.axis] : "#9aa4ab";
+    ctx.setLineDash(placed ? [] : [5, 4]);
+    ctx.globalAlpha = placed ? 0.9 : 0.55;
     ctx.beginPath();
-    d.pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])));
+    s.pts2d.forEach((p, i) => (i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])));
     ctx.stroke();
   }
+  ctx.setLineDash([]);
   panel.vps().forEach((v, i) => {
     if (!v || v[0] < 0 || v[0] > w || v[1] < 0 || v[1] > h) return;
     ctx.globalAlpha = 1; ctx.fillStyle = AXIS_COLOR[i];
@@ -80,11 +112,27 @@ function drawBelowInk(ctx: CanvasRenderingContext2D) {
   panel.drawOffscreenVps(ctx);        // 화면 밖 소실점 (§3.8)
 }
 
+/** 획 상태 — 배치된 것과 남은 것. **미배치의 이유를 나눠 보인다**(미분류 / 앵커 없음). */
+function renderStrokes() {
+  const placed = drawn.filter(s => s.pts3d.length).length;
+  const free = drawn.filter(s => s.axis === "free").length;
+  const floating = drawn.length - placed - free;
+  const rows = [`<div>획 ${drawn.length} · <b>3D ${placed}</b>`
+    + (free ? ` · 미분류 ${free}` : "") + (floating ? ` · 안 이어짐 ${floating}` : "") + "</div>"];
+  if (lastNote) rows.push(`<div class="hint">${lastNote}</div>`);
+  if (floating) rows.push('<div class="hint">이어지지 않은 획은 깊이가 정해지지 않습니다 — 기존 획에 닿게 그으면 놓입니다</div>');
+  strokeEl.innerHTML = rows.join("");
+  pickEl.style.display = free ? "flex" : "none";
+}
+
 function refresh() {
   ink.redraw();
   panel.renderStatus(statusEl);
+  renderStrokes();
   const r = panel.acc.solve();
-  msgEl.textContent = r.remaining.length ? r.remaining[0].hint : "카메라 확정 — 그리기로 넘어가세요";
+  msgEl.textContent = r.remaining.length ? r.remaining[0].hint
+    : (panel.tool === "draw" ? "그리세요 — 확정된 획은 오른쪽 3D에 쌓입니다"
+                             : "카메라 확정 — 그리기로 넘어가세요");
 }
 
 // ---------------------------------------------------------------- 배선
@@ -94,8 +142,32 @@ document.querySelectorAll<HTMLButtonElement>("#tools button").forEach(b => {
     document.querySelectorAll("#tools button").forEach(x => x.classList.remove("on"));
     b.classList.add("on");
     panel.tool = b.dataset.t as Tool;
+    refresh();
   });
 });
+
+/**
+ * 미분류 획의 축을 사용자가 고른다(§4.1 "애매하면 미분류로 두고 사용자 지정에 맡긴다").
+ * 가장 최근 미분류 획에 적용한다 — 방금 그은 획이 바로 그것이기 때문이다.
+ */
+for (const [label, axis] of [["축1", 0], ["축2", 1], ["축3", 2], ["화면평행", "screen"]] as [string, Axis][]) {
+  const b = document.createElement("button");
+  b.textContent = label;
+  if (typeof axis === "number") b.style.borderColor = AXIS_COLOR[axis];
+  b.addEventListener("click", () => {
+    for (let i = drawn.length - 1; i >= 0; i--) {
+      if (drawn[i].axis !== "free") continue;
+      drawn[i].axis = axis;
+      const ctx = placeCtx();
+      if (ctx) settle(drawn, ctx);
+      strokeView.sync(drawn);
+      lastNote = "";
+      break;
+    }
+    refresh();
+  });
+  pickEl.appendChild(b);
+}
 
 lensEl.addEventListener("input", () => {
   const mm = Number(lensEl.value);
@@ -121,10 +193,18 @@ lockBtn.addEventListener("click", () => {
   lockBtn.textContent = panel.locked ? "잠금 해제" : "카메라 잠금";
 });
 document.getElementById("reset")!.addEventListener("click", () => {
-  panel.reset(); drawn.length = 0; ink.clear(); refresh();
+  panel.reset(); drawn.length = 0; lastNote = ""; strokeView.reset(); ink.clear(); refresh();
 });
 
 window.addEventListener("resize", () => { fit(); viewport.resize(); });
+
+// **생성 시점에는 레이아웃이 아직 안 잡혀 있다.** S-0에서 3D 캔버스가 1×24로 굳었던 것과
+// 같은 자리인데 잉크 캔버스에는 적용하지 않았다 — 창 resize만 듣고 있으면 회복되지 않고,
+// 그 크기가 화각·무한원 판정(`isFiniteVp`)의 기준이라 **소실점 셋이 둘로 읽힌다**.
+// S-3 브라우저 확인에서 실제로 그렇게 나왔다.
+if (typeof ResizeObserver !== "undefined") {
+  new ResizeObserver(() => fit()).observe(canvas.parentElement ?? canvas);
+}
 fit();
 
 // PWA — 오프라인 동작(§1.4). dev 서버에서는 등록하지 않는다(HMR과 충돌한다).
@@ -133,3 +213,8 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
     navigator.serviceWorker.register("./sw.js").catch(() => { /* 오프라인 없이도 동작한다 */ });
   });
 }
+
+// 브라우저 확인용 — 콘솔에서 배치 상태를 그대로 읽을 수 있게 한다(S-3 검증).
+(window as unknown as { s2s: unknown }).s2s = {
+  strokes: drawn, panel, addStroke, placeCtx, refresh, viewport, strokeView,
+};

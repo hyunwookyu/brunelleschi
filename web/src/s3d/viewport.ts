@@ -20,6 +20,8 @@ export class Viewport {
   private dirty = true;
   private disposed = false;
   private ro?: ResizeObserver;
+  /** 사용자가 직접 궤도를 돌렸는가. 돌렸으면 자동 맞춤이 시점을 빼앗지 않는다. */
+  userMoved = false;
 
   constructor(readonly host: HTMLElement) {
     const w = Math.max(1, host.clientWidth), h = Math.max(1, host.clientHeight);
@@ -50,6 +52,8 @@ export class Viewport {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.12;
     this.controls.addEventListener("change", () => this.invalidate());
+    // 사용자가 한 번이라도 직접 돌렸으면 그 시점을 빼앗지 않는다(자동 맞춤을 멈춘다).
+    this.controls.addEventListener("start", () => { this.userMoved = true; });
 
     // 생성 시점에는 레이아웃이 아직 안 잡혀 있을 수 있다(실제로 캔버스가 1×24로 잡혔다).
     // 창 resize만 듣고 있으면 그 상태로 굳는다 — 호스트 자체를 관찰한다.

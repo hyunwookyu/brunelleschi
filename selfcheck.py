@@ -12,6 +12,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 NEAR_ZERO = 1e-10
 RATIO_KEYS = ("rate", "ratio", "f1", "iou", "precision", "recall", "coverage")
+# 통계 요약 블록의 **대표값이 정확히 0·1**이거나 **분포 전체가 한 값**이면 같은 의심 대상이다.
+# **키 이름 규칙이 놓친 실제 사례**(S-3): `identity_check_px`(전 표본 0 = 항등)와
+# `rotated_difference.screen`(미리보기 평면과 같은 평면이라 항등)이 둘 다 안 걸렸다.
+# DEFERRED "selfcheck가 정확히 1.0을 못 잡는다"가 이 규칙을 요구하고 있었다.
+#
+# **꼬리(min·p10)는 개별로 보지 않는다** — 반올림된 작은 값이 0으로 찍히는 것뿐이라
+# 그것까지 세면 신호가 잡음에 묻힌다(넓힌 첫 판에서 89 → 345건으로 터졌다).
+STAT_MEDIAN = "median"
 COUNT_KEYS = ("n_", "count", "_n", "crashes", "violations")
 
 
@@ -46,11 +54,33 @@ def _degenerate_distributions(obj, path="") -> list[dict]:
     return flags
 
 
+def _constant_stats(obj, path="") -> list[dict]:
+    """요약 통계 블록의 **분포 전체가 한 값(0 또는 1)** 인 경우 — 사실상 항등이다."""
+    flags = []
+    if isinstance(obj, dict):
+        lo, hi = obj.get("min"), obj.get("max")
+        if lo is not None and lo == hi and lo in (0.0, 1.0) and obj.get("n"):
+            flags.append({"path": path, "val": lo,
+                          "flag": f"분포 전체가 {lo}(n={obj['n']}) → 항등/측정 미작동 확인"})
+        for k, v in obj.items():
+            flags += _constant_stats(v, f"{path}.{k}" if path else k)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            flags += _constant_stats(v, f"{path}[{i}]")
+    return flags
+
+
 def check(report: dict, prev: dict | None = None) -> list[dict]:
-    flags = _degenerate_distributions(report)
+    flags = _degenerate_distributions(report) + _constant_stats(report)
     prev_flat = dict(_walk(prev)) if prev else {}
     for path, val in _walk(report):
         low = path.lower()
+        leaf = path.rsplit(".", 1)[-1].lower()
+        # 분포의 꼬리(min·p10·p90·max)는 개별로 보지 않는다. `*_ratio.min = 0`은 반올림의 산물이지
+        # 자기참조가 아니다 — 이걸 세면 신호가 잡음에 묻힌다(실제로 89 → 345건이 됐다).
+        # 항등은 `_constant_stats`(분포 전체가 한 값)와 median 규칙이 잡는다.
+        if leaf in ("min", "p10", "p90", "max"):
+            continue
         if isinstance(val, (int, float)) and not isinstance(val, bool):
             if 0 < abs(val) < NEAR_ZERO:
                 flags.append({"path": path, "val": val,
@@ -58,6 +88,9 @@ def check(report: dict, prev: dict | None = None) -> list[dict]:
             if any(k in low for k in RATIO_KEYS) and val in (1.0, 0.0):
                 flags.append({"path": path, "val": val,
                               "flag": f"정확히 {val} 비율 → 측정 대상/자기참조 확인"})
+            elif path.rsplit(".", 1)[-1].lower() == STAT_MEDIAN and val in (1.0, 0.0):
+                flags.append({"path": path, "val": val,
+                              "flag": f"통계 대표값이 정확히 {val} → 항등/자기참조 확인"})
             if any(k in low for k in COUNT_KEYS) and val == 0 and "violation" not in low and "crash" not in low:
                 flags.append({"path": path, "val": val,
                               "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"})

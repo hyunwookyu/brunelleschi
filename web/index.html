@@ -53,6 +53,11 @@
     #presets button{text-align:left;padding:6px 9px;border:1px solid #d5d5d5;background:#fff;
       border-radius:6px;cursor:pointer;font-size:12px}
     #presets button small{display:block;color:#888;margin-top:1px}
+    #strokes{font-size:13px;line-height:1.5}
+    #strokes .hint{color:#666;font-size:12px;margin-top:4px;line-height:1.45}
+    #axispick{display:none;gap:4px;flex-wrap:wrap;margin-top:8px}
+    #axispick button{height:28px;padding:0 9px;border:1px solid #c8c8c8;background:#fff;
+      border-radius:6px;cursor:pointer;font-size:12px}
     #lensrow{display:flex;align-items:center;gap:8px}
     #lens{flex:1}
     #lensval{font-variant-numeric:tabular-nums;font-size:12px;color:#444;min-width:52px;text-align:right}
@@ -84,6 +89,11 @@
           <input id="lens" type="range" min="14" max="85" step="1" value="35">
           <span id="lensval">35mm</span>
         </div>
+      </div>
+      <div class="sec">
+        <h3>획</h3>
+        <div id="strokes"></div>
+        <div id="axispick"></div>
       </div>
       <div class="sec">
         <h3>프리셋</h3>

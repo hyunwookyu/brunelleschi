@@ -1,0 +1,175 @@
+// S-3 측정용 합성 장면 — **정답 3D가 있는** 투시 그림을 만든다.
+//
+// S-2는 화면에서 상자를 작도했다(2D 정답만 있다). S-3이 재는 것은 **깊이**이므로
+// 반대로 간다: 3D 상자를 먼저 세우고 → 알려진 카메라로 투영하고 → 그 위에 잉크 노이즈를
+// 얹는다. 그러면 각 모서리의 **참 3D 위치**를 알고 있으므로 배치 결과와 대조할 수 있다.
+//
+// **자기확인 차단**(HANDOFF 경고 2·D-S4): 노이즈는 2D에서만 얹는다. 배치가 쓰는 수학
+// (광선-평면)으로 정답을 만들지 않는다. 활 마루(skew)도 0.5(대칭)를 쓰지 않는다 —
+// 대칭 활은 최소제곱 주축이 참 방향과 정확히 나란해져 판정이 공짜로 맞는다(S-2에서 걸렸다).
+import type { Pt2 } from "../src/s3d/camera.js";
+import {
+  project, unit3, add3, sub3, mul3, dot3, norm3, cross3, groundFrame, rayThrough, rayPlane,
+  EYE_HEIGHT, type Vec3, type Plane,
+} from "../src/s3d/geom3d.js";
+import { renderInk, gauss, type InkGrade } from "../src/s3d/synthInk.js";
+
+const rad = (deg: number) => (deg * Math.PI) / 180;
+
+export interface Scene {
+  principal: Pt2;
+  f: number;
+  imgSize: [number, number];
+  /** 관례: 0 가로 · 1 안쪽 · 2 수직. `vps[2]`가 수직축이다. */
+  vps: [Pt2, Pt2, Pt2];
+  axes: [Vec3, Vec3, Vec3];
+  ground: Plane;
+}
+
+/**
+ * 요(yaw)·피치로 세운 카메라. 피치가 0이 아니면 **지면이 카메라 좌표계의 y = const 가 아니다** —
+ * 3점 투시가 그런 경우이고, 지면을 y로 두면 씨앗이 틀린 자리에 떨어진다.
+ */
+export function scene(
+  yawDeg = 35, pitchDeg = 15, f = 1000, imgSize: [number, number] = [960, 672],
+): Scene {
+  const y = rad(yawDeg), t = rad(pitchDeg);
+  const rx = (v: Vec3): Vec3 => [v[0], v[1] * Math.cos(t) - v[2] * Math.sin(t),
+                                 v[1] * Math.sin(t) + v[2] * Math.cos(t)];
+  const axes: [Vec3, Vec3, Vec3] = [
+    rx([Math.cos(y), 0, Math.sin(y)]),      // 가로
+    rx([-Math.sin(y), 0, Math.cos(y)]),     // 안쪽
+    rx([0, 1, 0]),                          // 수직(아래 +) — 지면 법선
+  ];
+  const principal: Pt2 = [imgSize[0] / 2, imgSize[1] / 2];
+  const vp = (d: Vec3): Pt2 => [principal[0] + (f * d[0]) / d[2], principal[1] + (f * d[1]) / d[2]];
+  return {
+    principal, f, imgSize,
+    vps: [vp(axes[0]), vp(axes[1]), vp(axes[2])],
+    axes,
+    ground: groundFrame(vp(axes[2]), principal, f, EYE_HEIGHT),
+  };
+}
+
+/** 화면 점 → 지면 위 참 3D 점. 상자를 지면에 세울 때 쓴다. */
+export function groundPoint(sc: Scene, s: Pt2): Vec3 | null {
+  return rayPlane([0, 0, 0], rayThrough(s, sc.principal, sc.f), sc.ground.n, sc.ground.d);
+}
+
+export interface TrueEdge { a: Vec3; b: Vec3; axis: 0 | 1 | 2; }
+
+/**
+ * 지면에 세운 직육면체의 12모서리 — **그리는 순서대로**.
+ * 앵커 체인이 씨앗 모서리에서 뻗어 나가도록 연결된 순서로 낸다(§4.2).
+ * 위쪽은 `−axes[2]`다(수직축이 아래를 향한다).
+ */
+export function boxEdges(sc: Scene, O: Vec3, a: number, b: number, c: number): TrueEdge[] {
+  const [e0, e1, e2] = sc.axes;
+  const A = add3(O, mul3(e0, a)), B = add3(O, mul3(e1, b));
+  const AB = add3(A, mul3(e1, b));
+  const up = (p: Vec3) => sub3(p, mul3(e2, c));
+  const Ou = up(O), Au = up(A), Bu = up(B), ABu = up(AB);
+  return [
+    { a: O, b: A, axis: 0 },
+    { a: O, b: B, axis: 1 },
+    { a: O, b: Ou, axis: 2 },
+    { a: A, b: AB, axis: 1 },
+    { a: B, b: AB, axis: 0 },
+    { a: A, b: Au, axis: 2 },
+    { a: B, b: Bu, axis: 2 },
+    { a: AB, b: ABu, axis: 2 },
+    { a: Ou, b: Au, axis: 0 },
+    { a: Ou, b: Bu, axis: 1 },
+    { a: Au, b: ABu, axis: 1 },
+    { a: Bu, b: ABu, axis: 0 },
+  ];
+}
+
+export interface DrawnEdge extends TrueEdge { pts2d: Pt2[]; a2d: Pt2; b2d: Pt2; }
+
+/**
+ * 참 모서리를 투영하고 그 위에 잉크 노이즈를 얹는다. **노이즈는 2D에만 있다.**
+ *
+ * `endJitter`는 **끝점을 겨냥해 빗나가는 양**(그림 대각 대비 σ)이다. 이것이 없으면 안 된다 —
+ * `renderInk`의 활은 `sin(πu)`라 **양 끝에서 정확히 0**이고, 고주파는 점 간격에 비례해
+ * 0.3px 수준이다. 즉 끝점이 참 모서리에 **못으로 박혀 있다**. 그 상태로 앵커 체인을 재면
+ * "오차가 누적되지 않는다"가 나오는데, 그것은 체인의 성질이 아니라 **노이즈 모델의 성질**이다
+ * (HANDOFF 경고 2가 말한 자기확인). 실획 모델의 `closure_gap`(시종점 어긋남)이 이 성분이며
+ * `renderInk`는 그것을 구현하지 않았다 — 여기서 명시적 인자로 넣고 스윕한다.
+ */
+export function drawEdges(
+  sc: Scene, edges: TrueEdge[], grade: InkGrade, r: () => number, skew: number,
+  endJitter = 0,
+): DrawnEdge[] | null {
+  const proj: [Pt2, Pt2][] = [];
+  for (const e of edges) {
+    const a = project(e.a, sc.principal, sc.f), b = project(e.b, sc.principal, sc.f);
+    if (!a || !b) return null;
+    proj.push([a, b]);
+  }
+  const xs = proj.flat().map(p => p[0]), ys = proj.flat().map(p => p[1]);
+  const diag = Math.hypot(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+  const jit = (p: Pt2): Pt2 =>
+    endJitter <= 0 ? p : [p[0] + gauss(r) * endJitter * diag, p[1] + gauss(r) * endJitter * diag];
+  return edges.map((e, i) => {
+    // 획마다 **따로** 빗나간다 — 같은 모서리를 두 획이 겨냥해도 끝점이 어긋난다
+    const a2 = jit(proj[i][0]), b2 = jit(proj[i][1]);
+    const pts2d = renderInk([a2, b2], grade, r, diag, skew) as Pt2[];
+    return { ...e, pts2d, a2d: a2, b2d: b2 };
+  });
+}
+
+// ---------------------------------------------------------------- 회전 후 보기
+
+/** 수직축을 지나는 축 둘레로 점을 돌린다 — "돌려서 본다"를 흉내 낸다(§4.4 판단 기준). */
+export function rotateAbout(p: Vec3, center: Vec3, axis: Vec3, deg: number): Vec3 {
+  const k = unit3(axis), th = rad(deg), c = Math.cos(th), s = Math.sin(th);
+  const v = sub3(p, center);
+  // 로드리게스
+  const rot = add3(add3(mul3(v, c), mul3(cross3(k, v), s)), mul3(k, dot3(k, v) * (1 - c)));
+  return add3(center, rot);
+}
+
+/** 점열의 현에서 벗어난 **최대 수직거리**. 2D·3D 공용(떨림 진폭). */
+export function chordDeviation(pts: number[][]): number {
+  if (pts.length < 3) return 0;
+  const a = pts[0], b = pts[pts.length - 1];
+  const d = a.map((v, i) => b[i] - v);
+  const L = Math.hypot(...d);
+  if (L < 1e-12) return 0;
+  const u = d.map(v => v / L);
+  let m = 0;
+  for (const p of pts) {
+    const w = p.map((v, i) => v - a[i]);
+    const t = w.reduce((s, v, i) => s + v * u[i], 0);
+    m = Math.max(m, Math.hypot(...w.map((v, i) => v - u[i] * t)));
+  }
+  return m;
+}
+
+export const median = (xs: number[]): number | null => {
+  const v = xs.filter(Number.isFinite).sort((p, q) => p - q);
+  if (!v.length) return null;
+  const h = v.length >> 1;
+  return v.length % 2 ? v[h] : (v[h - 1] + v[h]) / 2;
+};
+export const quantile = (xs: number[], q: number): number | null => {
+  const v = xs.filter(Number.isFinite).sort((p, q2) => p - q2);
+  if (!v.length) return null;
+  return v[Math.min(v.length - 1, Math.max(0, Math.round(q * (v.length - 1))))];
+};
+export const round = (x: number | null, k = 4): number | null =>
+  x == null || !Number.isFinite(x) ? null : +x.toFixed(k);
+/**
+ * 요약 통계. **작은 쪽 꼬리도 낸다** — `ray_axis_deg`처럼 "작을수록 위험한" 지표를
+ * median/p90/max로만 내면 재려는 위험과 반대 방향을 보게 된다(리뷰어 지적).
+ */
+export const stat = (xs: number[], k = 4) => ({
+  n: xs.filter(Number.isFinite).length,
+  min: round(quantile(xs, 0), k),
+  p10: round(quantile(xs, 0.1), k),
+  median: round(median(xs), k),
+  p90: round(quantile(xs, 0.9), k),
+  max: round(quantile(xs, 1), k),
+});
+export { norm3, sub3, add3, mul3, dot3, unit3, project };

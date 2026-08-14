@@ -90,3 +90,38 @@ export function rayPlane(o: Vec3, dir: Vec3, n: Vec3, d: number): Vec3 | null {
   if (t <= 0) return null;
   return add3(o, mul3(dir, t));
 }
+
+export interface Plane { n: Vec3; d: number; }
+
+/**
+ * 눈높이 게이지. 실척이 없으므로 **어떤 값을 쓰든 전체 배율일 뿐**이다.
+ * 지면 격자(`groundGrid`)와 씨앗(`seedOnGround`)이 같은 값을 써야 한다 — 다르면
+ * 화면의 격자와 실제 배치가 어긋난다. 그래서 한 군데에만 둔다.
+ */
+export const EYE_HEIGHT = 1;
+
+/**
+ * **지면 평면은 수직축이 정한다.** n·x = h.
+ *
+ * S-1은 지면을 카메라 좌표계의 `y = 1`로 두었다. 그것은 **카메라가 수평일 때만** 맞다 —
+ * 3점 투시에서는 카메라가 기울어 있으므로 지면이 y = const 가 아니다(S-3에서 드러났다).
+ * 수직 소실점이 있으면 그 방향이 곧 지면의 법선이고, 없으면(1·2점) 카메라가 수평이라는
+ * 뜻이므로 (0,1,0)으로 떨어진다 — **일반화이지 변경이 아니다.**
+ *
+ * `height`는 눈높이 게이지다. 실척이 없으므로 어떤 값을 쓰든 전체 배율일 뿐이며 1로 고정한다
+ * (`groundGrid`와 `seedOnGround`가 같은 값을 써야 한다 — 다르면 격자와 획이 어긋난다).
+ */
+export function groundFrame(vpUp: Pt2 | null, principal: Pt2, f: number, height = 1): Plane {
+  let n: Vec3 = [0, 1, 0];
+  if (vpUp) {
+    const v = axisDirection(vpUp, principal, f);
+    // 지면은 눈 **아래**에 있다 — 화면 y+ 쪽을 향하도록 부호를 맞춘다.
+    n = v[1] >= 0 ? v : [-v[0], -v[1], -v[2]];
+  }
+  return { n, d: height };
+}
+
+/** 화면 점 → 지면 위 3D 점. 지면이 그 방향에 없으면(지평선 위·카메라 뒤) `null`. */
+export function onGround(screen: Pt2, principal: Pt2, f: number, g: Plane): Vec3 | null {
+  return rayPlane([0, 0, 0], rayThrough(screen, principal, f), g.n, g.d);
+}

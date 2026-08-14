@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "build": "vite build",
     "dev": "vite",
-    "dev:http": "node -e \"process.env.S2S_HTTP='1';require('child_process').spawnSync(process.platform==='win32'?'npx.cmd':'npx',['vite'],{stdio:'inherit',env:process.env})\""
+    "dev:http": "node -e \"process.env.S2S_HTTP='1';require('child_process').spawnSync(process.platform==='win32'?'npx.cmd':'npx',['vite'],{stdio:'inherit',env:process.env})\"",
+    "dev:5222": "node -e \"process.env.S2S_HTTP='1';require('child_process').spawnSync(process.platform==='win32'?'npx.cmd':'npx',['vite','--port','5222','--strictPort'],{stdio:'inherit',env:process.env})\""
   },
   "devDependencies": {
     "@types/node": "^26.2.0",

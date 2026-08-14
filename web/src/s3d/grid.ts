@@ -8,7 +8,10 @@
 // 실척은 지면 씨앗점에서 나온다(W-3 앵커 체인). 그전에 눈금을 그리면 **없는 정보를
 // 있는 것처럼 보여 주게 된다** — 이 프로젝트가 반복해서 걸린 유형이다. DEFERRED에 기록.
 import { isFiniteVp, type Pt2, type CameraSolution } from "./camera.js";
-import { axisDirection, project, unit3, type Vec3 } from "./geom3d.js";
+import {
+  axisDirection, project, unit3, sub3, mul3, dot3, norm3, rayPlane, rayThrough, groundFrame,
+  EYE_HEIGHT, type Vec3,
+} from "./geom3d.js";
 
 export interface GuideLine {
   a: Pt2; b: Pt2;
@@ -96,7 +99,9 @@ export const GROUND_COLOR = "#7f8c8d";
  * 그래서 눈금·치수를 함께 그리지 않는다 — 없는 정보를 있는 것처럼 보여 주지 않기 위해서다.
  * 격자가 하는 일은 "이 방향이 저기로 모인다"를 보여 주는 것뿐이다.
  *
- * 지면은 `y = 1`(f 단위)로 둔다. `place.seedOnGround`가 쓰는 것과 같은 게이지다.
+ * **지면은 수직축이 정한다** — `seedOnGround`와 같은 게이지다(`groundFrame`, 눈높이 1).
+ * S-1에서는 `y = 1`로 두었는데 그것은 카메라가 수평일 때만 맞다. 3점 투시에서는 카메라가
+ * 기울어 있어 지면이 y = const 가 아니다(S-3에서 드러났다).
  */
 export function groundGrid(
   cam: CameraSolution, vps: (Pt2 | null)[], imgSize: [number, number],
@@ -108,19 +113,26 @@ export function groundGrid(
   const a1 = vps[1] && isFiniteVp(vps[1], imgSize) ? axisDirection(vps[1]!, pp, f) : null;
   if (!a0 || !a1) return [];
 
-  // 지면 위에서 두 축 방향의 성분만 남긴다(y=1 평면 안에 있어야 한다)
+  const vUp = vps[2] && isFiniteVp(vps[2], imgSize) ? vps[2]! : null;
+  const g = groundFrame(vUp, pp, f, EYE_HEIGHT);
+  // 두 축 방향에서 지면 법선 성분을 뺀다 — 지면 안에 눕힌다(수평이면 그대로다)
   const flat = (v: Vec3): Vec3 | null => {
-    const d = unit3([v[0], 0, v[2]]);
-    return Math.hypot(d[0], d[2]) < 1e-6 ? null : d;
+    const d = unit3(sub3(v, mul3(g.n, dot3(v, g.n))));
+    return norm3(d) < 1e-6 ? null : d;
   };
   const u = flat(a0), w = flat(a1);
   if (!u || !w) return [];
 
   const [W, H] = imgSize;
   const out: GuideLine[] = [];
-  const O: Vec3 = [0, 1, 0];
-  const at = (i: number, t: number, along: Vec3, across: Vec3): Vec3 =>
-    [O[0] + across[0] * i * step + along[0] * t, 1, O[2] + across[2] * i * step + along[2] * t];
+  // 격자 원점 = 화면 중앙 아래를 지나는 광선이 지면과 만나는 곳. 없으면 법선 발.
+  const O: Vec3 = rayPlane([0, 0, 0], rayThrough([W / 2, H * 0.72], pp, f), g.n, g.d)
+    ?? mul3(g.n, g.d);
+  const at = (i: number, t: number, along: Vec3, across: Vec3): Vec3 => [
+    O[0] + across[0] * i * step + along[0] * t,
+    O[1] + across[1] * i * step + along[1] * t,
+    O[2] + across[2] * i * step + along[2] * t,
+  ];
 
   for (const [along, across, axis] of [[u, w, 0], [w, u, 1]] as [Vec3, Vec3, 0 | 1][]) {
     for (let i = -half; i <= half; i++) {

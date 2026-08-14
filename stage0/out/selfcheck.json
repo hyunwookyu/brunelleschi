@@ -1,15 +1,597 @@
 {
-  "n_flags": 1,
+  "n_flags": 117,
   "flags": [
     {
       "path": "one_stroke_one_axis.json:by_word.square.too_bent_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "preview_gap.json:identity_check_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=415) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "preview_gap.json:rotated_difference.by_mode.screen",
+      "val": 0,
+      "flag": "분포 전체가 0(n=415) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "preview_gap.json:identity_check_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "preview_gap.json:join_shift_by_end_jitter.jitter_0.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "preview_gap.json:join_shift_by_end_jitter.jitter_0.no_anchor_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "preview_gap.json:join_shift_by_end_jitter.jitter_0.unanchored_of_classified",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "preview_gap.json:join_shift_by_end_jitter.jitter_0.005.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "preview_gap.json:join_shift_by_end_jitter.jitter_0.005.no_anchor_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "preview_gap.json:join_shift_by_end_jitter.jitter_0.005.unanchored_of_classified",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "preview_gap.json:rotated_difference.by_mode.screen.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:judged.screen.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:judged.screen.wobble_ratio.median",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:judged.facing.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:oracle_axis.sight.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:oracle_axis.sight.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:oracle_axis.screen.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:oracle_axis.screen.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:oracle_axis.screen.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:oracle_axis.screen.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:oracle_axis.screen.wobble_ratio.median",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:oracle_axis.facing.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:oracle_axis.facing.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:oracle_axis.facing.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:oracle_axis.facing.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.005.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.005.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.005.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.005.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.01.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.01.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.01.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.01.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.02.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.02.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.04.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.04.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_sight.jitter_0.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_sight.jitter_0.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_sight.jitter_0.005.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_sight.jitter_0.005.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_sight.jitter_0.01.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_sight.jitter_0.01.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_sight.jitter_0.02.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_sight.jitter_0.02.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_sight.jitter_0.04.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_sight.jitter_0.04.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.endpoint_only_control.by_jitter.jitter_0.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.endpoint_only_control.by_jitter.jitter_0.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.endpoint_only_control.by_jitter.jitter_0.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.endpoint_only_control.by_jitter.jitter_0.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.endpoint_only_control.by_jitter.jitter_0.005.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.endpoint_only_control.by_jitter.jitter_0.005.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.endpoint_only_control.by_jitter.jitter_0.005.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.endpoint_only_control.by_jitter.jitter_0.005.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.endpoint_only_control.by_jitter.jitter_0.01.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.endpoint_only_control.by_jitter.jitter_0.01.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.endpoint_only_control.by_jitter.jitter_0.02.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.endpoint_only_control.by_jitter.jitter_0.02.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.endpoint_only_control.by_jitter.jitter_0.04.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.endpoint_only_control.by_jitter.jitter_0.04.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.sight.f_bias_-0.2.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.sight.f_bias_-0.2.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.sight.f_bias_-0.1.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.sight.f_bias_-0.1.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.sight.f_bias_0.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.sight.f_bias_0.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.sight.f_bias_0.1.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.sight.f_bias_0.1.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.sight.f_bias_0.2.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.sight.f_bias_0.2.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_-0.2.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_-0.2.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_-0.2.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_-0.2.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_-0.1.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_-0.1.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_-0.1.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_-0.1.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_0.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_0.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_0.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_0.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_0.1.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_0.1.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_0.1.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_0.1.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_0.2.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_0.2.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_0.2.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.screen.f_bias_0.2.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_-0.2.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_-0.2.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_-0.2.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_-0.2.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_-0.1.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_-0.1.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_-0.1.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_-0.1.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_0.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_0.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_0.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_0.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_0.axis_angle_deg.median",
+      "val": 1,
+      "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_0.1.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_0.1.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_0.1.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_0.1.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_0.2.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_0.2.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_0.2.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:as8_anchor_chain.f_bias_control.by_mode_and_bias.facing.f_bias_0.2.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:plane_family_sweep.by_deg.deg_20.wobble_ratio.median",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     }
   ],
   "scanned": [
     "axis_judgement.json",
-    "one_stroke_one_axis.json"
+    "one_stroke_one_axis.json",
+    "preview_gap.json",
+    "wobble_plane.json"
   ],
   "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."
 }
