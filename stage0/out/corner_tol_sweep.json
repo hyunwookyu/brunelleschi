@@ -1,0 +1,535 @@
+{
+  "spec": "W-0 코너 검출 파라미터 스윕. 얕은 코너 누락 ↔ 없는 코너 생성의 맞바꿈.",
+  "selection_rule": "① spurious_corner_rate ≤ 0.02 ② 그 안에서 합성 exact 최대 ③ 최대와 0.02 이내로 동점이면 평활 큰 쪽(거친 잉크 대비). 규칙을 측정 전에 고정했다.",
+  "current": {
+    "name": "deg20_sig1.5"
+  },
+  "chosen": {
+    "name": "deg20_sig1.5",
+    "cfg": {
+      "corner_deg": 20,
+      "smooth_sigma": 1.5
+    },
+    "synthetic": {
+      "exact": 0.9556,
+      "over_split": 0.0028,
+      "under_split": 0.0417,
+      "shallow_exact": 0.8848,
+      "spurious_corner_rate": 0.0056
+    },
+    "real": {
+      "n_strokes": 716,
+      "runs_per_stroke": 2.729,
+      "curve_rate": 0.257,
+      "line_rate": 0.3282,
+      "edge_coverage": 0.8344
+    }
+  },
+  "grid": [
+    {
+      "name": "deg10_sig0.5",
+      "cfg": {
+        "corner_deg": 10,
+        "smooth_sigma": 0.5
+      },
+      "synthetic": {
+        "exact": 0.8653,
+        "over_split": 0.1347,
+        "under_split": 0,
+        "shallow_exact": 0.8401,
+        "spurious_corner_rate": 0.05
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 3.846,
+        "curve_rate": 0.2919,
+        "line_rate": 0.2179,
+        "edge_coverage": 0.8908
+      }
+    },
+    {
+      "name": "deg10_sig1",
+      "cfg": {
+        "corner_deg": 10,
+        "smooth_sigma": 1
+      },
+      "synthetic": {
+        "exact": 0.8833,
+        "over_split": 0.1167,
+        "under_split": 0,
+        "shallow_exact": 0.8662,
+        "spurious_corner_rate": 0.05
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 3.532,
+        "curve_rate": 0.2612,
+        "line_rate": 0.236,
+        "edge_coverage": 0.8805
+      }
+    },
+    {
+      "name": "deg10_sig1.5",
+      "cfg": {
+        "corner_deg": 10,
+        "smooth_sigma": 1.5
+      },
+      "synthetic": {
+        "exact": 0.8931,
+        "over_split": 0.1069,
+        "under_split": 0,
+        "shallow_exact": 0.8773,
+        "spurious_corner_rate": 0.05
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 3.271,
+        "curve_rate": 0.2402,
+        "line_rate": 0.2709,
+        "edge_coverage": 0.8711
+      }
+    },
+    {
+      "name": "deg10_sig2",
+      "cfg": {
+        "corner_deg": 10,
+        "smooth_sigma": 2
+      },
+      "synthetic": {
+        "exact": 0.8972,
+        "over_split": 0.1028,
+        "under_split": 0,
+        "shallow_exact": 0.881,
+        "spurious_corner_rate": 0.05
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 3.038,
+        "curve_rate": 0.2304,
+        "line_rate": 0.2891,
+        "edge_coverage": 0.8623
+      }
+    },
+    {
+      "name": "deg15_sig0.5",
+      "cfg": {
+        "corner_deg": 15,
+        "smooth_sigma": 0.5
+      },
+      "synthetic": {
+        "exact": 0.9667,
+        "over_split": 0.0292,
+        "under_split": 0.0042,
+        "shallow_exact": 0.9554,
+        "spurious_corner_rate": 0.0222
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 3.126,
+        "curve_rate": 0.2696,
+        "line_rate": 0.2779,
+        "edge_coverage": 0.8709
+      }
+    },
+    {
+      "name": "deg15_sig1",
+      "cfg": {
+        "corner_deg": 15,
+        "smooth_sigma": 1
+      },
+      "synthetic": {
+        "exact": 0.9639,
+        "over_split": 0.0292,
+        "under_split": 0.0069,
+        "shallow_exact": 0.948,
+        "spurious_corner_rate": 0.0222
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.979,
+        "curve_rate": 0.2514,
+        "line_rate": 0.2961,
+        "edge_coverage": 0.8664
+      }
+    },
+    {
+      "name": "deg15_sig1.5",
+      "cfg": {
+        "corner_deg": 15,
+        "smooth_sigma": 1.5
+      },
+      "synthetic": {
+        "exact": 0.9653,
+        "over_split": 0.0222,
+        "under_split": 0.0125,
+        "shallow_exact": 0.948,
+        "spurious_corner_rate": 0.0222
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.865,
+        "curve_rate": 0.243,
+        "line_rate": 0.3073,
+        "edge_coverage": 0.8544
+      }
+    },
+    {
+      "name": "deg15_sig2",
+      "cfg": {
+        "corner_deg": 15,
+        "smooth_sigma": 2
+      },
+      "synthetic": {
+        "exact": 0.9639,
+        "over_split": 0.0181,
+        "under_split": 0.0181,
+        "shallow_exact": 0.9368,
+        "spurious_corner_rate": 0.0222
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.781,
+        "curve_rate": 0.2444,
+        "line_rate": 0.3198,
+        "edge_coverage": 0.8486
+      }
+    },
+    {
+      "name": "deg20_sig0.5",
+      "cfg": {
+        "corner_deg": 20,
+        "smooth_sigma": 0.5
+      },
+      "synthetic": {
+        "exact": 0.9736,
+        "over_split": 0.0056,
+        "under_split": 0.0208,
+        "shallow_exact": 0.9405,
+        "spurious_corner_rate": 0.0056
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.866,
+        "curve_rate": 0.2654,
+        "line_rate": 0.3031,
+        "edge_coverage": 0.8632
+      }
+    },
+    {
+      "name": "deg20_sig1",
+      "cfg": {
+        "corner_deg": 20,
+        "smooth_sigma": 1
+      },
+      "synthetic": {
+        "exact": 0.9681,
+        "over_split": 0.0028,
+        "under_split": 0.0292,
+        "shallow_exact": 0.9182,
+        "spurious_corner_rate": 0.0056
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.795,
+        "curve_rate": 0.2612,
+        "line_rate": 0.3101,
+        "edge_coverage": 0.8508
+      }
+    },
+    {
+      "name": "deg20_sig1.5",
+      "cfg": {
+        "corner_deg": 20,
+        "smooth_sigma": 1.5
+      },
+      "synthetic": {
+        "exact": 0.9556,
+        "over_split": 0.0028,
+        "under_split": 0.0417,
+        "shallow_exact": 0.8848,
+        "spurious_corner_rate": 0.0056
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.729,
+        "curve_rate": 0.257,
+        "line_rate": 0.3282,
+        "edge_coverage": 0.8344
+      }
+    },
+    {
+      "name": "deg20_sig2",
+      "cfg": {
+        "corner_deg": 20,
+        "smooth_sigma": 2
+      },
+      "synthetic": {
+        "exact": 0.9306,
+        "over_split": 0.0028,
+        "under_split": 0.0667,
+        "shallow_exact": 0.8253,
+        "spurious_corner_rate": 0.0056
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.669,
+        "curve_rate": 0.264,
+        "line_rate": 0.3338,
+        "edge_coverage": 0.8157
+      }
+    },
+    {
+      "name": "deg25_sig0.5",
+      "cfg": {
+        "corner_deg": 25,
+        "smooth_sigma": 0.5
+      },
+      "synthetic": {
+        "exact": 0.9583,
+        "over_split": 0.0014,
+        "under_split": 0.0403,
+        "shallow_exact": 0.8922,
+        "spurious_corner_rate": 0.0056
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.739,
+        "curve_rate": 0.2751,
+        "line_rate": 0.317,
+        "edge_coverage": 0.836
+      }
+    },
+    {
+      "name": "deg25_sig1",
+      "cfg": {
+        "corner_deg": 25,
+        "smooth_sigma": 1
+      },
+      "synthetic": {
+        "exact": 0.9333,
+        "over_split": 0.0014,
+        "under_split": 0.0653,
+        "shallow_exact": 0.8327,
+        "spurious_corner_rate": 0.0056
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.689,
+        "curve_rate": 0.2723,
+        "line_rate": 0.3254,
+        "edge_coverage": 0.8204
+      }
+    },
+    {
+      "name": "deg25_sig1.5",
+      "cfg": {
+        "corner_deg": 25,
+        "smooth_sigma": 1.5
+      },
+      "synthetic": {
+        "exact": 0.9042,
+        "over_split": 0.0014,
+        "under_split": 0.0944,
+        "shallow_exact": 0.7546,
+        "spurious_corner_rate": 0.0056
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.642,
+        "curve_rate": 0.2682,
+        "line_rate": 0.3324,
+        "edge_coverage": 0.8047
+      }
+    },
+    {
+      "name": "deg25_sig2",
+      "cfg": {
+        "corner_deg": 25,
+        "smooth_sigma": 2
+      },
+      "synthetic": {
+        "exact": 0.8681,
+        "over_split": 0.0014,
+        "under_split": 0.1306,
+        "shallow_exact": 0.658,
+        "spurious_corner_rate": 0.0056
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.603,
+        "curve_rate": 0.2765,
+        "line_rate": 0.3366,
+        "edge_coverage": 0.7861
+      }
+    },
+    {
+      "name": "deg30_sig0.5",
+      "cfg": {
+        "corner_deg": 30,
+        "smooth_sigma": 0.5
+      },
+      "synthetic": {
+        "exact": 0.9167,
+        "over_split": 0,
+        "under_split": 0.0833,
+        "shallow_exact": 0.7844,
+        "spurious_corner_rate": 0
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.663,
+        "curve_rate": 0.2891,
+        "line_rate": 0.3212,
+        "edge_coverage": 0.804
+      }
+    },
+    {
+      "name": "deg30_sig1",
+      "cfg": {
+        "corner_deg": 30,
+        "smooth_sigma": 1
+      },
+      "synthetic": {
+        "exact": 0.8931,
+        "over_split": 0,
+        "under_split": 0.1069,
+        "shallow_exact": 0.7212,
+        "spurious_corner_rate": 0
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.617,
+        "curve_rate": 0.2821,
+        "line_rate": 0.3296,
+        "edge_coverage": 0.7904
+      }
+    },
+    {
+      "name": "deg30_sig1.5",
+      "cfg": {
+        "corner_deg": 30,
+        "smooth_sigma": 1.5
+      },
+      "synthetic": {
+        "exact": 0.8417,
+        "over_split": 0,
+        "under_split": 0.1583,
+        "shallow_exact": 0.5836,
+        "spurious_corner_rate": 0
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.574,
+        "curve_rate": 0.2891,
+        "line_rate": 0.3352,
+        "edge_coverage": 0.7726
+      }
+    },
+    {
+      "name": "deg30_sig2",
+      "cfg": {
+        "corner_deg": 30,
+        "smooth_sigma": 2
+      },
+      "synthetic": {
+        "exact": 0.7986,
+        "over_split": 0,
+        "under_split": 0.2014,
+        "shallow_exact": 0.4758,
+        "spurious_corner_rate": 0
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.522,
+        "curve_rate": 0.2961,
+        "line_rate": 0.3394,
+        "edge_coverage": 0.7516
+      }
+    },
+    {
+      "name": "deg35_sig0.5",
+      "cfg": {
+        "corner_deg": 35,
+        "smooth_sigma": 0.5
+      },
+      "synthetic": {
+        "exact": 0.8792,
+        "over_split": 0,
+        "under_split": 0.1208,
+        "shallow_exact": 0.684,
+        "spurious_corner_rate": 0
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.591,
+        "curve_rate": 0.3017,
+        "line_rate": 0.324,
+        "edge_coverage": 0.7811
+      }
+    },
+    {
+      "name": "deg35_sig1",
+      "cfg": {
+        "corner_deg": 35,
+        "smooth_sigma": 1
+      },
+      "synthetic": {
+        "exact": 0.8278,
+        "over_split": 0,
+        "under_split": 0.1722,
+        "shallow_exact": 0.5502,
+        "spurious_corner_rate": 0
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.553,
+        "curve_rate": 0.2961,
+        "line_rate": 0.3324,
+        "edge_coverage": 0.769
+      }
+    },
+    {
+      "name": "deg35_sig1.5",
+      "cfg": {
+        "corner_deg": 35,
+        "smooth_sigma": 1.5
+      },
+      "synthetic": {
+        "exact": 0.7833,
+        "over_split": 0,
+        "under_split": 0.2167,
+        "shallow_exact": 0.4349,
+        "spurious_corner_rate": 0
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.503,
+        "curve_rate": 0.3073,
+        "line_rate": 0.3366,
+        "edge_coverage": 0.7362
+      }
+    },
+    {
+      "name": "deg35_sig2",
+      "cfg": {
+        "corner_deg": 35,
+        "smooth_sigma": 2
+      },
+      "synthetic": {
+        "exact": 0.7056,
+        "over_split": 0,
+        "under_split": 0.2944,
+        "shallow_exact": 0.2528,
+        "spurious_corner_rate": 0
+      },
+      "real": {
+        "n_strokes": 716,
+        "runs_per_stroke": 2.447,
+        "curve_rate": 0.3198,
+        "line_rate": 0.3408,
+        "edge_coverage": 0.7101
+      }
+    }
+  ],
+  "note": "실획 열의 runs_per_stroke·curve_rate는 **정답이 없다** — 임계를 낮출 때 엣지가 부푸는 정도를 보는 용도이지 성능 지표가 아니다."
+}

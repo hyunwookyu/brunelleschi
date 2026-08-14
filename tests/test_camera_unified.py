@@ -82,35 +82,37 @@ def test_one_point_without_extra_info_leaves_depth_unresolved():
     assert r["direct_scale_axes"] == ["width", "height"]   # 7.7: 1점은 폭·높이 실척
 
 
-def test_one_point_square_assumption_resolves_f_when_gate_passes():
-    """f 경로 b: 사다리꼴 정사각 가정(8.8) + 게이트(18.4 하한 + 상한 3W)."""
-    d_true = 700.0
-    q = _one_point_quad(d_true, h=150.0, width=200.0, depth=200.0, z0=400.0)
-    r = recover_camera([np.array([0.0, 0.0]), None, None], SZ, quad=q)
+def test_one_point_f_comes_from_setting_not_from_shape_assumption():
+    """W 전환: 1점에서 f는 **설정값**이다(계획서 §3.3). 형태를 가정해 역산하지 않는다.
+
+    구 경로(타원 8.7 / 사다리꼴 정사각 가정 8.8 + 상한 3W 게이트)는 §2.3에서 폐기됐다.
+    폐기 사유가 실제로 구현에 반영됐는지 여기서 잠근다 — 그 인자를 넘기면 오류가 나야 한다."""
+    vp = np.array([0.0, 0.0])
+    r = recover_camera([vp, None, None], SZ, f_setting=900.0)
     assert r["case"] == "1pt" and r["ok"]
-    assert r["f_source"].startswith("trapezoid")
-    assert abs(r["f"] - d_true) / d_true < 1e-6
+    assert r["f"] == 900.0
+    assert r["f_source"] == "setting(렌즈 슬라이더)"
+    # 설정이 없으면 미결정으로 남는다(추정하지 않는다)
+    r0 = recover_camera([vp, None, None], SZ)
+    assert not r0["ok"] and r0["verdict"] == "unresolved_f"
+    # 폐기된 인자는 받지 않는다
+    with pytest.raises(TypeError):
+        recover_camera([vp, None, None], SZ, quad=np.zeros((4, 2)))
+    with pytest.raises(TypeError):
+        recover_camera([vp, None, None], SZ, ellipse={"a": 1, "b": 1, "A": 1, "B": 1})
 
 
-def test_one_point_square_assumption_rejected_by_gate():
-    """게이트가 막으면 채택하지 않고 unresolved로 남긴다 — 임의 추정 금지."""
-    # 아주 얕은 도형 → 정사각 가정 시 시거리가 비현실적으로 커진다(상한 위반)
-    q = _one_point_quad(700.0, h=150.0, width=900.0, depth=90.0, z0=500.0)
-    r = recover_camera([np.array([0.0, 0.0]), None, None], SZ, quad=q)
-    assert not r["ok"]
-    assert "gate_rejected" in r
-    assert any("깊이 미결정" in u for u in r["unresolved"])
+def test_one_point_setting_still_gets_fov_warning():
+    """f가 설정값이어도 화각 경고(18.4)는 살아 있다 — §2.3이 유지한 유일한 게이트."""
+    vp = np.array([0.0, 0.0])
+    wide = recover_camera([vp, None, None], SZ, f_setting=SZ[0] * 0.3)   # 아주 넓은 화각
+    ok = recover_camera([vp, None, None], SZ, f_setting=SZ[0] * 1.2)
+    assert wide["verdict"] == "unreliable" and ok["verdict"] == "trust"
+    # 상한은 없다: 아주 좁은 화각도 경고 대상이 아니다(V-E 무효, 이론서 18.4는 단측)
+    narrow = recover_camera([vp, None, None], SZ, f_setting=SZ[0] * 5.0)
+    assert narrow["ok"] and narrow["verdict"] == "trust"
 
 
-def test_one_point_ellipse_takes_priority():
-    """f 경로 a: 타원이 있으면 최우선(8.7). 이론서 수치례로 확인."""
-    r = recover_camera([np.array([400.0, 300.0]), None, None], SZ,
-                       ellipse={"a": 0.25, "b": 0.5, "A": 0.354, "B": 0.125})
-    assert r["ok"] and r["f_source"].startswith("ellipse")
-    assert abs(r["f"] - 1.0) < 0.005
-
-
-# ---------------------------------------------------------------- 0점
 def test_zero_vps_is_axonometric_limit():
     """2.4: d→∞ 극한. 투시로 깊이를 얻을 수 없다."""
     r = recover_camera([None, None, None], SZ)

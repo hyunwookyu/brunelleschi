@@ -58,13 +58,13 @@ def direct_scale_axes(n_finite_vps: int) -> list[str]:
 
 
 def recover_camera(vps: Sequence[Optional[np.ndarray]], img_size,
-                   quad=None, ellipse: dict | None = None,
-                   principal: Optional[Sequence[float]] = None) -> dict:
+                   principal: Optional[Sequence[float]] = None,
+                   f_setting: Optional[float] = None) -> dict:
     """유한 소실점 개수로 나뉘는 단일 경로.
 
     vps: 최대 3개(직교 세 방향). None = 무한원(화면 평행).
-    quad: 1점 경로에서 사다리꼴 정사각 가정을 쓸 때 필요(8.8).
-    ellipse: {"a","b","A","B"} 있으면 1점에서 f를 직접 준다(8.7) — 최우선.
+    f_setting: 1점에서 f를 채우는 **설정값**(렌즈 슬라이더, 픽셀 단위). 측정이 아니다.
+        구 인자 quad/ellipse(8.8/8.7 역산)는 W 전환에서 제거했다 — 계획서 §2.3.
 
     반환 공통: case, n_vps, principal_point, f, residual, verdict, unresolved[], direct_scale_axes
     """
@@ -106,32 +106,24 @@ def recover_camera(vps: Sequence[Optional[np.ndarray]], img_size,
         out["dof_note"] = "자유도 1을 주점 가정으로 소진 — 가정이 틀리면 f가 틀린다"
         return out
 
-    # ---------------- 1점: 자유도 1 = f (깊이 미결정) ----------------
+    # ---------------- 1점: 자유도 1 = f → **설정값으로 채운다** ----------------
     if n == 1:
         pp = finite[0].tolist()      # 소실점 = 주점 (5.3)
         out.update({"case": "1pt", "principal_point": pp, "residual": 0.0})
-        # f 결정 경로 (우선순위, 지시 2.2)
-        if ellipse:
-            r = d_from_ellipse(**ellipse)          # a. 타원 (8.7)
-            if r["ok"]:
-                out.update({"ok": True, "f": r["f"], "f_source": "ellipse(8.7)", **gate(r["f"], W)})
-                return out
-        if quad is not None:
-            r = d_from_trapezoid(quad)             # b. 사다리꼴 정사각 가정 (8.8)
-            g = gate(r.get("f"), W, r.get("ok", False))
-            # 1번 게이트: 하한(0.5W)+상한(3W). 통과해야 채택한다.
-            upper_ok = (g.get("ratio") is not None and g["ratio"] <= 3.0)
-            if r.get("ok") and g["verdict"] in ("trust", "warn") and upper_ok:
-                out.update({"ok": True, "f": r["f"], "f_source": "trapezoid_square_assumption(8.8)",
-                            **g})
-                out["dof_note"] = "정사각 가정으로 f 결정 — 가정이 틀리면 d가 그만큼 틀린다(게이트 통과분)"
-                return out
-            out["gate_rejected"] = {"reason": r.get("reason"), **g}
-        # c/d/e — 발화·수동 입력, 다중 뷰, 없으면 unresolved
+        # W 전환: f를 **역산하지 않는다**. 계획서 §3.3 "1점 → 소실점 = 주점, f는 설정".
+        # 구 경로(타원 8.7 / 사다리꼴 정사각 가정 8.8)는 §2.3에서 폐기됐다 —
+        # 형태를 가정해 f를 되찾는 절차이고, 이 접근에는 가정할 형태가 없다.
+        # 상한 게이트 d>3W도 함께 제거했다: 이론서 18.4는 광각 **단측**만 다루고,
+        # 상한을 정당화하던 실측(V-E)은 폐기된 1점 형태가정 경로에서 나온 것이다.
+        if f_setting is not None and f_setting > 0:
+            out.update({"ok": True, "f": float(f_setting), "f_source": "setting(렌즈 슬라이더)",
+                        **gate(float(f_setting), W)})
+            out["dof_note"] = "자유도 1(f)을 설정으로 소진 — 측정이 아니라 사용자 선택이다(provenance: setting)"
+            return out
         out.update({"ok": False, "f": None, "verdict": "unresolved_f", "ratio": None, "fov_deg": None})
         out["unresolved"].append(
-            "1점 투시: 시거리 f 미결정 → **안쪽 깊이 미결정**. "
-            "타원·정사각 가정(게이트 통과)·치수 입력·추가 뷰 중 하나가 필요하다(이론서 5.3)")
+            "1점 투시: f 미설정 → **안쪽 깊이 미결정**. 렌즈 값을 정하면 채워진다(계획서 §3.2). "
+            "폭·높이는 그 전에도 실척으로 읽힌다(이론서 7.7)")
         out["dof_note"] = "자유도 1(f) 잔존 — 폭·높이는 실척 직접(7.7), 깊이만 미결정"
         return out
 

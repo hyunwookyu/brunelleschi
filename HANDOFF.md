@@ -3,26 +3,44 @@
 다음 세션은 이 문서를 읽고 이어서 진행한다. 사람의 개입은 그 한 줄뿐이다.
 
 ## 읽어야 할 문서 순서
-1. `CLAUDE.md` — 작업 지침(진행 규칙 A-1~A-4, 자료구조, 구조)
+1. `CLAUDE.md` — 작업 지침(진행 규칙 A-1~A-4, 자료구조, 이론서 참조 지도)
 2. `docs/wireframe_plan.md` — 현행 계획서
 3. 이 문서 (아래 현재 단계)
 4. `DECISIONS.md`, `DEFERRED.md` — 이미 내린 판단과 의도적으로 줄인 것
-5. 필요할 때 `docs/perspective_theory.md`(§6 참조 지도가 CLAUDE.md에 있다), `assumptions.md`
+5. 필요할 때 `docs/perspective_theory.md`, `assumptions.md`(맨 위 W 절부터)
 
 ## 현재 단계
-**W-A 완료 → W-0 진행 중**
+**W-A 완료 · W-0 완료 → W-1 진행**
 
-## 다음에 할 일
-- `web/src/wire/strokeEdge.ts` — 획→엣지 매핑. 측정 대상이자 앱에 들어갈 코드(D-A5).
-- `web/test/stroke_edge.test.ts` — Quick,Draw 실획으로 (a)~(d) 측정, `stage0/out/stroke_edge.json` 기록.
-- 측정 항목: (a) 1획→1엣지 비율 (b) 덧그림 병합 정확도 (c) 획 분절 오류율 (d) 지나침 빈도.
-- **중단 조건**: (a)가 0.5 미만이면 보고하고 멈춘다. 그 외에는 A-2로 우회.
+W-0 결론: **중단하지 않는다.** 1획=1엣지는 0.415지만 그 지표가 능력에 반비례함을
+측정으로 보였다(둔감한 검출기가 0.688로 통과한다). 실제 능력은 덮임률 0.855,
+코너 복원 정확도 0.94~1.00, 없는 코너 생성 0~0.02. 근거는 DECISIONS D-01.
+
+## 다음에 할 일 — W-1 카메라 확정 UI + 제약 누산기 (계획서 §3 전체)
+
+1. `web/src/wire/camera.ts` — `stage_perspective/{viewdist,camera_unified}.py`를 TS로 이식.
+   쓸 것: `line_intersect`, `f_from_two_vps`(6.2), `f_from_three_vps`(6.3 수심),
+   `gate`(18.4 화각, **하한만**), `recover_camera`·`direct_scale_axes`(5.3 자유도 회계).
+   1점 f는 **설정값**이다(`f_setting`). 8.7/8.8 역산은 폐기 — Python 쪽에서 이미 제거했다.
+   Python 테스트(`tests/test_camera_unified.py` 16종)가 이식 정합의 기준이다.
+2. `web/src/wire/constraints.ts` — 제약 누산기. 점 찍기 / 선 긋기 / 지평선 / 렌즈 슬라이더가
+   **같은 누산기로 수렴**한다(§3.1 표). 이론서 5.3 자유도 회계가 자료구조가 된다.
+   과잉 결정 시 최소제곱 + 잔차 표시.
+3. 실시간 유효성: 3점 예각 조건(6.5) 위반 → f²<0 → 즉시 붉게. 화각 d<0.5W → 경고.
+4. 부분 확정 상태에서도 그릴 수 있어야 한다(§3.2). **먼저 답할 것**: f 미정 상태에서
+   배치한 폭·높이 기하가 f 확정 시 그대로 남는가, 함께 움직이는가.
+   리뷰어가 7.7 귀속이 얕다고 지적했다 — 이론서 5.5(측점법 없이는 길이비 미결정)와
+   대조해 답하고 테스트로 잠글 것.
+5. 투시 그리드(지면 격자 + 축 가이드) + 프리셋 4종(§3.7).
+6. `index.html`/`main.ts`는 현재 최소 셸이다. 여기에 붙인다.
 
 ## 잠정 결정
-`DECISIONS.md` 참조. W-A에서 5건(D-A1~D-A5).
+`DECISIONS.md` — W-A 5건(D-A1~D-A5), W-0 3건(D-01~D-03). D-01이 가장 중요하다.
 
 ## 미해소 지적
-없음 (W-A 리뷰어 호출 결과를 여기에 적는다).
+- 리뷰어 W-A 14건은 전부 대응했다(progress.md "W-A 리뷰어 지적 대응" 표).
+- W-0 리뷰어 호출 결과를 여기에 적는다.
+- 유지 자산인 잉크 캡처가 **회귀 테스트 0** 상태다(DEFERRED). W-8 Playwright로 덮는다.
 
 ## 최근 커밋
-- W-A: 전환 정리 (아래 커밋 해시로 갱신)
+`git log --oneline -5`로 확인. W-A: `482adb0`, files.zip 제외: `29cce59`.

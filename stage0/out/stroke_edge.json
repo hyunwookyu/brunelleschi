@@ -1,0 +1,303 @@
+{
+  "spec": "W-0 획→엣지 매핑 측정 (계획서 §6.1). 실획 분포 + 합성 정답 대조.",
+  "source": {
+    "real": "Quick,Draw raw [\"square\",\"house\",\"castle\",\"skyscraper\",\"door\",\"line\",\"triangle\"] 각 120장 상한",
+    "synthetic": "코너 수를 아는 폴리라인 + 실측 잉크 노이즈(archive_pre_W/ink_noise_model.json)",
+    "caveat": [
+      "Quick,Draw는 **마우스·손가락 낙서**다. 작도 도구로 한 획씩 긋는 상황이 아니다.",
+      "따라서 실획 비율은 이 도구에서의 성능이 아니라 **하한**으로 읽어야 한다.",
+      "애플펜슬 대표성은 여전히 미검증(assumptions V-A)."
+    ]
+  },
+  "real_ink": {
+    "totals": {
+      "n_strokes": 2013,
+      "kind": {
+        "line": 659,
+        "polyline": 758,
+        "curve": 534,
+        "dot": 62
+      },
+      "one_stroke_one_edge_all": 0.3274,
+      "one_stroke_one_edge_inscope": 0.4651,
+      "inscope_rate": 0.7039,
+      "edge_coverage": 0.8553
+    },
+    "closed_shapes_only": {
+      "words": [
+        "square",
+        "house",
+        "castle",
+        "skyscraper",
+        "door",
+        "triangle"
+      ],
+      "n_strokes": 1881,
+      "one_stroke_one_edge_all": 0.2839,
+      "one_stroke_one_edge_inscope": 0.4152,
+      "edge_coverage": 0.8464,
+      "why": "`line` 범주는 1획=1엣지가 자명하다. 그것을 빼면 판정이 표본 구성에 덜 좌우된다."
+    },
+    "by_word": {
+      "square": {
+        "n_strokes": 160,
+        "n_drawings": 120,
+        "kind": {
+          "dot": 5,
+          "line": 22,
+          "polyline": 109,
+          "curve": 24
+        },
+        "one_stroke_one_edge_all": 0.1375,
+        "one_stroke_one_edge_inscope": 0.1679,
+        "runs_median": 4,
+        "multi_run_rate": 0.8581,
+        "overtrace_rate": 0.0038,
+        "overshoot_rate": 0.1385,
+        "overshoot_tail_median": 0.0435,
+        "edge_coverage": 0.9156
+      },
+      "house": {
+        "n_strokes": 465,
+        "n_drawings": 120,
+        "kind": {
+          "dot": 15,
+          "line": 148,
+          "polyline": 200,
+          "curve": 102
+        },
+        "one_stroke_one_edge_all": 0.3183,
+        "one_stroke_one_edge_inscope": 0.4253,
+        "runs_median": 2,
+        "multi_run_rate": 0.6622,
+        "overtrace_rate": 0.0255,
+        "overshoot_rate": 0.2555,
+        "overshoot_tail_median": 0.068,
+        "edge_coverage": 0.8648
+      },
+      "castle": {
+        "n_strokes": 421,
+        "n_drawings": 120,
+        "kind": {
+          "dot": 10,
+          "line": 90,
+          "polyline": 144,
+          "curve": 177
+        },
+        "one_stroke_one_edge_all": 0.2138,
+        "one_stroke_one_edge_inscope": 0.3846,
+        "runs_median": 3,
+        "multi_run_rate": 0.7543,
+        "overtrace_rate": 0.0243,
+        "overshoot_rate": 0.1114,
+        "overshoot_tail_median": 0.0716,
+        "edge_coverage": 0.7588
+      },
+      "skyscraper": {
+        "n_strokes": 368,
+        "n_drawings": 120,
+        "kind": {
+          "dot": 16,
+          "line": 163,
+          "polyline": 106,
+          "curve": 83
+        },
+        "one_stroke_one_edge_all": 0.4429,
+        "one_stroke_one_edge_inscope": 0.6059,
+        "runs_median": 2,
+        "multi_run_rate": 0.5341,
+        "overtrace_rate": 0.0465,
+        "overshoot_rate": 0.1464,
+        "overshoot_tail_median": 0.0672,
+        "edge_coverage": 0.8875
+      },
+      "door": {
+        "n_strokes": 291,
+        "n_drawings": 120,
+        "kind": {
+          "dot": 14,
+          "line": 55,
+          "polyline": 106,
+          "curve": 116
+        },
+        "one_stroke_one_edge_all": 0.189,
+        "one_stroke_one_edge_inscope": 0.3416,
+        "runs_median": 3,
+        "multi_run_rate": 0.7906,
+        "overtrace_rate": 0.0505,
+        "overshoot_rate": 0.115,
+        "overshoot_tail_median": 0.0662,
+        "edge_coverage": 0.8254
+      },
+      "line": {
+        "n_strokes": 132,
+        "n_drawings": 120,
+        "kind": {
+          "dot": 0,
+          "line": 125,
+          "polyline": 6,
+          "curve": 1
+        },
+        "one_stroke_one_edge_all": 0.947,
+        "one_stroke_one_edge_inscope": 0.9542,
+        "runs_median": 1,
+        "multi_run_rate": 0.053,
+        "overtrace_rate": 0.0625,
+        "overshoot_rate": 0.0347,
+        "overshoot_tail_median": 0.1776,
+        "edge_coverage": 0.9821
+      },
+      "triangle": {
+        "n_strokes": 176,
+        "n_drawings": 120,
+        "kind": {
+          "dot": 2,
+          "line": 56,
+          "polyline": 87,
+          "curve": 31
+        },
+        "one_stroke_one_edge_all": 0.3182,
+        "one_stroke_one_edge_inscope": 0.3916,
+        "runs_median": 3,
+        "multi_run_rate": 0.6667,
+        "overtrace_rate": 0.0051,
+        "overshoot_rate": 0.1816,
+        "overshoot_tail_median": 0.042,
+        "edge_coverage": 0.8927
+      }
+    },
+    "reading": [
+      "one_stroke_one_edge_all: 분모가 곡선 포함 전 획. 곡선은 이 도구의 범위 밖이므로 과소평가다.",
+      "one_stroke_one_edge_inscope: 분모가 직선·폴리라인. 중단 조건(0.5)은 이쪽에 건다.",
+      "polyline 비율이 곧 (c) 분절이 필요한 비율이다 — 한 획이 여러 엣지인 경우.",
+      "edge_coverage: 잉크 길이 중 직선 런으로 덮인 비율. 1:1 매핑이 아니어도 엣지가 되는 양.",
+      "**주의**: one_stroke_one_edge 는 검출기가 좋아질수록 내려간다(아래 metric_direction 참조)."
+    ]
+  },
+  "synthetic_accuracy": {
+    "segmentation": {
+      "precise": {
+        "n": 200,
+        "exact": 0.995,
+        "over_split": 0,
+        "under_split": 0.005,
+        "straight_only": {
+          "n": 57,
+          "spurious_corner_rate": 0
+        },
+        "exact_by_turn_deg": {
+          "45~70": {
+            "n": 86,
+            "exact": 0.9884
+          },
+          "70~100": {
+            "n": 104,
+            "exact": 1
+          },
+          "100~135": {
+            "n": 96,
+            "exact": 0.9792
+          }
+        }
+      },
+      "medium": {
+        "n": 200,
+        "exact": 1,
+        "over_split": 0,
+        "under_split": 0,
+        "straight_only": {
+          "n": 52,
+          "spurious_corner_rate": 0
+        },
+        "exact_by_turn_deg": {
+          "45~70": {
+            "n": 92,
+            "exact": 1
+          },
+          "70~100": {
+            "n": 90,
+            "exact": 1
+          },
+          "100~135": {
+            "n": 105,
+            "exact": 1
+          }
+        }
+      },
+      "coarse": {
+        "n": 200,
+        "exact": 0.94,
+        "over_split": 0.02,
+        "under_split": 0.04,
+        "straight_only": {
+          "n": 47,
+          "spurious_corner_rate": 0
+        },
+        "exact_by_turn_deg": {
+          "45~70": {
+            "n": 86,
+            "exact": 0.8837
+          },
+          "70~100": {
+            "n": 124,
+            "exact": 0.9194
+          },
+          "100~135": {
+            "n": 113,
+            "exact": 0.9115
+          }
+        }
+      },
+      "note": "exact = 코너 수를 정확히 맞춘 비율. over_split = 없는 코너를 만든 비율(떨림을 코너로 오인)."
+    },
+    "overtrace": {
+      "precise": {
+        "n_pairs": 400,
+        "tp": 200,
+        "fn": 0,
+        "fp": 2,
+        "tn": 198,
+        "precision": 0.9901,
+        "recall": 1
+      },
+      "medium": {
+        "n_pairs": 400,
+        "tp": 182,
+        "fn": 18,
+        "fp": 7,
+        "tn": 193,
+        "precision": 0.963,
+        "recall": 0.91
+      },
+      "coarse": {
+        "n_pairs": 400,
+        "tp": 138,
+        "fn": 62,
+        "fp": 7,
+        "tn": 193,
+        "precision": 0.9517,
+        "recall": 0.69
+      },
+      "note": "음성 표본은 **나란한 다른 변**(벽 두께). 오탐이 나면 두 줄이 한 줄로 접힌다."
+    }
+  },
+  "metric_direction": {
+    "chosen": {
+      "one_stroke_one_edge_inscope": 0.4152,
+      "edge_coverage": 0.8464
+    },
+    "deliberately_blunt": {
+      "one_stroke_one_edge_inscope": 0.6877,
+      "edge_coverage": 0.4386
+    },
+    "synthetic_exact": {
+      "chosen": 1,
+      "blunt": 0.4667
+    },
+    "verdict": "둔감한 검출기가 1획=1엣지 비율은 **높이고** 덮임률과 합성 정확도는 낮춘다면, 이 비율은 능력이 아니라 **그리기 습관 + 검출 실패**를 재는 것이다. 중단 판정을 여기에 걸면 나쁜 검출기가 통과한다."
+  },
+  "cross_check": {
+    "overshoot_prev_measurement": 0.1134,
+    "note": "구 잉크 모델이 잰 코너 오버슈트(medium 0.1134, 변 길이 대비)와 여기 overshoot_tail_median은 **다른 양**이다. 구 값은 코너에서 삐져나온 길이, 여기 값은 교차점을 지난 꼬리 비율. 같은 현상의 두 측면이라 크기만 대조한다."
+  }
+}
