@@ -1,0 +1,84 @@
+{
+  "spec": "직교 폴리곤 분할 검증(지시 D-1b-2). 외곽=measured 자격, 노치=prior 필요량.",
+  "by_shape": {
+    "L": {
+      "precise": {
+        "n": 119,
+        "scope_agreement": 0.983,
+        "truth_scope": "L",
+        "outer_aspect_err_median": 0.1428,
+        "outer_aspect_err_p90": 0.5257,
+        "similarity_iou_median": 0.8229,
+        "notch_u_err_median": 0.5,
+        "notch_v_err_median": 0.1089,
+        "notch_du_err_median": 0.0372,
+        "notch_dv_err_median": 0.0366
+      },
+      "medium": {
+        "n": 110,
+        "scope_agreement": 0.945,
+        "truth_scope": "L",
+        "outer_aspect_err_median": 0.3325,
+        "outer_aspect_err_p90": 3.2944,
+        "similarity_iou_median": 0.7081,
+        "notch_u_err_median": 0.5,
+        "notch_v_err_median": 0.5,
+        "notch_du_err_median": 0.0635,
+        "notch_dv_err_median": 0.0846
+      }
+    },
+    "U": {
+      "precise": {
+        "n": 131,
+        "scope_agreement": 1.0,
+        "truth_scope": "out_of_scope",
+        "outer_aspect_err_median": 0.2488,
+        "outer_aspect_err_p90": 3.2727,
+        "similarity_iou_median": 0.5962,
+        "notch_u_err_median": null,
+        "notch_v_err_median": null,
+        "notch_du_err_median": null,
+        "notch_dv_err_median": null
+      },
+      "medium": {
+        "n": 92,
+        "scope_agreement": 1.0,
+        "truth_scope": "out_of_scope",
+        "outer_aspect_err_median": 0.557,
+        "outer_aspect_err_p90": 5.5383,
+        "similarity_iou_median": 0.3461,
+        "notch_u_err_median": null,
+        "notch_v_err_median": null,
+        "notch_du_err_median": null,
+        "notch_dv_err_median": null
+      }
+    },
+    "stair": {
+      "precise": {
+        "n": 108,
+        "scope_agreement": 0.991,
+        "truth_scope": "out_of_scope",
+        "outer_aspect_err_median": 0.2515,
+        "outer_aspect_err_p90": 4.5782,
+        "similarity_iou_median": 0.4714,
+        "notch_u_err_median": null,
+        "notch_v_err_median": null,
+        "notch_du_err_median": null,
+        "notch_dv_err_median": null
+      },
+      "medium": {
+        "n": 106,
+        "scope_agreement": 0.991,
+        "truth_scope": "out_of_scope",
+        "outer_aspect_err_median": 0.3934,
+        "outer_aspect_err_p90": 8.2912,
+        "similarity_iou_median": 0.373,
+        "notch_u_err_median": null,
+        "notch_v_err_median": null,
+        "notch_du_err_median": null,
+        "notch_dv_err_median": null
+      }
+    }
+  },
+  "note": "외곽 종횡비 오차가 기존 2H 종횡비 오차(L precise 0.046)와 같은 수준이면 분할이 외곽 정확도를 떨어뜨리지 않는 것 — 멈춤 조건 미해당. 노치 오차는 prior가 채워야 할 양이다(외곽 대비 비율)."
+}

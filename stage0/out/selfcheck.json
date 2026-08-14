@@ -420,6 +420,7 @@
     "score.json",
     "seed_variance.json",
     "sketchgraphs_check.json",
+    "split_eval.json",
     "tolerance.json",
     "uncertainty_eval.json",
     "unmappable_report.json",
