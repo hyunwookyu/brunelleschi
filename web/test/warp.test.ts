@@ -45,36 +45,38 @@ const rate = (k: number, n: number) => (n ? +(k / n).toFixed(4) : null);
 type Variant = "base" | "a" | "b" | "c" | "ab" | "abc";
 
 /** 변형별 설정. `base`는 S-3 그대로(위치 의존·상대 순위 끔). */
-function cfgOf(v: Variant): { cfg: AxisCfg; cam?: typeof CAM; consensus: boolean } {
-  const off = { angle_relax: 0, rank_margin: Infinity };
+function cfgOf(v: Variant, over: AxisCfg = {}): { cfg: AxisCfg; cam?: typeof CAM; consensus: boolean } {
+  const off = { angle_relax: 0, rank_margin: Infinity, ...over };
   switch (v) {
     case "base": return { cfg: off, consensus: false };
-    case "a": return { cfg: { rank_margin: Infinity }, cam: CAM, consensus: false };
-    case "b": return { cfg: { angle_relax: 0 }, cam: CAM, consensus: false };
+    case "a": return { cfg: { rank_margin: Infinity, ...over }, cam: CAM, consensus: false };
+    case "b": return { cfg: { angle_relax: 0, ...over }, cam: CAM, consensus: false };
     // c 단독 — a·b 없이 이웃 일관성만. 지시가 "가장 효과가 클 것"으로 예상한 항이다.
     case "c": return { cfg: off, consensus: true };
-    case "ab": return { cfg: {}, cam: CAM, consensus: false };
-    case "abc": return { cfg: {}, cam: CAM, consensus: true };
+    case "ab": return { cfg: { ...over }, cam: CAM, consensus: false };
+    case "abc": return { cfg: { ...over }, cam: CAM, consensus: true };
   }
 }
 
 interface Acc {
   n: number; assigned: number; correct: number; wrong: number; relative: number;
+  /** **b가 순위로 구제한 획 중 틀린 수.** "조용히 틀림 +0.0000"이 천장의 산물인지 가른다. */
+  relative_wrong: number;
   rescued: number; rescued_wrong: number;
   placed: number; no_anchor: number;
   misfit_by_radius: Map<number, number[]>;
   by_reason: Record<string, number>;
 }
 const emptyAcc = (): Acc => ({
-  n: 0, assigned: 0, correct: 0, wrong: 0, relative: 0, rescued: 0, rescued_wrong: 0,
+  n: 0, assigned: 0, correct: 0, wrong: 0, relative: 0, relative_wrong: 0, rescued: 0, rescued_wrong: 0,
   placed: 0, no_anchor: 0, misfit_by_radius: new Map(), by_reason: {},
 });
 
 function runOne(sc: Scene, warp: number, variant: Variant, seed: number, n: number, acc: Acc,
-                joinRatio = PLACE_TOL.join_ratio) {
+                joinRatio = PLACE_TOL.join_ratio, over: AxisCfg = {}) {
   const r = rng32(seed);
-  const { cfg, consensus } = cfgOf(variant);
-  const cam = cfgOf(variant).cam ? { principal: sc.principal, f: sc.f } : undefined;
+  const { cfg, consensus } = cfgOf(variant, over);
+  const cam = cfgOf(variant, over).cam ? { principal: sc.principal, f: sc.f } : undefined;
   const ctx: PlaceCtx = { principal: sc.principal, f: sc.f, vps: sc.vps, imgSize: sc.imgSize };
   // **넓은 렌즈일수록 상자를 키운다.** 줄이면 그림이 화면 중앙에만 머물러 화각을 넓혀 놓고도
   // 18.4의 기준(60°)을 넘지 않는다 — 그러면 왜곡을 측정하지 못한다.
@@ -113,8 +115,9 @@ function runOne(sc: Scene, warp: number, variant: Variant, seed: number, n: numb
       }
       if (v.axis === "free") return;
       acc.assigned += 1;
-      if (v.relative) acc.relative += 1;
-      if (v.axis === drawn[i].axis) acc.correct += 1; else acc.wrong += 1;
+      const right = v.axis === drawn[i].axis;
+      if (v.relative) { acc.relative += 1; if (!right) acc.relative_wrong += 1; }
+      if (right) acc.correct += 1; else acc.wrong += 1;
     });
     for (const rc of rescued) {
       acc.rescued += 1;
@@ -142,6 +145,10 @@ const summarize = (a: Acc) => ({
   /** A-3이 가장 싫어하는 것 — 전체 중 조용히 틀린 축에 배정된 비율. */
   silent_wrong_rate: rate(a.wrong, a.n),
   relative_rate: rate(a.relative, a.n),
+  relative: a.relative,
+  relative_wrong: a.relative_wrong,
+  /** **순위로 구제한 획의 오류율.** 기저 오류율과 비교해야 한다 — b 채택의 판정선이다. */
+  relative_wrong_rate: rate(a.relative_wrong, a.relative),
   rescued_rate: rate(a.rescued, a.n),
   rescued: a.rescued,
   rescued_wrong: a.rescued_wrong,
@@ -237,6 +244,23 @@ describe("S-2b 체계적 왜곡", () => {
       byScene[name] = byWarp;
     }
 
+    // **b의 두 상수를 스윕한다**(리뷰어 지적: 근거가 원장에 없고, "조용히 틀림 +0.0000"이
+    // 천장의 산물일 수 있다). 넓은 구도·warp 0.3에서 천장과 배수를 흔든다.
+    const bSweep: Record<string, unknown> = {};
+    for (const ceil of [0.10, 0.14, 0.22, 0.30, 0.45]) {
+      for (const marg of [1.5, 2.5, 4.0]) {
+        const acc = emptyAcc();
+        runOne(WIDE, 0.3, "b", 8400, 45, acc, PLACE_TOL.join_ratio,
+               { vp_dist_ceiling: ceil, rank_margin: marg });
+        bSweep[`ceiling_${ceil}_margin_${marg}`] = {
+          assigned_rate: rate(acc.assigned, acc.n),
+          silent_wrong_rate: rate(acc.wrong, acc.n),
+          relative: acc.relative, relative_wrong: acc.relative_wrong,
+          relative_wrong_rate: rate(acc.relative_wrong, acc.relative),
+        };
+      }
+    }
+
     // (e) 접합 허용 범위 ↔ 미배치율
     const joinSweep: Record<string, unknown> = {};
     for (const jr of [0.01, 0.015, 0.025, 0.04]) {
@@ -313,6 +337,18 @@ describe("S-2b 체계적 왜곡", () => {
         + "왜곡이 위치 의존이면 바깥 구간에서 커진다 — a의 근거다. 18.4의 60°는 tan 0.577이다."
       ),
       by_scene: byScene,
+      b_threshold_sweep: {
+        why: (
+          "**b의 두 상수에는 측정 근거가 없었다**(리뷰어 지적). `vp_dist_ceiling`(상대 순위로 "
+          + "구제할 수 있는 부적합도 한계)과 `rank_margin`(1등이 2등보다 나아야 하는 배수)을 "
+          + "흔들어, 채택 결론('판정률은 오르고 조용히 틀림은 안 는다')이 그 값에 걸려 있는지 본다. "
+          + "**`relative_wrong`이 핵심**이다 — b가 구제한 획 중 틀린 수. 0이면 천장이 "
+          + "안전한 것이고, 천장을 올렸을 때 늘어난다면 그 값이 결론을 만들고 있었던 것이다."
+        ),
+        condition: { scene: "wide_98deg", warp: 0.3, variant: "b", seed: 8400, boxes: 45 },
+        default: { vp_dist_ceiling: AXIS_TOL.vp_dist_ceiling, rank_margin: AXIS_TOL.rank_margin },
+        by_threshold: bSweep,
+      },
       join_radius_sweep: joinSweep,
       selfcheck_notes: {
         "rescued_rate·rescued_wrong_rate = 0": (

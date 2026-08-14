@@ -64,6 +64,39 @@ describe("S-4 튜브 메쉬", () => {
       }
     }
     expect(worst).toBeLessThan(0.03);          // 반지름(0.03) 미만 = 한 칸도 안 돌았다
+
+  });
+
+  it("**대조군: 접선이 기준축을 지나는 획에서 매 점 프레임이 홱 돈다** — 평행 이송의 근거", () => {
+    // 나선으로는 안 갈렸다(오히려 대조군이 작았다). **꼬임은 특이점에서만 생긴다** —
+    // 매 점 프레임은 `T × (0,1,0)`이라 접선이 (0,1,0)과 나란해지는 순간 정의를 잃는다.
+    // 여기 획은 그 자리를 **정확히 통과한다**(yz 평면의 호: 접선이 t=0에서 (0,1,0)).
+    // 상자 모서리 같은 곧은 획은 그 자리를 지나지 않아 둘이 거의 같다
+    // (원장 `twist_ratio_naive_frame` 0.472 대 0.435) — 그것도 함께 적어 둔다.
+    const n = 61, R = 0.03;
+    const pts: Vec3[] = Array.from({ length: n }, (_, i) => {
+      const t = -1.2 + (2.4 * i) / (n - 1);
+      return [0, Math.sin(t), 2 + Math.cos(t)] as Vec3;
+    });
+    const seg = TUBE_TOL.radial_segments;
+    const worstOf = (naiveFrame: boolean) => {
+      const m = buildTube(pts, pts.map(() => R), { naiveFrame })!;
+      let w = 0;
+      for (let i = 1; i < n; i++) {
+        const step = norm3(sub3(pts[i], pts[i - 1]));
+        for (let j = 0; j < seg; j++) {
+          const o = (i * seg + j) * 3, q = ((i - 1) * seg + j) * 3;
+          w = Math.max(w, norm3(sub3(
+            [m.positions[o], m.positions[o + 1], m.positions[o + 2]],
+            [m.positions[q], m.positions[q + 1], m.positions[q + 2]])) - step);
+        }
+      }
+      return w;
+    };
+    const transported = worstOf(false), naive = worstOf(true);
+    // 실측: 평행 이송 0.00104 / 매 점 프레임 0.01888 (반지름 0.03) — **18배**.
+    expect(transported).toBeLessThan(R * 0.1);     // 평행 이송은 매끄럽다
+    expect(naive).toBeGreaterThan(transported * 8);
   });
 
   it("법선이 바깥을 향하고 단위벡터다 — 조명이 뒤집히지 않는다", () => {

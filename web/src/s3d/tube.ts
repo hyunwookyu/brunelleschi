@@ -109,7 +109,8 @@ function transport(v: Vec3, t0: Vec3, t1: Vec3): Vec3 {
  * 방향이 계속 변하므로 실제로 그 자리를 지난다.
  */
 export function buildTube(
-  pts: Vec3[], radii: number[], cfg: Partial<typeof TUBE_TOL> & { caps?: boolean } = {},
+  pts: Vec3[], radii: number[],
+  cfg: Partial<typeof TUBE_TOL> & { caps?: boolean; naiveFrame?: boolean } = {},
 ): TubeMesh | null {
   const c = { ...TUBE_TOL, caps: true, ...cfg };
   const seg = Math.max(3, Math.round(c.radial_segments));
@@ -140,7 +141,13 @@ export function buildTube(
   const positions = new Float32Array(n * seg * 3);
   const normals = new Float32Array(n * seg * 3);
   for (let i = 0; i < n; i++) {
-    if (i > 0) {
+    if (c.naiveFrame) {
+      // **대조군**: 매 점에서 프레임을 새로 고른다(평행 이송 없음). 접선이 기준축과
+      // 나란해지는 곳에서 프레임이 홱 돈다 — 그 자리가 실제로 얼마나 생기는지 재려고 남긴다.
+      let n2 = cross3(T[i], [0, 1, 0]);
+      if (norm3(n2) < 1e-6) n2 = cross3(T[i], [1, 0, 0]);
+      nrm = unit3(n2);
+    } else if (i > 0) {
       nrm = transport(nrm, T[i - 1], T[i]);
       nrm = unit3(sub3(nrm, mul3(T[i], dot3(nrm, T[i]))));   // 수직성 회복(수치 표류)
     }

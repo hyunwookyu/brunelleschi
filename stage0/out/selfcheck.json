@@ -1,5 +1,5 @@
 {
-  "n_flags": 293,
+  "n_flags": 362,
   "flags": [
     {
       "path": "one_stroke_one_axis.json:by_word.square.too_bent_rate",
@@ -167,7 +167,17 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.b.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.b.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.c.relative_wrong_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
@@ -177,7 +187,17 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.ab.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.ab.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.abc.relative_wrong_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
@@ -217,6 +237,11 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.b.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.b.rescued_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -228,6 +253,11 @@
     },
     {
       "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.c.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.ab.relative_wrong_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
@@ -267,14 +297,29 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.3.b.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.3.b.rescued_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.3.c.relative_wrong_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.3.c.rescued_wrong_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.3.ab.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.3.ab.rescued_rate",
@@ -307,7 +352,17 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.5.b.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.5.b.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.5.ab.relative_wrong_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
@@ -337,6 +392,11 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.b.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.b.rescued_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -352,7 +412,17 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.ab.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.ab.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.abc.relative_wrong_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
@@ -382,7 +452,17 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.15.b.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.15.b.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.15.ab.relative_wrong_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
@@ -412,7 +492,17 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.3.b.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.3.b.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.3.c.relative_wrong_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
@@ -422,7 +512,17 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.3.ab.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.3.ab.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.3.abc.relative_wrong_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
@@ -457,12 +557,27 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.b.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.b.rescued_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.c.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.c.rescued_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.ab.relative_wrong_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
@@ -477,6 +592,11 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.abc.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.abc.rescued_wrong_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -485,6 +605,231 @@
       "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.abc.no_anchor_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.1_margin_1.5.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.1_margin_1.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.1_margin_1.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.1_margin_2.5.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.1_margin_2.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.1_margin_2.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.1_margin_4.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.1_margin_4.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.1_margin_4.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.14_margin_1.5.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.14_margin_1.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.14_margin_1.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.14_margin_2.5.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.14_margin_2.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.14_margin_2.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.14_margin_4.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.14_margin_4.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.14_margin_4.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.22_margin_1.5.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.22_margin_1.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.22_margin_1.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.22_margin_2.5.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.22_margin_2.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.22_margin_2.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.22_margin_4.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.22_margin_4.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.22_margin_4.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.3_margin_1.5.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.3_margin_1.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.3_margin_1.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.3_margin_2.5.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.3_margin_2.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.3_margin_2.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.3_margin_4.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.3_margin_4.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.3_margin_4.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.45_margin_1.5.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.45_margin_1.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.45_margin_1.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.45_margin_2.5.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.45_margin_2.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.45_margin_2.5.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.45_margin_4.relative_wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.45_margin_4.relative_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:b_threshold_sweep.by_threshold.ceiling_0.45_margin_4.relative_wrong_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "systematic_warp.json:join_radius_sweep.join_0.025.no_anchor_rate",
