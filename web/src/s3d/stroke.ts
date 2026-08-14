@@ -55,6 +55,15 @@ export const PLACE_TOL = {
    * **조용히 틀린 깊이보다 미배치가 낫다**(A-3). 값은 잠정 — S-10 실획에서 재정한다.
    */
   view_depth_guard: 0.05,
+  /**
+   * **돌린 시점의 앵커 검사 둘**(S-6). 하나만으로는 각도에 따라 구멍이 남는다 —
+   * 정합성은 **양 끝에 후보가 있을 때만** 쓸 수 있고(궤도 45°에서 38.5%가 자유단이었다),
+   * 깊이 타당성은 자유단 경로를 막는다. 함께 쓰면 모서리 오차 p90이
+   * **0.72~0.93 → 0.05~0.075**(12~18배)로 떨어진다. 배치율은 0.85~0.99 → 0.65~0.76.
+   * 값은 잠정이다(AS-13) — 0.5는 듣고 1.0은 느슨해서 45°가 되돌아간다.
+   */
+  view_far_end_check: 1,
+  view_depth_envelope: 0.5,
   /** 눈높이 게이지는 `geom3d.EYE_HEIGHT` 한 군데에만 둔다(격자와 씨앗이 같아야 한다). */
   eye_height: EYE_HEIGHT,
 };
@@ -333,6 +342,97 @@ export function findAnchor(
   return best;
 }
 
+/** 반경 안의 **모든** 앵커 후보(하나만 고르지 않는다). `findAnchor`는 최근접만 준다. */
+export function anchorCandidates(
+  strokes: Stroke[], end: Pt2, radius: number,
+): { pos: Vec3; id: string; d: number }[] {
+  const out: { pos: Vec3; id: string; d: number }[] = [];
+  for (const s of strokes) {
+    const m = Math.min(s.pts2d.length, s.pts3d.length);
+    if (m < 2) continue;
+    let best: { pos: Vec3; d: number } | null = null;
+    for (let i = 1; i < m; i++) {
+      const a = s.pts2d[i - 1], b = s.pts2d[i];
+      const ex = b[0] - a[0], ey = b[1] - a[1], L2 = ex * ex + ey * ey;
+      const t = L2 < 1e-12 ? 0
+        : Math.max(0, Math.min(1, ((end[0] - a[0]) * ex + (end[1] - a[1]) * ey) / L2));
+      const d = Math.hypot(a[0] + ex * t - end[0], a[1] + ey * t - end[1]);
+      if (d > radius || (best && d >= best.d)) continue;
+      const p0 = s.pts3d[i - 1], p1 = s.pts3d[i];
+      best = { d, pos: [p0[0] + (p1[0] - p0[0]) * t, p0[1] + (p1[1] - p0[1]) * t,
+                        p0[2] + (p1[2] - p0[2]) * t] };
+    }
+    if (best) out.push({ ...best, id: s.id });
+  }
+  return out.sort((a, b) => a.d - b.d);
+}
+
+export interface Resolved { anchor: Vec3; id: string; which: 0 | 1; byFarEnd: boolean; }
+
+/** 진단 카운터 — **왜 정합성 검사를 못 썼는지**를 세지 않으면 추측하게 된다. */
+export const RESOLVE_STATS = { pairChecked: 0, pairAccepted: 0, pairRejected: 0, oneSided: 0 };
+export const resetResolveStats = () => {
+  RESOLVE_STATS.pairChecked = 0; RESOLVE_STATS.pairAccepted = 0;
+  RESOLVE_STATS.pairRejected = 0; RESOLVE_STATS.oneSided = 0;
+};
+
+/**
+ * **획 자신의 축 제약으로 앵커를 고른다**(S-6). S-5가 남긴 가장 큰 결함의 근본 해법이다.
+ *
+ * 화면 거리만으로 고르면 돌린 시점에서 **가림** 때문에 깊이가 전혀 다른 획에 붙는다
+ * (S-5 측정: 모서리 오차 p90이 상자 대각의 0.87). 깊이 애매성 가드는 후보가 **둘 이상일 때만**
+ * 발동하므로 완전히 겹치면 못 잡았다.
+ *
+ * 그런데 **축과 앵커가 정해지면 획 전체가 정해진다** — 반대쪽 끝점이 어디로 갈지 예측된다.
+ * 앵커가 맞으면 그 예측이 반대쪽 끝의 기존 기하와 만나고, 틀리면 엉뚱한 곳을 가리킨다.
+ * **후보가 하나뿐이어도 그 하나가 틀렸다는 것을 알 수 있다** — 애매성이 아니라 **정합성**을 본다.
+ *
+ * 양 끝에 후보가 있을 때만 쓴다. 한쪽이 자유단이면 검사할 것이 없으므로 기존 규칙으로 떨어진다.
+ */
+export function resolveAnchor(
+  strokes: Stroke[], pts2d: Pt2[], axis: Axis, ctx: PlaceCtx,
+  opts: { mode?: WobblePlane; rep?: { a: Pt2; b: Pt2 }; radius: number; farEndTol?: number },
+): Resolved | null {
+  const ends: [Pt2, Pt2] = [pts2d[0], pts2d[pts2d.length - 1]];
+  const cands: [ReturnType<typeof anchorCandidates>, ReturnType<typeof anchorCandidates>] =
+    [anchorCandidates(strokes, ends[0], opts.radius),
+     anchorCandidates(strokes, ends[1], opts.radius)];
+  if (!cands[0].length && !cands[1].length) return null;
+
+  // 양 끝에 후보가 있으면 **정합성**으로 고른다
+  if (cands[0].length && cands[1].length) {
+    let best: { r: Resolved; score: number } | null = null;
+    for (const k of [0, 1] as const) {
+      for (const a of cands[k]) {
+        const r = placeStroke(pts2d, axis, a.pos, ctx, opts.mode ?? "facing", opts.rep, k);
+        if (!r.ok) continue;
+        const far = k === 0 ? r.pts3d[r.pts3d.length - 1] : r.pts3d[0];
+        // 예측한 반대쪽 끝이 그쪽 후보들 중 하나와 만나는가. 허용치는 **그 깊이에서의 접합 반경**이다.
+        const tol = (opts.farEndTol ?? 1) * (opts.radius * far[2]) / ctx.f;
+        for (const b of cands[1 - k]) {
+          const score = norm3(sub3(far, b.pos)) / Math.max(tol, 1e-9);
+          if (!best || score < best.score) {
+            best = { score, r: { anchor: a.pos, id: a.id, which: k, byFarEnd: true } };
+          }
+        }
+      }
+    }
+    // 어떤 짝도 안 맞으면 **놓지 않는다** — 후보가 하나뿐이어도 그것이 틀렸다는 뜻이다
+    if (best) {
+      RESOLVE_STATS.pairChecked += 1;
+      if (best.score <= 1) { RESOLVE_STATS.pairAccepted += 1; return best.r; }
+      RESOLVE_STATS.pairRejected += 1;
+      return null;
+    }
+  }
+
+  // 한쪽만 후보가 있다(자유단) — 검사할 것이 없으므로 최근접으로 간다
+  RESOLVE_STATS.oneSided += 1;
+  const k: 0 | 1 = cands[0].length ? 0 : 1;
+  const a = cands[k][0];
+  return { anchor: a.pos, id: a.id, which: k, byFarEnd: false };
+}
+
 let _seq = 0;
 export const resetStrokeIds = () => { _seq = 0; };
 
@@ -358,6 +458,18 @@ export interface PlaceOpts {
    * 0이면 꺼진다(기존 동작).
    */
   depthGuard?: number;
+  /**
+   * **반대쪽 끝점 정합성으로 앵커를 고른다**(S-6). 가드가 못 잡는 완전 겹침의 근본 해법.
+   * 값은 허용치 배수(1 = 그 깊이에서의 접합 반경). 0이면 꺼진다.
+   */
+  farEndCheck?: number;
+  /**
+   * **깊이 타당성**(S-6) — 정합성 검사를 못 쓴 획(한쪽이 자유단)에만 적용한다.
+   * 놓인 획이 기존 기하의 깊이 범위를 이 비율만큼 벗어나면 배치하지 않는다.
+   * 측정: 궤도 45°에서 **38.5%가 자유단**이라 정합성 검사가 아예 안 걸렸고, 그 경로가 꼬리였다.
+   * 0이면 꺼진다.
+   */
+  depthEnvelope?: number;
 }
 
 /**
@@ -370,9 +482,25 @@ export function placeInto(
   if (stroke.pts2d.length < 2 || stroke.axis === "free") return false;
   const radius = (ctx.joinRatio ?? PLACE_TOL.join_ratio) * diagOf(ctx.imgSize);
   const ends: [Pt2, Pt2] = [stroke.pts2d[0], stroke.pts2d[stroke.pts2d.length - 1]];
-  const hit = findAnchor(placed, ends, radius, opts.endpointOnly, opts.nearestSample, opts.depthGuard);
-  // 가림으로 후보가 갈리지 않으면 **놓지 않는다**. 사용자가 다시 돌리거나 이어 그으면 풀린다.
-  if (hit?.depthAmbiguous) return false;
+  let hit: { pos: Vec3; id: string; which: 0 | 1 } | null;
+  let byFarEnd = false;
+  if (opts.farEndCheck) {
+    // **획 자신의 축 제약으로 고른다**(S-6). 양 끝에 후보가 있으면 정합성으로 가른다.
+    const r = resolveAnchor(placed, stroke.pts2d, stroke.axis, ctx,
+      { mode: opts.mode, rep: stroke.rep ?? opts.rep, radius, farEndTol: opts.farEndCheck });
+    // 후보는 있었는데 어떤 짝도 안 맞으면 `null`이다 — 그때는 **놓지 않는다**.
+    if (!r && (anchorCandidates(placed, stroke.pts2d[0], radius).length
+               || anchorCandidates(placed, stroke.pts2d[stroke.pts2d.length - 1], radius).length)) {
+      return false;
+    }
+    hit = r ? { pos: r.anchor, id: r.id, which: r.which } : null;
+    byFarEnd = r?.byFarEnd ?? false;
+  } else {
+    const h = findAnchor(placed, ends, radius, opts.endpointOnly, opts.nearestSample, opts.depthGuard);
+    // 가림으로 후보가 갈리지 않으면 **놓지 않는다**. 사용자가 다시 돌리거나 이어 그으면 풀린다.
+    if (h?.depthAmbiguous) return false;
+    hit = h;
+  }
 
   let anchor: Vec3 | null = hit ? hit.pos : null;
   let joinAt: 0 | 1 | undefined = hit ? hit.which : undefined;
@@ -386,6 +514,18 @@ export function placeInto(
   const r = placeStroke(stroke.pts2d, stroke.axis, anchor, ctx,
     opts.mode ?? "facing", stroke.rep ?? opts.rep, joinAt);
   if (!r.ok) return false;
+
+  // **깊이 타당성** — 정합성으로 고르지 못한 앵커(자유단)는 이것으로 한 번 더 거른다.
+  // 앵커가 틀리면 획이 기존 기하에서 한참 떨어진 깊이로 날아간다.
+  if (opts.depthEnvelope && !byFarEnd && placed.length) {
+    const zs = placed.flatMap(t => t.pts3d.map(p => p[2]));
+    if (zs.length) {
+      const lo = Math.min(...zs), hi = Math.max(...zs), span = Math.max(hi - lo, hi * 0.05);
+      const m = opts.depthEnvelope * span;
+      const zNew = r.pts3d.map(p => p[2]);
+      if (Math.min(...zNew) < lo - m || Math.max(...zNew) > hi + m) return false;
+    }
+  }
   stroke.pts3d = r.pts3d;
   stroke.anchorRef = hit ? hit.id : null;
   stroke.joinShift = r.joinShift;

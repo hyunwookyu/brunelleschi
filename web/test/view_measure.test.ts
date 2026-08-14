@@ -13,7 +13,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { classifyStroke } from "../src/s3d/axis.js";
 import { newStroke, settle, resetStrokeIds, reprojectionGap, strokeLen2d,
-         type PlaceCtx, type Stroke } from "../src/s3d/stroke.js";
+         RESOLVE_STATS, resetResolveStats, type PlaceCtx, type Stroke } from "../src/s3d/stroke.js";
 import { viewPlaceCtx, toView, projectInView, fFromFov, type ViewPose } from "../src/s3d/viewCamera.js";
 import { norm3, sub3, unit3, cross3, dot3, mul3, type Vec3 } from "../src/s3d/geom3d.js";
 import { rng32, renderInk, gauss } from "../src/s3d/synthInk.js";
@@ -97,7 +97,8 @@ const empty = (): Acc => ({
 });
 
 /** 첫 시점에서 앞쪽 8모서리, 돌린 뒤 뒤쪽 4모서리. */
-function oneRound(deg: number, elev: number, seed: number, n: number, acc: Acc, depthGuard = 0) {
+function oneRound(deg: number, elev: number, seed: number, n: number, acc: Acc,
+                  depthGuard = 0, farEndCheck = 0, depthEnvelope = 0) {
   const r = rng32(seed);
   for (let it = 0; it < n; it++) {
     const O = groundPoint(SC, [340 + r() * 200, 430 + r() * 80]);
@@ -167,7 +168,7 @@ function oneRound(deg: number, elev: number, seed: number, n: number, acc: Acc, 
                                                 p, ctxV.principal, ctxV.f));
       return pj.every(Boolean) ? { ...s, pts2d: pj as Pt2[] } : { ...s, pts3d: [] };
     });
-    settle(movedCtx, ctxV, { mode: "facing", depthGuard });
+    settle(movedCtx, ctxV, { mode: "facing", depthGuard, farEndCheck, depthEnvelope });
 
     for (let i = before; i < movedCtx.length; i++) {
       const s = movedCtx[i];
@@ -221,12 +222,34 @@ describe("S-5 측정", () => {
     const guardSweep: Record<string, unknown> = {};
     for (const g of [0, 0.05, 0.15, 0.3]) {
       const acc = empty();
-      oneRound(75, 35, 9575, 40, acc, g);
+      oneRound(75, 35, 9575, 40, acc, g, 0);
       guardSweep[`guard_${g}`] = {
         placed_rate: rate(acc.placed_second, acc.n_second),
         joined_rate: rate(acc.joined_second, acc.n_second),
         corner_err_ratio: stat(acc.corner_err, 4),
       };
+    }
+
+    // **S-6 근본 해법** — 획 자신의 축 제약으로 반대쪽 끝점을 검사한다.
+    // 가드는 후보가 둘 이상일 때만 발동했다(완전 겹침에서 무력). 이것은 후보가 하나뿐이어도
+    // **그 하나가 틀렸다는 것**을 안다 — 애매성이 아니라 정합성을 보기 때문이다.
+    const farEndSweep: Record<string, unknown> = {};
+    for (const [g, fe, de] of [[0, 0, 0], [0.05, 0, 0], [0, 1, 0], [0, 1.5, 0],
+                               [0, 1, 0.5], [0, 1, 1.0]] as [number, number, number][]) {
+      const perAngle: Record<string, unknown> = {};
+      for (const [deg, elev] of [[45, 35], [75, 35], [110, 35]] as [number, number][]) {
+        const acc = empty();
+        resetResolveStats();
+        oneRound(deg, elev, 9500 + deg + elev * 7, 40, acc, g, fe, de);
+        perAngle[`orbit_${deg}deg_elev_${elev}`] = {
+          placed_rate: rate(acc.placed_second, acc.n_second),
+          joined_rate: rate(acc.joined_second, acc.n_second),
+          corner_err_ratio: stat(acc.corner_err, 4),
+          /** **왜 정합성 검사를 못 썼는가** — 추측하지 않으려고 센다. */
+          resolve: { ...RESOLVE_STATS },
+        };
+      }
+      farEndSweep[`guard_${g}_farEnd_${fe}_env_${de}`] = perAngle;
     }
 
     const report = {
@@ -258,6 +281,17 @@ describe("S-5 측정", () => {
         + "여기서 재는 것은 '돌린 시점에서 파이프라인이 서는가'이지 '사람이 그렇게 그리는가'가 아니다."
       ),
       by_orbit_angle: byAngle,
+      far_end_check: {
+        why: (
+          "**S-6 근본 해법** — 가드가 못 잡던 완전 겹침을 푼다. **축과 앵커가 정해지면 획 전체가 "
+          + "정해지므로 반대쪽 끝점이 어디로 갈지 예측된다.** 앵커가 맞으면 그 예측이 반대쪽 끝의 "
+          + "기존 기하와 만나고, 틀리면 엉뚱한 곳을 가리킨다. **후보가 하나뿐이어도 그 하나가 "
+          + "틀렸다는 것을 알 수 있다** — 애매성이 아니라 **정합성**을 보기 때문이다. "
+          + "양 끝에 후보가 있을 때만 쓴다(자유단이면 검사할 것이 없다). "
+          + "값은 허용치 배수이며 1이 '그 깊이에서의 접합 반경'이다."
+        ),
+        by_setting: farEndSweep,
+      },
       depth_guard_sweep: {
         why: (
           "**접합을 화면에서 판정하는 것의 대가**(S-5가 발견). 돌린 시점에서는 앞뒤 획이 화면에서 "

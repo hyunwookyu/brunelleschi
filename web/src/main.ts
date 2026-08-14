@@ -143,9 +143,12 @@ function addStrokeFromView(pts: Pt2[], raw?: number[][]) {
       ? { ...t, pts3d: p3, pts2d: p2 as Pt2[] }
       : { ...t, pts3d: [] };            // 새 시점에서 안 보이는 획은 앵커 후보가 아니다
   });
-  // **가림 방어를 켠다**(S-5). 돌린 시점에서는 앞뒤 획이 화면에서 겹쳐,
-  // 화면 거리만으로 앵커를 고르면 조용히 틀린 깊이에 놓인다(측정: 모서리 오차 p90 0.87).
-  settle(inView, ctxV, { mode: "facing", depthGuard: PLACE_TOL.view_depth_guard });
+  // **앵커 검사 둘을 켠다**(S-6). 돌린 시점에서는 앞뒤 획이 화면에서 겹쳐(가림) 화면 거리만으로
+  // 고르면 조용히 틀린 깊이에 놓인다. 획 자신의 축 제약으로 반대쪽 끝점을 검사하고(정합성),
+  // 그걸 못 쓰는 자유단은 깊이 타당성으로 막는다. p90 0.87 → 0.05.
+  settle(inView, ctxV, { mode: "facing",
+    farEndCheck: PLACE_TOL.view_far_end_check,
+    depthEnvelope: PLACE_TOL.view_depth_envelope });
 
   const placed = inView.find(t => t.id === s.id);
   if (placed?.pts3d.length) {

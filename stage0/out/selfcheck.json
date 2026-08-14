@@ -1962,13 +1962,13 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "web\\src\\s3d\\stroke.ts:254:reprojectionGap",
+      "path": "web\\src\\s3d\\stroke.ts:263:reprojectionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     }
   ],
   "n_stale": 0,
-  "constants_hash": "b1815380",
+  "constants_hash": "d69c2154",
   "scanned": [
     "axis_judgement.json",
     "constants.json",

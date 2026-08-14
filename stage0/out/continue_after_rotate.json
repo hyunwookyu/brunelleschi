@@ -1,7 +1,7 @@
 {
   "spec": "S-5 회전 후 이어 그리기. 첫 시점에서 앞쪽 8모서리를 그려 3D로 올린 뒤, 돌린 시점에서 뒤쪽 4모서리를 그린다.",
   "constants": {
-    "hash": "b1815380",
+    "hash": "d69c2154",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -26,6 +26,8 @@
       "PLACE_TOL": {
         "join_ratio": 0.015,
         "view_depth_guard": 0.05,
+        "view_far_end_check": 1,
+        "view_depth_envelope": 0.5,
         "eye_height": 1
       },
       "TUBE_TOL": {
@@ -418,6 +420,347 @@
         "median": 0,
         "p90": 0,
         "max": 0
+      }
+    }
+  },
+  "far_end_check": {
+    "why": "**S-6 근본 해법** — 가드가 못 잡던 완전 겹침을 푼다. **축과 앵커가 정해지면 획 전체가 정해지므로 반대쪽 끝점이 어디로 갈지 예측된다.** 앵커가 맞으면 그 예측이 반대쪽 끝의 기존 기하와 만나고, 틀리면 엉뚱한 곳을 가리킨다. **후보가 하나뿐이어도 그 하나가 틀렸다는 것을 알 수 있다** — 애매성이 아니라 **정합성**을 보기 때문이다. 양 끝에 후보가 있을 때만 쓴다(자유단이면 검사할 것이 없다). 값은 허용치 배수이며 1이 '그 깊이에서의 접합 반경'이다.",
+    "by_setting": {
+      "guard_0_farEnd_0_env_0": {
+        "orbit_45deg_elev_35": {
+          "placed_rate": 0.8487,
+          "joined_rate": 0.8487,
+          "corner_err_ratio": {
+            "n": 258,
+            "min": 0.002,
+            "p10": 0.0095,
+            "median": 0.0293,
+            "p90": 0.716,
+            "max": 1.3299
+          },
+          "resolve": {
+            "pairChecked": 0,
+            "pairAccepted": 0,
+            "pairRejected": 0,
+            "oneSided": 0
+          }
+        },
+        "orbit_75deg_elev_35": {
+          "placed_rate": 0.9938,
+          "joined_rate": 0.9938,
+          "corner_err_ratio": {
+            "n": 318,
+            "min": 0.0034,
+            "p10": 0.0135,
+            "median": 0.0333,
+            "p90": 0.9093,
+            "max": 1.9552
+          },
+          "resolve": {
+            "pairChecked": 0,
+            "pairAccepted": 0,
+            "pairRejected": 0,
+            "oneSided": 0
+          }
+        },
+        "orbit_110deg_elev_35": {
+          "placed_rate": 0.9125,
+          "joined_rate": 0.9125,
+          "corner_err_ratio": {
+            "n": 292,
+            "min": 0.0039,
+            "p10": 0.0122,
+            "median": 0.0332,
+            "p90": 0.9249,
+            "max": 1.7096
+          },
+          "resolve": {
+            "pairChecked": 0,
+            "pairAccepted": 0,
+            "pairRejected": 0,
+            "oneSided": 0
+          }
+        }
+      },
+      "guard_0.05_farEnd_0_env_0": {
+        "orbit_45deg_elev_35": {
+          "placed_rate": 0.7237,
+          "joined_rate": 0.7237,
+          "corner_err_ratio": {
+            "n": 220,
+            "min": 0.002,
+            "p10": 0.0103,
+            "median": 0.0288,
+            "p90": 0.7086,
+            "max": 1.3299
+          },
+          "resolve": {
+            "pairChecked": 0,
+            "pairAccepted": 0,
+            "pairRejected": 0,
+            "oneSided": 0
+          }
+        },
+        "orbit_75deg_elev_35": {
+          "placed_rate": 0.8812,
+          "joined_rate": 0.8812,
+          "corner_err_ratio": {
+            "n": 282,
+            "min": 0.0034,
+            "p10": 0.0128,
+            "median": 0.0316,
+            "p90": 0.9093,
+            "max": 1.9552
+          },
+          "resolve": {
+            "pairChecked": 0,
+            "pairAccepted": 0,
+            "pairRejected": 0,
+            "oneSided": 0
+          }
+        },
+        "orbit_110deg_elev_35": {
+          "placed_rate": 0.7562,
+          "joined_rate": 0.7562,
+          "corner_err_ratio": {
+            "n": 242,
+            "min": 0.0031,
+            "p10": 0.0095,
+            "median": 0.025,
+            "p90": 0.6698,
+            "max": 1.7096
+          },
+          "resolve": {
+            "pairChecked": 0,
+            "pairAccepted": 0,
+            "pairRejected": 0,
+            "oneSided": 0
+          }
+        }
+      },
+      "guard_0_farEnd_1_env_0": {
+        "orbit_45deg_elev_35": {
+          "placed_rate": 0.6974,
+          "joined_rate": 0.6974,
+          "corner_err_ratio": {
+            "n": 212,
+            "min": 0.0028,
+            "p10": 0.01,
+            "median": 0.025,
+            "p90": 0.7099,
+            "max": 1.3299
+          },
+          "resolve": {
+            "pairChecked": 99,
+            "pairAccepted": 44,
+            "pairRejected": 55,
+            "oneSided": 62
+          }
+        },
+        "orbit_75deg_elev_35": {
+          "placed_rate": 0.75,
+          "joined_rate": 0.75,
+          "corner_err_ratio": {
+            "n": 240,
+            "min": 0.0032,
+            "p10": 0.0107,
+            "median": 0.0258,
+            "p90": 0.0686,
+            "max": 1.9552
+          },
+          "resolve": {
+            "pairChecked": 147,
+            "pairAccepted": 71,
+            "pairRejected": 76,
+            "oneSided": 49
+          }
+        },
+        "orbit_110deg_elev_35": {
+          "placed_rate": 0.6563,
+          "joined_rate": 0.6563,
+          "corner_err_ratio": {
+            "n": 210,
+            "min": 0.0039,
+            "p10": 0.0089,
+            "median": 0.0243,
+            "p90": 0.0635,
+            "max": 1.7096
+          },
+          "resolve": {
+            "pairChecked": 148,
+            "pairAccepted": 61,
+            "pairRejected": 87,
+            "oneSided": 44
+          }
+        }
+      },
+      "guard_0_farEnd_1.5_env_0": {
+        "orbit_45deg_elev_35": {
+          "placed_rate": 0.7237,
+          "joined_rate": 0.7237,
+          "corner_err_ratio": {
+            "n": 220,
+            "min": 0.0028,
+            "p10": 0.0095,
+            "median": 0.0225,
+            "p90": 0.6336,
+            "max": 1.3299
+          },
+          "resolve": {
+            "pairChecked": 93,
+            "pairAccepted": 51,
+            "pairRejected": 42,
+            "oneSided": 59
+          }
+        },
+        "orbit_75deg_elev_35": {
+          "placed_rate": 0.8187,
+          "joined_rate": 0.8187,
+          "corner_err_ratio": {
+            "n": 262,
+            "min": 0.0032,
+            "p10": 0.0113,
+            "median": 0.0256,
+            "p90": 0.062,
+            "max": 1.9552
+          },
+          "resolve": {
+            "pairChecked": 134,
+            "pairAccepted": 84,
+            "pairRejected": 50,
+            "oneSided": 47
+          }
+        },
+        "orbit_110deg_elev_35": {
+          "placed_rate": 0.7,
+          "joined_rate": 0.7,
+          "corner_err_ratio": {
+            "n": 224,
+            "min": 0.0039,
+            "p10": 0.0089,
+            "median": 0.0247,
+            "p90": 0.0959,
+            "max": 1.7096
+          },
+          "resolve": {
+            "pairChecked": 137,
+            "pairAccepted": 69,
+            "pairRejected": 68,
+            "oneSided": 43
+          }
+        }
+      },
+      "guard_0_farEnd_1_env_0.5": {
+        "orbit_45deg_elev_35": {
+          "placed_rate": 0.6513,
+          "joined_rate": 0.6513,
+          "corner_err_ratio": {
+            "n": 198,
+            "min": 0.0028,
+            "p10": 0.01,
+            "median": 0.0225,
+            "p90": 0.0746,
+            "max": 0.8785
+          },
+          "resolve": {
+            "pairChecked": 99,
+            "pairAccepted": 42,
+            "pairRejected": 57,
+            "oneSided": 63
+          }
+        },
+        "orbit_75deg_elev_35": {
+          "placed_rate": 0.7562,
+          "joined_rate": 0.7562,
+          "corner_err_ratio": {
+            "n": 242,
+            "min": 0.0032,
+            "p10": 0.0107,
+            "median": 0.0242,
+            "p90": 0.0509,
+            "max": 1.0553
+          },
+          "resolve": {
+            "pairChecked": 145,
+            "pairAccepted": 73,
+            "pairRejected": 72,
+            "oneSided": 52
+          }
+        },
+        "orbit_110deg_elev_35": {
+          "placed_rate": 0.6563,
+          "joined_rate": 0.6563,
+          "corner_err_ratio": {
+            "n": 210,
+            "min": 0.0039,
+            "p10": 0.0088,
+            "median": 0.0243,
+            "p90": 0.0556,
+            "max": 0.9384
+          },
+          "resolve": {
+            "pairChecked": 145,
+            "pairAccepted": 62,
+            "pairRejected": 83,
+            "oneSided": 49
+          }
+        }
+      },
+      "guard_0_farEnd_1_env_1": {
+        "orbit_45deg_elev_35": {
+          "placed_rate": 0.6776,
+          "joined_rate": 0.6776,
+          "corner_err_ratio": {
+            "n": 206,
+            "min": 0.0028,
+            "p10": 0.01,
+            "median": 0.0235,
+            "p90": 0.6695,
+            "max": 1.3299
+          },
+          "resolve": {
+            "pairChecked": 98,
+            "pairAccepted": 43,
+            "pairRejected": 55,
+            "oneSided": 62
+          }
+        },
+        "orbit_75deg_elev_35": {
+          "placed_rate": 0.75,
+          "joined_rate": 0.75,
+          "corner_err_ratio": {
+            "n": 240,
+            "min": 0.0032,
+            "p10": 0.0107,
+            "median": 0.0258,
+            "p90": 0.0686,
+            "max": 1.9552
+          },
+          "resolve": {
+            "pairChecked": 147,
+            "pairAccepted": 71,
+            "pairRejected": 76,
+            "oneSided": 49
+          }
+        },
+        "orbit_110deg_elev_35": {
+          "placed_rate": 0.6563,
+          "joined_rate": 0.6563,
+          "corner_err_ratio": {
+            "n": 210,
+            "min": 0.0039,
+            "p10": 0.0088,
+            "median": 0.0239,
+            "p90": 0.0569,
+            "max": 0.9409
+          },
+          "resolve": {
+            "pairChecked": 146,
+            "pairAccepted": 61,
+            "pairRejected": 85,
+            "oneSided": 46
+          }
+        }
       }
     }
   },
