@@ -1,4 +1,4 @@
-> **폐기 (2026-08-14).** `docs/wireframe_plan.md`로 대체됐다.
+> **폐기 (2026-08-14).** `docs/wireframe_plan.md`로 대체됐다. 이후 `wireframe_plan.md`도 폐기됐고 현행은 `docs/sketch3d_plan.md`다.
 >
 > **사유**: 이 계획은 "미결정 자유도를 사전분포로 채우고 provenance로 출처를 표시한다"는 것이다.
 > 채움이 필요했던 이유는 관측이 부족해서였다. 카메라를 먼저 세우면 커서 픽셀 하나가 3D 점 하나를

@@ -4,9 +4,9 @@
 // 보이고, 채우는 방법이 여럿임을 보인다(점 찍기든 선 긋기든 지평선이든 같은 자리에 닿는다).
 //
 // DOM만 만진다. 계산은 전부 `constraints.ts`에 있고 여기서는 **표시**만 한다.
-import { ConstraintAccumulator, PRESETS, fPixelsFrom35mm, type AxisId } from "../wire/constraints.js";
-import { guides, AXIS_COLOR, HORIZON_COLOR } from "../wire/grid.js";
-import type { Pt2 } from "../wire/camera.js";
+import { ConstraintAccumulator, PRESETS, fPixelsFrom35mm, type AxisId } from "../s3d/constraints.js";
+import { guides, AXIS_COLOR, HORIZON_COLOR } from "../s3d/grid.js";
+import type { Pt2 } from "../s3d/camera.js";
 
 export type Tool = "draw" | "vp0" | "vp1" | "vp2" | "horizon";
 

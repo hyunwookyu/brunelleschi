@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import {
   lineIntersect, lsIntersection, fFromTwoVps, fFromThreeVps, gate,
   directScaleAxes, recoverCamera, frontalWorld, depthFromForeshortening, type Pt2,
-} from "../src/wire/camera.js";
+} from "../src/s3d/camera.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REF = JSON.parse(readFileSync(resolve(HERE, "camera_ref.json"), "utf-8"));

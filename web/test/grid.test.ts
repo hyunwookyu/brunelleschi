@@ -1,7 +1,7 @@
 // W-1 투시 가이드 (§3.8). 그리는 것보다 **안 그리는 것**이 중요하다.
 import { describe, it, expect } from "vitest";
-import { clipToRect, fanFromVp, guides, AXIS_COLOR } from "../src/wire/grid.js";
-import { recoverCamera, type Pt2 } from "../src/wire/camera.js";
+import { clipToRect, fanFromVp, guides, AXIS_COLOR } from "../src/s3d/grid.js";
+import { recoverCamera, type Pt2 } from "../src/s3d/camera.js";
 
 const SZ: [number, number] = [800, 600];
 const inRect = (p: Pt2) => p[0] >= -1e-6 && p[0] <= 800 + 1e-6 && p[1] >= -1e-6 && p[1] <= 600 + 1e-6;

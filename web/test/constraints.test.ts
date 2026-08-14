@@ -6,8 +6,8 @@
 import { describe, it, expect } from "vitest";
 import {
   ConstraintAccumulator, PRESETS, fPixelsFrom35mm, type Gesture,
-} from "../src/wire/constraints.js";
-import type { Pt2 } from "../src/wire/camera.js";
+} from "../src/s3d/constraints.js";
+import type { Pt2 } from "../src/s3d/camera.js";
 
 const SZ: [number, number] = [800, 600];
 const VP_L: Pt2 = [-200, 300], VP_R: Pt2 = [1400, 300];

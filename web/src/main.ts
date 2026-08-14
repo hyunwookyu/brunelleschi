@@ -1,13 +1,12 @@
 // 엔트리 — W-1 카메라 확정 화면. 계획서 §3.
 //
 // 잉크 캔버스 하나에 **가이드 → 확정 제스처 → 사용자 획** 순으로 겹쳐 그린다.
-// 계산은 전부 `wire/`에 있고 여기는 DOM 배선만 한다.
+// 계산은 전부 `s3d/`에 있고 여기는 DOM 배선만 한다.
 import { InkCanvas } from "./capture/inkCanvas.js";
 import { CameraPanel, type Tool } from "./ui/cameraPanel.js";
-import { PRESETS } from "./wire/constraints.js";
-import { AXIS_COLOR } from "./wire/grid.js";
-import { parseStroke } from "./wire/strokeEdge.js";
-import type { Pt2 } from "./wire/camera.js";
+import { PRESETS } from "./s3d/constraints.js";
+import { AXIS_COLOR } from "./s3d/grid.js";
+import type { Pt2 } from "./s3d/camera.js";
 
 const canvas = document.getElementById("ink") as HTMLCanvasElement;
 const statusEl = document.getElementById("status")!;
@@ -22,8 +21,8 @@ function cssSize(): [number, number] {
 
 const panel = new CameraPanel(cssSize(), () => refresh());
 
-/** 사용자가 그린 획(그리기 도구) — W-2 추론 엔진이 붙기 전까지는 엣지만 잡아 둔다. */
-const drawn: { a: Pt2; b: Pt2 }[] = [];
+/** 사용자가 그린 획 — **원본 점열 그대로** 보관한다. 3D 배치는 S-3이 붙는다. */
+const drawn: { a: Pt2; b: Pt2; pts: Pt2[] }[] = [];
 
 function fit() {
   const [w, h] = cssSize();
@@ -43,8 +42,9 @@ const ink = new InkCanvas(canvas, {
     if (pts.length < 2) return;
     const a = pts[0], b = pts[pts.length - 1];
     if (panel.tool === "draw") {
-      // 획을 직선 런으로 쪼개 둔다(W-0). 배치는 W-3 앵커 체인이 한다.
-      for (const r of parseStroke(pts).runs) drawn.push({ a: r.a as Pt2, b: r.b as Pt2 });
+      // **획을 쪼개지 않는다**(계획서 §1 "획을 버리지 않는다"). 지금은 화면에만 남기고,
+      // 3D 배치는 S-3(획 → 3D)이 붙는다.
+      drawn.push({ a, b, pts });
     } else {
       panel.handleStroke(a, b);
     }
@@ -63,7 +63,9 @@ function drawBelowInk(ctx: CanvasRenderingContext2D) {
   ctx.lineWidth = 2;
   for (const d of drawn) {
     ctx.strokeStyle = "#111"; ctx.globalAlpha = 0.85;
-    ctx.beginPath(); ctx.moveTo(d.a[0], d.a[1]); ctx.lineTo(d.b[0], d.b[1]); ctx.stroke();
+    ctx.beginPath();
+    d.pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])));
+    ctx.stroke();
   }
   panel.vps().forEach((v, i) => {
     if (!v || v[0] < 0 || v[0] > w || v[1] < 0 || v[1] > h) return;
