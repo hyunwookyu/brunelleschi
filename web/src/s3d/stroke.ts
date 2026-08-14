@@ -579,6 +579,58 @@ export function placeOnSpan(
   return best && best.score <= 1 ? best : null;
 }
 
+// ---------------------------------------------------------------- S-7 사용자 지정 배치
+
+/**
+ * **사용자가 고른 앵커로 놓는다**(S-7, D-S15 c·d). **검사하지 않는다 — 사용자가 판단했다.**
+ *
+ * 자동 경로가 놓지 못한 획(배치율 0.65~0.82)과 **일관되게 틀리게 놓인 획**(S-6 1의 잔여
+ * 한계)이 여기로 온다. A-3의 "애매하면 놓지 않는다"는 **버린다**는 뜻이 아니었다 —
+ * 이것이 그 완결이다.
+ *
+ * 무엇이 정해지느냐는 **고른 개수와 획의 축**에 달렸다:
+ * - 축이 있고 한쪽을 골랐다 → 축 + 앵커가 획 전체를 정한다. **미확정 아님.**
+ * - 축이 없고 양쪽을 골랐다 → 두 앵커가 평면을 정한다(§4.3 폴백과 같은 평면). **미확정 아님.**
+ * - 축이 없고 한쪽만 골랐다 → 깊이가 **그 앵커의 깊이**라는 것 말고는 근거가 없다.
+ *   화면 평행 평면에 놓고 **미확정으로 표시**한다(`provisional`).
+ */
+export function placeByUser(
+  stroke: Stroke, ctx: PlaceCtx, picks: { a?: Vec3; b?: Vec3 }, mode: WobblePlane = "facing",
+): { pts3d: Vec3[]; provisional: boolean } | null {
+  const pts = stroke.pts2d;
+  if (pts.length < 2) return null;
+  const dir = axisVec(stroke.axis, ctx, stroke.rep);
+  if (dir && (picks.a || picks.b)) {
+    const which: 0 | 1 = picks.a ? 0 : 1;
+    const r = placeStroke(pts, stroke.axis, (picks.a ?? picks.b)!, ctx, mode, stroke.rep, which);
+    return r.ok ? { pts3d: r.pts3d, provisional: false } : null;
+  }
+  if (picks.a && picks.b) {
+    const pl = wobblePlane(picks.a, sub3(picks.b, picks.a), "facing");
+    const got = placeOnPlane(pts, pl, ctx);
+    if (!got) return null;
+    got[0] = picks.a; got[got.length - 1] = picks.b;      // 양 끝 접합(§1.2)
+    return { pts3d: got, provisional: false };
+  }
+  const one = picks.a ?? picks.b;
+  if (!one) return null;
+  const got = placeOnPlane(pts, { n: [0, 0, 1], d: one[2] }, ctx);
+  if (!got) return null;
+  got[picks.a ? 0 : got.length - 1] = one;
+  return { pts3d: got, provisional: true };               // 깊이 근거가 앵커 하나뿐이다
+}
+
+/** 깊이를 사용자가 직접 준다(S-7). 화면 평행 평면 — **언제나 미확정**이다. */
+export function placeAtDepth(pts2d: Pt2[], z: number, ctx: PlaceCtx): Vec3[] | null {
+  return z > 1e-6 ? placeOnPlane(pts2d, { n: [0, 0, 1], d: z }, ctx) : null;
+}
+
+/** 이미 놓인 획들의 깊이 범위. 깊이 슬라이더의 눈금이 된다. */
+export function depthRange(strokes: Stroke[]): [number, number] | null {
+  const zs = strokes.flatMap(s => s.pts3d.map(p => p[2]));
+  return zs.length ? [Math.min(...zs), Math.max(...zs)] : null;
+}
+
 let _seq = 0;
 export const resetStrokeIds = () => { _seq = 0; };
 

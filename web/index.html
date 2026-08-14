@@ -37,6 +37,7 @@
     #tools button[data-t="vp2"].on{background:#2471a3}
     #tools button[data-t="horizon"].on{background:#666}
     #tools button[data-t="draw"].on{background:#111}
+    #tools button[data-t="edit"].on{background:#b9770e}
     #tools .swatch{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:1px}
 
     /* 상태 = 이론서 5.3 자유도 회계 */
@@ -63,6 +64,12 @@
     #strokes{font-size:13px;line-height:1.5}
     #strokes .hint{color:#666;font-size:12px;margin-top:4px;line-height:1.45}
     #axispick{display:none;gap:4px;flex-wrap:wrap;margin-top:8px}
+    #fix{margin-top:8px;font-size:12px;color:#444}
+    #fix .row{display:flex;align-items:center;gap:6px;margin-top:5px}
+    #fix button{height:26px;padding:0 8px;border:1px solid #c8c8c8;background:#fff;
+      border-radius:6px;cursor:pointer;font-size:12px}
+    #fix button.on{background:#b9770e;color:#fff;border-color:transparent}
+    #fix input[type=range]{flex:1;min-width:90px}
     #axispick button{height:28px;padding:0 9px;border:1px solid #c8c8c8;background:#fff;
       border-radius:6px;cursor:pointer;font-size:12px}
     #lensrow{display:flex;align-items:center;gap:8px}
@@ -85,6 +92,7 @@
         <button data-t="vp2"><span class="swatch" style="background:#2471a3"></span>축3</button>
         <button data-t="horizon">지평선</button>
         <button data-t="draw">그리기</button>
+        <button data-t="edit" title="놓이지 않은 획을 골라 붙일 곳을 지정합니다">고치기</button>
       </div>
     </div>
     <div id="view">
@@ -108,6 +116,7 @@
         <h3>획</h3>
         <div id="strokes"></div>
         <div id="axispick"></div>
+        <div id="fix"></div>
       </div>
       <div class="sec">
         <h3>프리셋</h3>

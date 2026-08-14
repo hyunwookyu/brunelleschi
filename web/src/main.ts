@@ -9,7 +9,8 @@ import { CameraPanel, type Tool } from "./ui/cameraPanel.js";
 import { PRESETS } from "./s3d/constraints.js";
 import { AXIS_COLOR } from "./s3d/grid.js";
 import { classifyStroke, AXIS_TOL, type Axis } from "./s3d/axis.js";
-import { newStroke, settle, reprojectAll, PLACE_TOL,
+import { newStroke, settle, reprojectAll, PLACE_TOL, anchorCandidates, placeByUser,
+         placeAtDepth, depthRange, diagOf,
          type Stroke, type PlaceCtx, type PlaceOpts } from "./s3d/stroke.js";
 import { buildSession, downloadSession } from "./ui/sessionExport.js";
 import { viewPlaceCtx, toView, fromView, projectInView } from "./s3d/viewCamera.js";
@@ -36,6 +37,103 @@ const lensEl = document.getElementById("lens") as HTMLInputElement;
 const lensVal = document.getElementById("lensval")!;
 const strokeEl = document.getElementById("strokes")!;
 const pickEl = document.getElementById("axispick")!;
+const fixEl = document.getElementById("fix")!;
+
+// ---------------------------------------------------------------- S-7 미배치 고치기 (D-S15 b~d)
+
+/**
+ * **놓지 않되 버리지 않는다**(D-S15)의 구현. 자동 경로가 놓지 못한 획과 **일관되게 틀리게
+ * 놓인 획**(S-6 1의 잔여 한계)을 사용자가 직접 붙인다.
+ *
+ * 상태는 앱에만 둔다 — `Stroke`를 늘리지 않는다(`rawPoints`·`viewOrigin`과 같은 방식).
+ * `provisional`은 **깊이 근거가 앵커 하나뿐인 배치**다(사용자가 깊이를 직접 준 것 포함).
+ */
+let selId: string | null = null;
+const picks: { a?: Vec3; b?: Vec3 } = {};
+const provisional = new Set<string>();
+/** 지금 보이는 후보 점(화면 좌표) — 클릭 판정과 그리기가 같은 목록을 쓴다. */
+let candDots: { at: Pt2; pos: Vec3; end: 0 | 1 }[] = [];
+
+const selected = () => drawn.find(s => s.id === selId) ?? null;
+
+/** 선택된 획의 양 끝 앵커 후보를 **첫 카메라 화면 좌표로** 모은다. */
+function refreshCandidates() {
+  candDots = [];
+  const ctx = placeCtx(), s = selected();
+  if (!ctx || !s || viewOrigin.has(s.id)) return;      // view 획은 좌표계가 달라 여기 못 그린다
+  const radius = PLACE_TOL.join_ratio * diagOf(ctx.imgSize) * 3;   // 고를 수 있게 넉넉히
+  const others = drawn.filter(t => t.id !== s.id && t.pts3d.length);
+  for (const end of [0, 1] as const) {
+    const at = end === 0 ? s.pts2d[0] : s.pts2d[s.pts2d.length - 1];
+    for (const c of anchorCandidates(others, at, radius)) {
+      const p = project(c.pos, ctx.principal, ctx.f);
+      if (p) candDots.push({ at: p, pos: c.pos, end });
+    }
+  }
+}
+
+/** 클릭 한 번 — 후보 점을 골랐으면 붙이고, 아니면 가장 가까운 획을 선택한다. */
+function editClick(at: Pt2) {
+  const ctx = placeCtx();
+  if (!ctx) return;
+  const hit = candDots.find(d => Math.hypot(d.at[0] - at[0], d.at[1] - at[1]) < 11);
+  if (hit && selId) {
+    picks[hit.end === 0 ? "a" : "b"] = hit.pos;
+    applyPicks();
+    return;
+  }
+  // 가장 가까운 획을 고른다 — **놓인 것도 고를 수 있다**(D-S15 d: 일관되게 틀린 배치를 되돌린다)
+  let best: { id: string; d: number } | null = null;
+  for (const s of drawn) {
+    const pts = screenPts(s);
+    if (!pts) continue;
+    for (let i = 1; i < pts.length; i++) {
+      const d = segDist(at, pts[i - 1], pts[i]);
+      if (!best || d < best.d) best = { id: s.id, d };
+    }
+  }
+  selId = best && best.d < 18 ? best.id : null;
+  delete picks.a; delete picks.b;
+  refreshCandidates();
+}
+
+/** 고른 앵커로 놓는다. 검사하지 않는다 — **사용자가 판단했다**. */
+function applyPicks() {
+  const ctx = placeCtx(), s = selected();
+  if (!ctx || !s) return;
+  const r = placeByUser(s, ctx, picks);
+  if (!r) { lastNote = "그 앵커로는 놓이지 않습니다 — 다른 점을 골라 보세요"; return; }
+  s.pts3d = r.pts3d;
+  s.joinShift = 0;
+  if (r.provisional) provisional.add(s.id); else provisional.delete(s.id);
+  markProvisional(s);
+  lastNote = r.provisional
+    ? "붙였습니다 — **깊이는 미확정**입니다(반대쪽 끝도 지정하면 확정됩니다)"
+    : "붙였습니다.";
+  strokeView.sync(drawn, ctx.f);
+}
+
+/** 미확정 배치는 **색으로 구분한다** — `Stroke.color`가 이미 있으므로 자료구조를 늘리지 않는다. */
+function markProvisional(s: Stroke) {
+  s.color = provisional.has(s.id) ? "#b9770e" : "#111";
+}
+
+/** 점과 선분의 거리. 획 선택에 쓴다. */
+function segDist(p: Pt2, a: Pt2, b: Pt2): number {
+  const ex = b[0] - a[0], ey = b[1] - a[1], L2 = ex * ex + ey * ey;
+  const t = L2 < 1e-12 ? 0 : Math.max(0, Math.min(1, ((p[0] - a[0]) * ex + (p[1] - a[1]) * ey) / L2));
+  return Math.hypot(a[0] + ex * t - p[0], a[1] + ey * t - p[1]);
+}
+
+/** 획을 **첫 카메라 화면 좌표**로 낸다. 배치된 것은 3D에서 투영, 미배치는 `pts2d` 그대로. */
+function screenPts(s: Stroke): Pt2[] | null {
+  const cam = placeCtx();
+  if (s.pts3d.length && cam) {
+    const pj = s.pts3d.map(p => project(p, cam.principal, cam.f));
+    return pj.every(Boolean) ? (pj as Pt2[]) : null;
+  }
+  return viewOrigin.has(s.id) ? null : s.pts2d;
+}
 
 const viewport = new Viewport(document.getElementById("view")!);
 // 굵기는 **이미 앱에 있는 6튜플**을 조회해서 쓴다 — `Stroke`를 늘리지 않는다(A-3).
@@ -108,6 +206,7 @@ const ink = new InkCanvas(canvas, {
     const pts = stroke.points.map(p => [p[0], p[1]] as Pt2);
     if (pts.length < 2) return;
     if (panel.tool === "draw") addStroke(pts, stroke.points);
+    else if (panel.tool === "edit") editClick(pts[0]);
     else panel.handleStroke(pts[0], pts[pts.length - 1]);
     refresh();
   },
@@ -224,6 +323,31 @@ function drawBelowInk(ctx: CanvasRenderingContext2D) {
     ctx.stroke();
   }
   ctx.setLineDash([]);
+  // **S-7 고치기** — 선택한 획을 굵게, 앵커 후보를 점으로. 고른 것은 채워서 구분한다.
+  const sel = selected();
+  if (sel) {
+    const pts = screenPts(sel);
+    if (pts && pts.length > 1) {
+      ctx.save();
+      ctx.strokeStyle = "#b9770e"; ctx.lineWidth = 4; ctx.globalAlpha = 0.55;
+      ctx.beginPath();
+      pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])));
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.save();
+    for (const d of candDots) {
+      const taken = d.end === 0 ? picks.a : picks.b;
+      const isTaken = !!taken && taken[0] === d.pos[0] && taken[1] === d.pos[1] && taken[2] === d.pos[2];
+      ctx.beginPath();
+      ctx.arc(d.at[0], d.at[1], isTaken ? 7 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = d.end === 0 ? "#b9770e" : "#2471a3";
+      ctx.globalAlpha = isTaken ? 1 : 0.5;
+      ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = "#fff"; ctx.stroke();
+    }
+    ctx.restore();
+  }
   panel.vps().forEach((v, i) => {
     if (!v || v[0] < 0 || v[0] > w || v[1] < 0 || v[1] > h) return;
     ctx.globalAlpha = 1; ctx.fillStyle = AXIS_COLOR[i];
@@ -255,9 +379,80 @@ function renderStrokes() {
   const hidden = drawn.filter(s => !s.pts3d.length && viewOrigin.has(s.id)).length;
   if (hidden) rows.push(`<div class="hint">그 중 ${hidden}획은 <b>돌린 시점에서 그린 미배치 획</b>이라 여기 안 보입니다 — 그 시점으로 돌아가면 보입니다(S-7에서 손봅니다)</div>`);
   strokeEl.innerHTML = rows.join("");
+  renderFix(unplaced);
   // **놓지 못한 미분류에만 축 선택을 띄운다.** 면 위 사선으로 이미 놓인 미분류 획에
   // 축 지정을 권하면 맞게 놓인 것을 축으로 옮기게 된다(A-3: 조용히 틀린 축을 만들지 않는다).
   pickEl.style.display = freeUnplaced ? "flex" : "none";
+}
+
+/**
+ * **미배치 획을 화면에 남기고 사용자가 지정하게 한다**(D-S15 b~d).
+ * 목록에서 고르면 캔버스에 후보 점이 뜨고, 점을 누르면 붙는다.
+ * 후보가 없거나 깊이를 직접 주고 싶으면 슬라이더를 쓴다 — **그 배치는 미확정으로 표시된다**.
+ */
+function renderFix(unplaced: Stroke[]) {
+  const ctx = placeCtx();
+  const sel = selected();
+  if (!ctx || (!unplaced.length && !sel)) { fixEl.innerHTML = ""; return; }
+  const rows: string[] = [];
+  if (panel.tool !== "edit") {
+    rows.push('<div class="hint">놓이지 않은 획은 <b>고치기</b>로 직접 붙일 수 있습니다</div>');
+  }
+  if (unplaced.length) {
+    rows.push('<div class="row" style="flex-wrap:wrap">놓지 못한 획: '
+      + unplaced.map(s => `<button data-fix="${s.id}"${s.id === selId ? ' class="on"' : ''}>`
+        + `${s.id}${viewOrigin.has(s.id) ? " (돌린 시점)" : ""}</button>`).join(" ")
+      + "</div>");
+  }
+  if (sel) {
+    const zr = depthRange(drawn.filter(t => t.id !== sel.id));
+    const nA = candDots.filter(d => d.end === 0).length, nB = candDots.length - nA;
+    rows.push(`<div class="row"><b>${sel.id}</b> 선택됨 — 후보 시작 ${nA} · 끝 ${nB}`
+      + (provisional.has(sel.id) ? ' · <span style="color:#b9770e">깊이 미확정</span>' : "")
+      + "</div>");
+    if (viewOrigin.has(sel.id)) {
+      rows.push('<div class="hint">돌린 시점에서 그린 획입니다 — 그 시점에서만 보입니다</div>');
+    } else if (candDots.length) {
+      rows.push('<div class="hint">캔버스의 점을 누르면 그 자리에 붙습니다'
+        + '(<span style="color:#b9770e">●</span> 시작 · <span style="color:#2471a3">●</span> 끝). '
+        + '한쪽만 고르면 깊이는 미확정입니다</div>');
+    } else {
+      rows.push('<div class="hint">닿는 기존 획이 없습니다 — 깊이를 직접 주세요(미확정으로 남습니다)</div>');
+    }
+    if (zr) {
+      rows.push(`<div class="row">깊이 <input id="depth" type="range" min="${(zr[0] * 0.5).toFixed(3)}"`
+        + ` max="${(zr[1] * 1.5).toFixed(3)}" step="${((zr[1] - zr[0]) / 200 || 0.01).toFixed(4)}"`
+        + ` value="${(sel.pts3d.length ? sel.pts3d[0][2] : (zr[0] + zr[1]) / 2).toFixed(3)}">`
+        + '<button id="clearsel">선택 해제</button></div>');
+    }
+  }
+  fixEl.innerHTML = rows.join("");
+  fixEl.querySelectorAll<HTMLButtonElement>("button[data-fix]").forEach(b => {
+    b.addEventListener("click", () => {
+      selId = b.dataset.fix!;
+      delete picks.a; delete picks.b;
+      refreshCandidates();
+      refresh();
+    });
+  });
+  const dep = fixEl.querySelector<HTMLInputElement>("#depth");
+  dep?.addEventListener("input", () => {
+    const s2 = selected(), c2 = placeCtx();
+    if (!s2 || !c2) return;
+    const got = placeAtDepth(s2.pts2d, Number(dep.value), c2);
+    if (!got) return;
+    s2.pts3d = got;
+    provisional.add(s2.id);                    // **깊이를 손으로 준 배치는 언제나 미확정이다**
+    markProvisional(s2);
+    strokeView.sync(drawn, c2.f);
+    ink.redraw();
+  });
+  // 끌고 있는 동안은 기하만 갱신하고(패널을 다시 그리면 슬라이더가 끊긴다),
+  // 놓을 때 개수·안내를 함께 맞춘다.
+  dep?.addEventListener("change", () => refresh());
+  fixEl.querySelector("#clearsel")?.addEventListener("click", () => {
+    selId = null; delete picks.a; delete picks.b; candDots = []; refresh();
+  });
 }
 
 function refresh() {
@@ -412,4 +607,9 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
 (window as unknown as { s2s: unknown }).s2s = {
   strokes: drawn, panel, addStroke, placeCtx, refresh, viewport, strokeView, exportSession,
   addStrokeFromView, worldAxes, setViewMode,
+  // **S-7 고치기** — 스크립트 확인과 S-10 Playwright가 쓴다(후보 점 좌표가 없으면 클릭을 못 만든다).
+  editClick, provisional, select: (id: string | null) => {
+    selId = id; delete picks.a; delete picks.b; refreshCandidates(); refresh();
+  },
+  candidates: () => candDots.map(d => ({ at: d.at, end: d.end })),
 };
