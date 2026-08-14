@@ -17,6 +17,66 @@
     "condition_labels": "모든 블록은 (판정/oracle, end_jitter, skew, grade, 접합 방식)의 조합이다. `judged`=판정 통과·end_jitter 0 / `judged_end_jitter`=판정 통과·end_jitter 0.02 / `oracle_axis`=참 축·end_jitter 0. **참 축 + end_jitter 0은 가장 유리한 조건이므로 결론의 대표값으로 쓰지 않는다**(리뷰어 지적)."
   },
   "caveat": "**합성이다.** 숙련자가 실제로 어떻게 긋는지는 이 표본에 없다(V-o·AS-1). 여기서 재는 것은 '같은 노이즈 수준에서 배치 방식이 얼마나 다른가'이며, 대표 조건은 활 마루 skew=0.12(치우침)다 — 0.5(대칭)는 판정이 공짜로 맞는 특수 조건이다(D-S4).",
+  "constants": {
+    "hash": "653c1f62",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
   "camera": {
     "vps": [
       [

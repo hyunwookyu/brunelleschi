@@ -1,0 +1,73 @@
+// **공유 상수 스냅샷** — 하류 재측정 누락을 자동으로 잡기 위한 것.
+//
+// 같은 유형이 세 번 재발했다.
+//   1. `hash(str)` 비결정 시드 → Track 2 전체가 낡음
+//   2. 등급 centroid 단위 혼동 → 마우스 판정이 낡음
+//   3. `AXIS_TOL` 기본값 변경(S-2b의 b) → **S-3 측정 전체가 낡음**
+//
+// 셋 다 "공유 상수·기본값이 바뀌면 그것에 의존하는 측정이 낡는다"는 하나의 원인이고,
+// **사람이 기억해서 잡을 수 있는 종류가 아니다.** 그래서 기계가 잡게 한다.
+//
+// ```
+// 측정 산출물마다 그 실행의 상수 스냅샷을 함께 기록한다   (여기)
+//   → selfcheck가 현재 상수와 대조해 다르면 STALE 플래그   (selfcheck.py)
+//   → 문서는 산출물을 파일명@해시로 인용한다              (CLAUDE.md §5)
+// ```
+import { AXIS_TOL } from "../src/s3d/axis.js";
+import { CONSENSUS_TOL } from "../src/s3d/consensus.js";
+import { PLACE_TOL } from "../src/s3d/stroke.js";
+import { TUBE_TOL } from "../src/s3d/tube.js";
+import { EYE_HEIGHT } from "../src/s3d/geom3d.js";
+import { VP_INFINITE_RATIO } from "../src/s3d/camera.js";
+import { INK_GRADES } from "../src/s3d/synthInk.js";
+
+/**
+ * **측정 결과를 바꿀 수 있는 모든 공유 상수.** 여기 빠진 것이 바뀌면 STALE이 안 잡힌다 —
+ * 새 임계를 만들 때 반드시 여기 넣는다.
+ */
+export const SHARED_CONSTANTS = {
+  AXIS_TOL,
+  CONSENSUS_TOL,
+  PLACE_TOL,
+  TUBE_TOL,
+  EYE_HEIGHT,
+  VP_INFINITE_RATIO,
+  INK_GRADES,
+} as const;
+
+/** 키 순서에 무관한 정준 문자열. 객체 리터럴 순서가 바뀌어도 해시가 안 흔들린다. */
+function canonical(v: unknown): string {
+  if (v === null || typeof v !== "object") return JSON.stringify(v);
+  if (Array.isArray(v)) return `[${v.map(canonical).join(",")}]`;
+  const o = v as Record<string, unknown>;
+  return `{${Object.keys(o).sort().map(k => `${JSON.stringify(k)}:${canonical(o[k])}`).join(",")}}`;
+}
+
+/** FNV-1a 32bit — **결정론적**이어야 한다(V-H: `hash(str)`·`Math.random` 금지). */
+export function stableHash(s: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, "0");
+}
+
+export interface ConstantsSnapshot {
+  hash: string;
+  values: typeof SHARED_CONSTANTS;
+  note: string;
+}
+
+/** 산출물에 넣을 스냅샷. **모든 측정 하네스가 이것을 `constants` 필드로 낸다.** */
+export function constantsSnapshot(): ConstantsSnapshot {
+  const text = canonical(SHARED_CONSTANTS);
+  return {
+    hash: stableHash(text),
+    values: SHARED_CONSTANTS,
+    note: (
+      "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 "
+      + "다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+    ),
+  };
+}

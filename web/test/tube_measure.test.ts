@@ -14,6 +14,7 @@ import { project, norm3, sub3, type Vec3 } from "../src/s3d/geom3d.js";
 import { rng32 } from "../src/s3d/synthInk.js";
 import { scene, groundPoint, boxEdges, drawEdges, rotateAbout, stat, round } from "./scene3d.js";
 import type { Pt2 } from "../src/s3d/camera.js";
+import { constantsSnapshot } from "./constants.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -161,6 +162,7 @@ describe("S-4 측정", () => {
         "three.js `TubeGeometry`는 **반지름이 상수**다. §S-4가 요구하는 속도 기반 굵기는 "
         + "점마다 다른 반지름이므로 직접 짠다. 표준 기하이고 참조 저장소는 보지 않았다(§3)."
       ),
+      constants: constantsSnapshot(),
       condition: { grade: "medium", skew: 0.12, end_jitter: 0.01, boxes: 40, seed: 9100,
                    radial_segments: TUBE_TOL.radial_segments, base_width_px: TUBE_TOL.base_width_px },
       scale: {

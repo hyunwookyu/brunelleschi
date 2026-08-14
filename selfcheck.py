@@ -2,7 +2,8 @@
 
 각 단계 완료 시 실행. 멈추지 말고 원인 확인 후 progress.md에 보고한다.
 플래그: 1e-10 미만 오차 / 정확히 1.0·0.0 비율 / 이전 대비 완전 불변 / 0 고정 카운터 /
-분포 전체가 한 값 / **복원↔역연산 왕복 지표**(자기참조 유형 3).
+분포 전체가 한 값 / **복원↔역연산 왕복 지표**(자기참조 유형 3) /
+**STALE 산출물**(공유 상수가 바뀌었는데 다시 안 돌린 것 — 하류 재측정 누락).
 
 의심 ≠ 오류. 각 플래그는 원인(자기참조·무노이즈·측정범위·미작동)을 사람이 확인할 대상.
 """
@@ -72,6 +73,9 @@ def _constant_stats(obj, path="") -> list[dict]:
 
 
 def check(report: dict, prev: dict | None = None) -> list[dict]:
+    # `constants` 스냅샷은 **측정이 아니라 메타데이터**다 — 임계값 자체가 0·1이면
+    # 값 규칙이 전부 걸린다(실제로 걸렸다). 대조는 `scan_stale_constants`가 따로 한다.
+    report = {k: v for k, v in report.items() if k != "constants"}
     flags = _degenerate_distributions(report) + _constant_stats(report)
     prev_flat = dict(_walk(prev)) if prev else {}
     for path, val in _walk(report):
@@ -181,6 +185,58 @@ def scan_roundtrip_metrics(root: Path) -> list[dict]:
     return flags
 
 
+def _flatten(obj, path="") -> dict:
+    out = {}
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            out.update(_flatten(v, f"{path}.{k}" if path else k))
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            out.update(_flatten(v, f"{path}[{i}]"))
+    else:
+        out[path] = obj
+    return out
+
+
+def scan_stale_constants(outdir: Path, reports: dict[str, dict]) -> list[dict]:
+    """**하류 재측정 누락 탐지** — 공유 상수가 바뀌었는데 안 다시 돌린 산출물을 잡는다.
+
+    같은 유형이 세 번 재발했다: `hash(str)` 비결정 시드(Track 2 전체),
+    등급 centroid 단위 혼동(마우스 판정), **`AXIS_TOL` 기본값 변경(S-2b의 b → S-3 측정)**.
+    셋 다 "공유 상수가 바뀌면 그것에 의존하는 측정이 낡는다"는 하나의 원인이고,
+    사람이 기억해서 잡을 수 있는 종류가 아니다.
+
+    `constants.json`(현재 값)과 각 산출물의 `constants` 스냅샷을 대조한다.
+    다르면 **STALE** — 그 산출물도, 그것을 인용한 문서도 낡았다.
+    """
+    cur_path = outdir / "constants.json"
+    if not cur_path.exists():
+        return [{"path": "constants.json", "val": None,
+                 "flag": "현재 상수 스냅샷이 없다 → `npx vitest run test/constants.test.ts`"}]
+    cur = json.loads(cur_path.read_text(encoding="utf-8"))
+    cur_flat = _flatten(cur.get("values", {}))
+    flags = []
+    for name, rep in sorted(reports.items()):
+        if name == "constants.json":
+            continue
+        snap = rep.get("constants")
+        if not isinstance(snap, dict) or "hash" not in snap:
+            flags.append({"path": name, "val": None,
+                          "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"})
+            continue
+        if snap.get("hash") == cur.get("hash"):
+            continue
+        diff = []
+        old = _flatten(snap.get("values", {}))
+        for k in sorted(set(old) | set(cur_flat)):
+            if old.get(k) != cur_flat.get(k):
+                diff.append(f"{k}: {old.get(k)} → {cur_flat.get(k)}")
+        flags.append({"path": f"{name}@{snap.get('hash')}", "val": "; ".join(diff[:6]) or "(값 동일, 해시만 다름)",
+                      "flag": f"**STALE** — 현재 상수({cur.get('hash')})와 다른 상수로 측정됐다. "
+                              f"다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"})
+    return flags
+
+
 def scan_nondeterministic_seeds(root: Path) -> list[dict]:
     """소스에서 비결정 시드 패턴을 정적 탐지(B-0 d). hash(str)를 시드에 쓰면 안 된다."""
     import re
@@ -212,6 +268,7 @@ def main():
     # 살아있는 측정만 본다 — W 전환 이후 산출물.
     skip = {"score_prev.json", "selfcheck.json", "score_baseline_deprecated.json"}
     flags = []
+    reports: dict[str, dict] = {}
     for p in sorted(outdir.glob("*.json")):
         if p.name in skip:
             continue
@@ -219,14 +276,20 @@ def main():
             report = json.loads(p.read_text(encoding="utf-8"))
         except Exception as ex:
             flags.append({"path": p.name, "val": None, "flag": f"JSON 파싱 실패: {ex}"}); continue
+        reports[p.name] = report
         for f in check(report, prev if p.name == "score.json" else None):
             f["path"] = f"{p.name}:{f['path']}"
             flags.append(f)
+
+    stale = scan_stale_constants(outdir, reports)      # 하류 재측정 누락 (재발 유형 자동 탐지)
+    flags += stale
 
     flags += scan_nondeterministic_seeds(ROOT)      # B-0 d: 비결정 시드 정적 탐지
     flags += scan_roundtrip_metrics(ROOT)          # 자기참조 3: 복원↔역연산 왕복 지표
 
     out = {"n_flags": len(flags), "flags": flags,
+           "n_stale": sum(1 for f in stale if "STALE" in f["flag"]),
+           "constants_hash": (reports.get("constants.json") or {}).get("hash"),
            "scanned": [p.name for p in sorted(outdir.glob("*.json")) if p.name not in skip],
            "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."}
     (ROOT / "stage0" / "out" / "selfcheck.json").write_text(

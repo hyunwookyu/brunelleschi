@@ -26,6 +26,7 @@ import {
   type Scene, type DrawnEdge,
 } from "./scene3d.js";
 import type { Pt2 } from "../src/s3d/camera.js";
+import { constantsSnapshot } from "./constants.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -341,6 +342,7 @@ describe("S-3 측정", () => {
         + "여기서 재는 것은 '같은 노이즈 수준에서 배치 방식이 얼마나 다른가'이며, "
         + "대표 조건은 활 마루 skew=0.12(치우침)다 — 0.5(대칭)는 판정이 공짜로 맞는 특수 조건이다(D-S4)."
       ),
+      constants: constantsSnapshot(),
       camera: { vps: SC.vps, f: SC.f, principal: SC.principal, yaw_deg: 35, pitch_deg: 15 },
       single_composition_warning: (
         "**구도도 도형도 하나뿐이다** — 요 35°·피치 15°의 3점 카메라와 지면에 세운 직육면체. "
@@ -485,6 +487,7 @@ describe("S-3 측정", () => {
     const unanchoredRef = rate(chosen.n_no_anchor, chosen.n_strokes - chosen.n_unclassified)!;
     const report = {
       spec: "S-3 §4.5 미리보기 ↔ 확정. AS-3(유일한 중단 조건)의 임계는 D-S6에 **측정 전에** 박혀 있다.",
+      constants: constantsSnapshot(),
       threshold: {
         median: 0.05, p90: 0.15,
         basis: "획 길이(호 길이) 대비 화면 좌표차. 화면 대각이 아니다 — 대각 대비로 하면 짧은 획에서 한없이 관대해진다.",

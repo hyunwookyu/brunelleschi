@@ -1,6 +1,11 @@
 {
-  "n_flags": 362,
+  "n_flags": 363,
   "flags": [
+    {
+      "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
     {
       "path": "one_stroke_one_axis.json:by_word.square.too_bent_rate",
       "val": 0,
@@ -1812,8 +1817,11 @@
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     }
   ],
+  "n_stale": 0,
+  "constants_hash": "653c1f62",
   "scanned": [
     "axis_judgement.json",
+    "constants.json",
     "one_stroke_one_axis.json",
     "preview_gap.json",
     "real_ink.json",

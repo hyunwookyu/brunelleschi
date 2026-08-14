@@ -2,6 +2,66 @@
   "spec": "S-4 튜브 메쉬. 규모·비용·꼬임·회전 거동을 잰다.",
   "not_measured": "**'그린 카메라에서 화면 폭 = 그은 굵기'는 재지 않는다.** `worldRadius`가 깊이/f로 환산한 것을 같은 깊이/f로 되재는 것이라 **설계 보장**이지 측정이 아니다(§4.5와 같은 유형. selfcheck 자기참조 3이 잡는 형태다). 불변식 테스트로만 잠갔다.",
   "why_not_TubeGeometry": "three.js `TubeGeometry`는 **반지름이 상수**다. §S-4가 요구하는 속도 기반 굵기는 점마다 다른 반지름이므로 직접 짠다. 표준 기하이고 참조 저장소는 보지 않았다(§3).",
+  "constants": {
+    "hash": "653c1f62",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
   "condition": {
     "grade": "medium",
     "skew": 0.12,
@@ -32,8 +92,8 @@
       "p90": 456,
       "max": 576
     },
-    "build_ms_total": 139.9,
-    "build_ms_per_stroke": 0.3209
+    "build_ms_total": 119.4,
+    "build_ms_per_stroke": 0.2738
   },
   "scale_note": "지연 예산(P1/P4/V-n) 확인용이다. 획 하나가 삼각형 수백 개 규모이고 생성이 밀리초 이하이면 **온디맨드 렌더로 충분**하다 — 매 프레임 도는 루프가 필요 없다.",
   "twist_ratio": {

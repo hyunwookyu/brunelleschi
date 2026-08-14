@@ -16,6 +16,7 @@ import { fileURLToPath } from "node:url";
 import { classifyStroke, representative, maxTurn, AXIS_TOL, type AxisCfg } from "../src/s3d/axis.js";
 import { lineIntersect, fFromThreeVps, type Pt2 } from "../src/s3d/camera.js";
 import { renderInk, rng32, type InkGrade } from "../src/s3d/synthInk.js";
+import { constantsSnapshot } from "./constants.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SZ: [number, number] = [960, 672];
@@ -98,6 +99,7 @@ describe("S-2 방향 판정", () => {
         + "여기서 재는 것은 '같은 노이즈 수준에서 판정 규칙이 얼마나 갈라내는가'이고, "
         + "'숙련자 획에서 정확한가'(S-1)는 실제 획이 생기는 S-10 이후에 다시 잰다."
       ),
+      constants: constantsSnapshot(),
       camera: { vps: VPS, f: fFromThreeVps(...VPS).f },
       tolerances: AXIS_TOL,
       by_grade,
