@@ -8,7 +8,7 @@ import { ConstraintAccumulator, PRESETS, fPixelsFrom35mm, type AxisId } from "..
 import { guides, AXIS_COLOR, HORIZON_COLOR, GROUND_COLOR } from "../s3d/grid.js";
 import type { Pt2 } from "../s3d/camera.js";
 
-export type Tool = "draw" | "edit" | "vp0" | "vp1" | "vp2" | "horizon";
+export type Tool = "draw" | "edit" | "erase" | "vp0" | "vp1" | "vp2" | "horizon";
 
 const AXIS_NAME = ["축 1 (가로)", "축 2 (안쪽)", "축 3 (수직)"];
 

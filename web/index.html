@@ -38,6 +38,7 @@
     #tools button[data-t="horizon"].on{background:#666}
     #tools button[data-t="draw"].on{background:#111}
     #tools button[data-t="edit"].on{background:#b9770e}
+    #tools button[data-t="erase"].on{background:#7b241c}
     #tools .swatch{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:1px}
 
     /* 상태 = 이론서 5.3 자유도 회계 */
@@ -93,6 +94,7 @@
         <button data-t="horizon">지평선</button>
         <button data-t="draw">그리기</button>
         <button data-t="edit" title="놓이지 않은 획을 골라 붙일 곳을 지정합니다">고치기</button>
+        <button data-t="erase" title="누른 자리의 획을 지웁니다">지우개</button>
       </div>
     </div>
     <div id="view">
@@ -125,6 +127,8 @@
     </div>
   </div>
   <div id="bar">
+    <button id="undo" title="Ctrl+Z">실행 취소</button>
+    <button id="redo" title="Ctrl+Shift+Z">다시 실행</button>
     <button id="lock">카메라 잠금</button>
     <button id="reset">처음부터</button>
     <button id="export" title="실획 측정용 세션 JSON (AS-6·AS-12 재측정 입력)">획 내보내기</button>

@@ -63,6 +63,84 @@ let candDots: { at: Pt2; pos: Vec3; end: 0 | 1 }[] = [];
 
 const selected = () => drawn.find(s => s.id === selId) ?? null;
 
+// ---------------------------------------------------------------- S-7 실행 취소
+
+/**
+ * **스냅샷 방식**(S-7). 되돌릴 것이 `drawn` 하나가 아니라 **앱이 들고 있는 곁가지 상태
+ * 전부**이기 때문이다 — 어느 시점에서 그렸는지(`viewOrigin`), 깊이가 미확정인지
+ * (`provisional`), 그리고 배치 결과(`pts3d`)가 모두 함께 움직인다.
+ * 명령 단위로 되돌리려면 그 다섯을 각각 역연산해야 하고, 그것은 새 배치 경로가 생길 때마다
+ * 깨진다. **스냅샷은 경로가 늘어도 안 깨진다**(A-3: 가장 단순한 것).
+ *
+ * `pts2d`는 **복사하지 않는다** — 그린 뒤로 절대 안 바뀌는 원본이다(§5).
+ * `rawPoints`·`verdicts`·`viewCam`도 안 되돌린다: id로 색인되고 id는 재사용되지 않으므로
+ * 남아 있어도 무해하다.
+ */
+interface Snap { strokes: Stroke[]; viewOrigin: string[]; provisional: string[]; sel: string | null; }
+const undoStack: Snap[] = [];
+const redoStack: Snap[] = [];
+const UNDO_MAX = 200;
+
+const snapshot = (): Snap => ({
+  strokes: drawn.map(s => ({ ...s, pts3d: s.pts3d.slice() })),
+  viewOrigin: [...viewOrigin], provisional: [...provisional], sel: selId,
+});
+
+/** **바꾸기 직전에** 부른다. 새 동작이 생기면 다시 할 것(redo)은 버린다. */
+function pushUndo() {
+  undoStack.push(snapshot());
+  if (undoStack.length > UNDO_MAX) undoStack.shift();
+  redoStack.length = 0;
+}
+
+function restore(sn: Snap) {
+  drawn.length = 0;
+  drawn.push(...sn.strokes);
+  viewOrigin.clear(); sn.viewOrigin.forEach(x => viewOrigin.add(x));
+  provisional.clear(); sn.provisional.forEach(x => provisional.add(x));
+  selId = sn.sel && drawn.some(s => s.id === sn.sel) ? sn.sel : null;
+  delete picks.a; delete picks.b;
+  refreshCandidates();
+  strokeView.sync(drawn, placeCtx()?.f);
+  refresh();
+}
+
+function undo() {
+  const sn = undoStack.pop();
+  if (!sn) { lastNote = "되돌릴 것이 없습니다"; refresh(); return; }
+  redoStack.push(snapshot());
+  restore(sn);
+}
+function redo() {
+  const sn = redoStack.pop();
+  if (!sn) { lastNote = "다시 실행할 것이 없습니다"; refresh(); return; }
+  undoStack.push(snapshot());
+  restore(sn);
+}
+
+/** 획 하나를 지운다. **자동 배치는 다시 안 돌린다** — 지운 것에 붙어 있던 획을 조용히
+ *  옮기면 사용자가 예상하지 못한 변화가 된다(그 획은 `anchorRef`가 가리키는 대상을 잃지만
+ *  이미 놓인 3D는 그대로다). 다시 붙이고 싶으면 `고치기`가 있다. */
+function eraseAt(at: Pt2) {
+  let best: { id: string; d: number } | null = null;
+  for (const s of drawn) {
+    const pts = screenPts(s);
+    if (!pts) continue;
+    for (let i = 1; i < pts.length; i++) {
+      const d = segDist(at, pts[i - 1], pts[i]);
+      if (!best || d < best.d) best = { id: s.id, d };
+    }
+  }
+  if (!best || best.d > 18) { lastNote = "지울 획을 못 찾았습니다"; return; }
+  pushUndo();
+  const i = drawn.findIndex(s => s.id === best!.id);
+  drawn.splice(i, 1);
+  viewOrigin.delete(best.id); provisional.delete(best.id);
+  if (selId === best.id) { selId = null; candDots = []; }
+  strokeView.sync(drawn, placeCtx()?.f);
+  lastNote = "지웠습니다.";
+}
+
 /** 선택된 획의 양 끝 앵커 후보를 **첫 카메라 화면 좌표로** 모은다. */
 function refreshCandidates() {
   candDots = [];
@@ -110,6 +188,7 @@ function applyPicks() {
   if (!ctx || !s) return;
   const r = placeByUser(s, ctx, picks);
   if (!r) { lastNote = "그 앵커로는 놓이지 않습니다 — 다른 점을 골라 보세요"; return; }
+  pushUndo();
   s.pts3d = r.pts3d;
   s.joinShift = 0;
   if (r.provisional) provisional.add(s.id); else provisional.delete(s.id);
@@ -214,6 +293,7 @@ const ink = new InkCanvas(canvas, {
     if (pts.length < 2) return;
     if (panel.tool === "draw") addStroke(pts, stroke.points);
     else if (panel.tool === "edit") editClick(pts[0]);
+    else if (panel.tool === "erase") eraseAt(pts[0]);
     else panel.handleStroke(pts[0], pts[pts.length - 1]);
     refresh();
   },
@@ -222,6 +302,7 @@ ink.setFrame("persp");
 
 /** 획 하나 — **판정(§4.1) → 앵커 체인(§4.2) → 역투영**. 획은 쪼개지 않는다(§1). */
 function addStroke(pts: Pt2[], raw?: number[][]) {
+  pushUndo();
   const ctx = placeCtx();
   // **카메라를 함께 넘긴다**(S-2b a·b). 화각 60°(이론서 18.4)를 넘는 자리에서는 사람이 수렴을
   // 완화해 그리므로 허용 범위를 넓히고, 왜곡이 후보 전체를 밀어 올려도 **순위**로 판정한다.
@@ -258,6 +339,7 @@ function worldAxes(): (Vec3 | null)[] {
  * 결과만 세계 좌표로 되돌린다 — `Stroke`가 드는 것은 언제나 세계 좌표다.
  */
 function addStrokeFromView(pts: Pt2[], raw?: number[][]) {
+  pushUndo();
   const axes = worldAxes();
   if (!axes.some(Boolean)) { lastNote = "카메라가 아직 확정되지 않았습니다"; return; }
   const pose = viewport.pose();
@@ -451,6 +533,8 @@ function renderFix(unplaced: Stroke[]) {
     });
   });
   const dep = fixEl.querySelector<HTMLInputElement>("#depth");
+  // 끌기 **시작**에 한 번만 스냅샷을 남긴다 — `input`마다 쌓으면 한 번 끌 때 수십 개가 된다
+  dep?.addEventListener("pointerdown", () => pushUndo());
   dep?.addEventListener("input", () => {
     const s2 = selected(), c2 = placeCtx();
     if (!s2 || !c2) return;
@@ -513,6 +597,7 @@ for (const [label, axis] of [["축1", 0], ["축2", 1], ["축3", 2], ["화면평�
   b.addEventListener("click", () => {
     for (let i = drawn.length - 1; i >= 0; i--) {
       if (drawn[i].axis !== "free" || drawn[i].pts3d.length) continue;
+      pushUndo();
       drawn[i].axis = axis;
       const ctx = placeCtx();
       if (ctx) settle(drawn, ctx, FIRST_VIEW);
@@ -625,6 +710,13 @@ function setViewMode(draw: boolean) {
 }
 // 돌리는 동안 미배치 파선이 시점과 함께 나타나고 사라진다(`sameView`).
 viewport.controls.addEventListener("change", () => ink3d.redraw());
+document.getElementById("undo")!.addEventListener("click", () => undo());
+document.getElementById("redo")!.addEventListener("click", () => redo());
+window.addEventListener("keydown", (e) => {
+  if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "z") return;
+  e.preventDefault();
+  (e.shiftKey ? redo : undo)();
+});
 document.getElementById("vt-orbit")!.addEventListener("click", () => setViewMode(false));
 document.getElementById("vt-draw")!.addEventListener("click", () => setViewMode(true));
 
@@ -663,6 +755,7 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
 // 브라우저 확인용 — 콘솔에서 배치 상태를 그대로 읽을 수 있게 한다(S-3 검증).
 (window as unknown as { s2s: unknown }).s2s = {
   strokes: drawn, panel, addStroke, placeCtx, refresh, viewport, strokeView, exportSession,
+  undo, redo, eraseAt, undoDepth: () => undoStack.length, redoDepth: () => redoStack.length,
   addStrokeFromView, worldAxes, setViewMode,
   // **S-7 고치기** — 스크립트 확인과 S-10 Playwright가 쓴다(후보 점 좌표가 없으면 클릭을 못 만든다).
   editClick, provisional, select: (id: string | null) => {
