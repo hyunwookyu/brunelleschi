@@ -1,5 +1,5 @@
 {
-  "n_flags": 208,
+  "n_flags": 293,
   "flags": [
     {
       "path": "one_stroke_one_axis.json:by_word.square.too_bent_rate",
@@ -577,6 +577,431 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "wobble_plane.json:by_grade_no_end_jitter.by_grade.precise.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:by_grade_no_end_jitter.by_grade.precise.no_anchor_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:by_grade_no_end_jitter.by_grade.precise.dropped_points",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:by_grade_no_end_jitter.by_grade.medium.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:by_grade_no_end_jitter.by_grade.medium.no_anchor_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:by_grade_no_end_jitter.by_grade.medium.dropped_points",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:by_grade_no_end_jitter.by_grade.coarse.dropped_points",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.segment_interp.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.segment_interp.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.segment_interp.unclassified_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.segment_interp.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.segment_interp.wrong_axis_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.segment_interp.wrong_axis_of_classified",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.segment_interp.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.segment_interp.no_anchor_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.segment_interp.dropped_points",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.nearest_sample.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.nearest_sample.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.nearest_sample.unclassified_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.nearest_sample.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.nearest_sample.wrong_axis_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.nearest_sample.wrong_axis_of_classified",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.nearest_sample.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.nearest_sample.no_anchor_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.nearest_sample.dropped_points",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.segment_interp.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.segment_interp.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.segment_interp.unclassified_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.segment_interp.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.segment_interp.wrong_axis_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.segment_interp.wrong_axis_of_classified",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.segment_interp.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.segment_interp.no_anchor_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.segment_interp.dropped_points",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.nearest_sample.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.nearest_sample.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.nearest_sample.unclassified_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.nearest_sample.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.nearest_sample.wrong_axis_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.nearest_sample.wrong_axis_of_classified",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.nearest_sample.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.nearest_sample.no_anchor_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.005.nearest_sample.dropped_points",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.segment_interp.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.segment_interp.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.segment_interp.unclassified_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.segment_interp.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.segment_interp.wrong_axis_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.segment_interp.wrong_axis_of_classified",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.segment_interp.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.segment_interp.no_anchor_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.segment_interp.dropped_points",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.nearest_sample.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.nearest_sample.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.nearest_sample.unclassified_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.nearest_sample.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.nearest_sample.wrong_axis_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.nearest_sample.wrong_axis_of_classified",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.nearest_sample.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.nearest_sample.no_anchor_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.01.nearest_sample.dropped_points",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.02.segment_interp.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.02.segment_interp.unclassified_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.02.segment_interp.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.02.segment_interp.wrong_axis_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.02.segment_interp.wrong_axis_of_classified",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.02.segment_interp.dropped_points",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.02.nearest_sample.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.02.nearest_sample.unclassified_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.02.nearest_sample.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.02.nearest_sample.wrong_axis_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.02.nearest_sample.wrong_axis_of_classified",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.02.nearest_sample.dropped_points",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.04.segment_interp.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.04.segment_interp.unclassified_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.04.segment_interp.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.04.segment_interp.wrong_axis_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.04.segment_interp.wrong_axis_of_classified",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.04.segment_interp.dropped_points",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.04.nearest_sample.unclassified_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.04.nearest_sample.unclassified_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.04.nearest_sample.wrong_axis_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.04.nearest_sample.wrong_axis_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.04.nearest_sample.wrong_axis_of_classified",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "wobble_plane.json:anchor_interpolation_control.by_jitter.jitter_0.04.nearest_sample.dropped_points",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "wobble_plane.json:as8_anchor_chain.jitter_sweep_facing.jitter_0.placed_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -1048,6 +1473,7 @@
     "preview_gap.json",
     "real_ink.json",
     "systematic_warp.json",
+    "tube_render.json",
     "wobble_plane.json"
   ],
   "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."

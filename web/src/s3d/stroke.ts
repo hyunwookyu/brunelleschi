@@ -267,6 +267,7 @@ export function reprojectionGap(pts3d: Vec3[], pts2d: Pt2[], ctx: PlaceCtx): num
  */
 export function findAnchor(
   strokes: Stroke[], ends: [Pt2, Pt2], radius: number, endpointOnly = false,
+  nearestSample = false,
 ): { pos: Vec3; id: string; which: 0 | 1; onBody: boolean } | null {
   let best: { pos: Vec3; id: string; which: 0 | 1; onBody: boolean } | null = null;
   let bestD = radius;
@@ -285,8 +286,11 @@ export function findAnchor(
       for (const k of [0, 1] as const) {
         const q = ends[k];
         // 끝점 전용에서는 선분 위로 사영하지 않고 **그 끝점 자체**만 본다
-        const t = endpointOnly ? (i === 1 ? 0 : 1)
+        // `nearestSample`은 선분 보간을 끄고 **가장 가까운 표본점**에 붙인다(대조군).
+        // 점 간격의 절반이 앵커 오차가 되고 그것이 체인을 타고 깊이로 증폭된다 — 는 주장의 확인용.
+        let t = endpointOnly ? (i === 1 ? 0 : 1)
           : (L2 < 1e-12 ? 0 : Math.max(0, Math.min(1, ((q[0] - a[0]) * ex + (q[1] - a[1]) * ey) / L2)));
+        if (nearestSample && !endpointOnly) t = t < 0.5 ? 0 : 1;
         const px = a[0] + ex * t, py = a[1] + ey * t;
         const d = Math.hypot(px - q[0], py - q[1]);
         if (d > bestD) continue;
@@ -320,6 +324,8 @@ export interface PlaceOpts {
   seedIfEmpty?: boolean;
   /** 끝점끼리만 잇는다(몸통 접합 없음). 측정 대조용 — 기본은 몸통까지 본다. */
   endpointOnly?: boolean;
+  /** 몸통 접합에서 선분 보간 대신 **가장 가까운 표본점**에 붙인다. 측정 대조군(S-4 배정). */
+  nearestSample?: boolean;
 }
 
 /**
@@ -332,7 +338,7 @@ export function placeInto(
   if (stroke.pts2d.length < 2 || stroke.axis === "free") return false;
   const radius = (ctx.joinRatio ?? PLACE_TOL.join_ratio) * diagOf(ctx.imgSize);
   const ends: [Pt2, Pt2] = [stroke.pts2d[0], stroke.pts2d[stroke.pts2d.length - 1]];
-  const hit = findAnchor(placed, ends, radius, opts.endpointOnly);
+  const hit = findAnchor(placed, ends, radius, opts.endpointOnly, opts.nearestSample);
 
   let anchor: Vec3 | null = hit ? hit.pos : null;
   let joinAt: 0 | 1 | undefined = hit ? hit.which : undefined;

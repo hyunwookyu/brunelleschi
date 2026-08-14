@@ -14,6 +14,11 @@ import { buildSession, downloadSession } from "./ui/sessionExport.js";
 import type { AxisVerdict } from "./s3d/axis.js";
 import type { Pt2 } from "./s3d/camera.js";
 
+/** 실획 수집용 원본 6튜플과 판정 결과. `Stroke`는 [x,y]만 들고 있으므로 여기 따로 남긴다.
+ *  **S-4의 속도 기반 굵기도 이것을 쓴다** — 자료구조를 늘리지 않기 위해서다(A-3). */
+const rawPoints = new Map<string, number[][]>();
+const verdicts = new Map<string, AxisVerdict>();
+
 const canvas = document.getElementById("ink") as HTMLCanvasElement;
 const statusEl = document.getElementById("status")!;
 const msgEl = document.getElementById("msg")!;
@@ -23,7 +28,10 @@ const strokeEl = document.getElementById("strokes")!;
 const pickEl = document.getElementById("axispick")!;
 
 const viewport = new Viewport(document.getElementById("view")!);
-const strokeView = new StrokeView(viewport);
+// 굵기는 **이미 앱에 있는 6튜플**을 조회해서 쓴다 — `Stroke`를 늘리지 않는다(A-3).
+// 맵은 획 확정 시점에 채워지고 3D 렌더는 그 뒤에 돌므로 **조회 시점에 항상 있다**
+// (구워 넣을 필요가 없다. 카메라 재조정으로 다시 그릴 때도 그대로 있다).
+const strokeView = new StrokeView(viewport, (id) => rawPoints.get(id));
 
 function cssSize(): [number, number] {
   const r = canvas.getBoundingClientRect();
@@ -34,9 +42,6 @@ const panel = new CameraPanel(cssSize(), () => { replace(); refresh(); });
 
 /** 사용자가 그린 획 — **원본 점열 그대로** 보관한다(§5). 3D는 여기서 파생된다. */
 const drawn: Stroke[] = [];
-/** 실획 수집용 원본 6튜플과 판정 결과. `Stroke`는 [x,y]만 들고 있으므로 여기 따로 남긴다. */
-const rawPoints = new Map<string, number[][]>();
-const verdicts = new Map<string, AxisVerdict>();
 
 /** 지금 카메라로 배치 문맥을 만든다. 카메라가 아직이면 `null`(배치하지 않는다). */
 function placeCtx(): PlaceCtx | null {
@@ -50,7 +55,7 @@ function replace() {
   const ctx = placeCtx();
   if (!ctx || !drawn.length) return;
   reprojectAll(drawn, ctx);
-  strokeView.sync(drawn);
+  strokeView.sync(drawn, ctx.f);
 }
 
 function fit() {
@@ -89,7 +94,7 @@ function addStroke(pts: Pt2[], raw?: number[][]) {
   if (raw) rawPoints.set(s.id, raw);
   verdicts.set(s.id, v as AxisVerdict);
   if (ctx) settle(drawn, ctx);
-  strokeView.sync(drawn);
+  strokeView.sync(drawn, ctx?.f);
   lastNote = v.note;
 }
 let lastNote = "";
@@ -170,7 +175,7 @@ for (const [label, axis] of [["축1", 0], ["축2", 1], ["축3", 2], ["화면평�
       drawn[i].axis = axis;
       const ctx = placeCtx();
       if (ctx) settle(drawn, ctx);
-      strokeView.sync(drawn);
+      strokeView.sync(drawn, ctx?.f);
       lastNote = "";
       break;
     }
@@ -232,10 +237,15 @@ window.addEventListener("resize", () => { fit(); viewport.resize(); });
 // 같은 자리인데 잉크 캔버스에는 적용하지 않았다 — 창 resize만 듣고 있으면 회복되지 않고,
 // 그 크기가 화각·무한원 판정(`isFiniteVp`)의 기준이라 **소실점 셋이 둘로 읽힌다**.
 // S-3 브라우저 확인에서 실제로 그렇게 나왔다.
+//
+// **`ResizeObserver`만으로는 부족하다**(S-4 브라우저 확인에서 또 걸렸다). 이 환경에서는
+// 관찰 직후 콜백이 오지 않아 초기 크기를 영영 못 받는다 — 200ms를 기다려도 0회였다.
+// `Viewport`가 처음부터 하던 대로 **다음 프레임에 한 번 더** 맞춘다. 둘 다 건다.
 if (typeof ResizeObserver !== "undefined") {
   new ResizeObserver(() => fit()).observe(canvas.parentElement ?? canvas);
 }
 fit();
+requestAnimationFrame(() => fit());
 
 // PWA — 오프라인 동작(§1.4). dev 서버에서는 등록하지 않는다(HMR과 충돌한다).
 if ("serviceWorker" in navigator && import.meta.env.PROD) {

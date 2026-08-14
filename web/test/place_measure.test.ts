@@ -43,6 +43,8 @@ interface Case {
   oracle?: boolean;
   /** 끝점끼리만 잇는다(몸통 접합 이전 상태) — "몸통 접합이 필수"의 대조군. */
   endpointOnly?: boolean;
+  /** 몸통 접합에서 선분 보간 대신 최근접 표본점 — "보간이 필요한가"의 대조군(S-4 배정). */
+  nearestSample?: boolean;
   /**
    * **카메라 f를 틀리게 준다**(비율). 지금까지의 측정은 참 카메라를 줬는데, 실사용에서
    * 1점 f는 설정값이고 2점 주점은 가정이다(AS-9·D-S5, 이론서 16.4 깊이 아핀 자유도).
@@ -106,7 +108,7 @@ function oneBox(c: Case, r: () => number, row: Row): void {
     return newStroke(d.pts2d, v.axis, v.rep ? { a: v.rep.a, b: v.rep.b } : undefined);
   });
   const pctx = ctxOf(c);
-  settle(list, pctx, { mode: c.mode, endpointOnly: c.endpointOnly });
+  settle(list, pctx, { mode: c.mode, endpointOnly: c.endpointOnly, nearestSample: c.nearestSample });
 
   const byId = new Map(list.map(s => [s.id, s]));
   const depthOf = (s: Stroke): number => {
@@ -296,6 +298,15 @@ describe("S-3 측정", () => {
                                          fBias: b, seed: 5900 + i }))]));
     const f_bias = Object.fromEntries(WOBBLE_PLANES.map(m => [m, fBiasOf(m)]));
     const family = planeFamilySweep([-80, -60, -40, -20, -10, 0, 10, 20, 40, 60, 80]);
+    // DEFERRED(S-4 배정) ① 선분 보간 대 최근접 표본점 — "≈4px가 체인을 탄다"는 **추정**이었다
+    const interp = Object.fromEntries(JITTERS.map((j, i) => [`jitter_${j}`, {
+      segment_interp: summarize(runCase({ mode: "facing", endJitter: j, oracle: true, seed: 5500 + i })),
+      nearest_sample: summarize(runCase({ mode: "facing", endJitter: j, oracle: true,
+                                          nearestSample: true, seed: 5500 + i })),
+    }]));
+    // DEFERRED(S-4 배정) ② 등급 순서 역전 — 끝점 오차를 0으로 두고 **등급만** 흔든다
+    const gradeIsolated = Object.fromEntries((["precise", "medium", "coarse"] as InkGrade[]).map((g, i) =>
+      [g, summarize(runCase({ mode: "facing", grade: g, endJitter: 0, seed: 5100 + i }))]));
 
     const report = {
       spec: "S-3 떨림 평면 선택(§4.4)과 앵커 체인 오차 전파(AS-8). 참 3D 상자 → 투영 → 잉크 노이즈 → 판정 → 배치 → 참 3D와 대조.",
@@ -355,6 +366,22 @@ describe("S-3 측정", () => {
       oracle_note: "판정을 건너뛰고 참 축을 준 조건. 판정 실패와 배치 품질이 섞이지 않도록 분리한다(리뷰어가 반복 지적한 유형).",
       judged_end_jitter: judged_jit,
       by_grade,
+      by_grade_no_end_jitter: {
+        why: (
+          "**등급 순서가 S-2와 반대인 이유를 가른다**(리뷰어 지적, S-4 배정). `by_grade`는 끝점 겨냥 "
+          + "오차 2%가 섞여 있어 등급 차이를 덮었을 수 있다. 여기서는 끝점 오차를 0으로 두고 "
+          + "**잉크 등급만** 흔든다 — 순서가 S-2와 같아지면 원인은 끝점 오차다."
+        ),
+        by_grade: gradeIsolated,
+      },
+      anchor_interpolation_control: {
+        why: (
+          "**선분 보간이 필요한가**(DEFERRED, S-4 배정). 몸통 접합에서 가장 가까운 표본점에 붙이면 "
+          + "점 간격의 절반(≈4px)이 앵커 오차가 되고 그것이 체인을 타고 깊이로 증폭된다 — 는 "
+          + "**추정**이었고 대조군이 없었다. 여기서 잰다."
+        ),
+        by_jitter: interp,
+      },
       by_skew,
       skew_note: "0.5(대칭 활)와 0.12(치우친 활)의 차이가 크면 그 수치는 노이즈 모델의 성질을 재고 있는 것이다(D-S4).",
       selfcheck_notes: {
@@ -365,6 +392,10 @@ describe("S-3 측정", () => {
           + "지표 하나로 판정하지 않는 이유가 이것이다."
         ),
         "oracle_axis.*.unclassified_rate / wrong_axis_rate = 0": "정의상 0이다 — 참 축을 주는 조건이라 판정 자체가 없다.",
+        "anchor_interpolation_control·by_grade_no_end_jitter의 정의상 0": (
+          "두 블록 다 **참 축(oracle)** 조건이라 `unclassified_rate`·`wrong_axis_rate`가 정의상 0이다"
+          + "(`by_grade_no_end_jitter`는 판정을 쓰므로 0이 아니다). 신규 플래그 대부분이 이 부류다."
+        ),
         "jitter_0 에서 placed_rate = 1, no_anchor_rate = 0": (
           "실측이다. 끝점 겨냥 오차가 0이면 두 획의 끝이 같은 화면 점이라 접합이 반드시 성립한다. "
           + "그 자체가 이 조건의 비현실성을 보여 주며, 스윕 상단(0.04)에서는 0.33까지 떨어진다."
