@@ -75,6 +75,7 @@ def run(n=200, seed=0):
         rng = np.random.default_rng(stable_seed(grade, base=seed))
         ious, fiterr, reproj, ortho, fails = [], [], [], [], 0
         aerr = []   # 종횡비 상대오차(1급 지표, 지시 1-ter A) — 역수 동치
+        oious = []  # 방위 유지 IoU(구 지표) — D-1b로 용도 구분해 병기
         for _ in range(n):
             quad = _rand_quad(rng); eye, target = _rand_cam(rng, quad)
             w4, img4, sz, _t = build_synthetic(img_size=(800, 600), eye=eye, target=target, world4=quad)
@@ -83,6 +84,7 @@ def run(n=200, seed=0):
             if not r["ok"]:
                 fails += 1; continue
             ious.append(r["plane_iou"]); fiterr.append(r["fit_error"])
+            if r.get("oriented_iou") is not None: oious.append(r["oriented_iou"])
             from stage_perspective.metric_audit import polygon_aspect, aspect_rel_err
             ae = aspect_rel_err(polygon_aspect(r["recovered_plane"]), polygon_aspect(quad))
             if np.isfinite(ae):
@@ -98,6 +100,7 @@ def run(n=200, seed=0):
             "corner_err_ratio": ratio, "n": n, "fail_rate": round(fails / n, 3),
             "plane_iou_median": q(ious, 50), "plane_iou_p10": q(ious, 10),
             "aspect_rel_err_median": q(aerr, 50), "aspect_rel_err_p90": q(aerr, 90),
+            "oriented_iou_median": q(oious, 50),
             "camera_fit_error_median": q(fiterr, 50), "camera_fit_error_p95": q(fiterr, 95),
             "reproj_error_median": q(reproj, 50), "ortho_residual_median_deg": q(ortho, 50),
         }

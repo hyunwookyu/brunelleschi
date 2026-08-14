@@ -120,6 +120,7 @@ def evaluate(n=120, seed=0):
             rng = np.random.default_rng(stable_seed(name, grade, base=seed))
             ious, holds = [], 0
             aerr = []   # 종횡비 상대오차(1급 지표, 지시 1-ter A)
+            oious = []  # 방위 유지 IoU(구 지표) — 병기
             for _ in range(n):
                 truth = base * rng.uniform(3, 8)
                 c = truth.mean(0); diag = float(np.hypot(*(truth.max(0) - truth.min(0))))
@@ -132,9 +133,13 @@ def evaluate(n=120, seed=0):
                 r = recover_orthogonal_polygon(noisy, sz)
                 if not r["ok"]:
                     continue
-                iou = _procrustes_iou(truth, r["recovered"])
+                # D-1b: 대응 탐색 포함 상사 IoU가 표준. 구 `_procrustes_iou`는 정점 순서를
+                # 그대로 믿어 순환 이동된 해를 과소평가했다.
+                from stage_perspective.shape_metrics import similarity_iou, oriented_iou
+                iou = similarity_iou(truth, r["recovered"])
                 if iou is not None:
                     ious.append(iou); holds += 1
+                    oious.append(oriented_iou(truth, r["recovered"]))
                     from stage_perspective.metric_audit import polygon_aspect, aspect_rel_err
                     ae = aspect_rel_err(polygon_aspect(r["recovered"]), polygon_aspect(truth))
                     if np.isfinite(ae):
@@ -142,6 +147,7 @@ def evaluate(n=120, seed=0):
             def q(x, p): return round(float(np.percentile(x, p)), 4) if x else None
             out[name][grade] = {"corner_err_ratio": ratio, "hold_rate": round(holds / n, 3),
                                 "iou_median": q(ious, 50), "iou_p10": q(ious, 10),
+                                "oriented_iou_median": q(oious, 50),
                                 "aspect_rel_err_median": q(aerr, 50), "aspect_rel_err_p90": q(aerr, 90)}
     return out
 

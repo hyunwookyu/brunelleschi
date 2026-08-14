@@ -5,22 +5,25 @@
       "coarse": {
         "corner_err_ratio": 0.0421,
         "hold_rate": 1.0,
-        "plane_iou_median": 0.7837,
-        "plane_iou_p10": 0.4623,
+        "plane_iou_median": 0.8577,
+        "plane_iou_p10": 0.6568,
+        "oriented_iou_median": 0.7837,
         "aspect_rel_err_median": 0.1505
       },
       "medium": {
         "corner_err_ratio": 0.0269,
         "hold_rate": 1.0,
-        "plane_iou_median": 0.8129,
-        "plane_iou_p10": 0.4584,
+        "plane_iou_median": 0.8788,
+        "plane_iou_p10": 0.7661,
+        "oriented_iou_median": 0.8129,
         "aspect_rel_err_median": 0.1279
       },
       "precise": {
         "corner_err_ratio": 0.0168,
         "hold_rate": 1.0,
-        "plane_iou_median": 0.874,
-        "plane_iou_p10": 0.4877,
+        "plane_iou_median": 0.9362,
+        "plane_iou_p10": 0.8254,
+        "oriented_iou_median": 0.874,
         "aspect_rel_err_median": 0.0635
       }
     },
@@ -28,22 +31,25 @@
       "coarse": {
         "corner_err_ratio": 0.0421,
         "hold_rate": 1.0,
-        "plane_iou_median": 0.6472,
-        "plane_iou_p10": 0.3469,
+        "plane_iou_median": 0.714,
+        "plane_iou_p10": 0.4468,
+        "oriented_iou_median": 0.6472,
         "aspect_rel_err_median": 0.3235
       },
       "medium": {
         "corner_err_ratio": 0.0269,
         "hold_rate": 1.0,
-        "plane_iou_median": 0.6097,
-        "plane_iou_p10": 0.3379,
+        "plane_iou_median": 0.7408,
+        "plane_iou_p10": 0.4442,
+        "oriented_iou_median": 0.6097,
         "aspect_rel_err_median": 0.2789
       },
       "precise": {
         "corner_err_ratio": 0.0168,
         "hold_rate": 1.0,
-        "plane_iou_median": 0.66,
-        "plane_iou_p10": 0.4023,
+        "plane_iou_median": 0.7263,
+        "plane_iou_p10": 0.4801,
+        "oriented_iou_median": 0.66,
         "aspect_rel_err_median": 0.3038
       }
     }
@@ -58,5 +64,5 @@
   "2F_c_repeated_module": {
     "status": "구조만 — 창·기둥 등간격 검출 필요(후속). 검출가능 영상비율은 2G"
   },
-  "conclusion": "직각가정(실측 코너오차 노이즈, medium): 직사각 footprint 종횡비 복원 IoU중앙 0.8129, 비직교 0.6097. 두 값의 격차가 직각가정의 유효 범위를 정한다."
+  "conclusion": "직각가정(실측 코너오차 노이즈, medium): 직사각 footprint 종횡비 복원 IoU중앙 0.8788, 비직교 0.7408. 두 값의 격차가 직각가정의 유효 범위를 정한다."
 }

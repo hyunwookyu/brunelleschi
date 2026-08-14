@@ -53,10 +53,14 @@ def reconstruct(plan4: np.ndarray, persp4: np.ndarray, img_size) -> dict:
     # 채택된 대응순열로 이미지점 정렬(fit_camera가 고른 perm)
     img_perm = persp4[res.perm]
     recovered = inverse_project_plane(H, img_perm)
-    # 원본 평면(무차원 — 스케일·이동 정규화 후 IoU)
-    iou = _poly_iou(_norm(plan4), _norm(recovered))
+    # D-1b: 표준은 **상사 IoU**(회전·대응 동치). 축 뒤바뀜은 게이지이므로 오차가 아니다.
+    # 방위 유지 IoU는 다중 뷰·대지 방위용으로 나란히 남긴다.
+    from stage_perspective.shape_metrics import similarity_iou, oriented_iou
+    sim = similarity_iou(plan4, recovered)
+    iou = sim if sim is not None else _poly_iou(_norm(plan4), _norm(recovered))
     return {"ok": True, "fit_error": float(res.fit_error), "perm": list(res.perm),
-            "plane_iou": round(iou, 4),
+            "plane_iou": round(float(iou), 4),
+            "oriented_iou": round(float(oriented_iou(plan4, recovered)), 4),
             "recovered_plane": recovered.tolist(),
             "note": "지면(Z=0) 요소만 복원. 올라간 요소는 수직선 길이(무차원, §3.5)."}
 

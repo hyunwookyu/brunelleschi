@@ -83,6 +83,7 @@ def evaluate(n=150, seed=0):
         for grade, ratio in GRADE_NOISE.items():
             rng = np.random.default_rng(stable_seed(kind, grade, base=seed))
             ious, aerr, holds = [], [], 0
+            oious = []   # 방위 유지 IoU(구 지표) — 용도 구분해 병기
             for _ in range(n):
                 truth = _irregular_quad(rng, skew) * rng.uniform(4, 10)
                 c = truth.mean(0); diag = float(np.hypot(*(truth.max(0) - truth.min(0))))
@@ -95,8 +96,15 @@ def evaluate(n=150, seed=0):
                 if not r["ok"]:
                     continue
                 holds += 1
-                iou = _poly_iou(_norm(truth), _norm(np.array(r["recovered_plane"])))
+                # D-1b: 표준은 **상사 IoU**(회전 동치). 축 뒤바뀜은 게이지이므로 오차가 아니다.
+                # 방위 유지 IoU도 나란히 남긴다(다중 뷰·대지 방위용).
+                from stage_perspective.shape_metrics import similarity_iou, oriented_iou
+                rec_plane = np.array(r["recovered_plane"])
+                iou = similarity_iou(truth, rec_plane)
+                if iou is None:
+                    continue
                 ious.append(iou)
+                oious.append(oriented_iou(truth, rec_plane))
                 # 참 종횡비 대비 복원 종횡비 오차. **역수 동치**로 잰다(지시 1-ter A):
                 # 종횡비는 width/depth 라벨링 때문에 역수까지만 결정되므로(1-bis 성질 1),
                 # 순진한 차이는 라벨 뒤바뀜(실측 28.75%)을 오차로 잡아 지표를 오염시킨다.
@@ -106,6 +114,7 @@ def evaluate(n=150, seed=0):
             def q(x, p): return round(float(np.percentile(x, p)), 4) if x else None
             out[kind][grade] = {"corner_err_ratio": ratio, "hold_rate": round(holds / n, 3),
                                 "plane_iou_median": q(ious, 50), "plane_iou_p10": q(ious, 10),
+                                "oriented_iou_median": q(oious, 50),
                                 "aspect_rel_err_median": q(aerr, 50)}
     return out
 
