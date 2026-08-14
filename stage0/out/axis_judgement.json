@@ -1,0 +1,169 @@
+{
+  "spec": "S-2 축 판정 정확도. 소실점 셋으로 작도한 상자의 12모서리를 잉크 획으로 그려 판정.",
+  "method": [
+    "예각 소실점 셋(6.5)으로 투시 정합 상자 작도 → 각 모서리의 정답 축을 안다.",
+    "모서리를 **깨끗한 선분이 아니라 잉크 획**으로 그린다(실측 노이즈 모델).",
+    "판정 임계는 전부 **길이·대각 대비 비율**이다(절대 픽셀 금지, V-s)."
+  ],
+  "three_numbers": "accuracy 하나만 보면 안 된다 — 미분류로 도망가면 쉽게 오른다. assigned_rate(얼마나 판정했나)와 silent_wrong_rate(조용히 틀린 축에 배정한 비율)를 함께 본다. A-3이 금지하는 것은 세 번째다.",
+  "caveat": "**합성이다.** 숙련자가 실제로 어떻게 긋는지는 이 표본에 없다(assumptions V-o). 여기서 재는 것은 '같은 노이즈 수준에서 판정 규칙이 얼마나 갈라내는가'이고, '숙련자 획에서 정확한가'(S-1)는 실제 획이 생기는 S-10 이후에 다시 잰다.",
+  "camera": {
+    "vps": [
+      [
+        -900,
+        260
+      ],
+      [
+        1900,
+        260
+      ],
+      [
+        480,
+        2600
+      ]
+    ],
+    "f": 1121.7402184488765
+  },
+  "tolerances": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12
+  },
+  "by_grade": {
+    "precise": {
+      "n": 3000,
+      "assigned_rate": 0.9967,
+      "accuracy": 0.9987,
+      "silent_wrong_rate": 0.0013,
+      "by_reason": {
+        "ok": 2990,
+        "ambiguous": 10
+      }
+    },
+    "medium": {
+      "n": 3000,
+      "assigned_rate": 0.997,
+      "accuracy": 0.9987,
+      "silent_wrong_rate": 0.0013,
+      "by_reason": {
+        "ok": 2991,
+        "ambiguous": 9
+      }
+    },
+    "coarse": {
+      "n": 3000,
+      "assigned_rate": 0.9903,
+      "accuracy": 0.9956,
+      "silent_wrong_rate": 0.0043,
+      "by_reason": {
+        "ok": 2971,
+        "too_bent": 6,
+        "ambiguous": 23
+      }
+    }
+  },
+  "self_confirmation_check": {
+    "why": "합성 활이 **대칭**이면 최소제곱 주축이 참 방향과 정확히 나란해진다(테스트로 확인). 그 조건에서만 재면 판정 규칙이 아니라 노이즈 모델의 성질을 재는 것이 된다. 마루 위치(skew)를 옮겨 그 공짜 정확도를 없앤 값이 아래다.",
+    "by_skew": {
+      "skew_0.5": {
+        "n": 1440,
+        "assigned_rate": 0.9965,
+        "accuracy": 0.9993,
+        "silent_wrong_rate": 0.0007,
+        "by_reason": {
+          "ok": 1435,
+          "ambiguous": 5
+        }
+      },
+      "skew_0.25": {
+        "n": 1440,
+        "assigned_rate": 0.9812,
+        "accuracy": 0.9752,
+        "silent_wrong_rate": 0.0243,
+        "by_reason": {
+          "ok": 1413,
+          "ambiguous": 27
+        }
+      },
+      "skew_0.12": {
+        "n": 1440,
+        "assigned_rate": 0.9257,
+        "accuracy": 0.961,
+        "silent_wrong_rate": 0.0361,
+        "by_reason": {
+          "ok": 1333,
+          "multi_axis": 62,
+          "ambiguous": 45
+        }
+      }
+    }
+  },
+  "bend_sweep": [
+    {
+      "bend_max": 0.08,
+      "n": 960,
+      "assigned_rate": 0.974,
+      "accuracy": 0.9936,
+      "silent_wrong_rate": 0.0063,
+      "by_reason": {
+        "ok": 935,
+        "too_bent": 22,
+        "ambiguous": 3
+      }
+    },
+    {
+      "bend_max": 0.12,
+      "n": 960,
+      "assigned_rate": 0.9969,
+      "accuracy": 0.9937,
+      "silent_wrong_rate": 0.0063,
+      "by_reason": {
+        "ok": 957,
+        "ambiguous": 3
+      }
+    },
+    {
+      "bend_max": 0.18,
+      "n": 960,
+      "assigned_rate": 0.9969,
+      "accuracy": 0.9937,
+      "silent_wrong_rate": 0.0063,
+      "by_reason": {
+        "ok": 957,
+        "ambiguous": 3
+      }
+    },
+    {
+      "bend_max": 0.25,
+      "n": 960,
+      "assigned_rate": 0.9969,
+      "accuracy": 0.9937,
+      "silent_wrong_rate": 0.0063,
+      "by_reason": {
+        "ok": 957,
+        "ambiguous": 3
+      }
+    },
+    {
+      "bend_max": 0.4,
+      "n": 960,
+      "assigned_rate": 0.9969,
+      "accuracy": 0.9937,
+      "silent_wrong_rate": 0.0063,
+      "by_reason": {
+        "ok": 957,
+        "ambiguous": 3
+      }
+    }
+  ],
+  "bend_sweep_note": "0.12 이상에서 값이 전부 같다 — **이 표본이 bend_max를 시험하지 못한다**. 상자 모서리는 그만큼 휘지 않는다. 0.18이라는 값은 이 스윕이 정당화하지 않으며, 실제 휜 획이 생기는 S-10 이후에 다시 정한다.",
+  "undecided_resolved": {
+    "크게 휜 획": "곡률 임계(bend_max) 초과 시 **미분류**. 최소제곱 직선으로 억지 배정하지 않는다.",
+    "한 획에 여러 축": "방향 급변(turn_deg)으로 검출해 **미분류**. 분절하지 않는다 — 획을 쪼개는 순간 §1이 깨진다."
+  }
+}

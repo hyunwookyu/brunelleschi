@@ -1,6 +1,8 @@
 {
   "n_flags": 0,
   "flags": [],
-  "scanned": [],
+  "scanned": [
+    "axis_judgement.json"
+  ],
   "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."
 }

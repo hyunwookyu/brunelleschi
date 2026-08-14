@@ -39,7 +39,8 @@ export function gauss(r: () => number): number {
  * 폴리라인 정점열 → 잉크 획. 각 변마다 저주파 활 한 번 + 점마다 고주파.
  * canonDiag = 도형 대각(픽셀). 노이즈는 전부 이 값에 비례한다(절대 픽셀 금지 — V-s).
  */
-export function renderInk(verts: Pt[], grade: InkGrade, r: () => number, canonDiag?: number): Pt[] {
+export function renderInk(verts: Pt[], grade: InkGrade, r: () => number, canonDiag?: number,
+                          skew = 0.5): Pt[] {
   const g = INK_GRADES[grade];
   const xs = verts.map(p => p[0]), ys = verts.map(p => p[1]);
   const diag = canonDiag ?? hypot(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
@@ -55,7 +56,13 @@ export function renderInk(verts: Pt[], grade: InkGrade, r: () => number, canonDi
     const m = Math.max(2, Math.round(L / step));
     for (let i = (k === 1 ? 0 : 1); i <= m; i++) {
       const t = i / m;
-      const arc = Math.sin(Math.PI * t) * bow;                // 양끝 고정, 가운데가 가장 휜다
+      // 활의 마루 위치. **0.5(대칭)가 기본이지만 그것이 특수한 경우다** —
+      // 대칭 활은 최소제곱 주축이 참 방향과 **정확히** 나란해져(편차가 상쇄된다)
+      // 방향 판정이 공짜로 맞는다. 실제 손 획은 한쪽으로 치우친다.
+      // skew를 0.5에서 옮기면 그 자기확인이 깨진다(S-2에서 실제로 걸렸다).
+      const u = skew <= 0 || skew >= 1 ? t
+        : (t < skew ? 0.5 * (t / skew) : 0.5 + 0.5 * ((t - skew) / (1 - skew)));
+      const arc = Math.sin(Math.PI * u) * bow;                 // 양끝 고정, 마루가 가장 휜다
       const hf = gauss(r) * g.hf_sigma * step;
       out.push([a[0] + ux * L * t + nx * (arc + hf), a[1] + uy * L * t + ny * (arc + hf)]);
     }
