@@ -12,7 +12,7 @@ import { classifyStroke, type Axis } from "./s3d/axis.js";
 import { newStroke, settle, reprojectAll, PLACE_TOL, type Stroke, type PlaceCtx } from "./s3d/stroke.js";
 import { buildSession, downloadSession } from "./ui/sessionExport.js";
 import { viewPlaceCtx, toView, fromView, projectInView } from "./s3d/viewCamera.js";
-import { axisDirection, type Vec3 } from "./s3d/geom3d.js";
+import { axisDirection, project, type Vec3 } from "./s3d/geom3d.js";
 import type { AxisVerdict } from "./s3d/axis.js";
 import type { Pt2 } from "./s3d/camera.js";
 
@@ -20,6 +20,13 @@ import type { Pt2 } from "./s3d/camera.js";
  *  **S-4의 속도 기반 굵기도 이것을 쓴다** — 자료구조를 늘리지 않기 위해서다(A-3). */
 const rawPoints = new Map<string, number[][]>();
 const verdicts = new Map<string, AxisVerdict>();
+/**
+ * **돌린 시점에서 그린 획의 id.** 그 획의 `pts2d`는 **뷰 캔버스 좌표**라서 왼쪽 캔버스에
+ * 그대로 그리면 엉뚱한 자리에 나온다(S-6에서 발견). 배치된 획은 `pts3d`를 첫 카메라로
+ * 투영해 그리고, 미배치 view 획은 왼쪽에 그리지 않는다 — 그린 시점에서만 의미가 있다.
+ * `Stroke`를 늘리지 않으려고 여기 둔다(`rawPoints`와 같은 방식).
+ */
+const viewOrigin = new Set<string>();
 
 const canvas = document.getElementById("ink") as HTMLCanvasElement;
 const statusEl = document.getElementById("status")!;
@@ -129,6 +136,7 @@ function addStrokeFromView(pts: Pt2[], raw?: number[][]) {
                            { principal: ctxV.principal, f: ctxV.f });
   const s = newStroke(pts, v.axis, v.rep ? { a: v.rep.a, b: v.rep.b } : undefined);
   drawn.push(s);
+  viewOrigin.add(s.id);
   if (raw) rawPoints.set(s.id, raw);
   verdicts.set(s.id, v as AxisVerdict);
   lastNote = v.note;
@@ -170,14 +178,24 @@ function drawBelowInk(ctx: CanvasRenderingContext2D) {
   panel.drawGuides(ctx);
   ctx.save();
   ctx.lineWidth = 2;
+  const cam0 = placeCtx();
   for (const s of drawn) {
-    // 축이 정해진 획은 축 색, 미분류는 회색 파선 — **어느 쪽인지 화면에서 바로 보인다**
     const placed = s.pts3d.length > 0;
+    // **어느 좌표계의 점을 그리는지 가린다.** 배치된 획은 3D에서 첫 카메라로 투영하고(시점과
+    // 무관하게 맞다), 미배치 획은 그린 화면의 `pts2d`뿐이다 — 그것이 뷰 좌표면 여기 못 그린다.
+    let pts: Pt2[] | null = null;
+    if (placed && cam0) {
+      const pj = s.pts3d.map(p => project(p, cam0.principal, cam0.f));
+      pts = pj.every(Boolean) ? (pj as Pt2[]) : null;      // 첫 카메라 뒤로 간 획은 안 보인다
+    } else if (!viewOrigin.has(s.id)) {
+      pts = s.pts2d;
+    }
+    if (!pts || pts.length < 2) continue;
     ctx.strokeStyle = typeof s.axis === "number" ? AXIS_COLOR[s.axis] : "#9aa4ab";
     ctx.setLineDash(placed ? [] : [5, 4]);
     ctx.globalAlpha = placed ? 0.9 : 0.55;
     ctx.beginPath();
-    s.pts2d.forEach((p, i) => (i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])));
+    pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])));
     ctx.stroke();
   }
   ctx.setLineDash([]);
@@ -199,6 +217,8 @@ function renderStrokes() {
     + (free ? ` · 미분류 ${free}` : "") + (floating ? ` · 안 이어짐 ${floating}` : "") + "</div>"];
   if (lastNote) rows.push(`<div class="hint">${lastNote}</div>`);
   if (floating) rows.push('<div class="hint">이어지지 않은 획은 깊이가 정해지지 않습니다 — 기존 획에 닿게 그으면 놓입니다</div>');
+  const hidden = drawn.filter(s => !s.pts3d.length && viewOrigin.has(s.id)).length;
+  if (hidden) rows.push(`<div class="hint">그 중 ${hidden}획은 <b>돌린 시점에서 그린 미배치 획</b>이라 여기 안 보입니다 — 그 시점으로 돌아가면 보입니다(S-7에서 손봅니다)</div>`);
   strokeEl.innerHTML = rows.join("");
   pickEl.style.display = free ? "flex" : "none";
 }
@@ -271,7 +291,7 @@ lockBtn.addEventListener("click", () => {
   lockBtn.textContent = panel.locked ? "잠금 해제" : "카메라 잠금";
 });
 document.getElementById("reset")!.addEventListener("click", () => {
-  panel.reset(); drawn.length = 0; rawPoints.clear(); verdicts.clear();
+  panel.reset(); drawn.length = 0; rawPoints.clear(); verdicts.clear(); viewOrigin.clear();
   lastNote = ""; strokeView.reset(); ink.clear(); refresh();
 });
 

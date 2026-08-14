@@ -64,6 +64,8 @@ export const PLACE_TOL = {
    */
   view_far_end_check: 1,
   view_depth_envelope: 0.5,
+  /** **면 위 사선**(§4.3)의 정합성 허용치 배수. 잠정 — 실획에서 재정한다(AS-13). */
+  face_far_end: 1,
   /** 눈높이 게이지는 `geom3d.EYE_HEIGHT` 한 군데에만 둔다(격자와 씨앗이 같아야 한다). */
   eye_height: EYE_HEIGHT,
 };
@@ -433,6 +435,68 @@ export function resolveAnchor(
   return { anchor: a.pos, id: a.id, which: k, byFarEnd: false };
 }
 
+// ---------------------------------------------------------------- §4.3 면 위 사선
+
+/**
+ * **면은 축 두 개가 정한다**(§4.3, S-6). 앵커가 위치를 정하고 두 축 방향이 방향을 정한다.
+ *
+ * 계획서는 "이미 정의된 면 위에 있음"이라 적었는데 면 생성(§6)은 S-8이다. 그러나 **면을
+ * 만들 필요가 없다** — 상자의 면은 축 두 개가 펴는 평면이고, 사선이 놓일 자리는 그 평면이다.
+ * 닫힌 획 루프를 찾을 필요도 없다(A-3: 가장 단순한 것). DECISIONS D-S14.
+ */
+export function axisPlane(anchor: Vec3, a: Vec3, b: Vec3): Plane | null {
+  const n = cross3(unit3(a), unit3(b));
+  if (norm3(n) < 1e-6) return null;                 // 두 축이 나란하면 평면이 안 선다
+  const u = unit3(n), d = dot3(u, anchor);
+  return d < 0 ? { n: mul3(u, -1), d: -d } : { n: u, d };
+}
+
+/**
+ * 축을 벗어난 획을 **면 위 사선**으로 놓아 본다(§4.3의 첫 경우).
+ *
+ * 면 + 시선 광선 = 3D 점이 **유일하게 결정된다** — 추가 가정이 없다. 다만 어느 면인지는
+ * 골라야 하므로 **S-6 (1)의 정합성 검사를 그대로 쓴다**: 앵커와 면이 맞으면 반대쪽 끝점의
+ * 예측이 그쪽 기존 기하와 만난다. **양 끝에 후보가 있을 때만** 시도한다 —
+ * 없으면 무엇으로도 검증할 수 없고, 검증 없이 놓는 것은 A-3이 금지하는 추측이다.
+ */
+export function placeOnFace(
+  placed: Stroke[], pts2d: Pt2[], ctx: PlaceCtx, radius: number, farEndTol = 1,
+): { pts3d: Vec3[]; id: string; which: 0 | 1; joinShift: number } | null {
+  const ends: [Pt2, Pt2] = [pts2d[0], pts2d[pts2d.length - 1]];
+  const cands = [anchorCandidates(placed, ends[0], radius),
+                 anchorCandidates(placed, ends[1], radius)];
+  if (!cands[0].length || !cands[1].length) return null;
+  const axes = [0, 1, 2].map(i => (ctx.vps[i] ? axisVec(i as 0 | 1 | 2, ctx) : null));
+
+  let best: { pts3d: Vec3[]; id: string; which: 0 | 1; joinShift: number; score: number } | null = null;
+  for (const k of [0, 1] as const) {
+    for (const a of cands[k]) {
+      for (const [i, j] of [[0, 1], [1, 2], [0, 2]] as [number, number][]) {
+        const ai = axes[i], aj = axes[j];
+        if (!ai || !aj) continue;
+        const pl = axisPlane(a.pos, ai, aj);
+        if (!pl) continue;
+        const pts3d = placeOnPlane(pts2d, pl, ctx);
+        if (!pts3d) continue;
+        const far = k === 0 ? pts3d[pts3d.length - 1] : pts3d[0];
+        const tol = farEndTol * (radius * far[2]) / ctx.f;
+        for (const b of cands[1 - k]) {
+          const score = norm3(sub3(far, b.pos)) / Math.max(tol, 1e-9);
+          if (best && score >= best.score) continue;
+          const idx = k === 0 ? 0 : pts3d.length - 1;
+          const p0 = project(pts3d[idx], ctx.principal, ctx.f);
+          const p1 = project(a.pos, ctx.principal, ctx.f);
+          const snapped = pts3d.slice();
+          snapped[idx] = a.pos;                       // 끝점 접합(§1.2)
+          best = { pts3d: snapped, id: a.id, which: k, score,
+                   joinShift: p0 && p1 ? Math.hypot(p0[0] - p1[0], p0[1] - p1[1]) : 0 };
+        }
+      }
+    }
+  }
+  return best && best.score <= 1 ? best : null;
+}
+
 let _seq = 0;
 export const resetStrokeIds = () => { _seq = 0; };
 
@@ -464,6 +528,11 @@ export interface PlaceOpts {
    */
   farEndCheck?: number;
   /**
+   * **면 위 사선**(§4.3, S-6). 축을 벗어난 획을 축 두 개가 펴는 평면 위에 놓아 본다.
+   * 값은 정합성 허용치 배수. 0이면 꺼진다(미분류는 안 놓인다).
+   */
+  facePlanes?: number;
+  /**
    * **깊이 타당성**(S-6) — 정합성 검사를 못 쓴 획(한쪽이 자유단)에만 적용한다.
    * 놓인 획이 기존 기하의 깊이 범위를 이 비율만큼 벗어나면 배치하지 않는다.
    * 측정: 궤도 45°에서 **38.5%가 자유단**이라 정합성 검사가 아예 안 걸렸고, 그 경로가 꼬리였다.
@@ -479,8 +548,20 @@ export interface PlaceOpts {
 export function placeInto(
   placed: Stroke[], stroke: Stroke, ctx: PlaceCtx, opts: PlaceOpts = {},
 ): boolean {
-  if (stroke.pts2d.length < 2 || stroke.axis === "free") return false;
+  if (stroke.pts2d.length < 2) return false;
   const radius = (ctx.joinRatio ?? PLACE_TOL.join_ratio) * diagOf(ctx.imgSize);
+
+  // **§4.3 면 위 사선** — 축을 벗어난 획은 축 두 개가 펴는 평면 위에 놓아 본다.
+  // 정합성 검사를 통과할 때만 놓는다(검증 없이 놓는 것은 추측이다, A-3).
+  if (stroke.axis === "free") {
+    if (!opts.facePlanes) return false;
+    const fr = placeOnFace(placed, stroke.pts2d, ctx, radius, opts.facePlanes);
+    if (!fr) return false;
+    stroke.pts3d = fr.pts3d;
+    stroke.anchorRef = fr.id;
+    stroke.joinShift = fr.joinShift;
+    return true;
+  }
   const ends: [Pt2, Pt2] = [stroke.pts2d[0], stroke.pts2d[stroke.pts2d.length - 1]];
   let hit: { pos: Vec3; id: string; which: 0 | 1 } | null;
   let byFarEnd = false;

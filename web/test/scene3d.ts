@@ -87,6 +87,23 @@ export function boxEdges(sc: Scene, O: Vec3, a: number, b: number, c: number): T
 
 export interface DrawnEdge extends TrueEdge { pts2d: Pt2[]; a2d: Pt2; b2d: Pt2; }
 
+/**
+ * **면 위 사선 두 개**(§4.3 측정용). 상자의 두 면에 대각선을 긋는다 —
+ * 어떤 소실점도 향하지 않으므로 축 판정에서 `no_axis_matches`가 되고, 면 위에 놓여야 한다.
+ * `axis`는 정답이 없으므로 `-1`로 표시한다.
+ */
+export function faceDiagonals(sc: Scene, O: Vec3, a: number, b: number, c: number)
+: { a: Vec3; b: Vec3; axis: -1 }[] {
+  const [e0, e1, e2] = sc.axes;
+  const A = add3(O, mul3(e0, a)), B = add3(O, mul3(e1, b));
+  const AB = add3(A, mul3(e1, b));
+  const up = (p: Vec3) => sub3(p, mul3(e2, c));
+  return [
+    { a: O, b: AB, axis: -1 },          // 바닥면(축0×축1)의 대각선
+    { a: O, b: up(A), axis: -1 },       // 옆면(축0×축2)의 대각선
+  ];
+}
+
 // ---------------------------------------------------------------- S-2b 체계적 왜곡
 
 /**
