@@ -5,7 +5,7 @@
 //
 // DOM만 만진다. 계산은 전부 `constraints.ts`에 있고 여기서는 **표시**만 한다.
 import { ConstraintAccumulator, PRESETS, fPixelsFrom35mm, type AxisId } from "../s3d/constraints.js";
-import { guides, AXIS_COLOR, HORIZON_COLOR } from "../s3d/grid.js";
+import { guides, AXIS_COLOR, HORIZON_COLOR, GROUND_COLOR } from "../s3d/grid.js";
 import type { Pt2 } from "../s3d/camera.js";
 
 export type Tool = "draw" | "vp0" | "vp1" | "vp2" | "horizon";
@@ -79,6 +79,9 @@ export class CameraPanel {
       if (l.kind === "horizon") {
         ctx.strokeStyle = HORIZON_COLOR; ctx.lineWidth = 1; ctx.setLineDash([6, 4]);
         ctx.globalAlpha = 0.7;
+      } else if (l.kind === "ground") {
+        ctx.strokeStyle = GROUND_COLOR; ctx.lineWidth = 1; ctx.setLineDash([]);
+        ctx.globalAlpha = 0.22;
       } else {
         ctx.strokeStyle = AXIS_COLOR[l.axis ?? 0]; ctx.lineWidth = 1; ctx.setLineDash([]);
         ctx.globalAlpha = 0.16;
@@ -86,6 +89,40 @@ export class CameraPanel {
       ctx.stroke();
     }
     ctx.restore();
+  }
+
+  /**
+   * 화면 밖 소실점을 가장자리 화살표로 알린다 (§3.8).
+   * 2점 투시에서 흔한 상황이라 "안 보이니까 없다"고 읽히면 안 된다.
+   * 선을 두 개 그으면 교점이 화면 밖이어도 확정되므로 별도 좌표계는 필요 없다.
+   */
+  drawOffscreenVps(ctx: CanvasRenderingContext2D) {
+    const [w, h] = this.imgSize;
+    this.vps().forEach((v, i) => {
+      if (!v) return;
+      if (v[0] >= 0 && v[0] <= w && v[1] >= 0 && v[1] <= h) return;
+      const cx = w / 2, cy = h / 2;
+      const dx = v[0] - cx, dy = v[1] - cy;
+      const L = Math.hypot(dx, dy) || 1;
+      const m = 22;
+      const t = Math.min((cx - m) / Math.abs(dx || 1e-9), (cy - m) / Math.abs(dy || 1e-9));
+      const px = cx + (dx / L) * L * t, py = cy + (dy / L) * L * t;
+      const ang = Math.atan2(dy, dx);
+      ctx.save();
+      ctx.translate(px, py); ctx.rotate(ang);
+      ctx.fillStyle = AXIS_COLOR[i]; ctx.globalAlpha = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(10, 0); ctx.lineTo(-6, 6); ctx.lineTo(-6, -6); ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      // 얼마나 멀리 있는지 — 화면 폭 대비
+      ctx.save();
+      ctx.fillStyle = AXIS_COLOR[i]; ctx.globalAlpha = 0.85;
+      ctx.font = "11px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`${(Math.hypot(dx, dy) / w).toFixed(1)}W`, px - (dx / L) * 18, py - (dy / L) * 18 + 4);
+      ctx.restore();
+    });
   }
 
   /** §3.2 상태 표시 = 이론서 5.3 자유도 회계 표. */

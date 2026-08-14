@@ -7,11 +7,12 @@
 // **아직 안 까는 것: 눈금이 있는 지면 격자.** 격자 간격은 실척이 있어야 정해지고
 // 실척은 지면 씨앗점에서 나온다(W-3 앵커 체인). 그전에 눈금을 그리면 **없는 정보를
 // 있는 것처럼 보여 주게 된다** — 이 프로젝트가 반복해서 걸린 유형이다. DEFERRED에 기록.
-import type { Pt2, CameraSolution } from "./camera.js";
+import { isFiniteVp, type Pt2, type CameraSolution } from "./camera.js";
+import { axisDirection, project, unit3, type Vec3 } from "./geom3d.js";
 
 export interface GuideLine {
   a: Pt2; b: Pt2;
-  kind: "axis" | "horizon";
+  kind: "axis" | "horizon" | "ground";
   axis?: 0 | 1 | 2;
 }
 
@@ -76,9 +77,69 @@ export function guides(
     if (!v) return;
     out.push(...fanFromVp(v, imgSize, 10, i as 0 | 1 | 2));
   });
+  out.push(...groundGrid(cam, vps, imgSize));
   return out;
 }
 
 /** 축별 색 (§4.4 "축별 색상"). SketchUp 관례에 맞춘다 — 빨강/초록/파랑. */
 export const AXIS_COLOR = ["#c0392b", "#1e8449", "#2471a3"] as const;
 export const HORIZON_COLOR = "#8e8e8e";
+export const GROUND_COLOR = "#7f8c8d";
+
+// ---------------------------------------------------------------- 지면 격자 (§3.6)
+
+/**
+ * **투시 지면 격자.** 부챗살과 달리 이것은 실제 3D 평면 위의 선을 투영한 것이다 —
+ * 두 축이 확정되고 f가 정해져야 나온다.
+ *
+ * 간격은 **표시용 선택**이지 측정이 아니다. 아직 실척이 없다(씨앗점이 S-3에서 생긴다).
+ * 그래서 눈금·치수를 함께 그리지 않는다 — 없는 정보를 있는 것처럼 보여 주지 않기 위해서다.
+ * 격자가 하는 일은 "이 방향이 저기로 모인다"를 보여 주는 것뿐이다.
+ *
+ * 지면은 `y = 1`(f 단위)로 둔다. `place.seedOnGround`가 쓰는 것과 같은 게이지다.
+ */
+export function groundGrid(
+  cam: CameraSolution, vps: (Pt2 | null)[], imgSize: [number, number],
+  half = 6, step = 1,
+): GuideLine[] {
+  const f = cam.f, pp = cam.principalPoint;
+  if (!cam.ok || f == null || !pp) return [];
+  const a0 = vps[0] && isFiniteVp(vps[0], imgSize) ? axisDirection(vps[0]!, pp, f) : null;
+  const a1 = vps[1] && isFiniteVp(vps[1], imgSize) ? axisDirection(vps[1]!, pp, f) : null;
+  if (!a0 || !a1) return [];
+
+  // 지면 위에서 두 축 방향의 성분만 남긴다(y=1 평면 안에 있어야 한다)
+  const flat = (v: Vec3): Vec3 | null => {
+    const d = unit3([v[0], 0, v[2]]);
+    return Math.hypot(d[0], d[2]) < 1e-6 ? null : d;
+  };
+  const u = flat(a0), w = flat(a1);
+  if (!u || !w) return [];
+
+  const [W, H] = imgSize;
+  const out: GuideLine[] = [];
+  const O: Vec3 = [0, 1, 0];
+  const at = (i: number, t: number, along: Vec3, across: Vec3): Vec3 =>
+    [O[0] + across[0] * i * step + along[0] * t, 1, O[2] + across[2] * i * step + along[2] * t];
+
+  for (const [along, across, axis] of [[u, w, 0], [w, u, 1]] as [Vec3, Vec3, 0 | 1][]) {
+    for (let i = -half; i <= half; i++) {
+      // 카메라 앞(z>0) 구간만 그린다. 뒤로 넘어가면 투영이 뒤집힌다.
+      const pts: Pt2[] = [];
+      for (let t = -half * step; t <= half * step + 1e-9; t += step * 0.25) {
+        const p = at(i, t, along, across);
+        if (p[2] <= 0.05) { pts.length = 0; continue; }
+        const s = project(p, pp, f);
+        if (!s) { pts.length = 0; continue; }
+        pts.push(s);
+      }
+      for (let k = 1; k < pts.length; k++) {
+        const a = pts[k - 1], b = pts[k];
+        // 화면을 완전히 벗어난 조각은 버린다
+        const inside = (q: Pt2) => q[0] > -W && q[0] < 2 * W && q[1] > -H && q[1] < 2 * H;
+        if (inside(a) || inside(b)) out.push({ a, b, kind: "ground", axis });
+      }
+    }
+  }
+  return out;
+}

@@ -77,6 +77,7 @@ function drawBelowInk(ctx: CanvasRenderingContext2D) {
     ctx.beginPath(); ctx.arc(v[0], v[1], 5, 0, Math.PI * 2); ctx.fill();
   });
   ctx.restore();
+  panel.drawOffscreenVps(ctx);        // 화면 밖 소실점 (§3.8)
 }
 
 function refresh() {
