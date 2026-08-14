@@ -8,6 +8,9 @@ export interface InkOptions {
   onStrokeEnd: (stroke: Stroke, frame: Frame) => void;   // pointerup 시 완성 획
   color?: string;
   onInputMode?: (penSeen: boolean) => void;              // 펜 감지 시 팜 리젝션 정책 알림
+  // 잉크 아래 층(투시 가이드·소실점 등, W-1). redraw가 캔버스를 지우므로 여기서 다시 깐다.
+  // 좌표는 **CSS 픽셀**로 그린다 — ctx는 dpr 스케일이 걸린 상태로 넘어온다.
+  onBackground?: (ctx: CanvasRenderingContext2D) => void;
 }
 
 // 프레임별 획 버퍼 + 라이브 잉크 렌더. 프레임 전환은 setFrame으로.
@@ -140,6 +143,12 @@ export class InkCanvas {
   redraw() {
     const dpr = this.dpr();
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    if (this.opts.onBackground) {
+      this.ctx.save();
+      this.ctx.scale(dpr, dpr);            // 배경은 CSS 픽셀 좌표로 그린다
+      this.opts.onBackground(this.ctx);
+      this.ctx.restore();
+    }
     // 투시 정합 힌트: 평면 폴리곤을 옅게(§3.2)
     if (this.frame === "persp") {
       this.ctx.strokeStyle = "rgba(30,120,170,0.28)";

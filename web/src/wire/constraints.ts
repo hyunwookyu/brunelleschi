@@ -58,7 +58,11 @@ export class ConstraintAccumulator {
   private horizon: { a: Pt2; b: Pt2 } | null = null;
   private lensF: number | null = null;
 
-  constructor(readonly imgSize: [number, number]) {}
+  imgSize: [number, number];
+  constructor(imgSize: [number, number]) { this.imgSize = imgSize; }
+
+  /** 창 크기가 바뀌면 화각·무한원 판정의 기준이 바뀐다. 제스처는 그대로 둔다. */
+  resize(imgSize: [number, number]): this { this.imgSize = imgSize; return this; }
 
   add(g: Gesture): this {
     switch (g.kind) {
