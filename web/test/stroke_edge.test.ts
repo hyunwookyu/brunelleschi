@@ -74,8 +74,12 @@ function measureWord(word: string, cfg: WireCfg = {}): WordStat | null {
       }
       // 덮임: 곡선 획이라도 그 안의 직선 런은 엣지가 된다. 획 단위 분류보다 관대하지만
       // **더 정직하다** — 실제로 기하가 되는 양을 잰다.
-      inkLen += pr.pathLen;
-      for (const rn of pr.runs) if (rn.straight) edgeLen += rn.len;
+      // **분모는 범위 안 획으로 제한한다**(리뷰어 지적). 곡선까지 넣으면 이 값은
+      // "임의 곡선의 구간 선형화 가능성"이 되고, 그것은 임계를 낮출수록 오른다.
+      if (pr.kind === "line" || pr.kind === "polyline") {
+        inkLen += pr.pathLen;
+        for (const rn of pr.runs) if (rn.straight) edgeLen += rn.len;
+      }
     }
     // 그림 하나 안의 모든 런을 모아 덧그림·지나침을 본다
     const segs: Seg[] = parses.flatMap(p => p.runs);
@@ -175,6 +179,9 @@ function segmentAccuracy(grade: InkGrade, seed: number, n = 200) {
 function overtraceAccuracy(grade: InkGrade, seed: number, n = 200) {
   const r = rng32(seed);
   let tp = 0, fn = 0, fp = 0, tn = 0;
+  // 음성 표본이 실제로 어디에 놓였는지 기록한다 — DEFERRED의 "5% 미만은 접힌다"와
+  // 실제 오탐 수가 맞는지 확인하기 위해(리뷰어 지적). 이격은 **긴 변 길이 대비**로 잰다.
+  const negOffsets: number[] = [], negMerged: number[] = [];
   for (let i = 0; i < n; i++) {
     // 양성: 같은 변을 두 번 그은 것
     const base = polyline(0, r);
@@ -187,11 +194,34 @@ function overtraceAccuracy(grade: InkGrade, seed: number, n = 200) {
     const off = (0.03 + 0.12 * r()) * 180;
     const shifted: Pt[] = base.map(([x, y]) => [x, y + off]);
     const c = parseStroke(renderInk(shifted, grade, r)).runs[0];
-    if (a && c) (overtraceScore(a, c).merge ? fp++ : tn++);
+    if (a && c) {
+      const sc = overtraceScore(a, c);
+      negOffsets.push(+(off / Math.max(a.len, c.len)).toFixed(4));
+      negMerged.push(sc.merge ? 1 : 0);
+      (sc.merge ? fp++ : tn++);
+    }
   }
   const precision = tp + fp ? +(tp / (tp + fp)).toFixed(4) : null;
   const recall = tp + fn ? +(tp / (tp + fn)).toFixed(4) : null;
-  return { n_pairs: n * 2, tp, fn, fp, tn, precision, recall };
+  const fpr = fp + tn ? fp / (fp + tn) : 0;
+  // **1:1 균형 표본의 정밀도는 실제 정밀도가 아니다**(리뷰어 지적). 실획 덧그림 유병률은
+  // 0.4~5%다 — 그 조건으로 재가중해 병기한다. 오탐의 결과가 "벽이 한 줄로 접힘"이라 체감에 직결된다.
+  const reweight = (prev: number) => {
+    const tpr = recall ?? 0;
+    const num = tpr * prev, den = num + fpr * (1 - prev);
+    return den > 0 ? +(num / den).toFixed(4) : null;
+  };
+  return {
+    n_pairs: n * 2, tp, fn, fp, tn, precision, recall,
+    fpr: +fpr.toFixed(4),
+    precision_at_real_prevalence: { "0.005": reweight(0.005), "0.02": reweight(0.02), "0.05": reweight(0.05) },
+    negative_sample_offsets: {
+      note: "긴 변 길이 대비 이격. 병합 임계 dist_ratio=0.05 아래인 음성이 몇이고 실제로 몇이 접혔는지.",
+      below_threshold: negOffsets.filter(x => x < 0.05).length,
+      below_threshold_merged: negOffsets.filter((x, i) => x < 0.05 && negMerged[i] === 1).length,
+      min: Math.min(...negOffsets), max: Math.max(...negOffsets),
+    },
+  };
 }
 
 // ---------------------------------------------------------------- 실행
@@ -230,7 +260,7 @@ describe("W-0 획→엣지 매핑", () => {
         synthetic: "코너 수를 아는 폴리라인 + 실측 잉크 노이즈(archive_pre_W/ink_noise_model.json)",
         caveat: [
           "Quick,Draw는 **마우스·손가락 낙서**다. 작도 도구로 한 획씩 긋는 상황이 아니다.",
-          "따라서 실획 비율은 이 도구에서의 성능이 아니라 **하한**으로 읽어야 한다.",
+          "따라서 실획 비율은 이 도구에서의 성능이 아니다. 작도 도구에서는 더 높을 것으로 **예상하나 미측정**이다 — 사용자가 사각형을 한 획에 그으면 오히려 내려간다.",
           "애플펜슬 대표성은 여전히 미검증(assumptions V-A).",
         ],
       },
@@ -256,23 +286,28 @@ describe("W-0 획→엣지 매핑", () => {
         by_word: byWord,
         reading: [
           "one_stroke_one_edge_all: 분모가 곡선 포함 전 획. 곡선은 이 도구의 범위 밖이므로 과소평가다.",
-          "one_stroke_one_edge_inscope: 분모가 직선·폴리라인. 중단 조건(0.5)은 이쪽에 건다.",
+          "one_stroke_one_edge_inscope: 분모가 직선·폴리라인. **게이트로 쓰지 않는다** — 아래 metric_direction 참조.",
+          "중단 판정은 edge_fidelity.json 의 optimal_rate 로 옮겼다(양방향 지표, DECISIONS D-01).",
           "polyline 비율이 곧 (c) 분절이 필요한 비율이다 — 한 획이 여러 엣지인 경우.",
           "edge_coverage: 잉크 길이 중 직선 런으로 덮인 비율. 1:1 매핑이 아니어도 엣지가 되는 양.",
           "**주의**: one_stroke_one_edge 는 검출기가 좋아질수록 내려간다(아래 metric_direction 참조).",
         ],
       },
       synthetic_accuracy: {
-        segmentation: {   // (c) 분절 오류율
-          precise: segmentAccuracy("precise", 11),
-          medium: segmentAccuracy("medium", 12),
-          coarse: segmentAccuracy("coarse", 13),
+        canonical_note: ("**정본은 이 표다.** corner_tol_sweep 은 파라미터 **선택**에 쓴 별도 표본이고 "
+          + "얕은 코너를 절반 섞어 더 어렵다 — 그 값(exact 0.9556)을 성능으로 인용하면 안 되고, "
+          + "여기 값을 선택 표본에 인용해서도 안 된다. 아래 시드(101/102/103)는 선택에 쓰지 않은 "
+          + "**홀드아웃**이다(선택 시드는 11/12/13, 스윕은 31)."),
+        segmentation: {   // (c) 분절 오류율 — 홀드아웃 시드
+          precise: segmentAccuracy("precise", 101),
+          medium: segmentAccuracy("medium", 102),
+          coarse: segmentAccuracy("coarse", 103),
           note: "exact = 코너 수를 정확히 맞춘 비율. over_split = 없는 코너를 만든 비율(떨림을 코너로 오인).",
         },
         overtrace: {      // (b) 덧그림 병합 정확도
-          precise: overtraceAccuracy("precise", 21),
-          medium: overtraceAccuracy("medium", 22),
-          coarse: overtraceAccuracy("coarse", 23),
+          precise: overtraceAccuracy("precise", 121),
+          medium: overtraceAccuracy("medium", 122),
+          coarse: overtraceAccuracy("coarse", 123),
           note: "음성 표본은 **나란한 다른 변**(벽 두께). 오탐이 나면 두 줄이 한 줄로 접힌다.",
         },
       },

@@ -5,7 +5,7 @@
     "synthetic": "코너 수를 아는 폴리라인 + 실측 잉크 노이즈(archive_pre_W/ink_noise_model.json)",
     "caveat": [
       "Quick,Draw는 **마우스·손가락 낙서**다. 작도 도구로 한 획씩 긋는 상황이 아니다.",
-      "따라서 실획 비율은 이 도구에서의 성능이 아니라 **하한**으로 읽어야 한다.",
+      "따라서 실획 비율은 이 도구에서의 성능이 아니다. 작도 도구에서는 더 높을 것으로 **예상하나 미측정**이다 — 사용자가 사각형을 한 획에 그으면 오히려 내려간다.",
       "애플펜슬 대표성은 여전히 미검증(assumptions V-A)."
     ]
   },
@@ -21,7 +21,7 @@
       "one_stroke_one_edge_all": 0.3274,
       "one_stroke_one_edge_inscope": 0.4651,
       "inscope_rate": 0.7039,
-      "edge_coverage": 0.8553
+      "edge_coverage": 0.9745
     },
     "closed_shapes_only": {
       "words": [
@@ -35,7 +35,7 @@
       "n_strokes": 1881,
       "one_stroke_one_edge_all": 0.2839,
       "one_stroke_one_edge_inscope": 0.4152,
-      "edge_coverage": 0.8464,
+      "edge_coverage": 0.9737,
       "why": "`line` 범주는 1획=1엣지가 자명하다. 그것을 빼면 판정이 표본 구성에 덜 좌우된다."
     },
     "by_word": {
@@ -55,7 +55,7 @@
         "overtrace_rate": 0.0038,
         "overshoot_rate": 0.1385,
         "overshoot_tail_median": 0.0435,
-        "edge_coverage": 0.9156
+        "edge_coverage": 0.9789
       },
       "house": {
         "n_strokes": 465,
@@ -73,7 +73,7 @@
         "overtrace_rate": 0.0255,
         "overshoot_rate": 0.2555,
         "overshoot_tail_median": 0.068,
-        "edge_coverage": 0.8648
+        "edge_coverage": 0.9704
       },
       "castle": {
         "n_strokes": 421,
@@ -91,7 +91,7 @@
         "overtrace_rate": 0.0243,
         "overshoot_rate": 0.1114,
         "overshoot_tail_median": 0.0716,
-        "edge_coverage": 0.7588
+        "edge_coverage": 0.9698
       },
       "skyscraper": {
         "n_strokes": 368,
@@ -109,7 +109,7 @@
         "overtrace_rate": 0.0465,
         "overshoot_rate": 0.1464,
         "overshoot_tail_median": 0.0672,
-        "edge_coverage": 0.8875
+        "edge_coverage": 0.9765
       },
       "door": {
         "n_strokes": 291,
@@ -127,7 +127,7 @@
         "overtrace_rate": 0.0505,
         "overshoot_rate": 0.115,
         "overshoot_tail_median": 0.0662,
-        "edge_coverage": 0.8254
+        "edge_coverage": 0.9765
       },
       "line": {
         "n_strokes": 132,
@@ -145,7 +145,7 @@
         "overtrace_rate": 0.0625,
         "overshoot_rate": 0.0347,
         "overshoot_tail_median": 0.1776,
-        "edge_coverage": 0.9821
+        "edge_coverage": 0.9858
       },
       "triangle": {
         "n_strokes": 176,
@@ -163,88 +163,90 @@
         "overtrace_rate": 0.0051,
         "overshoot_rate": 0.1816,
         "overshoot_tail_median": 0.042,
-        "edge_coverage": 0.8927
+        "edge_coverage": 0.9765
       }
     },
     "reading": [
       "one_stroke_one_edge_all: 분모가 곡선 포함 전 획. 곡선은 이 도구의 범위 밖이므로 과소평가다.",
-      "one_stroke_one_edge_inscope: 분모가 직선·폴리라인. 중단 조건(0.5)은 이쪽에 건다.",
+      "one_stroke_one_edge_inscope: 분모가 직선·폴리라인. **게이트로 쓰지 않는다** — 아래 metric_direction 참조.",
+      "중단 판정은 edge_fidelity.json 의 optimal_rate 로 옮겼다(양방향 지표, DECISIONS D-01).",
       "polyline 비율이 곧 (c) 분절이 필요한 비율이다 — 한 획이 여러 엣지인 경우.",
       "edge_coverage: 잉크 길이 중 직선 런으로 덮인 비율. 1:1 매핑이 아니어도 엣지가 되는 양.",
       "**주의**: one_stroke_one_edge 는 검출기가 좋아질수록 내려간다(아래 metric_direction 참조)."
     ]
   },
   "synthetic_accuracy": {
+    "canonical_note": "**정본은 이 표다.** corner_tol_sweep 은 파라미터 **선택**에 쓴 별도 표본이고 얕은 코너를 절반 섞어 더 어렵다 — 그 값(exact 0.9556)을 성능으로 인용하면 안 되고, 여기 값을 선택 표본에 인용해서도 안 된다. 아래 시드(101/102/103)는 선택에 쓰지 않은 **홀드아웃**이다(선택 시드는 11/12/13, 스윕은 31).",
     "segmentation": {
       "precise": {
-        "n": 200,
-        "exact": 0.995,
-        "over_split": 0,
-        "under_split": 0.005,
-        "straight_only": {
-          "n": 57,
-          "spurious_corner_rate": 0
-        },
-        "exact_by_turn_deg": {
-          "45~70": {
-            "n": 86,
-            "exact": 0.9884
-          },
-          "70~100": {
-            "n": 104,
-            "exact": 1
-          },
-          "100~135": {
-            "n": 96,
-            "exact": 0.9792
-          }
-        }
-      },
-      "medium": {
         "n": 200,
         "exact": 1,
         "over_split": 0,
         "under_split": 0,
         "straight_only": {
-          "n": 52,
+          "n": 48,
           "spurious_corner_rate": 0
         },
         "exact_by_turn_deg": {
           "45~70": {
-            "n": 92,
+            "n": 83,
             "exact": 1
           },
           "70~100": {
-            "n": 90,
+            "n": 107,
             "exact": 1
           },
           "100~135": {
-            "n": 105,
+            "n": 99,
             "exact": 1
+          }
+        }
+      },
+      "medium": {
+        "n": 200,
+        "exact": 0.985,
+        "over_split": 0,
+        "under_split": 0.015,
+        "straight_only": {
+          "n": 61,
+          "spurious_corner_rate": 0
+        },
+        "exact_by_turn_deg": {
+          "45~70": {
+            "n": 61,
+            "exact": 0.9344
+          },
+          "70~100": {
+            "n": 103,
+            "exact": 0.9806
+          },
+          "100~135": {
+            "n": 101,
+            "exact": 0.9901
           }
         }
       },
       "coarse": {
         "n": 200,
-        "exact": 0.94,
-        "over_split": 0.02,
-        "under_split": 0.04,
+        "exact": 0.93,
+        "over_split": 0,
+        "under_split": 0.07,
         "straight_only": {
-          "n": 47,
+          "n": 46,
           "spurious_corner_rate": 0
         },
         "exact_by_turn_deg": {
           "45~70": {
-            "n": 86,
-            "exact": 0.8837
+            "n": 87,
+            "exact": 0.7816
           },
           "70~100": {
-            "n": 124,
-            "exact": 0.9194
+            "n": 100,
+            "exact": 0.93
           },
           "100~135": {
-            "n": 113,
-            "exact": 0.9115
+            "n": 123,
+            "exact": 0.9756
           }
         }
       },
@@ -253,30 +255,69 @@
     "overtrace": {
       "precise": {
         "n_pairs": 400,
-        "tp": 200,
-        "fn": 0,
-        "fp": 2,
-        "tn": 198,
-        "precision": 0.9901,
-        "recall": 1
+        "tp": 196,
+        "fn": 4,
+        "fp": 6,
+        "tn": 194,
+        "precision": 0.9703,
+        "recall": 0.98,
+        "fpr": 0.03,
+        "precision_at_real_prevalence": {
+          "0.005": 0.141,
+          "0.02": 0.4,
+          "0.05": 0.6323
+        },
+        "negative_sample_offsets": {
+          "note": "긴 변 길이 대비 이격. 병합 임계 dist_ratio=0.05 아래인 음성이 몇이고 실제로 몇이 접혔는지.",
+          "below_threshold": 6,
+          "below_threshold_merged": 6,
+          "min": 0.0382,
+          "max": 0.3858
+        }
       },
       "medium": {
         "n_pairs": 400,
-        "tp": 182,
-        "fn": 18,
-        "fp": 7,
-        "tn": 193,
-        "precision": 0.963,
-        "recall": 0.91
+        "tp": 180,
+        "fn": 20,
+        "fp": 4,
+        "tn": 196,
+        "precision": 0.9783,
+        "recall": 0.9,
+        "fpr": 0.02,
+        "precision_at_real_prevalence": {
+          "0.005": 0.1844,
+          "0.02": 0.4787,
+          "0.05": 0.7031
+        },
+        "negative_sample_offsets": {
+          "note": "긴 변 길이 대비 이격. 병합 임계 dist_ratio=0.05 아래인 음성이 몇이고 실제로 몇이 접혔는지.",
+          "below_threshold": 5,
+          "below_threshold_merged": 4,
+          "min": 0.0387,
+          "max": 0.4137
+        }
       },
       "coarse": {
         "n_pairs": 400,
         "tp": 138,
         "fn": 62,
-        "fp": 7,
-        "tn": 193,
-        "precision": 0.9517,
-        "recall": 0.69
+        "fp": 4,
+        "tn": 196,
+        "precision": 0.9718,
+        "recall": 0.69,
+        "fpr": 0.02,
+        "precision_at_real_prevalence": {
+          "0.005": 0.1478,
+          "0.02": 0.4132,
+          "0.05": 0.6449
+        },
+        "negative_sample_offsets": {
+          "note": "긴 변 길이 대비 이격. 병합 임계 dist_ratio=0.05 아래인 음성이 몇이고 실제로 몇이 접혔는지.",
+          "below_threshold": 4,
+          "below_threshold_merged": 3,
+          "min": 0.038,
+          "max": 0.4202
+        }
       },
       "note": "음성 표본은 **나란한 다른 변**(벽 두께). 오탐이 나면 두 줄이 한 줄로 접힌다."
     }
@@ -284,11 +325,11 @@
   "metric_direction": {
     "chosen": {
       "one_stroke_one_edge_inscope": 0.4152,
-      "edge_coverage": 0.8464
+      "edge_coverage": 0.9737
     },
     "deliberately_blunt": {
       "one_stroke_one_edge_inscope": 0.6877,
-      "edge_coverage": 0.4386
+      "edge_coverage": 0.9541
     },
     "synthetic_exact": {
       "chosen": 1,

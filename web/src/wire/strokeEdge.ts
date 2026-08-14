@@ -249,3 +249,80 @@ export function crossParam(p: Seg, q: Seg): [number, number] | null {
   const u = (qp[0] * r[1] - qp[1] * r[0]) / den;
   return [t, u];
 }
+
+// ---------------------------------------------------------------- 양방향 적합도 (W-0 2차)
+//
+// **왜 또 지표를 만드는가**: 1획=1엣지는 검출기가 둔감할수록 오르고(코너를 놓쳐 런이 하나가 된다),
+// 덮임률은 검출기가 과민할수록 오른다(잘게 쪼갤수록 직선 런이 늘어난다). 둘 다 **한쪽으로만**
+// 속는다. 리뷰어가 두 번째 결함을 짚었고, 실제로 스윕에서 임계 10°(없는 코너 0.05)가
+// 덮임률에서는 채택안을 이긴다.
+//
+// 양쪽을 동시에 벌하는 양은 하나뿐이다: **같은 허용오차를 지키는 데 필요한 최소 엣지 수**와
+// 검출기가 실제로 낸 엣지 수의 비교. 잘게 쪼개면 detected가 늘고, 놓치면 조각이 허용오차를
+// 못 지켜 minimal이 늘어난다. **정답 라벨이 필요 없다** — 실획에서 바로 잰다(V-o 준수).
+
+/**
+ * 최소 분할 (DP). 모든 조각이 `straight_tol`을 지키는 가장 적은 분할 수.
+ *
+ * 소박한 O(n³)(모든 (i,j) 쌍마다 편차를 다시 재는 것)은 실획 수백 장에서 못 쓴다.
+ * 두 가지로 줄인다: ① i에서 j를 늘리며 **편차를 누적**해 재계산을 피한다
+ * ② 한 번 허용오차를 넘고 나면 더 늘려도 대개 못 돌아오므로 **연속 초과 K회에서 끊는다**.
+ * ②는 근사이지만 한쪽으로만 틀린다 — 최소분할을 **과대**평가할 수 있고 과소평가하지 않는다.
+ * 과대평가는 검출기를 유리하게 만들지 않는다(detected가 minimal보다 작아져 under_fit이 된다).
+ */
+const MIN_SEG_GIVEUP = 12;
+
+export function minimalSegments(points: Pt[], cfg: WireCfg = {}): { n: number; feasible: boolean } {
+  const c = { ...WIRE_TOL, ...cfg };
+  const rs = resample(points.map(p => [p[0], p[1]] as Pt), c.resample);
+  const n = rs.length;
+  if (n < 3) return { n: 1, feasible: true };
+  const INF = 1e9;
+  const dp = new Array<number>(n).fill(INF);
+  dp[0] = 0;
+  for (let i = 0; i < n - 1; i++) {
+    if (dp[i] >= INF) continue;
+    let bad = 0;
+    for (let j = i + 1; j < n; j++) {
+      const { len, residual } = segResidual(rs, i, j);
+      const ok = len >= c.tap_px && residual <= c.straight_tol;
+      if (ok) {
+        bad = 0;
+        if (dp[i] + 1 < dp[j]) dp[j] = dp[i] + 1;
+      } else if (len >= c.tap_px) {
+        if (++bad >= MIN_SEG_GIVEUP) break;
+      }
+    }
+  }
+  return dp[n - 1] >= INF ? { n: 0, feasible: false } : { n: dp[n - 1], feasible: true };
+}
+
+function segResidual(pts: Pt[], i0: number, i1: number): { len: number; residual: number } {
+  const a = pts[i0], b = pts[i1];
+  const len = hypot(b[0] - a[0], b[1] - a[1]);
+  if (len < 1e-9) return { len: 0, residual: 0 };
+  let m = 0;
+  for (let k = i0 + 1; k < i1; k++) m = Math.max(m, ptSegDist(pts[k], a, b));
+  return { len, residual: m / len };
+}
+
+export interface Fidelity {
+  detected: number; minimal: number; feasible: boolean;
+  verdict: "optimal" | "over_split" | "under_fit" | "out_of_scope";
+}
+
+/**
+ * 검출기가 낸 엣지 수 ↔ 허용오차를 지키는 최소 엣지 수.
+ *   optimal      같다 — 잉크가 딱 그만큼의 엣지다
+ *   over_split   더 많다 — 떨림을 코너로 오인해 쪼갰다
+ *   under_fit    더 적다 — 코너를 놓쳐 허용오차를 못 지키는 조각이 남았다
+ *   out_of_scope 어떤 분할로도 허용오차를 못 지킨다 = 곡선. 이 도구의 범위 밖(§1.2)
+ */
+export function fidelity(points: Pt[], cfg: WireCfg = {}): Fidelity {
+  const pr = parseStroke(points, cfg);
+  const m = minimalSegments(points, cfg);
+  const detected = pr.runs.length;
+  if (!m.feasible) return { detected, minimal: 0, feasible: false, verdict: "out_of_scope" };
+  const verdict = detected === m.n ? "optimal" : detected > m.n ? "over_split" : "under_fit";
+  return { detected, minimal: m.n, feasible: true, verdict };
+}

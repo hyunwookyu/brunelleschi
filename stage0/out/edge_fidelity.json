@@ -1,0 +1,212 @@
+{
+  "spec": "W-0 양방향 적합도 — 검출 엣지 수 vs 허용오차를 지키는 최소 엣지 수(DP).",
+  "why": [
+    "1획=1엣지는 **둔감할수록** 오른다(코너를 놓치면 런이 하나).",
+    "덮임률은 **과민할수록** 오른다(잘게 쪼갤수록 직선 런이 늘어난다).",
+    "적합도는 양쪽을 벌한다 — 쪼개면 detected가 늘고 놓치면 minimal이 늘어난다.",
+    "정답 라벨이 필요 없어 **실획에서 직접** 잰다(assumptions V-o)."
+  ],
+  "sample": "Quick,Draw raw 폐곡선 [\"square\",\"house\",\"castle\",\"skyscraper\",\"door\",\"triangle\"] (line 범주 제외). 낙서이므로 하한으로 읽는다.",
+  "chosen_cfg": {
+    "corner_deg": 20,
+    "smooth_sigma": 1.5
+  },
+  "chosen": {
+    "n": 1819,
+    "optimal_rate": 0.6916,
+    "over_split_rate": 0.0214,
+    "under_fit_rate": 0.1985,
+    "out_of_scope_rate": 0.0885,
+    "one_stroke_one_edge": 0.2936,
+    "runs_per_stroke": 2.885
+  },
+  "grid": [
+    {
+      "name": "deg10_sig0.5",
+      "cfg": {
+        "corner_deg": 10,
+        "smooth_sigma": 0.5
+      },
+      "n": 461,
+      "optimal_rate": 0.4512,
+      "over_split_rate": 0.3861,
+      "under_fit_rate": 0.0954,
+      "out_of_scope_rate": 0.0672,
+      "one_stroke_one_edge": 0.2169,
+      "runs_per_stroke": 3.798
+    },
+    {
+      "name": "deg10_sig1.5",
+      "cfg": {
+        "corner_deg": 10,
+        "smooth_sigma": 1.5
+      },
+      "n": 461,
+      "optimal_rate": 0.5965,
+      "over_split_rate": 0.2039,
+      "under_fit_rate": 0.1323,
+      "out_of_scope_rate": 0.0672,
+      "one_stroke_one_edge": 0.2798,
+      "runs_per_stroke": 3.262
+    },
+    {
+      "name": "deg10_sig3",
+      "cfg": {
+        "corner_deg": 10,
+        "smooth_sigma": 3
+      },
+      "n": 461,
+      "optimal_rate": 0.6963,
+      "over_split_rate": 0.0629,
+      "under_fit_rate": 0.1735,
+      "out_of_scope_rate": 0.0672,
+      "one_stroke_one_edge": 0.3167,
+      "runs_per_stroke": 2.813
+    },
+    {
+      "name": "deg20_sig0.5",
+      "cfg": {
+        "corner_deg": 20,
+        "smooth_sigma": 0.5
+      },
+      "n": 461,
+      "optimal_rate": 0.6768,
+      "over_split_rate": 0.0716,
+      "under_fit_rate": 0.1844,
+      "out_of_scope_rate": 0.0672,
+      "one_stroke_one_edge": 0.3059,
+      "runs_per_stroke": 2.868
+    },
+    {
+      "name": "deg20_sig1.5",
+      "cfg": {
+        "corner_deg": 20,
+        "smooth_sigma": 1.5
+      },
+      "n": 461,
+      "optimal_rate": 0.6941,
+      "over_split_rate": 0.0304,
+      "under_fit_rate": 0.2082,
+      "out_of_scope_rate": 0.0672,
+      "one_stroke_one_edge": 0.3232,
+      "runs_per_stroke": 2.731
+    },
+    {
+      "name": "deg20_sig3",
+      "cfg": {
+        "corner_deg": 20,
+        "smooth_sigma": 3
+      },
+      "n": 461,
+      "optimal_rate": 0.6898,
+      "over_split_rate": 0.0152,
+      "under_fit_rate": 0.2278,
+      "out_of_scope_rate": 0.0672,
+      "one_stroke_one_edge": 0.3341,
+      "runs_per_stroke": 2.584
+    },
+    {
+      "name": "deg30_sig0.5",
+      "cfg": {
+        "corner_deg": 30,
+        "smooth_sigma": 0.5
+      },
+      "n": 461,
+      "optimal_rate": 0.6746,
+      "over_split_rate": 0.0282,
+      "under_fit_rate": 0.2299,
+      "out_of_scope_rate": 0.0672,
+      "one_stroke_one_edge": 0.3232,
+      "runs_per_stroke": 2.655
+    },
+    {
+      "name": "deg30_sig1.5",
+      "cfg": {
+        "corner_deg": 30,
+        "smooth_sigma": 1.5
+      },
+      "n": 461,
+      "optimal_rate": 0.679,
+      "over_split_rate": 0.013,
+      "under_fit_rate": 0.2408,
+      "out_of_scope_rate": 0.0672,
+      "one_stroke_one_edge": 0.3319,
+      "runs_per_stroke": 2.566
+    },
+    {
+      "name": "deg30_sig3",
+      "cfg": {
+        "corner_deg": 30,
+        "smooth_sigma": 3
+      },
+      "n": 461,
+      "optimal_rate": 0.6443,
+      "over_split_rate": 0.0043,
+      "under_fit_rate": 0.2842,
+      "out_of_scope_rate": 0.0672,
+      "one_stroke_one_edge": 0.3427,
+      "runs_per_stroke": 2.401
+    },
+    {
+      "name": "deg45_sig0.5",
+      "cfg": {
+        "corner_deg": 45,
+        "smooth_sigma": 0.5
+      },
+      "n": 461,
+      "optimal_rate": 0.6421,
+      "over_split_rate": 0.0108,
+      "under_fit_rate": 0.2798,
+      "out_of_scope_rate": 0.0672,
+      "one_stroke_one_edge": 0.3319,
+      "runs_per_stroke": 2.425
+    },
+    {
+      "name": "deg45_sig1.5",
+      "cfg": {
+        "corner_deg": 45,
+        "smooth_sigma": 1.5
+      },
+      "n": 461,
+      "optimal_rate": 0.6074,
+      "over_split_rate": 0.0065,
+      "under_fit_rate": 0.3189,
+      "out_of_scope_rate": 0.0672,
+      "one_stroke_one_edge": 0.3362,
+      "runs_per_stroke": 2.289
+    },
+    {
+      "name": "deg45_sig3",
+      "cfg": {
+        "corner_deg": 45,
+        "smooth_sigma": 3
+      },
+      "n": 461,
+      "optimal_rate": 0.4772,
+      "over_split_rate": 0.0022,
+      "under_fit_rate": 0.4534,
+      "out_of_scope_rate": 0.0672,
+      "one_stroke_one_edge": 0.3449,
+      "runs_per_stroke": 1.792
+    }
+  ],
+  "metric_direction": {
+    "note": "임계를 낮추면(과민) 1획=1엣지는 내려가고 over_split이 오른다. 높이면(둔감) 반대다.",
+    "sharpest": {
+      "name": "deg10_sig0.5",
+      "one_stroke_one_edge": 0.2169,
+      "over_split_rate": 0.3861,
+      "optimal_rate": 0.4512
+    },
+    "bluntest": {
+      "name": "deg45_sig3",
+      "one_stroke_one_edge": 0.3449,
+      "under_fit_rate": 0.4534,
+      "optimal_rate": 0.4772
+    }
+  },
+  "reading": [
+    "optimal_rate 가 **이 방식의 전제를 재는 값**이다 — 잉크가 제 엣지 수로 떨어지는 비율.",
+    "out_of_scope_rate 는 어떤 분할로도 허용오차를 못 지키는 획 = 곡선. 도구 범위 밖(§1.2)."
+  ]
+}

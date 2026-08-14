@@ -1,0 +1,302 @@
+{
+  "spec": "W-1 카메라 수학 TS 이식 정합 기준(Python이 기준 구현).",
+  "img_size": [
+    800.0,
+    600.0
+  ],
+  "cases": {
+    "line_intersect": {
+      "input": [
+        [
+          0,
+          0
+        ],
+        [
+          10,
+          5
+        ],
+        [
+          0,
+          10
+        ],
+        [
+          10,
+          6
+        ]
+      ],
+      "out": [
+        11.11111111111111,
+        5.555555555555555
+      ]
+    },
+    "line_intersect_parallel": {
+      "input": [
+        [
+          0,
+          0
+        ],
+        [
+          10,
+          0
+        ],
+        [
+          0,
+          5
+        ],
+        [
+          10,
+          5
+        ]
+      ],
+      "out": null
+    },
+    "f_two_vps": {
+      "vps": [
+        [
+          -200.0,
+          300.0
+        ],
+        [
+          1400.0,
+          300.0
+        ]
+      ],
+      "out": {
+        "ok": true,
+        "f": 774.5966692414834,
+        "principal_point": [
+          400.0,
+          300.0
+        ],
+        "residual": 0.0,
+        "case": "2pt"
+      }
+    },
+    "f_two_vps_same_side": {
+      "vps": [
+        [
+          900.0,
+          300.0
+        ],
+        [
+          1400.0,
+          300.0
+        ]
+      ],
+      "out": {
+        "ok": false,
+        "reason": "vps_same_side_f2_negative",
+        "f2": -500000.0,
+        "principal_point": [
+          400.0,
+          300.0
+        ]
+      }
+    },
+    "f_three_vps_acute": {
+      "vps": [
+        [
+          -600.0,
+          200.0
+        ],
+        [
+          1400.0,
+          200.0
+        ],
+        [
+          400.0,
+          2200.0
+        ]
+      ],
+      "out": {
+        "ok": true,
+        "f": 866.0254037844386,
+        "principal_point": [
+          400.0,
+          700.0
+        ],
+        "residual": 0.0,
+        "case": "3pt"
+      }
+    },
+    "f_three_vps_obtuse": {
+      "vps": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          100.0,
+          0.0
+        ],
+        [
+          3000.0,
+          40.0
+        ]
+      ],
+      "out": {
+        "ok": false,
+        "reason": "obtuse_triangle_f2_negative",
+        "f2": -47314949999.99984,
+        "principal_point": [
+          2999.999999999995,
+          -217499.99999999962
+        ],
+        "residual": 1.6124701666703706e-16
+      }
+    },
+    "gate": {
+      "samples": [
+        {
+          "f": 200.0,
+          "out": {
+            "verdict": "unreliable",
+            "ratio": 0.25,
+            "fov_deg": 126.87
+          }
+        },
+        {
+          "f": 500.0,
+          "out": {
+            "verdict": "warn",
+            "ratio": 0.625,
+            "fov_deg": 77.32
+          }
+        },
+        {
+          "f": 700.0,
+          "out": {
+            "verdict": "trust",
+            "ratio": 0.875,
+            "fov_deg": 59.49
+          }
+        },
+        {
+          "f": 900.0,
+          "out": {
+            "verdict": "trust",
+            "ratio": 1.125,
+            "fov_deg": 47.92
+          }
+        },
+        {
+          "f": 4000.0,
+          "out": {
+            "verdict": "trust",
+            "ratio": 5.0,
+            "fov_deg": 11.42
+          }
+        }
+      ]
+    },
+    "direct_scale_axes": {
+      "0": [
+        "width",
+        "height",
+        "depth"
+      ],
+      "1": [
+        "width",
+        "height"
+      ],
+      "2": [
+        "height"
+      ],
+      "3": []
+    },
+    "recover_3pt": {
+      "out": {
+        "n_vps": 3,
+        "direct_scale_axes": [],
+        "case": "3pt",
+        "principal_point": [
+          400.0,
+          700.0
+        ],
+        "residual": 0.0,
+        "ok": true,
+        "f": 866.0254037844386,
+        "verdict": "trust",
+        "ratio": 1.0825,
+        "fov_deg": 49.58
+      }
+    },
+    "recover_2pt": {
+      "out": {
+        "n_vps": 2,
+        "direct_scale_axes": [
+          "height"
+        ],
+        "case": "2pt",
+        "principal_point": [
+          400.0,
+          300.0
+        ],
+        "residual": 0.0,
+        "ok": true,
+        "f": 774.5966692414834,
+        "verdict": "trust",
+        "ratio": 0.9682,
+        "fov_deg": 54.62
+      }
+    },
+    "recover_1pt_unset": {
+      "out": {
+        "n_vps": 1,
+        "direct_scale_axes": [
+          "width",
+          "height"
+        ],
+        "case": "1pt",
+        "principal_point": [
+          400.0,
+          300.0
+        ],
+        "residual": 0.0,
+        "ok": false,
+        "f": null,
+        "verdict": "unresolved_f",
+        "ratio": null,
+        "fov_deg": null
+      }
+    },
+    "recover_1pt_setting": {
+      "out": {
+        "n_vps": 1,
+        "direct_scale_axes": [
+          "width",
+          "height"
+        ],
+        "case": "1pt",
+        "principal_point": [
+          400.0,
+          300.0
+        ],
+        "residual": 0.0,
+        "ok": true,
+        "f": 900.0,
+        "verdict": "trust",
+        "ratio": 1.125,
+        "fov_deg": 47.92
+      }
+    },
+    "recover_0pt": {
+      "out": {
+        "n_vps": 0,
+        "direct_scale_axes": [
+          "width",
+          "height",
+          "depth"
+        ],
+        "case": "axonometric",
+        "ok": false,
+        "f": null,
+        "principal_point": null,
+        "residual": null,
+        "verdict": "no_perspective",
+        "ratio": null,
+        "fov_deg": null
+      }
+    }
+  }
+}
