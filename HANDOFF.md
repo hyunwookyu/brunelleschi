@@ -6,10 +6,10 @@
 1. `CLAUDE.md` — 작업 지침(A-1~A-4, 자료구조, 참조 저장소 금지 규정, 이론서 지도)
 2. `docs/sketch3d_plan.md` — **현행 계획서**(코드명 S). 폐기된 3종은 `docs/archive/`
 3. 이 문서 (아래 현재 단계)
-4. `DECISIONS.md` 맨 아래 "S 전환" 절 — **D-S1~D-S8**
-5. `DEFERRED.md`(맨 아래 S-3 두 절), `assumptions.md`(맨 위 S 절, AS-1~AS-12), 필요할 때 `docs/perspective_theory.md`
+4. `DECISIONS.md` 맨 아래 "S 전환" 절 — **D-S1~D-S10**
+5. `DEFERRED.md`(맨 아래 S-3 두 절), `assumptions.md`(맨 위 S 절, **AS-1~AS-15**), 필요할 때 `docs/perspective_theory.md`
 
-## ⚠ 이 프로젝트에서 반복해서 걸린 것 세 가지
+## ⚠ 이 프로젝트에서 반복해서 걸린 것 다섯 가지
 
 1. **문서의 수치가 원장(JSON)보다 뒤처진다.** 수치를 문서에 쓰기 전에 `stage0/out/`의
    JSON을 그 자리에서 다시 읽는다. 재측정했으면 그 값을 인용한 문서를 `grep`으로 전부 찾아 고친다.
@@ -127,7 +127,7 @@ cd web && npx vitest run test/real_ink.test.ts
 - S-A·S-0 리뷰어 잔여 중 아직 처리 안 된 것: DEFERRED의 단계 배정이 W-3/W-6/W-8을 가리킨다
   (S 번호로 재배정 필요), selfcheck 산출물에 정적 탐지가 훑은 파일 수 필드가 없다,
   **잉크 캡처 회귀 테스트 0**(S에서도 유지 항목인데 무검증 — S-10 Playwright).
-- selfcheck 117건 — 전부 원인 확인(분류표는 progress.md S-3 절 맨 아래).
+- selfcheck **208건** — 전부 원인 확인(분류는 progress.md의 S-3·S-2b 절 맨 아래).
 - `bend_max` 0.18은 측정이 정당화하지 못한다 — S-10 이후 재결정.
 - AS-1("숙련자 획에서 정확한가")은 **표본이 없다**. 조용히 틀리는 비율이 조건에 따라
   0.036~0.13으로 흔들린다.
@@ -139,7 +139,7 @@ cd web && npx vite --port 5222 --strictPort
 `S2S_HTTP=1`을 주면 HTTP(기본은 HTTPS). 5173은 다른 프로세스가 잡고 있어 5222를 쓴다.
 `npm run dev:5222 --prefix web`이 HTTP+5222 한 줄이고 `.claude/launch.json`이 그것을 쓴다.
 브라우저 확인은 마우스 `PointerEvent`를 직접 디스패치하면 된다.
-`window.s2s`에 `{strokes, panel, viewport, strokeView, addStroke, placeCtx, refresh}`가 노출돼 있다.
+`window.s2s`에 `{strokes, panel, viewport, strokeView, addStroke, placeCtx, refresh, exportSession}`이 노출돼 있다.
 
 테스트: `cd web && npx vitest run` · `python -m pytest tests/ -q` · `python selfcheck.py`.
 카메라 기준값 재생성: `python web/test/gen_camera_ref.py`.
