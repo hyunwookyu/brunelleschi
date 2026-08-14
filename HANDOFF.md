@@ -85,11 +85,13 @@
 
 ## 다음에 할 일 — S-7의 나머지
 
-1. **돌린 시점의 미배치 획을 그 시점에 겹쳐 그린다.** 지금은 목록에 `(돌린 시점)`으로 뜨고
-   "그 시점에서만 보입니다"라고만 안내한다. `#ink3d` 캔버스에 `pts2d`를 파선으로 그리면 된다
-   (그 좌표계가 곧 그 캔버스다). `main.ts`의 `drawBelowInk`에 대응하는 3D 쪽 훅이 필요하다.
-2. **돌린 시점에서도 `고치기`가 되게 한다.** 지금 `editClick`은 첫 카메라 좌표만 다룬다.
-   `viewPlaceCtx`로 후보를 뷰 좌표에 투영하면 같은 흐름이 선다.
+1. ~~돌린 시점의 미배치 획을 겹쳐 그린다~~ **완료** — 그 획의 카메라 자세를 `viewCam` Map에
+   들고 있다가 **같은 시점일 때만** 파선으로 그린다(다르면 `그 시점으로` 버튼).
+2. **돌린 시점에서도 `고치기`가 되게 한다.** 지금 `refreshCandidates`는 첫 카메라 좌표로만
+   후보를 모아서 view 획을 고르면 "후보 0"이 뜬다. `viewPlaceCtx`로 기존 획을 뷰 좌표에
+   투영하고(그 코드는 `addStrokeFromView`에 이미 있다) 클릭을 `#ink3d`에서 받으면 같은
+   흐름이 선다. **`editClick`은 첫 캔버스 전용이라는 전제가 지금 두 군데에 박혀 있다**
+   (`refreshCandidates`의 조기 반환, `screenPts`의 `viewOrigin` 분기).
 3. **undo/redo · 레이어 · 지우개 · 다중 선택.** 참조 저장소 코드를 복사하지 않는다(§3).
    undo는 `drawn` 배열과 `rawPoints`·`viewOrigin`·`provisional` 셋을 함께 되돌려야 한다.
 4. **돌린 시점의 평면 경로**(DEFERRED S-6 3). `addStrokeFromView`에는 `facePlanes`·`freeSpan`이
