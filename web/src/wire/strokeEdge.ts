@@ -274,7 +274,11 @@ const MIN_SEG_GIVEUP = 12;
 
 export function minimalSegments(points: Pt[], cfg: WireCfg = {}): { n: number; feasible: boolean } {
   const c = { ...WIRE_TOL, ...cfg };
-  const rs = resample(points.map(p => [p[0], p[1]] as Pt), c.resample);
+  // **검출기와 같은 전처리를 거쳐야 한다.** 평활 전 원본에서 재면 detected와 minimal이
+  // 서로 다른 곡선에서 나온 값이 되어 비교가 성립하지 않는다.
+  // (리뷰어가 out_of_scope_rate가 21개 설정 전부에서 소수점 넷째 자리까지 같은 것을 보고
+  //  이 비대칭을 짚었다 — σ가 바뀌어도 값이 안 움직이면 σ를 안 쓰고 있다는 뜻이다.)
+  const rs = smoothPath(resample(points.map(p => [p[0], p[1]] as Pt), c.resample), c.smooth_sigma);
   const n = rs.length;
   if (n < 3) return { n: 1, feasible: true };
   const INF = 1e9;
