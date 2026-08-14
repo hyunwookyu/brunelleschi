@@ -10,6 +10,8 @@ import { PRESETS } from "./s3d/constraints.js";
 import { AXIS_COLOR } from "./s3d/grid.js";
 import { classifyStroke, type Axis } from "./s3d/axis.js";
 import { newStroke, settle, reprojectAll, type Stroke, type PlaceCtx } from "./s3d/stroke.js";
+import { buildSession, downloadSession } from "./ui/sessionExport.js";
+import type { AxisVerdict } from "./s3d/axis.js";
 import type { Pt2 } from "./s3d/camera.js";
 
 const canvas = document.getElementById("ink") as HTMLCanvasElement;
@@ -32,6 +34,9 @@ const panel = new CameraPanel(cssSize(), () => { replace(); refresh(); });
 
 /** 사용자가 그린 획 — **원본 점열 그대로** 보관한다(§5). 3D는 여기서 파생된다. */
 const drawn: Stroke[] = [];
+/** 실획 수집용 원본 6튜플과 판정 결과. `Stroke`는 [x,y]만 들고 있으므로 여기 따로 남긴다. */
+const rawPoints = new Map<string, number[][]>();
+const verdicts = new Map<string, AxisVerdict>();
 
 /** 지금 카메라로 배치 문맥을 만든다. 카메라가 아직이면 `null`(배치하지 않는다). */
 function placeCtx(): PlaceCtx | null {
@@ -63,7 +68,7 @@ const ink = new InkCanvas(canvas, {
   onStrokeEnd: (stroke) => {
     const pts = stroke.points.map(p => [p[0], p[1]] as Pt2);
     if (pts.length < 2) return;
-    if (panel.tool === "draw") addStroke(pts);
+    if (panel.tool === "draw") addStroke(pts, stroke.points);
     else panel.handleStroke(pts[0], pts[pts.length - 1]);
     refresh();
   },
@@ -71,13 +76,18 @@ const ink = new InkCanvas(canvas, {
 ink.setFrame("persp");
 
 /** 획 하나 — **판정(§4.1) → 앵커 체인(§4.2) → 역투영**. 획은 쪼개지 않는다(§1). */
-function addStroke(pts: Pt2[]) {
+function addStroke(pts: Pt2[], raw?: number[][]) {
   const ctx = placeCtx();
+  // **카메라를 함께 넘긴다**(S-2b a·b). 화각 60°(이론서 18.4)를 넘는 자리에서는 사람이 수렴을
+  // 완화해 그리므로 허용 범위를 넓히고, 왜곡이 후보 전체를 밀어 올려도 **순위**로 판정한다.
+  // (c) 획 간 일관성은 **꺼 둔다** — 구제 29건 중 8건이 틀렸다(D-S9).
   const v = ctx
-    ? classifyStroke(pts, ctx.vps, ctx.imgSize)
+    ? classifyStroke(pts, ctx.vps, ctx.imgSize, {}, { principal: ctx.principal, f: ctx.f })
     : { axis: "free" as Axis, note: "카메라가 아직 확정되지 않았습니다", rep: null };
   const s = newStroke(pts, v.axis, v.rep ? { a: v.rep.a, b: v.rep.b } : undefined);
   drawn.push(s);
+  if (raw) rawPoints.set(s.id, raw);
+  verdicts.set(s.id, v as AxisVerdict);
   if (ctx) settle(drawn, ctx);
   strokeView.sync(drawn);
   lastNote = v.note;
@@ -193,7 +203,27 @@ lockBtn.addEventListener("click", () => {
   lockBtn.textContent = panel.locked ? "잠금 해제" : "카메라 잠금";
 });
 document.getElementById("reset")!.addEventListener("click", () => {
-  panel.reset(); drawn.length = 0; lastNote = ""; strokeView.reset(); ink.clear(); refresh();
+  panel.reset(); drawn.length = 0; rawPoints.clear(); verdicts.clear();
+  lastNote = ""; strokeView.reset(); ink.clear(); refresh();
+});
+
+/**
+ * 실획 내보내기 — **S-10 재측정의 유일한 입력 경로**다(AS-13).
+ * 받은 파일을 저장소의 `sessions/`에 넣으면 `real_ink.test.ts`가 집어 간다.
+ */
+function exportSession() {
+  return buildSession({
+    at: new Date().toISOString(),
+    imgSize: panel.imgSize,
+    cam: panel.acc.solve().camera,
+    vps: panel.vps(),
+    strokes: drawn, raw: rawPoints, verdicts,
+  });
+}
+document.getElementById("export")!.addEventListener("click", () => {
+  if (!drawn.length) { msgEl.textContent = "내보낼 획이 없습니다"; return; }
+  downloadSession(exportSession());
+  msgEl.textContent = `획 ${drawn.length}개를 내보냈습니다 — 저장소의 sessions/ 에 넣어 주세요`;
 });
 
 window.addEventListener("resize", () => { fit(); viewport.resize(); });
@@ -216,5 +246,5 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
 
 // 브라우저 확인용 — 콘솔에서 배치 상태를 그대로 읽을 수 있게 한다(S-3 검증).
 (window as unknown as { s2s: unknown }).s2s = {
-  strokes: drawn, panel, addStroke, placeCtx, refresh, viewport, strokeView,
+  strokes: drawn, panel, addStroke, placeCtx, refresh, viewport, strokeView, exportSession,
 };

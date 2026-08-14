@@ -87,6 +87,84 @@ export function boxEdges(sc: Scene, O: Vec3, a: number, b: number, c: number): T
 
 export interface DrawnEdge extends TrueEdge { pts2d: Pt2[]; a2d: Pt2; b2d: Pt2; }
 
+// ---------------------------------------------------------------- S-2b 체계적 왜곡
+
+/**
+ * **체계적 왜곡 — 사람이 수렴을 완화해 그리는 것**(AS-14, 이론서 18.4).
+ *
+ * 손떨림은 무작위이고 획마다 독립이지만, 이것은 **방향이 있고 여러 획에 일관**하다.
+ * 18.4: 화각 60° 이내는 평면-구면 차이가 선 굵기 이하이고, 넘어가면 주변부 신장이 감지된다 —
+ * 사람은 그 구간에서 수렴을 완화해 그린다. 건축 투시 작도의 관행이기도 하다.
+ *
+ * 모델은 **위치 의존 깊이 압축**이다. 투영의 수렴은 깊이로 나누는 데서 오므로 깊이를 기준면 쪽으로
+ * 당기면 수렴이 약해진다. 그 당기는 양을 **화각의 함수**로 둔다.
+ *
+ * ```
+ * t = |u_true − P| / f                      (tan 반각)
+ * λ(t) = 1 − warp · max(0, t/t60 − 1)       (60° 안이면 1 = 그대로)
+ * z'   = z_ref + (z − z_ref) · λ(t)         u = P + f · x / z'
+ * ```
+ *
+ * - `warp = 0` 왜곡 없음 · 클수록 가장자리에서 더 완화(축측 쪽으로)
+ * - **점의 함수라 여러 획에 일관**하고, 두 획이 공유하는 모서리는 **여전히 한 점**이다
+ * - **사영변환이 아니다.** λ가 위치마다 다르므로 다른 카메라로 흡수되지 않는다.
+ *   _처음에는 λ를 상수로 뒀는데 그것은 `[f,0,0,0; 0,f,0,0; 0,0,λ,c]`라는 **정상 카메라**였다 —
+ *   깊이 방향 아핀 자유도(이론서 16.4) 그 자체이고, 획 투표(§3.1)가 알아서 흡수한다.
+ *   반례 테스트가 그것을 잡았다._
+ *
+ * **이것은 사람 획을 잰 모델이 아니다.** 표본이 없다(AS-13). 성질만 맞춘 대용물이며,
+ * 맞춘 성질은 셋이다 — 위치 의존 · 획 간 일관 · 비사영. 실제 값은 S-10에서 잰다.
+ */
+export const WARP_T60 = 0.5773502692;         // tan(30°) — 18.4의 화각 60° 기준
+
+export function warpLambda(uTrue: Pt2, sc: Scene, warp: number): number {
+  if (warp <= 0) return 1;
+  const t = Math.hypot(uTrue[0] - sc.principal[0], uTrue[1] - sc.principal[1]) / sc.f;
+  return 1 - warp * Math.max(0, t / WARP_T60 - 1);
+}
+
+export function projectWarped(p: Vec3, sc: Scene, zRef: number, warp: number): Pt2 | null {
+  const u = project(p, sc.principal, sc.f);
+  if (!u) return null;
+  if (warp <= 0) return u;
+  const z = zRef + (p[2] - zRef) * warpLambda(u, sc, warp);
+  if (z <= 1e-9) return null;
+  return [sc.principal[0] + (p[0] * sc.f) / z, sc.principal[1] + (p[1] * sc.f) / z];
+}
+
+/**
+ * 왜곡이 실제로 "덜 수렴"시키는지 확인한다 — **겉보기 소실점이 참값보다 멀어져야 한다.**
+ * 같은 축 모서리들의 왜곡된 상을 최소제곱으로 만나게 해 겉보기 소실점을 낸다.
+ * 반환값은 `|겉보기 − 주점| / |참 VP − 주점|`이며 1보다 크면 덜 수렴한 것이다.
+ */
+export function apparentVpRatio(sc: Scene, edges: TrueEdge[], zRef: number, warp: number,
+                                axis: 0 | 1 | 2): number | null {
+  const lines: { p: Pt2; d: Pt2 }[] = [];
+  for (const e of edges) {
+    if (e.axis !== axis) continue;
+    const a = projectWarped(e.a, sc, zRef, warp), b = projectWarped(e.b, sc, zRef, warp);
+    if (!a || !b) continue;
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (L < 1e-9) continue;
+    lines.push({ p: a, d: [(b[0] - a[0]) / L, (b[1] - a[1]) / L] });
+  }
+  if (lines.length < 2) return null;
+  // 최소제곱 교점: Σ (I − dd^T) x = Σ (I − dd^T) p
+  let a11 = 0, a12 = 0, a22 = 0, b1 = 0, b2 = 0;
+  for (const { p, d } of lines) {
+    const m11 = 1 - d[0] * d[0], m12 = -d[0] * d[1], m22 = 1 - d[1] * d[1];
+    a11 += m11; a12 += m12; a22 += m22;
+    b1 += m11 * p[0] + m12 * p[1];
+    b2 += m12 * p[0] + m22 * p[1];
+  }
+  const det = a11 * a22 - a12 * a12;
+  if (Math.abs(det) < 1e-12) return null;
+  const x = (a22 * b1 - a12 * b2) / det, y = (a11 * b2 - a12 * b1) / det;
+  const dTrue = Math.hypot(sc.vps[axis][0] - sc.principal[0], sc.vps[axis][1] - sc.principal[1]);
+  const dApp = Math.hypot(x - sc.principal[0], y - sc.principal[1]);
+  return dTrue < 1e-9 ? null : dApp / dTrue;
+}
+
 /**
  * 참 모서리를 투영하고 그 위에 잉크 노이즈를 얹는다. **노이즈는 2D에만 있다.**
  *
@@ -99,11 +177,14 @@ export interface DrawnEdge extends TrueEdge { pts2d: Pt2[]; a2d: Pt2; b2d: Pt2; 
  */
 export function drawEdges(
   sc: Scene, edges: TrueEdge[], grade: InkGrade, r: () => number, skew: number,
-  endJitter = 0,
+  endJitter = 0, warp = 0,
 ): DrawnEdge[] | null {
+  // 체계적 왜곡(S-2b): 기준 깊이는 그림 중심의 깊이로 둔다 — 그 부근은 그대로 그려진다.
+  const zRef = warp <= 0 ? 0
+    : edges.reduce((s, e) => s + e.a[2] + e.b[2], 0) / (2 * edges.length);
   const proj: [Pt2, Pt2][] = [];
   for (const e of edges) {
-    const a = project(e.a, sc.principal, sc.f), b = project(e.b, sc.principal, sc.f);
+    const a = projectWarped(e.a, sc, zRef, warp), b = projectWarped(e.b, sc, zRef, warp);
     if (!a || !b) return null;
     proj.push([a, b]);
   }

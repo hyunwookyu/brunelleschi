@@ -34,10 +34,32 @@ export const AXIS_TOL = {
    */
   turn_deg: 45,
   turn_window_ratio: 0.12,      // 방향을 재는 창 = 점 수 대비
+
+  // ---- S-2b 체계적 왜곡 대응 (AS-14). 카메라(`cam`)가 주어질 때만 켜진다 ----
+  /**
+   * **(a) 위치 의존 임계.** 이론서 18.4: 화각 60° 이내는 평면-구면 차이가 선 굵기 이하이고,
+   * 넘어가면 주변부 신장이 감지된다 — 사람은 그 구간에서 수렴을 완화해 그린다.
+   * 그러므로 허용 범위도 화각 60°(반각 30°, tan = 0.577)를 넘는 만큼 넓힌다.
+   * 0이면 꺼진다(기존 동작).
+   */
+  angle_relax: 1.2,
+  /** 18.4의 기준 반각. `tan(30°)`. */
+  angle_t60: 0.5773502692,
+  /**
+   * **(b) 상대 순위 판정.** 체계적 왜곡은 **모든 후보의 부적합도를 함께 밀어 올린다** —
+   * 절대 임계로는 전부 탈락하지만 **순위는 유지된다**. 1등이 2등보다 이 배수만큼 나으면
+   * 절대 임계를 넘어도 채택한다. 단 아래 천장까지다.
+   */
+  rank_margin: 2.5,
+  /** 상대 판정의 하드 천장 — 이보다 나쁘면 순위가 좋아도 배정하지 않는다. */
+  vp_dist_ceiling: 0.22,
 };
 export type AxisCfg = Partial<typeof AXIS_TOL>;
 
 export interface Rep { a: Pt2; b: Pt2; len: number; bend: number; }
+
+/** 카메라 — (a) 위치 의존 임계에 필요하다. 없으면 그 보정이 꺼진다. */
+export interface AxisCam { principal: Pt2; f: number; }
 
 /**
  * 획의 **대표 직선**. 최소제곱(PCA 주축)으로 잡고 점열을 그 위에 사영해 양 끝을 낸다.
@@ -99,6 +121,23 @@ export function maxTurn(pts: Pt2[], windowRatio: number): number {
   return best;
 }
 
+/**
+ * **부호 있는** 부적합도 — 대표 직선을 연장했을 때 소실점이 **어느 쪽으로** 빗나갔는가.
+ *
+ * 크기만으로는 체계적 왜곡을 다룰 수 없다. 왜곡은 방향이 있으므로 이웃 획들이 **같은 쪽으로**
+ * 빗나가고, 그 편향을 빼면 판정이 선다(§c). 부호가 없으면 편향이 상쇄돼 보인다.
+ */
+export function vpMisfitSigned(rep: Rep, vp: Pt2): number {
+  const m: Pt2 = [(rep.a[0] + rep.b[0]) / 2, (rep.a[1] + rep.b[1]) / 2];
+  const da = Math.hypot(vp[0] - rep.a[0], vp[1] - rep.a[1]);
+  const db = Math.hypot(vp[0] - rep.b[0], vp[1] - rep.b[1]);
+  const p = da >= db ? rep.a : rep.b;
+  const dx = vp[0] - p[0], dy = vp[1] - p[1];
+  const L = Math.hypot(dx, dy);
+  if (L < 1e-9 || rep.len < 1e-9) return Infinity;
+  return ((m[0] - p[0]) * dy - (m[1] - p[1]) * dx) / L / rep.len;
+}
+
 /** 대표 직선이 소실점을 얼마나 빗나가는가 — **수직거리 ÷ 길이**. */
 export function vpMisfit(rep: Rep, vp: Pt2): number {
   const m: Pt2 = [(rep.a[0] + rep.b[0]) / 2, (rep.a[1] + rep.b[1]) / 2];
@@ -112,8 +151,22 @@ export function vpMisfit(rep: Rep, vp: Pt2): number {
   return Math.abs((m[0] - p[0]) * dy - (m[1] - p[1]) * dx) / L / rep.len;
 }
 
+/**
+ * **(a) 위치 의존 임계 배수.** 대표 직선의 중점이 주점에서 얼마나 떨어졌는지를 화각으로 재고,
+ * 이론서 18.4의 60° 기준을 넘는 만큼 허용 범위를 넓힌다. 60° 안이면 1(넓히지 않는다).
+ */
+export function angleWiden(rep: Rep, cam: AxisCam | undefined, c: typeof AXIS_TOL): number {
+  if (!cam || c.angle_relax <= 0) return 1;
+  const mx = (rep.a[0] + rep.b[0]) / 2 - cam.principal[0];
+  const my = (rep.a[1] + rep.b[1]) / 2 - cam.principal[1];
+  const t = Math.hypot(mx, my) / cam.f;               // tan(반각)
+  return 1 + c.angle_relax * Math.max(0, t / c.angle_t60 - 1);
+}
+
 export type Reason =
   | "ok" | "too_short" | "too_bent" | "multi_axis" | "ambiguous" | "no_axis_matches" | "no_camera";
+
+export interface AxisScore { axis: Axis; m: number; signed: number; }
 
 export interface AxisVerdict {
   axis: Axis;
@@ -121,6 +174,10 @@ export interface AxisVerdict {
   misfit: number | null;
   runnerUp: number | null;
   rep: Rep | null;
+  /** 후보별 부적합도(부호 포함). **§c 획 간 일관성이 이것을 쓴다.** */
+  scores?: AxisScore[];
+  /** 순위 기준으로만 채택했는가(절대 임계 초과) — 보고와 측정에서 갈라 본다. */
+  relative?: boolean;
   /** 미분류 이유를 사람 말로. 사용자가 축을 직접 고를 때 화면에 나온다. */
   note: string;
 }
@@ -144,6 +201,7 @@ const NOTE: Record<Reason, string> = {
  */
 export function classifyStroke(
   pts: Pt2[], vps: (Pt2 | null)[], imgSize: [number, number], cfg: AxisCfg = {},
+  cam?: AxisCam,
 ): AxisVerdict {
   const c = { ...AXIS_TOL, ...cfg };
   const diag = Math.hypot(imgSize[0], imgSize[1]);
@@ -161,37 +219,49 @@ export function classifyStroke(
     return { ...base, axis: "free", reason: "too_bent", note: NOTE.too_bent };
   }
 
-  const scored: { axis: Axis; m: number }[] = [];
+  const scored: AxisScore[] = [];
   vps.forEach((v, i) => {
     if (!v || !isFiniteVp(v, imgSize)) return;
-    scored.push({ axis: i as 0 | 1 | 2, m: vpMisfit(rep, v) });
+    scored.push({ axis: i as 0 | 1 | 2, m: vpMisfit(rep, v), signed: vpMisfitSigned(rep, v) });
   });
   // 화면평행(c=0) — 소실점이 없는 축. 수평·수직 중 가까운 쪽에서 벗어난 정도로 잰다.
   const dx = Math.abs(rep.b[0] - rep.a[0]) / rep.len;
   const dy = Math.abs(rep.b[1] - rep.a[1]) / rep.len;
   const sm = Math.min(dx, dy);
-  scored.push({ axis: "screen", m: sm <= c.screen_parallel ? sm : Infinity });
+  scored.push({ axis: "screen", m: sm <= c.screen_parallel ? sm : Infinity, signed: sm });
 
   scored.sort((p, q) => p.m - q.m);
+  const withScores = { ...base, scores: scored };
   const best = scored[0], second = scored[1];
   if (!best || !Number.isFinite(best.m)) {
     const reason: Reason = scored.length <= 1 ? "no_camera" : "no_axis_matches";
-    return { ...base, axis: "free", reason, note: NOTE[reason] };
-  }
-  if (best.m > c.vp_dist_ratio) {
-    return { ...base, axis: "free", misfit: best.m, reason: "no_axis_matches",
-             note: NOTE.no_axis_matches };
+    return { ...withScores, axis: "free", reason, note: NOTE[reason] };
   }
 
+  // (a) 위치 의존 임계 — 화각 60° 밖에서는 사람이 수렴을 완화해 그린다(18.4·AS-14)
+  const tol = c.vp_dist_ratio * angleWiden(rep, cam, c);
   const runnerUp = second && Number.isFinite(second.m) ? second.m : null;
+
+  // (b) 상대 순위 — 왜곡은 후보 전체를 함께 밀어 올리므로 순위는 살아 있다
+  let relative = false;
+  if (best.m > tol) {
+    const ranked = runnerUp != null && runnerUp > best.m * c.rank_margin;
+    if (!(ranked && best.m <= c.vp_dist_ceiling)) {
+      return { ...withScores, axis: "free", misfit: best.m, reason: "no_axis_matches",
+               note: NOTE.no_axis_matches };
+    }
+    relative = true;
+  }
+
   // 배수 기준은 1등이 0에 가까우면 무력해진다(짧은 획이 틀린 축에도 잘 맞는 경우).
   // 절대 여유를 함께 본다 — **둘 중 하나만 만족해도 구분된 것으로 본다.**
   const separated = runnerUp == null
     || runnerUp > best.m * c.ambiguity_margin
     || runnerUp - best.m > c.ambiguity_floor;
   if (!separated) {
-    return { ...base, axis: "free", misfit: best.m, runnerUp, reason: "ambiguous",
+    return { ...withScores, axis: "free", misfit: best.m, runnerUp, reason: "ambiguous",
              note: NOTE.ambiguous };
   }
-  return { rep, axis: best.axis, misfit: best.m, runnerUp, reason: "ok", note: "" };
+  return { rep, scores: scored, axis: best.axis, misfit: best.m, runnerUp,
+           reason: "ok", note: "", relative };
 }

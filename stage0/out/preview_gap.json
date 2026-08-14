@@ -9,7 +9,7 @@
   "finding_first": "**D-S6이 지정한 양은 이 구현에서 항등이다.** 그리는 중이든 확정 뒤든 각 점은 **자기 광선 위에** 놓이므로, 그린 카메라에서 다시 투영하면 어느 평면을 골라도 원본 `pts2d`로 돌아온다. 즉 '재투영 화면 좌표차'는 0이고 임계는 원리적으로 발동할 수 없다 — 리뷰어가 지적한 '반증 불가' 유형이 임계를 숫자로 박은 뒤에도 남아 있었던 셈이다.",
   "falsifiable_instead": "그래서 임계를 **실제로 화면을 움직이는 두 가지**에 건다(DECISIONS D-S7): ① 끝점 접합 이동량(§1.2가 허용하는 유일한 위치 개입) ② 그린 획이 3D에 못 놓이는 비율. 임계값 자체는 D-S6 그대로 두고 **적용 대상만 정정**한다.",
   "identity_check_px": {
-    "n": 415,
+    "n": 487,
     "min": 0,
     "p10": 0,
     "median": 0,
@@ -56,50 +56,50 @@
     },
     "jitter_0.01": {
       "join_shift_ratio": {
-        "n": 630,
+        "n": 635,
         "min": 0,
         "p10": 0.0002,
-        "median": 0.0189,
-        "p90": 0.0481,
+        "median": 0.0192,
+        "p90": 0.0492,
         "max": 0.1356
       },
-      "placed_rate": 0.875,
+      "placed_rate": 0.8819,
       "no_anchor_rate": 0.0014,
-      "unclassified_rate": 0.1236,
+      "unclassified_rate": 0.1167,
       "unanchored_of_classified": 0.0016,
-      "n_placed": 630,
+      "n_placed": 635,
       "n_strokes": 720
     },
     "jitter_0.02": {
       "join_shift_ratio": {
-        "n": 415,
+        "n": 487,
         "min": 0,
         "p10": 0,
-        "median": 0.0262,
+        "median": 0.028,
         "p90": 0.0668,
         "max": 0.1413
       },
-      "placed_rate": 0.5764,
-      "no_anchor_rate": 0.2472,
-      "unclassified_rate": 0.1764,
-      "unanchored_of_classified": 0.3002,
-      "n_placed": 415,
+      "placed_rate": 0.6764,
+      "no_anchor_rate": 0.2069,
+      "unclassified_rate": 0.1167,
+      "unanchored_of_classified": 0.2343,
+      "n_placed": 487,
       "n_strokes": 720
     },
     "jitter_0.04": {
       "join_shift_ratio": {
-        "n": 135,
+        "n": 170,
         "min": 0,
         "p10": 0,
-        "median": 0.0049,
-        "p90": 0.0513,
-        "max": 0.1073
+        "median": 0.0161,
+        "p90": 0.0609,
+        "max": 0.108
       },
-      "placed_rate": 0.1875,
-      "no_anchor_rate": 0.4347,
-      "unclassified_rate": 0.3778,
-      "unanchored_of_classified": 0.6987,
-      "n_placed": 135,
+      "placed_rate": 0.2361,
+      "no_anchor_rate": 0.5569,
+      "unclassified_rate": 0.2069,
+      "unanchored_of_classified": 0.7023,
+      "n_placed": 170,
       "n_strokes": 720
     }
   },
@@ -117,22 +117,22 @@
   "verdict": {
     "join_shift_median_pass": true,
     "join_shift_p90_pass": true,
-    "unanchored_at_ref": 0.3002,
+    "unanchored_at_ref": 0.2343,
     "reading": "**판정을 한 조건에서 읽지 않는다**(리뷰어 지적: 동작점을 측정 후에 고른 것이 된다). 끝점 겨냥 오차별로 읽으면 이렇다 — 1% 이하: 접합 이동 p90 0.05 이하이고 거의 다 놓인다. 2%: 이동량은 통과하나 축이 정해진 획의 1/4~1/3이 안 놓인다. 4%: 획의 80% 이상이 안 놓이고, **이동량은 오히려 좋아 보인다**(실패가 표본에서 빠지므로). 즉 **중단 조건은 도구가 아니라 입력에 걸린다**: 이 방식은 끝점 겨냥 오차가 그림 대각의 1% 근처일 때 성립한다. 그 값이 숙련자에게 얼마인지는 **미측정**이다(AS-1) — S-10에서 잰다."
   },
   "rotated_difference": {
     "definition": "확정 배치와 미리보기 배치를 **같은 각도로 돌려** 각각 투영한 뒤, 대응 점 사이 화면 거리의 중앙값 ÷ 획 길이. 회전은 수직축 둘레 60°다.",
     "by_mode": {
       "sight": {
-        "n": 359,
+        "n": 431,
         "min": 0.0051,
-        "p10": 0.1258,
-        "median": 0.3743,
-        "p90": 1.0902,
-        "max": 4.7072
+        "p10": 0.1208,
+        "median": 0.3929,
+        "p90": 1.1717,
+        "max": 6.7345
       },
       "screen": {
-        "n": 415,
+        "n": 487,
         "min": 0,
         "p10": 0,
         "median": 0,
@@ -140,11 +140,11 @@
         "max": 0
       },
       "facing": {
-        "n": 415,
+        "n": 487,
         "min": 0.0005,
         "p10": 0.0918,
-        "median": 0.2921,
-        "p90": 0.5501,
+        "median": 0.2714,
+        "p90": 0.5466,
         "max": 0.7802
       }
     },

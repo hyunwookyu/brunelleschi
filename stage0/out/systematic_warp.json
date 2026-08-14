@@ -1,0 +1,1269 @@
+{
+  "spec": "S-2b 체계적 왜곡 대응. 사람이 수렴을 완화해 그리는 것을 합성에 넣고(f), 판정 보정 a·b·c의 효과를 잰다.",
+  "premise": "**사용자 획의 오차는 무작위가 아니다**(AS-14). 손떨림 외에 **체계적 왜곡**이 있고 방향이 있으며 여러 획에 일관하다. 이론서 18.4: 화각 60°를 넘으면 정확한 투시가 어색해 보이고 사람은 이를 완화해 그린다 — 가장자리로 갈수록 진짜 소실점보다 덜 수렴시킨다. **오차가 아니라 의도일 수 있으므로 고치지 않는다. 받아들이되 축은 알아보게 한다.**",
+  "model": "**위치 의존** 깊이 압축. `λ(t) = 1 − warp·max(0, t/tan30° − 1)`, `z' = z_ref + (z−z_ref)·λ(t)`, `t = |u−P|/f`. warp=0이면 왜곡 없음. 점의 함수라 여러 획에 일관하고 공유 모서리가 한 점으로 남으며, **사영변환이 아니라** 다른 카메라로 흡수되지 않는다(반례 테스트 둘로 잠갔다). _처음에는 λ를 상수로 뒀는데 그것은 정상 카메라였다 — 깊이 방향 아핀 자유도(16.4) 그 자체이고 획 투표가 흡수한다. 반례가 잡았다._ **사람 획을 잰 모델이 아니다** — 표본이 없다(AS-13). 성질만 맞춘 대용물이다.",
+  "scenes": {
+    "normal_60deg": {
+      "f": 1000,
+      "fov_deg": 60.7,
+      "note": "S-3이 쓴 구도. 18.4의 '논쟁 무의미' 구간 경계"
+    },
+    "wide_98deg": {
+      "f": 520,
+      "fov_deg": 96.8,
+      "note": "18.4의 '지각과 명확히 어긋남' 구간"
+    }
+  },
+  "key_finding": "**왜곡은 구도에 달려 있다.** 18.4의 기준이 화각 60°이므로, 그 안쪽 구도에서는 같은 warp 값을 줘도 λ(t)=1이 되어 **왜곡이 생기지 않는다**. S-3이 쓴 구도가 정확히 그 경계(60.5°)라 S-3의 수치는 이 효과에 거의 영향받지 않는다 — **S-2b가 고치는 것은 넓은 구도다.**",
+  "variants": {
+    "base": "S-3 그대로(절대 임계, 위치 무관)",
+    "a": "위치 의존 임계 — 18.4의 화각 60° 기준을 넘는 만큼 허용을 넓힌다",
+    "b": "상대 순위 — 왜곡은 후보 전체를 함께 밀어 올리므로 순위로 판정한다(천장 있음)",
+    "c": "**획 간 일관성 단독** — a·b 없이 이웃의 국소 편향만 빼고 다시 본다",
+    "ab": "a + b",
+    "abc": "a + b + **획 간 일관성**(이웃의 국소 편향을 빼고 다시 본다)"
+  },
+  "three_numbers": "assigned_rate만 오르는 것은 개선이 아니다. **silent_wrong_rate(조용히 틀린 축)**를 함께 본다 — A-3이 금지하는 것이 그것이다. 구제된 획이 틀린 수(rescued_wrong)도 낸다.",
+  "condition": {
+    "end_jitter": 0.01,
+    "grade": "medium",
+    "skew": 0.12,
+    "mode": "facing",
+    "join_ratio": 0.015,
+    "boxes_per_cell": 45,
+    "seed_base": 8100,
+    "yaw_deg": 35,
+    "pitch_deg": 15
+  },
+  "tolerances": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+  },
+  "apparent_vp_ratio": {
+    "normal_60deg": {
+      "warp_0": {
+        "axis0": 1,
+        "axis1": 1,
+        "axis2": 1
+      },
+      "warp_0.15": {
+        "axis0": 1,
+        "axis1": 1,
+        "axis2": 1
+      },
+      "warp_0.3": {
+        "axis0": 1,
+        "axis1": 1,
+        "axis2": 1
+      },
+      "warp_0.5": {
+        "axis0": 1,
+        "axis1": 1,
+        "axis2": 1
+      }
+    },
+    "wide_98deg": {
+      "warp_0": {
+        "axis0": 1,
+        "axis1": 1,
+        "axis2": 1
+      },
+      "warp_0.15": {
+        "axis0": 1.175,
+        "axis1": 1.175,
+        "axis2": 1.091
+      },
+      "warp_0.3": {
+        "axis0": 1.182,
+        "axis1": 1.203,
+        "axis2": 1.012
+      },
+      "warp_0.5": {
+        "axis0": 0.974,
+        "axis1": 1.074,
+        "axis2": 0.755
+      }
+    }
+  },
+  "apparent_note": "겉보기 소실점 거리 ÷ 참 소실점 거리. 1보다 크면 덜 수렴한 것이다.",
+  "misfit_by_field_angle": {
+    "normal_60deg_warp_0": {
+      "tan_0.00~0.25": {
+        "n": 360,
+        "min": 0.0001,
+        "p10": 0.0034,
+        "median": 0.0151,
+        "p90": 0.0371,
+        "max": 0.0744
+      },
+      "tan_0.25~0.50": {
+        "n": 164,
+        "min": 0.0006,
+        "p10": 0.0035,
+        "median": 0.0171,
+        "p90": 0.0361,
+        "max": 0.0897
+      }
+    },
+    "normal_60deg_warp_0.15": {
+      "tan_0.00~0.25": {
+        "n": 373,
+        "min": 0,
+        "p10": 0.0028,
+        "median": 0.0163,
+        "p90": 0.0371,
+        "max": 0.0693
+      },
+      "tan_0.25~0.50": {
+        "n": 156,
+        "min": 0.0001,
+        "p10": 0.0019,
+        "median": 0.015,
+        "p90": 0.0362,
+        "max": 0.0656
+      }
+    },
+    "normal_60deg_warp_0.3": {
+      "tan_0.00~0.25": {
+        "n": 322,
+        "min": 0,
+        "p10": 0.0029,
+        "median": 0.0151,
+        "p90": 0.0382,
+        "max": 0.0758
+      },
+      "tan_0.25~0.50": {
+        "n": 194,
+        "min": 0.0001,
+        "p10": 0.0031,
+        "median": 0.0139,
+        "p90": 0.0348,
+        "max": 0.0685
+      }
+    },
+    "normal_60deg_warp_0.5": {
+      "tan_0.00~0.25": {
+        "n": 332,
+        "min": 0,
+        "p10": 0.0027,
+        "median": 0.0165,
+        "p90": 0.0395,
+        "max": 0.0822
+      },
+      "tan_0.25~0.50": {
+        "n": 190,
+        "min": 0.0002,
+        "p10": 0.0025,
+        "median": 0.0135,
+        "p90": 0.0331,
+        "max": 0.0781
+      }
+    },
+    "wide_98deg_warp_0": {
+      "tan_0.00~0.25": {
+        "n": 102,
+        "min": 0.0002,
+        "p10": 0.0025,
+        "median": 0.014,
+        "p90": 0.0408,
+        "max": 0.085
+      },
+      "tan_0.25~0.50": {
+        "n": 174,
+        "min": 0.0003,
+        "p10": 0.0018,
+        "median": 0.013,
+        "p90": 0.0372,
+        "max": 0.0704
+      },
+      "tan_0.50~0.75": {
+        "n": 113,
+        "min": 0.0004,
+        "p10": 0.0024,
+        "median": 0.0125,
+        "p90": 0.0364,
+        "max": 0.0755
+      },
+      "tan_0.75~1.00": {
+        "n": 20,
+        "min": 0.0001,
+        "p10": 0.0015,
+        "median": 0.008,
+        "p90": 0.0266,
+        "max": 0.0329
+      }
+    },
+    "wide_98deg_warp_0.15": {
+      "tan_0.00~0.25": {
+        "n": 131,
+        "min": 0,
+        "p10": 0.0022,
+        "median": 0.0141,
+        "p90": 0.0368,
+        "max": 0.0655
+      },
+      "tan_0.25~0.50": {
+        "n": 207,
+        "min": 0.0002,
+        "p10": 0.0028,
+        "median": 0.0156,
+        "p90": 0.0389,
+        "max": 0.0746
+      },
+      "tan_0.50~0.75": {
+        "n": 142,
+        "min": 0,
+        "p10": 0.0034,
+        "median": 0.0151,
+        "p90": 0.0363,
+        "max": 0.0938
+      },
+      "tan_0.75~1.00": {
+        "n": 33,
+        "min": 0.0042,
+        "p10": 0.0107,
+        "median": 0.0405,
+        "p90": 0.0733,
+        "max": 0.0958
+      }
+    },
+    "wide_98deg_warp_0.3": {
+      "tan_0.00~0.25": {
+        "n": 126,
+        "min": 0.0001,
+        "p10": 0.0024,
+        "median": 0.0124,
+        "p90": 0.0398,
+        "max": 0.0676
+      },
+      "tan_0.25~0.50": {
+        "n": 208,
+        "min": 0.0001,
+        "p10": 0.0029,
+        "median": 0.0153,
+        "p90": 0.0353,
+        "max": 0.0904
+      },
+      "tan_0.50~0.75": {
+        "n": 163,
+        "min": 0.0002,
+        "p10": 0.0025,
+        "median": 0.019,
+        "p90": 0.0484,
+        "max": 0.123
+      },
+      "tan_0.75~1.00": {
+        "n": 29,
+        "min": 0.0038,
+        "p10": 0.0526,
+        "median": 0.0988,
+        "p90": 0.1992,
+        "max": 0.2388
+      }
+    },
+    "wide_98deg_warp_0.5": {
+      "tan_0.00~0.25": {
+        "n": 127,
+        "min": 0.0003,
+        "p10": 0.0019,
+        "median": 0.0153,
+        "p90": 0.0401,
+        "max": 0.088
+      },
+      "tan_0.25~0.50": {
+        "n": 217,
+        "min": 0.0002,
+        "p10": 0.0032,
+        "median": 0.0137,
+        "p90": 0.0364,
+        "max": 0.0611
+      },
+      "tan_0.50~0.75": {
+        "n": 164,
+        "min": 0.0007,
+        "p10": 0.0045,
+        "median": 0.0211,
+        "p90": 0.0832,
+        "max": 0.28
+      },
+      "tan_0.75~1.00": {
+        "n": 12,
+        "min": 0.0068,
+        "p10": 0.0093,
+        "median": 0.1656,
+        "p90": 0.3033,
+        "max": 0.3244
+      }
+    }
+  },
+  "misfit_note": "참 축에 대한 부적합도를 대표 직선 중점의 **화각(tan 반각)** 구간별로 나눈 것. 왜곡이 위치 의존이면 바깥 구간에서 커진다 — a의 근거다. 18.4의 60°는 tan 0.577이다.",
+  "by_scene": {
+    "normal_60deg": {
+      "warp_0": {
+        "base": {
+          "n": 540,
+          "assigned_rate": 0.8852,
+          "accuracy": 0.9268,
+          "silent_wrong_rate": 0.0648,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8741,
+          "no_anchor_rate": 0.0111,
+          "by_reason": {
+            "ok": 478,
+            "ambiguous": 43,
+            "multi_axis": 16,
+            "no_axis_matches": 3
+          }
+        },
+        "a": {
+          "n": 540,
+          "assigned_rate": 0.8852,
+          "accuracy": 0.9268,
+          "silent_wrong_rate": 0.0648,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8741,
+          "no_anchor_rate": 0.0111,
+          "by_reason": {
+            "ok": 478,
+            "ambiguous": 43,
+            "multi_axis": 16,
+            "no_axis_matches": 3
+          }
+        },
+        "b": {
+          "n": 540,
+          "assigned_rate": 0.8907,
+          "accuracy": 0.9272,
+          "silent_wrong_rate": 0.0648,
+          "relative_rate": 0.0056,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8796,
+          "no_anchor_rate": 0.0111,
+          "by_reason": {
+            "ok": 481,
+            "ambiguous": 43,
+            "multi_axis": 16
+          }
+        },
+        "c": {
+          "n": 540,
+          "assigned_rate": 0.8889,
+          "accuracy": 0.9271,
+          "silent_wrong_rate": 0.0648,
+          "relative_rate": 0.0037,
+          "rescued_rate": 0.0037,
+          "rescued": 2,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": 0,
+          "placed_rate": 0.8778,
+          "no_anchor_rate": 0.0111,
+          "by_reason": {
+            "ok": 480,
+            "ambiguous": 42,
+            "multi_axis": 16,
+            "no_axis_matches": 2
+          }
+        },
+        "ab": {
+          "n": 540,
+          "assigned_rate": 0.8907,
+          "accuracy": 0.9272,
+          "silent_wrong_rate": 0.0648,
+          "relative_rate": 0.0056,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8796,
+          "no_anchor_rate": 0.0111,
+          "by_reason": {
+            "ok": 481,
+            "ambiguous": 43,
+            "multi_axis": 16
+          }
+        },
+        "abc": {
+          "n": 540,
+          "assigned_rate": 0.8926,
+          "accuracy": 0.9274,
+          "silent_wrong_rate": 0.0648,
+          "relative_rate": 0.0074,
+          "rescued_rate": 0.0019,
+          "rescued": 1,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": 0,
+          "placed_rate": 0.8815,
+          "no_anchor_rate": 0.0111,
+          "by_reason": {
+            "ok": 482,
+            "ambiguous": 42,
+            "multi_axis": 16
+          }
+        }
+      },
+      "warp_0.15": {
+        "base": {
+          "n": 540,
+          "assigned_rate": 0.9204,
+          "accuracy": 0.9175,
+          "silent_wrong_rate": 0.0759,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.9204,
+          "no_anchor_rate": 0,
+          "by_reason": {
+            "ok": 497,
+            "ambiguous": 28,
+            "multi_axis": 11,
+            "no_axis_matches": 4
+          }
+        },
+        "a": {
+          "n": 540,
+          "assigned_rate": 0.9204,
+          "accuracy": 0.9175,
+          "silent_wrong_rate": 0.0759,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.9204,
+          "no_anchor_rate": 0,
+          "by_reason": {
+            "ok": 497,
+            "ambiguous": 28,
+            "multi_axis": 11,
+            "no_axis_matches": 4
+          }
+        },
+        "b": {
+          "n": 540,
+          "assigned_rate": 0.9278,
+          "accuracy": 0.9182,
+          "silent_wrong_rate": 0.0759,
+          "relative_rate": 0.0074,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.9278,
+          "no_anchor_rate": 0,
+          "by_reason": {
+            "ok": 501,
+            "ambiguous": 28,
+            "multi_axis": 11
+          }
+        },
+        "c": {
+          "n": 540,
+          "assigned_rate": 0.9259,
+          "accuracy": 0.916,
+          "silent_wrong_rate": 0.0778,
+          "relative_rate": 0.0056,
+          "rescued_rate": 0.0056,
+          "rescued": 3,
+          "rescued_wrong": 1,
+          "rescued_wrong_rate": 0.3333,
+          "placed_rate": 0.9259,
+          "no_anchor_rate": 0,
+          "by_reason": {
+            "ok": 500,
+            "ambiguous": 25,
+            "multi_axis": 11,
+            "no_axis_matches": 4
+          }
+        },
+        "ab": {
+          "n": 540,
+          "assigned_rate": 0.9278,
+          "accuracy": 0.9182,
+          "silent_wrong_rate": 0.0759,
+          "relative_rate": 0.0074,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.9278,
+          "no_anchor_rate": 0,
+          "by_reason": {
+            "ok": 501,
+            "ambiguous": 28,
+            "multi_axis": 11
+          }
+        },
+        "abc": {
+          "n": 540,
+          "assigned_rate": 0.9333,
+          "accuracy": 0.9167,
+          "silent_wrong_rate": 0.0778,
+          "relative_rate": 0.013,
+          "rescued_rate": 0.0056,
+          "rescued": 3,
+          "rescued_wrong": 1,
+          "rescued_wrong_rate": 0.3333,
+          "placed_rate": 0.9333,
+          "no_anchor_rate": 0,
+          "by_reason": {
+            "ok": 504,
+            "ambiguous": 25,
+            "multi_axis": 11
+          }
+        }
+      },
+      "warp_0.3": {
+        "base": {
+          "n": 540,
+          "assigned_rate": 0.8759,
+          "accuracy": 0.871,
+          "silent_wrong_rate": 0.113,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.863,
+          "no_anchor_rate": 0.013,
+          "by_reason": {
+            "ok": 473,
+            "ambiguous": 33,
+            "multi_axis": 24,
+            "no_axis_matches": 10
+          }
+        },
+        "a": {
+          "n": 540,
+          "assigned_rate": 0.8759,
+          "accuracy": 0.871,
+          "silent_wrong_rate": 0.113,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.863,
+          "no_anchor_rate": 0.013,
+          "by_reason": {
+            "ok": 473,
+            "ambiguous": 33,
+            "multi_axis": 24,
+            "no_axis_matches": 10
+          }
+        },
+        "b": {
+          "n": 540,
+          "assigned_rate": 0.8944,
+          "accuracy": 0.8737,
+          "silent_wrong_rate": 0.113,
+          "relative_rate": 0.0185,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8815,
+          "no_anchor_rate": 0.013,
+          "by_reason": {
+            "ok": 483,
+            "ambiguous": 33,
+            "multi_axis": 24
+          }
+        },
+        "c": {
+          "n": 540,
+          "assigned_rate": 0.8778,
+          "accuracy": 0.8692,
+          "silent_wrong_rate": 0.1148,
+          "relative_rate": 0.0019,
+          "rescued_rate": 0.0019,
+          "rescued": 1,
+          "rescued_wrong": 1,
+          "rescued_wrong_rate": 1,
+          "placed_rate": 0.8648,
+          "no_anchor_rate": 0.013,
+          "by_reason": {
+            "ok": 474,
+            "ambiguous": 32,
+            "multi_axis": 24,
+            "no_axis_matches": 10
+          }
+        },
+        "ab": {
+          "n": 540,
+          "assigned_rate": 0.8944,
+          "accuracy": 0.8737,
+          "silent_wrong_rate": 0.113,
+          "relative_rate": 0.0185,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8815,
+          "no_anchor_rate": 0.013,
+          "by_reason": {
+            "ok": 483,
+            "ambiguous": 33,
+            "multi_axis": 24
+          }
+        },
+        "abc": {
+          "n": 540,
+          "assigned_rate": 0.8963,
+          "accuracy": 0.8719,
+          "silent_wrong_rate": 0.1148,
+          "relative_rate": 0.0204,
+          "rescued_rate": 0.0019,
+          "rescued": 1,
+          "rescued_wrong": 1,
+          "rescued_wrong_rate": 1,
+          "placed_rate": 0.8833,
+          "no_anchor_rate": 0.013,
+          "by_reason": {
+            "ok": 484,
+            "ambiguous": 32,
+            "multi_axis": 24
+          }
+        }
+      },
+      "warp_0.5": {
+        "base": {
+          "n": 540,
+          "assigned_rate": 0.887,
+          "accuracy": 0.9123,
+          "silent_wrong_rate": 0.0778,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.863,
+          "no_anchor_rate": 0.0241,
+          "by_reason": {
+            "ok": 479,
+            "ambiguous": 36,
+            "no_axis_matches": 7,
+            "multi_axis": 18
+          }
+        },
+        "a": {
+          "n": 540,
+          "assigned_rate": 0.887,
+          "accuracy": 0.9123,
+          "silent_wrong_rate": 0.0778,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.863,
+          "no_anchor_rate": 0.0241,
+          "by_reason": {
+            "ok": 479,
+            "ambiguous": 36,
+            "no_axis_matches": 7,
+            "multi_axis": 18
+          }
+        },
+        "b": {
+          "n": 540,
+          "assigned_rate": 0.8981,
+          "accuracy": 0.9134,
+          "silent_wrong_rate": 0.0778,
+          "relative_rate": 0.0111,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8741,
+          "no_anchor_rate": 0.0241,
+          "by_reason": {
+            "ok": 485,
+            "ambiguous": 36,
+            "multi_axis": 18,
+            "no_axis_matches": 1
+          }
+        },
+        "c": {
+          "n": 540,
+          "assigned_rate": 0.8926,
+          "accuracy": 0.9108,
+          "silent_wrong_rate": 0.0796,
+          "relative_rate": 0.0056,
+          "rescued_rate": 0.0056,
+          "rescued": 3,
+          "rescued_wrong": 1,
+          "rescued_wrong_rate": 0.3333,
+          "placed_rate": 0.8704,
+          "no_anchor_rate": 0.0222,
+          "by_reason": {
+            "ok": 482,
+            "ambiguous": 35,
+            "no_axis_matches": 5,
+            "multi_axis": 18
+          }
+        },
+        "ab": {
+          "n": 540,
+          "assigned_rate": 0.8981,
+          "accuracy": 0.9134,
+          "silent_wrong_rate": 0.0778,
+          "relative_rate": 0.0111,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8741,
+          "no_anchor_rate": 0.0241,
+          "by_reason": {
+            "ok": 485,
+            "ambiguous": 36,
+            "multi_axis": 18,
+            "no_axis_matches": 1
+          }
+        },
+        "abc": {
+          "n": 540,
+          "assigned_rate": 0.9019,
+          "accuracy": 0.9117,
+          "silent_wrong_rate": 0.0796,
+          "relative_rate": 0.0148,
+          "rescued_rate": 0.0037,
+          "rescued": 2,
+          "rescued_wrong": 1,
+          "rescued_wrong_rate": 0.5,
+          "placed_rate": 0.8796,
+          "no_anchor_rate": 0.0222,
+          "by_reason": {
+            "ok": 487,
+            "ambiguous": 35,
+            "multi_axis": 18
+          }
+        }
+      }
+    },
+    "wide_98deg": {
+      "warp_0": {
+        "base": {
+          "n": 420,
+          "assigned_rate": 0.919,
+          "accuracy": 0.9767,
+          "silent_wrong_rate": 0.0214,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8857,
+          "no_anchor_rate": 0.0333,
+          "by_reason": {
+            "ok": 386,
+            "ambiguous": 17,
+            "multi_axis": 11,
+            "no_axis_matches": 6
+          }
+        },
+        "a": {
+          "n": 420,
+          "assigned_rate": 0.919,
+          "accuracy": 0.9767,
+          "silent_wrong_rate": 0.0214,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8857,
+          "no_anchor_rate": 0.0333,
+          "by_reason": {
+            "ok": 386,
+            "ambiguous": 17,
+            "multi_axis": 11,
+            "no_axis_matches": 6
+          }
+        },
+        "b": {
+          "n": 420,
+          "assigned_rate": 0.9333,
+          "accuracy": 0.977,
+          "silent_wrong_rate": 0.0214,
+          "relative_rate": 0.0143,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8976,
+          "no_anchor_rate": 0.0357,
+          "by_reason": {
+            "ok": 392,
+            "ambiguous": 17,
+            "multi_axis": 11
+          }
+        },
+        "c": {
+          "n": 420,
+          "assigned_rate": 0.919,
+          "accuracy": 0.9767,
+          "silent_wrong_rate": 0.0214,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8857,
+          "no_anchor_rate": 0.0333,
+          "by_reason": {
+            "ok": 386,
+            "ambiguous": 17,
+            "multi_axis": 11,
+            "no_axis_matches": 6
+          }
+        },
+        "ab": {
+          "n": 420,
+          "assigned_rate": 0.9333,
+          "accuracy": 0.977,
+          "silent_wrong_rate": 0.0214,
+          "relative_rate": 0.0143,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8976,
+          "no_anchor_rate": 0.0357,
+          "by_reason": {
+            "ok": 392,
+            "ambiguous": 17,
+            "multi_axis": 11
+          }
+        },
+        "abc": {
+          "n": 420,
+          "assigned_rate": 0.9333,
+          "accuracy": 0.977,
+          "silent_wrong_rate": 0.0214,
+          "relative_rate": 0.0143,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8976,
+          "no_anchor_rate": 0.0357,
+          "by_reason": {
+            "ok": 392,
+            "ambiguous": 17,
+            "multi_axis": 11
+          }
+        }
+      },
+      "warp_0.15": {
+        "base": {
+          "n": 528,
+          "assigned_rate": 0.9148,
+          "accuracy": 0.9545,
+          "silent_wrong_rate": 0.0417,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.9034,
+          "no_anchor_rate": 0.0114,
+          "by_reason": {
+            "multi_axis": 15,
+            "ok": 483,
+            "ambiguous": 15,
+            "no_axis_matches": 15
+          }
+        },
+        "a": {
+          "n": 528,
+          "assigned_rate": 0.9299,
+          "accuracy": 0.9552,
+          "silent_wrong_rate": 0.0417,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.9205,
+          "no_anchor_rate": 0.0095,
+          "by_reason": {
+            "multi_axis": 15,
+            "ok": 491,
+            "ambiguous": 15,
+            "no_axis_matches": 7
+          }
+        },
+        "b": {
+          "n": 528,
+          "assigned_rate": 0.9413,
+          "accuracy": 0.9557,
+          "silent_wrong_rate": 0.0417,
+          "relative_rate": 0.0265,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.9337,
+          "no_anchor_rate": 0.0076,
+          "by_reason": {
+            "multi_axis": 15,
+            "ok": 497,
+            "ambiguous": 15,
+            "no_axis_matches": 1
+          }
+        },
+        "c": {
+          "n": 528,
+          "assigned_rate": 0.9205,
+          "accuracy": 0.9527,
+          "silent_wrong_rate": 0.0436,
+          "relative_rate": 0.0057,
+          "rescued_rate": 0.0057,
+          "rescued": 3,
+          "rescued_wrong": 1,
+          "rescued_wrong_rate": 0.3333,
+          "placed_rate": 0.9091,
+          "no_anchor_rate": 0.0114,
+          "by_reason": {
+            "multi_axis": 15,
+            "ok": 486,
+            "ambiguous": 13,
+            "no_axis_matches": 14
+          }
+        },
+        "ab": {
+          "n": 528,
+          "assigned_rate": 0.9413,
+          "accuracy": 0.9557,
+          "silent_wrong_rate": 0.0417,
+          "relative_rate": 0.0114,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.9337,
+          "no_anchor_rate": 0.0076,
+          "by_reason": {
+            "multi_axis": 15,
+            "ok": 497,
+            "ambiguous": 15,
+            "no_axis_matches": 1
+          }
+        },
+        "abc": {
+          "n": 528,
+          "assigned_rate": 0.9451,
+          "accuracy": 0.9539,
+          "silent_wrong_rate": 0.0436,
+          "relative_rate": 0.0152,
+          "rescued_rate": 0.0038,
+          "rescued": 2,
+          "rescued_wrong": 1,
+          "rescued_wrong_rate": 0.5,
+          "placed_rate": 0.9375,
+          "no_anchor_rate": 0.0076,
+          "by_reason": {
+            "multi_axis": 15,
+            "ok": 499,
+            "ambiguous": 13,
+            "no_axis_matches": 1
+          }
+        }
+      },
+      "warp_0.3": {
+        "base": {
+          "n": 540,
+          "assigned_rate": 0.8759,
+          "accuracy": 0.9366,
+          "silent_wrong_rate": 0.0556,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.863,
+          "no_anchor_rate": 0.013,
+          "by_reason": {
+            "ok": 473,
+            "no_axis_matches": 38,
+            "ambiguous": 15,
+            "multi_axis": 14
+          }
+        },
+        "a": {
+          "n": 540,
+          "assigned_rate": 0.8944,
+          "accuracy": 0.9379,
+          "silent_wrong_rate": 0.0556,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8815,
+          "no_anchor_rate": 0.013,
+          "by_reason": {
+            "ok": 483,
+            "no_axis_matches": 28,
+            "ambiguous": 15,
+            "multi_axis": 14
+          }
+        },
+        "b": {
+          "n": 540,
+          "assigned_rate": 0.9185,
+          "accuracy": 0.9395,
+          "silent_wrong_rate": 0.0556,
+          "relative_rate": 0.0426,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.9148,
+          "no_anchor_rate": 0.0037,
+          "by_reason": {
+            "ok": 496,
+            "no_axis_matches": 15,
+            "ambiguous": 15,
+            "multi_axis": 14
+          }
+        },
+        "c": {
+          "n": 540,
+          "assigned_rate": 0.8778,
+          "accuracy": 0.9367,
+          "silent_wrong_rate": 0.0556,
+          "relative_rate": 0.0019,
+          "rescued_rate": 0.0019,
+          "rescued": 1,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": 0,
+          "placed_rate": 0.8667,
+          "no_anchor_rate": 0.0111,
+          "by_reason": {
+            "ok": 474,
+            "no_axis_matches": 38,
+            "ambiguous": 14,
+            "multi_axis": 14
+          }
+        },
+        "ab": {
+          "n": 540,
+          "assigned_rate": 0.9204,
+          "accuracy": 0.9396,
+          "silent_wrong_rate": 0.0556,
+          "relative_rate": 0.0259,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.9167,
+          "no_anchor_rate": 0.0037,
+          "by_reason": {
+            "ok": 497,
+            "no_axis_matches": 14,
+            "ambiguous": 15,
+            "multi_axis": 14
+          }
+        },
+        "abc": {
+          "n": 540,
+          "assigned_rate": 0.9222,
+          "accuracy": 0.9398,
+          "silent_wrong_rate": 0.0556,
+          "relative_rate": 0.0278,
+          "rescued_rate": 0.0019,
+          "rescued": 1,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": 0,
+          "placed_rate": 0.9204,
+          "no_anchor_rate": 0.0019,
+          "by_reason": {
+            "ok": 498,
+            "no_axis_matches": 14,
+            "ambiguous": 14,
+            "multi_axis": 14
+          }
+        }
+      },
+      "warp_0.5": {
+        "base": {
+          "n": 540,
+          "assigned_rate": 0.887,
+          "accuracy": 0.9353,
+          "silent_wrong_rate": 0.0574,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8833,
+          "no_anchor_rate": 0.0037,
+          "by_reason": {
+            "ok": 479,
+            "multi_axis": 20,
+            "ambiguous": 14,
+            "no_axis_matches": 27
+          }
+        },
+        "a": {
+          "n": 540,
+          "assigned_rate": 0.8944,
+          "accuracy": 0.9358,
+          "silent_wrong_rate": 0.0574,
+          "relative_rate": 0,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.8944,
+          "no_anchor_rate": 0,
+          "by_reason": {
+            "ok": 483,
+            "multi_axis": 20,
+            "ambiguous": 14,
+            "no_axis_matches": 23
+          }
+        },
+        "b": {
+          "n": 540,
+          "assigned_rate": 0.9037,
+          "accuracy": 0.9365,
+          "silent_wrong_rate": 0.0574,
+          "relative_rate": 0.0167,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.9019,
+          "no_anchor_rate": 0.0019,
+          "by_reason": {
+            "ok": 488,
+            "multi_axis": 20,
+            "ambiguous": 14,
+            "no_axis_matches": 18
+          }
+        },
+        "c": {
+          "n": 540,
+          "assigned_rate": 0.8926,
+          "accuracy": 0.9357,
+          "silent_wrong_rate": 0.0574,
+          "relative_rate": 0.0056,
+          "rescued_rate": 0.0056,
+          "rescued": 3,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": 0,
+          "placed_rate": 0.8889,
+          "no_anchor_rate": 0.0037,
+          "by_reason": {
+            "ok": 482,
+            "multi_axis": 20,
+            "ambiguous": 12,
+            "no_axis_matches": 26
+          }
+        },
+        "ab": {
+          "n": 540,
+          "assigned_rate": 0.9056,
+          "accuracy": 0.9366,
+          "silent_wrong_rate": 0.0574,
+          "relative_rate": 0.0111,
+          "rescued_rate": 0,
+          "rescued": 0,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": null,
+          "placed_rate": 0.9056,
+          "no_anchor_rate": 0,
+          "by_reason": {
+            "ok": 489,
+            "multi_axis": 20,
+            "ambiguous": 14,
+            "no_axis_matches": 17
+          }
+        },
+        "abc": {
+          "n": 540,
+          "assigned_rate": 0.9111,
+          "accuracy": 0.937,
+          "silent_wrong_rate": 0.0574,
+          "relative_rate": 0.0167,
+          "rescued_rate": 0.0056,
+          "rescued": 3,
+          "rescued_wrong": 0,
+          "rescued_wrong_rate": 0,
+          "placed_rate": 0.9111,
+          "no_anchor_rate": 0,
+          "by_reason": {
+            "ok": 492,
+            "multi_axis": 20,
+            "ambiguous": 12,
+            "no_axis_matches": 16
+          }
+        }
+      }
+    }
+  },
+  "join_radius_sweep": {
+    "join_0.01": {
+      "placed_rate": 0.7896,
+      "no_anchor_rate": 0.1104,
+      "assigned_rate": 0.9,
+      "silent_wrong_rate": 0.0354
+    },
+    "join_0.015": {
+      "placed_rate": 0.8875,
+      "no_anchor_rate": 0.0125,
+      "assigned_rate": 0.9,
+      "silent_wrong_rate": 0.0354
+    },
+    "join_0.025": {
+      "placed_rate": 0.9,
+      "no_anchor_rate": 0,
+      "assigned_rate": 0.9,
+      "silent_wrong_rate": 0.0354
+    },
+    "join_0.04": {
+      "placed_rate": 0.9,
+      "no_anchor_rate": 0,
+      "assigned_rate": 0.9,
+      "silent_wrong_rate": 0.0354
+    }
+  },
+  "selfcheck_notes": {
+    "rescued_rate·rescued_wrong_rate = 0": "**c를 끈 변형(base·a·b·ab)에서는 정의상 0**이다 — 구제 기전이 돌지 않는다. c를 켠 변형에서 0인 것은 그 조건에서 구제할 획이 없었다는 실측이다(구제는 드물게 일어난다).",
+    "relative_rate = 0": "**b(상대 순위)를 끈 변형(base·a·c)에서는 정의상 0**이다 — `rank_margin`이 무한이라 순위 채택 경로가 닫혀 있다.",
+    "no_anchor_rate = 0": "끝점 겨냥 오차 1%에서는 거의 다 이어진다는 실측(S-3의 스윕과 같은 결과).",
+    "apparent_vp_ratio.axis* = 1 (좁은 구도)": "**정의상 1이다.** 화각 60° 안쪽에서는 λ(t)=1이라 왜곡이 적용되지 않는다 — 그것이 이 절의 핵심 발견이며 결함이 아니다."
+  },
+  "consensus_verdict": "**(c)는 기본으로 켜지 않는다.** 측정이 예상을 반증했다 — 지시는 c의 효과가 가장 클 것으로 예상했으나, 쌍대 비교에서 b(상대 순위)가 +0.043인 데 비해 c는 +0.002~0.006이고, **구제된 29획 중 8획이 틀렸다(28%)**. 파이프라인 기저 오류율 3~7%의 네 배가 넘는다 — A-3('조용히 틀린 축에 배정하지 않는다')이 금지하는 거래다. 기전이 틀렸다기보다 **이 표본이 c에게 근거를 주지 못한다**: 상자 하나에 축당 4획뿐이라 `min_support: 3`이 사실상 그 축 전체이고, 국소 편향이 자기 자신과 거의 같은 것을 본다. 획이 많은 실제 그림에서 다시 잰다(S-5·S-10). 코드는 남기되 꺼 둔다.",
+  "join_note": "(e) 왜곡이 있을 때 접합 허용 범위와 미배치율의 관계(넓은 구도, warp 0.3, abc). **왜곡 자체는 공유 모서리를 어긋내지 않는다**(점의 함수다) — 어긋내는 것은 끝점 겨냥 오차다. 그래서 이 스윕이 보는 것은 **판정 변화가 배치에 미치는 영향**이다."
+}

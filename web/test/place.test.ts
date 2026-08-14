@@ -72,18 +72,49 @@ describe("S-3 떨림 평면 (§4.4)", () => {
   const e0 = edges[0];                                    // 축 0 모서리
   const pts = wobble2d(cleanStroke(e0.a, e0.b), 6);
 
-  it("어느 평면을 골라도 **화면 이미지는 같다** — 다른 것은 깊이뿐이다", () => {
-    // 각 점이 자기 광선 위에 있으므로 그린 카메라에서는 구별되지 않는다.
-    // §4.5의 "미리보기 ↔ 확정 차이"가 화면에서 0인 이유가 이것이다.
-    const seen = WOBBLE_PLANES.map(m => placeStroke(pts, 0, e0.a, ctx, m));
-    for (const r of seen) {
-      expect(r.ok).toBe(true);
-      expect(Math.max(...reprojectionGap(r.pts3d, pts, ctx))).toBeLessThan(1e-6);
+  /**
+   * **화면 투영 불변식 (§4.5의 설계 보장).**
+   *
+   * 이것은 "지표가 항등이라 못 쓴다"가 아니라 **이 설계가 주는 보장**이다 —
+   * 각 점이 자기 광선 위에 놓이므로 미리보기든 확정이든, 어떤 떨림 평면이든,
+   * 앵커가 어디든, 그린 카메라에서 다시 투영하면 원본 `pts2d`로 정확히 돌아온다.
+   * 계획서 §9가 걱정한 "미리보기와 확정이 크게 달라 사용자가 놀란다"가
+   * **구조적으로 발생하지 않는다.**
+   *
+   * **역투영 방식이 바뀌면 깨질 성질이므로 여기서 잠근다.** 예를 들어 점을 축 직선으로
+   * 끌어당기거나(§1 위반), 평면 대신 최근접점을 쓰거나, 접합을 끝점 너머로 번지게 하면
+   * 이 테스트가 먼저 터진다.
+   */
+  it("**불변식**: 어떤 평면·앵커에서도 화면 투영이 원본과 같다 (§4.5 설계 보장)", () => {
+    const anchors = [e0.a, e0.b, edges[3].a, edges[7].b];
+    for (const anchor of anchors) {
+      for (const m of WOBBLE_PLANES) {
+        const r = placeStroke(pts, 0, anchor, ctx, m);
+        // 배치가 **실패할 수는 있다**(광선이 평면을 스쳐 지나면 획 전체를 놓지 않는다).
+        // 불변식이 요구하는 것은 "놓았다면 그 자리가 그린 자리"다 — 조용히 옮기지 않는다.
+        if (!r.ok) { expect(r.pts3d.length).toBe(0); continue; }
+        // 접합하지 않았으므로 **모든 점**이 자기 광선 위에 있어야 한다
+        expect(Math.max(...reprojectionGap(r.pts3d, pts, ctx))).toBeLessThan(1e-9);
+      }
+      // 미리보기(임시 평면)도 같은 보장을 받는다 — 확정과 화면에서 구별되지 않는다
+      const prev = previewStroke(pts, anchor, ctx);
+      expect(Math.max(...reprojectionGap(prev, pts, ctx))).toBeLessThan(1e-9);
     }
-    // 깊이는 다르다 — **떨린 점에서만** 갈린다(축 위의 점은 어느 평면에서도 같은 자리다).
+    // 그러나 깊이는 다르다 — **떨린 점에서만** 갈린다(축 위의 점은 어느 평면에서도 같은 자리다).
+    const seen = WOBBLE_PLANES.map(m => placeStroke(pts, 0, e0.a, ctx, m));
     const dz = seen[0].pts3d.map((p, i) => Math.abs(p[2] - seen[2].pts3d[i][2]));
     expect(Math.max(...dz)).toBeGreaterThan(1e-3);
     expect(Math.min(...dz)).toBeLessThan(1e-9);
+  });
+
+  it("반례: 점을 축으로 끌어당기면 불변식이 깨진다 — §1을 어기면 여기서 터진다", () => {
+    // "획을 직선으로 편다"의 최소 형태: 각 점을 축 직선 위 최근접점으로 옮긴다.
+    const dir = axisVec(0, ctx)!;
+    const snapped = placeStroke(pts, 0, e0.a, ctx, "facing").pts3d.map(p => {
+      const w = sub3(p, e0.a), t = dot3(w, dir);
+      return [e0.a[0] + dir[0] * t, e0.a[1] + dir[1] * t, e0.a[2] + dir[2] * t] as Vec3;
+    });
+    expect(Math.max(...reprojectionGap(snapped, pts, ctx))).toBeGreaterThan(1);
   });
 
   it("반례: **눈을 지나는 평면**은 배치 자체가 불가능하다 (계획서 문구를 글자 그대로 읽으면)", () => {

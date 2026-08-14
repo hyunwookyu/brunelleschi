@@ -32,7 +32,11 @@
     "min_len_ratio": 0.02,
     "bend_max": 0.18,
     "turn_deg": 45,
-    "turn_window_ratio": 0.12
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22
   },
   "by_grade": {
     "precise": {

@@ -1,7 +1,8 @@
 """selfcheck.py — §13 자기검증 규칙 1 (의심스러운 수치 자동 점검).
 
 각 단계 완료 시 실행. 멈추지 말고 원인 확인 후 progress.md에 보고한다.
-플래그: 1e-10 미만 오차 / 정확히 1.0·0.0 비율 / 이전 대비 완전 불변 / 0 고정 카운터.
+플래그: 1e-10 미만 오차 / 정확히 1.0·0.0 비율 / 이전 대비 완전 불변 / 0 고정 카운터 /
+분포 전체가 한 값 / **복원↔역연산 왕복 지표**(자기참조 유형 3).
 
 의심 ≠ 오류. 각 플래그는 원인(자기참조·무노이즈·측정범위·미작동)을 사람이 확인할 대상.
 """
@@ -122,6 +123,64 @@ def rerun_determinism(cmds: list[str] | None = None) -> list[dict]:
     return flags
 
 
+# 자기참조 유형 3 — **복원한 값을 그 복원에 쓴 연산으로 되검사하는 것**.
+# 유형 1(무노이즈 잔차)·2(노이즈 모델의 성질을 재기)에 이어 세 번째다.
+# 실제 사례: S-3의 "재투영 화면 좌표차" — 각 점을 자기 광선 위에 놓고 나서 그 광선으로
+# 다시 투영해 차이를 쟀다. 0이 나올 수밖에 없다(설계 보장이지 측정이 아니다).
+# 같은 유형: 3D→2D 투영으로 복원한 점을 다시 투영, 호모그래피로 편 것을 그 호모그래피로 검사,
+# 최소제곱 적합의 잔차를 그 적합의 성능이라 부르기.
+# 지표 이름과, 그 지표가 스스로 수행하면 자기참조가 되는 연산.
+METRIC_WORDS = ("gap", "err", "error", "diff", "residual", "mismatch", "fidelity", "roundtrip")
+TRANSFORM_CALLS = ("project(", "rayplane(", "raythrough(", "unproject(", "backproject(",
+                   "homography(", "warp(", "inverse(")
+
+
+def scan_roundtrip_metrics(root: Path) -> list[dict]:
+    """**복원한 값을 그 복원에 쓴 연산으로 되검사하는 지표**를 정적 탐지한다(자기참조 유형 3).
+
+    실제 사례: S-3의 `reprojectionGap` — 각 점을 자기 광선 위에 놓고 나서 **그 광선으로 다시
+    투영해** 차이를 쟀다. 0이 나올 수밖에 없다. 그 자체는 설계 보장이라 유용하지만,
+    **게이트로 쓰면 원리적으로 발동하지 않는다**(D-S6이 실제로 그렇게 걸렸다).
+
+    탐지 규칙: 함수 이름이 오차·차이류인데 **본문이 스스로 변환을 수행**하면 의심한다.
+    의심 ≠ 오류다. 사람이 "이것은 보장인가 측정인가"를 판정해 원장에 적고,
+    보장이면 그 지표에 임계를 걸지 않는다.
+    """
+    import re
+    flags = []
+    fn_head = re.compile(r"^\s*(?:export\s+)?(?:async\s+)?(?:function|def)\s+(\w+)"
+                         r"|^\s*(?:export\s+)?(?:const|let)\s+(\w+)\s*=\s*(?:\(|function)")
+    for src in sorted(list(root.rglob("*.ts")) + list(root.rglob("*.py"))):
+        sp = str(src).replace("\\", "/")
+        if "node_modules" in sp or "__pycache__" in sp or src.name == "selfcheck.py":
+            continue
+        try:
+            lines = src.read_text(encoding="utf-8").splitlines()
+        except Exception:
+            continue
+        cur, ln, buf = None, 0, []
+
+        def flush(name, at, body):
+            if not name or not any(w in name.lower() for w in METRIC_WORDS):
+                return
+            low = " ".join(body).lower().replace(" ", "")
+            hit = [c for c in TRANSFORM_CALLS if c in low]
+            if hit:
+                flags.append({"path": f"{src.relative_to(root)}:{at}:{name}", "val": ",".join(hit),
+                              "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 "
+                                      "오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"})
+
+        for i, line in enumerate(lines, 1):
+            m = fn_head.match(line)
+            if m:
+                flush(cur, ln, buf)
+                cur, ln, buf = (m.group(1) or m.group(2)), i, []
+            elif cur:
+                buf.append(line)
+        flush(cur, ln, buf)
+    return flags
+
+
 def scan_nondeterministic_seeds(root: Path) -> list[dict]:
     """소스에서 비결정 시드 패턴을 정적 탐지(B-0 d). hash(str)를 시드에 쓰면 안 된다."""
     import re
@@ -165,6 +224,7 @@ def main():
             flags.append(f)
 
     flags += scan_nondeterministic_seeds(ROOT)      # B-0 d: 비결정 시드 정적 탐지
+    flags += scan_roundtrip_metrics(ROOT)          # 자기참조 3: 복원↔역연산 왕복 지표
 
     out = {"n_flags": len(flags), "flags": flags,
            "scanned": [p.name for p in sorted(outdir.glob("*.json")) if p.name not in skip],

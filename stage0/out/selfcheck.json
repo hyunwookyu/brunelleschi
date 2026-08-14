@@ -1,5 +1,5 @@
 {
-  "n_flags": 117,
+  "n_flags": 208,
   "flags": [
     {
       "path": "one_stroke_one_axis.json:by_word.square.too_bent_rate",
@@ -9,12 +9,12 @@
     {
       "path": "preview_gap.json:identity_check_px",
       "val": 0,
-      "flag": "분포 전체가 0(n=415) → 항등/측정 미작동 확인"
+      "flag": "분포 전체가 0(n=487) → 항등/측정 미작동 확인"
     },
     {
       "path": "preview_gap.json:rotated_difference.by_mode.screen",
       "val": 0,
-      "flag": "분포 전체가 0(n=415) → 항등/측정 미작동 확인"
+      "flag": "분포 전체가 0(n=487) → 항등/측정 미작동 확인"
     },
     {
       "path": "preview_gap.json:identity_check_px.median",
@@ -55,6 +55,456 @@
       "path": "preview_gap.json:rotated_difference.by_mode.screen.median",
       "val": 0,
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "real_ink.json:n_sessions",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "real_ink.json:n_strokes",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:tolerances.max_spread_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.normal_60deg.warp_0.axis0",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.normal_60deg.warp_0.axis1",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.normal_60deg.warp_0.axis2",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.normal_60deg.warp_0.15.axis0",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.normal_60deg.warp_0.15.axis1",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.normal_60deg.warp_0.15.axis2",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.normal_60deg.warp_0.3.axis0",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.normal_60deg.warp_0.3.axis1",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.normal_60deg.warp_0.3.axis2",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.normal_60deg.warp_0.5.axis0",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.normal_60deg.warp_0.5.axis1",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.normal_60deg.warp_0.5.axis2",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.wide_98deg.warp_0.axis0",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.wide_98deg.warp_0.axis1",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:apparent_vp_ratio.wide_98deg.warp_0.axis2",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.base.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.base.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.a.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.a.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.b.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.c.rescued_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.ab.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.abc.rescued_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.base.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.base.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.base.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.a.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.a.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.a.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.b.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.b.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.c.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.ab.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.ab.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.15.abc.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.3.base.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.3.base.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.3.a.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.3.a.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.3.b.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.3.c.rescued_wrong_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.3.ab.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.3.abc.rescued_wrong_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.5.base.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.5.base.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.5.a.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.5.a.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.5.b.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.normal_60deg.warp_0.5.ab.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.base.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.base.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.a.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.a.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.b.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.c.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.c.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.ab.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.abc.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.15.base.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.15.base.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.15.a.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.15.a.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.15.b.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.15.ab.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.3.base.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.3.base.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.3.a.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.3.a.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.3.b.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.3.c.rescued_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.3.ab.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.3.abc.rescued_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.base.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.base.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.a.relative_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.a.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.a.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.b.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.c.rescued_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.ab.rescued_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.ab.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.abc.rescued_wrong_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:by_scene.wide_98deg.warp_0.5.abc.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:join_radius_sweep.join_0.025.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:join_radius_sweep.join_0.025.no_anchor_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "systematic_warp.json:join_radius_sweep.join_0.04.no_anchor_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "systematic_warp.json:join_radius_sweep.join_0.04.no_anchor_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "wobble_plane.json:judged.screen.no_anchor_rate",
@@ -585,12 +1035,19 @@
       "path": "wobble_plane.json:plane_family_sweep.by_deg.deg_20.wobble_ratio.median",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "web\\src\\s3d\\stroke.ts:246:reprojectionGap",
+      "val": "project(",
+      "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     }
   ],
   "scanned": [
     "axis_judgement.json",
     "one_stroke_one_axis.json",
     "preview_gap.json",
+    "real_ink.json",
+    "systematic_warp.json",
     "wobble_plane.json"
   ],
   "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."
