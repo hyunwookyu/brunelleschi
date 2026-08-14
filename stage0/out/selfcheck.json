@@ -1,8 +1,15 @@
 {
-  "n_flags": 0,
-  "flags": [],
+  "n_flags": 1,
+  "flags": [
+    {
+      "path": "one_stroke_one_axis.json:by_word.square.too_bent_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    }
+  ],
   "scanned": [
-    "axis_judgement.json"
+    "axis_judgement.json",
+    "one_stroke_one_axis.json"
   ],
   "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."
 }

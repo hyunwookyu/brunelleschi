@@ -1,0 +1,120 @@
+{
+  "spec": "AS-6 '한 획 = 한 축'의 실획 위반율. 방향 급변(maxTurn)으로 검출.",
+  "why": "계획서 §4.1은 '획 전체가 하나의 축에 배정된다'를 기본 동작으로 두지만 그것을 전제로 등록하지 않았다(리뷰어 지적). W-0 원장의 multi_run_rate 0.858은 오히려 반대를 시사한다. 그래서 직접 잰다.",
+  "sample_caveat": [
+    "Quick,Draw raw = 마우스·손가락 **낙서**다. 작도 도구로 한 획씩 긋는 상황이 아니다.",
+    "계획서의 사용자 전제(투시도 숙련자)와 **다른 표본**이다(assumptions V-o, V-A).",
+    "따라서 이 값은 **위반율의 상한**으로 읽는다. 숙련자가 더 낮을 것이라는 예상은 미측정이며,",
+    "그 예상을 수치로 대신하지 않는다. 실제 획은 S-10 이후 수집한다."
+  ],
+  "relation_to_W0": "W-0의 multi_run_rate(0.858, square)는 **직선 런 개수**를 세었고 여기서는 **방향 급변**을 센다. 완만히 휜 획은 런이 여럿이어도 축은 하나다 — 다른 양이다. 두 값을 같은 척도로 비교하면 안 된다(V-p 단위 혼동 유형).",
+  "thresholds": {
+    "turn_deg": 45,
+    "bend_max": 0.18
+  },
+  "totals": {
+    "n": 1816,
+    "single_axis_rate": 0.2963,
+    "multi_axis_rate": 0.6988,
+    "too_bent_rate": 0.005,
+    "turn_median_deg": 90,
+    "bend_median": 0.286
+  },
+  "by_word": {
+    "square": {
+      "n": 155,
+      "single_axis_rate": 0.1613,
+      "multi_axis_rate": 0.8387,
+      "too_bent_rate": 0,
+      "turn_median_deg": 93.379,
+      "bend_median": 0.435
+    },
+    "house": {
+      "n": 450,
+      "single_axis_rate": 0.3333,
+      "multi_axis_rate": 0.66,
+      "too_bent_rate": 0.0067,
+      "turn_median_deg": 84.121,
+      "bend_median": 0.307
+    },
+    "castle": {
+      "n": 408,
+      "single_axis_rate": 0.2255,
+      "multi_axis_rate": 0.7696,
+      "too_bent_rate": 0.0049,
+      "turn_median_deg": 98.34,
+      "bend_median": 0.286
+    },
+    "skyscraper": {
+      "n": 352,
+      "single_axis_rate": 0.4489,
+      "multi_axis_rate": 0.5483,
+      "too_bent_rate": 0.0028,
+      "turn_median_deg": 75.847,
+      "bend_median": 0.106
+    },
+    "door": {
+      "n": 277,
+      "single_axis_rate": 0.2022,
+      "multi_axis_rate": 0.7906,
+      "too_bent_rate": 0.0072,
+      "turn_median_deg": 90.014,
+      "bend_median": 0.326
+    },
+    "triangle": {
+      "n": 174,
+      "single_axis_rate": 0.3276,
+      "multi_axis_rate": 0.6667,
+      "too_bent_rate": 0.0057,
+      "turn_median_deg": 118.335,
+      "bend_median": 0.357
+    }
+  },
+  "turn_deg_sweep": [
+    {
+      "turn_deg": 25,
+      "n": 931,
+      "single_axis_rate": 0.2997,
+      "multi_axis_rate": 0.6992,
+      "too_bent_rate": 0.0011,
+      "turn_median_deg": 87.296,
+      "bend_median": 0.283
+    },
+    {
+      "turn_deg": 35,
+      "n": 931,
+      "single_axis_rate": 0.3179,
+      "multi_axis_rate": 0.681,
+      "too_bent_rate": 0.0011,
+      "turn_median_deg": 87.296,
+      "bend_median": 0.283
+    },
+    {
+      "turn_deg": 45,
+      "n": 931,
+      "single_axis_rate": 0.3265,
+      "multi_axis_rate": 0.6692,
+      "too_bent_rate": 0.0043,
+      "turn_median_deg": 87.296,
+      "bend_median": 0.283
+    },
+    {
+      "turn_deg": 60,
+      "n": 931,
+      "single_axis_rate": 0.3308,
+      "multi_axis_rate": 0.6477,
+      "too_bent_rate": 0.0215,
+      "turn_median_deg": 87.296,
+      "bend_median": 0.283
+    },
+    {
+      "turn_deg": 80,
+      "n": 931,
+      "single_axis_rate": 0.3383,
+      "multi_axis_rate": 0.5757,
+      "too_bent_rate": 0.0859,
+      "turn_median_deg": 87.296,
+      "bend_median": 0.283
+    }
+  ]
+}
