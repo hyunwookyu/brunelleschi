@@ -60,6 +60,7 @@
   "scanned": [
     "corner_tol_sweep.json",
     "edge_fidelity.json",
+    "refit_gain.json",
     "stroke_edge.json"
   ],
   "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."
