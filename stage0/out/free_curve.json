@@ -1,0 +1,879 @@
+{
+  "spec": "S-6 (3) 자유 곡선 폴백. **양 끝 앵커가 평면을 정한다** — 임의 깊이를 놓지 않는다.",
+  "constants": {
+    "hash": "0803f3fe",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "approach": "계획서의 '임시 평면(시선 수직)'은 **쓰지 않는다** — 앵커의 깊이를 복사하므로 획이 깊이로 안 들어가고(D-S8이 기각한 `screen`) 깊이가 임의가 된다. 대신 **두 앵커를 잇는 선을 담되 시선에 가장 정면인 평면**(`facing`을 앵커-앵커 방향에 적용)을 쓴다. 새 가정이 아니다 — 두 끝점의 3D 위치는 기존 기하가 정했고 그 사이를 어느 평면으로 잇느냐만 남았으며 D-S8이 그 물음에 이미 답했다. **양 끝에 후보가 있을 때만**(A-3).",
+  "fixtures": {
+    "on_face": "바닥면(축0×축1) 안에서 부푼 곡선. **면 경로가 이미 잡는다** — 폴백이 가로채면 안 된다.",
+    "straight_diagonal": "부풀지 않은 곧은 면 대각선 — S-6 (2)가 잰 것과 같은 획. **제한이 이것을 건드리면 안 된다**는 대조군이다.",
+    "in_space": "현은 바닥면 대각선이고 부푸는 방향이 **면 안 45° + 면 밖 45°**다 — 참 평면이 어느 축 평면도 아니다. _첫 판은 공간 대각선을 썼는데 63%가 `축2`로 판정돼 폴백에 닿지도 않았다. 그것은 §4.1의 문제(D-S16)이지 폴백의 성적이 아니다 — 갈라 센다._"
+  },
+  "split_note": "**판정이 축으로 부른 획은 폴백의 대상이 아니다.** `*_axis_assigned` 블록이 그 몫이고, 그 오차는 §4.1의 병목(D-S16)이지 이 경로의 성적이 아니다.",
+  "verdicts": {
+    "on_face:too_bent": 82,
+    "in_space:too_bent": 96,
+    "straight:axis2": 26,
+    "straight:no_axis_matches": 70,
+    "on_face:multi_axis": 10,
+    "on_face:no_axis_matches": 4,
+    "straight:axisscreen": 3,
+    "in_space:axis2": 2,
+    "in_space:multi_axis": 2,
+    "on_face:axis0": 3,
+    "on_face:axis2": 1,
+    "straight:axis0": 1
+  },
+  "bend_note": "**면 경로의 검사는 끝점 둘을 본다.** 곧은 획이면 끝점 둘 + 평면이 획을 유일하게 결정하므로 검사가 획 전체를 덮지만, **굽은 획은 가운데가 검증되지 않는다** — 가운데가 어디로 가든 끝점은 같다. `straight_only` 팔이 그 적용 범위로 제한한 것이고, S-6 (2)가 잰 **곧은** 사선은 이 제한에 거의 걸리지 않는다 — 이 원장의 `straight_diagonal`이 그 대조군이고, 제한을 켜도 배치율이 0.586 → 0.529다(잉크의 활 때문에 몇 획이 임계를 넘는다). `face_diagonal.json`의 0.842와 직접 비교하지 않는다 — 잉크 모델과 획 구성이 다르다.",
+  "metrics": {
+    "max_dev_ratio": "**곡선 전체의 최대 3D 이탈** ÷ 상자 대각. 끝점만 맞고 가운데가 틀어지는 것을 잡는다.",
+    "worst_end_ratio": "양 끝 중 나쁜 쪽 ÷ 상자 대각."
+  },
+  "condition": {
+    "grade": "medium",
+    "skew": 0.12,
+    "end_jitter": 0.01,
+    "boxes": 60,
+    "seed": 5150,
+    "camera": {
+      "yaw_deg": 35,
+      "pitch_deg": 15,
+      "f": 1000,
+      "img_size": [
+        960,
+        672
+      ]
+    },
+    "single_composition_warning": "구도가 하나뿐이다(직육면체, 요 35°·피치 15° 3점)."
+  },
+  "best_plane_floor": {
+    "straight_diagonal": {
+      "n": 100,
+      "min": 0.0074,
+      "p10": 0.0277,
+      "median": 0.0479,
+      "p90": 0.0986,
+      "max": 0.2245
+    },
+    "on_face": {
+      "n": 100,
+      "min": 0.0076,
+      "p10": 0.038,
+      "median": 0.0788,
+      "p90": 0.1414,
+      "max": 0.253
+    },
+    "in_space": {
+      "n": 100,
+      "min": 0.0122,
+      "p10": 0.0418,
+      "median": 0.0776,
+      "p90": 0.1544,
+      "max": 0.2701
+    }
+  },
+  "span_added": {
+    "non_nested": 1,
+    "only_span": {
+      "straight_diagonal": {
+        "n": 16,
+        "max_dev_ratio": {
+          "n": 16,
+          "min": 0.0386,
+          "p10": 0.0475,
+          "median": 0.072,
+          "p90": 0.2082,
+          "max": 1.1326
+        },
+        "over": {
+          "over_0.1": 5,
+          "over_0.2": 2,
+          "over_0.5": 1
+        }
+      },
+      "on_face": {
+        "n": 15,
+        "max_dev_ratio": {
+          "n": 15,
+          "min": 0.0852,
+          "p10": 0.1002,
+          "median": 0.1989,
+          "p90": 0.8805,
+          "max": 1.0149
+        },
+        "over": {
+          "over_0.1": 14,
+          "over_0.2": 7,
+          "over_0.5": 2
+        }
+      },
+      "in_space": {
+        "n": 21,
+        "max_dev_ratio": {
+          "n": 21,
+          "min": 0.0266,
+          "p10": 0.0483,
+          "median": 0.1385,
+          "p90": 0.3452,
+          "max": 0.8639
+        },
+        "over": {
+          "over_0.1": 15,
+          "over_0.2": 8,
+          "over_0.5": 2
+        }
+      }
+    },
+    "both_arms": {
+      "straight_diagonal": {
+        "n": 56,
+        "max_dev_ratio": {
+          "n": 56,
+          "min": 0.0215,
+          "p10": 0.043,
+          "median": 0.0995,
+          "p90": 0.8878,
+          "max": 1.0627
+        },
+        "over": {
+          "over_0.1": 27,
+          "over_0.2": 17,
+          "over_0.5": 16
+        }
+      },
+      "on_face": {
+        "n": 64,
+        "max_dev_ratio": {
+          "n": 64,
+          "min": 0.0202,
+          "p10": 0.0357,
+          "median": 0.0889,
+          "p90": 0.8824,
+          "max": 0.9744
+        },
+        "over": {
+          "over_0.1": 29,
+          "over_0.2": 18,
+          "over_0.5": 15
+        }
+      },
+      "in_space": {
+        "n": 65,
+        "max_dev_ratio": {
+          "n": 65,
+          "min": 0.1995,
+          "p10": 0.2778,
+          "median": 0.3406,
+          "p90": 0.8877,
+          "max": 0.985
+        },
+        "over": {
+          "over_0.1": 65,
+          "over_0.2": 64,
+          "over_0.5": 14
+        }
+      }
+    }
+  },
+  "arms": {
+    "face_only": {
+      "what": "면 경로만 — 지금 동작(폴백 없음)",
+      "opts": {
+        "facePlanes": 1,
+        "freeSpan": 0,
+        "freeBendMax": 0,
+        "farEndCheck": 1
+      },
+      "on_face": {
+        "n": 96,
+        "placed_rate": 0.6563,
+        "worst_end_ratio": {
+          "n": 63,
+          "min": 0.0198,
+          "p10": 0.0287,
+          "median": 0.0631,
+          "p90": 0.8824,
+          "max": 0.9744
+        },
+        "max_dev_ratio": {
+          "n": 63,
+          "min": 0.0202,
+          "p10": 0.0357,
+          "median": 0.082,
+          "p90": 0.8824,
+          "max": 0.9744
+        },
+        "over": {
+          "over_0.1": 27,
+          "over_0.2": 16,
+          "over_0.5": 13
+        }
+      },
+      "in_space": {
+        "n": 98,
+        "placed_rate": 0.6429,
+        "worst_end_ratio": {
+          "n": 63,
+          "min": 0.0107,
+          "p10": 0.031,
+          "median": 0.0677,
+          "p90": 0.8683,
+          "max": 0.9746
+        },
+        "max_dev_ratio": {
+          "n": 63,
+          "min": 0.1995,
+          "p10": 0.2778,
+          "median": 0.3372,
+          "p90": 0.8683,
+          "max": 0.985
+        },
+        "over": {
+          "over_0.1": 63,
+          "over_0.2": 62,
+          "over_0.5": 12
+        }
+      },
+      "straight_diagonal": {
+        "n": 70,
+        "placed_rate": 0.5857,
+        "worst_end_ratio": {
+          "n": 41,
+          "min": 0.0147,
+          "p10": 0.0216,
+          "median": 0.0596,
+          "p90": 0.1194,
+          "max": 0.8323
+        },
+        "max_dev_ratio": {
+          "n": 41,
+          "min": 0.0215,
+          "p10": 0.0419,
+          "median": 0.0799,
+          "p90": 0.1786,
+          "max": 0.8323
+        },
+        "over": {
+          "over_0.1": 12,
+          "over_0.2": 2,
+          "over_0.5": 1
+        }
+      },
+      "on_face_axis_assigned": {
+        "n": 4,
+        "placed_rate": 0.5,
+        "worst_end_ratio": {
+          "n": 2,
+          "min": 0.5423,
+          "p10": 0.5423,
+          "median": 0.7095,
+          "p90": 0.8768,
+          "max": 0.8768
+        },
+        "max_dev_ratio": {
+          "n": 2,
+          "min": 0.5504,
+          "p10": 0.5504,
+          "median": 0.7136,
+          "p90": 0.8768,
+          "max": 0.8768
+        },
+        "over": {
+          "over_0.1": 2,
+          "over_0.2": 2,
+          "over_0.5": 2
+        }
+      },
+      "in_space_axis_assigned": {
+        "n": 2,
+        "placed_rate": 1,
+        "worst_end_ratio": {
+          "n": 2,
+          "min": 0.9102,
+          "p10": 0.9102,
+          "median": 0.9325,
+          "p90": 0.9549,
+          "max": 0.9549
+        },
+        "max_dev_ratio": {
+          "n": 2,
+          "min": 0.9102,
+          "p10": 0.9102,
+          "median": 0.9325,
+          "p90": 0.9549,
+          "max": 0.9549
+        },
+        "over": {
+          "over_0.1": 2,
+          "over_0.2": 2,
+          "over_0.5": 2
+        }
+      },
+      "straight_axis_assigned": {
+        "n": 30,
+        "placed_rate": 0.5,
+        "worst_end_ratio": {
+          "n": 15,
+          "min": 0.7896,
+          "p10": 0.835,
+          "median": 0.88,
+          "p90": 0.9578,
+          "max": 1.0627
+        },
+        "max_dev_ratio": {
+          "n": 15,
+          "min": 0.7896,
+          "p10": 0.835,
+          "median": 0.88,
+          "p90": 0.9578,
+          "max": 1.0627
+        },
+        "over": {
+          "over_0.1": 15,
+          "over_0.2": 15,
+          "over_0.5": 15
+        }
+      }
+    },
+    "span": {
+      "what": "면 경로 + 자유 곡선 폴백",
+      "opts": {
+        "facePlanes": 1,
+        "freeSpan": 1,
+        "freeBendMax": 0,
+        "farEndCheck": 1
+      },
+      "on_face": {
+        "n": 96,
+        "placed_rate": 0.8021,
+        "worst_end_ratio": {
+          "n": 77,
+          "min": 0.0178,
+          "p10": 0.0284,
+          "median": 0.0599,
+          "p90": 0.8805,
+          "max": 1.0149
+        },
+        "max_dev_ratio": {
+          "n": 77,
+          "min": 0.0202,
+          "p10": 0.0386,
+          "median": 0.1089,
+          "p90": 0.8805,
+          "max": 1.0149
+        },
+        "over": {
+          "over_0.1": 44,
+          "over_0.2": 26,
+          "over_0.5": 15
+        }
+      },
+      "in_space": {
+        "n": 98,
+        "placed_rate": 0.8571,
+        "worst_end_ratio": {
+          "n": 84,
+          "min": 0.0107,
+          "p10": 0.0299,
+          "median": 0.0621,
+          "p90": 0.8489,
+          "max": 0.9746
+        },
+        "max_dev_ratio": {
+          "n": 84,
+          "min": 0.0266,
+          "p10": 0.1344,
+          "median": 0.3167,
+          "p90": 0.8489,
+          "max": 0.985
+        },
+        "over": {
+          "over_0.1": 78,
+          "over_0.2": 69,
+          "over_0.5": 14
+        }
+      },
+      "straight_diagonal": {
+        "n": 70,
+        "placed_rate": 0.8143,
+        "worst_end_ratio": {
+          "n": 57,
+          "min": 0.0147,
+          "p10": 0.033,
+          "median": 0.0596,
+          "p90": 0.149,
+          "max": 1.1326
+        },
+        "max_dev_ratio": {
+          "n": 57,
+          "min": 0.0215,
+          "p10": 0.0419,
+          "median": 0.0739,
+          "p90": 0.1796,
+          "max": 1.1326
+        },
+        "over": {
+          "over_0.1": 19,
+          "over_0.2": 4,
+          "over_0.5": 2
+        }
+      },
+      "on_face_axis_assigned": {
+        "n": 4,
+        "placed_rate": 0.5,
+        "worst_end_ratio": {
+          "n": 2,
+          "min": 0.5423,
+          "p10": 0.5423,
+          "median": 0.7095,
+          "p90": 0.8768,
+          "max": 0.8768
+        },
+        "max_dev_ratio": {
+          "n": 2,
+          "min": 0.5504,
+          "p10": 0.5504,
+          "median": 0.7136,
+          "p90": 0.8768,
+          "max": 0.8768
+        },
+        "over": {
+          "over_0.1": 2,
+          "over_0.2": 2,
+          "over_0.5": 2
+        }
+      },
+      "in_space_axis_assigned": {
+        "n": 2,
+        "placed_rate": 1,
+        "worst_end_ratio": {
+          "n": 2,
+          "min": 0.9102,
+          "p10": 0.9102,
+          "median": 0.9325,
+          "p90": 0.9549,
+          "max": 0.9549
+        },
+        "max_dev_ratio": {
+          "n": 2,
+          "min": 0.9102,
+          "p10": 0.9102,
+          "median": 0.9325,
+          "p90": 0.9549,
+          "max": 0.9549
+        },
+        "over": {
+          "over_0.1": 2,
+          "over_0.2": 2,
+          "over_0.5": 2
+        }
+      },
+      "straight_axis_assigned": {
+        "n": 30,
+        "placed_rate": 0.5,
+        "worst_end_ratio": {
+          "n": 15,
+          "min": 0.7896,
+          "p10": 0.8327,
+          "median": 0.88,
+          "p90": 0.9578,
+          "max": 1.0627
+        },
+        "max_dev_ratio": {
+          "n": 15,
+          "min": 0.7896,
+          "p10": 0.8327,
+          "median": 0.88,
+          "p90": 0.9578,
+          "max": 1.0627
+        },
+        "over": {
+          "over_0.1": 15,
+          "over_0.2": 15,
+          "over_0.5": 15
+        }
+      }
+    },
+    "straight_only": {
+      "what": "면 경로를 곧은 획으로 제한 — 굽은 획은 놓지 않는다",
+      "opts": {
+        "facePlanes": 1,
+        "freeSpan": 0,
+        "freeBendMax": 0.18,
+        "farEndCheck": 1
+      },
+      "on_face": {
+        "n": 96,
+        "placed_rate": 0.0313,
+        "worst_end_ratio": {
+          "n": 3,
+          "min": 0.0327,
+          "p10": 0.0327,
+          "median": 0.0644,
+          "p90": 0.2556,
+          "max": 0.2556
+        },
+        "max_dev_ratio": {
+          "n": 3,
+          "min": 0.0502,
+          "p10": 0.0502,
+          "median": 0.0644,
+          "p90": 0.2556,
+          "max": 0.2556
+        },
+        "over": {
+          "over_0.1": 1,
+          "over_0.2": 1,
+          "over_0.5": 0
+        }
+      },
+      "in_space": {
+        "n": 98,
+        "placed_rate": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "max_dev_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        }
+      },
+      "straight_diagonal": {
+        "n": 70,
+        "placed_rate": 0.5286,
+        "worst_end_ratio": {
+          "n": 37,
+          "min": 0.0147,
+          "p10": 0.0215,
+          "median": 0.0454,
+          "p90": 0.0926,
+          "max": 0.1194
+        },
+        "max_dev_ratio": {
+          "n": 37,
+          "min": 0.0215,
+          "p10": 0.0302,
+          "median": 0.0728,
+          "p90": 0.1134,
+          "max": 0.2114
+        },
+        "over": {
+          "over_0.1": 7,
+          "over_0.2": 1,
+          "over_0.5": 0
+        }
+      },
+      "on_face_axis_assigned": {
+        "n": 4,
+        "placed_rate": 0.5,
+        "worst_end_ratio": {
+          "n": 2,
+          "min": 0.5423,
+          "p10": 0.5423,
+          "median": 0.7095,
+          "p90": 0.8768,
+          "max": 0.8768
+        },
+        "max_dev_ratio": {
+          "n": 2,
+          "min": 0.5504,
+          "p10": 0.5504,
+          "median": 0.7136,
+          "p90": 0.8768,
+          "max": 0.8768
+        },
+        "over": {
+          "over_0.1": 2,
+          "over_0.2": 2,
+          "over_0.5": 2
+        }
+      },
+      "in_space_axis_assigned": {
+        "n": 2,
+        "placed_rate": 1,
+        "worst_end_ratio": {
+          "n": 2,
+          "min": 0.9102,
+          "p10": 0.9102,
+          "median": 0.9325,
+          "p90": 0.9549,
+          "max": 0.9549
+        },
+        "max_dev_ratio": {
+          "n": 2,
+          "min": 0.9102,
+          "p10": 0.9102,
+          "median": 0.9325,
+          "p90": 0.9549,
+          "max": 0.9549
+        },
+        "over": {
+          "over_0.1": 2,
+          "over_0.2": 2,
+          "over_0.5": 2
+        }
+      },
+      "straight_axis_assigned": {
+        "n": 30,
+        "placed_rate": 0.5,
+        "worst_end_ratio": {
+          "n": 15,
+          "min": 0.7896,
+          "p10": 0.835,
+          "median": 0.88,
+          "p90": 0.9466,
+          "max": 1.0627
+        },
+        "max_dev_ratio": {
+          "n": 15,
+          "min": 0.7896,
+          "p10": 0.835,
+          "median": 0.88,
+          "p90": 0.9466,
+          "max": 1.0627
+        },
+        "over": {
+          "over_0.1": 15,
+          "over_0.2": 15,
+          "over_0.5": 15
+        }
+      }
+    },
+    "straight_plus_span": {
+      "what": "면 경로는 곧은 획만 + 굽은 획은 폴백이 받는다",
+      "opts": {
+        "facePlanes": 1,
+        "freeSpan": 1,
+        "freeBendMax": 0.18,
+        "farEndCheck": 1
+      },
+      "on_face": {
+        "n": 96,
+        "placed_rate": 0.0313,
+        "worst_end_ratio": {
+          "n": 3,
+          "min": 0.0327,
+          "p10": 0.0327,
+          "median": 0.0644,
+          "p90": 0.2556,
+          "max": 0.2556
+        },
+        "max_dev_ratio": {
+          "n": 3,
+          "min": 0.0502,
+          "p10": 0.0502,
+          "median": 0.0644,
+          "p90": 0.2556,
+          "max": 0.2556
+        },
+        "over": {
+          "over_0.1": 1,
+          "over_0.2": 1,
+          "over_0.5": 0
+        }
+      },
+      "in_space": {
+        "n": 98,
+        "placed_rate": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "max_dev_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        }
+      },
+      "straight_diagonal": {
+        "n": 70,
+        "placed_rate": 0.6714,
+        "worst_end_ratio": {
+          "n": 47,
+          "min": 0.0147,
+          "p10": 0.0216,
+          "median": 0.0514,
+          "p90": 0.0925,
+          "max": 0.1194
+        },
+        "max_dev_ratio": {
+          "n": 47,
+          "min": 0.0215,
+          "p10": 0.0386,
+          "median": 0.0673,
+          "p90": 0.1024,
+          "max": 0.2114
+        },
+        "over": {
+          "over_0.1": 7,
+          "over_0.2": 1,
+          "over_0.5": 0
+        }
+      },
+      "on_face_axis_assigned": {
+        "n": 4,
+        "placed_rate": 0.5,
+        "worst_end_ratio": {
+          "n": 2,
+          "min": 0.5423,
+          "p10": 0.5423,
+          "median": 0.7095,
+          "p90": 0.8768,
+          "max": 0.8768
+        },
+        "max_dev_ratio": {
+          "n": 2,
+          "min": 0.5504,
+          "p10": 0.5504,
+          "median": 0.7136,
+          "p90": 0.8768,
+          "max": 0.8768
+        },
+        "over": {
+          "over_0.1": 2,
+          "over_0.2": 2,
+          "over_0.5": 2
+        }
+      },
+      "in_space_axis_assigned": {
+        "n": 2,
+        "placed_rate": 1,
+        "worst_end_ratio": {
+          "n": 2,
+          "min": 0.9102,
+          "p10": 0.9102,
+          "median": 0.9325,
+          "p90": 0.9549,
+          "max": 0.9549
+        },
+        "max_dev_ratio": {
+          "n": 2,
+          "min": 0.9102,
+          "p10": 0.9102,
+          "median": 0.9325,
+          "p90": 0.9549,
+          "max": 0.9549
+        },
+        "over": {
+          "over_0.1": 2,
+          "over_0.2": 2,
+          "over_0.5": 2
+        }
+      },
+      "straight_axis_assigned": {
+        "n": 30,
+        "placed_rate": 0.5,
+        "worst_end_ratio": {
+          "n": 15,
+          "min": 0.7896,
+          "p10": 0.835,
+          "median": 0.88,
+          "p90": 0.9466,
+          "max": 1.0627
+        },
+        "max_dev_ratio": {
+          "n": 15,
+          "min": 0.7896,
+          "p10": 0.835,
+          "median": 0.88,
+          "p90": 0.9466,
+          "max": 1.0627
+        },
+        "over": {
+          "over_0.1": 15,
+          "over_0.2": 15,
+          "over_0.5": 15
+        }
+      }
+    }
+  }
+}

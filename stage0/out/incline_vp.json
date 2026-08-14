@@ -1,0 +1,861 @@
+{
+  "spec": "S-6 (3) 경사 소실점. **위험부터 잰다** — 가르지 못하면 만들지 않는다(A-3).",
+  "constants": {
+    "hash": "0803f3fe",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "theory": "이론서 15.1: 경사 VP는 대응 수평 VP의 바로 위/아래. **정확히 읽으면 후보 집합이 점이 아니라 직선이다** — 경사 방향 `cos t·e_h − sin t·e_v`의 소실점은 전부 `VP_h`–`VP_v` 직선 위에 있다(불변식 테스트로 잠갔다).",
+  "why_single_stroke_fails": "**획 하나로는 원리적으로 못 가른다.** 대표 직선은 그 후보 직선과 한 점에서 만나므로 어떤 획에도 부적합도 **정확히 0**인 경사 VP가 존재한다 — 축 0 모서리조차 그렇다(그 교점이 `VP_h`이고 족의 `t = 0`이다). 반례 테스트가 이것을 잠근다. 그러므로 검출은 **평행한 경사 획 둘 이상**의 교점으로만 시도할 수 있다.",
+  "metric": "`ratio` = |두 획의 교점 − 참 경사 VP| ÷ |참 경사 VP − 수평 VP|. **1을 넘으면 경사인지 수평축인지 가를 수 없다** — 추정 오차가 두 가설 사이 간격보다 크다. `closer_to_axis_rate`는 추정 VP가 참 경사 VP보다 수평 VP에 더 가까운 비율이다.",
+  "condition": {
+    "grade": "medium",
+    "skew": 0.12,
+    "end_jitter": 0.01,
+    "boxes": 80,
+    "seeds": [
+      8821,
+      1301,
+      5501
+    ],
+    "camera": {
+      "yaw_deg": 35,
+      "pitch_deg": 15,
+      "f": 1000,
+      "img_size": [
+        960,
+        672
+      ]
+    },
+    "single_composition_warning": "구도가 하나뿐이다(직육면체, 요 35°·피치 15° 3점). 등급도 medium 하나다.",
+    "note": "경사각 0°는 **대조군**이다 — 수평축 그대로이므로 참 VP가 곧 `VP_h`이고 `vp_separation_px`가 0이다. 그래서 0°의 `ratio`와 `closer_to_axis_rate`는 **정의되지 않는다**(두 거리가 같은 양이다) — 범위를 말할 때 넣지 않는다."
+  },
+  "axis_tol": {
+    "vp_dist_ratio": 0.06,
+    "ambiguity_margin": 1.5
+  },
+  "by_slope_deg": {
+    "0": {
+      "n": 240,
+      "vp_separation_px": {
+        "n": 240,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "estimate_err_px": {
+        "n": 240,
+        "min": 22.8,
+        "p10": 166.1,
+        "median": 603.1,
+        "p90": 5936.3,
+        "max": 266939.3
+      },
+      "ratio": {
+        "n": 0,
+        "min": null,
+        "p10": null,
+        "median": null,
+        "p90": null,
+        "max": null
+      },
+      "by_n_strokes": {
+        "2": {
+          "n": 240,
+          "ratio": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "err_px": {
+            "n": 240,
+            "min": 22.8,
+            "p10": 166.1,
+            "median": 603.1,
+            "p90": 5936.3,
+            "max": 266939.3
+          },
+          "closer_to_axis_rate": 0.275
+        },
+        "3": {
+          "n": 240,
+          "ratio": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "err_px": {
+            "n": 240,
+            "min": 12.3,
+            "p10": 199.4,
+            "median": 689.8,
+            "p90": 1612.1,
+            "max": 119230
+          },
+          "closer_to_axis_rate": 0.1208
+        },
+        "4": {
+          "n": 240,
+          "ratio": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "err_px": {
+            "n": 240,
+            "min": 28.3,
+            "p10": 366.7,
+            "median": 790.9,
+            "p90": 1360.8,
+            "max": 5012.7
+          },
+          "closer_to_axis_rate": 0.0583
+        },
+        "6": {
+          "n": 240,
+          "ratio": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "err_px": {
+            "n": 240,
+            "min": 80.3,
+            "p10": 480.8,
+            "median": 878.9,
+            "p90": 1228.1,
+            "max": 2352.8
+          },
+          "closer_to_axis_rate": 0.0042
+        }
+      },
+      "ratio_median_by_seed": {
+        "1301": null,
+        "5501": null,
+        "8821": null
+      },
+      "closer_to_axis_rate": 0.275,
+      "stroke_len_ratio": {
+        "n": 240,
+        "min": 0.1769,
+        "p10": 0.2053,
+        "median": 0.2696,
+        "p90": 0.326,
+        "max": 0.3584
+      },
+      "verdict_now": {
+        "axis0": 232,
+        "free:multi_axis": 8
+      },
+      "placed_now": {
+        "n": 480,
+        "placed_rate": 0.8938,
+        "corner_err_ratio": {
+          "n": 858,
+          "min": 0.0012,
+          "p10": 0.0098,
+          "median": 0.0233,
+          "p90": 0.0551,
+          "max": 0.9696
+        },
+        "worst_end_ratio": {
+          "n": 429,
+          "min": 0.005,
+          "p10": 0.0139,
+          "median": 0.0278,
+          "p90": 0.0595,
+          "max": 0.9696
+        },
+        "worst_end_over": {
+          "over_0.1": 12,
+          "over_0.2": 6,
+          "over_0.5": 5
+        }
+      }
+    },
+    "10": {
+      "n": 240,
+      "vp_separation_px": {
+        "n": 240,
+        "min": 382.8,
+        "p10": 382.8,
+        "median": 382.8,
+        "p90": 382.8,
+        "max": 382.8
+      },
+      "estimate_err_px": {
+        "n": 240,
+        "min": 37.4,
+        "p10": 179.2,
+        "median": 745.2,
+        "p90": 7667,
+        "max": 690162
+      },
+      "ratio": {
+        "n": 240,
+        "min": 0.098,
+        "p10": 0.468,
+        "median": 1.947,
+        "p90": 20.028,
+        "max": 1802.888
+      },
+      "by_n_strokes": {
+        "2": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.098,
+            "p10": 0.468,
+            "median": 1.947,
+            "p90": 20.028,
+            "max": 1802.888
+          },
+          "err_px": {
+            "n": 240,
+            "min": 37.4,
+            "p10": 179.2,
+            "median": 745.2,
+            "p90": 7667,
+            "max": 690162
+          },
+          "closer_to_axis_rate": 0.4708
+        },
+        "3": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.05,
+            "p10": 0.604,
+            "median": 2.023,
+            "p90": 5.061,
+            "max": 47.784
+          },
+          "err_px": {
+            "n": 240,
+            "min": 19.3,
+            "p10": 231.2,
+            "median": 774.3,
+            "p90": 1937.6,
+            "max": 18292.3
+          },
+          "closer_to_axis_rate": 0.7542
+        },
+        "4": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.122,
+            "p10": 1.119,
+            "median": 2.404,
+            "p90": 4.041,
+            "max": 11.763
+          },
+          "err_px": {
+            "n": 240,
+            "min": 46.7,
+            "p10": 428.2,
+            "median": 920.1,
+            "p90": 1547,
+            "max": 4503
+          },
+          "closer_to_axis_rate": 0.8958
+        },
+        "6": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.073,
+            "p10": 1.642,
+            "median": 2.745,
+            "p90": 3.876,
+            "max": 6.793
+          },
+          "err_px": {
+            "n": 240,
+            "min": 28.1,
+            "p10": 628.5,
+            "median": 1051,
+            "p90": 1483.7,
+            "max": 2600.4
+          },
+          "closer_to_axis_rate": 0.9917
+        }
+      },
+      "ratio_median_by_seed": {
+        "1301": 1.923,
+        "5501": 2.036,
+        "8821": 1.944
+      },
+      "closer_to_axis_rate": 0.4708,
+      "stroke_len_ratio": {
+        "n": 240,
+        "min": 0.1829,
+        "p10": 0.2195,
+        "median": 0.2892,
+        "p90": 0.3501,
+        "max": 0.3961
+      },
+      "verdict_now": {
+        "axis0": 230,
+        "free:multi_axis": 10
+      },
+      "placed_now": {
+        "n": 480,
+        "placed_rate": 0.5271,
+        "corner_err_ratio": {
+          "n": 506,
+          "min": 0.0026,
+          "p10": 0.0123,
+          "median": 0.0333,
+          "p90": 0.0867,
+          "max": 0.8902
+        },
+        "worst_end_ratio": {
+          "n": 253,
+          "min": 0.0071,
+          "p10": 0.0251,
+          "median": 0.0507,
+          "p90": 0.1061,
+          "max": 0.8902
+        },
+        "worst_end_over": {
+          "over_0.1": 28,
+          "over_0.2": 4,
+          "over_0.5": 4
+        }
+      }
+    },
+    "20": {
+      "n": 240,
+      "vp_separation_px": {
+        "n": 240,
+        "min": 873.6,
+        "p10": 873.6,
+        "median": 873.6,
+        "p90": 873.6,
+        "max": 873.6
+      },
+      "estimate_err_px": {
+        "n": 240,
+        "min": 50.8,
+        "p10": 196.9,
+        "median": 942,
+        "p90": 8452.4,
+        "max": 988966.7
+      },
+      "ratio": {
+        "n": 240,
+        "min": 0.058,
+        "p10": 0.225,
+        "median": 1.078,
+        "p90": 9.675,
+        "max": 1132.003
+      },
+      "by_n_strokes": {
+        "2": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.058,
+            "p10": 0.225,
+            "median": 1.078,
+            "p90": 9.675,
+            "max": 1132.003
+          },
+          "err_px": {
+            "n": 240,
+            "min": 50.8,
+            "p10": 196.9,
+            "median": 942,
+            "p90": 8452.4,
+            "max": 988966.7
+          },
+          "closer_to_axis_rate": 0.3792
+        },
+        "3": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.013,
+            "p10": 0.285,
+            "median": 1.034,
+            "p90": 2.724,
+            "max": 41.802
+          },
+          "err_px": {
+            "n": 240,
+            "min": 11,
+            "p10": 249,
+            "median": 903.7,
+            "p90": 2379.4,
+            "max": 36520.5
+          },
+          "closer_to_axis_rate": 0.65
+        },
+        "4": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.038,
+            "p10": 0.492,
+            "median": 1.314,
+            "p90": 2.201,
+            "max": 45.742
+          },
+          "err_px": {
+            "n": 240,
+            "min": 33.2,
+            "p10": 430,
+            "median": 1148.1,
+            "p90": 1922.5,
+            "max": 39962.6
+          },
+          "closer_to_axis_rate": 0.8333
+        },
+        "6": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.221,
+            "p10": 0.876,
+            "median": 1.464,
+            "p90": 2.202,
+            "max": 3.312
+          },
+          "err_px": {
+            "n": 240,
+            "min": 193.3,
+            "p10": 765.2,
+            "median": 1278.6,
+            "p90": 1923.6,
+            "max": 2893.7
+          },
+          "closer_to_axis_rate": 0.9667
+        }
+      },
+      "ratio_median_by_seed": {
+        "1301": 1.167,
+        "5501": 1.1,
+        "8821": 0.872
+      },
+      "closer_to_axis_rate": 0.3792,
+      "stroke_len_ratio": {
+        "n": 240,
+        "min": 0.201,
+        "p10": 0.233,
+        "median": 0.3064,
+        "p90": 0.3756,
+        "max": 0.4145
+      },
+      "verdict_now": {
+        "free:no_axis_matches": 219,
+        "free:multi_axis": 8,
+        "axis0": 13
+      },
+      "placed_now": {
+        "n": 480,
+        "placed_rate": 0.5646,
+        "corner_err_ratio": {
+          "n": 542,
+          "min": 0.0034,
+          "p10": 0.0114,
+          "median": 0.0318,
+          "p90": 0.145,
+          "max": 0.9666
+        },
+        "worst_end_ratio": {
+          "n": 271,
+          "min": 0.0085,
+          "p10": 0.0188,
+          "median": 0.0447,
+          "p90": 0.809,
+          "max": 0.9666
+        },
+        "worst_end_over": {
+          "over_0.1": 57,
+          "over_0.2": 50,
+          "over_0.5": 46
+        }
+      }
+    },
+    "30": {
+      "n": 240,
+      "vp_separation_px": {
+        "n": 240,
+        "min": 1575,
+        "p10": 1575,
+        "median": 1575,
+        "p90": 1575,
+        "max": 1575
+      },
+      "estimate_err_px": {
+        "n": 240,
+        "min": 18.3,
+        "p10": 315.3,
+        "median": 1296.6,
+        "p90": 14221.5,
+        "max": 1818264.9
+      },
+      "ratio": {
+        "n": 240,
+        "min": 0.012,
+        "p10": 0.2,
+        "median": 0.823,
+        "p90": 9.03,
+        "max": 1154.467
+      },
+      "by_n_strokes": {
+        "2": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.012,
+            "p10": 0.2,
+            "median": 0.823,
+            "p90": 9.03,
+            "max": 1154.467
+          },
+          "err_px": {
+            "n": 240,
+            "min": 18.3,
+            "p10": 315.3,
+            "median": 1296.6,
+            "p90": 14221.5,
+            "max": 1818264.9
+          },
+          "closer_to_axis_rate": 0.4125
+        },
+        "3": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.029,
+            "p10": 0.259,
+            "median": 0.87,
+            "p90": 2.308,
+            "max": 9.954
+          },
+          "err_px": {
+            "n": 240,
+            "min": 46,
+            "p10": 408.2,
+            "median": 1369.9,
+            "p90": 3635.6,
+            "max": 15676.8
+          },
+          "closer_to_axis_rate": 0.65
+        },
+        "4": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.087,
+            "p10": 0.404,
+            "median": 1.02,
+            "p90": 1.67,
+            "max": 5.82
+          },
+          "err_px": {
+            "n": 240,
+            "min": 137,
+            "p10": 635.6,
+            "median": 1605.9,
+            "p90": 2630.3,
+            "max": 9165.7
+          },
+          "closer_to_axis_rate": 0.8417
+        },
+        "6": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.104,
+            "p10": 0.782,
+            "median": 1.151,
+            "p90": 1.523,
+            "max": 2.328
+          },
+          "err_px": {
+            "n": 240,
+            "min": 163.9,
+            "p10": 1231.4,
+            "median": 1812.7,
+            "p90": 2398.3,
+            "max": 3666.5
+          },
+          "closer_to_axis_rate": 0.9625
+        }
+      },
+      "ratio_median_by_seed": {
+        "1301": 0.942,
+        "5501": 0.875,
+        "8821": 0.695
+      },
+      "closer_to_axis_rate": 0.4125,
+      "stroke_len_ratio": {
+        "n": 240,
+        "min": 0.2101,
+        "p10": 0.2455,
+        "median": 0.3279,
+        "p90": 0.3985,
+        "max": 0.4386
+      },
+      "verdict_now": {
+        "free:no_axis_matches": 237,
+        "free:multi_axis": 3
+      },
+      "placed_now": {
+        "n": 480,
+        "placed_rate": 0.2479,
+        "corner_err_ratio": {
+          "n": 238,
+          "min": 0.0032,
+          "p10": 0.0113,
+          "median": 0.0391,
+          "p90": 0.8035,
+          "max": 0.9177
+        },
+        "worst_end_ratio": {
+          "n": 119,
+          "min": 0.0044,
+          "p10": 0.0247,
+          "median": 0.0922,
+          "p90": 0.8375,
+          "max": 0.9177
+        },
+        "worst_end_over": {
+          "over_0.1": 57,
+          "over_0.2": 51,
+          "over_0.5": 47
+        }
+      }
+    },
+    "45": {
+      "n": 240,
+      "vp_separation_px": {
+        "n": 240,
+        "min": 3738.8,
+        "p10": 3738.8,
+        "median": 3738.8,
+        "p90": 3738.8,
+        "max": 3738.8
+      },
+      "estimate_err_px": {
+        "n": 240,
+        "min": 20.1,
+        "p10": 1079.6,
+        "median": 3134,
+        "p90": 18487.4,
+        "max": 4195746.6
+      },
+      "ratio": {
+        "n": 240,
+        "min": 0.005,
+        "p10": 0.289,
+        "median": 0.838,
+        "p90": 4.945,
+        "max": 1122.225
+      },
+      "by_n_strokes": {
+        "2": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.005,
+            "p10": 0.289,
+            "median": 0.838,
+            "p90": 4.945,
+            "max": 1122.224
+          },
+          "err_px": {
+            "n": 240,
+            "min": 20.1,
+            "p10": 1079.6,
+            "median": 3134,
+            "p90": 18487.4,
+            "max": 4195746.1
+          },
+          "closer_to_axis_rate": 0.6125
+        },
+        "3": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.026,
+            "p10": 0.437,
+            "median": 0.892,
+            "p90": 1.812,
+            "max": 11.894
+          },
+          "err_px": {
+            "n": 240,
+            "min": 96,
+            "p10": 1635,
+            "median": 3335.3,
+            "p90": 6774.5,
+            "max": 44468.1
+          },
+          "closer_to_axis_rate": 0.8125
+        },
+        "4": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.032,
+            "p10": 0.609,
+            "median": 1.005,
+            "p90": 1.472,
+            "max": 3.262
+          },
+          "err_px": {
+            "n": 240,
+            "min": 121.3,
+            "p10": 2275.4,
+            "median": 3758.5,
+            "p90": 5501.8,
+            "max": 12194.6
+          },
+          "closer_to_axis_rate": 0.9167
+        },
+        "6": {
+          "n": 240,
+          "ratio": {
+            "n": 240,
+            "min": 0.384,
+            "p10": 0.8,
+            "median": 1.051,
+            "p90": 1.355,
+            "max": 2.043
+          },
+          "err_px": {
+            "n": 240,
+            "min": 1434.1,
+            "p10": 2989.9,
+            "median": 3931.2,
+            "p90": 5066.3,
+            "max": 7639.1
+          },
+          "closer_to_axis_rate": 0.9833
+        }
+      },
+      "ratio_median_by_seed": {
+        "1301": 0.909,
+        "5501": 0.906,
+        "8821": 0.794
+      },
+      "closer_to_axis_rate": 0.6125,
+      "stroke_len_ratio": {
+        "n": 240,
+        "min": 0.231,
+        "p10": 0.2624,
+        "median": 0.3569,
+        "p90": 0.4388,
+        "max": 0.4811
+      },
+      "verdict_now": {
+        "free:no_axis_matches": 236,
+        "free:multi_axis": 4
+      },
+      "placed_now": {
+        "n": 480,
+        "placed_rate": 0.2,
+        "corner_err_ratio": {
+          "n": 192,
+          "min": 0.0057,
+          "p10": 0.0126,
+          "median": 0.0412,
+          "p90": 0.7306,
+          "max": 0.8649
+        },
+        "worst_end_ratio": {
+          "n": 96,
+          "min": 0.0077,
+          "p10": 0.0258,
+          "median": 0.4014,
+          "p90": 0.7811,
+          "max": 0.8649
+        },
+        "worst_end_over": {
+          "over_0.1": 65,
+          "over_0.2": 60,
+          "over_0.5": 47
+        }
+      }
+    }
+  }
+}

@@ -8,7 +8,7 @@ import { StrokeView } from "./s3d/strokeView.js";
 import { CameraPanel, type Tool } from "./ui/cameraPanel.js";
 import { PRESETS } from "./s3d/constraints.js";
 import { AXIS_COLOR } from "./s3d/grid.js";
-import { classifyStroke, type Axis } from "./s3d/axis.js";
+import { classifyStroke, AXIS_TOL, type Axis } from "./s3d/axis.js";
 import { newStroke, settle, reprojectAll, PLACE_TOL,
          type Stroke, type PlaceCtx, type PlaceOpts } from "./s3d/stroke.js";
 import { buildSession, downloadSession } from "./ui/sessionExport.js";
@@ -68,12 +68,20 @@ function placeCtx(): PlaceCtx | null {
  *   (`misassign_retry.json`). 켜면 5.8%. 대신 배치율이 0.95 → 0.82로 떨어지고,
  *   남은 것은 미배치로 화면에 남는다(D-S15 — 놓지 않되 버리지 않는다).
  * - `facePlanes` **면 위 사선**(§4.3, D-S14). 미분류 사선의 84%가 이 경로로 놓인다.
+ * - `freeBendMax` **미분류 획의 평면 경로는 곧은 획에만**(S-6 3, D-S17). 면 경로도 폴백도
+ *   검사가 **끝점 둘**을 보므로 굽음은 어느 쪽에서도 검증되지 않는다. 굽은 획을 놓으면
+ *   면 경로 62% · 폴백 51%가 최대 이탈 0.2를 넘고, **최선의 평면은 0.078**이다 —
+ *   답이 없는 게 아니라 둘 다 못 고른다. 판정의 `bend_max`를 그대로 쓴다.
  * - `retryAsFace` **0이다**(D-S16). 구제 143획 중 46획(32%)이 틀렸다 — D-S9와 같은 이유.
+ * - `freeSpan` **켠다**(D-S17). 곧은 획에 한정하면 면 경로가 거절한 것을 회수한다 —
+ *   배치율 0.53 → 0.76이고 더 놓은 16획 중 0.2를 넘는 것은 1획이다.
  */
 const FIRST_VIEW: PlaceOpts = {
   farEndCheck: PLACE_TOL.far_end_check,
   facePlanes: PLACE_TOL.face_far_end,
+  freeBendMax: AXIS_TOL.bend_max,
   retryAsFace: PLACE_TOL.retry_as_face,
+  freeSpan: PLACE_TOL.span_far_end,
 };
 
 /** 카메라가 움직이면 **전부 다시 만든다**(§5 "pts2d를 반드시 보존한다"). */

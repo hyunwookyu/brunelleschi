@@ -12,7 +12,7 @@
 // 자기 광선 위에 있으므로 그린 카메라에서 다시 투영하면 원본 `pts2d`로 돌아온다(항등).
 // 평면 선택이 정하는 것은 **깊이**뿐이고, 그 차이는 **돌린 뒤에야 보인다**(§4.4·AS-2).
 import type { Pt2 } from "./camera.js";
-import type { Axis } from "./axis.js";
+import { representative, type Axis } from "./axis.js";
 import {
   rayThrough, project, axisDirection, rayPlane, groundFrame, EYE_HEIGHT,
   unit3, cross3, sub3, add3, mul3, dot3, norm3, type Vec3, type Plane,
@@ -82,6 +82,17 @@ export const PLACE_TOL = {
   retry_as_face: 0,
   /** **면 위 사선**(§4.3)의 정합성 허용치 배수. 잠정 — 실획에서 재정한다(AS-13). */
   face_far_end: 1,
+  /**
+   * **자유 곡선 폴백**(§4.3 셋째, S-6 3)의 정합성 허용치 배수. 0이면 꺼진다.
+   * 축 평면 위에도 안 놓이는 미분류 획을 **양 끝 앵커가 정하는 `facing` 평면**에 놓는다.
+   * 계획서의 "시선 수직 임시 평면"은 애초에 후보가 아니다 — 깊이가 임의가 되고,
+   * 그것은 D-S8이 기각한 `screen` 평면이다.
+   *
+   * **`freeBendMax`와 함께 써야 한다.** 굽은 획에서는 이 평면도 반이 틀린다(51%).
+   * 곧은 획에 한정하면 면 경로가 거절한 것을 회수한다 — 배치율 0.53 → 0.67이고
+   * **더 놓은 10획 중 0.2를 넘는 것이 없다**(`free_curve.json`). D-S17.
+   */
+  span_far_end: 1,
   /** 눈높이 게이지는 `geom3d.EYE_HEIGHT` 한 군데에만 둔다(격자와 씨앗이 같아야 한다). */
   eye_height: EYE_HEIGHT,
 };
@@ -520,6 +531,54 @@ export function placeOnFace(
   return best && best.score <= 1 ? best : null;
 }
 
+/**
+ * **자유 곡선 폴백**(§4.3의 셋째 경우, S-6 3). 어느 축도 아니고 축 평면 위도 아닌 획.
+ *
+ * 계획서는 "임시 평면(시선 수직)에 놓고 사용자가 나중에 조정"이라 적었다. **그 평면은 쓰지
+ * 않는다** — 시선 수직 평면은 앵커의 깊이를 그대로 복사하므로 획이 깊이로 전혀 안 들어가고
+ * (그것이 §4.5 미리보기이자 D-S8이 기각한 `screen`이다), 무엇보다 **깊이가 임의**가 된다.
+ *
+ * 대신 **양 끝 앵커가 평면을 정한다.** 두 앵커를 잇는 선을 담되 시선에 가장 정면으로 서는
+ * 평면 — `facing`(D-S8)을 축 대신 앵커-앵커 방향에 적용한 것이다. 새 가정이 아니다:
+ * 두 끝점의 3D 위치는 기존 기하가 이미 정했고, 그 사이를 어느 평면으로 잇느냐만 남았으며
+ * D-S8이 그 물음에 이미 답했다.
+ *
+ * **양 끝에 후보가 있을 때만 시도한다** — 한쪽이 자유단이면 평면이 안 정해지고, 그때 깊이는
+ * 정말로 임의다. 놓지 않는다(A-3). 검증은 면 경로와 같다: 놓고 난 반대쪽 끝이 그쪽 앵커와
+ * 만나야 한다.
+ */
+export function placeOnSpan(
+  placed: Stroke[], pts2d: Pt2[], ctx: PlaceCtx, radius: number, farEndTol = 1,
+): { pts3d: Vec3[]; id: string; which: 0 | 1; joinShift: number } | null {
+  const ends: [Pt2, Pt2] = [pts2d[0], pts2d[pts2d.length - 1]];
+  const cands = [anchorCandidates(placed, ends[0], radius),
+                 anchorCandidates(placed, ends[1], radius)];
+  if (!cands[0].length || !cands[1].length) return null;
+
+  let best: { pts3d: Vec3[]; id: string; which: 0 | 1; joinShift: number; score: number } | null = null;
+  for (const a of cands[0]) {
+    for (const b of cands[1]) {
+      const dir = sub3(b.pos, a.pos);
+      if (norm3(dir) < 1e-9) continue;                 // 두 앵커가 같은 점이면 평면이 안 선다
+      const pl = wobblePlane(a.pos, dir, "facing");
+      const pts3d = placeOnPlane(pts2d, pl, ctx);
+      if (!pts3d) continue;
+      // 평면이 두 앵커를 다 담으므로, 검사하는 것은 **끝점이 그 앵커를 겨냥했는가**이다.
+      const far = pts3d[pts3d.length - 1];
+      const tol = farEndTol * (radius * far[2]) / ctx.f;
+      const score = norm3(sub3(far, b.pos)) / Math.max(tol, 1e-9);
+      if (best && score >= best.score) continue;
+      const p0 = project(pts3d[0], ctx.principal, ctx.f);
+      const p1 = project(a.pos, ctx.principal, ctx.f);
+      const snapped = pts3d.slice();
+      snapped[0] = a.pos;                              // 끝점 접합(§1.2) — 시작 쪽만
+      best = { pts3d: snapped, id: a.id, which: 0, score,
+               joinShift: p0 && p1 ? Math.hypot(p0[0] - p1[0], p0[1] - p1[1]) : 0 };
+    }
+  }
+  return best && best.score <= 1 ? best : null;
+}
+
 let _seq = 0;
 export const resetStrokeIds = () => { _seq = 0; };
 
@@ -555,6 +614,27 @@ export interface PlaceOpts {
    * 값은 정합성 허용치 배수. 0이면 꺼진다(미분류는 안 놓인다).
    */
   facePlanes?: number;
+  /**
+   * **미분류 획의 평면 경로를 곧은 획으로 제한한다**(S-6 3, D-S17). 대표 직선에서의 최대
+   * 편차(길이 대비)가 이 값을 넘으면 **면 경로도 폴백도 쓰지 않는다**. 0이면 제한이 꺼진다.
+   *
+   * **근거는 검증의 적용 범위다.** 두 경로의 검사는 모두 **끝점 둘**을 본다 — 곧은 획이면
+   * 끝점 둘 + 평면이 획을 **유일하게 결정**하므로 검사가 획 전체를 덮는다. 굽은 획은
+   * 아니다: 가운데가 어디로 가든 끝점은 같으므로 **굽음은 검증되지 않는다**.
+   * 그러므로 제한은 **평면을 고르는 방법이 아니라 검증의 한계**에 걸리고, 면 경로와
+   * 폴백 어느 쪽에도 똑같이 적용된다.
+   *
+   * 측정이 그 귀결을 보인다(`free_curve.json`) — 굽은 획에서 면 경로는 62%, 폴백은 51%가
+   * 최대 이탈 0.2를 넘는다. **참 끝점을 지나는 최선의 평면은 0.078**이므로 답이 없는 것이
+   * 아니라 **두 방법 다 못 고르는 것**이다.
+   */
+  freeBendMax?: number;
+  /**
+   * **자유 곡선 폴백**(§4.3 셋째, S-6 3). 축 평면 위에도 안 놓이는 미분류 획을
+   * **양 끝 앵커가 정하는 `facing` 평면**에 놓는다. 값은 정합성 허용치 배수. 0이면 꺼진다.
+   * `facePlanes`가 먼저 시도되고, 실패했을 때만 이 경로로 온다.
+   */
+  freeSpan?: number;
   /**
    * **축 오배정 되돌리기**(S-6 2b). 축으로 배정된 획이 **정합성 검사에 실패하면**
    * 그것은 "이 축이 아니다"라는 신호다 — 사선으로 재시도한다(면 위 사선 경로).
@@ -594,8 +674,19 @@ export function placeInto(
     return true;
   };
   if (stroke.axis === "free") {
-    if (!opts.facePlanes) return false;
-    return onFace(opts.facePlanes);
+    // **평면 경로는 곧은 획에만.** 두 경로의 검사가 다 끝점 둘을 보므로 굽음은
+    // 어느 쪽에서도 검증되지 않는다(위 `freeBendMax`).
+    const rep = opts.freeBendMax ? representative(stroke.pts2d) : null;
+    if (opts.freeBendMax && (!rep || rep.bend > opts.freeBendMax)) return false;
+    if (opts.facePlanes && onFace(opts.facePlanes)) return true;
+    // **자유 곡선 폴백** — 축 평면이 안 맞으면 양 끝 앵커가 정하는 평면에 놓는다(§4.3 셋째).
+    if (!opts.freeSpan) return false;
+    const sr = placeOnSpan(placed, stroke.pts2d, ctx, radius, opts.freeSpan);
+    if (!sr) return false;
+    stroke.pts3d = sr.pts3d;
+    stroke.anchorRef = sr.id;
+    stroke.joinShift = sr.joinShift;
+    return true;
   }
   const ends: [Pt2, Pt2] = [stroke.pts2d[0], stroke.pts2d[stroke.pts2d.length - 1]];
   let hit: { pos: Vec3; id: string; which: 0 | 1 } | null;

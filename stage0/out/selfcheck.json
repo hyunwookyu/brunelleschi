@@ -1,5 +1,5 @@
 {
-  "n_flags": 664,
+  "n_flags": 700,
   "flags": [
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
@@ -155,6 +155,186 @@
       "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_70.vps_at_infinity.median",
       "val": 0,
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "free_curve.json:arms.face_only.in_space_axis_assigned.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "free_curve.json:arms.span.in_space_axis_assigned.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "free_curve.json:arms.straight_only.on_face.over.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "free_curve.json:arms.straight_only.in_space.placed_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "free_curve.json:arms.straight_only.in_space.placed_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "free_curve.json:arms.straight_only.in_space.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "free_curve.json:arms.straight_only.in_space.worst_end_ratio.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "free_curve.json:arms.straight_only.in_space.max_dev_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "free_curve.json:arms.straight_only.in_space.max_dev_ratio.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "free_curve.json:arms.straight_only.in_space.over.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "free_curve.json:arms.straight_only.in_space.over.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "free_curve.json:arms.straight_only.in_space.over.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "free_curve.json:arms.straight_only.in_space_axis_assigned.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "free_curve.json:arms.straight_plus_span.on_face.over.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "free_curve.json:arms.straight_plus_span.in_space.placed_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "free_curve.json:arms.straight_plus_span.in_space.placed_rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "free_curve.json:arms.straight_plus_span.in_space.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "free_curve.json:arms.straight_plus_span.in_space.worst_end_ratio.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "free_curve.json:arms.straight_plus_span.in_space.max_dev_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "free_curve.json:arms.straight_plus_span.in_space.max_dev_ratio.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "free_curve.json:arms.straight_plus_span.in_space.over.over_0.1",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "free_curve.json:arms.straight_plus_span.in_space.over.over_0.2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "free_curve.json:arms.straight_plus_span.in_space.over.over_0.5",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "free_curve.json:arms.straight_plus_span.in_space_axis_assigned.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "incline_vp.json:by_slope_deg.0.vp_separation_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=240) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "incline_vp.json:by_slope_deg.0.vp_separation_px.median",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "incline_vp.json:by_slope_deg.0.vp_separation_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "incline_vp.json:by_slope_deg.0.ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "incline_vp.json:by_slope_deg.0.by_n_strokes.2.ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "incline_vp.json:by_slope_deg.0.by_n_strokes.2.ratio.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "incline_vp.json:by_slope_deg.0.by_n_strokes.3.ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "incline_vp.json:by_slope_deg.0.by_n_strokes.3.ratio.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "incline_vp.json:by_slope_deg.0.by_n_strokes.4.ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "incline_vp.json:by_slope_deg.0.by_n_strokes.4.ratio.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "incline_vp.json:by_slope_deg.0.by_n_strokes.6.ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "incline_vp.json:by_slope_deg.0.by_n_strokes.6.ratio.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "misassign_retry.json:by_end_jitter.0.005.arms.base.diag_axis_assigned.placed_rate",
@@ -3317,18 +3497,20 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "web\\src\\s3d\\stroke.ts:281:reprojectionGap",
+      "path": "web\\src\\s3d\\stroke.ts:292:reprojectionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     }
   ],
   "n_stale": 0,
-  "constants_hash": "272b5143",
+  "constants_hash": "0803f3fe",
   "scanned": [
     "axis_judgement.json",
     "constants.json",
     "continue_after_rotate.json",
     "face_diagonal.json",
+    "free_curve.json",
+    "incline_vp.json",
     "misassign_retry.json",
     "one_stroke_one_axis.json",
     "preview_gap.json",

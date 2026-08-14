@@ -1,7 +1,7 @@
 {
   "spec": "AS-6 '한 획 = 한 축'의 실획 위반율. 방향 급변(maxTurn)으로 검출.",
   "constants": {
-    "hash": "272b5143",
+    "hash": "0803f3fe",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -30,6 +30,7 @@
         "view_depth_envelope": 0.5,
         "retry_as_face": 0,
         "face_far_end": 1,
+        "span_far_end": 1,
         "eye_height": 1
       },
       "TUBE_TOL": {
