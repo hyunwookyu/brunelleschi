@@ -79,7 +79,7 @@ describe("굽은 획이 지금 어떻게 되는가", () => {
 
   it("**`고치기`로는 놓인다**(D-S18) — 굽은 획도 사용자 지정 경로가 받는다", () => {
     const { list, pts, edges } = bentOnBox();
-    const radius = PLACE_TOL.join_ratio * diagOf(CTX.imgSize) * 3;
+    const radius = PLACE_TOL.join_ratio * diagOf(CTX.imgSize) * PLACE_TOL.fix_candidate_radius_mult;
     const placed = list.filter(t => t.pts3d.length);
     const ca = anchorCandidates(placed, pts[0], radius);
     const cb = anchorCandidates(placed, pts[pts.length - 1], radius);

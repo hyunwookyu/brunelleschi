@@ -1,7 +1,7 @@
 {
   "spec": "S-7 (0) 돌린 시점의 평면 경로. **같은 획이 시점에 따라 갈리면 안 된다.**",
   "constants": {
-    "hash": "0803f3fe",
+    "hash": "503a75cb",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -31,6 +31,8 @@
         "retry_as_face": 0,
         "face_far_end": 1,
         "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
         "eye_height": 1
       },
       "TUBE_TOL": {
@@ -111,6 +113,24 @@
           "over_0.2": 0,
           "over_0.5": 0
         },
+        "diag_axis_assigned": {
+          "n": 186,
+          "share_of_diag": 0.7881,
+          "placed_rate": 0.7473,
+          "worst_end_ratio": {
+            "n": 139,
+            "min": 0.2471,
+            "p10": 0.4971,
+            "median": 0.6401,
+            "p90": 0.7378,
+            "max": 0.8142
+          },
+          "worst_end_over": {
+            "over_0.1": 139,
+            "over_0.2": 139,
+            "over_0.5": 124
+          }
+        },
         "edge_control": {
           "n": 118,
           "placed_rate": 0.7797,
@@ -143,6 +163,24 @@
           "over_0.2": 33,
           "over_0.5": 29
         },
+        "diag_axis_assigned": {
+          "n": 186,
+          "share_of_diag": 0.7881,
+          "placed_rate": 0.7473,
+          "worst_end_ratio": {
+            "n": 139,
+            "min": 0.2471,
+            "p10": 0.4971,
+            "median": 0.6401,
+            "p90": 0.7378,
+            "max": 0.8142
+          },
+          "worst_end_over": {
+            "over_0.1": 139,
+            "over_0.2": 139,
+            "over_0.5": 124
+          }
+        },
         "edge_control": {
           "n": 118,
           "placed_rate": 0.7966,
@@ -174,6 +212,24 @@
           "over_0.1": 0,
           "over_0.2": 0,
           "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 186,
+          "share_of_diag": 0.7881,
+          "placed_rate": 0.7473,
+          "worst_end_ratio": {
+            "n": 139,
+            "min": 0.2471,
+            "p10": 0.4971,
+            "median": 0.6401,
+            "p90": 0.7378,
+            "max": 0.8142
+          },
+          "worst_end_over": {
+            "over_0.1": 139,
+            "over_0.2": 139,
+            "over_0.5": 124
+          }
         },
         "edge_control": {
           "n": 118,
@@ -209,6 +265,24 @@
           "over_0.2": 0,
           "over_0.5": 0
         },
+        "diag_axis_assigned": {
+          "n": 86,
+          "share_of_diag": 0.3644,
+          "placed_rate": 0.407,
+          "worst_end_ratio": {
+            "n": 35,
+            "min": 0.3215,
+            "p10": 0.4302,
+            "median": 0.5807,
+            "p90": 0.7133,
+            "max": 0.8432
+          },
+          "worst_end_over": {
+            "over_0.1": 35,
+            "over_0.2": 35,
+            "over_0.5": 28
+          }
+        },
         "edge_control": {
           "n": 118,
           "placed_rate": 0.6525,
@@ -241,6 +315,24 @@
           "over_0.2": 5,
           "over_0.5": 3
         },
+        "diag_axis_assigned": {
+          "n": 86,
+          "share_of_diag": 0.3644,
+          "placed_rate": 0.407,
+          "worst_end_ratio": {
+            "n": 35,
+            "min": 0.3215,
+            "p10": 0.4302,
+            "median": 0.5807,
+            "p90": 0.7133,
+            "max": 0.8432
+          },
+          "worst_end_over": {
+            "over_0.1": 35,
+            "over_0.2": 35,
+            "over_0.5": 28
+          }
+        },
         "edge_control": {
           "n": 118,
           "placed_rate": 0.7034,
@@ -272,6 +364,24 @@
           "over_0.1": 0,
           "over_0.2": 0,
           "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 86,
+          "share_of_diag": 0.3644,
+          "placed_rate": 0.407,
+          "worst_end_ratio": {
+            "n": 35,
+            "min": 0.3215,
+            "p10": 0.4302,
+            "median": 0.5807,
+            "p90": 0.7133,
+            "max": 0.8432
+          },
+          "worst_end_over": {
+            "over_0.1": 35,
+            "over_0.2": 35,
+            "over_0.5": 28
+          }
         },
         "edge_control": {
           "n": 118,
@@ -307,6 +417,24 @@
           "over_0.2": 0,
           "over_0.5": 0
         },
+        "diag_axis_assigned": {
+          "n": 110,
+          "share_of_diag": 0.4622,
+          "placed_rate": 0.3273,
+          "worst_end_ratio": {
+            "n": 36,
+            "min": 0.4646,
+            "p10": 0.5214,
+            "median": 0.9838,
+            "p90": 1.128,
+            "max": 1.148
+          },
+          "worst_end_over": {
+            "over_0.1": 36,
+            "over_0.2": 36,
+            "over_0.5": 32
+          }
+        },
         "edge_control": {
           "n": 119,
           "placed_rate": 0.6891,
@@ -339,6 +467,24 @@
           "over_0.2": 1,
           "over_0.5": 1
         },
+        "diag_axis_assigned": {
+          "n": 110,
+          "share_of_diag": 0.4622,
+          "placed_rate": 0.3273,
+          "worst_end_ratio": {
+            "n": 36,
+            "min": 0.4646,
+            "p10": 0.5214,
+            "median": 0.9813,
+            "p90": 1.128,
+            "max": 1.1511
+          },
+          "worst_end_over": {
+            "over_0.1": 36,
+            "over_0.2": 36,
+            "over_0.5": 32
+          }
+        },
         "edge_control": {
           "n": 119,
           "placed_rate": 0.6975,
@@ -370,6 +516,24 @@
           "over_0.1": 0,
           "over_0.2": 0,
           "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 110,
+          "share_of_diag": 0.4622,
+          "placed_rate": 0.3273,
+          "worst_end_ratio": {
+            "n": 36,
+            "min": 0.4646,
+            "p10": 0.5214,
+            "median": 0.9838,
+            "p90": 1.128,
+            "max": 1.148
+          },
+          "worst_end_over": {
+            "over_0.1": 36,
+            "over_0.2": 36,
+            "over_0.5": 32
+          }
         },
         "edge_control": {
           "n": 119,

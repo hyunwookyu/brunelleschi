@@ -1,7 +1,7 @@
 {
   "spec": "S-6 (3) 자유 곡선 폴백. **양 끝 앵커가 평면을 정한다** — 임의 깊이를 놓지 않는다.",
   "constants": {
-    "hash": "0803f3fe",
+    "hash": "503a75cb",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -31,6 +31,8 @@
         "retry_as_face": 0,
         "face_far_end": 1,
         "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
         "eye_height": 1
       },
       "TUBE_TOL": {

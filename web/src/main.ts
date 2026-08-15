@@ -161,7 +161,7 @@ function refreshCandidates() {
   candDots = [];
   const ctx = placeCtx(), s = selected();
   if (!ctx || !s || viewOrigin.has(s.id)) return;      // view 획은 좌표계가 달라 여기 못 그린다
-  const radius = PLACE_TOL.join_ratio * diagOf(ctx.imgSize) * 3;   // 고를 수 있게 넉넉히
+  const radius = PLACE_TOL.join_ratio * diagOf(ctx.imgSize) * PLACE_TOL.fix_candidate_radius_mult;
   const others = drawn.filter(t => t.id !== s.id && t.pts3d.length);
   for (const end of [0, 1] as const) {
     const at = end === 0 ? s.pts2d[0] : s.pts2d[s.pts2d.length - 1];
@@ -210,7 +210,7 @@ function refreshCandidates3d() {
   if (!axes.some(Boolean)) return;
   const pose = viewport.pose();
   const ctxV = viewPlaceCtx(pose, axes, viewport.viewSize(), viewport.camera.fov);
-  const radius = PLACE_TOL.join_ratio * diagOf(ctxV.imgSize) * 3;
+  const radius = PLACE_TOL.join_ratio * diagOf(ctxV.imgSize) * PLACE_TOL.fix_candidate_radius_mult;
   const others: Stroke[] = [];
   for (const t of drawn) {
     if (t.id === s.id || !t.pts3d.length) continue;
@@ -754,8 +754,8 @@ function sameView(id: string): boolean {
   }
   return n > 0;
 }
-/** 같은 시점으로 볼 화면 이동 한계(px). 파선이 제자리로 보이면 되므로 몇 px이면 된다. */
-const SAME_VIEW_PX = 2;
+/** 같은 시점으로 볼 화면 이동 한계(px) — `PLACE_TOL`에 등록돼 있다(STALE 대상). */
+const SAME_VIEW_PX = PLACE_TOL.same_view_px;
 
 const ink3d = new InkCanvas(ink3dEl, {
   /**

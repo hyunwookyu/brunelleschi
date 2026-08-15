@@ -116,7 +116,7 @@ describe("S-7 사용자 지정 배치", () => {
     const errBad = norm3(sub3(s.pts3d[0], edges[4].a)) / diag3;
     expect(errBad).toBeGreaterThan(0.2);
     // 사용자가 옳은 앵커를 고른다
-    const radius = PLACE_TOL.join_ratio * diagOf(CTX.imgSize) * 3;
+    const radius = PLACE_TOL.join_ratio * diagOf(CTX.imgSize) * PLACE_TOL.fix_candidate_radius_mult;
     const others = list.filter(t => t.id !== s.id && t.pts3d.length);
     const cands = anchorCandidates(others, s.pts2d[0], radius);
     expect(cands.length).toBeGreaterThan(0);

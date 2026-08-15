@@ -90,9 +90,12 @@ const SEEDS = [9500, 1301, 5501];
 describe("S-7 (0) 돌린 시점의 평면 경로", () => {
   it("돌린 시점에서 그은 면 대각선이 놓이는지 재고 원장에 남긴다", () => {
     interface Acc { nDiag: number; free: number; placedFree: number; err: number[]; worst: number[];
-                    nEdge: number; placedEdge: number; edgeWorst: number[]; }
+                    nEdge: number; placedEdge: number; edgeWorst: number[];
+                    /** **축으로 배정된 사선** — 첫 시점의 15.8%와 같은 양이다(D-S14의 병목). */
+                    axisAssigned: number; axisPlaced: number; axisWorst: number[]; }
     const acc = (): Acc => ({ nDiag: 0, free: 0, placedFree: 0, err: [], worst: [],
-                              nEdge: 0, placedEdge: 0, edgeWorst: [] });
+                              nEdge: 0, placedEdge: 0, edgeWorst: [],
+                              axisAssigned: 0, axisPlaced: 0, axisWorst: [] });
     const res: Record<string, Record<number, Acc>> = {};
     for (const a of ARMS) { res[a.key] = {}; for (const d of ANGLES) res[a.key][d] = acc(); }
 
@@ -156,7 +159,17 @@ describe("S-7 (0) 돌린 시점의 평면 경로", () => {
             const ta = toView(pose, t.a), tb = toView(pose, t.b);
             if (isDiag) {
               R.nDiag += 1;
-              if (s.axis !== "free") continue;              // 축으로 오인된 것은 §4.1의 몫이다
+              if (s.axis !== "free") {
+                // **축으로 오인된 사선.** 첫 시점에서는 15.8%이고 그렇게 놓이면 오차 중앙 0.448이다
+                // (D-S14). 돌린 시점에서 그 비율과 오차를 안 재면 "사선은 고치기로 간다"가
+                // 그 집단을 빠뜨린 진술이 된다(리뷰어 지적).
+                R.axisAssigned += 1;
+                if (!s.pts3d.length) continue;
+                R.axisPlaced += 1;
+                R.axisWorst.push(Math.max(norm3(sub3(s.pts3d[0], ta)) / diag3,
+                                          norm3(sub3(s.pts3d[s.pts3d.length - 1], tb)) / diag3));
+                continue;
+              }
               R.free += 1;
               if (!s.pts3d.length) continue;
               R.placedFree += 1;
@@ -202,6 +215,17 @@ describe("S-7 (0) 돌린 시점의 평면 경로", () => {
             worst_end_ratio: stat(R.worst, 4),
             worst_end_over: Object.fromEntries([0.1, 0.2, 0.5].map(c =>
               [`over_${c}`, R.worst.filter(v => v > c).length])),
+            /**
+             * **축으로 오인된 사선**(§4.1의 병목이 돌린 시점에서 어떻게 되는가).
+             * `placed_rate`가 곧 조용히 틀린 배치의 비율이다.
+             */
+            diag_axis_assigned: {
+              n: R.axisAssigned, share_of_diag: rate(R.axisAssigned, R.nDiag),
+              placed_rate: rate(R.axisPlaced, R.axisAssigned),
+              worst_end_ratio: stat(R.axisWorst, 4),
+              worst_end_over: Object.fromEntries([0.1, 0.2, 0.5].map(c =>
+                [`over_${c}`, R.axisWorst.filter(v => v > c).length])),
+            },
             edge_control: { n: R.nEdge, placed_rate: rate(R.placedEdge, R.nEdge),
                             worst_end_ratio: stat(R.edgeWorst, 4),
                             over_0_2: R.edgeWorst.filter(v => v > 0.2).length },
