@@ -1,0 +1,152 @@
+{
+  "spec": "S-7 (0) 측정 경로와 앱 경로의 배선. **측정했다고 앱이 쓰는 것은 아니다.**",
+  "constants": {
+    "hash": "0803f3fe",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "why": "§4.3 면 위 사선을 S-6 (2)가 측정해 놓고 **앱은 그 경로를 안 켜고 있었다** — `settle(drawn, ctx)`가 옵션 없이 불렸고 두 단계가 그대로 지나갔다. 측정 하네스와 앱이 **각자 옵션 객체를 적는** 구조였기 때문이다. 이제 `src/s3d/appPlace.ts` 하나에서 가져오고, 이 테스트가 어긋남을 잡는다.",
+  "how_locked": [
+    "`appPlace.ts`의 `_EVERY_OPTION_REGISTERED`가 **컴파일 단계**에서 미등록 옵션을 잡는다",
+    "이 테스트가 `both`/`view`/`measure` 약속을 런타임으로 확인한다",
+    "`main.ts`에 옵션 없는 `settle` 호출이 남아 있으면 실패한다"
+  ],
+  "first_view": {
+    "farEndCheck": 1,
+    "facePlanes": 1,
+    "freeBendMax": 0.18,
+    "freeSpan": 1,
+    "retryAsFace": 0
+  },
+  "view": {
+    "farEndCheck": 1,
+    "retryAsFace": 0,
+    "depthEnvelope": 0.5
+  },
+  "wiring": {
+    "mode": {
+      "where": "arg",
+      "why": "떨림 평면. 앱은 기본값 `facing`(D-S8)을 쓴다 — 명시하지 않아도 같다"
+    },
+    "rep": {
+      "where": "arg",
+      "why": "대표 직선. `Stroke.rep`가 있으면 그것이 이긴다(측정 편의용 인자)"
+    },
+    "seedIfEmpty": {
+      "where": "arg",
+      "why": "씨앗 여부. `settle`이 배치된 획 수로 자동 결정한다"
+    },
+    "endpointOnly": {
+      "where": "measure",
+      "why": "몸통 접합을 끈 **대조군**(S-3). 끄면 끝점 오차 2%에서 47%가 앵커를 못 찾는다 — 켤 이유가 없다"
+    },
+    "nearestSample": {
+      "where": "measure",
+      "why": "선분 보간 대신 최근접 표본점을 쓰는 **대조군**(S-4). 차이가 없었으므로 보간을 유지한다"
+    },
+    "depthGuard": {
+      "where": "measure",
+      "why": "S-5의 깊이 애매성 가드. **D-S13의 검사 둘로 대체됐다** — 측정 재현용으로만 남긴다"
+    },
+    "farEndCheck": {
+      "where": "both",
+      "why": "정합성 검사(D-S13·D-S16)"
+    },
+    "facePlanes": {
+      "where": "first",
+      "why": "면 위 사선(D-S14). **돌린 시점에는 안 켠다** — 궤도 45°에서 놓인 것의 83%가 0.2를 넘는다(가림. D-S19, `view_plane.json`)"
+    },
+    "freeBendMax": {
+      "where": "first",
+      "why": "평면 경로를 곧은 획으로 제한(D-S17). 평면 경로가 첫 시점 전용이므로 이것도 그렇다"
+    },
+    "freeSpan": {
+      "where": "first",
+      "why": "자유 곡선 폴백(D-S17). 같은 이유로 첫 시점 전용이다(D-S19)"
+    },
+    "retryAsFace": {
+      "where": "both",
+      "why": "축 오배정 되돌리기. **값이 0이라 꺼져 있지만 배선은 되어 있다**(D-S16) — 실획에서 켤 때 배선을 다시 찾을 필요가 없게"
+    },
+    "depthEnvelope": {
+      "where": "view",
+      "why": "깊이 타당성. **가림이 시점에 달린 현상이라서**다(D-S12·D-S13) — 첫 시점에서는 자유단이 드물다"
+    }
+  },
+  "values_from_constants": {
+    "far_end_check": 1,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "retry_as_face": 0,
+    "view_depth_envelope": 0.5
+  },
+  "counts": {
+    "n_options": 12,
+    "both": 2,
+    "first_only": 3,
+    "view_only": 1,
+    "measure_only": 3,
+    "call_arg": 3
+  }
+}

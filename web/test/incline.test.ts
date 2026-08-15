@@ -30,16 +30,18 @@ import { rng32 } from "../src/s3d/synthInk.js";
 import { scene, groundPoint, boxEdges, drawEdges, stat,
          add3, sub3, mul3, unit3, type Scene, type TrueEdge } from "./scene3d.js";
 import type { Vec3 } from "../src/s3d/geom3d.js";
+import { FIRST_VIEW_OPTS } from "../src/s3d/appPlace.js";
 import { constantsSnapshot } from "./constants.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
 const SC: Scene = scene(35, 15);
 const CTX: PlaceCtx = { principal: SC.principal, f: SC.f, vps: SC.vps, imgSize: SC.imgSize };
-/** 앱과 같은 배치 옵션(D-S16). **지금 사용자가 겪는 것**을 재려면 이것이어야 한다. */
-const APP = { mode: "facing" as const, farEndCheck: PLACE_TOL.far_end_check,
-              facePlanes: PLACE_TOL.face_far_end, freeBendMax: AXIS_TOL.bend_max,
-              retryAsFace: PLACE_TOL.retry_as_face, freeSpan: PLACE_TOL.span_far_end };
+/**
+ * **앱과 같은 배치 옵션.** 하네스가 따로 적지 않고 `appPlace.ts`에서 가져온다 —
+ * 각자 적는 구조였을 때 §4.3이 앱에서 안 켜진 채로 두 단계가 지나갔다(S-7 0).
+ */
+const APP = FIRST_VIEW_OPTS;
 const rate = (k: number, n: number) => (n ? +(k / n).toFixed(4) : null);
 
 /** 화면 소실점. `d[2] <= 0`이면 카메라 뒤라 상이 없다. */

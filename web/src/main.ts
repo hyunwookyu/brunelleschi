@@ -12,6 +12,7 @@ import { classifyStroke, AXIS_TOL, type Axis } from "./s3d/axis.js";
 import { newStroke, settle, reprojectAll, PLACE_TOL, anchorCandidates, placeByUser,
          placeAtDepth, depthRange, diagOf,
          type Stroke, type PlaceCtx, type PlaceOpts } from "./s3d/stroke.js";
+import { FIRST_VIEW_OPTS, VIEW_OPTS } from "./s3d/appPlace.js";
 import { buildSession, downloadSession } from "./ui/sessionExport.js";
 import { viewPlaceCtx, toView, fromView, projectInView } from "./s3d/viewCamera.js";
 import { axisDirection, project, type Vec3 } from "./s3d/geom3d.js";
@@ -244,35 +245,11 @@ function placeCtx(): PlaceCtx | null {
   return { principal: cam.principalPoint, f: cam.f, vps: panel.vps(), imgSize: panel.imgSize };
 }
 
-/**
- * **첫 시점의 배치 옵션.** 두 호출 자리(그리기 · 사용자 축 지정)가 같아야 한다.
- *
- * - `farEndCheck` **첫 시점에도 켠다**(S-6 2b, D-S16). 틀린 앵커는 가림과 달리 시점에
- *   매이지 않는다 — 검사 없이는 놓인 모서리의 **12%**가 상자 대각의 0.2 넘게 틀려 있었다
- *   (`misassign_retry.json`). 켜면 5.8%. 대신 배치율이 0.95 → 0.82로 떨어지고,
- *   남은 것은 미배치로 화면에 남는다(D-S15 — 놓지 않되 버리지 않는다).
- * - `facePlanes` **면 위 사선**(§4.3, D-S14). 미분류 사선의 84%가 이 경로로 놓인다.
- * - `freeBendMax` **미분류 획의 평면 경로는 곧은 획에만**(S-6 3, D-S17). 면 경로도 폴백도
- *   검사가 **끝점 둘**을 보므로 굽음은 어느 쪽에서도 검증되지 않는다. 굽은 획을 놓으면
- *   면 경로 62% · 폴백 51%가 최대 이탈 0.2를 넘고, **최선의 평면은 0.078**이다 —
- *   답이 없는 게 아니라 둘 다 못 고른다. 판정의 `bend_max`를 그대로 쓴다.
- * - `retryAsFace` **0이다**(D-S16). 구제 143획 중 46획(32%)이 틀렸다 — D-S9와 같은 이유.
- * - `freeSpan` **켠다**(D-S17). 곧은 획에 한정하면 면 경로가 거절한 것을 회수한다 —
- *   배치율 0.53 → 0.76이고 더 놓은 16획 중 0.2를 넘는 것은 1획이다.
- */
-const FIRST_VIEW: PlaceOpts = {
-  farEndCheck: PLACE_TOL.far_end_check,
-  facePlanes: PLACE_TOL.face_far_end,
-  freeBendMax: AXIS_TOL.bend_max,
-  retryAsFace: PLACE_TOL.retry_as_face,
-  freeSpan: PLACE_TOL.span_far_end,
-};
-
 /** 카메라가 움직이면 **전부 다시 만든다**(§5 "pts2d를 반드시 보존한다"). */
 function replace() {
   const ctx = placeCtx();
   if (!ctx || !drawn.length) return;
-  reprojectAll(drawn, ctx, FIRST_VIEW);
+  reprojectAll(drawn, ctx, FIRST_VIEW_OPTS);
   strokeView.sync(drawn, ctx.f);
 }
 
@@ -314,7 +291,7 @@ function addStroke(pts: Pt2[], raw?: number[][]) {
   drawn.push(s);
   if (raw) rawPoints.set(s.id, raw);
   verdicts.set(s.id, v as AxisVerdict);
-  if (ctx) settle(drawn, ctx, FIRST_VIEW);
+  if (ctx) settle(drawn, ctx, FIRST_VIEW_OPTS);
   strokeView.sync(drawn, ctx?.f);
   lastNote = v.note;
 }
@@ -372,9 +349,7 @@ function addStrokeFromView(pts: Pt2[], raw?: number[][]) {
   // **앵커 검사 둘을 켠다**(S-6). 돌린 시점에서는 앞뒤 획이 화면에서 겹쳐(가림) 화면 거리만으로
   // 고르면 조용히 틀린 깊이에 놓인다. 획 자신의 축 제약으로 반대쪽 끝점을 검사하고(정합성),
   // 그걸 못 쓰는 자유단은 깊이 타당성으로 막는다. p90 0.87 → 0.05.
-  settle(inView, ctxV, { mode: "facing",
-    farEndCheck: PLACE_TOL.far_end_check,
-    depthEnvelope: PLACE_TOL.view_depth_envelope });
+  settle(inView, ctxV, VIEW_OPTS);
 
   const placed = inView.find(t => t.id === s.id);
   if (placed?.pts3d.length) {
@@ -600,7 +575,7 @@ for (const [label, axis] of [["축1", 0], ["축2", 1], ["축3", 2], ["화면평�
       pushUndo();
       drawn[i].axis = axis;
       const ctx = placeCtx();
-      if (ctx) settle(drawn, ctx, FIRST_VIEW);
+      if (ctx) settle(drawn, ctx, FIRST_VIEW_OPTS);
       strokeView.sync(drawn, ctx?.f);
       lastNote = "";
       break;

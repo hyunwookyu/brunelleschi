@@ -1,5 +1,5 @@
 {
-  "n_flags": 700,
+  "n_flags": 706,
   "flags": [
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
@@ -2542,6 +2542,36 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "view_plane.json:by_orbit_deg.45.now.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.45.app.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.75.now.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.75.app.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.110.now.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.110.app.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "wobble_plane.json:judged.screen.no_anchor_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -3517,6 +3547,8 @@
     "real_ink.json",
     "systematic_warp.json",
     "tube_render.json",
+    "view_plane.json",
+    "wiring.json",
     "wobble_plane.json"
   ],
   "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."

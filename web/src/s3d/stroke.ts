@@ -717,6 +717,8 @@ export function placeInto(
 
   // **§4.3 면 위 사선** — 축을 벗어난 획은 축 두 개가 펴는 평면 위에 놓아 본다.
   // 정합성 검사를 통과할 때만 놓는다(검증 없이 놓는 것은 추측이다, A-3).
+  // _깊이 타당성을 평면 경로에도 걸어 봤다(S-7 0). **안 듣는다** — 틀린 면도 앵커를 지나므로
+  //  깊이가 기존 범위 안에 들어온다(궤도 45°에서 0.2 초과가 33 → 33). 되돌렸다._
   const onFace = (tol: number): boolean => {
     const fr = placeOnFace(placed, stroke.pts2d, ctx, radius, tol);
     if (!fr) return false;

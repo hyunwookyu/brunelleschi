@@ -13,13 +13,14 @@ import { newStroke, settle, resetStrokeIds, placeByUser, placeAtDepth, depthRang
          type PlaceCtx, type Stroke } from "../src/s3d/stroke.js";
 import { norm3, sub3, add3, mul3, unit3, project, type Vec3 } from "../src/s3d/geom3d.js";
 import type { Pt2 } from "../src/s3d/camera.js";
+import { FIRST_VIEW_OPTS } from "../src/s3d/appPlace.js";
 import { rng32 } from "../src/s3d/synthInk.js";
 import { scene, groundPoint, boxEdges, drawEdges, type Scene } from "./scene3d.js";
 
 const SC: Scene = scene(35, 15);
 const CTX: PlaceCtx = { principal: SC.principal, f: SC.f, vps: SC.vps, imgSize: SC.imgSize };
-const APP = { mode: "facing" as const, farEndCheck: PLACE_TOL.far_end_check,
-              facePlanes: PLACE_TOL.face_far_end, freeSpan: PLACE_TOL.span_far_end };
+/** **앱과 같은 배치 옵션**(S-7 0) — 하네스가 따로 적지 않는다. */
+const APP = FIRST_VIEW_OPTS;
 
 /** 상자 하나를 세우고 참 3D를 함께 낸다. */
 function box(seed: number) {

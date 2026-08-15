@@ -1,0 +1,390 @@
+{
+  "spec": "S-7 (0) 돌린 시점의 평면 경로. **같은 획이 시점에 따라 갈리면 안 된다.**",
+  "constants": {
+    "hash": "0803f3fe",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "why": "§4.3의 평면 경로가 **첫 시점에만** 켜져 있었다(배선 점검에서 발견). 돌린 뒤에 그은 면 위 사선은 놓이지 않는다 — 사용자가 이해할 수 없는 동작이다. 다만 돌린 시점은 가림이 있고 자유단이 많아 조건이 다르므로 **측정하고 켠다**.",
+  "metrics": {
+    "recovered_of_free": "미분류로 남은 사선 중 놓인 비율 — 첫 시점의 `recovered_of_unclassified`와 같은 양이다.",
+    "worst_end_ratio": "획당 나쁜 쪽 끝 ÷ 상자 대각.",
+    "edge_control": "**대조군** — 같은 시점에서 그은 뒤쪽 모서리. 평면 경로를 켜서 축 획이 나빠지면 안 된다."
+  },
+  "condition": {
+    "grade": "medium",
+    "skew": 0.12,
+    "end_jitter": 0.01,
+    "boxes_per_cell": 40,
+    "orbit_deg": [
+      45,
+      75,
+      110
+    ],
+    "elev_deg": 18,
+    "seeds": [
+      9500,
+      1301,
+      5501
+    ],
+    "view_fov_deg": 45,
+    "single_composition_warning": "구도가 하나뿐이다(직육면체, 요 35°·피치 15° 3점)."
+  },
+  "by_orbit_deg": {
+    "45": {
+      "now": {
+        "what": "감사 이전 동작 — 정합성 + 깊이 타당성만. 면 경로 없음",
+        "n_diagonals": 236,
+        "unclassified_rate": 0.2119,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.7797,
+          "worst_end_ratio": {
+            "n": 92,
+            "min": 0.008,
+            "p10": 0.0168,
+            "median": 0.0371,
+            "p90": 0.1025,
+            "max": 0.135
+          },
+          "over_0_2": 0
+        }
+      },
+      "planes": {
+        "what": "첫 시점과 같은 평면 경로를 돌린 시점에도 켠 경우(**후보**)",
+        "n_diagonals": 236,
+        "unclassified_rate": 0.2119,
+        "recovered_of_free": 0.8,
+        "worst_end_ratio": {
+          "n": 40,
+          "min": 0.0144,
+          "p10": 0.0332,
+          "median": 0.6257,
+          "p90": 0.7459,
+          "max": 0.7768
+        },
+        "worst_end_over": {
+          "over_0.1": 33,
+          "over_0.2": 33,
+          "over_0.5": 29
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.7966,
+          "worst_end_ratio": {
+            "n": 94,
+            "min": 0.008,
+            "p10": 0.0168,
+            "median": 0.0371,
+            "p90": 0.1025,
+            "max": 0.135
+          },
+          "over_0_2": 0
+        }
+      },
+      "app": {
+        "what": "**출하 구성** `VIEW_OPTS`",
+        "n_diagonals": 236,
+        "unclassified_rate": 0.2119,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.7797,
+          "worst_end_ratio": {
+            "n": 92,
+            "min": 0.008,
+            "p10": 0.0168,
+            "median": 0.0371,
+            "p90": 0.1025,
+            "max": 0.135
+          },
+          "over_0_2": 0
+        }
+      }
+    },
+    "75": {
+      "now": {
+        "what": "감사 이전 동작 — 정합성 + 깊이 타당성만. 면 경로 없음",
+        "n_diagonals": 236,
+        "unclassified_rate": 0.6356,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.6525,
+          "worst_end_ratio": {
+            "n": 77,
+            "min": 0.0072,
+            "p10": 0.0172,
+            "median": 0.0366,
+            "p90": 0.5909,
+            "max": 0.7561
+          },
+          "over_0_2": 10
+        }
+      },
+      "planes": {
+        "what": "첫 시점과 같은 평면 경로를 돌린 시점에도 켠 경우(**후보**)",
+        "n_diagonals": 236,
+        "unclassified_rate": 0.6356,
+        "recovered_of_free": 0.74,
+        "worst_end_ratio": {
+          "n": 111,
+          "min": 0.009,
+          "p10": 0.0152,
+          "median": 0.029,
+          "p90": 0.0899,
+          "max": 0.8069
+        },
+        "worst_end_over": {
+          "over_0.1": 10,
+          "over_0.2": 5,
+          "over_0.5": 3
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.7034,
+          "worst_end_ratio": {
+            "n": 83,
+            "min": 0.0072,
+            "p10": 0.0172,
+            "median": 0.0368,
+            "p90": 0.6085,
+            "max": 0.7561
+          },
+          "over_0_2": 12
+        }
+      },
+      "app": {
+        "what": "**출하 구성** `VIEW_OPTS`",
+        "n_diagonals": 236,
+        "unclassified_rate": 0.6356,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.6525,
+          "worst_end_ratio": {
+            "n": 77,
+            "min": 0.0072,
+            "p10": 0.0172,
+            "median": 0.0366,
+            "p90": 0.5909,
+            "max": 0.7561
+          },
+          "over_0_2": 10
+        }
+      }
+    },
+    "110": {
+      "now": {
+        "what": "감사 이전 동작 — 정합성 + 깊이 타당성만. 면 경로 없음",
+        "n_diagonals": 238,
+        "unclassified_rate": 0.5378,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "edge_control": {
+          "n": 119,
+          "placed_rate": 0.6891,
+          "worst_end_ratio": {
+            "n": 82,
+            "min": 0.0048,
+            "p10": 0.0125,
+            "median": 0.0262,
+            "p90": 0.0482,
+            "max": 0.5418
+          },
+          "over_0_2": 1
+        }
+      },
+      "planes": {
+        "what": "첫 시점과 같은 평면 경로를 돌린 시점에도 켠 경우(**후보**)",
+        "n_diagonals": 238,
+        "unclassified_rate": 0.5378,
+        "recovered_of_free": 0.6094,
+        "worst_end_ratio": {
+          "n": 78,
+          "min": 0.0077,
+          "p10": 0.0147,
+          "median": 0.0296,
+          "p90": 0.0526,
+          "max": 0.8556
+        },
+        "worst_end_over": {
+          "over_0.1": 2,
+          "over_0.2": 1,
+          "over_0.5": 1
+        },
+        "edge_control": {
+          "n": 119,
+          "placed_rate": 0.6975,
+          "worst_end_ratio": {
+            "n": 83,
+            "min": 0.0048,
+            "p10": 0.0125,
+            "median": 0.0263,
+            "p90": 0.0482,
+            "max": 0.5418
+          },
+          "over_0_2": 1
+        }
+      },
+      "app": {
+        "what": "**출하 구성** `VIEW_OPTS`",
+        "n_diagonals": 238,
+        "unclassified_rate": 0.5378,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "edge_control": {
+          "n": 119,
+          "placed_rate": 0.6891,
+          "worst_end_ratio": {
+            "n": 82,
+            "min": 0.0048,
+            "p10": 0.0125,
+            "median": 0.0262,
+            "p90": 0.0482,
+            "max": 0.5418
+          },
+          "over_0_2": 1
+        }
+      }
+    }
+  }
+}
