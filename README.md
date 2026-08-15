@@ -1,7 +1,12 @@
 # SKETCH2SPACE — 실기 테스트 안내
 
-투시 스케치 3D 도구. 현행 계획서는 [`docs/sketch3d_plan.md`](docs/sketch3d_plan.md),
+투시 스케치 3D 도구. 현행 계획서는 [`docs/line_plan.md`](docs/line_plan.md),
 작업 규칙은 [`CLAUDE.md`](CLAUDE.md), 진행 기록은 [`progress.md`](progress.md).
+
+> **⚠ 2026-08-15 접근 전환 중(코드명 L).** 아래 0.5절·2절의 서술은 **폐기된 S 접근**의
+> 것이며 L-D에서 다시 쓴다. 지금 만드는 것은 **입력이 손 획인 SketchUp 선 도구**다 —
+> 시작점이 스냅으로 확정되고 그리는 동안 결과가 보인다. 사후 판정·`고치기`·2D/3D 분리
+> 뷰포트는 없어진다. 폐기 사유는 [`docs/archive/segment_plan.md`](docs/archive/segment_plan.md) 머리말.
 
 이 문서는 **실제로 그려보고 그 획을 측정에 넣기까지의 절차**를 다룬다.
 **이 도구가 무엇을 못 하는지와 그 수치**는 [`PROTOTYPE.md`](PROTOTYPE.md)에 따로 있다 —
