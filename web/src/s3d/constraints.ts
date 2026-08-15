@@ -35,6 +35,17 @@ export type AxisState =
   | { status: "on_line"; nLines: 1; line: { a: Pt2; b: Pt2 } }   // 자유도 1 남음
   | { status: "fixed"; nLines: number; vp: Pt2; source: "point" | "lines" | "horizon×line"; residual: number | null };
 
+/**
+ * **저장·복원용 원시 입력**(S-9). 푼 결과가 아니라 **사용자가 넣은 것 그대로**다 —
+ * 그래야 열었을 때 같은 상태에서 이어 그릴 수 있다(선을 더 그으면 잔차가 이어진다).
+ */
+export interface AccumulatorDump {
+  lines: Record<AxisId, { a: Pt2; b: Pt2 }[]>;
+  points: Partial<Record<AxisId, Pt2>>;
+  horizon: { a: Pt2; b: Pt2 } | null;
+  lensF: number | null;
+}
+
 export interface AccumulatorState {
   axes: Record<AxisId, AxisState>;
   horizon: { a: Pt2; b: Pt2 } | null;
@@ -86,6 +97,40 @@ export class ConstraintAccumulator {
 
   state(): AccumulatorState {
     return { axes: this.solve().axes, horizon: this.horizon, lensF: this.lensF };
+  }
+
+  /**
+   * **저장용 원시 상태**(S-9). `state()`는 푼 결과(`axes`)를 주는데 그것으로는 복원이 안 된다 —
+   * 소실점이 선 두 개로 정해졌는지 점 하나로 정해졌는지가 사라지고, 그러면 사용자가 다시
+   * 선을 그었을 때의 잔차·과잉 결정 표시가 달라진다. **입력 그대로**를 담는다.
+   *
+   * `imgSize`는 담지 않는다 — 창 크기는 열 때의 것이고 `resize`가 정한다(제스처는 그대로다).
+   */
+  dump(): AccumulatorDump {
+    return {
+      lines: { 0: this.lines[0].map(l => ({ a: [...l.a] as Pt2, b: [...l.b] as Pt2 })),
+               1: this.lines[1].map(l => ({ a: [...l.a] as Pt2, b: [...l.b] as Pt2 })),
+               2: this.lines[2].map(l => ({ a: [...l.a] as Pt2, b: [...l.b] as Pt2 })) },
+      points: ([0, 1, 2] as AxisId[]).reduce((o, a) => {
+        if (this.points[a]) o[a] = [...this.points[a]!] as Pt2;
+        return o;
+      }, {} as Partial<Record<AxisId, Pt2>>),
+      horizon: this.horizon ? { a: [...this.horizon.a] as Pt2, b: [...this.horizon.b] as Pt2 } : null,
+      lensF: this.lensF,
+    };
+  }
+
+  /** `dump()`의 역. **깊은 복사로 받는다** — 저장된 객체를 그대로 물면 나중 편집이 새 나간다. */
+  load(d: AccumulatorDump): this {
+    this.reset();
+    for (const a of [0, 1, 2] as AxisId[]) {
+      for (const l of d.lines?.[a] ?? []) this.add({ kind: "vp_line", axis: a, a: l.a, b: l.b });
+      const p = d.points?.[a];
+      if (p) this.add({ kind: "vp_point", axis: a, at: p });
+    }
+    if (d.horizon) this.add({ kind: "horizon", a: d.horizon.a, b: d.horizon.b });
+    if (d.lensF != null) this.add({ kind: "lens", f: d.lensF });
+    return this;
   }
 
   private diag(): number { return Math.hypot(this.imgSize[0], this.imgSize[1]); }

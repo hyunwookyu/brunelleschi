@@ -249,8 +249,18 @@ def scan_unread_fields(root: Path) -> list[dict]:
 
     판정은 거칠다 — `x.field =`(쓰기)는 있는데 그 밖의 `.field` 등장이 없으면 안 읽는 것이다.
     **의심이지 오류가 아니다**(다른 규칙과 같다).
+
+    **주석은 세지 않는다**(S-9에서 걸렸다). 저장 코드에 "`Stroke.layer`는 담지 않는다"고
+    적었더니 그 **문장이 읽기 1건으로 잡혀 플래그가 사라졌다** — 설명이 검사를 껐다.
+    자기참조의 한 형태이므로 주석을 지우고 센다. 문자열 안의 `//`(URL)는 앞 글자가 `:`이면
+    주석으로 보지 않는다 — 아니면 그 줄의 뒷부분이 통째로 사라져 **읽기를 놓친다**.
     """
     import re as _re
+
+    def strip_comments(t: str) -> str:
+        t = _re.sub(r"/\*.*?\*/", " ", t, flags=_re.S)     # 블록 주석
+        return _re.sub(r"(?<!:)//[^\n]*", " ", t)          # 줄 주석(`://`는 URL이다)
+
     SCANNED_FIELDS.clear()          # **훑은 필드를 남긴다** — 0건이 "깨끗함"인지 "안 돌았음"인지 갈린다
     src = root / "web" / "src"
     stroke = src / "s3d" / "stroke.ts"
@@ -268,7 +278,7 @@ def scan_unread_fields(root: Path) -> list[dict]:
             m = _re.match(r"  (\w+)\??:", ln)
             if m:
                 fields.append(m.group(1))
-    bodies = [f.read_text(encoding="utf-8") for f in sorted(src.rglob("*.ts"))]
+    bodies = [strip_comments(f.read_text(encoding="utf-8")) for f in sorted(src.rglob("*.ts"))]
     flags = []
     for name in fields:
         writes = reads = 0

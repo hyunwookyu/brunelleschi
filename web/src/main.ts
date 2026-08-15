@@ -10,10 +10,13 @@ import { PRESETS } from "./s3d/constraints.js";
 import { AXIS_COLOR } from "./s3d/grid.js";
 import { classifyStroke, AXIS_TOL, type Axis } from "./s3d/axis.js";
 import { newStroke, settle, reprojectAll, PLACE_TOL, anchorCandidates, placeByUser,
-         placeAtDepth, depthRange, diagOf,
+         placeAtDepth, depthRange, diagOf, setStrokeSeq, strokeSeq,
          type Stroke, type PlaceCtx, type PlaceOpts } from "./s3d/stroke.js";
 import { FIRST_VIEW_OPTS, VIEW_OPTS, VIEW_AXIS_CFG } from "./s3d/appPlace.js";
 import { buildSession, downloadSession } from "./ui/sessionExport.js";
+import { serializeDoc, restoreDoc, autosaver, getDoc, deleteDoc,
+         type Doc, type DocViewCam } from "./ui/store.js";
+import { toObj, toGltf, download } from "./ui/exportGeom.js";
 import { viewPlaceCtx, toView, fromView, projectInView } from "./s3d/viewCamera.js";
 import { axisDirection, project, type Vec3 } from "./s3d/geom3d.js";
 import type { AxisVerdict } from "./s3d/axis.js";
@@ -36,8 +39,7 @@ const viewOrigin = new Set<string>();
  * **같은 시점일 때만 겹쳐 그리고**, 다르면 "그 시점으로" 버튼을 준다.
  * `Stroke`를 늘리지 않는다 — `rawPoints`·`viewOrigin`과 같은 방식이다.
  */
-const viewCam = new Map<string, { pose: ReturnType<Viewport["pose"]>;
-                                  pos: [number, number, number]; tgt: [number, number, number] }>();
+const viewCam = new Map<string, DocViewCam>();
 
 const canvas = document.getElementById("ink") as HTMLCanvasElement;
 const statusEl = document.getElementById("status")!;
@@ -57,9 +59,21 @@ const fixEl = document.getElementById("fix")!;
  * 상태는 앱에만 둔다 — `Stroke`를 늘리지 않는다(`rawPoints`·`viewOrigin`과 같은 방식).
  * `provisional`은 **깊이 근거가 앵커 하나뿐인 배치**다(사용자가 깊이를 직접 준 것 포함).
  */
+/**
+ * 자동 저장기(S-9). **`let`으로 미리 세운다** — `refresh()`가 이것을 부르는데 그 함수는
+ * 초기화 중에도 불릴 수 있고, `const`면 TDZ로 터진다(`viewMode`에서 이미 걸린 자리다).
+ */
+let saver: ReturnType<typeof autosaver> | null = null;
+
 let selId: string | null = null;
 const picks: { a?: Vec3; b?: Vec3 } = {};
 const provisional = new Set<string>();
+/**
+ * **사용자가 직접 놓은 획**(S-9). `reprojectAll`이 **재생성하지 못하는 유일한 배치**다 —
+ * 자동 경로가 못 푼 것을 사람이 판단해서 놓았고, 그 판단은 `pts2d` 어디에도 없다.
+ * 그래서 저장에 반드시 담고(§S-9), 카메라를 다시 조정할 때 **잃는다는 것을 알린다**.
+ */
+const userPlaced = new Set<string>();
 /** 지금 보이는 후보 점(화면 좌표) — 클릭 판정과 그리기가 같은 목록을 쓴다. */
 let candDots: { at: Pt2; pos: Vec3; end: 0 | 1 }[] = [];
 /**
@@ -91,14 +105,16 @@ const selected = () => drawn.find(s => s.id === selId) ?? null;
  * `rawPoints`·`verdicts`·`viewCam`도 안 되돌린다: id로 색인되고 id는 재사용되지 않으므로
  * 남아 있어도 무해하다.
  */
-interface Snap { strokes: Stroke[]; viewOrigin: string[]; provisional: string[]; sel: string | null; }
+interface Snap { strokes: Stroke[]; viewOrigin: string[]; provisional: string[];
+                 userPlaced: string[]; sel: string | null; }
 const undoStack: Snap[] = [];
 const redoStack: Snap[] = [];
 const UNDO_MAX = 200;
 
 const snapshot = (): Snap => ({
   strokes: drawn.map(s => ({ ...s, pts3d: s.pts3d.slice() })),
-  viewOrigin: [...viewOrigin], provisional: [...provisional], sel: selId,
+  viewOrigin: [...viewOrigin], provisional: [...provisional],
+  userPlaced: [...userPlaced], sel: selId,
 });
 
 /** **바꾸기 직전에** 부른다. 새 동작이 생기면 다시 할 것(redo)은 버린다. */
@@ -113,6 +129,7 @@ function restore(sn: Snap) {
   drawn.push(...sn.strokes);
   viewOrigin.clear(); sn.viewOrigin.forEach(x => viewOrigin.add(x));
   provisional.clear(); sn.provisional.forEach(x => provisional.add(x));
+  userPlaced.clear(); sn.userPlaced.forEach(x => userPlaced.add(x));
   selId = sn.sel && drawn.some(s => s.id === sn.sel) ? sn.sel : null;
   delete picks.a; delete picks.b;
   refreshCandidates(); refreshCandidates3d();
@@ -150,7 +167,7 @@ function eraseAt(at: Pt2) {
   pushUndo();
   const i = drawn.findIndex(s => s.id === best!.id);
   drawn.splice(i, 1);
-  viewOrigin.delete(best.id); provisional.delete(best.id);
+  viewOrigin.delete(best.id); provisional.delete(best.id); userPlaced.delete(best.id);
   if (selId === best.id) { selId = null; candDots = []; }
   strokeView.sync(drawn, placeCtx()?.f);
   lastNote = "지웠습니다.";
@@ -253,6 +270,7 @@ function applyPicksInView() {
   pushUndo();
   s.pts3d = r.pts3d.map(p => fromView(pose, p));       // **세계 좌표로 되돌린다**
   s.joinShift = 0;
+  userPlaced.add(s.id);                                // 재생성되지 않는 배치다(S-9)
   if (r.provisional) provisional.add(s.id); else provisional.delete(s.id);
   markProvisional(s);
   lastNote = r.provisional
@@ -271,6 +289,7 @@ function applyPicks() {
   pushUndo();
   s.pts3d = r.pts3d;
   s.joinShift = 0;
+  userPlaced.add(s.id);                                // 재생성되지 않는 배치다(S-9)
   if (r.provisional) provisional.add(s.id); else provisional.delete(s.id);
   markProvisional(s);
   lastNote = r.provisional
@@ -326,11 +345,25 @@ function placeCtx(): PlaceCtx | null {
   return { principal: cam.principalPoint, f: cam.f, vps: panel.vps(), imgSize: panel.imgSize };
 }
 
-/** 카메라가 움직이면 **전부 다시 만든다**(§5 "pts2d를 반드시 보존한다"). */
+/**
+ * 카메라가 움직이면 **전부 다시 만든다**(§5 "pts2d를 반드시 보존한다").
+ *
+ * **사용자 지정 배치는 이때 사라진다**(S-9). `reprojectAll`은 `pts2d`에서 다시 만드는데
+ * 사람이 고른 앵커는 거기 없기 때문이다. 그 앵커를 그대로 다시 쓸 수도 없다 — 앵커는
+ * **다른 획 위의 3D 점**이고 카메라가 바뀌면 그 획도 옮겨 간다. 지어내지 않고 **알린다**.
+ */
 function replace() {
   const ctx = placeCtx();
   if (!ctx || !drawn.length) return;
+  const lost = drawn.filter(s => userPlaced.has(s.id)).length;
   reprojectAll(drawn, ctx, FIRST_VIEW_OPTS);
+  if (lost) {
+    userPlaced.clear();
+    provisional.clear();
+    for (const s of drawn) markProvisional(s);
+    lastNote = `카메라를 조정해 **사용자가 지정한 배치 ${lost}개가 다시 계산됐습니다** — `
+      + "필요하면 `고치기`로 다시 지정하세요";
+  }
   strokeView.sync(drawn, ctx.f);
 }
 
@@ -606,6 +639,7 @@ function renderFix(unplaced: Stroke[]) {
     if (!got) return;
     s2.pts3d = got;
     provisional.add(s2.id);                    // **깊이를 손으로 준 배치는 언제나 미확정이다**
+    userPlaced.add(s2.id);                     // 재생성되지 않는 배치다(S-9)
     markProvisional(s2);
     strokeView.sync(drawn, c2.f);
     ink.redraw();
@@ -628,6 +662,7 @@ function renderFix(unplaced: Stroke[]) {
 }
 
 function refresh() {
+  saver?.schedule();       // **자동 저장**(S-9). 디바운스가 있으므로 자주 불려도 한 번만 쓴다
   ink.redraw();
   ink3d.redraw();          // 돌린 시점의 미배치 파선이 선택·시점에 따라 바뀐다
   panel.renderStatus(statusEl);
@@ -699,6 +734,11 @@ lockBtn.addEventListener("click", () => {
 });
 document.getElementById("reset")!.addEventListener("click", () => {
   panel.reset(); drawn.length = 0; rawPoints.clear(); verdicts.clear(); viewOrigin.clear();
+  viewCam.clear(); provisional.clear(); userPlaced.clear();
+  undoStack.length = 0; redoStack.length = 0;
+  selId = null; candDots = []; candDots3d = [];
+  // **저장된 문서도 지운다**(S-9) — 안 지우면 새로고침에서 방금 버린 작업이 되살아난다.
+  void deleteDoc().catch(() => { /* 저장소가 없어도 화면은 비워졌다 */ });
   lastNote = ""; strokeView.reset(); ink.clear(); refresh();
 });
 
@@ -720,6 +760,78 @@ document.getElementById("export")!.addEventListener("click", () => {
   downloadSession(exportSession());
   msgEl.textContent = `획 ${drawn.length}개를 내보냈습니다 — 저장소의 sessions/ 에 넣어 주세요`;
 });
+
+// ---------------------------------------------------------------- S-9 저장·내보내기
+
+/** 색 규약을 내보내기와 화면이 **같이 쓴다** — 축 색·미확정 주황이 파일에도 남는다. */
+const stamp = () => new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+
+document.getElementById("exp-obj")!.addEventListener("click", () => {
+  const r = toObj(drawn, { colorOf, note: `내보낸 시각 ${new Date().toISOString()}` });
+  if (!r.strokes) { msgEl.textContent = "3D에 놓인 획이 없습니다"; return; }
+  download(r.data, `sketch2space-${stamp()}.obj`, "text/plain");
+  msgEl.textContent = `OBJ — 폴리라인 ${r.strokes}개 · 점 ${r.points}개`
+    + (r.skippedUnplaced ? ` (미배치 ${r.skippedUnplaced}개는 3D 좌표가 없어 빠집니다)` : "");
+});
+document.getElementById("exp-gltf")!.addEventListener("click", () => {
+  const r = toGltf(drawn, { colorOf, note: "SKETCH2SPACE" });
+  if (!r.strokes) { msgEl.textContent = "3D에 놓인 획이 없습니다"; return; }
+  download(JSON.stringify(r.data), `sketch2space-${stamp()}.gltf`, "model/gltf+json");
+  msgEl.textContent = `glTF — 선 ${r.strokes}개 · 점 ${r.points}개`
+    + (r.skippedUnplaced ? ` (미배치 ${r.skippedUnplaced}개 제외)` : "");
+});
+
+/**
+ * **자동 저장**(IndexedDB). 저장하는 것은 `drawn` + 카메라 입력 + 앱의 곁가지 상태 넷이다.
+ * `pts3d`도 담는다 — 재생성이 화면과 갈리는 자리가 셋 있다(`ui/store.ts` 머리말).
+ */
+const saveEl = document.getElementById("save")!;
+function buildDoc(): Doc {
+  return serializeDoc({
+    at: new Date().toISOString(),
+    imgSize: panel.imgSize,
+    cam: panel.acc.dump(),
+    locked: panel.locked,
+    lensMm: panel.lens,
+    seq: strokeSeq(),
+    strokes: drawn, raw: rawPoints, viewOrigin, viewCam, provisional, userPlaced,
+  });
+}
+saver = autosaver(buildDoc, 600, (ok) => {
+  saveEl.textContent = ok ? `저장됨 ${new Date().toLocaleTimeString()}` : "저장 실패(브라우저 저장소)";
+});
+/** 창을 닫기 전에 마지막 변경을 흘려 넣는다. 디바운스가 남아 있을 수 있다. */
+window.addEventListener("pagehide", () => { void saver.flush(); });
+
+/** 저장된 문서를 연다. **배치를 다시 돌리지 않는다** — 담긴 `pts3d`가 화면에 있던 그것이다. */
+function applyDoc(doc: Doc) {
+  const r = restoreDoc(doc);
+  drawn.length = 0; drawn.push(...r.strokes);
+  rawPoints.clear(); r.raw.forEach((v, k) => rawPoints.set(k, v));
+  viewOrigin.clear(); r.viewOrigin.forEach(x => viewOrigin.add(x));
+  viewCam.clear(); r.viewCam.forEach((v, k) => viewCam.set(k, v));
+  provisional.clear(); r.provisional.forEach(x => provisional.add(x));
+  userPlaced.clear(); r.userPlaced.forEach(x => userPlaced.add(x));
+  verdicts.clear();                       // 판정 근거는 담지 않는다 — 다시 그을 때만 쓴다
+  panel.acc.load(r.cam);
+  if (panel.locked !== r.locked) panel.toggleLock();
+  lockBtn.textContent = panel.locked ? "잠금 해제" : "카메라 잠금";
+  lensEl.value = String(r.lensMm);
+  lensVal.textContent = `${r.lensMm}mm`;
+  setStrokeSeq(r.seq);                    // **id를 이어 받는다** — 안 하면 새 획이 겹친다
+  undoStack.length = 0; redoStack.length = 0;
+  selId = null; delete picks.a; delete picks.b; candDots = []; candDots3d = [];
+  strokeView.sync(drawn, placeCtx()?.f);
+  const [w, h] = cssSize();
+  const moved = Math.abs(w - r.imgSize[0]) > 1 || Math.abs(h - r.imgSize[1]) > 1;
+  lastNote = `저장된 작업을 열었습니다 — 획 ${drawn.length}개`
+    + (userPlaced.size ? ` · 사용자 지정 배치 ${userPlaced.size}개` : "")
+    + (moved ? ` · **창 크기가 저장할 때(${r.imgSize[0]}×${r.imgSize[1]})와 다릅니다** — `
+             + "좌표는 픽셀 그대로 둡니다(획을 늘이지 않습니다)" : "");
+  refresh();
+}
+getDoc().then(doc => { if (doc && doc.strokes.length) applyDoc(doc); })
+        .catch(() => { /* 저장소가 없어도 도구는 동작한다 */ });
 
 // ---- S-5 3D 뷰 위에서 그리기 ----
 const ink3dEl = document.getElementById("ink3d") as HTMLCanvasElement;
@@ -898,4 +1010,8 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
              dC: c.pose.C.map((v: number, i: number) => +(v - now.C[i]).toFixed(5)) };
   },
   setView3dMode,
+  // **S-9 저장·내보내기** — S-10 Playwright가 왕복(저장 → 다시 열기)을 확인한다.
+  buildDoc, applyDoc, userPlaced, saveNow: () => saver?.flush(),
+  exportObj: () => toObj(drawn, { colorOf }),
+  exportGltf: () => toGltf(drawn, { colorOf }),
 };

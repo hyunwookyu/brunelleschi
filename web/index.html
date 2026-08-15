@@ -7,7 +7,11 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="theme-color" content="#1a99aa">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <!-- iOS의 '홈 화면에 추가'는 SVG를 읽지 않는다 — PNG가 없으면 아이콘이 안 뜬다(S-9). -->
+  <link rel="apple-touch-icon" href="./icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Sketch3D">
   <style>
     *{margin:0;box-sizing:border-box;-webkit-user-select:none;user-select:none}
     html,body{height:100%;font:14px system-ui,sans-serif;background:#f6f6f6;color:#111;overflow:hidden}
@@ -81,6 +85,7 @@
       padding:0 12px;background:#fff;border-top:1px solid #ddd}
     #bar button{height:30px;padding:0 12px;border:1px solid #ccc;background:#fff;border-radius:6px;cursor:pointer}
     #msg{color:#666;font-size:12px;margin-left:auto}
+    #save{color:#8a8a8a;font-size:11px;margin-left:6px;font-variant-numeric:tabular-nums}
   </style>
 </head>
 <body>
@@ -133,6 +138,9 @@
     <button id="lock">카메라 잠금</button>
     <button id="reset">처음부터</button>
     <button id="export" title="실획 측정용 세션 JSON (AS-6·AS-12 재측정 입력)">획 내보내기</button>
+    <button id="exp-obj" title="폴리라인 OBJ — 면은 없습니다(만들지 않는 도구입니다)">OBJ</button>
+    <button id="exp-gltf" title="glTF 2.0 (LINE_STRIP). 버퍼가 파일 안에 들어갑니다">glTF</button>
+    <span id="save" title="브라우저에 자동 저장됩니다(IndexedDB)"></span>
     <span id="msg">축1 소실점을 찍거나, 그 방향 선을 두 개 그으세요</span>
   </div>
   <script type="module" src="/src/main.ts"></script>

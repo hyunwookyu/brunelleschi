@@ -645,6 +645,14 @@ export function depthRange(strokes: Stroke[]): [number, number] | null {
 
 let _seq = 0;
 export const resetStrokeIds = () => { _seq = 0; };
+/**
+ * **저장한 문서를 열 때 번호를 이어 받는다**(S-9). 안 하면 새 획이 `s1`부터 다시 나가고
+ * **불러온 획과 id가 겹친다** — `rawPoints`·`provisional`·`anchorRef`가 전부 id로 색인되므로
+ * 겹치면 굵기와 미확정 표시가 남의 것을 가리킨다. 조용히 틀리는 종류라 테스트로 잠근다.
+ */
+export const setStrokeSeq = (n: number) => { _seq = Math.max(_seq, n); };
+/** 지금까지 나간 번호(저장에 담는다). */
+export const strokeSeq = () => _seq;
 
 export function newStroke(pts2d: Pt2[], axis: Axis, rep?: { a: Pt2; b: Pt2 }): Stroke {
   return {

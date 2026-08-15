@@ -1,0 +1,188 @@
+{
+  "spec": "S-9 저장·복원. **무엇이 재생성되지 않는가**를 대조군으로 잰다.",
+  "constants": {
+    "hash": "1671e540",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "why": "계획서 §5는 `pts3d`가 파생이라 적었다 — 그렇다면 저장할 것은 `pts2d`와 카메라뿐이다. 그 말을 그대로 믿지 않고 **같은 문서에서** (가) 담아 둔 `pts3d`와 (나) `reprojectAll`로 다시 만든 것을 비교한다. 갈리는 만큼이 저장하지 않으면 잃는 것이다.",
+  "metrics": {
+    "user_lost_by_regen": "사용자가 놓은 획 중 **재생성하면 미배치가 되는** 수 — 저장의 직접 근거.",
+    "auto_lost_by_regen": "자동으로 놓였던 획 중 재생성하면 안 놓이는 수(지우개 이력의 귀결).",
+    "auto_gained_by_regen": "반대로 재생성에서 새로 놓이는 수 — **화면에 없던 것이 생긴다**.",
+    "moved_over_0_05": "같은 획이 상자 대각의 5% 넘게 옮겨간 수."
+  },
+  "condition": {
+    "composition": "요 35°·피치 15° 3점, 직육면체 하나(구도가 하나뿐이다)",
+    "grade": "medium",
+    "skew": 0.12,
+    "end_jitter": 0.01,
+    "seeds": [
+      4242,
+      7,
+      991,
+      20250815,
+      31337
+    ],
+    "app_opts": "FIRST_VIEW_OPTS(앱과 같은 배선, S-7 0)",
+    "history_simulated": "지우개 1회(자동 재배치 없음) + 미배치 획 사용자 지정",
+    "single_composition_warning": "구도가 하나뿐이다 — 실획에서 다시 본다(AS-13)."
+  },
+  "by_seed": [
+    {
+      "seed": 4242,
+      "n_strokes": 11,
+      "n_user_placed": 0,
+      "user_lost_by_regen": 0,
+      "user_moved_over_0_05": 0,
+      "auto_lost_by_regen": 1,
+      "auto_gained_by_regen": 0,
+      "auto_moved_over_0_05": 0
+    },
+    {
+      "seed": 7,
+      "n_strokes": 11,
+      "n_user_placed": 3,
+      "user_lost_by_regen": 0,
+      "user_moved_over_0_05": 3,
+      "auto_lost_by_regen": 2,
+      "auto_gained_by_regen": 0,
+      "auto_moved_over_0_05": 2
+    },
+    {
+      "seed": 991,
+      "n_strokes": 11,
+      "n_user_placed": 3,
+      "user_lost_by_regen": 1,
+      "user_moved_over_0_05": 2,
+      "auto_lost_by_regen": 0,
+      "auto_gained_by_regen": 0,
+      "auto_moved_over_0_05": 0
+    },
+    {
+      "seed": 20250815,
+      "n_strokes": 11,
+      "n_user_placed": 2,
+      "user_lost_by_regen": 0,
+      "user_moved_over_0_05": 1,
+      "auto_lost_by_regen": 0,
+      "auto_gained_by_regen": 0,
+      "auto_moved_over_0_05": 1
+    },
+    {
+      "seed": 31337,
+      "n_strokes": 11,
+      "n_user_placed": 1,
+      "user_lost_by_regen": 1,
+      "user_moved_over_0_05": 0,
+      "auto_lost_by_regen": 0,
+      "auto_gained_by_regen": 0,
+      "auto_moved_over_0_05": 0
+    }
+  ],
+  "total": {
+    "strokes": 55,
+    "user_placed": 9,
+    "user_lost_by_regen": 2,
+    "user_lost_rate": 0.2222,
+    "user_drift_of_survivors": {
+      "n": 7,
+      "min": 0.0016,
+      "p10": 0.0568,
+      "median": 0.0799,
+      "p90": 0.1104,
+      "max": 0.2458
+    },
+    "auto_lost_by_regen": 3,
+    "auto_gained_by_regen": 0,
+    "auto_drift": {
+      "n": 43,
+      "min": 0,
+      "p10": 0,
+      "median": 0,
+      "p90": 0.0397,
+      "max": 0.0864
+    },
+    "erased_cases": 5
+  },
+  "export": {
+    "obj": {
+      "strokes": 12,
+      "points": 349,
+      "skipped_unplaced": 0,
+      "bytes": 12260
+    },
+    "gltf": {
+      "strokes": 12,
+      "points": 349,
+      "skipped_unplaced": 0,
+      "bytes": 10380
+    },
+    "note": "폴리라인으로 내보낸다 — 면을 만들지 않는 도구이고(D-S20) 튜브는 화면 표현이다."
+  },
+  "decision": "**담아 둔 `pts3d`를 쓴다**(재생성하지 않는다). 사용자 지정 배치는 재생성이 원리적으로 불가능하고(사람이 고른 앵커가 `pts2d`에 없다), 자동 배치도 지우개 이력 때문에 화면과 갈린다. **카메라를 다시 조정하면 그때는 재생성이 맞다** — 그 자리에서만 `reprojectAll`이 돌고, 사용자 지정 배치를 잃는다는 것을 화면에 알린다."
+}

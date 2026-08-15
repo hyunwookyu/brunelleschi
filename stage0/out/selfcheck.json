@@ -1,5 +1,5 @@
 {
-  "n_flags": 728,
+  "n_flags": 730,
   "flags": [
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
@@ -1695,6 +1695,16 @@
       "path": "one_stroke_one_axis.json:by_word.square.too_bent_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "persist.json:by_seed[0].n_user_placed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "persist.json:total.auto_drift.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
     },
     {
       "path": "preview_gap.json:identity_check_px",
@@ -3648,37 +3658,37 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 68
+      "reads": 89
     },
     {
       "field": "pts2d",
       "writes": 0,
-      "reads": 31
+      "reads": 33
     },
     {
       "field": "pts3d",
       "writes": 8,
-      "reads": 55
+      "reads": 67
     },
     {
       "field": "axis",
       "writes": 2,
-      "reads": 26
+      "reads": 29
     },
     {
       "field": "rep",
-      "writes": 0,
-      "reads": 27
+      "writes": 1,
+      "reads": 33
     },
     {
       "field": "anchorRef",
       "writes": 5,
-      "reads": 2
+      "reads": 4
     },
     {
       "field": "joinShift",
       "writes": 7,
-      "reads": 5
+      "reads": 7
     },
     {
       "field": "layer",
@@ -3688,12 +3698,12 @@
     {
       "field": "color",
       "writes": 1,
-      "reads": 9
+      "reads": 7
     },
     {
       "field": "width",
       "writes": 3,
-      "reads": 4
+      "reads": 6
     }
   ],
   "constants_hash": "1671e540",
@@ -3707,6 +3717,7 @@
     "incline_vp.json",
     "misassign_retry.json",
     "one_stroke_one_axis.json",
+    "persist.json",
     "preview_gap.json",
     "real_ink.json",
     "systematic_warp.json",

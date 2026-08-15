@@ -9,6 +9,9 @@
 import { defineConfig } from "vite";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 import { networkInterfaces } from "node:os";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { createHash } from "node:crypto";
 
 function lanAddresses(): string[] {
   const out: string[] = [];
@@ -50,6 +53,37 @@ function printLanUrls(https: boolean, fallbackPort: number) {
   };
 }
 
+/**
+ * **서비스 워커에 빌드 목록을 넣는다**(S-9). `public/sw.js`는 그대로 복사되므로 빌드 결과를
+ * 모른다 — 그대로 두면 첫 방문에서 HTML만 캐시되고 번들은 "언젠가 받아 둔 것"에 기댄다.
+ *
+ * 여기서 실제 산출 파일 이름을 넣어 주면 설치 시점에 전부 캐시되고, 이름에 빌드 해시가
+ * 들어가므로 **판본이 바뀌면 캐시 이름도 바뀐다**(낡은 번들이 안 남는다).
+ */
+function swPrecache() {
+  return {
+    name: "sw-precache",
+    apply: "build" as const,
+    writeBundle(opts: { dir?: string }, bundle: Record<string, unknown>) {
+      const dir = opts.dir ?? "dist";
+      const sw = join(dir, "sw.js");
+      if (!existsSync(sw)) return;
+      const files = Object.keys(bundle)
+        .filter(f => f !== "sw.js" && !f.endsWith(".map"))
+        .map(f => "./" + f.replace(/\\/g, "/"));
+      const list = ["./", "./manifest.webmanifest", "./icon.svg",
+                    "./icon-192.png", "./icon-512.png", ...files];
+      // 목록 자체로 판본을 만든다 — 내용이 같으면 같은 이름이라 재설치가 안 일어난다.
+      const build = createHash("sha256").update(list.join("|")).digest("hex").slice(0, 8);
+      writeFileSync(sw,
+        `self.__PRECACHE__ = ${JSON.stringify([...new Set(list)])};\n`
+        + `self.__BUILD__ = ${JSON.stringify(build)};\n`
+        + readFileSync(sw, "utf-8"), "utf-8");
+      console.log(`  sw.js — 사전 캐시 ${list.length}개 · 판본 ${build}`);
+    },
+  };
+}
+
 const useHttps = process.env.S2S_HTTP !== "1";
 const PORT = 5173;
 
@@ -57,6 +91,6 @@ export default defineConfig({
   root: ".",
   // host: true → 0.0.0.0 바인딩(LAN 노출). 기존 127.0.0.1 고정을 대체한다.
   server: { host: true, port: PORT, strictPort: true },
-  plugins: [...(useHttps ? [basicSsl()] : []), printLanUrls(useHttps, PORT)],
+  plugins: [...(useHttps ? [basicSsl()] : []), printLanUrls(useHttps, PORT), swPrecache()],
   build: { target: "es2022" },
 });
