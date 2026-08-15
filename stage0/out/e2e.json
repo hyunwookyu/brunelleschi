@@ -1,7 +1,7 @@
 {
   "spec": "S-10 종단 검증 — **실제 앱을 띄우고 실제 포인터 이벤트로** 그린 결과.",
   "constants": {
-    "hash": "1671e540",
+    "hash": "1a6f104b",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -17,6 +17,32 @@
         "rank_margin": 2.5,
         "vp_dist_ceiling": 0.22,
         "angle_max_deg": 0
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45
       },
       "CONSENSUS_TOL": {
         "radius_ratio": 0.45,
@@ -84,76 +110,76 @@
   },
   "first_view": {
     "strokes": 12,
-    "placed": 10,
+    "placed": 9,
     "mesh": {
-      "strokes": 10,
-      "vertices": 1040,
-      "triangles": 2040
+      "strokes": 9,
+      "vertices": 126,
+      "triangles": 216
     }
   },
   "stroke_latency_ms": {
     "n": 12,
-    "median": 2,
-    "max": 4,
+    "median": 2.1,
+    "max": 5.8,
     "note": "`pointerup` 하나가 반환할 때까지 — 판정·배치·튜브 생성·다시 그리기가 그 안이다. 개발 서버(번들 없음) 기준이므로 **상한**으로 읽는다."
   },
   "orbit_frame_ms": {
     "n": 30,
-    "median": 16.7,
-    "max": 17.9
+    "median": 16.65,
+    "max": 49.4
   },
   "second_view": {
     "added": 1,
-    "placed_total": 10,
+    "placed_total": 9,
     "camera_locked": false,
     "latency_ms": {
-      "median": 2.8
+      "median": 2.6
     },
     "note": "**기존 기하의 끝점 둘 사이**를 그었다(면 대각선 격). `camera_locked`가 false면 그 획이 안 놓였다는 뜻이다 — 잠금은 놓였을 때만 걸린다(D-S22의 귀결)."
   },
   "fix_by_hand": {
-    "unplaced": 3,
-    "ops": 7,
-    "fixed": 2,
-    "noCand": 1,
+    "unplaced": 4,
+    "ops": 6,
+    "fixed": 1,
+    "noCand": 3,
     "provisional": 0,
-    "userPlaced": 2,
+    "userPlaced": 1,
     "note": "**실제 UI 경로**(select → candidates → editClick)로 붙였다. `ops`는 조작 수다 — 합성 하네스(`fix_load.json`)와 같은 셈법이고, 여기서는 시나리오 하나의 실측이다. `noCand`는 **돌린 시점에서 그린 획**이다 — 첫 시점 캔버스에는 후보가 없다(좌표계가 다르다)."
   },
   "fix_in_rotated_view": {
-    "unplaced": 1,
-    "ops": 4,
+    "unplaced": 3,
+    "ops": 6,
     "placed": 1,
     "sameViewOk": 1,
-    "stillUnplaced": 0,
+    "stillUnplaced": 2,
     "note": "돌린 시점 획은 **그 시점으로 돌아가야** 후보가 생긴다(좌표계가 그 시점의 것이다). 조작 수에 '그 시점으로' 1이 더 붙는다 — `fix_load.json`의 모형이 0으로 잡은 항목이다."
   },
   "reload": {
-    "ms": 146,
+    "ms": 233,
     "strokes": 13,
-    "placed": 13,
-    "user_placed": 3,
+    "placed": 11,
+    "user_placed": 2,
     "identical": true,
     "mesh": {
-      "strokes": 13,
-      "vertices": 1328,
-      "triangles": 2604
+      "strokes": 11,
+      "vertices": 310,
+      "triangles": 576
     }
   },
   "export": {
     "obj": {
-      "strokes": 13,
-      "points": 217,
-      "skipped": 0,
+      "strokes": 11,
+      "points": 48,
+      "skipped": 2,
       "hasFace": false,
-      "bytes": 7904
+      "bytes": 2079
     },
     "gltf": {
-      "nodes": 13,
+      "nodes": 11,
       "modes": [
         3
       ],
-      "bytes": 9134
+      "bytes": 5669
     }
   },
   "undo_erase": {

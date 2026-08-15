@@ -89,7 +89,9 @@ describe("L-A.7 b 조건수 — 위치 대 각도 파라미터화", () => {
     // ---- **가이드 길이 스윕**. 핸들 예산이 길이에 어떻게 달렸는가 —
     //      이것이 `min_guide_ratio`를 정하는 유일한 실측 근거다(리뷰어 지적 [5]).
     const byLen: Record<string, unknown> = {};
-    for (const L of [100, 140, 200, 300, 450, 600]) {
+    // **1250을 더했다** — L-B.1의 단일 뷰포트에서 실제로 나온 가이드 길이가 607~1328px이다
+    // (`stage_browser.json`). 600에서 멈추면 새 뷰포트의 예산을 **외삽으로** 말하게 된다.
+    for (const L of [100, 140, 200, 300, 450, 600, 1250]) {
       const row: Record<string, unknown> = {};
       for (const sep of [3, 5, 10, 20]) {
         const [g1, g2] = pair(sep, L);
@@ -120,7 +122,7 @@ describe("L-A.7 b 조건수 — 위치 대 각도 파라미터화", () => {
 
     const doc = {
       what: "L-A.7 b — 핸들 1px 이동이 소실점·카메라를 얼마나 움직이는가. 위치 대 각도 파라미터화",
-      plan: "docs/line_plan.md §5.4 (발산 대응)",
+      plan: "docs/line_plan.md §5.2 (가이드 조정·발산 대응) — **개정 2 번호**",
       method: "각차 sep을 준 가이드 쌍에서 한 핸들을 **여덟 방향으로 1px씩** 옮긴다. "
         + "방향에 따라 민감도가 다르므로 하나만 보지 않는다. 스냅은 꺼서 표현만 본다.",
       warning: "⚠ **각도가 유계인 것은 정의의 귀결이다**(PITFALLS #3). 그것을 성과로 읽지 않는다. "
@@ -131,8 +133,10 @@ describe("L-A.7 b 조건수 — 위치 대 각도 파라미터화", () => {
       by_separation: rows,
       by_guide_length: byLen,
       guide_length_note: "**핸들 예산**(축 오차 0.5°를 쓰기까지 핸들이 움직여도 되는 px)이 "
-        + "가이드 길이에 어떻게 달렸는가. 기본 초안은 `DRAFT_TOL.min_guide_ratio` 0.12 × 대각 "
-        + "= 960×672에서 **140px**이다. 이 표가 그 값을 정하는 유일한 실측 근거다.",
+        + "가이드 길이에 어떻게 달렸는가. `DRAFT_TOL.min_guide_ratio`는 **0.45**이고 "
+        + "960×672에서 **527px**을 요구한다(초판은 0.12 = 140px이었고 그 서술이 이 필드에 "
+        + "남아 있었다 — 리뷰어 2회차). 단일 뷰포트(1280×675)의 실제 가이드는 607~1328px이고 "
+        + "**가장 짧은 것이 정확도를 정한다**. 이 표가 그 값을 정하는 유일한 실측 근거다.",
       constants: constantsSnapshot(),
     };
     mkdirSync(OUT, { recursive: true });

@@ -1,0 +1,592 @@
+{
+  "what": "L-B.1 — 2D 잉크와 3D 씬이 한 뷰포트에 겹칠 때 무엇이 보장이고 무엇이 측정인가",
+  "plan": "docs/line_plan.md §10.3 (단일 뷰포트) — 개정 2 번호",
+  "conditions": {
+    "compositions": [
+      "3pt_yaw35_pitch15",
+      "3pt_yaw20_pitch25",
+      "3pt_yaw50_pitch8",
+      "2pt_yaw35_pitch0",
+      "1pt_yaw0_pitch0"
+    ],
+    "composition_note": "`lift_gate`·`camera_gate`와 **같은 등록 집합**이다. 2점·1점을 포함한다 — `setViewOffset`과 무한원 소실점이 가장 다르게 도는 자리이기 때문이다.",
+    "grades": [
+      "precise",
+      "medium",
+      "coarse"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "end_jitters": [
+      0,
+      0.01,
+      0.03,
+      0.05
+    ],
+    "skew": 0.12,
+    "seed_note": "**등록 집합을 따른다**(`lift_gate`와 같은 시드·잡음). 초판은 시드 하나에서 소수 넷째 자리를 인용했다(PITFALLS #14).",
+    "skew_note": "⚠ `skew: 0.12`는 `lift_gate`와 같지만 **잡음 축의 조합이 다르다** — `placed_rate`를 `lift_gate`의 배치율과 나란히 읽지 않는다(#27).",
+    "canvas_px": [
+      960,
+      672
+    ],
+    "canvas_diag_px": 1171.8,
+    "camera": "**참 카메라**(합성 장면의 값)를 그대로 준다 — 검출·사용자 조정은 여기서 재지 않는다",
+    "ink_bow_by_grade": {
+      "precise": 0.0315,
+      "medium": 0.0558,
+      "coarse": 0.0937
+    }
+  },
+  "guarantees": {
+    "note": "**둘 다 측정이 아니다**(PITFALLS #5). 0(또는 부동소수 한계)이어야 하고, 그렇지 않으면 부호·규약 오류다. 임계를 걸지 않는다 — 불변식 테스트(`test/scene_cam.test.ts`)가 잠근다.",
+    "seg_gap_px_max": 0,
+    "seg_gap_why": "`liftAll`이 각 3D 점을 자기 광선 위에 놓는다 — 되쏘면 그 화면 점이다.",
+    "three_vs_project_gap_px_raw": 5.022285747336438e-13,
+    "three_vs_project_note": "**정확히 0이 아니다** — three의 행렬 파이프라인을 실제로 통과하므로 부동소수 한계가 남는다. 0이면 행렬을 안 탄 것이고 그것은 보장이 아니라 항등이다.",
+    "three_why": "`THREE.PerspectiveCamera` + `setViewOffset`이 만든 **실제 투영행렬**을 통과시킨다. 초판은 우리가 다시 쓴 같은 산식과 비교해 **정확히 0**이었는데 그것은 보장이 아니라 항등이었다."
+  },
+  "placement_with_true_camera": {
+    "note": "**`chord_dev`의 분모이자 그 자체로 관측이다.** 참 카메라를 준 배치이므로 카메라 정확도와 무관하고, **`coarse` 등급은 `lift_gate`·`camera_gate`가 한 번도 안 잰 등급**이다. 등급이 나빠지면 배치가 무너진다.",
+    "by_grade": {
+      "precise": {
+        "placed_over_strokes": "908/1440",
+        "rate": 0.6306
+      },
+      "medium": {
+        "placed_over_strokes": "868/1440",
+        "rate": 0.6028
+      },
+      "coarse": {
+        "placed_over_strokes": "640/1440",
+        "rate": 0.4444
+      }
+    }
+  },
+  "chord_dev": {
+    "note": "⚠ **이것도 측정이 아니다**(리뷰어가 뒤집었다). `seg_gap = 0`이므로 재투영된 세그먼트는 언제나 대표 직선이고, 원본 획에서 그 현(弦)까지의 거리를 정하는 것은 **잉크 모델의 활**과 **획의 화면 길이**뿐이다. `control_wrong_camera`가 그것을 보인다.",
+    "not_a_claim_about_users": "합성 잉크의 값이다. **실획 현실을 주장하지 않는다**(AS-C10). \"사용자가 확정 순간에 보는 변화\"로 읽으면 안 된다.",
+    "name_note": "옛 이름은 `ink_gap`이었다. `lift_gate.json`에도 `ink_gap_px`가 있는데 **그쪽은 장면당 대표값(n=장면 수)**이고 여기는 **점 단위(n=점 수)**다 — 집계 수준이 다르므로 두 값을 비교하지 않는다. 이름을 갈랐다(리뷰어 [2]).",
+    "by_grade": {
+      "precise": {
+        "px": {
+          "n": 30970,
+          "min": 0,
+          "p10": 0.0735,
+          "median": 0.5227,
+          "p90": 2.2098,
+          "max": 41.7568
+        },
+        "p90_over_canvas_diag": 0.00189,
+        "lf_bow": 0.0315
+      },
+      "medium": {
+        "px": {
+          "n": 26767,
+          "min": 0,
+          "p10": 0.1115,
+          "median": 0.7793,
+          "p90": 3.5616,
+          "max": 63.7952
+        },
+        "p90_over_canvas_diag": 0.00304,
+        "lf_bow": 0.0558
+      },
+      "coarse": {
+        "px": {
+          "n": 17821,
+          "min": 0.0002,
+          "p10": 0.1428,
+          "median": 1.0452,
+          "p90": 4.5669,
+          "max": 70.6156
+        },
+        "p90_over_canvas_diag": 0.0039,
+        "lf_bow": 0.0937
+      }
+    }
+  },
+  "control_wrong_camera": {
+    "method": "**f를 ±20% 틀리게 준다**(PITFALLS #5의 판별법). 값이 안 움직이면 측정이 아니다.",
+    "rows": {
+      "3pt_yaw35_pitch15": {
+        "f_x0.8": {
+          "placed": 10,
+          "chord_dev_median": 1.5437,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 1.0364
+        },
+        "f_x1": {
+          "placed": 10,
+          "chord_dev_median": 1.5437,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 0.8667
+        },
+        "f_x1.2": {
+          "placed": 10,
+          "chord_dev_median": 1.5437,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 0.7383
+        },
+        "vp0_shift_12px": {
+          "placed": 10,
+          "chord_dev_median": 1.5437,
+          "positive_channel_seg3d_len_median": 0.8677
+        },
+        "vp0_shift_40px": {
+          "placed": 10,
+          "chord_dev_median": 1.5437,
+          "positive_channel_seg3d_len_median": 0.8698
+        }
+      },
+      "3pt_yaw20_pitch25": {
+        "f_x0.8": {
+          "placed": 11,
+          "chord_dev_median": 1.1339,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 1.142
+        },
+        "f_x1": {
+          "placed": 11,
+          "chord_dev_median": 1.1339,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 0.886
+        },
+        "f_x1.2": {
+          "placed": 11,
+          "chord_dev_median": 1.1339,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 0.6937
+        },
+        "vp0_shift_12px": {
+          "placed": 11,
+          "chord_dev_median": 1.1339,
+          "positive_channel_seg3d_len_median": 0.886
+        },
+        "vp0_shift_40px": {
+          "placed": 11,
+          "chord_dev_median": 1.1339,
+          "positive_channel_seg3d_len_median": 0.886
+        }
+      },
+      "3pt_yaw50_pitch8": {
+        "f_x0.8": {
+          "placed": 9,
+          "chord_dev_median": 1.6801,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 1.0207
+        },
+        "f_x1": {
+          "placed": 9,
+          "chord_dev_median": 1.6801,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 0.8759
+        },
+        "f_x1.2": {
+          "placed": 9,
+          "chord_dev_median": 1.6801,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 0.7452
+        },
+        "vp0_shift_12px": {
+          "placed": 9,
+          "chord_dev_median": 1.6801,
+          "positive_channel_seg3d_len_median": 0.8738
+        },
+        "vp0_shift_40px": {
+          "placed": 9,
+          "chord_dev_median": 1.6801,
+          "positive_channel_seg3d_len_median": 0.874
+        }
+      },
+      "2pt_yaw35_pitch0": {
+        "f_x0.8": {
+          "placed": 10,
+          "chord_dev_median": 0.5253,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 0.7683
+        },
+        "f_x1": {
+          "placed": 10,
+          "chord_dev_median": 0.5253,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 0.8661
+        },
+        "f_x1.2": {
+          "placed": 10,
+          "chord_dev_median": 0.5253,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 0.9839
+        },
+        "vp0_shift_12px": {
+          "placed": 10,
+          "chord_dev_median": 0.5253,
+          "positive_channel_seg3d_len_median": 0.8661
+        },
+        "vp0_shift_40px": {
+          "placed": 10,
+          "chord_dev_median": 0.5253,
+          "positive_channel_seg3d_len_median": 0.8662
+        }
+      },
+      "1pt_yaw0_pitch0": {
+        "f_x0.8": {
+          "placed": 9,
+          "chord_dev_median": 0.3784,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 0.8834
+        },
+        "f_x1": {
+          "placed": 9,
+          "chord_dev_median": 0.3784,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 0.8673
+        },
+        "f_x1.2": {
+          "placed": 9,
+          "chord_dev_median": 0.3784,
+          "seg_gap_max": 0,
+          "positive_channel_seg3d_len_median": 0.8555
+        },
+        "vp0_shift_12px": {
+          "placed": 9,
+          "chord_dev_median": 0.3784,
+          "positive_channel_seg3d_len_median": 0.8673
+        },
+        "vp0_shift_40px": {
+          "placed": 9,
+          "chord_dev_median": 0.3784,
+          "positive_channel_seg3d_len_median": 0.8673
+        }
+      }
+    }
+  },
+  "by_shot": {
+    "3pt_yaw35_pitch15/precise": {
+      "placed_over_strokes": "212/288",
+      "placed_rate": 0.7361,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 2.5421149729252077e-13,
+      "chord_dev_px": {
+        "n": 6919,
+        "min": 0.0001,
+        "p10": 0.1013,
+        "median": 0.6453,
+        "p90": 2.1933,
+        "max": 22.4517
+      }
+    },
+    "3pt_yaw20_pitch25/precise": {
+      "placed_over_strokes": "174/288",
+      "placed_rate": 0.6042,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 3.595093471822542e-13,
+      "chord_dev_px": {
+        "n": 5622,
+        "min": 0.0004,
+        "p10": 0.1874,
+        "median": 1.1055,
+        "p90": 4.1121,
+        "max": 41.7568
+      }
+    },
+    "3pt_yaw50_pitch8/precise": {
+      "placed_over_strokes": "160/288",
+      "placed_rate": 0.5556,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 1.797546735911271e-13,
+      "chord_dev_px": {
+        "n": 5481,
+        "min": 0.0004,
+        "p10": 0.0929,
+        "median": 0.634,
+        "p90": 2.1999,
+        "max": 29.8212
+      }
+    },
+    "2pt_yaw35_pitch0/precise": {
+      "placed_over_strokes": "202/288",
+      "placed_rate": 0.7014,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 1.6077746776921858e-13,
+      "chord_dev_px": {
+        "n": 6981,
+        "min": 0.0001,
+        "p10": 0.0482,
+        "median": 0.2972,
+        "p90": 1.136,
+        "max": 12.2874
+      }
+    },
+    "1pt_yaw0_pitch0/precise": {
+      "placed_over_strokes": "160/288",
+      "placed_rate": 0.5556,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 1.7053025658242404e-13,
+      "chord_dev_px": {
+        "n": 5967,
+        "min": 0,
+        "p10": 0.052,
+        "median": 0.3565,
+        "p90": 1.2806,
+        "max": 16.4121
+      }
+    },
+    "3pt_yaw35_pitch15/medium": {
+      "placed_over_strokes": "197/288",
+      "placed_rate": 0.684,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 2.3437142008433856e-13,
+      "chord_dev_px": {
+        "n": 5856,
+        "min": 0.0002,
+        "p10": 0.1771,
+        "median": 1.0568,
+        "p90": 3.913,
+        "max": 39.7058
+      }
+    },
+    "3pt_yaw20_pitch25/medium": {
+      "placed_over_strokes": "159/288",
+      "placed_rate": 0.5521,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 3.722728620638729e-13,
+      "chord_dev_px": {
+        "n": 4548,
+        "min": 0.0006,
+        "p10": 0.2104,
+        "median": 1.5866,
+        "p90": 6.8575,
+        "max": 63.7952
+      }
+    },
+    "3pt_yaw50_pitch8/medium": {
+      "placed_over_strokes": "176/288",
+      "placed_rate": 0.6111,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 2.0495186137532014e-13,
+      "chord_dev_px": {
+        "n": 5519,
+        "min": 0,
+        "p10": 0.1316,
+        "median": 1.0086,
+        "p90": 3.5616,
+        "max": 29.531
+      }
+    },
+    "2pt_yaw35_pitch0/medium": {
+      "placed_over_strokes": "193/288",
+      "placed_rate": 0.6701,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 1.6077746776921858e-13,
+      "chord_dev_px": {
+        "n": 6027,
+        "min": 0.0001,
+        "p10": 0.079,
+        "median": 0.4574,
+        "p90": 1.634,
+        "max": 15.5828
+      }
+    },
+    "1pt_yaw0_pitch0/medium": {
+      "placed_over_strokes": "143/288",
+      "placed_rate": 0.4965,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 1.797546735911271e-13,
+      "chord_dev_px": {
+        "n": 4817,
+        "min": 0.0005,
+        "p10": 0.079,
+        "median": 0.5014,
+        "p90": 1.8305,
+        "max": 17.8381
+      }
+    },
+    "3pt_yaw35_pitch15/coarse": {
+      "placed_over_strokes": "147/288",
+      "placed_rate": 0.5104,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 2.428351918216984e-13,
+      "chord_dev_px": {
+        "n": 3991,
+        "min": 0.0002,
+        "p10": 0.2121,
+        "median": 1.2474,
+        "p90": 4.3304,
+        "max": 34.8989
+      }
+    },
+    "3pt_yaw20_pitch25/coarse": {
+      "placed_over_strokes": "120/288",
+      "placed_rate": 0.4167,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 5.022285747336438e-13,
+      "chord_dev_px": {
+        "n": 3164,
+        "min": 0.0018,
+        "p10": 0.392,
+        "median": 2.6712,
+        "p90": 8.5642,
+        "max": 70.6156
+      }
+    },
+    "3pt_yaw50_pitch8/coarse": {
+      "placed_over_strokes": "133/288",
+      "placed_rate": 0.4618,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 1.6077746776921858e-13,
+      "chord_dev_px": {
+        "n": 3842,
+        "min": 0.0002,
+        "p10": 0.2045,
+        "median": 1.5451,
+        "p90": 4.2823,
+        "max": 37.5952
+      }
+    },
+    "2pt_yaw35_pitch0/coarse": {
+      "placed_over_strokes": "121/288",
+      "placed_rate": 0.4201,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 1.6077746776921858e-13,
+      "chord_dev_px": {
+        "n": 3427,
+        "min": 0.0007,
+        "p10": 0.0943,
+        "median": 0.5517,
+        "p90": 1.9548,
+        "max": 15.4534
+      }
+    },
+    "1pt_yaw0_pitch0/coarse": {
+      "placed_over_strokes": "119/288",
+      "placed_rate": 0.4132,
+      "cells": "시드 6 × 잡음 4",
+      "guarantee_seg_gap_px_max": 0,
+      "guarantee_three_vs_project_gap_px_raw": 1.6077746776921858e-13,
+      "chord_dev_px": {
+        "n": 3397,
+        "min": 0.0003,
+        "p10": 0.0814,
+        "median": 0.5087,
+        "p90": 1.7379,
+        "max": 15.6613
+      }
+    }
+  },
+  "constants": {
+    "hash": "1a6f104b",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  }
+}

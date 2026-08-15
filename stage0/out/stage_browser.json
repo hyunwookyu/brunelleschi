@@ -1,0 +1,259 @@
+{
+  "spec": "L-B.1 단일 뷰포트 — **실제 브라우저에서** 3D 층과 2D 층이 같은 픽셀에 오는가",
+  "plan": "docs/line_plan.md §10.3 (개정 2 번호)",
+  "what_this_does_not_say": [
+    "배치 정확도 — 참값 대조를 앱에서 하지 않는다(DEFERRED)",
+    "사람이 도달하는 축 오차 — 여기서는 **참 소실점을 그대로 넣는다**(AS-L9은 표본 0)",
+    "실획 — 합성 잉크다(AS-C1·AS-C10)",
+    "분모는 상자 하나 12획이다. 구도 하나이므로 5구도 주장의 근거가 아니다"
+  ],
+  "condition": {
+    "browser": "chromium(Playwright) · 1440×900 · deviceScaleFactor 1(dpr 2는 페이지에서 흉내낸다)",
+    "server": "개발 서버(`npx vite --port 5223`)",
+    "fixture": "`/test/scene3d.ts` — **측정 하네스와 같은 픽스처**(손으로 만들면 아핀 상자가 나온다)",
+    "ink_grade": "medium",
+    "ink_seed": "LCG 12345(페이지 안에서 결정론적으로 생성)",
+    "end_jitter": 0.006,
+    "skew": 0.37,
+    "grade_note": "⚠ **동작점 하나다**(PITFALLS #12). 같은 구도의 `stage_cam.json`은 등급에 따라 배치가 크게 갈린다 — 여기 '12/12'를 등급 전체의 값으로 읽으면 안 된다.",
+    "camera": "요 35°·피치 15° 3점(f=1000px). 가이드를 **참 소실점**으로 세운다"
+  },
+  "constants": {
+    "hash": "1a6f104b",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "setup": {
+    "canvas": [
+      1280,
+      675
+    ],
+    "strokes": 12,
+    "hasCamera": true
+  },
+  "confirm": {
+    "lifted": 12,
+    "total": 12,
+    "f_px": 999.9999999999992,
+    "true_f_px": 1000,
+    "principal": [
+      640.0000000000008,
+      337.4999999999998
+    ],
+    "canvas_center": [
+      640,
+      337.5
+    ],
+    "view_offset": {
+      "enabled": true,
+      "fullWidth": 1280.0000000000016,
+      "fullHeight": 675.0000000000005,
+      "offsetX": 0,
+      "offsetY": 4.547473508864641e-13,
+      "width": 1280,
+      "height": 675
+    }
+  },
+  "wiring_identity_px": {
+    "max": 1.2710574864626038e-13,
+    "n": 24,
+    "note": "**보장의 배선 확인**이다(PITFALLS #5). 0에 가까워야 하고, 아니면 규약 오류다."
+  },
+  "offcenter_principal": {
+    "principal": [
+      577.6323670797206,
+      422.3960097378153
+    ],
+    "canvas_center": [
+      640,
+      337.5
+    ],
+    "view_offset": {
+      "enabled": true,
+      "fullWidth": 1404.735265840559,
+      "fullHeight": 844.7920194756306,
+      "offsetX": 124.7352658405589,
+      "offsetY": 0,
+      "width": 1280,
+      "height": 675
+    }
+  },
+  "offcenter_identity_px": {
+    "max": 1.3406493525361332e-13,
+    "n": 24
+  },
+  "dpr": {
+    "dpr": 2,
+    "ink_backbuffer": [
+      2560,
+      1350
+    ],
+    "ink_css": [
+      1280,
+      675
+    ],
+    "gl_backbuffer": [
+      2560,
+      1350
+    ],
+    "cam_imgSize": [
+      1280,
+      675
+    ]
+  },
+  "dpr_identity_px": {
+    "css_frame": 1.3406493525361332e-13,
+    "backbuffer_frame_control": 969.8364553729418,
+    "control_stat": "24점의 **최댓값**(css_frame과 같은 통계·같은 분모)",
+    "note": "**대조군이 요점이다**(#6). dpr 2에서 CSS 프레임으로 비교하면 0이고, 백버퍼 프레임으로 비교하면 벌어진다 — 벌어지지 않으면 이 행은 아무것도 검사하지 않는다.",
+    "what_this_is_not": "⚠ **앱의 dpr 규약을 되살린 것이 아니다**(리뷰어 2회차 [8][9]). 되살린 것은 **측정 쪽 비교 프레임**이고, 앱의 `canvasFrame` 규약을 잠그는 것은 `e2e/coords.spec.ts`(dpr 1·2·3 프로젝트)다. 여기서 dpr 2는 `deviceScaleFactor`가 아니라 **페이지 안에서 흉내낸 것**이라 브라우저 합성 경로를 타지 않는다 — PITFALLS #21이 기록한 실패 자리가 바로 그 조건이다."
+  },
+  "resize": {
+    "before": {
+      "enabled": true,
+      "fullWidth": 1404.735265840559,
+      "fullHeight": 844.7920194756306,
+      "offsetX": 124.7352658405589,
+      "offsetY": 0,
+      "width": 1280,
+      "height": 675
+    },
+    "after": {
+      "enabled": true,
+      "fullWidth": 1155.264734159441,
+      "fullHeight": 844.7920194756306,
+      "offsetX": 0,
+      "offsetY": 0,
+      "width": 820,
+      "height": 675,
+      "imgSize": [
+        820,
+        675
+      ]
+    },
+    "size_heal_count": 3
+  },
+  "painted": {
+    "segments": 12,
+    "painted": 12,
+    "blank_corner_control": 0
+  },
+  "orbit": {
+    "pinned": false,
+    "controls": true,
+    "ink_pointer_events": "none",
+    "gl_painted_px": 2383,
+    "ink_painted_px": 0
+  },
+  "home": {
+    "pinned": true,
+    "ink_painted_px": 109700
+  },
+  "guide_budget": {
+    "canvas": [
+      1280,
+      675
+    ],
+    "diag": 1447.074635255556,
+    "required_min_len_px": 651.1835858650002,
+    "actual_guide_len_px": [
+      1254.6,
+      1256.8,
+      1233.3,
+      1327.7,
+      607.6,
+      618.5
+    ],
+    "note": "**참 소실점으로 세운 가이드**의 길이다. 검출 초안이 아니다."
+  }
+}

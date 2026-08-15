@@ -506,7 +506,7 @@ describe("L-A 게이트 (§5.1~§5.3)", () => {
 
     const doc = {
       what: "L-A 게이트 — 초기 3D 올리기(§5.2)와 전환(§5.3)",
-      plan: "docs/line_plan.md §5.2·§5.3 · 사전 등록: progress.md 'L-A 게이트 — 사전 등록'",
+      plan: "docs/line_plan.md §5.4(3D 올리기) · 사전 등록: progress.md 'L-A 게이트 — 사전 등록' — **개정 2 번호**",
       conditions: {
         compositions: COMPOSITIONS.map(c => c.name), jitters: JITTERS,
         grades: GRADES, seeds: SEEDS,

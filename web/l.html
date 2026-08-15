@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>투시 선 도구 (L)</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <style>
+    /* §10.3 — 단일 뷰포트. 2D 잉크와 3D 씬이 같은 상자 안에 겹친다. */
+    *{margin:0;box-sizing:border-box;-webkit-user-select:none;user-select:none}
+    html,body{height:100%;font:14px system-ui,sans-serif;background:#fff;color:#111;overflow:hidden}
+    #wrap{position:absolute;inset:0;display:flex;flex-direction:column}
+    #frame{position:relative;flex:1;min-height:0;overflow:hidden}
+    #stage{position:absolute;inset:0}
+    #stage canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
+    #ink{position:absolute;inset:0;width:100%;height:100%;touch-action:none;z-index:2}
+    #status{position:absolute;left:10px;top:10px;z-index:3;max-width:min(46ch,60%);
+            background:rgba(255,255,255,.86);border:1px solid #e3e3e3;border-radius:8px;
+            padding:8px 10px;line-height:1.55;pointer-events:none;backdrop-filter:blur(2px)}
+    #status .hdr{font-size:13px;margin-bottom:2px}
+    #status .lock{background:#111;color:#fff;border-radius:4px;padding:0 5px;font-size:11px}
+    #status .dim{color:#888}
+    #status .f{color:#2471a3}
+    #status .warn{color:#b9770e}
+    #status .error{color:#c0392b}
+    #status .note{margin-top:4px;color:#444;border-top:1px solid #eee;padding-top:4px}
+    #status b{font-weight:600}
+    #bar{flex:0 0 auto;display:flex;gap:6px;align-items:center;padding:7px 10px;
+         border-top:1px solid #e3e3e3;background:#fafafa;overflow-x:auto}
+    #bar button{font:inherit;padding:5px 11px;border:1px solid #d4d4d4;border-radius:6px;
+                background:#fff;color:#111;cursor:pointer;white-space:nowrap}
+    #bar button.on{background:#111;color:#fff;border-color:#111}
+    #bar button:disabled{opacity:.38;cursor:default}
+    #bar .sep{width:1px;height:20px;background:#e0e0e0;flex:0 0 auto}
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="frame">
+      <div id="stage"></div>
+      <canvas id="ink"></canvas>
+      <div id="status"></div>
+    </div>
+    <div id="bar"></div>
+  </div>
+  <script type="module" src="./src/mainL.ts"></script>
+</body>
+</html>

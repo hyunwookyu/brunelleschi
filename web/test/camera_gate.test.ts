@@ -231,7 +231,7 @@ describe("L-A.5d·L-A.6 카메라 정확도 (§5.4·§5.5)", () => {
 
     const doc = {
       what: "L-A.5d — 소실점(축 방향)에 각도 오차를 준 조건의 형태 오차. **사용자 조정의 대리값**",
-      plan: "docs/line_plan.md §5.4 · 사전 등록: progress.md",
+      plan: "docs/line_plan.md §5.2(사용자 확정) · 사전 등록: progress.md — **개정 2 번호**",
       proxy_caveat: "⚠ **대리값이다.** 사람이 소실점을 몇 도까지 맞추는지는 표본이 없다"
         + "(AS-C1·AS-L9). 여기서 재는 것은 '축 방향 오차가 θ일 때 형태가 얼마나 틀리는가'이고, "
         + "'사람이 θ에 도달한다'는 **측정하지 않았다.**",
@@ -239,8 +239,16 @@ describe("L-A.5d·L-A.6 카메라 정확도 (§5.4·§5.5)", () => {
         + "아무것도 안 잰다. 독립 회전은 직교성을 깨고 그것이 사용자가 세 점을 따로 끄는 상황이다. "
         + "그 뒤 `recoverCamera`가 수심으로 f를 다시 낸다(앱과 같은 경로). "
         + "**축 라벨은 참값을 준다** — 카메라만 보려는 것이므로 검출 오배정을 섞지 않는다.",
-      target: { note: "참 카메라 대역 = L-A.4의 오라클 값",
-                placement_of_all: 0.9954, silent_wrong_cut_0_2: 0.0791 },
+      // ⚠ **폐기된 대역을 지웠다**(리뷰어 지적 [6] / PITFALLS #27).
+      // 옛 값 `placement_of_all: 0.9954` · `silent_wrong_cut_0_2: 0.0791`은 **`lift_gate`의
+      // 오라클 값**이고 (a) 배치는 최대 연결 성분 분모이며 (b) 조용히 틀림에는 **검출 오배정이
+      // 섞여 있다**. **대역은 같은 하네스에서 낸다** — 그것이 아래 `deg_0` 행이다.
+      target: { note: "**대역은 이 하네스의 `by_axis_err_*.deg_0` 행이다**(같은 조건·같은 분모). "
+                      + "다른 하네스의 값을 대역으로 가져오지 않는다(PITFALLS #27).",
+                registered_band: { silent_wrong_cut_0_2: 0.0673, shape_err_median: 0.0296 },
+                pass_line: "실측 축 오차 0.5° 이하에서 각각 1.1배·2.1배 이내. **5구도 전부**를 낸다.",
+                retired: { placement_of_all: 0.9954, silent_wrong_cut_0_2: 0.0791,
+                           why: "`lift_gate` 출처. 분모가 최대 연결 성분이고 검출 오배정이 섞였다." } },
       by_axis_err_all_compositions: byErr,
       by_axis_err_baseline_3pt_jitter_le_0_01: byErrBase,
       constants: constantsSnapshot(),

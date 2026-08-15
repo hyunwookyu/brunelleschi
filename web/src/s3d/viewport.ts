@@ -21,6 +21,15 @@ export class Viewport {
   private dirty = true;
   private disposed = false;
   private ro?: ResizeObserver;
+  /** 기본 바닥 격자. **단일 뷰포트(L-B)에서는 끈다** — 투시 그리드를 2D 층이 그린다. */
+  readonly grid: THREE.GridHelper;
+  /**
+   * **투영행렬을 바깥이 정한다**(L-B.1). 단일 뷰포트에서는 three 카메라가 **확정 투시 카메라와
+   * 같아야** 하고(주점이 화면 중심이 아니다) 그 설정은 `sceneCam.applyIntrinsics`에 있다.
+   * 걸려 있으면 `resize()`가 `aspect = w/h`로 덮어쓰지 않는다 — **덮어쓰면 주점이 중심으로
+   * 돌아가 잉크와 3D가 어긋난다**(창을 줄이면 재발하는 종류다).
+   */
+  projectionHook: ((size: [number, number]) => void) | null = null;
   /** 사용자가 직접 궤도를 돌렸는가. 돌렸으면 자동 맞춤이 시점을 빼앗지 않는다. */
   userMoved = false;
 
@@ -44,10 +53,10 @@ export class Viewport {
     key.position.set(2, 4, 3);
     this.scene.add(key);
 
-    const grid = new THREE.GridHelper(10, 20, 0xc4ccd2, 0xe0e6ea);
-    (grid.material as THREE.Material).transparent = true;
-    (grid.material as THREE.Material).opacity = 0.55;
-    this.scene.add(grid);
+    this.grid = new THREE.GridHelper(10, 20, 0xc4ccd2, 0xe0e6ea);
+    (this.grid.material as THREE.Material).transparent = true;
+    (this.grid.material as THREE.Material).opacity = 0.55;
+    this.scene.add(this.grid);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
@@ -73,8 +82,8 @@ export class Viewport {
   resize() {
     const w = Math.max(1, this.host.clientWidth), h = Math.max(1, this.host.clientHeight);
     this.renderer.setSize(w, h);
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
+    if (this.projectionHook) this.projectionHook([w, h]);
+    else { this.camera.aspect = w / h; this.camera.updateProjectionMatrix(); }
     this.invalidate();
   }
 

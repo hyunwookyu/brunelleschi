@@ -1,5 +1,5 @@
 {
-  "n_flags": 1403,
+  "n_flags": 1451,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -425,11 +425,6 @@
       "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_70.vps_at_infinity.median",
       "val": 0,
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
-    },
-    {
-      "path": "e2e.json:fix_in_rotated_view.stillUnplaced",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "e2e.json:service_worker_in_dev",
@@ -3782,6 +3777,251 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "stage_browser.json:confirm.view_offset.offsetY",
+      "val": 4.547473508864641e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_browser.json:dpr_identity_px.css_frame",
+      "val": 1.3406493525361332e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:guarantees.seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:guarantees.three_vs_project_gap_px_raw",
+      "val": 5.022285747336438e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.3pt_yaw35_pitch15.f_x0.8.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.3pt_yaw35_pitch15.f_x1.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.3pt_yaw35_pitch15.f_x1.2.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.3pt_yaw20_pitch25.f_x0.8.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.3pt_yaw20_pitch25.f_x1.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.3pt_yaw20_pitch25.f_x1.2.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.3pt_yaw50_pitch8.f_x0.8.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.3pt_yaw50_pitch8.f_x1.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.3pt_yaw50_pitch8.f_x1.2.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.2pt_yaw35_pitch0.f_x0.8.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.2pt_yaw35_pitch0.f_x1.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.2pt_yaw35_pitch0.f_x1.2.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.1pt_yaw0_pitch0.f_x0.8.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.1pt_yaw0_pitch0.f_x1.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:control_wrong_camera.rows.1pt_yaw0_pitch0.f_x1.2.seg_gap_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw35_pitch15/precise.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw35_pitch15/precise.guarantee_three_vs_project_gap_px_raw",
+      "val": 2.5421149729252077e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw20_pitch25/precise.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw20_pitch25/precise.guarantee_three_vs_project_gap_px_raw",
+      "val": 3.595093471822542e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw50_pitch8/precise.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw50_pitch8/precise.guarantee_three_vs_project_gap_px_raw",
+      "val": 1.797546735911271e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:by_shot.2pt_yaw35_pitch0/precise.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.2pt_yaw35_pitch0/precise.guarantee_three_vs_project_gap_px_raw",
+      "val": 1.6077746776921858e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:by_shot.1pt_yaw0_pitch0/precise.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.1pt_yaw0_pitch0/precise.guarantee_three_vs_project_gap_px_raw",
+      "val": 1.7053025658242404e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw35_pitch15/medium.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw35_pitch15/medium.guarantee_three_vs_project_gap_px_raw",
+      "val": 2.3437142008433856e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw20_pitch25/medium.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw20_pitch25/medium.guarantee_three_vs_project_gap_px_raw",
+      "val": 3.722728620638729e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw50_pitch8/medium.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw50_pitch8/medium.guarantee_three_vs_project_gap_px_raw",
+      "val": 2.0495186137532014e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:by_shot.2pt_yaw35_pitch0/medium.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.2pt_yaw35_pitch0/medium.guarantee_three_vs_project_gap_px_raw",
+      "val": 1.6077746776921858e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:by_shot.1pt_yaw0_pitch0/medium.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.1pt_yaw0_pitch0/medium.guarantee_three_vs_project_gap_px_raw",
+      "val": 1.797546735911271e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw35_pitch15/coarse.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw35_pitch15/coarse.guarantee_three_vs_project_gap_px_raw",
+      "val": 2.428351918216984e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw20_pitch25/coarse.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw20_pitch25/coarse.guarantee_three_vs_project_gap_px_raw",
+      "val": 5.022285747336438e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw50_pitch8/coarse.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.3pt_yaw50_pitch8/coarse.guarantee_three_vs_project_gap_px_raw",
+      "val": 1.6077746776921858e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:by_shot.2pt_yaw35_pitch0/coarse.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.2pt_yaw35_pitch0/coarse.guarantee_three_vs_project_gap_px_raw",
+      "val": 1.6077746776921858e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_cam.json:by_shot.1pt_yaw0_pitch0/coarse.guarantee_seg_gap_px_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_cam.json:by_shot.1pt_yaw0_pitch0/coarse.guarantee_three_vs_project_gap_px_raw",
+      "val": 1.6077746776921858e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
       "path": "systematic_warp.json:tolerances.max_spread_ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -6997,14 +7237,14 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "e2e.json@1671e540",
-      "val": "DRAFT_TOL.handle_ratio: None → 0.018; DRAFT_TOL.margin_ratio: None → 0.03; DRAFT_TOL.min_guide_ratio: None → 0.45; HOMOG_TOL.degenerate_cross: None → 1e-09; HOMOG_TOL.snap_deg: None → 3; LIFT_TOL.gauge_height: None → 1",
-      "flag": "**STALE** — 현재 상수(1a6f104b)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
       "path": "web/src/s3d/stroke.ts:Stroke.layer",
       "val": "쓰기 0 · 읽기 0",
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
+    },
+    {
+      "path": "web\\e2e\\stage.spec.ts:71:pixelGap",
+      "val": "project(",
+      "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
       "path": "web\\src\\s3d\\lift.ts:406:transitionGap",
@@ -7017,18 +7257,18 @@
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     }
   ],
-  "n_stale": 1,
+  "n_stale": 0,
   "n_unread_fields": 1,
   "field_reads": [
     {
       "field": "id",
       "writes": 0,
-      "reads": 118
+      "reads": 131
     },
     {
       "field": "pts2d",
       "writes": 0,
-      "reads": 41
+      "reads": 47
     },
     {
       "field": "pts3d",
@@ -7037,8 +7277,8 @@
     },
     {
       "field": "axis",
-      "writes": 3,
-      "reads": 40
+      "writes": 4,
+      "reads": 53
     },
     {
       "field": "rep",
@@ -7068,7 +7308,7 @@
     {
       "field": "width",
       "writes": 1,
-      "reads": 14
+      "reads": 16
     }
   ],
   "constants_hash": "1a6f104b",
@@ -7091,6 +7331,8 @@
     "preview_gap.json",
     "real_ink.json",
     "segment_gate.json",
+    "stage_browser.json",
+    "stage_cam.json",
     "systematic_warp.json",
     "tube_render.json",
     "view_plane.json",

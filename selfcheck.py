@@ -23,6 +23,12 @@ RATIO_KEYS = ("rate", "ratio", "f1", "iou", "precision", "recall", "coverage")
 # 그것까지 세면 신호가 잡음에 묻힌다(넓힌 첫 판에서 89 → 345건으로 터졌다).
 STAT_MEDIAN = "median"
 COUNT_KEYS = ("n_", "count", "_n", "crashes", "violations")
+# **정확히 0인 오차**는 1e-11보다 더 의심스럽다(자기참조 유형 3). 그런데 near-zero 규칙은
+# `0 < abs(val)`이라 **정확한 0을 그냥 지나쳤다** — L-B.1의 두 보장(seg_gap 0 · three_vs_project 0)이
+# 원장에 0으로 남았는데 한 건도 안 걸렸다. 검사를 **강화한다**(PITFALLS #19는 약화만 금지한다).
+# 보장이면 원장에 그렇게 적고 임계를 걸지 않는다 — 플래그는 "확인했다"의 자리다.
+# `"dev_"`이지 `"_dev"`가 아니다 — `service_worker_in_dev`가 오차로 잡혔다(오탐).
+ERROR_KEYS = ("gap", "err", "residual", "misfit", "deviation", "dev_", "offset_px", "identity")
 
 
 def _walk(obj, path=""):
@@ -90,6 +96,17 @@ def check(report: dict, prev: dict | None = None) -> list[dict]:
             if 0 < abs(val) < NEAR_ZERO:
                 flags.append({"path": path, "val": val,
                               "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"})
+            # **정확한 0**은 near-zero보다 강한 신호인데 위 조건이 놓친다(`0 < 0`이 거짓이다).
+            #
+            # ⚠ **`leaf`로 본다. `low`(전체 경로)로 보면 안 된다** — 첫 판이 그랬고
+            # `…_err.n = 0`(표본 0)이 380건 중 367건을 차지해 **오차값이 아닌 것이 오차 플래그로**
+            # 나왔다(리뷰어 지적 [4]). 부모 경로에 `err`가 있다고 자식이 오차인 것은 아니다.
+            # 겹쳐 세지도 않는다 — `median`은 아래 규칙이 잡는다.
+            if (val == 0 and leaf != STAT_MEDIAN and leaf != "n"
+                    and any(k in leaf for k in ERROR_KEYS)):
+                flags.append({"path": path, "val": val,
+                              "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인"
+                                      "(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"})
             if any(k in low for k in RATIO_KEYS) and val in (1.0, 0.0):
                 flags.append({"path": path, "val": val,
                               "flag": f"정확히 {val} 비율 → 측정 대상/자기참조 확인"})
