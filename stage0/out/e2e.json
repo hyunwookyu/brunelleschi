@@ -1,7 +1,7 @@
 {
   "spec": "S-10 종단 검증 — **실제 앱을 띄우고 실제 포인터 이벤트로** 그린 결과.",
   "constants": {
-    "hash": "46c028d1",
+    "hash": "2fd74e1c",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -17,6 +17,9 @@
         "rank_margin": 2.5,
         "vp_dist_ceiling": 0.22,
         "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
       },
       "VP_TOL": {
         "support_deg": 2.5,
@@ -155,8 +158,8 @@
   },
   "stroke_latency_ms": {
     "n": 12,
-    "median": 2,
-    "max": 4.7,
+    "median": 1.7,
+    "max": 3.4,
     "note": "`pointerup` 하나가 반환할 때까지 — 판정·배치·튜브 생성·다시 그리기가 그 안이다. 개발 서버(번들 없음) 기준이므로 **상한**으로 읽는다."
   },
   "orbit_frame_ms": {
@@ -191,7 +194,7 @@
     "note": "돌린 시점 획은 **그 시점으로 돌아가야** 후보가 생긴다(좌표계가 그 시점의 것이다). 조작 수에 '그 시점으로' 1이 더 붙는다 — `fix_load.json`의 모형이 0으로 잡은 항목이다."
   },
   "reload": {
-    "ms": 103,
+    "ms": 102,
     "strokes": 13,
     "placed": 11,
     "user_placed": 2,

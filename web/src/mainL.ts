@@ -12,6 +12,7 @@ import { CamState } from "./ui/camState.js";
 import { newDoc, newSStroke, newView, deleteView, lifted, pending, pendingElsewhere,
          type DocState, type SStroke } from "./ui/doc.js";
 import { takeSnap, applySnap, type AppSnap } from "./ui/appSnap.js";
+import { nearestSeg, PICK_TOL, type PickSeg } from "./ui/pick.js";
 import { draftFromDetection, handleAt, moveHandle, guideLineAt, moveGuideBy,
          extendGuide, DRAFT_TOL, type HandleRef } from "./s3d/vpDraft.js";
 import { diffPlacement, diffSummary, type PlacementDiff } from "./s3d/promoteDiff.js";
@@ -29,7 +30,7 @@ import type { Pt2 } from "./s3d/camera.js";
 import type { PlaceCtx } from "./s3d/stroke.js";
 import { viewPlaceCtx, toView, fromView, dirToView, type ViewPose } from "./s3d/viewCamera.js";
 
-type Tool = "draw" | "adjust" | "orbit";
+type Tool = "draw" | "adjust" | "orbit" | "edit";
 
 const host = document.getElementById("stage")!;
 const canvas = document.getElementById("ink") as HTMLCanvasElement;
@@ -58,6 +59,18 @@ let sens: AxisSens[] = [];
 let hoverSnap: SnapCand | null = null;
 /** 마지막 획이 무엇에 붙었나 — 화면에 사유를 낸다(#7: 추측하지 말고 센다). */
 let lastSnapNote = "";
+/**
+ * **고른 획**(L-D.1, §9.5). `고치기` 도구가 클릭으로 고르고 화살표·`Delete`가 작용한다.
+ *
+ * §9.5는 두 문장뿐이다 — "'이 획은 저 면 위에 있다' 수준의 지정 경로와, 지우는 경로를 둔다".
+ * **면 생성이 범위 밖이므로**(DEFERRED) 지정은 **축 지정**으로 한다.
+ * ⚠ 그 둘은 같은 것이 아니다: 면 지정은 획을 **평면에 가두고**, 축 지정은 **방향만** 준다.
+ * 축 지정으로 놓이는 것은 §5.4의 일괄 풀이가 그 방향으로 이어지는 구조를 찾을 때뿐이다.
+ *
+ * 조작은 **SketchUp 그대로**다(A-3) — 화살표가 축이고 `Delete`가 지우기다.
+ * 축 키는 그리는 중의 축 고정(L-B.5)과 **같은 배정**을 쓴다(왼쪽=축1 · 오른쪽=축2 · 위=축3).
+ */
+let picked: string | null = null;
 /**
  * **그리는 중의 실시간 판정**(L-B.4, §4). 시작점이 3D에 못박히면 커서 픽셀 하나가
  * 끝점을 정하므로 **확정과 같은 것**을 미리 보여 줄 수 있다 — 계획서 §11 L-B 게이트의
@@ -593,6 +606,75 @@ function relinkLostSnaps(): void {
   refresh();
 }
 
+// ---------------------------------------------------------------- 고치기 (L-D.1, §9.5)
+
+/**
+ * **고른 획을 지운다**(§9.5 "지우는 경로"). SketchUp의 지우개와 같다(A-3).
+ *
+ * ⚠ **문서에서만 지우면 안 된다** — 씬·스냅 후보·뷰 소유가 함께 정리돼야 한다.
+ * `syncScene()`이 셋을 다 한다(그것이 유일한 경로다). 되돌리기는 `pushUndo`가 받는다.
+ *
+ * ⚠ **지운 획에 붙어 있던 스냅은 끊긴다.** 그 획들을 2D로 되돌리지는 않는다 —
+ * 이미 놓인 3D는 좌표가 있고, 그것을 지우는 것은 **사용자가 시키지 않은 삭제**다.
+ * 대신 **끊긴 개수를 세어 알린다**(#7).
+ */
+function deletePicked(): void {
+  if (!picked) return;
+  const st = doc.strokes.find(x => x.id === picked);
+  if (!st) { picked = null; return; }
+  pushUndo();
+  const orphans = doc.strokes.filter(x => x.snapStart?.ofId === st.id).length;
+  doc.strokes = doc.strokes.filter(x => x.id !== st.id);
+  picked = null;
+  syncScene();
+  note = `획 하나를 지웠습니다`
+       + (orphans ? ` — <b>${orphans}획의 스냅이 이 획에 붙어 있었습니다</b>`
+                    + ` <span class="dim">(그 획들은 그대로 있습니다. 지우려면 따로 고르세요)</span>` : "")
+       + " <span class=\"dim\">· <b>실행취소</b>로 되돌립니다</span>";
+  refresh();
+}
+
+/**
+ * **고른 획에 축을 지정한다**(§9.5 "'이 획은 저 면 위에 있다' 수준의 지정 경로").
+ *
+ * ⚠ **면 지정이 아니다.** 면 생성이 범위 밖이라(DEFERRED) 줄 수 있는 것은 **방향**뿐이다.
+ * 둘은 같지 않다 — 면 지정은 획을 **평면에 가두고**, 축 지정은 방향만 준다.
+ * 그래서 **지정해도 안 놓일 수 있다**: §5.4의 일괄 풀이가 그 방향으로 이어지는 구조를
+ * 찾아야 하기 때문이다. **놓였는지 세어 알린다**(#7 — 추측하지 않는다).
+ *
+ * `userAxis`를 세우므로 **차수 승격의 재분류가 이 값을 안 덮는다**(§6.1 "사용자 지정만 유지").
+ */
+function assignAxis(ax: 0 | 1 | 2): void {
+  if (!picked) return;
+  const st = doc.strokes.find(x => x.id === picked);
+  const ctx = cam.ctx();
+  if (!st || !ctx) return;
+  pushUndo();
+  st.axis = ax;
+  st.userAxis = true;
+  const was = !!st.seg3d;
+  const fr = frame();
+  let placed = was;
+  if (fr) {
+    st.seg3d = null;
+    // ⚠ **일괄 풀이로는 안 놓인다** — `solveInto`는 **대기 집합끼리만** 풀어서 앵커가 없다.
+    // 종단 확인이 실제로 그것을 잡았다(지정 2획 · 올라간 것 **0**).
+    // **회수하는 것은 앵커다**(D-L20, L-B.7: 720/1904 대 일괄 0/1904) — 그래서 승격 연쇄를 돈다:
+    // 시작점이 이미 놓인 기하에 붙으면 §3·§7의 실시간 경로가 그 획을 놓는다.
+    // 확정 뷰에서는 그 앞에 일괄도 한 번 돌린다(서로 이어진 대기 획끼리 풀릴 수 있다)
+    if (fr.pinned) solveInto(fr.ctx, pending(doc, confirmView().id));
+    if (!st.seg3d) promoteChain(fr);
+    placed = !!st.seg3d;
+  }
+  syncScene();
+  note = `이 획을 <b style="color:${AXIS_COLOR[ax]}">축${ax + 1}</b>로 지정했습니다`
+       + (placed ? " — <b>3D로 올라갔습니다</b>"
+                 : " — <b>아직 2D로 대기</b>합니다"
+                   + " <span class=\"dim\">(축은 정해졌으나 다른 획과 이어지지 않았습니다)</span>")
+       + " <span class=\"dim\">· 지정한 축은 <b>차수 승격이 안 덮습니다</b>(§6.1)</span>";
+  refresh();
+}
+
 /** 차수 표식으로 되돌아간다 — **문서와 카메라를 함께**(§6.2). */
 function revertToOrder(order: number): void {
   const m = orderMarks.find(x => x.order === order);
@@ -849,11 +931,58 @@ function drawLivePreview(ctx2: CanvasRenderingContext2D) {
   ctx2.restore();
 }
 
+/**
+ * 화면 점에서 가장 가까운 획. **2D 대기 획과 3D 획을 함께 본다** —
+ * §9.5가 지우려는 것이 "영원히 안 올라가는 획"이지만 지우기는 둘 다에 필요하다.
+ *
+ * 3D 획은 **지금 시점으로 되쏜 선분**과 비교한다(L-B.8) — 돌린 뷰에서도 눈에 보이는 자리다.
+ */
+function pickStroke(p: Pt2): string | null {
+  return nearestSeg(p, pickSegs(), PICK_TOL.radius_ratio * Math.hypot(...cssSize()));
+}
+
+/** 고를 수 있는 것들의 **화면 선분**. 3D는 지금 시점으로 되쏘고 2D는 그린 좌표 그대로다. */
+function pickSegs(): PickSeg[] {
+  const fr = frame();
+  const out: PickSeg[] = [];
+  for (const st of doc.strokes) {
+    if (st.seg3d && fr) {
+      const a = project(fr.toV(st.seg3d[0]), fr.ctx.principal, fr.ctx.f);
+      const b = project(fr.toV(st.seg3d[1]), fr.ctx.principal, fr.ctx.f);
+      if (a && b) out.push({ id: st.id, a, b });
+    } else if (!st.seg3d && st.pts2d.length >= 2 && (!cam.locked || viewIsCurrent())) {
+      // 2D 대기 획은 **그린 뷰의 화면 좌표**다 — 다른 뷰에서는 안 고른다(§9.2)
+      out.push({ id: st.id, a: st.pts2d[0], b: st.pts2d[st.pts2d.length - 1] });
+    }
+  }
+  return out;
+}
+
+/** 고른 획을 굵게 그린다 — **무엇에 작용하는지 보이지 않으면 조작이 아니다.** */
+function drawPicked(ctx2: CanvasRenderingContext2D) {
+  if (!picked) return;
+  const st = doc.strokes.find(x => x.id === picked);
+  if (!st) return;
+  const fr = frame();
+  let a: Pt2 | null = null, b: Pt2 | null = null;
+  if (st.seg3d && fr) {
+    a = project(fr.toV(st.seg3d[0]), fr.ctx.principal, fr.ctx.f);
+    b = project(fr.toV(st.seg3d[1]), fr.ctx.principal, fr.ctx.f);
+  } else if (!st.seg3d) { a = st.pts2d[0]; b = st.pts2d[st.pts2d.length - 1]; }
+  if (!a || !b) return;
+  ctx2.save();
+  ctx2.strokeStyle = "#0a84ff"; ctx2.lineWidth = 5; ctx2.globalAlpha = 0.55;
+  ctx2.lineCap = "round"; ctx2.setLineDash([]);
+  ctx2.beginPath(); ctx2.moveTo(a[0], a[1]); ctx2.lineTo(b[0], b[1]); ctx2.stroke();
+  ctx2.restore();
+}
+
 function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   // **그리드·가이드·소실점 표식은 확정 뷰의 화면 좌표다.** 자유 시점에서 그리면
   // 화면에 붙어 따라다니는 유령이 된다 — 그래서 그 셋만 확정 시점으로 묶는다.
   // **스냅 표식과 미리보기는 지금 시점의 화면 좌표**라 어느 뷰에서든 옳다(L-B.8).
   drawPending(ctx2);
+  drawPicked(ctx2);
   drawPromoteLoss(ctx2);
   drawSnapMark(ctx2);
   drawLivePreview(ctx2);
@@ -875,8 +1004,25 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
 
 const ink = new InkCanvas(canvas, {
   onBackground: drawBelowInk,
-  dragMode: () => tool === "adjust" && !cam.locked,
+  dragMode: () => (tool === "adjust" && !cam.locked) || tool === "edit",
   onDrag: (p, phase) => {
+    // **고치기**(L-D.1, §9.5) — 누르는 순간 고른다. 빈 곳이면 선택이 풀린다(A-3: 선례 그대로)
+    if (tool === "edit") {
+      if (phase !== "down") return;
+      const hit = pickStroke(p);
+      picked = hit;
+      const st = hit ? doc.strokes.find(x => x.id === hit) : null;
+      note = st
+        ? `고름 — ${st.seg3d ? "3D" : "2D 대기"} 획 · 축 `
+          + (typeof st.axis === "number"
+             ? `<b style="color:${AXIS_COLOR[st.axis]}">축${st.axis + 1}</b>`
+               + (st.userAxis ? " <b>(사용자 지정)</b>" : "")
+             : `<span class="warn">${st.axis === "free" ? "미정" : String(st.axis)}</span>`)
+          + " <span class=\"dim\">· ← 축1 · → 축2 · ↑ 축3 · Delete 삭제</span>"
+        : "선택을 풀었습니다";
+      refresh();
+      return;
+    }
     // **끌면 그리드와 이미 놓인 기하가 따라 움직인다**(§5.2). 자동 검사가 원리적으로 불가능하므로
     // (§5.3) 이것이 유일한 판정 수단이다.
     if (phase === "down") {
@@ -1022,6 +1168,8 @@ function renderBar() {
     btn("draw", "그리기", tool === "draw"),
     btn("adjust", "가이드 조정", tool === "adjust", cam.locked || !cam.guides.length),
     btn("orbit", "궤도", tool === "orbit", !cam.locked),
+    // **고치기**(L-D.1, §9.5) — 클릭으로 고르고 화살표로 축 지정, Delete로 삭제
+    btn("edit", "고치기", tool === "edit", !doc.strokes.length),
     '<span class="sep"></span>',
     btn("draft", "소실점 추정", false, cam.locked),
     btn("extend", "가이드 늘리기", false, cam.locked || !cam.guides.length),
@@ -1194,8 +1342,13 @@ barEl.addEventListener("click", (e) => {
   const b = (e.target as HTMLElement).closest("button");
   if (!b) return;
   const act = (b as HTMLButtonElement).dataset.act!;
-  if (act === "draw" || act === "adjust" || act === "orbit") {
-    tool = act;
+  if (act === "draw" || act === "adjust" || act === "orbit" || act === "edit") {
+    tool = act as Tool;
+    if (act !== "edit") picked = null;
+    if (act === "edit") {
+      note = "**고치기** — 획을 눌러 고른 뒤 <b>← 축1 · → 축2 · ↑ 축3</b>으로 지정하거나"
+           + " <b>Delete</b>로 지웁니다. <span class=\"dim\">빈 곳을 누르면 선택이 풀립니다</span>";
+    }
     // 궤도는 **잉크 캔버스를 통과시켜** 밑의 three 캔버스가 받는다(OrbitControls 그대로).
     canvas.style.pointerEvents = act === "orbit" ? "none" : "auto";
     if (act === "orbit" && stage.isPinned) {
@@ -1258,6 +1411,14 @@ statusEl.addEventListener("click", (e) => {
 // 화살표 배정도 SketchUp의 화면 배치 그대로다(왼쪽=축1 · 위=수직축 · 오른쪽=축2).
 const ARROW_AXIS: Record<string, 0 | 1 | 2> = { ArrowLeft: 0, ArrowRight: 1, ArrowUp: 2 };
 window.addEventListener("keydown", (e) => {
+  // **고치기 모드가 먼저다**(L-D.1) — 같은 키를 쓰지만 대상이 다르다:
+  // 그리는 중의 축 고정은 **다음 획**에, 여기는 **고른 획**에 건다
+  if (tool === "edit" && picked) {
+    if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deletePicked(); return; }
+    const a = ARROW_AXIS[e.key];
+    if (a != null) { e.preventDefault(); assignAxis(a); return; }
+    if (e.key === "Escape") { picked = null; note = ""; refresh(); return; }
+  }
   if (!cam.locked) return;                       // 확정 전에는 잠글 축이 없다
   if (e.key === "Shift" && axisLock == null) { axisLock = "infer"; shiftHeld = null; refresh(); return; }
   const ax = ARROW_AXIS[e.key];
@@ -1329,6 +1490,10 @@ refresh();
     relinked: promoteReport.relinked,
   },
   orderMarks: () => orderMarks.map(m => m.order),
+  // L-D.1 — 고치기(§9.5). **앱 경로 그대로**를 종단 확인이 부른다(#17)
+  pick: (p: Pt2) => { picked = pickStroke(p); refresh(); return picked; },
+  picked: () => picked,
+  deletePicked, assignAxis,
   revertToOrder,
   relinkLostSnaps,
   /** 되돌리기가 **카메라까지** 되돌리는지 대조하기 위한 창(L-C.2). */

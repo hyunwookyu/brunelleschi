@@ -1064,7 +1064,7 @@
     ]
   },
   "constants": {
-    "hash": "46c028d1",
+    "hash": "2fd74e1c",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -1080,6 +1080,9 @@
         "rank_margin": 2.5,
         "vp_dist_ceiling": 0.22,
         "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
       },
       "VP_TOL": {
         "support_deg": 2.5,

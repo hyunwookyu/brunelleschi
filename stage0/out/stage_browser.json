@@ -19,7 +19,7 @@
     "camera": "요 35°·피치 15° 3점(f=1000px). 가이드를 **참 소실점**으로 세운다"
   },
   "constants": {
-    "hash": "46c028d1",
+    "hash": "2fd74e1c",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -35,6 +35,9 @@
         "rank_margin": 2.5,
         "vp_dist_ceiling": 0.22,
         "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
       },
       "VP_TOL": {
         "support_deg": 2.5,
@@ -845,6 +848,60 @@
       "**얼마나 자주 잃는가** — 이 픽스처는 표시 경로를 지나려고 고른 **p90 자리**다. 빈도는 `order_undo.json`이 216장면으로 잰다",
       "여러 차수 표식(1점·2점·3점)이 동시에 있을 때의 동작 — 이 픽스처는 2 → 3 하나뿐이다",
       "돌린 뷰에서의 표시 — `drawPromoteLoss`는 **확정 시점에서만** 그린다(`pts2d`가 그 화면 좌표다)"
+    ]
+  },
+  "l_d1": {
+    "setup": {
+      "strokes": 14,
+      "lifted": 12,
+      "pending": 2,
+      "tool_button_on": true
+    },
+    "pick": {
+      "want": "s1",
+      "got": "s1",
+      "cleared": null,
+      "picked_after": null
+    },
+    "assign": {
+      "n": 2,
+      "before": 12,
+      "after": 12,
+      "tried": [
+        {
+          "id": "s13",
+          "picked": true,
+          "userAxis": true,
+          "axis": 2,
+          "placed": false
+        },
+        {
+          "id": "s14",
+          "picked": true,
+          "userAxis": true,
+          "axis": 2,
+          "placed": false
+        }
+      ]
+    },
+    "assign_note": "대기 2획 중 2획을 골라 축3으로 지정했고 **0획이 올라갔다** — 3D 12 → 12. ⚠ **면 지정이 아니라 축 지정이다**(면 생성이 범위 밖) — 방향만 주므로 §5.4의 일괄 풀이가 그 방향으로 이어지는 구조를 찾아야 놓인다.",
+    "erase": {
+      "id": "s1",
+      "beforeN": 14,
+      "afterN": 13,
+      "gone": true,
+      "picked_cleared": true,
+      "snap_targets": [
+        12,
+        11
+      ],
+      "restored_n": 14,
+      "restored_has_it": true
+    },
+    "what_this_does_not_say": [
+      "**면 지정** — 면 생성이 범위 밖이라(DEFERRED) 줄 수 있는 것은 **방향**뿐이다. 면 지정은 획을 평면에 가두고 축 지정은 그러지 않는다",
+      "**사용자가 옳은 축을 고르는가** — 표본 0(AS-C1). 여기서는 축3을 기계적으로 준다",
+      "**지운 획에 붙어 있던 스냅** — 개수를 세어 알리지만 그 획들을 2D로 되돌리지는 않는다 (사용자가 안 시킨 삭제가 되기 때문이다)"
     ]
   }
 }

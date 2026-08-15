@@ -1,7 +1,7 @@
 {
   "spec": "S-3 §4.5 미리보기 ↔ 확정. AS-3(유일한 중단 조건)의 임계는 D-S6에 **측정 전에** 박혀 있다.",
   "constants": {
-    "hash": "46c028d1",
+    "hash": "2fd74e1c",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -17,6 +17,9 @@
         "rank_margin": 2.5,
         "vp_dist_ceiling": 0.22,
         "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
       },
       "VP_TOL": {
         "support_deg": 2.5,

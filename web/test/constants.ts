@@ -26,6 +26,7 @@ import { DRAFT_TOL } from "../src/s3d/vpDraft.js";
 import { SENS_TOL } from "../src/s3d/vpSensitivity.js";
 import { SNAP_TOL } from "../src/s3d/snap.js";
 import { LIVE_TOL } from "../src/s3d/liveLine.js";
+import { PICK_TOL } from "../src/ui/pick.js";
 import { INK_GRADES } from "../src/s3d/synthInk.js";
 
 /**
@@ -34,6 +35,8 @@ import { INK_GRADES } from "../src/s3d/synthInk.js";
  */
 export const SHARED_CONSTANTS = {
   AXIS_TOL,
+  // L-D.1 §9.5 — 고르기 반경. 하네스(`e2e/stage.spec.ts`의 `l_d1`)가 읽는다
+  PICK_TOL,
   VP_TOL,
   LIFT_TOL,
   HOMOG_TOL,

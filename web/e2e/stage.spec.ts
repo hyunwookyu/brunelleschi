@@ -1403,3 +1403,152 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
   ];
   led.l_c2 = l;
 });
+
+/**
+ * L-D.1 — **사용자 지정·삭제 경로**(§9.5). 산출: `stage_browser.json`의 `l_d1`.
+ *
+ * §9.5는 두 문장뿐이다 — "'이 획은 저 면 위에 있다' 수준의 지정 경로와, 지우는 경로를 둔다".
+ * **면 생성이 범위 밖이므로**(DEFERRED) 지정은 **축 지정**으로 한다. 그 차이를 아래에 적는다.
+ *
+ * 재는 것은 **배선**이다:
+ *   ① 클릭이 옳은 획을 고른다 ② 지우면 문서·씬·스냅이 함께 정리된다 ③ 되돌릴 수 있다
+ *   ④ **축 지정이 실제로 대기 획을 올린다**(0이면 이 경로는 쓸모가 없고 그 사실을 적는다)
+ *   ⑤ 지정한 축을 **차수 승격이 안 덮는다**(`userAxis`, §6.1)
+ */
+test("고치기 — 획을 고르고, 축을 지정하고, 지운다", async ({ page }) => {
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  const l: Record<string, unknown> = {};
+
+  l.setup = await page.evaluate(async () => {
+    const S = window.S2S;
+    const m = await import("/test/scene3d.ts");
+    const doc = await import("/src/ui/doc.ts");
+    const vd = await import("/src/s3d/vpDraft.ts");
+    const el = document.getElementById("ink") as HTMLCanvasElement;
+    const size: [number, number] = [el.clientWidth, el.clientHeight];
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
+    const sc = m.scene(35, 15, 1000, size);
+    const edges = m.boxEdges(sc, [0.6, -0.4, 4.2], 1.2, 1.0, 0.9);
+    let s0 = 12345 >>> 0;
+    const r = () => { s0 = (s0 * 1664525 + 1013904223) >>> 0; return s0 / 4294967296; };
+    for (const e of m.drawEdges(sc, edges, "medium", r, 0.37, 0.006, 0)) {
+      S.doc().strokes.push(doc.newSStroke(e.pts2d, S.doc().currentView));
+    }
+    const margin = 0.02 * Math.hypot(size[0], size[1]);
+    const guides: unknown[] = [];
+    sc.vps.forEach((vp: number[], ax: number) => {
+      for (const t of [[[0.30, 0.30], [0.30, 0.72]], [[0.70, 0.30], [0.70, 0.72]],
+                       [[0.32, 0.35], [0.70, 0.35]]][ax]) {
+        const q = [t[0] * size[0], t[1] * size[1]];
+        const far = [vp[0] + (q[0] - vp[0]) * 1e4, vp[1] + (q[1] - vp[1]) * 1e4];
+        const cl = vd.clipToCanvas([vp[0], vp[1]], far, size, margin);
+        if (cl) guides.push({ axis: ax, a: cl[0], b: cl[1] });
+      }
+    });
+    // **안 올라가는 획을 만든다** — §9.5가 말하는 그 상황이다("영원히 안 올라가는 획이 쌓일 수 있다").
+    // 면 대각선은 두 꼭짓점에 닿지만 **어느 축도 아니라서** 축 판정이 `free`로 남긴다
+    for (const d of m.faceDiagonals(sc, [0.6, -0.4, 4.2], 1.2, 1.0, 0.9)) {
+      const pa = m.project(d.a, sc.principal, sc.f), pb = m.project(d.b, sc.principal, sc.f);
+      if (pa && pb) S.doc().strokes.push(doc.newSStroke([pa, pb] as any, S.doc().currentView));
+    }
+    S.cam.guides = guides;
+    S.cam.apply(); S.refresh();
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="edit"]')!.click();
+    return { strokes: S.doc().strokes.length,
+             lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+             pending: S.doc().strokes.filter((s: any) => !s.seg3d).length,
+             tool_button_on: !!document.querySelector('#bar button[data-act="edit"].on') };
+  });
+  const su = l.setup as any;
+  expect(su.tool_button_on).toBe(true);
+  expect(su.lifted).toBeGreaterThan(0);
+  // **안 올라간 획이 실제로 있다** — 없으면 아래 지정 판정이 공허하다(#32의 실행 카운터)
+  expect(su.pending).toBeGreaterThan(0);
+
+  // ---- ① 클릭이 옳은 획을 고른다
+  l.pick = await page.evaluate(() => {
+    const S = window.S2S;
+    const st = S.doc().strokes.find((s: any) => s.seg3d)!;
+    // 그 획의 **화면 중점**을 누른다 — 잉크가 있던 자리이고 3D도 같은 픽셀이다(§5.3 보장)
+    const p0 = st.pts2d[0], p1 = st.pts2d[st.pts2d.length - 1];
+    const mid: [number, number] = [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2];
+    const got = S.pick(mid);
+    // **빈 곳을 누르면 풀린다**(A-3: 선례 그대로)
+    const empty = S.pick([4, 4]);
+    return { want: st.id, got, cleared: empty, picked_after: S.picked() };
+  });
+  const pk = l.pick as any;
+  expect(pk.got).toBe(pk.want);
+  expect(pk.cleared).toBeNull();
+
+  // ---- ④⑤ 축 지정이 대기 획을 올리는가, 그리고 승격이 안 덮는가
+  l.assign = await page.evaluate(() => {
+    const S = window.S2S;
+    const wait = S.doc().strokes.filter((s: any) => !s.seg3d);
+    if (!wait.length) return { skipped: "대기 획이 없다", n: 0 };
+    const before = S.doc().strokes.filter((s: any) => s.seg3d).length;
+    const tried: any[] = [];
+    for (const st of wait) {
+      const p0 = st.pts2d[0], p1 = st.pts2d[st.pts2d.length - 1];
+      S.pick([(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2]);
+      if (S.picked() !== st.id) {
+        tried.push({ id: st.id, picked: false, got: S.picked(),
+                     view_is_current: st.viewRef === S.currentView() });
+        continue;
+      }
+      S.assignAxis(2);
+      const now = S.doc().strokes.find((s: any) => s.id === st.id)!;
+      tried.push({ id: st.id, picked: true, userAxis: now.userAxis, axis: now.axis,
+                   placed: !!now.seg3d });
+    }
+    return { n: wait.length, before,
+             after: S.doc().strokes.filter((s: any) => s.seg3d).length, tried };
+  });
+  const as = l.assign as any;
+  // **지정이 실제로 걸린다** — `userAxis`가 서고 축이 그 값이다(#7: 추측하지 않는다)
+  const done = (as.tried ?? []).filter((t: any) => t.picked);
+  expect(done.length).toBeGreaterThan(0);
+  for (const t of done) { expect(t.userAxis).toBe(true); expect(t.axis).toBe(2); }
+  l.assign_note = `대기 ${as.n}획 중 ${done.length}획을 골라 축3으로 지정했고 `
+    + `**${done.filter((t: any) => t.placed).length}획이 올라갔다** — 3D ${as.before} → ${as.after}. `
+    + "⚠ **면 지정이 아니라 축 지정이다**(면 생성이 범위 밖) — 방향만 주므로 "
+    + "§5.4의 일괄 풀이가 그 방향으로 이어지는 구조를 찾아야 놓인다.";
+
+  // ---- ② ③ 지우기와 되돌리기
+  l.erase = await page.evaluate(() => {
+    const S = window.S2S;
+    const st = S.doc().strokes.find((s: any) => s.seg3d)!;
+    const p0 = st.pts2d[0], p1 = st.pts2d[st.pts2d.length - 1];
+    S.pick([(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2]);
+    const beforeN = S.doc().strokes.length, beforeTargets = S.snapTargets();
+    S.deletePicked();
+    const afterN = S.doc().strokes.length, afterTargets = S.snapTargets();
+    const gone = !S.doc().strokes.some((s: any) => s.id === st.id);
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="undo"]')!.click();
+    return { id: st.id, beforeN, afterN, gone, picked_cleared: S.picked() === null,
+             // **씬·스냅 후보가 함께 줄었는가** — 문서에서만 지우면 여기가 안 움직인다
+             snap_targets: [beforeTargets, afterTargets],
+             restored_n: S.doc().strokes.length,
+             restored_has_it: S.doc().strokes.some((s: any) => s.id === st.id) };
+  });
+  const er = l.erase as any;
+  expect(er.afterN).toBe(er.beforeN - 1);
+  expect(er.gone).toBe(true);
+  expect(er.picked_cleared).toBe(true);
+  // **문서에서만 지우지 않았다** — 스냅 대상이 함께 줄었다
+  expect(er.snap_targets[1]).toBe(er.snap_targets[0] - 1);
+  // **되돌릴 수 있다**
+  expect(er.restored_n).toBe(er.beforeN);
+  expect(er.restored_has_it).toBe(true);
+
+  l.what_this_does_not_say = [
+    "**면 지정** — 면 생성이 범위 밖이라(DEFERRED) 줄 수 있는 것은 **방향**뿐이다. "
+      + "면 지정은 획을 평면에 가두고 축 지정은 그러지 않는다",
+    "**사용자가 옳은 축을 고르는가** — 표본 0(AS-C1). 여기서는 축3을 기계적으로 준다",
+    "**지운 획에 붙어 있던 스냅** — 개수를 세어 알리지만 그 획들을 2D로 되돌리지는 않는다 "
+      + "(사용자가 안 시킨 삭제가 되기 때문이다)",
+  ];
+  led.l_d1 = l;
+});

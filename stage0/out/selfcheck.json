@@ -7723,12 +7723,12 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 179
+      "reads": 190
     },
     {
       "field": "pts2d",
       "writes": 3,
-      "reads": 75
+      "reads": 82
     },
     {
       "field": "pts3d",
@@ -7737,8 +7737,8 @@
     },
     {
       "field": "axis",
-      "writes": 5,
-      "reads": 86
+      "writes": 6,
+      "reads": 91
     },
     {
       "field": "rep",
@@ -7771,7 +7771,7 @@
       "reads": 16
     }
   ],
-  "constants_hash": "46c028d1",
+  "constants_hash": "2fd74e1c",
   "metrics_hash": "3df57ac7",
   "scanned": [
     "axis_judgement.json",
