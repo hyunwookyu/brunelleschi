@@ -151,10 +151,15 @@ describe("L-B.3 — 스냅 반경과 성공률", () => {
     /** **의도하지 않은 붙음** — 반경을 키우는 유일한 측정 가능한 비용(리뷰어 [2]). */
     const unintended: Record<string, Record<string, { snapped: number; n: number }>> = {};
     /** **스냅된 시작점에서의 배치 정확도** — L-B 게이트 두 번째 항목(리뷰어 [1]). */
-    const place: Record<string, {
-      n: number; placed: number; noSnap: number; noAxis: number; noEnd: number;
-      err: number[]; w10: number; w20: number; w50: number;
-    }> = {};
+    type Place = { n: number; placed: number; noSnap: number; noAxis: number; noEnd: number;
+                   err: number[]; w10: number; w20: number; w50: number };
+    const place: Record<string, Place> = {};
+    /**
+     * ⚠ **못으로 박힌 `end_jitter = 0`을 뺀 판**(리뷰어 2회차 [6]).
+     * `snapped_kind_counts`에는 그 판을 넣어 놓고 **여기는 안 넣었다** — 그런데
+     * L-B 게이트의 두 번째 항목이 이 표다. `shape_err.p10 = 0`이 증거였다.
+     */
+    const placeLive: Record<string, Place> = {};
 
     for (const rr of RADII) {
       const key = rr.toFixed(3);
@@ -295,6 +300,8 @@ describe("L-B.3 — 스냅 반경과 성공률", () => {
       const rk = rr.toFixed(3);
       place[rk] = { n: 0, placed: 0, noSnap: 0, noAxis: 0, noEnd: 0,
                     err: [], w10: 0, w20: 0, w50: 0 };
+      placeLive[rk] = { n: 0, placed: 0, noSnap: 0, noAxis: 0, noEnd: 0,
+                        err: [], w10: 0, w20: 0, w50: 0 };
       for (let ci = 0; ci < COMPOSITIONS.length; ci++) {
         for (const grade of GRADES) for (const seed of SEEDS) for (const jit of JITTERS) {
           const fx = fixture(ci, grade, seed, jit);
@@ -309,30 +316,32 @@ describe("L-B.3 — 스냅 반경과 성공률", () => {
           const structDiag = Math.max(...fx.segs.flatMap(a =>
             fx.segs.map(b => Math.max(norm3(sub3(a.a, b.a)), norm3(sub3(a.b, b.b))))));
           const preAll = staticCandidates(fx.segs);
-          const cell = place[rk];
+          const cells = jit > 0 ? [place[rk], placeLive[rk]] : [place[rk]];
+          const bump = (f: (c: Place) => void) => { for (const c2 of cells) f(c2); };
           for (let k = 0; k < fx.starts.length; k++) {
-            cell.n += 1;
+            bump(c2 => { c2.n += 1; });
             const self = `s${k}`;
             const targets = fx.segs.filter((_, i) => i !== k);
             const pre = preAll.filter((c: StaticCand) => c.ofId !== self && c.ofId2 !== self);
             const start = fx.starts[k].pt;
             const cand = snapCandidates(start, targets, ctxP, { radius_ratio: rr }, pre)[0];
-            if (!cand) { cell.noSnap += 1; continue; }
+            if (!cand) { bump(c2 => { c2.noSnap += 1; }); continue; }
             // 앱과 **같은 경로**: 시작점을 대상의 상으로 옮기고 축을 판정한 뒤 끝점을 정한다
             const endPt = fx.endPts[k];
             const near = nearestAxisOnScreen(cand.at, dirs, cand.screen, endPt,
                                              { principal: sc.principal, f: sc.f });
-            if (!near || near.deg > LIVE_TOL.axis_deg) { cell.noAxis += 1; continue; }
+            if (!near || near.deg > LIVE_TOL.axis_deg) { bump(c2 => { c2.noAxis += 1; }); continue; }
             const seg = segmentFromAnchor(cand.at, dirs[near.axis], endPt,
                                           { principal: sc.principal, f: sc.f });
-            if (!seg) { cell.noEnd += 1; continue; }
-            cell.placed += 1;
+            if (!seg) { bump(c2 => { c2.noEnd += 1; }); continue; }
             const T = fx.segs[k];
             const e = Math.max(norm3(sub3(seg[0], T.a)), norm3(sub3(seg[1], T.b))) / structDiag;
-            cell.err.push(e);
-            if (e > 0.1) cell.w10 += 1;
-            if (e > 0.2) cell.w20 += 1;
-            if (e > 0.5) cell.w50 += 1;
+            bump(c2 => {
+              c2.placed += 1; c2.err.push(e);
+              if (e > 0.1) c2.w10 += 1;
+              if (e > 0.2) c2.w20 += 1;
+              if (e > 0.5) c2.w50 += 1;
+            });
           }
         }
       }
@@ -513,7 +522,20 @@ describe("L-B.3 — 스냅 반경과 성공률", () => {
           + "앵커가 없다. 이것은 측정이 아니라 **설계상의 사실**이라 팔로 돌리지 않고 여기 적는다"
           + "(사전 등록의 '대조군: 스냅 끔'이 이것이다).",
         axis_tol_deg: LIVE_TOL.axis_deg,
-        rows: Object.fromEntries(Object.entries(place).map(([rk, v]) => [rk, {
+        which_row_to_quote: "⚠ **`rows_end_jitter_gt_0`를 인용한다.** `rows_all`에는 끝점이 참 "
+          + "모서리에 **못으로 박힌** `end_jitter = 0`의 1080셀(25%)이 섞여 있고, 그 증거가 "
+          + "`rows_all`의 `shape_err.p10 = 0`이다. PITFALLS #2·#11 — 초판이 "
+          + "`snapped_kind_counts`에는 이 판을 넣고 **여기는 빠뜨렸다**.",
+        rows_end_jitter_gt_0: Object.fromEntries(Object.entries(placeLive).map(([rk, v]) => [rk, {
+          placed_over_all: `${v.placed}/${v.n}`,
+          no_snap: v.noSnap, no_axis: v.noAxis, no_end: v.noEnd,
+          sum_check: v.placed + v.noSnap + v.noAxis + v.noEnd === v.n,
+          shape_err: stat(v.err),
+          silent_wrong: { cut_0_1: `${v.w10}/${v.placed}`, cut_0_2: `${v.w20}/${v.placed}`,
+                          cut_0_5: `${v.w50}/${v.placed}` },
+          silent_wrong_rate_0_2: round(v.w20 / Math.max(1, v.placed), 4),
+        }])),
+        rows_all: Object.fromEntries(Object.entries(place).map(([rk, v]) => [rk, {
           placed_over_all: `${v.placed}/${v.n}`,
           no_snap: v.noSnap, no_axis: v.noAxis, no_end: v.noEnd,
           sum_check: v.placed + v.noSnap + v.noAxis + v.noEnd === v.n,

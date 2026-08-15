@@ -183,6 +183,19 @@ describe("L-B.3(a) — 참 카메라에서 coarse 배치가 무너지는 원인"
       }
     }
 
+    // 결론 문장의 범위를 **표에서 직접 낸다**(#1 — 손으로 적으면 표와 어긋난다)
+    const allArms = Object.values(arms).flatMap(g => Object.values(g));
+    const meds = allArms.map(a => median(a.shape)).filter((x): x is number => x != null);
+    const sws = allArms.filter(a => a.placed > 0).map(a => a.w20 / a.placed);
+    const shapeLo = round(Math.min(...meds), 4), shapeHi = round(Math.max(...meds), 4);
+    const swLo = `${Math.round(100 * Math.min(...sws))}%`;
+    const swHi = `${Math.round(100 * Math.max(...sws))}%`;
+    const touchCurve = TOUCH.map(t2 => round(median(arms[`oracle_touch_${t2}`].precise.shape), 4));
+    const jTrue = {
+      judged: arms.judged_default.precise.jTrue, oracle: arms.oracle_axis_default.precise.jTrue,
+      judgedC: arms.judged_default.coarse.jTrue, oracleC: arms.oracle_axis_default.coarse.jTrue,
+    };
+
     const bake = (m: Record<string, Record<string, Arm>>) =>
       Object.fromEntries(Object.entries(m).map(([k, v]) =>
         [k, Object.fromEntries(Object.entries(v).map(([g, a]) => [g, report(a)]))]));
@@ -237,8 +250,18 @@ describe("L-B.3(a) — 참 카메라에서 coarse 배치가 무너지는 원인"
           + "남던 사유는 `구조에 이어지지 않았다`(연결 성분 분열)뿐이었다.",
         conditioning: "**조건수는 '못 푸는' 문제가 아니라 '틀리게 푸는' 문제로 나타난다.** "
           + "`solveNull`이 해를 못 내는 경우(`교점 제약이 형태를 정하지 못한다`)는 **0건**이다. "
-          + "대신 형태 오차 중앙이 어느 팔에서도 0.10~0.18이고, 놓인 것의 "
-          + "**cut 0.2 조용히 틀림이 34~39%**다.",
+          + `대신 형태 오차 중앙이 팔·등급을 통틀어 **${shapeLo}~${shapeHi}**이고, 놓인 것의 `
+          + `**cut 0.2 조용히 틀림이 ${swLo}~${swHi}**다. ⚠ 초판은 이 범위를 0.10~0.18 / `
+          + "34~39%로 적었는데 **자기 표와 안 맞았다**(리뷰어 2회차 [7]) — 이제 표에서 직접 낸다.",
+        monotone_cost: "⚠ **접합 반경을 키울수록 형태 오차 중앙이 단조 증가한다**(#16). "
+          + `oracle_touch_* (precise)에서 ${touchCurve.join(" → ")} — touch ${TOUCH.join(" / ")}.`,
+        oracle_arm_moves_two_stages: "⚠ **오라클 축 팔은 교점 집합도 함께 바꾼다**(리뷰어 2회차 [8]). "
+          + "축 라벨이 바뀌면 `frameOf`가 서는 획이 달라지고 `findJoints`가 **같은 축 쌍을 제외**"
+          + "하므로 후보 쌍 자체가 달라진다 — 참 교점 회수가 "
+          + `precise ${jTrue.judged} → ${jTrue.oracle}, coarse ${jTrue.judgedC} → ${jTrue.oracleC}로 는다. `
+          + "**그러므로 '지배항은 축 판정'은 '축 판정과 **그 하류인 교점 회수**'로 읽어야 한다** — "
+          + "둘의 몫은 이 설계로 갈리지 않는다. 갈리려면 축 라벨만 오라클로 주고 교점 집합은 "
+          + "judged 것으로 고정하는 팔이 필요한데 `liftAll` 내부를 갈라야 한다(DEFERRED).",
         tradeoff: "⚠ **고칠 때마다 조용히 틀림이 함께 는다**(#16 — 병목이 옮겨간 것을 없어진 것으로 "
           + "읽지 않는다). 오라클 축 기본 반경 496/1257(39%) → 오라클 축 + 0.09 954/1440(66%). "
           + "**배치율만 보면 반경을 키우는 것이 이득으로 보이는데 아니다.**",

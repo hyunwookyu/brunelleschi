@@ -24,7 +24,17 @@
 import { detectVps, linesFromStrokes, assignAxes, type DetLine } from "./vpDetect.js";
 import type { Pt2 } from "./camera.js";
 
-export interface Guide { axis: 0 | 1 | 2; a: Pt2; b: Pt2 }
+export interface Guide {
+  axis: 0 | 1 | 2; a: Pt2; b: Pt2;
+  /**
+   * **그림에서 나온 것이 아니라 채운 것인가**(L-B.3 항목 b · 리뷰어 2회차 [11]).
+   *
+   * 채우기를 넣은 뒤 **초안만으로 카메라가 서고 민감도 숫자가 뜬다** — 그런데 그 축 일부는
+   * 검출이 아니라 **표준 2점 구도의 기본값**이다. 구분하지 않으면 A-3의 "없는 숫자를
+   * 지어내지 않는다"가 뒤집힌다. 화면이 이 표시로 갈라 그린다.
+   */
+  filled?: boolean;
+}
 
 export const DRAFT_TOL = {
   /** 핸들 반경(화면 대각 대비). 손가락으로도 잡히게 넉넉히. */
@@ -137,7 +147,8 @@ export function draftFromDetection(
     const neutral = neutralGuides(imgSize);
     for (const ax of [0, 1, 2] as const) {
       if (out.filter(g => g.axis === ax).length >= 2) continue;
-      out.push(...neutral.filter(g => g.axis === ax).slice(0, 2 - out.filter(g => g.axis === ax).length));
+      const need = 2 - out.filter(g => g.axis === ax).length;
+      out.push(...neutral.filter(g => g.axis === ax).slice(0, need).map(g => ({ ...g, filled: true })));
     }
   }
   return out;

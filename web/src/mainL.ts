@@ -59,7 +59,17 @@ let lastSnapNote = "";
  * "미리보기와 확정의 일치(0)"가 그것을 요구한다.
  */
 let live: { anchor: SnapCand; axis: 0 | 1 | 2 | null; deg: number | null;
-            seg: [Vec3, Vec3] | null } | null = null;
+            seg: [Vec3, Vec3] | null; locked: boolean } | null = null;
+/**
+ * **축 고정**(L-B.5, §4). SketchUp을 그대로 따른다(A-3) —
+ * `Shift`는 **지금 추론된 축**을 누르는 동안 잠그고, 화살표는 특정 축을 토글한다.
+ *
+ * `null`이면 추론에 맡긴다. `"infer"`는 Shift가 눌린 상태이고, 실제로 잠기는 축은
+ * **그때 추론된 것**이다 — 그래서 값이 아니라 표시로 둔다.
+ */
+let axisLock: 0 | 1 | 2 | "infer" | null = null;
+/** Shift가 실제로 잠근 축. 뗄 때까지 유지한다. */
+let shiftHeld: 0 | 1 | 2 | null = null;
 const refreshSens = () => { sens = cam.guides.length ? cam.sensitivity() : []; };
 const undoStack: DocState[] = [];
 const UNDO_MAX = 200;
@@ -127,15 +137,32 @@ const axisDirs = (c: PlaceCtx) =>
 function resolveLive(c: PlaceCtx, at: Vec3, a2: Pt2, b2: Pt2) {
   const dirs = axisDirs(c);
   const near = nearestAxisOnScreen(at, dirs, a2, b2, c);
-  if (!near) return { axis: null, deg: null, seg: null, why: "축 후보가 없습니다" };
-  if (near.deg > LIVE_TOL.axis_deg) {
-    return { axis: null, deg: near.deg, seg: null,
-             why: `축과 ${near.deg.toFixed(1)}° 벌어졌습니다(${LIVE_TOL.axis_deg}° 이내여야 합니다)` };
+  // **고정은 여기 안에 있어야 한다**(#17) — 바깥에서 덮으면 미리보기와 확정이 갈린다
+  const forced = lockedAxis();
+  const use = forced != null && dirs[forced] ? forced : null;
+  if (use == null) {
+    if (!near) return { axis: null, deg: null, seg: null, locked: false, why: "축 후보가 없습니다" };
+    if (near.deg > LIVE_TOL.axis_deg) {
+      return { axis: null, deg: near.deg, seg: null, locked: false,
+               why: `축과 ${near.deg.toFixed(1)}° 벌어졌습니다`
+                  + `(${LIVE_TOL.axis_deg}° 이내여야 합니다 — Shift로 고정할 수 있습니다)` };
+    }
   }
-  const seg = segmentFromAnchor(at, dirs[near.axis], b2, c);
+  const ax = (use ?? near!.axis) as 0 | 1 | 2;
+  const seg = segmentFromAnchor(at, dirs[ax], b2, c);
+  const deg = near && near.axis === ax ? near.deg : null;
   return seg
-    ? { axis: near.axis, deg: near.deg, seg, why: "" }
-    : { axis: near.axis, deg: near.deg, seg: null, why: "끝점이 정해지지 않습니다" };
+    ? { axis: ax, deg, seg, locked: use != null, why: "" }
+    : { axis: ax, deg, seg: null, locked: use != null, why: "끝점이 정해지지 않습니다" };
+}
+
+/**
+ * 지금 잠긴 축. `Shift`는 **그때 추론된 축**을 잠그므로 처음 눌릴 때 확정되고
+ * 뗄 때까지 유지된다(SketchUp과 같다). 화살표는 축을 직접 고른다.
+ */
+function lockedAxis(): 0 | 1 | 2 | null {
+  if (axisLock === "infer") return shiftHeld;
+  return axisLock;
 }
 
 /**
@@ -149,8 +176,12 @@ function placeLive(st: SStroke, c: PlaceCtx, at: Vec3): boolean {
     return false;
   }
   st.axis = r.axis;
+  // **사용자가 고른 축은 재분류가 덮지 않는다**(`doc.ts`의 `userAxis`, §6.1의 "사용자 지정만 유지")
+  st.userAxis = r.locked;
   st.seg3d = r.seg;
-  lastSnapNote = `축${r.axis + 1}로 확정 (축과 ${r.deg!.toFixed(1)}°)`;
+  lastSnapNote = r.locked
+    ? `축${r.axis + 1}로 **고정**해 확정`
+    : `축${r.axis + 1}로 확정 (축과 ${r.deg != null ? r.deg.toFixed(1) : "?"}°)`;
   return true;
 }
 
@@ -264,8 +295,9 @@ function drawGuideHandles(ctx2: CanvasRenderingContext2D) {
   for (const g of cam.guides) {
     const st = cam.guideState.get(g.axis);
     ctx2.strokeStyle = AXIS_COLOR[g.axis];
-    ctx2.globalAlpha = (on ? 0.85 : 0.3) * (st?.infinite ? 0.5 : 1);
-    ctx2.setLineDash(st?.infinite ? [2, 3] : [5, 4]);
+    // **채운 가이드는 흐리고 다른 파선**이다 — 그림에서 나온 것이 아니라는 표시다
+    ctx2.globalAlpha = (on ? 0.85 : 0.3) * (st?.infinite ? 0.5 : 1) * (g.filled ? 0.45 : 1);
+    ctx2.setLineDash(st?.infinite ? [2, 3] : (g.filled ? [1, 5] : [5, 4]));
     ctx2.lineWidth = 1.5;
     ctx2.beginPath(); ctx2.moveTo(g.a[0], g.a[1]); ctx2.lineTo(g.b[0], g.b[1]); ctx2.stroke();
     if (!on) continue;
@@ -447,8 +479,14 @@ const ink = new InkCanvas(canvas, {
     const segs = snapSegs();
     const anchor = live?.anchor ?? snapAt(a0, segs, sc, {}, snapStatic(segs));
     if (!anchor) { live = null; refresh(); return; }
+    // Shift가 눌린 상태면 **처음 추론된 축**을 잡아 둔다(SketchUp과 같다)
+    if (axisLock === "infer" && shiftHeld == null) {
+      const dirs = axisDirs(c);
+      const n0 = nearestAxisOnScreen(anchor.at, dirs, anchor.screen, b0, c);
+      if (n0 && n0.deg <= LIVE_TOL.axis_deg) shiftHeld = n0.axis;
+    }
     const r = resolveLive(c, anchor.at, anchor.screen, b0);
-    live = { anchor, axis: r.axis, deg: r.deg, seg: r.seg };
+    live = { anchor, axis: r.axis, deg: r.deg, seg: r.seg, locked: r.locked };
     refresh();
   },
   onStrokeEnd: (stroke) => {
@@ -576,11 +614,20 @@ function renderStatus() {
   if (!cam.locked && sens.some(x => x.degPerPx != null)) {
     const cells = sens.filter(x => x.degPerPx != null).map(x => {
       const tight = (x.budgetPx ?? 0) < SENS_TOL.unusable_px;
+      const filled = cam.guides.some(g => g.axis === x.axis && g.filled);
       return `<span style="color:${AXIS_COLOR[x.axis]}">■</span>`
         + `<b${tight ? ' style="color:#c0392b"' : ""}>${x.budgetPx!.toFixed(1)}px</b>`
-        + `<span class="dim">(${x.degPerPx!.toFixed(2)}°/px · 선 ${Math.round(x.shortestGuidePx ?? 0)}px)</span>`;
+        + `<span class="dim">(${x.degPerPx!.toFixed(2)}°/px · 선 ${Math.round(x.shortestGuidePx ?? 0)}px`
+        + (filled ? " · <b>채움</b>" : "") + ")</span>";
     }).join(" · ");
     rows.push(`<div>핸들 예산 ${cells}</div>`);
+    // **채운 축은 그림에서 나온 것이 아니다** — 숫자가 뜨는 것 자체가 오해를 만든다(A-3)
+    const filledAxes = [...new Set(cam.guides.filter(g => g.filled).map(g => g.axis))];
+    if (filledAxes.length) {
+      rows.push(`<div class="warn">축 ${filledAxes.map(a => a + 1).join("·")}는 <b>검출이 아니라`
+        + ` 기본 위치로 채운 것</b>입니다 — 그림이 정한 값이 아니므로 <b>반드시 맞춰야</b> 합니다`
+        + ` <span class="dim">(채운 가이드는 흐린 점선입니다)</span></div>`);
+    }
     const tight = sens.filter(x => x.budgetPx != null && x.budgetPx < SENS_TOL.unusable_px);
     if (tight.length) {
       rows.push(`<div class="warn">축 ${tight.map(x => x.axis + 1).join("·")}는 <b>손으로 맞출 수 없습니다</b>`
@@ -596,12 +643,19 @@ function renderStatus() {
         ? ` · <b style="color:${SNAP_COLOR[hoverSnap.kind]}">${SNAP_LABEL[hoverSnap.kind]}</b>`
           + ` <span class="dim">(${hoverSnap.dist.toFixed(0)}px)</span>`
         : ' <span class="dim">(커서 아래 대상 없음)</span>') + "</div>");
+    const lk = lockedAxis();
+    if (axisLock != null) {
+      rows.push(`<div>축 고정 <b>${axisLock === "infer" ? "Shift" : `축${(axisLock as number) + 1}`}</b>`
+        + (lk != null ? ` → <b style="color:${AXIS_COLOR[lk]}">축${lk + 1}</b>` : "")
+        + ` <span class="dim">(← 축1 · → 축2 · ↑ 축3 · Shift 추론 축 · Esc 해제)</span></div>`);
+    }
     if (live) {
       rows.push(`<div>그리는 중 — 시작 <b style="color:${SNAP_COLOR[live.anchor.kind]}">`
         + `${SNAP_LABEL[live.anchor.kind]}</b> · `
         + (live.axis != null
           ? `<b style="color:${AXIS_COLOR[live.axis]}">축${live.axis + 1}</b>`
-            + ` <span class="dim">(${live.deg!.toFixed(1)}°)</span>`
+            + (live.locked ? ' <b>고정</b>'
+               : ` <span class="dim">(${live.deg != null ? live.deg.toFixed(1) : "?"}°)</span>`)
           : `<span class="warn">축 미정</span>`
             + (live.deg != null ? ` <span class="dim">(가장 가까운 축과 ${live.deg.toFixed(1)}°)</span>` : ""))
         + "</div>");
@@ -655,6 +709,38 @@ barEl.addEventListener("click", (e) => {
   refresh();
 });
 
+// ---- 축 고정(L-B.5, §4). **SketchUp 그대로**(A-3) — 새로 배울 것이 없다.
+// 화살표 배정도 SketchUp의 화면 배치 그대로다(왼쪽=축1 · 위=수직축 · 오른쪽=축2).
+const ARROW_AXIS: Record<string, 0 | 1 | 2> = { ArrowLeft: 0, ArrowRight: 1, ArrowUp: 2 };
+window.addEventListener("keydown", (e) => {
+  if (!cam.locked) return;                       // 확정 전에는 잠글 축이 없다
+  if (e.key === "Shift" && axisLock == null) { axisLock = "infer"; shiftHeld = null; refresh(); return; }
+  const ax = ARROW_AXIS[e.key];
+  if (ax != null) {
+    e.preventDefault();
+    axisLock = axisLock === ax ? null : ax;      // 다시 누르면 푼다
+    shiftHeld = null;
+    relive();
+    return;
+  }
+  if (e.key === "Escape" && axisLock != null) { axisLock = null; shiftHeld = null; relive(); }
+});
+window.addEventListener("keyup", (e) => {
+  if (e.key === "Shift" && axisLock === "infer") { axisLock = null; shiftHeld = null; relive(); }
+});
+
+/** 고정이 바뀌면 **그리는 중이라도** 미리보기를 다시 푼다 — 안 하면 화면이 낡는다(AS-C7과 같은 형태). */
+function relive() {
+  const c = cam.ctx();
+  if (live && c) {
+    const b = ink.livePoints();
+    const b2: Pt2 = b.length >= 2 ? [b[b.length - 1][0], b[b.length - 1][1]] : live.anchor.screen;
+    const r = resolveLive(c, live.anchor.at, live.anchor.screen, b2);
+    live = { anchor: live.anchor, axis: r.axis, deg: r.deg, seg: r.seg, locked: r.locked };
+  }
+  refresh();
+}
+
 window.addEventListener("resize", () => refresh());
 // 숨은 탭에서 열리면 관찰자가 발화하지 않는다(PITFALLS #22) — 보이게 되는 순간 다시 본다
 document.addEventListener("visibilitychange", () => refresh());
@@ -673,4 +759,6 @@ refresh();
   snapTargets: () => snapSegs().length,
   hoverSnap: () => hoverSnap,
   live: () => live,
+  axisLock: () => ({ mode: axisLock, resolved: lockedAxis() }),
+  setAxisLock: (a: 0 | 1 | 2 | "infer" | null) => { axisLock = a; shiftHeld = null; relive(); },
 };

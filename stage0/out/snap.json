@@ -2653,7 +2653,73 @@
     "note": "**계획서 §11 L-B 게이트의 두 번째 항목**(스냅된 시작점에서의 배치 정확도). 앱과 같은 경로다 — 시작점을 대상의 상으로 옮기고 `nearestAxisOnScreen`으로 축을 정한 뒤 `segmentFromAnchor`로 끝점을 낸다.",
     "control_snap_off": "**스냅이 없으면 이 경로는 0을 놓는다** — 시작점이 3D에 없으므로 앵커가 없다. 이것은 측정이 아니라 **설계상의 사실**이라 팔로 돌리지 않고 여기 적는다(사전 등록의 '대조군: 스냅 끔'이 이것이다).",
     "axis_tol_deg": 12,
-    "rows": {
+    "which_row_to_quote": "⚠ **`rows_end_jitter_gt_0`를 인용한다.** `rows_all`에는 끝점이 참 모서리에 **못으로 박힌** `end_jitter = 0`의 1080셀(25%)이 섞여 있고, 그 증거가 `rows_all`의 `shape_err.p10 = 0`이다. PITFALLS #2·#11 — 초판이 `snapped_kind_counts`에는 이 판을 넣고 **여기는 빠뜨렸다**.",
+    "rows_end_jitter_gt_0": {
+      "0.025": {
+        "placed_over_all": "2268/3240",
+        "no_snap": 295,
+        "no_axis": 677,
+        "no_end": 0,
+        "sum_check": true,
+        "shape_err": {
+          "n": 2268,
+          "min": 0,
+          "p10": 0.0048,
+          "median": 0.0349,
+          "p90": 0.7341,
+          "max": 13.3313
+        },
+        "silent_wrong": {
+          "cut_0_1": "651/2268",
+          "cut_0_2": "437/2268",
+          "cut_0_5": "376/2268"
+        },
+        "silent_wrong_rate_0_2": 0.1927
+      },
+      "0.050": {
+        "placed_over_all": "2503/3240",
+        "no_snap": 56,
+        "no_axis": 681,
+        "no_end": 0,
+        "sum_check": true,
+        "shape_err": {
+          "n": 2503,
+          "min": 0,
+          "p10": 0.0047,
+          "median": 0.034,
+          "p90": 0.7272,
+          "max": 13.3313
+        },
+        "silent_wrong": {
+          "cut_0_1": "686/2503",
+          "cut_0_2": "474/2503",
+          "cut_0_5": "409/2503"
+        },
+        "silent_wrong_rate_0_2": 0.1894
+      },
+      "0.100": {
+        "placed_over_all": "2559/3240",
+        "no_snap": 1,
+        "no_axis": 680,
+        "no_end": 0,
+        "sum_check": true,
+        "shape_err": {
+          "n": 2559,
+          "min": 0,
+          "p10": 0.0047,
+          "median": 0.0348,
+          "p90": 0.8218,
+          "max": 13.3313
+        },
+        "silent_wrong": {
+          "cut_0_1": "737/2559",
+          "cut_0_2": "555/2559",
+          "cut_0_5": "457/2559"
+        },
+        "silent_wrong_rate_0_2": 0.2169
+      }
+    },
+    "rows_all": {
       "0.025": {
         "placed_over_all": "3168/4320",
         "no_snap": 295,

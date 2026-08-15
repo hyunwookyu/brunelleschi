@@ -341,9 +341,21 @@ test("가이드 조정 — 늘리기·민감도·선 끌기", async ({ page }) =
              lengths: S.cam.guides.map((g: any) => +len(g).toFixed(1)),
              camera_solvable: !!S.cam.ctx(),
              sensitivity_shown: document.getElementById("status")!.innerText.includes("핸들 예산"),
-             note: "이 구도의 **검출 초안만으로는 카메라가 안 선다**. 민감도도 그래서 안 뜬다 — "
-                 + "**없는 숫자를 지어내지 않는다**(A-3). 아래는 참 소실점을 넣은 뒤의 값이다." };
+             filled_axes: S.cam.guides.filter((g: any) => g.filled).map((g: any) => g.axis),
+             warns_filled: document.getElementById("status")!.innerText.includes("채운 것"),
+             note: "⚠ **L-B.3(b)이 이 성질을 뒤집었다.** 옛 판의 주석은 '검출 초안만으로는 "
+                 + "카메라가 안 선다. 민감도도 그래서 안 뜬다'였는데, **빈 축을 중립으로 "
+                 + "채우면서 카메라가 서고 민감도가 뜬다**. 그 축은 그림이 정한 값이 아니므로 "
+                 + "화면이 **흐린 점선 + `채움` 표시 + 경고 줄**로 구분한다 — "
+                 + "구분하지 않으면 A-3의 '없는 숫자를 지어내지 않는다'가 뒤집힌다(리뷰어 2회차 [11])." };
   });
+
+  // **이 구도에서는 검출이 세 축을 다 채운다** — 채움이 0인 것이 정상이다.
+  // 그러니 개수를 요구하지 않고 **표시와 사실이 일치하는지**만 잠근다(#19: 설명이 검사를 끄지 않게).
+  {
+    const d = l.draft_only as { filled_axes: number[]; warns_filled: boolean };
+    expect(d.warns_filled).toBe(d.filled_axes.length > 0);
+  }
 
   // ② 참 소실점을 넣어 카메라를 세운다 — 그 뒤라야 민감도가 뜻을 갖는다
   await setup(page);
@@ -561,4 +573,78 @@ test("실시간 축 판정 — 미리보기와 확정이 같다", async ({ page 
     "일치 0은 **항등**이다 — 같은 함수를 같은 입력으로 부른다(#5)",
   ];
   led.l_b4 = l;
+});
+
+/**
+ * L-B.5 — **축 고정**(§4). 산출: `stage_browser.json`의 `l_b5`.
+ *
+ * 재는 것은 **배선뿐이다.** "고정하면 그 축으로 놓인다"는 **정의상 참**이라(PITFALLS #3)
+ * 성공률이 뜻이 없다. 확인하는 것은 ① 고정이 `resolveLive` 안에서 걸리는가
+ * (바깥에서 덮으면 미리보기와 확정이 갈린다) ② 추론이 거부한 획을 고정이 놓는가
+ * ③ 그렇게 놓인 획이 `userAxis`로 표시되는가(재분류가 덮지 않아야 한다).
+ */
+test("축 고정 — 추론이 거부한 획을 사용자가 강제한다", async ({ page }) => {
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  const l: Record<string, unknown> = {};
+
+  await setup(page);
+  await page.evaluate(() =>
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click());
+
+  const geo = await page.evaluate(async () => {
+    const S = window.S2S;
+    const g3 = await import("/src/s3d/geom3d.ts");
+    const ctx = S.cam.ctx();
+    const s0 = S.doc().strokes.find((s: any) => s.seg3d);
+    const r = (document.getElementById("ink") as HTMLCanvasElement).getBoundingClientRect();
+    return { a: g3.project(s0.seg3d[0], ctx.principal, ctx.f), axis: s0.axis,
+             originX: r.left, originY: r.top };
+  });
+  const cx = geo.originX, cy = geo.originY;
+
+  // **어느 축과도 안 맞는 방향**으로 긋는다 — 고정이 없으면 2D로 대기해야 한다
+  const wild = { x: cx + geo.a[0] + 120, y: cy + geo.a[1] - 130 };
+  await page.mouse.move(cx + geo.a[0] + 10, cy + geo.a[1] + 8);
+  await page.mouse.down();
+  await page.mouse.move(wild.x, wild.y, { steps: 5 });
+  await page.mouse.up();
+  l.without_lock = await page.evaluate(() => {
+    const st = window.S2S.doc().strokes[window.S2S.doc().strokes.length - 1];
+    return { placed: !!st.seg3d, axis: st.axis, userAxis: st.userAxis };
+  });
+
+  // 같은 획을 **축 고정**으로 다시 긋는다
+  // **그 앵커에서 실제로 뻗는 축**을 고정한다 — 임의의 축을 고르면 커서 광선과의
+  // 최근접점이 카메라 뒤로 가서 끝점이 안 정해질 수 있다(그것은 고정의 실패가 아니다)
+  await page.evaluate((ax) => window.S2S.setAxisLock(ax), geo.axis as 0 | 1 | 2);
+  await page.mouse.move(cx + geo.a[0] + 10, cy + geo.a[1] + 8);
+  await page.mouse.down();
+  await page.mouse.move(wild.x, wild.y, { steps: 5 });
+  const midLocked = await page.evaluate(() => {
+    const lv = window.S2S.live();
+    return { axis: lv?.axis ?? null, locked: lv?.locked ?? null, has_preview: !!lv?.seg,
+             status: document.getElementById("status")!.innerText.includes("축 고정") };
+  });
+  await page.mouse.up();
+  l.with_lock = await page.evaluate((mid) => {
+    const S = window.S2S;
+    const st = S.doc().strokes[S.doc().strokes.length - 1];
+    return { mid_drag: mid, placed: !!st.seg3d, axis: st.axis, userAxis: st.userAxis,
+             lock_state: S.axisLock(), last_note: document.getElementById("status")!.innerText };
+  }, midLocked);
+
+  expect((l.without_lock as any).placed).toBe(false);
+  expect((l.with_lock as any).placed).toBe(true);
+  expect((l.with_lock as any).axis).toBe(geo.axis);
+  // **사용자가 고른 축은 재분류가 덮지 않는다**(`doc.ts`의 `userAxis`)
+  expect((l.with_lock as any).userAxis).toBe(true);
+  expect((l.with_lock as any).mid_drag.locked).toBe(true);
+  expect((l.with_lock as any).mid_drag.status).toBe(true);
+
+  l.what_this_does_not_say = [
+    "고정이 오배정을 줄이는가 — **사용자 행동 의존이라 직접 측정이 불가능하다**(AS-L5)",
+    "'고정하면 그 축으로 놓인다'는 정의상 참이다(#3) — 여기서 재는 것은 배선뿐이다",
+  ];
+  led.l_b5 = l;
 });

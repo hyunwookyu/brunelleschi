@@ -118,6 +118,9 @@ const rep = (b: Bag) => ({
   silent_wrong_rate_0_2: round(b.w20 / Math.max(1, b.placed), 4),
 });
 
+const baseKeyOf = () => `vp${AXIS_TOL.vp_dist_ratio}_bend${AXIS_TOL.bend_max}`
+                      + `_amb${AXIS_TOL.ambiguity_margin}`;
+
 describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
   it("측정을 원장에 남긴다", () => {
     /** ① 확정 시점: 임계 조합 → 집계. */
@@ -137,7 +140,10 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
      * 그 표만 보면 "풀면 좋다"가 나오는데 그것은 픽스처가 벌을 못 주기 때문이다.
      * 인접한 두 모서리를 **한 획으로** 이어 그려 진짜 코너를 만든다. 그 획은 **거부돼야 옳다.**
      */
-    const turnControl: Record<string, { rejected: number; n: number }> = {};
+    const turnControl: Record<string, { rejected: number; n: number;
+                                       reasons: Record<string, number> }> = {};
+    /** 기준 조건의 **시드별 배치** — "+26이 시드 변동폭 안이다"를 재려면 폭을 재야 한다(#14). */
+    const bySeed: Record<string, number> = {};
 
     for (let ci = 0; ci < COMPOSITIONS.length; ci++) {
       for (const grade of GRADES) for (const seed of SEEDS) for (const jit of JITTERS) {
@@ -170,6 +176,7 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
           });
           const r = liftAll(input, ctx, { touch_ratio: LIFT_TOL.touch_ratio });
           b.n += 1; b.placed += r.placed.size;
+          if (key === baseKeyOf()) bySeed[String(seed)] = (bySeed[String(seed)] ?? 0) + r.placed.size;
           for (const e of perStrokeError(r.placed, fx.edges, fx.diag)) {
             b.err.push(e);
             if (e > 0.1) b.w10 += 1;
@@ -203,7 +210,7 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
           }
 
           // **대조군**: 진짜 코너가 있는 획은 거부돼야 옳다
-          const cell = (turnControl[key] ??= { rejected: 0, n: 0 });
+          const cell = (turnControl[key] ??= { rejected: 0, n: 0, reasons: {} });
           for (const [p, q] of CORNER_PAIRS) {
             const A = fx.strokes[p].pts2d, B = fx.strokes[q].pts2d;
             // 두 모서리를 잇는다. 방향이 맞도록 가까운 끝끼리 붙인다
@@ -214,7 +221,8 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
             const v = classifyStroke(joined, ctx.vps, SZ, cfg,
                                      { principal: ctx.principal, f: ctx.f });
             cell.n += 1;
-            if (v.axis === "free") cell.rejected += 1;
+            // **어느 규칙이 거부하는지 센다**(#7 — 초판은 세지 않고 "다른 규칙들"이라 지목했다)
+            if (v.axis === "free") { cell.rejected += 1; cell.reasons[v.reason] = (cell.reasons[v.reason] ?? 0) + 1; }
           }
         }
 
@@ -266,8 +274,7 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
     }
 
     // ---- 사전 등록한 채택 규칙(#26·#16). **측정 전에 박았다.**
-    const baseKey = `vp${AXIS_TOL.vp_dist_ratio}_bend${AXIS_TOL.bend_max}`
-                  + `_amb${AXIS_TOL.ambiguity_margin}`;
+    const baseKey = baseKeyOf();
     const base = confirm[baseKey];
     const baseRate = base.w20 / Math.max(1, base.placed);
     let pick: string | null = null, pickPlaced = base.placed;
@@ -275,6 +282,19 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
       const sw = b.w20 / Math.max(1, b.placed);
       if (sw <= baseRate && b.placed > pickPlaced) { pickPlaced = b.placed; pick = k; }
     }
+
+    // ---- **두 번째 목적함수**(리뷰어 [4]). 등록한 규칙은 "조용히 틀림 ≤ 기준 **이면서 배치 최대**"라
+    // 맞바꿈이 단조인 이 표에서 **완화 방향만** 볼 수 있다. 그런데 이 프로젝트의 정책은
+    // A-3·§9.1이다 — **미배치는 실패가 아니라 대기이고 승격이 연쇄한다**. 그 정책에서는
+    // 미배치의 비용이 **미뤄지는** 것이고 조용히 틀림은 **영구**다. 그러면 조이는 쪽이 답일 수 있다.
+    // **그래서 반대 방향도 낸다.** 규칙을 바꾼 것이 아니라 **하나 더 적는 것**이다(#28).
+    let tighten: string | null = null, tightSw = base.w20 / Math.max(1, base.placed);
+    for (const [k, b] of Object.entries(confirm)) {
+      const sw = b.w20 / Math.max(1, b.placed);
+      // 배치를 기준의 90% 이상 지키면서 조용히 틀림이 가장 낮은 조합
+      if (b.placed >= 0.9 * base.placed && sw < tightSw) { tightSw = sw; tighten = k; }
+    }
+    const seedVals = Object.values(bySeed);
 
     const doc = {
       what: "L-B.4 — 축 판정 임계를 풀면 배치가 느는가, 그리고 조용히 틀림은 어떻게 되는가",
@@ -340,6 +360,29 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
           + "구간이고(12 → 18은 +99 배치에 +0.8pp), 등록 규칙은 기준(12°) 위에서 아무것도 "
           + "안 고른다. **사유 없이 바꾸지 않는다**(#28).",
       },
+      policy_objective: {
+        why: "⚠ **등록한 규칙은 완화 방향만 볼 수 있다**(리뷰어 [4]). 목적이 '조용히 틀림 ≤ 기준 "
+          + "**이면서 배치 최대**'인데 이 표의 맞바꿈이 단조이므로 조이는 후보는 구조적으로 "
+          + "못 고른다. 그런데 이 프로젝트의 정책은 A-3·계획서 §9.1이다 — **미배치는 실패가 "
+          + "아니라 대기 상태이고 승격이 연쇄한다.** 그 정책에서 미배치의 비용은 **미뤄지는** "
+          + "것이고 조용히 틀림은 **영구**다. 그러면 조이는 쪽이 답일 수 있다.",
+        rule: "배치를 기준의 90% 이상 지키면서 **조용히 틀림(cut 0.2)이 가장 낮은** 조합.",
+        picked: tighten,
+        picked_row: tighten ? rep(confirm[tighten]) : null,
+        base_row: rep(base),
+        caveat: "⚠ **지금 채택하지 않는다.** 이 정책이 성립하려면 **승격 연쇄가 실제로 회수해야 "
+          + "하는데 그 기전이 아직 없다**(L-B.7). 회수율을 재기 전에 공유 상수를 바꾸면 "
+          + "'미배치는 대기다'가 **검증되지 않은 전제**가 된다. **L-B.7 뒤에 다시 본다**(DEFERRED).",
+      },
+      seed_spread_at_base: {
+        note: "**'+26이 시드 변동폭 안이다'를 재려면 폭을 재야 한다**(#14, 리뷰어 [7]). "
+          + "초판은 재지 않고 그렇게 적었다.",
+        placed_by_seed: bySeed,
+        spread: seedVals.length
+          ? { min: Math.min(...seedVals), max: Math.max(...seedVals),
+              range: Math.max(...seedVals) - Math.min(...seedVals) }
+          : null,
+      },
       confirm_time: Object.fromEntries(Object.entries(confirm).map(([k, v]) => [k, rep(v)])),
       turn_detection: {
         note: "**`coarse`의 등급 특이 항**이다 — 기본 조건의 `free` 사유에서 `multi_axis`가 "
@@ -352,6 +395,13 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
         rows: Object.fromEntries(Object.entries(turn).map(([k, v]) => [k, rep(v)])),
         control_true_corner_rejected: Object.fromEntries(
           Object.entries(turnControl).map(([k, v]) => [k, `${v.rejected}/${v.n}`])),
+        control_reject_reasons: Object.fromEntries(
+          Object.entries(turnControl).map(([k, v]) => [k, v.reasons])),
+        control_n_note: "분모 2160 = 5구도 × 3등급 × 6시드 × 4잡음 × **인접쌍 6개**.",
+        control_ceiling_warning: "⚠ **이 대조군은 동적 범위가 5.8pp(92.4~98.2%)로 천장에 붙어 "
+          + "있다.** `multi_axis`를 사실상 끈 `turn90`에서도 93%가 거부된다 — 즉 **이 대조군은 "
+          + "`multi_axis` 기능의 붕괴를 검출할 수 없다.** 90° 코너 획은 굽음·무매칭이 어차피 "
+          + "거부하기 때문이다. `control_reject_reasons`가 어느 규칙인지 **센 값**이다.",
       },
       live_time: {
         note: "**앵커가 3D에 있을 때의 판정.** 분모는 획 전체이고 스냅 실패도 `free`에 들어간다"

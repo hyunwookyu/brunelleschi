@@ -115,6 +115,86 @@
     "the_real_answer": "**고치는 것은 임계가 아니라 앵커다.** 같은 잉크·같은 구도에서 확정 시점 판정은 배치 **2416/4320(0.56)** · 조용히 틀림 **36.2%**인데, 앵커가 3D에 있는 실시간 판정은 배치 **3403/4320(0.79)** · 조용히 틀림 **16.7%**다. ⚠ **두 값을 나란히 읽을 때 조건 차를 함께 읽는다**(#27): 실시간 팔은 **참 3D 기하가 이미 있다**고 가정한다(스냅과 같은 상한 조건). 초기 확정에는 그것이 없다 — 그래서 이 비교는 '앵커가 있으면 다른 문제가 된다'를 말하지 '초기 확정을 고쳤다'를 말하지 않는다. **초기 확정의 몫은 L-B.7 승격 연쇄로 넘어간다.**",
     "live_threshold": "**`LIVE_TOL.axis_deg` = 12를 유지한다.** 각차 4 → 35°에서 배치 2554 → 3728이고 조용히 틀림 0.102 → 0.219다. 무릎이 12~18° 구간이고(12 → 18은 +99 배치에 +0.8pp), 등록 규칙은 기준(12°) 위에서 아무것도 안 고른다. **사유 없이 바꾸지 않는다**(#28)."
   },
+  "policy_objective": {
+    "why": "⚠ **등록한 규칙은 완화 방향만 볼 수 있다**(리뷰어 [4]). 목적이 '조용히 틀림 ≤ 기준 **이면서 배치 최대**'인데 이 표의 맞바꿈이 단조이므로 조이는 후보는 구조적으로 못 고른다. 그런데 이 프로젝트의 정책은 A-3·계획서 §9.1이다 — **미배치는 실패가 아니라 대기 상태이고 승격이 연쇄한다.** 그 정책에서 미배치의 비용은 **미뤄지는** 것이고 조용히 틀림은 **영구**다. 그러면 조이는 쪽이 답일 수 있다.",
+    "rule": "배치를 기준의 90% 이상 지키면서 **조용히 틀림(cut 0.2)이 가장 낮은** 조합.",
+    "picked": "vp0.03_bend0.18_amb2",
+    "picked_row": {
+      "placed_over_all": "2179/4320",
+      "placed_rate": 0.5044,
+      "axis": {
+        "correct": "2572/4320",
+        "wrong": "278/4320",
+        "free": "1470/4320"
+      },
+      "free_reasons": {
+        "ambiguous": 274,
+        "no_axis_matches": 835,
+        "multi_axis": 304,
+        "too_short": 57
+      },
+      "shape_err": {
+        "n": 2179,
+        "min": 0.0018,
+        "p10": 0.0167,
+        "median": 0.0887,
+        "p90": 0.3763,
+        "max": 2.4788
+      },
+      "silent_wrong": {
+        "cut_0_1": "1004/2179",
+        "cut_0_2": "607/2179",
+        "cut_0_5": "116/2179"
+      },
+      "silent_wrong_rate_0_2": 0.2786
+    },
+    "base_row": {
+      "placed_over_all": "2416/4320",
+      "placed_rate": 0.5593,
+      "axis": {
+        "correct": "2732/4320",
+        "wrong": "372/4320",
+        "free": "1216/4320"
+      },
+      "free_reasons": {
+        "ambiguous": 238,
+        "no_axis_matches": 617,
+        "multi_axis": 304,
+        "too_short": 57
+      },
+      "shape_err": {
+        "n": 2416,
+        "min": 0.0006,
+        "p10": 0.0197,
+        "median": 0.1222,
+        "p90": 0.4468,
+        "max": 3.3512
+      },
+      "silent_wrong": {
+        "cut_0_1": "1360/2416",
+        "cut_0_2": "874/2416",
+        "cut_0_5": "190/2416"
+      },
+      "silent_wrong_rate_0_2": 0.3618
+    },
+    "caveat": "⚠ **지금 채택하지 않는다.** 이 정책이 성립하려면 **승격 연쇄가 실제로 회수해야 하는데 그 기전이 아직 없다**(L-B.7). 회수율을 재기 전에 공유 상수를 바꾸면 '미배치는 대기다'가 **검증되지 않은 전제**가 된다. **L-B.7 뒤에 다시 본다**(DEFERRED)."
+  },
+  "seed_spread_at_base": {
+    "note": "**'+26이 시드 변동폭 안이다'를 재려면 폭을 재야 한다**(#14, 리뷰어 [7]). 초판은 재지 않고 그렇게 적었다.",
+    "placed_by_seed": {
+      "1": 406,
+      "2": 418,
+      "3": 412,
+      "4": 397,
+      "5": 396,
+      "6": 387
+    },
+    "spread": {
+      "min": 387,
+      "max": 418,
+      "range": 31
+    }
+  },
   "confirm_time": {
     "vp0.03_bend0.12_amb1.2": {
       "placed_over_all": "2384/4320",
@@ -1806,7 +1886,75 @@
       "turn90_win0.08": "2018/2160",
       "turn90_win0.12": "2008/2160",
       "turn90_win0.2": "1996/2160"
-    }
+    },
+    "control_reject_reasons": {
+      "turn30_win0.08": {
+        "multi_axis": 2099,
+        "no_axis_matches": 21,
+        "ambiguous": 1
+      },
+      "turn30_win0.12": {
+        "multi_axis": 2075,
+        "no_axis_matches": 27,
+        "ambiguous": 2
+      },
+      "turn30_win0.2": {
+        "multi_axis": 2060,
+        "no_axis_matches": 32,
+        "ambiguous": 3
+      },
+      "turn45_win0.08": {
+        "multi_axis": 2023,
+        "no_axis_matches": 50,
+        "ambiguous": 2
+      },
+      "turn45_win0.12": {
+        "multi_axis": 1991,
+        "no_axis_matches": 60,
+        "ambiguous": 3
+      },
+      "turn45_win0.2": {
+        "multi_axis": 1963,
+        "no_axis_matches": 67,
+        "ambiguous": 3
+      },
+      "turn60_win0.08": {
+        "multi_axis": 1965,
+        "no_axis_matches": 75,
+        "too_bent": 1,
+        "ambiguous": 2
+      },
+      "turn60_win0.12": {
+        "multi_axis": 1934,
+        "no_axis_matches": 88,
+        "ambiguous": 3
+      },
+      "turn60_win0.2": {
+        "multi_axis": 1906,
+        "no_axis_matches": 103,
+        "ambiguous": 4
+      },
+      "turn90_win0.08": {
+        "multi_axis": 1784,
+        "too_bent": 131,
+        "no_axis_matches": 100,
+        "ambiguous": 3
+      },
+      "turn90_win0.12": {
+        "multi_axis": 1760,
+        "no_axis_matches": 112,
+        "too_bent": 133,
+        "ambiguous": 3
+      },
+      "turn90_win0.2": {
+        "multi_axis": 1736,
+        "no_axis_matches": 116,
+        "too_bent": 140,
+        "ambiguous": 4
+      }
+    },
+    "control_n_note": "분모 2160 = 5구도 × 3등급 × 6시드 × 4잡음 × **인접쌍 6개**.",
+    "control_ceiling_warning": "⚠ **이 대조군은 동적 범위가 5.8pp(92.4~98.2%)로 천장에 붙어 있다.** `multi_axis`를 사실상 끈 `turn90`에서도 93%가 거부된다 — 즉 **이 대조군은 `multi_axis` 기능의 붕괴를 검출할 수 없다.** 90° 코너 획은 굽음·무매칭이 어차피 거부하기 때문이다. `control_reject_reasons`가 어느 규칙인지 **센 값**이다."
   },
   "live_time": {
     "note": "**앵커가 3D에 있을 때의 판정.** 분모는 획 전체이고 스냅 실패도 `free`에 들어간다(#9 — 무엇이 섞였는지 가른다: `free_reasons`가 `no_snap`/`angle_over`/`no_axis`로 나눈다).",
