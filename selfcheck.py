@@ -240,6 +240,18 @@ def scan_stale_constants(outdir: Path, reports: dict[str, dict]) -> list[dict]:
 SCANNED_FIELDS: list[dict] = []
 
 
+def strip_ts_comments(t: str) -> str:
+    """TS 소스에서 주석을 지운다 — `scan_unread_fields`가 **설명을 읽기로 세지 않도록**.
+
+    `://`(URL)는 주석으로 보지 않는다. 아니면 그 줄의 뒷부분이 통째로 사라져 **읽기를 놓친다**
+    — 놓치는 쪽이 더 위험하다(플래그가 조용히 사라진다).
+    **문자열 리터럴 안의 `.field`는 여전히 읽기로 센다** — 알려진 한계이고 반례 테스트에 적었다.
+    """
+    import re as _re
+    t = _re.sub(r"/\*.*?\*/", " ", t, flags=_re.S)      # 블록 주석·JSDoc
+    return _re.sub(r"(?<!:)//[^\n]*", " ", t)           # 줄 주석(`://`는 URL이다)
+
+
 def scan_unread_fields(root: Path) -> list[dict]:
     """**쓰기만 하고 읽지 않는 필드**를 잡는다(S-8c). 배선 누락의 세 번째 얼굴이다.
 
@@ -256,11 +268,6 @@ def scan_unread_fields(root: Path) -> list[dict]:
     주석으로 보지 않는다 — 아니면 그 줄의 뒷부분이 통째로 사라져 **읽기를 놓친다**.
     """
     import re as _re
-
-    def strip_comments(t: str) -> str:
-        t = _re.sub(r"/\*.*?\*/", " ", t, flags=_re.S)     # 블록 주석
-        return _re.sub(r"(?<!:)//[^\n]*", " ", t)          # 줄 주석(`://`는 URL이다)
-
     SCANNED_FIELDS.clear()          # **훑은 필드를 남긴다** — 0건이 "깨끗함"인지 "안 돌았음"인지 갈린다
     src = root / "web" / "src"
     stroke = src / "s3d" / "stroke.ts"
@@ -278,7 +285,7 @@ def scan_unread_fields(root: Path) -> list[dict]:
             m = _re.match(r"  (\w+)\??:", ln)
             if m:
                 fields.append(m.group(1))
-    bodies = [strip_comments(f.read_text(encoding="utf-8")) for f in sorted(src.rglob("*.ts"))]
+    bodies = [strip_ts_comments(f.read_text(encoding="utf-8")) for f in sorted(src.rglob("*.ts"))]
     flags = []
     for name in fields:
         writes = reads = 0

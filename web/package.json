@@ -15,6 +15,7 @@
     "icons": "python tools/make_icons.py"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/node": "^26.2.0",
     "@vitejs/plugin-basic-ssl": "^1.2.0",
     "typescript": "^5.6.0",

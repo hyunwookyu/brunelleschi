@@ -348,21 +348,27 @@ function placeCtx(): PlaceCtx | null {
 /**
  * 카메라가 움직이면 **전부 다시 만든다**(§5 "pts2d를 반드시 보존한다").
  *
- * **사용자 지정 배치는 이때 사라진다**(S-9). `reprojectAll`은 `pts2d`에서 다시 만드는데
- * 사람이 고른 앵커는 거기 없기 때문이다. 그 앵커를 그대로 다시 쓸 수도 없다 — 앵커는
- * **다른 획 위의 3D 점**이고 카메라가 바뀌면 그 획도 옮겨 간다. 지어내지 않고 **알린다**.
+ * **사용자 지정 배치는 이때 다시 계산된다**(S-9, D-S23). `reprojectAll`은 `pts2d`에서 다시
+ * 만드는데 사람이 고른 앵커는 거기 없다 — 일부는 안 놓이고 일부는 **다른 자리로 간다**.
+ * 그 앵커를 그대로 다시 쓸 수도 없다: 앵커는 **다른 획 위의 3D 점**이고 카메라가 바뀌면
+ * 그 획도 옮겨 간다(f 10%에 상자 대각의 8%). 지어내지 않고 **둘 다 알린다**.
  */
 function replace() {
   const ctx = placeCtx();
   if (!ctx || !drawn.length) return;
-  const lost = drawn.filter(s => userPlaced.has(s.id)).length;
+  const hand = drawn.filter(s => userPlaced.has(s.id));
   reprojectAll(drawn, ctx, FIRST_VIEW_OPTS);
-  if (lost) {
+  if (hand.length) {
+    // **무엇이 일어났는지 그대로 적는다**(D-S23): 안 놓이는 것도 있고 **다른 자리로 옮겨
+    // 가는 것도 있다**. "사라졌다"고만 적으면 조용히 옮겨간 획을 안 알리는 것이 된다.
+    // (측정: 지우개 이력이 없으면 9/9가 안 놓이고, 있으면 6/9가 다른 앵커로 간다.)
+    const back = hand.filter(s => s.pts3d.length).length;
     userPlaced.clear();
     provisional.clear();
     for (const s of drawn) markProvisional(s);
-    lastNote = `카메라를 조정해 **사용자가 지정한 배치 ${lost}개가 다시 계산됐습니다** — `
-      + "필요하면 `고치기`로 다시 지정하세요";
+    lastNote = `카메라를 조정해 **사용자가 지정한 배치 ${hand.length}개를 자동으로 다시 `
+      + `계산했습니다** — ${hand.length - back}개는 놓이지 않았고 ${back}개는 `
+      + "**다른 자리에 놓였을 수 있습니다**. 필요하면 `고치기`로 다시 지정하세요";
   }
   strokeView.sync(drawn, ctx.f);
 }

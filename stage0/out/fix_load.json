@@ -1,0 +1,362 @@
+{
+  "spec": "S-10 (a) 고치기 부하. **§1의 왕복 횟수 지표** — 크면 도구가 성립하지 않는다.",
+  "constants": {
+    "hash": "1671e540",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "why": "D-S22가 돌린 시점의 배치율을 0.25~0.46으로 떨어뜨렸다. 안 놓인 획은 `고치기`로 가는데 **그 부담을 재지 않았다.** 부담이 크면 '조용히 틀리게 놓지 않는다'는 선택이 도구를 못 쓰게 만든 것이 된다.",
+  "op_model": {
+    "select": 1,
+    "candidate_click": "끝마다 1(양 끝이면 2)",
+    "depth_slider": 1,
+    "go_to_view": "돌린 시점 획인데 지금 그 시점이 아니면 1 — **이 시나리오에서는 0이다**(그 시점에서 바로 고친다). 시점을 옮겨 다니면 그만큼 는다.",
+    "note": "앱의 `refreshCandidates` → `editClick` → `applyPicks` 경로와 같다. 후보 반경도 같다."
+  },
+  "user_models": {
+    "nearest": "화면에서 가장 가까운 후보(UI가 먼저 보여 주는 것)",
+    "oracle": "참 끝점에 가장 가까운 후보 — **상한**(답을 아는 사람)"
+  },
+  "metrics": {
+    "ops_per_drawn_stroke": "**핵심 지표.** 그린 획 하나당 추가 조작 수. 0이면 손댈 것이 없다.",
+    "fixed_wrong_rate": "손으로 붙인 것 중 참값에서 상자 대각의 0.2를 넘게 떨어진 비율. **사용자가 고른 앵커에는 검사를 안 걸므로**(D-S18) 이것이 그 대가다.",
+    "silent_wrong_rate_of_placed": "자동으로 놓였는데 크게 틀린 비율 — **고치기로 오지 않는다**. 사용자가 알아채야 고칠 수 있다(S-8b 잔여, D-S22)."
+  },
+  "condition": {
+    "composition": "요 35°·피치 15° 3점, 직육면체 하나",
+    "grade": "medium",
+    "skew": 0.12,
+    "end_jitter": 0.01,
+    "elev_deg": 18,
+    "orbit_deg": [
+      45,
+      75,
+      110
+    ],
+    "seeds": [
+      9500,
+      1301,
+      5501
+    ],
+    "boxes_per_cell": 30,
+    "first_view_opts": "FIRST_VIEW_OPTS",
+    "view_opts": "VIEW_OPTS + VIEW_AXIS_CFG(출하 구성)",
+    "single_composition_warning": "구도가 하나뿐이다. 실획에서 다시 본다(AS-13).",
+    "end_jitter_warning": "끝점 겨냥 오차 1%는 **이 방식이 성립한다고 주장하는 구간**이고 손에 있는 실획 자릿수(2.8~5.1%)는 그 밖이다(AS-12). 부담은 그쪽에서 더 커진다."
+  },
+  "first_view": {
+    "nearest": {
+      "n_drawn": 1080,
+      "auto_placed_rate": 0.8463,
+      "unplaced_rate": 0.1537,
+      "ops_total": 487,
+      "ops_per_unplaced": 2.9337,
+      "ops_per_drawn_stroke": 0.4509,
+      "ops_dist": {
+        "n": 166,
+        "min": 2,
+        "p10": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "provisional_rate": 0.0482,
+      "no_candidate_rate": 0.006,
+      "fixed_worst_end": {
+        "n": 166,
+        "min": 0.0129,
+        "p10": 0.0229,
+        "median": 0.0833,
+        "p90": 0.8632,
+        "max": 1.2055
+      },
+      "fixed_over_0_2": 63,
+      "fixed_wrong_rate": 0.3795,
+      "silent_wrong": 52,
+      "silent_wrong_rate_of_placed": 0.0569
+    },
+    "oracle": {
+      "n_drawn": 1080,
+      "auto_placed_rate": 0.8463,
+      "unplaced_rate": 0.1537,
+      "ops_total": 487,
+      "ops_per_unplaced": 2.9337,
+      "ops_per_drawn_stroke": 0.4509,
+      "ops_dist": {
+        "n": 166,
+        "min": 2,
+        "p10": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "provisional_rate": 0.0482,
+      "no_candidate_rate": 0.006,
+      "fixed_worst_end": {
+        "n": 166,
+        "min": 0.0087,
+        "p10": 0.0228,
+        "median": 0.0741,
+        "p90": 0.8621,
+        "max": 1.2055
+      },
+      "fixed_over_0_2": 58,
+      "fixed_wrong_rate": 0.3494,
+      "silent_wrong": 52,
+      "silent_wrong_rate_of_placed": 0.0569
+    }
+  },
+  "rotated_view": {
+    "45": {
+      "nearest": {
+        "n_drawn": 270,
+        "auto_placed_rate": 0.4185,
+        "unplaced_rate": 0.5815,
+        "ops_total": 460,
+        "ops_per_unplaced": 2.9299,
+        "ops_per_drawn_stroke": 1.7037,
+        "ops_dist": {
+          "n": 157,
+          "min": 2,
+          "p10": 3,
+          "median": 3,
+          "p90": 3,
+          "max": 3
+        },
+        "provisional_rate": 0.0446,
+        "no_candidate_rate": 0.0064,
+        "fixed_worst_end": {
+          "n": 152,
+          "min": 0.008,
+          "p10": 0.0232,
+          "median": 0.1663,
+          "p90": 0.7403,
+          "max": 1.9339
+        },
+        "fixed_over_0_2": 75,
+        "fixed_wrong_rate": 0.4934,
+        "silent_wrong": 74,
+        "silent_wrong_rate_of_placed": 0.6549
+      },
+      "oracle": {
+        "n_drawn": 270,
+        "auto_placed_rate": 0.4185,
+        "unplaced_rate": 0.5815,
+        "ops_total": 460,
+        "ops_per_unplaced": 2.9299,
+        "ops_per_drawn_stroke": 1.7037,
+        "ops_dist": {
+          "n": 157,
+          "min": 2,
+          "p10": 3,
+          "median": 3,
+          "p90": 3,
+          "max": 3
+        },
+        "provisional_rate": 0.0446,
+        "no_candidate_rate": 0.0064,
+        "fixed_worst_end": {
+          "n": 152,
+          "min": 0.0063,
+          "p10": 0.0175,
+          "median": 0.063,
+          "p90": 0.6781,
+          "max": 1.9966
+        },
+        "fixed_over_0_2": 44,
+        "fixed_wrong_rate": 0.2895,
+        "silent_wrong": 74,
+        "silent_wrong_rate_of_placed": 0.6549
+      }
+    },
+    "75": {
+      "nearest": {
+        "n_drawn": 267,
+        "auto_placed_rate": 0.1124,
+        "unplaced_rate": 0.8876,
+        "ops_total": 682,
+        "ops_per_unplaced": 2.8776,
+        "ops_per_drawn_stroke": 2.5543,
+        "ops_dist": {
+          "n": 237,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 3,
+          "max": 3
+        },
+        "provisional_rate": 0.0591,
+        "no_candidate_rate": 0.0169,
+        "fixed_worst_end": {
+          "n": 237,
+          "min": 0.0098,
+          "p10": 0.0184,
+          "median": 0.0516,
+          "p90": 0.6018,
+          "max": 31.3336
+        },
+        "fixed_over_0_2": 59,
+        "fixed_wrong_rate": 0.2489,
+        "silent_wrong": 9,
+        "silent_wrong_rate_of_placed": 0.3
+      },
+      "oracle": {
+        "n_drawn": 267,
+        "auto_placed_rate": 0.1124,
+        "unplaced_rate": 0.8876,
+        "ops_total": 682,
+        "ops_per_unplaced": 2.8776,
+        "ops_per_drawn_stroke": 2.5543,
+        "ops_dist": {
+          "n": 237,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 3,
+          "max": 3
+        },
+        "provisional_rate": 0.0591,
+        "no_candidate_rate": 0.0169,
+        "fixed_worst_end": {
+          "n": 237,
+          "min": 0.005,
+          "p10": 0.0135,
+          "median": 0.0366,
+          "p90": 0.5876,
+          "max": 29.1763
+        },
+        "fixed_over_0_2": 51,
+        "fixed_wrong_rate": 0.2152,
+        "silent_wrong": 9,
+        "silent_wrong_rate_of_placed": 0.3
+      }
+    },
+    "110": {
+      "nearest": {
+        "n_drawn": 267,
+        "auto_placed_rate": 0.1348,
+        "unplaced_rate": 0.8652,
+        "ops_total": 663,
+        "ops_per_unplaced": 2.8701,
+        "ops_per_drawn_stroke": 2.4831,
+        "ops_dist": {
+          "n": 231,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 3,
+          "max": 3
+        },
+        "provisional_rate": 0.0563,
+        "no_candidate_rate": 0.013,
+        "fixed_worst_end": {
+          "n": 231,
+          "min": 0.008,
+          "p10": 0.0213,
+          "median": 0.0546,
+          "p90": 1.0715,
+          "max": 1.1905
+        },
+        "fixed_over_0_2": 73,
+        "fixed_wrong_rate": 0.316,
+        "silent_wrong": 9,
+        "silent_wrong_rate_of_placed": 0.25
+      },
+      "oracle": {
+        "n_drawn": 267,
+        "auto_placed_rate": 0.1348,
+        "unplaced_rate": 0.8652,
+        "ops_total": 663,
+        "ops_per_unplaced": 2.8701,
+        "ops_per_drawn_stroke": 2.4831,
+        "ops_dist": {
+          "n": 231,
+          "min": 2,
+          "p10": 2,
+          "median": 3,
+          "p90": 3,
+          "max": 3
+        },
+        "provisional_rate": 0.0563,
+        "no_candidate_rate": 0.013,
+        "fixed_worst_end": {
+          "n": 231,
+          "min": 0.008,
+          "p10": 0.0185,
+          "median": 0.044,
+          "p90": 1.0686,
+          "max": 1.2067
+        },
+        "fixed_over_0_2": 70,
+        "fixed_wrong_rate": 0.303,
+        "silent_wrong": 9,
+        "silent_wrong_rate_of_placed": 0.25
+      }
+    }
+  },
+  "reference_frame": "**손 모델링과의 비교는 측정하지 않았다**(대조 실험이 없다). 다만 자릿수는 이렇게 읽는다 — CAD에서 모서리 하나를 놓으려면 최소 두 번(시작·끝)의 스냅 클릭이 필요하고, 여기서는 **그린 획 하나당 위 `ops_per_drawn_stroke`만큼만** 추가된다. 그 값이 2에 가까워지면 이 도구의 이점이 사라진다고 본다."
+}

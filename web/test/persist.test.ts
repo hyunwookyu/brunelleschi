@@ -59,11 +59,11 @@ const roundTrip = (d: Doc): Doc => JSON.parse(JSON.stringify(d)) as Doc;
  * 상자 하나를 그려 놓는다. 앱과 같은 옵션(`FIRST_VIEW_OPTS`)으로 배치한다.
  * `edges`는 참 3D — 이 단계에서는 정확도를 재지 않지만 대각 길이를 분모로 쓴다.
  */
-function box(seed: number) {
+function box(seed: number, endJitter = 0.01) {
   const r = rng32(seed);
   const O = groundPoint(SC, [430, 470])!;
   const edges = boxEdges(SC, O, 1.2, 1.0, 0.9);
-  const drawn = drawEdges(SC, edges, "medium", r, 0.12, 0.01)!;
+  const drawn = drawEdges(SC, edges, "medium", r, 0.12, endJitter)!;
   resetStrokeIds();
   const list: Stroke[] = drawn.map(d => {
     const v = classifyStroke(d.pts2d, SC.vps, SC.imgSize, {},
@@ -243,109 +243,175 @@ describe("S-9 내보내기", () => {
 describe("S-9 측정 — 재생성 대조", () => {
   it("저장하지 않으면 무엇을 잃는가", () => {
     const SEEDS = [4242, 7, 991, 20250815, 31337];
-    const rows: Record<string, unknown>[] = [];
-    const agg = {
-      strokes: 0, userStrokes: 0,
-      userLost: 0, userMoved: [] as number[],
-      autoLost: 0, autoMoved: [] as number[], autoGained: 0,
-      erasedCases: 0,
-    };
+    /**
+     * **동작점을 하나 고르지 않는다**(D-S7, 반복 유형 12). 끝점 겨냥 오차 0.01은 이 방식이
+     * 성립한다고 주장하는 구간이고, **손에 있는 실획 자릿수(0.028~0.051)는 그 밖이다**(AS-12).
+     * 지우개 횟수도 스윕한다 — 갈림의 크기가 **주입한 이력의 함수**이기 때문이다(리뷰어 지적).
+     */
+    const JITTERS = [0.01, 0.02];
+    const ERASES = [0, 1, 2];
+    const radius = PLACE_TOL.join_ratio * diagOf(SC.imgSize) * PLACE_TOL.fix_candidate_radius_mult;
 
-    for (const seed of SEEDS) {
-      const { list, diag3 } = box(seed);
-      const radius = PLACE_TOL.join_ratio * diagOf(SC.imgSize) * PLACE_TOL.fix_candidate_radius_mult;
+    interface Cell {
+      strokes: number; userStrokes: number; userLost: number; userMoved: number[];
+      autoLost: number; autoMoved: number[]; autoGained: number; erased: number;
+      /** 재생성이 **다른 앵커**를 골랐는가 — 사용자의 선택이 안 남았다는 직접 증거. */
+      userOtherAnchor: number;
+      bySeed: Record<string, unknown>[];
+    }
+    const cell = (): Cell => ({ strokes: 0, userStrokes: 0, userLost: 0, userMoved: [],
+                                autoLost: 0, autoMoved: [], autoGained: 0, erased: 0,
+                                userOtherAnchor: 0, bySeed: [] });
+    const res: Record<string, Cell> = {};
+    /** 카메라가 바뀌면 기존 기하가 얼마나 움직이는가 — D-S23의 논증을 수치로 바꾼다. */
+    const camShift: Record<string, number[]> = { "f_plus_10pct": [], "f_minus_10pct": [] };
 
-      // ---- 앱에서 실제로 일어나는 두 가지를 재현한다 ----
-      // (1) **지우개** — 지운 뒤 자동 배치를 다시 돌리지 않는다(S-7 3).
-      const erased = list.findIndex(s => s.pts3d.length && s.anchorRef);
-      if (erased >= 0) { list.splice(erased, 1); agg.erasedCases += 1; }
-      // (2) **사용자 지정 배치** — 미배치 획을 사람이 붙인다(S-7, D-S18).
-      const userIds = new Set<string>();
-      for (const s of list) {
-        if (s.pts3d.length) continue;
-        const placedOthers = list.filter(t => t.id !== s.id && t.pts3d.length);
-        const c0 = anchorCandidates(placedOthers, s.pts2d[0], radius);
-        const c1 = anchorCandidates(placedOthers, s.pts2d[s.pts2d.length - 1], radius);
-        if (!c0.length && !c1.length) continue;
-        const r = placeByUser(s, CTX, { a: c0[0]?.pos, b: c1[0]?.pos });
-        if (!r) continue;
-        s.pts3d = r.pts3d;
-        userIds.add(s.id);
+    for (const jit of JITTERS) for (const nErase of ERASES) {
+      const key = `jitter_${jit}_erase_${nErase}`;
+      const C = res[key] = cell();
+      for (const seed of SEEDS) {
+        const { list, diag3 } = box(seed, jit);
+
+        // (1) **지우개** — 지운 뒤 자동 배치를 다시 돌리지 않는다(S-7 3).
+        //     고르는 규칙: **놓였고 앵커가 있는 획을 앞에서부터**(원장에 적는다).
+        for (let k = 0; k < nErase; k++) {
+          const i = list.findIndex(s => s.pts3d.length && s.anchorRef);
+          if (i < 0) break;
+          list.splice(i, 1);
+          C.erased += 1;
+        }
+        // (2) **사용자 지정 배치** — 미배치 획을 사람이 붙인다(S-7, D-S18).
+        const userIds = new Set<string>();
+        const userAnchor = new Map<string, string>();
+        for (const s of list) {
+          if (s.pts3d.length) continue;
+          const placedOthers = list.filter(t => t.id !== s.id && t.pts3d.length);
+          const c0 = anchorCandidates(placedOthers, s.pts2d[0], radius);
+          const c1 = anchorCandidates(placedOthers, s.pts2d[s.pts2d.length - 1], radius);
+          if (!c0.length && !c1.length) continue;
+          const r = placeByUser(s, CTX, { a: c0[0]?.pos, b: c1[0]?.pos });
+          if (!r) continue;
+          s.pts3d = r.pts3d;
+          userIds.add(s.id);
+          userAnchor.set(s.id, (c0[0] ?? c1[0]).id);
+        }
+
+        // ---- 저장 → 열기 ----
+        const doc = roundTrip(serializeDoc(source(list, { userPlaced: userIds })));
+        const kept = restoreDoc(doc);                       // (가) 담아 둔 `pts3d`를 쓴다
+        const regen = restoreDoc(doc);                      // (나) 대조군 — 다시 만든다
+        reprojectAll(regen.strokes, CTX, APP);
+
+        let userLost = 0, autoLost = 0, autoGained = 0, otherAnchor = 0;
+        const userMoved: number[] = [], autoMoved: number[] = [];
+        for (let i = 0; i < kept.strokes.length; i++) {
+          const a = kept.strokes[i], b = regen.strokes[i];
+          const isUser = kept.userPlaced.has(a.id);
+          if (isUser && b.anchorRef && b.anchorRef !== userAnchor.get(a.id)) otherAnchor += 1;
+          if (a.pts3d.length && !b.pts3d.length) { isUser ? userLost++ : autoLost++; continue; }
+          if (!a.pts3d.length && b.pts3d.length) { autoGained += 1; continue; }
+          const d = drift(a.pts3d, b.pts3d, diag3);
+          if (d == null) continue;
+          (isUser ? userMoved : autoMoved).push(+d.toFixed(6));
+        }
+        C.strokes += kept.strokes.length;
+        C.userStrokes += userIds.size;
+        C.userLost += userLost; C.autoLost += autoLost; C.autoGained += autoGained;
+        C.userOtherAnchor += otherAnchor;
+        C.userMoved.push(...userMoved); C.autoMoved.push(...autoMoved);
+        C.bySeed.push({ seed, n_strokes: kept.strokes.length, n_user_placed: userIds.size,
+          user_lost_by_regen: userLost, user_other_anchor: otherAnchor,
+          auto_lost_by_regen: autoLost, auto_gained_by_regen: autoGained,
+          user_moved_over_0_05: userMoved.filter(v => v > 0.05).length });
+
+        // 왕복 자체는 **한 비트도 안 변한다**
+        for (let i = 0; i < list.length; i++) expect(kept.strokes[i].pts3d).toEqual(list[i].pts3d);
+
+        // ---- 카메라를 흔들면 기존 기하가 얼마나 움직이는가(D-S23의 논증 → 수치) ----
+        if (jit === 0.01 && nErase === 1) {
+          const arms: [string, number][] = [["f_plus_10pct", 1.1], ["f_minus_10pct", 0.9]];
+          for (const [k, mult] of arms) {
+            const moved = restoreDoc(doc);
+            reprojectAll(moved.strokes, { ...CTX, f: CTX.f * mult }, APP);
+            for (let i = 0; i < kept.strokes.length; i++) {
+              const d = drift(kept.strokes[i].pts3d, moved.strokes[i].pts3d, diag3);
+              if (d != null) camShift[k].push(+d.toFixed(6));
+            }
+          }
+        }
       }
-
-      // ---- 저장 → 열기 ----
-      const doc = roundTrip(serializeDoc(source(list, { userPlaced: userIds })));
-      const kept = restoreDoc(doc);                       // (가) 담아 둔 `pts3d`를 쓴다
-
-      // (나) **대조군** — `pts2d`와 카메라만 두고 `reprojectAll`로 다시 만든다
-      const regen = restoreDoc(doc);
-      reprojectAll(regen.strokes, CTX, APP);
-
-      let userLost = 0, autoLost = 0, autoGained = 0;
-      const userMoved: number[] = [], autoMoved: number[] = [];
-      for (let i = 0; i < kept.strokes.length; i++) {
-        const a = kept.strokes[i], b = regen.strokes[i];
-        const isUser = kept.userPlaced.has(a.id);
-        if (a.pts3d.length && !b.pts3d.length) { isUser ? userLost++ : autoLost++; continue; }
-        if (!a.pts3d.length && b.pts3d.length) { autoGained += 1; continue; }
-        const d = drift(a.pts3d, b.pts3d, diag3);
-        if (d == null) continue;
-        (isUser ? userMoved : autoMoved).push(+d.toFixed(6));
-      }
-      agg.strokes += kept.strokes.length;
-      agg.userStrokes += userIds.size;
-      agg.userLost += userLost; agg.autoLost += autoLost; agg.autoGained += autoGained;
-      agg.userMoved.push(...userMoved); agg.autoMoved.push(...autoMoved);
-
-      rows.push({
-        seed, n_strokes: kept.strokes.length, n_user_placed: userIds.size,
-        user_lost_by_regen: userLost,
-        user_moved_over_0_05: userMoved.filter(v => v > 0.05).length,
-        auto_lost_by_regen: autoLost, auto_gained_by_regen: autoGained,
-        auto_moved_over_0_05: autoMoved.filter(v => v > 0.05).length,
-      });
-
-      // 왕복 자체는 **한 비트도 안 변한다**
-      for (let i = 0; i < list.length; i++) expect(kept.strokes[i].pts3d).toEqual(list[i].pts3d);
     }
 
-    const obj = toObj(box(4242).list);
-    const gl = toGltf(box(4242).list);
+    /** 내보내기는 **미배치가 섞인 장면**으로 낸다 — 안 그러면 건너뛰기 분기가 안 돈다. */
+    const exportScene = box(991, 0.02);
+    const obj = toObj(exportScene.list);
+    const gl = toGltf(exportScene.list);
+    const base = res["jitter_0.01_erase_1"];
+
+    const summarize = (C: Cell) => ({
+      strokes: C.strokes,
+      erased_total: C.erased,
+      user_placed: C.userStrokes,
+      user_lost_by_regen: C.userLost,
+      user_lost: C.userLost + "/" + C.userStrokes,
+      user_lost_rate: C.userStrokes ? +(C.userLost / C.userStrokes).toFixed(4) : null,
+      user_drift_of_survivors: stat(C.userMoved, 4),
+      user_other_anchor: C.userOtherAnchor,
+      auto_population: C.strokes - C.userStrokes,
+      auto_lost_by_regen: C.autoLost,
+      auto_lost_rate: +(C.autoLost / Math.max(1, C.strokes - C.userStrokes)).toFixed(4),
+      auto_gained_by_regen: C.autoGained,
+      auto_drift: stat(C.autoMoved, 4),
+      by_seed: C.bySeed,
+    });
 
     const report = {
       spec: "S-9 저장·복원. **무엇이 재생성되지 않는가**를 대조군으로 잰다.",
       constants: constantsSnapshot(),
       why: (
-        "계획서 §5는 `pts3d`가 파생이라 적었다 — 그렇다면 저장할 것은 `pts2d`와 카메라뿐이다. "
-        + "그 말을 그대로 믿지 않고 **같은 문서에서** (가) 담아 둔 `pts3d`와 "
-        + "(나) `reprojectAll`로 다시 만든 것을 비교한다. 갈리는 만큼이 저장하지 않으면 잃는 것이다."
+        "`HANDOFF.md`가 \"`pts3d`는 저장하지 않아도 된다 — `reprojectAll`이 다시 만든다\"고 "
+        + "적었다(계획서 §5의 자료구조를 그렇게 읽은 것이다). 그 말을 그대로 믿지 않고 "
+        + "**같은 문서에서** (가) 담아 둔 `pts3d`와 (나) `reprojectAll` 재생성을 비교한다."
       ),
       metrics: {
-        user_lost_by_regen: "사용자가 놓은 획 중 **재생성하면 미배치가 되는** 수 — 저장의 직접 근거.",
-        auto_lost_by_regen: "자동으로 놓였던 획 중 재생성하면 안 놓이는 수(지우개 이력의 귀결).",
+        user_lost_by_regen: "사용자가 놓은 획 중 **재생성하면 미배치가 되는** 수.",
+        user_drift_of_survivors: "재생성에서도 놓인 사용자 획이 **원래 자리에서 옮겨간 거리**"
+          + "(상자 대각 대비). 0이 아니면 사용자가 고른 자리가 아니다.",
+        user_other_anchor: "재생성이 **다른 획을 앵커로 골랐다** — 사용자의 선택이 안 남았다는 직접 증거.",
+        auto_lost_by_regen: "자동으로 놓였던 획 중 재생성하면 안 놓이는 수(지우개 이력의 귀결). "
+          + "분모는 `auto_population`(전체 − 사용자 지정)이다.",
         auto_gained_by_regen: "반대로 재생성에서 새로 놓이는 수 — **화면에 없던 것이 생긴다**.",
-        moved_over_0_05: "같은 획이 상자 대각의 5% 넘게 옮겨간 수.",
+        camera_change_drift: "**카메라가 바뀌면 기존 기하가 얼마나 움직이는가.** D-S23의 "
+          + "\"재조정 때는 재생성이 맞다\"를 논증이 아니라 수치로 만든다 — 앵커가 이만큼 움직이므로 "
+          + "사용자 지정 배치를 그 자리에 두면 붙어 있던 획에서 떨어진다.",
       },
       condition: {
         composition: "요 35°·피치 15° 3점, 직육면체 하나(구도가 하나뿐이다)",
-        grade: "medium", skew: 0.12, end_jitter: 0.01, seeds: SEEDS,
+        grade: "medium", skew: 0.12, seeds: SEEDS,
+        end_jitter_sweep: JITTERS, erase_sweep: ERASES,
         app_opts: "FIRST_VIEW_OPTS(앱과 같은 배선, S-7 0)",
-        history_simulated: "지우개 1회(자동 재배치 없음) + 미배치 획 사용자 지정",
+        erase_rule: "**놓였고 `anchorRef`가 있는 획을 앞에서부터** 지운다(자동 재배치는 안 돌린다).",
+        user_fix_rule: "미배치 획의 양 끝에서 **가장 가까운 후보**를 고른다(`고치기`의 첫 후보).",
         single_composition_warning: "구도가 하나뿐이다 — 실획에서 다시 본다(AS-13).",
+        end_jitter_warning: "0.01은 이 방식이 성립한다고 주장하는 구간이고 실획 자릿수"
+          + "(0.028~0.051)는 그 밖이다(AS-12). 그래서 0.02를 함께 낸다.",
+        not_measured: [
+          "**돌린 시점에서 그린 획**은 이 하네스에 없다(첫 시점만 만든다). 그 획의 `pts2d`는 "
+          + "뷰 좌표라 첫 카메라로 재생성하는 **경로 자체가 없다** — 측정이 아니라 정의다.",
+          "카메라 재조정 팔은 f만 흔든다(주점·소실점은 그대로).",
+        ],
       },
-      by_seed: rows,
-      total: {
-        strokes: agg.strokes,
-        user_placed: agg.userStrokes,
-        user_lost_by_regen: agg.userLost,
-        user_lost_rate: agg.userStrokes ? +(agg.userLost / agg.userStrokes).toFixed(4) : null,
-        user_drift_of_survivors: stat(agg.userMoved, 4),
-        auto_lost_by_regen: agg.autoLost,
-        auto_gained_by_regen: agg.autoGained,
-        auto_drift: stat(agg.autoMoved, 4),
-        erased_cases: agg.erasedCases,
+      by_condition: Object.fromEntries(Object.entries(res).map(([k, C]) => [k, summarize(C)])),
+      headline: {
+        cell: "jitter_0.01_erase_1",
+        user_lost: base.userLost + "/" + base.userStrokes,
+        note: "**비율로 읽지 않는다** — 시드 하나가 분자를 1 움직인다(`by_seed` 참조). "
+          + "결론(저장한다)은 0이 아니라는 것만으로 선다.",
       },
+      camera_change_drift: Object.fromEntries(Object.entries(camShift)
+        .map(([k, v]) => [k, stat(v, 4)])),
       export: {
+        scene: "seed 991 · end_jitter 0.02 — **미배치가 섞인 장면**을 고른다(건너뛰기 분기 확인)",
         obj: { strokes: obj.strokes, points: obj.points, skipped_unplaced: obj.skippedUnplaced,
                bytes: obj.data.length },
         gltf: { strokes: gl.strokes, points: gl.points, skipped_unplaced: gl.skippedUnplaced,
@@ -353,16 +419,22 @@ describe("S-9 측정 — 재생성 대조", () => {
         note: "폴리라인으로 내보낸다 — 면을 만들지 않는 도구이고(D-S20) 튜브는 화면 표현이다.",
       },
       decision: (
-        "**담아 둔 `pts3d`를 쓴다**(재생성하지 않는다). 사용자 지정 배치는 재생성이 "
-        + "원리적으로 불가능하고(사람이 고른 앵커가 `pts2d`에 없다), 자동 배치도 지우개 이력 "
-        + "때문에 화면과 갈린다. **카메라를 다시 조정하면 그때는 재생성이 맞다** — "
-        + "그 자리에서만 `reprojectAll`이 돌고, 사용자 지정 배치를 잃는다는 것을 화면에 알린다."
+        "**담아 둔 `pts3d`를 쓴다**(재생성하지 않는다). 근거는 \"재생성이 불가능하다\"가 아니라 "
+        + "**\"재생성은 사용자가 고른 자리를 복원하지 않는다\"**이다 — 일부는 아예 안 놓이고, "
+        + "놓이는 것도 다른 앵커에 다른 자리로 간다(`user_other_anchor`). 자동 배치는 "
+        + "**지우개 이력이 없으면 한 획도 안 갈린다**(`erase_0` 셀) — 갈림은 이력에서 온다. "
+        + "**카메라를 다시 조정할 때는 재생성이 맞다**: `camera_change_drift`만큼 기존 기하가 "
+        + "움직이므로 사용자 지정 배치를 그 자리에 두면 붙어 있던 획에서 떨어진다."
       ),
     };
     mkdirSync(OUT, { recursive: true });
     writeFileSync(resolve(OUT, "persist.json"), JSON.stringify(report, null, 2), "utf-8");
 
-    // 대조군이 실제로 갈렸는가 — **안 갈리면 이 측정이 아무 말도 하지 않는다**
-    expect(agg.userStrokes).toBeGreaterThan(0);
-  }, 120_000);
+    expect(base.userStrokes).toBeGreaterThan(0);
+    // **지우개가 없으면 자동 배치는 한 획도 안 갈려야 한다**(같은 입력 → 같은 출력).
+    // 갈리면 `settle`이 순서 의존이라는 뜻이고, 그것은 S-9보다 큰 문제다.
+    const noErase = res["jitter_0.01_erase_0"];
+    expect(noErase.autoLost).toBe(0);
+    expect(noErase.autoGained).toBe(0);
+  }, 300_000);
 });

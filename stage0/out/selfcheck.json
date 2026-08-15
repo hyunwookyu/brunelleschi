@@ -1,5 +1,5 @@
 {
-  "n_flags": 730,
+  "n_flags": 747,
   "flags": [
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
@@ -1697,12 +1697,97 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "persist.json:by_seed[0].n_user_placed",
+      "path": "persist.json:by_condition.jitter_0.01_erase_0.auto_drift",
+      "val": 0,
+      "flag": "분포 전체가 0(n=51) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.02_erase_0.auto_drift",
+      "val": 0,
+      "flag": "분포 전체가 0(n=26) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.02_erase_1.user_drift_of_survivors",
+      "val": 0,
+      "flag": "분포 전체가 0(n=1) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.02_erase_1.auto_drift",
+      "val": 0,
+      "flag": "분포 전체가 0(n=22) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.01_erase_0.user_lost_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.01_erase_0.auto_lost_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.01_erase_0.auto_drift.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.01_erase_0.by_seed[0].n_user_placed",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "persist.json:total.auto_drift.median",
+      "path": "persist.json:by_condition.jitter_0.01_erase_1.auto_drift.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.01_erase_1.by_seed[0].n_user_placed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.01_erase_2.auto_drift.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.01_erase_2.by_seed[0].n_user_placed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.02_erase_0.user_lost_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.02_erase_0.auto_lost_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.02_erase_0.auto_drift.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.02_erase_1.user_drift_of_survivors.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.02_erase_1.auto_drift.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.02_erase_2.user_lost_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "persist.json:by_condition.jitter_0.02_erase_2.auto_drift.median",
       "val": 0,
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
     },
@@ -3668,7 +3753,7 @@
     {
       "field": "pts3d",
       "writes": 8,
-      "reads": 67
+      "reads": 68
     },
     {
       "field": "axis",
@@ -3713,6 +3798,7 @@
     "constants.json",
     "continue_after_rotate.json",
     "face_diagonal.json",
+    "fix_load.json",
     "free_curve.json",
     "incline_vp.json",
     "misassign_retry.json",
