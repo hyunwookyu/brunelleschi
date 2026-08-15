@@ -1,5 +1,5 @@
 {
-  "n_flags": 828,
+  "n_flags": 841,
   "flags": [
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
@@ -2257,6 +2257,71 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "segment_gate.json:by_cross_tol.tol_0.015_sup_2.first_view.silent_wrong_rate_of_placed",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "segment_gate.json:by_cross_tol.tol_0.015_sup_2.rotated_view.45.n_drawn",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "segment_gate.json:by_cross_tol.tol_0.015_sup_2.rotated_view.75.n_drawn",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "segment_gate.json:by_cross_tol.tol_0.015_sup_2.rotated_view.110.n_drawn",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "segment_gate.json:by_cross_tol.tol_0.03_sup_2.first_view.silent_wrong_rate_of_placed",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "segment_gate.json:by_cross_tol.tol_0.03_sup_2.rotated_view.45.n_drawn",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "segment_gate.json:by_cross_tol.tol_0.03_sup_2.rotated_view.75.n_drawn",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "segment_gate.json:by_cross_tol.tol_0.03_sup_2.rotated_view.110.n_drawn",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "segment_gate.json:by_cross_tol.tol_0.06_sup_2.first_view.silent_wrong_rate_of_placed",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "segment_gate.json:by_cross_tol.tol_0.06_sup_2.rotated_view.45.n_drawn",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "segment_gate.json:by_cross_tol.tol_0.06_sup_2.rotated_view.75.n_drawn",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "segment_gate.json:by_cross_tol.tol_0.06_sup_2.rotated_view.110.n_drawn",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "segment_gate.json:verdict.min_support_2.silent_first.now",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "systematic_warp.json:tolerances.max_spread_ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -4148,27 +4213,27 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 89
+      "reads": 94
     },
     {
       "field": "pts2d",
       "writes": 0,
-      "reads": 33
+      "reads": 34
     },
     {
       "field": "pts3d",
       "writes": 8,
-      "reads": 68
+      "reads": 69
     },
     {
       "field": "axis",
       "writes": 2,
-      "reads": 29
+      "reads": 30
     },
     {
       "field": "rep",
       "writes": 1,
-      "reads": 33
+      "reads": 35
     },
     {
       "field": "anchorRef",
@@ -4213,6 +4278,7 @@
     "persist.json",
     "preview_gap.json",
     "real_ink.json",
+    "segment_gate.json",
     "systematic_warp.json",
     "tube_render.json",
     "view_plane.json",

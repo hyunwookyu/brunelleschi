@@ -1,0 +1,761 @@
+{
+  "spec": "G-A.1 중간 판정 — 세그먼트 기하가 옛 배치 계층보다 나은가. **이번 전환의 유일한 중단 조건.**",
+  "constants": {
+    "hash": "1671e540",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "seg_tol": {
+    "cross_screen_ratio": 0.03,
+    "extend_ratio": 0.25,
+    "parallel_deg": 3,
+    "joint_gap_ratio": 0.05
+  },
+  "why": "옛 배치 계층은 끝점 겨냥 오차가 그대로 배치 오차가 됐다(배치율 0.112~0.846, 조용히 틀린 배치 0.057~0.655). 세그먼트 기하는 **끝점 대신 시선 평면 교차**로 위치를 정하므로 그 의존이 사라져야 한다. 같은 조건에서 재서 확인한다.",
+  "condition": {
+    "composition": "요 35°·피치 15° 3점, 직육면체 하나",
+    "grade": "medium",
+    "skew": 0.12,
+    "end_jitter": 0.01,
+    "elev_deg": 18,
+    "orbit_deg": [
+      45,
+      75,
+      110
+    ],
+    "seeds": [
+      9500,
+      1301,
+      5501
+    ],
+    "boxes_per_cell": 30,
+    "strokes_per_scene": {
+      "first": "모서리 12",
+      "rotated": "면 대각선 2 + 모서리 1"
+    },
+    "classifier": "옛 측정과 **같은 판정 설정**(첫 시점 기본, 돌린 시점 `VIEW_AXIS_CFG`) — 갈리는 것이 기하 계층뿐임을 보장한다",
+    "cross_tol_sweep": [
+      0.015,
+      0.03,
+      0.06
+    ],
+    "old_values_from": "fix_load.json@1671e540 (사용자 모형 nearest). 재실행 없이 인용한다.",
+    "single_composition_warning": "구도가 하나뿐이다(AS-13)."
+  },
+  "old": {
+    "first": {
+      "placed": 0.8463,
+      "silentWrong": 0.0569,
+      "diagMisassign": 0.158
+    },
+    "view45": {
+      "placed": 0.4185,
+      "silentWrong": 0.6549
+    },
+    "view75": {
+      "placed": 0.1124,
+      "silentWrong": 0.3
+    },
+    "view110": {
+      "placed": 0.1348,
+      "silentWrong": 0.25
+    }
+  },
+  "by_cross_tol": {
+    "tol_0.015_sup_1": {
+      "first_view": {
+        "n_drawn": 3240,
+        "placed_rate": 0.8691,
+        "silent_wrong": 972,
+        "silent_wrong_rate_of_placed": 0.3452,
+        "worst_end": {
+          "n": 2816,
+          "min": 0.0057,
+          "p10": 0.0197,
+          "median": 0.0696,
+          "p90": 0.8388,
+          "max": 1.7189
+        },
+        "over": {
+          "over_0.1": 1206,
+          "over_0.2": 972,
+          "over_0.5": 822
+        },
+        "seeds": 270,
+        "support_1": 2100,
+        "diag_as_axis_rate": null
+      },
+      "rotated_view": {
+        "45": {
+          "n_drawn": 264,
+          "placed_rate": 0.678,
+          "silent_wrong": 115,
+          "silent_wrong_rate_of_placed": 0.6425,
+          "worst_end": {
+            "n": 179,
+            "min": 0.0075,
+            "p10": 0.0428,
+            "median": 0.4919,
+            "p90": 0.7008,
+            "max": 5.1207
+          },
+          "over": {
+            "over_0.1": 135,
+            "over_0.2": 115,
+            "over_0.5": 88
+          },
+          "seeds": 0,
+          "support_1": 80,
+          "diag_as_axis_rate": 0.6477
+        },
+        "75": {
+          "n_drawn": 261,
+          "placed_rate": 0.4061,
+          "silent_wrong": 58,
+          "silent_wrong_rate_of_placed": 0.5472,
+          "worst_end": {
+            "n": 106,
+            "min": 0.0103,
+            "p10": 0.0338,
+            "median": 0.412,
+            "p90": 0.7005,
+            "max": 0.8384
+          },
+          "over": {
+            "over_0.1": 66,
+            "over_0.2": 58,
+            "over_0.5": 47
+          },
+          "seeds": 0,
+          "support_1": 63,
+          "diag_as_axis_rate": 0.3333
+        },
+        "110": {
+          "n_drawn": 261,
+          "placed_rate": 0.5364,
+          "silent_wrong": 76,
+          "silent_wrong_rate_of_placed": 0.5429,
+          "worst_end": {
+            "n": 140,
+            "min": 0.0075,
+            "p10": 0.0209,
+            "median": 0.4372,
+            "p90": 1.1708,
+            "max": 1.8051
+          },
+          "over": {
+            "over_0.1": 81,
+            "over_0.2": 76,
+            "over_0.5": 69
+          },
+          "seeds": 0,
+          "support_1": 75,
+          "diag_as_axis_rate": 0.4138
+        }
+      }
+    },
+    "tol_0.015_sup_2": {
+      "first_view": {
+        "n_drawn": 3240,
+        "placed_rate": 0.0833,
+        "silent_wrong": 0,
+        "silent_wrong_rate_of_placed": 0,
+        "worst_end": {
+          "n": 270,
+          "min": 0.0057,
+          "p10": 0.0135,
+          "median": 0.0268,
+          "p90": 0.0512,
+          "max": 0.0953
+        },
+        "over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "seeds": 270,
+        "support_1": 0,
+        "diag_as_axis_rate": null
+      },
+      "rotated_view": {
+        "45": {
+          "n_drawn": 0,
+          "placed_rate": null,
+          "silent_wrong": 0,
+          "silent_wrong_rate_of_placed": null,
+          "worst_end": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "over": {
+            "over_0.1": 0,
+            "over_0.2": 0,
+            "over_0.5": 0
+          },
+          "seeds": 0,
+          "support_1": 0,
+          "diag_as_axis_rate": null
+        },
+        "75": {
+          "n_drawn": 0,
+          "placed_rate": null,
+          "silent_wrong": 0,
+          "silent_wrong_rate_of_placed": null,
+          "worst_end": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "over": {
+            "over_0.1": 0,
+            "over_0.2": 0,
+            "over_0.5": 0
+          },
+          "seeds": 0,
+          "support_1": 0,
+          "diag_as_axis_rate": null
+        },
+        "110": {
+          "n_drawn": 0,
+          "placed_rate": null,
+          "silent_wrong": 0,
+          "silent_wrong_rate_of_placed": null,
+          "worst_end": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "over": {
+            "over_0.1": 0,
+            "over_0.2": 0,
+            "over_0.5": 0
+          },
+          "seeds": 0,
+          "support_1": 0,
+          "diag_as_axis_rate": null
+        }
+      }
+    },
+    "tol_0.03_sup_1": {
+      "first_view": {
+        "n_drawn": 3240,
+        "placed_rate": 0.8873,
+        "silent_wrong": 800,
+        "silent_wrong_rate_of_placed": 0.2783,
+        "worst_end": {
+          "n": 2875,
+          "min": 0.0057,
+          "p10": 0.0201,
+          "median": 0.0658,
+          "p90": 0.8093,
+          "max": 1.7189
+        },
+        "over": {
+          "over_0.1": 1120,
+          "over_0.2": 800,
+          "over_0.5": 661
+        },
+        "seeds": 270,
+        "support_1": 1689,
+        "diag_as_axis_rate": null
+      },
+      "rotated_view": {
+        "45": {
+          "n_drawn": 270,
+          "placed_rate": 0.7259,
+          "silent_wrong": 127,
+          "silent_wrong_rate_of_placed": 0.648,
+          "worst_end": {
+            "n": 196,
+            "min": 0.0114,
+            "p10": 0.0425,
+            "median": 0.5182,
+            "p90": 0.7027,
+            "max": 1.1871
+          },
+          "over": {
+            "over_0.1": 147,
+            "over_0.2": 127,
+            "over_0.5": 105
+          },
+          "seeds": 0,
+          "support_1": 50,
+          "diag_as_axis_rate": 0.6833
+        },
+        "75": {
+          "n_drawn": 267,
+          "placed_rate": 0.412,
+          "silent_wrong": 56,
+          "silent_wrong_rate_of_placed": 0.5091,
+          "worst_end": {
+            "n": 110,
+            "min": 0.0124,
+            "p10": 0.0241,
+            "median": 0.3737,
+            "p90": 0.6954,
+            "max": 0.8787
+          },
+          "over": {
+            "over_0.1": 64,
+            "over_0.2": 56,
+            "over_0.5": 43
+          },
+          "seeds": 0,
+          "support_1": 48,
+          "diag_as_axis_rate": 0.3034
+        },
+        "110": {
+          "n_drawn": 270,
+          "placed_rate": 0.5704,
+          "silent_wrong": 84,
+          "silent_wrong_rate_of_placed": 0.5455,
+          "worst_end": {
+            "n": 154,
+            "min": 0.009,
+            "p10": 0.024,
+            "median": 0.5313,
+            "p90": 1.145,
+            "max": 2.0749
+          },
+          "over": {
+            "over_0.1": 93,
+            "over_0.2": 84,
+            "over_0.5": 78
+          },
+          "seeds": 0,
+          "support_1": 40,
+          "diag_as_axis_rate": 0.4333
+        }
+      }
+    },
+    "tol_0.03_sup_2": {
+      "first_view": {
+        "n_drawn": 3240,
+        "placed_rate": 0.0833,
+        "silent_wrong": 0,
+        "silent_wrong_rate_of_placed": 0,
+        "worst_end": {
+          "n": 270,
+          "min": 0.0057,
+          "p10": 0.0135,
+          "median": 0.0268,
+          "p90": 0.0512,
+          "max": 0.0953
+        },
+        "over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "seeds": 270,
+        "support_1": 0,
+        "diag_as_axis_rate": null
+      },
+      "rotated_view": {
+        "45": {
+          "n_drawn": 0,
+          "placed_rate": null,
+          "silent_wrong": 0,
+          "silent_wrong_rate_of_placed": null,
+          "worst_end": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "over": {
+            "over_0.1": 0,
+            "over_0.2": 0,
+            "over_0.5": 0
+          },
+          "seeds": 0,
+          "support_1": 0,
+          "diag_as_axis_rate": null
+        },
+        "75": {
+          "n_drawn": 0,
+          "placed_rate": null,
+          "silent_wrong": 0,
+          "silent_wrong_rate_of_placed": null,
+          "worst_end": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "over": {
+            "over_0.1": 0,
+            "over_0.2": 0,
+            "over_0.5": 0
+          },
+          "seeds": 0,
+          "support_1": 0,
+          "diag_as_axis_rate": null
+        },
+        "110": {
+          "n_drawn": 0,
+          "placed_rate": null,
+          "silent_wrong": 0,
+          "silent_wrong_rate_of_placed": null,
+          "worst_end": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "over": {
+            "over_0.1": 0,
+            "over_0.2": 0,
+            "over_0.5": 0
+          },
+          "seeds": 0,
+          "support_1": 0,
+          "diag_as_axis_rate": null
+        }
+      }
+    },
+    "tol_0.06_sup_1": {
+      "first_view": {
+        "n_drawn": 3240,
+        "placed_rate": 0.8907,
+        "silent_wrong": 661,
+        "silent_wrong_rate_of_placed": 0.229,
+        "worst_end": {
+          "n": 2886,
+          "min": 0.0057,
+          "p10": 0.0197,
+          "median": 0.062,
+          "p90": 0.7779,
+          "max": 1.7505
+        },
+        "over": {
+          "over_0.1": 1046,
+          "over_0.2": 661,
+          "over_0.5": 497
+        },
+        "seeds": 270,
+        "support_1": 1196,
+        "diag_as_axis_rate": null
+      },
+      "rotated_view": {
+        "45": {
+          "n_drawn": 270,
+          "placed_rate": 0.7296,
+          "silent_wrong": 126,
+          "silent_wrong_rate_of_placed": 0.6396,
+          "worst_end": {
+            "n": 197,
+            "min": 0.016,
+            "p10": 0.0433,
+            "median": 0.4893,
+            "p90": 0.7039,
+            "max": 9.8293
+          },
+          "over": {
+            "over_0.1": 147,
+            "over_0.2": 126,
+            "over_0.5": 95
+          },
+          "seeds": 0,
+          "support_1": 23,
+          "diag_as_axis_rate": 0.6444
+        },
+        "75": {
+          "n_drawn": 270,
+          "placed_rate": 0.4259,
+          "silent_wrong": 62,
+          "silent_wrong_rate_of_placed": 0.5391,
+          "worst_end": {
+            "n": 115,
+            "min": 0.0159,
+            "p10": 0.0338,
+            "median": 0.303,
+            "p90": 0.7419,
+            "max": 6.0766
+          },
+          "over": {
+            "over_0.1": 72,
+            "over_0.2": 62,
+            "over_0.5": 45
+          },
+          "seeds": 0,
+          "support_1": 41,
+          "diag_as_axis_rate": 0.2889
+        },
+        "110": {
+          "n_drawn": 270,
+          "placed_rate": 0.5926,
+          "silent_wrong": 82,
+          "silent_wrong_rate_of_placed": 0.5125,
+          "worst_end": {
+            "n": 160,
+            "min": 0.0097,
+            "p10": 0.0264,
+            "median": 0.2889,
+            "p90": 1.1534,
+            "max": 1.9195
+          },
+          "over": {
+            "over_0.1": 92,
+            "over_0.2": 82,
+            "over_0.5": 74
+          },
+          "seeds": 0,
+          "support_1": 14,
+          "diag_as_axis_rate": 0.4222
+        }
+      }
+    },
+    "tol_0.06_sup_2": {
+      "first_view": {
+        "n_drawn": 3240,
+        "placed_rate": 0.0833,
+        "silent_wrong": 0,
+        "silent_wrong_rate_of_placed": 0,
+        "worst_end": {
+          "n": 270,
+          "min": 0.0057,
+          "p10": 0.0135,
+          "median": 0.0268,
+          "p90": 0.0512,
+          "max": 0.0953
+        },
+        "over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "seeds": 270,
+        "support_1": 0,
+        "diag_as_axis_rate": null
+      },
+      "rotated_view": {
+        "45": {
+          "n_drawn": 0,
+          "placed_rate": null,
+          "silent_wrong": 0,
+          "silent_wrong_rate_of_placed": null,
+          "worst_end": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "over": {
+            "over_0.1": 0,
+            "over_0.2": 0,
+            "over_0.5": 0
+          },
+          "seeds": 0,
+          "support_1": 0,
+          "diag_as_axis_rate": null
+        },
+        "75": {
+          "n_drawn": 0,
+          "placed_rate": null,
+          "silent_wrong": 0,
+          "silent_wrong_rate_of_placed": null,
+          "worst_end": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "over": {
+            "over_0.1": 0,
+            "over_0.2": 0,
+            "over_0.5": 0
+          },
+          "seeds": 0,
+          "support_1": 0,
+          "diag_as_axis_rate": null
+        },
+        "110": {
+          "n_drawn": 0,
+          "placed_rate": null,
+          "silent_wrong": 0,
+          "silent_wrong_rate_of_placed": null,
+          "worst_end": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "over": {
+            "over_0.1": 0,
+            "over_0.2": 0,
+            "over_0.5": 0
+          },
+          "seeds": 0,
+          "support_1": 0,
+          "diag_as_axis_rate": null
+        }
+      }
+    }
+  },
+  "rejected_fixes": [
+    {
+      "what": "지지가 많은 것부터 놓기(그린 순서 대신 최선 우선)",
+      "result": "**더 나빠졌다** — 지지 1의 오류가 30% → 49%. 초기 배치가 임의의 획으로 정해진다"
+    },
+    {
+      "what": "스침 각 임계 상향(3° → 10·20·30·40°)",
+      "result": "**더 나빠졌다** — 전체 오류 0.218 / 0.219 / 0.322 / 0.439 / 0.540. 좋은 후보까지 죽어 지지 1이 늘어난다"
+    },
+    {
+      "what": "동점을 입사각으로 가르기",
+      "result": "**더 나빠졌다** — 0.218 → 0.256"
+    }
+  ],
+  "by_support": {
+    "1": {
+      "n": 173,
+      "bad": 52,
+      "rate": 0.3006
+    },
+    "2": {
+      "n": 99,
+      "bad": 15,
+      "rate": 0.1515
+    },
+    "0(씨앗)": {
+      "n": 30,
+      "bad": 0
+    },
+    "3+": {
+      "n": 10,
+      "bad": 1,
+      "rate": 0.1
+    },
+    "note": "**지지 1이 문제다.** 후보가 하나뿐이면 그것이 맞는지 알 수단이 없다 — D-S22가 말한 '2D 증거로 구분 불가'가 새 기하에서도 같은 자리에 남았다."
+  },
+  "verdict": {
+    "min_support_1": {
+      "cross_tol": 0.03,
+      "placed_first": {
+        "old": 0.8463,
+        "now": 0.8873
+      },
+      "placed_view45": {
+        "old": 0.4185,
+        "now": 0.7259
+      },
+      "silent_first": {
+        "old": 0.0569,
+        "now": 0.2783
+      },
+      "silent_view45": {
+        "old": 0.6549,
+        "now": 0.648
+      }
+    },
+    "min_support_2": {
+      "cross_tol": 0.03,
+      "placed_first": {
+        "old": 0.8463,
+        "now": 0.0833
+      },
+      "placed_view45": {
+        "old": 0.4185,
+        "now": null
+      },
+      "silent_first": {
+        "old": 0.0569,
+        "now": 0
+      },
+      "silent_view45": {
+        "old": 0.6549,
+        "now": null
+      }
+    }
+  },
+  "_legacy_verdict_shape": {
+    "note": "판정은 `by_cross_tol` 전체를 보고 한다 — 임계 하나가 결론을 정하면 그 결론은 없다."
+  }
+}
