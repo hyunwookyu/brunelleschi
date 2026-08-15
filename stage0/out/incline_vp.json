@@ -1,7 +1,7 @@
 {
   "spec": "S-6 (3) 경사 소실점. **위험부터 잰다** — 가르지 못하면 만들지 않는다(A-3).",
   "constants": {
-    "hash": "dbcf3a11",
+    "hash": "46c028d1",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -42,7 +42,9 @@
       "DRAFT_TOL": {
         "handle_ratio": 0.018,
         "margin_ratio": 0.03,
-        "min_guide_ratio": 0.45
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
       },
       "SENS_TOL": {
         "probe_px": 1,

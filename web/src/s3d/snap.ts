@@ -129,27 +129,22 @@ function screenOf(at: Vec3, p: Pt2, ctx: SnapCtx): { screen: Pt2; dist: number }
 /** 선분 위의 매개변수 → 3D 점. */
 const atParam = (s: SnapSeg, t: number): Vec3 => add3(s.a, mul3(sub3(s.b, s.a), t));
 
+/** 질의와 무관한 후보 — 끝점·중점·교차점. **기하가 바뀔 때만 다시 만든다.** */
+export interface StaticCand { kind: SnapKind; at: Vec3; ofId?: string; ofId2?: string }
+
 /**
- * **후보를 전부 낸다** — 반경 안에 든 것만, 우선순위·거리 순으로.
+ * **질의와 무관한 후보를 미리 만든다.**
  *
- * 화면에 여러 개를 보이지는 않지만(선례는 하나만 보인다) 측정이 "무엇에 붙을 뻔했는가"를
- * 봐야 하므로 목록을 낸다. **추측하지 말고 센다**(#7).
+ * 교차점 후보가 `O(n²)`이라 포인터가 움직일 때마다 다시 만들면 대상 100선에서 5천 번의
+ * 최근접 계산이 매 프레임 돈다. 기하는 획을 놓을 때만 바뀌므로 **그때만** 다시 만든다.
+ * 측정 하네스도 같은 함수를 쓴다(PITFALLS #17) — 밀도 스윕이 이 절약 없이는 안 돈다.
  */
-export function snapCandidates(
-  p: Pt2, segs: SnapSeg[], ctx: SnapCtx, cfg: SnapCfg = {},
-): SnapCand[] {
+export function staticCandidates(segs: SnapSeg[], cfg: SnapCfg = {}): StaticCand[] {
   const c = { ...SNAP_TOL, ...cfg };
-  const R = c.radius_ratio * diagOf(ctx.imgSize);
   const G = geomScale(segs);
   const meet = c.meet_ratio * G;
   const merge = c.merge_ratio * G;
-  const out: SnapCand[] = [];
-
-  const push = (kind: SnapKind, at: Vec3, ofId?: string, ofId2?: string) => {
-    const sc = screenOf(at, p, ctx);
-    if (!sc || sc.dist > R) return;
-    out.push({ kind, at, screen: sc.screen, dist: sc.dist, ofId, ofId2 });
-  };
+  const out: StaticCand[] = [];
 
   // ---- 끝점 · 중점. 같은 자리를 여러 획이 공유하므로 **합친다**(중복 후보는 정보가 아니다).
   const seen: { at: Vec3; kind: SnapKind }[] = [];
@@ -159,10 +154,10 @@ export function snapCandidates(
     return true;
   };
   for (const s of segs) {
-    for (const at of [s.a, s.b]) if (fresh(at, "endpoint")) push("endpoint", at, s.id);
+    for (const at of [s.a, s.b]) if (fresh(at, "endpoint")) out.push({ kind: "endpoint", at, ofId: s.id });
     // **3D 중점을 투영한다** — 화면 중점이 아니다(투시에서 둘은 다르다).
     const mid = atParam(s, 0.5);
-    if (fresh(mid, "midpoint")) push("midpoint", mid, s.id);
+    if (fresh(mid, "midpoint")) out.push({ kind: "midpoint", at: mid, ofId: s.id });
   }
 
   // ---- 교차점: **3D에서 실제로 만나는 것만.** 화면 교차는 가림이다.
@@ -179,8 +174,33 @@ export function snapCandidates(
     const at = mul3(add3(cl.p, cl.q), 0.5);
     // 끝점과 같은 자리면 끝점이 이미 냈다 — 교차점으로 또 내지 않는다
     if ([A.a, A.b, B.a, B.b].some(e => norm3(sub3(e, at)) <= merge)) continue;
-    push("intersection", at, A.id, B.id);
+    out.push({ kind: "intersection", at, ofId: A.id, ofId2: B.id });
   }
+  return out;
+}
+
+/**
+ * **후보를 전부 낸다** — 반경 안에 든 것만, 우선순위·거리 순으로.
+ *
+ * 화면에 여러 개를 보이지는 않지만(선례는 하나만 보인다) 측정이 "무엇에 붙을 뻔했는가"를
+ * 봐야 하므로 목록을 낸다. **추측하지 말고 센다**(#7).
+ *
+ * `pre`를 주면 질의 무관 후보를 다시 만들지 않는다(`staticCandidates`).
+ */
+export function snapCandidates(
+  p: Pt2, segs: SnapSeg[], ctx: SnapCtx, cfg: SnapCfg = {}, pre?: StaticCand[],
+): SnapCand[] {
+  const c = { ...SNAP_TOL, ...cfg };
+  const R = c.radius_ratio * diagOf(ctx.imgSize);
+  const out: SnapCand[] = [];
+
+  const push = (kind: SnapKind, at: Vec3, ofId?: string, ofId2?: string) => {
+    const sc = screenOf(at, p, ctx);
+    if (!sc || sc.dist > R) return;
+    out.push({ kind, at, screen: sc.screen, dist: sc.dist, ofId, ofId2 });
+  };
+
+  for (const s of (pre ?? staticCandidates(segs, cfg))) push(s.kind, s.at, s.ofId, s.ofId2);
 
   // ---- 수선 발: 기준점이 있어야 정해진다(Rhino `Perp`와 같다).
   if (ctx.from) {
@@ -220,9 +240,9 @@ export function snapCandidates(
  * 아무 후보도 반경 안에 없으면 `null` — **애매하면 놓지 않는다**(A-3).
  */
 export function snapAt(
-  p: Pt2, segs: SnapSeg[], ctx: SnapCtx, cfg: SnapCfg = {},
+  p: Pt2, segs: SnapSeg[], ctx: SnapCtx, cfg: SnapCfg = {}, pre?: StaticCand[],
 ): SnapCand | null {
-  return snapCandidates(p, segs, ctx, cfg)[0] ?? null;
+  return snapCandidates(p, segs, ctx, cfg, pre)[0] ?? null;
 }
 
 /** 화면 표시용 — 종류별 라벨과 색. SketchUp의 관행(종류마다 다른 표식)을 따른다. */

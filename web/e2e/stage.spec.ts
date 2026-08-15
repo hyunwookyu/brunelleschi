@@ -445,6 +445,7 @@ test("스냅 — 대상·표식·시작점 확정", async ({ page }) => {
     const S = window.S2S;
     const g3 = await import("/src/s3d/geom3d.ts");
     const ctx = S.cam.ctx();
+    const sn = await import("/src/s3d/snap.ts");
     const st = S.doc().strokes[S.doc().strokes.length - 1];
     const back = st.seg3d ? g3.project(st.seg3d[0], ctx.principal, ctx.f) : null;
     return {

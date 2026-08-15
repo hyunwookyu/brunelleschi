@@ -1,7 +1,7 @@
 {
   "spec": "실획 측정. 앱의 '획 내보내기'로 받은 세션을 sessions/ 에 넣으면 여기서 잰다.",
   "constants": {
-    "hash": "dbcf3a11",
+    "hash": "46c028d1",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -42,7 +42,9 @@
       "DRAFT_TOL": {
         "handle_ratio": 0.018,
         "margin_ratio": 0.03,
-        "min_guide_ratio": 0.45
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
       },
       "SENS_TOL": {
         "probe_px": 1,

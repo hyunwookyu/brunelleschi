@@ -19,7 +19,7 @@
     "camera": "요 35°·피치 15° 3점(f=1000px). 가이드를 **참 소실점**으로 세운다"
   },
   "constants": {
-    "hash": "dbcf3a11",
+    "hash": "46c028d1",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -60,7 +60,9 @@
       "DRAFT_TOL": {
         "handle_ratio": 0.018,
         "margin_ratio": 0.03,
-        "min_guide_ratio": 0.45
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
       },
       "SENS_TOL": {
         "probe_px": 1,
@@ -273,16 +275,17 @@
   },
   "l_b2": {
     "draft_only": {
-      "guides": 5,
+      "guides": 6,
       "lengths": [
+        1205.2,
         236.1,
-        589.3,
         591.3,
-        1205.7,
+        588.2,
+        1220.5,
         379.3
       ],
-      "camera_solvable": false,
-      "sensitivity_shown": false,
+      "camera_solvable": true,
+      "sensitivity_shown": true,
       "note": "이 구도의 **검출 초안만으로는 카메라가 안 선다**. 민감도도 그래서 안 뜬다 — **없는 숫자를 지어내지 않는다**(A-3). 아래는 참 소실점을 넣은 뒤의 값이다."
     },
     "line_drag": {

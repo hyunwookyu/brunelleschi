@@ -25,7 +25,7 @@ import {
   norm3, sub3, add3, mul3, dot3, cross3, unit3, axisDirection, type Vec3,
 } from "../src/s3d/geom3d.js";
 import { rng32, gauss, type InkGrade } from "../src/s3d/synthInk.js";
-import { scene, boxLattice, drawEdges, groundPoint, stat, round, median,
+import { scene, boxLattice, drawEdges, groundPoint, stat, round, median, perStrokeError,
          type Scene, type TrueEdge } from "./scene3d.js";
 import { constantsSnapshot } from "./constants.js";
 
@@ -71,40 +71,6 @@ function fixture(ci: number, jit: number, grade: InkGrade, seed: number, k = 1):
     sc, edges, diag,
     strokes: drawn.map((e, i) => ({ id: `s${i}`, pts2d: e.pts2d as Pt2[], axis: "free" as Axis })),
   };
-}
-
-/** 전역 최적 배율로 맞춘 뒤 획별 위치 오차(구조 대각 대비). 끝점 뒤집힘을 가려낸다. */
-function perStrokeError(
-  placed: Map<string, { a: Vec3; b: Vec3 }>, edges: TrueEdge[], diag: number,
-): number[] {
-  const pick = (seg: { a: Vec3; b: Vec3 }, t: TrueEdge, k: number) => {
-    const d0 = norm3(sub3(mul3(seg.a, k), t.a)) + norm3(sub3(mul3(seg.b, k), t.b));
-    const d1 = norm3(sub3(mul3(seg.a, k), t.b)) + norm3(sub3(mul3(seg.b, k), t.a));
-    return d0 <= d1 ? [[seg.a, t.a], [seg.b, t.b]] as [Vec3, Vec3][]
-                    : [[seg.a, t.b], [seg.b, t.a]] as [Vec3, Vec3][];
-  };
-  let n0 = 0, d0 = 0;
-  placed.forEach((seg, id) => {
-    const t = edges[+id.slice(1)];
-    n0 += norm3(t.a) + norm3(t.b); d0 += norm3(seg.a) + norm3(seg.b);
-  });
-  const k0 = d0 > 1e-18 ? n0 / d0 : 1;
-  let num = 0, den = 0;
-  placed.forEach((seg, id) => {
-    for (const [p, q] of pick(seg, edges[+id.slice(1)], k0)) {
-      for (let c = 0; c < 3; c++) { num += p[c] * q[c]; den += p[c] * p[c]; }
-    }
-  });
-  const kk = den > 1e-18 ? num / den : 1;
-  const out: number[] = [];
-  placed.forEach((seg, id) => {
-    let m = 0;
-    for (const [p, q] of pick(seg, edges[+id.slice(1)], kk)) {
-      m = Math.max(m, norm3(sub3(mul3(p, kk), q)) / diag);
-    }
-    out.push(m);
-  });
-  return out;
 }
 
 /**

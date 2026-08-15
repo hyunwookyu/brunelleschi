@@ -1,0 +1,713 @@
+{
+  "what": "L-B.3(b) — 검출 확정률 0.88이 초안 변환에서 0.34가 되는 이유",
+  "why": "L-B.2가 `guide_budget.json`에 남긴 사실이다(카메라 성립 31/90, 지배항 `recover_failed` 30). **어느 단계에서 무엇을 잃는지**가 없었다.",
+  "hypothesis": "`draftFromDetection`이 지지선 중 **가장 긴 둘**을 고르는데, 소실점은 두 선의 **교점**이므로 조건을 정하는 것은 길이만이 아니라 **각차**다. 각차가 좁으면 L-A.7의 **무한원 스냅**(`snap_deg` 3°)이 그 축을 비우고, 축이 줄면 카메라가 안 선다. **이것이 '각도 파라미터화 전환과 관련 있는가'의 정확한 형태다.**",
+  "method": {
+    "arms": {
+      "support_pick": "`longest`(현행) / `widest`(각차만) / `len_x_sep`(len·len·sin 각차)",
+      "snap_deg": "0(끔 — L-A.7 이전 상태) / 3(현행) / 6"
+    },
+    "warning": "⚠ **확정률만 보면 안 된다**(#16). 카메라가 서기만 하고 틀리면 더 나쁘다 — 조용히 틀린 배치가 된다. `axis_dir_err_deg`를 함께 낸다(#30의 양성 채널).",
+    "same_as_guide_budget": "구도·캔버스·시드 산식·skew 0.12·잡음 0.01이 `guide_budget.json`과 같다 — 아니면 31/90을 설명하는 것이 아니다(#27)."
+  },
+  "conditions": {
+    "compositions": [
+      "3pt_yaw35_pitch15",
+      "3pt_yaw20_pitch25",
+      "3pt_yaw50_pitch8",
+      "2pt_yaw35_pitch0",
+      "1pt_yaw0_pitch0"
+    ],
+    "grades": [
+      "precise",
+      "medium",
+      "coarse"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "canvas_px": [
+      1280,
+      675
+    ],
+    "end_jitter": 0.01,
+    "skew": 0.12,
+    "cells_per_arm": "등급 3 × 구도 5 × 시드 6 = 90",
+    "default_pick": "len_x_sep",
+    "default_snap_deg": 3
+  },
+  "baseline_before_draft": {
+    "note": "**초안 변환 이전**의 검출. `vp_detect.json`의 확정률과 같은 뜻은 아니다 — 여기서 세는 것은 '화면 안 유한 소실점이 둘 이상 잡혔는가'다(#27: 두 값을 겹쳐 읽지 않는다).",
+    "scenes": 90,
+    "detected_finite_vps_ge_2": "75/90",
+    "detected_finite_vps_ge_3": "32/90",
+    "upper_bound_true_vps": "72/90",
+    "upper_bound_note": "**참 소실점**으로 가이드를 세우면 카메라가 서는 비율 — 초안이 완벽할 때의 상한."
+  },
+  "by_arm": {
+    "longest|snap0": {
+      "camera_ok": "40/90",
+      "rate": 0.4444,
+      "guides_lt_4": 21,
+      "axes_lt_2": 8,
+      "recover_failed": 21,
+      "sum_check": true,
+      "axes_snapped_to_infinity": 0,
+      "guide_pair_separation_deg": {
+        "n": 171,
+        "min": 0.03,
+        "p10": 1.3,
+        "median": 7.18,
+        "p90": 18.81,
+        "max": 40.15
+      },
+      "axis_dir_err_deg": {
+        "n": 92,
+        "min": 0.287,
+        "p10": 3.002,
+        "median": 13.796,
+        "p90": 34.483,
+        "max": 51.656
+      },
+      "f_rel_err": {
+        "n": 40,
+        "min": 0.0054,
+        "p10": 0.0757,
+        "median": 0.3225,
+        "p90": 0.8472,
+        "max": 0.9713
+      }
+    },
+    "longest|snap3": {
+      "camera_ok": "31/90",
+      "rate": 0.3444,
+      "guides_lt_4": 21,
+      "axes_lt_2": 8,
+      "recover_failed": 30,
+      "sum_check": true,
+      "axes_snapped_to_infinity": 42,
+      "guide_pair_separation_deg": {
+        "n": 171,
+        "min": 0.03,
+        "p10": 1.3,
+        "median": 7.18,
+        "p90": 18.81,
+        "max": 40.15
+      },
+      "axis_dir_err_deg": {
+        "n": 71,
+        "min": 0.689,
+        "p10": 3.002,
+        "median": 12.348,
+        "p90": 32.67,
+        "max": 47.353
+      },
+      "f_rel_err": {
+        "n": 31,
+        "min": 0.0054,
+        "p10": 0.0519,
+        "median": 0.3007,
+        "p90": 0.5735,
+        "max": 0.9602
+      }
+    },
+    "longest|snap6": {
+      "camera_ok": "21/90",
+      "rate": 0.2333,
+      "guides_lt_4": 21,
+      "axes_lt_2": 8,
+      "recover_failed": 40,
+      "sum_check": true,
+      "axes_snapped_to_infinity": 73,
+      "guide_pair_separation_deg": {
+        "n": 171,
+        "min": 0.03,
+        "p10": 1.3,
+        "median": 7.18,
+        "p90": 18.81,
+        "max": 40.15
+      },
+      "axis_dir_err_deg": {
+        "n": 47,
+        "min": 0.505,
+        "p10": 2.259,
+        "median": 5.756,
+        "p90": 16.514,
+        "max": 34.483
+      },
+      "f_rel_err": {
+        "n": 21,
+        "min": 0.0054,
+        "p10": 0.0519,
+        "median": 0.2669,
+        "p90": 0.5501,
+        "max": 0.8958
+      }
+    },
+    "widest|snap0": {
+      "camera_ok": "44/90",
+      "rate": 0.4889,
+      "guides_lt_4": 21,
+      "axes_lt_2": 10,
+      "recover_failed": 15,
+      "sum_check": true,
+      "axes_snapped_to_infinity": 0,
+      "guide_pair_separation_deg": {
+        "n": 169,
+        "min": 3.78,
+        "p10": 4.78,
+        "median": 14.24,
+        "p90": 30.55,
+        "max": 39.58
+      },
+      "axis_dir_err_deg": {
+        "n": 106,
+        "min": 1.315,
+        "p10": 2.402,
+        "median": 9.964,
+        "p90": 26.55,
+        "max": 44.082
+      },
+      "f_rel_err": {
+        "n": 44,
+        "min": 0.0088,
+        "p10": 0.08,
+        "median": 0.2922,
+        "p90": 0.6276,
+        "max": 0.8846
+      }
+    },
+    "widest|snap3": {
+      "camera_ok": "44/90",
+      "rate": 0.4889,
+      "guides_lt_4": 21,
+      "axes_lt_2": 10,
+      "recover_failed": 15,
+      "sum_check": true,
+      "axes_snapped_to_infinity": 0,
+      "guide_pair_separation_deg": {
+        "n": 169,
+        "min": 3.78,
+        "p10": 4.78,
+        "median": 14.24,
+        "p90": 30.55,
+        "max": 39.58
+      },
+      "axis_dir_err_deg": {
+        "n": 106,
+        "min": 1.315,
+        "p10": 2.402,
+        "median": 9.964,
+        "p90": 26.55,
+        "max": 44.082
+      },
+      "f_rel_err": {
+        "n": 44,
+        "min": 0.0088,
+        "p10": 0.08,
+        "median": 0.2922,
+        "p90": 0.6276,
+        "max": 0.8846
+      }
+    },
+    "widest|snap6": {
+      "camera_ok": "33/90",
+      "rate": 0.3667,
+      "guides_lt_4": 21,
+      "axes_lt_2": 10,
+      "recover_failed": 26,
+      "sum_check": true,
+      "axes_snapped_to_infinity": 30,
+      "guide_pair_separation_deg": {
+        "n": 169,
+        "min": 3.78,
+        "p10": 4.78,
+        "median": 14.24,
+        "p90": 30.55,
+        "max": 39.58
+      },
+      "axis_dir_err_deg": {
+        "n": 75,
+        "min": 1.315,
+        "p10": 2.734,
+        "median": 7.706,
+        "p90": 21.318,
+        "max": 30.546
+      },
+      "f_rel_err": {
+        "n": 33,
+        "min": 0.0029,
+        "p10": 0.0503,
+        "median": 0.2472,
+        "p90": 0.5781,
+        "max": 0.8724
+      }
+    },
+    "len_x_sep|snap0": {
+      "camera_ok": "43/90",
+      "rate": 0.4778,
+      "guides_lt_4": 21,
+      "axes_lt_2": 10,
+      "recover_failed": 16,
+      "sum_check": true,
+      "axes_snapped_to_infinity": 0,
+      "guide_pair_separation_deg": {
+        "n": 169,
+        "min": 3.36,
+        "p10": 4.37,
+        "median": 13.94,
+        "p90": 29.99,
+        "max": 39.58
+      },
+      "axis_dir_err_deg": {
+        "n": 103,
+        "min": 0.935,
+        "p10": 2.262,
+        "median": 9.051,
+        "p90": 25.952,
+        "max": 48.503
+      },
+      "f_rel_err": {
+        "n": 43,
+        "min": 0.0088,
+        "p10": 0.0833,
+        "median": 0.2432,
+        "p90": 0.5778,
+        "max": 0.8958
+      }
+    },
+    "len_x_sep|snap3": {
+      "camera_ok": "43/90",
+      "rate": 0.4778,
+      "guides_lt_4": 21,
+      "axes_lt_2": 10,
+      "recover_failed": 16,
+      "sum_check": true,
+      "axes_snapped_to_infinity": 0,
+      "guide_pair_separation_deg": {
+        "n": 169,
+        "min": 3.36,
+        "p10": 4.37,
+        "median": 13.94,
+        "p90": 29.99,
+        "max": 39.58
+      },
+      "axis_dir_err_deg": {
+        "n": 103,
+        "min": 0.935,
+        "p10": 2.262,
+        "median": 9.051,
+        "p90": 25.952,
+        "max": 48.503
+      },
+      "f_rel_err": {
+        "n": 43,
+        "min": 0.0088,
+        "p10": 0.0833,
+        "median": 0.2432,
+        "p90": 0.5778,
+        "max": 0.8958
+      }
+    },
+    "len_x_sep|snap6": {
+      "camera_ok": "33/90",
+      "rate": 0.3667,
+      "guides_lt_4": 21,
+      "axes_lt_2": 10,
+      "recover_failed": 26,
+      "sum_check": true,
+      "axes_snapped_to_infinity": 33,
+      "guide_pair_separation_deg": {
+        "n": 169,
+        "min": 3.36,
+        "p10": 4.37,
+        "median": 13.94,
+        "p90": 29.99,
+        "max": 39.58
+      },
+      "axis_dir_err_deg": {
+        "n": 75,
+        "min": 1,
+        "p10": 2.422,
+        "median": 7.706,
+        "p90": 22.658,
+        "max": 34.483
+      },
+      "f_rel_err": {
+        "n": 33,
+        "min": 0.0029,
+        "p10": 0.0547,
+        "median": 0.2148,
+        "p90": 0.572,
+        "max": 0.8958
+      }
+    },
+    "longest_filled|snap3": {
+      "camera_ok": "40/90",
+      "rate": 0.4444,
+      "guides_lt_4": 0,
+      "axes_lt_2": 0,
+      "recover_failed": 50,
+      "sum_check": true,
+      "axes_snapped_to_infinity": 103,
+      "guide_pair_separation_deg": {
+        "n": 270,
+        "min": 0,
+        "p10": 0,
+        "median": 5.21,
+        "p90": 18.81,
+        "max": 75.53
+      },
+      "axis_dir_err_deg": {
+        "n": 95,
+        "min": 0.689,
+        "p10": 3.101,
+        "median": 12.348,
+        "p90": 32.67,
+        "max": 47.353
+      },
+      "f_rel_err": {
+        "n": 40,
+        "min": 0.0054,
+        "p10": 0.0519,
+        "median": 0.3346,
+        "p90": 0.7532,
+        "max": 0.9602
+      }
+    },
+    "widest_filled|snap3": {
+      "camera_ok": "61/90",
+      "rate": 0.6778,
+      "guides_lt_4": 0,
+      "axes_lt_2": 0,
+      "recover_failed": 29,
+      "sum_check": true,
+      "axes_snapped_to_infinity": 58,
+      "guide_pair_separation_deg": {
+        "n": 270,
+        "min": 0,
+        "p10": 0,
+        "median": 10.78,
+        "p90": 30.96,
+        "max": 81.74
+      },
+      "axis_dir_err_deg": {
+        "n": 150,
+        "min": 1.315,
+        "p10": 2.555,
+        "median": 9.372,
+        "p90": 23.928,
+        "max": 45.125
+      },
+      "f_rel_err": {
+        "n": 61,
+        "min": 0.0088,
+        "p10": 0.0813,
+        "median": 0.3846,
+        "p90": 0.7707,
+        "max": 0.9166
+      }
+    },
+    "len_x_sep_filled|snap3": {
+      "camera_ok": "58/90",
+      "rate": 0.6444,
+      "guides_lt_4": 0,
+      "axes_lt_2": 0,
+      "recover_failed": 32,
+      "sum_check": true,
+      "axes_snapped_to_infinity": 58,
+      "guide_pair_separation_deg": {
+        "n": 270,
+        "min": 0,
+        "p10": 0,
+        "median": 10.32,
+        "p90": 30.07,
+        "max": 81.74
+      },
+      "axis_dir_err_deg": {
+        "n": 142,
+        "min": 0.935,
+        "p10": 2.422,
+        "median": 8.954,
+        "p90": 25.014,
+        "max": 48.503
+      },
+      "f_rel_err": {
+        "n": 58,
+        "min": 0.0088,
+        "p10": 0.09,
+        "median": 0.3152,
+        "p90": 0.737,
+        "max": 0.8958
+      }
+    },
+    "neutral_ignores_drawing|snap3": {
+      "camera_ok": "90/90",
+      "rate": 1,
+      "guides_lt_4": 0,
+      "axes_lt_2": 0,
+      "recover_failed": 0,
+      "sum_check": true,
+      "axes_snapped_to_infinity": 90,
+      "guide_pair_separation_deg": {
+        "n": 0,
+        "min": null,
+        "p10": null,
+        "median": null,
+        "p90": null,
+        "max": null
+      },
+      "axis_dir_err_deg": {
+        "n": 180,
+        "min": 6.706,
+        "p10": 6.986,
+        "median": 13.833,
+        "p90": 45,
+        "max": 45
+      },
+      "f_rel_err": {
+        "n": 90,
+        "min": 0.4076,
+        "p10": 0.4076,
+        "median": 0.4076,
+        "p90": 0.4076,
+        "max": 0.4076
+      }
+    }
+  },
+  "guide_pair_separation_deg_by_pick": {
+    "longest": {
+      "n": 171,
+      "min": 0.03,
+      "p10": 1.3,
+      "median": 7.18,
+      "p90": 18.81,
+      "max": 40.15
+    },
+    "widest": {
+      "n": 169,
+      "min": 3.78,
+      "p10": 4.78,
+      "median": 14.24,
+      "p90": 30.55,
+      "max": 39.58
+    },
+    "len_x_sep": {
+      "n": 169,
+      "min": 3.36,
+      "p10": 4.37,
+      "median": 13.94,
+      "p90": 29.99,
+      "max": 39.58
+    }
+  },
+  "by_grade_default": {
+    "precise": {
+      "camera_ok": "8/30",
+      "axis_dir_err_deg": {
+        "n": 18,
+        "min": 3.909,
+        "p10": 4.396,
+        "median": 14.095,
+        "p90": 37.304,
+        "max": 47.353
+      }
+    },
+    "medium": {
+      "camera_ok": "13/30",
+      "axis_dir_err_deg": {
+        "n": 29,
+        "min": 0.689,
+        "p10": 3.002,
+        "median": 12.595,
+        "p90": 32.67,
+        "max": 39.456
+      }
+    },
+    "coarse": {
+      "camera_ok": "10/30",
+      "axis_dir_err_deg": {
+        "n": 24,
+        "min": 1,
+        "p10": 2.288,
+        "median": 7.317,
+        "p90": 18.559,
+        "max": 34.483
+      }
+    }
+  },
+  "by_composition_default": {
+    "3pt_yaw35_pitch15": {
+      "camera_ok": "13/18",
+      "axis_dir_err_deg": {
+        "n": 33,
+        "min": 0.689,
+        "p10": 2.259,
+        "median": 5.28,
+        "p90": 17.408,
+        "max": 32.67
+      }
+    },
+    "3pt_yaw20_pitch25": {
+      "camera_ok": "3/18",
+      "axis_dir_err_deg": {
+        "n": 6,
+        "min": 3.663,
+        "p10": 4.624,
+        "median": 7.564,
+        "p90": 10.823,
+        "max": 10.823
+      }
+    },
+    "3pt_yaw50_pitch8": {
+      "camera_ok": "8/18",
+      "axis_dir_err_deg": {
+        "n": 17,
+        "min": 1.405,
+        "p10": 4.396,
+        "median": 13.557,
+        "p90": 18.786,
+        "max": 39.335
+      }
+    },
+    "2pt_yaw35_pitch0": {
+      "camera_ok": "4/18",
+      "axis_dir_err_deg": {
+        "n": 8,
+        "min": 12.595,
+        "p10": 12.661,
+        "median": 18.927,
+        "p90": 37.304,
+        "max": 47.353
+      }
+    },
+    "1pt_yaw0_pitch0": {
+      "camera_ok": "3/18",
+      "axis_dir_err_deg": {
+        "n": 7,
+        "min": 11.282,
+        "p10": 13.284,
+        "median": 13.731,
+        "p90": 36.888,
+        "max": 39.456
+      }
+    }
+  },
+  "constants": {
+    "hash": "46c028d1",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  }
+}

@@ -16,8 +16,8 @@ import { draftFromDetection, handleAt, moveHandle, guideLineAt, moveGuideBy,
 import { SENS_TOL, type AxisSens } from "./s3d/vpSensitivity.js";
 import { HOMOG_TOL } from "./s3d/vpHomog.js";
 import { liftAll, type LiftStroke } from "./s3d/lift.js";
-import { snapAt, SNAP_TOL, SNAP_LABEL, SNAP_COLOR,
-         type SnapCand, type SnapSeg, type SnapCtx } from "./s3d/snap.js";
+import { snapAt, staticCandidates, SNAP_TOL, SNAP_LABEL, SNAP_COLOR,
+         type SnapCand, type SnapSeg, type SnapCtx, type StaticCand } from "./s3d/snap.js";
 import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "./s3d/liveLine.js";
 import { classifyStroke } from "./s3d/axis.js";
 import { AXIS_COLOR, guides as gridGuides, HORIZON_COLOR, GROUND_COLOR } from "./s3d/grid.js";
@@ -71,6 +71,13 @@ const snapSegs = (): SnapSeg[] =>
   lifted(doc).map(s => ({ id: s.id, a: s.seg3d![0], b: s.seg3d![1] }));
 
 /**
+ * 질의 무관 후보 캐시. **교차점이 `O(n²)`이라 포인터가 움직일 때마다 만들면 안 된다** —
+ * 대상 100선이면 매 프레임 5천 번의 최근접 계산이다. 기하가 바뀔 때만(=`syncScene`) 버린다.
+ */
+let snapPre: StaticCand[] | null = null;
+const snapStatic = (segs: SnapSeg[]): StaticCand[] => (snapPre ??= staticCandidates(segs));
+
+/**
  * 스냅이 도는 조건: **카메라가 확정됐고 확정 시점에 있을 때**.
  * 궤도로 돌린 뒤에는 `stage`의 자유 카메라와 `cam.ctx()`가 달라 화면 좌표의 뜻이 다르다 —
  * 그 경로는 L-B.8(궤도 후 계속 그리기)에서 연다. **없는 스냅을 지어내지 않는다**(A-3).
@@ -90,6 +97,12 @@ function snapCtx(): SnapCtx | null {
  * 올라간 기하는 되쏘면 정확히 그 화면 점으로 돌아오므로(`lift.ts`의 `segGap = 0` 보장)
  * "3D 대상에 붙인다"와 "그 대상의 상으로 화면 점을 옮긴다"가 **같은 연산**이다.
  * 그래서 솔버를 바꾸지 않고 `pts2d[0]`만 옮기면 된다 — 새로 설계한 것이 없다(A-3).
+ */
+/**
+ * ⚠ **이 항등은 그 카메라에서만 성립한다**(리뷰어 [12b]). 차수 승격(§6.1)은 `pts2d`를 보존해
+ * **전부 처음부터 다시 올리는데**, 여기서 옮겨 놓은 `pts2d[0]`은 **옛 카메라가 만든 대상의
+ * 상**이라 새 카메라에서는 그 대상의 상이 다른 자리다. `snapStart.ofId`를 새 카메라로 **다시
+ * 풀지 않으면 스냅이 조용히 풀린다.** L-C에서 처리한다(`DEFERRED.md`).
  */
 function applySnapToStart(st: SStroke, cand: SnapCand): void {
   st.snapStart = { kind: cand.kind, at: cand.at, ofId: cand.ofId };
@@ -122,6 +135,7 @@ function placeLive(st: SStroke, c: PlaceCtx, at: Vec3): boolean {
 
 /** 문서의 3D 레이어를 씬에 반영한다. **여기가 유일한 경로다.** */
 function syncScene() {
+  snapPre = null;                       // 기하가 바뀌었다 — 스냅 후보를 다시 만든다
   const segs: StageSeg[] = lifted(doc).map(s => ({
     id: s.id, a: s.seg3d![0], b: s.seg3d![1], axis: s.axis,
   }));
@@ -365,7 +379,8 @@ const ink = new InkCanvas(canvas, {
   },
   onHover: (p) => {
     const sc = p ? snapCtx() : null;
-    const next = (sc && tool === "draw") ? snapAt(p!, snapSegs(), sc) : null;
+    const segs = snapSegs();
+    const next = (sc && tool === "draw") ? snapAt(p!, segs, sc, {}, snapStatic(segs)) : null;
     // 값이 안 바뀌면 다시 그리지 않는다 — 포인터마다 전체 재그리기가 돌면 안 된다
     const same = (!next && !hoverSnap)
       || (!!next && !!hoverSnap && next.kind === hoverSnap.kind
@@ -386,7 +401,8 @@ const ink = new InkCanvas(canvas, {
     if (cam.locked && ctx && stage.isPinned) {
       // **① 시작점 스냅**(§3). 붙으면 그 획의 3D가 확정된다.
       const sc = snapCtx();
-      const cand = sc ? snapAt(pts[0], snapSegs(), sc) : null;
+      const segs0 = snapSegs();
+      const cand = sc ? snapAt(pts[0], segs0, sc, {}, snapStatic(segs0)) : null;
       lastSnapNote = "";
       if (cand) {
         applySnapToStart(s, cand);
@@ -578,7 +594,10 @@ refresh();
 (window as unknown as Record<string, unknown>).S2S = {
   doc: () => doc, cam, stage, refresh, SIZE_HEAL,
   // L-B.3 — 종단 확인이 스냅을 앱 경로 그대로 부른다(PITFALLS #17)
-  snap: (p: Pt2) => { const sc = snapCtx(); return sc ? snapAt(p, snapSegs(), sc) : null; },
+  snap: (p: Pt2) => {
+    const sc = snapCtx(); const g = snapSegs();
+    return sc ? snapAt(p, g, sc, {}, snapStatic(g)) : null;
+  },
   snapTargets: () => snapSegs().length,
   hoverSnap: () => hoverSnap,
 };

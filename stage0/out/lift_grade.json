@@ -1,0 +1,2197 @@
+{
+  "what": "L-B.3(a) — **참 카메라**에서 `coarse` 배치가 0.44인 원인을 단계별로 가른다",
+  "why": "L-B.1이 `stage_cam.json`에 남긴 사실이다(precise 0.63 · medium 0.60 · coarse 0.44, 분모 1440). `lift_gate`·`camera_gate`가 **한 번도 안 잰 등급**이라 원인이 없었다.",
+  "method": {
+    "note": "**뺄셈으로 만들지 않는다**(#10). 각 단계를 오라클로 대체한 팔을 직접 돌린다.",
+    "arms": {
+      "judged_default": "실제 경로 — `classifyStroke` + `LIFT_TOL.touch_ratio`(0.015)",
+      "oracle_axis_default": "**축 판정을 뗀다** — 참 축 라벨을 그대로 준다",
+      "judged_touch_*": "**접합 반경 스윕** — 교점 검출이 얼마나 지배하는가",
+      "oracle_touch_*": "둘 다 오라클 — **남는 것이 동차 풀이(조건수)와 기하다**"
+    },
+    "camera": "**참 카메라**(합성 장면의 값)를 그대로 준다. 검출·조정은 여기서 안 잰다.",
+    "shape_err": "`scene3d.perStrokeError` — **`camera_gate`와 같은 함수**다(#1). 구조 대각 대비."
+  },
+  "conditions": {
+    "compositions": [
+      "3pt_yaw35_pitch15",
+      "3pt_yaw20_pitch25",
+      "3pt_yaw50_pitch8",
+      "2pt_yaw35_pitch0",
+      "1pt_yaw0_pitch0"
+    ],
+    "grades": [
+      "precise",
+      "medium",
+      "coarse"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "end_jitters": [
+      0,
+      0.01,
+      0.03,
+      0.05
+    ],
+    "skew": 0.12,
+    "touch_ratios": [
+      0.008,
+      0.015,
+      0.025,
+      0.04,
+      0.06,
+      0.09
+    ],
+    "touch_default": 0.015,
+    "canvas_px": [
+      960,
+      672
+    ],
+    "same_as_stage_cam": "구도·시드 산식·skew·잡음 축이 `stage_cam.json`과 같다 — 아니면 0.44를 설명하는 것이 아니다(#27).",
+    "ink_bow_by_grade": {
+      "precise": 0.0315,
+      "medium": 0.0558,
+      "coarse": 0.0937
+    }
+  },
+  "by_arm": {
+    "judged_default": {
+      "precise": {
+        "scenes": 120,
+        "placed_over_all": "908/1440",
+        "placed_rate": 0.6306,
+        "component_over_all": "908/1440",
+        "axis": {
+          "correct": "994/1440",
+          "wrong": "130/1440",
+          "free": "316/1440"
+        },
+        "joints": {
+          "true_found": "1182/2880",
+          "false_kept": 109,
+          "missed": 1698
+        },
+        "shape_err": {
+          "n": 908,
+          "min": 0.0006,
+          "p10": 0.0159,
+          "median": 0.1032,
+          "p90": 0.4149,
+          "max": 2.4788
+        },
+        "silent_wrong": {
+          "cut_0_1": "461/908",
+          "cut_0_2": "307/908",
+          "cut_0_5": "56/908"
+        }
+      },
+      "medium": {
+        "scenes": 120,
+        "placed_over_all": "868/1440",
+        "placed_rate": 0.6028,
+        "component_over_all": "868/1440",
+        "axis": {
+          "correct": "942/1440",
+          "wrong": "131/1440",
+          "free": "367/1440"
+        },
+        "joints": {
+          "true_found": "1007/2880",
+          "false_kept": 106,
+          "missed": 1873
+        },
+        "shape_err": {
+          "n": 868,
+          "min": 0.0027,
+          "p10": 0.0237,
+          "median": 0.1509,
+          "p90": 0.463,
+          "max": 3.3512
+        },
+        "silent_wrong": {
+          "cut_0_1": "533/868",
+          "cut_0_2": "340/868",
+          "cut_0_5": "77/868"
+        }
+      },
+      "coarse": {
+        "scenes": 120,
+        "placed_over_all": "640/1440",
+        "placed_rate": 0.4444,
+        "component_over_all": "640/1440",
+        "axis": {
+          "correct": "796/1440",
+          "wrong": "111/1440",
+          "free": "533/1440"
+        },
+        "joints": {
+          "true_found": "666/2880",
+          "false_kept": 57,
+          "missed": 2214
+        },
+        "shape_err": {
+          "n": 640,
+          "min": 0.0045,
+          "p10": 0.0247,
+          "median": 0.1233,
+          "p90": 0.4669,
+          "max": 3.0431
+        },
+        "silent_wrong": {
+          "cut_0_1": "366/640",
+          "cut_0_2": "227/640",
+          "cut_0_5": "57/640"
+        }
+      }
+    },
+    "oracle_axis_default": {
+      "precise": {
+        "scenes": 120,
+        "placed_over_all": "1257/1440",
+        "placed_rate": 0.8729,
+        "component_over_all": "1257/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "1764/2880",
+          "false_kept": 206,
+          "missed": 1116
+        },
+        "shape_err": {
+          "n": 1257,
+          "min": 0.0008,
+          "p10": 0.0183,
+          "median": 0.1388,
+          "p90": 0.41,
+          "max": 2.0316
+        },
+        "silent_wrong": {
+          "cut_0_1": "713/1257",
+          "cut_0_2": "496/1257",
+          "cut_0_5": "64/1257"
+        }
+      },
+      "medium": {
+        "scenes": 120,
+        "placed_over_all": "1266/1440",
+        "placed_rate": 0.8792,
+        "component_over_all": "1266/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "1659/2880",
+          "false_kept": 214,
+          "missed": 1221
+        },
+        "shape_err": {
+          "n": 1266,
+          "min": 0.0017,
+          "p10": 0.0318,
+          "median": 0.1663,
+          "p90": 0.4235,
+          "max": 2.3644
+        },
+        "silent_wrong": {
+          "cut_0_1": "843/1266",
+          "cut_0_2": "543/1266",
+          "cut_0_5": "71/1266"
+        }
+      },
+      "coarse": {
+        "scenes": 120,
+        "placed_over_all": "1187/1440",
+        "placed_rate": 0.8243,
+        "component_over_all": "1187/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "1500/2880",
+          "false_kept": 181,
+          "missed": 1380
+        },
+        "shape_err": {
+          "n": 1187,
+          "min": 0.0045,
+          "p10": 0.0389,
+          "median": 0.1809,
+          "p90": 0.4316,
+          "max": 5.567
+        },
+        "silent_wrong": {
+          "cut_0_1": "821/1187",
+          "cut_0_2": "545/1187",
+          "cut_0_5": "79/1187"
+        }
+      }
+    },
+    "judged_touch_0.008": {
+      "precise": {
+        "scenes": 120,
+        "placed_over_all": "787/1440",
+        "placed_rate": 0.5465,
+        "component_over_all": "787/1440",
+        "axis": {
+          "correct": "994/1440",
+          "wrong": "130/1440",
+          "free": "316/1440"
+        },
+        "joints": {
+          "true_found": "937/2880",
+          "false_kept": 74,
+          "missed": 1943
+        },
+        "shape_err": {
+          "n": 787,
+          "min": 0.0008,
+          "p10": 0.0136,
+          "median": 0.098,
+          "p90": 0.409,
+          "max": 2.4174
+        },
+        "silent_wrong": {
+          "cut_0_1": "391/787",
+          "cut_0_2": "256/787",
+          "cut_0_5": "52/787"
+        }
+      },
+      "medium": {
+        "scenes": 120,
+        "placed_over_all": "693/1440",
+        "placed_rate": 0.4813,
+        "component_over_all": "693/1440",
+        "axis": {
+          "correct": "942/1440",
+          "wrong": "131/1440",
+          "free": "367/1440"
+        },
+        "joints": {
+          "true_found": "737/2880",
+          "false_kept": 60,
+          "missed": 2143
+        },
+        "shape_err": {
+          "n": 693,
+          "min": 0.0018,
+          "p10": 0.0188,
+          "median": 0.1289,
+          "p90": 0.4721,
+          "max": 3.9649
+        },
+        "silent_wrong": {
+          "cut_0_1": "388/693",
+          "cut_0_2": "263/693",
+          "cut_0_5": "59/693"
+        }
+      },
+      "coarse": {
+        "scenes": 120,
+        "placed_over_all": "508/1440",
+        "placed_rate": 0.3528,
+        "component_over_all": "508/1440",
+        "axis": {
+          "correct": "796/1440",
+          "wrong": "111/1440",
+          "free": "533/1440"
+        },
+        "joints": {
+          "true_found": "467/2880",
+          "false_kept": 36,
+          "missed": 2413
+        },
+        "shape_err": {
+          "n": 508,
+          "min": 0.0032,
+          "p10": 0.0176,
+          "median": 0.0875,
+          "p90": 0.4381,
+          "max": 3.0431
+        },
+        "silent_wrong": {
+          "cut_0_1": "231/508",
+          "cut_0_2": "149/508",
+          "cut_0_5": "42/508"
+        }
+      }
+    },
+    "oracle_touch_0.008": {
+      "precise": {
+        "scenes": 120,
+        "placed_over_all": "1056/1440",
+        "placed_rate": 0.7333,
+        "component_over_all": "1056/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "1352/2880",
+          "false_kept": 125,
+          "missed": 1528
+        },
+        "shape_err": {
+          "n": 1056,
+          "min": 0.0008,
+          "p10": 0.0143,
+          "median": 0.1131,
+          "p90": 0.4045,
+          "max": 1.6156
+        },
+        "silent_wrong": {
+          "cut_0_1": "558/1056",
+          "cut_0_2": "403/1056",
+          "cut_0_5": "43/1056"
+        }
+      },
+      "medium": {
+        "scenes": 120,
+        "placed_over_all": "1012/1440",
+        "placed_rate": 0.7028,
+        "component_over_all": "1012/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "1214/2880",
+          "false_kept": 126,
+          "missed": 1666
+        },
+        "shape_err": {
+          "n": 1012,
+          "min": 0.0011,
+          "p10": 0.0214,
+          "median": 0.1426,
+          "p90": 0.4108,
+          "max": 2.3855
+        },
+        "silent_wrong": {
+          "cut_0_1": "604/1012",
+          "cut_0_2": "404/1012",
+          "cut_0_5": "45/1012"
+        }
+      },
+      "coarse": {
+        "scenes": 120,
+        "placed_over_all": "941/1440",
+        "placed_rate": 0.6535,
+        "component_over_all": "941/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "1058/2880",
+          "false_kept": 101,
+          "missed": 1822
+        },
+        "shape_err": {
+          "n": 941,
+          "min": 0.0021,
+          "p10": 0.0304,
+          "median": 0.1502,
+          "p90": 0.4133,
+          "max": 1.5503
+        },
+        "silent_wrong": {
+          "cut_0_1": "584/941",
+          "cut_0_2": "380/941",
+          "cut_0_5": "53/941"
+        }
+      }
+    },
+    "judged_touch_0.015": {
+      "precise": {
+        "scenes": 120,
+        "placed_over_all": "908/1440",
+        "placed_rate": 0.6306,
+        "component_over_all": "908/1440",
+        "axis": {
+          "correct": "994/1440",
+          "wrong": "130/1440",
+          "free": "316/1440"
+        },
+        "joints": {
+          "true_found": "1182/2880",
+          "false_kept": 109,
+          "missed": 1698
+        },
+        "shape_err": {
+          "n": 908,
+          "min": 0.0006,
+          "p10": 0.0159,
+          "median": 0.1032,
+          "p90": 0.4149,
+          "max": 2.4788
+        },
+        "silent_wrong": {
+          "cut_0_1": "461/908",
+          "cut_0_2": "307/908",
+          "cut_0_5": "56/908"
+        }
+      },
+      "medium": {
+        "scenes": 120,
+        "placed_over_all": "868/1440",
+        "placed_rate": 0.6028,
+        "component_over_all": "868/1440",
+        "axis": {
+          "correct": "942/1440",
+          "wrong": "131/1440",
+          "free": "367/1440"
+        },
+        "joints": {
+          "true_found": "1007/2880",
+          "false_kept": 106,
+          "missed": 1873
+        },
+        "shape_err": {
+          "n": 868,
+          "min": 0.0027,
+          "p10": 0.0237,
+          "median": 0.1509,
+          "p90": 0.463,
+          "max": 3.3512
+        },
+        "silent_wrong": {
+          "cut_0_1": "533/868",
+          "cut_0_2": "340/868",
+          "cut_0_5": "77/868"
+        }
+      },
+      "coarse": {
+        "scenes": 120,
+        "placed_over_all": "640/1440",
+        "placed_rate": 0.4444,
+        "component_over_all": "640/1440",
+        "axis": {
+          "correct": "796/1440",
+          "wrong": "111/1440",
+          "free": "533/1440"
+        },
+        "joints": {
+          "true_found": "666/2880",
+          "false_kept": 57,
+          "missed": 2214
+        },
+        "shape_err": {
+          "n": 640,
+          "min": 0.0045,
+          "p10": 0.0247,
+          "median": 0.1233,
+          "p90": 0.4669,
+          "max": 3.0431
+        },
+        "silent_wrong": {
+          "cut_0_1": "366/640",
+          "cut_0_2": "227/640",
+          "cut_0_5": "57/640"
+        }
+      }
+    },
+    "oracle_touch_0.015": {
+      "precise": {
+        "scenes": 120,
+        "placed_over_all": "1257/1440",
+        "placed_rate": 0.8729,
+        "component_over_all": "1257/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "1764/2880",
+          "false_kept": 206,
+          "missed": 1116
+        },
+        "shape_err": {
+          "n": 1257,
+          "min": 0.0008,
+          "p10": 0.0183,
+          "median": 0.1388,
+          "p90": 0.41,
+          "max": 2.0316
+        },
+        "silent_wrong": {
+          "cut_0_1": "713/1257",
+          "cut_0_2": "496/1257",
+          "cut_0_5": "64/1257"
+        }
+      },
+      "medium": {
+        "scenes": 120,
+        "placed_over_all": "1266/1440",
+        "placed_rate": 0.8792,
+        "component_over_all": "1266/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "1659/2880",
+          "false_kept": 214,
+          "missed": 1221
+        },
+        "shape_err": {
+          "n": 1266,
+          "min": 0.0017,
+          "p10": 0.0318,
+          "median": 0.1663,
+          "p90": 0.4235,
+          "max": 2.3644
+        },
+        "silent_wrong": {
+          "cut_0_1": "843/1266",
+          "cut_0_2": "543/1266",
+          "cut_0_5": "71/1266"
+        }
+      },
+      "coarse": {
+        "scenes": 120,
+        "placed_over_all": "1187/1440",
+        "placed_rate": 0.8243,
+        "component_over_all": "1187/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "1500/2880",
+          "false_kept": 181,
+          "missed": 1380
+        },
+        "shape_err": {
+          "n": 1187,
+          "min": 0.0045,
+          "p10": 0.0389,
+          "median": 0.1809,
+          "p90": 0.4316,
+          "max": 5.567
+        },
+        "silent_wrong": {
+          "cut_0_1": "821/1187",
+          "cut_0_2": "545/1187",
+          "cut_0_5": "79/1187"
+        }
+      }
+    },
+    "judged_touch_0.025": {
+      "precise": {
+        "scenes": 120,
+        "placed_over_all": "1038/1440",
+        "placed_rate": 0.7208,
+        "component_over_all": "1038/1440",
+        "axis": {
+          "correct": "994/1440",
+          "wrong": "130/1440",
+          "free": "316/1440"
+        },
+        "joints": {
+          "true_found": "1401/2880",
+          "false_kept": 177,
+          "missed": 1479
+        },
+        "shape_err": {
+          "n": 1038,
+          "min": 0.0004,
+          "p10": 0.0254,
+          "median": 0.1647,
+          "p90": 0.4533,
+          "max": 2.5552
+        },
+        "silent_wrong": {
+          "cut_0_1": "640/1038",
+          "cut_0_2": "440/1038",
+          "cut_0_5": "78/1038"
+        }
+      },
+      "medium": {
+        "scenes": 120,
+        "placed_over_all": "972/1440",
+        "placed_rate": 0.675,
+        "component_over_all": "972/1440",
+        "axis": {
+          "correct": "942/1440",
+          "wrong": "131/1440",
+          "free": "367/1440"
+        },
+        "joints": {
+          "true_found": "1206/2880",
+          "false_kept": 161,
+          "missed": 1674
+        },
+        "shape_err": {
+          "n": 972,
+          "min": 0.0009,
+          "p10": 0.0276,
+          "median": 0.1694,
+          "p90": 0.5038,
+          "max": 3.3238
+        },
+        "silent_wrong": {
+          "cut_0_1": "630/972",
+          "cut_0_2": "431/972",
+          "cut_0_5": "99/972"
+        }
+      },
+      "coarse": {
+        "scenes": 120,
+        "placed_over_all": "748/1440",
+        "placed_rate": 0.5194,
+        "component_over_all": "748/1440",
+        "axis": {
+          "correct": "796/1440",
+          "wrong": "111/1440",
+          "free": "533/1440"
+        },
+        "joints": {
+          "true_found": "825/2880",
+          "false_kept": 84,
+          "missed": 2055
+        },
+        "shape_err": {
+          "n": 748,
+          "min": 0.0076,
+          "p10": 0.0348,
+          "median": 0.1254,
+          "p90": 0.5127,
+          "max": 3.0431
+        },
+        "silent_wrong": {
+          "cut_0_1": "440/748",
+          "cut_0_2": "274/748",
+          "cut_0_5": "81/748"
+        }
+      }
+    },
+    "oracle_touch_0.025": {
+      "precise": {
+        "scenes": 120,
+        "placed_over_all": "1388/1440",
+        "placed_rate": 0.9639,
+        "component_over_all": "1389/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "2127/2880",
+          "false_kept": 315,
+          "missed": 753
+        },
+        "shape_err": {
+          "n": 1388,
+          "min": 0.0004,
+          "p10": 0.0266,
+          "median": 0.1824,
+          "p90": 0.4129,
+          "max": 2.399
+        },
+        "silent_wrong": {
+          "cut_0_1": "926/1388",
+          "cut_0_2": "653/1388",
+          "cut_0_5": "58/1388"
+        }
+      },
+      "medium": {
+        "scenes": 120,
+        "placed_over_all": "1373/1440",
+        "placed_rate": 0.9535,
+        "component_over_all": "1373/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "1994/2880",
+          "false_kept": 317,
+          "missed": 886
+        },
+        "shape_err": {
+          "n": 1373,
+          "min": 0.0008,
+          "p10": 0.0355,
+          "median": 0.1777,
+          "p90": 0.4268,
+          "max": 2.0334
+        },
+        "silent_wrong": {
+          "cut_0_1": "966/1373",
+          "cut_0_2": "641/1373",
+          "cut_0_5": "62/1373"
+        }
+      },
+      "coarse": {
+        "scenes": 120,
+        "placed_over_all": "1347/1440",
+        "placed_rate": 0.9354,
+        "component_over_all": "1347/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "1890/2880",
+          "false_kept": 292,
+          "missed": 990
+        },
+        "shape_err": {
+          "n": 1347,
+          "min": 0.0015,
+          "p10": 0.0432,
+          "median": 0.1809,
+          "p90": 0.4218,
+          "max": 3.4521
+        },
+        "silent_wrong": {
+          "cut_0_1": "927/1347",
+          "cut_0_2": "623/1347",
+          "cut_0_5": "71/1347"
+        }
+      }
+    },
+    "judged_touch_0.04": {
+      "precise": {
+        "scenes": 120,
+        "placed_over_all": "1080/1440",
+        "placed_rate": 0.75,
+        "component_over_all": "1080/1440",
+        "axis": {
+          "correct": "994/1440",
+          "wrong": "130/1440",
+          "free": "316/1440"
+        },
+        "joints": {
+          "true_found": "1558/2880",
+          "false_kept": 251,
+          "missed": 1322
+        },
+        "shape_err": {
+          "n": 1080,
+          "min": 0.0022,
+          "p10": 0.0376,
+          "median": 0.1844,
+          "p90": 0.462,
+          "max": 2.5805
+        },
+        "silent_wrong": {
+          "cut_0_1": "745/1080",
+          "cut_0_2": "503/1080",
+          "cut_0_5": "86/1080"
+        }
+      },
+      "medium": {
+        "scenes": 120,
+        "placed_over_all": "1027/1440",
+        "placed_rate": 0.7132,
+        "component_over_all": "1027/1440",
+        "axis": {
+          "correct": "942/1440",
+          "wrong": "131/1440",
+          "free": "367/1440"
+        },
+        "joints": {
+          "true_found": "1362/2880",
+          "false_kept": 221,
+          "missed": 1518
+        },
+        "shape_err": {
+          "n": 1027,
+          "min": 0.0003,
+          "p10": 0.0436,
+          "median": 0.1995,
+          "p90": 0.5387,
+          "max": 3.8541
+        },
+        "silent_wrong": {
+          "cut_0_1": "759/1027",
+          "cut_0_2": "511/1027",
+          "cut_0_5": "111/1027"
+        }
+      },
+      "coarse": {
+        "scenes": 120,
+        "placed_over_all": "809/1440",
+        "placed_rate": 0.5618,
+        "component_over_all": "809/1440",
+        "axis": {
+          "correct": "796/1440",
+          "wrong": "111/1440",
+          "free": "533/1440"
+        },
+        "joints": {
+          "true_found": "940/2880",
+          "false_kept": 125,
+          "missed": 1940
+        },
+        "shape_err": {
+          "n": 809,
+          "min": 0.0005,
+          "p10": 0.0447,
+          "median": 0.1718,
+          "p90": 0.5525,
+          "max": 3.0431
+        },
+        "silent_wrong": {
+          "cut_0_1": "557/809",
+          "cut_0_2": "353/809",
+          "cut_0_5": "94/809"
+        }
+      }
+    },
+    "oracle_touch_0.04": {
+      "precise": {
+        "scenes": 120,
+        "placed_over_all": "1427/1440",
+        "placed_rate": 0.991,
+        "component_over_all": "1427/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "2335/2880",
+          "false_kept": 451,
+          "missed": 545
+        },
+        "shape_err": {
+          "n": 1427,
+          "min": 0.0054,
+          "p10": 0.0479,
+          "median": 0.2031,
+          "p90": 0.4144,
+          "max": 2.4316
+        },
+        "silent_wrong": {
+          "cut_0_1": "1062/1427",
+          "cut_0_2": "729/1427",
+          "cut_0_5": "50/1427"
+        }
+      },
+      "medium": {
+        "scenes": 120,
+        "placed_over_all": "1426/1440",
+        "placed_rate": 0.9903,
+        "component_over_all": "1426/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "2288/2880",
+          "false_kept": 447,
+          "missed": 592
+        },
+        "shape_err": {
+          "n": 1426,
+          "min": 0.0006,
+          "p10": 0.0553,
+          "median": 0.206,
+          "p90": 0.4086,
+          "max": 2.3723
+        },
+        "silent_wrong": {
+          "cut_0_1": "1100/1426",
+          "cut_0_2": "733/1426",
+          "cut_0_5": "50/1426"
+        }
+      },
+      "coarse": {
+        "scenes": 120,
+        "placed_over_all": "1416/1440",
+        "placed_rate": 0.9833,
+        "component_over_all": "1416/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "2181/2880",
+          "false_kept": 435,
+          "missed": 699
+        },
+        "shape_err": {
+          "n": 1416,
+          "min": 0.0039,
+          "p10": 0.0566,
+          "median": 0.2163,
+          "p90": 0.4233,
+          "max": 3.7254
+        },
+        "silent_wrong": {
+          "cut_0_1": "1078/1416",
+          "cut_0_2": "758/1416",
+          "cut_0_5": "62/1416"
+        }
+      }
+    },
+    "judged_touch_0.06": {
+      "precise": {
+        "scenes": 120,
+        "placed_over_all": "1100/1440",
+        "placed_rate": 0.7639,
+        "component_over_all": "1100/1440",
+        "axis": {
+          "correct": "994/1440",
+          "wrong": "130/1440",
+          "free": "316/1440"
+        },
+        "joints": {
+          "true_found": "1632/2880",
+          "false_kept": 361,
+          "missed": 1248
+        },
+        "shape_err": {
+          "n": 1100,
+          "min": 0.0023,
+          "p10": 0.0497,
+          "median": 0.2194,
+          "p90": 0.4597,
+          "max": 2.5805
+        },
+        "silent_wrong": {
+          "cut_0_1": "817/1100",
+          "cut_0_2": "588/1100",
+          "cut_0_5": "79/1100"
+        }
+      },
+      "medium": {
+        "scenes": 120,
+        "placed_over_all": "1053/1440",
+        "placed_rate": 0.7312,
+        "component_over_all": "1053/1440",
+        "axis": {
+          "correct": "942/1440",
+          "wrong": "131/1440",
+          "free": "367/1440"
+        },
+        "joints": {
+          "true_found": "1456/2880",
+          "false_kept": 339,
+          "missed": 1424
+        },
+        "shape_err": {
+          "n": 1053,
+          "min": 0.0003,
+          "p10": 0.0482,
+          "median": 0.2194,
+          "p90": 0.5039,
+          "max": 3.8793
+        },
+        "silent_wrong": {
+          "cut_0_1": "801/1053",
+          "cut_0_2": "555/1053",
+          "cut_0_5": "106/1053"
+        }
+      },
+      "coarse": {
+        "scenes": 120,
+        "placed_over_all": "849/1440",
+        "placed_rate": 0.5896,
+        "component_over_all": "849/1440",
+        "axis": {
+          "correct": "796/1440",
+          "wrong": "111/1440",
+          "free": "533/1440"
+        },
+        "joints": {
+          "true_found": "999/2880",
+          "false_kept": 197,
+          "missed": 1881
+        },
+        "shape_err": {
+          "n": 849,
+          "min": 0.0072,
+          "p10": 0.05,
+          "median": 0.1949,
+          "p90": 0.5362,
+          "max": 3.0431
+        },
+        "silent_wrong": {
+          "cut_0_1": "608/849",
+          "cut_0_2": "414/849",
+          "cut_0_5": "99/849"
+        }
+      }
+    },
+    "oracle_touch_0.06": {
+      "precise": {
+        "scenes": 120,
+        "placed_over_all": "1438/1440",
+        "placed_rate": 0.9986,
+        "component_over_all": "1438/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "2530/2880",
+          "false_kept": 667,
+          "missed": 350
+        },
+        "shape_err": {
+          "n": 1438,
+          "min": 0.0057,
+          "p10": 0.0675,
+          "median": 0.2339,
+          "p90": 0.4267,
+          "max": 3.4646
+        },
+        "silent_wrong": {
+          "cut_0_1": "1163/1438",
+          "cut_0_2": "840/1438",
+          "cut_0_5": "54/1438"
+        }
+      },
+      "medium": {
+        "scenes": 120,
+        "placed_over_all": "1437/1440",
+        "placed_rate": 0.9979,
+        "component_over_all": "1437/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "2480/2880",
+          "false_kept": 672,
+          "missed": 400
+        },
+        "shape_err": {
+          "n": 1437,
+          "min": 0.0009,
+          "p10": 0.068,
+          "median": 0.239,
+          "p90": 0.4264,
+          "max": 4.3604
+        },
+        "silent_wrong": {
+          "cut_0_1": "1172/1437",
+          "cut_0_2": "850/1437",
+          "cut_0_5": "64/1437"
+        }
+      },
+      "coarse": {
+        "scenes": 120,
+        "placed_over_all": "1438/1440",
+        "placed_rate": 0.9986,
+        "component_over_all": "1438/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "2450/2880",
+          "false_kept": 668,
+          "missed": 430
+        },
+        "shape_err": {
+          "n": 1438,
+          "min": 0.0046,
+          "p10": 0.0659,
+          "median": 0.2436,
+          "p90": 0.4327,
+          "max": 3.449
+        },
+        "silent_wrong": {
+          "cut_0_1": "1174/1438",
+          "cut_0_2": "862/1438",
+          "cut_0_5": "65/1438"
+        }
+      }
+    },
+    "judged_touch_0.09": {
+      "precise": {
+        "scenes": 120,
+        "placed_over_all": "1111/1440",
+        "placed_rate": 0.7715,
+        "component_over_all": "1111/1440",
+        "axis": {
+          "correct": "994/1440",
+          "wrong": "130/1440",
+          "free": "316/1440"
+        },
+        "joints": {
+          "true_found": "1690/2880",
+          "false_kept": 479,
+          "missed": 1190
+        },
+        "shape_err": {
+          "n": 1111,
+          "min": 0.0045,
+          "p10": 0.0605,
+          "median": 0.2491,
+          "p90": 0.4742,
+          "max": 2.5805
+        },
+        "silent_wrong": {
+          "cut_0_1": "892/1111",
+          "cut_0_2": "681/1111",
+          "cut_0_5": "89/1111"
+        }
+      },
+      "medium": {
+        "scenes": 120,
+        "placed_over_all": "1059/1440",
+        "placed_rate": 0.7354,
+        "component_over_all": "1059/1440",
+        "axis": {
+          "correct": "942/1440",
+          "wrong": "131/1440",
+          "free": "367/1440"
+        },
+        "joints": {
+          "true_found": "1515/2880",
+          "false_kept": 439,
+          "missed": 1365
+        },
+        "shape_err": {
+          "n": 1059,
+          "min": 0.002,
+          "p10": 0.0564,
+          "median": 0.2522,
+          "p90": 0.5019,
+          "max": 3.8793
+        },
+        "silent_wrong": {
+          "cut_0_1": "839/1059",
+          "cut_0_2": "640/1059",
+          "cut_0_5": "109/1059"
+        }
+      },
+      "coarse": {
+        "scenes": 120,
+        "placed_over_all": "869/1440",
+        "placed_rate": 0.6035,
+        "component_over_all": "869/1440",
+        "axis": {
+          "correct": "796/1440",
+          "wrong": "111/1440",
+          "free": "533/1440"
+        },
+        "joints": {
+          "true_found": "1045/2880",
+          "false_kept": 276,
+          "missed": 1835
+        },
+        "shape_err": {
+          "n": 869,
+          "min": 0.0019,
+          "p10": 0.0588,
+          "median": 0.2318,
+          "p90": 0.5802,
+          "max": 3.0431
+        },
+        "silent_wrong": {
+          "cut_0_1": "680/869",
+          "cut_0_2": "488/869",
+          "cut_0_5": "118/869"
+        }
+      }
+    },
+    "oracle_touch_0.09": {
+      "precise": {
+        "scenes": 120,
+        "placed_over_all": "1440/1440",
+        "placed_rate": 1,
+        "component_over_all": "1440/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "2622/2880",
+          "false_kept": 873,
+          "missed": 258
+        },
+        "shape_err": {
+          "n": 1440,
+          "min": 0.0067,
+          "p10": 0.0783,
+          "median": 0.2593,
+          "p90": 0.4431,
+          "max": 4.3551
+        },
+        "silent_wrong": {
+          "cut_0_1": "1233/1440",
+          "cut_0_2": "954/1440",
+          "cut_0_5": "79/1440"
+        }
+      },
+      "medium": {
+        "scenes": 120,
+        "placed_over_all": "1440/1440",
+        "placed_rate": 1,
+        "component_over_all": "1440/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "2586/2880",
+          "false_kept": 880,
+          "missed": 294
+        },
+        "shape_err": {
+          "n": 1440,
+          "min": 0.0043,
+          "p10": 0.0844,
+          "median": 0.2692,
+          "p90": 0.4468,
+          "max": 4.4104
+        },
+        "silent_wrong": {
+          "cut_0_1": "1244/1440",
+          "cut_0_2": "970/1440",
+          "cut_0_5": "93/1440"
+        }
+      },
+      "coarse": {
+        "scenes": 120,
+        "placed_over_all": "1440/1440",
+        "placed_rate": 1,
+        "component_over_all": "1440/1440",
+        "axis": null,
+        "joints": {
+          "true_found": "2510/2880",
+          "false_kept": 861,
+          "missed": 370
+        },
+        "shape_err": {
+          "n": 1440,
+          "min": 0.0046,
+          "p10": 0.0899,
+          "median": 0.2692,
+          "p90": 0.4488,
+          "max": 5.5301
+        },
+        "silent_wrong": {
+          "cut_0_1": "1263/1440",
+          "cut_0_2": "962/1440",
+          "cut_0_5": "89/1440"
+        }
+      }
+    }
+  },
+  "unplaced_reasons": {
+    "note": "**추측하지 말고 센다**(#7). `liftAll`이 이미 사유를 돌려주고 있었는데 아무도 세지 않았다. 분모는 그 팔의 미배치 총수다.",
+    "judged_default": {
+      "precise": {
+        "축이 미분류다": 316,
+        "구조에 이어지지 않았다": 189,
+        "어느 획과도 교점이 없다": 27
+      },
+      "medium": {
+        "축이 미분류다": 367,
+        "구조에 이어지지 않았다": 194,
+        "어느 획과도 교점이 없다": 11
+      },
+      "coarse": {
+        "축이 미분류다": 533,
+        "구조에 이어지지 않았다": 237,
+        "어느 획과도 교점이 없다": 30
+      }
+    },
+    "oracle_axis_default": {
+      "precise": {
+        "구조에 이어지지 않았다": 183
+      },
+      "medium": {
+        "구조에 이어지지 않았다": 174
+      },
+      "coarse": {
+        "구조에 이어지지 않았다": 253
+      }
+    }
+  },
+  "reproduction_check": {
+    "note": "**이 하네스가 `stage_cam`의 관측을 재현하는가.** 재현 못 하면 다른 것을 재는 것이고 그때 아래 분해는 0.44를 설명하지 않는다.",
+    "stage_cam_placed_rate": {
+      "precise": 0.6306,
+      "medium": 0.6028,
+      "coarse": 0.4444
+    },
+    "stage_cam_source": "stage0/out/stage_cam.json:placement_with_true_camera.by_grade",
+    "here_placed_rate": {
+      "precise": 0.6306,
+      "medium": 0.6028,
+      "coarse": 0.4444
+    }
+  },
+  "conclusion": {
+    "dominant": "**축 판정 실패가 지배항이다.** 미배치 사유에서 `축이 미분류다`가 coarse 533 · medium 367 · precise 316이고, 축을 오라클로 주면 배치가 **0.44 → 0.82**(coarse) / 0.63 → 0.87(precise)로 오른다. **등급 격차 자체가 거의 사라진다**(0.19 → 0.05) — 즉 `coarse`가 나쁜 이유는 거의 전부 축 판정이다.",
+    "second": "**접합 반경이 그다음이다.** 오라클 축 + `touch_ratio` 0.09면 **1440/1440**이 놓인다. 남던 사유는 `구조에 이어지지 않았다`(연결 성분 분열)뿐이었다.",
+    "conditioning": "**조건수는 '못 푸는' 문제가 아니라 '틀리게 푸는' 문제로 나타난다.** `solveNull`이 해를 못 내는 경우(`교점 제약이 형태를 정하지 못한다`)는 **0건**이다. 대신 형태 오차 중앙이 어느 팔에서도 0.10~0.18이고, 놓인 것의 **cut 0.2 조용히 틀림이 34~39%**다.",
+    "tradeoff": "⚠ **고칠 때마다 조용히 틀림이 함께 는다**(#16 — 병목이 옮겨간 것을 없어진 것으로 읽지 않는다). 오라클 축 기본 반경 496/1257(39%) → 오라클 축 + 0.09 954/1440(66%). **배치율만 보면 반경을 키우는 것이 이득으로 보이는데 아니다.**",
+    "snap_does_not_fix_this": "⚠ **L-B.3의 스냅은 이 0.44를 못 고친다.** 스냅 대상은 **3D 레이어**인데(§9.1) 초기 확정 순간에는 3D가 아직 없다 — 모든 획이 2D 대기이고 대상이 0이다. 스냅이 닿는 것은 **확정 뒤에 그리는 획**뿐이다. 0.44에 닿는 것은 (1) 확정 시점의 축 판정(L-B.4) (2) 승격 연쇄(L-B.7)다.",
+    "end_jitter_note": "잡음이 지배적으로 크다 — coarse 배치가 잡음 0에서 234/360인데 0.05에서 70/360이다. **동작점 하나로 말하지 않는다**(#12)."
+  },
+  "by_composition_judged_default": {
+    "3pt_yaw35_pitch15": {
+      "precise": {
+        "scenes": 24,
+        "placed_over_all": "212/288",
+        "placed_rate": 0.7361,
+        "component_over_all": "212/288",
+        "axis": {
+          "correct": "231/288",
+          "wrong": "33/288",
+          "free": "24/288"
+        },
+        "joints": {
+          "true_found": "288/576",
+          "false_kept": 9,
+          "missed": 288
+        },
+        "shape_err": {
+          "n": 212,
+          "min": 0.0008,
+          "p10": 0.0123,
+          "median": 0.0574,
+          "p90": 0.4295,
+          "max": 1.3491
+        },
+        "silent_wrong": {
+          "cut_0_1": "68/212",
+          "cut_0_2": "40/212",
+          "cut_0_5": "12/212"
+        }
+      },
+      "medium": {
+        "scenes": 24,
+        "placed_over_all": "197/288",
+        "placed_rate": 0.684,
+        "component_over_all": "197/288",
+        "axis": {
+          "correct": "215/288",
+          "wrong": "34/288",
+          "free": "39/288"
+        },
+        "joints": {
+          "true_found": "228/576",
+          "false_kept": 13,
+          "missed": 348
+        },
+        "shape_err": {
+          "n": 197,
+          "min": 0.0063,
+          "p10": 0.0173,
+          "median": 0.0809,
+          "p90": 0.3181,
+          "max": 1.117
+        },
+        "silent_wrong": {
+          "cut_0_1": "87/197",
+          "cut_0_2": "41/197",
+          "cut_0_5": "10/197"
+        }
+      },
+      "coarse": {
+        "scenes": 24,
+        "placed_over_all": "147/288",
+        "placed_rate": 0.5104,
+        "component_over_all": "147/288",
+        "axis": {
+          "correct": "188/288",
+          "wrong": "29/288",
+          "free": "71/288"
+        },
+        "joints": {
+          "true_found": "178/576",
+          "false_kept": 5,
+          "missed": 398
+        },
+        "shape_err": {
+          "n": 147,
+          "min": 0.0078,
+          "p10": 0.0163,
+          "median": 0.0582,
+          "p90": 0.2556,
+          "max": 0.8964
+        },
+        "silent_wrong": {
+          "cut_0_1": "48/147",
+          "cut_0_2": "21/147",
+          "cut_0_5": "3/147"
+        }
+      }
+    },
+    "3pt_yaw20_pitch25": {
+      "precise": {
+        "scenes": 24,
+        "placed_over_all": "174/288",
+        "placed_rate": 0.6042,
+        "component_over_all": "174/288",
+        "axis": {
+          "correct": "223/288",
+          "wrong": "21/288",
+          "free": "44/288"
+        },
+        "joints": {
+          "true_found": "213/576",
+          "false_kept": 11,
+          "missed": 363
+        },
+        "shape_err": {
+          "n": 174,
+          "min": 0.0006,
+          "p10": 0.0088,
+          "median": 0.0323,
+          "p90": 0.2372,
+          "max": 0.8027
+        },
+        "silent_wrong": {
+          "cut_0_1": "47/174",
+          "cut_0_2": "26/174",
+          "cut_0_5": "7/174"
+        }
+      },
+      "medium": {
+        "scenes": 24,
+        "placed_over_all": "159/288",
+        "placed_rate": 0.5521,
+        "component_over_all": "159/288",
+        "axis": {
+          "correct": "211/288",
+          "wrong": "31/288",
+          "free": "46/288"
+        },
+        "joints": {
+          "true_found": "182/576",
+          "false_kept": 10,
+          "missed": 394
+        },
+        "shape_err": {
+          "n": 159,
+          "min": 0.0027,
+          "p10": 0.0134,
+          "median": 0.0933,
+          "p90": 0.44,
+          "max": 2.2061
+        },
+        "silent_wrong": {
+          "cut_0_1": "78/159",
+          "cut_0_2": "49/159",
+          "cut_0_5": "13/159"
+        }
+      },
+      "coarse": {
+        "scenes": 24,
+        "placed_over_all": "120/288",
+        "placed_rate": 0.4167,
+        "component_over_all": "120/288",
+        "axis": {
+          "correct": "173/288",
+          "wrong": "34/288",
+          "free": "81/288"
+        },
+        "joints": {
+          "true_found": "122/576",
+          "false_kept": 6,
+          "missed": 454
+        },
+        "shape_err": {
+          "n": 120,
+          "min": 0.0045,
+          "p10": 0.0251,
+          "median": 0.0741,
+          "p90": 0.5123,
+          "max": 1.7034
+        },
+        "silent_wrong": {
+          "cut_0_1": "54/120",
+          "cut_0_2": "42/120",
+          "cut_0_5": "13/120"
+        }
+      }
+    },
+    "3pt_yaw50_pitch8": {
+      "precise": {
+        "scenes": 24,
+        "placed_over_all": "160/288",
+        "placed_rate": 0.5556,
+        "component_over_all": "160/288",
+        "axis": {
+          "correct": "184/288",
+          "wrong": "30/288",
+          "free": "74/288"
+        },
+        "joints": {
+          "true_found": "197/576",
+          "false_kept": 17,
+          "missed": 379
+        },
+        "shape_err": {
+          "n": 160,
+          "min": 0.0046,
+          "p10": 0.0249,
+          "median": 0.0943,
+          "p90": 0.3439,
+          "max": 0.7765
+        },
+        "silent_wrong": {
+          "cut_0_1": "79/160",
+          "cut_0_2": "42/160",
+          "cut_0_5": "6/160"
+        }
+      },
+      "medium": {
+        "scenes": 24,
+        "placed_over_all": "176/288",
+        "placed_rate": 0.6111,
+        "component_over_all": "176/288",
+        "axis": {
+          "correct": "187/288",
+          "wrong": "22/288",
+          "free": "79/288"
+        },
+        "joints": {
+          "true_found": "188/576",
+          "false_kept": 23,
+          "missed": 388
+        },
+        "shape_err": {
+          "n": 176,
+          "min": 0.0037,
+          "p10": 0.0317,
+          "median": 0.156,
+          "p90": 0.4922,
+          "max": 0.9387
+        },
+        "silent_wrong": {
+          "cut_0_1": "114/176",
+          "cut_0_2": "69/176",
+          "cut_0_5": "16/176"
+        }
+      },
+      "coarse": {
+        "scenes": 24,
+        "placed_over_all": "133/288",
+        "placed_rate": 0.4618,
+        "component_over_all": "133/288",
+        "axis": {
+          "correct": "166/288",
+          "wrong": "11/288",
+          "free": "111/288"
+        },
+        "joints": {
+          "true_found": "135/576",
+          "false_kept": 16,
+          "missed": 441
+        },
+        "shape_err": {
+          "n": 133,
+          "min": 0.0076,
+          "p10": 0.0425,
+          "median": 0.1595,
+          "p90": 0.4629,
+          "max": 0.6286
+        },
+        "silent_wrong": {
+          "cut_0_1": "86/133",
+          "cut_0_2": "58/133",
+          "cut_0_5": "9/133"
+        }
+      }
+    },
+    "2pt_yaw35_pitch0": {
+      "precise": {
+        "scenes": 24,
+        "placed_over_all": "202/288",
+        "placed_rate": 0.7014,
+        "component_over_all": "202/288",
+        "axis": {
+          "correct": "187/288",
+          "wrong": "35/288",
+          "free": "66/288"
+        },
+        "joints": {
+          "true_found": "271/576",
+          "false_kept": 35,
+          "missed": 305
+        },
+        "shape_err": {
+          "n": 202,
+          "min": 0.0044,
+          "p10": 0.0355,
+          "median": 0.16,
+          "p90": 0.3578,
+          "max": 1.0999
+        },
+        "silent_wrong": {
+          "cut_0_1": "132/202",
+          "cut_0_2": "88/202",
+          "cut_0_5": "11/202"
+        }
+      },
+      "medium": {
+        "scenes": 24,
+        "placed_over_all": "193/288",
+        "placed_rate": 0.6701,
+        "component_over_all": "193/288",
+        "axis": {
+          "correct": "178/288",
+          "wrong": "34/288",
+          "free": "76/288"
+        },
+        "joints": {
+          "true_found": "243/576",
+          "false_kept": 31,
+          "missed": 333
+        },
+        "shape_err": {
+          "n": 193,
+          "min": 0.0097,
+          "p10": 0.0465,
+          "median": 0.1624,
+          "p90": 0.4292,
+          "max": 1.2533
+        },
+        "silent_wrong": {
+          "cut_0_1": "131/193",
+          "cut_0_2": "79/193",
+          "cut_0_5": "13/193"
+        }
+      },
+      "coarse": {
+        "scenes": 24,
+        "placed_over_all": "121/288",
+        "placed_rate": 0.4201,
+        "component_over_all": "121/288",
+        "axis": {
+          "correct": "135/288",
+          "wrong": "31/288",
+          "free": "122/288"
+        },
+        "joints": {
+          "true_found": "120/576",
+          "false_kept": 13,
+          "missed": 456
+        },
+        "shape_err": {
+          "n": 121,
+          "min": 0.0144,
+          "p10": 0.0309,
+          "median": 0.1665,
+          "p90": 0.624,
+          "max": 1.0761
+        },
+        "silent_wrong": {
+          "cut_0_1": "84/121",
+          "cut_0_2": "51/121",
+          "cut_0_5": "16/121"
+        }
+      }
+    },
+    "1pt_yaw0_pitch0": {
+      "precise": {
+        "scenes": 24,
+        "placed_over_all": "160/288",
+        "placed_rate": 0.5556,
+        "component_over_all": "160/288",
+        "axis": {
+          "correct": "169/288",
+          "wrong": "11/288",
+          "free": "108/288"
+        },
+        "joints": {
+          "true_found": "213/576",
+          "false_kept": 37,
+          "missed": 363
+        },
+        "shape_err": {
+          "n": 160,
+          "min": 0.0031,
+          "p10": 0.0753,
+          "median": 0.3314,
+          "p90": 0.5884,
+          "max": 2.4788
+        },
+        "silent_wrong": {
+          "cut_0_1": "135/160",
+          "cut_0_2": "111/160",
+          "cut_0_5": "20/160"
+        }
+      },
+      "medium": {
+        "scenes": 24,
+        "placed_over_all": "143/288",
+        "placed_rate": 0.4965,
+        "component_over_all": "143/288",
+        "axis": {
+          "correct": "151/288",
+          "wrong": "10/288",
+          "free": "127/288"
+        },
+        "joints": {
+          "true_found": "166/576",
+          "false_kept": 29,
+          "missed": 410
+        },
+        "shape_err": {
+          "n": 143,
+          "min": 0.0084,
+          "p10": 0.0707,
+          "median": 0.319,
+          "p90": 0.6187,
+          "max": 3.3512
+        },
+        "silent_wrong": {
+          "cut_0_1": "123/143",
+          "cut_0_2": "102/143",
+          "cut_0_5": "25/143"
+        }
+      },
+      "coarse": {
+        "scenes": 24,
+        "placed_over_all": "119/288",
+        "placed_rate": 0.4132,
+        "component_over_all": "119/288",
+        "axis": {
+          "correct": "134/288",
+          "wrong": "6/288",
+          "free": "148/288"
+        },
+        "joints": {
+          "true_found": "111/576",
+          "false_kept": 17,
+          "missed": 465
+        },
+        "shape_err": {
+          "n": 119,
+          "min": 0.0078,
+          "p10": 0.0494,
+          "median": 0.1832,
+          "p90": 0.5279,
+          "max": 3.0431
+        },
+        "silent_wrong": {
+          "cut_0_1": "94/119",
+          "cut_0_2": "55/119",
+          "cut_0_5": "16/119"
+        }
+      }
+    }
+  },
+  "by_end_jitter_judged_default": {
+    "0": {
+      "precise": {
+        "scenes": 30,
+        "placed_over_all": "325/360",
+        "placed_rate": 0.9028,
+        "component_over_all": "325/360",
+        "axis": {
+          "correct": "316/360",
+          "wrong": "9/360",
+          "free": "35/360"
+        },
+        "joints": {
+          "true_found": "510/720",
+          "false_kept": 40,
+          "missed": 210
+        },
+        "shape_err": {
+          "n": 325,
+          "min": 0.0006,
+          "p10": 0.0079,
+          "median": 0.0531,
+          "p90": 0.3608,
+          "max": 0.4651
+        },
+        "silent_wrong": {
+          "cut_0_1": "112/325",
+          "cut_0_2": "78/325",
+          "cut_0_5": "0/325"
+        }
+      },
+      "medium": {
+        "scenes": 30,
+        "placed_over_all": "294/360",
+        "placed_rate": 0.8167,
+        "component_over_all": "294/360",
+        "axis": {
+          "correct": "282/360",
+          "wrong": "15/360",
+          "free": "63/360"
+        },
+        "joints": {
+          "true_found": "380/720",
+          "false_kept": 31,
+          "missed": 340
+        },
+        "shape_err": {
+          "n": 294,
+          "min": 0.0027,
+          "p10": 0.0106,
+          "median": 0.066,
+          "p90": 0.3841,
+          "max": 1.7105
+        },
+        "silent_wrong": {
+          "cut_0_1": "128/294",
+          "cut_0_2": "84/294",
+          "cut_0_5": "8/294"
+        }
+      },
+      "coarse": {
+        "scenes": 30,
+        "placed_over_all": "234/360",
+        "placed_rate": 0.65,
+        "component_over_all": "234/360",
+        "axis": {
+          "correct": "244/360",
+          "wrong": "12/360",
+          "free": "104/360"
+        },
+        "joints": {
+          "true_found": "260/720",
+          "false_kept": 23,
+          "missed": 460
+        },
+        "shape_err": {
+          "n": 234,
+          "min": 0.0045,
+          "p10": 0.0184,
+          "median": 0.0865,
+          "p90": 0.3493,
+          "max": 1.031
+        },
+        "silent_wrong": {
+          "cut_0_1": "113/234",
+          "cut_0_2": "69/234",
+          "cut_0_5": "11/234"
+        }
+      }
+    },
+    "0.01": {
+      "precise": {
+        "scenes": 30,
+        "placed_over_all": "301/360",
+        "placed_rate": 0.8361,
+        "component_over_all": "301/360",
+        "axis": {
+          "correct": "284/360",
+          "wrong": "27/360",
+          "free": "49/360"
+        },
+        "joints": {
+          "true_found": "398/720",
+          "false_kept": 29,
+          "missed": 322
+        },
+        "shape_err": {
+          "n": 301,
+          "min": 0.0086,
+          "p10": 0.022,
+          "median": 0.074,
+          "p90": 0.3666,
+          "max": 1.0999
+        },
+        "silent_wrong": {
+          "cut_0_1": "132/301",
+          "cut_0_2": "85/301",
+          "cut_0_5": "13/301"
+        }
+      },
+      "medium": {
+        "scenes": 30,
+        "placed_over_all": "272/360",
+        "placed_rate": 0.7556,
+        "component_over_all": "272/360",
+        "axis": {
+          "correct": "268/360",
+          "wrong": "27/360",
+          "free": "65/360"
+        },
+        "joints": {
+          "true_found": "341/720",
+          "false_kept": 32,
+          "missed": 379
+        },
+        "shape_err": {
+          "n": 272,
+          "min": 0.0126,
+          "p10": 0.034,
+          "median": 0.1713,
+          "p90": 0.5278,
+          "max": 3.3238
+        },
+        "silent_wrong": {
+          "cut_0_1": "187/272",
+          "cut_0_2": "114/272",
+          "cut_0_5": "28/272"
+        }
+      },
+      "coarse": {
+        "scenes": 30,
+        "placed_over_all": "209/360",
+        "placed_rate": 0.5806,
+        "component_over_all": "209/360",
+        "axis": {
+          "correct": "223/360",
+          "wrong": "29/360",
+          "free": "108/360"
+        },
+        "joints": {
+          "true_found": "238/720",
+          "false_kept": 17,
+          "missed": 482
+        },
+        "shape_err": {
+          "n": 209,
+          "min": 0.0091,
+          "p10": 0.0246,
+          "median": 0.1634,
+          "p90": 0.5193,
+          "max": 3.0431
+        },
+        "silent_wrong": {
+          "cut_0_1": "129/209",
+          "cut_0_2": "90/209",
+          "cut_0_5": "25/209"
+        }
+      }
+    },
+    "0.03": {
+      "precise": {
+        "scenes": 30,
+        "placed_over_all": "172/360",
+        "placed_rate": 0.4778,
+        "component_over_all": "172/360",
+        "axis": {
+          "correct": "220/360",
+          "wrong": "44/360",
+          "free": "96/360"
+        },
+        "joints": {
+          "true_found": "179/720",
+          "false_kept": 23,
+          "missed": 541
+        },
+        "shape_err": {
+          "n": 172,
+          "min": 0.0248,
+          "p10": 0.0611,
+          "median": 0.1839,
+          "p90": 0.5008,
+          "max": 2.4174
+        },
+        "silent_wrong": {
+          "cut_0_1": "127/172",
+          "cut_0_2": "82/172",
+          "cut_0_5": "18/172"
+        }
+      },
+      "medium": {
+        "scenes": 30,
+        "placed_over_all": "183/360",
+        "placed_rate": 0.5083,
+        "component_over_all": "183/360",
+        "axis": {
+          "correct": "219/360",
+          "wrong": "43/360",
+          "free": "98/360"
+        },
+        "joints": {
+          "true_found": "187/720",
+          "false_kept": 20,
+          "missed": 533
+        },
+        "shape_err": {
+          "n": 183,
+          "min": 0.0145,
+          "p10": 0.0577,
+          "median": 0.1854,
+          "p90": 0.6169,
+          "max": 3.3512
+        },
+        "silent_wrong": {
+          "cut_0_1": "130/183",
+          "cut_0_2": "85/183",
+          "cut_0_5": "22/183"
+        }
+      },
+      "coarse": {
+        "scenes": 30,
+        "placed_over_all": "127/360",
+        "placed_rate": 0.3528,
+        "component_over_all": "127/360",
+        "axis": {
+          "correct": "178/360",
+          "wrong": "34/360",
+          "free": "148/360"
+        },
+        "joints": {
+          "true_found": "118/720",
+          "false_kept": 9,
+          "missed": 602
+        },
+        "shape_err": {
+          "n": 127,
+          "min": 0.0179,
+          "p10": 0.0445,
+          "median": 0.1226,
+          "p90": 0.5231,
+          "max": 2.4011
+        },
+        "silent_wrong": {
+          "cut_0_1": "76/127",
+          "cut_0_2": "42/127",
+          "cut_0_5": "15/127"
+        }
+      }
+    },
+    "0.05": {
+      "precise": {
+        "scenes": 30,
+        "placed_over_all": "110/360",
+        "placed_rate": 0.3056,
+        "component_over_all": "110/360",
+        "axis": {
+          "correct": "174/360",
+          "wrong": "50/360",
+          "free": "136/360"
+        },
+        "joints": {
+          "true_found": "95/720",
+          "false_kept": 17,
+          "missed": 625
+        },
+        "shape_err": {
+          "n": 110,
+          "min": 0.0326,
+          "p10": 0.0776,
+          "median": 0.2384,
+          "p90": 0.923,
+          "max": 2.4788
+        },
+        "silent_wrong": {
+          "cut_0_1": "90/110",
+          "cut_0_2": "62/110",
+          "cut_0_5": "25/110"
+        }
+      },
+      "medium": {
+        "scenes": 30,
+        "placed_over_all": "119/360",
+        "placed_rate": 0.3306,
+        "component_over_all": "119/360",
+        "axis": {
+          "correct": "173/360",
+          "wrong": "46/360",
+          "free": "141/360"
+        },
+        "joints": {
+          "true_found": "99/720",
+          "false_kept": 23,
+          "missed": 621
+        },
+        "shape_err": {
+          "n": 119,
+          "min": 0.0305,
+          "p10": 0.07,
+          "median": 0.1849,
+          "p90": 0.6625,
+          "max": 2.7212
+        },
+        "silent_wrong": {
+          "cut_0_1": "88/119",
+          "cut_0_2": "57/119",
+          "cut_0_5": "19/119"
+        }
+      },
+      "coarse": {
+        "scenes": 30,
+        "placed_over_all": "70/360",
+        "placed_rate": 0.1944,
+        "component_over_all": "70/360",
+        "axis": {
+          "correct": "151/360",
+          "wrong": "36/360",
+          "free": "173/360"
+        },
+        "joints": {
+          "true_found": "50/720",
+          "false_kept": 8,
+          "missed": 670
+        },
+        "shape_err": {
+          "n": 70,
+          "min": 0.0304,
+          "p10": 0.0669,
+          "median": 0.1236,
+          "p90": 0.4629,
+          "max": 1.9888
+        },
+        "silent_wrong": {
+          "cut_0_1": "48/70",
+          "cut_0_2": "26/70",
+          "cut_0_5": "6/70"
+        }
+      }
+    }
+  },
+  "constants": {
+    "hash": "46c028d1",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  }
+}

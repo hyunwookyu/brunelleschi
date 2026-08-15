@@ -44,29 +44,29 @@
   },
   "totals": {
     "cases": 90,
-    "camera_solvable": 31,
-    "improved": 27,
+    "camera_solvable": 58,
+    "improved": 48,
     "camera_moved_by_extend": 0,
     "gain_ratio": {
-      "n": 31,
+      "n": 58,
       "min": 1,
-      "median": 1.327,
-      "max": 6.807
+      "median": 1.303,
+      "max": 2.388
     },
     "guides_below_required": {
-      "before": 185,
-      "after": 114,
-      "of": 320,
+      "before": 347,
+      "after": 249,
+      "of": 540,
       "note": "**직접 센 수**다(#10: 뺄셈으로 만들지 않는다). `min_guide_ratio` 0.45 × 대각 = 651.2px 미만인 가이드."
     }
   },
   "why_camera_not_solvable": {
     "note": "**추측하지 않고 센다**(PITFALLS #7). `31/90`의 나머지 59가 무엇인지 안 적은 것이 리뷰어 지적이었다. 분모는 `cases`다(#11).",
     "counters": {
-      "guides_lt_4": 21,
-      "axes_lt_2": 8,
-      "recover_failed": 30,
-      "ok": 31
+      "guides_lt_4": 0,
+      "axes_lt_2": 0,
+      "recover_failed": 32,
+      "ok": 58
     },
     "vs_vp_detect": "⚠ `vp_detect.json`은 같은 잡음에서 확정률 **0.883**을 낸다. 여기가 낮은 것은 검출이 나빠서가 아니라 **소실점을 가이드 선 두 개로 줄이는 초안 변환**을 지나기 때문이다 — 두 수치를 나란히 읽지 않는다(#27)."
   },
@@ -75,9 +75,9 @@
     "canvas_chord_max_px": 588.18,
     "required_px": 651.2,
     "counts": {
-      "at_vertical_min": 26,
-      "other_below_required": 26,
-      "above_required": 100
+      "at_vertical_min": 98,
+      "other_below_required": 66,
+      "above_required": 184
     }
   },
   "worst_composition": {
@@ -85,151 +85,151 @@
     "min_budget_px_after_by_composition": {
       "3pt_yaw35_pitch15": {
         "n": 13,
-        "min": 0.694,
-        "max": 6.184,
-        "unusable_lt_1px": 2
-      },
-      "3pt_yaw50_pitch8": {
-        "n": 8,
-        "min": 0.734,
-        "max": 5.074,
-        "unusable_lt_1px": 3
-      },
-      "2pt_yaw35_pitch0": {
-        "n": 4,
-        "min": 0.226,
-        "max": 2.917,
+        "min": 0.95,
+        "max": 7.52,
         "unusable_lt_1px": 1
       },
-      "1pt_yaw0_pitch0": {
-        "n": 3,
-        "min": 0.117,
-        "max": 0.955,
-        "unusable_lt_1px": 3
-      },
       "3pt_yaw20_pitch25": {
-        "n": 3,
-        "min": 3.323,
-        "max": 5.579,
-        "unusable_lt_1px": 0
+        "n": 14,
+        "min": 0.63,
+        "max": 3.248,
+        "unusable_lt_1px": 4
+      },
+      "3pt_yaw50_pitch8": {
+        "n": 17,
+        "min": 0.8,
+        "max": 7.234,
+        "unusable_lt_1px": 4
+      },
+      "2pt_yaw35_pitch0": {
+        "n": 8,
+        "min": 0.465,
+        "max": 2.86,
+        "unusable_lt_1px": 2
+      },
+      "1pt_yaw0_pitch0": {
+        "n": 6,
+        "min": 0.547,
+        "max": 1.085,
+        "unusable_lt_1px": 4
       }
     }
   },
   "by_case": {
     "3pt_yaw35_pitch15/precise": {
-      "n": 2,
+      "n": 3,
       "of_seeds": 6,
       "min_budget_px": {
-        "before": 1.679,
-        "after": 1.819
+        "before": 1.808,
+        "after": 2.265
       },
       "shortest_guide_px": {
-        "before": 559.639,
+        "before": 546.783,
         "after": 588.536
       }
     },
     "3pt_yaw20_pitch25/precise": {
-      "n": 0,
-      "of_seeds": 6,
-      "min_budget_px": {
-        "before": null,
-        "after": null
-      },
-      "shortest_guide_px": {
-        "before": null,
-        "after": null
-      }
-    },
-    "3pt_yaw50_pitch8/precise": {
-      "n": 3,
-      "of_seeds": 6,
-      "min_budget_px": {
-        "before": 1.004,
-        "after": 1.107
-      },
-      "shortest_guide_px": {
-        "before": 588.903,
-        "after": 588.903
-      }
-    },
-    "2pt_yaw35_pitch0/precise": {
-      "n": 2,
-      "of_seeds": 6,
-      "min_budget_px": {
-        "before": 1.719,
-        "after": 2.917
-      },
-      "shortest_guide_px": {
-        "before": 651.184,
-        "after": 1193.181
-      }
-    },
-    "1pt_yaw0_pitch0/precise": {
-      "n": 1,
-      "of_seeds": 6,
-      "min_budget_px": {
-        "before": 0.017,
-        "after": 0.117
-      },
-      "shortest_guide_px": {
-        "before": 523.019,
-        "after": 588.32
-      }
-    },
-    "3pt_yaw35_pitch15/medium": {
       "n": 5,
       "of_seeds": 6,
       "min_budget_px": {
-        "before": 1.334,
-        "after": 1.348
+        "before": 2.071,
+        "after": 2.467
       },
       "shortest_guide_px": {
-        "before": 550.43,
+        "before": 438.75,
+        "after": 588.909
+      }
+    },
+    "3pt_yaw50_pitch8/precise": {
+      "n": 6,
+      "of_seeds": 6,
+      "min_budget_px": {
+        "before": 1.461,
+        "after": 1.461
+      },
+      "shortest_guide_px": {
+        "before": 438.75,
+        "after": 588.176
+      }
+    },
+    "2pt_yaw35_pitch0/precise": {
+      "n": 3,
+      "of_seeds": 6,
+      "min_budget_px": {
+        "before": 1.248,
+        "after": 1.374
+      },
+      "shortest_guide_px": {
+        "before": 532.347,
+        "after": 588.176
+      }
+    },
+    "1pt_yaw0_pitch0/precise": {
+      "n": 2,
+      "of_seeds": 6,
+      "min_budget_px": {
+        "before": 0.667,
+        "after": 1.085
+      },
+      "shortest_guide_px": {
+        "before": 438.75,
+        "after": 588.176
+      }
+    },
+    "3pt_yaw35_pitch15/medium": {
+      "n": 4,
+      "of_seeds": 6,
+      "min_budget_px": {
+        "before": 1.809,
+        "after": 1.982
+      },
+      "shortest_guide_px": {
+        "before": 538.989,
         "after": 588.841
       }
     },
     "3pt_yaw20_pitch25/medium": {
-      "n": 2,
+      "n": 6,
       "of_seeds": 6,
       "min_budget_px": {
-        "before": 3.708,
-        "after": 4.919
+        "before": 1.307,
+        "after": 1.524
       },
       "shortest_guide_px": {
-        "before": 442.122,
-        "after": 595.173
+        "before": 445.338,
+        "after": 590.514
       }
     },
     "3pt_yaw50_pitch8/medium": {
-      "n": 3,
+      "n": 6,
       "of_seeds": 6,
       "min_budget_px": {
-        "before": 1.913,
-        "after": 2.67
+        "before": 2.6,
+        "after": 2.6
       },
       "shortest_guide_px": {
-        "before": 589.548,
-        "after": 589.548
+        "before": 438.75,
+        "after": 588.176
       }
     },
     "2pt_yaw35_pitch0/medium": {
-      "n": 2,
+      "n": 4,
       "of_seeds": 6,
       "min_budget_px": {
-        "before": 1.612,
-        "after": 2.621
+        "before": 1.241,
+        "after": 1.487
       },
       "shortest_guide_px": {
-        "before": 651.184,
-        "after": 760.019
+        "before": 532.631,
+        "after": 588.178
       }
     },
     "1pt_yaw0_pitch0/medium": {
       "n": 1,
       "of_seeds": 6,
       "min_budget_px": {
-        "before": 0.724,
-        "after": 0.955
+        "before": 0.777,
+        "after": 1.026
       },
       "shortest_guide_px": {
         "before": 522.434,
@@ -244,61 +244,61 @@
         "after": 2.352
       },
       "shortest_guide_px": {
-        "before": 547.568,
-        "after": 588.847
+        "before": 536.237,
+        "after": 588.227
       }
     },
     "3pt_yaw20_pitch25/coarse": {
-      "n": 1,
+      "n": 3,
       "of_seeds": 6,
       "min_budget_px": {
-        "before": 3.371,
-        "after": 5.579
+        "before": 0.723,
+        "after": 1.251
       },
       "shortest_guide_px": {
-        "before": 366.84,
+        "before": 343.89,
         "after": 591.252
       }
     },
     "3pt_yaw50_pitch8/coarse": {
-      "n": 2,
+      "n": 5,
       "of_seeds": 6,
       "min_budget_px": {
         "before": 2.114,
-        "after": 2.114
+        "after": 3.741
       },
       "shortest_guide_px": {
-        "before": 588.661,
-        "after": 588.661
+        "before": 438.75,
+        "after": 588.176
       }
     },
     "2pt_yaw35_pitch0/coarse": {
-      "n": 0,
-      "of_seeds": 6,
-      "min_budget_px": {
-        "before": null,
-        "after": null
-      },
-      "shortest_guide_px": {
-        "before": null,
-        "after": null
-      }
-    },
-    "1pt_yaw0_pitch0/coarse": {
       "n": 1,
       "of_seeds": 6,
       "min_budget_px": {
-        "before": 0.307,
-        "after": 0.547
+        "before": 0.982,
+        "after": 1.498
       },
       "shortest_guide_px": {
-        "before": 522.224,
-        "after": 588.234
+        "before": 438.75,
+        "after": 588.176
+      }
+    },
+    "1pt_yaw0_pitch0/coarse": {
+      "n": 3,
+      "of_seeds": 6,
+      "min_budget_px": {
+        "before": 0.542,
+        "after": 0.962
+      },
+      "shortest_guide_px": {
+        "before": 438.75,
+        "after": 588.176
       }
     }
   },
   "constants": {
-    "hash": "dbcf3a11",
+    "hash": "46c028d1",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -339,7 +339,9 @@
       "DRAFT_TOL": {
         "handle_ratio": 0.018,
         "margin_ratio": 0.03,
-        "min_guide_ratio": 0.45
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
       },
       "SENS_TOL": {
         "probe_px": 1,

@@ -1,5 +1,5 @@
 {
-  "n_flags": 1467,
+  "n_flags": 1472,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -434,6 +434,41 @@
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
     },
     {
+      "path": "draft_recover.json:by_arm.len_x_sep|snap0.axes_snapped_to_infinity",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "draft_recover.json:by_arm.len_x_sep|snap3.axes_snapped_to_infinity",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "draft_recover.json:by_arm.len_x_sep_filled|snap3.guides_lt_4",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "draft_recover.json:by_arm.len_x_sep_filled|snap3.axes_lt_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "draft_recover.json:by_arm.neutral_ignores_drawing|snap3.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "draft_recover.json:by_arm.neutral_ignores_drawing|snap3.guide_pair_separation_deg.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "draft_recover.json:by_arm.neutral_ignores_drawing|snap3.guide_pair_separation_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "e2e.json:service_worker_in_dev",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -739,7 +774,12 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "guide_budget.json:worst_composition.min_budget_px_after_by_composition.3pt_yaw20_pitch25.unusable_lt_1px",
+      "path": "guide_budget.json:why_camera_not_solvable.counters.guides_lt_4",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "guide_budget.json:why_camera_not_solvable.counters.axes_lt_2",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -1990,6 +2030,42 @@
     },
     {
       "path": "lift_gate.json:f_bias.f_scale_1.2.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_grade.json:unplaced_reasons.oracle_axis_default.precise",
+      "val": {
+        "구조에 이어지지 않았다": 183
+      },
+      "flag": "단일 범주 분포(n=183) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "lift_grade.json:unplaced_reasons.oracle_axis_default.medium",
+      "val": {
+        "구조에 이어지지 않았다": 174
+      },
+      "flag": "단일 범주 분포(n=174) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "lift_grade.json:unplaced_reasons.oracle_axis_default.coarse",
+      "val": {
+        "구조에 이어지지 않았다": 253
+      },
+      "flag": "단일 범주 분포(n=253) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "lift_grade.json:by_arm.oracle_touch_0.09.precise.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_grade.json:by_arm.oracle_touch_0.09.medium.placed_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_grade.json:by_arm.oracle_touch_0.09.coarse.placed_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -3789,88 +3865,25 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "snap.json:by_density.wrong_by_kind.k2.0.100",
-      "val": {
-        "endpoint": 197
-      },
-      "flag": "단일 범주 분포(n=197) → 변별력 없음/단위 불일치 의심"
-    },
-    {
-      "path": "snap.json:by_density.wrong_by_kind.k2.0.140",
-      "val": {
-        "endpoint": 197
-      },
-      "flag": "단일 범주 분포(n=197) → 변별력 없음/단위 불일치 의심"
-    },
-    {
-      "path": "snap.json:by_density.wrong_by_kind.k2.0.200",
-      "val": {
-        "endpoint": 197
-      },
-      "flag": "단일 범주 분포(n=197) → 변별력 없음/단위 불일치 의심"
-    },
-    {
       "path": "snap.json:by_density.wrong_by_kind.k2.0.280",
       "val": {
-        "endpoint": 197
+        "endpoint": 3925
       },
-      "flag": "단일 범주 분포(n=197) → 변별력 없음/단위 불일치 의심"
-    },
-    {
-      "path": "snap.json:by_density.wrong_by_kind.k3.0.100",
-      "val": {
-        "endpoint": 1330
-      },
-      "flag": "단일 범주 분포(n=1330) → 변별력 없음/단위 불일치 의심"
-    },
-    {
-      "path": "snap.json:by_density.wrong_by_kind.k3.0.140",
-      "val": {
-        "endpoint": 1330
-      },
-      "flag": "단일 범주 분포(n=1330) → 변별력 없음/단위 불일치 의심"
+      "flag": "단일 범주 분포(n=3925) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "snap.json:by_density.wrong_by_kind.k3.0.200",
       "val": {
-        "endpoint": 1330
+        "endpoint": 15076
       },
-      "flag": "단일 범주 분포(n=1330) → 변별력 없음/단위 불일치 의심"
+      "flag": "단일 범주 분포(n=15076) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "snap.json:by_density.wrong_by_kind.k3.0.280",
       "val": {
-        "endpoint": 1330
+        "endpoint": 15076
       },
-      "flag": "단일 범주 분포(n=1330) → 변별력 없음/단위 불일치 의심"
-    },
-    {
-      "path": "snap.json:snapped_kind_counts.rows.0.200",
-      "val": {
-        "endpoint": 4320
-      },
-      "flag": "단일 범주 분포(n=4320) → 변별력 없음/단위 불일치 의심"
-    },
-    {
-      "path": "snap.json:snapped_kind_counts.rows.0.280",
-      "val": {
-        "endpoint": 4320
-      },
-      "flag": "단일 범주 분포(n=4320) → 변별력 없음/단위 불일치 의심"
-    },
-    {
-      "path": "snap.json:wrong_by_kind.rows.0.200",
-      "val": {
-        "endpoint": 21
-      },
-      "flag": "단일 범주 분포(n=21) → 변별력 없음/단위 불일치 의심"
-    },
-    {
-      "path": "snap.json:wrong_by_kind.rows.0.280",
-      "val": {
-        "endpoint": 21
-      },
-      "flag": "단일 범주 분포(n=21) → 변별력 없음/단위 불일치 의심"
+      "flag": "단일 범주 분포(n=15076) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "stage_browser.json:confirm.view_offset.offsetY",
@@ -3883,12 +3896,12 @@
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
-      "path": "stage_browser.json:l_b3.drawn.start_reprojection_gap_px",
+      "path": "stage_browser.json:l_b3.drawn.start_reprojection_gap_px_IDENTITY",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
-      "path": "stage_browser.json:l_b3.drawn.start_reprojection_gap_px",
+      "path": "stage_browser.json:l_b3.drawn.start_reprojection_gap_px_IDENTITY",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -7384,12 +7397,12 @@
     {
       "field": "axis",
       "writes": 5,
-      "reads": 59
+      "reads": 62
     },
     {
       "field": "rep",
       "writes": 2,
-      "reads": 81
+      "reads": 87
     },
     {
       "field": "anchorRef",
@@ -7417,13 +7430,14 @@
       "reads": 16
     }
   ],
-  "constants_hash": "dbcf3a11",
+  "constants_hash": "46c028d1",
   "scanned": [
     "axis_judgement.json",
     "bend_share.json",
     "camera_gate.json",
     "constants.json",
     "continue_after_rotate.json",
+    "draft_recover.json",
     "e2e.json",
     "face_diagonal.json",
     "fix_load.json",
@@ -7431,6 +7445,7 @@
     "guide_budget.json",
     "incline_vp.json",
     "lift_gate.json",
+    "lift_grade.json",
     "misassign_retry.json",
     "occlusion.json",
     "one_stroke_one_axis.json",

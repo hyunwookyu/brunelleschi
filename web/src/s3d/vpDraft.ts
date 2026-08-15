@@ -47,6 +47,28 @@ export const DRAFT_TOL = {
    * 이것이 §5.4의 실제 한계이고 `progress.md`에 그렇게 적었다.
    */
   min_guide_ratio: 0.45,
+  /**
+   * **지지선 두 개를 고르는 방법**(L-B.3 항목 b).
+   *
+   * 초판은 `"longest"`(가장 긴 둘)였다. 근거는 "긴 획이 방향을 가장 잘 정한다"였는데,
+   * **소실점은 두 선의 교점**이므로 교점의 조건은 길이만이 아니라 **두 선의 각차**가 함께
+   * 정한다 — 나란한 두 선은 아무리 길어도 교점이 안 정해진다(무한원 스냅으로 축이 비워진다).
+   *
+   * `"len_x_sep"`은 `len_i · len_j · sin(각차)`를 최대로 하는 쌍이다 — 두 인자를 함께 본다.
+   * `"widest"`는 각차만 본다. **어느 것이 맞는지는 `draft_recover.json`이 정한다.**
+   */
+  support_pick: "len_x_sep" as "longest" | "widest" | "len_x_sep",
+  /**
+   * **초안이 못 채운 축을 중립 위치로 채운다**(L-B.3 항목 b).
+   *
+   * 측정(`draft_recover.json`): 초안은 90장면 중 **21에서 가이드가 4개 미만**이다.
+   * 그 축은 화면에 손잡이가 아예 없어 **사용자가 끌 것이 없다** — 조정 UI의 전제가 깨진다.
+   *
+   * 중립 가이드는 그림을 안 보는 표준 2점 구도이고, 축 오차 중앙 **13.8°**로 초안(9.05°)보다
+   * 나쁘다. 그러니 **초안을 대체하지 않고 빈 축만 채운다** — 있는 것은 초안이 이기고
+   * 없는 것은 중립이 0보다 낫다.
+   */
+  fill_missing_axes: true,
 };
 export type DraftCfg = Partial<typeof DRAFT_TOL>;
 
@@ -101,11 +123,8 @@ export function draftFromDetection(
     if (cd.infinite) continue;
     const axis = vps.findIndex(v => v && v[0] === cd.vp[0] && v[1] === cd.vp[1]);
     if (axis < 0) continue;
-    const sup = cd.support
-      .map(id => byId.get(id))
-      .filter((L): L is DetLine => !!L)
-      .sort((p, q) => q.rep.len - p.rep.len)
-      .slice(0, 2);
+    const pool = cd.support.map(id => byId.get(id)).filter((L): L is DetLine => !!L);
+    const sup = pickSupport(pool, c.support_pick);
     if (sup.length < 2) continue;
     for (const L of sup) {
       const [a, b] = atLeast(L.rep.a, L.rep.b, c.min_guide_ratio * diag);
@@ -113,6 +132,62 @@ export function draftFromDetection(
       if (cl) out.push({ axis: axis as 0 | 1 | 2, a: cl[0], b: cl[1] });
     }
   }
+  // **빈 축만 중립으로 채운다.** 초안이 있는 축은 건드리지 않는다 — 초안이 중립보다 낫다.
+  if (c.fill_missing_axes) {
+    const neutral = neutralGuides(imgSize);
+    for (const ax of [0, 1, 2] as const) {
+      if (out.filter(g => g.axis === ax).length >= 2) continue;
+      out.push(...neutral.filter(g => g.axis === ax).slice(0, 2 - out.filter(g => g.axis === ax).length));
+    }
+  }
+  return out;
+}
+
+/**
+ * 지지선 둘 고르기(§5.2 · L-B.3 항목 b). **왜 세 갈래인가는 `DRAFT_TOL.support_pick` 주석에 있다.**
+ *
+ * 후보가 많으면 `len_x_sep`·`widest`가 O(n²)이지만 지지선 수는 획 수 이하라 문제되지 않는다.
+ */
+export function pickSupport(pool: DetLine[], how: typeof DRAFT_TOL.support_pick): DetLine[] {
+  if (pool.length < 2) return pool.slice();
+  if (how === "longest") {
+    return pool.slice().sort((p, q) => q.rep.len - p.rep.len).slice(0, 2);
+  }
+  const dirOf = (L: DetLine): [number, number] => {
+    const dx = L.rep.b[0] - L.rep.a[0], dy = L.rep.b[1] - L.rep.a[1];
+    const n = Math.hypot(dx, dy) || 1;
+    return [dx / n, dy / n];
+  };
+  let best: DetLine[] = pool.slice(0, 2), bv = -Infinity;
+  for (let i = 0; i < pool.length; i++) for (let j = i + 1; j < pool.length; j++) {
+    const [ax, ay] = dirOf(pool[i]), [bx, by] = dirOf(pool[j]);
+    const sin = Math.abs(ax * by - ay * bx);          // |sin(각차)| — 부호 무시(축은 직선이다)
+    const v = how === "widest" ? sin : sin * pool[i].rep.len * pool[j].rep.len;
+    if (v > bv) { bv = v; best = [pool[i], pool[j]]; }
+  }
+  return best;
+}
+
+/**
+ * **중립 가이드** — 그림을 전혀 안 보는 표준 2점 구도. 소실점은 좌우 화면 밖, 수직은 화면 평행.
+ *
+ * 초안이 축을 못 채웠을 때의 시작 위치이며 **측정 하네스도 이 함수를 쓴다**(PITFALLS #17).
+ * 값의 근거는 `draft_recover.json`의 `neutral_ignores_drawing` 팔이다 —
+ * 카메라는 **언제나 서지만**(90/90) 축 오차 중앙 13.8° · f 상대오차 0.41로 초안보다 나쁘다.
+ */
+export function neutralGuides(imgSize: [number, number]): Guide[] {
+  const [W, H] = imgSize;
+  const vpR: Pt2 = [W * 1.6, H * 0.45], vpL: Pt2 = [-W * 0.6, H * 0.45];
+  const out: Guide[] = [];
+  for (const [ax, v] of [[0, vpR], [1, vpL]] as [0 | 1, Pt2][]) {
+    for (const t of [[W * 0.35, H * 0.35], [W * 0.35, H * 0.72]] as Pt2[]) {
+      out.push({ axis: ax, a: [v[0], v[1]], b: [t[0], t[1]] });
+    }
+  }
+  // 수직은 **화면 평행**으로 둔다 — 2점 구도의 기본값이다(이론서 2.2의 c=0).
+  // 3점 그림이면 사용자가 벌려서 끄고, 그때 차수가 승격된다(§6).
+  out.push({ axis: 2, a: [W * 0.3, H * 0.2], b: [W * 0.3, H * 0.85] });
+  out.push({ axis: 2, a: [W * 0.7, H * 0.2], b: [W * 0.7, H * 0.85] });
   return out;
 }
 

@@ -10,6 +10,7 @@ import {
 import { ConstraintAccumulator } from "../src/s3d/constraints.js";
 import type { Pt2 } from "../src/s3d/camera.js";
 import { scene, boxEdges, drawEdges, groundPoint } from "./scene3d.js";
+import { vpFromGuides } from "../src/s3d/vpHomog.js";
 import { rng32 } from "../src/s3d/synthInk.js";
 
 const SZ: [number, number] = [960, 672];
@@ -92,17 +93,40 @@ describe("소실점 초안과 조정 (§5.4)", () => {
     expect(handleAt(g, [g[0].a[0] + r * 0.5, g[0].a[1]], SZ)).not.toBeNull();
   });
 
-  it("**반례** — 무한원 소실점은 가이드를 만들지 않는다 (화면 평행 축)", () => {
+  it("**반례** — 무한원 소실점은 **검출 가이드**를 만들지 않는다 (화면 평행 축)", () => {
     // 2점 구도: 수직축이 화면 평행이라 끌 소실점이 없다
     const sc = scene(35, 0, 1000, SZ);
     const O = groundPoint(sc, [420, 500])!;
     const edges = boxEdges(sc, O, 1.1, 0.9, 0.8);
     const drawn = drawEdges(sc, edges, "precise", rng32(9), 0.12, 0.005, 0)!;
     const strokes = drawn.map((e, i) => ({ id: `s${i}`, pts2d: e.pts2d as Pt2[] }));
-    const per = byAxis(draftFromDetection(strokes, SZ));
-    // 수직 모서리들이 만드는 다발은 무한원이므로 가이드가 없어야 한다
+    // **채우기를 끄고 본다** — 재는 것은 "검출이 무한원 축에 가이드를 만드는가"다
+    const per = byAxis(draftFromDetection(strokes, SZ, { fill_missing_axes: false }));
     const withGuides = ([0, 1, 2] as const).filter(a => per[a].length > 0);
     expect(withGuides.length).toBeLessThanOrEqual(2);
+  });
+
+  it("빈 축은 **중립으로 채우되**, 그 축은 무한원으로 스냅된다 (L-B.3 항목 b)", () => {
+    const sc = scene(35, 0, 1000, SZ);
+    const O = groundPoint(sc, [420, 500])!;
+    const edges = boxEdges(sc, O, 1.1, 0.9, 0.8);
+    const drawn = drawEdges(sc, edges, "precise", rng32(9), 0.12, 0.005, 0)!;
+    const strokes = drawn.map((e, i) => ({ id: `s${i}`, pts2d: e.pts2d as Pt2[] }));
+    const off = byAxis(draftFromDetection(strokes, SZ, { fill_missing_axes: false }));
+    const on = byAxis(draftFromDetection(strokes, SZ, { fill_missing_axes: true }));
+    // 채우기가 실제로 무언가를 바꿔야 이 테스트가 뜻이 있다(#4)
+    const emptied = ([0, 1, 2] as const).filter(a => off[a].length < 2);
+    expect(emptied.length).toBeGreaterThan(0);
+    // **채워진 축은 손잡이가 생긴다** — 사용자가 끌 것이 없으면 조정 UI의 전제가 깨진다
+    for (const a of emptied) expect(on[a].length).toBe(2);
+    // **검출이 있던 축은 건드리지 않는다** — 초안이 중립보다 낫기 때문이다
+    for (const a of [0, 1, 2] as const) {
+      if (off[a].length >= 2) expect(on[a]).toEqual(off[a]);
+    }
+    // 채운 수직 둘은 화면 평행(나란함)이므로 **무한원으로 스냅된다** — 없는 소실점을 짓지 않는다
+    if (emptied.includes(2)) {
+      expect(vpFromGuides(on[2][0], on[2][1], SZ).infinite).toBe(true);
+    }
   });
 
   it("`moveHandle`은 원본을 바꾸지 않는다", () => {
