@@ -14,10 +14,10 @@ import { describe, it, expect } from "vitest";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { classifyStroke, AXIS_TOL } from "../src/s3d/axis.js";
+import { classifyStroke, AXIS_TOL, type AxisCfg } from "../src/s3d/axis.js";
 import { newStroke, settle, resetStrokeIds, PLACE_TOL,
          type PlaceCtx, type PlaceOpts, type Stroke } from "../src/s3d/stroke.js";
-import { VIEW_OPTS } from "../src/s3d/appPlace.js";
+import { VIEW_OPTS, VIEW_AXIS_CFG } from "../src/s3d/appPlace.js";
 import { norm3, sub3, add3, mul3, type Vec3 } from "../src/s3d/geom3d.js";
 import type { Pt2 } from "../src/s3d/camera.js";
 import { rng32, gauss, renderInk } from "../src/s3d/synthInk.js";
@@ -74,14 +74,34 @@ function drawInView(pose: ViewPose | null, ctx: PlaceCtx, edges: { a: Vec3; b: V
 /** 지금 동작 — 평면 경로가 없다. */
 const NOW: PlaceOpts = { mode: "facing", farEndCheck: PLACE_TOL.far_end_check,
                          depthEnvelope: PLACE_TOL.view_depth_envelope };
-const ARMS: { key: string; opts: PlaceOpts; what: string }[] = [
+/**
+ * `cfg`는 **그 시점의 판정 임계 덮어쓰기**다(S-8b (c)). 첫 시점은 건드리지 않는다 —
+ * 문제가 돌린 시점에서만 79%로 나타나므로 대응도 거기 한정한다.
+ */
+const ARMS: { key: string; opts: PlaceOpts; what: string; cfg?: AxisCfg }[] = [
   { key: "now", opts: NOW, what: "감사 이전 동작 — 정합성 + 깊이 타당성만. 면 경로 없음" },
   // **측정이 막은 후보**를 원장에 남긴다. 이 팔을 지우면 왜 안 켰는지가 원장에서 사라진다.
   { key: "planes", what: "첫 시점과 같은 평면 경로를 돌린 시점에도 켠 경우(**후보**)",
     opts: { ...NOW, facePlanes: PLACE_TOL.face_far_end, freeBendMax: AXIS_TOL.bend_max,
             freeSpan: PLACE_TOL.span_far_end } },
-  // 출하 구성 — `now`와 같아야 한다(평면 경로를 안 켠다). 다르면 배선이 어긋난 것이다.
-  { key: "app", opts: VIEW_OPTS, what: "**출하 구성** `VIEW_OPTS`" },
+  // 출하 구성 — `now`와 **옵션 구성이 같다**(평면 경로를 안 켠다). 두 팔의 일치는
+  // 검증이 아니라 **항등**이다(리뷰어). 구성이 갈라지면 그때 검증이 된다.
+  { key: "app", opts: VIEW_OPTS, cfg: VIEW_AXIS_CFG, what: "**출하 구성** `VIEW_OPTS` + `VIEW_AXIS_CFG`" },
+  // **S-8b 후보** — 정합성 검사로 못 고른 앵커(자유단 경로)를 버린다.
+  { key: "require", what: "출하 구성 + `requireFarEnd` — 자유단 경로를 막는다(**S-8b 후보**)",
+    opts: { ...VIEW_OPTS, requireFarEnd: true } },
+  // **S-8b (c)** — 돌린 시점의 축 배정을 보수적으로. 배치율이 떨어져도 조용히 틀린 것보다 낫다.
+  { key: "strict_fit", what: "돌린 시점만 `vp_dist_ratio` 0.06 → 0.03",
+    opts: VIEW_OPTS, cfg: { vp_dist_ratio: 0.03 } },
+  { key: "strict_margin", what: "돌린 시점만 `ambiguity_margin` 1.5 → 3.0",
+    opts: VIEW_OPTS, cfg: { ambiguity_margin: 3.0 } },
+  { key: "strict_both", what: "둘 다 + `requireFarEnd`",
+    opts: { ...VIEW_OPTS, requireFarEnd: true },
+    cfg: { vp_dist_ratio: 0.03, ambiguity_margin: 3.0 } },
+  // **S-8b 본안** — 부적합도를 각도로 읽는다(단위를 고치는 것이지 임계를 조이는 것이 아니다).
+  { key: "angle_5", what: "각도 상한 5°", opts: VIEW_OPTS, cfg: { angle_max_deg: 5 } },
+  { key: "angle_3", what: "각도 상한 3°", opts: VIEW_OPTS, cfg: { angle_max_deg: 3 } },
+  { key: "angle_2", what: "각도 상한 2°", opts: VIEW_OPTS, cfg: { angle_max_deg: 2 } },
 ];
 
 const ANGLES = [45, 75, 110];
@@ -92,10 +112,13 @@ describe("S-7 (0) 돌린 시점의 평면 경로", () => {
     interface Acc { nDiag: number; free: number; placedFree: number; err: number[]; worst: number[];
                     nEdge: number; placedEdge: number; edgeWorst: number[];
                     /** **축으로 배정된 사선** — 첫 시점의 15.8%와 같은 양이다(D-S14의 병목). */
-                    axisAssigned: number; axisPlaced: number; axisWorst: number[]; }
+                    axisAssigned: number; axisPlaced: number; axisWorst: number[];
+                    /** **화면 길이**(그림 대각 대비). W-2: 짧은 선은 틀린 VP에도 잘 맞는다. */
+                    axisLen: number[]; axisLenBad: number[]; freeLen: number[]; }
     const acc = (): Acc => ({ nDiag: 0, free: 0, placedFree: 0, err: [], worst: [],
                               nEdge: 0, placedEdge: 0, edgeWorst: [],
-                              axisAssigned: 0, axisPlaced: 0, axisWorst: [] });
+                              axisAssigned: 0, axisPlaced: 0, axisWorst: [],
+                              axisLen: [], axisLenBad: [], freeLen: [] });
     const res: Record<string, Record<number, Acc>> = {};
     for (const a of ARMS) { res[a.key] = {}; for (const d of ANGLES) res[a.key][d] = acc(); }
 
@@ -148,7 +171,8 @@ describe("S-7 (0) 돌린 시점의 평면 경로", () => {
           });
           const before = inView.length;
           drawn.forEach(p => {
-            const v = classifyStroke(p, ctxV.vps, ctxV.imgSize, {},
+            // **판정을 팔마다 한다** — `cfg`가 팔의 일부다(난수를 안 쓰므로 그림은 안 변한다)
+            const v = classifyStroke(p, ctxV.vps, ctxV.imgSize, arm.cfg ?? {},
                                      { principal: ctxV.principal, f: ctxV.f });
             inView.push(newStroke(p, v.axis, v.rep ? { a: v.rep.a, b: v.rep.b } : undefined));
           });
@@ -164,13 +188,22 @@ describe("S-7 (0) 돌린 시점의 평면 경로", () => {
                 // (D-S14). 돌린 시점에서 그 비율과 오차를 안 재면 "사선은 고치기로 간다"가
                 // 그 집단을 빠뜨린 진술이 된다(리뷰어 지적).
                 R.axisAssigned += 1;
+                const lr = Math.hypot(s.pts2d[0][0] - s.pts2d[s.pts2d.length - 1][0],
+                                      s.pts2d[0][1] - s.pts2d[s.pts2d.length - 1][1])
+                         / Math.hypot(...ctxV.imgSize);
+                R.axisLen.push(lr);
                 if (!s.pts3d.length) continue;
                 R.axisPlaced += 1;
-                R.axisWorst.push(Math.max(norm3(sub3(s.pts3d[0], ta)) / diag3,
-                                          norm3(sub3(s.pts3d[s.pts3d.length - 1], tb)) / diag3));
+                const w = Math.max(norm3(sub3(s.pts3d[0], ta)) / diag3,
+                                   norm3(sub3(s.pts3d[s.pts3d.length - 1], tb)) / diag3);
+                R.axisWorst.push(w);
+                if (w > 0.2) R.axisLenBad.push(lr);
                 continue;
               }
               R.free += 1;
+              R.freeLen.push(Math.hypot(s.pts2d[0][0] - s.pts2d[s.pts2d.length - 1][0],
+                                        s.pts2d[0][1] - s.pts2d[s.pts2d.length - 1][1])
+                             / Math.hypot(...ctxV.imgSize));
               if (!s.pts3d.length) continue;
               R.placedFree += 1;
               const e = [norm3(sub3(s.pts3d[0], ta)) / diag3,
@@ -209,6 +242,8 @@ describe("S-7 (0) 돌린 시점의 평면 경로", () => {
           const R = res[arm.key][d];
           return [arm.key, {
             what: arm.what,
+            cfg: arm.cfg ?? null,
+            opts_extra: { requireFarEnd: arm.opts.requireFarEnd ?? false },
             n_diagonals: R.nDiag,
             unclassified_rate: rate(R.free, R.nDiag),
             recovered_of_free: rate(R.placedFree, R.free),
@@ -225,6 +260,10 @@ describe("S-7 (0) 돌린 시점의 평면 경로", () => {
               worst_end_ratio: stat(R.axisWorst, 4),
               worst_end_over: Object.fromEntries([0.1, 0.2, 0.5].map(c =>
                 [`over_${c}`, R.axisWorst.filter(v => v > c).length])),
+              /** **화면 길이 ÷ 그림 대각.** 짧으면 틀린 VP에도 맞는다(W-2) — 원인을 가른다. */
+              screen_len_ratio: stat(R.axisLen, 4),
+              screen_len_of_wrong: stat(R.axisLenBad, 4),
+              screen_len_of_free: stat(R.freeLen, 4),
             },
             edge_control: { n: R.nEdge, placed_rate: rate(R.placedEdge, R.nEdge),
                             worst_end_ratio: stat(R.edgeWorst, 4),

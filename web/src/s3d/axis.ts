@@ -53,6 +53,21 @@ export const AXIS_TOL = {
   rank_margin: 2.5,
   /** 상대 판정의 하드 천장 — 이보다 나쁘면 순위가 좋아도 배정하지 않는다. */
   vp_dist_ceiling: 0.22,
+  /**
+   * **각도 상한(도)** — 대표 직선과 "그 점에서 소실점으로 가는 방향" 사이의 각. 0이면 꺼진다.
+   *
+   * 왜 필요한가(S-8b): `vp_dist_ratio`는 **소실점까지의 거리에 비례해 관대해진다**.
+   * 부적합도는 `d⊥/L`이고 `d⊥ = D·sin θ`이므로 `misfit = (D/L)·sin θ`다 —
+   * **소실점이 가까우면(D가 작으면) 같은 각도 오차가 작은 부적합도로 나온다.**
+   * 첫 시점은 소실점이 대개 화면 밖 먼 곳이라 문제가 없는데, **돌린 시점에서는 시선이
+   * 어떤 축과 나란해지면 그 축의 소실점이 주점 근처로 온다.** 그때 면 위 사선이 그 축에
+   * 붙는다 — 궤도 45°에서 사선의 **79%**가 그렇게 오배정됐다(`view_plane.json`).
+   *
+   * 각도로 재면 그 의존이 사라진다: `sin θ = misfit · L / D`.
+   * **이것은 임계를 조이는 것이 아니라 단위를 고치는 것이다** — 먼 소실점에서는
+   * 기존 판정과 거의 같고(그쪽이 이미 엄격하다), 가까운 소실점에서만 조인다.
+   */
+  angle_max_deg: 0,
 };
 export type AxisCfg = Partial<typeof AXIS_TOL>;
 
@@ -230,12 +245,38 @@ export function classifyStroke(
   const sm = Math.min(dx, dy);
   scored.push({ axis: "screen", m: sm <= c.screen_parallel ? sm : Infinity, signed: sm });
 
+  /**
+   * **부적합도를 각도로 환산한다**(S-8b). `misfit = (D/L)·sin θ`이므로 `sin θ = misfit·L/D`다.
+   * `D`는 `vpMisfit`이 기준으로 삼는 **먼 쪽 끝점**에서 소실점까지의 거리다.
+   */
+  const angleOf = (v: Pt2, m: number): number => {
+    const da = Math.hypot(v[0] - rep.a[0], v[1] - rep.a[1]);
+    const db = Math.hypot(v[0] - rep.b[0], v[1] - rep.b[1]);
+    const D = Math.max(da, db);
+    if (!(D > 1e-9) || !Number.isFinite(m)) return 90;
+    return (Math.asin(Math.min(1, (m * rep.len) / D)) * 180) / Math.PI;
+  };
+
   scored.sort((p, q) => p.m - q.m);
   const withScores = { ...base, scores: scored };
   const best = scored[0], second = scored[1];
   if (!best || !Number.isFinite(best.m)) {
     const reason: Reason = scored.length <= 1 ? "no_camera" : "no_axis_matches";
     return { ...withScores, axis: "free", reason, note: NOTE[reason] };
+  }
+
+  /**
+   * **각도 거부권**(S-8b). 순위와 애매성 판정은 **건드리지 않고**, 이긴 후보에만 건다.
+   * _처음에는 후보의 부적합도를 `Infinity`로 만들어 걸렀는데 **반대로 갔다** —
+   * 경쟁자를 죽이면 상대 순위(`rank_margin`)가 거저 통과해 오배정이 79% → 90%로 늘었다.
+   * 거름은 **선택 뒤에** 걸어야 한다._
+   */
+  if (c.angle_max_deg > 0 && typeof best.axis === "number") {
+    const v = vps[best.axis];
+    if (v && angleOf(v, best.m) > c.angle_max_deg) {
+      return { ...withScores, axis: "free", misfit: best.m, reason: "no_axis_matches",
+               note: NOTE.no_axis_matches };
+    }
   }
 
   // (a) 위치 의존 임계 — 화각 60° 밖에서는 사람이 수렴을 완화해 그린다(18.4·AS-14)

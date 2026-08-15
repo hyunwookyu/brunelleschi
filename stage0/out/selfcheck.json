@@ -1,5 +1,5 @@
 {
-  "n_flags": 706,
+  "n_flags": 727,
   "flags": [
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
@@ -2552,6 +2552,41 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "view_plane.json:by_orbit_deg.45.require.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.45.strict_fit.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.45.strict_margin.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.45.strict_both.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.45.angle_5.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.45.angle_3.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.45.angle_2.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "view_plane.json:by_orbit_deg.75.now.worst_end_ratio.n",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -2562,12 +2597,82 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "view_plane.json:by_orbit_deg.75.require.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.75.strict_fit.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.75.strict_margin.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.75.strict_both.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.75.angle_5.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.75.angle_3.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.75.angle_2.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "view_plane.json:by_orbit_deg.110.now.worst_end_ratio.n",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "view_plane.json:by_orbit_deg.110.app.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.110.require.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.110.strict_fit.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.110.strict_margin.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.110.strict_both.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.110.angle_5.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.110.angle_3.worst_end_ratio.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view_plane.json:by_orbit_deg.110.angle_2.worst_end_ratio.n",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
@@ -3533,7 +3638,7 @@
     }
   ],
   "n_stale": 0,
-  "constants_hash": "503a75cb",
+  "constants_hash": "1671e540",
   "scanned": [
     "axis_judgement.json",
     "bend_share.json",

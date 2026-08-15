@@ -1,7 +1,7 @@
 {
   "spec": "S-7 (0) 측정 경로와 앱 경로의 배선. **측정했다고 앱이 쓰는 것은 아니다.**",
   "constants": {
-    "hash": "503a75cb",
+    "hash": "1671e540",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -15,7 +15,8 @@
         "angle_relax": 1.2,
         "angle_t60": 0.5773502692,
         "rank_margin": 2.5,
-        "vp_dist_ceiling": 0.22
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
       },
       "CONSENSUS_TOL": {
         "radius_ratio": 0.45,
@@ -84,7 +85,8 @@
   "view": {
     "farEndCheck": 1,
     "retryAsFace": 0,
-    "depthEnvelope": 0.5
+    "depthEnvelope": 0.5,
+    "requireFarEnd": true
   },
   "wiring": {
     "mode": {
@@ -131,6 +133,10 @@
       "where": "both",
       "why": "축 오배정 되돌리기. **값이 0이라 꺼져 있지만 배선은 되어 있다**(D-S16) — 실획에서 켤 때 배선을 다시 찾을 필요가 없게"
     },
+    "requireFarEnd": {
+      "where": "view",
+      "why": "정합성 검사로 못 고른 앵커를 버린다. **돌린 시점에만** 켠다 — 그 시점의 자유단 경로가 조용히 틀린 배치의 통로다(D-S22, `view_plane.json`)"
+    },
     "depthEnvelope": {
       "where": "view",
       "why": "깊이 타당성. **가림이 시점에 달린 현상이라서**다(D-S12·D-S13) — 첫 시점에서는 자유단이 드물다"
@@ -144,10 +150,10 @@
     "view_depth_envelope": 0.5
   },
   "counts": {
-    "n_options": 12,
+    "n_options": 13,
     "both": 2,
     "first_only": 3,
-    "view_only": 1,
+    "view_only": 2,
     "measure_only": 3,
     "call_arg": 3
   }

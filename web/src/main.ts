@@ -12,7 +12,7 @@ import { classifyStroke, AXIS_TOL, type Axis } from "./s3d/axis.js";
 import { newStroke, settle, reprojectAll, PLACE_TOL, anchorCandidates, placeByUser,
          placeAtDepth, depthRange, diagOf,
          type Stroke, type PlaceCtx, type PlaceOpts } from "./s3d/stroke.js";
-import { FIRST_VIEW_OPTS, VIEW_OPTS } from "./s3d/appPlace.js";
+import { FIRST_VIEW_OPTS, VIEW_OPTS, VIEW_AXIS_CFG } from "./s3d/appPlace.js";
 import { buildSession, downloadSession } from "./ui/sessionExport.js";
 import { viewPlaceCtx, toView, fromView, projectInView } from "./s3d/viewCamera.js";
 import { axisDirection, project, type Vec3 } from "./s3d/geom3d.js";
@@ -408,7 +408,8 @@ function addStrokeFromView(pts: Pt2[], raw?: number[][]) {
     tgt: [viewport.controls.target.x, viewport.controls.target.y, viewport.controls.target.z] as [number, number, number],
   });
 
-  const v = classifyStroke(pts, ctxV.vps, ctxV.imgSize, {},
+  // **돌린 시점은 판정을 보수적으로 한다**(D-S22) — 투영 애매성으로 사선이 축에 붙는다.
+  const v = classifyStroke(pts, ctxV.vps, ctxV.imgSize, VIEW_AXIS_CFG,
                            { principal: ctxV.principal, f: ctxV.f });
   const s = newStroke(pts, v.axis, v.rep ? { a: v.rep.a, b: v.rep.b } : undefined);
   drawn.push(s);

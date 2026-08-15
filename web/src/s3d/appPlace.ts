@@ -13,7 +13,7 @@
 // **이것은 STALE과 같은 성격의 문제다.** 사람이 기억해서 잡을 종류가 아니므로
 // `test/wiring.test.ts`가 기계로 잠근다 — 새 옵션이 생기면 아래 표에 등록해야 컴파일된다.
 import { PLACE_TOL, type PlaceOpts } from "./stroke.js";
-import { AXIS_TOL } from "./axis.js";
+import { AXIS_TOL, type AxisCfg } from "./axis.js";
 
 /**
  * **첫 시점**(왼쪽 캔버스)의 배치 옵션.
@@ -51,7 +51,22 @@ export const VIEW_OPTS: PlaceOpts = {
   farEndCheck: PLACE_TOL.far_end_check,
   retryAsFace: PLACE_TOL.retry_as_face,
   depthEnvelope: PLACE_TOL.view_depth_envelope,
+  requireFarEnd: true,
 };
+
+/**
+ * **돌린 시점의 판정 임계 덮어쓰기**(S-8b, D-S22). 첫 시점은 건드리지 않는다.
+ *
+ * 돌린 시점에서 면 위 사선의 **79%가 축으로 오배정**되고 그렇게 놓인 것은 **전부** 크게
+ * 틀린다. 원인은 판정이 관대해서가 아니라 **투영의 애매성**이다 — 그 사선들은 축 소실점에
+ * **2° 안으로** 맞는다(각도 거부권을 걸어도 안 걸린다). 그 시점의 2D 증거만으로는
+ * 축 획과 구분되지 않는다.
+ *
+ * 그래서 **해결이 아니라 완화**다: 부적합도 임계를 절반으로 조이면 오배정이 20~30% 준다
+ * (139 → 111 / 35 → 25 / 36 → 29). 대가는 거의 없다(모서리 배치율 45°·110° 그대로,
+ * 75° 0.65 → 0.58). `requireFarEnd`와 함께 쓰면 93 / 7 / 13까지 내려간다.
+ */
+export const VIEW_AXIS_CFG: AxisCfg = { vp_dist_ratio: 0.03 };
 
 /**
  * **옵션마다 어디서 켜지는가.** 새 옵션이 `PlaceOpts`에 생기면 여기 등록해야 한다 —
@@ -76,6 +91,7 @@ export const PLACE_OPT_WIRING: Record<keyof PlaceOpts, { where: Wiring; why: str
   freeBendMax: { where: "first", why: "평면 경로를 곧은 획으로 제한(D-S17). 평면 경로가 첫 시점 전용이므로 이것도 그렇다" },
   freeSpan: { where: "first", why: "자유 곡선 폴백(D-S17). 같은 이유로 첫 시점 전용이다(D-S19)" },
   retryAsFace: { where: "both", why: "축 오배정 되돌리기. **값이 0이라 꺼져 있지만 배선은 되어 있다**(D-S16) — 실획에서 켤 때 배선을 다시 찾을 필요가 없게" },
+  requireFarEnd: { where: "view", why: "정합성 검사로 못 고른 앵커를 버린다. **돌린 시점에만** 켠다 — 그 시점의 자유단 경로가 조용히 틀린 배치의 통로다(D-S22, `view_plane.json`)" },
   depthEnvelope: { where: "view", why: "깊이 타당성. **가림이 시점에 달린 현상이라서**다(D-S12·D-S13) — 첫 시점에서는 자유단이 드물다" },
 };
 

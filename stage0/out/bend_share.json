@@ -1,7 +1,7 @@
 {
   "spec": "굽은 획의 비율. **D-S17이 평면 경로에서 뺀 집단의 규모**를 잰다.",
   "constants": {
-    "hash": "503a75cb",
+    "hash": "1671e540",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -15,7 +15,8 @@
         "angle_relax": 1.2,
         "angle_t60": 0.5773502692,
         "rank_margin": 2.5,
-        "vp_dist_ceiling": 0.22
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
       },
       "CONSENSUS_TOL": {
         "radius_ratio": 0.45,

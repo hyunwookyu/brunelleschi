@@ -709,6 +709,13 @@ export interface PlaceOpts {
    */
   retryAsFace?: number;
   /**
+   * **정합성 검사로 고르지 못한 앵커는 쓰지 않는다**(S-8b). 자유단(한쪽만 후보)이면
+   * 지금은 최근접으로 떨어지고 깊이 타당성만 막는데, **돌린 시점에서는 그 경로가
+   * 조용히 틀린 배치의 통로**다 — 축으로 오인된 사선의 대부분이 거기로 놓인다.
+   * 켜면 그 경로를 아예 막는다(놓지 않고 `고치기`로 넘긴다).
+   */
+  requireFarEnd?: boolean;
+  /**
    * **깊이 타당성**(S-6) — 정합성 검사를 못 쓴 획(한쪽이 자유단)에만 적용한다.
    * 놓인 획이 기존 기하의 깊이 범위를 이 비율만큼 벗어나면 배치하지 않는다.
    * 측정: 궤도 45°에서 **38.5%가 자유단**이라 정합성 검사가 아예 안 걸렸고, 그 경로가 꼬리였다.
@@ -780,6 +787,9 @@ export function placeInto(
     }
     hit = r ? { pos: r.anchor, id: r.id, which: r.which } : null;
     byFarEnd = r?.byFarEnd ?? false;
+    // **검사로 고르지 못했으면 놓지 않는다**(S-8b). 자유단 경로가 돌린 시점에서
+    // 조용히 틀린 배치의 통로였다 — 놓지 않되 버리지 않는다(D-S15).
+    if (opts.requireFarEnd && hit && !byFarEnd) return false;
   } else {
     const h = findAnchor(placed, ends, radius, opts.endpointOnly, opts.nearestSample, opts.depthGuard);
     // 가림으로 후보가 갈리지 않으면 **놓지 않는다**. 사용자가 다시 돌리거나 이어 그으면 풀린다.

@@ -1,7 +1,7 @@
 {
   "spec": "S-7 (0) 돌린 시점의 평면 경로. **같은 획이 시점에 따라 갈리면 안 된다.**",
   "constants": {
-    "hash": "503a75cb",
+    "hash": "1671e540",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -15,7 +15,8 @@
         "angle_relax": 1.2,
         "angle_t60": 0.5773502692,
         "rank_margin": 2.5,
-        "vp_dist_ceiling": 0.22
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
       },
       "CONSENSUS_TOL": {
         "radius_ratio": 0.45,
@@ -97,6 +98,10 @@
     "45": {
       "now": {
         "what": "감사 이전 동작 — 정합성 + 깊이 타당성만. 면 경로 없음",
+        "cfg": null,
+        "opts_extra": {
+          "requireFarEnd": false
+        },
         "n_diagonals": 236,
         "unclassified_rate": 0.2119,
         "recovered_of_free": 0,
@@ -129,6 +134,30 @@
             "over_0.1": 139,
             "over_0.2": 139,
             "over_0.5": 124
+          },
+          "screen_len_ratio": {
+            "n": 186,
+            "min": 0.1018,
+            "p10": 0.1448,
+            "median": 0.1972,
+            "p90": 0.2757,
+            "max": 0.3281
+          },
+          "screen_len_of_wrong": {
+            "n": 139,
+            "min": 0.1018,
+            "p10": 0.1394,
+            "median": 0.1941,
+            "p90": 0.271,
+            "max": 0.3281
+          },
+          "screen_len_of_free": {
+            "n": 50,
+            "min": 0.0988,
+            "p10": 0.127,
+            "median": 0.1778,
+            "p90": 0.2586,
+            "max": 0.2745
           }
         },
         "edge_control": {
@@ -147,6 +176,10 @@
       },
       "planes": {
         "what": "첫 시점과 같은 평면 경로를 돌린 시점에도 켠 경우(**후보**)",
+        "cfg": null,
+        "opts_extra": {
+          "requireFarEnd": false
+        },
         "n_diagonals": 236,
         "unclassified_rate": 0.2119,
         "recovered_of_free": 0.8,
@@ -179,6 +212,30 @@
             "over_0.1": 139,
             "over_0.2": 139,
             "over_0.5": 124
+          },
+          "screen_len_ratio": {
+            "n": 186,
+            "min": 0.1018,
+            "p10": 0.1448,
+            "median": 0.1972,
+            "p90": 0.2757,
+            "max": 0.3281
+          },
+          "screen_len_of_wrong": {
+            "n": 139,
+            "min": 0.1018,
+            "p10": 0.1394,
+            "median": 0.1941,
+            "p90": 0.271,
+            "max": 0.3281
+          },
+          "screen_len_of_free": {
+            "n": 50,
+            "min": 0.0988,
+            "p10": 0.127,
+            "median": 0.1778,
+            "p90": 0.2586,
+            "max": 0.2745
           }
         },
         "edge_control": {
@@ -196,7 +253,91 @@
         }
       },
       "app": {
-        "what": "**출하 구성** `VIEW_OPTS`",
+        "what": "**출하 구성** `VIEW_OPTS` + `VIEW_AXIS_CFG`",
+        "cfg": {
+          "vp_dist_ratio": 0.03
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 236,
+        "unclassified_rate": 0.3686,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 149,
+          "share_of_diag": 0.6314,
+          "placed_rate": 0.6644,
+          "worst_end_ratio": {
+            "n": 99,
+            "min": 0.4054,
+            "p10": 0.4925,
+            "median": 0.6292,
+            "p90": 0.7361,
+            "max": 0.8142
+          },
+          "worst_end_over": {
+            "over_0.1": 99,
+            "over_0.2": 99,
+            "over_0.5": 87
+          },
+          "screen_len_ratio": {
+            "n": 149,
+            "min": 0.1018,
+            "p10": 0.1463,
+            "median": 0.1948,
+            "p90": 0.2687,
+            "max": 0.3281
+          },
+          "screen_len_of_wrong": {
+            "n": 99,
+            "min": 0.1018,
+            "p10": 0.1429,
+            "median": 0.1877,
+            "p90": 0.2681,
+            "max": 0.3281
+          },
+          "screen_len_of_free": {
+            "n": 87,
+            "min": 0.0988,
+            "p10": 0.1352,
+            "median": 0.1971,
+            "p90": 0.2639,
+            "max": 0.3141
+          }
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.4576,
+          "worst_end_ratio": {
+            "n": 54,
+            "min": 0.011,
+            "p10": 0.0138,
+            "median": 0.0306,
+            "p90": 0.0613,
+            "max": 0.1155
+          },
+          "over_0_2": 0
+        }
+      },
+      "require": {
+        "what": "출하 구성 + `requireFarEnd` — 자유단 경로를 막는다(**S-8b 후보**)",
+        "cfg": null,
+        "opts_extra": {
+          "requireFarEnd": true
+        },
         "n_diagonals": 236,
         "unclassified_rate": 0.2119,
         "recovered_of_free": 0,
@@ -216,31 +357,536 @@
         "diag_axis_assigned": {
           "n": 186,
           "share_of_diag": 0.7881,
-          "placed_rate": 0.7473,
+          "placed_rate": 0.672,
           "worst_end_ratio": {
-            "n": 139,
-            "min": 0.2471,
+            "n": 125,
+            "min": 0.4054,
             "p10": 0.4971,
             "median": 0.6401,
-            "p90": 0.7378,
+            "p90": 0.7398,
             "max": 0.8142
           },
           "worst_end_over": {
-            "over_0.1": 139,
-            "over_0.2": 139,
-            "over_0.5": 124
+            "over_0.1": 125,
+            "over_0.2": 125,
+            "over_0.5": 112
+          },
+          "screen_len_ratio": {
+            "n": 186,
+            "min": 0.1018,
+            "p10": 0.1448,
+            "median": 0.1972,
+            "p90": 0.2757,
+            "max": 0.3281
+          },
+          "screen_len_of_wrong": {
+            "n": 125,
+            "min": 0.1018,
+            "p10": 0.1382,
+            "median": 0.1906,
+            "p90": 0.271,
+            "max": 0.3281
+          },
+          "screen_len_of_free": {
+            "n": 50,
+            "min": 0.0988,
+            "p10": 0.127,
+            "median": 0.1778,
+            "p90": 0.2586,
+            "max": 0.2745
           }
         },
         "edge_control": {
           "n": 118,
-          "placed_rate": 0.7797,
+          "placed_rate": 0.4576,
           "worst_end_ratio": {
-            "n": 92,
-            "min": 0.008,
-            "p10": 0.0168,
-            "median": 0.0371,
-            "p90": 0.1025,
-            "max": 0.135
+            "n": 54,
+            "min": 0.011,
+            "p10": 0.0138,
+            "median": 0.0306,
+            "p90": 0.0613,
+            "max": 0.1155
+          },
+          "over_0_2": 0
+        }
+      },
+      "strict_fit": {
+        "what": "돌린 시점만 `vp_dist_ratio` 0.06 → 0.03",
+        "cfg": {
+          "vp_dist_ratio": 0.03
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 236,
+        "unclassified_rate": 0.3686,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 149,
+          "share_of_diag": 0.6314,
+          "placed_rate": 0.6644,
+          "worst_end_ratio": {
+            "n": 99,
+            "min": 0.4054,
+            "p10": 0.4925,
+            "median": 0.6292,
+            "p90": 0.7361,
+            "max": 0.8142
+          },
+          "worst_end_over": {
+            "over_0.1": 99,
+            "over_0.2": 99,
+            "over_0.5": 87
+          },
+          "screen_len_ratio": {
+            "n": 149,
+            "min": 0.1018,
+            "p10": 0.1463,
+            "median": 0.1948,
+            "p90": 0.2687,
+            "max": 0.3281
+          },
+          "screen_len_of_wrong": {
+            "n": 99,
+            "min": 0.1018,
+            "p10": 0.1429,
+            "median": 0.1877,
+            "p90": 0.2681,
+            "max": 0.3281
+          },
+          "screen_len_of_free": {
+            "n": 87,
+            "min": 0.0988,
+            "p10": 0.1352,
+            "median": 0.1971,
+            "p90": 0.2639,
+            "max": 0.3141
+          }
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.4576,
+          "worst_end_ratio": {
+            "n": 54,
+            "min": 0.011,
+            "p10": 0.0138,
+            "median": 0.0306,
+            "p90": 0.0613,
+            "max": 0.1155
+          },
+          "over_0_2": 0
+        }
+      },
+      "strict_margin": {
+        "what": "돌린 시점만 `ambiguity_margin` 1.5 → 3.0",
+        "cfg": {
+          "ambiguity_margin": 3
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 236,
+        "unclassified_rate": 0.2542,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 176,
+          "share_of_diag": 0.7458,
+          "placed_rate": 0.6761,
+          "worst_end_ratio": {
+            "n": 119,
+            "min": 0.4054,
+            "p10": 0.4971,
+            "median": 0.6351,
+            "p90": 0.738,
+            "max": 0.8142
+          },
+          "worst_end_over": {
+            "over_0.1": 119,
+            "over_0.2": 119,
+            "over_0.5": 106
+          },
+          "screen_len_ratio": {
+            "n": 176,
+            "min": 0.1018,
+            "p10": 0.1463,
+            "median": 0.1988,
+            "p90": 0.2777,
+            "max": 0.3281
+          },
+          "screen_len_of_wrong": {
+            "n": 119,
+            "min": 0.1018,
+            "p10": 0.1429,
+            "median": 0.1929,
+            "p90": 0.271,
+            "max": 0.3281
+          },
+          "screen_len_of_free": {
+            "n": 60,
+            "min": 0.0988,
+            "p10": 0.127,
+            "median": 0.1785,
+            "p90": 0.2542,
+            "max": 0.2745
+          }
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.4576,
+          "worst_end_ratio": {
+            "n": 54,
+            "min": 0.011,
+            "p10": 0.0138,
+            "median": 0.0306,
+            "p90": 0.0613,
+            "max": 0.1155
+          },
+          "over_0_2": 0
+        }
+      },
+      "strict_both": {
+        "what": "둘 다 + `requireFarEnd`",
+        "cfg": {
+          "vp_dist_ratio": 0.03,
+          "ambiguity_margin": 3
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 236,
+        "unclassified_rate": 0.411,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 139,
+          "share_of_diag": 0.589,
+          "placed_rate": 0.6691,
+          "worst_end_ratio": {
+            "n": 93,
+            "min": 0.4054,
+            "p10": 0.4917,
+            "median": 0.6274,
+            "p90": 0.7361,
+            "max": 0.8142
+          },
+          "worst_end_over": {
+            "over_0.1": 93,
+            "over_0.2": 93,
+            "over_0.5": 81
+          },
+          "screen_len_ratio": {
+            "n": 139,
+            "min": 0.1018,
+            "p10": 0.1473,
+            "median": 0.1969,
+            "p90": 0.2726,
+            "max": 0.3281
+          },
+          "screen_len_of_wrong": {
+            "n": 93,
+            "min": 0.1018,
+            "p10": 0.1463,
+            "median": 0.1929,
+            "p90": 0.2682,
+            "max": 0.3281
+          },
+          "screen_len_of_free": {
+            "n": 97,
+            "min": 0.0988,
+            "p10": 0.1352,
+            "median": 0.1941,
+            "p90": 0.2612,
+            "max": 0.3141
+          }
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.4576,
+          "worst_end_ratio": {
+            "n": 54,
+            "min": 0.011,
+            "p10": 0.0138,
+            "median": 0.0306,
+            "p90": 0.0613,
+            "max": 0.1155
+          },
+          "over_0_2": 0
+        }
+      },
+      "angle_5": {
+        "what": "각도 상한 5°",
+        "cfg": {
+          "angle_max_deg": 5
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 236,
+        "unclassified_rate": 0.2119,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 186,
+          "share_of_diag": 0.7881,
+          "placed_rate": 0.672,
+          "worst_end_ratio": {
+            "n": 125,
+            "min": 0.4054,
+            "p10": 0.4971,
+            "median": 0.6401,
+            "p90": 0.7398,
+            "max": 0.8142
+          },
+          "worst_end_over": {
+            "over_0.1": 125,
+            "over_0.2": 125,
+            "over_0.5": 112
+          },
+          "screen_len_ratio": {
+            "n": 186,
+            "min": 0.1018,
+            "p10": 0.1448,
+            "median": 0.1972,
+            "p90": 0.2757,
+            "max": 0.3281
+          },
+          "screen_len_of_wrong": {
+            "n": 125,
+            "min": 0.1018,
+            "p10": 0.1382,
+            "median": 0.1906,
+            "p90": 0.271,
+            "max": 0.3281
+          },
+          "screen_len_of_free": {
+            "n": 50,
+            "min": 0.0988,
+            "p10": 0.127,
+            "median": 0.1778,
+            "p90": 0.2586,
+            "max": 0.2745
+          }
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.4576,
+          "worst_end_ratio": {
+            "n": 54,
+            "min": 0.011,
+            "p10": 0.0138,
+            "median": 0.0306,
+            "p90": 0.0613,
+            "max": 0.1155
+          },
+          "over_0_2": 0
+        }
+      },
+      "angle_3": {
+        "what": "각도 상한 3°",
+        "cfg": {
+          "angle_max_deg": 3
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 236,
+        "unclassified_rate": 0.2119,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 186,
+          "share_of_diag": 0.7881,
+          "placed_rate": 0.672,
+          "worst_end_ratio": {
+            "n": 125,
+            "min": 0.4054,
+            "p10": 0.4971,
+            "median": 0.6401,
+            "p90": 0.7398,
+            "max": 0.8142
+          },
+          "worst_end_over": {
+            "over_0.1": 125,
+            "over_0.2": 125,
+            "over_0.5": 112
+          },
+          "screen_len_ratio": {
+            "n": 186,
+            "min": 0.1018,
+            "p10": 0.1448,
+            "median": 0.1972,
+            "p90": 0.2757,
+            "max": 0.3281
+          },
+          "screen_len_of_wrong": {
+            "n": 125,
+            "min": 0.1018,
+            "p10": 0.1382,
+            "median": 0.1906,
+            "p90": 0.271,
+            "max": 0.3281
+          },
+          "screen_len_of_free": {
+            "n": 50,
+            "min": 0.0988,
+            "p10": 0.127,
+            "median": 0.1778,
+            "p90": 0.2586,
+            "max": 0.2745
+          }
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.4576,
+          "worst_end_ratio": {
+            "n": 54,
+            "min": 0.011,
+            "p10": 0.0138,
+            "median": 0.0306,
+            "p90": 0.0613,
+            "max": 0.1155
+          },
+          "over_0_2": 0
+        }
+      },
+      "angle_2": {
+        "what": "각도 상한 2°",
+        "cfg": {
+          "angle_max_deg": 2
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 236,
+        "unclassified_rate": 0.2161,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 185,
+          "share_of_diag": 0.7839,
+          "placed_rate": 0.6757,
+          "worst_end_ratio": {
+            "n": 125,
+            "min": 0.4054,
+            "p10": 0.4971,
+            "median": 0.6401,
+            "p90": 0.7398,
+            "max": 0.8142
+          },
+          "worst_end_over": {
+            "over_0.1": 125,
+            "over_0.2": 125,
+            "over_0.5": 112
+          },
+          "screen_len_ratio": {
+            "n": 185,
+            "min": 0.1018,
+            "p10": 0.1429,
+            "median": 0.1973,
+            "p90": 0.2757,
+            "max": 0.3281
+          },
+          "screen_len_of_wrong": {
+            "n": 125,
+            "min": 0.1018,
+            "p10": 0.1382,
+            "median": 0.1906,
+            "p90": 0.271,
+            "max": 0.3281
+          },
+          "screen_len_of_free": {
+            "n": 51,
+            "min": 0.0988,
+            "p10": 0.127,
+            "median": 0.1771,
+            "p90": 0.2586,
+            "max": 0.2745
+          }
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.4576,
+          "worst_end_ratio": {
+            "n": 54,
+            "min": 0.011,
+            "p10": 0.0138,
+            "median": 0.0306,
+            "p90": 0.0613,
+            "max": 0.1155
           },
           "over_0_2": 0
         }
@@ -249,6 +895,10 @@
     "75": {
       "now": {
         "what": "감사 이전 동작 — 정합성 + 깊이 타당성만. 면 경로 없음",
+        "cfg": null,
+        "opts_extra": {
+          "requireFarEnd": false
+        },
         "n_diagonals": 236,
         "unclassified_rate": 0.6356,
         "recovered_of_free": 0,
@@ -281,6 +931,30 @@
             "over_0.1": 35,
             "over_0.2": 35,
             "over_0.5": 28
+          },
+          "screen_len_ratio": {
+            "n": 86,
+            "min": 0.1472,
+            "p10": 0.2747,
+            "median": 0.3408,
+            "p90": 0.425,
+            "max": 0.4598
+          },
+          "screen_len_of_wrong": {
+            "n": 35,
+            "min": 0.1472,
+            "p10": 0.262,
+            "median": 0.3707,
+            "p90": 0.429,
+            "max": 0.4553
+          },
+          "screen_len_of_free": {
+            "n": 150,
+            "min": 0.1267,
+            "p10": 0.1501,
+            "median": 0.2092,
+            "p90": 0.3601,
+            "max": 0.4472
           }
         },
         "edge_control": {
@@ -299,6 +973,10 @@
       },
       "planes": {
         "what": "첫 시점과 같은 평면 경로를 돌린 시점에도 켠 경우(**후보**)",
+        "cfg": null,
+        "opts_extra": {
+          "requireFarEnd": false
+        },
         "n_diagonals": 236,
         "unclassified_rate": 0.6356,
         "recovered_of_free": 0.74,
@@ -331,6 +1009,30 @@
             "over_0.1": 35,
             "over_0.2": 35,
             "over_0.5": 28
+          },
+          "screen_len_ratio": {
+            "n": 86,
+            "min": 0.1472,
+            "p10": 0.2747,
+            "median": 0.3408,
+            "p90": 0.425,
+            "max": 0.4598
+          },
+          "screen_len_of_wrong": {
+            "n": 35,
+            "min": 0.1472,
+            "p10": 0.262,
+            "median": 0.3707,
+            "p90": 0.429,
+            "max": 0.4553
+          },
+          "screen_len_of_free": {
+            "n": 150,
+            "min": 0.1267,
+            "p10": 0.1501,
+            "median": 0.2092,
+            "p90": 0.3601,
+            "max": 0.4472
           }
         },
         "edge_control": {
@@ -348,7 +1050,91 @@
         }
       },
       "app": {
-        "what": "**출하 구성** `VIEW_OPTS`",
+        "what": "**출하 구성** `VIEW_OPTS` + `VIEW_AXIS_CFG`",
+        "cfg": {
+          "vp_dist_ratio": 0.03
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 236,
+        "unclassified_rate": 0.7754,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 53,
+          "share_of_diag": 0.2246,
+          "placed_rate": 0.1321,
+          "worst_end_ratio": {
+            "n": 7,
+            "min": 0.4246,
+            "p10": 0.4302,
+            "median": 0.5297,
+            "p90": 0.6008,
+            "max": 0.7103
+          },
+          "worst_end_over": {
+            "over_0.1": 7,
+            "over_0.2": 7,
+            "over_0.5": 5
+          },
+          "screen_len_ratio": {
+            "n": 53,
+            "min": 0.1472,
+            "p10": 0.2468,
+            "median": 0.344,
+            "p90": 0.4245,
+            "max": 0.4553
+          },
+          "screen_len_of_wrong": {
+            "n": 7,
+            "min": 0.2064,
+            "p10": 0.3125,
+            "median": 0.3315,
+            "p90": 0.3961,
+            "max": 0.4245
+          },
+          "screen_len_of_free": {
+            "n": 183,
+            "min": 0.1267,
+            "p10": 0.1538,
+            "median": 0.2274,
+            "p90": 0.3732,
+            "max": 0.4598
+          }
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.2458,
+          "worst_end_ratio": {
+            "n": 29,
+            "min": 0.0072,
+            "p10": 0.0145,
+            "median": 0.0264,
+            "p90": 0.0549,
+            "max": 0.5984
+          },
+          "over_0_2": 2
+        }
+      },
+      "require": {
+        "what": "출하 구성 + `requireFarEnd` — 자유단 경로를 막는다(**S-8b 후보**)",
+        "cfg": null,
+        "opts_extra": {
+          "requireFarEnd": true
+        },
         "n_diagonals": 236,
         "unclassified_rate": 0.6356,
         "recovered_of_free": 0,
@@ -368,39 +1154,548 @@
         "diag_axis_assigned": {
           "n": 86,
           "share_of_diag": 0.3644,
-          "placed_rate": 0.407,
+          "placed_rate": 0.093,
           "worst_end_ratio": {
-            "n": 35,
-            "min": 0.3215,
+            "n": 8,
+            "min": 0.4246,
             "p10": 0.4302,
-            "median": 0.5807,
-            "p90": 0.7133,
-            "max": 0.8432
+            "median": 0.5481,
+            "p90": 0.611,
+            "max": 0.7103
           },
           "worst_end_over": {
-            "over_0.1": 35,
-            "over_0.2": 35,
-            "over_0.5": 28
+            "over_0.1": 8,
+            "over_0.2": 8,
+            "over_0.5": 6
+          },
+          "screen_len_ratio": {
+            "n": 86,
+            "min": 0.1472,
+            "p10": 0.2747,
+            "median": 0.3408,
+            "p90": 0.425,
+            "max": 0.4598
+          },
+          "screen_len_of_wrong": {
+            "n": 8,
+            "min": 0.2064,
+            "p10": 0.2861,
+            "median": 0.3287,
+            "p90": 0.3961,
+            "max": 0.4245
+          },
+          "screen_len_of_free": {
+            "n": 150,
+            "min": 0.1267,
+            "p10": 0.1501,
+            "median": 0.2092,
+            "p90": 0.3601,
+            "max": 0.4472
           }
         },
         "edge_control": {
           "n": 118,
-          "placed_rate": 0.6525,
+          "placed_rate": 0.2797,
           "worst_end_ratio": {
-            "n": 77,
+            "n": 33,
             "min": 0.0072,
-            "p10": 0.0172,
-            "median": 0.0366,
-            "p90": 0.5909,
-            "max": 0.7561
+            "p10": 0.0145,
+            "median": 0.0273,
+            "p90": 0.0566,
+            "max": 0.5984
           },
-          "over_0_2": 10
+          "over_0_2": 2
+        }
+      },
+      "strict_fit": {
+        "what": "돌린 시점만 `vp_dist_ratio` 0.06 → 0.03",
+        "cfg": {
+          "vp_dist_ratio": 0.03
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 236,
+        "unclassified_rate": 0.7754,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 53,
+          "share_of_diag": 0.2246,
+          "placed_rate": 0.1321,
+          "worst_end_ratio": {
+            "n": 7,
+            "min": 0.4246,
+            "p10": 0.4302,
+            "median": 0.5297,
+            "p90": 0.6008,
+            "max": 0.7103
+          },
+          "worst_end_over": {
+            "over_0.1": 7,
+            "over_0.2": 7,
+            "over_0.5": 5
+          },
+          "screen_len_ratio": {
+            "n": 53,
+            "min": 0.1472,
+            "p10": 0.2468,
+            "median": 0.344,
+            "p90": 0.4245,
+            "max": 0.4553
+          },
+          "screen_len_of_wrong": {
+            "n": 7,
+            "min": 0.2064,
+            "p10": 0.3125,
+            "median": 0.3315,
+            "p90": 0.3961,
+            "max": 0.4245
+          },
+          "screen_len_of_free": {
+            "n": 183,
+            "min": 0.1267,
+            "p10": 0.1538,
+            "median": 0.2274,
+            "p90": 0.3732,
+            "max": 0.4598
+          }
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.2458,
+          "worst_end_ratio": {
+            "n": 29,
+            "min": 0.0072,
+            "p10": 0.0145,
+            "median": 0.0264,
+            "p90": 0.0549,
+            "max": 0.5984
+          },
+          "over_0_2": 2
+        }
+      },
+      "strict_margin": {
+        "what": "돌린 시점만 `ambiguity_margin` 1.5 → 3.0",
+        "cfg": {
+          "ambiguity_margin": 3
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 236,
+        "unclassified_rate": 0.6356,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 86,
+          "share_of_diag": 0.3644,
+          "placed_rate": 0.093,
+          "worst_end_ratio": {
+            "n": 8,
+            "min": 0.4246,
+            "p10": 0.4302,
+            "median": 0.5481,
+            "p90": 0.611,
+            "max": 0.7103
+          },
+          "worst_end_over": {
+            "over_0.1": 8,
+            "over_0.2": 8,
+            "over_0.5": 6
+          },
+          "screen_len_ratio": {
+            "n": 86,
+            "min": 0.1472,
+            "p10": 0.2747,
+            "median": 0.3408,
+            "p90": 0.425,
+            "max": 0.4598
+          },
+          "screen_len_of_wrong": {
+            "n": 8,
+            "min": 0.2064,
+            "p10": 0.2861,
+            "median": 0.3287,
+            "p90": 0.3961,
+            "max": 0.4245
+          },
+          "screen_len_of_free": {
+            "n": 150,
+            "min": 0.1267,
+            "p10": 0.1501,
+            "median": 0.2092,
+            "p90": 0.3601,
+            "max": 0.4472
+          }
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.2797,
+          "worst_end_ratio": {
+            "n": 33,
+            "min": 0.0072,
+            "p10": 0.0145,
+            "median": 0.0273,
+            "p90": 0.0566,
+            "max": 0.5984
+          },
+          "over_0_2": 2
+        }
+      },
+      "strict_both": {
+        "what": "둘 다 + `requireFarEnd`",
+        "cfg": {
+          "vp_dist_ratio": 0.03,
+          "ambiguity_margin": 3
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 236,
+        "unclassified_rate": 0.7754,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 53,
+          "share_of_diag": 0.2246,
+          "placed_rate": 0.1321,
+          "worst_end_ratio": {
+            "n": 7,
+            "min": 0.4246,
+            "p10": 0.4302,
+            "median": 0.5297,
+            "p90": 0.6008,
+            "max": 0.7103
+          },
+          "worst_end_over": {
+            "over_0.1": 7,
+            "over_0.2": 7,
+            "over_0.5": 5
+          },
+          "screen_len_ratio": {
+            "n": 53,
+            "min": 0.1472,
+            "p10": 0.2468,
+            "median": 0.344,
+            "p90": 0.4245,
+            "max": 0.4553
+          },
+          "screen_len_of_wrong": {
+            "n": 7,
+            "min": 0.2064,
+            "p10": 0.3125,
+            "median": 0.3315,
+            "p90": 0.3961,
+            "max": 0.4245
+          },
+          "screen_len_of_free": {
+            "n": 183,
+            "min": 0.1267,
+            "p10": 0.1538,
+            "median": 0.2274,
+            "p90": 0.3732,
+            "max": 0.4598
+          }
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.2458,
+          "worst_end_ratio": {
+            "n": 29,
+            "min": 0.0072,
+            "p10": 0.0145,
+            "median": 0.0264,
+            "p90": 0.0549,
+            "max": 0.5984
+          },
+          "over_0_2": 2
+        }
+      },
+      "angle_5": {
+        "what": "각도 상한 5°",
+        "cfg": {
+          "angle_max_deg": 5
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 236,
+        "unclassified_rate": 0.6356,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 86,
+          "share_of_diag": 0.3644,
+          "placed_rate": 0.093,
+          "worst_end_ratio": {
+            "n": 8,
+            "min": 0.4246,
+            "p10": 0.4302,
+            "median": 0.5481,
+            "p90": 0.611,
+            "max": 0.7103
+          },
+          "worst_end_over": {
+            "over_0.1": 8,
+            "over_0.2": 8,
+            "over_0.5": 6
+          },
+          "screen_len_ratio": {
+            "n": 86,
+            "min": 0.1472,
+            "p10": 0.2747,
+            "median": 0.3408,
+            "p90": 0.425,
+            "max": 0.4598
+          },
+          "screen_len_of_wrong": {
+            "n": 8,
+            "min": 0.2064,
+            "p10": 0.2861,
+            "median": 0.3287,
+            "p90": 0.3961,
+            "max": 0.4245
+          },
+          "screen_len_of_free": {
+            "n": 150,
+            "min": 0.1267,
+            "p10": 0.1501,
+            "median": 0.2092,
+            "p90": 0.3601,
+            "max": 0.4472
+          }
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.2797,
+          "worst_end_ratio": {
+            "n": 33,
+            "min": 0.0072,
+            "p10": 0.0145,
+            "median": 0.0273,
+            "p90": 0.0566,
+            "max": 0.5984
+          },
+          "over_0_2": 2
+        }
+      },
+      "angle_3": {
+        "what": "각도 상한 3°",
+        "cfg": {
+          "angle_max_deg": 3
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 236,
+        "unclassified_rate": 0.6356,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 86,
+          "share_of_diag": 0.3644,
+          "placed_rate": 0.093,
+          "worst_end_ratio": {
+            "n": 8,
+            "min": 0.4246,
+            "p10": 0.4302,
+            "median": 0.5481,
+            "p90": 0.611,
+            "max": 0.7103
+          },
+          "worst_end_over": {
+            "over_0.1": 8,
+            "over_0.2": 8,
+            "over_0.5": 6
+          },
+          "screen_len_ratio": {
+            "n": 86,
+            "min": 0.1472,
+            "p10": 0.2747,
+            "median": 0.3408,
+            "p90": 0.425,
+            "max": 0.4598
+          },
+          "screen_len_of_wrong": {
+            "n": 8,
+            "min": 0.2064,
+            "p10": 0.2861,
+            "median": 0.3287,
+            "p90": 0.3961,
+            "max": 0.4245
+          },
+          "screen_len_of_free": {
+            "n": 150,
+            "min": 0.1267,
+            "p10": 0.1501,
+            "median": 0.2092,
+            "p90": 0.3601,
+            "max": 0.4472
+          }
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.2797,
+          "worst_end_ratio": {
+            "n": 33,
+            "min": 0.0072,
+            "p10": 0.0145,
+            "median": 0.0273,
+            "p90": 0.0566,
+            "max": 0.5984
+          },
+          "over_0_2": 2
+        }
+      },
+      "angle_2": {
+        "what": "각도 상한 2°",
+        "cfg": {
+          "angle_max_deg": 2
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 236,
+        "unclassified_rate": 0.6398,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 85,
+          "share_of_diag": 0.3602,
+          "placed_rate": 0.0941,
+          "worst_end_ratio": {
+            "n": 8,
+            "min": 0.4246,
+            "p10": 0.4302,
+            "median": 0.5481,
+            "p90": 0.611,
+            "max": 0.7103
+          },
+          "worst_end_over": {
+            "over_0.1": 8,
+            "over_0.2": 8,
+            "over_0.5": 6
+          },
+          "screen_len_ratio": {
+            "n": 85,
+            "min": 0.1472,
+            "p10": 0.2736,
+            "median": 0.3401,
+            "p90": 0.4245,
+            "max": 0.4598
+          },
+          "screen_len_of_wrong": {
+            "n": 8,
+            "min": 0.2064,
+            "p10": 0.2861,
+            "median": 0.3287,
+            "p90": 0.3961,
+            "max": 0.4245
+          },
+          "screen_len_of_free": {
+            "n": 151,
+            "min": 0.1267,
+            "p10": 0.1501,
+            "median": 0.21,
+            "p90": 0.3631,
+            "max": 0.4472
+          }
+        },
+        "edge_control": {
+          "n": 118,
+          "placed_rate": 0.2797,
+          "worst_end_ratio": {
+            "n": 33,
+            "min": 0.0072,
+            "p10": 0.0145,
+            "median": 0.0273,
+            "p90": 0.0566,
+            "max": 0.5984
+          },
+          "over_0_2": 2
         }
       }
     },
     "110": {
       "now": {
         "what": "감사 이전 동작 — 정합성 + 깊이 타당성만. 면 경로 없음",
+        "cfg": null,
+        "opts_extra": {
+          "requireFarEnd": false
+        },
         "n_diagonals": 238,
         "unclassified_rate": 0.5378,
         "recovered_of_free": 0,
@@ -433,6 +1728,30 @@
             "over_0.1": 36,
             "over_0.2": 36,
             "over_0.5": 32
+          },
+          "screen_len_ratio": {
+            "n": 110,
+            "min": 0.1806,
+            "p10": 0.2121,
+            "median": 0.2635,
+            "p90": 0.4332,
+            "max": 0.5664
+          },
+          "screen_len_of_wrong": {
+            "n": 36,
+            "min": 0.1806,
+            "p10": 0.1976,
+            "median": 0.2604,
+            "p90": 0.4426,
+            "max": 0.4933
+          },
+          "screen_len_of_free": {
+            "n": 128,
+            "min": 0.1974,
+            "p10": 0.2447,
+            "median": 0.394,
+            "p90": 0.4873,
+            "max": 0.5864
           }
         },
         "edge_control": {
@@ -451,6 +1770,10 @@
       },
       "planes": {
         "what": "첫 시점과 같은 평면 경로를 돌린 시점에도 켠 경우(**후보**)",
+        "cfg": null,
+        "opts_extra": {
+          "requireFarEnd": false
+        },
         "n_diagonals": 238,
         "unclassified_rate": 0.5378,
         "recovered_of_free": 0.6094,
@@ -483,6 +1806,30 @@
             "over_0.1": 36,
             "over_0.2": 36,
             "over_0.5": 32
+          },
+          "screen_len_ratio": {
+            "n": 110,
+            "min": 0.1806,
+            "p10": 0.2121,
+            "median": 0.2635,
+            "p90": 0.4332,
+            "max": 0.5664
+          },
+          "screen_len_of_wrong": {
+            "n": 36,
+            "min": 0.1806,
+            "p10": 0.1976,
+            "median": 0.2604,
+            "p90": 0.4426,
+            "max": 0.4933
+          },
+          "screen_len_of_free": {
+            "n": 128,
+            "min": 0.1974,
+            "p10": 0.2447,
+            "median": 0.394,
+            "p90": 0.4873,
+            "max": 0.5864
           }
         },
         "edge_control": {
@@ -500,7 +1847,91 @@
         }
       },
       "app": {
-        "what": "**출하 구성** `VIEW_OPTS`",
+        "what": "**출하 구성** `VIEW_OPTS` + `VIEW_AXIS_CFG`",
+        "cfg": {
+          "vp_dist_ratio": 0.03
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 238,
+        "unclassified_rate": 0.6008,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 95,
+          "share_of_diag": 0.3992,
+          "placed_rate": 0.1368,
+          "worst_end_ratio": {
+            "n": 13,
+            "min": 0.9642,
+            "p10": 0.9705,
+            "median": 0.9876,
+            "p90": 1.0496,
+            "max": 1.0876
+          },
+          "worst_end_over": {
+            "over_0.1": 13,
+            "over_0.2": 13,
+            "over_0.5": 13
+          },
+          "screen_len_ratio": {
+            "n": 95,
+            "min": 0.1806,
+            "p10": 0.2025,
+            "median": 0.2539,
+            "p90": 0.3165,
+            "max": 0.4622
+          },
+          "screen_len_of_wrong": {
+            "n": 13,
+            "min": 0.1932,
+            "p10": 0.1954,
+            "median": 0.2179,
+            "p90": 0.2428,
+            "max": 0.2539
+          },
+          "screen_len_of_free": {
+            "n": 143,
+            "min": 0.1974,
+            "p10": 0.2466,
+            "median": 0.3982,
+            "p90": 0.4917,
+            "max": 0.5864
+          }
+        },
+        "edge_control": {
+          "n": 119,
+          "placed_rate": 0.2941,
+          "worst_end_ratio": {
+            "n": 35,
+            "min": 0.0084,
+            "p10": 0.0123,
+            "median": 0.0239,
+            "p90": 0.0408,
+            "max": 0.0429
+          },
+          "over_0_2": 0
+        }
+      },
+      "require": {
+        "what": "출하 구성 + `requireFarEnd` — 자유단 경로를 막는다(**S-8b 후보**)",
+        "cfg": null,
+        "opts_extra": {
+          "requireFarEnd": true
+        },
         "n_diagonals": 238,
         "unclassified_rate": 0.5378,
         "recovered_of_free": 0,
@@ -520,33 +1951,538 @@
         "diag_axis_assigned": {
           "n": 110,
           "share_of_diag": 0.4622,
-          "placed_rate": 0.3273,
+          "placed_rate": 0.1182,
           "worst_end_ratio": {
-            "n": 36,
-            "min": 0.4646,
-            "p10": 0.5214,
-            "median": 0.9838,
-            "p90": 1.128,
-            "max": 1.148
+            "n": 13,
+            "min": 0.9642,
+            "p10": 0.9705,
+            "median": 0.9876,
+            "p90": 1.0496,
+            "max": 1.0876
           },
           "worst_end_over": {
-            "over_0.1": 36,
-            "over_0.2": 36,
-            "over_0.5": 32
+            "over_0.1": 13,
+            "over_0.2": 13,
+            "over_0.5": 13
+          },
+          "screen_len_ratio": {
+            "n": 110,
+            "min": 0.1806,
+            "p10": 0.2121,
+            "median": 0.2635,
+            "p90": 0.4332,
+            "max": 0.5664
+          },
+          "screen_len_of_wrong": {
+            "n": 13,
+            "min": 0.1932,
+            "p10": 0.1954,
+            "median": 0.2179,
+            "p90": 0.2428,
+            "max": 0.2539
+          },
+          "screen_len_of_free": {
+            "n": 128,
+            "min": 0.1974,
+            "p10": 0.2447,
+            "median": 0.394,
+            "p90": 0.4873,
+            "max": 0.5864
           }
         },
         "edge_control": {
           "n": 119,
-          "placed_rate": 0.6891,
+          "placed_rate": 0.2941,
           "worst_end_ratio": {
-            "n": 82,
-            "min": 0.0048,
-            "p10": 0.0125,
-            "median": 0.0262,
-            "p90": 0.0482,
-            "max": 0.5418
+            "n": 35,
+            "min": 0.0084,
+            "p10": 0.0123,
+            "median": 0.0239,
+            "p90": 0.0408,
+            "max": 0.0429
           },
-          "over_0_2": 1
+          "over_0_2": 0
+        }
+      },
+      "strict_fit": {
+        "what": "돌린 시점만 `vp_dist_ratio` 0.06 → 0.03",
+        "cfg": {
+          "vp_dist_ratio": 0.03
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 238,
+        "unclassified_rate": 0.6008,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 95,
+          "share_of_diag": 0.3992,
+          "placed_rate": 0.1368,
+          "worst_end_ratio": {
+            "n": 13,
+            "min": 0.9642,
+            "p10": 0.9705,
+            "median": 0.9876,
+            "p90": 1.0496,
+            "max": 1.0876
+          },
+          "worst_end_over": {
+            "over_0.1": 13,
+            "over_0.2": 13,
+            "over_0.5": 13
+          },
+          "screen_len_ratio": {
+            "n": 95,
+            "min": 0.1806,
+            "p10": 0.2025,
+            "median": 0.2539,
+            "p90": 0.3165,
+            "max": 0.4622
+          },
+          "screen_len_of_wrong": {
+            "n": 13,
+            "min": 0.1932,
+            "p10": 0.1954,
+            "median": 0.2179,
+            "p90": 0.2428,
+            "max": 0.2539
+          },
+          "screen_len_of_free": {
+            "n": 143,
+            "min": 0.1974,
+            "p10": 0.2466,
+            "median": 0.3982,
+            "p90": 0.4917,
+            "max": 0.5864
+          }
+        },
+        "edge_control": {
+          "n": 119,
+          "placed_rate": 0.2941,
+          "worst_end_ratio": {
+            "n": 35,
+            "min": 0.0084,
+            "p10": 0.0123,
+            "median": 0.0239,
+            "p90": 0.0408,
+            "max": 0.0429
+          },
+          "over_0_2": 0
+        }
+      },
+      "strict_margin": {
+        "what": "돌린 시점만 `ambiguity_margin` 1.5 → 3.0",
+        "cfg": {
+          "ambiguity_margin": 3
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 238,
+        "unclassified_rate": 0.5378,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 110,
+          "share_of_diag": 0.4622,
+          "placed_rate": 0.1182,
+          "worst_end_ratio": {
+            "n": 13,
+            "min": 0.9642,
+            "p10": 0.9705,
+            "median": 0.9876,
+            "p90": 1.0496,
+            "max": 1.0876
+          },
+          "worst_end_over": {
+            "over_0.1": 13,
+            "over_0.2": 13,
+            "over_0.5": 13
+          },
+          "screen_len_ratio": {
+            "n": 110,
+            "min": 0.1806,
+            "p10": 0.2121,
+            "median": 0.2635,
+            "p90": 0.4332,
+            "max": 0.5664
+          },
+          "screen_len_of_wrong": {
+            "n": 13,
+            "min": 0.1932,
+            "p10": 0.1954,
+            "median": 0.2179,
+            "p90": 0.2428,
+            "max": 0.2539
+          },
+          "screen_len_of_free": {
+            "n": 128,
+            "min": 0.1974,
+            "p10": 0.2447,
+            "median": 0.394,
+            "p90": 0.4873,
+            "max": 0.5864
+          }
+        },
+        "edge_control": {
+          "n": 119,
+          "placed_rate": 0.2941,
+          "worst_end_ratio": {
+            "n": 35,
+            "min": 0.0084,
+            "p10": 0.0123,
+            "median": 0.0239,
+            "p90": 0.0408,
+            "max": 0.0429
+          },
+          "over_0_2": 0
+        }
+      },
+      "strict_both": {
+        "what": "둘 다 + `requireFarEnd`",
+        "cfg": {
+          "vp_dist_ratio": 0.03,
+          "ambiguity_margin": 3
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 238,
+        "unclassified_rate": 0.6008,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 95,
+          "share_of_diag": 0.3992,
+          "placed_rate": 0.1368,
+          "worst_end_ratio": {
+            "n": 13,
+            "min": 0.9642,
+            "p10": 0.9705,
+            "median": 0.9876,
+            "p90": 1.0496,
+            "max": 1.0876
+          },
+          "worst_end_over": {
+            "over_0.1": 13,
+            "over_0.2": 13,
+            "over_0.5": 13
+          },
+          "screen_len_ratio": {
+            "n": 95,
+            "min": 0.1806,
+            "p10": 0.2025,
+            "median": 0.2539,
+            "p90": 0.3165,
+            "max": 0.4622
+          },
+          "screen_len_of_wrong": {
+            "n": 13,
+            "min": 0.1932,
+            "p10": 0.1954,
+            "median": 0.2179,
+            "p90": 0.2428,
+            "max": 0.2539
+          },
+          "screen_len_of_free": {
+            "n": 143,
+            "min": 0.1974,
+            "p10": 0.2466,
+            "median": 0.3982,
+            "p90": 0.4917,
+            "max": 0.5864
+          }
+        },
+        "edge_control": {
+          "n": 119,
+          "placed_rate": 0.2941,
+          "worst_end_ratio": {
+            "n": 35,
+            "min": 0.0084,
+            "p10": 0.0123,
+            "median": 0.0239,
+            "p90": 0.0408,
+            "max": 0.0429
+          },
+          "over_0_2": 0
+        }
+      },
+      "angle_5": {
+        "what": "각도 상한 5°",
+        "cfg": {
+          "angle_max_deg": 5
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 238,
+        "unclassified_rate": 0.5378,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 110,
+          "share_of_diag": 0.4622,
+          "placed_rate": 0.1182,
+          "worst_end_ratio": {
+            "n": 13,
+            "min": 0.9642,
+            "p10": 0.9705,
+            "median": 0.9876,
+            "p90": 1.0496,
+            "max": 1.0876
+          },
+          "worst_end_over": {
+            "over_0.1": 13,
+            "over_0.2": 13,
+            "over_0.5": 13
+          },
+          "screen_len_ratio": {
+            "n": 110,
+            "min": 0.1806,
+            "p10": 0.2121,
+            "median": 0.2635,
+            "p90": 0.4332,
+            "max": 0.5664
+          },
+          "screen_len_of_wrong": {
+            "n": 13,
+            "min": 0.1932,
+            "p10": 0.1954,
+            "median": 0.2179,
+            "p90": 0.2428,
+            "max": 0.2539
+          },
+          "screen_len_of_free": {
+            "n": 128,
+            "min": 0.1974,
+            "p10": 0.2447,
+            "median": 0.394,
+            "p90": 0.4873,
+            "max": 0.5864
+          }
+        },
+        "edge_control": {
+          "n": 119,
+          "placed_rate": 0.2941,
+          "worst_end_ratio": {
+            "n": 35,
+            "min": 0.0084,
+            "p10": 0.0123,
+            "median": 0.0239,
+            "p90": 0.0408,
+            "max": 0.0429
+          },
+          "over_0_2": 0
+        }
+      },
+      "angle_3": {
+        "what": "각도 상한 3°",
+        "cfg": {
+          "angle_max_deg": 3
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 238,
+        "unclassified_rate": 0.5378,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 110,
+          "share_of_diag": 0.4622,
+          "placed_rate": 0.1182,
+          "worst_end_ratio": {
+            "n": 13,
+            "min": 0.9642,
+            "p10": 0.9705,
+            "median": 0.9876,
+            "p90": 1.0496,
+            "max": 1.0876
+          },
+          "worst_end_over": {
+            "over_0.1": 13,
+            "over_0.2": 13,
+            "over_0.5": 13
+          },
+          "screen_len_ratio": {
+            "n": 110,
+            "min": 0.1806,
+            "p10": 0.2121,
+            "median": 0.2635,
+            "p90": 0.4332,
+            "max": 0.5664
+          },
+          "screen_len_of_wrong": {
+            "n": 13,
+            "min": 0.1932,
+            "p10": 0.1954,
+            "median": 0.2179,
+            "p90": 0.2428,
+            "max": 0.2539
+          },
+          "screen_len_of_free": {
+            "n": 128,
+            "min": 0.1974,
+            "p10": 0.2447,
+            "median": 0.394,
+            "p90": 0.4873,
+            "max": 0.5864
+          }
+        },
+        "edge_control": {
+          "n": 119,
+          "placed_rate": 0.2941,
+          "worst_end_ratio": {
+            "n": 35,
+            "min": 0.0084,
+            "p10": 0.0123,
+            "median": 0.0239,
+            "p90": 0.0408,
+            "max": 0.0429
+          },
+          "over_0_2": 0
+        }
+      },
+      "angle_2": {
+        "what": "각도 상한 2°",
+        "cfg": {
+          "angle_max_deg": 2
+        },
+        "opts_extra": {
+          "requireFarEnd": true
+        },
+        "n_diagonals": 238,
+        "unclassified_rate": 0.6092,
+        "recovered_of_free": 0,
+        "worst_end_ratio": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "worst_end_over": {
+          "over_0.1": 0,
+          "over_0.2": 0,
+          "over_0.5": 0
+        },
+        "diag_axis_assigned": {
+          "n": 93,
+          "share_of_diag": 0.3908,
+          "placed_rate": 0.1398,
+          "worst_end_ratio": {
+            "n": 13,
+            "min": 0.9642,
+            "p10": 0.9705,
+            "median": 0.9876,
+            "p90": 1.0496,
+            "max": 1.0876
+          },
+          "worst_end_over": {
+            "over_0.1": 13,
+            "over_0.2": 13,
+            "over_0.5": 13
+          },
+          "screen_len_ratio": {
+            "n": 93,
+            "min": 0.1806,
+            "p10": 0.2034,
+            "median": 0.2633,
+            "p90": 0.4426,
+            "max": 0.5664
+          },
+          "screen_len_of_wrong": {
+            "n": 13,
+            "min": 0.1932,
+            "p10": 0.1954,
+            "median": 0.2179,
+            "p90": 0.2428,
+            "max": 0.2539
+          },
+          "screen_len_of_free": {
+            "n": 145,
+            "min": 0.1974,
+            "p10": 0.2431,
+            "median": 0.387,
+            "p90": 0.4828,
+            "max": 0.5864
+          }
+        },
+        "edge_control": {
+          "n": 119,
+          "placed_rate": 0.2941,
+          "worst_end_ratio": {
+            "n": 35,
+            "min": 0.0084,
+            "p10": 0.0123,
+            "median": 0.0239,
+            "p90": 0.0408,
+            "max": 0.0429
+          },
+          "over_0_2": 0
         }
       }
     }
