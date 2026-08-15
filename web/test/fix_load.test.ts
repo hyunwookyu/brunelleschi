@@ -253,6 +253,16 @@ describe("S-10 (a) 고치기 부하", () => {
       ops_per_unplaced: rate(A.ops, A.unplaced),
       ops_per_drawn_stroke: rate(A.ops, A.drawn),
       ops_dist: stat(A.opsList, 2),
+      /**
+       * **재시도를 넣으면**(붙인 것이 틀렸음을 사용자가 알아채고 다시 한다면). 지금 모형은
+       * 재시도를 0으로 잡는다 — 그것이 **하한**이라는 뜻이다. 한 번 더 하면 이만큼이다:
+       * `ops + (틀린 비율 × 3)`(고르기 1 + 후보 클릭 2). **알아채는지는 안 쟀다** —
+       * 화면에 "이 후보가 틀렸을 수 있다"는 표시가 없다.
+       */
+      ops_per_drawn_with_one_retry: A.drawn
+        ? +(((A.ops + (A.worst.length ? (A.over02 / A.worst.length) * A.unplaced * 3 : 0))
+             / A.drawn)).toFixed(4)
+        : null,
       provisional_rate: rate(A.provisional, A.unplaced),
       no_candidate_rate: rate(A.noCand, A.unplaced),
       /** 고친 결과가 참값에서 얼마나 떨어졌는가(상자 대각 대비). */
