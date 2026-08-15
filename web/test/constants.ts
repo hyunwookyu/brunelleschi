@@ -21,6 +21,8 @@ import { EYE_HEIGHT } from "../src/s3d/geom3d.js";
 import { VP_INFINITE_RATIO } from "../src/s3d/camera.js";
 import { VP_TOL } from "../src/s3d/vpDetect.js";
 import { LIFT_TOL } from "../src/s3d/lift.js";
+import { HOMOG_TOL } from "../src/s3d/vpHomog.js";
+import { DRAFT_TOL } from "../src/s3d/vpDraft.js";
 import { INK_GRADES } from "../src/s3d/synthInk.js";
 
 /**
@@ -31,6 +33,8 @@ export const SHARED_CONSTANTS = {
   AXIS_TOL,
   VP_TOL,
   LIFT_TOL,
+  HOMOG_TOL,
+  DRAFT_TOL,
   CONSENSUS_TOL,
   PLACE_TOL,
   TUBE_TOL,

@@ -1,7 +1,7 @@
 {
   "spec": "S-5 회전 후 이어 그리기. 첫 시점에서 앞쪽 8모서리를 그려 3D로 올린 뒤, 돌린 시점에서 뒤쪽 4모서리를 그린다.",
   "constants": {
-    "hash": "5fc03293",
+    "hash": "1a6f104b",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -34,6 +34,15 @@
         "reject_passes": 2,
         "reject_mult": 4,
         "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45
       },
       "CONSENSUS_TOL": {
         "radius_ratio": 0.45,

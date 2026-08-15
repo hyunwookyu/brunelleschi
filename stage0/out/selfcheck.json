@@ -1,5 +1,5 @@
 {
-  "n_flags": 1394,
+  "n_flags": 1403,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -5997,6 +5997,51 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "vp_homog.json:by_separation.sep_1deg.actual_sep_deg",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_homog.json:by_separation.sep_40deg.d_camera_f_rel.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_homog.json:by_separation.sep_40deg.d_axis_dir_deg.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_homog.json:by_separation.sep_40deg.camera_solvable.before",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_homog.json:by_separation.sep_40deg.camera_solvable.after",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_homog.json:by_separation.sep_60deg.d_camera_f_rel.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_homog.json:by_separation.sep_60deg.d_axis_dir_deg.n",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_homog.json:by_separation.sep_60deg.camera_solvable.before",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_homog.json:by_separation.sep_60deg.camera_solvable.after",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "wobble_plane.json:judged.screen.no_anchor_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -6953,8 +6998,8 @@
     },
     {
       "path": "e2e.json@1671e540",
-      "val": "LIFT_TOL.gauge_height: None → 1; LIFT_TOL.parallel_deg: None → 5; LIFT_TOL.reject_mult: None → 4; LIFT_TOL.reject_passes: None → 2; LIFT_TOL.touch_ratio: None → 0.015; VP_TOL.max_vps: None → 3",
-      "flag": "**STALE** — 현재 상수(5fc03293)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+      "val": "DRAFT_TOL.handle_ratio: None → 0.018; DRAFT_TOL.margin_ratio: None → 0.03; DRAFT_TOL.min_guide_ratio: None → 0.45; HOMOG_TOL.degenerate_cross: None → 1e-09; HOMOG_TOL.snap_deg: None → 3; LIFT_TOL.gauge_height: None → 1",
+      "flag": "**STALE** — 현재 상수(1a6f104b)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
     },
     {
       "path": "web/src/s3d/stroke.ts:Stroke.layer",
@@ -6993,7 +7038,7 @@
     {
       "field": "axis",
       "writes": 3,
-      "reads": 39
+      "reads": 40
     },
     {
       "field": "rep",
@@ -7026,7 +7071,7 @@
       "reads": 14
     }
   ],
-  "constants_hash": "5fc03293",
+  "constants_hash": "1a6f104b",
   "scanned": [
     "axis_judgement.json",
     "bend_share.json",
@@ -7050,6 +7095,7 @@
     "tube_render.json",
     "view_plane.json",
     "vp_detect.json",
+    "vp_homog.json",
     "wiring.json",
     "wobble_plane.json"
   ],

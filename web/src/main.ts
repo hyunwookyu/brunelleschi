@@ -8,6 +8,7 @@ import { Viewport } from "./s3d/viewport.js";
 import { StrokeView, colorOf, DEFAULT_COLOR } from "./s3d/strokeView.js";
 import { CameraPanel, type Tool } from "./ui/cameraPanel.js";
 import { liftAll, type LiftStroke } from "./s3d/lift.js";
+import { vpFromGuides, HOMOG_TOL } from "./s3d/vpHomog.js";
 import { draftFromDetection, handleAt, moveHandle, byAxis, DRAFT_TOL,
          type Guide, type HandleRef } from "./s3d/vpDraft.js";
 import { PRESETS } from "./s3d/constraints.js";
@@ -399,10 +400,29 @@ function liftFirstView(ctx: PlaceCtx): void {
   }
 }
 
-/** 가이드를 누산기에 반영한다 — **교체다**(끌 때마다 쌓이면 안 된다). */
+/** 축별 소실점 상태 — 화면에 무엇이 무한원인지 알린다(§5.4 c). */
+const guideState = new Map<0 | 1 | 2, { infinite: boolean; sepDeg: number }>();
+
+/**
+ * 가이드를 누산기에 반영한다 — **교체다**(끌 때마다 쌓이면 안 된다).
+ *
+ * **무한원 스냅**(§5.4 c, L-A.7). 두 가이드의 각차가 작으면 교점이 날아간다 —
+ * 측정(`vp_homog.json`)에서 각차 0.5°일 때 **핸들 1px이 축 방향을 1.10° 움직인다**.
+ * 그것은 L-A.5d가 잡은 **오차 예산 전체**(≈1°)다. 각차 3°에서는 0.39°/px, 5°에서 0.28°/px다.
+ *
+ * 그 구간에서는 소실점을 억지로 유한하게 두지 않고 **무한원으로 본다** — 그 축은 화면 평행이고
+ * 카메라는 한 차수 낮게 읽는다(이론서 5.3의 자유도 회계). 1·2점 분기가 정답이다.
+ */
 function applyGuides() {
   const per = byAxis(guides);
-  for (const ax of [0, 1, 2] as const) if (per[ax].length >= 2) panel.acc.setLines(ax, per[ax]);
+  guideState.clear();
+  for (const ax of [0, 1, 2] as const) {
+    if (per[ax].length < 2) continue;
+    const r = vpFromGuides(per[ax][0], per[ax][1], cssSize());
+    guideState.set(ax, { infinite: r.infinite, sepDeg: r.sepDeg });
+    // 무한원이면 **그 축을 비운다** — 소실점 개수가 줄어 낮은 차수로 읽힌다
+    panel.acc.setLines(ax, r.infinite ? [] : per[ax]);
+  }
 }
 
 /** 그린 획에서 소실점 초안을 만든다. **확정이 아니다** — 사용자가 맞춘다. */
@@ -478,6 +498,9 @@ function fit() {
  * 관찰자를 하나 더 거는 대신 **쓰는 자리에서 스스로 고친다.** `refresh`는 모든 상호작용에서
  * 도는데 그때 크기가 어긋나 있으면 맞춘다 — 어떤 관찰자가 발화하든 안 하든 회복된다.
  */
+/** **자가 치유 발동 횟수**(리뷰어 지적 [16]). 안 세면 네 번째 재발이 아무 데도 안 남는다. */
+export const SIZE_HEAL = { count: 0, firstAtMs: null as number | null };
+
 function sizeStale(): boolean {
   const [w, h] = cssSize();
   if (!(w > 2 && h > 2)) return false;       // 레이아웃 전이면 고칠 것이 없다
@@ -610,9 +633,11 @@ function drawGuideHandles(ctx: CanvasRenderingContext2D) {
   const on = panel.tool === "adjust" && !panel.locked;
   ctx.save();
   for (const g of guides) {
+    const st = guideState.get(g.axis);
     ctx.strokeStyle = AXIS_COLOR[g.axis];
-    ctx.globalAlpha = on ? 0.85 : 0.35;
-    ctx.setLineDash([5, 4]);
+    // **무한원으로 스냅된 축은 흐리게 + 촘촘한 파선**으로 알린다(§5.4 c)
+    ctx.globalAlpha = (on ? 0.85 : 0.35) * (st?.infinite ? 0.5 : 1);
+    ctx.setLineDash(st?.infinite ? [2, 3] : [5, 4]);
     ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(g.a[0], g.a[1]); ctx.lineTo(g.b[0], g.b[1]); ctx.stroke();
     if (!on) continue;
@@ -812,11 +837,25 @@ function renderFix(unplaced: Stroke[]) {
 
 function refresh() {
   // **크기가 굳었으면 여기서 고친다**(AS-C7, 세 번째). 어떤 관찰자가 발화하든 안 하든 회복된다.
-  if (sizeStale()) { fit(); return; }
+  if (sizeStale()) {
+    SIZE_HEAL.count += 1;
+    SIZE_HEAL.firstAtMs ??= Math.round(performance.now());
+    fit();
+    return;
+  }
   saver?.schedule();       // **자동 저장**(S-9). 디바운스가 있으므로 자주 불려도 한 번만 쓴다
   ink.redraw();
   ink3d.redraw();          // 돌린 시점의 미배치 파선이 선택·시점에 따라 바뀐다
   panel.renderStatus(statusEl);
+  // 무한원으로 스냅된 축을 알린다 — 사용자가 "왜 축이 사라졌지"를 묻지 않게
+  const snapped = [...guideState.entries()].filter(([, v]) => v.infinite);
+  if (snapped.length) {
+    const names = snapped.map(([a, v]) => `축${a + 1}(각차 ${v.sepDeg.toFixed(1)}°)`).join(" · ");
+    statusEl.insertAdjacentHTML("beforeend",
+      `<div class="hdr">${names} → <b>무한원(화면 평행)</b>으로 봅니다. `
+      + `가이드 두 선의 각차가 ${HOMOG_TOL.snap_deg}° 미만이면 교점이 정해지지 않습니다 — `
+      + `벌려서 끌면 유한 소실점이 됩니다.</div>`);
+  }
   renderStrokes();
   const r = panel.acc.solve();
   msgEl.textContent = r.remaining.length ? r.remaining[0].hint
@@ -897,7 +936,7 @@ lockBtn.addEventListener("click", () => {
 document.getElementById("reset")!.addEventListener("click", () => {
   panel.reset(); drawn.length = 0; rawPoints.clear(); verdicts.clear(); viewOrigin.clear();
   viewCam.clear(); provisional.clear(); userPlaced.clear();
-  guides = []; dragHandle = null; userAxis.clear();
+  guides = []; dragHandle = null; userAxis.clear(); guideState.clear();
   undoStack.length = 0; redoStack.length = 0;
   selId = null; candDots = []; candDots3d = [];
   // **저장된 문서도 지운다**(S-9) — 안 지우면 새로고침에서 방금 버린 작업이 되살아난다.
@@ -1253,6 +1292,8 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
 // 브라우저 확인용 — 콘솔에서 배치 상태를 그대로 읽을 수 있게 한다(S-3 검증).
 (window as unknown as { s2s: unknown }).s2s = {
   strokes: drawn, panel, addStroke, placeCtx, refresh, viewport, strokeView, exportSession,
+  // **자가 치유 카운터**(AS-C7 네 번째를 관측 가능하게 둔다). `진단`에도 나온다
+  sizeHeal: SIZE_HEAL, guides: () => guides, makeDraft,
   undo, redo, eraseAt, undoDepth: () => undoStack.length, redoDepth: () => redoStack.length,
   addStrokeFromView, worldAxes, setViewMode,
   // **S-7 고치기** — 스크립트 확인과 S-10 Playwright가 쓴다(후보 점 좌표가 없으면 클릭을 못 만든다).

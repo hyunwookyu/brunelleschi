@@ -16,7 +16,7 @@
 // 누산기가 이미 `vp_line`을 받으므로(`ConstraintAccumulator`) 새 기전이 아니다 —
 // **초기값을 검출이 채우고 끌 수 있게 만드는 것**이 여기서 하는 전부다.
 //
-// 임계의 자릿수(`camera_gate.json@034fc089`): 축 오차 1°는 소실점이 화면 밖
+// 임계의 자릿수(`camera_gate.json@1a6f104b`): 축 오차 1°는 소실점이 화면 밖
 // 800 / 1400 / 2200px일 때 화면에서 **29 / 52 / 102px**이다. 드래그로 닿는 거리다.
 import { detectVps, linesFromStrokes, assignAxes, type DetLine } from "./vpDetect.js";
 import type { Pt2 } from "./camera.js";
@@ -28,8 +28,22 @@ export const DRAFT_TOL = {
   handle_ratio: 0.018,
   /** 가이드 선을 화면 안으로 들일 때 남기는 여백(화면 대각 대비). */
   margin_ratio: 0.03,
-  /** 초안 가이드의 최소 길이(화면 대각 대비). 짧으면 끌기 어렵고 소실점이 흔들린다. */
-  min_guide_ratio: 0.12,
+  /**
+   * **초안 가이드의 최소 길이**(화면 대각 대비) — **핸들 예산을 정하는 지배 인자다.**
+   *
+   * 소실점은 두 핸들을 잇는 직선으로 정해지므로 그 직선의 각도 정밀도가 **핸들 간격에 비례**한다.
+   * 측정(`vp_homog.json`의 `by_guide_length`): 축 오차 0.5°를 다 쓰기까지 핸들이 움직여도 되는
+   * px(최악 방향, 각차 3~20°)는
+   * ```
+   * 길이 100px → 0.20~0.72px      300px → 0.63~2.16px
+   *      140px → 0.29~1.01px      450px → 0.96~3.25px
+   *      200px → 0.42~1.44px      600px → 1.28~4.33px
+   * ```
+   * **초판 0.12(960×672에서 140px)는 서브픽셀 예산이었다** — 사람이 맞출 수 없다.
+   * 0.45로 올린다(≈525px, 예산 1.1~3.8px). **그래도 넉넉하지 않다** —
+   * 이것이 §5.4의 실제 한계이고 `progress.md`에 그렇게 적었다.
+   */
+  min_guide_ratio: 0.45,
 };
 export type DraftCfg = Partial<typeof DRAFT_TOL>;
 

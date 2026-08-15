@@ -4784,7 +4784,7 @@
     "source": "docs/archive/segment_plan.md 머리말 · segment_gate.json@1671e540"
   },
   "constants": {
-    "hash": "5fc03293",
+    "hash": "1a6f104b",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -4817,6 +4817,15 @@
         "reject_passes": 2,
         "reject_mult": 4,
         "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45
       },
       "CONSENSUS_TOL": {
         "radius_ratio": 0.45,
