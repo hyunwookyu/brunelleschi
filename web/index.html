@@ -86,6 +86,12 @@
     #bar button{height:30px;padding:0 12px;border:1px solid #ccc;background:#fff;border-radius:6px;cursor:pointer}
     #msg{color:#666;font-size:12px;margin-left:auto}
     #save{color:#8a8a8a;font-size:11px;margin-left:6px;font-variant-numeric:tabular-nums}
+    /* 좌표 진단 — 닿는 자리와 그려지는 자리가 갈릴 때 즉시 원인을 가른다 */
+    #diagbox{position:absolute;right:8px;bottom:56px;z-index:9;display:none;max-width:340px;
+      background:rgba(20,22,24,.88);color:#eaeaea;font:11px/1.5 ui-monospace,Menlo,monospace;
+      padding:8px 10px;border-radius:6px;white-space:pre;pointer-events:none}
+    #diagbox.on{display:block}
+    #diagbox b{color:#7fd1e0}
   </style>
 </head>
 <body>
@@ -132,6 +138,7 @@
       </div>
     </div>
   </div>
+  <div id="diagbox"></div>
   <div id="bar">
     <button id="undo" title="Ctrl+Z">실행 취소</button>
     <button id="redo" title="Ctrl+Shift+Z">다시 실행</button>
@@ -140,6 +147,7 @@
     <button id="export" title="실획 측정용 세션 JSON (AS-6·AS-12 재측정 입력)">획 내보내기</button>
     <button id="exp-obj" title="폴리라인 OBJ — 면은 없습니다(만들지 않는 도구입니다)">OBJ</button>
     <button id="exp-gltf" title="glTF 2.0 (LINE_STRIP). 버퍼가 파일 안에 들어갑니다">glTF</button>
+    <button id="diag" title="포인터 좌표·캔버스 배율을 표시합니다(좌표 어긋남 진단)">진단</button>
     <span id="save" title="브라우저에 자동 저장됩니다(IndexedDB)"></span>
     <span id="msg">축1 소실점을 찍거나, 그 방향 선을 두 개 그으세요</span>
   </div>

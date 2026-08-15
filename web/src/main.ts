@@ -3,6 +3,7 @@
 // 잉크 캔버스 하나에 **가이드 → 확정 제스처 → 사용자 획** 순으로 겹쳐 그리고,
 // 확정된 획은 오른쪽 3D 뷰포트에 쌓인다. 계산은 전부 `s3d/`에 있고 여기는 DOM 배선만 한다.
 import { InkCanvas } from "./capture/inkCanvas.js";
+import { ensureFit, cssSizeOf, toLocal, deviceRatio } from "./capture/canvasFrame.js";
 import { Viewport } from "./s3d/viewport.js";
 import { StrokeView, colorOf, DEFAULT_COLOR } from "./s3d/strokeView.js";
 import { CameraPanel, type Tool } from "./ui/cameraPanel.js";
@@ -64,6 +65,17 @@ const fixEl = document.getElementById("fix")!;
  * 초기화 중에도 불릴 수 있고, `const`면 TDZ로 터진다(`viewMode`에서 이미 걸린 자리다).
  */
 let saver: ReturnType<typeof autosaver> | null = null;
+
+/**
+ * **좌표 진단**(버그 신고 대응). 상태를 **여기 위쪽에 세운다** — 캔버스를 만들 때 이미 한 번
+ * 그리고, 그 그리기가 `drawDiagCross`를 지나므로 선언이 아래면 TDZ로 터진다
+ * (`viewMode`·`saver`와 같은 자리다. 이 파일에서 세 번째다).
+ */
+let diagOn = false;
+const diagEl = document.getElementById("diagbox")!;
+/** 마지막 포인터 — 두 캔버스 각각. 십자를 그 자리에 그린다(그리기 좌표계로). */
+const diagLast: Record<"ink" | "ink3d", { client: Pt2; local: Pt2 } | null> =
+  { ink: null, ink3d: null };
 
 let selId: string | null = null;
 const picks: { a?: Vec3; b?: Vec3 } = {};
@@ -328,10 +340,7 @@ const viewport = new Viewport(document.getElementById("view")!);
 // (구워 넣을 필요가 없다. 카메라 재조정으로 다시 그릴 때도 그대로 있다).
 const strokeView = new StrokeView(viewport, (id) => rawPoints.get(id));
 
-function cssSize(): [number, number] {
-  const r = canvas.getBoundingClientRect();
-  return [Math.max(1, r.width), Math.max(1, r.height)];
-}
+const cssSize = (): [number, number] => cssSizeOf(canvas);
 
 const panel = new CameraPanel(cssSize(), () => { replace(); refresh(); });
 
@@ -373,12 +382,16 @@ function replace() {
   strokeView.sync(drawn, ctx.f);
 }
 
+/**
+ * 잉크 캔버스를 지금 크기에 맞춘다.
+ *
+ * **백버퍼와 변환은 여기서 만지지 않는다** — `InkCanvas`(→ `canvasFrame`)가 유일한 주인이다.
+ * _옛 코드가 여기서 `setTransform(dpr,…)`을 걸고 `InkCanvas`는 좌표마다 `* dpr`을 곱했다.
+ * 둘이 겹쳐 **dpr배 어긋난 자리에 잉크가 나왔다**(dpr=1인 데스크톱에서는 안 보였다)._
+ */
 function fit() {
+  ink.resize();                              // 백버퍼·변환·재그리기 — 규약은 `canvasFrame` 한 곳
   const [w, h] = cssSize();
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.round(w * dpr);
-  canvas.height = Math.round(h * dpr);
-  canvas.getContext("2d")!.setTransform(dpr, 0, 0, dpr, 0, 0);
   panel.acc.resize([w, h]);                  // 화각·무한원 판정 기준이 창 크기에 달려 있다
   refresh();
 }
@@ -546,6 +559,7 @@ function drawBelowInk(ctx: CanvasRenderingContext2D) {
   });
   ctx.restore();
   panel.drawOffscreenVps(ctx);        // 화면 밖 소실점 (§3.8)
+  drawDiagCross(ctx, "ink");          // 진단 십자(꺼져 있으면 아무것도 안 그린다)
 }
 
 /**
@@ -909,6 +923,7 @@ const ink3d = new InkCanvas(ink3dEl, {
       }
     }
     ctx.restore();
+    drawDiagCross(ctx, "ink3d");
   },
   onStrokeEnd: (stroke) => {
     const pts = stroke.points.map(p => [p[0], p[1]] as Pt2);
@@ -951,13 +966,119 @@ document.getElementById("vt-orbit")!.addEventListener("click", () => setView3dMo
 document.getElementById("vt-draw")!.addEventListener("click", () => setView3dMode("draw"));
 document.getElementById("vt-fix")!.addEventListener("click", () => setView3dMode("fix"));
 
-function fit3d() {
-  const [w, h] = viewport.viewSize();
-  const dpr = window.devicePixelRatio || 1;
-  ink3dEl.width = Math.round(w * dpr);
-  ink3dEl.height = Math.round(h * dpr);
-  ink3dEl.getContext("2d")!.setTransform(dpr, 0, 0, dpr, 0, 0);
+/**
+ * 3D 위 잉크 오버레이를 맞춘다. **자기 요소의 크기를 쓴다** — 옛 코드는 `viewport.viewSize()`
+ * (렌더러 캔버스의 크기)를 썼는데, 오버레이와 렌더러의 상자가 어긋나면 그만큼 좌표가 갈린다.
+ * 둘이 같은지는 진단(`s2s.diag()`)이 `view_vs_overlay`로 보여 준다.
+ */
+function fit3d() { ink3d.resize(); }
+
+// ---------------------------------------------------------------- 좌표 진단 (버그 신고 대응)
+//
+// **증상 확인 방법을 먼저 만든다**: 오프셋인지 배율인지를 화면에서 바로 가른다.
+// 포인터의 clientX/Y, 요소 rect, 백버퍼 크기, CSS 크기, dpr, 변환 후 좌표를 함께 보이고,
+// **닿은 자리에 십자를 그린다** — 십자가 손끝에서 벗어나면 그만큼이 어긋남이다.
+//
+// 갈리는 법:
+//   · 어긋남이 **원점에서 멀수록 커진다** → **배율**(백버퍼 ↔ CSS 불일치, dpr 이중 적용)
+//   · 어긋남이 **일정하다** → **오프셋**(rect 미적용·스크롤·안전영역)
+//   · 3D 캔버스에서만 난다 → 오버레이와 렌더러 상자 불일치(`view_vs_overlay`)
+
+function diagInfo() {
+  const r = canvas.getBoundingClientRect();
+  const r3 = ink3dEl.getBoundingClientRect();
+  const f = ink.frameInfo(), f3 = ink3d.frameInfo();
+  const vs = viewport.viewSize();
+  return {
+    dpr: deviceRatio(),
+    ink: { rect: [+r.left.toFixed(1), +r.top.toFixed(1), +r.width.toFixed(1), +r.height.toFixed(1)],
+           css: [f.cssW, f.cssH], back: [f.backW, f.backH], scale: [f.sx, f.sy],
+           element: [canvas.width, canvas.height],
+           /** **백버퍼가 CSS 상자와 안 맞으면 브라우저가 늘려 그린다** — 그것이 배율 어긋남이다. */
+           stretch: [+(canvas.width / Math.max(1, r.width)).toFixed(4),
+                     +(canvas.height / Math.max(1, r.height)).toFixed(4)],
+           last: diagLast.ink },
+    ink3d: { rect: [+r3.left.toFixed(1), +r3.top.toFixed(1), +r3.width.toFixed(1), +r3.height.toFixed(1)],
+             css: [f3.cssW, f3.cssH], back: [f3.backW, f3.backH], scale: [f3.sx, f3.sy],
+             element: [ink3dEl.width, ink3dEl.height], last: diagLast.ink3d },
+    /** 3D 오버레이와 three 렌더러의 상자가 같은가. 다르면 그 시점 좌표계가 갈린다(원인 c). */
+    view_vs_overlay: { renderer: vs, overlay: [f3.cssW, f3.cssH],
+                       same: Math.abs(vs[0] - f3.cssW) < 0.6 && Math.abs(vs[1] - f3.cssH) < 0.6 },
+    panel_img_size: panel.imgSize,
+    visual_viewport: typeof visualViewport !== "undefined" && visualViewport
+      ? { offsetLeft: +visualViewport.offsetLeft.toFixed(1),
+          offsetTop: +visualViewport.offsetTop.toFixed(1),
+          scale: +visualViewport.scale.toFixed(3) }
+      : null,
+    scroll: [window.scrollX, window.scrollY],
+  };
 }
+
+/** 진단 상자를 갱신한다. 포인터가 움직일 때마다 부른다(꺼져 있으면 아무것도 안 한다). */
+function renderDiag() {
+  if (!diagOn) return;
+  const d = diagInfo();
+  const line = (k: string, v: unknown) => `<b>${k}</b> ${JSON.stringify(v)}`;
+  const off = (x: { client: Pt2; local: Pt2 } | null, rect: number[]) => {
+    if (!x) return "—";
+    // 로컬 좌표를 다시 화면으로 되돌려 본다: 어긋나면 그 차이가 곧 증상이다
+    const backX = x.local[0] + rect[0], backY = x.local[1] + rect[1];
+    return `client(${x.client[0].toFixed(1)},${x.client[1].toFixed(1)}) → `
+      + `local(${x.local[0].toFixed(1)},${x.local[1].toFixed(1)}) → `
+      + `back(${backX.toFixed(1)},${backY.toFixed(1)}) `
+      + `Δ(${(backX - x.client[0]).toFixed(2)},${(backY - x.client[1]).toFixed(2)})`;
+  };
+  diagEl.innerHTML = [
+    line("dpr", d.dpr),
+    line("ink css/back/scale", [d.ink.css, d.ink.back, d.ink.scale]),
+    line("ink stretch(back÷rect)", d.ink.stretch),
+    `<b>ink</b> ${off(d.ink.last, d.ink.rect)}`,
+    line("3d css/back/scale", [d.ink3d.css, d.ink3d.back, d.ink3d.scale]),
+    `<b>3d</b> ${off(d.ink3d.last, d.ink3d.rect)}`,
+    line("view=overlay", d.view_vs_overlay.same),
+    line("panel.imgSize", d.panel_img_size),
+    line("visualViewport", d.visual_viewport),
+  ].join("\n");
+}
+
+/** 포인터가 닿은 자리에 십자를 그린다(그리기 좌표계로 — **어긋나면 손끝에서 벗어난다**). */
+function drawDiagCross(ctx: CanvasRenderingContext2D, which: "ink" | "ink3d") {
+  const d = diagLast[which];
+  if (!diagOn || !d) return;
+  ctx.save();
+  ctx.strokeStyle = "#e0245e";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(d.local[0] - 14, d.local[1]); ctx.lineTo(d.local[0] + 14, d.local[1]);
+  ctx.moveTo(d.local[0], d.local[1] - 14); ctx.lineTo(d.local[0], d.local[1] + 14);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(d.local[0], d.local[1], 9, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** 두 캔버스의 포인터를 **앱과 같은 변환으로** 기록한다(측정 경로와 앱 경로를 안 가른다). */
+for (const [key, el] of [["ink", canvas], ["ink3d", ink3dEl]] as ["ink" | "ink3d", HTMLCanvasElement][]) {
+  el.addEventListener("pointermove", (e) => {
+    if (!diagOn) return;
+    const frame = (key === "ink" ? ink : ink3d).frameInfo();
+    diagLast[key] = { client: [e.clientX, e.clientY],
+                      local: toLocal(el.getBoundingClientRect(), frame, e.clientX, e.clientY) };
+    renderDiag();
+    (key === "ink" ? ink : ink3d).redraw();
+  }, { passive: true });
+}
+
+document.getElementById("diag")!.addEventListener("click", () => {
+  diagOn = !diagOn;
+  diagEl.classList.toggle("on", diagOn);
+  (document.getElementById("diag") as HTMLButtonElement).style.background = diagOn ? "#e0245e" : "";
+  (document.getElementById("diag") as HTMLButtonElement).style.color = diagOn ? "#fff" : "";
+  renderDiag();
+  ink.redraw(); ink3d.redraw();
+});
+
 
 window.addEventListener("resize", () => { fit(); viewport.resize(); fit3d(); });
 
@@ -1030,6 +1151,7 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
   },
   // **S-9 저장·내보내기** — S-10 Playwright가 왕복(저장 → 다시 열기)을 확인한다.
   buildDoc, applyDoc, userPlaced, saveNow: () => saver?.flush(),
+  diag: diagInfo, setDiag: (on: boolean) => { if (on !== diagOn) document.getElementById("diag")!.click(); },
   exportObj: () => toObj(drawn, { colorOf }),
   exportGltf: () => toGltf(drawn, { colorOf }),
 };

@@ -4187,13 +4187,13 @@
     },
     {
       "field": "color",
-      "writes": 1,
+      "writes": 2,
       "reads": 7
     },
     {
       "field": "width",
-      "writes": 3,
-      "reads": 6
+      "writes": 1,
+      "reads": 14
     }
   ],
   "constants_hash": "1671e540",

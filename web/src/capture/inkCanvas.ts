@@ -1,6 +1,7 @@
 // V-5 잉크 캡처 — Pointer Events, 마우스 1급. 조건부 팜 리젝션 + coalesced(pen) + tilt/seq.
 // 측정(mouse_noise): 마우스는 precise 등급·단일 tolerance로 IoU≥0.97 → 마우스 전용 tol 불필요.
 import type { Stroke } from "../parser/types.js";
+import { ensureFit, toLocal, type Frame as CanvasFrame } from "./canvasFrame.js";
 
 export type Frame = "plan" | "persp";
 
@@ -9,7 +10,7 @@ export interface InkOptions {
   color?: string;
   onInputMode?: (penSeen: boolean) => void;              // 펜 감지 시 팜 리젝션 정책 알림
   // 잉크 아래 층(투시 가이드·소실점 등, W-1). redraw가 캔버스를 지우므로 여기서 다시 깐다.
-  // 좌표는 **CSS 픽셀**로 그린다 — ctx는 dpr 스케일이 걸린 상태로 넘어온다.
+  // 좌표는 **CSS 픽셀**로 그린다 — ctx에 배율이 이미 걸려 있다(`canvasFrame`).
   onBackground?: (ctx: CanvasRenderingContext2D) => void;
 }
 
@@ -27,6 +28,8 @@ export class InkCanvas {
   private opts: InkOptions;
   private hintFootprints: number[][][] = [];   // 투시 정합 힌트(평면 폴리곤 투영)
   private penSeen = false;                       // (a) 조건부 팜 리젝션: 펜 감지 시 펜 우선
+  /** 마지막으로 맞춘 프레임. `null`이면 아직 안 맞춘 것이다(`frameNow`가 맞춘다). */
+  private frame_: CanvasFrame | null = null;
 
   constructor(canvas: HTMLCanvasElement, opts: InkOptions) {
     this.canvas = canvas;
@@ -59,7 +62,7 @@ export class InkCanvas {
     return co && co.length ? co : [e];
   }
 
-  size() { return { w: this.canvas.clientWidth, h: this.canvas.clientHeight }; }
+  size() { const f = this.frameNow(); return { w: f.cssW, h: f.cssH }; }
 
   setFrame(f: Frame) { this.frame = f; this.redraw(); }
   getFrame() { return this.frame; }
@@ -73,9 +76,20 @@ export class InkCanvas {
     this.redraw();
   }
 
+  /**
+   * 포인터 → **CSS 픽셀 로컬 좌표**. 변환은 `canvasFrame` 한 군데에 있다.
+   * **여기서 dpr을 곱하지 않는다** — 그리기 변환이 이미 그 일을 한다(이 버그의 원인이었다).
+   */
   private local(e: PointerEvent): [number, number] {
-    const r = this.canvas.getBoundingClientRect();
-    return [e.clientX - r.left, e.clientY - r.top];
+    const frame: CanvasFrame = this.frameNow();
+    return toLocal(this.canvas.getBoundingClientRect(), frame, e.clientX, e.clientY);
+  }
+
+  /** 지금 프레임. 크기가 바뀌었으면 **그 자리에서 다시 맞춘다**(입력도 그리기도 같은 값을 본다). */
+  private frameNow(): CanvasFrame {
+    const r = ensureFit(this.canvas, this.frame_);
+    if (r.changed) this.frame_ = r.frame;
+    return this.frame_ ?? r.frame;
   }
 
   // 점 = [x, y, t, pressure, tiltX, tiltY] (§5.3). 마우스는 pressure 상수·tilt 0(파서 무관).
@@ -119,45 +133,47 @@ export class InkCanvas {
   private drawLive(from: number) {
     const n = this.pts.length;
     if (n < 2) return;
-    const dpr = this.dpr();
+    this.frameNow();                       // 크기가 바뀌었으면 여기서 회복된다
     this.ctx.strokeStyle = this.opts.color ?? "#111";
-    this.ctx.lineWidth = 2 * dpr;
+    this.ctx.lineWidth = 2;                // **CSS 픽셀** — 변환이 배율을 건다
     this.ctx.lineCap = "round";
     this.ctx.beginPath();
-    this.ctx.moveTo(this.pts[from][0] * dpr, this.pts[from][1] * dpr);
-    for (let i = from + 1; i < n; i++) this.ctx.lineTo(this.pts[i][0] * dpr, this.pts[i][1] * dpr);
+    this.ctx.moveTo(this.pts[from][0], this.pts[from][1]);
+    for (let i = from + 1; i < n; i++) this.ctx.lineTo(this.pts[i][0], this.pts[i][1]);
     this.ctx.stroke();
   }
 
-  private dpr() { return window.devicePixelRatio || 1; }
-
-  // 캔버스 백버퍼 크기 = CSS크기×dpr. resize·프레임전환 시 전체 재그리기.
+  /** 백버퍼·변환을 지금 크기에 맞춘다. 실제 배율은 `canvasFrame`이 정한다. */
   resize() {
-    const dpr = this.dpr();
-    const { w, h } = this.size();
-    this.canvas.width = Math.max(1, Math.round(w * dpr));
-    this.canvas.height = Math.max(1, Math.round(h * dpr));
+    const r = ensureFit(this.canvas, null);
+    this.frame_ = r.frame;
     this.redraw();
   }
 
+  /** 지금 프레임(진단용). */
+  frameInfo(): CanvasFrame { return this.frameNow(); }
+
+  /**
+   * **전부 CSS 픽셀로 그린다.** 배율은 `canvasFrame`의 변환 하나뿐이다 —
+   * 여기서 `* dpr`을 하면 **두 번 곱해져 잉크가 dpr배 어긋난다**(이 파일의 옛 버그).
+   */
   redraw() {
-    const dpr = this.dpr();
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    const frame = this.frameNow();
+    this.ctx.clearRect(0, 0, frame.cssW, frame.cssH);   // 변환이 걸려 있으므로 CSS 크기다
     if (this.opts.onBackground) {
       this.ctx.save();
-      this.ctx.scale(dpr, dpr);            // 배경은 CSS 픽셀 좌표로 그린다
       this.opts.onBackground(this.ctx);
       this.ctx.restore();
     }
     // 투시 정합 힌트: 평면 폴리곤을 옅게(§3.2)
     if (this.frame === "persp") {
       this.ctx.strokeStyle = "rgba(30,120,170,0.28)";
-      this.ctx.setLineDash([6 * dpr, 4 * dpr]);
-      this.ctx.lineWidth = 1.5 * dpr;
+      this.ctx.setLineDash([6, 4]);
+      this.ctx.lineWidth = 1.5;
       for (const fp of this.hintFootprints) {
         if (fp.length < 2) continue;
         this.ctx.beginPath();
-        fp.forEach(([x, y], i) => (i === 0 ? this.ctx.moveTo(x * dpr, y * dpr) : this.ctx.lineTo(x * dpr, y * dpr)));
+        fp.forEach(([x, y], i) => (i === 0 ? this.ctx.moveTo(x, y) : this.ctx.lineTo(x, y)));
         this.ctx.closePath();
         this.ctx.stroke();
       }
@@ -165,14 +181,14 @@ export class InkCanvas {
     }
     // 프레임 확정 획
     this.ctx.strokeStyle = this.opts.color ?? "#111";
-    this.ctx.lineWidth = 2 * dpr;
+    this.ctx.lineWidth = 2;
     this.ctx.lineCap = "round";
     for (const s of this.strokes[this.frame]) {
       const p = s.points;
       if (p.length < 2) continue;
       this.ctx.beginPath();
-      this.ctx.moveTo(p[0][0] * dpr, p[0][1] * dpr);
-      for (let i = 1; i < p.length; i++) this.ctx.lineTo(p[i][0] * dpr, p[i][1] * dpr);
+      this.ctx.moveTo(p[0][0], p[0][1]);
+      for (let i = 1; i < p.length; i++) this.ctx.lineTo(p[i][0], p[i][1]);
       this.ctx.stroke();
     }
   }
