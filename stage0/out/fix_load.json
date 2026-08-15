@@ -105,6 +105,18 @@
     "boxes_per_cell": 30,
     "first_view_opts": "FIRST_VIEW_OPTS",
     "view_opts": "VIEW_OPTS + VIEW_AXIS_CFG(출하 구성)",
+    "strokes_per_scene": {
+      "first_view": "직육면체 모서리 **12획**(사선 없음)",
+      "rotated_view": "**면 대각선 2 + 뒤 모서리 1 = 3획**",
+      "warning": "**두 셀의 획 구성이 다르다** — 시점만 다른 것이 아니다(`rotated_view_by_kind` 참조)."
+    },
+    "ops_not_counted": [
+      "어느 획이 안 놓였는지 **찾는** 조작(목록을 훑는 것)",
+      "붙인 뒤 **확인**하는 조작 — 25~49%가 크게 틀리는데 화면에 경고가 없다",
+      "잘못 골랐을 때 **되돌리기**",
+      "**조용히 틀린 자동 배치**를 찾아 고치는 조작(`ops_per_drawn_with_silent_fix`가 그 추정)",
+      "`depth_slider`는 이 표본에서 **한 번도 발화하지 않았다**(`ops_dist.max`가 전부 3)"
+    ],
     "single_composition_warning": "구도가 하나뿐이다. 실획에서 다시 본다(AS-13).",
     "end_jitter_warning": "끝점 겨냥 오차 1%는 **이 방식이 성립한다고 주장하는 구간**이고 손에 있는 실획 자릿수(2.8~5.1%)는 그 밖이다(AS-12). 부담은 그쪽에서 더 커진다."
   },
@@ -124,6 +136,9 @@
         "p90": 3,
         "max": 3
       },
+      "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+      "ops_per_drawn_with_go_to_view": 0.6046,
+      "ops_per_drawn_with_silent_fix": 0.7491,
       "ops_per_drawn_with_one_retry": 0.6259,
       "provisional_rate": 0.0482,
       "no_candidate_rate": 0.006,
@@ -134,6 +149,11 @@
         "median": 0.0833,
         "p90": 0.8632,
         "max": 1.2055
+      },
+      "fixed_over": {
+        "over_0.1": 78,
+        "over_0.2": 63,
+        "over_0.5": 36
       },
       "fixed_over_0_2": 63,
       "fixed_wrong_rate": 0.3795,
@@ -155,6 +175,9 @@
         "p90": 3,
         "max": 3
       },
+      "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+      "ops_per_drawn_with_go_to_view": 0.6046,
+      "ops_per_drawn_with_silent_fix": 0.7491,
       "ops_per_drawn_with_one_retry": 0.612,
       "provisional_rate": 0.0482,
       "no_candidate_rate": 0.006,
@@ -165,6 +188,11 @@
         "median": 0.0741,
         "p90": 0.8621,
         "max": 1.2055
+      },
+      "fixed_over": {
+        "over_0.1": 72,
+        "over_0.2": 58,
+        "over_0.5": 31
       },
       "fixed_over_0_2": 58,
       "fixed_wrong_rate": 0.3494,
@@ -189,6 +217,9 @@
           "p90": 3,
           "max": 3
         },
+        "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+        "ops_per_drawn_with_go_to_view": 2.2852,
+        "ops_per_drawn_with_silent_fix": 3.1074,
         "ops_per_drawn_with_one_retry": 2.5644,
         "provisional_rate": 0.0446,
         "no_candidate_rate": 0.0064,
@@ -199,6 +230,11 @@
           "median": 0.1663,
           "p90": 0.7403,
           "max": 1.9339
+        },
+        "fixed_over": {
+          "over_0.1": 93,
+          "over_0.2": 75,
+          "over_0.5": 60
         },
         "fixed_over_0_2": 75,
         "fixed_wrong_rate": 0.4934,
@@ -220,6 +256,9 @@
           "p90": 3,
           "max": 3
         },
+        "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+        "ops_per_drawn_with_go_to_view": 2.2852,
+        "ops_per_drawn_with_silent_fix": 3.1074,
         "ops_per_drawn_with_one_retry": 2.2087,
         "provisional_rate": 0.0446,
         "no_candidate_rate": 0.0064,
@@ -230,6 +269,11 @@
           "median": 0.063,
           "p90": 0.6781,
           "max": 1.9966
+        },
+        "fixed_over": {
+          "over_0.1": 62,
+          "over_0.2": 44,
+          "over_0.5": 40
         },
         "fixed_over_0_2": 44,
         "fixed_wrong_rate": 0.2895,
@@ -253,6 +297,9 @@
           "p90": 3,
           "max": 3
         },
+        "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+        "ops_per_drawn_with_go_to_view": 3.4419,
+        "ops_per_drawn_with_silent_fix": 3.5431,
         "ops_per_drawn_with_one_retry": 3.2172,
         "provisional_rate": 0.0591,
         "no_candidate_rate": 0.0169,
@@ -263,6 +310,11 @@
           "median": 0.0516,
           "p90": 0.6018,
           "max": 31.3336
+        },
+        "fixed_over": {
+          "over_0.1": 77,
+          "over_0.2": 59,
+          "over_0.5": 45
         },
         "fixed_over_0_2": 59,
         "fixed_wrong_rate": 0.2489,
@@ -284,6 +336,9 @@
           "p90": 3,
           "max": 3
         },
+        "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+        "ops_per_drawn_with_go_to_view": 3.4419,
+        "ops_per_drawn_with_silent_fix": 3.5431,
         "ops_per_drawn_with_one_retry": 3.1273,
         "provisional_rate": 0.0591,
         "no_candidate_rate": 0.0169,
@@ -294,6 +349,11 @@
           "median": 0.0366,
           "p90": 0.5876,
           "max": 29.1763
+        },
+        "fixed_over": {
+          "over_0.1": 61,
+          "over_0.2": 51,
+          "over_0.5": 39
         },
         "fixed_over_0_2": 51,
         "fixed_wrong_rate": 0.2152,
@@ -317,6 +377,9 @@
           "p90": 3,
           "max": 3
         },
+        "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+        "ops_per_drawn_with_go_to_view": 3.3483,
+        "ops_per_drawn_with_silent_fix": 3.4494,
         "ops_per_drawn_with_one_retry": 3.3034,
         "provisional_rate": 0.0563,
         "no_candidate_rate": 0.013,
@@ -327,6 +390,11 @@
           "median": 0.0546,
           "p90": 1.0715,
           "max": 1.1905
+        },
+        "fixed_over": {
+          "over_0.1": 81,
+          "over_0.2": 73,
+          "over_0.5": 65
         },
         "fixed_over_0_2": 73,
         "fixed_wrong_rate": 0.316,
@@ -348,6 +416,9 @@
           "p90": 3,
           "max": 3
         },
+        "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+        "ops_per_drawn_with_go_to_view": 3.3483,
+        "ops_per_drawn_with_silent_fix": 3.4494,
         "ops_per_drawn_with_one_retry": 3.2697,
         "provisional_rate": 0.0563,
         "no_candidate_rate": 0.013,
@@ -359,12 +430,592 @@
           "p90": 1.0686,
           "max": 1.2067
         },
+        "fixed_over": {
+          "over_0.1": 76,
+          "over_0.2": 70,
+          "over_0.5": 63
+        },
         "fixed_over_0_2": 70,
         "fixed_wrong_rate": 0.303,
         "silent_wrong": 9,
         "silent_wrong_rate_of_placed": 0.25
       }
     }
+  },
+  "rotated_view_by_kind": {
+    "45": {
+      "nearest": {
+        "diagonal": {
+          "n_drawn": 180,
+          "auto_placed_rate": 0.4111,
+          "unplaced_rate": 0.5889,
+          "ops_total": 315,
+          "ops_per_unplaced": 2.9717,
+          "ops_per_drawn_stroke": 1.75,
+          "ops_dist": {
+            "n": 106,
+            "min": 2,
+            "p10": 3,
+            "median": 3,
+            "p90": 3,
+            "max": 3
+          },
+          "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+          "ops_per_drawn_with_go_to_view": 2.3389,
+          "ops_per_drawn_with_silent_fix": 3.5722,
+          "ops_per_drawn_with_one_retry": 2.9394,
+          "provisional_rate": 0,
+          "no_candidate_rate": 0,
+          "fixed_worst_end": {
+            "n": 101,
+            "min": 0.0141,
+            "p10": 0.0255,
+            "median": 0.5531,
+            "p90": 1.4782,
+            "max": 1.9339
+          },
+          "fixed_over": {
+            "over_0.1": 70,
+            "over_0.2": 68,
+            "over_0.5": 59
+          },
+          "fixed_over_0_2": 68,
+          "fixed_wrong_rate": 0.6733,
+          "silent_wrong": 74,
+          "silent_wrong_rate_of_placed": 1
+        },
+        "edge": {
+          "n_drawn": 90,
+          "auto_placed_rate": 0.4333,
+          "unplaced_rate": 0.5667,
+          "ops_total": 145,
+          "ops_per_unplaced": 2.8431,
+          "ops_per_drawn_stroke": 1.6111,
+          "ops_dist": {
+            "n": 51,
+            "min": 2,
+            "p10": 2,
+            "median": 3,
+            "p90": 3,
+            "max": 3
+          },
+          "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+          "ops_per_drawn_with_go_to_view": 2.1778,
+          "ops_per_drawn_with_silent_fix": 2.1778,
+          "ops_per_drawn_with_one_retry": 1.8444,
+          "provisional_rate": 0,
+          "no_candidate_rate": 0,
+          "fixed_worst_end": {
+            "n": 51,
+            "min": 0.008,
+            "p10": 0.0232,
+            "median": 0.0851,
+            "p90": 0.2155,
+            "max": 0.619
+          },
+          "fixed_over": {
+            "over_0.1": 23,
+            "over_0.2": 7,
+            "over_0.5": 1
+          },
+          "fixed_over_0_2": 7,
+          "fixed_wrong_rate": 0.1373,
+          "silent_wrong": 0,
+          "silent_wrong_rate_of_placed": 0
+        }
+      },
+      "oracle": {
+        "diagonal": {
+          "n_drawn": 180,
+          "auto_placed_rate": 0.4111,
+          "unplaced_rate": 0.5889,
+          "ops_total": 315,
+          "ops_per_unplaced": 2.9717,
+          "ops_per_drawn_stroke": 1.75,
+          "ops_dist": {
+            "n": 106,
+            "min": 2,
+            "p10": 3,
+            "median": 3,
+            "p90": 3,
+            "max": 3
+          },
+          "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+          "ops_per_drawn_with_go_to_view": 2.3389,
+          "ops_per_drawn_with_silent_fix": 3.5722,
+          "ops_per_drawn_with_one_retry": 2.4322,
+          "provisional_rate": 0,
+          "no_candidate_rate": 0,
+          "fixed_worst_end": {
+            "n": 101,
+            "min": 0.0063,
+            "p10": 0.0141,
+            "median": 0.0527,
+            "p90": 1.497,
+            "max": 1.9966
+          },
+          "fixed_over": {
+            "over_0.1": 43,
+            "over_0.2": 39,
+            "over_0.5": 39
+          },
+          "fixed_over_0_2": 39,
+          "fixed_wrong_rate": 0.3861,
+          "silent_wrong": 74,
+          "silent_wrong_rate_of_placed": 1
+        },
+        "edge": {
+          "n_drawn": 90,
+          "auto_placed_rate": 0.4333,
+          "unplaced_rate": 0.5667,
+          "ops_total": 145,
+          "ops_per_unplaced": 2.8431,
+          "ops_per_drawn_stroke": 1.6111,
+          "ops_dist": {
+            "n": 51,
+            "min": 2,
+            "p10": 2,
+            "median": 3,
+            "p90": 3,
+            "max": 3
+          },
+          "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+          "ops_per_drawn_with_go_to_view": 2.1778,
+          "ops_per_drawn_with_silent_fix": 2.1778,
+          "ops_per_drawn_with_one_retry": 1.7778,
+          "provisional_rate": 0,
+          "no_candidate_rate": 0,
+          "fixed_worst_end": {
+            "n": 51,
+            "min": 0.008,
+            "p10": 0.0232,
+            "median": 0.0708,
+            "p90": 0.1985,
+            "max": 0.619
+          },
+          "fixed_over": {
+            "over_0.1": 19,
+            "over_0.2": 5,
+            "over_0.5": 1
+          },
+          "fixed_over_0_2": 5,
+          "fixed_wrong_rate": 0.098,
+          "silent_wrong": 0,
+          "silent_wrong_rate_of_placed": 0
+        }
+      }
+    },
+    "75": {
+      "nearest": {
+        "diagonal": {
+          "n_drawn": 178,
+          "auto_placed_rate": 0.0393,
+          "unplaced_rate": 0.9607,
+          "ops_total": 504,
+          "ops_per_unplaced": 2.9474,
+          "ops_per_drawn_stroke": 2.8315,
+          "ops_dist": {
+            "n": 171,
+            "min": 2,
+            "p10": 3,
+            "median": 3,
+            "p90": 3,
+            "max": 3
+          },
+          "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+          "ops_per_drawn_with_go_to_view": 3.7921,
+          "ops_per_drawn_with_silent_fix": 3.9101,
+          "ops_per_drawn_with_one_retry": 3.573,
+          "provisional_rate": 0,
+          "no_candidate_rate": 0,
+          "fixed_worst_end": {
+            "n": 171,
+            "min": 0.0098,
+            "p10": 0.0175,
+            "median": 0.0428,
+            "p90": 0.5816,
+            "max": 31.3336
+          },
+          "fixed_over": {
+            "over_0.1": 57,
+            "over_0.2": 44,
+            "over_0.5": 33
+          },
+          "fixed_over_0_2": 44,
+          "fixed_wrong_rate": 0.2573,
+          "silent_wrong": 7,
+          "silent_wrong_rate_of_placed": 1
+        },
+        "edge": {
+          "n_drawn": 89,
+          "auto_placed_rate": 0.2584,
+          "unplaced_rate": 0.7416,
+          "ops_total": 178,
+          "ops_per_unplaced": 2.697,
+          "ops_per_drawn_stroke": 2,
+          "ops_dist": {
+            "n": 66,
+            "min": 2,
+            "p10": 2,
+            "median": 3,
+            "p90": 3,
+            "max": 3
+          },
+          "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+          "ops_per_drawn_with_go_to_view": 2.7416,
+          "ops_per_drawn_with_silent_fix": 2.809,
+          "ops_per_drawn_with_one_retry": 2.5056,
+          "provisional_rate": 0,
+          "no_candidate_rate": 0,
+          "fixed_worst_end": {
+            "n": 66,
+            "min": 0.0175,
+            "p10": 0.0235,
+            "median": 0.058,
+            "p90": 0.6319,
+            "max": 0.754
+          },
+          "fixed_over": {
+            "over_0.1": 20,
+            "over_0.2": 15,
+            "over_0.5": 12
+          },
+          "fixed_over_0_2": 15,
+          "fixed_wrong_rate": 0.2273,
+          "silent_wrong": 2,
+          "silent_wrong_rate_of_placed": 0.087
+        }
+      },
+      "oracle": {
+        "diagonal": {
+          "n_drawn": 178,
+          "auto_placed_rate": 0.0393,
+          "unplaced_rate": 0.9607,
+          "ops_total": 504,
+          "ops_per_unplaced": 2.9474,
+          "ops_per_drawn_stroke": 2.8315,
+          "ops_dist": {
+            "n": 171,
+            "min": 2,
+            "p10": 3,
+            "median": 3,
+            "p90": 3,
+            "max": 3
+          },
+          "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+          "ops_per_drawn_with_go_to_view": 3.7921,
+          "ops_per_drawn_with_silent_fix": 3.9101,
+          "ops_per_drawn_with_one_retry": 3.5056,
+          "provisional_rate": 0,
+          "no_candidate_rate": 0,
+          "fixed_worst_end": {
+            "n": 171,
+            "min": 0.005,
+            "p10": 0.0124,
+            "median": 0.0299,
+            "p90": 0.5796,
+            "max": 29.1763
+          },
+          "fixed_over": {
+            "over_0.1": 46,
+            "over_0.2": 40,
+            "over_0.5": 31
+          },
+          "fixed_over_0_2": 40,
+          "fixed_wrong_rate": 0.2339,
+          "silent_wrong": 7,
+          "silent_wrong_rate_of_placed": 1
+        },
+        "edge": {
+          "n_drawn": 89,
+          "auto_placed_rate": 0.2584,
+          "unplaced_rate": 0.7416,
+          "ops_total": 178,
+          "ops_per_unplaced": 2.697,
+          "ops_per_drawn_stroke": 2,
+          "ops_dist": {
+            "n": 66,
+            "min": 2,
+            "p10": 2,
+            "median": 3,
+            "p90": 3,
+            "max": 3
+          },
+          "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+          "ops_per_drawn_with_go_to_view": 2.7416,
+          "ops_per_drawn_with_silent_fix": 2.809,
+          "ops_per_drawn_with_one_retry": 2.3708,
+          "provisional_rate": 0,
+          "no_candidate_rate": 0,
+          "fixed_worst_end": {
+            "n": 66,
+            "min": 0.0113,
+            "p10": 0.0222,
+            "median": 0.0547,
+            "p90": 0.6208,
+            "max": 0.7268
+          },
+          "fixed_over": {
+            "over_0.1": 15,
+            "over_0.2": 11,
+            "over_0.5": 8
+          },
+          "fixed_over_0_2": 11,
+          "fixed_wrong_rate": 0.1667,
+          "silent_wrong": 2,
+          "silent_wrong_rate_of_placed": 0.087
+        }
+      }
+    },
+    "110": {
+      "nearest": {
+        "diagonal": {
+          "n_drawn": 178,
+          "auto_placed_rate": 0.0506,
+          "unplaced_rate": 0.9494,
+          "ops_total": 494,
+          "ops_per_unplaced": 2.9231,
+          "ops_per_drawn_stroke": 2.7753,
+          "ops_dist": {
+            "n": 169,
+            "min": 2,
+            "p10": 3,
+            "median": 3,
+            "p90": 3,
+            "max": 3
+          },
+          "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+          "ops_per_drawn_with_go_to_view": 3.7247,
+          "ops_per_drawn_with_silent_fix": 3.8764,
+          "ops_per_drawn_with_one_retry": 3.9213,
+          "provisional_rate": 0,
+          "no_candidate_rate": 0,
+          "fixed_worst_end": {
+            "n": 169,
+            "min": 0.008,
+            "p10": 0.0237,
+            "median": 0.0664,
+            "p90": 1.0836,
+            "max": 1.1905
+          },
+          "fixed_over": {
+            "over_0.1": 73,
+            "over_0.2": 68,
+            "over_0.5": 64
+          },
+          "fixed_over_0_2": 68,
+          "fixed_wrong_rate": 0.4024,
+          "silent_wrong": 9,
+          "silent_wrong_rate_of_placed": 1
+        },
+        "edge": {
+          "n_drawn": 89,
+          "auto_placed_rate": 0.3034,
+          "unplaced_rate": 0.6966,
+          "ops_total": 169,
+          "ops_per_unplaced": 2.7258,
+          "ops_per_drawn_stroke": 1.8989,
+          "ops_dist": {
+            "n": 62,
+            "min": 2,
+            "p10": 2,
+            "median": 3,
+            "p90": 3,
+            "max": 3
+          },
+          "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+          "ops_per_drawn_with_go_to_view": 2.5955,
+          "ops_per_drawn_with_silent_fix": 2.5955,
+          "ops_per_drawn_with_one_retry": 2.0674,
+          "provisional_rate": 0,
+          "no_candidate_rate": 0,
+          "fixed_worst_end": {
+            "n": 62,
+            "min": 0.0104,
+            "p10": 0.0178,
+            "median": 0.0408,
+            "p90": 0.1142,
+            "max": 0.5418
+          },
+          "fixed_over": {
+            "over_0.1": 8,
+            "over_0.2": 5,
+            "over_0.5": 1
+          },
+          "fixed_over_0_2": 5,
+          "fixed_wrong_rate": 0.0806,
+          "silent_wrong": 0,
+          "silent_wrong_rate_of_placed": 0
+        }
+      },
+      "oracle": {
+        "diagonal": {
+          "n_drawn": 178,
+          "auto_placed_rate": 0.0506,
+          "unplaced_rate": 0.9494,
+          "ops_total": 494,
+          "ops_per_unplaced": 2.9231,
+          "ops_per_drawn_stroke": 2.7753,
+          "ops_dist": {
+            "n": 169,
+            "min": 2,
+            "p10": 3,
+            "median": 3,
+            "p90": 3,
+            "max": 3
+          },
+          "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+          "ops_per_drawn_with_go_to_view": 3.7247,
+          "ops_per_drawn_with_silent_fix": 3.8764,
+          "ops_per_drawn_with_one_retry": 3.8708,
+          "provisional_rate": 0,
+          "no_candidate_rate": 0,
+          "fixed_worst_end": {
+            "n": 169,
+            "min": 0.008,
+            "p10": 0.0185,
+            "median": 0.0546,
+            "p90": 1.0747,
+            "max": 1.2067
+          },
+          "fixed_over": {
+            "over_0.1": 69,
+            "over_0.2": 65,
+            "over_0.5": 62
+          },
+          "fixed_over_0_2": 65,
+          "fixed_wrong_rate": 0.3846,
+          "silent_wrong": 9,
+          "silent_wrong_rate_of_placed": 1
+        },
+        "edge": {
+          "n_drawn": 89,
+          "auto_placed_rate": 0.3034,
+          "unplaced_rate": 0.6966,
+          "ops_total": 169,
+          "ops_per_unplaced": 2.7258,
+          "ops_per_drawn_stroke": 1.8989,
+          "ops_dist": {
+            "n": 62,
+            "min": 2,
+            "p10": 2,
+            "median": 3,
+            "p90": 3,
+            "max": 3
+          },
+          "ops_identity": "(1 - auto_placed_rate) x ops_per_unplaced",
+          "ops_per_drawn_with_go_to_view": 2.5955,
+          "ops_per_drawn_with_silent_fix": 2.5955,
+          "ops_per_drawn_with_one_retry": 2.0674,
+          "provisional_rate": 0,
+          "no_candidate_rate": 0,
+          "fixed_worst_end": {
+            "n": 62,
+            "min": 0.0104,
+            "p10": 0.0191,
+            "median": 0.0393,
+            "p90": 0.1142,
+            "max": 0.5418
+          },
+          "fixed_over": {
+            "over_0.1": 7,
+            "over_0.2": 5,
+            "over_0.5": 1
+          },
+          "fixed_over_0_2": 5,
+          "fixed_wrong_rate": 0.0806,
+          "silent_wrong": 0,
+          "silent_wrong_rate_of_placed": 0
+        }
+      }
+    }
+  },
+  "candidate_radius_sweep": {
+    "mult_3": {
+      "n_fixed": 166,
+      "wrong_rate": 0.3494,
+      "worst_end": {
+        "n": 166,
+        "min": 0.0087,
+        "p10": 0.0228,
+        "median": 0.0741,
+        "p90": 0.8621,
+        "max": 1.2055
+      },
+      "no_candidate_rate": 0.006,
+      "candidates_seen": {
+        "n": 166,
+        "min": 0,
+        "p10": 2,
+        "median": 4,
+        "p90": 5,
+        "max": 7
+      },
+      "anchor_stroke_wrong": 27,
+      "wrong_because_anchor_wrong": 14,
+      "wrong_though_anchor_ok": 44,
+      "note": "**지금 값**"
+    },
+    "mult_5": {
+      "n_fixed": 166,
+      "wrong_rate": 0.3614,
+      "worst_end": {
+        "n": 166,
+        "min": 0.0087,
+        "p10": 0.0228,
+        "median": 0.0749,
+        "p90": 0.8632,
+        "max": 1.2295
+      },
+      "no_candidate_rate": 0,
+      "candidates_seen": {
+        "n": 166,
+        "min": 2,
+        "p10": 2,
+        "median": 4,
+        "p90": 6,
+        "max": 7
+      },
+      "anchor_stroke_wrong": null,
+      "wrong_because_anchor_wrong": null,
+      "wrong_though_anchor_ok": null,
+      "note": "후보"
+    },
+    "mult_8": {
+      "n_fixed": 166,
+      "wrong_rate": 0.3614,
+      "worst_end": {
+        "n": 166,
+        "min": 0.0087,
+        "p10": 0.0228,
+        "median": 0.0749,
+        "p90": 0.8632,
+        "max": 1.2295
+      },
+      "no_candidate_rate": 0,
+      "candidates_seen": {
+        "n": 166,
+        "min": 2,
+        "p10": 3,
+        "median": 5,
+        "p90": 7,
+        "max": 9
+      },
+      "anchor_stroke_wrong": null,
+      "wrong_because_anchor_wrong": null,
+      "wrong_though_anchor_ok": null,
+      "note": "후보"
+    }
+  },
+  "fix_then_settle": {
+    "scenes": 90,
+    "strokes": 1080,
+    "hand_fixed": 145,
+    "free_placements_after_settle": 21,
+    "free_per_hand_fix": 0.1448,
+    "ops_total": 432,
+    "ops_per_drawn_stroke": 0.4,
+    "note": "같은 장면의 비연쇄 값은 `first_view.nearest.ops_per_drawn_stroke`다 — 둘의 차가 이득이다."
   },
   "reference_frame": "**손 모델링과의 비교는 측정하지 않았다**(대조 실험이 없다). 다만 자릿수는 이렇게 읽는다 — CAD에서 모서리 하나를 놓으려면 최소 두 번(시작·끝)의 스냅 클릭이 필요하고, 여기서는 **그린 획 하나당 위 `ops_per_drawn_stroke`만큼만** 추가된다. 그 값이 2에 가까워지면 이 도구의 이점이 사라진다고 본다."
 }

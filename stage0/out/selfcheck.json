@@ -1,5 +1,5 @@
 {
-  "n_flags": 792,
+  "n_flags": 828,
   "flags": [
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
@@ -165,6 +165,186 @@
       "path": "e2e.json:service_worker_in_dev",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.45.nearest.diagonal.provisional_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.45.nearest.diagonal.no_candidate_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.45.nearest.diagonal.silent_wrong_rate_of_placed",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.45.nearest.edge.provisional_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.45.nearest.edge.no_candidate_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.45.nearest.edge.silent_wrong_rate_of_placed",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.45.oracle.diagonal.provisional_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.45.oracle.diagonal.no_candidate_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.45.oracle.diagonal.silent_wrong_rate_of_placed",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.45.oracle.edge.provisional_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.45.oracle.edge.no_candidate_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.45.oracle.edge.silent_wrong_rate_of_placed",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.75.nearest.diagonal.provisional_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.75.nearest.diagonal.no_candidate_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.75.nearest.diagonal.silent_wrong_rate_of_placed",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.75.nearest.edge.provisional_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.75.nearest.edge.no_candidate_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.75.oracle.diagonal.provisional_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.75.oracle.diagonal.no_candidate_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.75.oracle.diagonal.silent_wrong_rate_of_placed",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.75.oracle.edge.provisional_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.75.oracle.edge.no_candidate_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.110.nearest.diagonal.provisional_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.110.nearest.diagonal.no_candidate_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.110.nearest.diagonal.silent_wrong_rate_of_placed",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.110.nearest.edge.provisional_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.110.nearest.edge.no_candidate_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.110.nearest.edge.silent_wrong_rate_of_placed",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.110.oracle.diagonal.provisional_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.110.oracle.diagonal.no_candidate_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.110.oracle.diagonal.silent_wrong_rate_of_placed",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.110.oracle.edge.provisional_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.110.oracle.edge.no_candidate_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:rotated_view_by_kind.110.oracle.edge.silent_wrong_rate_of_placed",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:candidate_radius_sweep.mult_5.no_candidate_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "fix_load.json:candidate_radius_sweep.mult_8.no_candidate_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "free_curve.json:arms.face_only.in_space_axis_assigned.placed_rate",
