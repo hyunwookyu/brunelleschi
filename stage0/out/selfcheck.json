@@ -1,5 +1,5 @@
 {
-  "n_flags": 1486,
+  "n_flags": 1491,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -3820,6 +3820,11 @@
       "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
     },
     {
+      "path": "promote.json:by_arm.base.chain_extra_by_composition.1pt_yaw0_pitch0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "promote.json:by_arm.tighten.recovery_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -3974,6 +3979,26 @@
       "path": "stage_browser.json:l_b4.preview_vs_confirm.gap",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_browser.json:l_b8.drawn_in_orbit.mid_drag.axis",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "stage_browser.json:l_b8.drawn_in_orbit.views[0].pending",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "stage_browser.json:l_b8.drawn_in_orbit.views[1].pending",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "stage_browser.json:l_b8.drawn_in_orbit.axis",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "stage_cam.json:guarantees.seg_gap_px_max",

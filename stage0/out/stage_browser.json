@@ -468,6 +468,10 @@
       "max_abs": 0.7000000000000002
     },
     "ownership": {
+      "painted_before": 13338,
+      "painted_after": 13338,
+      "delta_other_view": 0,
+      "delta_same_view_control": 219,
       "views": [
         {
           "id": "v2",
@@ -486,34 +490,138 @@
       ],
       "status_mentions_hidden": true,
       "pending_here": 0,
-      "pending_there": 2
+      "pending_there": 2,
+      "lifted_in_v2": 1,
+      "canvas_css": [
+        1280,
+        675
+      ],
+      "size_heal_count": 1
     },
     "confirm_view_undeletable": {
       "disabled": true
     },
     "delete": {
       "before": {
-        "lifted": 12,
-        "total": 14,
-        "views": 2
+        "lifted": 13,
+        "total": 15,
+        "views": 2,
+        "lifted_in_deleted": 1
       },
       "after": {
-        "lifted": 12,
-        "total": 12,
+        "lifted": 13,
+        "total": 13,
         "views": 1
       },
-      "note": "3점 투시 · 소실점 3 확정\n3D 12 · 2D 대기 0\nf = 1000px · 화각 65.24° (수심(3점, 측정))\n스냅 켜짐 반경 72px · 대상 12선 (커서 아래 대상 없음)\n화각 65.24° — 다소 넓습니다(권장 60° 이하, 18.4)\n뷰를 지웠습니다 — 그 안의 2D 대기 획 2개가 함께 사라졌습니다",
+      "note": "3점 투시 · 소실점 3 확정\n3D 13 · 2D 대기 0\nf = 1000px · 화각 65.24° (수심(3점, 측정))\n스냅 켜짐 반경 72px · 대상 13선 (커서 아래 대상 없음)\n화각 65.24° — 다소 넓습니다(권장 60° 이하, 18.4)\n뷰를 지웠습니다 — 그 안의 2D 대기 획 2개가 함께 사라졌습니다",
       "current": "v2",
-      "rows": 1
+      "rows": 1,
+      "canvas_css": [
+        1280,
+        675
+      ],
+      "canvas_css_after": [
+        1280,
+        675
+      ],
+      "size_heal_count": 1
     },
     "undo_restores_view": {
       "views": 2,
-      "total": 14
+      "total": 15
     },
     "what_this_does_not_say": [
-      "§9.3의 '새 각도에서 그리면 뷰가 생긴다' — **궤도 후 그리기(L-B.8)가 열려야 도달한다**(#23). 여기서는 뷰를 코드로 만들어 전환·삭제·소유 규약만 확인한다",
-      "자세 왕복 0은 **설계 보장**이다(#5) — `pose()`와 `setPose()`가 서로의 역이다. 임계를 걸지 않고 틀린 자세 대조군을 함께 낸다",
-      "궤도 시점의 2D 획은 손으로 넣었다 — 그 좌표가 실제로 그 시점의 화면 좌표인지는 L-B.8의 일이다"
+      "§9.3의 '새 각도에서 그리면 뷰가 생긴다' — **여기서는 뷰를 코드로 만든다.** 실제로 그려서 뷰가 생기는 경로는 **L-B.8의 스펙**이 확인한다(#23)",
+      "자세 왕복 0은 **설계 보장**이다(#5) — `pose()`와 `setPose()`가 서로의 역이다. 임계를 걸지 않고 틀린 자세 대조군을 함께 낸다. ⚠ **대조군 0.7의 단위는 세계 좌표의 카메라 위치 성분**이고, 상자 대각이 약 2다",
+      "궤도 시점의 2D 획은 손으로 넣었다 — 그 좌표가 실제로 그 시점의 화면 좌표인지는 L-B.8의 일이다",
+      "'같은 화면이다'를 **자세 왕복 수치로** 확인했다 — 픽셀 대조는 아니다. 다른 뷰의 2D 획이 **0픽셀**인 것만 픽셀로 봤다"
+    ]
+  },
+  "l_b8": {
+    "after_orbit": {
+      "pinned": false,
+      "views": 1,
+      "snap_targets": 12,
+      "has_pose": true
+    },
+    "hover": {
+      "kind": "endpoint",
+      "has": true
+    },
+    "drawn_in_orbit": {
+      "mid_drag": {
+        "axis": 0,
+        "has_preview": true
+      },
+      "views": [
+        {
+          "id": "v2",
+          "name": "확정 뷰",
+          "seq": 2,
+          "isConfirm": true,
+          "pending": 0
+        },
+        {
+          "id": "v3",
+          "name": "뷰 1",
+          "seq": 3,
+          "isConfirm": false,
+          "pending": 0
+        }
+      ],
+      "current": "v3",
+      "new_view_created": true,
+      "stroke_owned_by_current": true,
+      "placed": true,
+      "axis": 0,
+      "seg3d": [
+        [
+          2.283882456992489,
+          -0.8420712448305954,
+          6.982102040659799
+        ],
+        [
+          1.3980656522180182,
+          -0.6815372816382963,
+          6.382981133685745
+        ]
+      ],
+      "snap_kind": "endpoint",
+      "snap_at": [
+        2.283882456992489,
+        -0.8420712448305954,
+        6.982102040659799
+      ]
+    },
+    "back_to_confirm": {
+      "pinned": true,
+      "unchanged": true,
+      "seg3d": [
+        [
+          2.283882456992489,
+          -0.8420712448305954,
+          6.982102040659799
+        ],
+        [
+          1.3980656522180182,
+          -0.6815372816382963,
+          6.382981133685745
+        ]
+      ],
+      "views": 2,
+      "current": "v3"
+    },
+    "second_stroke_same_pose": {
+      "before": 2,
+      "after": 2,
+      "resolved_to": "v3",
+      "expected": "v3"
+    },
+    "what_this_does_not_say": [
+      "배치 정확도 — 참값 대조를 앱에서 하지 않는다(DEFERRED). 여기서 재는 것은 **배선**이다",
+      "자세는 **코드로 만든 것**이고 마우스 궤도가 아니다 — OrbitControls 자체는 이 스펙이 안 본다",
+      "돌린 시점의 **지면 스냅은 끈다**(그 시점의 지면 평면을 세우지 않는다) — `on_face`가 안 나온다",
+      "돌린 시점의 2D 대기 획은 **일괄 풀이에 안 넣는다**(`liftAll`은 확정 카메라의 소실점을 쓴다). 그 시점에서 못 놓인 획은 그 뷰의 2D로 남고, 앵커가 생기면 그때 올라간다(§9.1)"
     ]
   }
 }

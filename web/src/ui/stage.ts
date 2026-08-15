@@ -127,8 +127,19 @@ export class Stage {
       new THREE.Vector3(...X), new THREE.Vector3(...Y), new THREE.Vector3(...Z));
     cam.quaternion.setFromRotationMatrix(m);
     cam.position.set(C[0], C[1], C[2]);
+    // ⚠ **`OrbitControls.update()`가 카메라를 자기 `target`으로 다시 겨눈다** —
+    // 자세만 넣고 `target`을 안 옮기면 방향이 덮여 **왕복이 안 맞는다.** 실제로 걸렸다:
+    // 뷰로 돌아가 그릴 때마다 `samePose`가 어긋나 **뷰가 하나씩 늘어났다**(L-B.8 종단 확인).
+    // 그래서 `target`을 **이 자세의 시선 위**에 둔다 — 그러면 `update()`가 항등이 된다.
+    // 굴림(roll)은 `OrbitControls`가 위를 +Y로 고정하므로 원래 표현할 수 없다(자세도 거기서 왔다).
+    const fwd = conv(p.R[2]);                        // three 세계에서 카메라가 보는 방향
+    const tgt = this.viewport.controls.target;
+    const d = target ? Math.max(1e-3, Math.hypot(...(conv(target).map((v, i) => v - C[i])) as [number, number, number]))
+                     : Math.max(1e-3, tgt.distanceTo(cam.position));
+    tgt.set(C[0] + fwd[0] * d, C[1] + fwd[1] * d, C[2] + fwd[2] * d);
     cam.updateMatrixWorld(true);
     this.viewport.controls.update();
+    cam.updateMatrixWorld(true);
     this.viewport.invalidate();
   }
 

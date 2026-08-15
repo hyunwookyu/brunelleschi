@@ -737,26 +737,69 @@ test("뷰 시스템 — 목록·전환·삭제·소유", async ({ page }) => {
   // 대조군이 움직이므로 아래 왕복 0은 **재는 것이 있는 0**이다. 다만 **임계는 안 건다**(#5)
   expect(round.pose_roundtrip_max_abs).toBeLessThan(1e-9);
 
-  // ---- ⑤ 다른 뷰의 대기 획은 숨는다. 화면에 개수가 나온다
+  // ---- ⑤ 다른 뷰의 대기 획은 숨는다. 화면에 개수가 나오고 **픽셀로도 안 그려진다**
   l.ownership = await page.evaluate(async () => {
     const S = window.S2S;
     const doc = await import("/src/ui/doc.ts");
     const v2 = S.views().find((x: any) => !x.isConfirm).id;
     const confirmId = S.views().find((x: any) => x.isConfirm).id;
+    // **대조군을 먼저 찍는다**(#6) — 그 상자 안에는 그리드·가이드도 있으므로 절대 픽셀 수는
+    // 아무것도 말하지 않는다. **획을 넣기 전과 후의 차이**가 재는 것이다
+    const el0 = document.getElementById("ink") as HTMLCanvasElement;
+    const dpr0 = el0.width / Math.max(1, el0.clientWidth);
+    const paintedIn = () => {
+      const g0 = el0.getContext("2d")!;
+      const bx = g0.getImageData(Math.round(95 * dpr0), Math.round(95 * dpr0),
+                                 Math.round(300 * dpr0), Math.round(260 * dpr0));
+      let n = 0;
+      for (let i = 3; i < bx.data.length; i += 4) if (bx.data[i] > 8) n += 1;
+      return n;
+    };
+    S.switchView(confirmId); S.refresh();
+    const paintedBefore = paintedIn();
     // 뷰 2가 대기 획 둘을 소유한다(궤도 시점의 화면 좌표 — L-B.8이 열리기 전이라 손으로 넣는다)
     S.doc().strokes.push(doc.newSStroke([[100, 100], [200, 160]], v2));
     S.doc().strokes.push(doc.newSStroke([[120, 200], [240, 260]], v2));
+    // **그 뷰에서 승격된 획도 하나 만든다**(리뷰어 [9]) — 삭제 팔이 "승격된 획은 남는다"를
+    // 실제로 시험하려면 지울 뷰 안에 승격된 획이 **있어야** 한다. 없으면 공허 통과다
+    const up = doc.newSStroke([[300, 300], [380, 340]], v2);
+    up.seg3d = [[0.2, 0.1, 3.0], [0.6, 0.1, 3.0]];
+    up.axis = 0;
+    S.doc().strokes.push(up);
     S.switchView(confirmId);
+    S.refresh();
     const statusAtConfirm = document.getElementById("status")!.innerText;
+    // **픽셀로 본다**(리뷰어 [15]) — 소유가 다르다는 것과 안 그려진다는 것은 다른 주장이다
+    const paintedAfter = paintedIn();
+    // **양성 채널**(#30) — 같은 획을 **확정 뷰 소유로** 넣으면 픽셀이 실제로 늘어야 한다.
+    // 안 늘면 위의 0은 "안 그린다"가 아니라 "측정이 안 돈다"이다
+    const probe = doc.newSStroke([[110, 110], [210, 170]], confirmId);
+    S.doc().strokes.push(probe);
+    S.refresh();
+    const paintedProbe = paintedIn();
+    S.doc().strokes.pop();
+    S.refresh();
     return {
+      painted_before: paintedBefore, painted_after: paintedAfter,
+      delta_other_view: paintedAfter - paintedBefore,
+      delta_same_view_control: paintedProbe - paintedAfter,
       views: S.views(),
       status_mentions_hidden: /다른 뷰 2 숨김/.test(statusAtConfirm),
       pending_here: S.doc().strokes.filter((s: any) => !s.seg3d && s.viewRef === confirmId).length,
       pending_there: S.doc().strokes.filter((s: any) => !s.seg3d && s.viewRef === v2).length,
+      lifted_in_v2: S.doc().strokes.filter((s: any) => s.seg3d && s.viewRef === v2).length,
+      canvas_css: [el0.clientWidth, el0.clientHeight],
+      size_heal_count: S.SIZE_HEAL.count,
     };
   });
   expect((l.ownership as any).status_mentions_hidden).toBe(true);
   expect((l.ownership as any).pending_there).toBe(2);
+  expect((l.ownership as any).lifted_in_v2).toBe(1);
+  // **다른 뷰의 2D 획은 한 픽셀도 안 그려진다** — 소유 질의가 아니라 화면 확인이다.
+  // 절대 픽셀 수가 아니라 **넣기 전후의 차이**다(상자 안에 그리드·가이드가 있다)
+  expect((l.ownership as any).delta_other_view).toBe(0);
+  // **양성 채널**(#30) — 같은 획을 이 뷰 소유로 넣으면 실제로 늘어난다
+  expect((l.ownership as any).delta_same_view_control).toBeGreaterThan(0);
 
   // ---- ④ 확정 뷰의 삭제 버튼은 비활성이다
   l.confirm_view_undeletable = await page.evaluate(() => {
@@ -773,7 +816,8 @@ test("뷰 시스템 — 목록·전환·삭제·소유", async ({ page }) => {
     const S = window.S2S;
     const v2 = S.views().find((x: any) => !x.isConfirm).id;
     const before = { lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
-                     total: S.doc().strokes.length, views: S.doc().views.length };
+                     total: S.doc().strokes.length, views: S.doc().views.length,
+                     lifted_in_deleted: S.doc().strokes.filter((s: any) => s.seg3d && s.viewRef === v2).length };
     const row = [...document.querySelectorAll("#views .row")]
       .find(r => r.querySelector(`button[data-view="${v2}"]`))!;
     (row.querySelector(".del") as HTMLButtonElement).click();
@@ -781,13 +825,23 @@ test("뷰 시스템 — 목록·전환·삭제·소유", async ({ page }) => {
              after: { lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
                       total: S.doc().strokes.length, views: S.doc().views.length },
              note: document.getElementById("status")!.innerText,
-             current: S.currentView(), rows: document.querySelectorAll("#views .row").length };
+             current: S.currentView(), rows: document.querySelectorAll("#views .row").length,
+             canvas_css: [(document.getElementById("ink") as HTMLCanvasElement).clientWidth,
+                          (document.getElementById("ink") as HTMLCanvasElement).clientHeight],
+             canvas_css_after: [(document.getElementById("ink") as HTMLCanvasElement).clientWidth,
+                                (document.getElementById("ink") as HTMLCanvasElement).clientHeight],
+             size_heal_count: S.SIZE_HEAL.count };
   });
   const del = l.delete as any;
   expect(del.after.views).toBe(del.before.views - 1);
   expect(del.after.total).toBe(del.before.total - 2);      // 대기 둘만 사라진다
+  // **그 뷰 안에 승격된 획이 있었는데 남았다**(리뷰어 [9]) — 이것이 §9.2의 핵심 규약이고
+  // 지울 뷰에 승격된 획이 0개면 공허 통과다. 그래서 위에서 하나 만들어 두었다
+  expect(del.before.lifted_in_deleted).toBe(1);
   expect(del.after.lifted).toBe(del.before.lifted);        // 승격된 것은 그대로다
   expect(del.rows).toBe(1);
+  // **크기 규약**(#22 / AS-C7 — 착수에 걸리는 번호로 적었다). 뷰 전환이 카메라를 갈아 끼운다
+  expect(del.canvas_css_after).toEqual((l.ownership as any).canvas_css);
 
   // ---- 되돌리기가 뷰 삭제도 되돌린다(스냅샷이 뷰를 복사한다)
   l.undo_restores_view = await page.evaluate(() => {
@@ -798,11 +852,156 @@ test("뷰 시스템 — 목록·전환·삭제·소유", async ({ page }) => {
   expect((l.undo_restores_view as any).views).toBe(2);
 
   l.what_this_does_not_say = [
-    "§9.3의 '새 각도에서 그리면 뷰가 생긴다' — **궤도 후 그리기(L-B.8)가 열려야 도달한다**(#23). "
-    + "여기서는 뷰를 코드로 만들어 전환·삭제·소유 규약만 확인한다",
+    "§9.3의 '새 각도에서 그리면 뷰가 생긴다' — **여기서는 뷰를 코드로 만든다.** "
+    + "실제로 그려서 뷰가 생기는 경로는 **L-B.8의 스펙**이 확인한다(#23)",
     "자세 왕복 0은 **설계 보장**이다(#5) — `pose()`와 `setPose()`가 서로의 역이다. "
-    + "임계를 걸지 않고 틀린 자세 대조군을 함께 낸다",
+    + "임계를 걸지 않고 틀린 자세 대조군을 함께 낸다. "
+    + "⚠ **대조군 0.7의 단위는 세계 좌표의 카메라 위치 성분**이고, 상자 대각이 약 2다",
     "궤도 시점의 2D 획은 손으로 넣었다 — 그 좌표가 실제로 그 시점의 화면 좌표인지는 L-B.8의 일이다",
+    "'같은 화면이다'를 **자세 왕복 수치로** 확인했다 — 픽셀 대조는 아니다. "
+    + "다른 뷰의 2D 획이 **0픽셀**인 것만 픽셀로 봤다",
   ];
   led.l_b6 = l;
+});
+
+/**
+ * L-B.8 — **궤도 후 계속 그리기**(§7 · §9.3). 산출: `stage_browser.json`의 `l_b8`.
+ *
+ * 이것이 §9.3의 "궤도를 돌려 **새 각도에서 실제로 획을 그리면** 그 시점이 새 뷰로 등록된다"를
+ * **도달 가능하게** 만든다. L-B.6은 뷰를 코드로 만들어 전환·삭제만 봤다(#23).
+ *
+ * 재는 것:
+ *   ① 돌린 시점에서 스냅이 돈다(대상 개수 · 표식)
+ *   ② 그리면 **새 뷰가 생기고** 그 획을 소유한다
+ *   ③ 그 획이 **3D로 놓인다** — 그리고 그 3D가 **확정 시점으로 돌아가도 제자리**다
+ *   ④ 같은 자세에서 한 획 더 그리면 **뷰가 안 늘어난다**("돌릴 때마다 만들지 않는다")
+ *
+ * ⚠ **말하지 않는 것**: 배치 정확도(참값 대조를 앱에서 안 한다) · 사람이 그 각도에서 얼마나
+ * 정확히 겨냥하는지(표본 0) · 여기 쓰는 자세는 **코드로 만든 것**이고 마우스 궤도가 아니다.
+ */
+test("궤도 후 계속 그리기 — 새 각도가 새 뷰가 된다", async ({ page }) => {
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  const l: Record<string, unknown> = {};
+
+  await setup(page);
+  await page.evaluate(() =>
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click());
+
+  // ---- 돌린다. **앱의 궤도 버튼 경로 그대로**
+  l.after_orbit = await page.evaluate(() => {
+    const S = window.S2S;
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="orbit"]')!.click();
+    const camT = S.stage.viewport.camera;
+    camT.position.set(1.6, -1.1, 2.2);
+    camT.lookAt(0.6, -0.4, 4.2);
+    camT.updateMatrixWorld(true);
+    // 그리기로 돌아온다 — 여기서부터 잉크 캔버스가 포인터를 받는다
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="draw"]')!.click();
+    S.refresh();
+    return { pinned: S.stage.isPinned, views: S.views().length,
+             snap_targets: S.snapTargets(), has_pose: !!S.pose() };
+  });
+  expect((l.after_orbit as any).pinned).toBe(false);
+  // **스냅 대상이 있다** — 돌린 시점에서도 3D 레이어가 대상이다(L-B.8이 연 것)
+  expect((l.after_orbit as any).snap_targets).toBe(12);
+
+  // ---- ① 돌린 시점에서 스냅이 도는가. 참 꼭짓점의 **이 시점 화면 좌표**를 겨냥한다
+  const target = await page.evaluate(async () => {
+    const S = window.S2S;
+    const vc = await import("/src/s3d/viewCamera.ts");
+    const g3 = await import("/src/s3d/geom3d.ts");
+    const pose = S.pose();
+    const el = document.getElementById("ink") as HTMLCanvasElement;
+    const size: [number, number] = [el.clientWidth, el.clientHeight];
+    const f = vc.fFromFov(45, size[1]);
+    const principal: [number, number] = [size[0] / 2, size[1] / 2];
+    // 3D 레이어의 한 끝점을 골라 그 화면 자리를 낸다
+    const s0 = S.doc().strokes.filter((s: any) => s.seg3d)[0];
+    const p = g3.project(vc.toView(pose, s0.seg3d[0]), principal, f);
+    // 그 축 방향으로 조금 간 자리를 끝점으로 삼는다
+    const q = g3.project(vc.toView(pose, s0.seg3d[1]), principal, f);
+    return { a: p, b: [p[0] + (q[0] - p[0]) * 0.6, p[1] + (q[1] - p[1]) * 0.6] as [number, number] };
+  });
+  const frame0 = await page.locator("#frame").boundingBox();
+  const ox = frame0!.x, oy = frame0!.y;
+
+  await page.mouse.move(ox + target.a[0] + 3, oy + target.a[1] + 3);
+  l.hover = await page.evaluate(() => {
+    const h = window.S2S.hoverSnap();
+    return { kind: h?.kind ?? null, has: !!h };
+  });
+  expect((l.hover as any).has).toBe(true);
+
+  // ---- ②③ 그린다
+  await page.mouse.down();
+  await page.mouse.move(ox + target.b[0], oy + target.b[1], { steps: 6 });
+  const mid = await page.evaluate(() => {
+    const lv = window.S2S.live();
+    return { axis: lv?.axis ?? null, has_preview: !!lv?.seg };
+  });
+  await page.mouse.up();
+
+  l.drawn_in_orbit = await page.evaluate((m) => {
+    const S = window.S2S;
+    const st = S.doc().strokes[S.doc().strokes.length - 1];
+    const cur = S.currentView();
+    return {
+      mid_drag: m,
+      views: S.views(), current: cur,
+      new_view_created: S.views().length === 2,
+      stroke_owned_by_current: st.viewRef === cur,
+      placed: !!st.seg3d, axis: st.axis,
+      seg3d: st.seg3d,
+      snap_kind: st.snapStart?.kind ?? null,
+      snap_at: st.snapStart?.at ?? null,
+    };
+  }, mid);
+  const d = l.drawn_in_orbit as any;
+  // **§9.3이 도달했다** — 새 각도에서 그렸더니 뷰가 생겼다
+  expect(d.new_view_created).toBe(true);
+  expect(d.stroke_owned_by_current).toBe(true);
+  expect(d.current).not.toBe("v1");
+  // **돌린 시점에서 3D가 확정된다**(L-B.8의 핵심)
+  expect(d.placed).toBe(true);
+  expect(typeof d.axis).toBe("number");
+
+  // ---- ③ 확정 시점으로 돌아가도 **그 3D가 제자리다**(세계 좌표로 저장했다는 뜻)
+  l.back_to_confirm = await page.evaluate((seg: number[][]) => {
+    const S = window.S2S;
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="home"]')!.click();
+    S.refresh();
+    const st = S.doc().strokes[S.doc().strokes.length - 1];
+    const same = st.seg3d!.every((p: number[], i: number) =>
+      p.every((v: number, k: number) => Math.abs(v - seg[i][k]) < 1e-12));
+    return { pinned: S.stage.isPinned, unchanged: same, seg3d: st.seg3d,
+             views: S.views().length, current: S.currentView() };
+  }, d.seg3d);
+  // **세계 좌표다.** 시점 좌표로 저장했다면 확정 시점에서 다른 자리가 된다
+  expect((l.back_to_confirm as any).unchanged).toBe(true);
+  expect((l.back_to_confirm as any).pinned).toBe(true);
+
+  // ---- ④ 같은 자세로 돌아가 한 획 더 — **뷰가 안 늘어난다**
+  l.second_stroke_same_pose = await page.evaluate(() => {
+    const S = window.S2S;
+    const v2 = S.views().find((x: any) => !x.isConfirm);
+    S.switchView(v2.id);
+    const before = S.views().length;
+    // `viewForDrawing`이 지금 자세에 해당하는 뷰를 **찾아서** 낸다(새로 만들지 않는다)
+    const got = S.viewForDrawing();
+    return { before, after: S.views().length, resolved_to: got, expected: v2.id };
+  });
+  expect((l.second_stroke_same_pose as any).after)
+    .toBe((l.second_stroke_same_pose as any).before);
+  expect((l.second_stroke_same_pose as any).resolved_to)
+    .toBe((l.second_stroke_same_pose as any).expected);
+
+  l.what_this_does_not_say = [
+    "배치 정확도 — 참값 대조를 앱에서 하지 않는다(DEFERRED). 여기서 재는 것은 **배선**이다",
+    "자세는 **코드로 만든 것**이고 마우스 궤도가 아니다 — OrbitControls 자체는 이 스펙이 안 본다",
+    "돌린 시점의 **지면 스냅은 끈다**(그 시점의 지면 평면을 세우지 않는다) — `on_face`가 안 나온다",
+    "돌린 시점의 2D 대기 획은 **일괄 풀이에 안 넣는다**(`liftAll`은 확정 카메라의 소실점을 쓴다). "
+    + "그 시점에서 못 놓인 획은 그 뷰의 2D로 남고, 앵커가 생기면 그때 올라간다(§9.1)",
+  ];
+  led.l_b8 = l;
 });

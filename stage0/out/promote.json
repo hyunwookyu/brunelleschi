@@ -116,14 +116,14 @@
   "conclusion": {
     "batch_was_never_executed": "**초판의 '일괄 기전이 아무것도 회수하지 못한다'는 측정이 아니었다**(PITFALLS #32). 대기 1904가 거름에서 전부 걸려 **솔버에 한 획도 안 닿았다** — 입력이 0인 실행의 결과는 기전에 대한 정보가 0이다. `축이 미분류다`는 **판정기의 결과이지 획의 성질이 아니다.**",
     "batch_works_when_given_axes": "**축을 주면 일괄 기전이 실행되고 크게 회수한다.** 오라클 축에서 입력 1904 · 솔버가 놓은 것 **1154** · 채택 **1154** (= 0.6061)다. 즉 **§9.1의 일괄 기전은 반증되지 않았다** — 막고 있던 것은 **축 판정**이고, 그것이 L-B.3(a)·L-B.4가 지배항으로 지목한 바로 그것이다. ⚠ **앵커 720과 직접 견주지 않는다**(리뷰어 [4]) — 그 720은 실제 축 라벨이라 기전 차이와 축 정보 차이가 섞인다. **축을 맞춘 대조군**은 앵커 **804/1904**이고, 그것과 견주면 일괄이 1.44배 많다. 나머지(804 대 720)가 **축 정보의 몫**이다. ⚠ **오라클은 상한이다.** 실제 축 라벨(연쇄가 붙인 것)로는 24/966밖에 안 된다.",
-    "batch_places_more_and_worse": "⚠ **개수만 읽으면 반대로 간다**(#15·#16 — 이 항목이 착수에 등록한 번호다). 오라클 일괄이 회수한 1154의 조용히 틀림이 cut 0.2에서 **675/1154 = 0.585**로 축을 맞춘 앵커(406/804 = 0.505)보다도, 확정(874/2416 = 0.362)보다도 **나쁘다.** 즉 정확히 적으면 **\"축을 주면 더 많이, 더 틀리게 놓는다\"**이다. §9.1이 살아난 것은 **개수 기전으로서**이지 품질 기전으로서가 아니다.",
+    "batch_places_more_and_worse": "⚠ **개수만 읽으면 반대로 간다**(#15·#16 — 이 항목이 착수에 등록한 번호다). 오라클 일괄이 회수한 1154의 조용히 틀림이 cut 0.2에서 **675/1154 = 0.585**로 축을 맞춘 앵커(406/804 = 0.505)보다도, 확정(874/2416 = 0.362)보다도 **나쁘다.** ⚠ **추정기를 맞춰도 유지된다**(2회차 리뷰어 [1]): 셋을 **전부 자기 게이지**로 재면 일괄 558/1154 = 0.484 · 앵커 269/804 = 0.335 · 확정 0.362다. 즉 정확히 적으면 **\"축을 주면 더 많이, 더 틀리게 놓는다\"**이고, ⚠ **축을 맞춘 앵커는 오히려 확정보다 낫다**(자기 게이지에서) — 초판은 그것을 \"확정보다도 나쁘다\"로 적었고 그것은 **고정 게이지와 fit을 견준 결과**였다. §9.1이 살아난 것은 **개수 기전으로서**이지 품질 기전으로서가 아니다.",
     "anchor_recovers": "**지금 실제로 회수하는 것은 앵커다** — 대기 획의 시작점이 확정된 기하에 붙으면 §3·§7의 실시간 경로가 그 획을 놓는다. 기준 조건 1회차 **720/1904**. 즉 **승격은 '다시 푸는 것'이 아니라 '앵커가 생기는 것'이다**(D-L20).",
-    "chain_happens": "**연쇄가 실제로 일어난다**(리뷰어 [4]). 2회차 이후 추가 회수 **218**이고 회차별로 {\"2\":192,\"3\":25,\"4\":1}다. 상한 8회에 도달한 장면은 0개다 — **수렴한다.** 게이트 3번(승격 연쇄가 실제로 일어나는가)의 원장 측 증거가 이것이다. 브라우저 확인은 L-B.6 뒤에 한다.",
-    "but_quality_does_not_improve": "**회수된 것이 확정된 것보다 나쁘다 — 다만 격차의 대부분은 배치가 아니라 게이지다**(리뷰어 [1] · #3·#31). 같은 720획을 두 추정기로 재면 고정 게이지 **392/720 = 0.544** · 자기 게이지 **286/720 = 0.397**다. 확정은 자기 게이지로 874/2416 = 0.362이므로, **같은 종류의 추정기끼리 견주면 격차는 1.1배**이지 1.51배가 아니다. ⚠ **그러나 사용자가 보는 것은 고정 게이지 쪽이다** — 앱은 회수 획에 배율을 다시 안 맞춘다. 그러므로 두 값의 차(≈15pp)는 **'형태는 비슷한데 확정된 틀과 배율이 안 맞는' 몫**이고, 그것이 승격이 실제로 더 내는 오차다. 반대 방향 대조(확정을 회수의 게이지로 재기)도 **929/1979**로 나빠진다 — **추정기 효과가 양방향으로 확인된다.** ⚠ **초판은 '1.5배 나쁘다'라고만 적었다** — 그것은 추정기 차이를 배치의 성질로 읽은 것이다. **'미배치는 대기다'는 개수 회수에 대해서만 참**이고 '나중에 더 정확히 놓인다'는 뜻이 아니다.",
-    "quality_collapses_in_low_order_compositions": "⚠ **구도로 가르면 결론이 갈린다**(리뷰어 [2] · #9). 기준 팔 앵커 회수의 조용히 틀림(cut 0.2)이 구도별로 3pt_yaw35_pitch15 52/163 · 3pt_yaw20_pitch25 49/137 · 3pt_yaw50_pitch8 142/242 · 2pt_yaw35_pitch0 59/85 · 1pt_yaw0_pitch0 90/93다. **1점 구도는 회수한 것의 거의 전부가 조용히 틀린다.** 자유도가 가장 적은 구도이고, 승격이 가장 위험한 자리가 바로 거기다. **'미배치는 대기다'를 구도와 무관하게 적지 않는다.**",
+    "chain_happens": "**연쇄가 실제로 일어난다**(리뷰어 [4]). 2회차 이후 추가 회수 **218**이고 회차별로 {\"2\":192,\"3\":25,\"4\":1}다. 상한 8회에 도달한 장면은 0개다 — **이 픽스처에서 수렴한다**(장면당 12획이라 깊이 4는 그래프가 정하는 상한에 가깝다). ⚠ **구도로 가르면 3점 구도의 현상이다**(2회차 리뷰어 [14]): 3pt_yaw35_pitch15 59 · 3pt_yaw20_pitch25 68 · 3pt_yaw50_pitch8 75 · 2pt_yaw35_pitch0 16 · 1pt_yaw0_pitch0 0로 **1점 구도는 0이다.** '승격은 연쇄한다'를 구도와 무관하게 적지 않는다. 게이트 3번의 원장 측 증거가 이것이고 브라우저 확인은 L-B.8 뒤에 한다.",
+    "but_quality_does_not_improve": "**승격이 더 내는 오차는 형태가 아니라 배율이다.** 회수 720을 확정 집합의 게이지로 재면 cut 0.2 **392/720 = 0.5444**이고 확정은 **874/2416 = 0.3618**다 — 배수 1.2~1.57(시드 6, 전부 1보다 크다). **이 격차는 실재한다.** 그런데 같은 720획을 **자기 게이지**로 재면 286/720 = 0.3972이고 배수가 **0.86~1.15로 1을 가로지른다** — **시드 폭 안이므로 그 결론은 없다**(#14). 즉 **형태만 보면 회수와 확정이 구분되지 않고, 차이는 전부 확정된 틀과 배율이 안 맞는 데서 온다.** 앱이 회수 획에 배율을 다시 안 맞추므로 **그 배율 어긋남이 사용자가 보는 오차다.** ⚠ **다만 꼬리는 자기 게이지에서도 나쁘다**(#8): p90이 **0.9144 대 0.4468**(≈2배)이고 중앙은 0.1405 대 0.1222다. **cut 0.2 비율 · 중앙 · p90의 배수가 서로 다르므로 '격차 N배'를 한 수로 적지 않는다.** ⚠ **이 항목은 두 번 고쳤다.** 초판 '같다'(게이지 없음) → '1.5배 나쁘다'(고정 게이지) → **'배율 몫은 실재하고 형태 몫은 시드 폭 안'**(추정기 대조 + 시드 폭). **같은 추정기로 재고 시드 폭을 보기 전까지 배수를 인용하지 않는다.**",
+    "quality_collapses_in_low_order_compositions": "⚠ **구도로 가르면 결론이 갈린다**(리뷰어 [2] · #9). 기준 팔 앵커 회수의 조용히 틀림(cut 0.2)이 구도별로 3pt_yaw35_pitch15 52/163 · 3pt_yaw20_pitch25 49/137 · 3pt_yaw50_pitch8 142/242 · 2pt_yaw35_pitch0 59/85 · 1pt_yaw0_pitch0 90/93이고, **같은 층의 확정**은 3pt_yaw35_pitch15 82/412 · 3pt_yaw20_pitch25 105/393 · 3pt_yaw50_pitch8 169/469 · 2pt_yaw35_pitch0 196/456 · 1pt_yaw0_pitch0 268/422다(2회차 리뷰어 [7] — 층을 맞춰야 배수가 층 효과와 안 섞인다). **1점 구도는 확정도 0.635로 나쁜데 회수는 0.968이다.** 자유도가 가장 적은 구도이고, 승격이 가장 위험한 자리가 바로 거기다. **'미배치는 대기다'를 구도와 무관하게 적지 않는다.**",
     "why_not_recovered": "**추측하지 말고 센다**(#7). 기준 조건 앵커 팔의 거부 사유는 {\"angle_over\":371,\"no_snap\":813}다 — 대기 획의 시작점이 **확정된 기하 근처에 아예 없다**는 것이 지배항이다. 그럴 수밖에 없다: 그 획들이 대기인 이유가 바로 안 이어졌기 때문이다. ⚠ **거부 사유가 둘뿐이라 '축이 정해지면 반드시 놓인다'가 구성상 항등이다**(리뷰어 [13]) — 앵커 회수율은 '축 판정 + 스냅의 통과율'이지 '배치가 맞는가'가 아니다. 맞는가는 위의 조용히 틀림이 답한다.",
     "recovery_rate_is_not_one_number": "⚠ **37.8%는 1회차·합산 한 점이고 조건을 가르면 안 유지된다**(리뷰어 [11] · #12). 등급으로는 precise 201/532 · medium 245/572 · coarse 274/800로 비슷한데, **끝점 잡음**으로는 jit_0 162/227 · jit_0.01 168/298 · jit_0.03 227/598 · jit_0.05 163/781, **구도**로는 3pt_yaw35_pitch15 163/308 · 3pt_yaw20_pitch25 137/411 · 3pt_yaw50_pitch8 242/395 · 2pt_yaw35_pitch0 85/348 · 1pt_yaw0_pitch0 93/442로 벌어진다. **구도 축이 잡음 축에 버금간다**(리뷰어 [2]). ⚠ **연쇄를 넣으면 배율이 달라진다**(리뷰어 [6]) — 잡음축은 1회차 기준 3.42배인데 연쇄 포함이면 2.53배다. 실획이 어느 대역인지는 표본이 0이다(AS-C1) — **회수율을 한 값으로 인용하지 않는다.**",
-    "recovery_rate_depends_on_the_operating_point": "⚠ **37.8%는 두 상수의 통과율이다**(리뷰어 [5] · #12). 거부 사유가 `angle_over`·`no_snap` 둘뿐이므로 회수율은 `axis_deg`·`radius_ratio`가 정한다. 스윕: axis4_rad0.05 479/1904(틀림 0.484) · axis20_rad0.05 808/1904(틀림 0.559) · axis12_rad0.02 516/1904(틀림 0.552) · axis12_rad0.1 818/1904(틀림 0.575) · axis20_rad0.1 934/1904(틀림 0.594). **개수와 조용히 틀림이 여기서도 단조로 맞바뀐다** — 가장 헐거운 점(axis20_rad0.1)도 오라클 일괄 1154에 못 미친다. 그래서 일괄이 앵커보다 많다는 판정은 **동작점을 바꿔도 유지된다.**",
+    "recovery_rate_depends_on_the_operating_point": "⚠ **37.8%는 두 상수의 통과율이다**(리뷰어 [5] · #12). 거부 사유가 `angle_over`·`no_snap` 둘뿐이므로 회수율은 `axis_deg`·`radius_ratio`가 정한다. 스윕: axis4_rad0.05 479/1904(틀림 0.484) · axis20_rad0.05 808/1904(틀림 0.559) · axis12_rad0.02 516/1904(틀림 0.552) · axis12_rad0.1 818/1904(틀림 0.575) · axis20_rad0.1 934/1904(틀림 0.594). **개수와 조용히 틀림이 여기서도 단조로 맞바뀐다.** ⚠ **강건성은 오라클 축 스윕으로 본다**(2회차 리뷰어 [2]) — 실 라벨 스윕을 오라클 일괄과 견주면 [4]가 막 제거한 **축 정보 교란이 되살아난다.** 축을 맞춘 스윕: axis4_rad0.05 804/1904 · axis20_rad0.05 804/1904 · axis12_rad0.02 566/1904 · axis12_rad0.1 968/1904 · axis20_rad0.1 968/1904. 가장 헐거운 점도 968로 오라클 일괄 1154에 못 미친다 — **판정이 동작점을 바꿔도 유지된다.** ⚠ 오라클 축에서는 `axis_deg`가 **아무 효과가 없다**(각도 시험을 건너뛰기 때문이다) — 그래서 그 스윕이 실제로 흔드는 것은 **스냅 반경 하나**다.",
     "d_l18": "**D-L18 기각**(등록 규칙대로, D-L21 유지). 조이기는 (배치 + 회수)가 2976으로 기준 3136보다 **작고**, 회수율이 두 팔에서 0.372 대 0.378로 비슷해 차이를 못 메운다. ⚠ **초판의 서술을 고친다**(리뷰어 [10]): 등록 규칙은 '개수 우선'이 아니라 **두 조건의 연언**(개수 ≥ 기준 **그리고** 조용히 틀림 < 기준)이었다. 단조 맞바꿈 아래서 그것을 통과하려면 회수가 그 단조성을 깨야 했고 안 깼다 — **충족 가능하되 좁은 규칙**이었다. 다만 조이기는 조용히 틀림을 0.4037 → 0.329로 낮추므로 품질 우선 목적함수에서는 여전히 이긴다. **규칙을 사후에 바꾸지 않는다**(#28)."
   },
   "by_arm": {
@@ -304,7 +304,9 @@
             "p90": 0.9454,
             "max": 8.7699
           },
-          "silent_0_2": "392/720"
+          "cut_0_1": "493/720",
+          "cut_0_2": "392/720",
+          "cut_0_5": "204/720"
         },
         "recovered_self_gauge": {
           "shape_err": {
@@ -315,7 +317,9 @@
             "p90": 0.9144,
             "max": 2.7152
           },
-          "silent_0_2": "286/720"
+          "cut_0_1": "431/720",
+          "cut_0_2": "286/720",
+          "cut_0_5": "142/720"
         },
         "confirmed_self_gauge": {
           "shape_err": {
@@ -326,7 +330,9 @@
             "p90": 0.4468,
             "max": 3.3512
           },
-          "silent_0_2": "874/2416"
+          "cut_0_1": "1360/2416",
+          "cut_0_2": "874/2416",
+          "cut_0_5": "190/2416"
         },
         "confirmed_recovered_gauge": {
           "shape_err": {
@@ -337,7 +343,103 @@
             "p90": 1.0701,
             "max": 5.036
           },
-          "silent_0_2": "929/1979"
+          "cut_0_1": "1251/1979",
+          "cut_0_2": "929/1979",
+          "cut_0_5": "516/1979"
+        },
+        "confirmed_subset_self_gauge": {
+          "shape_err": {
+            "n": 1979,
+            "min": 0.0006,
+            "p10": 0.0232,
+            "median": 0.1284,
+            "p90": 0.4625,
+            "max": 3.3512
+          },
+          "cut_0_1": "1145/1979",
+          "cut_0_2": "743/1979",
+          "cut_0_5": "165/1979",
+          "skipped_not_in_subset": 173
+        },
+        "anchor_oracle_self_gauge": {
+          "shape_err": {
+            "n": 804,
+            "min": 0.0002,
+            "p10": 0.0174,
+            "median": 0.1141,
+            "p90": 0.4765,
+            "max": 2.6329
+          },
+          "cut_0_1": "442/804",
+          "cut_0_2": "269/804",
+          "cut_0_5": "72/804"
+        },
+        "batch_oracle_self_gauge": {
+          "shape_err": {
+            "n": 1154,
+            "min": 0.0001,
+            "p10": 0.0452,
+            "median": 0.1924,
+            "p90": 0.4736,
+            "max": 2.8002
+          },
+          "cut_0_1": "846/1154",
+          "cut_0_2": "558/1154",
+          "cut_0_5": "99/1154"
+        },
+        "ratios_note": "**배수를 하나로 적지 않는다**(#8). cut 0.2 비율의 비 · 형태 오차 중앙의 비 · p90의 비가 서로 다르다 — 셋을 다 읽는다."
+      },
+      "seed_spread": {
+        "note": "표제 수치의 시드별 값. **결론의 여유가 이 폭보다 작으면 그 결론은 없다.**",
+        "rows": {
+          "1": {
+            "anchor_recovered_over_pending": "120/314",
+            "anchor_rate": 0.3822,
+            "recovered_fixed_silent_0_2": 0.5917,
+            "recovered_self_silent_0_2": 0.4417,
+            "confirmed_silent_0_2": 0.3855,
+            "self_over_confirmed_ratio": 1.146
+          },
+          "2": {
+            "anchor_recovered_over_pending": "125/302",
+            "anchor_rate": 0.4139,
+            "recovered_fixed_silent_0_2": 0.648,
+            "recovered_self_silent_0_2": 0.456,
+            "confirmed_silent_0_2": 0.4239,
+            "self_over_confirmed_ratio": 1.076
+          },
+          "3": {
+            "anchor_recovered_over_pending": "125/308",
+            "anchor_rate": 0.4058,
+            "recovered_fixed_silent_0_2": 0.496,
+            "recovered_self_silent_0_2": 0.408,
+            "confirmed_silent_0_2": 0.4149,
+            "self_over_confirmed_ratio": 0.983
+          },
+          "4": {
+            "anchor_recovered_over_pending": "115/323",
+            "anchor_rate": 0.356,
+            "recovered_fixed_silent_0_2": 0.4957,
+            "recovered_self_silent_0_2": 0.3217,
+            "confirmed_silent_0_2": 0.3158,
+            "self_over_confirmed_ratio": 1.019
+          },
+          "5": {
+            "anchor_recovered_over_pending": "111/324",
+            "anchor_rate": 0.3426,
+            "recovered_fixed_silent_0_2": 0.5045,
+            "recovered_self_silent_0_2": 0.3243,
+            "confirmed_silent_0_2": 0.375,
+            "self_over_confirmed_ratio": 0.865
+          },
+          "6": {
+            "anchor_recovered_over_pending": "124/333",
+            "anchor_rate": 0.3724,
+            "recovered_fixed_silent_0_2": 0.5242,
+            "recovered_self_silent_0_2": 0.4194,
+            "confirmed_silent_0_2": 0.3647,
+            "self_over_confirmed_ratio": 1.15
+          }
         }
       },
       "anchor_operating_points": {
@@ -377,7 +479,68 @@
             "silent_0_2": "555/934",
             "silent_rate_0_2": 0.5942
           }
+        },
+        "sweep_oracle_axis": {
+          "axis4_rad0.05": {
+            "got_over_pending": "804/1904",
+            "rate": 0.4223,
+            "silent_0_2": "406/804",
+            "silent_rate_0_2": 0.505
+          },
+          "axis20_rad0.05": {
+            "got_over_pending": "804/1904",
+            "rate": 0.4223,
+            "silent_0_2": "406/804",
+            "silent_rate_0_2": 0.505
+          },
+          "axis12_rad0.02": {
+            "got_over_pending": "566/1904",
+            "rate": 0.2973,
+            "silent_0_2": "277/566",
+            "silent_rate_0_2": 0.4894
+          },
+          "axis12_rad0.1": {
+            "got_over_pending": "968/1904",
+            "rate": 0.5084,
+            "silent_0_2": "541/968",
+            "silent_rate_0_2": 0.5589
+          },
+          "axis20_rad0.1": {
+            "got_over_pending": "968/1904",
+            "rate": 0.5084,
+            "silent_0_2": "541/968",
+            "silent_rate_0_2": 0.5589
+          }
         }
+      },
+      "confirmed_by_composition": {
+        "3pt_yaw35_pitch15": {
+          "silent_wrong_0_2": "82/412",
+          "rate": 0.199
+        },
+        "3pt_yaw20_pitch25": {
+          "silent_wrong_0_2": "105/393",
+          "rate": 0.2672
+        },
+        "3pt_yaw50_pitch8": {
+          "silent_wrong_0_2": "169/469",
+          "rate": 0.3603
+        },
+        "2pt_yaw35_pitch0": {
+          "silent_wrong_0_2": "196/456",
+          "rate": 0.4298
+        },
+        "1pt_yaw0_pitch0": {
+          "silent_wrong_0_2": "268/422",
+          "rate": 0.6351
+        }
+      },
+      "chain_extra_by_composition": {
+        "3pt_yaw35_pitch15": 59,
+        "3pt_yaw20_pitch25": 68,
+        "3pt_yaw50_pitch8": 75,
+        "2pt_yaw35_pitch0": 16,
+        "1pt_yaw0_pitch0": 0
       }
     },
     "tighten": {
@@ -557,7 +720,9 @@
             "p90": 0.911,
             "max": 8.9225
           },
-          "silent_0_2": "372/797"
+          "cut_0_1": "494/797",
+          "cut_0_2": "372/797",
+          "cut_0_5": "218/797"
         },
         "recovered_self_gauge": {
           "shape_err": {
@@ -568,7 +733,9 @@
             "p90": 1.2608,
             "max": 2.7406
           },
-          "silent_0_2": "312/797"
+          "cut_0_1": "460/797",
+          "cut_0_2": "312/797",
+          "cut_0_5": "178/797"
         },
         "confirmed_self_gauge": {
           "shape_err": {
@@ -579,7 +746,9 @@
             "p90": 0.3763,
             "max": 2.4788
           },
-          "silent_0_2": "607/2179"
+          "cut_0_1": "1004/2179",
+          "cut_0_2": "607/2179",
+          "cut_0_5": "116/2179"
         },
         "confirmed_recovered_gauge": {
           "shape_err": {
@@ -590,7 +759,103 @@
             "p90": 1.2571,
             "max": 5.036
           },
-          "silent_0_2": "833/1923"
+          "cut_0_1": "1156/1923",
+          "cut_0_2": "833/1923",
+          "cut_0_5": "441/1923"
+        },
+        "confirmed_subset_self_gauge": {
+          "shape_err": {
+            "n": 1923,
+            "min": 0.0021,
+            "p10": 0.0175,
+            "median": 0.0933,
+            "p90": 0.3841,
+            "max": 2.2061
+          },
+          "cut_0_1": "909/1923",
+          "cut_0_2": "552/1923",
+          "cut_0_5": "109/1923",
+          "skipped_not_in_subset": 76
+        },
+        "anchor_oracle_self_gauge": {
+          "shape_err": {
+            "n": 854,
+            "min": 0.0001,
+            "p10": 0.0137,
+            "median": 0.0918,
+            "p90": 0.396,
+            "max": 2.4888
+          },
+          "cut_0_1": "404/854",
+          "cut_0_2": "233/854",
+          "cut_0_5": "49/854"
+        },
+        "batch_oracle_self_gauge": {
+          "shape_err": {
+            "n": 1280,
+            "min": 0.0005,
+            "p10": 0.0474,
+            "median": 0.2035,
+            "p90": 0.4632,
+            "max": 2.8002
+          },
+          "cut_0_1": "961/1280",
+          "cut_0_2": "648/1280",
+          "cut_0_5": "93/1280"
+        },
+        "ratios_note": "**배수를 하나로 적지 않는다**(#8). cut 0.2 비율의 비 · 형태 오차 중앙의 비 · p90의 비가 서로 다르다 — 셋을 다 읽는다."
+      },
+      "seed_spread": {
+        "note": "표제 수치의 시드별 값. **결론의 여유가 이 폭보다 작으면 그 결론은 없다.**",
+        "rows": {
+          "1": {
+            "anchor_recovered_over_pending": "136/354",
+            "anchor_rate": 0.3842,
+            "recovered_fixed_silent_0_2": 0.5294,
+            "recovered_self_silent_0_2": 0.4485,
+            "confirmed_silent_0_2": 0.3273,
+            "self_over_confirmed_ratio": 1.371
+          },
+          "2": {
+            "anchor_recovered_over_pending": "143/340",
+            "anchor_rate": 0.4206,
+            "recovered_fixed_silent_0_2": 0.5385,
+            "recovered_self_silent_0_2": 0.4406,
+            "confirmed_silent_0_2": 0.3179,
+            "self_over_confirmed_ratio": 1.386
+          },
+          "3": {
+            "anchor_recovered_over_pending": "145/360",
+            "anchor_rate": 0.4028,
+            "recovered_fixed_silent_0_2": 0.4966,
+            "recovered_self_silent_0_2": 0.4621,
+            "confirmed_silent_0_2": 0.2889,
+            "self_over_confirmed_ratio": 1.599
+          },
+          "4": {
+            "anchor_recovered_over_pending": "120/368",
+            "anchor_rate": 0.3261,
+            "recovered_fixed_silent_0_2": 0.4083,
+            "recovered_self_silent_0_2": 0.3333,
+            "confirmed_silent_0_2": 0.2412,
+            "self_over_confirmed_ratio": 1.382
+          },
+          "5": {
+            "anchor_recovered_over_pending": "117/355",
+            "anchor_rate": 0.3296,
+            "recovered_fixed_silent_0_2": 0.4188,
+            "recovered_self_silent_0_2": 0.3077,
+            "confirmed_silent_0_2": 0.3167,
+            "self_over_confirmed_ratio": 0.971
+          },
+          "6": {
+            "anchor_recovered_over_pending": "136/364",
+            "anchor_rate": 0.3736,
+            "recovered_fixed_silent_0_2": 0.3897,
+            "recovered_self_silent_0_2": 0.3309,
+            "confirmed_silent_0_2": 0.225,
+            "self_over_confirmed_ratio": 1.471
+          }
         }
       },
       "anchor_operating_points": {
@@ -630,8 +895,42 @@
             "silent_0_2": "532/1016",
             "silent_rate_0_2": 0.5236
           }
+        },
+        "sweep_oracle_axis": {
+          "axis4_rad0.05": {
+            "got_over_pending": "854/2141",
+            "rate": 0.3989,
+            "silent_0_2": "341/854",
+            "silent_rate_0_2": 0.3993
+          },
+          "axis20_rad0.05": {
+            "got_over_pending": "854/2141",
+            "rate": 0.3989,
+            "silent_0_2": "341/854",
+            "silent_rate_0_2": 0.3993
+          },
+          "axis12_rad0.02": {
+            "got_over_pending": "617/2141",
+            "rate": 0.2882,
+            "silent_0_2": "228/617",
+            "silent_rate_0_2": 0.3695
+          },
+          "axis12_rad0.1": {
+            "got_over_pending": "1034/2141",
+            "rate": 0.483,
+            "silent_0_2": "489/1034",
+            "silent_rate_0_2": 0.4729
+          },
+          "axis20_rad0.1": {
+            "got_over_pending": "1034/2141",
+            "rate": 0.483,
+            "silent_0_2": "489/1034",
+            "silent_rate_0_2": 0.4729
+          }
         }
-      }
+      },
+      "confirmed_by_composition": {},
+      "chain_extra_by_composition": {}
     },
     "loosen": {
       "scenes": 360,
@@ -810,7 +1109,9 @@
             "p90": 0.8869,
             "max": 6.6366
           },
-          "silent_0_2": "315/577"
+          "cut_0_1": "416/577",
+          "cut_0_2": "315/577",
+          "cut_0_5": "153/577"
         },
         "recovered_self_gauge": {
           "shape_err": {
@@ -821,7 +1122,9 @@
             "p90": 0.6761,
             "max": 2.7155
           },
-          "silent_0_2": "212/577"
+          "cut_0_1": "320/577",
+          "cut_0_2": "212/577",
+          "cut_0_5": "89/577"
         },
         "confirmed_self_gauge": {
           "shape_err": {
@@ -832,7 +1135,9 @@
             "p90": 0.695,
             "max": 5.482
           },
-          "silent_0_2": "1187/2766"
+          "cut_0_1": "1743/2766",
+          "cut_0_2": "1187/2766",
+          "cut_0_5": "442/2766"
         },
         "confirmed_recovered_gauge": {
           "shape_err": {
@@ -843,7 +1148,103 @@
             "p90": 1.181,
             "max": 34.2598
           },
-          "silent_0_2": "1016/1864"
+          "cut_0_1": "1290/1864",
+          "cut_0_2": "1016/1864",
+          "cut_0_5": "571/1864"
+        },
+        "confirmed_subset_self_gauge": {
+          "shape_err": {
+            "n": 1864,
+            "min": 0.0022,
+            "p10": 0.0307,
+            "median": 0.1773,
+            "p90": 0.6933,
+            "max": 4.8078
+          },
+          "cut_0_1": "1262/1864",
+          "cut_0_2": "854/1864",
+          "cut_0_5": "324/1864",
+          "skipped_not_in_subset": 338
+        },
+        "anchor_oracle_self_gauge": {
+          "shape_err": {
+            "n": 660,
+            "min": 0.0002,
+            "p10": 0.0194,
+            "median": 0.1105,
+            "p90": 0.5685,
+            "max": 3.3859
+          },
+          "cut_0_1": "347/660",
+          "cut_0_2": "224/660",
+          "cut_0_5": "83/660"
+        },
+        "batch_oracle_self_gauge": {
+          "shape_err": {
+            "n": 883,
+            "min": 0.0001,
+            "p10": 0.0458,
+            "median": 0.187,
+            "p90": 0.4911,
+            "max": 2.2512
+          },
+          "cut_0_1": "629/883",
+          "cut_0_2": "417/883",
+          "cut_0_5": "86/883"
+        },
+        "ratios_note": "**배수를 하나로 적지 않는다**(#8). cut 0.2 비율의 비 · 형태 오차 중앙의 비 · p90의 비가 서로 다르다 — 셋을 다 읽는다."
+      },
+      "seed_spread": {
+        "note": "표제 수치의 시드별 값. **결론의 여유가 이 폭보다 작으면 그 결론은 없다.**",
+        "rows": {
+          "1": {
+            "anchor_recovered_over_pending": "100/269",
+            "anchor_rate": 0.3717,
+            "recovered_fixed_silent_0_2": 0.59,
+            "recovered_self_silent_0_2": 0.45,
+            "confirmed_silent_0_2": 0.4648,
+            "self_over_confirmed_ratio": 0.968
+          },
+          "2": {
+            "anchor_recovered_over_pending": "93/236",
+            "anchor_rate": 0.3941,
+            "recovered_fixed_silent_0_2": 0.6989,
+            "recovered_self_silent_0_2": 0.4839,
+            "confirmed_silent_0_2": 0.5659,
+            "self_over_confirmed_ratio": 0.855
+          },
+          "3": {
+            "anchor_recovered_over_pending": "94/250",
+            "anchor_rate": 0.376,
+            "recovered_fixed_silent_0_2": 0.5,
+            "recovered_self_silent_0_2": 0.3936,
+            "confirmed_silent_0_2": 0.4947,
+            "self_over_confirmed_ratio": 0.796
+          },
+          "4": {
+            "anchor_recovered_over_pending": "90/264",
+            "anchor_rate": 0.3409,
+            "recovered_fixed_silent_0_2": 0.4444,
+            "recovered_self_silent_0_2": 0.2333,
+            "confirmed_silent_0_2": 0.4569,
+            "self_over_confirmed_ratio": 0.511
+          },
+          "5": {
+            "anchor_recovered_over_pending": "96/264",
+            "anchor_rate": 0.3636,
+            "recovered_fixed_silent_0_2": 0.4479,
+            "recovered_self_silent_0_2": 0.2917,
+            "confirmed_silent_0_2": 0.4361,
+            "self_over_confirmed_ratio": 0.669
+          },
+          "6": {
+            "anchor_recovered_over_pending": "104/271",
+            "anchor_rate": 0.3838,
+            "recovered_fixed_silent_0_2": 0.5865,
+            "recovered_self_silent_0_2": 0.3462,
+            "confirmed_silent_0_2": 0.4489,
+            "self_over_confirmed_ratio": 0.771
+          }
         }
       },
       "anchor_operating_points": {
@@ -883,8 +1284,42 @@
             "silent_0_2": "461/764",
             "silent_rate_0_2": 0.6034
           }
+        },
+        "sweep_oracle_axis": {
+          "axis4_rad0.05": {
+            "got_over_pending": "660/1554",
+            "rate": 0.4247,
+            "silent_0_2": "355/660",
+            "silent_rate_0_2": 0.5379
+          },
+          "axis20_rad0.05": {
+            "got_over_pending": "660/1554",
+            "rate": 0.4247,
+            "silent_0_2": "355/660",
+            "silent_rate_0_2": 0.5379
+          },
+          "axis12_rad0.02": {
+            "got_over_pending": "428/1554",
+            "rate": 0.2754,
+            "silent_0_2": "230/428",
+            "silent_rate_0_2": 0.5374
+          },
+          "axis12_rad0.1": {
+            "got_over_pending": "826/1554",
+            "rate": 0.5315,
+            "silent_0_2": "491/826",
+            "silent_rate_0_2": 0.5944
+          },
+          "axis20_rad0.1": {
+            "got_over_pending": "826/1554",
+            "rate": 0.5315,
+            "silent_0_2": "491/826",
+            "silent_rate_0_2": 0.5944
+          }
         }
-      }
+      },
+      "confirmed_by_composition": {},
+      "chain_extra_by_composition": {}
     }
   },
   "base_by_grade": {

@@ -7,7 +7,7 @@
 // **옛 UI는 L-B 게이트 통과 전까지 지우지 않는다**(A-4). `index.html`이 그것이고 여기는 `l.html`이다.
 import { InkCanvas } from "./capture/inkCanvas.js";
 import { cssSizeOf } from "./capture/canvasFrame.js";
-import { Stage, type StageSeg } from "./ui/stage.js";
+import { Stage, FREE_FOV_DEG, type StageSeg } from "./ui/stage.js";
 import { CamState } from "./ui/camState.js";
 import { newDoc, newSStroke, newView, deleteView, lifted, pending, pendingElsewhere, snapshotDoc,
          type DocState, type SStroke } from "./ui/doc.js";
@@ -24,7 +24,7 @@ import { AXIS_COLOR, guides as gridGuides, HORIZON_COLOR, GROUND_COLOR } from ".
 import { project, axisDirection, groundFrame, type Vec3 } from "./s3d/geom3d.js";
 import type { Pt2 } from "./s3d/camera.js";
 import type { PlaceCtx } from "./s3d/stroke.js";
-import type { ViewPose } from "./s3d/viewCamera.js";
+import { viewPlaceCtx, toView, fromView, dirToView, type ViewPose } from "./s3d/viewCamera.js";
 
 type Tool = "draw" | "adjust" | "orbit";
 
@@ -85,9 +85,14 @@ function pushUndo() {
 
 // ---------------------------------------------------------------- 스냅 (§3)
 
-/** 스냅 대상 = **3D 레이어 그대로**. 2D 대기 획은 아직 공간에 없으므로 대상이 아니다(§9.1). */
-const snapSegs = (): SnapSeg[] =>
-  lifted(doc).map(s => ({ id: s.id, a: s.seg3d![0], b: s.seg3d![1] }));
+/**
+ * 스냅 대상 = **3D 레이어 그대로**. 2D 대기 획은 아직 공간에 없으므로 대상이 아니다(§9.1).
+ *
+ * `toV`가 주어지면 **시점 좌표로 옮겨서** 낸다(L-B.8) — 스냅은 화면 연산이라
+ * 카메라가 원점에 있다고 가정하기 때문이다. 확정 시점에서는 항등이다.
+ */
+const snapSegs = (toV: (p: Vec3) => Vec3 = ID): SnapSeg[] =>
+  lifted(doc).map(s => ({ id: s.id, a: toV(s.seg3d![0]), b: toV(s.seg3d![1]) }));
 
 /**
  * 질의 무관 후보 캐시. **교차점이 `O(n²)`이라 포인터가 움직일 때마다 만들면 안 된다** —
@@ -96,17 +101,61 @@ const snapSegs = (): SnapSeg[] =>
 let snapPre: StaticCand[] | null = null;
 const snapStatic = (segs: SnapSeg[]): StaticCand[] => (snapPre ??= staticCandidates(segs));
 
+// ---------------------------------------------------------------- 시점 틀 (L-B.8, §7)
+
 /**
- * 스냅이 도는 조건: **카메라가 확정됐고 확정 시점에 있을 때**.
- * 궤도로 돌린 뒤에는 `stage`의 자유 카메라와 `cam.ctx()`가 달라 화면 좌표의 뜻이 다르다 —
- * 그 경로는 L-B.8(궤도 후 계속 그리기)에서 연다. **없는 스냅을 지어내지 않는다**(A-3).
+ * **지금 시점의 배치 문맥과 좌표 변환**(L-B.8 — 궤도 후 계속 그리기).
+ *
+ * 확정 시점이면 항등이고, 돌린 뒤에는 **세계 ↔ 시점** 변환이 붙는다.
+ * 스냅과 실시간 판정은 **화면에서 도는 연산**이라 `project(principal, f)`가 카메라를
+ * 원점에 둔 것으로 가정한다 — 그래서 **기하를 시점 좌표로 옮겨 넣고 결과를 세계로 되돌린다.**
+ * `snap.ts`·`liveLine.ts`를 **한 줄도 안 고친다**(A-3: 새로 설계하지 않는다).
+ *
+ * 축 방향은 **시점이 바뀌어도 변하지 않는다**(`viewCamera.ts` 머리말) — 바뀌는 것은 소실점뿐이다.
  */
-function snapCtx(): SnapCtx | null {
+interface Frame {
+  ctx: PlaceCtx;
+  /** 세계 → 시점. 확정 시점에서는 항등이다. */
+  toV: (p: Vec3) => Vec3;
+  /** 시점 → 세계. `toV`의 역이다. */
+  fromV: (p: Vec3) => Vec3;
+  /** 세계 방향 → 시점 방향(평행이동 없음). */
+  dirV: (d: Vec3) => Vec3;
+  pinned: boolean;
+}
+
+const ID = <T>(x: T) => x;
+
+function frame(): Frame | null {
   const c = cam.ctx();
-  if (!c || !cam.locked || !stage.isPinned) return null;
-  return { principal: c.principal, f: c.f, imgSize: c.imgSize,
+  if (!c || !cam.locked) return null;
+  if (stage.isPinned) return { ctx: c, toV: ID, fromV: ID, dirV: ID, pinned: true };
+  const pose = stage.pose();
+  if (!pose) return null;
+  // **세계 축 방향은 첫 카메라가 정한 것 그대로다.** 새로 추정하지 않는다
+  const axes = c.vps.map(v => (v ? axisDirection(v, c.principal, c.f) : null));
+  return {
+    ctx: viewPlaceCtx(pose, axes, cssSize(), FREE_FOV_DEG),
+    toV: (p) => toView(pose, p),
+    fromV: (p) => fromView(pose, p),
+    dirV: (d) => dirToView(pose, d),
+    pinned: false,
+  };
+}
+
+/**
+ * 스냅이 도는 조건: **카메라가 확정됐을 때**. 확정 시점이든 돌린 시점이든 돈다(L-B.8).
+ *
+ * ⚠ **지면은 확정 시점에서만 낸다.** 돌린 시점의 지면 평면은 시점 좌표로 다시 세워야 하는데
+ * `groundFrame`은 소실점에서 세우고 그 소실점은 시점마다 다르다 — **없는 것을 지어내지 않는다**(A-3).
+ * 지면 스냅의 화면 거리는 정의상 0이라 성공률 측정에도 못 섞는 종류다(`snap.json`).
+ */
+function snapCtx(fr: Frame | null = frame()): SnapCtx | null {
+  if (!fr) return null;
+  const { ctx } = fr;
+  return { principal: ctx.principal, f: ctx.f, imgSize: ctx.imgSize,
            // 면 생성이 범위 밖이라 지금 있는 면은 지면 하나다(§3 "면 위 점")
-           ground: groundFrame(c.vps[2] ?? null, c.principal, c.f),
+           ground: fr.pinned ? groundFrame(ctx.vps[2] ?? null, ctx.principal, ctx.f) : null,
            from: null };
 }
 
@@ -123,8 +172,10 @@ function snapCtx(): SnapCtx | null {
  * 상**이라 새 카메라에서는 그 대상의 상이 다른 자리다. `snapStart.ofId`를 새 카메라로 **다시
  * 풀지 않으면 스냅이 조용히 풀린다.** L-C에서 처리한다(`DEFERRED.md`).
  */
-function applySnapToStart(st: SStroke, cand: SnapCand): void {
-  st.snapStart = { kind: cand.kind, at: cand.at, ofId: cand.ofId };
+function applySnapToStart(st: SStroke, cand: SnapCand, atWorld: Vec3 = cand.at): void {
+  // ⚠ **`at`은 세계 좌표로 적는다.** 돌린 시점에서는 `cand.at`이 **시점 좌표**다(L-B.8) —
+  // 그대로 넣으면 뷰를 바꿀 때마다 같은 획의 `snapStart`가 다른 점을 가리킨다.
+  st.snapStart = { kind: cand.kind, at: atWorld, ofId: cand.ofId };
   st.pts2d = [[cand.screen[0], cand.screen[1]], ...st.pts2d.slice(1)];
 }
 
@@ -135,22 +186,24 @@ function applySnapToStart(st: SStroke, cand: SnapCand): void {
  * 대기 사유가 `축이 미분류다`라서 같이 푸나 따로 푸나 같기 때문이다. 회수하는 것은 **앵커**다.
  * **연쇄한다** — 이번에 놓인 것이 다음 획의 대상이 되므로 더 안 늘 때까지 돈다.
  */
-function promoteChain(c: PlaceCtx): number {
+function promoteChain(fr: Frame): number {
   let total = 0;
   for (let pass = 0; pass < 8; pass++) {
-    const waiting = pending(doc, doc.views[0].id);
+    // **대기 획의 소유자는 지금 뷰다**(§9.2) — 다른 뷰의 `pts2d`는 다른 화면 좌표라
+    // 이 시점의 스냅에 넣으면 엉뚱한 자리에 붙는다
+    const waiting = pending(doc, doc.currentView);
     if (!waiting.length) break;
-    const segs = snapSegs();
+    const segs = snapSegs(fr.toV);
     if (!segs.length) break;
-    const sc = snapCtx();
+    const sc = snapCtx(fr);
     if (!sc) break;
     const pre = staticCandidates(segs);
     let n = 0;
     for (const st of waiting) {
       const cand = snapAt(st.pts2d[0], segs, sc, {}, pre);
       if (!cand) continue;
-      applySnapToStart(st, cand);
-      if (placeLive(st, c, cand.at)) n += 1;
+      applySnapToStart(st, cand, fr.fromV(cand.at));
+      if (placeLive(st, fr, cand.at)) n += 1;
     }
     total += n;
     if (!n) break;                     // 더 안 는다 — 연쇄가 멎었다
@@ -203,8 +256,8 @@ function lockedAxis(): 0 | 1 | 2 | null {
  * 스냅된 시작점 + 축 → 그 자리에서 3D 확정(§3 마지막 문단 · §7).
  * 축이 안 정해지면 `false`이고 그 획은 2D로 **대기**한다(§9.1).
  */
-function placeLive(st: SStroke, c: PlaceCtx, at: Vec3): boolean {
-  const r = resolveLive(c, at, st.pts2d[0], st.pts2d[st.pts2d.length - 1]);
+function placeLive(st: SStroke, fr: Frame, atV: Vec3): boolean {
+  const r = resolveLive(fr.ctx, atV, st.pts2d[0], st.pts2d[st.pts2d.length - 1]);
   if (!r.seg || r.axis == null) {
     lastSnapNote = `${r.why} — **2D로 대기**합니다`;
     return false;
@@ -212,7 +265,8 @@ function placeLive(st: SStroke, c: PlaceCtx, at: Vec3): boolean {
   st.axis = r.axis;
   // **사용자가 고른 축은 재분류가 덮지 않는다**(`doc.ts`의 `userAxis`, §6.1의 "사용자 지정만 유지")
   st.userAxis = r.locked;
-  st.seg3d = r.seg;
+  // **시점 좌표로 푼 것을 세계로 되돌린다**(L-B.8). 확정 시점에서는 항등이다
+  st.seg3d = [fr.fromV(r.seg[0]), fr.fromV(r.seg[1])];
   lastSnapNote = r.locked
     ? `축${r.axis + 1}로 **고정**해 확정`
     : `축${r.axis + 1}로 확정 (축과 ${r.deg != null ? r.deg.toFixed(1) : "?"}°)`;
@@ -256,10 +310,10 @@ function switchView(id: string) {
     note = `확정 뷰 — 3D가 잉크와 같은 자리에 그려집니다`;
   } else {
     stage.setPose(v.pose, orbitTarget());
-    // 궤도 시점에서 그리는 것은 **L-B.8이 여는 경로**다. 지금은 돌리기만 한다 —
-    // **없는 것을 지어내지 않는다**(A-3).
-    tool = "orbit"; canvas.style.pointerEvents = "none";
-    note = `${v.name} — 저장한 각도로 돌아왔습니다`;
+    // **L-B.8이 열렸다** — 돌린 시점에서도 그린다. 그래서 전환 뒤 바로 그리기다.
+    // 더 돌리려면 `궤도`를 누른다(SketchUp의 모드 전환과 같다).
+    tool = "draw"; canvas.style.pointerEvents = "auto";
+    note = `${v.name} — 저장한 각도로 돌아왔습니다. 여기서 바로 그릴 수 있습니다`;
   }
   hoverSnap = null; live = null;
   refresh();
@@ -282,6 +336,21 @@ function viewForDrawing(): string {
   const v = newView(`뷰 ${doc.views.length}`, p);
   doc.views.push(v);
   return v.id;
+}
+
+/**
+ * **지금 화면이 `doc.currentView`의 화면인가**(§9.2).
+ *
+ * 2D 대기 획을 그릴지 정하는 판정이다. `pts2d`는 **그린 뷰의 화면 좌표**라서
+ * 자세가 다르면 뜻이 없다 — 그리면 화면에 붙어 따라다니는 유령이 된다.
+ * L-B.8 이전에는 "확정 시점인가"로 충분했다(뷰가 하나뿐이었다).
+ */
+function viewIsCurrent(): boolean {
+  const v = doc.views.find(x => x.id === doc.currentView);
+  if (!v) return false;
+  const p = stage.pose();
+  if (v.pose === null) return p === null;          // 확정 뷰는 물려 있을 때만 맞다
+  return p !== null && samePose(v.pose, p);
 }
 
 /** 두 자세가 같은가 — 전환 직후 미세한 수치 차이로 뷰가 늘어나는 것을 막는다. */
@@ -367,7 +436,7 @@ function confirm() {
   cam.locked = true;
   stage.pinTo(ctx.principal, ctx.f);
   // 확정 직후에도 연쇄를 한 번 돈다 — 놓인 것이 생겼으므로 대기 획이 붙을 수 있다
-  const chained = n ? promoteChain(ctx) : 0;
+  const chained = n ? promoteChain(frame() ?? { ctx, toV: ID, fromV: ID, dirV: ID, pinned: true }) : 0;
   syncScene();
   note = `확정 — ${n + chained}/${targets.length}획이 3D로 올라갔습니다`
        + (chained ? `(그중 **${chained}획은 승격 연쇄**)` : "")
@@ -449,11 +518,12 @@ function drawGuideHandles(ctx2: CanvasRenderingContext2D) {
  * 2D 레이어 — **대기 중인 획**. 3D와 **약하게 구분한다**(§9.4): 회전하면 어차피 드러나므로
  * 미리 알리는 편이 낫고, 지나치게 강조하면 결함처럼 보인다.
  *
- * 확정 카메라를 벗어난 자유 시점에서는 **그리지 않는다** — `pts2d`가 확정 뷰의 화면 좌표라서
- * 다른 자세에서는 뜻이 없다(§9.2가 말하는 "다른 뷰에서는 숨는다"의 첫 사례).
+ * **지금 자세가 그 뷰의 자세일 때만 그린다**(§9.2) — `pts2d`는 그린 뷰의 화면 좌표라서
+ * 다른 자세에서는 뜻이 없다. L-B.8 이전에는 "확정 시점일 때만"이었고, 뷰가 여럿이 된
+ * 지금은 **뷰가 맞는가**로 판정한다.
  */
 function drawPending(ctx2: CanvasRenderingContext2D) {
-  if (cam.locked && !stage.isPinned) return;
+  if (cam.locked && !viewIsCurrent()) return;
   ctx2.save();
   ctx2.lineWidth = 2; ctx2.lineCap = "round";
   ctx2.strokeStyle = "#111";
@@ -523,12 +593,15 @@ function drawSnapMark(ctx2: CanvasRenderingContext2D) {
  */
 function drawLivePreview(ctx2: CanvasRenderingContext2D) {
   if (!live) return;
-  const c = cam.ctx();
-  if (!c) return;
+  // **지금 시점의 투영으로 되쏜다**(L-B.8) — `live.seg`는 세계 좌표이고
+  // 확정 카메라로 쏘면 돌린 뷰에서 엉뚱한 자리에 나온다
+  const fr = frame();
+  if (!fr) return;
+  const c = fr.ctx;
   const a = live.anchor.screen;
   ctx2.save();
   if (live.seg) {
-    const b = project(live.seg[1], c.principal, c.f);
+    const b = project(fr.toV(live.seg[1]), c.principal, c.f);
     if (b) {
       ctx2.strokeStyle = AXIS_COLOR[live.axis!];
       ctx2.lineWidth = 3; ctx2.globalAlpha = 0.85; ctx2.setLineDash([]);
@@ -543,15 +616,16 @@ function drawLivePreview(ctx2: CanvasRenderingContext2D) {
 }
 
 function drawBelowInk(ctx2: CanvasRenderingContext2D) {
-  // **확정 뷰를 벗어나면 2D 층 전체가 뜻을 잃는다** — 그리드도 가이드도 소실점 표식도
-  // 확정 뷰의 화면 좌표다. 자유 시점에서 그리면 화면에 붙어 따라다니는 유령이 된다.
-  if (cam.locked && !stage.isPinned) return;
-  drawGrid(ctx2);
+  // **그리드·가이드·소실점 표식은 확정 뷰의 화면 좌표다.** 자유 시점에서 그리면
+  // 화면에 붙어 따라다니는 유령이 된다 — 그래서 그 셋만 확정 시점으로 묶는다.
+  // **스냅 표식과 미리보기는 지금 시점의 화면 좌표**라 어느 뷰에서든 옳다(L-B.8).
   drawPending(ctx2);
-  drawPreview(ctx2);
-  drawGuideHandles(ctx2);
   drawSnapMark(ctx2);
   drawLivePreview(ctx2);
+  if (cam.locked && !stage.isPinned) return;
+  drawGrid(ctx2);
+  drawPreview(ctx2);
+  drawGuideHandles(ctx2);
   const [w, h] = cssSize();
   cam.vps().forEach((v, i) => {
     if (!v || v[0] < 0 || v[0] > w || v[1] < 0 || v[1] > h) return;
@@ -591,8 +665,9 @@ const ink = new InkCanvas(canvas, {
     refresh();
   },
   onHover: (p) => {
-    const sc = p ? snapCtx() : null;
-    const segs = snapSegs();
+    const fr = p ? frame() : null;
+    const sc = fr ? snapCtx(fr) : null;
+    const segs = snapSegs(fr?.toV);
     const next = (sc && tool === "draw") ? snapAt(p!, segs, sc, {}, snapStatic(segs)) : null;
     // 값이 안 바뀌면 다시 그리지 않는다 — 포인터마다 전체 재그리기가 돌면 안 된다
     const same = (!next && !hoverSnap)
@@ -604,11 +679,12 @@ const ink = new InkCanvas(canvas, {
   },
   onLive: (pts) => {
     // **그리는 중**: 앵커는 첫 점의 스냅, 끝점은 커서. 확정과 **같은 함수**를 쓴다(#17)
-    const c = cam.ctx(), sc = snapCtx();
-    if (!c || !sc || tool !== "draw" || pts.length < 2) { live = null; refresh(); return; }
+    const fr = frame(), sc = snapCtx(fr);
+    if (!fr || !sc || tool !== "draw" || pts.length < 2) { live = null; refresh(); return; }
+    const c = fr.ctx;
     const a0: Pt2 = [pts[0][0], pts[0][1]];
     const b0: Pt2 = [pts[pts.length - 1][0], pts[pts.length - 1][1]];
-    const segs = snapSegs();
+    const segs = snapSegs(fr.toV);
     const anchor = live?.anchor ?? snapAt(a0, segs, sc, {}, snapStatic(segs));
     if (!anchor) { live = null; refresh(); return; }
     // Shift가 눌린 상태면 **처음 추론된 축**을 잡아 둔다(SketchUp과 같다)
@@ -618,7 +694,9 @@ const ink = new InkCanvas(canvas, {
       if (n0 && n0.deg <= LIVE_TOL.axis_deg) shiftHeld = n0.axis;
     }
     const r = resolveLive(c, anchor.at, anchor.screen, b0);
-    live = { anchor, axis: r.axis, deg: r.deg, seg: r.seg, locked: r.locked };
+    // **미리보기는 세계 좌표로 낸다** — 3D 층이 세계에서 그리기 때문이다(L-B.8)
+    live = { anchor, axis: r.axis, deg: r.deg,
+             seg: r.seg ? [fr.fromV(r.seg[0]), fr.fromV(r.seg[1])] : null, locked: r.locked };
     refresh();
   },
   onStrokeEnd: (stroke) => {
@@ -630,26 +708,27 @@ const ink = new InkCanvas(canvas, {
     doc.currentView = viewForDrawing();
     const s = newSStroke(pts, doc.currentView);
     doc.strokes.push(s);
-    // 확정 뒤에는 그 자리에서 푼다 — **승격 연쇄**의 첫 형태다(§9.1). L-B.7에서 넓힌다.
-    const ctx = cam.ctx();
-    if (cam.locked && ctx && stage.isPinned) {
+    // 확정 뒤에는 그 자리에서 푼다 — **승격 연쇄**의 첫 형태다(§9.1).
+    // **돌린 시점에서도 돈다**(L-B.8) — `frame()`이 좌표 변환을 들고 있다
+    const fr = frame();
+    if (fr) {
       // **① 시작점 스냅**(§3). 붙으면 그 획의 3D가 확정된다.
-      const sc = snapCtx();
-      const segs0 = snapSegs();
+      const sc = snapCtx(fr);
+      const segs0 = snapSegs(fr.toV);
       const cand = sc ? snapAt(pts[0], segs0, sc, {}, snapStatic(segs0)) : null;
       lastSnapNote = "";
       if (cand) {
-        applySnapToStart(s, cand);
-        placeLive(s, ctx, cand.at);
-      } else if (snapSegs().length) {
+        applySnapToStart(s, cand, fr.fromV(cand.at));
+        placeLive(s, fr, cand.at);
+      } else if (segs0.length) {
         lastSnapNote = "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다";
       }
-      // **② 못 놓인 것은 일괄 풀이로** — 서로 이어진 2D 획들끼리 풀린다
-      if (!s.seg3d) solveInto(ctx, pending(doc, doc.views[0].id));
-      // **③ 승격 연쇄**(§9.1, L-B.7). ⚠ **일괄 재풀이는 아무것도 회수하지 못한다**(측정: 0/1904).
-      // 실제로 회수하는 것은 **앵커가 생기는 것**이다 — 새로 놓인 기하에 대기 획의 시작점이
-      // 붙으면 그 획도 놓인다. 그래서 획이 놓일 때마다 대기 집합을 다시 훑는다.
-      if (s.seg3d) promoteChain(ctx);
+      // **② 못 놓인 것은 일괄 풀이로** — 서로 이어진 2D 획들끼리 풀린다.
+      // ⚠ **확정 뷰에서만 돈다** — `liftAll`은 소실점을 쓰고 그 소실점은 확정 카메라의 것이다.
+      // 돌린 시점의 2D 획을 그 솔버에 넣으면 **다른 화면 좌표를 같은 카메라로 푸는 것**이다
+      if (!s.seg3d && fr.pinned) solveInto(fr.ctx, pending(doc, confirmView().id));
+      // **③ 승격 연쇄**(§9.1, L-B.7)
+      if (s.seg3d) promoteChain(fr);
       syncScene();
     }
     hoverSnap = null; live = null;
@@ -819,7 +898,7 @@ barEl.addEventListener("click", (e) => {
     if (act === "orbit" && stage.isPinned) {
       const segs = lifted(doc).map(s => ({ id: s.id, a: s.seg3d![0], b: s.seg3d![1], axis: s.axis }));
       stage.unpin(stage.centroid(segs));
-      note = "궤도 — 확정 뷰의 2D 대기 획은 숨깁니다(그 뷰의 화면 좌표이기 때문입니다)";
+      note = "궤도 — 다른 뷰의 2D 대기 획은 숨깁니다(그 뷰의 화면 좌표이기 때문입니다). 돌린 뒤 **그리기**를 누르면 그 각도가 새 뷰가 됩니다";
     }
   } else if (act === "draft") makeDraft();
   else if (act === "extend") {

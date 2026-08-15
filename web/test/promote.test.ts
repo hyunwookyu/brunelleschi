@@ -30,7 +30,7 @@ import { scene, boxEdges, drawEdges, groundPoint, stat, round,
          type Scene, type TrueEdge } from "./scene3d.js";
 import { rng32, type InkGrade } from "../src/s3d/synthInk.js";
 import { constantsSnapshot } from "./constants.js";
-import { fitGauge, segShapeError, metricsSnapshot } from "./metrics.js";
+import { fitGauge, segShapeError, silentWrong, metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -116,6 +116,22 @@ interface Bag {
   errConfirmedFromA: number[]; cfw20: number;
   // ---- 오라클 축 앵커(리뷰어 [4]) — 일괄 팔과 축 정보를 맞춘 대조군
   anchorOracle: number; errAnchorOracle: number[]; aow20: number; aow50: number;
+  /** 오라클 팔들의 **자기 게이지** 판(2회차 리뷰어 [1]) — 확정과 견주려면 추정기를 맞춰야 한다. */
+  errAnchorOracleSelf: number[]; errBatchOracleSelf: number[];
+  /** 확정을 회수 게이지로 잰 부분집합의 **자기 게이지** 판(2회차 [6]) — 부분집합 효과를 가른다. */
+  errConfirmedSubsetSelf: number[]; csw20: number;
+  /** 그 부분집합에서 빠진 획 수 — 1979 대 2416의 차를 카운터로 남긴다(#11). */
+  confirmedSubsetSkipped: number;
+  /** **오라클 축 × 동작점** 스윕(2회차 [2]) — 실 라벨 스윕과 오라클 일괄을 견주면 교란이 남는다. */
+  opSweepOracle: Record<string, { pending: number; got: number; w20: number; errN: number }>;
+  /** 시드별 표제 수치(2회차 [8] · #14). */
+  seedRows: Record<string, { recA: number; pend: number; aw20: number; aErrN: number;
+                             asw20: number; asErrN: number; cw20: number; cErrN: number;
+                             batchOracle: number; anchorOracle: number }>;
+  /** 확정 집합을 구도로 가른다(2회차 [7]). */
+  confirmByComp: Record<string, { n: number; w20: number }>;
+  /** 연쇄를 구도로 가른다(2회차 [14]). */
+  chainByComp: Record<string, number>;
   // ---- 동작점 스윕(리뷰어 [5] · #12)
   opSweep: Record<string, { pending: number; got: number; w20: number; errN: number }>;
   /** 대기 획이 0이라 연쇄 회차를 셀 것이 없던 장면(#11 — 338 대 360의 차이). */
@@ -160,6 +176,9 @@ const bag = (): Bag => ({ n: 0, total: 0, confirmed: 0, pendingN: 0, recovered: 
                           errRecoveredASelf: [], asw20: 0, asw50: 0,
                           errConfirmedFromA: [], cfw20: 0,
                           anchorOracle: 0, errAnchorOracle: [], aow20: 0, aow50: 0,
+                          errAnchorOracleSelf: [], errBatchOracleSelf: [],
+                          errConfirmedSubsetSelf: [], csw20: 0, confirmedSubsetSkipped: 0,
+                          opSweepOracle: {}, seedRows: {}, confirmByComp: {}, chainByComp: {},
                           opSweep: {}, noPending: 0 });
 const rep = (b: Bag) => ({
   scenes: b.n,
@@ -262,14 +281,37 @@ const rep = (b: Bag) => ({
     note: "'회수가 확정보다 나쁘다'가 **배치의 성질인지 추정기의 성질인지** 가른다. "
       + "회수 집합을 **자기 게이지**(회수만으로 적합)로도 재고, 확정 집합을 **회수의 게이지**로도 잰다. "
       + "네 값이 같은 방향을 가리켜야 결론이 선다.",
-    recovered_fixed_gauge: { shape_err: stat(b.errRecoveredA),
-                             silent_0_2: `${b.aw20}/${b.errRecoveredA.length}` },
-    recovered_self_gauge: { shape_err: stat(b.errRecoveredASelf),
-                            silent_0_2: `${b.asw20}/${b.errRecoveredASelf.length}` },
-    confirmed_self_gauge: { shape_err: stat(b.errConfirmed),
-                            silent_0_2: `${b.cw20}/${b.errConfirmed.length}` },
-    confirmed_recovered_gauge: { shape_err: stat(b.errConfirmedFromA),
-                                 silent_0_2: `${b.cfw20}/${b.errConfirmedFromA.length}` },
+    // **절단을 하나 고르지 않는다**(#13 · 2회차 [5]) — 등록한 셋을 다 낸다.
+    // 그리고 **형태 오차 자체도 낸다**(#8 · 2회차 [3]) — cut 0.2 비율의 비를
+    // "형태 격차"라 부르면 꼬리가 사라진다
+    recovered_fixed_gauge: { shape_err: stat(b.errRecoveredA), ...silentWrong(b.errRecoveredA) },
+    recovered_self_gauge: { shape_err: stat(b.errRecoveredASelf), ...silentWrong(b.errRecoveredASelf) },
+    confirmed_self_gauge: { shape_err: stat(b.errConfirmed), ...silentWrong(b.errConfirmed) },
+    confirmed_recovered_gauge: { shape_err: stat(b.errConfirmedFromA), ...silentWrong(b.errConfirmedFromA) },
+    // **같은 부분집합의 자기 게이지**(2회차 [6]) — 추정기와 부분집합 교체를 가른다
+    confirmed_subset_self_gauge: { shape_err: stat(b.errConfirmedSubsetSelf),
+                                   ...silentWrong(b.errConfirmedSubsetSelf),
+                                   skipped_not_in_subset: b.confirmedSubsetSkipped },
+    // **오라클 팔의 자기 게이지**(2회차 [1]) — 확정과의 비교 다리를 놓으려면 필요하다
+    anchor_oracle_self_gauge: { shape_err: stat(b.errAnchorOracleSelf),
+                                ...silentWrong(b.errAnchorOracleSelf) },
+    batch_oracle_self_gauge: { shape_err: stat(b.errBatchOracleSelf),
+                               ...silentWrong(b.errBatchOracleSelf) },
+    ratios_note: "**배수를 하나로 적지 않는다**(#8). cut 0.2 비율의 비 · 형태 오차 중앙의 비 · "
+      + "p90의 비가 서로 다르다 — 셋을 다 읽는다.",
+  },
+  // **시드 변동폭**(2회차 [8] · #14). 이 프로젝트는 0.6pp를 시드 폭으로 기각한 적이 있다
+  seed_spread: {
+    note: "표제 수치의 시드별 값. **결론의 여유가 이 폭보다 작으면 그 결론은 없다.**",
+    rows: Object.fromEntries(Object.entries(b.seedRows).map(([s, r]) => [s, {
+      anchor_recovered_over_pending: `${r.recA}/${r.pend}`,
+      anchor_rate: round(r.recA / Math.max(1, r.pend), 4),
+      recovered_fixed_silent_0_2: round(r.aw20 / Math.max(1, r.aErrN), 4),
+      recovered_self_silent_0_2: round(r.asw20 / Math.max(1, r.asErrN), 4),
+      confirmed_silent_0_2: round(r.cw20 / Math.max(1, r.cErrN), 4),
+      self_over_confirmed_ratio: round((r.asw20 / Math.max(1, r.asErrN))
+                                     / Math.max(1e-9, r.cw20 / Math.max(1, r.cErrN)), 3),
+    }])),
   },
   // ---- **동작점 스윕**(리뷰어 [5] · #12). 앵커 거부 사유가 두 상수의 귀결이므로
   // 한 점만 재면 37.8%는 배치의 성질이 아니라 **그 상수의 통과율**이다
@@ -284,7 +326,19 @@ const rep = (b: Bag) => ({
       silent_0_2: `${c.w20}/${c.errN}`,
       silent_rate_0_2: round(c.w20 / Math.max(1, c.errN), 4),
     }])),
+    // **오라클 축 × 동작점**(2회차 [2]). 위 스윕은 **실 라벨**이라 오라클 일괄과 견주면
+    // [4]가 제거한 축 정보 교란이 되살아난다. 축을 맞춘 채로 동작점을 흔든 것이 이것이다
+    sweep_oracle_axis: Object.fromEntries(Object.entries(b.opSweepOracle).map(([k, c]) => [k, {
+      got_over_pending: `${c.got}/${c.pending}`,
+      rate: round(c.got / Math.max(1, c.pending), 4),
+      silent_0_2: `${c.w20}/${c.errN}`,
+      silent_rate_0_2: round(c.w20 / Math.max(1, c.errN), 4),
+    }])),
   },
+  // **확정과 연쇄도 구도로 가른다**(2회차 [7][14])
+  confirmed_by_composition: Object.fromEntries(Object.entries(b.confirmByComp).map(([k, c]) =>
+    [k, { silent_wrong_0_2: `${c.w20}/${c.n}`, rate: round(c.w20 / Math.max(1, c.n), 4) }])),
+  chain_extra_by_composition: b.chainByComp,
 });
 
 describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
@@ -437,12 +491,18 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
           // 어떻게 되는가. 확정은 자기 게이지가 곧 `fit`이므로 여기서는 **회수 게이지**를 빌려 준다
           if (r1.promoted.size && first.placed.size) {
             const kFromA = fitGauge(r1.promoted, fx.edges);
+            const kSelf2 = fitGauge(first.placed, fx.edges);
             for (const [id, sg] of first.placed) {
               const e = segShapeError(sg, fx.edges[+id.slice(1)], fx.diag, kFromA);
               b.errConfirmedFromA.push(e);
               if (e > 0.2) b.cfw20 += 1;
+              // **같은 부분집합의 자기 게이지 판**(2회차 [6]) — 그래야 0.469 대 0.362의 차 중
+              // 추정기의 몫과 **부분집합 교체**의 몫이 갈린다
+              const e2 = segShapeError(sg, fx.edges[+id.slice(1)], fx.diag, kSelf2);
+              b.errConfirmedSubsetSelf.push(e2);
+              if (e2 > 0.2) b.csw20 += 1;
             }
-          }
+          } else b.confirmedSubsetSkipped += first.placed.size;
           // ---- **오라클 축 앵커**(리뷰어 [4]) — 일괄 팔과 **축 정보를 맞춘 대조군**.
           // 이것이 없으면 "일괄 1154 > 앵커 720"에서 기전 차이와 축 정보 차이가 안 갈린다
           {
@@ -454,6 +514,26 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
               b.errAnchorOracle.push(e);
               if (e > 0.2) b.aow20 += 1;
               if (e > 0.5) b.aow50 += 1;
+            }
+            // **자기 게이지 판**(2회차 [1]) — 확정(자기 게이지)과 견주려면 추정기를 맞춰야 한다
+            if (ro.promoted.size) {
+              const k = fitGauge(ro.promoted, fx.edges);
+              for (const [id, sg] of ro.promoted) {
+                b.errAnchorOracleSelf.push(segShapeError(sg, fx.edges[+id.slice(1)], fx.diag, k));
+              }
+            }
+            // ---- **오라클 축 × 동작점**(2회차 [2]) — 실 라벨 스윕과 오라클 일괄을 견주면
+            // [4]가 막 제거한 축 정보 교란이 되살아난다. 축을 맞춘 채로 동작점을 흔든다
+            for (const op of OP_SWEEP) {
+              const rr = anchorRound(pending, first.placed, op, true);
+              const key = `axis${op.axis_deg}_rad${op.radius_ratio}`;
+              const c = (b.opSweepOracle[key] ??= { pending: 0, got: 0, w20: 0, errN: 0 });
+              c.pending += pending.length; c.got += rr.promoted.size;
+              for (const [id, sg] of rr.promoted) {
+                const e = err(sg, id);
+                if (e == null) continue;
+                c.errN += 1; if (e > 0.2) c.w20 += 1;
+              }
             }
           }
           // ---- **두 번째 동작점**(리뷰어 [5] · #12). 거부 사유가 두 상수의 귀결이므로
@@ -493,6 +573,42 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
             rest = rest.filter(s => !rn.promoted.has(s.id));
           }
           b.chainRounds.push(round);
+          // ---- **시드별 표제 수치**(2회차 [8] · #14) — 이 프로젝트는 0.6pp를 시드 폭으로 기각했다
+          {
+            const sr = (b.seedRows[String(seed)] ??= { recA: 0, pend: 0, aw20: 0, aErrN: 0,
+                                                       asw20: 0, asErrN: 0, cw20: 0, cErrN: 0,
+                                                       batchOracle: 0, anchorOracle: 0 });
+            sr.recA += r1.promoted.size; sr.pend += pending.length;
+            if (kFix != null) {
+              for (const [id, sg] of r1.promoted) {
+                sr.aErrN += 1;
+                if (segShapeError(sg, fx.edges[+id.slice(1)], fx.diag, kFix) > 0.2) sr.aw20 += 1;
+              }
+              for (const [id, sg] of first.placed) {
+                sr.cErrN += 1;
+                if (segShapeError(sg, fx.edges[+id.slice(1)], fx.diag, kFix) > 0.2) sr.cw20 += 1;
+              }
+            }
+            if (r1.promoted.size) {
+              const ks = fitGauge(r1.promoted, fx.edges);
+              for (const [id, sg] of r1.promoted) {
+                sr.asErrN += 1;
+                if (segShapeError(sg, fx.edges[+id.slice(1)], fx.diag, ks) > 0.2) sr.asw20 += 1;
+              }
+            }
+          }
+          // ---- **확정과 연쇄를 구도로 가른다**(2회차 [7][14]) — 회수만 갈라 놓으면
+          // 1.10배가 층 효과와 섞이고, 연쇄는 1점 구도에서 0인 것이 안 보인다
+          if (name === "base" && kFix != null) {
+            const cc = (b.confirmByComp[COMPOSITIONS[ci].name] ??= { n: 0, w20: 0 });
+            for (const [id, sg] of first.placed) {
+              cc.n += 1;
+              if (segShapeError(sg, fx.edges[+id.slice(1)], fx.diag, kFix) > 0.2) cc.w20 += 1;
+            }
+            b.chainByComp[COMPOSITIONS[ci].name] =
+              (b.chainByComp[COMPOSITIONS[ci].name] ?? 0)
+              + ((cur.size - first.placed.size) - r1.promoted.size);
+          }
           if (name === "base") {
             const extra = (cur.size - first.placed.size) - r1.promoted.size;
             for (const c of [byGrade[grade] ??= cellule(), byJit[`jit_${jit}`] ??= cellule(),
@@ -540,6 +656,13 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
               b.errBatchOracle.push(e);
               if (e > 0.2) b.ow20 += 1;
               if (e > 0.5) b.ow50 += 1;
+            }
+            // **자기 게이지 판**(2회차 [1])
+            if (po.promoted.size) {
+              const k = fitGauge(po.promoted, fx.edges);
+              for (const [id, sg] of po.promoted) {
+                b.errBatchOracleSelf.push(segShapeError(sg, fx.edges[+id.slice(1)], fx.diag, k));
+              }
             }
           }
 
@@ -683,7 +806,17 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
           + `${round(arms.base.aow20 / Math.max(1, arms.base.errAnchorOracle.length), 3)})보다도, `
           + `확정(${arms.base.cw20}/${arms.base.errConfirmed.length} = `
           + `${round(arms.base.cw20 / Math.max(1, arms.base.errConfirmed.length), 3)})보다도 **나쁘다.** `
-          + "즉 정확히 적으면 **\"축을 주면 더 많이, 더 틀리게 놓는다\"**이다. "
+          + "⚠ **추정기를 맞춰도 유지된다**(2회차 리뷰어 [1]): 셋을 **전부 자기 게이지**로 재면 "
+          + `일괄 ${arms.base.errBatchOracleSelf.filter(e => e > 0.2).length}/`
+          + `${arms.base.errBatchOracleSelf.length} = `
+          + `${round(arms.base.errBatchOracleSelf.filter(e => e > 0.2).length / Math.max(1, arms.base.errBatchOracleSelf.length), 3)} · `
+          + `앵커 ${arms.base.errAnchorOracleSelf.filter(e => e > 0.2).length}/`
+          + `${arms.base.errAnchorOracleSelf.length} = `
+          + `${round(arms.base.errAnchorOracleSelf.filter(e => e > 0.2).length / Math.max(1, arms.base.errAnchorOracleSelf.length), 3)} · `
+          + `확정 ${round(arms.base.cw20 / Math.max(1, arms.base.errConfirmed.length), 3)}다. `
+          + "즉 정확히 적으면 **\"축을 주면 더 많이, 더 틀리게 놓는다\"**이고, "
+          + "⚠ **축을 맞춘 앵커는 오히려 확정보다 낫다**(자기 게이지에서) — 초판은 그것을 "
+          + "\"확정보다도 나쁘다\"로 적었고 그것은 **고정 게이지와 fit을 견준 결과**였다. "
           + "§9.1이 살아난 것은 **개수 기전으로서**이지 품질 기전으로서가 아니다.",
         anchor_recovers: "**지금 실제로 회수하는 것은 앵커다** — 대기 획의 시작점이 확정된 기하에 "
           + `붙으면 §3·§7의 실시간 경로가 그 획을 놓는다. 기준 조건 1회차 `
@@ -693,32 +826,46 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
           + `**${arms.base.chainExtra}**이고 회차별로 `
           + `${JSON.stringify(arms.base.chainByRound)}다. 상한 ${CHAIN_MAX_ROUNDS}회에 `
           + `도달한 장면은 ${arms.base.chainRounds.filter(r => r >= CHAIN_MAX_ROUNDS).length}개다 — `
-          + "**수렴한다.** 게이트 3번(승격 연쇄가 실제로 일어나는가)의 원장 측 증거가 이것이다. "
-          + "브라우저 확인은 L-B.6 뒤에 한다.",
-        but_quality_does_not_improve: "**회수된 것이 확정된 것보다 나쁘다 — 다만 격차의 대부분은 "
-          + "배치가 아니라 게이지다**(리뷰어 [1] · #3·#31). 같은 720획을 두 추정기로 재면 "
-          + `고정 게이지 **${arms.base.aw20}/${arms.base.errRecoveredA.length} = `
-          + `${round(arms.base.aw20 / Math.max(1, arms.base.errRecoveredA.length), 3)}** · `
-          + `자기 게이지 **${arms.base.asw20}/${arms.base.errRecoveredASelf.length} = `
-          + `${round(arms.base.asw20 / Math.max(1, arms.base.errRecoveredASelf.length), 3)}**다. `
-          + `확정은 자기 게이지로 ${arms.base.cw20}/${arms.base.errConfirmed.length} = `
-          + `${round(arms.base.cw20 / Math.max(1, arms.base.errConfirmed.length), 3)}이므로, `
-          + "**같은 종류의 추정기끼리 견주면 격차는 "
-          + `${round((arms.base.asw20 / Math.max(1, arms.base.errRecoveredASelf.length))
-                   / (arms.base.cw20 / Math.max(1, arms.base.errConfirmed.length)), 2)}배**이지 `
-          + `${round((arms.base.aw20 / Math.max(1, arms.base.errRecoveredA.length))
-                   / (arms.base.cw20 / Math.max(1, arms.base.errConfirmed.length)), 2)}배가 아니다. `
-          + "⚠ **그러나 사용자가 보는 것은 고정 게이지 쪽이다** — 앱은 회수 획에 배율을 다시 "
-          + "안 맞춘다. 그러므로 두 값의 차(≈15pp)는 **'형태는 비슷한데 확정된 틀과 배율이 안 맞는' 몫**이고, "
-          + "그것이 승격이 실제로 더 내는 오차다. 반대 방향 대조(확정을 회수의 게이지로 재기)도 "
-          + `**${arms.base.cfw20}/${arms.base.errConfirmedFromA.length}**로 나빠진다 — `
-          + "**추정기 효과가 양방향으로 확인된다.** "
-          + "⚠ **초판은 '1.5배 나쁘다'라고만 적었다** — 그것은 추정기 차이를 배치의 성질로 읽은 것이다. "
-          + "**'미배치는 대기다'는 개수 회수에 대해서만 참**이고 '나중에 더 정확히 놓인다'는 뜻이 아니다.",
+          + "**이 픽스처에서 수렴한다**(장면당 12획이라 깊이 4는 그래프가 정하는 상한에 가깝다). "
+          + "⚠ **구도로 가르면 3점 구도의 현상이다**(2회차 리뷰어 [14]): "
+          + `${Object.entries(arms.base.chainByComp).map(([k, v]) => `${k} ${v}`).join(" · ")}로 `
+          + "**1점 구도는 0이다.** '승격은 연쇄한다'를 구도와 무관하게 적지 않는다. "
+          + "게이트 3번의 원장 측 증거가 이것이고 브라우저 확인은 L-B.8 뒤에 한다.",
+        but_quality_does_not_improve: (() => {
+          const B = arms.base;
+          const g = (w: number, n: number) => round(w / Math.max(1, n), 4);
+          const ratios = Object.values(B.seedRows)
+            .map(r => (r.asw20 / Math.max(1, r.asErrN)) / Math.max(1e-9, r.cw20 / Math.max(1, r.cErrN)))
+            .sort((x, y) => x - y);
+          const fixedRatios = Object.values(B.seedRows)
+            .map(r => (r.aw20 / Math.max(1, r.aErrN)) / Math.max(1e-9, r.cw20 / Math.max(1, r.cErrN)))
+            .sort((x, y) => x - y);
+          return "**승격이 더 내는 오차는 형태가 아니라 배율이다.** 회수 720을 확정 집합의 게이지로 "
+            + `재면 cut 0.2 **${B.aw20}/${B.errRecoveredA.length} = ${g(B.aw20, B.errRecoveredA.length)}**이고 `
+            + `확정은 **${B.cw20}/${B.errConfirmed.length} = ${g(B.cw20, B.errConfirmed.length)}**다 — `
+            + `배수 ${round(fixedRatios[0], 2)}~${round(fixedRatios[fixedRatios.length - 1], 2)}(시드 6, 전부 1보다 크다). `
+            + "**이 격차는 실재한다.** "
+            + `그런데 같은 720획을 **자기 게이지**로 재면 ${B.asw20}/${B.errRecoveredASelf.length} = `
+            + `${g(B.asw20, B.errRecoveredASelf.length)}이고 배수가 `
+            + `**${round(ratios[0], 2)}~${round(ratios[ratios.length - 1], 2)}로 1을 가로지른다** — `
+            + "**시드 폭 안이므로 그 결론은 없다**(#14). 즉 **형태만 보면 회수와 확정이 구분되지 않고, "
+            + "차이는 전부 확정된 틀과 배율이 안 맞는 데서 온다.** 앱이 회수 획에 배율을 다시 안 맞추므로 "
+            + "**그 배율 어긋남이 사용자가 보는 오차다.** "
+            + "⚠ **다만 꼬리는 자기 게이지에서도 나쁘다**(#8): p90이 "
+            + `**${stat(B.errRecoveredASelf).p90} 대 ${stat(B.errConfirmed).p90}**(≈2배)이고 중앙은 `
+            + `${stat(B.errRecoveredASelf).median} 대 ${stat(B.errConfirmed).median}다. `
+            + "**cut 0.2 비율 · 중앙 · p90의 배수가 서로 다르므로 '격차 N배'를 한 수로 적지 않는다.** "
+            + "⚠ **이 항목은 두 번 고쳤다.** 초판 '같다'(게이지 없음) → '1.5배 나쁘다'(고정 게이지) → "
+            + "**'배율 몫은 실재하고 형태 몫은 시드 폭 안'**(추정기 대조 + 시드 폭). "
+            + "**같은 추정기로 재고 시드 폭을 보기 전까지 배수를 인용하지 않는다.**";
+        })(),
         quality_collapses_in_low_order_compositions: "⚠ **구도로 가르면 결론이 갈린다**(리뷰어 [2] · #9). "
           + "기준 팔 앵커 회수의 조용히 틀림(cut 0.2)이 구도별로 "
-          + `${Object.entries(byComp).map(([k, v]) => `${k} ${v.w20}/${v.errN}`).join(" · ")}다. `
-          + "**1점 구도는 회수한 것의 거의 전부가 조용히 틀린다.** 자유도가 가장 적은 구도이고, "
+          + `${Object.entries(byComp).map(([k, v]) => `${k} ${v.w20}/${v.errN}`).join(" · ")}이고, `
+          + "**같은 층의 확정**은 "
+          + `${Object.entries(arms.base.confirmByComp).map(([k, v]) => `${k} ${v.w20}/${v.n}`).join(" · ")}다`
+          + "(2회차 리뷰어 [7] — 층을 맞춰야 배수가 층 효과와 안 섞인다). "
+          + "**1점 구도는 확정도 0.635로 나쁜데 회수는 0.968이다.** 자유도가 가장 적은 구도이고, "
           + "승격이 가장 위험한 자리가 바로 거기다. **'미배치는 대기다'를 구도와 무관하게 적지 않는다.**",
         why_not_recovered: "**추측하지 말고 센다**(#7). 기준 조건 앵커 팔의 거부 사유는 "
           + `${JSON.stringify(arms.base.reasonsA)}다 — 대기 획의 시작점이 **확정된 기하 근처에 `
@@ -746,10 +893,15 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
           + `\`axis_deg\`·\`radius_ratio\`가 정한다. 스윕: `
           + `${Object.entries(arms.base.opSweep).map(([k, c]) =>
                `${k} ${c.got}/${c.pending}(틀림 ${round(c.w20 / Math.max(1, c.errN), 3)})`).join(" · ")}. `
-          + "**개수와 조용히 틀림이 여기서도 단조로 맞바뀐다** — 가장 헐거운 점"
-          + `(${Object.entries(arms.base.opSweep).slice(-1)[0][0]})도 오라클 일괄 `
-          + `${arms.base.batchOracle}에 못 미친다. 그래서 일괄이 앵커보다 많다는 판정은 `
-          + "**동작점을 바꿔도 유지된다.**",
+          + "**개수와 조용히 틀림이 여기서도 단조로 맞바뀐다.** "
+          + "⚠ **강건성은 오라클 축 스윕으로 본다**(2회차 리뷰어 [2]) — 실 라벨 스윕을 "
+          + "오라클 일괄과 견주면 [4]가 막 제거한 **축 정보 교란이 되살아난다.** "
+          + `축을 맞춘 스윕: ${Object.entries(arms.base.opSweepOracle).map(([k, c]) =>
+               `${k} ${c.got}/${c.pending}`).join(" · ")}. `
+          + `가장 헐거운 점도 ${Math.max(...Object.values(arms.base.opSweepOracle).map(c => c.got))}로 `
+          + `오라클 일괄 ${arms.base.batchOracle}에 못 미친다 — **판정이 동작점을 바꿔도 유지된다.** `
+          + "⚠ 오라클 축에서는 `axis_deg`가 **아무 효과가 없다**(각도 시험을 건너뛰기 때문이다) — "
+          + "그래서 그 스윕이 실제로 흔드는 것은 **스냅 반경 하나**다.",
         d_l18: "**D-L18 기각**(등록 규칙대로, D-L21 유지). 조이기는 (배치 + 회수)가 "
           + `${total(arms.tighten)}으로 기준 ${total(arms.base)}보다 **작고**, 회수율이 두 팔에서 `
           + `${round(arms.tighten.recoveredA / Math.max(1, arms.tighten.pendingN), 3)} 대 `

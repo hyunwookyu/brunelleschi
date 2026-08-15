@@ -29,7 +29,7 @@ import { norm3, sub3, unit3, axisDirection, type Vec3 } from "../src/s3d/geom3d.
 import { isFiniteVp, type Pt2 } from "../src/s3d/camera.js";
 import { scene, boxEdges, drawEdges, groundPoint, stat, round,
          type Scene, type TrueEdge } from "./scene3d.js";
-import { perStrokeError, metricsSnapshot } from "./metrics.js";
+import { perStrokeError, segShapeError, metricsSnapshot } from "./metrics.js";
 import { rng32, type InkGrade } from "../src/s3d/synthInk.js";
 import { constantsSnapshot } from "./constants.js";
 
@@ -122,6 +122,50 @@ const rep = (b: Bag) => ({
 const baseKeyOf = () => `vp${AXIS_TOL.vp_dist_ratio}_bend${AXIS_TOL.bend_max}`
                       + `_amb${AXIS_TOL.ambiguity_margin}`;
 
+/**
+ * **절단 격자**(사람 지시 — 0.2/0.35/0.5/0.7). 앞뒤를 넓혀 **교차점을 안에 가둔다** —
+ * 지시한 넷만 재면 교차가 격자 밖에 있을 때 그 사실을 못 본다(#12).
+ */
+const CUT_GRID = [0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.6, 0.7, 1.0];
+
+/**
+ * 절단 곡선 한 줄. **배치율과 조용히 틀림을 함께** 낸다 —
+ * 조용히 틀림만 보면 "아무것도 안 놓는" 설정이 이긴다(#15).
+ */
+const curveRow = (errs: number[], total: number) => ({
+  placed_over_all: `${errs.length}/${total}`,
+  placed_rate: round(errs.length / Math.max(1, total), 4),
+  by_cut: Object.fromEntries(CUT_GRID.map(c => {
+    const k = errs.filter(e => e > c).length;
+    return [`cut_${String(c).replace(".", "_")}`, {
+      silent_wrong: `${k}/${errs.length}`,
+      rate: round(k / Math.max(1, errs.length), 4),
+      // **놓인 것 중 맞은 것**을 전체 분모로도 낸다 — 배치율과 정확도를 한 수로 묶는다.
+      // 이것이 없으면 "덜 놓아서 이긴" 설정과 "잘 놓아서 이긴" 설정이 안 갈린다
+      right_over_all: round((errs.length - k) / Math.max(1, total), 4),
+    }];
+  })),
+});
+
+/**
+ * **교차점** — 두 팔의 조용히 틀림 비율이 뒤집히는 절단.
+ * 격자 사이면 선형 보간으로 하나 낸다. 안 뒤집히면 `null`이고 **그것도 결과다.**
+ */
+function crossing(a: number[], b: number[]): { cut: number | null; note: string } {
+  const rate = (xs: number[], c: number) => xs.filter(e => e > c).length / Math.max(1, xs.length);
+  const fine: number[] = [];
+  for (let c = 0.05; c <= 1.0001; c += 0.005) fine.push(+c.toFixed(3));
+  let prev: number | null = null;
+  for (const c of fine) {
+    const d = rate(a, c) - rate(b, c);
+    if (prev != null && Math.sign(d) !== Math.sign(prev) && Math.sign(d) !== 0) {
+      return { cut: c, note: `절단 ${c}에서 부호가 바뀐다(격자 0.005)` };
+    }
+    if (d !== 0) prev = d;
+  }
+  return { cut: null, note: "절단 0.05~1.0 전체에서 부호가 안 바뀐다 — **교차가 없다**" };
+}
+
 describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
   it("측정을 원장에 남긴다", () => {
     /** ① 확정 시점: 임계 조합 → 집계. */
@@ -130,6 +174,20 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
     const reasonsByGrade: Record<string, Record<string, number>> = {};
     /** ② 실시간: 각차 → 집계. */
     const liveByDeg: Record<string, Bag> = {};
+    /**
+     * **절단 곡선**(사람 지시). 절단을 **단일 동작점으로 두지 않는다**(#13·#12).
+     * 앵커 유무 × 절단에서 **배치율과 조용히 틀림을 함께** 보고 **교차점을 특정한다.**
+     *
+     * ⚠ **두 팔의 추정기가 다르다** — 확정은 적합 게이지(`liftAll`이 배율 자유도를 남긴다),
+     * 실시간은 게이지 1(앵커가 참 기하 위에 있어 배율 자유도가 없다). 확정 쪽이
+     * **더 관대한 추정기**이므로 "실시간이 낫다"는 방향의 결론은 **보수적**이고,
+     * "확정이 낫다"는 방향의 결론은 **그만큼 할인해서 읽는다.**
+     */
+    const curve = { confirm: [] as number[], live: [] as number[] };
+    /** 각 팔의 **분모** — 배치율을 내려면 놓인 것뿐 아니라 전체가 필요하다(#11). */
+    const curveN = { confirm: 0, live: 0 };
+    const curveByGrade: Record<string, { confirm: number[]; live: number[] }> = {};
+    const curveNByGrade: Record<string, { confirm: number; live: number }> = {};
     /** 실시간 판정의 **각차 분포** — 임계를 어디 두어야 하는지 이것이 말한다. */
     const liveDeg: number[] = [];
     /** 방향 급변 검출 스윕. */
@@ -183,7 +241,12 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
             if (e > 0.1) b.w10 += 1;
             if (e > 0.2) b.w20 += 1;
             if (e > 0.5) b.w50 += 1;
+            if (key === baseKeyOf()) {
+              curve.confirm.push(e);
+              (curveByGrade[grade] ??= { confirm: [], live: [] }).confirm.push(e);
+            }
           }
+          if (key === baseKeyOf()) { curveN.confirm += 12; (curveNByGrade[grade] ??= { confirm: 0, live: 0 }).confirm += 12; }
         }
 
         // ---------- ①-b 방향 급변 검출 — `coarse`의 등급 특이 항
@@ -251,6 +314,9 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
           for (const dg of LIVE_DEGS) {
             const b = (liveByDeg[String(dg)] ??= bag());
             b.total += 1;
+            if (dg === LIVE_TOL.axis_deg) {
+              curveN.live += 1; (curveNByGrade[grade] ??= { confirm: 0, live: 0 }).live += 1;
+            }
             if (!cand) { b.axFree += 1; b.reasons.no_snap = (b.reasons.no_snap ?? 0) + 1; continue; }
             if (!near || near.deg > dg) {
               b.axFree += 1;
@@ -264,11 +330,20 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
             if (!seg) { b.reasons.no_end = (b.reasons.no_end ?? 0) + 1; continue; }
             b.placed += 1;
             const T = fx.edges[k];
-            const e = Math.max(norm3(sub3(seg[0], T.a)), norm3(sub3(seg[1], T.b))) / fx.diag;
+            // **정의는 `metrics.ts` 하나다.** 여기는 **게이지 1**이 옳다 — 앵커 `cand.at`이
+            // **참 기하 위의 점**이므로 결과가 이미 참 좌표계에 있고 배율 자유도가 없다.
+            // ⚠ 그래서 이 팔과 확정 팔(적합 게이지)은 **추정기가 다르다** — 두 수를 나란히
+            // 읽을 때 그 사실을 적는다(리뷰어 [1]과 같은 형태의 함정이다).
+            // ⚠ 초판은 이 자리에 `Math.max(...)/diag`를 **인라인으로** 적었다. L-B.M의
+            // 전수 확인이 **복사된 함수만 찾고 인라인 식을 놓쳤다** — 그것도 정의 갈림이다.
+            const e = segShapeError({ a: seg[0], b: seg[1] }, T, fx.diag, 1);
             b.err.push(e);
             if (e > 0.1) b.w10 += 1;
             if (e > 0.2) b.w20 += 1;
             if (e > 0.5) b.w50 += 1;
+            if (dg === LIVE_TOL.axis_deg) {
+              curve.live.push(e); (curveByGrade[grade] ??= { confirm: [], live: [] }).live.push(e);
+            }
           }
         }
       }
@@ -320,6 +395,42 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
         defaults: { vp_dist_ratio: AXIS_TOL.vp_dist_ratio, bend_max: AXIS_TOL.bend_max,
                     ambiguity_margin: AXIS_TOL.ambiguity_margin,
                     live_axis_deg: LIVE_TOL.axis_deg, snap_radius_ratio: SNAP_TOL.radius_ratio },
+      },
+      // ---- **절단 곡선**(사람 지시). 절단을 단일 동작점으로 두지 않는다
+      cut_curve: {
+        note: "**앵커 유무 × 절단**에서 배치율과 조용히 틀림을 함께 본다. "
+          + "`right_over_all`이 둘을 한 수로 묶은 것이다(놓였고 맞은 것 / 전체) — "
+          + "조용히 틀림만 보면 **아무것도 안 놓는 설정이 이긴다**(#15).",
+        estimator_warning: "⚠ **두 팔의 게이지가 다르다.** 확정은 **적합 게이지**"
+          + "(`liftAll`이 배율 자유도를 남긴다), 실시간은 **게이지 1**(앵커가 참 기하 위에 있어 "
+          + "배율 자유도가 없다). 확정 쪽이 더 관대한 추정기이므로 **'실시간이 낫다'는 결론은 "
+          + "보수적**이고 **'확정이 낫다'는 결론은 그만큼 할인해서 읽는다.** "
+          + "⚠ 초판은 실시간 팔의 오차를 **인라인 식**으로 적었다 — L-B.M의 전수 확인이 "
+          + "복사된 **함수**만 찾고 인라인을 놓쳤다. 지금은 `metrics.segShapeError`를 부른다.",
+        arms: {
+          confirm_no_anchor: curveRow(curve.confirm, curveN.confirm),
+          live_with_anchor: curveRow(curve.live, curveN.live),
+        },
+        crossing_overall: crossing(curve.live, curve.confirm),
+        conclusion: "**교차는 비율에만 있고 개수에는 없다.** 조용히 틀림 *비율*은 절단 "
+          + `${crossing(curve.live, curve.confirm).cut}에서 뒤집히지만(그 위에서는 앵커가 더 나쁘다), `
+          + "**`right_over_all`(놓였고 맞은 것 / 전체)은 모든 절단·모든 등급에서 앵커가 이긴다** — "
+          + `앵커가 ${curveRow(curve.live, curveN.live).placed_rate} 대 `
+          + `${curveRow(curve.confirm, curveN.confirm).placed_rate}로 **41% 더 놓기 때문이다.** `
+          + "즉 '앵커는 큰 틀림을 늘린다'는 **조건부 비율의 성질**이고, "
+          + "**같은 획 수에서 맞게 놓이는 개수는 앵커가 언제나 더 많다.** "
+          + "⚠ 이것이 #15의 반대 방향이다 — 초판은 **비율만 보고** 절단 0.5에서 뒤집힌다고 읽었다. "
+          + "**등급별 분기는 필요 없다**: 교차 절단이 등급 셋에서 0.35~0.40으로 거의 같고 "
+          + "`right_over_all`은 세 등급 전부에서 앵커가 이긴다. "
+          + "⚠ **다만 두 팔의 게이지가 다르고 확정 쪽이 더 관대하다** — 그래서 이 결론(앵커 우세)은 "
+          + "**보수적**이다.",
+        // **등급별로도 낸다** — 실획이 어느 등급인지 모른다(AS-C1, 표본 0).
+        // **두 조건 모두에서 성립하는 설정이 있는가**가 사람이 물은 것이다
+        by_grade: Object.fromEntries(Object.entries(curveByGrade).map(([g, c]) => [g, {
+          confirm_no_anchor: curveRow(c.confirm, curveNByGrade[g].confirm),
+          live_with_anchor: curveRow(c.live, curveNByGrade[g].live),
+          crossing: crossing(c.live, c.confirm),
+        }])),
       },
       free_reasons_at_default: {
         note: "**533이 무엇인지 센다**(#7). `classifyStroke`가 이미 사유를 돌려주고 있었다.",
