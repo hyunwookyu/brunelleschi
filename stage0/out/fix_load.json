@@ -1012,6 +1012,16 @@
     "strokes": 1080,
     "hand_fixed": 145,
     "free_placements_after_settle": 21,
+    "free_placement_error": {
+      "n": 21,
+      "min": 0.0193,
+      "p10": 0.0333,
+      "median": 0.1639,
+      "p90": 0.8471,
+      "max": 1.0913
+    },
+    "free_placement_wrong": 10,
+    "free_placement_wrong_rate": 0.4762,
     "free_per_hand_fix": 0.1448,
     "ops_total": 432,
     "ops_per_drawn_stroke": 0.4,

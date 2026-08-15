@@ -180,7 +180,8 @@ describe("S-10 (a) 고치기 부하", () => {
                        anchorBad: 0, anchorBadAndWrong: 0, anchorGoodButWrong: 0 };
     }
     /** **연쇄 팔** — 손으로 하나 붙일 때마다 자동 배치를 다시 돌리면 몇 개가 공짜로 놓이는가. */
-    const cascade = { ops: 0, fixed: 0, freeAdds: 0, scenes: 0, strokes: 0 };
+    const cascade = { ops: 0, fixed: 0, freeAdds: 0, scenes: 0, strokes: 0,
+                      freeErr: [] as number[], freeWrong: 0 };
     const first: Record<string, Acc> = {};
     const view: Record<string, Record<number, Acc>> = {};
     /** **획 종류별**(리뷰어 4): 첫 시점 셀은 모서리 12획뿐이고 돌린 시점은 사선 2 + 모서리 1이다.
@@ -260,7 +261,20 @@ describe("S-10 (a) 고치기 부하", () => {
             // 못 붙이면 그 획은 이 팔에서 제외한다(무한 반복 방지) — 개수에서도 뺀다
             if (!got) { list.splice(idx, 1); cascade.strokes -= 1; continue; }
             list[idx].pts3d = got;
-            cascade.freeAdds += settle(list, CTX0, FIRST_VIEW_OPTS);   // **공짜로 놓이는 것**
+            // **공짜로 놓이는 것** — 그리고 **그것이 맞는지 함께 센다.** 부담이 줄어도
+            // 조용히 틀린 배치가 늘면 안 된다(A-3). 개수만 세면 그 위험이 안 보인다.
+            const wasPlaced = list.map(t => t.pts3d.length > 0);
+            const added = settle(list, CTX0, FIRST_VIEW_OPTS);
+            cascade.freeAdds += added;
+            list.forEach((t, k) => {
+              if (wasPlaced[k] || !t.pts3d.length) return;
+              const j = base.findIndex(x => x.id === t.id);
+              if (j < 0) return;
+              const w = Math.max(norm3(sub3(t.pts3d[0], edges[j].a)),
+                                 norm3(sub3(t.pts3d[t.pts3d.length - 1], edges[j].b))) / diag3;
+              cascade.freeErr.push(+w.toFixed(4));
+              if (w > 0.2) cascade.freeWrong += 1;
+            });
           }
         }
 
@@ -480,6 +494,11 @@ describe("S-10 (a) 고치기 부하", () => {
         scenes: cascade.scenes, strokes: cascade.strokes,
         hand_fixed: cascade.fixed,
         free_placements_after_settle: cascade.freeAdds,
+        /** **공짜로 놓인 것이 맞는가.** 부담이 줄어도 조용히 틀린 배치가 늘면 안 된다(A-3). */
+        free_placement_error: stat(cascade.freeErr, 4),
+        free_placement_wrong: cascade.freeWrong,
+        free_placement_wrong_rate: cascade.freeErr.length
+          ? +(cascade.freeWrong / cascade.freeErr.length).toFixed(4) : null,
         free_per_hand_fix: cascade.fixed ? +(cascade.freeAdds / cascade.fixed).toFixed(4) : null,
         ops_total: cascade.ops,
         ops_per_drawn_stroke: cascade.strokes ? +(cascade.ops / cascade.strokes).toFixed(4) : null,
