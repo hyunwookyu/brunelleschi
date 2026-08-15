@@ -1,5 +1,5 @@
 {
-  "n_flags": 1482,
+  "n_flags": 1486,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -3815,6 +3815,11 @@
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
     },
     {
+      "path": "promote.json:by_arm.base.chain.rounds_used.median",
+      "val": 1,
+      "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
+    },
+    {
       "path": "promote.json:by_arm.tighten.recovery_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -3825,6 +3830,11 @@
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
     },
     {
+      "path": "promote.json:by_arm.tighten.chain.rounds_used.median",
+      "val": 1,
+      "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
+    },
+    {
       "path": "promote.json:by_arm.loosen.recovery_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -3833,6 +3843,16 @@
       "path": "promote.json:by_arm.loosen.committed_drift.median",
       "val": 0,
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "promote.json:by_arm.loosen.chain.rounds_used.median",
+      "val": 1,
+      "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
+    },
+    {
+      "path": "promote.json:base_by_composition.1pt_yaw0_pitch0.chain_extra",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "real_ink.json:n_sessions",
@@ -7411,7 +7431,7 @@
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
     },
     {
-      "path": "web\\e2e\\stage.spec.ts:71:pixelGap",
+      "path": "web\\e2e\\stage.spec.ts:72:pixelGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
@@ -7427,6 +7447,7 @@
     }
   ],
   "n_stale": 0,
+  "n_stale_metrics": 0,
   "n_unread_fields": 1,
   "field_reads": [
     {
@@ -7481,6 +7502,7 @@
     }
   ],
   "constants_hash": "46c028d1",
+  "metrics_hash": "3df57ac7",
   "scanned": [
     "axis_judgement.json",
     "axis_live.json",
@@ -7497,6 +7519,7 @@
     "incline_vp.json",
     "lift_gate.json",
     "lift_grade.json",
+    "metrics.json",
     "misassign_retry.json",
     "occlusion.json",
     "one_stroke_one_axis.json",

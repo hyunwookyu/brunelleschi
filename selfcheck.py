@@ -79,9 +79,9 @@ def _constant_stats(obj, path="") -> list[dict]:
 
 
 def check(report: dict, prev: dict | None = None) -> list[dict]:
-    # `constants` 스냅샷은 **측정이 아니라 메타데이터**다 — 임계값 자체가 0·1이면
-    # 값 규칙이 전부 걸린다(실제로 걸렸다). 대조는 `scan_stale_constants`가 따로 한다.
-    report = {k: v for k, v in report.items() if k != "constants"}
+    # `constants`·`metrics` 스냅샷은 **측정이 아니라 메타데이터**다 — 임계값이나 절단값 자체가
+    # 0·1이면 값 규칙이 전부 걸린다(실제로 걸렸다). 대조는 `scan_stale_*`가 따로 한다.
+    report = {k: v for k, v in report.items() if k not in ("constants", "metric_defs")}
     flags = _degenerate_distributions(report) + _constant_stats(report)
     prev_flat = dict(_walk(prev)) if prev else {}
     for path, val in _walk(report):
@@ -234,7 +234,8 @@ def scan_stale_constants(outdir: Path, reports: dict[str, dict]) -> list[dict]:
     cur_flat = _flatten(cur.get("values", {}))
     flags = []
     for name, rep in sorted(reports.items()):
-        if name == "constants.json":
+        # `constants.json`·`metrics.json`은 **기준 자체**다 — 자기를 대조하지 않는다.
+        if name in ("constants.json", "metrics.json"):
             continue
         snap = rep.get("constants")
         if not isinstance(snap, dict) or "hash" not in snap:
@@ -251,6 +252,47 @@ def scan_stale_constants(outdir: Path, reports: dict[str, dict]) -> list[dict]:
         flags.append({"path": f"{name}@{snap.get('hash')}", "val": "; ".join(diff[:6]) or "(값 동일, 해시만 다름)",
                       "flag": f"**STALE** — 현재 상수({cur.get('hash')})와 다른 상수로 측정됐다. "
                               f"다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"})
+    return flags
+
+
+def scan_stale_metrics(outdir: Path, reports: dict[str, dict]) -> list[dict]:
+    """**정의 낡음 탐지** — 지표를 재는 *식*이 바뀌었는데 안 다시 돌린 산출물을 잡는다.
+
+    `scan_stale_constants`가 못 잡는 종류다. L-B.7에서 상수는 같은 채
+    형태 오차의 식만 갈렸고(게이지 유무), 같은 2416획이 `axis_live.json` 0.1222 ·
+    `promote.json` 0.1533으로 나왔다. **두 원장을 나란히 읽은 문서가 잘못된 비교를 했고
+    STALE은 아무것도 안 짚었다** — 잡을 대상이 상수가 아니었기 때문이다.
+
+    `metrics.json`(현재 정의)과 각 산출물의 `metrics` 스냅샷을 대조한다.
+    다르면 **STALE(정의)** — 어느 지표 함수가 다른지 함께 낸다.
+    """
+    cur_path = outdir / "metrics.json"
+    if not cur_path.exists():
+        return [{"path": "metrics.json", "val": None,
+                 "flag": "현재 지표 정의 스냅샷이 없다 → `npx vitest run test/metrics.test.ts`"}]
+    cur = json.loads(cur_path.read_text(encoding="utf-8"))
+    flags = []
+    if cur.get("source") != "file":
+        flags.append({"path": "metrics.json", "val": cur.get("source"),
+                      "flag": "기준 정의 스냅샷이 소스에서 안 왔다 → 대조가 무의미하다"})
+    for name, rep in sorted(reports.items()):
+        if name in ("metrics.json", "constants.json"):
+            continue
+        snap = rep.get("metric_defs")
+        if not isinstance(snap, dict) or "hash" not in snap:
+            flags.append({"path": name, "val": None,
+                          "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. "
+                                  "하네스에 metric_defs: metricsSnapshot()을 넣는다"})
+            continue
+        if snap.get("hash") == cur.get("hash"):
+            continue
+        old_names, cur_names = set(snap.get("names", [])), set(cur.get("names", []))
+        diff = sorted((old_names - cur_names) | (cur_names - old_names))
+        flags.append({"path": f"{name}@{snap.get('hash')}",
+                      "val": ("지표 목록이 다르다: " + ", ".join(diff[:6])) if diff
+                             else "(목록은 같다 — 식이나 절단값이 바뀌었다. `git diff web/test/metrics.ts`)",
+                      "flag": f"**STALE(정의)** — 현재 지표 정의({cur.get('hash')})와 다른 식으로 "
+                              f"측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"})
     return flags
 
 
@@ -367,6 +409,8 @@ def main():
 
     stale = scan_stale_constants(outdir, reports)      # 하류 재측정 누락 (재발 유형 자동 탐지)
     flags += stale
+    stale_m = scan_stale_metrics(outdir, reports)      # **정의** 낡음 (상수 스냅샷이 못 잡는 종류)
+    flags += stale_m
     unread = scan_unread_fields(ROOT)                  # 쓰기만 하고 안 읽는 필드 (배선 누락, S-8c)
     flags += unread
 
@@ -375,9 +419,11 @@ def main():
 
     out = {"n_flags": len(flags), "flags": flags,
            "n_stale": sum(1 for f in stale if "STALE" in f["flag"]),
+           "n_stale_metrics": sum(1 for f in stale_m if "STALE" in f["flag"]),
            "n_unread_fields": len(unread),
            "field_reads": SCANNED_FIELDS,
            "constants_hash": (reports.get("constants.json") or {}).get("hash"),
+           "metrics_hash": (reports.get("metrics.json") or {}).get("hash"),
            "scanned": [p.name for p in sorted(outdir.glob("*.json")) if p.name not in skip],
            "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."}
     (ROOT / "stage0" / "out" / "selfcheck.json").write_text(

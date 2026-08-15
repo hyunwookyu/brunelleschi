@@ -112,6 +112,25 @@
     },
     "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
   },
+  "metric_defs": {
+    "hash": "3df57ac7",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  },
   "approach": "**면은 축 두 개가 편다**(D-S14). 계획서의 '이미 정의된 면'을 면 생성(§6, S-8)까지 기다리지 않는다 — 상자의 면은 축 두 개가 펴는 평면이고 앵커가 위치를 정한다. 닫힌 획 루프 검출도 필요 없다(A-3). 어느 면인지는 **S-6 (1)의 정합성 검사**로 고른다.",
   "metrics": {
     "unclassified_rate": "사선이 **미분류로 남는 비율**. 축으로 배정되면 그것이 조용히 틀린 것이다.",

@@ -17,6 +17,7 @@ import { classifyStroke, representative, maxTurn, AXIS_TOL, type AxisCfg } from 
 import { lineIntersect, fFromThreeVps, type Pt2 } from "../src/s3d/camera.js";
 import { renderInk, rng32, type InkGrade } from "../src/s3d/synthInk.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SZ: [number, number] = [960, 672];
@@ -100,6 +101,7 @@ describe("S-2 방향 판정", () => {
         + "'숙련자 획에서 정확한가'(S-1)는 실제 획이 생기는 S-10 이후에 다시 잰다."
       ),
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       camera: { vps: VPS, f: fFromThreeVps(...VPS).f },
       tolerances: AXIS_TOL,
       by_grade,

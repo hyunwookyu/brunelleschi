@@ -112,6 +112,25 @@
     },
     "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
   },
+  "metric_defs": {
+    "hash": "3df57ac7",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  },
   "approach": "계획서의 '임시 평면(시선 수직)'은 **쓰지 않는다** — 앵커의 깊이를 복사하므로 획이 깊이로 안 들어가고(D-S8이 기각한 `screen`) 깊이가 임의가 된다. 대신 **두 앵커를 잇는 선을 담되 시선에 가장 정면인 평면**(`facing`을 앵커-앵커 방향에 적용)을 쓴다. 새 가정이 아니다 — 두 끝점의 3D 위치는 기존 기하가 정했고 그 사이를 어느 평면으로 잇느냐만 남았으며 D-S8이 그 물음에 이미 답했다. **양 끝에 후보가 있을 때만**(A-3).",
   "fixtures": {
     "on_face": "바닥면(축0×축1) 안에서 부푼 곡선. **면 경로가 이미 잡는다** — 폴백이 가로채면 안 된다.",

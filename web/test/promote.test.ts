@@ -20,9 +20,9 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { liftAll, LIFT_TOL, type LiftStroke, type LiftCtx, type LiftSeg } from "../src/s3d/lift.js";
 import { promote, promoteByAnchor, committedDrift } from "../src/s3d/promote.js";
-import { snapCandidates, staticCandidates, type SnapSeg, type SnapCtx } from "../src/s3d/snap.js";
+import { snapCandidates, staticCandidates, SNAP_TOL, type SnapSeg, type SnapCtx } from "../src/s3d/snap.js";
 import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "../src/s3d/liveLine.js";
-import { unit3, axisDirection } from "../src/s3d/geom3d.js";
+import { unit3, axisDirection, mul3 } from "../src/s3d/geom3d.js";
 import { classifyStroke, AXIS_TOL, type Axis, type AxisCfg } from "../src/s3d/axis.js";
 import { norm3, sub3 } from "../src/s3d/geom3d.js";
 import { isFiniteVp, type Pt2 } from "../src/s3d/camera.js";
@@ -30,6 +30,7 @@ import { scene, boxEdges, drawEdges, groundPoint, stat, round,
          type Scene, type TrueEdge } from "./scene3d.js";
 import { rng32, type InkGrade } from "../src/s3d/synthInk.js";
 import { constantsSnapshot } from "./constants.js";
+import { fitGauge, segShapeError, metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -76,12 +77,13 @@ function fixture(ci: number, grade: InkGrade, seed: number, jit: number): Fx | n
            strokes: drawn.map((e, i) => ({ id: `s${i}`, pts2d: e.pts2d as Pt2[], axis: "free" as Axis })) };
 }
 
-/** 한 세그먼트의 참값 대비 오차(구조 대각 대비). 끝점 짝은 가까운 쪽으로 맞춘다. */
-function segErr(seg: LiftSeg, t: TrueEdge, diag: number): number {
-  const d0 = Math.max(norm3(sub3(seg.a, t.a)), norm3(sub3(seg.b, t.b)));
-  const d1 = Math.max(norm3(sub3(seg.a, t.b)), norm3(sub3(seg.b, t.a)));
-  return Math.min(d0, d1) / diag;
-}
+// **형태 오차 정의는 `metrics.ts` 하나다.** 여기 있던 `segErr`가 게이지를 안 없앴고
+// (= 고정 게이지 1), 그래서 같은 2416획이 `axis_live.json` 0.1222 대 이 원장 0.1533으로
+// 갈렸다(리뷰어 L-B.7 [1]). `liftAll`은 깊이를 `gauge_height`로 정규화하므로
+// **절대 배율은 자유도**이고, 그것을 안 없애고 뺀 값은 형태 오차가 아니다.
+//
+// 승격에서 쓰는 게이지는 **확정 집합에서 적합한 것**이다 — 회수 획은 이미 확정된 틀에
+// 붙으므로, 회수 집합만 따로 다시 적합하면 "붙는다"는 성질 자체가 지워진다.
 
 interface Bag {
   n: number; total: number; confirmed: number; pendingN: number;
@@ -93,12 +95,48 @@ interface Bag {
   cw10: number; cw20: number; cw50: number;
   rw10: number; rw20: number; rw50: number;
   drift: number[];
+  /** 확정이 0이라 게이지가 안 정해진 장면 수. **이 장면의 형태 오차는 분모에 없다**(#11). */
+  noGauge: number;
+  // ---- 연쇄(리뷰어 [4]) — 2회차 이후가 "연쇄"다
+  /** 회차 번호 → 그 회차가 회수한 획 수. `[2]`부터가 연쇄의 증거다. */
+  chainByRound: Record<number, number>;
+  /** 장면마다 몇 회에서 멈췄는가. 1이면 그 장면은 연쇄가 없었다. */
+  chainRounds: number[];
+  /** 2회차 이후에 추가로 회수된 총합. */
+  chainExtra: number;
+  errChainExtra: number[]; xw20: number; xw50: number;
+  // ---- 일괄 기전 재측정(리뷰어 [2][3], PITFALLS #32) — **실행됐는지부터 센다**
+  batchAfter: number; batchAfterIn: number; batchAfterSolved: number;
+  batchOracle: number; batchOracleIn: number; batchOracleSolved: number;
+  batchOracleReasons: Record<string, number>;
+  errBatchOracle: number[]; ow20: number; ow50: number;
 }
+/** 연쇄 상한. 도달하면 원장에 적는다 — **조용히 자르지 않는다.** */
+const CHAIN_MAX_ROUNDS = 8;
+
+/**
+ * **회수율을 등급·잡음으로 가른다**(리뷰어 [11] · PITFALLS #12).
+ * 합산 한 점으로 "37.8%"라고 적으면 그 값이 어느 조건에서도 유지되는지 알 수 없다.
+ */
+interface Cellule { pending: number; anchor: number; chain: number; w20: number; errN: number }
+const cellule = (): Cellule => ({ pending: 0, anchor: 0, chain: 0, w20: 0, errN: 0 });
+const celluleRep = (c: Cellule) => ({
+  anchor_recovered_over_pending: `${c.anchor}/${c.pending}`,
+  anchor_recovery_rate: round(c.anchor / Math.max(1, c.pending), 4),
+  chain_extra: c.chain,
+  anchor_silent_wrong_0_2: `${c.w20}/${c.errN}`,
+});
 const bag = (): Bag => ({ n: 0, total: 0, confirmed: 0, pendingN: 0, recovered: 0, reasons: {},
                           recoveredA: 0, reasonsA: {}, errRecoveredA: [],
                           aw10: 0, aw20: 0, aw50: 0,
                           errConfirmed: [], errRecovered: [],
-                          cw10: 0, cw20: 0, cw50: 0, rw10: 0, rw20: 0, rw50: 0, drift: [] });
+                          cw10: 0, cw20: 0, cw50: 0, rw10: 0, rw20: 0, rw50: 0, drift: [],
+                          noGauge: 0,
+                          chainByRound: {}, chainRounds: [], chainExtra: 0,
+                          errChainExtra: [], xw20: 0, xw50: 0,
+                          batchAfter: 0, batchAfterIn: 0, batchAfterSolved: 0,
+                          batchOracle: 0, batchOracleIn: 0, batchOracleSolved: 0,
+                          batchOracleReasons: {}, errBatchOracle: [], ow20: 0, ow50: 0 });
 const rep = (b: Bag) => ({
   scenes: b.n,
   // **분모를 적는다**(#11). 회수율의 분모는 **그 조건에서 실제로 미배치인 획**이다
@@ -110,17 +148,25 @@ const rep = (b: Bag) => ({
   not_recovered_reasons: b.reasons,
   confirmed_shape_err: stat(b.errConfirmed),
   recovered_shape_err: stat(b.errRecovered),
+  // **분모는 형태 오차를 실제로 잰 집합이다**(#11) — 확정이 0인 장면은 게이지가 안 정해져
+  // 회수 획도 못 잰다. `scenes_without_gauge`가 그 장면 수다
+  scenes_without_gauge: b.noGauge,
+  shape_err_measured: { confirmed: `${b.errConfirmed.length}/${b.confirmed}`,
+                        recovered: `${b.errRecovered.length}/${b.recovered}`,
+                        anchor: `${b.errRecoveredA.length}/${b.recoveredA}` },
   // **절단을 하나 고르지 않는다**(#13). 분모는 각각 그 집합이다
-  confirmed_silent_wrong: { cut_0_1: `${b.cw10}/${b.confirmed}`, cut_0_2: `${b.cw20}/${b.confirmed}`,
-                            cut_0_5: `${b.cw50}/${b.confirmed}` },
-  recovered_silent_wrong: { cut_0_1: `${b.rw10}/${b.recovered}`, cut_0_2: `${b.rw20}/${b.recovered}`,
-                            cut_0_5: `${b.rw50}/${b.recovered}` },
+  confirmed_silent_wrong: { cut_0_1: `${b.cw10}/${b.errConfirmed.length}`,
+                            cut_0_2: `${b.cw20}/${b.errConfirmed.length}`,
+                            cut_0_5: `${b.cw50}/${b.errConfirmed.length}` },
+  recovered_silent_wrong: { cut_0_1: `${b.rw10}/${b.errRecovered.length}`,
+                            cut_0_2: `${b.rw20}/${b.errRecovered.length}`,
+                            cut_0_5: `${b.rw50}/${b.errRecovered.length}` },
   // **합쳐서 본다** — 채택 규칙이 (배치 + 회수)와 조용히 틀림을 함께 요구한다
   all_silent_wrong: {
-    cut_0_2: `${b.cw20 + b.rw20}/${b.confirmed + b.recovered}`,
-    cut_0_5: `${b.cw50 + b.rw50}/${b.confirmed + b.recovered}`,
-    rate_0_2: round((b.cw20 + b.rw20) / Math.max(1, b.confirmed + b.recovered), 4),
-    rate_0_5: round((b.cw50 + b.rw50) / Math.max(1, b.confirmed + b.recovered), 4),
+    cut_0_2: `${b.cw20 + b.rw20}/${b.errConfirmed.length + b.errRecovered.length}`,
+    cut_0_5: `${b.cw50 + b.rw50}/${b.errConfirmed.length + b.errRecovered.length}`,
+    rate_0_2: round((b.cw20 + b.rw20) / Math.max(1, b.errConfirmed.length + b.errRecovered.length), 4),
+    rate_0_5: round((b.cw50 + b.rw50) / Math.max(1, b.errConfirmed.length + b.errRecovered.length), 4),
   },
   committed_drift: stat(b.drift, 12),
   // ---- 두 번째 기전(앵커). **이것이 실제로 회수하는 쪽이다**
@@ -129,23 +175,57 @@ const rep = (b: Bag) => ({
   anchor_not_recovered_reasons: b.reasonsA,
   anchor_recovered_shape_err: stat(b.errRecoveredA),
   anchor_recovered_silent_wrong: {
-    cut_0_1: `${b.aw10}/${b.recoveredA}`, cut_0_2: `${b.aw20}/${b.recoveredA}`,
-    cut_0_5: `${b.aw50}/${b.recoveredA}`,
+    cut_0_1: `${b.aw10}/${b.errRecoveredA.length}`, cut_0_2: `${b.aw20}/${b.errRecoveredA.length}`,
+    cut_0_5: `${b.aw50}/${b.errRecoveredA.length}`,
   },
   anchor_all_silent_wrong: {
-    cut_0_2: `${b.cw20 + b.aw20}/${b.confirmed + b.recoveredA}`,
-    cut_0_5: `${b.cw50 + b.aw50}/${b.confirmed + b.recoveredA}`,
-    rate_0_2: round((b.cw20 + b.aw20) / Math.max(1, b.confirmed + b.recoveredA), 4),
-    rate_0_5: round((b.cw50 + b.aw50) / Math.max(1, b.confirmed + b.recoveredA), 4),
+    cut_0_2: `${b.cw20 + b.aw20}/${b.errConfirmed.length + b.errRecoveredA.length}`,
+    cut_0_5: `${b.cw50 + b.aw50}/${b.errConfirmed.length + b.errRecoveredA.length}`,
+    rate_0_2: round((b.cw20 + b.aw20) / Math.max(1, b.errConfirmed.length + b.errRecoveredA.length), 4),
+    rate_0_5: round((b.cw50 + b.aw50) / Math.max(1, b.errConfirmed.length + b.errRecoveredA.length), 4),
   },
   anchor_placed_total_over_all: `${b.confirmed + b.recoveredA}/${b.total}`,
+  // ---- **연쇄 자체**(리뷰어 [4]). 1회차는 위의 `anchor_*`와 같은 양이다
+  chain: {
+    note: "**회차별** 회수. `round_2` 이상이 있어야 '승격은 연쇄한다'가 측정된 것이다. "
+      + "`rounds_used`가 장면마다 몇 회에서 멈췄는지다(1 = 연쇄 없음).",
+    recovered_by_round: b.chainByRound,
+    extra_after_round_1: b.chainExtra,
+    rounds_used: stat(b.chainRounds, 2),
+    hit_round_cap: b.chainRounds.filter(r => r >= CHAIN_MAX_ROUNDS).length,
+    round_cap: CHAIN_MAX_ROUNDS,
+    extra_shape_err: stat(b.errChainExtra),
+    extra_silent_wrong: { cut_0_2: `${b.xw20}/${b.errChainExtra.length}`,
+                          cut_0_5: `${b.xw50}/${b.errChainExtra.length}` },
+    chain_placed_total_over_all: `${b.confirmed + b.recoveredA + b.chainExtra}/${b.total}`,
+  },
+  // ---- **일괄 기전 재측정**(리뷰어 [2][3] · PITFALLS #32). **실행 카운터를 먼저 낸다**
+  batch_reexamined: {
+    note: "초판의 회수 0은 **거름이 대기 집합을 전부 비워 솔버에 한 획도 안 닿은 것**이었다. "
+      + "`solved_pending`이 0이면 그 실행은 **기전에 대한 정보가 0이다**(#32). "
+      + "`축이 미분류다`는 판정기의 결과이지 획의 성질이 아니므로 **축을 주고 다시 돌린다**.",
+    after_chain: { input: b.batchAfterIn, solved_pending: b.batchAfterSolved,
+                   promoted: b.batchAfter },
+    oracle_axis: { input: b.batchOracleIn, solved_pending: b.batchOracleSolved,
+                   promoted: b.batchOracle, not_promoted_reasons: b.batchOracleReasons,
+                   shape_err: stat(b.errBatchOracle),
+                   silent_wrong: { cut_0_2: `${b.ow20}/${b.errBatchOracle.length}`,
+                                   cut_0_5: `${b.ow50}/${b.errBatchOracle.length}` } },
+  },
 });
 
 describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
   it("측정을 원장에 남긴다", () => {
     const arms: Record<string, Bag> = {};
     /** 대조군: **승격 없이** 같은 미배치 집합을 다시 푼다 — 아무 일도 안 일어나야 한다. */
-    const control = { tried: 0, extra: 0 };
+    const control = { tried: 0, extra: 0, errFixed: [] as number[], errSelf: [] as number[],
+                      fw20: 0, sw20: 0 };
+    /** **양성 채널**(리뷰어 [6]) — 덮어쓰기를 켜면 `committedDrift`가 0이 아니어야 한다. */
+    const driftPositive: number[] = [];
+    /** **기준 팔만** 등급·잡음·구도로 가른다(리뷰어 [11]). */
+    const byGrade: Record<string, Cellule> = {};
+    const byJit: Record<string, Cellule> = {};
+    const byComp: Record<string, Cellule> = {};
 
     for (let ci = 0; ci < COMPOSITIONS.length; ci++) {
       for (const grade of GRADES) for (const seed of SEEDS) for (const jit of JITTERS) {
@@ -166,8 +246,15 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
           }));
           const first = liftAll(input, ctx);
           b.confirmed += first.placed.size;
+          // **확정 집합이 게이지를 정한다.** 회수 획은 이 게이지로 잰다 — 새로 적합하지 않는다.
+          // 확정이 비면 게이지가 안 정해지므로 그 장면의 형태 오차는 **안 센다**(분모에서 뺀다).
+          const kFix = first.placed.size ? fitGauge(first.placed, fx.edges) : null;
+          if (kFix == null) b.noGauge += 1;
+          const err = (sg: LiftSeg, id: string): number | null =>
+            kFix == null ? null : segShapeError(sg, fx.edges[+id.slice(1)], fx.diag, kFix);
           for (const [id, seg] of first.placed) {
-            const e = segErr(seg, fx.edges[+id.slice(1)], fx.diag);
+            const e = err(seg, id);
+            if (e == null) continue;
             b.errConfirmed.push(e);
             if (e > 0.1) b.cw10 += 1;
             if (e > 0.2) b.cw20 += 1;
@@ -185,7 +272,8 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
           b.recovered += pr.promoted.size;
           for (const [k2, v] of Object.entries(pr.reasons)) b.reasons[k2] = (b.reasons[k2] ?? 0) + v;
           for (const [id, seg] of pr.promoted) {
-            const e = segErr(seg, fx.edges[+id.slice(1)], fx.diag);
+            const e = err(seg, id);
+            if (e == null) continue;
             b.errRecovered.push(e);
             if (e > 0.1) b.rw10 += 1;
             if (e > 0.2) b.rw20 += 1;
@@ -196,16 +284,21 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
 
           // ---- **두 번째 기전: 앵커로 올린다**(§3·§7의 실시간 경로를 대기 획에 적용).
           // 대상은 **확정된 3D 기하**다 — 새로 놓인 것에 시작점이 붙으면 앵커가 생긴다.
-          {
-            const segs: SnapSeg[] = [...first.placed].map(([id, sg]) => ({ id, a: sg.a, b: sg.b }));
-            const sctx: SnapCtx = { principal: ctx.principal, f: ctx.f, imgSize: SZ,
-                                    ground: null, from: null };
+          //
+          // ⚠ **한 회분만 재면 연쇄를 잰 것이 아니다**(리뷰어 [4]). 회수된 획이 다시 앵커가 되어
+          // 다음 회를 여는 것이 §9.1의 "승격은 연쇄한다"이므로, **더 안 늘 때까지 돈다.**
+          const sctx: SnapCtx = { principal: ctx.principal, f: ctx.f, imgSize: SZ,
+                                  ground: null, from: null };
+          const dirs = [0, 1, 2].map(i => {
+            const v = fx.sc.vps[i as 0 | 1 | 2];
+            return isFiniteVp(v, SZ) ? unit3(axisDirection(v, ctx.principal, ctx.f)) : null;
+          });
+          /** 한 회 — `committed`를 스냅 대상으로 두고 `rest`를 앵커로 올린다. 축 라벨도 낸다. */
+          const anchorRound = (rest: LiftStroke[], committedNow: Map<string, LiftSeg>) => {
+            const segs: SnapSeg[] = [...committedNow].map(([id, sg]) => ({ id, a: sg.a, b: sg.b }));
             const pre = staticCandidates(segs);
-            const dirs = [0, 1, 2].map(i => {
-              const v = fx.sc.vps[i as 0 | 1 | 2];
-              return isFiniteVp(v, SZ) ? unit3(axisDirection(v, ctx.principal, ctx.f)) : null;
-            });
-            const pa = promoteByAnchor(pending, (st) => {
+            const axisOf = new Map<string, Axis>();
+            const pa = promoteByAnchor(rest, (st) => {
               const a2 = st.pts2d[0], b2 = st.pts2d[st.pts2d.length - 1];
               const cand = segs.length
                 ? snapCandidates(a2, segs, sctx, {}, pre)[0] : undefined;
@@ -215,16 +308,95 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
               if (!near || near.deg > LIVE_TOL.axis_deg) return { seg: null, why: "angle_over" };
               const sg = segmentFromAnchor(cand.at, dirs[near.axis], b2,
                                            { principal: ctx.principal, f: ctx.f });
+              if (sg) axisOf.set(st.id, near.axis as Axis);
               return sg ? { seg: sg, why: "" } : { seg: null, why: "no_end" };
             });
-            b.recoveredA += pa.promoted.size;
-            for (const [k3, v] of Object.entries(pa.reasons)) b.reasonsA[k3] = (b.reasonsA[k3] ?? 0) + v;
-            for (const [id, sg] of pa.promoted) {
-              const e = segErr(sg, fx.edges[+id.slice(1)], fx.diag);
-              b.errRecoveredA.push(e);
-              if (e > 0.1) b.aw10 += 1;
-              if (e > 0.2) b.aw20 += 1;
-              if (e > 0.5) b.aw50 += 1;
+            return { ...pa, axisOf };
+          };
+
+          // ---- 1회차: 기존 보고와 같은 양(비교 가능성을 지킨다)
+          const r1 = anchorRound(pending, first.placed);
+          b.recoveredA += r1.promoted.size;
+          for (const [k3, v] of Object.entries(r1.reasons)) b.reasonsA[k3] = (b.reasonsA[k3] ?? 0) + v;
+          for (const [id, sg] of r1.promoted) {
+            const e = err(sg, id);
+            if (e == null) continue;
+            b.errRecoveredA.push(e);
+            if (e > 0.1) b.aw10 += 1;
+            if (e > 0.2) b.aw20 += 1;
+            if (e > 0.5) b.aw50 += 1;
+          }
+
+          // ---- **2회차 이후 — 연쇄 자체**(리뷰어 [4]). 더 안 늘 때까지.
+          const chainAxis = new Map<string, Axis>(r1.axisOf);
+          const cur = new Map(first.placed);
+          for (const [id, sg] of r1.promoted) cur.set(id, sg);
+          let rest = pending.filter(s => !r1.promoted.has(s.id));
+          let round = 1;
+          while (round < CHAIN_MAX_ROUNDS && rest.length) {
+            const rn = anchorRound(rest, cur);
+            if (!rn.promoted.size) break;
+            round += 1;
+            b.chainByRound[round] = (b.chainByRound[round] ?? 0) + rn.promoted.size;
+            for (const [id, sg] of rn.promoted) {
+              cur.set(id, sg);
+              chainAxis.set(id, rn.axisOf.get(id)!);
+              const e = err(sg, id);
+              if (e == null) continue;
+              b.errChainExtra.push(e);
+              if (e > 0.2) b.xw20 += 1;
+              if (e > 0.5) b.xw50 += 1;
+            }
+            rest = rest.filter(s => !rn.promoted.has(s.id));
+          }
+          b.chainRounds.push(round);
+          if (name === "base") {
+            const extra = (cur.size - first.placed.size) - r1.promoted.size;
+            for (const c of [byGrade[grade] ??= cellule(), byJit[`jit_${jit}`] ??= cellule(),
+                             byComp[COMPOSITIONS[ci].name] ??= cellule()]) {
+              c.pending += pending.length; c.anchor += r1.promoted.size; c.chain += extra;
+              for (const [id, sg] of r1.promoted) {
+                const e = err(sg, id);
+                if (e == null) continue;
+                c.errN += 1; if (e > 0.2) c.w20 += 1;
+              }
+            }
+          }
+          b.chainExtra += (cur.size - first.placed.size) - r1.promoted.size;
+
+          // ---- **[2][3] 축을 준 뒤 일괄 기전을 돌린다**(#32).
+          // 초판은 대기 1904가 거름에서 전부 걸려 **솔버에 한 획도 안 닿은 것**을 두고
+          // "기전이 회수를 못 한다"고 적었다. `축이 미분류다`는 **판정기의 결과이지 획의 성질이
+          // 아니다** — 축을 주면 실행될 수 있다. 두 팔로 가른다:
+          //   ⓐ 연쇄가 붙인 축 + 연쇄가 키운 확정 집합
+          //   ⓑ **오라클 축**(참값) — 어떤 축 판정기도 이보다 나을 수 없는 상한
+          {
+            const labeled = rest.map(s => ({ ...s, axis: chainAxis.get(s.id) ?? s.axis }));
+            const curInput: LiftStroke[] = [...cur.keys()].map(id =>
+              ({ ...input.find(s => s.id === id)!, axis: chainAxis.get(id) ?? input.find(s => s.id === id)!.axis }));
+            const pb = promote(labeled, curInput, cur, ctx, { touch_ratio: LIFT_TOL.touch_ratio });
+            b.batchAfter += pb.promoted.size;
+            b.batchAfterIn += pb.exec.pendingIn;
+            b.batchAfterSolved += pb.exec.solvedPending;
+
+            const oracle = pending.map(s => ({ ...s,
+              axis: trueAxis(fx.sc, fx.edges[+s.id.slice(1)].axis as 0 | 1 | 2) }));
+            const po = promote(oracle, input.map(s => ({
+              ...s, axis: first.placed.has(s.id)
+                ? trueAxis(fx.sc, fx.edges[+s.id.slice(1)].axis as 0 | 1 | 2) : s.axis,
+            })), first.placed, ctx, { touch_ratio: LIFT_TOL.touch_ratio });
+            b.batchOracle += po.promoted.size;
+            b.batchOracleIn += po.exec.pendingIn;
+            b.batchOracleSolved += po.exec.solvedPending;
+            for (const [k4, v] of Object.entries(po.reasons)) {
+              b.batchOracleReasons[k4] = (b.batchOracleReasons[k4] ?? 0) + v;
+            }
+            for (const [id, sg] of po.promoted) {
+              const e = err(sg, id);
+              if (e == null) continue;
+              b.errBatchOracle.push(e);
+              if (e > 0.2) b.ow20 += 1;
+              if (e > 0.5) b.ow50 += 1;
             }
           }
 
@@ -234,6 +406,30 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
             control.tried += pending.length;
             const again = liftAll(pending, ctx);
             control.extra += again.placed.size;
+            // **놓인 것의 형태 오차를 잰다**(리뷰어 [5]). "배율이 정해지지 않는다"는 논증이지
+            // 측정이 아니었다(#7). 두 게이지로 낸다 — 확정 집합의 게이지(승격이 쓰는 것)와
+            // **자기 게이지**(배율을 공짜로 주는 관대한 읽기)다. 둘이 갈리면 그것이 답이다
+            if (again.placed.size && kFix != null) {
+              const kSelf = fitGauge(again.placed, fx.edges);
+              for (const [id, sg] of again.placed) {
+                const eFix = segShapeError(sg, fx.edges[+id.slice(1)], fx.diag, kFix);
+                const eSelf = segShapeError(sg, fx.edges[+id.slice(1)], fx.diag, kSelf);
+                control.errFixed.push(eFix); control.errSelf.push(eSelf);
+                if (eFix > 0.2) control.fw20 += 1;
+                if (eSelf > 0.2) control.sw20 += 1;
+              }
+            }
+          }
+
+          // ---- **양성 채널**(리뷰어 [6] · #30): `committed_drift = 0`이 되살릴 수 있는 검사인가.
+          // 기준 팔은 승격이 기존 기하를 **안 쓰므로** 0이 자명해 보인다. 덮어쓰기를 켠 팔을
+          // 돌려 **0이 아닌 값**을 본다 — 안 움직이면 그 지표는 측정이 아니라 항등이다(#5).
+          if (name === "base" && first.placed.size) {
+            const overwritten = new Map(first.placed);
+            for (const [id, sg] of first.placed) {
+              overwritten.set(id, { a: mul3(sg.a, 1.01), b: mul3(sg.b, 1.01) });
+            }
+            driftPositive.push(committedDrift(first.placed, overwritten));
           }
         }
       }
@@ -242,7 +438,8 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
     // ---- 사전 등록한 채택 규칙(#26). **측정 전에 박았다.**
     // **두 기전 중 실제로 회수하는 쪽으로 판정한다** — 등록 규칙의 "(배치 + 회수)"는
     // 회수 기전을 지정하지 않았고, 일괄 재풀이는 0을 회수한다
-    const rate = (b: Bag) => (b.cw20 + b.aw20) / Math.max(1, b.confirmed + b.recoveredA);
+    const rate = (b: Bag) =>
+      (b.cw20 + b.aw20) / Math.max(1, b.errConfirmed.length + b.errRecoveredA.length);
     const total = (b: Bag) => b.confirmed + b.recoveredA;
     const verdict = total(arms.tighten) >= total(arms.base) && rate(arms.tighten) < rate(arms.base)
       ? "D-L18 채택 — 조이기가 (배치+회수)를 안 잃으면서 조용히 틀림을 낮춘다"
@@ -268,6 +465,19 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
         arms: ARMS,
         same_as_axis_live: "구도·시드 산식·skew·잡음 축이 `axis_live.json`·`lift_grade.json`과 "
           + "같다 — 아니면 D-L18을 가르는 것이 아니다(#27).",
+        // **앵커 팔의 조건을 적는다**(리뷰어 [12]) — 없으면 다른 원장의 앵커 수치와 나란히 못 읽는다
+        anchor_arm: {
+          snap_target: "**확정된 3D 기하**(`first.placed`) — 오차가 있는 것이다. "
+            + "`snap.json`·`axis_live.json`은 **참 3D**를 스냅 대상으로 썼다. "
+            + "그래서 이 원장의 앵커 수치를 그 둘과 직접 비교하지 않는다(#27).",
+          axis_deg: LIVE_TOL.axis_deg,
+          snap_radius_ratio: SNAP_TOL.radius_ratio,
+          chain: `더 안 늘 때까지 반복하되 상한 ${CHAIN_MAX_ROUNDS}회. 도달 횟수를 원장에 적는다.`,
+        },
+        metric_gauge: "형태 오차는 `metrics.ts` 하나에서 온다. **확정 집합이 게이지를 정하고 "
+          + "회수 획은 그 게이지로 잰다** — 회수 획만 다시 적합하면 '이미 확정된 틀에 붙는다'는 "
+          + "성질이 지워진다. 초판의 `segErr`(게이지 1)가 같은 2416획을 0.1533으로 냈고 "
+          + "`axis_live.json`은 0.1222였다(리뷰어 [1]).",
       },
       registered_rule: {
         rule: "**조이기가 옳으려면** (배치 + 회수)가 기준 이상이면서 **조용히 틀림(cut 0.2)이 "
@@ -282,33 +492,89 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
           + "'기존 기하와 함께 푸는 것'이 아니라 **'분모가 줄어든 것'**에서 온다.",
         newly_placed_over_pending: `${control.extra}/${control.tried}`,
         rate: round(control.extra / Math.max(1, control.tried), 4),
+        // **논증이 아니라 측정으로 처분한다**(리뷰어 [5] · #7). "배율이 정해지지 않는다"를
+        // 두 게이지로 가른다: 확정 집합의 게이지(승격이 쓰는 것) 대 자기 게이지(공짜 배율)
+        measured_not_argued: {
+          note: "확정 게이지로 재면 **배율이 안 맞아 크게 틀리고**, 자기 게이지로 재면 "
+            + "형태만 남는다. 둘의 격차가 곧 '배율이 정해지지 않는다'의 크기다.",
+          shape_err_committed_gauge: stat(control.errFixed),
+          shape_err_self_gauge: stat(control.errSelf),
+          silent_wrong_0_2: { committed_gauge: `${control.fw20}/${control.errFixed.length}`,
+                              self_gauge: `${control.sw20}/${control.errSelf.length}` },
+        },
+      },
+      // **양성 채널**(리뷰어 [6] · #30) — `committed_drift = 0`이 항등이 아님을 보인다
+      committed_drift_positive_channel: {
+        note: "기준 팔의 `committed_drift`는 전부 0이고 selfcheck가 '분포 전체가 0'으로 "
+          + "플래그한다. **원인 확인**: 확정 기하를 1.01배로 덮어쓴 반례 팔을 같은 함수에 넣으면 "
+          + "0이 아니다 — 즉 이 지표는 **되살릴 수 있는 검사**이지 설계 보장이 아니다(#5의 판별법). "
+          + "덮어쓰기를 켜면 값이 움직이므로 '측정이 안 도는 것'과 구분된다.",
+        overwritten_arm_drift: stat(driftPositive, 6),
+        base_arm_drift_is_zero: true,
       },
       conclusion: {
-        batch_resolve_recovers_nothing: "**§9.1의 '§5.4의 일괄 풀이를 재사용한다'는 이 구현에서 "
-          + "아무것도 회수하지 못한다 — 세 팔 모두 0이다.** 사유가 `축이 미분류다`(지배항)와 "
-          + "`구조에 이어지지 않았다`인데 **둘 다 획 하나의 성질**이라 문맥을 더 준다고 안 바뀐다. "
-          + "축 라벨이 없으면 `frameOf`가 서지 않고, 그것은 같이 푸나 따로 푸나 같다.",
-        anchor_recovers: "**실제로 회수하는 것은 앵커다** — 대기 획의 시작점이 확정된 기하에 "
-          + "붙으면 §3·§7의 실시간 경로가 그 획을 놓는다. 기준 조건에서 **720/1904 = 37.8%**. "
-          + "즉 **승격은 '다시 푸는 것'이 아니라 '앵커가 생기는 것'이다.** "
-          + "계획서 §9.1의 문장을 그렇게 고쳐야 한다(#23).",
-        but_quality_does_not_improve: "⚠ **회수된 것이 확정된 것보다 낫지 않다**(#16). "
-          + "회수 720의 조용히 틀림이 cut 0.2에서 **314(43.6%)** · cut 0.5에서 **169(23.5%)**인데 "
-          + "확정 2416은 각각 42.3% · 20.9%다. **승격은 개수를 늘리고 품질은 그대로 둔다.** "
-          + "그러므로 '미배치는 대기다'는 **개수 회수에 대해서만 참**이고, "
-          + "'나중에 더 정확히 놓인다'는 뜻이 아니다.",
-        why_not_recovered: "**추측하지 말고 센다**(#7). 기준 조건에서 `no_snap` **813** · "
-          + "`angle_over` 371이다 — 대기 획의 시작점이 **확정된 기하 근처에 아예 없다**는 것이 "
-          + "지배항이다. 그럴 수밖에 없다: 그 획들이 대기인 이유가 바로 안 이어졌기 때문이다.",
-        d_l18: "**D-L18 기각**(등록 규칙대로). 조이기는 (배치 + 회수)가 2976으로 기준 3136보다 "
-          + "**작다** — 회수가 그 차이를 못 메운다(회수율이 두 팔에서 37.8% 대 37.2%로 같기 때문이다). "
-          + "⚠ 다만 조이기는 조용히 틀림을 **cut 0.2에서 0.426 → 0.385 · cut 0.5에서 0.215 → 0.182**로 "
-          + "낮춘다. **등록 규칙이 개수를 우선하도록 짜여 있어서 기각된 것**이고, "
-          + "품질을 우선하는 목적함수에서는 여전히 조이기가 이긴다. **규칙을 사후에 바꾸지 않는다**(#28) — "
-          + "기각으로 적고 그 사실을 함께 적는다.",
+        batch_was_never_executed: "**초판의 '일괄 기전이 아무것도 회수하지 못한다'는 측정이 "
+          + "아니었다**(PITFALLS #32). 대기 "
+          + `${arms.base.pendingN}가 거름에서 전부 걸려 **솔버에 한 획도 안 닿았다** — `
+          + "입력이 0인 실행의 결과는 기전에 대한 정보가 0이다. "
+          + "`축이 미분류다`는 **판정기의 결과이지 획의 성질이 아니다.**",
+        batch_works_when_given_axes: "**축을 주면 일괄 기전이 실행되고 크게 회수한다.** "
+          + `오라클 축에서 입력 ${arms.base.batchOracleIn} · 솔버가 놓은 것 `
+          + `**${arms.base.batchOracleSolved}** · 채택 **${arms.base.batchOracle}** `
+          + `(= ${round(arms.base.batchOracle / Math.max(1, arms.base.batchOracleIn), 4)})다. `
+          + `앵커 경로의 ${arms.base.recoveredA}/${arms.base.pendingN}보다 **많다.** `
+          + "즉 **§9.1의 일괄 기전은 반증되지 않았다** — 막고 있던 것은 **축 판정**이고, "
+          + "그것이 L-B.3(a)·L-B.4가 지배항으로 지목한 바로 그것이다. "
+          + "⚠ **오라클은 상한이다.** 실제 축 라벨(연쇄가 붙인 것)로는 "
+          + `${arms.base.batchAfter}/${arms.base.batchAfterIn}밖에 안 된다.`,
+        anchor_recovers: "**지금 실제로 회수하는 것은 앵커다** — 대기 획의 시작점이 확정된 기하에 "
+          + `붙으면 §3·§7의 실시간 경로가 그 획을 놓는다. 기준 조건 1회차 `
+          + `**${arms.base.recoveredA}/${arms.base.pendingN}**. `
+          + "즉 **승격은 '다시 푸는 것'이 아니라 '앵커가 생기는 것'이다**(D-L20).",
+        chain_happens: "**연쇄가 실제로 일어난다**(리뷰어 [4]). 2회차 이후 추가 회수 "
+          + `**${arms.base.chainExtra}**이고 회차별로 `
+          + `${JSON.stringify(arms.base.chainByRound)}다. 상한 ${CHAIN_MAX_ROUNDS}회에 `
+          + `도달한 장면은 ${arms.base.chainRounds.filter(r => r >= CHAIN_MAX_ROUNDS).length}개다 — `
+          + "**수렴한다.** 게이트 3번(승격 연쇄가 실제로 일어나는가)의 원장 측 증거가 이것이다. "
+          + "브라우저 확인은 L-B.6 뒤에 한다.",
+        but_quality_does_not_improve: "⚠ **회수된 것이 확정된 것보다 뚜렷이 나쁘다**(#16). "
+          + `앵커 회수 ${arms.base.recoveredA}의 조용히 틀림이 cut 0.2에서 `
+          + `**${arms.base.aw20}(${round(arms.base.aw20 / Math.max(1, arms.base.errRecoveredA.length), 3)})** · `
+          + `확정 ${arms.base.errConfirmed.length}는 `
+          + `**${arms.base.cw20}(${round(arms.base.cw20 / Math.max(1, arms.base.errConfirmed.length), 3)})**다. `
+          + "⚠ **이 결론은 초판보다 강해졌다** — 초판은 게이지를 안 없앤 `segErr`로 43.6% 대 42.3%라 "
+          + "'같다'고 적었는데, 게이지를 확정 집합에 고정하니 격차가 드러났다. "
+          + "**'미배치는 대기다'는 개수 회수에 대해서만 참**이고 '나중에 더 정확히 놓인다'는 뜻이 아니다.",
+        why_not_recovered: "**추측하지 말고 센다**(#7). 기준 조건 앵커 팔의 거부 사유는 "
+          + `${JSON.stringify(arms.base.reasonsA)}다 — 대기 획의 시작점이 **확정된 기하 근처에 `
+          + "아예 없다**는 것이 지배항이다. 그럴 수밖에 없다: 그 획들이 대기인 이유가 바로 안 "
+          + "이어졌기 때문이다. ⚠ **거부 사유가 둘뿐이라 '축이 정해지면 반드시 놓인다'가 "
+          + "구성상 항등이다**(리뷰어 [13]) — 앵커 회수율은 '축 판정 + 스냅의 통과율'이지 "
+          + "'배치가 맞는가'가 아니다. 맞는가는 위의 조용히 틀림이 답한다.",
+        recovery_rate_is_not_one_number: "⚠ **37.8%는 합산 한 점이고 조건을 가르면 안 유지된다**"
+          + "(리뷰어 [11] · #12). 등급으로는 "
+          + `${Object.entries(byGrade).map(([k, v]) => `${k} ${v.anchor}/${v.pending}`).join(" · ")}로 `
+          + "비슷한데, **끝점 잡음으로는 "
+          + `${Object.entries(byJit).sort().map(([k, v]) => `${k} ${v.anchor}/${v.pending}`).join(" · ")}`
+          + "**로 3.4배 벌어진다. 잡음이 커지면 확정도 줄고 회수율도 줄어 **양쪽에서 잃는다.** "
+          + "실획 등급이 어디인지 모르므로(AS-C1, 표본 0) **회수율을 한 값으로 인용하지 않는다.**",
+        d_l18: "**D-L18 기각**(등록 규칙대로, D-L21 유지). 조이기는 (배치 + 회수)가 "
+          + `${total(arms.tighten)}으로 기준 ${total(arms.base)}보다 **작고**, 회수율이 두 팔에서 `
+          + `${round(arms.tighten.recoveredA / Math.max(1, arms.tighten.pendingN), 3)} 대 `
+          + `${round(arms.base.recoveredA / Math.max(1, arms.base.pendingN), 3)}로 비슷해 차이를 못 메운다. `
+          + "⚠ **초판의 서술을 고친다**(리뷰어 [10]): 등록 규칙은 '개수 우선'이 아니라 "
+          + "**두 조건의 연언**(개수 ≥ 기준 **그리고** 조용히 틀림 < 기준)이었다. 단조 맞바꿈 아래서 "
+          + "그것을 통과하려면 회수가 그 단조성을 깨야 했고 안 깼다 — **충족 가능하되 좁은 규칙**이었다. "
+          + `다만 조이기는 조용히 틀림을 ${round(rate(arms.base), 4)} → ${round(rate(arms.tighten), 4)}로 `
+          + "낮추므로 품질 우선 목적함수에서는 여전히 이긴다. **규칙을 사후에 바꾸지 않는다**(#28).",
       },
       by_arm: Object.fromEntries(Object.entries(arms).map(([k, v]) => [k, rep(v)])),
+      // **합산 한 점으로 적지 않는다**(리뷰어 [11] · #12) — 기준 팔을 등급·잡음·구도로 가른다
+      base_by_grade: Object.fromEntries(Object.entries(byGrade).map(([k, v]) => [k, celluleRep(v)])),
+      base_by_end_jitter: Object.fromEntries(Object.entries(byJit).map(([k, v]) => [k, celluleRep(v)])),
+      base_by_composition: Object.fromEntries(Object.entries(byComp).map(([k, v]) => [k, celluleRep(v)])),
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
     };
     mkdirSync(OUT, { recursive: true });
     writeFileSync(resolve(OUT, "promote.json"), JSON.stringify(doc, null, 2));
@@ -316,6 +582,15 @@ describe("L-B.7 — 승격 연쇄가 실제로 회수하는가", () => {
     // ---- 불변식
     // **승격은 기존 기하를 안 움직인다** — 되살릴 수 있는 검사다(덮어쓰면 0이 아니게 된다)
     for (const b of Object.values(arms)) expect(Math.max(0, ...b.drift)).toBe(0);
+    // **양성 채널**(리뷰어 [6] · #30) — 덮어쓰면 그 0이 실제로 깨져야 한다.
+    // 안 깨지면 `committedDrift`는 측정이 아니라 항등이고 게이트로 쓸 수 없다(#5)
+    expect(driftPositive.length).toBeGreaterThan(0);
+    expect(Math.min(...driftPositive)).toBeGreaterThan(0);
+    // **연쇄가 실제로 있다**(리뷰어 [4]) — 2회차 이후 회수가 0이면 "연쇄한다"를 못 적는다
+    expect(arms.base.chainExtra).toBeGreaterThan(0);
+    expect(arms.base.chainByRound[2]).toBeGreaterThan(0);
+    // **일괄 기전은 축을 주면 실행된다**(리뷰어 [2][3] · #32) — 초판의 0은 미실행이었다
+    expect(arms.base.batchOracleSolved).toBeGreaterThan(0);
     // 기준 조합이 `axis_live`의 확정 배치를 재현하는가 — 아니면 다른 것을 재고 있다
     expect(arms.base.total).toBe(GRADES.length * COMPOSITIONS.length * SEEDS.length * JITTERS.length * 12);
     expect(arms.base.confirmed).toBe(2416);

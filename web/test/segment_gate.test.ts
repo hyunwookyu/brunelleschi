@@ -30,6 +30,7 @@ import { viewPlaceCtx, toView, projectInView, type ViewPose } from "../src/s3d/v
 import { scene, groundPoint, boxEdges, faceDiagonals, stat,
          type Scene, type TrueEdge } from "./scene3d.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -213,6 +214,7 @@ describe("G-A.1 중간 판정 — 세그먼트 기하가 옛 배치 계층보다
     const report = {
       spec: "G-A.1 중간 판정 — 세그먼트 기하가 옛 배치 계층보다 나은가. **이번 전환의 유일한 중단 조건.**",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       seg_tol: SEG_TOL,
       why: (
         "옛 배치 계층은 끝점 겨냥 오차가 그대로 배치 오차가 됐다(배치율 0.112~0.846, "

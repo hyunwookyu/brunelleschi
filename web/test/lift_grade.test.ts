@@ -29,8 +29,9 @@ import { liftAll, LIFT_TOL, type LiftStroke, type LiftCtx } from "../src/s3d/lif
 import { classifyStroke, type Axis } from "../src/s3d/axis.js";
 import { norm3, sub3, type Vec3 } from "../src/s3d/geom3d.js";
 import { isFiniteVp, type Pt2 } from "../src/s3d/camera.js";
-import { scene, boxEdges, drawEdges, groundPoint, stat, round, median, perStrokeError,
+import { scene, boxEdges, drawEdges, groundPoint, stat, round, median,
          type Scene, type TrueEdge } from "./scene3d.js";
+import { perStrokeError, metricsSnapshot } from "./metrics.js";
 import { rng32, INK_GRADES, type InkGrade } from "../src/s3d/synthInk.js";
 import { constantsSnapshot } from "./constants.js";
 
@@ -275,6 +276,7 @@ describe("L-B.3(a) — 참 카메라에서 coarse 배치가 무너지는 원인"
       by_composition_judged_default: bake(byComp),
       by_end_jitter_judged_default: bake(byJit),
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
     };
     mkdirSync(OUT, { recursive: true });
     writeFileSync(resolve(OUT, "lift_grade.json"), JSON.stringify(doc, null, 2));

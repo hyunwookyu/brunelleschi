@@ -112,6 +112,25 @@
     },
     "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
   },
+  "metric_defs": {
+    "hash": "3df57ac7",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  },
   "what": "`representative(pts).bend` — 대표 직선(PCA 주축)에서의 최대 편차 ÷ 길이. **판정이 실제로 쓰는 그 양이다**(`classifyStroke`가 `bend > bend_max`면 `too_bent`로 미분류에 둔다). 너무 짧은 획(`min_len_ratio` 미만)은 판정과 같은 순서로 먼저 뺀다.",
   "caveat": "**표본이 Quick,Draw(마우스 낙서)다** — AS-13에 따라 이 수치로 설계 결정을 하지 않는다. 대상 사용자(스타일러스·투시도 숙련자)를 대표하지 않는다. 재는 것은 **자릿수**뿐이고, 실획이 들어오면 `real_ink.json`이 같은 양을 다시 낸다. **AS-7의 26.5%와 직접 비교하지 않는다** — 그 값은 `straight_tol` 0.10 기준의 다른 지표다.",
   "threshold_note": "`bend_max` **0.18은 측정이 정당화하지 못한 잠정값**이다(D-S2가 같은 상수에 대해 '이 표본이 임계를 시험하지 못한다'고 적었다). 그래서 절단값 다섯을 다 낸다 — 임계가 움직이면 이 비율이 얼마나 움직이는지가 함께 보여야 한다.",

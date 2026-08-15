@@ -21,6 +21,7 @@ import {
 } from "./scene3d.js";
 import type { Pt2 } from "../src/s3d/camera.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -327,6 +328,7 @@ describe("S-2b 체계적 왜곡", () => {
         + "함께 본다 — A-3이 금지하는 것이 그것이다. 구제된 획이 틀린 수(rescued_wrong)도 낸다."
       ),
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       condition: { end_jitter: END_JITTER, grade: "medium", skew: 0.12, mode: "facing",
                    join_ratio: PLACE_TOL.join_ratio, boxes_per_cell: 45, seed_base: 8100,
                    yaw_deg: 35, pitch_deg: 15 },

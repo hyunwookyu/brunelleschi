@@ -56,27 +56,72 @@
         "ambiguity_margin": 1.2
       }
     },
-    "same_as_axis_live": "구도·시드 산식·skew·잡음 축이 `axis_live.json`·`lift_grade.json`과 같다 — 아니면 D-L18을 가르는 것이 아니다(#27)."
+    "same_as_axis_live": "구도·시드 산식·skew·잡음 축이 `axis_live.json`·`lift_grade.json`과 같다 — 아니면 D-L18을 가르는 것이 아니다(#27).",
+    "anchor_arm": {
+      "snap_target": "**확정된 3D 기하**(`first.placed`) — 오차가 있는 것이다. `snap.json`·`axis_live.json`은 **참 3D**를 스냅 대상으로 썼다. 그래서 이 원장의 앵커 수치를 그 둘과 직접 비교하지 않는다(#27).",
+      "axis_deg": 12,
+      "snap_radius_ratio": 0.05,
+      "chain": "더 안 늘 때까지 반복하되 상한 8회. 도달 횟수를 원장에 적는다."
+    },
+    "metric_gauge": "형태 오차는 `metrics.ts` 하나에서 온다. **확정 집합이 게이지를 정하고 회수 획은 그 게이지로 잰다** — 회수 획만 다시 적합하면 '이미 확정된 틀에 붙는다'는 성질이 지워진다. 초판의 `segErr`(게이지 1)가 같은 2416획을 0.1533으로 냈고 `axis_live.json`은 0.1222였다(리뷰어 [1])."
   },
   "registered_rule": {
     "rule": "**조이기가 옳으려면** (배치 + 회수)가 기준 이상이면서 **조용히 틀림(cut 0.2)이 낮아야** 한다. 둘 중 하나라도 안 되면 D-L18은 기각이다.",
     "base_total": "3136",
     "tighten_total": "2976",
-    "base_silent_0_2": 0.4263,
-    "tighten_silent_0_2": 0.3854,
+    "base_silent_0_2": 0.4037,
+    "tighten_silent_0_2": 0.329,
     "verdict": "**D-L18 기각** — 조이기가 등록한 두 조건을 함께 만족하지 못한다"
   },
   "control_resolve_without_promotion": {
     "note": "**승격 없이** 미배치 집합만 다시 푼다(#6). 같은 입력을 같은 솔버에 다시 넣는 것이므로 **새로 놓이는 것이 거의 없어야** 한다 — 있다면 승격의 이득 중 그만큼은 '기존 기하와 함께 푸는 것'이 아니라 **'분모가 줄어든 것'**에서 온다.",
     "newly_placed_over_pending": "207/1904",
-    "rate": 0.1087
+    "rate": 0.1087,
+    "measured_not_argued": {
+      "note": "확정 게이지로 재면 **배율이 안 맞아 크게 틀리고**, 자기 게이지로 재면 형태만 남는다. 둘의 격차가 곧 '배율이 정해지지 않는다'의 크기다.",
+      "shape_err_committed_gauge": {
+        "n": 207,
+        "min": 0.0112,
+        "p10": 0.0568,
+        "median": 0.1985,
+        "p90": 1.1606,
+        "max": 41.7501
+      },
+      "shape_err_self_gauge": {
+        "n": 207,
+        "min": 0.0036,
+        "p10": 0.0363,
+        "median": 0.0994,
+        "p90": 0.5921,
+        "max": 2.1204
+      },
+      "silent_wrong_0_2": {
+        "committed_gauge": "103/207",
+        "self_gauge": "64/207"
+      }
+    }
+  },
+  "committed_drift_positive_channel": {
+    "note": "기준 팔의 `committed_drift`는 전부 0이고 selfcheck가 '분포 전체가 0'으로 플래그한다. **원인 확인**: 확정 기하를 1.01배로 덮어쓴 반례 팔을 같은 함수에 넣으면 0이 아니다 — 즉 이 지표는 **되살릴 수 있는 검사**이지 설계 보장이 아니다(#5의 판별법). 덮어쓰기를 켜면 값이 움직이므로 '측정이 안 도는 것'과 구분된다.",
+    "overwritten_arm_drift": {
+      "n": 324,
+      "min": 0.015016,
+      "p10": 0.029107,
+      "median": 0.043019,
+      "p90": 0.079236,
+      "max": 0.383697
+    },
+    "base_arm_drift_is_zero": true
   },
   "conclusion": {
-    "batch_resolve_recovers_nothing": "**§9.1의 '§5.4의 일괄 풀이를 재사용한다'는 이 구현에서 아무것도 회수하지 못한다 — 세 팔 모두 0이다.** 사유가 `축이 미분류다`(지배항)와 `구조에 이어지지 않았다`인데 **둘 다 획 하나의 성질**이라 문맥을 더 준다고 안 바뀐다. 축 라벨이 없으면 `frameOf`가 서지 않고, 그것은 같이 푸나 따로 푸나 같다.",
-    "anchor_recovers": "**실제로 회수하는 것은 앵커다** — 대기 획의 시작점이 확정된 기하에 붙으면 §3·§7의 실시간 경로가 그 획을 놓는다. 기준 조건에서 **720/1904 = 37.8%**. 즉 **승격은 '다시 푸는 것'이 아니라 '앵커가 생기는 것'이다.** 계획서 §9.1의 문장을 그렇게 고쳐야 한다(#23).",
-    "but_quality_does_not_improve": "⚠ **회수된 것이 확정된 것보다 낫지 않다**(#16). 회수 720의 조용히 틀림이 cut 0.2에서 **314(43.6%)** · cut 0.5에서 **169(23.5%)**인데 확정 2416은 각각 42.3% · 20.9%다. **승격은 개수를 늘리고 품질은 그대로 둔다.** 그러므로 '미배치는 대기다'는 **개수 회수에 대해서만 참**이고, '나중에 더 정확히 놓인다'는 뜻이 아니다.",
-    "why_not_recovered": "**추측하지 말고 센다**(#7). 기준 조건에서 `no_snap` **813** · `angle_over` 371이다 — 대기 획의 시작점이 **확정된 기하 근처에 아예 없다**는 것이 지배항이다. 그럴 수밖에 없다: 그 획들이 대기인 이유가 바로 안 이어졌기 때문이다.",
-    "d_l18": "**D-L18 기각**(등록 규칙대로). 조이기는 (배치 + 회수)가 2976으로 기준 3136보다 **작다** — 회수가 그 차이를 못 메운다(회수율이 두 팔에서 37.8% 대 37.2%로 같기 때문이다). ⚠ 다만 조이기는 조용히 틀림을 **cut 0.2에서 0.426 → 0.385 · cut 0.5에서 0.215 → 0.182**로 낮춘다. **등록 규칙이 개수를 우선하도록 짜여 있어서 기각된 것**이고, 품질을 우선하는 목적함수에서는 여전히 조이기가 이긴다. **규칙을 사후에 바꾸지 않는다**(#28) — 기각으로 적고 그 사실을 함께 적는다."
+    "batch_was_never_executed": "**초판의 '일괄 기전이 아무것도 회수하지 못한다'는 측정이 아니었다**(PITFALLS #32). 대기 1904가 거름에서 전부 걸려 **솔버에 한 획도 안 닿았다** — 입력이 0인 실행의 결과는 기전에 대한 정보가 0이다. `축이 미분류다`는 **판정기의 결과이지 획의 성질이 아니다.**",
+    "batch_works_when_given_axes": "**축을 주면 일괄 기전이 실행되고 크게 회수한다.** 오라클 축에서 입력 1904 · 솔버가 놓은 것 **1154** · 채택 **1154** (= 0.6061)다. 앵커 경로의 720/1904보다 **많다.** 즉 **§9.1의 일괄 기전은 반증되지 않았다** — 막고 있던 것은 **축 판정**이고, 그것이 L-B.3(a)·L-B.4가 지배항으로 지목한 바로 그것이다. ⚠ **오라클은 상한이다.** 실제 축 라벨(연쇄가 붙인 것)로는 24/966밖에 안 된다.",
+    "anchor_recovers": "**지금 실제로 회수하는 것은 앵커다** — 대기 획의 시작점이 확정된 기하에 붙으면 §3·§7의 실시간 경로가 그 획을 놓는다. 기준 조건 1회차 **720/1904**. 즉 **승격은 '다시 푸는 것'이 아니라 '앵커가 생기는 것'이다**(D-L20).",
+    "chain_happens": "**연쇄가 실제로 일어난다**(리뷰어 [4]). 2회차 이후 추가 회수 **218**이고 회차별로 {\"2\":192,\"3\":25,\"4\":1}다. 상한 8회에 도달한 장면은 0개다 — **수렴한다.** 게이트 3번(승격 연쇄가 실제로 일어나는가)의 원장 측 증거가 이것이다. 브라우저 확인은 L-B.6 뒤에 한다.",
+    "but_quality_does_not_improve": "⚠ **회수된 것이 확정된 것보다 뚜렷이 나쁘다**(#16). 앵커 회수 720의 조용히 틀림이 cut 0.2에서 **392(0.544)** · 확정 2416는 **874(0.362)**다. ⚠ **이 결론은 초판보다 강해졌다** — 초판은 게이지를 안 없앤 `segErr`로 43.6% 대 42.3%라 '같다'고 적었는데, 게이지를 확정 집합에 고정하니 격차가 드러났다. **'미배치는 대기다'는 개수 회수에 대해서만 참**이고 '나중에 더 정확히 놓인다'는 뜻이 아니다.",
+    "why_not_recovered": "**추측하지 말고 센다**(#7). 기준 조건 앵커 팔의 거부 사유는 {\"angle_over\":371,\"no_snap\":813}다 — 대기 획의 시작점이 **확정된 기하 근처에 아예 없다**는 것이 지배항이다. 그럴 수밖에 없다: 그 획들이 대기인 이유가 바로 안 이어졌기 때문이다. ⚠ **거부 사유가 둘뿐이라 '축이 정해지면 반드시 놓인다'가 구성상 항등이다**(리뷰어 [13]) — 앵커 회수율은 '축 판정 + 스냅의 통과율'이지 '배치가 맞는가'가 아니다. 맞는가는 위의 조용히 틀림이 답한다.",
+    "recovery_rate_is_not_one_number": "⚠ **37.8%는 합산 한 점이고 조건을 가르면 안 유지된다**(리뷰어 [11] · #12). 등급으로는 precise 201/532 · medium 245/572 · coarse 274/800로 비슷한데, **끝점 잡음으로는 jit_0 162/227 · jit_0.01 168/298 · jit_0.03 227/598 · jit_0.05 163/781**로 3.4배 벌어진다. 잡음이 커지면 확정도 줄고 회수율도 줄어 **양쪽에서 잃는다.** 실획 등급이 어디인지 모르므로(AS-C1, 표본 0) **회수율을 한 값으로 인용하지 않는다.**",
+    "d_l18": "**D-L18 기각**(등록 규칙대로, D-L21 유지). 조이기는 (배치 + 회수)가 2976으로 기준 3136보다 **작고**, 회수율이 두 팔에서 0.372 대 0.378로 비슷해 차이를 못 메운다. ⚠ **초판의 서술을 고친다**(리뷰어 [10]): 등록 규칙은 '개수 우선'이 아니라 **두 조건의 연언**(개수 ≥ 기준 **그리고** 조용히 틀림 < 기준)이었다. 단조 맞바꿈 아래서 그것을 통과하려면 회수가 그 단조성을 깨야 했고 안 깼다 — **충족 가능하되 좁은 규칙**이었다. 다만 조이기는 조용히 틀림을 0.4037 → 0.329로 낮추므로 품질 우선 목적함수에서는 여전히 이긴다. **규칙을 사후에 바꾸지 않는다**(#28)."
   },
   "by_arm": {
     "base": {
@@ -93,11 +138,11 @@
       },
       "confirmed_shape_err": {
         "n": 2416,
-        "min": 0.0004,
-        "p10": 0.0296,
-        "median": 0.1533,
-        "p90": 0.738,
-        "max": 17.6402
+        "min": 0.0006,
+        "p10": 0.0197,
+        "median": 0.1222,
+        "p90": 0.4468,
+        "max": 3.3512
       },
       "recovered_shape_err": {
         "n": 0,
@@ -107,10 +152,16 @@
         "p90": null,
         "max": null
       },
+      "scenes_without_gauge": 14,
+      "shape_err_measured": {
+        "confirmed": "2416/2416",
+        "recovered": "0/0",
+        "anchor": "720/720"
+      },
       "confirmed_silent_wrong": {
-        "cut_0_1": "1514/2416",
-        "cut_0_2": "1023/2416",
-        "cut_0_5": "506/2416"
+        "cut_0_1": "1360/2416",
+        "cut_0_2": "874/2416",
+        "cut_0_5": "190/2416"
       },
       "recovered_silent_wrong": {
         "cut_0_1": "0/0",
@@ -118,10 +169,10 @@
         "cut_0_5": "0/0"
       },
       "all_silent_wrong": {
-        "cut_0_2": "1023/2416",
-        "cut_0_5": "506/2416",
-        "rate_0_2": 0.4234,
-        "rate_0_5": 0.2094
+        "cut_0_2": "874/2416",
+        "cut_0_5": "190/2416",
+        "rate_0_2": 0.3618,
+        "rate_0_5": 0.0786
       },
       "committed_drift": {
         "n": 338,
@@ -139,24 +190,86 @@
       },
       "anchor_recovered_shape_err": {
         "n": 720,
-        "min": 0.0001,
-        "p10": 0.0299,
-        "median": 0.1566,
-        "p90": 0.9034,
-        "max": 34.2971
+        "min": 0.0022,
+        "p10": 0.0311,
+        "median": 0.235,
+        "p90": 0.9454,
+        "max": 8.7699
       },
       "anchor_recovered_silent_wrong": {
-        "cut_0_1": "459/720",
-        "cut_0_2": "314/720",
-        "cut_0_5": "169/720"
+        "cut_0_1": "493/720",
+        "cut_0_2": "392/720",
+        "cut_0_5": "204/720"
       },
       "anchor_all_silent_wrong": {
-        "cut_0_2": "1337/3136",
-        "cut_0_5": "675/3136",
-        "rate_0_2": 0.4263,
-        "rate_0_5": 0.2152
+        "cut_0_2": "1266/3136",
+        "cut_0_5": "394/3136",
+        "rate_0_2": 0.4037,
+        "rate_0_5": 0.1256
       },
-      "anchor_placed_total_over_all": "3136/4320"
+      "anchor_placed_total_over_all": "3136/4320",
+      "chain": {
+        "note": "**회차별** 회수. `round_2` 이상이 있어야 '승격은 연쇄한다'가 측정된 것이다. `rounds_used`가 장면마다 몇 회에서 멈췄는지다(1 = 연쇄 없음).",
+        "recovered_by_round": {
+          "2": 192,
+          "3": 25,
+          "4": 1
+        },
+        "extra_after_round_1": 218,
+        "rounds_used": {
+          "n": 338,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 2,
+          "max": 4
+        },
+        "hit_round_cap": 0,
+        "round_cap": 8,
+        "extra_shape_err": {
+          "n": 218,
+          "min": 0.0079,
+          "p10": 0.0408,
+          "median": 0.2398,
+          "p90": 0.9949,
+          "max": 2.0857
+        },
+        "extra_silent_wrong": {
+          "cut_0_2": "128/218",
+          "cut_0_5": "69/218"
+        },
+        "chain_placed_total_over_all": "3354/4320"
+      },
+      "batch_reexamined": {
+        "note": "초판의 회수 0은 **거름이 대기 집합을 전부 비워 솔버에 한 획도 안 닿은 것**이었다. `solved_pending`이 0이면 그 실행은 **기전에 대한 정보가 0이다**(#32). `축이 미분류다`는 판정기의 결과이지 획의 성질이 아니므로 **축을 주고 다시 돌린다**.",
+        "after_chain": {
+          "input": 966,
+          "solved_pending": 24,
+          "promoted": 24
+        },
+        "oracle_axis": {
+          "input": 1904,
+          "solved_pending": 1154,
+          "promoted": 1154,
+          "not_promoted_reasons": {
+            "구조에 이어지지 않았다": 497,
+            "scale_undetermined": 85,
+            "no_committed_geometry": 168
+          },
+          "shape_err": {
+            "n": 1154,
+            "min": 0.0021,
+            "p10": 0.0593,
+            "median": 0.2464,
+            "p90": 0.7159,
+            "max": 16.9138
+          },
+          "silent_wrong": {
+            "cut_0_2": "675/1154",
+            "cut_0_5": "265/1154"
+          }
+        }
+      }
     },
     "tighten": {
       "scenes": 360,
@@ -172,11 +285,11 @@
       },
       "confirmed_shape_err": {
         "n": 2179,
-        "min": 0.0005,
-        "p10": 0.0268,
-        "median": 0.1302,
-        "p90": 0.6661,
-        "max": 17.6402
+        "min": 0.0018,
+        "p10": 0.0167,
+        "median": 0.0887,
+        "p90": 0.3763,
+        "max": 2.4788
       },
       "recovered_shape_err": {
         "n": 0,
@@ -186,10 +299,16 @@
         "p90": null,
         "max": null
       },
+      "scenes_without_gauge": 25,
+      "shape_err_measured": {
+        "confirmed": "2179/2179",
+        "recovered": "0/0",
+        "anchor": "797/797"
+      },
       "confirmed_silent_wrong": {
-        "cut_0_1": "1270/2179",
-        "cut_0_2": "815/2179",
-        "cut_0_5": "357/2179"
+        "cut_0_1": "1004/2179",
+        "cut_0_2": "607/2179",
+        "cut_0_5": "116/2179"
       },
       "recovered_silent_wrong": {
         "cut_0_1": "0/0",
@@ -197,10 +316,10 @@
         "cut_0_5": "0/0"
       },
       "all_silent_wrong": {
-        "cut_0_2": "815/2179",
-        "cut_0_5": "357/2179",
-        "rate_0_2": 0.374,
-        "rate_0_5": 0.1638
+        "cut_0_2": "607/2179",
+        "cut_0_5": "116/2179",
+        "rate_0_2": 0.2786,
+        "rate_0_5": 0.0532
       },
       "committed_drift": {
         "n": 345,
@@ -218,24 +337,86 @@
       },
       "anchor_recovered_shape_err": {
         "n": 797,
-        "min": 0.0001,
-        "p10": 0.0273,
-        "median": 0.1479,
-        "p90": 0.9136,
-        "max": 34.2971
+        "min": 0.0013,
+        "p10": 0.0238,
+        "median": 0.1648,
+        "p90": 0.911,
+        "max": 8.9225
       },
       "anchor_recovered_silent_wrong": {
-        "cut_0_1": "492/797",
-        "cut_0_2": "332/797",
-        "cut_0_5": "184/797"
+        "cut_0_1": "494/797",
+        "cut_0_2": "372/797",
+        "cut_0_5": "218/797"
       },
       "anchor_all_silent_wrong": {
-        "cut_0_2": "1147/2976",
-        "cut_0_5": "541/2976",
-        "rate_0_2": 0.3854,
-        "rate_0_5": 0.1818
+        "cut_0_2": "979/2976",
+        "cut_0_5": "334/2976",
+        "rate_0_2": 0.329,
+        "rate_0_5": 0.1122
       },
-      "anchor_placed_total_over_all": "2976/4320"
+      "anchor_placed_total_over_all": "2976/4320",
+      "chain": {
+        "note": "**회차별** 회수. `round_2` 이상이 있어야 '승격은 연쇄한다'가 측정된 것이다. `rounds_used`가 장면마다 몇 회에서 멈췄는지다(1 = 연쇄 없음).",
+        "recovered_by_round": {
+          "2": 244,
+          "3": 38,
+          "4": 2
+        },
+        "extra_after_round_1": 284,
+        "rounds_used": {
+          "n": 345,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 2,
+          "max": 4
+        },
+        "hit_round_cap": 0,
+        "round_cap": 8,
+        "extra_shape_err": {
+          "n": 284,
+          "min": 0.0079,
+          "p10": 0.0371,
+          "median": 0.2317,
+          "p90": 0.9234,
+          "max": 9.1793
+        },
+        "extra_silent_wrong": {
+          "cut_0_2": "155/284",
+          "cut_0_5": "93/284"
+        },
+        "chain_placed_total_over_all": "3260/4320"
+      },
+      "batch_reexamined": {
+        "note": "초판의 회수 0은 **거름이 대기 집합을 전부 비워 솔버에 한 획도 안 닿은 것**이었다. `solved_pending`이 0이면 그 실행은 **기전에 대한 정보가 0이다**(#32). `축이 미분류다`는 판정기의 결과이지 획의 성질이 아니므로 **축을 주고 다시 돌린다**.",
+        "after_chain": {
+          "input": 1060,
+          "solved_pending": 33,
+          "promoted": 33
+        },
+        "oracle_axis": {
+          "input": 2141,
+          "solved_pending": 1280,
+          "promoted": 1280,
+          "not_promoted_reasons": {
+            "구조에 이어지지 않았다": 455,
+            "no_committed_geometry": 300,
+            "scale_undetermined": 106
+          },
+          "shape_err": {
+            "n": 1280,
+            "min": 0.0021,
+            "p10": 0.0553,
+            "median": 0.2319,
+            "p90": 0.624,
+            "max": 16.9138
+          },
+          "silent_wrong": {
+            "cut_0_2": "728/1280",
+            "cut_0_5": "238/1280"
+          }
+        }
+      }
     },
     "loosen": {
       "scenes": 360,
@@ -252,11 +433,11 @@
       },
       "confirmed_shape_err": {
         "n": 2766,
-        "min": 0.0004,
-        "p10": 0.0325,
-        "median": 0.1986,
-        "p90": 0.7864,
-        "max": 39.925
+        "min": 0.0008,
+        "p10": 0.0225,
+        "median": 0.1577,
+        "p90": 0.695,
+        "max": 5.482
       },
       "recovered_shape_err": {
         "n": 0,
@@ -266,10 +447,16 @@
         "p90": null,
         "max": null
       },
+      "scenes_without_gauge": 4,
+      "shape_err_measured": {
+        "confirmed": "2766/2766",
+        "recovered": "0/0",
+        "anchor": "577/577"
+      },
       "confirmed_silent_wrong": {
-        "cut_0_1": "1916/2766",
-        "cut_0_2": "1378/2766",
-        "cut_0_5": "706/2766"
+        "cut_0_1": "1743/2766",
+        "cut_0_2": "1187/2766",
+        "cut_0_5": "442/2766"
       },
       "recovered_silent_wrong": {
         "cut_0_1": "0/0",
@@ -277,10 +464,10 @@
         "cut_0_5": "0/0"
       },
       "all_silent_wrong": {
-        "cut_0_2": "1378/2766",
-        "cut_0_5": "706/2766",
-        "rate_0_2": 0.4982,
-        "rate_0_5": 0.2552
+        "cut_0_2": "1187/2766",
+        "cut_0_5": "442/2766",
+        "rate_0_2": 0.4291,
+        "rate_0_5": 0.1598
       },
       "committed_drift": {
         "n": 313,
@@ -298,24 +485,163 @@
       },
       "anchor_recovered_shape_err": {
         "n": 577,
-        "min": 0.0017,
-        "p10": 0.0325,
-        "median": 0.1606,
-        "p90": 0.8905,
-        "max": 26.0808
+        "min": 0.0015,
+        "p10": 0.0442,
+        "median": 0.2262,
+        "p90": 0.8869,
+        "max": 6.6366
       },
       "anchor_recovered_silent_wrong": {
-        "cut_0_1": "381/577",
-        "cut_0_2": "255/577",
-        "cut_0_5": "133/577"
+        "cut_0_1": "416/577",
+        "cut_0_2": "315/577",
+        "cut_0_5": "153/577"
       },
       "anchor_all_silent_wrong": {
-        "cut_0_2": "1633/3343",
-        "cut_0_5": "839/3343",
-        "rate_0_2": 0.4885,
-        "rate_0_5": 0.251
+        "cut_0_2": "1502/3343",
+        "cut_0_5": "595/3343",
+        "rate_0_2": 0.4493,
+        "rate_0_5": 0.178
       },
-      "anchor_placed_total_over_all": "3343/4320"
+      "anchor_placed_total_over_all": "3343/4320",
+      "chain": {
+        "note": "**회차별** 회수. `round_2` 이상이 있어야 '승격은 연쇄한다'가 측정된 것이다. `rounds_used`가 장면마다 몇 회에서 멈췄는지다(1 = 연쇄 없음).",
+        "recovered_by_round": {
+          "2": 151,
+          "3": 22
+        },
+        "extra_after_round_1": 173,
+        "rounds_used": {
+          "n": 313,
+          "min": 1,
+          "p10": 1,
+          "median": 1,
+          "p90": 2,
+          "max": 3
+        },
+        "hit_round_cap": 0,
+        "round_cap": 8,
+        "extra_shape_err": {
+          "n": 173,
+          "min": 0.0181,
+          "p10": 0.0441,
+          "median": 0.2173,
+          "p90": 1.013,
+          "max": 7.7034
+        },
+        "extra_silent_wrong": {
+          "cut_0_2": "93/173",
+          "cut_0_5": "54/173"
+        },
+        "chain_placed_total_over_all": "3516/4320"
+      },
+      "batch_reexamined": {
+        "note": "초판의 회수 0은 **거름이 대기 집합을 전부 비워 솔버에 한 획도 안 닿은 것**이었다. `solved_pending`이 0이면 그 실행은 **기전에 대한 정보가 0이다**(#32). `축이 미분류다`는 판정기의 결과이지 획의 성질이 아니므로 **축을 주고 다시 돌린다**.",
+        "after_chain": {
+          "input": 804,
+          "solved_pending": 17,
+          "promoted": 17
+        },
+        "oracle_axis": {
+          "input": 1554,
+          "solved_pending": 883,
+          "promoted": 883,
+          "not_promoted_reasons": {
+            "구조에 이어지지 않았다": 549,
+            "scale_undetermined": 74,
+            "no_committed_geometry": 48
+          },
+          "shape_err": {
+            "n": 883,
+            "min": 0.0108,
+            "p10": 0.0701,
+            "median": 0.28,
+            "p90": 1.0549,
+            "max": 13.4526
+          },
+          "silent_wrong": {
+            "cut_0_2": "574/883",
+            "cut_0_5": "263/883"
+          }
+        }
+      }
+    }
+  },
+  "base_by_grade": {
+    "precise": {
+      "anchor_recovered_over_pending": "201/532",
+      "anchor_recovery_rate": 0.3778,
+      "chain_extra": 56,
+      "anchor_silent_wrong_0_2": "118/201"
+    },
+    "medium": {
+      "anchor_recovered_over_pending": "245/572",
+      "anchor_recovery_rate": 0.4283,
+      "chain_extra": 60,
+      "anchor_silent_wrong_0_2": "139/245"
+    },
+    "coarse": {
+      "anchor_recovered_over_pending": "274/800",
+      "anchor_recovery_rate": 0.3425,
+      "chain_extra": 102,
+      "anchor_silent_wrong_0_2": "135/274"
+    }
+  },
+  "base_by_end_jitter": {
+    "jit_0.01": {
+      "anchor_recovered_over_pending": "168/298",
+      "anchor_recovery_rate": 0.5638,
+      "chain_extra": 45,
+      "anchor_silent_wrong_0_2": "75/168"
+    },
+    "jit_0.03": {
+      "anchor_recovered_over_pending": "227/598",
+      "anchor_recovery_rate": 0.3796,
+      "chain_extra": 94,
+      "anchor_silent_wrong_0_2": "124/227"
+    },
+    "jit_0.05": {
+      "anchor_recovered_over_pending": "163/781",
+      "anchor_recovery_rate": 0.2087,
+      "chain_extra": 70,
+      "anchor_silent_wrong_0_2": "105/163"
+    },
+    "jit_0": {
+      "anchor_recovered_over_pending": "162/227",
+      "anchor_recovery_rate": 0.7137,
+      "chain_extra": 9,
+      "anchor_silent_wrong_0_2": "88/162"
+    }
+  },
+  "base_by_composition": {
+    "3pt_yaw35_pitch15": {
+      "anchor_recovered_over_pending": "163/308",
+      "anchor_recovery_rate": 0.5292,
+      "chain_extra": 59,
+      "anchor_silent_wrong_0_2": "52/163"
+    },
+    "3pt_yaw20_pitch25": {
+      "anchor_recovered_over_pending": "137/411",
+      "anchor_recovery_rate": 0.3333,
+      "chain_extra": 68,
+      "anchor_silent_wrong_0_2": "49/137"
+    },
+    "3pt_yaw50_pitch8": {
+      "anchor_recovered_over_pending": "242/395",
+      "anchor_recovery_rate": 0.6127,
+      "chain_extra": 75,
+      "anchor_silent_wrong_0_2": "142/242"
+    },
+    "2pt_yaw35_pitch0": {
+      "anchor_recovered_over_pending": "85/348",
+      "anchor_recovery_rate": 0.2443,
+      "chain_extra": 16,
+      "anchor_silent_wrong_0_2": "59/85"
+    },
+    "1pt_yaw0_pitch0": {
+      "anchor_recovered_over_pending": "93/442",
+      "anchor_recovery_rate": 0.2104,
+      "chain_extra": 0,
+      "anchor_silent_wrong_0_2": "90/93"
     }
   },
   "constants": {
@@ -429,5 +755,24 @@
       }
     },
     "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "3df57ac7",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
   }
 }

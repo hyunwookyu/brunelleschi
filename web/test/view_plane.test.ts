@@ -24,6 +24,7 @@ import { rng32, gauss, renderInk } from "../src/s3d/synthInk.js";
 import { viewPlaceCtx, toView, projectInView, type ViewPose } from "../src/s3d/viewCamera.js";
 import { scene, groundPoint, boxEdges, faceDiagonals, stat, type Scene, type TrueEdge } from "./scene3d.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -224,6 +225,7 @@ describe("S-7 (0) 돌린 시점의 평면 경로", () => {
     const report = {
       spec: "S-7 (0) 돌린 시점의 평면 경로. **같은 획이 시점에 따라 갈리면 안 된다.**",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       why: (
         "§4.3의 평면 경로가 **첫 시점에만** 켜져 있었다(배선 점검에서 발견). 돌린 뒤에 그은 "
         + "면 위 사선은 놓이지 않는다 — 사용자가 이해할 수 없는 동작이다. 다만 돌린 시점은 "

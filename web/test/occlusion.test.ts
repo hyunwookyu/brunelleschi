@@ -27,6 +27,7 @@ import { viewPlaceCtx, toView, projectInView, type ViewPose } from "../src/s3d/v
 import { scene, groundPoint, boxEdges, faceDiagonals, stat,
          type Scene, type TrueEdge } from "./scene3d.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -209,6 +210,7 @@ describe("가림 정합성이 신호가 되는가 (타당성 측정 — 구현�
     const report = {
       spec: "가림 정합성의 **타당성 측정**. 구현이 아니다 — 앱 동작을 바꾸지 않는다.",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       why: (
         "D-S22가 '2D 증거로는 못 가른다'를 확정했고 남은 길이 2D 밖의 정보다. 그 후보가 "
         + "가림 정합성이다: 사용자는 획 전체를 보면서 그었는데, 어떤 배치 가설은 획의 일부를 "

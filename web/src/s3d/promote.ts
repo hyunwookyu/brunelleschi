@@ -38,10 +38,26 @@ export interface PromoteResult {
   reasons: Record<string, number>;
   /** 배율을 정하는 데 쓴 기준 획 수. 적으면 배율이 흔들린다. */
   anchorCount: number;
+  /**
+   * **실행 카운터**(PITFALLS #32). 회수 0이 "기전이 틀렸다"인지 "안 돌았다"인지 가른다.
+   *
+   * L-B.7 초판이 정확히 그것을 혼동했다 — 대기 1904가 거름에서 전부 걸려
+   * **솔버에 한 획도 안 닿았는데** "일괄 기전이 회수를 못 한다"고 적었다.
+   * 입력이 0이면 그 실행의 결과는 **기전에 대한 정보가 0이다.**
+   */
+  exec: {
+    /** 합동 풀이에 넣은 대기 획 수(= `pending.length`, 거름 이전). */
+    pendingIn: number;
+    /** 합동 풀이가 실제로 놓은 대기 획 수 — **거름 이전**이다. */
+    solvedPending: number;
+    /** 그중 연결 조건에서 떨어진 수. `solvedPending - 이것 = promoted.size`. */
+    droppedByConnection: number;
+  };
 }
 
 const empty = (): PromoteResult =>
-  ({ promoted: new Map(), scale: 1, reasons: {}, anchorCount: 0 });
+  ({ promoted: new Map(), scale: 1, reasons: {}, anchorCount: 0,
+     exec: { pendingIn: 0, solvedPending: 0, droppedByConnection: 0 } });
 
 /**
  * **대기 획을 기존 3D 기하에 붙여 올린다.**
@@ -59,6 +75,7 @@ export function promote(
   cfg: LiftCfg = {},
 ): PromoteResult {
   const out = empty();
+  out.exec.pendingIn = pending.length;
   if (!pending.length || !placed.size) {
     if (pending.length) out.reasons.no_committed_geometry = pending.length;
     return out;
@@ -100,7 +117,9 @@ export function promote(
       out.reasons[why] = (out.reasons[why] ?? 0) + 1;
       continue;
     }
+    out.exec.solvedPending += 1;
     if (!live.has(s.id) || !connected) {
+      out.exec.droppedByConnection += 1;
       out.reasons.not_connected_to_committed = (out.reasons.not_connected_to_committed ?? 0) + 1;
       continue;
     }

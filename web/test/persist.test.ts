@@ -32,6 +32,7 @@ import { serializeDoc, restoreDoc, isDoc, DOC_FORMAT,
          type Doc, type DocSource } from "../src/ui/store.js";
 import { toObj, toGltf, toBase64, toExportFrame, srgbToLinear } from "../src/ui/exportGeom.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -368,6 +369,7 @@ describe("S-9 측정 — 재생성 대조", () => {
     const report = {
       spec: "S-9 저장·복원. **무엇이 재생성되지 않는가**를 대조군으로 잰다.",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       why: (
         "`HANDOFF.md`가 \"`pts3d`는 저장하지 않아도 된다 — `reprojectAll`이 다시 만든다\"고 "
         + "적었다(계획서 §5의 자료구조를 그렇게 읽은 것이다). 그 말을 그대로 믿지 않고 "

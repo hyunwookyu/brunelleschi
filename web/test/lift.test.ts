@@ -12,6 +12,7 @@ import { transitionGap } from "../src/s3d/lift.js";
 import { lineIntersect, type Pt2 } from "../src/s3d/camera.js";
 import { norm3, sub3, mul3, type Vec3 } from "../src/s3d/geom3d.js";
 import { scene, boxEdges, drawEdges, groundPoint } from "./scene3d.js";
+import { fitGauge, perStrokeError } from "./metrics.js";
 import { rng32 } from "../src/s3d/synthInk.js";
 
 const SZ: [number, number] = [960, 672];
@@ -37,35 +38,11 @@ function boxFixture(jit = 0, seed = 5, grade: "precise" | "medium" = "precise") 
 function shapeError(
   placed: Map<string, { a: Vec3; b: Vec3 }>, truth: { a: Vec3; b: Vec3 }[], diag: number,
 ): { k: number; max: number; n: number } {
-  /** 뒤집힘을 가려낸다 — 짝지어 잰 거리가 작은 쪽. */
-  const pair = (seg: { a: Vec3; b: Vec3 }, t: { a: Vec3; b: Vec3 }, k: number)
-  : [[Vec3, Vec3], [Vec3, Vec3]] => {
-    const d0 = norm3(sub3(mul3(seg.a, k), t.a)) + norm3(sub3(mul3(seg.b, k), t.b));
-    const d1 = norm3(sub3(mul3(seg.a, k), t.b)) + norm3(sub3(mul3(seg.b, k), t.a));
-    return d0 <= d1 ? [[seg.a, t.a], [seg.b, t.b]] : [[seg.a, t.b], [seg.b, t.a]];
-  };
-  // 배율을 먼저 대충 잡고(중심 거리비) 그 배율로 짝을 정한 뒤 최소제곱 배율을 낸다
-  let n0 = 0, d0 = 0;
-  placed.forEach((seg, id) => {
-    const t = truth[+id.slice(1)];
-    n0 += norm3(t.a) + norm3(t.b); d0 += norm3(seg.a) + norm3(seg.b);
-  });
-  const k0 = d0 > 1e-18 ? n0 / d0 : 1;
-  let num = 0, den = 0, n = 0;
-  placed.forEach((seg, id) => {
-    for (const [p, q] of pair(seg, truth[+id.slice(1)], k0)) {
-      for (let k = 0; k < 3; k++) { num += p[k] * q[k]; den += p[k] * p[k]; }
-      n += 1;
-    }
-  });
-  const k = den > 1e-18 ? num / den : 1;
-  let max = 0;
-  placed.forEach((seg, id) => {
-    for (const [p, q] of pair(seg, truth[+id.slice(1)], k)) {
-      max = Math.max(max, norm3(sub3(mul3(p, k), q)) / diag);
-    }
-  });
-  return { k, max, n };
+  // **정의는 `metrics.ts` 하나다** — 여기 있던 지역 구현은 `fitGauge` + `perStrokeError`와
+  // 같은 식을 네 번째로 적은 것이었다(#1).
+  const k = fitGauge(placed, truth);
+  const errs = perStrokeError(placed, truth, diag, k);
+  return { k, max: errs.length ? Math.max(...errs) : 0, n: placed.size * 2 };
 }
 
 const boxDiag = (truth: { a: Vec3; b: Vec3 }[]): number => {

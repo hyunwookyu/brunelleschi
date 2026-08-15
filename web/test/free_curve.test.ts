@@ -26,6 +26,7 @@ import type { Pt2 } from "../src/s3d/camera.js";
 import { rng32, gauss, INK_GRADES } from "../src/s3d/synthInk.js";
 import { scene, groundPoint, boxEdges, drawEdges, stat, type Scene } from "./scene3d.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -249,6 +250,7 @@ describe("S-6 (3) 자유 곡선 폴백", () => {
     const report = {
       spec: "S-6 (3) 자유 곡선 폴백. **양 끝 앵커가 평면을 정한다** — 임의 깊이를 놓지 않는다.",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       approach: (
         "계획서의 '임시 평면(시선 수직)'은 **쓰지 않는다** — 앵커의 깊이를 복사하므로 획이 "
         + "깊이로 안 들어가고(D-S8이 기각한 `screen`) 깊이가 임의가 된다. 대신 **두 앵커를 잇는 "

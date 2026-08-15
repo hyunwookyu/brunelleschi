@@ -38,6 +38,7 @@ import { norm3, sub3, type Vec3 } from "../src/s3d/geom3d.js";
 import { rng32 } from "../src/s3d/synthInk.js";
 import { scene, groundPoint, boxEdges, faceDiagonals, drawEdges, stat, type Scene } from "./scene3d.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -298,6 +299,7 @@ describe("S-6 (2b) 축 오배정 되돌리기", () => {
     const report = {
       spec: "S-6 (2b) 축 오배정 되돌리기. 정합성 검사 실패를 '이 축이 아니다'의 신호로 쓴다.",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       approach: (
         "**판정 임계를 건드리지 않는다**(AS-13이 `AXIS_TOL` 조이기를 금지한다). "
         + "S-6 (1)의 정합성 검사는 축이 틀리면 반대쪽 끝점 예측이 빗나가므로 "

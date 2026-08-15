@@ -32,6 +32,7 @@ import { scene, groundPoint, boxEdges, drawEdges, stat,
 import type { Vec3 } from "../src/s3d/geom3d.js";
 import { FIRST_VIEW_OPTS } from "../src/s3d/appPlace.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -244,6 +245,7 @@ describe("S-6 (3) 경사 소실점 — 위험부터 잰다", () => {
     const report = {
       spec: "S-6 (3) 경사 소실점. **위험부터 잰다** — 가르지 못하면 만들지 않는다(A-3).",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       theory: (
         "이론서 15.1: 경사 VP는 대응 수평 VP의 바로 위/아래. **정확히 읽으면 후보 집합이 "
         + "점이 아니라 직선이다** — 경사 방향 `cos t·e_h − sin t·e_v`의 소실점은 전부 "

@@ -18,6 +18,7 @@ import type { Session, SessionStroke } from "../src/ui/sessionExport.js";
 import type { Pt2 } from "../src/s3d/camera.js";
 
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -81,6 +82,7 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
     const base = {
       spec: "실획 측정. 앱의 '획 내보내기'로 받은 세션을 sessions/ 에 넣으면 여기서 잰다.",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       why: (
         "AS-6·AS-12는 Quick,Draw 낙서에서 나온 수치이고 대상 사용자를 대표하지 않는다(AS-13). "
         + "**그 수치로 설계 결정을 하지 않기로 했으므로** 재측정 수단을 먼저 세운다. "

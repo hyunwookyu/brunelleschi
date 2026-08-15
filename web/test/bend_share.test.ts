@@ -27,6 +27,7 @@ import { loadQuickDraw, QUICKDRAW_WORDS } from "../src/data/quickdraw.js";
 import type { Pt2 } from "../src/s3d/camera.js";
 import { stat } from "./scene3d.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -139,6 +140,7 @@ describe("굽은 획의 비율", () => {
     const report = {
       spec: "굽은 획의 비율. **D-S17이 평면 경로에서 뺀 집단의 규모**를 잰다.",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       what: (
         "`representative(pts).bend` — 대표 직선(PCA 주축)에서의 최대 편차 ÷ 길이. "
         + "**판정이 실제로 쓰는 그 양이다**(`classifyStroke`가 `bend > bend_max`면 `too_bent`로 "

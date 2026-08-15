@@ -21,6 +21,7 @@ import { loadQuickDraw } from "../src/data/quickdraw.js";
 import { maxTurn, representative, AXIS_TOL } from "../src/s3d/axis.js";
 
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const WORDS = ["square", "house", "castle", "skyscraper", "door", "triangle"];
@@ -79,6 +80,7 @@ describe("AS-6 한 획 = 한 축", () => {
     const report = {
       spec: "AS-6 '한 획 = 한 축'의 실획 위반율. 방향 급변(maxTurn)으로 검출.",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       why: (
         "계획서 §4.1은 '획 전체가 하나의 축에 배정된다'를 기본 동작으로 두지만 "
         + "그것을 전제로 등록하지 않았다(리뷰어 지적). W-0 원장의 multi_run_rate 0.858은 "

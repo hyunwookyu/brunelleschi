@@ -27,8 +27,9 @@ import { snapCandidates, staticCandidates, SNAP_TOL,
 import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "../src/s3d/liveLine.js";
 import { norm3, sub3, unit3, axisDirection, type Vec3 } from "../src/s3d/geom3d.js";
 import { isFiniteVp, type Pt2 } from "../src/s3d/camera.js";
-import { scene, boxEdges, drawEdges, groundPoint, stat, round, perStrokeError,
+import { scene, boxEdges, drawEdges, groundPoint, stat, round,
          type Scene, type TrueEdge } from "./scene3d.js";
+import { perStrokeError, metricsSnapshot } from "./metrics.js";
 import { rng32, type InkGrade } from "../src/s3d/synthInk.js";
 import { constantsSnapshot } from "./constants.js";
 
@@ -412,6 +413,7 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
         rows: Object.fromEntries(Object.entries(liveByDeg).map(([k, v]) => [k, rep(v)])),
       },
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
     };
     mkdirSync(OUT, { recursive: true });
     writeFileSync(resolve(OUT, "axis_live.json"), JSON.stringify(doc, null, 2));

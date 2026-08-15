@@ -13,6 +13,7 @@ import { norm3, sub3, dot3, unit3, cross3, type Vec3 } from "../src/s3d/geom3d.j
 import { rng32 } from "../src/s3d/synthInk.js";
 import { scene, groundPoint, boxEdges, faceDiagonals, drawEdges, stat, type Scene } from "./scene3d.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -88,6 +89,7 @@ describe("S-6 (2) 면 위 사선", () => {
     const report = {
       spec: "S-6 (2) §4.3 면 위 사선. 상자의 두 면에 대각선을 긋고 회수율을 잰다.",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       approach: (
         "**면은 축 두 개가 편다**(D-S14). 계획서의 '이미 정의된 면'을 면 생성(§6, S-8)까지 "
         + "기다리지 않는다 — 상자의 면은 축 두 개가 펴는 평면이고 앵커가 위치를 정한다. "

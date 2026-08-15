@@ -33,6 +33,7 @@ import { viewPlaceCtx, toView, projectInView, type ViewPose } from "../src/s3d/v
 import { scene, groundPoint, boxEdges, faceDiagonals, stat,
          type Scene, type TrueEdge } from "./scene3d.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -414,6 +415,7 @@ describe("S-10 (a) 고치기 부하", () => {
     const report = {
       spec: "S-10 (a) 고치기 부하. **§1의 왕복 횟수 지표** — 크면 도구가 성립하지 않는다.",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       why: (
         "D-S22가 돌린 시점의 배치율을 0.25~0.46으로 떨어뜨렸다. 안 놓인 획은 `고치기`로 가는데 "
         + "**그 부담을 재지 않았다.** 부담이 크면 '조용히 틀리게 놓지 않는다'는 선택이 "

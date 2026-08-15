@@ -112,6 +112,25 @@
     },
     "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
   },
+  "metric_defs": {
+    "hash": "3df57ac7",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  },
   "approach": "**판정 임계를 건드리지 않는다**(AS-13이 `AXIS_TOL` 조이기를 금지한다). S-6 (1)의 정합성 검사는 축이 틀리면 반대쪽 끝점 예측이 빗나가므로 **검사 실패가 오배정의 신호**다. 실패하면 면 위 사선으로 재시도하고, 그것도 실패하면 미배치로 둔다(A-3: 놓지 않되 버리지 않는다).",
   "reading_rules": {
     "marginal_set": "**한계 집합을 뺄셈으로 만들지 않는다.** 두 팔의 배치 집합은 포함관계가 아니다 — retry는 check가 놓던 획도 잃는다(`vs.check.dropped`)고 원장이 말한다. 되돌리기의 한계 품질은 **`recovered`(직접 센 집합)**로 읽는다.",

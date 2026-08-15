@@ -19,6 +19,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { constantsSnapshot } from "../test/constants.js";
+import { metricsSnapshot } from "../test/metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -306,6 +307,7 @@ test.afterAll(() => {
       camera: "요 35°·피치 15° 3점(f=1000px). 가이드를 **참 소실점**으로 세운다",
     },
     constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
     ...led,
   }, null, 2), "utf-8");
 });

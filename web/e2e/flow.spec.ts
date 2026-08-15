@@ -13,6 +13,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 // **상수 스냅샷을 함께 낸다** — 배치 개수가 공유 임계에 달려 있으므로 STALE 대상이다.
 import { constantsSnapshot } from "../test/constants.js";
+import { metricsSnapshot } from "../test/metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -355,6 +356,7 @@ test.afterAll(() => {
   writeFileSync(resolve(OUT, "e2e.json"), JSON.stringify({
     spec: "S-10 종단 검증 — **실제 앱을 띄우고 실제 포인터 이벤트로** 그린 결과.",
     constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
     why: "지금까지의 측정은 전부 함수 호출이다. DOM·잉크 캡처·three 렌더·IndexedDB가 "
        + "함께 도는 것은 여기가 처음이고, **잉크 캡처 회귀 테스트가 0이었던 자리**이기도 하다.",
     condition: {

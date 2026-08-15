@@ -112,6 +112,25 @@
     },
     "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
   },
+  "metric_defs": {
+    "hash": "3df57ac7",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  },
   "why": "D-S22가 '2D 증거로는 못 가른다'를 확정했고 남은 길이 2D 밖의 정보다. 그 후보가 가림 정합성이다: 사용자는 획 전체를 보면서 그었는데, 어떤 배치 가설은 획의 일부를 기존 기하 뒤로 보낸다 — 그랬다면 안 보였어야 한다. **그 값이 참·거짓을 가르는지**를 먼저 잰다. 안 갈리면 다음 세션이 그 길로 가지 않아도 된다.",
   "metric": "`occluded_fraction` = 놓인 획의 점 중 **화면에서 다른 획에 덮이고 깊이가 뒤인** 비율. 판정은 **투영과 깊이 비교로만** 한다 — 배치가 쓰는 광선-평면 수학을 다시 쓰지 않는다(자기확인 차단). 참·거짓 라벨은 참값 3D에서 온다(끝점 오차 0.2 초과 = 크게 틀림).",
   "condition": {

@@ -38,6 +38,7 @@ import { isFiniteVp, type Pt2 } from "../src/s3d/camera.js";
 import { scene, boxEdges, drawEdges, groundPoint, stat, round, type Scene } from "./scene3d.js";
 import { rng32, type InkGrade } from "../src/s3d/synthInk.js";
 import { constantsSnapshot } from "./constants.js";
+import { axisDirErrors as axisDirErrorsM, metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -58,19 +59,9 @@ const PICKS = ["longest", "widest", "len_x_sep"] as const;
 const SNAP_DEGS = [0, HOMOG_TOL.snap_deg, 6];
 
 /** 검출 축 방향 ↔ 가장 가까운 참 축 방향의 각(도). **번호 규약과 무관하다.** */
-function axisDirErrors(vps: (Pt2 | null)[], principal: Pt2, f: number, sc: Scene): number[] {
-  const out: number[] = [];
-  for (const v of vps) {
-    if (!v) continue;
-    const d = unit3(axisDirection(v, principal, f));
-    let best = 90;
-    for (const t of sc.axes) {
-      best = Math.min(best, (Math.acos(Math.min(1, Math.abs(dot3(d, unit3(t))))) * 180) / Math.PI);
-    }
-    out.push(best);
-  }
-  return out;
-}
+/** 정의는 `metrics.axisDirErrors` 하나다 — 여기 있던 것은 `camera_gate`의 **바이트 동일한 복사본**이었다. */
+const axisDirErrors = (vps: (Pt2 | null)[], principal: Pt2, f: number, sc: Scene): number[] =>
+  axisDirErrorsM(vps, principal, f, sc.axes);
 
 /** `solveGuides`와 같은 경로이되 **무한원 스냅 각차를 바꿔 가며** 돈다(대조군). */
 function solveWithSnap(guides: Guide[], snapDeg: number) {
@@ -278,6 +269,7 @@ describe("L-B.3(b) — 초안 변환에서 카메라가 안 서는 조건", () =
       by_composition_default: Object.fromEntries(Object.entries(byComp).map(([k, v]) =>
         [k, { camera_ok: `${v.ok}/${v.n}`, axis_dir_err_deg: stat(v.axErr, 3) }])),
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
     };
     mkdirSync(OUT, { recursive: true });
     writeFileSync(resolve(OUT, "draft_recover.json"), JSON.stringify(doc, null, 2));

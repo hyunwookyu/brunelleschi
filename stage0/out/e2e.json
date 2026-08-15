@@ -112,6 +112,25 @@
     },
     "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
   },
+  "metric_defs": {
+    "hash": "3df57ac7",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  },
   "why": "지금까지의 측정은 전부 함수 호출이다. DOM·잉크 캡처·three 렌더·IndexedDB가 함께 도는 것은 여기가 처음이고, **잉크 캡처 회귀 테스트가 0이었던 자리**이기도 하다.",
   "condition": {
     "browser": "chromium(Playwright) · 1440×900 · deviceScaleFactor 1",
@@ -136,21 +155,21 @@
   },
   "stroke_latency_ms": {
     "n": 12,
-    "median": 1.85,
-    "max": 4.6,
+    "median": 2,
+    "max": 4.8,
     "note": "`pointerup` 하나가 반환할 때까지 — 판정·배치·튜브 생성·다시 그리기가 그 안이다. 개발 서버(번들 없음) 기준이므로 **상한**으로 읽는다."
   },
   "orbit_frame_ms": {
     "n": 30,
-    "median": 16.4,
-    "max": 18.3
+    "median": 16.7,
+    "max": 18.4
   },
   "second_view": {
     "added": 1,
     "placed_total": 9,
     "camera_locked": false,
     "latency_ms": {
-      "median": 2.4
+      "median": 2.3
     },
     "note": "**기존 기하의 끝점 둘 사이**를 그었다(면 대각선 격). `camera_locked`가 false면 그 획이 안 놓였다는 뜻이다 — 잠금은 놓였을 때만 걸린다(D-S22의 귀결)."
   },
@@ -172,7 +191,7 @@
     "note": "돌린 시점 획은 **그 시점으로 돌아가야** 후보가 생긴다(좌표계가 그 시점의 것이다). 조작 수에 '그 시점으로' 1이 더 붙는다 — `fix_load.json`의 모형이 0으로 잡은 항목이다."
   },
   "reload": {
-    "ms": 104,
+    "ms": 103,
     "strokes": 13,
     "placed": 11,
     "user_placed": 2,

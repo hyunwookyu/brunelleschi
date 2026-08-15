@@ -19,6 +19,7 @@ import { lineIntersect, recoverCamera, type Pt2 } from "../src/s3d/camera.js";
 import { unit3, dot3, axisDirection } from "../src/s3d/geom3d.js";
 import { stat, round } from "./scene3d.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -138,6 +139,7 @@ describe("L-A.7 b 조건수 — 위치 대 각도 파라미터화", () => {
         + "남아 있었다 — 리뷰어 2회차). 단일 뷰포트(1280×675)의 실제 가이드는 607~1328px이고 "
         + "**가장 짧은 것이 정확도를 정한다**. 이 표가 그 값을 정하는 유일한 실측 근거다.",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
     };
     mkdirSync(OUT, { recursive: true });
     writeFileSync(resolve(OUT, "vp_homog.json"), JSON.stringify(doc, null, 2));

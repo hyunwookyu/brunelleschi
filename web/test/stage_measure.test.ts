@@ -24,6 +24,7 @@ import { isFiniteVp, type Pt2 } from "../src/s3d/camera.js";
 import { scene, boxEdges, drawEdges, groundPoint, stat, round, type Scene } from "./scene3d.js";
 import { rng32, INK_GRADES, type InkGrade } from "../src/s3d/synthInk.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -241,6 +242,7 @@ describe("L-B.1 — 단일 뷰포트: 보장 둘과, 실측으로 오인했던 �
       },
       by_shot: byShot,
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
     };
     mkdirSync(OUT, { recursive: true });
     writeFileSync(resolve(OUT, "stage_cam.json"), JSON.stringify(doc, null, 2));

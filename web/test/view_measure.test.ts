@@ -19,6 +19,7 @@ import { norm3, sub3, unit3, cross3, dot3, mul3, type Vec3 } from "../src/s3d/ge
 import { rng32, renderInk, gauss } from "../src/s3d/synthInk.js";
 import { scene, groundPoint, boxEdges, stat, round, type Scene, type TrueEdge } from "./scene3d.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 import type { Pt2 } from "../src/s3d/camera.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -255,6 +256,7 @@ describe("S-5 측정", () => {
     const report = {
       spec: "S-5 회전 후 이어 그리기. 첫 시점에서 앞쪽 8모서리를 그려 3D로 올린 뒤, 돌린 시점에서 뒤쪽 4모서리를 그린다.",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       why: (
         "계획서가 **이 도구의 핵심 기능**이라 적은 단계다. 돌린 뒤에는 카메라를 정확히 알므로 "
         + "소실점을 다시 찍을 필요가 없다 — **축 방향은 그대로이고 소실점만 다시 계산**된다."

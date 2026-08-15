@@ -25,8 +25,9 @@ import {
   norm3, sub3, add3, mul3, dot3, cross3, unit3, axisDirection, type Vec3,
 } from "../src/s3d/geom3d.js";
 import { rng32, gauss, type InkGrade } from "../src/s3d/synthInk.js";
-import { scene, boxLattice, drawEdges, groundPoint, stat, round, median, perStrokeError,
+import { scene, boxLattice, drawEdges, groundPoint, stat, round, median,
          type Scene, type TrueEdge } from "./scene3d.js";
+import { perStrokeError, axisDirErrors, metricsSnapshot } from "./metrics.js";
 import { constantsSnapshot } from "./constants.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -104,20 +105,12 @@ function perturbedVps(sc: Scene, deg: number, r: () => number): (Pt2 | null)[] {
   });
 }
 
-/** 검출 축 방향 ↔ 가장 가까운 참 축 방향의 각(도). **번호 규약과 무관하다.** */
-function axisDirErrors(vps: (Pt2 | null)[], principal: Pt2, f: number, sc: Scene): number[] {
-  const out: number[] = [];
-  for (const v of vps) {
-    if (!v) continue;
-    const d = unit3(axisDirection(v, principal, f));
-    let best = 90;
-    for (const t of sc.axes) {
-      best = Math.min(best, (Math.acos(Math.min(1, Math.abs(dot3(d, unit3(t))))) * 180) / Math.PI);
-    }
-    out.push(best);
-  }
-  return out;
-}
+/**
+ * 검출 축 방향 ↔ 가장 가까운 참 축 방향의 각(도). **번호 규약과 무관하다.**
+ * 정의는 `metrics.axisDirErrors` 하나다 — `draft_recover`에 **바이트 동일한 복사본**이 있었다.
+ */
+const axisErrs = (vps: (Pt2 | null)[], principal: Pt2, f: number, sc: Scene): number[] =>
+  axisDirErrors(vps, principal, f, sc.axes);
 
 const rate = (k: number, n: number) => (n ? +(k / n).toFixed(4) : null);
 
@@ -153,7 +146,7 @@ function liftWith(fx: Fx, vps: (Pt2 | null)[], b: Bag, useDetectedAxes = false,
   b.camOk += 1;
   const f = cam.f!, principal = cam.principalPoint ?? [SZ[0] / 2, SZ[1] / 2];
   b.fErr.push(Math.abs(f - sc.f) / sc.f);
-  for (const e of axisDirErrors(vps, principal, f, sc)) b.axErr.push(e);
+  for (const e of axisErrs(vps, principal, f, sc)) b.axErr.push(e);
   const ctx: LiftCtx = { principal, f, vps, imgSize: SZ };
   const strokes: LiftStroke[] = fx.strokes.map((s, i) => ({
     ...s, axis: useDetectedAxes ? (detAxis?.get(s.id) ?? "free") : trueAxis(sc, edges[i].axis),
@@ -218,6 +211,7 @@ describe("L-A.5d·L-A.6 카메라 정확도 (§5.4·§5.5)", () => {
       by_axis_err_all_compositions: byErr,
       by_axis_err_baseline_3pt_jitter_le_0_01: byErrBase,
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
     };
     mkdirSync(OUT, { recursive: true });
     writeFileSync(resolve(OUT, "camera_gate.json"), JSON.stringify(doc, null, 2));

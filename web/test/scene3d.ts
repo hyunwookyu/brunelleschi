@@ -316,43 +316,12 @@ export const stat = (xs: number[], k = 4) => ({
 export { norm3, sub3, add3, mul3, dot3, unit3, project };
 
 /**
- * **형태 오차** — 전역 최적 배율로 맞춘 뒤의 획별 위치 오차(구조 대각 대비). 끝점 뒤집힘을 가려낸다.
+ * **형태 오차는 여기에 없다.** `test/metrics.ts`가 유일한 정의다.
  *
- * ⚠ **여기가 유일한 정의다.** L-B.3(항목 a)에서 `lift_grade`가 같은 양을 쓰려다
- * `camera_gate.test.ts`의 지역 함수를 복사할 뻔했다 — **같은 양이 두 숫자로 돌아다니는 것**이
- * PITFALLS #1이고 §5.4의 "0.026 대 0.0296"이 정확히 그 사고였다. 그래서 옮겨 왔다.
+ * 여기 있던 `perStrokeError`를 옮겼다 — 그것만으로는 재발을 못 막았기 때문이다.
+ * `promote.test.ts`가 게이지 없는 `segErr`를 새로 써서 같은 2416획이 두 값으로 돌아다녔다
+ * (리뷰어 L-B.7 [1]). `metrics.ts`는 **게이지를 인자로 강제하고 정의 해시를 산출물에 넣는다.**
  *
- * `placed`의 키는 `s<인덱스>` 규약이고 그 인덱스가 `edges`를 가리킨다.
+ * 하위 호환 재수출을 두지 않는다 — 두 경로가 생기면 다시 갈린다(PITFALLS #1).
  */
-export function perStrokeError(
-  placed: Map<string, { a: Vec3; b: Vec3 }>, edges: TrueEdge[], diag: number,
-): number[] {
-  const pick = (seg: { a: Vec3; b: Vec3 }, t: TrueEdge, k: number) => {
-    const d0 = norm3(sub3(mul3(seg.a, k), t.a)) + norm3(sub3(mul3(seg.b, k), t.b));
-    const d1 = norm3(sub3(mul3(seg.a, k), t.b)) + norm3(sub3(mul3(seg.b, k), t.a));
-    return d0 <= d1 ? [[seg.a, t.a], [seg.b, t.b]] as [Vec3, Vec3][]
-                    : [[seg.a, t.b], [seg.b, t.a]] as [Vec3, Vec3][];
-  };
-  let n0 = 0, d0 = 0;
-  placed.forEach((seg, id) => {
-    const t = edges[+id.slice(1)];
-    n0 += norm3(t.a) + norm3(t.b); d0 += norm3(seg.a) + norm3(seg.b);
-  });
-  const k0 = d0 > 1e-18 ? n0 / d0 : 1;
-  let num = 0, den = 0;
-  placed.forEach((seg, id) => {
-    for (const [p, q] of pick(seg, edges[+id.slice(1)], k0)) {
-      for (let c = 0; c < 3; c++) { num += p[c] * q[c]; den += p[c] * p[c]; }
-    }
-  });
-  const kk = den > 1e-18 ? num / den : 1;
-  const out: number[] = [];
-  placed.forEach((seg, id) => {
-    let m = 0;
-    for (const [p, q] of pick(seg, edges[+id.slice(1)], kk)) {
-      m = Math.max(m, norm3(sub3(mul3(p, kk), q)) / diag);
-    }
-    out.push(m);
-  });
-  return out;
-}
+export type { TrueEdge as MetricTrueEdge };

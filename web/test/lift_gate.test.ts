@@ -24,6 +24,7 @@ import { rng32, type InkGrade } from "../src/s3d/synthInk.js";
 import { scene, boxEdges, drawEdges, groundPoint, stat, round, median, type Scene, type TrueEdge }
   from "./scene3d.js";
 import { constantsSnapshot } from "./constants.js";
+import { perStrokeErrorMap, metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -76,38 +77,11 @@ const shares = (A: TrueEdge, B: TrueEdge): boolean => {
 };
 
 /** 전역 최적 배율로 맞춘 뒤 **획별** 위치 오차(상자 대각 대비). 끝점 뒤집힘을 가려낸다. */
-function perStrokeError(
-  placed: Map<string, { a: Vec3; b: Vec3 }>, edges: TrueEdge[], diag: number,
-): Map<string, number> {
-  const pick = (seg: { a: Vec3; b: Vec3 }, t: TrueEdge, k: number) => {
-    const d0 = norm3(sub3(mul3(seg.a, k), t.a)) + norm3(sub3(mul3(seg.b, k), t.b));
-    const d1 = norm3(sub3(mul3(seg.a, k), t.b)) + norm3(sub3(mul3(seg.b, k), t.a));
-    return d0 <= d1 ? [[seg.a, t.a], [seg.b, t.b]] as [Vec3, Vec3][]
-                    : [[seg.a, t.b], [seg.b, t.a]] as [Vec3, Vec3][];
-  };
-  let n0 = 0, d0 = 0;
-  placed.forEach((seg, id) => {
-    const t = edges[+id.slice(1)];
-    n0 += norm3(t.a) + norm3(t.b); d0 += norm3(seg.a) + norm3(seg.b);
-  });
-  const k0 = d0 > 1e-18 ? n0 / d0 : 1;
-  let num = 0, den = 0;
-  placed.forEach((seg, id) => {
-    for (const [p, q] of pick(seg, edges[+id.slice(1)], k0)) {
-      for (let c = 0; c < 3; c++) { num += p[c] * q[c]; den += p[c] * p[c]; }
-    }
-  });
-  const k = den > 1e-18 ? num / den : 1;
-  const out = new Map<string, number>();
-  placed.forEach((seg, id) => {
-    let m = 0;
-    for (const [p, q] of pick(seg, edges[+id.slice(1)], k)) {
-      m = Math.max(m, norm3(sub3(mul3(p, k), q)) / diag);
-    }
-    out.set(id, m);
-  });
-  return out;
-}
+/**
+ * 정의는 `metrics.perStrokeErrorMap` 하나다 — 여기 있던 것은 `scene3d`(당시)의 복사본이었다.
+ * 세 벌이 돌아다녔고 값은 같았지만, 네 번째로 만들어진 `promote.segErr`는 **값이 달랐다**.
+ */
+const perStrokeError = perStrokeErrorMap;
 
 /** 카운터 묶음 — **분자/분모로 적는다**(PITFALLS #14). */
 const bag = () => ({
@@ -441,6 +415,7 @@ describe("L-A 게이트 (§5.1~§5.3)", () => {
         + "단위를 바꾸는 것은 아무것도 고치지 않는다(PITFALLS #24). "
         + "misfit 0.06은 6.892°이므로 채택한 2.5°는 그보다 **엄격하다**",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
     };
     mkdirSync(OUT, { recursive: true });
     writeFileSync(resolve(OUT, "vp_detect.json"), JSON.stringify(doc, null, 2));
@@ -529,6 +504,7 @@ describe("L-A 게이트 (§5.1~§5.3)", () => {
         source: "docs/archive/segment_plan.md 머리말 · segment_gate.json@1671e540",
       },
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
     };
     mkdirSync(OUT, { recursive: true });
     writeFileSync(resolve(OUT, "lift_gate.json"), JSON.stringify(doc, null, 2));

@@ -37,6 +37,7 @@ import { scene, boxEdges, boxLattice, drawEdges, groundPoint, stat, round,
          type Scene, type TrueEdge } from "./scene3d.js";
 import { rng32, INK_GRADES, type InkGrade } from "../src/s3d/synthInk.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -552,6 +553,7 @@ describe("L-B.3 — 스냅 반경과 성공률", () => {
         rows: wrongKind,
       },
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
     };
     mkdirSync(OUT, { recursive: true });
     writeFileSync(resolve(OUT, "snap.json"), JSON.stringify(doc, null, 2));

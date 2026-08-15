@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { FIRST_VIEW_OPTS, VIEW_OPTS, PLACE_OPT_WIRING } from "../src/s3d/appPlace.js";
 import { PLACE_TOL } from "../src/s3d/stroke.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -83,6 +84,7 @@ describe("S-7 (0) 측정-앱 경로 배선", () => {
     const report = {
       spec: "S-7 (0) 측정 경로와 앱 경로의 배선. **측정했다고 앱이 쓰는 것은 아니다.**",
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
       why: (
         "§4.3 면 위 사선을 S-6 (2)가 측정해 놓고 **앱은 그 경로를 안 켜고 있었다** — "
         + "`settle(drawn, ctx)`가 옵션 없이 불렸고 두 단계가 그대로 지나갔다. "

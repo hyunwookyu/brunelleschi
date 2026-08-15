@@ -24,6 +24,7 @@ import { draftFromDetection, extendGuide, DRAFT_TOL, type Guide } from "../src/s
 import { scene, boxEdges, drawEdges, groundPoint, round } from "./scene3d.js";
 import { rng32, type InkGrade } from "../src/s3d/synthInk.js";
 import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 import type { Pt2 } from "../src/s3d/camera.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -194,6 +195,7 @@ describe("L-B.2 핸들 예산 — 초안을 늘리면 예산이 느는가", () =
       },
       by_case: rows,
       constants: constantsSnapshot(),
+      metric_defs: metricsSnapshot(),
     };
     mkdirSync(OUT, { recursive: true });
     writeFileSync(resolve(OUT, "guide_budget.json"), JSON.stringify(doc, null, 2));
