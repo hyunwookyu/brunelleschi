@@ -1,0 +1,335 @@
+{
+  "spec": "굽은 획의 비율. **D-S17이 평면 경로에서 뺀 집단의 규모**를 잰다.",
+  "constants": {
+    "hash": "0803f3fe",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "what": "`representative(pts).bend` — 대표 직선(PCA 주축)에서의 최대 편차 ÷ 길이. **판정이 실제로 쓰는 그 양이다**(`classifyStroke`가 `bend > bend_max`면 `too_bent`로 미분류에 둔다). 너무 짧은 획(`min_len_ratio` 미만)은 판정과 같은 순서로 먼저 뺀다.",
+  "caveat": "**표본이 Quick,Draw(마우스 낙서)다** — AS-13에 따라 이 수치로 설계 결정을 하지 않는다. 대상 사용자(스타일러스·투시도 숙련자)를 대표하지 않는다. 재는 것은 **자릿수**뿐이고, 실획이 들어오면 `real_ink.json`이 같은 양을 다시 낸다. **AS-7의 26.5%와 직접 비교하지 않는다** — 그 값은 `straight_tol` 0.10 기준의 다른 지표다.",
+  "threshold_note": "`bend_max` **0.18은 측정이 정당화하지 못한 잠정값**이다(D-S2가 같은 상수에 대해 '이 표본이 임계를 시험하지 못한다'고 적었다). 그래서 절단값 다섯을 다 낸다 — 임계가 움직이면 이 비율이 얼마나 움직이는지가 함께 보여야 한다.",
+  "bend_max_now": 0.18,
+  "n_strokes": 4785,
+  "n_too_short": 103,
+  "n_degenerate": 84,
+  "bend": {
+    "n": 4785,
+    "min": 0,
+    "p10": 0.012,
+    "median": 0.2706,
+    "p90": 0.4957,
+    "max": 0.8494
+  },
+  "share_over": {
+    "over_0.08": 0.6604,
+    "over_0.12": 0.6403,
+    "over_0.18": 0.6025,
+    "over_0.25": 0.5273,
+    "over_0.4": 0.2748
+  },
+  "split": {
+    "n_turned": 3242,
+    "n_smooth": 1543,
+    "turned_share": 0.6775,
+    "turned": {
+      "bend": {
+        "n": 3242,
+        "min": 0,
+        "p10": 0.1665,
+        "median": 0.3634,
+        "p90": 0.5255,
+        "max": 0.8494
+      },
+      "share_over": {
+        "over_0.08": 0.9528,
+        "over_0.12": 0.9349,
+        "over_0.18": 0.8834,
+        "over_0.25": 0.7748,
+        "over_0.4": 0.405
+      }
+    },
+    "smooth": {
+      "bend": {
+        "n": 1543,
+        "min": 0,
+        "p10": 0.0068,
+        "median": 0.0184,
+        "p90": 0.0495,
+        "max": 0.564
+      },
+      "share_over": {
+        "over_0.08": 0.046,
+        "over_0.12": 0.0214,
+        "over_0.18": 0.0123,
+        "over_0.25": 0.0071,
+        "over_0.4": 0.0013
+      }
+    }
+  },
+  "by_word": {
+    "square": {
+      "n": 401,
+      "n_too_short": 6,
+      "bend": {
+        "n": 401,
+        "min": 0,
+        "p10": 0.0162,
+        "median": 0.4261,
+        "p90": 0.5284,
+        "max": 0.7369
+      },
+      "share_over": {
+        "over_0.08": 0.7955,
+        "over_0.12": 0.7855,
+        "over_0.18": 0.7805,
+        "over_0.25": 0.7581,
+        "over_0.4": 0.586
+      },
+      "smooth": {
+        "n": 81,
+        "share_over": {
+          "over_0.08": 0.037,
+          "over_0.12": 0.0123,
+          "over_0.18": 0,
+          "over_0.25": 0,
+          "over_0.4": 0
+        }
+      }
+    },
+    "house": {
+      "n": 1045,
+      "n_too_short": 15,
+      "bend": {
+        "n": 1045,
+        "min": 0,
+        "p10": 0.0145,
+        "median": 0.3127,
+        "p90": 0.523,
+        "max": 0.763
+      },
+      "share_over": {
+        "over_0.08": 0.6766,
+        "over_0.12": 0.667,
+        "over_0.18": 0.6507,
+        "over_0.25": 0.6019,
+        "over_0.4": 0.3321
+      },
+      "smooth": {
+        "n": 325,
+        "share_over": {
+          "over_0.08": 0.0462,
+          "over_0.12": 0.0246,
+          "over_0.18": 0.0154,
+          "over_0.25": 0.0123,
+          "over_0.4": 0
+        }
+      }
+    },
+    "castle": {
+      "n": 1057,
+      "n_too_short": 17,
+      "bend": {
+        "n": 1057,
+        "min": 0,
+        "p10": 0.0166,
+        "median": 0.2909,
+        "p90": 0.5077,
+        "max": 0.8494
+      },
+      "share_over": {
+        "over_0.08": 0.754,
+        "over_0.12": 0.7266,
+        "over_0.18": 0.6802,
+        "over_0.25": 0.5752,
+        "over_0.4": 0.2744
+      },
+      "smooth": {
+        "n": 242,
+        "share_over": {
+          "over_0.08": 0.0785,
+          "over_0.12": 0.0455,
+          "over_0.18": 0.0331,
+          "over_0.25": 0.0248,
+          "over_0.4": 0.0083
+        }
+      }
+    },
+    "skyscraper": {
+      "n": 827,
+      "n_too_short": 41,
+      "bend": {
+        "n": 827,
+        "min": 0,
+        "p10": 0.0102,
+        "median": 0.1355,
+        "p90": 0.3783,
+        "max": 0.7564
+      },
+      "share_over": {
+        "over_0.08": 0.5611,
+        "over_0.12": 0.5224,
+        "over_0.18": 0.4123,
+        "over_0.25": 0.2684,
+        "over_0.4": 0.0907
+      },
+      "smooth": {
+        "n": 342,
+        "share_over": {
+          "over_0.08": 0.0526,
+          "over_0.12": 0.0175,
+          "over_0.18": 0.0088,
+          "over_0.25": 0,
+          "over_0.4": 0
+        }
+      }
+    },
+    "door": {
+      "n": 700,
+      "n_too_short": 16,
+      "bend": {
+        "n": 700,
+        "min": 0,
+        "p10": 0.0157,
+        "median": 0.3143,
+        "p90": 0.4633,
+        "max": 0.7529
+      },
+      "share_over": {
+        "over_0.08": 0.79,
+        "over_0.12": 0.7757,
+        "over_0.18": 0.7557,
+        "over_0.25": 0.6657,
+        "over_0.4": 0.24
+      },
+      "smooth": {
+        "n": 141,
+        "share_over": {
+          "over_0.08": 0.0638,
+          "over_0.12": 0.0284,
+          "over_0.18": 0.0142,
+          "over_0.25": 0.0071,
+          "over_0.4": 0
+        }
+      }
+    },
+    "line": {
+      "n": 338,
+      "n_too_short": 6,
+      "bend": {
+        "n": 338,
+        "min": 0,
+        "p10": 0.0054,
+        "median": 0.0155,
+        "p90": 0.0365,
+        "max": 0.4695
+      },
+      "share_over": {
+        "over_0.08": 0.0296,
+        "over_0.12": 0.0148,
+        "over_0.18": 0.0059,
+        "over_0.25": 0.0059,
+        "over_0.4": 0.003
+      },
+      "smooth": {
+        "n": 303,
+        "share_over": {
+          "over_0.08": 0.0033,
+          "over_0.12": 0,
+          "over_0.18": 0,
+          "over_0.25": 0,
+          "over_0.4": 0
+        }
+      }
+    },
+    "triangle": {
+      "n": 417,
+      "n_too_short": 2,
+      "bend": {
+        "n": 417,
+        "min": 0,
+        "p10": 0.0166,
+        "median": 0.3898,
+        "p90": 0.5382,
+        "max": 0.7619
+      },
+      "share_over": {
+        "over_0.08": 0.7434,
+        "over_0.12": 0.729,
+        "over_0.18": 0.717,
+        "over_0.25": 0.7002,
+        "over_0.4": 0.4772
+      },
+      "smooth": {
+        "n": 109,
+        "share_over": {
+          "over_0.08": 0.055,
+          "over_0.12": 0.0275,
+          "over_0.18": 0.0092,
+          "over_0.25": 0,
+          "over_0.4": 0
+        }
+      }
+    }
+  }
+}

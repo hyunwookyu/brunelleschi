@@ -3536,6 +3536,7 @@
   "constants_hash": "0803f3fe",
   "scanned": [
     "axis_judgement.json",
+    "bend_share.json",
     "constants.json",
     "continue_after_rotate.json",
     "face_diagonal.json",

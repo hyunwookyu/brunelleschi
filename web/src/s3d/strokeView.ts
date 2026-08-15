@@ -9,6 +9,21 @@ import { buildTube, widthProfile, worldRadius, TUBE_TOL } from "./tube.js";
 import { AXIS_COLOR } from "./grid.js";
 
 const FREE_COLOR = "#9aa4ab";
+/** `Stroke.color`의 기본값. 이것이면 **축 색을 쓴다**(아래 `colorOf`). */
+export const DEFAULT_COLOR = "#111";
+
+/**
+ * 획의 색. 평소에는 **축 색**이고, `Stroke.color`가 기본값이 아니면 **그것이 이긴다**.
+ *
+ * 그 덮어쓰기가 지금 쓰이는 곳은 **미확정 배치**다(S-7, D-S18 — 깊이 근거가 앵커 하나뿐인 배치).
+ * _`Stroke.color`는 자료구조에 있는데 아무도 안 읽고 있었다 — S-7이 미확정을 그 필드에
+ * 적어 놓고 3D도 2D도 축 색만 그리고 있었다(S-8 점검에서 발견). 표시를 만들었다고
+ * 화면이 쓰는 것은 아니다 — `appPlace`의 배선 문제와 같은 유형이다._
+ */
+export function colorOf(s: Stroke): string {
+  if (s.color && s.color !== DEFAULT_COLOR) return s.color;
+  return typeof s.axis === "number" ? AXIS_COLOR[s.axis] : FREE_COLOR;
+}
 
 /** 굵기 조회 — 획 id로 원본 6튜플을 준다. 없으면(합성 획) 일정 굵기로 떨어진다. */
 export type RawLookup = (id: string) => number[][] | undefined;
@@ -47,7 +62,7 @@ export class StrokeView {
       g.setAttribute("position", new THREE.BufferAttribute(m.positions, 3));
       g.setAttribute("normal", new THREE.BufferAttribute(m.normals, 3));
       g.setIndex(new THREE.BufferAttribute(m.indices, 1));
-      const color = typeof s.axis === "number" ? AXIS_COLOR[s.axis] : FREE_COLOR;
+      const color = colorOf(s);
       const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({
         color, roughness: 0.75, metalness: 0.0,
       }));

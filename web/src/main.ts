@@ -4,7 +4,7 @@
 // 확정된 획은 오른쪽 3D 뷰포트에 쌓인다. 계산은 전부 `s3d/`에 있고 여기는 DOM 배선만 한다.
 import { InkCanvas } from "./capture/inkCanvas.js";
 import { Viewport } from "./s3d/viewport.js";
-import { StrokeView } from "./s3d/strokeView.js";
+import { StrokeView, colorOf, DEFAULT_COLOR } from "./s3d/strokeView.js";
 import { CameraPanel, type Tool } from "./ui/cameraPanel.js";
 import { PRESETS } from "./s3d/constraints.js";
 import { AXIS_COLOR } from "./s3d/grid.js";
@@ -281,8 +281,10 @@ function applyPicks() {
 
 /** 미확정 배치는 **색으로 구분한다** — `Stroke.color`가 이미 있으므로 자료구조를 늘리지 않는다. */
 function markProvisional(s: Stroke) {
-  s.color = provisional.has(s.id) ? "#b9770e" : "#111";
+  s.color = provisional.has(s.id) ? PROVISIONAL_COLOR : DEFAULT_COLOR;
 }
+/** 미확정 배치의 색. `강조`와 같은 주황이라 2D·3D에서 같은 것으로 읽힌다. */
+const PROVISIONAL_COLOR = "#b9770e";
 
 /** 점과 선분의 거리. 획 선택에 쓴다. */
 function segDist(p: Pt2, a: Pt2, b: Pt2): number {
@@ -464,7 +466,7 @@ function drawBelowInk(ctx: CanvasRenderingContext2D) {
       pts = s.pts2d;
     }
     if (!pts || pts.length < 2) continue;
-    ctx.strokeStyle = typeof s.axis === "number" ? AXIS_COLOR[s.axis] : "#9aa4ab";
+    ctx.strokeStyle = colorOf(s);            // 미확정 배치는 여기서도 주황이다(S-7)
     ctx.setLineDash(placed ? [] : [5, 4]);
     ctx.globalAlpha = placed ? 0.9 : 0.55;
     ctx.beginPath();
