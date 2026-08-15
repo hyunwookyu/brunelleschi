@@ -1,5 +1,5 @@
 {
-  "n_flags": 1473,
+  "n_flags": 1482,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -3790,6 +3790,51 @@
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
     },
     {
+      "path": "promote.json:by_arm.base.committed_drift",
+      "val": 0,
+      "flag": "분포 전체가 0(n=338) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "promote.json:by_arm.tighten.committed_drift",
+      "val": 0,
+      "flag": "분포 전체가 0(n=345) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "promote.json:by_arm.loosen.committed_drift",
+      "val": 0,
+      "flag": "분포 전체가 0(n=313) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "promote.json:by_arm.base.recovery_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "promote.json:by_arm.base.committed_drift.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "promote.json:by_arm.tighten.recovery_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "promote.json:by_arm.tighten.committed_drift.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "promote.json:by_arm.loosen.recovery_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "promote.json:by_arm.loosen.committed_drift.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
       "path": "real_ink.json:n_sessions",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -7387,12 +7432,12 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 138
+      "reads": 149
     },
     {
       "field": "pts2d",
       "writes": 1,
-      "reads": 51
+      "reads": 52
     },
     {
       "field": "pts3d",
@@ -7457,6 +7502,7 @@
     "one_stroke_one_axis.json",
     "persist.json",
     "preview_gap.json",
+    "promote.json",
     "real_ink.json",
     "segment_gate.json",
     "snap.json",

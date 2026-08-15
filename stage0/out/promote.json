@@ -1,0 +1,433 @@
+{
+  "what": "L-B.7 — 승격 연쇄가 미배치를 실제로 회수하는가, 그리고 회수된 것이 맞는가",
+  "why": "계획서 §9.1의 '미배치는 실패가 아니라 대기 상태다'가 **이 구현에서 참인지**가 여기서 갈린다. 그리고 **D-L18**(축 판정 임계를 조이는 쪽)이 이 회수율에 달려 있다.",
+  "method": {
+    "promote": "**같은 `liftAll`을 재사용한다**(§9.1이 그렇게 적었다) — 대기 획과 확정 획을 함께 풀고, 확정 획들이 정해 주는 배율로 새로 놓인 것만 채택한다. **확정 성분과 이어진 것만** 올린다(떨어진 덩어리는 배율이 안 전달된다).",
+    "not_a_recompute": "**기존 기하는 안 움직인다.** 다시 푼 값으로 덮지 않는다 — 그것은 승격이 아니라 재계산이고 차수 승격(§6.1)의 일이다. `committed_drift`가 그것을 잠근다.",
+    "warning": "⚠ **#16** — 회수율이 높아도 **회수된 것이 조용히 틀리면 아무것도 안 고친 것**이다. ⚠ **#3** — 다시 풀면 일부가 놓이는 것은 거의 정의상 참이다. 재는 것은 **얼마나, 맞게**다."
+  },
+  "conditions": {
+    "compositions": [
+      "3pt_yaw35_pitch15",
+      "3pt_yaw20_pitch25",
+      "3pt_yaw50_pitch8",
+      "2pt_yaw35_pitch0",
+      "1pt_yaw0_pitch0"
+    ],
+    "grades": [
+      "precise",
+      "medium",
+      "coarse"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "end_jitters": [
+      0,
+      0.01,
+      0.03,
+      0.05
+    ],
+    "skew": 0.12,
+    "canvas_px": [
+      960,
+      672
+    ],
+    "camera": "**참 카메라**. 검출·조정은 여기서 안 잰다.",
+    "arms": {
+      "base": {
+        "vp_dist_ratio": 0.06,
+        "bend_max": 0.18,
+        "ambiguity_margin": 1.5
+      },
+      "tighten": {
+        "vp_dist_ratio": 0.03,
+        "bend_max": 0.18,
+        "ambiguity_margin": 2
+      },
+      "loosen": {
+        "vp_dist_ratio": 0.22,
+        "bend_max": 0.18,
+        "ambiguity_margin": 1.2
+      }
+    },
+    "same_as_axis_live": "구도·시드 산식·skew·잡음 축이 `axis_live.json`·`lift_grade.json`과 같다 — 아니면 D-L18을 가르는 것이 아니다(#27)."
+  },
+  "registered_rule": {
+    "rule": "**조이기가 옳으려면** (배치 + 회수)가 기준 이상이면서 **조용히 틀림(cut 0.2)이 낮아야** 한다. 둘 중 하나라도 안 되면 D-L18은 기각이다.",
+    "base_total": "3136",
+    "tighten_total": "2976",
+    "base_silent_0_2": 0.4263,
+    "tighten_silent_0_2": 0.3854,
+    "verdict": "**D-L18 기각** — 조이기가 등록한 두 조건을 함께 만족하지 못한다"
+  },
+  "control_resolve_without_promotion": {
+    "note": "**승격 없이** 미배치 집합만 다시 푼다(#6). 같은 입력을 같은 솔버에 다시 넣는 것이므로 **새로 놓이는 것이 거의 없어야** 한다 — 있다면 승격의 이득 중 그만큼은 '기존 기하와 함께 푸는 것'이 아니라 **'분모가 줄어든 것'**에서 온다.",
+    "newly_placed_over_pending": "207/1904",
+    "rate": 0.1087
+  },
+  "conclusion": {
+    "batch_resolve_recovers_nothing": "**§9.1의 '§5.4의 일괄 풀이를 재사용한다'는 이 구현에서 아무것도 회수하지 못한다 — 세 팔 모두 0이다.** 사유가 `축이 미분류다`(지배항)와 `구조에 이어지지 않았다`인데 **둘 다 획 하나의 성질**이라 문맥을 더 준다고 안 바뀐다. 축 라벨이 없으면 `frameOf`가 서지 않고, 그것은 같이 푸나 따로 푸나 같다.",
+    "anchor_recovers": "**실제로 회수하는 것은 앵커다** — 대기 획의 시작점이 확정된 기하에 붙으면 §3·§7의 실시간 경로가 그 획을 놓는다. 기준 조건에서 **720/1904 = 37.8%**. 즉 **승격은 '다시 푸는 것'이 아니라 '앵커가 생기는 것'이다.** 계획서 §9.1의 문장을 그렇게 고쳐야 한다(#23).",
+    "but_quality_does_not_improve": "⚠ **회수된 것이 확정된 것보다 낫지 않다**(#16). 회수 720의 조용히 틀림이 cut 0.2에서 **314(43.6%)** · cut 0.5에서 **169(23.5%)**인데 확정 2416은 각각 42.3% · 20.9%다. **승격은 개수를 늘리고 품질은 그대로 둔다.** 그러므로 '미배치는 대기다'는 **개수 회수에 대해서만 참**이고, '나중에 더 정확히 놓인다'는 뜻이 아니다.",
+    "why_not_recovered": "**추측하지 말고 센다**(#7). 기준 조건에서 `no_snap` **813** · `angle_over` 371이다 — 대기 획의 시작점이 **확정된 기하 근처에 아예 없다**는 것이 지배항이다. 그럴 수밖에 없다: 그 획들이 대기인 이유가 바로 안 이어졌기 때문이다.",
+    "d_l18": "**D-L18 기각**(등록 규칙대로). 조이기는 (배치 + 회수)가 2976으로 기준 3136보다 **작다** — 회수가 그 차이를 못 메운다(회수율이 두 팔에서 37.8% 대 37.2%로 같기 때문이다). ⚠ 다만 조이기는 조용히 틀림을 **cut 0.2에서 0.426 → 0.385 · cut 0.5에서 0.215 → 0.182**로 낮춘다. **등록 규칙이 개수를 우선하도록 짜여 있어서 기각된 것**이고, 품질을 우선하는 목적함수에서는 여전히 조이기가 이긴다. **규칙을 사후에 바꾸지 않는다**(#28) — 기각으로 적고 그 사실을 함께 적는다."
+  },
+  "by_arm": {
+    "base": {
+      "scenes": 360,
+      "confirmed_over_all": "2416/4320",
+      "pending_after_confirm": "1904/4320",
+      "recovered_over_pending": "0/1904",
+      "recovery_rate": 0,
+      "placed_total_over_all": "2416/4320",
+      "not_recovered_reasons": {
+        "축이 미분류다": 1116,
+        "구조에 이어지지 않았다": 620,
+        "no_committed_geometry": 168
+      },
+      "confirmed_shape_err": {
+        "n": 2416,
+        "min": 0.0004,
+        "p10": 0.0296,
+        "median": 0.1533,
+        "p90": 0.738,
+        "max": 17.6402
+      },
+      "recovered_shape_err": {
+        "n": 0,
+        "min": null,
+        "p10": null,
+        "median": null,
+        "p90": null,
+        "max": null
+      },
+      "confirmed_silent_wrong": {
+        "cut_0_1": "1514/2416",
+        "cut_0_2": "1023/2416",
+        "cut_0_5": "506/2416"
+      },
+      "recovered_silent_wrong": {
+        "cut_0_1": "0/0",
+        "cut_0_2": "0/0",
+        "cut_0_5": "0/0"
+      },
+      "all_silent_wrong": {
+        "cut_0_2": "1023/2416",
+        "cut_0_5": "506/2416",
+        "rate_0_2": 0.4234,
+        "rate_0_5": 0.2094
+      },
+      "committed_drift": {
+        "n": 338,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "anchor_recovered_over_pending": "720/1904",
+      "anchor_recovery_rate": 0.3782,
+      "anchor_not_recovered_reasons": {
+        "angle_over": 371,
+        "no_snap": 813
+      },
+      "anchor_recovered_shape_err": {
+        "n": 720,
+        "min": 0.0001,
+        "p10": 0.0299,
+        "median": 0.1566,
+        "p90": 0.9034,
+        "max": 34.2971
+      },
+      "anchor_recovered_silent_wrong": {
+        "cut_0_1": "459/720",
+        "cut_0_2": "314/720",
+        "cut_0_5": "169/720"
+      },
+      "anchor_all_silent_wrong": {
+        "cut_0_2": "1337/3136",
+        "cut_0_5": "675/3136",
+        "rate_0_2": 0.4263,
+        "rate_0_5": 0.2152
+      },
+      "anchor_placed_total_over_all": "3136/4320"
+    },
+    "tighten": {
+      "scenes": 360,
+      "confirmed_over_all": "2179/4320",
+      "pending_after_confirm": "2141/4320",
+      "recovered_over_pending": "0/2141",
+      "recovery_rate": 0,
+      "placed_total_over_all": "2179/4320",
+      "not_recovered_reasons": {
+        "축이 미분류다": 1270,
+        "구조에 이어지지 않았다": 571,
+        "no_committed_geometry": 300
+      },
+      "confirmed_shape_err": {
+        "n": 2179,
+        "min": 0.0005,
+        "p10": 0.0268,
+        "median": 0.1302,
+        "p90": 0.6661,
+        "max": 17.6402
+      },
+      "recovered_shape_err": {
+        "n": 0,
+        "min": null,
+        "p10": null,
+        "median": null,
+        "p90": null,
+        "max": null
+      },
+      "confirmed_silent_wrong": {
+        "cut_0_1": "1270/2179",
+        "cut_0_2": "815/2179",
+        "cut_0_5": "357/2179"
+      },
+      "recovered_silent_wrong": {
+        "cut_0_1": "0/0",
+        "cut_0_2": "0/0",
+        "cut_0_5": "0/0"
+      },
+      "all_silent_wrong": {
+        "cut_0_2": "815/2179",
+        "cut_0_5": "357/2179",
+        "rate_0_2": 0.374,
+        "rate_0_5": 0.1638
+      },
+      "committed_drift": {
+        "n": 345,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "anchor_recovered_over_pending": "797/2141",
+      "anchor_recovery_rate": 0.3723,
+      "anchor_not_recovered_reasons": {
+        "angle_over": 340,
+        "no_snap": 1004
+      },
+      "anchor_recovered_shape_err": {
+        "n": 797,
+        "min": 0.0001,
+        "p10": 0.0273,
+        "median": 0.1479,
+        "p90": 0.9136,
+        "max": 34.2971
+      },
+      "anchor_recovered_silent_wrong": {
+        "cut_0_1": "492/797",
+        "cut_0_2": "332/797",
+        "cut_0_5": "184/797"
+      },
+      "anchor_all_silent_wrong": {
+        "cut_0_2": "1147/2976",
+        "cut_0_5": "541/2976",
+        "rate_0_2": 0.3854,
+        "rate_0_5": 0.1818
+      },
+      "anchor_placed_total_over_all": "2976/4320"
+    },
+    "loosen": {
+      "scenes": 360,
+      "confirmed_over_all": "2766/4320",
+      "pending_after_confirm": "1554/4320",
+      "recovered_over_pending": "0/1554",
+      "recovery_rate": 0,
+      "placed_total_over_all": "2766/4320",
+      "not_recovered_reasons": {
+        "축이 미분류다": 756,
+        "구조에 이어지지 않았다": 749,
+        "no_committed_geometry": 48,
+        "카메라 뒤로 간다(해석 평면이 지평선을 넘는다)": 1
+      },
+      "confirmed_shape_err": {
+        "n": 2766,
+        "min": 0.0004,
+        "p10": 0.0325,
+        "median": 0.1986,
+        "p90": 0.7864,
+        "max": 39.925
+      },
+      "recovered_shape_err": {
+        "n": 0,
+        "min": null,
+        "p10": null,
+        "median": null,
+        "p90": null,
+        "max": null
+      },
+      "confirmed_silent_wrong": {
+        "cut_0_1": "1916/2766",
+        "cut_0_2": "1378/2766",
+        "cut_0_5": "706/2766"
+      },
+      "recovered_silent_wrong": {
+        "cut_0_1": "0/0",
+        "cut_0_2": "0/0",
+        "cut_0_5": "0/0"
+      },
+      "all_silent_wrong": {
+        "cut_0_2": "1378/2766",
+        "cut_0_5": "706/2766",
+        "rate_0_2": 0.4982,
+        "rate_0_5": 0.2552
+      },
+      "committed_drift": {
+        "n": 313,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "anchor_recovered_over_pending": "577/1554",
+      "anchor_recovery_rate": 0.3713,
+      "anchor_not_recovered_reasons": {
+        "angle_over": 343,
+        "no_snap": 634
+      },
+      "anchor_recovered_shape_err": {
+        "n": 577,
+        "min": 0.0017,
+        "p10": 0.0325,
+        "median": 0.1606,
+        "p90": 0.8905,
+        "max": 26.0808
+      },
+      "anchor_recovered_silent_wrong": {
+        "cut_0_1": "381/577",
+        "cut_0_2": "255/577",
+        "cut_0_5": "133/577"
+      },
+      "anchor_all_silent_wrong": {
+        "cut_0_2": "1633/3343",
+        "cut_0_5": "839/3343",
+        "rate_0_2": 0.4885,
+        "rate_0_5": 0.251
+      },
+      "anchor_placed_total_over_all": "3343/4320"
+    }
+  },
+  "constants": {
+    "hash": "46c028d1",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  }
+}

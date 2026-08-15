@@ -126,6 +126,38 @@ function applySnapToStart(st: SStroke, cand: SnapCand): void {
   st.pts2d = [[cand.screen[0], cand.screen[1]], ...st.pts2d.slice(1)];
 }
 
+/**
+ * **승격 연쇄**(§9.1). 새 획이 놓이면 대기 획들의 시작점이 그것에 붙을 수 있다.
+ *
+ * ⚠ **일괄 재풀이가 아니다.** `promote.json`이 그 경로의 회수율을 **0/1904**로 쟀다 —
+ * 대기 사유가 `축이 미분류다`라서 같이 푸나 따로 푸나 같기 때문이다. 회수하는 것은 **앵커**다.
+ * **연쇄한다** — 이번에 놓인 것이 다음 획의 대상이 되므로 더 안 늘 때까지 돈다.
+ */
+function promoteChain(c: PlaceCtx): number {
+  let total = 0;
+  for (let pass = 0; pass < 8; pass++) {
+    const waiting = pending(doc, doc.views[0].id);
+    if (!waiting.length) break;
+    const segs = snapSegs();
+    if (!segs.length) break;
+    const sc = snapCtx();
+    if (!sc) break;
+    const pre = staticCandidates(segs);
+    let n = 0;
+    for (const st of waiting) {
+      const cand = snapAt(st.pts2d[0], segs, sc, {}, pre);
+      if (!cand) continue;
+      applySnapToStart(st, cand);
+      if (placeLive(st, c, cand.at)) n += 1;
+    }
+    total += n;
+    if (!n) break;                     // 더 안 는다 — 연쇄가 멎었다
+    snapPre = null;                    // 기하가 늘었다
+  }
+  if (total) lastSnapNote += ` · **승격 연쇄로 ${total}획이 더 올라갔습니다**`;
+  return total;
+}
+
 /** 축 방향들 — 소실점이 없는 축은 `null`. 실시간 판정과 확정이 **같은 것을 쓴다**(#17). */
 const axisDirs = (c: PlaceCtx) =>
   c.vps.map(v => (v ? axisDirection(v, c.principal, c.f) : null));
@@ -238,9 +270,13 @@ function confirm() {
   const n = solveInto(ctx, targets);
   cam.locked = true;
   stage.pinTo(ctx.principal, ctx.f);
+  // 확정 직후에도 연쇄를 한 번 돈다 — 놓인 것이 생겼으므로 대기 획이 붙을 수 있다
+  const chained = n ? promoteChain(ctx) : 0;
   syncScene();
-  note = `확정 — ${n}/${targets.length}획이 3D로 올라갔습니다`
-       + (n < targets.length ? `. 나머지 ${targets.length - n}획은 **2D로 대기**합니다(연결되면 올라갑니다)` : "");
+  note = `확정 — ${n + chained}/${targets.length}획이 3D로 올라갔습니다`
+       + (chained ? `(그중 **${chained}획은 승격 연쇄**)` : "")
+       + (n + chained < targets.length
+          ? `. 나머지 ${targets.length - n - chained}획은 **2D로 대기**합니다(연결되면 올라갑니다)` : "");
   refresh();
 }
 
@@ -510,8 +546,12 @@ const ink = new InkCanvas(canvas, {
       } else if (snapSegs().length) {
         lastSnapNote = "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다";
       }
-      // **② 못 놓인 것은 일괄 풀이로** — 서로 이어진 2D 획들끼리 풀린다(L-B.7에서 넓힌다)
+      // **② 못 놓인 것은 일괄 풀이로** — 서로 이어진 2D 획들끼리 풀린다
       if (!s.seg3d) solveInto(ctx, pending(doc, doc.views[0].id));
+      // **③ 승격 연쇄**(§9.1, L-B.7). ⚠ **일괄 재풀이는 아무것도 회수하지 못한다**(측정: 0/1904).
+      // 실제로 회수하는 것은 **앵커가 생기는 것**이다 — 새로 놓인 기하에 대기 획의 시작점이
+      // 붙으면 그 획도 놓인다. 그래서 획이 놓일 때마다 대기 집합을 다시 훑는다.
+      if (s.seg3d) promoteChain(ctx);
       syncScene();
     }
     hoverSnap = null; live = null;
