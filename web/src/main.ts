@@ -7,6 +7,7 @@ import { ensureFit, cssSizeOf, toLocal, deviceRatio } from "./capture/canvasFram
 import { Viewport } from "./s3d/viewport.js";
 import { StrokeView, colorOf, DEFAULT_COLOR } from "./s3d/strokeView.js";
 import { CameraPanel, type Tool } from "./ui/cameraPanel.js";
+import { liftAll, type LiftStroke } from "./s3d/lift.js";
 import { draftFromDetection, handleAt, moveHandle, byAxis, DRAFT_TOL,
          type Guide, type HandleRef } from "./s3d/vpDraft.js";
 import { PRESETS } from "./s3d/constraints.js";
@@ -357,7 +358,46 @@ const drawn: Stroke[] = [];
 
 /** 축마다 가이드 선 둘. 끝점 넷을 끌면 소실점이 움직인다(화면 밖 소실점도 조정된다). */
 let guides: Guide[] = [];
+/** **사용자가 직접 고른 축** — 재분류가 덮어쓰지 않는다(명시적으로 고른 것은 판단이다). */
+const userAxis = new Set<string>();
 let dragHandle: HandleRef | null = null;
+
+/**
+ * **첫 시점 배치 — 계획서 §5.2의 일괄 해**(L-A.3). 옛 앵커 체인(`settle`)을 대신한다.
+ *
+ * 획마다 미지수 하나인 동차 선형계를 한 번에 푼다. **앵커도 씨앗도 없다** — 첫 획이
+ * 기준이 되어 초기 오류가 고착되던 것이 이 접근을 바꾼 이유다.
+ *
+ * 결과는 `pts3d = [a, b]`(두 점)로 쓴다. 프리핸드를 미뤘으므로 획이 직선 세그먼트다(§1.1).
+ * 튜브 렌더·저장·내보내기는 `pts3d`만 읽으므로 그대로 동작한다.
+ * **`pts2d`는 그대로 둔다** — 승격 때 처음부터 다시 올린다(§6.1).
+ *
+ * 돌린 시점에서 그린 획은 뺀다(`viewOrigin`) — 그 `pts2d`는 뷰 좌표라 첫 카메라에 못 올린다.
+ */
+function liftFirstView(ctx: PlaceCtx): void {
+  const own = drawn.filter(s => !viewOrigin.has(s.id));
+  if (!own.length) return;
+  // **확정 순간에 축별로 다시 분류한다**(§5.2 첫 단계). L에서는 **획이 카메라보다 먼저**
+  // 그려지므로 그릴 때의 축 판정은 전부 `free`다 — 다시 안 하면 아무것도 안 놓인다
+  // (브라우저 확인에서 실제로 배치 0이었다). **사용자가 직접 고른 축은 건드리지 않는다.**
+  for (const st of own) {
+    if (userAxis.has(st.id)) continue;
+    const v = classifyStroke(st.pts2d, ctx.vps, ctx.imgSize, {},
+      { principal: ctx.principal, f: ctx.f });
+    st.axis = v.axis;
+    if (v.rep) st.rep = { a: v.rep.a, b: v.rep.b };
+    verdicts.set(st.id, v as AxisVerdict);
+  }
+  const input: LiftStroke[] = own.map(s => ({ id: s.id, pts2d: s.pts2d, axis: s.axis }));
+  const r = liftAll(input, { principal: ctx.principal, f: ctx.f, vps: ctx.vps, imgSize: ctx.imgSize });
+  for (const s of own) {
+    const seg = r.placed.get(s.id);
+    // **놓지 않되 버리지 않는다**(D-C2) — 미배치는 `pts3d`가 비고 화면에 파선으로 남는다
+    s.pts3d = seg ? [seg.a, seg.b] : [];
+    s.anchorRef = null;
+    s.joinShift = 0;
+  }
+}
 
 /** 가이드를 누산기에 반영한다 — **교체다**(끌 때마다 쌓이면 안 된다). */
 function applyGuides() {
@@ -392,7 +432,7 @@ function replace() {
   const ctx = placeCtx();
   if (!ctx || !drawn.length) return;
   const hand = drawn.filter(s => userPlaced.has(s.id));
-  reprojectAll(drawn, ctx, FIRST_VIEW_OPTS);
+  liftFirstView(ctx);
   if (hand.length) {
     // **무엇이 일어났는지 그대로 적는다**(D-S23): 안 놓이는 것도 있고 **다른 자리로 옮겨
     // 가는 것도 있다**. "사라졌다"고만 적으면 조용히 옮겨간 획을 안 알리는 것이 된다.
@@ -484,7 +524,7 @@ function addStroke(pts: Pt2[], raw?: number[][]) {
   drawn.push(s);
   if (raw) rawPoints.set(s.id, raw);
   verdicts.set(s.id, v as AxisVerdict);
-  if (ctx) settle(drawn, ctx, FIRST_VIEW_OPTS);
+  if (ctx) liftFirstView(ctx);
   strokeView.sync(drawn, ctx?.f);
   lastNote = v.note;
 }
@@ -809,8 +849,9 @@ for (const [label, axis] of [["축1", 0], ["축2", 1], ["축3", 2], ["화면평�
       if (drawn[i].axis !== "free" || drawn[i].pts3d.length) continue;
       pushUndo();
       drawn[i].axis = axis;
+      userAxis.add(drawn[i].id);            // 재분류가 덮어쓰지 않는다
       const ctx = placeCtx();
-      if (ctx) settle(drawn, ctx, FIRST_VIEW_OPTS);
+      if (ctx) liftFirstView(ctx);
       strokeView.sync(drawn, ctx?.f);
       lastNote = "";
       break;
@@ -856,7 +897,7 @@ lockBtn.addEventListener("click", () => {
 document.getElementById("reset")!.addEventListener("click", () => {
   panel.reset(); drawn.length = 0; rawPoints.clear(); verdicts.clear(); viewOrigin.clear();
   viewCam.clear(); provisional.clear(); userPlaced.clear();
-  guides = []; dragHandle = null;
+  guides = []; dragHandle = null; userAxis.clear();
   undoStack.length = 0; redoStack.length = 0;
   selId = null; candDots = []; candDots3d = [];
   // **저장된 문서도 지운다**(S-9) — 안 지우면 새로고침에서 방금 버린 작업이 되살아난다.

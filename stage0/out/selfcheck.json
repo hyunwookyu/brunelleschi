@@ -6978,36 +6978,36 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 112
+      "reads": 118
     },
     {
       "field": "pts2d",
       "writes": 0,
-      "reads": 39
+      "reads": 41
     },
     {
       "field": "pts3d",
-      "writes": 8,
+      "writes": 9,
       "reads": 69
     },
     {
       "field": "axis",
-      "writes": 2,
-      "reads": 37
+      "writes": 3,
+      "reads": 39
     },
     {
       "field": "rep",
-      "writes": 1,
-      "reads": 78
+      "writes": 2,
+      "reads": 81
     },
     {
       "field": "anchorRef",
-      "writes": 5,
+      "writes": 6,
       "reads": 4
     },
     {
       "field": "joinShift",
-      "writes": 7,
+      "writes": 8,
       "reads": 7
     },
     {
