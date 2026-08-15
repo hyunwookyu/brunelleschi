@@ -30,6 +30,14 @@ export interface InkOptions {
    * (D-C3·PITFALLS #21). 바깥에서 `clientX`를 직접 읽으면 dpr 규약이 둘이 된다.
    */
   onHover?: (p: [number, number] | null) => void;
+  /**
+   * **그리는 중**(L-B.4 실시간 색·미리보기). 마지막 점이 커서다.
+   *
+   * 이것이 오면 `drawLive`(증분 그리기) 대신 **전체 다시 그리기**를 한다 —
+   * 미리보기 선이 커서를 따라와야 하는데 증분 그리기는 지우지 않기 때문이다.
+   * 진행 중인 획은 `redraw()`가 함께 그린다(아래 `livePoints`).
+   */
+  onLive?: (pts: number[][]) => void;
 }
 
 // 프레임별 획 버퍼 + 라이브 잉크 렌더. 프레임 전환은 setFrame으로.
@@ -150,7 +158,8 @@ export class InkCanvas {
     e.preventDefault();
     const from = this.pts.length - 1;   // 이번 move의 이어그릴 시작점
     for (const c of this.movePoints(e)) this.pts.push(this.sample(c, performance.now() - this.t0));
-    this.drawLive(Math.max(0, from));
+    if (this.opts.onLive) this.opts.onLive(this.pts);      // 호출자가 `redraw()`를 부른다
+    else this.drawLive(Math.max(0, from));
   };
 
   private onUp = (e: PointerEvent) => {
@@ -191,6 +200,9 @@ export class InkCanvas {
     this.redraw();
   }
 
+  /** 진행 중인 획(L-B.4). 비어 있으면 그리는 중이 아니다. */
+  livePoints(): number[][] { return this.drawing ? this.pts : []; }
+
   /** 지금 프레임(진단용). */
   frameInfo(): CanvasFrame { return this.frameNow(); }
 
@@ -220,10 +232,16 @@ export class InkCanvas {
       }
       this.ctx.setLineDash([]);
     }
-    // 프레임 확정 획
+    // 프레임 확정 획 + **진행 중인 획**(전체 다시 그리기 경로에서 사라지면 안 된다)
     this.ctx.strokeStyle = this.opts.color ?? "#111";
     this.ctx.lineWidth = 2;
     this.ctx.lineCap = "round";
+    if (this.drawing && this.pts.length >= 2) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.pts[0][0], this.pts[0][1]);
+      for (let i = 1; i < this.pts.length; i++) this.ctx.lineTo(this.pts[i][0], this.pts[i][1]);
+      this.ctx.stroke();
+    }
     for (const s of this.strokes[this.frame]) {
       const p = s.points;
       if (p.length < 2) continue;

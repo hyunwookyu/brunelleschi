@@ -53,6 +53,13 @@ let sens: AxisSens[] = [];
 let hoverSnap: SnapCand | null = null;
 /** 마지막 획이 무엇에 붙었나 — 화면에 사유를 낸다(#7: 추측하지 말고 센다). */
 let lastSnapNote = "";
+/**
+ * **그리는 중의 실시간 판정**(L-B.4, §4). 시작점이 3D에 못박히면 커서 픽셀 하나가
+ * 끝점을 정하므로 **확정과 같은 것**을 미리 보여 줄 수 있다 — 계획서 §11 L-B 게이트의
+ * "미리보기와 확정의 일치(0)"가 그것을 요구한다.
+ */
+let live: { anchor: SnapCand; axis: 0 | 1 | 2 | null; deg: number | null;
+            seg: [Vec3, Vec3] | null } | null = null;
 const refreshSens = () => { sens = cam.guides.length ? cam.sensitivity() : []; };
 const undoStack: DocState[] = [];
 const UNDO_MAX = 200;
@@ -109,25 +116,41 @@ function applySnapToStart(st: SStroke, cand: SnapCand): void {
   st.pts2d = [[cand.screen[0], cand.screen[1]], ...st.pts2d.slice(1)];
 }
 
+/** 축 방향들 — 소실점이 없는 축은 `null`. 실시간 판정과 확정이 **같은 것을 쓴다**(#17). */
+const axisDirs = (c: PlaceCtx) =>
+  c.vps.map(v => (v ? axisDirection(v, c.principal, c.f) : null));
+
+/**
+ * **실시간 판정 = 확정 판정**(L-B.4). 앵커·시작 화면점·끝 화면점만 주면 같은 답이 나온다 —
+ * 미리보기와 확정이 어긋날 여지가 **구조적으로 없다**(§11 게이트의 "일치 0").
+ */
+function resolveLive(c: PlaceCtx, at: Vec3, a2: Pt2, b2: Pt2) {
+  const dirs = axisDirs(c);
+  const near = nearestAxisOnScreen(at, dirs, a2, b2, c);
+  if (!near) return { axis: null, deg: null, seg: null, why: "축 후보가 없습니다" };
+  if (near.deg > LIVE_TOL.axis_deg) {
+    return { axis: null, deg: near.deg, seg: null,
+             why: `축과 ${near.deg.toFixed(1)}° 벌어졌습니다(${LIVE_TOL.axis_deg}° 이내여야 합니다)` };
+  }
+  const seg = segmentFromAnchor(at, dirs[near.axis], b2, c);
+  return seg
+    ? { axis: near.axis, deg: near.deg, seg, why: "" }
+    : { axis: near.axis, deg: near.deg, seg: null, why: "끝점이 정해지지 않습니다" };
+}
+
 /**
  * 스냅된 시작점 + 축 → 그 자리에서 3D 확정(§3 마지막 문단 · §7).
  * 축이 안 정해지면 `false`이고 그 획은 2D로 **대기**한다(§9.1).
  */
 function placeLive(st: SStroke, c: PlaceCtx, at: Vec3): boolean {
-  const dirs = c.vps.map(v => (v ? axisDirection(v, c.principal, c.f) : null));
-  const a2 = st.pts2d[0], b2 = st.pts2d[st.pts2d.length - 1];
-  const near = nearestAxisOnScreen(at, dirs, a2, b2, c);
-  if (!near || near.deg > LIVE_TOL.axis_deg) {
-    lastSnapNote = near
-      ? `축과 ${near.deg.toFixed(1)}° 벌어져 **2D로 대기**합니다(${LIVE_TOL.axis_deg}° 이내여야 합니다)`
-      : "축 후보가 없어 **2D로 대기**합니다";
+  const r = resolveLive(c, at, st.pts2d[0], st.pts2d[st.pts2d.length - 1]);
+  if (!r.seg || r.axis == null) {
+    lastSnapNote = `${r.why} — **2D로 대기**합니다`;
     return false;
   }
-  const seg = segmentFromAnchor(at, dirs[near.axis], b2, c);
-  if (!seg) { lastSnapNote = "끝점이 정해지지 않아 **2D로 대기**합니다"; return false; }
-  st.axis = near.axis;
-  st.seg3d = seg;
-  lastSnapNote = `축${near.axis + 1}로 확정 (축과 ${near.deg.toFixed(1)}°)`;
+  st.axis = r.axis;
+  st.seg3d = r.seg;
+  lastSnapNote = `축${r.axis + 1}로 확정 (축과 ${r.deg!.toFixed(1)}°)`;
   return true;
 }
 
@@ -330,6 +353,31 @@ function drawSnapMark(ctx2: CanvasRenderingContext2D) {
   ctx2.restore();
 }
 
+/**
+ * **실시간 미리보기**(L-B.4 · §4 "실시간 색"). 앵커에서 커서까지, **판정된 축의 색**으로.
+ * 축이 안 잡히면 회색 점선 — **없는 판정을 색으로 지어내지 않는다**(A-3).
+ */
+function drawLivePreview(ctx2: CanvasRenderingContext2D) {
+  if (!live) return;
+  const c = cam.ctx();
+  if (!c) return;
+  const a = live.anchor.screen;
+  ctx2.save();
+  if (live.seg) {
+    const b = project(live.seg[1], c.principal, c.f);
+    if (b) {
+      ctx2.strokeStyle = AXIS_COLOR[live.axis!];
+      ctx2.lineWidth = 3; ctx2.globalAlpha = 0.85; ctx2.setLineDash([]);
+      ctx2.beginPath(); ctx2.moveTo(a[0], a[1]); ctx2.lineTo(b[0], b[1]); ctx2.stroke();
+    }
+  }
+  // 앵커 표식은 항상 — 어디에 못박혔는지가 판정보다 먼저다
+  ctx2.globalAlpha = 1; ctx2.setLineDash([]);
+  ctx2.strokeStyle = SNAP_COLOR[live.anchor.kind]; ctx2.lineWidth = 2;
+  ctx2.strokeRect(a[0] - 5, a[1] - 5, 10, 10);
+  ctx2.restore();
+}
+
 function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   // **확정 뷰를 벗어나면 2D 층 전체가 뜻을 잃는다** — 그리드도 가이드도 소실점 표식도
   // 확정 뷰의 화면 좌표다. 자유 시점에서 그리면 화면에 붙어 따라다니는 유령이 된다.
@@ -339,6 +387,7 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   drawPreview(ctx2);
   drawGuideHandles(ctx2);
   drawSnapMark(ctx2);
+  drawLivePreview(ctx2);
   const [w, h] = cssSize();
   cam.vps().forEach((v, i) => {
     if (!v || v[0] < 0 || v[0] > w || v[1] < 0 || v[1] > h) return;
@@ -389,6 +438,19 @@ const ink = new InkCanvas(canvas, {
     hoverSnap = next;
     if (!same) refresh();
   },
+  onLive: (pts) => {
+    // **그리는 중**: 앵커는 첫 점의 스냅, 끝점은 커서. 확정과 **같은 함수**를 쓴다(#17)
+    const c = cam.ctx(), sc = snapCtx();
+    if (!c || !sc || tool !== "draw" || pts.length < 2) { live = null; refresh(); return; }
+    const a0: Pt2 = [pts[0][0], pts[0][1]];
+    const b0: Pt2 = [pts[pts.length - 1][0], pts[pts.length - 1][1]];
+    const segs = snapSegs();
+    const anchor = live?.anchor ?? snapAt(a0, segs, sc, {}, snapStatic(segs));
+    if (!anchor) { live = null; refresh(); return; }
+    const r = resolveLive(c, anchor.at, anchor.screen, b0);
+    live = { anchor, axis: r.axis, deg: r.deg, seg: r.seg };
+    refresh();
+  },
   onStrokeEnd: (stroke) => {
     const pts = stroke.points.map(p => [p[0], p[1]] as Pt2);
     ink.clear();                         // 잉크 버퍼는 문서가 아니다 — 우리가 그린다
@@ -414,7 +476,7 @@ const ink = new InkCanvas(canvas, {
       if (!s.seg3d) solveInto(ctx, pending(doc, doc.views[0].id));
       syncScene();
     }
-    hoverSnap = null;
+    hoverSnap = null; live = null;
     refresh();
   },
 });
@@ -534,6 +596,16 @@ function renderStatus() {
         ? ` · <b style="color:${SNAP_COLOR[hoverSnap.kind]}">${SNAP_LABEL[hoverSnap.kind]}</b>`
           + ` <span class="dim">(${hoverSnap.dist.toFixed(0)}px)</span>`
         : ' <span class="dim">(커서 아래 대상 없음)</span>') + "</div>");
+    if (live) {
+      rows.push(`<div>그리는 중 — 시작 <b style="color:${SNAP_COLOR[live.anchor.kind]}">`
+        + `${SNAP_LABEL[live.anchor.kind]}</b> · `
+        + (live.axis != null
+          ? `<b style="color:${AXIS_COLOR[live.axis]}">축${live.axis + 1}</b>`
+            + ` <span class="dim">(${live.deg!.toFixed(1)}°)</span>`
+          : `<span class="warn">축 미정</span>`
+            + (live.deg != null ? ` <span class="dim">(가장 가까운 축과 ${live.deg.toFixed(1)}°)</span>` : ""))
+        + "</div>");
+    }
     if (lastSnapNote) rows.push(`<div class="dim">마지막 획 — ${lastSnapNote}</div>`);
   }
   for (const w of r.warnings) rows.push(`<div class="${w.level}">${w.text}</div>`);
@@ -600,4 +672,5 @@ refresh();
   },
   snapTargets: () => snapSegs().length,
   hoverSnap: () => hoverSnap,
+  live: () => live,
 };

@@ -488,3 +488,77 @@ test("스냅 — 대상·표식·시작점 확정", async ({ page }) => {
   ];
   led.l_b3 = l;
 });
+
+/**
+ * L-B.4 — **실시간 축 판정과 미리보기**(§4). 산출: `stage_browser.json`의 `l_b4`.
+ *
+ * 재는 것: 그리는 **도중에** 축이 판정되고 미리보기가 뜨는가, 그리고
+ * **미리보기와 확정이 같은가**(계획서 §11 L-B 게이트의 세 번째 항목 — 일치 0).
+ */
+test("실시간 축 판정 — 미리보기와 확정이 같다", async ({ page }) => {
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  const l: Record<string, unknown> = {};
+
+  await setup(page);
+  await page.evaluate(() =>
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click());
+
+  const geo = await page.evaluate(async () => {
+    const S = window.S2S;
+    const g3 = await import("/src/s3d/geom3d.ts");
+    const ctx = S.cam.ctx();
+    const s0 = S.doc().strokes.find((s: any) => s.seg3d);
+    const r = (document.getElementById("ink") as HTMLCanvasElement).getBoundingClientRect();
+    return { a: g3.project(s0.seg3d[0], ctx.principal, ctx.f),
+             b: g3.project(s0.seg3d[1], ctx.principal, ctx.f),
+             originX: r.left, originY: r.top, axis: s0.axis };
+  });
+  const cx = geo.originX, cy = geo.originY;
+
+  // 꼭짓점 근처에서 시작해 같은 모서리 방향으로 **끌고 가는 도중** 상태를 읽는다
+  await page.mouse.move(cx + geo.a[0] + 11, cy + geo.a[1] + 9);
+  await page.mouse.down();
+  await page.mouse.move(cx + (geo.a[0] + geo.b[0]) / 2, cy + (geo.a[1] + geo.b[1]) / 2, { steps: 4 });
+
+  l.mid_drag = await page.evaluate(() => {
+    const S = window.S2S;
+    const t = document.getElementById("status")!.innerText;
+    return { status_shows_live: t.includes("그리는 중"),
+             status_shows_axis: /축[123]/.test(t),
+             hover_cleared: S.hoverSnap() === null };
+  });
+  expect((l.mid_drag as any).status_shows_live).toBe(true);
+  expect((l.mid_drag as any).status_shows_axis).toBe(true);
+
+  // **미리보기와 확정의 일치**: 끌기 마지막 위치의 미리보기 3D와, 그 자리에서 뗀 확정 3D
+  const endX = cx + geo.b[0] - 7, endY = cy + geo.b[1] + 4;
+  await page.mouse.move(endX, endY, { steps: 3 });
+  const preview = await page.evaluate(() => {
+    const S = window.S2S;
+    const lv = S.live();
+    return lv?.seg ? { axis: lv.axis, a: lv.seg[0], b: lv.seg[1] } : null;
+  });
+  await page.mouse.up();
+  l.preview_vs_confirm = await page.evaluate((pv) => {
+    const S = window.S2S;
+    const st = S.doc().strokes[S.doc().strokes.length - 1];
+    if (!pv || !st.seg3d) return { preview: !!pv, placed: !!st.seg3d, gap: null };
+    const g = Math.max(
+      ...[0, 1].flatMap(k => [0, 1, 2].map(c =>
+        Math.abs((k === 0 ? pv.a : pv.b)[c] - st.seg3d[k][c]))));
+    return { preview: true, placed: true, axis_same: pv.axis === st.axis, gap: +g.toFixed(12),
+             note: "⚠ **이것은 항등에 가깝다**(PITFALLS #5) — 미리보기와 확정이 `resolveLive` "
+                 + "**같은 함수**를 같은 입력으로 부른다. 재는 것은 정확도가 아니라 **배선**이고, "
+                 + "입력이 갈리는 경로가 생기면 이 값이 0이 아니게 된다. 임계를 걸지 않는다." };
+  }, preview);
+  expect((l.preview_vs_confirm as any).placed).toBe(true);
+  expect((l.preview_vs_confirm as any).axis_same).toBe(true);
+  expect((l.preview_vs_confirm as any).gap).toBe(0);
+
+  l.what_this_does_not_say = [
+    "축 판정의 정확도 — `axis_live.json`이 5구도·3등급·잡음 4·시드 6으로 낸다",
+    "일치 0은 **항등**이다 — 같은 함수를 같은 입력으로 부른다(#5)",
+  ];
+  led.l_b4 = l;
+});
