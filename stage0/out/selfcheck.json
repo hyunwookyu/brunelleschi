@@ -1,5 +1,5 @@
 {
-  "n_flags": 841,
+  "n_flags": 861,
   "flags": [
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
@@ -4197,6 +4197,106 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "axis_judgement.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "bend_share.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "continue_after_rotate.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "e2e.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "face_diagonal.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "fix_load.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "free_curve.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "incline_vp.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "misassign_retry.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "occlusion.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "one_stroke_one_axis.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "persist.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "preview_gap.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "real_ink.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "segment_gate.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "systematic_warp.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "tube_render.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "view_plane.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "wiring.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "wobble_plane.json@1671e540",
+      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
+      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
       "path": "web/src/s3d/stroke.ts:Stroke.layer",
       "val": "쓰기 0 · 읽기 0",
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
@@ -4207,18 +4307,18 @@
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     }
   ],
-  "n_stale": 0,
+  "n_stale": 20,
   "n_unread_fields": 1,
   "field_reads": [
     {
       "field": "id",
       "writes": 0,
-      "reads": 94
+      "reads": 100
     },
     {
       "field": "pts2d",
       "writes": 0,
-      "reads": 34
+      "reads": 35
     },
     {
       "field": "pts3d",
@@ -4233,7 +4333,7 @@
     {
       "field": "rep",
       "writes": 1,
-      "reads": 35
+      "reads": 55
     },
     {
       "field": "anchorRef",
@@ -4261,7 +4361,7 @@
       "reads": 14
     }
   ],
-  "constants_hash": "1671e540",
+  "constants_hash": "6c7f9be8",
   "scanned": [
     "axis_judgement.json",
     "bend_share.json",

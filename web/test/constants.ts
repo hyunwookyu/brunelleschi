@@ -19,6 +19,7 @@ import { PLACE_TOL } from "../src/s3d/stroke.js";
 import { TUBE_TOL } from "../src/s3d/tube.js";
 import { EYE_HEIGHT } from "../src/s3d/geom3d.js";
 import { VP_INFINITE_RATIO } from "../src/s3d/camera.js";
+import { VP_TOL } from "../src/s3d/vpDetect.js";
 import { INK_GRADES } from "../src/s3d/synthInk.js";
 
 /**
@@ -27,6 +28,7 @@ import { INK_GRADES } from "../src/s3d/synthInk.js";
  */
 export const SHARED_CONSTANTS = {
   AXIS_TOL,
+  VP_TOL,
   CONSENSUS_TOL,
   PLACE_TOL,
   TUBE_TOL,
