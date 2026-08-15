@@ -1,5 +1,5 @@
 {
-  "n_flags": 1495,
+  "n_flags": 1540,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -3653,6 +3653,231 @@
       "path": "order_promote.json:spurious_promotion_control.per_stroke.same",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_signal.json:candidate_2_f2_deviation.rows[0].residual",
+      "val": 2.0163725218373317e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "order_signal.json:candidate_2_f2_deviation.rows[1].residual",
+      "val": 2.6093677302425856e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "order_signal.json:candidate_2_f2_deviation.rows[2].residual",
+      "val": 1.6463612699567982e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "order_signal.json:candidate_2_f2_deviation.rows[3].residual",
+      "val": 7.688411078211579e-17,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "order_signal.json:candidate_2_f2_deviation.rows[4].residual",
+      "val": 6.721241739457773e-17,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "order_signal.json:candidate_2_f2_deviation.rows[5].residual",
+      "val": 2.320227724533917e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "order_signal.json:candidate_2_f2_deviation.rows[6].residual",
+      "val": 2.0096437379783625e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "order_signal.json:candidate_2_f2_deviation.rows[7].residual",
+      "val": 1.021967053524867e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "order_signal.json:candidate_2_f2_deviation.rows[8].residual",
+      "val": 1.0528751853039469e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "order_signal.json:candidate_2_f2_deviation.max_residual",
+      "val": 2.6093677302425856e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.arms.spurious_promotion.no_signal_by.2pt_yaw35_pitch0|precise|jit0.05",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.arms.spurious_promotion.seed_delta_median[0].seed",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[0].vs_spurious.n_bad",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[0].vs_spurious.n_bad",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[1].vs_spurious.at",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[2].vs_spurious.at",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[3].vs_spurious.at",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[4].vs_spurious.n_bad",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[4].vs_spurious.n_bad",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[5].vs_spurious.n_bad",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[5].vs_spurious.n_bad",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[6].vs_spurious.n_good",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[6].vs_spurious.n_good",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[6].vs_wrong_vp3.n_bad",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[6].vs_wrong_vp3.n_good",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[7].vs_spurious.at",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[8].vs_spurious.at",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[9].vs_spurious.at",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.stratified.rows[11].vs_spurious.at",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.rows[0].tpr",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.rows[1].tpr",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.rows[2].tpr",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.rows[3].tpr",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.rows[4].threshold",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.rows[7].threshold",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.oracle_control.vs_spurious.rows[0].tpr",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.oracle_control.vs_spurious.rows[1].tpr",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.oracle_control.vs_spurious_fixed_gauge.rows[0].tpr",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.oracle_control.vs_spurious_fixed_gauge.rows[1].tpr",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.oracle_control.vs_spurious_fixed_gauge.rows[2].tpr",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.oracle_control.vs_spurious_fixed_gauge.rows[3].tpr",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.oracle_control.vs_spurious_fixed_gauge.rows[4].tpr",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.oracle_control.vs_spurious_fixed_gauge.rows[5].tpr",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.oracle_control.vs_spurious_fixed_gauge.rows[6].tpr",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_signal.json:candidate_1_tilt_deg.separation.oracle_control.vs_spurious_fixed_gauge.rows[7].tpr",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "order_undo.json:visible_loss.snap_lost_per_scene.median",
@@ -7569,6 +7794,7 @@
     "occlusion.json",
     "one_stroke_one_axis.json",
     "order_promote.json",
+    "order_signal.json",
     "order_undo.json",
     "persist.json",
     "preview_gap.json",

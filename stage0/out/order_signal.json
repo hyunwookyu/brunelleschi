@@ -1,0 +1,1197 @@
+{
+  "what": "L-C.3 — §6.2의 대체 자동 신호 후보 둘(획별 `tiltDeg` · 소실점 삼각형 f² 편차)이 실제로 신호인가",
+  "why": "§6.2의 원래 신호(재투영 잔차)를 **AS-L6이 반증했다** — 사영 불변이라 승격 전후에 둘 다 0이다. 계획서가 후보 둘을 남겼고 **'사영 불변이 아닌 양인지 먼저 확인한다. 아니면 되돌리기만 쓴다'**고 적었다. 그 확인이 이것이다.",
+  "registered_rule": {
+    "note": "**측정 전에 박았다**(#26). `progress.md`의 L-C.3 절에 같은 문장이 있다.",
+    "rules": [
+      "① **사영 불변이 아니다** — f를 ±20% 틀리게 주면 값이 움직인다(#30). 못 넘으면 끝난다",
+      "② **자기참조가 아니다** — 틀린 카메라를 넣으면 값이 움직인다(#5)",
+      "③ **참 승격과 가짜 승격을 가른다** — 어떤 동작점에서든 판별력(TPR − FPR) ≥ 0.5"
+    ],
+    "caveat": "⚠ 셋 다 만족해도 **자동으로 걸지 않는다** — D-L26이 승격 자체에 결론이 없다고 적었다. 신호의 쓸모는 **되돌리기를 권하는 것**이지 자동 승격이 아니다."
+  },
+  "conditions": {
+    "compositions": [
+      "3pt_yaw35_pitch15",
+      "3pt_yaw20_pitch25",
+      "3pt_yaw50_pitch8",
+      "2pt_yaw35_pitch0"
+    ],
+    "grades": [
+      "precise",
+      "medium",
+      "coarse"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "end_jitters": [
+      0,
+      0.01,
+      0.03,
+      0.05
+    ],
+    "skew": 0.12,
+    "canvas_px": [
+      960,
+      672
+    ],
+    "camera": "**참 소실점**을 넣고 뺀다. 검출·조정 오차는 여기서 안 잰다.",
+    "spurious_vp3": [
+      480,
+      2688
+    ],
+    "signal": "장면당 한 수 = **놓인 획들의 `tiltDeg` 중앙값**. 획별로 쓰면 신호가 획 수에 딸려 움직인다. 못 내면 `no_signal`로 따로 센다(#11)."
+  },
+  "candidate_2_f2_deviation": {
+    "verdict": "❌ **신호가 아니다 — 자기참조 유형 3이다**(#5). 규칙 ②에서 죽는다.",
+    "why": "`fFromThreeVps`가 주점 `P`를 **삼각형의 수심**으로 잡는다. 그런데 `(V₁−P)·(V₂−P) = (V₂−P)·(V₃−P) = (V₁−P)·(V₃−P)`는 **수심의 항등식**이다. 그러므로 세 f²의 편차는 **어떤 삼각형에서도 0**이고 **틀린 소실점을 넣어도 0**이다. 계획서 §6.2가 인용한 '이론서 6.3의 자유도 0 조건'은 맞지만, **그 조건은 주점을 수심으로 잡는 순간 이미 소진된다** — 잴 것이 남지 않는다. 잴 수 있으려면 주점이 **독립으로 주어져야** 하는데(예: 2점 경로의 이미지 중심 가정) 3점 경로에서는 주점이 소실점에서 나온다(이론서 6.3).",
+    "rows": [
+      {
+        "name": "true_3pt_yaw35_pitch15",
+        "ok": true,
+        "residual": 2.0163725218373317e-16
+      },
+      {
+        "name": "wrong_vp3_3pt_yaw35_pitch15",
+        "ok": true,
+        "residual": 2.6093677302425856e-16
+      },
+      {
+        "name": "true_3pt_yaw20_pitch25",
+        "ok": true,
+        "residual": 1.6463612699567982e-16
+      },
+      {
+        "name": "wrong_vp3_3pt_yaw20_pitch25",
+        "ok": true,
+        "residual": 7.688411078211579e-17
+      },
+      {
+        "name": "true_3pt_yaw50_pitch8",
+        "ok": true,
+        "residual": 6.721241739457773e-17
+      },
+      {
+        "name": "wrong_vp3_3pt_yaw50_pitch8",
+        "ok": true,
+        "residual": 2.320227724533917e-16
+      },
+      {
+        "name": "spurious_2pt_yaw35_pitch0",
+        "ok": true,
+        "residual": 2.0096437379783625e-16
+      },
+      {
+        "name": "obtuse",
+        "ok": false,
+        "residual": 1.021967053524867e-16
+      },
+      {
+        "name": "arbitrary",
+        "ok": true,
+        "residual": 1.0528751853039469e-16
+      }
+    ],
+    "wrong_vp3_offset_px": [
+      400,
+      900
+    ],
+    "theory": "⚠ **이론서가 이미 항등식으로 적어 두었다** — 6.4: `f² = |PVᵢ|·|PHᵢ|`이고 **세 조합 모두 같은 값을 준다(삼각형의 수심에 관한 고전 항등식)**. 계획서 §6.2는 6.3만 인용해 후보로 세웠다. **인접 절을 읽었으면 측정 전에 기각할 수 있었다**(#23의 사례). 5.3의 자유도 표('3점 → 남는 자유도: 없음')와도 정합한다.",
+    "max_residual": 2.6093677302425856e-16,
+    "control_moves": false,
+    "note": "⚠ **둔각 삼각형**(`obtuse`, f² < 0이라 카메라가 아예 안 선다)과 **가짜 소실점**(`spurious_*`)과 **크게 틀린 소실점**(`wrong_vp3_*`)을 함께 넣었다. 전부 0이면 이 양은 **정보량이 0**이다. 실패가 아니라 **관측**이다."
+  },
+  "candidate_1_tilt_deg": {
+    "projective_invariance": {
+      "note": "**f를 ±20% 틀리게 주고 값이 움직이는지**(#30 · `camera_gate`의 양성 채널 방식). 안 움직이면 나머지를 안 잰다.",
+      "rows": [
+        {
+          "f_scale": 0.8,
+          "tilt": {
+            "n": 196,
+            "min": 0.1189,
+            "p10": 0.4977,
+            "median": 1.4136,
+            "p90": 3.7571,
+            "max": 9.9285
+          }
+        },
+        {
+          "f_scale": 1,
+          "tilt": {
+            "n": 196,
+            "min": 0.1053,
+            "p10": 0.4724,
+            "median": 1.3161,
+            "p90": 3.6377,
+            "max": 9.6413
+          }
+        },
+        {
+          "f_scale": 1.2,
+          "tilt": {
+            "n": 196,
+            "min": 0.0932,
+            "p10": 0.4361,
+            "median": 1.2277,
+            "p90": 3.4362,
+            "max": 9.3195
+          }
+        }
+      ],
+      "moves": {
+        "spread": 0.1859,
+        "relative": 0.1413
+      },
+      "passes_rule_1": true,
+      "caveat": "⚠ **움직인다는 것이 곧 쓸모는 아니다.** f가 클수록 tilt가 작아지는 **단조 관계**라, 이 양은 f 오차와 축 오차를 **못 가른다**. 규칙 ③이 그것을 시험한다."
+    },
+    "arms": {
+      "note": "**팔이 셋이다.** `spurious`는 '승격할 장면이 아니었다', `wrong_vp3`는 '승격은 맞는데 소실점을 잘못 놓았다'다 — 앱에서 겪는 오승격이 둘인데 초판은 앞의 하나만 쟀다(리뷰어 [2]). ⚠ **`spurious`는 참 팔과 구도가 다르다**(2pt 하나 대 3pt 셋)라 구도 효과와 교락한다 — `wrong_vp3`는 **참 팔과 같은 구도 셋**이라 그 교락이 없다(리뷰어 [1]).",
+      "gauge_note": "⚠ **형태 오차의 게이지를 둘 다 낸다**(2회차 리뷰어 [2]). `shape_err_after`는 **자기 게이지**(그 팔에서 적합)이고 `shape_err_fixed_gauge`는 **참 카메라로 푼 같은 장면의 게이지**를 고정으로 물린 것이다. AS-L11이 '승격이 더 내는 오차는 형태가 아니라 배율이고, 앱이 배율을 다시 안 맞추므로 **그 배율 어긋남이 사용자가 보는 오차다**'라고 적었다 — 자기 게이지는 **VP3 변위가 만드는 배율 성분을 흡수한다.**",
+      "real_promotion": {
+        "scenes": 216,
+        "no_signal": 20,
+        "no_signal_by": {
+          "3pt_yaw35_pitch15|precise|jit0.05": 1,
+          "3pt_yaw20_pitch25|precise|jit0.05": 2,
+          "3pt_yaw50_pitch8|precise|jit0.05": 3,
+          "3pt_yaw20_pitch25|precise|jit0.03": 1,
+          "3pt_yaw50_pitch8|medium|jit0.05": 1,
+          "3pt_yaw35_pitch15|medium|jit0.05": 1,
+          "3pt_yaw20_pitch25|medium|jit0.05": 1,
+          "3pt_yaw35_pitch15|medium|jit0.03": 1,
+          "3pt_yaw50_pitch8|coarse|jit0.05": 5,
+          "3pt_yaw50_pitch8|coarse|jit0": 1,
+          "3pt_yaw35_pitch15|coarse|jit0.05": 1,
+          "3pt_yaw20_pitch25|coarse|jit0.03": 1,
+          "3pt_yaw20_pitch25|coarse|jit0.05": 1
+        },
+        "tilt_before": {
+          "n": 196,
+          "min": 0,
+          "p10": 0.0971,
+          "median": 0.8409,
+          "p90": 3.3753,
+          "max": 7.8404
+        },
+        "tilt_after": {
+          "n": 196,
+          "min": 0.1053,
+          "p10": 0.4724,
+          "median": 1.3161,
+          "p90": 3.6377,
+          "max": 9.6413
+        },
+        "delta": {
+          "n": 196,
+          "min": -5.1367,
+          "p10": -0.5119,
+          "median": 0.3117,
+          "p90": 1.6077,
+          "max": 8.2544
+        },
+        "shape_err_after": {
+          "n": 196,
+          "min": 0.0055,
+          "p10": 0.0208,
+          "median": 0.0912,
+          "p90": 0.2845,
+          "max": 0.9163
+        },
+        "shape_err_fixed_gauge": {
+          "n": 196,
+          "min": 0.0055,
+          "p10": 0.0208,
+          "median": 0.0912,
+          "p90": 0.2845,
+          "max": 0.9163
+        },
+        "seed_delta_median": [
+          {
+            "seed": 1,
+            "median": 0.4061
+          },
+          {
+            "seed": 2,
+            "median": 0.339
+          },
+          {
+            "seed": 3,
+            "median": 0.0042
+          },
+          {
+            "seed": 4,
+            "median": 0.2727
+          },
+          {
+            "seed": 5,
+            "median": 0.3329
+          },
+          {
+            "seed": 6,
+            "median": 0.5406
+          }
+        ]
+      },
+      "spurious_promotion": {
+        "scenes": 72,
+        "no_signal": 3,
+        "no_signal_by": {
+          "2pt_yaw35_pitch0|precise|jit0.05": 1,
+          "2pt_yaw35_pitch0|medium|jit0.05": 2
+        },
+        "tilt_before": {
+          "n": 69,
+          "min": 0,
+          "p10": 0.1505,
+          "median": 0.6,
+          "p90": 2.1669,
+          "max": 2.6374
+        },
+        "tilt_after": {
+          "n": 69,
+          "min": 0.3264,
+          "p10": 0.45,
+          "median": 1.0198,
+          "p90": 2.9456,
+          "max": 7.4485
+        },
+        "delta": {
+          "n": 69,
+          "min": -0.2137,
+          "p10": 0.0302,
+          "median": 0.3932,
+          "p90": 1.4164,
+          "max": 4.8111
+        },
+        "shape_err_after": {
+          "n": 69,
+          "min": 0.0756,
+          "p10": 0.1215,
+          "median": 0.2537,
+          "p90": 0.4758,
+          "max": 0.7626
+        },
+        "shape_err_fixed_gauge": {
+          "n": 69,
+          "min": 2.9867,
+          "p10": 3.0404,
+          "median": 3.1196,
+          "p90": 3.3513,
+          "max": 4.3148
+        },
+        "seed_delta_median": [
+          {
+            "seed": 1,
+            "median": 0.3215
+          },
+          {
+            "seed": 2,
+            "median": 0.37
+          },
+          {
+            "seed": 3,
+            "median": 0.4805
+          },
+          {
+            "seed": 4,
+            "median": 0.2753
+          },
+          {
+            "seed": 5,
+            "median": 0.4032
+          },
+          {
+            "seed": 6,
+            "median": 0.4767
+          }
+        ]
+      },
+      "wrong_vp3_promotion": {
+        "offset_px": [
+          400,
+          900
+        ],
+        "axis3_err_deg": {
+          "n": 195,
+          "min": 2.9708,
+          "p10": 2.9708,
+          "median": 5.5857,
+          "p90": 9.8413,
+          "max": 9.8413
+        },
+        "axis3_err_note": "⚠ **픽셀이 아니라 도로 낸다**(2회차 리뷰어 [1]). AS-L9의 임계는 **0.5°**이고 AS-L8은 '먼 소실점의 100px이 곧 2~3°'라 적었다 — 픽셀만 적으면 그 둘과 대조가 안 된다.",
+        "scenes": 216,
+        "no_signal": 21,
+        "no_signal_by": {
+          "3pt_yaw35_pitch15|precise|jit0.05": 1,
+          "3pt_yaw20_pitch25|precise|jit0.05": 2,
+          "3pt_yaw50_pitch8|precise|jit0.05": 3,
+          "3pt_yaw20_pitch25|precise|jit0.03": 1,
+          "3pt_yaw50_pitch8|medium|jit0.05": 1,
+          "3pt_yaw35_pitch15|medium|jit0.05": 1,
+          "3pt_yaw20_pitch25|medium|jit0.05": 1,
+          "3pt_yaw35_pitch15|medium|jit0.03": 1,
+          "3pt_yaw20_pitch25|coarse|jit0.05": 2,
+          "3pt_yaw50_pitch8|coarse|jit0.05": 5,
+          "3pt_yaw50_pitch8|coarse|jit0": 1,
+          "3pt_yaw35_pitch15|coarse|jit0.05": 1,
+          "3pt_yaw20_pitch25|coarse|jit0.03": 1
+        },
+        "tilt_before": {
+          "n": 195,
+          "min": 0,
+          "p10": 0.0821,
+          "median": 0.8275,
+          "p90": 3.2833,
+          "max": 7.8404
+        },
+        "tilt_after": {
+          "n": 195,
+          "min": 0,
+          "p10": 0.3788,
+          "median": 1.2667,
+          "p90": 3.6738,
+          "max": 10.7739
+        },
+        "delta": {
+          "n": 195,
+          "min": -6.5885,
+          "p10": -0.4421,
+          "median": 0.1672,
+          "p90": 1.6062,
+          "max": 10.3753
+        },
+        "shape_err_after": {
+          "n": 195,
+          "min": 0.0166,
+          "p10": 0.0404,
+          "median": 0.1079,
+          "p90": 0.2767,
+          "max": 0.9159
+        },
+        "shape_err_fixed_gauge": {
+          "n": 195,
+          "min": 0.0463,
+          "p10": 0.0951,
+          "median": 0.2599,
+          "p90": 0.4891,
+          "max": 0.9516
+        },
+        "seed_delta_median": [
+          {
+            "seed": 1,
+            "median": 0.2794
+          },
+          {
+            "seed": 2,
+            "median": 0.2115
+          },
+          {
+            "seed": 3,
+            "median": 0.0142
+          },
+          {
+            "seed": 4,
+            "median": 0.1134
+          },
+          {
+            "seed": 5,
+            "median": 0.1531
+          },
+          {
+            "seed": 6,
+            "median": 0.2937
+          }
+        ]
+      },
+      "composition_control_2pt_solved_correctly": {
+        "note": "**구도 효과를 가른다**(2회차 리뷰어 [3]). 같은 `2pt_yaw35_pitch0` 장면을 **2점으로 옳게 푼** 형태 오차다. 이것이 이미 나쁘면 가짜 팔의 0.2537과 오라클 0.4979의 상당 부분은 **승격이 아니라 구도**가 만든 것이다.",
+        "shape_err": {
+          "n": 69,
+          "min": 0.0185,
+          "p10": 0.0604,
+          "median": 0.1435,
+          "p90": 0.3551,
+          "max": 0.667
+        }
+      },
+      "no_signal_note": "⚠ **탈락 비율이 팔마다 다르다**(#11) — 그러면 ROC의 분모가 **서로 다르게 정제된 집합**이다. `no_signal_by`가 어느 셀에서 빠졌는지다."
+    },
+    "stratified": {
+      "note": "**합산이 만든 무결론인지 본다.** 구도·잡음·등급으로 가르고, **시드 3을 뺀 판**도 낸다 — 그 시드 하나가 합산 격차를 지배하기 때문이다(리뷰어 [6]). `vs_spurious`는 구도 교락이 있고 `vs_wrong_vp3`는 없다.",
+      "rows": [
+        {
+          "stratum": "comp_3pt_yaw35_pitch15",
+          "vs_spurious": {
+            "best": null,
+            "at": null,
+            "n_bad": 0,
+            "n_good": 68,
+            "note": "한 팔이 비었다 — 판별력이 정의되지 않는다"
+          },
+          "vs_wrong_vp3": {
+            "best": 0.1176,
+            "at": 0.25,
+            "dir": "lt",
+            "n_bad": 68,
+            "n_good": 68
+          }
+        },
+        {
+          "stratum": "jit_0",
+          "vs_spurious": {
+            "best": 0.152,
+            "at": 0,
+            "dir": "gt",
+            "n_bad": 18,
+            "n_good": 53
+          },
+          "vs_wrong_vp3": {
+            "best": 0.1698,
+            "at": 0.25,
+            "dir": "lt",
+            "n_bad": 53,
+            "n_good": 53
+          }
+        },
+        {
+          "stratum": "grade_precise",
+          "vs_spurious": {
+            "best": 0.3385,
+            "at": 0,
+            "dir": "gt",
+            "n_bad": 23,
+            "n_good": 65
+          },
+          "vs_wrong_vp3": {
+            "best": 0.1077,
+            "at": 0,
+            "dir": "gt",
+            "n_bad": 65,
+            "n_good": 65
+          }
+        },
+        {
+          "stratum": "seeds_without_3",
+          "vs_spurious": {
+            "best": 0.1393,
+            "at": 0,
+            "dir": "gt",
+            "n_bad": 57,
+            "n_good": 163
+          },
+          "vs_wrong_vp3": {
+            "best": 0.1384,
+            "at": 0.25,
+            "dir": "lt",
+            "n_bad": 162,
+            "n_good": 163
+          }
+        },
+        {
+          "stratum": "comp_3pt_yaw20_pitch25",
+          "vs_spurious": {
+            "best": null,
+            "at": null,
+            "n_bad": 0,
+            "n_good": 66,
+            "note": "한 팔이 비었다 — 판별력이 정의되지 않는다"
+          },
+          "vs_wrong_vp3": {
+            "best": 0.0739,
+            "at": -0.5,
+            "dir": "gt",
+            "n_bad": 65,
+            "n_good": 66
+          }
+        },
+        {
+          "stratum": "comp_3pt_yaw50_pitch8",
+          "vs_spurious": {
+            "best": null,
+            "at": null,
+            "n_bad": 0,
+            "n_good": 62,
+            "note": "한 팔이 비었다 — 판별력이 정의되지 않는다"
+          },
+          "vs_wrong_vp3": {
+            "best": 0.2419,
+            "at": 0.25,
+            "dir": "lt",
+            "n_bad": 62,
+            "n_good": 62
+          }
+        },
+        {
+          "stratum": "comp_2pt_yaw35_pitch0",
+          "vs_spurious": {
+            "best": null,
+            "at": null,
+            "n_bad": 69,
+            "n_good": 0,
+            "note": "한 팔이 비었다 — 판별력이 정의되지 않는다"
+          },
+          "vs_wrong_vp3": {
+            "best": null,
+            "at": null,
+            "n_bad": 0,
+            "n_good": 0,
+            "note": "한 팔이 비었다 — 판별력이 정의되지 않는다"
+          }
+        },
+        {
+          "stratum": "jit_0.01",
+          "vs_spurious": {
+            "best": 0.0926,
+            "at": 0,
+            "dir": "gt",
+            "n_bad": 18,
+            "n_good": 54
+          },
+          "vs_wrong_vp3": {
+            "best": 0.037,
+            "at": 0.25,
+            "dir": "lt",
+            "n_bad": 54,
+            "n_good": 54
+          }
+        },
+        {
+          "stratum": "jit_0.03",
+          "vs_spurious": {
+            "best": 0.3366,
+            "at": 0,
+            "dir": "gt",
+            "n_bad": 18,
+            "n_good": 51
+          },
+          "vs_wrong_vp3": {
+            "best": 0.2353,
+            "at": 0.5,
+            "dir": "lt",
+            "n_bad": 51,
+            "n_good": 51
+          }
+        },
+        {
+          "stratum": "jit_0.05",
+          "vs_spurious": {
+            "best": 0.2228,
+            "at": 0,
+            "dir": "gt",
+            "n_bad": 15,
+            "n_good": 38
+          },
+          "vs_wrong_vp3": {
+            "best": 0.1216,
+            "at": 1,
+            "dir": "lt",
+            "n_bad": 37,
+            "n_good": 38
+          }
+        },
+        {
+          "stratum": "grade_medium",
+          "vs_spurious": {
+            "best": 0.139,
+            "at": 0.25,
+            "dir": "gt",
+            "n_bad": 22,
+            "n_good": 68
+          },
+          "vs_wrong_vp3": {
+            "best": 0.1765,
+            "at": 0.25,
+            "dir": "lt",
+            "n_bad": 68,
+            "n_good": 68
+          }
+        },
+        {
+          "stratum": "grade_coarse",
+          "vs_spurious": {
+            "best": 0.1528,
+            "at": 1,
+            "dir": "gt",
+            "n_bad": 24,
+            "n_good": 63
+          },
+          "vs_wrong_vp3": {
+            "best": 0.1367,
+            "at": 0.25,
+            "dir": "lt",
+            "n_bad": 62,
+            "n_good": 63
+          }
+        }
+      ]
+    },
+    "separation": {
+      "note": "**임계를 하나로 안 고른다**(#13). `Δtilt > 임계`를 '승격을 의심한다'로 읽고 **가짜를 잡는 비율(TPR)과 참을 잘못 의심하는 비율(FPR)**을 함께 낸다 — TPR만 보면 **전부 의심하는 신호**가 이긴다(#15).",
+      "rows": [
+        {
+          "threshold": -2,
+          "flags_spurious": "69/69",
+          "flags_real": "187/196",
+          "tpr": 1,
+          "fpr": 0.9541,
+          "separation": 0.0459
+        },
+        {
+          "threshold": -1,
+          "flags_spurious": "69/69",
+          "flags_real": "182/196",
+          "tpr": 1,
+          "fpr": 0.9286,
+          "separation": 0.0714
+        },
+        {
+          "threshold": -0.5,
+          "flags_spurious": "69/69",
+          "flags_real": "175/196",
+          "tpr": 1,
+          "fpr": 0.8929,
+          "separation": 0.1071
+        },
+        {
+          "threshold": -0.25,
+          "flags_spurious": "69/69",
+          "flags_real": "172/196",
+          "tpr": 1,
+          "fpr": 0.8776,
+          "separation": 0.1224
+        },
+        {
+          "threshold": 0,
+          "flags_spurious": "64/69",
+          "flags_real": "143/196",
+          "tpr": 0.9275,
+          "fpr": 0.7296,
+          "separation": 0.1979
+        },
+        {
+          "threshold": 0.25,
+          "flags_spurious": "43/69",
+          "flags_real": "105/196",
+          "tpr": 0.6232,
+          "fpr": 0.5357,
+          "separation": 0.0875
+        },
+        {
+          "threshold": 0.5,
+          "flags_spurious": "30/69",
+          "flags_real": "75/196",
+          "tpr": 0.4348,
+          "fpr": 0.3827,
+          "separation": 0.0521
+        },
+        {
+          "threshold": 1,
+          "flags_spurious": "17/69",
+          "flags_real": "39/196",
+          "tpr": 0.2464,
+          "fpr": 0.199,
+          "separation": 0.0474
+        },
+        {
+          "threshold": 2,
+          "flags_spurious": "4/69",
+          "flags_real": "13/196",
+          "tpr": 0.058,
+          "fpr": 0.0663,
+          "separation": -0.0084
+        },
+        {
+          "threshold": 3,
+          "flags_spurious": "1/69",
+          "flags_real": "8/196",
+          "tpr": 0.0145,
+          "fpr": 0.0408,
+          "separation": -0.0263
+        }
+      ],
+      "best_separation": 0.1979,
+      "passes_rule_3": false,
+      "oracle_control": {
+        "note": "⚠ **두 팔이 애초에 갈리는가**(#31). 신호가 못 가른다는 결론은 **가를 것이 있을 때만** 신호에 대한 정보다 — 팔이 원래 안 갈리면 그 실패는 픽스처의 성질이지 신호의 성질이 아니다. 참값(형태 오차 중앙)으로 같은 ROC를 그린다. **이것이 도달 가능한 상한이다.**",
+        "gauge_warning": "⚠⚠ **자기 게이지 오라클은 사용자가 보는 것을 안 잰다**(2회차 리뷰어 [2]). 최소제곱으로 전역 배율을 적합해 없애므로 **VP3 변위가 만드는 배율 성분을 흡수한다** — AS-L11이 '앱이 배율을 다시 안 맞추므로 그 배율 어긋남이 사용자가 보는 오차다'라고 적은 바로 그 자리다. **고정 게이지 판이 살아 있는 표다.**",
+        "vs_spurious": {
+          "rows": [
+            {
+              "err_threshold": 0.05,
+              "flags_bad": "69/69",
+              "flags_good": "131/196",
+              "tpr": 1,
+              "fpr": 0.6684,
+              "separation": 0.3316
+            },
+            {
+              "err_threshold": 0.075,
+              "flags_bad": "69/69",
+              "flags_good": "108/196",
+              "tpr": 1,
+              "fpr": 0.551,
+              "separation": 0.449
+            },
+            {
+              "err_threshold": 0.1,
+              "flags_bad": "64/69",
+              "flags_good": "90/196",
+              "tpr": 0.9275,
+              "fpr": 0.4592,
+              "separation": 0.4684
+            },
+            {
+              "err_threshold": 0.125,
+              "flags_bad": "59/69",
+              "flags_good": "70/196",
+              "tpr": 0.8551,
+              "fpr": 0.3571,
+              "separation": 0.4979
+            },
+            {
+              "err_threshold": 0.15,
+              "flags_bad": "52/69",
+              "flags_good": "56/196",
+              "tpr": 0.7536,
+              "fpr": 0.2857,
+              "separation": 0.4679
+            },
+            {
+              "err_threshold": 0.2,
+              "flags_bad": "43/69",
+              "flags_good": "37/196",
+              "tpr": 0.6232,
+              "fpr": 0.1888,
+              "separation": 0.4344
+            },
+            {
+              "err_threshold": 0.3,
+              "flags_bad": "27/69",
+              "flags_good": "17/196",
+              "tpr": 0.3913,
+              "fpr": 0.0867,
+              "separation": 0.3046
+            },
+            {
+              "err_threshold": 0.5,
+              "flags_bad": "4/69",
+              "flags_good": "6/196",
+              "tpr": 0.058,
+              "fpr": 0.0306,
+              "separation": 0.0274
+            }
+          ],
+          "best_separation": 0.4979,
+          "gauge": "self"
+        },
+        "vs_spurious_fixed_gauge": {
+          "rows": [
+            {
+              "err_threshold": 0.05,
+              "flags_bad": "69/69",
+              "flags_good": "131/196",
+              "tpr": 1,
+              "fpr": 0.6684,
+              "separation": 0.3316
+            },
+            {
+              "err_threshold": 0.075,
+              "flags_bad": "69/69",
+              "flags_good": "108/196",
+              "tpr": 1,
+              "fpr": 0.551,
+              "separation": 0.449
+            },
+            {
+              "err_threshold": 0.1,
+              "flags_bad": "69/69",
+              "flags_good": "90/196",
+              "tpr": 1,
+              "fpr": 0.4592,
+              "separation": 0.5408
+            },
+            {
+              "err_threshold": 0.125,
+              "flags_bad": "69/69",
+              "flags_good": "70/196",
+              "tpr": 1,
+              "fpr": 0.3571,
+              "separation": 0.6429
+            },
+            {
+              "err_threshold": 0.15,
+              "flags_bad": "69/69",
+              "flags_good": "56/196",
+              "tpr": 1,
+              "fpr": 0.2857,
+              "separation": 0.7143
+            },
+            {
+              "err_threshold": 0.2,
+              "flags_bad": "69/69",
+              "flags_good": "37/196",
+              "tpr": 1,
+              "fpr": 0.1888,
+              "separation": 0.8112
+            },
+            {
+              "err_threshold": 0.3,
+              "flags_bad": "69/69",
+              "flags_good": "17/196",
+              "tpr": 1,
+              "fpr": 0.0867,
+              "separation": 0.9133
+            },
+            {
+              "err_threshold": 0.5,
+              "flags_bad": "69/69",
+              "flags_good": "6/196",
+              "tpr": 1,
+              "fpr": 0.0306,
+              "separation": 0.9694
+            }
+          ],
+          "best_separation": 0.9694,
+          "gauge": "fixed(참 카메라)"
+        },
+        "vs_wrong_vp3_fixed_gauge": {
+          "rows": [
+            {
+              "err_threshold": 0.05,
+              "flags_bad": "194/195",
+              "flags_good": "131/196",
+              "tpr": 0.9949,
+              "fpr": 0.6684,
+              "separation": 0.3265
+            },
+            {
+              "err_threshold": 0.075,
+              "flags_bad": "190/195",
+              "flags_good": "108/196",
+              "tpr": 0.9744,
+              "fpr": 0.551,
+              "separation": 0.4233
+            },
+            {
+              "err_threshold": 0.1,
+              "flags_bad": "173/195",
+              "flags_good": "90/196",
+              "tpr": 0.8872,
+              "fpr": 0.4592,
+              "separation": 0.428
+            },
+            {
+              "err_threshold": 0.125,
+              "flags_bad": "170/195",
+              "flags_good": "70/196",
+              "tpr": 0.8718,
+              "fpr": 0.3571,
+              "separation": 0.5147
+            },
+            {
+              "err_threshold": 0.15,
+              "flags_bad": "160/195",
+              "flags_good": "56/196",
+              "tpr": 0.8205,
+              "fpr": 0.2857,
+              "separation": 0.5348
+            },
+            {
+              "err_threshold": 0.2,
+              "flags_bad": "143/195",
+              "flags_good": "37/196",
+              "tpr": 0.7333,
+              "fpr": 0.1888,
+              "separation": 0.5446
+            },
+            {
+              "err_threshold": 0.3,
+              "flags_bad": "67/195",
+              "flags_good": "17/196",
+              "tpr": 0.3436,
+              "fpr": 0.0867,
+              "separation": 0.2569
+            },
+            {
+              "err_threshold": 0.5,
+              "flags_bad": "19/195",
+              "flags_good": "6/196",
+              "tpr": 0.0974,
+              "fpr": 0.0306,
+              "separation": 0.0668
+            }
+          ],
+          "best_separation": 0.5446,
+          "gauge": "fixed(참 카메라)"
+        },
+        "vs_wrong_vp3": {
+          "rows": [
+            {
+              "err_threshold": 0.05,
+              "flags_bad": "155/195",
+              "flags_good": "131/196",
+              "tpr": 0.7949,
+              "fpr": 0.6684,
+              "separation": 0.1265
+            },
+            {
+              "err_threshold": 0.075,
+              "flags_bad": "121/195",
+              "flags_good": "108/196",
+              "tpr": 0.6205,
+              "fpr": 0.551,
+              "separation": 0.0695
+            },
+            {
+              "err_threshold": 0.1,
+              "flags_bad": "102/195",
+              "flags_good": "90/196",
+              "tpr": 0.5231,
+              "fpr": 0.4592,
+              "separation": 0.0639
+            },
+            {
+              "err_threshold": 0.125,
+              "flags_bad": "84/195",
+              "flags_good": "70/196",
+              "tpr": 0.4308,
+              "fpr": 0.3571,
+              "separation": 0.0736
+            },
+            {
+              "err_threshold": 0.15,
+              "flags_bad": "66/195",
+              "flags_good": "56/196",
+              "tpr": 0.3385,
+              "fpr": 0.2857,
+              "separation": 0.0527
+            },
+            {
+              "err_threshold": 0.2,
+              "flags_bad": "44/195",
+              "flags_good": "37/196",
+              "tpr": 0.2256,
+              "fpr": 0.1888,
+              "separation": 0.0369
+            },
+            {
+              "err_threshold": 0.3,
+              "flags_bad": "18/195",
+              "flags_good": "17/196",
+              "tpr": 0.0923,
+              "fpr": 0.0867,
+              "separation": 0.0056
+            },
+            {
+              "err_threshold": 0.5,
+              "flags_bad": "6/195",
+              "flags_good": "6/196",
+              "tpr": 0.0308,
+              "fpr": 0.0306,
+              "separation": 0.0002
+            }
+          ],
+          "best_separation": 0.1265,
+          "note": "⚠ **VP3를 (+400, +900)px 옮겨도 형태 오차가 거의 안 나빠진다** (중앙 0.0912 → 0.1079, 1.18배. 가짜 승격은 0.2537로 2.78배다). **참값으로도 못 가르는 자리**이므로 이 팔에서 `tiltDeg`가 실패하는 것은 **신호의 실패가 아니라 가를 것이 거의 없는 것**이다(#31). 즉 그 오승격은 **실제로 별로 안 나쁘다** — 되돌릴 이유가 약하다는 뜻이기도 하다."
+        },
+        "arms_are_separable": false,
+        "registered_bar_above_ceiling": true,
+        "note2": "⚠ **이것을 '상한'이라 부르지 않는다**(리뷰어 [3]). 이 수는 **형태 오차 중앙값을 임계로 자르는 규칙 한 가족의, 격자 여덟 점 중 최댓값**이다. 판별의 참값은 형태 오차가 아니라 **팔 라벨**이고, 라벨과 상관이 더 높은 관측량이 원리적으로 배제되지 않는다. 그러므로 **'등록 기준 0.5가 도달 불가능했다'도 증명되지 않았다** — 말할 수 있는 것은 **이 대리 참값으로는 0.5에 못 닿는다**까지다. **후보 ①의 실패를 등록 기준으로 주장하지 않는다**: 기준과 무관한 근거는 **시드 부호가 갈리는 것**(#14)과 **구도 교락이 없는 `wrong_vp3` 팔에서 판별력이 0에 붙는 것**(`stratified`의 `comp_*` 세 행: 0.015 · 0.074 · 0)이다. ⚠ **`vs_spurious`는 구도 안에서 잴 수 없다** — 가짜 팔이 `2pt_yaw35_pitch0` 한 구도에만 있어 3pt 층에서는 그 팔이 비기 때문이다(그래서 `null`이다). 즉 합산 0.1979는 **구도 간 비교**이고 그 안에 구도 효과가 섞여 있다(리뷰어 [1])."
+      }
+    },
+    "seed_spread": {
+      "note": "**시드 폭이 먼저다**(#14 — L-C.2에서 두 번 걸렸다). `gap`이 (가짜 Δ 중앙 − 참 Δ 중앙)이고 **부호가 갈리면 결론이 없다.**",
+      "rows": [
+        {
+          "seed": 1,
+          "real_delta_median": 0.4061,
+          "spur_delta_median": 0.3215,
+          "gap": -0.0846
+        },
+        {
+          "seed": 2,
+          "real_delta_median": 0.339,
+          "spur_delta_median": 0.37,
+          "gap": 0.031
+        },
+        {
+          "seed": 3,
+          "real_delta_median": 0.0042,
+          "spur_delta_median": 0.4805,
+          "gap": 0.4763
+        },
+        {
+          "seed": 4,
+          "real_delta_median": 0.2727,
+          "spur_delta_median": 0.2753,
+          "gap": 0.0026
+        },
+        {
+          "seed": 5,
+          "real_delta_median": 0.3329,
+          "spur_delta_median": 0.4032,
+          "gap": 0.0703
+        },
+        {
+          "seed": 6,
+          "real_delta_median": 0.5406,
+          "spur_delta_median": 0.4767,
+          "gap": -0.0639
+        }
+      ],
+      "gap_min": -0.0846,
+      "gap_max": 0.4763,
+      "all_same_sign": false
+    }
+  },
+  "conclusion": {
+    "candidate_2": "❌ **자기참조 유형 3 — 정보량 0**(규칙 ②). 주점을 수심으로 잡는 순간 세 f²가 같아지는 것이 **항등식**이라, 틀린 소실점·둔각 삼각형·가짜 승격에서도 편차가 전부 1e-16 이하다. **AS-L6과 같은 유형의 오류**이고 계획서가 '사영 불변이 아닌 양인지 먼저 확인한다'고 적어 둔 그 확인이 이것이다.",
+    "candidate_1": "❌ **규칙 ①은 통과하고 규칙 ③에서 죽는다.** f를 ±20% 흔들면 값이 움직이므로 **사영 불변은 아니다**(AS-L6의 함정은 피했다. 섭동한 f는 축 판정·`liftAll`·`frameOf` 셋 전부를 먹인다). 그러나 **오승격을 못 가른다** — 양방향을 다 훑어도 최선이 `wrong_vp3` 구도별 0.118 / 0.074 / 0.242이고 `spurious` 합산 0.1979이다. ⚠⚠ **그리고 그것은 신호의 실패이지 픽스처의 실패가 아니다** — 2회차 재측정이 그것을 뒤집어 확인했다. **참값을 고정 게이지로 재면 판별력이 `spurious` 0.9694 · `wrong_vp3` 0.5446로 둘 다 등록 기준 0.5를 넘는다.** 초판이 쓴 자기 게이지 값(0.4979 · 0.1265)은 **최소제곱이 전역 배율을 적합해 없앤 뒤의 수**이고, AS-L11이 '앱이 배율을 다시 안 맞추므로 **그 배율 어긋남이 사용자가 보는 오차다**'라고 적어 둔 바로 그 성분을 지운 것이다. **그러므로 초판의 두 문장을 철회한다**: ① '등록 기준 0.5가 도달 불가능했다' — **도달 가능하다**(0.97 · 0.54). ② '`wrong_vp3`는 애초에 가를 것이 거의 없다' — **가를 것이 많다**. 그 팔의 VP3 축 각오차는 **중앙 5.59°**(2.97~9.84°)로 AS-L9 임계 **0.5°의 11배**이고, 고정 게이지 형태 오차가 0.0912 → **0.2599**(2.85배)다. ⚠ 구도 효과도 갈랐다(2회차 리뷰어 [3]): 같은 2pt 장면을 **옳게 2점으로 푼** 대조군이 자기 게이지 0.1435라 `spurious`의 0.2537 중 일부는 구도였지만, **고정 게이지에서는 3.1196 대 0.0912라 구도로 설명되지 않는다.** 실패의 이유는 `tiltDeg`가 **f 오차와 축 오차를 섞기 때문**이다 — f가 클수록 tilt가 작아지는 단조 관계라 두 원인이 한 수에 겹친다.",
+    "verdict": "**후보 둘 다 안 선다. §6.2의 대비책으로 간다 — 사용자 확인이다.** ⚠ **다만 '잴 것이 없어서'가 아니다** — 고정 게이지 참값으로는 오승격 두 종류가 둘 다 0.5를 넘게 갈린다. **관측 가능한 신호를 아직 못 찾은 것이다.** 계획서가 이미 그렇게 적었다('아니면 되돌리기만 쓴다'). **그 되돌리기가 L-C.2에서 만들어졌다** — 차수를 명시한 되돌리기와 승격이 잃은 것의 표시다. ⚠ **이것은 우회가 아니라 계획서의 두 갈래 중 하나다.**",
+    "what_this_does_not_say": [
+      "**다른 신호가 없다** — 이 항목이 시험한 것은 계획서가 적은 후보 **둘**이다. 고정 게이지 참값이 0.97 · 0.54까지 가르므로 **메울 여지가 크다**. ⚠ 그 수를 '상한'이라 부르지 않는다 — **한 대리 참값의 성능**이지 도달 가능성의 증명이 아니다",
+      "**사용자가 옳게 판단하는가** — 표본 0(AS-C1). 자동 신호가 없다는 것과 사람이 잘 한다는 것은 다른 주장이다",
+      "**실제 앱 조건** — 여기는 참 소실점을 넣고 뺀다. 앱에서는 사용자가 맞춘 소실점이고 그 오차가 더해진다"
+    ]
+  },
+  "constants": {
+    "hash": "46c028d1",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "3df57ac7",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  }
+}
