@@ -237,6 +237,56 @@ def scan_stale_constants(outdir: Path, reports: dict[str, dict]) -> list[dict]:
     return flags
 
 
+SCANNED_FIELDS: list[dict] = []
+
+
+def scan_unread_fields(root: Path) -> list[dict]:
+    """**쓰기만 하고 읽지 않는 필드**를 잡는다(S-8c). 배선 누락의 세 번째 얼굴이다.
+
+    같은 유형이 세 번 나왔다: (1) 4.3 옵션이 앱에서 안 켜짐 (2) 하네스가 앱 옵션을 따로 적음
+    (3) **Stroke.color를 아무도 안 읽음** — S-7이 미확정을 그 필드에 적었는데 화면은 축 색만
+    그렸다. 앞의 둘은 appPlace.ts + wiring.test.ts가 잡고, 이것이 셋째다.
+
+    판정은 거칠다 — `x.field =`(쓰기)는 있는데 그 밖의 `.field` 등장이 없으면 안 읽는 것이다.
+    **의심이지 오류가 아니다**(다른 규칙과 같다).
+    """
+    import re as _re
+    SCANNED_FIELDS.clear()          # **훑은 필드를 남긴다** — 0건이 "깨끗함"인지 "안 돌았음"인지 갈린다
+    src = root / "web" / "src"
+    stroke = src / "s3d" / "stroke.ts"
+    if not stroke.exists():
+        return []
+    lines = stroke.read_text(encoding="utf-8").splitlines()
+    fields, inside = [], False
+    for ln in lines:                       # 인터페이스 블록을 줄 단위로 읽는다(정규식 없이)
+        if ln.startswith("export interface Stroke {"):
+            inside = True
+            continue
+        if inside:
+            if ln.startswith("}"):
+                break
+            m = _re.match(r"  (\w+)\??:", ln)
+            if m:
+                fields.append(m.group(1))
+    bodies = [f.read_text(encoding="utf-8") for f in sorted(src.rglob("*.ts"))]
+    flags = []
+    for name in fields:
+        writes = reads = 0
+        for body in bodies:
+            for mm in _re.finditer("[.]" + _re.escape(name) + "(?![A-Za-z0-9_])", body):
+                tail = body[mm.end():mm.end() + 4]
+                if _re.match(r"\s*=(?![=>])", tail):
+                    writes += 1
+                else:
+                    reads += 1
+        SCANNED_FIELDS.append({"field": name, "writes": writes, "reads": reads})
+        if not reads:            # 읽는 곳이 없다 — 써넣기만 하거나 아예 안 쓰거나
+            flags.append({"path": "web/src/s3d/stroke.ts:Stroke." + name,
+                          "val": "쓰기 %d · 읽기 0" % writes,
+                          "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 "
+                                  "(Stroke.color가 실제로 그랬다, S-8c)"})
+    return flags
+
 def scan_nondeterministic_seeds(root: Path) -> list[dict]:
     """소스에서 비결정 시드 패턴을 정적 탐지(B-0 d). hash(str)를 시드에 쓰면 안 된다."""
     import re
@@ -283,12 +333,16 @@ def main():
 
     stale = scan_stale_constants(outdir, reports)      # 하류 재측정 누락 (재발 유형 자동 탐지)
     flags += stale
+    unread = scan_unread_fields(ROOT)                  # 쓰기만 하고 안 읽는 필드 (배선 누락, S-8c)
+    flags += unread
 
     flags += scan_nondeterministic_seeds(ROOT)      # B-0 d: 비결정 시드 정적 탐지
     flags += scan_roundtrip_metrics(ROOT)          # 자기참조 3: 복원↔역연산 왕복 지표
 
     out = {"n_flags": len(flags), "flags": flags,
            "n_stale": sum(1 for f in stale if "STALE" in f["flag"]),
+           "n_unread_fields": len(unread),
+           "field_reads": SCANNED_FIELDS,
            "constants_hash": (reports.get("constants.json") or {}).get("hash"),
            "scanned": [p.name for p in sorted(outdir.glob("*.json")) if p.name not in skip],
            "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."}

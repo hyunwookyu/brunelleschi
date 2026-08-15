@@ -1,5 +1,5 @@
 {
-  "n_flags": 727,
+  "n_flags": 728,
   "flags": [
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
@@ -3632,12 +3632,70 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "web/src/s3d/stroke.ts:Stroke.layer",
+      "val": "쓰기 0 · 읽기 0",
+      "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
+    },
+    {
       "path": "web\\src\\s3d\\stroke.ts:304:reprojectionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     }
   ],
   "n_stale": 0,
+  "n_unread_fields": 1,
+  "field_reads": [
+    {
+      "field": "id",
+      "writes": 0,
+      "reads": 68
+    },
+    {
+      "field": "pts2d",
+      "writes": 0,
+      "reads": 31
+    },
+    {
+      "field": "pts3d",
+      "writes": 8,
+      "reads": 55
+    },
+    {
+      "field": "axis",
+      "writes": 2,
+      "reads": 26
+    },
+    {
+      "field": "rep",
+      "writes": 0,
+      "reads": 27
+    },
+    {
+      "field": "anchorRef",
+      "writes": 5,
+      "reads": 2
+    },
+    {
+      "field": "joinShift",
+      "writes": 7,
+      "reads": 5
+    },
+    {
+      "field": "layer",
+      "writes": 0,
+      "reads": 0
+    },
+    {
+      "field": "color",
+      "writes": 1,
+      "reads": 9
+    },
+    {
+      "field": "width",
+      "writes": 3,
+      "reads": 4
+    }
+  ],
   "constants_hash": "1671e540",
   "scanned": [
     "axis_judgement.json",
