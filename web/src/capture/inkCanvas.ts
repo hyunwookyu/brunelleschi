@@ -22,6 +22,14 @@ export interface InkOptions {
    */
   dragMode?: () => boolean;
   onDrag?: (p: [number, number], phase: "down" | "move" | "up") => void;
+  /**
+   * **떠 있는 커서**(L-B.3 스냅 표시). 그리지도 끌지도 않는 동안의 포인터 위치다.
+   * SketchUp/Rhino가 스냅 표식을 이때 보인다 — 눌러 보기 전에 무엇에 붙을지 알아야 한다.
+   *
+   * `onDrag`와 같은 이유로 여기에 둔다: 좌표 변환이 `canvasFrame` 단일 출처를 타야 한다
+   * (D-C3·PITFALLS #21). 바깥에서 `clientX`를 직접 읽으면 dpr 규약이 둘이 된다.
+   */
+  onHover?: (p: [number, number] | null) => void;
 }
 
 // 프레임별 획 버퍼 + 라이브 잉크 렌더. 프레임 전환은 setFrame으로.
@@ -51,6 +59,7 @@ export class InkCanvas {
     canvas.addEventListener("pointerup", this.onUp);
     canvas.addEventListener("pointercancel", this.onUp);
     canvas.addEventListener("pointerleave", this.onUp);
+    canvas.addEventListener("pointerleave", () => this.opts.onHover?.(null));
     // (e) iOS 확대 제스처·더블탭 줌 차단
     canvas.addEventListener("gesturestart", (ev) => ev.preventDefault());
     canvas.addEventListener("dblclick", (ev) => ev.preventDefault());
@@ -132,7 +141,12 @@ export class InkCanvas {
       this.opts.onDrag?.(this.local(e), "move");
       return;
     }
-    if (!this.drawing || e.pointerId !== this.activeId || !this.inkable(e)) return;
+    if (!this.drawing) {
+      // 떠 있는 커서 — 스냅 표식을 미리 보인다(L-B.3)
+      if (this.opts.onHover && this.inkable(e)) this.opts.onHover(this.local(e));
+      return;
+    }
+    if (e.pointerId !== this.activeId || !this.inkable(e)) return;
     e.preventDefault();
     const from = this.pts.length - 1;   // 이번 move의 이어그릴 시작점
     for (const c of this.movePoints(e)) this.pts.push(this.sample(c, performance.now() - this.t0));

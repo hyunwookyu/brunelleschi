@@ -16,9 +16,12 @@ import { draftFromDetection, handleAt, moveHandle, guideLineAt, moveGuideBy,
 import { SENS_TOL, type AxisSens } from "./s3d/vpSensitivity.js";
 import { HOMOG_TOL } from "./s3d/vpHomog.js";
 import { liftAll, type LiftStroke } from "./s3d/lift.js";
+import { snapAt, SNAP_TOL, SNAP_LABEL, SNAP_COLOR,
+         type SnapCand, type SnapSeg, type SnapCtx } from "./s3d/snap.js";
+import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "./s3d/liveLine.js";
 import { classifyStroke } from "./s3d/axis.js";
 import { AXIS_COLOR, guides as gridGuides, HORIZON_COLOR, GROUND_COLOR } from "./s3d/grid.js";
-import { project } from "./s3d/geom3d.js";
+import { project, axisDirection, groundFrame, type Vec3 } from "./s3d/geom3d.js";
 import type { Pt2 } from "./s3d/camera.js";
 import type { PlaceCtx } from "./s3d/stroke.js";
 
@@ -46,6 +49,10 @@ let dragLine: { index: number; last: Pt2 } | null = null;
  * 종단 확인에서 실제로 걸렸다. 갱신을 **쓰는 자리 하나로** 모은다(AS-C7의 자가 치유와 같은 형태).
  */
 let sens: AxisSens[] = [];
+/** 떠 있는 커서의 스냅 — **누르기 전에 무엇에 붙을지 보인다**(SketchUp/Rhino 관행, L-B.3). */
+let hoverSnap: SnapCand | null = null;
+/** 마지막 획이 무엇에 붙었나 — 화면에 사유를 낸다(#7: 추측하지 말고 센다). */
+let lastSnapNote = "";
 const refreshSens = () => { sens = cam.guides.length ? cam.sensitivity() : []; };
 const undoStack: DocState[] = [];
 const UNDO_MAX = 200;
@@ -55,6 +62,60 @@ const cssSize = (): [number, number] => cssSizeOf(canvas);
 function pushUndo() {
   undoStack.push(snapshotDoc(doc));
   if (undoStack.length > UNDO_MAX) undoStack.shift();
+}
+
+// ---------------------------------------------------------------- 스냅 (§3)
+
+/** 스냅 대상 = **3D 레이어 그대로**. 2D 대기 획은 아직 공간에 없으므로 대상이 아니다(§9.1). */
+const snapSegs = (): SnapSeg[] =>
+  lifted(doc).map(s => ({ id: s.id, a: s.seg3d![0], b: s.seg3d![1] }));
+
+/**
+ * 스냅이 도는 조건: **카메라가 확정됐고 확정 시점에 있을 때**.
+ * 궤도로 돌린 뒤에는 `stage`의 자유 카메라와 `cam.ctx()`가 달라 화면 좌표의 뜻이 다르다 —
+ * 그 경로는 L-B.8(궤도 후 계속 그리기)에서 연다. **없는 스냅을 지어내지 않는다**(A-3).
+ */
+function snapCtx(): SnapCtx | null {
+  const c = cam.ctx();
+  if (!c || !cam.locked || !stage.isPinned) return null;
+  return { principal: c.principal, f: c.f, imgSize: c.imgSize,
+           // 면 생성이 범위 밖이라 지금 있는 면은 지면 하나다(§3 "면 위 점")
+           ground: groundFrame(c.vps[2] ?? null, c.principal, c.f),
+           from: null };
+}
+
+/**
+ * **화면에서 시작점을 대상의 상으로 옮기는 것이 곧 3D 확정이다.**
+ *
+ * 올라간 기하는 되쏘면 정확히 그 화면 점으로 돌아오므로(`lift.ts`의 `segGap = 0` 보장)
+ * "3D 대상에 붙인다"와 "그 대상의 상으로 화면 점을 옮긴다"가 **같은 연산**이다.
+ * 그래서 솔버를 바꾸지 않고 `pts2d[0]`만 옮기면 된다 — 새로 설계한 것이 없다(A-3).
+ */
+function applySnapToStart(st: SStroke, cand: SnapCand): void {
+  st.snapStart = { kind: cand.kind, at: cand.at, ofId: cand.ofId };
+  st.pts2d = [[cand.screen[0], cand.screen[1]], ...st.pts2d.slice(1)];
+}
+
+/**
+ * 스냅된 시작점 + 축 → 그 자리에서 3D 확정(§3 마지막 문단 · §7).
+ * 축이 안 정해지면 `false`이고 그 획은 2D로 **대기**한다(§9.1).
+ */
+function placeLive(st: SStroke, c: PlaceCtx, at: Vec3): boolean {
+  const dirs = c.vps.map(v => (v ? axisDirection(v, c.principal, c.f) : null));
+  const a2 = st.pts2d[0], b2 = st.pts2d[st.pts2d.length - 1];
+  const near = nearestAxisOnScreen(at, dirs, a2, b2, c);
+  if (!near || near.deg > LIVE_TOL.axis_deg) {
+    lastSnapNote = near
+      ? `축과 ${near.deg.toFixed(1)}° 벌어져 **2D로 대기**합니다(${LIVE_TOL.axis_deg}° 이내여야 합니다)`
+      : "축 후보가 없어 **2D로 대기**합니다";
+    return false;
+  }
+  const seg = segmentFromAnchor(at, dirs[near.axis], b2, c);
+  if (!seg) { lastSnapNote = "끝점이 정해지지 않아 **2D로 대기**합니다"; return false; }
+  st.axis = near.axis;
+  st.seg3d = seg;
+  lastSnapNote = `축${near.axis + 1}로 확정 (축과 ${near.deg.toFixed(1)}°)`;
+  return true;
 }
 
 // ---------------------------------------------------------------- 3D 레이어
@@ -231,6 +292,30 @@ function drawPreview(ctx2: CanvasRenderingContext2D) {
 }
 let previewCount = 0, previewStuck = 0, previewFree = 0;
 
+/**
+ * 스냅 표식(§3 "표시"). **종류마다 다른 색과 라벨** — SketchUp의 관행 그대로다(A-3).
+ * 표식이 없으면 사용자는 무엇에 붙었는지 모르고, 그러면 **조용히 틀린 배치**가 된다.
+ */
+function drawSnapMark(ctx2: CanvasRenderingContext2D) {
+  if (!hoverSnap) return;
+  const [x, y] = hoverSnap.screen;
+  ctx2.save();
+  ctx2.strokeStyle = SNAP_COLOR[hoverSnap.kind];
+  ctx2.fillStyle = SNAP_COLOR[hoverSnap.kind];
+  ctx2.lineWidth = 2;
+  // 끝점은 네모, 나머지는 마름모 — 종류가 표식 모양으로도 갈린다
+  if (hoverSnap.kind === "endpoint") ctx2.strokeRect(x - 5, y - 5, 10, 10);
+  else {
+    ctx2.beginPath();
+    ctx2.moveTo(x, y - 6); ctx2.lineTo(x + 6, y); ctx2.lineTo(x, y + 6); ctx2.lineTo(x - 6, y);
+    ctx2.closePath(); ctx2.stroke();
+  }
+  ctx2.globalAlpha = 0.9;
+  ctx2.font = "11px system-ui, sans-serif";
+  ctx2.fillText(SNAP_LABEL[hoverSnap.kind], x + 9, y - 8);
+  ctx2.restore();
+}
+
 function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   // **확정 뷰를 벗어나면 2D 층 전체가 뜻을 잃는다** — 그리드도 가이드도 소실점 표식도
   // 확정 뷰의 화면 좌표다. 자유 시점에서 그리면 화면에 붙어 따라다니는 유령이 된다.
@@ -239,6 +324,7 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   drawPending(ctx2);
   drawPreview(ctx2);
   drawGuideHandles(ctx2);
+  drawSnapMark(ctx2);
   const [w, h] = cssSize();
   cam.vps().forEach((v, i) => {
     if (!v || v[0] < 0 || v[0] > w || v[1] < 0 || v[1] > h) return;
@@ -277,6 +363,17 @@ const ink = new InkCanvas(canvas, {
     cam.apply();
     refresh();
   },
+  onHover: (p) => {
+    const sc = p ? snapCtx() : null;
+    const next = (sc && tool === "draw") ? snapAt(p!, snapSegs(), sc) : null;
+    // 값이 안 바뀌면 다시 그리지 않는다 — 포인터마다 전체 재그리기가 돌면 안 된다
+    const same = (!next && !hoverSnap)
+      || (!!next && !!hoverSnap && next.kind === hoverSnap.kind
+          && Math.abs(next.screen[0] - hoverSnap.screen[0]) < 0.5
+          && Math.abs(next.screen[1] - hoverSnap.screen[1]) < 0.5);
+    hoverSnap = next;
+    if (!same) refresh();
+  },
   onStrokeEnd: (stroke) => {
     const pts = stroke.points.map(p => [p[0], p[1]] as Pt2);
     ink.clear();                         // 잉크 버퍼는 문서가 아니다 — 우리가 그린다
@@ -287,9 +384,21 @@ const ink = new InkCanvas(canvas, {
     // 확정 뒤에는 그 자리에서 푼다 — **승격 연쇄**의 첫 형태다(§9.1). L-B.7에서 넓힌다.
     const ctx = cam.ctx();
     if (cam.locked && ctx && stage.isPinned) {
-      solveInto(ctx, pending(doc, doc.views[0].id));
+      // **① 시작점 스냅**(§3). 붙으면 그 획의 3D가 확정된다.
+      const sc = snapCtx();
+      const cand = sc ? snapAt(pts[0], snapSegs(), sc) : null;
+      lastSnapNote = "";
+      if (cand) {
+        applySnapToStart(s, cand);
+        placeLive(s, ctx, cand.at);
+      } else if (snapSegs().length) {
+        lastSnapNote = "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다";
+      }
+      // **② 못 놓인 것은 일괄 풀이로** — 서로 이어진 2D 획들끼리 풀린다(L-B.7에서 넓힌다)
+      if (!s.seg3d) solveInto(ctx, pending(doc, doc.views[0].id));
       syncScene();
     }
+    hoverSnap = null;
     refresh();
   },
 });
@@ -401,6 +510,16 @@ function renderStatus() {
         + ` <span class="dim">가이드 선을 끌어 <b>더 긴 자리</b>로 옮기거나 두 선의 각차를 벌리세요</span></div>`);
     }
   }
+  // **스냅 상태**(§3 표시). 확정 뒤에만 뜬다 — 대상이 3D 레이어이기 때문이다.
+  if (snapCtx()) {
+    const rpx = Math.round(SNAP_TOL.radius_ratio * Math.hypot(...cssSize()));
+    rows.push(`<div>스냅 <b>켜짐</b> <span class="dim">반경 ${rpx}px · 대상 ${snapSegs().length}선</span>`
+      + (hoverSnap
+        ? ` · <b style="color:${SNAP_COLOR[hoverSnap.kind]}">${SNAP_LABEL[hoverSnap.kind]}</b>`
+          + ` <span class="dim">(${hoverSnap.dist.toFixed(0)}px)</span>`
+        : ' <span class="dim">(커서 아래 대상 없음)</span>') + "</div>");
+    if (lastSnapNote) rows.push(`<div class="dim">마지막 획 — ${lastSnapNote}</div>`);
+  }
   for (const w of r.warnings) rows.push(`<div class="${w.level}">${w.text}</div>`);
   if (note) rows.push(`<div class="note">${note}</div>`);
   statusEl.innerHTML = rows.join("");
@@ -458,4 +577,8 @@ refresh();
 // 브라우저 콘솔 진단용. 측정 하네스와 같은 픽스처를 쓰려면 여기서 문서를 꺼낸다.
 (window as unknown as Record<string, unknown>).S2S = {
   doc: () => doc, cam, stage, refresh, SIZE_HEAL,
+  // L-B.3 — 종단 확인이 스냅을 앱 경로 그대로 부른다(PITFALLS #17)
+  snap: (p: Pt2) => { const sc = snapCtx(); return sc ? snapAt(p, snapSegs(), sc) : null; },
+  snapTargets: () => snapSegs().length,
+  hoverSnap: () => hoverSnap,
 };

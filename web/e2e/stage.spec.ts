@@ -385,3 +385,105 @@ test("가이드 조정 — 늘리기·민감도·선 끌기", async ({ page }) =
 
   led.l_b2 = l;
 });
+
+/**
+ * L-B.3 — **스냅**(§3). 산출: `stage_browser.json`의 `l_b3`.
+ *
+ * 재는 것: 대상이 3D 레이어에서 오는가 · 떠 있는 커서에 표식이 뜨는가 ·
+ * **실제 포인터로 그은 획의 시작점이 붙고 그 자리에서 3D가 확정되는가**(§3 마지막 문단).
+ *
+ * ⚠ **정확도 표는 여기가 아니다** — `snap.json`이 5구도·3등급·시드 6으로 낸다.
+ * 여기는 **배선 확인**이고 동작점 하나다(#12).
+ */
+test("스냅 — 대상·표식·시작점 확정", async ({ page }) => {
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  const l: Record<string, unknown> = {};
+
+  await setup(page);
+  await page.evaluate(() =>
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click());
+
+  // ① 대상은 **3D 레이어**에서 온다. 확정 전에는 0이어야 한다 — 그 대조를 함께 낸다.
+  l.targets = await page.evaluate(() => {
+    const S = window.S2S;
+    return { after_confirm: S.snapTargets(), lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+             pending: S.doc().strokes.filter((s: any) => !s.seg3d).length };
+  });
+  expect((l.targets as any).after_confirm).toBe((l.targets as any).lifted);
+
+  // ② 떠 있는 커서 — 참 꼭짓점 근처에서 **끝점** 표식이 떠야 한다.
+  const geo = await page.evaluate(async () => {
+    const S = window.S2S;
+    const g3 = await import("/src/s3d/geom3d.ts");
+    const ctx = S.cam.ctx();
+    const s0 = S.doc().strokes.find((s: any) => s.seg3d);
+    const a = g3.project(s0.seg3d[0], ctx.principal, ctx.f);
+    const b = g3.project(s0.seg3d[1], ctx.principal, ctx.f);
+    const r = (document.getElementById("ink") as HTMLCanvasElement).getBoundingClientRect();
+    return { a, b, originX: r.left, originY: r.top, id: s0.id, axis: s0.axis };
+  });
+  const cx = geo.originX, cy = geo.originY;
+  // 꼭짓점에서 **18px 어긋나게** 겨냥한다 — 손 획이 정확히 맞지 않는 것을 흉내낸다
+  await page.mouse.move(cx + geo.a[0] + 13, cy + geo.a[1] + 12);
+  l.hover = await page.evaluate(() => {
+    const S = window.S2S;
+    const h = S.hoverSnap();
+    return { kind: h?.kind ?? null, dist_px: h ? +h.dist.toFixed(1) : null,
+             shown_in_status: document.getElementById("status")!.innerText.includes("스냅") };
+  });
+  expect((l.hover as any).kind).toBe("endpoint");
+  expect((l.hover as any).shown_in_status).toBe(true);
+
+  // ③ **실제 포인터로 긋는다.** 시작을 꼭짓점에서 어긋나게, 끝을 같은 모서리 방향으로.
+  await page.mouse.down();
+  await page.mouse.move(cx + (geo.a[0] + geo.b[0]) / 2, cy + (geo.a[1] + geo.b[1]) / 2, { steps: 4 });
+  await page.mouse.move(cx + geo.b[0] - 6, cy + geo.b[1] + 5, { steps: 4 });
+  await page.mouse.up();
+
+  l.drawn = await page.evaluate(async () => {
+    const S = window.S2S;
+    const g3 = await import("/src/s3d/geom3d.ts");
+    const ctx = S.cam.ctx();
+    const st = S.doc().strokes[S.doc().strokes.length - 1];
+    const back = st.seg3d ? g3.project(st.seg3d[0], ctx.principal, ctx.f) : null;
+    return {
+      snap_kind: st.snapStart?.kind ?? null,
+      snapped_to: st.snapStart?.ofId ?? null,
+      axis: st.axis,
+      placed: !!st.seg3d,
+      // ⚠ **이것은 측정이 아니라 항등이다**(PITFALLS #5). `pts2d[0] = project(cand.at)`로
+      // 넣고 `seg3d[0] = cand.at`으로 놓았으니 되쏘면 정확히 같은 점이다. **정확도가 아니라
+      // 배선을 검사한다** — 둘 중 하나만 대입하는 실수를 잡는다. 임계를 걸지 않는다.
+      start_reprojection_gap_px_IDENTITY: back
+        ? +Math.hypot(back[0] - st.pts2d[0][0], back[1] - st.pts2d[0][1]).toFixed(9) : null,
+      status_note: document.getElementById("status")!.innerText.includes("마지막 획"),
+    };
+  });
+  expect((l.drawn as any).snap_kind).toBe("endpoint");
+  expect((l.drawn as any).placed).toBe(true);
+  expect((l.drawn as any).axis).toBe(geo.axis);
+  expect((l.drawn as any).start_reprojection_gap_px_IDENTITY).toBeLessThan(1e-6);
+
+  // ④ **대조군** — 아무것도 없는 자리에서 시작하면 안 붙고 **2D로 대기**한다(§9.1).
+  await page.mouse.move(cx + 12, cy + 12);
+  await page.mouse.down();
+  await page.mouse.move(cx + 90, cy + 30, { steps: 3 });
+  await page.mouse.up();
+  l.control_far_from_geometry = await page.evaluate(() => {
+    const S = window.S2S;
+    const st = S.doc().strokes[S.doc().strokes.length - 1];
+    return { snap_kind: st.snapStart?.kind ?? null, placed: !!st.seg3d,
+             note: "붙지 않으면 **실패가 아니라 대기**다(§9.1). 조용히 틀린 배치를 만들지 않는다." };
+  });
+  expect((l.control_far_from_geometry as any).snap_kind).toBeNull();
+  expect((l.control_far_from_geometry as any).placed).toBe(false);
+
+  l.what_this_does_not_say = [
+    "성공률 — `snap.json`이 5구도·3등급·잡음 4·시드 6으로 낸다. 여기는 동작점 하나다(#12)",
+    "반경의 타당성 — 대상 밀도가 상자 하나다(`snap.json`의 `by_density`가 그것을 잰다)",
+    "실획 — 합성 잉크다(AS-C1)",
+    "`start_reprojection_gap_px_IDENTITY`는 **항등**이다 — 정확도가 아니라 배선을 검사한다(#5)",
+  ];
+  led.l_b3 = l;
+});

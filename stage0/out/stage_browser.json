@@ -19,7 +19,7 @@
     "camera": "요 35°·피치 15° 3점(f=1000px). 가이드를 **참 소실점**으로 세운다"
   },
   "constants": {
-    "hash": "addaeb9d",
+    "hash": "dbcf3a11",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -67,6 +67,15 @@
         "probe_dirs": 8,
         "budget_deg": 0.5,
         "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
       },
       "CONSENSUS_TOL": {
         "radius_ratio": 0.45,
@@ -331,5 +340,36 @@
       ],
       "shown_in_status": true
     }
+  },
+  "l_b3": {
+    "targets": {
+      "after_confirm": 12,
+      "lifted": 12,
+      "pending": 0
+    },
+    "hover": {
+      "kind": "endpoint",
+      "dist_px": 17.2,
+      "shown_in_status": true
+    },
+    "drawn": {
+      "snap_kind": "endpoint",
+      "snapped_to": "s6",
+      "axis": 0,
+      "placed": true,
+      "start_reprojection_gap_px_IDENTITY": 0,
+      "status_note": true
+    },
+    "control_far_from_geometry": {
+      "snap_kind": null,
+      "placed": false,
+      "note": "붙지 않으면 **실패가 아니라 대기**다(§9.1). 조용히 틀린 배치를 만들지 않는다."
+    },
+    "what_this_does_not_say": [
+      "성공률 — `snap.json`이 5구도·3등급·잡음 4·시드 6으로 낸다. 여기는 동작점 하나다(#12)",
+      "반경의 타당성 — 대상 밀도가 상자 하나다(`snap.json`의 `by_density`가 그것을 잰다)",
+      "실획 — 합성 잉크다(AS-C1)",
+      "`start_reprojection_gap_px_IDENTITY`는 **항등**이다 — 정확도가 아니라 배선을 검사한다(#5)"
+    ]
   }
 }

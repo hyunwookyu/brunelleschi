@@ -1,5 +1,5 @@
 {
-  "n_flags": 1452,
+  "n_flags": 1467,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -270,6 +270,13 @@
       "path": "camera_gate.json:by_strokes_per_axis.k_4.true_camera_oracle.axis_dir_err_deg.median",
       "val": 0,
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "constants.json:values.LIVE_TOL",
+      "val": {
+        "axis_deg": 12
+      },
+      "flag": "단일 범주 분포(n=12) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
@@ -3782,6 +3789,90 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "snap.json:by_density.wrong_by_kind.k2.0.100",
+      "val": {
+        "endpoint": 197
+      },
+      "flag": "단일 범주 분포(n=197) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "snap.json:by_density.wrong_by_kind.k2.0.140",
+      "val": {
+        "endpoint": 197
+      },
+      "flag": "단일 범주 분포(n=197) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "snap.json:by_density.wrong_by_kind.k2.0.200",
+      "val": {
+        "endpoint": 197
+      },
+      "flag": "단일 범주 분포(n=197) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "snap.json:by_density.wrong_by_kind.k2.0.280",
+      "val": {
+        "endpoint": 197
+      },
+      "flag": "단일 범주 분포(n=197) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "snap.json:by_density.wrong_by_kind.k3.0.100",
+      "val": {
+        "endpoint": 1330
+      },
+      "flag": "단일 범주 분포(n=1330) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "snap.json:by_density.wrong_by_kind.k3.0.140",
+      "val": {
+        "endpoint": 1330
+      },
+      "flag": "단일 범주 분포(n=1330) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "snap.json:by_density.wrong_by_kind.k3.0.200",
+      "val": {
+        "endpoint": 1330
+      },
+      "flag": "단일 범주 분포(n=1330) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "snap.json:by_density.wrong_by_kind.k3.0.280",
+      "val": {
+        "endpoint": 1330
+      },
+      "flag": "단일 범주 분포(n=1330) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "snap.json:snapped_kind_counts.rows.0.200",
+      "val": {
+        "endpoint": 4320
+      },
+      "flag": "단일 범주 분포(n=4320) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "snap.json:snapped_kind_counts.rows.0.280",
+      "val": {
+        "endpoint": 4320
+      },
+      "flag": "단일 범주 분포(n=4320) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "snap.json:wrong_by_kind.rows.0.200",
+      "val": {
+        "endpoint": 21
+      },
+      "flag": "단일 범주 분포(n=21) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "snap.json:wrong_by_kind.rows.0.280",
+      "val": {
+        "endpoint": 21
+      },
+      "flag": "단일 범주 분포(n=21) → 변별력 없음/단위 불일치 의심"
+    },
+    {
       "path": "stage_browser.json:confirm.view_offset.offsetY",
       "val": 4.547473508864641e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
@@ -3790,6 +3881,16 @@
       "path": "stage_browser.json:dpr_identity_px.css_frame",
       "val": 1.3406493525361332e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_browser.json:l_b3.drawn.start_reprojection_gap_px",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_browser.json:l_b3.drawn.start_reprojection_gap_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "stage_cam.json:guarantees.seg_gap_px_max",
@@ -7268,12 +7369,12 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 131
+      "reads": 138
     },
     {
       "field": "pts2d",
-      "writes": 0,
-      "reads": 47
+      "writes": 1,
+      "reads": 51
     },
     {
       "field": "pts3d",
@@ -7282,8 +7383,8 @@
     },
     {
       "field": "axis",
-      "writes": 4,
-      "reads": 56
+      "writes": 5,
+      "reads": 59
     },
     {
       "field": "rep",
@@ -7316,7 +7417,7 @@
       "reads": 16
     }
   ],
-  "constants_hash": "addaeb9d",
+  "constants_hash": "dbcf3a11",
   "scanned": [
     "axis_judgement.json",
     "bend_share.json",
@@ -7337,6 +7438,7 @@
     "preview_gap.json",
     "real_ink.json",
     "segment_gate.json",
+    "snap.json",
     "stage_browser.json",
     "stage_cam.json",
     "systematic_warp.json",
