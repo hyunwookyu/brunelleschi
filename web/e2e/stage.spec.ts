@@ -309,3 +309,79 @@ test.afterAll(() => {
     ...led,
   }, null, 2), "utf-8");
 });
+
+/**
+ * L-B.2 — **가이드 조정 UI와 실시간 피드백**(§5.2). 산출: `stage_browser.json`의 `l_b2`.
+ *
+ * 재는 것: 초안이 실제로 늘어나는가 · 민감도가 화면에 뜨는가 · 선을 통째로 끌 수 있는가.
+ * **정확도는 안 잰다** — 이 스펙은 배선 확인이다.
+ */
+test("가이드 조정 — 늘리기·민감도·선 끌기", async ({ page }) => {
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  const l: Record<string, unknown> = {};
+
+  // ① 검출 초안만으로는 카메라가 안 선다 — **그 사실 자체가 §5.1의 근거다**
+  l.draft_only = await page.evaluate(async () => {
+    const S = window.S2S;
+    const m = await import("/test/scene3d.ts");
+    const doc = await import("/src/ui/doc.ts");
+    const el = document.getElementById("ink") as HTMLCanvasElement;
+    const size: [number, number] = [el.clientWidth, el.clientHeight];
+    const sc = m.scene(35, 15, 1000, size);
+    const edges = m.boxEdges(sc, [0.6, -0.4, 4.2], 1.2, 1.0, 0.9);
+    let s0 = 12345 >>> 0;
+    const r = () => { s0 = (s0 * 1664525 + 1013904223) >>> 0; return s0 / 4294967296; };
+    for (const e of m.drawEdges(sc, edges, "medium", r, 0.37, 0.006, 0))
+      S.doc().strokes.push(doc.newSStroke(e.pts2d, S.doc().currentView));
+    S.refresh();
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="draft"]')!.click();
+    const len = (g: any) => Math.hypot(g.b[0] - g.a[0], g.b[1] - g.a[1]);
+    return { guides: S.cam.guides.length,
+             lengths: S.cam.guides.map((g: any) => +len(g).toFixed(1)),
+             camera_solvable: !!S.cam.ctx(),
+             sensitivity_shown: document.getElementById("status")!.innerText.includes("핸들 예산"),
+             note: "이 구도의 **검출 초안만으로는 카메라가 안 선다**. 민감도도 그래서 안 뜬다 — "
+                 + "**없는 숫자를 지어내지 않는다**(A-3). 아래는 참 소실점을 넣은 뒤의 값이다." };
+  });
+
+  // ② 참 소실점을 넣어 카메라를 세운다 — 그 뒤라야 민감도가 뜻을 갖는다
+  await setup(page);
+
+  // **선을 통째로 끌면 소실점이 옮겨지고 방향은 그대로여야 한다**
+  l.line_drag = await page.evaluate(async () => {
+    const S = window.S2S;
+    const vd = await import("/src/s3d/vpDraft.ts");
+    const el = document.getElementById("ink") as HTMLCanvasElement;
+    const size: [number, number] = [el.clientWidth, el.clientHeight];
+    const g0 = S.cam.guides[0];
+    const mid: [number, number] = [(g0.a[0] + g0.b[0]) / 2, (g0.a[1] + g0.b[1]) / 2];
+    const grabbed = vd.guideLineAt(S.cam.guides, mid, size);
+    const before = S.cam.vps().map((v: any) => v && v.map((x: number) => +x.toFixed(2)));
+    const dirBefore = [g0.b[0] - g0.a[0], g0.b[1] - g0.a[1]];
+    S.cam.guides = vd.moveGuideBy(S.cam.guides, 0, 30, -18);
+    S.cam.apply(); S.refresh();
+    const g1 = S.cam.guides[0];
+    return { grabbed_index: grabbed,
+             direction_unchanged: Math.abs((g1.b[0] - g1.a[0]) - dirBefore[0]) < 1e-9
+                               && Math.abs((g1.b[1] - g1.a[1]) - dirBefore[1]) < 1e-9,
+             vps_before: before,
+             vps_after: S.cam.vps().map((v: any) => v && v.map((x: number) => +x.toFixed(2))) };
+  });
+  expect((l.line_drag as any).grabbed_index).toBe(0);
+  expect((l.line_drag as any).direction_unchanged).toBe(true);
+
+  // **민감도가 화면에 뜨는가** — 원장에만 있던 값을 사용자에게 옮기는 것이 L-B.2다
+  l.sensitivity = await page.evaluate(() => {
+    const S = window.S2S;
+    const s = S.cam.sensitivity();
+    return { rows: s.map((x: any) => ({ axis: x.axis,
+               deg_per_px: x.degPerPx == null ? null : +x.degPerPx.toFixed(4),
+               budget_px: x.budgetPx == null ? null : +x.budgetPx.toFixed(3),
+               shortest_guide_px: x.shortestGuidePx == null ? null : +x.shortestGuidePx.toFixed(1) })),
+             shown_in_status: document.getElementById("status")!.innerText.includes("핸들 예산") };
+  });
+  expect((l.sensitivity as any).shown_in_status).toBe(true);
+
+  led.l_b2 = l;
+});

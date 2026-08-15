@@ -6,6 +6,7 @@
 import { ConstraintAccumulator, type AxisId } from "../s3d/constraints.js";
 import { vpFromGuides } from "../s3d/vpHomog.js";
 import { byAxis, type Guide } from "../s3d/vpDraft.js";
+import { axisSensitivity, type AxisSens } from "../s3d/vpSensitivity.js";
 import type { Pt2 } from "../s3d/camera.js";
 import type { PlaceCtx } from "../s3d/stroke.js";
 
@@ -53,6 +54,16 @@ export class CamState {
     if (!cam.ok || cam.f == null || !cam.principalPoint) return null;
     return { principal: cam.principalPoint, f: cam.f, vps: this.vps(), imgSize: this.imgSize };
   }
+
+  /**
+   * **핸들 1px이 축을 얼마나 움직이는가**(L-B.2, §5.2). 계산은 `vpSensitivity`에 있다 —
+   * 측정 하네스와 **같은 함수**를 쓴다(PITFALLS #17).
+   *
+   * 끌 때마다 부르면 핸들 수 × 8회의 카메라 해가 돈다. 가이드 6개면 96회이고
+   * 해가 작은 선형대수라 한 프레임 안이지만, **끄는 동안에는 갱신하지 않는다** —
+   * 값이 초당 수십 번 바뀌면 읽을 수 없다(그 자체가 정보가 아니다).
+   */
+  sensitivity(): AxisSens[] { return axisSensitivity(this.guides, this.imgSize); }
 
   /** 무한원으로 스냅된 축들 — 화면에 사유와 각차를 알린다. */
   snapped(): { axis: AxisId; sepDeg: number }[] {

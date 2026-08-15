@@ -23,6 +23,7 @@ import { VP_TOL } from "../src/s3d/vpDetect.js";
 import { LIFT_TOL } from "../src/s3d/lift.js";
 import { HOMOG_TOL } from "../src/s3d/vpHomog.js";
 import { DRAFT_TOL } from "../src/s3d/vpDraft.js";
+import { SENS_TOL } from "../src/s3d/vpSensitivity.js";
 import { INK_GRADES } from "../src/s3d/synthInk.js";
 
 /**
@@ -35,6 +36,7 @@ export const SHARED_CONSTANTS = {
   LIFT_TOL,
   HOMOG_TOL,
   DRAFT_TOL,
+  SENS_TOL,
   CONSENSUS_TOL,
   PLACE_TOL,
   TUBE_TOL,

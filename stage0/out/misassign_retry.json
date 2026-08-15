@@ -1,7 +1,7 @@
 {
   "spec": "S-6 (2b) 축 오배정 되돌리기. 정합성 검사 실패를 '이 축이 아니다'의 신호로 쓴다.",
   "constants": {
-    "hash": "1a6f104b",
+    "hash": "addaeb9d",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -43,6 +43,12 @@
         "handle_ratio": 0.018,
         "margin_ratio": 0.03,
         "min_guide_ratio": 0.45
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
       },
       "CONSENSUS_TOL": {
         "radius_ratio": 0.45,

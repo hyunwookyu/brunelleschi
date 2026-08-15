@@ -11,8 +11,9 @@ import { Stage, type StageSeg } from "./ui/stage.js";
 import { CamState } from "./ui/camState.js";
 import { newDoc, newSStroke, lifted, pending, pendingElsewhere, snapshotDoc,
          type DocState, type SStroke } from "./ui/doc.js";
-import { draftFromDetection, handleAt, moveHandle, DRAFT_TOL,
-         type HandleRef } from "./s3d/vpDraft.js";
+import { draftFromDetection, handleAt, moveHandle, guideLineAt, moveGuideBy,
+         extendGuide, DRAFT_TOL, type HandleRef } from "./s3d/vpDraft.js";
+import { SENS_TOL, type AxisSens } from "./s3d/vpSensitivity.js";
 import { HOMOG_TOL } from "./s3d/vpHomog.js";
 import { liftAll, type LiftStroke } from "./s3d/lift.js";
 import { classifyStroke } from "./s3d/axis.js";
@@ -34,6 +35,18 @@ const cam = new CamState(cssSizeOf(canvas));
 let tool: Tool = "draw";
 let note = "";
 let dragHandle: HandleRef | null = null;
+/** **선을 통째로 끄는 중**(L-B.2). 라이노·SketchUp에서 선을 끄는 것과 같다(A-3). */
+let dragLine: { index: number; last: Pt2 } | null = null;
+/**
+ * 민감도. **끄는 동안에는 갱신하지 않는다** — 초당 수십 번 바뀌면 읽을 수 없고,
+ * 핸들 수 × 8회의 카메라 해가 매 프레임 돈다.
+ *
+ * ⚠ **`refresh()`가 부른다.** 처음에는 `소실점 추정`과 끌기 종료에서만 불렀는데, 그러면
+ * 가이드가 다른 경로로 바뀔 때(되돌리기·비우기·창 크기·바깥에서 주입) **낡은 값이 남는다** —
+ * 종단 확인에서 실제로 걸렸다. 갱신을 **쓰는 자리 하나로** 모은다(AS-C7의 자가 치유와 같은 형태).
+ */
+let sens: AxisSens[] = [];
+const refreshSens = () => { sens = cam.guides.length ? cam.sensitivity() : []; };
 const undoStack: DocState[] = [];
 const UNDO_MAX = 200;
 
@@ -108,7 +121,12 @@ function makeDraft() {
   const src = pending(doc, doc.views[0].id).map(s => ({ id: s.id, pts2d: s.pts2d }));
   if (src.length < 3) { note = "획이 더 필요합니다 — 방향마다 두어 개씩 그으세요"; refresh(); return; }
   cam.guides = draftFromDetection(src, cssSize());
+  // **초안을 캔버스 끝까지 늘린다**(L-B.2). 방향과 소실점은 안 바뀌고 **지렛대만 길어진다** —
+  // 핸들 예산이 길이에 반비례하기 때문이다(`vp_homog.json`: 300px 0.63~2.16 → 1250px 2.68~9.03).
+  // 검출 지지선 그대로 두면 그림이 길이를 정해 버린다(L-B.1에서 여섯 중 둘이 요구치 미달이었다).
+  for (let i = 0; i < cam.guides.length; i++) cam.guides = extendGuide(cam.guides, i, cssSize());
   cam.apply();
+  refreshSens();
   tool = "adjust";
   note = "검출은 **초안**입니다 — 끝점을 끌어 그림에 맞추세요";
   refresh();
@@ -207,8 +225,11 @@ function drawPreview(ctx2: CanvasRenderingContext2D) {
   }
   ctx2.restore();
   previewCount = probe.filter(s => s.seg3d).length;
+  previewStuck = probe.length - previewCount;
+  // **왜 안 올라가는지** 가른다 — 축이 안 정해진 것과, 축은 있는데 못 이은 것은 다른 문제다
+  previewFree = probe.filter(s => !s.seg3d && s.axis === "free").length;
 }
-let previewCount = 0;
+let previewCount = 0, previewStuck = 0, previewFree = 0;
 
 function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   // **확정 뷰를 벗어나면 2D 층 전체가 뜻을 잃는다** — 그리드도 가이드도 소실점 표식도
@@ -236,10 +257,23 @@ const ink = new InkCanvas(canvas, {
   onDrag: (p, phase) => {
     // **끌면 그리드와 이미 놓인 기하가 따라 움직인다**(§5.2). 자동 검사가 원리적으로 불가능하므로
     // (§5.3) 이것이 유일한 판정 수단이다.
-    if (phase === "down") { dragHandle = handleAt(cam.guides, p, cssSize()); return; }
-    if (!dragHandle) return;
-    if (phase === "up") { dragHandle = null; refresh(); return; }
-    cam.guides = moveHandle(cam.guides, dragHandle, p);
+    if (phase === "down") {
+      dragHandle = handleAt(cam.guides, p, cssSize());
+      // 핸들을 못 잡았으면 **선 자체**를 잡는다 — 선을 옮겨 더 긴 현을 찾을 수 있다
+      const li = dragHandle ? null : guideLineAt(cam.guides, p, cssSize());
+      dragLine = li == null ? null : { index: li, last: p };
+      return;
+    }
+    if (phase === "up") {
+      if (dragHandle || dragLine) refreshSens();     // 놓을 때 한 번만 다시 잰다
+      dragHandle = null; dragLine = null; refresh(); return;
+    }
+    if (dragHandle) cam.guides = moveHandle(cam.guides, dragHandle, p);
+    else if (dragLine) {
+      cam.guides = moveGuideBy(cam.guides, dragLine.index,
+                               p[0] - dragLine.last[0], p[1] - dragLine.last[1]);
+      dragLine.last = p;
+    } else return;
     cam.apply();
     refresh();
   },
@@ -292,6 +326,8 @@ function refresh() {
       SIZE_HEAL.firstAtMs ??= Math.round(performance.now());
       fit();
     }
+    // 끄는 중이 아니면 민감도를 다시 잰다 — 낡은 값이 남지 않는다
+    if (!dragHandle && !dragLine) refreshSens();
     ink.redraw();
     renderBar();
     renderStatus();
@@ -307,6 +343,7 @@ function renderBar() {
     btn("orbit", "궤도", tool === "orbit", !cam.locked),
     '<span class="sep"></span>',
     btn("draft", "소실점 추정", false, cam.locked),
+    btn("extend", "가이드 늘리기", false, cam.locked || !cam.guides.length),
     btn("confirm", "확정", false, cam.locked || !cam.ctx()),
     btn("home", "확정 시점으로", false, !cam.locked || stage.isPinned),
     '<span class="sep"></span>',
@@ -328,6 +365,13 @@ function renderStatus() {
     + (pendingElsewhere(doc) ? ` <span class="dim">(다른 뷰 ${pendingElsewhere(doc)} 숨김)</span>` : "")
     + (!cam.locked && previewCount ? ` <span class="dim">· 지금 확정하면 ${previewCount} 올라감</span>` : "")
     + "</div>");
+  // **어느 획이 왜 안 올라가는지**(L-B.2). 미배치는 실패가 아니라 대기지만(§9.1),
+  // 확정 전이라면 가이드를 고쳐 해결할 수 있으므로 **사유를 갈라 보인다**.
+  if (!cam.locked && previewStuck) {
+    rows.push(`<div class="dim">안 올라가는 ${previewStuck}획 — 축 미정 ${previewFree} ·`
+      + ` 축은 있으나 안 이어짐 ${previewStuck - previewFree}`
+      + " <span class=\"dim\">(축 미정은 가이드 각도, 안 이어짐은 획이 서로 닿는지의 문제입니다)</span></div>");
+  }
   // **깊이 스케일의 출처는 하나이고 화면에 나온다**(CLAUDE.md §1 / 이론서 16.2·16.4)
   if (c.ok && c.f != null) {
     const src = { "orthocenter(6.3)": "수심(3점, 측정)", "two_vps(6.2)": "두 소실점(측정)",
@@ -338,6 +382,24 @@ function renderStatus() {
   for (const s of cam.snapped()) {
     rows.push(`<div class="warn">축${s.axis + 1} → <b>무한원(화면 평행)</b> · 각차 ${s.sepDeg.toFixed(1)}°`
       + ` <span class="dim">(${HOMOG_TOL.snap_deg}° 미만이면 교점이 정해지지 않습니다 — 벌려서 끄세요)</span></div>`);
+  }
+  // **핸들 1px이 축을 얼마나 움직이는가**(L-B.2, §5.2). 자동 판정이 불가능하므로 사용자의
+  // 눈이 판정 수단인데, **눈은 자기 손이 얼마나 정밀해야 하는지를 못 본다.**
+  // 예산이 1px 미만이면 **그 축은 손으로 맞출 수 없다** — 지금까지 원장에만 있던 사실이다.
+  if (!cam.locked && sens.some(x => x.degPerPx != null)) {
+    const cells = sens.filter(x => x.degPerPx != null).map(x => {
+      const tight = (x.budgetPx ?? 0) < SENS_TOL.unusable_px;
+      return `<span style="color:${AXIS_COLOR[x.axis]}">■</span>`
+        + `<b${tight ? ' style="color:#c0392b"' : ""}>${x.budgetPx!.toFixed(1)}px</b>`
+        + `<span class="dim">(${x.degPerPx!.toFixed(2)}°/px · 선 ${Math.round(x.shortestGuidePx ?? 0)}px)</span>`;
+    }).join(" · ");
+    rows.push(`<div>핸들 예산 ${cells}</div>`);
+    const tight = sens.filter(x => x.budgetPx != null && x.budgetPx < SENS_TOL.unusable_px);
+    if (tight.length) {
+      rows.push(`<div class="warn">축 ${tight.map(x => x.axis + 1).join("·")}는 <b>손으로 맞출 수 없습니다</b>`
+        + ` — 1px 움직임이 ${SENS_TOL.budget_deg}° 예산을 넘습니다.`
+        + ` <span class="dim">가이드 선을 끌어 <b>더 긴 자리</b>로 옮기거나 두 선의 각차를 벌리세요</span></div>`);
+    }
   }
   for (const w of r.warnings) rows.push(`<div class="${w.level}">${w.text}</div>`);
   if (note) rows.push(`<div class="note">${note}</div>`);
@@ -360,6 +422,16 @@ barEl.addEventListener("click", (e) => {
       note = "궤도 — 확정 뷰의 2D 대기 획은 숨깁니다(그 뷰의 화면 좌표이기 때문입니다)";
     }
   } else if (act === "draft") makeDraft();
+  else if (act === "extend") {
+    // **방향과 소실점은 안 바뀐다** — 지렛대만 길어진다. 예산이 길이에 반비례하기 때문이다.
+    const before = cam.guides.map(g => Math.hypot(g.b[0] - g.a[0], g.b[1] - g.a[1]));
+    for (let i = 0; i < cam.guides.length; i++) cam.guides = extendGuide(cam.guides, i, cssSize());
+    const after = cam.guides.map(g => Math.hypot(g.b[0] - g.a[0], g.b[1] - g.a[1]));
+    cam.apply(); refreshSens();
+    note = `가이드를 캔버스 끝까지 늘렸습니다 — 가장 짧은 선 `
+         + `${Math.round(Math.min(...before))} → ${Math.round(Math.min(...after))}px`
+         + " (방향과 소실점은 안 바뀝니다. **정확도는 가장 짧은 선이 정합니다**)";
+  }
   else if (act === "confirm") confirm();
   else if (act === "home") {
     const ctx = cam.ctx();
@@ -371,7 +443,7 @@ barEl.addEventListener("click", (e) => {
   } else if (act === "clear") {
     pushUndo();
     doc = newDoc(); cam.guides = []; cam.apply(); cam.locked = false;
-    cam.acc.reset(); syncScene(); note = "";
+    cam.acc.reset(); syncScene(); sens = []; note = "";
   }
   refresh();
 });

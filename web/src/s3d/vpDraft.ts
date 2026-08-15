@@ -16,8 +16,11 @@
 // 누산기가 이미 `vp_line`을 받으므로(`ConstraintAccumulator`) 새 기전이 아니다 —
 // **초기값을 검출이 채우고 끌 수 있게 만드는 것**이 여기서 하는 전부다.
 //
-// 임계의 자릿수(`camera_gate.json@1a6f104b`): 축 오차 1°는 소실점이 화면 밖
-// 800 / 1400 / 2200px일 때 화면에서 **29 / 52 / 102px**이다. 드래그로 닿는 거리다.
+// ⚠ 옛 주석은 "축 오차 1°는 화면에서 29 / 52 / 102px이라 드래그로 닿는다"였다. **둘 다 철회됐다.**
+//   ① 임계는 1°가 아니라 **0.5°**다(L-A.7 정정, `camera_gate.json@addaeb9d`의 무오차 행 기준).
+//   ② 29~102px은 **소실점 좌표의 여유이지 핸들 여유가 아니다**(PITFALLS #29).
+//      사용자가 만지는 양으로 환산하면 **핸들 예산**이고, 그것은 가이드 길이와 각차가 정한다 —
+//      `vpSensitivity.ts`가 그 값을 계산하고 `guide_budget.json`이 실측을 낸다.
 import { detectVps, linesFromStrokes, assignAxes, type DetLine } from "./vpDetect.js";
 import type { Pt2 } from "./camera.js";
 
@@ -146,4 +149,57 @@ export function byAxis(guides: Guide[]): Record<0 | 1 | 2, { a: Pt2; b: Pt2 }[]>
   const out = { 0: [], 1: [], 2: [] } as Record<0 | 1 | 2, { a: Pt2; b: Pt2 }[]>;
   for (const g of guides) out[g.axis].push({ a: g.a, b: g.b });
   return out;
+}
+
+/**
+ * **선 자체에 가장 가까운 가이드**(L-B.2). 핸들이 아니라 **선을 통째로 잡는다** —
+ * 라이노·SketchUp에서 선을 끄는 것과 같은 동작이라 새로 배울 것이 없다(A-3).
+ *
+ * 왜 필요한가: 초안 가이드는 **검출 지지선**에서 나오므로 길이를 그림이 정한다.
+ * 캔버스 안 현(弦)이 짧은 자리에 놓이면 `min_guide_ratio`를 못 채우고
+ * (L-B.1에서 여섯 중 둘이 651px에 미달했다) **핸들 예산이 그만큼 좁아진다**.
+ * 선을 옮기면 사용자가 **더 긴 현이 나오는 자리로** 가져갈 수 있다.
+ */
+export function guideLineAt(
+  guides: Guide[], p: Pt2, imgSize: [number, number], cfg: DraftCfg = {},
+): number | null {
+  const c = { ...DRAFT_TOL, ...cfg };
+  const r = c.handle_ratio * diagOf(imgSize);
+  let bestI = -1, bestD = Infinity;
+  guides.forEach((g, i) => {
+    const ex = g.b[0] - g.a[0], ey = g.b[1] - g.a[1], L2 = ex * ex + ey * ey;
+    const t = L2 < 1e-12 ? 0
+      : Math.max(0, Math.min(1, ((p[0] - g.a[0]) * ex + (p[1] - g.a[1]) * ey) / L2));
+    const d = Math.hypot(g.a[0] + ex * t - p[0], g.a[1] + ey * t - p[1]);
+    if (d < bestD) { bestD = d; bestI = i; }
+  });
+  return bestI >= 0 && bestD <= r ? bestI : null;
+}
+
+/** 가이드 하나를 통째로 평행이동한다. **방향은 그대로** — 소실점이 선을 따라 미끄러진다. */
+export function moveGuideBy(guides: Guide[], index: number, dx: number, dy: number): Guide[] {
+  return guides.map((g, i) => (i !== index ? g
+    : { ...g, a: [g.a[0] + dx, g.a[1] + dy] as Pt2, b: [g.b[0] + dx, g.b[1] + dy] as Pt2 }));
+}
+
+/**
+ * 가이드를 **자기 직선을 따라 캔버스 끝까지 늘린다**(L-B.2).
+ * 방향과 소실점은 안 바뀌고 **지렛대만 길어진다** — 핸들 예산이 길이에 반비례하기 때문이다
+ * (`vp_homog.json`: 300px 0.63~2.16 → 1250px 2.68~9.03).
+ * 늘릴 수 없으면(이미 최대) 그대로 돌려준다.
+ */
+export function extendGuide(
+  guides: Guide[], index: number, imgSize: [number, number], cfg: DraftCfg = {},
+): Guide[] {
+  const c = { ...DRAFT_TOL, ...cfg };
+  const g = guides[index];
+  if (!g) return guides;
+  const dx = g.b[0] - g.a[0], dy = g.b[1] - g.a[1];
+  const L = Math.hypot(dx, dy);
+  if (L < 1e-9) return guides;
+  const far: [Pt2, Pt2] = [[g.a[0] - dx * 1e3, g.a[1] - dy * 1e3],
+                           [g.b[0] + dx * 1e3, g.b[1] + dy * 1e3]];
+  const cl = clipToCanvas(far[0], far[1], imgSize, c.margin_ratio * diagOf(imgSize));
+  if (!cl) return guides;
+  return guides.map((x, i) => (i === index ? { ...x, a: cl[0], b: cl[1] } : x));
 }

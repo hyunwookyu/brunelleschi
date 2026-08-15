@@ -1,5 +1,5 @@
 {
-  "n_flags": 1451,
+  "n_flags": 1452,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -730,6 +730,11 @@
       "path": "free_curve.json:arms.straight_plus_span.in_space_axis_assigned.placed_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "guide_budget.json:worst_composition.min_budget_px_after_by_composition.3pt_yaw20_pitch25.unusable_lt_1px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "incline_vp.json:by_slope_deg.0.vp_separation_px",
@@ -7278,7 +7283,7 @@
     {
       "field": "axis",
       "writes": 4,
-      "reads": 53
+      "reads": 56
     },
     {
       "field": "rep",
@@ -7311,7 +7316,7 @@
       "reads": 16
     }
   ],
-  "constants_hash": "1a6f104b",
+  "constants_hash": "addaeb9d",
   "scanned": [
     "axis_judgement.json",
     "bend_share.json",
@@ -7322,6 +7327,7 @@
     "face_diagonal.json",
     "fix_load.json",
     "free_curve.json",
+    "guide_budget.json",
     "incline_vp.json",
     "lift_gate.json",
     "misassign_retry.json",

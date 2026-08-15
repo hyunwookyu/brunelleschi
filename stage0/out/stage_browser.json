@@ -19,7 +19,7 @@
     "camera": "요 35°·피치 15° 3점(f=1000px). 가이드를 **참 소실점**으로 세운다"
   },
   "constants": {
-    "hash": "1a6f104b",
+    "hash": "addaeb9d",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -61,6 +61,12 @@
         "handle_ratio": 0.018,
         "margin_ratio": 0.03,
         "min_guide_ratio": 0.45
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
       },
       "CONSENSUS_TOL": {
         "radius_ratio": 0.45,
@@ -255,5 +261,75 @@
       618.5
     ],
     "note": "**참 소실점으로 세운 가이드**의 길이다. 검출 초안이 아니다."
+  },
+  "l_b2": {
+    "draft_only": {
+      "guides": 5,
+      "lengths": [
+        236.1,
+        589.3,
+        591.3,
+        1205.7,
+        379.3
+      ],
+      "camera_solvable": false,
+      "sensitivity_shown": false,
+      "note": "이 구도의 **검출 초안만으로는 카메라가 안 선다**. 민감도도 그래서 안 뜬다 — **없는 숫자를 지어내지 않는다**(A-3). 아래는 참 소실점을 넣은 뒤의 값이다."
+    },
+    "line_drag": {
+      "grabbed_index": 0,
+      "direction_unchanged": true,
+      "vps_before": [
+        [
+          2118.53,
+          69.55
+        ],
+        [
+          -84.91,
+          69.55
+        ],
+        [
+          640,
+          4069.55
+        ]
+      ],
+      "vps_after": [
+        [
+          2214.59,
+          46.49
+        ],
+        [
+          -84.91,
+          69.55
+        ],
+        [
+          640,
+          4069.55
+        ]
+      ]
+    },
+    "sensitivity": {
+      "rows": [
+        {
+          "axis": 0,
+          "deg_per_px": 0.1993,
+          "budget_px": 2.509,
+          "shortest_guide_px": 1225.7
+        },
+        {
+          "axis": 1,
+          "deg_per_px": 0.2192,
+          "budget_px": 2.281,
+          "shortest_guide_px": 1233.3
+        },
+        {
+          "axis": 2,
+          "deg_per_px": 0.2265,
+          "budget_px": 2.207,
+          "shortest_guide_px": 618.2
+        }
+      ],
+      "shown_in_status": true
+    }
   }
 }

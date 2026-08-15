@@ -1,7 +1,7 @@
 {
   "spec": "S-10 종단 검증 — **실제 앱을 띄우고 실제 포인터 이벤트로** 그린 결과.",
   "constants": {
-    "hash": "1a6f104b",
+    "hash": "addaeb9d",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -43,6 +43,12 @@
         "handle_ratio": 0.018,
         "margin_ratio": 0.03,
         "min_guide_ratio": 0.45
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
       },
       "CONSENSUS_TOL": {
         "radius_ratio": 0.45,
@@ -119,21 +125,21 @@
   },
   "stroke_latency_ms": {
     "n": 12,
-    "median": 2.1,
-    "max": 5.8,
+    "median": 1.95,
+    "max": 3.9,
     "note": "`pointerup` 하나가 반환할 때까지 — 판정·배치·튜브 생성·다시 그리기가 그 안이다. 개발 서버(번들 없음) 기준이므로 **상한**으로 읽는다."
   },
   "orbit_frame_ms": {
     "n": 30,
-    "median": 16.65,
-    "max": 49.4
+    "median": 16.45,
+    "max": 18.1
   },
   "second_view": {
     "added": 1,
     "placed_total": 9,
     "camera_locked": false,
     "latency_ms": {
-      "median": 2.6
+      "median": 2.5
     },
     "note": "**기존 기하의 끝점 둘 사이**를 그었다(면 대각선 격). `camera_locked`가 false면 그 획이 안 놓였다는 뜻이다 — 잠금은 놓였을 때만 걸린다(D-S22의 귀결)."
   },
@@ -155,7 +161,7 @@
     "note": "돌린 시점 획은 **그 시점으로 돌아가야** 후보가 생긴다(좌표계가 그 시점의 것이다). 조작 수에 '그 시점으로' 1이 더 붙는다 — `fix_load.json`의 모형이 0으로 잡은 항목이다."
   },
   "reload": {
-    "ms": 233,
+    "ms": 149,
     "strokes": 13,
     "placed": 11,
     "user_placed": 2,
