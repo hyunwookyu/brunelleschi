@@ -1,7 +1,7 @@
 {
   "spec": "G-A.1 중간 판정 — 세그먼트 기하가 옛 배치 계층보다 나은가. **이번 전환의 유일한 중단 조건.**",
   "constants": {
-    "hash": "034fc089",
+    "hash": "5fc03293",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -25,7 +25,8 @@
         "min_support": 3,
         "min_len_ratio": 0.02,
         "refit_passes": 2,
-        "max_vps": 3
+        "max_vps": 3,
+        "seed_pairs_max": 6000
       },
       "LIFT_TOL": {
         "touch_ratio": 0.015,

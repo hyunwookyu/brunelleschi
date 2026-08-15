@@ -40,6 +40,7 @@
     #tools button[data-t="vp1"].on{background:#1e8449}
     #tools button[data-t="vp2"].on{background:#2471a3}
     #tools button[data-t="horizon"].on{background:#666}
+    #tools button[data-t="adjust"].on{background:#6c3483}
     #tools button[data-t="draw"].on{background:#111}
     #tools button[data-t="edit"].on{background:#b9770e}
     #tools button[data-t="erase"].on{background:#7b241c}
@@ -103,6 +104,7 @@
         <button data-t="vp1"><span class="swatch" style="background:#1e8449"></span>축2</button>
         <button data-t="vp2"><span class="swatch" style="background:#2471a3"></span>축3</button>
         <button data-t="horizon">지평선</button>
+        <button data-t="adjust" title="검출된 소실점의 가이드 선을 끌어 맞춥니다 — 그리드와 3D가 따라 움직입니다">소실점 조정</button>
         <button data-t="draw">그리기</button>
         <button data-t="edit" title="놓이지 않은 획을 골라 붙일 곳을 지정합니다">고치기</button>
         <button data-t="erase" title="누른 자리의 획을 지웁니다">지우개</button>
@@ -142,7 +144,8 @@
   <div id="bar">
     <button id="undo" title="Ctrl+Z">실행 취소</button>
     <button id="redo" title="Ctrl+Shift+Z">다시 실행</button>
-    <button id="lock">카메라 잠금</button>
+    <button id="draft" title="그린 획에서 소실점을 추정해 초안으로 놓습니다">소실점 추정</button>
+      <button id="lock">카메라 잠금</button>
     <button id="reset">처음부터</button>
     <button id="export" title="실획 측정용 세션 JSON (AS-6·AS-12 재측정 입력)">획 내보내기</button>
     <button id="exp-obj" title="폴리라인 OBJ — 면은 없습니다(만들지 않는 도구입니다)">OBJ</button>

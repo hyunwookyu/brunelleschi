@@ -12,6 +12,16 @@ export interface InkOptions {
   // 잉크 아래 층(투시 가이드·소실점 등, W-1). redraw가 캔버스를 지우므로 여기서 다시 깐다.
   // 좌표는 **CSS 픽셀**로 그린다 — ctx에 배율이 이미 걸려 있다(`canvasFrame`).
   onBackground?: (ctx: CanvasRenderingContext2D) => void;
+  /**
+   * **끌기 모드**(L-A.5, 계획서 §5.4). `true`면 포인터가 잉크가 아니라 `onDrag`로 간다 —
+   * 소실점 가이드 핸들을 끄는 데 쓴다.
+   *
+   * 왜 여기에 두는가: 좌표 변환(`local`)이 **`canvasFrame` 단일 출처**를 타야 하기 때문이다
+   * (D-C3·PITFALLS #21). 바깥에서 `clientX`를 직접 읽으면 dpr 규약이 둘이 되고,
+   * 그 버그는 dpr 1인 데스크톱에서 안 보인다.
+   */
+  dragMode?: () => boolean;
+  onDrag?: (p: [number, number], phase: "down" | "move" | "up") => void;
 }
 
 // 프레임별 획 버퍼 + 라이브 잉크 렌더. 프레임 전환은 setFrame으로.
@@ -98,11 +108,18 @@ export class InkCanvas {
     return [x, y, t, e.pressure || 0.5, e.tiltX || 0, e.tiltY || 0];
   }
 
+  private dragging = false;
+
   private onDown = (e: PointerEvent) => {
-    if (this.drawing) return;                 // 멀티터치/멀티펜 방어: 한 번에 한 획
+    if (this.drawing || this.dragging) return; // 멀티터치/멀티펜 방어: 한 번에 하나
     if (!this.inkable(e)) return;
     e.preventDefault();
     try { this.canvas.setPointerCapture(e.pointerId); } catch { /* 합성 이벤트 등 */ }
+    if (this.opts.dragMode?.()) {
+      this.dragging = true; this.activeId = e.pointerId;
+      this.opts.onDrag?.(this.local(e), "down");
+      return;
+    }
     this.drawing = true;
     this.activeId = e.pointerId;
     this.t0 = performance.now();
@@ -110,6 +127,11 @@ export class InkCanvas {
   };
 
   private onMove = (e: PointerEvent) => {
+    if (this.dragging && e.pointerId === this.activeId) {
+      e.preventDefault();
+      this.opts.onDrag?.(this.local(e), "move");
+      return;
+    }
     if (!this.drawing || e.pointerId !== this.activeId || !this.inkable(e)) return;
     e.preventDefault();
     const from = this.pts.length - 1;   // 이번 move의 이어그릴 시작점
@@ -118,6 +140,11 @@ export class InkCanvas {
   };
 
   private onUp = (e: PointerEvent) => {
+    if (this.dragging && e.pointerId === this.activeId) {
+      this.dragging = false; this.activeId = null;
+      this.opts.onDrag?.(this.local(e), "up");
+      return;
+    }
     if (!this.drawing || e.pointerId !== this.activeId) return;
     this.drawing = false;
     this.activeId = null;

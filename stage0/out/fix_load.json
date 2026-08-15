@@ -1,7 +1,7 @@
 {
   "spec": "S-10 (a) 고치기 부하. **§1의 왕복 횟수 지표** — 크면 도구가 성립하지 않는다.",
   "constants": {
-    "hash": "034fc089",
+    "hash": "5fc03293",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -25,7 +25,8 @@
         "min_support": 3,
         "min_len_ratio": 0.02,
         "refit_passes": 2,
-        "max_vps": 3
+        "max_vps": 3,
+        "seed_pairs_max": 6000
       },
       "LIFT_TOL": {
         "touch_ratio": 0.015,

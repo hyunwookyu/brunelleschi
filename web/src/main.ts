@@ -7,6 +7,8 @@ import { ensureFit, cssSizeOf, toLocal, deviceRatio } from "./capture/canvasFram
 import { Viewport } from "./s3d/viewport.js";
 import { StrokeView, colorOf, DEFAULT_COLOR } from "./s3d/strokeView.js";
 import { CameraPanel, type Tool } from "./ui/cameraPanel.js";
+import { draftFromDetection, handleAt, moveHandle, byAxis, DRAFT_TOL,
+         type Guide, type HandleRef } from "./s3d/vpDraft.js";
 import { PRESETS } from "./s3d/constraints.js";
 import { AXIS_COLOR } from "./s3d/grid.js";
 import { classifyStroke, AXIS_TOL, type Axis } from "./s3d/axis.js";
@@ -347,6 +349,30 @@ const panel = new CameraPanel(cssSize(), () => { replace(); refresh(); });
 /** 사용자가 그린 획 — **원본 점열 그대로** 보관한다(§5). 3D는 여기서 파생된다. */
 const drawn: Stroke[] = [];
 
+// ---------------------------------------------------------------- §5.4 소실점 초안·조정
+//
+// L-A.4·L-A.6이 정한 것: **자동 검출만으로는 안 되고**(축 오차 4.5~10°, 임계 ≈1°)
+// **검출을 버릴 이유도 없다**. 검출은 초안이고 사용자가 확정한다.
+// 자동 검사가 사영 불변이라 성립하지 않으므로(§5.3·§6.2 폐기) **실시간 피드백이 유일한 판정 수단**이다.
+
+/** 축마다 가이드 선 둘. 끝점 넷을 끌면 소실점이 움직인다(화면 밖 소실점도 조정된다). */
+let guides: Guide[] = [];
+let dragHandle: HandleRef | null = null;
+
+/** 가이드를 누산기에 반영한다 — **교체다**(끌 때마다 쌓이면 안 된다). */
+function applyGuides() {
+  const per = byAxis(guides);
+  for (const ax of [0, 1, 2] as const) if (per[ax].length >= 2) panel.acc.setLines(ax, per[ax]);
+}
+
+/** 그린 획에서 소실점 초안을 만든다. **확정이 아니다** — 사용자가 맞춘다. */
+function makeDraft() {
+  if (panel.locked) return;
+  guides = draftFromDetection(drawn.map(s => ({ id: s.id, pts2d: s.pts2d })), cssSize());
+  applyGuides();
+  replace(); refresh();
+}
+
 /** 지금 카메라로 배치 문맥을 만든다. 카메라가 아직이면 `null`(배치하지 않는다). */
 function placeCtx(): PlaceCtx | null {
   const cam = panel.acc.solve().camera;
@@ -389,15 +415,49 @@ function replace() {
  * _옛 코드가 여기서 `setTransform(dpr,…)`을 걸고 `InkCanvas`는 좌표마다 `* dpr`을 곱했다.
  * 둘이 겹쳐 **dpr배 어긋난 자리에 잉크가 나왔다**(dpr=1인 데스크톱에서는 안 보였다)._
  */
+let fitting = false;
 function fit() {
-  ink.resize();                              // 백버퍼·변환·재그리기 — 규약은 `canvasFrame` 한 곳
+  if (fitting) return;                       // `refresh`가 다시 부를 수 있다
+  fitting = true;
+  try {
+    ink.resize();                            // 백버퍼·변환·재그리기 — 규약은 `canvasFrame` 한 곳
+    const [w, h] = cssSize();
+    panel.acc.resize([w, h]);                // 화각·무한원 판정 기준이 창 크기에 달려 있다
+    refresh();
+  } finally { fitting = false; }
+}
+
+/**
+ * **캔버스 크기가 굳었는가**(AS-C7). 이 프로젝트에서 **세 번째**다.
+ *
+ * `ResizeObserver`는 이 환경에서 초기 콜백을 안 주고(S-4), `requestAnimationFrame`은
+ * **숨은 탭에서 완전히 멈춘다**(구 V-n: 600ms에 0프레임). 브라우저 창이 뒤에서 열리면
+ * 둘 다 발화하지 않아 `acc.imgSize`가 `[1, 24]`로 굳는다 — 그 크기가 화각·무한원 판정의
+ * 기준이라 **소실점 셋이 하나로 읽힌다.** L-A.5 브라우저 확인에서 실제로 그렇게 나왔다.
+ *
+ * 관찰자를 하나 더 거는 대신 **쓰는 자리에서 스스로 고친다.** `refresh`는 모든 상호작용에서
+ * 도는데 그때 크기가 어긋나 있으면 맞춘다 — 어떤 관찰자가 발화하든 안 하든 회복된다.
+ */
+function sizeStale(): boolean {
   const [w, h] = cssSize();
-  panel.acc.resize([w, h]);                  // 화각·무한원 판정 기준이 창 크기에 달려 있다
-  refresh();
+  if (!(w > 2 && h > 2)) return false;       // 레이아웃 전이면 고칠 것이 없다
+  const [pw, ph] = panel.acc.imgSize;
+  return Math.abs(pw - w) > 0.5 || Math.abs(ph - h) > 0.5;
 }
 
 const ink = new InkCanvas(canvas, {
   onBackground: (ctx) => drawBelowInk(ctx),
+  dragMode: () => panel.tool === "adjust" && !panel.locked,
+  onDrag: (p, phase) => {
+    // **끌면 그리드와 이미 놓인 기하가 따라 움직인다**(§5.4 b). 자동 검사가 없으므로
+    // 사용자가 그림과 대조해 판별하는 것이 유일한 판정 수단이다.
+    if (phase === "down") { dragHandle = handleAt(guides, p, cssSize()); return; }
+    if (!dragHandle) return;
+    if (phase === "up") { dragHandle = null; return; }
+    guides = moveHandle(guides, dragHandle, p);
+    applyGuides();
+    replace(); refresh();
+  },
   onStrokeEnd: (stroke) => {
     const pts = stroke.points.map(p => [p[0], p[1]] as Pt2);
     if (pts.length < 2) return;
@@ -500,6 +560,34 @@ function addStrokeFromView(pts: Pt2[], raw?: number[][]) {
 
 // ---------------------------------------------------------------- 그리기
 
+/**
+ * **소실점 가이드 핸들**(§5.4). 축마다 선 두 개, 끝점 넷이 손잡이다.
+ * 소실점은 대개 화면 밖이라 점을 직접 못 끈다 — fSpy·Match Photo의 선례를 따른다(A-3).
+ */
+function drawGuideHandles(ctx: CanvasRenderingContext2D) {
+  if (!guides.length) return;
+  const r = DRAFT_TOL.handle_ratio * Math.hypot(...cssSize());
+  const on = panel.tool === "adjust" && !panel.locked;
+  ctx.save();
+  for (const g of guides) {
+    ctx.strokeStyle = AXIS_COLOR[g.axis];
+    ctx.globalAlpha = on ? 0.85 : 0.35;
+    ctx.setLineDash([5, 4]);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(g.a[0], g.a[1]); ctx.lineTo(g.b[0], g.b[1]); ctx.stroke();
+    if (!on) continue;
+    ctx.setLineDash([]);
+    ctx.fillStyle = AXIS_COLOR[g.axis];
+    for (const p of [g.a, g.b]) {
+      ctx.beginPath(); ctx.arc(p[0], p[1], r * 0.45, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 0.35;
+      ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 0.85;
+    }
+  }
+  ctx.restore();
+}
+
 /** 잉크 아래 층: 투시 가이드 → 그린 획(축 색) → 소실점 표식. */
 function drawBelowInk(ctx: CanvasRenderingContext2D) {
   const [w, h] = cssSize();
@@ -558,6 +646,7 @@ function drawBelowInk(ctx: CanvasRenderingContext2D) {
     ctx.beginPath(); ctx.arc(v[0], v[1], 5, 0, Math.PI * 2); ctx.fill();
   });
   ctx.restore();
+  drawGuideHandles(ctx);              // §5.4 소실점 조정 핸들
   panel.drawOffscreenVps(ctx);        // 화면 밖 소실점 (§3.8)
   drawDiagCross(ctx, "ink");          // 진단 십자(꺼져 있으면 아무것도 안 그린다)
 }
@@ -682,6 +771,8 @@ function renderFix(unplaced: Stroke[]) {
 }
 
 function refresh() {
+  // **크기가 굳었으면 여기서 고친다**(AS-C7, 세 번째). 어떤 관찰자가 발화하든 안 하든 회복된다.
+  if (sizeStale()) { fit(); return; }
   saver?.schedule();       // **자동 저장**(S-9). 디바운스가 있으므로 자주 불려도 한 번만 쓴다
   ink.redraw();
   ink3d.redraw();          // 돌린 시점의 미배치 파선이 선택·시점에 따라 바뀐다
@@ -747,14 +838,25 @@ for (const p of PRESETS) {
   presetsEl.appendChild(b);
 }
 
+document.getElementById("draft")!.addEventListener("click", () => {
+  makeDraft();
+  lastNote = guides.length
+    ? `소실점 초안 ${guides.length / 2}축 — \`소실점 조정\`으로 가이드 끝을 끌어 맞추세요`
+    : "획이 모자라 소실점을 추정하지 못했습니다 — 같은 방향 선을 셋 이상 그어 주세요";
+  refresh();
+});
+
 const lockBtn = document.getElementById("lock") as HTMLButtonElement;
 lockBtn.addEventListener("click", () => {
+  // **확정 버튼**(§5.4 c). 누르면 잠기고 그 전까지는 계속 조정 가능하다.
   panel.toggleLock();                        // 소프트 락 (§3.5)
   lockBtn.textContent = panel.locked ? "잠금 해제" : "카메라 잠금";
+  refresh();
 });
 document.getElementById("reset")!.addEventListener("click", () => {
   panel.reset(); drawn.length = 0; rawPoints.clear(); verdicts.clear(); viewOrigin.clear();
   viewCam.clear(); provisional.clear(); userPlaced.clear();
+  guides = []; dragHandle = null;
   undoStack.length = 0; redoStack.length = 0;
   selId = null; candDots = []; candDots3d = [];
   // **저장된 문서도 지운다**(S-9) — 안 지우면 새로고침에서 방금 버린 작업이 되살아난다.
@@ -1095,7 +1197,10 @@ if (typeof ResizeObserver !== "undefined") {
 }
 fit();
 fit3d();
+// **셋 다 건다.** rAF는 숨은 탭에서 멈추고 타이머는 (스로틀되지만) 돈다.
 requestAnimationFrame(() => { fit(); fit3d(); });
+setTimeout(() => { fit(); fit3d(); }, 0);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { fit(); fit3d(); } });
 
 // PWA — 오프라인 동작(§1.4). dev 서버에서는 등록하지 않는다(HMR과 충돌한다).
 if ("serviceWorker" in navigator && import.meta.env.PROD) {

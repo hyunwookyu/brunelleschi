@@ -89,6 +89,16 @@ export class ConstraintAccumulator {
   /** 마지막 제스처 되돌리기용 — 축의 선 하나를 뺀다. 전체 상태는 W-7에서 다룬다. */
   popLine(axis: AxisId): this { this.lines[axis].pop(); return this; }
 
+  /**
+   * **축의 가이드 선을 통째로 바꾼다**(L-A.5, 계획서 §5.4). 끌 때마다 쌓이면 안 되므로
+   * `add`가 아니라 교체다. **점 제약도 지운다** — 점이 있으면 `solveAxis`가 선을 무시한다.
+   */
+  setLines(axis: AxisId, ls: { a: Pt2; b: Pt2 }[]): this {
+    this.lines[axis] = ls.map(l => ({ a: [...l.a] as Pt2, b: [...l.b] as Pt2 }));
+    delete this.points[axis];
+    return this;
+  }
+
   reset(): this {
     this.lines = { 0: [], 1: [], 2: [] };
     this.points = {}; this.horizon = null; this.lensF = null;
