@@ -440,5 +440,80 @@
       "고정이 오배정을 줄이는가 — **사용자 행동 의존이라 직접 측정이 불가능하다**(AS-L5)",
       "'고정하면 그 축으로 놓인다'는 정의상 참이다(#3) — 여기서 재는 것은 배선뿐이다"
     ]
+  },
+  "l_b6": {
+    "initial": {
+      "views": [
+        {
+          "id": "v2",
+          "name": "확정 뷰",
+          "seq": 2,
+          "isConfirm": true,
+          "pending": 0
+        }
+      ],
+      "rows": 1,
+      "current": "v2",
+      "lifted": 12,
+      "pending": 0
+    },
+    "roundtrip": {
+      "view_id": "v3",
+      "pinned_at_confirm_view": true,
+      "pinned_now": false,
+      "pose_roundtrip_max_abs": 0,
+      "current": "v3"
+    },
+    "roundtrip_wrong_pose_control": {
+      "max_abs": 0.7000000000000002
+    },
+    "ownership": {
+      "views": [
+        {
+          "id": "v2",
+          "name": "확정 뷰",
+          "seq": 2,
+          "isConfirm": true,
+          "pending": 0
+        },
+        {
+          "id": "v3",
+          "name": "뷰 2",
+          "seq": 3,
+          "isConfirm": false,
+          "pending": 2
+        }
+      ],
+      "status_mentions_hidden": true,
+      "pending_here": 0,
+      "pending_there": 2
+    },
+    "confirm_view_undeletable": {
+      "disabled": true
+    },
+    "delete": {
+      "before": {
+        "lifted": 12,
+        "total": 14,
+        "views": 2
+      },
+      "after": {
+        "lifted": 12,
+        "total": 12,
+        "views": 1
+      },
+      "note": "3점 투시 · 소실점 3 확정\n3D 12 · 2D 대기 0\nf = 1000px · 화각 65.24° (수심(3점, 측정))\n스냅 켜짐 반경 72px · 대상 12선 (커서 아래 대상 없음)\n화각 65.24° — 다소 넓습니다(권장 60° 이하, 18.4)\n뷰를 지웠습니다 — 그 안의 2D 대기 획 2개가 함께 사라졌습니다",
+      "current": "v2",
+      "rows": 1
+    },
+    "undo_restores_view": {
+      "views": 2,
+      "total": 14
+    },
+    "what_this_does_not_say": [
+      "§9.3의 '새 각도에서 그리면 뷰가 생긴다' — **궤도 후 그리기(L-B.8)가 열려야 도달한다**(#23). 여기서는 뷰를 코드로 만들어 전환·삭제·소유 규약만 확인한다",
+      "자세 왕복 0은 **설계 보장**이다(#5) — `pose()`와 `setPose()`가 서로의 역이다. 임계를 걸지 않고 틀린 자세 대조군을 함께 낸다",
+      "궤도 시점의 2D 획은 손으로 넣었다 — 그 좌표가 실제로 그 시점의 화면 좌표인지는 L-B.8의 일이다"
+    ]
   }
 }

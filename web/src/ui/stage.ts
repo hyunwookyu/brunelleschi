@@ -19,12 +19,20 @@ import type { Pt2 } from "../s3d/camera.js";
 import type { Vec3 } from "../s3d/geom3d.js";
 import { AXIS_COLOR } from "../s3d/grid.js";
 import type { Axis } from "../s3d/axis.js";
+import type { ViewPose } from "../s3d/viewCamera.js";
 
 /** 3D 레이어에 그릴 선분 하나. 프리핸드를 미뤘으므로 획 하나가 선분 하나다(§1.1). */
 export interface StageSeg { id: string; a: Vec3; b: Vec3; axis: Axis }
 
 /** 자유 시점(궤도)의 화각. 확정 카메라를 벗어난 뒤에만 쓴다. */
 export const FREE_FOV_DEG = 45;
+
+/**
+ * 우리 규약 ↔ three 규약(y 아래·z 안쪽 ↔ y 위·z 앞). **자기 자신이 역이다.**
+ * `viewport.ts`가 쓰는 그 변환과 같은 것이고, 여기 말고 다른 곳에서 다시 적지 않는다(#17).
+ */
+const conv = (v: Vec3): Vec3 => [v[0], -v[1], -v[2]];
+const neg = (v: Vec3): Vec3 => [-v[0], -v[1], -v[2]];
 
 export class Stage {
   readonly viewport: Viewport;
@@ -82,6 +90,47 @@ export class Stage {
   }
 
   get isPinned(): boolean { return this.pinned !== null; }
+
+  /**
+   * **지금 자세를 `ViewPose`로 낸다**(§9.2 — 뷰가 자세를 들고 있어야 되돌아갈 수 있다).
+   * 확정 카메라에 물려 있으면 `null`이다 — **그것이 확정 뷰의 표시**이고(`SView.pose === null`)
+   * 자세가 항등이라 저장할 것이 없다.
+   *
+   * 규약 변환은 **`viewport.ts`의 그것 하나뿐이다**(우리 y 아래·z 안쪽 ↔ three y 위·z 앞).
+   * three 카메라의 기저는 열 X(오른쪽)·Y(위)·−Z(보는 방향)이므로
+   * 우리 행 (오른쪽, 아래, 앞) = (X, −Y, −Z)를 그 변환으로 옮긴 것이다.
+   */
+  pose(): ViewPose | null {
+    if (this.pinned) return null;
+    const cam = this.viewport.camera;
+    cam.updateMatrixWorld(true);
+    const m = cam.matrixWorld.elements;
+    const col = (i: number): Vec3 => [m[i * 4], m[i * 4 + 1], m[i * 4 + 2]];
+    return {
+      R: [conv(col(0)), conv(neg(col(1))), conv(neg(col(2)))],
+      C: conv([cam.position.x, cam.position.y, cam.position.z]),
+    };
+  }
+
+  /**
+   * **저장된 자세로 되돌아간다**(§9.2 뷰 전환). `pose()`의 정확한 역이다 —
+   * `conv`가 자기 역이므로 부호만 되돌리면 된다.
+   *
+   * 물려 있던 상태를 먼저 푼다. 궤도 중심은 호출자가 준다(3D 레이어의 무게중심).
+   */
+  setPose(p: ViewPose, target: Vec3 | null): void {
+    this.unpin(target);
+    const cam = this.viewport.camera;
+    const X = conv(p.R[0]), Y = neg(conv(p.R[1])), Z = neg(conv(p.R[2]));
+    const C = conv(p.C);
+    const m = new THREE.Matrix4().makeBasis(
+      new THREE.Vector3(...X), new THREE.Vector3(...Y), new THREE.Vector3(...Z));
+    cam.quaternion.setFromRotationMatrix(m);
+    cam.position.set(C[0], C[1], C[2]);
+    cam.updateMatrixWorld(true);
+    this.viewport.controls.update();
+    this.viewport.invalidate();
+  }
 
   /** 3D 레이어를 통째로 다시 만든다. 선분 수가 적으므로 차분 갱신을 하지 않는다(A-3). */
   setSegments(list: StageSeg[]): void {

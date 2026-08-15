@@ -650,3 +650,159 @@ test("축 고정 — 추론이 거부한 획을 사용자가 강제한다", asyn
   ];
   led.l_b5 = l;
 });
+
+/**
+ * L-B.6 — **뷰 시스템**(§9.2~§9.4). 산출: `stage_browser.json`의 `l_b6`.
+ *
+ * 재는 것은 **배선**이다. 사전에 적은 목록 그대로다(#26 — 사후에 정하지 않는다):
+ *   ① 뷰 목록이 뜬다
+ *   ② 다른 뷰로 갔다가 돌아오면 **같은 화면**이다
+ *   ③ 뷰를 지우면 그 안의 대기 획이 함께 사라지고 **승격된 획은 남는다**
+ *   ④ 확정 뷰는 못 지운다
+ *   ⑤ 다른 뷰의 대기 획은 숨는다(개수가 화면에 나온다)
+ *
+ * ⚠ **말하지 않는 것**: §9.3의 "새 각도에서 그리면 뷰가 생긴다"는 **궤도 후 그리기(L-B.8)가
+ * 열려야 도달한다.** 여기서는 뷰를 코드로 만들어 전환·삭제·소유 규약만 확인한다(#23).
+ * ⚠ **왕복 픽셀 차이에 임계를 걸지 않는다**(#5) — `pose()`와 `setPose()`가 서로의 역이라
+ * **설계 보장**이다. 그래서 **틀린 자세를 넣은 대조군**을 함께 낸다(#30 양성 채널).
+ */
+test("뷰 시스템 — 목록·전환·삭제·소유", async ({ page }) => {
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  const l: Record<string, unknown> = {};
+
+  await setup(page);
+  await page.evaluate(() =>
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click());
+
+  // ---- ① 목록. 확정 뷰 하나에서 시작한다
+  l.initial = await page.evaluate(() => ({
+    views: window.S2S.views(),
+    rows: document.querySelectorAll("#views .row").length,
+    current: window.S2S.currentView(),
+    lifted: window.S2S.doc().strokes.filter((s: any) => s.seg3d).length,
+    pending: window.S2S.doc().strokes.filter((s: any) => !s.seg3d).length,
+  }));
+  expect((l.initial as any).views.length).toBe(1);
+  expect((l.initial as any).views[0].isConfirm).toBe(true);
+  expect((l.initial as any).rows).toBe(1);
+
+  // ---- ② 궤도 → 뷰 등록 → 확정 뷰로 갔다가 돌아온다. **같은 화면인가**
+  const round = await page.evaluate(async () => {
+    const S = window.S2S;
+    const doc = await import("/src/ui/doc.ts");
+    // 궤도로 돌린다(앱의 궤도 버튼과 같은 경로)
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="orbit"]')!.click();
+    const camT = S.stage.viewport.camera;
+    camT.position.set(2.2, 1.4, 5.1);
+    camT.lookAt(0, 0, 0);
+    camT.updateMatrixWorld(true);
+    const p = S.pose();
+    const v = doc.newView("뷰 2", p);
+    S.doc().views.push(v);
+    S.switchView(v.id);
+    const before = S.pose();
+    // 확정 뷰로 갔다가 돌아온다
+    S.switchView(S.views().find((x: any) => x.isConfirm).id);
+    const pinnedInBetween = S.stage.isPinned;
+    S.switchView(v.id);
+    const after = S.pose();
+    const d = (a: number[], b: number[]) => Math.max(...a.map((x, i) => Math.abs(x - b[i])));
+    return {
+      view_id: v.id, pinned_at_confirm_view: pinnedInBetween,
+      pinned_now: S.stage.isPinned,
+      pose_roundtrip_max_abs: Math.max(d(before.C, after.C),
+        ...[0, 1, 2].map(i => d(before.R[i], after.R[i]))),
+      current: S.currentView(),
+    };
+  });
+  l.roundtrip = round;
+  expect(round.pinned_at_confirm_view).toBe(true);
+  expect(round.pinned_now).toBe(false);
+  expect(round.current).toBe(round.view_id);
+
+  // **양성 채널**(#30·#5) — 왕복 0이 항등인지 측정인지 가른다.
+  // 틀린 자세를 넣으면 같은 비교가 0이 아니어야 한다. 안 움직이면 위의 0은 아무것도 안 말한다
+  l.roundtrip_wrong_pose_control = await page.evaluate(() => {
+    const S = window.S2S;
+    const before = S.pose();
+    const bent = { R: before.R, C: [before.C[0] + 0.7, before.C[1], before.C[2]] };
+    S.orbitTo(bent);
+    const after = S.pose();
+    const d = (a: number[], b: number[]) => Math.max(...a.map((x: number, i: number) => Math.abs(x - b[i])));
+    S.orbitTo(before);
+    return { max_abs: d(before.C, after.C) };
+  });
+  expect((l.roundtrip_wrong_pose_control as any).max_abs).toBeGreaterThan(0.5);
+  // 대조군이 움직이므로 아래 왕복 0은 **재는 것이 있는 0**이다. 다만 **임계는 안 건다**(#5)
+  expect(round.pose_roundtrip_max_abs).toBeLessThan(1e-9);
+
+  // ---- ⑤ 다른 뷰의 대기 획은 숨는다. 화면에 개수가 나온다
+  l.ownership = await page.evaluate(async () => {
+    const S = window.S2S;
+    const doc = await import("/src/ui/doc.ts");
+    const v2 = S.views().find((x: any) => !x.isConfirm).id;
+    const confirmId = S.views().find((x: any) => x.isConfirm).id;
+    // 뷰 2가 대기 획 둘을 소유한다(궤도 시점의 화면 좌표 — L-B.8이 열리기 전이라 손으로 넣는다)
+    S.doc().strokes.push(doc.newSStroke([[100, 100], [200, 160]], v2));
+    S.doc().strokes.push(doc.newSStroke([[120, 200], [240, 260]], v2));
+    S.switchView(confirmId);
+    const statusAtConfirm = document.getElementById("status")!.innerText;
+    return {
+      views: S.views(),
+      status_mentions_hidden: /다른 뷰 2 숨김/.test(statusAtConfirm),
+      pending_here: S.doc().strokes.filter((s: any) => !s.seg3d && s.viewRef === confirmId).length,
+      pending_there: S.doc().strokes.filter((s: any) => !s.seg3d && s.viewRef === v2).length,
+    };
+  });
+  expect((l.ownership as any).status_mentions_hidden).toBe(true);
+  expect((l.ownership as any).pending_there).toBe(2);
+
+  // ---- ④ 확정 뷰의 삭제 버튼은 비활성이다
+  l.confirm_view_undeletable = await page.evaluate(() => {
+    const S = window.S2S;
+    const rows = [...document.querySelectorAll("#views .row")];
+    const confirmId = S.views().find((x: any) => x.isConfirm).id;
+    const row = rows.find(r => r.querySelector(`button[data-view="${confirmId}"]`))!;
+    return { disabled: (row.querySelector(".del") as HTMLButtonElement).disabled };
+  });
+  expect((l.confirm_view_undeletable as any).disabled).toBe(true);
+
+  // ---- ③ 뷰 삭제 — 그 안의 대기 획은 사라지고 승격된 획은 남는다
+  l.delete = await page.evaluate(() => {
+    const S = window.S2S;
+    const v2 = S.views().find((x: any) => !x.isConfirm).id;
+    const before = { lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+                     total: S.doc().strokes.length, views: S.doc().views.length };
+    const row = [...document.querySelectorAll("#views .row")]
+      .find(r => r.querySelector(`button[data-view="${v2}"]`))!;
+    (row.querySelector(".del") as HTMLButtonElement).click();
+    return { before,
+             after: { lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+                      total: S.doc().strokes.length, views: S.doc().views.length },
+             note: document.getElementById("status")!.innerText,
+             current: S.currentView(), rows: document.querySelectorAll("#views .row").length };
+  });
+  const del = l.delete as any;
+  expect(del.after.views).toBe(del.before.views - 1);
+  expect(del.after.total).toBe(del.before.total - 2);      // 대기 둘만 사라진다
+  expect(del.after.lifted).toBe(del.before.lifted);        // 승격된 것은 그대로다
+  expect(del.rows).toBe(1);
+
+  // ---- 되돌리기가 뷰 삭제도 되돌린다(스냅샷이 뷰를 복사한다)
+  l.undo_restores_view = await page.evaluate(() => {
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="undo"]')!.click();
+    return { views: window.S2S.doc().views.length,
+             total: window.S2S.doc().strokes.length };
+  });
+  expect((l.undo_restores_view as any).views).toBe(2);
+
+  l.what_this_does_not_say = [
+    "§9.3의 '새 각도에서 그리면 뷰가 생긴다' — **궤도 후 그리기(L-B.8)가 열려야 도달한다**(#23). "
+    + "여기서는 뷰를 코드로 만들어 전환·삭제·소유 규약만 확인한다",
+    "자세 왕복 0은 **설계 보장**이다(#5) — `pose()`와 `setPose()`가 서로의 역이다. "
+    + "임계를 걸지 않고 틀린 자세 대조군을 함께 낸다",
+    "궤도 시점의 2D 획은 손으로 넣었다 — 그 좌표가 실제로 그 시점의 화면 좌표인지는 L-B.8의 일이다",
+  ];
+  led.l_b6 = l;
+});

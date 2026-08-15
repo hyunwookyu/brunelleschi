@@ -9,7 +9,7 @@ import { InkCanvas } from "./capture/inkCanvas.js";
 import { cssSizeOf } from "./capture/canvasFrame.js";
 import { Stage, type StageSeg } from "./ui/stage.js";
 import { CamState } from "./ui/camState.js";
-import { newDoc, newSStroke, lifted, pending, pendingElsewhere, snapshotDoc,
+import { newDoc, newSStroke, newView, deleteView, lifted, pending, pendingElsewhere, snapshotDoc,
          type DocState, type SStroke } from "./ui/doc.js";
 import { draftFromDetection, handleAt, moveHandle, guideLineAt, moveGuideBy,
          extendGuide, DRAFT_TOL, type HandleRef } from "./s3d/vpDraft.js";
@@ -24,6 +24,7 @@ import { AXIS_COLOR, guides as gridGuides, HORIZON_COLOR, GROUND_COLOR } from ".
 import { project, axisDirection, groundFrame, type Vec3 } from "./s3d/geom3d.js";
 import type { Pt2 } from "./s3d/camera.js";
 import type { PlaceCtx } from "./s3d/stroke.js";
+import type { ViewPose } from "./s3d/viewCamera.js";
 
 type Tool = "draw" | "adjust" | "orbit";
 
@@ -31,6 +32,7 @@ const host = document.getElementById("stage")!;
 const canvas = document.getElementById("ink") as HTMLCanvasElement;
 const barEl = document.getElementById("bar")!;
 const statusEl = document.getElementById("status")!;
+const viewsEl = document.getElementById("views")!;
 
 const stage = new Stage(host);
 let doc: DocState = newDoc();
@@ -227,6 +229,100 @@ function syncScene() {
   }));
   stage.setSegments(segs);
 }
+
+// ---------------------------------------------------------------- 뷰 시스템 (L-B.6, §9.2~§9.4)
+
+/** 확정 뷰 — `pose === null`인 것 하나다(§9.2). 첫 카메라 자체이고 자세가 항등이다. */
+const confirmView = () => doc.views.find(v => v.pose === null) ?? doc.views[0];
+
+/** 궤도 중심 — 3D 레이어의 무게중심. 없으면 `null`이고 컨트롤이 원점을 본다. */
+const orbitTarget = () => stage.centroid(lifted(doc).map(s =>
+  ({ id: s.id, a: s.seg3d![0], b: s.seg3d![1], axis: s.axis })));
+
+/**
+ * **뷰 전환**(§9.2). 확정 뷰면 확정 카메라에 다시 물리고, 아니면 저장된 자세로 돌아간다.
+ *
+ * 2D 대기 획은 `viewRef`가 소유하므로 **전환만으로 화면의 2D 층이 바뀐다** —
+ * 숨기는 이유는 정리가 아니라 **좌표계**다(`doc.ts` 머리말).
+ */
+function switchView(id: string) {
+  const v = doc.views.find(x => x.id === id);
+  if (!v) return;
+  doc.currentView = id;
+  const ctx = cam.ctx();
+  if (v.pose === null) {
+    if (ctx) stage.pinTo(ctx.principal, ctx.f);
+    tool = "draw"; canvas.style.pointerEvents = "auto";
+    note = `확정 뷰 — 3D가 잉크와 같은 자리에 그려집니다`;
+  } else {
+    stage.setPose(v.pose, orbitTarget());
+    // 궤도 시점에서 그리는 것은 **L-B.8이 여는 경로**다. 지금은 돌리기만 한다 —
+    // **없는 것을 지어내지 않는다**(A-3).
+    tool = "orbit"; canvas.style.pointerEvents = "none";
+    note = `${v.name} — 저장한 각도로 돌아왔습니다`;
+  }
+  hoverSnap = null; live = null;
+  refresh();
+}
+
+/**
+ * **지금 자세에 해당하는 뷰를 찾거나 만든다**(§9.3).
+ *
+ * 계획서: "궤도를 돌려 **새 각도에서 실제로 획을 그리면** 그 시점이 새 뷰로 등록된다.
+ * 돌릴 때마다 만들지 않는다 — 뷰가 넘친다." 그래서 **획을 그리는 자리에서만** 부른다.
+ *
+ * ⚠ **지금은 확정 뷰만 반환한다** — 궤도 시점에서 그리는 경로가 아직 안 열렸기 때문이다
+ * (L-B.8). 생성 가지는 그때 도달한다. 그 사실을 `progress.md`에 적었다(#23).
+ */
+function viewForDrawing(): string {
+  const p = stage.pose();
+  if (p === null) return confirmView().id;
+  const cur = doc.views.find(v => v.id === doc.currentView);
+  if (cur && cur.pose && samePose(cur.pose, p)) return cur.id;
+  const v = newView(`뷰 ${doc.views.length}`, p);
+  doc.views.push(v);
+  return v.id;
+}
+
+/** 두 자세가 같은가 — 전환 직후 미세한 수치 차이로 뷰가 늘어나는 것을 막는다. */
+function samePose(a: ViewPose, b: ViewPose): boolean {
+  const near = (u: Vec3, v: Vec3) =>
+    Math.abs(u[0] - v[0]) < 1e-6 && Math.abs(u[1] - v[1]) < 1e-6 && Math.abs(u[2] - v[2]) < 1e-6;
+  return near(a.C, b.C) && a.R.every((r, i) => near(r, b.R[i]));
+}
+
+function renderViews() {
+  const rows = doc.views.map(v => {
+    const n = pending(doc, v.id).length;
+    const on = v.id === doc.currentView;
+    const del = v.pose === null
+      ? `<button class="del" disabled title="확정 뷰는 지울 수 없습니다 — 첫 카메라입니다">✕</button>`
+      : `<button class="del" data-delview="${v.id}" title="이 뷰와 그 안의 대기 획 ${n}개를 지웁니다">✕</button>`;
+    return `<div class="row"><button data-view="${v.id}"${on ? ' class="on"' : ""}>`
+         + `${v.name}${n ? ` <span class="n">·2D ${n}</span>` : ""}</button>${del}</div>`;
+  });
+  viewsEl.innerHTML = `<div class="cap">뷰 ${doc.views.length}</div>` + rows.join("");
+}
+
+viewsEl.addEventListener("click", (e) => {
+  const b = (e.target as HTMLElement).closest("button");
+  if (!b || (b as HTMLButtonElement).disabled) return;
+  const del = (b as HTMLButtonElement).dataset.delview;
+  if (del) {
+    pushUndo();
+    // **보고 있던 뷰를 지웠을 때만** 카메라를 옮긴다. 아니면 화면이 이유 없이 튄다
+    const wasHere = doc.currentView === del;
+    const r = deleteView(doc, del);
+    if (!r) { note = "확정 뷰는 지울 수 없습니다"; refresh(); return; }
+    // **뷰를 지우면 그 안의 대기 획도 함께 사라진다**(§9.2). 승격된 획은 뷰 소속이 없으므로 남는다.
+    if (wasHere) switchView(doc.currentView);
+    note = `뷰를 지웠습니다 — 그 안의 2D 대기 획 ${r.removed}개가 함께 사라졌습니다`;
+    refresh();
+    return;
+  }
+  const to = (b as HTMLButtonElement).dataset.view;
+  if (to) switchView(to);
+});
 
 /**
  * **일괄 풀이**(§5.4). 확정 뷰의 대기 획을 축별로 다시 분류하고 한 번에 푼다.
@@ -530,6 +626,8 @@ const ink = new InkCanvas(canvas, {
     ink.clear();                         // 잉크 버퍼는 문서가 아니다 — 우리가 그린다
     if (pts.length < 2 || tool !== "draw") { refresh(); return; }
     pushUndo();
+    // **§9.3 — 그리는 자리에서만 뷰가 생긴다.** 돌릴 때마다 만들면 뷰가 넘친다
+    doc.currentView = viewForDrawing();
     const s = newSStroke(pts, doc.currentView);
     doc.strokes.push(s);
     // 확정 뒤에는 그 자리에서 푼다 — **승격 연쇄**의 첫 형태다(§9.1). L-B.7에서 넓힌다.
@@ -596,6 +694,7 @@ function refresh() {
     ink.redraw();
     renderBar();
     renderStatus();
+    renderViews();
   } finally { refreshing = false; }
 }
 
@@ -801,4 +900,15 @@ refresh();
   live: () => live,
   axisLock: () => ({ mode: axisLock, resolved: lockedAxis() }),
   setAxisLock: (a: 0 | 1 | 2 | "infer" | null) => { axisLock = a; shiftHeld = null; relive(); },
+  // L-B.6 — 뷰 시스템(§9.2~§9.4). **앱 경로 그대로**를 종단 확인이 부른다(#17)
+  views: () => doc.views.map(v => ({ id: v.id, name: v.name, seq: v.seq,
+                                     isConfirm: v.pose === null,
+                                     pending: pending(doc, v.id).length })),
+  currentView: () => doc.currentView,
+  switchView,
+  pose: () => stage.pose(),
+  /** 궤도를 코드로 돌린다 — Playwright가 마우스로 돌리지 않고도 새 자세를 만든다. */
+  orbitTo: (p: ViewPose) => { stage.setPose(p, orbitTarget()); refresh(); },
+  /** §9.3의 생성 경로. **L-B.8이 열리기 전에는 확정 뷰를 낸다**(#23). */
+  viewForDrawing,
 };
