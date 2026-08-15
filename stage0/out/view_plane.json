@@ -1,7 +1,7 @@
 {
   "spec": "S-7 (0) 돌린 시점의 평면 경로. **같은 획이 시점에 따라 갈리면 안 된다.**",
   "constants": {
-    "hash": "6c7f9be8",
+    "hash": "352cea70",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -25,6 +25,13 @@
         "min_len_ratio": 0.02,
         "refit_passes": 2,
         "max_vps": 3
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
       },
       "CONSENSUS_TOL": {
         "radius_ratio": 0.45,
