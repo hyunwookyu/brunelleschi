@@ -1,5 +1,5 @@
 {
-  "n_flags": 747,
+  "n_flags": 749,
   "flags": [
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
@@ -155,6 +155,16 @@
       "path": "continue_after_rotate.json:by_orbit_angle.orbit_45deg_elev_70.vps_at_infinity.median",
       "val": 0,
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "e2e.json:fix_in_rotated_view.stillUnplaced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "e2e.json:service_worker_in_dev",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "free_curve.json:arms.face_only.in_space_axis_assigned.placed_rate",
@@ -3797,6 +3807,7 @@
     "bend_share.json",
     "constants.json",
     "continue_after_rotate.json",
+    "e2e.json",
     "face_diagonal.json",
     "fix_load.json",
     "free_curve.json",

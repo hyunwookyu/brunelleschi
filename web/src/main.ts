@@ -1016,6 +1016,18 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
              dC: c.pose.C.map((v: number, i: number) => +(v - now.C[i]).toFixed(5)) };
   },
   setView3dMode,
+  /**
+   * **세계 좌표 → 지금 시점의 3D 캔버스 좌표**(S-10). 돌린 시점에서 "기존 기하에 닿게"
+   * 그으려면 그 자리가 화면 어디인지 알아야 한다 — 앱이 후보를 찾을 때 쓰는 것과 **같은 변환**이다
+   * (측정 경로와 앱 경로를 가르지 않는다, 반복 유형 15).
+   */
+  projectToView: (p: Vec3): Pt2 | null => {
+    const axes = worldAxes();
+    if (!axes.some(Boolean)) return null;
+    const pose = viewport.pose();
+    const ctxV = viewPlaceCtx(pose, axes, viewport.viewSize(), viewport.camera.fov);
+    return projectInView(pose, p, ctxV.principal, ctxV.f);
+  },
   // **S-9 저장·내보내기** — S-10 Playwright가 왕복(저장 → 다시 열기)을 확인한다.
   buildDoc, applyDoc, userPlaced, saveNow: () => saver?.flush(),
   exportObj: () => toObj(drawn, { colorOf }),

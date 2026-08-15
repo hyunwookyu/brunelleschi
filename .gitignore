@@ -15,3 +15,5 @@ data/perspective/*.csv
 data/perspective/probe/
 files.zip
 web/vite.log
+web/test-results/
+web/playwright-report/
