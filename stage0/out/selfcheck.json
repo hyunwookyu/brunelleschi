@@ -1,5 +1,5 @@
 {
-  "n_flags": 861,
+  "n_flags": 1340,
   "flags": [
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
@@ -525,6 +525,1196 @@
       "path": "incline_vp.json:by_slope_deg.0.by_n_strokes.6.ratio.n",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=54) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.fitted_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=54) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.005.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=55) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.005.fitted_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=55) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.005.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.01.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=50) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.01.fitted_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=50) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.01.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.03.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=45) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.03.fitted_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=45) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.03.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.05.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=34) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.05.fitted_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=34) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.05.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=55) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=36) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.fitted_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=36) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=36) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=51) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=36) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.fitted_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=36) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=36) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=50) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=33) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.fitted_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=33) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=36) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=48) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=33) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.fitted_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=33) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=36) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=34) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.detected_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=21) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.fitted_camera.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=21) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=36) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_0.8.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_0.9.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_1.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_1.1.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_1.2.seg_gap_px",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.fitted_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.005.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.005.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.005.fitted_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.005.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.005.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.005.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.01.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.01.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.01.fitted_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.01.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.01.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.01.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.03.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.03.detected_camera.joint_residual.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.03.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.03.fitted_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.03.fitted_camera.joint_residual.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.03.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.03.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.03.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.05.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.05.detected_camera.joint_residual.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.05.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.05.fitted_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.05.fitted_camera.joint_residual.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.05.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.05.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_jitter.jitter_0.05.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.detected_camera.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.true_camera_oracle.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.detected_camera.confirm.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.detected_camera.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.detected_camera.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.fitted_camera.confirm.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.fitted_camera.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.fitted_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.true_camera_oracle.confirm.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.true_camera_oracle.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw35_pitch15.baseline_jitter_le_0_01.true_camera_oracle.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.detected_camera.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.true_camera_oracle.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.detected_camera.confirm.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.detected_camera.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.detected_camera.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.fitted_camera.confirm.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.fitted_camera.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.fitted_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.true_camera_oracle.confirm.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.true_camera_oracle.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw20_pitch25.baseline_jitter_le_0_01.true_camera_oracle.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.detected_camera.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.true_camera_oracle.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.detected_camera.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.detected_camera.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.fitted_camera.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.fitted_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.true_camera_oracle.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.3pt_yaw50_pitch8.baseline_jitter_le_0_01.true_camera_oracle.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.detected_camera.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.true_camera_oracle.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.detected_camera.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.detected_camera.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.fitted_camera.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.fitted_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.true_camera_oracle.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.true_camera_oracle.placement.of_all.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.2pt_yaw35_pitch0.baseline_jitter_le_0_01.true_camera_oracle.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.detected_camera.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.detected_camera.f_rel_err.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.detected_camera.axis_tilt_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.detected_camera.axis_tilt_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.detected_camera.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.detected_camera.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.detected_camera.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.true_camera_oracle.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.true_camera_oracle.f_rel_err.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.true_camera_oracle.axis_tilt_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.true_camera_oracle.axis_tilt_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.true_camera_oracle.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.true_camera_oracle.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.true_camera_oracle.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.detected_camera.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.detected_camera.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.detected_camera.f_rel_err.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.detected_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.detected_camera.axis_tilt_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.detected_camera.axis_tilt_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.detected_camera.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.detected_camera.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.detected_camera.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.fitted_camera.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.fitted_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.fitted_camera.silent_wrong.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.fitted_camera.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.fitted_camera.f_rel_err.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.fitted_camera.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.fitted_camera.axis_tilt_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.fitted_camera.axis_tilt_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.fitted_camera.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.fitted_camera.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.true_camera_oracle.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.true_camera_oracle.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.true_camera_oracle.placement.of_all.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.true_camera_oracle.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.true_camera_oracle.f_rel_err.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.true_camera_oracle.seg_gap_px.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.true_camera_oracle.axis_tilt_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.true_camera_oracle.axis_tilt_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.true_camera_oracle.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.true_camera_oracle.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:by_composition_all_jitters.1pt_yaw0_pitch0.baseline_jitter_le_0_01.true_camera_oracle.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_0.8.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_0.8.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_0.9.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_0.9.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_1.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_1.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_1.1.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_1.1.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_1.2.seg_gap_px.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "lift_gate.json:f_bias.f_scale_1.2.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "misassign_retry.json:by_end_jitter.0.005.arms.base.diag_axis_assigned.placed_rate",
@@ -3242,6 +4432,1301 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "vp_detect.json:by_support_deg.deg_1.5.all.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_1.5.by_jitter.jitter_0.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_1.5.by_jitter.jitter_0.005.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_1.5.by_jitter.jitter_0.01.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_1.5.by_jitter.jitter_0.03.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_1.5.by_jitter.jitter_0.03.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_1.5.by_jitter.jitter_0.05.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_1.5.by_jitter.jitter_0.05.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_2.all.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_2.by_jitter.jitter_0.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_2.by_jitter.jitter_0.005.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_2.by_jitter.jitter_0.01.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_2.by_jitter.jitter_0.03.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_2.by_jitter.jitter_0.05.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_2.by_jitter.jitter_0.05.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_2.5.all.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_2.5.by_jitter.jitter_0.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_2.5.by_jitter.jitter_0.005.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_2.5.by_jitter.jitter_0.01.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_2.5.by_jitter.jitter_0.03.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_2.5.by_jitter.jitter_0.05.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_3.all.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_3.by_jitter.jitter_0.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_3.by_jitter.jitter_0.005.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_3.by_jitter.jitter_0.01.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_3.by_jitter.jitter_0.03.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_3.by_jitter.jitter_0.05.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_4.all.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_4.by_jitter.jitter_0.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_4.by_jitter.jitter_0.005.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_4.by_jitter.jitter_0.01.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_4.by_jitter.jitter_0.03.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_4.by_jitter.jitter_0.05.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_6.all.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_6.all.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_6.by_jitter.jitter_0.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_6.by_jitter.jitter_0.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_6.by_jitter.jitter_0.005.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_6.by_jitter.jitter_0.005.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_6.by_jitter.jitter_0.01.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_6.by_jitter.jitter_0.01.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_6.by_jitter.jitter_0.03.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_6.by_jitter.jitter_0.03.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_6.by_jitter.jitter_0.05.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_support_deg.deg_6.by_jitter.jitter_0.05.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.confirm.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.confirm.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.confirm.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.vps_found.one",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.fake_joints.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.fake_joints.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.placement.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.placement.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.placement.of_all.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.placement.of_all.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.silent_wrong.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.silent_wrong.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.shape_err_max.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.shape_err_median.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.joint_residual.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.seg_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.ink_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.axis_tilt_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.far_vps.axis_dir_err_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.confirm.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.confirm.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.confirm.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.fake_joints.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.fake_joints.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.placement.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.placement.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.placement.of_all.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.placement.of_all.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.silent_wrong.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.silent_wrong.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.shape_err_max.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.shape_err_median.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.joint_residual.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.seg_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.ink_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.axis_tilt_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.near_vps_1pt.axis_dir_err_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.confirm.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.confirm.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.confirm.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.fake_joints.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.fake_joints.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.placement.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.placement.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.placement.of_all.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.placement.of_all.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.silent_wrong.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.silent_wrong.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.shape_err_max.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.shape_err_median.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.joint_residual.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.seg_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.ink_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.axis_tilt_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.far_vps.axis_dir_err_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.confirm.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.confirm.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.confirm.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.fake_joints.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.fake_joints.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.placement.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.placement.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.placement.of_all.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.placement.of_all.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.silent_wrong.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.silent_wrong.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.shape_err_max.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.shape_err_median.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.joint_residual.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.seg_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.ink_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.axis_tilt_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_0.5.near_vps_1pt.axis_dir_err_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.confirm.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.confirm.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.confirm.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.fake_joints.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.fake_joints.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.placement.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.placement.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.placement.of_all.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.placement.of_all.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.silent_wrong.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.silent_wrong.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.shape_err_max.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.shape_err_median.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.joint_residual.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.seg_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.ink_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.axis_tilt_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.far_vps.axis_dir_err_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.confirm.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.confirm.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.confirm.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.fake_joints.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.fake_joints.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.placement.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.placement.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.placement.of_all.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.placement.of_all.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.silent_wrong.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.silent_wrong.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.shape_err_max.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.shape_err_median.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.joint_residual.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.seg_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.ink_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.axis_tilt_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_1.near_vps_1pt.axis_dir_err_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.confirm.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.confirm.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.confirm.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.fake_joints.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.fake_joints.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.placement.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.placement.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.placement.of_all.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.placement.of_all.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.silent_wrong.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.silent_wrong.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.shape_err_max.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.shape_err_median.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.joint_residual.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.seg_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.ink_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.axis_tilt_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.far_vps.axis_dir_err_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.confirm.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.confirm.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.confirm.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.fake_joints.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.fake_joints.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.placement.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.placement.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.placement.of_all.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.placement.of_all.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.silent_wrong.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.silent_wrong.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.shape_err_max.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.shape_err_median.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.joint_residual.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.seg_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.ink_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.axis_tilt_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_2.near_vps_1pt.axis_dir_err_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.confirm.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.confirm.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.confirm.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.fake_joints.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.fake_joints.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.placement.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.placement.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.placement.of_all.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.placement.of_all.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.silent_wrong.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.silent_wrong.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.shape_err_max.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.shape_err_median.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.joint_residual.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.seg_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.ink_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.axis_tilt_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.far_vps.axis_dir_err_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.confirm.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.confirm.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.confirm.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.vps_found.three",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.fake_joints.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.fake_joints.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.placement.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.placement.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.placement.of_all.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.placement.of_all.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.silent_wrong.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.silent_wrong.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.shape_err_max.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.shape_err_median.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.joint_residual.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.seg_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.ink_gap_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.axis_tilt_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.fitted_f_rel_err.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_reach.reach_4.near_vps_1pt.axis_dir_err_deg.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_detect.json:by_min_spread_mult.mult_0.true_finite_kept.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_detect.json:by_min_spread_mult.mult_0.true_infinite_wrongly_kept.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "wobble_plane.json:judged.screen.no_anchor_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -4197,104 +6682,9 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "axis_judgement.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "bend_share.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "continue_after_rotate.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
       "path": "e2e.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "face_diagonal.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "fix_load.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "free_curve.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "incline_vp.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "misassign_retry.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "occlusion.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "one_stroke_one_axis.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "persist.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "preview_gap.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "real_ink.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "segment_gate.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "systematic_warp.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "tube_render.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "view_plane.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "wiring.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "wobble_plane.json@1671e540",
-      "val": "VP_TOL.max_vps: None → 3; VP_TOL.min_len_ratio: None → 0.02; VP_TOL.min_reach: None → 1; VP_TOL.min_support: None → 3; VP_TOL.refit_passes: None → 2; VP_TOL.support_deg: None → 2.5",
-      "flag": "**STALE** — 현재 상수(6c7f9be8)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+      "val": "LIFT_TOL.gauge_height: None → 1; LIFT_TOL.parallel_deg: None → 5; LIFT_TOL.reject_mult: None → 4; LIFT_TOL.reject_passes: None → 2; LIFT_TOL.touch_ratio: None → 0.015; VP_TOL.max_vps: None → 3",
+      "flag": "**STALE** — 현재 상수(034fc089)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
     },
     {
       "path": "web/src/s3d/stroke.ts:Stroke.layer",
@@ -4302,23 +6692,28 @@
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
     },
     {
+      "path": "web\\src\\s3d\\lift.ts:406:transitionGap",
+      "val": "project(",
+      "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
+    },
+    {
       "path": "web\\src\\s3d\\stroke.ts:304:reprojectionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     }
   ],
-  "n_stale": 20,
+  "n_stale": 1,
   "n_unread_fields": 1,
   "field_reads": [
     {
       "field": "id",
       "writes": 0,
-      "reads": 100
+      "reads": 110
     },
     {
       "field": "pts2d",
       "writes": 0,
-      "reads": 35
+      "reads": 38
     },
     {
       "field": "pts3d",
@@ -4328,12 +6723,12 @@
     {
       "field": "axis",
       "writes": 2,
-      "reads": 30
+      "reads": 34
     },
     {
       "field": "rep",
       "writes": 1,
-      "reads": 55
+      "reads": 74
     },
     {
       "field": "anchorRef",
@@ -4361,7 +6756,7 @@
       "reads": 14
     }
   ],
-  "constants_hash": "6c7f9be8",
+  "constants_hash": "034fc089",
   "scanned": [
     "axis_judgement.json",
     "bend_share.json",
@@ -4372,6 +6767,7 @@
     "fix_load.json",
     "free_curve.json",
     "incline_vp.json",
+    "lift_gate.json",
     "misassign_retry.json",
     "occlusion.json",
     "one_stroke_one_axis.json",
@@ -4382,6 +6778,7 @@
     "systematic_warp.json",
     "tube_render.json",
     "view_plane.json",
+    "vp_detect.json",
     "wiring.json",
     "wobble_plane.json"
   ],

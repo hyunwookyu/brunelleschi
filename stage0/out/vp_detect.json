@@ -1,0 +1,5541 @@
+{
+  "what": "L-A.2 소실점 후보 검출 — support_deg·min_reach 스윕, 최소제곱 가중 대조",
+  "plan": "docs/line_plan.md §5.1",
+  "conditions": {
+    "compositions": [
+      "3pt_yaw35_pitch15",
+      "3pt_yaw20_pitch25",
+      "3pt_yaw50_pitch8",
+      "2pt_yaw35_pitch0",
+      "1pt_yaw0_pitch0"
+    ],
+    "jitters": [
+      0,
+      0.005,
+      0.01,
+      0.03,
+      0.05
+    ],
+    "jitter_note": "0.03·0.05가 유일한 실획 자릿수(AS-C2 0.028~0.051). S·G는 그 구간 미측정",
+    "grades": [
+      "precise",
+      "medium"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "denominators": {
+      "confirm": "분모 = 장면 수. 분자 = recoverCamera.ok",
+      "confirm_note": "1점 구도는 소실점이 하나뿐이므로 f가 설정값이다(AS-C4). 사전 등록의 '소실점 ≥2'는 1점 구도에 적용되지 않아 cam.ok로 판정한다",
+      "misassign": "분모 = 소실점에 **배정된 획**. unassigned·population을 함께 낸다"
+    }
+  },
+  "by_support_deg": {
+    "deg_1.5": {
+      "all": {
+        "scenes": 300,
+        "confirm": {
+          "k": 247,
+          "n": 300,
+          "rate": 0.8233
+        },
+        "vps_found": {
+          "one": 63,
+          "two": 124,
+          "three": 101
+        },
+        "misassign": {
+          "k": 224,
+          "n": 2045,
+          "rate": 0.1095,
+          "unassigned": 1555,
+          "population": 3600
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 3600,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 247,
+          "min": 0,
+          "p10": 0,
+          "median": 0.0547,
+          "p90": 0.5464,
+          "max": 0.9319
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "by_jitter": {
+        "jitter_0": {
+          "scenes": 60,
+          "confirm": {
+            "k": 54,
+            "n": 60,
+            "rate": 0.9
+          },
+          "vps_found": {
+            "one": 3,
+            "two": 18,
+            "three": 39
+          },
+          "misassign": {
+            "k": 41,
+            "n": 547,
+            "rate": 0.075,
+            "unassigned": 173,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 54,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0713,
+            "p90": 0.4178,
+            "max": 0.9177
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.005": {
+          "scenes": 60,
+          "confirm": {
+            "k": 50,
+            "n": 60,
+            "rate": 0.8333
+          },
+          "vps_found": {
+            "one": 3,
+            "two": 22,
+            "three": 35
+          },
+          "misassign": {
+            "k": 52,
+            "n": 510,
+            "rate": 0.102,
+            "unassigned": 210,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 50,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0835,
+            "p90": 0.2995,
+            "max": 0.9319
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.01": {
+          "scenes": 60,
+          "confirm": {
+            "k": 53,
+            "n": 60,
+            "rate": 0.8833
+          },
+          "vps_found": {
+            "one": 4,
+            "two": 37,
+            "three": 19
+          },
+          "misassign": {
+            "k": 47,
+            "n": 450,
+            "rate": 0.1044,
+            "unassigned": 270,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 53,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0983,
+            "p90": 0.6516,
+            "max": 0.8992
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.03": {
+          "scenes": 60,
+          "confirm": {
+            "k": 49,
+            "n": 60,
+            "rate": 0.8167
+          },
+          "vps_found": {
+            "one": 25,
+            "two": 27,
+            "three": 6
+          },
+          "misassign": {
+            "k": 49,
+            "n": 308,
+            "rate": 0.1591,
+            "unassigned": 412,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 49,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.6002,
+            "max": 0.778
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.05": {
+          "scenes": 60,
+          "confirm": {
+            "k": 41,
+            "n": 60,
+            "rate": 0.6833
+          },
+          "vps_found": {
+            "one": 28,
+            "two": 20,
+            "three": 2
+          },
+          "misassign": {
+            "k": 35,
+            "n": 230,
+            "rate": 0.1522,
+            "unassigned": 490,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 41,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.5478,
+            "max": 0.8496
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        }
+      }
+    },
+    "deg_2": {
+      "all": {
+        "scenes": 300,
+        "confirm": {
+          "k": 253,
+          "n": 300,
+          "rate": 0.8433
+        },
+        "vps_found": {
+          "one": 48,
+          "two": 127,
+          "three": 122
+        },
+        "misassign": {
+          "k": 259,
+          "n": 2304,
+          "rate": 0.1124,
+          "unassigned": 1296,
+          "population": 3600
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 3600,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 253,
+          "min": 0,
+          "p10": 0,
+          "median": 0.0682,
+          "p90": 0.5683,
+          "max": 0.9727
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "by_jitter": {
+        "jitter_0": {
+          "scenes": 60,
+          "confirm": {
+            "k": 53,
+            "n": 60,
+            "rate": 0.8833
+          },
+          "vps_found": {
+            "one": 2,
+            "two": 14,
+            "three": 44
+          },
+          "misassign": {
+            "k": 44,
+            "n": 597,
+            "rate": 0.0737,
+            "unassigned": 123,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 53,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0615,
+            "p90": 0.4178,
+            "max": 0.8675
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.005": {
+          "scenes": 60,
+          "confirm": {
+            "k": 51,
+            "n": 60,
+            "rate": 0.85
+          },
+          "vps_found": {
+            "one": 1,
+            "two": 20,
+            "three": 39
+          },
+          "misassign": {
+            "k": 61,
+            "n": 560,
+            "rate": 0.1089,
+            "unassigned": 160,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 51,
+            "min": 0,
+            "p10": 0,
+            "median": 0.088,
+            "p90": 0.4313,
+            "max": 0.9319
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.01": {
+          "scenes": 60,
+          "confirm": {
+            "k": 53,
+            "n": 60,
+            "rate": 0.8833
+          },
+          "vps_found": {
+            "one": 1,
+            "two": 35,
+            "three": 24
+          },
+          "misassign": {
+            "k": 51,
+            "n": 496,
+            "rate": 0.1028,
+            "unassigned": 224,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 53,
+            "min": 0,
+            "p10": 0,
+            "median": 0.1124,
+            "p90": 0.6744,
+            "max": 0.9727
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.03": {
+          "scenes": 60,
+          "confirm": {
+            "k": 49,
+            "n": 60,
+            "rate": 0.8167
+          },
+          "vps_found": {
+            "one": 20,
+            "two": 28,
+            "three": 11
+          },
+          "misassign": {
+            "k": 53,
+            "n": 351,
+            "rate": 0.151,
+            "unassigned": 369,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 49,
+            "min": 0,
+            "p10": 0,
+            "median": 0.2195,
+            "p90": 0.5879,
+            "max": 0.9618
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.05": {
+          "scenes": 60,
+          "confirm": {
+            "k": 47,
+            "n": 60,
+            "rate": 0.7833
+          },
+          "vps_found": {
+            "one": 24,
+            "two": 30,
+            "three": 4
+          },
+          "misassign": {
+            "k": 50,
+            "n": 300,
+            "rate": 0.1667,
+            "unassigned": 420,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 47,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.5994,
+            "max": 0.8496
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        }
+      }
+    },
+    "deg_2.5": {
+      "all": {
+        "scenes": 300,
+        "confirm": {
+          "k": 254,
+          "n": 300,
+          "rate": 0.8467
+        },
+        "vps_found": {
+          "one": 29,
+          "two": 129,
+          "three": 140
+        },
+        "misassign": {
+          "k": 284,
+          "n": 2497,
+          "rate": 0.1137,
+          "unassigned": 1103,
+          "population": 3600
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 3600,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 254,
+          "min": 0,
+          "p10": 0,
+          "median": 0.0896,
+          "p90": 0.5403,
+          "max": 0.9618
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "by_jitter": {
+        "jitter_0": {
+          "scenes": 60,
+          "confirm": {
+            "k": 54,
+            "n": 60,
+            "rate": 0.9
+          },
+          "vps_found": {
+            "one": 0,
+            "two": 17,
+            "three": 43
+          },
+          "misassign": {
+            "k": 44,
+            "n": 620,
+            "rate": 0.071,
+            "unassigned": 100,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 54,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0345,
+            "p90": 0.4001,
+            "max": 0.8675
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.005": {
+          "scenes": 60,
+          "confirm": {
+            "k": 55,
+            "n": 60,
+            "rate": 0.9167
+          },
+          "vps_found": {
+            "one": 0,
+            "two": 16,
+            "three": 44
+          },
+          "misassign": {
+            "k": 65,
+            "n": 600,
+            "rate": 0.1083,
+            "unassigned": 120,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 55,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0927,
+            "p90": 0.4313,
+            "max": 0.8984
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.01": {
+          "scenes": 60,
+          "confirm": {
+            "k": 51,
+            "n": 60,
+            "rate": 0.85
+          },
+          "vps_found": {
+            "one": 0,
+            "two": 31,
+            "three": 29
+          },
+          "misassign": {
+            "k": 61,
+            "n": 531,
+            "rate": 0.1149,
+            "unassigned": 189,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 51,
+            "min": 0,
+            "p10": 0,
+            "median": 0.1301,
+            "p90": 0.5119,
+            "max": 0.934
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.03": {
+          "scenes": 60,
+          "confirm": {
+            "k": 49,
+            "n": 60,
+            "rate": 0.8167
+          },
+          "vps_found": {
+            "one": 10,
+            "two": 36,
+            "three": 14
+          },
+          "misassign": {
+            "k": 56,
+            "n": 406,
+            "rate": 0.1379,
+            "unassigned": 314,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 49,
+            "min": 0,
+            "p10": 0,
+            "median": 0.221,
+            "p90": 0.5868,
+            "max": 0.9618
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.05": {
+          "scenes": 60,
+          "confirm": {
+            "k": 45,
+            "n": 60,
+            "rate": 0.75
+          },
+          "vps_found": {
+            "one": 19,
+            "two": 29,
+            "three": 10
+          },
+          "misassign": {
+            "k": 58,
+            "n": 340,
+            "rate": 0.1706,
+            "unassigned": 380,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 45,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0314,
+            "p90": 0.6486,
+            "max": 0.8496
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        }
+      }
+    },
+    "deg_3": {
+      "all": {
+        "scenes": 300,
+        "confirm": {
+          "k": 253,
+          "n": 300,
+          "rate": 0.8433
+        },
+        "vps_found": {
+          "one": 24,
+          "two": 133,
+          "three": 142
+        },
+        "misassign": {
+          "k": 302,
+          "n": 2605,
+          "rate": 0.1159,
+          "unassigned": 995,
+          "population": 3600
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 3600,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 253,
+          "min": 0,
+          "p10": 0,
+          "median": 0.0562,
+          "p90": 0.5119,
+          "max": 0.9618
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "by_jitter": {
+        "jitter_0": {
+          "scenes": 60,
+          "confirm": {
+            "k": 57,
+            "n": 60,
+            "rate": 0.95
+          },
+          "vps_found": {
+            "one": 0,
+            "two": 18,
+            "three": 42
+          },
+          "misassign": {
+            "k": 51,
+            "n": 635,
+            "rate": 0.0803,
+            "unassigned": 85,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 57,
+            "min": 0,
+            "p10": 0,
+            "median": 0.015,
+            "p90": 0.2583,
+            "max": 0.9428
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.005": {
+          "scenes": 60,
+          "confirm": {
+            "k": 56,
+            "n": 60,
+            "rate": 0.9333
+          },
+          "vps_found": {
+            "one": 0,
+            "two": 17,
+            "three": 43
+          },
+          "misassign": {
+            "k": 62,
+            "n": 619,
+            "rate": 0.1002,
+            "unassigned": 101,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 56,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0497,
+            "p90": 0.3801,
+            "max": 0.8984
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.01": {
+          "scenes": 60,
+          "confirm": {
+            "k": 51,
+            "n": 60,
+            "rate": 0.85
+          },
+          "vps_found": {
+            "one": 1,
+            "two": 25,
+            "three": 34
+          },
+          "misassign": {
+            "k": 61,
+            "n": 556,
+            "rate": 0.1097,
+            "unassigned": 164,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 51,
+            "min": 0,
+            "p10": 0,
+            "median": 0.1171,
+            "p90": 0.4099,
+            "max": 0.934
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.03": {
+          "scenes": 60,
+          "confirm": {
+            "k": 46,
+            "n": 60,
+            "rate": 0.7667
+          },
+          "vps_found": {
+            "one": 6,
+            "two": 42,
+            "three": 12
+          },
+          "misassign": {
+            "k": 61,
+            "n": 429,
+            "rate": 0.1422,
+            "unassigned": 291,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 46,
+            "min": 0,
+            "p10": 0,
+            "median": 0.2202,
+            "p90": 0.5941,
+            "max": 0.9618
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.05": {
+          "scenes": 60,
+          "confirm": {
+            "k": 43,
+            "n": 60,
+            "rate": 0.7167
+          },
+          "vps_found": {
+            "one": 17,
+            "two": 31,
+            "three": 11
+          },
+          "misassign": {
+            "k": 67,
+            "n": 366,
+            "rate": 0.1831,
+            "unassigned": 354,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 43,
+            "min": 0,
+            "p10": 0,
+            "median": 0.1771,
+            "p90": 0.7111,
+            "max": 0.8694
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        }
+      }
+    },
+    "deg_4": {
+      "all": {
+        "scenes": 300,
+        "confirm": {
+          "k": 255,
+          "n": 300,
+          "rate": 0.85
+        },
+        "vps_found": {
+          "one": 16,
+          "two": 131,
+          "three": 153
+        },
+        "misassign": {
+          "k": 326,
+          "n": 2803,
+          "rate": 0.1163,
+          "unassigned": 797,
+          "population": 3600
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 3600,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 255,
+          "min": 0,
+          "p10": 0,
+          "median": 0.0239,
+          "p90": 0.48,
+          "max": 0.9618
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "by_jitter": {
+        "jitter_0": {
+          "scenes": 60,
+          "confirm": {
+            "k": 59,
+            "n": 60,
+            "rate": 0.9833
+          },
+          "vps_found": {
+            "one": 0,
+            "two": 15,
+            "three": 45
+          },
+          "misassign": {
+            "k": 51,
+            "n": 658,
+            "rate": 0.0775,
+            "unassigned": 62,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 59,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0024,
+            "p90": 0.2411,
+            "max": 0.9428
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.005": {
+          "scenes": 60,
+          "confirm": {
+            "k": 57,
+            "n": 60,
+            "rate": 0.95
+          },
+          "vps_found": {
+            "one": 0,
+            "two": 19,
+            "three": 41
+          },
+          "misassign": {
+            "k": 59,
+            "n": 640,
+            "rate": 0.0922,
+            "unassigned": 80,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 57,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0254,
+            "p90": 0.3917,
+            "max": 0.8984
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.01": {
+          "scenes": 60,
+          "confirm": {
+            "k": 49,
+            "n": 60,
+            "rate": 0.8167
+          },
+          "vps_found": {
+            "one": 0,
+            "two": 26,
+            "three": 34
+          },
+          "misassign": {
+            "k": 64,
+            "n": 604,
+            "rate": 0.106,
+            "unassigned": 116,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 49,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0333,
+            "p90": 0.3181,
+            "max": 0.6744
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.03": {
+          "scenes": 60,
+          "confirm": {
+            "k": 44,
+            "n": 60,
+            "rate": 0.7333
+          },
+          "vps_found": {
+            "one": 3,
+            "two": 42,
+            "three": 15
+          },
+          "misassign": {
+            "k": 67,
+            "n": 472,
+            "rate": 0.1419,
+            "unassigned": 248,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 44,
+            "min": 0,
+            "p10": 0,
+            "median": 0.182,
+            "p90": 0.654,
+            "max": 0.9618
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.05": {
+          "scenes": 60,
+          "confirm": {
+            "k": 46,
+            "n": 60,
+            "rate": 0.7667
+          },
+          "vps_found": {
+            "one": 13,
+            "two": 29,
+            "three": 18
+          },
+          "misassign": {
+            "k": 85,
+            "n": 429,
+            "rate": 0.1981,
+            "unassigned": 291,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 46,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0036,
+            "p90": 0.6178,
+            "max": 0.934
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        }
+      }
+    },
+    "deg_6": {
+      "all": {
+        "scenes": 300,
+        "confirm": {
+          "k": 251,
+          "n": 300,
+          "rate": 0.8367
+        },
+        "vps_found": {
+          "one": 8,
+          "two": 162,
+          "three": 130
+        },
+        "misassign": {
+          "k": 359,
+          "n": 2940,
+          "rate": 0.1221,
+          "unassigned": 660,
+          "population": 3600
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 3600,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 251,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.3628,
+          "max": 0.9229
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "by_jitter": {
+        "jitter_0": {
+          "scenes": 60,
+          "confirm": {
+            "k": 58,
+            "n": 60,
+            "rate": 0.9667
+          },
+          "vps_found": {
+            "one": 0,
+            "two": 28,
+            "three": 32
+          },
+          "misassign": {
+            "k": 59,
+            "n": 647,
+            "rate": 0.0912,
+            "unassigned": 73,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 58,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.0648,
+            "max": 0.3509
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.005": {
+          "scenes": 60,
+          "confirm": {
+            "k": 58,
+            "n": 60,
+            "rate": 0.9667
+          },
+          "vps_found": {
+            "one": 0,
+            "two": 28,
+            "three": 32
+          },
+          "misassign": {
+            "k": 58,
+            "n": 641,
+            "rate": 0.0905,
+            "unassigned": 79,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 58,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.1291,
+            "max": 0.8984
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.01": {
+          "scenes": 60,
+          "confirm": {
+            "k": 46,
+            "n": 60,
+            "rate": 0.7667
+          },
+          "vps_found": {
+            "one": 0,
+            "two": 34,
+            "three": 26
+          },
+          "misassign": {
+            "k": 68,
+            "n": 623,
+            "rate": 0.1091,
+            "unassigned": 97,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 46,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.3404,
+            "max": 0.4377
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.03": {
+          "scenes": 60,
+          "confirm": {
+            "k": 46,
+            "n": 60,
+            "rate": 0.7667
+          },
+          "vps_found": {
+            "one": 2,
+            "two": 38,
+            "three": 20
+          },
+          "misassign": {
+            "k": 75,
+            "n": 533,
+            "rate": 0.1407,
+            "unassigned": 187,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 46,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.6124,
+            "max": 0.9229
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "jitter_0.05": {
+          "scenes": 60,
+          "confirm": {
+            "k": 43,
+            "n": 60,
+            "rate": 0.7167
+          },
+          "vps_found": {
+            "one": 6,
+            "two": 34,
+            "three": 20
+          },
+          "misassign": {
+            "k": 99,
+            "n": 496,
+            "rate": 0.1996,
+            "unassigned": 224,
+            "population": 720
+          },
+          "fake_joints": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "placement": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "of_all": {
+              "k": 0,
+              "n": 720,
+              "rate": 0
+            }
+          },
+          "silent_wrong": {
+            "k": 0,
+            "n": 0,
+            "rate": null,
+            "threshold": 0.2
+          },
+          "f_rel_err": {
+            "n": 43,
+            "min": 0,
+            "p10": 0,
+            "median": 0,
+            "p90": 0.6584,
+            "max": 0.9217
+          },
+          "shape_err_max": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "shape_err_median": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "joint_residual": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "seg_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "ink_gap_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_tilt_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "fitted_f_rel_err": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          },
+          "axis_dir_err_deg": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        }
+      }
+    }
+  },
+  "by_min_reach": {
+    "reach_0": {
+      "far_vps": {
+        "scenes": 96,
+        "confirm": {
+          "k": 0,
+          "n": 96,
+          "rate": 0
+        },
+        "vps_found": {
+          "one": 0,
+          "two": 50,
+          "three": 46
+        },
+        "misassign": {
+          "k": 245,
+          "n": 852,
+          "rate": 0.2876,
+          "unassigned": 300,
+          "population": 1152
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 1152,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "near_vps_1pt": {
+        "scenes": 24,
+        "confirm": {
+          "k": 0,
+          "n": 24,
+          "rate": 0
+        },
+        "vps_found": {
+          "one": 1,
+          "two": 12,
+          "three": 11
+        },
+        "misassign": {
+          "k": 29,
+          "n": 199,
+          "rate": 0.1457,
+          "unassigned": 89,
+          "population": 288
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 288,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      }
+    },
+    "reach_0.5": {
+      "far_vps": {
+        "scenes": 96,
+        "confirm": {
+          "k": 0,
+          "n": 96,
+          "rate": 0
+        },
+        "vps_found": {
+          "one": 5,
+          "two": 42,
+          "three": 49
+        },
+        "misassign": {
+          "k": 114,
+          "n": 828,
+          "rate": 0.1377,
+          "unassigned": 324,
+          "population": 1152
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 1152,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "near_vps_1pt": {
+        "scenes": 24,
+        "confirm": {
+          "k": 0,
+          "n": 24,
+          "rate": 0
+        },
+        "vps_found": {
+          "one": 3,
+          "two": 12,
+          "three": 9
+        },
+        "misassign": {
+          "k": 9,
+          "n": 183,
+          "rate": 0.0492,
+          "unassigned": 105,
+          "population": 288
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 288,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      }
+    },
+    "reach_1": {
+      "far_vps": {
+        "scenes": 96,
+        "confirm": {
+          "k": 0,
+          "n": 96,
+          "rate": 0
+        },
+        "vps_found": {
+          "one": 7,
+          "two": 39,
+          "three": 50
+        },
+        "misassign": {
+          "k": 113,
+          "n": 826,
+          "rate": 0.1368,
+          "unassigned": 326,
+          "population": 1152
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 1152,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "near_vps_1pt": {
+        "scenes": 24,
+        "confirm": {
+          "k": 0,
+          "n": 24,
+          "rate": 0
+        },
+        "vps_found": {
+          "one": 3,
+          "two": 13,
+          "three": 8
+        },
+        "misassign": {
+          "k": 8,
+          "n": 180,
+          "rate": 0.0444,
+          "unassigned": 108,
+          "population": 288
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 288,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      }
+    },
+    "reach_2": {
+      "far_vps": {
+        "scenes": 96,
+        "confirm": {
+          "k": 0,
+          "n": 96,
+          "rate": 0
+        },
+        "vps_found": {
+          "one": 8,
+          "two": 49,
+          "three": 39
+        },
+        "misassign": {
+          "k": 113,
+          "n": 782,
+          "rate": 0.1445,
+          "unassigned": 370,
+          "population": 1152
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 1152,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "near_vps_1pt": {
+        "scenes": 24,
+        "confirm": {
+          "k": 0,
+          "n": 24,
+          "rate": 0
+        },
+        "vps_found": {
+          "one": 3,
+          "two": 13,
+          "three": 8
+        },
+        "misassign": {
+          "k": 8,
+          "n": 180,
+          "rate": 0.0444,
+          "unassigned": 108,
+          "population": 288
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 288,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      }
+    },
+    "reach_4": {
+      "far_vps": {
+        "scenes": 96,
+        "confirm": {
+          "k": 0,
+          "n": 96,
+          "rate": 0
+        },
+        "vps_found": {
+          "one": 16,
+          "two": 57,
+          "three": 19
+        },
+        "misassign": {
+          "k": 84,
+          "n": 648,
+          "rate": 0.1296,
+          "unassigned": 504,
+          "population": 1152
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 1152,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "near_vps_1pt": {
+        "scenes": 24,
+        "confirm": {
+          "k": 0,
+          "n": 24,
+          "rate": 0
+        },
+        "vps_found": {
+          "one": 4,
+          "two": 19,
+          "three": 0
+        },
+        "misassign": {
+          "k": 6,
+          "n": 146,
+          "rate": 0.0411,
+          "unassigned": 142,
+          "population": 288
+        },
+        "fake_joints": {
+          "k": 0,
+          "n": 0,
+          "rate": null
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 288,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "threshold": 0.2
+        },
+        "f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_max": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "joint_residual": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "seg_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "ink_gap_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_tilt_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "fitted_f_rel_err": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "axis_dir_err_deg": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      }
+    }
+  },
+  "by_min_spread_mult": {
+    "mult_0": {
+      "true_finite_kept": {
+        "k": 221,
+        "n": 221,
+        "rate": 1
+      },
+      "true_infinite_wrongly_kept": {
+        "k": 67,
+        "n": 67,
+        "rate": 1
+      },
+      "spread_deg_true_finite": {
+        "n": 221,
+        "min": 0.4269,
+        "p10": 3.87,
+        "median": 15.0257,
+        "p90": 50.0258,
+        "max": 79.3907
+      },
+      "spread_deg_true_infinite": {
+        "n": 67,
+        "min": 0.4725,
+        "p10": 1.2249,
+        "median": 3.5668,
+        "p90": 10.6306,
+        "max": 17.0767
+      }
+    },
+    "mult_1": {
+      "true_finite_kept": {
+        "k": 208,
+        "n": 221,
+        "rate": 0.9412
+      },
+      "true_infinite_wrongly_kept": {
+        "k": 45,
+        "n": 67,
+        "rate": 0.6716
+      },
+      "spread_deg_true_finite": {
+        "n": 221,
+        "min": 0.4269,
+        "p10": 3.87,
+        "median": 15.0257,
+        "p90": 50.0258,
+        "max": 79.3907
+      },
+      "spread_deg_true_infinite": {
+        "n": 67,
+        "min": 0.4725,
+        "p10": 1.2249,
+        "median": 3.5668,
+        "p90": 10.6306,
+        "max": 17.0767
+      }
+    },
+    "mult_1.5": {
+      "true_finite_kept": {
+        "k": 199,
+        "n": 221,
+        "rate": 0.9005
+      },
+      "true_infinite_wrongly_kept": {
+        "k": 33,
+        "n": 67,
+        "rate": 0.4925
+      },
+      "spread_deg_true_finite": {
+        "n": 221,
+        "min": 0.4269,
+        "p10": 3.87,
+        "median": 15.0257,
+        "p90": 50.0258,
+        "max": 79.3907
+      },
+      "spread_deg_true_infinite": {
+        "n": 67,
+        "min": 0.4725,
+        "p10": 1.2249,
+        "median": 3.5668,
+        "p90": 10.6306,
+        "max": 17.0767
+      }
+    },
+    "mult_2": {
+      "true_finite_kept": {
+        "k": 190,
+        "n": 221,
+        "rate": 0.8597
+      },
+      "true_infinite_wrongly_kept": {
+        "k": 22,
+        "n": 67,
+        "rate": 0.3284
+      },
+      "spread_deg_true_finite": {
+        "n": 221,
+        "min": 0.4269,
+        "p10": 3.87,
+        "median": 15.0257,
+        "p90": 50.0258,
+        "max": 79.3907
+      },
+      "spread_deg_true_infinite": {
+        "n": 67,
+        "min": 0.4725,
+        "p10": 1.2249,
+        "median": 3.5668,
+        "p90": 10.6306,
+        "max": 17.0767
+      }
+    },
+    "mult_3": {
+      "true_finite_kept": {
+        "k": 171,
+        "n": 221,
+        "rate": 0.7738
+      },
+      "true_infinite_wrongly_kept": {
+        "k": 15,
+        "n": 67,
+        "rate": 0.2239
+      },
+      "spread_deg_true_finite": {
+        "n": 221,
+        "min": 0.4269,
+        "p10": 3.87,
+        "median": 15.0257,
+        "p90": 50.0258,
+        "max": 79.3907
+      },
+      "spread_deg_true_infinite": {
+        "n": 67,
+        "min": 0.4725,
+        "p10": 1.2249,
+        "median": 3.5668,
+        "p90": 10.6306,
+        "max": 17.0767
+      }
+    }
+  },
+  "spread_note": "참 소실점이 **유한**인 다발을 살리는가(첫 열)와 **무한원**인 다발을 잘못 받는가(둘째 열)를 함께 낸다. 한쪽만 보면 한 방향만 잠근다",
+  "ls_weight_oracle": {
+    "uniform": {
+      "n": 217,
+      "min": 0,
+      "p10": 0,
+      "median": 0.0921,
+      "p90": 0.4055,
+      "max": 0.7281
+    },
+    "len": {
+      "n": 216,
+      "min": 0,
+      "p10": 0,
+      "median": 0.086,
+      "p90": 0.4044,
+      "max": 0.8077
+    },
+    "len2": {
+      "n": 215,
+      "min": 0,
+      "p10": 0,
+      "median": 0.0793,
+      "p90": 0.3942,
+      "max": 0.8934
+    }
+  },
+  "screen_len_ratio_per_composition": [
+    2.057,
+    4.37,
+    2.07,
+    2.031,
+    4.443
+  ],
+  "screen_len_ratio_note": "12모서리의 화면 길이 최대/최소 비. **1.5 미만이면 길이 가중이 균등 가중과 거의 같아지므로 `ls_weight_oracle`의 무변화는 정보가 없다**(리뷰어 지적)",
+  "unit_equivalence": {
+    "misfit_0_06_as_deg": 6.8921,
+    "deg_2_5_as_misfit": 0.02181
+  },
+  "unit_note": "`vpMisfit = sin φ / 2`이므로 각도 임계는 부적합도 임계의 **단조 재매개화**다. 단위를 바꾸는 것은 아무것도 고치지 않는다(PITFALLS #24). misfit 0.06은 6.892°이므로 채택한 2.5°는 그보다 **엄격하다**",
+  "constants": {
+    "hash": "034fc089",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  }
+}

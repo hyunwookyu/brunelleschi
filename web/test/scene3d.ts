@@ -43,11 +43,17 @@ export function scene(
   ];
   const principal: Pt2 = [imgSize[0] / 2, imgSize[1] / 2];
   const vp = (d: Vec3): Pt2 => [principal[0] + (f * d[0]) / d[2], principal[1] + (f * d[1]) / d[2]];
+  // **피치 0이면 수직축이 화면 평행이라 소실점이 무한원이다**(c=0, 이론서 2.2) — 그때
+  // `vp(axes[2])`는 `[NaN, Infinity]`이고 그것을 `groundFrame`에 주면 지면 법선이 NaN이 된다.
+  // 무한원이면 카메라가 수평이라는 뜻이므로 `null`을 준다(그러면 (0,1,0)으로 떨어진다).
+  // _2점·1점 구도를 처음 넣었을 때 `groundPoint`가 NaN을 돌려주고 픽스처가 통째로 죽었다._
+  const vUp = vp(axes[2]);
+  const upFinite = Number.isFinite(vUp[0]) && Number.isFinite(vUp[1]);
   return {
     principal, f, imgSize,
     vps: [vp(axes[0]), vp(axes[1]), vp(axes[2])],
     axes,
-    ground: groundFrame(vp(axes[2]), principal, f, EYE_HEIGHT),
+    ground: groundFrame(upFinite ? vUp : null, principal, f, EYE_HEIGHT),
   };
 }
 

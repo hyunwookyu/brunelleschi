@@ -122,7 +122,10 @@ describe("소실점 후보 검출 (§5.1)", () => {
     const vps = assignAxes(got, lines);
     const cam = recoverCamera(vps, SZ);
     expect(cam.ok).toBe(true);
-    expect(cam.case).toBe("3pt");
+    // **3점으로 읽히지 않아도 실패가 아니다.** 다발의 방향 산포가 작으면 그 소실점은
+    // 위치가 정해지지 않으므로 `infinite`로 표시되고 축이 `screen`이 된다(`min_spread_mult`).
+    // 그러면 2점으로 읽고 **나중에 승격한다** — 그것이 §6의 설계다.
+    expect(["3pt", "2pt"]).toContain(cam.case);
     // **시드 하나로 정밀도를 주장하지 않는다**(AS-C9). 분포는 원장이 낸다
     // (`vp_detect.json`: 중앙 0.105 · p90 0.267). 여기서는 자릿수만 잠근다.
     expect(Math.abs(cam.f! - sc.f) / sc.f).toBeLessThan(0.35);

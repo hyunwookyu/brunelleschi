@@ -14,8 +14,8 @@
 // **직교성은 여기서 보지 않는다.** 검출은 후보를 제안하고 **카메라가 검증한다** —
 // 3점은 예각 조건(6.5), 2점은 주점 반대쪽 조건(6.2)이 f² < 0으로 거른다.
 // 검출에 직교 조건을 넣으면 같은 판정을 두 군데서 하게 되고, 어긋나면 원인을 못 가른다.
-import { lineIntersect, lsIntersection, isFiniteVp, type Pt2 } from "./camera.js";
-import { representative, vpMisfit, type Rep } from "./axis.js";
+import { lineIntersect, isFiniteVp, type Pt2 } from "./camera.js";
+import { representative, vpMisfit, type Axis, type Rep } from "./axis.js";
 
 /** 검출에 들어가는 대표 직선. `id`는 어느 획에서 왔는지. */
 export interface DetLine { id: string; rep: Rep }
@@ -26,8 +26,14 @@ export interface VpCandidate {
   support: string[];
   /** 지지선들의 **각도 오차 중앙값(도)**. 작을수록 한 점에 잘 모였다. */
   residual: number;
-  /** 화면 밖 아주 멀리 — 사실상 무한원(화면 평행, c=0. 이론서 2.2). */
+  /**
+   * **유한 소실점이 아니다** — 화면 밖 아주 멀거나, 지지선 방향 산포가 작아
+   * **위치가 정해지지 않는다**(화면 평행, c=0. 이론서 2.2).
+   * 이 후보의 지지선은 `screen` 축이 된다.
+   */
   infinite: boolean;
+  /** 지지선 방향의 최대 각차(도). 작으면 교점 위치가 노이즈에 지배된다. */
+  spreadDeg: number;
 }
 
 export const VP_TOL = {
@@ -64,6 +70,23 @@ export const VP_TOL = {
    * 근·원 소실점 어디서나 같은 식으로 작동한다(A-3: 가장 단순한 것).
    */
   min_reach: 1.0,
+  /**
+   * **지지 판정 ③ — 소실점이 실제로 어디 있는지 정해지는가**(localizability).
+   * 지지선 **방향의 최대 각차**가 `support_deg`의 이 배수 이상이어야 한다.
+   *
+   * 화면 평행 축(c=0)의 획들은 서로 나란하므로 **노이즈만으로도 어딘가에서 만난다** —
+   * 그 교점은 아주 멀고 위치가 노이즈에 완전히 지배된다. 그것을 유한 소실점으로 받으면
+   * **2점 투시가 3점으로 읽히고 `fFromThreeVps`가 엉뚱한 f를 낸다.**
+   * 실제로 그랬다: 2점 구도에서 수직 4획이 `[245, −9252]`에 모여 지지 4를 만들었다.
+   *
+   * 교점의 위치 불확실도는 `노이즈 / 방향 산포`에 비례하므로 산포를 임계로 쓴다.
+   * 측정(`vp_detect.json`): 참 소실점이 무한원인 다발은 산포 **1.3~3.4°**,
+   * 유한인 다발은 **4.2~54.5°**다. 1.5배(=3.75°)가 그 사이에 든다.
+   *
+   * 걸린 다발은 버리지 않는다 — `infinite: true`로 표시하고 그 획들은 **`screen` 축**이 된다
+   * (소실점이 없다는 것이 곧 화면 평행이라는 뜻이다, 이론서 2.2).
+   */
+  min_spread_mult: 1.5,
   /** **3개 이상**(§5.1). 2는 교점이 반드시 생기므로 정보가 없다. */
   min_support: 3,
   /** 이보다 짧은 획은 방향을 못 믿는다 — 화면 대각 대비(`AXIS_TOL.min_len_ratio`와 같다). */
@@ -142,6 +165,22 @@ export function vpReach(rep: Rep, vp: Pt2): number {
   return rep.len < 1e-9 ? 0 : Math.min(da, db) / rep.len;
 }
 
+/** 지지선 **방향**의 최대 각차(도). 방향은 부호 없는 0~180°로 접는다. */
+export function dirSpread(reps: Rep[]): number {
+  const angs = reps.map(r => {
+    let a = Math.atan2(r.b[1] - r.a[1], r.b[0] - r.a[0]);
+    if (a < 0) a += Math.PI;
+    return (a * 180) / Math.PI;
+  });
+  let m = 0;
+  for (const p of angs) for (const q of angs) {
+    let d = Math.abs(p - q);
+    if (d > 90) d = 180 - d;
+    m = Math.max(m, d);
+  }
+  return m;
+}
+
 const median = (xs: number[]): number => {
   if (!xs.length) return Infinity;
   const s = xs.slice().sort((a, b) => a - b);
@@ -159,6 +198,36 @@ const median = (xs: number[]): number => {
  * 근평행 쌍의 교점은 노이즈에 거칠어 그 자체로는 소실점 추정치가 못 된다 —
  * 지지를 모으는 **씨앗**으로만 쓰고 값은 재적합이 준다.
  */
+/**
+ * 지지선들의 **길이² 가중 최소제곱 교점**.
+ *
+ * ⚠ D-L5 초판은 "가중을 넣어도 중앙값이 안 움직인다 → f 오차는 입력의 몫"이라고 적었고
+ * **그것이 틀렸다.** 그 대조는 구도 **하나**(직육면체 하나)에서 돌았고 12모서리의 화면 길이가
+ * 서로 비슷해 길이 가중이 균등 가중과 거의 같아졌다. 구도를 다섯으로 늘려 다시 재니
+ * f 상대오차 중앙이 균등 0.0921 → `len` 0.0860 → **`len²` 0.0793**으로 움직인다
+ * (`vp_detect.json`). 리뷰어가 그 대안 설명을 정확히 짚었다.
+ *
+ * 길이²가 자연스러운 가중인 이유: 짧은 획의 방향 오차는 끝점 잡음 ÷ 길이로 커지므로
+ * 방향의 분산이 `1/len²`에 비례한다 — 그 역수가 가중이다.
+ */
+function fitVp(sup: DetLine[]): Pt2 | null {
+  let a00 = 0, a01 = 0, a11 = 0, b0 = 0, b1 = 0;
+  for (const { rep } of sup) {
+    const dx = rep.b[0] - rep.a[0], dy = rep.b[1] - rep.a[1];
+    const L = Math.hypot(dx, dy);
+    if (L < 1e-9) continue;
+    const nx = -dy / L, ny = dx / L;                 // 법선
+    const c = nx * rep.a[0] + ny * rep.a[1];
+    const w = L * L;
+    a00 += w * nx * nx; a01 += w * nx * ny; a11 += w * ny * ny;
+    b0 += w * nx * c; b1 += w * ny * c;
+  }
+  const det = a00 * a11 - a01 * a01;
+  if (Math.abs(det) < 1e-9) return null;
+  const x = (a11 * b0 - a01 * b1) / det, y = (a00 * b1 - a01 * b0) / det;
+  return Number.isFinite(x) && Number.isFinite(y) ? [x, y] : null;
+}
+
 export function detectVps(
   lines: DetLine[], imgSize: [number, number], cfg: VpCfg = {},
 ): VpCandidate[] {
@@ -166,12 +235,6 @@ export function detectVps(
   const out: VpCandidate[] = [];
   let pool = lines.slice();
 
-  const fitOver = (sup: DetLine[]): Pt2 | null => {
-    const fit = lsIntersection(sup.map(L => ({
-      p: L.rep.a, d: [L.rep.b[0] - L.rep.a[0], L.rep.b[1] - L.rep.a[1]] as Pt2,
-    })));
-    return fit && Number.isFinite(fit[0]) && Number.isFinite(fit[1]) ? fit : null;
-  };
 
   for (let k = 0; k < c.max_vps; k++) {
     if (pool.length < c.min_support) break;
@@ -194,7 +257,7 @@ export function detectVps(
     // 최소제곱 재적합 → 지지 재수집. 씨앗 교점의 거칠기를 여기서 턴다.
     let vp = best.vp, ids = best.ids, res = best.res, score = best.score;
     for (let pass = 0; pass < c.refit_passes; pass++) {
-      const fit = fitOver(pool.filter(L => ids.includes(L.id)));
+      const fit = fitVp(pool.filter(L => ids.includes(L.id)));
       if (!fit) break;
       const got = supportOf(pool, fit, c);
       // 재적합이 점수를 잃으면 되돌린다 — 최소제곱은 이상점 하나에 끌려간다
@@ -203,7 +266,11 @@ export function detectVps(
     }
     if (ids.length < c.min_support) break;
 
-    out.push({ vp, support: ids, residual: res, infinite: !isFiniteVp(vp, imgSize) });
+    const spreadDeg = dirSpread(pool.filter(L => ids.includes(L.id)).map(L => L.rep));
+    out.push({
+      vp, support: ids, residual: res, spreadDeg,
+      infinite: !isFiniteVp(vp, imgSize) || spreadDeg < c.min_spread_mult * c.support_deg,
+    });
     pool = pool.filter(L => !ids.includes(L.id));
   }
 
@@ -239,14 +306,12 @@ function reassign(
   cands.forEach((cd, i) => {
     const g = groups[i];
     if (g.length < c.min_support) return;
-    const fit = lsIntersection(g.map(L => ({
-      p: L.rep.a, d: [L.rep.b[0] - L.rep.a[0], L.rep.b[1] - L.rep.a[1]] as Pt2,
-    })));
-    const vp = fit && Number.isFinite(fit[0]) && Number.isFinite(fit[1]) ? fit : cd.vp;
+    const vp = fitVp(g) ?? cd.vp;
     const ms = g.map(L => vpAngle(L.rep, vp));
+    const spreadDeg = dirSpread(g.map(L => L.rep));
     out.push({
-      vp, support: g.map(L => L.id), residual: median(ms),
-      infinite: !isFiniteVp(vp, imgSize),
+      vp, support: g.map(L => L.id), residual: median(ms), spreadDeg,
+      infinite: !isFiniteVp(vp, imgSize) || spreadDeg < c.min_spread_mult * c.support_deg,
     });
   });
   return out;
@@ -285,6 +350,44 @@ export function orderVps(cands: VpCandidate[], lines: DetLine[]): (Pt2 | null)[]
 }
 
 /**
+ * **획을 축별로 분류한다**(§5.2의 첫 단계). 검출이 이미 군집을 만들었으므로 다시 판정하지 않는다 —
+ * 지지 집합이 곧 축이다.
+ *
+ * 소실점이 안 잡힌 축은 **화면 평행**이다(c=0, 이론서 2.2). 그런데 그 라벨을 함부로 주면
+ * 3점 구도에서 군집에 못 든 획이 우연히 세로에 가깝다는 이유로 `screen`이 된다 —
+ * 조용히 틀린 축이다(A-3). 그래서 **개수로 잠근다**: 소실점 `k`개가 잡혔으면
+ * 화면 평행 축은 `3 − k`개뿐이고, `k = 3`이면 `screen` 라벨을 아예 주지 않는다(5.3 자유도 회계).
+ *
+ * 어느 쪽도 아니면 `free`(미분류)다. **미분류는 놓지 않고 화면에 남긴다**(D-C2).
+ */
+export function classifyByDetection(
+  lines: DetLine[], cands: VpCandidate[], vps: (Pt2 | null)[], imgSize: [number, number],
+  screenParallel = 0.05,
+): Map<string, Axis> {
+  const out = new Map<string, Axis>();
+  // 지지 집합 → 축 번호. `assignAxes`가 정한 순서와 같은 소실점을 찾아 붙인다
+  cands.forEach(cd => {
+    const ax = vps.findIndex(v => v && v[0] === cd.vp[0] && v[1] === cd.vp[1]);
+    if (ax < 0) return;
+    for (const id of cd.support) out.set(id, ax as 0 | 1 | 2);
+  });
+  // 무한원 다발의 지지선은 곧바로 `screen`이다 — 소실점이 없다는 것이 화면 평행이라는 뜻이다
+  for (const cd of cands) {
+    if (!cd.infinite) continue;
+    for (const id of cd.support) if (!out.has(id)) out.set(id, "screen");
+  }
+  const nScreen = 3 - cands.filter(c => !c.infinite).length;
+  for (const L of lines) {
+    if (out.has(L.id)) continue;
+    if (nScreen <= 0) { out.set(L.id, "free"); continue; }
+    const dx = Math.abs(L.rep.b[0] - L.rep.a[0]) / L.rep.len;
+    const dy = Math.abs(L.rep.b[1] - L.rep.a[1]) / L.rep.len;
+    out.set(L.id, Math.min(dx, dy) <= screenParallel ? "screen" : "free");
+  }
+  return out;
+}
+
+/**
  * **수직축이 아직 안 잡혔을 때**는 `vps[2]`를 비워 두면 안 된다 —
  * 1점 투시에서 잡힌 소실점 하나는 **깊이축**이고 수직이 아니다.
  *
@@ -297,9 +400,11 @@ export function orderVps(cands: VpCandidate[], lines: DetLine[]): (Pt2 | null)[]
  * 소실점이 안 잡혔다는 것이 곧 그 축이 화면에 평행하다는 뜻이다(이론서 2.2).
  */
 export function assignAxes(cands: VpCandidate[], lines: DetLine[]): (Pt2 | null)[] {
-  if (cands.length >= 3) return orderVps(cands.slice(0, 3), lines);
+  // **유한 소실점만 축 번호를 받는다.** 무한원 다발은 `screen`이므로 `vps`에 들어가지 않는다
+  const fin = cands.filter(c => !c.infinite);
+  if (fin.length >= 3) return orderVps(fin.slice(0, 3), lines);
   const vps: (Pt2 | null)[] = [null, null, null];
-  const sorted = cands.slice().sort((a, b) => a.vp[0] - b.vp[0]);
+  const sorted = fin.slice().sort((a, b) => a.vp[0] - b.vp[0]);
   sorted.forEach((c, i) => { if (i < 2) vps[i] = c.vp; });
   return vps;
 }
