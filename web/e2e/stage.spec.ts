@@ -1005,3 +1005,125 @@ test("궤도 후 계속 그리기 — 새 각도가 새 뷰가 된다", async ({
   ];
   led.l_b8 = l;
 });
+
+/**
+ * L-C.1 — **차수 승격**(§6.1). 산출: `stage_browser.json`의 `l_c1`.
+ *
+ * 재는 것은 **배선**이다: 소실점을 하나 더 잡고 `차수 승격`을 누르면
+ *   ① 차수가 실제로 오른다 ② **전부 다시 풀린다** ③ **화면이 움직인다**(§6.2 — 초기 확정과 다르다)
+ *   ④ `실행취소`가 되돌린다 ⑤ 스냅이 새 상으로 옮겨진다
+ *
+ * ⚠ **말하지 않는 것**: 승격이 나아지게 하는가(그것은 `order_promote.json`이 참값으로 잰다) ·
+ * 사람이 세 번째 소실점을 얼마나 정확히 잡는가(표본 0).
+ */
+test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린다", async ({ page }) => {
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  const l: Record<string, unknown> = {};
+
+  // **2점으로 시작한다** — 수직 축 가이드를 안 세운다
+  l.setup2pt = await page.evaluate(async () => {
+    const S = window.S2S;
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
+    const m = await import("/test/scene3d.ts");
+    const doc = await import("/src/ui/doc.ts");
+    const vd = await import("/src/s3d/vpDraft.ts");
+    const el = document.getElementById("ink") as HTMLCanvasElement;
+    const size: [number, number] = [el.clientWidth, el.clientHeight];
+    const sc = m.scene(35, 15, 1000, size);
+    const edges = m.boxEdges(sc, [0.6, -0.4, 4.2], 1.2, 1.0, 0.9);
+    let s0 = 12345 >>> 0;
+    const r = () => { s0 = (s0 * 1664525 + 1013904223) >>> 0; return s0 / 4294967296; };
+    const drawn = m.drawEdges(sc, edges, "medium", r, 0.37, 0.006, 0);
+    for (const e of drawn) S.doc().strokes.push(doc.newSStroke(e.pts2d, S.doc().currentView));
+    const margin = 0.02 * Math.hypot(size[0], size[1]);
+    const mk = (ax: number, ts: number[][]) => {
+      const vp = sc.vps[ax];
+      const out: unknown[] = [];
+      for (const t of ts) {
+        const q = [t[0] * size[0], t[1] * size[1]];
+        const far = [vp[0] + (q[0] - vp[0]) * 1e4, vp[1] + (q[1] - vp[1]) * 1e4];
+        const cl = vd.clipToCanvas([vp[0], vp[1]], far, size, margin);
+        if (cl) out.push({ axis: ax, a: cl[0], b: cl[1] });
+      }
+      return out;
+    };
+    // 가로 둘만 — **수직 축은 비운다**(2점 투시)
+    S.cam.guides = [...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])];
+    S.cam.apply(); S.refresh();
+    (window as any).__SC2 = sc;
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    return { order: S.order(), lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+             locked: S.cam.locked };
+  });
+  expect((l.setup2pt as any).order).toBe(2);
+  expect((l.setup2pt as any).lifted).toBeGreaterThan(0);
+
+  // ---- 소실점을 하나 더 잡는다 → 차수 승격
+  l.promote = await page.evaluate(async () => {
+    const S = window.S2S;
+    const vd = await import("/src/s3d/vpDraft.ts");
+    const sc = (window as any).__SC2;
+    const el = document.getElementById("ink") as HTMLCanvasElement;
+    const size: [number, number] = [el.clientWidth, el.clientHeight];
+    const margin = 0.02 * Math.hypot(size[0], size[1]);
+    const before = {
+      order: S.order(), lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+      first_id: S.doc().strokes.find((s: any) => s.seg3d).id,
+      seg0: S.doc().strokes.find((s: any) => s.seg3d).seg3d.map((p: number[]) => [...p]),
+      snap_count: S.doc().strokes.filter((s: any) => s.snapStart?.ofId).length,
+    };
+    S.unlockGuides();
+    const vp = sc.vps[2];
+    for (const t of [[0.42, 0.35], [0.62, 0.35]]) {
+      const q = [t[0] * size[0], t[1] * size[1]];
+      const far = [vp[0] + (q[0] - vp[0]) * 1e4, vp[1] + (q[1] - vp[1]) * 1e4];
+      const cl = vd.clipToCanvas([vp[0], vp[1]], far, size, margin);
+      if (cl) S.cam.guides.push({ axis: 2, a: cl[0], b: cl[1] });
+    }
+    S.cam.apply(); S.refresh();
+    const midOrder = S.order();
+    S.promoteOrderNow();
+    const st0 = S.doc().strokes.find((s: any) => s.id === before.first_id)!;
+    const moved = st0.seg3d
+      ? st0.seg3d.some((p: number[], i: number) =>
+          p.some((v: number, k: number) => Math.abs(v - before.seg0[i][k]) > 1e-9))
+      : true;
+    return {
+      before, order_after_guides: midOrder, order: S.order(),
+      lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+      geometry_moved: moved, locked: S.cam.locked, pinned: S.stage.isPinned,
+      note: document.getElementById("status")!.innerText,
+      size_heal_count: S.SIZE_HEAL.count,
+    };
+  });
+  const pr = l.promote as any;
+  // ① 차수가 올랐다
+  expect(pr.before.order).toBe(2);
+  expect(pr.order).toBe(3);
+  // ③ **화면이 움직인다** — §5.3의 "전환 무변화"는 초기 확정에 한한 이야기다(§6.2)
+  expect(pr.geometry_moved).toBe(true);
+  expect(pr.locked).toBe(true);
+  expect(pr.pinned).toBe(true);
+  expect(pr.note).toContain("차수 승격 2점 → 3점");
+
+  // ---- ④ 되돌리기(§6.2 — 주 판정 수단)
+  l.undo = await page.evaluate((arg: { seg0: number[][]; id: string }) => {
+    const S = window.S2S;
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="undo"]')!.click();
+    const st0 = S.doc().strokes.find((s: any) => s.id === arg.id)!;
+    const same = !!st0.seg3d && st0.seg3d.every((p: number[], i: number) =>
+      p.every((v: number, k: number) => Math.abs(v - arg.seg0[i][k]) < 1e-12));
+    return { restored: same, lifted: S.doc().strokes.filter((s: any) => s.seg3d).length };
+  }, { seg0: pr.before.seg0, id: pr.before.first_id });
+  // **되돌리기가 승격 전 기하를 정확히 복원한다** — 그것이 §6.2의 전제다
+  expect((l.undo as any).restored).toBe(true);
+  expect((l.undo as any).lifted).toBe(pr.before.lifted);
+
+  l.what_this_does_not_say = [
+    "승격이 **나아지게 하는가** — 참값 대조는 `order_promote.json`이 한다(앱에는 참값이 없다)",
+    "사람이 세 번째 소실점을 얼마나 정확히 잡는가 — **표본 0**(AS-L9)",
+    "여기 소실점은 **참값을 넣은 것**이다. 검출·조정 오차는 L-A·L-B가 잰다",
+  ];
+  led.l_c1 = l;
+});

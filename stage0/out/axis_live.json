@@ -87,58 +87,88 @@
           "cut_0_1": {
             "silent_wrong": "1360/2416",
             "rate": 0.5629,
-            "right_over_all": 0.2444
+            "right_over_all": 0.2444,
+            "wrong_over_all": 0.3148,
+            "wrong_count": 1360
           },
           "cut_0_15": {
             "silent_wrong": "1090/2416",
             "rate": 0.4512,
-            "right_over_all": 0.3069
+            "right_over_all": 0.3069,
+            "wrong_over_all": 0.2523,
+            "wrong_count": 1090
           },
           "cut_0_2": {
             "silent_wrong": "874/2416",
             "rate": 0.3618,
-            "right_over_all": 0.3569
+            "right_over_all": 0.3569,
+            "wrong_over_all": 0.2023,
+            "wrong_count": 874
           },
           "cut_0_25": {
             "silent_wrong": "702/2416",
             "rate": 0.2906,
-            "right_over_all": 0.3968
+            "right_over_all": 0.3968,
+            "wrong_over_all": 0.1625,
+            "wrong_count": 702
           },
           "cut_0_3": {
             "silent_wrong": "559/2416",
             "rate": 0.2314,
-            "right_over_all": 0.4299
+            "right_over_all": 0.4299,
+            "wrong_over_all": 0.1294,
+            "wrong_count": 559
           },
           "cut_0_35": {
             "silent_wrong": "424/2416",
             "rate": 0.1755,
-            "right_over_all": 0.4611
+            "right_over_all": 0.4611,
+            "wrong_over_all": 0.0981,
+            "wrong_count": 424
           },
           "cut_0_4": {
             "silent_wrong": "316/2416",
             "rate": 0.1308,
-            "right_over_all": 0.4861
+            "right_over_all": 0.4861,
+            "wrong_over_all": 0.0731,
+            "wrong_count": 316
           },
           "cut_0_5": {
             "silent_wrong": "190/2416",
             "rate": 0.0786,
-            "right_over_all": 0.5153
+            "right_over_all": 0.5153,
+            "wrong_over_all": 0.044,
+            "wrong_count": 190
           },
           "cut_0_6": {
             "silent_wrong": "133/2416",
             "rate": 0.055,
-            "right_over_all": 0.5285
+            "right_over_all": 0.5285,
+            "wrong_over_all": 0.0308,
+            "wrong_count": 133
           },
           "cut_0_7": {
             "silent_wrong": "90/2416",
             "rate": 0.0373,
-            "right_over_all": 0.5384
+            "right_over_all": 0.5384,
+            "wrong_over_all": 0.0208,
+            "wrong_count": 90
           },
           "cut_1": {
             "silent_wrong": "46/2416",
             "rate": 0.019,
-            "right_over_all": 0.5486
+            "right_over_all": 0.5486,
+            "wrong_over_all": 0.0106,
+            "wrong_count": 46
           }
+        },
+        "shape_err": {
+          "n": 2416,
+          "min": 0.0006,
+          "p10": 0.0197,
+          "median": 0.1222,
+          "p90": 0.4468,
+          "max": 3.3512
         }
       },
       "live_with_anchor": {
@@ -148,58 +178,88 @@
           "cut_0_1": {
             "silent_wrong": "781/3403",
             "rate": 0.2295,
-            "right_over_all": 0.6069
+            "right_over_all": 0.6069,
+            "wrong_over_all": 0.1808,
+            "wrong_count": 781
           },
           "cut_0_15": {
             "silent_wrong": "628/3403",
             "rate": 0.1845,
-            "right_over_all": 0.6424
+            "right_over_all": 0.6424,
+            "wrong_over_all": 0.1454,
+            "wrong_count": 628
           },
           "cut_0_2": {
             "silent_wrong": "568/3403",
             "rate": 0.1669,
-            "right_over_all": 0.6563
+            "right_over_all": 0.6563,
+            "wrong_over_all": 0.1315,
+            "wrong_count": 568
           },
           "cut_0_25": {
             "silent_wrong": "542/3403",
             "rate": 0.1593,
-            "right_over_all": 0.6623
+            "right_over_all": 0.6623,
+            "wrong_over_all": 0.1255,
+            "wrong_count": 542
           },
           "cut_0_3": {
             "silent_wrong": "533/3403",
             "rate": 0.1566,
-            "right_over_all": 0.6644
+            "right_over_all": 0.6644,
+            "wrong_over_all": 0.1234,
+            "wrong_count": 533
           },
           "cut_0_35": {
             "silent_wrong": "525/3403",
             "rate": 0.1543,
-            "right_over_all": 0.6662
+            "right_over_all": 0.6662,
+            "wrong_over_all": 0.1215,
+            "wrong_count": 525
           },
           "cut_0_4": {
             "silent_wrong": "516/3403",
             "rate": 0.1516,
-            "right_over_all": 0.6683
+            "right_over_all": 0.6683,
+            "wrong_over_all": 0.1194,
+            "wrong_count": 516
           },
           "cut_0_5": {
             "silent_wrong": "503/3403",
             "rate": 0.1478,
-            "right_over_all": 0.6713
+            "right_over_all": 0.6713,
+            "wrong_over_all": 0.1164,
+            "wrong_count": 503
           },
           "cut_0_6": {
             "silent_wrong": "456/3403",
             "rate": 0.134,
-            "right_over_all": 0.6822
+            "right_over_all": 0.6822,
+            "wrong_over_all": 0.1056,
+            "wrong_count": 456
           },
           "cut_0_7": {
             "silent_wrong": "369/3403",
             "rate": 0.1084,
-            "right_over_all": 0.7023
+            "right_over_all": 0.7023,
+            "wrong_over_all": 0.0854,
+            "wrong_count": 369
           },
           "cut_1": {
             "silent_wrong": "172/3403",
             "rate": 0.0505,
-            "right_over_all": 0.7479
+            "right_over_all": 0.7479,
+            "wrong_over_all": 0.0398,
+            "wrong_count": 172
           }
+        },
+        "shape_err": {
+          "n": 3403,
+          "min": 0,
+          "p10": 0,
+          "median": 0.0198,
+          "p90": 0.7149,
+          "max": 13.3313
         }
       }
     },
@@ -207,393 +267,794 @@
       "cut": 0.375,
       "note": "절단 0.375에서 부호가 바뀐다(격자 0.005)"
     },
-    "conclusion": "**교차는 비율에만 있고 개수에는 없다.** 조용히 틀림 *비율*은 절단 0.375에서 뒤집히지만(그 위에서는 앵커가 더 나쁘다), **`right_over_all`(놓였고 맞은 것 / 전체)은 모든 절단·모든 등급에서 앵커가 이긴다** — 앵커가 0.7877 대 0.5593로 **41% 더 놓기 때문이다.** 즉 '앵커는 큰 틀림을 늘린다'는 **조건부 비율의 성질**이고, **같은 획 수에서 맞게 놓이는 개수는 앵커가 언제나 더 많다.** ⚠ 이것이 #15의 반대 방향이다 — 초판은 **비율만 보고** 절단 0.5에서 뒤집힌다고 읽었다. **등급별 분기는 필요 없다**: 교차 절단이 등급 셋에서 0.35~0.40으로 거의 같고 `right_over_all`은 세 등급 전부에서 앵커가 이긴다. ⚠ **다만 두 팔의 게이지가 다르고 확정 쪽이 더 관대하다** — 그래서 이 결론(앵커 우세)은 **보수적**이다.",
-    "by_grade": {
-      "precise": {
-        "confirm_no_anchor": {
-          "placed_over_all": "908/1440",
-          "placed_rate": 0.6306,
-          "by_cut": {
-            "cut_0_1": {
-              "silent_wrong": "461/908",
-              "rate": 0.5077,
-              "right_over_all": 0.3104
-            },
-            "cut_0_15": {
-              "silent_wrong": "367/908",
-              "rate": 0.4042,
-              "right_over_all": 0.3757
-            },
-            "cut_0_2": {
-              "silent_wrong": "307/908",
-              "rate": 0.3381,
-              "right_over_all": 0.4174
-            },
-            "cut_0_25": {
-              "silent_wrong": "246/908",
-              "rate": 0.2709,
-              "right_over_all": 0.4597
-            },
-            "cut_0_3": {
-              "silent_wrong": "188/908",
-              "rate": 0.207,
-              "right_over_all": 0.5
-            },
-            "cut_0_35": {
-              "silent_wrong": "144/908",
-              "rate": 0.1586,
-              "right_over_all": 0.5306
-            },
-            "cut_0_4": {
-              "silent_wrong": "101/908",
-              "rate": 0.1112,
-              "right_over_all": 0.5604
-            },
-            "cut_0_5": {
-              "silent_wrong": "56/908",
-              "rate": 0.0617,
-              "right_over_all": 0.5917
-            },
-            "cut_0_6": {
-              "silent_wrong": "36/908",
-              "rate": 0.0396,
-              "right_over_all": 0.6056
-            },
-            "cut_0_7": {
-              "silent_wrong": "26/908",
-              "rate": 0.0286,
-              "right_over_all": 0.6125
-            },
-            "cut_1": {
-              "silent_wrong": "12/908",
-              "rate": 0.0132,
-              "right_over_all": 0.6222
-            }
+    "arms_end_jitter_positive": {
+      "note": "**`end_jitter > 0`만.** `snap.json`이 규정한 서명(`shape_err.p10 = 0`)이 앵커 팔에 있었다 — L-B.3 2회차가 이미 한 번 고친 결함이고 여기서 재발했다. **두 팔을 나란히 읽을 때는 이 표를 쓴다.**",
+      "confirm_no_anchor": {
+        "placed_over_all": "1563/3240",
+        "placed_rate": 0.4824,
+        "by_cut": {
+          "cut_0_1": {
+            "silent_wrong": "1007/1563",
+            "rate": 0.6443,
+            "right_over_all": 0.1716,
+            "wrong_over_all": 0.3108,
+            "wrong_count": 1007
+          },
+          "cut_0_15": {
+            "silent_wrong": "794/1563",
+            "rate": 0.508,
+            "right_over_all": 0.2373,
+            "wrong_over_all": 0.2451,
+            "wrong_count": 794
+          },
+          "cut_0_2": {
+            "silent_wrong": "643/1563",
+            "rate": 0.4114,
+            "right_over_all": 0.284,
+            "wrong_over_all": 0.1985,
+            "wrong_count": 643
+          },
+          "cut_0_25": {
+            "silent_wrong": "523/1563",
+            "rate": 0.3346,
+            "right_over_all": 0.321,
+            "wrong_over_all": 0.1614,
+            "wrong_count": 523
+          },
+          "cut_0_3": {
+            "silent_wrong": "418/1563",
+            "rate": 0.2674,
+            "right_over_all": 0.3534,
+            "wrong_over_all": 0.129,
+            "wrong_count": 418
+          },
+          "cut_0_35": {
+            "silent_wrong": "320/1563",
+            "rate": 0.2047,
+            "right_over_all": 0.3836,
+            "wrong_over_all": 0.0988,
+            "wrong_count": 320
+          },
+          "cut_0_4": {
+            "silent_wrong": "259/1563",
+            "rate": 0.1657,
+            "right_over_all": 0.4025,
+            "wrong_over_all": 0.0799,
+            "wrong_count": 259
+          },
+          "cut_0_5": {
+            "silent_wrong": "171/1563",
+            "rate": 0.1094,
+            "right_over_all": 0.4296,
+            "wrong_over_all": 0.0528,
+            "wrong_count": 171
+          },
+          "cut_0_6": {
+            "silent_wrong": "120/1563",
+            "rate": 0.0768,
+            "right_over_all": 0.4454,
+            "wrong_over_all": 0.037,
+            "wrong_count": 120
+          },
+          "cut_0_7": {
+            "silent_wrong": "83/1563",
+            "rate": 0.0531,
+            "right_over_all": 0.4568,
+            "wrong_over_all": 0.0256,
+            "wrong_count": 83
+          },
+          "cut_1": {
+            "silent_wrong": "43/1563",
+            "rate": 0.0275,
+            "right_over_all": 0.4691,
+            "wrong_over_all": 0.0133,
+            "wrong_count": 43
           }
         },
-        "live_with_anchor": {
-          "placed_over_all": "1136/1440",
-          "placed_rate": 0.7889,
-          "by_cut": {
-            "cut_0_1": {
-              "silent_wrong": "267/1136",
-              "rate": 0.235,
-              "right_over_all": 0.6035
-            },
-            "cut_0_15": {
-              "silent_wrong": "218/1136",
-              "rate": 0.1919,
-              "right_over_all": 0.6375
-            },
-            "cut_0_2": {
-              "silent_wrong": "198/1136",
-              "rate": 0.1743,
-              "right_over_all": 0.6514
-            },
-            "cut_0_25": {
-              "silent_wrong": "187/1136",
-              "rate": 0.1646,
-              "right_over_all": 0.659
-            },
-            "cut_0_3": {
-              "silent_wrong": "184/1136",
-              "rate": 0.162,
-              "right_over_all": 0.6611
-            },
-            "cut_0_35": {
-              "silent_wrong": "181/1136",
-              "rate": 0.1593,
-              "right_over_all": 0.6632
-            },
-            "cut_0_4": {
-              "silent_wrong": "178/1136",
-              "rate": 0.1567,
-              "right_over_all": 0.6653
-            },
-            "cut_0_5": {
-              "silent_wrong": "174/1136",
-              "rate": 0.1532,
-              "right_over_all": 0.6681
-            },
-            "cut_0_6": {
-              "silent_wrong": "158/1136",
-              "rate": 0.1391,
-              "right_over_all": 0.6792
-            },
-            "cut_0_7": {
-              "silent_wrong": "125/1136",
-              "rate": 0.11,
-              "right_over_all": 0.7021
-            },
-            "cut_1": {
-              "silent_wrong": "58/1136",
-              "rate": 0.0511,
-              "right_over_all": 0.7486
-            }
-          }
-        },
-        "crossing": {
-          "cut": 0.35,
-          "note": "절단 0.35에서 부호가 바뀐다(격자 0.005)"
+        "shape_err": {
+          "n": 1563,
+          "min": 0.0086,
+          "p10": 0.0322,
+          "median": 0.1528,
+          "p90": 0.5231,
+          "max": 3.3512
         }
       },
-      "medium": {
-        "confirm_no_anchor": {
-          "placed_over_all": "868/1440",
-          "placed_rate": 0.6028,
-          "by_cut": {
-            "cut_0_1": {
-              "silent_wrong": "533/868",
-              "rate": 0.6141,
-              "right_over_all": 0.2326
-            },
-            "cut_0_15": {
-              "silent_wrong": "436/868",
-              "rate": 0.5023,
-              "right_over_all": 0.3
-            },
-            "cut_0_2": {
-              "silent_wrong": "340/868",
-              "rate": 0.3917,
-              "right_over_all": 0.3667
-            },
-            "cut_0_25": {
-              "silent_wrong": "273/868",
-              "rate": 0.3145,
-              "right_over_all": 0.4132
-            },
-            "cut_0_3": {
-              "silent_wrong": "222/868",
-              "rate": 0.2558,
-              "right_over_all": 0.4486
-            },
-            "cut_0_35": {
-              "silent_wrong": "165/868",
-              "rate": 0.1901,
-              "right_over_all": 0.4882
-            },
-            "cut_0_4": {
-              "silent_wrong": "121/868",
-              "rate": 0.1394,
-              "right_over_all": 0.5188
-            },
-            "cut_0_5": {
-              "silent_wrong": "77/868",
-              "rate": 0.0887,
-              "right_over_all": 0.5493
-            },
-            "cut_0_6": {
-              "silent_wrong": "59/868",
-              "rate": 0.068,
-              "right_over_all": 0.5618
-            },
-            "cut_0_7": {
-              "silent_wrong": "38/868",
-              "rate": 0.0438,
-              "right_over_all": 0.5764
-            },
-            "cut_1": {
-              "silent_wrong": "22/868",
-              "rate": 0.0253,
-              "right_over_all": 0.5875
-            }
+      "live_with_anchor": {
+        "placed_over_all": "2503/3240",
+        "placed_rate": 0.7725,
+        "by_cut": {
+          "cut_0_1": {
+            "silent_wrong": "686/2503",
+            "rate": 0.2741,
+            "right_over_all": 0.5608,
+            "wrong_over_all": 0.2117,
+            "wrong_count": 686
+          },
+          "cut_0_15": {
+            "silent_wrong": "533/2503",
+            "rate": 0.2129,
+            "right_over_all": 0.608,
+            "wrong_over_all": 0.1645,
+            "wrong_count": 533
+          },
+          "cut_0_2": {
+            "silent_wrong": "473/2503",
+            "rate": 0.189,
+            "right_over_all": 0.6265,
+            "wrong_over_all": 0.146,
+            "wrong_count": 473
+          },
+          "cut_0_25": {
+            "silent_wrong": "447/2503",
+            "rate": 0.1786,
+            "right_over_all": 0.6346,
+            "wrong_over_all": 0.138,
+            "wrong_count": 447
+          },
+          "cut_0_3": {
+            "silent_wrong": "438/2503",
+            "rate": 0.175,
+            "right_over_all": 0.6373,
+            "wrong_over_all": 0.1352,
+            "wrong_count": 438
+          },
+          "cut_0_35": {
+            "silent_wrong": "430/2503",
+            "rate": 0.1718,
+            "right_over_all": 0.6398,
+            "wrong_over_all": 0.1327,
+            "wrong_count": 430
+          },
+          "cut_0_4": {
+            "silent_wrong": "421/2503",
+            "rate": 0.1682,
+            "right_over_all": 0.6426,
+            "wrong_over_all": 0.1299,
+            "wrong_count": 421
+          },
+          "cut_0_5": {
+            "silent_wrong": "408/2503",
+            "rate": 0.163,
+            "right_over_all": 0.6466,
+            "wrong_over_all": 0.1259,
+            "wrong_count": 408
+          },
+          "cut_0_6": {
+            "silent_wrong": "375/2503",
+            "rate": 0.1498,
+            "right_over_all": 0.6568,
+            "wrong_over_all": 0.1157,
+            "wrong_count": 375
+          },
+          "cut_0_7": {
+            "silent_wrong": "304/2503",
+            "rate": 0.1215,
+            "right_over_all": 0.6787,
+            "wrong_over_all": 0.0938,
+            "wrong_count": 304
+          },
+          "cut_1": {
+            "silent_wrong": "136/2503",
+            "rate": 0.0543,
+            "right_over_all": 0.7306,
+            "wrong_over_all": 0.042,
+            "wrong_count": 136
           }
         },
-        "live_with_anchor": {
-          "placed_over_all": "1132/1440",
-          "placed_rate": 0.7861,
-          "by_cut": {
-            "cut_0_1": {
-              "silent_wrong": "254/1132",
-              "rate": 0.2244,
-              "right_over_all": 0.6097
-            },
-            "cut_0_15": {
-              "silent_wrong": "203/1132",
-              "rate": 0.1793,
-              "right_over_all": 0.6451
-            },
-            "cut_0_2": {
-              "silent_wrong": "183/1132",
-              "rate": 0.1617,
-              "right_over_all": 0.659
-            },
-            "cut_0_25": {
-              "silent_wrong": "175/1132",
-              "rate": 0.1546,
-              "right_over_all": 0.6646
-            },
-            "cut_0_3": {
-              "silent_wrong": "171/1132",
-              "rate": 0.1511,
-              "right_over_all": 0.6674
-            },
-            "cut_0_35": {
-              "silent_wrong": "170/1132",
-              "rate": 0.1502,
-              "right_over_all": 0.6681
-            },
-            "cut_0_4": {
-              "silent_wrong": "166/1132",
-              "rate": 0.1466,
-              "right_over_all": 0.6708
-            },
-            "cut_0_5": {
-              "silent_wrong": "163/1132",
-              "rate": 0.144,
-              "right_over_all": 0.6729
-            },
-            "cut_0_6": {
-              "silent_wrong": "146/1132",
-              "rate": 0.129,
-              "right_over_all": 0.6847
-            },
-            "cut_0_7": {
-              "silent_wrong": "120/1132",
-              "rate": 0.106,
-              "right_over_all": 0.7028
-            },
-            "cut_1": {
-              "silent_wrong": "57/1132",
-              "rate": 0.0504,
-              "right_over_all": 0.7465
-            }
-          }
-        },
-        "crossing": {
-          "cut": 0.4,
-          "note": "절단 0.4에서 부호가 바뀐다(격자 0.005)"
+        "shape_err": {
+          "n": 2503,
+          "min": 0,
+          "p10": 0.0047,
+          "median": 0.034,
+          "p90": 0.7268,
+          "max": 13.3313
         }
       },
-      "coarse": {
-        "confirm_no_anchor": {
-          "placed_over_all": "640/1440",
-          "placed_rate": 0.4444,
-          "by_cut": {
-            "cut_0_1": {
-              "silent_wrong": "366/640",
-              "rate": 0.5719,
-              "right_over_all": 0.1903
-            },
-            "cut_0_15": {
-              "silent_wrong": "287/640",
-              "rate": 0.4484,
-              "right_over_all": 0.2451
-            },
-            "cut_0_2": {
-              "silent_wrong": "227/640",
-              "rate": 0.3547,
-              "right_over_all": 0.2868
-            },
-            "cut_0_25": {
-              "silent_wrong": "183/640",
-              "rate": 0.2859,
-              "right_over_all": 0.3174
-            },
-            "cut_0_3": {
-              "silent_wrong": "149/640",
-              "rate": 0.2328,
-              "right_over_all": 0.341
-            },
-            "cut_0_35": {
-              "silent_wrong": "115/640",
-              "rate": 0.1797,
-              "right_over_all": 0.3646
-            },
-            "cut_0_4": {
-              "silent_wrong": "94/640",
-              "rate": 0.1469,
-              "right_over_all": 0.3792
-            },
-            "cut_0_5": {
-              "silent_wrong": "57/640",
-              "rate": 0.0891,
-              "right_over_all": 0.4049
-            },
-            "cut_0_6": {
-              "silent_wrong": "38/640",
-              "rate": 0.0594,
-              "right_over_all": 0.4181
-            },
-            "cut_0_7": {
-              "silent_wrong": "26/640",
-              "rate": 0.0406,
-              "right_over_all": 0.4264
-            },
-            "cut_1": {
-              "silent_wrong": "12/640",
-              "rate": 0.0187,
-              "right_over_all": 0.4361
-            }
+      "crossing": {
+        "cut": 0.4,
+        "note": "절단 0.4에서 부호가 바뀐다(격자 0.005)"
+      },
+      "lambda_table": {
+        "cut_0_1": {
+          "lambda_1": {
+            "live": 0.3491,
+            "confirm": -0.1392,
+            "live_wins": true
+          },
+          "lambda_2": {
+            "live": 0.1373,
+            "confirm": -0.45,
+            "live_wins": true
+          },
+          "lambda_3": {
+            "live": -0.0744,
+            "confirm": -0.7608,
+            "live_wins": true
+          },
+          "lambda_5": {
+            "live": -0.4978,
+            "confirm": -1.3824,
+            "live_wins": true
+          },
+          "lambda_10": {
+            "live": -1.5565,
+            "confirm": -2.9364,
+            "live_wins": true
           }
         },
-        "live_with_anchor": {
-          "placed_over_all": "1135/1440",
-          "placed_rate": 0.7882,
-          "by_cut": {
-            "cut_0_1": {
-              "silent_wrong": "260/1135",
-              "rate": 0.2291,
-              "right_over_all": 0.6076
-            },
-            "cut_0_15": {
-              "silent_wrong": "207/1135",
-              "rate": 0.1824,
-              "right_over_all": 0.6444
-            },
-            "cut_0_2": {
-              "silent_wrong": "187/1135",
-              "rate": 0.1648,
-              "right_over_all": 0.6583
-            },
-            "cut_0_25": {
-              "silent_wrong": "180/1135",
-              "rate": 0.1586,
-              "right_over_all": 0.6632
-            },
-            "cut_0_3": {
-              "silent_wrong": "178/1135",
-              "rate": 0.1568,
-              "right_over_all": 0.6646
-            },
-            "cut_0_35": {
-              "silent_wrong": "174/1135",
-              "rate": 0.1533,
-              "right_over_all": 0.6674
-            },
-            "cut_0_4": {
-              "silent_wrong": "172/1135",
-              "rate": 0.1515,
-              "right_over_all": 0.6687
-            },
-            "cut_0_5": {
-              "silent_wrong": "166/1135",
-              "rate": 0.1463,
-              "right_over_all": 0.6729
-            },
-            "cut_0_6": {
-              "silent_wrong": "152/1135",
-              "rate": 0.1339,
-              "right_over_all": 0.6826
-            },
-            "cut_0_7": {
-              "silent_wrong": "124/1135",
-              "rate": 0.1093,
-              "right_over_all": 0.7021
-            },
-            "cut_1": {
-              "silent_wrong": "57/1135",
-              "rate": 0.0502,
-              "right_over_all": 0.7486
-            }
+        "cut_0_15": {
+          "lambda_1": {
+            "live": 0.4435,
+            "confirm": -0.0077,
+            "live_wins": true
+          },
+          "lambda_2": {
+            "live": 0.279,
+            "confirm": -0.2528,
+            "live_wins": true
+          },
+          "lambda_3": {
+            "live": 0.1145,
+            "confirm": -0.4978,
+            "live_wins": true
+          },
+          "lambda_5": {
+            "live": -0.2145,
+            "confirm": -0.988,
+            "live_wins": true
+          },
+          "lambda_10": {
+            "live": -1.037,
+            "confirm": -2.2133,
+            "live_wins": true
           }
         },
-        "crossing": {
-          "cut": 0.395,
-          "note": "절단 0.395에서 부호가 바뀐다(격자 0.005)"
+        "cut_0_2": {
+          "lambda_1": {
+            "live": 0.4806,
+            "confirm": 0.0855,
+            "live_wins": true
+          },
+          "lambda_2": {
+            "live": 0.3346,
+            "confirm": -0.113,
+            "live_wins": true
+          },
+          "lambda_3": {
+            "live": 0.1886,
+            "confirm": -0.3114,
+            "live_wins": true
+          },
+          "lambda_5": {
+            "live": -0.1034,
+            "confirm": -0.7083,
+            "live_wins": true
+          },
+          "lambda_10": {
+            "live": -0.8333,
+            "confirm": -1.7006,
+            "live_wins": true
+          }
+        },
+        "cut_0_25": {
+          "lambda_1": {
+            "live": 0.4966,
+            "confirm": 0.1596,
+            "live_wins": true
+          },
+          "lambda_2": {
+            "live": 0.3586,
+            "confirm": -0.0019,
+            "live_wins": true
+          },
+          "lambda_3": {
+            "live": 0.2207,
+            "confirm": -0.1633,
+            "live_wins": true
+          },
+          "lambda_5": {
+            "live": -0.0552,
+            "confirm": -0.4861,
+            "live_wins": true
+          },
+          "lambda_10": {
+            "live": -0.7451,
+            "confirm": -1.2932,
+            "live_wins": true
+          }
+        },
+        "cut_0_3": {
+          "lambda_1": {
+            "live": 0.5022,
+            "confirm": 0.2244,
+            "live_wins": true
+          },
+          "lambda_2": {
+            "live": 0.367,
+            "confirm": 0.0954,
+            "live_wins": true
+          },
+          "lambda_3": {
+            "live": 0.2318,
+            "confirm": -0.0336,
+            "live_wins": true
+          },
+          "lambda_5": {
+            "live": -0.0386,
+            "confirm": -0.2917,
+            "live_wins": true
+          },
+          "lambda_10": {
+            "live": -0.7145,
+            "confirm": -0.9367,
+            "live_wins": true
+          }
+        },
+        "cut_0_35": {
+          "lambda_1": {
+            "live": 0.5071,
+            "confirm": 0.2849,
+            "live_wins": true
+          },
+          "lambda_2": {
+            "live": 0.3744,
+            "confirm": 0.1861,
+            "live_wins": true
+          },
+          "lambda_3": {
+            "live": 0.2417,
+            "confirm": 0.0873,
+            "live_wins": true
+          },
+          "lambda_5": {
+            "live": -0.0238,
+            "confirm": -0.1102,
+            "live_wins": true
+          },
+          "lambda_10": {
+            "live": -0.6873,
+            "confirm": -0.604,
+            "live_wins": false
+          }
+        },
+        "cut_0_4": {
+          "lambda_1": {
+            "live": 0.5127,
+            "confirm": 0.3225,
+            "live_wins": true
+          },
+          "lambda_2": {
+            "live": 0.3827,
+            "confirm": 0.2426,
+            "live_wins": true
+          },
+          "lambda_3": {
+            "live": 0.2528,
+            "confirm": 0.1627,
+            "live_wins": true
+          },
+          "lambda_5": {
+            "live": -0.0071,
+            "confirm": 0.0028,
+            "live_wins": false
+          },
+          "lambda_10": {
+            "live": -0.6568,
+            "confirm": -0.3969,
+            "live_wins": false
+          }
+        },
+        "cut_0_5": {
+          "lambda_1": {
+            "live": 0.5207,
+            "confirm": 0.3769,
+            "live_wins": true
+          },
+          "lambda_2": {
+            "live": 0.3948,
+            "confirm": 0.3241,
+            "live_wins": true
+          },
+          "lambda_3": {
+            "live": 0.2688,
+            "confirm": 0.2713,
+            "live_wins": false
+          },
+          "lambda_5": {
+            "live": 0.017,
+            "confirm": 0.1657,
+            "live_wins": false
+          },
+          "lambda_10": {
+            "live": -0.6127,
+            "confirm": -0.0981,
+            "live_wins": false
+          }
+        },
+        "cut_0_6": {
+          "lambda_1": {
+            "live": 0.541,
+            "confirm": 0.4083,
+            "live_wins": true
+          },
+          "lambda_2": {
+            "live": 0.4253,
+            "confirm": 0.3713,
+            "live_wins": true
+          },
+          "lambda_3": {
+            "live": 0.3096,
+            "confirm": 0.3343,
+            "live_wins": false
+          },
+          "lambda_5": {
+            "live": 0.0781,
+            "confirm": 0.2602,
+            "live_wins": false
+          },
+          "lambda_10": {
+            "live": -0.5006,
+            "confirm": 0.075,
+            "live_wins": false
+          }
+        },
+        "cut_0_7": {
+          "lambda_1": {
+            "live": 0.5849,
+            "confirm": 0.4312,
+            "live_wins": true
+          },
+          "lambda_2": {
+            "live": 0.491,
+            "confirm": 0.4056,
+            "live_wins": true
+          },
+          "lambda_3": {
+            "live": 0.3972,
+            "confirm": 0.3799,
+            "live_wins": true
+          },
+          "lambda_5": {
+            "live": 0.2096,
+            "confirm": 0.3287,
+            "live_wins": false
+          },
+          "lambda_10": {
+            "live": -0.2596,
+            "confirm": 0.2006,
+            "live_wins": false
+          }
+        },
+        "cut_1": {
+          "lambda_1": {
+            "live": 0.6886,
+            "confirm": 0.4559,
+            "live_wins": true
+          },
+          "lambda_2": {
+            "live": 0.6466,
+            "confirm": 0.4426,
+            "live_wins": true
+          },
+          "lambda_3": {
+            "live": 0.6046,
+            "confirm": 0.4293,
+            "live_wins": true
+          },
+          "lambda_5": {
+            "live": 0.5207,
+            "confirm": 0.4028,
+            "live_wins": true
+          },
+          "lambda_10": {
+            "live": 0.3108,
+            "confirm": 0.3364,
+            "live_wins": false
+          }
         }
       }
-    }
+    },
+    "lambda_table_all": {
+      "cut_0_1": {
+        "lambda_1": {
+          "live": 0.4262,
+          "confirm": -0.0704,
+          "live_wins": true
+        },
+        "lambda_2": {
+          "live": 0.2454,
+          "confirm": -0.3852,
+          "live_wins": true
+        },
+        "lambda_3": {
+          "live": 0.0646,
+          "confirm": -0.7,
+          "live_wins": true
+        },
+        "lambda_5": {
+          "live": -0.297,
+          "confirm": -1.3296,
+          "live_wins": true
+        },
+        "lambda_10": {
+          "live": -1.2009,
+          "confirm": -2.9037,
+          "live_wins": true
+        }
+      },
+      "cut_0_15": {
+        "lambda_1": {
+          "live": 0.497,
+          "confirm": 0.0546,
+          "live_wins": true
+        },
+        "lambda_2": {
+          "live": 0.3516,
+          "confirm": -0.1977,
+          "live_wins": true
+        },
+        "lambda_3": {
+          "live": 0.2062,
+          "confirm": -0.45,
+          "live_wins": true
+        },
+        "lambda_5": {
+          "live": -0.0845,
+          "confirm": -0.9546,
+          "live_wins": true
+        },
+        "lambda_10": {
+          "live": -0.8113,
+          "confirm": -2.2162,
+          "live_wins": true
+        }
+      },
+      "cut_0_2": {
+        "lambda_1": {
+          "live": 0.5248,
+          "confirm": 0.1546,
+          "live_wins": true
+        },
+        "lambda_2": {
+          "live": 0.3933,
+          "confirm": -0.0477,
+          "live_wins": true
+        },
+        "lambda_3": {
+          "live": 0.2618,
+          "confirm": -0.25,
+          "live_wins": true
+        },
+        "lambda_5": {
+          "live": -0.0012,
+          "confirm": -0.6546,
+          "live_wins": true
+        },
+        "lambda_10": {
+          "live": -0.6586,
+          "confirm": -1.6662,
+          "live_wins": true
+        }
+      },
+      "cut_0_25": {
+        "lambda_1": {
+          "live": 0.5368,
+          "confirm": 0.2343,
+          "live_wins": true
+        },
+        "lambda_2": {
+          "live": 0.4113,
+          "confirm": 0.0718,
+          "live_wins": true
+        },
+        "lambda_3": {
+          "live": 0.2859,
+          "confirm": -0.0907,
+          "live_wins": true
+        },
+        "lambda_5": {
+          "live": 0.035,
+          "confirm": -0.4157,
+          "live_wins": true
+        },
+        "lambda_10": {
+          "live": -0.5924,
+          "confirm": -1.2282,
+          "live_wins": true
+        }
+      },
+      "cut_0_3": {
+        "lambda_1": {
+          "live": 0.541,
+          "confirm": 0.3005,
+          "live_wins": true
+        },
+        "lambda_2": {
+          "live": 0.4176,
+          "confirm": 0.1711,
+          "live_wins": true
+        },
+        "lambda_3": {
+          "live": 0.2942,
+          "confirm": 0.0417,
+          "live_wins": true
+        },
+        "lambda_5": {
+          "live": 0.0475,
+          "confirm": -0.2171,
+          "live_wins": true
+        },
+        "lambda_10": {
+          "live": -0.5694,
+          "confirm": -0.8641,
+          "live_wins": true
+        }
+      },
+      "cut_0_35": {
+        "lambda_1": {
+          "live": 0.5447,
+          "confirm": 0.363,
+          "live_wins": true
+        },
+        "lambda_2": {
+          "live": 0.4231,
+          "confirm": 0.2648,
+          "live_wins": true
+        },
+        "lambda_3": {
+          "live": 0.3016,
+          "confirm": 0.1667,
+          "live_wins": true
+        },
+        "lambda_5": {
+          "live": 0.0586,
+          "confirm": -0.0296,
+          "live_wins": true
+        },
+        "lambda_10": {
+          "live": -0.5491,
+          "confirm": -0.5204,
+          "live_wins": false
+        }
+      },
+      "cut_0_4": {
+        "lambda_1": {
+          "live": 0.5488,
+          "confirm": 0.413,
+          "live_wins": true
+        },
+        "lambda_2": {
+          "live": 0.4294,
+          "confirm": 0.3398,
+          "live_wins": true
+        },
+        "lambda_3": {
+          "live": 0.31,
+          "confirm": 0.2667,
+          "live_wins": true
+        },
+        "lambda_5": {
+          "live": 0.0711,
+          "confirm": 0.1204,
+          "live_wins": false
+        },
+        "lambda_10": {
+          "live": -0.5262,
+          "confirm": -0.2454,
+          "live_wins": false
+        }
+      },
+      "cut_0_5": {
+        "lambda_1": {
+          "live": 0.5549,
+          "confirm": 0.4713,
+          "live_wins": true
+        },
+        "lambda_2": {
+          "live": 0.4384,
+          "confirm": 0.4273,
+          "live_wins": true
+        },
+        "lambda_3": {
+          "live": 0.322,
+          "confirm": 0.3833,
+          "live_wins": false
+        },
+        "lambda_5": {
+          "live": 0.0891,
+          "confirm": 0.2954,
+          "live_wins": false
+        },
+        "lambda_10": {
+          "live": -0.4931,
+          "confirm": 0.0755,
+          "live_wins": false
+        }
+      },
+      "cut_0_6": {
+        "lambda_1": {
+          "live": 0.5766,
+          "confirm": 0.4977,
+          "live_wins": true
+        },
+        "lambda_2": {
+          "live": 0.4711,
+          "confirm": 0.4669,
+          "live_wins": true
+        },
+        "lambda_3": {
+          "live": 0.3655,
+          "confirm": 0.4361,
+          "live_wins": false
+        },
+        "lambda_5": {
+          "live": 0.1544,
+          "confirm": 0.3745,
+          "live_wins": false
+        },
+        "lambda_10": {
+          "live": -0.3734,
+          "confirm": 0.2206,
+          "live_wins": false
+        }
+      },
+      "cut_0_7": {
+        "lambda_1": {
+          "live": 0.6169,
+          "confirm": 0.5176,
+          "live_wins": true
+        },
+        "lambda_2": {
+          "live": 0.5315,
+          "confirm": 0.4968,
+          "live_wins": true
+        },
+        "lambda_3": {
+          "live": 0.4461,
+          "confirm": 0.4759,
+          "live_wins": false
+        },
+        "lambda_5": {
+          "live": 0.2752,
+          "confirm": 0.4343,
+          "live_wins": false
+        },
+        "lambda_10": {
+          "live": -0.1519,
+          "confirm": 0.3301,
+          "live_wins": false
+        }
+      },
+      "cut_1": {
+        "lambda_1": {
+          "live": 0.7081,
+          "confirm": 0.538,
+          "live_wins": true
+        },
+        "lambda_2": {
+          "live": 0.6683,
+          "confirm": 0.5273,
+          "live_wins": true
+        },
+        "lambda_3": {
+          "live": 0.6285,
+          "confirm": 0.5167,
+          "live_wins": true
+        },
+        "lambda_5": {
+          "live": 0.5488,
+          "confirm": 0.4954,
+          "live_wins": true
+        },
+        "lambda_10": {
+          "live": 0.3498,
+          "confirm": 0.4421,
+          "live_wins": false
+        }
+      }
+    },
+    "conclusion": "⚠ **초판의 '교차는 비율에만 있고 개수에는 없다'는 틀렸다**(리뷰어 [1][2][3]). 세 가지가 겹쳐 있었다. **① 앵커 팔 분모에 못박힌 `end_jitter = 0`이 25% 섞여 있었다** — `shape_err.p10 = 0`이 그 서명이고 `snap.json`이 규정해 둔 것이며 L-B.3 2회차가 이미 한 번 고쳤다. 확정 팔에는 못이 없어 **앵커가 공짜로 이겼다.** `arms_end_jitter_positive`가 그것을 뺀 표이고 **그쪽이 살아 있다.** **② `right_over_all`만 보면 '맞은 개수'만 보는 것**이다 — **틀린 개수는 교차한다**: cut 0.2에서 앵커 0.146 대 확정 0.1985(앵커가 낫다)인데 cut 0.5에서 0.1259 대 0.0528로 **앵커가 2.4배 나쁘다.** **③ `right_over_all`은 미배치와 조용히 틀림에 똑같이 0점을 준다**(λ = 1)인데 이 프로젝트의 정책은 그 둘을 등가로 안 본다(`policy_objective`: 미배치는 유예, 조용히 틀림은 영구). `lambda_table`이 그 민감도다 — **cut 0.2에서는 λ 10까지 앵커가 이기고, cut 0.5에서는 λ ≤ 2에서만 이긴다.** **정확한 결론**: 작은 절단(≤ 0.35)에서는 앵커가 어떤 비용비에서도 이기고, **큰 절단에서는 비용비가 정한다.** A-3(\"조용히 틀린 배치를 만들지 않는다\")은 λ를 크게 보는 쪽이므로 **큰 틀림 기준으로는 앵커가 진다** — 초판의 '모든 절단에서 앵커가 이긴다'를 **철회한다.** ⚠ **등급별 분기 판정도 철회한다**(리뷰어 [4]): 앵커 팔은 **참 3D를 대상으로 준 오라클**이라 등급 효과가 **구성상 나올 수 없다**(배치율 0.789/0.786/0.788). 등급 무관은 관측이 아니라 설계의 산물이다(#31). ⚠ **꼬리도 앵커가 나쁘다**(#8): p90 0.7268 대 0.5231 · max **13.33 대 3.35(4.0배)**."
   },
   "free_reasons_at_default": {
     "note": "**533이 무엇인지 센다**(#7). `classifyStroke`가 이미 사유를 돌려주고 있었다.",

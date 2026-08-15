@@ -1,5 +1,5 @@
 {
-  "n_flags": 1491,
+  "n_flags": 1493,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -3643,6 +3643,16 @@
       "path": "one_stroke_one_axis.json:by_word.square.too_bent_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_promote.json:spurious_promotion_control.per_stroke.same",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_promote.json:spurious_promotion_control.per_stroke.same",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "persist.json:by_condition.jitter_0.01_erase_0.auto_drift",
@@ -7478,12 +7488,12 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 161
+      "reads": 168
     },
     {
       "field": "pts2d",
-      "writes": 1,
-      "reads": 52
+      "writes": 3,
+      "reads": 61
     },
     {
       "field": "pts3d",
@@ -7493,7 +7503,7 @@
     {
       "field": "axis",
       "writes": 5,
-      "reads": 76
+      "reads": 79
     },
     {
       "field": "rep",
@@ -7548,6 +7558,7 @@
     "misassign_retry.json",
     "occlusion.json",
     "one_stroke_one_axis.json",
+    "order_promote.json",
     "persist.json",
     "preview_gap.json",
     "promote.json",

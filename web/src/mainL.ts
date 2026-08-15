@@ -20,6 +20,7 @@ import { snapAt, staticCandidates, SNAP_TOL, SNAP_LABEL, SNAP_COLOR,
          type SnapCand, type SnapSeg, type SnapCtx, type StaticCand } from "./s3d/snap.js";
 import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "./s3d/liveLine.js";
 import { classifyStroke } from "./s3d/axis.js";
+import { promoteOrder, orderOf, type OrderStroke } from "./s3d/promoteOrder.js";
 import { AXIS_COLOR, guides as gridGuides, HORIZON_COLOR, GROUND_COLOR } from "./s3d/grid.js";
 import { project, axisDirection, groundFrame, type Vec3 } from "./s3d/geom3d.js";
 import type { Pt2 } from "./s3d/camera.js";
@@ -72,6 +73,11 @@ let live: { anchor: SnapCand; axis: 0 | 1 | 2 | null; deg: number | null;
 let axisLock: 0 | 1 | 2 | "infer" | null = null;
 /** Shift가 실제로 잠근 축. 뗄 때까지 유지한다. */
 let shiftHeld: 0 | 1 | 2 | null = null;
+/**
+ * **확정·승격 시점에 잠근 소실점 개수**(L-C.1, §6.1). 차수 승격을 누를 때
+ * `cam`은 **이미 새 차수**이므로(사용자가 가이드를 먼저 세운다) 옛 차수를 따로 들어야 한다.
+ */
+let lockedOrder: number | null = null;
 const refreshSens = () => { sens = cam.guides.length ? cam.sensitivity() : []; };
 const undoStack: DocState[] = [];
 const UNDO_MAX = 200;
@@ -421,6 +427,74 @@ function solveInto(ctx: PlaceCtx, targets: SStroke[]): number {
   return n;
 }
 
+// ---------------------------------------------------------------- 차수 승격 (L-C.1, §6.1)
+
+/**
+ * **차수 승격 — 소실점이 하나 더 잡히면 전부 다시 푼다**(§6.1).
+ * 계획서 §1.2의 **고유한 것 ②**다.
+ *
+ * ⚠ **자동으로 걸지 않는다.** 사전 등록한 규칙("배치가 안 줄면서 조용히 틀림이 안 는다")에서
+ * **배치 조건이 깨졌다**(`order_promote.json`: 같은 획 집합에서 −168). 품질은 나아지는데
+ * 개수가 준다 — 그래서 §6.2대로 **사용자가 보고 되돌린다.** `실행취소`가 그 경로다.
+ *
+ * 화면이 **실제로 움직인다** — §5.3의 "전환 무변화"는 **초기 확정에 한한 이야기**다(§6.2).
+ */
+function promoteOrderNow(): void {
+  const ctx = cam.ctx();
+  if (!ctx) { note = "카메라가 정해지지 않았습니다"; refresh(); return; }
+  // ⚠ **지금 카메라의 차수는 이미 새 것이다** — 사용자가 가이드를 더 세운 뒤 누르기 때문이다.
+  // 그래서 **확정·승격 시점에 잠근 차수**를 따로 들고 있어야 "N점 → M점"을 적을 수 있다
+  const before = lockedOrder ?? orderOf(ctx.vps, ctx.imgSize);
+  const lifted0 = lifted(doc).length;
+  pushUndo();
+  const input: OrderStroke[] = doc.strokes.map(s => ({
+    id: s.id, pts2d: s.pts2d, axis: s.axis, userAxis: s.userAxis, snapStart: s.snapStart,
+  }));
+  const r = promoteOrder(input, { principal: ctx.principal, f: ctx.f,
+                                  vps: ctx.vps, imgSize: ctx.imgSize });
+  // **전부 다시 푼 결과로 갈아 끼운다** — 부분 유지는 좌표계가 섞인 상태를 만든다(§6.1)
+  const oldScale = geomScaleOf(lifted(doc));
+  for (const s of doc.strokes) {
+    const seg = r.placed.get(s.id);
+    s.seg3d = seg ? [seg.a, seg.b] : null;
+  }
+  // `promoteOrder`가 옮긴 `pts2d[0]`·`snapStart`를 문서에 되돌려 넣는다
+  const byId = new Map(input.map(x => [x.id, x]));
+  for (const s of doc.strokes) {
+    const x = byId.get(s.id);
+    if (x) { s.pts2d = x.pts2d; s.snapStart = x.snapStart; }
+  }
+  // **뷰 카메라도 함께 갱신한다**(§6.1) — 기하가 새 배율로 풀렸으므로 눈 위치도 같이 옮긴다.
+  // 상대적 시점(방향·상대 거리)은 유지된다
+  const newScale = geomScaleOf(lifted(doc));
+  const k = oldScale > 1e-9 && newScale > 1e-9 ? newScale / oldScale : 1;
+  if (Math.abs(k - 1) > 1e-9) {
+    for (const v of doc.views) {
+      if (v.pose) v.pose = { R: v.pose.R, C: [v.pose.C[0] * k, v.pose.C[1] * k, v.pose.C[2] * k] };
+    }
+  }
+  cam.locked = true;
+  stage.pinTo(ctx.principal, ctx.f);
+  doc.currentView = confirmView().id;
+  syncScene();
+  const after = orderOf(ctx.vps, ctx.imgSize);
+  lockedOrder = after;
+  const now = lifted(doc).length;
+  note = `**차수 승격 ${before}점 → ${after}점** — 전부 다시 풀었습니다. `
+       + `3D ${lifted0} → ${now}획 · 스냅 ${r.snap.reanchored}/${r.snap.had}개를 새 상으로 옮겼습니다`
+       + (r.snap.target_unplaced
+          ? ` (대상이 안 놓인 ${r.snap.target_unplaced}개는 못 살렸습니다)` : "")
+       + ". **화면이 움직입니다** — 아니다 싶으면 `실행취소`로 되돌립니다(§6.2)";
+  refresh();
+}
+
+/** 3D 레이어의 크기 — 뷰 눈 위치를 같이 옮기기 위한 배율 기준. */
+function geomScaleOf(list: SStroke[]): number {
+  let m = 0;
+  for (const s of list) for (const p of s.seg3d!) m = Math.max(m, Math.hypot(p[0], p[1], p[2]));
+  return m;
+}
+
 /**
  * 확정 — 계획서 §1.2의 **고유한 것 ①**. 그때까지의 획이 3D로 올라가고 카메라가 잠긴다.
  *
@@ -434,6 +508,7 @@ function confirm() {
   const targets = pending(doc, doc.views[0].id);
   const n = solveInto(ctx, targets);
   cam.locked = true;
+  lockedOrder = orderOf(ctx.vps, ctx.imgSize);
   stage.pinTo(ctx.principal, ctx.f);
   // 확정 직후에도 연쇄를 한 번 돈다 — 놓인 것이 생겼으므로 대기 획이 붙을 수 있다
   const chained = n ? promoteChain(frame() ?? { ctx, toV: ID, fromV: ID, dirV: ID, pinned: true }) : 0;
@@ -789,6 +864,9 @@ function renderBar() {
     btn("extend", "가이드 늘리기", false, cam.locked || !cam.guides.length),
     btn("confirm", "확정", false, cam.locked || !cam.ctx()),
     btn("home", "확정 시점으로", false, !cam.locked || stage.isPinned),
+    // **차수 승격**(§6.1) — 소실점을 더 잡은 뒤 누른다. 자동으로 안 건다(측정이 그렇게 말한다)
+    btn("reorder", "차수 승격", false, !cam.locked || !lifted(doc).length),
+    btn("unlock", "소실점 다시", cam.locked === false && !!lifted(doc).length, !cam.locked),
     '<span class="sep"></span>',
     btn("undo", "실행취소", false, !undoStack.length),
     btn("clear", "비우기"),
@@ -912,6 +990,14 @@ barEl.addEventListener("click", (e) => {
          + " (방향과 소실점은 안 바뀝니다. **정확도는 가장 짧은 선이 정합니다**)";
   }
   else if (act === "confirm") confirm();
+  else if (act === "reorder") promoteOrderNow();
+  else if (act === "unlock") {
+    // **차수 승격의 입구**(§6.1) — 소실점을 하나 더 잡으려면 가이드를 다시 만져야 한다.
+    // 확정 기하는 그대로 두고 **가이드만 연다**. 다시 `차수 승격`을 누르면 전부 다시 푼다
+    cam.locked = false; tool = "adjust";
+    note = "소실점을 다시 잡습니다 — 축을 더 세운 뒤 **차수 승격**을 누르세요. "
+         + "확정된 3D는 그대로 있고, 승격을 눌러야 다시 풀립니다";
+  }
   else if (act === "home") {
     const ctx = cam.ctx();
     if (ctx) { stage.pinTo(ctx.principal, ctx.f); tool = "draw"; canvas.style.pointerEvents = "auto";
@@ -921,7 +1007,7 @@ barEl.addEventListener("click", (e) => {
     if (sn) { doc = sn; syncScene(); note = ""; }
   } else if (act === "clear") {
     pushUndo();
-    doc = newDoc(); cam.guides = []; cam.apply(); cam.locked = false;
+    doc = newDoc(); cam.guides = []; cam.apply(); cam.locked = false; lockedOrder = null;
     cam.acc.reset(); syncScene(); sens = []; note = "";
   }
   refresh();
@@ -990,4 +1076,10 @@ refresh();
   orbitTo: (p: ViewPose) => { stage.setPose(p, orbitTarget()); refresh(); },
   /** §9.3의 생성 경로. **L-B.8이 열리기 전에는 확정 뷰를 낸다**(#23). */
   viewForDrawing,
+  // L-C.1 — 차수 승격(§6.1). **앱 경로 그대로**를 종단 확인이 부른다(#17)
+  order: () => { const c = cam.ctx(); return c ? orderOf(c.vps, c.imgSize) : null; },
+  promoteOrderNow,
+  unlockGuides: () => {
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="unlock"]')?.click();
+  },
 };

@@ -1,0 +1,312 @@
+{
+  "what": "L-C.1 — 차수 승격(§6.1)이 전부 다시 풀고, 그 결과가 나아지는가",
+  "why": "계획서 §1.2의 **고유한 것 둘 중 두 번째**다. 그리고 §6.2의 자동 신호가 이미 반증됐으므로(AS-L6) **참값 대조 말고는 잴 것이 없다.**",
+  "method": {
+    "promotion": "참 장면이 3점인 구도에서 **카메라를 2점으로 준다**(수직 소실점을 무한원으로) → 전부 올린다 → **참 수직 소실점을 넣어 승격** → 전부 다시 올린다.",
+    "control": "**가짜 승격**(#6·#30): 참 장면이 **2점**(피치 0)인데 **없는 세 번째 소실점**을 지어넣는다. 여기서 나빠지지 않으면 이 측정은 승격을 재는 것이 아니다.",
+    "pairing": "**같은 획에서 전후를 짝짓는다**(#11). 비율끼리 견주면 다른 집합의 비교다.",
+    "gauge": "전후는 **카메라가 다르므로 게이지도 각각 적합한다**(#1). 같은 게이지로 재면 그 차이는 형태가 아니라 게이지 차이다 — L-B.M이 정확히 그 자리에서 걸렸다.",
+    "snap": "승격 전에 **스냅을 실제로 붙인다**. 안 붙이면 '조용히 풀린다'를 잴 대상이 없다."
+  },
+  "conditions": {
+    "true_3pt": [
+      "3pt_yaw35_pitch15",
+      "3pt_yaw20_pitch25",
+      "3pt_yaw50_pitch8"
+    ],
+    "true_2pt": [
+      "2pt_yaw35_pitch0"
+    ],
+    "grades": [
+      "precise",
+      "medium",
+      "coarse"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "end_jitters": [
+      0,
+      0.01,
+      0.03,
+      0.05
+    ],
+    "skew": 0.12,
+    "canvas_px": [
+      960,
+      672
+    ],
+    "camera": "**참 소실점**을 넣고 뺀다 — 검출·조정 오차는 여기서 안 잰다(그것은 L-A·L-B다).",
+    "spurious_vp": "화면 아래 [480, 2688] — 캔버스 밖이지만 `isFiniteVp` 안이다"
+  },
+  "order_changed": {
+    "note": "**입력이 실제로 승격인지 먼저 센다**(#32). 전후 차수가 같으면 그 실행은 승격에 대한 정보가 0이다.",
+    "before": {
+      "n": 288,
+      "min": 2,
+      "p10": 2,
+      "median": 2,
+      "p90": 2,
+      "max": 2
+    },
+    "after": {
+      "n": 288,
+      "min": 3,
+      "p10": 3,
+      "median": 3,
+      "p90": 3,
+      "max": 3
+    },
+    "all_promoted": true
+  },
+  "real_promotion": {
+    "note": "**같은 획에서 전후를 짝짓는다**(#11). `both_placed` 안에서만 형태 오차를 견준다 — 한쪽만 놓인 획은 견줄 짝이 없다.",
+    "both_placed": 552,
+    "only_before": 570,
+    "only_after": 402,
+    "neither": 1068,
+    "placed_delta": -168,
+    "shape_err_before": {
+      "n": 552,
+      "min": 0.0054,
+      "p10": 0.0419,
+      "median": 0.1259,
+      "p90": 1.1301,
+      "max": 2.226
+    },
+    "shape_err_after": {
+      "n": 552,
+      "min": 0.0006,
+      "p10": 0.0161,
+      "median": 0.0913,
+      "p90": 0.5395,
+      "max": 2.1984
+    },
+    "silent_wrong_before": {
+      "cut_0_1": "306/552",
+      "cut_0_2": "186/552",
+      "cut_0_5": "90/552"
+    },
+    "silent_wrong_after": {
+      "cut_0_1": "264/552",
+      "cut_0_2": "172/552",
+      "cut_0_5": "60/552"
+    },
+    "per_stroke": {
+      "improved": 356,
+      "worsened": 194,
+      "same": 2
+    }
+  },
+  "spurious_promotion_control": {
+    "note": "**같은 획에서 전후를 짝짓는다**(#11). `both_placed` 안에서만 형태 오차를 견준다 — 한쪽만 놓인 획은 견줄 짝이 없다.",
+    "both_placed": 296,
+    "only_before": 220,
+    "only_after": 133,
+    "neither": 215,
+    "placed_delta": -87,
+    "shape_err_before": {
+      "n": 296,
+      "min": 0.0066,
+      "p10": 0.0363,
+      "median": 0.1518,
+      "p90": 0.594,
+      "max": 1.1991
+    },
+    "shape_err_after": {
+      "n": 296,
+      "min": 0.0082,
+      "p10": 0.0669,
+      "median": 0.2554,
+      "p90": 0.7915,
+      "max": 1.4707
+    },
+    "silent_wrong_before": {
+      "cut_0_1": "185/296",
+      "cut_0_2": "119/296",
+      "cut_0_5": "35/296"
+    },
+    "silent_wrong_after": {
+      "cut_0_1": "235/296",
+      "cut_0_2": "180/296",
+      "cut_0_5": "63/296"
+    },
+    "per_stroke": {
+      "improved": 96,
+      "worsened": 200,
+      "same": 0
+    }
+  },
+  "snap_reanchor": {
+    "note": "**양성 채널이 먼저다**(#30). `drift_px`가 0이면 '차수 승격에서 스냅이 조용히 풀린다'는 걱정 자체가 없는 것이다 — 옛 화면 점과 **새 상**의 화면 거리다.",
+    "had": 2391,
+    "reanchored": 1908,
+    "target_unplaced": 483,
+    "behind_camera": 0,
+    "sum_check": true,
+    "drift_px": {
+      "n": 1908,
+      "min": 0,
+      "p10": 0.014,
+      "median": 0.595,
+      "p90": 311.453,
+      "max": 639.398
+    },
+    "caveat": "⚠ **끝점·중점 말고는 매개변수가 안 정해진다.** 교차점·수선 발·선 위는 두 선분의 관계라 한 대상만으로는 못 되돌린다 — `a`쪽 끝점으로 근사한다. 정확히 하려면 `snapStart`가 매개변수를 들어야 하고 그것은 `snap.ts` 변경이다(DEFERRED)."
+  },
+  "seed_spread": {
+    "note": "표제 수치의 시드별 값(#14). **여유가 이 폭보다 작으면 그 결론은 없다.**",
+    "after_over_before_silent_0_2": [
+      0.8,
+      0.833,
+      0.886,
+      0.946,
+      0.975,
+      1
+    ],
+    "crosses_one": false
+  },
+  "registered_rule": {
+    "rule": "**승격이 옳으려면** 같은 획 집합에서 배치가 안 줄면서 조용히 틀림(cut 0.2)이 안 늘어야 한다. 둘 중 하나라도 안 되면 **자동으로 걸지 않는다**(§6.2 사용자 확인).",
+    "placement_delta": -168,
+    "silent_before_0_2": 0.337,
+    "silent_after_0_2": 0.3116,
+    "verdict": "**승격을 자동으로 걸지 않는다** — 등록한 두 조건을 함께 만족하지 못한다(§6.2 사용자 확인)"
+  },
+  "constants": {
+    "hash": "46c028d1",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "3df57ac7",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  }
+}

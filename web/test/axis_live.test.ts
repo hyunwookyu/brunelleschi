@@ -143,9 +143,35 @@ const curveRow = (errs: number[], total: number) => ({
       // **놓인 것 중 맞은 것**을 전체 분모로도 낸다 — 배치율과 정확도를 한 수로 묶는다.
       // 이것이 없으면 "덜 놓아서 이긴" 설정과 "잘 놓아서 이긴" 설정이 안 갈린다
       right_over_all: round((errs.length - k) / Math.max(1, total), 4),
+      // ⚠ **틀린 개수도 전체 분모로 낸다**(리뷰어 [2] · #15). `right_over_all`만 내면
+      // "맞은 것"에만 교차가 없다는 것을 "교차가 없다"로 읽게 된다 — **틀린 개수는 교차한다.**
+      wrong_over_all: round(k / Math.max(1, total), 4),
+      wrong_count: k,
     }];
   })),
+  // **꼬리를 함께 낸다**(#8 · 리뷰어 [10]) — cut 카운트만 내면 p90·max가 사라진다
+  shape_err: stat(errs),
 });
+
+/**
+ * **비용비 λ로 본 판정**(리뷰어 [3] · #26·#28).
+ *
+ * `right_over_all`은 **미배치와 조용히 틀림에 똑같이 0점**을 준다(λ = 1). 그런데 이 프로젝트의
+ * 정책은 그 둘을 등가로 안 본다 — **미배치의 비용은 미뤄지는 것이고 조용히 틀림은 영구다**
+ * (`policy_objective`). 그러므로 λ를 **하나로 고정하면 그 결론은 정의의 귀결**이다.
+ *
+ * 점수 = (맞게 놓인 수 − λ × 조용히 틀린 수) / 전체. λ를 흔들어 **부호가 바뀌는 지점**을 낸다.
+ */
+const LAMBDAS = [1, 2, 3, 5, 10];
+const lambdaTable = (a: number[], na: number, b: number[], nb: number) =>
+  Object.fromEntries(CUT_GRID.map(c => {
+    const ka = a.filter(e => e > c).length, kb = b.filter(e => e > c).length;
+    return [`cut_${String(c).replace(".", "_")}`, Object.fromEntries(LAMBDAS.map(L => {
+      const sa = (a.length - ka - L * ka) / Math.max(1, na);
+      const sb = (b.length - kb - L * kb) / Math.max(1, nb);
+      return [`lambda_${L}`, { live: round(sa, 4), confirm: round(sb, 4), live_wins: sa > sb }];
+    }))];
+  }));
 
 /**
  * **교차점** — 두 팔의 조용히 틀림 비율이 뒤집히는 절단.
@@ -184,6 +210,15 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
      * "확정이 낫다"는 방향의 결론은 **그만큼 할인해서 읽는다.**
      */
     const curve = { confirm: [] as number[], live: [] as number[] };
+    /**
+     * ⚠ **`end_jitter = 0`을 뺀 판**(리뷰어 [1] · #2·#9). 잡음 0에서는 잉크 끝점이 참 모서리에
+     * **못으로 박혀** 오차가 정확히 0인 획이 생긴다 — `snap.json`이 그 서명을
+     * "`shape_err.p10 = 0`"이라고 규정해 놓았고 L-B.3 2회차가 이미 한 번 고친 결함이다.
+     * **앵커 팔에만 못이 들어오고 확정 팔에는 안 들어온다**(확정은 솔버를 거치므로 0이 안 된다) —
+     * 그래서 그대로 나란히 놓으면 앵커가 공짜로 이긴다.
+     */
+    const curveJ = { confirm: [] as number[], live: [] as number[] };
+    const curveNJ = { confirm: 0, live: 0 };
     /** 각 팔의 **분모** — 배치율을 내려면 놓인 것뿐 아니라 전체가 필요하다(#11). */
     const curveN = { confirm: 0, live: 0 };
     const curveByGrade: Record<string, { confirm: number[]; live: number[] }> = {};
@@ -244,9 +279,14 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
             if (key === baseKeyOf()) {
               curve.confirm.push(e);
               (curveByGrade[grade] ??= { confirm: [], live: [] }).confirm.push(e);
+              if (jit > 0) curveJ.confirm.push(e);
             }
           }
-          if (key === baseKeyOf()) { curveN.confirm += 12; (curveNByGrade[grade] ??= { confirm: 0, live: 0 }).confirm += 12; }
+          if (key === baseKeyOf()) {
+            curveN.confirm += 12;
+            if (jit > 0) curveNJ.confirm += 12;
+            (curveNByGrade[grade] ??= { confirm: 0, live: 0 }).confirm += 12;
+          }
         }
 
         // ---------- ①-b 방향 급변 검출 — `coarse`의 등급 특이 항
@@ -316,6 +356,7 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
             b.total += 1;
             if (dg === LIVE_TOL.axis_deg) {
               curveN.live += 1; (curveNByGrade[grade] ??= { confirm: 0, live: 0 }).live += 1;
+              if (jit > 0) curveNJ.live += 1;
             }
             if (!cand) { b.axFree += 1; b.reasons.no_snap = (b.reasons.no_snap ?? 0) + 1; continue; }
             if (!near || near.deg > dg) {
@@ -343,6 +384,7 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
             if (e > 0.5) b.w50 += 1;
             if (dg === LIVE_TOL.axis_deg) {
               curve.live.push(e); (curveByGrade[grade] ??= { confirm: [], live: [] }).live.push(e);
+              if (jit > 0) curveJ.live.push(e);
             }
           }
         }
@@ -412,25 +454,44 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
           live_with_anchor: curveRow(curve.live, curveN.live),
         },
         crossing_overall: crossing(curve.live, curve.confirm),
-        conclusion: "**교차는 비율에만 있고 개수에는 없다.** 조용히 틀림 *비율*은 절단 "
-          + `${crossing(curve.live, curve.confirm).cut}에서 뒤집히지만(그 위에서는 앵커가 더 나쁘다), `
-          + "**`right_over_all`(놓였고 맞은 것 / 전체)은 모든 절단·모든 등급에서 앵커가 이긴다** — "
-          + `앵커가 ${curveRow(curve.live, curveN.live).placed_rate} 대 `
-          + `${curveRow(curve.confirm, curveN.confirm).placed_rate}로 **41% 더 놓기 때문이다.** `
-          + "즉 '앵커는 큰 틀림을 늘린다'는 **조건부 비율의 성질**이고, "
-          + "**같은 획 수에서 맞게 놓이는 개수는 앵커가 언제나 더 많다.** "
-          + "⚠ 이것이 #15의 반대 방향이다 — 초판은 **비율만 보고** 절단 0.5에서 뒤집힌다고 읽었다. "
-          + "**등급별 분기는 필요 없다**: 교차 절단이 등급 셋에서 0.35~0.40으로 거의 같고 "
-          + "`right_over_all`은 세 등급 전부에서 앵커가 이긴다. "
-          + "⚠ **다만 두 팔의 게이지가 다르고 확정 쪽이 더 관대하다** — 그래서 이 결론(앵커 우세)은 "
-          + "**보수적**이다.",
-        // **등급별로도 낸다** — 실획이 어느 등급인지 모른다(AS-C1, 표본 0).
-        // **두 조건 모두에서 성립하는 설정이 있는가**가 사람이 물은 것이다
-        by_grade: Object.fromEntries(Object.entries(curveByGrade).map(([g, c]) => [g, {
-          confirm_no_anchor: curveRow(c.confirm, curveNByGrade[g].confirm),
-          live_with_anchor: curveRow(c.live, curveNByGrade[g].live),
-          crossing: crossing(c.live, c.confirm),
-        }])),
+        // ⚠ **못박힌 `end_jitter = 0`을 뺀 판**(리뷰어 [1] · #2·#9). **이쪽이 살아 있는 표다.**
+        // 앵커 팔에만 못이 들어오고(잉크 끝점이 참 모서리에 박힌다) 확정 팔에는 안 들어온다
+        arms_end_jitter_positive: {
+          note: "**`end_jitter > 0`만.** `snap.json`이 규정한 서명(`shape_err.p10 = 0`)이 "
+            + "앵커 팔에 있었다 — L-B.3 2회차가 이미 한 번 고친 결함이고 여기서 재발했다. "
+            + "**두 팔을 나란히 읽을 때는 이 표를 쓴다.**",
+          confirm_no_anchor: curveRow(curveJ.confirm, curveNJ.confirm),
+          live_with_anchor: curveRow(curveJ.live, curveNJ.live),
+          crossing: crossing(curveJ.live, curveJ.confirm),
+          lambda_table: lambdaTable(curveJ.live, curveNJ.live, curveJ.confirm, curveNJ.confirm),
+        },
+        lambda_table_all: lambdaTable(curve.live, curveN.live, curve.confirm, curveN.confirm),
+        conclusion: (() => {
+          const wa = (c: number) => curveJ.live.filter(x => x > c).length / Math.max(1, curveNJ.live);
+          const wb = (c: number) => curveJ.confirm.filter(x => x > c).length / Math.max(1, curveNJ.confirm);
+          return "⚠ **초판의 '교차는 비율에만 있고 개수에는 없다'는 틀렸다**(리뷰어 [1][2][3]). "
+            + "세 가지가 겹쳐 있었다. "
+            + "**① 앵커 팔 분모에 못박힌 `end_jitter = 0`이 25% 섞여 있었다** — "
+            + "`shape_err.p10 = 0`이 그 서명이고 `snap.json`이 규정해 둔 것이며 L-B.3 2회차가 "
+            + "이미 한 번 고쳤다. 확정 팔에는 못이 없어 **앵커가 공짜로 이겼다.** "
+            + "`arms_end_jitter_positive`가 그것을 뺀 표이고 **그쪽이 살아 있다.** "
+            + "**② `right_over_all`만 보면 '맞은 개수'만 보는 것**이다 — "
+            + `**틀린 개수는 교차한다**: cut 0.2에서 앵커 ${round(wa(0.2), 4)} 대 확정 `
+            + `${round(wb(0.2), 4)}(앵커가 낫다)인데 cut 0.5에서 ${round(wa(0.5), 4)} 대 `
+            + `${round(wb(0.5), 4)}로 **앵커가 ${round(wa(0.5) / Math.max(1e-9, wb(0.5)), 1)}배 나쁘다.** `
+            + "**③ `right_over_all`은 미배치와 조용히 틀림에 똑같이 0점을 준다**(λ = 1)인데 "
+            + "이 프로젝트의 정책은 그 둘을 등가로 안 본다(`policy_objective`: 미배치는 유예, "
+            + "조용히 틀림은 영구). `lambda_table`이 그 민감도다 — **cut 0.2에서는 λ 10까지 "
+            + "앵커가 이기고, cut 0.5에서는 λ ≤ 2에서만 이긴다.** "
+            + "**정확한 결론**: 작은 절단(≤ 0.35)에서는 앵커가 어떤 비용비에서도 이기고, "
+            + "**큰 절단에서는 비용비가 정한다.** A-3(\"조용히 틀린 배치를 만들지 않는다\")은 "
+            + "λ를 크게 보는 쪽이므로 **큰 틀림 기준으로는 앵커가 진다** — "
+            + "초판의 '모든 절단에서 앵커가 이긴다'를 **철회한다.** "
+            + "⚠ **등급별 분기 판정도 철회한다**(리뷰어 [4]): 앵커 팔은 **참 3D를 대상으로 준 "
+            + "오라클**이라 등급 효과가 **구성상 나올 수 없다**(배치율 0.789/0.786/0.788). "
+            + "등급 무관은 관측이 아니라 설계의 산물이다(#31). "
+            + "⚠ **꼬리도 앵커가 나쁘다**(#8): p90 0.7268 대 0.5231 · max **13.33 대 3.35(4.0배)**.";
+        })(),
       },
       free_reasons_at_default: {
         note: "**533이 무엇인지 센다**(#7). `classifyStroke`가 이미 사유를 돌려주고 있었다.",
