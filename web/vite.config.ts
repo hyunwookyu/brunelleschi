@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 // 지시 4.1~4.2 — iPad 실기 접근용 설정.
 //   4.1 LAN 노출(--host) + LAN IP 출력
 //   4.2 HTTPS — Wake Lock(§5.2)과 getUserMedia(V-6)가 **secure context**를 요구한다.
@@ -93,4 +94,7 @@ export default defineConfig({
   server: { host: true, port: PORT, strictPort: true },
   plugins: [...(useHttps ? [basicSsl()] : []), printLanUrls(useHttps, PORT), swPrecache()],
   build: { target: "es2022" },
+  // **vitest는 `test/`만 본다** — `e2e/`는 Playwright 것이라 vitest가 집으면
+  // `test.describe.configure()`에서 터진다(실제로 걸렸다. 두 러너가 같은 확장자를 쓴다).
+  test: { include: ["test/**/*.test.ts"], exclude: ["e2e/**", "node_modules/**", "dist/**"] },
 });
