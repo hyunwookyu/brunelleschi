@@ -95,6 +95,16 @@ export const VP_TOL = {
   refit_passes: 2,
   /** 찾을 소실점의 최대 개수. 3점 투시가 상한이다(자유도 0, 이론서 5.3). */
   max_vps: 3,
+  /**
+   * **씨앗 후보(쌍) 수 상한.** 쌍마다 교점을 시험하므로 비용이 `O(n³)`이고,
+   * 획 300개면 3천만 번이 넘어 **측정 하네스가 멈췄다**(L-A.6에서 실제로 겪었다).
+   *
+   * 상한을 넘으면 쌍을 **결정론적 보폭**으로 건너뛴다(`Math.random` 금지, AS-C9).
+   * 씨앗을 덜 보는 것은 **정확도 손실이 아니다** — 씨앗은 지지를 모으는 출발점일 뿐이고
+   * 값은 최소제곱 재적합이 준다(§5.1). 같은 소실점을 가리키는 쌍이 여러 개이므로
+   * 일부만 봐도 같은 군집에 닿는다. **다만 덜 본다는 사실을 원장에 적는다**(조용한 절단 금지).
+   */
+  seed_pairs_max: 6000,
 };
 export type VpCfg = Partial<typeof VP_TOL>;
 
@@ -240,9 +250,14 @@ export function detectVps(
     if (pool.length < c.min_support) break;
 
     // 쌍마다 교점 → 가중 점수. 동점이면 부적합도 중앙값이 작은 쪽.
+    // 쌍이 너무 많으면 **결정론적 보폭**으로 건너뛴다(`seed_pairs_max`).
+    const nPairs = (pool.length * (pool.length - 1)) / 2;
+    const stride = nPairs > c.seed_pairs_max ? Math.ceil(nPairs / c.seed_pairs_max) : 1;
+    let seen = 0;
     let best: { vp: Pt2; ids: string[]; res: number; score: number } | null = null;
     for (let i = 0; i < pool.length; i++) {
       for (let j = i + 1; j < pool.length; j++) {
+        if (stride > 1 && (seen++ % stride) !== 0) continue;
         const p = lineIntersect(pool[i].rep.a, pool[i].rep.b, pool[j].rep.a, pool[j].rep.b);
         if (!p || !Number.isFinite(p[0]) || !Number.isFinite(p[1])) continue;
         const { ids, ms, score } = supportOf(pool, p, c);

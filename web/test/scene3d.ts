@@ -91,6 +91,43 @@ export function boxEdges(sc: Scene, O: Vec3, a: number, b: number, c: number): T
   ];
 }
 
+/**
+ * **k등분 격자 상자** — 축당 획 수를 늘리기 위한 픽스처(L-A.6, 계획서 §5.5).
+ *
+ * `k = 1`이면 `boxEdges`와 같은 12모서리다. `k`를 올리면 내부 격자선이 생기고
+ * **축당 획 수가 `(k+1)²·k`로 늘어난다** — 4 / 18 / 48 / 100.
+ *
+ * ⚠ **선분으로 낸다(전체를 관통하는 직선이 아니다).** 관통선으로 하면 서로 **몸통에서**
+ * 교차하고, `findJoints`는 가림을 걸러내려고 **끝점 근처 교점만** 제약으로 쓰므로
+ * (L-A.3) 그 교점이 하나도 안 잡힌다. 격자점마다 끊으면 모든 접합이 끝점 접합이 된다.
+ * _관통선 판을 먼저 만들었다가 이 이유로 버렸다._
+ *
+ * 건축적으로도 이쪽이 맞다 — 층·기둥·창 분할선이 격자점에서 만난다.
+ */
+export function boxLattice(
+  sc: Scene, O: Vec3, a: number, b: number, c: number, k: number,
+): TrueEdge[] {
+  const [e0, e1, e2] = sc.axes;
+  const step = [a / k, b / k, c / k];
+  // 수직축은 위로 자란다(`axes[2]`가 아래를 향한다)
+  const dir: [Vec3, Vec3, Vec3] = [e0, e1, [-e2[0], -e2[1], -e2[2]]];
+  const at = (i: number, j: number, m: number): Vec3 => add3(add3(add3(O,
+    mul3(dir[0], i * step[0])), mul3(dir[1], j * step[1])), mul3(dir[2], m * step[2]));
+  const out: TrueEdge[] = [];
+  for (const ax of [0, 1, 2] as const) {
+    for (let p = 0; p <= k; p++) for (let q = 0; q <= k; q++) for (let r = 0; r < k; r++) {
+      const idx: [number, number, number] = [0, 0, 0];
+      const others = [0, 1, 2].filter(x => x !== ax) as [number, number];
+      idx[others[0]] = p; idx[others[1]] = q; idx[ax] = r;
+      const A = at(idx[0], idx[1], idx[2]);
+      const idx2 = idx.slice() as [number, number, number];
+      idx2[ax] = r + 1;
+      out.push({ a: A, b: at(idx2[0], idx2[1], idx2[2]), axis: ax });
+    }
+  }
+  return out;
+}
+
 export interface DrawnEdge extends TrueEdge { pts2d: Pt2[]; a2d: Pt2; b2d: Pt2; }
 
 /**
