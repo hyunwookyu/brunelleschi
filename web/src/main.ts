@@ -36,7 +36,8 @@ const viewOrigin = new Set<string>();
  * **같은 시점일 때만 겹쳐 그리고**, 다르면 "그 시점으로" 버튼을 준다.
  * `Stroke`를 늘리지 않는다 — `rawPoints`·`viewOrigin`과 같은 방식이다.
  */
-const viewCam = new Map<string, { pos: [number, number, number]; tgt: [number, number, number] }>();
+const viewCam = new Map<string, { pose: ReturnType<Viewport["pose"]>;
+                                  pos: [number, number, number]; tgt: [number, number, number] }>();
 
 const canvas = document.getElementById("ink") as HTMLCanvasElement;
 const statusEl = document.getElementById("status")!;
@@ -61,6 +62,19 @@ const picks: { a?: Vec3; b?: Vec3 } = {};
 const provisional = new Set<string>();
 /** 지금 보이는 후보 점(화면 좌표) — 클릭 판정과 그리기가 같은 목록을 쓴다. */
 let candDots: { at: Pt2; pos: Vec3; end: 0 | 1 }[] = [];
+/**
+ * **돌린 시점의 후보 점**(S-7 4). 좌표계가 다르므로 목록을 따로 둔다 —
+ * `at`은 3D 캔버스 좌표이고 `pos`는 **그 시점의 뷰 좌표**다(세계 좌표가 아니다).
+ * D-S19가 돌린 시점의 자동 평면 경로를 막았으므로 **거기서 그은 사선은 이 경로가 유일하다**.
+ */
+let candDots3d: { at: Pt2; pos: Vec3; end: 0 | 1 }[] = [];
+/**
+ * 3D 뷰의 모드 셋. `fix`가 S-7 (4) — 돌린 시점에서 못 놓은 획을 붙인다.
+ * **여기서 선언한다** — 3D 잉크 캔버스의 배경 콜백이 이것을 읽는데, 그 캔버스는 아래에서
+ * 만들어지고 **만들면서 한 번 그린다**. 선언이 그보다 뒤면 TDZ로 터진다(브라우저 확인에서 걸렸다).
+ */
+type ViewMode = "orbit" | "draw" | "fix";
+let viewMode: ViewMode = "orbit";
 
 const selected = () => drawn.find(s => s.id === selId) ?? null;
 
@@ -101,7 +115,7 @@ function restore(sn: Snap) {
   provisional.clear(); sn.provisional.forEach(x => provisional.add(x));
   selId = sn.sel && drawn.some(s => s.id === sn.sel) ? sn.sel : null;
   delete picks.a; delete picks.b;
-  refreshCandidates();
+  refreshCandidates(); refreshCandidates3d();
   strokeView.sync(drawn, placeCtx()?.f);
   refresh();
 }
@@ -180,7 +194,72 @@ function editClick(at: Pt2) {
   }
   selId = best && best.d < 18 ? best.id : null;
   delete picks.a; delete picks.b;
-  refreshCandidates();
+  refreshCandidates(); refreshCandidates3d();
+}
+
+/**
+ * **돌린 시점의 앵커 후보**(S-7 4). 기존 획을 그 시점 좌표로 옮기고 거기서 후보를 찾는다 —
+ * `addStrokeFromView`가 배치할 때 하는 것과 같은 변환이다.
+ * **그 시점일 때만** 뜻이 있다(선택된 획의 `pts2d`가 그 시점 좌표다).
+ */
+function refreshCandidates3d() {
+  candDots3d = [];
+  const s = selected();
+  if (!s || !viewOrigin.has(s.id) || !sameView(s.id)) return;
+  const axes = worldAxes();
+  if (!axes.some(Boolean)) return;
+  const pose = viewport.pose();
+  const ctxV = viewPlaceCtx(pose, axes, viewport.viewSize(), viewport.camera.fov);
+  const radius = PLACE_TOL.join_ratio * diagOf(ctxV.imgSize) * 3;
+  const others: Stroke[] = [];
+  for (const t of drawn) {
+    if (t.id === s.id || !t.pts3d.length) continue;
+    const p3 = t.pts3d.map(p => toView(pose, p));
+    const p2 = t.pts3d.map(p => projectInView(pose, p, ctxV.principal, ctxV.f));
+    if (p2.every(Boolean)) others.push({ ...t, pts3d: p3, pts2d: p2 as Pt2[] });
+  }
+  for (const end of [0, 1] as const) {
+    const at = end === 0 ? s.pts2d[0] : s.pts2d[s.pts2d.length - 1];
+    for (const c of anchorCandidates(others, at, radius)) {
+      const p = projectInView({ R: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], C: [0, 0, 0] },
+                              c.pos, ctxV.principal, ctxV.f);
+      if (p) candDots3d.push({ at: p, pos: c.pos, end });
+    }
+  }
+}
+
+/** 3D 캔버스에서의 고치기 클릭. 좌표계만 다르고 흐름은 `editClick`과 같다. */
+function editClick3d(at: Pt2) {
+  const s = selected();
+  if (!s) return;
+  const hit = candDots3d.find(d => Math.hypot(d.at[0] - at[0], d.at[1] - at[1]) < 11);
+  if (!hit) return;
+  picks[hit.end === 0 ? "a" : "b"] = hit.pos;
+  applyPicksInView();
+}
+
+/**
+ * 뷰 좌표에서 놓고 **세계 좌표로 되돌린다**. 배치 자체는 `placeByUser`가 하고
+ * 여기서는 좌표계만 오간다 — `addStrokeFromView`와 같은 구조다.
+ */
+function applyPicksInView() {
+  const s = selected();
+  const axes = worldAxes();
+  if (!s || !axes.some(Boolean)) return;
+  const pose = viewport.pose();
+  const ctxV = viewPlaceCtx(pose, axes, viewport.viewSize(), viewport.camera.fov);
+  const r = placeByUser(s, ctxV, picks);
+  if (!r) { lastNote = "그 앵커로는 놓이지 않습니다 — 다른 점을 골라 보세요"; refresh(); return; }
+  pushUndo();
+  s.pts3d = r.pts3d.map(p => fromView(pose, p));       // **세계 좌표로 되돌린다**
+  s.joinShift = 0;
+  if (r.provisional) provisional.add(s.id); else provisional.delete(s.id);
+  markProvisional(s);
+  lastNote = r.provisional
+    ? "붙였습니다 — **깊이는 미확정**입니다(반대쪽 끝도 지정하면 확정됩니다)"
+    : "붙였습니다.";
+  strokeView.sync(drawn, placeCtx()?.f);
+  refresh();
 }
 
 /** 고른 앵커로 놓는다. 검사하지 않는다 — **사용자가 판단했다**. */
@@ -322,6 +401,7 @@ function addStrokeFromView(pts: Pt2[], raw?: number[][]) {
   const pose = viewport.pose();
   const ctxV = viewPlaceCtx(pose, axes, viewport.viewSize(), viewport.camera.fov);
   const camNow = () => ({
+    pose,       // **배치에 쓴 자세 그대로** — 화면 대조는 이것으로 한다
     pos: [viewport.camera.position.x, viewport.camera.position.y, viewport.camera.position.z] as [number, number, number],
     tgt: [viewport.controls.target.x, viewport.controls.target.y, viewport.controls.target.z] as [number, number, number],
   });
@@ -446,7 +526,8 @@ function renderStrokes() {
   if (lastNote) rows.push(`<div class="hint">${lastNote}</div>`);
   if (floating) rows.push('<div class="hint">이어지지 않은 획은 깊이가 정해지지 않습니다 — 기존 획에 닿게 그으면 놓입니다</div>');
   const hidden = drawn.filter(s => !s.pts3d.length && viewOrigin.has(s.id)).length;
-  if (hidden) rows.push(`<div class="hint">그 중 ${hidden}획은 <b>돌린 시점에서 그린 미배치 획</b>이라 여기 안 보입니다 — 그 시점으로 돌아가면 보입니다(S-7에서 손봅니다)</div>`);
+  if (hidden) rows.push(`<div class="hint">그 중 ${hidden}획은 <b>돌린 시점에서 그린 미배치 획</b>입니다 — `
+    + "그 시점으로 돌아가면 3D 위에 파선으로 보이고, 거기서 <b>고치기</b>로 붙일 수 있습니다</div>");
   strokeEl.innerHTML = rows.join("");
   renderFix(unplaced);
   // **놓지 못한 미분류에만 축 선택을 띄운다.** 면 위 사선으로 이미 놓인 미분류 획에
@@ -484,6 +565,11 @@ function renderFix(unplaced: Stroke[]) {
         + (sameView(sel.id) ? "<b>지금 그 시점이라 3D 위에 파선으로 보입니다</b>"
                             : "그 시점으로 돌아가면 3D 위에 보입니다")
         + (viewCam.has(sel.id) ? ' <button id="goview">그 시점으로</button>' : "") + "</div>");
+      rows.push('<div class="hint">'
+        + (sameView(sel.id)
+            ? `3D 뷰의 <b>고치기</b>를 누르면 후보 점 ${candDots3d.length}개가 뜹니다 — 거기서 붙입니다`
+            : "붙이려면 먼저 그 시점으로 돌아가세요")
+        + " (돌린 시점의 사선은 자동으로 안 놓입니다 — D-S19)</div>");
     } else if (candDots.length) {
       rows.push('<div class="hint">캔버스의 점을 누르면 그 자리에 붙습니다'
         + '(<span style="color:#b9770e">●</span> 시작 · <span style="color:#2471a3">●</span> 끝). '
@@ -634,15 +720,40 @@ document.getElementById("export")!.addEventListener("click", () => {
 
 // ---- S-5 3D 뷰 위에서 그리기 ----
 const ink3dEl = document.getElementById("ink3d") as HTMLCanvasElement;
-/** 지금 시점이 그 획을 그린 시점과 같은가. 카메라 위치·타깃이 거의 같으면 같다고 본다. */
+/**
+ * 지금 시점이 그 획을 그린 시점과 **같은가**. 판정을 **화면에서** 한다 —
+ * 재는 것이 "그 획의 `pts2d`를 지금 그려도 제자리인가"이기 때문이다.
+ *
+ * _처음에는 카메라 위치·타깃을 1e-3으로 비교했는데 **한 번도 같지 않았다**:
+ * `OrbitControls`의 damping이 놓은 뒤에도 계속 카메라를 미세하게 옮긴다.
+ * 3D 좌표로 재면 그 흔들림이 그대로 잡히지만 **화면에서는 1px도 안 움직인다**._
+ */
 function sameView(id: string): boolean {
   const c = viewCam.get(id);
   if (!c) return false;
-  const p = viewport.camera.position, t = viewport.controls.target;
-  const d = Math.hypot(p.x - c.pos[0], p.y - c.pos[1], p.z - c.pos[2])
-          + Math.hypot(t.x - c.tgt[0], t.y - c.tgt[1], t.z - c.tgt[2]);
-  return d < 1e-3;
+  const axes = worldAxes();
+  if (!axes.some(Boolean)) return false;
+  const now = viewport.pose(), size = viewport.viewSize(), fov = viewport.camera.fov;
+  const ctxN = viewPlaceCtx(now, axes, size, fov);
+  const ctxT = viewPlaceCtx(c.pose, axes, size, fov);
+  // 기존 기하의 점 몇 개가 두 시점에서 같은 화면 자리에 오는가
+  let worst = 0, n = 0;
+  for (const t of drawn) {
+    if (!t.pts3d.length) continue;
+    for (const p of [t.pts3d[0], t.pts3d[t.pts3d.length - 1]]) {
+      const a = projectInView(now, p, ctxN.principal, ctxN.f);
+      const b = projectInView(c.pose, p, ctxT.principal, ctxT.f);
+      if (!a || !b) return false;
+      worst = Math.max(worst, Math.hypot(a[0] - b[0], a[1] - b[1]));
+      n += 1;
+      if (worst > SAME_VIEW_PX) return false;
+    }
+    if (n >= 8) break;
+  }
+  return n > 0;
 }
+/** 같은 시점으로 볼 화면 이동 한계(px). 파선이 제자리로 보이면 되므로 몇 px이면 된다. */
+const SAME_VIEW_PX = 2;
 
 const ink3d = new InkCanvas(ink3dEl, {
   /**
@@ -662,29 +773,52 @@ const ink3d = new InkCanvas(ink3dEl, {
       s.pts2d.forEach((p, i) => (i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1])));
       ctx.stroke();
     }
+    // **고치기 모드의 앵커 후보**(S-7 4). 첫 캔버스와 같은 색 규약이다.
+    if (viewMode === "fix") {
+      ctx.setLineDash([]);
+      for (const d of candDots3d) {
+        const taken = d.end === 0 ? picks.a : picks.b;
+        const isTaken = !!taken && taken[0] === d.pos[0] && taken[1] === d.pos[1] && taken[2] === d.pos[2];
+        ctx.beginPath();
+        ctx.arc(d.at[0], d.at[1], isTaken ? 7 : 5, 0, Math.PI * 2);
+        ctx.fillStyle = d.end === 0 ? "#b9770e" : "#2471a3";
+        ctx.globalAlpha = isTaken ? 1 : 0.55;
+        ctx.fill();
+        ctx.lineWidth = 1.5; ctx.strokeStyle = "#fff"; ctx.stroke();
+      }
+    }
     ctx.restore();
   },
   onStrokeEnd: (stroke) => {
     const pts = stroke.points.map(p => [p[0], p[1]] as Pt2);
-    if (pts.length >= 2) addStrokeFromView(pts, stroke.points);
+    if (viewMode === "fix") { if (pts.length) editClick3d(pts[0]); }
+    else if (pts.length >= 2) addStrokeFromView(pts, stroke.points);
     ink3d.clear();                      // 3D가 그 획을 이미 그리므로 잉크는 지운다
     refresh();
   },
 });
 ink3d.setFrame("persp");
 
-function setViewMode(draw: boolean) {
-  ink3dEl.classList.toggle("on", draw);
+function setViewMode(draw: boolean) { setView3dMode(draw ? "draw" : "orbit"); }
+
+function setView3dMode(m: ViewMode) {
+  viewMode = m;
+  const draw = m === "draw";
+  ink3dEl.classList.toggle("on", m !== "orbit");
   ink3d.redraw();
-  viewport.controls.enabled = !draw;
-  document.getElementById("vt-orbit")!.classList.toggle("on", !draw);
+  viewport.controls.enabled = m === "orbit";
+  document.getElementById("vt-orbit")!.classList.toggle("on", m === "orbit");
   document.getElementById("vt-draw")!.classList.toggle("on", draw);
-  document.getElementById("viewlabel")!.textContent = draw
-    ? "3D — **여기서 그리면 그 시점으로 놓인다**" : "3D — 드래그로 회전";
+  document.getElementById("vt-fix")!.classList.toggle("on", m === "fix");
+  document.getElementById("viewlabel")!.textContent =
+    m === "draw" ? "3D — **여기서 그리면 그 시점으로 놓인다**"
+    : m === "fix" ? "3D — **못 놓은 획을 골라 점을 누른다**"
+    : "3D — 드래그로 회전";
+  refreshCandidates3d();
   refresh();
 }
 // 돌리는 동안 미배치 파선이 시점과 함께 나타나고 사라진다(`sameView`).
-viewport.controls.addEventListener("change", () => ink3d.redraw());
+viewport.controls.addEventListener("change", () => { refreshCandidates3d(); ink3d.redraw(); });
 document.getElementById("undo")!.addEventListener("click", () => undo());
 document.getElementById("redo")!.addEventListener("click", () => redo());
 window.addEventListener("keydown", (e) => {
@@ -692,8 +826,9 @@ window.addEventListener("keydown", (e) => {
   e.preventDefault();
   (e.shiftKey ? redo : undo)();
 });
-document.getElementById("vt-orbit")!.addEventListener("click", () => setViewMode(false));
-document.getElementById("vt-draw")!.addEventListener("click", () => setViewMode(true));
+document.getElementById("vt-orbit")!.addEventListener("click", () => setView3dMode("orbit"));
+document.getElementById("vt-draw")!.addEventListener("click", () => setView3dMode("draw"));
+document.getElementById("vt-fix")!.addEventListener("click", () => setView3dMode("fix"));
 
 function fit3d() {
   const [w, h] = viewport.viewSize();
@@ -733,8 +868,31 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
   undo, redo, eraseAt, undoDepth: () => undoStack.length, redoDepth: () => redoStack.length,
   addStrokeFromView, worldAxes, setViewMode,
   // **S-7 고치기** — 스크립트 확인과 S-10 Playwright가 쓴다(후보 점 좌표가 없으면 클릭을 못 만든다).
-  editClick, provisional, select: (id: string | null) => {
-    selId = id; delete picks.a; delete picks.b; refreshCandidates(); refresh();
+  editClick, editClick3d, provisional, select: (id: string | null) => {
+    selId = id; delete picks.a; delete picks.b;
+    refreshCandidates(); refreshCandidates3d(); refresh();
   },
   candidates: () => candDots.map(d => ({ at: d.at, end: d.end })),
+  candidates3d: () => candDots3d.map(d => ({ at: d.at, end: d.end })),
+  sameView, viewCamHas: (id: string) => viewCam.has(id),
+  sameViewDebug: (id: string) => {
+    const c = viewCam.get(id); if (!c) return { err: "no cam" };
+    const axes = worldAxes();
+    const now = viewport.pose(), size = viewport.viewSize(), fov = viewport.camera.fov;
+    const ctxN = viewPlaceCtx(now, axes, size, fov);
+    const ctxT = viewPlaceCtx(c.pose, axes, size, fov);
+    let worst = 0, n = 0, nullHit = 0;
+    for (const t of drawn) {
+      if (!t.pts3d.length) continue;
+      for (const p of [t.pts3d[0], t.pts3d[t.pts3d.length - 1]]) {
+        const a = projectInView(now, p, ctxN.principal, ctxN.f);
+        const b = projectInView(c.pose, p, ctxT.principal, ctxT.f);
+        if (!a || !b) { nullHit += 1; continue; }
+        worst = Math.max(worst, Math.hypot(a[0] - b[0], a[1] - b[1])); n += 1;
+      }
+    }
+    return { worst: +worst.toFixed(3), n, nullHit, fN: +ctxN.f.toFixed(2), fT: +ctxT.f.toFixed(2),
+             dC: c.pose.C.map((v: number, i: number) => +(v - now.C[i]).toFixed(5)) };
+  },
+  setView3dMode,
 };

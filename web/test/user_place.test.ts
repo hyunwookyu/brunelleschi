@@ -15,6 +15,7 @@ import { norm3, sub3, add3, mul3, unit3, project, type Vec3 } from "../src/s3d/g
 import type { Pt2 } from "../src/s3d/camera.js";
 import { FIRST_VIEW_OPTS } from "../src/s3d/appPlace.js";
 import { rng32 } from "../src/s3d/synthInk.js";
+import { toView, fromView, projectInView, type ViewPose } from "../src/s3d/viewCamera.js";
 import { scene, groundPoint, boxEdges, drawEdges, type Scene } from "./scene3d.js";
 
 const SC: Scene = scene(35, 15);
@@ -121,6 +122,28 @@ describe("S-7 사용자 지정 배치", () => {
     expect(cands.length).toBeGreaterThan(0);
     const r = placeByUser(s, CTX, { a: cands[0].pos })!;
     expect(norm3(sub3(r.pts3d[0], edges[4].a)) / diag3).toBeLessThan(errBad);
+  });
+
+  it("**돌린 시점에서 지정해도 세계 좌표가 맞는다**(S-7 4) — 좌표계만 오간다", () => {
+    const { list, edges } = box(4242);
+    // 임의의 시점 하나. 앱은 `viewport.pose()`가 주고 여기서는 손으로 만든다.
+    const pose: ViewPose = {
+      R: [[0.8, 0, 0.6], [0, 1, 0], [-0.6, 0, 0.8]],
+      C: [0.4, -0.2, 0.3],
+    };
+    const ctxV: PlaceCtx = { principal: SC.principal, f: SC.f, vps: SC.vps, imgSize: SC.imgSize };
+    // 기존 획의 앵커를 뷰 좌표로 옮긴다(앱의 `refreshCandidates3d`가 하는 것)
+    const anchorW = list[0].pts3d[0];
+    const anchorV = toView(pose, anchorW);
+    // 그 시점의 화면에 그린 획
+    const ptsV = [edges[0].a, edges[3].b]
+      .map(p => projectInView(pose, p, ctxV.principal, ctxV.f)!) as Pt2[];
+    const s = newStroke(ptsV, "free");
+    const r = placeByUser(s, ctxV, { a: anchorV })!;
+    expect(r).not.toBeNull();
+    // **세계 좌표로 되돌리면 고른 앵커 그 점이어야 한다** — 좌표계 왕복이 손실 없이 닫힌다
+    const back = r.pts3d.map(p => fromView(pose, p));
+    expect(norm3(sub3(back[0], anchorW))).toBeLessThan(1e-9);
   });
 
   it("깊이 범위는 놓인 획에서 나온다. 놓인 획이 없으면 `null`", () => {
