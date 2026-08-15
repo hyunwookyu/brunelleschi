@@ -65,7 +65,7 @@
     "all_promoted": true
   },
   "real_promotion": {
-    "note": "**같은 획에서 전후를 짝짓는다**(#11). `both_placed` 안에서만 형태 오차를 견준다 — 한쪽만 놓인 획은 견줄 짝이 없다.",
+    "note": "**같은 획에서 전후를 짝짓는다**(#11). `both_placed` 안에서만 형태 오차를 **견준다** — 한쪽만 놓인 획은 견줄 짝이 없다. 다만 **오차 자체는 그쪽도 잰다**(`only_*_shape_err`) — D-L25의 목적함수가 놓인 것 전부를 보기 때문이다.",
     "both_placed": 552,
     "only_before": 570,
     "only_after": 402,
@@ -101,10 +101,41 @@
       "improved": 356,
       "worsened": 194,
       "same": 2
+    },
+    "only_before_shape_err": {
+      "n": 570,
+      "min": 0.0094,
+      "p10": 0.0347,
+      "median": 0.1199,
+      "p90": 0.8766,
+      "max": 1.5802
+    },
+    "only_after_shape_err": {
+      "n": 402,
+      "min": 0.0046,
+      "p10": 0.0259,
+      "median": 0.114,
+      "p90": 0.7847,
+      "max": 2.6398
+    },
+    "only_before_silent_wrong": {
+      "cut_0_1": "322/570",
+      "cut_0_2": "193/570",
+      "cut_0_5": "97/570"
+    },
+    "only_after_silent_wrong": {
+      "cut_0_1": "221/402",
+      "cut_0_2": "136/402",
+      "cut_0_5": "68/402"
+    },
+    "shape_err_measured": {
+      "both": "552/552",
+      "only_before": "570/570",
+      "only_after": "402/402"
     }
   },
   "spurious_promotion_control": {
-    "note": "**같은 획에서 전후를 짝짓는다**(#11). `both_placed` 안에서만 형태 오차를 견준다 — 한쪽만 놓인 획은 견줄 짝이 없다.",
+    "note": "**같은 획에서 전후를 짝짓는다**(#11). `both_placed` 안에서만 형태 오차를 **견준다** — 한쪽만 놓인 획은 견줄 짝이 없다. 다만 **오차 자체는 그쪽도 잰다**(`only_*_shape_err`) — D-L25의 목적함수가 놓인 것 전부를 보기 때문이다.",
     "both_placed": 296,
     "only_before": 220,
     "only_after": 133,
@@ -140,10 +171,547 @@
       "improved": 96,
       "worsened": 200,
       "same": 0
+    },
+    "only_before_shape_err": {
+      "n": 220,
+      "min": 0.0075,
+      "p10": 0.0477,
+      "median": 0.1579,
+      "p90": 0.3907,
+      "max": 1.0809
+    },
+    "only_after_shape_err": {
+      "n": 133,
+      "min": 0.0301,
+      "p10": 0.1582,
+      "median": 0.3592,
+      "p90": 0.8962,
+      "max": 1.2614
+    },
+    "only_before_silent_wrong": {
+      "cut_0_1": "150/220",
+      "cut_0_2": "83/220",
+      "cut_0_5": "12/220"
+    },
+    "only_after_silent_wrong": {
+      "cut_0_1": "129/133",
+      "cut_0_2": "110/133",
+      "cut_0_5": "36/133"
+    },
+    "shape_err_measured": {
+      "both": "296/296",
+      "only_before": "220/220",
+      "only_after": "133/133"
+    }
+  },
+  "dl25_rescore": {
+    "note": "**D-L25가 옛 등록 규칙을 대체했으므로 이 규칙도 다시 채점한다**(리뷰어 [4]). 옛 규칙('배치가 안 줄면서 조용히 틀림이 안 는다')은 배치 −168 하나로 기각됐다. D-L25는 배치와 틀림을 **한 수**로 합쳐 λ가 비율을 정한다.",
+    "caveat": "⚠ **`only_*` 획은 짝이 없다** — 승격 전후에서 **다른 획 집합**이므로 이 점수는 짝지은 비교가 아니다(#11). 분모(전체 획)는 같다. ⚠ **게이지 적합 모집단도 다르다**(2회차 리뷰어): 승격 전 1122획 · 후 954획에서 각각 적합한다. D-L22가 같은 종류의 비교에서 **부분집합 효과를 1.3pp로 실측**해 놓았고 여기 합산 여유는 **2.6pp**다 — 여유가 이미 알려진 편향의 2배 안이다. **그 몫을 안 갈랐다**(DEFERRED). ⚠ **여유를 비율로만 읽지 않는다**(#14) — `margin_strokes`를 함께 낸다. λ=2·절단 0.5 칸의 여유는 **9획**이고, 같은 세션이 8획짜리 칸(λ 표)을 '근거가 못 된다'고 철회했다. **같은 기준을 적용하면 그 칸도 못 쓴다.**",
+    "total_strokes": 2592,
+    "placed_before": 1122,
+    "placed_after": 954,
+    "err_n_before": 1122,
+    "err_n_after": 954,
+    "table": {
+      "cut_0.1_lambda_1": {
+        "before": -0.0517,
+        "after": -0.0062,
+        "promotion_wins": true,
+        "margin": 0.0455,
+        "margin_strokes": 118
+      },
+      "cut_0.1_lambda_2": {
+        "before": -0.294,
+        "after": -0.1933,
+        "promotion_wins": true,
+        "margin": 0.1007,
+        "margin_strokes": 261
+      },
+      "cut_0.1_lambda_3": {
+        "before": -0.5363,
+        "after": -0.3804,
+        "promotion_wins": true,
+        "margin": 0.1559,
+        "margin_strokes": 404
+      },
+      "cut_0.1_lambda_5": {
+        "before": -1.0208,
+        "after": -0.7546,
+        "promotion_wins": true,
+        "margin": 0.2662,
+        "margin_strokes": 690
+      },
+      "cut_0.1_lambda_10": {
+        "before": -2.2323,
+        "after": -1.6902,
+        "promotion_wins": true,
+        "margin": 0.5421,
+        "margin_strokes": 1405
+      },
+      "cut_0.2_lambda_1": {
+        "before": 0.1404,
+        "after": 0.1304,
+        "promotion_wins": false,
+        "margin": -0.01,
+        "margin_strokes": -26
+      },
+      "cut_0.2_lambda_2": {
+        "before": -0.0058,
+        "after": 0.0116,
+        "promotion_wins": true,
+        "margin": 0.0174,
+        "margin_strokes": 45
+      },
+      "cut_0.2_lambda_3": {
+        "before": -0.152,
+        "after": -0.1073,
+        "promotion_wins": true,
+        "margin": 0.0447,
+        "margin_strokes": 116
+      },
+      "cut_0.2_lambda_5": {
+        "before": -0.4444,
+        "after": -0.3449,
+        "promotion_wins": true,
+        "margin": 0.0995,
+        "margin_strokes": 258
+      },
+      "cut_0.2_lambda_10": {
+        "before": -1.1755,
+        "after": -0.939,
+        "promotion_wins": true,
+        "margin": 0.2365,
+        "margin_strokes": 613
+      },
+      "cut_0.35_lambda_1": {
+        "before": 0.2307,
+        "after": 0.2199,
+        "promotion_wins": false,
+        "margin": -0.0108,
+        "margin_strokes": -28
+      },
+      "cut_0.35_lambda_2": {
+        "before": 0.1296,
+        "after": 0.1458,
+        "promotion_wins": true,
+        "margin": 0.0162,
+        "margin_strokes": 42
+      },
+      "cut_0.35_lambda_3": {
+        "before": 0.0285,
+        "after": 0.0718,
+        "promotion_wins": true,
+        "margin": 0.0433,
+        "margin_strokes": 112
+      },
+      "cut_0.35_lambda_5": {
+        "before": -0.1736,
+        "after": -0.0764,
+        "promotion_wins": true,
+        "margin": 0.0972,
+        "margin_strokes": 252
+      },
+      "cut_0.35_lambda_10": {
+        "before": -0.679,
+        "after": -0.4468,
+        "promotion_wins": true,
+        "margin": 0.2322,
+        "margin_strokes": 602
+      },
+      "cut_0.5_lambda_1": {
+        "before": 0.2886,
+        "after": 0.2693,
+        "promotion_wins": false,
+        "margin": -0.0193,
+        "margin_strokes": -50
+      },
+      "cut_0.5_lambda_2": {
+        "before": 0.2164,
+        "after": 0.2199,
+        "promotion_wins": true,
+        "margin": 0.0035,
+        "margin_strokes": 9
+      },
+      "cut_0.5_lambda_3": {
+        "before": 0.1443,
+        "after": 0.1705,
+        "promotion_wins": true,
+        "margin": 0.0262,
+        "margin_strokes": 68
+      },
+      "cut_0.5_lambda_5": {
+        "before": 0,
+        "after": 0.0718,
+        "promotion_wins": true,
+        "margin": 0.0718,
+        "margin_strokes": 186
+      },
+      "cut_0.5_lambda_10": {
+        "before": -0.3607,
+        "after": -0.1752,
+        "promotion_wins": true,
+        "margin": 0.1855,
+        "margin_strokes": 481
+      },
+      "cut_0.7_lambda_1": {
+        "before": 0.3202,
+        "after": 0.314,
+        "promotion_wins": false,
+        "margin": -0.0062,
+        "margin_strokes": -16
+      },
+      "cut_0.7_lambda_2": {
+        "before": 0.2639,
+        "after": 0.287,
+        "promotion_wins": true,
+        "margin": 0.0231,
+        "margin_strokes": 60
+      },
+      "cut_0.7_lambda_3": {
+        "before": 0.2076,
+        "after": 0.26,
+        "promotion_wins": true,
+        "margin": 0.0524,
+        "margin_strokes": 136
+      },
+      "cut_0.7_lambda_5": {
+        "before": 0.0949,
+        "after": 0.206,
+        "promotion_wins": true,
+        "margin": 0.1111,
+        "margin_strokes": 288
+      },
+      "cut_0.7_lambda_10": {
+        "before": -0.1867,
+        "after": 0.071,
+        "promotion_wins": true,
+        "margin": 0.2577,
+        "margin_strokes": 668
+      },
+      "cut_1_lambda_1": {
+        "before": 0.3488,
+        "after": 0.3457,
+        "promotion_wins": false,
+        "margin": -0.0031,
+        "margin_strokes": -8
+      },
+      "cut_1_lambda_2": {
+        "before": 0.3067,
+        "after": 0.3345,
+        "promotion_wins": true,
+        "margin": 0.0278,
+        "margin_strokes": 72
+      },
+      "cut_1_lambda_3": {
+        "before": 0.2647,
+        "after": 0.3233,
+        "promotion_wins": true,
+        "margin": 0.0586,
+        "margin_strokes": 152
+      },
+      "cut_1_lambda_5": {
+        "before": 0.1806,
+        "after": 0.3009,
+        "promotion_wins": true,
+        "margin": 0.1203,
+        "margin_strokes": 312
+      },
+      "cut_1_lambda_10": {
+        "before": -0.0297,
+        "after": 0.245,
+        "promotion_wins": true,
+        "margin": 0.2747,
+        "margin_strokes": 712
+      }
+    },
+    "spurious_control_rescore": {
+      "note": "**양성 채널**(#30) — 같은 산식을 **가짜 승격**(참 2점 장면에 없는 세 번째 소실점을 넣은 것)에 건다. 여기서 점수가 나빠져야 위 표가 승격을 재는 것이다. 안 나빠지면 그것은 **목적함수의 편향**이지 승격의 성질이 아니다.",
+      "total_strokes": 864,
+      "placed_before": 516,
+      "placed_after": 429,
+      "table": {
+        "cut_0.1_lambda_1": {
+          "before": -0.1782,
+          "after": -0.3461,
+          "promotion_wins": false,
+          "margin": -0.1679,
+          "margin_strokes": -145
+        },
+        "cut_0.1_lambda_2": {
+          "before": -0.566,
+          "after": -0.7674,
+          "promotion_wins": false,
+          "margin": -0.2014,
+          "margin_strokes": -174
+        },
+        "cut_0.1_lambda_3": {
+          "before": -0.9537,
+          "after": -1.1887,
+          "promotion_wins": false,
+          "margin": -0.235,
+          "margin_strokes": -203
+        },
+        "cut_0.1_lambda_5": {
+          "before": -1.7292,
+          "after": -2.0313,
+          "promotion_wins": false,
+          "margin": -0.3021,
+          "margin_strokes": -261
+        },
+        "cut_0.1_lambda_10": {
+          "before": -3.6678,
+          "after": -4.1377,
+          "promotion_wins": false,
+          "margin": -0.4699,
+          "margin_strokes": -406
+        },
+        "cut_0.2_lambda_1": {
+          "before": 0.1296,
+          "after": -0.1748,
+          "promotion_wins": false,
+          "margin": -0.3044,
+          "margin_strokes": -263
+        },
+        "cut_0.2_lambda_2": {
+          "before": -0.1042,
+          "after": -0.5104,
+          "promotion_wins": false,
+          "margin": -0.4062,
+          "margin_strokes": -351
+        },
+        "cut_0.2_lambda_3": {
+          "before": -0.338,
+          "after": -0.8461,
+          "promotion_wins": false,
+          "margin": -0.5081,
+          "margin_strokes": -439
+        },
+        "cut_0.2_lambda_5": {
+          "before": -0.8056,
+          "after": -1.5174,
+          "promotion_wins": false,
+          "margin": -0.7118,
+          "margin_strokes": -615
+        },
+        "cut_0.2_lambda_10": {
+          "before": -1.9745,
+          "after": -3.1956,
+          "promotion_wins": false,
+          "margin": -1.2211,
+          "margin_strokes": -1055
+        },
+        "cut_0.35_lambda_1": {
+          "before": 0.3866,
+          "after": 0.1215,
+          "promotion_wins": false,
+          "margin": -0.2651,
+          "margin_strokes": -229
+        },
+        "cut_0.35_lambda_2": {
+          "before": 0.2813,
+          "after": -0.066,
+          "promotion_wins": false,
+          "margin": -0.3473,
+          "margin_strokes": -300
+        },
+        "cut_0.35_lambda_3": {
+          "before": 0.1759,
+          "after": -0.2535,
+          "promotion_wins": false,
+          "margin": -0.4294,
+          "margin_strokes": -371
+        },
+        "cut_0.35_lambda_5": {
+          "before": -0.0347,
+          "after": -0.6285,
+          "promotion_wins": false,
+          "margin": -0.5938,
+          "margin_strokes": -513
+        },
+        "cut_0.35_lambda_10": {
+          "before": -0.5613,
+          "after": -1.566,
+          "promotion_wins": false,
+          "margin": -1.0047,
+          "margin_strokes": -868
+        },
+        "cut_0.5_lambda_1": {
+          "before": 0.4884,
+          "after": 0.2674,
+          "promotion_wins": false,
+          "margin": -0.221,
+          "margin_strokes": -191
+        },
+        "cut_0.5_lambda_2": {
+          "before": 0.434,
+          "after": 0.1528,
+          "promotion_wins": false,
+          "margin": -0.2812,
+          "margin_strokes": -243
+        },
+        "cut_0.5_lambda_3": {
+          "before": 0.3796,
+          "after": 0.0382,
+          "promotion_wins": false,
+          "margin": -0.3414,
+          "margin_strokes": -295
+        },
+        "cut_0.5_lambda_5": {
+          "before": 0.2708,
+          "after": -0.191,
+          "promotion_wins": false,
+          "margin": -0.4618,
+          "margin_strokes": -399
+        },
+        "cut_0.5_lambda_10": {
+          "before": -0.0012,
+          "after": -0.7639,
+          "promotion_wins": false,
+          "margin": -0.7627,
+          "margin_strokes": -659
+        },
+        "cut_0.7_lambda_1": {
+          "before": 0.5278,
+          "after": 0.3553,
+          "promotion_wins": false,
+          "margin": -0.1725,
+          "margin_strokes": -149
+        },
+        "cut_0.7_lambda_2": {
+          "before": 0.4931,
+          "after": 0.2847,
+          "promotion_wins": false,
+          "margin": -0.2084,
+          "margin_strokes": -180
+        },
+        "cut_0.7_lambda_3": {
+          "before": 0.4583,
+          "after": 0.2141,
+          "promotion_wins": false,
+          "margin": -0.2442,
+          "margin_strokes": -211
+        },
+        "cut_0.7_lambda_5": {
+          "before": 0.3889,
+          "after": 0.0729,
+          "promotion_wins": false,
+          "margin": -0.316,
+          "margin_strokes": -273
+        },
+        "cut_0.7_lambda_10": {
+          "before": 0.2153,
+          "after": -0.2801,
+          "promotion_wins": false,
+          "margin": -0.4954,
+          "margin_strokes": -428
+        },
+        "cut_1_lambda_1": {
+          "before": 0.5671,
+          "after": 0.4549,
+          "promotion_wins": false,
+          "margin": -0.1122,
+          "margin_strokes": -97
+        },
+        "cut_1_lambda_2": {
+          "before": 0.5521,
+          "after": 0.434,
+          "promotion_wins": false,
+          "margin": -0.1181,
+          "margin_strokes": -102
+        },
+        "cut_1_lambda_3": {
+          "before": 0.537,
+          "after": 0.4132,
+          "promotion_wins": false,
+          "margin": -0.1238,
+          "margin_strokes": -107
+        },
+        "cut_1_lambda_5": {
+          "before": 0.5069,
+          "after": 0.3715,
+          "promotion_wins": false,
+          "margin": -0.1354,
+          "margin_strokes": -117
+        },
+        "cut_1_lambda_10": {
+          "before": 0.4317,
+          "after": 0.2674,
+          "promotion_wins": false,
+          "margin": -0.1643,
+          "margin_strokes": -142
+        }
+      },
+      "at_registered_point": {
+        "before": 0.3796,
+        "after": 0.0382,
+        "promotion_wins": false,
+        "margin": -0.3414,
+        "margin_strokes": -295
+      }
+    },
+    "at_registered_point": {
+      "before": 0.1443,
+      "after": 0.1705,
+      "promotion_wins": true,
+      "margin": 0.0262,
+      "margin_strokes": 68
+    },
+    "seed_spread_at_registered_point": {
+      "note": "시드별 (승격 후 − 승격 전) 점수 차. **전부 같은 부호여야** 결론이 선다.",
+      "rows": [
+        {
+          "seed": 1,
+          "before": 0.1644,
+          "after": 0.1181,
+          "margin": -0.0463,
+          "promotion_wins": false
+        },
+        {
+          "seed": 2,
+          "before": 0.0139,
+          "after": 0.0926,
+          "margin": 0.0787,
+          "promotion_wins": true
+        },
+        {
+          "seed": 3,
+          "before": 0.1782,
+          "after": 0.1528,
+          "margin": -0.0254,
+          "promotion_wins": false
+        },
+        {
+          "seed": 4,
+          "before": 0.088,
+          "after": 0.2014,
+          "margin": 0.1134,
+          "promotion_wins": true
+        },
+        {
+          "seed": 5,
+          "before": 0.25,
+          "after": 0.2176,
+          "margin": -0.0324,
+          "promotion_wins": false
+        },
+        {
+          "seed": 6,
+          "before": 0.1713,
+          "after": 0.2407,
+          "margin": 0.0694,
+          "promotion_wins": true
+        }
+      ],
+      "margin_min": -0.0463,
+      "margin_max": 0.1134,
+      "margin_range": 0.1597,
+      "all_same_sign": false,
+      "verdict": "⚠ **부호가 시드마다 갈린다 — 이 동작점에서는 결론이 없다**(#14). ⚠ **양성 채널은 별개로 산다**: 같은 산식이 가짜 승격에는 **−295획**을 매기고 절단 여섯 전부에서 벌한다(`spurious_control_rescore`) — 즉 **목적함수는 눈이 떠 있고, 결론이 없는 것은 참 승격의 효과가 시드 폭 안이기 때문이다.**"
     }
   },
   "snap_reanchor": {
     "note": "**양성 채널이 먼저다**(#30). `drift_px`가 0이면 '차수 승격에서 스냅이 조용히 풀린다'는 걱정 자체가 없는 것이다 — 옛 화면 점과 **새 상**의 화면 거리다.",
+    "scope": "⚠ **이 블록만 두 팔을 합산한다** — 참 승격 216장면 + **가짜 승격 대조군 72장면**이다. 위의 `real_promotion`·`spurious_promotion_control`은 갈려 있는데 여기는 안 갈렸다. **참 승격만의 값은 `order_undo.json`에 있다**(had 1676 · reanchored 1381 · lost 295). 혼입값(2391 / 1908 / 483)을 참 승격의 수로 인용하면 안 된다 — 실제로 그렇게 인용됐고 고쳤다.",
     "had": 2391,
     "reanchored": 1908,
     "target_unplaced": 483,

@@ -25,6 +25,15 @@
     #status .error{color:#c0392b}
     #status .note{margin-top:4px;color:#444;border-top:1px solid #eee;padding-top:4px}
     #status b{font-weight:600}
+    /* §6.2 승격 요약 — **눈에 띄어야 한다.** 승격은 품질을 올리고 배치를 줄이므로
+       사용자가 되돌릴 이유가 실제로 있고(L-C.1), 자동 신호가 없어 이 표시가 유일한 판정 수단이다.
+       ⚠ `#status`가 `pointer-events:none`이라 **여기서 되살려야** 재연결 버튼이 눌린다. */
+    #status .promote{pointer-events:auto;margin:-8px -10px 8px;padding:8px 10px;
+                     background:#fff6e5;border-bottom:1px solid #f0d9b0;
+                     border-radius:8px 8px 0 0}
+    #status .promote button{font:inherit;font-size:13px;padding:3px 9px;margin:3px 0;
+                            border:1px solid #d4a95c;border-radius:5px;
+                            background:#fff;color:#111;cursor:pointer}
     #bar{flex:0 0 auto;display:flex;gap:6px;align-items:center;padding:7px 10px;
          border-top:1px solid #e3e3e3;background:#fafafa;overflow-x:auto}
     #bar button{font:inherit;padding:5px 11px;border:1px solid #d4d4d4;border-radius:6px;

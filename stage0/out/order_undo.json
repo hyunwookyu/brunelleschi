@@ -1,0 +1,368 @@
+{
+  "what": "L-C.2 — 승격이 잃은 것이 보이는가(개수), 그리고 되돌리기가 되돌리는가(보장)",
+  "why": "§6.2는 '사용자가 즉시 보고 되돌린다'이다. **지금은** 표시와 되돌리기가 판정 수단이고 그러려면 잃은 것이 보여야 한다. ⚠ **'유일한'이라 적으면 안 된다**(L-C.2 리뷰어 [8]) — AS-L6이 반증한 것은 **재투영 잔차 하나**이고, 계획서 §6.2는 대체 후보 둘(획별 `tiltDeg` · 소실점 삼각형 f² 편차)을 **시험하라**고 적었다. AS-L6 자신이 `tiltDeg`가 '끝점 오차 0.03에서 중앙 2.06°로 **실제로 움직인다**'고 기록해 두었다. 그 시험이 **L-C.3**이고 아직 안 했다. L-C.1이 이 UI의 필요를 측정으로 뒷받침했다 — 승격은 품질을 올리고 **배치를 −168 줄인다**.",
+  "method": {
+    "loss": "`order_promote`와 **같은 픽스처·같은 산식**으로 승격을 돌리고, **앱이 부르는 `diffPlacement`**로 전후 배치를 짝지어 `dropped`·`gained`를 낸다(#17). `snap_lost`는 `promoteOrder`가 **직접 모은 id 집합**이다(#10).",
+    "undo": "**설계 보장**이다(#5·자기참조 유형 3) — `takeSnap` → 상태를 어긴다 → `applySnap` → `snapDiff`가 비는지. 스냅샷을 되돌리고 그 스냅샷과 비교하는 것이므로 **측정이 아니고 임계를 안 건다.** 값은 **양성 채널**에 있다.",
+    "positive_channel": "같은 대조를 **다른 상태**(승격 후)에 걸어 그 자리를 이름으로 짚는지 본다. 안 짚으면 왕복 통과는 '언제나 빈 배열'과 구분되지 않는다."
+  },
+  "conditions": {
+    "compositions": [
+      "3pt_yaw35_pitch15",
+      "3pt_yaw20_pitch25",
+      "3pt_yaw50_pitch8"
+    ],
+    "grades": [
+      "precise",
+      "medium",
+      "coarse"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "end_jitters": [
+      0,
+      0.01,
+      0.03,
+      0.05
+    ],
+    "skew": 0.12,
+    "canvas_px": [
+      960,
+      672
+    ],
+    "camera": "**참 소실점**을 넣고 뺀다 — 검출·조정 오차는 여기서 안 잰다."
+  },
+  "visible_loss": {
+    "note": "**이 수가 0이면 이 UI는 아무것도 안 보인다.** 그 사실이 판정이다(사전 등록 ②). `dropped`는 3D였다가 2D 대기로 내려온 획이고 **실패가 아니라 대기**다(§9.1) — 표시의 문구도 그렇게 적었다.",
+    "scenes": 216,
+    "scenes_with_dropped": "176/216",
+    "scenes_with_snap_lost": "94/216",
+    "dropped_total": 570,
+    "gained_total": 402,
+    "placed_delta": -168,
+    "dropped_per_scene": {
+      "n": 216,
+      "min": 0,
+      "p10": 0,
+      "median": 2,
+      "p90": 5,
+      "max": 10
+    },
+    "gained_per_scene": {
+      "n": 216,
+      "min": 0,
+      "p10": 0,
+      "median": 1.5,
+      "p90": 4,
+      "max": 8
+    },
+    "snap_lost_per_scene": {
+      "n": 216,
+      "min": 0,
+      "p10": 0,
+      "median": 0,
+      "p90": 4,
+      "max": 10
+    },
+    "snap": {
+      "had": 1676,
+      "reanchored": 1381,
+      "lost": 295,
+      "lost_rate": 0.176
+    },
+    "by_composition": {
+      "3pt_yaw35_pitch15": {
+        "scenes": 72,
+        "dropped": 212,
+        "snap_lost": 100
+      },
+      "3pt_yaw20_pitch25": {
+        "scenes": 72,
+        "dropped": 173,
+        "snap_lost": 86
+      },
+      "3pt_yaw50_pitch8": {
+        "scenes": 72,
+        "dropped": 185,
+        "snap_lost": 109
+      }
+    },
+    "set_vs_counter_mismatch": 0,
+    "set_vs_counter_checks": 432,
+    "set_vs_counter_probe_fires": true,
+    "cross_check": "⚠ **`order_promote.json`의 스냅 수와 다르게 보이는 것이 정상이다** — 그쪽 `snap_reanchor`는 **가짜 승격 대조군까지 합산**한 값이고(참 2점 구도 72장면이 더 있다) 여기는 **참 3점 216장면만**이다(#11). ⚠ `placed_delta`가 양쪽에서 **−168**로 같은 것은 **#33(값 대조)이 아니다** — 같은 픽스처·같은 산식이라 그냥 결정성이다(L-C.2 리뷰어 [6]). 여기서 실제로 확인되는 것은 **#17**이다: 짝짓기를 **앱이 부르는 `diffPlacement`**로 하는데도 하네스가 직접 짝지은 `order_promote`와 같은 수가 나온다 — 앱 경로와 측정 경로가 안 갈렸다."
+  },
+  "undo_roundtrip": {
+    "note": "⚠ **설계 보장이지 측정이 아니다**(CLAUDE.md §5.1 자기참조 유형 3). **임계를 걸지 않는다.** 아래 `positive_channel`이 이 대조가 눈뜬 것임을 보인다.",
+    "guarantee": "왕복 뒤 `snapDiff`가 빈다",
+    "covers": {
+      "note": "**담는 것**과 **담지 않아도 되는 것**을 나눠 적는다. 후자는 사유를 함께 적는다 — 사유 없이 빠진 것이 초판의 결함이었다.",
+      "held": [
+        "doc.strokes.id",
+        "doc.strokes.pts2d",
+        "doc.strokes.seg3d",
+        "doc.strokes.axis",
+        "doc.strokes.userAxis",
+        "doc.strokes.snapStart",
+        "doc.strokes.viewRef",
+        "doc.strokes.color",
+        "doc.strokes.width",
+        "doc.views",
+        "doc.currentView",
+        "cam.guides",
+        "cam.locked",
+        "lockedOrder",
+        "promoteReport"
+      ],
+      "held_but_not_compared": {
+        "fields": [
+          "id(순서로만 본다)",
+          "userAxis",
+          "viewRef",
+          "color",
+          "width"
+        ],
+        "why": "⚠ **`takeSnap`은 `{...s}`로 전부 담지만 `snapDiff`는 이 다섯을 안 본다.** 담기므로 **복원은 된다** — 못 보는 것은 *복원 실패를 잡는 능력*이다. 지금 승격·되돌리기 경로가 이 다섯을 안 건드리므로 대조에 넣을 이유가 없었고, **건드리게 되면 그때 넣어야 한다.** `Stroke.layer`는 `SStroke`에 아예 없다 (#18이 잡은 그 필드이고 L 전환에서 빠졌다)."
+      },
+      "derived_not_held": {
+        "fields": [
+          "cam.acc",
+          "vps",
+          "principal",
+          "f",
+          "fSource",
+          "order"
+        ],
+        "why": "**가이드에서 파생된다** — `CamState.apply()`가 **`guides`만으로** `acc.setLines(axis, ...)`를 다시 부르고 `vps()`/`ctx()`가 그 해에서 나온다. 누산기에 들어가는 선은 `byAxis(this.guides)`가 유일한 출처다(획은 안 들어간다 — 확정 뒤에는 획이 소실점을 안 바꾼다, CLAUDE.md §1). ⚠ **브라우저 확인은 `revert_by_order` 경로 하나뿐이다**(2회차 리뷰어) — 일반 `실행취소` 경로는 이 픽스처에서 가이드가 안 바뀌어(6 → 6) 파생 복원을 시험하지 않는다. `trials`의 `guides`·`guides_add`가 그 자리를 노드에서 덮지만 **앱 경로의 확인은 한 경로뿐**이다."
+      },
+      "transient_not_held": {
+        "fields": [
+          "tool",
+          "axisLock",
+          "hoverSnap",
+          "live",
+          "note"
+        ],
+        "why": "**그리는 중의 상태**라 되돌리기의 대상이 아니다(SketchUp도 안 되돌린다, A-3). 다음 포인터 이벤트가 전부 다시 만든다."
+      },
+      "stage_pose": "`stage`의 자세는 `doc.views[].pose`가 들고 있으므로 문서에 있다. 다만 **지금 보고 있는 자세**(`stage.pose()`)는 `doc.currentView`가 정하고 `restoreSnap`이 확정 시점으로 되돌린다 — 그것이 §6.2가 요구하는 동작이다."
+    },
+    "trials": {
+      "note": "**왕복을 여러 번 돌린다**(리뷰어 [10]). 어긴 방식을 바꿔 가며 돌고, 매번 **어긴 것이 대조에 잡히는지**(`detected > 0`)를 먼저 본다 — 안 잡히면 그 왕복은 아무것도 안 지킨 것이다. ⚠ **개별 일곱은 각각 1이고 `all`은 8이다** — 합(7)이 아니다(2회차 리뷰어). `all`은 `locked`(1) + `guides.length`(1) + **획 여섯의 `seg3d.presence`**(6)를 함께 어기기 때문이다. 개별 `seg3d_null`은 획 **하나**만 비운다.",
+      "n": 8,
+      "rows": [
+        {
+          "breaker": "guides",
+          "detected": 1,
+          "restored": true
+        },
+        {
+          "breaker": "guides_add",
+          "detected": 1,
+          "restored": true
+        },
+        {
+          "breaker": "seg3d_null",
+          "detected": 1,
+          "restored": true
+        },
+        {
+          "breaker": "seg3d_move",
+          "detected": 1,
+          "restored": true
+        },
+        {
+          "breaker": "pts2d",
+          "detected": 1,
+          "restored": true
+        },
+        {
+          "breaker": "snapStart",
+          "detected": 1,
+          "restored": true
+        },
+        {
+          "breaker": "locked",
+          "detected": 1,
+          "restored": true
+        },
+        {
+          "breaker": "all",
+          "detected": 8,
+          "restored": true
+        }
+      ],
+      "all_detected": true,
+      "all_restored": true
+    },
+    "round_trip_diff": [],
+    "round_trip_empty": true,
+    "positive_channel": {
+      "note": "같은 대조를 승격 **후** 상태에 걸었다. 여기가 비면 대조가 눈이 먼 것이고 그러면 위의 통과는 아무 뜻이 없다(#30).",
+      "diff_len": 14,
+      "names_all": [
+        "lockedOrder",
+        "guides.length",
+        "strokes[0].pts2d[0]",
+        "strokes[0].seg3d.presence",
+        "strokes[1].pts2d[0]",
+        "strokes[1].seg3d",
+        "strokes[2].pts2d[0]",
+        "strokes[2].seg3d",
+        "strokes[3].pts2d[0]",
+        "strokes[3].seg3d.presence",
+        "strokes[4].pts2d[0]",
+        "strokes[4].seg3d",
+        "strokes[5].pts2d[0]",
+        "strokes[5].seg3d"
+      ],
+      "sees_pts2d": true,
+      "sees_guides": true,
+      "sees_seg3d": true,
+      "sees_locked_order": true
+    },
+    "camera_included": {
+      "note": "⚠ **초판의 `실행취소`는 문서만 되돌렸다.** 승격을 되돌리면 기하는 옛 해로 돌아가는데 소실점은 새 것 그대로 남아 §6.1이 금지한 **좌표계가 섞인 상태**가 된다. 화면은 그럴듯해서 아무도 못 본다. `appSnap`이 둘을 함께 담는다.",
+      "guides_restored": 4,
+      "guides_at_promotion": 5,
+      "locked_order_restored": 2
+    }
+  },
+  "constants": {
+    "hash": "46c028d1",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "3df57ac7",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  }
+}

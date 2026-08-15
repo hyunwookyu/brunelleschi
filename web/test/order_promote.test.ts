@@ -82,18 +82,50 @@ interface Paired {
   bothPlaced: number; onlyBefore: number; onlyAfter: number; neither: number;
   errBefore: number[]; errAfter: number[];
   improved: number; worsened: number; same: number;
+  /**
+   * **한쪽만 놓인 획의 형태 오차**(L-C.2 리뷰어 [4]).
+   *
+   * 짝이 없으니 **전후를 견줄 수는 없다** — 그것이 `errBefore`/`errAfter`를 `both_placed`로
+   * 좁힌 이유다. 그러나 **D-L25의 목적함수는 짝짓기를 안 한다**: 점수가
+   * `(놓였고 맞은 것 − λ·조용히 틀린 것) / 전체`라 **놓인 것 전부의 오차**가 필요하다.
+   * 이것이 없으면 승격의 등록 규칙을 D-L25로 다시 채점할 수 없다 — 실제로 못 했다.
+   * 게이지는 각 팔의 것을 쓴다(#1: 카메라가 다르다).
+   */
+  errOnlyBefore: number[]; errOnlyAfter: number[];
 }
 const paired = (): Paired => ({ bothPlaced: 0, onlyBefore: 0, onlyAfter: 0, neither: 0,
-                                errBefore: [], errAfter: [], improved: 0, worsened: 0, same: 0 });
+                                errBefore: [], errAfter: [], improved: 0, worsened: 0, same: 0,
+                                errOnlyBefore: [], errOnlyAfter: [] });
 const pairedRep = (p: Paired) => ({
-  note: "**같은 획에서 전후를 짝짓는다**(#11). `both_placed` 안에서만 형태 오차를 견준다 — "
-    + "한쪽만 놓인 획은 견줄 짝이 없다.",
+  note: "**같은 획에서 전후를 짝짓는다**(#11). `both_placed` 안에서만 형태 오차를 **견준다** — "
+    + "한쪽만 놓인 획은 견줄 짝이 없다. 다만 **오차 자체는 그쪽도 잰다**(`only_*_shape_err`) — "
+    + "D-L25의 목적함수가 놓인 것 전부를 보기 때문이다.",
   both_placed: p.bothPlaced, only_before: p.onlyBefore, only_after: p.onlyAfter, neither: p.neither,
   placed_delta: p.onlyAfter - p.onlyBefore,
   shape_err_before: stat(p.errBefore), shape_err_after: stat(p.errAfter),
   silent_wrong_before: silentWrong(p.errBefore), silent_wrong_after: silentWrong(p.errAfter),
   per_stroke: { improved: p.improved, worsened: p.worsened, same: p.same },
+  only_before_shape_err: stat(p.errOnlyBefore), only_after_shape_err: stat(p.errOnlyAfter),
+  only_before_silent_wrong: silentWrong(p.errOnlyBefore),
+  only_after_silent_wrong: silentWrong(p.errOnlyAfter),
+  shape_err_measured: { both: `${p.errBefore.length}/${p.bothPlaced}`,
+                        only_before: `${p.errOnlyBefore.length}/${p.onlyBefore}`,
+                        only_after: `${p.errOnlyAfter.length}/${p.onlyAfter}` },
 });
+
+/**
+ * **D-L25로 다시 채점한다**(2026-08-16 사람이 정한 목적함수).
+ *
+ * `점수 = (놓였고 맞은 것 − λ·조용히 틀린 것) / 전체`. 분모는 **획 전부**이므로
+ * 미배치가 0점을 받고 조용히 틀림이 −λ를 받는다 — 그것이 "미배치는 유예, 틀림은 영구"다.
+ *
+ * ⚠ **λ와 절단을 하나만 내지 않는다**(#12·#13) — 절단에서 승자가 뒤집히는 것을 이 프로젝트가
+ * 이미 봤다(`axis_live.cut_curve`). 표로 낸다.
+ */
+function dl25(all: number[], placed: number, total: number, lam: number, cut: number): number {
+  const wrong = all.filter(e => e > cut).length;
+  return +((placed - wrong - lam * wrong) / Math.max(1, total)).toFixed(4);
+}
 
 /** 스냅 대상을 새로 만든다 — 시작점을 이웃 획의 끝점에 붙인다(앱 경로와 같은 함수). */
 function attachSnaps(fx: Fx, placed: Map<string, LiftSeg>): number {
@@ -128,6 +160,14 @@ describe("L-C.1 — 차수 승격이 전부 다시 푸는가, 그리고 나아�
     const orders = { before: [] as number[], after: [] as number[] };
     /** 시드별 표제 수치(#14). */
     const bySeed: Record<string, { both: number; wB: number; wA: number }> = {};
+    /**
+     * **시드별 D-L25 점수**(#14 — 여유가 시드 폭보다 작으면 그 결론은 없다).
+     *
+     * L-C.2 리뷰어 [2]가 짚은 자리다: 같은 세션이 D-L21 재채점은 시드 폭 때문에 보류하면서
+     * 다른 수는 폭을 안 보고 박았다. **여기서는 먼저 잰다.**
+     */
+    const dl25Seed: Record<string, { total: number; pB: number; pA: number;
+                                     eB: number[]; eA: number[] }> = {};
 
     const run = (
       C: typeof TRUE_3PT[number], bag: Paired, spuriousArm: boolean, grade: InkGrade,
@@ -167,8 +207,16 @@ describe("L-C.1 — 차수 승격이 전부 다시 푸는가, 그리고 나아�
       // ---- **전후를 짝짓는다**. 게이지는 **각각 적합**한다(#1 — 카메라가 다르다)
       const kB = rB.placed.size ? fitGauge(rB.placed, fx.edges) : null;
       const kA = pr.placed.size ? fitGauge(pr.placed, fx.edges) : null;
+      // **시드별 D-L25 자루**(#14). 참 승격 팔만 — 가짜 팔은 대조군이다
+      const ds = spuriousArm ? null
+        : (dl25Seed[String(seed)] ??= { total: 0, pB: 0, pA: 0, eB: [], eA: [] });
       for (const s of fx.strokes) {
         const b = rB.placed.get(s.id), a = pr.placed.get(s.id);
+        if (ds) {
+          ds.total += 1;
+          if (b) { ds.pB += 1; if (kB != null) ds.eB.push(segShapeError(b, fx.edges[+s.id.slice(1)], fx.diag, kB)); }
+          if (a) { ds.pA += 1; if (kA != null) ds.eA.push(segShapeError(a, fx.edges[+s.id.slice(1)], fx.diag, kA)); }
+        }
         if (b && a) {
           bag.bothPlaced += 1;
           if (kB == null || kA == null) continue;
@@ -184,9 +232,14 @@ describe("L-C.1 — 차수 승격이 전부 다시 푸는가, 그리고 나아�
             if (eB > 0.2) sr.wB += 1;
             if (eA > 0.2) sr.wA += 1;
           }
-        } else if (b) bag.onlyBefore += 1;
-        else if (a) bag.onlyAfter += 1;
-        else bag.neither += 1;
+        } else if (b) {
+          bag.onlyBefore += 1;
+          // **오차는 잰다**(리뷰어 [4]) — 견줄 짝이 없을 뿐 D-L25는 이 획도 센다
+          if (kB != null) bag.errOnlyBefore.push(segShapeError(b, fx.edges[+s.id.slice(1)], fx.diag, kB));
+        } else if (a) {
+          bag.onlyAfter += 1;
+          if (kA != null) bag.errOnlyAfter.push(segShapeError(a, fx.edges[+s.id.slice(1)], fx.diag, kA));
+        } else bag.neither += 1;
       }
     };
 
@@ -236,9 +289,101 @@ describe("L-C.1 — 차수 승격이 전부 다시 푸는가, 그리고 나아�
       },
       real_promotion: pairedRep(real),
       spurious_promotion_control: pairedRep(spurious),
+      // ---- **D-L25로 다시 채점한다**(리뷰어 [4]: 등록 규칙을 대체했으면 이것도 대상이다)
+      dl25_rescore: (() => {
+        const total = real.bothPlaced + real.onlyBefore + real.onlyAfter + real.neither;
+        const errB = [...real.errBefore, ...real.errOnlyBefore];
+        const errA = [...real.errAfter, ...real.errOnlyAfter];
+        const pB = real.bothPlaced + real.onlyBefore, pA = real.bothPlaced + real.onlyAfter;
+        // ⚠ **절단을 셋만 내면 "모든 절단에서"가 셋을 가리킨다**(#13 — 2회차 리뷰어).
+        // 절단 곡선은 같은 물음에서 0.1~1.0의 11점을 냈고 0.6~1.0에서 우열이 뒤집혔다
+        const CUTS = [0.1, 0.2, 0.35, 0.5, 0.7, 1];
+        const cell = (eB: number[], eA: number[], b0: number, a0: number, n: number,
+                      lam: number, cut: number) => {
+          const b = dl25(eB, b0, n, lam, cut), a = dl25(eA, a0, n, lam, cut);
+          return { before: b, after: a, promotion_wins: a > b,
+                   // **여유를 획수로도 낸다**(#14 — 비율만 보면 8획과 800획이 같아 보인다)
+                   margin: +(a - b).toFixed(4), margin_strokes: Math.round((a - b) * n) };
+        };
+        const table: Record<string, unknown> = {};
+        for (const cut of CUTS) for (const lam of [1, 2, 3, 5, 10]) {
+          table[`cut_${cut}_lambda_${lam}`] = cell(errB, errA, pB, pA, total, lam, cut);
+        }
+        // ---- **양성 채널**(#30, 2회차 리뷰어): 새 목적함수가 **가짜 승격을 벌하는가**.
+        // 안 벌하면 "합산으로 승격이 이긴다"가 목적함수의 편향(덜 놓으면 유리해지는 성질)인지
+        // 승격의 성질인지 구분되지 않는다 — L-C.1이 세운 대조군을 그대로 다시 채점한다
+        const sTotal = spurious.bothPlaced + spurious.onlyBefore + spurious.onlyAfter
+                     + spurious.neither;
+        const sErrB = [...spurious.errBefore, ...spurious.errOnlyBefore];
+        const sErrA = [...spurious.errAfter, ...spurious.errOnlyAfter];
+        const spB = spurious.bothPlaced + spurious.onlyBefore;
+        const spA = spurious.bothPlaced + spurious.onlyAfter;
+        const sTable: Record<string, unknown> = {};
+        for (const cut of CUTS) for (const lam of [1, 2, 3, 5, 10]) {
+          sTable[`cut_${cut}_lambda_${lam}`] = cell(sErrB, sErrA, spB, spA, sTotal, lam, cut);
+        }
+        return {
+          note: "**D-L25가 옛 등록 규칙을 대체했으므로 이 규칙도 다시 채점한다**(리뷰어 [4]). "
+            + "옛 규칙('배치가 안 줄면서 조용히 틀림이 안 는다')은 배치 −168 하나로 기각됐다. "
+            + "D-L25는 배치와 틀림을 **한 수**로 합쳐 λ가 비율을 정한다.",
+          caveat: "⚠ **`only_*` 획은 짝이 없다** — 승격 전후에서 **다른 획 집합**이므로 "
+            + "이 점수는 짝지은 비교가 아니다(#11). 분모(전체 획)는 같다. "
+            + "⚠ **게이지 적합 모집단도 다르다**(2회차 리뷰어): 승격 전 1122획 · 후 954획에서 "
+            + "각각 적합한다. D-L22가 같은 종류의 비교에서 **부분집합 효과를 1.3pp로 실측**해 "
+            + "놓았고 여기 합산 여유는 **2.6pp**다 — 여유가 이미 알려진 편향의 2배 안이다. "
+            + "**그 몫을 안 갈랐다**(DEFERRED). "
+            + "⚠ **여유를 비율로만 읽지 않는다**(#14) — `margin_strokes`를 함께 낸다. "
+            + "λ=2·절단 0.5 칸의 여유는 **9획**이고, 같은 세션이 8획짜리 칸(λ 표)을 "
+            + "'근거가 못 된다'고 철회했다. **같은 기준을 적용하면 그 칸도 못 쓴다.**",
+          total_strokes: total,
+          placed_before: pB, placed_after: pA,
+          err_n_before: errB.length, err_n_after: errA.length,
+          table,
+          spurious_control_rescore: {
+            note: "**양성 채널**(#30) — 같은 산식을 **가짜 승격**(참 2점 장면에 없는 세 번째 "
+              + "소실점을 넣은 것)에 건다. 여기서 점수가 나빠져야 위 표가 승격을 재는 것이다. "
+              + "안 나빠지면 그것은 **목적함수의 편향**이지 승격의 성질이 아니다.",
+            total_strokes: sTotal, placed_before: spB, placed_after: spA,
+            table: sTable,
+            at_registered_point: cell(sErrB, sErrA, spB, spA, sTotal, 3, 0.5),
+          },
+          // **등록 동작점**(D-L25: λ=3 · 절단 0.5)에서의 판정
+          at_registered_point: cell(errB, errA, pB, pA, total, 3, 0.5),
+          // **시드 폭이 먼저다**(#14, 리뷰어 [2]) — 여유가 이 폭보다 작으면 결론이 없다
+          seed_spread_at_registered_point: (() => {
+            const rows = Object.entries(dl25Seed).map(([sd, v]) => {
+              const b = dl25(v.eB, v.pB, v.total, 3, 0.5), a = dl25(v.eA, v.pA, v.total, 3, 0.5);
+              return { seed: Number(sd), before: b, after: a, margin: +(a - b).toFixed(4),
+                       promotion_wins: a > b };
+            }).sort((x, y) => x.seed - y.seed);
+            const ms = rows.map(r => r.margin).sort((x, y) => x - y);
+            return {
+              note: "시드별 (승격 후 − 승격 전) 점수 차. **전부 같은 부호여야** 결론이 선다.",
+              rows,
+              margin_min: ms[0], margin_max: ms[ms.length - 1],
+              margin_range: +(ms[ms.length - 1] - ms[0]).toFixed(4),
+              all_same_sign: rows.every(r => r.promotion_wins) || rows.every(r => !r.promotion_wins),
+              verdict: rows.every(r => r.promotion_wins)
+                ? "**시드 여섯 전부에서 승격이 이긴다** — D-L25 동작점에서 결론이 선다"
+                : rows.every(r => !r.promotion_wins)
+                  ? "시드 여섯 전부에서 승격이 진다"
+                  : "⚠ **부호가 시드마다 갈린다 — 이 동작점에서는 결론이 없다**(#14). "
+                    + "⚠ **양성 채널은 별개로 산다**: 같은 산식이 가짜 승격에는 **−295획**을 "
+                    + "매기고 절단 여섯 전부에서 벌한다(`spurious_control_rescore`) — "
+                    + "즉 **목적함수는 눈이 떠 있고, 결론이 없는 것은 참 승격의 효과가 "
+                    + "시드 폭 안이기 때문이다.**",
+            };
+          })(),
+        };
+      })(),
       snap_reanchor: {
         note: "**양성 채널이 먼저다**(#30). `drift_px`가 0이면 '차수 승격에서 스냅이 조용히 "
           + "풀린다'는 걱정 자체가 없는 것이다 — 옛 화면 점과 **새 상**의 화면 거리다.",
+        // ⚠ **범위가 위의 배치 지표와 다르다**(#11 · L-C.2 리뷰어 [5])
+        scope: "⚠ **이 블록만 두 팔을 합산한다** — 참 승격 216장면 + **가짜 승격 대조군 72장면**이다. "
+          + "위의 `real_promotion`·`spurious_promotion_control`은 갈려 있는데 여기는 안 갈렸다. "
+          + "**참 승격만의 값은 `order_undo.json`에 있다**(had 1676 · reanchored 1381 · lost 295). "
+          + "혼입값(2391 / 1908 / 483)을 참 승격의 수로 인용하면 안 된다 — 실제로 그렇게 인용됐고 고쳤다.",
         had: snapAgg.had, reanchored: snapAgg.reanchored,
         target_unplaced: snapAgg.target_unplaced, behind_camera: snapAgg.behind_camera,
         sum_check: snapAgg.reanchored + snapAgg.target_unplaced + snapAgg.behind_camera

@@ -53,6 +53,16 @@ export interface OrderResult {
     /** 대상이 카메라 뒤로 가서 투영이 안 되는 것. */
     behind_camera: number;
     /**
+     * **못 살린 스냅의 획 id** — `target_unplaced`와 `behind_camera`를 합친 **직접 집합**이다.
+     *
+     * 개수를 `had − reanchored`로 만들지 않는다(#10). 그리고 이 목록이 있어야
+     * L-C.2가 **어느 획인지 화면에 표시**할 수 있다 — 개수만으로는 못 보인다.
+     * 그 획들의 시작점은 **옛 카메라의 상 그대로**라 **조용히 틀린 시작점**이다.
+     */
+    lost_ids: string[];
+    /** 새 상으로 옮긴 획 id. `reanchored`의 직접 집합이다. */
+    reanchored_ids: string[];
+    /**
      * **다시 안 옮겼다면 어긋났을 거리**(px). 0이면 "조용히 풀린다"는 걱정이 없는 것이다 —
      * **양성 채널이 먼저다**(#30). 옛 화면 점과 새 상의 화면 거리다.
      */
@@ -75,7 +85,8 @@ export function promoteOrder(
 ): OrderResult {
   const out: OrderResult = {
     placed: new Map(),
-    snap: { had: 0, reanchored: 0, target_unplaced: 0, behind_camera: 0, drift_px: [] },
+    snap: { had: 0, reanchored: 0, target_unplaced: 0, behind_camera: 0,
+            lost_ids: [], reanchored_ids: [], drift_px: [] },
   };
   if (!strokes.length) return out;
   const work = strokes.map(copyStroke);
@@ -95,7 +106,7 @@ export function promoteOrder(
     if (!s.snapStart?.ofId) continue;
     out.snap.had += 1;
     const target = r1.placed.get(s.snapStart.ofId);
-    if (!target) { out.snap.target_unplaced += 1; continue; }
+    if (!target) { out.snap.target_unplaced += 1; out.snap.lost_ids.push(s.id); continue; }
     // 옛 3D 점이 대상 위 어디였는지 — **매개변수로 옮긴다**(끝점이면 0 또는 1이다).
     // 옛 대상의 3D를 모르므로 `kind`에 기대지 않고 **가장 가까운 매개변수**를 쓴다.
     const t = paramOnOldTarget(s.snapStart.at, s.snapStart.kind);
@@ -104,12 +115,13 @@ export function promoteOrder(
                       target.a[2] + (target.b[2] - target.a[2]) * t];
     const u = project(at, ctx.principal, ctx.f);
     if (!u || !Number.isFinite(u[0]) || !Number.isFinite(u[1])) {
-      out.snap.behind_camera += 1; continue;
+      out.snap.behind_camera += 1; out.snap.lost_ids.push(s.id); continue;
     }
     out.snap.drift_px.push(Math.hypot(u[0] - s.pts2d[0][0], u[1] - s.pts2d[0][1]));
     s.pts2d = [[u[0], u[1]], ...s.pts2d.slice(1)];
     s.snapStart = { ...s.snapStart, at };
     out.snap.reanchored += 1;
+    out.snap.reanchored_ids.push(s.id);
     moved = true;
   }
 

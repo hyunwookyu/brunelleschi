@@ -219,6 +219,15 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
      */
     const curveJ = { confirm: [] as number[], live: [] as number[] };
     const curveNJ = { confirm: 0, live: 0 };
+    /**
+     * **시드별 λ 점수**(#14 — 여유가 시드 폭보다 작으면 그 결론은 없다).
+     *
+     * L-C.2 리뷰어 [2]가 짚었다: D-L25가 이 표의 λ=3·절단 0.5 한 칸(여유 **0.0025**)을
+     * 근거로 인용했는데 **그 폭을 안 쟀다.** 같은 원장이 배치 시드 폭을 31로 실측해 두고도
+     * 그랬다. 여기서 잰다 — 폭이 여유보다 크면 **그 칸은 근거가 못 된다.**
+     */
+    const curveJSeed: Record<string, { confirm: number[]; live: number[];
+                                       nc: number; nl: number }> = {};
     /** 각 팔의 **분모** — 배치율을 내려면 놓인 것뿐 아니라 전체가 필요하다(#11). */
     const curveN = { confirm: 0, live: 0 };
     const curveByGrade: Record<string, { confirm: number[]; live: number[] }> = {};
@@ -279,12 +288,19 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
             if (key === baseKeyOf()) {
               curve.confirm.push(e);
               (curveByGrade[grade] ??= { confirm: [], live: [] }).confirm.push(e);
-              if (jit > 0) curveJ.confirm.push(e);
+              if (jit > 0) {
+                curveJ.confirm.push(e);
+                (curveJSeed[String(seed)] ??= { confirm: [], live: [], nc: 0, nl: 0 })
+                  .confirm.push(e);
+              }
             }
           }
           if (key === baseKeyOf()) {
             curveN.confirm += 12;
-            if (jit > 0) curveNJ.confirm += 12;
+            if (jit > 0) {
+              curveNJ.confirm += 12;
+              (curveJSeed[String(seed)] ??= { confirm: [], live: [], nc: 0, nl: 0 }).nc += 12;
+            }
             (curveNByGrade[grade] ??= { confirm: 0, live: 0 }).confirm += 12;
           }
         }
@@ -356,7 +372,10 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
             b.total += 1;
             if (dg === LIVE_TOL.axis_deg) {
               curveN.live += 1; (curveNByGrade[grade] ??= { confirm: 0, live: 0 }).live += 1;
-              if (jit > 0) curveNJ.live += 1;
+              if (jit > 0) {
+                curveNJ.live += 1;
+                (curveJSeed[String(seed)] ??= { confirm: [], live: [], nc: 0, nl: 0 }).nl += 1;
+              }
             }
             if (!cand) { b.axFree += 1; b.reasons.no_snap = (b.reasons.no_snap ?? 0) + 1; continue; }
             if (!near || near.deg > dg) {
@@ -384,7 +403,10 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
             if (e > 0.5) b.w50 += 1;
             if (dg === LIVE_TOL.axis_deg) {
               curve.live.push(e); (curveByGrade[grade] ??= { confirm: [], live: [] }).live.push(e);
-              if (jit > 0) curveJ.live.push(e);
+              if (jit > 0) {
+                curveJ.live.push(e);
+                (curveJSeed[String(seed)] ??= { confirm: [], live: [], nc: 0, nl: 0 }).live.push(e);
+              }
             }
           }
         }
@@ -464,6 +486,31 @@ describe("L-B.4 — 축 판정 임계와 실시간 판정", () => {
           live_with_anchor: curveRow(curveJ.live, curveNJ.live),
           crossing: crossing(curveJ.live, curveJ.confirm),
           lambda_table: lambdaTable(curveJ.live, curveNJ.live, curveJ.confirm, curveNJ.confirm),
+          // **D-L25가 인용한 칸의 시드 폭**(#14, L-C.2 리뷰어 [2]).
+          // 여유가 폭 안이면 그 칸은 **근거가 못 된다** — 정책만 남는다
+          seed_spread_at_dl25_point: (() => {
+            const rows = Object.entries(curveJSeed).map(([sd, v]) => {
+              const kl = v.live.filter(e => e > 0.5).length;
+              const kc = v.confirm.filter(e => e > 0.5).length;
+              const sl = (v.live.length - kl - 3 * kl) / Math.max(1, v.nl);
+              const sc = (v.confirm.length - kc - 3 * kc) / Math.max(1, v.nc);
+              return { seed: Number(sd), live: round(sl, 4), confirm: round(sc, 4),
+                       margin: +(sc - sl).toFixed(4), confirm_wins: sc > sl };
+            }).sort((x, y) => x.seed - y.seed);
+            const ms = rows.map(r => r.margin).sort((x, y) => x - y);
+            return {
+              note: "**D-L25의 동작점(λ=3 · 절단 0.5)을 시드별로 다시 낸다.** "
+                + "합산 여유는 confirm 0.2713 − live 0.2688 = **0.0025**이다.",
+              lambda: 3, cut: 0.5, rows,
+              margin_min: ms[0], margin_max: ms[ms.length - 1],
+              margin_range: +(ms[ms.length - 1] - ms[0]).toFixed(4),
+              all_same_sign: rows.every(r => r.confirm_wins) || rows.every(r => !r.confirm_wins),
+              verdict: (rows.every(r => r.confirm_wins) || rows.every(r => !r.confirm_wins))
+                ? "시드 여섯이 같은 부호다 — 이 칸에 결론이 있다"
+                : "⚠ **부호가 시드마다 갈린다 — 이 칸은 D-L25의 근거가 못 된다**(#14). "
+                  + "D-L25는 **정책만으로** 서고, 그 사실을 결정문에 적어야 한다",
+            };
+          })(),
         },
         lambda_table_all: lambdaTable(curve.live, curveN.live, curve.confirm, curveN.confirm),
         conclusion: (() => {

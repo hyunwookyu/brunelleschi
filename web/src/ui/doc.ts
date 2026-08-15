@@ -110,10 +110,21 @@ export function deleteView(d: DocState, id: string): { removed: number } | null 
   return { removed: before - d.strokes.length };
 }
 
-/** 되돌리기용 스냅샷. **문서 하나만 복사하면 된다** — 곁가지 집합이 없다. */
+/**
+ * 되돌리기용 스냅샷. **문서 하나만 복사하면 된다** — 곁가지 집합이 없다.
+ *
+ * ⚠ **카메라는 여기 없다.** 되돌리기가 담아야 하는 것은 문서와 카메라 둘이고
+ * 그 조립은 `ui/appSnap.ts`가 한다 — 승격을 되돌릴 때 소실점이 새 것으로 남으면
+ * §6.1이 금지한 좌표계가 섞인 상태가 된다.
+ *
+ * ⚠ **`pts2d`는 바깥 배열만 복사한다.** 규약은 "**교체하고 제자리에서 안 고친다**"이고
+ * 코드 전체가 그렇게 쓴다(승격의 `promoteOrder`·스냅의 `applySnapToStart` 둘 다 새 배열을 만든다).
+ * 점 배열까지 복사하면 되돌리기 200단계 × 획 × 점이 되고, 그 비용은 규약이 지켜지는 한 낭비다.
+ * 바깥 배열을 복사하는 것은 `push`/`splice` 같은 **배열 단위 조작**에 대한 방어다.
+ */
 export function snapshotDoc(d: DocState): DocState {
   return {
-    strokes: d.strokes.map(s => ({ ...s, pts2d: s.pts2d,
+    strokes: d.strokes.map(s => ({ ...s, pts2d: [...s.pts2d],
       seg3d: s.seg3d ? [[...s.seg3d[0]], [...s.seg3d[1]]] as [Vec3, Vec3] : null })),
     views: d.views.map(v => ({ ...v })),
     currentView: d.currentView,

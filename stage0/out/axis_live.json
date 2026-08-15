@@ -753,6 +753,60 @@
             "live_wins": false
           }
         }
+      },
+      "seed_spread_at_dl25_point": {
+        "note": "**D-L25의 동작점(λ=3 · 절단 0.5)을 시드별로 다시 낸다.** 합산 여유는 confirm 0.2713 − live 0.2688 = **0.0025**이다.",
+        "lambda": 3,
+        "cut": 0.5,
+        "rows": [
+          {
+            "seed": 1,
+            "live": 0.2,
+            "confirm": 0.3333,
+            "margin": 0.1333,
+            "confirm_wins": true
+          },
+          {
+            "seed": 2,
+            "live": 0.2815,
+            "confirm": 0.2519,
+            "margin": -0.0296,
+            "confirm_wins": false
+          },
+          {
+            "seed": 3,
+            "live": 0.2241,
+            "confirm": 0.2593,
+            "margin": 0.0352,
+            "confirm_wins": true
+          },
+          {
+            "seed": 4,
+            "live": 0.3074,
+            "confirm": 0.3389,
+            "margin": 0.0315,
+            "confirm_wins": true
+          },
+          {
+            "seed": 5,
+            "live": 0.3185,
+            "confirm": 0.2352,
+            "margin": -0.0833,
+            "confirm_wins": false
+          },
+          {
+            "seed": 6,
+            "live": 0.2815,
+            "confirm": 0.2093,
+            "margin": -0.0722,
+            "confirm_wins": false
+          }
+        ],
+        "margin_min": -0.0833,
+        "margin_max": 0.1333,
+        "margin_range": 0.2166,
+        "all_same_sign": false,
+        "verdict": "⚠ **부호가 시드마다 갈린다 — 이 칸은 D-L25의 근거가 못 된다**(#14). D-L25는 **정책만으로** 서고, 그 사실을 결정문에 적어야 한다"
       }
     },
     "lambda_table_all": {

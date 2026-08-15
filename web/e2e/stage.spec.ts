@@ -1127,3 +1127,279 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
   ];
   led.l_c1 = l;
 });
+
+/**
+ * L-C.2 — **되돌리기 UI**(§6.2). 산출: `stage_browser.json`의 `l_c2`.
+ *
+ * §6.2는 "사용자가 즉시 **보고** 되돌린다"이다. L-C.1이 배선을 확인했고 여기는 **그 앞의 둘**이다:
+ *   ① 승격이 무엇을 잃었는지 **화면에 나온다**(내려간 획 · 끊긴 스냅)
+ *   ② **차수를 명시한 되돌리기**가 생기고, 그것이 **소실점과 기하를 함께** 되돌린다
+ *   ③ ⚠ **회귀** — 일반 `실행취소`도 카메라를 되돌린다. 초판은 문서만 되돌려
+ *      기하는 옛 해 · 소실점은 새 것인 **좌표계가 섞인 상태**를 만들었다(§6.1이 금지한 것)
+ *
+ * ⚠ **말하지 않는 것**: 사용자가 그 표시를 보고 옳게 판단하는가(표본 0, AS-C1) ·
+ * 재연결이 붙이는 자리가 옳은가(그것은 스냅의 문제이고 `snap.json`이 잰다).
+ */
+test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아간다", async ({ page }) => {
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  const l: Record<string, unknown> = {};
+
+  // ---- 2점으로 확정하고, 수직 가이드를 세워 승격한다(`l_c1`과 같은 절차)
+  l.promote = await page.evaluate(async () => {
+    const S = window.S2S;
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
+    const m = await import("/test/scene3d.ts");
+    const doc = await import("/src/ui/doc.ts");
+    const vd = await import("/src/s3d/vpDraft.ts");
+    const el = document.getElementById("ink") as HTMLCanvasElement;
+    const size: [number, number] = [el.clientWidth, el.clientHeight];
+    const sc = m.scene(35, 15, 1000, size);
+    const edges = m.boxEdges(sc, [0.6, -0.4, 4.2], 1.2, 1.0, 0.9);
+    let s0 = 12345 >>> 0;
+    const r = () => { s0 = (s0 * 1664525 + 1013904223) >>> 0; return s0 / 4294967296; };
+    for (const e of m.drawEdges(sc, edges, "medium", r, 0.37, 0.006, 0)) {
+      S.doc().strokes.push(doc.newSStroke(e.pts2d, S.doc().currentView));
+    }
+    const margin = 0.02 * Math.hypot(size[0], size[1]);
+    const mk = (ax: number, ts: number[][]) => {
+      const vp = sc.vps[ax];
+      const out: unknown[] = [];
+      for (const t of ts) {
+        const q = [t[0] * size[0], t[1] * size[1]];
+        const far = [vp[0] + (q[0] - vp[0]) * 1e4, vp[1] + (q[1] - vp[1]) * 1e4];
+        const cl = vd.clipToCanvas([vp[0], vp[1]], far, size, margin);
+        if (cl) out.push({ axis: ax, a: cl[0], b: cl[1] });
+      }
+      return out;
+    };
+    S.cam.guides = [...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])];
+    S.cam.apply(); S.refresh();
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    const before = {
+      order: S.order(),
+      lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+      // **전체 상태를 찍어 둔다** — 되돌리기가 이것과 같아져야 한다
+      ids3d: S.doc().strokes.filter((s: any) => s.seg3d).map((s: any) => s.id).sort(),
+      guides: S.camSnapshot().guides.length,
+      pts0: S.doc().strokes.map((s: any) => [s.id, s.pts2d[0][0], s.pts2d[0][1]]),
+    };
+    S.unlockGuides();
+    for (const g of mk(2, [[0.42, 0.35], [0.62, 0.35]])) S.cam.guides.push(g as any);
+    S.cam.apply(); S.refresh();
+    S.promoteOrderNow();
+    return {
+      before, order: S.order(), report: S.promoteReport(), marks: S.orderMarks(),
+      lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+      panel: document.querySelector("#status .promote")?.textContent ?? null,
+      revert_button: !!document.querySelector('#bar button[data-act="revert2"]'),
+    };
+  });
+  const pr = l.promote as any;
+  expect(pr.before.order).toBe(2);
+  expect(pr.order).toBe(3);
+  // ① **요약이 화면에 있다.** 개수만 상태 줄에 묻히면 "눈에 띄게"가 아니다(§6.2)
+  expect(pr.panel).toContain("차수 승격 2점 → 3점");
+  expect(pr.report).not.toBeNull();
+  // ② **차수를 명시한 되돌리기 버튼이 생겼다**
+  expect(pr.marks).toEqual([2]);
+  expect(pr.revert_button).toBe(true);
+  // **잃은 것이 있으면 그것이 패널에 적힌다** — 없으면 없다고 적는다(#7)
+  const lost = pr.report.dropped.length, snapLost = pr.report.snapLost.length;
+  l.what_was_lost = { dropped: lost, snap_lost: snapLost,
+                      reanchored: `${pr.report.reanchored}/${pr.report.had}` };
+  if (lost) expect(pr.panel).toContain("3D에서 내려왔습니다");
+  if (snapLost) expect(pr.panel).toContain("끊겼습니다");
+
+  // ---- ③ ⚠ **회귀**: 일반 `실행취소`가 카메라 상태까지 되돌리는가
+  //
+  // ⚠ **되돌아가는 자리를 정확히 적는다**: `실행취소` 한 번은 **승격 직전**으로 간다.
+  // 그 자리는 "`소실점 다시`를 눌러 가이드를 셋째 축까지 세웠지만 **아직 승격은 안 한**" 상태이고,
+  // 앱이 명시적으로 지원하는 상태다(`unlock`의 안내문: "확정된 3D는 그대로 있고,
+  // 승격을 눌러야 다시 풀립니다"). 그러므로 **`S.order()`는 3이 맞다** — 가이드가 그대로이기 때문이다.
+  // **되돌아와야 하는 것은 `locked` · `lockedOrder` · 기하**이고, 초판은 그 셋을 안 되돌렸다.
+  l.undo_restores_camera = await page.evaluate(() => {
+    const S = window.S2S;
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="undo"]')!.click();
+    const c = S.camSnapshot();
+    return { order: S.order(), guides: c.guides.length, locked: c.locked,
+             locked_order: c.lockedOrder,
+             lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+             report_gone: S.promoteReport() === null };
+  });
+  const ur = l.undo_restores_camera as any;
+  // **이것이 초판의 결함이다** — 문서만 되돌리면 이 셋이 승격 후 값 그대로 남는다
+  expect(ur.locked).toBe(false);
+  expect(ur.locked_order).toBe(2);
+  expect(ur.lifted).toBe(pr.before.lifted);
+  expect(ur.report_gone).toBe(true);
+  // 가이드는 **안 되돌아온다** — 승격 직전에 이미 셋째 축이 서 있었다. 그것이 옳다
+  expect(ur.order).toBe(3);
+
+  // ---- ④ **차수 되돌리기**: 다시 승격한 뒤 획을 더 그려도 한 번에 2점으로 간다
+  l.revert_by_order = await page.evaluate(async (arg: { pts0: [string, number, number][] }) => {
+    const S = window.S2S;
+    const doc = await import("/src/ui/doc.ts");
+    S.promoteOrderNow();                              // 되돌린 자리에서 다시 승격한다
+    const afterPromote = S.order();
+    // 승격 뒤에 획을 하나 더 그린다 — `실행취소` 한 번으로는 못 돌아가는 자리를 만든다
+    S.doc().strokes.push(doc.newSStroke([[120, 140], [260, 200]], S.doc().currentView));
+    S.refresh();
+    const strokesBefore = S.doc().strokes.length;
+    S.revertToOrder(2);
+    const map = new Map(S.doc().strokes.map((s: any) => [s.id, s.pts2d[0]]));
+    // **`pts2d[0]`까지 되돌아왔는가**(#34) — 승격이 스냅된 시작점을 새 상으로 옮기므로
+    // 그것이 안 돌아오면 시작점만 새 카메라 자리에 남는다(L-C.1이 p90 311px로 잰 이동이다)
+    const pts_restored = arg.pts0.every(([id, x, y]) => {
+      const p = map.get(id) as number[] | undefined;
+      return !!p && Math.abs(p[0] - x) < 1e-12 && Math.abs(p[1] - y) < 1e-12;
+    });
+    return {
+      after_promote: afterPromote, strokes_before_revert: strokesBefore,
+      order: S.order(), guides: S.camSnapshot().guides.length,
+      ids3d: S.doc().strokes.filter((s: any) => s.seg3d).map((s: any) => s.id).sort(),
+      pts_restored, strokes: S.doc().strokes.length,
+      note: document.getElementById("status")!.innerText,
+    };
+  }, { pts0: pr.before.pts0 });
+  const rv = l.revert_by_order as any;
+  expect(rv.after_promote).toBe(3);
+  // **한 번에 2점으로 간다** — 그 사이에 그린 획도 함께 사라진다(스냅샷 그대로다)
+  expect(rv.order).toBe(2);
+  expect(rv.guides).toBe(pr.before.guides);
+  expect(rv.ids3d).toEqual(pr.before.ids3d);
+  expect(rv.pts_restored).toBe(true);
+  expect(rv.note).toContain("2점으로 되돌렸습니다");
+
+  // ---- ⑤ ⚠ **잃은 것이 실제로 있는 픽스처에서 다시 본다.**
+  //
+  // 위 픽스처는 `dropped = 0 · snapLost = 0`이라 **표시 경로를 한 줄도 안 지난다** —
+  // 통과해도 공허하다(리뷰어가 L-B.6 [9]에서 같은 형태를 잡았다: "지울 뷰 안에 승격 획을
+  // 만들어 넣은 뒤 다시 봤다"). 그래서 **떨어지는 획과 끊기는 스냅이 나오는 픽스처**로 바꾼다.
+  // 잉크 등급·시드는 `order_undo.json`이 "176/216 장면에서 내려간 획이 생긴다"고 잰 것과
+  // 같은 현상이고, 여기서는 그 중 하나를 **눈으로 보이는지** 확인한다.
+  l.loss_shown = await page.evaluate(async () => {
+    const S = window.S2S;
+    const m = await import("/test/scene3d.ts");
+    const doc = await import("/src/ui/doc.ts");
+    const vd = await import("/src/s3d/vpDraft.ts");
+    const el = document.getElementById("ink") as HTMLCanvasElement;
+    const size: [number, number] = [el.clientWidth, el.clientHeight];
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
+    const sc = m.scene(35, 15, 1000, size);
+    const edges = m.boxEdges(sc, [0.6, -0.4, 4.2], 1.2, 1.0, 0.9);
+    let s0 = 4242 >>> 0;
+    const r = () => { s0 = (s0 * 1664525 + 1013904223) >>> 0; return s0 / 4294967296; };
+    for (const e of m.drawEdges(sc, edges, "medium", r, 0.37, 0.04, 0)) {
+      S.doc().strokes.push(doc.newSStroke(e.pts2d, S.doc().currentView));
+    }
+    const margin = 0.02 * Math.hypot(size[0], size[1]);
+    const mk = (ax: number, ts: number[][]) => {
+      const vp = sc.vps[ax]; const out: any[] = [];
+      for (const t of ts) {
+        const q = [t[0] * size[0], t[1] * size[1]];
+        const far = [vp[0] + (q[0] - vp[0]) * 1e4, vp[1] + (q[1] - vp[1]) * 1e4];
+        const cl = vd.clipToCanvas([vp[0], vp[1]], far, size, margin);
+        if (cl) out.push({ axis: ax, a: cl[0], b: cl[1] });
+      }
+      return out;
+    };
+    S.cam.guides = [...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])];
+    S.cam.apply(); S.refresh();
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    S.unlockGuides();
+    for (const g of mk(2, [[0.42, 0.35], [0.62, 0.35]])) S.cam.guides.push(g);
+    S.cam.apply(); S.refresh();
+    S.promoteOrderNow();
+    const rep = S.promoteReport();
+
+    // **표식이 실제로 캔버스에 그려졌는가** — 문구만 보면 그리기 경로는 안 지난다.
+    // 끊긴 스냅의 시작점 둘레에서 ⊘의 붉은색을 찾는다. 좌표는 **CSS 픽셀**이고
+    // 캔버스는 dpr 배율이므로 그만큼 곱해 읽는다(D-C3·#21 — dpr 1에서만 보면 안 된다)
+    const g2 = el.getContext("2d")!;
+    const dpr = el.width / el.clientWidth;
+    const near = (p: number[], want: [number, number, number]) => {
+      const R = Math.round(9 * dpr);
+      const x0 = Math.max(0, Math.round(p[0] * dpr) - R), y0 = Math.max(0, Math.round(p[1] * dpr) - R);
+      const d = g2.getImageData(x0, y0, R * 2, R * 2).data;
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] > 40 && Math.abs(d[i] - want[0]) < 45
+            && Math.abs(d[i + 1] - want[1]) < 45 && Math.abs(d[i + 2] - want[2]) < 45) return true;
+      }
+      return false;
+    };
+    const byId = new Map(S.doc().strokes.map((s: any) => [s.id, s]));
+    const snapMark = rep.snapLost.length
+      ? near((byId.get(rep.snapLost[0]) as any).pts2d[0], [192, 57, 43]) : null;
+    const dropMark = rep.dropped.length
+      ? near((byId.get(rep.dropped[0]) as any).pts2d[0], [230, 126, 34]) : null;
+
+    const panel = document.querySelector("#status .promote")?.textContent ?? "";
+    const relinkBtn = document.querySelector<HTMLButtonElement>('#status button[data-act="relink"]');
+    const beforeRelink = rep.snapLost.length;
+    relinkBtn?.click();
+    const rep2 = S.promoteReport();
+    // 되돌리기가 재연결도 되돌리는가 — 표시가 **다시 나와야** 한다
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="undo"]')!.click();
+    const rep3 = S.promoteReport();
+    return {
+      // ⚠ **매개변수를 원장에 남긴다**(#25 — 원장 밖 측정은 규칙이 있어도 안 걸린다)
+      fixture: { grade: "medium", end_jitter: 0.04, seed: 4242, skew: 0.37,
+                 scene: "yaw 35 · pitch 15 · f 1000", box: [1.2, 1.0, 0.9] },
+      dropped: rep.dropped.length, gained: rep.gained.length,
+      snap_lost: beforeRelink, snap_had: rep.had, reanchored: rep.reanchored,
+      panel_says_dropped: panel.includes("3D에서 내려왔습니다"),
+      panel_says_snap_lost: panel.includes("끊겼습니다"),
+      relink_button: !!relinkBtn,
+      drop_mark_drawn: dropMark, snap_mark_drawn: snapMark,
+      relinked: rep2?.relinked ?? null, snap_lost_after: rep2?.snapLost.length ?? null,
+      undo_restores_report: rep3 != null && rep3.snapLost.length === beforeRelink
+                            && rep3.relinked === null,
+    };
+  });
+  const ls = l.loss_shown as any;
+  // **픽스처가 실제로 잃는다** — 안 잃으면 아래 판정이 전부 공허하다(#32의 실행 카운터와 같은 형태)
+  expect(ls.dropped).toBeGreaterThan(0);
+  expect(ls.snap_lost).toBeGreaterThan(0);
+  // ① 문구 ② **그리기 경로** — 둘 다 본다
+  expect(ls.panel_says_dropped).toBe(true);
+  expect(ls.panel_says_snap_lost).toBe(true);
+  expect(ls.drop_mark_drawn).toBe(true);
+  expect(ls.snap_mark_drawn).toBe(true);
+  // ③ 재연결은 **버튼이다** — 자동으로 안 한다(A-3·D-L25)
+  expect(ls.relink_button).toBe(true);
+  expect(ls.relinked.tried).toBe(ls.snap_lost);
+  expect(ls.snap_lost_after).toBe(ls.snap_lost - ls.relinked.ok);
+  // ④ 되돌리면 표시가 **다시 나온다** — 안 나오면 사용자가 무엇을 되돌렸는지 못 본다
+  expect(ls.undo_restores_report).toBe(true);
+
+  // ⚠ **이 픽스처를 어떻게 골랐는지 적는다**(#25·#12 · 리뷰어 [7]).
+  l.loss_fixture_provenance = {
+    how: "첫 픽스처(medium · jitter 0.006 · seed 12345)가 `dropped 0 · snapLost 0`이라 "
+      + "표시 경로를 안 지났다. **등급 2 × jitter 3 × 시드 3 = 18조합을 훑어** "
+      + "`dropped > 0 && snapLost > 0`인 것을 골랐다. 18조합 중 **셋**이 그랬다 "
+      + "(medium/0.04/4242 · coarse/0.02/4242 · coarse/0.04/4242).",
+    why_not_cherry_picking: "**결론을 만들려고 고른 것이 아니라 코드 경로를 지나려고 골랐다.** "
+      + "이 테스트가 판정하는 것은 '표시가 뜨는가'이지 '얼마나 자주 잃는가'가 아니다 — "
+      + "빈도는 `order_undo.json`이 216장면으로 잰다(내려감 176/216 · 스냅 끊김 94/216).",
+    where_in_population: "⚠ **이 픽스처는 모집단의 꼬리 쪽이다.** 스냅 끊김 4/5 = 0.80인데 "
+      + "모집단은 295/1676 = **0.176**이고, 장면당 끊김은 중앙 **0** · p90 **4**다"
+      + "(`order_undo.json@46c028d1`) — 즉 **p90 자리**다. "
+      + "표시 경로를 지나려면 그래야 하지만, **이 수를 대표값으로 인용하면 안 된다.**",
+    off_grid: "⚠ **격자 밖이 셋이다**(#12): jitter 0.04(격자 {0, 0.01, 0.03, 0.05}) · "
+      + "seed 4242(격자 {1..6}) · **skew 0.37**(하네스는 0.12 — 3배다). "
+      + "skew는 이 파일의 다른 브라우저 픽스처와 같은 값이고 **훑기에서 흔들지 않았다**(고정). "
+      + "배선 확인용이고 여기서 나온 수치를 원장 값으로 쓰지 않는다.",
+  };
+
+  l.what_this_does_not_say = [
+    "사용자가 그 표시를 보고 **옳게 판단하는가** — 표본 0(AS-C1)",
+    "재연결이 붙이는 자리가 **옳은가** — 그것은 스냅의 문제이고 `snap.json`이 잰다. "
+      + "여기서 재는 것은 **끊긴 것이 보이고 되돌릴 수 있는가**뿐이다",
+    "**얼마나 자주 잃는가** — 이 픽스처는 표시 경로를 지나려고 고른 **p90 자리**다. "
+      + "빈도는 `order_undo.json`이 216장면으로 잰다",
+    "여러 차수 표식(1점·2점·3점)이 동시에 있을 때의 동작 — 이 픽스처는 2 → 3 하나뿐이다",
+    "돌린 뷰에서의 표시 — `drawPromoteLoss`는 **확정 시점에서만** 그린다(`pts2d`가 그 화면 좌표다)",
+  ];
+  led.l_c2 = l;
+});

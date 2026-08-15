@@ -9,10 +9,12 @@ import { InkCanvas } from "./capture/inkCanvas.js";
 import { cssSizeOf } from "./capture/canvasFrame.js";
 import { Stage, FREE_FOV_DEG, type StageSeg } from "./ui/stage.js";
 import { CamState } from "./ui/camState.js";
-import { newDoc, newSStroke, newView, deleteView, lifted, pending, pendingElsewhere, snapshotDoc,
+import { newDoc, newSStroke, newView, deleteView, lifted, pending, pendingElsewhere,
          type DocState, type SStroke } from "./ui/doc.js";
+import { takeSnap, applySnap, type AppSnap } from "./ui/appSnap.js";
 import { draftFromDetection, handleAt, moveHandle, guideLineAt, moveGuideBy,
          extendGuide, DRAFT_TOL, type HandleRef } from "./s3d/vpDraft.js";
+import { diffPlacement, diffSummary, type PlacementDiff } from "./s3d/promoteDiff.js";
 import { SENS_TOL, type AxisSens } from "./s3d/vpSensitivity.js";
 import { HOMOG_TOL } from "./s3d/vpHomog.js";
 import { liftAll, type LiftStroke } from "./s3d/lift.js";
@@ -79,15 +81,73 @@ let shiftHeld: 0 | 1 | 2 | null = null;
  */
 let lockedOrder: number | null = null;
 const refreshSens = () => { sens = cam.guides.length ? cam.sensitivity() : []; };
-const undoStack: DocState[] = [];
+
+// **스냅샷 자료구조와 대조는 `ui/appSnap.ts` 하나가 정한다**(#17) — 원장이 같은 함수를 부른다.
+const undoStack: AppSnap[] = [];
 const UNDO_MAX = 200;
 
 const cssSize = (): [number, number] => cssSizeOf(canvas);
 
+const appSnap = (): AppSnap => takeSnap(doc, cam, lockedOrder,
+  promoteReport ? { ...promoteReport, snapLost: [...promoteReport.snapLost] } : null);
+
+/** 스냅샷을 그대로 되돌린다. **문서만 되돌리지 않는다**(`appSnap.ts` 머리말). */
+function restoreSnap(s: AppSnap) {
+  doc = applySnap(cam, s);
+  lockedOrder = s.lockedOrder;
+  const c = cam.ctx();
+  if (c && s.locked) stage.pinTo(c.principal, c.f);
+  const rep = s.report as PromoteReport | null;
+  promoteReport = rep ? { ...rep, snapLost: [...rep.snapLost] } : null;
+  refreshSens();
+  syncScene();
+}
+
 function pushUndo() {
-  undoStack.push(snapshotDoc(doc));
+  undoStack.push(appSnap());
   if (undoStack.length > UNDO_MAX) undoStack.shift();
 }
+
+// ---------------------------------------------------------------- 차수 되돌리기 (L-C.2, §6.2)
+
+/**
+ * **차수를 명시한 되돌리기**(§6.2: "사용자가 즉시 보고 `1점으로 되돌리기`를 누른다").
+ *
+ * 일반 `실행취소`와 다른 것: 되돌아갈 자리가 **차수로 이름 붙어 있다.** 승격 뒤에 몇 획을
+ * 더 그렸어도 "2점으로" 한 번에 간다 — 그것이 §6.2가 "임계를 정교하게 만드는 것보다 싸다"고
+ * 적은 수단이다. 승격은 사용자가 **판단할 수 있는 유일한 신호**이므로(§5.3·AS-L6) 되돌리기가 쉬워야 한다.
+ *
+ * ⚠ **표식을 뜨는 시점은 `차수 승격`을 누를 때가 아니다.** 그때는 사용자가 이미 가이드를
+ * 더 세워 놓았으므로 카메라가 **새 차수**다 — 그 상태를 "2점"이라 이름 붙이면 되돌려도
+ * 소실점이 셋이다. 뜨는 자리는 **`확정`과 `소실점 다시`** 둘이다: 둘 다 그 차수에서의
+ * 마지막 온전한 상태이고, `소실점 다시`는 **카메라를 만지기 직전**이다.
+ *
+ * 같은 차수의 표식은 **덮어쓴다** — 그 차수에서 마지막으로 본 상태가 사용자가 기억하는 것이다.
+ */
+const orderMarks: { order: number; snap: AppSnap }[] = [];
+
+function markOrder(order: number, snap: AppSnap) {
+  const i = orderMarks.findIndex(m => m.order === order);
+  if (i >= 0) orderMarks[i] = { order, snap };
+  else { orderMarks.push({ order, snap }); orderMarks.sort((a, b) => a.order - b.order); }
+}
+
+/**
+ * **승격이 무엇을 바꿨나** — 화면에 눈에 띄게 낸다(§6.2).
+ *
+ * `null`이면 알릴 것이 없다. 그 다음 획을 그리거나 되돌리면 사라진다 —
+ * **낡은 표시를 남겨 두면 지금 상태의 설명으로 읽힌다**(AS-C7과 같은 형태의 함정이다).
+ */
+interface PromoteReport {
+  before: number; after: number;
+  diff: PlacementDiff;
+  /** 스냅을 **못 살린 획 id**. 그 시작점은 옛 카메라의 상 그대로다 — **조용히 틀린 시작점**이다. */
+  snapLost: string[];
+  reanchored: number; had: number;
+  /** 재연결을 눌렀는가. 누른 뒤에는 결과를 그 자리에 적는다. */
+  relinked: { ok: number; tried: number } | null;
+}
+let promoteReport: PromoteReport | null = null;
 
 // ---------------------------------------------------------------- 스냅 (§3)
 
@@ -445,7 +505,9 @@ function promoteOrderNow(): void {
   // ⚠ **지금 카메라의 차수는 이미 새 것이다** — 사용자가 가이드를 더 세운 뒤 누르기 때문이다.
   // 그래서 **확정·승격 시점에 잠근 차수**를 따로 들고 있어야 "N점 → M점"을 적을 수 있다
   const before = lockedOrder ?? orderOf(ctx.vps, ctx.imgSize);
-  const lifted0 = lifted(doc).length;
+  // **승격 전 배치를 id로 찍어 둔다**(#10 — 뺄셈으로 만들지 않는다). 나중에 개수만 있으면
+  // "몇 개 잃었다"까지는 적을 수 있어도 **어느 획인지 화면에 표시할 수 없다.**
+  const placedBefore = new Map(doc.strokes.map(s => [s.id, s.seg3d != null]));
   pushUndo();
   const input: OrderStroke[] = doc.strokes.map(s => ({
     id: s.id, pts2d: s.pts2d, axis: s.axis, userAxis: s.userAxis, snapStart: s.snapStart,
@@ -479,12 +541,66 @@ function promoteOrderNow(): void {
   syncScene();
   const after = orderOf(ctx.vps, ctx.imgSize);
   lockedOrder = after;
-  const now = lifted(doc).length;
-  note = `**차수 승격 ${before}점 → ${after}점** — 전부 다시 풀었습니다. `
-       + `3D ${lifted0} → ${now}획 · 스냅 ${r.snap.reanchored}/${r.snap.had}개를 새 상으로 옮겼습니다`
-       + (r.snap.target_unplaced
-          ? ` (대상이 안 놓인 ${r.snap.target_unplaced}개는 못 살렸습니다)` : "")
-       + ". **화면이 움직입니다** — 아니다 싶으면 `실행취소`로 되돌립니다(§6.2)";
+  // **잃은 것을 센다**(L-C.2). 계산은 `promoteDiff.ts` 하나가 하고 원장도 그것을 부른다(#17)
+  const placedAfter = new Map(doc.strokes.map(s => [s.id, s.seg3d != null]));
+  promoteReport = {
+    before, after,
+    diff: diffPlacement(placedBefore, placedAfter),
+    snapLost: r.snap.lost_ids.slice(),
+    reanchored: r.snap.reanchored, had: r.snap.had,
+    relinked: null,
+  };
+  note = "";                     // 요약 패널이 그 자리를 대신한다 — 두 곳에 쓰면 갈린다
+  refresh();
+}
+
+/**
+ * **끊긴 스냅을 다시 붙여 본다**(L-C.2, 사람 지시).
+ *
+ * ⚠ **자동으로 안 한다.** 옛 대상이 새 카메라에서 안 놓였으므로 **다른 대상에 붙는 것**이고,
+ * 그것을 소리 없이 하면 A-3의 "조용히 틀린 배치를 만들지 않는다"를 정면으로 어긴다.
+ * D-L25(λ = 3)가 같은 방향이다 — 미배치의 비용이 틀린 배치의 1/3이다.
+ * 그래서 **사용자가 누르고, 몇 개가 어디에 붙었는지 되돈다.**
+ *
+ * 붙일 곳이 없으면 그 획은 표시된 채로 남는다 — **없는 것을 지어내지 않는다.**
+ */
+function relinkLostSnaps(): void {
+  if (!promoteReport?.snapLost.length) return;
+  const fr = frame(); const sc = snapCtx(fr);
+  if (!fr || !sc) return;
+  pushUndo();                                   // **되돌릴 수 있어야 한다** — 기하가 움직인다
+  const segs = snapSegs(fr.toV);
+  const pre = snapStatic(segs);
+  const still: string[] = [];
+  const tried = promoteReport.snapLost.length;
+  let ok = 0;
+  for (const id of promoteReport.snapLost) {
+    const s = doc.strokes.find(x => x.id === id);
+    // 자기 자신에는 못 붙는다 — 대상 목록에서 뺀다(그리기 경로와 같은 규약)
+    const cand = s ? snapAt(s.pts2d[0], segs.filter(g => g.id !== id), sc,
+                            {}, pre.filter(c => c.ofId !== id && c.ofId2 !== id)) : null;
+    if (!s || !cand) { still.push(id); continue; }
+    applySnapToStart(s, cand, fr.fromV(cand.at));
+    // **그리기와 같은 경로로 놓는다**(#17·A-3) — 앵커가 생겼으므로 §7의 실시간 경로다.
+    // 일괄 솔버를 부르면 안 된다: 돌린 시점에서는 `pts2d`가 다른 화면 좌표다(L-B.8 머리말)
+    s.seg3d = null;
+    placeLive(s, fr, cand.at);
+    ok += 1;                                    // **붙은 개수**다 — 놓인 개수와 다르다(#9)
+  }
+  promoteReport.snapLost = still;
+  promoteReport.relinked = { ok, tried };
+  syncScene();
+  refresh();
+}
+
+/** 차수 표식으로 되돌아간다 — **문서와 카메라를 함께**(§6.2). */
+function revertToOrder(order: number): void {
+  const m = orderMarks.find(x => x.order === order);
+  if (!m) return;
+  pushUndo();
+  restoreSnap(m.snap);
+  note = `**${order}점으로 되돌렸습니다** — 소실점과 기하를 함께 되돌렸습니다`
+       + " <span class=\"dim\">(둘 중 하나만 되돌리면 좌표계가 섞입니다, §6.1)</span>";
   refresh();
 }
 
@@ -510,6 +626,8 @@ function confirm() {
   cam.locked = true;
   lockedOrder = orderOf(ctx.vps, ctx.imgSize);
   stage.pinTo(ctx.principal, ctx.f);
+  // **이 차수의 표식**(§6.2). `소실점 다시`에서 더 최근 상태로 덮인다
+  markOrder(lockedOrder, appSnap());
   // 확정 직후에도 연쇄를 한 번 돈다 — 놓인 것이 생겼으므로 대기 획이 붙을 수 있다
   const chained = n ? promoteChain(frame() ?? { ctx, toV: ID, fromV: ID, dirV: ID, pinned: true }) : 0;
   syncScene();
@@ -638,6 +756,47 @@ function drawPreview(ctx2: CanvasRenderingContext2D) {
 }
 let previewCount = 0, previewStuck = 0, previewFree = 0;
 
+/** 승격에서 잃은 것의 색. 상태 패널의 문장과 **같은 값을 쓴다** — 갈리면 설명이 안 맞는다. */
+const LOSS_COLOR = { dropped: "#e67e22", snap: "#c0392b" };
+
+/**
+ * **승격이 잃은 것을 화면에 표시한다**(L-C.2, 사람 지시).
+ *
+ * "승격 후 풀린 스냅을 표시하거나 재연결을 시도한다. **조용히 풀리면 사용자가 모른 채
+ * 구조가 끊긴다** — A-3 위반이다." 개수를 상태 줄에 적는 것만으로는 부족하다 —
+ * 어느 획인지 모르면 되돌릴지 말지를 정할 수 없다.
+ *
+ * ⚠ **좌표는 CSS 픽셀이다**(D-C3·#21) — `ctx2`에 배율이 이미 걸려 있다.
+ * ⚠ 표시는 **확정 시점에서만** 옳다: `pts2d`는 확정 카메라의 화면 좌표라
+ * 돌린 뷰에 그리면 화면에 붙어 따라다니는 유령이 된다(`drawBelowInk` 머리말과 같은 이유).
+ */
+function drawPromoteLoss(ctx2: CanvasRenderingContext2D) {
+  if (!promoteReport || !stage.isPinned) return;
+  const byId = new Map(doc.strokes.map(s => [s.id, s]));
+  ctx2.save();
+  // ① 3D에서 내려온 획 — 획 전체를 주황 점선으로 덮는다
+  ctx2.strokeStyle = LOSS_COLOR.dropped; ctx2.lineWidth = 3;
+  ctx2.setLineDash([7, 5]); ctx2.globalAlpha = 0.95; ctx2.lineCap = "round";
+  for (const id of promoteReport.diff.dropped) {
+    const s = byId.get(id);
+    if (!s || s.pts2d.length < 2) continue;
+    ctx2.beginPath();
+    s.pts2d.forEach((p, i) => (i === 0 ? ctx2.moveTo(p[0], p[1]) : ctx2.lineTo(p[0], p[1])));
+    ctx2.stroke();
+  }
+  // ② 스냅이 끊긴 획 — **시작점에** ⊘. 끊긴 것은 획이 아니라 그 점이다
+  ctx2.setLineDash([]); ctx2.strokeStyle = LOSS_COLOR.snap; ctx2.lineWidth = 2.5;
+  for (const id of promoteReport.snapLost) {
+    const s = byId.get(id);
+    if (!s || !s.pts2d.length) continue;
+    const [x, y] = s.pts2d[0];
+    ctx2.beginPath(); ctx2.arc(x, y, 7, 0, Math.PI * 2); ctx2.stroke();
+    ctx2.beginPath();
+    ctx2.moveTo(x - 5, y + 5); ctx2.lineTo(x + 5, y - 5); ctx2.stroke();
+  }
+  ctx2.restore();
+}
+
 /**
  * 스냅 표식(§3 "표시"). **종류마다 다른 색과 라벨** — SketchUp의 관행 그대로다(A-3).
  * 표식이 없으면 사용자는 무엇에 붙었는지 모르고, 그러면 **조용히 틀린 배치**가 된다.
@@ -695,6 +854,7 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   // 화면에 붙어 따라다니는 유령이 된다 — 그래서 그 셋만 확정 시점으로 묶는다.
   // **스냅 표식과 미리보기는 지금 시점의 화면 좌표**라 어느 뷰에서든 옳다(L-B.8).
   drawPending(ctx2);
+  drawPromoteLoss(ctx2);
   drawSnapMark(ctx2);
   drawLivePreview(ctx2);
   if (cam.locked && !stage.isPinned) return;
@@ -779,6 +939,9 @@ const ink = new InkCanvas(canvas, {
     ink.clear();                         // 잉크 버퍼는 문서가 아니다 — 우리가 그린다
     if (pts.length < 2 || tool !== "draw") { refresh(); return; }
     pushUndo();
+    // **승격 요약은 그 전환의 설명이다** — 획을 더 그리면 설명이 낡는다(AS-C7과 같은 형태).
+    // 차수 되돌리기 버튼은 남는다 — 그것이 §6.2의 지속 수단이다
+    promoteReport = null;
     // **§9.3 — 그리는 자리에서만 뷰가 생긴다.** 돌릴 때마다 만들면 뷰가 넘친다
     doc.currentView = viewForDrawing();
     const s = newSStroke(pts, doc.currentView);
@@ -869,9 +1032,70 @@ function renderBar() {
     btn("unlock", "소실점 다시", cam.locked === false && !!lifted(doc).length, !cam.locked),
     '<span class="sep"></span>',
     btn("undo", "실행취소", false, !undoStack.length),
+    // **차수를 명시한 되돌리기**(L-C.2, §6.2). `실행취소`와 다른 것은 **이름이 차수라는 것**이다 —
+    // 승격 뒤에 몇 획을 더 그렸어도 한 번에 돌아간다.
+    // **지금 차수의 표식은 안 낸다** — 있는 자리로 되돌아가는 버튼은 아무 일도 안 한다
+    ...orderMarks.filter(m => m.order !== lockedOrder)
+                 .map(m => btn(`revert${m.order}`, `${m.order}점으로 되돌리기`)),
     btn("clear", "비우기"),
   ].join("");
 }
+
+/**
+ * **승격 요약**(L-C.2, §6.2). 승격은 **품질을 올리고 배치를 줄인다**(L-C.1: 형태 오차 중앙
+ * 0.1259 → 0.0913 · 배치 −168, `order_promote.json@46c028d1`). 어느 쪽을 택할지는
+ * 그림마다 다르고 **자동 신호가 없으므로**(AS-L6이 §6.2의 재투영 잔차를 반증했다)
+ * 사용자가 정한다. 정하려면 **무엇을 잃었는지 보여야 한다.**
+ *
+ * ⚠ **조용히 풀린 스냅이 여기 나온다.** `order_promote.json`이 그것을 실측했다 —
+ * 다시 안 옮겼다면 어긋났을 거리가 **p90 311px · max 639px**다. `promoteOrder`가
+ * 대부분을 새 상으로 옮기지만 **대상이 새 카메라에서 안 놓이면 못 살린다.**
+ * 그 획들의 시작점은 옛 카메라의 상 그대로여서 **구조가 소리 없이 끊긴 자리**다 — A-3 위반이다.
+ */
+function renderPromoteReport(): string {
+  const p = promoteReport;
+  if (!p) return "";
+  const rows: string[] = [];
+  rows.push(`<div class="hdr"><b>차수 승격 ${p.before}점 → ${p.after}점</b>`
+    + ' <span class="dim">— 전부 다시 풀었습니다(§6.1)</span></div>');
+  rows.push(`<div>${diffSummary(p.diff, p.snapLost.length)}</div>`);
+  if (p.diff.dropped.length) {
+    rows.push(`<div class="warn"><b>${p.diff.dropped.length}획이 3D에서 내려왔습니다</b>`
+      + ' — 화면에 <span style="color:#e67e22">주황 점선</span>으로 표시됩니다.'
+      + ' <span class="dim">실패가 아니라 <b>대기</b>입니다(§9.1) — 이어지는 획이 생기면 다시 올라갑니다</span></div>');
+  }
+  if (p.snapLost.length) {
+    rows.push(`<div class="warn"><b>스냅 ${p.snapLost.length}개가 끊겼습니다</b>`
+      + ` <span class="dim">(${p.reanchored}/${p.had}개는 새 상으로 옮겼습니다)</span>`
+      + ' — 붙어 있던 대상이 새 카메라에서 안 놓였습니다.'
+      + ' 화면에 <span style="color:#c0392b">빨간 ⊘</span>로 표시됩니다.'
+      + ' <span class="dim">그 시작점은 <b>옛 카메라의 자리</b>입니다</span></div>');
+    rows.push('<div><button data-act="relink">스냅 재연결 시도</button>'
+      + ' <span class="dim">다른 대상에 붙습니다 — <b>자동으로 하지 않습니다</b>(A-3)</span></div>');
+  } else if (p.had) {
+    rows.push(`<div class="dim">스냅 ${p.reanchored}/${p.had}개를 새 상으로 옮겼습니다 — 끊긴 것 없음</div>`);
+  }
+  if (p.relinked) {
+    rows.push(`<div>재연결 — <b>${p.relinked.ok}/${p.relinked.tried}</b>개가 다른 대상에 붙었습니다`
+      + (p.snapLost.length ? ` <span class="dim">(${p.snapLost.length}개는 붙을 곳이 없습니다)</span>` : "")
+      + ' <span class="dim">· 아니다 싶으면 <b>실행취소</b></span></div>');
+  }
+  rows.push('<div class="dim"><b>화면이 움직입니다</b> — 되돌리려면 위의'
+    + ` <b>${p.before}점으로 되돌리기</b>를 누르세요(소실점과 기하를 함께 되돌립니다)</div>`);
+  return `<div class="promote">${rows.join("")}</div>`;
+}
+
+/**
+ * 상태 줄의 `**굵게**`를 실제 굵게로 바꾼다.
+ *
+ * ⚠ **화면에 별표가 그대로 나오고 있었다.** 이 파일의 안내문 대부분이 마크다운으로
+ * 적혀 있는데(문서·주석과 같은 문체다) 상태 줄은 HTML을 그린다 — `소실점 다시`·
+ * `가이드 늘리기`·`확정`의 문장 전부가 그랬다. L-C.2의 승격 요약이 **강조에 기대는 화면**이라
+ * 여기서 드러났다. 고치는 자리는 **쓰는 곳 하나**다(문장 30개를 고치지 않는다).
+ *
+ * `<` 를 만들지 않으므로 새 태그가 생길 여지가 없다 — 넣는 문장은 전부 이 파일 안에 있다.
+ */
+const md = (s: string) => s.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
 
 function renderStatus() {
   const r = cam.acc.solve();
@@ -960,7 +1184,8 @@ function renderStatus() {
   }
   for (const w of r.warnings) rows.push(`<div class="${w.level}">${w.text}</div>`);
   if (note) rows.push(`<div class="note">${note}</div>`);
-  statusEl.innerHTML = rows.join("");
+  // **승격 요약은 맨 위에 둔다**(§6.2) — 아래에 있으면 상태 줄에 묻혀 "눈에 띄게"가 안 된다
+  statusEl.innerHTML = md(renderPromoteReport() + rows.join(""));
 }
 
 // ---------------------------------------------------------------- 배선
@@ -994,6 +1219,9 @@ barEl.addEventListener("click", (e) => {
   else if (act === "unlock") {
     // **차수 승격의 입구**(§6.1) — 소실점을 하나 더 잡으려면 가이드를 다시 만져야 한다.
     // 확정 기하는 그대로 두고 **가이드만 연다**. 다시 `차수 승격`을 누르면 전부 다시 푼다
+    // **카메라를 만지기 직전이 표식의 자리다**(위 `orderMarks` 머리말) —
+    // 여기서 안 뜨면 승격을 되돌려도 소실점이 새 차수로 남는다
+    if (lockedOrder != null) markOrder(lockedOrder, appSnap());
     cam.locked = false; tool = "adjust";
     note = "소실점을 다시 잡습니다 — 축을 더 세운 뒤 **차수 승격**을 누르세요. "
          + "확정된 3D는 그대로 있고, 승격을 눌러야 다시 풀립니다";
@@ -1003,14 +1231,27 @@ barEl.addEventListener("click", (e) => {
     if (ctx) { stage.pinTo(ctx.principal, ctx.f); tool = "draw"; canvas.style.pointerEvents = "auto";
                note = "확정 시점 — 3D가 잉크와 같은 자리에 그려집니다"; }
   } else if (act === "undo") {
+    // **문서만 되돌리면 안 된다**(L-C.2) — 승격을 되돌릴 때 소실점이 새 것으로 남으면
+    // §6.1이 금지한 **좌표계가 섞인 상태**가 된다. `restoreSnap`이 둘을 함께 되돌린다
     const sn = undoStack.pop();
-    if (sn) { doc = sn; syncScene(); note = ""; }
-  } else if (act === "clear") {
+    if (sn) { restoreSnap(sn); note = ""; }
+  } else if (act === "relink") relinkLostSnaps();
+  else if (act.startsWith("revert")) revertToOrder(Number(act.slice(6)));
+  else if (act === "clear") {
     pushUndo();
     doc = newDoc(); cam.guides = []; cam.apply(); cam.locked = false; lockedOrder = null;
     cam.acc.reset(); syncScene(); sens = []; note = "";
+    orderMarks.length = 0; promoteReport = null;
   }
   refresh();
+});
+
+// **승격 요약 패널 안의 버튼**(L-C.2). 도구 막대와 같은 규약(`data-act`)을 쓴다 —
+// 규약이 둘이 되면 다음 버튼을 어디에 다는지가 매번 판단거리가 된다
+statusEl.addEventListener("click", (e) => {
+  const b = (e.target as HTMLElement).closest("button");
+  if (!b) return;
+  if ((b as HTMLButtonElement).dataset.act === "relink") relinkLostSnaps();
 });
 
 // ---- 축 고정(L-B.5, §4). **SketchUp 그대로**(A-3) — 새로 배울 것이 없다.
@@ -1079,6 +1320,20 @@ refresh();
   // L-C.1 — 차수 승격(§6.1). **앱 경로 그대로**를 종단 확인이 부른다(#17)
   order: () => { const c = cam.ctx(); return c ? orderOf(c.vps, c.imgSize) : null; },
   promoteOrderNow,
+  // L-C.2 — 되돌리기 UI(§6.2). **앱 경로 그대로**를 종단 확인이 부른다(#17)
+  promoteReport: () => promoteReport && {
+    before: promoteReport.before, after: promoteReport.after,
+    dropped: promoteReport.diff.dropped, gained: promoteReport.diff.gained,
+    snapLost: promoteReport.snapLost,
+    reanchored: promoteReport.reanchored, had: promoteReport.had,
+    relinked: promoteReport.relinked,
+  },
+  orderMarks: () => orderMarks.map(m => m.order),
+  revertToOrder,
+  relinkLostSnaps,
+  /** 되돌리기가 **카메라까지** 되돌리는지 대조하기 위한 창(L-C.2). */
+  camSnapshot: () => ({ guides: cam.guides.map(g => [g.axis, g.a[0], g.a[1], g.b[0], g.b[1]]),
+                        locked: cam.locked, lockedOrder }),
   unlockGuides: () => {
     document.querySelector<HTMLButtonElement>('#bar button[data-act="unlock"]')?.click();
   },
