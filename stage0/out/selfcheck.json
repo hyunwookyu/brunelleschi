@@ -1,5 +1,5 @@
 {
-  "n_flags": 749,
+  "n_flags": 792,
   "flags": [
     {
       "path": "constants.json:values.CONSENSUS_TOL.max_spread_ratio",
@@ -1700,6 +1700,221 @@
       "path": "misassign_retry.json:by_end_jitter.0.02.arms.retry_0.25.vs.check.by_seed[2].dropped_n",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.45.good_occluded.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.45.bad_occluded.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.45.threshold_sweep.over_0.2.good_lost_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.45.threshold_sweep.over_0.4.good_lost_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.75.good_occluded.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.75.bad_occluded.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.75.threshold_sweep.over_0.05.wrong_caught_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.75.threshold_sweep.over_0.1.wrong_caught_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.75.threshold_sweep.over_0.2.wrong_caught_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.75.threshold_sweep.over_0.2.good_lost_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.75.threshold_sweep.over_0.4.wrong_caught_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.75.threshold_sweep.over_0.4.good_lost_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.110.good_occluded.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.110.bad_occluded.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.110.threshold_sweep.over_0.2.wrong_caught_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.110.threshold_sweep.over_0.4.wrong_caught_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r2px.110.threshold_sweep.over_0.4.good_lost_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r4px.45.good_occluded.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r4px.45.threshold_sweep.over_0.4.good_lost_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r4px.75.good_occluded.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r4px.75.bad_occluded.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r4px.75.threshold_sweep.over_0.1.wrong_caught_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r4px.75.threshold_sweep.over_0.2.wrong_caught_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r4px.75.threshold_sweep.over_0.4.wrong_caught_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r4px.110.good_occluded.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r4px.110.bad_occluded.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r4px.110.threshold_sweep.over_0.4.wrong_caught_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r8px.75.bad_occluded.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r8px.75.threshold_sweep.over_0.1.wrong_caught_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r8px.75.threshold_sweep.over_0.2.wrong_caught_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:by_radius_and_orbit.r8px.75.threshold_sweep.over_0.4.wrong_caught_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:separation.r2px.45.good_median",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:separation.r2px.45.bad_median",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:separation.r2px.75.good_median",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:separation.r2px.75.bad_median",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:separation.r2px.110.good_median",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:separation.r2px.110.bad_median",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:separation.r4px.45.good_median",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:separation.r4px.75.good_median",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:separation.r4px.75.bad_median",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:separation.r4px.110.good_median",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:separation.r4px.110.bad_median",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "occlusion.json:separation.r8px.75.bad_median",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "one_stroke_one_axis.json:by_word.square.too_bent_rate",
@@ -3813,6 +4028,7 @@
     "free_curve.json",
     "incline_vp.json",
     "misassign_retry.json",
+    "occlusion.json",
     "one_stroke_one_axis.json",
     "persist.json",
     "preview_gap.json",

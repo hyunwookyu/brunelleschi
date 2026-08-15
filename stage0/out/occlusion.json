@@ -1,0 +1,586 @@
+{
+  "spec": "가림 정합성의 **타당성 측정**. 구현이 아니다 — 앱 동작을 바꾸지 않는다.",
+  "constants": {
+    "hash": "1671e540",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "why": "D-S22가 '2D 증거로는 못 가른다'를 확정했고 남은 길이 2D 밖의 정보다. 그 후보가 가림 정합성이다: 사용자는 획 전체를 보면서 그었는데, 어떤 배치 가설은 획의 일부를 기존 기하 뒤로 보낸다 — 그랬다면 안 보였어야 한다. **그 값이 참·거짓을 가르는지**를 먼저 잰다. 안 갈리면 다음 세션이 그 길로 가지 않아도 된다.",
+  "metric": "`occluded_fraction` = 놓인 획의 점 중 **화면에서 다른 획에 덮이고 깊이가 뒤인** 비율. 판정은 **투영과 깊이 비교로만** 한다 — 배치가 쓰는 광선-평면 수학을 다시 쓰지 않는다(자기확인 차단). 참·거짓 라벨은 참값 3D에서 온다(끝점 오차 0.2 초과 = 크게 틀림).",
+  "condition": {
+    "composition": "요 35°·피치 15° 3점, 직육면체 하나",
+    "grade": "medium",
+    "skew": 0.12,
+    "end_jitter": 0.01,
+    "elev_deg": 18,
+    "orbit_deg": [
+      45,
+      75,
+      110
+    ],
+    "seeds": [
+      9500,
+      1301,
+      5501
+    ],
+    "boxes_per_cell": 30,
+    "opts": "VIEW_OPTS + VIEW_AXIS_CFG(출하 구성) — **지금 실제로 놓이는 것만** 대상이다",
+    "occluders": "먼저 있던 기하만(새로 그은 획끼리는 세지 않는다)",
+    "screen_radius_px_sweep": [
+      2,
+      4,
+      8
+    ],
+    "depth_margin": 0.02,
+    "single_composition_warning": "구도가 하나뿐이다(AS-13)."
+  },
+  "by_radius_and_orbit": {
+    "r2px": {
+      "45": {
+        "n_good": 39,
+        "n_bad": 74,
+        "good_occluded": {
+          "n": 39,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.0588,
+          "max": 0.1538
+        },
+        "bad_occluded": {
+          "n": 74,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.0952,
+          "max": 0.5357
+        },
+        "threshold_sweep": {
+          "over_0.05": {
+            "wrong_caught": 16,
+            "wrong_caught_rate": 0.2162,
+            "good_lost": 5,
+            "good_lost_rate": 0.1282
+          },
+          "over_0.1": {
+            "wrong_caught": 7,
+            "wrong_caught_rate": 0.0946,
+            "good_lost": 1,
+            "good_lost_rate": 0.0256
+          },
+          "over_0.2": {
+            "wrong_caught": 4,
+            "wrong_caught_rate": 0.0541,
+            "good_lost": 0,
+            "good_lost_rate": 0
+          },
+          "over_0.4": {
+            "wrong_caught": 1,
+            "wrong_caught_rate": 0.0135,
+            "good_lost": 0,
+            "good_lost_rate": 0
+          }
+        }
+      },
+      "75": {
+        "n_good": 21,
+        "n_bad": 9,
+        "good_occluded": {
+          "n": 21,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.1538,
+          "max": 0.1667
+        },
+        "bad_occluded": {
+          "n": 9,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0.0333
+        },
+        "threshold_sweep": {
+          "over_0.05": {
+            "wrong_caught": 0,
+            "wrong_caught_rate": 0,
+            "good_lost": 8,
+            "good_lost_rate": 0.381
+          },
+          "over_0.1": {
+            "wrong_caught": 0,
+            "wrong_caught_rate": 0,
+            "good_lost": 6,
+            "good_lost_rate": 0.2857
+          },
+          "over_0.2": {
+            "wrong_caught": 0,
+            "wrong_caught_rate": 0,
+            "good_lost": 0,
+            "good_lost_rate": 0
+          },
+          "over_0.4": {
+            "wrong_caught": 0,
+            "wrong_caught_rate": 0,
+            "good_lost": 0,
+            "good_lost_rate": 0
+          }
+        }
+      },
+      "110": {
+        "n_good": 27,
+        "n_bad": 9,
+        "good_occluded": {
+          "n": 27,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.0345,
+          "max": 0.2353
+        },
+        "bad_occluded": {
+          "n": 9,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.037,
+          "max": 0.1667
+        },
+        "threshold_sweep": {
+          "over_0.05": {
+            "wrong_caught": 1,
+            "wrong_caught_rate": 0.1111,
+            "good_lost": 1,
+            "good_lost_rate": 0.037
+          },
+          "over_0.1": {
+            "wrong_caught": 1,
+            "wrong_caught_rate": 0.1111,
+            "good_lost": 1,
+            "good_lost_rate": 0.037
+          },
+          "over_0.2": {
+            "wrong_caught": 0,
+            "wrong_caught_rate": 0,
+            "good_lost": 1,
+            "good_lost_rate": 0.037
+          },
+          "over_0.4": {
+            "wrong_caught": 0,
+            "wrong_caught_rate": 0,
+            "good_lost": 0,
+            "good_lost_rate": 0
+          }
+        }
+      }
+    },
+    "r4px": {
+      "45": {
+        "n_good": 39,
+        "n_bad": 74,
+        "good_occluded": {
+          "n": 39,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.1,
+          "max": 0.2308
+        },
+        "bad_occluded": {
+          "n": 74,
+          "min": 0,
+          "p10": 0,
+          "median": 0.0125,
+          "p90": 0.2963,
+          "max": 0.9286
+        },
+        "threshold_sweep": {
+          "over_0.05": {
+            "wrong_caught": 25,
+            "wrong_caught_rate": 0.3378,
+            "good_lost": 12,
+            "good_lost_rate": 0.3077
+          },
+          "over_0.1": {
+            "wrong_caught": 14,
+            "wrong_caught_rate": 0.1892,
+            "good_lost": 4,
+            "good_lost_rate": 0.1026
+          },
+          "over_0.2": {
+            "wrong_caught": 8,
+            "wrong_caught_rate": 0.1081,
+            "good_lost": 2,
+            "good_lost_rate": 0.0513
+          },
+          "over_0.4": {
+            "wrong_caught": 2,
+            "wrong_caught_rate": 0.027,
+            "good_lost": 0,
+            "good_lost_rate": 0
+          }
+        }
+      },
+      "75": {
+        "n_good": 21,
+        "n_bad": 9,
+        "good_occluded": {
+          "n": 21,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.2308,
+          "max": 0.5
+        },
+        "bad_occluded": {
+          "n": 9,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0.0667
+        },
+        "threshold_sweep": {
+          "over_0.05": {
+            "wrong_caught": 1,
+            "wrong_caught_rate": 0.1111,
+            "good_lost": 8,
+            "good_lost_rate": 0.381
+          },
+          "over_0.1": {
+            "wrong_caught": 0,
+            "wrong_caught_rate": 0,
+            "good_lost": 8,
+            "good_lost_rate": 0.381
+          },
+          "over_0.2": {
+            "wrong_caught": 0,
+            "wrong_caught_rate": 0,
+            "good_lost": 5,
+            "good_lost_rate": 0.2381
+          },
+          "over_0.4": {
+            "wrong_caught": 0,
+            "wrong_caught_rate": 0,
+            "good_lost": 1,
+            "good_lost_rate": 0.0476
+          }
+        }
+      },
+      "110": {
+        "n_good": 27,
+        "n_bad": 9,
+        "good_occluded": {
+          "n": 27,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.0588,
+          "max": 0.4706
+        },
+        "bad_occluded": {
+          "n": 9,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.037,
+          "max": 0.3
+        },
+        "threshold_sweep": {
+          "over_0.05": {
+            "wrong_caught": 1,
+            "wrong_caught_rate": 0.1111,
+            "good_lost": 4,
+            "good_lost_rate": 0.1481
+          },
+          "over_0.1": {
+            "wrong_caught": 1,
+            "wrong_caught_rate": 0.1111,
+            "good_lost": 2,
+            "good_lost_rate": 0.0741
+          },
+          "over_0.2": {
+            "wrong_caught": 1,
+            "wrong_caught_rate": 0.1111,
+            "good_lost": 1,
+            "good_lost_rate": 0.037
+          },
+          "over_0.4": {
+            "wrong_caught": 0,
+            "wrong_caught_rate": 0,
+            "good_lost": 1,
+            "good_lost_rate": 0.037
+          }
+        }
+      }
+    },
+    "r8px": {
+      "45": {
+        "n_good": 39,
+        "n_bad": 74,
+        "good_occluded": {
+          "n": 39,
+          "min": 0,
+          "p10": 0,
+          "median": 0.12,
+          "p90": 0.5455,
+          "max": 0.7917
+        },
+        "bad_occluded": {
+          "n": 74,
+          "min": 0,
+          "p10": 0,
+          "median": 0.045,
+          "p90": 0.5185,
+          "max": 1
+        },
+        "threshold_sweep": {
+          "over_0.05": {
+            "wrong_caught": 36,
+            "wrong_caught_rate": 0.4865,
+            "good_lost": 28,
+            "good_lost_rate": 0.7179
+          },
+          "over_0.1": {
+            "wrong_caught": 29,
+            "wrong_caught_rate": 0.3919,
+            "good_lost": 22,
+            "good_lost_rate": 0.5641
+          },
+          "over_0.2": {
+            "wrong_caught": 16,
+            "wrong_caught_rate": 0.2162,
+            "good_lost": 13,
+            "good_lost_rate": 0.3333
+          },
+          "over_0.4": {
+            "wrong_caught": 10,
+            "wrong_caught_rate": 0.1351,
+            "good_lost": 9,
+            "good_lost_rate": 0.2308
+          }
+        }
+      },
+      "75": {
+        "n_good": 21,
+        "n_bad": 9,
+        "good_occluded": {
+          "n": 21,
+          "min": 0,
+          "p10": 0,
+          "median": 0.125,
+          "p90": 0.6429,
+          "max": 0.6667
+        },
+        "bad_occluded": {
+          "n": 9,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0.0455,
+          "max": 0.1
+        },
+        "threshold_sweep": {
+          "over_0.05": {
+            "wrong_caught": 1,
+            "wrong_caught_rate": 0.1111,
+            "good_lost": 12,
+            "good_lost_rate": 0.5714
+          },
+          "over_0.1": {
+            "wrong_caught": 0,
+            "wrong_caught_rate": 0,
+            "good_lost": 11,
+            "good_lost_rate": 0.5238
+          },
+          "over_0.2": {
+            "wrong_caught": 0,
+            "wrong_caught_rate": 0,
+            "good_lost": 8,
+            "good_lost_rate": 0.381
+          },
+          "over_0.4": {
+            "wrong_caught": 0,
+            "wrong_caught_rate": 0,
+            "good_lost": 8,
+            "good_lost_rate": 0.381
+          }
+        }
+      },
+      "110": {
+        "n_good": 27,
+        "n_bad": 9,
+        "good_occluded": {
+          "n": 27,
+          "min": 0,
+          "p10": 0,
+          "median": 0.0294,
+          "p90": 0.0882,
+          "max": 0.9706
+        },
+        "bad_occluded": {
+          "n": 9,
+          "min": 0,
+          "p10": 0,
+          "median": 0.0345,
+          "p90": 0.3333,
+          "max": 0.4667
+        },
+        "threshold_sweep": {
+          "over_0.05": {
+            "wrong_caught": 3,
+            "wrong_caught_rate": 0.3333,
+            "good_lost": 9,
+            "good_lost_rate": 0.3333
+          },
+          "over_0.1": {
+            "wrong_caught": 3,
+            "wrong_caught_rate": 0.3333,
+            "good_lost": 3,
+            "good_lost_rate": 0.1111
+          },
+          "over_0.2": {
+            "wrong_caught": 2,
+            "wrong_caught_rate": 0.2222,
+            "good_lost": 3,
+            "good_lost_rate": 0.1111
+          },
+          "over_0.4": {
+            "wrong_caught": 1,
+            "wrong_caught_rate": 0.1111,
+            "good_lost": 2,
+            "good_lost_rate": 0.0741
+          }
+        }
+      }
+    }
+  },
+  "separation": {
+    "r2px": {
+      "45": {
+        "good_median": 0,
+        "bad_median": 0,
+        "separates": false,
+        "inverted": false
+      },
+      "75": {
+        "good_median": 0,
+        "bad_median": 0,
+        "separates": false,
+        "inverted": false
+      },
+      "110": {
+        "good_median": 0,
+        "bad_median": 0,
+        "separates": false,
+        "inverted": false
+      }
+    },
+    "r4px": {
+      "45": {
+        "good_median": 0,
+        "bad_median": 0.0125,
+        "separates": false,
+        "inverted": false
+      },
+      "75": {
+        "good_median": 0,
+        "bad_median": 0,
+        "separates": false,
+        "inverted": false
+      },
+      "110": {
+        "good_median": 0,
+        "bad_median": 0,
+        "separates": false,
+        "inverted": false
+      }
+    },
+    "r8px": {
+      "45": {
+        "good_median": 0.12,
+        "bad_median": 0.045,
+        "separates": false,
+        "inverted": true
+      },
+      "75": {
+        "good_median": 0.125,
+        "bad_median": 0,
+        "separates": false,
+        "inverted": true
+      },
+      "110": {
+        "good_median": 0.0294,
+        "bad_median": 0.0345,
+        "separates": false,
+        "inverted": false
+      }
+    }
+  },
+  "how_to_read": "**갈린다면** `bad_occluded`의 중앙값이 `good_occluded`보다 뚜렷이 크고, 임계 스윕에서 `wrong_caught_rate`가 `good_lost_rate`보다 크게 앞선다. **안 갈린다면** 두 분포가 겹치고, 그때는 이 신호로 D-S22를 되돌릴 수 없다."
+}

@@ -93,21 +93,21 @@
   },
   "stroke_latency_ms": {
     "n": 12,
-    "median": 2.35,
-    "max": 5.1,
+    "median": 2.15,
+    "max": 4,
     "note": "`pointerup` 하나가 반환할 때까지 — 판정·배치·튜브 생성·다시 그리기가 그 안이다. 개발 서버(번들 없음) 기준이므로 **상한**으로 읽는다."
   },
   "orbit_frame_ms": {
     "n": 30,
-    "median": 16.85,
-    "max": 21.7
+    "median": 16.6,
+    "max": 24.2
   },
   "second_view": {
     "added": 1,
     "placed_total": 10,
     "camera_locked": false,
     "latency_ms": {
-      "median": 2.5
+      "median": 2.8
     },
     "note": "**기존 기하의 끝점 둘 사이**를 그었다(면 대각선 격). `camera_locked`가 false면 그 획이 안 놓였다는 뜻이다 — 잠금은 놓였을 때만 걸린다(D-S22의 귀결)."
   },
@@ -146,14 +146,14 @@
       "points": 217,
       "skipped": 0,
       "hasFace": false,
-      "bytes": 7906
+      "bytes": 7908
     },
     "gltf": {
       "nodes": 13,
       "modes": [
         3
       ],
-      "bytes": 9135
+      "bytes": 9134
     }
   },
   "undo_erase": {
