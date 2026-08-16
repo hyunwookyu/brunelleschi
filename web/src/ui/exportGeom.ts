@@ -29,8 +29,23 @@ export interface ExportLine {
 }
 
 /** 문서 → 내보낼 선 목록. **3D로 올라간 획만** 나간다(2D 레이어는 좌표가 없다). */
-export function linesFromDoc(doc: DocState, viewName?: (id: string) => string): ExportLine[] {
-  return doc.strokes.filter(s => s.seg3d)
+/**
+ * **채널이 내보내기를 가른다**(2026-08-17 사람 지시 D-3).
+ *
+ * ```
+ * 결과선  포함
+ * 보조선  제외(옵션으로 켠다)  ← `withGuides`
+ * 주석    제외 (그리고 애초에 3D가 없다)
+ * ```
+ *
+ * ⚠ **기본이 "보조선 제외"인데 기본 채널은 보조선이다**(D-1). 즉 **결과선을 한 번도 안 그으면
+ * 내보내기가 빈다** — 그것이 D-6("결과선을 강제하지 않는다")과 어긋나지 않게 하려면
+ * 부르는 쪽이 **몇 개가 빠졌는지 화면에 내야 한다**(#7). `mainL`이 그렇게 한다.
+ */
+export function linesFromDoc(doc: DocState, viewName?: (id: string) => string,
+                             opts: { withGuides?: boolean } = {}): ExportLine[] {
+  return doc.strokes
+    .filter(s => s.seg3d && (s.channel === "result" || (opts.withGuides && s.channel !== "note")))
     .map(s => ({ id: s.id, pts3d: [s.seg3d![0], s.seg3d![1]] as Vec3[], axis: s.axis as never,
                  color: s.color, view: viewName ? viewName(s.viewRef) : s.viewRef }));
 }

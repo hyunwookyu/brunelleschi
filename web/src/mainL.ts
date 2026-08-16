@@ -9,8 +9,8 @@ import { InkCanvas } from "./capture/inkCanvas.js";
 import { cssSizeOf, deviceRatio } from "./capture/canvasFrame.js";
 import { Stage, FREE_FOV_DEG, type StageSeg } from "./ui/stage.js";
 import { CamState } from "./ui/camState.js";
-import { newDoc, newSStroke, newView, deleteView, lifted, pending, pendingElsewhere,
-         type DocState, type SStroke } from "./ui/doc.js";
+import { newDoc, newSStroke, newView, deleteView, lifted, pending, pendingElsewhere, liftable,
+         type DocState, type SStroke, type Channel } from "./ui/doc.js";
 import { takeSnap, applySnap, type AppSnap } from "./ui/appSnap.js";
 // L-D.2 저장·내보내기 — **뷰 목록과 뷰별 2D 획**을 담는다(§9.2)
 import { serializeDoc2, restoreDoc2, autosaver2, getDoc2, deleteDoc2,
@@ -108,6 +108,22 @@ let live: { anchor: SnapCand; axis: 0 | 1 | 2 | null; deg: number | null;
  */
 let axisLock: 0 | 1 | 2 | null = null;
 /**
+ * **지금 그리는 펜 채널**(2026-08-17 사람 지시 D). **기본은 보조선**이다 — 작도 순서가
+ * 그렇기 때문이다: 구축선을 긋고 그 위에 확정선을 덧그린다.
+ *
+ * ⚠ **자동 판정을 하지 않는다**(D-4). 사용자가 고르고, 나중에 `고치기`로 바꾼다.
+ * ⚠ **화면에 보여야 한다**(D-5) — 모르고 그으면 나중에 고쳐야 한다.
+ */
+let channel: Channel = "guide";
+
+/** 채널의 화면 이름·색. **표시 규약의 단일 출처다**(#17) — 도구 막대·상태 줄·2D 층이 읽는다. */
+const CHANNEL_UI: Record<Channel, { name: string; color: string; dash: number[]; alpha: number }> = {
+  // E의 네 단계 중 위 둘 — 결과선이 **결과물**이므로 가장 진하다
+  result: { name: "결과선", color: "#111111", dash: [], alpha: 1 },
+  guide: { name: "보조선", color: "#8a8a8a", dash: [7, 5], alpha: 0.85 },
+  note: { name: "주석", color: "#2471a3", dash: [], alpha: 0.9 },
+};
+/**
  * **카메라가 서기 전의 화면 직교 스냅**(2026-08-17 A-2). `live`와 따로 두는 이유는
  * 그것이 **앵커(3D 스냅)를 요구**하기 때문이다 — 여기에는 3D가 아직 없다.
  *
@@ -141,6 +157,42 @@ const orthoPts = (pts: Pt2[], o: ScreenOrtho | null): Pt2[] =>
  * 객체로 두는 이유는 종단 확인이 `S2S`로 읽고 쓰기 때문이다(#17: 앱 경로 하나).
  */
 const AXIS_SNAP = { on: true };
+/**
+ * **보조선을 내보낼 것인가**(D-3 "제외(옵션)"). 기본은 **끔** — 결과선이 결과물이다.
+ * 객체로 두는 이유는 종단 확인이 `S2S`로 읽고 쓰기 때문이다(#17: 앱 경로 하나).
+ */
+const EXPORT_GUIDES = { on: false };
+/**
+ * **보조선 표시 토글**(2026-08-17 사람 지시 E). 기본 **켬**이고, **돌리면 자동으로 흐려진다**
+ * (그것은 `stage.ts`의 `CHANNEL_3D.guide_orbit`이 한다 — 토글과 다른 축이다).
+ *
+ * 토글은 **끄는 것**이고 흐림은 **약하게 하는 것**이다. 둘을 한 손잡이로 묶지 않는다:
+ * 돌린 채로 보조선을 아예 끄고 싶은 때가 있다.
+ */
+const SHOW_GUIDES = { on: true };
+
+/**
+ * **선 표시 네 단계**(E). 위로 갈수록 진하다 — **결과선이 결과물이다.**
+ *
+ * ```
+ * 결과선(3D)          검정, 진하게        `CHANNEL_UI.result` + `stage.CHANNEL_3D.result`
+ * 보조선(3D)          회색 파선           `CHANNEL_UI.guide`  + `stage.CHANNEL_3D.guide`
+ * 미승격(2D 레이어)    연하게              `drawPending`의 알파
+ * 스타일러스 미리보기  **가장 연하게**      아래 값
+ * ```
+ *
+ * ⚠⚠ **옛 판은 순서가 뒤집혀 있었다**(E의 보고): 미리보기가 알파 0.85·굵기 3으로 가장 진했고
+ * 확정선은 그보다 흐렸다. **축 색은 미리보기에 붙으므로 연한 톤이어야 한다** —
+ * 색이 축을 말하되 "이것이 결과물"이라고 말하면 안 된다.
+ */
+const PREVIEW_INK = { alpha: 0.4, width: 2, gray: 0.35 };
+
+/** 색을 흰색 쪽으로 섞는다 — 축 색을 남기되 톤을 낮춘다(E). `stage.ts`의 `lerp`와 같은 자리다. */
+function paler(hex: string, t: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  const mix = (c: number) => Math.round(c + (255 - c) * t);
+  return `rgb(${mix((n >> 16) & 255)},${mix((n >> 8) & 255)},${mix(n & 255)})`;
+}
 /** **그 획만 자유**(수정자). `Shift`를 누르고 있는 동안만 참이다 — 토글과 상황이 다르다. */
 let freeStroke = false;
 /**
@@ -390,6 +442,7 @@ function promoteChain(fr: Frame): number {
     const pre = staticCandidates(segs);
     let n = 0;
     for (const st of waiting) {
+      if (!liftable(st)) continue;               // **주석은 승격 연쇄에도 안 들어간다**(D-3)
       const cand = snapAt(st.pts2d[0], segs, sc, {}, pre);
       if (!cand) continue;
       applySnapToStart(st, cand, fr.fromV(cand.at));
@@ -552,9 +605,10 @@ function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = nul
 /** 문서의 3D 레이어를 씬에 반영한다. **여기가 유일한 경로다.** */
 function syncScene() {
   snapPre = null;                       // 기하가 바뀌었다 — 스냅 후보를 다시 만든다
-  const segs: StageSeg[] = lifted(doc).map(s => ({
-    id: s.id, a: s.seg3d![0], b: s.seg3d![1], axis: s.axis,
-  }));
+  // **보조선 표시 토글**(E). 끄면 3D 층에서 빠진다 — 스냅 대상은 그대로다(끄는 것은 표시다)
+  const segs: StageSeg[] = lifted(doc)
+    .filter(s => SHOW_GUIDES.on || s.channel !== "guide")
+    .map(s => ({ id: s.id, a: s.seg3d![0], b: s.seg3d![1], axis: s.axis, channel: s.channel }));
   stage.setSegments(segs);
 }
 
@@ -679,11 +733,13 @@ viewsEl.addEventListener("click", (e) => {
 function solveInto(ctx: PlaceCtx, targets: SStroke[]): number {
   if (!targets.length) return 0;
   for (const st of targets) {
+    if (!liftable(st)) continue;                 // **주석은 3D로 안 간다**(D-3)
     if (st.userAxis) continue;
     // **규칙이 이미 축을 정해 뒀다** — 검출 판정(`classifyStroke`)을 안 부른다(사람 지시 1).
     st.axis = cam.axisOf(st.pts2d).axis;
   }
-  const input: LiftStroke[] = targets.map(s => ({ id: s.id, pts2d: s.pts2d, axis: s.axis }));
+  const input: LiftStroke[] = targets.filter(liftable)
+    .map(s => ({ id: s.id, pts2d: s.pts2d, axis: s.axis }));
   const r = liftAll(input, { principal: ctx.principal, f: ctx.f, vps: ctx.vps,
                              imgSize: ctx.imgSize, axisDirs: ctx.axisDirs });
   let n = 0;
@@ -851,6 +907,32 @@ function deletePicked(): void {
  *
  * `userAxis`를 세우므로 **차수 승격의 재분류가 이 값을 안 덮는다**(§6.1 "사용자 지정만 유지").
  */
+/**
+ * **고른 획의 채널을 바꾼다**(D-4). 자동 판정을 하지 않으므로 **여기가 유일한 변경 경로**다.
+ *
+ * ⚠ **주석으로 바꾸면 3D에서 내려온다**(D-3) — 주석은 기하가 아니다. 반대로 주석을
+ * 보조선·결과선으로 바꾸면 **자동으로 안 올라간다**: 올라가려면 시작점이 무언가에 붙어야
+ * 하고 그것은 그리는 시점의 일이다. **승격 연쇄를 한 번 돌려 준다** — 붙으면 올라간다.
+ */
+function setPickedChannel(next: Channel): void {
+  if (!picked) return;
+  const st = doc.strokes.find(x => x.id === picked);
+  if (!st || st.channel === next) return;
+  pushUndo();
+  st.channel = next;
+  let placed = !!st.seg3d;
+  if (next === "note") { st.seg3d = null; placed = false; }
+  else if (!st.seg3d) {
+    const fr = frame();
+    if (fr) { promoteChain(fr); placed = !!st.seg3d; }
+  }
+  syncScene();
+  note = `채널을 <b style="color:${CHANNEL_UI[next].color}">${CHANNEL_UI[next].name}</b>으로 바꿨습니다`
+       + (next === "note" ? " — <b>3D에서 내려왔습니다</b>"
+          : placed ? " — <b>3D에 있습니다</b>" : " — <b>2D로 대기</b>합니다");
+  refresh();
+}
+
 function assignAxis(ax: 0 | 1 | 2): void {
   if (!picked) return;
   const st = doc.strokes.find(x => x.id === picked);
@@ -1214,12 +1296,20 @@ function drawPending(ctx2: CanvasRenderingContext2D) {
   if (cam.locked && !viewIsCurrent()) return;
   ctx2.save();
   ctx2.lineWidth = 2; ctx2.lineCap = "round";
-  ctx2.strokeStyle = "#111";
-  ctx2.globalAlpha = cam.locked ? 0.45 : 0.9;
-  ctx2.setLineDash(cam.locked ? [5, 4] : []);
-  // **직선으로 그린다**(§1.1 · 사람 지시 2-a) — 시작점과 끝점 둘뿐이다.
-  // `pts2d`는 그대로 보존되므로 프리핸드로 돌아갈 때 이 줄만 되돌리면 된다.
-  for (const s of pending(doc)) drawStraight(ctx2, s.pts2d);
+  // **채널이 색과 파선을 정한다**(D-1) — 그리고 **미승격 2D는 연하다**(E의 셋째 단계).
+  //
+  // ⚠ **주석은 3D로 안 올라가므로 언제나 여기 있다**(D-3) — 그것은 "대기"가 아니라
+  // **그 뷰의 화면 층**이다. 그래서 카메라가 서도 안 흐려진다(다른 셋과 다르다).
+  for (const s of pending(doc)) {
+    // 옛 저장본·옛 하네스의 획은 채널이 없을 수 있다 — **보조선으로 본다**(D-1의 기본값)
+    const ui = CHANNEL_UI[s.channel] ?? CHANNEL_UI.guide;
+    ctx2.strokeStyle = ui.color;
+    ctx2.setLineDash(ui.dash.length ? ui.dash : (cam.locked && s.channel !== "note" ? [5, 4] : []));
+    ctx2.globalAlpha = s.channel === "note" ? ui.alpha
+      : (cam.locked ? 0.35 : 0.65) * ui.alpha;      // **§9.4 — 2D를 약하게 구분한다**(E)
+    // **직선으로 그린다**(§1.1) — 시작점과 끝점 둘뿐이다. `pts2d`는 그대로 보존된다
+    drawStraight(ctx2, s.pts2d);
+  }
   ctx2.restore();
 }
 
@@ -1231,13 +1321,16 @@ function drawPreview(ctx2: CanvasRenderingContext2D) {
   const probe = pending(doc, doc.views[0].id).map(s => ({ ...s, seg3d: null } as SStroke));
   solveInto(ctx, probe);
   ctx2.save();
-  ctx2.lineWidth = 2.5; ctx2.lineCap = "round"; ctx2.globalAlpha = 0.9;
+  // **확정 전 미리보기도 연하다**(E) — 아직 올라간 것이 아니다
+  ctx2.lineWidth = PREVIEW_INK.width; ctx2.lineCap = "round";
+  ctx2.globalAlpha = PREVIEW_INK.alpha;
   for (const s of probe) {
     if (!s.seg3d) continue;
     const a = project(s.seg3d[0], ctx.principal, ctx.f);
     const b = project(s.seg3d[1], ctx.principal, ctx.f);
     if (!a || !b) continue;
-    ctx2.strokeStyle = typeof s.axis === "number" ? AXIS_COLOR[s.axis] : "#444";
+    ctx2.strokeStyle = paler(typeof s.axis === "number" ? AXIS_COLOR[s.axis] : "#444444",
+                             PREVIEW_INK.gray);
     ctx2.beginPath(); ctx2.moveTo(a[0], a[1]); ctx2.lineTo(b[0], b[1]); ctx2.stroke();
   }
   ctx2.restore();
@@ -1360,8 +1453,15 @@ function drawLivePreview(ctx2: CanvasRenderingContext2D) {
   if (live.seg) {
     const b = project(fr.toV(live.seg[1]), c.principal, c.f);
     if (b) {
-      ctx2.strokeStyle = AXIS_COLOR[live.axis!];
-      ctx2.lineWidth = 3; ctx2.globalAlpha = 0.85; ctx2.setLineDash([]);
+      // **가장 연하다**(E의 넷째 단계) — 미리보기는 보조선이고 결과물이 아니다.
+      // 옛 판은 여기가 가장 진했다(알파 0.85·굵기 3).
+      // ⚠ **축이 `null`일 수 있다** — 양 끝 스냅으로 놓이는 획은 세그먼트가 있어도 축이
+      // 미분류다(D-L46). 옛 판은 `strokeStyle = undefined`가 조용히 무시됐는데
+      // `paler()`는 문자열을 요구하므로 **던졌다**(종단 확인이 `PAGEERROR`로 잡았다).
+      ctx2.strokeStyle = paler(live.axis != null ? AXIS_COLOR[live.axis] : "#444444",
+                               PREVIEW_INK.gray);
+      ctx2.lineWidth = PREVIEW_INK.width; ctx2.globalAlpha = PREVIEW_INK.alpha;
+      ctx2.setLineDash([]);
       ctx2.beginPath(); ctx2.moveTo(a[0], a[1]); ctx2.lineTo(b[0], b[1]); ctx2.stroke();
     }
   }
@@ -1524,7 +1624,8 @@ const ink = new InkCanvas(canvas, {
              ? `<b style="color:${AXIS_COLOR[st.axis]}">축${st.axis + 1}</b>`
                + (st.userAxis ? " <b>(사용자 지정)</b>" : "")
              : `<span class="warn">${st.axis === "free" ? "미정" : String(st.axis)}</span>`)
-          + " <span class=\"dim\">· ← 축1 · → 축2 · ↑ 축3 · Delete 삭제</span>"
+          + ` · 펜 <b style="color:${CHANNEL_UI[st.channel].color}">${CHANNEL_UI[st.channel].name}</b>`
+          + " <span class=\"dim\">· ← 축1 · → 축2 · ↑ 축3 · 1 보조선 · 2 결과선 · 3 주석 · Delete 삭제</span>"
         : "선택을 풀었습니다";
       refresh();
       return;
@@ -1595,18 +1696,20 @@ const ink = new InkCanvas(canvas, {
     promoteReport = null;
     // **§9.3 — 그리는 자리에서만 뷰가 생긴다.** 돌릴 때마다 만들면 뷰가 넘친다
     doc.currentView = viewForDrawing();
-    const s = newSStroke(pts, doc.currentView);
+    const s = newSStroke(pts, doc.currentView, channel);
     doc.strokes.push(s);
     // **① 규칙에 넣는다**(사람 지시 1) — 확정 전에는 이것이 카메라를 세우는 유일한 경로다.
     // 그은 선이 곧 제약이다: 화면 가로세로면 축 자체, 깊이면 교점. 추정하지 않는다.
-    if (!cam.locked) feedStroke(s);
+    // **주석은 규칙에도 3D에도 안 들어간다**(D-3). 해칭·지시선·메모는 기하가 아니다 —
+    // 그것으로 카메라를 정하면 **조용히 틀린 카메라**가 된다(A-3).
+    if (!cam.locked && liftable(s)) feedStroke(s);
     // **카메라가 서는 순간 자동으로 잠근다**(2026-08-17 F). 확정 버튼이 없어졌다 —
     // 카메라가 정해지고 3D가 서면 **그 순간부터 돌릴 수 있다**. 되돌리기는 위에서 이미
     // 쌓았으므로 여기서 다시 쌓지 않는다(획 하나 = 스냅샷 하나).
     if (!cam.locked && cam.ctx()) confirm(false);
     // 확정 뒤에는 그 자리에서 푼다 — **승격 연쇄**의 첫 형태다(§9.1).
     // **돌린 시점에서도 돈다**(L-B.8) — `frame()`이 좌표 변환을 들고 있다
-    const fr = frame();
+    const fr = liftable(s) ? frame() : null;
     if (fr) {
       // **① 시작점 스냅**(§3). 붙으면 그 획의 3D가 확정된다.
       const sc = snapCtx(fr);
@@ -1771,8 +1874,19 @@ function renderBar() {
     btn("orbit", "궤도", tool === "orbit", !cam.locked),
     // **축 스냅 — 라이노 직교 모드**(사람 지시 1). 기본 켬. `F8`로도 토글한다
     btn("axissnap", `축 스냅 ${AXIS_SNAP.on ? "켬" : "끔"}`, AXIS_SNAP.on),
+    // **보조선 표시 토글**(E). 기본 켬 — 돌리면 흐려지는 것은 이것과 별개다(자동)
+    btn("showguide", `보조선 ${SHOW_GUIDES.on ? "보임" : "숨김"}`, SHOW_GUIDES.on),
     // **고치기**(L-D.1, §9.5) — 클릭으로 고르고 화살표로 축 지정, Delete로 삭제
     btn("edit", "고치기", tool === "edit", !doc.strokes.length),
+    '<span class="sep"></span>',
+    // **현재 채널이 화면에 보인다**(D-5). 모르고 그으면 나중에 고쳐야 한다
+    ...(["guide", "result", "note"] as Channel[]).map(k =>
+      `<button data-act="ch_${k}"${channel === k ? ' class="on"' : ""}`
+      + ` style="border-left:4px solid ${CHANNEL_UI[k].color}"`
+      + ` title="${k === "guide" ? "작도의 본체 — 3D로 올라가고 돌리면 흐려집니다"
+                 : k === "result" ? "보조선 위를 덧그어 확정합니다 — 내보내기에 포함됩니다"
+                 : "해칭·지시선·메모 — 3D로 안 올라가고 그린 뷰에서만 보입니다"}"`
+      + `>${CHANNEL_UI[k].name}</button>`),
     '<span class="sep"></span>',
     // ⛔ **렌즈 슬라이더를 뺐다**(2026-08-17 C-1): "건축가는 투시도를 그릴 때 렌즈를
     // 고려하지 않는다. 소실점 위치가 곧 렌즈이므로 이미 정하고 있다." 1점의 f는
@@ -1792,6 +1906,8 @@ function renderBar() {
     ...orderMarks.filter(m => m.order !== lockedOrder)
                  .map(m => btn(`revert${m.order}`, `${m.order}점으로 되돌리기`)),
     '<span class="sep"></span>',
+    // **보조선 내보내기 옵션**(D-3 "제외(옵션)"). 기본은 끔 — 결과선이 결과물이다
+    btn("expguide", `보조선 내보내기 ${EXPORT_GUIDES.on ? "켬" : "끔"}`, EXPORT_GUIDES.on),
     btn("obj", "OBJ", false, !lifted(doc).length),
     btn("gltf", "glTF", false, !lifted(doc).length),
     btn("json", ".brnl 저장", false, !doc.strokes.length),
@@ -1897,6 +2013,12 @@ function renderStatus() {
   const n3 = lifted(doc).length, n2 = pending(doc).length;
   rows.push(`<div class="hdr"><b>${caseLabel}</b> · 소실점 ${c.nVps}`
     + (cam.locked ? ' <span class="lock">확정</span>' : "") + "</div>");
+  // **현재 채널이 화면에 보인다**(D-5) — 도구 막대의 버튼과 **같은 출처**를 읽는다(#17)
+  rows.push(`<div>펜 <b style="color:${CHANNEL_UI[channel].color}">${CHANNEL_UI[channel].name}</b>`
+    + ` <span class="dim">(${channel === "guide" ? "작도의 본체 — 3D로 올라갑니다"
+        : channel === "result" ? "확정선 — 내보내기에 포함됩니다"
+        : "3D로 안 올라갑니다"}`
+    + ` · <b>고치기</b>에서 <b>1</b>·<b>2</b>·<b>3</b>으로 바꿉니다)</span></div>`);
   rows.push(`<div>3D <b>${n3}</b> · 2D 대기 <b>${n2}</b>`
     + (pendingElsewhere(doc) ? ` <span class="dim">(다른 뷰 ${pendingElsewhere(doc)} 숨김)</span>` : "")
     + (!cam.locked && previewCount ? ` <span class="dim">· 지금 확정하면 ${previewCount} 올라감</span>` : "")
@@ -2000,6 +2122,15 @@ barEl.addEventListener("click", (e) => {
       note = "궤도 — 다른 뷰의 2D 대기 획은 숨깁니다(그 뷰의 화면 좌표이기 때문입니다). 돌린 뒤 **그리기**를 누르면 그 각도가 새 뷰가 됩니다";
     }
   }
+  else if (act.startsWith("ch_")) {
+    channel = act.slice(3) as Channel;
+    const ui = CHANNEL_UI[channel];
+    note = `펜 채널 **${ui.name}** — `
+         + (channel === "guide" ? "작도의 본체입니다. 3D로 올라가고 돌리면 흐려집니다"
+            : channel === "result" ? "보조선 위를 덧그어 확정합니다. **내보내기에 포함**됩니다"
+            : "**3D로 안 올라갑니다** — 그린 뷰에서만 보이고 내보내기에서 빠집니다")
+         + ' <span class="dim">· 나중에 <b>고치기</b>에서 바꿀 수 있습니다(D-4)</span>';
+  }
   else if (act === "axissnap") {
     AXIS_SNAP.on = !AXIS_SNAP.on;
     note = `축 스냅 **${AXIS_SNAP.on ? "켬" : "끔"}** — `
@@ -2043,16 +2174,36 @@ barEl.addEventListener("click", (e) => {
                "application/json");
       note = `.brnl — 뷰 ${doc.views.length} · 획 ${doc.strokes.length} <span class="dim">(내용은 JSON이다)</span>`;
     } else {
-      const lines = linesFromDoc(doc, nameOf);
+      // **채널이 내보내기를 가른다**(D-3): 결과선만 나가고 보조선은 옵션이다.
+      // ⚠ **기본 채널이 보조선**이므로(D-1) 결과선을 한 번도 안 그으면 빈다 —
+      // D-6("결과선을 강제하지 않는다")이 어긋나 보이지 않게 **몇 개가 왜 빠졌는지 낸다**(#7)
+      const lines = linesFromDoc(doc, nameOf, { withGuides: EXPORT_GUIDES.on });
       const r = act === "obj" ? toObj(lines, { note: "Brunelleschi" })
                               : toGltf(lines, { note: "Brunelleschi" });
       const text = act === "obj" ? (r.data as string) : JSON.stringify(r.data);
       download(text, `brunelleschi-${stamp}.${act}`,
                act === "obj" ? "text/plain" : "model/gltf+json");
       const pend = doc.strokes.length - lifted(doc).length;
+      const guides = lifted(doc).filter(x => x.channel === "guide").length;
+      const notes = doc.strokes.filter(x => x.channel === "note").length;
       note = `${act.toUpperCase()} — 선 ${r.strokes}개`
-           + (pend ? ` (2D 레이어 ${pend}획은 3D 좌표가 없어 빠집니다)` : "");
+           + (!EXPORT_GUIDES.on && guides
+              ? ` <span class="warn">(보조선 ${guides}획 제외 — <b>보조선 내보내기</b>로 켭니다)</span>` : "")
+           + (notes ? ` <span class="dim">(주석 ${notes}획은 3D가 없습니다)</span>` : "")
+           + (pend ? ` <span class="dim">(2D 대기 ${pend - notes}획도 빠집니다)</span>` : "");
     }
+  }
+  else if (act === "showguide") {
+    SHOW_GUIDES.on = !SHOW_GUIDES.on;
+    syncScene();
+    note = `보조선 **${SHOW_GUIDES.on ? "보임" : "숨김"}**`
+         + ' <span class="dim">(표시만 바뀝니다 — 스냅 대상과 내보내기는 그대로입니다.'
+         + ' 돌리면 자동으로 흐려지는 것은 이 토글과 별개입니다)</span>';
+  }
+  else if (act === "expguide") {
+    EXPORT_GUIDES.on = !EXPORT_GUIDES.on;
+    note = `보조선 내보내기 **${EXPORT_GUIDES.on ? "켬" : "끔"}**`
+         + ' <span class="dim">(주석은 3D가 없으므로 어느 쪽이든 안 나갑니다)</span>';
   }
   else if (act === "clear") {
     pushUndo();
@@ -2092,6 +2243,9 @@ window.addEventListener("keydown", (e) => {
     if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deletePicked(); return; }
     const a = ARROW_AXIS[e.key];
     if (a != null) { e.preventDefault(); assignAxis(a); return; }
+    // **사후 변경**(D-4) — 고른 획의 채널을 바꾼다. 자동 판정은 하지 않는다
+    const ch: Record<string, Channel> = { "1": "guide", "2": "result", "3": "note" };
+    if (ch[e.key]) { e.preventDefault(); setPickedChannel(ch[e.key]); return; }
     if (e.key === "Escape") { picked = null; note = ""; refresh(); return; }
   }
   if (e.key === "F8") {                          // **라이노 직교 모드 그대로**(A-3)
@@ -2162,8 +2316,10 @@ refresh();
   diag: frameDiag,
   // L-D.2 저장·내보내기 — **앱 경로 그대로**를 종단 확인이 부른다(#17)
   buildDoc2, applyDoc2, saveNow: () => saver?.flush(), saveNote: () => saveNote,
-  exportObj: () => toObj(linesFromDoc(doc, id => doc.views.find(v => v.id === id)?.name ?? id)),
-  exportGltf: () => toGltf(linesFromDoc(doc, id => doc.views.find(v => v.id === id)?.name ?? id)),
+  exportObj: () => toObj(linesFromDoc(doc, id => doc.views.find(v => v.id === id)?.name ?? id,
+                                      { withGuides: EXPORT_GUIDES.on })),
+  exportGltf: () => toGltf(linesFromDoc(doc, id => doc.views.find(v => v.id === id)?.name ?? id,
+                                        { withGuides: EXPORT_GUIDES.on })),
   // L-B.3 — 종단 확인이 스냅을 앱 경로 그대로 부른다(PITFALLS #17)
   snap: (p: Pt2) => {
     const sc = snapCtx(); const g = snapSegs();
@@ -2266,6 +2422,15 @@ refresh();
   ask: () => ask && { strokeId: ask.strokeId, question: ask.question, toH: ask.toH, toV: ask.toV },
   answerAsk: (choice: "screen" | "depth" | "vertical") => { answerAsk(choice); },
   lens: () => cam.lensMm,
+  /** **펜 채널**(D) — 앱 경로 그대로를 종단 확인이 부른다(#17). */
+  channel: () => channel,
+  setChannel: (c: Channel) => { channel = c; refresh(); },
+  setPickedChannel,
+  exportGuides: () => EXPORT_GUIDES.on,
+  showGuides: () => SHOW_GUIDES.on,
+  setShowGuides: (on: boolean) => { SHOW_GUIDES.on = on; syncScene(); refresh(); },
+  setExportGuides: (on: boolean) => { EXPORT_GUIDES.on = on; refresh(); },
+  channels: () => doc.strokes.map(x => ({ id: x.id, channel: x.channel, lifted: !!x.seg3d })),
   /** **거리점**(C-2·C-5, 이론서 7.4) — 앱 경로 그대로를 종단 확인이 부른다(#17). */
   distance: () => cam.rules.distance,
   distancePoints: () => distancePoints(cam.rules),

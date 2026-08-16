@@ -22,7 +22,33 @@ import type { Axis } from "../s3d/axis.js";
 import type { ViewPose } from "../s3d/viewCamera.js";
 
 /** 3D 레이어에 그릴 선분 하나. 프리핸드를 미뤘으므로 획 하나가 선분 하나다(§1.1). */
-export interface StageSeg { id: string; a: Vec3; b: Vec3; axis: Axis }
+export interface StageSeg {
+  id: string; a: Vec3; b: Vec3; axis: Axis;
+  /** **펜 채널**(2026-08-17 D). 없으면 보조선으로 본다(옛 저장본·옛 하네스). */
+  channel?: "guide" | "result" | "note";
+}
+
+/**
+ * **채널별 3D 표시**(D-3 · E). 네 단계 중 위 둘이 여기 있다 — 결과선이 **결과물**이므로
+ * 가장 진하고, 보조선은 그 아래다. **돌리면 보조선이 자동으로 흐려진다**(E) —
+ * 확정 시점에서는 잉크와 겹쳐 보이므로 구분이 덜 필요하지만, 돌린 뒤에는 결과물만
+ * 보이는 것이 맞다.
+ *
+ * ⚠ **축 색은 결과선에만 온전히 준다.** 보조선은 축 색을 **회색 쪽으로 섞어** 낸다 —
+ * 색이 축을 말하되 "이것이 결과물"이라고 말하지는 않게 한다.
+ */
+export const CHANNEL_3D = {
+  result: { opacity: 1, gray: 0 },
+  /**
+   * 돌리면 `orbit`으로 바뀐다(E: "기본 켬, 돌리면 자동으로 흐려진다").
+   *
+   * ⚠⚠ **처음 고른 값(0.55/0.45 · 0.2/0.75)은 너무 옅었다** — 기본 채널이 보조선이므로
+   * 갓 그린 그림은 **전부 보조선**이고, 돌리면 화면이 **통째로 비었다**(종단 확인이
+   * `gl_painted_px = 0`으로 잡았다). 흐림은 **약하게 하는 것**이지 **없애는 것**이 아니다.
+   */
+  guide: { opacity: 0.75, gray: 0.3 },
+  guide_orbit: { opacity: 0.5, gray: 0.4 },
+} as const;
 
 /** 자유 시점(궤도)의 화각. 확정 카메라를 벗어난 뒤에만 쓴다. */
 export const FREE_FOV_DEG = 45;
@@ -70,6 +96,7 @@ export class Stage {
     this.viewport.projectionHook = (size) =>
       applyIntrinsics(cam as unknown as CameraLike, threeIntrinsics(principal, f, size));
     this.viewport.projectionHook(this.size());
+    this.redrawChannels();               // **보조선의 흐림이 핀 상태로 갈린다**(E)
     this.viewport.invalidate();
   }
 
@@ -87,9 +114,11 @@ export class Stage {
     this.viewport.controls.enabled = true;
     this.viewport.controls.update();
     this.viewport.invalidate();
+    this.redrawChannels();               // **돌리면 보조선이 흐려진다**(E)
   }
 
   get isPinned(): boolean { return this.pinned !== null; }
+
 
   /**
    * **지금 자세를 `ViewPose`로 낸다**(§9.2 — 뷰가 자세를 들고 있어야 되돌아갈 수 있다).
@@ -144,25 +173,48 @@ export class Stage {
   }
 
   /** 3D 레이어를 통째로 다시 만든다. 선분 수가 적으므로 차분 갱신을 하지 않는다(A-3). */
+  /** 마지막으로 넣은 목록 — **돌리면 보조선을 흐리게 다시 그려야 한다**(E). */
+  private lastSegs: StageSeg[] = [];
+
   setSegments(list: StageSeg[]): void {
+    this.lastSegs = list;
     this.segs.clear();
     this.lineGeom?.dispose();
     this.lineGeom = null;
     if (!list.length) { this.viewport.invalidate(); return; }
-    const pos: number[] = [], col: number[] = [];
-    const c = new THREE.Color();
-    for (const s of list) {
-      c.set(typeof s.axis === "number" ? AXIS_COLOR[s.axis] : "#444");
-      pos.push(s.a[0], s.a[1], s.a[2], s.b[0], s.b[1], s.b[2]);
-      col.push(c.r, c.g, c.b, c.r, c.g, c.b);
+    // **채널마다 재질이 다르다**(불투명도) — 한 `LineSegments`로는 못 낸다.
+    // 주석은 여기 안 온다(3D로 안 올라간다, D-3).
+    const groups: { key: "result" | "guide"; opacity: number; gray: number }[] = [
+      { key: "result", ...CHANNEL_3D.result },
+      { key: "guide", ...(this.isPinned ? CHANNEL_3D.guide : CHANNEL_3D.guide_orbit) },
+    ];
+    const c = new THREE.Color(), white = new THREE.Color("#ffffff");
+    for (const g0 of groups) {
+      const pos: number[] = [], col: number[] = [];
+      for (const s of list) {
+        if ((s.channel ?? "guide") !== g0.key) continue;
+        c.set(typeof s.axis === "number" ? AXIS_COLOR[s.axis] : "#444");
+        // **회색 쪽으로 섞는다** — 축 색은 남기되 "결과물"로 안 읽히게 한다
+        if (g0.gray > 0) c.lerp(white, g0.gray);
+        pos.push(s.a[0], s.a[1], s.a[2], s.b[0], s.b[1], s.b[2]);
+        col.push(c.r, c.g, c.b, c.r, c.g, c.b);
+      }
+      if (!pos.length) continue;
+      const g = new THREE.BufferGeometry();
+      g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+      if (g0.key === "result") this.lineGeom = g;      // dispose 대상 하나만 든다
+      this.segs.add(new THREE.LineSegments(g, new THREE.LineBasicMaterial({
+        vertexColors: true, linewidth: 1,
+        transparent: g0.opacity < 1, opacity: g0.opacity,
+      })));
     }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-    g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
-    this.lineGeom = g;
-    this.segs.add(new THREE.LineSegments(g,
-      new THREE.LineBasicMaterial({ vertexColors: true, linewidth: 1 })));
     this.viewport.invalidate();
+  }
+
+  /** **핀 상태가 바뀌면 보조선의 흐림이 바뀐다**(E) — 같은 목록으로 다시 그린다. */
+  private redrawChannels(): void {
+    if (this.lastSegs.length) this.setSegments(this.lastSegs);
   }
 
   /** 3D 레이어의 무게중심 — 궤도 회전의 중심으로 쓴다. 비었으면 `null`. */

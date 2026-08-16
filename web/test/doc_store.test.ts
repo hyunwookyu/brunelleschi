@@ -134,8 +134,14 @@ describe("L-D.2 저장·복원 v2", () => {
 
   it("내보내기는 **3D만** 내고 뷰 이름을 남긴다(2D 레이어는 좌표가 없다)", () => {
     const d = fixture();
-    const lines = linesFromDoc(d, id => d.views.find(v => v.id === id)?.name ?? id);
+    // ⚠ **2026-08-17 D-3이 채널 필터를 더했다**: 기본은 **결과선만** 나가고 보조선은 옵션이다.
+    // 이 픽스처의 획은 기본 채널(보조선)이라 옵션을 켜야 종전과 같은 것을 잰다 —
+    // 채널 자체는 `channel.test.ts`가 잠근다(#17: 한 시험이 두 가지를 재지 않는다).
+    const lines = linesFromDoc(d, id => d.views.find(v => v.id === id)?.name ?? id,
+                               { withGuides: true });
     expect(lines.length).toBe(1);                       // 3D는 하나뿐이다
+    // **반례** — 옵션을 끄면 보조선이라 안 나간다(필터가 실제로 돈다)
+    expect(linesFromDoc(d).length).toBe(0);
     expect(lines[0].view).toBe("확정 뷰");
     const obj = toObj(lines);
     expect(obj.strokes).toBe(1);

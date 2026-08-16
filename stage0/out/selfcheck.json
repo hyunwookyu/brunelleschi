@@ -9108,7 +9108,7 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 138
+      "reads": 140
     },
     {
       "field": "pts2d",
@@ -9123,7 +9123,7 @@
     {
       "field": "axis",
       "writes": 5,
-      "reads": 83
+      "reads": 84
     },
     {
       "field": "rep",
@@ -9148,18 +9148,18 @@
     {
       "field": "color",
       "writes": 0,
-      "reads": 9
+      "reads": 14
     },
     {
       "field": "width",
       "writes": 1,
-      "reads": 16
+      "reads": 18
     }
   ],
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 181,
+      "files_scanned": 182,
       "exts_declared": [
         ".md",
         ".py",
@@ -9173,7 +9173,7 @@
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 122,
+      "files_scanned": 123,
       "exts_declared": [
         ".ts"
       ],
@@ -9183,7 +9183,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 181,
+      "files_scanned": 182,
       "exts_declared": [
         ".md",
         ".py",
@@ -9197,7 +9197,7 @@
     },
     {
       "sweep": "external_data",
-      "files_scanned": 78,
+      "files_scanned": 79,
       "exts_declared": [
         ".ts"
       ],

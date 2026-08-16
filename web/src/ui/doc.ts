@@ -19,6 +19,26 @@ import type { ViewPose } from "../s3d/viewCamera.js";
 /** 획의 시작점이 무엇에 붙었는가(§3 스냅). L-B.3에서 채운다. */
 export interface SnapRef { kind: string; at: Vec3; ofId?: string }
 
+/**
+ * **펜 채널**(2026-08-17 사람 지시 D). 작도 순서 그대로다 — **구축선을 긋고 그 위에
+ * 확정선을 덧그린다.**
+ *
+ * ```
+ * guide   회색 파선  **보조선 — 기본값.** 작도의 본체다. 3D로 올라가고 돌리면 흐려진다
+ * result  검정 실선  결과선 — 보조선 위를 따라 덧그어 확정한다. 돌려도 남고 내보내기에 포함
+ * note    파랑      주석(해칭·지시선·메모) — **3D로 안 올라가고** 그린 뷰에서만 보인다
+ * ```
+ *
+ * ⚠ **스냅 강도를 채널로 가르지 않는다**(D-2). 보조선 단계가 작도의 본체이고 정확한
+ * 교점·끝점이 없으면 작도가 안 된다. 채널이 정하는 것은 **표시와 내보내기**뿐이다(C-4).
+ * ⚠ **자동 판정을 하지 않는다**(D-4) — 사용자가 고르고, 나중에 골라서 바꾼다.
+ * ⚠ **결과선을 강제하지 않는다**(D-6) — 보조선만 그리고 끝내도 3D는 서 있다.
+ */
+export type Channel = "guide" | "result" | "note";
+
+/** 옛 저장본에는 이 필드가 없다 — **보조선이 기본**이다(D-1). */
+export const DEFAULT_CHANNEL: Channel = "guide";
+
 export interface SStroke {
   id: string;
   /** **원본을 보존한다**(CLAUDE.md §1) — 승격·차수 승격이 여기서 다시 푼다. */
@@ -39,6 +59,8 @@ export interface SStroke {
    * `null`이면 끝점은 커서였고, 그때는 축이 방향을 준다(§3의 원래 경로).
    */
   snapEnd: SnapRef | null;
+  /** **펜 채널**(D). 그리기·렌더·내보내기·저장·고치기 다섯 곳이 읽는다(#18). */
+  channel: Channel;
   color?: string;
   width?: number;
 }
@@ -93,11 +115,18 @@ export function newView(name: string, pose: ViewPose | null): SView {
   return { id: `v${viewSeq}`, name, pose, seq: viewSeq };
 }
 
-export function newSStroke(pts2d: Pt2[], viewRef: string): SStroke {
+export function newSStroke(pts2d: Pt2[], viewRef: string,
+                           channel: Channel = DEFAULT_CHANNEL): SStroke {
   strokeSeq += 1;
   return { id: `s${strokeSeq}`, pts2d, viewRef, seg3d: null, axis: "free",
-           userAxis: false, snapStart: null, snapEnd: null };
+           userAxis: false, snapStart: null, snapEnd: null, channel };
 }
+
+/**
+ * **3D로 올라갈 수 있는 획인가**(D-3). 주석은 아니다 — 그린 뷰의 화면에만 있다.
+ * **판정을 여기 하나에 둔다**(#17): 규칙 투입·배치·승격 연쇄가 같은 함수를 본다.
+ */
+export const liftable = (s: SStroke): boolean => s.channel !== "note";
 
 /** 3D 레이어 — 어느 뷰에서든 보인다. */
 export const lifted = (d: DocState): SStroke[] => d.strokes.filter(s => s.seg3d !== null);

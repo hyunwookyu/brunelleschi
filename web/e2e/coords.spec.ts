@@ -51,6 +51,10 @@ for (const dpr of [1, 2, 3]) {
         const rect = cv.getBoundingClientRect();
         // 그리기 도구로 바꾸고(획이 기록되게) 캔버스 안 한 자리를 긋는다
         (document.querySelector('#bar button[data-act="draw"]') as HTMLButtonElement).click();
+        // ⚠ **결과선으로 긋는다**(2026-08-17 D-1). 기본 채널이 **보조선(회색 `#8a8a8a`)**이라
+        // 아래 `INK_MAX = 60`(세 채널 다 어두운 것만 잉크로 센다)에 안 걸린다.
+        // 이 스펙이 재는 것은 **좌표 규약**이지 채널이 아니므로 어두운 채널로 고정한다.
+        S.setChannel("result");
         // **왼쪽 위 사분면에 긋는다** — 어긋난 잉크(×dpr 자리)가 캔버스 **안에** 떨어져야
         // 그 자리를 검사할 수 있다. 가운데에 그으면 ×3 자리가 캔버스 밖이라 아무것도 안 보인다
         // (첫 판이 그래서 버그를 못 잡았다 — 재현해 확인했다).
@@ -191,6 +195,10 @@ for (const dpr of [1, 2, 3]) {
         const cv = document.getElementById("ink") as HTMLCanvasElement;
         const rect = cv.getBoundingClientRect();
         (document.querySelector('#bar button[data-act="draw"]') as HTMLButtonElement).click();
+        // ⚠ **결과선으로 긋는다**(2026-08-17 D-1). 기본 채널이 **보조선(회색 `#8a8a8a`)**이라
+        // 아래 `INK_MAX = 60`(세 채널 다 어두운 것만 잉크로 센다)에 안 걸린다.
+        // 이 스펙이 재는 것은 **좌표 규약**이지 채널이 아니므로 어두운 채널로 고정한다.
+        S.setChannel("result");
         const P = [Math.round(rect.width * 0.6), Math.round(rect.height * 0.4)];
         const ev = (type: string, x: number, y: number, buttons: number) =>
           cv.dispatchEvent(new PointerEvent(type, {

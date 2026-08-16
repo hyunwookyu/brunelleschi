@@ -17,7 +17,8 @@ import type { Axis } from "../s3d/axis.js";
 import type { ViewPose } from "../s3d/viewCamera.js";
 import type { AccumulatorDump } from "../s3d/constraints.js";
 import type { RuleState } from "../s3d/vpRules.js";
-import type { DocState, SStroke, SView, SnapRef } from "./doc.js";
+import { DEFAULT_CHANNEL } from "./doc.js";
+import type { DocState, SStroke, SView, SnapRef, Channel } from "./doc.js";
 
 export const DOC2_FORMAT = "s2s-doc/2";
 
@@ -55,6 +56,8 @@ export interface Doc2 {
     snapStart: SnapRef | null;
     /** **끝점 스냅**(오스냅, D-L46). 옛 저장본에는 없다 — 복원이 `null`로 채운다 */
     snapEnd?: SnapRef | null;
+    /** **펜 채널**(D). 옛 저장본에는 없다 — 보조선으로 읽는다. */
+    channel?: Channel;
     color?: string;
     width?: number;
   }[];
@@ -100,6 +103,7 @@ export function serializeDoc2(s: Doc2Source): Doc2 {
       userAxis: t.userAxis,
       snapStart: t.snapStart ? { ...t.snapStart, at: [...t.snapStart.at] as Vec3 } : null,
       snapEnd: t.snapEnd ? { ...t.snapEnd, at: [...t.snapEnd.at] as Vec3 } : null,
+      channel: t.channel,
       color: t.color,
       width: t.width,
     })),
@@ -133,6 +137,8 @@ export function restoreDoc2(d: Doc2): Restored2 {
     snapStart: t.snapStart ?? null,
     // **옛 저장본에는 이 필드가 없다** — 없으면 끝점 스냅이 아니었던 것이다
     snapEnd: t.snapEnd ?? null,
+    // **옛 저장본은 채널이 없다** — 보조선으로 읽는다(D-1의 기본값)
+    channel: t.channel ?? DEFAULT_CHANNEL,
     color: t.color,
     width: t.width,
   }));

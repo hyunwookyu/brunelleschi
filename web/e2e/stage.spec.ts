@@ -427,8 +427,12 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
   expect(fresh.collides).toBe(false);
 
   // 내보내기가 **뷰 이름을 담고 3D만** 낸다
+  // ⚠ **2026-08-17 D-3이 채널 필터를 더했다**: 기본은 결과선만 나가고 이 픽스처의 획은
+  // 보조선(기본 채널)이다. 옵션을 켜서 종전과 같은 것을 잰다 — 채널 자체는
+  // `test/channel.test.ts`가 잠근다(#17: 한 시험이 두 가지를 재지 않는다).
   const exp = await page.evaluate(() => {
     const S = window.S2S;
+    S.setExportGuides(true);
     const o = S.exportObj(), g = S.exportGltf();
     return { objStrokes: o.strokes, objHasFace: /^f /m.test(o.data),
              objHasView: /view=/.test(o.data), skipped: o.skippedUnplaced,
@@ -619,7 +623,8 @@ test.skip("가이드 조정 — 늘리기·민감도·선 끌기 (대상이 사�
  * ⚠ **정확도 표는 여기가 아니다** — `snap.json`이 5구도·3등급·시드 6으로 낸다.
  * 여기는 **배선 확인**이고 동작점 하나다(#12).
  */
-test("스냅 — 대상·표식·시작점 확정", async ({ page }) => {
+test("스냅 — 대상·표식·시작점 확정", async ({
+ page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
   const l: Record<string, unknown> = {};
