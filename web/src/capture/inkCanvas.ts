@@ -2,6 +2,7 @@
 // 측정(mouse_noise): 마우스는 precise 등급·단일 tolerance로 IoU≥0.97 → 마우스 전용 tol 불필요.
 import type { Stroke } from "../parser/types.js";
 import { ensureFit, toLocal, type Frame as CanvasFrame } from "./canvasFrame.js";
+import { PalmGate } from "./palmGate.js";
 
 export type Frame = "plan" | "persp";
 
@@ -41,6 +42,25 @@ export interface InkOptions {
    * 진행 중인 획은 `redraw()`가 함께 그린다(아래 `livePoints`).
    */
   onLive?: (pts: number[][]) => void;
+  /**
+   * **카메라로 가는 포인터**(2026-08-17 G). 잉크가 아닌 포인터를 여기로 넘긴다 —
+   * 터치는 언제나, 마우스는 `cameraMouse()`가 참일 때(궤도 모드).
+   *
+   * **왜 여기가 라우터인가**: 잉크 캔버스가 three 캔버스를 덮고 있어 터치가
+   * `OrbitControls`까지 안 내려간다. 옛 판은 `궤도` 버튼이 `pointer-events: none`을 걸어
+   * **캔버스를 통째로 비켜서** 해결했는데, 그러면 그 동안 잉크·스냅·호버가 전부 죽는다.
+   * 펜·마우스·터치를 **가르는 자리는 이미 여기**(`inkable`)이므로 라우터도 여기 둔다 —
+   * 좌표 변환(`local`)이 `canvasFrame` 단일 출처를 지나는 것도 같은 이유다(#21).
+   *
+   * 팜 리젝션(G-2)은 `PalmGate`가 하고 **여기서 지난다** — 잉크 쪽만 막으면
+   * 손바닥이 카메라를 돌린다.
+   */
+  onCamera?: (id: number, phase: "down" | "move" | "up" | "cancel",
+              p: [number, number]) => void;
+  /** 마우스가 카메라로 가는가(궤도 모드). 없으면 마우스는 언제나 잉크다 */
+  cameraMouse?: () => boolean;
+  /** 휠 — 데스크톱 확인용 줌. 카메라 쪽으로 그대로 넘긴다 */
+  onWheel?: (deltaY: number) => void;
 }
 
 // 프레임별 획 버퍼 + 라이브 잉크 렌더. 프레임 전환은 setFrame으로.
@@ -74,15 +94,58 @@ export class InkCanvas {
     // (e) iOS 확대 제스처·더블탭 줌 차단
     canvas.addEventListener("gesturestart", (ev) => ev.preventDefault());
     canvas.addEventListener("dblclick", (ev) => ev.preventDefault());
+    // 휠 — 데스크톱 확인용 줌. 잉크 캔버스가 위에 있어 three 캔버스에 안 닿는다(G)
+    canvas.addEventListener("wheel", (ev) => {
+      if (!this.opts.onWheel) return;
+      ev.preventDefault();
+      this.opts.onWheel(ev.deltaY);
+    }, { passive: false });
   }
 
   isPenSession() { return this.penSeen; }
+  /** 팜 리젝션이 실제로 몇 번 발동했나(#22: 조용한 거부는 관측 불가를 만든다) */
+  palmStats() { return this.palm.stats(); }
+  /** 펜이 지금 화면에 닿아 있는가(G-2) */
+  get penTouching(): boolean { return this.palm.penTouching; }
+
+  private palm = new PalmGate();
 
   // (a) 마우스·펜 1급. 터치는 제스처(잉크 제외). 펜 감지 세션에선 터치=팜 → 확정 배제.
   private inkable(e: PointerEvent): boolean {
     if (e.pointerType === "pen") { if (!this.penSeen) { this.penSeen = true; this.opts.onInputMode?.(true); } return true; }
-    if (e.pointerType === "mouse") return true;
+    if (e.pointerType === "mouse") return !this.opts.cameraMouse?.();
     return false;   // touch: 잉크 아님(펜 세션=팜 리젝션, 비펜 세션=제스처 예약)
+  }
+
+  /**
+   * **잉크가 아닌 포인터를 카메라로 보낸다**(G). 보냈으면 `true` — 호출자는 거기서 멈춘다.
+   *
+   * 터치는 `PalmGate`를 지난다(G-2). 마우스는 궤도 모드일 때만 온다.
+   * 펜은 여기서 **접촉 상태만 갱신**하고(팜 리젝션의 입력) 잉크로 내려간다.
+   */
+  private routeCamera(e: PointerEvent, phase: "down" | "move" | "up" | "cancel"): boolean {
+    if (e.pointerType === "pen") {
+      if (phase === "down") {
+        // 펜이 이긴다 — 진행 중인 제스처를 취소하고 그 손가락들을 계속 막는다
+        for (const t of this.palm.penDown(e.pointerId))
+          this.opts.onCamera?.(t, "cancel", [0, 0]);
+      } else if (phase === "up" || phase === "cancel") this.palm.penUp(e.pointerId);
+      return false;
+    }
+    if (e.pointerType === "touch") {
+      const go = this.palm.touch(e.pointerId, phase);
+      if (go === "forward" && this.opts.onCamera) {
+        e.preventDefault();
+        this.opts.onCamera(e.pointerId, phase, this.local(e));
+      }
+      return true;                       // 터치는 **어느 쪽이든 잉크가 아니다**
+    }
+    if (e.pointerType === "mouse" && this.opts.cameraMouse?.() && this.opts.onCamera) {
+      e.preventDefault();
+      this.opts.onCamera(e.pointerId, phase, this.local(e));
+      return true;
+    }
+    return false;
   }
 
   // (b) coalesced events — pen/touch만 유효(고주파). 마우스는 이벤트율 낮아 무의미 → 단일 이벤트.
@@ -131,6 +194,12 @@ export class InkCanvas {
   private dragging = false;
 
   private onDown = (e: PointerEvent) => {
+    // **라우팅이 먼저다**(G) — 잉크가 진행 중이어도 터치는 카메라 문(`PalmGate`)을 지나야 한다.
+    // 여기서 걸러야 손바닥이 카메라를 돌리는 것을 막을 수 있다(G-2).
+    if (this.routeCamera(e, "down")) {
+      try { this.canvas.setPointerCapture(e.pointerId); } catch { /* 합성 이벤트 등 */ }
+      return;
+    }
     if (this.drawing || this.dragging) return; // 멀티터치/멀티펜 방어: 한 번에 하나
     if (!this.inkable(e)) return;
     e.preventDefault();
@@ -147,6 +216,7 @@ export class InkCanvas {
   };
 
   private onMove = (e: PointerEvent) => {
+    if (this.routeCamera(e, "move")) return;
     if (this.dragging && e.pointerId === this.activeId) {
       e.preventDefault();
       this.opts.onDrag?.(this.local(e), "move");
@@ -166,6 +236,7 @@ export class InkCanvas {
   };
 
   private onUp = (e: PointerEvent) => {
+    if (this.routeCamera(e, e.type === "pointercancel" ? "cancel" : "up")) return;
     if (this.dragging && e.pointerId === this.activeId) {
       this.dragging = false; this.activeId = null;
       this.opts.onDrag?.(this.local(e), "up");

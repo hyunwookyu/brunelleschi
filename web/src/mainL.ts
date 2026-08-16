@@ -6,6 +6,8 @@
 //
 // **옛 UI는 L-B 게이트 통과 전까지 지우지 않는다**(A-4). `index.html`이 그것이고 여기는 `l.html`이다.
 import { InkCanvas } from "./capture/inkCanvas.js";
+// **터치 제스처 → 카메라**(2026-08-17 G). 라우팅은 `InkCanvas`가, 해석은 여기가 한다
+import { CamGestures, GESTURE_TOL } from "./capture/camGesture.js";
 import { cssSizeOf, deviceRatio } from "./capture/canvasFrame.js";
 import { Stage, FREE_FOV_DEG, type StageSeg } from "./ui/stage.js";
 import { CamState } from "./ui/camState.js";
@@ -622,6 +624,31 @@ const orbitTarget = () => stage.centroid(lifted(doc).map(s =>
   ({ id: s.id, a: s.seg3d![0], b: s.seg3d![1], axis: s.axis })));
 
 /**
+ * **손가락이 카메라를 움직인다**(2026-08-17 G). 잉크 캔버스가 라우터이고(`onCamera`)
+ * 여기서 `OrbitControls`의 **공개 API**로 내려간다 — 궤도 수학을 다시 짜지 않는다(A-3).
+ *
+ * `begin()`이 **확정 카메라를 푼다** — `궤도` 버튼이 하던 그 일이고, 손가락이 그것을 대신한다.
+ * ⚠ **도구는 안 바꾼다**: 펜은 계속 그리는 도구다(그것이 지시문의 목표 동작이다).
+ */
+const gestures = new CamGestures({
+  begin: () => {
+    if (!cam.locked || !lifted(doc).length) return false;   // 아직 돌릴 3D가 없다
+    if (stage.isPinned) {
+      stage.unpin(orbitTarget());
+      note = "돌리는 중 — **펜으로 계속 그릴 수 있습니다**."
+           + " <span class=\"dim\">다른 뷰의 2D 대기 획은 숨깁니다(그 뷰의 화면 좌표이기 때문입니다)</span>";
+      refresh();
+    }
+    stage.viewport.userMoved = true;   // 자동 맞춤이 시점을 빼앗지 않는다
+    return true;
+  },
+  controls: () => stage.viewport.controls,
+  height: () => stage.size()[1],
+  changed: () => stage.viewport.invalidate(),
+  ended: () => refresh(),
+});
+
+/**
  * **뷰 전환**(§9.2). 확정 뷰면 확정 카메라에 다시 물리고, 아니면 저장된 자세로 돌아간다.
  *
  * 2D 대기 획은 `viewRef`가 소유하므로 **전환만으로 화면의 2D 층이 바뀐다** —
@@ -634,13 +661,13 @@ function switchView(id: string) {
   const ctx = cam.ctx();
   if (v.pose === null) {
     if (ctx) stage.pinTo(ctx.principal, ctx.f);
-    tool = "draw"; canvas.style.pointerEvents = "auto";
+    tool = "draw";
     note = `확정 뷰 — 3D가 잉크와 같은 자리에 그려집니다`;
   } else {
     stage.setPose(v.pose, orbitTarget());
     // **L-B.8이 열렸다** — 돌린 시점에서도 그린다. 그래서 전환 뒤 바로 그리기다.
     // 더 돌리려면 `궤도`를 누른다(SketchUp의 모드 전환과 같다).
-    tool = "draw"; canvas.style.pointerEvents = "auto";
+    tool = "draw";
     note = `${v.name} — 저장한 각도로 돌아왔습니다. 여기서 바로 그릴 수 있습니다`;
   }
   hoverSnap = null; live = null;
@@ -1590,6 +1617,11 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
 
 const ink = new InkCanvas(canvas, {
   onBackground: drawBelowInk,
+  // **입력 장치가 도구를 가른다**(G): 펜·마우스는 잉크, **터치는 언제나 카메라**다.
+  // 마우스는 `궤도(마우스)`를 누른 동안만 카메라로 간다(데스크톱 확인용).
+  onCamera: (id, phase, p) => gestures.onPointer(id, phase, p),
+  cameraMouse: () => tool === "orbit",
+  onWheel: (d) => gestures.onWheel(d),
   // **위치로 갈리는 끌기가 생겼다**(D-L45) — 지평선 손잡이 위면 그리기가 아니라 끌기다
   dragMode: (p) => tool === "edit" || horizonGrab(p),
   onDrag: (p, phase) => {
@@ -1870,14 +1902,19 @@ function renderBar() {
   const btn = (id: string, label: string, on = false, dis = false) =>
     `<button data-act="${id}"${on ? ' class="on"' : ""}${dis ? " disabled" : ""}>${label}</button>`;
   barEl.innerHTML = [
-    btn("draw", "그리기", tool === "draw"),
-    btn("orbit", "궤도", tool === "orbit", !cam.locked),
+    // **펜 쪽 도구 선택**(2026-08-17 G-1) — 이 묶음이 **펜이 무엇을 하는가**를 정한다.
+    // 손가락은 여기에 안 걸린다(언제나 카메라다). ⚠ 지우개 둘(세그먼트·부분)이
+    // **이 자리에 들어온다** — 기능이 없는 버튼을 미리 두지 않는다(I에서 함께 넣는다)
+    btn("draw", "선 그리기", tool === "draw"),
+    btn("edit", "선택", tool === "edit", !doc.strokes.length),
+    '<span class="sep"></span>',
+    // **궤도는 마우스 전용으로 남는다**(G-1) — 아이패드에서는 손가락이 이 버튼을 대신한다
+    `<button data-act="orbit"${tool === "orbit" ? ' class="on"' : ""}${!cam.locked ? " disabled" : ""}`
+    + ` title="마우스 전용입니다 — 손가락 1개는 궤도, 2개는 팬·줌이라 버튼이 필요 없습니다">궤도(마우스)</button>`,
     // **축 스냅 — 라이노 직교 모드**(사람 지시 1). 기본 켬. `F8`로도 토글한다
     btn("axissnap", `축 스냅 ${AXIS_SNAP.on ? "켬" : "끔"}`, AXIS_SNAP.on),
     // **보조선 표시 토글**(E). 기본 켬 — 돌리면 흐려지는 것은 이것과 별개다(자동)
     btn("showguide", `보조선 ${SHOW_GUIDES.on ? "보임" : "숨김"}`, SHOW_GUIDES.on),
-    // **고치기**(L-D.1, §9.5) — 클릭으로 고르고 화살표로 축 지정, Delete로 삭제
-    btn("edit", "고치기", tool === "edit", !doc.strokes.length),
     '<span class="sep"></span>',
     // **현재 채널이 화면에 보인다**(D-5). 모르고 그으면 나중에 고쳐야 한다
     ...(["guide", "result", "note"] as Channel[]).map(k =>
@@ -2111,11 +2148,12 @@ barEl.addEventListener("click", (e) => {
     tool = act as Tool;
     if (act !== "edit") picked = null;
     if (act === "edit") {
-      note = "**고치기** — 획을 눌러 고른 뒤 <b>← 축1 · → 축2 · ↑ 축3</b>으로 지정하거나"
+      note = "**선택** — 획을 눌러 고른 뒤 <b>← 축1 · → 축2 · ↑ 축3</b>으로 지정하거나"
            + " <b>Delete</b>로 지웁니다. <span class=\"dim\">빈 곳을 누르면 선택이 풀립니다</span>";
     }
-    // 궤도는 **잉크 캔버스를 통과시켜** 밑의 three 캔버스가 받는다(OrbitControls 그대로).
-    canvas.style.pointerEvents = act === "orbit" ? "none" : "auto";
+    // ⛔ **`pointerEvents = "none"` 전환을 지웠다**(G) — 궤도 동안 잉크 캔버스를 통째로
+    // 비켜서면 그 사이 스냅·호버·펜이 전부 죽는다. 지금은 **마우스도 제스처층으로 간다**
+    // (`cameraMouse()`가 `tool === "orbit"`을 본다). 잉크 캔버스는 언제나 받는다.
     if (act === "orbit" && stage.isPinned) {
       const segs = lifted(doc).map(s => ({ id: s.id, a: s.seg3d![0], b: s.seg3d![1], axis: s.axis }));
       stage.unpin(stage.centroid(segs));
@@ -2154,7 +2192,7 @@ barEl.addEventListener("click", (e) => {
   }
   else if (act === "home") {
     const ctx = cam.ctx();
-    if (ctx) { stage.pinTo(ctx.principal, ctx.f); tool = "draw"; canvas.style.pointerEvents = "auto";
+    if (ctx) { stage.pinTo(ctx.principal, ctx.f); tool = "draw";
                note = "확정 시점 — 3D가 잉크와 같은 자리에 그려집니다"; }
   } else if (act === "undo") {
     // **문서만 되돌리면 안 된다**(L-C.2) — 승격을 되돌릴 때 소실점이 새 것으로 남으면
@@ -2353,6 +2391,20 @@ refresh();
   pose: () => stage.pose(),
   /** 궤도를 코드로 돌린다 — Playwright가 마우스로 돌리지 않고도 새 자세를 만든다. */
   orbitTo: (p: ViewPose) => { stage.setPose(p, orbitTarget()); refresh(); },
+  // **G — 입력 라우팅.** 하네스는 **실제 포인터 사건을 캔버스에 던지고**(라우터를 지난다)
+  // 여기서는 **읽기만** 한다(#17: 측정 경로가 앱 경로를 우회하면 앱을 안 재는 것이다)
+  /** 궤도 상태 — 방위각·앙각·거리. 카메라가 움직였는지 이것으로 잰다 */
+  camPose: () => {
+    const c = stage.viewport.controls;
+    return { azimuth: c.getAzimuthalAngle(), polar: c.getPolarAngle(), dist: c.getDistance(),
+             target: [c.target.x, c.target.y, c.target.z] as [number, number, number],
+             pinned: stage.isPinned };
+  },
+  /** 팜 리젝션이 몇 번 발동했나(G-2) — 조용한 거부를 관측 가능하게 둔다(#22) */
+  palm: () => ({ ...ink.palmStats(), pen_touching: ink.penTouching }),
+  /** 지금 제스처 — 손가락 수·모드·활성 */
+  gesture: () => ({ fingers: gestures.fingers, mode: gestures.mode, active: gestures.active }),
+  gestureTol: () => ({ ...GESTURE_TOL }),
   /** §9.3의 생성 경로. **L-B.8이 열리기 전에는 확정 뷰를 낸다**(#23). */
   viewForDrawing,
   // L-C.1 — 차수 승격(§6.1). **앱 경로 그대로**를 종단 확인이 부른다(#17)

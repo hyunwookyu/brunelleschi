@@ -21,6 +21,7 @@ import { fileURLToPath } from "node:url";
 import { constantsSnapshot } from "../test/constants.js";
 import { metricsSnapshot } from "../test/metrics.js";
 import { gate } from "../test/gate.js";
+import { setupScene } from "./fixture.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -43,53 +44,9 @@ declare global {
  * 그래야 둘을 잇는 획이 스냅으로 붙고 ①의 연쇄가 상자를 건너간다.
  */
 async function setup(page: Page, opts: { boxes?: 1 | 2 } = {}) {
-  return page.evaluate(async ({ boxes }) => {
-    const S = window.S2S;
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
-    const m = await import("/test/scene3d.ts");
-    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 하네스가 화면 밖 소실점으로 직선을 만드는 데만 쓴다
-    const doc = await import("/src/ui/doc.ts");
-
-    const el = document.getElementById("ink") as HTMLCanvasElement;
-    const size: [number, number] = [el.clientWidth, el.clientHeight];
-    const sc = m.scene(35, 15, 1000, size);
-    const O: [number, number, number] = [0.6, -0.4, 4.2];
-    const A = 1.2;
-    const edges = m.boxEdges(sc, O, A, 1.0, 0.9);
-    if (boxes === 2) {
-      // **면을 맞댄 두 번째 상자** — `axes[0]`로 A만큼 밀면 첫 상자의 오른쪽 면과 붙는다.
-      // 치수를 달리해 두 상자가 구분되게 한다(같으면 스크린샷에서 어느 쪽인지 안 보인다).
-      const e0 = sc.axes[0];
-      const O2: [number, number, number] =
-        [O[0] + e0[0] * A, O[1] + e0[1] * A, O[2] + e0[2] * A];
-      edges.push(...m.boxEdges(sc, O2, 0.9, 1.0, 0.7));
-    }
-    // 결정론적 난수 — `Math.random` 금지(CLAUDE.md §5)
-    let s0 = 12345 >>> 0;
-    const r = () => { s0 = (s0 * 1664525 + 1013904223) >>> 0; return s0 / 4294967296; };
-    const drawn = m.drawEdges(sc, edges, "medium", r, 0.37, 0.006, 0);
-    for (const e of drawn) S.doc().strokes.push(doc.newSStroke(e.pts2d, S.doc().currentView));
-    // **참 소실점을 규칙 상태로 넣는다** — 사람이 완벽히 그은 극한이다.
-    // ⚠ 옛 판은 가이드 여섯을 세웠다. 가이드가 없어졌으므로(D-L37) 슬롯을 직접 넣는다.
-    // 규칙의 순서를 지킨다: **첫 수평 소실점이 지평선을 정의한다**
-    S.cam.loadRules({
-      slots: [0, 1, 2].map(ax => ({
-        kind: "vp", at: [sc.vps[ax][0], sc.vps[ax][1]],
-        // ⚠ `orthocenter`는 **더 이상 만들어지지 않는다**(2026-08-17 A-4) — 수직 소실점은
-        // 사용자가 그은 기울어진 세로선에서 나온다. 여기서는 **참값을 직접 넣는 것**이므로
-        // 그 출처로 적는다(하네스는 "사람이 완벽히 그은 극한"을 흉내 낸다).
-        source: ax === 0 ? "two_lines" : ax === 1 ? "horizon_x_line" : "tilted_vertical",
-        support: 2,
-      })),
-      horizon: sc.vps[0][1],
-      waiting: [], verticalLines: [],
-    });
-    S.refresh();
-    window.__SC = sc;
-    return { canvas: size, strokes: S.doc().strokes.length, hasCamera: !!S.cam.ctx(),
-             boxes: boxes ?? 1,
-             lifted: S.doc().strokes.filter((s: { seg3d?: unknown }) => s.seg3d).length };
-  }, { boxes: opts.boxes ?? 1 });
+  // ⚠ **본체는 `e2e/fixture.ts`로 옮겼다**(2026-08-17 G) — G의 하네스가 같은 장면을 쓰는데
+  // 복사하면 픽스처가 둘이 되고 한쪽만 고쳐지는 자리가 생긴다.
+  return setupScene(page, opts);
 }
 
 /**
@@ -361,7 +318,14 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
     document.querySelector<HTMLButtonElement>('#bar button[data-act="orbit"]')!.click();
     const camT = S.stage.viewport.camera;
     camT.position.set(1.6, -1.1, 2.2);
-    camT.lookAt(0.6, -0.4, 4.2);
+    // ⚠⚠ **자세를 `lookAt`만으로 주면 안 된다**(2026-08-17 G에서 잡았다 — 이 시험은 **간헐적으로**
+    // 실패하고 있었다): 렌더 루프의 `controls.update()`가 카메라를 자기 `target`으로 **다시 겨눈다**.
+    // 두 `evaluate` 사이에 프레임이 도느냐에 따라 자세가 갈렸고, 안 돌면 상자가 **카메라 뒤**라
+    // `project()`가 `null`을 내 다음 줄이 던졌다. `target`을 함께 주고 **여기서 `update()`를 부르면**
+    // 그 뒤의 `update()`가 항등이 된다. 규약 변환은 `stage.unpin`의 그것과 같다(우리 y 아래·z 안쪽).
+    const ctl = S.stage.viewport.controls;
+    ctl.target.set(0.6, 0.4, -4.2);              // 우리 (0.6,-0.4,4.2) → three
+    ctl.update();
     camT.updateMatrixWorld(true);
     document.querySelector<HTMLButtonElement>('#bar button[data-act="draw"]')!.click();
     S.refresh();
@@ -1158,7 +1122,14 @@ test("궤도 후 계속 그리기 — 새 각도가 새 뷰가 된다", async ({
     document.querySelector<HTMLButtonElement>('#bar button[data-act="orbit"]')!.click();
     const camT = S.stage.viewport.camera;
     camT.position.set(1.6, -1.1, 2.2);
-    camT.lookAt(0.6, -0.4, 4.2);
+    // ⚠⚠ **자세를 `lookAt`만으로 주면 안 된다**(2026-08-17 G에서 잡았다 — 이 시험은 **간헐적으로**
+    // 실패하고 있었다): 렌더 루프의 `controls.update()`가 카메라를 자기 `target`으로 **다시 겨눈다**.
+    // 두 `evaluate` 사이에 프레임이 도느냐에 따라 자세가 갈렸고, 안 돌면 상자가 **카메라 뒤**라
+    // `project()`가 `null`을 내 다음 줄이 던졌다. `target`을 함께 주고 **여기서 `update()`를 부르면**
+    // 그 뒤의 `update()`가 항등이 된다. 규약 변환은 `stage.unpin`의 그것과 같다(우리 y 아래·z 안쪽).
+    const ctl = S.stage.viewport.controls;
+    ctl.target.set(0.6, 0.4, -4.2);              // 우리 (0.6,-0.4,4.2) → three
+    ctl.update();
     camT.updateMatrixWorld(true);
     // 그리기로 돌아온다 — 여기서부터 잉크 캔버스가 포인터를 받는다
     document.querySelector<HTMLButtonElement>('#bar button[data-act="draw"]')!.click();

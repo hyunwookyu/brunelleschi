@@ -1,5 +1,5 @@
 {
-  "n_flags": 1817,
+  "n_flags": 1820,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -6591,6 +6591,21 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "touch_route.json:palm_rejection.op1_pen_touching.moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "touch_route.json:palm_rejection.op2_held_after_pen_up.moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "touch_route.json:palm_rejection.pen_interrupts_gesture.moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "view_plane.json:by_orbit_deg.45.now.worst_end_ratio.n",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -9026,7 +9041,7 @@
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
     },
     {
-      "path": "web\\e2e\\stage.spec.ts:100:pixelGap",
+      "path": "web\\e2e\\stage.spec.ts:57:pixelGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
@@ -9159,7 +9174,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 182,
+      "files_scanned": 187,
       "exts_declared": [
         ".md",
         ".py",
@@ -9173,7 +9188,7 @@
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 123,
+      "files_scanned": 126,
       "exts_declared": [
         ".ts"
       ],
@@ -9183,7 +9198,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 182,
+      "files_scanned": 187,
       "exts_declared": [
         ".md",
         ".py",
@@ -9197,7 +9212,7 @@
     },
     {
       "sweep": "external_data",
-      "files_scanned": 79,
+      "files_scanned": 82,
       "exts_declared": [
         ".ts"
       ],
@@ -9233,7 +9248,7 @@
       "unit": "게이트 블록",
       "targets": 13,
       "hits": 0,
-      "note": "값 대조를 **지난 것 4** · **면제 9**(`reachability_absent`) · 원장 44개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, guide_budget.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, osnap.json:gate, preview_gap.json:gate, rule_camera.json:gate, segment_gate.json:gate, stage_browser.json:l_b3.gate"
+      "note": "값 대조를 **지난 것 4** · **면제 9**(`reachability_absent`) · 원장 45개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, guide_budget.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, osnap.json:gate, preview_gap.json:gate, rule_camera.json:gate, segment_gate.json:gate, stage_browser.json:l_b3.gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -9284,6 +9299,7 @@
     "stage_cam.json",
     "static_deploy.json",
     "systematic_warp.json",
+    "touch_route.json",
     "tube_render.json",
     "view_plane.json",
     "vp_detect.json",

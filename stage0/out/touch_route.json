@@ -1,0 +1,263 @@
+{
+  "spec": "G 입력 라우팅 — 잉크 캔버스가 three 캔버스를 덮은 상태에서 터치를 어디로 보낼 것인가",
+  "instruction": "2026-08-17 사람 지시 G (펜=그리기 · 손가락1=궤도 · 손가락2=팬/줌 · 마우스=버튼 모드)",
+  "what_this_does_not_say": [
+    "실기기 — chromium의 **합성 포인터 사건**이다. 실제 아이패드의 손바닥 접촉 형태·펜 이벤트 순서는 재지 않는다(AS-C1과 같은 자리: 실기 표본 0)",
+    "제스처의 **감**(감도·관성) — 재는 것은 '어느 API가 불렸고 카메라가 움직였나'까지다",
+    "동시 접촉의 시간차 — 사건을 순서대로 던지므로 실제 손바닥의 겹침 시간은 안 재진다"
+  ],
+  "condition": {
+    "browser": "chromium(Playwright) · 1440×900 · deviceScaleFactor 1",
+    "three": "r0.185.1 (`OrbitControls.js`)",
+    "pointer_events": "`new PointerEvent(...)` 합성. **앱의 라우터(`InkCanvas`)를 그대로 지난다**",
+    "gesture_tol": "아래 `gesture_tol` — `src/capture/camGesture.ts`의 `GESTURE_TOL` 실측값"
+  },
+  "constants": {
+    "hash": "509615a1",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "vertical_ask_deg": 45,
+        "min_vp_len_ratio": 0.04
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "a45078a5",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong",
+      "rate",
+      "fraction"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다.",
+    "uses_metrics": false
+  },
+  "candidates": {
+    "note": "세 후보를 같은 페이지에서 실행했다. **③이 양성 채널**이다(#30).",
+    "c1_redispatch": {
+      "threw": true,
+      "message": "Uncaught NotFoundError: Failed to execute 'setPointerCapture' on 'Element': No active pointer with the given id is found.",
+      "azimuth_delta": 0,
+      "pitfall": "합성 pointerId에서 `setPointerCapture`가 던진다",
+      "verdict": "함정 실재 — 던졌다"
+    },
+    "c2_controls_on_ink": {
+      "pen_orbits": true,
+      "azimuth_delta": 1.117010721276371,
+      "pitfall": "three가 `pointerType !== 'touch'`를 마우스로 본다 → **펜이 궤도를 돈다**",
+      "harness_intervention": "①과 섞이지 않게 `setPointerCapture`를 무력화하고 쟀다",
+      "verdict": "함정 실재 — 펜이 궤도를 돌렸다"
+    },
+    "c3_direct": {
+      "public_api": [
+        "rotateLeft",
+        "rotateUp",
+        "pan",
+        "dollyIn",
+        "dollyOut"
+      ],
+      "api_complete": true,
+      "azimuth_delta": 0.02112,
+      "dist_before": 0,
+      "dist_ratio": null,
+      "pitfall_as_written": "three 최신판은 `rotateLeft` 같은 공개 API가 없다",
+      "damping_note": "감쇠(0.12) 때문에 한 프레임에는 요구량의 일부만 적용된다 — 재는 것은 **움직였는가**다",
+      "dist_note": "`dist_before = 0`이면 확정 카메라에 물린 상태(궤도 반지름 0)라 줌을 못 잰다 → 앱 팔에서 잰다",
+      "verdict": "**함정이 사실이 아니다** — r185에 다섯 다 있고 카메라가 움직인다(#23: 실제를 따른다)",
+      "source": "node_modules/three/examples/jsm/controls/OrbitControls.js"
+    },
+    "chosen": "③ — 라우팅만 직접 하고 **카메라는 `OrbitControls` 공개 API**로 움직인다(A-3)"
+  },
+  "app_gestures": {
+    "pinned_before": true,
+    "pinned_after_one_finger": false,
+    "one_finger": {
+      "azimuth_delta": 1.2550890458961697,
+      "polar_delta": 1.5441044110622533,
+      "dist_delta": 6.677190436864323
+    },
+    "two_finger": {
+      "dist_ratio": 0.5102040816326526,
+      "target_moved": 0.07092262018325317
+    },
+    "reading": "손가락 하나가 **확정 카메라를 풀고**(pinned true → false) 방위각을 돌린다. 둘은 **거리를 줄이고**(벌림) 궤도 중심을 옮긴다."
+  },
+  "gesture_tol": {
+    "rotate_speed": 1,
+    "pan_speed": 1,
+    "wheel_base": 0.95,
+    "dead_px": 3
+  },
+  "palm_rejection": {
+    "control_no_pen": {
+      "moved": 1.2411230236401645
+    },
+    "op1_pen_touching": {
+      "moved": 0
+    },
+    "op2_held_after_pen_up": {
+      "moved": 0
+    },
+    "pen_interrupts_gesture": {
+      "moved": 0
+    },
+    "counters": {
+      "rejected_down": 2,
+      "cancelled_by_pen": 1,
+      "held_after_pen_up": 2,
+      "forwarded_down": 3,
+      "pen_touching": false
+    },
+    "reading": "대조군은 움직이고 나머지 셋은 0이다. **대조군이 없으면 '터치가 원래 안 먹는 것'과 구분이 안 된다**(#6). 동작점 둘을 다 잰다(#12) — ②가 없으면 쉬고 있던 손바닥이 펜을 떼는 순간 궤도가 된다."
+  },
+  "device_routing": {
+    "strokes": {
+      "start": 12,
+      "after_pen": 13,
+      "after_mouse": 14,
+      "after_mouse_in_orbit": 14
+    },
+    "camera_moved": {
+      "by_pen": 0,
+      "by_mouse_in_orbit": 1.5514037795500677
+    },
+    "reading": "펜·마우스는 잉크로, 터치는 카메라로 간다. 마우스는 `궤도(마우스)` 동안만 카메라다. ⚠ **`pointer-events: none` 전환을 지웠으므로** 궤도 중에도 잉크 캔버스가 사건을 받는다."
+  },
+  "dpr2": {
+    "dpr": 2,
+    "azimuth_delta": 1.255089045896018,
+    "dpr1_azimuth_delta": 1.2550890458961697,
+    "ratio": 0.9999999999998792,
+    "reading": "비가 1이면 css 픽셀 규약이 지켜진 것이다. **2면 dpr이 어딘가에서 곱해졌다.**"
+  }
+}
