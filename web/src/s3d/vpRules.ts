@@ -18,7 +18,10 @@
 // 그것이 번갈아 긋기에서 축 오차 32.57°가 나온 자리로 의심됐다(`rule_camera.json`).
 // 지금은 **지평선이 먼저 있고 모든 수평 소실점이 그 위에 놓인다.** 교점 계산에서 한 쪽이
 // **오차 없이 정확**하므로 그 실패 모드가 통째로 사라진다. 옵션으로 끄지 않는다.
-// 지평선 높이는 **카메라 피치가 정하고** 사용자가 직접 조절하지 않는다(궤도로 바뀐다).
+// 지평선 높이는 **카메라 피치다**(이론서 3.1). ⚠ **2026-08-16 3차 지시로 사용자가 끈다**(D-L45) —
+// 옛 판은 "궤도로만 바뀐다"였고 그 귀결이 **초기 스케치가 1점·2점뿐**인 것이었다(피치 0 →
+// 수심 유도 `null`). 끄는 것은 **피치를 주는 것**이고 새 자유도가 아니다. **소실점이 서면 잠긴다**
+// (`horizonAdjustable`) — 그 뒤에 옮기면 소실점이 자기 지지선에서 떨어진다(D-L32가 그 자리다).
 //
 // **유일한 판단은 그은 선이 깊이인지 화면 가로세로인지다.** 임계 하나로 갈리고,
 // 그 사이(애매)면 **사용자에게 묻는다**(A-3: 애매하면 놓지 않는다).
@@ -84,7 +87,8 @@ export interface RuleState {
   slots: [Slot | null, Slot | null, Slot | null];
   /**
    * 지평선 높이(화면 y). **처음부터 있다** — 소실점이 정하는 것이 아니라 **카메라 피치**가
-   * 정한다(이론서 3.1 + 롤 0). 초기값은 화면 중앙(피치 0)이고 궤도로만 바뀐다.
+   * 정한다(이론서 3.1 + 롤 0). 초기값은 화면 중앙(피치 0)이고, **소실점이 서기 전까지는
+   * 사용자가 끌어 바꾼다**(D-L45). 그 뒤로는 궤도가 바꾼다.
    * ⚠ `null`은 **옛 저장본**에서만 온다 — `loadRules`가 기본값으로 채운다.
    */
   horizon: number;
@@ -94,6 +98,33 @@ export interface RuleState {
 
 /** **피치 0의 지평선** — 화면 중앙. 1점 투시에서 소실점이 주점이라는 것과 같은 자리다(5.3). */
 export const defaultHorizon = (imgSize: [number, number]): number => imgSize[1] / 2;
+
+/**
+ * **지평선을 아직 옮길 수 있는가**(D-L45).
+ *
+ * 유한 수평 소실점이 **하나라도 서면 잠긴다.** 그 소실점은 지평선 **위에서** 정해진 것이라
+ * (규칙 c: 깊이선 × 지평선), 지평선만 옮기면 소실점이 자기 지지선에서 떨어진다 —
+ * **D-L32가 실패한 자리가 정확히 그것이다**(사후 사영: 배치 2049 → 792).
+ * 그러므로 조작은 **소실점이 서기 전**에만 열린다. 그 뒤로는 궤도가 지평선을 바꾼다.
+ */
+export const horizonAdjustable = (st: RuleState): boolean =>
+  !st.slots.some(s => s != null && s.kind === "vp");
+
+/**
+ * **지평선을 옮긴 새 상태**(사람이 끈다 = 카메라 피치를 준다, 이론서 3.1의 역방향).
+ *
+ * 못 옮기는 상태면 **입력을 그대로 낸다** — 조용히 옮기지 않는다(A-3). 부르는 쪽이
+ * `horizonAdjustable`로 먼저 갈라 화면에 표시하고, 여기는 마지막 방어다.
+ *
+ * 화면 밖으로는 안 나간다 — 끄는 손잡이가 화면에 있어야 하기 때문이다.
+ * **새 임계를 만들지 않는다**(#17): 경계는 캔버스 자체다.
+ */
+export function withHorizon(st0: RuleState, y: number, imgSize: [number, number]): RuleState {
+  if (!horizonAdjustable(st0) || !Number.isFinite(y)) return st0;
+  const st = cloneRuleState(st0);
+  st.horizon = Math.min(imgSize[1], Math.max(0, y));
+  return st;
+}
 
 export function newRuleState(imgSize: [number, number] = [960, 672]): RuleState {
   return { slots: [null, null, null], horizon: defaultHorizon(imgSize), verticalLines: [] };

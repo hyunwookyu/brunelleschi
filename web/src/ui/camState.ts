@@ -17,7 +17,7 @@
 import { ConstraintAccumulator, type AxisId } from "../s3d/constraints.js";
 import {
   newRuleState, cloneRuleState, stepRule, deriveVertical, vpsOf, axisDirsOf, defaultHorizon,
-  orderOfState, axisOfStroke, RULE_TOL,
+  horizonAdjustable, withHorizon, orderOfState, axisOfStroke, RULE_TOL,
   type RuleState, type RuleEvent, type RLine,
 } from "../s3d/vpRules.js";
 import { fPixelsFrom35mm } from "../s3d/constraints.js";
@@ -61,13 +61,21 @@ export class CamState {
   get imgSize(): [number, number] { return this.acc.imgSize; }
 
   resize(s: [number, number]) {
-    const wasDefault = Math.abs(this.rules.horizon - defaultHorizon(this.imgSize)) < 1e-6;
+    const oldH = this.imgSize[1];
     this.acc.resize(s);
-    // **기본 지평선은 화면 중앙이므로 창이 바뀌면 따라간다.** 소실점이 이미 그 위에 놓였으면
-    // 옮기지 않는다 — 그러면 확정된 축이 소리 없이 바뀐다(A-3).
-    if (wasDefault && !this.rules.slots.some(x => x?.kind === "vp")) {
+    // **창이 바뀌면 지평선은 화면 비율을 지킨다.** 소실점이 이미 그 위에 놓였으면 옮기지
+    // 않는다 — 그러면 확정된 축이 소리 없이 바뀐다(A-3).
+    //
+    // ⚠ 옛 판은 **기본값일 때만** 따라갔다. 사용자가 끌 수 있게 되면서(D-L45) 그것으로는
+    // 부족하다 — 끌어 둔 지평선이 창이 줄 때 화면 밖으로 나간다. 비례로 옮기면 기본값
+    // (중앙 = H/2)도 **같은 식으로 중앙에 남으므로** 갈래가 하나로 준다(#17).
+    //
+    // ⚠⚠ **레이아웃 전에는 캔버스 높이가 1px일 수 있다**(첫 `fit()` 전). 그 상태의 y는 뜻이
+    // 없으므로 비례로 늘리지 않고 **기본값으로 다시 잡는다** — 브라우저에서 실제로 걸렸다:
+    // 높이 1에서 `setHorizon(200)`이 1로 잘리고, 그 1이 675로 늘어나 **화면 바닥에 붙었다**.
+    if (horizonAdjustable(this.rules)) {
       this.rules = cloneRuleState(this.rules);
-      this.rules.horizon = defaultHorizon(s);
+      this.rules.horizon = oldH > 2 ? (this.rules.horizon * s[1]) / oldH : defaultHorizon(s);
     }
     // 창이 커지면 **유도된 수직 소실점의 전제(주점 = 이미지 중심)가 움직인다** —
     // 유도값은 다시 낸다. 그은 선에서 나온 소실점은 그대로 둔다(그것은 그림이 정한 값이다).
@@ -104,6 +112,28 @@ export class CamState {
     const applied = r.event.type !== "ask" && r.event.type !== "rejected";
     if (applied) { this.rules = r.state; this.apply(); }
     return { event: r.event, applied };
+  }
+
+  /**
+   * **지평선을 끌 수 있는가**(D-L45). 확정 전이고 **유한 소실점이 아직 없을 때**만이다.
+   * 화면이 이 값으로 손잡이를 낼지 정하고, `setHorizon`이 마지막 방어다.
+   */
+  canSetHorizon(): boolean { return !this.locked && horizonAdjustable(this.rules); }
+
+  /**
+   * **지평선을 옮긴다 = 카메라 피치를 준다**(이론서 3.1의 역방향).
+   *
+   * 사용자는 **그림의 지평선을 올리내리는 것**으로 인식하고 그동안 카메라가 돈다 —
+   * 그것이 "3점 투시를 처음부터 그릴 수 있어야 한다"의 답이다(QUESTIONS g).
+   * 못 옮기는 상태면 `false`를 내고 **아무것도 안 바꾼다**.
+   */
+  setHorizon(y: number): boolean {
+    if (!this.canSetHorizon()) return false;
+    const next = withHorizon(this.rules, y, this.imgSize);
+    if (next === this.rules || next.horizon === this.rules.horizon) return false;
+    this.rules = next;
+    this.apply();
+    return true;
   }
 
   vps(): (Pt2 | null)[] { return vpsOf(this.rules); }

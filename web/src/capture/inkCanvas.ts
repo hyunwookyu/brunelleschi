@@ -19,8 +19,11 @@ export interface InkOptions {
    * 왜 여기에 두는가: 좌표 변환(`local`)이 **`canvasFrame` 단일 출처**를 타야 하기 때문이다
    * (D-C3·PITFALLS #21). 바깥에서 `clientX`를 직접 읽으면 dpr 규약이 둘이 되고,
    * 그 버그는 dpr 1인 데스크톱에서 안 보인다.
+   *
+   * ⚠ **누른 자리를 함께 준다**(2026-08-16, D-L45) — 지평선 손잡이처럼 **위치로 갈리는**
+   * 끌기가 생겼기 때문이다. 좌표는 여기서 `local()`로 만든 것이라 규약이 하나로 남는다.
    */
-  dragMode?: () => boolean;
+  dragMode?: (p: [number, number]) => boolean;
   onDrag?: (p: [number, number], phase: "down" | "move" | "up") => void;
   /**
    * **떠 있는 커서**(L-B.3 스냅 표시). 그리지도 끌지도 않는 동안의 포인터 위치다.
@@ -132,7 +135,7 @@ export class InkCanvas {
     if (!this.inkable(e)) return;
     e.preventDefault();
     try { this.canvas.setPointerCapture(e.pointerId); } catch { /* 합성 이벤트 등 */ }
-    if (this.opts.dragMode?.()) {
+    if (this.opts.dragMode?.(this.local(e))) {
       this.dragging = true; this.activeId = e.pointerId;
       this.opts.onDrag?.(this.local(e), "down");
       return;

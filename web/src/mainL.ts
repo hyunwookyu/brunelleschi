@@ -105,6 +105,17 @@ const AXIS_SNAP = { on: true };
 /** **그 획만 자유**(수정자). `Shift`를 누르고 있는 동안만 참이다 — 토글과 상황이 다르다. */
 let freeStroke = false;
 /**
+ * **지평선을 끄는 중인가**(D-L45, QUESTIONS g의 답).
+ *
+ * 사용자는 **그림의 지평선을 올리내린다**고 인식하고 그동안 **카메라 피치가 돈다**
+ * (이론서 3.1의 역방향). 그래야 **3점 투시를 처음부터** 그릴 수 있다 —
+ * 피치 0에서는 수심 유도가 `null`이라 초기 스케치가 1점·2점뿐이었다(D-L43의 곁가지).
+ *
+ * **소실점이 서면 잠긴다**(`cam.canSetHorizon()`). 그 뒤에 옮기면 소실점이 자기 지지선에서
+ * 떨어지고 그것이 D-L32가 실패한 자리다.
+ */
+let horizonDrag = false;
+/**
  * **확정·승격 시점에 잠근 소실점 개수**(L-C.1, §6.1). 차수 승격을 누를 때
  * `cam`은 **이미 새 차수**이므로(사용자가 가이드를 먼저 세운다) 옛 차수를 따로 들어야 한다.
  */
@@ -861,9 +872,20 @@ function ruleStatus(): string {
          + ` <span class="dim">(${SRC_SHORT[sl.source]}·지지 ${sl.support})</span>`;
   });
   const rows = [`<div>${cells.join(" · ")}</div>`];
+  // ⚠ **옛 문구는 "첫 소실점이 정했습니다"였다** — 그것은 D-L43 이전의 규칙이다.
+  // 지금 지평선은 **처음부터 있고**(D-L43) **소실점이 서기 전까지는 사용자가 끈다**(D-L45).
+  // 아래 `renderStatus`의 지평선 줄과 **같은 말을 해야 한다**(화면 안내가 갈리면 안 된다).
   if (st.horizon !== null) {
-    rows.push(`<div>지평선 <b>y = ${Math.round(st.horizon)}</b>`
-      + ' <span class="dim">(첫 소실점이 정했습니다 — 다음 소실점은 이 위에 놓입니다)</span></div>');
+    const d = Math.round(st.horizon - cssSize()[1] / 2);
+    rows.push(`<div>지평선 <b>y = ${Math.round(st.horizon)}</b> <span class="dim">(`
+      + (cam.canSetHorizon()
+         ? "<b>오른쪽 손잡이를 끌어 옮깁니다</b> — 그것이 카메라 피치입니다 · "
+           + (d === 0
+              ? "지금은 화면 중앙이라 <b>피치 0 → 2점까지</b>"
+              : `중앙보다 ${Math.abs(d)}px ${d < 0 ? "위 · 내려다보는" : "아래 · 올려다보는"} 구도`
+                + " → <b>깊이선 둘이면 3점</b>")
+         : "소실점이 이 위에 놓여 <b>잠겼습니다</b> — 이제는 궤도가 바꿉니다")
+      + ")</span></div>");
   }
   rows.push(`<div class="note">${nextHint()}</div>`);
   return rows.join("");
@@ -931,19 +953,50 @@ function drawAsk(ctx2: CanvasRenderingContext2D): void {
  * 모든 수평 소실점이 그 위에 놓이므로 **그림의 기준선**이고, 카메라가 서기 전에도 있다.
  * 높이는 **카메라 피치가 정하고** 사용자가 직접 조절하지 않는다(궤도로 바뀐다).
  */
+/**
+ * **지평선 손잡이를 잡았는가**(D-L45). 반경은 **`PICK_TOL`을 그대로 쓴다** —
+ * 새 임계를 만들지 않는다(#17). 고르기와 같은 종류의 조작이고(커서로 정확히 짚는 것)
+ * 선례의 값(10~15px)에 가깝다.
+ *
+ * ⚠ **끌 수 없는 상태면 잡히지 않는다** — 그때 그 자리는 그냥 그리는 자리다.
+ */
+function horizonGrab(p: Pt2): boolean {
+  if (tool !== "draw" || !cam.canSetHorizon()) return false;
+  if (cam.locked && !stage.isPinned) return false;      // 돌린 뷰의 화면 좌표가 아니다
+  return Math.abs(p[1] - cam.rules.horizon) <= PICK_TOL.radius_ratio * Math.hypot(...cssSize());
+}
+
 function drawHorizon(ctx2: CanvasRenderingContext2D) {
   // ⚠ **확정 시점에서만 그린다** — 지평선은 **확정 카메라의 화면 좌표**다(그리드·가이드와 같다).
   // 돌린 뷰에 그리면 화면에 붙어 따라다니는 유령이 된다(`drawBelowInk` 머리말).
   if (cam.locked && !stage.isPinned) return;
-  const [w] = cssSize();
+  const [w, h] = cssSize();
   const y = cam.rules.horizon;
+  const grabbable = cam.canSetHorizon() && (!cam.locked || stage.isPinned);
   ctx2.save();
-  ctx2.strokeStyle = HORIZON_COLOR; ctx2.lineWidth = 1;
-  ctx2.setLineDash([6, 4]); ctx2.globalAlpha = cam.locked ? 0.35 : 0.55;
+  ctx2.strokeStyle = HORIZON_COLOR;
+  ctx2.lineWidth = horizonDrag ? 2 : 1;
+  ctx2.setLineDash([6, 4]);
+  ctx2.globalAlpha = horizonDrag ? 0.95 : cam.locked ? 0.35 : 0.55;
   ctx2.beginPath(); ctx2.moveTo(0, y); ctx2.lineTo(w, y); ctx2.stroke();
-  ctx2.setLineDash([]); ctx2.globalAlpha = 0.5;
+  ctx2.setLineDash([]);
+  // **끌 수 있으면 손잡이를 낸다** — 없으면 사용자는 끌 수 있다는 것을 모른다(D-L45).
+  // 오른쪽 끝에 두는 이유: 그리는 자리(가운데)와 겹치지 않는다
+  if (grabbable) {
+    ctx2.globalAlpha = horizonDrag ? 1 : 0.75;
+    ctx2.fillStyle = HORIZON_COLOR;
+    ctx2.beginPath();
+    ctx2.moveTo(w - 26, y); ctx2.lineTo(w - 14, y - 6); ctx2.lineTo(w - 14, y + 6);
+    ctx2.closePath(); ctx2.fill();
+    ctx2.fillRect(w - 12, y - 1, 10, 2);
+  }
+  ctx2.globalAlpha = 0.5;
   ctx2.font = "11px system-ui, sans-serif"; ctx2.fillStyle = HORIZON_COLOR;
-  ctx2.fillText(`지평선 y=${Math.round(y)}`, 8, y - 5);
+  // **위/아래가 곧 구도다** — 지평선이 중앙보다 위면 내려다보는 구도(부감)다(이론서 3.1).
+  const where = Math.abs(y - h / 2) < 1 ? "피치 0"
+    : y < h / 2 ? `내려다봄 ${Math.round(h / 2 - y)}px` : `올려다봄 ${Math.round(y - h / 2)}px`;
+  ctx2.fillText(
+    `지평선 y=${Math.round(y)} · ${where}${grabbable ? " · 끌어 옮깁니다" : ""}`, 8, y - 5);
   ctx2.restore();
 }
 
@@ -1180,8 +1233,28 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
 
 const ink = new InkCanvas(canvas, {
   onBackground: drawBelowInk,
-  dragMode: () => tool === "edit",
+  // **위치로 갈리는 끌기가 생겼다**(D-L45) — 지평선 손잡이 위면 그리기가 아니라 끌기다
+  dragMode: (p) => tool === "edit" || horizonGrab(p),
   onDrag: (p, phase) => {
+    // **지평선 끌기**(D-L45, QUESTIONS g) — 그리는 도구 안에서 손잡이 위에서만 시작한다.
+    // 끄는 동안 카메라 피치가 돌고, 사용자는 **그림의 지평선을 옮긴다**고 인식한다
+    if (tool === "draw") {
+      if (phase === "down") {
+        if (!horizonGrab(p)) return;
+        pushUndo();                      // 되돌리기가 지평선을 담는다(`appSnap`의 `rules`)
+        horizonDrag = true;
+      }
+      if (!horizonDrag) return;
+      cam.setHorizon(p[1]);
+      if (phase === "up") {
+        horizonDrag = false;
+        note = `지평선 y=${Math.round(cam.rules.horizon)} — `
+             + "**깊이선 둘을 그으면 3점 투시가 섭니다**"
+             + " <span class=\"dim\">(지평선이 화면 중앙이면 피치 0이라 2점까지입니다)</span>";
+      }
+      refresh();
+      return;
+    }
     // **고치기**(L-D.1, §9.5) — 누르는 순간 고른다. 빈 곳이면 선택이 풀린다(A-3: 선례 그대로)
     if (tool === "edit") {
       if (phase !== "down") return;
@@ -1560,6 +1633,7 @@ function renderStatus() {
   }
   if (c.assumption) rows.push(`<div class="dim">${c.assumption}</div>`);
   // **지금 상태와 무엇이 부족한가**(사람 지시 3). 안내가 없으면 사용자는 아무것도 못 긋는다.
+  // **지평선 줄은 `ruleStatus()` 하나가 낸다**(D-L45) — 두 곳에서 내면 문구가 갈린다
   if (!cam.locked) rows.push(ruleStatus());
   if (ruleNote) rows.push(`<div class="dim">마지막 획 — ${ruleNote}</div>`);
   // **스냅 상태**(§3 표시). 확정 뒤에만 뜬다 — 대상이 3D 레이어이기 때문이다.
@@ -1849,6 +1923,11 @@ refresh();
                         locked: cam.locked, lockedOrder }),
   // **규칙 경로를 종단 확인이 앱 경로 그대로 부른다**(#17)
   rules: () => cam.dumpRules(),
+  // **지평선 끌기**(D-L45). 종단 확인이 손으로 끌지 않고도 같은 경로를 부른다(#17)
+  horizon: () => ({ y: cam.rules.horizon, adjustable: cam.canSetHorizon(), dragging: horizonDrag }),
+  setHorizon: (y: number) => { const ok = cam.setHorizon(y); refresh(); return ok; },
+  /** 손잡이가 잡히는가 — **화면 좌표로** 묻는다(반경이 `PICK_TOL`이라 크기에 딸린다). */
+  horizonGrab: (p: Pt2) => horizonGrab(p),
   /**
    * **하네스 전용 — 축마다 직선 둘을 주면 그 교점을 소실점으로 세운다.**
    *
@@ -1885,7 +1964,6 @@ refresh();
   // 축 스냅(사람 지시 1) — **앱 경로 그대로**를 종단 확인이 부른다(#17)
   axisSnap: () => ({ on: AXIS_SNAP.on, freeStroke }),
   setAxisSnap: (on: boolean) => { AXIS_SNAP.on = on; relive(); },
-  horizon: () => cam.rules.horizon,
   setLens: (mm: number | null) => { cam.lensMm = mm; cam.apply(); refresh(); },
   unlockGuides: () => {
     document.querySelector<HTMLButtonElement>('#bar button[data-act="unlock"]')?.click();

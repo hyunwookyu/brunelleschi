@@ -31,15 +31,15 @@
     "view_vs_overlay": {
       "renderer": [
         1280,
-        748
+        755
       ],
       "overlay": [
         1280,
-        748
+        755
       ],
       "same": true
     },
-    "size_heal": 2
+    "size_heal": 1
   },
   "dpr_2": {
     "drawn_vs_want_px": [
@@ -47,7 +47,7 @@
       0
     ],
     "ink_at_mid": 101,
-    "ink_at_scaled": 0,
+    "ink_at_scaled": 1,
     "stretch": [
       2,
       2
@@ -59,15 +59,15 @@
     "view_vs_overlay": {
       "renderer": [
         1280,
-        748
+        755
       ],
       "overlay": [
         1280,
-        748
+        755
       ],
       "same": true
     },
-    "size_heal": 2
+    "size_heal": 1
   },
   "probe_control_dpr_2": {
     "before": 0,
@@ -79,7 +79,7 @@
       0
     ],
     "ink_at_mid": 209,
-    "ink_at_scaled": 2,
+    "ink_at_scaled": 3,
     "stretch": [
       3,
       3
@@ -91,15 +91,15 @@
     "view_vs_overlay": {
       "renderer": [
         1280,
-        748
+        755
       ],
       "overlay": [
         1280,
-        748
+        755
       ],
       "same": true
     },
-    "size_heal": 2
+    "size_heal": 1
   },
   "probe_control_dpr_3": {
     "before": 0,

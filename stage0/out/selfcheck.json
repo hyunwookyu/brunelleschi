@@ -1,5 +1,5 @@
 {
-  "n_flags": 1789,
+  "n_flags": 1856,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -1927,6 +1927,351 @@
       "path": "horizon.json:roll_control.rows.roll_10deg.roll_zero.silent_wrong.cut_0_5.rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:headline.center|grouped.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:headline.center|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:headline.center|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:headline.center|drawn.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:headline.center|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:headline.center|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw35_pitch15.center|grouped.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw35_pitch15.center|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw35_pitch15.center|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw35_pitch15.center|drawn.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw35_pitch15.center|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw35_pitch15.center|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw35_pitch15.true|grouped.order3_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw20_pitch25.center|grouped.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw20_pitch25.center|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw20_pitch25.center|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw20_pitch25.center|drawn.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw20_pitch25.center|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw20_pitch25.center|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw50_pitch8.center|grouped.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw50_pitch8.center|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw50_pitch8.center|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw50_pitch8.center|drawn.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw50_pitch8.center|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw50_pitch8.center|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw50_pitch8.true|grouped.order3_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.3pt_yaw50_pitch8.placebo|grouped.order3_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.center|grouped.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.center|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.center|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.center|drawn.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.center|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.center|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.true|grouped.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.true|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.true|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.true|drawn.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.true|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.true|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.placebo|grouped.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.placebo|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.placebo|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.placebo|drawn.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.placebo|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.2pt_yaw35_pitch0.placebo|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.center|grouped.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.center|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.center|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.center|drawn.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.center|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.center|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.true|grouped.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.true|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.true|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.true|drawn.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.true|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.true|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.placebo|grouped.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.placebo|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.placebo|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.placebo|drawn.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.placebo|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:by_composition.1pt_yaw0_pitch0.placebo|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:all.center|grouped.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:all.center|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:all.center|grouped.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_pitch.json:all.center|drawn.order3_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_pitch.json:all.center|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_pitch.json:all.center|drawn.horizon_offset_px_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "incline_vp.json:by_slope_deg.0.vp_separation_px",
@@ -8871,97 +9216,87 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "bend_share.json@34db7279",
-      "val": "RULE_TOL.depth_min_deg: None → 8; RULE_TOL.screen_axis_deg: None → 4; RULE_TOL.vertical_ask_deg: None → 45; SNAP_TOL_AXIS.ambiguous_deg: None → 6",
-      "flag": "**STALE** — 현재 상수(1b6175a4)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
-      "path": "one_stroke_one_axis.json@34db7279",
-      "val": "RULE_TOL.depth_min_deg: None → 8; RULE_TOL.screen_axis_deg: None → 4; RULE_TOL.vertical_ask_deg: None → 45; SNAP_TOL_AXIS.ambiguous_deg: None → 6",
-      "flag": "**STALE** — 현재 상수(1b6175a4)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
       "path": "web/src/s3d/stroke.ts:Stroke.layer",
       "val": "쓰기 0 · 읽기 0",
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
     },
     {
-      "path": "web/e2e/stage.spec.ts:97:pixelGap",
+      "path": "web\\e2e\\stage.spec.ts:97:pixelGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/src/s3d/lift.ts:415:transitionGap",
+      "path": "web\\src\\s3d\\lift.ts:415:transitionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/src/s3d/stroke.ts:313:reprojectionGap",
+      "path": "web\\src\\s3d\\stroke.ts:313:reprojectionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/test/axis_live.test.ts",
+      "path": "web\\test\\axis_live.test.ts",
       "val": "18건 (줄 [111, 119, 137, 142, 145])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/draft_recover.test.ts",
+      "path": "web\\test\\draft_recover.test.ts",
       "val": "1건 (줄 [94])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/lift_grade.test.ts",
+      "path": "web\\test\\lift_grade.test.ts",
       "val": "1건 (줄 [104])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/metrics.ts",
+      "path": "web\\test\\metrics.ts",
       "val": "1건 (줄 [135])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/order_promote.test.ts",
+      "path": "web\\test\\order_promote.test.ts",
       "val": "3건 (줄 [127, 252, 260])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/order_signal.test.ts",
+      "path": "web\\test\\order_signal.test.ts",
       "val": "3건 (줄 [322, 323, 346])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/order_undo.test.ts",
+      "path": "web\\test\\order_undo.test.ts",
       "val": "1건 (줄 [252])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/persist.test.ts",
+      "path": "web\\test\\persist.test.ts",
       "val": "1건 (줄 [363])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/promote.test.ts",
+      "path": "web\\test\\promote.test.ts",
       "val": "35건 (줄 [161, 189, 211, 212, 217])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/snap_measure.test.ts",
+      "path": "web\\test\\snap_measure.test.ts",
       "val": "3건 (줄 [92, 93, 537])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/stage_measure.test.ts",
+      "path": "web\\test\\stage_measure.test.ts",
       "val": "2건 (줄 [179, 221])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/tube_measure.test.ts",
+      "path": "web\\test\\tube_measure.test.ts",
       "val": "1건 (줄 [176])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     }
   ],
-  "n_stale": 2,
+  "n_stale": 0,
   "n_stale_metrics": 0,
   "n_unread_fields": 1,
   "field_reads": [
@@ -9019,7 +9354,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 173,
+      "files_scanned": 177,
       "exts_declared": [
         ".md",
         ".py",
@@ -9027,13 +9362,13 @@
       ],
       "hits_by_ext": {
         ".md": 9,
-        ".ts": 6,
-        ".py": 2
+        ".py": 2,
+        ".ts": 6
       }
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 116,
+      "files_scanned": 118,
       "exts_declared": [
         ".ts"
       ],
@@ -9043,7 +9378,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 173,
+      "files_scanned": 177,
       "exts_declared": [
         ".md",
         ".py",
@@ -9052,12 +9387,12 @@
       "hits_by_ext": {
         ".md": 10,
         ".py": 4,
-        ".ts": 44
+        ".ts": 45
       }
     },
     {
       "sweep": "external_data",
-      "files_scanned": 72,
+      "files_scanned": 74,
       "exts_declared": [
         ".ts"
       ],
@@ -9091,14 +9426,14 @@
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 11,
+      "targets": 12,
       "hits": 0,
-      "note": "값 대조를 **지난 것 4** · **면제 7**(`reachability_absent`) · 원장 42개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, guide_budget.json:gate, lift_gate.json:gate, preview_gap.json:gate, rule_camera.json:gate, segment_gate.json:gate, stage_browser.json:l_b3.gate"
+      "note": "값 대조를 **지난 것 5** · **면제 7**(`reachability_absent`) · 원장 43개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, camera_gate.json:gate, horizon.json:gate, horizon_pitch.json:gate, order_signal.json:gate / 면제: coords.json:gate, guide_budget.json:gate, lift_gate.json:gate, preview_gap.json:gate, rule_camera.json:gate, segment_gate.json:gate, stage_browser.json:l_b3.gate"
     },
     {
       "scan": "scan_zero_denominator",
       "unit": "하네스 파일",
-      "targets": 42,
+      "targets": 43,
       "hits": 12,
       "note": "원장을 쓰는 `web/test/**.ts`만 본다"
     }
@@ -9121,6 +9456,7 @@
     "free_curve.json",
     "guide_budget.json",
     "horizon.json",
+    "horizon_pitch.json",
     "incline_vp.json",
     "lift_gate.json",
     "lift_grade.json",
