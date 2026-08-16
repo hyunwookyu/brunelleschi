@@ -1,5 +1,5 @@
 {
-  "n_flags": 1820,
+  "n_flags": 1829,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -6591,7 +6591,37 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "touch_route.json:palm_rejection.control_no_pen.counters.rejected_down",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "touch_route.json:palm_rejection.control_no_pen.counters.cancelled_by_pen",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "touch_route.json:palm_rejection.control_no_pen.counters.held_after_pen_up",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "touch_route.json:palm_rejection.op1_pen_touching.moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "touch_route.json:palm_rejection.op1_pen_touching.counters.cancelled_by_pen",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "touch_route.json:palm_rejection.op1_pen_touching.counters.held_after_pen_up",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "touch_route.json:palm_rejection.op1_pen_touching.counters.forwarded_down",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -6601,7 +6631,22 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "touch_route.json:palm_rejection.op2_held_after_pen_up.counters.cancelled_by_pen",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "touch_route.json:palm_rejection.op2_held_after_pen_up.counters.forwarded_down",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "touch_route.json:palm_rejection.pen_interrupts_gesture.moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "touch_route.json:palm_rejection.pen_interrupts_gesture.counters.rejected_down",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -9239,7 +9284,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 105,
+      "targets": 110,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },

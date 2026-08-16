@@ -177,7 +177,11 @@ test("후보 셋 — 어느 함정이 실제로 걸리나", async ({ page }) => 
     note: "세 후보를 같은 페이지에서 실행했다. **③이 양성 채널**이다(#30).",
     c1_redispatch: { ...r.cand1,
       pitfall: "합성 pointerId에서 `setPointerCapture`가 던진다",
-      verdict: r.cand1.threw ? "함정 실재 — 던졌다" : "이 조건에서는 안 던졌다" },
+      // ⚠ **조건을 좁혀 적는다**(리뷰어 [5]) — 합성 사건에는 활성 포인터가 **정의상 없다**.
+      // 실기기에서 원래 포인터가 살아 있는 채로 재발행하면 안 던질 수도 있다(안 쟀다).
+      // 이 팔이 말하는 것은 "**합성 재발행**은 던진다"까지다.
+      scope: "합성 포인터 사건에 한한다. 실기기에서 활성 포인터를 그대로 재발행하는 경우는 **미측정**",
+      verdict: r.cand1.threw ? "함정 실재(합성 조건) — 던졌다" : "이 조건에서는 안 던졌다" },
     c2_controls_on_ink: { ...r.cand2,
       pitfall: "three가 `pointerType !== 'touch'`를 마우스로 본다 → **펜이 궤도를 돈다**",
       harness_intervention: "①과 섞이지 않게 `setPointerCapture`를 무력화하고 쟀다",
@@ -186,8 +190,11 @@ test("후보 셋 — 어느 함정이 실제로 걸리나", async ({ page }) => 
       pitfall_as_written: "three 최신판은 `rotateLeft` 같은 공개 API가 없다",
       damping_note: "감쇠(0.12) 때문에 한 프레임에는 요구량의 일부만 적용된다 — 재는 것은 **움직였는가**다",
       dist_note: "`dist_before = 0`이면 확정 카메라에 물린 상태(궤도 반지름 0)라 줌을 못 잰다 → 앱 팔에서 잰다",
+      // ⚠ **존재와 작동을 한 문장에 묶지 않는다**(리뷰어 [10]) — 이 팔이 확인한 작동은
+      // **회전 하나**다. 줌은 `dist_before = 0`이라 못 쟀고 팬은 이 팔에 값이 없다.
       verdict: r.cand3.api_complete
-        ? "**함정이 사실이 아니다** — r185에 다섯 다 있고 카메라가 움직인다(#23: 실제를 따른다)"
+        ? "**함정이 사실이 아니다** — r185에 다섯 다 **있고**, 이 팔에서 **회전**이 실제로 움직였다"
+        + "(줌·팬의 작동은 앱 팔에서 잰다). #23: 계획과 실제가 어긋나면 실제를 따른다"
         : "공개 API가 모자란다",
       source: "node_modules/three/examples/jsm/controls/OrbitControls.js" },
     chosen: "③ — 라우팅만 직접 하고 **카메라는 `OrbitControls` 공개 API**로 움직인다(A-3)",
@@ -217,6 +224,15 @@ test("앱 종단 — 손가락 1개는 궤도, 2개는 팬·줌", async ({ page 
   await pointer(page, { type: "pointerup", id: 3, kind: "touch", x: 648, y: 412 });
   const afterTwo = await settle(page);
 
+  // **핀 해제의 도약을 갈라낸다**(리뷰어 [9]) — 첫 손짓의 `dist`·`polar` 델타에는
+  // "확정 카메라(궤도 반지름 0)에서 자유 시점으로 나가는 재초기화"가 섞여 있다.
+  // **이미 풀린 상태에서 같은 손짓**을 한 번 더 해서 그 몫을 뺀 값을 함께 낸다.
+  const beforeAgain = await settle(page);
+  await drag(page, 4, "touch", [500, 400], [640, 430]);            // 첫 팔과 **같은 손짓**
+  const afterAgain = await settle(page);
+  // **터치는 획을 안 만든다**(리뷰어 [13]) — 라우팅 표에 터치 행이 없었다
+  const strokesAfterTouch = await page.evaluate(() => window.S2S.doc().strokes.length);
+
   const g = await page.evaluate(() => window.S2S.gestureTol());
   led.app_gestures = {
     pinned_before: before.pinned,
@@ -224,17 +240,33 @@ test("앱 종단 — 손가락 1개는 궤도, 2개는 팬·줌", async ({ page 
     one_finger: { azimuth_delta: Math.abs(afterOne.azimuth - before.azimuth),
                   polar_delta: Math.abs(afterOne.polar - before.polar),
                   dist_delta: Math.abs(afterOne.dist - before.dist) },
-    two_finger: { dist_ratio: afterTwo.dist / afterOne.dist,
+    // ⚠⚠ **`dist_ratio`는 측정이 아니라 설계 보장이다**(#5 · 리뷰어 [4]) — 우리가 부른
+    // `dollyOut(끝거리/처음거리)`를 그대로 되받는다: 100 → 196px이므로 1/1.96 = 0.5102다.
+    // **읽을 것은 값이 아니라 부호와 경로**다(벌리면 가까워진다 · 두 손가락이 줌으로 갔다).
+    two_finger: { input_px: { d0: 100, d1: 196, ratio: 196 / 100 },
+                  dist_ratio: afterTwo.dist / afterOne.dist,
+                  guarantee: "1/1.96 = 0.5102 — `dollyOut` 호출의 항등이다. 임계를 걸지 않는다",
                   target_moved: Math.hypot(...afterTwo.target.map((v: number, i: number) =>
                                   v - afterOne.target[i])) },
+    // **같은 손짓을 이미 풀린 상태에서 한 번 더** — 핀 해제 몫이 빠진 값이다
+    one_finger_already_free: { azimuth_delta: Math.abs(afterAgain.azimuth - beforeAgain.azimuth),
+                               polar_delta: Math.abs(afterAgain.polar - beforeAgain.polar),
+                               dist_delta: Math.abs(afterAgain.dist - beforeAgain.dist) },
+    strokes_after_touch_only: { before: s.strokes, after: strokesAfterTouch },
     reading: "손가락 하나가 **확정 카메라를 풀고**(pinned true → false) 방위각을 돌린다. "
-           + "둘은 **거리를 줄이고**(벌림) 궤도 중심을 옮긴다.",
+           + "둘은 **거리를 줄이고**(벌림) 궤도 중심을 옮긴다. "
+           + "⚠ 첫 팔의 `polar`·`dist` 델타에는 **핀 해제의 재초기화**가 섞여 있다 — "
+           + "그 몫이 빠진 값이 `one_finger_already_free`다. "
+           + "⚠ **터치만으로는 획이 안 생긴다**(`strokes_after_touch_only`).",
   };
   led.gesture_tol = g;
 
   expect(afterOne.pinned).toBe(false);                              // 손가락이 `궤도` 버튼을 대신한다
   expect(Math.abs(afterOne.azimuth - before.azimuth)).toBeGreaterThan(0.05);
   expect(afterTwo.dist / afterOne.dist).toBeLessThan(1);            // 벌리면 가까워진다
+  expect(strokesAfterTouch).toBe(s.strokes);                        // 터치는 획을 안 만든다
+  // 핀이 풀린 뒤에도 같은 손짓이 같은 방향으로 돈다(핀 해제가 그 회전의 원인이 아니다)
+  expect(Math.abs(afterAgain.azimuth - beforeAgain.azimuth)).toBeGreaterThan(0.05);
 });
 
 test("팜 리젝션 — 펜이 닿아 있는 동안 손가락이 카메라를 안 움직인다(G-2)", async ({ page }) => {
@@ -243,18 +275,22 @@ test("팜 리젝션 — 펜이 닿아 있는 동안 손가락이 카메라를 �
   // 먼저 자유 시점으로 나가 둔다 — 핀 해제 여부가 아니라 **회전량**을 재기 위해서다
   await drag(page, 1, "touch", [500, 400], [560, 410]);
 
+  const counters = () => page.evaluate(() => window.S2S.palm());
   // ── 대조군(#6): 펜 없이 같은 터치 → 움직인다
+  const cnt0 = await counters();
   const c0 = await settle(page);
   await drag(page, 2, "touch", [500, 400], [620, 440]);
   const c1 = await settle(page);
 
   // ── 동작점 ①: 펜이 닿아 있는 동안 시작한 터치
+  const cnt1 = await counters();
   await pointer(page, { type: "pointerdown", id: 7, kind: "pen", x: 300, y: 300 });
   const p0 = await settle(page);
   await drag(page, 3, "touch", [500, 400], [620, 440]);
   const p1 = await settle(page);
 
   // ── 동작점 ②: **펜을 뗀 뒤에도 남아 있는 터치**(쉬고 있던 손바닥)
+  const cnt2 = await counters();
   await pointer(page, { type: "pointerdown", id: 4, kind: "touch", x: 500, y: 400 });   // 손바닥이 먼저 닿는다
   await pointer(page, { type: "pointerup", id: 7, kind: "pen", x: 320, y: 320 });       // 펜을 뗀다
   const h0 = await settle(page);
@@ -264,6 +300,7 @@ test("팜 리젝션 — 펜이 닿아 있는 동안 손가락이 카메라를 �
   await pointer(page, { type: "pointerup", id: 4, kind: "touch", x: 620, y: 442 });
 
   // ── 펜이 **나중에** 내려와 진행 중인 제스처를 끊는가
+  const cnt3 = await counters();
   await pointer(page, { type: "pointerdown", id: 5, kind: "touch", x: 500, y: 400 });
   await pointer(page, { type: "pointermove", id: 5, kind: "touch", x: 540, y: 410 });
   const b0 = await settle(page);
@@ -275,15 +312,35 @@ test("팜 리젝션 — 펜이 닿아 있는 동안 손가락이 카메라를 �
   await pointer(page, { type: "pointerup", id: 5, kind: "touch", x: 660, y: 452 });
 
   const palm = await page.evaluate(() => window.S2S.palm());
+  // **팔별 카운터 증분**(리뷰어 [6]) — 총계만 내면 어느 팔의 0이 "문이 돌아서"인지
+  // "그 경로가 아예 안 돌아서"인지 갈리지 않는다(#32). 각 팔이 자기 문을 지났음을 낸다.
+  const d = (a: any, b: any) => ({
+    rejected_down: b.rejected_down - a.rejected_down,
+    cancelled_by_pen: b.cancelled_by_pen - a.cancelled_by_pen,
+    held_after_pen_up: b.held_after_pen_up - a.held_after_pen_up,
+    forwarded_down: b.forwarded_down - a.forwarded_down,
+  });
   led.palm_rejection = {
-    control_no_pen: { moved: moved(c0, c1) },
-    op1_pen_touching: { moved: moved(p0, p1) },
-    op2_held_after_pen_up: { moved: moved(h0, h1) },
-    pen_interrupts_gesture: { moved: moved(b0, b1) },
-    counters: palm,
+    // ⚠ **입력을 원장에 적는다**(리뷰어 [1] · #25) — 대조군과 ①이 **같은 손짓**이어야
+    // 그 비교가 성립한다. 원장 밖에 있으면 다음 세션이 확인할 길이 없다.
+    input_px: {
+      control_no_pen: { from: [500, 400], to: [620, 440], steps: 6 },
+      op1_pen_touching: { from: [500, 400], to: [620, 440], steps: 6, note: "**대조군과 같다**" },
+      op2_held_after_pen_up: { from: [500, 400], to: [620, 442], steps: 6 },
+      pen_interrupts_gesture: { from: [540, 410], to: [660, 452], steps: 6 },
+      pen_at: [300, 300],
+    },
+    control_no_pen: { moved: moved(c0, c1), counters: d(cnt0, cnt1) },
+    op1_pen_touching: { moved: moved(p0, p1), counters: d(cnt1, cnt2) },
+    op2_held_after_pen_up: { moved: moved(h0, h1), counters: d(cnt2, cnt3) },
+    pen_interrupts_gesture: { moved: moved(b0, b1), counters: d(cnt3, palm) },
+    counters_total: palm,
     reading: "대조군은 움직이고 나머지 셋은 0이다. **대조군이 없으면 '터치가 원래 안 먹는 것'과 "
            + "구분이 안 된다**(#6). 동작점 둘을 다 잰다(#12) — ②가 없으면 쉬고 있던 손바닥이 "
-           + "펜을 떼는 순간 궤도가 된다.",
+           + "펜을 떼는 순간 궤도가 된다. **팔별 카운터 증분**이 각 팔이 자기 문을 실제로 "
+           + "지났음을 낸다 — 총계만으로는 앞 팔의 상태가 막은 것과 구분이 안 된다(#32). "
+           + "⚠ `moved`는 |Δ방위각|+|Δ앙각|+|Δ거리|의 합이고 `app_gestures`의 축별 델타와 "
+           + "**다른 지표**다 — 두 표의 수를 견주지 않는다.",
   };
 
   expect(moved(c0, c1)).toBeGreaterThan(0.05);       // 대조군: 움직인다
@@ -293,6 +350,11 @@ test("팜 리젝션 — 펜이 닿아 있는 동안 손가락이 카메라를 �
   expect(palm.rejected_down).toBeGreaterThan(0);
   expect(palm.held_after_pen_up).toBeGreaterThan(0);
   expect(palm.cancelled_by_pen).toBeGreaterThan(0);
+  // 팔별로도 **그 팔에서** 문이 돌았는가 — 총계가 아니라 증분으로 본다
+  expect(d(cnt1, cnt2).rejected_down).toBeGreaterThan(0);          // ①이 실제로 거부했다
+  expect(d(cnt2, cnt3).held_after_pen_up).toBeGreaterThan(0);      // ②가 실제로 유지했다
+  expect(d(cnt3, palm).cancelled_by_pen).toBeGreaterThan(0);       // 펜이 실제로 끊었다
+  expect(d(cnt0, cnt1).forwarded_down).toBeGreaterThan(0);         // 대조군은 실제로 통과했다
 });
 
 test("펜과 마우스는 잉크로 간다 — 라우팅이 장치로 갈린다", async ({ page }) => {
@@ -349,15 +411,69 @@ test.describe("dpr 2", () => {
     await drag(page, 1, "touch", [500, 400], [640, 430]);      // dpr 1 팔과 **같은 좌표**
     const after = await settle(page);
     const dpr = await page.evaluate(() => window.devicePixelRatio);
+
+    // **양성 채널**(#30 · 리뷰어 [7]) — 비가 1.0인 것이 "규약이 지켜졌다"인지
+    // "이 지표가 손짓 크기에 둔감하다"인지 갈려야 한다. **같은 팔에서 절반 손짓**을 낸다:
+    // 그것이 0.5를 내면 지표는 민감하고, 그러므로 앞의 1.0이 정보다.
+    // ⚠ **두 배로 안 한다** — `getAzimuthalAngle()`은 `atan2`라 (−π, π]로 **감기고**,
+    // 큰 회전에서는 |Δ|가 그 감김을 탄다(실측: 두 배 입력에서 비가 3.28로 나왔다).
+    // 절반은 감김에서 멀어 그 오염이 없다.
+    // ⚠⚠ 기준은 **이미 풀린 상태의 같은 손짓**이어야 한다 — 첫 팔은 **핀 해제**를 포함하므로
+    // 회전량이 그만큼 다르다(`app_gestures.one_finger` 1.2551 대 `one_finger_already_free` 1.0860).
+    // 그래서 양성 채널은 **자유 상태의 전체 : 자유 상태의 절반**으로 잰다.
+    const bFull = await settle(page);
+    await drag(page, 2, "touch", [500, 400], [640, 430]);      // 전체(자유 상태)
+    const aFull = await settle(page);
+    const b2 = await settle(page);
+    await drag(page, 3, "touch", [500, 400], [570, 415]);      // **절반**(Δx 70 · Δy 15)
+    const a2 = await settle(page);
+
+    // **팬도 잰다**(리뷰어 [7]) — 회전과 핀치는 비(比)라 dpr이 분자·분모에서 상쇄될 수 있다.
+    // 픽셀 → 월드 환산이 들어가는 팬이 dpr 규약이 깨지는 자리다.
+    const b3 = await settle(page);
+    await pointer(page, { type: "pointerdown", id: 4, kind: "touch", x: 500, y: 400 });
+    await pointer(page, { type: "pointerdown", id: 5, kind: "touch", x: 600, y: 400 });
+    for (let i = 1; i <= 6; i++) {
+      await pointer(page, { type: "pointermove", id: 4, kind: "touch", x: 500 + i * 10, y: 400 });
+      await pointer(page, { type: "pointermove", id: 5, kind: "touch", x: 600 + i * 10, y: 400 });
+    }
+    await pointer(page, { type: "pointerup", id: 4, kind: "touch", x: 560, y: 400 });
+    await pointer(page, { type: "pointerup", id: 5, kind: "touch", x: 660, y: 400 });
+    const a3 = await settle(page);
+
     // ⚠ 기준값은 **dpr 1 팔이 같은 파일에서 낸 값**이다 — 파일 전체를 돌려야 있다
     // (`-g`로 이것만 돌리면 없다). 없으면 **건너뛴다** — 없는 비교를 지어내지 않는다
-    const one = (led.app_gestures as any)?.one_finger?.azimuth_delta as number | undefined;
+    const app = led.app_gestures as any;
+    const one = app?.one_finger?.azimuth_delta as number | undefined;
     test.skip(one === undefined, "dpr 1 팔이 안 돌았다 — 파일 전체를 돌린다");
-    led.dpr2 = { dpr, azimuth_delta: Math.abs(after.azimuth - before.azimuth),
-                 dpr1_azimuth_delta: one,
-                 ratio: one ? Math.abs(after.azimuth - before.azimuth) / one : null,
-                 reading: "비가 1이면 css 픽셀 규약이 지켜진 것이다. **2면 dpr이 어딘가에서 곱해졌다.**" };
+    const az = Math.abs(after.azimuth - before.azimuth);
+    const azFull = Math.abs(aFull.azimuth - bFull.azimuth);
+    const az2 = Math.abs(a2.azimuth - b2.azimuth);
+    const panMoved = Math.hypot(...a3.target.map((v: number, i: number) => v - b3.target[i]));
+    led.dpr2 = {
+      dpr,
+      rotate: { azimuth_delta: az, dpr1_azimuth_delta: one, ratio: az / one!,
+                input_px: { from: [500, 400], to: [640, 430], note: "dpr 1 팔과 같은 좌표" } },
+      positive_channel: { azimuth_delta_half_input: az2, azimuth_delta_full_free: azFull,
+                          ratio_to_single: az2 / azFull,
+                          input_px: { from: [500, 400], to: [570, 415],
+                                      note: "Δx가 절반. 기준은 **자유 상태의 전체 손짓**이다 — "
+                                          + "첫 팔은 핀 해제를 포함해 회전량이 다르다" },
+                          reading: "**0.5에 가까워야 지표가 민감한 것**이다. 1에 붙으면 "
+                                 + "앞의 비 1.0은 규약의 증거가 아니라 둔감의 증거다. "
+                                 + "⚠ 두 배로 안 재는 이유: `getAzimuthalAngle()`이 `atan2`라 "
+                                 + "**감긴다**(두 배 입력에서 비 3.28이 나왔다)" },
+      pan: { target_moved: panMoved,
+             input_px: { two_fingers_dx: 60, note: "두 손가락을 나란히 60px 민다(거리 불변 → 줌 없음)" },
+             reading: "팬은 픽셀 → 월드 환산을 지난다. dpr이 섞이면 여기가 갈린다 — "
+                    + "값 자체는 궤도 반지름에 비례하므로 **dpr 1 팔과 직접 비교하지 않는다**" },
+      reading: "회전 비가 1이면 css 픽셀 규약이 지켜진 것이다. **2면 dpr이 어딘가에서 곱해졌다.**",
+    };
     expect(dpr).toBe(2);
-    expect(Math.abs(after.azimuth - before.azimuth)).toBeCloseTo(one!, 12);
+    expect(az).toBeCloseTo(one!, 12);
+    // 양성 채널: 절반 손짓은 절반 돈다(죽은 구간 한 걸음이 양쪽에서 같은 비율로 빠진다)
+    expect(az2 / azFull).toBeGreaterThan(0.45);
+    expect(az2 / azFull).toBeLessThan(0.55);
+    expect(panMoved).toBeGreaterThan(0);
   });
 });
