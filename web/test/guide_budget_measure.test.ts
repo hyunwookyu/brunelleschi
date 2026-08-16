@@ -24,6 +24,7 @@ import { draftFromDetection, extendGuide, DRAFT_TOL, type Guide } from "../src/s
 import { scene, boxEdges, drawEdges, groundPoint, round } from "./scene3d.js";
 import { rng32, type InkGrade } from "../src/s3d/synthInk.js";
 import { constantsSnapshot } from "./constants.js";
+import { gate } from "./gate.js";
 import { metricsSnapshot } from "./metrics.js";
 import type { Pt2 } from "../src/s3d/camera.js";
 
@@ -137,6 +138,18 @@ describe("L-B.2 핸들 예산 — 초안을 늘리면 예산이 느는가", () =
     const doc = {
       what: "L-B.2 — 초안 가이드를 캔버스 끝까지 늘리면 **핸들 예산**이 늘어나는가",
       plan: "docs/line_plan.md §5.2 (개정 2 번호)",
+      gate: gate({
+        registered: "가장 **짧은** 가이드의 예산을 읽는다(가장 긴 것으로 읽지 않는다 — "
+          + "카메라 정확도는 가장 나쁜 축이 정한다). 통과: 늘린 뒤 최소 예산이 늘어나고 "
+          + "카메라(f)는 안 바뀐다.",
+        reachability: "**둘 다 구성상 확인 가능하다** — 예산은 카메라 해의 수치 미분이라 "
+          + "결정론적이고(#3), f 불변은 같은 원장의 `camera_moved_by_extend`가 직접 센다. "
+          + "⚠ **그러나 잔존 미달의 도달 가능성은 아니다**: 늘린 뒤 길이는 캔버스 안 현이 "
+          + "상한이고 그 최대가 588.18px인데 요구는 651.2px라, **수직에 가까운 가이드는 "
+          + "어떤 그림에서도 못 닿는다**(`extend_ceiling`). 원인은 그림이 아니라 캔버스 높이다.",
+        status: "살아 있다. ⚠ 이 게이트가 재는 것은 **핸들 하나** 가정 위의 대리값이고 "
+          + "사람이 그 예산 안에 놓는가는 **표본 0**이다(AS-L9·#29).",
+      }),
       preregistered: {
         target: "가장 짧은 가이드의 예산. **가장 긴 것으로 읽지 않는다** — 카메라 정확도는 "
           + "가장 나쁜 축이 정한다(리뷰어 2회차 [13-b]에서 걸린 자리).",

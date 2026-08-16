@@ -29,6 +29,7 @@ import { scene, boxLattice, drawEdges, groundPoint, stat, round, median,
          type Scene, type TrueEdge } from "./scene3d.js";
 import { perStrokeError, axisDirErrors, metricsSnapshot } from "./metrics.js";
 import { constantsSnapshot } from "./constants.js";
+import { gate } from "./gate.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -202,6 +203,20 @@ describe("L-A.5d·L-A.6 카메라 정확도 (§5.4·§5.5)", () => {
       // 옛 값 `placement_of_all: 0.9954` · `silent_wrong_cut_0_2: 0.0791`은 **`lift_gate`의
       // 오라클 값**이고 (a) 배치는 최대 연결 성분 분모이며 (b) 조용히 틀림에는 **검출 오배정이
       // 섞여 있다**. **대역은 같은 하네스에서 낸다** — 그것이 아래 `deg_0` 행이다.
+      // **게이트를 `gate`라는 이름으로 적는다**(#35 자동 검사가 그 이름을 찾는다).
+      // 이 블록이 없어서 검사가 원장 39개를 훑고도 **덮는 대상이 0**이었다.
+      gate: gate({
+        registered: "L-A.7 재등록(CLAUDE.md §2) — 사람이 가이드를 끌어 도달하는 **실측 축 방향 "
+          + "오차 0.5° 이하**에서, 조용히 틀림 ≤ 0.0673×1.1 · 형태 오차 중앙 ≤ 0.0296×2.1. "
+          + "**5구도 전부**를 낸다(기준 구도 하나로 통과를 주장하지 않는다).",
+        reachability: "지표 축에서는 **도달 가능하다** — 같은 하네스의 `deg_0` 행이 정의상 "
+          + "1.0배·1.0배이고 그것이 대역의 출처다(같은 조건·같은 분모, PITFALLS #27). "
+          + "⚠ **그러나 게이트의 다른 절반은 도달 가능성이 미확인이다**: 사람이 0.5°까지 "
+          + "맞추는지는 **표본 0**이고(AS-L9·AS-C1) 대리값(핸들 예산)도 **핸들 하나** 가정 "
+          + "위에 있다(#29). 즉 넘을 수 있는 것이 확인된 것은 *지표*이지 *사람*이 아니다. "
+          + "⚠ 낮추지 않는다 — 적기만 한다(#26의 반대편 문).",
+        status: "살아 있다. L-A 게이트(`lift_gate`)는 2026-08-15에 실패했고 이것이 그 재등록이다.",
+      }),
       target: { note: "**대역은 이 하네스의 `by_axis_err_*.deg_0` 행이다**(같은 조건·같은 분모). "
                       + "다른 하네스의 값을 대역으로 가져오지 않는다(PITFALLS #27).",
                 registered_band: { silent_wrong_cut_0_2: 0.0673, shape_err_median: 0.0296 },

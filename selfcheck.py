@@ -298,6 +298,27 @@ def scan_stale_metrics(outdir: Path, reports: dict[str, dict]) -> list[dict]:
 
 SCANNED_FIELDS: list[dict] = []
 SWEEP_SCANNED: list[dict] = []
+COVERAGE: list[dict] = []
+
+
+def _cover(scan: str, unit: str, targets: int, hits: int, note: str = "") -> list[dict]:
+    """**검사가 실제로 덮은 대상 수**를 남기고, 0이면 플래그한다(PITFALLS #32·#35).
+
+    실제로 걸린 것: `scan_gate_reachability`가 원장 39개를 훑고도 **`gate`라는 이름의
+    블록이 하나도 없어** 덮는 대상이 0이었다. 플래그 0건이 나왔고 그것이
+    **깨끗함으로 읽혔다.** 0건이 "깨끗함"인지 "안 돎"인지 가르는 것은 오직 **덮은 수**다.
+
+    ⚠ 덮는 수가 0일 때 고칠 곳은 **검사가 아니라 기록하는 쪽**이다 —
+    하네스가 그 이름으로 적게 한다. 검사의 이름 목록을 넓혀 0을 지우면 #19다
+    (설명이 검사를 끄는 것과 같은 방향).
+    """
+    COVERAGE.append({"scan": scan, "unit": unit, "targets": targets, "hits": hits,
+                     "note": note or None})
+    if targets:
+        return []
+    return [{"path": f"selfcheck:{scan}", "val": f"덮는 대상 0 ({unit})",
+             "flag": f"**이 검사가 덮는 대상이 0이다** — 단위: {unit}(#32). 플래그 0건이 "
+                     f"깨끗함이 아니라 **안 돎**이다. 기록하는 쪽(하네스)이 그 이름으로 적게 고친다"}]
 
 
 def strip_ts_comments(t: str) -> str:
@@ -426,6 +447,9 @@ def scan_sweep_coverage(root: Path) -> list[dict]:
         if not n_files:
             flags.append({"path": f"sweeps.json:{sw['name']}", "val": 0,
                           "flag": "훑은 파일이 0 → 훑기가 **안 돌았다**(경로·확장자 확인)"})
+    # 훑기별 0은 위에서 잡는다. 여기서는 **훑기 자체가 하나도 없는 경우**를 잡는다.
+    flags += _cover("scan_sweep_coverage", "훑기", len(SWEEP_SCANNED), len(flags),
+                    note="훑기별 파일 수는 `sweeps[]`에 있다")
     return flags
 
 
@@ -442,6 +466,7 @@ def scan_gate_reachability(reports: dict[str, dict]) -> list[dict]:
     적기만 한다(#26의 반대편 문을 열지 않는다).
     """
     flags = []
+    seen: list[str] = []                 # **덮은 게이트 블록**(0이면 검사가 안 도는 것이다)
     def walk(node, path, fname):
         if isinstance(node, dict):
             keys = {k.lower() for k in node}
@@ -450,6 +475,7 @@ def scan_gate_reachability(reports: dict[str, dict]) -> list[dict]:
             leaf = path.lower().split(".")[-1].split("[")[0]
             looks_gate = leaf in ("gate", "gates", "게이트", "criterion", "criteria")
             if looks_gate and isinstance(node, dict):
+                seen.append(f"{fname}:{path}")
                 if not ({"reachability", "oracle", "도달"} & keys):
                     flags.append({"path": f"{fname}:{path}", "val": sorted(keys)[:6],
                                   "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 "
@@ -461,6 +487,9 @@ def scan_gate_reachability(reports: dict[str, dict]) -> list[dict]:
                 walk(v, f"{path}[{i}]", fname)
     for fname, rep in reports.items():
         walk(rep, "", fname)
+    flags += _cover("scan_gate_reachability", "게이트 블록", len(seen), len(flags),
+                    note="덮은 곳: " + (", ".join(seen) if seen else "없음")
+                         + f" (원장 {len(reports)}개 훑음)")
     return flags
 
 
@@ -477,8 +506,10 @@ def scan_zero_denominator(root: Path) -> list[dict]:
     import re
     pat = re.compile(r"/\s*Math\.max\(\s*1\s*,")
     flags = []
+    n_targets = 0                         # **훑은 하네스 수**(0이면 거름이 깨진 것이다)
     base = root / "web" / "test"
     if not base.exists():
+        flags += _cover("scan_zero_denominator", "하네스 파일", 0, 0, note="web/test 없음")
         return flags
     for f in sorted(base.rglob("*.ts")):
         try:
@@ -487,6 +518,7 @@ def scan_zero_denominator(root: Path) -> list[dict]:
             continue
         if "stage0" not in txt and "writeFileSync" not in txt:
             continue                      # 원장을 안 쓰는 파일은 대상이 아니다
+        n_targets += 1
         hits = [i for i, line in enumerate(txt.splitlines(), 1) if pat.search(line)]
         if hits:
             # **파일당 한 건으로 묶는다.** 70건을 그대로 내면 검사가 소음이 되고
@@ -494,6 +526,8 @@ def scan_zero_denominator(root: Path) -> list[dict]:
             flags.append({"path": f"{f.relative_to(root)}", "val": f"{len(hits)}건 (줄 {hits[:5]})",
                           "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 "
                                   "`null`을 낸다. 표시용 보호면 그렇게 적는다"})
+    flags += _cover("scan_zero_denominator", "하네스 파일", n_targets, len(flags),
+                    note="원장을 쓰는 `web/test/**.ts`만 본다")
     return flags
 
 
@@ -541,6 +575,7 @@ def main():
             f["path"] = f"{p.name}:{f['path']}"
             flags.append(f)
 
+    COVERAGE.clear()                                   # **덮은 대상 수**를 이번 실행 것만 남긴다
     stale = scan_stale_constants(outdir, reports)      # 하류 재측정 누락 (재발 유형 자동 탐지)
     flags += stale
     stale_m = scan_stale_metrics(outdir, reports)      # **정의** 낡음 (상수 스냅샷이 못 잡는 종류)
@@ -560,6 +595,9 @@ def main():
            "n_unread_fields": len(unread),
            "field_reads": SCANNED_FIELDS,
            "sweeps": SWEEP_SCANNED,
+           # **각 자동 검사가 덮은 대상 수.** 0이면 위 flags에 함께 뜬다 —
+           # 플래그 0건이 "깨끗함"인지 "안 돎"인지 가르는 것은 이 수뿐이다(#32).
+           "coverage": COVERAGE,
            "constants_hash": (reports.get("constants.json") or {}).get("hash"),
            "metrics_hash": (reports.get("metrics.json") or {}).get("hash"),
            "scanned": [p.name for p in sorted(outdir.glob("*.json")) if p.name not in skip],
@@ -573,6 +611,10 @@ def main():
     print(f"자기검증 플래그 {len(flags)}건 (스캔 {len(out['scanned'])}개 산출물):")
     for f in flags:
         print(f"  ! {f['path']} = {f['val']}  - {f['flag']}")
+    # **덮는 대상 수를 함께 낸다** — 0건이 깨끗함인지 안 돎인지는 이것으로만 갈린다(#32).
+    print("자동 검사가 덮는 대상:")
+    for c in COVERAGE:
+        print(f"  · {c['scan']}: {c['unit']} {c['targets']}개 · 플래그 {c['hits']}건")
 
 
 if __name__ == "__main__":

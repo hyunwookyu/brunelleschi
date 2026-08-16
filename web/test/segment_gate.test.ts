@@ -30,6 +30,7 @@ import { viewPlaceCtx, toView, projectInView, type ViewPose } from "../src/s3d/v
 import { scene, groundPoint, boxEdges, faceDiagonals, stat,
          type Scene, type TrueEdge } from "./scene3d.js";
 import { constantsSnapshot } from "./constants.js";
+import { gate } from "./gate.js";
 import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -213,6 +214,17 @@ describe("G-A.1 중간 판정 — 세그먼트 기하가 옛 배치 계층보다
     const base = 0.03;   // 본문에 인용하는 임계
     const report = {
       spec: "G-A.1 중간 판정 — 세그먼트 기하가 옛 배치 계층보다 나은가. **이번 전환의 유일한 중단 조건.**",
+      gate: gate({
+        registered: "같은 합성 조건에서 옛 값 대비 — 배치율(첫 시점 0.846 · 돌린 시점 0.419) 상승 · "
+          + "사선 오배정(0.158) 유지 이하 · 조용히 틀린 배치(0.057 / 0.655) 하락. "
+          + "측정 전에 박았다(#26).",
+        reachability: "**옛 값이 같은 판정 계층에서 나왔다** — `classifyStroke`를 같은 설정으로 쓰므로 "
+          + "갈리는 것이 기하 계층뿐임이 보장되고, 그래서 대조가 도달 가능성의 자리다"
+          + "(`fix_load.json@1671e540`, 재실행 없이 인용). ⚠ **다른 하네스의 값이므로 대역으로 "
+          + "쓰지 않는다**(#27) — 자릿수 대조다.",
+        status: "**폐기된 계획(G)의 게이트다.** 사유는 `docs/archive/segment_plan.md` 머리말에 있다 — "
+          + "실패한 것은 기하 표현이 아니라 순서였다. 원장은 대조를 위해 남긴다.",
+      }),
       constants: constantsSnapshot(),
       metric_defs: metricsSnapshot(),
       seg_tol: SEG_TOL,

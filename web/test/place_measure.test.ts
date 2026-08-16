@@ -27,6 +27,7 @@ import {
 } from "./scene3d.js";
 import type { Pt2 } from "../src/s3d/camera.js";
 import { constantsSnapshot } from "./constants.js";
+import { gate } from "./gate.js";
 import { metricsSnapshot } from "./metrics.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -491,6 +492,18 @@ describe("S-3 측정", () => {
       spec: "S-3 §4.5 미리보기 ↔ 확정. AS-3(유일한 중단 조건)의 임계는 D-S6에 **측정 전에** 박혀 있다.",
       constants: constantsSnapshot(),
       metric_defs: metricsSnapshot(),
+      gate: gate({
+        registered: "AS-3(당시 유일한 중단 조건) — 접합 이동량이 획 길이 대비 중앙 0.05 · "
+          + "p90 0.15 이하. **측정 전에** D-S6에 박혀 있다(#26).",
+        reachability: "⚠ **이 기준은 구조적으로 넘기 쉽다** — 접합은 접합 반경 안에서만 일어나므로 "
+          + "이동량이 `join_ratio × 화면대각`(17.6px)을 못 넘고, 크게 어긋난 획은 큰 이동량이 "
+          + "아니라 **미배치로 새어 나간다**. 즉 통과가 배제하는 것이 좁다. 나머지 절반을 "
+          + "`unanchored_threshold`가 맡는데 **그 값(0.2)은 측정 후에 정했고**(post_hoc) "
+          + "판정의 근거로 쓰지 않는다 — 하는 일은 **발동 가능한 관측 조합이 있음을 보이는 것** "
+          + "하나이고, 끝점 겨냥 오차 2%·4%에서 실제로 발동한다.",
+        status: "살아 있다(S 계열). ⚠ **중단 조건이 도구가 아니라 입력에 걸린다** — 이 방식은 "
+          + "끝점 겨냥 오차가 그림 대각의 1% 근처일 때 성립하고, 숙련자의 그 값은 **미측정**이다(AS-1).",
+      }),
       threshold: {
         median: 0.05, p90: 0.15,
         basis: "획 길이(호 길이) 대비 화면 좌표차. 화면 대각이 아니다 — 대각 대비로 하면 짧은 획에서 한없이 관대해진다.",
