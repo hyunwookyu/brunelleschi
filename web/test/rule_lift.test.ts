@@ -65,7 +65,10 @@ describe("규칙 → 카메라 → 3D (전환이 실제로 되는가)", () => {
   it("깊이선 **하나**에서 1점 투시가 확정된다", () => {
     const { cam, ctx, events } = run();
     expect(cam.order()).toBe(1);
-    expect(events.slice(0, 4)).toEqual(["screen_axis", "support", "screen_axis", "support"]);
+    // ⚠ **세 번째가 `screen_axis`에서 `support`로 바뀌었다**(2026-08-17 A-2):
+    // 수직축은 **처음부터 화면 수직**이라 세로선이 축을 새로 세우지 않고 **지지선으로 센다**.
+    // 옛 판은 그 선언을 기다렸고, 그래서 **첫 획부터 세로선이 안 그어졌다**(A-1).
+    expect(events.slice(0, 4)).toEqual(["screen_axis", "support", "support", "support"]);
     // **지평선이 처음부터 있으므로 첫 깊이선에서 바로 선다**(2026-08-16 2차 지시).
     // 옛 판은 여기가 `waiting`이었고 두 번째 깊이선을 기다렸다
     expect(events[4]).toBe("vp_fixed");

@@ -1,7 +1,7 @@
 {
   "spec": "가림 정합성의 **타당성 측정**. 구현이 아니다 — 앱 동작을 바꾸지 않는다.",
   "constants": {
-    "hash": "1b6175a4",
+    "hash": "c524c154",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -49,7 +49,8 @@
       "RULE_TOL": {
         "screen_axis_deg": 4,
         "depth_min_deg": 8,
-        "vertical_ask_deg": 45
+        "vertical_ask_deg": 45,
+        "min_vp_len_px": 40
       },
       "SNAP_TOL_AXIS": {
         "ambiguous_deg": 6

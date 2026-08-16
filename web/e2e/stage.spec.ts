@@ -75,7 +75,10 @@ async function setup(page: Page, opts: { boxes?: 1 | 2 } = {}) {
     S.cam.loadRules({
       slots: [0, 1, 2].map(ax => ({
         kind: "vp", at: [sc.vps[ax][0], sc.vps[ax][1]],
-        source: ax === 0 ? "two_lines" : ax === 1 ? "horizon_x_line" : "orthocenter",
+        // ⚠ `orthocenter`는 **더 이상 만들어지지 않는다**(2026-08-17 A-4) — 수직 소실점은
+        // 사용자가 그은 기울어진 세로선에서 나온다. 여기서는 **참값을 직접 넣는 것**이므로
+        // 그 출처로 적는다(하네스는 "사람이 완벽히 그은 극한"을 흉내 낸다).
+        source: ax === 0 ? "two_lines" : ax === 1 ? "horizon_x_line" : "tilted_vertical",
         support: 2,
       })),
       horizon: sc.vps[0][1],
@@ -1660,7 +1663,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
       + "빈도는 `order_undo.json`이 216장면으로 잰다(내려감 176/216 · 스냅 끊김 94/216).",
     where_in_population: "⚠ **이 픽스처는 모집단의 꼬리 쪽이다.** 스냅 끊김 4/5 = 0.80인데 "
       + "모집단은 295/1676 = **0.176**이고, 장면당 끊김은 중앙 **0** · p90 **4**다"
-      + "(`order_undo.json@1b6175a4`) — 즉 **p90 자리**다. "
+      + "(`order_undo.json@c524c154`) — 즉 **p90 자리**다. "
       + "표시 경로를 지나려면 그래야 하지만, **이 수를 대표값으로 인용하면 안 된다.**",
     off_grid: "⚠ **격자 밖이 셋이다**(#12): jitter 0.04(격자 {0, 0.01, 0.03, 0.05}) · "
       + "seed 4242(격자 {1..6}) · **skew 0.37**(하네스는 0.12 — 3배다). "

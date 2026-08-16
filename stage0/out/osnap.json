@@ -308,7 +308,7 @@
     "note": "⚠ **이 항목이 등록한 게이트다**(#41). 대상이 참 3D라 **상한**이다."
   },
   "constants": {
-    "hash": "1b6175a4",
+    "hash": "c524c154",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -356,7 +356,8 @@
       "RULE_TOL": {
         "screen_axis_deg": 4,
         "depth_min_deg": 8,
-        "vertical_ask_deg": 45
+        "vertical_ask_deg": 45,
+        "min_vp_len_px": 40
       },
       "SNAP_TOL_AXIS": {
         "ambiguous_deg": 6

@@ -16,7 +16,7 @@
 // 규칙이 낸 소실점을 `vp_point`로 넣으면 그대로 동작한다. 바뀐 것은 **무엇이 그 점을 정하는가**다.
 import { ConstraintAccumulator, type AxisId } from "../s3d/constraints.js";
 import {
-  newRuleState, cloneRuleState, stepRule, deriveVertical, vpsOf, axisDirsOf, defaultHorizon,
+  newRuleState, cloneRuleState, stepRule, vpsOf, axisDirsOf, defaultHorizon,
   horizonAdjustable, withHorizon, orderOfState, axisOfStroke, RULE_TOL,
   type RuleState, type RuleEvent, type RLine,
 } from "../s3d/vpRules.js";
@@ -77,19 +77,27 @@ export class CamState {
       this.rules = cloneRuleState(this.rules);
       this.rules.horizon = oldH > 2 ? (this.rules.horizon * s[1]) / oldH : defaultHorizon(s);
     }
-    // 창이 커지면 **유도된 수직 소실점의 전제(주점 = 이미지 중심)가 움직인다** —
-    // 유도값은 다시 낸다. 그은 선에서 나온 소실점은 그대로 둔다(그것은 그림이 정한 값이다).
-    if (this.rules.slots[2]?.kind === "vp" && this.rules.slots[2].source === "orthocenter") {
-      this.rules = cloneRuleState(this.rules);
-      this.rules.slots[2] = null;
-      this.rules = deriveVertical(this.rules, s);
-    }
+    // ⚠⚠ **수심 유도값을 다시 내던 갈래를 뺐다**(2026-08-17 A-4). 그 갈래는 "창이 커지면
+    // 주점 = 이미지 중심 전제가 움직이므로 유도값을 다시 낸다"였는데, **유도를 없앴으므로
+    // 다시 낼 수단이 없다** — 남겨 두면 슬롯을 비우기만 하고 **수직 소실점이 조용히 사라진다**
+    // (종단 확인이 실제로 잡았다: 창을 줄였다 되돌리면 3점이 2점이 되고 3D가 화면 밖으로 갔다).
+    // 지금 `slots[2]`의 유한 소실점은 **사용자가 그은 선에서 나온 값**이므로 창 크기와 무관하다.
     this.apply();
   }
 
   /** 규칙 상태 → 누산기. **교체다**(쌓이면 안 된다). */
   apply(): void {
     const vps = vpsOf(this.rules);
+    // **2점 투시에서 지평선은 주점 y다**(2026-08-17 A-4). 피치가 아니다:
+    // 수직축이 화면 수직이면 피치는 정의상 0이고, 그때 지평선 y = 주점 y가 **강제된다**
+    // (이론서 3.1 + 롤 0). 지평선을 화면 아래쪽에 두는 건축 투시는 **피치가 아니라
+    // 주점이 내려간 것**(시프트 렌즈와 같은 자리)이다.
+    //
+    // ⚠ 옛 판은 이 자리를 안 세웠고 주점이 언제나 이미지 중심이었다 — 그래서 지평선을
+    // 끌면 f² = −(V₁−P)·(V₂−P)에 `(h − c_y)²`가 얹혀 f가 **작아졌다**(화각이 넓어졌다).
+    // 3점(수직 소실점이 유한)에서는 주점이 **수심**이므로 이 값이 안 쓰인다(`recoverCamera`).
+    this.acc.add({ kind: "horizon", a: [0, this.rules.horizon], b: [1, this.rules.horizon] });
+
     for (const ax of [0, 1, 2] as AxisId[]) {
       this.acc.setLines(ax, []);                     // 선 제약은 쓰지 않는다 — 규칙이 점을 준다
       const v = vps[ax];

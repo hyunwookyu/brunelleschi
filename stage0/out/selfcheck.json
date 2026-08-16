@@ -1,5 +1,5 @@
 {
-  "n_flags": 1821,
+  "n_flags": 1817,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -83,21 +83,6 @@
     },
     {
       "path": "axis_snap.json:by_arm_order.placebo_wrong_horizon__drawn.silent_0_2_rate",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "axis_snap.json:by_arm_order.placebo_wrong_horizon__drawn.ambiguous_right",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "axis_snap.json:by_arm_order.placebo_wrong_horizon__drawn.ambiguous_accuracy",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "axis_snap.json:by_arm_order.placebo_wrong_horizon__grouped.silent_0_2_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -1929,11 +1914,6 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "horizon_pitch.json:headline.center|grouped.order3_rate",
-      "val": 0,
-      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
-    },
-    {
       "path": "horizon_pitch.json:headline.center|grouped.horizon_offset_px_median",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
@@ -1942,11 +1922,6 @@
       "path": "horizon_pitch.json:headline.center|grouped.horizon_offset_px_median",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "horizon_pitch.json:headline.center|drawn.order3_rate",
-      "val": 0,
-      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "horizon_pitch.json:headline.center|drawn.horizon_offset_px_median",
@@ -5450,12 +5425,17 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "rule_camera.json:by_jitter.jit_0.rule_drawn.camera_ok_rate",
+      "path": "rule_camera.json:by_jitter.jit_0.005.rule_drawn.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "rule_camera.json:by_jitter.jit_0.005.rule_drawn.camera_ok_rate",
+      "path": "rule_camera.json:by_composition.2pt_yaw35_pitch0.rule_drawn.camera_ok_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_camera.json:by_composition.1pt_yaw0_pitch0.rule_grouped.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -9046,7 +9026,7 @@
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
     },
     {
-      "path": "web\\e2e\\stage.spec.ts:97:pixelGap",
+      "path": "web\\e2e\\stage.spec.ts:100:pixelGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
@@ -9143,7 +9123,7 @@
     {
       "field": "axis",
       "writes": 5,
-      "reads": 84
+      "reads": 83
     },
     {
       "field": "rep",
@@ -9179,7 +9159,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 179,
+      "files_scanned": 181,
       "exts_declared": [
         ".md",
         ".py",
@@ -9193,7 +9173,7 @@
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 120,
+      "files_scanned": 122,
       "exts_declared": [
         ".ts"
       ],
@@ -9203,7 +9183,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 179,
+      "files_scanned": 181,
       "exts_declared": [
         ".md",
         ".py",
@@ -9217,7 +9197,7 @@
     },
     {
       "sweep": "external_data",
-      "files_scanned": 76,
+      "files_scanned": 78,
       "exts_declared": [
         ".ts"
       ],
@@ -9244,7 +9224,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 99,
+      "targets": 105,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
@@ -9263,7 +9243,7 @@
       "note": "원장을 쓰는 `web/test/**.ts`만 본다"
     }
   ],
-  "constants_hash": "1b6175a4",
+  "constants_hash": "c524c154",
   "metrics_hash": "a45078a5",
   "scanned": [
     "axis_judgement.json",

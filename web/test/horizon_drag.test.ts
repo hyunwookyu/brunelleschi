@@ -56,24 +56,53 @@ describe("지평선 끌기 — 조작 가능성", () => {
   });
 });
 
-describe("지평선 끌기 — 3점 투시가 초기부터 선다 (QUESTIONS g)", () => {
-  it("지평선이 중앙이면 2점까지다 — 피치 0에서 수직축은 무한원이다(이론서 2.2)", () => {
+/**
+ * ⚠⚠ **2026-08-17 A-4가 이 절의 계약을 뒤집었다.**
+ *
+ * 옛 계약: "지평선을 중앙에서 옮기면 **같은 두 깊이선으로 3점이 선다**"(수심 유도가 산다).
+ * 그것이 **결함으로 보고됐다** — 사용자는 2점을 그리고 있는데 지평선 높이만으로 도구가
+ * "내려다보는 뷰"라고 정해 버리고, 그 결과 **수직 소실점 위쪽에서 축 스냅이 안 걸렸다**.
+ *
+ * 새 계약: **2점에서 피치 판정은 없다.** 수직축은 화면 수직이고, 3점은 사용자가
+ * **기울어진 수직선을 수직축이라고 답할 때만** 선다. 지평선 끌기는 남지만 그 뜻이
+ * **주점 y**로 바뀐다(피치 0에서 지평선 = 주점 y가 강제된다, 이론서 3.1).
+ *
+ * ⚠ **이 시험은 회귀 팔이다** — 옛 동작을 되살리면(=`deriveVertical`이 지평선만으로 발화하면)
+ * 아래 첫 시험이 **실제로 깨진다**(A-4를 고치기 전 상태에서 확인했다: 차수 3 · `orthocenter`).
+ */
+describe("2점에서는 피치를 판정하지 않는다 (2026-08-17 A-4)", () => {
+  it("지평선이 중앙이면 2점이고 수직축은 화면 수직이다", () => {
     const st = feed(newRuleState(SZ), [DEPTH_A, DEPTH_B]);
     expect(st.horizon).toBe(CENTER);
     expect(orderOfState(st)).toBe(2);
-    expect(st.slots[2]).toBeNull();
+    expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
   });
 
-  it("지평선을 올리면 **같은 두 획으로 3점이 선다** — 수심 유도가 산다(6.3)", () => {
+  it("**회귀** — 지평선을 올려도 3점이 안 된다. 같은 두 획이면 같은 2점이다", () => {
     const st = feed(withHorizon(newRuleState(SZ), 200, SZ), [DEPTH_A, DEPTH_B]);
+    expect(st.horizon).toBe(200);
+    expect(orderOfState(st)).toBe(2);
+    expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
+  });
+
+  /**
+   * **양성 채널**(#30) — 위 둘이 "3점이 아무 데서도 안 선다"는 뜻이면 판정이 아니다.
+   * 3점은 **사용자가 기울어진 수직선을 수직축이라 답할 때** 실제로 선다.
+   */
+  it("**양성** — 기울어진 수직선을 수직축이라 답하면 3점이 선다", () => {
+    let st = feed(withHorizon(newRuleState(SZ), 200, SZ), [DEPTH_A, DEPTH_B]);
+    // 화면 수직에서 **20.1° 기운 선** — 올려다보는 구도의 세로 모서리.
+    // ⚠ ① `depth`(≥8°)여야 선 하나로 3점을 선언한다(4~8°는 손 오차 대역이다)
+    //    ② 소실점 삼각형이 **예각**이어야 한다(6.5) — V₁·V₂가 280px이므로 V₃는 지평선에서 140px 밖
+    const r = stepRule(st, { a: [700, 300], b: [590, 600] }, SZ, "vertical");
+    st = r.state;
     expect(orderOfState(st)).toBe(3);
     const s2 = st.slots[2];
     expect(s2?.kind).toBe("vp");
-    // **유도임을 그대로 낸다** — 측정이 아니라 가정의 귀결이다(#5 · 이론서 6.4)
     if (s2 && s2.kind === "vp") {
-      expect(s2.source).toBe("orthocenter");
-      // 내려다보는 구도(지평선이 중앙 위) → 수직 소실점은 지평선 **아래**다(`horizon.ts` 머리말)
-      expect(s2.at[1]).toBeGreaterThan(200);
+      // **측정이다** — 그은 선에서 읽었고, 가정은 주점 x = 이미지 중심 하나뿐이다
+      expect(s2.source).toBe("tilted_vertical");
+      expect(s2.at[0]).toBeCloseTo(SZ[0] / 2, 6);
     }
   });
 });

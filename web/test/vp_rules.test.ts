@@ -42,8 +42,9 @@ describe("유일한 판단 — 깊이인가 화면 가로세로인가", () => {
     expect(classifyLine([0, 100], [400, 100 + 400 * t]).kind).toBe("ambiguous");
     const r = stepRule(newRuleState(SZ), line([0, 100], [400, 100 + 400 * t]), SZ);
     expect(r.event.type).toBe("ask");
-    // **상태가 안 움직인다** — 답이 오기 전에는 규칙이 아무것도 안 한다
-    expect(r.state.slots).toEqual([null, null, null]);
+    // **상태가 안 움직인다** — 답이 오기 전에는 규칙이 아무것도 안 한다.
+    // ⚠ 초기 상태는 이제 `[null, null, 화면 수직]`이다(2026-08-17 A-2)
+    expect(r.state.slots).toEqual(newRuleState(SZ).slots);
   });
 
   it("각차는 0~90에 든다", () => {
@@ -156,26 +157,37 @@ describe("c. 두 번째 소실점도 같은 지평선 위다", () => {
     expect(r.state.slots[1]).toBeNull();
   });
 
-  it("화면 가로축 선언은 두 번째 소실점이 **대체한다** — 차수 승격이다", () => {
+  /**
+   * ⚠⚠ **계약이 뒤집혔다**(2026-08-17 B). 옛 판은 두 번째 수평 소실점이 화면 가로축 선언을
+   * **밀어냈다**(`promoted`, 1점 → 2점). 지시문이 그것을 없앴다: **"되돌리기를 만들지 않는다.
+   * 잘못 그었으면 처음부터 다시 그린다."** 화면 가로선을 그은 것은 **1점 투시를 선언한 것**이고
+   * 그 뒤의 대각선은 전부 그 하나뿐인 깊이축이다.
+   *
+   * 이 시험이 그 **회귀 팔**이다 — 대체를 되살리면 여기가 먼저 깨진다.
+   */
+  it("**회귀** — 화면 가로축 선언은 두 번째 소실점이 **못 밀어낸다**(B)", () => {
     let st = feed([[line([0, 100], [400, 100])], [line([100, 50], [100, 500])]]);
     st = feed([[seg(P0, V1)]], st);
     expect(st.slots[0]).toMatchObject({ kind: "screen" });
     const r = stepRule(st, seg(P0, V2), SZ);
-    expect(r.event.type).toBe("promoted");
-    expect(orderOfState(r.state)).toBe(2);
+    expect(r.event.type).toBe("rejected");
+    expect(orderOfState(r.state)).toBe(1);
+    expect(r.state).toBe(st);                          // **같은 객체** — 조용히 안 바꾼다
   });
 });
 
-describe("d. 세 번째는 수심 조건으로 **유도된다** (이론서 6.3)", () => {
+describe("d. 세 번째는 **사용자가 그은 기울어진 수직선**에서 나온다 (2026-08-17 A-4)", () => {
   const H = SZ[1] / 2;
   /**
-   * ⚠ **유도는 지평선이 주점 높이면 `null`이다 — 그것이 옳다**(이론서 2.2).
-   * `P_y = h`는 **피치 0**이고 그때 수직축은 화면 평행(무한원)이라 소실점이 없다.
-   * 기본 지평선이 화면 중앙(피치 0)이므로 **초기 스케치는 1점·2점뿐이고 3점은 궤도 뒤다**
-   * (사람 지시 2-d: 지평선 위치는 카메라 피치가 정하고 궤도로 바뀐다).
-   * 아래 둘은 **피치가 걸린 카메라**를 흉내 내려고 지평선을 옮겨 둔다.
+   * ⚠⚠ **이 절의 계약이 뒤집혔다.** 옛 판은 수평 소실점 둘 + 주점 가정에서 V₃를
+   * **수심으로 유도**했고(이론서 6.3), 그러면 **지평선 높이가 곧 3점 여부**가 됐다 —
+   * 사용자가 2점을 그리는 동안 도구가 피치를 정하는 것이고 그것이 A-4의 결함 보고다.
+   *
+   * 새 계약: V₃ = **그은 기울어진 수직선 ∩ (x = 이미지 중심)**. 가정은 주점 x 하나뿐이고
+   * 나머지는 측정이다. 옛 수심 항등(6.4)은 `horizon.test.ts`가 계속 재현한다
+   * (`vpVerticalFromOrthocenter`는 `horizon.ts`에 남는다 — 폐기 코드 규칙).
    */
-  const HP = 250;                                       // 피치가 걸린 지평선
+  const HP = 250;                                       // 지평선(2점에서는 주점 y다)
   const V1: Pt2 = [-600, HP], V2: Pt2 = [1500, HP];
   const seg = (from: Pt2, to: Pt2, t = 0.25): RLine =>
     line(from, [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t]);
@@ -187,39 +199,53 @@ describe("d. 세 번째는 수심 조건으로 **유도된다** (이론서 6.3)"
     expect(orderOfState(st)).toBe(2);
   });
 
-  it("선언이 없으면 두 수평 소실점에서 유도한다 (피치가 걸린 카메라)", () => {
-    let st = newRuleState(SZ);
-    st.slots[0] = { kind: "vp", at: V1, source: "horizon_x_line", support: 2 };
-    st.horizon = HP;
-    st.slots[1] = { kind: "vp", at: V2, source: "horizon_x_line", support: 1 };
-    st = deriveVertical(st, SZ);
-    expect(st.slots[2]).toMatchObject({ kind: "vp", source: "orthocenter" });
+  /**
+   * **회귀 팔**(A-4). 옛 코드를 되살리면 이 시험이 실제로 깨진다 — 고치기 전 상태에서
+   * 이 입력이 `{kind:"vp", source:"orthocenter"}`를 냈다.
+   */
+  it("**회귀** — 선언이 없으면 유도하지 않는다. 지평선이 어디 있든 수직축은 화면 수직이다", () => {
+    for (const h of [SZ[1] / 2, HP, 480]) {
+      let st = newRuleState(SZ);
+      st.slots[0] = { kind: "vp", at: [V1[0], h], source: "horizon_x_line", support: 2 };
+      st.slots[1] = { kind: "vp", at: [V2[0], h], source: "horizon_x_line", support: 1 };
+      st.horizon = h;
+      st = deriveVertical(st, SZ);
+      expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
+      expect(orderOfState(st)).toBe(2);
+    }
   });
 
-  /**
-   * ⚠⚠ **이것은 측정이 아니라 항등이다**(PITFALLS #5 자기참조 유형 3 · 이론서 6.4).
-   *
-   * 유도된 V₃는 "두 소실점 + 주점 가정"의 **귀결**이므로, 그것을 넣어 f를 다시 내면
-   * 2점 해와 **같은 값**이 나온다. 그러므로 **임계를 걸지 않고 항등임을 적는다** —
-   * 이 시험이 확인하는 것은 정확도가 아니라 **우리 구현이 그 항등을 지킨다**는 것뿐이다.
-   * (자유도가 이미 주점 가정에서 소진됐다. 새 정보가 아니다.)
-   */
-  it("유도된 V₃로 낸 f는 두 소실점 해와 항등으로 같다 (**설계 보장** — 측정이 아니다)", () => {
+  /** **양성 채널**(#30) — 위가 "3점이 아무 데서도 안 선다"면 판정이 아니다. */
+  it("**양성** — 기울어진 수직선을 답하면 그 선에서 V₃가 나온다 (측정이다)", () => {
     let st = newRuleState(SZ);
     st.slots[0] = { kind: "vp", at: V1, source: "horizon_x_line", support: 2 };
-    st.horizon = HP;
     st.slots[1] = { kind: "vp", at: V2, source: "horizon_x_line", support: 1 };
-    const two = recoverCamera([V1, V2, null], SZ);
+    st.horizon = HP;
+    // 화면 수직에서 **13.7° 기운** 선. ⚠ 각을 아무렇게나 못 고른다:
+    // ① `depth`(≥8°)여야 **선 하나로** 3점을 선언한다 — 4~8°는 손 오차 대역이라 안 받는다
+    // ② 소실점 삼각형이 **예각**이어야 카메라가 성립하고(6.5), V₁·V₂가 2100px 벌어져 있으면
+    //    V₃는 지평선에서 **1050px 넘게** 떨어져야 한다((V₁−V₃)·(V₂−V₃) > 0).
+    const a: Pt2 = [700, 550], b: Pt2 = [612, 910];
+    st.verticalLines.push(line(a, b));
     st = deriveVertical(st, SZ);
+    expect(st.slots[2]).toMatchObject({ kind: "vp", source: "tilted_vertical" });
+    const v3 = (st.slots[2] as { at: Pt2 }).at;
+    expect(v3[0]).toBeCloseTo(SZ[0] / 2, 6);            // 주점 x = 이미지 중심 가정(16.2)
+    // **그은 선 위에 있다** — 유도가 아니라 그 선에서 읽은 값이다
+    const dist = Math.abs((v3[0] - a[0]) * (b[1] - a[1]) - (v3[1] - a[1]) * (b[0] - a[0]))
+               / Math.hypot(b[0] - a[0], b[1] - a[1]);
+    expect(dist).toBeLessThan(1e-6);
+    // 3점 카메라가 실제로 선다 — 주점은 **수심**이고 f는 6.3에서 나온다
     const three = recoverCamera(vpsOf(st), SZ);
     expect(three.ok).toBe(true);
-    expect(three.f!).toBeCloseTo(two.f!, 6);
-    // 축 방향도 같은 것을 가리킨다 — 유도값은 `d₁ × d₂`의 상이다
-    const P = two.principalPoint!, f = two.f!;
-    const d1 = unit3(axisDirection(V1, P, f)), d2 = unit3(axisDirection(V2, P, f));
-    const d3 = axisDirection((st.slots[2] as { at: Pt2 }).at, P, f);
-    expect(Math.min(angleBetween(d3, cross3(d1, d2) as Vec3),
-                    angleBetween(d3, cross3(d2, d1) as Vec3))).toBeLessThan(1e-6);
+    expect(three.fSource).toBe("orthocenter(6.3)");
+    // 세 축이 서로 직교한다 — 카메라가 실제로 성립한다는 뜻이다(6.3·6.5)
+    const P = three.principalPoint!, f = three.f!;
+    const [d1, d2, d3] = vpsOf(st).map(v => unit3(axisDirection(v!, P, f)));
+    for (const [u, v] of [[d1, d2], [d2, d3], [d1, d3]] as [Vec3, Vec3][]) {
+      expect(Math.abs(angleBetween(u, v) - 90)).toBeLessThan(1e-6);
+    }
+    expect(cross3(d1, d2).length).toBe(3);              // 사용한다 — 죽은 import를 안 남긴다
   });
 });
 
@@ -244,16 +270,6 @@ describe("획 → 축 (규칙이 이미 정해 뒀다)", () => {
     expect(axisOfStroke(towards(V2), st()).axis).toBe(1);
   });
 
-  // **피치 0에서는 수직축이 무한원이다** — 유도가 `null`을 내는 것이 옳다(이론서 2.2).
-  // 기본 지평선이 화면 중앙이므로 **초기 스케치는 1점·2점뿐이다**(3점은 궤도 뒤다).
-  it("지평선이 주점 높이면 수직 소실점을 안 만든다 (피치 0 = 2점 투시)", () => {
-    const H0 = SZ[1] / 2;
-    let s0 = newRuleState(SZ);
-    s0.slots[0] = { kind: "vp", at: [-600, H0], source: "horizon_x_line", support: 2 };
-    s0.slots[1] = { kind: "vp", at: [1500, H0], source: "horizon_x_line", support: 1 };
-    s0 = deriveVertical(s0, SZ);
-    expect(s0.slots[2]).toBeNull();
-  });
   // **양성 채널**(#30) — 아무 획이나 축을 받으면 판정이 아니다
   it("어느 축도 안 향하는 획은 미분류다 — 조용히 배정하지 않는다", () => {
     expect(axisOfStroke([[300, 600], [700, 120]], st()).axis).toBe("free");

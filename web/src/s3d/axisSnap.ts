@@ -27,6 +27,44 @@
 //   · 화면에는 **고른 것만** 보인다. 움직이면 색과 방향이 함께 바뀐다 — 설명할 필요가 없다
 import { closestPoints, rayThrough, project, add3, mul3, unit3, norm3, type Vec3 } from "./geom3d.js";
 import type { Pt2 } from "./camera.js";
+import { RULE_TOL, type RuleCfg } from "./vpRules.js";
+
+// ---------------------------------------------------------------- 화면 직교 스냅 (A-2)
+
+/**
+ * **화면 가로·세로 스냅 — 카메라와 무관하고 첫 획부터 돈다**(2026-08-17 사람 지시 A-2).
+ *
+ * 화면에 평행한 방향은 소실점이 **무한원**이고(이론서 2.2, c=0), 그 성질은 **어떤 카메라를
+ * 나중에 세우든 유지된다.** 롤이 0이므로 화면 수직도 언제나 수직축이다. 즉 여기에는
+ * **추정할 것이 없다** — 그런데 옛 판은 카메라가 확정될 때까지 아무 스냅도 안 돌렸다
+ * (`frame()`이 `cam.locked`를 요구했다). 그것이 A-1·A-3이 본 증상의 절반이다.
+ *
+ * **이것이 초기 확정의 정확도를 올린다**: 지평선이 화면 수평이므로 규칙 ⓒ(깊이선 × 지평선)의
+ * 교점에서 **한 쪽이 오차 없이 정확**해지고, 손 오차는 깊이선 하나에만 남는다.
+ *
+ * ⚠ **새 임계를 만들지 않는다**(#17) — 각 임계는 `RULE_TOL.screen_axis_deg`(4°)를 그대로 쓴다.
+ * 그 값이 곧 "이 획을 화면 축으로 본다"의 정의이므로, 스냅과 판정이 **같은 자리에서 갈린다**:
+ * 스냅이 걸린 획은 정확히 0°/90°가 되어 `classifyLine`이 반드시 `screen_h`·`screen_v`를 낸다.
+ *
+ * ⚠ **축 스냅(라이노 직교 모드)과 달리 임계가 있다.** 축 스냅은 "언제나 어느 축으로 간다"인데
+ * 여기서 그러면 **깊이선을 못 긋는다**(45° 획이 가로나 세로로 끌려간다). 화면 축 둘만으로는
+ * 평면을 못 덮으므로 임계 밖은 **그대로 둔다**.
+ *
+ * 커서는 **그 축 위로 수직 투영**된다(Rhino·SketchUp 직교 모드 그대로, A-3).
+ */
+export interface ScreenOrtho { dir: "h" | "v"; at: Pt2; deg: number }
+
+export function screenOrthoSnap(a: Pt2, b: Pt2, cfg: RuleCfg = {}): ScreenOrtho | null {
+  const c = { ...RULE_TOL, ...cfg };
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const L = Math.hypot(dx, dy);
+  if (L < 1e-9) return null;
+  const toH = (Math.asin(Math.min(1, Math.abs(dy) / L)) * 180) / Math.PI;
+  const toV = 90 - toH;
+  if (toH <= c.screen_axis_deg) return { dir: "h", at: [b[0], a[1]], deg: toH };
+  if (toV <= c.screen_axis_deg) return { dir: "v", at: [a[0], b[1]], deg: toV };
+  return null;
+}
 
 /** 축 스냅의 임계. **`test/constants.ts`에 등록한다**(D-C4). */
 export const SNAP_TOL_AXIS = {

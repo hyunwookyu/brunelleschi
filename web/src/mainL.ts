@@ -20,9 +20,11 @@ import { setDocSeq, docSeq } from "./ui/doc.js";
 import { nearestSeg, PICK_TOL, type PickSeg } from "./ui/pick.js";
 import { diffPlacement, diffSummary, type PlacementDiff } from "./s3d/promoteDiff.js";
 // **규칙 기반 소실점**(2026-08-16 전면 교체). 검출 초안·가이드·민감도 경로는 전부 빠졌다.
-import { classifyLine, RULE_TOL, type RuleEvent, type RLine, type RuleState } from "./s3d/vpRules.js";
+import { classifyLine, snapAxisTable as snapAxisRows, orderCandidate, RULE_TOL,
+         type RuleEvent, type RLine, type RuleState, type OrderCandidate } from "./s3d/vpRules.js";
 // **축 스냅**(사람 지시 1·3) — 그리는 동안 축으로 강제하고, 모호하면 커서가 가른다
-import { snapToAxis, SNAP_TOL_AXIS, type AxisCand } from "./s3d/axisSnap.js";
+import { snapToAxis, screenOrthoSnap, SNAP_TOL_AXIS,
+         type AxisCand, type ScreenOrtho } from "./s3d/axisSnap.js";
 import { liftAll, LIFT_TOL, type LiftStroke } from "./s3d/lift.js";
 import { snapAt, snapCandidates, staticCandidates, SNAP_TOL, SNAP_LABEL, SNAP_COLOR, SNAP_ICON, SNAP_TIP,
          type SnapCand, type SnapKind, type SnapSeg, type SnapCtx,
@@ -105,6 +107,35 @@ let live: { anchor: SnapCand; axis: 0 | 1 | 2 | null; deg: number | null;
  * 화면 안내와 실제가 갈린 자리다.
  */
 let axisLock: 0 | 1 | 2 | null = null;
+/**
+ * **카메라가 서기 전의 화면 직교 스냅**(2026-08-17 A-2). `live`와 따로 두는 이유는
+ * 그것이 **앵커(3D 스냅)를 요구**하기 때문이다 — 여기에는 3D가 아직 없다.
+ *
+ * ⚠ **카메라가 선 뒤에는 안 돈다.** 그 뒤로는 축 스냅이 방향을 정하고, 화면 가로·세로가
+ * 실제로 축인 상태(1점의 가로·모든 차수의 세로)에서는 `axisDirsOf`가 그 방향을
+ * 후보로 **이미 낸다**(무한원 축, D-L40). 2점에서 화면 가로는 **축이 아니므로**
+ * 거기로 끌어당기면 조용히 틀린 배치가 된다(A-3).
+ */
+let live2d: { a: Pt2; b: Pt2; ortho: ScreenOrtho } | null = null;
+
+/**
+ * **지금 스냅 가능한 축**(A). 판정은 `vpRules.snapAxisTable` 하나가 하고 여기서는
+ * "카메라가 섰는가"만 넘긴다 — 그 답은 `frame()`이다(축 스냅이 실제로 도는 조건과 같다).
+ */
+const snapAxisTable = () => snapAxisRows(cam.rules, !!frame());
+
+/** 획의 양 끝에 화면 직교 스냅을 건다. **그리는 중과 확정이 같은 함수를 부른다**(#17). */
+function orthoOf(pts: Pt2[]): ScreenOrtho | null {
+  if (pts.length < 2) return null;
+  return screenOrthoSnap(pts[0], pts[pts.length - 1]);
+}
+
+/**
+ * 화면 직교 스냅이 걸린 획의 **점열**. §1.1대로 **두 점만 남는다** —
+ * 축 스냅이 커서 위치를 통째로 버리는 것과 같은 자리다(도구가 기하를 정한다).
+ */
+const orthoPts = (pts: Pt2[], o: ScreenOrtho | null): Pt2[] =>
+  (o ? [pts[0], o.at] : pts);
 /**
  * **축 스냅 — 라이노 직교 모드**(사람 지시 1). 기본은 **켬**이고 토글로 끈다.
  * 객체로 두는 이유는 종단 확인이 `S2S`로 읽고 쓰기 때문이다(#17: 앱 경로 하나).
@@ -944,11 +975,9 @@ function ruleText(e: RuleEvent): string {
       return `${AXIS_NAME(e.axis)} **소실점 확정** (${Math.round(e.at[0])}, ${Math.round(e.at[1])})`
            + ` <span class="dim">— ${SRC_NAME[e.source]}</span>`
            + (e.horizonSet ? ` · **지평선 y=${Math.round(e.at[1])} 확정**` : "");
-    case "promoted":
-      return `**차수 승격** — ${AXIS_NAME(e.axis)}가 화면 가로축에서 **소실점**으로 바뀌었습니다`
-           + ` <span class="dim">(${SRC_NAME[e.source]})</span>`;
     case "derived_vertical":
-      return `수직 소실점을 **유도**했습니다 <span class="dim">(수심 조건, 이론서 6.3 — 측정이 아닙니다)</span>`;
+      return `**차수 승격 — 3점 투시**. 수직 소실점을 (${Math.round(e.at[0])}, ${Math.round(e.at[1])})에`
+           + ` 세웠습니다 <span class="dim">(그은 기울어진 수직선에서 읽었습니다 — 측정입니다)</span>`;
     case "waiting":
       return `깊이선 **${e.have}개** — 하나 더 그으면 소실점이 정해집니다`;
     case "support":
@@ -964,6 +993,8 @@ const SRC_NAME: Record<string, string> = {
   two_lines: "깊이선 두 개의 교점",
   horizon_x_line: "깊이선 하나 × 지평선",
   orthocenter: "수심 조건 유도(6.3) — 측정이 아닙니다",
+  // **2026-08-17 A-4** — 3점의 유일한 입구. 옛 유도(`orthocenter`)와 달리 **측정**이다
+  tilted_vertical: "기울어진 수직선 × 화면 중심 세로",
 };
 
 /**
@@ -1006,29 +1037,50 @@ function ruleStatus(): string {
 
 const SRC_SHORT: Record<string, string> = {
   two_lines: "깊이선 둘", horizon_x_line: "지평선×선", orthocenter: "유도 6.3",
+  tilted_vertical: "기운 수직선",
 };
 
-/** **다음에 그을 것 한 줄.** 이것이 없으면 사용자는 왜 대기인지 모른다. */
+/** **차수 후보의 화면 이름**(B: "상태를 명시적으로 만든다"). 판정은 `vpRules`가 한다(#17). */
+const CAND_NAME: Record<OrderCandidate, string> = {
+  initial: "초기 — 축 없음",
+  one_point: "1점 후보 — 깊이축 하나",
+  two_point: "2점 후보 — 깊이축 둘",
+};
+
+/**
+ * **다음에 그을 것 한 줄.** 이것이 없으면 사용자는 왜 대기인지 모른다.
+ *
+ * ⚠ **"화면 세로선을 그으세요"를 뺐다**(A-2) — 수직축은 **처음부터 화면 수직**이고 선언을
+ * 기다리지 않는다. 옛 안내는 사용자에게 **없는 일**을 시키고 있었다.
+ */
 function nextHint(): string {
   const st = cam.rules;
   const n = cam.order();
-  const need: string[] = [];
-  const hasScreenH = ([0, 1] as const).some(i => st.slots[i]?.kind === "screen");
-  if (!st.slots[2]) need.push("<b>화면 세로선</b>(수직축)");
-  if (!hasScreenH && !([0, 1] as const).some(i => st.slots[i])) need.push("<b>화면 가로선</b>(가로축)");
-  if (n === 0) {
-    need.push("<b>깊이선 하나</b>"
-      + ' <span class="dim">(지평선과의 교점이 첫 소실점입니다 — 두 개가 아니라 하나면 됩니다)</span>');
-  } else if (n === 1) {
-    need.push("<b>다른 방향 깊이선 하나</b>"
-      + ' <span class="dim">(지평선과의 교점이 두 번째 소실점입니다 — 세 개가 아니라 하나면 됩니다)</span>');
+  const cand = orderCandidate(st);
+  const standing = !!cam.ctx();
+  const head = `<b>${CAND_NAME[cand]}</b>`;
+  if (cand === "initial") {
+    return `${head} — 다음: <b>화면 가로선</b>이면 **1점 투시**로 갑니다 ·`
+         + " <b>대각선</b>이면 그 교점이 첫 소실점입니다(2점으로 갑니다)"
+         + ' <span class="dim">(화면 세로선은 아무것도 안 좁힙니다 — 수직축은 1점·2점 둘 다에서'
+         + " 화면 수직입니다)</span>";
   }
-  if (!need.length) {
-    return cam.ctx()
-      ? `<b>${n}점 투시</b> — 그을 것이 다 갖춰졌습니다. <b>확정</b>을 누르면 3D로 올라갑니다`
-      : `<b>${n}점 투시</b>인데 카메라가 안 섭니다 — 아래 경고를 보세요`;
+  if (cand === "one_point") {
+    if (n === 0) return `${head} — 다음: <b>깊이선 하나</b>`
+      + ' <span class="dim">(지평선과의 교점이 그 소실점입니다. 이후 대각선은 전부 그 축입니다)</span>';
+    return standing
+      ? `${head} · <b>1점 투시</b>가 섰습니다`
+      : `${head} · 소실점은 섰는데 <b>깊이가 아직 없습니다</b>`
+        + ' <span class="dim">(아래 안내를 보세요)</span>';
   }
-  return `다음: ${need.join(" · ")}`;
+  if (n <= 1) {
+    return `${head} — 다음: <b>다른 방향 깊이선 하나</b>`
+         + ' <span class="dim">(지평선과의 교점이 두 번째 소실점입니다 — 셋이 아니라 하나면 됩니다)</span>';
+  }
+  return standing
+    ? `${head} · <b>${n}점 투시</b>가 섰습니다`
+      + (n === 2 ? ' <span class="dim">(기울어진 세로 모서리를 긋고 <b>수직축</b>이라고 답하면 3점이 됩니다)</span>' : "")
+    : `<b>${n}점 투시</b>인데 카메라가 안 섭니다 — 아래 경고를 보세요`;
 }
 
 // ---------------------------------------------------------------- 2D 레이어 그리기
@@ -1309,6 +1361,28 @@ function drawLivePreview(ctx2: CanvasRenderingContext2D) {
 }
 
 /**
+ * **카메라가 서기 전의 미리보기**(A-2) — 화면 가로·세로로 스냅된 직선.
+ *
+ * `drawLivePreview`와 갈라 두는 이유는 그것이 3D 앵커를 요구하기 때문이다. 여기서는
+ * 화면 좌표 둘뿐이고 3D가 없다 — **없는 판정을 색으로 지어내지 않는다**(A-3):
+ * 축 번호가 아직 없으므로 축 색을 안 쓰고 **회색**으로 그린다.
+ */
+function drawLive2d(ctx2: CanvasRenderingContext2D) {
+  if (!live2d) return;
+  const { a, ortho } = live2d;
+  ctx2.save();
+  ctx2.strokeStyle = "#555"; ctx2.lineWidth = 2.5; ctx2.globalAlpha = 0.55;
+  ctx2.setLineDash([]); ctx2.lineCap = "round";
+  ctx2.beginPath(); ctx2.moveTo(a[0], a[1]); ctx2.lineTo(ortho.at[0], ortho.at[1]); ctx2.stroke();
+  // **무엇에 붙었는지 보인다**(#7) — 표식이 없으면 조용히 끌려간 것이 된다
+  ctx2.globalAlpha = 0.8;
+  ctx2.font = "11px system-ui, sans-serif"; ctx2.fillStyle = "#555";
+  ctx2.fillText(ortho.dir === "h" ? "화면 가로" : "화면 세로",
+                ortho.at[0] + 8, ortho.at[1] - 6);
+  ctx2.restore();
+}
+
+/**
  * 화면 점에서 가장 가까운 획. **2D 대기 획과 3D 획을 함께 본다** —
  * §9.5가 지우려는 것이 "영원히 안 올라가는 획"이지만 지우기는 둘 다에 필요하다.
  *
@@ -1364,6 +1438,7 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   drawPromoteLoss(ctx2);
   drawSnapMark(ctx2);
   drawLivePreview(ctx2);
+  drawLive2d(ctx2);                     // **카메라가 서기 전의 화면 직교 스냅**(A-2)
   if (cam.locked && !stage.isPinned) return;
   drawGrid(ctx2);
   drawPreview(ctx2);
@@ -1438,7 +1513,22 @@ const ink = new InkCanvas(canvas, {
   onLive: (pts) => {
     // **그리는 중**: 앵커는 첫 점의 스냅, 끝점은 커서. 확정과 **같은 함수**를 쓴다(#17)
     const fr = frame(), sc = snapCtx(fr);
-    if (!fr || !sc || tool !== "draw" || pts.length < 2) { live = null; refresh(); return; }
+    // **카메라가 서기 전에도 화면 가로·세로는 스냅된다**(A-2) — 추정할 것이 없기 때문이다.
+    // 이 갈래가 없으면 **첫 획부터 아무 스냅도 안 돈다**(A-1이 본 증상).
+    if (!fr || !sc) {
+      live = null;
+      live2d = (tool === "draw" && pts.length >= 2)
+        ? (() => {
+            const a: Pt2 = [pts[0][0], pts[0][1]];
+            const b: Pt2 = [pts[pts.length - 1][0], pts[pts.length - 1][1]];
+            const o = screenOrthoSnap(a, b);
+            return o ? { a, b, ortho: o } : null;
+          })()
+        : null;
+      refresh(); return;
+    }
+    live2d = null;
+    if (tool !== "draw" || pts.length < 2) { live = null; refresh(); return; }
     const c = fr.ctx;
     const a0: Pt2 = [pts[0][0], pts[0][1]];
     const b0: Pt2 = [pts[pts.length - 1][0], pts[pts.length - 1][1]];
@@ -1459,9 +1549,13 @@ const ink = new InkCanvas(canvas, {
     refresh();
   },
   onStrokeEnd: (stroke) => {
-    const pts = stroke.points.map(p => [p[0], p[1]] as Pt2);
+    const raw = stroke.points.map(p => [p[0], p[1]] as Pt2);
     ink.clear();                         // 잉크 버퍼는 문서가 아니다 — 우리가 그린다
-    if (pts.length < 2 || tool !== "draw") { refresh(); return; }
+    live2d = null;
+    if (raw.length < 2 || tool !== "draw") { refresh(); return; }
+    // **화면 직교 스냅**(A-2). 카메라가 서기 전에만 돈다 — 그 뒤로는 축 스냅이 방향을 정한다.
+    // 미리보기(`onLive`)와 **같은 함수**를 부르므로 보인 대로 놓인다(§11 게이트).
+    const pts = frame() ? raw : orthoPts(raw, orthoOf(raw));
     pushUndo();
     // **승격 요약은 그 전환의 설명이다** — 획을 더 그리면 설명이 낡는다(AS-C7과 같은 형태).
     // 차수 되돌리기 버튼은 남는다 — 그것이 §6.2의 지속 수단이다
@@ -1704,7 +1798,7 @@ function renderAsk(): string {
 
 /**
  * **승격 요약**(L-C.2, §6.2). 승격은 **품질을 올리고 배치를 줄인다**(L-C.1: 형태 오차 중앙
- * 0.1259 → 0.0913 · 배치 −168, `order_promote.json@1b6175a4`). 어느 쪽을 택할지는
+ * 0.1259 → 0.0913 · 배치 −168, `order_promote.json@c524c154`). 어느 쪽을 택할지는
  * 그림마다 다르고 **자동 신호가 없으므로**(AS-L6이 §6.2의 재투영 잔차를 반증했다)
  * 사용자가 정한다. 정하려면 **무엇을 잃었는지 보여야 한다.**
  *
@@ -2052,6 +2146,14 @@ refresh();
                                     .map(x => ({ id: x.id, start: x.snapStart!.kind,
                                                  end: x.snapEnd!.kind, axis: x.axis })),
   live: () => live,
+  /** **화면 직교 스냅**(A-2) — 종단 확인이 앱 경로 그대로 부른다(#17). */
+  live2d: () => live2d,
+  orthoSnap: (a: Pt2, b: Pt2) => screenOrthoSnap(a, b),
+  /**
+   * **지금 스냅 가능한 축**(A: "1·2·3점 각각에서 어느 축이 스냅 가능한지 표"). 화면과
+   * 측정이 같은 함수를 읽는다(#17) — 표가 코드와 갈리면 표가 틀린다.
+   */
+  snapAxes: () => snapAxisTable(),
   axisLock: () => ({ mode: axisLock, resolved: lockedAxis() }),
   setAxisLock: (a: 0 | 1 | 2 | null) => { axisLock = a; relive(); },
   // L-B.6 — 뷰 시스템(§9.2~§9.4). **앱 경로 그대로**를 종단 확인이 부른다(#17)
@@ -2067,6 +2169,8 @@ refresh();
   viewForDrawing,
   // L-C.1 — 차수 승격(§6.1). **앱 경로 그대로**를 종단 확인이 부른다(#17)
   order: () => { const c = cam.ctx(); return c ? orderOf(c.vps, c.imgSize) : null; },
+  /** **차수 후보**(B) — 소실점이 잡히기 전에도 첫 획이 후보를 좁힌다. 앱 경로 그대로(#17). */
+  orderCandidate: () => orderCandidate(cam.rules),
   promoteOrderNow,
   // L-C.2 — 되돌리기 UI(§6.2). **앱 경로 그대로**를 종단 확인이 부른다(#17)
   promoteReport: () => promoteReport && {

@@ -182,7 +182,13 @@ export function recoverCamera(
 
   if (n === 2) {
     const r = fFromTwoVps(finite[0], finite[1], imgSize, opts.principal);
-    const assumption = "주점 = 이미지 중심(이론서 16.2, 가정 W-y) — 미검증";
+    // **주점을 받았으면 그 사실을 그대로 적는다**(2026-08-17 A-4). 앱은 2점에서
+    // `[W/2, 지평선]`을 넣는다 — 피치 0이면 지평선 y = 주점 y가 **강제되므로**(이론서 3.1)
+    // y는 가정이 아니라 그림이 정한 값이고, 남는 가정은 **x = 이미지 중심**뿐이다.
+    // 안 받으면 종전대로 이미지 중심 둘 다 가정이다(Python 기준 구현과 같은 문안).
+    const assumption = opts.principal
+      ? "주점 x = 이미지 중심(이론서 16.2) · y = 지평선(피치 0이면 강제된다, 3.1) — x는 미검증"
+      : "주점 = 이미지 중심(이론서 16.2, 가정 W-y) — 미검증";
     if (!r.ok) {
       return {
         ...base, case: "2pt", ok: false, f: null,
