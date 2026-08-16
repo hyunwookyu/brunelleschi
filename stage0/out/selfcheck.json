@@ -1,5 +1,5 @@
 {
-  "n_flags": 1553,
+  "n_flags": 1552,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -7696,11 +7696,6 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "e2e.json@3df57ac7",
-      "val": "지표 목록이 다르다: fraction, rate",
-      "flag": "**STALE(정의)** — 현재 지표 정의(a45078a5)와 다른 식으로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
-    },
-    {
       "path": "web/src/s3d/stroke.ts:Stroke.layer",
       "val": "쓰기 0 · 읽기 0",
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
@@ -7782,7 +7777,7 @@
     }
   ],
   "n_stale": 0,
-  "n_stale_metrics": 1,
+  "n_stale_metrics": 0,
   "n_unread_fields": 1,
   "field_reads": [
     {

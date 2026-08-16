@@ -157,7 +157,8 @@ HTTP로 뜬다. **Wake Lock과 마이크는 동작하지 않는다**(secure cont
 ### 정적 배포 (GitHub Pages)
 
 `.github/workflows/pages.yml`이 `main`/`master` 푸시에 빌드→배포한다.
-빌드 전에 `tsc`와 `vitest`를 돌리므로 **깨진 것은 안 올라간다**.
+빌드 전에 `tsc`와 `vitest`를 돌리도록 **적혀 있다** — ⚠ **아직 한 번도 실행되지 않았다**
+(Settings → Pages를 켜야 돈다). 첫 배포 뒤에 "보장"으로 바꾼다(#32의 거울상을 피한다).
 
 빌드는 **상대 경로**(`base: "./"`)를 쓴다 — Pages의 하위 경로(`/<repo>/`)든 루트든
 그대로 열리고 리포지토리 이름을 어디에도 안 박는다. 다른 base가 필요하면:
@@ -165,6 +166,9 @@ HTTP로 뜬다. **Wake Lock과 마이크는 동작하지 않는다**(secure cont
 ```bash
 cd web && S2S_BASE=/my-path/ npm run build
 ```
+
+⚠ **인앱 브라우저(메신저 내장 웹뷰)에서는 서비스 워커가 막힌다** — 등록이 실패하므로
+**오프라인이 안 된다**. Safari/Chrome으로 열어야 한다(실측: 등록이 "unknown error"로 거절됐다).
 
 **확인은 자동이다**: `web/e2e/static_deploy.spec.ts`가 빌드본을 **하위 경로에 올려**
 ① 열리는지 ② 서비스 워커가 그 경로를 scope로 잡는지 ③ **오프라인 새로고침에서도 뜨는지**를
