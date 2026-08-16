@@ -1,5 +1,5 @@
 {
-  "n_flags": 1743,
+  "n_flags": 1752,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -5201,6 +5201,51 @@
       "flag": "단일 범주 분포(n=15076) → 변별력 없음/단위 불일치 의심"
     },
     {
+      "path": "stage_browser.json:confirm.view_offset.offsetY",
+      "val": 4.547473508864641e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_browser.json:dpr_identity_px.css_frame",
+      "val": 1.3406493525361332e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "stage_browser.json:l_b3.drawn.start_reprojection_gap_px_IDENTITY",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_browser.json:l_b3.drawn.start_reprojection_gap_px_IDENTITY",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "stage_browser.json:l_b4.preview_vs_confirm.gap",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "stage_browser.json:l_b8.drawn_in_orbit.mid_drag.axis",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "stage_browser.json:l_b8.drawn_in_orbit.views[0].pending",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "stage_browser.json:l_b8.drawn_in_orbit.views[1].pending",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "stage_browser.json:l_b8.drawn_in_orbit.axis",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "stage_cam.json:guarantees.seg_gap_px_max",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
@@ -8837,7 +8882,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 96,
+      "targets": 97,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
@@ -8846,7 +8891,7 @@
       "unit": "게이트 블록",
       "targets": 7,
       "hits": 0,
-      "note": "덮은 곳: camera_gate.json:gate, guide_budget.json:gate, horizon.json:gate, lift_gate.json:gate, order_signal.json:gate, preview_gap.json:gate, segment_gate.json:gate (원장 40개 훑음)"
+      "note": "값 대조를 **지난 것 3** · **면제 4**(`reachability_absent`) · 원장 40개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: guide_budget.json:gate, lift_gate.json:gate, preview_gap.json:gate, segment_gate.json:gate"
     },
     {
       "scan": "scan_zero_denominator",

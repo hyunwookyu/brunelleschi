@@ -604,6 +604,10 @@ def scan_gate_reachability(reports: dict[str, dict]) -> list[dict]:
     """
     flags = []
     seen: list[str] = []                 # **덮은 게이트 블록**(0이면 검사가 안 도는 것이다)
+    # ⚠ **면제와 검증을 갈라 센다**(리뷰어 지적) — `reachability_absent`는 값 대조를
+    # **지난 것이 아니라 면제된 것**이다. 합쳐 세면 "일곱 전부 통과"로 읽힌다(#38·#32).
+    verified: list[str] = []
+    exempt: list[str] = []
     def walk(node, path, fname):
         if isinstance(node, dict):
             keys = {k.lower() for k in node}
@@ -618,6 +622,10 @@ def scan_gate_reachability(reports: dict[str, dict]) -> list[dict]:
                                   "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 "
                                           "넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"})
                 flags.extend(_gate_value_checks(node, fname, path, reports.get(fname) or {}))
+                if "reachability_value" in node:
+                    verified.append(f"{fname}:{path}")
+                elif str(node.get("reachability_absent", "")).strip():
+                    exempt.append(f"{fname}:{path}")
             for k, v in node.items():
                 walk(v, f"{path}.{k}" if path else k, fname)
         elif isinstance(node, list):
@@ -626,8 +634,11 @@ def scan_gate_reachability(reports: dict[str, dict]) -> list[dict]:
     for fname, rep in reports.items():
         walk(rep, "", fname)
     flags += _cover("scan_gate_reachability", "게이트 블록", len(seen), len(flags),
-                    note="덮은 곳: " + (", ".join(seen) if seen else "없음")
-                         + f" (원장 {len(reports)}개 훑음)")
+                    note=f"값 대조를 **지난 것 {len(verified)}** · **면제 {len(exempt)}**"
+                         f"(`reachability_absent`) · 원장 {len(reports)}개 훑음. "
+                         f"⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 "
+                         f"근거로 쓰지 않는다. 검증: {', '.join(verified) or '없음'} / "
+                         f"면제: {', '.join(exempt) or '없음'}")
     return flags
 
 
