@@ -8859,7 +8859,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 167,
+      "files_scanned": 166,
       "exts_declared": [
         ".md",
         ".py",
@@ -8883,7 +8883,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 167,
+      "files_scanned": 166,
       "exts_declared": [
         ".md",
         ".py",
@@ -8913,6 +8913,13 @@
       "targets": 4,
       "hits": 0,
       "note": "훑기별 파일 수는 `sweeps[]`에 있다"
+    },
+    {
+      "scan": "scan_stray_progress",
+      "unit": "진행 기록 파일",
+      "targets": 1,
+      "hits": 0,
+      "note": null
     },
     {
       "scan": "scan_citation_hashes",

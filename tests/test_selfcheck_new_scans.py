@@ -190,3 +190,19 @@ def test_citation_to_missing_ledger_fires(tmp_path):
     (tmp_path / "doc.md").write_text("gone_ledger.json@aabbccdd", encoding="utf-8")
     flags = selfcheck.scan_citation_hashes(tmp_path, {"real.json": {"constants": {"hash": "aabbccdd"}}})
     assert any("없는 원장을 인용한다" in f["flag"] for f in flags), flags
+
+
+def test_stray_progress_fires(tmp_path):
+    """**루트 밖 `progress.md`**를 잡는다 — 세 번째 재발이라 기계가 본다(2026-08-16)."""
+    (tmp_path / "progress.md").write_text("정본", encoding="utf-8")
+    (tmp_path / "web").mkdir()
+    (tmp_path / "web" / "progress.md").write_text("여기 쓰면 안 된다", encoding="utf-8")
+    flags = selfcheck.scan_stray_progress(tmp_path)
+    assert any("루트 밖" in f["flag"] for f in flags), flags
+    assert any(f["path"] == "web/progress.md" for f in flags), flags
+
+
+def test_stray_progress_quiet_when_only_root(tmp_path):
+    """루트의 것만 있으면 **조용해야 한다** — 늘 우는 검사는 안 읽힌다."""
+    (tmp_path / "progress.md").write_text("정본", encoding="utf-8")
+    assert selfcheck.scan_stray_progress(tmp_path) == []

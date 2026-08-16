@@ -460,6 +460,28 @@ def scan_sweep_coverage(root: Path) -> list[dict]:
 
 
 
+def scan_stray_progress(root: Path) -> list[dict]:
+    """**루트 밖 `progress.md`**를 잡는다(2026-08-16, 세 번째 재발).
+
+    쉘 작업 디렉토리가 `web/`일 때 `cat >> progress.md`를 하면 `web/progress.md`가 생긴다.
+    그러면 **다음 세션이 그 항목을 못 본다** — 읽는 곳은 루트의 것 하나뿐이다.
+    `HANDOFF.md`가 그 자리를 경고했는데도 **같은 실수가 반복됐다**(사람이 기억할 종류가 아니다).
+    """
+    flags = []
+    for p in sorted(root.rglob("progress.md")):
+        if "node_modules" in str(p) or "docs/archive" in str(p).replace("\\", "/"):
+            continue
+        if p.parent.resolve() == root.resolve():
+            continue                     # 루트의 것이 정본이다
+        flags.append({"path": str(p.relative_to(root)).replace("\\", "/"), "val": p.stat().st_size,
+                      "flag": "**루트 밖 `progress.md`다** — 쉘 작업 디렉토리가 하위 폴더일 때 "
+                              "`cat >>`를 하면 생긴다. **다음 세션이 그 항목을 못 본다**. "
+                              "루트로 옮기고 지운다"})
+    flags += _cover("scan_stray_progress", "진행 기록 파일",
+                    len(list(root.rglob("progress.md"))), len(flags))
+    return flags
+
+
 def scan_citation_hashes(root: Path, reports: dict[str, dict]) -> list[dict]:
     """**인용한 해시가 그 원장의 현재 해시와 맞는가**(PITFALLS #33의 값 대조, 2026-08-16).
 
@@ -735,6 +757,7 @@ def main():
     flags += scan_nondeterministic_seeds(ROOT)      # B-0 d: 비결정 시드 정적 탐지
     flags += scan_roundtrip_metrics(ROOT)          # 자기참조 3: 복원↔역연산 왕복 지표
     flags += scan_sweep_coverage(ROOT)             # #33 자동화: 전수 훑기의 확장자 커버리지
+    flags += scan_stray_progress(ROOT)             # 루트 밖 progress.md (세 번째 재발)
     flags += scan_citation_hashes(ROOT, reports)   # #33 값 대조: 인용 해시 ↔ 원장 현재 해시
     flags += scan_gate_reachability(reports)       # #35 자동화: 게이트에 도달 가능성 필드
     flags += scan_zero_denominator(ROOT)           # #36 자동화: 분모 0을 1로 바꾸는 나눗셈
