@@ -4487,3 +4487,23 @@ pytest 73 · selfcheck 인용 **126건 플래그 0** · STALE 0 · 상수 해시
 **#37은 [8]에서, #41은 [4](중단 조건 게이트의 판정 주체 소실)에서 걸렸다.**
 세션 내 재발 지적(항목 0의 규칙을 1~3이 어김)도 맞다 — 원장 재독의 grep 범위를
 **전체 .md**로 넓히는 것으로 대응했다(이번 [1]의 수정이 그 증거다).
+
+### 4. Line2 교체 — 화면 고정 굵기
+
+**PITFALLS 대조**(착수): **#21**(dpr — `LineMaterial.resolution`이 그 자리) · **#22**(크기 굳음 —
+resolution 갱신 시점). 최근 다섯(#41~#37)은 해당 없음.
+
+`stage.ts`의 3D 층을 `LineSegments`+`LineBasicMaterial`(WebGL에서 linewidth 무시 — 1px 고정,
+굵기 위계 불가)에서 **`LineSegments2`+`LineMaterial`**(three 예제, 화면 픽셀 굵기)로 교체.
+`worldUnits:false`라 거리와 무관하고 — 카메라가 서는 순간 굵기가 변하지 않는다(전환 신호 없음).
+굵기 `LINE_PX = { result: 2.2, guide: 1.4 }`(표시 상수 — constants.ts 비등록, D-L49 예외).
+`Viewport.onResize` 신설 — resolution이 창 크기를 따라간다(#21·#22, projectionHook과 분리:
+훅은 핀 상태마다 갈아 끼워진다). 튜브(`tube.ts`)는 앱에 배선돼 있지 않았다 — 옛 UI 잔재이고
+측정 원장(`tube_render.json`)이 있어 **안 지운다**(범위).
+
+**검증**: tsc·빌드·vitest 403·Playwright 26 통과(`gl_painted_px` 검사 포함) ·
+실브라우저 종단 프로브(실포인터): 가로선→P1, 깊이선→**임의 f로 3D 섬**(지시 5-4 해소 확인),
+세로선 축2, 결과선 채널 승격, 오스냅 vertex dist 0, 직교 스냅, **pageerror 0**, 잉크 픽셀 59042.
+⚠ 프로브 스크린샷이 지시 5의 결함을 실증했다: 방사선 과다(5-5)·결과선이 축 색(5-7)·
+보조선 과연(5-7)·VP 점 크기(5-6). **5-1(결과선 소실)은 재현되지 않았다** — 1~4의 정리로
+해소된 것으로 보이고(결과선이 올라가고 보인다), 지시대로 여기서 병합한다.

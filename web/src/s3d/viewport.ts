@@ -30,6 +30,12 @@ export class Viewport {
    * 돌아가 잉크와 3D가 어긋난다**(창을 줄이면 재발하는 종류다).
    */
   projectionHook: ((size: [number, number]) => void) | null = null;
+  /**
+   * **크기가 바뀔 때 함께 불린다**(2026-08-17 지시 4). `LineMaterial.resolution`처럼
+   * 화면 크기를 아는 셰이더 상수가 낡으면 화면 굵기가 어긋난다(#21·#22의 자리).
+   * `projectionHook`과 따로 두는 이유: 훅은 핀 상태마다 갈아 끼워진다.
+   */
+  onResize: ((size: [number, number]) => void) | null = null;
   /** 사용자가 직접 궤도를 돌렸는가. 돌렸으면 자동 맞춤이 시점을 빼앗지 않는다. */
   userMoved = false;
 
@@ -84,6 +90,7 @@ export class Viewport {
     this.renderer.setSize(w, h);
     if (this.projectionHook) this.projectionHook([w, h]);
     else { this.camera.aspect = w / h; this.camera.updateProjectionMatrix(); }
+    this.onResize?.([w, h]);
     this.invalidate();
   }
 

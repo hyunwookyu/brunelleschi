@@ -12,6 +12,13 @@
 // **궤도는 잉크 캔버스를 통과시켜 넘긴다** — `pointer-events: none`을 걸면 밑의 three 캔버스가
 // 받고 `OrbitControls`가 그대로 동작한다. 궤도 조작을 새로 짜지 않는다(A-3: 선례를 따른다).
 import * as THREE from "three";
+// **화면 고정 굵기 선**(2026-08-17 지시 4). 튜브 메쉬는 3D 형상이라 거리에 따라 가늘어지고,
+// `LineBasicMaterial`의 `linewidth`는 WebGL에서 무시된다(항상 1px — 굵기 위계를 못 만든다).
+// three 예제의 `Line2` 계열이 화면 픽셀 단위 굵기를 낸다 — 카메라가 서는 순간 굵기가 변하면
+// 그것이 전환 신호가 되므로, 선의 화면 굵기는 거리와 무관해야 한다.
+import { LineSegments2 } from "three/examples/jsm/lines/LineSegments2.js";
+import { LineSegmentsGeometry } from "three/examples/jsm/lines/LineSegmentsGeometry.js";
+import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { Viewport } from "../s3d/viewport.js";
 import { threeIntrinsics, applyIntrinsics, applyFreeAspect,
          type CameraLike } from "../s3d/sceneCam.js";
@@ -37,6 +44,13 @@ export interface StageSeg {
  * ⚠ **축 색은 결과선에만 온전히 준다.** 보조선은 축 색을 **회색 쪽으로 섞어** 낸다 —
  * 색이 축을 말하되 "이것이 결과물"이라고 말하지는 않게 한다.
  */
+/**
+ * **채널별 화면 굵기(px)**(지시 4 — "얇게 한다"). 거리·확대와 무관한 화면 픽셀이다.
+ * 결과선이 결과물이므로 가장 굵고, 보조선은 그보다 얇다(지시 5-7의 위계).
+ * ⚠ 표시 상수라 `test/constants.ts`에 안 넣는다(D-L49의 예외와 같은 자리 — 어느 하네스도 안 읽는다).
+ */
+export const LINE_PX = { result: 2.2, guide: 1.4 } as const;
+
 export const CHANNEL_3D = {
   result: { opacity: 1, gray: 0 },
   /**
@@ -65,7 +79,9 @@ export class Stage {
   /** 지금 확정 카메라에 물려 있는가. 그렇지 않으면 자유 시점이다. */
   private pinned: { principal: Pt2; f: number } | null = null;
   private segs = new THREE.Group();
-  private lineGeom: THREE.BufferGeometry | null = null;
+  /** 만들어 둔 재질·기하 — 굵기 셰이더가 화면 크기를 알아야 하므로 크기 변화 때 갱신한다. */
+  private lineMats: LineMaterial[] = [];
+  private lineGeoms: LineSegmentsGeometry[] = [];
 
   constructor(readonly host: HTMLElement) {
     this.viewport = new Viewport(host);
@@ -73,6 +89,11 @@ export class Stage {
     this.viewport.controls.enabled = false;     // 확정 전에는 돌릴 3D가 없다
     this.viewport.world.add(this.segs);
     this.viewport.renderer.setClearColor(0xffffff, 1);
+    // **화면 굵기의 기준 크기**(#21·#22): `LineMaterial.resolution`이 낡으면 굵기가 어긋난다.
+    // 창 크기 갱신은 `projectionHook`이 아니라 여기서 받는다 — 훅은 핀 상태마다 갈아 끼워진다.
+    this.viewport.onResize = (size) => {
+      for (const m of this.lineMats) m.resolution.set(size[0], size[1]);
+    };
   }
 
   size(): [number, number] {
@@ -179,16 +200,18 @@ export class Stage {
   setSegments(list: StageSeg[]): void {
     this.lastSegs = list;
     this.segs.clear();
-    this.lineGeom?.dispose();
-    this.lineGeom = null;
+    for (const g of this.lineGeoms) g.dispose();
+    for (const m of this.lineMats) m.dispose();
+    this.lineGeoms = []; this.lineMats = [];
     if (!list.length) { this.viewport.invalidate(); return; }
-    // **채널마다 재질이 다르다**(불투명도) — 한 `LineSegments`로는 못 낸다.
+    // **채널마다 재질이 다르다**(불투명도·굵기) — 한 개체로는 못 낸다.
     // 주석은 여기 안 온다(3D로 안 올라간다, D-3).
     const groups: { key: "result" | "guide"; opacity: number; gray: number }[] = [
       { key: "result", ...CHANNEL_3D.result },
       { key: "guide", ...(this.isPinned ? CHANNEL_3D.guide : CHANNEL_3D.guide_orbit) },
     ];
     const c = new THREE.Color(), white = new THREE.Color("#ffffff");
+    const [vw, vh] = this.viewport.viewSize();
     for (const g0 of groups) {
       const pos: number[] = [], col: number[] = [];
       for (const s of list) {
@@ -200,14 +223,18 @@ export class Stage {
         col.push(c.r, c.g, c.b, c.r, c.g, c.b);
       }
       if (!pos.length) continue;
-      const g = new THREE.BufferGeometry();
-      g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-      g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
-      if (g0.key === "result") this.lineGeom = g;      // dispose 대상 하나만 든다
-      this.segs.add(new THREE.LineSegments(g, new THREE.LineBasicMaterial({
-        vertexColors: true, linewidth: 1,
+      // **화면 픽셀 굵기**(지시 4) — `worldUnits: false`가 그 뜻이다. 거리에 따라 안 가늘어지므로
+      // 카메라가 서는 순간 굵기가 변하지 않는다(전환 신호를 안 만든다).
+      const g = new LineSegmentsGeometry();
+      g.setPositions(pos);
+      g.setColors(col);
+      const m = new LineMaterial({
+        vertexColors: true, worldUnits: false, linewidth: LINE_PX[g0.key],
         transparent: g0.opacity < 1, opacity: g0.opacity,
-      })));
+      });
+      m.resolution.set(vw, vh);
+      this.lineGeoms.push(g); this.lineMats.push(m);
+      this.segs.add(new LineSegments2(g, m));
     }
     this.viewport.invalidate();
   }
