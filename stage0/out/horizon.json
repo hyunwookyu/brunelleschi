@@ -1,0 +1,2024 @@
+{
+  "what": "L-D.0 — 롤 0을 카메라 모델에 박고 지평선을 수평으로 고정하면 검출이 좋아지는가",
+  "plan": "docs/line_plan.md L-D.0(사람 지시, 2026-08-16) · 이론서 3.1 · 5.3 · 6.3 · 2.2",
+  "gate": {
+    "registered": "**L-A.6과 같은 조건**(같은 구도·격자·잉크)에서 축 방향 오차 중앙이 **약 1° 아래**로 내려가면 자동 확정 경로를 되살린다. 기준선은 같은 하네스의 `detected_baseline` 행이고, L-A.6의 값은 7.40 / 10.04 / 10.09 / 4.53°다(축당 4 / 18 / 48 / 100획). **측정 전에 박았다**(#26). ⚠ 안 내려가면 **초안 품질이 얼마나 올랐는지만 기록한다** — 사용자 확정을 유지한다.",
+    "reachability": "**같은 하네스의 `orthocenter_identity`가 그 자리다** — 참 카메라를 넣으면 수심 관계가 오차 0으로 성립한다(항등이므로 정보량은 0이다, #5). 즉 **제약 자체는 정확하고 남는 문제는 입력(검출 소실점)의 오차**다. ⚠ 그러므로 이 게이트가 넘어가려면 **검출이 지평선 높이를 1° 상당으로 맞춰야** 하고 그것이 도달 가능한지는 이 측정이 답한다. ⚠ 넘든 못 넘든 **기준을 낮추지 않는다**(#26의 반대편 문).",
+    "status": "이번 실행의 결과는 `by_strokes_per_axis`에 있다."
+  },
+  "what_this_does_not_say": [
+    "**사람이 롤 없이 그리는가** — 표본 0이다(AS-C1). 픽스처는 롤 0으로 만든 것이고, 기울여 그리는 대가는 `roll_control`이 잰다",
+    "실획 — 합성 잉크다(AS-C10이 그 모델을 양방향으로 틀렸다고 적었다)",
+    "**사람이 축 오차 0.5°에 도달하는가**(AS-L9) — 이 항목은 자동 검출만 본다"
+  ],
+  "condition": {
+    "compositions": [
+      "3pt_yaw35_pitch15",
+      "3pt_yaw20_pitch25",
+      "3pt_yaw50_pitch8",
+      "2pt_yaw35_pitch0",
+      "1pt_yaw0_pitch0"
+    ],
+    "jitters": [
+      0,
+      0.005,
+      0.01,
+      0.03,
+      0.05
+    ],
+    "grades": [
+      "precise",
+      "medium"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "lattice_k": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "rolls_deg": [
+      0,
+      2,
+      5,
+      10
+    ],
+    "principal": "이미지 중심 가정(이론서 16.2 · AS-C5). **이 가정이 제약에 들어간다**",
+    "same_as": "`camera_gate.test.ts`와 같은 구도·격자·잉크 — 바꾸면 `by_strokes_per_axis` 비교가 깨진다"
+  },
+  "horizon_tol": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+  },
+  "orthocenter_identity": {
+    "rows": [
+      {
+        "comp": "3pt_yaw35_pitch15",
+        "horizon_dy_px": 0,
+        "true_v3": [
+          480,
+          4068.05
+        ],
+        "derived_v3": [
+          480,
+          4068.05
+        ],
+        "err_px": 0
+      },
+      {
+        "comp": "3pt_yaw20_pitch25",
+        "horizon_dy_px": 0,
+        "true_v3": [
+          480,
+          2480.51
+        ],
+        "derived_v3": [
+          480,
+          2480.51
+        ],
+        "err_px": 0
+      },
+      {
+        "comp": "3pt_yaw50_pitch8",
+        "horizon_dy_px": 0,
+        "true_v3": [
+          480,
+          7451.37
+        ],
+        "derived_v3": [
+          480,
+          7451.37
+        ],
+        "err_px": 0
+      },
+      {
+        "comp": "2pt_yaw35_pitch0",
+        "skipped": "무한원 축이 있다"
+      },
+      {
+        "comp": "1pt_yaw0_pitch0",
+        "skipped": "무한원 축이 있다"
+      }
+    ],
+    "reading": "**측정이 아니라 항등 확인이다**(PITFALLS #5) — 참 카메라에서 6.3이 성립하는지 본 것이고 오차가 0인 것이 정상이다. **임계를 걸지 않는다.** 이것이 하는 일은 식의 부호와 유도가 맞는지 잠그는 것뿐이다."
+  },
+  "by_strokes_per_axis": {
+    "k_1": {
+      "strokes_per_axis": 4,
+      "seeds_used": 6,
+      "jitters_used": 5,
+      "compositions_used": 5,
+      "cost_note": null,
+      "detected_baseline": {
+        "scenes": 300,
+        "camera_ok": {
+          "k": 258,
+          "n": 300,
+          "rate": 0.86
+        },
+        "placement": {
+          "k": 2049,
+          "n": 2049,
+          "rate": 1,
+          "of_all": {
+            "k": 2049,
+            "n": 3600,
+            "rate": 0.5692
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 1895,
+            "n": 2049,
+            "rate": 0.9248
+          },
+          "cut_0_2": {
+            "k": 1666,
+            "n": 2049,
+            "rate": 0.8131
+          },
+          "cut_0_5": {
+            "k": 1094,
+            "n": 2049,
+            "rate": 0.5339
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 500,
+          "min": 0,
+          "p10": 1.1899,
+          "median": 7.4048,
+          "p90": 35,
+          "max": 46.6621
+        },
+        "shape_err_median": {
+          "n": 251,
+          "min": 0.0389,
+          "p10": 0.162,
+          "median": 0.5918,
+          "p90": 2.8154,
+          "max": 4.0751
+        },
+        "f_rel_err": {
+          "n": 258,
+          "min": 0,
+          "p10": 0,
+          "median": 0.0747,
+          "p90": 0.5651,
+          "max": 0.968
+        },
+        "constraint_applied": {
+          "horizon_merged": 0,
+          "vertical_x_moved": 0,
+          "vertical_synthesized": 0
+        },
+        "vp_shift_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "detected_roll_zero": {
+        "scenes": 300,
+        "camera_ok": {
+          "k": 213,
+          "n": 300,
+          "rate": 0.71
+        },
+        "placement": {
+          "k": 792,
+          "n": 792,
+          "rate": 1,
+          "of_all": {
+            "k": 792,
+            "n": 3600,
+            "rate": 0.22
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 755,
+            "n": 792,
+            "rate": 0.9533
+          },
+          "cut_0_2": {
+            "k": 732,
+            "n": 792,
+            "rate": 0.9242
+          },
+          "cut_0_5": {
+            "k": 506,
+            "n": 792,
+            "rate": 0.6389
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 461,
+          "min": 0,
+          "p10": 0.5184,
+          "median": 6.146,
+          "p90": 36.0077,
+          "max": 51.5172
+        },
+        "shape_err_median": {
+          "n": 124,
+          "min": 0.0408,
+          "p10": 0.3474,
+          "median": 1.2152,
+          "p90": 2.9128,
+          "max": 4.0751
+        },
+        "f_rel_err": {
+          "n": 213,
+          "min": 0,
+          "p10": 0,
+          "median": 0.0414,
+          "p90": 0.4815,
+          "max": 0.9324
+        },
+        "constraint_applied": {
+          "horizon_merged": 493,
+          "vertical_x_moved": 82,
+          "vertical_synthesized": 108
+        },
+        "vp_shift_px": {
+          "n": 495,
+          "min": 0,
+          "p10": 4.905,
+          "median": 55.479,
+          "p90": 1253.312,
+          "max": 3082.923
+        }
+      },
+      "oracle_axis_labels_roll_zero": {
+        "scenes": 300,
+        "camera_ok": {
+          "k": 149,
+          "n": 300,
+          "rate": 0.4967
+        },
+        "placement": {
+          "k": 504,
+          "n": 504,
+          "rate": 1,
+          "of_all": {
+            "k": 504,
+            "n": 3600,
+            "rate": 0.14
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 460,
+            "n": 504,
+            "rate": 0.9127
+          },
+          "cut_0_2": {
+            "k": 428,
+            "n": 504,
+            "rate": 0.8492
+          },
+          "cut_0_5": {
+            "k": 201,
+            "n": 504,
+            "rate": 0.3988
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 333,
+          "min": 0,
+          "p10": 0,
+          "median": 4.4599,
+          "p90": 12.5443,
+          "max": 45.8415
+        },
+        "shape_err_median": {
+          "n": 73,
+          "min": 0.0408,
+          "p10": 0.2465,
+          "median": 0.4555,
+          "p90": 2.5326,
+          "max": 3.2014
+        },
+        "f_rel_err": {
+          "n": 149,
+          "min": 0,
+          "p10": 0,
+          "median": 0.0462,
+          "p90": 0.414,
+          "max": 0.7707
+        },
+        "constraint_applied": {
+          "horizon_merged": 525,
+          "vertical_x_moved": 174,
+          "vertical_synthesized": 36
+        },
+        "vp_shift_px": {
+          "n": 469,
+          "min": 0,
+          "p10": 2.355,
+          "median": 40.171,
+          "p90": 680.101,
+          "max": 6798.854
+        }
+      },
+      "constrained_refit": {
+        "scenes": 300,
+        "camera_ok": {
+          "k": 225,
+          "n": 300,
+          "rate": 0.75
+        },
+        "placement": {
+          "k": 848,
+          "n": 848,
+          "rate": 1,
+          "of_all": {
+            "k": 848,
+            "n": 3600,
+            "rate": 0.2356
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 813,
+            "n": 848,
+            "rate": 0.9587
+          },
+          "cut_0_2": {
+            "k": 787,
+            "n": 848,
+            "rate": 0.9281
+          },
+          "cut_0_5": {
+            "k": 556,
+            "n": 848,
+            "rate": 0.6557
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 496,
+          "min": 0,
+          "p10": 0.5387,
+          "median": 5.7339,
+          "p90": 37.6984,
+          "max": 49.8438
+        },
+        "shape_err_median": {
+          "n": 132,
+          "min": 0.0408,
+          "p10": 0.3511,
+          "median": 1.3354,
+          "p90": 2.9128,
+          "max": 4.0751
+        },
+        "f_rel_err": {
+          "n": 225,
+          "min": 0,
+          "p10": 0,
+          "median": 0.056,
+          "p90": 0.5934,
+          "max": 0.9636
+        },
+        "constraint_applied": {
+          "horizon_merged": 404,
+          "vertical_x_moved": 82,
+          "vertical_synthesized": 109
+        },
+        "vp_shift_px": {
+          "n": 404,
+          "min": 0.196,
+          "p10": 9.924,
+          "median": 86.545,
+          "p90": 1909.45,
+          "max": 5403.927
+        }
+      }
+    },
+    "k_2": {
+      "strokes_per_axis": 18,
+      "seeds_used": 6,
+      "jitters_used": 5,
+      "compositions_used": 5,
+      "cost_note": null,
+      "detected_baseline": {
+        "scenes": 300,
+        "camera_ok": {
+          "k": 184,
+          "n": 300,
+          "rate": 0.6133
+        },
+        "placement": {
+          "k": 6035,
+          "n": 6035,
+          "rate": 1,
+          "of_all": {
+            "k": 6035,
+            "n": 16200,
+            "rate": 0.3725
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 5736,
+            "n": 6035,
+            "rate": 0.9505
+          },
+          "cut_0_2": {
+            "k": 4919,
+            "n": 6035,
+            "rate": 0.8151
+          },
+          "cut_0_5": {
+            "k": 2792,
+            "n": 6035,
+            "rate": 0.4626
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 501,
+          "min": 0,
+          "p10": 1.9065,
+          "median": 10.0437,
+          "p90": 32.6825,
+          "max": 49.9646
+        },
+        "shape_err_median": {
+          "n": 184,
+          "min": 0.108,
+          "p10": 0.1726,
+          "median": 0.5606,
+          "p90": 2.4547,
+          "max": 3.9023
+        },
+        "f_rel_err": {
+          "n": 184,
+          "min": 0,
+          "p10": 0.0194,
+          "median": 0.2084,
+          "p90": 0.7477,
+          "max": 0.99
+        },
+        "constraint_applied": {
+          "horizon_merged": 0,
+          "vertical_x_moved": 0,
+          "vertical_synthesized": 0
+        },
+        "vp_shift_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "detected_roll_zero": {
+        "scenes": 300,
+        "camera_ok": {
+          "k": 177,
+          "n": 300,
+          "rate": 0.59
+        },
+        "placement": {
+          "k": 522,
+          "n": 522,
+          "rate": 1,
+          "of_all": {
+            "k": 522,
+            "n": 16200,
+            "rate": 0.0322
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 507,
+            "n": 522,
+            "rate": 0.9713
+          },
+          "cut_0_2": {
+            "k": 465,
+            "n": 522,
+            "rate": 0.8908
+          },
+          "cut_0_5": {
+            "k": 269,
+            "n": 522,
+            "rate": 0.5153
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 515,
+          "min": 0,
+          "p10": 1.0797,
+          "median": 8.0473,
+          "p90": 32.4506,
+          "max": 49.1598
+        },
+        "shape_err_median": {
+          "n": 28,
+          "min": 0.0895,
+          "p10": 0.2276,
+          "median": 0.3645,
+          "p90": 2.4367,
+          "max": 2.7365
+        },
+        "f_rel_err": {
+          "n": 177,
+          "min": 0,
+          "p10": 0.0223,
+          "median": 0.1793,
+          "p90": 0.7495,
+          "max": 0.9619
+        },
+        "constraint_applied": {
+          "horizon_merged": 586,
+          "vertical_x_moved": 239,
+          "vertical_synthesized": 41
+        },
+        "vp_shift_px": {
+          "n": 818,
+          "min": 0,
+          "p10": 5.333,
+          "median": 39.8375,
+          "p90": 315.4,
+          "max": 2098.255
+        }
+      },
+      "oracle_axis_labels_roll_zero": {
+        "scenes": 300,
+        "camera_ok": {
+          "k": 205,
+          "n": 300,
+          "rate": 0.6833
+        },
+        "placement": {
+          "k": 912,
+          "n": 912,
+          "rate": 1,
+          "of_all": {
+            "k": 912,
+            "n": 16200,
+            "rate": 0.0563
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 809,
+            "n": 912,
+            "rate": 0.8871
+          },
+          "cut_0_2": {
+            "k": 755,
+            "n": 912,
+            "rate": 0.8279
+          },
+          "cut_0_5": {
+            "k": 379,
+            "n": 912,
+            "rate": 0.4156
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 501,
+          "min": 0,
+          "p10": 0,
+          "median": 4.969,
+          "p90": 19.2418,
+          "max": 49.3967
+        },
+        "shape_err_median": {
+          "n": 36,
+          "min": 0.2157,
+          "p10": 0.2937,
+          "median": 0.5072,
+          "p90": 2.4367,
+          "max": 2.7365
+        },
+        "f_rel_err": {
+          "n": 205,
+          "min": 0,
+          "p10": 0,
+          "median": 0.0732,
+          "p90": 0.5909,
+          "max": 0.9279
+        },
+        "constraint_applied": {
+          "horizon_merged": 537,
+          "vertical_x_moved": 180,
+          "vertical_synthesized": 52
+        },
+        "vp_shift_px": {
+          "n": 644,
+          "min": 0,
+          "p10": 4.27,
+          "median": 32.8345,
+          "p90": 382.633,
+          "max": 2839.772
+        }
+      },
+      "constrained_refit": {
+        "scenes": 300,
+        "camera_ok": {
+          "k": 203,
+          "n": 300,
+          "rate": 0.6767
+        },
+        "placement": {
+          "k": 730,
+          "n": 730,
+          "rate": 1,
+          "of_all": {
+            "k": 730,
+            "n": 16200,
+            "rate": 0.0451
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 718,
+            "n": 730,
+            "rate": 0.9836
+          },
+          "cut_0_2": {
+            "k": 674,
+            "n": 730,
+            "rate": 0.9233
+          },
+          "cut_0_5": {
+            "k": 473,
+            "n": 730,
+            "rate": 0.6479
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 591,
+          "min": 0,
+          "p10": 1.2607,
+          "median": 9.2961,
+          "p90": 34.5735,
+          "max": 51.9255
+        },
+        "shape_err_median": {
+          "n": 38,
+          "min": 0.2164,
+          "p10": 0.2464,
+          "median": 0.7495,
+          "p90": 2.6855,
+          "max": 3.0215
+        },
+        "f_rel_err": {
+          "n": 203,
+          "min": 0,
+          "p10": 0.0278,
+          "median": 0.3072,
+          "p90": 0.8609,
+          "max": 0.9795
+        },
+        "constraint_applied": {
+          "horizon_merged": 578,
+          "vertical_x_moved": 239,
+          "vertical_synthesized": 43
+        },
+        "vp_shift_px": {
+          "n": 578,
+          "min": 0.855,
+          "p10": 12.229,
+          "median": 77.9515,
+          "p90": 717.445,
+          "max": 5312.018
+        }
+      }
+    },
+    "k_3": {
+      "strokes_per_axis": 48,
+      "seeds_used": 3,
+      "jitters_used": 3,
+      "compositions_used": 3,
+      "cost_note": "검출이 O(n³)이라 시드·잡음·구도를 줄였다 — 조용히 자르지 않는다",
+      "detected_baseline": {
+        "scenes": 54,
+        "camera_ok": {
+          "k": 32,
+          "n": 54,
+          "rate": 0.5926
+        },
+        "placement": {
+          "k": 2045,
+          "n": 2045,
+          "rate": 1,
+          "of_all": {
+            "k": 2045,
+            "n": 7776,
+            "rate": 0.263
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 2014,
+            "n": 2045,
+            "rate": 0.9848
+          },
+          "cut_0_2": {
+            "k": 1816,
+            "n": 2045,
+            "rate": 0.888
+          },
+          "cut_0_5": {
+            "k": 941,
+            "n": 2045,
+            "rate": 0.4601
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 93,
+          "min": 0.3149,
+          "p10": 3.2634,
+          "median": 10.0922,
+          "p90": 33.1147,
+          "max": 45.5546
+        },
+        "shape_err_median": {
+          "n": 32,
+          "min": 0.1427,
+          "p10": 0.2016,
+          "median": 0.4604,
+          "p90": 1.1861,
+          "max": 2.2062
+        },
+        "f_rel_err": {
+          "n": 32,
+          "min": 0.0037,
+          "p10": 0.0228,
+          "median": 0.1846,
+          "p90": 0.5361,
+          "max": 0.9692
+        },
+        "constraint_applied": {
+          "horizon_merged": 0,
+          "vertical_x_moved": 0,
+          "vertical_synthesized": 0
+        },
+        "vp_shift_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "detected_roll_zero": {
+        "scenes": 54,
+        "camera_ok": {
+          "k": 34,
+          "n": 54,
+          "rate": 0.6296
+        },
+        "placement": {
+          "k": 9,
+          "n": 9,
+          "rate": 1,
+          "of_all": {
+            "k": 9,
+            "n": 7776,
+            "rate": 0.0012
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 9,
+            "n": 9,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 9,
+            "n": 9,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 6,
+            "n": 9,
+            "rate": 0.6667
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 102,
+          "min": 0.2777,
+          "p10": 2.0372,
+          "median": 9.4668,
+          "p90": 32.5447,
+          "max": 45.6468
+        },
+        "shape_err_median": {
+          "n": 2,
+          "min": 0.3791,
+          "p10": 0.3791,
+          "median": 0.6014,
+          "p90": 0.8237,
+          "max": 0.8237
+        },
+        "f_rel_err": {
+          "n": 34,
+          "min": 0.0155,
+          "p10": 0.036,
+          "median": 0.1587,
+          "p90": 0.6628,
+          "max": 0.8705
+        },
+        "constraint_applied": {
+          "horizon_merged": 108,
+          "vertical_x_moved": 50,
+          "vertical_synthesized": 4
+        },
+        "vp_shift_px": {
+          "n": 158,
+          "min": 0.873,
+          "p10": 7.602,
+          "median": 45.381,
+          "p90": 203.552,
+          "max": 1235.465
+        }
+      },
+      "oracle_axis_labels_roll_zero": {
+        "scenes": 54,
+        "camera_ok": {
+          "k": 31,
+          "n": 54,
+          "rate": 0.5741
+        },
+        "placement": {
+          "k": 6,
+          "n": 6,
+          "rate": 1,
+          "of_all": {
+            "k": 6,
+            "n": 7776,
+            "rate": 0.0008
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 6,
+            "n": 6,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 6,
+            "n": 6,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 6,
+            "n": 6,
+            "rate": 1
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 93,
+          "min": 0.2777,
+          "p10": 1.9091,
+          "median": 9.2513,
+          "p90": 41.2592,
+          "max": 45.8008
+        },
+        "shape_err_median": {
+          "n": 1,
+          "min": 1.1208,
+          "p10": 1.1208,
+          "median": 1.1208,
+          "p90": 1.1208,
+          "max": 1.1208
+        },
+        "f_rel_err": {
+          "n": 31,
+          "min": 0.0155,
+          "p10": 0.0453,
+          "median": 0.1607,
+          "p90": 0.7403,
+          "max": 0.9277
+        },
+        "constraint_applied": {
+          "horizon_merged": 108,
+          "vertical_x_moved": 54,
+          "vertical_synthesized": 0
+        },
+        "vp_shift_px": {
+          "n": 152,
+          "min": 0.873,
+          "p10": 7.234,
+          "median": 43.388,
+          "p90": 552.693,
+          "max": 2107.738
+        }
+      },
+      "constrained_refit": {
+        "scenes": 54,
+        "camera_ok": {
+          "k": 32,
+          "n": 54,
+          "rate": 0.5926
+        },
+        "placement": {
+          "k": 3,
+          "n": 3,
+          "rate": 1,
+          "of_all": {
+            "k": 3,
+            "n": 7776,
+            "rate": 0.0004
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 3,
+            "n": 3,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 3,
+            "n": 3,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 0,
+            "n": 3,
+            "rate": 0
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 96,
+          "min": 0.2431,
+          "p10": 1.1053,
+          "median": 8.7764,
+          "p90": 32.6428,
+          "max": 47.5676
+        },
+        "shape_err_median": {
+          "n": 1,
+          "min": 0.3801,
+          "p10": 0.3801,
+          "median": 0.3801,
+          "p90": 0.3801,
+          "max": 0.3801
+        },
+        "f_rel_err": {
+          "n": 32,
+          "min": 0.0005,
+          "p10": 0.0601,
+          "median": 0.1832,
+          "p90": 0.5,
+          "max": 0.8553
+        },
+        "constraint_applied": {
+          "horizon_merged": 108,
+          "vertical_x_moved": 50,
+          "vertical_synthesized": 4
+        },
+        "vp_shift_px": {
+          "n": 108,
+          "min": 1.114,
+          "p10": 17.263,
+          "median": 83.6905,
+          "p90": 920.83,
+          "max": 2344.627
+        }
+      }
+    },
+    "k_4": {
+      "strokes_per_axis": 100,
+      "seeds_used": 1,
+      "jitters_used": 3,
+      "compositions_used": 3,
+      "cost_note": "검출이 O(n³)이라 시드·잡음·구도를 줄였다 — 조용히 자르지 않는다",
+      "detected_baseline": {
+        "scenes": 18,
+        "camera_ok": {
+          "k": 6,
+          "n": 18,
+          "rate": 0.3333
+        },
+        "placement": {
+          "k": 692,
+          "n": 692,
+          "rate": 1,
+          "of_all": {
+            "k": 692,
+            "n": 5400,
+            "rate": 0.1281
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 654,
+            "n": 692,
+            "rate": 0.9451
+          },
+          "cut_0_2": {
+            "k": 539,
+            "n": 692,
+            "rate": 0.7789
+          },
+          "cut_0_5": {
+            "k": 252,
+            "n": 692,
+            "rate": 0.3642
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 18,
+          "min": 0.3057,
+          "p10": 1.95,
+          "median": 4.529,
+          "p90": 42.6735,
+          "max": 50.8462
+        },
+        "shape_err_median": {
+          "n": 6,
+          "min": 0.1625,
+          "p10": 0.2229,
+          "median": 0.3219,
+          "p90": 2.1737,
+          "max": 2.1737
+        },
+        "f_rel_err": {
+          "n": 6,
+          "min": 0.0566,
+          "p10": 0.061,
+          "median": 0.1524,
+          "p90": 0.9006,
+          "max": 0.9006
+        },
+        "constraint_applied": {
+          "horizon_merged": 0,
+          "vertical_x_moved": 0,
+          "vertical_synthesized": 0
+        },
+        "vp_shift_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        }
+      },
+      "detected_roll_zero": {
+        "scenes": 18,
+        "camera_ok": {
+          "k": 7,
+          "n": 18,
+          "rate": 0.3889
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 5400,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "cut_0_2": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "cut_0_5": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 21,
+          "min": 0.8179,
+          "p10": 1.7161,
+          "median": 4.6094,
+          "p90": 42.6292,
+          "max": 51.0473
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "f_rel_err": {
+          "n": 7,
+          "min": 0.0129,
+          "p10": 0.033,
+          "median": 0.2389,
+          "p90": 0.6202,
+          "max": 0.9038
+        },
+        "constraint_applied": {
+          "horizon_merged": 36,
+          "vertical_x_moved": 18,
+          "vertical_synthesized": 0
+        },
+        "vp_shift_px": {
+          "n": 54,
+          "min": 0.04,
+          "p10": 5.441,
+          "median": 53.214,
+          "p90": 346.901,
+          "max": 1806.971
+        }
+      },
+      "oracle_axis_labels_roll_zero": {
+        "scenes": 18,
+        "camera_ok": {
+          "k": 9,
+          "n": 18,
+          "rate": 0.5
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 5400,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "cut_0_2": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "cut_0_5": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 27,
+          "min": 0.7561,
+          "p10": 1.7161,
+          "median": 8.4495,
+          "p90": 32.0248,
+          "max": 51.0473
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "f_rel_err": {
+          "n": 9,
+          "min": 0.0129,
+          "p10": 0.033,
+          "median": 0.3092,
+          "p90": 0.7651,
+          "max": 0.9038
+        },
+        "constraint_applied": {
+          "horizon_merged": 36,
+          "vertical_x_moved": 18,
+          "vertical_synthesized": 0
+        },
+        "vp_shift_px": {
+          "n": 50,
+          "min": 0.04,
+          "p10": 5.441,
+          "median": 39.7675,
+          "p90": 749.689,
+          "max": 2162.411
+        }
+      },
+      "constrained_refit": {
+        "scenes": 18,
+        "camera_ok": {
+          "k": 8,
+          "n": 18,
+          "rate": 0.4444
+        },
+        "placement": {
+          "k": 0,
+          "n": 0,
+          "rate": null,
+          "of_all": {
+            "k": 0,
+            "n": 5400,
+            "rate": 0
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "cut_0_2": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          },
+          "cut_0_5": {
+            "k": 0,
+            "n": 0,
+            "rate": null
+          }
+        },
+        "axis_dir_err_deg": {
+          "n": 24,
+          "min": 1.1278,
+          "p10": 1.555,
+          "median": 8.5438,
+          "p90": 43.1928,
+          "max": 50.9743
+        },
+        "shape_err_median": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "f_rel_err": {
+          "n": 8,
+          "min": 0.0098,
+          "p10": 0.035,
+          "median": 0.2851,
+          "p90": 0.9108,
+          "max": 0.9612
+        },
+        "constraint_applied": {
+          "horizon_merged": 36,
+          "vertical_x_moved": 18,
+          "vertical_synthesized": 0
+        },
+        "vp_shift_px": {
+          "n": 36,
+          "min": 0.146,
+          "p10": 16.993,
+          "median": 97.8295,
+          "p90": 1528.503,
+          "max": 2950.112
+        }
+      }
+    }
+  },
+  "roll_control": {
+    "rows": {
+      "roll_0deg": {
+        "baseline": {
+          "scenes": 30,
+          "camera_ok": {
+            "k": 27,
+            "n": 30,
+            "rate": 0.9
+          },
+          "placement": {
+            "k": 218,
+            "n": 218,
+            "rate": 1,
+            "of_all": {
+              "k": 218,
+              "n": 360,
+              "rate": 0.6056
+            }
+          },
+          "silent_wrong": {
+            "cut_0_1": {
+              "k": 203,
+              "n": 218,
+              "rate": 0.9312
+            },
+            "cut_0_2": {
+              "k": 169,
+              "n": 218,
+              "rate": 0.7752
+            },
+            "cut_0_5": {
+              "k": 97,
+              "n": 218,
+              "rate": 0.445
+            }
+          },
+          "axis_dir_err_deg": {
+            "n": 55,
+            "min": 0,
+            "p10": 1.4242,
+            "median": 6.0933,
+            "p90": 17.7732,
+            "max": 40.66
+          },
+          "shape_err_median": {
+            "n": 27,
+            "min": 0.0408,
+            "p10": 0.1575,
+            "median": 0.4697,
+            "p90": 2.8439,
+            "max": 3.0305
+          },
+          "f_rel_err": {
+            "n": 27,
+            "min": 0,
+            "p10": 0,
+            "median": 0.1068,
+            "p90": 0.3482,
+            "max": 0.8684
+          },
+          "constraint_applied": {
+            "horizon_merged": 0,
+            "vertical_x_moved": 0,
+            "vertical_synthesized": 0
+          },
+          "vp_shift_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "roll_zero": {
+          "scenes": 30,
+          "camera_ok": {
+            "k": 19,
+            "n": 30,
+            "rate": 0.6333
+          },
+          "placement": {
+            "k": 62,
+            "n": 62,
+            "rate": 1,
+            "of_all": {
+              "k": 62,
+              "n": 360,
+              "rate": 0.1722
+            }
+          },
+          "silent_wrong": {
+            "cut_0_1": {
+              "k": 54,
+              "n": 62,
+              "rate": 0.871
+            },
+            "cut_0_2": {
+              "k": 49,
+              "n": 62,
+              "rate": 0.7903
+            },
+            "cut_0_5": {
+              "k": 38,
+              "n": 62,
+              "rate": 0.6129
+            }
+          },
+          "axis_dir_err_deg": {
+            "n": 43,
+            "min": 0,
+            "p10": 0,
+            "median": 4.4693,
+            "p90": 20.2524,
+            "max": 40.66
+          },
+          "shape_err_median": {
+            "n": 11,
+            "min": 0.0408,
+            "p10": 0.0703,
+            "median": 0.4555,
+            "p90": 2.9128,
+            "max": 3.0472
+          },
+          "f_rel_err": {
+            "n": 19,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0454,
+            "p90": 0.2687,
+            "max": 0.5779
+          },
+          "constraint_applied": {
+            "horizon_merged": 53,
+            "vertical_x_moved": 8,
+            "vertical_synthesized": 15
+          },
+          "vp_shift_px": {
+            "n": 55,
+            "min": 0,
+            "p10": 15.147,
+            "median": 73.784,
+            "p90": 1661.234,
+            "max": 3082.923
+          }
+        }
+      },
+      "roll_2deg": {
+        "baseline": {
+          "scenes": 30,
+          "camera_ok": {
+            "k": 27,
+            "n": 30,
+            "rate": 0.9
+          },
+          "placement": {
+            "k": 220,
+            "n": 220,
+            "rate": 1,
+            "of_all": {
+              "k": 220,
+              "n": 360,
+              "rate": 0.6111
+            }
+          },
+          "silent_wrong": {
+            "cut_0_1": {
+              "k": 203,
+              "n": 220,
+              "rate": 0.9227
+            },
+            "cut_0_2": {
+              "k": 167,
+              "n": 220,
+              "rate": 0.7591
+            },
+            "cut_0_5": {
+              "k": 93,
+              "n": 220,
+              "rate": 0.4227
+            }
+          },
+          "axis_dir_err_deg": {
+            "n": 55,
+            "min": 0,
+            "p10": 1.4242,
+            "median": 6.0933,
+            "p90": 17.7732,
+            "max": 40.66
+          },
+          "shape_err_median": {
+            "n": 27,
+            "min": 0.0443,
+            "p10": 0.1553,
+            "median": 0.4606,
+            "p90": 2.8437,
+            "max": 3.1719
+          },
+          "f_rel_err": {
+            "n": 27,
+            "min": 0,
+            "p10": 0,
+            "median": 0.1068,
+            "p90": 0.3482,
+            "max": 0.8684
+          },
+          "constraint_applied": {
+            "horizon_merged": 0,
+            "vertical_x_moved": 0,
+            "vertical_synthesized": 0
+          },
+          "vp_shift_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "roll_zero": {
+          "scenes": 30,
+          "camera_ok": {
+            "k": 19,
+            "n": 30,
+            "rate": 0.6333
+          },
+          "placement": {
+            "k": 59,
+            "n": 59,
+            "rate": 1,
+            "of_all": {
+              "k": 59,
+              "n": 360,
+              "rate": 0.1639
+            }
+          },
+          "silent_wrong": {
+            "cut_0_1": {
+              "k": 49,
+              "n": 59,
+              "rate": 0.8305
+            },
+            "cut_0_2": {
+              "k": 44,
+              "n": 59,
+              "rate": 0.7458
+            },
+            "cut_0_5": {
+              "k": 32,
+              "n": 59,
+              "rate": 0.5424
+            }
+          },
+          "axis_dir_err_deg": {
+            "n": 43,
+            "min": 0,
+            "p10": 0,
+            "median": 5.0614,
+            "p90": 22.0511,
+            "max": 40.66
+          },
+          "shape_err_median": {
+            "n": 11,
+            "min": 0.0443,
+            "p10": 0.0794,
+            "median": 0.474,
+            "p90": 3.0675,
+            "max": 3.1719
+          },
+          "f_rel_err": {
+            "n": 19,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0441,
+            "p90": 0.2797,
+            "max": 0.5793
+          },
+          "constraint_applied": {
+            "horizon_merged": 53,
+            "vertical_x_moved": 8,
+            "vertical_synthesized": 13
+          },
+          "vp_shift_px": {
+            "n": 55,
+            "min": 0,
+            "p10": 14.359,
+            "median": 123.487,
+            "p90": 1663.926,
+            "max": 3062.683
+          }
+        }
+      },
+      "roll_5deg": {
+        "baseline": {
+          "scenes": 30,
+          "camera_ok": {
+            "k": 27,
+            "n": 30,
+            "rate": 0.9
+          },
+          "placement": {
+            "k": 210,
+            "n": 210,
+            "rate": 1,
+            "of_all": {
+              "k": 210,
+              "n": 360,
+              "rate": 0.5833
+            }
+          },
+          "silent_wrong": {
+            "cut_0_1": {
+              "k": 203,
+              "n": 210,
+              "rate": 0.9667
+            },
+            "cut_0_2": {
+              "k": 170,
+              "n": 210,
+              "rate": 0.8095
+            },
+            "cut_0_5": {
+              "k": 95,
+              "n": 210,
+              "rate": 0.4524
+            }
+          },
+          "axis_dir_err_deg": {
+            "n": 55,
+            "min": 0,
+            "p10": 1.4242,
+            "median": 6.0933,
+            "p90": 17.7732,
+            "max": 40.66
+          },
+          "shape_err_median": {
+            "n": 27,
+            "min": 0.0781,
+            "p10": 0.1727,
+            "median": 0.4651,
+            "p90": 2.7923,
+            "max": 3.1841
+          },
+          "f_rel_err": {
+            "n": 27,
+            "min": 0,
+            "p10": 0,
+            "median": 0.1068,
+            "p90": 0.3482,
+            "max": 0.8684
+          },
+          "constraint_applied": {
+            "horizon_merged": 0,
+            "vertical_x_moved": 0,
+            "vertical_synthesized": 0
+          },
+          "vp_shift_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "roll_zero": {
+          "scenes": 30,
+          "camera_ok": {
+            "k": 19,
+            "n": 30,
+            "rate": 0.6333
+          },
+          "placement": {
+            "k": 60,
+            "n": 60,
+            "rate": 1,
+            "of_all": {
+              "k": 60,
+              "n": 360,
+              "rate": 0.1667
+            }
+          },
+          "silent_wrong": {
+            "cut_0_1": {
+              "k": 57,
+              "n": 60,
+              "rate": 0.95
+            },
+            "cut_0_2": {
+              "k": 52,
+              "n": 60,
+              "rate": 0.8667
+            },
+            "cut_0_5": {
+              "k": 36,
+              "n": 60,
+              "rate": 0.6
+            }
+          },
+          "axis_dir_err_deg": {
+            "n": 43,
+            "min": 0,
+            "p10": 0,
+            "median": 5.9275,
+            "p90": 24.7903,
+            "max": 40.66
+          },
+          "shape_err_median": {
+            "n": 10,
+            "min": 0.0781,
+            "p10": 0.304,
+            "median": 0.8947,
+            "p90": 3.1809,
+            "max": 3.1841
+          },
+          "f_rel_err": {
+            "n": 19,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0575,
+            "p90": 0.2986,
+            "max": 0.5825
+          },
+          "constraint_applied": {
+            "horizon_merged": 53,
+            "vertical_x_moved": 8,
+            "vertical_synthesized": 12
+          },
+          "vp_shift_px": {
+            "n": 55,
+            "min": 0,
+            "p10": 60.546,
+            "median": 187.274,
+            "p90": 1664.164,
+            "max": 3025.334
+          }
+        }
+      },
+      "roll_10deg": {
+        "baseline": {
+          "scenes": 30,
+          "camera_ok": {
+            "k": 27,
+            "n": 30,
+            "rate": 0.9
+          },
+          "placement": {
+            "k": 194,
+            "n": 194,
+            "rate": 1,
+            "of_all": {
+              "k": 194,
+              "n": 360,
+              "rate": 0.5389
+            }
+          },
+          "silent_wrong": {
+            "cut_0_1": {
+              "k": 192,
+              "n": 194,
+              "rate": 0.9897
+            },
+            "cut_0_2": {
+              "k": 164,
+              "n": 194,
+              "rate": 0.8454
+            },
+            "cut_0_5": {
+              "k": 93,
+              "n": 194,
+              "rate": 0.4794
+            }
+          },
+          "axis_dir_err_deg": {
+            "n": 55,
+            "min": 0,
+            "p10": 1.4242,
+            "median": 6.0933,
+            "p90": 17.7732,
+            "max": 40.66
+          },
+          "shape_err_median": {
+            "n": 24,
+            "min": 0.0864,
+            "p10": 0.2098,
+            "median": 0.4779,
+            "p90": 2.6061,
+            "max": 3.2095
+          },
+          "f_rel_err": {
+            "n": 27,
+            "min": 0,
+            "p10": 0,
+            "median": 0.1068,
+            "p90": 0.3482,
+            "max": 0.8684
+          },
+          "constraint_applied": {
+            "horizon_merged": 0,
+            "vertical_x_moved": 0,
+            "vertical_synthesized": 0
+          },
+          "vp_shift_px": {
+            "n": 0,
+            "min": null,
+            "p10": null,
+            "median": null,
+            "p90": null,
+            "max": null
+          }
+        },
+        "roll_zero": {
+          "scenes": 30,
+          "camera_ok": {
+            "k": 19,
+            "n": 30,
+            "rate": 0.6333
+          },
+          "placement": {
+            "k": 29,
+            "n": 29,
+            "rate": 1,
+            "of_all": {
+              "k": 29,
+              "n": 360,
+              "rate": 0.0806
+            }
+          },
+          "silent_wrong": {
+            "cut_0_1": {
+              "k": 29,
+              "n": 29,
+              "rate": 1
+            },
+            "cut_0_2": {
+              "k": 29,
+              "n": 29,
+              "rate": 1
+            },
+            "cut_0_5": {
+              "k": 29,
+              "n": 29,
+              "rate": 1
+            }
+          },
+          "axis_dir_err_deg": {
+            "n": 43,
+            "min": 0,
+            "p10": 0,
+            "median": 10.0103,
+            "p90": 25.3245,
+            "max": 40.66
+          },
+          "shape_err_median": {
+            "n": 4,
+            "min": 1.3331,
+            "p10": 1.3331,
+            "median": 2.1958,
+            "p90": 3.2095,
+            "max": 3.2095
+          },
+          "f_rel_err": {
+            "n": 19,
+            "min": 0,
+            "p10": 0,
+            "median": 0.0654,
+            "p90": 0.3363,
+            "max": 0.5908
+          },
+          "constraint_applied": {
+            "horizon_merged": 53,
+            "vertical_x_moved": 8,
+            "vertical_synthesized": 14
+          },
+          "vp_shift_px": {
+            "n": 55,
+            "min": 0,
+            "p10": 136.128,
+            "median": 293.44,
+            "p90": 1654.429,
+            "max": 2944.72
+          }
+        }
+      }
+    },
+    "why": "**롤 0은 가정이지 관측이 아니다**(#30). 종이를 기울여 그리면 지평선이 화면 수평이 아니고, 그때 이 제약은 **틀린 곳으로 소실점을 끈다**. 그 대가가 얼마인지 여기서 잰다 — 안 재면 '롤 0에서 좋아졌다'가 무엇을 대가로 했는지 안 보인다.",
+    "note": "롤은 **이미지 평면의 회전**이므로 주점을 중심으로 화면 점을 돌려 만든다 (카메라 롤과 정확히 같다). **참 축도 같은 각으로 돌려 기준계를 맞춘다** — 방향 `d`의 카메라 좌표가 `(R_z(θ)(x,y), z)`가 되기 때문이다. ⚠⚠ **초판은 참 축을 안 돌렸고 그래서 이 대조군이 통째로 무효였다**: `roll_zero` 팔이 지평선을 수평으로 되돌리며 사실상 롤을 되감았고, 그것이 \"기울여도 좋아진다\"로 읽혔다. 재던 것이 품질이 아니라 **기준계 불일치**였다(#35의 ⚠⚠ · #37)."
+  },
+  "constants": {
+    "hash": "34db7279",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "a45078a5",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong",
+      "rate",
+      "fraction"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "n_flags": 1552,
+  "n_flags": 1601,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -782,6 +782,251 @@
       "path": "guide_budget.json:why_camera_not_solvable.counters.axes_lt_2",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:orthocenter_identity.rows[0].horizon_dy_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:orthocenter_identity.rows[0].err_px",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon.json:orthocenter_identity.rows[1].horizon_dy_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:orthocenter_identity.rows[1].err_px",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon.json:orthocenter_identity.rows[2].horizon_dy_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:orthocenter_identity.rows[2].err_px",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_1.detected_baseline.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_1.detected_baseline.constraint_applied.horizon_merged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_1.detected_roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_1.oracle_axis_labels_roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_1.constrained_refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_2.detected_baseline.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_2.detected_baseline.constraint_applied.horizon_merged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_2.detected_roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_2.oracle_axis_labels_roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_2.constrained_refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.detected_baseline.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.detected_baseline.constraint_applied.horizon_merged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.detected_roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.detected_roll_zero.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.detected_roll_zero.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.oracle_axis_labels_roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.oracle_axis_labels_roll_zero.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.oracle_axis_labels_roll_zero.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.oracle_axis_labels_roll_zero.silent_wrong.cut_0_5.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.constrained_refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.constrained_refit.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.constrained_refit.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.constrained_refit.silent_wrong.cut_0_5.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.detected_baseline.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.detected_baseline.constraint_applied.horizon_merged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.detected_roll_zero.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.oracle_axis_labels_roll_zero.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.constrained_refit.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_0deg.baseline.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_0deg.baseline.constraint_applied.horizon_merged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_0deg.roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_2deg.baseline.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_2deg.baseline.constraint_applied.horizon_merged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_2deg.roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_5deg.baseline.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_5deg.baseline.constraint_applied.horizon_merged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_5deg.roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_10deg.baseline.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_10deg.baseline.constraint_applied.horizon_merged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_10deg.roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_10deg.roll_zero.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_10deg.roll_zero.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:roll_control.rows.roll_10deg.roll_zero.silent_wrong.cut_0_5.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "incline_vp.json:by_slope_deg.0.vp_separation_px",
@@ -7834,7 +8079,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 164,
+      "files_scanned": 166,
       "exts_declared": [
         ".md",
         ".py",
@@ -7843,22 +8088,22 @@
       "hits_by_ext": {
         ".md": 10,
         ".py": 2,
-        ".ts": 6
+        ".ts": 7
       }
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 105,
+      "files_scanned": 107,
       "exts_declared": [
         ".ts"
       ],
       "hits_by_ext": {
-        ".ts": 13
+        ".ts": 14
       }
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 164,
+      "files_scanned": 166,
       "exts_declared": [
         ".md",
         ".py",
@@ -7867,7 +8112,7 @@
       "hits_by_ext": {
         ".md": 9,
         ".py": 4,
-        ".ts": 31
+        ".ts": 32
       }
     }
   ],
@@ -7882,26 +8127,26 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 84,
+      "targets": 92,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다(반례 픽스처·폐기 문서)"
     },
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 6,
+      "targets": 7,
       "hits": 0,
-      "note": "덮은 곳: camera_gate.json:gate, guide_budget.json:gate, lift_gate.json:gate, order_signal.json:gate, preview_gap.json:gate, segment_gate.json:gate (원장 39개 훑음)"
+      "note": "덮은 곳: camera_gate.json:gate, guide_budget.json:gate, horizon.json:gate, lift_gate.json:gate, order_signal.json:gate, preview_gap.json:gate, segment_gate.json:gate (원장 40개 훑음)"
     },
     {
       "scan": "scan_zero_denominator",
       "unit": "하네스 파일",
-      "targets": 37,
+      "targets": 38,
       "hits": 12,
       "note": "원장을 쓰는 `web/test/**.ts`만 본다"
     }
   ],
-  "constants_hash": "2fd74e1c",
+  "constants_hash": "34db7279",
   "metrics_hash": "a45078a5",
   "scanned": [
     "axis_judgement.json",
@@ -7917,6 +8162,7 @@
     "fix_load.json",
     "free_curve.json",
     "guide_budget.json",
+    "horizon.json",
     "incline_vp.json",
     "lift_gate.json",
     "lift_grade.json",

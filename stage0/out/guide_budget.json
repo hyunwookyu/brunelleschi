@@ -303,7 +303,7 @@
     }
   },
   "constants": {
-    "hash": "2fd74e1c",
+    "hash": "34db7279",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -343,6 +343,10 @@
       "HOMOG_TOL": {
         "snap_deg": 3,
         "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
       },
       "DRAFT_TOL": {
         "handle_ratio": 0.018,

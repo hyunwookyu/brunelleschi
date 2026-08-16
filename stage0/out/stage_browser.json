@@ -19,7 +19,7 @@
     "camera": "요 35°·피치 15° 3점(f=1000px). 가이드를 **참 소실점**으로 세운다"
   },
   "constants": {
-    "hash": "2fd74e1c",
+    "hash": "34db7279",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -59,6 +59,10 @@
       "HOMOG_TOL": {
         "snap_deg": 3,
         "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
       },
       "DRAFT_TOL": {
         "handle_ratio": 0.018,
@@ -298,7 +302,7 @@
     "note": "**참 소실점으로 세운 가이드**의 길이다. 검출 초안이 아니다."
   },
   "l_d3_save_roundtrip": {
-    "reload_ms": 1165,
+    "reload_ms": 1144,
     "views": 2,
     "lifted": 12,
     "pending_2d": 1,
