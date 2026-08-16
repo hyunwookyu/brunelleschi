@@ -4,6 +4,8 @@
   "gate": {
     "registered": "L-A 게이트(CLAUDE.md §2 초판) — 상자 하나를 그리면 확정되고, 전환 시 화면이 안 튀고, 연결된 획이 전부 놓이는가. 측정 전에 박았다(#26).",
     "reachability": "**같은 하네스의 `true_camera_oracle` 팔이 그 자리다** — 참 소실점·참 축을 주면 무엇이 나오는지 `by_jitter.*.true_camera_oracle`에 있다. ⚠ 이 원장의 오라클 조용히 틀림 0.0791은 **대역으로 쓰면 안 된다** — 분모가 최대 연결 성분이고 **검출 오배정이 섞여 있다**(PITFALLS #27). 대역은 `camera_gate`의 `deg_0` 행이다.",
+    "reachability_value": 0.2552,
+    "reachability_source": "by_jitter/jitter_0/true_camera_oracle/silent_wrong/rate",
     "status": "**은퇴했다.** 2026-08-15에 실패했고(조용히 틀린 배치 0.641) 대응이 계획서 §5.4다. 재등록된 게이트는 `camera_gate.json`의 `gate` 블록(L-A.7)이다."
   },
   "conditions": {

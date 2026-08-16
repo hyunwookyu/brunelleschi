@@ -431,7 +431,10 @@ afterAll(() => {
         + "이 하네스만으로는 갈리지 않는다.** ⚠ 그래도 **기준을 낮추지 않는다**(#26의 반대편 문). "
         + "⚠ `orthocenter_identity`는 reachability가 아니다 — **항등이라 정보량 0**이고(#5) "
         + "식의 유도를 잠그는 것 말고는 아무 말도 안 한다(초판이 그것을 이 자리에 적었고 고쳤다).",
-      status: "이번 실행의 결과는 `by_strokes_per_axis`에 있다.",
+      reachability_value: 4.4599,
+      reachability_source: "by_strokes_per_axis/k_1/oracle_axis_labels_roll_zero/axis_dir_err_deg/median",
+      status: "이번 실행의 결과는 `by_strokes_per_axis`에 있다. **오라클 팔이 4.4599°로 "
+        + "임계(현행 0.5°)의 8.9배**이고 그것이 이 하네스의 최선이다.",
     }),
     what_this_does_not_say: [
       "**사람이 롤 없이 그리는가** — 표본 0이다(AS-C1). 픽스처는 롤 0으로 만든 것이고, "

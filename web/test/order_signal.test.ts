@@ -386,6 +386,8 @@ describe("L-C.3 — §6.2의 대체 자동 신호가 서는가", () => {
           + "`wrong_vp3` 0.5446이다. ⚠ 초판 오라클은 **자기 게이지**라 0.4979 · 0.1265였고 "
           + "'기준이 도달 불가능했다'는 결론이 **통째로 지표의 산물**이었다(#35의 ⚠⚠). "
           + "오라클을 상한이라 부르지 않는다 — **한 대리 참값의 성능**이다.",
+        reachability_value: 0.9694,
+        reachability_source: "candidate_1_tilt_deg/separation/oracle_control/vs_spurious_fixed_gauge/best_separation",
         status: "닫혔다 — 후보 둘 다 규칙을 못 넘었다. 자동 승격은 안 건다(D-L26).",
       }),
       registered_rule: {

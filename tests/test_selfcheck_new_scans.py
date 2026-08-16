@@ -52,7 +52,11 @@ def test_gate_without_reachability_fires():
 
 
 def test_gate_with_reachability_passes():
-    rep = {"gate": {"criterion": "판별력 ≥ 0.5", "reachability": "오라클 팔 0.97", "result": 0.31}}
+    # ⚠ **#40 이후로는 산문만으로 부족하다** — 수치 + 출처, 또는 "오라클 없음" 명시가 있어야 한다.
+    rep = {"gate": {"criterion": "판별력 ≥ 0.5", "reachability": "오라클 팔 0.97",
+                    "reachability_value": 0.97, "reachability_source": "oracle/best",
+                    "result": 0.31},
+           "oracle": {"best": 0.97}}
     assert selfcheck.scan_gate_reachability({"x.json": rep}) == []
 
 
@@ -82,7 +86,9 @@ def test_gate_scan_flags_zero_coverage():
 
 def test_gate_scan_reports_coverage_when_gates_exist():
     """게이트가 있으면 덮는 수를 보고하고 **0 플래그는 안 뜬다**."""
-    rep = {"gate": {"registered": "판별력 ≥ 0.5", "reachability": "오라클 0.97"}}
+    rep = {"gate": {"registered": "판별력 ≥ 0.5", "reachability": "오라클 0.97",
+                    "reachability_value": 0.97, "reachability_source": "oracle/best"},
+           "oracle": {"best": 0.97}}
     flags = selfcheck.scan_gate_reachability({"a.json": rep, "b.json": rep})
     assert flags == [], flags
     assert _cov("scan_gate_reachability")["targets"] == 2
@@ -113,3 +119,74 @@ def test_sweep_coverage_reports_sweep_count(tmp_path):
     flags = selfcheck.scan_sweep_coverage(tmp_path)
     assert any("덮는 대상이 0" in f["flag"] and "훑기" in f["val"] for f in flags), flags
     assert _cov("scan_sweep_coverage")["targets"] == 0
+
+
+# ---- #40: **자동 검사의 필수 필드를 항등·자명한 값으로 채우지 않는다** (2026-08-16, 사람 지시) ----
+# 실제로 걸린 것: #35 검사를 만든 **같은 세션**이 `reachability`를 정보량 0인 항등으로 채웠다
+# (`horizon` 초판의 "참 카메라에서 오차 0"). 필드가 안 비었으므로 검사를 통과했다 —
+# **검사를 만들면서 검사를 무력화한 것**이다. 아래가 그 반례들이다.
+
+
+def test_gate_reachability_prose_only_fires():
+    """산문뿐이면 걸려야 한다 — 수치도 '오라클 없음' 명시도 없는 상태."""
+    rep = {"gate": {"registered": "판별력 ≥ 0.5", "reachability": "구성상 도달 가능하다"}}
+    flags = selfcheck.scan_gate_reachability({"x.json": rep})
+    assert any("산문뿐" in (f["val"] or "") for f in flags), flags
+
+
+def test_gate_reachability_identity_value_fires():
+    """도달 가능성 값이 **정확히 0**이면 항등을 의심해야 한다(#5) — horizon 초판이 그랬다."""
+    rep = {"gate": {"registered": "오차 ≤ 1", "reachability": "참 카메라에서 오차 0",
+                    "reachability_value": 0, "reachability_source": "oracle/err"},
+           "oracle": {"err": 0}}
+    flags = selfcheck.scan_gate_reachability({"x.json": rep})
+    assert any("정확히 0 또는 1" in f["flag"] for f in flags), flags
+
+
+def test_gate_reachability_value_mismatch_fires():
+    """적어 둔 수치가 원장과 다르면 걸려야 한다(값 대조, #33) — 재측정 뒤 안 고친 자리."""
+    rep = {"gate": {"registered": "r", "reachability": "오라클 팔",
+                    "reachability_value": 0.97, "reachability_source": "oracle/best"},
+           "oracle": {"best": 0.42}}
+    flags = selfcheck.scan_gate_reachability({"x.json": rep})
+    assert any("원장과 다르다" in f["flag"] for f in flags), flags
+
+
+def test_gate_reachability_bad_source_fires():
+    rep = {"gate": {"registered": "r", "reachability": "오라클 팔",
+                    "reachability_value": 0.97, "reachability_source": "nowhere/at/all"}}
+    flags = selfcheck.scan_gate_reachability({"x.json": rep})
+    assert any("안 풀린다" in f["flag"] for f in flags), flags
+
+
+def test_gate_reachability_ok_is_quiet():
+    """수치가 자명하지 않고 원장과 맞으면 **조용해야 한다** — 늘 우는 검사는 안 읽힌다."""
+    rep = {"gate": {"registered": "r", "reachability": "오라클 팔",
+                    "reachability_value": 0.9694, "reachability_source": "oracle/best"},
+           "oracle": {"best": 0.9694}}
+    assert selfcheck.scan_gate_reachability({"x.json": rep}) == []
+
+
+def test_gate_reachability_absent_is_quiet():
+    """오라클이 **없다고 명시**하면 통과한다 — '없다'도 결론이고 그것이 원장에 남는다."""
+    rep = {"gate": {"registered": "r", "reachability": "…",
+                    "reachability_absent": "이 게이트에는 참값 팔이 없다"}}
+    assert selfcheck.scan_gate_reachability({"x.json": rep}) == []
+
+
+def test_sweep_pattern_never_matches_fires(tmp_path):
+    """파일은 훑었는데 **패턴이 한 번도 안 맞으면** 그 훑기는 공허하다(#40)."""
+    (tmp_path / "a.md").write_text("아무 내용", encoding="utf-8")
+    (tmp_path / "sweeps.json").write_text(json.dumps({"sweeps": [{
+        "name": "t", "why": "", "pattern": "결코없는패턴XYZ",
+        "roots": ["."], "exts": [".md"], "exclude": [],
+    }]}), encoding="utf-8")
+    flags = selfcheck.scan_sweep_coverage(tmp_path)
+    assert any("한 번도 안 맞았다" in f["flag"] for f in flags), flags
+
+
+def test_citation_to_missing_ledger_fires(tmp_path):
+    """**없는 원장을 인용하면** 값 대조를 한 번도 안 지난다 — 조용히 넘어가면 안 된다(#40)."""
+    (tmp_path / "doc.md").write_text("gone_ledger.json@aabbccdd", encoding="utf-8")
+    flags = selfcheck.scan_citation_hashes(tmp_path, {"real.json": {"constants": {"hash": "aabbccdd"}}})
+    assert any("없는 원장을 인용한다" in f["flag"] for f in flags), flags

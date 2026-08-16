@@ -19,6 +19,26 @@ export type Gate = {
   registered: string;
   /** 무엇이 그 기준을 넘을 수 있는가(#35). 못 넘어도 기준을 낮추지 않는다 */
   reachability: string;
+  /**
+   * **도달 가능성의 수치**(PITFALLS #40, 2026-08-16 사람 지시).
+   *
+   * 산문만으로는 **항등이나 자명한 값**을 적어 놓고도 검사를 통과한다 — 실제로 그랬다:
+   * `horizon`의 초판이 "참 카메라에서 오차 0"(항등, 정보량 0)을 이 자리에 적었고,
+   * `camera_gate`는 "`deg_0` 행이 **정의상** 1.0배"라 적었는데 그 행이 **대역의 출처 자체**다.
+   * **자동 검사를 만들면서 그 검사를 무력화한 것**이고, 그래서 수치를 함께 요구한다.
+   *
+   * 값은 **기준과 같은 지표**여야 하고 `reachability_source`가 그것이 원장 어디에 있는지 적는다.
+   * ⚠ **정확히 0이나 1이면 selfcheck가 항등을 의심한다** — 그 값은 대개 측정이 아니라 보장이다(#5).
+   */
+  reachability_value?: number | number[];
+  /** 위 값이 이 원장 안 어디에 있는가. 점 경로(`a.b.c`). selfcheck가 **값 대조**한다(#33) */
+  reachability_source?: string;
+  /**
+   * **오라클 팔이 없다면 그 사실을 명시한다.** 산문 속에 묻히지 않게 별도 필드로 받는다 —
+   * "없다"는 것도 결론이고, 그러면 #35대로 *기준을 못 넘은 것이 신호의 성질인지 기준의
+   * 성질인지 갈리지 않는다*는 상태임이 원장에 남는다. ⚠ 기준을 낮추는 근거가 아니다.
+   */
+  reachability_absent?: string;
   /** 이번 실행의 결과(있으면) */
   result?: unknown;
   /** 이 게이트가 살아 있는가 — 은퇴했으면 사유를 적는다 */
@@ -32,5 +52,15 @@ export function gate(g: Gate): Gate {
     throw new Error("gate.registered가 비었다 — 통과 기준은 측정 전에 박는다(PITFALLS #26)");
   if (!g.reachability?.trim())
     throw new Error("gate.reachability가 비었다 — 무엇이 이 기준을 넘을 수 있는지 함께 적는다(PITFALLS #35)");
+  // **산문만으로는 안 된다**(#40) — 수치 + 출처, 아니면 "오라클이 없다"는 명시.
+  const hasValue = g.reachability_value !== undefined;
+  if (hasValue && !g.reachability_source?.trim())
+    throw new Error("gate.reachability_value가 있는데 `reachability_source`가 없다 — "
+                    + "그 수치가 원장 어디에서 왔는지 적는다(값 대조, PITFALLS #33)");
+  if (!hasValue && !g.reachability_absent?.trim())
+    throw new Error("gate의 도달 가능성이 **산문뿐이다**(PITFALLS #40) — "
+                    + "`reachability_value` + `reachability_source`를 적거나, "
+                    + "오라클 팔이 없으면 `reachability_absent`에 그 사실을 적는다. "
+                    + "산문만 두면 항등·자명한 값을 적고도 검사를 통과한다(실제로 그랬다)");
   return g;
 }

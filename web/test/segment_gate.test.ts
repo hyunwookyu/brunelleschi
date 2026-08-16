@@ -222,6 +222,8 @@ describe("G-A.1 중간 판정 — 세그먼트 기하가 옛 배치 계층보다
           + "갈리는 것이 기하 계층뿐임이 보장되고, 그래서 대조가 도달 가능성의 자리다"
           + "(`fix_load.json@34db7279`, 재실행 없이 인용). ⚠ **다른 하네스의 값이므로 대역으로 "
           + "쓰지 않는다**(#27) — 자릿수 대조다.",
+        reachability_value: 0.8463,
+        reachability_source: "old/first/placed",
         status: "**폐기된 계획(G)의 게이트다.** 사유는 `docs/archive/segment_plan.md` 머리말에 있다 — "
           + "실패한 것은 기하 표현이 아니라 순서였다. 원장은 대조를 위해 남긴다.",
       }),

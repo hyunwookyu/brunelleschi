@@ -447,6 +447,12 @@ def scan_sweep_coverage(root: Path) -> list[dict]:
         if not n_files:
             flags.append({"path": f"sweeps.json:{sw['name']}", "val": 0,
                           "flag": "훑은 파일이 0 → 훑기가 **안 돌았다**(경로·확장자 확인)"})
+        elif not found:
+            # **파일은 훑었는데 패턴이 한 번도 안 맞았다** — 덮는 수는 0이 아닌데
+            # 대조한 것이 0이다. #38이 잡는 "덮는 수 0"의 **다음 단계**이고 #40의 형태다.
+            flags.append({"path": f"sweeps.json:{sw['name']}", "val": f"파일 {n_files} · 일치 0",
+                          "flag": "**패턴이 한 번도 안 맞았다**(#40) — 파일은 훑었는데 대조한 것이 "
+                                  "0이다. 훑기가 **공허하다**: 패턴이 낡았는지 본다"})
     # 훑기별 0은 위에서 잡는다. 여기서는 **훑기 자체가 하나도 없는 경우**를 잡는다.
     flags += _cover("scan_sweep_coverage", "훑기", len(SWEEP_SCANNED), len(flags),
                     note="훑기별 파일 수는 `sweeps[]`에 있다")
@@ -474,6 +480,7 @@ def scan_citation_hashes(root: Path, reports: dict[str, dict]) -> list[dict]:
            for name, rep in reports.items()
            if isinstance(rep.get("constants"), dict)}
     flags, n_cites = [], 0
+    unresolved: list[str] = []
     SKIP = ("node_modules", "docs/archive", "stage0/out", "__pycache__", "dist",
             "test-results", "tests/", "tests\\")
     for f in sorted(root.rglob("*")):
@@ -489,7 +496,10 @@ def scan_citation_hashes(root: Path, reports: dict[str, dict]) -> list[dict]:
         for i, line in enumerate(txt.splitlines(), 1):
             for name, h in pat.findall(line):
                 if name not in cur or not cur[name]:
-                    continue                     # 없는 원장의 인용은 이 검사의 대상이 아니다
+                    # **조용히 건너뛰면 안 된다**(#40) — 없는 원장을 인용하면 값 대조가
+                    # 통째로 안 일어나고, 그것이 "인용이 깨끗하다"로 읽힌다.
+                    unresolved.append(f"{rel}:{i} {name}")
+                    continue
                 n_cites += 1
                 if h != cur[name]:
                     flags.append({
@@ -498,9 +508,87 @@ def scan_citation_hashes(root: Path, reports: dict[str, dict]) -> list[dict]:
                                 "다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 "
                                 "다시 읽는다**(CLAUDE.md §5)",
                     })
+    if unresolved:
+        flags.append({"path": "scan_citation_hashes", "val": unresolved[:5],
+                      "flag": f"**없는 원장을 인용한다**({len(unresolved)}건, #40) — 그 인용은 "
+                              f"값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"})
     flags += _cover("scan_citation_hashes", "인용", n_cites, len(flags),
-                    note="`tests/`·`docs/archive/`는 뺀다(반례 픽스처·폐기 문서)")
+                    note=f"`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 {len(unresolved)}건")
     return flags
+
+
+
+def _resolve(root, dotted: str):
+    """원장 안 경로(`a/b/c`)를 따라간다. 못 가면 `KeyError`.
+
+    ⚠ **구분자가 `/`다.** 점을 쓰면 `deg_0.25`처럼 **키 이름에 점이 든 것**을 못 가른다 —
+    이 저장소의 스윕 키가 실제로 그렇다(`deg_0.25` · `jitter_0.005` · `r2px.45`).
+    """
+    node = root
+    for part in dotted.replace("]", "").replace("[", "/").split("/"):
+        if part == "":
+            continue
+        if isinstance(node, list):
+            node = node[int(part)]
+        elif isinstance(node, dict):
+            if part not in node:
+                raise KeyError(dotted)
+            node = node[part]
+        else:
+            raise KeyError(dotted)
+    return node
+
+
+def _gate_value_checks(node: dict, fname: str, path: str, report: dict) -> list[dict]:
+    """**도달 가능성이 산문뿐이거나 자명한 값인지 본다**(PITFALLS #40, 2026-08-16 사람 지시).
+
+    실제로 걸린 것: `#35` 검사를 만든 **같은 세션**이 그 필드를 **정보량 0인 항등**으로 채웠다
+    (`horizon` 초판의 "참 카메라에서 오차 0"). `camera_gate`는 "`deg_0` 행이 **정의상** 1.0배"라
+    적었는데 그 행이 **대역의 출처 자체**다. 둘 다 필드가 비지 않았으므로 검사를 통과했다 —
+    **검사를 만들면서 검사를 무력화한 것**이다.
+
+    그래서 산문 대신 **수치 + 출처**를 요구하고 셋을 본다:
+      ① 산문뿐인가(`reachability_value`도 `reachability_absent`도 없다)
+      ② 값이 **정확히 0 또는 1**인가 — 그 자리의 0/1은 대개 측정이 아니라 **보장**이다(#5)
+      ③ `reachability_source`가 이 원장에서 실제로 그 값을 가리키는가(**값 대조**, #33)
+    """
+    out = []
+    keys = {k.lower() for k in node}
+    here = f"{fname}:{path}"
+    if not ({"reachability", "oracle", "도달"} & keys):
+        return out                       # 위에서 이미 플래그했다
+    has_val = "reachability_value" in node
+    if not has_val and not str(node.get("reachability_absent", "")).strip():
+        out.append({"path": here, "val": "산문뿐",
+                    "flag": "**도달 가능성이 산문뿐이다**(#40) — `reachability_value` + "
+                            "`reachability_source`를 적거나, 오라클이 없으면 "
+                            "`reachability_absent`에 그 사실을 적는다. 산문만 두면 "
+                            "**항등·자명한 값을 적고도 통과한다**(실제로 그랬다)"})
+        return out
+    if not has_val:
+        return out                       # 오라클 없음을 명시했다 — 그것이 결론이다
+    vals = node["reachability_value"]
+    vals = vals if isinstance(vals, list) else [vals]
+    trivial = [v for v in vals if isinstance(v, (int, float)) and v in (0, 1)]
+    if trivial:
+        out.append({"path": f"{here}.reachability_value", "val": vals,
+                    "flag": "**도달 가능성 값이 정확히 0 또는 1이다**(#40) — 그 자리의 0/1은 "
+                            "대개 측정이 아니라 **설계 보장**이다(#5). 항등을 도달 가능성으로 "
+                            "쓰면 정보량이 0이다. 다른 팔의 수치를 적는다"})
+    src = node.get("reachability_source")
+    if src:
+        try:
+            got = _resolve(report, str(src))
+        except Exception:
+            out.append({"path": f"{here}.reachability_source", "val": src,
+                        "flag": "**출처 경로가 이 원장에서 안 풀린다**(#40) — 값 대조를 못 한다"})
+        else:
+            gl = got if isinstance(got, list) else [got]
+            if [round(x, 6) if isinstance(x, (int, float)) else x for x in gl] !=                [round(x, 6) if isinstance(x, (int, float)) else x for x in vals]:
+                out.append({"path": f"{here}.reachability_value", "val": f"적은 값 {vals} ≠ 원장 {gl}",
+                            "flag": "**도달 가능성 값이 원장과 다르다**(#40·#33 값 대조) — "
+                                    "재측정 뒤 손으로 적은 수치를 안 고친 것이다"})
+    return out
 
 
 def scan_gate_reachability(reports: dict[str, dict]) -> list[dict]:
@@ -529,6 +617,7 @@ def scan_gate_reachability(reports: dict[str, dict]) -> list[dict]:
                     flags.append({"path": f"{fname}:{path}", "val": sorted(keys)[:6],
                                   "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 "
                                           "넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"})
+                flags.extend(_gate_value_checks(node, fname, path, reports.get(fname) or {}))
             for k, v in node.items():
                 walk(v, f"{path}.{k}" if path else k, fname)
         elif isinstance(node, list):
