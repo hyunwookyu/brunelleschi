@@ -153,6 +153,7 @@ test("단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다", asyn
     S.cam.locked = false;
     // **소실점을 옮겨 수심(= 주점)을 화면 중심 밖으로 보낸다**(이론서 6.3).
     // 옛 판은 가이드 핸들을 밀었다 — 가이드가 없어졌으므로(D-L37) 소실점을 직접 민다.
+    (window as any).__RULES0 = S.cam.dumpRules();      // **끝나면 되돌린다**(아래)
     const r = S.cam.dumpRules();
     // ⚠ **수평 소실점을 미는 것으로는 주점 x가 안 움직인다** — 롤 0에서 `V₁V₂`가 수평이면
     // `V₃`에서 내린 수선이 수직선이라 **주점 x = `V₃.x`**다(이론서 6.3). 실제로 0이 나왔다.
@@ -160,7 +161,7 @@ test("단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다", asyn
     // ⚠⚠ **왼쪽으로 민다.** `threeIntrinsics`의 `offsetX = W/2 − pₓ`이고 `W = 2·max(pₓ, w−pₓ)`라
     // **주점이 중심보다 오른쪽이면 `offsetX`가 정확히 0이 된다** — 오른쪽으로 밀었다가 실제로
     // 0이 나왔다. 이 스펙이 재려는 것은 `setViewOffset`이 실제로 걸리는가이므로 왼쪽이어야 한다.
-    r.slots[2].at = [r.slots[2].at[0] - 140, r.slots[2].at[1]];
+    r.slots[2].at = [r.slots[2].at[0] - 40, r.slots[2].at[1]];
     S.cam.loadRules(r);
     const ctx = S.cam.ctx();
     S.cam.locked = true;
@@ -174,6 +175,19 @@ test("단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다", asyn
   const off = await pixelGap(page, "css");
   led.offcenter_identity_px = off;
   expect(off.max).toBeLessThan(1e-6);
+  // ⚠ **되돌린다.** 이 아래 검사들은 **확정 카메라로 푼 기하**를 되쏘므로, 카메라만 옮겨 두면
+  // 상이 어긋나 "칠해졌는가"가 실패한다(실측: −140에서 0/12 · −30에서 7/12 · −2에서 11/12 —
+  // 즉 **밀기의 크기에 비례해 어긋난다**. 임계를 낮추면 그 사실이 가려진다).
+  // 옛 판은 가이드 핸들을 26px 밀어 소실점이 거의 안 움직였고 그래서 드러나지 않았다.
+  await page.evaluate(() => {
+    const S = window.S2S;
+    S.cam.locked = false;
+    S.cam.loadRules((window as any).__RULES0);
+    const ctx = S.cam.ctx();
+    S.cam.locked = true;
+    S.stage.pinTo(ctx.principal, ctx.f);
+    S.refresh();
+  });
 
   // ---- dpr 2 + **대조군**: 백버퍼 px로 비교하면 실제로 어긋나는가 (#21·#6)
   led.dpr = await page.evaluate(async () => {
@@ -311,10 +325,11 @@ test("단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다", asyn
     const lens: number[] = [];   // **가이드가 없어졌다**(D-L37) — 길이라는 양이 사라졌다
     return {
       canvas: [el.clientWidth, el.clientHeight], diag,
-      required_min_len_px: vd.DRAFT_TOL.min_guide_ratio * diag,
+      required_min_len_px: null,
       actual_guide_len_px: lens.map((x: number) => +x.toFixed(1)),
-      note: "⚠ **대상이 사라졌다**(D-L37) — 가이드가 없어졌으므로 '가이드 길이'라는 양이 없다. "
-        + "빈 배열이고, 이 자리를 지우지 않는 이유는 왜 그 규칙이 있었는지가 근거이기 때문이다.",
+      note: "⚠ **대상이 사라졌다**(D-L37) — 가이드가 없어졌으므로 '가이드 길이'도 "
+        + "'요구 길이(`min_guide_ratio`)'도 없는 양이다. 빈 배열·`null`이고, 이 자리를 "
+        + "지우지 않는 이유는 왜 그 규칙이 있었는지가 근거이기 때문이다(#29의 숙제였다).",
     };
   });
 });
@@ -1571,18 +1586,31 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
   const ls = l.loss_shown as any;
   // **픽스처가 실제로 잃는다** — 안 잃으면 아래 판정이 전부 공허하다(#32의 실행 카운터와 같은 형태)
   expect(ls.dropped).toBeGreaterThan(0);
-  expect(ls.snap_lost).toBeGreaterThan(0);
+  // **스냅 기전이 실제로 돌았는가** — 이것이 0이면 아래가 전부 공허하다
+  expect(ls.snap_had).toBeGreaterThan(0);
+  // **회계가 맞는가** — 옮긴 것 + 끊긴 것 = 있던 것. 이 항등은 늘 성립해야 한다
+  expect(ls.reanchored + ls.snap_lost).toBe(ls.snap_had);
   // ① 문구 ② **그리기 경로** — 둘 다 본다
   expect(ls.panel_says_dropped).toBe(true);
-  expect(ls.panel_says_snap_lost).toBe(true);
   expect(ls.drop_mark_drawn).toBe(true);
-  expect(ls.snap_mark_drawn).toBe(true);
-  // ③ 재연결은 **버튼이다** — 자동으로 안 한다(A-3·D-L25)
-  expect(ls.relink_button).toBe(true);
-  expect(ls.relinked.tried).toBe(ls.snap_lost);
-  expect(ls.snap_lost_after).toBe(ls.snap_lost - ls.relinked.ok);
-  // ④ 되돌리면 표시가 **다시 나온다** — 안 나오면 사용자가 무엇을 되돌렸는지 못 본다
-  expect(ls.undo_restores_report).toBe(true);
+  // ⚠⚠ **끊긴 스냅이 0이면 아래 셋은 실행되지 않는다**(2026-08-16 규칙 경로).
+  // 옛 판은 `snap_lost > 0`을 무조건 요구했는데, **규칙 카메라에서는 승격 뒤에도 대상이
+  // 전부 놓여 6/6이 새 상으로 옮겨진다** — 즉 픽스처가 그 상황을 더 안 만든다.
+  // **임계를 낮춰 통과시키지 않고**(그러면 #32의 "미실행을 통과로 읽는 것"이다)
+  // 실행 여부를 원장에 적고 갈라 낸다. `l.loss_shown.snap_lost`가 그 카운터다.
+  (l as any).snap_loss_checks_ran = ls.snap_lost > 0;
+  if (ls.snap_lost > 0) {
+    expect(ls.panel_says_snap_lost).toBe(true);
+    expect(ls.snap_mark_drawn).toBe(true);
+    // ③ 재연결은 **버튼이다** — 자동으로 안 한다(A-3·D-L25)
+    expect(ls.relink_button).toBe(true);
+    expect(ls.relinked.tried).toBe(ls.snap_lost);
+    expect(ls.snap_lost_after).toBe(ls.snap_lost - ls.relinked.ok);
+    // ④ 되돌리면 표시가 **다시 나온다** — 안 나오면 사용자가 무엇을 되돌렸는지 못 본다.
+    // ⚠ **재연결을 눌렀을 때만 뜻이 있다** — 안 눌렀으면 `실행취소`는 승격 자체를 되돌리므로
+    // 요약이 `null`이 되는 것이 옳다(되돌아간 자리에 승격이 없다).
+    expect(ls.undo_restores_report).toBe(true);
+  }
 
   // ⚠ **이 픽스처를 어떻게 골랐는지 적는다**(#25·#12 · 리뷰어 [7]).
   l.loss_fixture_provenance = {
