@@ -454,6 +454,55 @@ def scan_sweep_coverage(root: Path) -> list[dict]:
 
 
 
+def scan_citation_hashes(root: Path, reports: dict[str, dict]) -> list[dict]:
+    """**인용한 해시가 그 원장의 현재 해시와 맞는가**(PITFALLS #33의 값 대조, 2026-08-16).
+
+    `ledger_citation` 훑기는 **확장자 커버리지만** 봤다 — `산출물.json@해시` 꼴이 어느 확장자에
+    나오는지는 세면서 **그 해시가 맞는지는 안 봤다.** 그래서 상수 해시가 `46c028d1 → 2fd74e1c`로
+    옮길 때 그 문자열만 62곳 고쳤고, **다른 옛 해시(`1671e540`·`0803f3fe`·`272b5143`)로 적힌
+    25곳이 그대로 남았다.** 같은 원장을 두 문서가 다른 해시로 인용하는 상태였다.
+
+    ⚠ **해시만 고치면 안 된다.** 해시가 다르다는 것은 그 원장이 **다른 상수로 다시 돌았다**는
+    뜻이고, 그러면 인용한 **수치 자체**가 바뀌었을 수 있다. 이 플래그는 "해시를 고쳐라"가 아니라
+    **"그 수치를 원장에서 다시 읽어라"**다(CLAUDE.md §5).
+
+    `tests/`와 `docs/archive/`는 뺀다 — 반례 픽스처의 가짜 해시와 폐기 문서의 옛 인용이다.
+    """
+    import re
+    pat = re.compile(r"([A-Za-z_0-9]+\.json)@([0-9a-f]{8})")
+    cur = {name: (rep.get("constants") or {}).get("hash")
+           for name, rep in reports.items()
+           if isinstance(rep.get("constants"), dict)}
+    flags, n_cites = [], 0
+    SKIP = ("node_modules", "docs/archive", "stage0/out", "__pycache__", "dist",
+            "test-results", "tests/", "tests\\")
+    for f in sorted(root.rglob("*")):
+        if not f.is_file() or f.suffix not in (".md", ".ts", ".py"):
+            continue
+        rel = str(f.relative_to(root)).replace("\\", "/")
+        if any(x in rel for x in SKIP):
+            continue
+        try:
+            txt = f.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        for i, line in enumerate(txt.splitlines(), 1):
+            for name, h in pat.findall(line):
+                if name not in cur or not cur[name]:
+                    continue                     # 없는 원장의 인용은 이 검사의 대상이 아니다
+                n_cites += 1
+                if h != cur[name]:
+                    flags.append({
+                        "path": f"{rel}:{i}", "val": f"{name}@{h} ≠ 현재 {cur[name]}",
+                        "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 "
+                                "다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 "
+                                "다시 읽는다**(CLAUDE.md §5)",
+                    })
+    flags += _cover("scan_citation_hashes", "인용", n_cites, len(flags),
+                    note="`tests/`·`docs/archive/`는 뺀다(반례 픽스처·폐기 문서)")
+    return flags
+
+
 def scan_gate_reachability(reports: dict[str, dict]) -> list[dict]:
     """**게이트를 등록할 때 도달 가능성을 함께 박는다**(PITFALLS #35 자동화, 2026-08-16).
 
@@ -586,6 +635,7 @@ def main():
     flags += scan_nondeterministic_seeds(ROOT)      # B-0 d: 비결정 시드 정적 탐지
     flags += scan_roundtrip_metrics(ROOT)          # 자기참조 3: 복원↔역연산 왕복 지표
     flags += scan_sweep_coverage(ROOT)             # #33 자동화: 전수 훑기의 확장자 커버리지
+    flags += scan_citation_hashes(ROOT, reports)   # #33 값 대조: 인용 해시 ↔ 원장 현재 해시
     flags += scan_gate_reachability(reports)       # #35 자동화: 게이트에 도달 가능성 필드
     flags += scan_zero_denominator(ROOT)           # #36 자동화: 분모 0을 1로 바꾸는 나눗셈
 

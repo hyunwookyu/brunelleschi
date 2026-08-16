@@ -7,7 +7,12 @@
 // v1에서 실제로 겪은 것 둘을 여기서 미리 막는다:
 //   ① **id를 안 이어받아 새 획이 불러온 획과 겹쳤다** → `setDocSeq`
 //   ② 뷰를 안 담으면 **2D 레이어가 통째로 사라진다**(`viewRef`가 가리킬 곳이 없다)
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterAll } from "vitest";
+import { writeFileSync, mkdirSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { constantsSnapshot } from "./constants.js";
+import { metricsSnapshot } from "./metrics.js";
 import { newDoc, newSStroke, newView, resetDocSeq, setDocSeq, docSeq,
          type DocState } from "../src/ui/doc.js";
 import { serializeDoc2, restoreDoc2, isDoc2, DOC2_FORMAT,
@@ -16,6 +21,10 @@ import { ConstraintAccumulator } from "../src/s3d/constraints.js";
 import { linesFromDoc, toObj, toGltf } from "../src/ui/exportGeom.js";
 import type { Vec3 } from "../src/s3d/geom3d.js";
 import type { Pt2 } from "../src/s3d/camera.js";
+
+const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "stage0", "out");
+/** **원장에 남긴다**(PITFALLS #25) — 문장으로만 있는 확인은 selfcheck를 한 번도 안 지난다. */
+const led: Record<string, unknown> = {};
 
 const IMG: [number, number] = [960, 672];
 
@@ -55,6 +64,9 @@ describe("L-D.2 저장·복원 v2", () => {
     const pend = back.doc.strokes.filter(s => !s.seg3d);
     expect(pend.length).toBe(2);
     expect(new Set(pend.map(s => s.viewRef))).toEqual(new Set([d.views[0].id, d.views[1].id]));
+    led.views_and_pending = { views: back.doc.views.length, pending_2d: pend.length,
+                              owners: [...new Set(pend.map(s => s.viewRef))].length,
+                              pose_survives: back.doc.views[1].pose !== null };
   });
 
   it("`pts2d`·`seg3d`·스냅 출처가 **한 비트도 안 변한다**", () => {
@@ -68,6 +80,11 @@ describe("L-D.2 저장·복원 v2", () => {
     }
     expect(back.locked).toBe(true);
     expect(back.order).toBe(2);
+    led.bit_identical = { strokes: d.strokes.length,
+                          fields: ["pts2d", "seg3d", "snapStart", "axis"],
+                          locked: back.locked, order: back.order,
+                          note: "**설계 보장이다**(#5) — 담기로 한 필드이므로 같을 수밖에 없다. "
+                            + "임계를 걸지 않는다. 깨지면 저장 포맷 결함이다" };
   });
 
   it("**id를 이어 받는다** — 안 이어받으면 새 획이 불러온 획과 겹친다(반례)", () => {
@@ -87,6 +104,9 @@ describe("L-D.2 저장·복원 v2", () => {
     const freshView = newView("새 뷰", null);
     expect(back.doc.strokes.some(s => s.id === fresh.id)).toBe(false);
     expect(back.doc.views.some(v => v.id === freshView.id)).toBe(false);
+    led.id_continues = { collides_without_setDocSeq: true, collides_with_setDocSeq: false,
+                         seq: back.seq,
+                         note: "**반례가 실제로 걸린다**(#32) — 이어받지 않으면 같은 id가 난다" };
   });
 
   it("**없는 뷰를 가리키는 획**은 확정 뷰로 데려온다(조용히 사라지지 않는다)", () => {
@@ -99,6 +119,8 @@ describe("L-D.2 저장·복원 v2", () => {
     expect(back.doc.strokes[2].viewRef).toBe(home.id);
     expect(back.doc.currentView).toBe(home.id);
     expect(back.doc.strokes.length).toBe(3);            // 하나도 안 잃는다
+    led.dangling_viewref = { rehomed_to: "확정 뷰(pose === null)", strokes_lost: 0,
+                             note: "손으로 고친 문서·낡은 판본에서 온다. **조용히 안 사라진다**" };
   });
 
   it("반례: v1 문서나 남의 JSON은 열지 않는다", () => {
@@ -106,6 +128,8 @@ describe("L-D.2 저장·복원 v2", () => {
     expect(isDoc2({ format: DOC2_FORMAT, strokes: [] })).toBe(false);      // views 없음
     expect(isDoc2({ format: DOC2_FORMAT, strokes: [], views: [] })).toBe(false);  // 빈 뷰
     expect(isDoc2(null)).toBe(false);
+    led.rejects = { "s2s-doc/1(v1)": false, "views 없음": false, "빈 뷰": false, "null": false,
+                    note: "**거절이 설계다** — 위 `v1_rejected` 참조" };
   });
 
   it("내보내기는 **3D만** 내고 뷰 이름을 남긴다(2D 레이어는 좌표가 없다)", () => {
@@ -121,6 +145,11 @@ describe("L-D.2 저장·복원 v2", () => {
                                        meshes: { primitives: { mode: number }[] }[] };
     expect(gl.nodes[0].name).toContain("@확정 뷰");
     expect(gl.meshes[0].primitives[0].mode).toBe(3);    // LINE_STRIP
+    led.export_3d_only = { doc_strokes: d.strokes.length, exported: lines.length,
+                           obj_has_face: /^f /m.test(obj.data), obj_has_view: true,
+                           gltf_mode: 3,
+                           note: "2D 레이어는 좌표가 없으므로 안 나간다 — **미배치는 대기지 "
+                             + "내보낼 것이 아니다**(§9.1)" };
   });
 
   it("카메라 제약이 **입력 그대로** 담긴다 — 열어서 이어 조정할 수 있다", () => {
@@ -133,5 +162,30 @@ describe("L-D.2 저장·복원 v2", () => {
     const again = new ConstraintAccumulator(IMG).load(back.cam!);
     expect(again.solve().axes[0].status).toBe("fixed");
     expect((again.solve().axes[0] as { nLines: number }).nLines).toBe(2);
+    led.camera_constraints = { axis0_status: again.solve().axes[0].status, n_lines: 2,
+                               note: "**입력(선)을 담는다** — 푼 결과가 아니다. 그래야 열어서 "
+                                 + "이어 조정할 수 있고 차수 승격이 전부 다시 푼다(§6.1)" };
   });
+});
+
+afterAll(() => {
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "doc_store.json"), JSON.stringify({
+    spec: "L-D.2 저장·복원 v2 — 뷰가 2D 획의 소유자라는 성질을 저장이 지키는가(§9.2)",
+    plan: "docs/line_plan.md L-D.2 · §9.2",
+    what_this_does_not_say: [
+      "**IndexedDB를 안 탄다** — 여기는 직렬화 함수의 왕복이다(구조적 복제는 JSON으로 흉내낸다). "
+        + "실제 저장소 왕복은 `stage_browser.json`의 `l_d3_save_roundtrip`이다",
+      "성능 — 문서 크기·저장 지연을 안 잰다",
+      "v1 문서의 이전(migration) — **거절**이 설계다(아래 `v1_rejected`)",
+    ],
+    v1_rejected: "v1 문서는 열지 않는다. **옛 UI(`index.html`)로 그린 저장은 새 UI에서 안 뜬다.** "
+      + "이전 경로를 안 짜는 이유: v1에는 뷰가 없어 `viewRef`를 만들어 내야 하고, "
+      + "그러면 **없는 소유 관계를 지어내는 것**이다(A-3: 애매하면 놓지 않는다). "
+      + "키도 갈랐다(`current` 대 `current2`) — 같은 DB에서 서로 덮지 않는다(#34).",
+    format: DOC2_FORMAT,
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 2), "utf-8");
 });

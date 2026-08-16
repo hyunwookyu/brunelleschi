@@ -1,5 +1,16 @@
 {
-  "spec": "S-10 종단 검증 — **실제 앱을 띄우고 실제 포인터 이벤트로** 그린 결과.",
+  "spec": "L-D.2 정적 배포 — 서버 없이, 하위 경로에서, 오프라인으로 열리는가",
+  "plan": "docs/line_plan.md L-D.2",
+  "what_this_does_not_say": [
+    "실제 GitHub Pages에서 도는가 — **아직 한 번도 실행되지 않았다**(Settings → Pages 미설정)",
+    "아이패드 사파리 — 여기는 chromium이다. 인앱 브라우저의 서비스 워커 제한은 별개다",
+    "설치형 PWA 동작 — manifest가 있다는 것과 설치되는 것은 다르다"
+  ],
+  "condition": {
+    "server": "Node 정적 서버(이 스펙이 띄운다) · 하위 경로 /SKETCH2SPACE · 포트 8901",
+    "build": "`npm run build` 산출물(`dist/`). 빌드본이 없으면 **건너뛴다**(#32)",
+    "browser": "chromium(Playwright) · 1440×900 · deviceScaleFactor 1"
+  },
   "constants": {
     "hash": "2fd74e1c",
     "values": {
@@ -136,100 +147,24 @@
     "source": "file",
     "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
   },
-  "why": "지금까지의 측정은 전부 함수 호출이다. DOM·잉크 캡처·three 렌더·IndexedDB가 함께 도는 것은 여기가 처음이고, **잉크 캡처 회귀 테스트가 0이었던 자리**이기도 하다.",
-  "condition": {
-    "browser": "chromium(Playwright) · 1440×900 · deviceScaleFactor 1",
-    "server": "개발 서버(`npm run dev:5222`, 번들 없음) — 지연은 **상한**으로 읽는다",
-    "composition": "요 35°·피치 15° 3점(f=320px), 상자 하나 12획 + 돌린 시점 2획",
-    "machine_dependent": "지연·프레임 시간은 이 기계의 값이다. 회귀 감시용이고 절대 기준이 아니다."
+  "l_d2": {
+    "subpath_opens": true,
+    "views": 1,
+    "absolute_asset_srcs": 0,
+    "sw_scope_matches_subpath": true,
+    "controlled_after_reload": true,
+    "offline_reload_views": 1,
+    "console_errors": []
   },
-  "camera": {
-    "case": "3pt",
-    "f": 320,
-    "fov": 74.88,
-    "fSource": "orthocenter(6.3)"
-  },
-  "first_view": {
-    "strokes": 12,
-    "placed": 9,
-    "mesh": {
-      "strokes": 9,
-      "vertices": 126,
-      "triangles": 216
-    }
-  },
-  "stroke_latency_ms": {
-    "n": 12,
-    "median": 1.9,
-    "max": 3.6,
-    "note": "`pointerup` 하나가 반환할 때까지 — 판정·배치·튜브 생성·다시 그리기가 그 안이다. 개발 서버(번들 없음) 기준이므로 **상한**으로 읽는다."
-  },
-  "orbit_frame_ms": {
-    "n": 30,
-    "median": 16.7,
-    "max": 18.2
-  },
-  "second_view": {
-    "added": 1,
-    "placed_total": 9,
-    "camera_locked": false,
-    "latency_ms": {
-      "median": 2.2
+  "l_d2_offline_control": {
+    "arm_a_precache_only": {
+      "removed": "`.js` 전부를 사전 캐시 목록에서 뺐다",
+      "app_revived": true
     },
-    "note": "**기존 기하의 끝점 둘 사이**를 그었다(면 대각선 격). `camera_locked`가 false면 그 획이 안 놓였다는 뜻이다 — 잠금은 놓였을 때만 걸린다(D-S22의 귀결)."
-  },
-  "fix_by_hand": {
-    "unplaced": 4,
-    "ops": 6,
-    "fixed": 1,
-    "noCand": 3,
-    "provisional": 0,
-    "userPlaced": 1,
-    "note": "**실제 UI 경로**(select → candidates → editClick)로 붙였다. `ops`는 조작 수다 — 합성 하네스(`fix_load.json`)와 같은 셈법이고, 여기서는 시나리오 하나의 실측이다. `noCand`는 **돌린 시점에서 그린 획**이다 — 첫 시점 캔버스에는 후보가 없다(좌표계가 다르다)."
-  },
-  "fix_in_rotated_view": {
-    "unplaced": 3,
-    "ops": 6,
-    "placed": 1,
-    "sameViewOk": 1,
-    "stillUnplaced": 2,
-    "note": "돌린 시점 획은 **그 시점으로 돌아가야** 후보가 생긴다(좌표계가 그 시점의 것이다). 조작 수에 '그 시점으로' 1이 더 붙는다 — `fix_load.json`의 모형이 0으로 잡은 항목이다."
-  },
-  "reload": {
-    "ms": 144,
-    "strokes": 13,
-    "placed": 11,
-    "user_placed": 2,
-    "identical": true,
-    "mesh": {
-      "strokes": 11,
-      "vertices": 310,
-      "triangles": 576
-    }
-  },
-  "export": {
-    "obj": {
-      "strokes": 11,
-      "points": 48,
-      "skipped": 2,
-      "hasFace": false,
-      "bytes": 2079
+    "arm_b_cache_emptied": {
+      "deleted_js_entries": 3,
+      "app_revived": false
     },
-    "gltf": {
-      "nodes": 11,
-      "modes": [
-        3
-      ],
-      "bytes": 5669
-    }
-  },
-  "undo_erase": {
-    "before": 13,
-    "afterErase": 12,
-    "afterUndo": 13,
-    "redoDepth": 1
-  },
-  "console_errors": [],
-  "service_worker_in_dev": 0,
-  "offline_dev_server": "안 뜬다 — 개발 서버에는 서비스 워커가 없다"
+    "reading": "**A가 살았다 — ③의 통과는 사전 캐시 목록의 효력이 아니다.** `fetch` 핸들러가 성공 응답을 그때그때 캐시하므로 온라인으로 두 번 연 뒤에는 번들이 런타임 캐시에 있다. 사전 캐시가 실제로 사는 자리는 **첫 방문에서 아직 안 받은 지연 로드 청크**이고 이 확인은 그것을 안 잰다(미측정). **B가 깨지는 것**이 ③이 배제하는 것이다 — 캐시에 번들이 없으면 안 뜬다."
+  }
 }

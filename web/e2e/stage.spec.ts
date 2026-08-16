@@ -400,12 +400,39 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
   const cleared = await page.evaluate(() => window.S2S.doc().strokes.length);
   expect(cleared).toBe(0);
 
-  led.persist = {
+  // **블록 이름을 `l_*` 규약에 맞춘다**(리뷰어 [1]) — 옛 이름 `persist`는 S-9 원장
+  // `persist.json`과 헷갈렸고, HANDOFF가 "원장 밖"으로 잘못 읽어 중복 append를 지시했다.
+  led.l_d3_save_roundtrip = {
     reload_ms: Date.now() - t0,
     views: after.views.length, lifted: after.lifted, pending_2d: after.pending,
     identical: true, export: exp,
+    // **`identical`이 무엇을 덮는지 적는다**(PITFALLS #17, 리뷰어 [15]).
+    // "같다"만 적으면 다음 세션이 그것을 전수 대조로 읽는다.
+    identical_covers: ["strokes[].id", "strokes[].viewRef", "strokes[].axis",
+                       "strokes[].seg3d", "strokes[].pts2d[0]",
+                       "views[].id", "views[].name", "views[].pose 유무",
+                       "currentView", "lifted 수", "pending 수", "cam.locked",
+                       "cam.guides 수", "order"],
+    identical_does_not_cover: ["pts2d 전체(첫 점만 본다)", "snapStart", "color·width·layer",
+                               "되돌리기 이력", "orderMarks", "가이드 핸들 상태"],
+    // **저장 v2가 못 담는 것**(리뷰어 [6]) — 복원 뒤 어떻게 보이는지 한 줄씩.
+    v2_does_not_hold: {
+      "되돌리기 이력": "복원 뒤 되돌리기 깊이가 0이다. 새로고침 전 조작은 못 되돌린다",
+      orderMarks: "차수 표식(승격이 무엇을 잃었는지)이 사라진다 — **되돌릴 대상이 안 보인다**",
+      "못 살린 스냅 표식": "⚠ **가장 나쁜 항목이다** — 승격에서 대상이 안 놓여 못 옮긴 시작점의 "
+        + "표식이 복원 뒤 사라진다. 그 획은 조용히 틀린 시작점을 가진 채 정상으로 보인다",
+      "승격 손실 표시": "L-C.2의 손실 목록이 복원 뒤 비어 있다",
+      "가이드 핸들 상태": "가이드 선 자체는 `cam.guides`로 살지만 어느 핸들을 잡고 있었는지는 안 산다",
+      "Stroke.color·width": "화면이 축 색을 쓰므로 복원 뒤 차이가 안 보인다(#18의 `layer`와 같은 자리)",
+      "Stroke.layer": "**아무 데도 안 쓰인다**(selfcheck: 쓰기 0 · 읽기 0). 저장 안 함이 맞다",
+    },
+    reload_ms_definition: "`page.reload()` 호출 직전부터 `window.S2S`가 서고 `doc().strokes`가 "
+      + "0이 아닐 때까지. ⚠ **`e2e.json`의 `reload.ms`(146)와 다른 구간이다** — 그쪽은 옛 UI "
+      + "(`index.html`)의 복원이고 여기는 새 UI(`l.html`)에 **뷰 둘 + 2D 레이어**가 실린 문서다. "
+      + "두 수를 견주지 않는다(리뷰어 [16]).",
     note: "**직렬화 왕복이다**(설계 보장, PITFALLS #5) — `seg3d`를 담기로 했으므로 같을 "
-      + "수밖에 없다. 깨지면 저장 포맷 결함을 뜻한다. 임계를 걸지 않는다.",
+      + "수밖에 없다. 깨지면 저장 포맷 결함을 뜻한다. 임계를 걸지 않는다. "
+      + "⚠ **틀린 문서를 넣는 대조군이 없다**(#30) — `identical`은 위 목록만 덮는다.",
   };
 });
 

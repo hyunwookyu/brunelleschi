@@ -512,7 +512,7 @@ describe("L-A 게이트 (§5.1~§5.3)", () => {
         note: "구 접근과의 대조. 조건이 다르므로(구도·경로) 자릿수만 읽는다",
         S_first_view: { placement: 0.846, silent_wrong: 0.057 },
         G_first_view: { placement: 0.887, silent_wrong: 0.278 },
-        source: "docs/archive/segment_plan.md 머리말 · segment_gate.json@1671e540",
+        source: "docs/archive/segment_plan.md 머리말 · segment_gate.json@2fd74e1c",
       },
       constants: constantsSnapshot(),
       metric_defs: metricsSnapshot(),

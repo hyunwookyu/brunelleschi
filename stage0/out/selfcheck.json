@@ -7880,16 +7880,23 @@
       "note": "훑기별 파일 수는 `sweeps[]`에 있다"
     },
     {
+      "scan": "scan_citation_hashes",
+      "unit": "인용",
+      "targets": 84,
+      "hits": 0,
+      "note": "`tests/`·`docs/archive/`는 뺀다(반례 픽스처·폐기 문서)"
+    },
+    {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
       "targets": 6,
       "hits": 0,
-      "note": "덮은 곳: camera_gate.json:gate, guide_budget.json:gate, lift_gate.json:gate, order_signal.json:gate, preview_gap.json:gate, segment_gate.json:gate (원장 37개 훑음)"
+      "note": "덮은 곳: camera_gate.json:gate, guide_budget.json:gate, lift_gate.json:gate, order_signal.json:gate, preview_gap.json:gate, segment_gate.json:gate (원장 39개 훑음)"
     },
     {
       "scan": "scan_zero_denominator",
       "unit": "하네스 파일",
-      "targets": 36,
+      "targets": 37,
       "hits": 12,
       "note": "원장을 쓰는 `web/test/**.ts`만 본다"
     }
@@ -7903,6 +7910,7 @@
     "camera_gate.json",
     "constants.json",
     "continue_after_rotate.json",
+    "doc_store.json",
     "draft_recover.json",
     "e2e.json",
     "face_diagonal.json",
@@ -7927,6 +7935,7 @@
     "snap.json",
     "stage_browser.json",
     "stage_cam.json",
+    "static_deploy.json",
     "systematic_warp.json",
     "tube_render.json",
     "view_plane.json",
