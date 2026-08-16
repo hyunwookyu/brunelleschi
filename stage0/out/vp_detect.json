@@ -5454,7 +5454,7 @@
   },
   "unit_note": "`vpMisfit = sin φ / 2`이므로 각도 임계는 부적합도 임계의 **단조 재매개화**다. 단위를 바꾸는 것은 아무것도 고치지 않는다(PITFALLS #24). misfit 0.06은 6.892°이므로 채택한 2.5°는 그보다 **엄격하다**",
   "constants": {
-    "hash": "5955b34c",
+    "hash": "1b6175a4",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -5502,8 +5502,10 @@
       "RULE_TOL": {
         "screen_axis_deg": 4,
         "depth_min_deg": 8,
-        "min_sep_deg": 3,
         "vertical_ask_deg": 45
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
       },
       "DRAFT_TOL": {
         "handle_ratio": 0.018,

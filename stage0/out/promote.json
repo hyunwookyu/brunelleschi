@@ -1401,7 +1401,7 @@
     }
   },
   "constants": {
-    "hash": "5955b34c",
+    "hash": "1b6175a4",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -1449,8 +1449,10 @@
       "RULE_TOL": {
         "screen_axis_deg": 4,
         "depth_min_deg": 8,
-        "min_sep_deg": 3,
         "vertical_ask_deg": 45
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
       },
       "DRAFT_TOL": {
         "handle_ratio": 0.018,

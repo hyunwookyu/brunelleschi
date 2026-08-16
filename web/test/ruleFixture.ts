@@ -8,7 +8,7 @@ import type { Pt2 } from "../src/s3d/camera.js";
 
 /** 유한 소실점 슬롯. `source`는 **깊이선 둘의 교점**으로 둔다(규칙 b). */
 export const vpSlot = (at: Pt2, support = 2): Slot =>
-  ({ kind: "vp", at: [at[0], at[1]], source: "two_lines", support });
+  ({ kind: "vp", at: [at[0], at[1]], source: "horizon_x_line", support });
 
 /** 무한원(화면 평행) 슬롯 — 화면 가로/세로 축(규칙 a). */
 export const screenSlot = (dir: "h" | "v", support = 1): Slot =>
@@ -18,12 +18,15 @@ export const screenSlot = (dir: "h" | "v", support = 1): Slot =>
  * 슬롯 셋 → 규칙 상태. **지평선은 첫 유한 수평 소실점이 정한다** —
  * 손으로 넣지 않는다(그 순서가 규칙의 핵심이라 픽스처에서도 지킨다).
  */
-export function rulesOf(slots: [Slot | null, Slot | null, Slot | null]): RuleState {
+export function rulesOf(slots: [Slot | null, Slot | null, Slot | null],
+                        imgSize: [number, number] = [960, 672]): RuleState {
+  // **지평선은 처음부터 있다**(2026-08-16). 유한 수평 소실점이 있으면 그 y가 지평선이고
+  // (규칙이 그 위에만 놓으므로 같은 값이다), 없으면 기본값(피치 0 = 화면 중앙)이다.
   const h = ([0, 1] as const).map(i => slots[i]).find(s => s && s.kind === "vp");
   return {
     slots,
-    horizon: h && h.kind === "vp" ? h.at[1] : null,
-    waiting: [], verticalLines: [],
+    horizon: h && h.kind === "vp" ? h.at[1] : imgSize[1] / 2,
+    verticalLines: [],
   };
 }
 

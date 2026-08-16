@@ -16,7 +16,7 @@
 // 규칙이 낸 소실점을 `vp_point`로 넣으면 그대로 동작한다. 바뀐 것은 **무엇이 그 점을 정하는가**다.
 import { ConstraintAccumulator, type AxisId } from "../s3d/constraints.js";
 import {
-  newRuleState, cloneRuleState, stepRule, deriveVertical, vpsOf, axisDirsOf,
+  newRuleState, cloneRuleState, stepRule, deriveVertical, vpsOf, axisDirsOf, defaultHorizon,
   orderOfState, axisOfStroke, RULE_TOL,
   type RuleState, type RuleEvent, type RLine,
 } from "../s3d/vpRules.js";
@@ -46,7 +46,7 @@ export interface RuleFeedback {
 export class CamState {
   readonly acc: ConstraintAccumulator;
   /** 규칙 상태 — **이것이 카메라의 단일 출처다.** */
-  rules: RuleState = newRuleState();
+  rules: RuleState = newRuleState([960, 672]);
   /** 확정됐는가(§1.2의 "카메라 확정"). 확정 뒤에는 획이 소실점을 바꾸지 않는다. */
   locked = false;
   /** 1점 투시에서 쓸 렌즈(35mm 환산 mm). `null`이면 f가 안 채워진다. */
@@ -54,13 +54,21 @@ export class CamState {
 
   constructor(imgSize: [number, number]) {
     this.acc = new ConstraintAccumulator(imgSize);
+    this.rules = newRuleState(imgSize);
     this.apply();
   }
 
   get imgSize(): [number, number] { return this.acc.imgSize; }
 
   resize(s: [number, number]) {
+    const wasDefault = Math.abs(this.rules.horizon - defaultHorizon(this.imgSize)) < 1e-6;
     this.acc.resize(s);
+    // **기본 지평선은 화면 중앙이므로 창이 바뀌면 따라간다.** 소실점이 이미 그 위에 놓였으면
+    // 옮기지 않는다 — 그러면 확정된 축이 소리 없이 바뀐다(A-3).
+    if (wasDefault && !this.rules.slots.some(x => x?.kind === "vp")) {
+      this.rules = cloneRuleState(this.rules);
+      this.rules.horizon = defaultHorizon(s);
+    }
     // 창이 커지면 **유도된 수직 소실점의 전제(주점 = 이미지 중심)가 움직인다** —
     // 유도값은 다시 낸다. 그은 선에서 나온 소실점은 그대로 둔다(그것은 그림이 정한 값이다).
     if (this.rules.slots[2]?.kind === "vp" && this.rules.slots[2].source === "orthocenter") {
@@ -121,12 +129,17 @@ export class CamState {
   /** 저장·복원용. **규칙 상태 그대로** 담는다(푼 결과가 아니다 — 열어서 이어 그릴 수 있어야 한다). */
   dumpRules(): RuleState { return cloneRuleState(this.rules); }
   loadRules(s: RuleState | null): void {
-    this.rules = s ? cloneRuleState(s) : newRuleState();
+    this.rules = s ? cloneRuleState(s) : newRuleState(this.imgSize);
+    // **옛 저장본은 지평선이 `null`이거나 없다** — 기본값(피치 0 = 화면 중앙)으로 채운다.
+    // 지평선은 이제 **처음부터 있는 것**이라 없는 상태가 존재하지 않는다.
+    if (typeof this.rules.horizon !== "number" || !Number.isFinite(this.rules.horizon)) {
+      this.rules.horizon = defaultHorizon(this.imgSize);
+    }
     this.apply();
   }
 
   reset(): void {
-    this.rules = newRuleState();
+    this.rules = newRuleState(this.imgSize);
     this.acc.reset();
     this.lensMm = DEFAULT_LENS_MM;
     this.locked = false;

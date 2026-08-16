@@ -1,7 +1,7 @@
 {
   "spec": "S-7 (0) 측정 경로와 앱 경로의 배선. **측정했다고 앱이 쓰는 것은 아니다.**",
   "constants": {
-    "hash": "5955b34c",
+    "hash": "1b6175a4",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -49,8 +49,10 @@
       "RULE_TOL": {
         "screen_axis_deg": 4,
         "depth_min_deg": 8,
-        "min_sep_deg": 3,
         "vertical_ask_deg": 45
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
       },
       "DRAFT_TOL": {
         "handle_ratio": 0.018,

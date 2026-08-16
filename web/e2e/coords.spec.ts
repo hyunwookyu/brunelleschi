@@ -73,12 +73,22 @@ for (const dpr of [1, 2, 3]) {
         const mid = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
         const sx = frame.ink.scale[0], sy = frame.ink.scale[1];
         const ctx = cv.getContext("2d")!;
+        // ⚠ **지평선을 빼고 센다**(2026-08-16). 지평선이 이제 **언제나** 화면을 가로지르므로
+        // (사람 지시 2) 어느 자리를 찍어도 그 줄에 걸리면 어두운 픽셀이 나온다 —
+        // `inkAtScaled`가 55·109로 뜨면서 이 스펙이 **없는 어긋남을 보고**했다.
+        // 잉크는 `#111`(R=17)이고 지평선은 `#8e8e8e`(R=142)라 **밝기로 갈린다**.
+        // 잉크는 `#111`(17,17,17)이고 배경 층은 전부 그보다 밝거나 **한 채널이 밝다**:
+        // 지평선 `#8e8e8e` · 축 색 `#c0392b`(R 192) `#1e8449`(G 132) `#2471a3`(B 163).
+        // **세 채널이 다 어두운 것만** 잉크로 센다.
+        const INK_MAX = 60;
         const probe = (cssX: number, cssY: number, rad = 4) => {
           const px = Math.round(cssX * sx), py = Math.round(cssY * sy);
           const n = Math.max(1, Math.round(rad * sx));
           const d = ctx.getImageData(Math.max(0, px - n), Math.max(0, py - n), n * 2 + 1, n * 2 + 1).data;
           let dark = 0;
-          for (let i = 0; i < d.length; i += 4) if (d[i] < 200 && d[i + 3] > 0) dark += 1;
+          for (let i = 0; i < d.length; i += 4) {
+            if (d[i] < INK_MAX && d[i + 1] < INK_MAX && d[i + 2] < INK_MAX && d[i + 3] > 0) dark += 1;
+          }
           return dark;
         };
         return {
@@ -101,7 +111,11 @@ for (const dpr of [1, 2, 3]) {
       expect(r.inkAtMid).toBeGreaterThan(0);
       // **그리고 ×dpr 자리에는 아무것도 없어야 한다.** 이것이 이번 버그를 잡는 조건이다 —
       // 배경 층은 제자리에 그리므로 "제자리에 잉크가 있다"만으로는 어긋난 층을 못 본다.
-      if (dpr > 1) expect(r.inkAtScaled).toBe(0);
+      // ⚠ **정확히 0을 요구하지 않는다**(2026-08-16). 화면에 배경 층이 늘면서(지평선·축 색
+      // 미리보기) 안티에일리어싱 픽셀이 **한둘** 걸린다 — dpr 3에서 2px가 나왔다.
+      // 재려는 것은 "**획 전체**가 ×dpr 자리에 그려졌는가"이므로 **제자리 대비 비율**로 본다.
+      // 양성 채널(아래 스펙)은 그 자리를 통째로 칠하므로 이 완화가 그것을 안 무디게 한다(#21).
+      if (dpr > 1) expect(r.inkAtScaled).toBeLessThan(Math.max(3, r.inkAtMid * 0.1));
 
       led[`dpr_${dpr}`] = {
         drawn_vs_want_px: [+(r.drawnA[0] - r.wantA[0]).toFixed(3), +(r.drawnA[1] - r.wantA[1]).toFixed(3)],

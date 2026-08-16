@@ -27,6 +27,7 @@ import { SENS_TOL } from "../src/s3d/vpSensitivity.js";
 import { SNAP_TOL } from "../src/s3d/snap.js";
 import { HORIZON_TOL } from "../src/s3d/horizon.js";
 import { RULE_TOL } from "../src/s3d/vpRules.js";
+import { SNAP_TOL_AXIS } from "../src/s3d/axisSnap.js";
 import { LIVE_TOL } from "../src/s3d/liveLine.js";
 import { PICK_TOL } from "../src/ui/pick.js";
 import { INK_GRADES } from "../src/s3d/synthInk.js";
@@ -46,6 +47,8 @@ export const SHARED_CONSTANTS = {
   HORIZON_TOL,
   // **규칙 기반 소실점 확정**(2026-08-16 전면 교체). 하네스 `test/rule_camera.test.ts`가 읽는다
   RULE_TOL,
+  // **축 스냅 — 라이노 직교 모드**(2026-08-16 2차 지시). 하네스 `test/axis_snap_measure.test.ts`
+  SNAP_TOL_AXIS,
   DRAFT_TOL,
   SENS_TOL,
   SNAP_TOL,

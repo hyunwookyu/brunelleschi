@@ -31,15 +31,15 @@
     "view_vs_overlay": {
       "renderer": [
         1280,
-        755
+        748
       ],
       "overlay": [
         1280,
-        755
+        748
       ],
       "same": true
     },
-    "size_heal": 1
+    "size_heal": 2
   },
   "dpr_2": {
     "drawn_vs_want_px": [
@@ -59,15 +59,15 @@
     "view_vs_overlay": {
       "renderer": [
         1280,
-        755
+        748
       ],
       "overlay": [
         1280,
-        755
+        748
       ],
       "same": true
     },
-    "size_heal": 1
+    "size_heal": 2
   },
   "probe_control_dpr_2": {
     "before": 0,
@@ -79,7 +79,7 @@
       0
     ],
     "ink_at_mid": 209,
-    "ink_at_scaled": 0,
+    "ink_at_scaled": 2,
     "stretch": [
       3,
       3
@@ -91,22 +91,22 @@
     "view_vs_overlay": {
       "renderer": [
         1280,
-        755
+        748
       ],
       "overlay": [
         1280,
-        755
+        748
       ],
       "same": true
     },
-    "size_heal": 1
+    "size_heal": 2
   },
   "probe_control_dpr_3": {
     "before": 0,
     "after": 175
   },
   "constants": {
-    "hash": "5955b34c",
+    "hash": "1b6175a4",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -154,8 +154,10 @@
       "RULE_TOL": {
         "screen_axis_deg": 4,
         "depth_min_deg": 8,
-        "min_sep_deg": 3,
         "vertical_ask_deg": 45
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
       },
       "DRAFT_TOL": {
         "handle_ratio": 0.018,

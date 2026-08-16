@@ -83,7 +83,7 @@ export function snapDiff(a: AppSnap, b: AppSnap): string[] {
       w.push(`rules.slots[${i}].vp`);
     }
   }
-  if (a.rules.waiting.length !== b.rules.waiting.length) w.push("rules.waiting.length");
+
   if (a.doc.views.length !== b.doc.views.length) w.push("views.length");
   if (a.doc.strokes.length !== b.doc.strokes.length) w.push("strokes.length");
   else for (let i = 0; i < a.doc.strokes.length; i++) {

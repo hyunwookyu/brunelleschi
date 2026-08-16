@@ -8,12 +8,17 @@
 //
 // ```
 // a. 화면 가로·세로 선  → 그 축 자체다. 소실점이 무한원이고 계산할 것이 없다(이론서 2.2, c=0)
-// b. 깊이선 두 개       → 교점이 소실점 하나. 1점 투시 확정
-// c. 소실점 하나        → 지평선이 그 높이의 수평선으로 확정된다(롤 0, 이론서 3.1).
-//                        다른 방향 깊이선 **하나**를 더 그으면 그 선과 지평선의 교점이 두 번째다.
-//                        **세 개가 아니라 하나다** — 지평선이 이미 자유도 하나를 먹었다
+// b. 깊이선 **하나**    → 그 선과 **지평선**의 교점이 소실점이다. 1점 투시 확정
+// c. 다른 방향 깊이선   → 같은 지평선 위에서 두 번째 소실점. 2점 투시
 // d. 세 번째(수직)      → 수심 조건으로 **유도한다**(이론서 6.3). 그리는 것이 아니다
 // ```
+//
+// ⚠⚠ **지평선은 처음부터 있다**(2026-08-16 2차 지시). 옛 판은 "첫 소실점이 지평선을
+// 정의한다"였고 그래서 **첫 소실점만 두 선의 교점**이었다 — 그 둘이 나란해지면 교점이 날아가고,
+// 그것이 번갈아 긋기에서 축 오차 32.57°가 나온 자리로 의심됐다(`rule_camera.json`).
+// 지금은 **지평선이 먼저 있고 모든 수평 소실점이 그 위에 놓인다.** 교점 계산에서 한 쪽이
+// **오차 없이 정확**하므로 그 실패 모드가 통째로 사라진다. 옵션으로 끄지 않는다.
+// 지평선 높이는 **카메라 피치가 정하고** 사용자가 직접 조절하지 않는다(궤도로 바뀐다).
 //
 // **유일한 판단은 그은 선이 깊이인지 화면 가로세로인지다.** 임계 하나로 갈리고,
 // 그 사이(애매)면 **사용자에게 묻는다**(A-3: 애매하면 놓지 않는다).
@@ -47,12 +52,6 @@ export const RULE_TOL = {
    */
   depth_min_deg: 8,
   /**
-   * 첫 소실점을 만드는 깊이선 **두 개의 각차**(도). 이보다 나란하면 교점이 정해지지 않는다.
-   * `HOMOG_TOL.snap_deg`(3°)와 같은 자리이고 근거도 같다 — 그 아래에서는 핸들/끝점 1px이
-   * 축을 0.39°/px 이상 움직여 0.5° 예산의 78%를 쓴다(`vp_homog.json@5955b34c`).
-   */
-  min_sep_deg: 3,
-  /**
    * 두 번째 **수평** 소실점을 만들려는 깊이선이 화면 수직에 이보다 가까우면(도)
    * **묻는다** — 두 번째 수평축인지 수직축인지 선만 보고는 갈리지 않기 때문이다.
    *
@@ -83,16 +82,21 @@ export type VpSource =
 
 export interface RuleState {
   slots: [Slot | null, Slot | null, Slot | null];
-  /** 지평선 높이(화면 y). **첫 유한 소실점이 정한다** — 그 순서가 규칙의 핵심이다. */
-  horizon: number | null;
-  /** 아직 소실점을 못 만든 깊이선. 지평선이 서기 전에만 쌓인다. */
-  waiting: RLine[];
+  /**
+   * 지평선 높이(화면 y). **처음부터 있다** — 소실점이 정하는 것이 아니라 **카메라 피치**가
+   * 정한다(이론서 3.1 + 롤 0). 초기값은 화면 중앙(피치 0)이고 궤도로만 바뀐다.
+   * ⚠ `null`은 **옛 저장본**에서만 온다 — `loadRules`가 기본값으로 채운다.
+   */
+  horizon: number;
   /** 사용자가 "수직축"이라 답한 획들의 대표선 — 유도된 V₃의 지지선으로 센다. */
   verticalLines: RLine[];
 }
 
-export function newRuleState(): RuleState {
-  return { slots: [null, null, null], horizon: null, waiting: [], verticalLines: [] };
+/** **피치 0의 지평선** — 화면 중앙. 1점 투시에서 소실점이 주점이라는 것과 같은 자리다(5.3). */
+export const defaultHorizon = (imgSize: [number, number]): number => imgSize[1] / 2;
+
+export function newRuleState(imgSize: [number, number] = [960, 672]): RuleState {
+  return { slots: [null, null, null], horizon: defaultHorizon(imgSize), verticalLines: [] };
 }
 
 export function cloneRuleState(s: RuleState): RuleState {
@@ -103,7 +107,6 @@ export function cloneRuleState(s: RuleState): RuleState {
       (x ? (x.kind === "vp" ? { ...x, at: [x.at[0], x.at[1]] as Pt2 } : { ...x }) : null),
     ) as RuleState["slots"],
     horizon: s.horizon,
-    waiting: s.waiting.map(l => ({ a: [...l.a] as Pt2, b: [...l.b] as Pt2 })),
     verticalLines: s.verticalLines.map(l => ({ a: [...l.a] as Pt2, b: [...l.b] as Pt2 })),
   };
 }
@@ -242,8 +245,9 @@ export function stepRule(
   // ---- b·c. 깊이선
   const target = horizontalTarget(st);
 
-  // c. 지평선이 이미 있다 — **선 하나면 된다**
-  if (st.horizon !== null) {
+  // b·c. **지평선은 언제나 있다** — 깊이선 하나면 소실점이 정해진다.
+  // 교점의 한 쪽(지평선)이 **오차 없이 정확**하므로 "두 선이 나란해져 교점이 날아가는" 실패가 없다.
+  {
     const rep: Rep = { a: line.a, b: line.b,
                        len: Math.hypot(line.b[0] - line.a[0], line.b[1] - line.a[1]), bend: 0 };
     const p = vpOnHorizon(rep, st.horizon);
@@ -283,28 +287,6 @@ export function stepRule(
                : { type: "vp_fixed", axis: target.index, at: p, source: "horizon_x_line", horizonSet: false } };
   }
 
-  // b. 지평선이 아직 없다 — 깊이선 두 개의 교점이 첫 소실점이다
-  if (!target) {
-    return { state: st0, event: { type: "rejected",
-      why: "수평 축이 이미 둘 다 정해졌습니다" } };
-  }
-  st.waiting.push(line);
-  if (st.waiting.length < 2) return { state: st, event: { type: "waiting", have: st.waiting.length } };
-  const prev = st.waiting[st.waiting.length - 2];
-  const sep = sepDeg(prev, line);
-  if (sep < c.min_sep_deg) {
-    return { state: st, event: { type: "waiting", have: st.waiting.length } };
-  }
-  const at = lineIntersect(prev.a, prev.b, line.a, line.b);
-  if (!at || !isFiniteVp(at, imgSize)) {
-    return { state: st, event: { type: "waiting", have: st.waiting.length } };
-  }
-  st.slots[target.index] = { kind: "vp", at, source: "two_lines", support: 2 };
-  st.horizon = at[1];                       // **첫 소실점이 지평선을 정의한다** — 이 순서가 규칙이다
-  st.waiting = [];
-  const st2 = deriveVertical(st, imgSize);
-  return { state: st2,
-           event: { type: "vp_fixed", axis: target.index, at, source: "two_lines", horizonSet: true } };
 }
 
 /**

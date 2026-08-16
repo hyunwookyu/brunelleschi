@@ -17,7 +17,7 @@ const SZ: [number, number] = [960, 672];
 const line = (a: Pt2, b: Pt2): RLine => ({ a, b });
 
 /** 규칙에 선들을 차례로 넣는다 — 앱의 `feedStroke`와 같은 순서다. */
-function feed(ls: [RLine, ("screen" | "depth" | "vertical")?][], st = newRuleState()): RuleState {
+function feed(ls: [RLine, ("screen" | "depth" | "vertical")?][], st = newRuleState(SZ)): RuleState {
   for (const [l, f] of ls) st = stepRule(st, l, SZ, f).state;
   return st;
 }
@@ -40,7 +40,7 @@ describe("유일한 판단 — 깊이인가 화면 가로세로인가", () => {
     const mid = (RULE_TOL.screen_axis_deg + RULE_TOL.depth_min_deg) / 2;
     const t = Math.tan((mid * Math.PI) / 180);
     expect(classifyLine([0, 100], [400, 100 + 400 * t]).kind).toBe("ambiguous");
-    const r = stepRule(newRuleState(), line([0, 100], [400, 100 + 400 * t]), SZ);
+    const r = stepRule(newRuleState(SZ), line([0, 100], [400, 100 + 400 * t]), SZ);
     expect(r.event.type).toBe("ask");
     // **상태가 안 움직인다** — 답이 오기 전에는 규칙이 아무것도 안 한다
     expect(r.state.slots).toEqual([null, null, null]);
@@ -75,98 +75,122 @@ describe("a. 화면 가로세로 선은 축 자체다 (이론서 2.2)", () => {
   });
 });
 
-describe("b. 깊이선 두 개의 교점 = 소실점 하나 (1점 투시)", () => {
-  const V: Pt2 = [480, 250];
-  const toward = (from: Pt2): RLine => line(from, [from[0] + (V[0] - from[0]) * 0.4,
-                                                   from[1] + (V[1] - from[1]) * 0.4]);
+describe("b. 깊이선 **하나** × 지평선 = 소실점 (1점 투시)", () => {
+  const H = SZ[1] / 2;                                  // 기본 지평선 = 피치 0
+  const V: Pt2 = [700, H];
+  const toward = (from: Pt2): RLine =>
+    line(from, [from[0] + (V[0] - from[0]) * 0.4, from[1] + (V[1] - from[1]) * 0.4]);
 
-  it("첫 소실점이 지평선을 정의한다 — 그 순서다", () => {
-    const st = feed([[toward([100, 600])], [toward([880, 620])]]);
-    expect(st.slots[0]).toMatchObject({ kind: "vp", source: "two_lines" });
-    const vp = (st.slots[0] as { at: Pt2 }).at;
-    expect(vp[0]).toBeCloseTo(V[0], 6);
-    expect(vp[1]).toBeCloseTo(V[1], 6);
-    expect(st.horizon).toBeCloseTo(V[1], 6);          // ① 지평선은 그 높이다
-    expect(orderOfState(st)).toBe(1);
+  it("지평선은 처음부터 있다 — 소실점이 정하는 것이 아니다", () => {
+    expect(newRuleState(SZ).horizon).toBeCloseTo(H, 9);
   });
 
-  it("나란한 두 선은 소실점을 못 만든다 — 대기로 남는다", () => {
-    const st = feed([[line([0, 0], [400, 300])], [line([0, 200], [400, 500])]]);
-    expect(st.slots[0]).toBeNull();
-    expect(st.horizon).toBeNull();
-    expect(st.waiting.length).toBe(2);
+  it("깊이선 **하나**로 확정된다", () => {
+    const r = stepRule(newRuleState(SZ), toward([200, 600]), SZ);
+    expect(r.event.type).toBe("vp_fixed");
+    const vp = (r.state.slots[0] as { at: Pt2 }).at;
+    expect(vp[0]).toBeCloseTo(V[0], 4);
+    expect(vp[1]).toBeCloseTo(H, 9);                    // **지평선 위에 정확히 놓인다**
+    expect(orderOfState(r.state)).toBe(1);
+  });
+
+  /**
+   * **두 선이 나란해져 교점이 날아가는 실패가 없어졌다**(사람 지시 2-b).
+   * 옛 규칙은 깊이선 둘의 교점이라 각차가 작으면 소실점이 폭주했다.
+   * 지금은 교점의 한 쪽(지평선)이 **오차 없이 정확**하다.
+   */
+  it("나란한 두 선을 그어도 각각 제 소실점을 낸다 — 옛 실패 모드가 없다", () => {
+    let st = newRuleState(SZ);
+    const a = stepRule(st, toward([200, 600]), SZ);
+    st = a.state;
+    // 거의 같은 방향의 두 번째 선 — 옛 규칙에서는 이 쌍이 교점을 못 냈다
+    const b = stepRule(st, toward([205, 604]), SZ);
+    expect(b.event.type).toBe("support");               // 같은 축을 향한 지지선이다
+    expect(orderOfState(b.state)).toBe(1);
+    expect((b.state.slots[0] as { at: Pt2 }).at[1]).toBeCloseTo(H, 9);
+  });
+
+  it("지평선과 거의 나란한 선은 안 받는다 — 교점이 발산한다", () => {
+    const r = stepRule(newRuleState(SZ), line([200, 500], [800, 498]), SZ, "depth");
+    expect(r.event.type).toBe("rejected");
   });
 
   it("화면 가로축이 이미 있으면 소실점은 다른 슬롯으로 간다", () => {
-    const st = feed([[line([0, 100], [400, 100])], [toward([100, 600])], [toward([880, 620])]]);
+    const st = feed([[line([0, 100], [400, 100])], [toward([200, 600])]]);
     expect(st.slots[0]).toMatchObject({ kind: "screen" });
     expect(st.slots[1]).toMatchObject({ kind: "vp" });
   });
 });
 
-describe("c. 소실점 하나 + 깊이선 하나 = 두 번째 (선 하나면 된다)", () => {
-  const V1: Pt2 = [-600, 300];
-  const V2: Pt2 = [1500, 300];
+describe("c. 두 번째 소실점도 같은 지평선 위다", () => {
+  const H = SZ[1] / 2;
+  const V1: Pt2 = [-600, H], V2: Pt2 = [1500, H];
   const seg = (from: Pt2, to: Pt2, t = 0.25): RLine =>
     line(from, [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t]);
 
+  // ⚠ **시작점을 지평선에서 충분히 떨어뜨린다** — 가까우면 선이 얕아져 `screen_h` 임계에
+  // 걸리고 `ask`가 뜬다(실제로 걸렸다). 지평선이 화면 중앙으로 내려온 결과다.
+  const P0: Pt2 = [300, 640];
   const base = (): RuleState => feed([
-    [line([100, 50], [100, 500])],                    // 화면 세로 → 수직축
-    [seg([300, 500], V1)], [seg([300, 150], V1)],     // 깊이선 둘 → V1 + 지평선
+    [line([100, 50], [100, 500])],                      // 화면 세로 → 수직축
+    [seg(P0, V1)],                                      // 깊이선 하나 → V1
   ]);
 
-  it("**세 개가 아니라 하나다** — 지평선이 자유도 하나를 이미 먹었다", () => {
+  it("선 하나로 2점이 된다", () => {
     const st0 = base();
-    expect(st0.horizon).toBeCloseTo(300, 6);
-    const r = stepRule(st0, seg([300, 500], V2), SZ);
+    expect(orderOfState(st0)).toBe(1);
+    const r = stepRule(st0, seg(P0, V2), SZ);
     expect(r.event.type).toBe("vp_fixed");
     const v2 = (r.state.slots[1] as { at: Pt2 }).at;
     expect(v2[0]).toBeCloseTo(V2[0], 4);
-    expect(v2[1]).toBeCloseTo(300, 6);                // **지평선 위에 놓인다**
+    expect(v2[1]).toBeCloseTo(H, 9);
     expect(orderOfState(r.state)).toBe(2);
   });
 
   it("같은 축을 향한 선은 지지선이다 — 소실점은 잠겨 있다", () => {
     const st0 = base();
-    const before = JSON.stringify(st0.slots[0]);
-    const r = stepRule(st0, seg([700, 520], V1), SZ);
+    const before = (st0.slots[0] as { at: Pt2 }).at.slice();
+    const r = stepRule(st0, seg([700, 650], V1), SZ);
     expect(r.event.type).toBe("support");
-    expect((r.state.slots[0] as { at: Pt2 }).at).toEqual(JSON.parse(before).at);
+    expect((r.state.slots[0] as { at: Pt2 }).at).toEqual(before);
     expect(r.state.slots[1]).toBeNull();
-  });
-
-  it("지평선과 거의 나란한 선은 안 받는다 — 교점이 발산한다", () => {
-    const st0 = base();
-    const r = stepRule(st0, line([200, 480], [800, 478]), SZ, "depth");
-    expect(r.event.type).toBe("rejected");
   });
 
   it("화면 가로축 선언은 두 번째 소실점이 **대체한다** — 차수 승격이다", () => {
     let st = feed([[line([0, 100], [400, 100])], [line([100, 50], [100, 500])]]);
-    st = feed([[seg([300, 500], V1)], [seg([300, 150], V1)]], st);
+    st = feed([[seg(P0, V1)]], st);
     expect(st.slots[0]).toMatchObject({ kind: "screen" });
-    const r = stepRule(st, seg([300, 500], V2), SZ);
+    const r = stepRule(st, seg(P0, V2), SZ);
     expect(r.event.type).toBe("promoted");
     expect(orderOfState(r.state)).toBe(2);
   });
 });
 
 describe("d. 세 번째는 수심 조건으로 **유도된다** (이론서 6.3)", () => {
-  const V1: Pt2 = [-600, 250], V2: Pt2 = [1500, 250];
+  const H = SZ[1] / 2;
+  /**
+   * ⚠ **유도는 지평선이 주점 높이면 `null`이다 — 그것이 옳다**(이론서 2.2).
+   * `P_y = h`는 **피치 0**이고 그때 수직축은 화면 평행(무한원)이라 소실점이 없다.
+   * 기본 지평선이 화면 중앙(피치 0)이므로 **초기 스케치는 1점·2점뿐이고 3점은 궤도 뒤다**
+   * (사람 지시 2-d: 지평선 위치는 카메라 피치가 정하고 궤도로 바뀐다).
+   * 아래 둘은 **피치가 걸린 카메라**를 흉내 내려고 지평선을 옮겨 둔다.
+   */
+  const HP = 250;                                       // 피치가 걸린 지평선
+  const V1: Pt2 = [-600, HP], V2: Pt2 = [1500, HP];
   const seg = (from: Pt2, to: Pt2, t = 0.25): RLine =>
     line(from, [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t]);
 
   it("화면 세로축이 선언돼 있으면 유도하지 않는다 — 2점 투시가 옳다", () => {
     let st = feed([[line([100, 50], [100, 500])]]);
-    st = feed([[seg([300, 500], V1)], [seg([300, 120], V1)], [seg([300, 500], V2)]], st);
+    st = feed([[seg([300, 640], [V1[0], H])], [seg([300, 640], [V2[0], H])]], st);
     expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
     expect(orderOfState(st)).toBe(2);
   });
 
-  it("선언이 없으면 두 수평 소실점에서 유도한다", () => {
-    let st = newRuleState();
-    st.slots[0] = { kind: "vp", at: V1, source: "two_lines", support: 2 };
-    st.horizon = V1[1];
+  it("선언이 없으면 두 수평 소실점에서 유도한다 (피치가 걸린 카메라)", () => {
+    let st = newRuleState(SZ);
+    st.slots[0] = { kind: "vp", at: V1, source: "horizon_x_line", support: 2 };
+    st.horizon = HP;
     st.slots[1] = { kind: "vp", at: V2, source: "horizon_x_line", support: 1 };
     st = deriveVertical(st, SZ);
     expect(st.slots[2]).toMatchObject({ kind: "vp", source: "orthocenter" });
@@ -181,9 +205,9 @@ describe("d. 세 번째는 수심 조건으로 **유도된다** (이론서 6.3)"
    * (자유도가 이미 주점 가정에서 소진됐다. 새 정보가 아니다.)
    */
   it("유도된 V₃로 낸 f는 두 소실점 해와 항등으로 같다 (**설계 보장** — 측정이 아니다)", () => {
-    let st = newRuleState();
-    st.slots[0] = { kind: "vp", at: V1, source: "two_lines", support: 2 };
-    st.horizon = V1[1];
+    let st = newRuleState(SZ);
+    st.slots[0] = { kind: "vp", at: V1, source: "horizon_x_line", support: 2 };
+    st.horizon = HP;
     st.slots[1] = { kind: "vp", at: V2, source: "horizon_x_line", support: 1 };
     const two = recoverCamera([V1, V2, null], SZ);
     st = deriveVertical(st, SZ);
@@ -202,7 +226,7 @@ describe("d. 세 번째는 수심 조건으로 **유도된다** (이론서 6.3)"
 describe("획 → 축 (규칙이 이미 정해 뒀다)", () => {
   const V1: Pt2 = [-600, 250], V2: Pt2 = [1500, 250];
   const st = (): RuleState => {
-    const s = newRuleState();
+    const s = newRuleState(SZ);
     s.slots[0] = { kind: "vp", at: V1, source: "two_lines", support: 2 };
     s.slots[1] = { kind: "vp", at: V2, source: "horizon_x_line", support: 1 };
     s.slots[2] = { kind: "screen", dir: "v", support: 1 };
@@ -220,6 +244,16 @@ describe("획 → 축 (규칙이 이미 정해 뒀다)", () => {
     expect(axisOfStroke(towards(V2), st()).axis).toBe(1);
   });
 
+  // **피치 0에서는 수직축이 무한원이다** — 유도가 `null`을 내는 것이 옳다(이론서 2.2).
+  // 기본 지평선이 화면 중앙이므로 **초기 스케치는 1점·2점뿐이다**(3점은 궤도 뒤다).
+  it("지평선이 주점 높이면 수직 소실점을 안 만든다 (피치 0 = 2점 투시)", () => {
+    const H0 = SZ[1] / 2;
+    let s0 = newRuleState(SZ);
+    s0.slots[0] = { kind: "vp", at: [-600, H0], source: "horizon_x_line", support: 2 };
+    s0.slots[1] = { kind: "vp", at: [1500, H0], source: "horizon_x_line", support: 1 };
+    s0 = deriveVertical(s0, SZ);
+    expect(s0.slots[2]).toBeNull();
+  });
   // **양성 채널**(#30) — 아무 획이나 축을 받으면 판정이 아니다
   it("어느 축도 안 향하는 획은 미분류다 — 조용히 배정하지 않는다", () => {
     expect(axisOfStroke([[300, 600], [700, 120]], st()).axis).toBe("free");

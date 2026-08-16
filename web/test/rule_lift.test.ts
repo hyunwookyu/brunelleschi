@@ -13,7 +13,7 @@ import { representative } from "../src/s3d/axis.js";
 import type { Pt2 } from "../src/s3d/camera.js";
 
 const SZ: [number, number] = [960, 672];
-const VP: Pt2 = [480, 336];                       // 1점 투시 — 소실점이 화면 중앙
+const VP: Pt2 = [480, SZ[1] / 2];                 // 1점 투시 — 소실점이 **기본 지평선 위**(피치 0)
 
 /** 소실점으로 가는 선분(끝점 둘). `t`가 소실점 쪽으로 가는 비율이다. */
 const toVp = (from: Pt2, t = 0.35): Pt2[] =>
@@ -62,12 +62,13 @@ function run(opts: { lens?: number | null; dropAxisDirs?: boolean } = {}) {
 }
 
 describe("규칙 → 카메라 → 3D (전환이 실제로 되는가)", () => {
-  it("선 넷이면 1점 투시가 확정된다", () => {
+  it("깊이선 **하나**에서 1점 투시가 확정된다", () => {
     const { cam, ctx, events } = run();
     expect(cam.order()).toBe(1);
     expect(events.slice(0, 4)).toEqual(["screen_axis", "support", "screen_axis", "support"]);
-    expect(events[4]).toBe("waiting");
-    expect(events[5]).toBe("vp_fixed");            // **두 번째 깊이선에서 선다**
+    // **지평선이 처음부터 있으므로 첫 깊이선에서 바로 선다**(2026-08-16 2차 지시).
+    // 옛 판은 여기가 `waiting`이었고 두 번째 깊이선을 기다렸다
+    expect(events[4]).toBe("vp_fixed");
     expect(cam.rules.horizon).toBeCloseTo(VP[1], 6);
     expect(ctx).not.toBeNull();
     // f의 출처는 **설정**이다 — 측정이 아니고 화면이 그렇게 낸다(CLAUDE.md §1)

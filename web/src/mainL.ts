@@ -21,6 +21,8 @@ import { nearestSeg, PICK_TOL, type PickSeg } from "./ui/pick.js";
 import { diffPlacement, diffSummary, type PlacementDiff } from "./s3d/promoteDiff.js";
 // **규칙 기반 소실점**(2026-08-16 전면 교체). 검출 초안·가이드·민감도 경로는 전부 빠졌다.
 import { classifyLine, RULE_TOL, type RuleEvent, type RLine, type RuleState } from "./s3d/vpRules.js";
+// **축 스냅**(사람 지시 1·3) — 그리는 동안 축으로 강제하고, 모호하면 커서가 가른다
+import { snapToAxis, SNAP_TOL_AXIS, type AxisCand } from "./s3d/axisSnap.js";
 import { liftAll, type LiftStroke } from "./s3d/lift.js";
 import { snapAt, staticCandidates, SNAP_TOL, SNAP_LABEL, SNAP_COLOR,
          type SnapCand, type SnapSeg, type SnapCtx, type StaticCand } from "./s3d/snap.js";
@@ -82,7 +84,9 @@ let picked: string | null = null;
  * "미리보기와 확정의 일치(0)"가 그것을 요구한다.
  */
 let live: { anchor: SnapCand; axis: 0 | 1 | 2 | null; deg: number | null;
-            seg: [Vec3, Vec3] | null; locked: boolean } | null = null;
+            seg: [Vec3, Vec3] | null; locked: boolean;
+            /** **모호 구간에 들어갔는가**(사람 지시 3-f) — 화면에 짧게 표시한다. */
+            ambiguous: boolean; tied: number[] } | null = null;
 /**
  * **축 고정**(L-B.5, §4). SketchUp을 그대로 따른다(A-3) —
  * `Shift`는 **지금 추론된 축**을 누르는 동안 잠그고, 화살표는 특정 축을 토글한다.
@@ -93,6 +97,13 @@ let live: { anchor: SnapCand; axis: 0 | 1 | 2 | null; deg: number | null;
 let axisLock: 0 | 1 | 2 | "infer" | null = null;
 /** Shift가 실제로 잠근 축. 뗄 때까지 유지한다. */
 let shiftHeld: 0 | 1 | 2 | null = null;
+/**
+ * **축 스냅 — 라이노 직교 모드**(사람 지시 1). 기본은 **켬**이고 토글로 끈다.
+ * 객체로 두는 이유는 종단 확인이 `S2S`로 읽고 쓰기 때문이다(#17: 앱 경로 하나).
+ */
+const AXIS_SNAP = { on: true };
+/** **그 획만 자유**(수정자). `Shift`를 누르고 있는 동안만 참이다 — 토글과 상황이 다르다. */
+let freeStroke = false;
 /**
  * **확정·승격 시점에 잠근 소실점 개수**(L-C.1, §6.1). 차수 승격을 누를 때
  * `cam`은 **이미 새 차수**이므로(사용자가 가이드를 먼저 세운다) 옛 차수를 따로 들어야 한다.
@@ -314,7 +325,8 @@ function promoteChain(fr: Frame): number {
 
 /** 축 방향들 — 소실점이 없는 축은 `null`. 실시간 판정과 확정이 **같은 것을 쓴다**(#17). */
 const axisDirs = (c: PlaceCtx) =>
-  c.vps.map(v => (v ? axisDirection(v, c.principal, c.f) : null));
+  // **무한원 축의 방향도 함께 온다**(D-L40) — 소실점이 없다고 축이 없는 것이 아니다
+  c.axisDirs ?? c.vps.map(v => (v ? axisDirection(v, c.principal, c.f) : null));
 
 /**
  * **실시간 판정 = 확정 판정**(L-B.4). 앵커·시작 화면점·끝 화면점만 주면 같은 답이 나온다 —
@@ -322,34 +334,53 @@ const axisDirs = (c: PlaceCtx) =>
  */
 function resolveLive(c: PlaceCtx, at: Vec3, a2: Pt2, b2: Pt2) {
   const dirs = axisDirs(c);
-  const near = nearestAxisOnScreen(at, dirs, a2, b2, c);
   // **고정은 여기 안에 있어야 한다**(#17) — 바깥에서 덮으면 미리보기와 확정이 갈린다
   const forced = lockedAxis();
   const use = forced != null && dirs[forced] ? forced : null;
-  if (use == null) {
-    if (!near) return { axis: null, deg: null, seg: null, locked: false, why: "축 후보가 없습니다" };
-    if (near.deg > LIVE_TOL.axis_deg) {
-      return { axis: null, deg: near.deg, seg: null, locked: false,
-               why: `축과 ${near.deg.toFixed(1)}° 벌어졌습니다`
-                  + `(${LIVE_TOL.axis_deg}° 이내여야 합니다 — Shift로 고정할 수 있습니다)` };
-    }
+
+  // ---- **자유 획**(수정자). 축으로 강제하지 않으므로 방향이 없고 **2D로 대기**한다.
+  // 양 끝이 오스냅으로 확정되면 축 밖 선도 3D가 나온다 — 그것이 다음 단계다(사람 지시 6).
+  if (use == null && !axisSnapOn()) {
+    const near = nearestAxisOnScreen(at, dirs, a2, b2, c);
+    return { axis: null, deg: near?.deg ?? null, seg: null, locked: false, ambiguous: false,
+             tied: [] as number[], why: freeStroke ? "자유 획(수정자)" : "축 스냅이 꺼져 있습니다" };
   }
-  const ax = (use ?? near!.axis) as 0 | 1 | 2;
-  const seg = segmentFromAnchor(at, dirs[ax], b2, c);
-  const deg = near && near.axis === ax ? near.deg : null;
+
+  // ---- **축 스냅**(사람 지시 1). 각도로 거르지 않는다 — 언제나 어느 축으로 간다.
+  // 모호 구간이면 **커서에 가까운 쪽**이 이긴다(사람 지시 3).
+  const ch = snapToAxis(at, dirs, a2, b2, c);
+  const ax = (use ?? ch.pick?.axis ?? null);
+  if (ax == null) {
+    return { axis: null, deg: null, seg: null, locked: false, ambiguous: false,
+             tied: [] as number[], why: "축 후보가 없습니다" };
+  }
+  const cand = ch.tied.find((t: AxisCand) => t.axis === ax) ?? ch.pick;
+  // **고정 축은 후보 밖일 수 있다** — 그때는 그 축으로 직접 푼다(같은 함수다)
+  const seg = cand && cand.axis === ax ? cand.seg : segmentFromAnchor(at, dirs[ax], b2, c);
+  const deg = cand && cand.axis === ax ? cand.deg : null;
+  const tied = ch.tied.map((t: AxisCand) => t.axis);
   return seg
-    ? { axis: ax, deg, seg, locked: use != null, why: "" }
-    : { axis: ax, deg, seg: null, locked: use != null, why: "끝점이 정해지지 않습니다" };
+    ? { axis: ax, deg, seg, locked: use != null, ambiguous: ch.ambiguous && use == null, tied, why: "" }
+    : { axis: ax, deg, seg: null, locked: use != null, ambiguous: false, tied,
+        why: "끝점이 정해지지 않습니다" };
 }
 
 /**
- * 지금 잠긴 축. `Shift`는 **그때 추론된 축**을 잠그므로 처음 눌릴 때 확정되고
- * 뗄 때까지 유지된다(SketchUp과 같다). 화살표는 축을 직접 고른다.
+ * 지금 잠긴 축. 화살표가 축을 직접 고른다(SketchUp 그대로).
+ *
+ * ⚠ **`Shift`의 뜻이 바뀌었다**(2026-08-16) — 옛 판은 "추론된 축을 잠근다"였는데
+ * **축 스냅이 언제나 도므로 그 잠금이 하는 일이 없어졌다.** 지금 `Shift`는
+ * **그 획만 자유**(축 강제 없음)다 — 라이노 직교 모드에서 수정자가 하는 일과 같다(A-3).
  */
 function lockedAxis(): 0 | 1 | 2 | null {
-  if (axisLock === "infer") return shiftHeld;
-  return axisLock;
+  return axisLock === "infer" ? null : axisLock;
 }
+
+/**
+ * **축 스냅이 지금 도는가**(사람 지시 1). 토글(기본 켬)과 수정자(그 획만) 둘이 있다 —
+ * 상황이 다르다: 토글은 라이노 직교 모드처럼 켜고 끄는 것이고, 수정자는 한 획만 푼다.
+ */
+const axisSnapOn = () => AXIS_SNAP.on && !freeStroke;
 
 /**
  * 스냅된 시작점 + 축 → 그 자리에서 3D 확정(§3 마지막 문단 · §7).
@@ -846,15 +877,13 @@ const SRC_SHORT: Record<string, string> = {
 function nextHint(): string {
   const st = cam.rules;
   const n = cam.order();
-  const waiting = st.waiting.length;
   const need: string[] = [];
   const hasScreenH = ([0, 1] as const).some(i => st.slots[i]?.kind === "screen");
   if (!st.slots[2]) need.push("<b>화면 세로선</b>(수직축)");
   if (!hasScreenH && !([0, 1] as const).some(i => st.slots[i])) need.push("<b>화면 가로선</b>(가로축)");
   if (n === 0) {
-    need.push(waiting
-      ? `<b>깊이선 하나 더</b> <span class="dim">(지금 ${waiting}개 — 두 개의 교점이 첫 소실점입니다)</span>`
-      : "<b>깊이선 두 개</b> <span class=\"dim\">(교점이 첫 소실점입니다)</span>");
+    need.push("<b>깊이선 하나</b>"
+      + ' <span class="dim">(지평선과의 교점이 첫 소실점입니다 — 두 개가 아니라 하나면 됩니다)</span>');
   } else if (n === 1) {
     need.push("<b>다른 방향 깊이선 하나</b>"
       + ' <span class="dim">(지평선과의 교점이 두 번째 소실점입니다 — 세 개가 아니라 하나면 됩니다)</span>');
@@ -896,6 +925,27 @@ function drawAsk(ctx2: CanvasRenderingContext2D): void {
   ctx2.restore();
 }
 
+
+/**
+ * **지평선은 언제나 옅게 깔린다**(사람 지시 2). 옵션으로 끄지 않는다 —
+ * 모든 수평 소실점이 그 위에 놓이므로 **그림의 기준선**이고, 카메라가 서기 전에도 있다.
+ * 높이는 **카메라 피치가 정하고** 사용자가 직접 조절하지 않는다(궤도로 바뀐다).
+ */
+function drawHorizon(ctx2: CanvasRenderingContext2D) {
+  // ⚠ **확정 시점에서만 그린다** — 지평선은 **확정 카메라의 화면 좌표**다(그리드·가이드와 같다).
+  // 돌린 뷰에 그리면 화면에 붙어 따라다니는 유령이 된다(`drawBelowInk` 머리말).
+  if (cam.locked && !stage.isPinned) return;
+  const [w] = cssSize();
+  const y = cam.rules.horizon;
+  ctx2.save();
+  ctx2.strokeStyle = HORIZON_COLOR; ctx2.lineWidth = 1;
+  ctx2.setLineDash([6, 4]); ctx2.globalAlpha = cam.locked ? 0.35 : 0.55;
+  ctx2.beginPath(); ctx2.moveTo(0, y); ctx2.lineTo(w, y); ctx2.stroke();
+  ctx2.setLineDash([]); ctx2.globalAlpha = 0.5;
+  ctx2.font = "11px system-ui, sans-serif"; ctx2.fillStyle = HORIZON_COLOR;
+  ctx2.fillText(`지평선 y=${Math.round(y)}`, 8, y - 5);
+  ctx2.restore();
+}
 
 function drawGrid(ctx2: CanvasRenderingContext2D) {
   const r = cam.acc.solve();
@@ -1106,6 +1156,7 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   // **그리드·가이드·소실점 표식은 확정 뷰의 화면 좌표다.** 자유 시점에서 그리면
   // 화면에 붙어 따라다니는 유령이 된다 — 그래서 그 셋만 확정 시점으로 묶는다.
   // **스냅 표식과 미리보기는 지금 시점의 화면 좌표**라 어느 뷰에서든 옳다(L-B.8).
+  drawHorizon(ctx2);          // **언제나 깔린다** — 카메라가 서기 전에도(사람 지시 2)
   drawPending(ctx2);
   drawPicked(ctx2);
   drawPromoteLoss(ctx2);
@@ -1181,7 +1232,8 @@ const ink = new InkCanvas(canvas, {
     const r = resolveLive(c, anchor.at, anchor.screen, b0);
     // **미리보기는 세계 좌표로 낸다** — 3D 층이 세계에서 그리기 때문이다(L-B.8)
     live = { anchor, axis: r.axis, deg: r.deg,
-             seg: r.seg ? [fr.fromV(r.seg[0]), fr.fromV(r.seg[1])] : null, locked: r.locked };
+             seg: r.seg ? [fr.fromV(r.seg[0]), fr.fromV(r.seg[1])] : null, locked: r.locked,
+             ambiguous: r.ambiguous, tied: r.tied };
     refresh();
   },
   onStrokeEnd: (stroke) => {
@@ -1303,10 +1355,17 @@ function refresh() {
       SIZE_HEAL.firstAtMs ??= Math.round(performance.now());
       fit();
     }
-    ink.redraw();
+    // ⚠⚠ **화면 글자를 먼저 그리고 잉크를 나중에 그린다.** 순서가 반대면 이렇게 된다:
+    // `renderBar()`가 도구 막대의 높이를 바꾸면(렌즈 슬라이더가 붙는 순간이 그렇다)
+    // `#frame`이 줄고 캔버스 CSS 크기가 바뀌어 **백버퍼가 새로 잡히면서 방금 그린 잉크가
+    // 통째로 지워진다.** 그리고 다음 `refresh()`가 없으면 빈 화면으로 남는다 —
+    // `coords.spec`의 "닿은 자리에 잉크가 나온다"가 **0픽셀**로 그것을 잡았다.
     renderBar();
     renderStatus();
     renderViews();
+    // 막대가 커졌으면 여기서 크기를 맞춘다(AS-C7의 자가 치유와 같은 자리)
+    if (sizeStale()) { SIZE_HEAL.count += 1; SIZE_HEAL.firstAtMs ??= Math.round(performance.now()); fit(); }
+    ink.redraw();
     saver?.schedule();          // **자동 저장**(L-D.2). 디바운스가 있어 자주 불려도 한 번 쓴다
   } finally { refreshing = false; }
 }
@@ -1353,6 +1412,8 @@ function renderBar() {
   barEl.innerHTML = [
     btn("draw", "그리기", tool === "draw"),
     btn("orbit", "궤도", tool === "orbit", !cam.locked),
+    // **축 스냅 — 라이노 직교 모드**(사람 지시 1). 기본 켬. `F8`로도 토글한다
+    btn("axissnap", `축 스냅 ${AXIS_SNAP.on ? "켬" : "끔"}`, AXIS_SNAP.on),
     // **고치기**(L-D.1, §9.5) — 클릭으로 고르고 화살표로 축 지정, Delete로 삭제
     btn("edit", "고치기", tool === "edit", !doc.strokes.length),
     '<span class="sep"></span>',
@@ -1417,7 +1478,7 @@ function renderAsk(): string {
 
 /**
  * **승격 요약**(L-C.2, §6.2). 승격은 **품질을 올리고 배치를 줄인다**(L-C.1: 형태 오차 중앙
- * 0.1259 → 0.0913 · 배치 −168, `order_promote.json@5955b34c`). 어느 쪽을 택할지는
+ * 0.1259 → 0.0913 · 배치 −168, `order_promote.json@1b6175a4`). 어느 쪽을 택할지는
  * 그림마다 다르고 **자동 신호가 없으므로**(AS-L6이 §6.2의 재투영 잔차를 반증했다)
  * 사용자가 정한다. 정하려면 **무엇을 잃었는지 보여야 한다.**
  *
@@ -1515,6 +1576,10 @@ function renderStatus() {
         + (lk != null ? ` → <b style="color:${AXIS_COLOR[lk]}">축${lk + 1}</b>` : "")
         + ` <span class="dim">(← 축1 · → 축2 · ↑ 축3 · Shift 추론 축 · Esc 해제)</span></div>`);
     }
+    // **축 스냅이 도는가**(사람 지시 1-d). 색이 축을 말하고, 이 줄이 상태를 말한다
+    rows.push(`<div>축 스냅 <b>${AXIS_SNAP.on ? "켬" : "끔"}</b>`
+      + ` <span class="dim">(F8 · Shift를 누르고 그으면 그 획만 자유)</span>`
+      + (freeStroke ? ' · <b class="warn">자유 획(Shift)</b>' : "") + "</div>");
     if (live) {
       rows.push(`<div>그리는 중 — 시작 <b style="color:${SNAP_COLOR[live.anchor.kind]}">`
         + `${SNAP_LABEL[live.anchor.kind]}</b> · `
@@ -1524,6 +1589,12 @@ function renderStatus() {
                : ` <span class="dim">(${live.deg != null ? live.deg.toFixed(1) : "?"}°)</span>`)
           : `<span class="warn">축 미정</span>`
             + (live.deg != null ? ` <span class="dim">(가장 가까운 축과 ${live.deg.toFixed(1)}°)</span>` : ""))
+        // **모호 구간 표시**(사람 지시 3-f) — 들어갔다는 것을 알 수 있어야 한다
+        + (live.ambiguous
+           ? ` · <b class="warn">모호</b> <span class="dim">(축 `
+             + live.tied.map(a => a + 1).join("·")
+             + `가 ${SNAP_TOL_AXIS.ambiguous_deg}° 안 — 커서를 움직여 고르세요)</span>`
+           : "")
         + "</div>");
     }
     if (lastSnapNote) rows.push(`<div class="dim">마지막 획 — ${lastSnapNote}</div>`);
@@ -1556,6 +1627,16 @@ barEl.addEventListener("click", (e) => {
       stage.unpin(stage.centroid(segs));
       note = "궤도 — 다른 뷰의 2D 대기 획은 숨깁니다(그 뷰의 화면 좌표이기 때문입니다). 돌린 뒤 **그리기**를 누르면 그 각도가 새 뷰가 됩니다";
     }
+  }
+  else if (act === "axissnap") {
+    AXIS_SNAP.on = !AXIS_SNAP.on;
+    note = `축 스냅 **${AXIS_SNAP.on ? "켬" : "끔"}** — `
+         + (AXIS_SNAP.on
+            ? "그리는 동안 방향이 축으로 **강제**됩니다(커서를 정확히 따라가지 않습니다). "
+              + "<b>Shift</b>를 누르고 그으면 그 획만 자유입니다"
+            : "그은 대로 놓입니다. 축이 안 정해지면 **2D로 대기**합니다")
+         + " <span class=\"dim\">· <b>F8</b>(라이노 직교 모드)</span>";
+    relive();
   }
   else if (act === "confirm") confirm();
   else if (act === "reorder") promoteOrderNow();
@@ -1651,8 +1732,14 @@ window.addEventListener("keydown", (e) => {
     if (a != null) { e.preventDefault(); assignAxis(a); return; }
     if (e.key === "Escape") { picked = null; note = ""; refresh(); return; }
   }
+  if (e.key === "F8") {                          // **라이노 직교 모드 그대로**(A-3)
+    e.preventDefault(); AXIS_SNAP.on = !AXIS_SNAP.on; relive();
+    note = `축 스냅 **${AXIS_SNAP.on ? "켬" : "끔"}** <span class="dim">(F8 · 라이노 직교 모드)</span>`;
+    return;
+  }
   if (!cam.locked) return;                       // 확정 전에는 잠글 축이 없다
-  if (e.key === "Shift" && axisLock == null) { axisLock = "infer"; shiftHeld = null; refresh(); return; }
+  // **`Shift`는 그 획만 자유**(사람 지시 1) — 토글과 상황이 다르다
+  if (e.key === "Shift" && !freeStroke) { freeStroke = true; relive(); return; }
   const ax = ARROW_AXIS[e.key];
   if (ax != null) {
     e.preventDefault();
@@ -1664,7 +1751,7 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && axisLock != null) { axisLock = null; shiftHeld = null; relive(); }
 });
 window.addEventListener("keyup", (e) => {
-  if (e.key === "Shift" && axisLock === "infer") { axisLock = null; shiftHeld = null; relive(); }
+  if (e.key === "Shift" && freeStroke) { freeStroke = false; relive(); }
 });
 
 /** 고정이 바뀌면 **그리는 중이라도** 미리보기를 다시 푼다 — 안 하면 화면이 낡는다(AS-C7과 같은 형태). */
@@ -1674,7 +1761,8 @@ function relive() {
     const b = ink.livePoints();
     const b2: Pt2 = b.length >= 2 ? [b[b.length - 1][0], b[b.length - 1][1]] : live.anchor.screen;
     const r = resolveLive(c, live.anchor.at, live.anchor.screen, b2);
-    live = { anchor: live.anchor, axis: r.axis, deg: r.deg, seg: r.seg, locked: r.locked };
+    live = { anchor: live.anchor, axis: r.axis, deg: r.deg, seg: r.seg, locked: r.locked,
+             ambiguous: r.ambiguous, tied: r.tied };
   }
   refresh();
 }
@@ -1774,11 +1862,13 @@ refresh();
       const ls = harnessLines.filter(g => g.axis === ax);
       if (ls.length < 2) return null;
       const at = lineIntersect(ls[0].a, ls[0].b, ls[1].a, ls[1].b);
-      return at ? { kind: "vp" as const, at, source: "two_lines" as const, support: ls.length } : null;
+      return at ? { kind: "vp" as const, at, source: "horizon_x_line" as const,
+                    support: ls.length } : null;
     }) as RuleState["slots"];
+    // **지평선은 처음부터 있다** — 유한 수평 소실점이 있으면 그 y이고, 없으면 기본값이다
     const h = ([0, 1] as const).map(i => slots[i]).find(x => x && x.kind === "vp");
-    cam.loadRules({ slots, horizon: h && h.kind === "vp" ? h.at[1] : null,
-                    waiting: [], verticalLines: [] });
+    cam.loadRules({ slots, horizon: h && h.kind === "vp" ? h.at[1] : cam.imgSize[1] / 2,
+                    verticalLines: [] });
     refresh();
   },
   axisLines: () => harnessLines.map(g => ({ ...g, a: [...g.a] as Pt2, b: [...g.b] as Pt2 })),
@@ -1792,6 +1882,10 @@ refresh();
   ask: () => ask && { strokeId: ask.strokeId, question: ask.question, toH: ask.toH, toV: ask.toV },
   answerAsk: (choice: "screen" | "depth" | "vertical") => { answerAsk(choice); },
   lens: () => cam.lensMm,
+  // 축 스냅(사람 지시 1) — **앱 경로 그대로**를 종단 확인이 부른다(#17)
+  axisSnap: () => ({ on: AXIS_SNAP.on, freeStroke }),
+  setAxisSnap: (on: boolean) => { AXIS_SNAP.on = on; relive(); },
+  horizon: () => cam.rules.horizon,
   setLens: (mm: number | null) => { cam.lensMm = mm; cam.apply(); refresh(); },
   unlockGuides: () => {
     document.querySelector<HTMLButtonElement>('#bar button[data-act="unlock"]')?.click();
