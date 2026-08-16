@@ -1,5 +1,5 @@
 {
-  "n_flags": 1752,
+  "n_flags": 1743,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -5201,51 +5201,6 @@
       "flag": "단일 범주 분포(n=15076) → 변별력 없음/단위 불일치 의심"
     },
     {
-      "path": "stage_browser.json:confirm.view_offset.offsetY",
-      "val": 4.547473508864641e-13,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
-      "path": "stage_browser.json:dpr_identity_px.css_frame",
-      "val": 1.3406493525361332e-13,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
-      "path": "stage_browser.json:l_b3.drawn.start_reprojection_gap_px_IDENTITY",
-      "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
-    },
-    {
-      "path": "stage_browser.json:l_b3.drawn.start_reprojection_gap_px_IDENTITY",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "stage_browser.json:l_b4.preview_vs_confirm.gap",
-      "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
-    },
-    {
-      "path": "stage_browser.json:l_b8.drawn_in_orbit.mid_drag.axis",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "stage_browser.json:l_b8.drawn_in_orbit.views[0].pending",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "stage_browser.json:l_b8.drawn_in_orbit.views[1].pending",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "stage_browser.json:l_b8.drawn_in_orbit.axis",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
       "path": "stage_cam.json:guarantees.seg_gap_px_max",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
@@ -8701,7 +8656,7 @@
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
     },
     {
-      "path": "web\\e2e\\stage.spec.ts:72:pixelGap",
+      "path": "web\\e2e\\stage.spec.ts:95:pixelGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },

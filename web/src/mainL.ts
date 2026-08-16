@@ -277,8 +277,16 @@ function applySnapToStart(st: SStroke, cand: SnapCand, atWorld: Vec3 = cand.at):
  * 대기 사유가 `축이 미분류다`라서 같이 푸나 따로 푸나 같기 때문이다. 회수하는 것은 **앵커**다.
  * **연쇄한다** — 이번에 놓인 것이 다음 획의 대상이 되므로 더 안 늘 때까지 돈다.
  */
+/**
+ * **연쇄의 회차별 기록**(L-D.3). 합계만 내면 "여러 회 돌았는가"가 안 보인다 —
+ * L-B 게이트 3번이 요구하는 것이 그것이다. 마지막 호출분만 들고 있다.
+ * ⚠ **상한(8)에 닿았는지도 남긴다** — 닿았다면 수렴한 것이 아니라 잘린 것이다(#32).
+ */
+const chainTrace: { pass: number; waiting: number; placed: number }[] = [];
+
 function promoteChain(fr: Frame): number {
   let total = 0;
+  chainTrace.length = 0;
   for (let pass = 0; pass < 8; pass++) {
     // **대기 획의 소유자는 지금 뷰다**(§9.2) — 다른 뷰의 `pts2d`는 다른 화면 좌표라
     // 이 시점의 스냅에 넣으면 엉뚱한 자리에 붙는다
@@ -296,6 +304,7 @@ function promoteChain(fr: Frame): number {
       applySnapToStart(st, cand, fr.fromV(cand.at));
       if (placeLive(st, fr, cand.at)) n += 1;
     }
+    chainTrace.push({ pass: pass + 1, waiting: waiting.length, placed: n });
     total += n;
     if (!n) break;                     // 더 안 는다 — 연쇄가 멎었다
     snapPre = null;                    // 기하가 늘었다
@@ -1586,6 +1595,8 @@ refresh();
     relinked: promoteReport.relinked,
   },
   orderMarks: () => orderMarks.map(m => m.order),
+  /** L-D.3 — **연쇄 회차별** (대기 수 · 놓인 수). 합계만으로는 "여러 회"가 안 보인다 */
+  chainTrace: () => chainTrace.map(x => ({ ...x })),
   // L-D.1 — 고치기(§9.5). **앱 경로 그대로**를 종단 확인이 부른다(#17)
   pick: (p: Pt2) => { picked = pickStroke(p); refresh(); return picked; },
   picked: () => picked,

@@ -29,9 +29,20 @@ declare global {
   interface Window { S2S: any; __SC: any }
 }
 
-/** 합성 상자를 넣고 **참 소실점으로** 가이드를 세운다 — 사람이 완벽히 맞춘 극한. */
-async function setup(page: Page) {
-  return page.evaluate(async () => {
+/**
+ * 합성 상자를 넣고 **참 소실점으로** 가이드를 세운다 — 사람이 완벽히 맞춘 극한.
+ *
+ * `boxes = 2`면 **첫 상자와 면을 맞댄 두 번째 상자**를 함께 넣는다(L-D.3).
+ * 상자 하나로는 안 되는 것 셋이 있다:
+ *   ① **승격 연쇄가 픽스처 상한에 갇힌다** — 장면당 12획이면 깊이 4가 거의 상한이다
+ *      (`promote.json`의 1회 720 → 2회 192 → 3회 25 → 4회 1이 그 모양이다)
+ *   ② 뷰 하나에 **구조가 하나**뿐이라 "이어 그리기"가 같은 덩어리 안에서만 일어난다
+ *   ③ 지연·스크린샷 회귀가 **획 24개 규모**에서 어떤지 모른다
+ * 두 번째 상자는 `axes[0]` 방향으로 첫 상자의 `a`만큼 밀어 **면을 공유**한다 —
+ * 그래야 둘을 잇는 획이 스냅으로 붙고 ①의 연쇄가 상자를 건너간다.
+ */
+async function setup(page: Page, opts: { boxes?: 1 | 2 } = {}) {
+  return page.evaluate(async ({ boxes }) => {
     const S = window.S2S;
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
     const m = await import("/test/scene3d.ts");
@@ -40,7 +51,17 @@ async function setup(page: Page) {
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
     const sc = m.scene(35, 15, 1000, size);
-    const edges = m.boxEdges(sc, [0.6, -0.4, 4.2], 1.2, 1.0, 0.9);
+    const O: [number, number, number] = [0.6, -0.4, 4.2];
+    const A = 1.2;
+    const edges = m.boxEdges(sc, O, A, 1.0, 0.9);
+    if (boxes === 2) {
+      // **면을 맞댄 두 번째 상자** — `axes[0]`로 A만큼 밀면 첫 상자의 오른쪽 면과 붙는다.
+      // 치수를 달리해 두 상자가 구분되게 한다(같으면 스크린샷에서 어느 쪽인지 안 보인다).
+      const e0 = sc.axes[0];
+      const O2: [number, number, number] =
+        [O[0] + e0[0] * A, O[1] + e0[1] * A, O[2] + e0[2] * A];
+      edges.push(...m.boxEdges(sc, O2, 0.9, 1.0, 0.7));
+    }
     // 결정론적 난수 — `Math.random` 금지(CLAUDE.md §5)
     let s0 = 12345 >>> 0;
     const r = () => { s0 = (s0 * 1664525 + 1013904223) >>> 0; return s0 / 4294967296; };
@@ -60,8 +81,10 @@ async function setup(page: Page) {
     });
     S.cam.guides = guides; S.cam.apply(); S.refresh();
     window.__SC = sc;
-    return { canvas: size, strokes: S.doc().strokes.length, hasCamera: !!S.cam.ctx() };
-  });
+    return { canvas: size, strokes: S.doc().strokes.length, hasCamera: !!S.cam.ctx(),
+             boxes: boxes ?? 1,
+             lifted: S.doc().strokes.filter((s: { seg3d?: unknown }) => s.seg3d).length };
+  }, { boxes: opts.boxes ?? 1 });
 }
 
 /**
@@ -1702,4 +1725,226 @@ test("고치기 — 획을 고르고, 축을 지정하고, 지운다", async ({ 
       + "(사용자가 안 시킨 삭제가 되기 때문이다)",
   ];
   led.l_d1 = l;
+});
+
+/**
+ * **L-D.3 종단 검증** — 상자 둘 픽스처 위에서 L-B 게이트 3번·차수 표식 다중·지연·회귀를
+ * 함께 닫는다. 산출: `stage_browser.json`의 `l_d3`.
+ *
+ * 착수 시 `PITFALLS.md` 최근 다섯을 읽었다. 걸리는 번호:
+ *   **#26**(판정을 측정 전에 박았다 — `progress.md`의 "L-D.3 — 사전 등록: 판정")
+ *   **#32**(연쇄가 실제로 돌았는지 **회차별 카운터**로 남긴다. 상한 8에 닿았으면 잘린 것이다)
+ *   **#25**(원장에 남긴다) · **#17**(앱 경로 그대로 부른다) · **#22**(캔버스 굳음)
+ *   **#40**(도달 가능성을 자명한 값으로 적지 않는다)
+ *
+ * **이 확인이 말하지 않는 것**: 배치 정확도(참값 대조를 앱에서 안 한다) · 실획 · 사람의 축 오차.
+ */
+test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", async ({ page }) => {
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  const l: Record<string, unknown> = {};
+
+  // ---- ① 상자 둘 픽스처. **하나짜리와 규모가 실제로 다른지** 센다
+  const two = await setup(page, { boxes: 2 });
+  expect(two.boxes).toBe(2);
+  expect(two.strokes).toBe(24);                       // 12 × 2
+  expect(two.hasCamera).toBe(true);
+  const confirmed = await page.evaluate(() => {
+    const S = window.S2S;
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    return { lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+             pending: S.doc().strokes.filter((s: any) => !s.seg3d).length,
+             order: S.order() };
+  });
+  l.fixture = { strokes: two.strokes, ...confirmed,
+                note: "상자 둘이 **면을 공유**한다 — 그래야 연쇄가 상자를 건너간다. "
+                  + "확정에서 **24/24가 놓였다**는 것이 두 번째 상자의 모서리가 첫 상자의 "
+                  + "기하에 앵커로 붙었다는 뜻이다(따로 이어 그은 획 없이도 건너간다).",
+                registered_pass: "상자 둘 · 두 상자를 잇는 배치가 실제로 일어난다(사전 등록)" };
+  expect(confirmed.lifted).toBeGreaterThan(12);       // 상자 하나보다 많이 놓인다
+
+  // ---- ② **지연**: 획 하나를 실제 포인터로 긋고 `pointerup` 반환까지를 잰다
+  //
+  // ⚠ `e2e.json`은 **옛 UI**의 값이라 여기와 같은 구간이 아니다(L-D.2 리뷰어 [16]).
+  // 이것은 **새 UI · 상자 둘(24획)** 규모의 값이다.
+  // ⚠ **페이지 안에서 잰다.** 초판은 `page.mouse.*`를 Date.now()로 감쌌는데 그것은
+  // **CDP 왕복**을 재는 것이라 앱의 지연이 아니었다(중앙 30ms대). `flow.spec.ts`가 이미
+  // 옳은 방식을 쓰고 있었다 — `pointerup` **디스패치가 반환할 때까지**를 `performance.now()`로.
+  const lat: number[] = await page.evaluate(() => {
+    const cv = document.querySelector("#ink") as HTMLCanvasElement;
+    const r = cv.getBoundingClientRect();
+    const ev = (type: string, x: number, y: number, buttons: number) =>
+      cv.dispatchEvent(new PointerEvent(type, {
+        clientX: r.left + x, clientY: r.top + y, pointerId: 1, pointerType: "mouse",
+        isPrimary: true, bubbles: true, cancelable: true, button: 0, buttons }));
+    const out: number[] = [];
+    for (let i = 0; i < 8; i++) {
+      const x0 = cv.clientWidth * (0.20 + i * 0.02), y0 = cv.clientHeight * 0.80;
+      ev("pointerdown", x0, y0, 1);
+      for (let k = 1; k <= 4; k++) ev("pointermove", x0 + 15 * k, y0 - 5 * k, 1);
+      // **재는 것은 `pointerup` 하나다** — 판정·배치·튜브 생성·다시 그리기가 그 안이다
+      const t0 = performance.now();
+      ev("pointerup", x0 + 60, y0 - 20, 0);
+      out.push(+(performance.now() - t0).toFixed(3));
+    }
+    return out;
+  });
+  const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[xs.length >> 1];
+  l.stroke_latency_ms = {
+    n: lat.length, median: med(lat), max: Math.max(...lat),
+    note: "**개발 서버(번들 없음) · 상자 둘(24획 + 그린 획)** 기준이므로 상한으로 읽는다. "
+      + "⚠ `e2e.json`의 값은 **옛 UI**라 같은 구간이 아니다 — 견주지 않는다.",
+    registered_pass: "중앙 10ms 미만(사전 등록)",
+  };
+  expect(med(lat)).toBeLessThan(10);
+
+  // ---- ③ **L-B 게이트 3번**: 승격 연쇄가 **여러 회** 도는가. 회차별로 남긴다
+  l.promote_chain = await page.evaluate(async () => {
+    const S = window.S2S;
+    // 2점으로 다시 세운다 — 수직 가이드를 뒤에 더해 승격을 만든다(`l_c2`와 같은 절차)
+    const m = await import("/test/scene3d.ts");
+    const doc = await import("/src/ui/doc.ts");
+    const vd = await import("/src/s3d/vpDraft.ts");
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
+    const el = document.getElementById("ink") as HTMLCanvasElement;
+    const size: [number, number] = [el.clientWidth, el.clientHeight];
+    const sc = m.scene(35, 15, 1000, size);
+    const O: [number, number, number] = [0.6, -0.4, 4.2];
+    const edges = m.boxEdges(sc, O, 1.2, 1.0, 0.9);
+    const e0 = sc.axes[0];
+    edges.push(...m.boxEdges(sc, [O[0] + e0[0] * 1.2, O[1] + e0[1] * 1.2, O[2] + e0[2] * 1.2],
+                             0.9, 1.0, 0.7));
+    let s0 = 12345 >>> 0;
+    const r = () => { s0 = (s0 * 1664525 + 1013904223) >>> 0; return s0 / 4294967296; };
+    for (const e of m.drawEdges(sc, edges, "medium", r, 0.37, 0.006, 0)) {
+      S.doc().strokes.push(doc.newSStroke(e.pts2d, S.doc().currentView));
+    }
+    const margin = 0.02 * Math.hypot(size[0], size[1]);
+    const mk = (ax: number, ts: number[][]) => {
+      const vp = sc.vps[ax]; const out: unknown[] = [];
+      for (const t of ts) {
+        const q = [t[0] * size[0], t[1] * size[1]];
+        const far = [vp[0] + (q[0] - vp[0]) * 1e4, vp[1] + (q[1] - vp[1]) * 1e4];
+        const cl = vd.clipToCanvas([vp[0], vp[1]], far, size, margin);
+        if (cl) out.push({ axis: ax, a: cl[0], b: cl[1] });
+      }
+      return out;
+    };
+    S.cam.guides = [...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])];
+    S.cam.apply(); S.refresh();
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    const before = { order: S.order(),
+                     lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+                     pending: S.doc().strokes.filter((s: any) => !s.seg3d).length };
+    S.unlockGuides();
+    for (const g of mk(2, [[0.42, 0.35], [0.62, 0.35]])) S.cam.guides.push(g as any);
+    S.cam.apply(); S.refresh();
+    S.promoteOrderNow();
+    return { before, order: S.order(), trace: S.chainTrace(),
+             lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+             pending: S.doc().strokes.filter((s: any) => !s.seg3d).length };
+  });
+  const pc = l.promote_chain as any;
+  expect(pc.before.order).toBe(2);
+  expect(pc.order).toBe(3);
+  // **연쇄가 실제로 돌았는가**(#32) — 회차 배열이 비면 이 실행은 기전에 대한 정보가 0이다
+  (l.promote_chain as any).rounds = pc.trace.length;
+  (l.promote_chain as any).hit_cap = pc.trace.length >= 8;
+  (l.promote_chain as any).reading =
+    pc.trace.length >= 2
+      ? "**여러 회 돌았다** — 회차별 (대기 · 놓임)이 `trace`에 있다"
+      : "⚠ **한 회로 멎었다.** 상자 둘로도 연쇄가 안 길어진다면 그것은 픽스처가 아니라 "
+        + "기전의 성질이다 — 대기 집합이 첫 회에 거의 다 소진되는지 `trace`로 본다";
+  expect(pc.trace.length).toBeGreaterThanOrEqual(1);
+  expect(pc.trace.length).toBeLessThan(8);            // 상한에 닿으면 수렴이 아니라 잘린 것이다
+
+  // ---- ④ **차수 표식 다중**: `orderMarks`가 2·3점을 **함께** 들고 있을 때의 되돌리기
+  //
+  // 표식은 **카메라를 만지기 직전**(`unlock`)에 찍힌다. 그러므로 둘을 만드는 길은
+  // 2점에서 unlock(→ 표식 2) → 승격(3점) → **다시 unlock**(→ 표식 3)이다.
+  // ⚠ **`revertToOrder(2)` 뒤에 다시 승격해도 3점이 안 된다** — 되돌리기가 **가이드까지**
+  // 되돌리므로 세 번째 축이 없어지기 때문이다. 그것이 §6.1이 요구하는 동작이고
+  // (둘 중 하나만 되돌리면 좌표계가 섞인다) 아래에서 그 사실을 못박는다.
+  l.order_marks_multi = await page.evaluate(async () => {
+    const S = window.S2S;
+    const after3 = { order: S.order(), marks: S.orderMarks() };
+    // 3점 상태에서 **다시** 카메라를 연다 → 표식 3이 찍혀 목록이 둘이 된다
+    S.unlockGuides();
+    const twoMarks = { marks: S.orderMarks(), buttons: [...document.querySelectorAll("#bar button")]
+      .map(b => (b as HTMLElement).dataset.act).filter(a => a && a.startsWith("revert")) };
+    const at3 = { lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+                  guides: S.camSnapshot().guides.length };
+    // **가장 최근 차수(3)로 되돌린다** — 3점 상태가 그대로 돌아와야 한다
+    S.revertToOrder(3);
+    const back3 = { order: S.order(), lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+                    guides: S.camSnapshot().guides.length, locked: S.camSnapshot().locked };
+    // **그다음 2로 되돌린다** — 가이드가 둘로 줄고 차수가 2가 된다
+    S.revertToOrder(2);
+    const back2 = { order: S.order(), lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
+                    guides: S.camSnapshot().guides.length };
+    // ⚠ **여기서 다시 승격해도 3점이 안 된다**(가이드가 되돌아갔으므로) — 못박는다
+    S.promoteOrderNow();
+    const repromote = { order: S.order(), guides: S.camSnapshot().guides.length };
+    return { after3, twoMarks, at3, back3, back2, repromote };
+  });
+  const om = l.order_marks_multi as any;
+  (om as any).buttons_note =
+    "표식은 둘(2·3)인데 **버튼은 하나**다 — `lockedOrder`의 표식은 안 낸다(있는 자리로 "
+    + "가는 버튼은 아무 일도 안 한다). 표식 3은 **더 그린 뒤** 돌아올 자리로 살아 있고 "
+    + "`revertToOrder(3)`이 그것을 쓴다.";
+  expect(om.after3.order).toBe(3);
+  expect(om.after3.marks).toEqual([2]);
+  // ① **표식이 둘이 된다** — 2와 3을 함께 들고 있다
+  expect(om.twoMarks.marks).toEqual([2, 3]);
+  // ② **버튼은 하나다** — `lockedOrder`(=3)의 표식은 일부러 안 낸다("있는 자리로
+  //    되돌아가는 버튼은 아무 일도 안 한다"). 즉 **표식 둘 · 버튼 하나**가 옳은 상태다.
+  //    ⚠ 초판은 버튼 둘을 기대했다 — **코드가 맞고 기대가 틀렸다**(A-3: 측정을 따른다).
+  expect(om.twoMarks.buttons).toEqual(["revert2"]);
+  // ③ **가장 최근 차수로 되돌리면 3점 상태가 그대로다**
+  expect(om.back3.order).toBe(3);
+  expect(om.back3.guides).toBe(om.at3.guides);
+  expect(om.back3.lifted).toBe(om.at3.lifted);
+  // ④ **2로 되돌리면 가이드가 줄고 차수가 2가 된다** — 문서와 카메라가 함께 돌아간다
+  expect(om.back2.order).toBe(2);
+  expect(om.back2.guides).toBeLessThan(om.back3.guides);
+  // ⑤ ⚠ **그 뒤 재승격은 아무것도 안 한다** — 세 번째 축 가이드가 없기 때문이다.
+  //    "되돌리기가 문서만 되돌리면 소실점이 새 차수로 남는다"의 **거울상 확인**이다(§6.1)
+  expect(om.repromote.order).toBe(2);
+  expect(om.repromote.guides).toBe(om.back2.guides);
+  (l.order_marks_multi as any).reading =
+    "표식 둘(2·3)을 함께 든다(버튼은 `lockedOrder` 것을 빼므로 하나다). **되돌리기는 문서와 카메라를 "
+    + "함께 되돌리므로**, 2로 되돌린 뒤 재승격해도 3점이 안 된다(가이드가 같이 돌아갔다). "
+    + "그것이 §6.1이 요구하는 동작이다 — 둘 중 하나만 되돌리면 좌표계가 섞인다.";
+
+  // ---- ⑤ **스크린샷 회귀**: 같은 픽스처를 두 번 세우면 픽셀이 같아야 한다(결정론)
+  //
+  // ⚠ **기계 간 비교는 안 한다** — 폰트·안티에일리어싱이 다르다. 같은 실행 안의 두 번만 본다.
+  // ⚠ **매번 새로고침해서 같은 출발점에서 잰다.** 초판은 `clear()`만 하고 다시 세웠는데,
+  // 그러면 **앞 절이 남긴 상태**(`cam.locked` · `lockedOrder` · 자세)가 첫 판과 둘째 판에서
+  // 달라 픽셀이 갈렸다 — 스펙 하나만 돌리면 통과하고 **전체를 돌리면 실패**했다.
+  // 재는 것은 "같은 픽스처가 같은 픽셀을 내는가"이므로 출발점을 같게 만드는 것이 맞다.
+  const shot = async () => {
+    await page.goto("/l.html");
+    await page.waitForFunction(() => !!window.S2S);
+    await setup(page, { boxes: 2 });
+    await page.evaluate(() => {
+      document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    });
+    return (await page.locator("#ink").screenshot()).toString("base64");
+  };
+  const a = await shot(), b = await shot();
+  l.screenshot_regression = {
+    identical: a === b, bytes: a.length,
+    note: "**결정론 확인이다**(설계 보장, #5) — 잉크가 LCG이고 자세가 고정이므로 같아야 한다. "
+      + "임계를 걸지 않는다. ⚠ **기계 간 비교는 안 한다**(폰트·안티에일리어싱).",
+  };
+  expect(a).toBe(b);
+
+  l.what_this_does_not_say = [
+    "배치 정확도 — 참값 대조를 앱에서 하지 않는다(측정 경로와 앱 경로를 섞는 일이다, #17)",
+    "실획 — 합성 잉크다(AS-C1·AS-C10)",
+    "사람이 도달하는 축 오차 — 참 소실점을 그대로 넣는다(AS-L9은 표본 0)",
+    "**AS-L9 시나리오는 여기 없다** — 사람이 가이드를 끄는 것이라 자동화가 안 된다(DEFERRED)",
+  ];
+  led.l_d3 = l;
 });
