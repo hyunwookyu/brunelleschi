@@ -297,6 +297,7 @@ def scan_stale_metrics(outdir: Path, reports: dict[str, dict]) -> list[dict]:
 
 
 SCANNED_FIELDS: list[dict] = []
+SWEEP_SCANNED: list[dict] = []
 
 
 def strip_ts_comments(t: str) -> str:
@@ -363,6 +364,139 @@ def scan_unread_fields(root: Path) -> list[dict]:
                                   "(Stroke.color가 실제로 그랬다, S-8c)"})
     return flags
 
+
+def scan_sweep_coverage(root: Path) -> list[dict]:
+    """**전수 훑기가 확장자를 다 덮는지**(PITFALLS #33 자동화, 2026-08-16).
+
+    실제로 걸린 것: 인용 점검을 `.md`만 훑어 **하네스 주석의 인용**을 놓쳤다.
+    같은 유형으로 지표 정의 점검이 함수 호출만 찾아 인라인 식을 놓쳤다(`axis_live`).
+
+    `sweeps.json`이 훑기마다 `pattern`·`roots`·`exts`를 선언하고, 여기서 **선언한 확장자
+    밖에서도 그 패턴이 나오는지** 본다. 나오면 그 훑기는 덜 덮은 것이다.
+    **의심이지 오류가 아니다** — 일부러 뺀 확장자면 `exclude`에 적거나 `exts`에 넣는다.
+    """
+    import re
+    spec_path = root / "sweeps.json"
+    if not spec_path.exists():
+        return [{"path": "sweeps.json", "val": None,
+                 "flag": "전수 훑기 선언 파일이 없다 → #33 자동 검사가 **안 돈다**"}]
+    try:
+        spec = json.loads(spec_path.read_text(encoding="utf-8"))
+    except Exception as ex:
+        return [{"path": "sweeps.json", "val": None, "flag": f"파싱 실패: {ex}"}]
+
+    flags = []
+    SWEEP_SCANNED.clear()
+    for sw in spec.get("sweeps", []):
+        pat = re.compile(sw["pattern"])
+        exts = set(sw.get("exts", []))
+        excl = sw.get("exclude", [])
+        found: dict[str, int] = {}
+        n_files = 0
+        for rt in sw.get("roots", ["."]):
+            base = root / rt
+            if not base.exists():
+                continue
+            for f in base.rglob("*"):
+                if not f.is_file():
+                    continue
+                rel = str(f.relative_to(root)).replace("\\", "/")
+                if any(x in rel for x in excl):
+                    continue
+                if f.suffix not in (".md", ".ts", ".py", ".json", ".html", ".js"):
+                    continue
+                try:
+                    txt = f.read_text(encoding="utf-8")
+                except Exception:
+                    continue
+                if f.suffix in exts:
+                    n_files += 1
+                if pat.search(txt):
+                    found[f.suffix] = found.get(f.suffix, 0) + 1
+        missing = {k: v for k, v in found.items() if k not in exts}
+        SWEEP_SCANNED.append({"sweep": sw["name"], "files_scanned": n_files,
+                              "exts_declared": sorted(exts), "hits_by_ext": found})
+        if missing:
+            flags.append({
+                "path": f"sweeps.json:{sw['name']}",
+                "val": ", ".join(f"{k}({v})" for k, v in sorted(missing.items())),
+                "flag": "**선언 밖 확장자에서 같은 패턴이 나온다** → 그 훑기가 덜 덮었다(#33). "
+                        "`exts`에 넣거나 `exclude`로 이유를 밝힌다",
+            })
+        if not n_files:
+            flags.append({"path": f"sweeps.json:{sw['name']}", "val": 0,
+                          "flag": "훑은 파일이 0 → 훑기가 **안 돌았다**(경로·확장자 확인)"})
+    return flags
+
+
+
+def scan_gate_reachability(reports: dict[str, dict]) -> list[dict]:
+    """**게이트를 등록할 때 도달 가능성을 함께 박는다**(PITFALLS #35 자동화, 2026-08-16).
+
+    L-C.3이 그 반대 방향으로 실패했다 — 기준(판별력 0.5)을 측정 전에 박긴 했는데
+    **그 픽스처에서 도달 가능한지 모르는 채**였다. 기준을 못 넘은 것이 신호의 성질인지
+    기준의 성질인지 갈리지 않았다.
+
+    원장에 `gate`(또는 `gates`) 블록이 있으면 **`reachability`가 있어야 한다** — 무엇이 그
+    기준을 넘을 수 있는가(오라클 팔·대리 참값·이론 상한). ⚠ 없다고 기준을 낮추지 않는다.
+    적기만 한다(#26의 반대편 문을 열지 않는다).
+    """
+    flags = []
+    def walk(node, path, fname):
+        if isinstance(node, dict):
+            keys = {k.lower() for k in node}
+            # **키 이름이 게이트일 때만** 본다. `threshold`가 든 통계 블록까지 세면
+            # 97건이 떠서 검사가 소음이 된다(고쳤다) — 우는 검사는 아무도 안 읽는다.
+            leaf = path.lower().split(".")[-1].split("[")[0]
+            looks_gate = leaf in ("gate", "gates", "게이트", "criterion", "criteria")
+            if looks_gate and isinstance(node, dict):
+                if not ({"reachability", "oracle", "도달"} & keys):
+                    flags.append({"path": f"{fname}:{path}", "val": sorted(keys)[:6],
+                                  "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 "
+                                          "넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"})
+            for k, v in node.items():
+                walk(v, f"{path}.{k}" if path else k, fname)
+        elif isinstance(node, list):
+            for i, v in enumerate(node):
+                walk(v, f"{path}[{i}]", fname)
+    for fname, rep in reports.items():
+        walk(rep, "", fname)
+    return flags
+
+
+
+def scan_zero_denominator(root: Path) -> list[dict]:
+    """**분모 0을 1로 바꾸는 나눗셈**을 정적 탐지한다(PITFALLS #36 자동화, 2026-08-16).
+
+    `분자 / Math.max(1, 분모)`는 **없는 관측을 만든다** — L-C.3의 `bestOf`가 빈 층에
+    판별력 −0.03과 1을 냈다. 표시용 보호와 관측 생성을 가른다: 관측이면 `rate()`가
+    `null`을 내야 한다(`web/test/metrics.ts`).
+
+    **원장을 쓰는 하네스만 본다** — 화면 코드의 나눗셈 보호는 대상이 아니다.
+    """
+    import re
+    pat = re.compile(r"/\s*Math\.max\(\s*1\s*,")
+    flags = []
+    base = root / "web" / "test"
+    if not base.exists():
+        return flags
+    for f in sorted(base.rglob("*.ts")):
+        try:
+            txt = f.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        if "stage0" not in txt and "writeFileSync" not in txt:
+            continue                      # 원장을 안 쓰는 파일은 대상이 아니다
+        hits = [i for i, line in enumerate(txt.splitlines(), 1) if pat.search(line)]
+        if hits:
+            # **파일당 한 건으로 묶는다.** 70건을 그대로 내면 검사가 소음이 되고
+            # 아무도 안 읽는다(#35 자동화에서 같은 실수를 했다).
+            flags.append({"path": f"{f.relative_to(root)}", "val": f"{len(hits)}건 (줄 {hits[:5]})",
+                          "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 "
+                                  "`null`을 낸다. 표시용 보호면 그렇게 적는다"})
+    return flags
+
+
 def scan_nondeterministic_seeds(root: Path) -> list[dict]:
     """소스에서 비결정 시드 패턴을 정적 탐지(B-0 d). hash(str)를 시드에 쓰면 안 된다."""
     import re
@@ -416,12 +550,16 @@ def main():
 
     flags += scan_nondeterministic_seeds(ROOT)      # B-0 d: 비결정 시드 정적 탐지
     flags += scan_roundtrip_metrics(ROOT)          # 자기참조 3: 복원↔역연산 왕복 지표
+    flags += scan_sweep_coverage(ROOT)             # #33 자동화: 전수 훑기의 확장자 커버리지
+    flags += scan_gate_reachability(reports)       # #35 자동화: 게이트에 도달 가능성 필드
+    flags += scan_zero_denominator(ROOT)           # #36 자동화: 분모 0을 1로 바꾸는 나눗셈
 
     out = {"n_flags": len(flags), "flags": flags,
            "n_stale": sum(1 for f in stale if "STALE" in f["flag"]),
            "n_stale_metrics": sum(1 for f in stale_m if "STALE" in f["flag"]),
            "n_unread_fields": len(unread),
            "field_reads": SCANNED_FIELDS,
+           "sweeps": SWEEP_SCANNED,
            "constants_hash": (reports.get("constants.json") or {}).get("hash"),
            "metrics_hash": (reports.get("metrics.json") or {}).get("hash"),
            "scanned": [p.name for p in sorted(outdir.glob("*.json")) if p.name not in skip],

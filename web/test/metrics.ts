@@ -129,6 +129,22 @@ export function axisDirErrors(
   return out;
 }
 
+/**
+ * **비율은 분모가 0이면 `null`이다**(PITFALLS #36 자동화, 2026-08-16).
+ *
+ * `분자 / Math.max(1, 분모)`를 쓰면 **분모 0이 1로 바뀌어 없는 관측이 생긴다** —
+ * L-C.3의 `bestOf`가 가짜 팔이 없는 층에 판별력 −0.03을, 참 팔이 없는 층에 1을 냈다.
+ * 둘 다 없는 수다. **표시용 나눗셈 보호를 관측 생성에 쓰지 않는다.**
+ *
+ * 분자/분모를 함께 남기고 싶으면 `fraction()`을 쓴다(#14).
+ */
+export function rate(k: number, n: number): number | null {
+  return n > 0 ? +(k / n).toFixed(4) : null;
+}
+
+/** **비율보다 분자/분모**(PITFALLS #14). 분모 0이면 `0/0`이 그대로 보인다. */
+export const fraction = (k: number, n: number): string => `${k}/${n}`;
+
 /** **절단을 하나 고르지 않는다**(PITFALLS #13). 이 셋이 원장 전체의 공통 절단이다. */
 export const SILENT_CUTS = [0.1, 0.2, 0.5] as const;
 
@@ -152,7 +168,7 @@ export function silentWrong(errs: readonly number[]): Record<string, string> {
 /** 이 파일에서 정의된 지표. 목록 자체도 해시에 들어간다 — 지우면 해시가 움직인다. */
 export const METRIC_NAMES = [
   "pairEnds", "fitGauge", "segShapeError", "perStrokeErrorMap", "perStrokeError",
-  "axisDirErrors", "silentWrong",
+  "axisDirErrors", "silentWrong", "rate", "fraction",
 ] as const;
 
 export interface MetricsSnapshot {

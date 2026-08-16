@@ -1,0 +1,63 @@
+{
+  "note": "**전수 훑기 선언**(PITFALLS #33 자동화). 되풀이하는 전수 점검마다 여기에 적는다. `selfcheck.scan_sweep_coverage`가 각 훑기의 `pattern`이 **선언한 확장자 밖에서도 나오는지** 보고, 나오면 그 훑기가 덜 덮은 것이다. 실제로 걸렸던 것: 인용 점검을 `.md`만 훑어 하네스 주석의 인용을 놓쳤고, 지표 정의 점검이 함수 호출만 찾아 인라인 식을 놓쳤다.",
+  "sweeps": [
+    {
+      "name": "ledger_citation",
+      "why": "문서가 원장을 인용할 때 `산출물.json@해시`로 적는다(CLAUDE.md §5). 훑을 때 문서만 보면 **코드 주석의 인용**을 놓친다.",
+      "pattern": "\\.json@[0-9a-f]{8}",
+      "roots": [
+        "."
+      ],
+      "exts": [
+        ".md",
+        ".ts",
+        ".py"
+      ],
+      "exclude": [
+        "node_modules",
+        "docs/archive",
+        "stage0/out",
+        "__pycache__",
+        "dist",
+        "test-results"
+      ]
+    },
+    {
+      "name": "metric_definition",
+      "why": "지표 정의는 `test/metrics.ts` 한 곳에서만 온다(D-L23). 함수 이름으로만 찾으면 **인라인으로 펼쳐 쓴 같은 식**을 놓친다(#33이 실제로 그랬다 — `axis_live`).",
+      "pattern": "silentWrong|segShapeError|fitGauge|perStrokeError",
+      "roots": [
+        "web/test",
+        "web/src"
+      ],
+      "exts": [
+        ".ts"
+      ],
+      "exclude": [
+        "node_modules"
+      ]
+    },
+    {
+      "name": "pitfall_reference",
+      "why": "각 항목이 착수 시 PITFALLS를 읽었는지 하네스 머리말에 적는다. 문서만 훑으면 하네스를 놓친다.",
+      "pattern": "PITFALLS",
+      "roots": [
+        "."
+      ],
+      "exts": [
+        ".md",
+        ".ts",
+        ".py"
+      ],
+      "exclude": [
+        "node_modules",
+        "docs/archive",
+        "stage0/out",
+        "__pycache__",
+        "dist",
+        "test-results",
+        "sweeps.json"
+      ]
+    }
+  ]
+}
