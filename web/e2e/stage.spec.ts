@@ -679,12 +679,28 @@ test("스냅 — 대상·표식·시작점 확정", async ({ page }) => {
       // 배선을 검사한다** — 둘 중 하나만 대입하는 실수를 잡는다. 임계를 걸지 않는다.
       start_reprojection_gap_px_IDENTITY: back
         ? +Math.hypot(back[0] - st.pts2d[0][0], back[1] - st.pts2d[0][1]).toFixed(9) : null,
+      // **두 점 배치의 정의**(D-L46) — 3D 세그먼트가 두 앵커 그 자체인가.
+      // ⚠ 이것도 배선 검사이지 정확도가 아니다(#5) — 대입한 값을 되읽는다
+      end_snapped: !!st.snapEnd,
+      seg_matches_anchors_px: st.seg3d && st.snapStart && st.snapEnd
+        ? +Math.max(
+            Math.hypot(st.seg3d[0][0] - st.snapStart.at[0], st.seg3d[0][1] - st.snapStart.at[1],
+                       st.seg3d[0][2] - st.snapStart.at[2]),
+            Math.hypot(st.seg3d[1][0] - st.snapEnd.at[0], st.seg3d[1][1] - st.snapEnd.at[1],
+                       st.seg3d[1][2] - st.snapEnd.at[2])).toFixed(9)
+        : null,
       status_note: document.getElementById("status")!.innerText.includes("마지막 획"),
     };
   });
   expect((l.drawn as any).snap_kind).toBe("endpoint");
   expect((l.drawn as any).placed).toBe(true);
-  expect((l.drawn as any).axis).toBe(geo.axis);
+  // ⚠⚠ **계약이 바뀌었다**(2026-08-16, D-L46 오스냅). 끝점이 **다른 꼭짓점에 붙으면**
+  // 그 획은 **두 점으로** 놓이고 축은 **라벨**일 뿐이다 — 옛 단언(`axis === geo.axis`)은
+  // 축 경로의 계약이었다. 두 앵커가 **서로 다른 획의 3D**에서 오므로 그 방향이 축과
+  // 정확히 나란하지 않을 수 있고(실측 6.3°), 그때 라벨은 **미분류**가 맞다(A-3: 지어내지 않는다).
+  // **대신 두 점 배치의 정의를 검사한다**: 끝점이 붙었고, 3D가 그 두 앵커와 같다.
+  expect((l.drawn as any).end_snapped).toBe(true);
+  expect((l.drawn as any).seg_matches_anchors_px).toBeLessThan(1e-6);
   expect((l.drawn as any).start_reprojection_gap_px_IDENTITY).toBeLessThan(1e-6);
 
   // ④ **대조군** — 아무것도 없는 자리에서 시작하면 안 붙고 **2D로 대기**한다(§9.1).
@@ -762,7 +778,9 @@ test("실시간 축 판정 — 미리보기와 확정이 같다", async ({ page 
     const S = window.S2S;
     const t = document.getElementById("status")!.innerText;
     return { status_shows_live: t.includes("그리는 중"),
-             status_shows_axis: /축[123]/.test(t),
+             // **두 점 배치도 판정이다**(D-L46) — 축 대신 "양 끝 스냅"이 뜬다.
+             // 재는 것은 "지금 무엇으로 놓이는지가 화면에 보이는가"이고 둘 다 그 답이다
+             status_shows_axis: /축[123]/.test(t) || t.includes("양 끝 스냅"),
              hover_cleared: S.hoverSnap() === null };
   });
   expect((l.mid_drag as any).status_shows_live).toBe(true);
@@ -784,7 +802,10 @@ test("실시간 축 판정 — 미리보기와 확정이 같다", async ({ page 
     const g = Math.max(
       ...[0, 1].flatMap(k => [0, 1, 2].map(c =>
         Math.abs((k === 0 ? pv.a : pv.b)[c] - st.seg3d[k][c]))));
-    return { preview: true, placed: true, axis_same: pv.axis === st.axis, gap: +g.toFixed(12),
+    // ⚠ **표현이 둘이다**: 미리보기의 미분류는 `null`, 문서의 미분류는 `"free"`다(D-L46 이후
+    // 두 점 배치에서 실제로 난다). **같은 뜻을 같게 본다** — 임계를 무르는 것이 아니다
+    const same = pv.axis === st.axis || (pv.axis === null && st.axis === "free");
+    return { preview: true, placed: true, axis_same: same, gap: +g.toFixed(12),
              note: "⚠ **이것은 항등에 가깝다**(PITFALLS #5) — 미리보기와 확정이 `resolveLive` "
                  + "**같은 함수**를 같은 입력으로 부른다. 재는 것은 정확도가 아니라 **배선**이고, "
                  + "입력이 갈리는 경로가 생기면 이 값이 0이 아니게 된다. 임계를 걸지 않는다." };
@@ -833,15 +854,22 @@ test("축 고정 — 추론이 거부한 획을 사용자가 강제한다", asyn
   // 가므로** "축이 안 맞아서 대기한다"는 상태가 아예 없어진다. 이 스펙이 재는 것은
   // **명시적 축 고정이 추론의 거부를 덮는가**이고, 그 거부는 축 스냅이 꺼졌을 때만 난다.
   await page.evaluate(() => window.S2S.setAxisSnap(false));
-  const wild = { x: cx + geo.a[0] + 120, y: cy + geo.a[1] - 130 };
+  // ⚠⚠ **끝점도 스냅 대상에서 멀어야 한다**(2026-08-16, D-L46) — 오스냅이 들어오면서
+  // **양 끝이 붙은 획은 축 없이 놓인다.** 끝점이 어떤 대상 반경 안이면 이 스펙이 재려던 것
+  // ("축이 안 맞으면 대기한다")이 아니라 **두 점 배치**를 재게 된다. 그래서 더 멀리 두고,
+  // `snapEnd === null`을 **전제로 못 박는다**(전제가 깨지면 이 검사가 조용히 다른 것을 잰다).
+  const wild = { x: cx + geo.a[0] + 250, y: cy + geo.a[1] - 300 };
   await page.mouse.move(cx + geo.a[0] + 10, cy + geo.a[1] + 8);
   await page.mouse.down();
   await page.mouse.move(wild.x, wild.y, { steps: 5 });
   await page.mouse.up();
   l.without_lock = await page.evaluate(() => {
     const st = window.S2S.doc().strokes[window.S2S.doc().strokes.length - 1];
-    return { placed: !!st.seg3d, axis: st.axis, userAxis: st.userAxis };
+    return { placed: !!st.seg3d, axis: st.axis, userAxis: st.userAxis,
+             end_snapped: !!st.snapEnd };
   });
+  // **전제**: 끝점이 아무 대상에도 안 붙었다 — 붙었으면 아래 검사는 다른 것을 잰다(D-L46)
+  expect((l.without_lock as any).end_snapped).toBe(false);
 
   // 같은 획을 **축 고정**으로 다시 긋는다
   // **그 앵커에서 실제로 뻗는 축**을 고정한다 — 임의의 축을 고르면 커서 광선과의
@@ -1183,6 +1211,7 @@ test("궤도 후 계속 그리기 — 새 각도가 새 뷰가 된다", async ({
       seg3d: st.seg3d,
       snap_kind: st.snapStart?.kind ?? null,
       snap_at: st.snapStart?.at ?? null,
+      end_snapped: !!st.snapEnd,
     };
   }, mid);
   const d = l.drawn_in_orbit as any;
@@ -1192,7 +1221,10 @@ test("궤도 후 계속 그리기 — 새 각도가 새 뷰가 된다", async ({
   expect(d.current).not.toBe("v1");
   // **돌린 시점에서 3D가 확정된다**(L-B.8의 핵심)
   expect(d.placed).toBe(true);
-  expect(typeof d.axis).toBe("number");
+  // ⚠ **계약이 바뀌었다**(D-L46): 양 끝이 붙으면 **축 없이 두 점으로** 놓이고 축은 라벨이다.
+  // 재는 것은 "돌린 시점에서 3D가 확정된다"이므로 **놓인 근거가 축이든 두 점이든 통과**이고,
+  // **둘 다 아니면 실패**다(그때는 `axis`가 미분류이면서 끝점도 안 붙은 것이다)
+  expect(typeof d.axis === "number" || d.end_snapped).toBe(true);
 
   // ---- ③ 확정 시점으로 돌아가도 **그 3D가 제자리다**(세계 좌표로 저장했다는 뜻)
   l.back_to_confirm = await page.evaluate((seg: number[][]) => {

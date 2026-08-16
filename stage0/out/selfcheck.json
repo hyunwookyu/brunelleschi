@@ -1,5 +1,5 @@
 {
-  "n_flags": 1823,
+  "n_flags": 1818,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -5110,11 +5110,6 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "osnap.json:by_composition.3pt_yaw35_pitch15.both_snap_rate",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
       "path": "osnap.json:by_composition.3pt_yaw35_pitch15.anchor_err_median",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
@@ -5175,22 +5170,12 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "osnap.json:by_jitter.jit_0.005.both_snap_rate",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
       "path": "osnap.json:by_jitter.jit_0.005.anchor_err_median",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
       "path": "osnap.json:by_jitter.jit_0.01.start_snap_rate",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "osnap.json:by_jitter.jit_0.01.both_snap_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -5581,22 +5566,12 @@
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
-      "path": "stage_browser.json:l_b8.drawn_in_orbit.mid_drag.axis",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
       "path": "stage_browser.json:l_b8.drawn_in_orbit.views[0].pending",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "stage_browser.json:l_b8.drawn_in_orbit.views[1].pending",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "stage_browser.json:l_b8.drawn_in_orbit.axis",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -9153,7 +9128,7 @@
     {
       "field": "axis",
       "writes": 5,
-      "reads": 80
+      "reads": 84
     },
     {
       "field": "rep",
@@ -9254,7 +9229,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 95,
+      "targets": 97,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },

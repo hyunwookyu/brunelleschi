@@ -23,15 +23,16 @@ import { diffPlacement, diffSummary, type PlacementDiff } from "./s3d/promoteDif
 import { classifyLine, RULE_TOL, type RuleEvent, type RLine, type RuleState } from "./s3d/vpRules.js";
 // **축 스냅**(사람 지시 1·3) — 그리는 동안 축으로 강제하고, 모호하면 커서가 가른다
 import { snapToAxis, SNAP_TOL_AXIS, type AxisCand } from "./s3d/axisSnap.js";
-import { liftAll, type LiftStroke } from "./s3d/lift.js";
-import { snapAt, staticCandidates, SNAP_TOL, SNAP_LABEL, SNAP_COLOR, SNAP_ICON, SNAP_TIP,
+import { liftAll, LIFT_TOL, type LiftStroke } from "./s3d/lift.js";
+import { snapAt, snapCandidates, staticCandidates, SNAP_TOL, SNAP_LABEL, SNAP_COLOR, SNAP_ICON, SNAP_TIP,
          type SnapCand, type SnapKind, type SnapSeg, type SnapCtx,
          type StaticCand } from "./s3d/snap.js";
 import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "./s3d/liveLine.js";
 import { representative } from "./s3d/axis.js";
 import { promoteOrder, orderOf, type OrderStroke } from "./s3d/promoteOrder.js";
 import { AXIS_COLOR, guides as gridGuides, HORIZON_COLOR, GROUND_COLOR } from "./s3d/grid.js";
-import { project, axisDirection, groundFrame, type Vec3 } from "./s3d/geom3d.js";
+import { project, axisDirection, groundFrame, sub3, angleBetween,
+         type Vec3 } from "./s3d/geom3d.js";
 import { lineIntersect, type Pt2 } from "./s3d/camera.js";
 import type { PlaceCtx } from "./s3d/stroke.js";
 import { viewPlaceCtx, toView, fromView, dirToView, type ViewPose } from "./s3d/viewCamera.js";
@@ -290,7 +291,13 @@ function endSnapAt(fr: Frame, anchorAt: Vec3, p: Pt2): SnapCand | null {
   const sc = snapCtx(fr, anchorAt);
   if (!sc) return null;
   const segs = snapSegs(fr.toV);
-  const cand = snapAt(p, segs, sc, {}, snapStatic(segs));
+  // ⚠⚠ **끝점 스냅은 "정확한" 대상만 쓴다**(라이노 기본값 그대로, A-3).
+  // 라이노에서 **Near(근처점)는 기본이 꺼져 있다** — 선 근처 어디서나 걸려 너무 잘 잡히기
+  // 때문이다. 여기서도 같은 일이 실제로 났다: 모서리를 따라 그으면 `on_edge`가 **언제나**
+  // 걸려 모든 획이 두 점 배치가 됐다(종단 확인이 잡았다). 시작점 스냅은 종전대로 전부 쓴다 —
+  // 그 경로의 측정(`snap.json`)이 그 목록 위에 있다.
+  const cand = snapCandidates(p, segs, sc, {}, snapStatic(segs))
+    .find(c => c.kind !== "on_edge" && c.kind !== "on_face") ?? null;
   // **앵커 자신에 붙는 것은 선분이 아니다** — 길이 0을 만들지 않는다
   if (!cand) return null;
   const d = Math.hypot(cand.at[0] - anchorAt[0], cand.at[1] - anchorAt[1], cand.at[2] - anchorAt[2]);
@@ -386,7 +393,22 @@ function resolveLive(c: PlaceCtx, at: Vec3, a2: Pt2, b2: Pt2, end: SnapCand | nu
   // 자유 세그먼트)이 이 경로로 놓인다. 각도는 **표시용**으로만 낸다(축을 붙이지 않는다).
   if (end) {
     const near = nearestAxisOnScreen(at, dirs, a2, b2, c);
-    return { axis: null, deg: near?.deg ?? null, seg: [at, end.at] as [Vec3, Vec3],
+    // **라벨은 기하를 안 바꾼다**(아래 `placeLive` 머리말).
+    //
+    // ⚠⚠ **화면 판정(`cam.axisOf`)을 쓰면 안 된다** — 그것은 **확정 뷰의 소실점**으로 재므로
+    // 돌린 시점에서는 다른 화면 좌표를 그 소실점에 대는 것이 된다(종단 확인이 잡았다:
+    // 돌린 뷰의 획이 전부 미분류가 됐다). **3D 방향을 이 시점의 축 방향과 견준다** —
+    // 임계는 새로 만들지 않고 `LIFT_TOL.parallel_deg`(나란함 판정)를 그대로 쓴다(#17).
+    const dir = sub3(end.at, at);
+    let lab: 0 | 1 | 2 | null = null;
+    for (const i of [0, 1, 2] as const) {
+      const d = dirs[i];
+      if (!d) continue;
+      const deg = angleBetween(dir, d);
+      if (Math.min(deg, 180 - deg) <= LIFT_TOL.parallel_deg) { lab = i; break; }
+    }
+    return { axis: lab, deg: near?.deg ?? null,
+             seg: [at, end.at] as [Vec3, Vec3],
              locked: false, ambiguous: false, tied: [] as number[], why: "", twoPoint: true };
   }
   // **고정은 여기 안에 있어야 한다**(#17) — 바깥에서 덮으면 미리보기와 확정이 갈린다
@@ -448,12 +470,22 @@ function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = nul
     lastSnapNote = `${r.why} — **2D로 대기**합니다`;
     return false;
   }
-  // **양 끝 스냅은 축이 없다** — 두 점이 이미 선분을 정했으므로 미분류로 둔다(A-3: 추정 금지)
+  // **양 끝 스냅은 두 점이 기하를 정한다** — 축은 **기하를 안 바꾸는 라벨**로만 붙인다.
+  //
+  // ⚠ 라벨을 아예 안 붙이면 축 색·재분류·측정이 통째로 빠진다(종단 확인이 그것을 잡았다:
+  // 모서리를 따라 그은 획이 `free`가 됐다). 선례도 라벨은 붙인다 — SketchUp은 두 점 사이
+  // 선이 축과 나란하면 **축 색으로 그린다**. **추정이 아닌 이유**: 이 라벨은 어떤 점도
+  // 움직이지 않는다(기하는 이미 두 점이 정했다).
+  //
+  // **판정은 앱의 단일 출처를 그대로 쓴다**(#17) — `cam.axisOf`는 규칙이 정해 둔 소실점에
+  // 획을 붙이는 그 함수이고, 대각선처럼 어느 축도 아니면 **미분류**를 낸다(새 임계 없음).
   if (r.twoPoint) {
-    st.axis = "free";
+    const lab = r.axis ?? "free";
+    st.axis = lab;
     st.userAxis = false;
     st.seg3d = [fr.fromV(r.seg[0]), fr.fromV(r.seg[1])];
-    lastSnapNote = `**양 끝 스냅**으로 확정 — ${SNAP_LABEL[st.snapStart!.kind as SnapKind]}`
+    lastSnapNote = `**양 끝 스냅**으로 확정(축 ${typeof lab === "number" ? lab + 1 : "미분류"})`
+                 + ` — ${SNAP_LABEL[st.snapStart!.kind as SnapKind]}`
                  + ` → ${SNAP_LABEL[(end?.kind ?? "endpoint") as SnapKind]}`
                  + (r.deg != null ? ` <span class="dim">(가장 가까운 축과 ${r.deg.toFixed(1)}°)</span>` : "");
     return true;
@@ -1765,7 +1797,11 @@ function renderStatus() {
         // **양 끝 스냅이면 축이 아니라 두 점이 정한다**(D-L46) — 오스냅이 축 스냅을 이긴다
         + (live.end
           ? `끝 <b style="color:${SNAP_COLOR[live.end.kind]}">${SNAP_LABEL[live.end.kind]}</b>`
-            + ' · <b>양 끝 스냅으로 확정</b> <span class="dim">(축이 필요 없습니다'
+            + (live.axis != null
+               ? ` · <b style="color:${AXIS_COLOR[live.axis]}">축${live.axis + 1}</b>`
+                 + ' <span class="dim">(라벨일 뿐 — 기하는 두 점이 정합니다)</span>'
+               : ' · <span class="dim">축 미분류</span>')
+            + ' · <b>양 끝 스냅으로 확정</b> <span class="dim">(축 추론이 필요 없습니다'
             + (live.deg != null ? ` · 가장 가까운 축과 ${live.deg.toFixed(1)}°` : "")
             + ")</span>"
           : live.axis != null

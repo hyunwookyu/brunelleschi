@@ -20,7 +20,7 @@ import { describe, it, expect } from "vitest";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { snapAt, staticCandidates, geomScale, type SnapSeg, type SnapCtx } from "../src/s3d/snap.js";
+import { snapAt, snapCandidates, staticCandidates, geomScale, type SnapSeg, type SnapCtx } from "../src/s3d/snap.js";
 import { representative } from "../src/s3d/axis.js";
 import { norm3, sub3, type Vec3 } from "../src/s3d/geom3d.js";
 import type { Pt2 } from "../src/s3d/camera.js";
@@ -58,8 +58,8 @@ const REGISTERED =
   + "⚠ 축 스냅 팔의 대각선 배치는 **구성상 0**이다(대각선은 어느 축도 아니다) — 대조가 아니라 **정의**다. "
   + "⚠ **이 항목이 등록한 게이트이고 CLAUDE.md §2의 중단 조건이 아니다**(#41).";
 
-interface Fx { sc: Scene; drawnBox: ReturnType<typeof drawEdges>; drawnDiag: ReturnType<typeof drawEdges>;
-               trueDiag: { a: Vec3; b: Vec3 }[] }
+type Drawn = NonNullable<ReturnType<typeof drawEdges>>;
+interface Fx { sc: Scene; drawnBox: Drawn; drawnDiag: Drawn; trueDiag: { a: Vec3; b: Vec3 }[] }
 
 function fixture(ci: number, jit: number, grade: InkGrade, seed: number): Fx | null {
   const C = COMPOSITIONS[ci];
@@ -123,7 +123,10 @@ describe("오스냅 — 양 끝 스냅이 축 밖 선을 놓는가 (D-L46)", () 
               if (!s) return;
               for (const b of bags) b.startSnap += 1;
               // **끝점 스냅은 앵커를 기준점으로 준다**(수선 발이 성립하려면 필요하다 — Rhino `Perp`)
-              const e = snapAt(rep.b, segs, { ...ctx, from: s.at }, {}, pre);
+              // **그리고 정확한 대상만 쓴다** — 앱의 `endSnapAt`과 같은 규약이다(#17: 경로가 갈리면 안 된다).
+              // 라이노에서 Near(근처점)가 기본 꺼짐인 이유와 같다: 선 근처 어디서나 걸린다
+              const e = snapCandidates(rep.b, segs, { ...ctx, from: s.at }, {}, pre)
+                .find(c => c.kind !== "on_edge" && c.kind !== "on_face") ?? null;
               if (!e || norm3(sub3(e.at, s.at)) < 1e-9) {
                 for (const b of bags) b.startOnly += 1;
                 return;
@@ -170,6 +173,10 @@ describe("오스냅 — 양 끝 스냅이 축 밖 선을 놓는가 (D-L46)", () 
         targets: "**참 3D 상자 모서리 12개**(앱에서는 이미 놓인 3D 레이어가 그 자리다). "
           + "⚠ **상한이다** — 카메라 오차가 안 섞였다(#2).",
         diagonals: "`faceDiagonals` — 바닥면·옆면의 대각선 둘. **어느 소실점도 안 향한다.**",
+        end_snap_targets: "끝점 스냅은 **정확한 대상만** 쓴다(정점·끝점·중점·교차점·수선 발) — "
+          + "`on_edge`·`on_face`는 뺀다. **라이노 기본값 그대로**이고(Near는 기본 꺼짐), "
+          + "앱의 `endSnapAt`과 같은 규약이다(#17). ⚠ 안 빼면 **모서리를 따라 그은 획이 전부** "
+          + "두 점 배치가 된다(종단 확인이 그것을 잡았다).",
         ground: "지면 스냅은 **끈다** — 화면 거리가 정의상 0이라 성공률을 공짜로 1로 만든다(#3).",
         metric: "붙은 두 점과 참 대각선 두 끝의 거리 평균 ÷ 기하 크기(가까운 짝으로). "
           + "`anchor_err_median`은 **시작점만**의 오차다. "
