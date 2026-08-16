@@ -168,6 +168,16 @@ AS-L1~AS-L12에 반증과 조건이 전부 있고, 각 항목의 과정은 `prog
 `stage0/out/archive_W/e2e.json`도 같은 이유로 남겼다 — 만드는 스펙이 없어져 **다시 못 돌리므로**
 `@해시` 인용을 뗐고 **현재형 근거로 쓰지 않는다**(`PROTOTYPE.md` §2.4에 그렇게 박았다).
 
+## ⚠ 배포는 **`main` 병합이 있어야 갱신된다** (2026-08-16 확인)
+
+`pages.yml`이 `on: push: branches: [main, master]`이고, `deploy` job의 `github-pages`
+**환경이 기본 브랜치로 제한**돼 있다. 작업 브랜치에서 `workflow_dispatch`로 돌려 본 결과
+**`build`·`measure`는 초록인데 `deploy`가 단계 하나도 못 돌고 실패**한다(환경 규칙에서 막힌다).
+
+즉 <https://hyunwookyu.github.io/brunelleschi/> 는 **`claude/vanishing-point-rules-overhaul-qxrqga`를
+`main`에 병합해야** 갱신된다. **브랜치 규칙상 사람이 병합한다** — 이 세션은 `main`에 안 민다.
+확인한 실행: <https://github.com/hyunwookyu/brunelleschi/actions/runs/31951050859>
+
 ## ✋ 브라우저에서 보는 절차
 
 **배포본**: <https://hyunwookyu.github.io/brunelleschi/> (설치 없이 바로 열린다)
