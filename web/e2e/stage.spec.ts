@@ -20,6 +20,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { constantsSnapshot } from "../test/constants.js";
 import { metricsSnapshot } from "../test/metrics.js";
+import { gate } from "../test/gate.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -668,6 +669,22 @@ test("스냅 — 대상·표식·시작점 확정", async ({ page }) => {
   expect((l.control_far_from_geometry as any).snap_kind).toBeNull();
   expect((l.control_far_from_geometry as any).placed).toBe(false);
 
+  // **사전 등록을 `gate()` 이름으로 적는다**(#38·#40) — 산문 필드(`registered_pass`)로 두면
+  // `scan_gate_reachability`의 대상이 아니고, 그래서 **값이 어긋나도 자동으로 안 잡힌다**
+  // (실제로 `reload_ms`가 그렇게 낡았다). 리뷰어 [15]가 그 사각지대를 짚었다.
+  l.gate = gate({
+    registered: "L-D.3 종단 — ① 상자 둘에서 두 상자를 잇는 배치가 일어난다 "
+      + "② 승격 연쇄가 **2회 이상** 돌고 상한 8에 안 닿는다 ③ `orderMarks`가 2·3점을 함께 든다 "
+      + "④ 획 하나 지연 중앙 **10ms 미만**(개발 서버) ⑤ 같은 픽스처 두 판의 픽셀이 같다. "
+      + "`progress.md`의 'L-D.3 — 사전 등록: 판정'에 측정 전에 박았다(#26).",
+    reachability: "**배선 확인이라 오라클 팔이 없다** — 아래 `reachability_absent` 참조. 다섯 다 '되는가'이고 '얼마나 맞는가'가 아니다.",
+    reachability_absent: "**오라클 팔이 없고, 있을 자리도 아니다.** 이것은 정확도 측정이 아니라 "
+      + "**배선 확인**이다 — 다섯 다 '되는가'이지 '얼마나 맞는가'가 아니다. 정확도는 합성 "
+      + "하네스가 재고(`promote`·`axis_live`), 앱에서 참값 대조를 하는 것은 측정 경로와 앱 경로를 "
+      + "섞는 일이다(#17). ⚠ **④는 기계·실행마다 흔들린다** — 판정은 '10ms 미만'이라는 "
+      + "**자릿수**이고 중앙값 그 자체를 인용하면 문서가 곧 낡는다(실제로 낡았다).",
+    status: "다섯 전부 통과. 회차·수치는 위 블록에 있다.",
+  });
   l.what_this_does_not_say = [
     "성공률 — `snap.json`이 5구도·3등급·잡음 4·시드 6으로 낸다. 여기는 동작점 하나다(#12)",
     "반경의 타당성 — 대상 밀도가 상자 하나다(`snap.json`의 `by_density`가 그것을 잰다)",
@@ -1794,7 +1811,8 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
     n: lat.length, median: med(lat), max: Math.max(...lat),
     note: "**개발 서버(번들 없음) · 상자 둘(24획 + 그린 획)** 기준이므로 상한으로 읽는다. "
       + "⚠ `e2e.json`의 값은 **옛 UI**라 같은 구간이 아니다 — 견주지 않는다.",
-    registered_pass: "중앙 10ms 미만(사전 등록)",
+    registered_pass: "중앙 10ms 미만(사전 등록). ⚠ **중앙값 자체를 문서에 인용하지 않는다** — "
+      + "기계·실행마다 흔들린다. 판정은 자릿수다",
   };
   expect(med(lat)).toBeLessThan(10);
 

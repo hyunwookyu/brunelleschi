@@ -15,8 +15,21 @@
 // (`mainL.ts`의 `frameDiag`). 도구 막대도 `#tools [data-t]` → **`#bar [data-act]`**다.
 // ⚠ **`view_vs_overlay`의 뜻이 달라졌다** — 단일 뷰포트라 견주는 것이
 // **잉크 CSS 상자 ↔ three 렌더러 뷰 크기**다(옛 UI는 2D·3D 캔버스 둘이었다).
-// ⚠⚠ **버그를 되살려 실제로 잡는지 확인했다**(#21) — 아래 `[회귀]` 테스트가 그 자리다.
-import { test, expect, type Page } from "@playwright/test";
+// ⚠⚠ **아래 `[양성 채널]` 팔은 #30이지 #21이 아니다**(리뷰어가 정정했다).
+// 캔버스에 직접 칠하는 것은 **앱의 좌표 변환 경로를 지나지 않으므로**, 그 팔이 배제하는 것은
+// "탐침이 눈이 멀었다" 하나다. **#21이 요구하는 것(앱 쪽에 dpr 곱을 되살려 이 스펙이 실제로
+// 실패하는지)은 아직 안 했다** — `DEFERRED.md`에 적었다.
+import { test, expect } from "@playwright/test";
+import { writeFileSync, mkdirSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { constantsSnapshot } from "../test/constants.js";
+import { metricsSnapshot } from "../test/metrics.js";
+import { gate } from "../test/gate.js";
+
+const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "stage0", "out");
+/** **원장에 남긴다**(#25) — 이 스펙의 수치가 `progress.md` 산문에만 있었다. */
+const led: Record<string, unknown> = {};
 
 /** dpr마다 새 컨텍스트를 연다 — `deviceScaleFactor`는 컨텍스트 생성 시에만 정해진다. */
 for (const dpr of [1, 2, 3]) {
@@ -90,6 +103,13 @@ for (const dpr of [1, 2, 3]) {
       // 배경 층은 제자리에 그리므로 "제자리에 잉크가 있다"만으로는 어긋난 층을 못 본다.
       if (dpr > 1) expect(r.inkAtScaled).toBe(0);
 
+      led[`dpr_${dpr}`] = {
+        drawn_vs_want_px: [+(r.drawnA[0] - r.wantA[0]).toFixed(3), +(r.drawnA[1] - r.wantA[1]).toFixed(3)],
+        ink_at_mid: r.inkAtMid, ink_at_scaled: r.inkAtScaled,
+        stretch: r.frame.ink.stretch, scale: r.frame.ink.scale,
+        view_vs_overlay: r.frame.view_vs_overlay, size_heal: r.frame.size_heal,
+      };
+
       // 프레임 자체의 정합성
       expect(r.frame.dpr).toBe(dpr);
       expect(r.frame.ink.scale[0]).toBeCloseTo(dpr, 2);
@@ -98,14 +118,16 @@ for (const dpr of [1, 2, 3]) {
     });
 
     /**
-     * **[회귀] 양성 채널** — 위 테스트의 `expect(inkAtScaled).toBe(0)`이 **눈이 떠 있는가**(#21·#30).
+     * **[양성 채널]**(#30) — 위 테스트의 `expect(inkAtScaled).toBe(0)`이 **눈이 떠 있는가**.
      *
      * 그 단언은 "×dpr 자리에 잉크가 없다"인데, **탐침이 아무것도 못 보는 상태여도 0이 나온다.**
-     * 첫 판이 실제로 그렇게 통과하고 있었다(배경 층이 제자리에 그리는 탓). 그래서
-     * **버그를 되살린다**: ×dpr 자리에 일부러 칠하고 같은 탐침이 그것을 **잡는지** 본다.
-     * 못 잡으면 위 단언은 아무것도 배제하지 않는다.
+     * 그래서 ×dpr 자리에 일부러 칠하고 같은 탐침이 **잡는지** 본다.
+     *
+     * ⚠ **이것은 #21(버그를 되살린다)이 아니다** — 캔버스에 직접 칠하는 것은 **앱의 좌표 변환
+     * 경로를 안 지난다.** 배제되는 것은 "탐침 맹점" 하나이고, **"앱이 dpr을 두 번 적용해도
+     * 이 스펙이 실패한다"는 미확인이다.** 리뷰어가 정정했고 `DEFERRED.md`에 남겼다.
      */
-    test("[회귀] ×dpr 자리에 일부러 칠하면 같은 탐침이 잡는다", async ({ page }) => {
+    test("[양성 채널] ×dpr 자리에 일부러 칠하면 같은 탐침이 잡는다", async ({ page }) => {
       test.skip(dpr === 1, "dpr 1에서는 ×dpr 자리가 제자리다 — 가를 것이 없다");
       await page.goto("/l.html");
       await page.waitForFunction(() => !!(window as any).S2S);
@@ -140,8 +162,9 @@ for (const dpr of [1, 2, 3]) {
         return { before, after: probe(mid[0] * frame.dpr, mid[1] * frame.dpr), dpr: frame.dpr };
       });
       expect(r.dpr).toBe(dpr);
-      expect(r.before).toBe(0);            // 되살리기 전에는 비어 있다
-      expect(r.after).toBeGreaterThan(0);  // **되살린 버그를 실제로 잡는다**
+      expect(r.before).toBe(0);            // 칠하기 전에는 비어 있다
+      expect(r.after).toBeGreaterThan(0);  // **탐침이 그것을 잡는다** — 맹점이 아니다
+      led[`probe_control_dpr_${dpr}`] = { before: r.before, after: r.after };
     });
 
     test("창 크기가 바뀌어도 성립한다(ResizeObserver가 안 와도)", async ({ page }) => {
@@ -174,3 +197,39 @@ for (const dpr of [1, 2, 3]) {
     });
   });
 }
+
+test.afterAll(() => {
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "coords.json"), JSON.stringify({
+    spec: "D-C3 좌표 규약 — 닿은 자리에 잉크가 나오는가. dpr 1·2·3에서 잠근다(PITFALLS #21).",
+    plan: "DECISIONS D-C3 · `src/capture/canvasFrame.ts`가 단일 출처다",
+    gate: gate({
+      registered: "① 기록된 `pts2d`가 누른 CSS 좌표와 **1px 이내** ② 누른 자리에 **실제로 칠해졌다** "
+        + "③ **×dpr 자리에는 아무것도 없다**(dpr > 1) ④ `stretch`가 dpr과 같다 "
+        + "⑤ 잉크와 three 렌더러가 같은 상자다. **창 크기를 바꿔도 성립한다**(ResizeObserver 없이).",
+      reachability: "**항등이므로 오라클 팔이 없다** — 아래 `reachability_absent` 참조. 넘을 수 있는 것을 굳이 적자면 ③의 양성 채널(`probe_control_*`)이고 그것은 탐침의 눈이지 기준을 넘는 팔이 아니다.",
+      reachability_absent: "**오라클 팔이 없고, 있을 자리도 아니다** — 좌표 규약은 정확도가 아니라 "
+        + "**항등**이고(닿은 자리 = 그린 자리) 참값이 곧 입력이다. "
+        + "⚠⚠ **그래서 ③이 특히 위험하다**: '없다'는 단언은 **탐침이 눈이 멀어도 참**이다. "
+        + "`probe_control_*`이 그 양성 채널이고(#30), ×dpr 자리에 일부러 칠하면 탐침이 잡는다. "
+        + "⚠ **그러나 그것은 #21이 아니다** — 캔버스에 직접 칠하는 것은 **앱의 변환 경로를 "
+        + "안 지난다.** '앱이 dpr을 두 번 적용해도 이 스펙이 실패한다'는 **미확인**이다(DEFERRED).",
+      status: "새 UI(`l.html` + `window.S2S`)로 옮긴 뒤에도 dpr 1·2·3에서 통과한다. "
+        + "⚠ **`view_vs_overlay`의 뜻이 달라졌다** — 단일 뷰포트라 견주는 것이 "
+        + "**잉크 CSS 상자 ↔ three 렌더러 뷰 크기**다(옛 UI는 2D·3D 캔버스 둘이었다).",
+    }),
+    what_this_does_not_say: [
+      "**실기기** — chromium이 `deviceScaleFactor`로 흉내 낸 dpr이다. iPad 사파리가 아니다",
+      "**앱 변환 경로의 회귀** — 위 `reachability_absent`의 ⚠ 참조(#21 미이행)",
+      "**두 캔버스의 배율 불일치** — 옛 UI가 잡던 그 실패 모드는 **대상이 사라졌다**(캔버스가 하나다). "
+        + "지금 `view_vs_overlay`가 잡는 것은 잉크 ↔ 렌더러 상자 불일치다",
+    ],
+    zero_note: "⚠ `drawn_vs_want_px`가 **정확히 0**이라 selfcheck가 플래그한다 — **원인은 항등이다**: "
+      + "앱이 포인터의 CSS 좌표를 **그대로** `pts2d`에 적으므로(변환이 항등이어야 한다는 것이 "
+      + "이 규약의 내용이다) 어긋남이 0인 것이 통과다. **측정이 아니라 보장이므로 임계를 안 건다**(#5). "
+      + "0이 아니게 되는 순간이 D-C3 위반이고 그때 `expect(<1)`이 잡는다.",
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 2), "utf-8");
+});
