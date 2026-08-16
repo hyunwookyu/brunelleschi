@@ -24,6 +24,12 @@ import { norm3, sub3, project } from "../src/s3d/geom3d.js";
 import { rng32 } from "../src/s3d/synthInk.js";
 import { scene, groundPoint, boxEdges, drawEdges, type Scene } from "./scene3d.js";
 import { loadQuickDraw, QUICKDRAW_WORDS } from "../src/data/quickdraw.js";
+import { skipReason } from "./dataDeps.js";
+
+/** **외부 데이터 의존**(`data/quickdraw`) — 없으면 건너뛴다. **통과로 세지 않는다**(#32).
+ *  ⚠ 건너뛸 때 **원장을 안 건드린다** — 빈 산출물을 쓰면 커밋된 지난 측정이 덮인다.
+ *  ⚠ `S2S_REQUIRE_DATA=1`이면 건너뛰지 않고 **실패한다**(`dataDeps.ts`). */
+const NO_DATA = skipReason("quickdraw");
 import type { Pt2 } from "../src/s3d/camera.js";
 import { stat } from "./scene3d.js";
 import { constantsSnapshot } from "./constants.js";
@@ -99,7 +105,9 @@ describe("굽은 획이 지금 어떻게 되는가", () => {
 });
 
 describe("굽은 획의 비율", () => {
-  it("Quick,Draw 실획의 `bend` 분포를 낸다", () => {
+  it.skipIf(NO_DATA)(
+    `Quick,Draw 실획의 \`bend\` 분포를 낸다${NO_DATA ? ` [건너뜀: ${NO_DATA}]` : ""}`,
+    () => {
     const bends: number[] = [];
     /**
      * **무엇이 섞였는지 먼저 가른다**(HANDOFF 10). `bend`가 큰 획에는 두 종류가 있다 —

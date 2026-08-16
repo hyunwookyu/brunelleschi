@@ -58,6 +58,21 @@
         "test-results",
         "sweeps.json"
       ]
+    },
+    {
+      "name": "external_data",
+      "why": "**저장소 밖 데이터를 읽는 하네스는 전부 `test/dataDeps.ts`에 등록해야 한다.** 등록 안 하면 CI처럼 그 데이터가 없는 환경에서 **조용히 0건으로 통과하거나**(로더가 `[]`를 낸다) 엉뚱한 단언 실패로 죽는다 — 2026-08-16에 실제로 그랬다(`one_stroke_one_axis`·`bend_share`가 Pages 빌드를 막았다). ⚠ 이 훑기는 **읽기 호출이 있는 파일**을 찾는다. 그 파일이 등록처를 안 부르면 사람이 본다.",
+      "pattern": "existsSync\\(|readdirSync\\(|readFileSync\\(",
+      "roots": [
+        "web/test",
+        "web/e2e"
+      ],
+      "exts": [
+        ".ts"
+      ],
+      "exclude": [
+        "node_modules"
+      ]
     }
   ]
 }

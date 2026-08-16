@@ -3430,3 +3430,89 @@ README의 "종단 검증 (S-10)"은 **L-D.3 기준으로 다시 썼고**, v1 저
 ### 검증
 vitest 327/327 · Playwright **22 통과 · 1 건너뜀 / 23** · pytest 71/71 · tsc·빌드 통과 ·
 selfcheck **1757건 · STALE 0/0** · 게이트 **9**(값 대조 3 · 면제 6).
+
+## CI 실패 — 외부 데이터 의존을 등록처로 묶었다 (2026-08-16, 사람 지시)
+
+착수 시 읽은 것: 최근 다섯. 걸리는 번호: **#32**(0건을 통과로 세지 않는다 — 이 항목의 핵심) ·
+**#33**(전수 확인이 문법으로만 찾지 않았는지) · **#25**(원장) · **#19**(검사를 약화시키지 않는다) ·
+**#38**(덮는 대상 수).
+
+### 무엇이 걸렸나
+
+GitHub Actions의 Pages 배포가 막혔다:
+```
+test/one_stroke_one_axis.test.ts:109  expected 0 to be greater than 500
+test/bend_share.test.ts:185           expected 0 to be greater than 100
+```
+둘 다 `data/quickdraw/*.ndjson`을 읽는데 **그 파일은 `.gitignore`에 있다**(낱말당 수십 MB,
+Google CC BY 4.0 데이터라 저장소에 복제 안 한다). **CI에 없다.**
+
+⚠ **실패 메시지가 원인을 안 가리켰다.** `loadQuickDraw`가 파일이 없으면 **조용히 `[]`를 내서**,
+"표본 0"이 아니라 "0이 500보다 크지 않다"로 나왔다. **조용한 빈 결과가 진단을 가린다.**
+
+### (a) 건너뛰되 **통과로 세지 않는다**
+
+`web/test/dataDeps.ts`를 등록처로 만들었다. 셋을 지킨다:
+
+1. **건너뛴다 — 통과가 아니다.** `it.skipIf(NO_DATA)`이고 **사유가 테스트 이름에 붙는다**.
+   vitest가 `skipped`로 보고한다.
+2. **원장을 안 건드린다.** 데이터가 없을 때 빈 산출물을 쓰면 **저장소에 커밋된 지난 측정이
+   덮인다** — 그러면 CI 실행이 로컬 측정을 지운다. 건너뛰면 원장은 그대로고,
+   상수가 어긋나면 selfcheck의 STALE이 잡는다(원래 그 검사의 일이다).
+3. **`S2S_REQUIRE_DATA=1`이면 건너뛰지 않고 실패한다.** 로컬·야간이 그 모드다 —
+   **"있어야 하는 자리에서 조용히 건너뛰는 것"을 막는 자리**가 그것이다.
+
+**기전 자체에 반례를 걸었다**(`test/data_deps.test.ts` 6건) — 없을 때 사유를 내는가 ·
+빈 디렉토리를 없는 것으로 보는가(`README.md`·점 파일만 있으면 **비어 있는 것**이다) ·
+등록 안 된 이름은 던지는가 · `REQUIRE_DATA`에서 실패로 바뀌는가.
+
+**실제로 확인했다**: `data/quickdraw`를 잠시 치우고 전체를 돌렸다 —
+**330 통과 · 2 건너뜀**이고 `stage0/out`의 원장은 **하나도 안 바뀌었다**.
+`S2S_REQUIRE_DATA=1`에서는 같은 조건이 **던진다**.
+
+### (b) 전수 확인 — **셋이고 그중 하나가 같은 함정에 있었다**
+
+훑은 것: `web/test/**.ts` · `web/e2e/**.ts`의 `existsSync`·`readFileSync`·`readdirSync`.
+
+| 의존 | 쓰는 곳 | 상태 |
+|---|---|---|
+| `data/quickdraw` | `one_stroke_one_axis` · `bend_share` | **고쳤다**(위) |
+| `sessions/` | `real_ink` | ⚠ **같은 함정에 있었다** — 표본이 없으면 `expect(true).toBe(true)`로 **통과 처리**했다. `ctx.skip()`으로 바꿨다 |
+| `web/dist` | `static_deploy.spec` | 이미 `test.skip`에 사유가 있었다(#32를 그때 적었다) |
+
+`camera_ref.json`은 **저장소 안에 커밋돼 있으므로** 대상이 아니다.
+
+⚠⚠ **첫 판의 전수 확인이 둘을 놓쳤다**(#33). `readFileSync`를 **직접 부르는 파일**만 셌는데
+`bend_share`·`one_stroke_one_axis`는 `loadQuickDraw`를 거쳐서 그 호출이 그 파일에 없다.
+**공허성 단언이 그것을 잡았다** — "거른 결과가 넷이어야 한다"고 박아 두니 둘만 나왔다.
+거름을 셋으로 넓혔다(직접 읽기 · **로더 import** · 건너뛰기 기전 사용).
+**그 단언이 없었으면 빈 전수 확인이 통과했다.**
+
+`sweeps.json`에 **`external_data` 훑기**를 등록했다(`web/test`·`web/e2e`의 읽기 호출, 7건 일치).
+⚠ 그 훑기는 **문법**만 본다 — 값 대조는 위 테스트가 한다.
+
+### (c) 배포와 측정을 갈랐다
+
+`pages.yml`을 job 둘로 나눴다:
+
+- **`build`(배포 경로)** — `tsc` · `npm run build` · **`static_deploy.spec.ts`만**.
+  그 스펙이 배포와 직접 관련된 유일한 e2e다(하위 경로·서비스 워커 scope·오프라인).
+  ⚠ `dist/`가 있어야 도므로 **빌드 다음에** 둔다.
+- **`measure`** — `npx vitest run` 전체. **`continue-on-error: true`**라 배포를 안 막는다.
+  측정 실패는 배포 가능성과 무관하고, 여기서 막으면 문서 한 줄 고치는 push마다 배포가 멎는다.
+  ⚠ **그래도 빨간 X는 뜬다** — 조용히 지나가는 것이 아니다.
+  건너뛴 것을 **작업 요약(`$GITHUB_STEP_SUMMARY`)에 적는다**.
+
+⚠ **"빠르게 하려고 뺀다"가 아니라 "배포와 무관한 것을 뺀다"가 기준이다.**
+A-4(깨진 채로 다음으로 가지 않는다)는 그대로다 — 배포 job도 여전히 타입과 배포 확인을 돈다.
+
+### 부수
+
+`actions/checkout@v4` · `actions/setup-node@v4` → **`@v5`**(Node 20 대상 경고).
+`upload-pages-artifact@v3`·`deploy-pages@v4`는 현행 최신이라 그대로 둔다.
+
+### 검증
+vitest **332 통과 · 1 건너뜀**(58파일. 건너뜀은 `real_ink` — `sessions/`가 비었다) ·
+Playwright 22 통과 · 1 건너뜀 · pytest 71/71 · tsc·빌드 통과 ·
+selfcheck STALE(상수) 0 · STALE(정의) 0 · 훑기 **4**.
+**데이터를 치운 상태**에서도 330 통과 · 2 건너뜀이고 원장 불변.

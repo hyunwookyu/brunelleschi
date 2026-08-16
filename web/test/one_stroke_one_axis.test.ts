@@ -18,6 +18,12 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Pt2 } from "../src/s3d/camera.js";
 import { loadQuickDraw } from "../src/data/quickdraw.js";
+import { skipReason } from "./dataDeps.js";
+
+/** **외부 데이터 의존**(`data/quickdraw`) — 없으면 건너뛴다. **통과로 세지 않는다**(#32).
+ *  ⚠ 건너뛸 때 **원장을 안 건드린다** — 빈 산출물을 쓰면 커밋된 지난 측정이 덮인다.
+ *  ⚠ `S2S_REQUIRE_DATA=1`이면 건너뛰지 않고 **실패한다**(`dataDeps.ts`). */
+const NO_DATA = skipReason("quickdraw");
 import { maxTurn, representative, AXIS_TOL } from "../src/s3d/axis.js";
 
 import { constantsSnapshot } from "./constants.js";
@@ -68,7 +74,9 @@ const view = (t: Tally) => ({
 });
 
 describe("AS-6 한 획 = 한 축", () => {
-  it("실획에서 위반율을 재고 stage0/out/one_stroke_one_axis.json에 남긴다", () => {
+  it.skipIf(NO_DATA)(
+    `실획에서 위반율을 재고 stage0/out/one_stroke_one_axis.json에 남긴다${NO_DATA ? ` [건너뜀: ${NO_DATA}]` : ""}`,
+    () => {
     const base = measure(AXIS_TOL.turn_deg);
     const total = sum(base);
 

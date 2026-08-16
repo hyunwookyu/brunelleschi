@@ -8,6 +8,7 @@
 // 쓰는 법: 앱에서 "획 내보내기" → 받은 JSON을 저장소의 `sessions/`에 넣는다 → 테스트를 돌린다.
 // 산출: `stage0/out/real_ink.json`.
 import { describe, it, expect } from "vitest";
+import { skipReason } from "./dataDeps.js";
 import { writeFileSync, mkdirSync, readdirSync, readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -70,7 +71,15 @@ function endpointAimErrors(strokes: SessionStroke[], diag: number, maxRatio = 0.
 }
 
 describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
-  it("sessions/ 의 실획을 재고 원장에 남긴다. 표본이 없으면 대기 상태를 남긴다", () => {
+  // **외부 데이터 의존**(`sessions/`) — 없으면 **대기 원장만 남기고 건너뛴다**.
+  // ⚠ 초판은 `expect(true).toBe(true)`로 **통과 처리**했다 — 그것이 #32 그 자체다
+  // (측정이 한 번도 안 돌았는데 초록으로 보인다). 이제 vitest가 **skip으로 보고**하고
+  // 사유가 이름에 뜬다. `S2S_REQUIRE_DATA=1`이면 그 건너뛰기가 **실패로 바뀐다**.
+  // ⚠ **대기 원장은 그대로 쓴다** — 그것이 "수단은 서 있고 표본이 없다"의 기록이고,
+  // `quickdraw` 쪽과 달리 **덮을 지난 측정이 없다**(한 번도 안 쟀다).
+  const NO_SESSIONS = skipReason("sessions");
+
+  it("sessions/ 의 실획을 재고 원장에 남긴다. 표본이 없으면 대기 상태를 남긴다", ctx => {
     const sessions = loadSessions();
     const metrics = {
       one_stroke_one_axis: "한 획에 방향이 둘 이상인 비율(AS-6). 합성/낙서 대비 기준: Quick,Draw 0.699",
@@ -105,7 +114,10 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
         n_sessions: 0, n_strokes: 0,
         note: "**표본 없음.** 수단은 서 있고 측정은 사용자 획이 들어온 뒤다. AS-6·AS-12는 그때까지 잠정.",
       }, null, 2), "utf-8");
-      expect(true).toBe(true);
+      // **통과로 세지 않는다**(#32) — 여기서 끝내면 "측정이 돌았다"로 읽힌다.
+      // vitest의 동적 건너뛰기로 **skip으로 보고**한다.
+      expect(NO_SESSIONS, "`sessions/`가 비었는데 등록처가 그것을 못 봤다").not.toBeNull();
+      ctx.skip();
       return;
     }
 

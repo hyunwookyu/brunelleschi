@@ -8859,7 +8859,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 164,
+      "files_scanned": 166,
       "exts_declared": [
         ".md",
         ".py",
@@ -8873,7 +8873,7 @@
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 105,
+      "files_scanned": 107,
       "exts_declared": [
         ".ts"
       ],
@@ -8883,7 +8883,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 164,
+      "files_scanned": 166,
       "exts_declared": [
         ".md",
         ".py",
@@ -8892,7 +8892,17 @@
       "hits_by_ext": {
         ".md": 10,
         ".py": 4,
-        ".ts": 34
+        ".ts": 35
+      }
+    },
+    {
+      "sweep": "external_data",
+      "files_scanned": 66,
+      "exts_declared": [
+        ".ts"
+      ],
+      "hits_by_ext": {
+        ".ts": 8
       }
     }
   ],
@@ -8900,7 +8910,7 @@
     {
       "scan": "scan_sweep_coverage",
       "unit": "훑기",
-      "targets": 3,
+      "targets": 4,
       "hits": 0,
       "note": "훑기별 파일 수는 `sweeps[]`에 있다"
     },
@@ -8921,7 +8931,7 @@
     {
       "scan": "scan_zero_denominator",
       "unit": "하네스 파일",
-      "targets": 38,
+      "targets": 40,
       "hits": 12,
       "note": "원장을 쓰는 `web/test/**.ts`만 본다"
     }
