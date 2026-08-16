@@ -285,6 +285,130 @@ test("단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다", asyn
   });
 });
 
+test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)", async ({ page }) => {
+  // 착수 시 PITFALLS 최근 다섯을 읽었다. 걸리는 것:
+  //   #32(미실행을 반증으로 안 쓴다 — 저장소를 비우고 시작해 **이번 실행이** 쓴 것을 본다)
+  //   #34(v1 `store.ts`가 같은 DB를 쓴다 — 키가 갈렸는지 여기서 함께 본다)
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+  await setup(page);
+
+  // 확정 → 3D. 그 뒤 **궤도를 돌려 새 뷰**를 만들고 거기서 한 획 더 긋는다(2D 레이어).
+  const before = await page.evaluate(async () => {
+    const S = window.S2S;
+    const doc = await import("/src/ui/doc.ts");
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    // 새 각도 → 새 뷰(§9.3). **앱의 궤도 버튼 경로 그대로**다(#17) —
+    // `pose()`는 궤도로 풀리기 전에는 `null`이라(확정 시점에 고정) 직접 카메라를 옮긴다.
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="orbit"]')!.click();
+    const camT = S.stage.viewport.camera;
+    camT.position.set(1.6, -1.1, 2.2);
+    camT.lookAt(0.6, -0.4, 4.2);
+    camT.updateMatrixWorld(true);
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="draw"]')!.click();
+    S.refresh();
+    const v = S.viewForDrawing();
+    S.doc().currentView = v;
+    S.doc().strokes.push(doc.newSStroke([[120, 140], [260, 210]], v));
+    S.refresh();
+    await S.saveNow();
+    const d = S.doc();
+    return {
+      views: d.views.map((x: any) => ({ id: x.id, name: x.name, pose: !!x.pose })),
+      currentView: d.currentView,
+      strokes: d.strokes.map((x: any) => ({ id: x.id, viewRef: x.viewRef, axis: x.axis,
+                                            seg3d: x.seg3d, pts2d0: x.pts2d[0] })),
+      lifted: d.strokes.filter((x: any) => x.seg3d).length,
+      pending: d.strokes.filter((x: any) => !x.seg3d).length,
+      locked: S.cam.locked,
+      guides: S.cam.guides.length,
+      order: S.order(),
+    };
+  });
+  expect(before.lifted).toBe(12);
+  expect(before.pending).toBe(1);                     // 새 뷰의 2D 레이어 한 획
+  expect(before.views.length).toBe(2);
+
+  // ---- 새로고침 ----
+  const t0 = Date.now();
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S && window.S2S.doc().strokes.length > 0);
+  const after = await page.evaluate(() => {
+    const S = window.S2S, d = S.doc();
+    return {
+      views: d.views.map((x: any) => ({ id: x.id, name: x.name, pose: !!x.pose })),
+      currentView: d.currentView,
+      strokes: d.strokes.map((x: any) => ({ id: x.id, viewRef: x.viewRef, axis: x.axis,
+                                            seg3d: x.seg3d, pts2d0: x.pts2d[0] })),
+      lifted: d.strokes.filter((x: any) => x.seg3d).length,
+      pending: d.strokes.filter((x: any) => !x.seg3d).length,
+      locked: S.cam.locked,
+      guides: S.cam.guides.length,
+      order: S.order(),
+      newId: (() => { const n = S.doc().strokes.length; return `s${n}`; })(),
+    };
+  });
+
+  // **한 비트도 안 변한다** — `pts2d`·`seg3d`·`viewRef`·축
+  expect(after.strokes).toEqual(before.strokes);
+  expect(after.views).toEqual(before.views);
+  expect(after.currentView).toBe(before.currentView);
+  expect(after.lifted).toBe(before.lifted);
+  expect(after.pending).toBe(before.pending);         // **2D 레이어가 살아 있다**(§9.1)
+  expect(after.locked).toBe(true);
+  expect(after.guides).toBe(before.guides);           // 가이드가 카메라의 입력이다(§5.4)
+  expect(after.order).toBe(before.order);
+
+  // **새 획의 id가 안 겹친다**(v1에서 실제로 겪었다)
+  const fresh = await page.evaluate(async () => {
+    const S = window.S2S;
+    const doc = await import("/src/ui/doc.ts");
+    const s = doc.newSStroke([[10, 10], [20, 20]], S.doc().currentView);
+    return { id: s.id, collides: S.doc().strokes.some((x: any) => x.id === s.id) };
+  });
+  expect(fresh.collides).toBe(false);
+
+  // 내보내기가 **뷰 이름을 담고 3D만** 낸다
+  const exp = await page.evaluate(() => {
+    const S = window.S2S;
+    const o = S.exportObj(), g = S.exportGltf();
+    return { objStrokes: o.strokes, objHasFace: /^f /m.test(o.data),
+             objHasView: /view=/.test(o.data), skipped: o.skippedUnplaced,
+             gltfNodes: g.data.nodes.length, gltfName: g.data.nodes[0].name,
+             gltfModes: [...new Set(g.data.meshes.map((m: any) => m.primitives[0].mode))] };
+  });
+  expect(exp.objStrokes).toBe(12);                    // 2D 레이어는 안 나간다
+  expect(exp.skipped).toBe(0);                        // `linesFromDoc`이 이미 걸렀다
+  expect(exp.objHasFace).toBe(false);
+  expect(exp.objHasView).toBe(true);
+  expect(exp.gltfModes).toEqual([3]);
+  expect(exp.gltfName).toContain("@");
+
+  // **비우기가 저장본까지 지운다** — 안 지우면 새로고침에서 버린 작업이 되살아난다
+  await page.evaluate(async () => {
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
+    await new Promise(r => setTimeout(r, 900));       // 디바운스(600ms)보다 길게
+  });
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+  const cleared = await page.evaluate(() => window.S2S.doc().strokes.length);
+  expect(cleared).toBe(0);
+
+  led.persist = {
+    reload_ms: Date.now() - t0,
+    views: after.views.length, lifted: after.lifted, pending_2d: after.pending,
+    identical: true, export: exp,
+    note: "**직렬화 왕복이다**(설계 보장, PITFALLS #5) — `seg3d`를 담기로 했으므로 같을 "
+      + "수밖에 없다. 깨지면 저장 포맷 결함을 뜻한다. 임계를 걸지 않는다.",
+  };
+});
+
 test.afterAll(() => {
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "stage_browser.json"), JSON.stringify({

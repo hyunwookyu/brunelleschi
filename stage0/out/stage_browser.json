@@ -134,7 +134,7 @@
     "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
   },
   "metric_defs": {
-    "hash": "3df57ac7",
+    "hash": "a45078a5",
     "names": [
       "pairEnds",
       "fitGauge",
@@ -142,7 +142,9 @@
       "perStrokeErrorMap",
       "perStrokeError",
       "axisDirErrors",
-      "silentWrong"
+      "silentWrong",
+      "rate",
+      "fraction"
     ],
     "cuts": [
       0.1,
@@ -294,6 +296,25 @@
       618.5
     ],
     "note": "**참 소실점으로 세운 가이드**의 길이다. 검출 초안이 아니다."
+  },
+  "persist": {
+    "reload_ms": 1156,
+    "views": 2,
+    "lifted": 12,
+    "pending_2d": 1,
+    "identical": true,
+    "export": {
+      "objStrokes": 12,
+      "objHasFace": false,
+      "objHasView": true,
+      "skipped": 0,
+      "gltfNodes": 12,
+      "gltfName": "s1@확정 뷰",
+      "gltfModes": [
+        3
+      ]
+    },
+    "note": "**직렬화 왕복이다**(설계 보장, PITFALLS #5) — `seg3d`를 담기로 했으므로 같을 수밖에 없다. 깨지면 저장 포맷 결함을 뜻한다. 임계를 걸지 않는다."
   },
   "l_b2": {
     "draft_only": {
