@@ -28,7 +28,7 @@ import { snapAt, snapCandidates, staticCandidates, SNAP_TOL, SNAP_LABEL, SNAP_CO
          type SnapCand, type SnapKind, type SnapSeg, type SnapCtx,
          type StaticCand } from "./s3d/snap.js";
 import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "./s3d/liveLine.js";
-import { representative } from "./s3d/axis.js";
+import { representative, AXIS_TOL } from "./s3d/axis.js";
 import { promoteOrder, orderOf, type OrderStroke } from "./s3d/promoteOrder.js";
 import { AXIS_COLOR, guides as gridGuides, HORIZON_COLOR, GROUND_COLOR } from "./s3d/grid.js";
 import { project, axisDirection, groundFrame, sub3, angleBetween,
@@ -465,6 +465,21 @@ const axisSnapOn = () => AXIS_SNAP.on && !freeStroke;
  * 축이 안 정해지면 `false`이고 그 획은 2D로 **대기**한다(§9.1).
  */
 function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = null): boolean {
+  // ⚠⚠ **꺾인 획은 두 점으로 놓지 않는다**(리뷰어 지적, 2026-08-16).
+  //
+  // 양 끝 스냅은 **축을 우회하는 경로**라, 축 판정이 걸러 주던 "한 획에 방향이 둘"이
+  // 그냥 통과한다 — 그러면 꺾인 획이 **조용히 직선으로** 놓인다(Quick,Draw 낙서의 67.7%가
+  // 그 종류다, AS-6). 굽음 임계는 **축 경로가 쓰던 것 그대로**다(`AXIS_TOL.bend_max`, #17).
+  // **애매하면 놓지 않는다**(A-3) — 그 획은 2D로 대기한다.
+  if (end) {
+    const rep0 = representative(st.pts2d);
+    if (!rep0 || rep0.bend > AXIS_TOL.bend_max) {
+      lastSnapNote = `양 끝이 붙었지만 **획이 꺾여 있습니다**`
+                   + ` <span class="dim">(굽음 ${rep0 ? rep0.bend.toFixed(3) : "?"} > `
+                   + `${AXIS_TOL.bend_max}) — **2D로 대기**합니다</span>`;
+      return false;
+    }
+  }
   const r = resolveLive(fr.ctx, atV, st.pts2d[0], st.pts2d[st.pts2d.length - 1], end);
   if (!r.seg || (r.axis == null && !r.twoPoint)) {
     lastSnapNote = `${r.why} — **2D로 대기**합니다`;

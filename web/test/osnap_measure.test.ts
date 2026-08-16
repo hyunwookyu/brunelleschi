@@ -21,7 +21,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { snapAt, snapCandidates, staticCandidates, geomScale, type SnapSeg, type SnapCtx } from "../src/s3d/snap.js";
-import { representative } from "../src/s3d/axis.js";
+import { representative, classifyStroke, AXIS_TOL } from "../src/s3d/axis.js";
 import { norm3, sub3, type Vec3 } from "../src/s3d/geom3d.js";
 import type { Pt2 } from "../src/s3d/camera.js";
 import { rng32, type InkGrade } from "../src/s3d/synthInk.js";
@@ -49,11 +49,15 @@ const CUTS = [0.1, 0.2, 0.5];
 
 /** **사전 등록**(#26). 이 항목이 등록한 게이트이고 **중단 조건이 아니다**(#41). */
 const REGISTERED =
-  "**축 밖 선(면 위 사선)이 양 끝 스냅으로 놓인다.** 셋을 함께 본다: "
-  + "① 시작점이 붙는 비(`start_snap`) ② **양 끝이 다 붙는 비**(`both_snap`) — 이것이 이 기전의 문이다 "
-  + "③ 그렇게 놓인 대각선의 **조용히 틀린 배치**가 절단 0.2에서 **같은 잉크의 축 경로 배치보다 나쁘지 않다**. "
-  + "통과선: `both_snap`이 **0이 아니고**(#38 — 덮는 대상이 없으면 이 팔은 공허하다), "
-  + "조용히 틀림이 절단 0.2에서 **0.5 미만**이다. "
+  "**축 밖 선(면 위 사선)이 양 끝 스냅으로 놓이고, 그 배치가 시작점 스냅 경로만큼 정확하다.** "
+  + "통과선(개정 — 리뷰어 1회차 [1]): 절단 0.2의 오붙음이 **0.19 미만**이다. "
+  + "**그 수의 출처는 `snap.json`의 시작점 스냅 배치**다 — 같은 합성 잉크·같은 절단에서 "
+  + "**놓인 것의 19%(474/2503)가 조용히 틀렸다**. ⚠ **프레임이 완전히 같지는 않다**(#27): "
+  + "그쪽은 축 경로로 놓은 것이고 이쪽은 두 점 배치이며, 둘 다 **대상은 참 3D**다. "
+  + "그래서 이 통과선은 **'새 경로가 기존 경로보다 나쁘지 않다'**는 뜻이고 절대 기준이 아니다. "
+  + "**이 게이트를 실패시키는 관측**: 대각선 100개 중 20개 이상이 절단 0.2를 넘는 자리에 붙는 것 "
+  + "— 겨냥 오차가 커지거나(잡음 0.05 행이 그 방향이다) 대상이 촘촘해지면 실제로 난다. "
+  + "**함께 낸다**(#38): `both_snap`(기전이 몇 번 발동했나) · **축 경로 팔의 실행 카운터**. "
   + "⚠ **대상을 참 3D로 준다** — 이것은 기전의 **상한**이고 카메라 오차가 빠져 있다(#2). "
   + "⚠ 축 스냅 팔의 대각선 배치는 **구성상 0**이다(대각선은 어느 축도 아니다) — 대조가 아니라 **정의**다. "
   + "⚠ **이 항목이 등록한 게이트이고 CLAUDE.md §2의 중단 조건이 아니다**(#41).";
@@ -81,6 +85,10 @@ describe("오스냅 — 양 끝 스냅이 축 밖 선을 놓는가 (D-L46)", () 
   it("시작점 붙음 · 양 끝 붙음 · 배치 정확도를 원장에 낸다", () => {
     interface Bag {
       diags: number; startSnap: number; bothSnap: number;
+      /** **축 경로가 실제로 돌았는가**(#32) — 판정 호출 수와 축이 배정된 수. */
+      axisCalls: number; axisAssigned: number;
+      /** **꺾인 획으로 거절된 수**(앱의 두 점 배치 가드와 같은 임계). */
+      tooBent: number;
       /** 붙은 점이 **참 꼭짓점**에서 얼마나 떨어졌나(기하 크기 대비). */
       anchorErr: number[];
       /** 놓인 대각선의 **형태 오차**(양 끝 거리 평균 ÷ 기하 크기). */
@@ -88,8 +96,8 @@ describe("오스냅 — 양 끝 스냅이 축 밖 선을 놓는가 (D-L46)", () 
       /** 시작점만 붙고 끝점이 안 붙은 것 — 그 획은 **2D로 대기**한다. */
       startOnly: number;
     }
-    const bag = (): Bag => ({ diags: 0, startSnap: 0, bothSnap: 0, anchorErr: [], shape: [],
-                              startOnly: 0 });
+    const bag = (): Bag => ({ diags: 0, startSnap: 0, bothSnap: 0, axisCalls: 0, axisAssigned: 0,
+                              tooBent: 0, anchorErr: [], shape: [], startOnly: 0 });
     const all = bag();
     const byComp: Record<string, Bag> = {};
     const byJitter: Record<string, Bag> = {};
@@ -119,6 +127,14 @@ describe("오스냅 — 양 끝 스냅이 축 밖 선을 놓는가 (D-L46)", () 
               const rep = representative(d.pts2d);
               if (!rep) return;
               for (const b of bags) b.diags += 1;
+              // **축 경로를 실제로 돌린다**(#32) — 0이 '안 돌아서 0'인지 갈리게 한다
+              const cls = classifyStroke(d.pts2d, fx.sc.vps, SZ, {},
+                                         { principal: fx.sc.principal, f: fx.sc.f });
+              for (const b of bags) {
+                b.axisCalls += 1;
+                if (typeof cls.axis === "number") b.axisAssigned += 1;
+                if (rep.bend > AXIS_TOL.bend_max) b.tooBent += 1;
+              }
               const s = snapAt(rep.a, segs, ctx, {}, pre);
               if (!s) return;
               for (const b of bags) b.startSnap += 1;
@@ -150,8 +166,11 @@ describe("오스냅 — 양 끝 스냅이 축 밖 선을 놓는가 (D-L46)", () 
       start_snap: b.startSnap, start_snap_rate: rate(b.startSnap, b.diags),
       both_snap: b.bothSnap, both_snap_rate: rate(b.bothSnap, b.diags),
       start_only: b.startOnly,
-      /** **축 경로로는 0이다** — 대각선은 어느 축도 아니다(구성상 0, #5) */
-      axis_path_placed: 0,
+      /** **축 경로가 실제로 돈 횟수와 배정된 수**(#32 — 0이 미실행인지 갈리게 한다). */
+      axis_calls: b.axisCalls, axis_assigned: b.axisAssigned,
+      axis_assigned_rate: rate(b.axisAssigned, b.axisCalls),
+      /** 꺾인 획(앱이 두 점 배치를 거절하는 조건). 0이면 이 픽스처에 그 종류가 없다는 뜻이다. */
+      too_bent: b.tooBent,
       shape_median: round(median(b.shape), 4),
       anchor_err_median: round(median(b.anchorErr), 4),
       ...Object.fromEntries(CUTS.map(c => [
@@ -162,7 +181,7 @@ describe("오스냅 — 양 끝 스냅이 축 밖 선을 놓는가 (D-L46)", () 
 
     const head = sum(all);
     const wrong02 = (head as Record<string, unknown>)["silently_wrong_0.2"] as number | null;
-    const passed = all.bothSnap > 0 && wrong02 != null && wrong02 < 0.5;
+    const passed = all.bothSnap > 0 && wrong02 != null && wrong02 < 0.19;
 
     const out = {
       what: "**양 끝 스냅으로 축 밖 선(면 위 사선)이 놓이는가** — 사람 지시가 요구한 세 지표.",
@@ -182,9 +201,11 @@ describe("오스냅 — 양 끝 스냅이 축 밖 선을 놓는가 (D-L46)", () 
           + "`anchor_err_median`은 **시작점만**의 오차다. "
           + "⚠⚠ **이 값은 옳은 대상에 붙으면 정의상 0이다**(대상이 참 3D이므로) — "
           + "크기가 아니라 **이산**이고, 읽을 것은 `silently_wrong_*`다(`what_the_zeros_mean` 참조).",
-        axis_path_note: "**축 경로로는 이 획들이 0개 놓인다** — 대각선은 어느 축도 아니기 때문이다. "
-          + "그러므로 이 팔의 이득은 **대조가 아니라 정의**이고, 재는 것은 '되는가'가 아니라 "
-          + "'**얼마나 맞게** 되는가'다(#5).",
+        axis_path_note: "**축 경로 팔을 실제로 돌린다**(리뷰어 1회차 [3] · #32: 미실행을 반증으로 "
+          + "처리하지 않는다). 초판은 '대각선은 어느 축도 아니므로 0개'라고 **정의로 적었는데** "
+          + "`face_diagonal.json`이 같은 대상에서 축 배정 **19/120(0.158)**을 냈다 — 정의가 아니라 "
+          + "**반증된 명제**였다. 그래서 판정을 돌리고 `axis_assigned`·`axis_calls`를 낸다. "
+          + "⚠ 축으로 배정된 사선이 놓이면 그것은 회수가 아니라 **조용히 틀린 배치**다(그 원장의 결론).",
       },
       headline: head,
       // **0이 뜨는 자리를 미리 갈라 적는다**(#5 "보장이면 그렇게 적고 임계를 걸지 않는다")
@@ -215,8 +236,11 @@ describe("오스냅 — 양 끝 스냅이 축 밖 선을 놓는가 (D-L46)", () 
           "**사람 획의 겨냥 오차 표본이 0이다**(AS-C1·AS-C10). 참 대상 + 무잡음 행은 항등이라 "
           + "오라클로 못 쓴다(#5). 그러므로 이 게이트를 넘을 수 있는 것이 무엇인지는 **미상**이다.",
         result: { both_snap: `${all.bothSnap}/${all.diags}`,
-                  silently_wrong_0_2: wrong02,
-                  shape_median: head.shape_median, passed },
+                  silently_wrong_0_2: wrong02, threshold: 0.19,
+                  threshold_source: "snap.json — 시작점 스냅 배치의 조용히 틀림 474/2503(절단 0.2)",
+                  axis_calls: head.axis_calls, axis_assigned: head.axis_assigned,
+                  // ⚠ **보장이지 측정이 아니다**(임계를 안 건다, `what_the_zeros_mean` 참조)
+                  shape_median_GUARANTEE: head.shape_median, passed },
         note: "⚠ **이 항목이 등록한 게이트다**(#41). 대상이 참 3D라 **상한**이다.",
       }),
       constants: constantsSnapshot(),

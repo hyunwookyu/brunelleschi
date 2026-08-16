@@ -1,5 +1,5 @@
 {
-  "n_flags": 1818,
+  "n_flags": 1821,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -5110,9 +5110,19 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "osnap.json:by_composition.3pt_yaw35_pitch15.axis_assigned_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "osnap.json:by_composition.3pt_yaw35_pitch15.anchor_err_median",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "osnap.json:by_composition.3pt_yaw20_pitch25.axis_assigned_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "osnap.json:by_composition.3pt_yaw20_pitch25.anchor_err_median",
@@ -5208,6 +5218,11 @@
       "path": "osnap.json:by_grade.medium.anchor_err_median",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "osnap.json:gate.result.shape_median_GUARANTEE",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "persist.json:by_condition.jitter_0.01_erase_0.auto_drift",
@@ -9118,7 +9133,7 @@
     {
       "field": "pts2d",
       "writes": 5,
-      "reads": 78
+      "reads": 79
     },
     {
       "field": "pts3d",
@@ -9229,7 +9244,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 98,
+      "targets": 99,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
