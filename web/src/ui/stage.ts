@@ -24,7 +24,6 @@ import { threeIntrinsics, applyIntrinsics, applyFreeAspect,
          type CameraLike } from "../s3d/sceneCam.js";
 import type { Pt2 } from "../s3d/camera.js";
 import type { Vec3 } from "../s3d/geom3d.js";
-import { AXIS_COLOR } from "../s3d/grid.js";
 import type { Axis } from "../s3d/axis.js";
 import type { ViewPose } from "../s3d/viewCamera.js";
 
@@ -41,8 +40,9 @@ export interface StageSeg {
  * 확정 시점에서는 잉크와 겹쳐 보이므로 구분이 덜 필요하지만, 돌린 뒤에는 결과물만
  * 보이는 것이 맞다.
  *
- * ⚠ **축 색은 결과선에만 온전히 준다.** 보조선은 축 색을 **회색 쪽으로 섞어** 낸다 —
- * 색이 축을 말하되 "이것이 결과물"이라고 말하지는 않게 한다.
+ * ⚠⚠ **축 색을 3D 층에서 뺐다**(2026-08-17 지시 5-7): "축 색은 그리는 중 미리보기에만 쓴다."
+ * 옛 판은 결과선까지 축 색이라 결과물이 빨강·초록으로 보였다 — 색의 위계가 뒤집혀 있었다.
+ * 지금은 **채널이 색을 정한다**: 결과선 검정 · 보조선 진한 무채 실선.
  */
 /**
  * **채널별 화면 굵기(px)**(지시 4 — "얇게 한다"). 거리·확대와 무관한 화면 픽셀이다.
@@ -52,7 +52,7 @@ export interface StageSeg {
 export const LINE_PX = { result: 2.2, guide: 1.4 } as const;
 
 export const CHANNEL_3D = {
-  result: { opacity: 1, gray: 0 },
+  result: { opacity: 1, color: "#111111" },
   /**
    * 돌리면 `orbit`으로 바뀐다(E: "기본 켬, 돌리면 자동으로 흐려진다").
    *
@@ -60,8 +60,8 @@ export const CHANNEL_3D = {
    * 갓 그린 그림은 **전부 보조선**이고, 돌리면 화면이 **통째로 비었다**(종단 확인이
    * `gl_painted_px = 0`으로 잡았다). 흐림은 **약하게 하는 것**이지 **없애는 것**이 아니다.
    */
-  guide: { opacity: 0.75, gray: 0.3 },
-  guide_orbit: { opacity: 0.5, gray: 0.4 },
+  guide: { opacity: 0.75, color: "#4a4a4a" },
+  guide_orbit: { opacity: 0.5, color: "#4a4a4a" },
 } as const;
 
 /** 자유 시점(궤도)의 화각. 확정 카메라를 벗어난 뒤에만 쓴다. */
@@ -206,19 +206,18 @@ export class Stage {
     if (!list.length) { this.viewport.invalidate(); return; }
     // **채널마다 재질이 다르다**(불투명도·굵기) — 한 개체로는 못 낸다.
     // 주석은 여기 안 온다(3D로 안 올라간다, D-3).
-    const groups: { key: "result" | "guide"; opacity: number; gray: number }[] = [
+    const groups: { key: "result" | "guide"; opacity: number; color: string }[] = [
       { key: "result", ...CHANNEL_3D.result },
       { key: "guide", ...(this.isPinned ? CHANNEL_3D.guide : CHANNEL_3D.guide_orbit) },
     ];
-    const c = new THREE.Color(), white = new THREE.Color("#ffffff");
+    const c = new THREE.Color();
     const [vw, vh] = this.viewport.viewSize();
     for (const g0 of groups) {
+      // **채널이 색을 정한다**(지시 5-7) — 축 색은 그리는 중 미리보기에만 쓴다
+      c.set(g0.color);
       const pos: number[] = [], col: number[] = [];
       for (const s of list) {
         if ((s.channel ?? "guide") !== g0.key) continue;
-        c.set(typeof s.axis === "number" ? AXIS_COLOR[s.axis] : "#444");
-        // **회색 쪽으로 섞는다** — 축 색은 남기되 "결과물"로 안 읽히게 한다
-        if (g0.gray > 0) c.lerp(white, g0.gray);
         pos.push(s.a[0], s.a[1], s.a[2], s.b[0], s.b[1], s.b[2]);
         col.push(c.r, c.g, c.b, c.r, c.g, c.b);
       }
@@ -234,7 +233,13 @@ export class Stage {
       });
       m.resolution.set(vw, vh);
       this.lineGeoms.push(g); this.lineMats.push(m);
-      this.segs.add(new LineSegments2(g, m));
+      const obj = new LineSegments2(g, m);
+      // ⚠⚠ **결과선을 보조선 위에 그린다**(리뷰어 [2]가 잡았다). 겹쳐 그은 두 선은 깊이가
+      // 같아 그리기 순서가 승부를 정하는데, 옛 순서(결과선 먼저)는 **보조선이 결과선을
+      // 덮었다** — 종단 원장의 최암 60(결과선 #111=17이 아니라 보조선 #4a4a4a=74 쪽)이
+      // 그 실측이다. 결과물이 위다(지시 5-7).
+      obj.renderOrder = g0.key === "result" ? 2 : 1;
+      this.segs.add(obj);
     }
     this.viewport.invalidate();
   }

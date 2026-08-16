@@ -20,6 +20,17 @@ declare global {
  * 두 번째 상자는 `axes[0]` 방향으로 첫 상자의 `a`만큼 밀어 **면을 공유**한다.
  */
 export async function setupScene(page: Page, opts: { boxes?: 1 | 2 } = {}) {
+  // ⚠⚠ **저장 복원 경쟁을 픽스처에서 끊는다**(2026-08-17 3차에서 간헐 실패로 드러났다).
+  // `getDoc2` 복원은 비동기라, 아래 `clear` 클릭과 획 주입 사이의 `await import` 틈에
+  // **앞 시험의 자동 저장본**이 끼어들 수 있다 — 그러면 획 수·규칙 상태가 실행마다 갈리고,
+  // 상태 패널(물음)이 떠 `#stage` 높이가 변해 **제스처 회전량까지** 달라졌다
+  // (`touch_route` dpr 2 팔이 1.2551 ↔ 1.9817로 흔들린 원인). 지우고 새로 연다.
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!(window as unknown as { S2S: unknown }).S2S);
   return page.evaluate(async ({ boxes }) => {
     const S = window.S2S;
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();

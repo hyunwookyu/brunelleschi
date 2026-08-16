@@ -39,36 +39,16 @@ export function clipToRect(p: Pt2, d: Pt2, w: number, h: number): [Pt2, Pt2] | n
   return [[p[0] + t0 * dx, p[1] + t0 * dy], [p[0] + t1 * dx, p[1] + t1 * dy]];
 }
 
-/**
- * 소실점으로 모이는 부챗살. 화면 테두리를 균등 분할한 점들을 향해 긋는다.
- * 소실점 자체가 화면 안이면 그 주위로 고르게 퍼진다.
- */
-export function fanFromVp(vp: Pt2, imgSize: [number, number], n = 12, axis: 0 | 1 | 2 = 0): GuideLine[] {
-  const [w, h] = imgSize;
-  const out: GuideLine[] = [];
-  const perim: Pt2[] = [];
-  for (let i = 0; i < n; i++) {
-    const t = (i + 0.5) / n;
-    perim.push([t * w, 0], [t * w, h], [0, t * h], [w, t * h]);
-  }
-  const seen = new Set<string>();
-  for (const q of perim) {
-    const d: Pt2 = [q[0] - vp[0], q[1] - vp[1]];
-    const L = Math.hypot(d[0], d[1]);
-    if (L < 1e-6) continue;
-    const key = (Math.atan2(d[1], d[0]) * 40).toFixed(0);   // 방향 중복 제거
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const seg = clipToRect(vp, [d[0] / L, d[1] / L], w, h);
-    if (seg) out.push({ a: seg[0], b: seg[1], kind: "axis", axis });
-  }
-  return out;
-}
+// ⛔ **부챗살(`fanFromVp`)을 지웠다**(2026-08-17 지시 5-5). 화면 테두리를 균등 분할한
+// 방사선은 **화면 각도의 균등 분할**이라 공간에서는 불규칙하다 — "공간상 정사각형 격자"가
+// 지시이고 그것은 `groundGrid`(지면 격자 투영)가 한다. 이론서 9.5: 등간격 지면선의 화면
+// 좌표는 1/(V−uₙ)이 등차수열 — 3D 격자를 투영하면 그 성질이 저절로 성립한다.
 
-/** 카메라 상태 → 가이드선. 확정된 축만 그린다 — 모르는 것을 그리지 않는다. */
+/** 카메라 상태 → 가이드선. **지평선 + 지면 격자**뿐이다 — 모르는 것을 그리지 않는다. */
 export function guides(
   cam: CameraSolution, vps: (Pt2 | null)[], imgSize: [number, number],
   horizonY?: number | null,
+  axisDirs?: (Vec3 | null)[] | null,
 ): GuideLine[] {
   const [w, h] = imgSize;
   const out: GuideLine[] = [];
@@ -76,11 +56,7 @@ export function guides(
   if (y != null && y > -h && y < 2 * h) {
     out.push({ a: [0, y], b: [w, y], kind: "horizon" });
   }
-  vps.forEach((v, i) => {
-    if (!v) return;
-    out.push(...fanFromVp(v, imgSize, 10, i as 0 | 1 | 2));
-  });
-  out.push(...groundGrid(cam, vps, imgSize));
+  out.push(...groundGrid(cam, vps, imgSize, undefined, undefined, axisDirs));
   return out;
 }
 
@@ -106,11 +82,16 @@ export const GROUND_COLOR = "#7f8c8d";
 export function groundGrid(
   cam: CameraSolution, vps: (Pt2 | null)[], imgSize: [number, number],
   half = 6, step = 1,
+  axisDirs?: (Vec3 | null)[] | null,
 ): GuideLine[] {
   const f = cam.f, pp = cam.principalPoint;
   if (!cam.ok || f == null || !pp) return [];
-  const a0 = vps[0] && isFiniteVp(vps[0], imgSize) ? axisDirection(vps[0]!, pp, f) : null;
-  const a1 = vps[1] && isFiniteVp(vps[1], imgSize) ? axisDirection(vps[1]!, pp, f) : null;
+  // **1점 투시에서도 선다**(지시 5-5): 무한원 축은 소실점이 없지만 방향은 정해져 있다
+  // (`axisDirsOf`, D-L40) — 그 방향을 받으면 가로축이 화면 평행인 격자가 나온다.
+  const dirOf = (i: 0 | 1): Vec3 | null =>
+    (vps[i] && isFiniteVp(vps[i], imgSize) ? axisDirection(vps[i]!, pp, f)
+     : axisDirs?.[i] ?? null);
+  const a0 = dirOf(0), a1 = dirOf(1);
   if (!a0 || !a1) return [];
 
   const vUp = vps[2] && isFiniteVp(vps[2], imgSize) ? vps[2]! : null;

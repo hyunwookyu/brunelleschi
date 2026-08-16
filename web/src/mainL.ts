@@ -122,8 +122,10 @@ let channel: Channel = "guide";
 /** 채널의 화면 이름·색. **표시 규약의 단일 출처다**(#17) — 도구 막대·상태 줄·2D 층이 읽는다. */
 const CHANNEL_UI: Record<Channel, { name: string; color: string; dash: number[]; alpha: number }> = {
   // E의 네 단계 중 위 둘 — 결과선이 **결과물**이므로 가장 진하다
+  // **지시 5-7**: 결과선 검정 가장 진하게 · 보조선 **진한 실선(점선을 쓰지 않는다)** ·
+  // 방사선·격자는 아주 연한 무채색(`drawGrid`) · 축 색은 그리는 중 미리보기에만
   result: { name: "결과선", color: "#111111", dash: [], alpha: 1 },
-  guide: { name: "보조선", color: "#8a8a8a", dash: [7, 5], alpha: 0.85 },
+  guide: { name: "보조선", color: "#4a4a4a", dash: [], alpha: 0.9 },
   note: { name: "주석", color: "#2471a3", dash: [], alpha: 0.9 },
 };
 /**
@@ -173,6 +175,8 @@ const EXPORT_GUIDES = { on: false };
  * 돌린 채로 보조선을 아예 끄고 싶은 때가 있다.
  */
 const SHOW_GUIDES = { on: true };
+/** **격자 토글**(지시 5-5). 기본 켬 — 지면 정사각 격자의 투영이다(화면 각도 균등분할 아님). */
+const SHOW_GRID = { on: true };
 
 /**
  * **선 표시 네 단계**(E). 위로 갈수록 진하다 — **결과선이 결과물이다.**
@@ -1175,9 +1179,12 @@ function drawHorizon(ctx2: CanvasRenderingContext2D) {
 }
 
 function drawGrid(ctx2: CanvasRenderingContext2D) {
+  if (!SHOW_GRID.on) return;
   const r = cam.acc.solve();
+  // **1점에서도 격자가 선다**(지시 5-5) — 무한원 축의 방향(`axisDirs`)을 넘긴다(D-L40)
   const lines = gridGuides(r.camera, cam.vps(), cam.imgSize,
-                           r.camera.principalPoint ? r.camera.principalPoint[1] : null);
+                           r.camera.principalPoint ? r.camera.principalPoint[1] : null,
+                           cam.ctx()?.axisDirs ?? null);
   ctx2.save();
   for (const l of lines) {
     ctx2.beginPath();
@@ -1185,12 +1192,10 @@ function drawGrid(ctx2: CanvasRenderingContext2D) {
     if (l.kind === "horizon") {
       ctx2.strokeStyle = HORIZON_COLOR; ctx2.lineWidth = 1; ctx2.setLineDash([6, 4]);
       ctx2.globalAlpha = 0.7;
-    } else if (l.kind === "ground") {
-      ctx2.strokeStyle = GROUND_COLOR; ctx2.lineWidth = 1; ctx2.setLineDash([]);
-      ctx2.globalAlpha = 0.22;
     } else {
-      ctx2.strokeStyle = AXIS_COLOR[l.axis ?? 0]; ctx2.lineWidth = 1; ctx2.setLineDash([]);
-      ctx2.globalAlpha = 0.16;
+      // **아주 연한 무채색**(지시 5-7) — 격자는 보조선보다 한참 아래다
+      ctx2.strokeStyle = GROUND_COLOR; ctx2.lineWidth = 1; ctx2.setLineDash([]);
+      ctx2.globalAlpha = 0.14;
     }
     ctx2.stroke();
   }
@@ -1217,7 +1222,7 @@ function drawPending(ctx2: CanvasRenderingContext2D) {
     // 옛 저장본·옛 하네스의 획은 채널이 없을 수 있다 — **보조선으로 본다**(D-1의 기본값)
     const ui = CHANNEL_UI[s.channel] ?? CHANNEL_UI.guide;
     ctx2.strokeStyle = ui.color;
-    ctx2.setLineDash(ui.dash.length ? ui.dash : (cam.standing() && s.channel !== "note" ? [5, 4] : []));
+    ctx2.setLineDash(ui.dash);            // **점선을 쓰지 않는다**(지시 5-7) — 채널 정의 그대로
     ctx2.globalAlpha = s.channel === "note" ? ui.alpha
       : (cam.standing() ? 0.35 : 0.65) * ui.alpha;      // **§9.4 — 2D를 약하게 구분한다**(E)
     // **직선으로 그린다**(§1.1) — 시작점과 끝점 둘뿐이다. `pts2d`는 그대로 보존된다
@@ -1450,8 +1455,9 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   cam.vps().forEach((v, i) => {
     if (!v || v[0] < 0 || v[0] > w || v[1] < 0 || v[1] > h) return;
     ctx2.save();
-    ctx2.globalAlpha = 1; ctx2.fillStyle = AXIS_COLOR[i];
-    ctx2.beginPath(); ctx2.arc(v[0], v[1], 5, 0, Math.PI * 2); ctx2.fill();
+    // **표식을 줄였다**(지시 5-6) — 소실점은 참조점이지 그림이 아니다
+    ctx2.globalAlpha = 0.8; ctx2.fillStyle = AXIS_COLOR[i];
+    ctx2.beginPath(); ctx2.arc(v[0], v[1], 3, 0, Math.PI * 2); ctx2.fill();
     ctx2.restore();
   });
 }
@@ -1745,6 +1751,8 @@ function renderBar() {
     btn("axissnap", `축 스냅 ${AXIS_SNAP.on ? "켬" : "끔"}`, AXIS_SNAP.on),
     // **보조선 표시 토글**(E). 기본 켬 — 돌리면 흐려지는 것은 이것과 별개다(자동)
     btn("showguide", `보조선 ${SHOW_GUIDES.on ? "보임" : "숨김"}`, SHOW_GUIDES.on),
+    // **격자 토글**(지시 5-5). 기본 켬
+    btn("showgrid", `격자 ${SHOW_GRID.on ? "켬" : "끔"}`, SHOW_GRID.on),
     '<span class="sep"></span>',
     // **현재 채널이 화면에 보인다**(D-5). 모르고 그으면 나중에 고쳐야 한다
     ...(["guide", "result", "note"] as Channel[]).map(k =>
@@ -1970,6 +1978,10 @@ barEl.addEventListener("click", (e) => {
            + (pend ? ` <span class="dim">(2D 대기 ${pend - notes}획도 빠집니다)</span>` : "");
     }
   }
+  else if (act === "showgrid") {
+    SHOW_GRID.on = !SHOW_GRID.on;
+    note = "";
+  }
   else if (act === "showguide") {
     SHOW_GUIDES.on = !SHOW_GUIDES.on;
     syncScene();
@@ -2135,9 +2147,16 @@ refresh();
   /** 궤도 상태 — 방위각·앙각·거리. 카메라가 움직였는지 이것으로 잰다 */
   camPose: () => {
     const c = stage.viewport.controls;
-    return { azimuth: c.getAzimuthalAngle(), polar: c.getPolarAngle(), dist: c.getDistance(),
+    // ⚠⚠ **핀 상태의 구면각은 0으로 고정한다**(2026-08-17 지시 6에서 간헐 실패로 드러났다).
+    // 핀에서는 카메라가 원점·항등이고 컨트롤이 꺼져 있어 `getAzimuthalAngle()`이 **마지막
+    // `update()` 시점의 낡은 내부값**을 낸다 — 생성 직후 값(atan2(3.2, 3.6) = 0.7266)이
+    // 프레임 경쟁에 따라 남기도 지워지기도 해서, 핀에서 재는 하네스 기준선이 실행마다
+    // 흔들렸다(1.2551 ↔ 1.9817). 핀의 자세는 정의상 항등이므로 0이 맞다.
+    const pinned = stage.isPinned;
+    return { azimuth: pinned ? 0 : c.getAzimuthalAngle(),
+             polar: pinned ? 0 : c.getPolarAngle(), dist: c.getDistance(),
              target: [c.target.x, c.target.y, c.target.z] as [number, number, number],
-             pinned: stage.isPinned };
+             pinned };
   },
   /** 팜 리젝션이 몇 번 발동했나(G-2) — 조용한 거부를 관측 가능하게 둔다(#22) */
   palm: () => ({ ...ink.palmStats(), pen_touching: ink.penTouching }),
@@ -2219,6 +2238,8 @@ refresh();
   setPickedChannel,
   exportGuides: () => EXPORT_GUIDES.on,
   showGuides: () => SHOW_GUIDES.on,
+  showGrid: () => SHOW_GRID.on,
+  setShowGrid: (on: boolean) => { SHOW_GRID.on = on; refresh(); },
   setShowGuides: (on: boolean) => { SHOW_GUIDES.on = on; syncScene(); refresh(); },
   setExportGuides: (on: boolean) => { EXPORT_GUIDES.on = on; refresh(); },
   channels: () => doc.strokes.map(x => ({ id: x.id, channel: x.channel, lifted: !!x.seg3d })),
