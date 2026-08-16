@@ -729,7 +729,7 @@
   },
   "guide_length_note": "**핸들 예산**(축 오차 0.5°를 쓰기까지 핸들이 움직여도 되는 px)이 가이드 길이에 어떻게 달렸는가. `DRAFT_TOL.min_guide_ratio`는 **0.45**이고 960×672에서 **527px**을 요구한다(초판은 0.12 = 140px이었고 그 서술이 이 필드에 남아 있었다 — 리뷰어 2회차). 단일 뷰포트(1280×675)의 실제 가이드는 607~1328px이고 **가장 짧은 것이 정확도를 정한다**. 이 표가 그 값을 정하는 유일한 실측 근거다.",
   "constants": {
-    "hash": "c524c154",
+    "hash": "509615a1",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -778,7 +778,7 @@
         "screen_axis_deg": 4,
         "depth_min_deg": 8,
         "vertical_ask_deg": 45,
-        "min_vp_len_px": 40
+        "min_vp_len_ratio": 0.04
       },
       "SNAP_TOL_AXIS": {
         "ambiguous_deg": 6

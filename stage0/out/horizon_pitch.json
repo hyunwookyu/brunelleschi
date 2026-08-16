@@ -68,7 +68,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.076,
-      "rejected_per_run": 5.34,
+      "rejected_per_run": 5.292,
       "horizon_offset_px_median": 0,
       "horizon_err_px_median": 267.95
     },
@@ -87,7 +87,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.069,
-      "rejected_per_run": 5.382,
+      "rejected_per_run": 5.333,
       "horizon_offset_px_median": 0,
       "horizon_err_px_median": 267.95
     },
@@ -106,7 +106,7 @@
       "order3": 84,
       "order3_rate": 0.5833,
       "asks_per_run": 3.069,
-      "rejected_per_run": 4,
+      "rejected_per_run": 3.951,
       "horizon_offset_px_median": 267.95,
       "horizon_err_px_median": 0
     },
@@ -125,7 +125,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.069,
-      "rejected_per_run": 3.833,
+      "rejected_per_run": 3.785,
       "horizon_offset_px_median": 267.95,
       "horizon_err_px_median": 0
     },
@@ -144,7 +144,7 @@
       "order3": 84,
       "order3_rate": 0.5833,
       "asks_per_run": 3.063,
-      "rejected_per_run": 5.861,
+      "rejected_per_run": 5.813,
       "horizon_offset_px_median": 267.95,
       "horizon_err_px_median": 535.9
     },
@@ -163,7 +163,7 @@
       "order3": 80,
       "order3_rate": 0.5556,
       "asks_per_run": 3.014,
-      "rejected_per_run": 6.049,
+      "rejected_per_run": 6,
       "horizon_offset_px_median": 267.95,
       "horizon_err_px_median": 535.9
     },
@@ -182,7 +182,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.076,
-      "rejected_per_run": 3.951,
+      "rejected_per_run": 3.903,
       "horizon_offset_px_median": 277.95,
       "horizon_err_px_median": 10
     },
@@ -201,7 +201,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.069,
-      "rejected_per_run": 3.806,
+      "rejected_per_run": 3.757,
       "horizon_offset_px_median": 277.95,
       "horizon_err_px_median": 10
     },
@@ -220,7 +220,7 @@
       "order3": 84,
       "order3_rate": 0.5833,
       "asks_per_run": 3.069,
-      "rejected_per_run": 4.028,
+      "rejected_per_run": 3.979,
       "horizon_offset_px_median": 257.95,
       "horizon_err_px_median": 10
     },
@@ -239,7 +239,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.069,
-      "rejected_per_run": 3.854,
+      "rejected_per_run": 3.806,
       "horizon_offset_px_median": 257.95,
       "horizon_err_px_median": 10
     },
@@ -258,7 +258,7 @@
       "order3": 84,
       "order3_rate": 0.5833,
       "asks_per_run": 3.069,
-      "rejected_per_run": 3.965,
+      "rejected_per_run": 3.917,
       "horizon_offset_px_median": 297.95,
       "horizon_err_px_median": 30
     },
@@ -277,7 +277,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.069,
-      "rejected_per_run": 3.792,
+      "rejected_per_run": 3.75,
       "horizon_offset_px_median": 297.95,
       "horizon_err_px_median": 30
     },
@@ -296,7 +296,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.076,
-      "rejected_per_run": 4.118,
+      "rejected_per_run": 4.069,
       "horizon_offset_px_median": 237.95,
       "horizon_err_px_median": 30
     },
@@ -315,7 +315,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.069,
-      "rejected_per_run": 3.896,
+      "rejected_per_run": 3.847,
       "horizon_offset_px_median": 237.95,
       "horizon_err_px_median": 30
     },
@@ -334,7 +334,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.076,
-      "rejected_per_run": 4.076,
+      "rejected_per_run": 4.028,
       "horizon_offset_px_median": 327.95,
       "horizon_err_px_median": 60
     },
@@ -353,7 +353,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.069,
-      "rejected_per_run": 3.854,
+      "rejected_per_run": 3.813,
       "horizon_offset_px_median": 327.95,
       "horizon_err_px_median": 60
     },
@@ -372,7 +372,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.076,
-      "rejected_per_run": 4.229,
+      "rejected_per_run": 4.181,
       "horizon_offset_px_median": 207.95,
       "horizon_err_px_median": 60
     },
@@ -391,7 +391,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.069,
-      "rejected_per_run": 4,
+      "rejected_per_run": 3.951,
       "horizon_offset_px_median": 207.95,
       "horizon_err_px_median": 60
     },
@@ -410,7 +410,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.076,
-      "rejected_per_run": 4.174,
+      "rejected_per_run": 4.125,
       "horizon_offset_px_median": 387.95,
       "horizon_err_px_median": 120
     },
@@ -429,7 +429,7 @@
       "order3": 85,
       "order3_rate": 0.5903,
       "asks_per_run": 3.069,
-      "rejected_per_run": 3.917,
+      "rejected_per_run": 3.875,
       "horizon_offset_px_median": 387.95,
       "horizon_err_px_median": 120
     },
@@ -448,7 +448,7 @@
       "order3": 84,
       "order3_rate": 0.5833,
       "asks_per_run": 3.056,
-      "rejected_per_run": 4.208,
+      "rejected_per_run": 4.16,
       "horizon_offset_px_median": 147.95,
       "horizon_err_px_median": 120
     },
@@ -467,7 +467,7 @@
       "order3": 84,
       "order3_rate": 0.5833,
       "asks_per_run": 3.063,
-      "rejected_per_run": 3.944,
+      "rejected_per_run": 3.896,
       "horizon_offset_px_median": 147.95,
       "horizon_err_px_median": 120
     }
@@ -879,7 +879,7 @@
     "note": "⚠ **이 항목이 등록한 게이트다.** CLAUDE.md §2의 중단 조건(실측 축 오차 0.5°)과 다른 게이트이고 같은 말로 부르지 않는다(#41). ⚠ **구도별 판정을 함께 낸다** — 합산 하나로 통과를 주장하지 않는다."
   },
   "constants": {
-    "hash": "c524c154",
+    "hash": "509615a1",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -928,7 +928,7 @@
         "screen_axis_deg": 4,
         "depth_min_deg": 8,
         "vertical_ask_deg": 45,
-        "min_vp_len_px": 40
+        "min_vp_len_ratio": 0.04
       },
       "SNAP_TOL_AXIS": {
         "ambiguous_deg": 6

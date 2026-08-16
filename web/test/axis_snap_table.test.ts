@@ -19,6 +19,8 @@ import { CamState } from "../src/ui/camState.js";
 import type { Pt2 } from "../src/s3d/camera.js";
 
 const SZ: [number, number] = [960, 672];
+/** 최소 길이는 **화면 대각 대비**다(A-5, 2026-08-17 리뷰어 지적으로 px → 비). */
+const MIN_LEN = RULE_TOL.min_vp_len_ratio * Math.hypot(SZ[0], SZ[1]);
 
 
 // ---------------------------------------------------------------- A-2 화면 직교 스냅
@@ -205,7 +207,7 @@ describe("A-1·A-3 축 후보가 실제로 나온다 (표가 아니라 기하)",
 
 describe("A-5 짧은 획은 소실점을 안 만든다", () => {
   const short = (): [Pt2, Pt2] => {
-    const L = RULE_TOL.min_vp_len_px - 5;
+    const L = MIN_LEN - 5;
     return [[300, 400], [300 + L * Math.cos(Math.PI / 6), 400 - L * Math.sin(Math.PI / 6)]];
   };
 
@@ -218,7 +220,7 @@ describe("A-5 짧은 획은 소실점을 안 만든다", () => {
   });
 
   it("**반례** — 임계 위면 그대로 소실점이 선다", () => {
-    const L = RULE_TOL.min_vp_len_px + 5;
+    const L = MIN_LEN + 5;
     const b: Pt2 = [300 + L * Math.cos(Math.PI / 6), 400 - L * Math.sin(Math.PI / 6)];
     const r = stepRule(newRuleState(SZ), { a: [300, 400], b }, SZ);
     expect(r.event.type).toBe("vp_fixed");

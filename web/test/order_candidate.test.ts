@@ -13,6 +13,8 @@ import {
 import type { Pt2 } from "../src/s3d/camera.js";
 
 const SZ: [number, number] = [960, 672];
+/** 최소 길이는 **화면 대각 대비**다(A-5, 2026-08-17 리뷰어 지적으로 px → 비). */
+const MIN_LEN = RULE_TOL.min_vp_len_ratio * Math.hypot(SZ[0], SZ[1]);
 
 const line = (a: Pt2, b: Pt2): RLine => ({ a, b });
 
@@ -35,7 +37,7 @@ const INPUTS: { key: string; line: RLine; forced?: "screen" | "depth" | "vertica
   { key: "깊이 오른쪽", line: line([560, 560], [946, 457]) },
   { key: "가파른 깊이 70°", line: at(70, [400, 560]) },
   { key: "애매 6°", line: at(AMB_DEG) },
-  { key: "짧은 획", line: at(30, [300, 400], RULE_TOL.min_vp_len_px - 5) },
+  { key: "짧은 획", line: at(30, [300, 400], MIN_LEN - 5) },
   // ⚠ **17.4° 기운 선**이어야 한다 — `depth`(≥8°)만 선 하나로 3점을 선언한다(4~8°는 손 오차)
   { key: "수직축이라 답함", line: line([700, 600], [590, 950]), forced: "vertical" },
 ];
@@ -125,8 +127,11 @@ const TABLE: Record<string, string[]> = {
     "support|one_point|1",
     "support|one_point|1",
     "support|one_point|1",          // 같은 소실점을 향한다
-    "rejected|one_point|1",         // **다른 방향** → 1점에는 깊이축이 하나뿐이다(B)
-    "rejected|one_point|1",
+    // **다른 방향** → 1점에는 깊이축이 하나뿐이므로 두 번째 소실점이 안 선다(B).
+    // 대신 그것이 **거리점**이고 시거리를 정한다(C-2, 이론서 7.4)
+    "distance_point|one_point|1",
+    // 가파른 선도 같다 — 1점 후보에서는 수직축 물음이 안 뜨고(B), 축을 안 향하면 거리점이다
+    "distance_point|one_point|1",
     "ask|one_point|1",
     "rejected|one_point|1",
     "support|one_point|1",
@@ -178,7 +183,8 @@ describe("B 전수 상태 전이 (6 상태 × 8 획)", () => {
     // 사건 종류가 실제로 갈린다 — 한 종류로 쏠리면 판정이 아니다
     const kinds = new Set(cells.map(c => c.split("|")[0]));
     expect(kinds).toEqual(new Set(
-      ["screen_axis", "support", "vp_fixed", "ask", "rejected", "derived_vertical"]));
+      ["screen_axis", "support", "vp_fixed", "ask", "rejected", "derived_vertical",
+       "distance_point"]));
   });
 
   /**

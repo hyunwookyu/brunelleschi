@@ -102,7 +102,7 @@ describe("W-1 카메라 수학 — Python 정합", () => {
     expect(r.ok).toBe(false);
     expect(r.f).toBeNull();
     expect(r.verdict).toBe("unresolved_f");
-    expect(r.unresolved[0]).toContain("f 미설정");
+    expect(r.unresolved[0]).toContain("깊이가 정해지지 않았습니다");
     // 설정을 주면 채워지고, 출처가 측정이 아님이 남는다
     const s = recoverCamera([[400, 300], null, null], SZ, { fSetting: 900 });
     expect(s.fSource).toBe("setting(렌즈)");

@@ -61,7 +61,7 @@
     "note": "**입력(선)을 담는다** — 푼 결과가 아니다. 그래야 열어서 이어 조정할 수 있고 차수 승격이 전부 다시 푼다(§6.1)"
   },
   "constants": {
-    "hash": "c524c154",
+    "hash": "509615a1",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -110,7 +110,7 @@
         "screen_axis_deg": 4,
         "depth_min_deg": 8,
         "vertical_ask_deg": 45,
-        "min_vp_len_px": 40
+        "min_vp_len_ratio": 0.04
       },
       "SNAP_TOL_AXIS": {
         "ambiguous_deg": 6

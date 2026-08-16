@@ -9108,7 +9108,7 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 139
+      "reads": 138
     },
     {
       "field": "pts2d",
@@ -9243,7 +9243,7 @@
       "note": "원장을 쓰는 `web/test/**.ts`만 본다"
     }
   ],
-  "constants_hash": "c524c154",
+  "constants_hash": "509615a1",
   "metrics_hash": "a45078a5",
   "scanned": [
     "axis_judgement.json",

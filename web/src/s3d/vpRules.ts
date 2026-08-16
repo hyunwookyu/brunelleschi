@@ -67,19 +67,27 @@ export const RULE_TOL = {
    */
   vertical_ask_deg: 45,
   /**
-   * **소실점에 기여하는 획의 최소 화면 길이**(px, 2026-08-17 사람 지시 A-5).
+   * **소실점에 기여하는 획의 최소 길이**(화면 대각 대비, 2026-08-17 사람 지시 A-5).
    *
    * 실수로 그은 작은 선이 두 번째 소실점을 정의해 버리는 것을 막는다. 그 아래 획은
    * **규칙에 안 들어간다** — 획 자체는 문서에 남고 카메라만 안 건드린다.
    *
-   * ⚠ **새 임계다**(#17). 대체할 기존 값이 없다: `AXIS_TOL`의 것들은 전부 **비**이고
-   * 이것은 "손이 미끄러진 것과 그은 것"을 가르는 **절대 길이**다. 화면 픽셀 기준이고
-   * 확대·축소와 무관하다(잉크 좌표가 CSS 픽셀이다).
-   * ⚠ **값 40은 잠정이다.** 실획 표본이 가르는 자리이고 `real_ink.test.ts`가 그것을 낸다
-   * (`K` — "최소 길이 임계 — 실수 획과 의도 획이 갈리는 지점"). 지금 근거는
-   * 960×672 화면 대각 1170px의 **3.4%**이고, 의도한 획이 그보다 짧은 경우를 못 봤다는 것뿐이다.
+   * ⚠⚠ **초판은 절대 px(40)였고 리뷰어가 둘을 짚었다**:
+   *   ① "대체할 기존 값이 없다"가 **틀렸다** — `AXIS_TOL.min_len_ratio`(0.02)와
+   *      `VP_TOL.min_len_ratio`(0.02)가 이미 있다.
+   *   ② 이 저장소의 임계는 전부 **비**인데 그것만 절대 px였다. 캔버스 크기 굳음이 세 번(AS-C7·#22),
+   *      dpr 규약 버그가 한 번(#21) 걸린 곳이고 **이번 지시의 출처가 아이패드**다.
+   * 그래서 **비로 바꾸고 기존 값의 배수로 적는다**: `AXIS_TOL.min_len_ratio`의 **2배**다.
+   *
+   * **왜 그 값을 그대로 안 쓰는가**: 그것은 "그 획에서 **방향을 낼 수 있는가**"의 하한이고
+   * (`representative`가 그 아래를 버린다), 여기는 "그 획이 **소실점을 정할 만큼 의도적인가**"다.
+   * 둘은 다른 물음이고 후자가 더 엄해야 한다 — 방향은 나오지만 실수인 획이 그 사이에 있다.
+   *
+   * ⚠ **배수 2는 잠정이고 스윕을 안 돌렸다**(#12 동작점 하나). 실획 표본이 가르는 자리이고
+   * `real_ink.test.ts`가 그것을 낸다(K — "최소 길이 임계 — 실수 획과 의도 획이 갈리는 지점").
+   * ⚠ **이 임계가 몇 획을 걸렀는지 세는 곳이 아직 없다**(#38 덮는 대상 미상) — `DEFERRED.md`.
    */
-  min_vp_len_px: 40,
+  min_vp_len_ratio: 0.04,
 } as const;
 export type RuleCfg = Partial<typeof RULE_TOL>;
 
@@ -117,6 +125,22 @@ export interface RuleState {
   horizon: number;
   /** 사용자가 "수직축"이라 답한 획들의 대표선 — 유도된 V₃의 지지선으로 센다. */
   verticalLines: RLine[];
+  /**
+   * **1점 투시의 f(px) — 거리점에서 읽은 값**(2026-08-17 사람 지시 C-2, 이론서 7.4).
+   *
+   * 1점 투시는 자유도가 하나 남고 그것이 f다(5.3). 옛 판은 **렌즈 슬라이더**로 채웠는데
+   * 지시문이 그것을 없앴다: **"건축가는 투시도를 그릴 때 렌즈를 고려하지 않는다. 소실점
+   * 위치가 곧 렌즈이므로 이미 정하고 있다."**
+   *
+   * 채우는 법: 1점 투시에서 소실점 = 주점이고(5.3) 바닥·벽 사각형의 **대각선**은
+   * 소실점이 아니라 **거리점**을 향한다. 거리점은 지평선 위에 있고 주점에서 **정확히 f**만큼
+   * 떨어져 있다(7.4). 그러므로 `f = |DP.x − VP.x|`이고 **측정이다**.
+   *
+   * `null`이면 **깊이가 미정**이다 — 카메라를 안 세운다(C-3: 임의값을 넣지 않는다).
+   * ⚠ 2점·3점에서는 안 쓴다(f가 소실점에서 나온다, 6.2·6.3).
+   * ⚠ 옛 저장본에는 이 필드가 없다 — `undefined`를 `null`로 읽는다.
+   */
+  distance: number | null;
 }
 
 /** **피치 0의 지평선** — 화면 중앙. 1점 투시에서 소실점이 주점이라는 것과 같은 자리다(5.3). */
@@ -172,7 +196,7 @@ const screenVerticalSlot = (): Slot => ({ kind: "screen", dir: "v", support: 0 }
 
 export function newRuleState(imgSize: [number, number] = [960, 672]): RuleState {
   return { slots: [null, null, screenVerticalSlot()],
-           horizon: defaultHorizon(imgSize), verticalLines: [] };
+           horizon: defaultHorizon(imgSize), verticalLines: [], distance: null };
 }
 
 export function cloneRuleState(s: RuleState): RuleState {
@@ -184,6 +208,8 @@ export function cloneRuleState(s: RuleState): RuleState {
     ) as RuleState["slots"],
     horizon: s.horizon,
     verticalLines: s.verticalLines.map(l => ({ a: [...l.a] as Pt2, b: [...l.b] as Pt2 })),
+    // ⚠ 옛 저장본에는 없다 — `undefined`를 `null`로 읽는다(C-2)
+    distance: s.distance ?? null,
   };
 }
 
@@ -243,6 +269,8 @@ export type RuleEvent =
   | { type: "waiting"; have: number }
   /** 이미 있는 축을 향한 선이다. 소실점은 **잠겨 있다** — 지지 수만 는다. */
   | { type: "support"; axis: 0 | 1 | 2 }
+  /** **거리점에서 시거리를 읽었다**(C-2, 이론서 7.4). 1점 투시의 f가 여기서 채워진다. */
+  | { type: "distance_point"; at: Pt2; f: number }
   /** 사용자에게 묻는다. */
   | { type: "ask"; question: "screen_or_depth" | "second_horizontal_or_vertical"; verdict: LineVerdict }
   /** 쓸 수 없다. `why`가 사유다. */
@@ -339,10 +367,11 @@ export function stepRule(
   // 정의해 버리던 자리다.
   {
     const L = Math.hypot(line.b[0] - line.a[0], line.b[1] - line.a[1]);
-    if (L < c.min_vp_len_px) {
+    const min = c.min_vp_len_ratio * Math.hypot(imgSize[0], imgSize[1]);
+    if (L < min) {
       return { state: st0, event: { type: "rejected",
         why: `획이 ${Math.round(L)}px로 짧아 소실점에 안 넣습니다`
-           + ` (최소 ${c.min_vp_len_px}px) — 획은 그대로 남습니다` } };
+           + ` (최소 ${Math.round(min)}px = 화면 대각의 ${c.min_vp_len_ratio}) — 획은 그대로 남습니다` } };
     }
   }
 
@@ -436,10 +465,29 @@ export function stepRule(
       return { state: st0, event: { type: "ask", question: "second_horizontal_or_vertical", verdict: v } };
     }
     if (!target) {
+      // **1점 투시에서 축을 안 향하는 대각선은 거리점을 정한다**(2026-08-17 C-2, 이론서 7.4).
+      //
+      // 1점에서는 소실점 = 주점이고(5.3) 지평선 y = 그 소실점의 y다. 바닥·벽 사각형의
+      // **대각선**은 소실점이 아니라 지평선 위 **거리점**을 향하고, 그 거리점은 주점에서
+      // **정확히 f**만큼 떨어져 있다. 그러므로 **그 선 하나가 시거리를 정한다** —
+      // 렌즈를 물어볼 필요가 없다(C-1: "소실점 위치가 곧 렌즈다").
+      //
+      // ⚠ **이미 정해졌으면 안 덮는다** — 소실점과 같은 규약이다(§1의 잠금). 두 번째 대각선은
+      // 지지선이고, 값이 크게 다르면 그것은 **사용자가 다른 것을 그린 것**이라 조용히 안 바꾼다.
+      const dpVp = cand === "one_point" ? finiteHorizontals(st)[0] : undefined;
+      if (dpVp && st.distance == null) {
+        const dp = vpOnHorizon(rep, st.horizon);
+        const f = dp ? Math.abs(dp[0] - dpVp.at[0]) : 0;
+        if (dp && f > 1e-6 && isFiniteVp(dp, imgSize)) {
+          st.distance = f;
+          return { state: st, event: { type: "distance_point", at: dp, f } };
+        }
+      }
       return { state: st0, event: { type: "rejected",
         why: cand === "one_point"
-          ? "**1점 투시**입니다 — 깊이축이 하나뿐이고 그 소실점은 이미 정해졌습니다."
-            + " 이 선은 그 축을 안 향합니다"
+          ? (st.distance != null
+             ? "**시거리는 이미 정해졌습니다**(거리점) — 이 선은 깊이축도 거리점도 아닙니다"
+             : "지평선과 거의 나란해 거리점을 못 읽습니다")
           : "수평 소실점이 이미 둘입니다 — 소실점은 확정 후 잠깁니다(CLAUDE.md §1)" } };
     }
     if (!isFiniteVp(p, imgSize)) {
@@ -554,6 +602,18 @@ export function axisDirsOf(st: RuleState, principal: Pt2, f: number): ([number, 
     const L = Math.hypot(d[0], d[1], d[2]);
     return L < 1e-12 ? null : [d[0] / L, d[1] / L, d[2] / L];
   }) as ([number, number, number] | null)[];
+}
+
+/**
+ * **거리점 둘**(C-5, 이론서 7.4). f가 정해진 1점 투시에서만 있고, 지평선 위 소실점의
+ * 좌우로 **정확히 f**만큼 떨어진 자리다. 화면에 표시하고 스냅 대상에 넣는다 —
+ * 그 점을 향해 그은 선이 곧 45° 대각선이다. **f가 미정이면 거리점이 없다.**
+ */
+export function distancePoints(st: RuleState): [Pt2, Pt2] | null {
+  if (st.distance == null || !(st.distance > 0)) return null;
+  const h = ([0, 1] as const).map(i => st.slots[i]).find(s => s && s.kind === "vp");
+  if (!h || h.kind !== "vp") return null;
+  return [[h.at[0] - st.distance, st.horizon], [h.at[0] + st.distance, st.horizon]];
 }
 
 /** 정해진 축 수(무한원 포함). 화면 표시가 "무엇이 부족한지"를 이것으로 낸다. */

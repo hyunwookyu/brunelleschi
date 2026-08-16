@@ -112,7 +112,11 @@ export class ConstraintAccumulator {
     return this;
   }
 
-  /** 렌즈 설정(1점 투시의 f). `null`이면 비운다. **측정이 아니라 설정이다**(provenance). */
+  /**
+   * **1점 투시의 f**. `null`이면 비운다.
+   * ⚠ 이름은 옛 뜻(렌즈 설정)이 남았지만 **지금 들어오는 값은 거리점에서 읽은 측정이다**
+   * (2026-08-17 C-2). 출처는 `setLensProvenance`가 따로 들고 `recoverCamera`에 넘긴다.
+   */
   setLens(f: number | null): this {
     this.lensF = f != null && f > 0 ? f : null;
     return this;
@@ -218,6 +222,9 @@ export class ConstraintAccumulator {
 
     const camera = recoverCamera(vps, this.imgSize, {
       principal, fSetting: this.lensF ?? undefined,
+      // **1점의 f는 거리점에서 온다**(2026-08-17 C-2) — `setLens`에 들어오는 값이 그것뿐이다.
+      // 렌즈 설정 경로는 C-1로 없어졌으므로 출처가 하나다(#18: 안 읽는 필드를 만들지 않는다).
+      fProvenance: "distance_point(7.4)",
     });
 
     const warnings: SolveResult["warnings"] = [];

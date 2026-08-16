@@ -115,7 +115,7 @@ describe("W-1 제약 누산기", () => {
       { kind: "lens", f: fPixelsFrom35mm(24, SZ[0]) },
     ]);
     expect(withLens.camera.ok).toBe(true);
-    expect(withLens.camera.fSource).toBe("setting(렌즈)");
+    expect(withLens.camera.fSource).toBe("distance_point(7.4)");
   });
 
   it("엣지 투표가 쌓이면 소실점이 스스로 잡힌다(§3.1 마지막 행)", () => {

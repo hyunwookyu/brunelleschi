@@ -18,7 +18,7 @@
   },
   "caveat": "**합성이다.** 숙련자가 실제로 어떻게 긋는지는 이 표본에 없다(V-o·AS-1). 여기서 재는 것은 '같은 노이즈 수준에서 배치 방식이 얼마나 다른가'이며, 대표 조건은 활 마루 skew=0.12(치우침)다 — 0.5(대칭)는 판정이 공짜로 맞는 특수 조건이다(D-S4).",
   "constants": {
-    "hash": "c524c154",
+    "hash": "509615a1",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -67,7 +67,7 @@
         "screen_axis_deg": 4,
         "depth_min_deg": 8,
         "vertical_ask_deg": 45,
-        "min_vp_len_px": 40
+        "min_vp_len_ratio": 0.04
       },
       "SNAP_TOL_AXIS": {
         "ambiguous_deg": 6

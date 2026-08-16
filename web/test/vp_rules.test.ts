@@ -170,9 +170,12 @@ describe("c. 두 번째 소실점도 같은 지평선 위다", () => {
     st = feed([[seg(P0, V1)]], st);
     expect(st.slots[0]).toMatchObject({ kind: "screen" });
     const r = stepRule(st, seg(P0, V2), SZ);
-    expect(r.event.type).toBe("rejected");
+    // ⚠ **2026-08-17 C-2가 이 칸의 사건을 바꿨다**: 1점 투시에서 축을 안 향하는 대각선은
+    // **거리점**이고 그것이 시거리를 정한다(7.4). 요점은 그대로다 — **소실점은 안 는다.**
+    expect(r.event.type).toBe("distance_point");
     expect(orderOfState(r.state)).toBe(1);
-    expect(r.state).toBe(st);                          // **같은 객체** — 조용히 안 바꾼다
+    expect(r.state.slots[0]).toMatchObject({ kind: "screen", dir: "h" });   // **안 밀렸다**
+    expect(r.state.distance).toBeGreaterThan(0);
   });
 });
 

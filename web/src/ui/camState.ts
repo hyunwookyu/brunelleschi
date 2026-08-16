@@ -20,20 +20,20 @@ import {
   horizonAdjustable, withHorizon, orderOfState, axisOfStroke, RULE_TOL,
   type RuleState, type RuleEvent, type RLine,
 } from "../s3d/vpRules.js";
-import { fPixelsFrom35mm } from "../s3d/constraints.js";
 import type { Pt2 } from "../s3d/camera.js";
 import type { Axis } from "../s3d/axis.js";
 import type { PlaceCtx } from "../s3d/stroke.js";
 
 /**
- * **1점 투시의 f는 설정값이다**(이론서 5.3 자유도 회계 · CLAUDE.md §1).
+ * ⛔ **렌즈를 3D 정의 경로에서 뺐다**(2026-08-17 사람 지시 C-1).
  *
- * 소실점 하나면 자유도가 하나 남고 그것이 f다. 측정으로 채울 수 없으므로 **설정으로 채우고
- * 출처를 화면에 낸다**(`fSource = "setting(렌즈)"`). 기본값 35mm 환산은 흔한 스케치 화각이다.
+ * 지시문: **"건축가는 투시도를 그릴 때 렌즈를 고려하지 않는다. 소실점 위치가 곧 렌즈이므로
+ * 이미 정하고 있다."** 1점 투시의 f는 이제 **그린 사각형의 대각선**에서 나온다
+ * (거리점, 이론서 7.4 · `RuleState.distance`). 렌즈 슬라이더는 화면에서 사라졌다.
  *
- * ⚠ **이 값이 없으면 1점 투시에서 카메라가 서지 않는다** — `recoverCamera`가 `ok:false`를 내고
- * `ctx()`가 `null`이 되어 **무엇을 그려도 대기**가 된다. 규칙 b("깊이선 둘 → 1점 투시 확정")가
- * 실제로 확정이 되려면 이 자리가 채워져 있어야 한다.
+ * 이 상수는 **옛 저장본을 여는 경로에만** 남는다(`Doc2.lensMm`). 값이 있어도
+ * **f의 출처로 쓰지 않는다** — 그러면 "임의값을 넣지 않는다"(C-3)를 어긴다.
+ * ⚠ D-L39를 뒤집은 것이다: 그 결정은 "1점의 f를 기본 렌즈로 채운다"였다.
  */
 export const DEFAULT_LENS_MM = 35;
 
@@ -49,8 +49,11 @@ export class CamState {
   rules: RuleState = newRuleState([960, 672]);
   /** 확정됐는가(§1.2의 "카메라 확정"). 확정 뒤에는 획이 소실점을 바꾸지 않는다. */
   locked = false;
-  /** 1점 투시에서 쓸 렌즈(35mm 환산 mm). `null`이면 f가 안 채워진다. */
-  lensMm: number | null = DEFAULT_LENS_MM;
+  /**
+   * ⛔ **더 이상 f의 출처가 아니다**(C-1). 옛 저장본에서 읽어 두기만 한다 —
+   * 값이 있어도 `apply()`가 안 쓴다. 1점의 f는 `rules.distance`(거리점)에서 온다.
+   */
+  lensMm: number | null = null;
 
   constructor(imgSize: [number, number]) {
     this.acc = new ConstraintAccumulator(imgSize);
@@ -103,10 +106,11 @@ export class CamState {
       const v = vps[ax];
       if (v) this.acc.setPoint(ax, v);
     }
-    // **1점 투시에서만 f를 설정으로 채운다.** 2·3점에서는 측정이 이긴다(`recoverCamera`).
+    // **1점 투시의 f는 거리점에서 온다**(C-2, 이론서 7.4). 2·3점에서는 소실점이 정한다(6.2·6.3).
+    // ⚠ **렌즈 설정을 안 쓴다**(C-1). 없으면 **f가 미정이고 카메라가 안 선다** — 그것이 옳다:
+    // 깊이가 안 정해진 상태에 **임의값을 넣지 않는다**(C-3).
     const nFinite = vps.filter(Boolean).length;
-    this.acc.setLens(nFinite === 1 && this.lensMm != null
-      ? fPixelsFrom35mm(this.lensMm, this.imgSize[0]) : null);
+    this.acc.setLens(nFinite === 1 ? this.rules.distance : null);
   }
 
   /**
@@ -179,7 +183,7 @@ export class CamState {
   reset(): void {
     this.rules = newRuleState(this.imgSize);
     this.acc.reset();
-    this.lensMm = DEFAULT_LENS_MM;
+    this.lensMm = null;
     this.locked = false;
     this.apply();
   }

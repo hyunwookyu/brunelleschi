@@ -189,7 +189,7 @@ function runOne(fx: Fx, order: (typeof ORDERS)[number], arm: Arm): RunOut {
         if (idx != null) slots[idx] = { kind: "vp", at, source: "two_lines", support: ls.length };
       }
     }
-    st = { slots, horizon: defaultHorizon(SZ), verticalLines: [] };
+    st = { slots, horizon: defaultHorizon(SZ), verticalLines: [], distance: null };
     // 지평선 없는 팔에서는 **축마다 두 선이 필요**하므로, 각 축의 셋째 획부터가 "확정 뒤"다
     const seen: Record<number, number> = { 0: 0, 1: 0, 2: 0 };
     for (const { e } of reps) {

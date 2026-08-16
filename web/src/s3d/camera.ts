@@ -138,7 +138,7 @@ export interface CameraSolution {
   nVps: number;
   ok: boolean;
   f: number | null;
-  fSource?: "orthocenter(6.3)" | "two_vps(6.2)" | "setting(렌즈)";
+  fSource?: "orthocenter(6.3)" | "two_vps(6.2)" | "setting(렌즈)" | "distance_point(7.4)";
   principalPoint: Pt2 | null;
   residual: number | null;
   verdict: Verdict | "unresolved_f" | "no_perspective";
@@ -154,7 +154,13 @@ export interface CameraSolution {
 /** 소실점 개수로 갈리는 단일 경로. `fSetting`은 1점에서 f를 채우는 **설정값**(측정 아님). */
 export function recoverCamera(
   vps: (Pt2 | null)[], imgSize: [number, number],
-  opts: { principal?: Pt2; fSetting?: number } = {},
+  opts: { principal?: Pt2; fSetting?: number;
+          /**
+           * **1점의 f가 어디서 왔는가**(2026-08-17 C-2). 기본은 옛 뜻(`설정 = 렌즈`)이고,
+           * 앱은 **거리점**(이론서 7.4)을 넘긴다 — 그것은 **설정이 아니라 측정**이므로
+           * 화면이 갈라 보여야 한다(CLAUDE.md §1: 깊이 스케일의 출처는 하나이고 화면에 나온다).
+           */
+          fProvenance?: "setting(렌즈)" | "distance_point(7.4)" } = {},
 ): CameraSolution {
   const [W] = imgSize;
   const finite = vps.filter((v): v is Pt2 => isFiniteVp(v, imgSize));
@@ -208,16 +214,21 @@ export function recoverCamera(
     const P = finite[0];                    // 소실점 = 주점 (5.3)
     if (opts.fSetting != null && opts.fSetting > 0) {
       return {
-        ...base, case: "1pt", ok: true, f: opts.fSetting, fSource: "setting(렌즈)",
+        ...base, case: "1pt", ok: true, f: opts.fSetting,
+        fSource: opts.fProvenance ?? "setting(렌즈)",
         principalPoint: P, residual: 0, ...gate(opts.fSetting, W),
-        dofNote: "자유도 1(f)을 설정으로 소진 — 측정이 아니라 사용자 선택이다(provenance: setting)",
+        dofNote: opts.fProvenance === "distance_point(7.4)"
+          ? "자유도 1(f)을 **거리점**으로 소진 — 그린 대각선에서 읽은 **측정**이다(7.4)"
+          : "자유도 1(f)을 설정으로 소진 — 측정이 아니라 사용자 선택이다(provenance: setting)",
       };
     }
     return {
       ...base, case: "1pt", ok: false, f: null, principalPoint: P, residual: 0,
       verdict: "unresolved_f", ratio: null, fovDeg: null,
-      unresolved: ["1점 투시: f 미설정 → 안쪽 깊이 미결정. 렌즈 값을 정하면 채워진다(§3.2). "
-        + "폭·높이는 그 전에도 실척 비례로 읽힌다(7.7)"],
+      // ⚠ **문구가 바뀌었다**(2026-08-17 C-3): "렌즈 값을 정하면"이 아니라 **바닥·벽을 하나
+      // 그리면**이다. 화면에 **렌즈·시거리 같은 말을 내지 않는다**(지시문).
+      unresolved: ["**깊이가 정해지지 않았습니다.** 바닥이나 벽을 하나 그려주세요 — "
+        + "그 사각형의 대각선이 깊이를 정합니다. 폭·높이는 그 전에도 실척 비례로 읽힙니다(7.7)"],
       dofNote: "자유도 1(f) 잔존 — 깊이만 미결정",
     };
   }

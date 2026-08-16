@@ -133,7 +133,7 @@ test("단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다", asyn
 
   led.confirm = await page.evaluate(() => {
     const S = window.S2S;
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    window.S2S.confirmNow();
     const ctx = S.cam.ctx();
     const el = document.getElementById("ink") as HTMLCanvasElement;
     return {
@@ -355,7 +355,7 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
   const before = await page.evaluate(async () => {
     const S = window.S2S;
     const doc = await import("/src/ui/doc.ts");
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    window.S2S.confirmNow();
     // 새 각도 → 새 뷰(§9.3). **앱의 궤도 버튼 경로 그대로**다(#17) —
     // `pose()`는 궤도로 풀리기 전에는 `null`이라(확정 시점에 고정) 직접 카메라를 옮긴다.
     document.querySelector<HTMLButtonElement>('#bar button[data-act="orbit"]')!.click();
@@ -626,7 +626,7 @@ test("스냅 — 대상·표식·시작점 확정", async ({ page }) => {
 
   await setup(page);
   await page.evaluate(() =>
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click());
+    window.S2S.confirmNow());
 
   // ① 대상은 **3D 레이어**에서 온다. 확정 전에는 0이어야 한다 — 그 대조를 함께 낸다.
   l.targets = await page.evaluate(() => {
@@ -758,7 +758,7 @@ test("실시간 축 판정 — 미리보기와 확정이 같다", async ({ page 
 
   await setup(page);
   await page.evaluate(() =>
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click());
+    window.S2S.confirmNow());
 
   const geo = await page.evaluate(async () => {
     const S = window.S2S;
@@ -839,7 +839,7 @@ test("축 고정 — 추론이 거부한 획을 사용자가 강제한다", asyn
 
   await setup(page);
   await page.evaluate(() =>
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click());
+    window.S2S.confirmNow());
 
   const geo = await page.evaluate(async () => {
     const S = window.S2S;
@@ -932,7 +932,7 @@ test("뷰 시스템 — 목록·전환·삭제·소유", async ({ page }) => {
 
   await setup(page);
   await page.evaluate(() =>
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click());
+    window.S2S.confirmNow());
 
   // ---- ① 목록. 확정 뷰 하나에서 시작한다
   l.initial = await page.evaluate(() => ({
@@ -1145,7 +1145,7 @@ test("궤도 후 계속 그리기 — 새 각도가 새 뷰가 된다", async ({
 
   await setup(page);
   await page.evaluate(() =>
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click());
+    window.S2S.confirmNow());
 
   // ---- 돌린다. **앱의 궤도 버튼 경로 그대로**
   l.after_orbit = await page.evaluate(() => {
@@ -1316,7 +1316,7 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
     S.setAxisLines([...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])]);
     S.cam.apply(); S.refresh();
     (window as any).__SC2 = sc;
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    window.S2S.confirmNow();
     return { order: S.order(), lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
              locked: S.cam.locked };
   });
@@ -1440,7 +1440,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
     };
     S.setAxisLines([...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])]);
     S.cam.apply(); S.refresh();
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    window.S2S.confirmNow();
     const before = {
       order: S.order(),
       lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
@@ -1572,7 +1572,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
     };
     S.setAxisLines([...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])]);
     S.cam.apply(); S.refresh();
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    window.S2S.confirmNow();
     S.unlockGuides();
     S.setAxisLines([...S.axisLines(), ...mk(2, [[0.42, 0.35], [0.62, 0.35]])]);
     S.cam.apply(); S.refresh();
@@ -1663,7 +1663,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
       + "빈도는 `order_undo.json`이 216장면으로 잰다(내려감 176/216 · 스냅 끊김 94/216).",
     where_in_population: "⚠ **이 픽스처는 모집단의 꼬리 쪽이다.** 스냅 끊김 4/5 = 0.80인데 "
       + "모집단은 295/1676 = **0.176**이고, 장면당 끊김은 중앙 **0** · p90 **4**다"
-      + "(`order_undo.json@c524c154`) — 즉 **p90 자리**다. "
+      + "(`order_undo.json@509615a1`) — 즉 **p90 자리**다. "
       + "표시 경로를 지나려면 그래야 하지만, **이 수를 대표값으로 인용하면 안 된다.**",
     off_grid: "⚠ **격자 밖이 셋이다**(#12): jitter 0.04(격자 {0, 0.01, 0.03, 0.05}) · "
       + "seed 4242(격자 {1..6}) · **skew 0.37**(하네스는 0.12 — 3배다). "
@@ -1734,7 +1734,7 @@ test("고치기 — 획을 고르고, 축을 지정하고, 지운다", async ({ 
     }
     S.setAxisLines(guides);
     S.cam.apply(); S.refresh();
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    window.S2S.confirmNow();
     document.querySelector<HTMLButtonElement>('#bar button[data-act="edit"]')!.click();
     return { strokes: S.doc().strokes.length,
              lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
@@ -1865,7 +1865,7 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
   expect(two.hasCamera).toBe(true);
   const confirmed = await page.evaluate(() => {
     const S = window.S2S;
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    window.S2S.confirmNow();
     return { lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
              pending: S.doc().strokes.filter((s: any) => !s.seg3d).length,
              order: S.order() };
@@ -1948,7 +1948,7 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
     };
     S.setAxisLines([...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])]);
     S.cam.apply(); S.refresh();
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+    window.S2S.confirmNow();
     const before = { order: S.order(),
                      lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
                      pending: S.doc().strokes.filter((s: any) => !s.seg3d).length };
@@ -2044,7 +2044,7 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
     await page.waitForFunction(() => !!window.S2S);
     await setup(page, { boxes: 2 });
     await page.evaluate(() => {
-      document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
+      window.S2S.confirmNow();
       // ⚠ **한 번 더 그린다** — 도구 막대의 높이가 바뀌면 캔버스가 새로 잡히고(자가 치유)
       // 그 프레임의 그림이 **치유 전/후 중 어느 쪽인지가 실행마다 갈린다**.
       // 두 장이 **같은 안정 상태**에서 찍히게 한 번 더 돌린다(위 머리말과 같은 이유).
