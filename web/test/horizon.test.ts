@@ -106,7 +106,7 @@ const bag = () => ({
   wrong10: 0, wrong20: 0, wrong50: 0,
   shapeMed: [] as number[], axErr: [] as number[], fErr: [] as number[],
   applied: { horizon_merged: 0, vertical_x_moved: 0, vertical_synthesized: 0 },
-  shift: [] as number[],
+  shift: [] as number[], shiftDy: [] as number[],
 });
 type Bag = ReturnType<typeof bag>;
 const report = (b: Bag) => ({
@@ -123,7 +123,11 @@ const report = (b: Bag) => ({
   // **제약이 실제로 발동했는가**(#32) — 0이면 이 팔의 결과는 제약에 대해 정보가 0이다
   constraint_applied: b.applied,
   vp_shift_px: stat(b.shift),
+  // **Δy 단독**(리뷰어 [5]) — 사영은 y만 옮기고 적합은 (x, y) 둘을 옮긴다.
+  // "두 수평 소실점의 y가 그만큼 어긋나 있다"는 주장의 근거는 **이 열**이지 위가 아니다.
+  vp_shift_dy_px: stat(b.shiftDy),
 });
+type Arm = "base" | "roll0" | "oracle" | "no_synth" | "placebo" | "refit";
 
 /**
  * 한 장면을 재고 카운터에 넣는다.
@@ -133,13 +137,19 @@ const report = (b: Bag) => ({
  *   `"roll0"`  — 검출 소실점을 롤 0으로 사영한다
  *   `"oracle"` — **축 라벨을 참값으로 주고** 롤 0을 건다. 제약이 틀린 것인지
  *                `assignAxes`가 어느 것이 수직인지 잘못 고른 것인지 가른다(#35의 오라클 자리)
+ *   `"no_synth"` — 롤 0을 걸되 **무한원 축에 V₃를 합성하지 않는다**. 2pt·1pt 구도에서
+ *                  잡음이 `P_y − h`를 0이 아니게 만들면 식이 **거대한 유한 V₃**를 내는데
+ *                  이론서 2.2는 그 자리에 소실점이 **없다**고 적는다(리뷰어 [2])
+ *   `"placebo"` — 소실점을 **같은 크기로 임의 방향** 옮긴다. 배치 붕괴가 *제약*의 성질인지
+ *                 *소실점을 80px 옮기는 것 일반*의 성질인지 가른다(#30, 리뷰어 [4][5])
  *   `"refit"`  — 제약을 **적합 안에** 넣는다(`fitHorizonPair`). 사영은 소실점을 자기
  *                지지선에서 떼어 놓으므로, 그 팔의 배치 붕괴가 **제약의 성질인지 사영의
  *                성질인지** 이 팔이 가른다(#32: 미실행을 반증으로 처리하지 않는다)
  */
-function measure(fx: Fx, b: Bag, arm: "base" | "roll0" | "oracle" | "refit") {
+function measure(fx: Fx, b: Bag, arm: Arm, cfg: { min_slope_deg?: number;
+                 min_vp_sep_ratio?: number } = {}) {
   const { sc, edges, diag } = fx;
-  const roll0 = arm === "roll0" || arm === "oracle";
+  const roll0 = arm === "roll0" || arm === "oracle" || arm === "no_synth";
   b.scenes += 1; b.total += edges.length;
   const lines = linesFromStrokes(fx.strokes, SZ);
   const cands = detectVps(lines, SZ);
@@ -171,6 +181,8 @@ function measure(fx: Fx, b: Bag, arm: "base" | "roll0" | "oracle" | "refit") {
       b.applied.horizon_merged += 2;
       b.shift.push(+Math.hypot(fit.v1[0] - before[0][0], fit.v1[1] - before[0][1]).toFixed(3));
       b.shift.push(+Math.hypot(fit.v2[0] - before[1][0], fit.v2[1] - before[1][1]).toFixed(3));
+      b.shiftDy.push(+Math.abs(fit.v1[1] - before[0][1]).toFixed(3));
+      b.shiftDy.push(+Math.abs(fit.v2[1] - before[1][1]).toFixed(3));
       if (vps[2]) { vps[2] = [P0[0], vps[2]![1]]; b.applied.vertical_x_moved += 1; }
       else {
         const v = vpVerticalFromOrthocenter(fit.v1, fit.v2, P0, Math.hypot(...SZ));
@@ -182,11 +194,28 @@ function measure(fx: Fx, b: Bag, arm: "base" | "roll0" | "oracle" | "refit") {
     // 지지 수를 가중치로 준다 — 획이 많은 축의 지평선 높이를 더 믿는다
     const w: (number | null)[] =
       vps.map(v => (v ? cands.find(c => c.vp === v)?.support.length ?? 1 : null));
-    const r = applyRollZero(vps, P0, SZ, w);
+    const r = applyRollZero(vps, P0, SZ, w, cfg, arm === "no_synth");
     vps = r.vps;
     b.applied.horizon_merged += r.applied.horizon_merged;
     b.applied.vertical_x_moved += r.applied.vertical_x_moved ? 1 : 0;
     b.applied.vertical_synthesized += r.applied.vertical_synthesized ? 1 : 0;
+    for (const s of r.shiftPx) if (s > 0) b.shift.push(+s.toFixed(3));
+    for (const s of r.shiftDy) if (s > 0) b.shiftDy.push(+s.toFixed(3));
+  }
+  if (arm === "placebo") {
+    // **위약 대조군**(#30) — 제약과 **같은 크기**로 옮기되 방향은 결정론적 임의다.
+    // 붕괴가 "롤 0"의 성질인지 "소실점이 80px 움직이는 것"의 성질인지 갈린다.
+    const w2: (number | null)[] =
+      vps.map(v => (v ? cands.find(c => c.vp === v)?.support.length ?? 1 : null));
+    const r = applyRollZero(vps, P0, SZ, w2);
+    const rr = rng32(fx.edges.length * 131 + Math.round(fx.rollDeg) + 7);
+    vps = vps.map((v, i) => {
+      const d = r.shiftPx[i];
+      if (!v || !(d > 0)) return v;
+      const th = 2 * Math.PI * rr();
+      return [v[0] + d * Math.cos(th), v[1] + d * Math.sin(th)] as Pt2;
+    });
+    b.applied.horizon_merged += r.applied.horizon_merged;
     for (const s of r.shiftPx) if (s > 0) b.shift.push(+s.toFixed(3));
   }
   const cam = recoverCamera(vps, SZ, { fSetting: sc.f });
@@ -267,7 +296,7 @@ describe("L-D.0 롤 0 제약 — 지평선 수평 고정", () => {
       const seeds = k <= 2 ? SEEDS : k === 3 ? [1, 2, 3] : [1];
       const jits = k <= 2 ? JITTERS : [0.005, 0.01, 0.03];
       const comps = k <= 2 ? [0, 1, 2, 3, 4] : BIG_K_COMPS;
-      const base = bag(), roll = bag(), orac = bag(), refi = bag();
+      const base = bag(), roll = bag(), orac = bag(), refi = bag(), nsyn = bag(), plac = bag();
       let perAxis = 0;
       for (const ci of comps) for (const jit of jits) for (const g of GRADES) for (const sd of seeds) {
         const fx = fixture(ci, jit, g, sd, k);
@@ -277,6 +306,8 @@ describe("L-D.0 롤 0 제약 — 지평선 수평 고정", () => {
         measure(fx, roll, "roll0");
         measure(fx, orac, "oracle");
         measure(fx, refi, "refit");
+        measure(fx, nsyn, "no_synth");
+        measure(fx, plac, "placebo");
       }
       byK[`k_${k}`] = {
         strokes_per_axis: perAxis,
@@ -285,10 +316,68 @@ describe("L-D.0 롤 0 제약 — 지평선 수평 고정", () => {
         detected_baseline: report(base), detected_roll_zero: report(roll),
         oracle_axis_labels_roll_zero: report(orac),
         constrained_refit: report(refi),
+        roll_zero_no_synthesis: report(nsyn),
+        placebo_same_shift_random_dir: report(plac),
       };
     }
     doc.by_strokes_per_axis = byK;
     expect(Object.keys(byK).length).toBe(LATTICE_K.length);
+  }, 900_000);
+
+  it("**구도별 층화** — 무한원 축 구도(2pt·1pt)가 붕괴를 만드는가", () => {
+    // 리뷰어 [2]: `by_strokes_per_axis`는 5구도 합산만 낸다. 그런데 그중 둘은
+    // **수직축이 무한원**이라 V₃가 없는 것이 옳고(이론서 2.2), `vertical_synthesized`가
+    // k_1에서 108(≈2pt+1pt 120장면의 90%)이다. **갈라 봐야 결론의 범위가 정해진다.**
+    const rows: Record<string, unknown> = {};
+    for (let ci = 0; ci < COMPOSITIONS.length; ci++) {
+      const arms: [Arm, ReturnType<typeof bag>][] =
+        (["base", "roll0", "no_synth", "placebo", "refit"] as Arm[]).map(a => [a, bag()]);
+      for (const jit of JITTERS) for (const g of GRADES) for (const sd of SEEDS) {
+        const fx = fixture(ci, jit, g, sd, 1);
+        if (!fx) continue;
+        for (const [a, b] of arms) measure(fx, b, a);
+      }
+      rows[COMPOSITIONS[ci].name] = Object.fromEntries(arms.map(([a, b]) => [a, report(b)]));
+    }
+    doc.by_composition_k1 = {
+      rows,
+      why: "**결론의 범위를 정한다**(#11·#15). 5구도 합산은 수직축이 무한원인 둘(2pt·1pt)을 "
+        + "섞는데, 그 구도에서 롤 0은 **없어야 할 소실점을 만들어 넣는다**. "
+        + "`no_synth` 팔이 그것을 끄고, 차이가 그 몫이다.",
+    };
+    expect(Object.keys(rows).length).toBe(COMPOSITIONS.length);
+  }, 900_000);
+
+  it("**HORIZON_TOL 스윕** — 발동 임계가 결론을 정하는가", () => {
+    // 리뷰어 [1]: `min_slope_deg`·`min_vp_sep_ratio`가 제약 발동을 정하는데 동작점 하나였다(#12).
+    // **한 값에 결론을 걸지 않는다**(#13).
+    const rows: Record<string, unknown> = {};
+    for (const slope of [2, 3.75, 7]) for (const sep of [0.10, 0.15, 0.30]) {
+      const roll = bag(), refi = bag();
+      for (const ci of [0, 1, 2, 3, 4]) for (const jit of JITTERS) for (const sd of [1, 2, 3]) {
+        const fx = fixture(ci, jit, "medium", sd, 1);
+        if (!fx) continue;
+        measure(fx, roll, "roll0", { min_slope_deg: slope, min_vp_sep_ratio: sep });
+        measure(fx, refi, "refit", { min_slope_deg: slope, min_vp_sep_ratio: sep });
+      }
+      rows[`slope_${slope}_sep_${sep}`] = { roll_zero: report(roll), constrained_refit: report(refi) };
+    }
+    doc.horizon_tol_sweep = {
+      rows,
+      registered_point: { min_slope_deg: HORIZON_TOL.min_slope_deg,
+                          min_vp_sep_ratio: HORIZON_TOL.min_vp_sep_ratio },
+      vacuous_warning: "⚠⚠ **이 스윕은 공허하다**(#31) — 아홉 격자점이 **완전히 같은 수**를 낸다. "
+        + "이유는 `applyRollZero`가 두 임계를 **거의 안 부르기 때문**이다: `min_slope_deg`는 "
+        + "`vpOnHorizon`(획 하나 + 지평선 교점) 전용이고 사영 경로가 그 함수를 안 쓰며, "
+        + "`min_vp_sep_ratio`는 **수직축 합성 분기**에서만 걸린다. "
+        + "**그러므로 '발동 임계가 결론을 정하는가'에 대한 답은 '이 두 임계는 결론에 안 닿는다'이고**, "
+        + "무결론이 아니라 **설계의 귀결**이다(#31이 요구한 그 확인). 리뷰어 [1]에 대한 답이 이것이다.",
+      why: "**두 임계의 근거가 선례 유추뿐이었다**(`min_spread_mult` × `support_deg`와 같은 자리, "
+        + "6.5의 예각 조건과 같은 방향) — 측정이 아니다. 조이면 제약을 **확실히 수평인 쌍에만** "
+        + "걸게 되므로 붕괴가 줄 수 있고, 그러면 '붕괴는 제약의 성질'이 "
+        + "'붕괴는 이 발동 임계의 성질'로 바뀐다(리뷰어 [1]).",
+    };
+    expect(Object.keys(rows).length).toBe(9);
   }, 900_000);
 
   it("**양성 채널** — 종이를 기울이면(롤 ≠ 0) 이 제약이 해를 끼치는가", () => {
@@ -330,12 +419,18 @@ afterAll(() => {
         + "**약 1° 아래**로 내려가면 자동 확정 경로를 되살린다. 기준선은 같은 하네스의 "
         + "`detected_baseline` 행이고, L-A.6의 값은 7.40 / 10.04 / 10.09 / 4.53°다"
         + "(축당 4 / 18 / 48 / 100획). **측정 전에 박았다**(#26). "
+        + "⚠ **박은 값이 정정 전 임계다**(리뷰어 [8]) — AS-L9와 CLAUDE.md §2의 현행 임계는 "
+        + "**0.5°**이고 ≈1°는 그 전 값이다. **사후에 안 고친다**(#26·#28) — 등록문은 그대로 두고 "
+        + "여기 적는다. 방향은 한쪽이라 결론이 안 바뀐다: 0.5°로 읽으면 실패가 **더 크다**. "
         + "⚠ 안 내려가면 **초안 품질이 얼마나 올랐는지만 기록한다** — 사용자 확정을 유지한다.",
-      reachability: "**같은 하네스의 `orthocenter_identity`가 그 자리다** — 참 카메라를 넣으면 "
-        + "수심 관계가 오차 0으로 성립한다(항등이므로 정보량은 0이다, #5). 즉 **제약 자체는 "
-        + "정확하고 남는 문제는 입력(검출 소실점)의 오차**다. ⚠ 그러므로 이 게이트가 넘어가려면 "
-        + "**검출이 지평선 높이를 1° 상당으로 맞춰야** 하고 그것이 도달 가능한지는 "
-        + "이 측정이 답한다. ⚠ 넘든 못 넘든 **기준을 낮추지 않는다**(#26의 반대편 문).",
+      reachability: "**`oracle_axis_labels_roll_zero` 팔이 그 자리다**(축 라벨을 참값으로 주고 "
+        + "검출 소실점을 쓴다) — 축당 4/18/48/100획에서 **4.4599 / 4.9690 / 9.2513 / 8.4495°**다. "
+        + "⚠⚠ **즉 이 하네스에서 검출 기반 팔이 1°에 닿은 적은 한 번도 없다.** 0을 내는 것은 "
+        + "`camera_gate`의 `true_camera_oracle`뿐이고 그것은 참 소실점을 그대로 넣은 **항등**이다. "
+        + "**그러므로 #35대로 적는다: 기준을 못 넘은 것이 신호의 성질인지 기준의 성질인지 "
+        + "이 하네스만으로는 갈리지 않는다.** ⚠ 그래도 **기준을 낮추지 않는다**(#26의 반대편 문). "
+        + "⚠ `orthocenter_identity`는 reachability가 아니다 — **항등이라 정보량 0**이고(#5) "
+        + "식의 유도를 잠그는 것 말고는 아무 말도 안 한다(초판이 그것을 이 자리에 적었고 고쳤다).",
       status: "이번 실행의 결과는 `by_strokes_per_axis`에 있다.",
     }),
     what_this_does_not_say: [
@@ -343,6 +438,9 @@ afterAll(() => {
         + "기울여 그리는 대가는 `roll_control`이 잰다",
       "실획 — 합성 잉크다(AS-C10이 그 모델을 양방향으로 틀렸다고 적었다)",
       "**사람이 축 오차 0.5°에 도달하는가**(AS-L9) — 이 항목은 자동 검출만 본다",
+      "**주점이 이미지 중심이 아닐 때** — 픽스처는 주점이 정확히 중심이라(`true_v3`의 x = 480 = Pₓ) "
+        + "AS-C5 가정이 **참인 최선 조건**이다. 어긋나면 더 나빠질 수만 있다(방향만 안다)",
+      "**배치 붕괴의 자리** — 미배치 사유별 카운터가 이 하네스에 없다(`lift_grade`가 그 분해를 한다)",
     ],
     condition: {
       compositions: COMPOSITIONS.map(c => c.name), jitters: JITTERS, grades: GRADES,

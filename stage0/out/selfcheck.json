@@ -1,5 +1,5 @@
 {
-  "n_flags": 1601,
+  "n_flags": 1752,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -839,6 +839,21 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "horizon.json:by_strokes_per_axis.k_1.roll_zero_no_synthesis.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_1.roll_zero_no_synthesis.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_1.placebo_same_shift_random_dir.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "horizon.json:by_strokes_per_axis.k_2.detected_baseline.placement.rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -860,6 +875,21 @@
     },
     {
       "path": "horizon.json:by_strokes_per_axis.k_2.constrained_refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_2.roll_zero_no_synthesis.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_2.roll_zero_no_synthesis.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_2.placebo_same_shift_random_dir.placement.rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -929,6 +959,41 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "horizon.json:by_strokes_per_axis.k_3.roll_zero_no_synthesis.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.roll_zero_no_synthesis.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.roll_zero_no_synthesis.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.roll_zero_no_synthesis.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.placebo_same_shift_random_dir.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.placebo_same_shift_random_dir.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_3.placebo_same_shift_random_dir.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "horizon.json:by_strokes_per_axis.k_4.detected_baseline.placement.rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -952,6 +1017,696 @@
       "path": "horizon.json:by_strokes_per_axis.k_4.constrained_refit.placement.of_all.rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.roll_zero_no_synthesis.placement.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.roll_zero_no_synthesis.placement.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.roll_zero_no_synthesis.placement.of_all.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.roll_zero_no_synthesis.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.roll_zero_no_synthesis.placement.of_all.rate",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.roll_zero_no_synthesis.silent_wrong.cut_0_1.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.roll_zero_no_synthesis.silent_wrong.cut_0_1.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.roll_zero_no_synthesis.silent_wrong.cut_0_2.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.roll_zero_no_synthesis.silent_wrong.cut_0_2.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.roll_zero_no_synthesis.silent_wrong.cut_0_5.k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.roll_zero_no_synthesis.silent_wrong.cut_0_5.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.roll_zero_no_synthesis.shape_err_median.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.roll_zero_no_synthesis.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_strokes_per_axis.k_4.placebo_same_shift_random_dir.placement.of_all.rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.base.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.base.constraint_applied.horizon_merged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.base.constraint_applied.vertical_x_moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.base.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.base.vp_shift_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.base.vp_shift_dy_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.roll0.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.roll0.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.no_synth.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.no_synth.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.no_synth.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.placebo.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.placebo.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.placebo.constraint_applied.vertical_x_moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.placebo.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.placebo.vp_shift_dy_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw35_pitch15.refit.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.base.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.base.constraint_applied.horizon_merged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.base.constraint_applied.vertical_x_moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.base.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.base.vp_shift_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.base.vp_shift_dy_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.roll0.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.roll0.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.roll0.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.roll0.silent_wrong.cut_0_5.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.no_synth.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.no_synth.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.no_synth.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.no_synth.silent_wrong.cut_0_5.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.no_synth.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.placebo.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.placebo.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.placebo.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.placebo.silent_wrong.cut_0_5.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.placebo.constraint_applied.vertical_x_moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.placebo.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.placebo.vp_shift_dy_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.refit.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.refit.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw20_pitch25.refit.silent_wrong.cut_0_5.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw50_pitch8.base.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw50_pitch8.base.constraint_applied.horizon_merged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw50_pitch8.base.constraint_applied.vertical_x_moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw50_pitch8.base.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw50_pitch8.base.vp_shift_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw50_pitch8.base.vp_shift_dy_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw50_pitch8.roll0.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw50_pitch8.no_synth.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw50_pitch8.no_synth.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw50_pitch8.placebo.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw50_pitch8.placebo.constraint_applied.vertical_x_moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw50_pitch8.placebo.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw50_pitch8.placebo.vp_shift_dy_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.3pt_yaw50_pitch8.refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.2pt_yaw35_pitch0.base.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.2pt_yaw35_pitch0.base.constraint_applied.horizon_merged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.2pt_yaw35_pitch0.base.constraint_applied.vertical_x_moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.2pt_yaw35_pitch0.base.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.2pt_yaw35_pitch0.base.vp_shift_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.2pt_yaw35_pitch0.base.vp_shift_dy_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.2pt_yaw35_pitch0.roll0.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.2pt_yaw35_pitch0.no_synth.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.2pt_yaw35_pitch0.no_synth.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.2pt_yaw35_pitch0.placebo.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.2pt_yaw35_pitch0.placebo.constraint_applied.vertical_x_moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.2pt_yaw35_pitch0.placebo.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.2pt_yaw35_pitch0.placebo.vp_shift_dy_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.2pt_yaw35_pitch0.refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.base.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.base.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.base.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.base.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.base.f_rel_err.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.base.constraint_applied.horizon_merged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.base.constraint_applied.vertical_x_moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.base.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.base.vp_shift_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.base.vp_shift_dy_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.roll0.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.roll0.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.roll0.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.roll0.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.roll0.f_rel_err.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.no_synth.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.no_synth.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.no_synth.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.no_synth.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.no_synth.f_rel_err.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.no_synth.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.placebo.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.placebo.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.placebo.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.placebo.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.placebo.f_rel_err.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.placebo.constraint_applied.vertical_x_moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.placebo.constraint_applied.vertical_synthesized",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.placebo.vp_shift_dy_px.n",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.refit.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.refit.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.refit.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:by_composition_k1.rows.1pt_yaw0_pitch0.refit.f_rel_err.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_2_sep_0.1.roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_2_sep_0.1.constrained_refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_2_sep_0.15.roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_2_sep_0.15.constrained_refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_2_sep_0.3.roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_2_sep_0.3.constrained_refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_3.75_sep_0.1.roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_3.75_sep_0.1.constrained_refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_3.75_sep_0.15.roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_3.75_sep_0.15.constrained_refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_3.75_sep_0.3.roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_3.75_sep_0.3.constrained_refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_7_sep_0.1.roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_7_sep_0.1.constrained_refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_7_sep_0.15.roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_7_sep_0.15.constrained_refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_7_sep_0.3.roll_zero.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon.json:horizon_tol_sweep.rows.slope_7_sep_0.3.constrained_refit.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "horizon.json:roll_control.rows.roll_0deg.baseline.placement.rate",

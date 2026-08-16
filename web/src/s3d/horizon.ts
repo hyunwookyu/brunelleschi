@@ -142,11 +142,20 @@ export interface RollZeroResult {
   applied: { horizon_merged: number; vertical_x_moved: boolean; vertical_synthesized: boolean };
   /** 사영 전후 소실점 이동량(px). 0이면 검출이 이미 롤 0을 만족한 것이다. */
   shiftPx: number[];
+  /** **y 성분만**의 이동량(px). 지평선 어긋남의 직접 지표다 — `shiftPx`는 x 이동을 포함한다. */
+  shiftDy: number[];
 }
 
 export function applyRollZero(
   vps: (Pt2 | null)[], principal: Pt2, imgSize: [number, number],
   weights?: (number | null)[], cfg: { min_vp_sep_ratio?: number } = {},
+  /**
+   * **무한원 수직축에 V₃를 합성하지 않는다**(리뷰어 [2], 2026-08-16).
+   * 2pt·1pt 구도에서는 수직축의 소실점이 **없는 것이 옳다**(이론서 2.2, c=0).
+   * 그런데 잡음이 `P_y − h`를 0이 아니게 만들면 수심 식이 **거대한 유한 V₃**를 낸다 —
+   * 그것을 카메라에 넣으면 2점 장면이 3점으로 읽힌다(D-L7이 같은 이유로 만든 조건).
+   */
+  noSynthesize = false,
 ): RollZeroResult {
   const diag = Math.hypot(imgSize[0], imgSize[1]);
   const out = vps.slice();
@@ -171,7 +180,7 @@ export function applyRollZero(
   if (out[2]) {
     out[2] = [principal[0], out[2]![1]];
     applied.vertical_x_moved = true;
-  } else if (out[0] && out[1] && horizon !== null) {
+  } else if (!noSynthesize && out[0] && out[1] && horizon !== null) {
     // ③ 없으면 수심 조건으로 만든다(6.3). **못 만들면 null 그대로** — 2점 투시다
     const v = vpVerticalFromOrthocenter(out[0]!, out[1]!, principal, diag, cfg);
     if (v) { out[2] = v; applied.vertical_synthesized = true; }
@@ -181,7 +190,11 @@ export function applyRollZero(
     const b = before[i];
     return v && b ? Math.hypot(v[0] - b[0], v[1] - b[1]) : 0;
   });
-  return { vps: out, horizon, applied, shiftPx };
+  const shiftDy = out.map((v, i) => {
+    const b = before[i];
+    return v && b ? Math.abs(v[1] - b[1]) : 0;
+  });
+  return { vps: out, horizon, applied, shiftPx, shiftDy };
 }
 
 /**
