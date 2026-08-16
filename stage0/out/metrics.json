@@ -7,7 +7,7 @@
     "`python selfcheck.py`가 이 파일과 대조해 다르면 **STALE(정의)** — 어느 지표가 다른지 함께 낸다."
   ],
   "gauge_policy": "`liftAll`이 깊이를 `gauge_height`로 정규화하므로 **절대 배율은 자유도**다. 형태 오차는 게이지를 정하고 잰다. 한 번에 푸는 집합은 그 집합에서 적합하고(`fit`), **승격 회수 획은 확정 집합의 게이지를 고정으로 받는다** — 회수 획만 다시 적합하면 '이미 확정된 틀에 붙는다'는 성질이 지워진다.",
-  "hash": "3df57ac7",
+  "hash": "a45078a5",
   "names": [
     "pairEnds",
     "fitGauge",
@@ -15,7 +15,9 @@
     "perStrokeErrorMap",
     "perStrokeError",
     "axisDirErrors",
-    "silentWrong"
+    "silentWrong",
+    "rate",
+    "fraction"
   ],
   "cuts": [
     0.1,

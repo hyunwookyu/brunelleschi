@@ -1,5 +1,5 @@
 {
-  "n_flags": 1552,
+  "n_flags": 1554,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -7696,6 +7696,16 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "e2e.json@3df57ac7",
+      "val": "지표 목록이 다르다: fraction, rate",
+      "flag": "**STALE(정의)** — 현재 지표 정의(a45078a5)와 다른 식으로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "stage_browser.json@3df57ac7",
+      "val": "지표 목록이 다르다: fraction, rate",
+      "flag": "**STALE(정의)** — 현재 지표 정의(a45078a5)와 다른 식으로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
       "path": "web/src/s3d/stroke.ts:Stroke.layer",
       "val": "쓰기 0 · 읽기 0",
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
@@ -7777,18 +7787,18 @@
     }
   ],
   "n_stale": 0,
-  "n_stale_metrics": 0,
+  "n_stale_metrics": 2,
   "n_unread_fields": 1,
   "field_reads": [
     {
       "field": "id",
       "writes": 0,
-      "reads": 190
+      "reads": 203
     },
     {
       "field": "pts2d",
       "writes": 3,
-      "reads": 82
+      "reads": 84
     },
     {
       "field": "pts3d",
@@ -7798,7 +7808,7 @@
     {
       "field": "axis",
       "writes": 6,
-      "reads": 91
+      "reads": 94
     },
     {
       "field": "rep",
@@ -7823,18 +7833,18 @@
     {
       "field": "color",
       "writes": 2,
-      "reads": 7
+      "reads": 10
     },
     {
       "field": "width",
       "writes": 1,
-      "reads": 16
+      "reads": 18
     }
   ],
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 159,
+      "files_scanned": 162,
       "exts_declared": [
         ".md",
         ".py",
@@ -7848,7 +7858,7 @@
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 101,
+      "files_scanned": 103,
       "exts_declared": [
         ".ts"
       ],
@@ -7858,7 +7868,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 159,
+      "files_scanned": 162,
       "exts_declared": [
         ".md",
         ".py",
@@ -7867,12 +7877,12 @@
       "hits_by_ext": {
         ".md": 9,
         ".py": 4,
-        ".ts": 26
+        ".ts": 29
       }
     }
   ],
   "constants_hash": "2fd74e1c",
-  "metrics_hash": "3df57ac7",
+  "metrics_hash": "a45078a5",
   "scanned": [
     "axis_judgement.json",
     "axis_live.json",

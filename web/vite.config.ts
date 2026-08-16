@@ -88,8 +88,19 @@ function swPrecache() {
 const useHttps = process.env.S2S_HTTP !== "1";
 const PORT = 5173;
 
+/**
+ * **정적 배포의 base 경로**(L-D.2). GitHub Pages는 `https://<user>.github.io/<repo>/`처럼
+ * **하위 경로**에 올라가므로 `/assets/...` 절대 경로가 404가 된다. 빌드할 때
+ * `S2S_BASE=/SKETCH2SPACE/`를 주면 그 경로가 붙는다.
+ *
+ * 기본은 `"./"`(상대 경로)다 — **어느 하위 경로에 올려도 열리고** `file://`로도 열린다.
+ * 상대 경로가 안 되는 것은 서비스 워커의 `scope`뿐인데, 그것은 등록할 때 현재 경로를 쓴다.
+ */
+const BASE = process.env.S2S_BASE ?? "./";
+
 export default defineConfig({
   root: ".",
+  base: BASE,
   // host: true → 0.0.0.0 바인딩(LAN 노출). 기존 127.0.0.1 고정을 대체한다.
   server: { host: true, port: PORT, strictPort: true },
   plugins: [...(useHttps ? [basicSsl()] : []), printLanUrls(useHttps, PORT), swPrecache()],

@@ -5569,7 +5569,7 @@
     "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
   },
   "metric_defs": {
-    "hash": "3df57ac7",
+    "hash": "a45078a5",
     "names": [
       "pairEnds",
       "fitGauge",
@@ -5577,7 +5577,9 @@
       "perStrokeErrorMap",
       "perStrokeError",
       "axisDirErrors",
-      "silentWrong"
+      "silentWrong",
+      "rate",
+      "fraction"
     ],
     "cuts": [
       0.1,

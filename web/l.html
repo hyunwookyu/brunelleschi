@@ -4,7 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>투시 선 도구 (L)</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <meta name="theme-color" content="#1a99aa">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <!-- iOS의 '홈 화면에 추가'는 SVG를 안 읽는다 — PNG가 없으면 아이콘이 안 뜬다 -->
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Sketch3D">
   <style>
     /* §10.3 — 단일 뷰포트. 2D 잉크와 3D 씬이 같은 상자 안에 겹친다. */
     *{margin:0;box-sizing:border-box;-webkit-user-select:none;user-select:none}

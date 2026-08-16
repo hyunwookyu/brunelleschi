@@ -118,7 +118,7 @@
     "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
   },
   "metric_defs": {
-    "hash": "3df57ac7",
+    "hash": "a45078a5",
     "names": [
       "pairEnds",
       "fitGauge",
@@ -126,7 +126,9 @@
       "perStrokeErrorMap",
       "perStrokeError",
       "axisDirErrors",
-      "silentWrong"
+      "silentWrong",
+      "rate",
+      "fraction"
     ],
     "cuts": [
       0.1,
@@ -166,8 +168,8 @@
       "p90": 456,
       "max": 576
     },
-    "build_ms_total": 184.5,
-    "build_ms_per_stroke": 0.4231
+    "build_ms_total": 119.6,
+    "build_ms_per_stroke": 0.2743
   },
   "scale_note": "지연 예산(P1/P4/V-n) 확인용이다. 획 하나가 삼각형 수백 개 규모이고 생성이 밀리초 이하이면 **온디맨드 렌더로 충분**하다 — 매 프레임 도는 루프가 필요 없다.",
   "twist_ratio": {

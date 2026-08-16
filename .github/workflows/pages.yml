@@ -1,0 +1,58 @@
+# 정적 배포 — GitHub Pages (L-D.2)
+#
+# 계산이 전부 브라우저에서 돈다. 서버가 없으므로 **정적 호스팅만으로 동작한다**:
+# PC가 꺼져 있어도 아이패드에서 열리고, 같은 네트워크에 있을 필요도 없다.
+#
+# **base 경로**: Pages는 `https://<user>.github.io/<repo>/`처럼 하위 경로에 올라간다.
+# 빌드가 **상대 경로**(`base: "./"`)를 쓰므로 하위 경로든 루트든 그대로 열린다 —
+# 리포지토리 이름을 workflow에 박지 않는다(이름이 바뀌어도 안 깨진다).
+#
+# **서비스 워커**: `sw.js`도 상대 경로로 등록하므로 scope가 그 하위 경로가 된다.
+# 빌드가 사전 캐시 목록을 주입한다(`vite.config.ts`의 `swPrecache`).
+name: Pages
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      # 배포 전에 **테스트와 타입을 통과시킨다**(A-4: 깨진 채로 다음으로 가지 않는다)
+      - run: npx tsc --noEmit
+      - run: npx vitest run
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -12,6 +12,11 @@ import { CamState } from "./ui/camState.js";
 import { newDoc, newSStroke, newView, deleteView, lifted, pending, pendingElsewhere,
          type DocState, type SStroke } from "./ui/doc.js";
 import { takeSnap, applySnap, type AppSnap } from "./ui/appSnap.js";
+// L-D.2 저장·내보내기 — **뷰 목록과 뷰별 2D 획**을 담는다(§9.2)
+import { serializeDoc2, restoreDoc2, autosaver2, getDoc2, deleteDoc2,
+         type Doc2 } from "./ui/docStore.js";
+import { toObj, toGltf, download, linesFromDoc } from "./ui/exportGeom.js";
+import { setDocSeq, docSeq } from "./ui/doc.js";
 import { nearestSeg, PICK_TOL, type PickSeg } from "./ui/pick.js";
 import { draftFromDetection, handleAt, moveHandle, guideLineAt, moveGuideBy,
          extendGuide, DRAFT_TOL, type HandleRef } from "./s3d/vpDraft.js";
@@ -161,6 +166,13 @@ interface PromoteReport {
   relinked: { ok: number; tried: number } | null;
 }
 let promoteReport: PromoteReport | null = null;
+
+/**
+ * **자동 저장기**(L-D.2). `let`으로 미리 세운다 — `refresh()`가 부르는데 그 함수는 초기화
+ * 중에도 불리고, `const`면 TDZ로 터진다(옛 `main.ts`에서 세 번 걸린 자리다).
+ */
+let saver: ReturnType<typeof autosaver2> | null = null;
+let saveNote = "";
 
 // ---------------------------------------------------------------- 스냅 (§3)
 
@@ -1158,7 +1170,42 @@ function refresh() {
     renderBar();
     renderStatus();
     renderViews();
+    saver?.schedule();          // **자동 저장**(L-D.2). 디바운스가 있어 자주 불려도 한 번 쓴다
   } finally { refreshing = false; }
+}
+
+/** 지금 상태 → 저장 문서. **뷰와 뷰별 2D 획이 함께 간다**(§9.2). */
+function buildDoc2(): Doc2 {
+  return serializeDoc2({
+    at: new Date().toISOString(),
+    imgSize: cam.imgSize,
+    cam: cam.acc.dump(),
+    locked: cam.locked,
+    order: lockedOrder ?? 1,
+    doc,
+    seq: docSeq(),
+  });
+}
+
+/** 저장 문서 → 지금 상태. **다시 풀지 않는다** — `seg3d`가 화면에 있던 그것이다. */
+function applyDoc2(d: Doc2) {
+  const r = restoreDoc2(d);
+  doc = r.doc;
+  setDocSeq(r.seq);
+  cam.acc.reset();
+  if (r.cam) cam.acc.load(r.cam);
+  // **가이드는 누산기에서 되살린다** — 가이드가 곧 카메라의 입력이다(§5.4)
+  cam.guides = ([0, 1, 2] as const).flatMap(ax =>
+    (r.cam?.lines?.[ax] ?? []).map(l => ({ axis: ax, a: [...l.a] as Pt2, b: [...l.b] as Pt2 })));
+  cam.apply();
+  cam.locked = r.locked;
+  lockedOrder = r.locked ? r.order : null;
+  undoStack.length = 0; orderMarks.length = 0; promoteReport = null;
+  picked = null; sens = [];
+  syncScene();
+  note = `저장된 작업을 열었습니다 — 뷰 ${doc.views.length} · 획 ${doc.strokes.length}`
+       + ` (3D ${lifted(doc).length} · 2D ${doc.strokes.length - lifted(doc).length})`;
+  refresh();
 }
 
 function renderBar() {
@@ -1185,6 +1232,10 @@ function renderBar() {
     // **지금 차수의 표식은 안 낸다** — 있는 자리로 되돌아가는 버튼은 아무 일도 안 한다
     ...orderMarks.filter(m => m.order !== lockedOrder)
                  .map(m => btn(`revert${m.order}`, `${m.order}점으로 되돌리기`)),
+    '<span class="sep"></span>',
+    btn("obj", "OBJ", false, !lifted(doc).length),
+    btn("gltf", "glTF", false, !lifted(doc).length),
+    btn("json", "JSON", false, !doc.strokes.length),
     btn("clear", "비우기"),
   ].join("");
 }
@@ -1332,6 +1383,8 @@ function renderStatus() {
   }
   for (const w of r.warnings) rows.push(`<div class="${w.level}">${w.text}</div>`);
   if (note) rows.push(`<div class="note">${note}</div>`);
+  // **저장 상태를 화면이 읽는다**(PITFALLS #18 — 써 놓고 안 읽는 필드를 만들지 않는다)
+  if (saveNote) rows.push(`<div class="dim">${saveNote}</div>`);
   // **승격 요약은 맨 위에 둔다**(§6.2) — 아래에 있으면 상태 줄에 묻혀 "눈에 띄게"가 안 된다
   statusEl.innerHTML = md(renderPromoteReport() + rows.join(""));
 }
@@ -1390,11 +1443,33 @@ barEl.addEventListener("click", (e) => {
     if (sn) { restoreSnap(sn); note = ""; }
   } else if (act === "relink") relinkLostSnaps();
   else if (act.startsWith("revert")) revertToOrder(Number(act.slice(6)));
+  else if (act === "obj" || act === "gltf" || act === "json") {
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    const nameOf = (id: string) => doc.views.find(v => v.id === id)?.name ?? id;
+    if (act === "json") {
+      // **자체 형식** — 뷰 목록과 **2D 레이어까지** 담는 유일한 경로다(OBJ·glTF는 3D만 낸다)
+      download(JSON.stringify(buildDoc2(), null, 2), `sketch2space-${stamp}.json`,
+               "application/json");
+      note = `JSON — 뷰 ${doc.views.length} · 획 ${doc.strokes.length}`;
+    } else {
+      const lines = linesFromDoc(doc, nameOf);
+      const r = act === "obj" ? toObj(lines, { note: "SKETCH2SPACE" })
+                              : toGltf(lines, { note: "SKETCH2SPACE" });
+      const text = act === "obj" ? (r.data as string) : JSON.stringify(r.data);
+      download(text, `sketch2space-${stamp}.${act}`,
+               act === "obj" ? "text/plain" : "model/gltf+json");
+      const pend = doc.strokes.length - lifted(doc).length;
+      note = `${act.toUpperCase()} — 선 ${r.strokes}개`
+           + (pend ? ` (2D 레이어 ${pend}획은 3D 좌표가 없어 빠집니다)` : "");
+    }
+  }
   else if (act === "clear") {
     pushUndo();
     doc = newDoc(); cam.guides = []; cam.apply(); cam.locked = false; lockedOrder = null;
     cam.acc.reset(); syncScene(); sens = []; note = "";
     orderMarks.length = 0; promoteReport = null;
+    // **저장본도 지운다** — 안 지우면 새로고침에서 방금 버린 작업이 되살아난다
+    void deleteDoc2().catch(() => { /* 저장소가 없어도 화면은 비워졌다 */ });
   }
   refresh();
 });
@@ -1452,11 +1527,32 @@ window.addEventListener("resize", () => refresh());
 document.addEventListener("visibilitychange", () => refresh());
 
 fit();
+// **자동 저장 기동과 복원**(L-D.2). 문서가 비어 있지 않을 때만 연다 —
+// 빈 문서를 열면 "비우기" 직후의 새로고침이 아무 일도 안 한 것처럼 보인다.
+saver = autosaver2(buildDoc2, 600, (ok) => {
+  saveNote = ok ? `저장됨 ${new Date().toLocaleTimeString()}` : "저장 실패(브라우저 저장소)";
+});
+window.addEventListener("pagehide", () => { void saver?.flush(); });
+getDoc2().then(d => { if (d && d.strokes.length) applyDoc2(d); })
+         .catch(() => { /* 저장소가 없어도 도구는 동작한다 */ });
+
+// **PWA — 오프라인 동작**(L-D.2). 개발 서버에서는 등록하지 않는다(HMR과 충돌한다).
+// 경로는 **상대**여야 한다 — Pages의 하위 경로에서 `/sw.js`는 남의 자리를 가리킨다.
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => { /* 오프라인 없이도 동작한다 */ });
+  });
+}
+
 refresh();
 
 // 브라우저 콘솔 진단용. 측정 하네스와 같은 픽스처를 쓰려면 여기서 문서를 꺼낸다.
 (window as unknown as Record<string, unknown>).S2S = {
   doc: () => doc, cam, stage, refresh, SIZE_HEAL,
+  // L-D.2 저장·내보내기 — **앱 경로 그대로**를 종단 확인이 부른다(#17)
+  buildDoc2, applyDoc2, saveNow: () => saver?.flush(), saveNote: () => saveNote,
+  exportObj: () => toObj(linesFromDoc(doc, id => doc.views.find(v => v.id === id)?.name ?? id)),
+  exportGltf: () => toGltf(linesFromDoc(doc, id => doc.views.find(v => v.id === id)?.name ?? id)),
   // L-B.3 — 종단 확인이 스냅을 앱 경로 그대로 부른다(PITFALLS #17)
   snap: (p: Pt2) => {
     const sc = snapCtx(); const g = snapSegs();

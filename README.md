@@ -149,6 +149,51 @@ HTTP로 뜬다. **Wake Lock과 마이크는 동작하지 않는다**(secure cont
 
 ---
 
+## 1.5 배포와 원격 접속 (L-D.2)
+
+**계산이 전부 브라우저에서 돈다 — 서버가 필요 없다.** 그래서 정적 호스팅만으로 동작하고,
+**PC가 꺼져 있어도 아이패드에서 열린다**(같은 네트워크일 필요도 없다).
+
+### 정적 배포 (GitHub Pages)
+
+`.github/workflows/pages.yml`이 `main`/`master` 푸시에 빌드→배포한다.
+빌드 전에 `tsc`와 `vitest`를 돌리므로 **깨진 것은 안 올라간다**.
+
+빌드는 **상대 경로**(`base: "./"`)를 쓴다 — Pages의 하위 경로(`/<repo>/`)든 루트든
+그대로 열리고 리포지토리 이름을 어디에도 안 박는다. 다른 base가 필요하면:
+
+```bash
+cd web && S2S_BASE=/my-path/ npm run build
+```
+
+**확인은 자동이다**: `web/e2e/static_deploy.spec.ts`가 빌드본을 **하위 경로에 올려**
+① 열리는지 ② 서비스 워커가 그 경로를 scope로 잡는지 ③ **오프라인 새로고침에서도 뜨는지**를
+실제로 잰다. 로컬에서 같은 확인:
+
+```bash
+cd web && npm run build && npx playwright test e2e/static_deploy.spec.ts
+```
+
+⚠ 배포 URL은 리포지토리 설정(Settings → Pages)을 켠 뒤 정해진다 — 정해지면 여기 적는다.
+
+### 개발 중 원격 접속 — cloudflared (권장)
+
+```bash
+cloudflared tunnel --url https://localhost:5173
+```
+
+같은 망이 아니어도 접속되고 **HTTPS가 자동으로 붙는다** — 자체 서명 인증서 경고가 사라지고
+Wake Lock·마이크 권한이 정상 동작한다(secure context가 성립한다).
+출력되는 `https://<임의>.trycloudflare.com` 주소를 아이패드에서 연다.
+`npm run dev:http`(HTTP)로 띄웠다면 `--url http://localhost:5173`으로 준다.
+
+### 대안 — LAN + 자체 서명 (기존 절차)
+
+같은 Wi-Fi에서만 되고 인증서 경고를 넘겨야 한다. 절차는 1절에 그대로 있다.
+**cloudflared가 안 될 때의 폴백**으로 남긴다.
+
+---
+
 ## 2. iPad 동작 점검 목록
 
 실기에서 확인할 항목.

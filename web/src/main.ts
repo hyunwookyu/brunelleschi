@@ -969,14 +969,14 @@ document.getElementById("export")!.addEventListener("click", () => {
 const stamp = () => new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
 
 document.getElementById("exp-obj")!.addEventListener("click", () => {
-  const r = toObj(drawn, { colorOf, note: `내보낸 시각 ${new Date().toISOString()}` });
+  const r = toObj(drawn, { colorOf: (x) => colorOf(x as unknown as Stroke), note: `내보낸 시각 ${new Date().toISOString()}` });
   if (!r.strokes) { msgEl.textContent = "3D에 놓인 획이 없습니다"; return; }
   download(r.data, `sketch2space-${stamp()}.obj`, "text/plain");
   msgEl.textContent = `OBJ — 폴리라인 ${r.strokes}개 · 점 ${r.points}개`
     + (r.skippedUnplaced ? ` (미배치 ${r.skippedUnplaced}개는 3D 좌표가 없어 빠집니다)` : "");
 });
 document.getElementById("exp-gltf")!.addEventListener("click", () => {
-  const r = toGltf(drawn, { colorOf, note: "SKETCH2SPACE" });
+  const r = toGltf(drawn, { colorOf: (x) => colorOf(x as unknown as Stroke), note: "SKETCH2SPACE" });
   if (!r.strokes) { msgEl.textContent = "3D에 놓인 획이 없습니다"; return; }
   download(JSON.stringify(r.data), `sketch2space-${stamp()}.gltf`, "model/gltf+json");
   msgEl.textContent = `glTF — 선 ${r.strokes}개 · 점 ${r.points}개`
@@ -1339,6 +1339,6 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
   // **S-9 저장·내보내기** — S-10 Playwright가 왕복(저장 → 다시 열기)을 확인한다.
   buildDoc, applyDoc, userPlaced, saveNow: () => saver?.flush(),
   diag: diagInfo, setDiag: (on: boolean) => { if (on !== diagOn) document.getElementById("diag")!.click(); },
-  exportObj: () => toObj(drawn, { colorOf }),
-  exportGltf: () => toGltf(drawn, { colorOf }),
+  exportObj: () => toObj(drawn, { colorOf: (x) => colorOf(x as unknown as Stroke) }),
+  exportGltf: () => toGltf(drawn, { colorOf: (x) => colorOf(x as unknown as Stroke) }),
 };

@@ -1,0 +1,202 @@
+// L-D.2 **저장·복원 v2** — 뷰 목록과 **뷰별 2D 획**을 담는다.
+//
+// 착수 시 `PITFALLS.md` 최근 다섯을 읽었다. 걸리는 것: **#36**(비율 계산 없음 — 여기는 개수만
+// 센다), **#34**(옛 v1 경로가 같은 DB를 쓰므로 함께 확인한다).
+//
+// v1(`store.ts`)과 무엇이 다른가:
+//   v1은 `Stroke[]` 하나였고 **뷰가 없었다**. L의 문서는 `DocState` — 뷰가 2D 획의 **소유자**다
+//   (`docs/line_plan.md` §9.1). 뷰를 안 담으면 **2D 레이어가 통째로 사라진다**: `viewRef`가
+//   가리킬 뷰가 없어 어느 시점에서 그린 것인지 잃고, 그 획은 다시 그릴 수도 없다.
+//
+// **담는 것**: 뷰 목록(자세 포함) · 획 전부(`pts2d` 원본 · `seg3d` · 축 · 사용자 축 · 스냅 출처) ·
+// 카메라 제약 **입력 그대로** · 현재 뷰 · id 시퀀스.
+// **안 담는 것**: 실행 취소 이력(세션 안의 것) · 파생 기하(3D는 `seg3d`가 이미 결과다).
+import type { Pt2 } from "../s3d/camera.js";
+import type { Vec3 } from "../s3d/geom3d.js";
+import type { Axis } from "../s3d/axis.js";
+import type { ViewPose } from "../s3d/viewCamera.js";
+import type { AccumulatorDump } from "../s3d/constraints.js";
+import type { DocState, SStroke, SView, SnapRef } from "./doc.js";
+
+export const DOC2_FORMAT = "s2s-doc/2";
+
+export interface Doc2 {
+  format: typeof DOC2_FORMAT;
+  /** ISO 문자열. **호출자가 넣는다** — 저장 코드가 시각을 만들지 않는다(재현성 규칙). */
+  at: string;
+  /** 저장할 때의 캔버스 크기(px). 열 때 다르면 **좌표를 늘리지 않고 알린다**. */
+  imgSize: [number, number];
+  /** 카메라 제약 **입력 그대로**(푼 결과가 아니다 — 열어서 이어 조정할 수 있어야 한다). */
+  cam: AccumulatorDump | null;
+  /** 카메라가 확정됐는가. `false`면 아직 2D 단계다. */
+  locked: boolean;
+  /** 지금 몇 점 투시인가(차수). 승격 이력의 현재 상태다. */
+  order: number;
+  views: { id: string; name: string; pose: ViewPose | null; seq: number }[];
+  currentView: string;
+  strokes: {
+    id: string;
+    pts2d: number[][];
+    viewRef: string;
+    seg3d: [number[], number[]] | null;
+    axis: Axis;
+    userAxis: boolean;
+    snapStart: SnapRef | null;
+    color?: string;
+    width?: number;
+  }[];
+  /** id 시퀀스. 이어받지 않으면 새 획이 불러온 획과 **id가 겹친다**(v1에서 실제로 겪었다). */
+  seq: { stroke: number; view: number };
+}
+
+export interface Doc2Source {
+  at: string;
+  imgSize: [number, number];
+  cam: AccumulatorDump | null;
+  locked: boolean;
+  order: number;
+  doc: DocState;
+  seq: { stroke: number; view: number };
+}
+
+/** 앱 상태 → 저장 문서. **순수 함수다** — IndexedDB 없이 테스트한다. */
+export function serializeDoc2(s: Doc2Source): Doc2 {
+  return {
+    format: DOC2_FORMAT,
+    at: s.at,
+    imgSize: [s.imgSize[0], s.imgSize[1]],
+    cam: s.cam,
+    locked: s.locked,
+    order: s.order,
+    views: s.doc.views.map(v => ({
+      id: v.id, name: v.name, seq: v.seq,
+      pose: v.pose ? { R: v.pose.R.map(r => [...r] as Vec3) as [Vec3, Vec3, Vec3],
+                       C: [...v.pose.C] as Vec3 } : null,
+    })),
+    currentView: s.doc.currentView,
+    strokes: s.doc.strokes.map(t => ({
+      id: t.id,
+      pts2d: t.pts2d.map(p => [p[0], p[1]]),
+      viewRef: t.viewRef,
+      seg3d: t.seg3d ? [[...t.seg3d[0]], [...t.seg3d[1]]] : null,
+      axis: t.axis,
+      userAxis: t.userAxis,
+      snapStart: t.snapStart ? { ...t.snapStart, at: [...t.snapStart.at] as Vec3 } : null,
+      color: t.color,
+      width: t.width,
+    })),
+    seq: { ...s.seq },
+  };
+}
+
+export interface Restored2 {
+  doc: DocState;
+  cam: AccumulatorDump | null;
+  locked: boolean;
+  order: number;
+  imgSize: [number, number];
+  seq: { stroke: number; view: number };
+}
+
+/** 저장 문서 → 앱 상태. **배치를 다시 돌리지 않는다** — `seg3d`가 화면에 있던 그것이다. */
+export function restoreDoc2(d: Doc2): Restored2 {
+  const views: SView[] = d.views.map(v => ({
+    id: v.id, name: v.name, seq: v.seq,
+    pose: v.pose ? { R: v.pose.R.map(r => [...r] as Vec3) as [Vec3, Vec3, Vec3],
+                     C: [...v.pose.C] as Vec3 } : null,
+  }));
+  const strokes: SStroke[] = d.strokes.map(t => ({
+    id: t.id,
+    pts2d: t.pts2d.map(p => [p[0], p[1]] as Pt2),
+    viewRef: t.viewRef,
+    seg3d: t.seg3d ? [[...t.seg3d[0]] as Vec3, [...t.seg3d[1]] as Vec3] : null,
+    axis: t.axis,
+    userAxis: !!t.userAxis,
+    snapStart: t.snapStart ?? null,
+    color: t.color,
+    width: t.width,
+  }));
+  // **없는 뷰를 가리키는 획을 남기지 않는다** — 그 획은 어디에도 안 그려지고 조용히 사라진다.
+  const known = new Set(views.map(v => v.id));
+  const home = views.find(v => v.pose === null) ?? views[0];
+  for (const t of strokes) if (!known.has(t.viewRef)) t.viewRef = home.id;
+  const current = known.has(d.currentView) ? d.currentView : home.id;
+
+  // **id는 문서의 값과 실제 id 중 큰 쪽**을 따른다(손으로 고친 문서에서도 안 겹치게).
+  let sSeq = d.seq?.stroke ?? 0, vSeq = d.seq?.view ?? 0;
+  for (const t of strokes) { const m = /^s(\d+)$/.exec(t.id); if (m) sSeq = Math.max(sSeq, +m[1]); }
+  for (const v of views) { const m = /^v(\d+)$/.exec(v.id); if (m) vSeq = Math.max(vSeq, +m[1]); }
+
+  return { doc: { strokes, views, currentView: current },
+           cam: d.cam ?? null, locked: !!d.locked, order: d.order ?? 1,
+           imgSize: d.imgSize, seq: { stroke: sSeq, view: vSeq } };
+}
+
+/** 형식 검사 — 남의 JSON이나 v1 문서를 조용히 열지 않는다. */
+export function isDoc2(v: unknown): v is Doc2 {
+  const d = v as Doc2 | null;
+  return !!d && d.format === DOC2_FORMAT && Array.isArray(d.strokes) && Array.isArray(d.views)
+         && d.views.length > 0;
+}
+
+// ---------------------------------------------------------------- IndexedDB
+
+const DB_NAME = "sketch2space";
+const DB_VERSION = 1;
+const STORE = "docs";
+/** v2 자동 저장 슬롯. **v1과 키를 나눈다** — 같은 키를 쓰면 옛 앱이 새 문서를 못 읽고 지운다. */
+export const CURRENT2 = "current2";
+
+function open(): Promise<IDBDatabase> {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+    };
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function tx<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+  return open().then(db => new Promise<T>((res, rej) => {
+    const t = db.transaction(STORE, mode);
+    const req = fn(t.objectStore(STORE));
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+    t.oncomplete = () => db.close();
+  }));
+}
+
+export const putDoc2 = (doc: Doc2, key = CURRENT2): Promise<unknown> =>
+  tx("readwrite", s => s.put(doc, key));
+export const getDoc2 = (key = CURRENT2): Promise<Doc2 | null> =>
+  tx<Doc2 | undefined>("readonly", s => s.get(key)).then(v => (isDoc2(v) ? v : null));
+export const deleteDoc2 = (key = CURRENT2): Promise<unknown> =>
+  tx("readwrite", s => s.delete(key));
+
+/**
+ * **자동 저장기**. 마지막 변경에서 `delay`ms 쉬면 한 번 쓴다.
+ * 저장 실패는 **작업을 막지 않는다**(사파리 프라이빗처럼 IndexedDB가 없는 환경이 있다).
+ */
+export function autosaver2(build: () => Doc2, delay = 600,
+                           onDone?: (ok: boolean, err?: unknown) => void) {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let running = false, again = false;
+  const flush = async () => {
+    if (running) { again = true; return; }
+    running = true;
+    try { await putDoc2(build()); onDone?.(true); }
+    catch (e) { onDone?.(false, e); }
+    finally { running = false; if (again) { again = false; void flush(); } }
+  };
+  return {
+    schedule() {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => { timer = null; void flush(); }, delay);
+    },
+    flush,
+    get pending() { return timer !== null; },
+  };
+}

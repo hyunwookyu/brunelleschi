@@ -61,6 +61,20 @@ let viewSeq = 0;
 /** 테스트가 id를 예측할 수 있게 되돌린다. **앱에서는 부르지 않는다.** */
 export function resetDocSeq(): void { strokeSeq = 0; viewSeq = 0; }
 
+/** 지금까지 나간 번호(저장에 담는다, L-D.2). */
+export const docSeq = (): { stroke: number; view: number } =>
+  ({ stroke: strokeSeq, view: viewSeq });
+
+/**
+ * **저장된 문서를 열 때 번호를 이어 받는다**(L-D.2). 안 하면 새 획이 `s1`부터 다시 나가고
+ * **불러온 획과 id가 겹친다** — 스냅 출처(`ofId`)·`viewRef`가 id로 가리키므로 겹치면
+ * 남의 것을 가리킨다. 조용히 틀리는 종류라 테스트로 잠근다.
+ */
+export function setDocSeq(s: { stroke: number; view: number }): void {
+  strokeSeq = Math.max(strokeSeq, s.stroke);
+  viewSeq = Math.max(viewSeq, s.view);
+}
+
 export function newDoc(): DocState {
   const v = newView("확정 뷰", null);
   return { strokes: [], views: [v], currentView: v.id };
