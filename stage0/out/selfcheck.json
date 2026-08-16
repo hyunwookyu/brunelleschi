@@ -5717,7 +5717,7 @@
     },
     {
       "path": "stage_browser.json:dpr_identity_px.css_frame",
-      "val": 1.2409095402129096e-13,
+      "val": 1.4000577049868946e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
