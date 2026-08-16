@@ -51,17 +51,21 @@
 
 ### 검증 현황
 
-vitest **327/327**(57파일) · Playwright **22 통과 · 1 건너뜀 / 23**
+vitest **332 통과 · 1 건너뜀**(58파일) · Playwright **22 통과 · 1 건너뜀 / 23**
 (coords 9 · stage 12 · static_deploy 2) · pytest **71/71** · tsc·빌드 통과 ·
+**GitHub Actions 세 job 전부 초록**(`build` · `deploy` · `measure`) ·
 selfcheck **1757건 · STALE(상수) 0 · STALE(정의) 0** ·
 **상수 해시 `34db7279`** · **정의 해시 `a45078a5`** ·
-자동 검사 커버리지 훑기 3 / 인용 92 / 게이트 **9**(**값 대조 3 · 면제 6**) / 하네스 38.
+자동 검사 커버리지 훑기 **4** / 인용 91 / 게이트 **9**(**값 대조 3 · 면제 6**) / 하네스 40.
 
 ⚠ **검증 문구는 두 칸으로 적는다** — "STALE 0"만 적었다가 STALE(정의) 1건을 놓친 적이 있다(#1).
 ⚠ **면제는 통과가 아니다** — `reachability_absent` 게이트 여섯은 도달 가능성이 **미상**이고
 근거로 쓰지 않는다.
-⚠ **건너뛴 하나는 `coords`의 `[양성 채널] dpr 1`이고 의도된 것이다** —
-dpr 1에서는 ×dpr 자리가 제자리라 가를 것이 없다. **빌드본 없음이 아니다**(#32).
+⚠ **건너뛴 것의 정체를 적는다**(#32) — Playwright 쪽은 `coords`의 `[양성 채널] dpr 1`
+(dpr 1에서는 ×dpr 자리가 제자리라 **가를 것이 없다**), vitest 쪽은 `real_ink`
+(`sessions/`가 비었다). **둘 다 의도된 것이고 빌드본 없음이 아니다.**
+⚠⚠ **CI에서는 vitest 건너뜀이 셋이다** — `data/quickdraw`가 없어 `one_stroke_one_axis`·
+`bend_share`가 더 건너뛴다. **통과로 세지 않는다**(`web/test/dataDeps.ts`).
 ⚠⚠ **벽시계 수치(지연·복원 ms)를 문서에 인용하지 않는다** — 같은 기계에서도
 2.1↔2.2ms · 1152↔1175ms로 흔들려 **문서가 곧 낡는다**(실제로 낡았다). 판정은 자릿수이고
 값은 `stage_browser.json`의 `l_d3`에 있다.
@@ -88,6 +92,7 @@ dpr 1에서는 ×dpr 자리가 제자리라 가를 것이 없다. **빌드본 �
 | **#41 신설**(사람 지시) | 중단 조건에 걸렸다고 적었으면 실제로 멈춘다 |
 | **삭제 리뷰어 16건**(높음 4) | **셋이 내 쪽이 틀렸다** — `[회귀]` 팔이 #21이 아니었고(#30이다), "보호가 `stage.spec`으로 옮겨졌다"가 틀렸고, **#40의 규칙을 바로 다음 항목이 어겼다** |
 | **L-D.4 문서** | 이름 반영 · `QUESTIONS.md` 신설 · `PROTOTYPE.md` §5 · README를 L 기준으로 다시 씀 · D-L33~D-L36 |
+| **CI 실패 고침**(사람 지시) | 외부 데이터 의존을 **`test/dataDeps.ts` 등록처**로 묶고(건너뛰되 **통과로 안 센다**), `pages.yml`에서 **배포와 측정을 갈랐다**. **Pages가 배포됐다** |
 
 ## L이 남긴 사실 — **판정의 단일 출처는 `assumptions.md`다**
 
@@ -113,6 +118,9 @@ AS-L1~AS-L12에 반증과 조건이 전부 있고, 각 항목의 과정은 `prog
 
 ## ✋ 브라우저에서 보는 절차
 
+**배포본**: <https://hyunwookyu.github.io/brunelleschi/> (설치 없이 바로 열린다)
+
+로컬:
 ```bash
 cd web && npm run dev:5222
 ```
@@ -141,6 +149,12 @@ python -m pytest tests/ -q && python selfcheck.py
 ⚠ **`playwright` 앞에 `npm run build`를 넣는다** — `dist/`가 낡으면 `static_deploy`가 실패한다.
 `camera_gate`가 103초 · `horizon`이 160초 걸린다.
 
+**외부 데이터가 있어야 하는 자리에서 조용히 건너뛰지 않게** 하려면:
+```bash
+cd web && S2S_REQUIRE_DATA=1 npx vitest run
+```
+그 모드는 **건너뛰기를 실패로 바꾼다**(`test/dataDeps.ts`). CI는 그 플래그 없이 돈다.
+
 ## 미해소 (전문은 `DEFERRED.md`)
 
 - **실획 표본이 0이다**(AS-C1). 위 "다음에 할 일"이 그것이다
@@ -151,8 +165,9 @@ python -m pytest tests/ -q && python selfcheck.py
   사라졌고 "`stage.spec`으로 옮겨졌다"는 **철회했다**(D-L35)
 - **`Math.max(1, n)`이 12개 하네스 70곳에 남아 있다** — **D-L21 재개 전에**
   `promote`·`axis_live`의 53곳을 먼저 가른다
-- **배포 URL이 아직 없다** — Settings → Pages를 켜야 정해진다.
-  `pages.yml`은 **아직 한 번도 실행되지 않았다**
+- ~~배포 URL이 없다~~ **배포됐다**: <https://hyunwookyu.github.io/brunelleschi/>
+  (2026-08-16 첫 실행, 세 job 전부 초록). ⚠ **실제 Pages의 동작 확인은 원장 밖 관측이다** —
+  `static_deploy.spec.ts`는 여전히 **로컬 정적 서버**를 잰다
 - **저장소 디렉토리 이름이 `SKETCH2SPACE`다** — `brunelleschi`로 바꾸는 것은 사람이 한다
 - **v1 저장을 열 수단이 없다** — 옛 UI를 지웠다. 데이터는 `current` 키에 그대로 있으므로
   읽는 스크립트를 한 번 짜면 된다(D-L29)

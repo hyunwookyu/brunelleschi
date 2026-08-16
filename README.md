@@ -145,9 +145,23 @@ HTTP로 뜬다. **Wake Lock과 마이크는 동작하지 않는다**(secure cont
 
 ### 정적 배포 (GitHub Pages)
 
-`.github/workflows/pages.yml`이 `main`/`master` 푸시에 빌드→배포한다.
-빌드 전에 `tsc`와 `vitest`를 돌리도록 **적혀 있다** — ⚠ **아직 한 번도 실행되지 않았다**
-(Settings → Pages를 켜야 돈다). 첫 배포 뒤에 "보장"으로 바꾼다(#32의 거울상을 피한다).
+## ▶ **배포본**: <https://hyunwookyu.github.io/brunelleschi/>
+
+`.github/workflows/pages.yml`이 `main` 푸시에 빌드→배포한다. **2026-08-16에 처음 실행됐고
+셋 다 초록이다**(`build` · `deploy` · `measure`). 그 전까지 이 자리에는
+"아직 한 번도 실행되지 않았다"고 적혀 있었다 — **적힌 것과 도는 것은 다르기 때문이다**(#32의 거울상).
+
+**job을 둘로 가른다**:
+
+| job | 무엇 | 배포를 막는가 |
+|---|---|---|
+| `build` → `deploy` | `tsc` · `npm run build` · **`static_deploy.spec.ts`** | **막는다**(A-4) |
+| `measure` | `npx vitest run` 전체 | **안 막는다**(`continue-on-error`) |
+
+⚠ **측정 하네스가 배포를 막지 않는다.** `data/quickdraw`·`sessions/`가 CI에 없어
+그 둘은 **건너뛰고**, 건너뛴 사실이 vitest의 `skipped`와 작업 요약에 남는다 —
+**통과로 세지 않는다**(등록처는 `web/test/dataDeps.ts`).
+로컬에서 `S2S_REQUIRE_DATA=1`로 돌리면 **그 건너뛰기가 실패로 바뀐다.**
 
 빌드는 **상대 경로**(`base: "./"`)를 쓴다 — Pages의 하위 경로(`/<repo>/`)든 루트든
 그대로 열리고 리포지토리 이름을 어디에도 안 박는다. 다른 base가 필요하면:
@@ -167,8 +181,9 @@ cd web && S2S_BASE=/my-path/ npm run build
 cd web && npm run build && npx playwright test e2e/static_deploy.spec.ts
 ```
 
-⚠ **배포 URL은 아직 없다** — 리포지토리 설정(Settings → Pages)을 켜야 정해진다.
-켜면 `https://<사용자>.github.io/brunelleschi/`가 되고, 그때 이 줄을 그 주소로 바꾼다.
+**배포본에서 확인한 것**(2026-08-16, 브라우저 실측 — ⚠ **원장 밖 관측이다**):
+`/brunelleschi/`와 `/brunelleschi/l.html` 둘 다 **200** · `window.S2S`가 서고 도구 막대가 뜬다 ·
+서비스 워커가 **`/brunelleschi/`를 scope로** 잡고 페이지를 제어한다 · 콘솔 오류 0.
 **루트로 들어와도 열린다** — `public/index.html`이 `l.html`로 보낸다(UI가 아니라 리다이렉트 한 장이다).
 
 ### 개발 중 원격 접속 — cloudflared (권장)
