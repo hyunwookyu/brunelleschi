@@ -9171,7 +9171,7 @@
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 9,
+        ".md": 10,
         ".py": 2,
         ".ts": 6
       }
@@ -9229,7 +9229,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 97,
+      "targets": 98,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
