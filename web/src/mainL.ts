@@ -88,15 +88,16 @@ let live: { anchor: SnapCand; axis: 0 | 1 | 2 | null; deg: number | null;
             /** **모호 구간에 들어갔는가**(사람 지시 3-f) — 화면에 짧게 표시한다. */
             ambiguous: boolean; tied: number[] } | null = null;
 /**
- * **축 고정**(L-B.5, §4). SketchUp을 그대로 따른다(A-3) —
- * `Shift`는 **지금 추론된 축**을 누르는 동안 잠그고, 화살표는 특정 축을 토글한다.
+ * **축 고정**(L-B.5, §4). **화살표가 특정 축을 토글한다** — SketchUp 그대로다(A-3).
+ * `null`이면 축 스냅에 맡긴다.
  *
- * `null`이면 추론에 맡긴다. `"infer"`는 Shift가 눌린 상태이고, 실제로 잠기는 축은
- * **그때 추론된 것**이다 — 그래서 값이 아니라 표시로 둔다.
+ * ⚠ **옛 `"infer"` 모드를 지웠다**(D-L44, 2026-08-16). 그것은 "`Shift`를 누르는 동안
+ * **지금 추론된 축**을 잠근다"였는데, **축 스냅이 언제나 도는 지금은 추론이 곧 스냅이라
+ * 잠글 것이 없다.** `Shift`의 뜻은 **그 획만 자유**로 바뀌었다(`freeStroke`).
+ * 코드에는 그 모드가 죽은 채 남아 있었고 상태 줄이 아직 "Shift 추론 축"이라 적고 있었다 —
+ * 화면 안내와 실제가 갈린 자리다.
  */
-let axisLock: 0 | 1 | 2 | "infer" | null = null;
-/** Shift가 실제로 잠근 축. 뗄 때까지 유지한다. */
-let shiftHeld: 0 | 1 | 2 | null = null;
+let axisLock: 0 | 1 | 2 | null = null;
 /**
  * **축 스냅 — 라이노 직교 모드**(사람 지시 1). 기본은 **켬**이고 토글로 끈다.
  * 객체로 두는 이유는 종단 확인이 `S2S`로 읽고 쓰기 때문이다(#17: 앱 경로 하나).
@@ -377,14 +378,13 @@ function resolveLive(c: PlaceCtx, at: Vec3, a2: Pt2, b2: Pt2) {
 }
 
 /**
- * 지금 잠긴 축. 화살표가 축을 직접 고른다(SketchUp 그대로).
+ * 지금 잠긴 축. **화살표가 축을 직접 고른다**(SketchUp 그대로).
  *
- * ⚠ **`Shift`의 뜻이 바뀌었다**(2026-08-16) — 옛 판은 "추론된 축을 잠근다"였는데
- * **축 스냅이 언제나 도므로 그 잠금이 하는 일이 없어졌다.** 지금 `Shift`는
- * **그 획만 자유**(축 강제 없음)다 — 라이노 직교 모드에서 수정자가 하는 일과 같다(A-3).
+ * ⚠ **`Shift`는 여기 없다**(D-L44) — 그 키는 축을 잠그는 것이 아니라 **그 획만 자유**로
+ * 푸는 수정자다(`freeStroke`, 라이노 직교 모드의 수정자와 같은 자리, A-3).
  */
 function lockedAxis(): 0 | 1 | 2 | null {
-  return axisLock === "infer" ? null : axisLock;
+  return axisLock;
 }
 
 /**
@@ -1296,12 +1296,8 @@ const ink = new InkCanvas(canvas, {
     const segs = snapSegs(fr.toV);
     const anchor = live?.anchor ?? snapAt(a0, segs, sc, {}, snapStatic(segs));
     if (!anchor) { live = null; refresh(); return; }
-    // Shift가 눌린 상태면 **처음 추론된 축**을 잡아 둔다(SketchUp과 같다)
-    if (axisLock === "infer" && shiftHeld == null) {
-      const dirs = axisDirs(c);
-      const n0 = nearestAxisOnScreen(anchor.at, dirs, anchor.screen, b0, c);
-      if (n0 && n0.deg <= LIVE_TOL.axis_deg) shiftHeld = n0.axis;
-    }
+    // ⚠ **옛 판은 여기서 `Shift`가 잡은 축을 기억했다**(`shiftHeld`) — D-L44로 그 뜻이
+    // 바뀌면서 죽은 코드가 됐고 지웠다. 지금 `Shift`는 `freeStroke`이고 `resolveLive`가 본다
     const r = resolveLive(c, anchor.at, anchor.screen, b0);
     // **미리보기는 세계 좌표로 낸다** — 3D 층이 세계에서 그리기 때문이다(L-B.8)
     live = { anchor, axis: r.axis, deg: r.deg,
@@ -1645,10 +1641,9 @@ function renderStatus() {
           + ` <span class="dim">(${hoverSnap.dist.toFixed(0)}px)</span>`
         : ' <span class="dim">(커서 아래 대상 없음)</span>') + "</div>");
     const lk = lockedAxis();
-    if (axisLock != null) {
-      rows.push(`<div>축 고정 <b>${axisLock === "infer" ? "Shift" : `축${(axisLock as number) + 1}`}</b>`
-        + (lk != null ? ` → <b style="color:${AXIS_COLOR[lk]}">축${lk + 1}</b>` : "")
-        + ` <span class="dim">(← 축1 · → 축2 · ↑ 축3 · Shift 추론 축 · Esc 해제)</span></div>`);
+    if (lk != null) {
+      rows.push(`<div>축 고정 <b style="color:${AXIS_COLOR[lk]}">축${lk + 1}</b>`
+        + ` <span class="dim">(← 축1 · → 축2 · ↑ 축3 · 같은 키를 다시 눌러 해제 · Esc 해제)</span></div>`);
     }
     // **축 스냅이 도는가**(사람 지시 1-d). 색이 축을 말하고, 이 줄이 상태를 말한다
     rows.push(`<div>축 스냅 <b>${AXIS_SNAP.on ? "켬" : "끔"}</b>`
@@ -1818,11 +1813,10 @@ window.addEventListener("keydown", (e) => {
   if (ax != null) {
     e.preventDefault();
     axisLock = axisLock === ax ? null : ax;      // 다시 누르면 푼다
-    shiftHeld = null;
     relive();
     return;
   }
-  if (e.key === "Escape" && axisLock != null) { axisLock = null; shiftHeld = null; relive(); }
+  if (e.key === "Escape" && axisLock != null) { axisLock = null; relive(); }
 });
 window.addEventListener("keyup", (e) => {
   if (e.key === "Shift" && freeStroke) { freeStroke = false; relive(); }
@@ -1886,7 +1880,7 @@ refresh();
   hoverSnap: () => hoverSnap,
   live: () => live,
   axisLock: () => ({ mode: axisLock, resolved: lockedAxis() }),
-  setAxisLock: (a: 0 | 1 | 2 | "infer" | null) => { axisLock = a; shiftHeld = null; relive(); },
+  setAxisLock: (a: 0 | 1 | 2 | null) => { axisLock = a; relive(); },
   // L-B.6 — 뷰 시스템(§9.2~§9.4). **앱 경로 그대로**를 종단 확인이 부른다(#17)
   views: () => doc.views.map(v => ({ id: v.id, name: v.name, seq: v.seq,
                                      isConfirm: v.pose === null,
