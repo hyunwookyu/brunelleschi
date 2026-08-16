@@ -8127,7 +8127,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 92,
+      "targets": 95,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다(반례 픽스처·폐기 문서)"
     },
