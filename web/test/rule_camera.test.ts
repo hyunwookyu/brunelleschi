@@ -383,7 +383,7 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
           + "다른 게이트이고 같은 말로 부르지 않는다(PITFALLS #41).",
       }),
       constants: constantsSnapshot(),
-      metrics: metricsSnapshot(),
+      metric_defs: metricsSnapshot(),
     };
     mkdirSync(OUT, { recursive: true });
     writeFileSync(resolve(OUT, "rule_camera.json"), JSON.stringify(out, null, 2));

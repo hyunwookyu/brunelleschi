@@ -19,6 +19,9 @@ export default defineConfig({
     viewport: { width: 1440, height: 900 },
     deviceScaleFactor: 1,
     trace: "off",
+    // **컨테이너에 이 판이 쓰는 브라우저 빌드가 없을 수 있다** — 있으면 그것을 쓴다.
+    // 없으면 이 줄은 `undefined`라 기본 동작이다(로컬·CI에서 동작이 안 바뀐다).
+    launchOptions: { executablePath: process.env.PW_EXECUTABLE || undefined },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {

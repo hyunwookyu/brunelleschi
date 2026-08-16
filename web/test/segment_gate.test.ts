@@ -11,7 +11,7 @@
 // | 조용히 틀린 배치 | 0.057 / 0.655 | 하락 |
 //
 // **판정 계층은 그대로다**(§7.1) — `classifyStroke`를 같은 설정으로 쓴다. 그래야 갈리는 것이
-// **기하 계층뿐**임이 보장된다. 옛 값은 `fix_load.json@34db7279`에서 온다(재실행 없이 인용).
+// **기하 계층뿐**임이 보장된다. 옛 값은 `fix_load.json@5955b34c`에서 온다(재실행 없이 인용).
 //
 // _"돌린 시점"은 G-B 이후 개념이 사라지지만(뷰포트가 하나가 된다), **대조를 위해** 옛 방식대로
 // 첫 시점에서 상자를 세우고 돌린 카메라에서 이어 그린다. 조건을 바꾸면 비교가 무의미해진다._
@@ -42,7 +42,7 @@ const VIEW_FOV = 45;
 const END_JITTER = 0.01;          // **옛 측정과 같은 동작점**(1%)
 const rate = (k: number, n: number) => (n ? +(k / n).toFixed(4) : null);
 
-/** 옛 값 — `fix_load.json@34db7279`(사용자 모형 `nearest`). 재실행 없이 인용한다. */
+/** 옛 값 — `fix_load.json@5955b34c`(사용자 모형 `nearest`). 재실행 없이 인용한다. */
 const OLD = {
   first: { placed: 0.8463, silentWrong: 0.0569, diagMisassign: 0.158 },
   view45: { placed: 0.4185, silentWrong: 0.6549 },
@@ -220,7 +220,7 @@ describe("G-A.1 중간 판정 — 세그먼트 기하가 옛 배치 계층보다
           + "측정 전에 박았다(#26).",
         reachability: "**옛 값이 같은 판정 계층에서 나왔다** — `classifyStroke`를 같은 설정으로 쓰므로 "
           + "갈리는 것이 기하 계층뿐임이 보장되고, 그래서 대조가 도달 가능성의 자리다"
-          + "(`fix_load.json@34db7279`, 재실행 없이 인용). ⚠ **다른 하네스의 값이므로 대역으로 "
+          + "(`fix_load.json@5955b34c`, 재실행 없이 인용). ⚠ **다른 하네스의 값이므로 대역으로 "
           + "쓰지 않는다**(#27) — 자릿수 대조다.",
         // ⚠⚠ **초판은 0.8463(`old/first/placed`)을 적었는데 그것은 판정의 기준선 그 자체다** —
         // `camera_gate`가 "`deg_0`가 정의상 1.0배"로 ❌ 받은 것과 **같은 구조**이고,
@@ -248,7 +248,7 @@ describe("G-A.1 중간 판정 — 세그먼트 기하가 옛 배치 계층보다
         classifier: "옛 측정과 **같은 판정 설정**(첫 시점 기본, 돌린 시점 `VIEW_AXIS_CFG`) — "
           + "갈리는 것이 기하 계층뿐임을 보장한다",
         cross_tol_sweep: TOLS,
-        old_values_from: "fix_load.json@34db7279 (사용자 모형 nearest). 재실행 없이 인용한다.",
+        old_values_from: "fix_load.json@5955b34c (사용자 모형 nearest). 재실행 없이 인용한다.",
         single_composition_warning: "구도가 하나뿐이다(AS-13).",
       },
       old: OLD,

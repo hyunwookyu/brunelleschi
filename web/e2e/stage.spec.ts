@@ -47,6 +47,7 @@ async function setup(page: Page, opts: { boxes?: 1 | 2 } = {}) {
     const S = window.S2S;
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
     const m = await import("/test/scene3d.ts");
+    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 하네스가 화면 밖 소실점으로 직선을 만드는 데만 쓴다
     const doc = await import("/src/ui/doc.ts");
 
     const el = document.getElementById("ink") as HTMLCanvasElement;
@@ -150,15 +151,23 @@ test("단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다", asyn
   led.offcenter_principal = await page.evaluate(() => {
     const S = window.S2S;
     S.cam.locked = false;
-    const g = S.cam.rules.slots;
-    g[0] = { axis: g[0].axis, a: [g[0].a[0] + 26, g[0].a[1] - 34], b: g[0].b };
-    g[4] = { axis: g[4].axis, a: g[4].a, b: [g[4].b[0] - 18, g[4].b[1] + 12] };
-    S.cam.apply();
+    // **소실점을 옮겨 수심(= 주점)을 화면 중심 밖으로 보낸다**(이론서 6.3).
+    // 옛 판은 가이드 핸들을 밀었다 — 가이드가 없어졌으므로(D-L37) 소실점을 직접 민다.
+    const r = S.cam.dumpRules();
+    // ⚠ **수평 소실점을 미는 것으로는 주점 x가 안 움직인다** — 롤 0에서 `V₁V₂`가 수평이면
+    // `V₃`에서 내린 수선이 수직선이라 **주점 x = `V₃.x`**다(이론서 6.3). 실제로 0이 나왔다.
+    // 그래서 **수직 소실점을 민다** — 그것이 주점을 화면 중심 밖으로 보내는 유일한 손잡이다.
+    // ⚠⚠ **왼쪽으로 민다.** `threeIntrinsics`의 `offsetX = W/2 − pₓ`이고 `W = 2·max(pₓ, w−pₓ)`라
+    // **주점이 중심보다 오른쪽이면 `offsetX`가 정확히 0이 된다** — 오른쪽으로 밀었다가 실제로
+    // 0이 나왔다. 이 스펙이 재려는 것은 `setViewOffset`이 실제로 걸리는가이므로 왼쪽이어야 한다.
+    r.slots[2].at = [r.slots[2].at[0] - 140, r.slots[2].at[1]];
+    S.cam.loadRules(r);
     const ctx = S.cam.ctx();
     S.cam.locked = true;
     S.stage.pinTo(ctx.principal, ctx.f);
     const el = document.getElementById("ink") as HTMLCanvasElement;
     return { principal: ctx.principal, canvas_center: [el.clientWidth / 2, el.clientHeight / 2],
+             vps: S.cam.vps(),
              view_offset: { ...S.stage.viewport.camera.view } };
   });
   expect(Math.abs((led.offcenter_principal as any).view_offset.offsetX)).toBeGreaterThan(1);
@@ -509,6 +518,7 @@ test.skip("가이드 조정 — 늘리기·민감도·선 끌기 (대상이 사�
   l.draft_only = await page.evaluate(async () => {
     const S = window.S2S;
     const m = await import("/test/scene3d.ts");
+    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 하네스가 화면 밖 소실점으로 직선을 만드는 데만 쓴다
     const doc = await import("/src/ui/doc.ts");
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
@@ -1224,6 +1234,7 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
     const S = window.S2S;
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
     const m = await import("/test/scene3d.ts");
+    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 하네스가 화면 밖 소실점으로 직선을 만드는 데만 쓴다
     const doc = await import("/src/ui/doc.ts");
 
     const el = document.getElementById("ink") as HTMLCanvasElement;
@@ -1260,7 +1271,7 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
   // ---- 소실점을 하나 더 잡는다 → 차수 승격
   l.promote = await page.evaluate(async () => {
     const S = window.S2S;
-
+    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 화면 밖 소실점으로 직선을 만드는 데만 쓴다
     const sc = (window as any).__SC2;
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
@@ -1348,6 +1359,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
     const S = window.S2S;
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
     const m = await import("/test/scene3d.ts");
+    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 하네스가 화면 밖 소실점으로 직선을 만드는 데만 쓴다
     const doc = await import("/src/ui/doc.ts");
 
     const el = document.getElementById("ink") as HTMLCanvasElement;
@@ -1379,7 +1391,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
       lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
       // **전체 상태를 찍어 둔다** — 되돌리기가 이것과 같아져야 한다
       ids3d: S.doc().strokes.filter((s: any) => s.seg3d).map((s: any) => s.id).sort(),
-      guides: S.camSnapshot().guides.length,
+      guides: S.camSnapshot().rules.slots.filter(Boolean).length,
       pts0: S.doc().strokes.map((s: any) => [s.id, s.pts2d[0][0], s.pts2d[0][1]]),
     };
     S.unlockGuides();
@@ -1420,7 +1432,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
     const S = window.S2S;
     document.querySelector<HTMLButtonElement>('#bar button[data-act="undo"]')!.click();
     const c = S.camSnapshot();
-    return { order: S.order(), guides: c.guides.length, locked: c.locked,
+    return { order: S.order(), guides: c.rules.slots.filter(Boolean).length, locked: c.locked,
              locked_order: c.lockedOrder,
              lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
              report_gone: S.promoteReport() === null };
@@ -1454,7 +1466,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
     });
     return {
       after_promote: afterPromote, strokes_before_revert: strokesBefore,
-      order: S.order(), guides: S.camSnapshot().guides.length,
+      order: S.order(), guides: S.camSnapshot().rules.slots.filter(Boolean).length,
       ids3d: S.doc().strokes.filter((s: any) => s.seg3d).map((s: any) => s.id).sort(),
       pts_restored, strokes: S.doc().strokes.length,
       note: document.getElementById("status")!.innerText,
@@ -1479,6 +1491,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
   l.loss_shown = await page.evaluate(async () => {
     const S = window.S2S;
     const m = await import("/test/scene3d.ts");
+    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 하네스가 화면 밖 소실점으로 직선을 만드는 데만 쓴다
     const doc = await import("/src/ui/doc.ts");
 
     const el = document.getElementById("ink") as HTMLCanvasElement;
@@ -1582,7 +1595,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
       + "빈도는 `order_undo.json`이 216장면으로 잰다(내려감 176/216 · 스냅 끊김 94/216).",
     where_in_population: "⚠ **이 픽스처는 모집단의 꼬리 쪽이다.** 스냅 끊김 4/5 = 0.80인데 "
       + "모집단은 295/1676 = **0.176**이고, 장면당 끊김은 중앙 **0** · p90 **4**다"
-      + "(`order_undo.json@34db7279`) — 즉 **p90 자리**다. "
+      + "(`order_undo.json@5955b34c`) — 즉 **p90 자리**다. "
       + "표시 경로를 지나려면 그래야 하지만, **이 수를 대표값으로 인용하면 안 된다.**",
     off_grid: "⚠ **격자 밖이 셋이다**(#12): jitter 0.04(격자 {0, 0.01, 0.03, 0.05}) · "
       + "seed 4242(격자 {1..6}) · **skew 0.37**(하네스는 0.12 — 3배다). "
@@ -1621,6 +1634,7 @@ test("고치기 — 획을 고르고, 축을 지정하고, 지운다", async ({ 
   l.setup = await page.evaluate(async () => {
     const S = window.S2S;
     const m = await import("/test/scene3d.ts");
+    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 하네스가 화면 밖 소실점으로 직선을 만드는 데만 쓴다
     const doc = await import("/src/ui/doc.ts");
 
     const el = document.getElementById("ink") as HTMLCanvasElement;
@@ -1828,6 +1842,7 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
     const S = window.S2S;
     // 2점으로 다시 세운다 — 수직 가이드를 뒤에 더해 승격을 만든다(`l_c2`와 같은 절차)
     const m = await import("/test/scene3d.ts");
+    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 하네스가 화면 밖 소실점으로 직선을 만드는 데만 쓴다
     const doc = await import("/src/ui/doc.ts");
 
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
@@ -1898,18 +1913,18 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
     const twoMarks = { marks: S.orderMarks(), buttons: [...document.querySelectorAll("#bar button")]
       .map(b => (b as HTMLElement).dataset.act).filter(a => a && a.startsWith("revert")) };
     const at3 = { lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
-                  guides: S.camSnapshot().guides.length };
+                  guides: S.camSnapshot().rules.slots.filter(Boolean).length };
     // **가장 최근 차수(3)로 되돌린다** — 3점 상태가 그대로 돌아와야 한다
     S.revertToOrder(3);
     const back3 = { order: S.order(), lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
-                    guides: S.camSnapshot().guides.length, locked: S.camSnapshot().locked };
+                    guides: S.camSnapshot().rules.slots.filter(Boolean).length, locked: S.camSnapshot().locked };
     // **그다음 2로 되돌린다** — 가이드가 둘로 줄고 차수가 2가 된다
     S.revertToOrder(2);
     const back2 = { order: S.order(), lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
-                    guides: S.camSnapshot().guides.length };
+                    guides: S.camSnapshot().rules.slots.filter(Boolean).length };
     // ⚠ **여기서 다시 승격해도 3점이 안 된다**(가이드가 되돌아갔으므로) — 못박는다
     S.promoteOrderNow();
-    const repromote = { order: S.order(), guides: S.camSnapshot().guides.length };
+    const repromote = { order: S.order(), guides: S.camSnapshot().rules.slots.filter(Boolean).length };
     return { after3, twoMarks, at3, back3, back2, repromote };
   });
   const om = l.order_marks_multi as any;

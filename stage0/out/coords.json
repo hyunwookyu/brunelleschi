@@ -46,7 +46,7 @@
       0,
       0
     ],
-    "ink_at_mid": 99,
+    "ink_at_mid": 101,
     "ink_at_scaled": 0,
     "stretch": [
       2,
@@ -106,7 +106,7 @@
     "after": 175
   },
   "constants": {
-    "hash": "34db7279",
+    "hash": "5955b34c",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -150,6 +150,12 @@
       "HORIZON_TOL": {
         "min_slope_deg": 3.75,
         "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "min_sep_deg": 3,
+        "vertical_ask_deg": 45
       },
       "DRAFT_TOL": {
         "handle_ratio": 0.018,

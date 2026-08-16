@@ -1417,7 +1417,7 @@ function renderAsk(): string {
 
 /**
  * **승격 요약**(L-C.2, §6.2). 승격은 **품질을 올리고 배치를 줄인다**(L-C.1: 형태 오차 중앙
- * 0.1259 → 0.0913 · 배치 −168, `order_promote.json@34db7279`). 어느 쪽을 택할지는
+ * 0.1259 → 0.0913 · 배치 −168, `order_promote.json@5955b34c`). 어느 쪽을 택할지는
  * 그림마다 다르고 **자동 신호가 없으므로**(AS-L6이 §6.2의 재투영 잔차를 반증했다)
  * 사용자가 정한다. 정하려면 **무엇을 잃었는지 보여야 한다.**
  *
@@ -1690,7 +1690,10 @@ saver = autosaver2(buildDoc2, 600, (ok) => {
   saveNote = ok ? `저장됨 ${new Date().toLocaleTimeString()}` : "저장 실패(브라우저 저장소)";
 });
 window.addEventListener("pagehide", () => { void saver?.flush(); });
-getDoc2().then(d => { if (d && d.strokes.length) applyDoc2(d); })
+// ⚠ **복원은 비동기라 늦게 도착한다.** 그 사이에 사용자가(또는 하네스가) 이미 그렸으면
+// **덮지 않는다** — 덮으면 방금 그린 획이 소리 없이 사라진다. 종단 확인에서 실제로 걸렸다:
+// 앞 시험의 저장본이 `setup()` 뒤에 도착해 획 12개를 통째로 갈아 치웠다(배치 0).
+getDoc2().then(d => { if (d && d.strokes.length && !doc.strokes.length) applyDoc2(d); })
          .catch(() => { /* 저장소가 없어도 도구는 동작한다 */ });
 
 // **PWA — 오프라인 동작**(L-D.2). 개발 서버에서는 등록하지 않는다(HMR과 충돌한다).
