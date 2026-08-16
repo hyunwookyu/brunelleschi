@@ -75,8 +75,8 @@ describe("저장 — 옛 저장본은 보조선으로 열린다", () => {
   it("왕복하면 채널이 그대로다", () => {
     const d = docOfThree();
     const back = restoreDoc2(serializeDoc2({
-      at: "t", imgSize: [960, 672], cam: null as never, rules: null, lensMm: null,
-      locked: false, order: 1, doc: d, seq: { stroke: 9, view: 3 },
+      at: "t", imgSize: [960, 672], cam: null as never, rules: null,
+      doc: d, seq: { stroke: 9, view: 3 },
     })).doc;
     expect(back.strokes.map(s => s.channel)).toEqual(["guide", "result", "note"]);
   });
@@ -84,8 +84,8 @@ describe("저장 — 옛 저장본은 보조선으로 열린다", () => {
   it("**채널이 없는 저장본**은 보조선이 된다 — 조용히 결과선이 되지 않는다", () => {
     const d = docOfThree();
     const wire = serializeDoc2({
-      at: "t", imgSize: [960, 672], cam: null as never, rules: null, lensMm: null,
-      locked: false, order: 1, doc: d, seq: { stroke: 9, view: 3 },
+      at: "t", imgSize: [960, 672], cam: null as never, rules: null,
+      doc: d, seq: { stroke: 9, view: 3 },
     });
     // 옛 저장본을 흉내 낸다 — 필드를 통째로 뺀다
     for (const t of wire.strokes as { channel?: string }[]) delete t.channel;

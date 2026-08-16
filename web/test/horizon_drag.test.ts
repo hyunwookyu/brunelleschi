@@ -6,7 +6,7 @@
 // D-L32가 실패한 자리다(사후 사영: 배치 2049 → 792).
 import { describe, it, expect } from "vitest";
 import {
-  newRuleState, stepRule, orderOfState, horizonAdjustable, withHorizon, defaultHorizon,
+  newRuleState, stepRule, perspectiveOrder, horizonAdjustable, withHorizon, defaultHorizon,
   type RuleState, type RLine,
 } from "../src/s3d/vpRules.js";
 import { CamState } from "../src/ui/camState.js";
@@ -74,14 +74,14 @@ describe("2점에서는 피치를 판정하지 않는다 (2026-08-17 A-4)", () =
   it("지평선이 중앙이면 2점이고 수직축은 화면 수직이다", () => {
     const st = feed(newRuleState(SZ), [DEPTH_A, DEPTH_B]);
     expect(st.horizon).toBe(CENTER);
-    expect(orderOfState(st)).toBe(2);
+    expect(perspectiveOrder(st)).toBe(2);
     expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
   });
 
   it("**회귀** — 지평선을 올려도 3점이 안 된다. 같은 두 획이면 같은 2점이다", () => {
     const st = feed(withHorizon(newRuleState(SZ), 200, SZ), [DEPTH_A, DEPTH_B]);
     expect(st.horizon).toBe(200);
-    expect(orderOfState(st)).toBe(2);
+    expect(perspectiveOrder(st)).toBe(2);
     expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
   });
 
@@ -96,7 +96,7 @@ describe("2점에서는 피치를 판정하지 않는다 (2026-08-17 A-4)", () =
     //    ② 소실점 삼각형이 **예각**이어야 한다(6.5) — V₁·V₂가 280px이므로 V₃는 지평선에서 140px 밖
     const r = stepRule(st, { a: [700, 300], b: [590, 600] }, SZ, "vertical");
     st = r.state;
-    expect(orderOfState(st)).toBe(3);
+    expect(perspectiveOrder(st)).toBe(3);
     const s2 = st.slots[2];
     expect(s2?.kind).toBe("vp");
     if (s2 && s2.kind === "vp") {
@@ -108,21 +108,16 @@ describe("2점에서는 피치를 판정하지 않는다 (2026-08-17 A-4)", () =
 });
 
 describe("지평선 끌기 — 앱 경로(CamState)", () => {
-  it("확정 전·소실점 전에는 옮겨지고, 확정되면 잠긴다", () => {
+  it("소실점 전에는 옮겨진다 (잠금 플래그가 아니라 소실점 유무가 가른다, 지시 1)", () => {
     const cam = new CamState(SZ);
     expect(cam.canSetHorizon()).toBe(true);
     expect(cam.setHorizon(210)).toBe(true);
     expect(cam.rules.horizon).toBe(210);
-    cam.locked = true;
-    expect(cam.canSetHorizon()).toBe(false);
-    expect(cam.setHorizon(300)).toBe(false);
-    expect(cam.rules.horizon).toBe(210);        // **안 바뀐다**
   });
 
-  it("**반례** — 소실점이 선 뒤에는 확정 전이어도 안 옮겨진다", () => {
+  it("**반례** — 소실점이 서면 안 옮겨진다", () => {
     const cam = new CamState(SZ);
     cam.loadRules(rulesOf([vpSlot([620, 200]), null, null], SZ));
-    expect(cam.locked).toBe(false);
     expect(cam.canSetHorizon()).toBe(false);
     expect(cam.setHorizon(400)).toBe(false);
     expect(cam.rules.horizon).toBe(200);

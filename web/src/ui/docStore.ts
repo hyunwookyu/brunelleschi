@@ -38,12 +38,11 @@ export interface Doc2 {
    * 옛 작업의 소실점을 읽는 스크립트를 나중에 짤 수 있다(D-L29와 같은 자리).
    */
   rules?: RuleState | null;
-  /** 1점 투시의 렌즈 설정(35mm 환산 mm). **측정이 아니라 설정이다.** */
+  /** ⛔ **옛 저장본에서만 온다**(2026-08-17 지시 1·2). 렌즈 경로는 폐기됐고, `locked`·`order`는
+   * **파생 상태라 더 이상 저장하지 않는다** — 차수는 `perspectiveOrder(rules)`가 계산한다. */
   lensMm?: number | null;
-  /** 카메라가 확정됐는가. `false`면 아직 2D 단계다. */
-  locked: boolean;
-  /** 지금 몇 점 투시인가(차수). 승격 이력의 현재 상태다. */
-  order: number;
+  locked?: boolean;
+  order?: number;
   views: { id: string; name: string; pose: ViewPose | null; seq: number }[];
   currentView: string;
   strokes: {
@@ -70,14 +69,12 @@ export interface Doc2Source {
   imgSize: [number, number];
   cam: AccumulatorDump | null;
   rules?: RuleState | null;
-  lensMm?: number | null;
-  locked: boolean;
-  order: number;
   doc: DocState;
   seq: { stroke: number; view: number };
 }
 
-/** 앱 상태 → 저장 문서. **순수 함수다** — IndexedDB 없이 테스트한다. */
+/** 앱 상태 → 저장 문서. **순수 함수다** — IndexedDB 없이 테스트한다.
+ * ⚠ `locked`·`order`·`lensMm`은 **더 이상 쓰지 않는다**(파생 상태 — 지시 1: 저장하지 않고 계산한다). */
 export function serializeDoc2(s: Doc2Source): Doc2 {
   return {
     format: DOC2_FORMAT,
@@ -85,9 +82,6 @@ export function serializeDoc2(s: Doc2Source): Doc2 {
     imgSize: [s.imgSize[0], s.imgSize[1]],
     cam: s.cam,
     rules: s.rules ?? null,
-    lensMm: s.lensMm ?? null,
-    locked: s.locked,
-    order: s.order,
     views: s.doc.views.map(v => ({
       id: v.id, name: v.name, seq: v.seq,
       pose: v.pose ? { R: v.pose.R.map(r => [...r] as Vec3) as [Vec3, Vec3, Vec3],
@@ -114,8 +108,6 @@ export function serializeDoc2(s: Doc2Source): Doc2 {
 export interface Restored2 {
   doc: DocState;
   cam: AccumulatorDump | null;
-  locked: boolean;
-  order: number;
   imgSize: [number, number];
   seq: { stroke: number; view: number };
 }
@@ -153,8 +145,9 @@ export function restoreDoc2(d: Doc2): Restored2 {
   for (const t of strokes) { const m = /^s(\d+)$/.exec(t.id); if (m) sSeq = Math.max(sSeq, +m[1]); }
   for (const v of views) { const m = /^v(\d+)$/.exec(v.id); if (m) vSeq = Math.max(vSeq, +m[1]); }
 
+  // ⚠ 옛 저장본의 `locked`·`order`는 **읽지 않는다** — 파생 상태이고 `rules`에서 계산된다.
   return { doc: { strokes, views, currentView: current },
-           cam: d.cam ?? null, locked: !!d.locked, order: d.order ?? 1,
+           cam: d.cam ?? null,
            imgSize: d.imgSize, seq: { stroke: sSeq, view: vSeq } };
 }
 

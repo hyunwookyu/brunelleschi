@@ -23,11 +23,10 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { detectVps, linesFromStrokes, assignAxes } from "../src/s3d/vpDetect.js";
 import { recoverCamera, isFiniteVp, type Pt2 } from "../src/s3d/camera.js";
-import { fPixelsFrom35mm } from "../src/s3d/constraints.js";
-import { DEFAULT_LENS_MM } from "../src/ui/camState.js";
+import { P1_F_RATIO } from "../src/ui/camState.js";
 import { representative } from "../src/s3d/axis.js";
 import {
-  newRuleState, stepRule, vpsOf, orderOfState, sepDeg,
+  newRuleState, stepRule, vpsOf, perspectiveOrder, sepDeg,
   type RuleState, type RLine,
 } from "../src/s3d/vpRules.js";
 import { rng32, type InkGrade } from "../src/s3d/synthInk.js";
@@ -258,7 +257,7 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
               // 안 주면 1점 구도의 실행이 통째로 "카메라 없음"이 되어 **분모에서 사라진다**(#11).
               const nF = vps.filter(v => v && isFiniteVp(v, SZ)).length;
               const cam = recoverCamera(vps, SZ,
-                nF === 1 ? { fSetting: fPixelsFrom35mm(DEFAULT_LENS_MM, SZ[0]) } : {});
+                nF === 1 ? { fSetting: P1_F_RATIO * SZ[0] } : {});   // P1 임의 f(지시 1)
               const errs = cam.ok && cam.principalPoint && cam.f != null
                 ? axisDirErrors(vps, cam.principalPoint, cam.f, fx.sc.axes) : [];
               for (const t of [arms[arm], byJitter[jk][arm], byComp[ck][arm],
@@ -332,11 +331,13 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
         jitters: JITTERS, grades: GRADES, seeds: SEEDS,
         lattice_k: 1,
         metric: "유한 소실점의 축 방향 오차(도) — `metrics.axisDirErrors`. **무한원 축은 안 센다**",
-        lens_setting_mm: DEFAULT_LENS_MM,
-        why_lens: "소실점이 하나면 자유도 1(f)이 남고 **설정으로 채운다**(이론서 5.3 · CLAUDE.md §1). "
+        p1_f_ratio: P1_F_RATIO,
+        why_lens: "소실점이 하나면 자유도 1(f)이 남고 **임의값으로 채운다**(D-L53 — P1 깊이 무차원). "
           + "안 채우면 1점 구도의 실행이 통째로 '카메라 없음'이 되어 분모에서 사라진다(#11). "
-          + "⚠ 참 f는 1000px이고 설정은 " + Math.round(fPixelsFrom35mm(DEFAULT_LENS_MM, SZ[0]))
-          + "px이라 **1점 행의 오차에는 렌즈 설정 오차가 섞여 있다** — 규칙의 오차가 아니다.",
+          + "⚠ 참 f는 1000px이고 임의 f는 " + Math.round(P1_F_RATIO * SZ[0])
+          + "px이다. **이 원장의 지표(축 방향 오차)에는 그 어긋남이 안 섞인다** — 1pt 구도의 "
+          + "축 방향은 f와 무관하고(headline_no_identity.note 그대로) 그래서 표제에서도 뺐다. "
+          + "f 어긋남이 닿는 것은 이 원장이 안 재는 깊이 배율뿐이다(리뷰어 [9] 정정).",
         why_infinite_excluded:
           "화면 평행 축의 방향은 규칙이 `(1,0,0)`·`(0,1,0)`으로 **정의**한다. 그 오차는 측정이 "
           + "아니라 항등이므로(참 장면도 롤 0이다) 표제 수치에 섞으면 값을 공짜로 낮춘다(#5).",

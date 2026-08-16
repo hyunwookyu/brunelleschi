@@ -26,13 +26,11 @@ import { cloneRuleState, type RuleState } from "../s3d/vpRules.js";
 export interface AppSnap {
   doc: DocState;
   /**
-   * 카메라의 상태는 이것과 `locked`가 전부다 — 누산기는 `apply()`가 다시 만든다.
+   * 카메라의 상태는 **이것이 전부다** — 누산기는 `apply()`가 다시 만들고, 차수와
+   * "확정됐는가"는 **파생 상태라 계산한다**(2026-08-17 지시 1 — 옛 `locked`·`lockedOrder`를 뺐다).
    * **가이드가 아니라 규칙 상태다**(2026-08-16 전면 교체) — 그은 선이 만든 슬롯 셋과 지평선.
    */
   rules: RuleState;
-  locked: boolean;
-  /** 확정·승격 시점에 잠근 소실점 개수. 이것이 없으면 "N점 → M점"을 못 적는다. */
-  lockedOrder: number | null;
   /** 승격 요약(불투명). 재연결을 되돌리면 표시가 **다시 나와야** 한다. */
   report: unknown | null;
 }
@@ -41,10 +39,9 @@ export interface AppSnap {
 export const copyRules = (r: RuleState): RuleState => cloneRuleState(r);
 
 export function takeSnap(
-  doc: DocState, cam: CamState, lockedOrder: number | null, report: unknown | null = null,
+  doc: DocState, cam: CamState, report: unknown | null = null,
 ): AppSnap {
-  return { doc: snapshotDoc(doc), rules: copyRules(cam.rules),
-           locked: cam.locked, lockedOrder, report };
+  return { doc: snapshotDoc(doc), rules: copyRules(cam.rules), report };
 }
 
 /**
@@ -55,7 +52,6 @@ export function takeSnap(
  */
 export function applySnap(cam: CamState, s: AppSnap): DocState {
   cam.loadRules(s.rules);
-  cam.locked = s.locked;
   return s.doc;
 }
 
@@ -68,8 +64,6 @@ export function applySnap(cam: CamState, s: AppSnap): DocState {
  */
 export function snapDiff(a: AppSnap, b: AppSnap): string[] {
   const w: string[] = [];
-  if (a.locked !== b.locked) w.push("locked");
-  if (a.lockedOrder !== b.lockedOrder) w.push("lockedOrder");
   if (a.doc.currentView !== b.doc.currentView) w.push("currentView");
   if (a.rules.horizon !== b.rules.horizon) w.push("rules.horizon");
   for (let i = 0; i < 3; i++) {

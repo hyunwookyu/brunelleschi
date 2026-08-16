@@ -157,7 +157,6 @@ describe("L-C.2 — 승격이 잃은 것이 보이는가, 되돌리기가 되돌
     const cam = new CamState(SZ);
     // **규칙 상태로 세운다** — 가이드가 없어졌다(2026-08-16). 2점 투시: 수평 소실점 둘 + 화면 세로
     setRules(cam, [vpSlot([-1400, 330]), vpSlot([2100, 330]), screenSlot("v")]);
-    cam.locked = true;
     let doc: DocState = newDoc();
     for (let i = 0; i < 6; i++) {
       const s = newSStroke([[100 + i * 30, 200], [200 + i * 30, 260]], doc.currentView);
@@ -165,7 +164,7 @@ describe("L-C.2 — 승격이 잃은 것이 보이는가, 되돌리기가 되돌
       s.snapStart = { kind: "endpoint", at: [i, 0, 0], ofId: `x${i}` };
       doc.strokes.push(s);
     }
-    const snap0 = takeSnap(doc, cam, 2);
+    const snap0 = takeSnap(doc, cam);
 
     // **승격을 흉내 낸다**: 수직축이 무한원에서 **유한 소실점**으로 바뀌고(3점), 기하가 다시 풀리고,
     // **스냅된 시작점이 새 상으로 옮겨진다**(그것이 L-C.1이 p90 311px로 실측한 그 이동이다)
@@ -175,16 +174,16 @@ describe("L-C.2 — 승격이 잃은 것이 보이는가, 되돌리기가 되돌
       s.seg3d = i % 3 === 0 ? null : [[i * 2, 1, 1], [i * 2 + 1, 1.5, 1.2]];
       s.pts2d = [[s.pts2d[0][0] + 37, s.pts2d[0][1] - 12], ...s.pts2d.slice(1)];
     }
-    const snapPromoted = takeSnap(doc, cam, 3);
+    const snapPromoted = takeSnap(doc, cam);
 
     doc = applySnap(cam, snap0);
-    const roundTrip = snapDiff(takeSnap(doc, cam, snap0.lockedOrder), snap0);
+    const roundTrip = snapDiff(takeSnap(doc, cam), snap0);
 
     // **양성 채널**(#30) — 대조가 눈뜬 것인가. 왕복이 비는 것만으로는
     // "언제나 빈 배열을 내는 함수"와 구분되지 않는다.
     // ⚠ 초판은 `snapDiff(snap0, snapPromoted)`도 따로 냈는데 **같은 계산의 중복**이라
     // 두 증거처럼 읽혔다(리뷰어 [11]). 하나만 낸다
-    const positive = snapDiff(takeSnap(doc, cam, snap0.lockedOrder), snapPromoted);
+    const positive = snapDiff(takeSnap(doc, cam), snapPromoted);
 
     // ---- **왕복을 여러 번 돌린다**(리뷰어 [10] — n이 없으면 보장의 범위가 없다).
     // 어긴 방식을 바꿔 가며 돈다: 가이드만 · 기하만 · 시작점만 · 잠금만 · 전부
@@ -197,17 +196,17 @@ describe("L-C.2 — 승격이 잃은 것이 보이는가, 되돌리기가 되돌
       { name: "seg3d_move", f: (d) => { d.strokes[2].seg3d = [[9, 9, 9], [8, 8, 8]]; } },
       { name: "pts2d", f: (d) => { d.strokes[3].pts2d = [[1, 1], ...d.strokes[3].pts2d.slice(1)]; } },
       { name: "snapStart", f: (d) => { d.strokes[4].snapStart = null; } },
-      { name: "locked", f: (_d, c) => { c.locked = false; } },
-      { name: "all", f: (d, c) => { c.locked = false; setRules(c, [vpSlot([-1400, 330]), null, null]);
+      // ⚠ `locked` 항목을 뺐다(지시 1) — 잠금은 파생 상태라 스냅샷에 없다. 규칙이 그 자리를 덮는다
+      { name: "all", f: (d, c) => { setRules(c, [vpSlot([-1400, 330]), null, null]);
                                     d.strokes.forEach(s => { s.seg3d = null; }); } },
     ];
     const trials = breakers.map(b => {
-      const base = takeSnap(doc, cam, snap0.lockedOrder);
+      const base = takeSnap(doc, cam);
       b.f(doc, cam);
       // **어긴 것이 실제로 대조에 잡히는가** — 안 잡히면 그 왕복은 아무것도 안 지킨 것이다
-      const broke = snapDiff(takeSnap(doc, cam, snap0.lockedOrder), base);
+      const broke = snapDiff(takeSnap(doc, cam), base);
       doc = applySnap(cam, base);
-      const back = snapDiff(takeSnap(doc, cam, base.lockedOrder), base);
+      const back = snapDiff(takeSnap(doc, cam), base);
       return { breaker: b.name, detected: broke.length, restored: back.length === 0 };
     });
 
@@ -348,7 +347,6 @@ describe("L-C.2 — 승격이 잃은 것이 보이는가, 되돌리기가 되돌
           axes_restored: cam.rules.slots.filter(Boolean).length,
           axes_at_promotion: snapPromoted.rules.slots.filter(Boolean).length,
           order_restored: cam.order(),
-          locked_order_restored: snap0.lockedOrder,
         },
       },
       constants: constantsSnapshot(),

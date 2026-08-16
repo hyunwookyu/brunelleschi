@@ -29,7 +29,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { recoverCamera, isFiniteVp, type Pt2 } from "../src/s3d/camera.js";
 import { fPixelsFrom35mm } from "../src/s3d/constraints.js";
-import { DEFAULT_LENS_MM } from "../src/ui/camState.js";
+import { P1_F_RATIO } from "../src/ui/camState.js";
 import { representative } from "../src/s3d/axis.js";
 import {
   newRuleState, stepRule, vpsOf, defaultHorizon, type RuleState, type RLine,
@@ -242,7 +242,7 @@ describe("지평선 = 피치 — 사용자가 끌면 3점이 초기부터 서는
                 const vps = vpsOf(r.st);
                 const nF = vps.filter(v => v && isFiniteVp(v, SZ)).length;
                 const cam = recoverCamera(vps, SZ,
-                  nF === 1 ? { fSetting: fPixelsFrom35mm(DEFAULT_LENS_MM, SZ[0]) } : {});
+                  nF === 1 ? { fSetting: P1_F_RATIO * SZ[0] } : {});   // P1 임의 f(지시 1)
                 const okCam = cam.ok && cam.principalPoint && cam.f != null;
                 const errs = okCam ? axisDirErrors(vps, cam.principalPoint!, cam.f!, fx.sc.axes) : [];
                 // **수평 축 둘만** — 같은 카메라로, 유도된 세 번째를 빼고 잰다(#11)

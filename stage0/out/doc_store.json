@@ -22,8 +22,6 @@
       "snapStart",
       "axis"
     ],
-    "locked": true,
-    "order": 2,
     "note": "**설계 보장이다**(#5) — 담기로 한 필드이므로 같을 수밖에 없다. 임계를 걸지 않는다. 깨지면 저장 포맷 결함이다"
   },
   "id_continues": {

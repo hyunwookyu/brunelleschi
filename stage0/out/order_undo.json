@@ -155,7 +155,7 @@
     },
     "trials": {
       "note": "**왕복을 여러 번 돌린다**(리뷰어 [10]). 어긴 방식을 바꿔 가며 돌고, 매번 **어긴 것이 대조에 잡히는지**(`detected > 0`)를 먼저 본다 — 안 잡히면 그 왕복은 아무것도 안 지킨 것이다. ⚠ **개별 일곱은 각각 1이고 `all`은 8이다** — 합(7)이 아니다(2회차 리뷰어). `all`은 `locked`(1) + `guides.length`(1) + **획 여섯의 `seg3d.presence`**(6)를 함께 어기기 때문이다. 개별 `seg3d_null`은 획 **하나**만 비운다.",
-      "n": 8,
+      "n": 7,
       "rows": [
         {
           "breaker": "vp_moved",
@@ -188,13 +188,8 @@
           "restored": true
         },
         {
-          "breaker": "locked",
-          "detected": 1,
-          "restored": true
-        },
-        {
           "breaker": "all",
-          "detected": 9,
+          "detected": 8,
           "restored": true
         }
       ],
@@ -205,9 +200,8 @@
     "round_trip_empty": true,
     "positive_channel": {
       "note": "같은 대조를 승격 **후** 상태에 걸었다. 여기가 비면 대조가 눈이 먼 것이고 그러면 위의 통과는 아무 뜻이 없다(#30).",
-      "diff_len": 14,
+      "diff_len": 13,
       "names_all": [
-        "lockedOrder",
         "rules.slots[2].kind",
         "strokes[0].pts2d[0]",
         "strokes[0].seg3d.presence",
@@ -225,14 +219,13 @@
       "sees_pts2d": true,
       "sees_rules": true,
       "sees_seg3d": true,
-      "sees_locked_order": true
+      "sees_locked_order": false
     },
     "camera_included": {
       "note": "⚠ **초판의 `실행취소`는 문서만 되돌렸다.** 승격을 되돌리면 기하는 옛 해로 돌아가는데 소실점은 새 것 그대로 남아 §6.1이 금지한 **좌표계가 섞인 상태**가 된다. 화면은 그럴듯해서 아무도 못 본다. `appSnap`이 둘을 함께 담는다.",
       "axes_restored": 3,
       "axes_at_promotion": 3,
-      "order_restored": 2,
-      "locked_order_restored": 2
+      "order_restored": 2
     }
   },
   "constants": {

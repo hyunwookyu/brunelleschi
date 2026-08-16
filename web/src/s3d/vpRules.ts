@@ -125,22 +125,9 @@ export interface RuleState {
   horizon: number;
   /** 사용자가 "수직축"이라 답한 획들의 대표선 — 유도된 V₃의 지지선으로 센다. */
   verticalLines: RLine[];
-  /**
-   * **1점 투시의 f(px) — 거리점에서 읽은 값**(2026-08-17 사람 지시 C-2, 이론서 7.4).
-   *
-   * 1점 투시는 자유도가 하나 남고 그것이 f다(5.3). 옛 판은 **렌즈 슬라이더**로 채웠는데
-   * 지시문이 그것을 없앴다: **"건축가는 투시도를 그릴 때 렌즈를 고려하지 않는다. 소실점
-   * 위치가 곧 렌즈이므로 이미 정하고 있다."**
-   *
-   * 채우는 법: 1점 투시에서 소실점 = 주점이고(5.3) 바닥·벽 사각형의 **대각선**은
-   * 소실점이 아니라 **거리점**을 향한다. 거리점은 지평선 위에 있고 주점에서 **정확히 f**만큼
-   * 떨어져 있다(7.4). 그러므로 `f = |DP.x − VP.x|`이고 **측정이다**.
-   *
-   * `null`이면 **깊이가 미정**이다 — 카메라를 안 세운다(C-3: 임의값을 넣지 않는다).
-   * ⚠ 2점·3점에서는 안 쓴다(f가 소실점에서 나온다, 6.2·6.3).
-   * ⚠ 옛 저장본에는 이 필드가 없다 — `undefined`를 `null`로 읽는다.
-   */
-  distance: number | null;
+  // ⛔ **`distance`(거리점 f)를 지웠다**(2026-08-17 사람 지시 2). 대각선은 거리점인지
+  // 2점 승격인지 기하로 구분 불가다. 1점의 f는 **임의값**이다 — 깊이 배율일 뿐이고
+  // 형태는 정확하다(camera.ts `frontalWorld`의 게이지). 옛 저장본의 `distance`는 무시된다.
 }
 
 /** **피치 0의 지평선** — 화면 중앙. 1점 투시에서 소실점이 주점이라는 것과 같은 자리다(5.3). */
@@ -196,7 +183,7 @@ const screenVerticalSlot = (): Slot => ({ kind: "screen", dir: "v", support: 0 }
 
 export function newRuleState(imgSize: [number, number] = [960, 672]): RuleState {
   return { slots: [null, null, screenVerticalSlot()],
-           horizon: defaultHorizon(imgSize), verticalLines: [], distance: null };
+           horizon: defaultHorizon(imgSize), verticalLines: [] };
 }
 
 export function cloneRuleState(s: RuleState): RuleState {
@@ -208,8 +195,6 @@ export function cloneRuleState(s: RuleState): RuleState {
     ) as RuleState["slots"],
     horizon: s.horizon,
     verticalLines: s.verticalLines.map(l => ({ a: [...l.a] as Pt2, b: [...l.b] as Pt2 })),
-    // ⚠ 옛 저장본에는 없다 — `undefined`를 `null`로 읽는다(C-2)
-    distance: s.distance ?? null,
   };
 }
 
@@ -269,8 +254,7 @@ export type RuleEvent =
   | { type: "waiting"; have: number }
   /** 이미 있는 축을 향한 선이다. 소실점은 **잠겨 있다** — 지지 수만 는다. */
   | { type: "support"; axis: 0 | 1 | 2 }
-  /** **거리점에서 시거리를 읽었다**(C-2, 이론서 7.4). 1점 투시의 f가 여기서 채워진다. */
-  | { type: "distance_point"; at: Pt2; f: number }
+  // ⛔ `distance_point` 사건을 지웠다(2026-08-17 지시 2) — 거리점 경로 전체가 폐기됐다
   /** 사용자에게 묻는다. */
   | { type: "ask"; question: "screen_or_depth" | "second_horizontal_or_vertical"; verdict: LineVerdict }
   /** 쓸 수 없다. `why`가 사유다. */
@@ -278,29 +262,38 @@ export type RuleEvent =
 
 export interface StepResult { state: RuleState; event: RuleEvent }
 
-// ---------------------------------------------------------------- 차수 후보 (2026-08-17 B)
+// ---------------------------------------------------------------- 상태 = 계산 (2026-08-17 지시 1)
 
 /**
- * **첫 획이 차수 후보를 좁힌다**(2026-08-17 사람 지시 B). 소실점이 잡히기 **전에도** 그렇다.
+ * **상태는 넷뿐이고 저장하지 않는다** — `order = f(소실점 집합, 가로선 유무)`.
+ * 표시도 판정도 이 함수를 부른다. **어긋날 자리가 없다**(같은 사실을 두 곳이 알면 어긋난다).
  *
  * ```
- * 초기       축 없음. 화면 가로·세로만 스냅된다
- * 1점 후보   화면 가로가 선언됐다 → 깊이축이 **하나만** 남는다. 이후 대각선은 전부 깊이선이고
- *            모호 판정(두 번째 수평인가 수직인가)이 **안 일어난다**
- * 2점 후보   유한 수평 소실점이 있다 → 깊이축이 둘. 대각선에서 모호가 생긴다
+ * 0 (NONE)  축 부족. 화면 가로·세로만 스냅. 3D 안 섬 — 수평 소실점 0~1개, 가로선 없음
+ * 1 (P1)    가로선이 그어졌다 → 1점 확정. 가로·세로 무한원 + 깊이 소실점 하나.
+ *           f는 깊이 배율일 뿐이므로 **임의값**으로 두고 3D를 세운다(전역 스케일과 같은 처리)
+ * 2 (P2)    수평 소실점 둘 → f² = |PV₁|·|PV₂| (이론서 6.2)
+ * 3 (P3)    소실점 셋 → 주점 = 수심, f (6.3)
  * ```
+ *
+ * 전이: NONE→P1(가로선) · NONE→P2(깊이선 둘이 서로 다른 소실점으로) · P2→P3(기울어진 수직선).
+ * **P1에서는 되돌릴 수 없다** — 가로선이 있으면 1점 확정이고 이후 깊이선은 기존 소실점을
+ * 향해야 한다. **후보 개념이 없다. 확정이거나 아니거나다.**
  *
  * 근거: **가로축이 화면에 평행하다는 것이 1점 투시의 정의다**(이론서 2.3 — 분기가 아니라
- * 무한원으로 간 축의 개수). 2점이면 두 수평축이 **모두** 유한 소실점을 갖는다.
- * 화면 세로선은 아무것도 안 좁힌다 — 수직축은 1점·2점 **둘 다에서** 화면 수직이다.
+ * 무한원으로 간 축의 개수). 화면 세로선은 아무것도 안 정한다 — 수직축은 1·2점 모두 화면 수직이다.
  */
-export type OrderCandidate = "initial" | "one_point" | "two_point";
+export type POrder = 0 | 1 | 2 | 3;
 
-export function orderCandidate(st: RuleState): OrderCandidate {
-  const hs = ([0, 1] as const).map(i => st.slots[i]);
-  if (hs.some(s => s?.kind === "screen")) return "one_point";
-  if (hs.some(s => s?.kind === "vp")) return "two_point";
-  return "initial";
+export function perspectiveOrder(st: RuleState): POrder {
+  const hasH = ([0, 1] as const).some(i => {
+    const s = st.slots[i];
+    return s != null && s.kind === "screen" && s.dir === "h";
+  });
+  if (hasH) return 1;
+  const nH = ([0, 1] as const).filter(i => st.slots[i]?.kind === "vp").length;
+  if (nH >= 2) return st.slots[2]?.kind === "vp" ? 3 : 2;
+  return 0;
 }
 
 /**
@@ -388,20 +381,30 @@ export function stepRule(
       const s = st.slots[i];
       if (s && s.kind === "screen" && s.dir === "h") { s.support += 1; return { state: st, event: { type: "support", axis: i } }; }
     }
-    // ⚠⚠ **1점 선언은 `initial`에서만 열린다**(2026-08-17 B: "**첫 획**이 후보를 좁힌다").
+    // ⚠⚠ **P2가 확정된 뒤에는 가로선이 축이 아니다**(2026-08-17 지시 1 — P2 → P1 전이는 없다).
     //
-    // 유한 수평 소실점이 이미 하나 서 있으면 이 그림은 **2점 후보**다. 그 상태에서 화면
-    // 수평선을 축으로 받으면 **한 획이 그림 전체를 1점으로 되돌린다** — 그리고 B가 그
-    // 되돌리기를 금지했으므로 사용자는 처음부터 다시 그려야 한다.
+    // 수평 소실점이 **둘 다** 서면 2점 확정이고, 그 상태에서 화면 수평선을 축으로 받으면
+    // 한 획이 그림 전체를 1점으로 되돌린다 — 되돌리기는 없으므로 거절한다.
+    // (3점 구도의 깊이 모서리 중 화면 수평에 가까운 것이 그림을 되돌리던 자리 —
+    // `horizon_pitch.json`에서 차수 3이 141/144 → 21로 무너졌던 그 문이다.)
     //
-    // 실제로 그 일이 났다: 3점 구도의 깊이 모서리 중 **화면 수평에 가까운 것**이 하나만
-    // 있어도 1점이 선언되고, 그러면 수직축 물음이 막혀(1점에서는 3점이 불가능하다)
-    // **3점으로 갈 입구가 사라진다** — `horizon_pitch.json`의 몰아 긋기에서 차수 3이
-    // 141/144 → **21**로 무너진 자리다.
-    if (orderCandidate(st) === "two_point") {
+    // ⚠ **소실점이 하나뿐이면 받는다**(지시 1이 옛 "2점 후보 거절"을 좁혔다): 깊이선을 먼저
+    // 긋고 가로선을 그으면 NONE → P1이고, 그 소실점이 P1의 깊이축이 된다. 후보 개념이
+    // 없어졌으므로 확정 전 상태에서 가로선을 거절할 근거가 없다.
+    if (perspectiveOrder(st) >= 2) {
       return { state: st0, event: { type: "rejected",
-        why: "**2점 후보**입니다 — 수평 소실점이 이미 섰으므로 화면 수평선은 축이 아닙니다."
-           + " 1점으로 그리려면 처음부터 다시 그으세요(B)" } };
+        why: "**2점이 확정됐습니다** — 수평 소실점이 이미 둘이므로 화면 수평선은 축이 아닙니다."
+           + " 1점으로 그리려면 처음부터 다시 그으세요" } };
+    }
+    // ⚠⚠ **소실점이 하나라도 서 있으면 조용히 선언하지 않고 묻는다**(A-3 — 애매하면 놓지 않는다).
+    //
+    // P1 확정은 **불가역**이므로(전이표에 P1을 떠나는 길이 없다), 손 오차로 얕아진 깊이
+    // 모서리(≤ 4°)가 조용히 가로선으로 읽히면 **한 획이 그림 전체를 1점에 가둔다.**
+    // 측정이 그 회귀를 실제로 잡았다(2026-08-17 3차): 이 물음 없이 받게 하자 몰아 긋기
+    // 축 오차 중앙이 10.1° → **31.6°**로 무너졌다(`axis_snap.json` — D-L48의 141/144 → 21과
+    // 같은 기전). 소실점이 없는 초기 상태에서는 그대로 받는다 — 첫 가로선은 의도가 분명하다.
+    if (forced !== "screen" && finiteHorizontals(st).length > 0) {
+      return { state: st0, event: { type: "ask", question: "screen_or_depth", verdict: v } };
     }
     const free = ([0, 1] as const).find(i => !st.slots[i]);
     if (free === undefined) {
@@ -424,7 +427,7 @@ export function stepRule(
 
   // ---- b·c. 깊이선
   const target = horizontalTarget(st);
-  const cand = orderCandidate(st);
+  const order = perspectiveOrder(st);
 
   // b·c. **지평선은 언제나 있다** — 깊이선 하나면 소실점이 정해진다.
   // 교점의 한 쪽(지평선)이 **오차 없이 정확**하므로 "두 선이 나란해져 교점이 날아가는" 실패가 없다.
@@ -454,40 +457,23 @@ export function stepRule(
     // ⚠ 조건이 셋 바뀌었다(2026-08-17):
     //   ① `!st.slots[2]` → **유한 소실점이 아닌 동안**. 슬롯 2는 이제 처음부터 화면 수직이라
     //      옛 검사는 항상 거짓이다. 기울어진 수직선이 3점 선언이 될 수 있으므로 물어야 한다(A-4)
-    //   ② **1점 후보에서는 안 묻는다**(B). 화면 가로가 선언된 순간 3점은 불가능하고
+    //   ② **P1에서는 안 묻는다**. 화면 가로가 선언된 순간 3점은 불가능하고
     //      (1점의 정의가 가로축 무한원이다) 남은 축은 깊이 하나뿐이라 **모호가 없다**
     //   ③ ⚠⚠ **`!target` 거절보다 앞에 둔다.** 옛 자리(뒤)에서는 **수평 소실점이 둘 다 서면
     //      가파른 선이 물음도 없이 거절**됐고, 그러면 **3점으로 갈 입구가 아예 없다** —
     //      `horizon_pitch.json`에서 차수 3이 141/144 → **0**으로 무너진 것이 그 자리다.
     //      2점이 선 뒤에 세로 모서리를 긋는 것이 **정상적인 3점 작도 순서**다.
-    if (forced !== "depth" && cand !== "one_point"
+    if (forced !== "depth" && order !== 1
         && v.toV < c.vertical_ask_deg && st.slots[2]?.kind !== "vp") {
       return { state: st0, event: { type: "ask", question: "second_horizontal_or_vertical", verdict: v } };
     }
     if (!target) {
-      // **1점 투시에서 축을 안 향하는 대각선은 거리점을 정한다**(2026-08-17 C-2, 이론서 7.4).
-      //
-      // 1점에서는 소실점 = 주점이고(5.3) 지평선 y = 그 소실점의 y다. 바닥·벽 사각형의
-      // **대각선**은 소실점이 아니라 지평선 위 **거리점**을 향하고, 그 거리점은 주점에서
-      // **정확히 f**만큼 떨어져 있다. 그러므로 **그 선 하나가 시거리를 정한다** —
-      // 렌즈를 물어볼 필요가 없다(C-1: "소실점 위치가 곧 렌즈다").
-      //
-      // ⚠ **이미 정해졌으면 안 덮는다** — 소실점과 같은 규약이다(§1의 잠금). 두 번째 대각선은
-      // 지지선이고, 값이 크게 다르면 그것은 **사용자가 다른 것을 그린 것**이라 조용히 안 바꾼다.
-      const dpVp = cand === "one_point" ? finiteHorizontals(st)[0] : undefined;
-      if (dpVp && st.distance == null) {
-        const dp = vpOnHorizon(rep, st.horizon);
-        const f = dp ? Math.abs(dp[0] - dpVp.at[0]) : 0;
-        if (dp && f > 1e-6 && isFiniteVp(dp, imgSize)) {
-          st.distance = f;
-          return { state: st, event: { type: "distance_point", at: dp, f } };
-        }
-      }
+      // ⛔ **거리점 획득을 지웠다**(2026-08-17 지시 2) — 대각선이 거리점인지 2점 승격인지
+      // 기하로 구분 불가다. P1의 f는 임의값이다(`perspectiveOrder` 머리말).
+      // 축을 안 향하는 깊이선은 카메라에 안 들어간다 — 획 자체는 문서에 남는다.
       return { state: st0, event: { type: "rejected",
-        why: cand === "one_point"
-          ? (st.distance != null
-             ? "**시거리는 이미 정해졌습니다**(거리점) — 이 선은 깊이축도 거리점도 아닙니다"
-             : "지평선과 거의 나란해 거리점을 못 읽습니다")
+        why: order === 1
+          ? "기존 소실점을 향하지 않는 깊이선입니다 — 1점 확정 뒤의 깊이선은 그 소실점을 향해야 합니다"
           : "수평 소실점이 이미 둘입니다 — 소실점은 확정 후 잠깁니다(CLAUDE.md §1)" } };
     }
     if (!isFiniteVp(p, imgSize)) {
@@ -549,10 +535,10 @@ export function deriveVertical(st0: RuleState, imgSize: [number, number],
                                cfg: RuleCfg = {}): RuleState {
   const st = cloneRuleState(st0);
   if (st.slots[2]?.kind === "vp") return st;          // 이미 유한 소실점이다
-  // **1점 후보에서는 3점이 불가능하다**(B). 가로축이 화면에 평행하다는 것이 1점의 정의이고
+  // **P1에서는 3점이 불가능하다.** 가로축이 화면에 평행하다는 것이 1점의 정의이고
   // (이론서 2.3), 그 상태에서 수직축까지 유한 소실점이면 **무한원 축 하나 + 유한 둘**이라
   // 사용자가 그리고 있는 그림이 아니다. **애매하면 놓지 않는다**(A-3).
-  if (orderCandidate(st) === "one_point") return st;
+  if (perspectiveOrder(st) === 1) return st;
   const lines = tiltedVerticals(st, cfg);
   if (!lines.length) return st;                       // 화면 수직이 옳다 — 1점·2점이다
   const cx = imgSize[0] / 2;
@@ -604,23 +590,8 @@ export function axisDirsOf(st: RuleState, principal: Pt2, f: number): ([number, 
   }) as ([number, number, number] | null)[];
 }
 
-/**
- * **거리점 둘**(C-5, 이론서 7.4). f가 정해진 1점 투시에서만 있고, 지평선 위 소실점의
- * 좌우로 **정확히 f**만큼 떨어진 자리다. 화면에 표시하고 스냅 대상에 넣는다 —
- * 그 점을 향해 그은 선이 곧 45° 대각선이다. **f가 미정이면 거리점이 없다.**
- */
-export function distancePoints(st: RuleState): [Pt2, Pt2] | null {
-  if (st.distance == null || !(st.distance > 0)) return null;
-  const h = ([0, 1] as const).map(i => st.slots[i]).find(s => s && s.kind === "vp");
-  if (!h || h.kind !== "vp") return null;
-  return [[h.at[0] - st.distance, st.horizon], [h.at[0] + st.distance, st.horizon]];
-}
-
-/** 정해진 축 수(무한원 포함). 화면 표시가 "무엇이 부족한지"를 이것으로 낸다. */
-export const settledAxes = (st: RuleState): number => st.slots.filter(Boolean).length;
-
-/** 유한 소실점 수 = 투시 차수(1·2·3점). 이론서 2.3 — 분기가 아니라 개수다. */
-export const orderOfState = (st: RuleState): number => vpsOf(st).filter(Boolean).length;
+// ⛔ **`distancePoints`·`settledAxes`·`orderOfState`를 지웠다**(2026-08-17 지시 1·2·3).
+// 거리점 경로는 폐기됐고, 차수는 `perspectiveOrder` 하나가 계산한다 — 표시도 판정도 그것을 부른다.
 
 // ---------------------------------------------------------------- 스냅 표 (2026-08-17 A)
 

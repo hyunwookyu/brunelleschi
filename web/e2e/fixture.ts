@@ -74,7 +74,7 @@ export async function setupConfirmed(page: Page, opts: { boxes?: 1 | 2 } = {}) {
   const s = await setupScene(page, opts);
   return page.evaluate(async (s) => {
     window.S2S.confirmNow();
-    return { ...s, locked: window.S2S.cam.locked,
+    return { ...s, standing: window.S2S.standing(),
              lifted: window.S2S.doc().strokes.filter((x: { seg3d?: unknown }) => x.seg3d).length };
   }, s);
 }

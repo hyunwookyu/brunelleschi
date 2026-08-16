@@ -138,7 +138,9 @@ export interface CameraSolution {
   nVps: number;
   ok: boolean;
   f: number | null;
-  fSource?: "orthocenter(6.3)" | "two_vps(6.2)" | "setting(렌즈)" | "distance_point(7.4)";
+  fSource?: "orthocenter(6.3)" | "two_vps(6.2)" | "setting(렌즈)" | "distance_point(7.4)"
+    /** **1점의 임의 f**(2026-08-17 지시 1) — 깊이 배율일 뿐이라 형태에 안 닿는다(`frontalWorld` 게이지). */
+    | "arbitrary(1점 깊이 무차원)";
   principalPoint: Pt2 | null;
   residual: number | null;
   verdict: Verdict | "unresolved_f" | "no_perspective";
@@ -160,7 +162,7 @@ export function recoverCamera(
            * 앱은 **거리점**(이론서 7.4)을 넘긴다 — 그것은 **설정이 아니라 측정**이므로
            * 화면이 갈라 보여야 한다(CLAUDE.md §1: 깊이 스케일의 출처는 하나이고 화면에 나온다).
            */
-          fProvenance?: "setting(렌즈)" | "distance_point(7.4)" } = {},
+          fProvenance?: "setting(렌즈)" | "distance_point(7.4)" | "arbitrary(1점 깊이 무차원)" } = {},
 ): CameraSolution {
   const [W] = imgSize;
   const finite = vps.filter((v): v is Pt2 => isFiniteVp(v, imgSize));
@@ -219,6 +221,8 @@ export function recoverCamera(
         principalPoint: P, residual: 0, ...gate(opts.fSetting, W),
         dofNote: opts.fProvenance === "distance_point(7.4)"
           ? "자유도 1(f)을 **거리점**으로 소진 — 그린 대각선에서 읽은 **측정**이다(7.4)"
+          : opts.fProvenance === "arbitrary(1점 깊이 무차원)"
+          ? "자유도 1(f)이 **임의값**이다 — 깊이 배율일 뿐이고 형태는 정확하다(`frontalWorld` 게이지, 지시 1)"
           : "자유도 1(f)을 설정으로 소진 — 측정이 아니라 사용자 선택이다(provenance: setting)",
       };
     }

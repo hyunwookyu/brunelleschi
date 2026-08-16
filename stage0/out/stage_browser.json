@@ -307,7 +307,7 @@
   },
   "home": {
     "pinned": true,
-    "ink_painted_px": 106327
+    "ink_painted_px": 105909
   },
   "guide_budget": {
     "canvas": [
@@ -320,7 +320,7 @@
     "note": "⚠ **대상이 사라졌다**(D-L37) — 가이드가 없어졌으므로 '가이드 길이'도 '요구 길이(`min_guide_ratio`)'도 없는 양이다. 빈 배열·`null`이고, 이 자리를 지우지 않는 이유는 왜 그 규칙이 있었는지가 근거이기 때문이다(#29의 숙제였다)."
   },
   "l_d3_save_roundtrip": {
-    "reload_ms": 1149,
+    "reload_ms": 1147,
     "views": 2,
     "lifted": 12,
     "pending_2d": 1,
@@ -348,7 +348,7 @@
       "currentView",
       "lifted 수",
       "pending 수",
-      "cam.locked",
+      "standing",
       "cam.rules 축 수",
       "order"
     ],
@@ -378,8 +378,7 @@
     },
     "hover": {
       "kind": "endpoint",
-      "dist_px": 17.2,
-      "shown_in_status": true
+      "dist_px": 17.2
     },
     "drawn": {
       "snap_kind": "endpoint",
@@ -389,7 +388,7 @@
       "start_reprojection_gap_px_IDENTITY": 0,
       "end_snapped": true,
       "seg_matches_anchors_px": 0,
-      "status_note": true
+      "status_note": false
     },
     "control_far_from_geometry": {
       "snap_kind": null,
@@ -411,8 +410,6 @@
   },
   "l_b4": {
     "mid_drag": {
-      "status_shows_live": true,
-      "status_shows_axis": true,
       "hover_cleared": false
     },
     "preview_vs_confirm": {
@@ -439,7 +436,7 @@
         "axis": 0,
         "locked": true,
         "has_preview": true,
-        "status": true
+        "status": false
       },
       "placed": true,
       "axis": 0,
@@ -448,7 +445,7 @@
         "mode": 0,
         "resolved": 0
       },
-      "last_note": "3점 투시 · 소실점 3 확정\n펜 보조선 (작도의 본체 — 3D로 올라갑니다 · 고치기에서 1·2·3으로 바꿉니다)\n3D 14 · 2D 대기 0\nf = 1000px · 화각 65.24° (수심(3점, 측정))\n스냅 켜짐 반경 72px · 대상 14선 (커서 아래 대상 없음)\n축 고정 축1 (← 축1 · → 축2 · ↑ 축3 · 같은 키를 다시 눌러 해제 · Esc 해제)\n축 스냅 끔 (F8 · Shift를 누르고 그으면 그 획만 자유)\n마지막 획 — 축1로 고정해 확정 · 승격 연쇄로 1획이 더 올라갔습니다\n화각 65.24° — 다소 넓습니다(권장 60° 이하, 18.4)\n3점 투시로 카메라가 섰습니다 — 이제 돌릴 수 있습니다 (소실점이 잠겼습니다. 차수 승격만이 카메라를 바꿉니다) · 12/12획이 3D로 올라갔습니다"
+      "last_note": ""
     },
     "what_this_does_not_say": [
       "고정이 오배정을 줄이는가 — **사용자 행동 의존이라 직접 측정이 불가능하다**(AS-L5)",
@@ -502,7 +499,7 @@
           "pending": 2
         }
       ],
-      "status_mentions_hidden": true,
+      "status_mentions_hidden": false,
       "pending_here": 0,
       "pending_there": 2,
       "lifted_in_v2": 1,
@@ -527,7 +524,7 @@
         "total": 13,
         "views": 1
       },
-      "note": "3점 투시 · 소실점 3 확정\n펜 보조선 (작도의 본체 — 3D로 올라갑니다 · 고치기에서 1·2·3으로 바꿉니다)\n3D 13 · 2D 대기 0\nf = 1000px · 화각 65.24° (수심(3점, 측정))\n스냅 켜짐 반경 72px · 대상 13선 (커서 아래 대상 없음)\n축 스냅 켬 (F8 · Shift를 누르고 그으면 그 획만 자유)\n화각 65.24° — 다소 넓습니다(권장 60° 이하, 18.4)\n뷰를 지웠습니다 — 그 안의 2D 대기 획 2개가 함께 사라졌습니다",
+      "note": "뷰를 지웠습니다 — 그 안의 2D 대기 획 2개가 함께 사라졌습니다",
       "current": "v2",
       "rows": 1,
       "canvas_css": [
@@ -643,7 +640,7 @@
     "setup2pt": {
       "order": 2,
       "lifted": 8,
-      "locked": true
+      "standing": true
     },
     "promote": {
       "before": {
@@ -668,9 +665,9 @@
       "order": 3,
       "lifted": 12,
       "geometry_moved": true,
-      "locked": true,
+      "standing": true,
       "pinned": true,
-      "note": "차수 승격 2점 → 3점 — 전부 다시 풀었습니다(§6.1)\n3D 12획 · 올라감 +4\n스냅 4/4개를 새 상으로 옮겼습니다 — 끊긴 것 없음\n화면이 움직입니다 — 되돌리려면 위의 2점으로 되돌리기를 누르세요(소실점과 기하를 함께 되돌립니다)\n3점 투시 · 소실점 3 확정\n펜 보조선 (작도의 본체 — 3D로 올라갑니다 · 고치기에서 1·2·3으로 바꿉니다)\n3D 12 · 2D 대기 0\nf = 1000px · 화각 65.24° (수심(3점, 측정))\n스냅 켜짐 반경 72px · 대상 12선 (커서 아래 대상 없음)\n축 스냅 켬 (F8 · Shift를 누르고 그으면 그 획만 자유)\n마지막 획 — 축1로 확정 (축과 81.3°) · 승격 연쇄로 4획이 더 올라갔습니다\n화각 65.24° — 다소 넓습니다(권장 60° 이하, 18.4)",
+      "note": "차수 승격 2점 → 3점 — 전부 다시 풀었습니다(§6.1)\n3D 12획 · 올라감 +4\n스냅 4/4개를 새 상으로 옮겼습니다 — 끊긴 것 없음\n화면이 움직입니다 — 되돌리려면 위의 2점으로 되돌리기를 누르세요(소실점과 기하를 함께 되돌립니다)",
       "size_heal_count": 1
     },
     "undo": {
@@ -793,8 +790,7 @@
     "undo_restores_camera": {
       "order": 3,
       "guides": 3,
-      "locked": false,
-      "locked_order": 2,
+      "standing": true,
       "lifted": 8,
       "report_gone": true
     },
@@ -815,7 +811,7 @@
       ],
       "pts_restored": true,
       "strokes": 12,
-      "note": "2점 투시 · 소실점 2 확정\n펜 보조선 (작도의 본체 — 3D로 올라갑니다 · 고치기에서 1·2·3으로 바꿉니다)\n3D 8 · 2D 대기 4\nf = 1035px · 화각 63.45° (두 소실점(측정))\n주점 x = 이미지 중심(이론서 16.2) · y = 지평선(피치 0이면 강제된다, 3.1) — x는 미검증\n스냅 켜짐 반경 72px · 대상 8선 (커서 아래 대상 없음)\n축 스냅 켬 (F8 · Shift를 누르고 그으면 그 획만 자유)\n마지막 획 — 축1로 확정 (축과 81.3°) · 승격 연쇄로 4획이 더 올라갔습니다\n화각 63.45° — 다소 넓습니다(권장 60° 이하, 18.4)\n2점으로 되돌렸습니다 — 소실점과 기하를 함께 되돌렸습니다 (둘 중 하나만 되돌리면 좌표계가 섞입니다, §6.1)"
+      "note": "2점으로 되돌렸습니다 — 소실점과 기하를 함께 되돌렸습니다 (둘 중 하나만 되돌리면 좌표계가 섞입니다, §6.1)"
     },
     "loss_shown": {
       "fixture": {
@@ -909,8 +905,8 @@
     },
     "stroke_latency_ms": {
       "n": 8,
-      "median": 2,
-      "max": 2.6,
+      "median": 1.7,
+      "max": 8.3,
       "note": "**개발 서버(번들 없음) · 상자 둘(24획 + 그린 획)** 기준이므로 상한으로 읽는다. ⚠ `e2e.json`의 값은 **옛 UI**라 같은 구간이 아니다 — 견주지 않는다.",
       "registered_pass": "중앙 10ms 미만(사전 등록). ⚠ **중앙값 자체를 문서에 인용하지 않는다** — 기계·실행마다 흔들린다. 판정은 자릿수다"
     },
@@ -949,26 +945,10 @@
         "order": 3,
         "marks": [
           2
-        ]
-      },
-      "twoMarks": {
-        "marks": [
-          2,
-          3
         ],
         "buttons": [
           "revert2"
         ]
-      },
-      "at3": {
-        "lifted": 18,
-        "guides": 3
-      },
-      "back3": {
-        "order": 3,
-        "lifted": 18,
-        "guides": 3,
-        "locked": true
       },
       "back2": {
         "order": 2,
@@ -979,12 +959,11 @@
         "order": 2,
         "guides": 2
       },
-      "buttons_note": "표식은 둘(2·3)인데 **버튼은 하나**다 — `lockedOrder`의 표식은 안 낸다(있는 자리로 가는 버튼은 아무 일도 안 한다). 표식 3은 **더 그린 뒤** 돌아올 자리로 살아 있고 `revertToOrder(3)`이 그것을 쓴다.",
-      "reading": "표식 둘(2·3)을 함께 든다(버튼은 `lockedOrder` 것을 빼므로 하나다). **되돌리기는 문서와 카메라를 함께 되돌리므로**, 2로 되돌린 뒤 재승격해도 3점이 안 된다(가이드가 같이 돌아갔다). 그것이 §6.1이 요구하는 동작이다 — 둘 중 하나만 되돌리면 좌표계가 섞인다."
+      "reading": "**되돌리기는 문서와 카메라를 함께 되돌린다** — 2로 되돌린 뒤 재승격해도 3점이 안 된다(규칙이 같이 돌아갔다). §6.1: 둘 중 하나만 되돌리면 좌표계가 섞인다."
     },
     "screenshot_regression": {
       "identical": true,
-      "bytes": 390408,
+      "bytes": 779786,
       "note": "**결정론 확인이다**(설계 보장, #5) — 잉크가 LCG이고 자세가 고정이므로 같아야 한다. 임계를 걸지 않는다. ⚠ **기계 간 비교는 안 한다**(폰트·안티에일리어싱)."
     },
     "what_this_does_not_say": [

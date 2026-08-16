@@ -5,14 +5,14 @@
 //   ② **1점 투시에서는 f가 없어 `ctx()`가 `null`이었다**(자유도 1이 남는다, 이론서 5.3) —
 //      그리고 무한원 축의 방향을 넘길 자리가 없어 **화면 가로·세로 획이 못 올라갔다**
 //
-// ⚠⚠ **2026-08-17 C가 ②의 절반을 바꿨다.** f를 채우던 것이 **렌즈 설정**이었는데 지시문이
-// 그것을 없앴다 — 1점의 f는 이제 **그린 사각형의 대각선**에서 나온다(거리점, 이론서 7.4).
-// 그러므로 이 파일의 픽스처에 **바닥 대각선 하나**가 들어간다. 그것이 없으면 카메라가
-// 안 서는 것이 옳다(C-3: 깊이가 미정인 상태에 임의값을 넣지 않는다).
+// ⚠⚠ **2026-08-17 지시 1이 ②의 처리를 다시 바꿨다.** C-2의 거리점 경로는 폐기됐다
+// (대각선이 거리점인지 2점 승격인지 기하로 구분 불가). **P1(가로선 확정)의 f는 임의값**이다 —
+// 깊이 배율일 뿐이고 형태는 정확하다(`frontalWorld` 게이지). 그래서 대각선 없이도 3D가 선다.
+// 반례는 **NONE**(가로선 없는 소실점 하나)이다 — 거기서는 여전히 안 선다.
 //
 // 여기서 확인하는 것은 ②다. **양성 채널을 함께 둔다**(#30) — 고친 것을 도로 빼면 실제로 실패하는지.
 import { describe, it, expect } from "vitest";
-import { CamState, DEFAULT_LENS_MM } from "../src/ui/camState.js";
+import { CamState, P1_F_RATIO } from "../src/ui/camState.js";
 import { liftAll, type LiftStroke } from "../src/s3d/lift.js";
 import { representative } from "../src/s3d/axis.js";
 import type { Pt2 } from "../src/s3d/camera.js";
@@ -24,14 +24,9 @@ const VP: Pt2 = [480, SZ[1] / 2];                 // 1점 투시 — 소실점�
 const toVp = (from: Pt2, t = 0.35): Pt2[] =>
   [from, [from[0] + (VP[0] - from[0]) * t, from[1] + (VP[1] - from[1]) * t]];
 
-/**
- * **거리점**(7.4) — 지평선 위, 소실점에서 `f`만큼. 여기서는 참 f를 700px로 둔다
- * (화각 약 69°, 실무 대역). **이 값이 대각선 하나에서 되나오는지**가 C-2의 확인이다.
- */
-const TRUE_F = 700;
-const DP: Pt2 = [VP[0] + TRUE_F, SZ[1] / 2];
-
-/** 거리점으로 가는 선분 — 바닥 사각형의 대각선이 이 방향이다. */
+/** 옛 거리점 자리(지평선 위, 소실점에서 700px) — 지금은 **축을 안 향하는 깊이선**의 예다.
+ * 규칙은 이 선을 거절하고(P1 확정 뒤의 깊이선은 기존 소실점을 향해야 한다) 획은 2D로 남는다. */
+const DP: Pt2 = [VP[0] + 700, SZ[1] / 2];
 const toDp = (from: Pt2, t = 0.35): Pt2[] =>
   [from, [from[0] + (DP[0] - from[0]) * t, from[1] + (DP[1] - from[1]) * t]];
 
@@ -80,25 +75,21 @@ function run(opts: { noDiagonal?: boolean; dropAxisDirs?: boolean } = {}) {
 }
 
 describe("규칙 → 카메라 → 3D (전환이 실제로 되는가)", () => {
-  it("깊이선 **하나**에서 1점 투시가 확정된다", () => {
+  it("깊이선 **하나**에서 1점 투시가 확정되고 임의 f로 선다 (지시 1 — P1)", () => {
     const { cam, ctx, events } = run();
     expect(cam.order()).toBe(1);
     // ⚠ **세 번째가 `screen_axis`에서 `support`로 바뀌었다**(2026-08-17 A-2):
     // 수직축은 **처음부터 화면 수직**이라 세로선이 축을 새로 세우지 않고 **지지선으로 센다**.
-    // 옛 판은 그 선언을 기다렸고, 그래서 **첫 획부터 세로선이 안 그어졌다**(A-1).
     expect(events.slice(0, 4)).toEqual(["screen_axis", "support", "support", "support"]);
-    // **지평선이 처음부터 있으므로 첫 깊이선에서 바로 선다**(2026-08-16 2차 지시).
-    // 옛 판은 여기가 `waiting`이었고 두 번째 깊이선을 기다렸다
+    // **지평선이 처음부터 있으므로 첫 깊이선에서 바로 선다**(2026-08-16 2차 지시)
     expect(events[4]).toBe("vp_fixed");
     expect(cam.rules.horizon).toBeCloseTo(VP[1], 6);
     expect(ctx).not.toBeNull();
-    // **f의 출처는 거리점이다**(2026-08-17 C-2, 이론서 7.4) — 측정이고 화면이 그렇게 낸다.
-    // 옛 판은 `"setting(렌즈)"`였고 그 경로가 없어졌다(C-1)
-    expect(cam.acc.solve().camera.fSource).toBe("distance_point(7.4)");
-    // **그린 대각선 하나가 참 f를 되낸다** — 이것이 C-2의 요점이다
-    expect(cam.rules.distance).toBeCloseTo(TRUE_F, 6);
-    expect(ctx!.f).toBeCloseTo(TRUE_F, 6);
-    expect(events[events.length - 1]).toBe("distance_point");
+    // **P1의 f는 임의값이고 출처가 화면에 남는다**(지시 1 · CLAUDE.md §1 fSource)
+    expect(cam.acc.solve().camera.fSource).toBe("arbitrary(1점 깊이 무차원)");
+    expect(ctx!.f).toBeCloseTo(P1_F_RATIO * SZ[0], 6);
+    // **축을 안 향하는 대각선은 거절된다** — 거리점 경로가 없다(지시 2). 획은 2D로 남는다
+    expect(events[events.length - 1]).toBe("rejected");
   });
 
   it("축이 셋 다 붙고 획이 전부 3D로 올라간다", () => {
@@ -108,12 +99,22 @@ describe("규칙 → 카메라 → 3D (전환이 실제로 되는가)", () => {
     expect(placed).toBe(8);
   });
 
-  // **양성 채널**(#30) — 고친 것을 도로 빼면 실패해야 한다. 안 그러면 위 통과는 아무 뜻이 없다
-  it("**반례** — 대각선이 없으면 카메라가 안 선다 (1점의 자유도 1, C-3)", () => {
-    const { ctx, placed, cam } = run({ noDiagonal: true });
-    expect(cam.rules.distance).toBeNull();
-    expect(ctx).toBeNull();
-    expect(placed).toBe(0);
+  // **양성 채널**(#30) — P1의 "임의 f로 선다"가 공허하지 않은지: 대각선 없이도 서고,
+  // **가로선이 없으면(NONE·소실점 하나) 안 선다** — 그 문이 임의 f의 유일한 조건이다.
+  it("대각선이 없어도 선다 — P1은 임의 f다 (지시 5-4의 해소)", () => {
+    const { ctx, placed } = run({ noDiagonal: true });
+    expect(ctx).not.toBeNull();
+    expect(placed).toBe(8);
+  });
+
+  it("**반례** — 가로선 없는 소실점 하나(NONE)는 3D를 안 세운다", () => {
+    const cam = new CamState(SZ);
+    // 깊이선 하나만 — 소실점은 서지만 상태는 NONE이다
+    const rep = representative(toVp([280, 240]))!;
+    const r = cam.feed({ a: rep.a, b: rep.b });
+    expect(r.event.type).toBe("vp_fixed");
+    expect(cam.order()).toBe(0);
+    expect(cam.ctx()).toBeNull();
   });
 
   it("무한원 축의 방향을 안 넘기면 화면 가로·세로 획이 못 올라간다", () => {
@@ -122,16 +123,5 @@ describe("규칙 → 카메라 → 3D (전환이 실제로 되는가)", () => {
     expect(without).toBeLessThan(withDirs);
   });
 
-  /** ⛔ **렌즈는 3D 정의 경로에서 빠졌다**(C-1) — 상수는 옛 저장본을 여는 자리에만 남는다. */
-  it("**회귀** — 렌즈 값을 넣어도 f가 안 채워진다 (임의값을 넣지 않는다, C-3)", () => {
-    const cam = new CamState(SZ);
-    cam.lensMm = DEFAULT_LENS_MM;
-    cam.apply();
-    for (const s of drawnStrokes().filter(x => x.id !== "diag")) {
-      const rep = representative(s.pts)!;
-      cam.feed({ a: rep.a, b: rep.b });
-    }
-    expect(cam.order()).toBe(1);
-    expect(cam.ctx()).toBeNull();               // **렌즈가 있어도 안 선다**
-  });
+  /** ⛔ 렌즈 경로는 코드에서 통째로 빠졌다(지시 2) — `lensMm` 필드 자체가 없다. */
 });

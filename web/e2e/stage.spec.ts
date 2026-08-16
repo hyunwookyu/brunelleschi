@@ -110,7 +110,6 @@ test("단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다", asyn
   // ---- 주점이 화면 중심이 아닌 경로 (`setViewOffset`의 offsetX ≠ 0)
   led.offcenter_principal = await page.evaluate(() => {
     const S = window.S2S;
-    S.cam.locked = false;
     // **소실점을 옮겨 수심(= 주점)을 화면 중심 밖으로 보낸다**(이론서 6.3).
     // 옛 판은 가이드 핸들을 밀었다 — 가이드가 없어졌으므로(D-L37) 소실점을 직접 민다.
     (window as any).__RULES0 = S.cam.dumpRules();      // **끝나면 되돌린다**(아래)
@@ -124,7 +123,6 @@ test("단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다", asyn
     r.slots[2].at = [r.slots[2].at[0] - 40, r.slots[2].at[1]];
     S.cam.loadRules(r);
     const ctx = S.cam.ctx();
-    S.cam.locked = true;
     S.stage.pinTo(ctx.principal, ctx.f);
     const el = document.getElementById("ink") as HTMLCanvasElement;
     return { principal: ctx.principal, canvas_center: [el.clientWidth / 2, el.clientHeight / 2],
@@ -141,10 +139,8 @@ test("단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다", asyn
   // 옛 판은 가이드 핸들을 26px 밀어 소실점이 거의 안 움직였고 그래서 드러나지 않았다.
   await page.evaluate(() => {
     const S = window.S2S;
-    S.cam.locked = false;
     S.cam.loadRules((window as any).__RULES0);
     const ctx = S.cam.ctx();
-    S.cam.locked = true;
     S.stage.pinTo(ctx.principal, ctx.f);
     S.refresh();
   });
@@ -342,7 +338,7 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
                                             seg3d: x.seg3d, pts2d0: x.pts2d[0] })),
       lifted: d.strokes.filter((x: any) => x.seg3d).length,
       pending: d.strokes.filter((x: any) => !x.seg3d).length,
-      locked: S.cam.locked,
+      standing: S.standing(),
       axes: S.cam.rules.slots.filter(Boolean).length,
       order: S.order(),
     };
@@ -364,7 +360,7 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
                                             seg3d: x.seg3d, pts2d0: x.pts2d[0] })),
       lifted: d.strokes.filter((x: any) => x.seg3d).length,
       pending: d.strokes.filter((x: any) => !x.seg3d).length,
-      locked: S.cam.locked,
+      standing: S.standing(),
       axes: S.cam.rules.slots.filter(Boolean).length,
       order: S.order(),
       newId: (() => { const n = S.doc().strokes.length; return `s${n}`; })(),
@@ -377,7 +373,7 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
   expect(after.currentView).toBe(before.currentView);
   expect(after.lifted).toBe(before.lifted);
   expect(after.pending).toBe(before.pending);         // **2D 레이어가 살아 있다**(§9.1)
-  expect(after.locked).toBe(true);
+  expect(after.standing).toBe(true);
   expect(after.axes).toBe(before.axes);              // 규칙 상태가 카메라의 입력이다(D-L37)
   expect(after.order).toBe(before.order);
 
@@ -431,7 +427,7 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
     identical_covers: ["strokes[].id", "strokes[].viewRef", "strokes[].axis",
                        "strokes[].seg3d", "strokes[].pts2d[0]",
                        "views[].id", "views[].name", "views[].pose 유무",
-                       "currentView", "lifted 수", "pending 수", "cam.locked",
+                       "currentView", "lifted 수", "pending 수", "standing",
                        "cam.rules 축 수", "order"],
     identical_does_not_cover: ["pts2d 전체(첫 점만 본다)", "snapStart", "color·width·layer",
                                "되돌리기 이력", "orderMarks"],
@@ -504,7 +500,7 @@ test.skip("가이드 조정 — 늘리기·민감도·선 끌기 (대상이 사�
   l.draft_only = await page.evaluate(async () => {
     const S = window.S2S;
     const m = await import("/test/scene3d.ts");
-    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 하네스가 화면 밖 소실점으로 직선을 만드는 데만 쓴다
+    const vd = await import("/src/s3d/clip2d.ts");   // 화면 밖 소실점 → 캔버스 안 직선(범용 클리핑)
     const doc = await import("/src/ui/doc.ts");
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
@@ -622,11 +618,10 @@ test("스냅 — 대상·표식·시작점 확정", async ({
   l.hover = await page.evaluate(() => {
     const S = window.S2S;
     const h = S.hoverSnap();
-    return { kind: h?.kind ?? null, dist_px: h ? +h.dist.toFixed(1) : null,
-             shown_in_status: document.getElementById("status")!.innerText.includes("스냅") };
+    return { kind: h?.kind ?? null, dist_px: h ? +h.dist.toFixed(1) : null };
   });
   expect((l.hover as any).kind).toBe("endpoint");
-  expect((l.hover as any).shown_in_status).toBe(true);
+  // ⛔ 상태 줄 스냅 표시 확인을 뺐다(지시 3 — 상태 패널이 비었다). 표식은 캔버스에 그려진다
 
   // ③ **실제 포인터로 긋는다.** 시작을 꼭짓점에서 어긋나게, 끝을 같은 모서리 방향으로.
   await page.mouse.down();
@@ -749,14 +744,9 @@ test("실시간 축 판정 — 미리보기와 확정이 같다", async ({ page 
   l.mid_drag = await page.evaluate(() => {
     const S = window.S2S;
     const t = document.getElementById("status")!.innerText;
-    return { status_shows_live: t.includes("그리는 중"),
-             // **두 점 배치도 판정이다**(D-L46) — 축 대신 "양 끝 스냅"이 뜬다.
-             // 재는 것은 "지금 무엇으로 놓이는지가 화면에 보이는가"이고 둘 다 그 답이다
-             status_shows_axis: /축[123]/.test(t) || t.includes("양 끝 스냅"),
-             hover_cleared: S.hoverSnap() === null };
+    // ⛔ 상태 줄의 "그리는 중" 표시 확인을 뺐다(지시 3) — 판정은 캔버스 미리보기 색이 보인다
+    return { hover_cleared: S.hoverSnap() === null };
   });
-  expect((l.mid_drag as any).status_shows_live).toBe(true);
-  expect((l.mid_drag as any).status_shows_axis).toBe(true);
 
   // **미리보기와 확정의 일치**: 끌기 마지막 위치의 미리보기 3D와, 그 자리에서 뗀 확정 3D
   const endX = cx + geo.b[0] - 7, endY = cy + geo.b[1] + 4;
@@ -870,7 +860,7 @@ test("축 고정 — 추론이 거부한 획을 사용자가 강제한다", asyn
   // **사용자가 고른 축은 재분류가 덮지 않는다**(`doc.ts`의 `userAxis`)
   expect((l.with_lock as any).userAxis).toBe(true);
   expect((l.with_lock as any).mid_drag.locked).toBe(true);
-  expect((l.with_lock as any).mid_drag.status).toBe(true);
+  // ⛔ 상태 줄 확인을 뺐다(지시 3)
 
   l.what_this_does_not_say = [
     "고정이 오배정을 줄이는가 — **사용자 행동 의존이라 직접 측정이 불가능하다**(AS-L5)",
@@ -1020,7 +1010,7 @@ test("뷰 시스템 — 목록·전환·삭제·소유", async ({ page }) => {
       size_heal_count: S.SIZE_HEAL.count,
     };
   });
-  expect((l.ownership as any).status_mentions_hidden).toBe(true);
+  // ⛔ 상태 줄 "다른 뷰 N 숨김" 문구를 뺐다(지시 3) — 숨김 동작 자체는 아래 픽셀 확인이 잰다
   expect((l.ownership as any).pending_there).toBe(2);
   expect((l.ownership as any).lifted_in_v2).toBe(1);
   // **다른 뷰의 2D 획은 한 픽셀도 안 그려진다** — 소유 질의가 아니라 화면 확인이다.
@@ -1265,7 +1255,7 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
     const S = window.S2S;
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
     const m = await import("/test/scene3d.ts");
-    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 하네스가 화면 밖 소실점으로 직선을 만드는 데만 쓴다
+    const vd = await import("/src/s3d/clip2d.ts");   // 화면 밖 소실점 → 캔버스 안 직선(범용 클리핑)
     const doc = await import("/src/ui/doc.ts");
 
     const el = document.getElementById("ink") as HTMLCanvasElement;
@@ -1294,7 +1284,7 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
     (window as any).__SC2 = sc;
     window.S2S.confirmNow();
     return { order: S.order(), lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
-             locked: S.cam.locked };
+             standing: S.standing() };
   });
   expect((l.setup2pt as any).order).toBe(2);
   expect((l.setup2pt as any).lifted).toBeGreaterThan(0);
@@ -1302,7 +1292,7 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
   // ---- 소실점을 하나 더 잡는다 → 차수 승격
   l.promote = await page.evaluate(async () => {
     const S = window.S2S;
-    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 화면 밖 소실점으로 직선을 만드는 데만 쓴다
+    const vd = await import("/src/s3d/clip2d.ts");   // 화면 밖 소실점 → 캔버스 안 직선
     const sc = (window as any).__SC2;
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
@@ -1313,7 +1303,8 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
       seg0: S.doc().strokes.find((s: any) => s.seg3d).seg3d.map((p: number[]) => [...p]),
       snap_count: S.doc().strokes.filter((s: any) => s.snapStart?.ofId).length,
     };
-    S.unlockGuides();
+    // ⛔ `unlockGuides`(소실점 다시)가 없어졌다(지시 1·2) — 잠금 상태 자체가 없다.
+    // 규칙에 세 번째 축을 넣는 순간 **차수는 이미 3으로 계산된다**(perspectiveOrder).
     const vp = sc.vps[2];
     for (const t of [[0.42, 0.35], [0.62, 0.35]]) {
       const q = [t[0] * size[0], t[1] * size[1]];
@@ -1323,7 +1314,7 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
     }
     S.cam.apply(); S.refresh();
     const midOrder = S.order();
-    S.promoteOrderNow();
+    S.promoteOrderNow(before.order);
     const st0 = S.doc().strokes.find((s: any) => s.id === before.first_id)!;
     const moved = st0.seg3d
       ? st0.seg3d.some((p: number[], i: number) =>
@@ -1332,7 +1323,7 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
     return {
       before, order_after_guides: midOrder, order: S.order(),
       lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
-      geometry_moved: moved, locked: S.cam.locked, pinned: S.stage.isPinned,
+      geometry_moved: moved, standing: S.standing(), pinned: S.stage.isPinned,
       note: document.getElementById("status")!.innerText,
       size_heal_count: S.SIZE_HEAL.count,
     };
@@ -1343,7 +1334,7 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
   expect(pr.order).toBe(3);
   // ③ **화면이 움직인다** — §5.3의 "전환 무변화"는 초기 확정에 한한 이야기다(§6.2)
   expect(pr.geometry_moved).toBe(true);
-  expect(pr.locked).toBe(true);
+  expect(pr.standing).toBe(true);
   expect(pr.pinned).toBe(true);
   expect(pr.note).toContain("차수 승격 2점 → 3점");
 
@@ -1390,7 +1381,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
     const S = window.S2S;
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
     const m = await import("/test/scene3d.ts");
-    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 하네스가 화면 밖 소실점으로 직선을 만드는 데만 쓴다
+    const vd = await import("/src/s3d/clip2d.ts");   // 화면 밖 소실점 → 캔버스 안 직선(범용 클리핑)
     const doc = await import("/src/ui/doc.ts");
 
     const el = document.getElementById("ink") as HTMLCanvasElement;
@@ -1425,10 +1416,9 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
       guides: S.camSnapshot().rules.slots.filter(Boolean).length,
       pts0: S.doc().strokes.map((s: any) => [s.id, s.pts2d[0][0], s.pts2d[0][1]]),
     };
-    S.unlockGuides();
     S.setAxisLines([...S.axisLines(), ...mk(2, [[0.42, 0.35], [0.62, 0.35]])] as any);
     S.cam.apply(); S.refresh();
-    S.promoteOrderNow();
+    S.promoteOrderNow(before.order);
     return {
       before, order: S.order(), report: S.promoteReport(), marks: S.orderMarks(),
       lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
@@ -1454,34 +1444,32 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
 
   // ---- ③ ⚠ **회귀**: 일반 `실행취소`가 카메라 상태까지 되돌리는가
   //
-  // ⚠ **되돌아가는 자리를 정확히 적는다**: `실행취소` 한 번은 **승격 직전**으로 간다.
-  // 그 자리는 "`소실점 다시`를 눌러 가이드를 셋째 축까지 세웠지만 **아직 승격은 안 한**" 상태이고,
-  // 앱이 명시적으로 지원하는 상태다(`unlock`의 안내문: "확정된 3D는 그대로 있고,
-  // 승격을 눌러야 다시 풀립니다"). 그러므로 **`S.order()`는 3이 맞다** — 가이드가 그대로이기 때문이다.
-  // **되돌아와야 하는 것은 `locked` · `lockedOrder` · 기하**이고, 초판은 그 셋을 안 되돌렸다.
+  // ⚠ **되돌아가는 자리**: `실행취소` 한 번은 **승격 직전**(`promoteOrderNow`의 스냅샷)으로
+  // 간다. 그 자리는 규칙에 셋째 축이 이미 서 있고(차수 계산 3) **기하는 아직 2점 해**인
+  // 상태다. 되돌아와야 하는 것은 **규칙(스냅샷의 `rules`)과 기하**이고, `locked`·`lockedOrder`는
+  // 이제 존재하지 않는다 — 차수는 규칙에서 계산된다(지시 1).
   l.undo_restores_camera = await page.evaluate(() => {
     const S = window.S2S;
     document.querySelector<HTMLButtonElement>('#bar button[data-act="undo"]')!.click();
     const c = S.camSnapshot();
-    return { order: S.order(), guides: c.rules.slots.filter(Boolean).length, locked: c.locked,
-             locked_order: c.lockedOrder,
+    return { order: S.order(), guides: c.rules.slots.filter(Boolean).length,
+             standing: c.standing,
              lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
              report_gone: S.promoteReport() === null };
   });
   const ur = l.undo_restores_camera as any;
-  // **이것이 초판의 결함이다** — 문서만 되돌리면 이 셋이 승격 후 값 그대로 남는다
-  expect(ur.locked).toBe(false);
-  expect(ur.locked_order).toBe(2);
+  // **기하가 승격 전으로 돌아왔다** — 문서만 되돌리면 좌표계가 섞인다(§6.1)
+  expect(ur.standing).toBe(true);
   expect(ur.lifted).toBe(pr.before.lifted);
   expect(ur.report_gone).toBe(true);
-  // 가이드는 **안 되돌아온다** — 승격 직전에 이미 셋째 축이 서 있었다. 그것이 옳다
+  // 규칙은 **안 되돌아온다** — 승격 직전에 이미 셋째 축이 서 있었다. 그것이 옳다
   expect(ur.order).toBe(3);
 
   // ---- ④ **차수 되돌리기**: 다시 승격한 뒤 획을 더 그려도 한 번에 2점으로 간다
   l.revert_by_order = await page.evaluate(async (arg: { pts0: [string, number, number][] }) => {
     const S = window.S2S;
     const doc = await import("/src/ui/doc.ts");
-    S.promoteOrderNow();                              // 되돌린 자리에서 다시 승격한다
+    S.promoteOrderNow(2);                             // 되돌린 자리에서 다시 승격한다
     const afterPromote = S.order();
     // 승격 뒤에 획을 하나 더 그린다 — `실행취소` 한 번으로는 못 돌아가는 자리를 만든다
     S.doc().strokes.push(doc.newSStroke([[120, 140], [260, 200]], S.doc().currentView));
@@ -1522,7 +1510,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
   l.loss_shown = await page.evaluate(async () => {
     const S = window.S2S;
     const m = await import("/test/scene3d.ts");
-    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 하네스가 화면 밖 소실점으로 직선을 만드는 데만 쓴다
+    const vd = await import("/src/s3d/clip2d.ts");   // 화면 밖 소실점 → 캔버스 안 직선(범용 클리핑)
     const doc = await import("/src/ui/doc.ts");
 
     const el = document.getElementById("ink") as HTMLCanvasElement;
@@ -1549,10 +1537,10 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
     S.setAxisLines([...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])]);
     S.cam.apply(); S.refresh();
     window.S2S.confirmNow();
-    S.unlockGuides();
+    const beforeOrder = S.order();
     S.setAxisLines([...S.axisLines(), ...mk(2, [[0.42, 0.35], [0.62, 0.35]])]);
     S.cam.apply(); S.refresh();
-    S.promoteOrderNow();
+    S.promoteOrderNow(beforeOrder);
     const rep = S.promoteReport();
 
     // **표식이 실제로 캔버스에 그려졌는가** — 문구만 보면 그리기 경로는 안 지난다.
@@ -1678,7 +1666,7 @@ test("고치기 — 획을 고르고, 축을 지정하고, 지운다", async ({ 
   l.setup = await page.evaluate(async () => {
     const S = window.S2S;
     const m = await import("/test/scene3d.ts");
-    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 하네스가 화면 밖 소실점으로 직선을 만드는 데만 쓴다
+    const vd = await import("/src/s3d/clip2d.ts");   // 화면 밖 소실점 → 캔버스 안 직선(범용 클리핑)
     const doc = await import("/src/ui/doc.ts");
 
     const el = document.getElementById("ink") as HTMLCanvasElement;
@@ -1894,7 +1882,7 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
     const S = window.S2S;
     // 2점으로 다시 세운다 — 수직 가이드를 뒤에 더해 승격을 만든다(`l_c2`와 같은 절차)
     const m = await import("/test/scene3d.ts");
-    const vd = await import("/src/s3d/vpDraft.ts");   // ⛔ 폐기 경로(D-L37) — 하네스가 화면 밖 소실점으로 직선을 만드는 데만 쓴다
+    const vd = await import("/src/s3d/clip2d.ts");   // 화면 밖 소실점 → 캔버스 안 직선(범용 클리핑)
     const doc = await import("/src/ui/doc.ts");
 
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
@@ -1928,10 +1916,9 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
     const before = { order: S.order(),
                      lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
                      pending: S.doc().strokes.filter((s: any) => !s.seg3d).length };
-    S.unlockGuides();
     S.setAxisLines([...S.axisLines(), ...mk(2, [[0.42, 0.35], [0.62, 0.35]])] as any);
     S.cam.apply(); S.refresh();
-    S.promoteOrderNow();
+    S.promoteOrderNow(before.order);
     return { before, order: S.order(), trace: S.chainTrace(),
              lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
              pending: S.doc().strokes.filter((s: any) => !s.seg3d).length };
@@ -1957,56 +1944,37 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
   // ⚠ **`revertToOrder(2)` 뒤에 다시 승격해도 3점이 안 된다** — 되돌리기가 **가이드까지**
   // 되돌리므로 세 번째 축이 없어지기 때문이다. 그것이 §6.1이 요구하는 동작이고
   // (둘 중 하나만 되돌리면 좌표계가 섞인다) 아래에서 그 사실을 못박는다.
-  l.order_marks_multi = await page.evaluate(async () => {
+  // ⛔ **다중 표식 시험을 좁혔다**(지시 1·2): 표식 3을 만들던 입구(`소실점 다시` 버튼)가
+  // 없어졌다 — 잠금·해제라는 상태 자체가 없다. 남는 표식은 확정 시점의 것 하나(2)이고,
+  // 되돌리기가 **문서와 카메라를 함께** 되돌리는 성질(§6.1)만 확인한다.
+  l.order_marks_multi = await page.evaluate(() => {
     const S = window.S2S;
-    const after3 = { order: S.order(), marks: S.orderMarks() };
-    // 3점 상태에서 **다시** 카메라를 연다 → 표식 3이 찍혀 목록이 둘이 된다
-    S.unlockGuides();
-    const twoMarks = { marks: S.orderMarks(), buttons: [...document.querySelectorAll("#bar button")]
-      .map(b => (b as HTMLElement).dataset.act).filter(a => a && a.startsWith("revert")) };
-    const at3 = { lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
-                  guides: S.camSnapshot().rules.slots.filter(Boolean).length };
-    // **가장 최근 차수(3)로 되돌린다** — 3점 상태가 그대로 돌아와야 한다
-    S.revertToOrder(3);
-    const back3 = { order: S.order(), lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
-                    guides: S.camSnapshot().rules.slots.filter(Boolean).length, locked: S.camSnapshot().locked };
-    // **그다음 2로 되돌린다** — 가이드가 둘로 줄고 차수가 2가 된다
+    const after3 = { order: S.order(), marks: S.orderMarks(),
+                     buttons: [...document.querySelectorAll("#bar button")]
+                       .map(b => (b as HTMLElement).dataset.act)
+                       .filter(a => a && a.startsWith("revert")) };
+    // **2로 되돌린다** — 가이드가 둘로 줄고 차수가 2가 된다
     S.revertToOrder(2);
     const back2 = { order: S.order(), lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
                     guides: S.camSnapshot().rules.slots.filter(Boolean).length };
-    // ⚠ **여기서 다시 승격해도 3점이 안 된다**(가이드가 되돌아갔으므로) — 못박는다
-    S.promoteOrderNow();
+    // ⚠ **여기서 다시 승격해도 3점이 안 된다**(규칙이 되돌아갔으므로) — 못박는다
+    S.promoteOrderNow(2);
     const repromote = { order: S.order(), guides: S.camSnapshot().rules.slots.filter(Boolean).length };
-    return { after3, twoMarks, at3, back3, back2, repromote };
+    return { after3, back2, repromote };
   });
   const om = l.order_marks_multi as any;
-  (om as any).buttons_note =
-    "표식은 둘(2·3)인데 **버튼은 하나**다 — `lockedOrder`의 표식은 안 낸다(있는 자리로 "
-    + "가는 버튼은 아무 일도 안 한다). 표식 3은 **더 그린 뒤** 돌아올 자리로 살아 있고 "
-    + "`revertToOrder(3)`이 그것을 쓴다.";
   expect(om.after3.order).toBe(3);
   expect(om.after3.marks).toEqual([2]);
-  // ① **표식이 둘이 된다** — 2와 3을 함께 들고 있다
-  expect(om.twoMarks.marks).toEqual([2, 3]);
-  // ② **버튼은 하나다** — `lockedOrder`(=3)의 표식은 일부러 안 낸다("있는 자리로
-  //    되돌아가는 버튼은 아무 일도 안 한다"). 즉 **표식 둘 · 버튼 하나**가 옳은 상태다.
-  //    ⚠ 초판은 버튼 둘을 기대했다 — **코드가 맞고 기대가 틀렸다**(A-3: 측정을 따른다).
-  expect(om.twoMarks.buttons).toEqual(["revert2"]);
-  // ③ **가장 최근 차수로 되돌리면 3점 상태가 그대로다**
-  expect(om.back3.order).toBe(3);
-  expect(om.back3.guides).toBe(om.at3.guides);
-  expect(om.back3.lifted).toBe(om.at3.lifted);
-  // ④ **2로 되돌리면 가이드가 줄고 차수가 2가 된다** — 문서와 카메라가 함께 돌아간다
+  expect(om.after3.buttons).toEqual(["revert2"]);
+  // **2로 되돌리면 가이드가 줄고 차수가 2가 된다** — 문서와 카메라가 함께 돌아간다
   expect(om.back2.order).toBe(2);
-  expect(om.back2.guides).toBeLessThan(om.back3.guides);
-  // ⑤ ⚠ **그 뒤 재승격은 아무것도 안 한다** — 세 번째 축 가이드가 없기 때문이다.
-  //    "되돌리기가 문서만 되돌리면 소실점이 새 차수로 남는다"의 **거울상 확인**이다(§6.1)
+  expect(om.back2.guides).toBe(2);                    // 하네스 `setAxisLines`는 수직 슬롯을 비워 둔다
+  // ⚠ **그 뒤 재승격은 아무것도 안 한다** — 세 번째 축이 없기 때문이다(§6.1의 거울상)
   expect(om.repromote.order).toBe(2);
   expect(om.repromote.guides).toBe(om.back2.guides);
   (l.order_marks_multi as any).reading =
-    "표식 둘(2·3)을 함께 든다(버튼은 `lockedOrder` 것을 빼므로 하나다). **되돌리기는 문서와 카메라를 "
-    + "함께 되돌리므로**, 2로 되돌린 뒤 재승격해도 3점이 안 된다(가이드가 같이 돌아갔다). "
-    + "그것이 §6.1이 요구하는 동작이다 — 둘 중 하나만 되돌리면 좌표계가 섞인다.";
+    "**되돌리기는 문서와 카메라를 함께 되돌린다** — 2로 되돌린 뒤 재승격해도 3점이 안 된다"
+    + "(규칙이 같이 돌아갔다). §6.1: 둘 중 하나만 되돌리면 좌표계가 섞인다.";
 
   // ---- ⑤ **스크린샷 회귀**: 같은 픽스처를 두 번 세우면 픽셀이 같아야 한다(결정론)
   //
@@ -2018,6 +1986,15 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
   const shot = async () => {
     await page.goto("/l.html");
     await page.waitForFunction(() => !!window.S2S);
+    // ⚠ **저장 복원 경쟁을 끊는다**(2026-08-17 3차에서 간헐 실패로 드러났다): `getDoc2` 복원이
+    // 비동기라, 앞 판의 자동 저장본이 `setup`의 획 주입과 **경주**한다 — 복원이 먼저 오면
+    // 두 판의 그림이 달라진다. 저장소를 지우고 다시 연 뒤에 세운다(출발점을 같게).
+    await page.evaluate(() => new Promise<void>(res => {
+      const q = indexedDB.deleteDatabase("sketch2space");
+      q.onsuccess = q.onerror = q.onblocked = () => res();
+    }));
+    await page.reload();
+    await page.waitForFunction(() => !!window.S2S);
     await setup(page, { boxes: 2 });
     await page.evaluate(() => {
       window.S2S.confirmNow();
@@ -2026,7 +2003,12 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
       // 두 장이 **같은 안정 상태**에서 찍히게 한 번 더 돌린다(위 머리말과 같은 이유).
       window.S2S.refresh(); window.S2S.refresh();
     });
-    return (await page.locator("#ink").screenshot()).toString("base64");
+    // ⚠ **요소 스크린샷이 아니라 캔버스 비트맵을 비교한다**(2026-08-17 3차 정정).
+    // 요소 스크린샷은 캔버스 위에 겹친 DOM 글자까지 합성하는데, 그 글자의 안티에일리어싱이
+    // 페이지 로드 간에 ±1 그레이 레벨로 흔들렸다(실측: 22px, 전부 도구 막대 글자 자리) —
+    // 재려는 것은 **잉크 층의 결정론**이므로 잉크 캔버스의 픽셀만 본다.
+    return page.evaluate(() =>
+      (document.getElementById("ink") as HTMLCanvasElement).toDataURL());
   };
   const a = await shot(), b = await shot();
   l.screenshot_regression = {

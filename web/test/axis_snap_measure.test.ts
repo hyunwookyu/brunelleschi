@@ -22,7 +22,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { recoverCamera, isFiniteVp, lineIntersect, type Pt2 } from "../src/s3d/camera.js";
 import { fPixelsFrom35mm } from "../src/s3d/constraints.js";
-import { DEFAULT_LENS_MM } from "../src/ui/camState.js";
+import { P1_F_RATIO } from "../src/ui/camState.js";
 import { representative } from "../src/s3d/axis.js";
 import {
   newRuleState, stepRule, vpsOf, axisDirsOf, axisOfStroke, defaultHorizon,
@@ -189,7 +189,7 @@ function runOne(fx: Fx, order: (typeof ORDERS)[number], arm: Arm): RunOut {
         if (idx != null) slots[idx] = { kind: "vp", at, source: "two_lines", support: ls.length };
       }
     }
-    st = { slots, horizon: defaultHorizon(SZ), verticalLines: [], distance: null };
+    st = { slots, horizon: defaultHorizon(SZ), verticalLines: [] };
     // 지평선 없는 팔에서는 **축마다 두 선이 필요**하므로, 각 축의 셋째 획부터가 "확정 뒤"다
     const seen: Record<number, number> = { 0: 0, 1: 0, 2: 0 };
     for (const { e } of reps) {
@@ -202,7 +202,7 @@ function runOne(fx: Fx, order: (typeof ORDERS)[number], arm: Arm): RunOut {
   const vps = vpsOf(st);
   const nF = vps.filter(v => v && isFiniteVp(v, SZ)).length;
   const cam = recoverCamera(vps, SZ,
-    nF === 1 ? { fSetting: fPixelsFrom35mm(DEFAULT_LENS_MM, SZ[0]) } : {});
+    nF === 1 ? { fSetting: P1_F_RATIO * SZ[0] } : {});   // P1 임의 f(지시 1)
   const out: RunOut = {
     cameraOk: cam.ok, axisErrs: [], order: nF, placed: 0, total: fx.drawn.length,
     shape: [], ambigFired, ambigRight, ambigTotal, snapped: 0,

@@ -47,7 +47,7 @@ function fixture(): DocState {
 
 const src = (d: DocState) => ({
   at: "2026-08-16T00:00:00.000Z", imgSize: IMG,
-  cam: new ConstraintAccumulator(IMG).dump(), locked: true, order: 2, doc: d, seq: docSeq(),
+  cam: new ConstraintAccumulator(IMG).dump(), doc: d, seq: docSeq(),
 });
 
 /** JSON을 한 번 통과시킨다 — IndexedDB의 구조적 복제와 같은 자리다. */
@@ -78,11 +78,9 @@ describe("L-D.2 저장·복원 v2", () => {
       expect(back.doc.strokes[i].snapStart).toEqual(d.strokes[i].snapStart);
       expect(back.doc.strokes[i].axis).toBe(d.strokes[i].axis);
     }
-    expect(back.locked).toBe(true);
-    expect(back.order).toBe(2);
+    // ⚠ `locked`·`order`는 더 이상 저장하지 않는다(지시 1 — 파생 상태는 계산한다)
     led.bit_identical = { strokes: d.strokes.length,
                           fields: ["pts2d", "seg3d", "snapStart", "axis"],
-                          locked: back.locked, order: back.order,
                           note: "**설계 보장이다**(#5) — 담기로 한 필드이므로 같을 수밖에 없다. "
                             + "임계를 걸지 않는다. 깨지면 저장 포맷 결함이다" };
   });

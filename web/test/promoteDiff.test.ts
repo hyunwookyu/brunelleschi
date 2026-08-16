@@ -68,7 +68,6 @@ describe("appSnap — 되돌리기가 문서와 카메라를 함께 담는가", 
     const cam = new CamState([960, 672]);
     // **규칙 상태로 세운다** — 가이드가 없어졌다(2026-08-16). 축 0·1이 수평 소실점, 2가 화면 세로
     setRules(cam, [vpSlot([-1400, 330]), vpSlot([2100, 330]), screenSlot("v")]);
-    cam.locked = true;
     const doc = newDoc();
     doc.strokes.push(newSStroke(P(100), doc.currentView));
     doc.strokes.push(newSStroke(P(200), doc.currentView));
@@ -78,32 +77,29 @@ describe("appSnap — 되돌리기가 문서와 카메라를 함께 담는가", 
 
   it("왕복은 항등이다 (**설계 보장** — 측정이 아니다)", () => {
     const { cam, doc } = build();
-    const s0 = takeSnap(doc, cam, 2);
+    const s0 = takeSnap(doc, cam);
     // 상태를 어긴다: 소실점을 옮기고, 획을 3D에서 내리고, 시작점을 옮긴다
     setRules(cam, [vpSlot([-900, 300]), vpSlot([2100, 330]), screenSlot("v")]);
-    cam.locked = false;
     doc.strokes[0].seg3d = null;
     doc.strokes[1].pts2d = [[999, 999], ...doc.strokes[1].pts2d.slice(1)];
     const back = applySnap(cam, s0);
-    expect(snapDiff(takeSnap(back, cam, s0.lockedOrder), s0)).toEqual([]);
-    expect(cam.locked).toBe(true);
+    expect(snapDiff(takeSnap(back, cam), s0)).toEqual([]);
+    expect(cam.standing()).toBe(true);          // **계산으로 확정이다**(지시 1 — 규칙이 되돌아왔으므로)
     expect(cam.rules.slots[0]).toMatchObject({ kind: "vp", at: [-1400, 330] });
   });
 
   // **양성 채널**(#30) — 대조가 눈뜬 것인지 본다. 안 짚으면 위의 통과는 아무 뜻이 없다
   it("다른 상태를 넣으면 그 자리를 이름으로 짚는다", () => {
     const { cam, doc } = build();
-    const a = takeSnap(doc, cam, 2);
+    const a = takeSnap(doc, cam);
     const mut = (f: (d: typeof doc, c: CamState) => void): AppSnap => {
       const d2 = snapshotDoc(doc);
       const c2 = new CamState([960, 672]);
       c2.loadRules(cam.rules);
-      c2.locked = cam.locked;
       f(d2, c2);
       c2.apply();
-      return takeSnap(d2, c2, 2);
+      return takeSnap(d2, c2);
     };
-    expect(snapDiff(a, mut((_, c) => { c.locked = false; }))).toContain("locked");
     expect(snapDiff(a, mut((_, c) => {
       setRules(c, [vpSlot([-999, 330]), vpSlot([2100, 330]), screenSlot("v")]);
     }))).toContain("rules.slots[0].vp");
@@ -121,12 +117,13 @@ describe("appSnap — 되돌리기가 문서와 카메라를 함께 담는가", 
       .toContain("strokes[1].pts2d[0]");
     expect(snapDiff(a, mut(d => { d.strokes[0].snapStart = { kind: "endpoint", at: [0, 0, 0], ofId: "z" }; })))
       .toContain("strokes[0].snapStart.presence");
-    expect(snapDiff(a, takeSnap(doc, cam, 3))).toContain("lockedOrder");
+    // ⚠ `lockedOrder` 항목을 뺐다(지시 1) — 차수는 스냅샷이 아니라 규칙에서 계산된다.
+    // 차수가 바뀌는 변경은 위의 `rules.slots[2].kind`(무한원 → 유한 소실점)가 잡는다
   });
 
   it("스냅샷은 나중의 획에 안 딸려 움직인다", () => {
     const { cam, doc } = build();
-    const s = takeSnap(doc, cam, 2);
+    const s = takeSnap(doc, cam);
     (cam.rules.slots[0] as { at: Pt2 }).at[0] = 12345;
     doc.strokes[0].seg3d = null;
     expect((s.rules.slots[0] as { at: Pt2 }).at[0]).toBe(-1400);

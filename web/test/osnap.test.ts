@@ -109,14 +109,14 @@ describe("오스냅 — 저장이 `snapEnd`를 넘긴다", () => {
   };
 
   it("왕복하면 `snapEnd`가 그대로다", () => {
-    const d = serializeDoc2({ at: "t", imgSize: SZ, cam: null, locked: true, order: 2,
+    const d = serializeDoc2({ at: "t", imgSize: SZ, cam: null,
                               doc: docOf(), seq: { stroke: 1, view: 1 } });
     const back = restoreDoc2(d);
     expect(back.doc.strokes[0].snapEnd).toEqual({ kind: "midpoint", at: [1, 1, 6], ofId: "B" });
   });
 
   it("**옛 저장본**(필드가 없다)은 `null`로 복원된다", () => {
-    const d = serializeDoc2({ at: "t", imgSize: SZ, cam: null, locked: true, order: 2,
+    const d = serializeDoc2({ at: "t", imgSize: SZ, cam: null,
                               doc: docOf(), seq: { stroke: 1, view: 1 } });
     delete (d.strokes[0] as { snapEnd?: unknown }).snapEnd;
     expect(restoreDoc2(d).doc.strokes[0].snapEnd).toBeNull();

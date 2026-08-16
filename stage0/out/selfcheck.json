@@ -5415,6 +5415,11 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "rule_camera.json:how.p1_f_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "rule_camera.json:headline_no_identity.detect.asks_per_run",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6592,7 +6597,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 5.329070518200751e-15,
+      "val": 4.440892098500626e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -9126,11 +9131,6 @@
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\draft_recover.test.ts",
-      "val": "1건 (줄 [94])",
-      "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
-    },
-    {
       "path": "web\\test\\lift_grade.test.ts",
       "val": "1건 (줄 [104])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
@@ -9152,7 +9152,7 @@
     },
     {
       "path": "web\\test\\order_undo.test.ts",
-      "val": "1건 (줄 [252])",
+      "val": "1건 (줄 [251])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
@@ -9188,7 +9188,7 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 140
+      "reads": 138
     },
     {
       "field": "pts2d",
@@ -9203,12 +9203,12 @@
     {
       "field": "axis",
       "writes": 5,
-      "reads": 84
+      "reads": 68
     },
     {
       "field": "rep",
       "writes": 1,
-      "reads": 80
+      "reads": 70
     },
     {
       "field": "anchorRef",
@@ -9228,18 +9228,18 @@
     {
       "field": "color",
       "writes": 0,
-      "reads": 14
+      "reads": 13
     },
     {
       "field": "width",
       "writes": 1,
-      "reads": 18
+      "reads": 17
     }
   ],
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 187,
+      "files_scanned": 179,
       "exts_declared": [
         ".md",
         ".py",
@@ -9248,22 +9248,22 @@
       "hits_by_ext": {
         ".md": 11,
         ".py": 2,
-        ".ts": 6
+        ".ts": 5
       }
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 126,
+      "files_scanned": 118,
       "exts_declared": [
         ".ts"
       ],
       "hits_by_ext": {
-        ".ts": 15
+        ".ts": 14
       }
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 187,
+      "files_scanned": 179,
       "exts_declared": [
         ".md",
         ".py",
@@ -9272,12 +9272,12 @@
       "hits_by_ext": {
         ".md": 10,
         ".py": 4,
-        ".ts": 46
+        ".ts": 42
       }
     },
     {
       "sweep": "external_data",
-      "files_scanned": 82,
+      "files_scanned": 76,
       "exts_declared": [
         ".ts"
       ],
@@ -9304,7 +9304,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 126,
+      "targets": 128,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
@@ -9318,8 +9318,8 @@
     {
       "scan": "scan_zero_denominator",
       "unit": "하네스 파일",
-      "targets": 44,
-      "hits": 12,
+      "targets": 41,
+      "hits": 11,
       "note": "원장을 쓰는 `web/test/**.ts`만 본다"
     }
   ],

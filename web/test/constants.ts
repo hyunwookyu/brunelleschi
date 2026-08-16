@@ -22,8 +22,6 @@ import { VP_INFINITE_RATIO } from "../src/s3d/camera.js";
 import { VP_TOL } from "../src/s3d/vpDetect.js";
 import { LIFT_TOL } from "../src/s3d/lift.js";
 import { HOMOG_TOL } from "../src/s3d/vpHomog.js";
-import { DRAFT_TOL } from "../src/s3d/vpDraft.js";
-import { SENS_TOL } from "../src/s3d/vpSensitivity.js";
 import { SNAP_TOL } from "../src/s3d/snap.js";
 import { HORIZON_TOL } from "../src/s3d/horizon.js";
 import { RULE_TOL } from "../src/s3d/vpRules.js";
@@ -49,8 +47,14 @@ export const SHARED_CONSTANTS = {
   RULE_TOL,
   // **축 스냅 — 라이노 직교 모드**(2026-08-16 2차 지시). 하네스 `test/axis_snap_measure.test.ts`
   SNAP_TOL_AXIS,
-  DRAFT_TOL,
-  SENS_TOL,
+  // ⛔ **`vpDraft.ts`·`vpSensitivity.ts`는 2026-08-17 지시 2로 삭제됐다**(검출 초안 경로).
+  // 값을 **동결 리터럴로 남기는 이유는 해시 안정성 하나다**: 전역 해시가 하나뿐이라
+  // (DEFERRED "의존 집합별 해시") 키를 빼면 이 상수에 의존한 적 없는 원장 40여 개가
+  // 전부 STALE이 된다 — D-L51이 `GESTURE_TOL`을 안 넣은 것과 같은 자리의 결정이다.
+  // 어떤 코드도 이 값을 더는 읽지 않는다. 의존 집합별 해시가 서면 그때 뺀다.
+  DRAFT_TOL: { handle_ratio: 0.018, margin_ratio: 0.03, min_guide_ratio: 0.45,
+               support_pick: "len_x_sep", fill_missing_axes: true },
+  SENS_TOL: { probe_px: 1, probe_dirs: 8, budget_deg: 0.5, unusable_px: 1.0 },
   SNAP_TOL,
   LIVE_TOL,
   CONSENSUS_TOL,

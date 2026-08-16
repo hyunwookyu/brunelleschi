@@ -22,8 +22,9 @@ import { setDocSeq, docSeq } from "./ui/doc.js";
 import { nearestSeg, PICK_TOL, type PickSeg } from "./ui/pick.js";
 import { diffPlacement, diffSummary, type PlacementDiff } from "./s3d/promoteDiff.js";
 // **규칙 기반 소실점**(2026-08-16 전면 교체). 검출 초안·가이드·민감도 경로는 전부 빠졌다.
-import { classifyLine, snapAxisTable as snapAxisRows, orderCandidate, distancePoints, RULE_TOL,
-         type RuleEvent, type RLine, type RuleState, type OrderCandidate } from "./s3d/vpRules.js";
+// **상태는 넷뿐이고 차수는 계산한다**(2026-08-17 지시 1) — `perspectiveOrder` 하나를 부른다.
+import { classifyLine, snapAxisTable as snapAxisRows, perspectiveOrder, RULE_TOL,
+         type RuleEvent, type RLine, type RuleState } from "./s3d/vpRules.js";
 // **축 스냅**(사람 지시 1·3) — 그리는 동안 축으로 강제하고, 모호하면 커서가 가른다
 import { snapToAxis, screenOrthoSnap, SNAP_TOL_AXIS,
          type AxisCand, type ScreenOrtho } from "./s3d/axisSnap.js";
@@ -33,7 +34,7 @@ import { snapAt, snapCandidates, staticCandidates, SNAP_TOL, SNAP_LABEL, SNAP_CO
          type StaticCand } from "./s3d/snap.js";
 import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "./s3d/liveLine.js";
 import { representative, AXIS_TOL } from "./s3d/axis.js";
-import { promoteOrder, orderOf, type OrderStroke } from "./s3d/promoteOrder.js";
+import { promoteOrder, type OrderStroke } from "./s3d/promoteOrder.js";
 import { AXIS_COLOR, guides as gridGuides, HORIZON_COLOR, GROUND_COLOR } from "./s3d/grid.js";
 import { project, axisDirection, groundFrame, sub3, angleBetween,
          type Vec3 } from "./s3d/geom3d.js";
@@ -59,7 +60,7 @@ let note = "";
  * **마지막 획이 규칙에 어떻게 들어갔는가**(사람 지시 3 — "무엇이 부족한지 알면 사용자가 긋는다").
  * 화면에 그대로 낸다. 추측하지 않고 규칙이 낸 사건을 그대로 보인다(#7).
  */
-let ruleNote = "";
+// (지시 3 — `ruleNote` 상태 줄을 지웠다: 규칙 사건은 화면에 안 낸다)
 /**
  * **애매해서 묻고 있는 획**(사람 지시 1 — "애매하면 사용자에게 묻는다. 추정하지 않는다").
  *
@@ -208,11 +209,8 @@ let freeStroke = false;
  * 떨어지고 그것이 D-L32가 실패한 자리다.
  */
 let horizonDrag = false;
-/**
- * **확정·승격 시점에 잠근 소실점 개수**(L-C.1, §6.1). 차수 승격을 누를 때
- * `cam`은 **이미 새 차수**이므로(사용자가 가이드를 먼저 세운다) 옛 차수를 따로 들어야 한다.
- */
-let lockedOrder: number | null = null;
+// ⛔ **`lockedOrder`를 지웠다**(2026-08-17 지시 1) — 차수는 저장하지 않고 `cam.order()`가
+// 계산한다. 표시도 판정도 그 함수를 부른다. 어긋날 자리가 없다.
 /** 하네스가 넣은 축 직선(위 `setAxisLines`). **앱은 안 쓴다** — 화면에 가이드가 없다. */
 let harnessLines: { axis: 0 | 1 | 2; a: Pt2; b: Pt2 }[] = [];
 // **스냅샷 자료구조와 대조는 `ui/appSnap.ts` 하나가 정한다**(#17) — 원장이 같은 함수를 부른다.
@@ -221,15 +219,14 @@ const UNDO_MAX = 200;
 
 const cssSize = (): [number, number] => cssSizeOf(canvas);
 
-const appSnap = (): AppSnap => takeSnap(doc, cam, lockedOrder,
+const appSnap = (): AppSnap => takeSnap(doc, cam,
   promoteReport ? { ...promoteReport, snapLost: [...promoteReport.snapLost] } : null);
 
 /** 스냅샷을 그대로 되돌린다. **문서만 되돌리지 않는다**(`appSnap.ts` 머리말). */
 function restoreSnap(s: AppSnap) {
   doc = applySnap(cam, s);
-  lockedOrder = s.lockedOrder;
   const c = cam.ctx();
-  if (c && s.locked) stage.pinTo(c.principal, c.f);
+  if (c) stage.pinTo(c.principal, c.f);
   const rep = s.report as PromoteReport | null;
   promoteReport = rep ? { ...rep, snapLost: [...rep.snapLost] } : null;
   syncScene();
@@ -332,8 +329,9 @@ interface Frame {
 const ID = <T>(x: T) => x;
 
 function frame(): Frame | null {
+  // **"확정됐는가"는 계산이다**(지시 1) — 카메라가 서면 그 순간부터 확정이다(옛 `locked` 플래그 폐기).
   const c = cam.ctx();
-  if (!c || !cam.locked) return null;
+  if (!c) return null;
   if (stage.isPinned) return { ctx: c, toV: ID, fromV: ID, dirV: ID, pinned: true };
   const pose = stage.pose();
   if (!pose) return null;
@@ -632,12 +630,10 @@ const orbitTarget = () => stage.centroid(lifted(doc).map(s =>
  */
 const gestures = new CamGestures({
   begin: () => {
-    if (!cam.locked || !lifted(doc).length) return false;   // 아직 돌릴 3D가 없다
+    if (!cam.standing() || !lifted(doc).length) return false;   // 아직 돌릴 3D가 없다
     if (stage.isPinned) {
       stage.unpin(orbitTarget());
-      note = "돌리는 중 — **펜으로 계속 그릴 수 있습니다**."
-           + " <span class=\"dim\">다른 뷰의 2D 대기 획은 숨깁니다(그 뷰의 화면 좌표이기 때문입니다)</span>";
-      refresh();
+      refresh();   // ⛔ "돌리는 중" 안내를 뺐다(지시 3) — 돌릴 수 있는지는 손가락이 안다
     }
     stage.viewport.userMoved = true;   // 자동 맞춤이 시점을 빼앗지 않는다
     return true;
@@ -662,13 +658,13 @@ function switchView(id: string) {
   if (v.pose === null) {
     if (ctx) stage.pinTo(ctx.principal, ctx.f);
     tool = "draw";
-    note = `확정 뷰 — 3D가 잉크와 같은 자리에 그려집니다`;
+    note = "";
   } else {
     stage.setPose(v.pose, orbitTarget());
     // **L-B.8이 열렸다** — 돌린 시점에서도 그린다. 그래서 전환 뒤 바로 그리기다.
     // 더 돌리려면 `궤도`를 누른다(SketchUp의 모드 전환과 같다).
     tool = "draw";
-    note = `${v.name} — 저장한 각도로 돌아왔습니다. 여기서 바로 그릴 수 있습니다`;
+    note = "";
   }
   hoverSnap = null; live = null;
   refresh();
@@ -784,22 +780,21 @@ function solveInto(ctx: PlaceCtx, targets: SStroke[]): number {
  * **차수 승격 — 소실점이 하나 더 잡히면 전부 다시 푼다**(§6.1).
  * 계획서 §1.2의 **고유한 것 ②**다.
  *
- * ⚠ **자동으로 걸지 않는다.** 사전 등록한 규칙("배치가 안 줄면서 조용히 틀림이 안 는다")에서
- * **배치 조건이 깨졌다**(`order_promote.json`: 같은 획 집합에서 −168). 품질은 나아지는데
- * 개수가 준다 — 그래서 §6.2대로 **사용자가 보고 되돌린다.** `실행취소`가 그 경로다.
+ * **자동으로 건다**(2026-08-17 지시 1 — 전이 P2 → P3이 곧 승격이고 버튼이 없다).
+ * 사용자가 기울어진 세로 모서리를 "수직축"이라 답하는 순간 규칙이 V₃를 세우고 여기가 돈다.
+ * 화면이 **실제로 움직이므로 알린다**(지시 3-d의 예외 둘 중 하나) — `promoteReport`가 그것이다.
+ * 아니다 싶으면 `실행취소`·`N점으로 되돌리기`가 §6.2의 경로다.
  *
- * 화면이 **실제로 움직인다** — §5.3의 "전환 무변화"는 **초기 확정에 한한 이야기**다(§6.2).
+ * `before`는 **전이 직전의 차수**다 — 부르는 쪽(`advanceCamera`)이 feed 전에 재 둔다.
  */
-function promoteOrderNow(): void {
+function autoPromoteOrder(before: number): void {
   const ctx = cam.ctx();
-  if (!ctx) { note = "카메라가 정해지지 않았습니다"; refresh(); return; }
-  // ⚠ **지금 카메라의 차수는 이미 새 것이다** — 사용자가 가이드를 더 세운 뒤 누르기 때문이다.
-  // 그래서 **확정·승격 시점에 잠근 차수**를 따로 들고 있어야 "N점 → M점"을 적을 수 있다
-  const before = lockedOrder ?? orderOf(ctx.vps, ctx.imgSize);
+  if (!ctx) return;
   // **승격 전 배치를 id로 찍어 둔다**(#10 — 뺄셈으로 만들지 않는다). 나중에 개수만 있으면
   // "몇 개 잃었다"까지는 적을 수 있어도 **어느 획인지 화면에 표시할 수 없다.**
   const placedBefore = new Map(doc.strokes.map(s => [s.id, s.seg3d != null]));
-  pushUndo();
+  // ⚠ **여기서 `pushUndo`를 안 한다** — 승격을 일으킨 획의 `onStrokeEnd`가 이미 쌓았고,
+  // 옛 차수의 표식은 `feedCamera`가 **feed 직전 스냅샷**으로 남겼다(여기서 뜨면 이미 새 차수다).
   const input: OrderStroke[] = doc.strokes.map(s => ({
     id: s.id, pts2d: s.pts2d, axis: s.axis, userAxis: s.userAxis, snapStart: s.snapStart,
     // **양 끝 스냅은 승격에서도 두 점으로 다시 풀린다**(D-L46) — 하나라도 못 살리면 안 놓는다
@@ -829,12 +824,10 @@ function promoteOrderNow(): void {
       if (v.pose) v.pose = { R: v.pose.R, C: [v.pose.C[0] * k, v.pose.C[1] * k, v.pose.C[2] * k] };
     }
   }
-  cam.locked = true;
   stage.pinTo(ctx.principal, ctx.f);
   doc.currentView = confirmView().id;
   syncScene();
-  const after = orderOf(ctx.vps, ctx.imgSize);
-  lockedOrder = after;
+  const after = cam.order();
   // **잃은 것을 센다**(L-C.2). 계산은 `promoteDiff.ts` 하나가 하고 원장도 그것을 부른다(#17)
   const placedAfter = new Map(doc.strokes.map(s => [s.id, s.seg3d != null]));
   promoteReport = {
@@ -1010,44 +1003,54 @@ function geomScaleOf(list: SStroke[]): number {
 }
 
 /**
- * 확정 — 계획서 §1.2의 **고유한 것 ①**. 그때까지의 획이 3D로 올라가고 카메라가 잠긴다.
+ * 확정 — 계획서 §1.2의 **고유한 것 ①**. 그때까지의 획이 3D로 올라간다.
  *
  * 전환이 **무변화**여야 한다: 3D 레이어를 그리는 카메라가 확정 카메라와 같으므로
  * 올라간 획은 **잉크가 있던 바로 그 픽셀**에 그려진다(`sceneCam` 머리말 — 설계 보장이다).
- */
-/**
- * ⚠⚠ **`확정` 버튼을 없앴다**(2026-08-17 사람 지시 F). 카메라가 서면 **그 순간부터 돌릴 수
- * 있어야 한다** — 별도 승인 절차가 필요 없다. 그 버튼은 **사용자가 가이드를 조정하던 시절의
- * 잔재**이고(D-L37이 가이드를 없앴다) 지금은 그은 선이 카메라를 정하므로 조정할 대상이 없다.
+ * **그래서 아무것도 알리지 않는다**(2026-08-17 지시 3) — 알리면 전환이 있다는 인상을 준다.
+ * 돌릴 수 있는지는 손가락을 대보면 안다.
  *
- * **자동으로 잠근다**: `onStrokeEnd`가 획을 규칙에 넣은 뒤 `cam.ctx()`가 서면 여기로 온다.
- * 그 뒤 획은 소실점에 기여하지 않고(`CamState.feed`가 잠금을 본다) **차수 승격만이 카메라를
- * 바꾼다** — 그때는 화면이 움직이는 것이 정상이다(§6.2).
- *
- * `pushU`가 거짓이면 되돌리기를 안 쌓는다 — 부르는 쪽이 이미 쌓았을 때다(획 하나에 스냅샷 둘을
- * 만들면 `실행취소`를 두 번 눌러야 획 하나가 지워진다).
+ * ⛔ `locked` 플래그·`확정` 버튼 경로를 지웠다(지시 2) — "확정됐는가"는 `cam.standing()`이
+ * 계산하고, 소실점 잠금은 `stepRule` 자체의 성질이다(슬롯이 차면 지지선으로만 센다).
  */
-function confirm(pushU = true) {
+function standCamera() {
   const ctx = cam.ctx();
-  if (!ctx) { note = "카메라가 아직 정해지지 않았습니다 — 아래 안내대로 선을 더 그으세요"; refresh(); return; }
-  if (pushU) pushUndo();
+  if (!ctx) return;
   const targets = pending(doc, doc.views[0].id);
   const n = solveInto(ctx, targets);
-  cam.locked = true;
-  lockedOrder = orderOf(ctx.vps, ctx.imgSize);
   stage.pinTo(ctx.principal, ctx.f);
-  // **이 차수의 표식**(§6.2). `소실점 다시`에서 더 최근 상태로 덮인다
-  markOrder(lockedOrder, appSnap());
   // 확정 직후에도 연쇄를 한 번 돈다 — 놓인 것이 생겼으므로 대기 획이 붙을 수 있다
-  const chained = n ? promoteChain(frame() ?? { ctx, toV: ID, fromV: ID, dirV: ID, pinned: true }) : 0;
+  if (n) promoteChain(frame() ?? { ctx, toV: ID, fromV: ID, dirV: ID, pinned: true });
+  // **이 차수의 표식**(§6.2) — `N점으로 되돌리기`의 자리다.
+  // ⚠ **연쇄 뒤에 뜬다.** 앞에 뜨면 표식이 연쇄 전 절반만 든 상태가 된다 — 옛 판은
+  // `소실점 다시`가 표식을 덮어써 이 순서 결함이 가려져 있었고, 그 버튼이 없어지자
+  // 종단 확인(되돌리기 ids3d 대조)이 실제로 잡았다(2026-08-17 3차).
+  markOrder(cam.order(), appSnap());
   syncScene();
-  note = `<b>${lockedOrder}점 투시로 카메라가 섰습니다 — 이제 돌릴 수 있습니다</b>`
-       + ` <span class="dim">(소실점이 잠겼습니다. 차수 승격만이 카메라를 바꿉니다)</span> · `
-       + `${n + chained}/${targets.length}획이 3D로 올라갔습니다`
-       + (chained ? `(그중 **${chained}획은 승격 연쇄**)` : "")
-       + (n + chained < targets.length
-          ? `. 나머지 ${targets.length - n - chained}획은 **2D로 대기**합니다(연결되면 올라갑니다)` : "");
   refresh();
+}
+
+/**
+ * **획 하나가 카메라를 어디로 보내는가** — 전이(NONE→P1 · NONE→P2 · P2→P3)의 단일 관문.
+ *
+ * `cam.feed` 앞뒤로 차수를 재서 ① 처음 서면 조용히 확정(`standCamera` — 무변화 전환)
+ * ② 차수가 오르면 **자동 승격**(`autoPromoteOrder` — 형태가 움직이므로 알린다, 지시 3-d).
+ * 승격 직전 상태는 `markOrder`가 표식으로 남긴다(§6.2 되돌리기).
+ */
+function feedCamera(line: RLine, forced?: "screen" | "depth" | "vertical") {
+  const before = cam.order();
+  const wasStanding = cam.standing();
+  // 승격은 **수직축 답**에서만 난다(P2 → P3) — 그때만 직전 상태를 떠 둔다(스냅샷 비용)
+  const preSnap = wasStanding && forced === "vertical" ? appSnap() : null;
+  const r = cam.feed(line, forced);
+  if (r.applied && cam.standing()) {
+    if (!wasStanding) standCamera();
+    else if (cam.order() !== before && preSnap) {
+      markOrder(before, preSnap);
+      autoPromoteOrder(before);
+    }
+  }
+  return r;
 }
 
 // ---------------------------------------------------------------- 규칙 (사람 지시 1·3)
@@ -1061,17 +1064,19 @@ function confirm(pushU = true) {
  */
 function feedStroke(st: SStroke, forced?: "screen" | "depth" | "vertical"): void {
   const rep = representative(st.pts2d);
-  if (!rep) { ruleNote = "획이 너무 짧아 방향을 못 믿습니다"; return; }
+  if (!rep) return;
   const line: RLine = { a: rep.a, b: rep.b };
-  const r = cam.feed(line, forced);
+  const r = feedCamera(line, forced);
   if (r.event.type === "ask") {
+    // **카메라가 선 뒤에는 화면축/깊이 물음을 안 낸다**(지시 3 — 시스템 사정을 안 묻는다).
+    // 그 물음은 카메라를 세우는 단계의 것이고, 선 뒤에 남는 유일한 물음은 **3점 입구**
+    // (두 번째 수평축인가 수직축인가)다 — 그것이 P2 → P3 전이의 문이다.
+    if (cam.standing() && r.event.question === "screen_or_depth") { ask = null; return; }
     ask = { strokeId: st.id, line, question: r.event.question,
             toH: r.event.verdict.toH, toV: r.event.verdict.toV };
-    ruleNote = "";
     return;
   }
   ask = null;
-  ruleNote = ruleText(r.event);
 }
 
 /** 물음에 답한다 — 그 답을 규칙에 **강제로** 넣는다. */
@@ -1081,130 +1086,16 @@ function answerAsk(choice: "screen" | "depth" | "vertical"): void {
   const line = ask.line;
   ask = null;
   if (st) feedStroke(st, choice);
-  else { const r = cam.feed(line, choice); ruleNote = ruleText(r.event); }
+  else feedCamera(line, choice);
   // 규칙이 카메라를 세웠을 수 있다 — 대기 획을 다시 본다
   refresh();
 }
 
-const AXIS_NAME = (i: 0 | 1 | 2) => `<b style="color:${AXIS_COLOR[i]}">축${i + 1}</b>`;
-
-/** 규칙 사건 → 사람이 읽는 한 줄. **화면 문구의 단일 출처다**(갈리면 설명이 안 맞는다). */
-function ruleText(e: RuleEvent): string {
-  switch (e.type) {
-    case "screen_axis":
-      return `화면 ${e.dir === "h" ? "가로" : "세로"}선 → ${AXIS_NAME(e.axis)} **확정**`
-           + ' <span class="dim">(소실점이 무한원이라 계산할 것이 없습니다, 이론서 2.2)</span>';
-    case "vp_fixed":
-      return `${AXIS_NAME(e.axis)} **소실점 확정** (${Math.round(e.at[0])}, ${Math.round(e.at[1])})`
-           + ` <span class="dim">— ${SRC_NAME[e.source]}</span>`
-           + (e.horizonSet ? ` · **지평선 y=${Math.round(e.at[1])} 확정**` : "");
-    case "derived_vertical":
-      return `**차수 승격 — 3점 투시**. 수직 소실점을 (${Math.round(e.at[0])}, ${Math.round(e.at[1])})에`
-           + ` 세웠습니다 <span class="dim">(그은 기울어진 수직선에서 읽었습니다 — 측정입니다)</span>`;
-    case "waiting":
-      return `깊이선 **${e.have}개** — 하나 더 그으면 소실점이 정해집니다`;
-    case "support":
-      return `${AXIS_NAME(e.axis)}를 향한 선입니다 <span class="dim">(소실점은 확정 후 잠깁니다 — 지지선으로만 셉니다)</span>`;
-    case "rejected":
-      return `<span class="warn">${e.why}</span>`;
-    default:
-      return "";
-  }
-}
-
-const SRC_NAME: Record<string, string> = {
-  two_lines: "깊이선 두 개의 교점",
-  horizon_x_line: "깊이선 하나 × 지평선",
-  orthocenter: "수심 조건 유도(6.3) — 측정이 아닙니다",
-  // **2026-08-17 A-4** — 3점의 유일한 입구. 옛 유도(`orthocenter`)와 달리 **측정**이다
-  tilted_vertical: "기울어진 수직선 × 화면 중심 세로",
-};
-
-/**
- * **지금 상태와 무엇이 부족한가**(사람 지시 3).
- *
- * "무엇이 부족한지 알면 사용자가 긋는다. 지금은 아무 안내 없이 대기만 한다."
- * 그래서 **슬롯 셋을 그대로 보이고 다음에 그을 것을 한 줄로** 낸다.
- */
-function ruleStatus(): string {
-  const st = cam.rules;
-  const cells = ([0, 1, 2] as const).map(i => {
-    const sl = st.slots[i];
-    if (!sl) return `<span class="dim">축${i + 1} 미정</span>`;
-    if (sl.kind === "screen") {
-      return `${AXIS_NAME(i)} <b>화면 ${sl.dir === "h" ? "가로" : "세로"}</b>`
-           + ` <span class="dim">(무한원·지지 ${sl.support})</span>`;
-    }
-    return `${AXIS_NAME(i)} <b>소실점</b>`
-         + ` <span class="dim">(${SRC_SHORT[sl.source]}·지지 ${sl.support})</span>`;
-  });
-  const rows = [`<div>${cells.join(" · ")}</div>`];
-  // ⚠ **옛 문구는 "첫 소실점이 정했습니다"였다** — 그것은 D-L43 이전의 규칙이다.
-  // 지금 지평선은 **처음부터 있고**(D-L43) **소실점이 서기 전까지는 사용자가 끈다**(D-L45).
-  // 아래 `renderStatus`의 지평선 줄과 **같은 말을 해야 한다**(화면 안내가 갈리면 안 된다).
-  if (st.horizon !== null) {
-    const d = Math.round(st.horizon - cssSize()[1] / 2);
-    rows.push(`<div>지평선 <b>y = ${Math.round(st.horizon)}</b> <span class="dim">(`
-      + (cam.canSetHorizon()
-         ? "<b>오른쪽 손잡이를 끌어 옮깁니다</b> — 그것이 카메라 피치입니다 · "
-           + (d === 0
-              ? "지금은 화면 중앙이라 <b>피치 0 → 2점까지</b>"
-              : `중앙보다 ${Math.abs(d)}px ${d < 0 ? "위 · 내려다보는" : "아래 · 올려다보는"} 구도`
-                + " → <b>깊이선 둘이면 3점</b>")
-         : "소실점이 이 위에 놓여 <b>잠겼습니다</b> — 이제는 궤도가 바꿉니다")
-      + ")</span></div>");
-  }
-  rows.push(`<div class="note">${nextHint()}</div>`);
-  return rows.join("");
-}
-
-const SRC_SHORT: Record<string, string> = {
-  two_lines: "깊이선 둘", horizon_x_line: "지평선×선", orthocenter: "유도 6.3",
-  tilted_vertical: "기운 수직선",
-};
-
-/** **차수 후보의 화면 이름**(B: "상태를 명시적으로 만든다"). 판정은 `vpRules`가 한다(#17). */
-const CAND_NAME: Record<OrderCandidate, string> = {
-  initial: "초기 — 축 없음",
-  one_point: "1점 후보 — 깊이축 하나",
-  two_point: "2점 후보 — 깊이축 둘",
-};
-
-/**
- * **다음에 그을 것 한 줄.** 이것이 없으면 사용자는 왜 대기인지 모른다.
- *
- * ⚠ **"화면 세로선을 그으세요"를 뺐다**(A-2) — 수직축은 **처음부터 화면 수직**이고 선언을
- * 기다리지 않는다. 옛 안내는 사용자에게 **없는 일**을 시키고 있었다.
- */
-function nextHint(): string {
-  const st = cam.rules;
-  const n = cam.order();
-  const cand = orderCandidate(st);
-  const standing = !!cam.ctx();
-  const head = `<b>${CAND_NAME[cand]}</b>`;
-  if (cand === "initial") {
-    return `${head} — 다음: <b>화면 가로선</b>이면 **1점 투시**로 갑니다 ·`
-         + " <b>대각선</b>이면 그 교점이 첫 소실점입니다(2점으로 갑니다)"
-         + ' <span class="dim">(화면 세로선은 아무것도 안 좁힙니다 — 수직축은 1점·2점 둘 다에서'
-         + " 화면 수직입니다)</span>";
-  }
-  if (cand === "one_point") {
-    if (n === 0) return `${head} — 다음: <b>깊이선 하나</b>`
-      + ' <span class="dim">(지평선과의 교점이 그 소실점입니다. 이후 대각선은 전부 그 축입니다)</span>';
-    return standing
-      ? `${head} · <b>1점 투시</b>가 섰습니다`
-      : `${head} · 소실점은 섰는데 <b>깊이가 아직 없습니다</b>`
-        + ' <span class="dim">(아래 안내를 보세요)</span>';
-  }
-  if (n <= 1) {
-    return `${head} — 다음: <b>다른 방향 깊이선 하나</b>`
-         + ' <span class="dim">(지평선과의 교점이 두 번째 소실점입니다 — 셋이 아니라 하나면 됩니다)</span>';
-  }
-  return standing
-    ? `${head} · <b>${n}점 투시</b>가 섰습니다`
-      + (n === 2 ? ' <span class="dim">(기울어진 세로 모서리를 긋고 <b>수직축</b>이라고 답하면 3점이 됩니다)</span>' : "")
-    : `<b>${n}점 투시</b>인데 카메라가 안 섭니다 — 아래 경고를 보세요`;
-}
+// ⛔ **상태 표시 문구를 지웠다**(2026-08-17 지시 3) — `ruleText`·`ruleStatus`·`nextHint`·
+// `CAND_NAME`·`SRC_NAME`. "1점 투시 확정" "2점 후보" "다음에 그을 것" "깊이가 정해지지
+// 않았습니다"는 전부 시스템 사정이고 사용자가 알 필요가 없다 — **알리면 전환이 있다는
+// 인상을 준다.** 남는 안내는 둘뿐이다: 아무리 그려도 안 돌아갈 때의 최소 안내(`renderStatus`)와
+// 차수 승격 알림(`renderPromoteReport` — 형태가 실제로 움직인다).
 
 // ---------------------------------------------------------------- 2D 레이어 그리기
 
@@ -1250,22 +1141,22 @@ function drawAsk(ctx2: CanvasRenderingContext2D): void {
  */
 function horizonGrab(p: Pt2): boolean {
   if (tool !== "draw" || !cam.canSetHorizon()) return false;
-  if (cam.locked && !stage.isPinned) return false;      // 돌린 뷰의 화면 좌표가 아니다
+  if (cam.standing() && !stage.isPinned) return false;      // 돌린 뷰의 화면 좌표가 아니다
   return Math.abs(p[1] - cam.rules.horizon) <= PICK_TOL.radius_ratio * Math.hypot(...cssSize());
 }
 
 function drawHorizon(ctx2: CanvasRenderingContext2D) {
   // ⚠ **확정 시점에서만 그린다** — 지평선은 **확정 카메라의 화면 좌표**다(그리드·가이드와 같다).
   // 돌린 뷰에 그리면 화면에 붙어 따라다니는 유령이 된다(`drawBelowInk` 머리말).
-  if (cam.locked && !stage.isPinned) return;
-  const [w, h] = cssSize();
+  if (cam.standing() && !stage.isPinned) return;
+  const [w] = cssSize();
   const y = cam.rules.horizon;
-  const grabbable = cam.canSetHorizon() && (!cam.locked || stage.isPinned);
+  const grabbable = cam.canSetHorizon() && (!cam.standing() || stage.isPinned);
   ctx2.save();
   ctx2.strokeStyle = HORIZON_COLOR;
   ctx2.lineWidth = horizonDrag ? 2 : 1;
   ctx2.setLineDash([6, 4]);
-  ctx2.globalAlpha = horizonDrag ? 0.95 : cam.locked ? 0.35 : 0.55;
+  ctx2.globalAlpha = horizonDrag ? 0.95 : cam.standing() ? 0.35 : 0.55;
   ctx2.beginPath(); ctx2.moveTo(0, y); ctx2.lineTo(w, y); ctx2.stroke();
   ctx2.setLineDash([]);
   // **끌 수 있으면 손잡이를 낸다** — 없으면 사용자는 끌 수 있다는 것을 모른다(D-L45).
@@ -1278,13 +1169,8 @@ function drawHorizon(ctx2: CanvasRenderingContext2D) {
     ctx2.closePath(); ctx2.fill();
     ctx2.fillRect(w - 12, y - 1, 10, 2);
   }
-  ctx2.globalAlpha = 0.5;
-  ctx2.font = "11px system-ui, sans-serif"; ctx2.fillStyle = HORIZON_COLOR;
-  // **위/아래가 곧 구도다** — 지평선이 중앙보다 위면 내려다보는 구도(부감)다(이론서 3.1).
-  const where = Math.abs(y - h / 2) < 1 ? "피치 0"
-    : y < h / 2 ? `내려다봄 ${Math.round(h / 2 - y)}px` : `올려다봄 ${Math.round(y - h / 2)}px`;
-  ctx2.fillText(
-    `지평선 y=${Math.round(y)} · ${where}${grabbable ? " · 끌어 옮깁니다" : ""}`, 8, y - 5);
+  // ⛔ **캡션("피치 0"·"내려다봄"·y값)을 지웠다**(지시 3) — 시스템 사정이다.
+  // 선과 손잡이만 남는다: 선은 그림의 기준선이고 손잡이는 사용자가 조작하는 것이다.
   ctx2.restore();
 }
 
@@ -1320,7 +1206,7 @@ function drawGrid(ctx2: CanvasRenderingContext2D) {
  * 지금은 **뷰가 맞는가**로 판정한다.
  */
 function drawPending(ctx2: CanvasRenderingContext2D) {
-  if (cam.locked && !viewIsCurrent()) return;
+  if (cam.standing() && !viewIsCurrent()) return;
   ctx2.save();
   ctx2.lineWidth = 2; ctx2.lineCap = "round";
   // **채널이 색과 파선을 정한다**(D-1) — 그리고 **미승격 2D는 연하다**(E의 셋째 단계).
@@ -1331,42 +1217,18 @@ function drawPending(ctx2: CanvasRenderingContext2D) {
     // 옛 저장본·옛 하네스의 획은 채널이 없을 수 있다 — **보조선으로 본다**(D-1의 기본값)
     const ui = CHANNEL_UI[s.channel] ?? CHANNEL_UI.guide;
     ctx2.strokeStyle = ui.color;
-    ctx2.setLineDash(ui.dash.length ? ui.dash : (cam.locked && s.channel !== "note" ? [5, 4] : []));
+    ctx2.setLineDash(ui.dash.length ? ui.dash : (cam.standing() && s.channel !== "note" ? [5, 4] : []));
     ctx2.globalAlpha = s.channel === "note" ? ui.alpha
-      : (cam.locked ? 0.35 : 0.65) * ui.alpha;      // **§9.4 — 2D를 약하게 구분한다**(E)
+      : (cam.standing() ? 0.35 : 0.65) * ui.alpha;      // **§9.4 — 2D를 약하게 구분한다**(E)
     // **직선으로 그린다**(§1.1) — 시작점과 끝점 둘뿐이다. `pts2d`는 그대로 보존된다
     drawStraight(ctx2, s.pts2d);
   }
   ctx2.restore();
 }
 
-/** 확정 전 미리보기 — 카메라가 잡히면 **올라갈 획을 축 색으로** 보인다(§5.2 실시간 피드백). */
-function drawPreview(ctx2: CanvasRenderingContext2D) {
-  if (cam.locked) return;
-  const ctx = cam.ctx();
-  if (!ctx) return;
-  const probe = pending(doc, doc.views[0].id).map(s => ({ ...s, seg3d: null } as SStroke));
-  solveInto(ctx, probe);
-  ctx2.save();
-  // **확정 전 미리보기도 연하다**(E) — 아직 올라간 것이 아니다
-  ctx2.lineWidth = PREVIEW_INK.width; ctx2.lineCap = "round";
-  ctx2.globalAlpha = PREVIEW_INK.alpha;
-  for (const s of probe) {
-    if (!s.seg3d) continue;
-    const a = project(s.seg3d[0], ctx.principal, ctx.f);
-    const b = project(s.seg3d[1], ctx.principal, ctx.f);
-    if (!a || !b) continue;
-    ctx2.strokeStyle = paler(typeof s.axis === "number" ? AXIS_COLOR[s.axis] : "#444444",
-                             PREVIEW_INK.gray);
-    ctx2.beginPath(); ctx2.moveTo(a[0], a[1]); ctx2.lineTo(b[0], b[1]); ctx2.stroke();
-  }
-  ctx2.restore();
-  previewCount = probe.filter(s => s.seg3d).length;
-  previewStuck = probe.length - previewCount;
-  // **왜 안 올라가는지** 가른다 — 축이 안 정해진 것과, 축은 있는데 못 이은 것은 다른 문제다
-  previewFree = probe.filter(s => !s.seg3d && s.axis === "free").length;
-}
-let previewCount = 0, previewStuck = 0, previewFree = 0;
+// ⛔ **확정 전 미리보기(`drawPreview`)를 지웠다**(지시 1·3) — 확정이 자동이라
+// "확정 전인데 카메라가 선" 창이 없어졌고, "지금 확정하면 N 올라감"은 상태 노출이었다.
+
 
 /** 승격에서 잃은 것의 색. 상태 패널의 문장과 **같은 값을 쓴다** — 갈리면 설명이 안 맞는다. */
 const LOSS_COLOR = { dropped: "#e67e22", snap: "#c0392b" };
@@ -1542,7 +1404,7 @@ function pickSegs(): PickSeg[] {
       const a = project(fr.toV(st.seg3d[0]), fr.ctx.principal, fr.ctx.f);
       const b = project(fr.toV(st.seg3d[1]), fr.ctx.principal, fr.ctx.f);
       if (a && b) out.push({ id: st.id, a, b });
-    } else if (!st.seg3d && st.pts2d.length >= 2 && (!cam.locked || viewIsCurrent())) {
+    } else if (!st.seg3d && st.pts2d.length >= 2 && (!cam.standing() || viewIsCurrent())) {
       // 2D 대기 획은 **그린 뷰의 화면 좌표**다 — 다른 뷰에서는 안 고른다(§9.2)
       out.push({ id: st.id, a: st.pts2d[0], b: st.pts2d[st.pts2d.length - 1] });
     }
@@ -1580,30 +1442,11 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   drawSnapMark(ctx2);
   drawLivePreview(ctx2);
   drawLive2d(ctx2);                     // **카메라가 서기 전의 화면 직교 스냅**(A-2)
-  if (cam.locked && !stage.isPinned) return;
+  if (cam.standing() && !stage.isPinned) return;
   drawGrid(ctx2);
-  drawPreview(ctx2);
   drawAsk(ctx2);
   const [w, h] = cssSize();
-  // **거리점**(C-5, 이론서 7.4) — 소실점과 **다른 표식**으로 낸다: 소실점은 축이고
-  // 거리점은 유도점이다. f가 미정이면 없다(그때는 그릴 것이 없는 것이 옳다).
-  const dps = distancePoints(cam.rules);
-  if (dps) {
-    ctx2.save();
-    ctx2.strokeStyle = "#8e44ad"; ctx2.fillStyle = "#8e44ad"; ctx2.lineWidth = 2;
-    for (const d of dps) {
-      if (d[0] < -40 || d[0] > w + 40) continue;              // 화면 밖이면 표식을 안 낸다
-      ctx2.globalAlpha = 0.85;
-      ctx2.beginPath();                                        // **속 빈 마름모** — 소실점(찬 원)과 갈린다
-      ctx2.moveTo(d[0], d[1] - 7); ctx2.lineTo(d[0] + 7, d[1]);
-      ctx2.lineTo(d[0], d[1] + 7); ctx2.lineTo(d[0] - 7, d[1]);
-      ctx2.closePath(); ctx2.stroke();
-      ctx2.globalAlpha = 0.6;
-      ctx2.font = "11px system-ui, sans-serif";
-      ctx2.fillText("거리점", d[0] + 10, d[1] - 8);
-    }
-    ctx2.restore();
-  }
+  // ⛔ **거리점 표시를 지웠다**(지시 2) — 거리점 경로 전체가 폐기됐다.
   cam.vps().forEach((v, i) => {
     if (!v || v[0] < 0 || v[0] > w || v[1] < 0 || v[1] > h) return;
     ctx2.save();
@@ -1635,12 +1478,7 @@ const ink = new InkCanvas(canvas, {
       }
       if (!horizonDrag) return;
       cam.setHorizon(p[1]);
-      if (phase === "up") {
-        horizonDrag = false;
-        note = `지평선 y=${Math.round(cam.rules.horizon)} — `
-             + "**깊이선 둘을 그으면 3점 투시가 섭니다**"
-             + " <span class=\"dim\">(지평선이 화면 중앙이면 피치 0이라 2점까지입니다)</span>";
-      }
+      if (phase === "up") horizonDrag = false;   // ⛔ 안내 문구를 뺐다(지시 3 — 시스템 사정)
       refresh();
       return;
     }
@@ -1730,15 +1568,13 @@ const ink = new InkCanvas(canvas, {
     doc.currentView = viewForDrawing();
     const s = newSStroke(pts, doc.currentView, channel);
     doc.strokes.push(s);
-    // **① 규칙에 넣는다**(사람 지시 1) — 확정 전에는 이것이 카메라를 세우는 유일한 경로다.
-    // 그은 선이 곧 제약이다: 화면 가로세로면 축 자체, 깊이면 교점. 추정하지 않는다.
+    // **① 규칙에 넣는다**(사람 지시 1) — 카메라를 세우고(NONE→P1·P2) 승격(P2→P3)하는
+    // 유일한 경로다. 그은 선이 곧 제약이다: 화면 가로세로면 축 자체, 깊이면 교점.
+    // 카메라가 선 뒤에도 넣는다 — 지지선 세기와 **3점 입구**(기울어진 수직선 물음)가 살아야
+    // 하기 때문이다. 확정·승격은 `feedCamera` 안에서 자동으로 난다(지시 1 — 버튼이 없다).
     // **주석은 규칙에도 3D에도 안 들어간다**(D-3). 해칭·지시선·메모는 기하가 아니다 —
     // 그것으로 카메라를 정하면 **조용히 틀린 카메라**가 된다(A-3).
-    if (!cam.locked && liftable(s)) feedStroke(s);
-    // **카메라가 서는 순간 자동으로 잠근다**(2026-08-17 F). 확정 버튼이 없어졌다 —
-    // 카메라가 정해지고 3D가 서면 **그 순간부터 돌릴 수 있다**. 되돌리기는 위에서 이미
-    // 쌓았으므로 여기서 다시 쌓지 않는다(획 하나 = 스냅샷 하나).
-    if (!cam.locked && cam.ctx()) confirm(false);
+    if (liftable(s)) feedStroke(s);
     // 확정 뒤에는 그 자리에서 푼다 — **승격 연쇄**의 첫 형태다(§9.1).
     // **돌린 시점에서도 돈다**(L-B.8) — `frame()`이 좌표 변환을 들고 있다
     const fr = liftable(s) ? frame() : null;
@@ -1868,11 +1704,9 @@ function buildDoc2(): Doc2 {
     at: new Date().toISOString(),
     imgSize: cam.imgSize,
     cam: cam.acc.dump(),
-    // **규칙 상태가 카메라의 입력이다**(2026-08-16) — 누산기 덤프는 그 귀결이다
+    // **규칙 상태가 카메라의 입력이다**(2026-08-16) — 누산기 덤프는 그 귀결이다.
+    // ⚠ `locked`·`order`·`lensMm`은 더 이상 저장하지 않는다(지시 1 — 파생 상태는 계산한다)
     rules: cam.dumpRules(),
-    lensMm: cam.lensMm,
-    locked: cam.locked,
-    order: lockedOrder ?? 1,
     doc,
     seq: docSeq(),
   });
@@ -1886,15 +1720,11 @@ function applyDoc2(d: Doc2) {
   // **규칙 상태를 되살린다** — 그것이 카메라의 입력이다(가이드가 아니다).
   // 옛 저장본(`rules`가 없다)은 규칙이 비어 카메라가 안 선다 — **조용히 틀리게 세우지 않는다**(A-3).
   cam.loadRules(d.rules ?? null);
-  if (d.lensMm !== undefined) cam.lensMm = d.lensMm;
-  cam.apply();
-  cam.locked = r.locked;
-  lockedOrder = r.locked ? r.order : null;
+  // ⚠ 옛 저장본의 `locked`·`order`·`lensMm`은 읽지 않는다 — 전부 `rules`에서 계산된다(지시 1)
   undoStack.length = 0; orderMarks.length = 0; promoteReport = null;
-  picked = null; ask = null; ruleNote = "";
+  picked = null; ask = null;
   syncScene();
-  note = `저장된 작업을 열었습니다 — 뷰 ${doc.views.length} · 획 ${doc.strokes.length}`
-       + ` (3D ${lifted(doc).length} · 2D ${doc.strokes.length - lifted(doc).length})`;
+  note = "";   // ⛔ 복원 요약을 뺐다(지시 3) — 열린 그림 자체가 보인다
   refresh();
 }
 
@@ -1909,7 +1739,7 @@ function renderBar() {
     btn("edit", "선택", tool === "edit", !doc.strokes.length),
     '<span class="sep"></span>',
     // **궤도는 마우스 전용으로 남는다**(G-1) — 아이패드에서는 손가락이 이 버튼을 대신한다
-    `<button data-act="orbit"${tool === "orbit" ? ' class="on"' : ""}${!cam.locked ? " disabled" : ""}`
+    `<button data-act="orbit"${tool === "orbit" ? ' class="on"' : ""}${!cam.standing() ? " disabled" : ""}`
     + ` title="마우스 전용입니다 — 손가락 1개는 궤도, 2개는 팬·줌이라 버튼이 필요 없습니다">궤도(마우스)</button>`,
     // **축 스냅 — 라이노 직교 모드**(사람 지시 1). 기본 켬. `F8`로도 토글한다
     btn("axissnap", `축 스냅 ${AXIS_SNAP.on ? "켬" : "끔"}`, AXIS_SNAP.on),
@@ -1931,16 +1761,15 @@ function renderBar() {
     // 말을 내지 않는다**(C-3) — 안내는 "바닥이나 벽을 하나 그려주세요"다.
     // ⚠ **`확정` 버튼을 뺐다**(2026-08-17 F) — 카메라가 서는 순간 자동으로 잠기고 그때부터
     // 돌릴 수 있다. 그 버튼은 **가이드를 조정하던 시절의 잔재**였다(D-L37이 가이드를 없앴다).
-    btn("home", "확정 시점으로", false, !cam.locked || stage.isPinned),
-    // **차수 승격**(§6.1) — 소실점을 더 잡은 뒤 누른다. 자동으로 안 건다(측정이 그렇게 말한다)
-    btn("reorder", "차수 승격", false, !cam.locked || !lifted(doc).length),
-    btn("unlock", "소실점 다시", cam.locked === false && !!lifted(doc).length, !cam.locked),
+    btn("home", "확정 시점으로", false, !cam.standing() || stage.isPinned),
+    // ⛔ **`차수 승격`·`소실점 다시` 버튼을 지웠다**(지시 1·2) — 승격은 전이(P2→P3)에서
+    // 자동으로 나고, 잠금·해제라는 상태 자체가 없어졌다(확정이거나 아니거나).
     '<span class="sep"></span>',
     btn("undo", "실행취소", false, !undoStack.length),
     // **차수를 명시한 되돌리기**(L-C.2, §6.2). `실행취소`와 다른 것은 **이름이 차수라는 것**이다 —
     // 승격 뒤에 몇 획을 더 그렸어도 한 번에 돌아간다.
     // **지금 차수의 표식은 안 낸다** — 있는 자리로 되돌아가는 버튼은 아무 일도 안 한다
-    ...orderMarks.filter(m => m.order !== lockedOrder)
+    ...orderMarks.filter(m => m.order !== cam.order())
                  .map(m => btn(`revert${m.order}`, `${m.order}점으로 되돌리기`)),
     '<span class="sep"></span>',
     // **보조선 내보내기 옵션**(D-3 "제외(옵션)"). 기본은 끔 — 결과선이 결과물이다
@@ -1977,7 +1806,7 @@ function renderAsk(): string {
     rows.push('<div class="hdr"><b>이 선은 두 번째 수평축입니까, 수직축입니까?</b></div>');
     rows.push(`<div>${angles}</div>`);
     rows.push('<div class="dim">수직축이면 소실점을 그리지 않습니다 —'
-      + ' 수평 소실점 둘이 서면 <b>수심 조건으로 유도</b>합니다(이론서 6.3)</div>');
+      + ' 수직축이면 그 선(들)에서 수직 소실점을 읽습니다 — 그것이 3점의 유일한 입구입니다</div>');
     rows.push('<div><button data-act="ask_depth">두 번째 수평축</button>'
       + ' <button data-act="ask_vertical">수직축</button>'
       + ' <button data-act="ask_skip">모르겠다(2D로 둔다)</button></div>');
@@ -2042,99 +1871,24 @@ function renderPromoteReport(): string {
 const md = (s: string) => s.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
 
 function renderStatus() {
-  const r = cam.acc.solve();
-  const c = r.camera;
-  const caseLabel = { "3pt": "3점 투시", "2pt": "2점 투시", "1pt": "1점 투시",
-                      axonometric: "평행(축측)" }[c.case];
+  // ⛔ **상태 패널을 비웠다**(2026-08-17 지시 3). 옛 판이 내던 것 — 차수·후보·소실점 수·
+  // f와 출처·다음에 그을 것·슬롯 상태·스냅 반경·그리는 중 판정 — 은 전부 시스템 사정이고,
+  // 알리면 "2D를 내보낸다 / 3D로 전환된다"는 인상을 준다. 사용자는 계속 종이에 그린 것이다.
+  //
+  // 남는 것 셋:
+  //   ① **물음**(`renderAsk`) — 사용자가 답해야 진행되는 것(A-3: 추정하지 않는다)
+  //   ② **차수 승격 알림**(`renderPromoteReport`) — 형태가 실제로 움직인다(지시 3-d 예외)
+  //   ③ **아무리 그려도 안 돌아갈 때의 최소 안내** — 빈도가 낮아야 한다(지시 3-d 예외).
+  //      획을 여덟 이상 그렸는데 3D가 하나도 없을 때만 한 줄 낸다.
   const rows: string[] = [];
-  const n3 = lifted(doc).length, n2 = pending(doc).length;
-  rows.push(`<div class="hdr"><b>${caseLabel}</b> · 소실점 ${c.nVps}`
-    + (cam.locked ? ' <span class="lock">확정</span>' : "") + "</div>");
-  // **현재 채널이 화면에 보인다**(D-5) — 도구 막대의 버튼과 **같은 출처**를 읽는다(#17)
-  rows.push(`<div>펜 <b style="color:${CHANNEL_UI[channel].color}">${CHANNEL_UI[channel].name}</b>`
-    + ` <span class="dim">(${channel === "guide" ? "작도의 본체 — 3D로 올라갑니다"
-        : channel === "result" ? "확정선 — 내보내기에 포함됩니다"
-        : "3D로 안 올라갑니다"}`
-    + ` · <b>고치기</b>에서 <b>1</b>·<b>2</b>·<b>3</b>으로 바꿉니다)</span></div>`);
-  rows.push(`<div>3D <b>${n3}</b> · 2D 대기 <b>${n2}</b>`
-    + (pendingElsewhere(doc) ? ` <span class="dim">(다른 뷰 ${pendingElsewhere(doc)} 숨김)</span>` : "")
-    + (!cam.locked && previewCount ? ` <span class="dim">· 지금 확정하면 ${previewCount} 올라감</span>` : "")
-    + "</div>");
-  // **어느 획이 왜 안 올라가는지**(L-B.2). 미배치는 실패가 아니라 대기지만(§9.1),
-  // 확정 전이라면 가이드를 고쳐 해결할 수 있으므로 **사유를 갈라 보인다**.
-  if (!cam.locked && previewStuck) {
-    rows.push(`<div class="dim">안 올라가는 ${previewStuck}획 — 축 미정 ${previewFree} ·`
-      + ` 축은 있으나 안 이어짐 ${previewStuck - previewFree}`
-      + " <span class=\"dim\">(축 미정은 가이드 각도, 안 이어짐은 획이 서로 닿는지의 문제입니다)</span></div>");
+  const liftables = doc.strokes.filter(x => liftable(x)).length;
+  if (!cam.standing() && liftables >= 8 && !lifted(doc).length && !ask) {
+    rows.push('<div class="note">선이 아직 입체를 정하지 않았습니다 — '
+      + '**서로 다른 방향의 기울어진 선 둘**(각자의 소실점), 또는 **가로선 하나와 기울어진 선 하나**가 '
+      + '입체를 세웁니다</div>');
   }
-  // **깊이 스케일의 출처는 하나이고 화면에 나온다**(CLAUDE.md §1 / 이론서 16.2·16.4)
-  if (c.ok && c.f != null) {
-    const src: Record<string, string> = {
-      "orthocenter(6.3)": "수심(3점, 측정)", "two_vps(6.2)": "두 소실점(측정)",
-      // ⛔ 옛 저장본에서만 온다(C-1) — 새로 만들지 않는다
-      "setting(렌즈)": "렌즈 설정(옛 저장본)",
-      // **거리점**(C-2, 이론서 7.4) — 그린 대각선에서 읽은 **측정**이다
-      "distance_point(7.4)": "거리점(7.4, 측정)",
-    };
-    rows.push(`<div class="f">f = ${c.f.toFixed(0)}px · 화각 ${c.fovDeg}°`
-      + ` <span class="dim">(${src[c.fSource!] ?? c.fSource})</span></div>`);
-  }
-  if (c.assumption) rows.push(`<div class="dim">${c.assumption}</div>`);
-  // **지금 상태와 무엇이 부족한가**(사람 지시 3). 안내가 없으면 사용자는 아무것도 못 긋는다.
-  // **지평선 줄은 `ruleStatus()` 하나가 낸다**(D-L45) — 두 곳에서 내면 문구가 갈린다
-  if (!cam.locked) rows.push(ruleStatus());
-  if (ruleNote) rows.push(`<div class="dim">마지막 획 — ${ruleNote}</div>`);
-  // **스냅 상태**(§3 표시). 확정 뒤에만 뜬다 — 대상이 3D 레이어이기 때문이다.
-  if (snapCtx()) {
-    const rpx = Math.round(SNAP_TOL.radius_ratio * Math.hypot(...cssSize()));
-    rows.push(`<div>스냅 <b>켜짐</b> <span class="dim">반경 ${rpx}px · 대상 ${snapSegs().length}선</span>`
-      + (hoverSnap
-        ? ` · <b style="color:${SNAP_COLOR[hoverSnap.kind]}">${SNAP_LABEL[hoverSnap.kind]}</b>`
-          + ` <span class="dim">(${hoverSnap.dist.toFixed(0)}px)</span>`
-        : ' <span class="dim">(커서 아래 대상 없음)</span>') + "</div>");
-    const lk = lockedAxis();
-    if (lk != null) {
-      rows.push(`<div>축 고정 <b style="color:${AXIS_COLOR[lk]}">축${lk + 1}</b>`
-        + ` <span class="dim">(← 축1 · → 축2 · ↑ 축3 · 같은 키를 다시 눌러 해제 · Esc 해제)</span></div>`);
-    }
-    // **축 스냅이 도는가**(사람 지시 1-d). 색이 축을 말하고, 이 줄이 상태를 말한다
-    rows.push(`<div>축 스냅 <b>${AXIS_SNAP.on ? "켬" : "끔"}</b>`
-      + ` <span class="dim">(F8 · Shift를 누르고 그으면 그 획만 자유)</span>`
-      + (freeStroke ? ' · <b class="warn">자유 획(Shift)</b>' : "") + "</div>");
-    if (live) {
-      rows.push(`<div>그리는 중 — 시작 <b style="color:${SNAP_COLOR[live.anchor.kind]}">`
-        + `${SNAP_LABEL[live.anchor.kind]}</b> · `
-        // **양 끝 스냅이면 축이 아니라 두 점이 정한다**(D-L46) — 오스냅이 축 스냅을 이긴다
-        + (live.end
-          ? `끝 <b style="color:${SNAP_COLOR[live.end.kind]}">${SNAP_LABEL[live.end.kind]}</b>`
-            + (live.axis != null
-               ? ` · <b style="color:${AXIS_COLOR[live.axis]}">축${live.axis + 1}</b>`
-                 + ' <span class="dim">(라벨일 뿐 — 기하는 두 점이 정합니다)</span>'
-               : ' · <span class="dim">축 미분류</span>')
-            + ' · <b>양 끝 스냅으로 확정</b> <span class="dim">(축 추론이 필요 없습니다'
-            + (live.deg != null ? ` · 가장 가까운 축과 ${live.deg.toFixed(1)}°` : "")
-            + ")</span>"
-          : live.axis != null
-          ? `<b style="color:${AXIS_COLOR[live.axis]}">축${live.axis + 1}</b>`
-            + (live.locked ? ' <b>고정</b>'
-               : ` <span class="dim">(${live.deg != null ? live.deg.toFixed(1) : "?"}°)</span>`)
-          : `<span class="warn">축 미정</span>`
-            + (live.deg != null ? ` <span class="dim">(가장 가까운 축과 ${live.deg.toFixed(1)}°)</span>` : ""))
-        // **모호 구간 표시**(사람 지시 3-f) — 들어갔다는 것을 알 수 있어야 한다
-        + (live.ambiguous
-           ? ` · <b class="warn">모호</b> <span class="dim">(축 `
-             + live.tied.map(a => a + 1).join("·")
-             + `가 ${SNAP_TOL_AXIS.ambiguous_deg}° 안 — 커서를 움직여 고르세요)</span>`
-           : "")
-        + "</div>");
-    }
-    if (lastSnapNote) rows.push(`<div class="dim">마지막 획 — ${lastSnapNote}</div>`);
-  }
-  for (const w of r.warnings) rows.push(`<div class="${w.level}">${w.text}</div>`);
   if (note) rows.push(`<div class="note">${note}</div>`);
-  // **저장 상태를 화면이 읽는다**(PITFALLS #18 — 써 놓고 안 읽는 필드를 만들지 않는다)
   if (saveNote) rows.push(`<div class="dim">${saveNote}</div>`);
-  // **물음과 승격 요약은 맨 위에 둔다** — 아래에 있으면 상태 줄에 묻혀 "눈에 띄게"가 안 된다
   statusEl.innerHTML = md(renderAsk() + renderPromoteReport() + rows.join(""));
 }
 
@@ -2157,17 +1911,13 @@ barEl.addEventListener("click", (e) => {
     if (act === "orbit" && stage.isPinned) {
       const segs = lifted(doc).map(s => ({ id: s.id, a: s.seg3d![0], b: s.seg3d![1], axis: s.axis }));
       stage.unpin(stage.centroid(segs));
-      note = "궤도 — 다른 뷰의 2D 대기 획은 숨깁니다(그 뷰의 화면 좌표이기 때문입니다). 돌린 뒤 **그리기**를 누르면 그 각도가 새 뷰가 됩니다";
+      note = "";   // ⛔ 좌표계 설명을 뺐다(지시 3)
     }
   }
   else if (act.startsWith("ch_")) {
     channel = act.slice(3) as Channel;
     const ui = CHANNEL_UI[channel];
-    note = `펜 채널 **${ui.name}** — `
-         + (channel === "guide" ? "작도의 본체입니다. 3D로 올라가고 돌리면 흐려집니다"
-            : channel === "result" ? "보조선 위를 덧그어 확정합니다. **내보내기에 포함**됩니다"
-            : "**3D로 안 올라갑니다** — 그린 뷰에서만 보이고 내보내기에서 빠집니다")
-         + ' <span class="dim">· 나중에 <b>고치기</b>에서 바꿀 수 있습니다(D-4)</span>';
+    note = "";   // 채널은 버튼 강조가 말한다(지시 3-c) — 설명은 버튼 툴팁에 있다
   }
   else if (act === "axissnap") {
     AXIS_SNAP.on = !AXIS_SNAP.on;
@@ -2179,21 +1929,10 @@ barEl.addEventListener("click", (e) => {
          + " <span class=\"dim\">· <b>F8</b>(라이노 직교 모드)</span>";
     relive();
   }
-  else if (act === "reorder") promoteOrderNow();
-  else if (act === "unlock") {
-    // **차수 승격의 입구**(§6.1) — 소실점을 하나 더 잡으려면 가이드를 다시 만져야 한다.
-    // 확정 기하는 그대로 두고 **가이드만 연다**. 다시 `차수 승격`을 누르면 전부 다시 푼다
-    // **카메라를 만지기 직전이 표식의 자리다**(위 `orderMarks` 머리말) —
-    // 여기서 안 뜨면 승격을 되돌려도 소실점이 새 차수로 남는다
-    if (lockedOrder != null) markOrder(lockedOrder, appSnap());
-    cam.locked = false; tool = "draw";
-    note = "소실점을 다시 잡습니다 — **다른 방향 깊이선을 하나 더 그은 뒤** <b>차수 승격</b>을 누르세요. "
-         + "확정된 3D는 그대로 있고, 승격을 눌러야 다시 풀립니다";
-  }
   else if (act === "home") {
     const ctx = cam.ctx();
     if (ctx) { stage.pinTo(ctx.principal, ctx.f); tool = "draw";
-               note = "확정 시점 — 3D가 잉크와 같은 자리에 그려집니다"; }
+               note = ""; }
   } else if (act === "undo") {
     // **문서만 되돌리면 안 된다**(L-C.2) — 승격을 되돌릴 때 소실점이 새 것으로 남으면
     // §6.1이 금지한 **좌표계가 섞인 상태**가 된다. `restoreSnap`이 둘을 함께 되돌린다
@@ -2245,8 +1984,8 @@ barEl.addEventListener("click", (e) => {
   }
   else if (act === "clear") {
     pushUndo();
-    doc = newDoc(); cam.reset(); lockedOrder = null;
-    syncScene(); note = ""; ruleNote = ""; ask = null;
+    doc = newDoc(); cam.reset();
+    syncScene(); note = ""; ask = null;
     orderMarks.length = 0; promoteReport = null;
     // **저장본도 지운다** — 안 지우면 새로고침에서 방금 버린 작업이 되살아난다
     void deleteDoc2().catch(() => { /* 저장소가 없어도 화면은 비워졌다 */ });
@@ -2266,7 +2005,7 @@ statusEl.addEventListener("click", (e) => {
   else if (act === "ask_vertical") answerAsk("vertical");
   else if (act === "ask_skip") {
     // **모른다고 답하는 것도 답이다** — 그 획은 2D로 남고 규칙은 안 움직인다(A-3)
-    ask = null; ruleNote = "그 선은 규칙에 안 넣었습니다 — **2D로 대기**합니다";
+    ask = null;
     refresh();
   }
 });
@@ -2291,7 +2030,7 @@ window.addEventListener("keydown", (e) => {
     note = `축 스냅 **${AXIS_SNAP.on ? "켬" : "끔"}** <span class="dim">(F8 · 라이노 직교 모드)</span>`;
     return;
   }
-  if (!cam.locked) return;                       // 확정 전에는 잠글 축이 없다
+  if (!cam.standing()) return;                   // 확정 전에는 잠글 축이 없다
   // **`Shift`는 그 획만 자유**(사람 지시 1) — 토글과 상황이 다르다
   if (e.key === "Shift" && !freeStroke) { freeStroke = true; relive(); return; }
   const ax = ARROW_AXIS[e.key];
@@ -2407,13 +2146,14 @@ refresh();
   gestureTol: () => ({ ...GESTURE_TOL }),
   /** §9.3의 생성 경로. **L-B.8이 열리기 전에는 확정 뷰를 낸다**(#23). */
   viewForDrawing,
-  // L-C.1 — 차수 승격(§6.1). **앱 경로 그대로**를 종단 확인이 부른다(#17)
-  order: () => { const c = cam.ctx(); return c ? orderOf(c.vps, c.imgSize) : null; },
-  /** **차수 후보**(B) — 소실점이 잡히기 전에도 첫 획이 후보를 좁힌다. 앱 경로 그대로(#17). */
-  orderCandidate: () => orderCandidate(cam.rules),
-  promoteOrderNow,
-  /** **자동 잠금의 앱 경로**(F) — 하네스는 규칙을 직접 넣으므로 획을 안 긋는다(#17). */
-  confirmNow: () => confirm(),
+  // **차수 = 계산**(지시 1). NONE 0 · P1 1 · P2 2 · P3 3 — 표시도 판정도 이 함수다(#17)
+  order: () => cam.order(),
+  standing: () => cam.standing(),
+  /** 승격 재풀이의 하네스 입구 — 규칙을 직접 넣은 뒤 부른다(앱에서는 전이가 자동으로 부른다).
+   * 여기서는 `pushUndo`를 직접 쌓는다 — 앱 경로에서는 승격을 일으킨 획의 스냅샷이 그 역할이다. */
+  promoteOrderNow: (before?: number) => { pushUndo(); autoPromoteOrder(before ?? cam.order()); },
+  /** 확정(들어올리기)의 하네스 입구 — 규칙을 직접 넣으므로 획을 안 긋는다(#17). 앱에서는 자동이다. */
+  confirmNow: () => standCamera(),
   // L-C.2 — 되돌리기 UI(§6.2). **앱 경로 그대로**를 종단 확인이 부른다(#17)
   promoteReport: () => promoteReport && {
     before: promoteReport.before, after: promoteReport.after,
@@ -2431,9 +2171,9 @@ refresh();
   deletePicked, assignAxis,
   revertToOrder,
   relinkLostSnaps,
-  /** 되돌리기가 **카메라까지** 되돌리는지 대조하기 위한 창(L-C.2). */
+  /** 되돌리기가 **카메라까지** 되돌리는지 대조하기 위한 창(L-C.2). `standing`·`order`는 계산값이다. */
   camSnapshot: () => ({ rules: cam.dumpRules(), vps: cam.vps(),
-                        locked: cam.locked, lockedOrder }),
+                        standing: cam.standing(), order: cam.order() }),
   // **규칙 경로를 종단 확인이 앱 경로 그대로 부른다**(#17)
   rules: () => cam.dumpRules(),
   // **지평선 끌기**(D-L45). 종단 확인이 손으로 끌지 않고도 같은 경로를 부른다(#17)
@@ -2460,20 +2200,19 @@ refresh();
     // **지평선은 처음부터 있다** — 유한 수평 소실점이 있으면 그 y이고, 없으면 기본값이다
     const h = ([0, 1] as const).map(i => slots[i]).find(x => x && x.kind === "vp");
     cam.loadRules({ slots, horizon: h && h.kind === "vp" ? h.at[1] : cam.imgSize[1] / 2,
-                    verticalLines: [], distance: null });
+                    verticalLines: [] });
     refresh();
   },
   axisLines: () => harnessLines.map(g => ({ ...g, a: [...g.a] as Pt2, b: [...g.b] as Pt2 })),
+  // **하네스도 앱과 같은 관문을 지난다**(#17) — 확정·승격이 자동으로 나는 그 경로다
   feedLine: (a: Pt2, b: Pt2, forced?: "screen" | "depth" | "vertical") => {
-    const r = cam.feed({ a, b }, forced);
-    ruleNote = ruleText(r.event);
+    const r = feedCamera({ a, b }, forced);
     refresh();
     return r.event;
   },
   classifyLine: (a: Pt2, b: Pt2) => classifyLine(a, b),
   ask: () => ask && { strokeId: ask.strokeId, question: ask.question, toH: ask.toH, toV: ask.toV },
   answerAsk: (choice: "screen" | "depth" | "vertical") => { answerAsk(choice); },
-  lens: () => cam.lensMm,
   /** **펜 채널**(D) — 앱 경로 그대로를 종단 확인이 부른다(#17). */
   channel: () => channel,
   setChannel: (c: Channel) => { channel = c; refresh(); },
@@ -2483,13 +2222,7 @@ refresh();
   setShowGuides: (on: boolean) => { SHOW_GUIDES.on = on; syncScene(); refresh(); },
   setExportGuides: (on: boolean) => { EXPORT_GUIDES.on = on; refresh(); },
   channels: () => doc.strokes.map(x => ({ id: x.id, channel: x.channel, lifted: !!x.seg3d })),
-  /** **거리점**(C-2·C-5, 이론서 7.4) — 앱 경로 그대로를 종단 확인이 부른다(#17). */
-  distance: () => cam.rules.distance,
-  distancePoints: () => distancePoints(cam.rules),
   // 축 스냅(사람 지시 1) — **앱 경로 그대로**를 종단 확인이 부른다(#17)
   axisSnap: () => ({ on: AXIS_SNAP.on, freeStroke }),
   setAxisSnap: (on: boolean) => { AXIS_SNAP.on = on; relive(); },
-  unlockGuides: () => {
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="unlock"]')?.click();
-  },
 };

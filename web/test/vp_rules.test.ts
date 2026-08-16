@@ -8,7 +8,7 @@
 import { describe, it, expect } from "vitest";
 import {
   classifyLine, sepDeg, stepRule, newRuleState, deriveVertical, vpsOf, axisDirsOf,
-  orderOfState, axisOfStroke, RULE_TOL, type RuleState, type RLine,
+  perspectiveOrder, axisOfStroke, RULE_TOL, type RuleState, type RLine,
 } from "../src/s3d/vpRules.js";
 import { recoverCamera, type Pt2 } from "../src/s3d/camera.js";
 import { cross3, unit3, axisDirection, angleBetween, type Vec3 } from "../src/s3d/geom3d.js";
@@ -59,7 +59,9 @@ describe("a. 화면 가로세로 선은 축 자체다 (이론서 2.2)", () => {
     expect(st.slots[0]).toMatchObject({ kind: "screen", dir: "h" });
     expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
     expect(vpsOf(st)).toEqual([null, null, null]);
-    expect(orderOfState(st)).toBe(0);
+    // **가로선이 그어졌으므로 1점 확정이다**(지시 1) — 후보 개념이 없다. 소실점은 아직 없어도
+    // 차수는 1이고, 깊이 소실점이 서는 순간 임의 f로 3D가 선다
+    expect(perspectiveOrder(st)).toBe(1);
   });
 
   it("같은 방향을 또 그으면 지지 수만 는다 — 축은 안 바뀐다", () => {
@@ -92,7 +94,8 @@ describe("b. 깊이선 **하나** × 지평선 = 소실점 (1점 투시)", () =>
     const vp = (r.state.slots[0] as { at: Pt2 }).at;
     expect(vp[0]).toBeCloseTo(V[0], 4);
     expect(vp[1]).toBeCloseTo(H, 9);                    // **지평선 위에 정확히 놓인다**
-    expect(orderOfState(r.state)).toBe(1);
+    // **소실점 하나 = NONE이다**(지시 1) — 가로선이 오면 P1, 두 번째 소실점이 오면 P2
+    expect(perspectiveOrder(r.state)).toBe(0);
   });
 
   /**
@@ -107,7 +110,7 @@ describe("b. 깊이선 **하나** × 지평선 = 소실점 (1점 투시)", () =>
     // 거의 같은 방향의 두 번째 선 — 옛 규칙에서는 이 쌍이 교점을 못 냈다
     const b = stepRule(st, toward([205, 604]), SZ);
     expect(b.event.type).toBe("support");               // 같은 축을 향한 지지선이다
-    expect(orderOfState(b.state)).toBe(1);
+    expect(perspectiveOrder(b.state)).toBe(0);          // 소실점 하나는 NONE(지시 1)
     expect((b.state.slots[0] as { at: Pt2 }).at[1]).toBeCloseTo(H, 9);
   });
 
@@ -139,13 +142,13 @@ describe("c. 두 번째 소실점도 같은 지평선 위다", () => {
 
   it("선 하나로 2점이 된다", () => {
     const st0 = base();
-    expect(orderOfState(st0)).toBe(1);
+    expect(perspectiveOrder(st0)).toBe(0);              // 소실점 하나 = NONE(지시 1)
     const r = stepRule(st0, seg(P0, V2), SZ);
     expect(r.event.type).toBe("vp_fixed");
     const v2 = (r.state.slots[1] as { at: Pt2 }).at;
     expect(v2[0]).toBeCloseTo(V2[0], 4);
     expect(v2[1]).toBeCloseTo(H, 9);
-    expect(orderOfState(r.state)).toBe(2);
+    expect(perspectiveOrder(r.state)).toBe(2);
   });
 
   it("같은 축을 향한 선은 지지선이다 — 소실점은 잠겨 있다", () => {
@@ -170,12 +173,11 @@ describe("c. 두 번째 소실점도 같은 지평선 위다", () => {
     st = feed([[seg(P0, V1)]], st);
     expect(st.slots[0]).toMatchObject({ kind: "screen" });
     const r = stepRule(st, seg(P0, V2), SZ);
-    // ⚠ **2026-08-17 C-2가 이 칸의 사건을 바꿨다**: 1점 투시에서 축을 안 향하는 대각선은
-    // **거리점**이고 그것이 시거리를 정한다(7.4). 요점은 그대로다 — **소실점은 안 는다.**
-    expect(r.event.type).toBe("distance_point");
-    expect(orderOfState(r.state)).toBe(1);
+    // ⚠ **2026-08-17 지시 2가 이 칸의 사건을 다시 바꿨다**: 거리점 경로가 폐기됐으므로
+    // 1점 확정 뒤 축을 안 향하는 대각선은 **거절**된다. 요점은 그대로다 — **소실점은 안 는다.**
+    expect(r.event.type).toBe("rejected");
+    expect(perspectiveOrder(r.state)).toBe(1);
     expect(r.state.slots[0]).toMatchObject({ kind: "screen", dir: "h" });   // **안 밀렸다**
-    expect(r.state.distance).toBeGreaterThan(0);
   });
 });
 
@@ -199,7 +201,7 @@ describe("d. 세 번째는 **사용자가 그은 기울어진 수직선**에서 
     let st = feed([[line([100, 50], [100, 500])]]);
     st = feed([[seg([300, 640], [V1[0], H])], [seg([300, 640], [V2[0], H])]], st);
     expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
-    expect(orderOfState(st)).toBe(2);
+    expect(perspectiveOrder(st)).toBe(2);
   });
 
   /**
@@ -214,7 +216,7 @@ describe("d. 세 번째는 **사용자가 그은 기울어진 수직선**에서 
       st.horizon = h;
       st = deriveVertical(st, SZ);
       expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
-      expect(orderOfState(st)).toBe(2);
+      expect(perspectiveOrder(st)).toBe(2);
     }
   });
 

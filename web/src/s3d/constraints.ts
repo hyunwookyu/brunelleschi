@@ -222,9 +222,9 @@ export class ConstraintAccumulator {
 
     const camera = recoverCamera(vps, this.imgSize, {
       principal, fSetting: this.lensF ?? undefined,
-      // **1점의 f는 거리점에서 온다**(2026-08-17 C-2) — `setLens`에 들어오는 값이 그것뿐이다.
-      // 렌즈 설정 경로는 C-1로 없어졌으므로 출처가 하나다(#18: 안 읽는 필드를 만들지 않는다).
-      fProvenance: "distance_point(7.4)",
+      // **1점의 f는 임의값이다**(2026-08-17 지시 1) — `setLens`에 들어오는 값이 그것뿐이다.
+      // 거리점 경로(C-2)는 폐기됐다: 대각선이 거리점인지 2점 승격인지 기하로 구분 불가.
+      fProvenance: "arbitrary(1점 깊이 무차원)",
     });
 
     const warnings: SolveResult["warnings"] = [];
@@ -300,10 +300,5 @@ export function fPixelsFrom35mm(mm: number, imgWidth: number): number {
   return (mm / 36.0) * imgWidth;      // 35mm 판 가로 36mm
 }
 
-export interface Preset { id: string; label: string; mm: number; vps: 1 | 2 | 3; note: string; }
-export const PRESETS: Preset[] = [
-  { id: "in1", label: "실내 1점 24mm", mm: 24, vps: 1, note: "좁은 방 정면 — 넓게 담긴다" },
-  { id: "in2", label: "실내 2점 35mm", mm: 35, vps: 2, note: "방 모서리에서 본 구도" },
-  { id: "out2", label: "외부 2점 50mm", mm: 50, vps: 2, note: "건물 모서리 — 왜곡이 가장 적다" },
-  { id: "out3", label: "외부 3점 앙각", mm: 35, vps: 3, note: "올려다보는 구도 — 수직선도 모인다" },
-];
+// ⛔ **렌즈 프리셋(`PRESETS`)을 지웠다**(2026-08-17 지시 2 — 렌즈 슬라이더·f 입력 경로 폐기).
+// `fPixelsFrom35mm`은 남는다: 하네스가 화각 환산에 쓰는 순수 함수다(렌즈 UI가 아니다).

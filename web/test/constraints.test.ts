@@ -5,7 +5,7 @@
 // 값이 맞는지만 보면 그 주장은 검증되지 않는다.
 import { describe, it, expect } from "vitest";
 import {
-  ConstraintAccumulator, PRESETS, fPixelsFrom35mm, type Gesture,
+  ConstraintAccumulator, fPixelsFrom35mm, type Gesture,
 } from "../src/s3d/constraints.js";
 import type { Pt2 } from "../src/s3d/camera.js";
 
@@ -115,7 +115,8 @@ describe("W-1 제약 누산기", () => {
       { kind: "lens", f: fPixelsFrom35mm(24, SZ[0]) },
     ]);
     expect(withLens.camera.ok).toBe(true);
-    expect(withLens.camera.fSource).toBe("distance_point(7.4)");
+    // **P1의 f는 임의값이다**(2026-08-17 지시 1 — 거리점 경로 폐기)
+    expect(withLens.camera.fSource).toBe("arbitrary(1점 깊이 무차원)");
   });
 
   it("엣지 투표가 쌓이면 소실점이 스스로 잡힌다(§3.1 마지막 행)", () => {
@@ -136,8 +137,7 @@ describe("W-1 제약 누산기", () => {
   });
 
   it("프리셋 4종이 §3.7과 맞고 mm→px 환산이 화면 폭에 비례한다", () => {
-    expect(PRESETS.map(p => p.mm)).toEqual([24, 35, 50, 35]);
-    expect(PRESETS.map(p => p.vps)).toEqual([1, 2, 2, 3]);
+    // ⛔ PRESETS는 렌즈 잔재로 삭제됐다(지시 2)
     expect(fPixelsFrom35mm(36, 800)).toBeCloseTo(800, 9);      // 36mm = 화면 폭
     expect(fPixelsFrom35mm(50, 1600) / fPixelsFrom35mm(50, 800)).toBeCloseTo(2, 9);
   });

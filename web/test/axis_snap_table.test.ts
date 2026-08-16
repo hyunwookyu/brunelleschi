@@ -11,7 +11,7 @@
 // **몇 개인지**를 단언한다. 전부 `null`인 표는 "규칙을 지켰다"가 아니라 "아무것도 안 한다"다.
 import { describe, it, expect } from "vitest";
 import {
-  newRuleState, stepRule, snapAxisTable, axisDirsOf, classifyLine, orderOfState,
+  newRuleState, stepRule, snapAxisTable, axisDirsOf, classifyLine, perspectiveOrder,
   RULE_TOL, type RuleState,
 } from "../src/s3d/vpRules.js";
 import { screenOrthoSnap, axisCandidates } from "../src/s3d/axisSnap.js";
@@ -105,7 +105,7 @@ describe("스냅 표 — 상태마다 어느 축이 스냅되는가", () => {
     expect(snapAxisTable(st, false).filter(r => r.via).length).toBe(1);
   });
 
-  it("화면 가로 선언(1점 후보) — 가로·세로 둘이 화면 직교로 잡힌다", () => {
+  it("화면 가로 선언(P1 — 깊이 소실점 전) — 가로·세로 둘이 화면 직교로 잡힌다", () => {
     const st = feed(newRuleState(SZ), [SCREEN_H]);
     expect(rows(st, false)).toEqual(["screen_h/screen_ortho", "-/-", "screen_v/screen_ortho"]);
     expect(snapAxisTable(st, false).filter(r => r.via).length).toBe(2);
@@ -113,34 +113,34 @@ describe("스냅 표 — 상태마다 어느 축이 스냅되는가", () => {
 
   it("1점 확정 — 소실점 하나 + 화면 가로 + 화면 세로. 셋 다 축 스냅이다", () => {
     const st = feed(feed(newRuleState(SZ), [SCREEN_H]), [DEPTH_A]);
-    expect(orderOfState(st)).toBe(1);
+    expect(perspectiveOrder(st)).toBe(1);
     expect(rows(st, true)).toEqual(["screen_h/axis_snap", "vp/axis_snap", "screen_v/axis_snap"]);
     expect(snapAxisTable(st, true).filter(r => r.via).length).toBe(3);
   });
 
   it("**A-1** 2점 확정 — 수직축이 화면 수직으로 **스냅 대상에 들어 있다**", () => {
     const st = feed(newRuleState(SZ), [DEPTH_A, DEPTH_B]);
-    expect(orderOfState(st)).toBe(2);
+    expect(perspectiveOrder(st)).toBe(2);
     expect(rows(st, true)).toEqual(["vp/axis_snap", "vp/axis_snap", "screen_v/axis_snap"]);
     expect(snapAxisTable(st, true).filter(r => r.via).length).toBe(3);
   });
 
   it("3점 확정 — 셋 다 소실점", () => {
     const st = feed(feed(newRuleState(SZ), [DEPTH_A, DEPTH_B]), [TILTED_V], "vertical");
-    expect(orderOfState(st)).toBe(3);
+    expect(perspectiveOrder(st)).toBe(3);
     expect(rows(st, true)).toEqual(["vp/axis_snap", "vp/axis_snap", "vp/axis_snap"]);
   });
 
   /**
    * **반례** — 소실점이 있어도 **카메라가 안 서면** 그 방향을 못 만든다(축 방향이 `(V−P, f)`라
-   * f가 필요하다). 1점에서 f가 미정인 동안이 그 자리다. 표가 "언제나 전부 스냅된다"를
-   * 내면 그것은 판정이 아니다(#30).
+   * f가 필요하다). **NONE에서 소실점이 하나뿐인 동안**이 그 자리다(지시 1 — 가로선 없는
+   * 소실점 하나는 3D를 안 세운다). 표가 "언제나 전부 스냅된다"를 내면 그것은 판정이 아니다(#30).
    */
-  it("**반례** — 카메라가 안 서면 소실점 축은 못 쓴다. 화면 축은 그래도 된다", () => {
-    const st = feed(feed(newRuleState(SZ), [SCREEN_H]), [DEPTH_A]);
-    // 축2에 소실점이 **있는데도** `via`가 `-`다 — f가 없어 그 방향을 못 만든다
-    expect(rows(st, false)).toEqual(["screen_h/screen_ortho", "vp/-", "screen_v/screen_ortho"]);
-    expect(snapAxisTable(st, false).filter(r => r.via).length).toBe(2);
+  it("**반례** — 카메라가 안 서면(NONE·소실점 하나) 소실점 축은 못 쓴다. 화면 축은 그래도 된다", () => {
+    const st = feed(newRuleState(SZ), [DEPTH_A]);
+    // 축1에 소실점이 **있는데도** `via`가 `-`다 — 카메라가 안 서서 그 방향을 못 만든다
+    expect(rows(st, false)).toEqual(["vp/-", "-/-", "screen_v/screen_ortho"]);
+    expect(snapAxisTable(st, false).filter(r => r.via).length).toBe(1);
   });
 });
 
@@ -216,7 +216,7 @@ describe("A-5 짧은 획은 소실점을 안 만든다", () => {
     const r = stepRule(st0, { a: short()[0], b: short()[1] }, SZ);
     expect(r.event.type).toBe("rejected");
     expect(r.state).toBe(st0);                            // **같은 객체** — 조용히 안 바꾼다
-    expect(orderOfState(r.state)).toBe(0);
+    expect(perspectiveOrder(r.state)).toBe(0);
   });
 
   it("**반례** — 임계 위면 그대로 소실점이 선다", () => {
@@ -224,7 +224,8 @@ describe("A-5 짧은 획은 소실점을 안 만든다", () => {
     const b: Pt2 = [300 + L * Math.cos(Math.PI / 6), 400 - L * Math.sin(Math.PI / 6)];
     const r = stepRule(newRuleState(SZ), { a: [300, 400], b }, SZ);
     expect(r.event.type).toBe("vp_fixed");
-    expect(orderOfState(r.state)).toBe(1);
+    // 소실점 하나 = **NONE**이다(지시 1) — 가로선이 오면 P1, 두 번째 소실점이 오면 P2
+    expect(perspectiveOrder(r.state)).toBe(0);
   });
 
   it("사용자가 답한 수직축 선언은 길이로 안 막는다 — 그것은 소실점 후보가 아니다", () => {

@@ -95,35 +95,9 @@ export function vpOnHorizon(
   return Number.isFinite(x) ? [x, h] : null;
 }
 
-/**
- * **③ 수심 조건으로 세 번째 소실점을 유도한다**(이론서 6.3).
- *
- * `V₁`·`V₂`가 지평선 위(같은 y = h)에 있고 주점 `P`가 수심일 때
- * `V₃ = (Pₓ, h − (Pₓ−x₁)(Pₓ−x₂)/(P_y−h))`.
- *
- * ⚠⚠ **이것은 측정이 아니라 유도다.** `V₁`·`V₂`·`P`가 주어지면 값이 일의적으로 정해지므로
- * **새 정보를 넣지 않는다** — 이 `V₃`로 f를 다시 내면 두 소실점 해(6.2)와 **항등으로 같다**
- * (이론서 6.4의 수심 항등식. PITFALLS #5 자기참조 유형 3 · #37). 그래서 부르는 쪽은
- * 이 값을 **축 방향으로만** 쓰고 f의 출처로 쓰지 않는다.
- *
- * `null`을 내는 경우:
- *   - `P_y == h` — 피치 0이라 수직축이 **화면 평행**이다(무한원. 이론서 2.2). 2점 투시다
- *   - 두 소실점이 너무 가깝다(`min_vp_sep_ratio`) — 수심 관계의 조건수가 죽는다
- *
- * ⚠ **위/아래는 이 식이 정한다**(부호가 따라온다) — 주점이 지평선 위에 있으면
- * `P_y − h < 0`이고, `(Pₓ−x₁)(Pₓ−x₂)`는 주점이 두 소실점 **사이**에 있을 때 음수다
- * (그것이 정상 구도다). 두 음수의 몫이 양수이므로 `y₃ = h − (양수) < h`가 되어
- * **수직 소실점이 지평선 위쪽**에 온다 — 올려다보는 구도. 반대면 아래다.
- */
-export function vpVerticalFromOrthocenter(
-  v1: Pt2, v2: Pt2, principal: Pt2, diag: number,
-  cfg: { min_vp_sep_ratio?: number } = {},
-): Pt2 | null {
-  const c = { ...HORIZON_TOL, ...cfg };
-  if (Math.abs(v1[0] - v2[0]) < c.min_vp_sep_ratio * diag) return null;
-  const h = (v1[1] + v2[1]) / 2;                    // 롤 0이면 같아야 한다
-  const dy = principal[1] - h;
-  if (Math.abs(dy) < 1e-6) return null;             // 피치 0 — 수직축은 무한원이다
-  const y3 = h - ((principal[0] - v1[0]) * (principal[0] - v2[0])) / dy;
-  return Number.isFinite(y3) ? [principal[0], y3] : null;
-}
+// ⛔ **③ 수심 유도(`vpVerticalFromOrthocenter`)를 지웠다**(2026-08-17 지시 2 — "2점 피치 추정은
+// 수심 유도 잔재. 3점의 영역이다"). 그 유도는 `dy = P_y − 지평선`으로 나누므로 지평선 높이가
+// 곧 3점 여부가 됐고(A-4가 배선을 이미 끊었다), 3점의 유일한 입구는 사용자의 수직축 선언이다
+// (`vpRules.deriveVertical`). ⚠ `HORIZON_TOL.min_vp_sep_ratio`는 그 유도만 쓰던 임계지만
+// **상수는 남긴다** — `SHARED_CONSTANTS`의 전역 해시가 움직이면 무관한 원장 40여 개가 STALE이
+// 된다(DEFERRED "의존 집합별 해시" 항목이 그 자리다). 판정을 가르는 자리가 없으므로 무해하다.
