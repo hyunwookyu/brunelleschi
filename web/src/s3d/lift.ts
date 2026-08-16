@@ -47,6 +47,12 @@ export interface LiftCtx {
   /** 확정된 소실점. 관례상 `vps[2]`가 **수직축**이다. */
   vps: (Pt2 | null)[];
   imgSize: [number, number];
+  /**
+   * **축 번호 → 3D 방향**(단위벡터). 있으면 `vps`보다 우선한다 — 무한원 축(화면 평행)은
+   * 소실점이 없지만 방향은 있다(이론서 2.2). `PlaceCtx.axisDirs`와 같은 것이고
+   * 채우는 자리는 `vpRules.axisDirsOf` 하나다(#17).
+   */
+  axisDirs?: (Vec3 | null)[];
 }
 
 export const LIFT_TOL = {
@@ -119,6 +125,9 @@ export function dirOf(axis: Axis, ctx: LiftCtx, rep: Rep): Vec3 | null {
     const d: Vec3 = [rep.b[0] - rep.a[0], rep.b[1] - rep.a[1], 0];
     return norm3(d) < 1e-9 ? null : unit3(d);
   }
+  // **무한원 축은 소실점이 없어도 방향이 있다**(이론서 2.2) — 규칙 경로가 그것을 넘긴다
+  const given = ctx.axisDirs?.[axis];
+  if (given) return unit3(given);
   const vp = ctx.vps[axis];
   return vp ? axisDirection(vp, ctx.principal, ctx.f) : null;
 }

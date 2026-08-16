@@ -8,7 +8,7 @@
 import { InkCanvas } from "./capture/inkCanvas.js";
 import { cssSizeOf, deviceRatio } from "./capture/canvasFrame.js";
 import { Stage, FREE_FOV_DEG, type StageSeg } from "./ui/stage.js";
-import { CamState } from "./ui/camState.js";
+import { CamState, DEFAULT_LENS_MM } from "./ui/camState.js";
 import { newDoc, newSStroke, newView, deleteView, lifted, pending, pendingElsewhere,
          type DocState, type SStroke } from "./ui/doc.js";
 import { takeSnap, applySnap, type AppSnap } from "./ui/appSnap.js";
@@ -18,24 +18,23 @@ import { serializeDoc2, restoreDoc2, autosaver2, getDoc2, deleteDoc2,
 import { toObj, toGltf, download, linesFromDoc } from "./ui/exportGeom.js";
 import { setDocSeq, docSeq } from "./ui/doc.js";
 import { nearestSeg, PICK_TOL, type PickSeg } from "./ui/pick.js";
-import { draftFromDetection, handleAt, moveHandle, guideLineAt, moveGuideBy,
-         extendGuide, DRAFT_TOL, type HandleRef } from "./s3d/vpDraft.js";
 import { diffPlacement, diffSummary, type PlacementDiff } from "./s3d/promoteDiff.js";
-import { SENS_TOL, type AxisSens } from "./s3d/vpSensitivity.js";
-import { HOMOG_TOL } from "./s3d/vpHomog.js";
+// **규칙 기반 소실점**(2026-08-16 전면 교체). 검출 초안·가이드·민감도 경로는 전부 빠졌다.
+import { classifyLine, RULE_TOL, type RuleEvent, type RLine, type RuleState } from "./s3d/vpRules.js";
 import { liftAll, type LiftStroke } from "./s3d/lift.js";
 import { snapAt, staticCandidates, SNAP_TOL, SNAP_LABEL, SNAP_COLOR,
          type SnapCand, type SnapSeg, type SnapCtx, type StaticCand } from "./s3d/snap.js";
 import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "./s3d/liveLine.js";
-import { classifyStroke } from "./s3d/axis.js";
+import { representative } from "./s3d/axis.js";
 import { promoteOrder, orderOf, type OrderStroke } from "./s3d/promoteOrder.js";
 import { AXIS_COLOR, guides as gridGuides, HORIZON_COLOR, GROUND_COLOR } from "./s3d/grid.js";
 import { project, axisDirection, groundFrame, type Vec3 } from "./s3d/geom3d.js";
-import type { Pt2 } from "./s3d/camera.js";
+import { lineIntersect, type Pt2 } from "./s3d/camera.js";
 import type { PlaceCtx } from "./s3d/stroke.js";
 import { viewPlaceCtx, toView, fromView, dirToView, type ViewPose } from "./s3d/viewCamera.js";
 
-type Tool = "draw" | "adjust" | "orbit" | "edit";
+// **가이드 조정 도구가 없어졌다** — 끌 가이드가 없다. 선만 그으면 카메라가 선다(사람 지시 1).
+type Tool = "draw" | "orbit" | "edit";
 
 const host = document.getElementById("stage")!;
 const canvas = document.getElementById("ink") as HTMLCanvasElement;
@@ -48,18 +47,19 @@ let doc: DocState = newDoc();
 const cam = new CamState(cssSizeOf(canvas));
 let tool: Tool = "draw";
 let note = "";
-let dragHandle: HandleRef | null = null;
-/** **선을 통째로 끄는 중**(L-B.2). 라이노·SketchUp에서 선을 끄는 것과 같다(A-3). */
-let dragLine: { index: number; last: Pt2 } | null = null;
 /**
- * 민감도. **끄는 동안에는 갱신하지 않는다** — 초당 수십 번 바뀌면 읽을 수 없고,
- * 핸들 수 × 8회의 카메라 해가 매 프레임 돈다.
- *
- * ⚠ **`refresh()`가 부른다.** 처음에는 `소실점 추정`과 끌기 종료에서만 불렀는데, 그러면
- * 가이드가 다른 경로로 바뀔 때(되돌리기·비우기·창 크기·바깥에서 주입) **낡은 값이 남는다** —
- * 종단 확인에서 실제로 걸렸다. 갱신을 **쓰는 자리 하나로** 모은다(AS-C7의 자가 치유와 같은 형태).
+ * **마지막 획이 규칙에 어떻게 들어갔는가**(사람 지시 3 — "무엇이 부족한지 알면 사용자가 긋는다").
+ * 화면에 그대로 낸다. 추측하지 않고 규칙이 낸 사건을 그대로 보인다(#7).
  */
-let sens: AxisSens[] = [];
+let ruleNote = "";
+/**
+ * **애매해서 묻고 있는 획**(사람 지시 1 — "애매하면 사용자에게 묻는다. 추정하지 않는다").
+ *
+ * 답할 때까지 그 획은 **2D로 대기**한다. 답이 오면 그 답을 규칙에 강제로 넣는다.
+ * 취소하면 획은 남고 규칙에는 안 들어간다 — **없는 판정을 지어내지 않는다**(A-3).
+ */
+let ask: { strokeId: string; line: RLine; question: RuleEvent extends never ? never :
+           "screen_or_depth" | "second_horizontal_or_vertical"; toH: number; toV: number } | null = null;
 /** 떠 있는 커서의 스냅 — **누르기 전에 무엇에 붙을지 보인다**(SketchUp/Rhino 관행, L-B.3). */
 let hoverSnap: SnapCand | null = null;
 /** 마지막 획이 무엇에 붙었나 — 화면에 사유를 낸다(#7: 추측하지 말고 센다). */
@@ -98,8 +98,8 @@ let shiftHeld: 0 | 1 | 2 | null = null;
  * `cam`은 **이미 새 차수**이므로(사용자가 가이드를 먼저 세운다) 옛 차수를 따로 들어야 한다.
  */
 let lockedOrder: number | null = null;
-const refreshSens = () => { sens = cam.guides.length ? cam.sensitivity() : []; };
-
+/** 하네스가 넣은 축 직선(위 `setAxisLines`). **앱은 안 쓴다** — 화면에 가이드가 없다. */
+let harnessLines: { axis: 0 | 1 | 2; a: Pt2; b: Pt2 }[] = [];
 // **스냅샷 자료구조와 대조는 `ui/appSnap.ts` 하나가 정한다**(#17) — 원장이 같은 함수를 부른다.
 const undoStack: AppSnap[] = [];
 const UNDO_MAX = 200;
@@ -117,7 +117,6 @@ function restoreSnap(s: AppSnap) {
   if (c && s.locked) stage.pinTo(c.principal, c.f);
   const rep = s.report as PromoteReport | null;
   promoteReport = rep ? { ...rep, snapLost: [...rep.snapLost] } : null;
-  refreshSens();
   syncScene();
 }
 
@@ -506,12 +505,12 @@ function solveInto(ctx: PlaceCtx, targets: SStroke[]): number {
   if (!targets.length) return 0;
   for (const st of targets) {
     if (st.userAxis) continue;
-    const v = classifyStroke(st.pts2d, ctx.vps, ctx.imgSize, {},
-                             { principal: ctx.principal, f: ctx.f });
-    st.axis = v.axis;
+    // **규칙이 이미 축을 정해 뒀다** — 검출 판정(`classifyStroke`)을 안 부른다(사람 지시 1).
+    st.axis = cam.axisOf(st.pts2d).axis;
   }
   const input: LiftStroke[] = targets.map(s => ({ id: s.id, pts2d: s.pts2d, axis: s.axis }));
-  const r = liftAll(input, { principal: ctx.principal, f: ctx.f, vps: ctx.vps, imgSize: ctx.imgSize });
+  const r = liftAll(input, { principal: ctx.principal, f: ctx.f, vps: ctx.vps,
+                             imgSize: ctx.imgSize, axisDirs: ctx.axisDirs });
   let n = 0;
   for (const s of targets) {
     const seg = r.placed.get(s.id);
@@ -546,8 +545,9 @@ function promoteOrderNow(): void {
   const input: OrderStroke[] = doc.strokes.map(s => ({
     id: s.id, pts2d: s.pts2d, axis: s.axis, userAxis: s.userAxis, snapStart: s.snapStart,
   }));
-  const r = promoteOrder(input, { principal: ctx.principal, f: ctx.f,
-                                  vps: ctx.vps, imgSize: ctx.imgSize });
+  const r = promoteOrder(input, { principal: ctx.principal, f: ctx.f, vps: ctx.vps,
+                                  imgSize: ctx.imgSize, axisDirs: ctx.axisDirs },
+                         {}, (pts) => cam.axisOf(pts).axis);
   // **전부 다시 푼 결과로 갈아 끼운다** — 부분 유지는 좌표계가 섞인 상태를 만든다(§6.1)
   const oldScale = geomScaleOf(lifted(doc));
   for (const s of doc.strokes) {
@@ -722,7 +722,7 @@ function geomScaleOf(list: SStroke[]): number {
  */
 function confirm() {
   const ctx = cam.ctx();
-  if (!ctx) { note = "카메라가 아직 정해지지 않았습니다 — 가이드를 맞추세요"; refresh(); return; }
+  if (!ctx) { note = "카메라가 아직 정해지지 않았습니다 — 아래 안내대로 선을 더 그으세요"; refresh(); return; }
   pushUndo();
   const targets = pending(doc, doc.views[0].id);
   const n = solveInto(ctx, targets);
@@ -741,24 +741,161 @@ function confirm() {
   refresh();
 }
 
-/** 소실점 초안 — **확정이 아니다**. 사용자가 맞춘다(§5.1·§5.2). */
-function makeDraft() {
-  if (cam.locked) return;
-  const src = pending(doc, doc.views[0].id).map(s => ({ id: s.id, pts2d: s.pts2d }));
-  if (src.length < 3) { note = "획이 더 필요합니다 — 방향마다 두어 개씩 그으세요"; refresh(); return; }
-  cam.guides = draftFromDetection(src, cssSize());
-  // **초안을 캔버스 끝까지 늘린다**(L-B.2). 방향과 소실점은 안 바뀌고 **지렛대만 길어진다** —
-  // 핸들 예산이 길이에 반비례하기 때문이다(`vp_homog.json`: 300px 0.63~2.16 → 1250px 2.68~9.03).
-  // 검출 지지선 그대로 두면 그림이 길이를 정해 버린다(L-B.1에서 여섯 중 둘이 요구치 미달이었다).
-  for (let i = 0; i < cam.guides.length; i++) cam.guides = extendGuide(cam.guides, i, cssSize());
-  cam.apply();
-  refreshSens();
-  tool = "adjust";
-  note = "검출은 **초안**입니다 — 끝점을 끌어 그림에 맞추세요";
+// ---------------------------------------------------------------- 규칙 (사람 지시 1·3)
+
+/**
+ * **획 하나를 규칙에 넣는다.** 대표 직선을 쓴다 — 손떨림이 각 판정을 흔들면 안 되고,
+ * `representative`가 최소제곱 주축이라 시작-끝 잇기보다 낫다(`axis.ts` 머리말).
+ *
+ * 애매하면 `ask`를 세우고 **그 획은 2D로 대기**한다. 답이 올 때까지 규칙은 안 움직인다 —
+ * 이것이 "추정하지 않는다"의 구현이다(A-3: 애매하면 놓지 않는다).
+ */
+function feedStroke(st: SStroke, forced?: "screen" | "depth" | "vertical"): void {
+  const rep = representative(st.pts2d);
+  if (!rep) { ruleNote = "획이 너무 짧아 방향을 못 믿습니다"; return; }
+  const line: RLine = { a: rep.a, b: rep.b };
+  const r = cam.feed(line, forced);
+  if (r.event.type === "ask") {
+    ask = { strokeId: st.id, line, question: r.event.question,
+            toH: r.event.verdict.toH, toV: r.event.verdict.toV };
+    ruleNote = "";
+    return;
+  }
+  ask = null;
+  ruleNote = ruleText(r.event);
+}
+
+/** 물음에 답한다 — 그 답을 규칙에 **강제로** 넣는다. */
+function answerAsk(choice: "screen" | "depth" | "vertical"): void {
+  if (!ask) return;
+  const st = doc.strokes.find(x => x.id === ask!.strokeId);
+  const line = ask.line;
+  ask = null;
+  if (st) feedStroke(st, choice);
+  else { const r = cam.feed(line, choice); ruleNote = ruleText(r.event); }
+  // 규칙이 카메라를 세웠을 수 있다 — 대기 획을 다시 본다
   refresh();
 }
 
+const AXIS_NAME = (i: 0 | 1 | 2) => `<b style="color:${AXIS_COLOR[i]}">축${i + 1}</b>`;
+
+/** 규칙 사건 → 사람이 읽는 한 줄. **화면 문구의 단일 출처다**(갈리면 설명이 안 맞는다). */
+function ruleText(e: RuleEvent): string {
+  switch (e.type) {
+    case "screen_axis":
+      return `화면 ${e.dir === "h" ? "가로" : "세로"}선 → ${AXIS_NAME(e.axis)} **확정**`
+           + ' <span class="dim">(소실점이 무한원이라 계산할 것이 없습니다, 이론서 2.2)</span>';
+    case "vp_fixed":
+      return `${AXIS_NAME(e.axis)} **소실점 확정** (${Math.round(e.at[0])}, ${Math.round(e.at[1])})`
+           + ` <span class="dim">— ${SRC_NAME[e.source]}</span>`
+           + (e.horizonSet ? ` · **지평선 y=${Math.round(e.at[1])} 확정**` : "");
+    case "promoted":
+      return `**차수 승격** — ${AXIS_NAME(e.axis)}가 화면 가로축에서 **소실점**으로 바뀌었습니다`
+           + ` <span class="dim">(${SRC_NAME[e.source]})</span>`;
+    case "derived_vertical":
+      return `수직 소실점을 **유도**했습니다 <span class="dim">(수심 조건, 이론서 6.3 — 측정이 아닙니다)</span>`;
+    case "waiting":
+      return `깊이선 **${e.have}개** — 하나 더 그으면 소실점이 정해집니다`;
+    case "support":
+      return `${AXIS_NAME(e.axis)}를 향한 선입니다 <span class="dim">(소실점은 확정 후 잠깁니다 — 지지선으로만 셉니다)</span>`;
+    case "rejected":
+      return `<span class="warn">${e.why}</span>`;
+    default:
+      return "";
+  }
+}
+
+const SRC_NAME: Record<string, string> = {
+  two_lines: "깊이선 두 개의 교점",
+  horizon_x_line: "깊이선 하나 × 지평선",
+  orthocenter: "수심 조건 유도(6.3) — 측정이 아닙니다",
+};
+
+/**
+ * **지금 상태와 무엇이 부족한가**(사람 지시 3).
+ *
+ * "무엇이 부족한지 알면 사용자가 긋는다. 지금은 아무 안내 없이 대기만 한다."
+ * 그래서 **슬롯 셋을 그대로 보이고 다음에 그을 것을 한 줄로** 낸다.
+ */
+function ruleStatus(): string {
+  const st = cam.rules;
+  const cells = ([0, 1, 2] as const).map(i => {
+    const sl = st.slots[i];
+    if (!sl) return `<span class="dim">축${i + 1} 미정</span>`;
+    if (sl.kind === "screen") {
+      return `${AXIS_NAME(i)} <b>화면 ${sl.dir === "h" ? "가로" : "세로"}</b>`
+           + ` <span class="dim">(무한원·지지 ${sl.support})</span>`;
+    }
+    return `${AXIS_NAME(i)} <b>소실점</b>`
+         + ` <span class="dim">(${SRC_SHORT[sl.source]}·지지 ${sl.support})</span>`;
+  });
+  const rows = [`<div>${cells.join(" · ")}</div>`];
+  if (st.horizon !== null) {
+    rows.push(`<div>지평선 <b>y = ${Math.round(st.horizon)}</b>`
+      + ' <span class="dim">(첫 소실점이 정했습니다 — 다음 소실점은 이 위에 놓입니다)</span></div>');
+  }
+  rows.push(`<div class="note">${nextHint()}</div>`);
+  return rows.join("");
+}
+
+const SRC_SHORT: Record<string, string> = {
+  two_lines: "깊이선 둘", horizon_x_line: "지평선×선", orthocenter: "유도 6.3",
+};
+
+/** **다음에 그을 것 한 줄.** 이것이 없으면 사용자는 왜 대기인지 모른다. */
+function nextHint(): string {
+  const st = cam.rules;
+  const n = cam.order();
+  const waiting = st.waiting.length;
+  const need: string[] = [];
+  const hasScreenH = ([0, 1] as const).some(i => st.slots[i]?.kind === "screen");
+  if (!st.slots[2]) need.push("<b>화면 세로선</b>(수직축)");
+  if (!hasScreenH && !([0, 1] as const).some(i => st.slots[i])) need.push("<b>화면 가로선</b>(가로축)");
+  if (n === 0) {
+    need.push(waiting
+      ? `<b>깊이선 하나 더</b> <span class="dim">(지금 ${waiting}개 — 두 개의 교점이 첫 소실점입니다)</span>`
+      : "<b>깊이선 두 개</b> <span class=\"dim\">(교점이 첫 소실점입니다)</span>");
+  } else if (n === 1) {
+    need.push("<b>다른 방향 깊이선 하나</b>"
+      + ' <span class="dim">(지평선과의 교점이 두 번째 소실점입니다 — 세 개가 아니라 하나면 됩니다)</span>');
+  }
+  if (!need.length) {
+    return cam.ctx()
+      ? `<b>${n}점 투시</b> — 그을 것이 다 갖춰졌습니다. <b>확정</b>을 누르면 3D로 올라갑니다`
+      : `<b>${n}점 투시</b>인데 카메라가 안 섭니다 — 아래 경고를 보세요`;
+  }
+  return `다음: ${need.join(" · ")}`;
+}
+
 // ---------------------------------------------------------------- 2D 레이어 그리기
+
+/**
+ * **획 하나 = 직선 하나**(계획서 §1.1). 점열의 처음과 끝만 잇는다.
+ *
+ * 계획서는 "획이 직선 세그먼트가 되고 손떨림은 버린다"인데 **렌더 층이 그 결정을 안 따르고
+ * 있었다** — 화면에 손 획이 그대로 보였다. 고치는 자리는 **그리는 곳 전부**이고
+ * (`inkCanvas`의 잉크 · 여기의 2D 대기층 · `strokeView`의 튜브), 셋 다 같은 규약을 쓴다.
+ */
+function drawStraight(ctx2: CanvasRenderingContext2D, pts: Pt2[]): void {
+  if (pts.length < 2) return;
+  const a = pts[0], b = pts[pts.length - 1];
+  ctx2.beginPath();
+  ctx2.moveTo(a[0], a[1]); ctx2.lineTo(b[0], b[1]);
+  ctx2.stroke();
+}
+
+/** 물어보는 중인 획을 화면에 띄운다 — **무엇에 대해 묻는지 안 보이면 답할 수 없다.** */
+function drawAsk(ctx2: CanvasRenderingContext2D): void {
+  if (!ask) return;
+  ctx2.save();
+  ctx2.strokeStyle = "#8e44ad"; ctx2.lineWidth = 4;
+  ctx2.globalAlpha = 0.8; ctx2.setLineDash([9, 5]); ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(ask.line.a[0], ask.line.a[1]); ctx2.lineTo(ask.line.b[0], ask.line.b[1]);
+  ctx2.stroke();
+  ctx2.restore();
+}
+
 
 function drawGrid(ctx2: CanvasRenderingContext2D) {
   const r = cam.acc.solve();
@@ -783,33 +920,6 @@ function drawGrid(ctx2: CanvasRenderingContext2D) {
   ctx2.restore();
 }
 
-/** 가이드 선과 손잡이(§5.2). 소실점이 대개 화면 밖이라 점을 직접 못 끈다. */
-function drawGuideHandles(ctx2: CanvasRenderingContext2D) {
-  if (!cam.guides.length) return;
-  const r = DRAFT_TOL.handle_ratio * Math.hypot(...cssSize());
-  const on = tool === "adjust" && !cam.locked;
-  ctx2.save();
-  for (const g of cam.guides) {
-    const st = cam.guideState.get(g.axis);
-    ctx2.strokeStyle = AXIS_COLOR[g.axis];
-    // **채운 가이드는 흐리고 다른 파선**이다 — 그림에서 나온 것이 아니라는 표시다
-    ctx2.globalAlpha = (on ? 0.85 : 0.3) * (st?.infinite ? 0.5 : 1) * (g.filled ? 0.45 : 1);
-    ctx2.setLineDash(st?.infinite ? [2, 3] : (g.filled ? [1, 5] : [5, 4]));
-    ctx2.lineWidth = 1.5;
-    ctx2.beginPath(); ctx2.moveTo(g.a[0], g.a[1]); ctx2.lineTo(g.b[0], g.b[1]); ctx2.stroke();
-    if (!on) continue;
-    ctx2.setLineDash([]);
-    ctx2.fillStyle = AXIS_COLOR[g.axis];
-    for (const p of [g.a, g.b]) {
-      ctx2.beginPath(); ctx2.arc(p[0], p[1], r * 0.45, 0, Math.PI * 2); ctx2.fill();
-      ctx2.globalAlpha = 0.3;
-      ctx2.beginPath(); ctx2.arc(p[0], p[1], r, 0, Math.PI * 2); ctx2.stroke();
-      ctx2.globalAlpha = 0.85;
-    }
-  }
-  ctx2.restore();
-}
-
 /**
  * 2D 레이어 — **대기 중인 획**. 3D와 **약하게 구분한다**(§9.4): 회전하면 어차피 드러나므로
  * 미리 알리는 편이 낫고, 지나치게 강조하면 결함처럼 보인다.
@@ -825,12 +935,9 @@ function drawPending(ctx2: CanvasRenderingContext2D) {
   ctx2.strokeStyle = "#111";
   ctx2.globalAlpha = cam.locked ? 0.45 : 0.9;
   ctx2.setLineDash(cam.locked ? [5, 4] : []);
-  for (const s of pending(doc)) {
-    if (s.pts2d.length < 2) continue;
-    ctx2.beginPath();
-    s.pts2d.forEach((p, i) => (i === 0 ? ctx2.moveTo(p[0], p[1]) : ctx2.lineTo(p[0], p[1])));
-    ctx2.stroke();
-  }
+  // **직선으로 그린다**(§1.1 · 사람 지시 2-a) — 시작점과 끝점 둘뿐이다.
+  // `pts2d`는 그대로 보존되므로 프리핸드로 돌아갈 때 이 줄만 되돌리면 된다.
+  for (const s of pending(doc)) drawStraight(ctx2, s.pts2d);
   ctx2.restore();
 }
 
@@ -882,10 +989,7 @@ function drawPromoteLoss(ctx2: CanvasRenderingContext2D) {
   ctx2.setLineDash([7, 5]); ctx2.globalAlpha = 0.95; ctx2.lineCap = "round";
   for (const id of promoteReport.diff.dropped) {
     const s = byId.get(id);
-    if (!s || s.pts2d.length < 2) continue;
-    ctx2.beginPath();
-    s.pts2d.forEach((p, i) => (i === 0 ? ctx2.moveTo(p[0], p[1]) : ctx2.lineTo(p[0], p[1])));
-    ctx2.stroke();
+    if (s) drawStraight(ctx2, s.pts2d);           // **직선**(§1.1)
   }
   // ② 스냅이 끊긴 획 — **시작점에** ⊘. 끊긴 것은 획이 아니라 그 점이다
   ctx2.setLineDash([]); ctx2.strokeStyle = LOSS_COLOR.snap; ctx2.lineWidth = 2.5;
@@ -1010,7 +1114,7 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   if (cam.locked && !stage.isPinned) return;
   drawGrid(ctx2);
   drawPreview(ctx2);
-  drawGuideHandles(ctx2);
+  drawAsk(ctx2);
   const [w, h] = cssSize();
   cam.vps().forEach((v, i) => {
     if (!v || v[0] < 0 || v[0] > w || v[1] < 0 || v[1] > h) return;
@@ -1025,7 +1129,7 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
 
 const ink = new InkCanvas(canvas, {
   onBackground: drawBelowInk,
-  dragMode: () => (tool === "adjust" && !cam.locked) || tool === "edit",
+  dragMode: () => tool === "edit",
   onDrag: (p, phase) => {
     // **고치기**(L-D.1, §9.5) — 누르는 순간 고른다. 빈 곳이면 선택이 풀린다(A-3: 선례 그대로)
     if (tool === "edit") {
@@ -1044,27 +1148,6 @@ const ink = new InkCanvas(canvas, {
       refresh();
       return;
     }
-    // **끌면 그리드와 이미 놓인 기하가 따라 움직인다**(§5.2). 자동 검사가 원리적으로 불가능하므로
-    // (§5.3) 이것이 유일한 판정 수단이다.
-    if (phase === "down") {
-      dragHandle = handleAt(cam.guides, p, cssSize());
-      // 핸들을 못 잡았으면 **선 자체**를 잡는다 — 선을 옮겨 더 긴 현을 찾을 수 있다
-      const li = dragHandle ? null : guideLineAt(cam.guides, p, cssSize());
-      dragLine = li == null ? null : { index: li, last: p };
-      return;
-    }
-    if (phase === "up") {
-      if (dragHandle || dragLine) refreshSens();     // 놓을 때 한 번만 다시 잰다
-      dragHandle = null; dragLine = null; refresh(); return;
-    }
-    if (dragHandle) cam.guides = moveHandle(cam.guides, dragHandle, p);
-    else if (dragLine) {
-      cam.guides = moveGuideBy(cam.guides, dragLine.index,
-                               p[0] - dragLine.last[0], p[1] - dragLine.last[1]);
-      dragLine.last = p;
-    } else return;
-    cam.apply();
-    refresh();
   },
   onHover: (p) => {
     const fr = p ? frame() : null;
@@ -1113,6 +1196,9 @@ const ink = new InkCanvas(canvas, {
     doc.currentView = viewForDrawing();
     const s = newSStroke(pts, doc.currentView);
     doc.strokes.push(s);
+    // **① 규칙에 넣는다**(사람 지시 1) — 확정 전에는 이것이 카메라를 세우는 유일한 경로다.
+    // 그은 선이 곧 제약이다: 화면 가로세로면 축 자체, 깊이면 교점. 추정하지 않는다.
+    if (!cam.locked) feedStroke(s);
     // 확정 뒤에는 그 자리에서 푼다 — **승격 연쇄**의 첫 형태다(§9.1).
     // **돌린 시점에서도 돈다**(L-B.8) — `frame()`이 좌표 변환을 들고 있다
     const fr = frame();
@@ -1217,8 +1303,6 @@ function refresh() {
       SIZE_HEAL.firstAtMs ??= Math.round(performance.now());
       fit();
     }
-    // 끄는 중이 아니면 민감도를 다시 잰다 — 낡은 값이 남지 않는다
-    if (!dragHandle && !dragLine) refreshSens();
     ink.redraw();
     renderBar();
     renderStatus();
@@ -1233,6 +1317,9 @@ function buildDoc2(): Doc2 {
     at: new Date().toISOString(),
     imgSize: cam.imgSize,
     cam: cam.acc.dump(),
+    // **규칙 상태가 카메라의 입력이다**(2026-08-16) — 누산기 덤프는 그 귀결이다
+    rules: cam.dumpRules(),
+    lensMm: cam.lensMm,
     locked: cam.locked,
     order: lockedOrder ?? 1,
     doc,
@@ -1245,16 +1332,15 @@ function applyDoc2(d: Doc2) {
   const r = restoreDoc2(d);
   doc = r.doc;
   setDocSeq(r.seq);
-  cam.acc.reset();
-  if (r.cam) cam.acc.load(r.cam);
-  // **가이드는 누산기에서 되살린다** — 가이드가 곧 카메라의 입력이다(§5.4)
-  cam.guides = ([0, 1, 2] as const).flatMap(ax =>
-    (r.cam?.lines?.[ax] ?? []).map(l => ({ axis: ax, a: [...l.a] as Pt2, b: [...l.b] as Pt2 })));
+  // **규칙 상태를 되살린다** — 그것이 카메라의 입력이다(가이드가 아니다).
+  // 옛 저장본(`rules`가 없다)은 규칙이 비어 카메라가 안 선다 — **조용히 틀리게 세우지 않는다**(A-3).
+  cam.loadRules(d.rules ?? null);
+  if (d.lensMm !== undefined) cam.lensMm = d.lensMm;
   cam.apply();
   cam.locked = r.locked;
   lockedOrder = r.locked ? r.order : null;
   undoStack.length = 0; orderMarks.length = 0; promoteReport = null;
-  picked = null; sens = [];
+  picked = null; ask = null; ruleNote = "";
   syncScene();
   note = `저장된 작업을 열었습니다 — 뷰 ${doc.views.length} · 획 ${doc.strokes.length}`
        + ` (3D ${lifted(doc).length} · 2D ${doc.strokes.length - lifted(doc).length})`;
@@ -1266,13 +1352,16 @@ function renderBar() {
     `<button data-act="${id}"${on ? ' class="on"' : ""}${dis ? " disabled" : ""}>${label}</button>`;
   barEl.innerHTML = [
     btn("draw", "그리기", tool === "draw"),
-    btn("adjust", "가이드 조정", tool === "adjust", cam.locked || !cam.guides.length),
     btn("orbit", "궤도", tool === "orbit", !cam.locked),
     // **고치기**(L-D.1, §9.5) — 클릭으로 고르고 화살표로 축 지정, Delete로 삭제
     btn("edit", "고치기", tool === "edit", !doc.strokes.length),
     '<span class="sep"></span>',
-    btn("draft", "소실점 추정", false, cam.locked),
-    btn("extend", "가이드 늘리기", false, cam.locked || !cam.guides.length),
+    // **1점 투시의 f는 설정값이다**(이론서 5.3 · CLAUDE.md §1) — 측정으로 못 채운다.
+    // 소실점이 하나뿐일 때만 뜬다: 2·3점에서는 측정이 f를 정한다
+    ...(cam.order() === 1 && !cam.locked
+        ? [`<span class="lens">렌즈 <input id="lens" type="range" min="16" max="85" step="1"`
+           + ` value="${cam.lensMm ?? DEFAULT_LENS_MM}"><b>${cam.lensMm ?? DEFAULT_LENS_MM}mm</b></span>`]
+        : []),
     btn("confirm", "확정", false, cam.locked || !cam.ctx()),
     btn("home", "확정 시점으로", false, !cam.locked || stage.isPinned),
     // **차수 승격**(§6.1) — 소실점을 더 잡은 뒤 누른다. 자동으로 안 건다(측정이 그렇게 말한다)
@@ -1291,6 +1380,39 @@ function renderBar() {
     btn("json", ".brnl 저장", false, !doc.strokes.length),
     btn("clear", "비우기"),
   ].join("");
+}
+
+/**
+ * **묻는다**(사람 지시 1: "애매하면 사용자에게 묻는다. 추정하지 않는다").
+ *
+ * 두 가지만 묻는다:
+ *   ① 화면 가로세로인가 깊이인가 — 임계 사이(`screen_axis_deg` ~ `depth_min_deg`)일 때
+ *   ② 두 번째 수평축인가 수직축인가 — 선이 가팔라 갈리지 않을 때(3점 구도에서만 난다)
+ *
+ * ⚠ **답할 때까지 규칙은 안 움직인다.** 그 획은 2D로 대기하고 화면에 보라 점선으로 뜬다.
+ */
+function renderAsk(): string {
+  if (!ask) return "";
+  const angles = `<span class="dim">수평과 ${ask.toH.toFixed(1)}° · 수직과 ${ask.toV.toFixed(1)}°`
+               + ` (화면 축은 ${RULE_TOL.screen_axis_deg}° 이내 · 깊이는 ${RULE_TOL.depth_min_deg}° 밖)</span>`;
+  const rows: string[] = [];
+  if (ask.question === "screen_or_depth") {
+    rows.push('<div class="hdr"><b>이 선은 무엇입니까?</b>'
+      + ' <span class="dim">— 임계 사이라 갈리지 않습니다</span></div>');
+    rows.push(`<div>${angles}</div>`);
+    rows.push('<div><button data-act="ask_screen">화면 가로세로 축</button>'
+      + ' <button data-act="ask_depth">깊이선</button>'
+      + ' <button data-act="ask_skip">모르겠다(2D로 둔다)</button></div>');
+  } else {
+    rows.push('<div class="hdr"><b>이 선은 두 번째 수평축입니까, 수직축입니까?</b></div>');
+    rows.push(`<div>${angles}</div>`);
+    rows.push('<div class="dim">수직축이면 소실점을 그리지 않습니다 —'
+      + ' 수평 소실점 둘이 서면 <b>수심 조건으로 유도</b>합니다(이론서 6.3)</div>');
+    rows.push('<div><button data-act="ask_depth">두 번째 수평축</button>'
+      + ' <button data-act="ask_vertical">수직축</button>'
+      + ' <button data-act="ask_skip">모르겠다(2D로 둔다)</button></div>');
+  }
+  return `<div class="promote">${rows.join("")}</div>`;
 }
 
 /**
@@ -1376,37 +1498,9 @@ function renderStatus() {
     rows.push(`<div class="f">f = ${c.f.toFixed(0)}px · 화각 ${c.fovDeg}° <span class="dim">(${src})</span></div>`);
   }
   if (c.assumption) rows.push(`<div class="dim">${c.assumption}</div>`);
-  for (const s of cam.snapped()) {
-    rows.push(`<div class="warn">축${s.axis + 1} → <b>무한원(화면 평행)</b> · 각차 ${s.sepDeg.toFixed(1)}°`
-      + ` <span class="dim">(${HOMOG_TOL.snap_deg}° 미만이면 교점이 정해지지 않습니다 — 벌려서 끄세요)</span></div>`);
-  }
-  // **핸들 1px이 축을 얼마나 움직이는가**(L-B.2, §5.2). 자동 판정이 불가능하므로 사용자의
-  // 눈이 판정 수단인데, **눈은 자기 손이 얼마나 정밀해야 하는지를 못 본다.**
-  // 예산이 1px 미만이면 **그 축은 손으로 맞출 수 없다** — 지금까지 원장에만 있던 사실이다.
-  if (!cam.locked && sens.some(x => x.degPerPx != null)) {
-    const cells = sens.filter(x => x.degPerPx != null).map(x => {
-      const tight = (x.budgetPx ?? 0) < SENS_TOL.unusable_px;
-      const filled = cam.guides.some(g => g.axis === x.axis && g.filled);
-      return `<span style="color:${AXIS_COLOR[x.axis]}">■</span>`
-        + `<b${tight ? ' style="color:#c0392b"' : ""}>${x.budgetPx!.toFixed(1)}px</b>`
-        + `<span class="dim">(${x.degPerPx!.toFixed(2)}°/px · 선 ${Math.round(x.shortestGuidePx ?? 0)}px`
-        + (filled ? " · <b>채움</b>" : "") + ")</span>";
-    }).join(" · ");
-    rows.push(`<div>핸들 예산 ${cells}</div>`);
-    // **채운 축은 그림에서 나온 것이 아니다** — 숫자가 뜨는 것 자체가 오해를 만든다(A-3)
-    const filledAxes = [...new Set(cam.guides.filter(g => g.filled).map(g => g.axis))];
-    if (filledAxes.length) {
-      rows.push(`<div class="warn">축 ${filledAxes.map(a => a + 1).join("·")}는 <b>검출이 아니라`
-        + ` 기본 위치로 채운 것</b>입니다 — 그림이 정한 값이 아니므로 <b>반드시 맞춰야</b> 합니다`
-        + ` <span class="dim">(채운 가이드는 흐린 점선입니다)</span></div>`);
-    }
-    const tight = sens.filter(x => x.budgetPx != null && x.budgetPx < SENS_TOL.unusable_px);
-    if (tight.length) {
-      rows.push(`<div class="warn">축 ${tight.map(x => x.axis + 1).join("·")}는 <b>손으로 맞출 수 없습니다</b>`
-        + ` — 1px 움직임이 ${SENS_TOL.budget_deg}° 예산을 넘습니다.`
-        + ` <span class="dim">가이드 선을 끌어 <b>더 긴 자리</b>로 옮기거나 두 선의 각차를 벌리세요</span></div>`);
-    }
-  }
+  // **지금 상태와 무엇이 부족한가**(사람 지시 3). 안내가 없으면 사용자는 아무것도 못 긋는다.
+  if (!cam.locked) rows.push(ruleStatus());
+  if (ruleNote) rows.push(`<div class="dim">마지막 획 — ${ruleNote}</div>`);
   // **스냅 상태**(§3 표시). 확정 뒤에만 뜬다 — 대상이 3D 레이어이기 때문이다.
   if (snapCtx()) {
     const rpx = Math.round(SNAP_TOL.radius_ratio * Math.hypot(...cssSize()));
@@ -1438,8 +1532,8 @@ function renderStatus() {
   if (note) rows.push(`<div class="note">${note}</div>`);
   // **저장 상태를 화면이 읽는다**(PITFALLS #18 — 써 놓고 안 읽는 필드를 만들지 않는다)
   if (saveNote) rows.push(`<div class="dim">${saveNote}</div>`);
-  // **승격 요약은 맨 위에 둔다**(§6.2) — 아래에 있으면 상태 줄에 묻혀 "눈에 띄게"가 안 된다
-  statusEl.innerHTML = md(renderPromoteReport() + rows.join(""));
+  // **물음과 승격 요약은 맨 위에 둔다** — 아래에 있으면 상태 줄에 묻혀 "눈에 띄게"가 안 된다
+  statusEl.innerHTML = md(renderAsk() + renderPromoteReport() + rows.join(""));
 }
 
 // ---------------------------------------------------------------- 배선
@@ -1448,7 +1542,7 @@ barEl.addEventListener("click", (e) => {
   const b = (e.target as HTMLElement).closest("button");
   if (!b) return;
   const act = (b as HTMLButtonElement).dataset.act!;
-  if (act === "draw" || act === "adjust" || act === "orbit" || act === "edit") {
+  if (act === "draw" || act === "orbit" || act === "edit") {
     tool = act as Tool;
     if (act !== "edit") picked = null;
     if (act === "edit") {
@@ -1462,16 +1556,6 @@ barEl.addEventListener("click", (e) => {
       stage.unpin(stage.centroid(segs));
       note = "궤도 — 다른 뷰의 2D 대기 획은 숨깁니다(그 뷰의 화면 좌표이기 때문입니다). 돌린 뒤 **그리기**를 누르면 그 각도가 새 뷰가 됩니다";
     }
-  } else if (act === "draft") makeDraft();
-  else if (act === "extend") {
-    // **방향과 소실점은 안 바뀐다** — 지렛대만 길어진다. 예산이 길이에 반비례하기 때문이다.
-    const before = cam.guides.map(g => Math.hypot(g.b[0] - g.a[0], g.b[1] - g.a[1]));
-    for (let i = 0; i < cam.guides.length; i++) cam.guides = extendGuide(cam.guides, i, cssSize());
-    const after = cam.guides.map(g => Math.hypot(g.b[0] - g.a[0], g.b[1] - g.a[1]));
-    cam.apply(); refreshSens();
-    note = `가이드를 캔버스 끝까지 늘렸습니다 — 가장 짧은 선 `
-         + `${Math.round(Math.min(...before))} → ${Math.round(Math.min(...after))}px`
-         + " (방향과 소실점은 안 바뀝니다. **정확도는 가장 짧은 선이 정합니다**)";
   }
   else if (act === "confirm") confirm();
   else if (act === "reorder") promoteOrderNow();
@@ -1481,8 +1565,8 @@ barEl.addEventListener("click", (e) => {
     // **카메라를 만지기 직전이 표식의 자리다**(위 `orderMarks` 머리말) —
     // 여기서 안 뜨면 승격을 되돌려도 소실점이 새 차수로 남는다
     if (lockedOrder != null) markOrder(lockedOrder, appSnap());
-    cam.locked = false; tool = "adjust";
-    note = "소실점을 다시 잡습니다 — 축을 더 세운 뒤 **차수 승격**을 누르세요. "
+    cam.locked = false; tool = "draw";
+    note = "소실점을 다시 잡습니다 — **다른 방향 깊이선을 하나 더 그은 뒤** <b>차수 승격</b>을 누르세요. "
          + "확정된 3D는 그대로 있고, 승격을 눌러야 다시 풀립니다";
   }
   else if (act === "home") {
@@ -1520,8 +1604,8 @@ barEl.addEventListener("click", (e) => {
   }
   else if (act === "clear") {
     pushUndo();
-    doc = newDoc(); cam.guides = []; cam.apply(); cam.locked = false; lockedOrder = null;
-    cam.acc.reset(); syncScene(); sens = []; note = "";
+    doc = newDoc(); cam.reset(); lockedOrder = null;
+    syncScene(); note = ""; ruleNote = ""; ask = null;
     orderMarks.length = 0; promoteReport = null;
     // **저장본도 지운다** — 안 지우면 새로고침에서 방금 버린 작업이 되살아난다
     void deleteDoc2().catch(() => { /* 저장소가 없어도 화면은 비워졌다 */ });
@@ -1534,7 +1618,25 @@ barEl.addEventListener("click", (e) => {
 statusEl.addEventListener("click", (e) => {
   const b = (e.target as HTMLElement).closest("button");
   if (!b) return;
-  if ((b as HTMLButtonElement).dataset.act === "relink") relinkLostSnaps();
+  const act = (b as HTMLButtonElement).dataset.act;
+  if (act === "relink") relinkLostSnaps();
+  else if (act === "ask_screen") answerAsk("screen");
+  else if (act === "ask_depth") answerAsk("depth");
+  else if (act === "ask_vertical") answerAsk("vertical");
+  else if (act === "ask_skip") {
+    // **모른다고 답하는 것도 답이다** — 그 획은 2D로 남고 규칙은 안 움직인다(A-3)
+    ask = null; ruleNote = "그 선은 규칙에 안 넣었습니다 — **2D로 대기**합니다";
+    refresh();
+  }
+});
+
+// **렌즈 슬라이더**(1점 투시의 f). 측정이 아니라 설정이고 화면에 그렇게 나온다
+barEl.addEventListener("input", (e) => {
+  const t = e.target as HTMLInputElement;
+  if (t.id !== "lens") return;
+  cam.lensMm = Number(t.value);
+  cam.apply();
+  refresh();
 });
 
 // ---- 축 고정(L-B.5, §4). **SketchUp 그대로**(A-3) — 새로 배울 것이 없다.
@@ -1652,8 +1754,42 @@ refresh();
   revertToOrder,
   relinkLostSnaps,
   /** 되돌리기가 **카메라까지** 되돌리는지 대조하기 위한 창(L-C.2). */
-  camSnapshot: () => ({ guides: cam.guides.map(g => [g.axis, g.a[0], g.a[1], g.b[0], g.b[1]]),
+  camSnapshot: () => ({ rules: cam.dumpRules(), vps: cam.vps(),
                         locked: cam.locked, lockedOrder }),
+  // **규칙 경로를 종단 확인이 앱 경로 그대로 부른다**(#17)
+  rules: () => cam.dumpRules(),
+  /**
+   * **하네스 전용 — 축마다 직선 둘을 주면 그 교점을 소실점으로 세운다.**
+   *
+   * 옛 `S.cam.guides = [...]` 자리를 대신한다. 화면에는 가이드가 없다(D-L37) —
+   * 이것은 **알려진 카메라를 만드는 입구**이고 계산은 규칙 ⓑ와 **같은 교점**이다.
+   * 직선이 하나뿐이거나 나란하면 그 축은 **비운다**(무한원 — 없는 소실점을 지어내지 않는다).
+   */
+  setAxisLines: (list: { axis: 0 | 1 | 2; a: Pt2; b: Pt2 }[]) => {
+    harnessLines = list.map(g => ({ axis: g.axis, a: [...g.a] as Pt2, b: [...g.b] as Pt2 }));
+    const slots = ([0, 1, 2] as const).map(ax => {
+      const ls = harnessLines.filter(g => g.axis === ax);
+      if (ls.length < 2) return null;
+      const at = lineIntersect(ls[0].a, ls[0].b, ls[1].a, ls[1].b);
+      return at ? { kind: "vp" as const, at, source: "two_lines" as const, support: ls.length } : null;
+    }) as RuleState["slots"];
+    const h = ([0, 1] as const).map(i => slots[i]).find(x => x && x.kind === "vp");
+    cam.loadRules({ slots, horizon: h && h.kind === "vp" ? h.at[1] : null,
+                    waiting: [], verticalLines: [] });
+    refresh();
+  },
+  axisLines: () => harnessLines.map(g => ({ ...g, a: [...g.a] as Pt2, b: [...g.b] as Pt2 })),
+  feedLine: (a: Pt2, b: Pt2, forced?: "screen" | "depth" | "vertical") => {
+    const r = cam.feed({ a, b }, forced);
+    ruleNote = ruleText(r.event);
+    refresh();
+    return r.event;
+  },
+  classifyLine: (a: Pt2, b: Pt2) => classifyLine(a, b),
+  ask: () => ask && { strokeId: ask.strokeId, question: ask.question, toH: ask.toH, toV: ask.toV },
+  answerAsk: (choice: "screen" | "depth" | "vertical") => { answerAsk(choice); },
+  lens: () => cam.lensMm,
+  setLens: (mm: number | null) => { cam.lensMm = mm; cam.apply(); refresh(); },
   unlockGuides: () => {
     document.querySelector<HTMLButtonElement>('#bar button[data-act="unlock"]')?.click();
   },

@@ -179,17 +179,28 @@ export class InkCanvas {
     this.pts = [];
   };
 
-  // 라이브: from..끝 세그먼트만 그림(전체 재그리기 회피). coalesced 다중점 대응.
-  private drawLive(from: number) {
-    const n = this.pts.length;
-    if (n < 2) return;
-    this.frameNow();                       // 크기가 바뀌었으면 여기서 회복된다
-    this.ctx.strokeStyle = this.opts.color ?? "#111";
-    this.ctx.lineWidth = 2;                // **CSS 픽셀** — 변환이 배율을 건다
-    this.ctx.lineCap = "round";
+  /**
+   * 라이브 미리보기 — **시작점에서 지금 커서까지의 직선**(계획서 §1.1).
+   *
+   * ⚠ 옛 판은 `from..끝` 구간만 이어 그렸다(증분). **직선은 증분으로 그릴 수 없다** —
+   * 커서가 움직이면 앞서 그린 직선을 지워야 하므로 **전체를 다시 그린다.**
+   * (`onLive`를 준 호출자는 어차피 `redraw()`를 부르므로 이 경로를 안 탄다.)
+   */
+  private drawLive(_from: number) {
+    if (this.pts.length < 2) return;
+    this.redraw();
+  }
+
+  /**
+   * **획 하나가 그리는 직선** — 시작점과 끝점 둘뿐이다(계획서 §1.1: 손떨림은 버린다).
+   * `pts2d`는 계속 보존하므로 나중에 프리핸드로 돌아갈 때 여기만 되돌리면 된다.
+   */
+  private strokeLine(p: number[][]) {
+    if (p.length < 2) return;
+    const a = p[0], b = p[p.length - 1];
     this.ctx.beginPath();
-    this.ctx.moveTo(this.pts[from][0], this.pts[from][1]);
-    for (let i = from + 1; i < n; i++) this.ctx.lineTo(this.pts[i][0], this.pts[i][1]);
+    this.ctx.moveTo(a[0], a[1]);
+    this.ctx.lineTo(b[0], b[1]);
     this.ctx.stroke();
   }
 
@@ -236,19 +247,9 @@ export class InkCanvas {
     this.ctx.strokeStyle = this.opts.color ?? "#111";
     this.ctx.lineWidth = 2;
     this.ctx.lineCap = "round";
-    if (this.drawing && this.pts.length >= 2) {
-      this.ctx.beginPath();
-      this.ctx.moveTo(this.pts[0][0], this.pts[0][1]);
-      for (let i = 1; i < this.pts.length; i++) this.ctx.lineTo(this.pts[i][0], this.pts[i][1]);
-      this.ctx.stroke();
-    }
-    for (const s of this.strokes[this.frame]) {
-      const p = s.points;
-      if (p.length < 2) continue;
-      this.ctx.beginPath();
-      this.ctx.moveTo(p[0][0], p[0][1]);
-      for (let i = 1; i < p.length; i++) this.ctx.lineTo(p[i][0], p[i][1]);
-      this.ctx.stroke();
-    }
+    // **그리는 도중에도 직선이 보인다** — 시작점에서 커서까지(§1.1 · 사람 지시 2-a·d).
+    // 놓으면 그 직선이 그대로 확정되므로 **미리보기와 결과가 어긋날 여지가 없다.**
+    if (this.drawing) this.strokeLine(this.pts);
+    for (const s of this.strokes[this.frame]) this.strokeLine(s.points);
   }
 }

@@ -99,6 +99,25 @@ export class ConstraintAccumulator {
     return this;
   }
 
+  /**
+   * **축의 소실점을 통째로 바꾼다**(2026-08-16 규칙 경로). `null`이면 지운다 —
+   * 그 축은 **무한원이거나 미정**이고, 어느 쪽인지는 `vpRules`의 슬롯이 안다
+   * (카메라 수학에는 차이가 없다: 둘 다 유한 소실점이 아니다).
+   *
+   * `setLines`와 같은 이유로 `add`가 아니라 교체다 — 획마다 쌓이면 안 된다.
+   */
+  setPoint(axis: AxisId, at: Pt2 | null): this {
+    if (at) this.points[axis] = [at[0], at[1]];
+    else delete this.points[axis];
+    return this;
+  }
+
+  /** 렌즈 설정(1점 투시의 f). `null`이면 비운다. **측정이 아니라 설정이다**(provenance). */
+  setLens(f: number | null): this {
+    this.lensF = f != null && f > 0 ? f : null;
+    return this;
+  }
+
   reset(): this {
     this.lines = { 0: [], 1: [], 2: [] };
     this.points = {}; this.horizon = null; this.lensF = null;

@@ -7,7 +7,7 @@
     "status": "**폐기된 계획(G)의 게이트다.** 사유는 `docs/archive/segment_plan.md` 머리말에 있다 — 실패한 것은 기하 표현이 아니라 순서였다. 원장은 대조를 위해 남긴다."
   },
   "constants": {
-    "hash": "34db7279",
+    "hash": "5955b34c",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -51,6 +51,12 @@
       "HORIZON_TOL": {
         "min_slope_deg": 3.75,
         "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "min_sep_deg": 3,
+        "vertical_ask_deg": 45
       },
       "DRAFT_TOL": {
         "handle_ratio": 0.018,

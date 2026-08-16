@@ -26,6 +26,7 @@ import { DRAFT_TOL } from "../src/s3d/vpDraft.js";
 import { SENS_TOL } from "../src/s3d/vpSensitivity.js";
 import { SNAP_TOL } from "../src/s3d/snap.js";
 import { HORIZON_TOL } from "../src/s3d/horizon.js";
+import { RULE_TOL } from "../src/s3d/vpRules.js";
 import { LIVE_TOL } from "../src/s3d/liveLine.js";
 import { PICK_TOL } from "../src/ui/pick.js";
 import { INK_GRADES } from "../src/s3d/synthInk.js";
@@ -43,6 +44,8 @@ export const SHARED_CONSTANTS = {
   HOMOG_TOL,
   // L-D.0 — 롤 0 제약(지평선 수평 고정). 하네스 `test/horizon.test.ts`가 읽는다
   HORIZON_TOL,
+  // **규칙 기반 소실점 확정**(2026-08-16 전면 교체). 하네스 `test/rule_camera.test.ts`가 읽는다
+  RULE_TOL,
   DRAFT_TOL,
   SENS_TOL,
   SNAP_TOL,

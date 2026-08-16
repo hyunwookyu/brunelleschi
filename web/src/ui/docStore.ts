@@ -16,6 +16,7 @@ import type { Vec3 } from "../s3d/geom3d.js";
 import type { Axis } from "../s3d/axis.js";
 import type { ViewPose } from "../s3d/viewCamera.js";
 import type { AccumulatorDump } from "../s3d/constraints.js";
+import type { RuleState } from "../s3d/vpRules.js";
 import type { DocState, SStroke, SView, SnapRef } from "./doc.js";
 
 export const DOC2_FORMAT = "s2s-doc/2";
@@ -28,6 +29,16 @@ export interface Doc2 {
   imgSize: [number, number];
   /** 카메라 제약 **입력 그대로**(푼 결과가 아니다 — 열어서 이어 조정할 수 있어야 한다). */
   cam: AccumulatorDump | null;
+  /**
+   * **규칙 상태**(2026-08-16). 카메라의 진짜 입력이다 — 슬롯 셋과 지평선.
+   *
+   * ⚠ **옛 저장본에는 없다.** 없으면 규칙이 비어 카메라가 안 서고 획이 2D로 남는다 —
+   * **조용히 틀린 카메라를 세우는 것보다 낫다**(A-3). `cam`은 남겨 둔다: 그것으로
+   * 옛 작업의 소실점을 읽는 스크립트를 나중에 짤 수 있다(D-L29와 같은 자리).
+   */
+  rules?: RuleState | null;
+  /** 1점 투시의 렌즈 설정(35mm 환산 mm). **측정이 아니라 설정이다.** */
+  lensMm?: number | null;
   /** 카메라가 확정됐는가. `false`면 아직 2D 단계다. */
   locked: boolean;
   /** 지금 몇 점 투시인가(차수). 승격 이력의 현재 상태다. */
@@ -53,6 +64,8 @@ export interface Doc2Source {
   at: string;
   imgSize: [number, number];
   cam: AccumulatorDump | null;
+  rules?: RuleState | null;
+  lensMm?: number | null;
   locked: boolean;
   order: number;
   doc: DocState;
@@ -66,6 +79,8 @@ export function serializeDoc2(s: Doc2Source): Doc2 {
     at: s.at,
     imgSize: [s.imgSize[0], s.imgSize[1]],
     cam: s.cam,
+    rules: s.rules ?? null,
+    lensMm: s.lensMm ?? null,
     locked: s.locked,
     order: s.order,
     views: s.doc.views.map(v => ({

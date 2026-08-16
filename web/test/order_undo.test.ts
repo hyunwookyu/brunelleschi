@@ -29,6 +29,7 @@ import { diffPlacement } from "../src/s3d/promoteDiff.js";
 import { takeSnap, applySnap, snapDiff } from "../src/ui/appSnap.js";
 import { newDoc, newSStroke, resetDocSeq, type DocState } from "../src/ui/doc.js";
 import { CamState } from "../src/ui/camState.js";
+import { setRules, vpSlot, screenSlot } from "./ruleFixture.js";
 import { liftAll, LIFT_TOL, type LiftStroke, type LiftCtx, type LiftSeg } from "../src/s3d/lift.js";
 import { classifyStroke, type Axis } from "../src/s3d/axis.js";
 import { snapCandidates, staticCandidates, type SnapSeg, type SnapCtx } from "../src/s3d/snap.js";
@@ -154,9 +155,8 @@ describe("L-C.2 — 승격이 잃은 것이 보이는가, 되돌리기가 되돌
     // ---- ② 되돌리기 왕복. **설계 보장이다** — 임계를 안 건다(#5)
     resetDocSeq();
     const cam = new CamState(SZ);
-    cam.guides = [{ axis: 0, a: [40, 120], b: [900, 60] }, { axis: 0, a: [40, 600], b: [900, 520] },
-                  { axis: 1, a: [60, 60], b: [880, 590] }, { axis: 1, a: [60, 560], b: [880, 140] }];
-    cam.apply();
+    // **규칙 상태로 세운다** — 가이드가 없어졌다(2026-08-16). 2점 투시: 수평 소실점 둘 + 화면 세로
+    setRules(cam, [vpSlot([-1400, 330]), vpSlot([2100, 330]), screenSlot("v")]);
     cam.locked = true;
     let doc: DocState = newDoc();
     for (let i = 0; i < 6; i++) {
@@ -167,10 +167,9 @@ describe("L-C.2 — 승격이 잃은 것이 보이는가, 되돌리기가 되돌
     }
     const snap0 = takeSnap(doc, cam, 2);
 
-    // **승격을 흉내 낸다**: 가이드가 하나 더 서고, 기하가 다시 풀리고,
+    // **승격을 흉내 낸다**: 수직축이 무한원에서 **유한 소실점**으로 바뀌고(3점), 기하가 다시 풀리고,
     // **스냅된 시작점이 새 상으로 옮겨진다**(그것이 L-C.1이 p90 311px로 실측한 그 이동이다)
-    cam.guides.push({ axis: 2, a: [480, 40], b: [470, 620] });
-    cam.apply();
+    setRules(cam, [vpSlot([-1400, 330]), vpSlot([2100, 330]), vpSlot([480, -2600])]);
     for (let i = 0; i < doc.strokes.length; i++) {
       const s = doc.strokes[i];
       s.seg3d = i % 3 === 0 ? null : [[i * 2, 1, 1], [i * 2 + 1, 1.5, 1.2]];
@@ -190,14 +189,16 @@ describe("L-C.2 — 승격이 잃은 것이 보이는가, 되돌리기가 되돌
     // ---- **왕복을 여러 번 돌린다**(리뷰어 [10] — n이 없으면 보장의 범위가 없다).
     // 어긴 방식을 바꿔 가며 돈다: 가이드만 · 기하만 · 시작점만 · 잠금만 · 전부
     const breakers: { name: string; f: (d: DocState, c: CamState) => void }[] = [
-      { name: "guides", f: (_d, c) => { c.guides[0].a = [7, 7]; c.apply(); } },
-      { name: "guides_add", f: (_d, c) => { c.guides.push({ axis: 2, a: [1, 2], b: [3, 4] }); c.apply(); } },
+      { name: "vp_moved", f: (_d, c) => {
+          setRules(c, [vpSlot([-900, 300]), vpSlot([2100, 330]), screenSlot("v")]); } },
+      { name: "vp_added", f: (_d, c) => {
+          setRules(c, [vpSlot([-1400, 330]), vpSlot([2100, 330]), vpSlot([480, -2600])]); } },
       { name: "seg3d_null", f: (d) => { d.strokes[1].seg3d = null; } },
       { name: "seg3d_move", f: (d) => { d.strokes[2].seg3d = [[9, 9, 9], [8, 8, 8]]; } },
       { name: "pts2d", f: (d) => { d.strokes[3].pts2d = [[1, 1], ...d.strokes[3].pts2d.slice(1)]; } },
       { name: "snapStart", f: (d) => { d.strokes[4].snapStart = null; } },
       { name: "locked", f: (_d, c) => { c.locked = false; } },
-      { name: "all", f: (d, c) => { c.locked = false; c.guides.length = 1; c.apply();
+      { name: "all", f: (d, c) => { c.locked = false; setRules(c, [vpSlot([-1400, 330]), null, null]);
                                     d.strokes.forEach(s => { s.seg3d = null; }); } },
     ];
     const trials = breakers.map(b => {
@@ -334,7 +335,9 @@ describe("L-C.2 — 승격이 잃은 것이 보이는가, 되돌리기가 되돌
           // **`pts2d`를 실제로 본다**(#34) — 승격이 스냅된 시작점을 옮기므로,
           // 이것이 안 잡히면 '되돌렸다'가 시작점만 새 자리에 남은 상태를 통과시킨다
           sees_pts2d: positive.some(x => x.includes("pts2d")),
-          sees_guides: positive.some(x => x.startsWith("guides")),
+          // **카메라도 본다** — 옛 이름은 `guides`였고 지금은 규칙 슬롯이다(2026-08-16 전면 교체).
+          // 이름만 바꾼 것이 아니라 **보는 대상이 소실점 자체**가 됐다
+          sees_rules: positive.some(x => x.startsWith("rules")),
           sees_seg3d: positive.some(x => x.includes("seg3d")),
           sees_locked_order: positive.includes("lockedOrder"),
         },
@@ -342,8 +345,9 @@ describe("L-C.2 — 승격이 잃은 것이 보이는가, 되돌리기가 되돌
           note: "⚠ **초판의 `실행취소`는 문서만 되돌렸다.** 승격을 되돌리면 기하는 옛 해로 "
             + "돌아가는데 소실점은 새 것 그대로 남아 §6.1이 금지한 **좌표계가 섞인 상태**가 된다. "
             + "화면은 그럴듯해서 아무도 못 본다. `appSnap`이 둘을 함께 담는다.",
-          guides_restored: cam.guides.length,
-          guides_at_promotion: snapPromoted.guides.length,
+          axes_restored: cam.rules.slots.filter(Boolean).length,
+          axes_at_promotion: snapPromoted.rules.slots.filter(Boolean).length,
+          order_restored: cam.order(),
           locked_order_restored: snap0.lockedOrder,
         },
       },
@@ -365,7 +369,7 @@ describe("L-C.2 — 승격이 잃은 것이 보이는가, 되돌리기가 되돌
     // **양성 채널이 먼저다**(#30) — 안 움직이면 위 줄은 아무것도 안 말한다
     expect(positive.length).toBeGreaterThan(0);
     expect(doc2.undo_roundtrip.positive_channel.sees_pts2d).toBe(true);
-    expect(doc2.undo_roundtrip.positive_channel.sees_guides).toBe(true);
+    expect(doc2.undo_roundtrip.positive_channel.sees_rules).toBe(true);
     expect(doc2.undo_roundtrip.positive_channel.sees_seg3d).toBe(true);
     // **어긴 것이 매번 잡히고 매번 되돌아온다**(리뷰어 [10]) — n을 원장에 적었다
     expect(doc2.undo_roundtrip.trials.all_detected).toBe(true);

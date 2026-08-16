@@ -21,13 +21,15 @@
 // 임계를 걸지 않는다.** 대신 `snapDiff`가 **다른 상태에서는 다르다고 말하는지**를 함께 낸다(#30).
 import { snapshotDoc, type DocState } from "./doc.js";
 import type { CamState } from "./camState.js";
-import type { Guide } from "../s3d/vpDraft.js";
-import type { Pt2 } from "../s3d/camera.js";
+import { cloneRuleState, type RuleState } from "../s3d/vpRules.js";
 
 export interface AppSnap {
   doc: DocState;
-  /** 카메라의 상태는 이것과 `locked`가 전부다 — 누산기는 `apply()`가 다시 만든다. */
-  guides: Guide[];
+  /**
+   * 카메라의 상태는 이것과 `locked`가 전부다 — 누산기는 `apply()`가 다시 만든다.
+   * **가이드가 아니라 규칙 상태다**(2026-08-16 전면 교체) — 그은 선이 만든 슬롯 셋과 지평선.
+   */
+  rules: RuleState;
   locked: boolean;
   /** 확정·승격 시점에 잠근 소실점 개수. 이것이 없으면 "N점 → M점"을 못 적는다. */
   lockedOrder: number | null;
@@ -35,14 +37,13 @@ export interface AppSnap {
   report: unknown | null;
 }
 
-/** 가이드 깊은 사본 — 스냅샷이 나중의 끌기에 딸려 움직이면 안 된다. */
-export const copyGuides = (gs: readonly Guide[]): Guide[] =>
-  gs.map(g => ({ ...g, a: [g.a[0], g.a[1]] as Pt2, b: [g.b[0], g.b[1]] as Pt2 }));
+/** 규칙 상태 깊은 사본 — 스냅샷이 나중의 획에 딸려 움직이면 안 된다. */
+export const copyRules = (r: RuleState): RuleState => cloneRuleState(r);
 
 export function takeSnap(
   doc: DocState, cam: CamState, lockedOrder: number | null, report: unknown | null = null,
 ): AppSnap {
-  return { doc: snapshotDoc(doc), guides: copyGuides(cam.guides),
+  return { doc: snapshotDoc(doc), rules: copyRules(cam.rules),
            locked: cam.locked, lockedOrder, report };
 }
 
@@ -53,8 +54,7 @@ export function takeSnap(
  * 하네스가 같은 경로를 부를 수 있다(#17).
  */
 export function applySnap(cam: CamState, s: AppSnap): DocState {
-  cam.guides = copyGuides(s.guides);
-  cam.apply();
+  cam.loadRules(s.rules);
   cam.locked = s.locked;
   return s.doc;
 }
@@ -71,14 +71,19 @@ export function snapDiff(a: AppSnap, b: AppSnap): string[] {
   if (a.locked !== b.locked) w.push("locked");
   if (a.lockedOrder !== b.lockedOrder) w.push("lockedOrder");
   if (a.doc.currentView !== b.doc.currentView) w.push("currentView");
-  if (a.guides.length !== b.guides.length) w.push("guides.length");
-  else for (let i = 0; i < a.guides.length; i++) {
-    const p = a.guides[i], q = b.guides[i];
-    if (p.axis !== q.axis) w.push(`guides[${i}].axis`);
-    if (p.a[0] !== q.a[0] || p.a[1] !== q.a[1] || p.b[0] !== q.b[0] || p.b[1] !== q.b[1]) {
-      w.push(`guides[${i}].pts`);
+  if (a.rules.horizon !== b.rules.horizon) w.push("rules.horizon");
+  for (let i = 0; i < 3; i++) {
+    const p = a.rules.slots[i], q = b.rules.slots[i];
+    if (!p !== !q) { w.push(`rules.slots[${i}].presence`); continue; }
+    if (!p || !q) continue;
+    if (p.kind !== q.kind) { w.push(`rules.slots[${i}].kind`); continue; }
+    if (p.kind === "screen" && q.kind === "screen" && p.dir !== q.dir) w.push(`rules.slots[${i}].dir`);
+    if (p.kind === "vp" && q.kind === "vp"
+        && (p.at[0] !== q.at[0] || p.at[1] !== q.at[1] || p.source !== q.source)) {
+      w.push(`rules.slots[${i}].vp`);
     }
   }
+  if (a.rules.waiting.length !== b.rules.waiting.length) w.push("rules.waiting.length");
   if (a.doc.views.length !== b.doc.views.length) w.push("views.length");
   if (a.doc.strokes.length !== b.doc.strokes.length) w.push("strokes.length");
   else for (let i = 0; i < a.doc.strokes.length; i++) {

@@ -158,12 +158,12 @@
       "n": 8,
       "rows": [
         {
-          "breaker": "guides",
-          "detected": 1,
+          "breaker": "vp_moved",
+          "detected": 2,
           "restored": true
         },
         {
-          "breaker": "guides_add",
+          "breaker": "vp_added",
           "detected": 1,
           "restored": true
         },
@@ -194,7 +194,7 @@
         },
         {
           "breaker": "all",
-          "detected": 8,
+          "detected": 9,
           "restored": true
         }
       ],
@@ -208,7 +208,7 @@
       "diff_len": 14,
       "names_all": [
         "lockedOrder",
-        "guides.length",
+        "rules.slots[2].kind",
         "strokes[0].pts2d[0]",
         "strokes[0].seg3d.presence",
         "strokes[1].pts2d[0]",
@@ -223,19 +223,20 @@
         "strokes[5].seg3d"
       ],
       "sees_pts2d": true,
-      "sees_guides": true,
+      "sees_rules": true,
       "sees_seg3d": true,
       "sees_locked_order": true
     },
     "camera_included": {
       "note": "⚠ **초판의 `실행취소`는 문서만 되돌렸다.** 승격을 되돌리면 기하는 옛 해로 돌아가는데 소실점은 새 것 그대로 남아 §6.1이 금지한 **좌표계가 섞인 상태**가 된다. 화면은 그럴듯해서 아무도 못 본다. `appSnap`이 둘을 함께 담는다.",
-      "guides_restored": 4,
-      "guides_at_promotion": 5,
+      "axes_restored": 3,
+      "axes_at_promotion": 3,
+      "order_restored": 2,
       "locked_order_restored": 2
     }
   },
   "constants": {
-    "hash": "34db7279",
+    "hash": "5955b34c",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -279,6 +280,12 @@
       "HORIZON_TOL": {
         "min_slope_deg": 3.75,
         "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "min_sep_deg": 3,
+        "vertical_ask_deg": 45
       },
       "DRAFT_TOL": {
         "handle_ratio": 0.018,

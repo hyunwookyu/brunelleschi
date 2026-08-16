@@ -82,6 +82,11 @@ const copyStroke = (s: OrderStroke): OrderStroke =>
  */
 export function promoteOrder(
   strokes: OrderStroke[], ctx: LiftCtx, cfg: AxisCfg = {},
+  /**
+   * **축을 다시 붙이는 방법**(2026-08-16 규칙 경로). 안 주면 옛 검출 판정(`classifyStroke`)이다.
+   * 앱은 `CamState.axisOf`를 준다 — 규칙이 이미 축을 정해 뒀으므로 **추정이 없다**(#17).
+   */
+  classify?: (pts2d: Pt2[]) => Axis,
 ): OrderResult {
   const out: OrderResult = {
     placed: new Map(),
@@ -94,6 +99,7 @@ export function promoteOrder(
   // ---- 1차: **스냅을 무시하고** 전부 올린다. 대상의 새 3D를 얻는 것이 목적이다
   const relabel = (s: OrderStroke): Axis => {
     if (s.userAxis) return s.axis;                    // 사용자 지정만 유지한다(§6.1)
+    if (classify) return classify(s.pts2d);
     return classifyStroke(s.pts2d, ctx.vps, ctx.imgSize, cfg,
                           { principal: ctx.principal, f: ctx.f }).axis;
   };

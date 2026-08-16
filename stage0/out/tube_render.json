@@ -3,7 +3,7 @@
   "not_measured": "**'그린 카메라에서 화면 폭 = 그은 굵기'는 재지 않는다.** `worldRadius`가 깊이/f로 환산한 것을 같은 깊이/f로 되재는 것이라 **설계 보장**이지 측정이 아니다(§4.5와 같은 유형. selfcheck 자기참조 3이 잡는 형태다). 불변식 테스트로만 잠갔다.",
   "why_not_TubeGeometry": "three.js `TubeGeometry`는 **반지름이 상수**다. §S-4가 요구하는 속도 기반 굵기는 점마다 다른 반지름이므로 직접 짠다. 표준 기하이고 참조 저장소는 보지 않았다(§3).",
   "constants": {
-    "hash": "34db7279",
+    "hash": "5955b34c",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -47,6 +47,12 @@
       "HORIZON_TOL": {
         "min_slope_deg": 3.75,
         "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "min_sep_deg": 3,
+        "vertical_ask_deg": 45
       },
       "DRAFT_TOL": {
         "handle_ratio": 0.018,
@@ -172,8 +178,8 @@
       "p90": 456,
       "max": 576
     },
-    "build_ms_total": 162.8,
-    "build_ms_per_stroke": 0.3735
+    "build_ms_total": 243.4,
+    "build_ms_per_stroke": 0.5583
   },
   "scale_note": "지연 예산(P1/P4/V-n) 확인용이다. 획 하나가 삼각형 수백 개 규모이고 생성이 밀리초 이하이면 **온디맨드 렌더로 충분**하다 — 매 프레임 도는 루프가 필요 없다.",
   "twist_ratio": {

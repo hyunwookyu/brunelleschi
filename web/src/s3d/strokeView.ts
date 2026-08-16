@@ -51,11 +51,17 @@ export class StrokeView {
 
     for (const s of strokes) {
       if (s.pts3d.length < 2) continue;
+      // **획은 직선 세그먼트다 — 양 끝만 쓴다**(계획서 §1.1, 2026-08-16 사람 지시 2-b).
+      // 손떨림을 버리기로 한 결정이 렌더 층에서 안 지켜지고 있었다: 중심선에 점열을 그대로
+      // 넣으면 튜브가 손 획의 곡선을 **그대로 보존한다**. `pts3d`는 그대로 두므로
+      // (`Stroke`를 안 고친다) 프리핸드로 돌아갈 때 이 두 줄만 되돌리면 된다.
+      const line = [s.pts3d[0], s.pts3d[s.pts3d.length - 1]];
       const px = widthProfile(this.rawOf?.(s.id), s.pts3d.length);
+      const w0 = px[0], w1 = px[px.length - 1];
       // f가 없으면 깊이 환산을 할 수 없다 — 화면 굵기를 세계 크기로 옮기는 데 초점거리가 필요하다.
-      const radii = s.pts3d.map((p, i) => f ? worldRadius(px[i] * s.width, p[2], f)
-                                            : TUBE_TOL.base_width_px * 0.0004 * s.width);
-      const m = buildTube(s.pts3d, radii);
+      const radii = line.map((p, i) => f ? worldRadius((i === 0 ? w0 : w1) * s.width, p[2], f)
+                                         : TUBE_TOL.base_width_px * 0.0004 * s.width);
+      const m = buildTube(line, radii);
       if (!m) continue;
 
       const g = new THREE.BufferGeometry();

@@ -1,5 +1,5 @@
 {
-  "n_flags": 1757,
+  "n_flags": 1848,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -5140,6 +5140,16 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "rule_camera.json:headline_no_identity.detect.asks_per_run",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_no_identity.detect.rejected_per_run",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "segment_gate.json:by_cross_tol.tol_0.015_sup_2.first_view.silent_wrong_rate_of_placed",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -8721,109 +8731,554 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "bend_share.json@34db7279",
+      "val": "RULE_TOL.depth_min_deg: None → 8; RULE_TOL.min_sep_deg: None → 3; RULE_TOL.screen_axis_deg: None → 4; RULE_TOL.vertical_ask_deg: None → 45",
+      "flag": "**STALE** — 현재 상수(5955b34c)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "coords.json@34db7279",
+      "val": "RULE_TOL.depth_min_deg: None → 8; RULE_TOL.min_sep_deg: None → 3; RULE_TOL.screen_axis_deg: None → 4; RULE_TOL.vertical_ask_deg: None → 45",
+      "flag": "**STALE** — 현재 상수(5955b34c)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "horizon.json@34db7279",
+      "val": "RULE_TOL.depth_min_deg: None → 8; RULE_TOL.min_sep_deg: None → 3; RULE_TOL.screen_axis_deg: None → 4; RULE_TOL.vertical_ask_deg: None → 45",
+      "flag": "**STALE** — 현재 상수(5955b34c)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "one_stroke_one_axis.json@34db7279",
+      "val": "RULE_TOL.depth_min_deg: None → 8; RULE_TOL.min_sep_deg: None → 3; RULE_TOL.screen_axis_deg: None → 4; RULE_TOL.vertical_ask_deg: None → 45",
+      "flag": "**STALE** — 현재 상수(5955b34c)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "stage_browser.json@34db7279",
+      "val": "RULE_TOL.depth_min_deg: None → 8; RULE_TOL.min_sep_deg: None → 3; RULE_TOL.screen_axis_deg: None → 4; RULE_TOL.vertical_ask_deg: None → 45",
+      "flag": "**STALE** — 현재 상수(5955b34c)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "static_deploy.json@34db7279",
+      "val": "RULE_TOL.depth_min_deg: None → 8; RULE_TOL.min_sep_deg: None → 3; RULE_TOL.screen_axis_deg: None → 4; RULE_TOL.vertical_ask_deg: None → 45",
+      "flag": "**STALE** — 현재 상수(5955b34c)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "rule_camera.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
       "path": "web/src/s3d/stroke.ts:Stroke.layer",
       "val": "쓰기 0 · 읽기 0",
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
     },
     {
-      "path": "web\\e2e\\stage.spec.ts:96:pixelGap",
+      "path": "web/e2e/stage.spec.ts:96:pixelGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web\\src\\s3d\\lift.ts:406:transitionGap",
+      "path": "web/src/s3d/lift.ts:415:transitionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web\\src\\s3d\\stroke.ts:304:reprojectionGap",
+      "path": "web/src/s3d/stroke.ts:313:reprojectionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web\\test\\axis_live.test.ts",
+      "path": "CLAUDE.md:80",
+      "val": "camera_gate.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DECISIONS.md:47",
+      "val": "vp_detect.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DECISIONS.md:86",
+      "val": "vp_detect.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DECISIONS.md:109",
+      "val": "lift_gate.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DECISIONS.md:182",
+      "val": "snap.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DECISIONS.md:184",
+      "val": "draft_recover.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DECISIONS.md:186",
+      "val": "axis_live.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DECISIONS.md:188",
+      "val": "promote.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DECISIONS.md:198",
+      "val": "axis_live.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DECISIONS.md:199",
+      "val": "order_promote.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DECISIONS.md:201",
+      "val": "face_diagonal.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DECISIONS.md:228",
+      "val": "doc_store.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DEFERRED.md:42",
+      "val": "vp_homog.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DEFERRED.md:52",
+      "val": "lift_grade.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DEFERRED.md:59",
+      "val": "draft_recover.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DEFERRED.md:85",
+      "val": "promote.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DEFERRED.md:111",
+      "val": "axis_live.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DEFERRED.md:113",
+      "val": "promote.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DEFERRED.md:124",
+      "val": "order_undo.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DEFERRED.md:169",
+      "val": "face_diagonal.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "DEFERRED.md:198",
+      "val": "face_diagonal.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "PITFALLS.md:169",
+      "val": "stage_cam.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "PROTOTYPE.md:15",
+      "val": "fix_load.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "PROTOTYPE.md:72",
+      "val": "view_plane.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "PROTOTYPE.md:83",
+      "val": "occlusion.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "PROTOTYPE.md:120",
+      "val": "view_plane.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "PROTOTYPE.md:153",
+      "val": "persist.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "PROTOTYPE.md:171",
+      "val": "face_diagonal.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "PROTOTYPE.md:172",
+      "val": "misassign_retry.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "PROTOTYPE.md:173",
+      "val": "face_diagonal.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "PROTOTYPE.md:174",
+      "val": "view_plane.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "PROTOTYPE.md:186",
+      "val": "fix_load.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "PROTOTYPE.md:260",
+      "val": "occlusion.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "README.md:257",
+      "val": "persist.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "README.md:261",
+      "val": "doc_store.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "assumptions.md:25",
+      "val": "vp_detect.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "assumptions.md:27",
+      "val": "stage_cam.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "assumptions.md:28",
+      "val": "snap.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "assumptions.md:30",
+      "val": "camera_gate.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "assumptions.md:30",
+      "val": "vp_homog.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "assumptions.md:30",
+      "val": "guide_budget.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "assumptions.md:32",
+      "val": "promote.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "assumptions.md:35",
+      "val": "order_signal.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "assumptions.md:43",
+      "val": "snap.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "docs/line_plan.md:80",
+      "val": "vp_homog.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "docs/line_plan.md:88",
+      "val": "camera_gate.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "docs/line_plan.md:95",
+      "val": "vp_homog.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "docs/line_plan.md:110",
+      "val": "guide_budget.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "docs/line_plan.md:157",
+      "val": "camera_gate.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "docs/line_plan.md:184",
+      "val": "order_signal.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "docs/line_plan.md:244",
+      "val": "promote.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "docs/line_plan.md:336",
+      "val": "face_diagonal.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:103",
+      "val": "vp_detect.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:116",
+      "val": "vp_detect.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:116",
+      "val": "lift_gate.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:208",
+      "val": "camera_gate.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:370",
+      "val": "vp_homog.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:532",
+      "val": "stage_cam.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:707",
+      "val": "guide_budget.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:743",
+      "val": "vp_detect.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:865",
+      "val": "snap.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:1169",
+      "val": "axis_live.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:1497",
+      "val": "promote.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:2204",
+      "val": "axis_live.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:2223",
+      "val": "promote.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:2305",
+      "val": "order_undo.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:2527",
+      "val": "order_signal.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:2763",
+      "val": "face_diagonal.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:2867",
+      "val": "face_diagonal.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:3037",
+      "val": "promote.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:3038",
+      "val": "order_undo.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "progress.md:3158",
+      "val": "camera_gate.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "web/e2e/stage.spec.ts:1585",
+      "val": "order_undo.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "web/src/mainL.ts:1420",
+      "val": "order_promote.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "web/src/s3d/promoteDiff.ts:5",
+      "val": "order_promote.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "web/src/s3d/vpDraft.ts:20",
+      "val": "camera_gate.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "web/src/s3d/vpRules.ts:52",
+      "val": "vp_homog.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "web/test/lift_gate.test.ts:525",
+      "val": "segment_gate.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "web/test/segment_gate.test.ts:14",
+      "val": "fix_load.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "web/test/segment_gate.test.ts:45",
+      "val": "fix_load.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "web/test/segment_gate.test.ts:223",
+      "val": "fix_load.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "web/test/segment_gate.test.ts:251",
+      "val": "fix_load.json@34db7279 ≠ 현재 5955b34c",
+      "flag": "**인용 해시가 원장의 현재 해시와 다르다**(#33 값 대조) → 그 원장은 다른 상수로 다시 돌았다. **해시만 고치지 말고 수치를 원장에서 다시 읽는다**(CLAUDE.md §5)"
+    },
+    {
+      "path": "web/test/axis_live.test.ts",
       "val": "18건 (줄 [111, 119, 137, 142, 145])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\draft_recover.test.ts",
+      "path": "web/test/draft_recover.test.ts",
       "val": "1건 (줄 [94])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\lift_grade.test.ts",
+      "path": "web/test/lift_grade.test.ts",
       "val": "1건 (줄 [104])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\metrics.ts",
+      "path": "web/test/metrics.ts",
       "val": "1건 (줄 [135])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\order_promote.test.ts",
+      "path": "web/test/order_promote.test.ts",
       "val": "3건 (줄 [127, 252, 260])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\order_signal.test.ts",
+      "path": "web/test/order_signal.test.ts",
       "val": "3건 (줄 [322, 323, 346])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\order_undo.test.ts",
-      "val": "1건 (줄 [251])",
+      "path": "web/test/order_undo.test.ts",
+      "val": "1건 (줄 [252])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\persist.test.ts",
+      "path": "web/test/persist.test.ts",
       "val": "1건 (줄 [363])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\promote.test.ts",
+      "path": "web/test/promote.test.ts",
       "val": "35건 (줄 [161, 189, 211, 212, 217])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\snap_measure.test.ts",
+      "path": "web/test/snap_measure.test.ts",
       "val": "3건 (줄 [92, 93, 537])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\stage_measure.test.ts",
+      "path": "web/test/stage_measure.test.ts",
       "val": "2건 (줄 [179, 221])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\tube_measure.test.ts",
+      "path": "web/test/tube_measure.test.ts",
       "val": "1건 (줄 [176])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     }
   ],
-  "n_stale": 0,
+  "n_stale": 6,
   "n_stale_metrics": 0,
   "n_unread_fields": 1,
   "field_reads": [
     {
       "field": "id",
       "writes": 0,
-      "reads": 137
+      "reads": 138
     },
     {
       "field": "pts2d",
       "writes": 3,
-      "reads": 71
+      "reads": 70
     },
     {
       "field": "pts3d",
       "writes": 4,
-      "reads": 37
+      "reads": 38
     },
     {
       "field": "axis",
       "writes": 4,
-      "reads": 83
+      "reads": 77
     },
     {
       "field": "rep",
@@ -8848,7 +9303,7 @@
     {
       "field": "color",
       "writes": 0,
-      "reads": 10
+      "reads": 9
     },
     {
       "field": "width",
@@ -8859,7 +9314,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 166,
+      "files_scanned": 169,
       "exts_declared": [
         ".md",
         ".py",
@@ -8867,13 +9322,13 @@
       ],
       "hits_by_ext": {
         ".md": 9,
-        ".py": 2,
-        ".ts": 7
+        ".ts": 7,
+        ".py": 2
       }
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 107,
+      "files_scanned": 112,
       "exts_declared": [
         ".ts"
       ],
@@ -8883,7 +9338,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 166,
+      "files_scanned": 169,
       "exts_declared": [
         ".md",
         ".py",
@@ -8892,12 +9347,12 @@
       "hits_by_ext": {
         ".md": 10,
         ".py": 4,
-        ".ts": 35
+        ".ts": 41
       }
     },
     {
       "sweep": "external_data",
-      "files_scanned": 66,
+      "files_scanned": 69,
       "exts_declared": [
         ".ts"
       ],
@@ -8925,25 +9380,25 @@
       "scan": "scan_citation_hashes",
       "unit": "인용",
       "targets": 91,
-      "hits": 0,
+      "hits": 82,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 9,
+      "targets": 10,
       "hits": 0,
-      "note": "값 대조를 **지난 것 3** · **면제 6**(`reachability_absent`) · 원장 40개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, guide_budget.json:gate, lift_gate.json:gate, preview_gap.json:gate, segment_gate.json:gate, stage_browser.json:l_b3.gate"
+      "note": "값 대조를 **지난 것 3** · **면제 7**(`reachability_absent`) · 원장 41개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, guide_budget.json:gate, lift_gate.json:gate, preview_gap.json:gate, rule_camera.json:gate, segment_gate.json:gate, stage_browser.json:l_b3.gate"
     },
     {
       "scan": "scan_zero_denominator",
       "unit": "하네스 파일",
-      "targets": 40,
+      "targets": 41,
       "hits": 12,
       "note": "원장을 쓰는 `web/test/**.ts`만 본다"
     }
   ],
-  "constants_hash": "34db7279",
+  "constants_hash": "5955b34c",
   "metrics_hash": "a45078a5",
   "scanned": [
     "axis_judgement.json",
@@ -8974,6 +9429,7 @@
     "preview_gap.json",
     "promote.json",
     "real_ink.json",
+    "rule_camera.json",
     "segment_gate.json",
     "snap.json",
     "stage_browser.json",

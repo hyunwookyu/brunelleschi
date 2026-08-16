@@ -16,8 +16,10 @@ import { fileURLToPath } from "node:url";
 import { detectVps, linesFromStrokes, assignAxes, classifyByDetection } from "../src/s3d/vpDetect.js";
 import { liftAll, type LiftStroke, type LiftCtx } from "../src/s3d/lift.js";
 import { recoverCamera, isFiniteVp, type Pt2 } from "../src/s3d/camera.js";
-import { applyRollZero, vpOnHorizon, vpVerticalFromOrthocenter, fitHorizonPair, HORIZON_TOL }
-  from "../src/s3d/horizon.js";
+import { vpOnHorizon, vpVerticalFromOrthocenter, HORIZON_TOL } from "../src/s3d/horizon.js";
+// ⛔ **폐기 경로의 근거 재현**(D-L32). 앱은 이것을 배선하지 않는다 — 바른 순서는
+// `horizon.ts`에 있고 `vpRules.ts`가 그것을 쓴다(2026-08-16 순서 정정).
+import { applyRollZero, fitHorizonPair } from "../src/s3d/horizonRollZero.js";
 import { representative, type Axis, type Rep } from "../src/s3d/axis.js";
 import { norm3, sub3, type Vec3 } from "../src/s3d/geom3d.js";
 import { rng32, type InkGrade } from "../src/s3d/synthInk.js";

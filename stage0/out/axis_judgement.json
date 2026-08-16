@@ -8,7 +8,7 @@
   "three_numbers": "accuracy 하나만 보면 안 된다 — 미분류로 도망가면 쉽게 오른다. assigned_rate(얼마나 판정했나)와 silent_wrong_rate(조용히 틀린 축에 배정한 비율)를 함께 본다. A-3이 금지하는 것은 세 번째다.",
   "caveat": "**합성이다.** 숙련자가 실제로 어떻게 긋는지는 이 표본에 없다(assumptions V-o). 여기서 재는 것은 '같은 노이즈 수준에서 판정 규칙이 얼마나 갈라내는가'이고, '숙련자 획에서 정확한가'(S-1)는 실제 획이 생기는 S-10 이후에 다시 잰다.",
   "constants": {
-    "hash": "34db7279",
+    "hash": "5955b34c",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -52,6 +52,12 @@
       "HORIZON_TOL": {
         "min_slope_deg": 3.75,
         "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "min_sep_deg": 3,
+        "vertical_ask_deg": 45
       },
       "DRAFT_TOL": {
         "handle_ratio": 0.018,

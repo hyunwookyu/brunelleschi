@@ -9,6 +9,7 @@ import { takeSnap, applySnap, snapDiff, type AppSnap } from "../src/ui/appSnap.j
 import { newDoc, newSStroke, snapshotDoc } from "../src/ui/doc.js";
 import { CamState } from "../src/ui/camState.js";
 import type { Pt2 } from "../src/s3d/camera.js";
+import { setRules, vpSlot, screenSlot } from "./ruleFixture.js";
 
 const P = (n: number): Pt2[] => [[n, n], [n + 40, n + 10]];
 
@@ -65,8 +66,8 @@ describe("diffPlacement — 승격이 무엇을 잃었나", () => {
 describe("appSnap — 되돌리기가 문서와 카메라를 함께 담는가", () => {
   const build = () => {
     const cam = new CamState([960, 672]);
-    cam.guides = [{ axis: 0, a: [10, 20], b: [300, 40] }, { axis: 0, a: [10, 300], b: [300, 250] }];
-    cam.apply();
+    // **규칙 상태로 세운다** — 가이드가 없어졌다(2026-08-16). 축 0·1이 수평 소실점, 2가 화면 세로
+    setRules(cam, [vpSlot([-1400, 330]), vpSlot([2100, 330]), screenSlot("v")]);
     cam.locked = true;
     const doc = newDoc();
     doc.strokes.push(newSStroke(P(100), doc.currentView));
@@ -78,15 +79,15 @@ describe("appSnap — 되돌리기가 문서와 카메라를 함께 담는가", 
   it("왕복은 항등이다 (**설계 보장** — 측정이 아니다)", () => {
     const { cam, doc } = build();
     const s0 = takeSnap(doc, cam, 2);
-    // 상태를 어긴다: 가이드를 끌고, 획을 3D에서 내리고, 시작점을 옮긴다
-    cam.guides[0].a = [77, 88];
-    cam.apply(); cam.locked = false;
+    // 상태를 어긴다: 소실점을 옮기고, 획을 3D에서 내리고, 시작점을 옮긴다
+    setRules(cam, [vpSlot([-900, 300]), vpSlot([2100, 330]), screenSlot("v")]);
+    cam.locked = false;
     doc.strokes[0].seg3d = null;
     doc.strokes[1].pts2d = [[999, 999], ...doc.strokes[1].pts2d.slice(1)];
     const back = applySnap(cam, s0);
     expect(snapDiff(takeSnap(back, cam, s0.lockedOrder), s0)).toEqual([]);
     expect(cam.locked).toBe(true);
-    expect(cam.guides[0].a).toEqual([10, 20]);
+    expect(cam.rules.slots[0]).toMatchObject({ kind: "vp", at: [-1400, 330] });
   });
 
   // **양성 채널**(#30) — 대조가 눈뜬 것인지 본다. 안 짚으면 위의 통과는 아무 뜻이 없다
@@ -96,14 +97,20 @@ describe("appSnap — 되돌리기가 문서와 카메라를 함께 담는가", 
     const mut = (f: (d: typeof doc, c: CamState) => void): AppSnap => {
       const d2 = snapshotDoc(doc);
       const c2 = new CamState([960, 672]);
-      c2.guides = cam.guides.map(g => ({ ...g, a: [...g.a] as Pt2, b: [...g.b] as Pt2 }));
+      c2.loadRules(cam.rules);
       c2.locked = cam.locked;
       f(d2, c2);
       c2.apply();
       return takeSnap(d2, c2, 2);
     };
     expect(snapDiff(a, mut((_, c) => { c.locked = false; }))).toContain("locked");
-    expect(snapDiff(a, mut((_, c) => { c.guides[0].a = [1, 2]; }))).toContain("guides[0].pts");
+    expect(snapDiff(a, mut((_, c) => {
+      setRules(c, [vpSlot([-999, 330]), vpSlot([2100, 330]), screenSlot("v")]);
+    }))).toContain("rules.slots[0].vp");
+    // **무한원 축을 유한 소실점으로 바꾼 것도 잡힌다** — 차수가 바뀌는 자리다
+    expect(snapDiff(a, mut((_, c) => {
+      setRules(c, [vpSlot([-1400, 330]), vpSlot([2100, 330]), vpSlot([480, -3000])]);
+    }))).toContain("rules.slots[2].kind");
     expect(snapDiff(a, mut(d => { d.strokes[0].seg3d = null; })))
       .toContain("strokes[0].seg3d.presence");
     expect(snapDiff(a, mut(d => { d.strokes[0].seg3d = [[9, 9, 9], [1, 0, 0]]; })))
@@ -117,12 +124,12 @@ describe("appSnap — 되돌리기가 문서와 카메라를 함께 담는가", 
     expect(snapDiff(a, takeSnap(doc, cam, 3))).toContain("lockedOrder");
   });
 
-  it("스냅샷은 나중의 끌기에 안 딸려 움직인다", () => {
+  it("스냅샷은 나중의 획에 안 딸려 움직인다", () => {
     const { cam, doc } = build();
     const s = takeSnap(doc, cam, 2);
-    cam.guides[0].a[0] = 12345;
+    (cam.rules.slots[0] as { at: Pt2 }).at[0] = 12345;
     doc.strokes[0].seg3d = null;
-    expect(s.guides[0].a[0]).toBe(10);
+    expect((s.rules.slots[0] as { at: Pt2 }).at[0]).toBe(-1400);
     expect(s.doc.strokes[0].seg3d).not.toBeNull();
   });
 });

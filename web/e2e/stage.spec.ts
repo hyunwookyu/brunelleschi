@@ -48,7 +48,7 @@ async function setup(page: Page, opts: { boxes?: 1 | 2 } = {}) {
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
     const m = await import("/test/scene3d.ts");
     const doc = await import("/src/ui/doc.ts");
-    const vd = await import("/src/s3d/vpDraft.ts");
+
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
     const sc = m.scene(35, 15, 1000, size);
@@ -68,19 +68,19 @@ async function setup(page: Page, opts: { boxes?: 1 | 2 } = {}) {
     const r = () => { s0 = (s0 * 1664525 + 1013904223) >>> 0; return s0 / 4294967296; };
     const drawn = m.drawEdges(sc, edges, "medium", r, 0.37, 0.006, 0);
     for (const e of drawn) S.doc().strokes.push(doc.newSStroke(e.pts2d, S.doc().currentView));
-    const margin = 0.02 * Math.hypot(size[0], size[1]);
-    const targets = [[[0.30, 0.30], [0.30, 0.72]], [[0.70, 0.30], [0.70, 0.72]],
-                     [[0.32, 0.35], [0.70, 0.35]]];
-    const guides: unknown[] = [];
-    sc.vps.forEach((vp: number[], ax: number) => {
-      for (const t of targets[ax]) {
-        const q = [t[0] * size[0], t[1] * size[1]];
-        const far = [vp[0] + (q[0] - vp[0]) * 1e4, vp[1] + (q[1] - vp[1]) * 1e4];
-        const cl = vd.clipToCanvas([vp[0], vp[1]], far, size, margin);
-        if (cl) guides.push({ axis: ax, a: cl[0], b: cl[1] });
-      }
+    // **참 소실점을 규칙 상태로 넣는다** — 사람이 완벽히 그은 극한이다.
+    // ⚠ 옛 판은 가이드 여섯을 세웠다. 가이드가 없어졌으므로(D-L37) 슬롯을 직접 넣는다.
+    // 규칙의 순서를 지킨다: **첫 수평 소실점이 지평선을 정의한다**
+    S.cam.loadRules({
+      slots: [0, 1, 2].map(ax => ({
+        kind: "vp", at: [sc.vps[ax][0], sc.vps[ax][1]],
+        source: ax === 0 ? "two_lines" : ax === 1 ? "horizon_x_line" : "orthocenter",
+        support: 2,
+      })),
+      horizon: sc.vps[0][1],
+      waiting: [], verticalLines: [],
     });
-    S.cam.guides = guides; S.cam.apply(); S.refresh();
+    S.refresh();
     window.__SC = sc;
     return { canvas: size, strokes: S.doc().strokes.length, hasCamera: !!S.cam.ctx(),
              boxes: boxes ?? 1,
@@ -150,7 +150,7 @@ test("단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다", asyn
   led.offcenter_principal = await page.evaluate(() => {
     const S = window.S2S;
     S.cam.locked = false;
-    const g = S.cam.guides;
+    const g = S.cam.rules.slots;
     g[0] = { axis: g[0].axis, a: [g[0].a[0] + 26, g[0].a[1] - 34], b: g[0].b };
     g[4] = { axis: g[4].axis, a: g[4].a, b: [g[4].b[0] - 18, g[4].b[1] + 12] };
     S.cam.apply();
@@ -296,15 +296,16 @@ test("단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다", asyn
   // ---- **핸들 예산**은 사용자가 만지는 양이다(#29). DEFERRED가 L-B에 물려 둔 숙제.
   led.guide_budget = await page.evaluate(async () => {
     const S = window.S2S;
-    const vd = await import("/src/s3d/vpDraft.ts");
+
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const diag = Math.hypot(el.clientWidth, el.clientHeight);
-    const lens = S.cam.guides.map((g: any) => Math.hypot(g.b[0] - g.a[0], g.b[1] - g.a[1]));
+    const lens: number[] = [];   // **가이드가 없어졌다**(D-L37) — 길이라는 양이 사라졌다
     return {
       canvas: [el.clientWidth, el.clientHeight], diag,
       required_min_len_px: vd.DRAFT_TOL.min_guide_ratio * diag,
       actual_guide_len_px: lens.map((x: number) => +x.toFixed(1)),
-      note: "**참 소실점으로 세운 가이드**의 길이다. 검출 초안이 아니다.",
+      note: "⚠ **대상이 사라졌다**(D-L37) — 가이드가 없어졌으므로 '가이드 길이'라는 양이 없다. "
+        + "빈 배열이고, 이 자리를 지우지 않는 이유는 왜 그 규칙이 있었는지가 근거이기 때문이다.",
     };
   });
 });
@@ -351,7 +352,7 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
       lifted: d.strokes.filter((x: any) => x.seg3d).length,
       pending: d.strokes.filter((x: any) => !x.seg3d).length,
       locked: S.cam.locked,
-      guides: S.cam.guides.length,
+      axes: S.cam.rules.slots.filter(Boolean).length,
       order: S.order(),
     };
   });
@@ -373,7 +374,7 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
       lifted: d.strokes.filter((x: any) => x.seg3d).length,
       pending: d.strokes.filter((x: any) => !x.seg3d).length,
       locked: S.cam.locked,
-      guides: S.cam.guides.length,
+      axes: S.cam.rules.slots.filter(Boolean).length,
       order: S.order(),
       newId: (() => { const n = S.doc().strokes.length; return `s${n}`; })(),
     };
@@ -386,7 +387,7 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
   expect(after.lifted).toBe(before.lifted);
   expect(after.pending).toBe(before.pending);         // **2D 레이어가 살아 있다**(§9.1)
   expect(after.locked).toBe(true);
-  expect(after.guides).toBe(before.guides);           // 가이드가 카메라의 입력이다(§5.4)
+  expect(after.axes).toBe(before.axes);              // 규칙 상태가 카메라의 입력이다(D-L37)
   expect(after.order).toBe(before.order);
 
   // **새 획의 id가 안 겹친다**(v1에서 실제로 겪었다)
@@ -436,9 +437,9 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
                        "strokes[].seg3d", "strokes[].pts2d[0]",
                        "views[].id", "views[].name", "views[].pose 유무",
                        "currentView", "lifted 수", "pending 수", "cam.locked",
-                       "cam.guides 수", "order"],
+                       "cam.rules 축 수", "order"],
     identical_does_not_cover: ["pts2d 전체(첫 점만 본다)", "snapStart", "color·width·layer",
-                               "되돌리기 이력", "orderMarks", "가이드 핸들 상태"],
+                               "되돌리기 이력", "orderMarks"],
     // **저장 v2가 못 담는 것**(리뷰어 [6]) — 복원 뒤 어떻게 보이는지 한 줄씩.
     v2_does_not_hold: {
       "되돌리기 이력": "복원 뒤 되돌리기 깊이가 0이다. 새로고침 전 조작은 못 되돌린다",
@@ -446,7 +447,7 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
       "못 살린 스냅 표식": "⚠ **가장 나쁜 항목이다** — 승격에서 대상이 안 놓여 못 옮긴 시작점의 "
         + "표식이 복원 뒤 사라진다. 그 획은 조용히 틀린 시작점을 가진 채 정상으로 보인다",
       "승격 손실 표시": "L-C.2의 손실 목록이 복원 뒤 비어 있다",
-      "가이드 핸들 상태": "가이드 선 자체는 `cam.guides`로 살지만 어느 핸들을 잡고 있었는지는 안 산다",
+
       "Stroke.color·width": "화면이 축 색을 쓰므로 복원 뒤 차이가 안 보인다(#18의 `layer`와 같은 자리)",
       "Stroke.layer": "**아무 데도 안 쓰인다**(selfcheck: 쓰기 0 · 읽기 0). 저장 안 함이 맞다",
     },
@@ -479,7 +480,7 @@ test.afterAll(() => {
       end_jitter: 0.006, skew: 0.37,
       grade_note: "⚠ **동작점 하나다**(PITFALLS #12). 같은 구도의 `stage_cam.json`은 등급에 따라 "
         + "배치가 크게 갈린다 — 여기 '12/12'를 등급 전체의 값으로 읽으면 안 된다.",
-      camera: "요 35°·피치 15° 3점(f=1000px). 가이드를 **참 소실점**으로 세운다",
+      camera: "요 35°·피치 15° 3점(f=1000px). **참 소실점을 규칙 슬롯에 직접 넣는다**(D-L37)",
     },
     constants: constantsSnapshot(),
     metric_defs: metricsSnapshot(),
@@ -490,10 +491,16 @@ test.afterAll(() => {
 /**
  * L-B.2 — **가이드 조정 UI와 실시간 피드백**(§5.2). 산출: `stage_browser.json`의 `l_b2`.
  *
- * 재는 것: 초안이 실제로 늘어나는가 · 민감도가 화면에 뜨는가 · 선을 통째로 끌 수 있는가.
- * **정확도는 안 잰다** — 이 스펙은 배선 확인이다.
+ * ⛔ **대상이 사라졌다**(D-L37, 2026-08-16). 소실점 확정이 규칙 기반으로 바뀌면서
+ * 검출 초안·가이드 여섯·핸들·민감도·`가이드 늘리기`가 전부 빠졌다 — 이 스펙이 재던 셋
+ * (초안이 늘어나는가 · 민감도가 뜨는가 · 선을 끌 수 있는가)이 **하나도 남아 있지 않다.**
+ *
+ * **지우지 않고 건너뛴다** — 왜 그 확인이 있었는지가 근거이기 때문이다(`PITFALLS.md` 머리말).
+ * ⚠ **`stage_browser.json`의 `l_b2`가 이제 안 갱신된다** — 그 절을 인용하는 문서는
+ * **낡은 UI를 설명하는 것**이다(계획서 §5.2의 핸들 예산 표가 그것이다).
+ * 규칙 경로의 대응 확인은 `test/vp_rules.test.ts`와 `stage0/out/rule_camera.json`에 있다.
  */
-test("가이드 조정 — 늘리기·민감도·선 끌기", async ({ page }) => {
+test.skip("가이드 조정 — 늘리기·민감도·선 끌기 (대상이 사라졌다, D-L37)", async ({ page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
   const l: Record<string, unknown> = {};
@@ -540,7 +547,7 @@ test("가이드 조정 — 늘리기·민감도·선 끌기", async ({ page }) =
   // **선을 통째로 끌면 소실점이 옮겨지고 방향은 그대로여야 한다**
   l.line_drag = await page.evaluate(async () => {
     const S = window.S2S;
-    const vd = await import("/src/s3d/vpDraft.ts");
+
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
     const g0 = S.cam.guides[0];
@@ -1218,7 +1225,7 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
     const m = await import("/test/scene3d.ts");
     const doc = await import("/src/ui/doc.ts");
-    const vd = await import("/src/s3d/vpDraft.ts");
+
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
     const sc = m.scene(35, 15, 1000, size);
@@ -1240,7 +1247,7 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
       return out;
     };
     // 가로 둘만 — **수직 축은 비운다**(2점 투시)
-    S.cam.guides = [...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])];
+    S.setAxisLines([...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])]);
     S.cam.apply(); S.refresh();
     (window as any).__SC2 = sc;
     document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
@@ -1253,7 +1260,7 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
   // ---- 소실점을 하나 더 잡는다 → 차수 승격
   l.promote = await page.evaluate(async () => {
     const S = window.S2S;
-    const vd = await import("/src/s3d/vpDraft.ts");
+
     const sc = (window as any).__SC2;
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
@@ -1270,7 +1277,7 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
       const q = [t[0] * size[0], t[1] * size[1]];
       const far = [vp[0] + (q[0] - vp[0]) * 1e4, vp[1] + (q[1] - vp[1]) * 1e4];
       const cl = vd.clipToCanvas([vp[0], vp[1]], far, size, margin);
-      if (cl) S.cam.guides.push({ axis: 2, a: cl[0], b: cl[1] });
+      if (cl) S.setAxisLines([...S.axisLines(), { axis: 2, a: cl[0], b: cl[1] }]);
     }
     S.cam.apply(); S.refresh();
     const midOrder = S.order();
@@ -1342,7 +1349,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
     const m = await import("/test/scene3d.ts");
     const doc = await import("/src/ui/doc.ts");
-    const vd = await import("/src/s3d/vpDraft.ts");
+
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
     const sc = m.scene(35, 15, 1000, size);
@@ -1364,7 +1371,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
       }
       return out;
     };
-    S.cam.guides = [...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])];
+    S.setAxisLines([...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])]);
     S.cam.apply(); S.refresh();
     document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
     const before = {
@@ -1376,7 +1383,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
       pts0: S.doc().strokes.map((s: any) => [s.id, s.pts2d[0][0], s.pts2d[0][1]]),
     };
     S.unlockGuides();
-    for (const g of mk(2, [[0.42, 0.35], [0.62, 0.35]])) S.cam.guides.push(g as any);
+    S.setAxisLines([...S.axisLines(), ...mk(2, [[0.42, 0.35], [0.62, 0.35]])] as any);
     S.cam.apply(); S.refresh();
     S.promoteOrderNow();
     return {
@@ -1473,7 +1480,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
     const S = window.S2S;
     const m = await import("/test/scene3d.ts");
     const doc = await import("/src/ui/doc.ts");
-    const vd = await import("/src/s3d/vpDraft.ts");
+
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
@@ -1495,11 +1502,11 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
       }
       return out;
     };
-    S.cam.guides = [...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])];
+    S.setAxisLines([...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])]);
     S.cam.apply(); S.refresh();
     document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
     S.unlockGuides();
-    for (const g of mk(2, [[0.42, 0.35], [0.62, 0.35]])) S.cam.guides.push(g);
+    S.setAxisLines([...S.axisLines(), ...mk(2, [[0.42, 0.35], [0.62, 0.35]])]);
     S.cam.apply(); S.refresh();
     S.promoteOrderNow();
     const rep = S.promoteReport();
@@ -1615,7 +1622,7 @@ test("고치기 — 획을 고르고, 축을 지정하고, 지운다", async ({ 
     const S = window.S2S;
     const m = await import("/test/scene3d.ts");
     const doc = await import("/src/ui/doc.ts");
-    const vd = await import("/src/s3d/vpDraft.ts");
+
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
@@ -1643,7 +1650,7 @@ test("고치기 — 획을 고르고, 축을 지정하고, 지운다", async ({ 
       const pa = m.project(d.a, sc.principal, sc.f), pb = m.project(d.b, sc.principal, sc.f);
       if (pa && pb) S.doc().strokes.push(doc.newSStroke([pa, pb] as any, S.doc().currentView));
     }
-    S.cam.guides = guides;
+    S.setAxisLines(guides);
     S.cam.apply(); S.refresh();
     document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
     document.querySelector<HTMLButtonElement>('#bar button[data-act="edit"]')!.click();
@@ -1822,7 +1829,7 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
     // 2점으로 다시 세운다 — 수직 가이드를 뒤에 더해 승격을 만든다(`l_c2`와 같은 절차)
     const m = await import("/test/scene3d.ts");
     const doc = await import("/src/ui/doc.ts");
-    const vd = await import("/src/s3d/vpDraft.ts");
+
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
@@ -1848,14 +1855,14 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
       }
       return out;
     };
-    S.cam.guides = [...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])];
+    S.setAxisLines([...mk(0, [[0.30, 0.30], [0.30, 0.72]]), ...mk(1, [[0.70, 0.30], [0.70, 0.72]])]);
     S.cam.apply(); S.refresh();
     document.querySelector<HTMLButtonElement>('#bar button[data-act="confirm"]')!.click();
     const before = { order: S.order(),
                      lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
                      pending: S.doc().strokes.filter((s: any) => !s.seg3d).length };
     S.unlockGuides();
-    for (const g of mk(2, [[0.42, 0.35], [0.62, 0.35]])) S.cam.guides.push(g as any);
+    S.setAxisLines([...S.axisLines(), ...mk(2, [[0.42, 0.35], [0.62, 0.35]])] as any);
     S.cam.apply(); S.refresh();
     S.promoteOrderNow();
     return { before, order: S.order(), trace: S.chainTrace(),

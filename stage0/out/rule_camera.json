@@ -1,0 +1,910 @@
+{
+  "what": "규칙 기반 소실점 확정(그은 선이 곧 제약)의 축 방향 오차. 검출 기반과 같은 픽스처에서 대조.",
+  "how": {
+    "fixtures": 300,
+    "fixture_failed": 0,
+    "compositions": [
+      "3pt_yaw35_pitch15",
+      "3pt_yaw20_pitch25",
+      "3pt_yaw50_pitch8",
+      "2pt_yaw35_pitch0",
+      "1pt_yaw0_pitch0"
+    ],
+    "jitters": [
+      0,
+      0.005,
+      0.01,
+      0.03,
+      0.05
+    ],
+    "grades": [
+      "precise",
+      "medium"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "lattice_k": 1,
+    "metric": "유한 소실점의 축 방향 오차(도) — `metrics.axisDirErrors`. **무한원 축은 안 센다**",
+    "lens_setting_mm": 35,
+    "why_lens": "소실점이 하나면 자유도 1(f)이 남고 **설정으로 채운다**(이론서 5.3 · CLAUDE.md §1). 안 채우면 1점 구도의 실행이 통째로 '카메라 없음'이 되어 분모에서 사라진다(#11). ⚠ 참 f는 1000px이고 설정은 933px이라 **1점 행의 오차에는 렌즈 설정 오차가 섞여 있다** — 규칙의 오차가 아니다.",
+    "why_infinite_excluded": "화면 평행 축의 방향은 규칙이 `(1,0,0)`·`(0,1,0)`으로 **정의**한다. 그 오차는 측정이 아니라 항등이므로(참 장면도 롤 0이다) 표제 수치에 섞으면 값을 공짜로 낮춘다(#5).",
+    "arms": {
+      "rule_drawn": "축을 번갈아 긋는 순서(모서리를 따라가는 사람). **순서 오라클 없음**",
+      "rule_grouped": "축별로 몰아 긋는 순서. ⚠ **참 축 라벨을 쓰는 순서 오라클**",
+      "rule_wide_pair": "첫 축의 **각차가 가장 큰 두 선**을 먼저 긋는다. ⚠ 순서 오라클이고 **이 방식이 얼마나 잘할 수 있는가**의 팔이다(#35 도달 가능성)",
+      "detect": "`detectVps` + `assignAxes` — **같은 획·같은 실행**(#27). 4선 최소제곱이다"
+    },
+    "ask_policy": "물음에는 **참 축으로 답했다**(오라클). 답한 횟수를 `asks_per_run`으로 남긴다 — 사람이 실제로 몇 번 개입해야 하는가이고 그것이 이 방식의 비용이다."
+  },
+  "headline": {
+    "note": "**잡음이 걸린 행만**(0.005·0.01·0.03·0.05). 잡음 0 행은 항등이라 뺐다(#5).",
+    "rule_drawn": {
+      "runs": 240,
+      "camera_ok": 122,
+      "camera_ok_rate": 0.5083,
+      "axes_measured": 252,
+      "deg_median": 30.161,
+      "deg_p90": 44.4292,
+      "deg_max": 50.6963,
+      "order_median": 2,
+      "asks_per_run": 2.425,
+      "rejected_per_run": 3.725,
+      "first_pair_sep_deg_median": 37.41
+    },
+    "rule_grouped": {
+      "runs": 240,
+      "camera_ok": 182,
+      "camera_ok_rate": 0.7583,
+      "axes_measured": 502,
+      "deg_median": 7.3205,
+      "deg_p90": 29.3102,
+      "deg_max": 50.4846,
+      "order_median": 3,
+      "asks_per_run": 2.563,
+      "rejected_per_run": 4.392,
+      "first_pair_sep_deg_median": 13.59
+    },
+    "rule_wide_pair": {
+      "runs": 240,
+      "camera_ok": 171,
+      "camera_ok_rate": 0.7125,
+      "axes_measured": 472,
+      "deg_median": 7.1088,
+      "deg_p90": 32.3944,
+      "deg_max": 50.4846,
+      "order_median": 3,
+      "asks_per_run": 2.508,
+      "rejected_per_run": 4.404,
+      "first_pair_sep_deg_median": 17.96
+    },
+    "detect": {
+      "runs": 240,
+      "camera_ok": 191,
+      "camera_ok_rate": 0.7958,
+      "axes_measured": 359,
+      "deg_median": 8.572,
+      "deg_p90": 35,
+      "deg_max": 43.9221,
+      "order_median": 2,
+      "asks_per_run": 0,
+      "rejected_per_run": 0,
+      "first_pair_sep_deg_median": null
+    }
+  },
+  "headline_no_identity": {
+    "note": "위에서 **`1pt_yaw0_pitch0` 구도를 더 뺐다.** 그 구도의 유일한 유한 소실점은 주점 자리이고, 소실점 하나면 주점이 그 소실점이 되므로 축 방향이 **f와 무관하게 광축 (0,0,1)**이 된다 — 그 구도의 참 깊이축과 같아서 **어떤 오차를 넣어도 0이 나온다**. 실측에서 `deg_median = 0`으로 드러났다(#5 자기참조 유형 3). **이 표가 표제다.**",
+    "rule_drawn": {
+      "runs": 192,
+      "camera_ok": 92,
+      "camera_ok_rate": 0.4792,
+      "axes_measured": 204,
+      "deg_median": 32.5715,
+      "deg_p90": 44.6622,
+      "deg_max": 50.6963,
+      "order_median": 2,
+      "asks_per_run": 2.526,
+      "rejected_per_run": 4.24,
+      "first_pair_sep_deg_median": 40.32
+    },
+    "rule_grouped": {
+      "runs": 192,
+      "camera_ok": 157,
+      "camera_ok_rate": 0.8177,
+      "axes_measured": 464,
+      "deg_median": 6.9299,
+      "deg_p90": 26.3946,
+      "deg_max": 50.4846,
+      "order_median": 3,
+      "asks_per_run": 2.62,
+      "rejected_per_run": 5.068,
+      "first_pair_sep_deg_median": 9.62
+    },
+    "rule_wide_pair": {
+      "runs": 192,
+      "camera_ok": 147,
+      "camera_ok_rate": 0.7656,
+      "axes_measured": 435,
+      "deg_median": 6.9313,
+      "deg_p90": 29.7795,
+      "deg_max": 50.4846,
+      "order_median": 3,
+      "asks_per_run": 2.62,
+      "rejected_per_run": 5.141,
+      "first_pair_sep_deg_median": 11.87
+    },
+    "detect": {
+      "runs": 192,
+      "camera_ok": 159,
+      "camera_ok_rate": 0.8281,
+      "axes_measured": 321,
+      "deg_median": 9.1742,
+      "deg_p90": 35,
+      "deg_max": 43.9221,
+      "order_median": 2,
+      "asks_per_run": 0,
+      "rejected_per_run": 0,
+      "first_pair_sep_deg_median": null
+    }
+  },
+  "by_jitter": {
+    "jit_0": {
+      "rule_drawn": {
+        "runs": 60,
+        "camera_ok": 34,
+        "camera_ok_rate": 0.5667,
+        "axes_measured": 59,
+        "deg_median": 27.5631,
+        "deg_p90": 41.9015,
+        "deg_max": 49.8749,
+        "order_median": 2,
+        "asks_per_run": 1.733,
+        "rejected_per_run": 3.017,
+        "first_pair_sep_deg_median": 37.43
+      },
+      "rule_grouped": {
+        "runs": 60,
+        "camera_ok": 51,
+        "camera_ok_rate": 0.85,
+        "axes_measured": 129,
+        "deg_median": 2.0578,
+        "deg_p90": 24.6862,
+        "deg_max": 42.0289,
+        "order_median": 3,
+        "asks_per_run": 1.833,
+        "rejected_per_run": 3.817,
+        "first_pair_sep_deg_median": 20.49
+      },
+      "rule_wide_pair": {
+        "runs": 60,
+        "camera_ok": 51,
+        "camera_ok_rate": 0.85,
+        "axes_measured": 129,
+        "deg_median": 2.0578,
+        "deg_p90": 25.361,
+        "deg_max": 42.7217,
+        "order_median": 3,
+        "asks_per_run": 1.833,
+        "rejected_per_run": 3.817,
+        "first_pair_sep_deg_median": 20.31
+      },
+      "detect": {
+        "runs": 60,
+        "camera_ok": 57,
+        "camera_ok_rate": 0.95,
+        "axes_measured": 119,
+        "deg_median": 4.4765,
+        "deg_p90": 17.8812,
+        "deg_max": 40.66,
+        "order_median": 2,
+        "asks_per_run": 0,
+        "rejected_per_run": 0,
+        "first_pair_sep_deg_median": null
+      }
+    },
+    "jit_0.005": {
+      "rule_drawn": {
+        "runs": 60,
+        "camera_ok": 36,
+        "camera_ok_rate": 0.6,
+        "axes_measured": 67,
+        "deg_median": 29.6695,
+        "deg_p90": 43.8863,
+        "deg_max": 47.2561,
+        "order_median": 2,
+        "asks_per_run": 1.65,
+        "rejected_per_run": 3.017,
+        "first_pair_sep_deg_median": 35.86
+      },
+      "rule_grouped": {
+        "runs": 60,
+        "camera_ok": 52,
+        "camera_ok_rate": 0.8667,
+        "axes_measured": 139,
+        "deg_median": 3.6177,
+        "deg_p90": 25.1596,
+        "deg_max": 44.4317,
+        "order_median": 3,
+        "asks_per_run": 1.817,
+        "rejected_per_run": 4.1,
+        "first_pair_sep_deg_median": 15.58
+      },
+      "rule_wide_pair": {
+        "runs": 60,
+        "camera_ok": 51,
+        "camera_ok_rate": 0.85,
+        "axes_measured": 136,
+        "deg_median": 3.5507,
+        "deg_p90": 25.1596,
+        "deg_max": 44.4317,
+        "order_median": 3,
+        "asks_per_run": 1.783,
+        "rejected_per_run": 4.067,
+        "first_pair_sep_deg_median": 17.16
+      },
+      "detect": {
+        "runs": 60,
+        "camera_ok": 57,
+        "camera_ok_rate": 0.95,
+        "axes_measured": 120,
+        "deg_median": 5.3082,
+        "deg_p90": 25.6416,
+        "deg_max": 43.9221,
+        "order_median": 2,
+        "asks_per_run": 0,
+        "rejected_per_run": 0,
+        "first_pair_sep_deg_median": null
+      }
+    },
+    "jit_0.01": {
+      "rule_drawn": {
+        "runs": 60,
+        "camera_ok": 29,
+        "camera_ok_rate": 0.4833,
+        "axes_measured": 55,
+        "deg_median": 29.3102,
+        "deg_p90": 43.9579,
+        "deg_max": 46.8384,
+        "order_median": 2,
+        "asks_per_run": 2.267,
+        "rejected_per_run": 3.367,
+        "first_pair_sep_deg_median": 36.09
+      },
+      "rule_grouped": {
+        "runs": 60,
+        "camera_ok": 53,
+        "camera_ok_rate": 0.8833,
+        "axes_measured": 141,
+        "deg_median": 3.4702,
+        "deg_p90": 18.9756,
+        "deg_max": 39.9108,
+        "order_median": 3,
+        "asks_per_run": 2.483,
+        "rejected_per_run": 3.8,
+        "first_pair_sep_deg_median": 9.25
+      },
+      "rule_wide_pair": {
+        "runs": 60,
+        "camera_ok": 50,
+        "camera_ok_rate": 0.8333,
+        "axes_measured": 134,
+        "deg_median": 3.0275,
+        "deg_p90": 18.9756,
+        "deg_max": 44.1038,
+        "order_median": 3,
+        "asks_per_run": 2.4,
+        "rejected_per_run": 3.8,
+        "first_pair_sep_deg_median": 10.05
+      },
+      "detect": {
+        "runs": 60,
+        "camera_ok": 51,
+        "camera_ok_rate": 0.85,
+        "axes_measured": 108,
+        "deg_median": 7.3892,
+        "deg_p90": 27.0503,
+        "deg_max": 40.66,
+        "order_median": 2,
+        "asks_per_run": 0,
+        "rejected_per_run": 0,
+        "first_pair_sep_deg_median": null
+      }
+    },
+    "jit_0.03": {
+      "rule_drawn": {
+        "runs": 60,
+        "camera_ok": 30,
+        "camera_ok_rate": 0.5,
+        "axes_measured": 66,
+        "deg_median": 31.2333,
+        "deg_p90": 44.3282,
+        "deg_max": 50.6963,
+        "order_median": 2,
+        "asks_per_run": 3.05,
+        "rejected_per_run": 3.667,
+        "first_pair_sep_deg_median": 39.03
+      },
+      "rule_grouped": {
+        "runs": 60,
+        "camera_ok": 38,
+        "camera_ok_rate": 0.6333,
+        "axes_measured": 111,
+        "deg_median": 10.3612,
+        "deg_p90": 35.2409,
+        "deg_max": 50.4846,
+        "order_median": 3,
+        "asks_per_run": 3.2,
+        "rejected_per_run": 4.517,
+        "first_pair_sep_deg_median": 12.18
+      },
+      "rule_wide_pair": {
+        "runs": 60,
+        "camera_ok": 38,
+        "camera_ok_rate": 0.6333,
+        "axes_measured": 110,
+        "deg_median": 13.2795,
+        "deg_p90": 35.2409,
+        "deg_max": 50.4846,
+        "order_median": 3,
+        "asks_per_run": 3.117,
+        "rejected_per_run": 4.75,
+        "first_pair_sep_deg_median": 16.64
+      },
+      "detect": {
+        "runs": 60,
+        "camera_ok": 44,
+        "camera_ok_rate": 0.7333,
+        "axes_measured": 75,
+        "deg_median": 15.0834,
+        "deg_p90": 34.9413,
+        "deg_max": 43.3588,
+        "order_median": 2,
+        "asks_per_run": 0,
+        "rejected_per_run": 0,
+        "first_pair_sep_deg_median": null
+      }
+    },
+    "jit_0.05": {
+      "rule_drawn": {
+        "runs": 60,
+        "camera_ok": 27,
+        "camera_ok_rate": 0.45,
+        "axes_measured": 64,
+        "deg_median": 30.1634,
+        "deg_p90": 44.9865,
+        "deg_max": 49,
+        "order_median": 2,
+        "asks_per_run": 2.733,
+        "rejected_per_run": 4.85,
+        "first_pair_sep_deg_median": 38.97
+      },
+      "rule_grouped": {
+        "runs": 60,
+        "camera_ok": 39,
+        "camera_ok_rate": 0.65,
+        "axes_measured": 111,
+        "deg_median": 15.2359,
+        "deg_p90": 40.6543,
+        "deg_max": 50.1537,
+        "order_median": 3,
+        "asks_per_run": 2.75,
+        "rejected_per_run": 5.15,
+        "first_pair_sep_deg_median": 19.67
+      },
+      "rule_wide_pair": {
+        "runs": 60,
+        "camera_ok": 32,
+        "camera_ok_rate": 0.5333,
+        "axes_measured": 92,
+        "deg_median": 17.4992,
+        "deg_p90": 42.2567,
+        "deg_max": 50.1537,
+        "order_median": 3,
+        "asks_per_run": 2.733,
+        "rejected_per_run": 5,
+        "first_pair_sep_deg_median": 22.18
+      },
+      "detect": {
+        "runs": 60,
+        "camera_ok": 39,
+        "camera_ok_rate": 0.65,
+        "axes_measured": 56,
+        "deg_median": 27.1388,
+        "deg_p90": 40.66,
+        "deg_max": 42.48,
+        "order_median": 2,
+        "asks_per_run": 0,
+        "rejected_per_run": 0,
+        "first_pair_sep_deg_median": null
+      }
+    }
+  },
+  "by_composition": {
+    "3pt_yaw35_pitch15": {
+      "rule_drawn": {
+        "runs": 60,
+        "camera_ok": 32,
+        "camera_ok_rate": 0.5333,
+        "axes_measured": 68,
+        "deg_median": 30.3812,
+        "deg_p90": 45.6362,
+        "deg_max": 49.8959,
+        "order_median": 2,
+        "asks_per_run": 2.65,
+        "rejected_per_run": 4.333,
+        "first_pair_sep_deg_median": 44.47
+      },
+      "rule_grouped": {
+        "runs": 60,
+        "camera_ok": 56,
+        "camera_ok_rate": 0.9333,
+        "axes_measured": 168,
+        "deg_median": 4.4536,
+        "deg_p90": 35.3206,
+        "deg_max": 50.4846,
+        "order_median": 3,
+        "asks_per_run": 2.617,
+        "rejected_per_run": 4.5,
+        "first_pair_sep_deg_median": 8.74
+      },
+      "rule_wide_pair": {
+        "runs": 60,
+        "camera_ok": 55,
+        "camera_ok_rate": 0.9167,
+        "axes_measured": 165,
+        "deg_median": 4.0277,
+        "deg_p90": 38.5363,
+        "deg_max": 50.4846,
+        "order_median": 3,
+        "asks_per_run": 2.617,
+        "rejected_per_run": 4.583,
+        "first_pair_sep_deg_median": 8.85
+      },
+      "detect": {
+        "runs": 60,
+        "camera_ok": 51,
+        "camera_ok_rate": 0.85,
+        "axes_measured": 123,
+        "deg_median": 6.4637,
+        "deg_p90": 22.4433,
+        "deg_max": 37.6984,
+        "order_median": 2,
+        "asks_per_run": 0,
+        "rejected_per_run": 0,
+        "first_pair_sep_deg_median": null
+      }
+    },
+    "3pt_yaw20_pitch25": {
+      "rule_drawn": {
+        "runs": 60,
+        "camera_ok": 45,
+        "camera_ok_rate": 0.75,
+        "axes_measured": 100,
+        "deg_median": 27.4068,
+        "deg_p90": 42.8476,
+        "deg_max": 46.2863,
+        "order_median": 2,
+        "asks_per_run": 2.367,
+        "rejected_per_run": 5.017,
+        "first_pair_sep_deg_median": 74.35
+      },
+      "rule_grouped": {
+        "runs": 60,
+        "camera_ok": 52,
+        "camera_ok_rate": 0.8667,
+        "axes_measured": 153,
+        "deg_median": 6.8056,
+        "deg_p90": 19.7585,
+        "deg_max": 48.3815,
+        "order_median": 3,
+        "asks_per_run": 2.917,
+        "rejected_per_run": 4.95,
+        "first_pair_sep_deg_median": 8.94
+      },
+      "rule_wide_pair": {
+        "runs": 60,
+        "camera_ok": 50,
+        "camera_ok_rate": 0.8333,
+        "axes_measured": 147,
+        "deg_median": 6.8056,
+        "deg_p90": 31.6083,
+        "deg_max": 48.3815,
+        "order_median": 3,
+        "asks_per_run": 2.917,
+        "rejected_per_run": 4.917,
+        "first_pair_sep_deg_median": 8.94
+      },
+      "detect": {
+        "runs": 60,
+        "camera_ok": 56,
+        "camera_ok_rate": 0.9333,
+        "axes_measured": 134,
+        "deg_median": 6.2988,
+        "deg_p90": 19.6614,
+        "deg_max": 31.6083,
+        "order_median": 3,
+        "asks_per_run": 0,
+        "rejected_per_run": 0,
+        "first_pair_sep_deg_median": null
+      }
+    },
+    "3pt_yaw50_pitch8": {
+      "rule_drawn": {
+        "runs": 60,
+        "camera_ok": 14,
+        "camera_ok_rate": 0.2333,
+        "axes_measured": 35,
+        "deg_median": 42.0168,
+        "deg_p90": 47.5646,
+        "deg_max": 50.6963,
+        "order_median": 2,
+        "asks_per_run": 1.733,
+        "rejected_per_run": 3.933,
+        "first_pair_sep_deg_median": 35.9
+      },
+      "rule_grouped": {
+        "runs": 60,
+        "camera_ok": 52,
+        "camera_ok_rate": 0.8667,
+        "axes_measured": 153,
+        "deg_median": 3.2138,
+        "deg_p90": 14.4626,
+        "deg_max": 36.9975,
+        "order_median": 3,
+        "asks_per_run": 1.65,
+        "rejected_per_run": 5.283,
+        "first_pair_sep_deg_median": 9.29
+      },
+      "rule_wide_pair": {
+        "runs": 60,
+        "camera_ok": 49,
+        "camera_ok_rate": 0.8167,
+        "axes_measured": 145,
+        "deg_median": 3.2347,
+        "deg_p90": 16.5018,
+        "deg_max": 48.2922,
+        "order_median": 3,
+        "asks_per_run": 1.65,
+        "rejected_per_run": 5.383,
+        "first_pair_sep_deg_median": 10.65
+      },
+      "detect": {
+        "runs": 60,
+        "camera_ok": 52,
+        "camera_ok_rate": 0.8667,
+        "axes_measured": 91,
+        "deg_median": 12.3851,
+        "deg_p90": 40.66,
+        "deg_max": 40.66,
+        "order_median": 2,
+        "asks_per_run": 0,
+        "rejected_per_run": 0,
+        "first_pair_sep_deg_median": null
+      }
+    },
+    "2pt_yaw35_pitch0": {
+      "rule_drawn": {
+        "runs": 60,
+        "camera_ok": 24,
+        "camera_ok_rate": 0.4,
+        "axes_measured": 49,
+        "deg_median": 28.236,
+        "deg_p90": 40.7134,
+        "deg_max": 46.7829,
+        "order_median": 2,
+        "asks_per_run": 2.9,
+        "rejected_per_run": 3.3,
+        "first_pair_sep_deg_median": 21.25
+      },
+      "rule_grouped": {
+        "runs": 60,
+        "camera_ok": 37,
+        "camera_ok_rate": 0.6167,
+        "axes_measured": 108,
+        "deg_median": 16.8386,
+        "deg_p90": 27.161,
+        "deg_max": 38.976,
+        "order_median": 3,
+        "asks_per_run": 2.867,
+        "rejected_per_run": 5.3,
+        "first_pair_sep_deg_median": 18.71
+      },
+      "rule_wide_pair": {
+        "runs": 60,
+        "camera_ok": 33,
+        "camera_ok_rate": 0.55,
+        "axes_measured": 96,
+        "deg_median": 18.4768,
+        "deg_p90": 27.6368,
+        "deg_max": 46.8258,
+        "order_median": 3,
+        "asks_per_run": 2.867,
+        "rejected_per_run": 5.383,
+        "first_pair_sep_deg_median": 19.69
+      },
+      "detect": {
+        "runs": 60,
+        "camera_ok": 47,
+        "camera_ok_rate": 0.7833,
+        "axes_measured": 80,
+        "deg_median": 15.8249,
+        "deg_p90": 35,
+        "deg_max": 43.9221,
+        "order_median": 2,
+        "asks_per_run": 0,
+        "rejected_per_run": 0,
+        "first_pair_sep_deg_median": null
+      }
+    },
+    "1pt_yaw0_pitch0": {
+      "rule_drawn": {
+        "runs": 60,
+        "camera_ok": 41,
+        "camera_ok_rate": 0.6833,
+        "axes_measured": 59,
+        "deg_median": 23.6347,
+        "deg_p90": 43.0486,
+        "deg_max": 46.9514,
+        "order_median": 2,
+        "asks_per_run": 1.783,
+        "rejected_per_run": 1.333,
+        "first_pair_sep_deg_median": 26.81
+      },
+      "rule_grouped": {
+        "runs": 60,
+        "camera_ok": 36,
+        "camera_ok_rate": 0.6,
+        "axes_measured": 49,
+        "deg_median": 15.6604,
+        "deg_p90": 43.2583,
+        "deg_max": 46.9514,
+        "order_median": 2,
+        "asks_per_run": 2.033,
+        "rejected_per_run": 1.35,
+        "first_pair_sep_deg_median": 26.96
+      },
+      "rule_wide_pair": {
+        "runs": 60,
+        "camera_ok": 35,
+        "camera_ok_rate": 0.5833,
+        "axes_measured": 48,
+        "deg_median": 0,
+        "deg_p90": 40.9402,
+        "deg_max": 47.8278,
+        "order_median": 2,
+        "asks_per_run": 1.817,
+        "rejected_per_run": 1.167,
+        "first_pair_sep_deg_median": 59.06
+      },
+      "detect": {
+        "runs": 60,
+        "camera_ok": 42,
+        "camera_ok_rate": 0.7,
+        "axes_measured": 50,
+        "deg_median": 0,
+        "deg_p90": 18.5723,
+        "deg_max": 40.0071,
+        "order_median": 1,
+        "asks_per_run": 0,
+        "rejected_per_run": 0,
+        "first_pair_sep_deg_median": null
+      }
+    }
+  },
+  "all_jitters": {
+    "rule_drawn": {
+      "runs": 300,
+      "camera_ok": 156,
+      "camera_ok_rate": 0.52,
+      "axes_measured": 311,
+      "deg_median": 29.9218,
+      "deg_p90": 44.0159,
+      "deg_max": 50.6963,
+      "order_median": 2,
+      "asks_per_run": 2.287,
+      "rejected_per_run": 3.583,
+      "first_pair_sep_deg_median": 37.41
+    },
+    "rule_grouped": {
+      "runs": 300,
+      "camera_ok": 233,
+      "camera_ok_rate": 0.7767,
+      "axes_measured": 631,
+      "deg_median": 6.1504,
+      "deg_p90": 27.978,
+      "deg_max": 50.4846,
+      "order_median": 3,
+      "asks_per_run": 2.417,
+      "rejected_per_run": 4.277,
+      "first_pair_sep_deg_median": 14.7
+    },
+    "rule_wide_pair": {
+      "runs": 300,
+      "camera_ok": 222,
+      "camera_ok_rate": 0.74,
+      "axes_measured": 601,
+      "deg_median": 5.8397,
+      "deg_p90": 30.5293,
+      "deg_max": 50.4846,
+      "order_median": 3,
+      "asks_per_run": 2.373,
+      "rejected_per_run": 4.287,
+      "first_pair_sep_deg_median": 19.53
+    },
+    "detect": {
+      "runs": 300,
+      "camera_ok": 248,
+      "camera_ok_rate": 0.8267,
+      "axes_measured": 478,
+      "deg_median": 6.7961,
+      "deg_p90": 35,
+      "deg_max": 43.9221,
+      "order_median": 2,
+      "asks_per_run": 0,
+      "rejected_per_run": 0,
+      "first_pair_sep_deg_median": null
+    }
+  },
+  "gate": {
+    "registered": "규칙 팔의 축 방향 오차 중앙값(도)이 **같은 하네스·같은 픽스처**의 검출 팔보다 작다. 모집단은 5구도 × 6시드 × 등급 2 × 잡음 {0.005,0.01,0.03,0.05}이고 **잡음 0 행은 뺀다**(무오차 입력에서 교점은 정의상 참 소실점이라 오차 0 — 측정이 아니라 항등이다, #5). ⚠ 이것은 **이 항목이 등록한 게이트**이고 CLAUDE.md §2의 중단 조건(실측 축 오차 0.5°)이 아니다(#41).",
+    "reachability": "**오라클이 없다.** 이 방식의 '완벽한 입력'은 참 투영이고, 그때 두 깊이선의 교점은 **정의상 참 소실점**이라 오차가 0이다 — 그것은 도달 가능성이 아니라 항등이다(PITFALLS #5 자기참조 유형 3 · #40 ②: 그 자리의 0은 측정이 아니라 보장이다). 그러므로 '기준을 못 넘으면 신호의 성질인가 기준의 성질인가'가 **갈리지 않는 상태**이고, 그 사실을 여기 남긴다(#35). ⚠ 기준을 낮추는 근거가 아니다.",
+    "reachability_absent": "무오차 입력에서 규칙의 축 오차는 정의상 0(`by_jitter.jit_0`이 그것이고 표제에서 뺐다). 항등이므로 오라클로 쓸 수 없다.",
+    "result": {
+      "rule_grouped_median": 6.9299,
+      "detect_median": 9.1742,
+      "passed": true
+    },
+    "note": "⚠ **이 항목이 등록한 게이트다.** CLAUDE.md §2의 중단 조건(실측 축 오차 0.5°)과 다른 게이트이고 같은 말로 부르지 않는다(PITFALLS #41)."
+  },
+  "constants": {
+    "hash": "5955b34c",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "min_sep_deg": 3,
+        "vertical_ask_deg": 45
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metrics": {
+    "hash": "a45078a5",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong",
+      "rate",
+      "fraction"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  }
+}
