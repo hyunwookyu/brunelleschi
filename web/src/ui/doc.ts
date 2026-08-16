@@ -31,6 +31,14 @@ export interface SStroke {
   /** 사용자가 직접 고른 축은 재분류가 덮지 않는다. */
   userAxis: boolean;
   snapStart: SnapRef | null;
+  /**
+   * **끝점이 붙은 대상**(2026-08-16 사람 지시 — 오스냅). `snapStart`와 짝이다.
+   *
+   * **양 끝이 스냅으로 확정되면 축이 없어도 3D가 나온다** — 두 점이 선분을 정하므로
+   * 추론할 것이 없다. 그것이 면 위 사선·자유 세그먼트를 대신하는 경로다(D-L46).
+   * `null`이면 끝점은 커서였고, 그때는 축이 방향을 준다(§3의 원래 경로).
+   */
+  snapEnd: SnapRef | null;
   color?: string;
   width?: number;
 }
@@ -88,7 +96,7 @@ export function newView(name: string, pose: ViewPose | null): SView {
 export function newSStroke(pts2d: Pt2[], viewRef: string): SStroke {
   strokeSeq += 1;
   return { id: `s${strokeSeq}`, pts2d, viewRef, seg3d: null, axis: "free",
-           userAxis: false, snapStart: null };
+           userAxis: false, snapStart: null, snapEnd: null };
 }
 
 /** 3D 레이어 — 어느 뷰에서든 보인다. */

@@ -53,6 +53,8 @@ export interface Doc2 {
     axis: Axis;
     userAxis: boolean;
     snapStart: SnapRef | null;
+    /** **끝점 스냅**(오스냅, D-L46). 옛 저장본에는 없다 — 복원이 `null`로 채운다 */
+    snapEnd?: SnapRef | null;
     color?: string;
     width?: number;
   }[];
@@ -97,6 +99,7 @@ export function serializeDoc2(s: Doc2Source): Doc2 {
       axis: t.axis,
       userAxis: t.userAxis,
       snapStart: t.snapStart ? { ...t.snapStart, at: [...t.snapStart.at] as Vec3 } : null,
+      snapEnd: t.snapEnd ? { ...t.snapEnd, at: [...t.snapEnd.at] as Vec3 } : null,
       color: t.color,
       width: t.width,
     })),
@@ -128,6 +131,8 @@ export function restoreDoc2(d: Doc2): Restored2 {
     axis: t.axis,
     userAxis: !!t.userAxis,
     snapStart: t.snapStart ?? null,
+    // **옛 저장본에는 이 필드가 없다** — 없으면 끝점 스냅이 아니었던 것이다
+    snapEnd: t.snapEnd ?? null,
     color: t.color,
     width: t.width,
   }));

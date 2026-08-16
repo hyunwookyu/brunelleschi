@@ -60,7 +60,7 @@
 |---|---|---|
 | `scan_sweep_coverage`(#33) | 훑기 | **3** (훑기별 파일 수는 `sweeps[]`) |
 | `scan_citation_hashes`(#33 값 대조) | 인용 | **89** — 옛 해시 23곳을 이 검사가 찾아냈다 |
-| `scan_gate_reachability`(#35·**#40**) | 게이트 블록 | **7** — `camera_gate`·`lift_gate`·`order_signal`·`guide_budget`·`preview_gap`·`segment_gate`·`horizon`. ⚠ **값 대조를 실제로 지난 것은 3(`camera_gate`·`horizon`·`order_signal`)이고 4는 `reachability_absent`로 면제됐다** — 면제는 통과가 아니다(도달 가능성이 **미상**이라는 뜻이고 근거로 쓰지 않는다). `coverage`가 둘을 갈라 센다 |
+| `scan_gate_reachability`(#35·**#40**) | 게이트 블록 | **12**(2026-08-16 갱신) — ⚠ **값 대조를 실제로 지난 것은 4**(`axis_snap`·`camera_gate`·`horizon`·`order_signal`)이고 **8은 `reachability_absent`로 면제**됐다(`coords`·`guide_budget`·**`horizon_pitch`**·`lift_gate`·`preview_gap`·`rule_camera`·`segment_gate`·`stage_browser.l_b3`). **면제는 통과가 아니다** — 도달 가능성이 **미상**이라는 뜻이고 근거로 쓰지 않는다. `coverage`가 둘을 갈라 센다. ⚠ 이 표는 **원장보다 뒤처지기 쉽다**(리뷰어가 7에서 잡았다) — 수를 인용하기 전에 `stage0/out/selfcheck.json`의 `coverage`를 다시 읽는다 |
 | `scan_zero_denominator`(#36) | 하네스 파일 | **38** (원장을 쓰는 `web/test/**.ts`) |
 
 ⚠ **덮는 수가 0이 아니라고 전수인 것은 아니다.** 게이트 발견은 **이름**으로 하므로

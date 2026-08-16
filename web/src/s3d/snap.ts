@@ -29,11 +29,19 @@ import { project, closestPoints, rayThrough, add3, sub3, mul3, dot3, norm3,
 import type { Pt2 } from "./camera.js";
 
 export type SnapKind =
-  | "endpoint" | "midpoint" | "intersection" | "perpendicular" | "on_edge" | "on_face";
+  | "vertex" | "endpoint" | "midpoint" | "intersection" | "perpendicular" | "on_edge" | "on_face";
 
-/** **우선순위**(앞이 높다). 선례 그대로 — 정확한 것이 앞선다. */
+/**
+ * **우선순위**(앞이 높다). 선례 그대로 — 정확한 것이 앞선다.
+ *
+ * ⚠ **`vertex`(정점)는 이 자료구조에서 "여러 획이 만나는 끝점"이다**(2026-08-16 사람 지시).
+ * Rhino의 `Vertex`는 메쉬·SubD의 정점인데 **여기 기하는 선분뿐이라 그 대상이 없다** —
+ * 없는 것을 지어내지 않고, 대신 **모서리가 만나는 꼭짓점**에 그 이름을 준다.
+ * 끝점보다 앞이지만 **위치는 같다**(같은 3D 점의 다른 이름이므로 붙는 자리가 안 바뀐다) —
+ * 바뀌는 것은 **표시**뿐이고, 그래서 이 순위 변경은 배치를 안 움직인다.
+ */
 export const SNAP_ORDER: readonly SnapKind[] =
-  ["endpoint", "midpoint", "intersection", "perpendicular", "on_edge", "on_face"] as const;
+  ["vertex", "endpoint", "midpoint", "intersection", "perpendicular", "on_edge", "on_face"] as const;
 
 const RANK = new Map<SnapKind, number>(SNAP_ORDER.map((k, i) => [k, i]));
 
@@ -147,10 +155,13 @@ export function staticCandidates(segs: SnapSeg[], cfg: SnapCfg = {}): StaticCand
   const out: StaticCand[] = [];
 
   // ---- 끝점 · 중점. 같은 자리를 여러 획이 공유하므로 **합친다**(중복 후보는 정보가 아니다).
-  const seen: { at: Vec3; kind: SnapKind }[] = [];
+  // **합쳐진 개수가 곧 정점 여부다** — 둘 이상이 만나면 그 자리는 꼭짓점이다(위 `SNAP_ORDER`).
+  const seen: { at: Vec3; kind: SnapKind; hits: number; idx: number }[] = [];
   const fresh = (at: Vec3, kind: SnapKind): boolean => {
-    for (const s of seen) if (s.kind === kind && norm3(sub3(s.at, at)) <= merge) return false;
-    seen.push({ at, kind });
+    for (const s of seen) {
+      if (s.kind === kind && norm3(sub3(s.at, at)) <= merge) { s.hits += 1; return false; }
+    }
+    seen.push({ at, kind, hits: 1, idx: out.length });
     return true;
   };
   for (const s of segs) {
@@ -158,6 +169,10 @@ export function staticCandidates(segs: SnapSeg[], cfg: SnapCfg = {}): StaticCand
     // **3D 중점을 투영한다** — 화면 중점이 아니다(투시에서 둘은 다르다).
     const mid = atParam(s, 0.5);
     if (fresh(mid, "midpoint")) out.push({ kind: "midpoint", at: mid, ofId: s.id });
+  }
+  // **여러 획이 만난 끝점을 정점으로 승격한다.** 위치는 그대로이고 이름과 표시만 바뀐다
+  for (const s of seen) {
+    if (s.kind === "endpoint" && s.hits >= 2) out[s.idx].kind = "vertex";
   }
 
   // ---- 교차점: **3D에서 실제로 만나는 것만.** 화면 교차는 가림이다.
@@ -247,10 +262,28 @@ export function snapAt(
 
 /** 화면 표시용 — 종류별 라벨과 색. SketchUp의 관행(종류마다 다른 표식)을 따른다. */
 export const SNAP_LABEL: Record<SnapKind, string> = {
-  endpoint: "끝점", midpoint: "중점", intersection: "교차점",
+  vertex: "정점", endpoint: "끝점", midpoint: "중점", intersection: "교차점",
   perpendicular: "수선 발", on_edge: "선 위", on_face: "면 위",
 };
 export const SNAP_COLOR: Record<SnapKind, string> = {
-  endpoint: "#20a020", midpoint: "#1f77d0", intersection: "#c02090",
+  vertex: "#0c7a0c", endpoint: "#20a020", midpoint: "#1f77d0", intersection: "#c02090",
   perpendicular: "#d06a00", on_edge: "#7a7a7a", on_face: "#8a6d3b",
+};
+/**
+ * **종류별 표식 모양**(§3 "표시"). 색만으로는 안 갈린다 — 선례가 모양을 함께 쓴다
+ * (SketchUp의 초록 네모=끝점 · 하늘색 마름모=중점 · Rhino의 종류별 아이콘).
+ */
+export const SNAP_ICON: Record<SnapKind, "square" | "diamond" | "cross" | "triangle" | "circle" | "tee"> = {
+  vertex: "square", endpoint: "square", midpoint: "diamond", intersection: "cross",
+  perpendicular: "tee", on_edge: "circle", on_face: "triangle",
+};
+/** 툴팁 — **무엇에 붙는지와 그것이 무엇을 정하는지**를 한 줄로. */
+export const SNAP_TIP: Record<SnapKind, string> = {
+  vertex: "여러 획이 만나는 꼭짓점 — 가장 확실한 대상입니다",
+  endpoint: "획의 끝점",
+  midpoint: "획의 3D 중점(화면 중점이 아닙니다)",
+  intersection: "3D에서 실제로 만나는 교차점(겉보기 교차는 제외)",
+  perpendicular: "시작점에서 그 획에 내린 수선의 발",
+  on_edge: "그 획 위에서 커서에 가장 가까운 점",
+  on_face: "지면 위의 점(시선과 지면의 교점)",
 };

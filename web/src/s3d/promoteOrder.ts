@@ -37,6 +37,12 @@ export interface OrderStroke {
   userAxis: boolean;
   /** 무엇에 붙었나. `ofId`가 있으면 **그 대상의 새 상으로 다시 옮긴다.** */
   snapStart: { kind: string; at: Vec3; ofId?: string } | null;
+  /**
+   * **끝점이 붙은 대상**(오스냅, D-L46). 양 끝이 다 있으면 그 획은 **축이 없어도** 놓인다 —
+   * 두 점이 선분을 정하기 때문이다. 승격에서도 같다: **둘 다 다시 풀리면 그 둘로 놓고,
+   * 하나라도 못 살리면 놓지 않는다**(반쪽은 조용히 틀린 자리다, A-3).
+   */
+  snapEnd?: { kind: string; at: Vec3; ofId?: string } | null;
 }
 
 export interface OrderResult {
@@ -106,35 +112,71 @@ export function promoteOrder(
   const pass1: LiftStroke[] = work.map(s => ({ id: s.id, pts2d: s.pts2d, axis: relabel(s) }));
   const r1 = liftAll(pass1, ctx);
 
-  // ---- 2차: 1차 결과를 대상으로 `snapStart`를 다시 푼다
+  // ---- 2차: 1차 결과를 대상으로 스냅을 다시 푼다.
+  //
+  // **한 획에 두 자리가 있다**(오스냅, D-L46) — 시작점과 끝점. 같은 연산이므로 한 함수로 푼다
+  // (#34: 한 자리에서 고친 것은 그 자리에서만 고쳐진다).
   let moved = false;
-  for (const s of work) {
-    if (!s.snapStart?.ofId) continue;
-    out.snap.had += 1;
-    const target = r1.placed.get(s.snapStart.ofId);
-    if (!target) { out.snap.target_unplaced += 1; out.snap.lost_ids.push(s.id); continue; }
+  /** 옛 스냅 → 새 3D + 새 화면점. 못 살리면 `null`. */
+  const reanchor = (ref: { kind: string; at: Vec3; ofId?: string },
+                    old: Pt2): { at: Vec3; u: Pt2 } | "unplaced" | "behind" => {
+    const target = ref.ofId ? r1.placed.get(ref.ofId) : undefined;
+    if (!target) return "unplaced";
     // 옛 3D 점이 대상 위 어디였는지 — **매개변수로 옮긴다**(끝점이면 0 또는 1이다).
     // 옛 대상의 3D를 모르므로 `kind`에 기대지 않고 **가장 가까운 매개변수**를 쓴다.
-    const t = paramOnOldTarget(s.snapStart.at, s.snapStart.kind);
+    const t = paramOnOldTarget(ref.at, ref.kind);
     const at: Vec3 = [target.a[0] + (target.b[0] - target.a[0]) * t,
                       target.a[1] + (target.b[1] - target.a[1]) * t,
                       target.a[2] + (target.b[2] - target.a[2]) * t];
     const u = project(at, ctx.principal, ctx.f);
-    if (!u || !Number.isFinite(u[0]) || !Number.isFinite(u[1])) {
-      out.snap.behind_camera += 1; out.snap.lost_ids.push(s.id); continue;
+    if (!u || !Number.isFinite(u[0]) || !Number.isFinite(u[1])) return "behind";
+    out.snap.drift_px.push(Math.hypot(u[0] - old[0], u[1] - old[1]));
+    return { at, u: [u[0], u[1]] };
+  };
+
+  /** 양 끝 스냅이 다 살아난 획 — **두 점으로 직접 놓는다**(축이 필요 없다). */
+  const twoPoint = new Map<string, LiftSeg>();
+
+  for (const s of work) {
+    const hasStart = !!s.snapStart?.ofId, hasEnd = !!s.snapEnd?.ofId;
+    if (!hasStart && !hasEnd) continue;
+    out.snap.had += 1;
+    const last = s.pts2d.length - 1;
+    const rs = hasStart ? reanchor(s.snapStart!, s.pts2d[0]) : null;
+    const re = hasEnd ? reanchor(s.snapEnd!, s.pts2d[last]) : null;
+    const bad = [rs, re].find(r => r === "unplaced" || r === "behind");
+    if (bad) {
+      // **하나라도 못 살리면 그 획은 잃은 것으로 센다** — 반쪽 스냅은 조용히 틀린 자리다
+      if (bad === "unplaced") out.snap.target_unplaced += 1; else out.snap.behind_camera += 1;
+      out.snap.lost_ids.push(s.id);
+      continue;
     }
-    out.snap.drift_px.push(Math.hypot(u[0] - s.pts2d[0][0], u[1] - s.pts2d[0][1]));
-    s.pts2d = [[u[0], u[1]], ...s.pts2d.slice(1)];
-    s.snapStart = { ...s.snapStart, at };
+    if (rs && rs !== "unplaced" && rs !== "behind") {
+      s.pts2d = [rs.u, ...s.pts2d.slice(1)];
+      s.snapStart = { ...s.snapStart!, at: rs.at };
+    }
+    if (re && re !== "unplaced" && re !== "behind") {
+      s.pts2d = [...s.pts2d.slice(0, last), re.u];
+      s.snapEnd = { ...s.snapEnd!, at: re.at };
+    }
+    // **양 끝이 다 살아났으면 그 둘이 곧 3D다**(추론이 없다)
+    if (rs && re && rs !== "unplaced" && rs !== "behind" && re !== "unplaced" && re !== "behind") {
+      twoPoint.set(s.id, { a: rs.at, b: re.at });
+    }
     out.snap.reanchored += 1;
     out.snap.reanchored_ids.push(s.id);
     moved = true;
   }
 
   // ---- 옮긴 것이 있으면 다시 푼다. 없으면 1차가 답이다(**같은 연산을 두 번 돌리지 않는다**)
-  if (!moved) { out.placed = r1.placed; return out; }
-  const pass2: LiftStroke[] = work.map(s => ({ id: s.id, pts2d: s.pts2d, axis: relabel(s) }));
-  out.placed = liftAll(pass2, ctx).placed;
+  if (!moved) {
+    out.placed = r1.placed;
+  } else {
+    const pass2: LiftStroke[] = work.map(s => ({ id: s.id, pts2d: s.pts2d, axis: relabel(s) }));
+    out.placed = liftAll(pass2, ctx).placed;
+  }
+  // **양 끝 스냅은 솔버 결과를 덮는다** — 두 점이 이미 선분을 정했고 그것이 사용자가 지정한 것이다
+  for (const [id, seg] of twoPoint) out.placed.set(id, seg);
   return out;
 }
 

@@ -263,13 +263,38 @@ function frame(): Frame | null {
  * `groundFrame`은 소실점에서 세우고 그 소실점은 시점마다 다르다 — **없는 것을 지어내지 않는다**(A-3).
  * 지면 스냅의 화면 거리는 정의상 0이라 성공률 측정에도 못 섞는 종류다(`snap.json`).
  */
-function snapCtx(fr: Frame | null = frame()): SnapCtx | null {
+function snapCtx(fr: Frame | null = frame(), from: Vec3 | null = null): SnapCtx | null {
   if (!fr) return null;
   const { ctx } = fr;
   return { principal: ctx.principal, f: ctx.f, imgSize: ctx.imgSize,
            // 면 생성이 범위 밖이라 지금 있는 면은 지면 하나다(§3 "면 위 점")
            ground: fr.pinned ? groundFrame(ctx.vps[2] ?? null, ctx.principal, ctx.f) : null,
-           from: null };
+           // **수선 발은 시작점이 있어야 정해진다**(Rhino `Perp`와 같다) — 끝점을 스냅할 때만 온다
+           from };
+}
+
+/**
+ * **끝점 스냅**(오스냅, D-L46). 그리는 중이든 확정이든 **같은 함수**가 낸다(#17).
+ *
+ * 시작점 스냅과 다른 점 둘: ① `from`(앵커)을 넘겨 **수선 발**이 성립하게 한다
+ * ② **자기 자신은 대상이 아니다**(아직 3D 레이어에 없으므로 자동으로 빠진다).
+ * `null`이면 끝점은 커서이고, 그때는 축이 방향을 준다(§3의 원래 경로).
+ */
+function endSnapAt(fr: Frame, anchorAt: Vec3, p: Pt2): SnapCand | null {
+  const sc = snapCtx(fr, anchorAt);
+  if (!sc) return null;
+  const segs = snapSegs(fr.toV);
+  const cand = snapAt(p, segs, sc, {}, snapStatic(segs));
+  // **앵커 자신에 붙는 것은 선분이 아니다** — 길이 0을 만들지 않는다
+  if (!cand) return null;
+  const d = Math.hypot(cand.at[0] - anchorAt[0], cand.at[1] - anchorAt[1], cand.at[2] - anchorAt[2]);
+  return d > 1e-9 ? cand : null;
+}
+
+/** 끝점 스냅을 획에 적는다 — 시작점 판(`applySnapToStart`)과 같은 규약이다(#34). */
+function applySnapToEnd(st: SStroke, cand: SnapCand, atWorld: Vec3 = cand.at): void {
+  st.snapEnd = { kind: cand.kind, at: atWorld, ofId: cand.ofId };
+  st.pts2d = [...st.pts2d.slice(0, st.pts2d.length - 1), [cand.screen[0], cand.screen[1]]];
 }
 
 /**
