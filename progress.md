@@ -4366,7 +4366,7 @@ G에서는 안 하고 그 사실을 여기 적는다 — 값은 이미 원장에
 #### 검증
 
 vitest **71파일 441 통과 · 1 건너뜀**(+ `cam_gesture.test.ts` 15) · tsc·빌드 통과 ·
-Playwright **25 통과 · 2 건너뜀**(+ `touch_route.spec.ts` 5) · pytest 73 통과 ·
+Playwright **26 통과 · 2 건너뜀**(+ `touch_route.spec.ts` 5) · pytest 73 통과 ·
 selfcheck 플래그 **1833건 · STALE(상수) 0 · STALE(정의) 0** ·
 상수 해시 **`509615a1`**(제스처 상수는 안 넣었다) · 인용 **110건 플래그 0** ·
 게이트 블록 13(이 원장은 게이트를 등록하지 않는다).
