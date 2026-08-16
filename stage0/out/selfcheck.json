@@ -6592,7 +6592,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 1.199040866595169e-14,
+      "val": 5.329070518200751e-15,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -9246,7 +9246,7 @@
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 10,
+        ".md": 11,
         ".py": 2,
         ".ts": 6
       }
@@ -9304,7 +9304,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 110,
+      "targets": 126,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
