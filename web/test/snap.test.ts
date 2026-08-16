@@ -93,13 +93,20 @@ describe("L-B.3 스냅 — 선례를 그대로 따르는가", () => {
     expect(Math.abs(d[0] * e[0] + d[1] * e[1] + d[2] * e[2])).toBeLessThan(1e-9);
   });
 
-  it("모서리를 공유하는 두 획이 끝점 후보를 **하나만** 낸다", () => {
+  it("모서리를 공유하는 두 획이 끝점 후보를 **하나만** 낸다 — 그리고 그것이 **정점**이다", () => {
     const a: SnapSeg = { id: "a", a: [0, 0, 5], b: [2, 0, 5] };
     const b: SnapSeg = { id: "b", a: [0, 0, 5], b: [0, 2, 5] };
     const at = px([0, 0, 5]);
+    // ⚠ **2026-08-16에 종류가 바뀌었다**(오스냅, D-L46) — 여러 획이 만나는 끝점은 `vertex`다.
+    // **합쳐진다는 불변식은 그대로**이고(후보가 하나다), 바뀐 것은 **이름과 표시**뿐이다.
     const eps = snapCandidates(at, [a, b], ctx(), { radius_ratio: 0.02 })
-      .filter(c => c.kind === "endpoint" && c.dist < 1e-6);
+      .filter(c => (c.kind === "endpoint" || c.kind === "vertex") && c.dist < 1e-6);
     expect(eps.length).toBe(1);
+    expect(eps[0].kind).toBe("vertex");
+    // **혼자인 끝점은 여전히 `endpoint`다** — 승격은 "둘 이상이 만날 때"만이다
+    const lone = snapCandidates(px([2, 0, 5]), [a, b], ctx(), { radius_ratio: 0.02 })
+      .filter(c => c.dist < 1e-6 && (c.kind === "endpoint" || c.kind === "vertex"));
+    expect(lone.map(c => c.kind)).toEqual(["endpoint"]);
   });
 
   it("반경 밖이면 `null` — **애매하면 놓지 않는다**", () => {
@@ -146,8 +153,10 @@ describe("L-B.3 스냅 — 선례를 그대로 따르는가", () => {
   });
 
   it("우선순위 목록이 계획서 §3 그대로다", () => {
+    // **`vertex`가 앞에 붙었다**(2026-08-16 사람 지시 — 오스냅의 대상 목록에 정점이 있다).
+    // 위치는 끝점과 같으므로 **붙는 자리가 안 바뀐다** — 바뀌는 것은 표시다(`snap.ts` 머리말)
     expect([...SNAP_ORDER]).toEqual(
-      ["endpoint", "midpoint", "intersection", "perpendicular", "on_edge", "on_face"]);
+      ["vertex", "endpoint", "midpoint", "intersection", "perpendicular", "on_edge", "on_face"]);
     expect(SNAP_TOL.radius_ratio).toBeGreaterThan(0);
   });
 });

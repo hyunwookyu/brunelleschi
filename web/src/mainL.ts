@@ -24,8 +24,9 @@ import { classifyLine, RULE_TOL, type RuleEvent, type RLine, type RuleState } fr
 // **축 스냅**(사람 지시 1·3) — 그리는 동안 축으로 강제하고, 모호하면 커서가 가른다
 import { snapToAxis, SNAP_TOL_AXIS, type AxisCand } from "./s3d/axisSnap.js";
 import { liftAll, type LiftStroke } from "./s3d/lift.js";
-import { snapAt, staticCandidates, SNAP_TOL, SNAP_LABEL, SNAP_COLOR,
-         type SnapCand, type SnapSeg, type SnapCtx, type StaticCand } from "./s3d/snap.js";
+import { snapAt, staticCandidates, SNAP_TOL, SNAP_LABEL, SNAP_COLOR, SNAP_ICON, SNAP_TIP,
+         type SnapCand, type SnapKind, type SnapSeg, type SnapCtx,
+         type StaticCand } from "./s3d/snap.js";
 import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "./s3d/liveLine.js";
 import { representative } from "./s3d/axis.js";
 import { promoteOrder, orderOf, type OrderStroke } from "./s3d/promoteOrder.js";
@@ -86,7 +87,12 @@ let picked: string | null = null;
 let live: { anchor: SnapCand; axis: 0 | 1 | 2 | null; deg: number | null;
             seg: [Vec3, Vec3] | null; locked: boolean;
             /** **모호 구간에 들어갔는가**(사람 지시 3-f) — 화면에 짧게 표시한다. */
-            ambiguous: boolean; tied: number[] } | null = null;
+            ambiguous: boolean; tied: number[];
+            /**
+             * **끝점이 붙은 대상**(오스냅, D-L46). 있으면 이 획은 **두 점으로 확정된다** —
+             * 축이 필요 없고 축 스냅을 **이긴다**(Rhino: 오스냅이 직교 모드를 덮는다).
+             */
+            end: SnapCand | null } | null = null;
 /**
  * **축 고정**(L-B.5, §4). **화살표가 특정 축을 토글한다** — SketchUp 그대로다(A-3).
  * `null`이면 축 스냅에 맡긴다.
@@ -349,7 +355,10 @@ function promoteChain(fr: Frame): number {
       const cand = snapAt(st.pts2d[0], segs, sc, {}, pre);
       if (!cand) continue;
       applySnapToStart(st, cand, fr.fromV(cand.at));
-      if (placeLive(st, fr, cand.at)) n += 1;
+      // **대기 획도 양 끝 스냅으로 올라갈 수 있다**(D-L46) — 축이 없어도 두 점이면 놓인다
+      const endCand = endSnapAt(fr, cand.at, st.pts2d[st.pts2d.length - 1]);
+      if (endCand) applySnapToEnd(st, endCand, fr.fromV(endCand.at));
+      if (placeLive(st, fr, cand.at, endCand)) n += 1;
     }
     chainTrace.push({ pass: pass + 1, waiting: waiting.length, placed: n });
     total += n;
@@ -369,8 +378,17 @@ const axisDirs = (c: PlaceCtx) =>
  * **실시간 판정 = 확정 판정**(L-B.4). 앵커·시작 화면점·끝 화면점만 주면 같은 답이 나온다 —
  * 미리보기와 확정이 어긋날 여지가 **구조적으로 없다**(§11 게이트의 "일치 0").
  */
-function resolveLive(c: PlaceCtx, at: Vec3, a2: Pt2, b2: Pt2) {
+function resolveLive(c: PlaceCtx, at: Vec3, a2: Pt2, b2: Pt2, end: SnapCand | null = null) {
   const dirs = axisDirs(c);
+
+  // ---- **오스냅이 축 스냅을 이긴다**(D-L46, Rhino 선례: 오스냅이 직교 모드를 덮는다).
+  // 양 끝이 지정되면 **추론할 것이 없다** — 두 점이 선분을 정한다. 축을 벗어난 선(면 위 사선·
+  // 자유 세그먼트)이 이 경로로 놓인다. 각도는 **표시용**으로만 낸다(축을 붙이지 않는다).
+  if (end) {
+    const near = nearestAxisOnScreen(at, dirs, a2, b2, c);
+    return { axis: null, deg: near?.deg ?? null, seg: [at, end.at] as [Vec3, Vec3],
+             locked: false, ambiguous: false, tied: [] as number[], why: "", twoPoint: true };
+  }
   // **고정은 여기 안에 있어야 한다**(#17) — 바깥에서 덮으면 미리보기와 확정이 갈린다
   const forced = lockedAxis();
   const use = forced != null && dirs[forced] ? forced : null;
@@ -380,7 +398,8 @@ function resolveLive(c: PlaceCtx, at: Vec3, a2: Pt2, b2: Pt2) {
   if (use == null && !axisSnapOn()) {
     const near = nearestAxisOnScreen(at, dirs, a2, b2, c);
     return { axis: null, deg: near?.deg ?? null, seg: null, locked: false, ambiguous: false,
-             tied: [] as number[], why: freeStroke ? "자유 획(수정자)" : "축 스냅이 꺼져 있습니다" };
+             tied: [] as number[], twoPoint: false,
+             why: freeStroke ? "자유 획(수정자)" : "축 스냅이 꺼져 있습니다" };
   }
 
   // ---- **축 스냅**(사람 지시 1). 각도로 거르지 않는다 — 언제나 어느 축으로 간다.
@@ -389,7 +408,7 @@ function resolveLive(c: PlaceCtx, at: Vec3, a2: Pt2, b2: Pt2) {
   const ax = (use ?? ch.pick?.axis ?? null);
   if (ax == null) {
     return { axis: null, deg: null, seg: null, locked: false, ambiguous: false,
-             tied: [] as number[], why: "축 후보가 없습니다" };
+             tied: [] as number[], twoPoint: false, why: "축 후보가 없습니다" };
   }
   const cand = ch.tied.find((t: AxisCand) => t.axis === ax) ?? ch.pick;
   // **고정 축은 후보 밖일 수 있다** — 그때는 그 축으로 직접 푼다(같은 함수다)
@@ -397,8 +416,9 @@ function resolveLive(c: PlaceCtx, at: Vec3, a2: Pt2, b2: Pt2) {
   const deg = cand && cand.axis === ax ? cand.deg : null;
   const tied = ch.tied.map((t: AxisCand) => t.axis);
   return seg
-    ? { axis: ax, deg, seg, locked: use != null, ambiguous: ch.ambiguous && use == null, tied, why: "" }
-    : { axis: ax, deg, seg: null, locked: use != null, ambiguous: false, tied,
+    ? { axis: ax, deg, seg, locked: use != null, ambiguous: ch.ambiguous && use == null,
+        tied, twoPoint: false, why: "" }
+    : { axis: ax, deg, seg: null, locked: use != null, ambiguous: false, tied, twoPoint: false,
         why: "끝점이 정해지지 않습니다" };
 }
 
@@ -422,20 +442,30 @@ const axisSnapOn = () => AXIS_SNAP.on && !freeStroke;
  * 스냅된 시작점 + 축 → 그 자리에서 3D 확정(§3 마지막 문단 · §7).
  * 축이 안 정해지면 `false`이고 그 획은 2D로 **대기**한다(§9.1).
  */
-function placeLive(st: SStroke, fr: Frame, atV: Vec3): boolean {
-  const r = resolveLive(fr.ctx, atV, st.pts2d[0], st.pts2d[st.pts2d.length - 1]);
-  if (!r.seg || r.axis == null) {
+function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = null): boolean {
+  const r = resolveLive(fr.ctx, atV, st.pts2d[0], st.pts2d[st.pts2d.length - 1], end);
+  if (!r.seg || (r.axis == null && !r.twoPoint)) {
     lastSnapNote = `${r.why} — **2D로 대기**합니다`;
     return false;
   }
-  st.axis = r.axis;
+  // **양 끝 스냅은 축이 없다** — 두 점이 이미 선분을 정했으므로 미분류로 둔다(A-3: 추정 금지)
+  if (r.twoPoint) {
+    st.axis = "free";
+    st.userAxis = false;
+    st.seg3d = [fr.fromV(r.seg[0]), fr.fromV(r.seg[1])];
+    lastSnapNote = `**양 끝 스냅**으로 확정 — ${SNAP_LABEL[st.snapStart!.kind as SnapKind]}`
+                 + ` → ${SNAP_LABEL[(end?.kind ?? "endpoint") as SnapKind]}`
+                 + (r.deg != null ? ` <span class="dim">(가장 가까운 축과 ${r.deg.toFixed(1)}°)</span>` : "");
+    return true;
+  }
+  st.axis = r.axis as 0 | 1 | 2;
   // **사용자가 고른 축은 재분류가 덮지 않는다**(`doc.ts`의 `userAxis`, §6.1의 "사용자 지정만 유지")
   st.userAxis = r.locked;
   // **시점 좌표로 푼 것을 세계로 되돌린다**(L-B.8). 확정 시점에서는 항등이다
   st.seg3d = [fr.fromV(r.seg[0]), fr.fromV(r.seg[1])];
   lastSnapNote = r.locked
-    ? `축${r.axis + 1}로 **고정**해 확정`
-    : `축${r.axis + 1}로 확정 (축과 ${r.deg != null ? r.deg.toFixed(1) : "?"}°)`;
+    ? `축${(r.axis as number) + 1}로 **고정**해 확정`
+    : `축${(r.axis as number) + 1}로 확정 (축과 ${r.deg != null ? r.deg.toFixed(1) : "?"}°)`;
   return true;
 }
 
@@ -611,6 +641,8 @@ function promoteOrderNow(): void {
   pushUndo();
   const input: OrderStroke[] = doc.strokes.map(s => ({
     id: s.id, pts2d: s.pts2d, axis: s.axis, userAxis: s.userAxis, snapStart: s.snapStart,
+    // **양 끝 스냅은 승격에서도 두 점으로 다시 풀린다**(D-L46) — 하나라도 못 살리면 안 놓는다
+    snapEnd: s.snapEnd,
   }));
   const r = promoteOrder(input, { principal: ctx.principal, f: ctx.f, vps: ctx.vps,
                                   imgSize: ctx.imgSize, axisDirs: ctx.axisDirs },
@@ -625,7 +657,7 @@ function promoteOrderNow(): void {
   const byId = new Map(input.map(x => [x.id, x]));
   for (const s of doc.strokes) {
     const x = byId.get(s.id);
-    if (x) { s.pts2d = x.pts2d; s.snapStart = x.snapStart; }
+    if (x) { s.pts2d = x.pts2d; s.snapStart = x.snapStart; s.snapEnd = x.snapEnd ?? null; }
   }
   // **뷰 카메라도 함께 갱신한다**(§6.1) — 기하가 새 배율로 풀렸으므로 눈 위치도 같이 옮긴다.
   // 상대적 시점(방향·상대 거리)은 유지된다
@@ -682,10 +714,19 @@ function relinkLostSnaps(): void {
                             {}, pre.filter(c => c.ofId !== id && c.ofId2 !== id)) : null;
     if (!s || !cand) { still.push(id); continue; }
     applySnapToStart(s, cand, fr.fromV(cand.at));
+    // **양 끝 스냅이었으면 끝점도 다시 붙여야 한다**(D-L46) — 시작점만 살리면 그 획은
+    // **반쪽만 옛 카메라의 자리**에 남는다(조용히 틀린 자리다, A-3).
+    // 못 붙이면 `snapEnd`를 지우고 축 경로로 되돌린다 — **없는 스냅을 들고 있지 않는다**
+    let endCand: SnapCand | null = null;
+    if (s.snapEnd) {
+      endCand = endSnapAt(fr, cand.at, s.pts2d[s.pts2d.length - 1]);
+      if (endCand) applySnapToEnd(s, endCand, fr.fromV(endCand.at));
+      else s.snapEnd = null;
+    }
     // **그리기와 같은 경로로 놓는다**(#17·A-3) — 앵커가 생겼으므로 §7의 실시간 경로다.
     // 일괄 솔버를 부르면 안 된다: 돌린 시점에서는 `pts2d`가 다른 화면 좌표다(L-B.8 머리말)
     s.seg3d = null;
-    placeLive(s, fr, cand.at);
+    placeLive(s, fr, cand.at, endCand);
     ok += 1;                                    // **붙은 개수**다 — 놓인 개수와 다르다(#9)
   }
   promoteReport.snapLost = still;
@@ -1136,23 +1177,57 @@ function drawPromoteLoss(ctx2: CanvasRenderingContext2D) {
  * 스냅 표식(§3 "표시"). **종류마다 다른 색과 라벨** — SketchUp의 관행 그대로다(A-3).
  * 표식이 없으면 사용자는 무엇에 붙었는지 모르고, 그러면 **조용히 틀린 배치**가 된다.
  */
-function drawSnapMark(ctx2: CanvasRenderingContext2D) {
-  if (!hoverSnap) return;
-  const [x, y] = hoverSnap.screen;
-  ctx2.save();
-  ctx2.strokeStyle = SNAP_COLOR[hoverSnap.kind];
-  ctx2.fillStyle = SNAP_COLOR[hoverSnap.kind];
+/**
+ * **종류별 아이콘**(§3 "표시", 사람 지시 — 오스냅). 색만으로는 안 갈린다.
+ * 모양 배정은 `snap.ts`의 `SNAP_ICON` 하나가 정한다(#17: 표시 규약도 단일 출처).
+ */
+function drawSnapIcon(ctx2: CanvasRenderingContext2D, kind: SnapKind, x: number, y: number,
+                      r = 6): void {
+  ctx2.strokeStyle = SNAP_COLOR[kind];
+  ctx2.fillStyle = SNAP_COLOR[kind];
   ctx2.lineWidth = 2;
-  // 끝점은 네모, 나머지는 마름모 — 종류가 표식 모양으로도 갈린다
-  if (hoverSnap.kind === "endpoint") ctx2.strokeRect(x - 5, y - 5, 10, 10);
-  else {
-    ctx2.beginPath();
-    ctx2.moveTo(x, y - 6); ctx2.lineTo(x + 6, y); ctx2.lineTo(x, y + 6); ctx2.lineTo(x - 6, y);
-    ctx2.closePath(); ctx2.stroke();
+  ctx2.beginPath();
+  switch (SNAP_ICON[kind]) {
+    case "square":
+      // **정점은 채운 네모, 끝점은 빈 네모** — 같은 모양의 강약이 그 관계를 말한다
+      if (kind === "vertex") ctx2.fillRect(x - r + 1, y - r + 1, 2 * r - 2, 2 * r - 2);
+      else ctx2.strokeRect(x - r + 1, y - r + 1, 2 * r - 2, 2 * r - 2);
+      return;
+    case "diamond":
+      ctx2.moveTo(x, y - r); ctx2.lineTo(x + r, y); ctx2.lineTo(x, y + r); ctx2.lineTo(x - r, y);
+      ctx2.closePath(); break;
+    case "cross":
+      ctx2.moveTo(x - r, y - r); ctx2.lineTo(x + r, y + r);
+      ctx2.moveTo(x + r, y - r); ctx2.lineTo(x - r, y + r); break;
+    case "tee":                                  // 수선 발 — 라이노의 ⊥ 표식
+      ctx2.moveTo(x - r, y + r); ctx2.lineTo(x + r, y + r);
+      ctx2.moveTo(x, y + r); ctx2.lineTo(x, y - r); break;
+    case "triangle":
+      ctx2.moveTo(x, y - r); ctx2.lineTo(x + r, y + r); ctx2.lineTo(x - r, y + r);
+      ctx2.closePath(); break;
+    default:                                     // circle — 선 위 근처점
+      ctx2.arc(x, y, r - 1, 0, Math.PI * 2); break;
   }
+  ctx2.stroke();
+}
+
+/** 표식 + **툴팁**(종류와 그것이 무엇을 정하는지). 표식이 없으면 조용히 틀린 배치가 된다. */
+function drawSnapMark(ctx2: CanvasRenderingContext2D, cand: SnapCand | null = hoverSnap,
+                      tip = true) {
+  if (!cand) return;
+  const [x, y] = cand.screen;
+  ctx2.save();
+  drawSnapIcon(ctx2, cand.kind, x, y);
   ctx2.globalAlpha = 0.9;
   ctx2.font = "11px system-ui, sans-serif";
-  ctx2.fillText(SNAP_LABEL[hoverSnap.kind], x + 9, y - 8);
+  ctx2.fillStyle = SNAP_COLOR[cand.kind];
+  ctx2.fillText(SNAP_LABEL[cand.kind], x + 9, y - 8);
+  if (tip) {
+    // **툴팁** — 라이노가 스냅 이름 옆에 무엇인지 낸다. 옅게 두어 그림을 안 가린다
+    ctx2.globalAlpha = 0.55;
+    ctx2.font = "10px system-ui, sans-serif";
+    ctx2.fillText(SNAP_TIP[cand.kind], x + 9, y + 5);
+  }
   ctx2.restore();
 }
 
@@ -1179,9 +1254,11 @@ function drawLivePreview(ctx2: CanvasRenderingContext2D) {
   }
   // 앵커 표식은 항상 — 어디에 못박혔는지가 판정보다 먼저다
   ctx2.globalAlpha = 1; ctx2.setLineDash([]);
-  ctx2.strokeStyle = SNAP_COLOR[live.anchor.kind]; ctx2.lineWidth = 2;
-  ctx2.strokeRect(a[0] - 5, a[1] - 5, 10, 10);
+  drawSnapIcon(ctx2, live.anchor.kind, a[0], a[1], 5);
   ctx2.restore();
+  // **끝점 스냅도 표식을 낸다**(D-L46) — 양 끝이 붙었다는 것이 보여야 두 점 확정을 안다.
+  // 툴팁은 앵커 쪽만 낸다(둘 다 내면 그림을 가린다)
+  if (live.end) drawSnapMark(ctx2, live.end, false);
 }
 
 /**
@@ -1323,11 +1400,15 @@ const ink = new InkCanvas(canvas, {
     if (!anchor) { live = null; refresh(); return; }
     // ⚠ **옛 판은 여기서 `Shift`가 잡은 축을 기억했다**(`shiftHeld`) — D-L44로 그 뜻이
     // 바뀌면서 죽은 코드가 됐고 지웠다. 지금 `Shift`는 `freeStroke`이고 `resolveLive`가 본다
-    const r = resolveLive(c, anchor.at, anchor.screen, b0);
+    //
+    // **끝점도 스냅한다**(오스냅, D-L46) — 붙으면 **축 없이 두 점으로** 확정된다.
+    // 미리보기가 그것을 그대로 보이므로 확정과 어긋날 여지가 없다(§11 게이트).
+    const end = endSnapAt(fr, anchor.at, b0);
+    const r = resolveLive(c, anchor.at, anchor.screen, b0, end);
     // **미리보기는 세계 좌표로 낸다** — 3D 층이 세계에서 그리기 때문이다(L-B.8)
     live = { anchor, axis: r.axis, deg: r.deg,
              seg: r.seg ? [fr.fromV(r.seg[0]), fr.fromV(r.seg[1])] : null, locked: r.locked,
-             ambiguous: r.ambiguous, tied: r.tied };
+             ambiguous: r.ambiguous, tied: r.tied, end };
     refresh();
   },
   onStrokeEnd: (stroke) => {
@@ -1356,7 +1437,11 @@ const ink = new InkCanvas(canvas, {
       lastSnapNote = "";
       if (cand) {
         applySnapToStart(s, cand, fr.fromV(cand.at));
-        placeLive(s, fr, cand.at);
+        // **끝점도 붙는가**(오스냅, D-L46) — 붙으면 **축 없이 두 점으로** 확정된다.
+        // 미리보기(`onLive`)와 **같은 함수**를 부른다(#17: 미리보기와 확정이 갈릴 여지 없음)
+        const endCand = endSnapAt(fr, cand.at, pts[pts.length - 1]);
+        if (endCand) applySnapToEnd(s, endCand, fr.fromV(endCand.at));
+        placeLive(s, fr, cand.at, endCand);
       } else if (segs0.length) {
         lastSnapNote = "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다";
       }
@@ -1677,7 +1762,13 @@ function renderStatus() {
     if (live) {
       rows.push(`<div>그리는 중 — 시작 <b style="color:${SNAP_COLOR[live.anchor.kind]}">`
         + `${SNAP_LABEL[live.anchor.kind]}</b> · `
-        + (live.axis != null
+        // **양 끝 스냅이면 축이 아니라 두 점이 정한다**(D-L46) — 오스냅이 축 스냅을 이긴다
+        + (live.end
+          ? `끝 <b style="color:${SNAP_COLOR[live.end.kind]}">${SNAP_LABEL[live.end.kind]}</b>`
+            + ' · <b>양 끝 스냅으로 확정</b> <span class="dim">(축이 필요 없습니다'
+            + (live.deg != null ? ` · 가장 가까운 축과 ${live.deg.toFixed(1)}°` : "")
+            + ")</span>"
+          : live.axis != null
           ? `<b style="color:${AXIS_COLOR[live.axis]}">축${live.axis + 1}</b>`
             + (live.locked ? ' <b>고정</b>'
                : ` <span class="dim">(${live.deg != null ? live.deg.toFixed(1) : "?"}°)</span>`)
@@ -1855,7 +1946,7 @@ function relive() {
     const b2: Pt2 = b.length >= 2 ? [b[b.length - 1][0], b[b.length - 1][1]] : live.anchor.screen;
     const r = resolveLive(c, live.anchor.at, live.anchor.screen, b2);
     live = { anchor: live.anchor, axis: r.axis, deg: r.deg, seg: r.seg, locked: r.locked,
-             ambiguous: r.ambiguous, tied: r.tied };
+             ambiguous: r.ambiguous, tied: r.tied, end: live.end };
   }
   refresh();
 }
@@ -1903,6 +1994,12 @@ refresh();
   },
   snapTargets: () => snapSegs().length,
   hoverSnap: () => hoverSnap,
+  /** **끝점 스냅**(오스냅, D-L46) — 종단 확인이 앱 경로 그대로 부른다(#17). */
+  endSnap: (from: Vec3, p: Pt2) => { const fr = frame(); return fr ? endSnapAt(fr, from, p) : null; },
+  /** 양 끝 스냅으로 놓인 획 — 측정이 "대각선이 놓이는 비"를 읽는다 */
+  twoPointStrokes: () => doc.strokes.filter(x => x.snapStart && x.snapEnd && x.seg3d)
+                                    .map(x => ({ id: x.id, start: x.snapStart!.kind,
+                                                 end: x.snapEnd!.kind, axis: x.axis })),
   live: () => live,
   axisLock: () => ({ mode: axisLock, resolved: lockedAxis() }),
   setAxisLock: (a: 0 | 1 | 2 | null) => { axisLock = a; relive(); },

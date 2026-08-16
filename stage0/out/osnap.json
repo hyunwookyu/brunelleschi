@@ -1,0 +1,417 @@
+{
+  "what": "**양 끝 스냅으로 축 밖 선(면 위 사선)이 놓이는가** — 사람 지시가 요구한 세 지표.",
+  "how": {
+    "fixtures": 240,
+    "fixture_failed": 0,
+    "compositions": [
+      "3pt_yaw35_pitch15",
+      "3pt_yaw20_pitch25",
+      "3pt_yaw50_pitch8",
+      "2pt_yaw35_pitch0",
+      "1pt_yaw0_pitch0"
+    ],
+    "jitters": [
+      0.005,
+      0.01,
+      0.03,
+      0.05
+    ],
+    "grades": [
+      "precise",
+      "medium"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "targets": "**참 3D 상자 모서리 12개**(앱에서는 이미 놓인 3D 레이어가 그 자리다). ⚠ **상한이다** — 카메라 오차가 안 섞였다(#2).",
+    "diagonals": "`faceDiagonals` — 바닥면·옆면의 대각선 둘. **어느 소실점도 안 향한다.**",
+    "ground": "지면 스냅은 **끈다** — 화면 거리가 정의상 0이라 성공률을 공짜로 1로 만든다(#3).",
+    "metric": "붙은 두 점과 참 대각선 두 끝의 거리 평균 ÷ 기하 크기(가까운 짝으로). `anchor_err_median`은 **시작점만**의 오차다. ⚠⚠ **이 값은 옳은 대상에 붙으면 정의상 0이다**(대상이 참 3D이므로) — 크기가 아니라 **이산**이고, 읽을 것은 `silently_wrong_*`다(`what_the_zeros_mean` 참조).",
+    "axis_path_note": "**축 경로로는 이 획들이 0개 놓인다** — 대각선은 어느 축도 아니기 때문이다. 그러므로 이 팔의 이득은 **대조가 아니라 정의**이고, 재는 것은 '되는가'가 아니라 '**얼마나 맞게** 되는가'다(#5)."
+  },
+  "headline": {
+    "diagonals": 480,
+    "start_snap": 476,
+    "start_snap_rate": 0.9917,
+    "both_snap": 474,
+    "both_snap_rate": 0.9875,
+    "start_only": 2,
+    "axis_path_placed": 0,
+    "shape_median": 0,
+    "anchor_err_median": 0,
+    "silently_wrong_0.1": 0.0148,
+    "silently_wrong_0.2": 0.0105,
+    "silently_wrong_0.5": 0,
+    "silently_wrong_0.1_n": "7/474",
+    "silently_wrong_0.2_n": "5/474",
+    "silently_wrong_0.5_n": "0/474"
+  },
+  "what_the_zeros_mean": {
+    "shape_median = 0 · anchor_err_median = 0": "**구성상 0이다.** 스냅은 대상 위의 점을 **그대로** 쓰고, 이 하네스의 대상은 **참 3D 모서리**다 — 옳은 꼭짓점에 붙으면 오차가 **정확히 0**이다(측정이 아니라 설계 보장, #5·#2). 그러므로 **이 지표의 정보는 크기가 아니라 이산이다**: 0(옳은 대상) 또는 큰 값(틀린 대상). **실제로 재는 양은 `silently_wrong_*`(오붙음률)이고 그것이 이 원장의 결론이다.**",
+    "axis_path_placed = 0": "**정의의 귀결이다** — 대각선은 어느 축도 아니므로 축 경로로는 놓일 수 없다. 대조군이 아니라 '이 기전이 없으면 0'이라는 사실의 기록이다.",
+    "낮은 잡음 행의 silently_wrong = 0": "겨냥 오차가 작으면 가장 가까운 후보가 참 꼭짓점이다 — **잡음 0.05에서만 5/474가 틀린다**. 즉 이 기전의 실패는 **겨냥 오차 / 대상 간격**의 비가 정한다(`snap.json`의 결론과 같다)."
+  },
+  "by_composition": {
+    "3pt_yaw35_pitch15": {
+      "diagonals": 96,
+      "start_snap": 96,
+      "start_snap_rate": 1,
+      "both_snap": 96,
+      "both_snap_rate": 1,
+      "start_only": 0,
+      "axis_path_placed": 0,
+      "shape_median": 0,
+      "anchor_err_median": 0,
+      "silently_wrong_0.1": 0.0104,
+      "silently_wrong_0.2": 0.0104,
+      "silently_wrong_0.5": 0,
+      "silently_wrong_0.1_n": "1/96",
+      "silently_wrong_0.2_n": "1/96",
+      "silently_wrong_0.5_n": "0/96"
+    },
+    "3pt_yaw20_pitch25": {
+      "diagonals": 96,
+      "start_snap": 92,
+      "start_snap_rate": 0.9583,
+      "both_snap": 90,
+      "both_snap_rate": 0.9375,
+      "start_only": 2,
+      "axis_path_placed": 0,
+      "shape_median": 0,
+      "anchor_err_median": 0,
+      "silently_wrong_0.1": 0,
+      "silently_wrong_0.2": 0,
+      "silently_wrong_0.5": 0,
+      "silently_wrong_0.1_n": "0/90",
+      "silently_wrong_0.2_n": "0/90",
+      "silently_wrong_0.5_n": "0/90"
+    },
+    "3pt_yaw50_pitch8": {
+      "diagonals": 96,
+      "start_snap": 96,
+      "start_snap_rate": 1,
+      "both_snap": 96,
+      "both_snap_rate": 1,
+      "start_only": 0,
+      "axis_path_placed": 0,
+      "shape_median": 0,
+      "anchor_err_median": 0,
+      "silently_wrong_0.1": 0.0208,
+      "silently_wrong_0.2": 0,
+      "silently_wrong_0.5": 0,
+      "silently_wrong_0.1_n": "2/96",
+      "silently_wrong_0.2_n": "0/96",
+      "silently_wrong_0.5_n": "0/96"
+    },
+    "2pt_yaw35_pitch0": {
+      "diagonals": 96,
+      "start_snap": 96,
+      "start_snap_rate": 1,
+      "both_snap": 96,
+      "both_snap_rate": 1,
+      "start_only": 0,
+      "axis_path_placed": 0,
+      "shape_median": 0,
+      "anchor_err_median": 0,
+      "silently_wrong_0.1": 0,
+      "silently_wrong_0.2": 0,
+      "silently_wrong_0.5": 0,
+      "silently_wrong_0.1_n": "0/96",
+      "silently_wrong_0.2_n": "0/96",
+      "silently_wrong_0.5_n": "0/96"
+    },
+    "1pt_yaw0_pitch0": {
+      "diagonals": 96,
+      "start_snap": 96,
+      "start_snap_rate": 1,
+      "both_snap": 96,
+      "both_snap_rate": 1,
+      "start_only": 0,
+      "axis_path_placed": 0,
+      "shape_median": 0,
+      "anchor_err_median": 0,
+      "silently_wrong_0.1": 0.0417,
+      "silently_wrong_0.2": 0.0417,
+      "silently_wrong_0.5": 0,
+      "silently_wrong_0.1_n": "4/96",
+      "silently_wrong_0.2_n": "4/96",
+      "silently_wrong_0.5_n": "0/96"
+    }
+  },
+  "by_jitter": {
+    "jit_0.005": {
+      "diagonals": 120,
+      "start_snap": 120,
+      "start_snap_rate": 1,
+      "both_snap": 120,
+      "both_snap_rate": 1,
+      "start_only": 0,
+      "axis_path_placed": 0,
+      "shape_median": 0,
+      "anchor_err_median": 0,
+      "silently_wrong_0.1": 0,
+      "silently_wrong_0.2": 0,
+      "silently_wrong_0.5": 0,
+      "silently_wrong_0.1_n": "0/120",
+      "silently_wrong_0.2_n": "0/120",
+      "silently_wrong_0.5_n": "0/120"
+    },
+    "jit_0.01": {
+      "diagonals": 120,
+      "start_snap": 120,
+      "start_snap_rate": 1,
+      "both_snap": 120,
+      "both_snap_rate": 1,
+      "start_only": 0,
+      "axis_path_placed": 0,
+      "shape_median": 0,
+      "anchor_err_median": 0,
+      "silently_wrong_0.1": 0,
+      "silently_wrong_0.2": 0,
+      "silently_wrong_0.5": 0,
+      "silently_wrong_0.1_n": "0/120",
+      "silently_wrong_0.2_n": "0/120",
+      "silently_wrong_0.5_n": "0/120"
+    },
+    "jit_0.03": {
+      "diagonals": 120,
+      "start_snap": 120,
+      "start_snap_rate": 1,
+      "both_snap": 119,
+      "both_snap_rate": 0.9917,
+      "start_only": 1,
+      "axis_path_placed": 0,
+      "shape_median": 0,
+      "anchor_err_median": 0,
+      "silently_wrong_0.1": 0,
+      "silently_wrong_0.2": 0,
+      "silently_wrong_0.5": 0,
+      "silently_wrong_0.1_n": "0/119",
+      "silently_wrong_0.2_n": "0/119",
+      "silently_wrong_0.5_n": "0/119"
+    },
+    "jit_0.05": {
+      "diagonals": 120,
+      "start_snap": 116,
+      "start_snap_rate": 0.9667,
+      "both_snap": 115,
+      "both_snap_rate": 0.9583,
+      "start_only": 1,
+      "axis_path_placed": 0,
+      "shape_median": 0,
+      "anchor_err_median": 0,
+      "silently_wrong_0.1": 0.0609,
+      "silently_wrong_0.2": 0.0435,
+      "silently_wrong_0.5": 0,
+      "silently_wrong_0.1_n": "7/115",
+      "silently_wrong_0.2_n": "5/115",
+      "silently_wrong_0.5_n": "0/115"
+    }
+  },
+  "by_grade": {
+    "precise": {
+      "diagonals": 240,
+      "start_snap": 239,
+      "start_snap_rate": 0.9958,
+      "both_snap": 238,
+      "both_snap_rate": 0.9917,
+      "start_only": 1,
+      "axis_path_placed": 0,
+      "shape_median": 0,
+      "anchor_err_median": 0,
+      "silently_wrong_0.1": 0.0126,
+      "silently_wrong_0.2": 0.0084,
+      "silently_wrong_0.5": 0,
+      "silently_wrong_0.1_n": "3/238",
+      "silently_wrong_0.2_n": "2/238",
+      "silently_wrong_0.5_n": "0/238"
+    },
+    "medium": {
+      "diagonals": 240,
+      "start_snap": 237,
+      "start_snap_rate": 0.9875,
+      "both_snap": 236,
+      "both_snap_rate": 0.9833,
+      "start_only": 1,
+      "axis_path_placed": 0,
+      "shape_median": 0,
+      "anchor_err_median": 0,
+      "silently_wrong_0.1": 0.0169,
+      "silently_wrong_0.2": 0.0127,
+      "silently_wrong_0.5": 0,
+      "silently_wrong_0.1_n": "4/236",
+      "silently_wrong_0.2_n": "3/236",
+      "silently_wrong_0.5_n": "0/236"
+    }
+  },
+  "gate": {
+    "registered": "**축 밖 선(면 위 사선)이 양 끝 스냅으로 놓인다.** 셋을 함께 본다: ① 시작점이 붙는 비(`start_snap`) ② **양 끝이 다 붙는 비**(`both_snap`) — 이것이 이 기전의 문이다 ③ 그렇게 놓인 대각선의 **조용히 틀린 배치**가 절단 0.2에서 **같은 잉크의 축 경로 배치보다 나쁘지 않다**. 통과선: `both_snap`이 **0이 아니고**(#38 — 덮는 대상이 없으면 이 팔은 공허하다), 조용히 틀림이 절단 0.2에서 **0.5 미만**이다. ⚠ **대상을 참 3D로 준다** — 이것은 기전의 **상한**이고 카메라 오차가 빠져 있다(#2). ⚠ 축 스냅 팔의 대각선 배치는 **구성상 0**이다(대각선은 어느 축도 아니다) — 대조가 아니라 **정의**다. ⚠ **이 항목이 등록한 게이트이고 CLAUDE.md §2의 중단 조건이 아니다**(#41).",
+    "reachability": "**오라클은 참 대상 + 잡음 0 행이고 그것은 항등이다** — 겨냥 오차가 0이면 시작점이 참 꼭짓점의 상 위에 있으므로 스냅이 **정의상** 그 꼭짓점을 고른다(#5). 그래서 잡음 0 행을 아예 안 돌렸다. 남는 도달 가능성 물음은 **사람의 겨냥 오차가 어느 자릿수인가**이고 그것은 **표본 0이다**(AS-C1). 합성 잉크의 겨냥 오차는 AS-C10이 양방향으로 틀렸다고 적었다.",
+    "reachability_absent": "**사람 획의 겨냥 오차 표본이 0이다**(AS-C1·AS-C10). 참 대상 + 무잡음 행은 항등이라 오라클로 못 쓴다(#5). 그러므로 이 게이트를 넘을 수 있는 것이 무엇인지는 **미상**이다.",
+    "result": {
+      "both_snap": "474/480",
+      "silently_wrong_0_2": 0.0105,
+      "shape_median": 0,
+      "passed": true
+    },
+    "note": "⚠ **이 항목이 등록한 게이트다**(#41). 대상이 참 3D라 **상한**이다."
+  },
+  "constants": {
+    "hash": "1b6175a4",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "vertical_ask_deg": 45
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "a45078a5",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong",
+      "rate",
+      "fraction"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  }
+}

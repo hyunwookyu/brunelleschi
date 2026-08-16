@@ -43,9 +43,9 @@
     "scenes": 216,
     "scenes_with_dropped": "176/216",
     "scenes_with_snap_lost": "94/216",
-    "dropped_total": 570,
-    "gained_total": 402,
-    "placed_delta": -168,
+    "dropped_total": 564,
+    "gained_total": 401,
+    "placed_delta": -163,
     "dropped_per_scene": {
       "n": 216,
       "min": 0,
@@ -58,7 +58,7 @@
       "n": 216,
       "min": 0,
       "p10": 0,
-      "median": 1.5,
+      "median": 1,
       "p90": 4,
       "max": 8
     },
@@ -72,9 +72,9 @@
     },
     "snap": {
       "had": 1676,
-      "reanchored": 1381,
-      "lost": 295,
-      "lost_rate": 0.176
+      "reanchored": 1380,
+      "lost": 296,
+      "lost_rate": 0.1766
     },
     "by_composition": {
       "3pt_yaw35_pitch15": {
@@ -84,8 +84,8 @@
       },
       "3pt_yaw20_pitch25": {
         "scenes": 72,
-        "dropped": 173,
-        "snap_lost": 86
+        "dropped": 167,
+        "snap_lost": 87
       },
       "3pt_yaw50_pitch8": {
         "scenes": 72,

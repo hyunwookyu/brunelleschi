@@ -1,5 +1,5 @@
 {
-  "n_flags": 1799,
+  "n_flags": 1823,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -5085,6 +5085,11 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_undo.json:visible_loss.gained_per_scene.median",
+      "val": 1,
+      "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
+    },
+    {
       "path": "order_undo.json:visible_loss.snap_lost_per_scene.median",
       "val": 0,
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
@@ -5093,6 +5098,131 @@
       "path": "order_undo.json:visible_loss.set_vs_counter_mismatch",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "osnap.json:headline.anchor_err_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "osnap.json:by_composition.3pt_yaw35_pitch15.start_snap_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "osnap.json:by_composition.3pt_yaw35_pitch15.both_snap_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "osnap.json:by_composition.3pt_yaw35_pitch15.anchor_err_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "osnap.json:by_composition.3pt_yaw20_pitch25.anchor_err_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "osnap.json:by_composition.3pt_yaw50_pitch8.start_snap_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "osnap.json:by_composition.3pt_yaw50_pitch8.both_snap_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "osnap.json:by_composition.3pt_yaw50_pitch8.anchor_err_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "osnap.json:by_composition.2pt_yaw35_pitch0.start_snap_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "osnap.json:by_composition.2pt_yaw35_pitch0.both_snap_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "osnap.json:by_composition.2pt_yaw35_pitch0.anchor_err_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "osnap.json:by_composition.1pt_yaw0_pitch0.start_snap_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "osnap.json:by_composition.1pt_yaw0_pitch0.both_snap_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "osnap.json:by_composition.1pt_yaw0_pitch0.anchor_err_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "osnap.json:by_jitter.jit_0.005.start_snap_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "osnap.json:by_jitter.jit_0.005.both_snap_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "osnap.json:by_jitter.jit_0.005.anchor_err_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "osnap.json:by_jitter.jit_0.01.start_snap_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "osnap.json:by_jitter.jit_0.01.both_snap_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "osnap.json:by_jitter.jit_0.01.anchor_err_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "osnap.json:by_jitter.jit_0.03.start_snap_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "osnap.json:by_jitter.jit_0.03.anchor_err_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "osnap.json:by_jitter.jit_0.05.anchor_err_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "osnap.json:by_grade.precise.anchor_err_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "osnap.json:by_grade.medium.anchor_err_median",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
       "path": "persist.json:by_condition.jitter_0.01_erase_0.auto_drift",
@@ -5270,11 +5400,6 @@
       "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
     },
     {
-      "path": "promote.json:by_arm.base.chain_extra_by_composition.1pt_yaw0_pitch0",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
       "path": "promote.json:by_arm.tighten.recovery_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -5303,11 +5428,6 @@
       "path": "promote.json:by_arm.loosen.chain.rounds_used.median",
       "val": 1,
       "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
-    },
-    {
-      "path": "promote.json:base_by_composition.1pt_yaw0_pitch0.chain_extra",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "real_ink.json:n_sessions",
@@ -5407,21 +5527,21 @@
     {
       "path": "snap.json:by_density.wrong_by_kind.k2.0.280",
       "val": {
-        "endpoint": 3925
+        "vertex": 3925
       },
       "flag": "단일 범주 분포(n=3925) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "snap.json:by_density.wrong_by_kind.k3.0.200",
       "val": {
-        "endpoint": 15076
+        "vertex": 15076
       },
       "flag": "단일 범주 분포(n=15076) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "snap.json:by_density.wrong_by_kind.k3.0.280",
       "val": {
-        "endpoint": 15076
+        "vertex": 15076
       },
       "flag": "단일 범주 분포(n=15076) → 변별력 없음/단위 불일치 의심"
     },
@@ -9018,12 +9138,12 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 138
+      "reads": 139
     },
     {
       "field": "pts2d",
       "writes": 5,
-      "reads": 74
+      "reads": 78
     },
     {
       "field": "pts3d",
@@ -9032,8 +9152,8 @@
     },
     {
       "field": "axis",
-      "writes": 4,
-      "reads": 79
+      "writes": 5,
+      "reads": 80
     },
     {
       "field": "rep",
@@ -9069,7 +9189,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 177,
+      "files_scanned": 179,
       "exts_declared": [
         ".md",
         ".py",
@@ -9083,7 +9203,7 @@
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 118,
+      "files_scanned": 120,
       "exts_declared": [
         ".ts"
       ],
@@ -9093,7 +9213,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 177,
+      "files_scanned": 179,
       "exts_declared": [
         ".md",
         ".py",
@@ -9102,12 +9222,12 @@
       "hits_by_ext": {
         ".md": 10,
         ".py": 4,
-        ".ts": 45
+        ".ts": 46
       }
     },
     {
       "sweep": "external_data",
-      "files_scanned": 74,
+      "files_scanned": 76,
       "exts_declared": [
         ".ts"
       ],
@@ -9141,14 +9261,14 @@
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 12,
+      "targets": 13,
       "hits": 0,
-      "note": "값 대조를 **지난 것 4** · **면제 8**(`reachability_absent`) · 원장 43개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, guide_budget.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, preview_gap.json:gate, rule_camera.json:gate, segment_gate.json:gate, stage_browser.json:l_b3.gate"
+      "note": "값 대조를 **지난 것 4** · **면제 9**(`reachability_absent`) · 원장 44개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, guide_budget.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, osnap.json:gate, preview_gap.json:gate, rule_camera.json:gate, segment_gate.json:gate, stage_browser.json:l_b3.gate"
     },
     {
       "scan": "scan_zero_denominator",
       "unit": "하네스 파일",
-      "targets": 43,
+      "targets": 44,
       "hits": 12,
       "note": "원장을 쓰는 `web/test/**.ts`만 본다"
     }
@@ -9182,6 +9302,7 @@
     "order_promote.json",
     "order_signal.json",
     "order_undo.json",
+    "osnap.json",
     "persist.json",
     "preview_gap.json",
     "promote.json",

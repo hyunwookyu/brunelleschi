@@ -648,55 +648,55 @@
         "0.008": {
           "on_edge": 893,
           "midpoint": 16,
-          "endpoint": 3
+          "vertex": 3
         },
         "0.012": {
           "on_edge": 768,
           "midpoint": 29,
-          "endpoint": 5
+          "vertex": 5
         },
         "0.018": {
           "on_edge": 623,
           "midpoint": 51,
-          "endpoint": 8
+          "vertex": 8
         },
         "0.025": {
           "on_edge": 469,
           "midpoint": 74,
-          "endpoint": 14
+          "vertex": 14
         },
         "0.035": {
           "on_edge": 326,
           "midpoint": 121,
-          "endpoint": 16
+          "vertex": 16
         },
         "0.050": {
           "on_edge": 192,
           "midpoint": 130,
-          "endpoint": 36
+          "vertex": 36
         },
         "0.070": {
           "on_edge": 119,
           "midpoint": 61,
-          "endpoint": 128
+          "vertex": 128
         },
         "0.100": {
           "midpoint": 71,
           "on_edge": 49,
-          "endpoint": 177
+          "vertex": 177
         },
         "0.140": {
           "midpoint": 55,
-          "endpoint": 213,
+          "vertex": 213,
           "on_edge": 24
         },
         "0.200": {
-          "endpoint": 249,
+          "vertex": 249,
           "midpoint": 39,
           "on_edge": 3
         },
         "0.280": {
-          "endpoint": 288,
+          "vertex": 288,
           "midpoint": 3
         }
       },
@@ -704,106 +704,106 @@
         "0.008": {
           "on_edge": 4568,
           "midpoint": 1122,
-          "endpoint": 344
+          "vertex": 344
         },
         "0.012": {
           "on_edge": 3566,
           "midpoint": 1495,
-          "endpoint": 612
+          "vertex": 612
         },
         "0.018": {
           "on_edge": 2372,
-          "endpoint": 1012,
+          "vertex": 1012,
           "midpoint": 1891
         },
         "0.025": {
           "on_edge": 1432,
           "midpoint": 1778,
-          "endpoint": 1596
+          "vertex": 1596
         },
         "0.035": {
           "on_edge": 582,
-          "endpoint": 2370,
+          "vertex": 2370,
           "midpoint": 1408
         },
         "0.050": {
           "midpoint": 932,
-          "endpoint": 2977,
+          "vertex": 2977,
           "on_edge": 152
         },
         "0.070": {
           "midpoint": 320,
-          "endpoint": 3582,
+          "vertex": 3582,
           "on_edge": 43
         },
         "0.100": {
-          "endpoint": 3848,
+          "vertex": 3848,
           "midpoint": 70,
           "on_edge": 9
         },
         "0.140": {
-          "endpoint": 3900,
+          "vertex": 3900,
           "midpoint": 21,
           "on_edge": 4
         },
         "0.200": {
-          "endpoint": 3922,
+          "vertex": 3922,
           "midpoint": 3
         },
         "0.280": {
-          "endpoint": 3925
+          "vertex": 3925
         }
       },
       "k3": {
         "0.008": {
           "on_edge": 9841,
           "midpoint": 6206,
-          "endpoint": 3602
+          "vertex": 3602
         },
         "0.012": {
           "on_edge": 5980,
-          "endpoint": 6162,
+          "vertex": 6162,
           "midpoint": 6259
         },
         "0.018": {
           "on_edge": 2491,
-          "endpoint": 9046,
+          "vertex": 9046,
           "midpoint": 5440
         },
         "0.025": {
           "on_edge": 840,
-          "endpoint": 11389,
+          "vertex": 11389,
           "midpoint": 3679
         },
         "0.035": {
           "on_edge": 214,
-          "endpoint": 13234,
+          "vertex": 13234,
           "midpoint": 1865
         },
         "0.050": {
           "midpoint": 443,
-          "endpoint": 14579,
+          "vertex": 14579,
           "on_edge": 74
         },
         "0.070": {
-          "endpoint": 14945,
+          "vertex": 14945,
           "midpoint": 97,
           "on_edge": 17
         },
         "0.100": {
-          "endpoint": 15044,
+          "vertex": 15044,
           "midpoint": 25,
           "on_edge": 5
         },
         "0.140": {
-          "endpoint": 15070,
+          "vertex": 15070,
           "midpoint": 6
         },
         "0.200": {
-          "endpoint": 15076
+          "vertex": 15076
         },
         "0.280": {
-          "endpoint": 15076
+          "vertex": 15076
         }
       }
     }
@@ -2236,128 +2236,128 @@
     "rows_all": {
       "0.008": {
         "on_edge": 1014,
-        "endpoint": 2181,
+        "vertex": 2181,
         "none": 1109,
         "midpoint": 16
       },
       "0.012": {
         "on_edge": 884,
-        "endpoint": 2625,
+        "vertex": 2625,
         "none": 782,
         "midpoint": 29
       },
       "0.018": {
         "on_edge": 736,
-        "endpoint": 3066,
+        "vertex": 3066,
         "none": 467,
         "midpoint": 51
       },
       "0.025": {
         "on_edge": 556,
-        "endpoint": 3377,
+        "vertex": 3377,
         "none": 295,
         "midpoint": 92
       },
       "0.035": {
         "on_edge": 392,
-        "endpoint": 3621,
+        "vertex": 3621,
         "none": 150,
         "midpoint": 157
       },
       "0.050": {
         "on_edge": 258,
-        "endpoint": 3840,
+        "vertex": 3840,
         "none": 56,
         "midpoint": 166
       },
       "0.070": {
         "on_edge": 185,
-        "endpoint": 4058,
+        "vertex": 4058,
         "midpoint": 61,
         "none": 16
       },
       "0.100": {
         "midpoint": 89,
-        "endpoint": 4160,
+        "vertex": 4160,
         "on_edge": 70,
         "none": 1
       },
       "0.140": {
         "midpoint": 91,
-        "endpoint": 4205,
+        "vertex": 4205,
         "on_edge": 24
       },
       "0.200": {
-        "endpoint": 4260,
+        "vertex": 4260,
         "midpoint": 57,
         "on_edge": 3
       },
       "0.280": {
-        "endpoint": 4317,
+        "vertex": 4317,
         "midpoint": 3
       }
     },
     "rows_end_jitter_gt_0": {
       "0.008": {
         "on_edge": 924,
-        "endpoint": 1191,
+        "vertex": 1191,
         "none": 1109,
         "midpoint": 16
       },
       "0.012": {
         "on_edge": 794,
-        "endpoint": 1635,
+        "vertex": 1635,
         "none": 782,
         "midpoint": 29
       },
       "0.018": {
         "on_edge": 646,
-        "endpoint": 2076,
+        "vertex": 2076,
         "none": 467,
         "midpoint": 51
       },
       "0.025": {
         "on_edge": 484,
-        "endpoint": 2387,
+        "vertex": 2387,
         "none": 295,
         "midpoint": 74
       },
       "0.035": {
         "on_edge": 338,
-        "endpoint": 2631,
+        "vertex": 2631,
         "none": 150,
         "midpoint": 121
       },
       "0.050": {
         "on_edge": 204,
-        "endpoint": 2850,
+        "vertex": 2850,
         "none": 56,
         "midpoint": 130
       },
       "0.070": {
         "on_edge": 131,
-        "endpoint": 3032,
+        "vertex": 3032,
         "midpoint": 61,
         "none": 16
       },
       "0.100": {
         "midpoint": 71,
-        "endpoint": 3116,
+        "vertex": 3116,
         "on_edge": 52,
         "none": 1
       },
       "0.140": {
         "midpoint": 55,
-        "endpoint": 3161,
+        "vertex": 3161,
         "on_edge": 24
       },
       "0.200": {
-        "endpoint": 3198,
+        "vertex": 3198,
         "midpoint": 39,
         "on_edge": 3
       },
       "0.280": {
-        "endpoint": 3237,
+        "vertex": 3237,
         "midpoint": 3
       }
     }
@@ -2788,55 +2788,55 @@
       "0.008": {
         "on_edge": 893,
         "midpoint": 16,
-        "endpoint": 3
+        "vertex": 3
       },
       "0.012": {
         "on_edge": 768,
         "midpoint": 29,
-        "endpoint": 5
+        "vertex": 5
       },
       "0.018": {
         "on_edge": 623,
         "midpoint": 51,
-        "endpoint": 8
+        "vertex": 8
       },
       "0.025": {
         "on_edge": 469,
         "midpoint": 92,
-        "endpoint": 14
+        "vertex": 14
       },
       "0.035": {
         "on_edge": 326,
         "midpoint": 157,
-        "endpoint": 16
+        "vertex": 16
       },
       "0.050": {
         "on_edge": 192,
         "midpoint": 166,
-        "endpoint": 36
+        "vertex": 36
       },
       "0.070": {
         "on_edge": 119,
         "midpoint": 61,
-        "endpoint": 164
+        "vertex": 164
       },
       "0.100": {
         "midpoint": 89,
         "on_edge": 49,
-        "endpoint": 231
+        "vertex": 231
       },
       "0.140": {
         "midpoint": 91,
-        "endpoint": 267,
+        "vertex": 267,
         "on_edge": 24
       },
       "0.200": {
-        "endpoint": 321,
+        "vertex": 321,
         "midpoint": 57,
         "on_edge": 3
       },
       "0.280": {
-        "endpoint": 378,
+        "vertex": 378,
         "midpoint": 3
       }
     }
