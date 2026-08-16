@@ -95,7 +95,7 @@ test("하위 경로에서 열리고, 서비스 워커가 잡히고, 오프라인
   });
   expect(app.views).toBe(1);
   expect(app.bar).toContain("OBJ");
-  expect(app.bar).toContain("JSON");
+  expect(app.bar).toContain(".brnl 저장");   // 자체 형식(내용은 JSON)
   // 절대 경로가 섞이면 하위 경로에서 404가 난다
   for (const a of app.assets) expect(a?.startsWith("/")).toBe(false);
 

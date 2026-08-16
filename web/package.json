@@ -1,9 +1,9 @@
 {
-  "name": "sketch2space-web",
+  "name": "brunelleschi-web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "iPad 실시간 뷰어 — 파서 TS 포팅 (참조: python/, 지시서 V)",
+  "description": "Brunelleschi — 투시도와 입체를 동시에 보면서 실시간으로 입체를 만든다",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",

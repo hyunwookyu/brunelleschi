@@ -1288,7 +1288,7 @@ function renderBar() {
     '<span class="sep"></span>',
     btn("obj", "OBJ", false, !lifted(doc).length),
     btn("gltf", "glTF", false, !lifted(doc).length),
-    btn("json", "JSON", false, !doc.strokes.length),
+    btn("json", ".brnl 저장", false, !doc.strokes.length),
     btn("clear", "비우기"),
   ].join("");
 }
@@ -1500,16 +1500,18 @@ barEl.addEventListener("click", (e) => {
     const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
     const nameOf = (id: string) => doc.views.find(v => v.id === id)?.name ?? id;
     if (act === "json") {
-      // **자체 형식** — 뷰 목록과 **2D 레이어까지** 담는 유일한 경로다(OBJ·glTF는 3D만 낸다)
-      download(JSON.stringify(buildDoc2(), null, 2), `sketch2space-${stamp}.json`,
+      // **자체 형식** — 뷰 목록과 **2D 레이어까지** 담는 유일한 경로다(OBJ·glTF는 3D만 낸다).
+      // 확장자는 `.brnl`(Brunelleschi)이고 **내용은 JSON 그대로다** — 텍스트 편집기로 열리고
+      // `git diff`가 되고 디버깅이 쉽다(사람 지시). MIME도 `application/json`으로 둔다.
+      download(JSON.stringify(buildDoc2(), null, 2), `brunelleschi-${stamp}.brnl`,
                "application/json");
-      note = `JSON — 뷰 ${doc.views.length} · 획 ${doc.strokes.length}`;
+      note = `.brnl — 뷰 ${doc.views.length} · 획 ${doc.strokes.length} <span class="dim">(내용은 JSON이다)</span>`;
     } else {
       const lines = linesFromDoc(doc, nameOf);
-      const r = act === "obj" ? toObj(lines, { note: "SKETCH2SPACE" })
-                              : toGltf(lines, { note: "SKETCH2SPACE" });
+      const r = act === "obj" ? toObj(lines, { note: "Brunelleschi" })
+                              : toGltf(lines, { note: "Brunelleschi" });
       const text = act === "obj" ? (r.data as string) : JSON.stringify(r.data);
-      download(text, `sketch2space-${stamp}.${act}`,
+      download(text, `brunelleschi-${stamp}.${act}`,
                act === "obj" ? "text/plain" : "model/gltf+json");
       const pend = doc.strokes.length - lifted(doc).length;
       note = `${act.toUpperCase()} — 선 ${r.strokes}개`

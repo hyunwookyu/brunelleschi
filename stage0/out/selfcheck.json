@@ -8829,7 +8829,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 163,
+      "files_scanned": 164,
       "exts_declared": [
         ".md",
         ".py",
@@ -8853,14 +8853,14 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 163,
+      "files_scanned": 164,
       "exts_declared": [
         ".md",
         ".py",
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 9,
+        ".md": 10,
         ".py": 4,
         ".ts": 33
       }
@@ -8877,7 +8877,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 93,
+      "targets": 92,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
