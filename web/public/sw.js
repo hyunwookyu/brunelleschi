@@ -7,7 +7,7 @@
 // 실제로 빌드된 파일 목록으로 바꾼다 — 그러지 않으면 첫 방문에서 **HTML만 캐시되고**
 // 번들은 그때그때 받아 두는 것에 기대게 된다(그리는 도중 오프라인이 되면 다음 실행이 깨진다).
 // 목록에 빌드 해시가 들어가므로 **판본이 바뀌면 캐시 이름도 바뀐다** — 낡은 번들이 안 남는다.
-const PRECACHE = self.__PRECACHE__ || ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
+const PRECACHE = self.__PRECACHE__ || ["./", "./l.html", "./manifest.webmanifest", "./icon.svg"];
 const CACHE = "sketch3d-" + (self.__BUILD__ || "dev");
 
 self.addEventListener("install", (e) => {
@@ -38,7 +38,7 @@ self.addEventListener("fetch", (e) => {
           caches.open(CACHE).then((c) => c.put(req, copy));
         }
         return res;
-      }).catch(() => caches.match("./index.html"));
+      }).catch(() => caches.match("./l.html"));
     }),
   );
 });

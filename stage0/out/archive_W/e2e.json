@@ -1,4 +1,5 @@
 {
+  "_archived": "**옛 UI(`index.html` + `main.ts`)를 지워 이 원장을 만드는 스펙(`e2e/flow.spec.ts`)이 없다**(L-D.3 통과 후, 2026-08-16). 다시 못 돌리므로 `stage0/out/`에서 뺐다 — 남겨 두면 상수가 움직일 때마다 STALE로 뜨는데 고칠 방법이 없다. **현재형 근거로 인용하지 않고 `@해시`를 붙이지 않는다.** 새 UI의 같은 양은 `stage_browser.json`의 `l_d3`(지연·스크린샷)와 `l_d3_save_roundtrip`(복원)에 있다. ⚠ 둘을 견주지 않는다 — **다른 화면·다른 구간**이다.",
   "spec": "S-10 종단 검증 — **실제 앱을 띄우고 실제 포인터 이벤트로** 그린 결과.",
   "constants": {
     "hash": "34db7279",
@@ -40,7 +41,7 @@
       },
       "HOMOG_TOL": {
         "snap_deg": 3,
-        "degenerate_cross": 1e-9
+        "degenerate_cross": 1e-09
       },
       "HORIZON_TOL": {
         "min_slope_deg": 3.75,

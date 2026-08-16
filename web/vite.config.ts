@@ -104,11 +104,12 @@ export default defineConfig({
   // host: true → 0.0.0.0 바인딩(LAN 노출). 기존 127.0.0.1 고정을 대체한다.
   server: { host: true, port: PORT, strictPort: true },
   plugins: [...(useHttps ? [basicSsl()] : []), printLanUrls(useHttps, PORT), swPrecache()],
-  // **두 화면을 함께 낸다**(L-B). `l.html`이 새 단일 뷰포트 UI이고 `index.html`은 옛 UI다 —
-  // 옛 UI는 **L-B 게이트 통과 전까지 지우지 않는다**(A-4). 게이트를 지나면 `l.html`이 index가 된다.
+  // **화면은 `l.html` 하나다** — L-D.3 종단 검증을 통과한 뒤 옛 UI(`index.html`·`main.ts`·
+  // `cameraPanel.ts`)를 지웠다(2026-08-16, A-4: 폐기 코드를 지우기 전에 게이트를 통과시킨다).
+  // 루트로 들어온 사람은 `public/index.html`(리다이렉트 한 장)이 `l.html`로 보낸다.
   build: {
     target: "es2022",
-    rollupOptions: { input: { main: "index.html", l: "l.html" } },
+    rollupOptions: { input: { l: "l.html" } },
   },
   // **vitest는 `test/`만 본다** — `e2e/`는 Playwright 것이라 vitest가 집으면
   // `test.describe.configure()`에서 터진다(실제로 걸렸다. 두 러너가 같은 확장자를 쓴다).

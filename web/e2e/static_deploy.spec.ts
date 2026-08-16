@@ -44,19 +44,6 @@ test.beforeAll(async () => {
     if (!p.startsWith(SUB)) { res.statusCode = 404; res.end("nope"); return; }
     p = p.slice(SUB.length) || "/";
     if (p.endsWith("/")) p += "l.html";
-    // **양성 채널**(#30) — 사전 캐시 목록에서 번들을 뺀 서비스 워커를 따로 낸다.
-    // 통과가 무엇을 배제했는지 보이려면 **실패하는 팔**이 있어야 한다.
-    if (p === "/sw-broken.js") {
-      const src = await readFile(join(DIST, "sw.js"), "utf-8");
-      const out = src
-        .replace(/self\.__PRECACHE__ = (\[.*?\]);/, (_m, list) => {
-          const kept = (JSON.parse(list) as string[]).filter(u => !u.endsWith(".js"));
-          return `self.__PRECACHE__ = ${JSON.stringify(kept)};`;
-        })
-        .replace(/self\.__BUILD__ = ".*?";/, 'self.__BUILD__ = "broken";');
-      res.setHeader("Content-Type", "text/javascript");
-      res.end(out); return;
-    }
     try {
       const buf = await readFile(join(DIST, p));
       res.setHeader("Content-Type", MIME[extname(p)] ?? "application/octet-stream");
@@ -147,51 +134,55 @@ test("하위 경로에서 열리고, 서비스 워커가 잡히고, 오프라인
 });
 
 /**
- * **양성 채널**(PITFALLS #30) — 위의 ③이 무엇을 배제했는지 보인다.
+ * **양성 채널**(PITFALLS #30) — 위 ③이 무엇을 배제했는지 보인다.
  *
- * 리뷰어가 짚었다: 오프라인 통과에 **실패해야 하는 팔이 없었다.** 통과가 사전 캐시 목록의
- * 효력을 증명하는 것인지, 아니면 다른 경로로 어차피 뜨는 것인지 안 갈렸다.
- * 같은 성격의 대조군이 다른 블록에는 전부 있다(`backbuffer_frame_control` ·
- * `roundtrip_wrong_pose_control` · `blank_corner_control`).
+ * 리뷰어가 짚었다: 오프라인 통과에 **실패해야 하는 팔이 없었다.** 통과가 캐시의 효력인지,
+ * 아니면 다른 경로로 어차피 뜨는 것인지 안 갈렸다.
  *
- * **팔 둘을 낸다** — 하나만으로는 안 갈린다:
- *   A. 사전 캐시 목록에서 `.js`를 뺀 서비스 워커 → 그래도 뜨는가
- *   B. A에 더해 **캐시에 들어간 `.js`를 직접 지운다** → 그러면 깨지는가
+ * ⚠⚠ **초판은 팔을 둘 뒀고 그중 하나가 무효였다 — 철회한다.**
+ * 팔 A는 "사전 캐시 목록에서 `.js`를 뺀 서비스 워커"를 따로 등록해 재는 것이었는데,
+ * **앱(`mainL.ts`)이 페이지를 열 때마다 자기 서비스 워커(`./sw.js`)를 다시 등록한다.**
+ * 그래서 같은 scope에 **워커 둘이 얹혀 경쟁**했고(캐시 목록에 `sketch3d-<build>`와
+ * `sketch3d-broken`이 함께 남는다), 어느 쪽이 그 새로고침을 잡을지가 실행마다 갈렸다.
+ * 초판이 그 팔에서 읽은 결론("A가 살았다 → ③의 통과는 사전 캐시의 효력이 아니다")은
+ * **교락된 팔에서 나온 것이므로 무효다.** 빌드가 바뀌자 곧바로 뒤집혔다.
  *
- * ⚠ **A는 안 깨졌다**(실측). 서비스 워커의 `fetch` 핸들러가 성공한 동일 출처 응답을
- * 그때그때 캐시에 넣으므로, 온라인으로 두 번 연 뒤에는 번들이 **런타임 캐시**로 이미 들어 있다.
- * 즉 **③의 통과는 사전 캐시 목록의 효력이 아니다** — 이 시나리오에서 사전 캐시가 하는 일은
- * *첫 방문에서 아직 안 받은 자산*(지연 로드 청크)을 미리 채우는 것뿐이고, 이 확인은 그것을
- * 재지 않는다. **B가 깨지는 것**이 ③이 실제로 배제하는 것이다: 캐시에 번들이 없으면 안 뜬다.
+ * **팔 하나로 줄인다**(A-3: 가장 단순한 것). 앱의 서비스 워커를 그대로 두고
+ * **그 캐시에서 `.js`만 지운다.** 그러면 문서는 여전히 캐시에서 오고(`doc_from_cache`)
+ * **앱은 못 산다**(`app_revived`) — 그것이 ③이 실제로 배제하는 것이다:
+ * **캐시에 번들이 없으면 오프라인 새로고침이 깨진다.**
  */
-test("[양성 채널] 캐시에 번들이 없으면 오프라인 새로고침이 실제로 깨진다", async ({ page, context }) => {
+test("[양성 채널] 캐시에서 번들을 지우면 오프라인 새로고침이 실제로 깨진다", async ({ page, context }) => {
   await page.goto(`http://localhost:${PORT}${SUB}/l.html`);
   await page.waitForFunction(() => !!(window as unknown as { S2S?: unknown }).S2S);
-
-  const scope = await page.evaluate(async () => {
-    const reg = await navigator.serviceWorker.register("./sw-broken.js");
-    await navigator.serviceWorker.ready;
-    return reg.scope;
-  });
-  expect(scope).toBe(`http://localhost:${PORT}${SUB}/`);
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+  // 사전 캐시가 채워질 틈을 준다(설치 → 활성)
   await page.reload();
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
 
+  /**
+   * 오프라인에서 **문서**와 **앱**을 갈라 낸다.
+   * ⚠ `reload` 거부(`ERR_INTERNET_DISCONNECTED`)를 잡아야 한다 — 안 잡으면
+   * "문서도 못 왔다"가 관측이 아니라 테스트 오류로 뜬다(#7).
+   */
   const lives = async () => {
     await context.setOffline(true);
-    await page.reload();
-    const ok = await page
-      .waitForFunction(() => !!(window as unknown as { S2S?: unknown }).S2S,
-                       undefined, { timeout: 5_000 })
-      .then(() => true, () => false);
+    const doc = await page.reload().then(() => true, () => false);
+    const app = doc
+      ? await page.waitForFunction(() => !!(window as unknown as { S2S?: unknown }).S2S,
+                                   undefined, { timeout: 5_000 }).then(() => true, () => false)
+      : false;
     await context.setOffline(false);
-    return ok;
+    if (!doc) await page.goto(`http://localhost:${PORT}${SUB}/l.html`);
+    return { doc, app };
   };
 
-  // 팔 A — 사전 캐시에서만 뺐다. **런타임 캐시가 메운다**(실측: 산다)
-  const armA = await lives();
+  // ---- ① **지우기 전**: 오프라인에서 앱이 산다(위 ③과 같은 상태)
+  const before = await lives();
+  expect(before.doc).toBe(true);
+  expect(before.app).toBe(true);
 
-  // 팔 B — 캐시에 들어간 `.js`를 직접 지운다. **이때는 깨져야 한다**
+  // ---- ② **캐시에서 `.js`만 지운다** — 앱 코드는 안 건드린다
   const deleted = await page.evaluate(async () => {
     let n = 0;
     for (const k of await caches.keys()) {
@@ -202,20 +193,20 @@ test("[양성 채널] 캐시에 번들이 없으면 오프라인 새로고침이
     }
     return n;
   });
-  expect(deleted).toBeGreaterThan(0);          // 지울 것이 없으면 이 팔은 아무 말도 안 한다(#32)
-  const armB = await lives();
+  expect(deleted).toBeGreaterThan(0);   // 지울 것이 없으면 이 팔은 아무 말도 안 한다(#32)
 
-  expect(armB).toBe(false);                    // **깨져야 통과다**
+  // ---- ③ **깨져야 통과다**
+  const after = await lives();
+  expect(after.doc).toBe(true);         // 문서는 여전히 캐시에서 온다
+  expect(after.app).toBe(false);        // **앱은 못 산다**
 
   led.l_d2_offline_control = {
-    arm_a_precache_only: { removed: "`.js` 전부를 사전 캐시 목록에서 뺐다", app_revived: armA },
-    arm_b_cache_emptied: { deleted_js_entries: deleted, app_revived: armB },
-    reading: armA
-      ? "**A가 살았다 — ③의 통과는 사전 캐시 목록의 효력이 아니다.** `fetch` 핸들러가 성공 "
-        + "응답을 그때그때 캐시하므로 온라인으로 두 번 연 뒤에는 번들이 런타임 캐시에 있다. "
-        + "사전 캐시가 실제로 사는 자리는 **첫 방문에서 아직 안 받은 지연 로드 청크**이고 "
-        + "이 확인은 그것을 안 잰다(미측정). **B가 깨지는 것**이 ③이 배제하는 것이다 — "
-        + "캐시에 번들이 없으면 안 뜬다."
-      : "A가 깨졌다 — 사전 캐시 목록이 필요조건이다(이 실행에서는 그렇게 나왔다).",
+    before_delete: before, deleted_js_entries: deleted, after_delete: after,
+    reading: "**③이 배제하는 것은 '캐시에 번들이 있다'이다.** 지우기 전에는 문서·앱 둘 다 살고, "
+      + "`.js`만 지우면 **문서는 살고 앱은 죽는다** — 즉 그 확인은 눈이 떠 있다. "
+      + "⚠⚠ **초판의 팔 A(사전 캐시 목록에서 `.js`를 뺀 별도 워커)는 무효였다** — "
+      + "앱이 자기 서비스 워커를 매번 다시 등록하므로 같은 scope에 워커 둘이 경쟁했다. "
+      + "거기서 읽은 '③의 통과는 사전 캐시의 효력이 아니다'를 **철회한다**. "
+      + "**사전 캐시 목록만의 몫은 이 설계로 안 갈린다**(앱의 등록을 못 끄기 때문이다) — 미측정이다.",
   };
 });

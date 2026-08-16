@@ -1,5 +1,5 @@
 {
-  "n_flags": 1752,
+  "n_flags": 1751,
   "flags": [
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.f_rel_err",
@@ -465,11 +465,6 @@
     },
     {
       "path": "draft_recover.json:by_arm.neutral_ignores_drawing|snap3.guide_pair_separation_deg.n",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "e2e.json:service_worker_in_dev",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -8783,37 +8778,37 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 203
+      "reads": 137
     },
     {
       "field": "pts2d",
       "writes": 3,
-      "reads": 84
+      "reads": 71
     },
     {
       "field": "pts3d",
-      "writes": 9,
-      "reads": 69
+      "writes": 4,
+      "reads": 37
     },
     {
       "field": "axis",
-      "writes": 6,
-      "reads": 94
+      "writes": 4,
+      "reads": 83
     },
     {
       "field": "rep",
-      "writes": 2,
-      "reads": 89
+      "writes": 1,
+      "reads": 80
     },
     {
       "field": "anchorRef",
-      "writes": 6,
-      "reads": 4
+      "writes": 4,
+      "reads": 3
     },
     {
       "field": "joinShift",
-      "writes": 8,
-      "reads": 7
+      "writes": 4,
+      "reads": 6
     },
     {
       "field": "layer",
@@ -8822,19 +8817,19 @@
     },
     {
       "field": "color",
-      "writes": 2,
+      "writes": 0,
       "reads": 10
     },
     {
       "field": "width",
       "writes": 1,
-      "reads": 18
+      "reads": 16
     }
   ],
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 166,
+      "files_scanned": 163,
       "exts_declared": [
         ".md",
         ".py",
@@ -8848,7 +8843,7 @@
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 107,
+      "files_scanned": 105,
       "exts_declared": [
         ".ts"
       ],
@@ -8858,7 +8853,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 166,
+      "files_scanned": 163,
       "exts_declared": [
         ".md",
         ".py",
@@ -8867,7 +8862,7 @@
       "hits_by_ext": {
         ".md": 9,
         ".py": 4,
-        ".ts": 32
+        ".ts": 33
       }
     }
   ],
@@ -8882,7 +8877,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 97,
+      "targets": 93,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
@@ -8891,7 +8886,7 @@
       "unit": "게이트 블록",
       "targets": 7,
       "hits": 0,
-      "note": "값 대조를 **지난 것 3** · **면제 4**(`reachability_absent`) · 원장 40개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: guide_budget.json:gate, lift_gate.json:gate, preview_gap.json:gate, segment_gate.json:gate"
+      "note": "값 대조를 **지난 것 3** · **면제 4**(`reachability_absent`) · 원장 39개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: guide_budget.json:gate, lift_gate.json:gate, preview_gap.json:gate, segment_gate.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -8912,7 +8907,6 @@
     "continue_after_rotate.json",
     "doc_store.json",
     "draft_recover.json",
-    "e2e.json",
     "face_diagonal.json",
     "fix_load.json",
     "free_curve.json",

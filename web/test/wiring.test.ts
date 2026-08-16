@@ -71,13 +71,31 @@ describe("S-7 (0) 측정-앱 경로 배선", () => {
     expect(diff.sort()).toEqual([...allowed].sort());
   });
 
-  it("**앱이 옵션 객체를 직접 적지 않는다** — `appPlace.ts`에서 가져온다", () => {
-    const main = readFileSync(resolve(SRC, "main.ts"), "utf-8");
-    // 옵션 없는 `settle(x, y)` 호출이 남아 있으면 그것이 §4.3에서 실제로 일어난 결함이다
-    const bare = main.match(/settle\([^)]*\)/g)?.filter(c => c.split(",").length < 3) ?? [];
-    expect(bare, `옵션 없이 부른 settle이 있다: ${bare.join(" / ")}`).toEqual([]);
-    expect(main).toContain("FIRST_VIEW_OPTS");
-    expect(main).toContain("VIEW_OPTS");
+  /**
+   * **⚠ 이 검사의 대상이 L 전환에서 사라졌다**(2026-08-16, 옛 UI 삭제 절차).
+   *
+   * 원래 잡던 결함: 옛 UI(`main.ts`)가 `settle(drawn, ctx)`를 **옵션 없이** 불러
+   * S-6이 측정해 둔 면 위 사선 경로가 앱에서 안 켜져 있었다(§4.3).
+   * 새 UI(`mainL.ts`)는 **그 계층을 아예 안 쓴다** — `liftAll`·`placeLive`·`solveInto`가
+   * 그 자리이고 그것이 L 전환의 내용이다. 그러므로 `main.ts`를 읽던 줄은 대상이 없다.
+   *
+   * **지우지 않고 방향을 뒤집는다**(PITFALLS: 대상이 사라진 항목은 그렇게 표시한다).
+   * 이제 확인하는 것은 **새 UI가 폐기된 배치 계층으로 돌아가지 않았는가**다 —
+   * `settle`이 다시 불리면 두 계층이 섞인 상태이고, 그것은 L 전환이 없앤 결함의 재발이다.
+   *
+   * ⚠ **검사를 약화시키지 않는다**(#19). 원래 검사가 지키던 것(**측정 경로 = 앱 경로**)은
+   * L에서 **`e2e/stage.spec.ts`가 `window.S2S`를 통해 앱 함수를 그대로 부르는 것**으로
+   * 옮겨졌다(#17). 아래 `covers`에 그 범위를 적는다.
+   */
+  it("**새 UI가 폐기된 배치 계층으로 안 돌아간다** — `settle`을 안 부른다", () => {
+    const mainL = readFileSync(resolve(SRC, "mainL.ts"), "utf-8");
+    const calls = mainL.match(/settle\(/g) ?? [];
+    expect(calls, `mainL.ts가 폐기된 settle을 부른다(${calls.length}회)`).toEqual([]);
+    // 그리고 **L의 배치 경로가 실제로 거기 있다** — 없으면 위 단언이 공허하다(#32)
+    for (const fn of ["liftAll", "placeLive", "solveInto"]) {
+      expect(mainL, `mainL.ts에 ${fn}이 없다 — 그러면 "settle을 안 부른다"가 공허하다`)
+        .toContain(fn);
+    }
   });
 
   it("원장에 배선 표를 남긴다", () => {
@@ -94,7 +112,11 @@ describe("S-7 (0) 측정-앱 경로 배선", () => {
       how_locked: [
         "`appPlace.ts`의 `_EVERY_OPTION_REGISTERED`가 **컴파일 단계**에서 미등록 옵션을 잡는다",
         "이 테스트가 `both`/`view`/`measure` 약속을 런타임으로 확인한다",
-        "`main.ts`에 옵션 없는 `settle` 호출이 남아 있으면 실패한다",
+        "⚠ **`main.ts`를 읽던 줄은 대상이 사라졌다**(L 전환에서 옛 UI가 삭제됐다) — "
+          + "이제 **새 UI가 `settle`로 돌아가지 않았는지**를 본다(재발 방지 방향)",
+        "⚠ **원래 검사가 지키던 것(측정 경로 = 앱 경로)은 `e2e/stage.spec.ts`로 옮겨졌다** — "
+          + "그 스펙이 `window.S2S`를 통해 앱 함수를 **그대로** 부른다(#17). "
+          + "이 표가 덮는 것은 이제 **S·G 하네스**(`view_plane`·`segment_gate`)뿐이고 앱이 아니다",
       ],
       first_view: FIRST_VIEW_OPTS,
       view: VIEW_OPTS,

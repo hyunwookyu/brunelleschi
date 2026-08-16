@@ -6,7 +6,7 @@
 //
 // **옛 UI는 L-B 게이트 통과 전까지 지우지 않는다**(A-4). `index.html`이 그것이고 여기는 `l.html`이다.
 import { InkCanvas } from "./capture/inkCanvas.js";
-import { cssSizeOf } from "./capture/canvasFrame.js";
+import { cssSizeOf, deviceRatio } from "./capture/canvasFrame.js";
 import { Stage, FREE_FOV_DEG, type StageSeg } from "./ui/stage.js";
 import { CamState } from "./ui/camState.js";
 import { newDoc, newSStroke, newView, deleteView, lifted, pending, pendingElsewhere,
@@ -1163,6 +1163,50 @@ function fit() {
   stage.viewport.resize();
 }
 
+/**
+ * **좌표 규약 진단**(D-C3, PITFALLS #21) — 옛 UI의 `s2s.diag()`가 하던 일을 여기로 옮겼다.
+ *
+ * 잉크가 dpr배 어긋나 그려지던 버그는 **데스크톱(dpr 1)에서도 Playwright 기본값에서도
+ * 안 잡혔다.** 그것을 dpr 1·2·3에서 잠그는 것이 `e2e/coords.spec.ts`이고, 그 스펙이
+ * 읽는 것이 이 함수다. **옛 UI를 지우면 이 자리가 없어지므로 먼저 옮긴다.**
+ *
+ * 갈리는 법(옛 주석 그대로):
+ *   · 어긋남이 **원점에서 멀수록 커진다** → **배율**(백버퍼 ↔ CSS 불일치, dpr 이중 적용)
+ *   · 어긋남이 **일정하다** → **오프셋**(rect 미적용·스크롤·안전영역)
+ *
+ * ⚠ **단일 뷰포트라 `view_vs_overlay`의 뜻이 달라졌다**(§10.3). 옛 UI는 2D 캔버스와 3D
+ * 오버레이가 **따로** 있어 둘의 상자를 견줬는데, 여기서는 잉크 캔버스 하나가 three 렌더러
+ * **위에 겹쳐** 있으므로 견주는 것은 **잉크 CSS 상자 ↔ 렌더러 뷰 크기**다.
+ * 이름을 유지하는 이유는 그 스펙이 그 이름으로 잠그고 있기 때문이다(#17: 덮는 범위를 적는다).
+ */
+function frameDiag() {
+  const r = canvas.getBoundingClientRect();
+  const fi = ink.frameInfo();
+  const vs = stage.viewport.viewSize();
+  return {
+    dpr: deviceRatio(),
+    ink: {
+      rect: [+r.left.toFixed(1), +r.top.toFixed(1), +r.width.toFixed(1), +r.height.toFixed(1)],
+      css: [fi.cssW, fi.cssH], back: [fi.backW, fi.backH], scale: [fi.sx, fi.sy],
+      element: [canvas.width, canvas.height],
+      /** **백버퍼가 CSS 상자와 안 맞으면 브라우저가 늘려 그린다** — 그것이 배율 어긋남이다. */
+      stretch: [+(canvas.width / Math.max(1, r.width)).toFixed(4),
+                +(canvas.height / Math.max(1, r.height)).toFixed(4)],
+    },
+    /** 잉크 캔버스와 three 렌더러가 **같은 CSS 상자**인가. 다르면 그 시점 좌표계가 갈린다. */
+    view_vs_overlay: { renderer: vs, overlay: [fi.cssW, fi.cssH],
+                       same: Math.abs(vs[0] - fi.cssW) < 0.6 && Math.abs(vs[1] - fi.cssH) < 0.6 },
+    cam_img_size: cam.imgSize,
+    size_heal: SIZE_HEAL.count,
+    visual_viewport: typeof visualViewport !== "undefined" && visualViewport
+      ? { offsetLeft: +visualViewport.offsetLeft.toFixed(1),
+          offsetTop: +visualViewport.offsetTop.toFixed(1),
+          scale: +visualViewport.scale.toFixed(3) }
+      : null,
+    scroll: [window.scrollX, window.scrollY],
+  };
+}
+
 let refreshing = false;
 function refresh() {
   if (refreshing) return;
@@ -1558,6 +1602,8 @@ refresh();
 // 브라우저 콘솔 진단용. 측정 하네스와 같은 픽스처를 쓰려면 여기서 문서를 꺼낸다.
 (window as unknown as Record<string, unknown>).S2S = {
   doc: () => doc, cam, stage, refresh, SIZE_HEAL,
+  /** D-C3 좌표 규약 진단(#21) — `e2e/coords.spec.ts`가 dpr 1·2·3에서 이것을 잠근다 */
+  diag: frameDiag,
   // L-D.2 저장·내보내기 — **앱 경로 그대로**를 종단 확인이 부른다(#17)
   buildDoc2, applyDoc2, saveNow: () => saver?.flush(), saveNote: () => saveNote,
   exportObj: () => toObj(linesFromDoc(doc, id => doc.views.find(v => v.id === id)?.name ?? id)),
