@@ -237,7 +237,8 @@ test("앱 종단 — 손가락 1개는 궤도, 2개는 팬·줌", async ({ page 
   led.app_gestures = {
     pinned_before: before.pinned,
     pinned_after_one_finger: afterOne.pinned,
-    one_finger: { azimuth_delta: Math.abs(afterOne.azimuth - before.azimuth),
+    one_finger: { input_px: { from: [500, 400], to: [640, 430], steps: 6, start: "확정 카메라(pinned)" },
+                  azimuth_delta: Math.abs(afterOne.azimuth - before.azimuth),
                   polar_delta: Math.abs(afterOne.polar - before.polar),
                   dist_delta: Math.abs(afterOne.dist - before.dist) },
     // ⚠⚠ **`dist_ratio`는 측정이 아니라 설계 보장이다**(#5 · 리뷰어 [4]) — 우리가 부른
@@ -249,13 +250,16 @@ test("앱 종단 — 손가락 1개는 궤도, 2개는 팬·줌", async ({ page 
                   target_moved: Math.hypot(...afterTwo.target.map((v: number, i: number) =>
                                   v - afterOne.target[i])) },
     // **같은 손짓을 이미 풀린 상태에서 한 번 더** — 핀 해제 몫이 빠진 값이다
-    one_finger_already_free: { azimuth_delta: Math.abs(afterAgain.azimuth - beforeAgain.azimuth),
+    one_finger_already_free: { input_px: { from: [500, 400], to: [640, 430], steps: 6,
+                                           start: "자유 시점(이미 풀림) — **첫 팔과 같은 손짓**" },
+                               azimuth_delta: Math.abs(afterAgain.azimuth - beforeAgain.azimuth),
                                polar_delta: Math.abs(afterAgain.polar - beforeAgain.polar),
                                dist_delta: Math.abs(afterAgain.dist - beforeAgain.dist) },
     strokes_after_touch_only: { before: s.strokes, after: strokesAfterTouch },
     reading: "손가락 하나가 **확정 카메라를 풀고**(pinned true → false) 방위각을 돌린다. "
            + "둘은 **거리를 줄이고**(벌림) 궤도 중심을 옮긴다. "
-           + "⚠ 첫 팔의 `polar`·`dist` 델타에는 **핀 해제의 재초기화**가 섞여 있다 — "
+           + "⚠ 첫 팔은 **세 성분 전부**에 핀 해제의 재초기화가 섞여 있다(방위각도 1.2551 대 1.0860으로 "
+           + "13.5% 다르다) — "
            + "그 몫이 빠진 값이 `one_finger_already_free`다. "
            + "⚠ **터치만으로는 획이 안 생긴다**(`strokes_after_touch_only`).",
   };
@@ -329,11 +333,23 @@ test("팜 리젝션 — 펜이 닿아 있는 동안 손가락이 카메라를 �
       op2_held_after_pen_up: { from: [500, 400], to: [620, 442], steps: 6 },
       pen_interrupts_gesture: { from: [540, 410], to: [660, 452], steps: 6 },
       pen_at: [300, 300],
+      control_covers: "대조군의 짝은 **①뿐이다**(같은 손짓). ②는 끝점이 2px 다르고 "
+                    + "'펜이 끊기'는 시작점이 40px 다르다 — 그 둘의 0은 ①의 대조군을 **빌려 읽는다**",
     },
+    arm_order: ["control_no_pen", "op1_pen_touching", "op2_held_after_pen_up", "pen_interrupts_gesture"],
+    arm_start_state: { control: { dist: c0.dist, pinned: c0.pinned },
+                       op1: { dist: p0.dist, pinned: p0.pinned },
+                       op2: { dist: h0.dist, pinned: h0.pinned },
+                       pen_interrupts: { dist: b0.dist, pinned: b0.pinned },
+                       note: "팔들이 **같은 페이지 상태를 이어 쓴다** — 앞 팔이 뒤 팔의 시작을 정한다" },
     control_no_pen: { moved: moved(c0, c1), counters: d(cnt0, cnt1) },
     op1_pen_touching: { moved: moved(p0, p1), counters: d(cnt1, cnt2) },
     op2_held_after_pen_up: { moved: moved(h0, h1), counters: d(cnt2, cnt3) },
     pen_interrupts_gesture: { moved: moved(b0, b1), counters: d(cnt3, palm) },
+    // ⚠ **총계 = 팔 시작 전 상태 + 팔별 증분**이다. 이 시험은 팔에 들어가기 전에
+    // **자유 시점으로 나가는 손짓 하나**를 먼저 하므로 그 통과 1건이 총계에만 있다 —
+    // 적지 않으면 "증분 합 2 ≠ 총계 3"이 설명되지 않는다(리뷰어 2회차 [3]).
+    counters_before_arms: cnt0,
     counters_total: palm,
     reading: "대조군은 움직이고 나머지 셋은 0이다. **대조군이 없으면 '터치가 원래 안 먹는 것'과 "
            + "구분이 안 된다**(#6). 동작점 둘을 다 잰다(#12) — ②가 없으면 쉬고 있던 손바닥이 "
@@ -410,7 +426,14 @@ test.describe("dpr 2", () => {
     const before = await pose(page);
     await drag(page, 1, "touch", [500, 400], [640, 430]);      // dpr 1 팔과 **같은 좌표**
     const after = await settle(page);
-    const dpr = await page.evaluate(() => window.devicePixelRatio);
+    // **섭동이 실제로 걸렸는가**(#30의 나머지 절반 · 리뷰어 2회차 [7]) — `devicePixelRatio`만
+    // 읽으면 그것은 설정의 되읽기다. **캔버스 백버퍼가 css 크기의 몇 배인지**를 함께 읽는다:
+    // 그것이 2면 dpr이 렌더 경로에 실제로 걸린 것이고, 그때의 회전 비 1.0이 정보다.
+    const dpr = await page.evaluate(() => {
+      const el = document.getElementById("ink") as HTMLCanvasElement;
+      return { devicePixelRatio: window.devicePixelRatio, css_w: el.clientWidth,
+               backing_w: el.width, backing_ratio: el.width / Math.max(1, el.clientWidth) };
+    });
 
     // **양성 채널**(#30 · 리뷰어 [7]) — 비가 1.0인 것이 "규약이 지켜졌다"인지
     // "이 지표가 손짓 크기에 둔감하다"인지 갈려야 한다. **같은 팔에서 절반 손짓**을 낸다:
@@ -452,6 +475,9 @@ test.describe("dpr 2", () => {
     const panMoved = Math.hypot(...a3.target.map((v: number, i: number) => v - b3.target[i]));
     led.dpr2 = {
       dpr,
+      perturbation_applied: { backing_ratio: dpr.backing_ratio,
+        reading: "**백버퍼가 css 폭의 2배**여야 dpr 섭동이 실제로 걸린 것이다. "
+               + "1이면 회전 비 1.0은 '규약이 지켜졌다'가 아니라 '섭동이 안 걸렸다'다" },
       rotate: { azimuth_delta: az, dpr1_azimuth_delta: one, ratio: az / one!,
                 input_px: { from: [500, 400], to: [640, 430], note: "dpr 1 팔과 같은 좌표" } },
       positive_channel: { azimuth_delta_half_input: az2, azimuth_delta_full_free: azFull,
@@ -465,11 +491,14 @@ test.describe("dpr 2", () => {
                                  + "**감긴다**(두 배 입력에서 비 3.28이 나왔다)" },
       pan: { target_moved: panMoved,
              input_px: { two_fingers_dx: 60, note: "두 손가락을 나란히 60px 민다(거리 불변 → 줌 없음)" },
-             reading: "팬은 픽셀 → 월드 환산을 지난다. dpr이 섞이면 여기가 갈린다 — "
-                    + "값 자체는 궤도 반지름에 비례하므로 **dpr 1 팔과 직접 비교하지 않는다**" },
+             is_verdict: false,
+             reading: "⚠ **판정이 아니라 기록이다** — 같은 궤도 반지름의 dpr 1 팬 팔이 없어 "
+                    + "견줄 대상이 없다(값이 반지름에 비례한다). 여기서 말하는 것은 "
+                    + "'dpr 2에서 팬 경로가 돈다'까지다" },
       reading: "회전 비가 1이면 css 픽셀 규약이 지켜진 것이다. **2면 dpr이 어딘가에서 곱해졌다.**",
     };
-    expect(dpr).toBe(2);
+    expect(dpr.devicePixelRatio).toBe(2);
+    expect(dpr.backing_ratio).toBe(2);        // 섭동이 렌더 경로까지 걸렸다
     expect(az).toBeCloseTo(one!, 12);
     // 양성 채널: 절반 손짓은 절반 돈다(죽은 구간 한 걸음이 양쪽에서 같은 비율로 빠진다)
     expect(az2 / azFull).toBeGreaterThan(0.45);

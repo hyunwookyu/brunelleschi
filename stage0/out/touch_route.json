@@ -188,7 +188,7 @@
         "dollyOut"
       ],
       "api_complete": true,
-      "azimuth_delta": 0.02112,
+      "azimuth_delta": 0.7477623406817256,
       "dist_before": 0,
       "dist_ratio": null,
       "pitfall_as_written": "three 최신판은 `rotateLeft` 같은 공개 API가 없다",
@@ -203,9 +203,21 @@
     "pinned_before": true,
     "pinned_after_one_finger": false,
     "one_finger": {
-      "azimuth_delta": 1.255089045896211,
-      "polar_delta": 1.5441044110622417,
-      "dist_delta": 6.67719043686432
+      "input_px": {
+        "from": [
+          500,
+          400
+        ],
+        "to": [
+          640,
+          430
+        ],
+        "steps": 6,
+        "start": "확정 카메라(pinned)"
+      },
+      "azimuth_delta": 1.2550890458961697,
+      "polar_delta": 1.5441044110622533,
+      "dist_delta": 6.677190436864323
     },
     "two_finger": {
       "input_px": {
@@ -213,20 +225,32 @@
         "d1": 196,
         "ratio": 1.96
       },
-      "dist_ratio": 0.5102040816326519,
+      "dist_ratio": 0.5102040816326523,
       "guarantee": "1/1.96 = 0.5102 — `dollyOut` 호출의 항등이다. 임계를 걸지 않는다",
-      "target_moved": 0.0707773688396778
+      "target_moved": 0.07099796499196254
     },
     "one_finger_already_free": {
-      "azimuth_delta": 1.0859826456850086,
-      "polar_delta": 0.23271056693249248,
-      "dist_delta": 0
+      "input_px": {
+        "from": [
+          500,
+          400
+        ],
+        "to": [
+          640,
+          430
+        ],
+        "steps": 6,
+        "start": "자유 시점(이미 풀림) — **첫 팔과 같은 손짓**"
+      },
+      "azimuth_delta": 1.085982645685021,
+      "polar_delta": 0.2327105669324936,
+      "dist_delta": 5.329070518200751e-15
     },
     "strokes_after_touch_only": {
       "before": 12,
       "after": 12
     },
-    "reading": "손가락 하나가 **확정 카메라를 풀고**(pinned true → false) 방위각을 돌린다. 둘은 **거리를 줄이고**(벌림) 궤도 중심을 옮긴다. ⚠ 첫 팔의 `polar`·`dist` 델타에는 **핀 해제의 재초기화**가 섞여 있다 — 그 몫이 빠진 값이 `one_finger_already_free`다. ⚠ **터치만으로는 획이 안 생긴다**(`strokes_after_touch_only`)."
+    "reading": "손가락 하나가 **확정 카메라를 풀고**(pinned true → false) 방위각을 돌린다. 둘은 **거리를 줄이고**(벌림) 궤도 중심을 옮긴다. ⚠ 첫 팔은 **세 성분 전부**에 핀 해제의 재초기화가 섞여 있다(방위각도 1.2551 대 1.0860으로 13.5% 다르다) — 그 몫이 빠진 값이 `one_finger_already_free`다. ⚠ **터치만으로는 획이 안 생긴다**(`strokes_after_touch_only`)."
   },
   "gesture_tol": {
     "rotate_speed": 1,
@@ -284,10 +308,36 @@
       "pen_at": [
         300,
         300
-      ]
+      ],
+      "control_covers": "대조군의 짝은 **①뿐이다**(같은 손짓). ②는 끝점이 2px 다르고 '펜이 끊기'는 시작점이 40px 다르다 — 그 둘의 0은 ①의 대조군을 **빌려 읽는다**"
+    },
+    "arm_order": [
+      "control_no_pen",
+      "op1_pen_touching",
+      "op2_held_after_pen_up",
+      "pen_interrupts_gesture"
+    ],
+    "arm_start_state": {
+      "control": {
+        "dist": 6.67719043686435,
+        "pinned": false
+      },
+      "op1": {
+        "dist": 6.677190436864356,
+        "pinned": false
+      },
+      "op2": {
+        "dist": 6.677190436864356,
+        "pinned": false
+      },
+      "pen_interrupts": {
+        "dist": 6.677190436864356,
+        "pinned": false
+      },
+      "note": "팔들이 **같은 페이지 상태를 이어 쓴다** — 앞 팔이 뒤 팔의 시작을 정한다"
     },
     "control_no_pen": {
-      "moved": 1.2411230236401507,
+      "moved": 1.241123023640127,
       "counters": {
         "rejected_down": 0,
         "cancelled_by_pen": 0,
@@ -322,6 +372,13 @@
         "forwarded_down": 1
       }
     },
+    "counters_before_arms": {
+      "rejected_down": 0,
+      "cancelled_by_pen": 0,
+      "held_after_pen_up": 0,
+      "forwarded_down": 1,
+      "pen_touching": false
+    },
     "counters_total": {
       "rejected_down": 2,
       "cancelled_by_pen": 1,
@@ -340,16 +397,25 @@
     },
     "camera_moved": {
       "by_pen": 0,
-      "by_mouse_in_orbit": 1.5514037795499793
+      "by_mouse_in_orbit": 1.5514037795499875
     },
     "reading": "펜·마우스는 잉크로, 터치는 카메라로 간다. 마우스는 `궤도(마우스)` 동안만 카메라다. ⚠ **`pointer-events: none` 전환을 지웠으므로** 궤도 중에도 잉크 캔버스가 사건을 받는다."
   },
   "dpr2": {
-    "dpr": 2,
+    "dpr": {
+      "devicePixelRatio": 2,
+      "css_w": 1280,
+      "backing_w": 2560,
+      "backing_ratio": 2
+    },
+    "perturbation_applied": {
+      "backing_ratio": 2,
+      "reading": "**백버퍼가 css 폭의 2배**여야 dpr 섭동이 실제로 걸린 것이다. 1이면 회전 비 1.0은 '규약이 지켜졌다'가 아니라 '섭동이 안 걸렸다'다"
+    },
     "rotate": {
-      "azimuth_delta": 1.255089045895953,
-      "dpr1_azimuth_delta": 1.255089045896211,
-      "ratio": 0.9999999999997944,
+      "azimuth_delta": 1.2550890458959503,
+      "dpr1_azimuth_delta": 1.2550890458961697,
+      "ratio": 0.9999999999998253,
       "input_px": {
         "from": [
           500,
@@ -363,9 +429,9 @@
       }
     },
     "positive_channel": {
-      "azimuth_delta_half_input": 0.5429913228424454,
-      "azimuth_delta_full_free": 1.0859826456847679,
-      "ratio_to_single": 0.5000000000000566,
+      "azimuth_delta_half_input": 0.5429913228422767,
+      "azimuth_delta_full_free": 1.0859826456846526,
+      "ratio_to_single": 0.4999999999999543,
       "input_px": {
         "from": [
           500,
@@ -380,12 +446,13 @@
       "reading": "**0.5에 가까워야 지표가 민감한 것**이다. 1에 붙으면 앞의 비 1.0은 규약의 증거가 아니라 둔감의 증거다. ⚠ 두 배로 안 재는 이유: `getAzimuthalAngle()`이 `atan2`라 **감긴다**(두 배 입력에서 비 3.28이 나왔다)"
     },
     "pan": {
-      "target_moved": 0.46917890675156837,
+      "target_moved": 0.452830842855987,
       "input_px": {
         "two_fingers_dx": 60,
         "note": "두 손가락을 나란히 60px 민다(거리 불변 → 줌 없음)"
       },
-      "reading": "팬은 픽셀 → 월드 환산을 지난다. dpr이 섞이면 여기가 갈린다 — 값 자체는 궤도 반지름에 비례하므로 **dpr 1 팔과 직접 비교하지 않는다**"
+      "is_verdict": false,
+      "reading": "⚠ **판정이 아니라 기록이다** — 같은 궤도 반지름의 dpr 1 팬 팔이 없어 견줄 대상이 없다(값이 반지름에 비례한다). 여기서 말하는 것은 'dpr 2에서 팬 경로가 돈다'까지다"
     },
     "reading": "회전 비가 1이면 css 픽셀 규약이 지켜진 것이다. **2면 dpr이 어딘가에서 곱해졌다.**"
   }
