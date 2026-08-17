@@ -152,6 +152,8 @@ interface RunOut {
    * `screen_h`가 먼저면 그 순간 P1이 굳고 되돌릴 길이 없다(지시 1: P1은 불가역).
    */
   firstDecl: "screen_h" | "screen_v" | "vp" | "none";
+  /** **물음 종류별 내역**(7-R [4-F] · #7) — "남는 물음이 전부 screen_or_depth"를 세서 확인한다. */
+  askKinds: Record<string, number>;
 }
 
 function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
@@ -161,6 +163,7 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
   const cam = new CamState(SZ);
   let asks = 0, fed = 0;
   let firstDecl: RunOut["firstDecl"] = "none";
+  const askKinds: Record<string, number> = {};
   /** 앱의 `pend2Segs()` 자리 — 확정 전 2D 오스냅 대상. `rule_camera`와 같은 근사다. */
   const fedSegs: Snap2Seg[] = [];
   /** 규칙에 먹인 최종 점열(= 앱의 `pts2d`). 배치도 이것으로 한다 — 앱이 그렇게 한다(#17). */
@@ -191,6 +194,7 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
       let r = cam.feed(line, forced);
       if (r.event.type === "ask") {
         asks += 1;
+        askKinds[r.event.question] = (askKinds[r.event.question] ?? 0) + 1;
         // **참 축으로 답한다**(오라클) — `rule_camera`와 같은 규약이다
         const truth: "screen" | "depth" =
           // ⛔ **"vertical" 답을 지웠다**(7차 지시 3-b) — 기울어진 선은 항상 깊이선이다.
@@ -219,7 +223,7 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
     ? list.map(e => trueAxis(fx.sc, e.axis))
     : finalPts.map(p => cam.axisOf(p).axis);
   if (!ctx) return { order: ord, cameraOk: false, drawnN: list.length, placedN: 0, errs: [],
-                     asks, fed, firstDecl };
+                     asks, fed, firstDecl, askKinds };
   const strokes: LiftStroke[] = finalPts.map((pts, i) => ({
     // ⚠ **키 규약**: `metrics.edgeIndexOf`가 `s<인덱스>`를 참 모서리 인덱스로 읽는다.
     // `list`는 순서를 바꾼 것이므로 **원래 인덱스**를 붙여야 참값과 짝이 맞는다
@@ -228,7 +232,7 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
   const r = liftAll(strokes, ctx);
   const errs = perStrokeError(r.placed, fx.edges, fx.diag);
   return { order: ord, cameraOk: true, drawnN: list.length, placedN: r.placed.size, errs,
-           asks, fed, firstDecl };
+           asks, fed, firstDecl, askKinds };
 }
 
 // ---------------------------------------------------------------- 집계
@@ -239,10 +243,12 @@ interface Bag {
   drawnN: number; placedN: number; errs: number[];
   asks: number; fed: number;
   firstDecl: Record<string, number>;
+  askKinds: Record<string, number>;
 }
 const bag = (): Bag => ({ runs: 0, cameraOk: 0, orders: { p0: 0, p1: 0, p2: 0, p3: 0 },
                           drawnN: 0, placedN: 0, errs: [], asks: 0, fed: 0,
-                          firstDecl: { screen_h: 0, screen_v: 0, vp: 0, none: 0 } });
+                          firstDecl: { screen_h: 0, screen_v: 0, vp: 0, none: 0 },
+                          askKinds: {} });
 
 function add(b: Bag, r: RunOut) {
   b.runs += 1;
@@ -252,6 +258,7 @@ function add(b: Bag, r: RunOut) {
   for (const e of r.errs) b.errs.push(e);
   b.asks += r.asks; b.fed += r.fed;
   b.firstDecl[r.firstDecl] += 1;
+  for (const [k, n] of Object.entries(r.askKinds)) b.askKinds[k] = (b.askKinds[k] ?? 0) + n;
 }
 
 function summarize(b: Bag) {
@@ -272,6 +279,11 @@ function summarize(b: Bag) {
     /** **규칙에 실제로 먹인 획 수**(#32) — 0이면 그 팔의 결과는 기전에 대한 정보가 0이다. */
     fed_strokes: b.fed,
     asks_total: b.asks,
+    /** **물음 종류별**(7-R [4-F]) — 3점 물음이 지워졌으므로 `screen_or_depth`만 남아야 한다. */
+    ask_kinds: b.askKinds,
+    /** **획당 물음**(7-R [4-E] · #11·#24) — 지시 3-f가 보고한 자릿수는 6/5획 = **1.2회/획**이다.
+     *  이 하네스의 값과 자릿수가 다르면 "0에 가까워졌는가"를 이 하네스로 판정할 수 없다. */
+    asks_per_stroke: rate(b.asks, b.drawnN),
     /** **무엇이 먼저 선언됐는가**(#7). `screen_h`가 먼저면 그 실행은 그 순간 P1로 굳는다. */
     first_declaration: b.firstDecl,
   };
@@ -414,15 +426,24 @@ describe("차수가 P1에 갇히는가 — 그리고 배치가 따라오는가 (
           + "되쓰기는 이 팔에서 **구조적으로 항등**이다. 즉 여기서 '배치가 안 좋아졌다'가 말하는 것은 "
           + "**1-a(우회 제거)에 대한 것뿐**이다. 1-c·1-d의 판정자는 `confirm_dir.json`이다",
         "⚠ **게이트 ②(바닥 탈출)는 개입에 대한 정보가 0이다**(7-R [2]) — 절단 0.2 안에 든 배치가 "
-          + "`fixed`·`bypass` 둘 다 **176**이고 절단 0.1도 둘 다 **90**이다. 그 게이트가 말하는 것은 "
+          + `\`fixed\` ${placed - wrong} · \`bypass\` ${Number(silentWrong(head.bypass.errs).cut_0_2.split("/")[1])
+              - Number(silentWrong(head.bypass.errs).cut_0_2.split("/")[0])}로 같다. 그 게이트가 말하는 것은 `
           + "'이 하네스가 바닥에 붙어 있지 않다'는 **하네스의 성질**이지 1-a의 성질이 아니다. "
           + "`gate.result.floor_gate_discriminates`가 그 사실을 낸다(#40의 자매 유형: 값이 0·1이 "
           + "아니어도 대조 팔에서 같으면 자명하다)",
-        "⚠ **P1 −20의 내역**(7-R [4]·#15·#16): P2 +7 · P3 +8 · **P0 +5**이고 카메라가 선 실행이 "
-          + "563 → 555로 **줄었다**. P0은 차수가 풀린 것이 아니라 카메라가 아예 안 선 것이다 — "
+        "⚠ **P1이 줄어든 몫에 손실이 섞여 있다**(7-R [4]·#15·#16) — 이 실행의 내역: "
+          + `P1 ${p1Bypass} → ${p1Fixed} · P2 ${head.bypass.orders.p2} → ${head.fixed.orders.p2} · `
+          + `P3 ${head.bypass.orders.p3} → ${head.fixed.orders.p3} · **P0 ${head.bypass.orders.p0} → ${head.fixed.orders.p0}** · `
+          + `카메라가 선 실행 ${head.bypass.cameraOk} → ${head.fixed.cameraOk}. `
+          + "P0은 차수가 풀린 것이 아니라 카메라가 아예 안 선 것이다 — "
           + "'차수가 풀린다'를 P1 개수만으로 읽으면 그 손실이 안 보인다",
-        "**조용히 틀림의 분모가 팔마다 다르다**(#11) — `fixed` 3910 · `bypass` 3935 · "
-          + "`oracle` 6432. 행 간 비율 비교는 **같은 양의 비교가 아니다**. 그래서 분자/분모를 그대로 낸다",
+        "**조용히 틀림의 분모가 팔마다 다르다**(#11) — "
+          + ARMS.map(a => `\`${a}\` ${head[a].placedN}`).join(" · ")
+          + ". 행 간 비율 비교는 **같은 양의 비교가 아니다**. 그래서 분자/분모를 그대로 낸다",
+        "⚠⚠ **3점 세 구도에서 조용히 틀림이 정확히 1.000이다**(7-R [4-A] · #40 ②) — "
+          + "`by_composition`을 그 자리에서 읽는다. 집계 형태 오차가 좋아지는 것은 **층 구성**이 "
+          + "바뀐 것일 수 있다(카메라가 선 실행이 늘면 저오차 층인 1pt 구도의 비중이 는다, #9). "
+          + "층 내 개선과 층 구성 변화를 이 원장은 **안 가른다**",
         "**위약 팔이 없다**(#39) — `bypass`는 양성 채널(옛 배선)이지 위약이 아니다. "
           + "다만 이번 개입은 '해를 얼마나 옮기는가'가 아니라 **배선 제거**라 위약의 대상이 애매하다",
         "**#12·#13**: 절단 셋·잡음 다섯·등급 둘·순서 둘·시드 여섯(`by_seed`)을 다 냈지만 "

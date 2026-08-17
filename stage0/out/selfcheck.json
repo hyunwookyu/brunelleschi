@@ -1,5 +1,5 @@
 {
-  "n_flags": 2787,
+  "n_flags": 2863,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -5178,6 +5178,538 @@
       "path": "orbit_center.json:center.target_to_proj_bbox",
       "val": 3.552713678800501e-15,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "order_lock.json:arms.bypass.headline.ask_kinds",
+      "val": {
+        "screen_or_depth": 1273
+      },
+      "flag": "단일 범주 분포(n=1273) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:arms.fixed.headline.ask_kinds",
+      "val": {
+        "screen_or_depth": 1319
+      },
+      "flag": "단일 범주 분포(n=1319) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:arms.rule_vp_true_axis.headline.ask_kinds",
+      "val": {
+        "screen_or_depth": 1319
+      },
+      "flag": "단일 범주 분포(n=1319) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:arms.true_vp_rule_axis.headline.ask_kinds",
+      "val": {
+        "screen_or_depth": 1319
+      },
+      "flag": "단일 범주 분포(n=1319) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 190
+      },
+      "flag": "단일 범주 분포(n=190) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 190
+      },
+      "flag": "단일 범주 분포(n=190) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 190
+      },
+      "flag": "단일 범주 분포(n=190) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 190
+      },
+      "flag": "단일 범주 분포(n=190) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 187
+      },
+      "flag": "단일 범주 분포(n=187) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 188
+      },
+      "flag": "단일 범주 분포(n=188) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 188
+      },
+      "flag": "단일 범주 분포(n=188) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 188
+      },
+      "flag": "단일 범주 분포(n=188) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 253
+      },
+      "flag": "단일 범주 분포(n=253) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 260
+      },
+      "flag": "단일 범주 분포(n=260) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 260
+      },
+      "flag": "단일 범주 분포(n=260) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 260
+      },
+      "flag": "단일 범주 분포(n=260) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 339
+      },
+      "flag": "단일 범주 분포(n=339) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 359
+      },
+      "flag": "단일 범주 분포(n=359) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 359
+      },
+      "flag": "단일 범주 분포(n=359) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 359
+      },
+      "flag": "단일 범주 분포(n=359) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 304
+      },
+      "flag": "단일 범주 분포(n=304) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 322
+      },
+      "flag": "단일 범주 분포(n=322) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 322
+      },
+      "flag": "단일 범주 분포(n=322) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 322
+      },
+      "flag": "단일 범주 분포(n=322) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 631
+      },
+      "flag": "단일 범주 분포(n=631) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 647
+      },
+      "flag": "단일 범주 분포(n=647) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 647
+      },
+      "flag": "단일 범주 분포(n=647) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 647
+      },
+      "flag": "단일 범주 분포(n=647) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 642
+      },
+      "flag": "단일 범주 분포(n=642) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 672
+      },
+      "flag": "단일 범주 분포(n=672) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 672
+      },
+      "flag": "단일 범주 분포(n=672) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 672
+      },
+      "flag": "단일 범주 분포(n=672) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 301
+      },
+      "flag": "단일 범주 분포(n=301) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 315
+      },
+      "flag": "단일 범주 분포(n=315) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 315
+      },
+      "flag": "단일 범주 분포(n=315) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 315
+      },
+      "flag": "단일 범주 분포(n=315) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 269
+      },
+      "flag": "단일 범주 분포(n=269) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 280
+      },
+      "flag": "단일 범주 분포(n=280) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 280
+      },
+      "flag": "단일 범주 분포(n=280) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 280
+      },
+      "flag": "단일 범주 분포(n=280) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 183
+      },
+      "flag": "단일 범주 분포(n=183) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 196
+      },
+      "flag": "단일 범주 분포(n=196) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 196
+      },
+      "flag": "단일 범주 분포(n=196) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 196
+      },
+      "flag": "단일 범주 분포(n=196) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 320
+      },
+      "flag": "단일 범주 분포(n=320) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 328
+      },
+      "flag": "단일 범주 분포(n=328) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 328
+      },
+      "flag": "단일 범주 분포(n=328) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 328
+      },
+      "flag": "단일 범주 분포(n=328) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 200
+      },
+      "flag": "단일 범주 분포(n=200) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 200
+      },
+      "flag": "단일 범주 분포(n=200) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 200
+      },
+      "flag": "단일 범주 분포(n=200) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 200
+      },
+      "flag": "단일 범주 분포(n=200) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 210
+      },
+      "flag": "단일 범주 분포(n=210) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 219
+      },
+      "flag": "단일 범주 분포(n=219) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 219
+      },
+      "flag": "단일 범주 분포(n=219) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 219
+      },
+      "flag": "단일 범주 분포(n=219) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 199
+      },
+      "flag": "단일 범주 분포(n=199) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 210
+      },
+      "flag": "단일 범주 분포(n=210) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 210
+      },
+      "flag": "단일 범주 분포(n=210) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 210
+      },
+      "flag": "단일 범주 분포(n=210) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 212
+      },
+      "flag": "단일 범주 분포(n=212) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 217
+      },
+      "flag": "단일 범주 분포(n=217) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 217
+      },
+      "flag": "단일 범주 분포(n=217) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 217
+      },
+      "flag": "단일 범주 분포(n=217) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 190
+      },
+      "flag": "단일 범주 분포(n=190) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 197
+      },
+      "flag": "단일 범주 분포(n=197) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 197
+      },
+      "flag": "단일 범주 분포(n=197) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 197
+      },
+      "flag": "단일 범주 분포(n=197) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 207
+      },
+      "flag": "단일 범주 분포(n=207) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 214
+      },
+      "flag": "단일 범주 분포(n=214) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 214
+      },
+      "flag": "단일 범주 분포(n=214) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 214
+      },
+      "flag": "단일 범주 분포(n=214) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.bypass.ask_kinds",
+      "val": {
+        "screen_or_depth": 255
+      },
+      "flag": "단일 범주 분포(n=255) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.fixed.ask_kinds",
+      "val": {
+        "screen_or_depth": 262
+      },
+      "flag": "단일 범주 분포(n=262) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.rule_vp_true_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 262
+      },
+      "flag": "단일 범주 분포(n=262) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.true_vp_rule_axis.ask_kinds",
+      "val": {
+        "screen_or_depth": 262
+      },
+      "flag": "단일 범주 분포(n=262) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "order_lock.json:arms.bypass.headline.order_counts.p0",
