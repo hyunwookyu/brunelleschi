@@ -191,6 +191,48 @@ describe("b. 첫 소실점 = 한 축으로 모인 **세** 깊이선의 교점 (6
     expect(r.event.type).toBe("vp_fixed");
   });
 
+  // ------------------------------------------------------------------ 7차 지시 2
+  //
+  // 지시 2-1의 **대기 규칙 표**를 그대로 시험으로 옮긴다. 위 시험들이 세 행(대각선 1·2·셋이
+  // 한 축·셋이 갈림)을 이미 덮으므로 여기서는 **남은 세 행**과 **2-5**(빈 캔버스 첫 대각선)를 낸다.
+  it("**2-1 표** — 수평선이 오면 화면 평행 축이 생기고 1점이 확정된다", () => {
+    // 대각선 둘로 대기 중인 상태에서 수평선을 그으면 그것이 축이다(표 다섯째 줄)
+    let st = stepRule(newRuleState(SZ), toward([200, 600]), SZ).state;
+    st = stepRule(st, toward([300, 640]), SZ).state;
+    expect(perspectiveOrder(st)).toBe(0);
+    const r = stepRule(st, line([120, 500], [520, 500]), SZ);
+    expect(r.event.type).toBe("screen_axis");
+    expect(perspectiveOrder(r.state)).toBe(1);
+  });
+
+  it("**2-1 표** — 수직선만으로는 정보가 없다. 계속 대기다", () => {
+    let st = newRuleState(SZ);
+    for (const y0 of [200, 260, 320]) {
+      const r = stepRule(st, line([300 + y0, y0], [300 + y0, y0 + 200]), SZ);
+      // 화면 수직은 **처음부터 선언된 슬롯 2**의 지지선일 뿐이다(D-L47 ⓑ)
+      expect(r.event.type).toBe("support");
+      st = r.state;
+    }
+    expect(perspectiveOrder(st)).toBe(0);
+    expect(vpsOf(st).filter(Boolean).length).toBe(0);
+  });
+
+  it("**2-5** — 빈 캔버스의 첫 대각선에는 묻지 않는다. 그것이 첫 깊이축이다", () => {
+    // 축이 하나도 없을 때는 물을 것이 없다 — 두 번째 수평축일 수 없고(첫 번째가 없다)
+    // 수직축일 수도 없다(3점은 2점 확정 뒤에만).
+    for (const b of [[520, 250], [520, 430], [420, 200], [430, 480]] as Pt2[]) {
+      const r = stepRule(newRuleState(SZ), line([260, 340], b), SZ);
+      expect(r.event.type).not.toBe("ask");
+    }
+    // **양성 채널**(#30) — 소실점이 하나 선 뒤에는 가파른 선이 실제로 물음을 낸다
+    let st = stepRule(newRuleState(SZ), toward([200, 600]), SZ).state;
+    st = stepRule(st, toward([300, 640]), SZ).state;
+    st = stepRule(st, toward([250, 620]), SZ).state;
+    expect(vpsOf(st).filter(Boolean).length).toBeGreaterThan(0);
+    const r2 = stepRule(st, line([300, 200], [340, 560]), SZ);
+    expect(r2.event.type).toBe("ask");
+  });
+
   it("화면 가로축이 이미 있으면 소실점은 다른 슬롯으로 간다", () => {
     const st = feed([[line([0, 100], [400, 100])], [toward([200, 600])], [toward([300, 640])]]);
     expect(st.slots[0]).toMatchObject({ kind: "screen" });

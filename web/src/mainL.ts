@@ -2449,7 +2449,10 @@ function renderAsk(): string {
   } else {
     rows.push('<div class="hdr"><b>이 선은 두 번째 수평축입니까, 수직축입니까?</b></div>');
     rows.push(`<div>${angles}</div>`);
-    rows.push('<div class="dim">수직축이면 소실점을 그리지 않습니다 —'
+    // ⚠ **옛 문구는 자기모순이었다**(7차 지시 2-5): "수직축이면 소실점을 그리지 않습니다 /
+    // 수직축이면 그 선에서 소실점을 읽습니다"가 한 문장에 있었다. 앞 절은 **두 번째 수평축**의
+    // 설명이 잘못 붙은 것이다. 두 갈래를 갈라 적는다.
+    rows.push('<div class="dim">두 번째 수평축이면 지평선 위에 소실점이 생깁니다 ·'
       + ' 수직축이면 그 선(들)에서 수직 소실점을 읽습니다 — 그것이 3점의 유일한 입구입니다</div>');
     rows.push('<div><button data-act="ask_depth">두 번째 수평축</button>'
       + ' <button data-act="ask_vertical">수직축</button>'

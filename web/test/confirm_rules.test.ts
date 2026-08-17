@@ -15,7 +15,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   newRuleState, stepRule, resolvePool, convergeDeg, fovGate, perspectiveOrder,
-  RULE_TOL, FOV_GATE, type RLine,
+  sepDeg, beyondSegment, RULE_TOL, FOV_GATE, type RLine,
 } from "../src/s3d/vpRules.js";
 import { lineIntersect, isFiniteVp, type Pt2 } from "../src/s3d/camera.js";
 import { vpMisfit, AXIS_TOL } from "../src/s3d/axis.js";
@@ -258,6 +258,54 @@ function ruleThreeSection() {
   let ctrlOldWrong = 0, ctrlNewWrong = 0;
   /** **옛 절대 창(40px)의 결과** — 창을 바꾼 것이 결론을 만든 것이 아님을 보이려고 함께 낸다. */
   let oldWrong40 = 0, newWrong40 = 0;
+  /**
+   * **각차 기준 팔**(2026-08-18 7차 지시 2-2 · 7-R 리뷰어 [①-a]).
+   *
+   * 지시문은 "어느 둘이 같은 축인가 — **각도 유사도**. 셋 중 가까운 둘이 한 축"이라 적었고
+   * 구현은 `far`(교점까지의 거리)를 쓴다. 6차 문서가 그 대체의 근거로 "합성 400구도에서
+   * 각차 399 · 거리 400"을 인용했는데 **그 수는 어느 원장에도 없었다**(#25 — 원장 밖 측정).
+   * 그래서 **여기서 실제로 돌린다**: 같은 입력·같은 잡음에서 두 선택자의 묶음 정오를 나란히 낸다.
+   * ⚠ 두 선택자는 `resolvePool`의 ④(셋이 안 모일 때)만 갈린다 — ①(셋이 모인다)은 공통이다.
+   */
+  let angleWrong = 0, farWrong = 0, ctrlAngleWrong = 0, ctrlFarWrong = 0;
+  let implWrongMain = 0, implWrongCtrl = 0;
+  /**
+   * **왜 현행 구현이 각차 기준만큼 못 하는가**(#7 — 추측 말고 카운터).
+   * 각차 기준은 **모든 짝**을 보고 현행 구현은 `poolCandidates`를 지난 짝만 본다.
+   * 참 짝(같은 축의 둘)이 그 문에서 걸리면 어떤 선택자도 못 고른다.
+   */
+  const dropped = { merge: 0, beyond: 0, infinite: 0, survived: 0 };
+  /** **`far` 분포**(7-R 리뷰어 [②-a]) — 묶음이 맞은 구도와 틀린 구도에서 그 값이 갈리는가.
+   *  지시 2-3("셋이 다 다르면 알린다")이 임계를 걸 수 있는 자리인지의 근거다. */
+  const farOkList: number[] = [], farBadList: number[] = [];
+  /** 두 선택자는 **하네스가 직접 구현한다** — 구현이 바뀌어도 이 표가 안 낡는다(#1·#34).
+   *  현행 구현의 값은 `impl_wrong`이고 그것이 `resolvePool`을 그대로 부른다. */
+  /** 각차 기준 선택자 — **셋 중 각차가 가장 작은 짝**이 한 축이다(지시 2-2 문자 그대로). */
+  const pickByAngle = (pool: RLine[]): [number, number] | null => {
+    let best: [number, number] | null = null, bestSep = Infinity;
+    for (let i = 0; i < pool.length; i++) for (let j = i + 1; j < pool.length; j++) {
+      const sp = sepDeg(pool[i], pool[j]);
+      if (sp < bestSep) { bestSep = sp; best = [i, j]; }
+    }
+    return best;
+  };
+  /** 무리 중심에서 교점까지의 거리 — `poolCandidates`의 `far`와 같은 정의다(#17). */
+  const farOf = (pool: RLine[], at: Pt2): number => {
+    const cx = pool.reduce((t, l) => t + (l.a[0] + l.b[0]) / 2, 0) / pool.length;
+    const cy = pool.reduce((t, l) => t + (l.a[1] + l.b[1]) / 2, 0) / pool.length;
+    return Math.hypot(at[0] - cx, at[1] - cy);
+  };
+  /** 거리 기준 선택자(6차 판) — **교점이 무리 중심에서 가장 먼 짝**. */
+  const pickByFar = (pool: RLine[]): [number, number] | null => {
+    let best: [number, number] | null = null, bestFar = -1;
+    for (let i = 0; i < pool.length; i++) for (let j = i + 1; j < pool.length; j++) {
+      const at = lineIntersect(pool[i].a, pool[i].b, pool[j].a, pool[j].b);
+      if (!at || !isFiniteVp(at, SZ)) continue;
+      const f = farOf(pool, at);
+      if (f > bestFar) { bestFar = f; best = [i, j]; }
+    }
+    return best;
+  };
   /** 잡음을 준 끝점 — 시작점 둘레로 `AIM_JITTER_DEG` 안에서 방향을 흔든다. */
   const jitter = (l: RLine): RLine => {
     const dx = l.b[0] - l.a[0], dy = l.b[1] - l.a[1];
@@ -299,6 +347,11 @@ function ruleThreeSection() {
     const ctrlGrouped = !!ctrlNew
       && ctrlNew.members.every(k => ctrlAxis[k] === ctrlAxis[ctrlNew.members[0]]);
     if (!ctrlGrouped) ctrlNewWrong += 1;
+    if (!ctrlGrouped) implWrongCtrl += 1;
+    const ctrlAng = pickByAngle([c1, c2, c3]);
+    if (!ctrlAng || ctrlAxis[ctrlAng[0]] !== ctrlAxis[ctrlAng[1]]) ctrlAngleWrong += 1;
+    const ctrlFarP = pickByFar([c1, c2, c3]);
+    if (!ctrlFarP || ctrlAxis[ctrlFarP[0]] !== ctrlAxis[ctrlFarP[1]]) ctrlFarWrong += 1;
 
     // 옛 규칙 — 두 선만으로 확정한다
     // **옛 규칙** — 두 선만으로 확정한다. `axisOf`는 그 선이 겨눈 참 축이다
@@ -321,7 +374,28 @@ function ruleThreeSection() {
     if (got) {
       newErr.push(Math.min(errTo(got.at, VA), errTo(got.at, VB)));
       if (got.rest.length) newTwoPoint += 1;
+      // **`far` 분포**(7-R [②-a]) — 맞은 묶음과 틀린 묶음에서 갈리는가
+      (grouped ? farOkList : farBadList).push(farOf([l1, l2, l3], got.at));
     }
+    // **참 짝이 후보 문을 지나는가**(#7) — 같은 축인 (l1, l3)
+    {
+      const P = [l1, l2, l3];
+      const at = lineIntersect(l1.a, l1.b, l3.a, l3.b);
+      const mergePx = SNAP_TOL.merge_ratio * Math.hypot(SZ[0], SZ[1]);
+      if (!at || !isFiniteVp(at, SZ)) dropped.infinite += 1;
+      else if ([l1.a, l1.b, l3.a, l3.b].some(e =>
+                 Math.hypot(e[0] - at[0], e[1] - at[1]) <= mergePx)) dropped.merge += 1;
+      else if (!beyondSegment(l1, at) || !beyondSegment(l3, at)) dropped.beyond += 1;
+      else dropped.survived += 1;
+      void P;
+    }
+    // **각차 기준 대 거리 기준**(7차 지시 2-2) — 같은 입력에서 나란히 센다.
+    // 셋째 열(`impl_wrong`)이 **현행 `resolvePool`**이다
+    if (!grouped) implWrongMain += 1;
+    const ang = pickByAngle([l1, l2, l3]);
+    if (!ang || axisOf[ang[0]] !== axisOf[ang[1]]) angleWrong += 1;
+    const farP = pickByFar([l1, l2, l3]);
+    if (!farP || axisOf[farP[0]] !== axisOf[farP[1]]) farWrong += 1;
   }
   // **무잡음 팔**(#25 — "15 → 3"을 산문이 아니라 필드로 남긴다).
   const r0 = rng32(20260818);
@@ -373,6 +447,41 @@ function ruleThreeSection() {
                 first_vp_error_px: stat(newErr),
                 waited_at_two_lines: newWaited,
                 two_point_in_one_step: newTwoPoint },
+    /**
+     * **지시 2-2가 명시한 기준(각도 유사도) 대 구현(거리)** — 7차 지시 2-2 · 7-R 리뷰어 [①-a].
+     * 6차 문서가 인용하던 "400구도 각차 399 · 거리 400"은 **어느 원장에도 없던 수다**(#25).
+     * 이것이 그 자리를 대신하는 **실제 실행**이다. 같은 입력·같은 잡음·같은 시드.
+     * ⚠ 두 팔의 분모는 같고(N) 묶음 정오의 정의도 같다(#11).
+     */
+    angle_vs_far: {
+      main_arm: { of: N, angle_wrong: angleWrong, far_wrong: farWrong, impl_wrong: implWrongMain },
+      control_arm: { of: N, angle_wrong: ctrlAngleWrong, far_wrong: ctrlFarWrong,
+                     impl_wrong: implWrongCtrl },
+      both_arms: { of: 2 * N, angle_wrong: angleWrong + ctrlAngleWrong,
+                   far_wrong: farWrong + ctrlFarWrong,
+                   impl_wrong: implWrongMain + implWrongCtrl },
+      note: "각차 기준은 **셋 중 각차가 가장 작은 짝**을 한 축으로 본다(지시 2-2 문자 그대로). "
+          + "거리 기준은 현행 `resolvePool` ④다. ⚠ 두 선택자는 ④에서만 갈린다 — 셋이 모이는 "
+          + "구도(①)는 공통 경로이므로 이 표의 차이는 **④에서만 난 것**이다. "
+          + "`impl_wrong`은 **현행 `resolvePool`**을 그대로 부른 값이다 — 두 선택자는 하네스가 "
+          + "직접 구현하므로 구현이 바뀌어도 이 표가 안 낡는다(#1·#34).",
+      /**
+       * **격차의 출처**(#7) — 각차 기준은 **모든 짝**을 보고 구현은 `poolCandidates`를 지난
+       * 짝만 본다. 참 짝(같은 축의 둘)이 그 문에서 걸리면 어떤 선택자도 못 고른다.
+       * 주 팔 120구도에서 참 짝이 어느 문에 걸렸는가:
+       */
+      true_pair_gate: dropped,
+    },
+    /**
+     * **`far` 분포**(7-R 리뷰어 [②-a]) — 지시 2-3("셋이 다 다르면 알린다")에 임계를 걸 수 있는가.
+     * 맞은 묶음과 틀린 묶음의 분포가 겹치면 `far` 하나로는 못 가른다.
+     * ⚠ **이것은 임계를 고르는 표가 아니라 "고를 수 있는가"의 표다**(#12: 동작점 하나·#13).
+     */
+    far_distribution: {
+      grouped_ok: stat(farOkList), grouped_wrong: stat(farBadList),
+      note: "겹치면 `far` 하나로 '잘못 그었다'를 못 가른다 — 그때는 지시 2-3의 알림에 다른 "
+          + "신호가 필요하다. 분모: 소실점을 실제로 낸 구도만(#11).",
+    },
     /** 분모가 왜 갈리는가(#11) — `wrong`은 **못 낸 것도 틀림**으로 세고, 오차 분포는 **낸 것만** 센다. */
     denominators: "wrong = N(못 낸 것 포함) · first_vp_error_px.n = 소실점을 실제로 낸 구도 수",
     gate: gate({

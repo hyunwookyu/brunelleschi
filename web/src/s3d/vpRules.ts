@@ -631,13 +631,26 @@ export function resolvePool(
   // ③ **두 선뿐이면 대기한다** — 같은 축인지 다른 축인지 갈리지 않는다(지시 11-1 둘째 줄).
   //    이것이 이번 변경의 핵심이다: 옛 판은 여기서 확정했고 그래서 2점이 1점이 됐다.
   if (pool.length < 3) return null;
-  // ④ **셋이 안 모인다 → 어느 둘이 같은 축인가**(지시 11-2). 지시문은 "각도 유사도"라 적었고
-  //    그 근거는 **같은 축의 두 선이 거의 나란하다**는 것이다. 같은 사실의 더 곧은 표현이
-  //    `far`다 — 나란할수록 교점이 멀다. 그리고 **멀다는 것이 곧 "소실점이지 공간의 한 점이
-  //    아니다"**라는 지시문의 근거 그 자체다(11 머리말). 합성 400구도에서 각차 기준은 399,
-  //    거리 기준은 400을 맞혔다(`confirm_rules.json`의 `vp_rule_three`).
-  //    나머지는 `rest`로 나가 **두 번째 소실점**이 된다.
-  const c = [...cands].sort((a, b) => b.far - a.far)[0];
+  // ④ **셋이 안 모인다 → 어느 둘이 같은 축인가**(지시 11-2 · 7차 지시 2-2).
+  //
+  // ⚠⚠ **2026-08-18 7차에 기준이 바뀌었다 — 측정이 지시문 쪽이었다.**
+  // 6차 판은 `far`(교점까지의 거리) 최대를 썼고 그 근거로 "합성 400구도에서 각차 399 ·
+  // 거리 400"을 인용했는데, **그 수는 어느 원장에도 없었다**(7-R 리뷰어 [①-a] · #25).
+  // 실제로 돌려 보니 반대다(`confirm_rules.json`의 `angle_vs_far`, 240구도·같은 잡음·같은 시드):
+  // **각차 최소 0/240 · 거리 최대 31/240.** 지시문이 적은 "각도 유사도"가 맞다.
+  //
+  // 기전: `far`는 각차뿐 아니라 **두 선 사이의 간격**에도 비례한다(간격 ÷ sinΔθ) — 같은 각차라도
+  // 멀리 떨어져 그은 짝이 이긴다(7-R [①-c] · #24: 단위를 바꾸는 것과 판정을 바꾸는 것은 다르다).
+  // "소실점은 멀다"(11 머리말)는 성질은 `beyondSegment`와 `isFiniteVp`가 이미 지킨다.
+  //
+  // ⚠⚠ **이 정렬 자체는 그 픽스처에서 아무것도 안 바꿨다** — 두 정렬 모두 구현 틀림이
+  // **7/120 · 대조 24/120**으로 같다(직접 확인했다). 남은 격차의 출처는 ④가 아니라
+  // **후보 문**이다: 참 짝이 `beyondSegment`에 4/120 걸린다(`angle_vs_far.true_pair_gate`).
+  // 그럼에도 이 기준으로 두는 이유는 ① 지시문이 명시한 양이고 ② 독립 선택자 비교에서
+  // 각차 0/240 · 거리 14/240이며 ③ `far`가 간격에 오염된 양이기 때문이다(#24).
+  // 후보 문을 무르는 것은 AS-L28(무잡음 15 → 3)을 되돌리는 일이라 안 한다 — `DEFERRED`.
+  // 나머지는 `rest`로 나가 **두 번째 소실점**이 된다.
+  const c = [...cands].sort((a, b) => a.sep - b.sep || b.far - a.far)[0];
   return { at: c.at, support: c.members.length, members: c.members, rest: restOf(c) };
 }
 
@@ -833,6 +846,9 @@ export function stepRule(
       // **모이지 않은 나머지가 두 번째 축이다**(지시 11-1 넷째 줄) — 그 선과 지평선의 교점.
       // 각차가 가장 큰 것을 고른다(교점의 조건수가 가장 좋다 — `sepDeg`, 기존 수단 #17).
       let second: { i: 0 | 1; at: Pt2; fov: FovVerdict } | null = null;
+      // **두 번째 축이 화각 게이트에 걸린 것도 알린다**(7차 지시 2-3·4-c) — 옛 판은 조용히
+      // 1점으로 남겼고, 그러면 사용자는 **2점을 그렸는데 1점이 됐다**는 것을 모른다.
+      let secondRejected: FovVerdict | null = null;
       const other = horizontalTargetAfter(st, target.index);
       if (other != null && got.rest.length) {
         const cand = got.rest
@@ -844,6 +860,8 @@ export function stepRule(
           if (fov.band !== "reject") {
             st.slots[other] = { kind: "vp", at: cand.at, source: "horizon_x_line", support: 1 };
             second = { i: other, at: cand.at, fov };
+          } else {
+            secondRejected = fov;
           }
         }
       }
@@ -855,6 +873,8 @@ export function stepRule(
                      source: "horizon_x_line", horizonSet: true, fov: second.fov }
                  : { type: "vp_fixed", axis: target.index, at: got.at,
                      source: "two_lines", horizonSet: true,
+                     // 두 번째 축이 화각에 걸렸으면 그 판정을 실어 보낸다 — 부르는 쪽이 알린다
+                     ...(secondRejected ? { fov: secondRejected } : {}),
                      paired: { a: [pool[got.members[0]].a[0], pool[got.members[0]].a[1]],
                                b: [pool[got.members[0]].b[0], pool[got.members[0]].b[1]] } } };
     }
