@@ -325,7 +325,7 @@
     "note": "⚠ **대상이 사라졌다**(D-L37) — 가이드가 없어졌으므로 '가이드 길이'도 '요구 길이(`min_guide_ratio`)'도 없는 양이다. 빈 배열·`null`이고, 이 자리를 지우지 않는 이유는 왜 그 규칙이 있었는지가 근거이기 때문이다(#29의 숙제였다)."
   },
   "l_d3_save_roundtrip": {
-    "reload_ms": 1177,
+    "reload_ms": 1180,
     "views": 2,
     "lifted": 12,
     "pending_2d": 1,
@@ -641,220 +641,6 @@
       "돌린 시점의 2D 대기 획은 **일괄 풀이에 안 넣는다**(`liftAll`은 확정 카메라의 소실점을 쓴다). 그 시점에서 못 놓인 획은 그 뷰의 2D로 남고, 앵커가 생기면 그때 올라간다(§9.1)"
     ]
   },
-  "l_c1": {
-    "setup2pt": {
-      "order": 2,
-      "lifted": 8,
-      "standing": true
-    },
-    "promote": {
-      "before": {
-        "order": 2,
-        "lifted": 8,
-        "first_id": "s1",
-        "seg0": [
-          [
-            2.1631444269112423,
-            0.9769702946755753,
-            6.8622962281717035
-          ],
-          [
-            0.8605003793396241,
-            0.990899326256122,
-            5.946178173450347
-          ]
-        ],
-        "snap_count": 4
-      },
-      "order_after_guides": 3,
-      "order": 3,
-      "lifted": 8,
-      "geometry_moved": true,
-      "standing": true,
-      "pinned": true,
-      "note": "차수 승격 2점 → 3점 — 전부 다시 풀었습니다(§6.1)\n3D 8획\n스냅 4/4개를 새 상으로 옮겼습니다 — 끊긴 것 없음\n화면이 움직입니다 — 되돌리려면 위의 2점으로 되돌리기를 누르세요(소실점과 기하를 함께 되돌립니다)",
-      "size_heal_count": 1
-    },
-    "undo": {
-      "restored": true,
-      "lifted": 8
-    },
-    "what_this_does_not_say": [
-      "승격이 **나아지게 하는가** — 참값 대조는 `order_promote.json`이 한다(앱에는 참값이 없다)",
-      "사람이 세 번째 소실점을 얼마나 정확히 잡는가 — **표본 0**(AS-L9)",
-      "여기 소실점은 **참값을 넣은 것**이다. 검출·조정 오차는 L-A·L-B가 잰다"
-    ]
-  },
-  "l_c2": {
-    "promote": {
-      "before": {
-        "order": 2,
-        "lifted": 8,
-        "ids3d": [
-          "s1",
-          "s2",
-          "s3",
-          "s4",
-          "s5",
-          "s6",
-          "s7",
-          "s8"
-        ],
-        "guides": 2,
-        "pts0": [
-          [
-            "s1",
-            789.5910561542387,
-            239.96719649611114
-          ],
-          [
-            "s2",
-            782.6857906796081,
-            241.6245897762414
-          ],
-          [
-            "s3",
-            782.3885365245783,
-            243.0069150239492
-          ],
-          [
-            "s4",
-            965.3277957305721,
-            216.49061986749166
-          ],
-          [
-            "s5",
-            642.0758386179054,
-            212.64177734507848
-          ],
-          [
-            "s6",
-            966.3414789315614,
-            216.44084166469713
-          ],
-          [
-            "s7",
-            647.4217619821375,
-            213.98376393107782
-          ],
-          [
-            "s8",
-            821.2584743486674,
-            200.87388750425205
-          ],
-          [
-            "s9",
-            787.039905920106,
-            18.400160759710282
-          ],
-          [
-            "s10",
-            792.0135261070666,
-            20.77792110525181
-          ],
-          [
-            "s11",
-            978.9621116966428,
-            26.676137127036544
-          ],
-          [
-            "s12",
-            643.5309088226949,
-            22.704541760966
-          ]
-        ]
-      },
-      "order": 3,
-      "report": {
-        "before": 2,
-        "after": 3,
-        "dropped": [],
-        "gained": [],
-        "snapLost": [],
-        "reanchored": 4,
-        "had": 4,
-        "relinked": null
-      },
-      "marks": [
-        2
-      ],
-      "lifted": 8,
-      "panel": "차수 승격 2점 → 3점 — 전부 다시 풀었습니다(§6.1)3D 8획스냅 4/4개를 새 상으로 옮겼습니다 — 끊긴 것 없음화면이 움직입니다 — 되돌리려면 위의 2점으로 되돌리기를 누르세요(소실점과 기하를 함께 되돌립니다)",
-      "revert_button": true
-    },
-    "what_was_lost": {
-      "dropped": 0,
-      "snap_lost": 0,
-      "reanchored": "4/4"
-    },
-    "undo_restores_camera": {
-      "order": 3,
-      "guides": 3,
-      "standing": true,
-      "lifted": 8,
-      "report_gone": true
-    },
-    "revert_by_order": {
-      "after_promote": 3,
-      "strokes_before_revert": 13,
-      "order": 2,
-      "guides": 2,
-      "ids3d": [
-        "s1",
-        "s2",
-        "s3",
-        "s4",
-        "s5",
-        "s6",
-        "s7",
-        "s8"
-      ],
-      "pts_restored": true,
-      "strokes": 12,
-      "note": "2점으로 되돌렸습니다 — 소실점과 기하를 함께 되돌렸습니다 (둘 중 하나만 되돌리면 좌표계가 섞입니다, §6.1)"
-    },
-    "loss_shown": {
-      "fixture": {
-        "grade": "medium",
-        "end_jitter": 0.04,
-        "seed": 4242,
-        "skew": 0.37,
-        "scene": "yaw 35 · pitch 15 · f 1000",
-        "box": [
-          1.2,
-          1,
-          0.9
-        ]
-      },
-      "dropped": 2,
-      "gained": 0,
-      "snap_lost": 0,
-      "snap_had": 4,
-      "reanchored": 4,
-      "panel_says_dropped": true,
-      "panel_says_snap_lost": false,
-      "relink_button": false,
-      "drop_mark_drawn": true,
-      "snap_mark_drawn": null,
-      "relinked": null,
-      "snap_lost_after": 0,
-      "undo_restores_report": false
-    },
-    "snap_loss_checks_ran": false,
-    "loss_fixture_provenance": {
-      "how": "첫 픽스처(medium · jitter 0.006 · seed 12345)가 `dropped 0 · snapLost 0`이라 표시 경로를 안 지났다. **등급 2 × jitter 3 × 시드 3 = 18조합을 훑어** `dropped > 0 && snapLost > 0`인 것을 골랐다. 18조합 중 **셋**이 그랬다 (medium/0.04/4242 · coarse/0.02/4242 · coarse/0.04/4242).",
-      "why_not_cherry_picking": "**결론을 만들려고 고른 것이 아니라 코드 경로를 지나려고 골랐다.** 이 테스트가 판정하는 것은 '표시가 뜨는가'이지 '얼마나 자주 잃는가'가 아니다 — 빈도는 `order_undo.json`이 216장면으로 잰다(내려감 176/216 · 스냅 끊김 94/216).",
-      "where_in_population": "⚠ **이 픽스처는 모집단의 꼬리 쪽이다.** 스냅 끊김 4/5 = 0.80인데 모집단은 295/1676 = **0.176**이고, 장면당 끊김은 중앙 **0** · p90 **4**다(`order_undo.json@54346ad1`) — 즉 **p90 자리**다. 표시 경로를 지나려면 그래야 하지만, **이 수를 대표값으로 인용하면 안 된다.**",
-      "off_grid": "⚠ **격자 밖이 셋이다**(#12): jitter 0.04(격자 {0, 0.01, 0.03, 0.05}) · seed 4242(격자 {1..6}) · **skew 0.37**(하네스는 0.12 — 3배다). skew는 이 파일의 다른 브라우저 픽스처와 같은 값이고 **훑기에서 흔들지 않았다**(고정). 배선 확인용이고 여기서 나온 수치를 원장 값으로 쓰지 않는다."
-    },
-    "what_this_does_not_say": [
-      "사용자가 그 표시를 보고 **옳게 판단하는가** — 표본 0(AS-C1)",
-      "재연결이 붙이는 자리가 **옳은가** — 그것은 스냅의 문제이고 `snap.json`이 잰다. 여기서 재는 것은 **끊긴 것이 보이고 되돌릴 수 있는가**뿐이다",
-      "**얼마나 자주 잃는가** — 이 픽스처는 표시 경로를 지나려고 고른 **p90 자리**다. 빈도는 `order_undo.json`이 216장면으로 잰다",
-      "여러 차수 표식(1점·2점·3점)이 동시에 있을 때의 동작 — 이 픽스처는 2 → 3 하나뿐이다",
-      "돌린 뷰에서의 표시 — `drawPromoteLoss`는 **확정 시점에서만** 그린다(`pts2d`가 그 화면 좌표다)"
-    ]
-  },
   "l_d1": {
     "setup": {
       "strokes": 14,
@@ -905,8 +691,8 @@
     },
     "stroke_latency_ms": {
       "n": 8,
-      "median": 1.7,
-      "max": 2.8,
+      "median": 1.6,
+      "max": 3.1,
       "note": "**개발 서버(번들 없음) · 상자 둘(24획 + 그린 획)** 기준이므로 상한으로 읽는다. ⚠ `e2e.json`의 값은 **옛 UI**라 같은 구간이 아니다 — 견주지 않는다.",
       "registered_pass": "중앙 10ms 미만(사전 등록). ⚠ **중앙값 자체를 문서에 인용하지 않는다** — 기계·실행마다 흔들린다. 판정은 자릿수다"
     },
@@ -916,7 +702,7 @@
         "lifted": 20,
         "pending": 4
       },
-      "order": 3,
+      "order": 2,
       "trace": [
         {
           "pass": 1,
@@ -934,32 +720,14 @@
           "placed": 0
         }
       ],
-      "lifted": 16,
-      "pending": 8,
+      "lifted": 20,
+      "pending": 4,
       "rounds": 3,
       "hit_cap": false,
       "reading": "**여러 회 돌았다** — 회차별 (대기 · 놓임)이 `trace`에 있다"
     },
     "order_marks_multi": {
-      "after3": {
-        "order": 3,
-        "marks": [
-          2
-        ],
-        "buttons": [
-          "revert2"
-        ]
-      },
-      "back2": {
-        "order": 2,
-        "lifted": 20,
-        "guides": 2
-      },
-      "repromote": {
-        "order": 2,
-        "guides": 2
-      },
-      "reading": "**되돌리기는 문서와 카메라를 함께 되돌린다** — 2로 되돌린 뒤 재승격해도 3점이 안 된다(규칙이 같이 돌아갔다). §6.1: 둘 중 하나만 되돌리면 좌표계가 섞인다."
+      "retired": "7차 지시 3-d — 차수 승격 개념이 사라졌다"
     },
     "screenshot_regression": {
       "identical": true,

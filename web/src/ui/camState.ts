@@ -100,7 +100,7 @@ export class CamState {
    *
    * `forced`는 사용자가 물음에 답한 것이다.
    */
-  feed(line: RLine, forced?: "screen" | "depth" | "vertical"): RuleFeedback {
+  feed(line: RLine, forced?: "screen" | "depth"): RuleFeedback {
     const r = stepRule(this.rules, line, this.imgSize, forced);
     const applied = r.event.type !== "ask" && r.event.type !== "rejected";
     if (applied) { this.rules = r.state; this.apply(); }

@@ -667,37 +667,21 @@ const finiteHorizontals = (st: RuleState): { i: 0 | 1; at: Pt2 }[] =>
  */
 export function stepRule(
   st0: RuleState, line: RLine, imgSize: [number, number],
-  forced?: "screen" | "depth" | "vertical", cfg: RuleCfg = {},
+  forced?: "screen" | "depth", cfg: RuleCfg = {},
 ): StepResult {
   const c = { ...RULE_TOL, ...cfg };
   const st = cloneRuleState(st0);
   const v = classifyLine(line.a, line.b, cfg);
   if (v.kind === "degenerate") return { state: st0, event: { type: "rejected", why: "선이 한 점이다" } };
 
-  // 사용자가 "수직축"이라 답했다 — 유도될 V₃의 지지선으로만 센다(선에서 소실점을 만들지 않는다).
+  // ⛔ **`forced === "vertical"` 분기를 지웠다**(2026-08-18 7차 지시 3-b).
   //
-  // ⚠ **그 선이 화면 수직이 아니면 그것이 3점 선언이다**(2026-08-17 A-4). 수심 유도는
-  // 이제 **여기서만** 열린다 — 지평선 높이가 혼자 3점을 만들던 경로를 뺐다.
-  if (forced === "vertical") {
-    st.verticalLines.push(line);
-    const s2 = st.slots[2];
-    // **이미 다른 출처로 정해진 수직 소실점은 안 건드린다** — 지지선으로만 센다(§1의 잠금).
-    // ⚠ `tilted_vertical`은 예외다: 그 값은 **이 선들이 만든 것**이므로 선이 하나 더 오면
-    // **다시 푼다**. 소실점 하나를 지지선 여럿의 최소제곱 교점으로 푸는 것과 같은 자리다.
-    if (s2 && s2.kind === "vp" && s2.source !== "tilted_vertical") {
-      s2.support += 1;
-      return { state: st, event: { type: "support", axis: 2 } };
-    }
-    const prev = s2 && s2.kind === "vp" ? s2 : null;
-    if (prev) st.slots[2] = screenVerticalSlot();                     // 다시 풀 자리를 연다
-    const st2 = deriveVertical(st, imgSize);
-    const now = st2.slots[2];
-    if (now && now.kind === "vp") return { state: st2, event: { type: "derived_vertical", at: now.at } };
-    // **다시 풀기가 실패하면 옛 값을 되돌린다.** 지지선을 하나 더 그었다고 이미 선 수직
-    // 소실점이 사라지면 안 된다 — 그것은 **사용자가 시키지 않은 되돌리기**다(A-3).
-    if (prev) { st2.slots[2] = { ...prev, support: prev.support + 1 }; }
-    return { state: st2, event: { type: "support", axis: 2 } };
-  }
+  // **3점은 시점의 성질이지 그리는 선의 종류가 아니다**(지시 3 머리말). 3점 투시는 2점이
+  // 서 있는 상태에서 **카메라를 기울여야** 나오고, 그 기울인 시점에서는 `viewPlaceCtx`가
+  // 세 축의 방향을 전부 들고 있으므로 **축 스냅의 후보가 하나 늘 뿐 기전이 같다**(지시 3-b).
+  // 그래서 "이 선이 수직축입니까"라고 물을 이유가 없다 — **기울어진 선은 항상 깊이선이다.**
+  // 함께 사라진 것: `RuleState.verticalLines` · `tiltedVerticals` · `wantsTiltedVertical` ·
+  // `deriveVertical`(수심 유도의 마지막 잔재) · P2 → P3 승격(지시 3-d).
   // **너무 짧은 획은 소실점에 기여하지 않는다**(A-5). 획 자체는 부르는 쪽에 남는다 —
   // 여기서는 **카메라를 안 건드리는 것**만 한다. 실수로 그은 작은 선이 두 번째 소실점을
   // 정의해 버리던 자리다.
@@ -794,25 +778,11 @@ export function stepRule(
         return { state: st, event: { type: "support", axis: i } };
       }
     }
-    // **두 번째 수평축인가 수직축인가** — 선만 보고 안 갈리면 묻는다.
-    //
-    // ⚠ 조건이 셋 바뀌었다(2026-08-17):
-    //   ① `!st.slots[2]` → **유한 소실점이 아닌 동안**. 슬롯 2는 이제 처음부터 화면 수직이라
-    //      옛 검사는 항상 거짓이다. 기울어진 수직선이 3점 선언이 될 수 있으므로 물어야 한다(A-4)
-    //   ② **P1에서는 안 묻는다**. 화면 가로가 선언된 순간 3점은 불가능하고
-    //      (1점의 정의가 가로축 무한원이다) 남은 축은 깊이 하나뿐이라 **모호가 없다**
-    //   ③ ⚠⚠ **`!target` 거절보다 앞에 둔다.** 옛 자리(뒤)에서는 **수평 소실점이 둘 다 서면
-    //      가파른 선이 물음도 없이 거절**됐고, 그러면 **3점으로 갈 입구가 아예 없다** —
-    //      `horizon_pitch.json`에서 차수 3이 141/144 → **0**으로 무너진 것이 그 자리다.
-    //      2점이 선 뒤에 세로 모서리를 긋는 것이 **정상적인 3점 작도 순서**다.
-    //   ④ ⚠⚠ **축이 하나도 없으면 안 묻는다**(2026-08-18 6차 지시 11-5): 빈 캔버스의 첫
-    //      대각선은 **첫 깊이축**이다. 두 번째 수평축일 수 없고(첫 번째가 없다) 수직축일
-    //      수도 없다(3점은 2점 확정 뒤에만 — 지시 3-e). **축이 하나도 없을 때는 물을 것이
-    //      없다.** 실획 첫 표본에서 물음이 5획에 여섯 번 났고 그 대부분이 이 자리다.
-    if (forced !== "depth" && order !== 1 && finiteHorizontals(st).length > 0
-        && v.toV < c.vertical_ask_deg && st.slots[2]?.kind !== "vp") {
-      return { state: st0, event: { type: "ask", question: "second_horizontal_or_vertical", verdict: v } };
-    }
+    // ⛔ **"두 번째 수평축입니까, 수직축입니까" 물음을 지웠다**(7차 지시 3-b).
+    // **기울어진 선은 항상 깊이선이다.** 3점 시점의 수직축은 카메라를 기울였을 때 생기고
+    // 그때는 축 스냅이 알아서 고른다(위 `forced === "vertical"` 자리의 설명).
+    // 남는 물음은 화면 가로세로 대 깊이(`screen_or_depth`) 하나뿐이다 — 그것은 **차수를
+    // 정하는 물음이 아니라** 4~8° 애매 구간의 판정이다.
     if (!target) {
       // ⛔ **거리점 획득을 지웠다**(2026-08-17 지시 2) — 대각선이 거리점인지 2점 승격인지
       // 기하로 구분 불가다. P1의 f는 임의값이다(`perspectiveOrder` 머리말).
@@ -866,8 +836,7 @@ export function stepRule(
         }
       }
       st.depthLines = [];
-      const st2 = deriveVertical(st, imgSize);
-      return { state: st2,
+      return { state: st,
                event: second
                  ? { type: "vp_fixed", axis: second.i, at: second.at,
                      source: "horizon_x_line", horizonSet: true, fov: second.fov }
@@ -897,93 +866,26 @@ export function stepRule(
       return { state: st0, event: { type: "rejected", why: fov.why, fov, notify: true } };
     }
     st.slots[target.index] = { kind: "vp", at: p, source: "horizon_x_line", support: 1 };
-    const st2 = deriveVertical(st, imgSize);
-    return { state: st2,
+    return { state: st,
              event: { type: "vp_fixed", axis: target.index, at: p,
                       source: "horizon_x_line", horizonSet: false, fov } };
   }
 
 }
 
-/**
- * **사용자가 기울어진 수직선을 수직축이라고 답했는가** — 그것이 **유일한 3점 입구다**(A-4).
- *
- * ⚠ **새 필드를 만들지 않는다**(#18: 안 읽는 필드를 늘리지 않는다). `verticalLines`에
- * 이미 그 선이 들어 있고, 화면 수직인지는 `classifyLine`이 **같은 임계로** 판정한다(#17).
- * 그러므로 옛 저장본도 그대로 열린다 — 저장된 선을 다시 판정하면 같은 답이 나온다.
- */
-/**
- * ⚠⚠ **`!== "screen_v"`가 아니라 `=== "depth"`다.** 초판이 전자였고 측정이 잡았다:
- * 손으로 그은 세로선은 4~8°(애매 구간)로 흔히 떨어지는데, 그것을 "기울었다"로 읽으면
- * **손 오차가 3점 투시를 만든다**. `horizon_pitch.json`에서 중앙 지평선의 차수 3 비율이
- * 0 → **0.63**으로 뛴 것이 그 자리다. 애매 구간은 **화면 수직 쪽**으로 둔다 —
- * 3점 선언은 **의도가 분명한 기울기**(≥ `depth_min_deg`)만 받는다(A-3: 애매하면 놓지 않는다).
- */
-export const tiltedVerticals = (st: RuleState, cfg: RuleCfg = {}): RLine[] =>
-  st.verticalLines.filter(l => classifyLine(l.a, l.b, cfg).kind !== "screen_v");
-
-/** 기울기가 **의심의 여지 없이** 크다 — 선 하나로 3점을 선언해도 되는 조건. */
-const clearlyTilted = (l: RLine, cfg: RuleCfg = {}): boolean =>
-  classifyLine(l.a, l.b, cfg).kind === "depth";
-
-export const wantsTiltedVertical = (st: RuleState, cfg: RuleCfg = {}): boolean =>
-  tiltedVerticals(st, cfg).length > 0;
-
-/**
- * **수직 소실점 — 사용자가 그은 기울어진 수직선에서 읽는다**(2026-08-17 A-4로 교체).
- *
- * ⚠⚠ **옛 판은 수심 유도였다**(이론서 6.3): 수평 소실점 둘과 주점(= 이미지 중심 가정)이
- * 있으면 V₃가 일의적으로 정해진다. 그것을 **뺐다** — 그 식은 `dy = P_y − 지평선`으로 나누므로
- * **지평선 높이가 곧 3점 여부**가 됐고, 그러면 **사용자가 2점을 그리는 동안 도구가 피치를
- * 정한다**(A-4가 지적한 그 자리). 2점 투시에서 피치 판정은 필요 없다.
- *
- * 지금은 **정보의 출처가 사용자의 선**이다:
- * ```
- * V₃ = (그은 기울어진 수직선) ∩ (x = W/2)      ← 주점 x = 이미지 중심 가정(16.2)만 쓴다
- * ```
- * 선이 여럿이면 그 교점들의 **y 평균**이다(전부 같은 축의 지지선이므로).
- * 그러면 주점은 소실점 삼각형의 **수심**으로 다시 나오고(6.3) f도 거기서 나온다 —
- * 즉 **가정의 귀결이 아니라 측정**이다(PITFALLS #5 자기참조 유형 3이 해소된다).
- *
- * ⚠ 여전히 남는 가정: **주점 x = 이미지 중심**(16.2, AS-C5). 롤 0이면 수직 소실점은
- * 주점과 같은 x에 있다 — 그것이 이 식의 근거이고 옛 수심 식의 출력 형태(`[P_x, y₃]`)와 같다.
- */
-export function deriveVertical(st0: RuleState, imgSize: [number, number],
-                               cfg: RuleCfg = {}): RuleState {
-  const st = cloneRuleState(st0);
-  if (st.slots[2]?.kind === "vp") return st;          // 이미 유한 소실점이다
-  // **P1에서는 3점이 불가능하다.** 가로축이 화면에 평행하다는 것이 1점의 정의이고
-  // (이론서 2.3), 그 상태에서 수직축까지 유한 소실점이면 **무한원 축 하나 + 유한 둘**이라
-  // 사용자가 그리고 있는 그림이 아니다. **애매하면 놓지 않는다**(A-3).
-  if (perspectiveOrder(st) === 1) return st;
-  const lines = tiltedVerticals(st, cfg);
-  if (!lines.length) return st;                       // 화면 수직이 옳다 — 1점·2점이다
-  const cx = imgSize[0] / 2;
-  // ⚠⚠ **선이 둘 이상이면 최소제곱 교점이다**(`lsIntersection`) — 초판은 언제나
-  // `∩ (x = W/2)`를 쓰고 그 y들을 평균했고, 측정이 그것을 **조건수 때문에** 기각했다:
-  // 수직 소실점은 화면에서 아주 멀리 있으므로 획을 x = W/2까지 **외삽**하면 각 오차가
-  // 크게 증폭된다(`horizon_pitch.json`의 축별 몰아 긋기에서 축 오차 중앙 **37.7°**).
-  // 소실점을 지지선 여럿의 교점으로 푸는 것은 이 저장소의 기존 수단이다(#17: `camera.ts`).
-  // 선이 하나뿐일 때만 **주점 x = 이미지 중심**(16.2)을 써서 자유도를 메운다.
-  let v3: Pt2 | null = null;
-  if (lines.length >= 2) {
-    v3 = lsIntersection(lines.map(l => ({ p: l.a,
-      d: [l.b[0] - l.a[0], l.b[1] - l.a[1]] as Pt2 })));
-    // **거의 나란하면 교점이 발산한다** — 그때는 아래 한 선 경로로 내려간다(A-3: 못 내면 안 낸다)
-    if (v3 && !isFiniteVp(v3, imgSize)) v3 = null;
-  }
-  // **선이 하나뿐일 때는 기울기가 분명해야 한다.** 손으로 그은 세로선은 4~8°(애매 구간)로
-  // 흔히 떨어지는데, 그 하나를 x = W/2까지 **외삽**하면 각 오차가 크게 증폭된다 —
-  // 그러면 **손 오차가 3점 투시를 만든다**(초판이 그랬고 `horizon_pitch.json`이 잡았다).
-  if (!v3 && lines.length === 1 && clearlyTilted(lines[0], cfg)) {
-    const p = lineIntersect(lines[0].a, lines[0].b, [cx, 0], [cx, 1]);
-    v3 = p && Number.isFinite(p[1]) ? [cx, p[1]] : null;
-  }
-  if (!v3) return st;
-  if (!isFiniteVp(v3, imgSize)) return st;            // 사실상 무한원 — 화면 수직으로 둔다
-  st.slots[2] = { kind: "vp", at: v3, source: "tilted_vertical", support: lines.length };
-  return st;
-}
+// ⛔ **`tiltedVerticals`·`clearlyTilted`·`wantsTiltedVertical`·`deriveVertical`을 지웠다**
+// (2026-08-18 7차 지시 3-b·3-c).
+//
+// 세 세대가 이 자리에 겹쳐 있었다: ① 수심 유도(이론서 6.3 — 지평선 높이가 곧 3점 여부가 되어
+// **도구가 피치를 정했다**) ② A-4의 "기울어진 수직선을 사용자가 선언한다"(물음이 생겼다)
+// ③ **지금 — 아무것도 안 한다.** 3점은 **카메라를 기울인 시점의 성질**이고, 그 시점에서
+// `viewCamera.viewPlaceCtx`가 세 축 방향을 전부 낸다. 확정 카메라의 수직축은 화면 수직으로
+// 남고(롤 0 · 피치 0), 기울인 시점에서 수직축의 소실점이 화면 안으로 들어온다.
+// 지시 3-c: "세 번째 소실점을 수심으로 유도할 필요가 없다. 카메라가 이미 있으므로
+// 피치에서 계산된다."
+//
+// ⚠ `Slot.source`의 `"tilted_vertical"`·`"orthocenter"`는 **옛 저장본을 여는 데 남긴다** —
+// 그 값으로 저장된 슬롯은 그대로 읽히고 `perspectiveOrder`가 3을 낸다(아래 머리말).
 
 // ---------------------------------------------------------------- 점 찍기 확정 (4차 지시 4-b)
 
@@ -1050,7 +952,7 @@ export function pickVpAt(
   }
   (st.slots[target.index] as { support: number }).support = Math.max(1, sup);
   st.depthLines = [];
-  return { state: deriveVertical(st, imgSize), at };
+  return { state: st, at };
 }
 
 // ---------------------------------------------------------------- 상태 → 카메라 입력

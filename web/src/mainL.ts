@@ -324,8 +324,9 @@ const UNDO_MAX = 200;
 
 const cssSize = (): [number, number] => cssSizeOf(canvas);
 
-const appSnap = (): AppSnap => takeSnap(doc, cam,
-  promoteReport ? { ...promoteReport, snapLost: [...promoteReport.snapLost] } : null);
+// ⚠ **`report` 자리는 이제 언제나 `null`이다**(7차 지시 3-d — 승격 요약이 없어졌다).
+// `appSnap.ts`의 자료구조는 그대로 두어 **옛 저장본이 그대로 열린다**(읽는 쪽이 무시한다).
+const appSnap = (): AppSnap => takeSnap(doc, cam, null);
 
 /** 스냅샷을 그대로 되돌린다. **문서만 되돌리지 않는다**(`appSnap.ts` 머리말). */
 function restoreSnap(s: AppSnap) {
@@ -337,8 +338,6 @@ function restoreSnap(s: AppSnap) {
   // 핀 투영이 낡기 때문이고, 그때 화면은 확정 전 2D 층으로 돌아간다.
   if (c && stage.isPinned) stage.pinTo(c.principal, c.f);
   else if (!c && stage.isPinned) stage.unpin(null);
-  const rep = s.report as PromoteReport | null;
-  promoteReport = rep ? { ...rep, snapLost: [...rep.snapLost] } : null;
   syncScene();
 }
 
@@ -347,46 +346,17 @@ function pushUndo() {
   if (undoStack.length > UNDO_MAX) undoStack.shift();
 }
 
-// ---------------------------------------------------------------- 차수 되돌리기 (L-C.2, §6.2)
-
-/**
- * **차수를 명시한 되돌리기**(§6.2: "사용자가 즉시 보고 `1점으로 되돌리기`를 누른다").
- *
- * 일반 `실행취소`와 다른 것: 되돌아갈 자리가 **차수로 이름 붙어 있다.** 승격 뒤에 몇 획을
- * 더 그렸어도 "2점으로" 한 번에 간다 — 그것이 §6.2가 "임계를 정교하게 만드는 것보다 싸다"고
- * 적은 수단이다. 승격은 사용자가 **판단할 수 있는 유일한 신호**이므로(§5.3·AS-L6) 되돌리기가 쉬워야 한다.
- *
- * ⚠ **표식을 뜨는 시점은 `차수 승격`을 누를 때가 아니다.** 그때는 사용자가 이미 가이드를
- * 더 세워 놓았으므로 카메라가 **새 차수**다 — 그 상태를 "2점"이라 이름 붙이면 되돌려도
- * 소실점이 셋이다. 뜨는 자리는 **`확정`과 `소실점 다시`** 둘이다: 둘 다 그 차수에서의
- * 마지막 온전한 상태이고, `소실점 다시`는 **카메라를 만지기 직전**이다.
- *
- * 같은 차수의 표식은 **덮어쓴다** — 그 차수에서 마지막으로 본 상태가 사용자가 기억하는 것이다.
- */
-const orderMarks: { order: number; snap: AppSnap }[] = [];
-
-function markOrder(order: number, snap: AppSnap) {
-  const i = orderMarks.findIndex(m => m.order === order);
-  if (i >= 0) orderMarks[i] = { order, snap };
-  else { orderMarks.push({ order, snap }); orderMarks.sort((a, b) => a.order - b.order); }
-}
-
-/**
- * **승격이 무엇을 바꿨나** — 화면에 눈에 띄게 낸다(§6.2).
- *
- * `null`이면 알릴 것이 없다. 그 다음 획을 그리거나 되돌리면 사라진다 —
- * **낡은 표시를 남겨 두면 지금 상태의 설명으로 읽힌다**(AS-C7과 같은 형태의 함정이다).
- */
-interface PromoteReport {
-  before: number; after: number;
-  diff: PlacementDiff;
-  /** 스냅을 **못 살린 획 id**. 그 시작점은 옛 카메라의 상 그대로다 — **조용히 틀린 시작점**이다. */
-  snapLost: string[];
-  reanchored: number; had: number;
-  /** 재연결을 눌렀는가. 누른 뒤에는 결과를 그 자리에 적는다. */
-  relinked: { ok: number; tried: number } | null;
-}
-let promoteReport: PromoteReport | null = null;
+// ⛔ **차수 되돌리기·승격 요약을 통째로 지웠다**(2026-08-18 7차 지시 3-d).
+//
+// `orderMarks` · `markOrder` · `revertToOrder` · `PromoteReport` · `promoteReport` ·
+// `autoPromoteOrder` · `relinkSnaps` · `drawPromoteLoss` · `renderPromoteReport` ·
+// `N점으로 되돌리기` 버튼이 전부 여기 있었다. **차수 승격 개념이 사라졌으므로**
+// (지시 3-d — 3점은 시점의 성질이지 획이 만드는 전이가 아니다) 되돌릴 전이가 없다.
+// 남는 되돌리기는 일반 `실행취소` 하나다.
+//
+// ⚠ **순수 모듈은 남긴다**: `s3d/promoteOrder.ts`·`s3d/promoteDiff.ts`와 그 단위 시험은
+// 대상이 사라졌어도 **왜 그 규칙이 있었는지가 근거**이므로 지우지 않고 그렇게 표시한다
+// (PITFALLS 머리말의 규약 그대로). 차수 재풀이가 다시 필요해지면 그 자리에서 다시 잇는다.
 
 /**
  * **자동 저장기**(L-D.2). `let`으로 미리 세운다 — `refresh()`가 부르는데 그 함수는 초기화
@@ -1023,120 +993,10 @@ function solveInto(ctx: PlaceCtx, targets: SStroke[]): number {
   return n;
 }
 
-// ---------------------------------------------------------------- 차수 승격 (L-C.1, §6.1)
-
-/**
- * **차수 승격 — 소실점이 하나 더 잡히면 전부 다시 푼다**(§6.1).
- * 계획서 §1.2의 **고유한 것 ②**다.
- *
- * **자동으로 건다**(2026-08-17 지시 1 — 전이 P2 → P3이 곧 승격이고 버튼이 없다).
- * 사용자가 기울어진 세로 모서리를 "수직축"이라 답하는 순간 규칙이 V₃를 세우고 여기가 돈다.
- * 화면이 **실제로 움직이므로 알린다**(지시 3-d의 예외 둘 중 하나) — `promoteReport`가 그것이다.
- * 아니다 싶으면 `실행취소`·`N점으로 되돌리기`가 §6.2의 경로다.
- *
- * `before`는 **전이 직전의 차수**다 — 부르는 쪽(`advanceCamera`)이 feed 전에 재 둔다.
- */
-function autoPromoteOrder(before: number): void {
-  const ctx = cam.ctx();
-  if (!ctx) return;
-  // **승격 전 배치를 id로 찍어 둔다**(#10 — 뺄셈으로 만들지 않는다). 나중에 개수만 있으면
-  // "몇 개 잃었다"까지는 적을 수 있어도 **어느 획인지 화면에 표시할 수 없다.**
-  const placedBefore = new Map(doc.strokes.map(s => [s.id, s.seg3d != null]));
-  // ⚠ **여기서 `pushUndo`를 안 한다** — 승격을 일으킨 획의 `onStrokeEnd`가 이미 쌓았고,
-  // 옛 차수의 표식은 `feedCamera`가 **feed 직전 스냅샷**으로 남겼다(여기서 뜨면 이미 새 차수다).
-  const input: OrderStroke[] = doc.strokes.map(s => ({
-    id: s.id, pts2d: s.pts2d, axis: s.axis, userAxis: s.userAxis, snapStart: s.snapStart,
-    // **양 끝 스냅은 승격에서도 두 점으로 다시 풀린다**(D-L46) — 하나라도 못 살리면 안 놓는다
-    snapEnd: s.snapEnd,
-  }));
-  const r = promoteOrder(input, { principal: ctx.principal, f: ctx.f, vps: ctx.vps,
-                                  imgSize: ctx.imgSize, axisDirs: ctx.axisDirs },
-                         {}, (pts) => cam.axisOf(pts).axis);
-  // **전부 다시 푼 결과로 갈아 끼운다** — 부분 유지는 좌표계가 섞인 상태를 만든다(§6.1)
-  const oldScale = geomScaleOf(lifted(doc));
-  for (const s of doc.strokes) {
-    const seg = r.placed.get(s.id);
-    s.seg3d = seg ? [seg.a, seg.b] : null;
-  }
-  // `promoteOrder`가 옮긴 `pts2d[0]`·`snapStart`를 문서에 되돌려 넣는다
-  const byId = new Map(input.map(x => [x.id, x]));
-  for (const s of doc.strokes) {
-    const x = byId.get(s.id);
-    if (x) { s.pts2d = x.pts2d; s.snapStart = x.snapStart; s.snapEnd = x.snapEnd ?? null; }
-  }
-  // **뷰 카메라도 함께 갱신한다**(§6.1) — 기하가 새 배율로 풀렸으므로 눈 위치도 같이 옮긴다.
-  // 상대적 시점(방향·상대 거리)은 유지된다
-  const newScale = geomScaleOf(lifted(doc));
-  const k = oldScale > 1e-9 && newScale > 1e-9 ? newScale / oldScale : 1;
-  if (Math.abs(k - 1) > 1e-9) {
-    for (const v of doc.views) {
-      if (v.pose) v.pose = { R: v.pose.R, C: [v.pose.C[0] * k, v.pose.C[1] * k, v.pose.C[2] * k] };
-    }
-  }
-  stage.pinTo(ctx.principal, ctx.f);
-  doc.currentView = confirmView().id;
-  syncScene();
-  const after = cam.order();
-  // **잃은 것을 센다**(L-C.2). 계산은 `promoteDiff.ts` 하나가 하고 원장도 그것을 부른다(#17)
-  const placedAfter = new Map(doc.strokes.map(s => [s.id, s.seg3d != null]));
-  promoteReport = {
-    before, after,
-    diff: diffPlacement(placedBefore, placedAfter),
-    snapLost: r.snap.lost_ids.slice(),
-    reanchored: r.snap.reanchored, had: r.snap.had,
-    relinked: null,
-  };
-  note = "";                     // 요약 패널이 그 자리를 대신한다 — 두 곳에 쓰면 갈린다
-  refresh();
-}
-
-/**
- * **끊긴 스냅을 다시 붙여 본다**(L-C.2, 사람 지시).
- *
- * ⚠ **자동으로 안 한다.** 옛 대상이 새 카메라에서 안 놓였으므로 **다른 대상에 붙는 것**이고,
- * 그것을 소리 없이 하면 A-3의 "조용히 틀린 배치를 만들지 않는다"를 정면으로 어긴다.
- * D-L25(λ = 3)가 같은 방향이다 — 미배치의 비용이 틀린 배치의 1/3이다.
- * 그래서 **사용자가 누르고, 몇 개가 어디에 붙었는지 되돈다.**
- *
- * 붙일 곳이 없으면 그 획은 표시된 채로 남는다 — **없는 것을 지어내지 않는다.**
- */
-function relinkLostSnaps(): void {
-  if (!promoteReport?.snapLost.length) return;
-  const fr = frame(); const sc = snapCtx(fr);
-  if (!fr || !sc) return;
-  pushUndo();                                   // **되돌릴 수 있어야 한다** — 기하가 움직인다
-  const segs = snapSegs(fr.toV);
-  const pre = snapStatic(segs);
-  const still: string[] = [];
-  const tried = promoteReport.snapLost.length;
-  let ok = 0;
-  for (const id of promoteReport.snapLost) {
-    const s = doc.strokes.find(x => x.id === id);
-    // 자기 자신에는 못 붙는다 — 대상 목록에서 뺀다(그리기 경로와 같은 규약)
-    const cand = s ? appSnapAt(s.pts2d[0], segs.filter(g => g.id !== id), sc,
-                               pre.filter(c => c.ofId !== id && c.ofId2 !== id)) : null;
-    if (!s || !cand) { still.push(id); continue; }
-    applySnapToStart(s, cand, fr.fromV(cand.at));
-    // **양 끝 스냅이었으면 끝점도 다시 붙여야 한다**(D-L46) — 시작점만 살리면 그 획은
-    // **반쪽만 옛 카메라의 자리**에 남는다(조용히 틀린 자리다, A-3).
-    // 못 붙이면 `snapEnd`를 지우고 축 경로로 되돌린다 — **없는 스냅을 들고 있지 않는다**
-    let endCand: SnapCand | null = null;
-    if (s.snapEnd) {
-      endCand = endSnapAt(fr, cand.at, s.pts2d[s.pts2d.length - 1]);
-      if (endCand) applySnapToEnd(s, endCand, fr.fromV(endCand.at));
-      else s.snapEnd = null;
-    }
-    // **그리기와 같은 경로로 놓는다**(#17·A-3) — 앵커가 생겼으므로 §7의 실시간 경로다.
-    // 일괄 솔버를 부르면 안 된다: 돌린 시점에서는 `pts2d`가 다른 화면 좌표다(L-B.8 머리말)
-    s.seg3d = null;
-    placeLive(s, fr, cand.at, endCand);
-    ok += 1;                                    // **붙은 개수**다 — 놓인 개수와 다르다(#9)
-  }
-  promoteReport.snapLost = still;
-  promoteReport.relinked = { ok, tried };
-  syncScene();
-  refresh();
-}
+// ⛔ **차수 승격 블록을 지웠다**(2026-08-18 7차 지시 3-d) — `autoPromoteOrder`(§6.1의
+// 전부 다시 풀기)와 `relinkLostSnaps`(잃은 스냅 재연결)가 여기 있었다. 승격 전이가
+// 없어졌으므로 부르는 곳이 없다. 순수 모듈(`promoteOrder.ts`·`promoteDiff.ts`)과 그
+// 단위 시험은 남는다 — 왜 그 규칙이 있었는지가 근거다.
 
 // ---------------------------------------------------------------- 고치기 (L-D.1, §9.5)
 
@@ -1366,17 +1226,6 @@ function assignAxis(ax: 0 | 1 | 2): void {
   refresh();
 }
 
-/** 차수 표식으로 되돌아간다 — **문서와 카메라를 함께**(§6.2). */
-function revertToOrder(order: number): void {
-  const m = orderMarks.find(x => x.order === order);
-  if (!m) return;
-  pushUndo();
-  restoreSnap(m.snap);
-  note = `**${order}점으로 되돌렸습니다** — 소실점과 기하를 함께 되돌렸습니다`
-       + " <span class=\"dim\">(둘 중 하나만 되돌리면 좌표계가 섞입니다, §6.1)</span>";
-  refresh();
-}
-
 /** 3D 레이어의 크기 — 뷰 눈 위치를 같이 옮기기 위한 배율 기준. */
 function geomScaleOf(list: SStroke[]): number {
   let m = 0;
@@ -1405,35 +1254,23 @@ function standCamera() {
   stage.pinTo(ctx.principal, ctx.f);
   // 확정 직후에도 연쇄를 한 번 돈다 — 놓인 것이 생겼으므로 대기 획이 붙을 수 있다
   if (n) promoteChain(frame() ?? { ctx, toV: ID, fromV: ID, dirV: ID, pinned: true });
-  // **이 차수의 표식**(§6.2) — `N점으로 되돌리기`의 자리다.
-  // ⚠ **연쇄 뒤에 뜬다.** 앞에 뜨면 표식이 연쇄 전 절반만 든 상태가 된다 — 옛 판은
-  // `소실점 다시`가 표식을 덮어써 이 순서 결함이 가려져 있었고, 그 버튼이 없어지자
-  // 종단 확인(되돌리기 ids3d 대조)이 실제로 잡았다(2026-08-17 3차).
-  markOrder(cam.order(), appSnap());
   syncScene();
   refresh();
 }
 
 /**
- * **획 하나가 카메라를 어디로 보내는가** — 전이(NONE→P1 · NONE→P2 · P2→P3)의 단일 관문.
+ * **획 하나가 카메라를 어디로 보내는가** — 전이(NONE→P1 · NONE→P2)의 단일 관문.
  *
- * `cam.feed` 앞뒤로 차수를 재서 ① 처음 서면 조용히 확정(`standCamera` — 무변화 전환)
- * ② 차수가 오르면 **자동 승격**(`autoPromoteOrder` — 형태가 움직이므로 알린다, 지시 3-d).
- * 승격 직전 상태는 `markOrder`가 표식으로 남긴다(§6.2 되돌리기).
+ * 처음 서면 조용히 확정한다(`standCamera` — 무변화 전환). ⛔ **승격 갈래는 없다**(7차 지시 3-d).
  */
-function feedCamera(line: RLine, forced?: "screen" | "depth" | "vertical") {
-  const before = cam.order();
+function feedCamera(line: RLine, forced?: "screen" | "depth") {
   const wasStanding = cam.standing();
-  // 승격은 **수직축 답**에서만 난다(P2 → P3) — 그때만 직전 상태를 떠 둔다(스냅샷 비용)
-  const preSnap = wasStanding && forced === "vertical" ? appSnap() : null;
   const r = cam.feed(line, forced);
-  if (r.applied && cam.standing()) {
-    if (!wasStanding) standCamera();
-    else if (cam.order() !== before && preSnap) {
-      markOrder(before, preSnap);
-      autoPromoteOrder(before);
-    }
-  }
+  // ⛔ **차수 승격 분기를 지웠다**(2026-08-18 7차 지시 3-d). 남아 있던 전이는 P2 → P3
+  // 하나였고 그 입구(기울어진 수직선의 "수직축" 답)를 3-b가 없앴다 — **차수 승격 개념이
+  // 사라졌다.** 3점은 카메라를 기울인 시점의 성질이지 획이 만드는 전이가 아니다.
+  // 남는 전이는 **NONE → P1 · NONE → P2**뿐이고 그것은 "카메라가 처음 서는 것"이다.
+  if (r.applied && cam.standing() && !wasStanding) standCamera();
   return r;
 }
 
@@ -1446,7 +1283,7 @@ function feedCamera(line: RLine, forced?: "screen" | "depth" | "vertical") {
  * 애매하면 `ask`를 세우고 **그 획은 2D로 대기**한다. 답이 올 때까지 규칙은 안 움직인다 —
  * 이것이 "추정하지 않는다"의 구현이다(A-3: 애매하면 놓지 않는다).
  */
-function feedStroke(st: SStroke, forced?: "screen" | "depth" | "vertical"): void {
+function feedStroke(st: SStroke, forced?: "screen" | "depth"): void {
   const rep = representative(st.pts2d);
   if (!rep) return;
   const line: RLine = { a: rep.a, b: rep.b };
@@ -1473,7 +1310,7 @@ function feedStroke(st: SStroke, forced?: "screen" | "depth" | "vertical"): void
 }
 
 /** 물음에 답한다 — 그 답을 규칙에 **강제로** 넣는다. */
-function answerAsk(choice: "screen" | "depth" | "vertical"): void {
+function answerAsk(choice: "screen" | "depth"): void {
   if (!ask) return;
   askStats[choice] += 1;
   const st = doc.strokes.find(x => x.id === ask!.strokeId);
@@ -1489,7 +1326,7 @@ function answerAsk(choice: "screen" | "depth" | "vertical"): void {
 // `CAND_NAME`·`SRC_NAME`. "1점 투시 확정" "2점 후보" "다음에 그을 것" "깊이가 정해지지
 // 않았습니다"는 전부 시스템 사정이고 사용자가 알 필요가 없다 — **알리면 전환이 있다는
 // 인상을 준다.** 남는 안내는 둘뿐이다: 아무리 그려도 안 돌아갈 때의 최소 안내(`renderStatus`)와
-// 차수 승격 알림(`renderPromoteReport` — 형태가 실제로 움직인다).
+// ⛔ 차수 승격 알림도 없어졌다(7차 지시 3-d).
 
 // ---------------------------------------------------------------- 2D 레이어 그리기
 
@@ -1685,41 +1522,6 @@ function drawPending(ctx2: CanvasRenderingContext2D) {
 
 /** 승격에서 잃은 것의 색. 상태 패널의 문장과 **같은 값을 쓴다** — 갈리면 설명이 안 맞는다. */
 const LOSS_COLOR = { dropped: "#e67e22", snap: "#c0392b" };
-
-/**
- * **승격이 잃은 것을 화면에 표시한다**(L-C.2, 사람 지시).
- *
- * "승격 후 풀린 스냅을 표시하거나 재연결을 시도한다. **조용히 풀리면 사용자가 모른 채
- * 구조가 끊긴다** — A-3 위반이다." 개수를 상태 줄에 적는 것만으로는 부족하다 —
- * 어느 획인지 모르면 되돌릴지 말지를 정할 수 없다.
- *
- * ⚠ **좌표는 CSS 픽셀이다**(D-C3·#21) — `ctx2`에 배율이 이미 걸려 있다.
- * ⚠ 표시는 **확정 시점에서만** 옳다: `pts2d`는 확정 카메라의 화면 좌표라
- * 돌린 뷰에 그리면 화면에 붙어 따라다니는 유령이 된다(`drawBelowInk` 머리말과 같은 이유).
- */
-function drawPromoteLoss(ctx2: CanvasRenderingContext2D) {
-  if (!promoteReport || !stage.isPinned) return;
-  const byId = new Map(doc.strokes.map(s => [s.id, s]));
-  ctx2.save();
-  // ① 3D에서 내려온 획 — 획 전체를 주황 점선으로 덮는다
-  ctx2.strokeStyle = LOSS_COLOR.dropped; ctx2.lineWidth = 3;
-  ctx2.setLineDash([7, 5]); ctx2.globalAlpha = 0.95; ctx2.lineCap = "round";
-  for (const id of promoteReport.diff.dropped) {
-    const s = byId.get(id);
-    if (s) drawStraight(ctx2, s.pts2d);           // **직선**(§1.1)
-  }
-  // ② 스냅이 끊긴 획 — **시작점에** ⊘. 끊긴 것은 획이 아니라 그 점이다
-  ctx2.setLineDash([]); ctx2.strokeStyle = LOSS_COLOR.snap; ctx2.lineWidth = 2.5;
-  for (const id of promoteReport.snapLost) {
-    const s = byId.get(id);
-    if (!s || !s.pts2d.length) continue;
-    const [x, y] = s.pts2d[0];
-    ctx2.beginPath(); ctx2.arc(x, y, 7, 0, Math.PI * 2); ctx2.stroke();
-    ctx2.beginPath();
-    ctx2.moveTo(x - 5, y + 5); ctx2.lineTo(x + 5, y - 5); ctx2.stroke();
-  }
-  ctx2.restore();
-}
 
 /**
  * 스냅 표식(§3 "표시"). **종류마다 다른 색과 라벨** — SketchUp의 관행 그대로다(A-3).
@@ -1918,7 +1720,6 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   drawHorizon(ctx2);          // **언제나 깔린다** — 카메라가 서기 전에도(사람 지시 2)
   drawPending(ctx2);
   drawPicked(ctx2);
-  drawPromoteLoss(ctx2);
   // **2D 후보의 표식도 같은 자리에서 낸다**(4차 지시 1) — 3D가 있으면 3D가 이긴다(질의와 같은 순서)
   drawSnapMark(ctx2, hoverSnap ?? (hover2d ? { kind: hover2d.kind, screen: hover2d.at } : null));
   drawLivePreview(ctx2);
@@ -2129,7 +1930,6 @@ const ink = new InkCanvas(canvas, {
     pushUndo();
     // **승격 요약은 그 전환의 설명이다** — 획을 더 그리면 설명이 낡는다(AS-C7과 같은 형태).
     // 차수 되돌리기 버튼은 남는다 — 그것이 §6.2의 지속 수단이다
-    promoteReport = null;
     // **§9.3 — 그리는 자리에서만 뷰가 생긴다.** 돌릴 때마다 만들면 뷰가 넘친다
     doc.currentView = viewForDrawing();
     const s = newSStroke(pts, doc.currentView, channel);
@@ -2334,7 +2134,7 @@ function applyDoc2(d: Doc2) {
   // 옛 저장본(`rules`가 없다)은 규칙이 비어 카메라가 안 선다 — **조용히 틀리게 세우지 않는다**(A-3).
   cam.loadRules(d.rules ?? null);
   // ⚠ 옛 저장본의 `locked`·`order`·`lensMm`은 읽지 않는다 — 전부 `rules`에서 계산된다(지시 1)
-  undoStack.length = 0; orderMarks.length = 0; promoteReport = null;
+  undoStack.length = 0;
   picked = null; ask = null;
   syncScene();
   note = "";   // ⛔ 복원 요약을 뺐다(지시 3) — 열린 그림 자체가 보인다
@@ -2350,8 +2150,6 @@ function renderBar() {
     + `${dis ? " disabled" : ""}>${label}</button>`;
   const fold = BAR_MENU.open ? "" : "folded";
   barEl.innerHTML = [
-    ...orderMarks.filter(m => m.order !== cam.order())
-                 .map(m => btn(`revert${m.order}`, `${m.order}점으로 되돌리기`)),
     // ---- 표시·스냅 토글 — **접이식**(4차 6-a). 기본 접힘
     btn("menu", `표시·스냅 ${BAR_MENU.open ? "▴" : "▾"}`, BAR_MENU.open),
     btn("axissnap", `축 스냅 ${AXIS_SNAP.on ? "켬" : "끔"}`, AXIS_SNAP.on, false, fold),
@@ -2434,87 +2232,33 @@ function renderSide() {
  *
  * ⚠ **답할 때까지 규칙은 안 움직인다.** 그 획은 2D로 대기하고 화면에 보라 점선으로 뜬다.
  */
+/**
+ * **남는 물음은 하나뿐이다**(2026-08-18 7차 지시 3-e·3-g).
+ *
+ * "두 번째 수평축입니까, 수직축입니까"가 없어졌다(3-b — 기울어진 선은 항상 깊이선이다).
+ * 남은 것은 **화면 축 대 깊이**이고 그것은 차수를 정하는 물음이 아니라 4~8° 애매 구간의
+ * 판정이다. **문구를 사용자의 말로 바꾼다**(3-g): "화면 가로세로 축 / 깊이선"은 도구의
+ * 어휘이고, 사용자가 아는 것은 **그 선이 화면에 붙어 있는가 안으로 들어가는가**다.
+ */
 function renderAsk(): string {
   if (!ask) return "";
   const angles = `<span class="dim">수평과 ${ask.toH.toFixed(1)}° · 수직과 ${ask.toV.toFixed(1)}°`
                + ` (화면 축은 ${RULE_TOL.screen_axis_deg}° 이내 · 깊이는 ${RULE_TOL.depth_min_deg}° 밖)</span>`;
+  // 어느 쪽에 가까운가로 문구를 고른다 — 가로선이면 "가로", 세로선이면 "세로"다
+  const horiz = ask.toH <= ask.toV;
   const rows: string[] = [];
-  if (ask.question === "screen_or_depth") {
-    rows.push('<div class="hdr"><b>이 선은 무엇입니까?</b>'
-      + ' <span class="dim">— 임계 사이라 갈리지 않습니다</span></div>');
-    rows.push(`<div>${angles}</div>`);
-    rows.push('<div><button data-act="ask_screen">화면 가로세로 축</button>'
-      + ' <button data-act="ask_depth">깊이선</button>'
-      + ' <button data-act="ask_skip">모르겠다(2D로 둔다)</button></div>');
-  } else {
-    rows.push('<div class="hdr"><b>이 선은 두 번째 수평축입니까, 수직축입니까?</b></div>');
-    rows.push(`<div>${angles}</div>`);
-    // ⚠ **옛 문구는 자기모순이었다**(7차 지시 2-5): "수직축이면 소실점을 그리지 않습니다 /
-    // 수직축이면 그 선에서 소실점을 읽습니다"가 한 문장에 있었다. 앞 절은 **두 번째 수평축**의
-    // 설명이 잘못 붙은 것이다. 두 갈래를 갈라 적는다.
-    rows.push('<div class="dim">두 번째 수평축이면 지평선 위에 소실점이 생깁니다 ·'
-      + ' 수직축이면 그 선(들)에서 수직 소실점을 읽습니다 — 그것이 3점의 유일한 입구입니다</div>');
-    rows.push('<div><button data-act="ask_depth">두 번째 수평축</button>'
-      + ' <button data-act="ask_vertical">수직축</button>'
-      + ' <button data-act="ask_skip">모르겠다(2D로 둔다)</button></div>');
-  }
+  rows.push('<div class="hdr"><b>이 선은 화면에 나란합니까, 안으로 들어갑니까?</b></div>');
+  rows.push(`<div>${angles}</div>`);
+  rows.push('<div><button data-act="ask_screen">'
+    + (horiz ? "화면에 나란한 가로선" : "화면에 나란한 세로선") + '</button>'
+    + ' <button data-act="ask_depth">안으로 들어가는 선</button>'
+    + ' <button data-act="ask_skip">모르겠다(2D로 둔다)</button></div>');
   return `<div class="promote">${rows.join("")}</div>`;
 }
 
-/**
- * **승격 요약**(L-C.2, §6.2). 승격은 **품질을 올리고 배치를 줄인다**(L-C.1: 형태 오차 중앙
- * 0.1259 → 0.0913 · 배치 −168, `order_promote.json@54346ad1`). 어느 쪽을 택할지는
- * 그림마다 다르고 **자동 신호가 없으므로**(AS-L6이 §6.2의 재투영 잔차를 반증했다)
- * 사용자가 정한다. 정하려면 **무엇을 잃었는지 보여야 한다.**
- *
- * ⚠ **조용히 풀린 스냅이 여기 나온다.** `order_promote.json`이 그것을 실측했다 —
- * 다시 안 옮겼다면 어긋났을 거리가 **p90 311px · max 639px**다. `promoteOrder`가
- * 대부분을 새 상으로 옮기지만 **대상이 새 카메라에서 안 놓이면 못 살린다.**
- * 그 획들의 시작점은 옛 카메라의 상 그대로여서 **구조가 소리 없이 끊긴 자리**다 — A-3 위반이다.
- */
-function renderPromoteReport(): string {
-  const p = promoteReport;
-  if (!p) return "";
-  const rows: string[] = [];
-  rows.push(`<div class="hdr"><b>차수 승격 ${p.before}점 → ${p.after}점</b>`
-    + ' <span class="dim">— 전부 다시 풀었습니다(§6.1)</span></div>');
-  rows.push(`<div>${diffSummary(p.diff, p.snapLost.length)}</div>`);
-  if (p.diff.dropped.length) {
-    rows.push(`<div class="warn"><b>${p.diff.dropped.length}획이 3D에서 내려왔습니다</b>`
-      + ' — 화면에 <span style="color:#e67e22">주황 점선</span>으로 표시됩니다.'
-      + ' <span class="dim">실패가 아니라 <b>대기</b>입니다(§9.1) — 이어지는 획이 생기면 다시 올라갑니다</span></div>');
-  }
-  if (p.snapLost.length) {
-    rows.push(`<div class="warn"><b>스냅 ${p.snapLost.length}개가 끊겼습니다</b>`
-      + ` <span class="dim">(${p.reanchored}/${p.had}개는 새 상으로 옮겼습니다)</span>`
-      + ' — 붙어 있던 대상이 새 카메라에서 안 놓였습니다.'
-      + ' 화면에 <span style="color:#c0392b">빨간 ⊘</span>로 표시됩니다.'
-      + ' <span class="dim">그 시작점은 <b>옛 카메라의 자리</b>입니다</span></div>');
-    rows.push('<div><button data-act="relink">스냅 재연결 시도</button>'
-      + ' <span class="dim">다른 대상에 붙습니다 — <b>자동으로 하지 않습니다</b>(A-3)</span></div>');
-  } else if (p.had) {
-    rows.push(`<div class="dim">스냅 ${p.reanchored}/${p.had}개를 새 상으로 옮겼습니다 — 끊긴 것 없음</div>`);
-  }
-  if (p.relinked) {
-    rows.push(`<div>재연결 — <b>${p.relinked.ok}/${p.relinked.tried}</b>개가 다른 대상에 붙었습니다`
-      + (p.snapLost.length ? ` <span class="dim">(${p.snapLost.length}개는 붙을 곳이 없습니다)</span>` : "")
-      + ' <span class="dim">· 아니다 싶으면 <b>실행취소</b></span></div>');
-  }
-  rows.push('<div class="dim"><b>화면이 움직입니다</b> — 되돌리려면 위의'
-    + ` <b>${p.before}점으로 되돌리기</b>를 누르세요(소실점과 기하를 함께 되돌립니다)</div>`);
-  return `<div class="promote">${rows.join("")}</div>`;
-}
+// ⛔ **`renderPromoteReport`를 지웠다**(7차 지시 3-d) — 승격이 없으므로 요약할 것이 없다.
+// `promoteDiff.diffSummary`(순수 모듈)는 남는다.
 
-/**
- * 상태 줄의 `**굵게**`를 실제 굵게로 바꾼다.
- *
- * ⚠ **화면에 별표가 그대로 나오고 있었다.** 이 파일의 안내문 대부분이 마크다운으로
- * 적혀 있는데(문서·주석과 같은 문체다) 상태 줄은 HTML을 그린다 — `소실점 다시`·
- * `가이드 늘리기`·`확정`의 문장 전부가 그랬다. L-C.2의 승격 요약이 **강조에 기대는 화면**이라
- * 여기서 드러났다. 고치는 자리는 **쓰는 곳 하나**다(문장 30개를 고치지 않는다).
- *
- * `<` 를 만들지 않으므로 새 태그가 생길 여지가 없다 — 넣는 문장은 전부 이 파일 안에 있다.
- */
 const md = (s: string) => s.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
 
 function renderStatus() {
@@ -2524,7 +2268,6 @@ function renderStatus() {
   //
   // 남는 것 셋:
   //   ① **물음**(`renderAsk`) — 사용자가 답해야 진행되는 것(A-3: 추정하지 않는다)
-  //   ② **차수 승격 알림**(`renderPromoteReport`) — 형태가 실제로 움직인다(지시 3-d 예외)
   //   ③ **아무리 그려도 안 돌아갈 때의 최소 안내** — 빈도가 낮아야 한다(지시 3-d 예외).
   //      획을 여덟 이상 그렸는데 3D가 하나도 없을 때만 한 줄 낸다.
   const rows: string[] = [];
@@ -2536,7 +2279,7 @@ function renderStatus() {
   }
   if (note) rows.push(`<div class="note">${note}</div>`);
   if (saveNote) rows.push(`<div class="dim">${saveNote}</div>`);
-  statusEl.innerHTML = md(renderAsk() + renderPromoteReport() + rows.join(""));
+  statusEl.innerHTML = md(renderAsk() + rows.join(""));
 }
 
 // ---------------------------------------------------------------- 배선
@@ -2591,8 +2334,7 @@ const onActClick = (e: Event) => {
     // §6.1이 금지한 **좌표계가 섞인 상태**가 된다. `restoreSnap`이 둘을 함께 되돌린다
     const sn = undoStack.pop();
     if (sn) { restoreSnap(sn); note = ""; }
-  } else if (act === "relink") relinkLostSnaps();
-  else if (act.startsWith("revert")) revertToOrder(Number(act.slice(6)));
+  }
   else if (act === "obj" || act === "gltf" || act === "json") {
     const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
     const nameOf = (id: string) => doc.views.find(v => v.id === id)?.name ?? id;
@@ -2650,7 +2392,6 @@ const onActClick = (e: Event) => {
     pushUndo();
     doc = newDoc(); cam.reset();
     syncScene(); note = ""; ask = null;
-    orderMarks.length = 0; promoteReport = null;
     // **저장본도 지운다** — 안 지우면 새로고침에서 방금 버린 작업이 되살아난다
     void deleteDoc2().catch(() => { /* 저장소가 없어도 화면은 비워졌다 */ });
   }
@@ -2665,10 +2406,8 @@ statusEl.addEventListener("click", (e) => {
   const b = (e.target as HTMLElement).closest("button");
   if (!b) return;
   const act = (b as HTMLButtonElement).dataset.act;
-  if (act === "relink") relinkLostSnaps();
-  else if (act === "ask_screen") answerAsk("screen");
+  if (act === "ask_screen") answerAsk("screen");
   else if (act === "ask_depth") answerAsk("depth");
-  else if (act === "ask_vertical") answerAsk("vertical");
   else if (act === "ask_skip") {
     // **모른다고 답하는 것도 답이다** — 그 획은 2D로 남고 규칙은 안 움직인다(A-3)
     askStats.skipped += 1;
@@ -2856,28 +2595,16 @@ refresh();
   // **차수 = 계산**(지시 1). NONE 0 · P1 1 · P2 2 · P3 3 — 표시도 판정도 이 함수다(#17)
   order: () => cam.order(),
   standing: () => cam.standing(),
-  /** 승격 재풀이의 하네스 입구 — 규칙을 직접 넣은 뒤 부른다(앱에서는 전이가 자동으로 부른다).
-   * 여기서는 `pushUndo`를 직접 쌓는다 — 앱 경로에서는 승격을 일으킨 획의 스냅샷이 그 역할이다. */
-  promoteOrderNow: (before?: number) => { pushUndo(); autoPromoteOrder(before ?? cam.order()); },
+  // ⛔ `promoteOrderNow`를 지웠다(7차 지시 3-d) — 부를 승격이 없다.
   /** 확정(들어올리기)의 하네스 입구 — 규칙을 직접 넣으므로 획을 안 긋는다(#17). 앱에서는 자동이다. */
   confirmNow: () => standCamera(),
-  // L-C.2 — 되돌리기 UI(§6.2). **앱 경로 그대로**를 종단 확인이 부른다(#17)
-  promoteReport: () => promoteReport && {
-    before: promoteReport.before, after: promoteReport.after,
-    dropped: promoteReport.diff.dropped, gained: promoteReport.diff.gained,
-    snapLost: promoteReport.snapLost,
-    reanchored: promoteReport.reanchored, had: promoteReport.had,
-    relinked: promoteReport.relinked,
-  },
-  orderMarks: () => orderMarks.map(m => m.order),
+  // ⛔ `promoteReport`·`orderMarks` 창을 지웠다(7차 지시 3-d).
   /** L-D.3 — **연쇄 회차별** (대기 수 · 놓인 수). 합계만으로는 "여러 회"가 안 보인다 */
   chainTrace: () => chainTrace.map(x => ({ ...x })),
   // L-D.1 — 고치기(§9.5). **앱 경로 그대로**를 종단 확인이 부른다(#17)
   pick: (p: Pt2) => { picked = pickStroke(p); refresh(); return picked; },
   picked: () => picked,
   deletePicked, assignAxis,
-  revertToOrder,
-  relinkLostSnaps,
   /** 되돌리기가 **카메라까지** 되돌리는지 대조하기 위한 창(L-C.2). `standing`·`order`는 계산값이다. */
   camSnapshot: () => ({ rules: cam.dumpRules(), vps: cam.vps(),
                         standing: cam.standing(), order: cam.order() }),
@@ -2921,7 +2648,7 @@ refresh();
   },
   axisLines: () => harnessLines.map(g => ({ ...g, a: [...g.a] as Pt2, b: [...g.b] as Pt2 })),
   // **하네스도 앱과 같은 관문을 지난다**(#17) — 확정·승격이 자동으로 나는 그 경로다
-  feedLine: (a: Pt2, b: Pt2, forced?: "screen" | "depth" | "vertical") => {
+  feedLine: (a: Pt2, b: Pt2, forced?: "screen" | "depth") => {
     const r = feedCamera({ a, b }, forced);
     refresh();
     return r.event;
@@ -2945,7 +2672,7 @@ refresh();
     ERASER.px = Math.max(ERASER.min, Math.min(ERASER.max, px));
     refresh();
   },
-  answerAsk: (choice: "screen" | "depth" | "vertical") => { answerAsk(choice); },
+  answerAsk: (choice: "screen" | "depth") => { answerAsk(choice); },
   /** **펜 채널**(D) — 앱 경로 그대로를 종단 확인이 부른다(#17). */
   channel: () => channel,
   setChannel: (c: Channel) => { channel = c; refresh(); },

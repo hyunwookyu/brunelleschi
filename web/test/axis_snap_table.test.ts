@@ -74,7 +74,7 @@ describe("A-2 화면 직교 스냅 — 카메라와 무관하다", () => {
 
 /** 그은 선으로 상태를 만든다 — **앱과 같은 경로**다(#17). */
 function feed(st0: RuleState, lines: [Pt2, Pt2][],
-              forced?: "screen" | "depth" | "vertical"): RuleState {
+              forced?: "screen" | "depth"): RuleState {
   let st = st0;
   for (const [a, b] of lines) {
     const r = stepRule(st, { a, b }, SZ, forced);
@@ -136,8 +136,13 @@ describe("스냅 표 — 상태마다 어느 축이 스냅되는가", () => {
     expect(snapAxisTable(st, true).filter(r => r.via).length).toBe(3);
   });
 
+  // **3점 시점의 축 후보는 셋이다**(7차 지시 3-b) — 그 상태를 만드는 방법만 바뀌었다.
+  // 옛 판은 "수직축입니까"에 답해서 만들었고, 지금은 **카메라를 기울인 시점**이 만든다.
+  // 여기서는 그 상태를 **옛 저장본처럼 직접 넣어** 표만 확인한다(#17: 표는 상태의 함수다).
   it("3점 확정 — 셋 다 소실점", () => {
-    const st = feed(feed(newRuleState(SZ), [DEPTH_A, DEPTH_A2, DEPTH_B]), [TILTED_V], "vertical");
+    const st0 = feed(newRuleState(SZ), [DEPTH_A, DEPTH_A2, DEPTH_B]);
+    const st = { ...st0, slots: [st0.slots[0], st0.slots[1],
+      { kind: "vp", at: [480, 950] as Pt2, source: "tilted_vertical", support: 1 }] as typeof st0.slots };
     expect(perspectiveOrder(st)).toBe(3);
     expect(rows(st, true)).toEqual(["vp/axis_snap", "vp/axis_snap", "vp/axis_snap"]);
   });
@@ -249,9 +254,9 @@ describe("A-5 짧은 획은 소실점을 안 만든다", () => {
     expect(perspectiveOrder(r3.state)).toBe(0);
   });
 
-  it("사용자가 답한 수직축 선언은 길이로 안 막는다 — 그것은 소실점 후보가 아니다", () => {
-    const r = stepRule(newRuleState(SZ), { a: [300, 400], b: [302, 420] }, SZ, "vertical");
-    expect(r.event.type).not.toBe("rejected");
-  });
+  // ⛔ **대상이 사라졌다**(2026-08-18 7차 지시 3-b — 기울어진 선은 항상 깊이선이고
+  //    "수직축입니까" 물음이 없어졌다). **지우지 않고 은퇴로 표시한다** — 왜 그 규칙이
+  //    있었는지가 근거다(PITFALLS 머리말).
+  it.skip("사용자가 답한 수직축 선언은 길이로 안 막는다 — 그것은 소실점 후보가 아니다", () => {});
 });
 

@@ -156,10 +156,10 @@ function runOne(fx: Fx, order: (typeof ORDERS)[number], arm: Arm): RunOut {
       const line: RLine = { a: rep!.a, b: rep!.b };
       let r = stepRule(st, line, SZ);
       if (r.event.type === "ask") {
-        const truth: "screen" | "depth" | "vertical" =
-          e.axis === 2 && !isFiniteVp(fx.sc.vps[2], SZ) ? "screen"
-          : e.axis === 2 ? "vertical"
-          : isFiniteVp(fx.sc.vps[e.axis], SZ) ? "depth" : "screen";
+        const truth: "screen" | "depth" =
+          // ⛔ **"vertical" 답을 지웠다**(7차 지시 3-b) — 기울어진 선은 항상 깊이선이다.
+          // 유한 소실점을 가진 축이면 깊이, 화면 평행이면 화면 축이다
+          isFiniteVp(fx.sc.vps[e.axis], SZ) ? "depth" : "screen";
         r = stepRule(st, line, SZ, truth);
       }
       if (r.event.type !== "rejected") st = r.state;

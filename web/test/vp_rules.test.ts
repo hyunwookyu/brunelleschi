@@ -7,7 +7,7 @@
 //   #37(이론서를 먼저 본다 — 6.3 수심 · 6.4 항등식 · 2.2 무한원 · 3.1 지평선)
 import { describe, it, expect } from "vitest";
 import {
-  classifyLine, sepDeg, stepRule, newRuleState, deriveVertical, vpsOf, axisDirsOf,
+  classifyLine, sepDeg, stepRule, newRuleState, vpsOf, axisDirsOf,
   perspectiveOrder, axisOfStroke, RULE_TOL, type RuleState, type RLine,
 } from "../src/s3d/vpRules.js";
 import { recoverCamera, type Pt2 } from "../src/s3d/camera.js";
@@ -18,7 +18,7 @@ const SZ: [number, number] = [960, 672];
 const line = (a: Pt2, b: Pt2): RLine => ({ a, b });
 
 /** 규칙에 선들을 차례로 넣는다 — 앱의 `feedStroke`와 같은 순서다. */
-function feed(ls: [RLine, ("screen" | "depth" | "vertical")?][], st = newRuleState(SZ)): RuleState {
+function feed(ls: [RLine, ("screen" | "depth")?][], st = newRuleState(SZ)): RuleState {
   for (const [l, f] of ls) st = stepRule(st, l, SZ, f).state;
   return st;
 }
@@ -355,50 +355,13 @@ describe("d. 세 번째는 **사용자가 그은 기울어진 수직선**에서 
    * **회귀 팔**(A-4). 옛 코드를 되살리면 이 시험이 실제로 깨진다 — 고치기 전 상태에서
    * 이 입력이 `{kind:"vp", source:"orthocenter"}`를 냈다.
    */
-  it("**회귀** — 선언이 없으면 유도하지 않는다. 지평선이 어디 있든 수직축은 화면 수직이다", () => {
-    for (const h of [SZ[1] / 2, HP, 480]) {
-      let st = newRuleState(SZ);
-      st.slots[0] = { kind: "vp", at: [V1[0], h], source: "horizon_x_line", support: 2 };
-      st.slots[1] = { kind: "vp", at: [V2[0], h], source: "horizon_x_line", support: 1 };
-      st.horizon = h;
-      st = deriveVertical(st, SZ);
-      expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
-      expect(perspectiveOrder(st)).toBe(2);
-    }
-  });
-
-  /** **양성 채널**(#30) — 위가 "3점이 아무 데서도 안 선다"면 판정이 아니다. */
-  it("**양성** — 기울어진 수직선을 답하면 그 선에서 V₃가 나온다 (측정이다)", () => {
-    let st = newRuleState(SZ);
-    st.slots[0] = { kind: "vp", at: V1, source: "horizon_x_line", support: 2 };
-    st.slots[1] = { kind: "vp", at: V2, source: "horizon_x_line", support: 1 };
-    st.horizon = HP;
-    // 화면 수직에서 **13.7° 기운** 선. ⚠ 각을 아무렇게나 못 고른다:
-    // ① `depth`(≥8°)여야 **선 하나로** 3점을 선언한다 — 4~8°는 손 오차 대역이라 안 받는다
-    // ② 소실점 삼각형이 **예각**이어야 카메라가 성립하고(6.5), V₁·V₂가 2100px 벌어져 있으면
-    //    V₃는 지평선에서 **1050px 넘게** 떨어져야 한다((V₁−V₃)·(V₂−V₃) > 0).
-    const a: Pt2 = [700, 550], b: Pt2 = [612, 910];
-    st.verticalLines.push(line(a, b));
-    st = deriveVertical(st, SZ);
-    expect(st.slots[2]).toMatchObject({ kind: "vp", source: "tilted_vertical" });
-    const v3 = (st.slots[2] as { at: Pt2 }).at;
-    expect(v3[0]).toBeCloseTo(SZ[0] / 2, 6);            // 주점 x = 이미지 중심 가정(16.2)
-    // **그은 선 위에 있다** — 유도가 아니라 그 선에서 읽은 값이다
-    const dist = Math.abs((v3[0] - a[0]) * (b[1] - a[1]) - (v3[1] - a[1]) * (b[0] - a[0]))
-               / Math.hypot(b[0] - a[0], b[1] - a[1]);
-    expect(dist).toBeLessThan(1e-6);
-    // 3점 카메라가 실제로 선다 — 주점은 **수심**이고 f는 6.3에서 나온다
-    const three = recoverCamera(vpsOf(st), SZ);
-    expect(three.ok).toBe(true);
-    expect(three.fSource).toBe("orthocenter(6.3)");
-    // 세 축이 서로 직교한다 — 카메라가 실제로 성립한다는 뜻이다(6.3·6.5)
-    const P = three.principalPoint!, f = three.f!;
-    const [d1, d2, d3] = vpsOf(st).map(v => unit3(axisDirection(v!, P, f)));
-    for (const [u, v] of [[d1, d2], [d2, d3], [d1, d3]] as [Vec3, Vec3][]) {
-      expect(Math.abs(angleBetween(u, v) - 90)).toBeLessThan(1e-6);
-    }
-    expect(cross3(d1, d2).length).toBe(3);              // 사용한다 — 죽은 import를 안 남긴다
-  });
+  // ⛔ **대상이 사라졌다**(2026-08-18 7차 지시 3-b·3-c) — `deriveVertical`(수심 유도의
+  //    마지막 잔재)과 "수직축입니까" 물음이 함께 없어졌다. 3점은 **카메라를 기울인 시점의
+  //    성질**이고 그 시점의 축 방향은 `viewCamera.viewPlaceCtx`가 낸다.
+  //    **지우지 않고 은퇴로 표시한다** — 왜 그 규칙이 있었는지가 근거다(PITFALLS 머리말).
+  //    세 세대의 기록: ① 수심 유도(D-L32·D-L43) ② 사용자 선언(A-4) ③ 없음(7차).
+  it.skip("**회귀** — 선언이 없으면 유도하지 않는다. 지평선이 어디 있든 수직축은 화면 수직이다", () => {});
+  it.skip("**양성** — 기울어진 수직선을 답하면 그 선에서 V₃가 나온다 (측정이다)", () => {});
 });
 
 describe("획 → 축 (규칙이 이미 정해 뒀다)", () => {
