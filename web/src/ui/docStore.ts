@@ -83,9 +83,35 @@ export interface Doc2Source {
   seq: { stroke: number; view: number };
 }
 
+/**
+ * **저장 무결성 — 뷰 자세**(2026-08-17 7차 항목 1-c). 위반이면 사유를, 정상이면 `null`을 낸다.
+ *
+ * `pose === null`은 **확정 뷰의 표식**이다(doc.ts — 첫 카메라 자체·자세 항등). 그래서
+ * "pose가 null이면 실패"가 아니라, **표식의 전제가 깨진 문서**를 실패로 본다:
+ *   ① 확정 뷰가 없거나 둘 이상 — 복원(`restoreDoc2`)의 home 판정과 뷰 전환이 전부 이 표식
+ *      위에 있으므로, 깨진 채 저장되면 열 때 조용히 틀린 뷰 배선이 된다
+ *   ② 저장된 자세에 유한하지 않은 값 — 열 때 카메라가 NaN으로 선다
+ * 어느 쪽도 정상 경로로는 만들어질 수 없다 — 그래서 걸리면 **저장을 실패로 기록**한다
+ * (조용히 깨진 파일을 남기는 것보다 낫다, A-3).
+ */
+export function doc2PoseIntegrity(views: { id: string; pose: ViewPose | null }[]): string | null {
+  const confirms = views.filter(v => v.pose === null).length;
+  if (confirms !== 1) return `확정 뷰(pose null)가 ${confirms}개다 — 정확히 하나여야 한다`;
+  for (const v of views) {
+    if (!v.pose) continue;
+    const nums = [...v.pose.C, ...v.pose.R[0], ...v.pose.R[1], ...v.pose.R[2]];
+    if (!nums.every(Number.isFinite)) return `뷰 ${v.id}의 자세에 유한하지 않은 값이 있다`;
+  }
+  return null;
+}
+
 /** 앱 상태 → 저장 문서. **순수 함수다** — IndexedDB 없이 테스트한다.
- * ⚠ `locked`·`order`·`lensMm`은 **더 이상 쓰지 않는다**(파생 상태 — 지시 1: 저장하지 않고 계산한다). */
+ * ⚠ `locked`·`order`·`lensMm`은 **더 이상 쓰지 않는다**(파생 상태 — 지시 1: 저장하지 않고 계산한다).
+ * ⚠ 뷰 자세 무결성이 깨져 있으면 **던진다**(7차 항목 1-c) — 자동 저장기는 이것을 잡아
+ * 실패로 기록하고(`onDone(false)`), 내보내기 버튼은 실패 사유를 화면에 낸다. */
 export function serializeDoc2(s: Doc2Source): Doc2 {
+  const bad = doc2PoseIntegrity(s.doc.views);
+  if (bad) throw new Error(`저장 무결성: ${bad}`);
   return {
     format: DOC2_FORMAT,
     at: s.at,

@@ -49,7 +49,8 @@ interface BrnlDoc {
   askStats?: { asked: number; screen: number; depth: number; vertical: number; skipped: number };
   pathStats?: { direct: number; lift: number; twoPoint: number };
   strokes: { id: string; pts2d: number[][]; seg3d: [number[], number[]] | null;
-             axis: number | string; channel?: string; snapDistPx?: number | null }[];
+             axis: number | string; channel?: string; snapDistPx?: number | null;
+             snapStart?: { kind: string } | null; snapEnd?: { kind: string } | null }[];
 }
 function loadBrnl(): BrnlDoc[] {
   if (!existsSync(SESSIONS)) return [];
@@ -61,6 +62,29 @@ function loadBrnl(): BrnlDoc[] {
 }
 
 const xy = (s: SessionStroke): Pt2[] => s.raw.map(p => [p[0], p[1]] as Pt2);
+
+/**
+ * **소실점 방향 오차(°)**(7차) — 획 현(a→b)과 시작점→소실점 방향의 각차. 방향 부호는
+ * 무시한다(축은 부호가 없다). 퇴화(길이 0·시작점=소실점)는 null.
+ * 집계와 반례 테스트가 **같은 함수**를 쓴다(#17).
+ */
+export function vpDirErrDeg(a0: Pt2, b0: Pt2, vp: Pt2): number | null {
+  const u: Pt2 = [b0[0] - a0[0], b0[1] - a0[1]];
+  const v: Pt2 = [vp[0] - a0[0], vp[1] - a0[1]];
+  const lu = Math.hypot(u[0], u[1]), lv = Math.hypot(v[0], v[1]);
+  if (lu < 1e-9 || lv < 1e-9) return null;
+  const c = Math.min(1, Math.abs(u[0] * v[0] + u[1] * v[1]) / (lu * lv));
+  return (Math.acos(c) * 180) / Math.PI;
+}
+
+/**
+ * **7차 이전 저장본의 snapDistPx 0 오염인가** — 옛 정의는 스냅이 걸리면 `cand.dist`를
+ * 적었고 핀 상태에서 on_face가 항상 걸려 전부 0이 됐다(실획 첫 표본). 새 정의(aimDistPx)는
+ * on_face를 빼고 최근접 정밀 대상을 재므로, on_face 시작 + 정확히 0은 옛 정의의 서명이다.
+ * 두 정의를 한 분포에 섞지 않는다(#11).
+ */
+export const isLegacySnapZero = (st: { snapDistPx?: number | null; snapStart?: { kind: string } | null }): boolean =>
+  st.snapStart?.kind === "on_face" && st.snapDistPx === 0;
 
 /** 한 획에 방향이 둘 이상인가 — AS-6과 같은 정의(방향 급변). */
 const multiAxis = (pts: Pt2[]) => maxTurn(pts, TURN_WINDOW) > TURN_DEG;
@@ -133,7 +157,7 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
     const brnl = loadBrnl();
     const K_DEFS = {
       channel_share: "채널(보조선/결과선/주석)별 획 수 — 지시 D의 사용 비율",
-      snap_dist_px: "시작점의 겨냥 거리(px). **40px 프로브라 조리개 절단 없음**(리뷰어 [7]) — 스냅 여부는 snapStart로 가른다. 반경(현 15px)의 실측 근거. ⚠ **on_face(지면)는 안 담긴다**(4차 재검 [7] — 화면 거리가 정의상 0이라 앱이 snapDistPx·프로브에서 뺀다, #3·#5). ⚠ **표본은 3D 오스냅(카메라 확정 후)뿐이다** — 2D 오스냅(확정 전, D-L57)은 이 필드를 안 적는다(#11 · D-L56 덮는 범위 축소)",
+      snap_dist_px: "시작점의 겨냥 거리(px) — **7차 항목 2가 정의를 수리했다**(#23 정의 갱신): 스냅 성패와 무관하게, 스냅 전 원시 시작점에서 40px 프로브 안 **최근접** 정밀 대상(on_face 제외)까지의 거리(aimDistPx 하나 — 없으면 null). 반경(현 15px)의 실측 근거. ⚠ **7차 이전 저장본은 이 정의가 아니다** — 스냅이 걸리면 cand.dist를 적었고 핀 상태에서 on_face가 항상 걸려 **전부 0으로 오염**됐다(실획 첫 표본이 그랬다). 그래서 `snapStart.kind === on_face && snapDistPx === 0`인 표본은 분포에서 갈라 `snap_dist_legacy_zero`로 센다(#11 — 두 정의를 한 분포에 섞지 않는다). ⚠ **표본은 3D 오스냅(카메라 확정 후)뿐이다** — 2D 오스냅(확정 전, D-L57)은 이 필드를 안 적는다(#11 · D-L56 덮는 범위 축소)",
       ask: "모호 물음 횟수(asked/answered/skipped) — AS-L14의 실측",
       stroke_len_ratio: "사람 획 길이 ÷ 캔버스 대각 — min_vp_len_ratio(0.04)의 실측 근거",
       below_min_vp_len: "min_vp_len_ratio 미달 획 수 / 사람 획 수. ⚠ **조각(pieceOf)은 분모에서 뺀다**(#11 — 지우개 산물은 사람 획과 단위가 다르다)",
@@ -143,6 +167,8 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
       vertex_zero_pairs: "정점 산포에서 갈라 센 공유점(<1e-9) 쌍 수 — 스냅 보장 0의 몫(#5. 원장 필드명, 4차 재검 [8]로 등재)",
       vp_confirm_source: "소실점 확정 경로 분포(6차 지시 3 — rules.slots[*].source): picked_point=찍기 · two_lines=교점 · 그 외. 이월-3의 합성 대조(찍기 pick_0 축 오차 2.67° 대 two_lines 31.61°, pick_vp.json)가 동기다 — **실사용에서 어느 쪽을 쓰는지**가 여기서 나온다",
       path_use: "배치 경로 분포(6차 지시 3 — pathStats): direct=1점 직접 좌표 · lift=카메라 투영 · twoPoint=양 끝 스냅. **지시 2(1점 직접)가 실제로 쓰이는지**의 분자·분모다. ⚠ 카운터는 저장 시점의 세션 것이다(불러오기로 이어지지 않는다 — askStats와 같은 규약)",
+      snap_use: "스냅 사용 분포(7차 지시 항목 2·4 — 실획 첫 표본의 결함 지표): snapStart 종류별 획 수 · snapEnd 있는 획 수 / 3D 획 수. **끝점 스냅이 실제로 걸리는지**가 여기서 나온다(첫 표본은 0/5였다 — 캐시 결함 수정 후 재측정 대상)",
+      vp_dir_err_deg: "수평축(0·1) 배정 획의 2D 현 방향과 시작점→그 축 소실점 방향의 각차(°) — **사람이 소실점을 향해 얼마나 정확히 긋는가**(AS-L9 계열의 실획 대리). 첫 표본의 사람 보고 Δ0.0~1.7°(합성 31.6° 대비)를 하네스가 재현하는 자리다. ⚠ 축 배정이 곧 정답 라벨은 아니다(caveat와 같은 유보)",
     };
     const kMetrics = (() => {
       if (!brnl.length) return { status: "awaiting_samples", n_docs: 0, metrics: K_DEFS,
@@ -154,6 +180,9 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
         ] };
       let n = 0, nPieces = 0, byChannel: Record<string, number> = {}, snapDists: number[] = [],
           asked = 0, answered = 0, skipped = 0, shortShare = 0, zeroPairs = 0;
+      let legacyZero = 0, nLifted = 0, nSnapEnd = 0;
+      const snapStartKinds: Record<string, number> = {};
+      const vpDirErrs: number[] = [];
       const vpSource: Record<string, number> = {};
       const pathUse = { direct: 0, lift: 0, twoPoint: 0 };
       const lensR: number[] = [], vertexGaps: number[] = [], horizonDelta: number[] = [];
@@ -165,7 +194,24 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
           if ((st as { pieceOf?: string }).pieceOf) { nPieces += 1; continue; }
           n += 1;
           byChannel[st.channel ?? "guide"] = (byChannel[st.channel ?? "guide"] ?? 0) + 1;
-          if (st.snapDistPx != null) snapDists.push(st.snapDistPx);
+          // **7차 이전 저장본의 on_face 0 오염을 가른다**(#11 — K_DEFS.snap_dist_px)
+          if (st.snapDistPx != null) {
+            if (isLegacySnapZero(st)) legacyZero += 1;
+            else snapDists.push(st.snapDistPx);
+          }
+          // **스냅 사용 분포**(7차 — 첫 표본의 결함 지표)
+          if (st.snapStart) snapStartKinds[st.snapStart.kind] = (snapStartKinds[st.snapStart.kind] ?? 0) + 1;
+          if (st.seg3d) { nLifted += 1; if (st.snapEnd) nSnapEnd += 1; }
+          // **소실점 방향 오차**(7차) — 수평축 배정 획의 현 방향 vs 시작점→소실점 방향
+          if (typeof st.axis === "number" && st.axis <= 1 && st.pts2d.length >= 2) {
+            const sl = d.rules?.slots?.[st.axis];
+            if (sl && sl.kind === "vp" && sl.at) {
+              const a0: Pt2 = [st.pts2d[0][0], st.pts2d[0][1]];
+              const b0: Pt2 = [st.pts2d[st.pts2d.length - 1][0], st.pts2d[st.pts2d.length - 1][1]];
+              const e = vpDirErrDeg(a0, b0, sl.at);
+              if (e != null) vpDirErrs.push(e);
+            }
+          }
           const pts = st.pts2d;
           if (pts.length >= 2) {
             const L = Math.hypot(pts[pts.length - 1][0] - pts[0][0], pts[pts.length - 1][1] - pts[0][1]);
@@ -208,6 +254,9 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
         metrics: K_DEFS,
         channel_share: byChannel,
         snap_dist_px: stat(snapDists, 2),
+        snap_dist_legacy_zero: legacyZero,
+        snap_use: { start_kinds: snapStartKinds, end_snapped: `${nSnapEnd}/${nLifted}` },
+        vp_dir_err_deg: stat(vpDirErrs, 2),
         ask: { asked, answered, skipped },
         vp_confirm_source: vpSource,
         path_use: pathUse,
@@ -304,5 +353,31 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
     writeFileSync(resolve(OUT, "real_ink.json"), JSON.stringify(report, null, 2), "utf-8");
     expect(nStrokes).toBeGreaterThan(0);
     expect(median(aimErrors)).not.toBeNull();
+  });
+
+  // **새 지표의 반례 테스트**(A-4 — 지표가 의도한 것을 재는지. 표본 없이도 돈다)
+  it("vp_dir_err_deg — 정확히 향하면 0, 5° 틀면 ≈5, 퇴화는 null (반례)", () => {
+    const a: Pt2 = [100, 300], vp: Pt2 = [1100, 200];
+    // 정확히 소실점을 향한 현
+    expect(vpDirErrDeg(a, [600, 250], vp)!).toBeLessThan(1e-9);
+    // 5° 튼 현 — 지표가 실제로 움직인다(#5의 판별법: 틀린 입력에 지표가 반응하는가)
+    const th = Math.atan2(200 - 300, 1100 - 100) + (5 * Math.PI) / 180;
+    const b5: Pt2 = [a[0] + 500 * Math.cos(th), a[1] + 500 * Math.sin(th)];
+    expect(Math.abs(vpDirErrDeg(a, b5, vp)! - 5)).toBeLessThan(1e-6);
+    // 반대 방향으로 그어도 같다 — 축은 부호가 없다
+    const bRev: Pt2 = [a[0] - 500 * Math.cos(th), a[1] - 500 * Math.sin(th)];
+    expect(Math.abs(vpDirErrDeg(a, bRev, vp)! - 5)).toBeLessThan(1e-6);
+    // 퇴화 — 길이 0 · 시작점이 소실점 위(방향이 없다)
+    expect(vpDirErrDeg(a, a, vp)).toBeNull();
+    expect(vpDirErrDeg(vp, [1200, 180], vp)).toBeNull();
+  });
+
+  it("snap_dist_legacy_zero — 옛 정의(on_face·0)만 갈라지고 새 정의 값은 분포에 남는다 (반례)", () => {
+    expect(isLegacySnapZero({ snapDistPx: 0, snapStart: { kind: "on_face" } })).toBe(true);
+    // 새 정의의 정당한 값들은 안 갈린다
+    expect(isLegacySnapZero({ snapDistPx: 12.4, snapStart: { kind: "on_face" } })).toBe(false);
+    expect(isLegacySnapZero({ snapDistPx: 0, snapStart: { kind: "endpoint" } })).toBe(false);
+    expect(isLegacySnapZero({ snapDistPx: null, snapStart: { kind: "on_face" } })).toBe(false);
+    expect(isLegacySnapZero({ snapDistPx: 0, snapStart: null })).toBe(false);
   });
 });
