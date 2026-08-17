@@ -75,6 +75,11 @@ const REGISTERED =
   + "모집단은 5구도 × 6시드 × 등급 2 × 잡음 {0,0.005,0.01,0.03,0.05} × 순서 2 = 600실행이고 "
   + "**카메라가 안 서는 실행도 분모에 든다**(#11). 배치 분모는 **그은 획 전부**다(놓인 것만 세면 "
   + "안 놓인 것이 공짜로 사라진다 — #10·#11). "
+  + "**[8차 지시 1-d 추가 등록]** ③ **양쪽을 함께 잰다**: `fixed` 팔의 절단 0.2 안 배치"
+  + "(`within_cut_0_2`)가 `bypass`보다 **안 줄고**, 절단 0.5 밖 파국(`beyond_cut_0_5`)이 "
+  + "**안 는다**. ①·②가 각각 한쪽만 봐서 **'중앙은 2.33배 좋아지고 잘 놓인 것은 176 → 46으로 "
+  + "주는' 개입을 통과시켰기** 때문이다. ⚠⚠ 셋 다 **팔 사이**(fixed ↔ bypass) 비교라 "
+  + "**커밋 사이**의 변화는 여전히 못 잡는다 — 그 값은 이전 커밋의 원장에서 읽는다. "
   + "⚠ 이것은 이 항목이 등록한 게이트이고 CLAUDE.md §2의 중단 조건이 아니다(#41).";
 
 // ---------------------------------------------------------------- 픽스처
@@ -244,11 +249,21 @@ interface Bag {
   asks: number; fed: number;
   firstDecl: Record<string, number>;
   askKinds: Record<string, number>;
+  /**
+   * **차수별 분해**(2026-08-18 8차 지시 1-a). 항목 1이 P1 잠김을 풀자 **중앙 형태 오차는
+   * 2.33배 좋아졌는데 절단 0.2 안에 든 배치가 176 → 46으로 줄었다.** 집계만 보면 그
+   * 130이 어디로 갔는지 알 수 없다 — P1에서는 틀리더라도 놓였고 P2에서는 안 놓이는가,
+   * 아니면 P0(카메라가 안 섬)으로 빠졌는가. **층 내 개선과 층 구성 변화를 가른다**(#9).
+   */
+  byOrder: Record<string, { runs: number; drawnN: number; placedN: number; errs: number[] }>;
 }
+const orderBag = () => ({ runs: 0, drawnN: 0, placedN: 0, errs: [] as number[] });
 const bag = (): Bag => ({ runs: 0, cameraOk: 0, orders: { p0: 0, p1: 0, p2: 0, p3: 0 },
                           drawnN: 0, placedN: 0, errs: [], asks: 0, fed: 0,
                           firstDecl: { screen_h: 0, screen_v: 0, vp: 0, none: 0 },
-                          askKinds: {} });
+                          askKinds: {},
+                          byOrder: { p0: orderBag(), p1: orderBag(),
+                                     p2: orderBag(), p3: orderBag() } });
 
 function add(b: Bag, r: RunOut) {
   b.runs += 1;
@@ -259,6 +274,10 @@ function add(b: Bag, r: RunOut) {
   b.asks += r.asks; b.fed += r.fed;
   b.firstDecl[r.firstDecl] += 1;
   for (const [k, n] of Object.entries(r.askKinds)) b.askKinds[k] = (b.askKinds[k] ?? 0) + n;
+  // **차수별로도 같은 것을 센다**(8차 지시 1-a) — 분모는 그 차수의 **그은 획 전부**다(#11)
+  const o = b.byOrder[`p${r.order}`];
+  o.runs += 1; o.drawnN += r.drawnN; o.placedN += r.placedN;
+  for (const e of r.errs) o.errs.push(e);
 }
 
 function summarize(b: Bag) {
@@ -284,8 +303,30 @@ function summarize(b: Bag) {
     /** **획당 물음**(7-R [4-E] · #11·#24) — 지시 3-f가 보고한 자릿수는 6/5획 = **1.2회/획**이다.
      *  이 하네스의 값과 자릿수가 다르면 "0에 가까워졌는가"를 이 하네스로 판정할 수 없다. */
     asks_per_stroke: rate(b.asks, b.drawnN),
-    /** **무엇이 먼저 선언됐는가**(#7). `screen_h`가 먼저면 그 실행은 그 순간 P1로 굳는다. */
+    /** **무엇이 먼저 선언됐는가**(#7). ⚠ **8차 항목 1로 뜻이 바뀌었다** — `screen_h`가 먼저
+     *  나도 **그 순간 P1로 굳지 않는다**(깊이 소실점이 있어야 P1이다). 이 카운터는 **선언
+     *  사건**을 세지 **차수**를 안 센다. 7차가 둘을 같게 읽었고 8차가 갈랐다. */
     first_declaration: b.firstDecl,
+    /**
+     * **두 쪽을 함께 낸다**(2026-08-18 8차 지시 1-c·1-d). 비율만 보면 분모가 줄 때 자동으로
+     * 오르므로, **절대 개수**를 나란히 둔다:
+     *   `within_cut_0_2`  — 잘 놓인 것(절단 0.2 안). **정확 감소**를 잡는다.
+     *   `beyond_cut_0_5`  — 파국(절단 0.5 밖). **파국 감소**를 잡는다.
+     * 항목 1이 중앙을 2.33배 좋게 하면서 `within`을 176 → 46으로 줄인 것이 **한 지표로는
+     * 안 보였다**(집계 중앙만 봤다). 이 둘이 그 자리를 덮는다.
+     */
+    within_cut_0_2: b.errs.filter(e => e <= 0.2).length,
+    beyond_cut_0_5: b.errs.filter(e => e > 0.5).length,
+    /** **차수별 분해**(지시 1-a) — 줄어든 배치가 어느 차수로 옮겨 갔는지 가른다(#9). */
+    by_order: Object.fromEntries(Object.entries(b.byOrder).map(([k, o]) => [k, {
+      runs: o.runs,
+      placement: fraction(o.placedN, o.drawnN),
+      placement_rate: rate(o.placedN, o.drawnN),
+      within_cut_0_2: o.errs.filter(e => e <= 0.2).length,
+      beyond_cut_0_5: o.errs.filter(e => e > 0.5).length,
+      silent_wrong: silentWrong(o.errs),
+      shape_err_median: o.errs.length ? round(median(o.errs), 4) : null,
+    }])),
   };
 }
 
@@ -395,6 +436,29 @@ describe("차수가 P1에 갇히는가 — 그리고 배치가 따라오는가 (
             !== (Number(silentWrong(head.bypass.errs).cut_0_2.split("/")[1])
                - Number(silentWrong(head.bypass.errs).cut_0_2.split("/")[0])),
           oracle_cut_0_2: silentWrong(head.oracle.errs).cut_0_2,
+          // ---- ③ **양쪽을 함께 잰다**(2026-08-18 8차 지시 1-d)
+          //
+          // ①·②는 **한쪽만** 봤다: ①은 P1 개수, ②는 조용히 틀림의 바닥. 그래서 항목 1이
+          // **중앙을 2.33배 좋게 하면서 잘 놓인 것을 176 → 46으로 줄인 것**을 둘 다 못 잡았고
+          // 게이트는 통과로 떴다. 이제 **정확(within)과 파국(beyond)을 나란히** 낸다.
+          //
+          // ⚠⚠ **한계를 그대로 적는다**: 이 셋은 전부 **팔 사이**(fixed ↔ bypass) 비교다.
+          // 176 → 46은 **커밋 사이** 변화라 어느 팔 비교로도 안 나온다 — 그것은
+          // `git show <이전 커밋>:stage0/out/order_lock.json`으로 읽어야 한다.
+          // 즉 **이 게이트는 여전히 그 대가를 못 잡는다.** 잡는 것은 다음 개입이
+          // 같은 두 수를 어느 방향으로 옮기는가다.
+          within_cut_0_2_delta: (placed - wrong)
+            - (Number(silentWrong(head.bypass.errs).cut_0_2.split("/")[1])
+             - Number(silentWrong(head.bypass.errs).cut_0_2.split("/")[0])),
+          beyond_cut_0_5_fixed: head.fixed.errs.filter(e => e > 0.5).length,
+          beyond_cut_0_5_bypass: head.bypass.errs.filter(e => e > 0.5).length,
+          pass_two_sided: (placed - wrong)
+              >= (Number(silentWrong(head.bypass.errs).cut_0_2.split("/")[1])
+                - Number(silentWrong(head.bypass.errs).cut_0_2.split("/")[0]))
+            && head.fixed.errs.filter(e => e > 0.5).length
+              <= head.bypass.errs.filter(e => e > 0.5).length,
+          two_sided_note: "③ **정확이 안 줄고 파국이 안 는다**(지시 1-d). ⚠ 팔 사이 비교라 "
+            + "커밋 사이의 176 → 46은 못 잡는다 — 그 값은 이전 커밋의 원장에서 읽는다.",
         },
         note: "⚠ 이 게이트는 이 항목이 등록한 것이고 CLAUDE.md §2의 중단 조건이 아니다(#41).",
       }),

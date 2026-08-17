@@ -1,5 +1,5 @@
 {
-  "n_flags": 2831,
+  "n_flags": 3212,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -5742,6 +5742,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:arms.bypass.headline.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:arms.bypass.headline.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:arms.bypass.headline.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:arms.bypass.headline.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:arms.fixed.headline.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -5765,6 +5785,26 @@
       "path": "order_lock.json:arms.fixed.headline.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:arms.fixed.headline.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:arms.fixed.headline.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:arms.fixed.headline.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:arms.fixed.headline.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:arms.rule_vp_true_axis.headline.order_counts.p3",
@@ -5792,6 +5832,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:arms.rule_vp_true_axis.headline.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:arms.rule_vp_true_axis.headline.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:arms.rule_vp_true_axis.headline.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:arms.rule_vp_true_axis.headline.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:arms.true_vp_rule_axis.headline.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -5815,6 +5875,11 @@
       "path": "order_lock.json:arms.true_vp_rule_axis.headline.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:arms.true_vp_rule_axis.headline.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:arms.oracle.headline.camera_ok_rate",
@@ -5862,6 +5927,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:arms.oracle.headline.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:arms.oracle.headline.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:arms.oracle.headline.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.bypass.order_counts.p1",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -5897,6 +5977,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.fixed.order_counts.p1",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -5930,6 +6030,26 @@
       "path": "order_lock.json:by_jitter.jit_0.fixed.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_jitter.jit_0.rule_vp_true_axis.order_counts.p1",
@@ -5972,6 +6092,36 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.rule_vp_true_axis.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.rule_vp_true_axis.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -6005,6 +6155,26 @@
       "path": "order_lock.json:by_jitter.jit_0.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.true_vp_rule_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.true_vp_rule_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.true_vp_rule_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_jitter.jit_0.oracle.camera_ok_rate",
@@ -6052,6 +6222,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.005.bypass.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6075,6 +6260,26 @@
       "path": "order_lock.json:by_jitter.jit_0.005.bypass.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_jitter.jit_0.005.fixed.order_counts.p3",
@@ -6102,6 +6307,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.005.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.005.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6127,6 +6352,31 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.005.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.rule_vp_true_axis.by_order.p1.placement_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.005.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -6150,6 +6400,21 @@
       "path": "order_lock.json:by_jitter.jit_0.005.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.true_vp_rule_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.true_vp_rule_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_jitter.jit_0.005.oracle.camera_ok_rate",
@@ -6197,6 +6462,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.005.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.005.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.01.bypass.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6220,6 +6500,26 @@
       "path": "order_lock.json:by_jitter.jit_0.01.bypass.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_jitter.jit_0.01.fixed.order_counts.p3",
@@ -6247,6 +6547,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.01.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.01.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6272,6 +6592,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.01.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.01.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -6295,6 +6635,21 @@
       "path": "order_lock.json:by_jitter.jit_0.01.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.true_vp_rule_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.true_vp_rule_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_jitter.jit_0.01.oracle.camera_ok_rate",
@@ -6342,6 +6697,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.01.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.01.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.03.bypass.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6367,6 +6737,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.03.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.03.fixed.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6390,6 +6780,26 @@
       "path": "order_lock.json:by_jitter.jit_0.03.fixed.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_jitter.jit_0.03.rule_vp_true_axis.order_counts.p3",
@@ -6422,6 +6832,36 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.03.rule_vp_true_axis.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.rule_vp_true_axis.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.03.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -6445,6 +6885,11 @@
       "path": "order_lock.json:by_jitter.jit_0.03.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_jitter.jit_0.03.oracle.camera_ok_rate",
@@ -6492,6 +6937,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.03.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.03.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.05.bypass.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6520,6 +6980,36 @@
       "path": "order_lock.json:by_jitter.jit_0.05.bypass.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.bypass.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.bypass.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_jitter.jit_0.05.fixed.order_counts.p3",
@@ -6552,6 +7042,36 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.05.fixed.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.fixed.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.05.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6582,6 +7102,36 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.05.rule_vp_true_axis.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.rule_vp_true_axis.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_jitter.jit_0.05.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -6605,6 +7155,21 @@
       "path": "order_lock.json:by_jitter.jit_0.05.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.true_vp_rule_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.true_vp_rule_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_jitter.jit_0.05.oracle.camera_ok_rate",
@@ -6652,6 +7217,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_jitter.jit_0.05.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_jitter.jit_0.05.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_order.alternating.bypass.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6675,6 +7255,26 @@
       "path": "order_lock.json:by_order.alternating.bypass.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_order.alternating.fixed.order_counts.p3",
@@ -6702,6 +7302,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_order.alternating.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_order.alternating.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6727,6 +7347,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_order.alternating.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_order.alternating.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -6750,6 +7390,11 @@
       "path": "order_lock.json:by_order.alternating.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_order.alternating.oracle.camera_ok_rate",
@@ -6797,6 +7442,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_order.alternating.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.alternating.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_order.grouped.bypass.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6820,6 +7480,26 @@
       "path": "order_lock.json:by_order.grouped.bypass.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_order.grouped.fixed.order_counts.p3",
@@ -6847,6 +7527,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_order.grouped.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_order.grouped.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6872,6 +7572,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_order.grouped.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_order.grouped.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -6895,6 +7615,21 @@
       "path": "order_lock.json:by_order.grouped.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.true_vp_rule_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.true_vp_rule_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_order.grouped.oracle.camera_ok_rate",
@@ -6942,6 +7677,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_order.grouped.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_order.grouped.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.bypass.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -6982,6 +7732,31 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.bypass.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.bypass.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.fixed.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -7012,6 +7787,36 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.fixed.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.fixed.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -7037,6 +7842,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -7060,6 +7885,21 @@
       "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.true_vp_rule_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.true_vp_rule_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.oracle.camera_ok_rate",
@@ -7107,6 +7947,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw35_pitch15.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.bypass.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -7147,6 +8002,31 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.bypass.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.bypass.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.fixed.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -7175,6 +8055,36 @@
       "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.fixed.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.fixed.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.fixed.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.rule_vp_true_axis.order_counts.p3",
@@ -7207,6 +8117,36 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.rule_vp_true_axis.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.rule_vp_true_axis.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -7230,6 +8170,11 @@
       "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.oracle.camera_ok_rate",
@@ -7277,6 +8222,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw20_pitch25.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.bypass.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -7317,6 +8277,31 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.bypass.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.bypass.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.fixed.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -7347,6 +8332,36 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.fixed.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.fixed.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -7372,6 +8387,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -7395,6 +8430,21 @@
       "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.true_vp_rule_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.true_vp_rule_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.oracle.camera_ok_rate",
@@ -7442,6 +8492,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.3pt_yaw50_pitch8.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.bypass.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -7465,6 +8530,26 @@
       "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.bypass.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.fixed.order_counts.p3",
@@ -7492,6 +8577,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -7517,6 +8622,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -7540,6 +8665,26 @@
       "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.true_vp_rule_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.true_vp_rule_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.true_vp_rule_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.oracle.camera_ok_rate",
@@ -7587,6 +8732,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.2pt_yaw35_pitch0.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.bypass.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -7615,6 +8775,36 @@
       "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.bypass.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.bypass.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.bypass.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.fixed.order_counts.p3",
@@ -7647,6 +8837,36 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.fixed.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.fixed.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -7675,6 +8895,36 @@
       "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.rule_vp_true_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.rule_vp_true_axis.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.rule_vp_true_axis.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.true_vp_rule_axis.camera_ok_rate",
@@ -7715,6 +8965,41 @@
       "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.true_vp_rule_axis.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.true_vp_rule_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.true_vp_rule_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.true_vp_rule_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.true_vp_rule_axis.by_order.p2.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.true_vp_rule_axis.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.oracle.camera_ok_rate",
@@ -7762,6 +9047,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_composition.1pt_yaw0_pitch0.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_1.bypass.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -7790,6 +9090,36 @@
       "path": "order_lock.json:by_seed.seed_1.bypass.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.bypass.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.bypass.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_seed.seed_1.fixed.order_counts.p3",
@@ -7822,6 +9152,36 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_1.fixed.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.fixed.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_1.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -7847,6 +9207,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_1.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_1.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -7870,6 +9250,21 @@
       "path": "order_lock.json:by_seed.seed_1.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.true_vp_rule_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.true_vp_rule_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_seed.seed_1.oracle.camera_ok_rate",
@@ -7917,6 +9312,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_1.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_1.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_2.bypass.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -7945,6 +9355,36 @@
       "path": "order_lock.json:by_seed.seed_2.bypass.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.bypass.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.bypass.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_seed.seed_2.fixed.order_counts.p3",
@@ -7977,6 +9417,36 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_2.fixed.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.fixed.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_2.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -8002,6 +9472,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_2.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_2.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -8025,6 +9515,11 @@
       "path": "order_lock.json:by_seed.seed_2.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_seed.seed_2.oracle.camera_ok_rate",
@@ -8072,6 +9567,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_2.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_2.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_3.bypass.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -8100,6 +9610,36 @@
       "path": "order_lock.json:by_seed.seed_3.bypass.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.bypass.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.bypass.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_seed.seed_3.fixed.order_counts.p3",
@@ -8132,6 +9672,36 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_3.fixed.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.fixed.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_3.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -8162,6 +9732,36 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_3.rule_vp_true_axis.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.rule_vp_true_axis.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_3.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -8185,6 +9785,21 @@
       "path": "order_lock.json:by_seed.seed_3.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.true_vp_rule_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.true_vp_rule_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_seed.seed_3.oracle.camera_ok_rate",
@@ -8232,6 +9847,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_3.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_3.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_4.bypass.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -8255,6 +9885,26 @@
       "path": "order_lock.json:by_seed.seed_4.bypass.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_seed.seed_4.fixed.order_counts.p3",
@@ -8282,6 +9932,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_4.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_4.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -8307,6 +9977,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_4.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_4.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -8330,6 +10020,21 @@
       "path": "order_lock.json:by_seed.seed_4.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.true_vp_rule_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.true_vp_rule_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_seed.seed_4.oracle.camera_ok_rate",
@@ -8377,6 +10082,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_4.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_4.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_5.bypass.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -8400,6 +10120,26 @@
       "path": "order_lock.json:by_seed.seed_5.bypass.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_seed.seed_5.fixed.order_counts.p3",
@@ -8427,6 +10167,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_5.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_5.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -8452,6 +10212,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_5.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_5.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -8475,6 +10255,21 @@
       "path": "order_lock.json:by_seed.seed_5.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.true_vp_rule_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.true_vp_rule_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_seed.seed_5.oracle.camera_ok_rate",
@@ -8522,6 +10317,21 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_5.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_5.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_6.bypass.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -8545,6 +10355,26 @@
       "path": "order_lock.json:by_seed.seed_6.bypass.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.bypass.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.bypass.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.bypass.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.bypass.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_seed.seed_6.fixed.order_counts.p3",
@@ -8572,6 +10402,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_6.fixed.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.fixed.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.fixed.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.fixed.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_6.rule_vp_true_axis.order_counts.p3",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -8597,6 +10447,26 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "order_lock.json:by_seed.seed_6.rule_vp_true_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.rule_vp_true_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.rule_vp_true_axis.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.rule_vp_true_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_lock.json:by_seed.seed_6.true_vp_rule_axis.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -8620,6 +10490,21 @@
       "path": "order_lock.json:by_seed.seed_6.true_vp_rule_axis.first_declaration.none",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.true_vp_rule_axis.by_order.p0.placement_rate",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.true_vp_rule_axis.by_order.p0.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.true_vp_rule_axis.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_lock.json:by_seed.seed_6.oracle.camera_ok_rate",
@@ -8665,6 +10550,26 @@
       "path": "order_lock.json:by_seed.seed_6.oracle.first_declaration.vp",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.oracle.by_order.p1.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.oracle.by_order.p2.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:by_seed.seed_6.oracle.by_order.p3.within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "order_lock.json:gate.result.within_cut_0_2_delta",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "order_promote.json:spurious_promotion_control.per_stroke.same",
