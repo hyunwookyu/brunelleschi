@@ -51,18 +51,18 @@
     "note": "잡음 {0.005,0.01,0.03,0.05}만(#5 — 잡음 0에서 pick_0은 정의상 참 소실점이라 항등). 5구도 혼합이다 — 구도별은 by_composition을 읽는다(§2의 5구도 규범).",
     "two_lines": {
       "runs": 240,
-      "camera_ok": 238,
-      "camera_ok_rate": 0.9917,
+      "camera_ok": 208,
+      "camera_ok_rate": 0.8667,
       "pick_ok": 0,
       "pick_failed": 0,
-      "axes_measured": 296,
-      "deg_median": 31.0237,
-      "deg_p90": 40.66,
+      "axes_measured": 377,
+      "deg_median": 7.4804,
+      "deg_p90": 32.5494,
       "deg_max": 52.7341,
       "axes_picked": 0,
       "deg_median_picked": null,
       "asks_per_run": 2.567,
-      "rejected_per_run": 3.708
+      "rejected_per_run": 3.362
     },
     "pick_0": {
       "runs": 240,
@@ -70,14 +70,14 @@
       "camera_ok_rate": 1,
       "pick_ok": 196,
       "pick_failed": 44,
-      "axes_measured": 420,
-      "deg_median": 1.6814,
-      "deg_p90": 22.2483,
+      "axes_measured": 425,
+      "deg_median": 1.985,
+      "deg_p90": 23.2538,
       "deg_max": 50.6141,
       "axes_picked": 348,
       "deg_median_picked": 1.223,
       "asks_per_run": 3.842,
-      "rejected_per_run": 3.567
+      "rejected_per_run": 3.558
     },
     "pick_fwd_10": {
       "runs": 240,
@@ -85,14 +85,14 @@
       "camera_ok_rate": 1,
       "pick_ok": 195,
       "pick_failed": 45,
-      "axes_measured": 420,
-      "deg_median": 1.669,
-      "deg_p90": 21.7574,
+      "axes_measured": 425,
+      "deg_median": 1.9887,
+      "deg_p90": 22.2483,
       "deg_max": 50.6141,
       "axes_picked": 347,
       "deg_median_picked": 1.2175,
       "asks_per_run": 3.854,
-      "rejected_per_run": 3.571
+      "rejected_per_run": 3.563
     },
     "pick_back_10": {
       "runs": 240,
@@ -100,29 +100,29 @@
       "camera_ok_rate": 1,
       "pick_ok": 196,
       "pick_failed": 44,
-      "axes_measured": 420,
-      "deg_median": 1.695,
-      "deg_p90": 22.0358,
+      "axes_measured": 425,
+      "deg_median": 1.9729,
+      "deg_p90": 22.2483,
       "deg_max": 50.6141,
       "axes_picked": 348,
       "deg_median_picked": 1.2148,
       "asks_per_run": 3.842,
-      "rejected_per_run": 3.554
+      "rejected_per_run": 3.546
     },
     "pick_fwd_30": {
       "runs": 240,
-      "camera_ok": 240,
-      "camera_ok_rate": 1,
+      "camera_ok": 239,
+      "camera_ok_rate": 0.9958,
       "pick_ok": 192,
       "pick_failed": 48,
-      "axes_measured": 420,
-      "deg_median": 1.9454,
-      "deg_p90": 21.5248,
+      "axes_measured": 424,
+      "deg_median": 2.0594,
+      "deg_p90": 22.2482,
       "deg_max": 50.6141,
       "axes_picked": 344,
       "deg_median_picked": 1.2814,
       "asks_per_run": 3.842,
-      "rejected_per_run": 3.558
+      "rejected_per_run": 3.55
     },
     "pick_back_30": {
       "runs": 240,
@@ -130,29 +130,29 @@
       "camera_ok_rate": 1,
       "pick_ok": 196,
       "pick_failed": 44,
-      "axes_measured": 420,
-      "deg_median": 1.6255,
-      "deg_p90": 23.2538,
+      "axes_measured": 425,
+      "deg_median": 1.7274,
+      "deg_p90": 23.4399,
       "deg_max": 50.6141,
       "axes_picked": 348,
       "deg_median_picked": 1.1974,
       "asks_per_run": 3.842,
-      "rejected_per_run": 3.546
+      "rejected_per_run": 3.538
     },
     "pick_fwd_60": {
       "runs": 240,
-      "camera_ok": 240,
-      "camera_ok_rate": 1,
+      "camera_ok": 239,
+      "camera_ok_rate": 0.9958,
       "pick_ok": 152,
       "pick_failed": 88,
-      "axes_measured": 420,
-      "deg_median": 1.7278,
-      "deg_p90": 18.8869,
+      "axes_measured": 428,
+      "deg_median": 2.1189,
+      "deg_p90": 23.1779,
       "deg_max": 50.6141,
       "axes_picked": 304,
       "deg_median_picked": 1.5479,
       "asks_per_run": 3.7,
-      "rejected_per_run": 3.567
+      "rejected_per_run": 3.496
     },
     "pick_back_60": {
       "runs": 240,
@@ -160,29 +160,29 @@
       "camera_ok_rate": 1,
       "pick_ok": 196,
       "pick_failed": 44,
-      "axes_measured": 420,
-      "deg_median": 1.6804,
-      "deg_p90": 23.4399,
+      "axes_measured": 425,
+      "deg_median": 1.7873,
+      "deg_p90": 23.7471,
       "deg_max": 50.6141,
       "axes_picked": 348,
       "deg_median_picked": 1.2214,
       "asks_per_run": 3.846,
-      "rejected_per_run": 3.592
+      "rejected_per_run": 3.583
     },
     "pick_fwd_120": {
       "runs": 240,
-      "camera_ok": 240,
-      "camera_ok_rate": 1,
+      "camera_ok": 239,
+      "camera_ok_rate": 0.9958,
       "pick_ok": 122,
       "pick_failed": 118,
-      "axes_measured": 394,
-      "deg_median": 2.3821,
-      "deg_p90": 31.6083,
+      "axes_measured": 402,
+      "deg_median": 2.5923,
+      "deg_p90": 33.3153,
       "deg_max": 50.6141,
       "axes_picked": 244,
       "deg_median_picked": 1.6029,
       "asks_per_run": 3.508,
-      "rejected_per_run": 3.608
+      "rejected_per_run": 3.538
     },
     "pick_back_120": {
       "runs": 240,
@@ -190,32 +190,32 @@
       "camera_ok_rate": 1,
       "pick_ok": 196,
       "pick_failed": 44,
-      "axes_measured": 420,
-      "deg_median": 1.9083,
-      "deg_p90": 23.2538,
+      "axes_measured": 425,
+      "deg_median": 1.9498,
+      "deg_p90": 23.4399,
       "deg_max": 50.6141,
       "axes_picked": 348,
       "deg_median_picked": 1.472,
       "asks_per_run": 3.842,
-      "rejected_per_run": 3.679
+      "rejected_per_run": 3.671
     }
   },
   "by_jitter": {
     "jit_0": {
       "two_lines": {
         "runs": 60,
-        "camera_ok": 58,
-        "camera_ok_rate": 0.9667,
+        "camera_ok": 48,
+        "camera_ok_rate": 0.8,
         "pick_ok": 0,
         "pick_failed": 0,
-        "axes_measured": 66,
-        "deg_median": 31.6083,
-        "deg_p90": 40.66,
+        "axes_measured": 95,
+        "deg_median": 2.6632,
+        "deg_p90": 8.4937,
         "deg_max": 40.66,
         "axes_picked": 0,
         "deg_median_picked": null,
         "asks_per_run": 2.1,
-        "rejected_per_run": 2.733
+        "rejected_per_run": 2.233
       },
       "pick_0": {
         "runs": 60,
@@ -298,10 +298,10 @@
         "camera_ok_rate": 0.9667,
         "pick_ok": 48,
         "pick_failed": 12,
-        "axes_measured": 106,
-        "deg_median": 0.435,
-        "deg_p90": 1.8272,
-        "deg_max": 3.3858,
+        "axes_measured": 109,
+        "deg_median": 0.4925,
+        "deg_p90": 2.2038,
+        "deg_max": 48.056,
         "axes_picked": 96,
         "deg_median_picked": 0.4986,
         "asks_per_run": 3.667,
@@ -328,10 +328,10 @@
         "camera_ok_rate": 0.9667,
         "pick_ok": 36,
         "pick_failed": 24,
-        "axes_measured": 94,
-        "deg_median": 0.5743,
+        "axes_measured": 97,
+        "deg_median": 0.6194,
         "deg_p90": 40.66,
-        "deg_max": 40.66,
+        "deg_max": 48.056,
         "axes_picked": 72,
         "deg_median_picked": 0.5691,
         "asks_per_run": 3.283,
@@ -356,18 +356,18 @@
     "jit_0.005": {
       "two_lines": {
         "runs": 60,
-        "camera_ok": 60,
-        "camera_ok_rate": 1,
+        "camera_ok": 48,
+        "camera_ok_rate": 0.8,
         "pick_ok": 0,
         "pick_failed": 0,
-        "axes_measured": 67,
-        "deg_median": 31.6083,
-        "deg_p90": 40.66,
-        "deg_max": 40.66,
+        "axes_measured": 91,
+        "deg_median": 2.4746,
+        "deg_p90": 20.3779,
+        "deg_max": 37.6984,
         "axes_picked": 0,
         "deg_median_picked": null,
         "asks_per_run": 2.05,
-        "rejected_per_run": 2.883
+        "rejected_per_run": 2.517
       },
       "pick_0": {
         "runs": 60,
@@ -450,14 +450,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 48,
         "pick_failed": 12,
-        "axes_measured": 108,
-        "deg_median": 0.5663,
-        "deg_p90": 2.581,
-        "deg_max": 16.4642,
+        "axes_measured": 109,
+        "deg_median": 0.6079,
+        "deg_p90": 3.218,
+        "deg_max": 26.0897,
         "axes_picked": 96,
         "deg_median_picked": 0.7053,
         "asks_per_run": 3.583,
-        "rejected_per_run": 2.233
+        "rejected_per_run": 2.183
       },
       "pick_back_60": {
         "runs": 60,
@@ -480,14 +480,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 36,
         "pick_failed": 24,
-        "axes_measured": 97,
-        "deg_median": 0.6241,
+        "axes_measured": 98,
+        "deg_median": 0.6583,
         "deg_p90": 40.66,
         "deg_max": 40.66,
         "axes_picked": 72,
         "deg_median_picked": 0.6138,
         "asks_per_run": 3.217,
-        "rejected_per_run": 2.267
+        "rejected_per_run": 2.217
       },
       "pick_back_120": {
         "runs": 60,
@@ -508,18 +508,18 @@
     "jit_0.01": {
       "two_lines": {
         "runs": 60,
-        "camera_ok": 60,
-        "camera_ok_rate": 1,
+        "camera_ok": 49,
+        "camera_ok_rate": 0.8167,
         "pick_ok": 0,
         "pick_failed": 0,
-        "axes_measured": 67,
-        "deg_median": 31.6083,
-        "deg_p90": 40.66,
+        "axes_measured": 94,
+        "deg_median": 4.6112,
+        "deg_p90": 27.0879,
         "deg_max": 49.1113,
         "axes_picked": 0,
         "deg_median_picked": null,
         "asks_per_run": 2.233,
-        "rejected_per_run": 2.967
+        "rejected_per_run": 2.667
       },
       "pick_0": {
         "runs": 60,
@@ -609,7 +609,7 @@
         "axes_picked": 94,
         "deg_median_picked": 1.2746,
         "asks_per_run": 3.783,
-        "rejected_per_run": 2.467
+        "rejected_per_run": 2.333
       },
       "pick_back_60": {
         "runs": 60,
@@ -639,7 +639,7 @@
         "axes_picked": 78,
         "deg_median_picked": 1.2392,
         "asks_per_run": 3.517,
-        "rejected_per_run": 2.5
+        "rejected_per_run": 2.367
       },
       "pick_back_120": {
         "runs": 60,
@@ -660,18 +660,18 @@
     "jit_0.03": {
       "two_lines": {
         "runs": 60,
-        "camera_ok": 60,
-        "camera_ok_rate": 1,
+        "camera_ok": 54,
+        "camera_ok_rate": 0.9,
         "pick_ok": 0,
         "pick_failed": 0,
-        "axes_measured": 78,
-        "deg_median": 27.9675,
-        "deg_p90": 40.66,
+        "axes_measured": 95,
+        "deg_median": 13.284,
+        "deg_p90": 34.6808,
         "deg_max": 52.7341,
         "axes_picked": 0,
         "deg_median_picked": null,
         "asks_per_run": 3.017,
-        "rejected_per_run": 4.25
+        "rejected_per_run": 3.767
       },
       "pick_0": {
         "runs": 60,
@@ -679,14 +679,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 47,
         "pick_failed": 13,
-        "axes_measured": 102,
-        "deg_median": 5.3704,
+        "axes_measured": 104,
+        "deg_median": 5.1761,
         "deg_p90": 31.6083,
         "deg_max": 47.7208,
         "axes_picked": 82,
         "deg_median_picked": 3.4048,
         "asks_per_run": 4.017,
-        "rejected_per_run": 4.283
+        "rejected_per_run": 4.267
       },
       "pick_fwd_10": {
         "runs": 60,
@@ -694,14 +694,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 47,
         "pick_failed": 13,
-        "axes_measured": 102,
-        "deg_median": 5.2349,
-        "deg_p90": 30.5607,
-        "deg_max": 40.8218,
+        "axes_measured": 104,
+        "deg_median": 5.1115,
+        "deg_p90": 29.0153,
+        "deg_max": 41.7625,
         "axes_picked": 82,
         "deg_median_picked": 3.4189,
         "asks_per_run": 4.067,
-        "rejected_per_run": 4.283
+        "rejected_per_run": 4.267
       },
       "pick_back_10": {
         "runs": 60,
@@ -709,14 +709,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 47,
         "pick_failed": 13,
-        "axes_measured": 102,
-        "deg_median": 5.3523,
+        "axes_measured": 104,
+        "deg_median": 5.1632,
         "deg_p90": 31.6083,
-        "deg_max": 41.1812,
+        "deg_max": 41.7625,
         "axes_picked": 82,
         "deg_median_picked": 3.3854,
         "asks_per_run": 4.017,
-        "rejected_per_run": 4.233
+        "rejected_per_run": 4.217
       },
       "pick_fwd_30": {
         "runs": 60,
@@ -724,14 +724,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 46,
         "pick_failed": 14,
-        "axes_measured": 102,
-        "deg_median": 5.7685,
+        "axes_measured": 104,
+        "deg_median": 5.6483,
         "deg_p90": 31.6083,
         "deg_max": 48.2241,
         "axes_picked": 81,
         "deg_median_picked": 3.7104,
         "asks_per_run": 4.033,
-        "rejected_per_run": 4.267
+        "rejected_per_run": 4.25
       },
       "pick_back_30": {
         "runs": 60,
@@ -739,14 +739,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 47,
         "pick_failed": 13,
-        "axes_measured": 102,
-        "deg_median": 5.3158,
-        "deg_p90": 31.6083,
-        "deg_max": 40.8218,
+        "axes_measured": 104,
+        "deg_median": 5.102,
+        "deg_p90": 30.7227,
+        "deg_max": 41.7625,
         "axes_picked": 82,
         "deg_median_picked": 3.3531,
         "asks_per_run": 4.017,
-        "rejected_per_run": 4.2
+        "rejected_per_run": 4.183
       },
       "pick_fwd_60": {
         "runs": 60,
@@ -754,14 +754,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 35,
         "pick_failed": 25,
-        "axes_measured": 102,
-        "deg_median": 5.2521,
-        "deg_p90": 25.4504,
-        "deg_max": 40.8218,
+        "axes_measured": 106,
+        "deg_median": 5.5438,
+        "deg_p90": 28.9775,
+        "deg_max": 41.7625,
         "axes_picked": 70,
         "deg_median_picked": 4.5887,
         "asks_per_run": 3.883,
-        "rejected_per_run": 4.15
+        "rejected_per_run": 4.083
       },
       "pick_back_60": {
         "runs": 60,
@@ -769,14 +769,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 47,
         "pick_failed": 13,
-        "axes_measured": 102,
-        "deg_median": 5.2606,
-        "deg_p90": 31.6083,
+        "axes_measured": 104,
+        "deg_median": 4.976,
+        "deg_p90": 26.9925,
         "deg_max": 46.0608,
         "axes_picked": 82,
         "deg_median_picked": 3.3183,
         "asks_per_run": 4.017,
-        "rejected_per_run": 4.233
+        "rejected_per_run": 4.217
       },
       "pick_fwd_120": {
         "runs": 60,
@@ -784,14 +784,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 28,
         "pick_failed": 32,
-        "axes_measured": 96,
-        "deg_median": 5.0094,
+        "axes_measured": 100,
+        "deg_median": 5.2782,
         "deg_p90": 35.7701,
-        "deg_max": 40.8218,
+        "deg_max": 41.7625,
         "axes_picked": 56,
         "deg_median_picked": 4.0398,
         "asks_per_run": 3.783,
-        "rejected_per_run": 4.3
+        "rejected_per_run": 4.233
       },
       "pick_back_120": {
         "runs": 60,
@@ -799,31 +799,31 @@
         "camera_ok_rate": 1,
         "pick_ok": 47,
         "pick_failed": 13,
-        "axes_measured": 102,
-        "deg_median": 4.8968,
-        "deg_p90": 21.7396,
-        "deg_max": 40.8218,
+        "axes_measured": 104,
+        "deg_median": 4.7808,
+        "deg_p90": 21.2604,
+        "deg_max": 41.7625,
         "axes_picked": 82,
         "deg_median_picked": 2.9272,
         "asks_per_run": 4,
-        "rejected_per_run": 4.35
+        "rejected_per_run": 4.333
       }
     },
     "jit_0.05": {
       "two_lines": {
         "runs": 60,
-        "camera_ok": 58,
-        "camera_ok_rate": 0.9667,
+        "camera_ok": 57,
+        "camera_ok_rate": 0.95,
         "pick_ok": 0,
         "pick_failed": 0,
-        "axes_measured": 84,
-        "deg_median": 19.3655,
-        "deg_p90": 37.6984,
-        "deg_max": 44.6297,
+        "axes_measured": 97,
+        "deg_median": 18.5383,
+        "deg_p90": 35,
+        "deg_max": 48.621,
         "axes_picked": 0,
         "deg_median_picked": null,
         "asks_per_run": 2.967,
-        "rejected_per_run": 4.733
+        "rejected_per_run": 4.5
       },
       "pick_0": {
         "runs": 60,
@@ -831,14 +831,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 30,
         "pick_failed": 30,
-        "axes_measured": 103,
-        "deg_median": 11.9907,
-        "deg_p90": 32.3164,
+        "axes_measured": 106,
+        "deg_median": 13.8874,
+        "deg_p90": 35,
         "deg_max": 50.6141,
         "axes_picked": 52,
         "deg_median_picked": 8.7925,
         "asks_per_run": 3.583,
-        "rejected_per_run": 5.483
+        "rejected_per_run": 5.467
       },
       "pick_fwd_10": {
         "runs": 60,
@@ -846,14 +846,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 29,
         "pick_failed": 31,
-        "axes_measured": 103,
-        "deg_median": 11.9972,
-        "deg_p90": 32.3164,
+        "axes_measured": 106,
+        "deg_median": 13.8874,
+        "deg_p90": 35,
         "deg_max": 50.6141,
         "axes_picked": 51,
         "deg_median_picked": 8.5403,
         "asks_per_run": 3.583,
-        "rejected_per_run": 5.5
+        "rejected_per_run": 5.483
       },
       "pick_back_10": {
         "runs": 60,
@@ -861,29 +861,29 @@
         "camera_ok_rate": 1,
         "pick_ok": 30,
         "pick_failed": 30,
-        "axes_measured": 103,
-        "deg_median": 10.9922,
-        "deg_p90": 31.6083,
+        "axes_measured": 106,
+        "deg_median": 12.2741,
+        "deg_p90": 33.3153,
         "deg_max": 50.6141,
         "axes_picked": 52,
         "deg_median_picked": 8.2672,
         "asks_per_run": 3.583,
-        "rejected_per_run": 5.483
+        "rejected_per_run": 5.467
       },
       "pick_fwd_30": {
         "runs": 60,
-        "camera_ok": 60,
-        "camera_ok_rate": 1,
+        "camera_ok": 59,
+        "camera_ok_rate": 0.9833,
         "pick_ok": 27,
         "pick_failed": 33,
-        "axes_measured": 103,
-        "deg_median": 10.3099,
-        "deg_p90": 31.4796,
+        "axes_measured": 105,
+        "deg_median": 12.5639,
+        "deg_p90": 32.3164,
         "deg_max": 50.6141,
         "axes_picked": 49,
         "deg_median_picked": 7.6644,
         "asks_per_run": 3.567,
-        "rejected_per_run": 5.467
+        "rejected_per_run": 5.45
       },
       "pick_back_30": {
         "runs": 60,
@@ -891,29 +891,29 @@
         "camera_ok_rate": 1,
         "pick_ok": 30,
         "pick_failed": 30,
-        "axes_measured": 103,
-        "deg_median": 12.5627,
-        "deg_p90": 31.6083,
+        "axes_measured": 106,
+        "deg_median": 14.1017,
+        "deg_p90": 34.0379,
         "deg_max": 50.6141,
         "axes_picked": 52,
         "deg_median_picked": 9.0872,
         "asks_per_run": 3.583,
-        "rejected_per_run": 5.5
+        "rejected_per_run": 5.483
       },
       "pick_fwd_60": {
         "runs": 60,
-        "camera_ok": 60,
-        "camera_ok_rate": 1,
+        "camera_ok": 59,
+        "camera_ok_rate": 0.9833,
         "pick_ok": 22,
         "pick_failed": 38,
-        "axes_measured": 103,
-        "deg_median": 11.1132,
-        "deg_p90": 28.5601,
+        "axes_measured": 106,
+        "deg_median": 13.8874,
+        "deg_p90": 31.6083,
         "deg_max": 50.6141,
         "axes_picked": 44,
         "deg_median_picked": 7.4031,
         "asks_per_run": 3.55,
-        "rejected_per_run": 5.417
+        "rejected_per_run": 5.383
       },
       "pick_back_60": {
         "runs": 60,
@@ -921,29 +921,29 @@
         "camera_ok_rate": 1,
         "pick_ok": 30,
         "pick_failed": 30,
-        "axes_measured": 103,
-        "deg_median": 13.7186,
-        "deg_p90": 32.3164,
+        "axes_measured": 106,
+        "deg_median": 14.2441,
+        "deg_p90": 34.0379,
         "deg_max": 50.6141,
         "axes_picked": 52,
         "deg_median_picked": 8.9779,
         "asks_per_run": 3.6,
-        "rejected_per_run": 5.433
+        "rejected_per_run": 5.417
       },
       "pick_fwd_120": {
         "runs": 60,
-        "camera_ok": 60,
-        "camera_ok_rate": 1,
+        "camera_ok": 59,
+        "camera_ok_rate": 0.9833,
         "pick_ok": 19,
         "pick_failed": 41,
-        "axes_measured": 102,
-        "deg_median": 12.5407,
-        "deg_p90": 30.312,
+        "axes_measured": 105,
+        "deg_median": 14.0563,
+        "deg_p90": 32.3164,
         "deg_max": 50.6141,
         "axes_picked": 38,
         "deg_median_picked": 7.5989,
         "asks_per_run": 3.517,
-        "rejected_per_run": 5.367
+        "rejected_per_run": 5.333
       },
       "pick_back_120": {
         "runs": 60,
@@ -951,14 +951,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 30,
         "pick_failed": 30,
-        "axes_measured": 103,
-        "deg_median": 16.893,
-        "deg_p90": 31.0102,
+        "axes_measured": 106,
+        "deg_median": 17.7287,
+        "deg_p90": 31.9975,
         "deg_max": 50.6141,
         "axes_picked": 52,
         "deg_median_picked": 14.7479,
         "asks_per_run": 3.6,
-        "rejected_per_run": 5.55
+        "rejected_per_run": 5.533
       }
     }
   },
@@ -970,14 +970,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 0,
         "pick_failed": 0,
-        "axes_measured": 92,
-        "deg_median": 13.9618,
-        "deg_p90": 37.6984,
+        "axes_measured": 115,
+        "deg_median": 4.3841,
+        "deg_p90": 32.5494,
         "deg_max": 52.7341,
         "axes_picked": 0,
         "deg_median_picked": null,
         "asks_per_run": 3.133,
-        "rejected_per_run": 3.833
+        "rejected_per_run": 3.45
       },
       "pick_0": {
         "runs": 60,
@@ -1122,14 +1122,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 0,
         "pick_failed": 0,
-        "axes_measured": 70,
-        "deg_median": 31.6083,
+        "axes_measured": 110,
+        "deg_median": 5.6036,
         "deg_p90": 31.6083,
         "deg_max": 44.6297,
         "axes_picked": 0,
         "deg_median_picked": null,
         "asks_per_run": 2.7,
-        "rejected_per_run": 5.45
+        "rejected_per_run": 4.583
       },
       "pick_0": {
         "runs": 60,
@@ -1137,14 +1137,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 43,
         "pick_failed": 17,
-        "axes_measured": 113,
-        "deg_median": 0.8027,
-        "deg_p90": 26.6666,
+        "axes_measured": 116,
+        "deg_median": 0.8244,
+        "deg_p90": 26.2748,
         "deg_max": 50.6141,
         "axes_picked": 86,
         "deg_median_picked": 0.4777,
         "asks_per_run": 4.05,
-        "rejected_per_run": 4.183
+        "rejected_per_run": 4.167
       },
       "pick_fwd_10": {
         "runs": 60,
@@ -1152,14 +1152,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 43,
         "pick_failed": 17,
-        "axes_measured": 113,
-        "deg_median": 0.8242,
-        "deg_p90": 26.3114,
+        "axes_measured": 116,
+        "deg_median": 0.8391,
+        "deg_p90": 23.8859,
         "deg_max": 50.6141,
         "axes_picked": 86,
         "deg_median_picked": 0.4851,
         "asks_per_run": 4.05,
-        "rejected_per_run": 4.183
+        "rejected_per_run": 4.167
       },
       "pick_back_10": {
         "runs": 60,
@@ -1167,14 +1167,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 43,
         "pick_failed": 17,
-        "axes_measured": 113,
-        "deg_median": 0.8029,
-        "deg_p90": 28.3411,
+        "axes_measured": 116,
+        "deg_median": 0.826,
+        "deg_p90": 26.238,
         "deg_max": 50.6141,
         "axes_picked": 86,
         "deg_median_picked": 0.4887,
         "asks_per_run": 4.05,
-        "rejected_per_run": 4.183
+        "rejected_per_run": 4.167
       },
       "pick_fwd_30": {
         "runs": 60,
@@ -1182,14 +1182,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 43,
         "pick_failed": 17,
-        "axes_measured": 113,
-        "deg_median": 0.8619,
-        "deg_p90": 23.8346,
+        "axes_measured": 116,
+        "deg_median": 0.8856,
+        "deg_p90": 23.7471,
         "deg_max": 50.6141,
         "axes_picked": 86,
         "deg_median_picked": 0.4714,
         "asks_per_run": 4.05,
-        "rejected_per_run": 4.2
+        "rejected_per_run": 4.183
       },
       "pick_back_30": {
         "runs": 60,
@@ -1197,14 +1197,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 43,
         "pick_failed": 17,
-        "axes_measured": 113,
-        "deg_median": 0.754,
-        "deg_p90": 26.1633,
+        "axes_measured": 116,
+        "deg_median": 0.7803,
+        "deg_p90": 23.8346,
         "deg_max": 50.6141,
         "axes_picked": 86,
         "deg_median_picked": 0.5102,
         "asks_per_run": 4.05,
-        "rejected_per_run": 4.133
+        "rejected_per_run": 4.117
       },
       "pick_fwd_60": {
         "runs": 60,
@@ -1212,14 +1212,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 43,
         "pick_failed": 17,
-        "axes_measured": 113,
-        "deg_median": 0.8641,
-        "deg_p90": 23.8346,
+        "axes_measured": 116,
+        "deg_median": 0.8889,
+        "deg_p90": 23.7471,
         "deg_max": 50.6141,
         "axes_picked": 86,
         "deg_median_picked": 0.4531,
         "asks_per_run": 4.05,
-        "rejected_per_run": 4.217
+        "rejected_per_run": 4.2
       },
       "pick_back_60": {
         "runs": 60,
@@ -1227,14 +1227,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 43,
         "pick_failed": 17,
-        "axes_measured": 113,
-        "deg_median": 0.7433,
-        "deg_p90": 23.8346,
+        "axes_measured": 116,
+        "deg_median": 0.7708,
+        "deg_p90": 23.7471,
         "deg_max": 50.6141,
         "axes_picked": 86,
         "deg_median_picked": 0.5328,
         "asks_per_run": 4.067,
-        "rejected_per_run": 4.133
+        "rejected_per_run": 4.117
       },
       "pick_fwd_120": {
         "runs": 60,
@@ -1242,14 +1242,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 43,
         "pick_failed": 17,
-        "axes_measured": 113,
-        "deg_median": 0.9925,
-        "deg_p90": 23.8346,
+        "axes_measured": 116,
+        "deg_median": 0.9981,
+        "deg_p90": 23.7471,
         "deg_max": 50.6141,
         "axes_picked": 86,
         "deg_median_picked": 0.5221,
         "asks_per_run": 4.05,
-        "rejected_per_run": 4.217
+        "rejected_per_run": 4.2
       },
       "pick_back_120": {
         "runs": 60,
@@ -1257,14 +1257,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 43,
         "pick_failed": 17,
-        "axes_measured": 113,
-        "deg_median": 0.7863,
-        "deg_p90": 23.8346,
+        "axes_measured": 116,
+        "deg_median": 0.8421,
+        "deg_p90": 23.7471,
         "deg_max": 50.6141,
         "axes_picked": 86,
         "deg_median_picked": 0.6148,
         "asks_per_run": 4.067,
-        "rejected_per_run": 4.15
+        "rejected_per_run": 4.133
       }
     },
     "3pt_yaw50_pitch8": {
@@ -1274,14 +1274,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 0,
         "pick_failed": 0,
-        "axes_measured": 74,
-        "deg_median": 40.66,
-        "deg_p90": 40.66,
+        "axes_measured": 114,
+        "deg_median": 4.3198,
+        "deg_p90": 23.9958,
         "deg_max": 40.66,
         "axes_picked": 0,
         "deg_median_picked": null,
         "asks_per_run": 1.783,
-        "rejected_per_run": 3.55
+        "rejected_per_run": 3.217
       },
       "pick_0": {
         "runs": 60,
@@ -1426,14 +1426,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 0,
         "pick_failed": 0,
-        "axes_measured": 70,
-        "deg_median": 35,
-        "deg_p90": 35,
-        "deg_max": 35,
+        "axes_measured": 110,
+        "deg_median": 9.3809,
+        "deg_p90": 32.7402,
+        "deg_max": 41.3655,
         "axes_picked": 0,
         "deg_median_picked": null,
         "asks_per_run": 3,
-        "rejected_per_run": 2.45
+        "rejected_per_run": 2.3
       },
       "pick_0": {
         "runs": 60,
@@ -1574,18 +1574,18 @@
     "1pt_yaw0_pitch0": {
       "two_lines": {
         "runs": 60,
-        "camera_ok": 56,
-        "camera_ok_rate": 0.9333,
+        "camera_ok": 16,
+        "camera_ok_rate": 0.2667,
         "pick_ok": 0,
         "pick_failed": 0,
-        "axes_measured": 56,
-        "deg_median": 0,
-        "deg_p90": 0,
-        "deg_max": 0,
+        "axes_measured": 23,
+        "deg_median": 20.8277,
+        "deg_p90": 34.2268,
+        "deg_max": 48.621,
         "axes_picked": 0,
         "deg_median_picked": null,
         "asks_per_run": 1.75,
-        "rejected_per_run": 2.283
+        "rejected_per_run": 2.133
       },
       "pick_0": {
         "runs": 60,
@@ -1593,14 +1593,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 56,
         "pick_failed": 4,
-        "axes_measured": 60,
+        "axes_measured": 62,
         "deg_median": 0,
         "deg_p90": 0,
-        "deg_max": 0,
+        "deg_max": 46.7058,
         "axes_picked": 56,
         "deg_median_picked": 0,
         "asks_per_run": 2.55,
-        "rejected_per_run": 2.567
+        "rejected_per_run": 2.55
       },
       "pick_fwd_10": {
         "runs": 60,
@@ -1608,14 +1608,14 @@
         "camera_ok_rate": 1,
         "pick_ok": 55,
         "pick_failed": 5,
-        "axes_measured": 60,
+        "axes_measured": 62,
         "deg_median": 0,
         "deg_p90": 0,
-        "deg_max": 0,
+        "deg_max": 46.7058,
         "axes_picked": 55,
         "deg_median_picked": 0,
         "asks_per_run": 2.55,
-        "rejected_per_run": 2.567
+        "rejected_per_run": 2.55
       },
       "pick_back_10": {
         "runs": 60,
@@ -1623,29 +1623,29 @@
         "camera_ok_rate": 1,
         "pick_ok": 56,
         "pick_failed": 4,
-        "axes_measured": 60,
+        "axes_measured": 62,
         "deg_median": 0,
         "deg_p90": 0,
-        "deg_max": 0,
+        "deg_max": 46.7058,
         "axes_picked": 56,
         "deg_median_picked": 0,
         "asks_per_run": 2.55,
-        "rejected_per_run": 2.533
+        "rejected_per_run": 2.517
       },
       "pick_fwd_30": {
         "runs": 60,
-        "camera_ok": 60,
-        "camera_ok_rate": 1,
+        "camera_ok": 59,
+        "camera_ok_rate": 0.9833,
         "pick_ok": 52,
         "pick_failed": 8,
-        "axes_measured": 60,
+        "axes_measured": 61,
         "deg_median": 0,
         "deg_p90": 0,
-        "deg_max": 0,
+        "deg_max": 46.7058,
         "axes_picked": 52,
         "deg_median_picked": 0,
         "asks_per_run": 2.517,
-        "rejected_per_run": 2.5
+        "rejected_per_run": 2.483
       },
       "pick_back_30": {
         "runs": 60,
@@ -1653,29 +1653,29 @@
         "camera_ok_rate": 1,
         "pick_ok": 56,
         "pick_failed": 4,
-        "axes_measured": 60,
+        "axes_measured": 62,
         "deg_median": 0,
         "deg_p90": 0,
-        "deg_max": 0,
+        "deg_max": 46.7058,
         "axes_picked": 56,
         "deg_median_picked": 0,
         "asks_per_run": 2.55,
-        "rejected_per_run": 2.567
+        "rejected_per_run": 2.55
       },
       "pick_fwd_60": {
         "runs": 60,
-        "camera_ok": 58,
-        "camera_ok_rate": 0.9667,
+        "camera_ok": 57,
+        "camera_ok_rate": 0.95,
         "pick_ok": 0,
         "pick_failed": 60,
-        "axes_measured": 58,
+        "axes_measured": 66,
         "deg_median": 0,
-        "deg_p90": 0,
-        "deg_max": 0,
+        "deg_p90": 35.2649,
+        "deg_max": 48.056,
         "axes_picked": 0,
         "deg_median_picked": null,
         "asks_per_run": 1.75,
-        "rejected_per_run": 2.583
+        "rejected_per_run": 2.317
       },
       "pick_back_60": {
         "runs": 60,
@@ -1683,29 +1683,29 @@
         "camera_ok_rate": 1,
         "pick_ok": 56,
         "pick_failed": 4,
-        "axes_measured": 60,
+        "axes_measured": 62,
         "deg_median": 0,
         "deg_p90": 0,
-        "deg_max": 0,
+        "deg_max": 46.7058,
         "axes_picked": 56,
         "deg_median_picked": 0,
         "asks_per_run": 2.55,
-        "rejected_per_run": 3.017
+        "rejected_per_run": 3
       },
       "pick_fwd_120": {
         "runs": 60,
-        "camera_ok": 58,
-        "camera_ok_rate": 0.9667,
+        "camera_ok": 57,
+        "camera_ok_rate": 0.95,
         "pick_ok": 0,
         "pick_failed": 60,
-        "axes_measured": 58,
+        "axes_measured": 66,
         "deg_median": 0,
-        "deg_p90": 0,
-        "deg_max": 0,
+        "deg_p90": 35.2649,
+        "deg_max": 48.056,
         "axes_picked": 0,
         "deg_median_picked": null,
         "asks_per_run": 1.75,
-        "rejected_per_run": 2.583
+        "rejected_per_run": 2.317
       },
       "pick_back_120": {
         "runs": 60,
@@ -1713,24 +1713,24 @@
         "camera_ok_rate": 1,
         "pick_ok": 56,
         "pick_failed": 4,
-        "axes_measured": 60,
+        "axes_measured": 62,
         "deg_median": 0,
         "deg_p90": 0,
-        "deg_max": 0,
+        "deg_max": 46.7058,
         "axes_picked": 56,
         "deg_median_picked": 0,
         "asks_per_run": 2.55,
-        "rejected_per_run": 3.367
+        "rejected_per_run": 3.35
       }
     }
   },
   "tolerance_curve": {
-    "two_lines_deg_median": 31.0237,
+    "two_lines_deg_median": 7.4804,
     "rows": [
       {
         "err_px": -120,
         "arm": "pick_back_120",
-        "deg_median": 1.9083,
+        "deg_median": 1.9498,
         "deg_median_picked": 1.472,
         "pick_ok": 196,
         "pick_failed": 44,
@@ -1740,7 +1740,7 @@
       {
         "err_px": -60,
         "arm": "pick_back_60",
-        "deg_median": 1.6804,
+        "deg_median": 1.7873,
         "deg_median_picked": 1.2214,
         "pick_ok": 196,
         "pick_failed": 44,
@@ -1750,7 +1750,7 @@
       {
         "err_px": -30,
         "arm": "pick_back_30",
-        "deg_median": 1.6255,
+        "deg_median": 1.7274,
         "deg_median_picked": 1.1974,
         "pick_ok": 196,
         "pick_failed": 44,
@@ -1760,7 +1760,7 @@
       {
         "err_px": -10,
         "arm": "pick_back_10",
-        "deg_median": 1.695,
+        "deg_median": 1.9729,
         "deg_median_picked": 1.2148,
         "pick_ok": 196,
         "pick_failed": 44,
@@ -1770,7 +1770,7 @@
       {
         "err_px": 0,
         "arm": "pick_0",
-        "deg_median": 1.6814,
+        "deg_median": 1.985,
         "deg_median_picked": 1.223,
         "pick_ok": 196,
         "pick_failed": 44,
@@ -1780,7 +1780,7 @@
       {
         "err_px": 10,
         "arm": "pick_fwd_10",
-        "deg_median": 1.669,
+        "deg_median": 1.9887,
         "deg_median_picked": 1.2175,
         "pick_ok": 195,
         "pick_failed": 45,
@@ -1790,31 +1790,31 @@
       {
         "err_px": 30,
         "arm": "pick_fwd_30",
-        "deg_median": 1.9454,
+        "deg_median": 2.0594,
         "deg_median_picked": 1.2814,
         "pick_ok": 192,
         "pick_failed": 48,
-        "camera_ok": 240,
+        "camera_ok": 239,
         "runs": 240
       },
       {
         "err_px": 60,
         "arm": "pick_fwd_60",
-        "deg_median": 1.7278,
+        "deg_median": 2.1189,
         "deg_median_picked": 1.5479,
         "pick_ok": 152,
         "pick_failed": 88,
-        "camera_ok": 240,
+        "camera_ok": 239,
         "runs": 240
       },
       {
         "err_px": 120,
         "arm": "pick_fwd_120",
-        "deg_median": 2.3821,
+        "deg_median": 2.5923,
         "deg_median_picked": 1.6029,
         "pick_ok": 122,
         "pick_failed": 118,
-        "camera_ok": 240,
+        "camera_ok": 239,
         "runs": 240
       }
     ],
@@ -1829,8 +1829,8 @@
     "reachability": "**사람이 소실점 자리를 몇 px 안에 찍는가의 표본이 0이다**(AS-L9와 같은 자리). pick_0 팔은 오라클이고 도달 가능성의 수치로 쓰지 않는다(#35·#40). 대리로 tolerance_curve를 낸다 — 교점 경로보다 나은 찍기 오차의 최대 폭(best_tolerance_px)이 사람 손이 들어가야 하는 창이다. 그 창에 사람이 드는지는 실사용 관측이어야 한다.",
     "reachability_absent": "사람 찍기 정확도 표본 0(AS-L9). 창의 크기(tolerance_curve)만 낸다.",
     "result": {
-      "pick_0_median": 1.6814,
-      "two_lines_median": 31.0237,
+      "pick_0_median": 1.985,
+      "two_lines_median": 7.4804,
       "pick_ok_headline": 196,
       "pick_failed_headline": 44,
       "tolerance_px": 120,

@@ -71,7 +71,11 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
              strokes: S.doc().strokes.length };
   }, INK_PX);
   expect((led.s1_horizontal as any).ink_px).toBeGreaterThan(50);   // **획이 화면에 남았다**
-  expect((led.s1_horizontal as any).order).toBe(1);                // **가로선 = 1점 확정**(지시 1)
+  // ⚠⚠ **1 → 0으로 뒤집혔다**(2026-08-18 8차 지시 1-a). 옛 판은 "가로선 = 1점 확정"이었고
+  // 그것이 **수평축의 존재를 카메라가 선 것으로 읽은** 자리다. 이제 축만 기록하고 대기한다 —
+  // `standing: false`는 옛 판에서도 이미 false였다(그 어긋남이 이 결함의 서명이었다:
+  // **차수는 1인데 카메라는 안 서 있는** 상태를 도구가 "확정"이라 불렀다).
+  expect((led.s1_horizontal as any).order).toBe(0);
   expect((led.s1_horizontal as any).standing).toBe(false);         // 깊이 소실점 전 — 3D는 아직
 
   // ---- ③ 깊이선 **둘**(같은 소실점을 향한 짝) → 3D가 선다 (P1 임의 f — 지시 1·5-4)
@@ -80,6 +84,9 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
   // 두 선 다 (0.62, 0.42)를 지나므로 교점 = 그 점이고, 지평선이 그 y로 맞춰진다.
   await draw(0.30, 0.72, 0.476, 0.555);
   await draw(0.38, 0.75, 0.50, 0.585);
+  // **셋째 지지선**(8차 지시 1-a) — 위 둘의 교점 (0.62, 0.42)를 지난다. 화면 가로축만으로는
+  // P1이 아니게 되면서 두 선 지름길이 없어졌다(D-L69의 기본 경로).
+  await draw(0.36, 0.70, 0.50, 0.549);
   led.s3_depth = await page.evaluate(() => {
     const S = window.S2S;
     const vp = S.stage.viewport;
@@ -97,7 +104,9 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
              gl_painted_px: painted };
   });
   expect((led.s3_depth as any).standing).toBe(true);
-  expect((led.s3_depth as any).lifted).toBe(3);          // 가로선 + 깊이선 짝(4차 지시 3)
+  // ⚠ **+1은 셋째 지지선을 픽스처에 넣었기 때문이다**(8차 지시 1-a) — 임계를 결과에 맞춘 것이
+  // 아니라 **입력이 한 획 늘었다**(가로선 + 깊이선 **셋**).
+  expect((led.s3_depth as any).lifted).toBe(4);
   // **축 배정**(5-3의 원장 근거, 리뷰어 [6]) — 가로선과 깊이선이 서로 다른 축이다
   expect(new Set((led.s3_depth as any).axes).size).toBe(2);
   expect((led.s3_depth as any).axes.every((a: unknown) => typeof a === "number")).toBe(true);
@@ -870,6 +879,8 @@ test("회전 중심 — 경계 상자 중심을 시선에 투영한 점으로 �
   await drawPx(0.30 * W, 0.75 * H, 0.70 * W, 0.75 * H);
   await drawPx(0.30 * W, 0.72 * H, 0.476 * W, 0.555 * H);
   await drawPx(0.38 * W, 0.75 * H, 0.50 * W, 0.585 * H);
+  // **셋째 지지선**(8차 지시 1-a) — 위 둘의 교점 (0.62W, 0.42H)를 지난다
+  await drawPx(0.36 * W, 0.70 * H, 0.50 * W, 0.549 * H);
   await drawPx(0.30 * W, 0.70 * H, 0.34 * W, 0.70 * H);
   await drawPx(0.30 * W, 0.68 * H, 0.34 * W, 0.68 * H);
   led.standing = await page.evaluate(() => window.S2S.standing());
@@ -1155,6 +1166,9 @@ test("1점 확정 — 직전·직후 그린 선이 같은 자리다 (5차 지시
   // ---- ② 확정 획 — 밑선 오른끝에서 같은 소실점 쪽으로 긋는 둘째 깊이선.
   //      첫 깊이선과의 연장 수렴 교점(≈0.62W, 0.58H) = 소실점 → P1 확정
   await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
+  // **셋째 지지선**(8차 지시 1-a) — 위 둘의 교점 (0.6204W, 0.58H)를 지난다.
+  // 화면 가로축만으로는 P1이 아니게 되면서 두 선 지름길이 없어졌다(D-L69의 기본 경로).
+  await drawPx(0.30 * W, 0.42 * H, 0.4602 * W, 0.50 * H);
   led.after_state = await page.evaluate(() => {
     const S = window.S2S, d = S.doc();
     return { standing: S.standing(), order: S.order(),
@@ -1165,7 +1179,8 @@ test("1점 확정 — 직전·직후 그린 선이 같은 자리다 (5차 지시
   });
   expect((led.after_state as any).standing).toBe(true);
   // **일괄 풀이가 실제로 돌았다** — 옛 코드는 가짜 뷰 때문에 0이었다(이 팔의 되살린 버그)
-  expect((led.after_state as any).lifted).toBe(3);
+  // ⚠ **+1은 셋째 지지선을 픽스처에 넣었기 때문이다**(8차 지시 1-a) — 임계를 결과에 맞춘 것이 아니라 **입력이 한 획 늘었다**.
+  expect((led.after_state as any).lifted).toBe(4);
   expect((led.after_state as any).pending_hidden).toBe(0);   // 숨은 뷰에 남은 획이 없다
 
   // ---- ③ 직후: 같은 자리(그린 선 중점)가 여전히 보인다 — 잉크가 아니면 3D가 그 자리에 있다
@@ -2159,13 +2174,17 @@ test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, �
   await drawPx(0.25 * W, 0.30 * H, 0.45 * W, 0.301 * H);
   await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
   await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
+  // **셋째 지지선**(8차 지시 1-a) — 위 둘의 교점 (0.6204W, 0.58H)를 지난다.
+  // 화면 가로축만으로는 P1이 아니게 되면서 두 선 지름길이 없어졌다(D-L69의 기본 경로).
+  await drawPx(0.30 * W, 0.42 * H, 0.4602 * W, 0.50 * H);
   led.s1_confirm = await state();
-  expect((led.s1_confirm as any).lifted).toBe(3);
+  // ⚠ **+1은 셋째 지지선을 픽스처에 넣었기 때문이다**(8차 지시 1-a) — 임계를 결과에 맞춘 것이 아니라 **입력이 한 획 늘었다**.
+  expect((led.s1_confirm as any).lifted).toBe(4);
 
   // ---- ② 정면에서 이어 그리기 — 기존 끝점에서 가로선: **직접 좌표 경로**(X축 선)
   await drawPx(0.4167 * W, 0.426 * H, 0.56 * W, 0.428 * H);
   led.s2_front = await state();
-  expect((led.s2_front as any).lifted).toBe(4);
+  expect((led.s2_front as any).lifted).toBe(5);
   expect((led.s2_front as any).path.direct).toBeGreaterThanOrEqual(1);   // 직접 경로가 실제로 돌았다
   {
     const segs = (led.s2_front as any).segs as number[][][];
@@ -2179,7 +2198,7 @@ test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, �
   //      (지면 화면 거리 0) 무스냅 경로는 지평선 위·기하 밖에서만 도달한다(원장에 명시)
   await drawPx(0.66 * W, 0.15 * H, 0.78 * W, 0.152 * H);
   led.s3_unanchored = await state();
-  expect((led.s3_unanchored as any).lifted).toBe(5);
+  expect((led.s3_unanchored as any).lifted).toBe(6);
   {
     const st = led.s3_unanchored as any;
     const s = st.segs[st.segs.length - 1];
@@ -2202,7 +2221,7 @@ test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, �
     expect(p.on).toBe(true);                                             // 화면 안에 있다
     await drawPx(p.x - box.x, p.y - box.y, p.x - box.x + 0.12 * W, p.y - box.y + 2);
     led.s4_right = await state();
-    expect((led.s4_right as any).lifted).toBe(6);
+    expect((led.s4_right as any).lifted).toBe(7);
     const s = (led.s4_right as any).segs[(led.s4_right as any).segs.length - 1];
     expect(Math.abs(s[0][0] - s[1][0])).toBeLessThan(1e-9);              // 우측면 가로 = Z축: x 불변
     expect(Math.abs(s[0][1] - s[1][1])).toBeLessThan(1e-9);              // y 불변
@@ -2220,7 +2239,7 @@ test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, �
     expect(p.on).toBe(true);
     await drawPx(p.x - box.x, p.y - box.y, p.x - box.x - 0.1 * W, p.y - box.y - 2);
     led.s5_back = await state();
-    expect((led.s5_back as any).lifted).toBe(7);
+    expect((led.s5_back as any).lifted).toBe(8);
     const s = (led.s5_back as any).segs[(led.s5_back as any).segs.length - 1];
     expect(Math.abs(s[0][1] - s[1][1])).toBeLessThan(1e-9);              // 배면 가로 = X축: y 불변
     expect(Math.abs(s[0][2] - s[1][2])).toBeLessThan(1e-9);              // z 불변

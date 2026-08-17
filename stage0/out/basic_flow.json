@@ -21,20 +21,21 @@
  },
  "s1_horizontal": {
   "ink_px": 1542,
-  "order": 1,
+  "order": 0,
   "standing": false,
   "strokes": 1
  },
  "s3_depth": {
   "standing": true,
   "order": 1,
-  "lifted": 3,
+  "lifted": 4,
   "axes": [
    0,
    1,
+   1,
    1
   ],
-  "gl_painted_px": 1837
+  "gl_painted_px": 2249
  },
  "s4_result": {
   "channel": "result",
@@ -45,7 +46,7 @@
  },
  "s5_orbit": {
   "pinned": false,
-  "gl_painted_px": 3656
+  "gl_painted_px": 5425
  },
  "s6_continue": {
   "snap_start": "endpoint",

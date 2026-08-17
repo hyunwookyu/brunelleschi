@@ -33,8 +33,8 @@
  "after_state": {
   "standing": true,
   "order": 1,
-  "lifted": 3,
-  "strokes": 3,
+  "lifted": 4,
+  "strokes": 4,
   "pending_hidden": 0
  },
  "after": [
@@ -53,16 +53,20 @@
    "gap_b": 0
   },
   {
-   "gap_a": 0.0000034592363708980725,
+   "gap_a": 0.0000034592363973051238,
    "gap_b": 0.0000025518660879997775
+  },
+  {
+   "gap_a": 0.0000025227468819546816,
+   "gap_b": 0.000013938314260038327
   },
   {
    "gap_a": 0,
    "gap_b": 0
   }
  ],
- "reproject_start_max": 0.0000034592363708980725,
- "reproject_end_max": 0.0000025518660879997775,
+ "reproject_start_max": 0.0000034592363973051238,
+ "reproject_end_max": 0.000013938314260038327,
  "gl_empty_spot": 255,
  "console_errors": [],
  "constants": {

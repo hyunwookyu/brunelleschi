@@ -60,9 +60,10 @@ describe("a. 화면 가로세로 선은 축 자체다 (이론서 2.2)", () => {
     expect(st.slots[0]).toMatchObject({ kind: "screen", dir: "h" });
     expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
     expect(vpsOf(st)).toEqual([null, null, null]);
-    // **가로선이 그어졌으므로 1점 확정이다**(지시 1) — 후보 개념이 없다. 소실점은 아직 없어도
-    // 차수는 1이고, 깊이 소실점이 서는 순간 임의 f로 3D가 선다
-    expect(perspectiveOrder(st)).toBe(1);
+    // ⚠⚠ **1 → 0으로 뒤집혔다**(2026-08-18 8차 지시 1-a·1-b). 옛 판은 "가로선이 그어졌으므로
+    // 1점 확정"이라 적었는데, 그것이 **수평축의 존재를 카메라가 선 것으로 읽은** 자리다.
+    // 깊이 소실점이 없으면 **깊이 방향이 미정**이라 카메라가 설 수 없다 — 축만 기록하고 대기다.
+    expect(perspectiveOrder(st)).toBe(0);
   });
 
   it("같은 방향을 또 그으면 지지 수만 는다 — 축은 안 바뀐다", () => {
@@ -195,14 +196,33 @@ describe("b. 첫 소실점 = 한 축으로 모인 **세** 깊이선의 교점 (6
   //
   // 지시 2-1의 **대기 규칙 표**를 그대로 시험으로 옮긴다. 위 시험들이 세 행(대각선 1·2·셋이
   // 한 축·셋이 갈림)을 이미 덮으므로 여기서는 **남은 세 행**과 **2-5**(빈 캔버스 첫 대각선)를 낸다.
-  it("**2-1 표** — 수평선이 오면 화면 평행 축이 생기고 1점이 확정된다", () => {
+  it("**2-1 표** — 수평선이 오면 화면 평행 축이 생기지만 **1점은 아직이다**", () => {
     // 대각선 둘로 대기 중인 상태에서 수평선을 그으면 그것이 축이다(표 다섯째 줄)
     let st = stepRule(newRuleState(SZ), toward([200, 600]), SZ).state;
     st = stepRule(st, toward([300, 640]), SZ).state;
     expect(perspectiveOrder(st)).toBe(0);
     const r = stepRule(st, line([120, 500], [520, 500]), SZ);
     expect(r.event.type).toBe("screen_axis");
-    expect(perspectiveOrder(r.state)).toBe(1);
+    // ⚠⚠ **1 → 0으로 뒤집혔다**(8차 지시 1-a). 축은 생겼지만 **깊이 소실점이 아직 없다** —
+    // 대각선 둘은 여전히 대기이고(셋째 선이 정한다, D-L69) 카메라는 안 섰다.
+    expect(perspectiveOrder(r.state)).toBe(0);
+    expect(r.state.slots[0]).toMatchObject({ kind: "screen", dir: "h" });
+  });
+
+  // ---- 8차 지시 1-d 회귀 팔: "수평선 + 깊이선"이 어디서 P1이 되고 어디서 P2가 되는가
+  it("**1-d** — 수평선 뒤 깊이선 하나로는 P1이 안 된다. 같은 축으로 셋이 모이면 P1이다", () => {
+    // 수평선 먼저 → 축만 기록되고 대기(지시 1-a)
+    let st = stepRule(newRuleState(SZ), line([120, 500], [520, 500]), SZ).state;
+    expect(perspectiveOrder(st)).toBe(0);
+    // 깊이선 하나 — 소실점이 안 선다(한 선은 교점을 못 만든다). **P1이 선언되면 안 된다**
+    st = stepRule(st, toward([200, 600]), SZ).state;
+    expect(perspectiveOrder(st)).toBe(0);
+    expect(vpsOf(st).filter(Boolean)).toHaveLength(0);
+    // 같은 축으로 둘 더 → 한 점으로 모이므로 깊이 소실점 하나 → **그때 P1**
+    st = stepRule(st, toward([300, 640]), SZ).state;
+    st = stepRule(st, toward([260, 620]), SZ).state;
+    expect(vpsOf(st).filter(Boolean)).toHaveLength(1);
+    expect(perspectiveOrder(st)).toBe(1);
   });
 
   it("**2-1 표** — 수직선만으로는 정보가 없다. 계속 대기다", () => {
@@ -285,9 +305,13 @@ describe("b. 첫 소실점 = 한 축으로 모인 **세** 깊이선의 교점 (6
   });
 
   it("화면 가로축이 이미 있으면 소실점은 다른 슬롯으로 간다", () => {
-    const st = feed([[line([0, 100], [400, 100])], [toward([200, 600])], [toward([300, 640])]]);
+    // ⚠ 깊이선이 **셋**이다(8차 지시 1-a): 옛 판은 화면 가로축이 있으면 둘로 정했는데
+    // (`unambiguous = order === 1`), P1이 가로선만으로 서던 그 지름길이 없어졌다.
+    const st = feed([[line([0, 100], [400, 100])],
+                     [toward([200, 600])], [toward([300, 640])], [toward([260, 620])]]);
     expect(st.slots[0]).toMatchObject({ kind: "screen" });
     expect(st.slots[1]).toMatchObject({ kind: "vp" });
+    expect(perspectiveOrder(st)).toBe(1);
   });
 
   /**
@@ -364,13 +388,40 @@ describe("c. 두 번째 소실점도 같은 지평선 위다", () => {
    *
    * 이 시험이 그 **회귀 팔**이다 — 대체를 되살리면 여기가 먼저 깨진다.
    */
-  it("**회귀** — 화면 가로축 선언은 두 번째 소실점이 **못 밀어낸다**(B)", () => {
+  // ⚠⚠⚠ **이 칸의 계약이 2026-08-18 8차 지시 1-d로 뒤집혔다.**
+  //
+  // 옛 시험의 이름은 "화면 가로축 선언은 두 번째 소실점이 **못 밀어낸다**"였고, 근거는
+  // "화면 가로선을 그은 것은 1점 투시를 **선언**한 것"이었다. **그 전제가 틀렸다** —
+  // 가로선은 수평축의 존재를 말할 뿐 카메라가 섰다는 뜻이 아니고(지시 1-a), 손 오차로
+  // 얕아진 깊이 모서리가 그 자리에 들어오면 **P2가 영영 도달 불가**가 됐다
+  // (`first_declaration.screen_h` 497/600 — 그 잠김의 두 번째 층).
+  //
+  // 새 계약: **카메라가 서기 전의 가로축 기록은 잠정**이고, 두 축이 한 번에 정해지면
+  // 밀려난다. **P1이 실제로 선 뒤에는 여전히 불가역이다**(아래 둘째 팔이 그것을 지킨다).
+  it("**1-d** — 잠정 화면 가로축은 두 번째 소실점이 **밀어낸다**(P2가 도달 가능해야 한다)", () => {
     let st = feed([[line([0, 100], [400, 100])], [line([100, 50], [100, 500])]]);
-    st = feed([[seg(P0, V1)], [seg([560, 600], V1)]], st);   // 짝으로 V1을 세운다(4차 지시 3)
-    expect(st.slots[0]).toMatchObject({ kind: "screen" });
+    expect(st.slots[0]).toMatchObject({ kind: "screen", dir: "h" });
+    expect(perspectiveOrder(st)).toBe(0);                      // 아직 카메라가 안 섰다
+    // V1로 둘 + V2로 하나 → 갈리므로 **2점이 한 번에 선다**(D-L69)
+    st = feed([[seg(P0, V1)], [seg([560, 600], V1)]], st);
+    expect(perspectiveOrder(st)).toBe(0);                      // 둘까지는 대기
     const r = stepRule(st, seg(P0, V2), SZ);
-    // ⚠ **2026-08-17 지시 2가 이 칸의 사건을 다시 바꿨다**: 거리점 경로가 폐기됐으므로
-    // 1점 확정 뒤 축을 안 향하는 대각선은 **거절**된다. 요점은 그대로다 — **소실점은 안 는다.**
+    expect(r.event.type).toBe("vp_fixed");
+    expect(perspectiveOrder(r.state)).toBe(2);                 // **P2에 도달했다**
+    expect(r.state.slots[0]).toMatchObject({ kind: "vp" });    // **밀렸다**
+    expect(r.state.slots[1]).toMatchObject({ kind: "vp" });
+    // **조용히 바꾸지 않는다**(A-3) — 밀어낸 사실을 사건에 실어 알린다
+    if (r.event.type === "vp_fixed") expect(r.event.displacedScreenH).toBe(true);
+  });
+
+  it("**회귀** — P1이 **실제로 선 뒤에는** 축을 안 향하는 깊이선이 거절되고 안 밀린다", () => {
+    // 가로축 + V1로 셋 → 깊이 소실점이 하나 서서 **P1이 실제로 선다**
+    let st = feed([[line([0, 100], [400, 100])], [line([100, 50], [100, 500])]]);
+    st = feed([[seg(P0, V1)], [seg([560, 600], V1)], [seg([520, 560], V1)]], st);
+    expect(perspectiveOrder(st)).toBe(1);
+    expect(st.slots[0]).toMatchObject({ kind: "screen", dir: "h" });
+    const r = stepRule(st, seg(P0, V2), SZ);
+    // P1은 불가역이다(D-L53) — 소실점은 안 늘고 가로축도 안 밀린다
     expect(r.event.type).toBe("rejected");
     expect(perspectiveOrder(r.state)).toBe(1);
     expect(r.state.slots[0]).toMatchObject({ kind: "screen", dir: "h" });   // **안 밀렸다**

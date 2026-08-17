@@ -81,10 +81,14 @@ describe("규칙 → 카메라 → 3D (전환이 실제로 되는가)", () => {
     // ⚠ **세 번째가 `screen_axis`에서 `support`로 바뀌었다**(2026-08-17 A-2):
     // 수직축은 **처음부터 화면 수직**이라 세로선이 축을 새로 세우지 않고 **지지선으로 센다**.
     expect(events.slice(0, 4)).toEqual(["screen_axis", "support", "support", "support"]);
-    // ⚠⚠ **첫 깊이선은 대기하고 둘째와의 교점에서 선다**(2026-08-17 4차 지시 3 —
+    // ⚠⚠ **첫 깊이선은 대기하고 교점에서 선다**(2026-08-17 4차 지시 3 —
     // "소실점은 그린 선의 교점"이 2차의 "지평선 × 선 하나"를 되돌렸다)
+    // ⚠⚠ **둘 → 셋으로 늘었다**(2026-08-18 8차 지시 1-a): 옛 판은 화면 가로축이 있으면
+    // (= 옛 정의로 P1이면) 두 선으로 정했는데, P1이 **깊이 소실점을 요구**하게 되면서
+    // 그 지름길이 없어졌다. 이제 **셋째 선이 정한다**(D-L69의 기본 경로).
     expect(events[4]).toBe("waiting");
-    expect(events[5]).toBe("vp_fixed");
+    expect(events[5]).toBe("waiting");
+    expect(events[6]).toBe("vp_fixed");
     expect(cam.rules.horizon).toBeCloseTo(VP[1], 6);
     expect(ctx).not.toBeNull();
     // **P1의 f는 임의값이고 출처가 화면에 남는다**(지시 1 · CLAUDE.md §1 fSource)

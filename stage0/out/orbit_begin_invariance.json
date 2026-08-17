@@ -18,8 +18,8 @@
   "reachability_absent": "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 이동 0의 화면 불변은 설계 보장(#5 — 죽은 구간이 begin을 안 연다)이고, 판정은 그 배선(재조준 부재)이다"
  },
  "sig_before": {
-  "painted": 1795,
-  "sum": 879742395
+  "painted": 1767,
+  "sum": 823198491
  },
  "dir_before": [
   0,
@@ -27,8 +27,8 @@
   -1
  ],
  "sig_touch": {
-  "painted": 1795,
-  "sum": 879742395
+  "painted": 1767,
+  "sum": 823198491
  },
  "began": true,
  "dir_after": [
@@ -38,8 +38,8 @@
  ],
  "gaze_change_deg": 0.24099703264042296,
  "sig_after_rotation": {
-  "painted": 2253,
-  "sum": 941123088
+  "painted": 1893,
+  "sum": 211322268
  },
  "console_errors": [],
  "constants": {

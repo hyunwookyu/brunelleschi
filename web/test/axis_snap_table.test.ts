@@ -123,7 +123,9 @@ describe("스냅 표 — 상태마다 어느 축이 스냅되는가", () => {
   });
 
   it("1점 확정 — 소실점 하나 + 화면 가로 + 화면 세로. 셋 다 축 스냅이다", () => {
-    const st = feed(feed(newRuleState(SZ), [SCREEN_H]), [DEPTH_A, DEPTH_A2]);
+    // ⚠ 깊이선이 **셋**이다(2026-08-18 8차 지시 1-a): 화면 가로축만으로는 P1이 아니고
+    // (깊이 소실점이 있어야 한다) 그 지름길이 없어져 셋째 선이 소실점을 정한다.
+    const st = feed(feed(newRuleState(SZ), [SCREEN_H]), [DEPTH_A, DEPTH_A2, DEPTH_A3]);
     expect(perspectiveOrder(st)).toBe(1);
     expect(rows(st, true)).toEqual(["screen_h/axis_snap", "vp/axis_snap", "screen_v/axis_snap"]);
     expect(snapAxisTable(st, true).filter(r => r.via).length).toBe(3);

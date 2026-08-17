@@ -401,6 +401,11 @@ export type RuleEvent =
       /** two_lines일 때 짝이 된 대기 선(측정용 — 5차 이월-2 리뷰어 [22]). 앱 동작에는 안 쓰인다. */
       paired?: RLine;
       /**
+       * **잠정 화면 가로축을 밀어내고 2점이 섰다**(8차 지시 1-d). 사용자가 가로선이라 그은
+       * 획이 실제로는 **얕은 깊이 모서리**였다는 뜻이므로 **알린다**(A-3: 조용히 바꾸지 않는다).
+       */
+      displacedScreenH?: boolean;
+      /**
        * **화각 게이트의 판정**(6차 지시 7-b). 2점이 서는 순간에만 채워진다 —
        * `ok`가 아니면 화면에 그대로 낸다(**확정은 됐고 시점이 이상하다**는 알림이다).
        */
@@ -454,13 +459,31 @@ export interface StepResult { state: RuleState; event: RuleEvent }
 export type POrder = 0 | 1 | 2 | 3;
 
 export function perspectiveOrder(st: RuleState): POrder {
+  const nH = ([0, 1] as const).filter(i => st.slots[i]?.kind === "vp").length;
+  if (nH >= 2) return st.slots[2]?.kind === "vp" ? 3 : 2;
+  // ⚠⚠ **화면 수평축만으로는 1점이 아니다**(2026-08-18 8차 지시 1-a·1-b).
+  //
+  // 옛 판은 `hasH`면 곧바로 1을 냈다 — **수평축이 존재한다는 것과 카메라가 섰다는 것을
+  // 같은 것으로 읽은 것**이다. 그 둘은 다르다: 1점 투시는 화면 평행 수평축 **하나와
+  // 깊이 소실점 하나**로 정의되고(이론서 2.3 — 무한원으로 간 축의 개수), 깊이 소실점이
+  // 없으면 **깊이 방향이 미정**이라 카메라가 설 수 없다.
+  //
+  // 그 오독의 대가가 실측으로 지배항이었다: `order_lock.json`의 `first_declaration.screen_h`가
+  // **497/600**(잡음 0 층 120/120)이고 **`snapForced` 우회를 지워도 안 움직였다**(D-L70).
+  // 손 오차로 얕아진 깊이 모서리(≤ 4°)가 화면 수평선으로 읽히면 그 한 획이 수평 슬롯을
+  // 차지하고, 슬롯이 둘뿐이라 **두 번째 깊이 소실점이 영영 못 들어와 P2가 도달 불가**가 됐다.
+  // 요인 분해가 같은 방향을 가리켰다 — 축 라벨만 참으로 바꾸면 형태 오차가 안 움직이고
+  // (1.3329 → 1.3511) **소실점만 참으로 바꾸면 크게 움직인다**(→ 0.2452).
+  //
+  // **차수는 카메라 상태의 함수다**(지시 1-b): 1점 = 시선이 세계 축과 정렬·피치 0 ·
+  // 2점 = 시선이 축과 어긋남·피치 0 · 3점 = 피치 ≠ 0. 슬롯 집합은 그 상태의 **관측**이고
+  // 아래 대응이 그 정의와 일치한다 — 화면 수평축 + 깊이 소실점 하나면 시선이 그 축에
+  // 정렬돼 있고 피치가 0이다(수직축이 화면 수직이므로).
   const hasH = ([0, 1] as const).some(i => {
     const s = st.slots[i];
     return s != null && s.kind === "screen" && s.dir === "h";
   });
-  if (hasH) return 1;
-  const nH = ([0, 1] as const).filter(i => st.slots[i]?.kind === "vp").length;
-  if (nH >= 2) return st.slots[2]?.kind === "vp" ? 3 : 2;
+  if (hasH && nH >= 1) return 1;
   return 0;
 }
 
@@ -810,8 +833,13 @@ export function stepRule(
     if (finiteHorizontals(st).length === 0) {
       const pool = st.depthLines ?? (st.depthLines = []);
       pool.push({ a: [line.a[0], line.a[1]], b: [line.b[0], line.b[1]] });
-      // 화면 가로축이 이미 서 있으면 깊이축은 하나뿐이다 — 그때만 두 선으로 정한다
-      const unambiguous = order === 1;
+      // ⚠⚠ **8차 항목 1-a가 이 조건을 죽였다.** 옛 판은 `order === 1`이면 두 선으로 정했고
+      // ("화면 가로축이 이미 서 있으면 깊이축은 하나뿐이다"), P1이 **가로선만으로** 섰으므로
+      // 그 지름길이 실제로 자주 열렸다. 이제 P1은 **깊이 소실점이 있어야** 서므로
+      // (`perspectiveOrder`) **유한 수평 소실점이 0인 이 가지에서 order는 1일 수 없다.**
+      // 그래서 **언제나 세 번째 선을 기다린다** — 화면 가로선이 기록돼 있어도 마찬가지다.
+      // 그것이 지시 1-a의 "깊이 소실점이 없으면 축만 기록하고 대기"다(D-L69의 기본 경로).
+      const unambiguous = false;
       const got = resolvePool(pool, imgSize, unambiguous, cfg);
       if (!got) return { state: st, event: { type: "waiting", have: pool.length } };
       st.slots[target.index] = { kind: "vp", at: got.at, source: "two_lines",
@@ -824,7 +852,20 @@ export function stepRule(
       // **두 번째 축이 화각 게이트에 걸린 것도 알린다**(7차 지시 2-3·4-c) — 옛 판은 조용히
       // 1점으로 남겼고, 그러면 사용자는 **2점을 그렸는데 1점이 됐다**는 것을 모른다.
       let secondRejected: FovVerdict | null = null;
-      const other = horizontalTargetAfter(st, target.index);
+      // **모이지 않은 나머지가 두 번째 축이면 잠정 가로축을 밀어낸다**(8차 지시 1-d).
+      //
+      // 빈 슬롯이 없고 남은 하나가 **화면 가로축 기록**이면, 그 기록은 카메라가 서기 전에
+      // 적힌 **잠정**이다(지시 1-a: "깊이 소실점이 없으면 축만 기록하고 대기"). 여기서
+      // 두 축이 한 번에 정해지면 그 잠정은 **틀린 읽기였던 것**이므로 밀어낸다 —
+      // 밀어내지 않으면 슬롯이 차서 **P2가 도달 불가**가 되고, 그것이 `screen_h` 497/600의
+      // 두 번째 층이었다. ⚠ **P1이 이미 선 뒤에는 여기 안 온다**(그때는 유한 수평 소실점이
+      // 있어 위 `finiteHorizontals(st).length === 0` 가지에 못 들어온다) — **P1은 여전히
+      // 불가역이다**(D-L53). 밀어낸 사실은 사건에 실어 **알린다**(A-3: 조용히 바꾸지 않는다).
+      const emptyOther = horizontalTargetAfter(st, target.index);
+      const tentativeH = ([0, 1] as const).find(
+        i => i !== target.index && st.slots[i]?.kind === "screen");
+      const other = emptyOther ?? tentativeH ?? null;
+      const displacedScreenH = emptyOther == null && tentativeH != null;
       if (other != null && got.rest.length) {
         const cand = got.rest
           .map(k => ({ k, at: vpOnHorizon(repOfLine(pool[k]), st.horizon) }))
@@ -844,7 +885,8 @@ export function stepRule(
       return { state: st,
                event: second
                  ? { type: "vp_fixed", axis: second.i, at: second.at,
-                     source: "horizon_x_line", horizonSet: true, fov: second.fov }
+                     source: "horizon_x_line", horizonSet: true, fov: second.fov,
+                     ...(displacedScreenH ? { displacedScreenH: true } : {}) }
                  : { type: "vp_fixed", axis: target.index, at: got.at,
                      source: "two_lines", horizonSet: true,
                      // 두 번째 축이 화각에 걸렸으면 그 판정을 실어 보낸다 — 부르는 쪽이 알린다
