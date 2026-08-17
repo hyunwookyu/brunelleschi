@@ -479,6 +479,14 @@ test.describe("dpr 2", () => {
         reading: "**백버퍼가 css 폭의 2배**여야 dpr 섭동이 실제로 걸린 것이다. "
                + "1이면 회전 비 1.0은 '규약이 지켜졌다'가 아니라 '섭동이 안 걸렸다'다" },
       rotate: { azimuth_delta: az, dpr1_azimuth_delta: one, ratio: az / one!,
+                az_tol_rad: 1e-6,
+                az_tol_note: "판정은 |az−dpr1| < 1e-6rad(6차 항목 1에서 개정, #28 — 옛 정밀도 12"
+                  + "(5e-13)는 판정 의도(오배선 = 비 2, Δ≈0.5rad)보다 다섯 자리 과했다. 두 팔의 "
+                  + "차는 이 원장의 azimuth_delta 두 필드가 이 실행의 값이다. 6차 컨테이너"
+                  + "(chromium-1194)에서는 관측 4회 전부 1e-10대로 5e-13을 넘어 실패했고 변경 전 "
+                  + "코드에서도 재현됐다(코드 결함 아님). ⚠ 5차 기록(전량·단독 통과)은 그 환경의 "
+                  + "차가 5e-13 이하였다는 뜻이므로 **환경 간 밴드가 다르다(원인 미상 — 감쇠 적분 "
+                  + "타이밍·브라우저 빌드 추정, 2-R′ [A-2])** — '같은 밴드의 간헐'이 아니다)",
                 input_px: { from: [500, 400], to: [640, 430], note: "dpr 1 팔과 같은 좌표" } },
       positive_channel: { azimuth_delta_half_input: az2, azimuth_delta_full_free: azFull,
                           ratio_to_single: az2 / azFull,
@@ -499,7 +507,11 @@ test.describe("dpr 2", () => {
     };
     expect(dpr.devicePixelRatio).toBe(2);
     expect(dpr.backing_ratio).toBe(2);        // 섭동이 렌더 경로까지 걸렸다
-    expect(az).toBeCloseTo(one!, 12);
+    // ⚠ 정밀도 12(5e-13)는 판정 의도보다 다섯 자리 과했다 — dpr 오배선의 신호는 **비 2**
+    // (Δ≈0.5rad)이지 1e-10대 잡음이 아니다. 이 컨테이너에서는 관측 4회 전부 1e-10대로
+    // 실패했고(변경 전 코드에서도 재현), 5차 환경의 통과 기록은 그쪽 차가 5e-13 이하였다는
+    // 뜻이다 — 환경 간 밴드가 다르다(원인 미상). 1e-6rad은 오배선과 다섯 자리 여유로 갈린다.
+    expect(Math.abs(az - one!)).toBeLessThan(1e-6);
     // 양성 채널: 절반 손짓은 절반 돈다(죽은 구간 한 걸음이 양쪽에서 같은 비율로 빠진다)
     expect(az2 / azFull).toBeGreaterThan(0.45);
     expect(az2 / azFull).toBeLessThan(0.55);

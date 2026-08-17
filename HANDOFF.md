@@ -128,10 +128,11 @@ e2e `stage.spec` 둘(차수 승격 · 되돌리기 UI). 그리고 `RULE_TOL.vert
 ## 개발 명령
 
 ```bash
-cd web && npx vitest run && npx tsc --noEmit && npm run build && npx playwright test
+cd web && npx vitest run && npx tsc --noEmit && npm run build && \
+  PW_EXECUTABLE=/opt/pw-browsers/chromium npx playwright test
 ```
 ```bash
-python -m pytest tests/ -q && python selfcheck.py
+python3 -m pytest tests/ -q && python selfcheck.py
 ```
 ⚠ `playwright` 앞에 `npm run build`. ⚠ `progress.md`는 루트 하나.
 ⚠ **selfcheck는 저장소 루트에서 돌린다**(`web/`에서 돌리면 아무것도 안 나온다).

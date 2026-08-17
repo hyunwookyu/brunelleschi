@@ -1,0 +1,262 @@
+{
+  "setup": {
+    "canvas": [
+      1280,
+      674
+    ],
+    "strokes": 12,
+    "hasCamera": true,
+    "boxes": 1,
+    "lifted": 12,
+    "standing": true
+  },
+  "before_roundtrip": [
+    {
+      "kind": "endpoint",
+      "dist": 3.78
+    },
+    {
+      "kind": "endpoint",
+      "dist": 4.24
+    }
+  ],
+  "after_roundtrip": [
+    {
+      "kind": "endpoint",
+      "dist": 3.78
+    },
+    {
+      "kind": "endpoint",
+      "dist": 4.24
+    }
+  ],
+  "stale_offset_px": {
+    "offsets": [
+      341.2,
+      293
+    ],
+    "behind_camera": 0
+  },
+  "aim_dist_px_sample": {
+    "snap_start_kind": "endpoint",
+    "snap_dist_px": 4.56,
+    "osnap_radius_px": 15
+  },
+  "far_aim": {
+    "old_def_kind": "on_face",
+    "old_def_dist": 0,
+    "snap_start_kind": "on_face",
+    "snap_dist_px": 20.75
+  },
+  "spec": "7차 항목 2 — 스냅 정적 후보 캐시가 시점(poseKey)을 키로 갖는다: 뷰 왕복 직후 첫 질의가 끝점을 문다",
+  "constants": {
+    "hash": "54346ad1",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "vertical_ask_deg": 45,
+        "min_vp_len_ratio": 0.04,
+        "concurrent_deg": 3
+      },
+      "FOV_GATE": {
+        "severe_f_ratio": 0.5,
+        "ok_f_ratio": 0.87
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "a45078a5",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong",
+      "rate",
+      "fraction"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  },
+  "what_this_does_not_say": [
+    "실획 재현이 아니다 — 합성 상자·참 소실점 픽스처다(AS-C1)",
+    "dpr 1·데스크톱 뷰포트 1440×900·합성 포인터다(#21) — iPad 실기는 안 덮는다",
+    "반경(기본 15px — resolve2d.OSNAP_RADIUS_PX, 설정 4~40px 가변)의 적정성은 여기서 안 갈린다 — 실획 snapDistPx 분포(수리된 정의 aimDistPx — 필드명은 그대로다)가 답한다",
+    "왕복 질의의 표본은 **끝점 2건**이다 — 정점·중점·교차점 표본 0(2-R″ [8]. 같은 정적 캐시의 종류들이라 기전은 같지만 값으로는 안 덮었다) · 반경·자세·캔버스도 각 하나다(#12)",
+    "stale_offset_px.behind_camera는 낡은 후보가 카메라 뒤로 가 아예 죽는 경우의 수다 — 이 실행에서는 0(관측 없음)이고, 그때 옛 판이 후보를 잃는다는 것은 기하 서술이지 실측이 아니다"
+  ],
+  "gate_oracle_values": [
+    341.2,
+    293,
+    20.75
+  ],
+  "gate": {
+    "registered": "⚠ 이 항목이 등록한 게이트다 — CLAUDE.md §2의 중단 조건(camera_gate)이 아니다(#41). 확정 뷰 ↔ 회전 시점 왕복(그 시점에서 기하 변경·호버 오염 포함) 직후의 첫 질의가 왕복 전과 같은 **끝점**을 문다(정점·중점·교차점은 표본 0 — what_not_say). 그리고 끝점 곁 ~8px에서 그은 획의 snapDistPx가 0도 null도 아닌 조리개 안 값으로 적히고, 조리개 밖(~22px) 지면 시작 획의 snapDistPx도 실거리로 적힌다(옛 정의는 그 자리가 0 — far_aim.old_def_dist가 이 실행의 되살림이다). ⚠ 기준 등록 시점(#26): 스펙 작성(첫 실행 전)에 등록했고, [8] 대응의 '끝점' 좁힘과 far_aim 팔 추가는 측정 뒤의 **모집단 명시·팔 추가**다 — 통과선 수치는 안 움직였다",
+    "reachability": "음성 채널(#30) — ①(캐시): 낡은 캐시의 후보가 확정 카메라에서 참 자리를 벗어나는 거리(stale_offset_px 두 값 — 수백 px대. 이 원장의 osnap_radius_px = 15와 자릿수로 갈린다). ②(겨냥 거리): far_aim의 새 정의 값(셋째 값 — 조리개 밖 실거리). 옛 정의의 대응값은 far_aim.old_def_dist = 정확히 0(버그의 구성상 산물이라 reachability_value에 안 넣는다 — #40 ②의 0·1 규칙. 값 자체는 원장 far_aim에 있다)",
+    "reachability_value": [
+      341.2,
+      293,
+      20.75
+    ],
+    "reachability_source": "gate_oracle_values",
+    "result": {
+      "before": [
+        {
+          "kind": "endpoint",
+          "dist": 3.78
+        },
+        {
+          "kind": "endpoint",
+          "dist": 4.24
+        }
+      ],
+      "after": [
+        {
+          "kind": "endpoint",
+          "dist": 3.78
+        },
+        {
+          "kind": "endpoint",
+          "dist": 4.24
+        }
+      ],
+      "aim_dist_px_sample": {
+        "snap_start_kind": "endpoint",
+        "snap_dist_px": 4.56,
+        "osnap_radius_px": 15
+      },
+      "far_aim": {
+        "old_def_kind": "on_face",
+        "old_def_dist": 0,
+        "snap_start_kind": "on_face",
+        "snap_dist_px": 20.75
+      }
+    },
+    "note": "수정 전 재현(#21): 같은 스펙이 after에서 **on_edge**(캐시 밖 하위 대체)를 물어 실패했다 — progress.md 7차 항목 2의 재현 기록. 실획의 시작 스냅에서는 같은 자리가 on_face였다(획이 기존 기하에서 떨어진 곳에서 시작해 on_edge 후보도 멀었던 상태)"
+  }
+}

@@ -68,12 +68,22 @@ export const fFromFov = (fovDeg: number, heightPx: number): number =>
  */
 export function viewPlaceCtx(
   pose: ViewPose, axes: (Vec3 | null)[], imgSize: [number, number], fovDeg: number,
+  // **렌더러가 실제로 쓰는 내적 파라미터**(7차 항목 1). 자유 시점이 확정 카메라의 렌즈를
+  // 이어받으므로(stage.freeIntrinsics) 배치 문맥도 같은 값을 써야 한다 — 다르면 렌더와
+  // 배치가 다른 카메라가 된다(#17). 없으면 종전대로 `fovDeg`·중심 주점이다.
+  intr?: { principal: Pt2; f: number } | null,
 ): PlaceCtx {
-  const f = fFromFov(fovDeg, imgSize[1]);
-  const principal: Pt2 = [imgSize[0] / 2, imgSize[1] / 2];
+  const f = intr ? intr.f : fFromFov(fovDeg, imgSize[1]);
+  const principal: Pt2 = intr ? [intr.principal[0], intr.principal[1]]
+                              : [imgSize[0] / 2, imgSize[1] / 2];
   return {
     principal, f, imgSize,
     vps: axes.map(a => (a ? vpOfDirection(pose, a, principal, f, imgSize) : null)),
+    // **축 방향도 시점 좌표로 함께 넘긴다**(6차 지시 2 — D-L40의 회전 판). 무한원 축
+    // (화면평행 — 소실점 null)도 방향은 있고, 돌린 시점에서는 그 축이 깊이축이 된다.
+    // 옛 판은 vps만 넘겨 **1점 확정의 화면평행 축 둘이 돌린 시점에서 사라졌다** —
+    // 우측면 입면에서 X축(깊이) 획을 못 올리던 자리다(네 입면 흐름 2-4의 장애물).
+    axisDirs: axes.map(a => (a ? unit3(dirToView(pose, a)) : null)),
   };
 }
 

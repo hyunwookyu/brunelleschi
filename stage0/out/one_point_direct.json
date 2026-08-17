@@ -1,0 +1,207 @@
+{
+ "spec": "6차 지시 2-5 — 1점 직접 좌표(directSegment)와 lift 경로(segmentFromAnchor)의 동등성. 끝 커서는 참 3D 끝점을 카메라 투영으로 되돌린 상('일부러 투영을 거치게') — 축 3 × 앵커 8 × 끝점 3, 확정 뷰 꼴(항등)과 우측면 입면 꼴(순열·부호) 두 프레임. 음성 대조: 요·피치 각 2° 합성으로 튼 카메라에서 갈라짐(한 축 회전만이면 그 축이 구성상 불변 — min에 항등 0이 섞인다)",
+ "what_this_does_not_say": [
+  "**동등성 자체는 같은 사영의 두 표현이라 보장에 가깝다**(#5) — 이 팔이 재는 것은 배선(공식이 그 교점을 실제로 내는가)이고, 판정력은 음성 대조(negative)가 진다(#39)",
+  "커서가 축의 화면 직선 **위**에 있는 표본이다 — 스냅된 획의 잉크가 그렇다(직교·소실점 방향 스냅이 획을 축 방향으로 편다). 선 밖 커서에서는 두 경로가 2차 소량으로 갈라진다(직접 = 화면 성분 읽기 · lift = 광선-직선 최근점) — 그 동작점은 이 원장 밖이다(#12)",
+  "앱 경로(resolveLive 안의 분기)는 여기 없다 — 종단은 elevation_flow(입면 흐름 e2e)가 잰다",
+  "ONE_POINT_TOL은 test/constants.ts 밖이다(D-L49·D-L51의 예외와 같은 자리 — 전역 해시 동결). ⚠ 면제 사유의 정정(2-R′ [B-3]): **동등성 팔은 align_eps에 의존하지 않으나 frame_judgment(0.5° null)는 의존한다** — align_eps를 바꾸면 STALE이 못 잡으므로 이 원장을 재실행한다(DEFERRED 의존 집합별 해시의 자리) — 값은 algo_constants 필드",
+  "**깊이 성분은 1점 f(임의값 — D-L53)가 정하는 배율 위의 값이다**(이론서 16.4·AS-C4 — 2-R′ [B-7]): 직접 경로도 lift와 같은 f를 쓰므로 동등성에는 안 닿지만, 이 경로로 만든 입체의 깊이:폭 비는 그 상수에 달렸다",
+  "**잔차 노름 전환의 되살림 확인**(A-4 — 2-R′ [B-11]): 초판 |내적| 판정에서는 ③의 0.5° 단언이 **실제로 실패했다**(개발 중 관측 — 전환의 계기가 그 실패다). 단언은 상시로 남는다",
+  "hand_deg(손 정렬 자동 스냅)의 동작은 이 하네스 밖이다(카메라·감쇠가 필요한 e2e 영역 — elevation_flow의 자동 정렬 팔)",
+  "planeAnchor 왕복(pa_roundtrip_px)은 **역함수의 정의 확인**이라 항등이다 — 임계를 걸지 않는다(#5·§5 유형 3)"
+ ],
+ "thresholds": {
+  "eq_max": 1e-9,
+  "neg_min_max": 0.01,
+  "neg_min_each": 0.0001,
+  "samples_min": 50
+ },
+ "algo_constants": {
+  "ONE_POINT_TOL": {
+   "align_eps": 0.001,
+   "hand_deg": 2
+  }
+ },
+ "equality_identity": {
+  "n": 72,
+  "max_diff": 3.019806626980426e-14
+ },
+ "equality_right_elevation": {
+  "n": 72,
+  "max_diff": 8.08242361927114e-14
+ },
+ "negative_tilt_2deg_yx": {
+  "n": 72,
+  "max_diff": 0.9417643664605451,
+  "min_diff": 0.024429670520691896,
+  "median_diff": 0.05607502970858472,
+  "max_rel_to_len": 0.5886027290378406,
+  "note": "직접 공식(항등 프레임 가정)에 참 방향이 2° 튼 lift를 대조 — 전제 붕괴 시 갈라지는 크기. 보수 통계는 min(음성 팔에서 max는 유리한 꼬리다 — 2-R′ [B-4]). max_rel_to_len은 획 길이 대비(#29 — 크기의 뜻: 2° 틀림이 획 길이의 이 비율만큼 끝점을 옮긴다)"
+ },
+ "frame_judgment": {
+  "tilt_half_deg_is_null": true,
+  "permutation_ok": true,
+  "degenerate_null": true
+ },
+ "pa_roundtrip_px": 0,
+ "gate": {
+  "registered": "동등성 두 프레임 max_diff < 1e-9(표본 각 ≥50) · 음성 대조(2° 틀림) **min_diff > 1e-4**(보수 통계 — 표본 전부 갈라진다)·max_diff > 0.01 · 0.5° 튼 프레임 판정 null · 깊이 퇴화 null. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+  "reachability": "음성 대조가 오라클이다 — 전제가 무너진 카메라에서 직접↔lift가 갈라지는 크기의 **최솟값**이 eq_max(1e-9)의 다섯 자리 위에 있어, 동등성 통과가 '어떤 입력에도 같다'는 자명이 아님을 가른다(보수 통계 — 2-R′ [B-4])",
+  "reachability_value": 0.024429670520691896,
+  "reachability_source": "negative_tilt_2deg_yx/min_diff"
+ },
+ "constants": {
+  "hash": "54346ad1",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}

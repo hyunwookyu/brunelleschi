@@ -58,6 +58,14 @@
     "n_lines": 2,
     "note": "**입력(선)을 담는다** — 푼 결과가 아니다. 그래야 열어서 이어 조정할 수 있고 차수 승격이 전부 다시 푼다(§6.1)"
   },
+  "pose_integrity": {
+    "spec": "7차 항목 1-c — serializeDoc2가 확정 뷰 표식(pose null 정확히 1)·자세 유한성을 강제한다",
+    "throws_no_confirm": true,
+    "throws_two_confirm": true,
+    "throws_nan_pose": true,
+    "ok_normal": true,
+    "note": "정상 경로로는 안 만들어지는 상태다 — 걸리면 조용히 깨진 파일 대신 저장 실패를 기록한다(A-3)"
+  },
   "constants": {
     "hash": "54346ad1",
     "values": {

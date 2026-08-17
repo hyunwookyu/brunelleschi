@@ -98,8 +98,24 @@ export function resolve2dCore(raw: Pt2[], ctx: Resolve2dCtx): Resolve2dOut {
   const end2 = (rep0 && rep0.bend <= AXIS_TOL.bend_max)
     ? snap2dAt(b0, ctx.cands, ctx.radiusPx, ctx.kinds) : null;
   if (end2) {
-    return { a, b: end2.at, ortho: null, vpdir: null, start2, end2, guides,
-             pts: [a, end2.at], engaged: true };
+    // **오스냅이 기하를 정하되, 소실점 방향 판정은 함께 낸다**(2026-08-17 7차 항목 2-c).
+    // 옛 판은 여기서 `vpdir`를 비운 채 반환했다 — 기존 깊이선 위에 **정확히 얹힌** 획도
+    // `snapForced`가 없어, 분류가 모호 구간(4°~8°)이면 **물음으로 갔다**(실획 첫 표본:
+    // 물음 6회/획 5). 판정 임계는 방향 스냅과 같은 것(vpMisfit ≤ vp_dist_ratio)이고
+    // **점은 옮기지 않는다** — 두 끝은 오스냅이 정했다. vpdir 강제는 규칙에서 **기존
+    // 소실점의 지지(support)로만** 떨어지므로 카메라를 못 바꾼다(stepRule의 지지 판정이
+    // 같은 임계다 — 안전).
+    //
+    // ⚠⚠ **화면 직교(ortho)는 강제하지 않는다**(2-R″ [1] — 리뷰어가 잡았다). forced="screen"은
+    // stepRule의 P1 가드("소실점이 서 있으면 화면 수평선을 **묻는다**" — D-L53: 이 물음 없이
+    // 받게 하자 축 오차 중앙 10.1° → 31.6°로 무너졌고, P1은 **불가역**이다)를 우회한다.
+    // 끝점 오스냅은 방향의 의도 선언이 아니다 — 두 점을 이었을 뿐이고 방향은 그 점들이
+    // 정한 우연이다(방향 스냅 "스냅이 곧 선언"과 다른 상황). 얕은 현이 가로선으로 읽히는
+    // 경우의 물음은 **그대로 남긴다** — 불가역 잠금의 문은 조용히 열지 않는다(A-3).
+    const dj = dirSnap2dCore(a, end2.at, ctx.vps);
+    return { a, b: end2.at, ortho: null,
+             vpdir: dj.vpdir ? { ...dj.vpdir, at: [end2.at[0], end2.at[1]] } : null,
+             start2, end2, guides, pts: [a, end2.at], engaged: true };
   }
   // ③ 방향 — 화면 직교·소실점 방향(이동량이 작은 쪽, D-L58)
   const d = dirSnap2dCore(a, b0, ctx.vps);

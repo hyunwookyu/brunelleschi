@@ -78,6 +78,41 @@ export async function setupScene(page: Page, opts: { boxes?: 1 | 2 } = {}) {
 }
 
 /**
+ * **배선 차(px)** — three가 실제로 그리는 픽셀과 `project(principal, f)`의 최대 거리.
+ * `stage.spec.ts`의 `pixelGap(css)`과 같은 프로브다(7차 항목 1이 복원 확인에 재사용) —
+ * 확정 카메라와 무대가 같은 카메라면 **구성상 0에 가깝다**(#5 — 보장의 배선 확인).
+ * 무대가 다른 자세(예: 복원 누락의 생성 기본 자세)면 수백 px로 벌어진다 — 그것이 판별력이다.
+ */
+export async function wiringGapPx(page: Page): Promise<{ max: number; n: number }> {
+  return page.evaluate(async () => {
+    const S = window.S2S;
+    const g3 = await import("/src/s3d/geom3d.ts");
+    const ctx = S.cam.ctx();
+    const camT = S.stage.viewport.camera;
+    camT.updateMatrixWorld(true);
+    const el = document.getElementById("ink") as HTMLCanvasElement;
+    const w = el.clientWidth, h = el.clientHeight;
+    const mvp = camT.projectionMatrix.clone().multiply(camT.matrixWorldInverse);
+    let max = 0, n = 0;
+    for (const s of S.doc().strokes) {
+      if (!s.seg3d) continue;
+      for (const p of s.seg3d) {
+        const v = [p[0], -p[1], -p[2], 1];            // `world` 그룹의 x축 180°
+        const e = mvp.elements;
+        const cl = [0, 1, 2, 3].map(rw =>
+          e[rw] * v[0] + e[4 + rw] * v[1] + e[8 + rw] * v[2] + e[12 + rw] * v[3]);
+        const px = [w * (cl[0] / cl[3] + 1) / 2, h * (1 - cl[1] / cl[3]) / 2];
+        const want = g3.project(p, ctx.principal, ctx.f);
+        if (!want) continue;
+        max = Math.max(max, Math.hypot(px[0] - want[0], px[1] - want[1]));
+        n++;
+      }
+    }
+    return { max, n };
+  });
+}
+
+/**
  * 픽스처 + **자동 잠금까지**(F: 카메라가 서는 순간 잠긴다 — `confirmNow`가 그 앱 경로다).
  * 3D가 서 있어야 하는 하네스는 이것을 부른다.
  */

@@ -193,8 +193,11 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
     const pose = S.pose();
+    // **자유 시점은 확정 렌즈를 이어받는다**(7차 항목 1) — 앱(frame())과 같은 내적 파라미터를
+    // 같은 출처(stage.freeIntrinsics)에서 읽는다(#17). 옛 45°·중심 주점은 낡은 값이다
     const ctx = vc.viewPlaceCtx(pose, S.cam.ctx().vps.map((v: any) =>
-      (v ? g3.axisDirection(v, S.cam.ctx().principal, S.cam.ctx().f) : null)), size, 45);
+      (v ? g3.axisDirection(v, S.cam.ctx().principal, S.cam.ctx().f) : null)), size, 45,
+      S.stage.freeIntrinsics());
     const st = S.doc().strokes.find((s: any) => s.seg3d)!;
     const p = g3.project(vc.toView(pose, st.seg3d[0]), ctx.principal, ctx.f);
     return p ? { x: p[0] / size[0], y: p[1] / size[1] } : null;
@@ -1276,7 +1279,13 @@ test("궤도 시작 — 손가락만 대면 화면이 같고, 첫 회전이 이�
     return { standing: S.standing(), lifted: S.doc().strokes.filter((s: any) => s.seg3d).length };
   });
   expect(ready.standing).toBe(true);
-  expect(ready.lifted).toBe(3);
+  // ⚠⚠ **3 → 4는 8차 항목 0(병합)의 귀결이고 개선이 아니다.** 원격 갈래의 미앵커 배치
+  // (`placeUnanchored`·`planeAnchor` — D-L77)가 넷째 획을 **지면에 임의 깊이로** 놓는다:
+  // 실측 `snapStart: null` · `seg3d` y가 앞 셋과 같은 -0.295(지면)이고 z는 3.499~6.995다.
+  // **8차 항목 6-5가 그 임의 스냅을 지운다** — 그때 이 수는 3으로 돌아가고, 그 시점에는
+  // **이 줄이 회귀 신호**다(#30 양성 채널). 지금 4로 적는 것은 원격 갈래가 **이미 배포된
+  // 동작**이라 병합이 그것을 되돌리지 않기 때문이다(DEFERRED 8차 항목 0 절).
+  expect(ready.lifted).toBe(4);
 
   // GL 서명(칠해진 수 + 성긴 체크섬) — 화면이 같은가의 판정
   const GL_SIG = `(() => {
@@ -1641,7 +1650,9 @@ test("지우개 크기·도구 배치 — 슬라이더가 반경을 바꾸고 �
     standing: window.S2S.standing(),
     lifted: window.S2S.doc().strokes.filter((s: any) => s.seg3d).length }));
   expect(ready.standing).toBe(true);
-  expect(ready.lifted).toBe(3);
+  // ⚠ 3 → 4의 사유는 이 파일 위쪽 "궤도 시작" 팔의 주석과 같다(8차 항목 0 병합 —
+  // 원격 갈래의 미앵커 배치. **항목 6-5가 지우면 3으로 돌아간다**).
+  expect(ready.lifted).toBe(4);
 
   // ---- ⑤ 지우개 도구 → 사이드바가 보이고, 슬라이더가 ERASER.px를 바꾼다
   await page.click('#tools button[data-act="erase_part"]');
@@ -1845,11 +1856,16 @@ test("시점 저장·복귀 — 실행취소는 카메라를 안 건드린다 (5
   }, null, 1));
 });
 
-// ---------------------------------------------------------------- 5차 지시 8 — 뷰 큐브
+// ---------------------------------------------------------------- 6차 지시 1 — 3D 뷰 큐브
 //
-// 수직축(Y) 고정 회전: 면 클릭 = 90° 스냅(애니메이션) · 드래그 = 연속 회전 · 피치 유지 —
-// 1점에서 90° 돌리면 여전히 1점이고 소실점만 옮겨 간다(8-b). 큐브 방향은 카메라를 따른다(8-e).
-test("뷰 큐브 — 90° 스냅·연속 회전·피치 유지·소실점 하나 (5차 지시 8)", async ({ page }) => {
+// 면 = 1점 시점(피치 0) · 꼭짓점 = 3점 시점 · 드래그 = 연속 요 회전(수직축 고정) ·
+// 화살표 = 상대 90°(피치 유지) · 재탭 = 가장 가까운 1점(피치 0·중심 조준·거리 유지).
+// 차수 판정은 vps_finite(유한 소실점 가족 수 — |축·시선| > 0.05): 1점=1 · 2점=2 · 3점=3.
+import { CUBE_TOL } from "../src/ui/viewCube.js";
+
+/** 피치≠0 전제의 문턱(재검 [5]·8-R″ [M4]) — 원장 thresholds로 등록된다. */
+const FY_NONZERO_MIN = 0.02;
+test("3D 뷰 큐브 — 면=1점 스냅·꼭짓점=3점·드래그 연속·상대 90°·재탭=가장 가까운 1점 (6차 지시 1)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
@@ -1878,22 +1894,31 @@ test("뷰 큐브 — 90° 스냅·연속 회전·피치 유지·소실점 하나
     const S = window.S2S;
     const c = S.stage.viewport.camera;
     c.updateMatrixWorld(true);
-    const f = { x: 0, y: 0, z: 0 };
     const v = c.getWorldDirection(new (c.position.constructor)());
-    // 수평 세계 축 두 가족(three x·z)의 소실점이 화면 안에 몇 개인가
+    const V3 = c.position.constructor;
+    // 유한 소실점 가족 수 — 세계 축(three x·y·z)이 화면과 나란하지 않으면 유한(이론서 2.2 c=0)
+    const fam = [new V3(1, 0, 0), new V3(0, 1, 0), new V3(0, 0, 1)];
+    const finite = fam.filter(a => Math.abs(a.dot(v)) > 0.05).length;
+    // 수평 축 두 가족의 소실점이 화면 안에 몇 개인가(5차와 같은 프로브 — far 평면 안 500)
     const inside = (dir) => {
       for (const s of [1, -1]) {
-        // ⚠ far 평면(1000) 안의 원거리 점을 쓴다 — 밖이면 NDC z>1로 걸러져 프로브가 공허해진다
         const far = c.position.clone().addScaledVector(dir, s * 500);
         const nd = far.project(c);
         if (nd.z < 1 && Math.abs(nd.x) <= 1 && Math.abs(nd.y) <= 1) return true;
       }
       return false;
     };
-    const V3 = c.position.constructor;
     const nInside = [new V3(1, 0, 0), new V3(0, 0, 1)].filter(inside).length;
+    // 궤도 중심(우리 규약 → three)까지의 거리와 조준 각
+    const oc = S.orbitCenter();
+    const c3 = new V3(oc[0], -oc[1], -oc[2]);
+    const toC = c3.clone().sub(c.position);
+    const dist = toC.length();
+    const aimDeg = Math.acos(Math.max(-1, Math.min(1, toC.normalize().dot(v)))) * 180 / Math.PI;
     return { yaw: S.cubeYaw(), fy: v.y, pinned: S.stage.isPinned,
-             vps_inside: nInside, cube_on: S.viewCube().on,
+             vps_finite: finite, vps_inside: nInside, dist, aim_deg: aimDeg,
+             pos: [c.position.x, c.position.y, c.position.z],
+             cube_on: S.viewCube().on,
              cube_hidden: document.getElementById("cube").classList.contains("hidden") };
   })`;
   const led: Record<string, unknown> = {};
@@ -1902,14 +1927,21 @@ test("뷰 큐브 — 90° 스냅·연속 회전·피치 유지·소실점 하나
     for (let i = 0; i < 40; i++) {
       await page.waitForTimeout(100);
       const cur = await page.evaluate(c => eval(c)(), STATE);
-      // ⚠ 요만 보면 수직 감쇠 꼬리를 놓친다(fy가 움직이는 동안 yaw는 이미 멎는다) — 둘 다 본다
+      // 요·수직 성분·위치 셋 다 본다 — 요만 보면 수직 감쇠 꼬리를 놓친다(8-R″ [M5]의 자리)
       const d = Math.abs((prev as any).yaw - (cur as any).yaw)
-              + Math.abs((prev as any).fy - (cur as any).fy);
+              + Math.abs((prev as any).fy - (cur as any).fy)
+              + Math.hypot(...(prev as any).pos.map((x: number, k: number) => x - (cur as any).pos[k]));
       prev = cur;
       if (d < 1e-10) break;
     }
     return prev;
   };
+  /** 90° 격자에서의 이탈(°) — 요가 세계 축 정렬인지. */
+  const offGrid = (yawRad: number) => {
+    const deg = (yawRad * 180) / Math.PI;
+    return Math.abs(deg - Math.round(deg / 90) * 90);
+  };
+  const wrapDeg = (a: number) => Math.abs(((a + 540) % 360) - 180);
 
   // 확정 상태(1점 — 눈높이 위 구도, lifted 3)
   await drawPx(0.25 * W, 0.30 * H, 0.45 * W, 0.301 * H);
@@ -1934,39 +1966,83 @@ test("뷰 큐브 — 90° 스냅·연속 회전·피치 유지·소실점 하나
       pointerId: 93001, pointerType: "touch", isPrimary: true, bubbles: true }));
   });
   led.before = await settle();
-  expect(Math.abs((led.before as any).fy)).toBeGreaterThan(0.02);  // **피치≠0 — 판별력의 전제**
-  expect((led.before as any).cube_on).toBe(true);            // 기본 켬(8-d)
+  expect(Math.abs((led.before as any).fy)).toBeGreaterThan(FY_NONZERO_MIN);  // **피치≠0 — 판별의 전제**
+  expect((led.before as any).cube_on).toBe(true);            // 기본 켬(지시 1-5)
   expect((led.before as any).cube_hidden).toBe(false);       // 확정 후 보인다
 
-  // ---- 면 클릭(오른쪽 1/3) = +90° 스냅(애니메이션)
   const cube = (await page.locator("#cube").boundingBox())!;
-  await page.mouse.click(cube.x + cube.width * 0.85, cube.y + cube.height * 0.5);
-  led.after_snap = await settle();
-  const dyaw = Math.abs((((led.after_snap as any).yaw - (led.before as any).yaw)
-    + Math.PI * 3) % (Math.PI * 2) - Math.PI);
-  led.dyaw_deg = (dyaw * 180) / Math.PI;
-  expect(Math.abs((led.dyaw_deg as number) - 90)).toBeLessThan(0.5);   // **90° 돌았다**
-  // **피치 유지**(8-b) — 시선의 수직 성분이 그대로다
-  expect(Math.abs((led.after_snap as any).fy - (led.before as any).fy)).toBeLessThan(1e-6);
-  // **여전히 1점** — 수평 축 두 가족 중 소실점이 화면 안에 **하나**다(검증 절 그대로)
-  expect((led.after_snap as any).vps_inside).toBe(1);
+  const cx = cube.x + cube.width / 2, cy = cube.y + cube.height / 2;
+  const S_PX = cube.width * 0.22;                            // 큐브 반변(viewCube.scale과 같은 식)
 
-  // ---- 드래그 = 연속 회전(작게 끌면 작게 돈다 — 90° 스냅이 아니다)
-  await page.mouse.move(cube.x + cube.width * 0.5, cube.y + cube.height * 0.5);
+  // **요 전제**(8-R″ 재검 [1] — 요 0에서 면 탭하면 '격자 복귀'가 자명하다 #40 ②):
+  // 큐브 드래그로 요를 격자 밖으로 틀어 두고, 면 탭이 격자로 **되돌리는지** 잰다
+  await page.mouse.move(cx, cy);
   await page.mouse.down();
-  await page.mouse.move(cube.x + cube.width * 0.5 + 20, cube.y + cube.height * 0.5, { steps: 5 });
+  await page.mouse.move(cx + 20, cy, { steps: 5 });
+  await page.mouse.up();
+  led.before_face = await settle();
+  expect(offGrid((led.before_face as any).yaw)).toBeGreaterThan(1);   // 격자 밖에서 출발한다
+  expect(Math.abs((led.before_face as any).fy)).toBeGreaterThan(FY_NONZERO_MIN);
+
+  // ---- ① 면 탭(가운데) = **1점 스냅**: 피치가 0으로, 요는 90° 격자로, 중심 조준·거리 유지
+  await page.mouse.click(cx, cy);
+  await page.waitForTimeout(350);
+  led.after_face = await settle();
+  expect(Math.abs((led.after_face as any).fy)).toBeLessThan(1e-6);          // **피치 0**(0.02↑에서 내려왔다)
+  expect(offGrid((led.after_face as any).yaw)).toBeLessThan(0.5);           // 격자 **복귀**(1°↑ 밖에서 왔다)
+  expect((led.after_face as any).vps_finite).toBe(1);                       // **1점** — 유한 소실점 가족 1
+  expect((led.after_face as any).vps_inside).toBe(1);                       // 그 소실점이 화면 안에 1개
+  // 기준은 **탭 직전** 상태다 — 사전 드래그(spinYaw)는 시선 투영점 둘레 회전이라
+  // 경계 상자 중심까지의 거리가 바뀔 수 있다(투영점 ≠ 중심). 스냅이 보존하는 것은
+  // '스냅 시작 시점의 중심 거리'다(stage.snapToDir의 규약).
+  expect(Math.abs((led.after_face as any).dist - (led.before_face as any).dist)
+         / (led.before_face as any).dist).toBeLessThan(1e-6);               // **거리 유지**
+  expect((led.after_face as any).aim_deg).toBeLessThan(0.5);                // **궤도 중심 조준**
+
+  // ---- ② 꼭짓점 탭(우상 0.8·0.8) = **3점 스냅**: 피치 ±35.26° · 유한 소실점 3
+  await page.mouse.click(cx + 0.8 * S_PX, cy - 0.8 * S_PX);
+  await page.waitForTimeout(350);
+  led.after_vertex = await settle();
+  expect(Math.abs(Math.abs((led.after_vertex as any).fy) - 1 / Math.sqrt(3))).toBeLessThan(0.02);
+  expect((led.after_vertex as any).vps_finite).toBe(3);                     // **3점**
+  expect(Math.abs((led.after_vertex as any).dist - (led.after_face as any).dist)
+         / (led.after_face as any).dist).toBeLessThan(1e-6);
+
+  // ---- ③ 드래그 = 연속 요 회전(수직축 고정 — 피치 ≠ 0 상태에서 fy 불변이 판별이다, 재검 [5])
+  expect(Math.abs((led.after_vertex as any).fy)).toBeGreaterThan(FY_NONZERO_MIN);
+  await page.mouse.move(cx, cy);
+  await page.mouse.down();
+  await page.mouse.move(cx + 20, cy, { steps: 5 });
   await page.mouse.up();
   led.after_drag = await settle();
-  const dragYaw = Math.abs((((led.after_drag as any).yaw - (led.after_snap as any).yaw)
-    + Math.PI * 3) % (Math.PI * 2) - Math.PI) * 180 / Math.PI;
+  const dragYaw = wrapDeg(((led.after_drag as any).yaw - (led.after_vertex as any).yaw) * 180 / Math.PI);
   led.drag_deg = dragYaw;
   expect(dragYaw).toBeGreaterThan(1);                        // 실제로 돌았다(#38 — 공허 방지)
   expect(dragYaw).toBeLessThan(45);                          // 90° 스냅이 아니라 연속이다
-  expect(Math.abs((led.after_drag as any).fy - (led.before as any).fy)).toBeLessThan(1e-6);
+  expect(Math.abs((led.after_drag as any).fy - (led.after_vertex as any).fy)).toBeLessThan(1e-6);
 
-  // ---- 토글(8-d) — 끄면 숨는다
+  // ---- ④ 상대 90° 화살표(지시 1-2) — 요만 +90°, **피치 유지**(절대 스냅과의 판별)
+  await page.mouse.click(cube.x + cube.width - 6, cy);
+  await page.waitForTimeout(350);
+  led.after_arrow = await settle();
+  const arrowYaw = wrapDeg(((led.after_arrow as any).yaw - (led.after_drag as any).yaw) * 180 / Math.PI);
+  led.arrow_deg = arrowYaw;
+  expect(Math.abs(arrowYaw - 90)).toBeLessThan(0.5);
+  expect(Math.abs((led.after_arrow as any).fy - (led.after_drag as any).fy)).toBeLessThan(1e-6);
+
+  // ---- ⑤ 재탭(가운데) = **가장 가까운 1점**(지시 1-3) — 3점 시점에서 탭 한 번에 1점 복귀
+  await page.mouse.click(cx, cy);
+  await page.waitForTimeout(350);
+  led.after_retap = await settle();
+  expect(Math.abs((led.after_retap as any).fy)).toBeLessThan(1e-6);         // 피치 0
+  expect(offGrid((led.after_retap as any).yaw)).toBeLessThan(0.5);          // 가장 가까운 세계 축
+  expect((led.after_retap as any).vps_finite).toBe(1);                      // 다시 1점
+  expect(Math.abs((led.after_retap as any).dist - (led.after_arrow as any).dist)
+         / (led.after_arrow as any).dist).toBeLessThan(1e-6);               // 거리 유지
+  expect((led.after_retap as any).aim_deg).toBeLessThan(0.5);               // 중심 조준
+
+  // ---- ⑥ 토글(지시 1-5) — 끄면 숨는다
   await page.evaluate(() => {
-    const S = window.S2S;
     (document.querySelector('#bar button[data-act="menu"]') as HTMLButtonElement).click();
   });
   await page.click('#bar button[data-act="viewcube"]');
@@ -1980,21 +2056,229 @@ test("뷰 큐브 — 90° 스냅·연속 회전·피치 유지·소실점 하나
 
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "view_cube.json"), JSON.stringify({
-    spec: "5차 지시 8 — 뷰 큐브: 면 클릭 90° 스냅(수직축 고정·피치 유지·소실점 화면 안 1개 유지), 드래그 연속 회전, 토글(기본 켬). Playwright 신뢰 이벤트·콘솔 오류 0",
+    spec: "6차 지시 1 — 3D 뷰 큐브: 면 탭=1점 스냅(피치 0·요 90° 격자·중심 조준·거리 유지), 꼭짓점 탭=3점(피치 ±35.26°·유한 소실점 3), 드래그=연속 요 회전(수직축 고정·fy 불변), 화살표=상대 90°(피치 유지), 재탭=가장 가까운 1점, 토글. Playwright 신뢰 이벤트·콘솔 오류 0",
     what_this_does_not_say: [
-      "면 클릭의 구현은 단순화다(좌/우 1/3 = 그 방향 90°·가운데 = 가장 가까운 90° 정렬) — CAD 뷰 큐브의 3D 면 히트가 아니다. 위/아래 면은 없다: 회전 축이 수직축 고정이라(8-b) 피치를 바꾸는 면은 정의상 못 둔다",
-      "vps_inside의 판정은 세계 수평 축 두 가족의 소실점 투영이다 — 그린 선의 실측 수렴점이 아니다(#5에 가까운 기하 계산). 화면 안 개수가 1인 것이 '같은 조건의 1점'의 판정이다",
-      "한 구도·한 클릭 지점의 확인이다(#12) · dpr 1(#21)",
-      "판별의 전제로 **피치≠0을 먼저 만든다**(재검 [5]) — 확정 카메라(fy=0)에서는 수직축 회전과 국소 up 회전이 같은 결과라 이 게이트가 국소 up 구현을 통과시킨다. fy≠0 시작을 단언에 넣었다",
+      "모서리(2점) 탭 팔이 없다 — 분류기의 모서리 밴드는 vitest(view_cube_hit.test.ts)가 잰다. 종단은 면·꼭짓점·재탭 셋이고 2점 시점 종단은 한 동작점 아낌이다(#12 — 모서리 배선은 면·꼭짓점과 같은 snap 경로 하나다 #17)",
+      "**도착 요·피치·거리·조준은 설계 보장이다**(8-R″ [M8]·재검 [6] — snapToDir가 중심을 겨눈 목표 자세를 해석적으로 대입하고 flyTo·setPose가 그 자세로 끝난다. **상대 회전(spinYaw)도 정확한 델타 대입이다** — arrow_deg가 정확히 90, aim_deg가 정확히 0으로 찍히는 것이 그 보장의 표시다). 임계(0.5°·1e-6)는 측정이 아니라 **배선 확인**이다 — 이 팔이 재는 것은 '올바른 목표가 계산되어 카메라에 실제로 실렸는가'다(§5 유형 3: 보장이라 적고 측정이라 주장하지 않는다). 판별력이 있는 값은 **움직인 것들**이다: fy 0.084→0(면 탭)·0→0.577(꼭짓점), 요 격자 밖 1°↑→격자(면 탭·재탭), 드래그 13.75°",
+      "fy_before_min(0.02)의 출처(8-R″ 재검 [8]): 8-R′ [5]가 등록한 값 그대로 — 궤도 15px 입력이 만드는 fy(≈0.08)의 1/4 아래·감쇠 꼬리 잡음(1e-10대)의 여덟 자리 위에 둔 **임의 문턱**이다(#26 — 측정 전에 박았다. 정밀 측정값이 아니다)",
+      "**피치≠0을 먼저 만든다**(재검 [5]·8-R″ [M4]) — 확정 카메라(fy=0)에서 면 탭의 '피치 0'은 공허하다. fy가 문턱(fy_before_min) 위에서 1e-6 아래로 **움직이는 것**이 양성 채널이고, 그 문턱은 thresholds에 등록했다",
+      "settle은 이 스펙의 지역 헬퍼다(8-R″ [M5]) — 요·시선 수직 성분·카메라 위치 셋의 수렴을 본다(요만 보면 수직 감쇠 꼬리를 놓친다). viewpoint_undo의 settle은 위치 3성분을 보는 별개 지역 함수다",
+      "vps_finite는 세계 축 세 가족의 시선 내적 판정(기하 계산)이지 그린 선의 실측 수렴점이 아니다(#5에 가까움) · vps_inside는 5차와 같은 화면 안 투영 프로브다",
       "드래그 팔의 하한(1°)은 공허 방지다(#38 — 안 돌았으면 이 팔은 아무것도 안 잰 것이다)",
-      "되살림 확인(A-4)은 별도로 안 했다 — 이 팔의 단언 자체가 배선 부재에서 실패한다(spinYaw 미배선이면 dyaw 0·드래그 0으로 하한이 깨진다). 그 판단을 여기 적는다(#25 — 원장 밖 실행 없음)",
+      "판정 좌표는 전부 three 세계 축이다(#24 — basisOf·cubeHit·STATE 프로브가 같은 규약으로 닫힌다. 각은 yaw rad 원장 필드에 도(°) 파생 병기)",
+      "한 구도·클릭 지점 각 1개의 확인이다(#12) · dpr 1·합성 마우스(#21·AS-C1)",
+      "위/아래 면 탭·빗나감 경로·재탭 각 문턱(retap_cos)의 경계는 vitest가 잰다 — 종단 팔은 없다",
+      "**되살림 확인(A-4)은 별도로 안 했다** — 이 팔의 단언 자체가 배선 부재에서 실패한다(snapToDir 미배선이면 fy가 0으로 안 내려와 ①이, 분류기 미배선이면 꼭짓점 스냅이 없어 ②가 깨진다). 그 판단을 여기 적는다(#25 — 원장 밖 실행 없음)",
+      "ui_constants(CUBE_TOL)는 test/constants.ts 밖이다(D-L49·D-L51의 예외와 같은 자리 — 전역 해시 동결. 조작 감도라 어느 원장 값도 이 상수에 의존하지 않는다) — 값은 아래 ui_constants 필드",
     ],
-    thresholds: { snap_deg_tol: 0.5, pitch_delta_max: 1e-6, drag_min_deg: 1, drag_max_deg: 45,
+    thresholds: { fy_before_min: FY_NONZERO_MIN, snap_grid_tol_deg: 0.5, pitch_zero_max: 1e-6,
+                  vertex_fy_tol: 0.02, drag_min_deg: 1, drag_max_deg: 45, arrow_tol_deg: 0.5,
+                  dist_rel_tol: 1e-6, aim_max_deg: 0.5, offgrid_before_min_deg: 1,
                   console_errors_max: 0 },
+    ui_constants: { CUBE_TOL },
+    inputs: {
+      note: "재현 좌표(8-R″ 재검 [11] — #12의 동작점을 값으로 남긴다). 좌표는 요소 상대·CSS px",
+      orbit_pitch: { at_frac: [0.6, 0.6], dy_px: [6, 15], pointer: "touch" },
+      pre_face_drag_px: 20,
+      face_tap: "큐브 중심", vertex_tap: "큐브 중심 + (0.8, -0.8) x 반변",
+      drag_px: 20, arrow: "우측 가장자리 -6px", retap: "큐브 중심",
+      cube_css_px: 108, scale_ratio: 0.22,
+    },
     gate: {
-      registered: "면 클릭(우 1/3) 후 요 변화 90°±0.5° · 피치(시선 수직 성분) 변화 <1e-6 · 수평 축 소실점이 화면 안에 정확히 1개 · 드래그 20px 후 요 1~45°(연속 — 스냅 아님) · 토글로 숨김 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      registered: "피치≠0(|fy| > fy_before_min)·요 격자 밖(offGrid > 1° — 8-R″ 재검 [1]: 요 0에서의 격자 판정은 자명하다) 전제에서: 면 탭 후 |fy| < 1e-6·요 90° 격자 ±0.5°(**fy·요가 실제로 움직였다** — 양성 채널)·유한 소실점 1(화면 안 1)·중심 조준 <0.5°·거리 유지 <1e-6 · 꼭짓점 탭 후 |fy|≈1/√3 ±0.02·유한 소실점 3 · 드래그 20px 후 요 1~45°(연속)·fy 불변 <1e-6 · 화살표 +90°±0.5°·fy 불변 · 재탭 후 1점 복귀(피치 0·격자·거리·조준) · 토글 숨김 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
-      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 피치 유지는 수직축 회전의 기하 보장이고(#5) 판정은 그 배선(클릭→spinYaw→카메라)이다",
+      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 도착 자세·거리는 목표 자세의 해석적 구성이 주는 보장이고(#5·8-R″ [M8]) 판정은 그 배선(탭→분류→snapToDir→카메라)이다",
+    },
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 1));
+});
+
+// ---------------------------------------------------------------- 6차 지시 2 — 네 입면 흐름
+//
+// "정면 그리기 → 큐브로 우측면 → 이어 그리기 → 배면 → 이어 그리기 → 자유 시점으로 돌려
+// 형태 확인. 각 단계 픽셀 확인."(2-5) — 1점 시점에서 축 스냅 획은 **직접 좌표 경로**로
+// 올라가고(pathStats.direct), 1점이 깨지면 lift 경로다(음성 대조가 앱 안에 있다).
+test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, 직접 좌표 경로 (6차 지시 2)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+
+  const box = (await page.locator("#ink").boundingBox())!;
+  const W = box.width, H = box.height;
+  const drawPx = async (x1: number, y1: number, x2: number, y2: number) => {
+    await page.mouse.move(box.x + x1, box.y + y1);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move(box.x + x1 + (x2 - x1) * i / 8, box.y + y1 + (y2 - y1) * i / 8);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(60);
+  };
+  /** 문서 상태 + GL 픽셀 — 각 단계의 픽셀 확인(2-5). */
+  const STATE = `(() => {
+    const S = window.S2S;
+    const vp = S.stage.viewport;
+    vp.renderer.render(vp.scene, vp.camera);
+    const gl = vp.renderer.getContext();
+    const bw = gl.drawingBufferWidth, bh = gl.drawingBufferHeight;
+    const buf = new Uint8Array(bw * bh * 4);
+    gl.readPixels(0, 0, bw, bh, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+    let painted = 0;
+    for (let i = 0; i < buf.length; i += 4)
+      if (buf[i] < 235 || buf[i + 1] < 235 || buf[i + 2] < 235) painted++;
+    return { lifted: S.doc().strokes.filter(s => s.seg3d).length,
+             segs: S.doc().strokes.filter(s => s.seg3d).map(s => s.seg3d),
+             path: S.pathStats(), center: S.orbitCenter(), gl_painted_px: painted,
+             yaw: S.cubeYaw() };
+  })`;
+  const state = () => page.evaluate(c => eval(c)(), STATE);
+  /** 세계 점(우리 규약)의 잉크 캔버스 화면 좌표 — 이어 그리기의 시작점을 여기서 얻는다. */
+  const screenOf = (w: number[]) => page.evaluate((pt) => {
+    const S = window.S2S;
+    const c = S.stage.viewport.camera;
+    c.updateMatrixWorld(true);
+    const v = new (c.position.constructor)(pt[0], -pt[1], -pt[2]).project(c);
+    const r = document.getElementById("ink")!.getBoundingClientRect();
+    return { x: r.left + ((v.x + 1) / 2) * r.width, y: r.top + ((1 - v.y) / 2) * r.height,
+             on: Math.abs(v.x) < 1 && Math.abs(v.y) < 1 && v.z < 1 };
+  }, w);
+  const led: Record<string, unknown> = {};
+
+  // ---- ① 정면(확정 1점) — 상자 뼈대(가로 + 깊이 짝)로 카메라가 선다
+  await drawPx(0.25 * W, 0.30 * H, 0.45 * W, 0.301 * H);
+  await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
+  await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
+  led.s1_confirm = await state();
+  expect((led.s1_confirm as any).lifted).toBe(3);
+
+  // ---- ② 정면에서 이어 그리기 — 기존 끝점에서 가로선: **직접 좌표 경로**(X축 선)
+  await drawPx(0.4167 * W, 0.426 * H, 0.56 * W, 0.428 * H);
+  led.s2_front = await state();
+  expect((led.s2_front as any).lifted).toBe(4);
+  expect((led.s2_front as any).path.direct).toBeGreaterThanOrEqual(1);   // 직접 경로가 실제로 돌았다
+  {
+    const segs = (led.s2_front as any).segs as number[][][];
+    const s = segs[segs.length - 1];
+    expect(Math.abs(s[0][1] - s[1][1])).toBeLessThan(1e-9);              // 화면 가로 = X축: y 불변
+    expect(Math.abs(s[0][2] - s[1][2])).toBeLessThan(1e-9);              // z 불변
+  }
+
+  // ---- ③ 빈 곳에서 시작(무스냅) — **궤도 중심의 깊이 평면**에 놓인다(2-3). 미승격 없음.
+  //      ⚠ **지평선 위**에서 긋는다 — 확정 뷰의 지평선 아래는 지면 스냅이 전부 받으므로
+  //      (지면 화면 거리 0) 무스냅 경로는 지평선 위·기하 밖에서만 도달한다(원장에 명시)
+  await drawPx(0.66 * W, 0.15 * H, 0.78 * W, 0.152 * H);
+  led.s3_unanchored = await state();
+  expect((led.s3_unanchored as any).lifted).toBe(5);
+  {
+    const st = led.s3_unanchored as any;
+    const s = st.segs[st.segs.length - 1];
+    // 기준은 **그리기 전** 궤도 중심이다 — 배치 후 중심은 새 획을 포함해 옮겨 간다
+    expect(Math.abs(s[0][2] - (led.s2_front as any).center[2])).toBeLessThan(1e-6);
+    expect(Math.abs(s[0][2] - s[1][2])).toBeLessThan(1e-9);              // 가로선 — z 불변
+  }
+
+  // ---- ④ 큐브 화살표로 우측면(상대 90° — 정확 정렬에서는 절대 정렬과 같다) → 이어 그리기
+  const cube = (await page.locator("#cube").boundingBox())!;
+  const cy = cube.y + cube.height / 2;
+  await page.mouse.click(cube.x + cube.width - 6, cy);
+  await page.waitForTimeout(500);
+  led.yaw_right = (await state() as any).yaw;
+  {
+    // 기존 기하의 한 끝점에서 화면 가로로 — 우측면에서는 **Z축 선**이다(2-4)
+    const st = led.s3_unanchored as any;
+    const anchor3 = st.segs[0][1] as number[];                           // 첫 가로선의 오른끝
+    const p = await screenOf(anchor3);
+    expect(p.on).toBe(true);                                             // 화면 안에 있다
+    await drawPx(p.x - box.x, p.y - box.y, p.x - box.x + 0.12 * W, p.y - box.y + 2);
+    led.s4_right = await state();
+    expect((led.s4_right as any).lifted).toBe(6);
+    const s = (led.s4_right as any).segs[(led.s4_right as any).segs.length - 1];
+    expect(Math.abs(s[0][0] - s[1][0])).toBeLessThan(1e-9);              // 우측면 가로 = Z축: x 불변
+    expect(Math.abs(s[0][1] - s[1][1])).toBeLessThan(1e-9);              // y 불변
+    expect(Math.abs(s[1][2] - s[0][2])).toBeGreaterThan(1e-6);           // z가 실제로 움직였다
+    expect(Math.abs(s[0][0] - anchor3[0])).toBeLessThan(1e-6);           // 스냅 끝점의 깊이면
+  }
+
+  // ---- ⑤ 배면으로 → 이어 그리기(화면 가로 = 다시 X축)
+  await page.mouse.click(cube.x + cube.width - 6, cy);
+  await page.waitForTimeout(500);
+  {
+    const st = led.s4_right as any;
+    const anchor3 = st.segs[st.segs.length - 1][1] as number[];          // 방금 그은 Z선의 끝
+    const p = await screenOf(anchor3);
+    expect(p.on).toBe(true);
+    await drawPx(p.x - box.x, p.y - box.y, p.x - box.x - 0.1 * W, p.y - box.y - 2);
+    led.s5_back = await state();
+    expect((led.s5_back as any).lifted).toBe(7);
+    const s = (led.s5_back as any).segs[(led.s5_back as any).segs.length - 1];
+    expect(Math.abs(s[0][1] - s[1][1])).toBeLessThan(1e-9);              // 배면 가로 = X축: y 불변
+    expect(Math.abs(s[0][2] - s[1][2])).toBeLessThan(1e-9);              // z 불변
+    expect(Math.abs(s[1][0] - s[0][0])).toBeGreaterThan(1e-6);           // x가 실제로 움직였다
+  }
+  expect((led.s5_back as any).path.direct).toBeGreaterThanOrEqual(4);    // 네 획 전부 직접 경로
+  expect((led.s5_back as any).path.lift).toBe(0);                        // 1점에서는 lift가 안 돈다
+
+  // ---- ⑥ 자유 시점(큐브 드래그 — 격자 밖 요) → 형태 확인 + **음성 대조**: 이제 lift 경로다
+  await page.mouse.move(cube.x + cube.width / 2, cy);
+  await page.mouse.down();
+  await page.mouse.move(cube.x + cube.width / 2 + 20, cy, { steps: 5 });
+  await page.mouse.up();
+  await page.waitForTimeout(300);
+  {
+    const st = await state() as any;
+    const anchor3 = st.segs[0][0] as number[];
+    const p = await screenOf(anchor3);
+    expect(p.on).toBe(true);
+    await drawPx(p.x - box.x, p.y - box.y, p.x - box.x + 0.1 * W, p.y - box.y + 3);
+  }
+  led.s6_free = await state();
+  expect((led.s6_free as any).gl_painted_px).toBeGreaterThan(0);         // **형태가 보인다**
+  expect((led.s6_free as any).path.lift).toBeGreaterThanOrEqual(1);      // 1점 밖 — lift 경로(음성 대조)
+  expect((led.s6_free as any).path.direct).toBe((led.s5_back as any).path.direct);
+
+  led.console_errors = errors;
+  expect(errors).toEqual([]);
+
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "elevation_flow.json"), JSON.stringify({
+    spec: "6차 지시 2 — 네 입면 흐름 종단: 정면(확정 1점) 이어 그리기(직접 경로·X축) → 무스냅 시작(궤도 중심 깊이 평면) → 화살표 90°로 우측면(Z축 선·스냅 끝점 깊이면) → 배면(X축 선) → 자유 시점(형태 확인 + lift 경로 음성 대조). Playwright 신뢰 이벤트·콘솔 오류 0",
+    what_this_does_not_say: [
+      "**축 평면 좌표(y·z 불변 등)는 직접 좌표 공식의 보장이다**(#5) — 이 팔이 재는 것은 배선(resolveLive 분기→placeLive→seg3d)과 경로 선택(direct/lift 카운터)이다. 공식 자체의 동등성은 one_point_direct.json이 잰다",
+      "우측면·배면 전환은 큐브 **화살표**(상대 90°)다 — 정확 정렬에서 출발하므로 절대 정렬과 같다(지시 1-2). 면 탭 전환은 view_cube.json의 팔이 잰다",
+      "**손 정렬 자동 스냅(hand_deg)의 종단 팔은 없다** — 감쇠 꼬리 대기 뒤 정렬이라 결정론이 약해, 판정은 onePointFrame(정확 정렬)의 반례 테스트와 여기의 lift 음성 대조가 진다. 자동 스냅 자체의 종단은 DEFERRED(실기 K와 같은 문)",
+      "한 구도·한 순서의 확인이다(#12) · dpr 1·합성 마우스(#21·AS-C1)",
+      "무스냅 배치의 snapStart는 null 그대로다 — 스냅이 아니라 평면 배치다(2-3). 그 사실이 저장본에 남는다",
+      "확정 뷰의 **지평선 아래**는 지면 스냅이 전부 받는다(지면 화면 거리 0 — 시작점이 지면 위 점이 된다) — 무스냅 평면 배치는 지평선 위·기하 밖에서 도달한다. 이 팔의 무스냅 획이 지평선 위(0.15H)인 이유다",
+      "**깊이 성분은 1점 f(임의값 — D-L53)가 정하는 배율 위의 값이다**(이론서 16.4·AS-C4 — 2-R′ [B-7]): s4의 Δz 같은 깊이 좌표와 이 흐름으로 만든 입체의 깊이:폭 비는 그 상수에 달렸다. 직접·lift 두 경로가 같은 f를 쓰므로 동등성에는 안 닿는다",
+      "손 정렬 자동 스냅의 발화는 **궤도 종료(터치 제스처·마우스 궤도) 뒤**다(2-R′ [B-6]) — flyTo 복귀·저장본 복원·실행취소는 저장된 자세를 그대로 복원하므로 대상이 아니고, 그 자세가 근사 정렬이면 1점으로 안 선다(직접 경로는 정확 정렬만). 이 팔은 화살표 이동이라 항상 정확 정렬에서 출발한다. ⚠ 정정(7차 항목 1): '저장본 복원이 자세를 그대로 복원한다'는 **적힌 시점에 거짓이었다** — 옛 applyDoc2는 무대 자세를 아예 재수립하지 않았다(새로고침 뒤 생성 기본 자세). 7차가 복원을 setPose/pinTo(정확 복원)로 고쳐 이 문장이 참이 됐다 — 발화 범위 판단(복원은 자동 스냅 대상이 아니다) 자체는 정확 복원을 전제로 한 것이라 7차 이후 상태에서 유지된다(restore_pose.json이 그 정확성을 잠근다)",
+      "pathStats는 확정 축 배치만 센다(미리보기 프레임 아님) — twoPoint(양 끝 스냅)는 별도 칸이고 **확정 단계에서 1**(상자 뼈대 중 한 획의 양 끝 스냅), 이후 전 단계 불변이다(2-R′ [B-2] — 초판 '0' 서술은 자기 데이터와 모순이었다)",
+    ],
+    thresholds: { plane_const_max: 1e-9, anchor_plane_max: 1e-6, moved_min: 1e-6,
+                  direct_min: 4, lift_min_after_free: 1, console_errors_max: 0 },
+    algo_constants_note: "ONE_POINT_TOL은 one_point_direct.json의 algo_constants에 있다",
+    inputs: {
+      note: "재현 좌표(#12) — 비율은 잉크 캔버스 크기 대비",
+      confirm: [[0.25, 0.30, 0.45, 0.301], [0.25, 0.30, 0.4167, 0.426], [0.45, 0.30, 0.5523, 0.468]],
+      front_stroke: [0.4167, 0.426, 0.56, 0.428], unanchored: [0.66, 0.15, 0.78, 0.152],
+      arrow: "큐브 우측 가장자리 -6px(두 번)", side_strokes: "기존 끝점의 투영 + 화면 가로 0.1~0.12W",
+      free: "큐브 드래그 +20px",
+    },
+    gate: {
+      registered: "정면 이어 그리기 direct≥1·X축 평면(y·z<1e-9) · 무스냅 시작 깊이=궤도 중심 z<1e-6 · 우측면 Z축 선(x·y<1e-9·z 이동>1e-6·앵커 깊이면) · 배면 X축 선 · 네 획 direct·lift 0 · 자유 시점 GL>0·lift≥1(음성 대조 — 1점 밖에서는 직접 경로가 안 돈다·direct 불변) · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "음성 대조가 오라클이다(2-R′ [B-1] — 초판은 통과 기준 자체(direct_min=4)를 도달 가능성으로 적었다: #40 ① 지표 불일치) — 자유 시점(격자 밖 요)에서 **같은 그리기가 lift로 간 수**가 값이다. 1이 자명값이 아닌 이유: 같은 그리기가 격자 안에서는 direct로 갔다(s2~s5 네 번). 이 값이 0이면 direct 카운터는 아무 데서나 오르는 것이고 이 게이트는 무효다. ⚠ 정확히 1이라 selfcheck #40 검사가 의심 플래그를 낸다 — 그 플래그의 원인 확인이 이 문장이다(의심≠오류, §5)",
+      reachability_value: 1,
+      reachability_source: "s6_free/path/lift",
     },
     ...led,
     constants: constantsSnapshot(),

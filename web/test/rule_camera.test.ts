@@ -211,7 +211,8 @@ function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
     st = r.state;
   }
   const screenAxes = st.slots.filter(sl => sl && sl.kind === "screen").length;
-  return { st, asks, rejected, firstSep, snapEngaged, snapQueried, firstPairMoved, screenAxes };
+  return { st, asks, rejected, firstSep, snapEngaged, snapQueried,
+           firstPairMoved, screenAxes };
 }
 
 type Order = "drawn" | "grouped" | "wide_pair";
@@ -547,7 +548,7 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
       what_this_does_not_say: [
         "합성 잉크는 짝을 의도하지 않는다(AS-L13의 자리) — 사람은 X 교차·연장 수렴으로 짝을 긋는다. 실획(K)이 최종 판정자다",
         "시드별 분해가 없다(#14) — 원시↔스냅 격차가 시드 폭 안인지 미확인이다(격차 값은 headline_no_identity를 그 자리에서 읽는다 — 수치를 여기 적으면 재실행마다 낡는다, #1). 짝지은 부분집합(paired_headline)이 표본 짝은 맞추지만 시드 폭은 못 대고, **축 분모는 여전히 다르다**(예: drawn 짝 층에서 raw_axes 대 snap_axes — 무한원 편평화의 선택 효과, 리뷰어 [3-6])",
-        "⚠ **배선 판이 셋이다**(7차 지시 1-a로 하나 늘었다): ① 물음 오라클(지시 3 이전) `git show d724ac0:stage0/out/rule_camera.json` ② 무물음 선언(직교→screen·vp_dir→depth 강제) `git show b52bc7c:stage0/out/rule_camera.json` ③ **현행 — 강제 없음**(D-L70). 이 파일은 ③이다. 물음에는 참 축으로 답한다(오라클) — 어느 팔도 실사용 성능이 아니다",
+        "⚠ **배선 판이 셋이다**(7차 지시 1-a로 하나 늘었다): ① 물음 오라클(지시 3 이전) `git show d724ac0:stage0/out/rule_camera.json` ② 무물음 선언(직교→screen·vp_dir→depth 강제) `git show b52bc7c:stage0/out/rule_camera.json` ③ **현행 — 강제 없음**(D-L70). 이 파일은 ③이다. 병합 전 원격 갈래의 판 둘도 남는다(8차 항목 0): 6차 마감 `git show 513c33d:...`, 끝점 오스냅 ortho+vpdir 강제(P1 가드 우회로 기각) `git show b4f2d9b:...` — 그 갈래의 `osnap_vpdir_forced` 카운터는 강제가 없어진 ③에서 대상이 사라졌다. 물음에는 참 축으로 답한다(오라클) — 어느 팔도 실사용 성능이 아니다",
         "카메라 확정 후 3D 오스냅·축 스냅의 효과는 2D 목록 근사 밖이다(§4.5 보장으로 화면 좌표는 같다)",
         "무한원 축 제외는 원시 팔에서는 항등 제거지만 **스냅 팔에서는 선택이 될 수 있다**(리뷰어 [23]② — 직교 스냅이 얕은 축을 화면 축으로 펴면 그 축이 분모에서 빠진다). screen_axes_total이 그 대조 재료다",
       ],
@@ -555,6 +556,12 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
         note: "**jit_0 층**(리뷰어 [21]) — endJitter 0이지만 등급 잉크 잡음은 남는 층. 4차 등록이 "
           + "'항등'이라며 표제에서 뺐는데 그 사유가 틀렸다(실측이 0이 아니다). 모집단 연속성으로 "
           + "표제는 유지하고 이 층을 따로 낸다 — 1pt 구도는 여기서도 뺐다(그쪽은 진짜 구성 항등).",
+        aperture_note: "**이 층에서 조리개 세 팔(4/15/40px)의 값·발동 수가 동일한 것은 스윕 "
+          + "미실행이 아니다**(8-R′ 재검 [M6] — 스윕은 지터 루프 안에서 무조건 돈다, 이 파일의 "
+          + "조리개 스윕 블록). 발동 수까지 같다는 것은 **4px를 넘는 거리의 스냅 후보가 이 층에 "
+          + "없다**는 뜻이다(있었다면 r40에서 늘었을 것 — 표제 층에서는 같은 스윕이 발동 수를 "
+          + "움직인다). 즉 반경이 결정에 안 묶이는 **포화**이고, '정보량 0'은 그 관측의 이름이지 "
+          + "기전 판정이 아니다 — 거리 분포 자체는 안 쟀다(#32 대응 관측 병기).",
         ...jit0Head,
       },
       paired_headline: {

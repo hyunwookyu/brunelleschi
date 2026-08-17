@@ -45,10 +45,10 @@
  },
  "s5_orbit": {
   "pinned": false,
-  "gl_painted_px": 2643
+  "gl_painted_px": 3656
  },
  "s6_continue": {
-  "snap_start": "vertex",
+  "snap_start": "endpoint",
   "lifted": true
  },
  "console_errors": [],
