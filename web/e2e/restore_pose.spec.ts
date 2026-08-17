@@ -363,9 +363,10 @@ test.afterAll(() => {
     registered: "⚠ 이 항목이 등록한 게이트다 — CLAUDE.md §2의 중단 조건(camera_gate)이 아니다(#41). "
       + "① 복원 직후 무대가 확정 카메라에 다시 물린다(pinned=true·확정 뷰 pose null 표식 유지) "
       + "② 저장된 회전 시점의 자세 왕복 차 < 1e-5(samePose 1e-6의 한 자릿수 위 배선 확인 — "
-      + "viewpoint_undo의 1e-3은 감쇠 꼬리를 지나는 다른 경로다(#28 사유 병기)) "
-      + "③ 주점 중심 밖(0.23H)에서 회전 시점의 렌더↔배치 투영 차 < 1e-6px. "
-      + "(배선 차·투영행렬 불변의 ≈0 자체는 보장이라 게이트 밖 — what_not_say)",
+      + "viewpoint_undo의 1e-3은 감쇠 꼬리를 지나는 다른 경로다(#28 사유 병기)). "
+      + "(배선 차·투영행렬 불변·주점 중심 밖의 렌더↔배치 투영 차(place_gap)의 ≈0은 같은 내적 "
+      + "재적용의 **보장**이라 전부 게이트 밖이다 — 불변식 단언으로만 건다(#5, 2-R″ [5]로 "
+      + "place_gap도 게이트에서 뺐다). 판별력은 음성 팔 넷이 담당한다)",
     reachability: "음성 팔 넷을 이 실행에서 쟀다(negative_arms) — 복원 누락 상태의 배선 차·"
       + "그 상태와 저장 자세의 성분 차·옛 unpin의 투영행렬 성분 차(주점 중심/중심 밖). "
       + "전부 통과선과 자릿수로 갈리므로 기준은 도달 가능하고 판별력이 있다",
@@ -374,7 +375,6 @@ test.afterAll(() => {
     result: {
       pinned_after_reload: (led.restore_confirm as any).after.pinned,
       viewpoint_pose_max_diff: (led.restore_viewpoint as any).pose_max_diff,
-      offcenter_place_gap_px: (led.offcenter as any).place_gap_px,
     },
   });
   mkdirSync(OUT, { recursive: true });

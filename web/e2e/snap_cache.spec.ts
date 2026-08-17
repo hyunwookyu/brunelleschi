@@ -100,7 +100,8 @@ test("뷰 왕복 직후 첫 질의가 끝점을 문다(캐시가 시점을 키�
   }, { pose: roundtrip.pose, ts: targets });
 
   // **수정의 본체** — 왕복 직후 첫 질의가 정밀 대상(끝점·정점)을 문다.
-  // 수정 전에는 캐시가 회전 시점 좌표라 on_face(지면)로 떨어졌다(#21 — 완료 기록의 재현 값).
+  // 수정 전에는 캐시가 회전 시점 좌표라 정밀 후보가 밀려나 **on_edge**(캐시 밖에서 매번
+  // 계산되는 하위 대체)로 떨어졌다(#21 — 이 스펙의 수정 전 실행이 그 값으로 실패했다).
   for (const c of after) {
     expect(c).not.toBeNull();
     expect(["endpoint", "vertex", "midpoint", "intersection"]).toContain(c!.kind);
@@ -108,6 +109,28 @@ test("뷰 왕복 직후 첫 질의가 끝점을 문다(캐시가 시점을 키�
   // 왕복 전과 같은 대상이 물린다 — 왕복이 스냅을 바꾸면 안 된다
   expect(after.map((c: any) => c?.kind)).toEqual(
     (led.before_roundtrip as any[]).map((c: any) => c?.kind));
+
+  // ---- **수리된 겨냥 거리의 산출 증거**(2-R″ [3] — 지시 2-b의 산출물을 원장에): 끝점에서
+  //      ~8px 벗어난 자리에서 실제로 긋고, 그 획의 snapDistPx가 **0도 null도 아닌** 값(원시
+  //      시작점 → 최근접 정밀 대상)으로 적히는가. 옛 정의는 이 자리에서 0(on_face) 또는
+  //      cand.dist였다 — 실획 첫 표본의 "전부 0"이 그 서명이다.
+  const frame0 = await page.locator("#frame").boundingBox();
+  const t0 = targets[0];
+  await page.mouse.move(frame0!.x + t0[0] + 5.7, frame0!.y + t0[1] + 5.7);
+  await page.mouse.down();
+  await page.mouse.move(frame0!.x + t0[0] + 90, frame0!.y + t0[1] + 60, { steps: 6 });
+  await page.mouse.up();
+  led.aim_dist_px_sample = await page.evaluate(() => {
+    const S = window.S2S;
+    const st = S.doc().strokes[S.doc().strokes.length - 1];
+    return { snap_start_kind: st.snapStart?.kind ?? null,
+             snap_dist_px: st.snapDistPx == null ? null : +st.snapDistPx.toFixed(2),
+             osnap_radius_px: S.osnap().radiusPx };
+  });
+  expect((led.aim_dist_px_sample as any).snap_dist_px).not.toBeNull();
+  expect((led.aim_dist_px_sample as any).snap_dist_px).toBeGreaterThan(0);   // 0 오염이 아니다
+  expect((led.aim_dist_px_sample as any).snap_dist_px)
+    .toBeLessThanOrEqual((led.aim_dist_px_sample as any).osnap_radius_px);   // 조리개 안 겨냥
 });
 
 test.afterAll(() => {
@@ -117,20 +140,29 @@ test.afterAll(() => {
   led.what_this_does_not_say = [
     "실획 재현이 아니다 — 합성 상자·참 소실점 픽스처다(AS-C1)",
     "dpr 1·데스크톱 뷰포트 1440×900·합성 포인터다(#21) — iPad 실기는 안 덮는다",
-    "반경 15px의 적정성은 여기서 안 갈린다 — 실획 snapDistPx 분포(수리된 측정)가 답한다",
-    "stale_offset_px.behind_camera는 낡은 후보가 카메라 뒤로 가 아예 죽는 경우의 수다 — 그때 옛 판은 후보를 잃었다",
+    "반경(기본 15px — resolve2d.OSNAP_RADIUS_PX, 설정 4~40px 가변)의 적정성은 여기서 안 " +
+      "갈린다 — 실획 snapDistPx 분포(수리된 정의 aimDistPx — 필드명은 그대로다)가 답한다",
+    "왕복 질의의 표본은 **끝점 2건**이다 — 정점·중점·교차점 표본 0(2-R″ [8]. 같은 정적 캐시의 " +
+      "종류들이라 기전은 같지만 값으로는 안 덮었다) · 반경·자세·캔버스도 각 하나다(#12)",
+    "stale_offset_px.behind_camera는 낡은 후보가 카메라 뒤로 가 아예 죽는 경우의 수다 — " +
+      "이 실행에서는 0(관측 없음)이고, 그때 옛 판이 후보를 잃는다는 것은 기하 서술이지 실측이 아니다",
   ];
   led.gate = gate({
     registered: "⚠ 이 항목이 등록한 게이트다 — CLAUDE.md §2의 중단 조건(camera_gate)이 "
       + "아니다(#41). 확정 뷰 ↔ 회전 시점 왕복(그 시점에서 기하 변경·호버 오염 포함) 직후의 "
-      + "첫 질의가 왕복 전과 같은 정밀 대상(끝점/정점/중점/교차점)을 문다",
+      + "첫 질의가 왕복 전과 같은 **끝점**을 문다(정점·중점·교차점은 표본 0 — what_not_say). "
+      + "그리고 끝점 곁 ~8px에서 그은 획의 snapDistPx가 0도 null도 아닌 조리개 안 값으로 적힌다",
     reachability: "음성 채널(#30) — 낡은 캐시의 후보가 확정 카메라에서 참 자리를 벗어나는 "
-      + "거리(stale_offset_px, 이 실행에서 잼). 조리개 15px과 자릿수로 갈리므로(수백 px 또는 "
-      + "카메라 뒤 소실) 낡은 캐시로는 이 게이트를 못 넘는다 — 기준이 판별력을 갖는 근거다",
+      + "거리(stale_offset_px — 이 실행에서 잼: 수백 px대). 이 원장의 osnap_radius_px"
+      + "(aim_dist_px_sample.osnap_radius_px = 앱 설정값)와 자릿수로 갈리므로 낡은 캐시로는 "
+      + "이 게이트를 못 넘는다 — 기준이 판별력을 갖는 근거다",
     reachability_value: (led as any).stale_offset_px.offsets,
     reachability_source: "stale_offset_px/offsets",
-    result: { before: led.before_roundtrip, after: led.after_roundtrip },
-    note: "수정 전 재현(#21): 같은 스펙이 after에서 on_face를 물어 실패했다 — progress.md 7차 항목 2의 재현 기록",
+    result: { before: led.before_roundtrip, after: led.after_roundtrip,
+              aim_dist_px_sample: led.aim_dist_px_sample },
+    note: "수정 전 재현(#21): 같은 스펙이 after에서 **on_edge**(캐시 밖 하위 대체)를 물어 "
+      + "실패했다 — progress.md 7차 항목 2의 재현 기록. 실획의 시작 스냅에서는 같은 자리가 "
+      + "on_face였다(획이 기존 기하에서 떨어진 곳에서 시작해 on_edge 후보도 멀었던 상태)",
   });
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "snap_cache.json"), JSON.stringify(led, null, 2));

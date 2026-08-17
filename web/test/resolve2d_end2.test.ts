@@ -43,14 +43,18 @@ describe("7차 항목 2-c — 끝점 오스냅이 걸려도 방향 판정이 나
     expect(r.vpdir!.at).toEqual(r.end2!.at);
   });
 
-  it("수평 대기선 위에 얹힌 획 → ortho(화면 가로)가 나온다", () => {
+  it("수평 대기선 위에 얹힌 획 → **ortho는 강제하지 않는다**(P1 가드를 우회하지 않는다)", () => {
+    // ⚠⚠ 초판은 여기서 ortho를 냈고 리뷰어(2-R″ [1])가 잡았다: forced="screen"은 stepRule의
+    // P1 가드(소실점이 서 있으면 화면 수평선을 **묻는다** — D-L53, 축 오차 10.1°→31.6°의
+    // 회귀 실측이 근거)를 우회한다. P1은 불가역이므로 그 문은 조용히 안 연다 — 얕은 현의
+    // 물음은 남고, 없어지는 물음은 **기존 소실점을 향한 현**(vpdir — 지지로만 감)뿐이다.
     const A: Pt2 = [100, 300], B: Pt2 = [400, 300];
     const raw: Pt2[] = [[103, 302], [397, 299]];
     const r = resolve2dCore(raw, { cands: candsOf(A, B), vps: [null, null, null],
                                    radiusPx: 15, relSnap: true });
     expect(r.end2).not.toBeNull();
-    expect(r.ortho).not.toBeNull();                       // #21: 수정 전 실패
-    expect(r.ortho!.dir).toBe("h");
+    expect(r.ortho).toBeNull();                           // 강제 없음 — 분류·물음은 규칙의 몫
+    expect(r.vpdir).toBeNull();
     expect(r.pts).toEqual([r.start2!.at, r.end2!.at]);
   });
 
