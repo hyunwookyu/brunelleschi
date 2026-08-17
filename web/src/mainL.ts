@@ -2235,6 +2235,7 @@ function buildDoc2(): Doc2 {
     // ⚠ `locked`·`order`·`lensMm`은 더 이상 저장하지 않는다(지시 1 — 파생 상태는 계산한다)
     rules: cam.dumpRules(),
     askStats: { ...askStats },
+    pathStats: { ...pathStats },
     doc,
     seq: docSeq(),
   });

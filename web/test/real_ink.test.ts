@@ -45,8 +45,9 @@ function loadSessions(): Session[] {
 interface BrnlDoc {
   format: string;
   imgSize: [number, number];
-  rules?: { horizon: number; slots: ({ kind: string; at?: [number, number] } | null)[] } | null;
+  rules?: { horizon: number; slots: ({ kind: string; at?: [number, number]; source?: string } | null)[] } | null;
   askStats?: { asked: number; screen: number; depth: number; vertical: number; skipped: number };
+  pathStats?: { direct: number; lift: number; twoPoint: number };
   strokes: { id: string; pts2d: number[][]; seg3d: [number[], number[]] | null;
              axis: number | string; channel?: string; snapDistPx?: number | null }[];
 }
@@ -140,6 +141,8 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
       horizon_vp_dy_px: "지평선-수평 소실점 y차. **보장 확인**(#5·이론서 3.1 — 규칙상 0. 0이 아니면 저장 경로 결함)",
       n_pieces: "조각(pieceOf 있는 획) 수 — 사람 획과 단위가 다르므로(#11) 갈라 세는 분모 재료다(4차 재검 [8]로 정의 등재)",
       vertex_zero_pairs: "정점 산포에서 갈라 센 공유점(<1e-9) 쌍 수 — 스냅 보장 0의 몫(#5. 원장 필드명, 4차 재검 [8]로 등재)",
+      vp_confirm_source: "소실점 확정 경로 분포(6차 지시 3 — rules.slots[*].source): picked_point=찍기 · two_lines=교점 · 그 외. 이월-3의 합성 대조(찍기 pick_0 축 오차 2.67° 대 two_lines 31.61°, pick_vp.json)가 동기다 — **실사용에서 어느 쪽을 쓰는지**가 여기서 나온다",
+      path_use: "배치 경로 분포(6차 지시 3 — pathStats): direct=1점 직접 좌표 · lift=카메라 투영 · twoPoint=양 끝 스냅. **지시 2(1점 직접)가 실제로 쓰이는지**의 분자·분모다. ⚠ 카운터는 저장 시점의 세션 것이다(불러오기로 이어지지 않는다 — askStats와 같은 규약)",
     };
     const kMetrics = (() => {
       if (!brnl.length) return { status: "awaiting_samples", n_docs: 0, metrics: K_DEFS,
@@ -151,6 +154,8 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
         ] };
       let n = 0, nPieces = 0, byChannel: Record<string, number> = {}, snapDists: number[] = [],
           asked = 0, answered = 0, skipped = 0, shortShare = 0, zeroPairs = 0;
+      const vpSource: Record<string, number> = {};
+      const pathUse = { direct: 0, lift: 0, twoPoint: 0 };
       const lensR: number[] = [], vertexGaps: number[] = [], horizonDelta: number[] = [];
       for (const d of brnl) {
         const diag = Math.hypot(d.imgSize[0], d.imgSize[1]) || 1;
@@ -186,6 +191,11 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
         }
         if (d.askStats) { asked += d.askStats.asked; skipped += d.askStats.skipped;
           answered += d.askStats.screen + d.askStats.depth + d.askStats.vertical; }
+        if (d.pathStats) { pathUse.direct += d.pathStats.direct;
+          pathUse.lift += d.pathStats.lift; pathUse.twoPoint += d.pathStats.twoPoint; }
+        for (const sl of d.rules?.slots ?? []) {
+          if (sl && sl.kind === "vp") vpSource[sl.source ?? "unknown"] = (vpSource[sl.source ?? "unknown"] ?? 0) + 1;
+        }
         // **AS-L9 대리** — 사용자 지평선 vs 수평 소실점들의 y (규칙상 그 위라 0이면 보장이지
         // 측정이 아니다 — 값이 0이면 그렇게 읽는다, #5)
         const h = d.rules?.horizon;
@@ -199,6 +209,8 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
         channel_share: byChannel,
         snap_dist_px: stat(snapDists, 2),
         ask: { asked, answered, skipped },
+        vp_confirm_source: vpSource,
+        path_use: pathUse,
         stroke_len_ratio: stat(lensR, 4),
         below_min_vp_len: `${shortShare}/${n}`,
         vertex_gap_ratio: stat(vertexGaps, 4),

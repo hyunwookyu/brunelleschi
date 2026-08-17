@@ -45,6 +45,8 @@ export interface Doc2 {
   order?: number;
   /** **모호 물음 카운터**(지시 K) — 실획 세션에서 묻는 빈도를 재기 위한 메타다. 선택. */
   askStats?: { asked: number; screen: number; depth: number; vertical: number; skipped: number };
+  /** **배치 경로 카운터**(6차 지시 3) — 1점 직접 좌표 경로 사용 비율의 재료다. 선택. */
+  pathStats?: { direct: number; lift: number; twoPoint: number };
   views: { id: string; name: string; pose: ViewPose | null; seq: number }[];
   currentView: string;
   strokes: {
@@ -76,6 +78,7 @@ export interface Doc2Source {
   cam: AccumulatorDump | null;
   rules?: RuleState | null;
   askStats?: { asked: number; screen: number; depth: number; vertical: number; skipped: number };
+  pathStats?: { direct: number; lift: number; twoPoint: number };
   doc: DocState;
   seq: { stroke: number; view: number };
 }
@@ -90,6 +93,7 @@ export function serializeDoc2(s: Doc2Source): Doc2 {
     cam: s.cam,
     rules: s.rules ?? null,
     askStats: s.askStats,
+    pathStats: s.pathStats,
     views: s.doc.views.map(v => ({
       id: v.id, name: v.name, seq: v.seq,
       pose: v.pose ? { R: v.pose.R.map(r => [...r] as Vec3) as [Vec3, Vec3, Vec3],

@@ -193,3 +193,16 @@ afterAll(() => {
     metric_defs: metricsSnapshot(),
   }, null, 2), "utf-8");
 });
+
+describe("6차 지시 3 — pathStats 저장(실획 측정 재료)", () => {
+  it("pathStats가 저장 문서에 그대로 실린다 · 없으면(옛 저장본) undefined 그대로다(반례)", () => {
+    const d = fixture();
+    const withStats = round(serializeDoc2({
+      ...src(d), pathStats: { direct: 3, lift: 1, twoPoint: 2 },
+    }));
+    expect(withStats.pathStats).toEqual({ direct: 3, lift: 1, twoPoint: 2 });
+    // 반례 — 옛 저장본(필드 없음)이 무언가로 채워지면 실획 측정이 0을 지어낸 것이 된다
+    const without = round(serializeDoc2(src(d)));
+    expect(without.pathStats).toBeUndefined();
+  });
+});
