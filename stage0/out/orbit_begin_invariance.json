@@ -1,56 +1,40 @@
 {
- "spec": "지시 6 — 기본 흐름 종단(사람 순서 그대로, Playwright 신뢰 이벤트·픽셀·콘솔 오류 0)",
+ "spec": "5차 지시 2 — 궤도 시작 불변: 손가락을 대기만 하면 화면이 같고(GL 서명 동일), 죽은 구간을 넘겨도 시선 변화가 미소 회전뿐이다(재조준 없음 — retarget이 중심을 시선 위로 투영).",
  "what_this_does_not_say": [
-  "배치 정확도 — 참값 대조가 없다(합성 픽스처도 없다 — 실제 손 순서만 있다)",
-  "실획 — Playwright 합성 마우스 경로다(AS-C1 — '실포인터'라 부르지 않는다)",
-  "⑥의 lifted 여부는 단언하지 않는다 — 돌린 시점의 배치는 앵커·각도에 따라 2D 대기가 옳을 수 있다(§9.1)",
-  "격자 픽셀은 안 잰다 — 격자 기하는 `test/grid.test.ts`의 9.5 잠금이 덮는다",
-  "dpr 1 실행이다(#21) — 표시 값(LINE_PX·표식 반지름)은 CSS px라 장치 시각 크기는 같지만, 실기(아이패드) 확인은 K의 문이다"
+  "GL 서명은 칠해진 픽셀 수 + 성긴 체크섬이다 — 완전한 프레임 대조가 아니다(같은 서명의 다른 프레임이 이론상 가능하나 재조준 크기의 변화는 못 지나간다)",
+  "시선 변화 1.5°는 2px 이동의 기대 회전(≈1.1°)과 재조준(경계 상자 방향, 수 도~수십 도)을 가르는 배선 임계다(#24 프레임: 도 단위·화면 높이 658px 기준) — 미소 회전의 정밀 검증이 아니다",
+  "dpr 1·합성 터치다(#21·AS-C1) — 실기(아이패드) 확인은 K의 문이다",
+  "한 구도(눈높이 위 상자)·중심 한 점의 확인이다(#12)"
  ],
  "thresholds": {
-  "result_darkens_by_min": 15,
-  "result_dark_max": 70,
-  "ink_px_min": 50,
+  "gaze_change_deg_max": 1.5,
   "console_errors_max": 0
  },
  "gate": {
-  "registered": "④ 결과선이 보조선 자리를 15 이상 어둡게 하고 절대 70 미만(5-1 소실·5-7 검정의 회귀) · ①~⑥ 각 단계의 픽셀·차수·스냅 단언 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
-  "reachability": "오라클 = 현행 구현의 실측(#35 — 상한이라 부르지 않는다). 회귀 팔 둘을 수동으로 돌렸다(2026-08-17): ① 결과선 색을 #c0392b로 되살리면 절대 상한에서 실패 ② 결과선 층을 제거하면(5-1 재현) 차등 판정이 실패(guide_dark − result_dark = 0). ⚠ 두 팔의 실측값은 원장 밖이다(#25 — 임시 패치 실행이라 재현 스크립트가 없다)",
-  "reachability_value": 60,
-  "reachability_source": "s4_result/result_dark_after"
+  "registered": "터치 다운(이동 0)에서 GL 서명 동일 · 죽은 구간을 넘긴 두 번째 이동(begin 실개방 — isPinned 해제 확인 #32)에서 시선 변화 <1.5°(재조준이면 실패) · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+  "reachability": "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
+  "reachability_absent": "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 이동 0의 화면 불변은 설계 보장(#5 — 죽은 구간이 begin을 안 연다)이고, 판정은 그 배선(재조준 부재)이다"
  },
- "s1_horizontal": {
-  "ink_px": 1542,
-  "order": 1,
-  "standing": false,
-  "strokes": 1
+ "sig_before": {
+  "painted": 1350,
+  "sum": 50651019
  },
- "s3_depth": {
-  "standing": true,
-  "order": 1,
-  "lifted": 3,
-  "axes": [
-   0,
-   1,
-   1
-  ],
-  "gl_painted_px": 1837
+ "dir_before": [
+  0,
+  0,
+  -1
+ ],
+ "sig_touch": {
+  "painted": 1350,
+  "sum": 50651019
  },
- "s4_result": {
-  "channel": "result",
-  "lifted": true,
-  "snap_start": "endpoint",
-  "guide_dark_before": 119,
-  "result_dark_after": 60
- },
- "s5_orbit": {
-  "pinned": false,
-  "gl_painted_px": 2609
- },
- "s6_continue": {
-  "snap_start": "vertex",
-  "lifted": true
- },
+ "began": true,
+ "dir_after": [
+  0.004206179304440382,
+  -6.123233995736767e-17,
+  -0.9999911539887035
+ ],
+ "gaze_change_deg": 0.24099703264042296,
  "console_errors": [],
  "constants": {
   "hash": "509615a1",

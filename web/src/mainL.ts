@@ -737,10 +737,10 @@ const gestures = new CamGestures({
       refresh();   // ⛔ "돌리는 중" 안내를 뺐다(지시 3) — 돌릴 수 있는지는 손가락이 안다
     } else {
       // **새 선이 그어졌으면 다음 궤도가 새 중심으로 돈다**(4차 지시 7-b) — 그리는 순간
-      // 옮기면 시점이 튀므로, 갱신 시점은 **궤도를 시작하는 순간**이다. `update()`가
-      // 카메라를 target으로 다시 겨눠 작은 재조준이 나는 것은 궤도 시작의 자연스러운 동작이다
-      const t = orbitTarget();
-      stage.viewport.controls.target.set(t[0], -t[1], -t[2]);
+      // 옮기면 시점이 튀므로, 갱신 시점은 **궤도를 시작하는 순간**이다.
+      // ⚠ **재조준은 자연스러운 동작이 아니었다**(5차 지시 2가 옛 문장을 뒤집었다) —
+      // 중심점만 바뀌고 시선은 유지한다: 중심을 **현재 시선 위로 투영**해 놓는다(retarget).
+      stage.retarget(orbitTarget());
       stage.viewport.controls.update();
     }
     stage.viewport.userMoved = true;   // 자동 맞춤이 시점을 빼앗지 않는다

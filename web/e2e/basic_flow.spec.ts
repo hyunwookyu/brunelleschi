@@ -818,7 +818,7 @@ test("관계 스냅 — 둘째 선의 끝이 첫 선의 끝과 같은 높이에 
 //
 // 궤도가 **그려진 오브젝트(3D 경계 상자)의 중심**으로 돈다. 옛 판은 끝점 평균(무게중심)이라
 // 짧은 선이 몰린 쪽으로 끌렸다 — 회귀 판별은 "target = bbox 중심 ≠ 끝점 평균"의 대조다.
-test("회전 중심 — 3D 경계 상자의 중심으로 돈다 (4차 지시 7)", async ({ page }) => {
+test("회전 중심 — 경계 상자 중심을 시선에 투영한 점으로 돈다 (4차 지시 7 · 5차 지시 2 개정)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
@@ -877,32 +877,37 @@ test("회전 중심 — 3D 경계 상자의 중심으로 돈다 (4차 지시 7)"
     const t = S.camPose().target;
     const target = [t[0], -t[1], -t[2]];
     const d = (a: number[], b: number[]) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    // **5차 지시 2 개정**: target = 경계 상자 중심을 **궤도 시작 시점의 시선에 투영**한 점.
+    // 확정 시점에서 시작했으므로 시선은 광축(눈 0·앞 +z) — 기대 target은 (0, 0, bbox.z)다
     return { n_lifted: segs.length, bbox, mean, target,
-             target_to_bbox: d(target, bbox), target_to_mean: d(target, mean),
+             target_to_proj_bbox: d(target, [0, 0, bbox[2]]),
+             target_to_bbox: d(target, bbox),
+             proj_gap_bbox_mean: Math.abs(bbox[2] - mean[2]),
              bbox_vs_mean: d(bbox, mean) };
   });
   const c = led.center as any;
   expect(c.n_lifted).toBeGreaterThanOrEqual(4);
   expect(c.bbox_vs_mean).toBeGreaterThan(0.05);            // **판별력** — 두 중심이 실제로 다르다
-  expect(c.target_to_bbox).toBeLessThan(1e-6);             // **상자 중심으로 돈다**(7-a)
-  expect(c.target_to_mean).toBeGreaterThan(0.05);          // **평균(옛 동작)이 아니다** — 회귀 판별
+  expect(c.proj_gap_bbox_mean).toBeGreaterThan(0.05);      // **투영 깊이도 갈린다** — 평균 대조 판별
+  // **상자 중심의 시선 투영으로 돈다**(7-a + 5차 2-a — 시선 유지: 재조준 없음)
+  expect(c.target_to_proj_bbox).toBeLessThan(1e-6);
 
   led.console_errors = errors;
   expect(errors).toEqual([]);
 
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "orbit_center.json"), JSON.stringify({
-    spec: "4차 지시 7 — 궤도 회전 중심 = 3D 경계 상자 중심. 갱신은 궤도 시작 시(7-b — 그리는 중 옮기면 시점이 튄다). Playwright 신뢰 이벤트·콘솔 오류 0",
+    spec: "4차 지시 7 + 5차 지시 2 개정 — 궤도 회전 중심 = 경계 상자 중심을 궤도 시작 시점의 시선에 투영한 점(시선 유지 — 재조준 없음). 갱신은 궤도 시작 시(7-b). Playwright 신뢰 이벤트·콘솔 오류 0",
     what_this_does_not_say: [
-      "target_to_bbox 0은 **보장 확인**이다(#5 — begin이 그 값을 넣는다). 판별력은 평균과의 대조(target_to_mean > 0.05, 옛 동작)가 든다. ⚠ 그럼에도 임계 1e-6을 거는 이유는 **배선 판정**(begin이 bboxCenter를 실제로 부르는가)이다 — 측정 임계가 아니다(§5.1 '보장이면 임계를 걸지 않는다'의 예외 사유, 이월-1 재검 #5 지적)",
+      "target_to_proj_bbox 0은 **보장 확인**이다(#5 — retarget이 그 값을 넣는다). 판별력은 평균 투영과의 대조(proj_gap_bbox_mean > 0.05)와 첫 프레임 팔(orbit_begin_invariance)이 든다. ⚠ 그럼에도 임계 1e-6을 거는 이유는 **배선 판정**(begin→retarget이 bboxCenter를 실제로 투영하는가)이다 — 측정 임계가 아니다(§5.1의 예외 사유, 이월-1 재검 #5 지적). target_to_bbox(횡 오프셋)는 정보 필드로 남긴다 — 그 값이 0이면 옛 동작(재조준)이다",
       "픽스처 하나·dpr 1의 확인이다(#12·#21)",
       "7-c(빈 화면 기본점)는 **도달 불가**다 — 버튼·손가락 두 경로 모두 gestures.begin 하나를 지나고 begin이 lifted 0을 거른다(3D를 전부 지워도 같다 — standing은 남지만 begin이 막는다). 방어 기본값 [0,0,4]는 그래서 미측정으로 남는다(코드 경로 확인 — 실행 팔은 없다, 리뷰어 [6])",
       "잰 경로는 **궤도 버튼(begin)** 하나다(리뷰어 [5]) — 터치 unpin·setPose·뷰 전환이 같은 orbitTarget()을 부르는 것은 코드 읽기이지 측정이 아니다",
       "픽스처의 y 성분이 축퇴다(리뷰어 [11]) — 모든 획이 같은 높이(지면 게이지 1)라 bbox와 평균이 y에서 같다. 판별(2.73)은 x·z만의 값이다",
     ],
-    thresholds: { target_to_bbox_max: 1e-6, discriminate_min: 0.05, console_errors_max: 0 },
+    thresholds: { target_to_proj_bbox_max: 1e-6, discriminate_min: 0.05, console_errors_max: 0 },
     gate: {
-      registered: "궤도 시작 순간의 target = 3D 경계 상자 중심(<1e-6) · 끝점 평균(옛 동작)과 뚜렷이 다름(>0.05 — 회귀 판별) · 콘솔 오류 0. "
+      registered: "궤도 시작 순간의 target = 경계 상자 중심의 시선 투영(<1e-6, 5차 지시 2 개정 — 4차 등록 'target = 상자 중심 그대로'를 사람 지시가 갈아 끼웠다: 재조준이 첫 프레임을 튀게 했다) · 평균 투영과 뚜렷이 다름(>0.05 — 회귀 판별) · 콘솔 오류 0. "
         + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
       reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — bbox_vs_mean(판별 간격)은 픽스처(몰아 그린 짧은 선)의 항등이라 도달 가능성으로 적지 않는다(#40 ⚠⚠)",
@@ -1192,6 +1197,138 @@ test("1점 확정 — 직전·직후 그린 선이 같은 자리다 (5차 지시
         + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
       reachability_absent: "**배선·보장 확인이라 도달 가능성 오라클이 성립하지 않는다** — 재투영 0은 §4.5의 설계 보장이고(#5) 임계 1e-3px는 배선 판정이다(실측 3.5e-6px — 부동소수 잔차만 걸린다)",
+    },
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 1));
+});
+
+// ---------------------------------------------------------------- 5차 지시 2 — 궤도 시작 불변
+//
+// **궤도를 시작해도 그리던 뷰에서 이어진다**(지시 2). 회전 중심(경계 상자 중심, D-L62)은
+// **현재 시선 위로 투영**해 놓는다(stage.retarget) — target을 중심점 그대로 놓으면
+// OrbitControls.update()가 카메라를 재조준해 첫 프레임이 튀었다(되살린 버그).
+test("궤도 시작 — 손가락만 대면 화면이 같고, 첫 회전이 이어진다 (5차 지시 2)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+
+  const box = (await page.locator("#ink").boundingBox())!;
+  const W = box.width, H = box.height;
+  const drawPx = async (x1: number, y1: number, x2: number, y2: number) => {
+    await page.mouse.move(box.x + x1, box.y + y1);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move(box.x + x1 + (x2 - x1) * i / 8, box.y + y1 + (y2 - y1) * i / 8);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(50);
+  };
+  const led: Record<string, unknown> = {};
+
+  // 확정 상태를 만든다(p1_invariance와 같은 눈높이 위 구도 — lifted 3)
+  await drawPx(0.25 * W, 0.30 * H, 0.45 * W, 0.301 * H);
+  await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
+  await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
+  const ready = await page.evaluate(() => {
+    const S = window.S2S;
+    return { standing: S.standing(), lifted: S.doc().strokes.filter((s: any) => s.seg3d).length };
+  });
+  expect(ready.standing).toBe(true);
+  expect(ready.lifted).toBe(3);
+
+  // GL 서명(칠해진 수 + 성긴 체크섬) — 화면이 같은가의 판정
+  const GL_SIG = `(() => {
+    const S = window.S2S;
+    const vp = S.stage.viewport;
+    vp.renderer.render(vp.scene, vp.camera);
+    const gl = vp.renderer.getContext();
+    const bw = gl.drawingBufferWidth, bh = gl.drawingBufferHeight;
+    const buf = new Uint8Array(bw * bh * 4);
+    gl.readPixels(0, 0, bw, bh, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+    let painted = 0, sum = 0;
+    for (let i = 0; i < buf.length; i += 4)
+      if (buf[i] < 235 || buf[i + 1] < 235 || buf[i + 2] < 235) { painted++; sum = (sum + i) % 1000000007; }
+    return { painted, sum };
+  })`;
+
+  // ---- ① 손가락을 **대기만** 한다(이동 0) → 화면 동일(죽은 구간 dead_px=3의 잠금 포함)
+  led.sig_before = await page.evaluate(f => eval(f)(), GL_SIG);
+  led.dir_before = await page.evaluate(() => {
+    const c = window.S2S.stage.viewport.camera;
+    c.updateMatrixWorld(true);
+    const d = { x: 0, y: 0, z: 0 } as any;
+    const v = c.getWorldDirection(new (c.position.constructor)());
+    return [v.x, v.y, v.z];
+  });
+  await page.evaluate(() => {
+    const el = document.getElementById("ink")!;
+    const r = el.getBoundingClientRect();
+    el.dispatchEvent(new PointerEvent("pointerdown", {
+      pointerId: 91001, pointerType: "touch", isPrimary: true, bubbles: true,
+      clientX: r.left + r.width * 0.7, clientY: r.top + r.height * 0.7, buttons: 1 }));
+  });
+  led.sig_touch = await page.evaluate(f => eval(f)(), GL_SIG);
+  expect((led.sig_touch as any).painted).toBe((led.sig_before as any).painted);
+  expect((led.sig_touch as any).sum).toBe((led.sig_before as any).sum);
+
+  // ---- ② 죽은 구간을 넘기고(+5px — 이 이동은 구간 소비만 한다) **한 번 더**(+7px) 움직여
+  //      begin을 실제로 연다(#32 — 첫 이동만으로는 begin이 안 열려 팔이 공허하다).
+  //      begin이 unpin → 궤도 중심 설정을 지나므로 여기가 재조준이 나던 자리다
+  await page.evaluate(() => {
+    const el = document.getElementById("ink")!;
+    const r = el.getBoundingClientRect();
+    // ⚠ 이동도 **캔버스에** 보낸다 — 리스너가 캔버스에 있고 합성 이벤트는 포인터 캡처를 안 탄다
+    for (const dx of [5, 7]) {
+      el.dispatchEvent(new PointerEvent("pointermove", {
+        pointerId: 91001, pointerType: "touch", isPrimary: true, bubbles: true,
+        clientX: r.left + r.width * 0.7 + dx, clientY: r.top + r.height * 0.7, buttons: 1 }));
+    }
+  });
+  led.began = await page.evaluate(() => !window.S2S.stage.isPinned);
+  expect(led.began).toBe(true);          // **begin이 실제로 열렸다**(#32 — 미실행이면 공허하다)
+  led.dir_after = await page.evaluate(() => {
+    const c = window.S2S.stage.viewport.camera;
+    c.updateMatrixWorld(true);
+    const v = c.getWorldDirection(new (c.position.constructor)());
+    return [v.x, v.y, v.z];
+  });
+  const dot = (led.dir_before as number[]).reduce((t, v, i) => t + v * (led.dir_after as number[])[i], 0);
+  led.gaze_change_deg = (Math.acos(Math.min(1, Math.max(-1, dot))) * 180) / Math.PI;
+  // 2px 회전의 기대 각은 (2π·2/658)·(180/π) ≈ 1.1° — 재조준(경계 상자 방향, 수 도~수십 도)과 갈린다
+  expect(led.gaze_change_deg as number).toBeLessThan(1.5);
+  await page.evaluate(() => {
+    document.getElementById("ink")!.dispatchEvent(new PointerEvent("pointerup", {
+      pointerId: 91001, pointerType: "touch", isPrimary: true, bubbles: true }));
+  });
+
+  led.console_errors = errors;
+  expect(errors).toEqual([]);
+
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "orbit_begin_invariance.json"), JSON.stringify({
+    spec: "5차 지시 2 — 궤도 시작 불변: 손가락을 대기만 하면 화면이 같고(GL 서명 동일), 죽은 구간을 넘겨도 시선 변화가 미소 회전뿐이다(재조준 없음 — retarget이 중심을 시선 위로 투영).",
+    what_this_does_not_say: [
+      "GL 서명은 칠해진 픽셀 수 + 성긴 체크섬이다 — 완전한 프레임 대조가 아니다(같은 서명의 다른 프레임이 이론상 가능하나 재조준 크기의 변화는 못 지나간다)",
+      "시선 변화 1.5°는 2px 이동의 기대 회전(≈1.1°)과 재조준(경계 상자 방향, 수 도~수십 도)을 가르는 배선 임계다(#24 프레임: 도 단위·화면 높이 658px 기준) — 미소 회전의 정밀 검증이 아니다",
+      "dpr 1·합성 터치다(#21·AS-C1) — 실기(아이패드) 확인은 K의 문이다",
+      "한 구도(눈높이 위 상자)·중심 한 점의 확인이다(#12)",
+    ],
+    thresholds: { gaze_change_deg_max: 1.5, console_errors_max: 0 },
+    gate: {
+      registered: "터치 다운(이동 0)에서 GL 서명 동일 · 죽은 구간을 넘긴 두 번째 이동(begin 실개방 — isPinned 해제 확인 #32)에서 시선 변화 <1.5°(재조준이면 실패) · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
+      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 이동 0의 화면 불변은 설계 보장(#5 — 죽은 구간이 begin을 안 연다)이고, 판정은 그 배선(재조준 부재)이다",
     },
     ...led,
     constants: constantsSnapshot(),

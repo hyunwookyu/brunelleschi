@@ -123,6 +123,29 @@ export class Stage {
     this.viewport.invalidate();
   }
 
+  /**
+   * **궤도 중심을 현재 시선 위로 놓는다**(5차 지시 2-a). 원하는 중심(경계 상자 중심)을
+   * 지금 카메라의 시선에 **수직 투영**한 점을 target으로 한다 — target을 그 점 그대로 놓으면
+   * `OrbitControls.update()`가 카메라를 그 점으로 다시 겨눠 **첫 프레임이 튄다.**
+   * `setPose`가 §9.2 왕복에서 쓰는 같은 규약이다(target이 시선 위면 update가 항등이다).
+   * 중심이 시선 뒤(투영 ≤ 0)면 지금 거리를 유지한다 — 어느 경우에도 시선은 안 바뀐다.
+   */
+  retarget(center: Vec3 | null): void {
+    const cam = this.viewport.camera;
+    cam.updateMatrixWorld(true);
+    const fwd = new THREE.Vector3();
+    cam.getWorldDirection(fwd);
+    const tgt = this.viewport.controls.target;
+    let d = tgt.distanceTo(cam.position);
+    if (center) {
+      // 우리 규약(y 아래·z 안쪽) → three(y 위·z 앞). 뒤집기는 `viewport.ts` 규약 그대로다.
+      const c3 = new THREE.Vector3(center[0], -center[1], -center[2]);
+      const proj = c3.sub(cam.position).dot(fwd);
+      if (proj > 1e-3) d = proj;
+    }
+    tgt.copy(cam.position).addScaledVector(fwd, Math.max(1e-3, d));
+  }
+
   /** 확정 카메라를 벗어나 자유 시점으로. 지금 자세에서 이어 돌린다. */
   unpin(target: Vec3 | null): void {
     this.pinned = null;
@@ -130,10 +153,10 @@ export class Stage {
     this.viewport.projectionHook = (size) =>
       applyFreeAspect(cam as unknown as CameraLike, size, FREE_FOV_DEG);
     this.viewport.projectionHook(this.size());
-    if (target) {
-      // 우리 규약(y 아래·z 안쪽) → three(y 위·z 앞). 뒤집기는 `viewport.ts` 규약 그대로다.
-      this.viewport.controls.target.set(target[0], -target[1], -target[2]);
-    }
+    // **시선 유지**(5차 지시 2-a) — 중심점만 바뀌고 카메라 위치·방향은 그대로여야
+    // 첫 회전이 그리던 뷰에서 이어진다. 옛 판은 target을 중심점 그대로 놓아
+    // update()가 카메라를 재조준했다 — 그것이 "회전 시 뷰가 튄다"였다.
+    this.retarget(target);
     this.viewport.controls.enabled = true;
     this.viewport.controls.update();
     this.viewport.invalidate();

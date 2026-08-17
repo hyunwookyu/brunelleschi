@@ -1,5 +1,5 @@
 {
-  "n_flags": 1949,
+  "n_flags": 1952,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -4840,13 +4840,28 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "orbit_begin_invariance.json:thresholds.console_errors_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "orbit_begin_invariance.json:dir_after[1]",
+      "val": -6.123233995736767e-17,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
       "path": "orbit_center.json:thresholds.console_errors_max",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
-      "path": "orbit_center.json:center.target_to_bbox",
-      "val": 1.790180836524724e-15,
+      "path": "orbit_center.json:center.target[1]",
+      "val": 1.9721522630525293e-31,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "orbit_center.json:center.target_to_proj_bbox",
+      "val": 3.552713678800501e-15,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -9884,16 +9899,16 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 138,
+      "targets": 139,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 24,
+      "targets": 25,
       "hits": 0,
-      "note": "값 대조를 **지난 것 5** · **면제 19**(`reachability_absent`) · 원장 56개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, eraser.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, stage_browser.json:l_b3.gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "note": "값 대조를 **지난 것 5** · **면제 20**(`reachability_absent`) · 원장 57개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, eraser.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, stage_browser.json:l_b3.gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -9932,6 +9947,7 @@
     "misassign_retry.json",
     "occlusion.json",
     "one_stroke_one_axis.json",
+    "orbit_begin_invariance.json",
     "orbit_center.json",
     "order_promote.json",
     "order_signal.json",
