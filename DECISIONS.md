@@ -460,8 +460,10 @@ constants.ts에 — 전역 해시가 바뀌어 원장 40여 개가 STALE이 된�
 - **vpdir**: stepRule에서 기존 소실점의 **지지(support)로만** 떨어진다(같은 vpMisfit 임계) —
   카메라를 못 바꾼다. 억제되는 물음은 모호 구간(4~8°)의 screen_or_depth뿐.
   실측: `rule_camera.json@509615a1` r40 팔 asks_per_run 2.521→2.475(headline) ·
-  2.337→2.300(all_jitters), **deg_median·rejected 전 팔 불변**. 15px 팔은 완전 불변
-  (합성 잉크의 오스냅 계합이 r40에서만 남을 만큼 성겨서다).
+  2.337→2.300(all_jitters), **deg_median·rejected 전 팔 불변**. **발동 카운터**
+  (`osnap_vpdir_forced` — 3·4-R [5]로 신설·#32의 발동/효과 갈림): 15px 팔 **0**(불변의
+  원인은 미발동이다) · r40 팔 **13**(전부 잡음 행 — asks 감소가 그 자리). 판 참조는 원장
+  what_not_say(6차 = 513c33d · 초판 = b4f2d9b, 3·4-R [4]).
 - **ortho 기각 사유**(2-R″ [1] — 리뷰어가 초판을 잡았다): forced="screen"은 stepRule의
   P1 가드("소실점이 서 있으면 화면 수평선을 **묻는다**" — D-L53: 이 물음 없이 받게 하자
   축 오차 중앙 10.1°→31.6° 붕괴, P1은 **불가역**)를 우회한다. 방향 스냅의 "스냅이 곧

@@ -131,6 +131,58 @@ test("뷰 왕복 직후 첫 질의가 끝점을 문다(캐시가 시점을 키�
   expect((led.aim_dist_px_sample as any).snap_dist_px).toBeGreaterThan(0);   // 0 오염이 아니다
   expect((led.aim_dist_px_sample as any).snap_dist_px)
     .toBeLessThanOrEqual((led.aim_dist_px_sample as any).osnap_radius_px);   // 조리개 안 겨냥
+
+  // ---- **옛 정의의 되살림**(#21 — 3·4-R [7]): 정밀 대상에서 조리개 밖(>15px)이고 지면이
+  //      받는 자리. 옛 정의(스냅된 후보의 dist)는 여기서 **on_face의 정의상 0**을 적었다 —
+  //      그 값을 이 실행에서 그대로 재고(old_def_dist = 그 자리의 스냅 결과 dist), 새 정의가
+  //      같은 획에 적는 값(조리개 밖·프로브 안의 실제 겨냥 거리)과 대조한다. 실획 첫 표본의
+  //      "전부 0"이 정확히 이 형태였다.
+  // 지점 선택: 어느 획 끝점의 **연장 방향으로 25px** — 세그먼트 몸통에서도 25px 떨어져
+  // on_edge(조리개 15px)가 못 받고, 지평선 아래라 지면(on_face)이 받는 자리다.
+  const farStart = await page.evaluate(async () => {
+    const S = window.S2S;
+    const g3 = await import("/src/s3d/geom3d.ts");
+    const ctx = S.cam.ctx();
+    const el = document.getElementById("ink") as HTMLCanvasElement;
+    const hy = S.horizon().y;
+    for (const s of S.doc().strokes) {
+      if (!s.seg3d) continue;
+      for (const [e, f] of [[0, 1], [1, 0]]) {
+        const pe = g3.project(s.seg3d[e], ctx.principal, ctx.f);
+        const pf = g3.project(s.seg3d[f], ctx.principal, ctx.f);
+        if (!pe || !pf) continue;
+        const L = Math.hypot(pe[0] - pf[0], pe[1] - pf[1]);
+        if (L < 1e-6) continue;
+        const p: [number, number] = [pe[0] + (25 * (pe[0] - pf[0])) / L,
+                                     pe[1] + (25 * (pe[1] - pf[1])) / L];
+        if (p[0] < 20 || p[0] > el.clientWidth - 20 || p[1] < hy + 10
+            || p[1] > el.clientHeight - 20) continue;
+        const c = S.snap(p);                    // 옛 정의가 적었을 값 — 스냅 결과의 dist
+        if (!c || c.kind !== "on_face") continue;   // on_edge 등이 받는 자리면 다음 후보
+        return { p, old_def_kind: c.kind, old_def_dist: +c.dist.toFixed(4) };
+      }
+    }
+    return null;
+  });
+  expect(farStart).not.toBeNull();
+  led.far_aim = { old_def_kind: (farStart as any).old_def_kind,
+                  old_def_dist: (farStart as any).old_def_dist };
+  const fp = (farStart as any).p as [number, number];
+  await page.mouse.move(frame0!.x + fp[0], frame0!.y + fp[1]);
+  await page.mouse.down();
+  await page.mouse.move(frame0!.x + fp[0] + 90, frame0!.y + fp[1] + 60, { steps: 6 });
+  await page.mouse.up();
+  led.far_aim = await page.evaluate((prev) => {
+    const S = window.S2S;
+    const st = S.doc().strokes[S.doc().strokes.length - 1];
+    return { ...prev, snap_start_kind: st.snapStart?.kind ?? null,
+             snap_dist_px: st.snapDistPx == null ? null : +st.snapDistPx.toFixed(2) };
+  }, led.far_aim);
+  expect((led.far_aim as any).old_def_kind).toBe("on_face");   // 옛 정의가 잡던 그 후보
+  expect((led.far_aim as any).old_def_dist).toBe(0);           // **옛 정의의 0 — 버그의 되살림**(#21)
+  expect((led.far_aim as any).snap_dist_px).not.toBeNull();
+  expect((led.far_aim as any).snap_dist_px).toBeGreaterThan(15);   // 조리개 밖 겨냥이 이제 보인다
+  expect((led.far_aim as any).snap_dist_px).toBeLessThanOrEqual(40);
 });
 
 test.afterAll(() => {
@@ -147,19 +199,27 @@ test.afterAll(() => {
     "stale_offset_px.behind_camera는 낡은 후보가 카메라 뒤로 가 아예 죽는 경우의 수다 — " +
       "이 실행에서는 0(관측 없음)이고, 그때 옛 판이 후보를 잃는다는 것은 기하 서술이지 실측이 아니다",
   ];
+  // 음성 팔 값들을 한 경로에 — selfcheck 값 대조(#33)가 푼다
+  led.gate_oracle_values = [...(led as any).stale_offset_px.offsets,
+                            (led as any).far_aim.snap_dist_px];
   led.gate = gate({
     registered: "⚠ 이 항목이 등록한 게이트다 — CLAUDE.md §2의 중단 조건(camera_gate)이 "
       + "아니다(#41). 확정 뷰 ↔ 회전 시점 왕복(그 시점에서 기하 변경·호버 오염 포함) 직후의 "
       + "첫 질의가 왕복 전과 같은 **끝점**을 문다(정점·중점·교차점은 표본 0 — what_not_say). "
-      + "그리고 끝점 곁 ~8px에서 그은 획의 snapDistPx가 0도 null도 아닌 조리개 안 값으로 적힌다",
-    reachability: "음성 채널(#30) — 낡은 캐시의 후보가 확정 카메라에서 참 자리를 벗어나는 "
-      + "거리(stale_offset_px — 이 실행에서 잼: 수백 px대). 이 원장의 osnap_radius_px"
-      + "(aim_dist_px_sample.osnap_radius_px = 앱 설정값)와 자릿수로 갈리므로 낡은 캐시로는 "
-      + "이 게이트를 못 넘는다 — 기준이 판별력을 갖는 근거다",
-    reachability_value: (led as any).stale_offset_px.offsets,
-    reachability_source: "stale_offset_px/offsets",
+      + "그리고 끝점 곁 ~8px에서 그은 획의 snapDistPx가 0도 null도 아닌 조리개 안 값으로 적히고, "
+      + "조리개 밖(~22px) 지면 시작 획의 snapDistPx도 실거리로 적힌다(옛 정의는 그 자리가 0 — "
+      + "far_aim.old_def_dist가 이 실행의 되살림이다). "
+      + "⚠ 기준 등록 시점(#26): 스펙 작성(첫 실행 전)에 등록했고, [8] 대응의 '끝점' 좁힘과 "
+      + "far_aim 팔 추가는 측정 뒤의 **모집단 명시·팔 추가**다 — 통과선 수치는 안 움직였다",
+    reachability: "음성 채널(#30) — ①(캐시): 낡은 캐시의 후보가 확정 카메라에서 참 자리를 "
+      + "벗어나는 거리(stale_offset_px 두 값 — 수백 px대. 이 원장의 osnap_radius_px = 15와 "
+      + "자릿수로 갈린다). ②(겨냥 거리): far_aim의 새 정의 값(셋째 값 — 조리개 밖 실거리). "
+      + "옛 정의의 대응값은 far_aim.old_def_dist = 정확히 0(버그의 구성상 산물이라 "
+      + "reachability_value에 안 넣는다 — #40 ②의 0·1 규칙. 값 자체는 원장 far_aim에 있다)",
+    reachability_value: (led as any).gate_oracle_values,
+    reachability_source: "gate_oracle_values",
     result: { before: led.before_roundtrip, after: led.after_roundtrip,
-              aim_dist_px_sample: led.aim_dist_px_sample },
+              aim_dist_px_sample: led.aim_dist_px_sample, far_aim: led.far_aim },
     note: "수정 전 재현(#21): 같은 스펙이 after에서 **on_edge**(캐시 밖 하위 대체)를 물어 "
       + "실패했다 — progress.md 7차 항목 2의 재현 기록. 실획의 시작 스냅에서는 같은 자리가 "
       + "on_face였다(획이 기존 기하에서 떨어진 곳에서 시작해 on_edge 후보도 멀었던 상태)",

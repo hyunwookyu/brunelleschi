@@ -108,6 +108,8 @@ interface RuleRun {
   snapEngaged: number;
   /** 2D 판정을 지난 획 수(#38 **분모** — 리뷰어 [22]. 확정 후 획은 앱에서도 안 지난다). */
   snapQueried: number;
+  /** 끝점 오스냅 현의 vpdir 강제 발동 수(7차 D-L69 ② — 3·4-R [5]). */
+  osnapVpdirForced: number;
   /** 첫 소실점(two_lines)을 만든 두 선 중 **끝점이 움직였던 것의 수**(0~2, 리뷰어 [22]).
    * two_lines가 안 났거나 원시 팔이면 null. */
   firstPairMoved: number | null;
@@ -131,6 +133,9 @@ function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
   const list = orderStrokes(fx, order);
   let st = newRuleState();
   let asks = 0, rejected = 0, snapEngaged = 0, snapQueried = 0;
+  /** **끝점 오스냅 현의 vpdir 강제 발동 수**(7차 D-L69 ② — 3·4-R [5]: 발동 0과 효과 0을
+   *  가른다 #32·#7). resolve2dCore가 end2와 vpdir를 함께 낸 경우다. */
+  let osnapVpdirForced = 0;
   let firstSep: number | null = null;
   let firstPairMoved: number | null = null;
   let prevWaiting: RLine | null = null;
@@ -167,6 +172,7 @@ function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
         // **스냅이 곧 선언이다**(5차 지시 3-a·b) — 직교면 화면 축, 소실점 방향이면 깊이.
         // 물음(판정)의 대상은 스냅이 안 걸린 자유 선뿐이다
         forcedBySnap = r2.ortho ? "screen" : r2.vpdir ? "depth" : undefined;
+        if (r2.end2 && r2.vpdir) osnapVpdirForced += 1;
       } else {
         // **위약**: 같은 크기, 임의 방향(#39). 스냅이 안 움직였으면 위약도 안 움직인다
         if ((dA > 1e-9 || dB > 1e-9) && rr) {
@@ -206,7 +212,8 @@ function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
     st = r.state;
   }
   const screenAxes = st.slots.filter(sl => sl && sl.kind === "screen").length;
-  return { st, asks, rejected, firstSep, snapEngaged, snapQueried, firstPairMoved, screenAxes };
+  return { st, asks, rejected, firstSep, snapEngaged, snapQueried, osnapVpdirForced,
+           firstPairMoved, screenAxes };
 }
 
 type Order = "drawn" | "grouped" | "wide_pair";
@@ -281,6 +288,7 @@ interface Bag {
   seps: number[];
   /** 끝점이 움직인 획 수(#38 분자). 원시 팔은 0. */
   snapped: number;
+  osnapVpdirForced: number;
   /** 2D 판정을 지난 획 수(#38 분모 — 리뷰어 [22]). */
   queried: number;
   /** 첫 짝(two_lines) 중 움직였던 선 수의 합과, two_lines가 난 실행 수(리뷰어 [22]). */
@@ -289,7 +297,7 @@ interface Bag {
   screenAxes: number;
 }
 const bag = (): Bag => ({ errs: [], runs: 0, ok: 0, order: [], asks: 0, rejected: 0, seps: [],
-                          snapped: 0, queried: 0, firstPairMoved: 0, firstPairRuns: 0,
+                          snapped: 0, queried: 0, osnapVpdirForced: 0, firstPairMoved: 0, firstPairRuns: 0,
                           screenAxes: 0 });
 
 function summarize(b: Bag) {
@@ -308,6 +316,8 @@ function summarize(b: Bag) {
     first_pair_sep_deg_median: round(median(b.seps), 2),
     snap_engaged: b.snapped,
     snap_queried: b.queried,
+    /** 끝점 오스냅 현의 vpdir 강제 발동 수(D-L69 ② — 0이면 그 팔의 '불변'은 미발동이다 #32). */
+    osnap_vpdir_forced: b.osnapVpdirForced,
     /** 첫 소실점을 만든 두 선 중 끝점이 움직였던 것(분자/분모 — 리뷰어 [22]). */
     first_pair_moved: b.firstPairMoved,
     first_pair_runs: b.firstPairRuns,
@@ -375,6 +385,7 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
                 t.asks += extra.asks ?? 0;
                 t.rejected += extra.rejected ?? 0;
                 t.snapped += extra.snapEngaged ?? 0;
+                t.osnapVpdirForced += extra.osnapVpdirForced ?? 0;
                 t.queried += extra.snapQueried ?? 0;
                 if (extra.firstPairMoved != null) {
                   t.firstPairMoved += extra.firstPairMoved; t.firstPairRuns += 1;
@@ -431,6 +442,7 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
         live[arm].order.push(...b.order); live[arm].asks += b.asks;
         live[arm].rejected += b.rejected; live[arm].seps.push(...b.seps);
         live[arm].snapped += b.snapped; live[arm].queried += b.queried;
+        live[arm].osnapVpdirForced += b.osnapVpdirForced;
         live[arm].firstPairMoved += b.firstPairMoved; live[arm].firstPairRuns += b.firstPairRuns;
         live[arm].screenAxes += b.screenAxes;
       }
@@ -453,6 +465,7 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
           t.errs.push(...b.errs); t.runs += b.runs; t.ok += b.ok;
           t.order.push(...b.order); t.asks += b.asks; t.rejected += b.rejected;
           t.seps.push(...b.seps); t.snapped += b.snapped; t.queried += b.queried;
+          t.osnapVpdirForced += b.osnapVpdirForced;
           t.firstPairMoved += b.firstPairMoved; t.firstPairRuns += b.firstPairRuns;
           t.screenAxes += b.screenAxes;
         }
@@ -474,6 +487,7 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
         t.errs.push(...b.errs); t.runs += b.runs; t.ok += b.ok;
         t.order.push(...b.order); t.asks += b.asks; t.rejected += b.rejected;
         t.seps.push(...b.seps); t.snapped += b.snapped; t.queried += b.queried;
+          t.osnapVpdirForced += b.osnapVpdirForced;
         t.firstPairMoved += b.firstPairMoved; t.firstPairRuns += b.firstPairRuns;
         t.screenAxes += b.screenAxes;
       }
@@ -539,6 +553,7 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
         "합성 잉크는 짝을 의도하지 않는다(AS-L13의 자리) — 사람은 X 교차·연장 수렴으로 짝을 긋는다. 실획(K)이 최종 판정자다",
         "시드별 분해가 없다(#14) — 원시↔스냅 격차가 시드 폭 안인지 미확인이다(격차 값은 headline_no_identity를 그 자리에서 읽는다 — 수치를 여기 적으면 재실행마다 낡는다, #1). 짝지은 부분집합(paired_headline)이 표본 짝은 맞추지만 시드 폭은 못 대고, **축 분모는 여전히 다르다**(예: drawn 짝 층에서 raw_axes 대 snap_axes — 무한원 편평화의 선택 효과, 리뷰어 [3-6])",
         "스냅 팔은 **무물음 선언 배선**(지시 3 — 직교→screen·vp_dir→depth 강제)이다. 남는 물음(자유 선)에는 참 축으로 답한다(오라클) — 어느 팔도 실사용 성능이 아니다. 물음 오라클 판(지시 3 이전)의 값은 git show d724ac0:stage0/out/rule_camera.json에 있다",
+        "판(revision) 참조(3·4-R [4]): 7차 이전(6차 마감) 판은 git show 513c33d:stage0/out/rule_camera.json, 7차 초판(끝점 오스냅 현의 ortho+vpdir 강제 — P1 가드 우회로 기각된 판, D-L69 ②)은 git show b4f2d9b:stage0/out/rule_camera.json이다. 현행은 vpdir만 강제한다 — 발동 수는 osnap_vpdir_forced가 팔별로 센다(0이면 그 팔의 무변화는 미발동이다, #32)",
         "카메라 확정 후 3D 오스냅·축 스냅의 효과는 2D 목록 근사 밖이다(§4.5 보장으로 화면 좌표는 같다)",
         "무한원 축 제외는 원시 팔에서는 항등 제거지만 **스냅 팔에서는 선택이 될 수 있다**(리뷰어 [23]② — 직교 스냅이 얕은 축을 화면 축으로 펴면 그 축이 분모에서 빠진다). screen_axes_total이 그 대조 재료다",
       ],
