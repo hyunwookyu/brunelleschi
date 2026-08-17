@@ -10,12 +10,12 @@
     "typecheck": "tsc --noEmit",
     "build": "vite build",
     "dev": "vite",
-    "dev:http": "node -e \"process.env.S2S_HTTP='1';require('child_process').spawnSync(process.platform==='win32'?'npx.cmd':'npx',['vite'],{stdio:'inherit',env:process.env})\"",
-    "dev:5222": "node -e \"process.env.S2S_HTTP='1';require('child_process').spawnSync(process.platform==='win32'?'npx.cmd':'npx',['vite','--port','5222','--strictPort'],{stdio:'inherit',env:process.env})\"",
+    "dev:http": "node -e \"process.env.S2S_HTTP='1';require('child_process').spawnSync(process.platform==='win32'?'npx.cmd':'npx',['vite'],{stdio:'inherit',env:process.env,shell:process.platform==='win32'})\"",
+    "dev:5222": "node -e \"process.env.S2S_HTTP='1';require('child_process').spawnSync(process.platform==='win32'?'npx.cmd':'npx',['vite','--port','5222','--strictPort'],{stdio:'inherit',env:process.env,shell:process.platform==='win32'})\"",
     "icons": "python tools/make_icons.py",
-    "dev:e2e": "node -e \"process.env.S2S_HTTP='1';require('child_process').spawnSync(process.platform==='win32'?'npx.cmd':'npx',['vite','--port','5223','--strictPort'],{stdio:'inherit',env:process.env})\"",
+    "dev:e2e": "node -e \"process.env.S2S_HTTP='1';require('child_process').spawnSync(process.platform==='win32'?'npx.cmd':'npx',['vite','--port','5223','--strictPort'],{stdio:'inherit',env:process.env,shell:process.platform==='win32'})\"",
     "e2e": "playwright test",
-    "build:pages": "node -e \"process.env.S2S_BASE=process.env.S2S_BASE||'./';require('child_process').spawnSync(process.platform==='win32'?'npx.cmd':'npx',['vite','build'],{stdio:'inherit',env:process.env})\"",
+    "build:pages": "node -e \"process.env.S2S_BASE=process.env.S2S_BASE||'./';require('child_process').spawnSync(process.platform==='win32'?'npx.cmd':'npx',['vite','build'],{stdio:'inherit',env:process.env,shell:process.platform==='win32'})\"",
     "preview": "vite preview --port 4173"
   },
   "devDependencies": {

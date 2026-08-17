@@ -788,6 +788,13 @@ function switchView(id: string) {
  * (L-B.8). 생성 가지는 그때 도달한다. 그 사실을 `progress.md`에 적었다(#23).
  */
 function viewForDrawing(): string {
+  // ⚠⚠ **카메라 확정 전에는 언제나 확정 뷰다**(5차 지시 1 — 화면 불변 전환의 전제).
+  // 그리는 이 화면이 **곧 확정 카메라의 화면이 된다**(§4.5) — 별개 시점이 아니다.
+  // 옛 판은 확정 전 스테이지가 비핀(자유 자세)이라는 이유로 **가짜 뷰를 만들어** 확정 전
+  // 획 전부를 거기 넣었고, 그 결과 ① `standCamera`의 일괄 풀이(확정 뷰 대상)가 빈 목록을
+  // 받아 **아무것도 안 올라갔고** ② 확정 순간 `viewIsCurrent()`가 거짓이 되어 **그린 획이
+  // 화면에서 통째로 사라졌다**(5차 항목 1 — "전환이 느껴지면 안 된다"의 정면 위반).
+  if (!cam.standing()) return confirmView().id;
   const p = stage.pose();
   if (p === null) return confirmView().id;
   const cur = doc.views.find(v => v.id === doc.currentView);
@@ -1257,7 +1264,9 @@ function geomScaleOf(list: SStroke[]): number {
 function standCamera() {
   const ctx = cam.ctx();
   if (!ctx) return;
-  const targets = pending(doc, doc.views[0].id);
+  // **확정 뷰의 대기 획 전부**(§5.4) — 확정 전 획은 전부 확정 뷰 소속이다(viewForDrawing).
+  // ⚠ `doc.views[0]`이 아니라 `confirmView()`다 — 뜻(자세 항등인 뷰)으로 찾는다.
+  const targets = pending(doc, confirmView().id);
   const n = solveInto(ctx, targets);
   stage.pinTo(ctx.principal, ctx.f);
   // 확정 직후에도 연쇄를 한 번 돈다 — 놓인 것이 생겼으므로 대기 획이 붙을 수 있다

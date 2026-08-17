@@ -1040,3 +1040,161 @@ test("빈 화면 — 두 번째 획이 첫 획의 끝점에 붙는다 (4차 지�
     metric_defs: metricsSnapshot(),
   }, null, 1));
 });
+
+// ---------------------------------------------------------------- 5차 지시 1 — 확정 화면 불변
+//
+// **1점 확정 직전·직후 그린 선이 같은 자리에 있는가**(지시 1-d의 반례 팔).
+// 되살린 버그: 확정 전 획이 자유 자세 가짜 뷰로 들어가 일괄 풀이가 빈 목록을 받고
+// (lifted 0), viewIsCurrent()가 거짓이 되어 그린 획이 화면에서 통째로 사라지던 것.
+// ⚠ **확정 획의 시작점을 지평선 위에 둔다** — 옛 코드가 우연히 살아나던 경로(시작점이
+// 지면을 물어 연쇄로 올라가는 것)를 막아, 옛 코드에서 이 팔이 반드시 실패하게 한다.
+test("1점 확정 — 직전·직후 그린 선이 같은 자리다 (5차 지시 1)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+
+  const box = (await page.locator("#ink").boundingBox())!;
+  const W = box.width, H = box.height;
+  const drawPx = async (x1: number, y1: number, x2: number, y2: number) => {
+    await page.mouse.move(box.x + x1, box.y + y1);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move(box.x + x1 + (x2 - x1) * i / 8, box.y + y1 + (y2 - y1) * i / 8);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(50);
+  };
+  const led: Record<string, unknown> = {};
+
+  // 획 중점들의 표시 여부 — 잉크(2D 알파) 또는 GL(3D 어둡기) 어느 층이든 보이면 된다
+  const VISIBLE_AT = `(async (pts) => {
+    const S = window.S2S;
+    const el = document.getElementById("ink");
+    const dpr = el.width / el.getBoundingClientRect().width;
+    const ink = el.getContext("2d").getImageData(0, 0, el.width, el.height).data;
+    const vp = S.stage.viewport;
+    vp.renderer.render(vp.scene, vp.camera);
+    const gl = vp.renderer.getContext();
+    const bw = gl.drawingBufferWidth, bh = gl.drawingBufferHeight;
+    const buf = new Uint8Array(bw * bh * 4);
+    gl.readPixels(0, 0, bw, bh, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+    const kx = bw / vp.renderer.domElement.clientWidth,
+          ky = bh / vp.renderer.domElement.clientHeight;
+    return pts.map(([sx, sy]) => {
+      let inkN = 0;
+      const cx = Math.round(sx * dpr), cy = Math.round(sy * dpr);
+      for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+        const i = ((cy + dy) * el.width + (cx + dx)) * 4 + 3;
+        if (i >= 0 && i < ink.length && ink[i] > 30) inkN++;
+      }
+      let dark = 255;
+      const gx = Math.round(sx * kx), gy = Math.round(bh - sy * ky);
+      for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+        const i = ((gy + dy) * bw + (gx + dx)) * 4;
+        if (i < 0 || i >= buf.length) continue;
+        dark = Math.min(dark, Math.max(buf[i], buf[i + 1], buf[i + 2]));
+      }
+      return { ink: inkN, gl_dark: dark };
+    });
+  })`;
+
+  // ---- ① 작도 밑선 + 깊이선 하나(밑선 왼끝에서 소실점 쪽으로) — 아직 확정 전
+  //      ⚠ 끝점을 잇는 실제 작도 형태다 — 일괄 풀이(liftAll)는 끝점 접합만 구조로 잇는다
+  //      (화면 가로지름은 가림 교차일 수 있어 안 잇는다, #23).
+  //      ⚠ **그림 전체가 지평선 위다**(눈높이 위 상자 — 올려다본 구도): 옛 코드의 우연한
+  //      생존 경로(확정 획 시작점이 지면을 물어 연쇄로 올라감)는 지면(지평선 아래)에서만
+  //      열리므로, 이 구도에서 옛 결함(일괄 풀이 빈 목록 → lifted 0)이 반드시 드러난다
+  await drawPx(0.25 * W, 0.30 * H, 0.45 * W, 0.301 * H);
+  await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
+  const mids0 = await page.evaluate(() => window.S2S.doc().strokes.map((s: any) => {
+    const a = s.pts2d[0], b = s.pts2d[s.pts2d.length - 1];
+    return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  }));
+  led.before = await page.evaluate(async ({ fn, pts }) => {
+    // eslint-disable-next-line no-eval
+    return await eval(fn)(pts);
+  }, { fn: VISIBLE_AT, pts: mids0 });
+  for (const v of led.before as any[]) expect(v.ink).toBeGreaterThan(0);  // 직전: 잉크가 보인다
+  led.standing_before = await page.evaluate(() => window.S2S.standing());
+  expect(led.standing_before).toBe(false);
+
+  // ---- ② 확정 획 — 밑선 오른끝에서 같은 소실점 쪽으로 긋는 둘째 깊이선.
+  //      첫 깊이선과의 연장 수렴 교점(≈0.62W, 0.58H) = 소실점 → P1 확정
+  await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
+  led.after_state = await page.evaluate(() => {
+    const S = window.S2S, d = S.doc();
+    return { standing: S.standing(), order: S.order(),
+             lifted: d.strokes.filter((s: any) => s.seg3d).length,
+             strokes: d.strokes.length,
+             pending_hidden: d.strokes.filter((s: any) => !s.seg3d
+               && s.viewRef !== d.currentView).length };
+  });
+  expect((led.after_state as any).standing).toBe(true);
+  // **일괄 풀이가 실제로 돌았다** — 옛 코드는 가짜 뷰 때문에 0이었다(이 팔의 되살린 버그)
+  expect((led.after_state as any).lifted).toBe(3);
+  expect((led.after_state as any).pending_hidden).toBe(0);   // 숨은 뷰에 남은 획이 없다
+
+  // ---- ③ 직후: 같은 자리(그린 선 중점)가 여전히 보인다 — 잉크가 아니면 3D가 그 자리에 있다
+  const mids1 = await page.evaluate(() => window.S2S.doc().strokes.slice(0, 2).map((s: any) => {
+    const a = s.pts2d[0], b = s.pts2d[s.pts2d.length - 1];
+    return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  }));
+  led.after = await page.evaluate(async ({ fn, pts }) => {
+    // eslint-disable-next-line no-eval
+    return await eval(fn)(pts);
+  }, { fn: VISIBLE_AT, pts: mids1 });
+  for (const v of led.after as any[]) {
+    expect(v.ink > 0 || v.gl_dark < 235).toBe(true);         // **같은 자리에 남아 있다**
+  }
+
+  // ---- ④ 재투영 불변(지시 1-b) — 올라간 세그먼트를 확정 카메라로 되쏘면 pts2d와 같다
+  led.reproject = await page.evaluate(() => {
+    const S = window.S2S, d = S.doc();
+    const ctx = S.cam.ctx();
+    const P = ctx.principal, f = ctx.f;
+    const prj = (p: number[]) => [P[0] + (f * p[0]) / p[2], P[1] + (f * p[1]) / p[2]];
+    return d.strokes.filter((s: any) => s.seg3d).map((s: any) => {
+      const a = prj(s.seg3d[0]), b = prj(s.seg3d[1]);
+      const a2 = s.pts2d[0], b2 = s.pts2d[s.pts2d.length - 1];
+      return { gap_a: Math.hypot(a[0] - a2[0], a[1] - a2[1]),
+               gap_b: Math.hypot(b[0] - b2[0], b[1] - b2[1]) };
+    });
+  });
+  // 시작점은 자기 광선 위(§4.5 — 오차 0). 끝점은 축 스냅이 방향을 다시 정할 수 있어 별도다
+  for (const g of led.reproject as any[]) expect(g.gap_a).toBeLessThan(1e-3);
+  led.reproject_end_max = Math.max(...(led.reproject as any[]).map((g: any) => g.gap_b));
+
+  led.console_errors = errors;
+  expect(errors).toEqual([]);
+
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "p1_invariance.json"), JSON.stringify({
+    spec: "5차 지시 1 — 1점 확정 직전·직후 화면 불변: 그린 선의 중점이 같은 자리에 보이고, 일괄 풀이가 확정 뷰의 대기 획 전부를 올린다. Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
+    what_this_does_not_say: [
+      "중점 표본 셋의 확인이다(#12) — 선 전체의 픽셀 일치가 아니다(안티에일리어싱·굵기 차로 완전 일치는 정의가 안 된다). 자리 불변의 판정은 9×9 창의 표시 유무다",
+      "재투영 0은 시작점(자기 광선 위, §4.5 보장 #5)이고 **끝점은 별도로 적는다** — 축 스냅이 방향을 다시 정하면 끝점 상이 이동한다(그건 결함이 아니라 D-L42의 동작이다). reproject_end_max가 그 값이다",
+      "dpr 1 실행이다(#21) — 아이패드(dpr 2·터치)의 확인은 실기(K)의 문이다",
+      "옛 결함의 재현 조건(그림 전체가 지평선 위 — 눈높이 위 상자)을 픽스처에 박았다 — 확정 획 시작점이 지평선 아래면 옛 코드도 지면 스냅 연쇄로 우연히 올라가 이 팔이 그 결함을 못 본다. 지평선 아래 구도의 확정은 기본 흐름 스펙(①~③)이 덮는다",
+    ],
+    thresholds: { reproject_start_px_max: 1e-3, gl_dark_max: 235, ink_alpha_min: 30,
+                  console_errors_max: 0 },
+    gate: {
+      registered: "확정 직전 세 획 중점에 잉크가 있고 · 확정 직후 lifted=3(일괄 풀이 실행 — 옛 코드는 가짜 뷰 때문에 0)·숨은 뷰 대기 0 · 같은 중점이 직후에도 보이고(잉크 또는 GL<235) · 올라간 시작점의 재투영 오차 <1e-3px(§4.5 — 실측 3.5e-6px, 부동소수 잔차만 담는 배선 임계) · 콘솔 오류 0. "
+        + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
+      reachability_absent: "**배선·보장 확인이라 도달 가능성 오라클이 성립하지 않는다** — 재투영 0은 §4.5의 설계 보장이고(#5) 임계 1e-3px는 배선 판정이다(실측 3.5e-6px — 부동소수 잔차만 걸린다)",
+    },
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 1));
+});
