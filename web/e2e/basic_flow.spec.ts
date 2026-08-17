@@ -1810,3 +1810,136 @@ test("시점 저장·복귀 — 실행취소는 카메라를 안 건드린다 (5
     metric_defs: metricsSnapshot(),
   }, null, 1));
 });
+
+// ---------------------------------------------------------------- 5차 지시 8 — 뷰 큐브
+//
+// 수직축(Y) 고정 회전: 면 클릭 = 90° 스냅(애니메이션) · 드래그 = 연속 회전 · 피치 유지 —
+// 1점에서 90° 돌리면 여전히 1점이고 소실점만 옮겨 간다(8-b). 큐브 방향은 카메라를 따른다(8-e).
+test("뷰 큐브 — 90° 스냅·연속 회전·피치 유지·소실점 하나 (5차 지시 8)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+
+  const box = (await page.locator("#ink").boundingBox())!;
+  const W = box.width, H = box.height;
+  const drawPx = async (x1: number, y1: number, x2: number, y2: number) => {
+    await page.mouse.move(box.x + x1, box.y + y1);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move(box.x + x1 + (x2 - x1) * i / 8, box.y + y1 + (y2 - y1) * i / 8);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(50);
+  };
+  const STATE = `(() => {
+    const S = window.S2S;
+    const c = S.stage.viewport.camera;
+    c.updateMatrixWorld(true);
+    const f = { x: 0, y: 0, z: 0 };
+    const v = c.getWorldDirection(new (c.position.constructor)());
+    // 수평 세계 축 두 가족(three x·z)의 소실점이 화면 안에 몇 개인가
+    const inside = (dir) => {
+      for (const s of [1, -1]) {
+        // ⚠ far 평면(1000) 안의 원거리 점을 쓴다 — 밖이면 NDC z>1로 걸러져 프로브가 공허해진다
+        const far = c.position.clone().addScaledVector(dir, s * 500);
+        const nd = far.project(c);
+        if (nd.z < 1 && Math.abs(nd.x) <= 1 && Math.abs(nd.y) <= 1) return true;
+      }
+      return false;
+    };
+    const V3 = c.position.constructor;
+    const nInside = [new V3(1, 0, 0), new V3(0, 0, 1)].filter(inside).length;
+    return { yaw: S.cubeYaw(), fy: v.y, pinned: S.stage.isPinned,
+             vps_inside: nInside, cube_on: S.viewCube().on,
+             cube_hidden: document.getElementById("cube").classList.contains("hidden") };
+  })`;
+  const led: Record<string, unknown> = {};
+  const settle = async () => {
+    let prev = await page.evaluate(c => eval(c)(), STATE);
+    for (let i = 0; i < 40; i++) {
+      await page.waitForTimeout(100);
+      const cur = await page.evaluate(c => eval(c)(), STATE);
+      const d = Math.abs((prev as any).yaw - (cur as any).yaw);
+      prev = cur;
+      if (d < 1e-10) break;
+    }
+    return prev;
+  };
+
+  // 확정 상태(1점 — 눈높이 위 구도, lifted 3)
+  await drawPx(0.25 * W, 0.30 * H, 0.45 * W, 0.301 * H);
+  await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
+  await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
+  led.before = await page.evaluate(c => eval(c)(), STATE);
+  expect((led.before as any).cube_on).toBe(true);            // 기본 켬(8-d)
+  expect((led.before as any).cube_hidden).toBe(false);       // 확정 후 보인다
+
+  // ---- 면 클릭(오른쪽 1/3) = +90° 스냅(애니메이션)
+  const cube = (await page.locator("#cube").boundingBox())!;
+  await page.mouse.click(cube.x + cube.width * 0.85, cube.y + cube.height * 0.5);
+  led.after_snap = await settle();
+  const dyaw = Math.abs((((led.after_snap as any).yaw - (led.before as any).yaw)
+    + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+  led.dyaw_deg = (dyaw * 180) / Math.PI;
+  expect(Math.abs((led.dyaw_deg as number) - 90)).toBeLessThan(0.5);   // **90° 돌았다**
+  // **피치 유지**(8-b) — 시선의 수직 성분이 그대로다
+  expect(Math.abs((led.after_snap as any).fy - (led.before as any).fy)).toBeLessThan(1e-6);
+  // **여전히 1점** — 수평 축 두 가족 중 소실점이 화면 안에 **하나**다(검증 절 그대로)
+  expect((led.after_snap as any).vps_inside).toBe(1);
+
+  // ---- 드래그 = 연속 회전(작게 끌면 작게 돈다 — 90° 스냅이 아니다)
+  await page.mouse.move(cube.x + cube.width * 0.5, cube.y + cube.height * 0.5);
+  await page.mouse.down();
+  await page.mouse.move(cube.x + cube.width * 0.5 + 20, cube.y + cube.height * 0.5, { steps: 5 });
+  await page.mouse.up();
+  led.after_drag = await settle();
+  const dragYaw = Math.abs((((led.after_drag as any).yaw - (led.after_snap as any).yaw)
+    + Math.PI * 3) % (Math.PI * 2) - Math.PI) * 180 / Math.PI;
+  led.drag_deg = dragYaw;
+  expect(dragYaw).toBeGreaterThan(1);                        // 실제로 돌았다(#38 — 공허 방지)
+  expect(dragYaw).toBeLessThan(45);                          // 90° 스냅이 아니라 연속이다
+  expect(Math.abs((led.after_drag as any).fy - (led.before as any).fy)).toBeLessThan(1e-6);
+
+  // ---- 토글(8-d) — 끄면 숨는다
+  await page.evaluate(() => {
+    const S = window.S2S;
+    (document.querySelector('#bar button[data-act="menu"]') as HTMLButtonElement).click();
+  });
+  await page.click('#bar button[data-act="viewcube"]');
+  led.toggled = await page.evaluate(() =>
+    new Promise(res => requestAnimationFrame(() => requestAnimationFrame(() =>
+      res(document.getElementById("cube")!.classList.contains("hidden"))))));
+  expect(led.toggled).toBe(true);
+
+  led.console_errors = errors;
+  expect(errors).toEqual([]);
+
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "view_cube.json"), JSON.stringify({
+    spec: "5차 지시 8 — 뷰 큐브: 면 클릭 90° 스냅(수직축 고정·피치 유지·소실점 화면 안 1개 유지), 드래그 연속 회전, 토글(기본 켬). Playwright 신뢰 이벤트·콘솔 오류 0",
+    what_this_does_not_say: [
+      "면 클릭의 구현은 단순화다(좌/우 1/3 = 그 방향 90°·가운데 = 가장 가까운 90° 정렬) — CAD 뷰 큐브의 3D 면 히트가 아니다. 위/아래 면은 없다: 회전 축이 수직축 고정이라(8-b) 피치를 바꾸는 면은 정의상 못 둔다",
+      "vps_inside의 판정은 세계 수평 축 두 가족의 소실점 투영이다 — 그린 선의 실측 수렴점이 아니다(#5에 가까운 기하 계산). 화면 안 개수가 1인 것이 '같은 조건의 1점'의 판정이다",
+      "한 구도·한 클릭 지점의 확인이다(#12) · dpr 1(#21)",
+    ],
+    thresholds: { snap_deg_tol: 0.5, pitch_delta_max: 1e-6, drag_min_deg: 1, drag_max_deg: 45,
+                  console_errors_max: 0 },
+    gate: {
+      registered: "면 클릭(우 1/3) 후 요 변화 90°±0.5° · 피치(시선 수직 성분) 변화 <1e-6 · 수평 축 소실점이 화면 안에 정확히 1개 · 드래그 20px 후 요 1~45°(연속 — 스냅 아님) · 토글로 숨김 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
+      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 피치 유지는 수직축 회전의 기하 보장이고(#5) 판정은 그 배선(클릭→spinYaw→카메라)이다",
+    },
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 1));
+});

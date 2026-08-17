@@ -70,8 +70,13 @@
     #side input[type=range]{writing-mode:vertical-lr;direction:rtl;height:140px;width:26px}
     #side .val{font-size:11px;color:#666}
     #side.hidden{display:none}
+    /* 5차 지시 8 — 뷰 큐브: 우측 상단(도구 묶음 아래). 면 클릭 = 90° 스냅 · 드래그 = 연속 회전 */
+    #cube{position:absolute;right:10px;top:118px;z-index:4;width:84px;height:84px;
+          background:rgba(255,255,255,.9);border:1px solid #e3e3e3;border-radius:10px;
+          touch-action:none;cursor:grab;backdrop-filter:blur(2px)}
+    #cube.hidden{display:none}
     /* §9.2 뷰 목록 — 라이노의 명명된 뷰를 따르되 **2D 획을 소유한다**. */
-    #views{position:absolute;right:10px;top:118px;z-index:3;min-width:15ch;max-width:30ch;
+    #views{position:absolute;right:10px;top:212px;z-index:3;min-width:15ch;max-width:30ch;
            background:rgba(255,255,255,.86);border:1px solid #e3e3e3;border-radius:8px;
            padding:6px 8px;line-height:1.5;backdrop-filter:blur(2px)}
     #views .cap{font-size:12px;color:#888;margin-bottom:3px}
@@ -95,6 +100,7 @@
       <div id="status"></div>
       <div id="tools"></div>
   <div id="side" class="hidden"></div>
+  <canvas id="cube" width="84" height="84"></canvas>
   <div id="views"></div>
     </div>
     <div id="bar"></div>

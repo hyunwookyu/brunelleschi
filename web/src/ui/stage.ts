@@ -193,6 +193,52 @@ export class Stage {
     requestAnimationFrame(step);
   }
 
+  /**
+   * **수직축 고정 회전**(5차 지시 8-b — 뷰 큐브). 카메라를 수직축(three Y — 우리 수직축)
+   * 둘레로 `deltaRad`만큼 돌린다. 피치는 정의상 유지된다(축이 수직이므로 극각 불변) —
+   * 1점에서 90° 돌리면 여전히 1점이고 소실점만 옮겨 간다. 회전 중심은 항목 2와 같다
+   * (경계 상자 중심 — unpin/retarget이 시선 투영으로 놓는다). `ms > 0`이면 애니메이션.
+   */
+  spinYaw(deltaRad: number, center: Vec3 | null, ms = 0, onDone?: () => void): void {
+    const cam = this.viewport.camera;
+    if (this.pinned) this.unpin(center);
+    else this.retarget(center);
+    cam.updateMatrixWorld(true);
+    const c3 = this.viewport.controls.target.clone();   // retarget이 시선 위에 놓은 중심
+    const p0 = cam.position.clone(), q0 = cam.quaternion.clone();
+    const t0 = this.viewport.controls.target.clone();
+    const Y = new THREE.Vector3(0, 1, 0);
+    const rot = (th: number) => {
+      const R = new THREE.Quaternion().setFromAxisAngle(Y, th);
+      cam.position.copy(p0.clone().sub(c3).applyQuaternion(R).add(c3));
+      cam.quaternion.copy(R.clone().multiply(q0));
+      this.viewport.controls.target.copy(t0.clone().sub(c3).applyQuaternion(R).add(c3));
+      cam.updateMatrixWorld(true);
+      this.viewport.invalidate();
+    };
+    if (ms <= 0) { rot(deltaRad); onDone?.(); return; }
+    const seq = ++this.flySeq;
+    const t0ms = performance.now();
+    const ease = (t: number) => t * t * (3 - 2 * t);
+    const step = () => {
+      if (seq !== this.flySeq) return;
+      const t = Math.min(1, (performance.now() - t0ms) / ms);
+      rot(deltaRad * ease(t));
+      if (t < 1) requestAnimationFrame(step);
+      else onDone?.();
+    };
+    requestAnimationFrame(step);
+  }
+
+  /** 지금 카메라의 요(수직축 둘레 방위, rad — three Y 기준)와 시선. 뷰 큐브가 읽는다. */
+  yawOf(): number {
+    const cam = this.viewport.camera;
+    cam.updateMatrixWorld(true);
+    const f = new THREE.Vector3();
+    cam.getWorldDirection(f);
+    return Math.atan2(f.x, -f.z);
+  }
+
   /** 확정 카메라를 벗어나 자유 시점으로. 지금 자세에서 이어 돌린다. */
   unpin(target: Vec3 | null): void {
     this.pinned = null;

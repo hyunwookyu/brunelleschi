@@ -42,6 +42,7 @@ import { representative, AXIS_TOL } from "./s3d/axis.js";
 import { cutParams, piecesFromCuts, subtractIntervals, reanchorId, pointAt,
          type Seg3 } from "./s3d/split.js";
 import { promoteOrder, type OrderStroke } from "./s3d/promoteOrder.js";
+import { ViewCube } from "./ui/viewCube.js";
 import { AXIS_COLOR, guides as gridGuides, HORIZON_COLOR, GROUND_COLOR } from "./s3d/grid.js";
 import { project, axisDirection, groundFrame, sub3, angleBetween,
          type Vec3 } from "./s3d/geom3d.js";
@@ -744,6 +745,17 @@ const orbitTarget = (): Vec3 => stage.centroid(lifted(doc).map(s =>
  * `begin()`이 **확정 카메라를 푼다** — `궤도` 버튼이 하던 그 일이고, 손가락이 그것을 대신한다.
  * ⚠ **도구는 안 바꾼다**: 펜은 계속 그리는 도구다(그것이 지시문의 목표 동작이다).
  */
+/** **뷰 큐브**(5차 지시 8) — 회전은 stage.spinYaw 하나를 지난다(#17). 기본 켬(8-d). */
+const viewCube = new ViewCube(document.getElementById("cube") as HTMLCanvasElement, {
+  yaw: () => stage.yawOf(),
+  spin: (delta, ms) => {
+    stage.viewport.userMoved = true;
+    stage.spinYaw(delta, orbitTarget(), ms, () => refresh());
+    refresh();
+  },
+  visible: () => cam.standing() && lifted(doc).length > 0,
+});
+
 const gestures = new CamGestures({
   begin: () => {
     if (!cam.standing() || !lifted(doc).length) return false;   // 아직 돌릴 3D가 없다
@@ -2183,6 +2195,7 @@ function renderBar() {
         + ` title="${SNAP_TIP[k]}">${SNAP_LABEL[k]}</button>`),
     ] : []),
     btn("expguide", `보조선 내보내기 ${EXPORT_GUIDES.on ? "켬" : "끔"}`, EXPORT_GUIDES.on, false, fold),
+    btn("viewcube", `뷰 큐브 ${viewCube.on ? "켬" : "끔"}`, viewCube.on, false, fold),
     // ---- 카메라 — **마우스 전용**(4차 6-b). 손가락 장치에서는 CSS가 숨긴다(l.html의 pointer: coarse)
     '<span class="sep mouse-only"></span>',
     `<button data-act="orbit" class="mouse-only${tool === "orbit" ? " on" : ""}"${!cam.standing() ? " disabled" : ""}`
@@ -2457,6 +2470,7 @@ const onActClick = (e: Event) => {
     note = `보조선 내보내기 **${EXPORT_GUIDES.on ? "켬" : "끔"}**`
          + ' <span class="dim">(주석은 3D가 없으므로 어느 쪽이든 안 나갑니다)</span>';
   }
+  else if (act === "viewcube") { viewCube.on = !viewCube.on; refresh(); }
   else if (act === "clear") {
     pushUndo();
     doc = newDoc(); cam.reset();
@@ -2731,6 +2745,13 @@ refresh();
   ask: () => ask && { strokeId: ask.strokeId, question: ask.question, toH: ask.toH, toV: ask.toV },
   /** 물음 카운터(5차 지시 3의 종단 확인이 읽는다 — #17). */
   askStats: () => ({ ...askStats }),
+  /** **뷰 큐브**(5차 지시 8) — 종단 확인이 앱 경로 그대로 부른다(#17). */
+  cubeSpin: (deltaRad: number, ms = 0) => {
+    stage.viewport.userMoved = true;
+    stage.spinYaw(deltaRad, orbitTarget(), ms, () => refresh());
+  },
+  cubeYaw: () => stage.yawOf(),
+  viewCube: () => ({ on: viewCube.on }),
   /** **시점 저장**(5차 지시 7-1) — 종단 확인이 앱 경로 그대로 부른다(#17). */
   saveViewpoint: () => { saveViewpoint(); },
   /** **지우개 크기**(5차 지시 5) — 종단 확인이 앱 경로 그대로 읽고 쓴다(#17). */

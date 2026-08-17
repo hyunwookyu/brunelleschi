@@ -1,5 +1,5 @@
 {
-  "n_flags": 1979,
+  "n_flags": 1982,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -7187,7 +7187,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 4.263256414560601e-14,
+      "val": 3.241851231905457e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7269,6 +7269,21 @@
       "path": "trace_hidden.json:thresholds.console_errors_max",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_cube.json:thresholds.console_errors_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_cube.json:after_snap.fy",
+      "val": -6.123233995736765e-17,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "view_cube.json:after_drag.fy",
+      "val": -6.123233995736766e-17,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_plane.json:by_orbit_deg.45.now.worst_end_ratio.n",
@@ -7467,7 +7482,7 @@
     },
     {
       "path": "viewpoint_undo.json:at_confirm.p[0]",
-      "val": -1.3281831245913861e-13,
+      "val": -1.5092990052174847e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7482,12 +7497,12 @@
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[1]",
-      "val": -1.8979691198219772e-14,
+      "val": -2.1567830907067928e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[2]",
-      "val": -5.810854518676259e-31,
+      "val": -6.603243771223023e-31,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -9963,13 +9978,13 @@
     {
       "field": "width",
       "writes": 1,
-      "reads": 17
+      "reads": 19
     }
   ],
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 190,
+      "files_scanned": 191,
       "exts_declared": [
         ".md",
         ".py",
@@ -9983,7 +9998,7 @@
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 126,
+      "files_scanned": 127,
       "exts_declared": [
         ".ts"
       ],
@@ -9993,7 +10008,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 190,
+      "files_scanned": 191,
       "exts_declared": [
         ".md",
         ".py",
@@ -10034,16 +10049,16 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 146,
+      "targets": 147,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 29,
+      "targets": 30,
       "hits": 0,
-      "note": "값 대조를 **지난 것 5** · **면제 24**(`reachability_absent`) · 원장 61개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "note": "값 대조를 **지난 것 5** · **면제 25**(`reachability_absent`) · 원장 62개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -10109,6 +10124,7 @@
     "touch_route.json",
     "trace_hidden.json",
     "tube_render.json",
+    "view_cube.json",
     "view_plane.json",
     "viewpoint_undo.json",
     "vp_detect.json",
