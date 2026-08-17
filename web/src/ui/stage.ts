@@ -239,6 +239,62 @@ export class Stage {
     return Math.atan2(f.x, -f.z);
   }
 
+  /**
+   * **카메라의 세계 기저**(three 좌표 — 오른쪽·위·시선). 뷰 큐브가 큐브 자세를 그리고
+   * 히트 광선을 만들 때 읽는다. 규약 변환 없이 three 그대로 낸다 — 큐브의 면 법선도
+   * three 세계 축으로 적으므로 같은 좌표계 안에서 닫힌다(#24 — 프레임을 섞지 않는다).
+   */
+  basisOf(): { r: Vec3; u: Vec3; f: Vec3 } {
+    const cam = this.viewport.camera;
+    cam.updateMatrixWorld(true);
+    const m = cam.matrixWorld.elements;
+    const fwd = new THREE.Vector3();
+    cam.getWorldDirection(fwd);
+    return { r: [m[0], m[1], m[2]], u: [m[4], m[5], m[6]], f: [fwd.x, fwd.y, fwd.z] };
+  }
+
+  /**
+   * **절대 시점으로 스냅**(6차 지시 1 — 뷰 큐브의 면·모서리·꼭짓점). 주어진 시선 방향
+   * (three 좌표)으로 **궤도 중심을 향해** 날아간다 — 방향만 돌리면 그린 것이 화면 어디에
+   * 오는지 예측이 안 되므로(지시 1-3) 중심을 겨누고 **거리는 유지한다**.
+   *
+   * 비행·마무리는 `flyTo`·`setPose` 재사용이다(#17 — 시점 복귀 280ms와 같은 경로).
+   * 시선이 수직에 너무 가까우면(윗면·아랫면) 피치를 89.5°로 눌러 `OrbitControls`의
+   * up=+Y 특이를 피한다 — CAD 뷰 큐브의 탑뷰도 실제로는 같은 처리를 한다.
+   */
+  snapToDir(fwdThree: Vec3, center: Vec3 | null, ms: number, onDone?: () => void): void {
+    const cam = this.viewport.camera;
+    cam.updateMatrixWorld(true);
+    const c3 = center
+      ? new THREE.Vector3(center[0], -center[1], -center[2])
+      : this.viewport.controls.target.clone();
+    const f = new THREE.Vector3(...fwdThree).normalize();
+    const horiz = Math.hypot(f.x, f.z);
+    const MAX_PITCH = (89.5 * Math.PI) / 180;
+    if (horiz < Math.cos(MAX_PITCH)) {
+      // 수직 특이 회피 — 지금 요를 유지한 채 피치만 한계로 누른다
+      const yaw = this.yawOf();
+      const s = f.y >= 0 ? 1 : -1;
+      f.set(Math.sin(yaw) * Math.cos(MAX_PITCH), s * Math.sin(MAX_PITCH),
+            -Math.cos(yaw) * Math.cos(MAX_PITCH)).normalize();
+    }
+    const d = Math.max(1e-3, c3.distanceTo(cam.position));
+    const eye = c3.clone().addScaledVector(f, -d);
+    // three 기저: right = f × y↑ (요만 있는 up 규약 — OrbitControls와 같다)
+    const right = f.clone().cross(new THREE.Vector3(0, 1, 0)).normalize();
+    const up = right.clone().cross(f).normalize();
+    // three → 우리 규약(ViewPose 행 = 오른쪽·아래·앞) — pose()의 역과 같은 변환이다
+    const pose: ViewPose = {
+      R: [conv([right.x, right.y, right.z]),
+          conv(neg([up.x, up.y, up.z])),
+          conv([f.x, f.y, f.z])],
+      C: conv([eye.x, eye.y, eye.z]),
+    };
+    const finish = () => { this.setPose(pose, center); onDone?.(); };
+    if (ms <= 0) { this.flySeq++; finish(); return; }
+    this.flyTo(pose, ms, finish);
+  }
+
   /** 확정 카메라를 벗어나 자유 시점으로. 지금 자세에서 이어 돌린다. */
   unpin(target: Vec3 | null): void {
     this.pinned = null;

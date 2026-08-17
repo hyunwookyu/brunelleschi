@@ -30,11 +30,11 @@
   "strokes": 2,
   "target": [
    640,
-   370.70001220703125
+   371.25
   ],
   "got": [
    640,
-   370.70001220703125
+   371.25
   ],
   "gap_px": 0,
   "standing": false,
@@ -43,7 +43,7 @@
  "positive_off": {
   "gap_px": 7.810249675906656
  },
- "ink_px": 4235,
+ "ink_px": 3275,
  "console_errors": [],
  "constants": {
   "hash": "509615a1",

@@ -479,6 +479,10 @@ test.describe("dpr 2", () => {
         reading: "**백버퍼가 css 폭의 2배**여야 dpr 섭동이 실제로 걸린 것이다. "
                + "1이면 회전 비 1.0은 '규약이 지켜졌다'가 아니라 '섭동이 안 걸렸다'다" },
       rotate: { azimuth_delta: az, dpr1_azimuth_delta: one, ratio: az / one!,
+                az_tol_rad: 1e-6,
+                az_tol_note: "판정은 |az−dpr1| < 1e-6rad(6차 항목 1에서 개정 — 옛 정밀도 12는 "
+                  + "판정 의도(오배선 = 비 2, Δ≈0.5rad)보다 다섯 자리 과했고 chromium-1194에서 "
+                  + "5.9e-10 부동소수 차이로 상시 실패했다. 변경 전 코드에서도 재현 — 코드 결함 아님)",
                 input_px: { from: [500, 400], to: [640, 430], note: "dpr 1 팔과 같은 좌표" } },
       positive_channel: { azimuth_delta_half_input: az2, azimuth_delta_full_free: azFull,
                           ratio_to_single: az2 / azFull,
@@ -499,7 +503,11 @@ test.describe("dpr 2", () => {
     };
     expect(dpr.devicePixelRatio).toBe(2);
     expect(dpr.backing_ratio).toBe(2);        // 섭동이 렌더 경로까지 걸렸다
-    expect(az).toBeCloseTo(one!, 12);
+    // ⚠ 정밀도 12(5e-13)는 판정 의도보다 다섯 자리 과했다 — dpr 오배선의 신호는 **비 2**
+    // (Δ≈0.5rad)이지 1e-10대 잡음이 아니다. chromium-1194 컨테이너에서 5.9e-10 차이로
+    // 상시 실패했고(변경 전 코드에서도 재현 — 6차 항목 1에서 확인), HANDOFF의 "간헐"의
+    // 정체가 이것이다. 1e-6rad은 여전히 오배선(0.5rad)과 다섯 자리 여유로 갈린다.
+    expect(Math.abs(az - one!)).toBeLessThan(1e-6);
     // 양성 채널: 절반 손짓은 절반 돈다(죽은 구간 한 걸음이 양쪽에서 같은 비율로 빠진다)
     expect(az2 / azFull).toBeGreaterThan(0.45);
     expect(az2 / azFull).toBeLessThan(0.55);

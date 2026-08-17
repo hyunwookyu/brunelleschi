@@ -745,12 +745,21 @@ const orbitTarget = (): Vec3 => stage.centroid(lifted(doc).map(s =>
  * `begin()`이 **확정 카메라를 푼다** — `궤도` 버튼이 하던 그 일이고, 손가락이 그것을 대신한다.
  * ⚠ **도구는 안 바꾼다**: 펜은 계속 그리는 도구다(그것이 지시문의 목표 동작이다).
  */
-/** **뷰 큐브**(5차 지시 8) — 회전은 stage.spinYaw 하나를 지난다(#17). 기본 켬(8-d). */
+/**
+ * **뷰 큐브**(6차 지시 1 — 3D 큐브). 상대 회전(드래그·화살표)은 stage.spinYaw,
+ * 절대 스냅(면·모서리·꼭짓점·가장 가까운 1점)은 stage.snapToDir 하나를 지난다(#17).
+ * 기본 켬(지시 1-5).
+ */
 const viewCube = new ViewCube(document.getElementById("cube") as HTMLCanvasElement, {
-  yaw: () => stage.yawOf(),
+  basis: () => stage.basisOf(),
   spin: (delta, ms) => {
     stage.viewport.userMoved = true;
     stage.spinYaw(delta, orbitTarget(), ms, () => refresh());
+    refresh();
+  },
+  snap: (fwd) => {
+    stage.viewport.userMoved = true;
+    stage.snapToDir(fwd, orbitTarget(), 280, () => refresh());
     refresh();
   },
   visible: () => cam.standing() && lifted(doc).length > 0,
@@ -2752,6 +2761,8 @@ refresh();
   },
   cubeYaw: () => stage.yawOf(),
   viewCube: () => ({ on: viewCube.on }),
+  /** **궤도 중심**(6차 지시 1 — 종단 확인이 거리 유지·중심 조준을 잴 때 읽는다, #17). */
+  orbitCenter: () => orbitTarget(),
   /** **시점 저장**(5차 지시 7-1) — 종단 확인이 앱 경로 그대로 부른다(#17). */
   saveViewpoint: () => { saveViewpoint(); },
   /** **지우개 크기**(5차 지시 5) — 종단 확인이 앱 경로 그대로 읽고 쓴다(#17). */

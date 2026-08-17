@@ -34,7 +34,7 @@
    1,
    1
   ],
-  "gl_painted_px": 1837
+  "gl_painted_px": 1851
  },
  "s4_result": {
   "channel": "result",
@@ -45,7 +45,7 @@
  },
  "s5_orbit": {
   "pinned": false,
-  "gl_painted_px": 2609
+  "gl_painted_px": 2673
  },
  "s6_continue": {
   "snap_start": "vertex",

@@ -1930,7 +1930,7 @@
     },
     {
       "path": "horizon_flow.json:pick.host_misfit",
-      "val": 4.289860679770448e-17,
+      "val": 4.2879203313100316e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -4860,16 +4860,6 @@
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
-      "path": "orbit_center.json:center.target[1]",
-      "val": 1.9721522630525293e-31,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
-      "path": "orbit_center.json:center.target_to_proj_bbox",
-      "val": 3.552713678800501e-15,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
       "path": "order_promote.json:spurious_promotion_control.per_stroke.same",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -5251,8 +5241,8 @@
     },
     {
       "path": "p1_invariance.json:reproject[0].gap_a",
-      "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+      "val": 8.038873388460929e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "p1_invariance.json:reproject[0].gap_b",
@@ -6127,7 +6117,7 @@
     },
     {
       "path": "stage_browser.json:dpr_identity_px.css_frame",
-      "val": 2.2914314707516465e-13,
+      "val": 1.2409095402129096e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7187,7 +7177,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 3.9968028886505635e-14,
+      "val": 2.8199664825478976e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7274,6 +7264,16 @@
       "path": "view_cube.json:thresholds.console_errors_max",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_cube.json:after_face.fy",
+      "val": -6.990606687426031e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "view_cube.json:after_retap.fy",
+      "val": -6.293024879530112e-17,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_plane.json:by_orbit_deg.45.now.worst_end_ratio.n",
@@ -7417,67 +7417,67 @@
     },
     {
       "path": "viewpoint_undo.json:orbited.p[1]",
-      "val": 2.1424943051298654e-16,
+      "val": 2.142494057865056e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[0]",
-      "val": -2.876436201773911e-17,
+      "val": -2.876978900574591e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[2]",
-      "val": -1.0486245366007244e-17,
+      "val": -1.0471346844056062e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.p[1]",
-      "val": 2.1424943051298657e-16,
+      "val": 2.142494057865056e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[0]",
-      "val": -2.876436201764019e-17,
+      "val": -2.8769789005699646e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[2]",
-      "val": -1.048624536627857e-17,
+      "val": -1.0471346844183172e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.p[1]",
-      "val": 2.1424943051298662e-16,
+      "val": 2.142494057865056e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[0]",
-      "val": -2.8764362017636284e-17,
+      "val": -2.8769789005698044e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[2]",
-      "val": -1.0486245366289348e-17,
+      "val": -1.0471346844187572e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dp",
-      "val": 2.620807173901849e-12,
+      "val": 1.0701644235051367e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dq",
-      "val": 3.7464967412046723e-13,
+      "val": 1.5293584102064903e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.p[0]",
-      "val": -1.5092990052174847e-13,
+      "val": -5.5765022547614946e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.p[1]",
-      "val": 2.142494305129865e-16,
+      "val": 2.1424940578650578e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7487,32 +7487,32 @@
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[1]",
-      "val": -2.1567830907067928e-14,
+      "val": -7.968803474228577e-15,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[2]",
-      "val": -6.603243771223023e-31,
+      "val": -2.439742416937084e-31,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.p[1]",
-      "val": 2.1424943051298662e-16,
+      "val": 2.1424940578650555e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[0]",
-      "val": -2.8764362017714923e-17,
+      "val": -2.876978900573009e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[2]",
-      "val": -1.0486245366073606e-17,
+      "val": -1.0471346844099516e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:return_gap",
-      "val": 1.614407302402222e-11,
+      "val": 1.057018417930208e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -8817,7 +8817,7 @@
     },
     {
       "path": "vp_dir_flow.json:snap.misfit",
-      "val": 1.0109591444801318e-16,
+      "val": 5.049498672572405e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -8872,17 +8872,17 @@
     },
     {
       "path": "vp_two_lines.json:fix.misfits[0]",
-      "val": 3.688056542639058e-17,
+      "val": 3.685674686347687e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "vp_two_lines.json:fix.misfits[1]",
-      "val": 1.1623825108569246e-16,
+      "val": 1.162265136918436e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "vp_two_lines.json:grid.maxSin",
-      "val": 1.2560206047907573e-14,
+      "val": 1.1459452313442206e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -9846,72 +9846,72 @@
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
     },
     {
-      "path": "web\\e2e\\stage.spec.ts:57:pixelGap",
+      "path": "web/e2e/stage.spec.ts:57:pixelGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web\\src\\s3d\\lift.ts:415:transitionGap",
+      "path": "web/src/s3d/lift.ts:415:transitionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web\\src\\s3d\\stroke.ts:313:reprojectionGap",
+      "path": "web/src/s3d/stroke.ts:313:reprojectionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web\\test\\axis_live.test.ts",
+      "path": "web/test/axis_live.test.ts",
       "val": "18건 (줄 [111, 119, 137, 142, 145])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\lift_grade.test.ts",
+      "path": "web/test/lift_grade.test.ts",
       "val": "1건 (줄 [104])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\metrics.ts",
+      "path": "web/test/metrics.ts",
       "val": "1건 (줄 [135])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\order_promote.test.ts",
+      "path": "web/test/order_promote.test.ts",
       "val": "3건 (줄 [127, 252, 260])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\order_signal.test.ts",
+      "path": "web/test/order_signal.test.ts",
       "val": "3건 (줄 [322, 323, 346])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\order_undo.test.ts",
+      "path": "web/test/order_undo.test.ts",
       "val": "1건 (줄 [251])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\persist.test.ts",
+      "path": "web/test/persist.test.ts",
       "val": "1건 (줄 [363])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\promote.test.ts",
+      "path": "web/test/promote.test.ts",
       "val": "35건 (줄 [161, 189, 211, 212, 217])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\snap_measure.test.ts",
+      "path": "web/test/snap_measure.test.ts",
       "val": "3건 (줄 [92, 93, 537])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\stage_measure.test.ts",
+      "path": "web/test/stage_measure.test.ts",
       "val": "2건 (줄 [179, 221])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web\\test\\tube_measure.test.ts",
+      "path": "web/test/tube_measure.test.ts",
       "val": "1건 (줄 [176])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     }
@@ -9968,13 +9968,13 @@
     {
       "field": "width",
       "writes": 1,
-      "reads": 19
+      "reads": 22
     }
   ],
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 191,
+      "files_scanned": 190,
       "exts_declared": [
         ".md",
         ".py",
@@ -9982,13 +9982,13 @@
       ],
       "hits_by_ext": {
         ".md": 10,
-        ".py": 2,
-        ".ts": 6
+        ".ts": 6,
+        ".py": 2
       }
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 127,
+      "files_scanned": 128,
       "exts_declared": [
         ".ts"
       ],
@@ -9998,7 +9998,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 191,
+      "files_scanned": 190,
       "exts_declared": [
         ".md",
         ".py",
@@ -10012,7 +10012,7 @@
     },
     {
       "sweep": "external_data",
-      "files_scanned": 84,
+      "files_scanned": 85,
       "exts_declared": [
         ".ts"
       ],
