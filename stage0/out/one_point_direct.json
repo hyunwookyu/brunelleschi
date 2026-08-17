@@ -1,16 +1,19 @@
 {
- "spec": "6차 지시 2-5 — 1점 직접 좌표(directSegment)와 lift 경로(segmentFromAnchor)의 동등성. 끝 커서는 참 3D 끝점을 카메라 투영으로 되돌린 상('일부러 투영을 거치게') — 축 3 × 앵커 8 × 끝점 3, 확정 뷰 꼴(항등)과 우측면 입면 꼴(순열·부호) 두 프레임. 음성 대조: 2° 튼 카메라에서 갈라짐",
+ "spec": "6차 지시 2-5 — 1점 직접 좌표(directSegment)와 lift 경로(segmentFromAnchor)의 동등성. 끝 커서는 참 3D 끝점을 카메라 투영으로 되돌린 상('일부러 투영을 거치게') — 축 3 × 앵커 8 × 끝점 3, 확정 뷰 꼴(항등)과 우측면 입면 꼴(순열·부호) 두 프레임. 음성 대조: 요·피치 각 2° 합성으로 튼 카메라에서 갈라짐(한 축 회전만이면 그 축이 구성상 불변 — min에 항등 0이 섞인다)",
  "what_this_does_not_say": [
   "**동등성 자체는 같은 사영의 두 표현이라 보장에 가깝다**(#5) — 이 팔이 재는 것은 배선(공식이 그 교점을 실제로 내는가)이고, 판정력은 음성 대조(negative)가 진다(#39)",
   "커서가 축의 화면 직선 **위**에 있는 표본이다 — 스냅된 획의 잉크가 그렇다(직교·소실점 방향 스냅이 획을 축 방향으로 편다). 선 밖 커서에서는 두 경로가 2차 소량으로 갈라진다(직접 = 화면 성분 읽기 · lift = 광선-직선 최근점) — 그 동작점은 이 원장 밖이다(#12)",
   "앱 경로(resolveLive 안의 분기)는 여기 없다 — 종단은 elevation_flow(입면 흐름 e2e)가 잰다",
-  "ONE_POINT_TOL은 test/constants.ts 밖이다(D-L49·D-L51의 예외와 같은 자리 — 전역 해시 동결. 픽스처가 정확 정렬이라 어느 값도 align_eps에 의존하지 않는다) — 값은 algo_constants 필드",
+  "ONE_POINT_TOL은 test/constants.ts 밖이다(D-L49·D-L51의 예외와 같은 자리 — 전역 해시 동결). ⚠ 면제 사유의 정정(2-R′ [B-3]): **동등성 팔은 align_eps에 의존하지 않으나 frame_judgment(0.5° null)는 의존한다** — align_eps를 바꾸면 STALE이 못 잡으므로 이 원장을 재실행한다(DEFERRED 의존 집합별 해시의 자리) — 값은 algo_constants 필드",
+  "**깊이 성분은 1점 f(임의값 — D-L53)가 정하는 배율 위의 값이다**(이론서 16.4·AS-C4 — 2-R′ [B-7]): 직접 경로도 lift와 같은 f를 쓰므로 동등성에는 안 닿지만, 이 경로로 만든 입체의 깊이:폭 비는 그 상수에 달렸다",
+  "**잔차 노름 전환의 되살림 확인**(A-4 — 2-R′ [B-11]): 초판 |내적| 판정에서는 ③의 0.5° 단언이 **실제로 실패했다**(개발 중 관측 — 전환의 계기가 그 실패다). 단언은 상시로 남는다",
   "hand_deg(손 정렬 자동 스냅)의 동작은 이 하네스 밖이다(카메라·감쇠가 필요한 e2e 영역 — elevation_flow의 자동 정렬 팔)",
   "planeAnchor 왕복(pa_roundtrip_px)은 **역함수의 정의 확인**이라 항등이다 — 임계를 걸지 않는다(#5·§5 유형 3)"
  ],
  "thresholds": {
   "eq_max": 1e-9,
-  "neg_min": 0.01,
+  "neg_min_max": 0.01,
+  "neg_min_each": 0.0001,
   "samples_min": 50
  },
  "algo_constants": {
@@ -27,10 +30,13 @@
   "n": 72,
   "max_diff": 8.08242361927114e-14
  },
- "negative_tilt2deg": {
+ "negative_tilt_2deg_yx": {
   "n": 72,
-  "max_diff": 0.25285179486414994,
-  "note": "직접 공식(항등 프레임 가정)에 참 방향이 2° 튼 lift를 대조 — 전제 붕괴 시 갈라지는 크기"
+  "max_diff": 0.9417643664605451,
+  "min_diff": 0.024429670520691896,
+  "median_diff": 0.05607502970858472,
+  "max_rel_to_len": 0.5886027290378406,
+  "note": "직접 공식(항등 프레임 가정)에 참 방향이 2° 튼 lift를 대조 — 전제 붕괴 시 갈라지는 크기. 보수 통계는 min(음성 팔에서 max는 유리한 꼬리다 — 2-R′ [B-4]). max_rel_to_len은 획 길이 대비(#29 — 크기의 뜻: 2° 틀림이 획 길이의 이 비율만큼 끝점을 옮긴다)"
  },
  "frame_judgment": {
   "tilt_half_deg_is_null": true,
@@ -39,10 +45,10 @@
  },
  "pa_roundtrip_px": 0,
  "gate": {
-  "registered": "동등성 두 프레임 max_diff < 1e-9(표본 각 ≥50) · 음성 대조(2° 틀림) max_diff > 0.01 · 0.5° 튼 프레임 판정 null · 깊이 퇴화 null. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
-  "reachability": "음성 대조가 오라클이다 — 전제가 무너진 카메라에서 직접↔lift가 갈라지는 크기가 eq_max(1e-9)의 일곱 자리 위에 있어, 동등성 통과가 '어떤 입력에도 같다'는 자명이 아님을 가른다",
-  "reachability_value": 0.25285179486414994,
-  "reachability_source": "negative_tilt2deg/max_diff"
+  "registered": "동등성 두 프레임 max_diff < 1e-9(표본 각 ≥50) · 음성 대조(2° 틀림) **min_diff > 1e-4**(보수 통계 — 표본 전부 갈라진다)·max_diff > 0.01 · 0.5° 튼 프레임 판정 null · 깊이 퇴화 null. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+  "reachability": "음성 대조가 오라클이다 — 전제가 무너진 카메라에서 직접↔lift가 갈라지는 크기의 **최솟값**이 eq_max(1e-9)의 다섯 자리 위에 있어, 동등성 통과가 '어떤 입력에도 같다'는 자명이 아님을 가른다(보수 통계 — 2-R′ [B-4])",
+  "reachability_value": 0.024429670520691896,
+  "reachability_source": "negative_tilt_2deg_yx/min_diff"
  },
  "constants": {
   "hash": "509615a1",

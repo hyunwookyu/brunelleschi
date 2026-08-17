@@ -861,6 +861,11 @@ const gestures = new CamGestures({
   ended: () => { armOnePointAlign(); refresh(); },
 });
 
+// **마우스 궤도의 종료에도 같은 자동 정렬**(2-R′ [B-6] — 터치 제스처만 덮으면 마우스 `궤도`
+// 모드가 빠진다). flyTo 복귀·저장본 복원·실행취소는 저장된 자세를 그대로 복원하므로 대상이
+// 아니다 — 그 자세가 근사 정렬이면 1점으로 안 선다(직접 경로는 정확 정렬만).
+stage.viewport.controls.addEventListener("end", () => armOnePointAlign());
+
 /**
  * **뷰 전환**(§9.2). 확정 뷰면 확정 카메라에 다시 물리고, 아니면 저장된 자세로 돌아간다.
  *
