@@ -2,7 +2,13 @@
 
 다음 세션은 이 문서를 읽고 이어서 진행한다. 사람의 개입은 그 한 줄뿐이다.
 
-## 현재 단계 — **2026-08-17 5차 지시(이월 3 + 사용 시험 8) 전부 완료. 다음 사람 지시 대기**
+## 현재 단계 — **2026-08-17 6차 세션: 5차 마감의 남은 셋 처리 완료. 다음 사람 지시 대기**
+
+6차 세션이 한 일: ① **8-R′ 재검** — 리뷰어 2회전(9건 + 6건 = 15건) 전부 대응, 미해소 이월
+없음(progress `8-R″`·`8-R‴` 절) ② **Actions 초록 확인** — `63e4831` Pages 성공(3277ebf 취소는
+후속 푸시의 정상 대체) ③ **실획(K) 미도착 확인**(`sessions/` README뿐).
+⚠⚠ **6차 커밋은 `main`이 아니라 `claude/5th-directive-complete-yu7xoq` 브랜치에 있다** —
+main 반영 여부는 사람이 정한다.
 
 5차 지시는 이월 셋(6-R 재검 · 하네스 앱 동작점 · horizon_pitch 재목적)과 사용 시험 8건이었다:
 ① **1점 확정 시 화면 소실**(최중요 — 수리 D-L64) ② 회전 시 뷰 튐(D-L65) ③ 스냅 수평선
@@ -46,22 +52,32 @@ D-L63  합성 하네스가 앱의 확정 전 2D 판정(resolve2dCore — mainL�
    주체는 `camera_gate.json`의 `deg_0.25` 행이고 이번 변경의 사정거리 밖(통과선 안 그대로).
 4. OrbitControls **감쇠(dampingFactor 0.12)의 꼬리**가 카메라 불변 측정을 오염시킨다 —
    e2e에서 정착 대기(settle)를 쓴다(viewpoint_undo·view_cube가 그렇게 한다).
-5. `touch_route` dpr2 팔의 간헐(전체 실행에서 가끔, 단독 통과)은 여전하다 — 알려진 자리.
+5. ~~`touch_route` dpr2 팔의 간헐~~ **원인 갈라 수리됨(6차)**: dpr 누출(신호 Δ≈1.09)이 아니라
+   정밀도 12 단언이 감쇠 정착 요동(실측 1e-10~1e-9 급)을 재고 있었다 — 허용치 |Δ|<1e-6으로
+   교체, 근거·실측은 `touch_route.json`의 `dpr2.thresholds`·`rotate.delta_abs`.
 6. 수는 적지 않는다 — **`selfcheck.json`의 `coverage`를 그 자리에서 읽는다.**
+7. **e2e 원장은 6차에 리눅스 컨테이너에서 전량 재생성됐다** — 값이 환경 간 요동한다
+   (orbit_begin 0.24°→0.43°, view_cube Δfy 1e-12~1e-11 급 등 — 전부 통과선 안, 인용 문서에
+   주석). vitest 원장은 결정적이라 무변화(rule_camera는 새 팔만 늘었다).
+8. **조리개 스윕은 이제 번갈아 팔도 있다**(`rule_drawn_snap_r4/_r40`, 8-R″ [6]) — 세 조리개
+   중앙 전부 35°이나 그것은 오배정 고원값이라 **포화와 안 갈랐다**(8-R‴ [4]). jit_0 층의
+   조리개 정보량은 `jit0_aperture` 계산 필드가 재실행마다 스스로 낸다(grouped true·drawn false).
 
 ## 다음에 할 일 — **사람 지시 대기.** 그 전에 할 수 있는 것
 
 | 항목 | 내용 |
 |---|---|
-| **마지막 리뷰어 재검** | 8-R′ 대응 표(progress 맨 끝 — 항목 3~8 리뷰 11건 대응)를 다음 세션 리뷰어가 재검한다(3~5차의 같은 절차) |
-| **Actions 초록** | `3277ebf`(+마감 커밋)의 Pages 실행 확인 |
+| **마지막 리뷰어 재검** | **8-R‴ 대응 표**(progress 맨 끝 — 2회차 6건 대응)를 다음 세션 리뷰어가 재검한다(같은 절차. 8-R′ 재검·8-R″ 재검은 6차에 끝났다) |
+| **브랜치 정리** | 6차 커밋(`claude/5th-directive-complete-yu7xoq`)의 main 반영 — 사람 판단 |
 | **실획(K)** | `sessions/`에 `.brnl`이 오면 **다른 일보다 먼저** — AS-L23(찍기)·AS-L24·AS-L25(스냅/선언)·D-L56·D-L59의 판정이 전부 여기 달려 있다 |
 | **아이패드 실기** | 새 UI(#tools·#side·뷰 큐브)의 손 가림(6-e)·dpr 2 확인 — K와 같은 문 |
 | **DEFERRED 신규** | LINE_PX 회귀 방어 · 접이식 #22 팔 · 옛 저장본 가짜 뷰 마이그레이션 · axis_snap 스냅 팔(실획 후) |
 
 ## 검증 현황 (마지막 커밋 기준)
 
-vitest **445 통과 · 1 건너뜀**(70파일) · tsc·빌드 통과 · Playwright **42 통과 · 2 건너뜀**
+(6차 재검증 — 리눅스 컨테이너) vitest **445 통과 · 1 건너뜀**(70파일 — real_ink만.
+quickdraw 데이터는 `python3 stage0/01_quickdraw_grades.py`로 재다운, 부산물
+`quickdraw_grades.json`은 미추적 유물이라 삭제) · tsc·빌드 통과 · Playwright **42 통과 · 2 건너뜀**
 (새 팔 7: p1_invariance·orbit_begin_invariance·snap_declare·trace_hidden·eraser_size·
 viewpoint_undo·view_cube — p1·orbit_begin·snap_declare·trace_hidden·viewpoint_undo는 **버그 되살림으로 실패 확인**(값은 원장 밖 #25 — 원장 명시), eraser_size·view_cube는 팔 안 자체 대조가 배선 부재를 잡는다 — 8-R′) ·
 pytest **73** · selfcheck STALE 0 · 게이트·인용 수는 **coverage를 그 자리에서 읽는다** ·
@@ -79,6 +95,8 @@ pytest **73** · selfcheck STALE 0 · 게이트·인용 수는 **coverage를 그
 ```bash
 cd web && npx vitest run && npx tsc --noEmit && npm run build && npx playwright test
 ```
+⚠ 이 원격 컨테이너에서는 Playwright 앞에 `PW_EXECUTABLE=/opt/pw-browsers/chromium`
+(설정의 기존 손잡이 — 고정 리비전 브라우저가 컨테이너에 없다).
 ```bash
 python -m pytest tests/ -q && python selfcheck.py
 ```

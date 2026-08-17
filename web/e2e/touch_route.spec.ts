@@ -479,7 +479,15 @@ test.describe("dpr 2", () => {
         reading: "**백버퍼가 css 폭의 2배**여야 dpr 섭동이 실제로 걸린 것이다. "
                + "1이면 회전 비 1.0은 '규약이 지켜졌다'가 아니라 '섭동이 안 걸렸다'다" },
       rotate: { azimuth_delta: az, dpr1_azimuth_delta: one, ratio: az / one!,
+                delta_abs: Math.abs(az - one!),
                 input_px: { from: [500, 400], to: [640, 430], note: "dpr 1 팔과 같은 좌표" } },
+      // **임계를 원장에 남긴다**(8-R‴ [3] — A-4/D-C4의 정신. e2e 임계는 선례대로 원장
+      // thresholds에 둔다: view_cube·eraser_size와 같은 처리, constants.ts 비등재).
+      thresholds: { azimuth_delta_abs_max: 1e-6,
+        rationale: "판별 대상은 비 1 대 2(dpr 곱 — 누출이면 Δ≈1.09)다. 옛 정밀도 12(<5e-13)는 "
+          + "그 판별이 아니라 감쇠 정착의 수치 결정성을 재고 있었고 정착 요동(실측 ~1e-10 급, "
+          + "delta_abs 필드)이 환경에 따라 그 선을 넘어 간헐이 됐다. 1e-6은 요동보다 3자리 위·"
+          + "누출 신호보다 6자리 아래다. ⚠ 완화 방향의 변경이다 — 더 완화하려면 새 근거가 필요하다" },
       positive_channel: { azimuth_delta_half_input: az2, azimuth_delta_full_free: azFull,
                           ratio_to_single: az2 / azFull,
                           input_px: { from: [500, 400], to: [570, 415],
