@@ -1,5 +1,5 @@
 {
-  "n_flags": 1847,
+  "n_flags": 1832,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -125,46 +125,6 @@
       "path": "camera_gate.json:by_axis_err_baseline_3pt_jitter_le_0_01.deg_0.axis_dir_err_deg",
       "val": 0,
       "flag": "분포 전체가 0(n=108) → 항등/측정 미작동 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_1.true_camera_oracle.f_rel_err",
-      "val": 0,
-      "flag": "분포 전체가 0(n=300) → 항등/측정 미작동 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_1.true_camera_oracle.axis_dir_err_deg",
-      "val": 0,
-      "flag": "분포 전체가 0(n=720) → 항등/측정 미작동 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_2.true_camera_oracle.f_rel_err",
-      "val": 0,
-      "flag": "분포 전체가 0(n=300) → 항등/측정 미작동 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_2.true_camera_oracle.axis_dir_err_deg",
-      "val": 0,
-      "flag": "분포 전체가 0(n=720) → 항등/측정 미작동 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_3.true_camera_oracle.f_rel_err",
-      "val": 0,
-      "flag": "분포 전체가 0(n=54) → 항등/측정 미작동 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_3.true_camera_oracle.axis_dir_err_deg",
-      "val": 0,
-      "flag": "분포 전체가 0(n=162) → 항등/측정 미작동 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_4.true_camera_oracle.f_rel_err",
-      "val": 0,
-      "flag": "분포 전체가 0(n=18) → 항등/측정 미작동 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_4.true_camera_oracle.axis_dir_err_deg",
-      "val": 0,
-      "flag": "분포 전체가 0(n=54) → 항등/측정 미작동 확인"
     },
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.camera_ok.rate",
@@ -295,86 +255,6 @@
       "path": "camera_gate.json:by_axis_err_baseline_3pt_jitter_le_0_01.deg_8.silent_wrong.cut_0_2.rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_1.detected_camera.placement.rate",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_1.true_camera_oracle.camera_ok.rate",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_1.true_camera_oracle.f_rel_err.median",
-      "val": 0,
-      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_1.true_camera_oracle.axis_dir_err_deg.median",
-      "val": 0,
-      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_2.detected_camera.placement.rate",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_2.true_camera_oracle.camera_ok.rate",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_2.true_camera_oracle.f_rel_err.median",
-      "val": 0,
-      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_2.true_camera_oracle.axis_dir_err_deg.median",
-      "val": 0,
-      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_3.detected_camera.placement.rate",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_3.true_camera_oracle.camera_ok.rate",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_3.true_camera_oracle.f_rel_err.median",
-      "val": 0,
-      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_3.true_camera_oracle.axis_dir_err_deg.median",
-      "val": 0,
-      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_4.detected_camera.placement.rate",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_4.true_camera_oracle.camera_ok.rate",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_4.true_camera_oracle.f_rel_err.median",
-      "val": 0,
-      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
-    },
-    {
-      "path": "camera_gate.json:by_strokes_per_axis.k_4.true_camera_oracle.axis_dir_err_deg.median",
-      "val": 0,
-      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
     },
     {
       "path": "constants.json:values.LIVE_TOL",
@@ -5460,12 +5340,32 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "rule_camera.json:headline_no_identity.rule_drawn.snap_engaged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_no_identity.rule_grouped.snap_engaged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_no_identity.rule_wide_pair.snap_engaged",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:headline_no_identity.detect.asks_per_run",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "rule_camera.json:headline_no_identity.detect.rejected_per_run",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_no_identity.detect.snap_engaged",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -5478,6 +5378,31 @@
       "path": "rule_camera.json:by_jitter.jit_0.rule_wide_pair.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_camera.json:by_jitter.jit_0.rule_grouped_snap.camera_ok_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_camera.json:by_jitter.jit_0.rule_wide_pair_snap.camera_ok_rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_camera.json:by_composition.1pt_yaw0_pitch0.rule_drawn_snap.deg_median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:by_composition.1pt_yaw0_pitch0.rule_drawn_snap.deg_p90",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:by_composition.1pt_yaw0_pitch0.rule_drawn_snap.deg_max",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "segment_gate.json:by_cross_tol.tol_0.015_sup_2.first_view.silent_wrong_rate_of_placed",
@@ -9374,7 +9299,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 128,
+      "targets": 131,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },

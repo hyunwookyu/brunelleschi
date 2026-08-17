@@ -33,8 +33,9 @@ import { snapCandidates, staticCandidates, SNAP_ORDER, SNAP_LABEL, SNAP_COLOR, S
          type SnapCand, type SnapKind, type SnapSeg, type SnapCtx,
          type StaticCand } from "./s3d/snap.js";
 // **2D 오스냅**(4차 지시 1) — 카메라 확정 전·미승격 2D 획의 화면 스냅. 후보 규칙은 snap2d.ts 하나다
-import { static2dCandidates, snap2dAt, alignAxes, type Snap2Cand, type Snap2Seg,
-         type AlignHit } from "./s3d/snap2d.js";
+import { static2dCandidates, snap2dAt, type Snap2Cand, type Snap2Seg } from "./s3d/snap2d.js";
+// **확정 전 2D 판정의 단일 출처**(5차 이월-2) — 합성 하네스가 같은 함수를 부른다(#17)
+import { resolve2dCore, OSNAP_RADIUS_PX, type Resolve2dOut } from "./s3d/resolve2d.js";
 import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "./s3d/liveLine.js";
 import { representative, AXIS_TOL } from "./s3d/axis.js";
 // **자동 분할**(지시 I) — 교차·접촉 절단점과 조각. SketchUp 선례. 순수 기하는 split.ts 하나다(#17)
@@ -186,110 +187,19 @@ const orthoPts = (pts: Pt2[], o: ScreenOrtho | null): Pt2[] =>
  */
 function snapped2d(raw: Pt2[]): Pt2[] { return resolve2d(raw).pts; }
 
-/** `resolve2d`의 결과 — 미리보기(onLive)와 확정(onStrokeEnd)이 **같은 값**을 본다(#17·§11). */
-interface Resolve2d {
-  a: Pt2; b: Pt2;
-  ortho: ScreenOrtho | null; vpdir: VpDirSnap | null;
-  start2: Snap2Cand | null; end2: Snap2Cand | null;
-  /** 관계 스냅 가이드(4차 지시 5-c). */
-  guides: { from: Pt2; to: Pt2 }[];
-  /** 확정 시 문서에 남길 점열. */
-  pts: Pt2[];
-  /** 무엇이든 걸렸는가 — 미리보기 표시 여부. */
-  engaged: boolean;
+/**
+ * **카메라 확정 전의 2D 판정 전부**(4차 지시 1·2·5 통합) — 로직은 `s3d/resolve2d.ts`의
+ * `resolve2dCore` 하나다(5차 이월-2, #17: 합성 하네스가 같은 함수를 부른다).
+ * 여기서는 앱 상태(대기 획·소실점·조리개·토글)만 채운다.
+ */
+function resolve2d(raw: Pt2[]): Resolve2dOut {
+  const segs = pend2Segs();
+  const cands = segs.length ? static2dCandidates(segs, Math.hypot(...cssSize())) : [];
+  return resolve2dCore(raw, { cands, vps: cam.vps(), radiusPx: OSNAP.radiusPx,
+                              kinds: OSNAP.kinds, relSnap: REL_SNAP.on });
 }
 
-/**
- * **카메라 확정 전의 2D 판정 전부**(4차 지시 1·2·5 통합) — 우선순위는
- * **오스냅 > 방향(화면 직교·소실점) > 관계 스냅(정렬)**이다(지시 5-d — 오스냅이 이긴다).
- * 관계 스냅은 방향 스냅과 **성분으로 결합**한다: 직교 세로선이면 y만, 가로선이면 x만,
- * 소실점 방향이면 그 직선 위에서 미끄러져 교점으로 — 방향을 깨지 않고 정렬한다.
- */
-function resolve2d(raw: Pt2[]): Resolve2d {
-  const a0 = raw[0], b0 = raw[raw.length - 1];
-  const guides: { from: Pt2; to: Pt2 }[] = [];
-  const tol = OSNAP.radiusPx;
-  const alignCands = (): Snap2Cand[] => {
-    const segs = pend2Segs();
-    return segs.length ? static2dCandidates(segs, Math.hypot(...cssSize())) : [];
-  };
-  // ① 시작점 — 오스냅이 이기고, 안 붙으면 정렬(끝점·중점의 x·y)
-  const start2 = snap2At(a0);
-  let a: Pt2 = start2 ? start2.at : [a0[0], a0[1]];
-  if (!start2 && REL_SNAP.on) {
-    const h = alignAxes(a, alignCands(), tol);
-    if (h.x) a = [h.x.v, a[1]];
-    if (h.y) a = [a[0], h.y.v];
-    if (h.x) guides.push({ from: h.x.from, to: [a[0], a[1]] });
-    if (h.y) guides.push({ from: h.y.from, to: [a[0], a[1]] });
-  }
-  // ② 끝점 — 오스냅(굽음 규약은 3D 양 끝 스냅 그대로, #34)
-  const rep0 = representative(raw);
-  const end2 = (rep0 && rep0.bend <= AXIS_TOL.bend_max) ? snap2At(b0) : null;
-  if (end2) {
-    return { a, b: end2.at, ortho: null, vpdir: null, start2, end2, guides,
-             pts: [a, end2.at], engaged: true };
-  }
-  // ③ 방향 — 화면 직교·소실점 방향(이동량이 작은 쪽, D-L58)
-  const d = dirSnap2d(a, b0);
-  let b: Pt2 = [d.at[0], d.at[1]];
-  // ④ 관계 스냅 — 방향과 성분으로 결합한다
-  if (REL_SNAP.on) {
-    const h = alignAxes(b, alignCands(), tol);
-    const push = (hit: AlignHit) => guides.push({ from: hit.from, to: [b[0], b[1]] });
-    if (d.ortho) {
-      // 직교 스냅은 한 성분이 이미 앵커에 잠겨 있다 — 남은 성분만 정렬한다
-      if (d.ortho.dir === "v" && h.y) { b = [b[0], h.y.v]; push(h.y); }
-      if (d.ortho.dir === "h" && h.x) { b = [h.x.v, b[1]]; push(h.x); }
-    } else if (d.vpdir) {
-      // 방향선 위에서 미끄러져 정렬 — 가이드(x=cx·y=cy)와 방향선의 교점 중 이동이 작은 쪽
-      const u: Pt2 = [d.vpdir.vp[0] - a[0], d.vpdir.vp[1] - a[1]];
-      let best: { q: Pt2; hit: AlignHit; move: number } | null = null;
-      if (h.x && Math.abs(u[0]) > 1e-6) {
-        const t = (h.x.v - a[0]) / u[0];
-        const q: Pt2 = [h.x.v, a[1] + t * u[1]];
-        const move = Math.hypot(q[0] - b[0], q[1] - b[1]);
-        if (move <= tol) best = { q, hit: h.x, move };
-      }
-      if (h.y && Math.abs(u[1]) > 1e-6) {
-        const t = (h.y.v - a[1]) / u[1];
-        const q: Pt2 = [a[0] + t * u[0], h.y.v];
-        const move = Math.hypot(q[0] - b[0], q[1] - b[1]);
-        if (move <= tol && (!best || move < best.move)) best = { q, hit: h.y, move };
-      }
-      if (best) { b = best.q; guides.push({ from: best.hit.from, to: [b[0], b[1]] }); }
-    } else {
-      if (h.x) b = [h.x.v, b[1]];
-      if (h.y) b = [b[0], h.y.v];
-      if (h.x) push(h.x);
-      if (h.y) push(h.y);
-    }
-  }
-  const startMoved = a[0] !== a0[0] || a[1] !== a0[1];
-  const endMoved = !!d.ortho || !!d.vpdir || b[0] !== b0[0] || b[1] !== b0[1];
-  const pts: Pt2[] = endMoved ? [a, b] : startMoved ? [a, ...raw.slice(1)] : raw;
-  return { a, b, ortho: d.ortho, vpdir: d.vpdir, start2, end2: null, guides, pts,
-           engaged: !!start2 || endMoved || guides.length > 0 };
-}
-
-/**
- * **카메라 확정 전 끝점의 방향 스냅**(4차 지시 2) — 소실점 방향(`vpDirSnap`)과 화면
- * 직교(`screenOrthoSnap`) 중 **끝점 이동량이 작은 쪽**이 이긴다(`chooseAxis`의 커서 규칙과
- * 같은 갈래 — 각으로 못 가르는 자리를 커서가 가른다). 소실점이 없으면 직교뿐이다.
- * 둘 다 임계 밖이면 그대로 둔다 — 임계 밖까지 끌면 두 번째 소실점을 만들 대각선을 못 긋는다.
- */
-function dirSnap2d(a: Pt2, b: Pt2): { at: Pt2; ortho: ScreenOrtho | null; vpdir: VpDirSnap | null } {
-  const dir = vpDirSnap(a, b, cam.vps());
-  const o = screenOrthoSnap(a, b);
-  if (dir && o) {
-    const mv = Math.hypot(dir.at[0] - b[0], dir.at[1] - b[1]);
-    const mo = Math.hypot(o.at[0] - b[0], o.at[1] - b[1]);
-    return mv <= mo ? { at: dir.at, ortho: null, vpdir: dir } : { at: o.at, ortho: o, vpdir: null };
-  }
-  if (dir) return { at: dir.at, ortho: null, vpdir: dir };
-  if (o) return { at: o.at, ortho: o, vpdir: null };
-  return { at: b, ortho: null, vpdir: null };
-}
+// ⛔ `dirSnap2d`는 `resolve2dCore` 안으로 옮겨졌다(5차 이월-2 — `dirSnap2dCore`).
 /**
  * **축 스냅 — 라이노 직교 모드**(사람 지시 1). 기본은 **켬**이고 토글로 끈다.
  * 객체로 두는 이유는 종단 확인이 `S2S`로 읽고 쓰기 때문이다(#17: 앱 경로 하나).
@@ -327,7 +237,7 @@ const REL_SNAP = { on: true };
 /** **하단바 접이식 메뉴**(4차 지시 6-a) — 표시·스냅 토글이 접힌다. 기본 접힘. */
 const BAR_MENU = { open: false };
 const OSNAP = {
-  radiusPx: 15,
+  radiusPx: OSNAP_RADIUS_PX,           // D-L56 15px — 출처는 resolve2d.ts 하나(#17)
   kinds: { vertex: true, endpoint: true, midpoint: true, intersection: true,
            perpendicular: true, on_edge: true, on_face: true } as Record<SnapKind, boolean>,
   open: false,                       // 설정 패널이 열려 있는가
