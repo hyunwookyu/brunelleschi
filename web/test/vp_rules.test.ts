@@ -233,6 +233,57 @@ describe("b. 첫 소실점 = 한 축으로 모인 **세** 깊이선의 교점 (6
     expect(r2.event.type).toBe("ask");
   });
 
+  // ------------------------------------------------------------------ 7차 지시 4 (화각 게이트)
+  //
+  // 지시 4-a: "2점 확정 직전에 화각을 판정한다 … f² ≤ 0 → 확정 거부."
+  // **그 게이트가 확정 경로에 실제로 걸려 있는지**를 여기서 잠근다(#17 — 배선 확인).
+  // 픽스처: 주점 x = 480(이미지 중심). 두 소실점이 **둘 다 그 오른쪽**이면 f² < 0이다
+  // (`(480−600)·(900−480) < 0`) — D-L68이 저장소 안의 잘못된 픽스처를 잡은 그 조건이다.
+  const VP_R1: Pt2 = [600, SZ[1] / 2];
+  const VP_R2: Pt2 = [900, SZ[1] / 2];
+  /** (900, 336)으로 뻗는 깊이선 — 39° 기울기라 `depth`이고 V1(600)을 향하지 않는다. */
+  const TO_R2: RLine = { a: [700, 500], b: [800, 418] };
+
+  it("**4-a** 두 번째 소실점이 f² ≤ 0이면 확정을 거부한다 — 게이트가 확정 경로에 걸려 있다", () => {
+    const st = newRuleState(SZ);
+    st.slots[0] = { kind: "vp", at: VP_R1, source: "two_lines", support: 2 };
+    st.horizon = SZ[1] / 2;
+    const r = stepRule(st, TO_R2, SZ);
+    expect(r.event.type).toBe("rejected");
+    if (r.event.type === "rejected") {
+      expect(r.event.fov?.band).toBe("reject");
+      expect(r.event.notify).toBe(true);               // **알린다**(지시 4-c)
+    }
+    expect(r.state.slots[1]).toBeNull();               // 두 번째 슬롯이 안 찼다
+  });
+
+  it("**양성 채널** — 주점을 사이에 둔 두 소실점은 그대로 선다(#30)", () => {
+    const st = newRuleState(SZ);
+    st.slots[0] = { kind: "vp", at: [-400, SZ[1] / 2], source: "two_lines", support: 2 };
+    st.horizon = SZ[1] / 2;
+    const r = stepRule(st, TO_R2, SZ);
+    expect(r.event.type).toBe("vp_fixed");
+    if (r.event.type === "vp_fixed") expect(r.event.fov?.band).not.toBe("reject");
+  });
+
+  it("**4-a·2-3** 2점이 한 번에 서는 경로에서도 화각에 걸리면 **조용히 1점이 되지 않는다**", () => {
+    // 셋이 두 축으로 갈리는 대기 집합 — {l1, l3}이 (600, 336)으로 모이고 l2는 (900, 336)이다.
+    // 두 번째 축이 f² ≤ 0이라 안 서고, 그 판정이 사건에 실려 나온다(7차 항목 2에서 고친 자리).
+    // ⚠ **각차 최소가 {l1, l3}을 골라야 한다**(D-L72) — 그래서 둘을 소실점에서 멀리 두어
+    //    거의 나란하게 만든다(sep 9.8°). TO_R2는 −39.4°라 둘 다에서 33° 넘게 떨어져 있다.
+    //    그리고 둘 다 **10°**여야 한다 — 4~8°는 애매 구간이라 물음이 뜬다(`depth_min_deg`).
+    const l1: RLine = { a: [100, 424.2], b: [240, 399.5] };        // → (600, 336) · −10°
+    const l3: RLine = { a: [100, 247.8], b: [240, 272.5] };        // → (600, 336) · +10°
+    let st = stepRule(newRuleState(SZ), l1, SZ).state;
+    st = stepRule(st, TO_R2, SZ).state;
+    const r = stepRule(st, l3, SZ);
+    expect(r.event.type).toBe("vp_fixed");
+    if (r.event.type === "vp_fixed") {
+      expect(r.event.fov?.band).toBe("reject");        // **알린다** — 조용히 1점이 아니다
+    }
+    expect(r.state.slots[1]).toBeNull();
+  });
+
   it("화면 가로축이 이미 있으면 소실점은 다른 슬롯으로 간다", () => {
     const st = feed([[line([0, 100], [400, 100])], [toward([200, 600])], [toward([300, 640])]]);
     expect(st.slots[0]).toMatchObject({ kind: "screen" });

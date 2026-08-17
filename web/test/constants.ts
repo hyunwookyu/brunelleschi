@@ -47,7 +47,8 @@ export const SHARED_CONSTANTS = {
   RULE_TOL,
   // **2점 확정의 화각 게이트**(2026-08-18 6차 지시 7). **판정을 가르므로 등록한다**(D-C4) —
   // 거부/경고 대역이 바뀌면 확정 여부가 바뀌고, 그러면 그 위의 측정이 전부 낡는다.
-  // 하네스 `test/fov_gate.test.ts`가 읽는다
+  // 하네스 `test/confirm_rules.test.ts`(`fov_gate` 절)와 `test/vp_rules.test.ts`가 읽는다
+  // ⚠ 초판 주석은 없는 파일(`test/fov_gate.test.ts`)을 가리켰다 — 7차 항목 4에서 정정
   FOV_GATE,
   // **축 스냅 — 라이노 직교 모드**(2026-08-16 2차 지시). 하네스 `test/axis_snap_measure.test.ts`
   SNAP_TOL_AXIS,
