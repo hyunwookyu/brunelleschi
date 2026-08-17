@@ -24,7 +24,7 @@ import { LIFT_TOL } from "../src/s3d/lift.js";
 import { HOMOG_TOL } from "../src/s3d/vpHomog.js";
 import { SNAP_TOL } from "../src/s3d/snap.js";
 import { HORIZON_TOL } from "../src/s3d/horizon.js";
-import { RULE_TOL } from "../src/s3d/vpRules.js";
+import { RULE_TOL, FOV_GATE } from "../src/s3d/vpRules.js";
 import { SNAP_TOL_AXIS } from "../src/s3d/axisSnap.js";
 import { LIVE_TOL } from "../src/s3d/liveLine.js";
 import { PICK_TOL } from "../src/ui/pick.js";
@@ -45,6 +45,10 @@ export const SHARED_CONSTANTS = {
   HORIZON_TOL,
   // **규칙 기반 소실점 확정**(2026-08-16 전면 교체). 하네스 `test/rule_camera.test.ts`가 읽는다
   RULE_TOL,
+  // **2점 확정의 화각 게이트**(2026-08-18 6차 지시 7). **판정을 가르므로 등록한다**(D-C4) —
+  // 거부/경고 대역이 바뀌면 확정 여부가 바뀌고, 그러면 그 위의 측정이 전부 낡는다.
+  // 하네스 `test/fov_gate.test.ts`가 읽는다
+  FOV_GATE,
   // **축 스냅 — 라이노 직교 모드**(2026-08-16 2차 지시). 하네스 `test/axis_snap_measure.test.ts`
   SNAP_TOL_AXIS,
   // ⛔ **`vpDraft.ts`·`vpSensitivity.ts`는 2026-08-17 지시 2로 삭제됐다**(검출 초안 경로).

@@ -65,7 +65,7 @@ vitest **445 통과 · 1 건너뜀**(70파일) · tsc·빌드 통과 · Playwrig
 (새 팔 7: p1_invariance·orbit_begin_invariance·snap_declare·trace_hidden·eraser_size·
 viewpoint_undo·view_cube — p1·orbit_begin·snap_declare·trace_hidden·viewpoint_undo는 **버그 되살림으로 실패 확인**(값은 원장 밖 #25 — 원장 명시), eraser_size·view_cube는 팔 안 자체 대조가 배선 부재를 잡는다 — 8-R′) ·
 pytest **73** · selfcheck STALE 0 · 게이트·인용 수는 **coverage를 그 자리에서 읽는다** ·
-상수 해시 **509615a1**.
+상수 해시 **69eba78d**.
 
 ## ✋ 브라우저
 

@@ -284,6 +284,8 @@ test("소실점 하나(카메라 전) — 그 방향으로 스냅된다 (4차 �
   //      지평선 위면 a→V 방향이 화면 수평과 겹칠 수 있다)을 픽스처가 배제한다
   await drawPx(0.30 * W, 0.70 * H, 0.465 * W, 0.535 * H);
   await drawPx(0.25 * W, 0.55 * H, 0.4425 * W, 0.4675 * H);
+  // **셋째 지지선**(6차 지시 11 — 소실점은 세 번째 선이 정한다). 같은 (0.60W, 0.40H)를 지난다
+  await drawPx(0.20 * W, 0.62 * H, 0.38 * W, 0.521 * H);
   const st1 = await page.evaluate(() => {
     const S = window.S2S;
     return { vps: S.camSnapshot().vps, standing: S.standing(), order: S.order(),
@@ -417,9 +419,11 @@ test("대각선 두 개 → 소실점 — 그 선들이 소실점을 정확히 �
   };
   const led: Record<string, unknown> = {};
 
-  // ---- 대각선 두 개 — 둘 다 (0.60W, 0.40H)를 지난다(기본 지평선 0.5H **밖** — 회귀 판별의 재료)
+  // ---- 대각선 **셋** — 전부 (0.60W, 0.40H)를 지난다(기본 지평선 0.5H **밖** — 회귀 판별의 재료).
+  //      ⚠ **셋이다**(6차 지시 11): 둘까지는 같은 축인지 다른 축인지 안 갈리므로 대기한다
   await drawPx(0.30 * W, 0.70 * H, 0.465 * W, 0.535 * H);
   await drawPx(0.25 * W, 0.55 * H, 0.4425 * W, 0.4675 * H);
+  await drawPx(0.20 * W, 0.62 * H, 0.38 * W, 0.521 * H);
   led.fix = await page.evaluate(async () => {
     const S = window.S2S;
     const ax = await import("/src/s3d/axis.ts");
@@ -439,8 +443,15 @@ test("대각선 두 개 → 소실점 — 그 선들이 소실점을 정확히 �
   led.fix_regression = { canvas_h: H, default_horizon_y: 0.5 * H,
                          vp_off_px: Math.abs(fix.vp[1] - 0.5 * H),
                          vp_off_ratio: Math.abs(fix.vp[1] - 0.5 * H) / H };
-  // **오차 0**(지시 3-d) — 교점의 정의다(보장 확인, #5). 판별력은 아래 회귀 판별이 든다
-  for (const m of fix.misfits) expect(m).toBeLessThan(1e-9);
+  // **오차 0**(지시 3-d) — 교점의 정의다(보장 확인, #5). 판별력은 아래 회귀 판별이 든다.
+  // ⚠ **셋 중 둘만 정확히 0이다**(6차 지시 11): 소실점은 짝의 교점이므로 그 둘은 정의상 0이고,
+  // 셋째는 **모임 판정**(`RULE_TOL.concurrent_deg` = 3°)을 지난 지지선이라 마우스 반올림만큼
+  // 어긋난다. 그 몫도 3°의 탄젠트 안이어야 한다 — 안 그러면 모임 판정이 헐거운 것이다
+  const exactMisfits = (fix.misfits as (number | null)[]).filter(m => m != null && m < 1e-9);
+  expect(exactMisfits.length).toBeGreaterThanOrEqual(2);
+  for (const m of fix.misfits) expect(m).toBeLessThan(Math.tan((3 * Math.PI) / 180));
+  led.fix_concurrency = { exact_zero: exactMisfits.length, of: fix.misfits.length,
+                          max_misfit: Math.max(...(fix.misfits as number[])) };
   // **회귀 판별** — 옛 규칙이면 소실점이 기본 지평선(0.5H) 위에 놓인다. 지금은 교점의 y다
   expect(Math.abs(fix.vp[1] - 0.5 * H)).toBeGreaterThan(0.05 * H);
   // **소실점이 지평선을 정한다**(지시 4-c의 앞당김 — 롤 0 유지)
@@ -496,17 +507,18 @@ test("대각선 두 개 → 소실점 — 그 선들이 소실점을 정확히 �
 
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "vp_two_lines.json"), JSON.stringify({
-    spec: "4차 지시 3 — 소실점 = 그린 두 대각선의 실제 교점. 그 선·격자가 그 점을 정확히 향한다. Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
+    spec: "**6차 지시 11** — 소실점 = 한 축으로 모인 **세** 대각선의 교점(4차 지시 3의 '두 선'을 대체한다: 다른 축의 두 선이 만나는 것은 공간의 한 점이지 소실점이 아니다). 그 선·격자가 그 점을 정확히 향한다. Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
     what_this_does_not_say: [
       "misfit·maxSin의 0은 측정이 아니라 **보장 확인**이다(#5) — 교점·투영의 정의다. 1e-9·1e-6은 배선 판정 임계이고 아래 thresholds에 있다",
+      "⚠ **셋 중 둘만 0이다**(6차 지시 11): 소실점은 짝의 교점이므로 그 둘은 정의상 0이고, 셋째는 모임 판정을 지난 지지선이라 마우스 반올림만큼 어긋난다(`fix_concurrency.max_misfit`). `line_misfit_max = 1e-9`는 **그 둘에만** 걸린다",
       "손 오차의 크기·나란한 짝의 조건수는 여기서 안 잰다 — 반례는 test/vp_rules.test.ts(대기·이음 제외·회귀 팔)가 덮는다",
       "실획이 아니다(AS-C1) — Playwright 합성 마우스다",
       "dpr 1 실행이다(#21) — 좌표 규약은 e2e/coords.spec.ts가 dpr 1·2·3에서 잠근다",
     ],
-    thresholds: { line_misfit_max: 1e-9, grid_sin_max: 1e-6, vp_off_default_horizon_min_ratio: 0.05,
+    thresholds: { line_misfit_max: 1e-9, concurrent_deg: 3, grid_sin_max: 1e-6, vp_off_default_horizon_min_ratio: 0.05,
                   ink_px_min: 50, console_errors_max: 0 },
     gate: {
-      registered: "소실점 = 그린 두 선의 교점(각 선의 부적합도 < 1e-9) · 소실점 y ≠ 기본 지평선(옛 규칙 판별) · 지평선 = 소실점 y · 격자 조각 전부가 소실점으로 모인다(sin < 1e-6, 덮는 수 > 10) · 콘솔 오류 0. "
+      registered: "소실점 = 한 축으로 모인 **세** 선의 교점 — 그중 **짝을 이룬 둘**의 부적합도 < 1e-9(교점의 정의)이고 **셋째(지지선)는 모임 판정 3°의 탄젠트 안**이다(6차 지시 11) · 소실점 y ≠ 기본 지평선(옛 규칙 판별) · 지평선 = 소실점 y · 격자 조각 전부가 소실점으로 모인다(sin < 1e-6, 덮는 수 > 10) · 콘솔 오류 0. "
         + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
       reachability_absent: "**배선·보장 확인이라 도달 가능성 오라클이 성립하지 않는다.** 회귀 판별값(|vp.y − 0.5H|)은 픽스처가 고른 소실점 높이의 항등이라 도달 가능성으로 적지 않는다(#40 ⚠⚠ — 항목 1 [7]·2 [B-3]과 같은 자리)",
@@ -583,6 +595,11 @@ test("지평선 — 확정 전에는 없고, 확정 후 그 높이에 생긴다 
   led.mid = await page.evaluate(() => ({ visible: window.S2S.horizon().visible }));
   expect((led.mid as any).visible).toBe(false);            // 한 선(대기)로는 아직 없다
   await drawPx(0.25 * W, 0.55 * H, 0.4425 * W, 0.4675 * H);
+  led.mid2 = await page.evaluate(() => ({ visible: window.S2S.horizon().visible }));
+  // **두 선으로도 아직 없다**(6차 지시 11) — 다른 축의 대각선 둘일 수 있기 때문이다
+  expect((led.mid2 as any).visible).toBe(false);
+  // **셋째 지지선**(6차 지시 11 — 소실점은 세 번째 선이 정한다). 같은 (0.60W, 0.40H)를 지난다
+  await drawPx(0.20 * W, 0.62 * H, 0.38 * W, 0.521 * H);
   led.after = await page.evaluate((arg) => {
     const S = window.S2S;
     const vp = (S.camSnapshot().vps as ([number, number] | null)[]).find((v: any) => v)!;
@@ -1252,6 +1269,8 @@ test("궤도 시작 — 손가락만 대면 화면이 같고, 첫 회전이 이�
   await drawPx(0.25 * W, 0.30 * H, 0.45 * W, 0.301 * H);
   await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
   await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
+  // **셋째 지지선**(6차 지시 11) — 위 둘의 교점 (0.6204W, 0.58H)를 지난다
+  await drawPx(0.30 * W, 0.42 * H, 0.4602 * W, 0.50 * H);
   const ready = await page.evaluate(() => {
     const S = window.S2S;
     return { standing: S.standing(), lifted: S.doc().strokes.filter((s: any) => s.seg3d).length };
@@ -1404,6 +1423,8 @@ test("스냅된 수평선 — 물음 없이 화면 축으로 확정된다 (5차 
   // ---- ① 깊이선 둘 → 소실점이 선다(아직 가로축 없음 — 물음 가드가 있던 그 상태)
   await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
   await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
+  // **셋째 지지선**(6차 지시 11) — 위 둘의 교점 (0.6204W, 0.58H)를 지난다
+  await drawPx(0.30 * W, 0.42 * H, 0.4602 * W, 0.50 * H);
   led.vp_state = await page.evaluate(() => {
     const S = window.S2S;
     return { vps: S.cam.vps().filter((v: unknown) => v).length,
@@ -1609,6 +1630,8 @@ test("지우개 크기·도구 배치 — 슬라이더가 반경을 바꾸고 �
   await drawPx(0.25 * W, 0.30 * H, 0.45 * W, 0.301 * H);
   await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
   await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
+  // **셋째 지지선**(6차 지시 11) — 위 둘의 교점 (0.6204W, 0.58H)를 지난다
+  await drawPx(0.30 * W, 0.42 * H, 0.4602 * W, 0.50 * H);
   const ready = await page.evaluate(() => ({
     standing: window.S2S.standing(),
     lifted: window.S2S.doc().strokes.filter((s: any) => s.seg3d).length }));
@@ -1724,6 +1747,8 @@ test("시점 저장·복귀 — 실행취소는 카메라를 안 건드린다 (5
   await drawPx(0.25 * W, 0.30 * H, 0.45 * W, 0.301 * H);
   await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
   await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
+  // **셋째 지지선**(6차 지시 11) — 위 둘의 교점 (0.6204W, 0.58H)를 지난다
+  await drawPx(0.30 * W, 0.42 * H, 0.4602 * W, 0.50 * H);
   expect(await page.evaluate(() => window.S2S.standing())).toBe(true);
 
   // ---- 돌린다(터치 한 손가락 — 항목 2 팔과 같은 경로)
@@ -1885,6 +1910,8 @@ test("뷰 큐브 — 90° 스냅·연속 회전·피치 유지·소실점 하나
   await drawPx(0.25 * W, 0.30 * H, 0.45 * W, 0.301 * H);
   await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
   await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
+  // **셋째 지지선**(6차 지시 11) — 위 둘의 교점 (0.6204W, 0.58H)를 지난다
+  await drawPx(0.30 * W, 0.42 * H, 0.4602 * W, 0.50 * H);
   // **피치를 먼저 준다**(재검 [5] — 확정 카메라는 fy=0이라 그 상태로는 '수직축 고정'과
   // '국소 up 회전'이 같은 결과다. 아래로 15px 돌려 fy≠0을 만든 뒤에 재야 판별이 산다)
   await page.evaluate(() => {

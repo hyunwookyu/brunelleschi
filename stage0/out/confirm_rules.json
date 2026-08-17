@@ -1,0 +1,446 @@
+{
+  "spec": "2026-08-18 6차 지시 1·2·7·11. 앱과 하네스가 같은 함수를 부른다(#17).",
+  "constants": {
+    "hash": "54346ad1",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "vertical_ask_deg": 45,
+        "min_vp_len_ratio": 0.04,
+        "concurrent_deg": 3
+      },
+      "FOV_GATE": {
+        "severe_f_ratio": 0.5,
+        "ok_f_ratio": 0.87
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "a45078a5",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong",
+      "rate",
+      "fraction"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  },
+  "why": "실획 첫 표본의 보고가 넷을 짚었다: 확정 뷰 자세 null · 끝점 스냅 전무 · 2점 확정의 화각 게이트 부재 · 다른 축의 대각선 둘이 1점으로 굳음. **파일 자체는 저장소에 없다** — `sessions/`가 비어 있고 `real_ink`는 `awaiting_samples`다. 그래서 여기서는 보고된 증상을 **코드에서** 재현·판정하고, 수치가 필요한 자리는 합성 구도로 잰다.",
+  "what_this_does_not_say": [
+    "**실획이 아니다.** `sessions/`가 비어 있어 `real_ink`는 `awaiting_samples`다 — `fov_gate.real_ink_reported`의 입력은 **지시문이 보고한 수**이고 파일 측정이 아니다.",
+    "**`confirm_view`의 분모는 뷰 하나다.** 지시 1을 기각한 근거는 술어의 성질이지 표본이 아니다 — 이 절은 통계가 아니라 불변 확인이다(6차 리뷰어 [4]).",
+    "**그리드의 방향이 맞다는 것을 여기서 재지 않았다** — 확정 카메라의 격자와 사용자 깊이선의 각차를 잰 값이 원장에 없다(리뷰어 [4]ⓒ). `DEFERRED`에 등재했다.",
+    "**`fov_gate.sweep`는 주점 정중앙 배치뿐이다.** 대역은 `f/W`가 가르므로 비대칭 배치도 담기지만 **그 방향의 동작점은 안 쟀다**(리뷰어 [4·5]).",
+    "**합성은 이 설계의 판정자가 아니다**(AS-L24·L25) — 합성 잉크에는 축의 의도가 없다. `vp_rule_three`는 규칙의 **기하적 판별력**을 재지 실사용 정확도를 안 잰다.",
+    "**중단 조건 게이트(`camera_gate.json`)는 이 변경을 안 지난다** — 그 하네스는 소실점을 직접 주고 `recoverCamera`만 부른다(`resolvePool`을 안 지난다). 그 원장이 안 움직인 것은 **안전의 증거가 아니라 사정거리 밖이라는 뜻**이다(리뷰어 #41).",
+    "**`beyondSegment`의 위약 팔이 없다**(#39) — 같은 수의 후보를 무관한 기준으로 지운 팔을 안 돌렸으므로, 무잡음 15 → 3이 '연장선 위'라는 성질의 몫인지 '후보를 줄인 것'의 몫인지 안 갈렸다.",
+    "**겨냥 잡음도 시드도 동작점 하나다**(#12·#14) — `aim_jitter_deg 1.7`(실획 보고 구간 0.0~1.7의 **끝**) · `seed 20260818`. 무잡음에서 같은 하네스가 `no_jitter_wrong`을 내므로 **결과가 잡음에 강하게 반응한다**. 7/120도 대조 팔의 24/120도 그 한 점의 값이다.",
+    "**대조 팔의 `old_wrong = 0`은 구성의 항등에 가깝다**(리뷰어) — 옛 규칙의 묶음 정오는 '첫 두 선이 같은 축인가'와 동치이고 그 순서를 정한 것이 픽스처다. 그 팔이 보인 것은 **지표가 0과 120을 모두 낸다**(양방향 도달 가능, #30)는 것이지 120/120의 비자명성이 아니다.",
+    "**위치를 구속하는 등록 기준이 없다** — 지표를 묶음으로 옮기면서 위치가 게이트에서 빠졌다. 카메라는 위치에서 나온다."
+  ],
+  "confirm_view": {
+    "what": "`pose === null`이 확정 뷰의 정의인가 — 그리고 자세를 채우면 무엇이 무너지는가",
+    "views_checked": 1,
+    "confirm_pose_null": true,
+    "is_confirm": true,
+    "round_trip_pose_null": true,
+    "counter_example": {
+      "what": "확정 뷰에 항등 자세를 채운 문서 — 지시 1-a가 하려던 변경",
+      "is_confirm_after": false,
+      "view_is_current_would_be": false
+    },
+    "finding": "지시 1의 세 증상은 자세 누락이 아니다. ① 그리드가 깊이선과 안 맞는 것은 **그리드의 원점이 임의**이기 때문이다(`grid.ts`의 `groundGrid`: 화면 (W/2, 0.72H) 광선 ∩ 눈높이 지면). 방향은 확정 카메라의 소실점에서 오므로 맞고 **자리와 간격만 임의**다. ② 회전 튐은 D-L65에서 이미 고쳤다(`stage.retarget` — 시선 투영). ③ 그릴 때마다 다른 곳은 **`on_face` 임의 깊이**이고 그것이 항목 4의 대상이다."
+  },
+  "end_probe": {
+    "what": "조리개 밖 끝점 겨냥을 프로브가 잡아내는가 — 세 사유를 가르는가",
+    "aperture_px": 15,
+    "probe_px": 40,
+    "covered": 6,
+    "rows": [
+      {
+        "offset_px": 5,
+        "snapped": true,
+        "probe_px": 5,
+        "verdict": "붙었다"
+      },
+      {
+        "offset_px": 12,
+        "snapped": true,
+        "probe_px": 12,
+        "verdict": "붙었다"
+      },
+      {
+        "offset_px": 20,
+        "snapped": false,
+        "probe_px": 20,
+        "verdict": "반경이 좁다(①)"
+      },
+      {
+        "offset_px": 30,
+        "snapped": false,
+        "probe_px": 30,
+        "verdict": "반경이 좁다(①)"
+      },
+      {
+        "offset_px": 60,
+        "snapped": false,
+        "probe_px": null,
+        "verdict": "후보가 없다(②)"
+      },
+      {
+        "offset_px": 200,
+        "snapped": false,
+        "probe_px": null,
+        "verdict": "후보가 없다(②)"
+      }
+    ],
+    "verdict_counts": {
+      "snapped": 2,
+      "radius_too_small": 2,
+      "no_candidate": 2
+    },
+    "on_face_excluded": "지면 스냅의 화면 거리는 정의상 0이라 프로브에서 뺀다(#3·#5)",
+    "probe_ran": {
+      "queries": 6,
+      "snap_targets": 1,
+      "static_candidates": 3
+    }
+  },
+  "fov_gate": {
+    "what": "두 수평 소실점이 서 있을 수 있는 카메라를 내는가 — 대역과 거부",
+    "thresholds": {
+      "severe_f_ratio": 0.5,
+      "ok_f_ratio": 0.87
+    },
+    "covered": 13,
+    "sweep": [
+      {
+        "f_over_w": 0.2,
+        "d_over_w": 0.4,
+        "band": "severe",
+        "f": 192,
+        "fov_deg": 136.4
+      },
+      {
+        "f_over_w": 0.4,
+        "d_over_w": 0.8,
+        "band": "severe",
+        "f": 384,
+        "fov_deg": 102.68
+      },
+      {
+        "f_over_w": 0.49,
+        "d_over_w": 0.98,
+        "band": "severe",
+        "f": 470.4,
+        "fov_deg": 91.16
+      },
+      {
+        "f_over_w": 0.5,
+        "d_over_w": 1,
+        "band": "warn",
+        "f": 480,
+        "fov_deg": 90
+      },
+      {
+        "f_over_w": 0.6,
+        "d_over_w": 1.2,
+        "band": "warn",
+        "f": 576,
+        "fov_deg": 79.61
+      },
+      {
+        "f_over_w": 0.86,
+        "d_over_w": 1.72,
+        "band": "warn",
+        "f": 825.6,
+        "fov_deg": 60.35
+      },
+      {
+        "f_over_w": 0.87,
+        "d_over_w": 1.74,
+        "band": "ok",
+        "f": 835.2,
+        "fov_deg": 59.77
+      },
+      {
+        "f_over_w": 1,
+        "d_over_w": 2,
+        "band": "ok",
+        "f": 960,
+        "fov_deg": 53.13
+      },
+      {
+        "f_over_w": 1.5,
+        "d_over_w": 3,
+        "band": "ok",
+        "f": 1440,
+        "fov_deg": 36.87
+      },
+      {
+        "f_over_w": 2,
+        "d_over_w": 4,
+        "band": "ok",
+        "f": 1920,
+        "fov_deg": 28.07
+      },
+      {
+        "f_over_w": 3,
+        "d_over_w": 6,
+        "band": "ok",
+        "f": 2880,
+        "fov_deg": 18.92
+      }
+    ],
+    "band_counts_ordered": [
+      3,
+      3,
+      5
+    ],
+    "counter_example": {
+      "what": "주점(480) 오른쪽에 둘 다 있는 소실점 — f² ≤ 0",
+      "band": "reject",
+      "f": null,
+      "why": "**서 있을 수 없는 시점입니다** — 대응하는 카메라가 없습니다(f² ≤ 0, 이론서 6.2·6.5). 두 소실점이 화면 중심을 넉넉히 사이에 두도록, 그리고 지평선이 화면 중앙에서 너무 멀지 않게 그으세요"
+    },
+    "off_screen_is_normal": {
+      "what": "화면 밖 소실점(±2400·3600)이 클램프 없이 계산에 들어가는가(지시 7-a)",
+      "band": "ok",
+      "d_over_w": 6.25,
+      "finite_vp_threshold_ratio": "VP_INFINITE_RATIO = 50 × 대각 — 화면 밖은 이 문턱 훨씬 안쪽이다",
+      "clamped": false
+    },
+    "real_ink_reported": {
+      "source": "6차 지시문 보고 — **파일이 sessions/에 없다**(real_ink는 awaiting_samples)",
+      "vp0": [
+        902,
+        157
+      ],
+      "vp1": [
+        -231,
+        157
+      ],
+      "w": 1180,
+      "d": 1133,
+      "d_over_w": 0.96,
+      "f": 474.16,
+      "f_over_w": 0.402,
+      "fov_deg": 102.43,
+      "band": "severe"
+    },
+    "gate": {
+      "registered": "f² ≤ 0이면 **거부**한다. d/W < 0.87이면 경고하되 **확정은 막지 않는다**(지시 7-b: 경고하고 확정하되 표시). 화면 밖 소실점은 **정상**이므로 거르지 않는다",
+      "reachability": "대역이 실제로 갈리는가 — **쓸기 11행은 severe·warn·ok 셋을 내고 reject는 `counter_example`이 낸다**(쓸기는 f² > 0 격자라 reject가 안 나온다). 한 대역만 나오면 판정이 아니다(#30). `reachability_value`는 `band_counts_ordered` = **[severe, warn, ok]** 순이다",
+      "reachability_value": [
+        3,
+        3,
+        5
+      ],
+      "reachability_source": "fov_gate/band_counts_ordered",
+      "result": {
+        "same_side_rejected": true,
+        "real_ink_band": "severe",
+        "real_ink_fov_deg": 102.42561961283505
+      }
+    }
+  },
+  "vp_rule_three": {
+    "what": "규칙이 정하는 것 = **어느 둘이 같은 축인가**(지시 11-2). 그 묶음이 맞는가를 잰다 — 소실점의 **위치**가 아니다",
+    "no_jitter_wrong": 3,
+    "metric": "grouped_correctly = 고른 짝(또는 묶음)의 선들이 전부 같은 참 축을 겨눴는가",
+    "compositions": 120,
+    "seed": 20260818,
+    "concurrent_deg": 3,
+    "aim_jitter_deg": 1.7,
+    "control_same_axis_first": {
+      "of": 120,
+      "old_wrong": 0,
+      "new_wrong": 24
+    },
+    "absolute_40px_window": {
+      "old_wrong": 120,
+      "new_wrong": 116,
+      "of": 120,
+      "note": "잡음 1.7°에서는 규칙이 아니라 교점의 조건수를 잰다"
+    },
+    "old_rule": {
+      "wrong": 120,
+      "of": 120,
+      "error_samples": 118,
+      "first_vp_error_px": {
+        "n": 118,
+        "min": 567.2376,
+        "p10": 750.2777,
+        "median": 1023.1324,
+        "p90": 1455.3387,
+        "max": 1806.8435
+      }
+    },
+    "new_rule": {
+      "wrong": 7,
+      "of": 120,
+      "error_samples": 116,
+      "first_vp_error_px": {
+        "n": 116,
+        "min": 16.7078,
+        "p10": 68.0513,
+        "median": 438.4277,
+        "p90": 2116.0538,
+        "max": 16735.7496
+      },
+      "waited_at_two_lines": 120,
+      "two_point_in_one_step": 113
+    },
+    "denominators": "wrong = N(못 낸 것 포함) · first_vp_error_px.n = 소실점을 실제로 낸 구도 수",
+    "gate": {
+      "registered": "① 다른 축의 대각선 둘로는 **아무 소실점도 안 선다**(대기 N/N). ② 셋째 선이 오면 **같은 축의 선들끼리 묶는다**(묶음 틀림 0/N). ⚠⚠ 등록 지표를 **위치(40px)에서 묶음으로** 바꿨다 — 겨냥 잡음 1.7°에서 위치 창은 **규칙이 아니라 교점의 조건수**를 재고(두 규칙 다 ~116/120 '틀림') 그러면 어느 규칙도 통과할 수 없다. **기준을 무른 것이 아니라 같은 양이 아니게 된 것**이고, 옛 창의 값도 `absolute_40px_window`에 함께 남긴다(#26·#24). 옛 규칙은 같은 입력에서 전부 틀린다",
+      "reachability": "옛 규칙 팔이 **버그를 되살린 것**이다 — 같은 하네스·같은 입력에서 틀린 수가 0이 아니어야 이 시험에 판별력이 있다(#30). 그 수가 도달 가능성의 값이다",
+      "reachability_value": 120,
+      "reachability_source": "vp_rule_three/old_rule/wrong",
+      "result": {
+        "new_wrong": 7,
+        "old_wrong": 120,
+        "waited": 120,
+        "both_arms": {
+          "of": 240,
+          "new_wrong": 31,
+          "old_wrong": 120
+        },
+        "no_jitter_wrong": 3,
+        "passed_wait": true,
+        "passed_correct": false
+      },
+      "status": "**②가 미달이다 — 기준을 낮추지 않는다**(#26)",
+      "note": "②가 안 맞는 몫은 **세 선이 두 축으로 갈리는 구도의 본래적 모호성**이다: 대각선 셋과 축 둘이면 2+1 쪼개기가 기하적으로 둘 이상 성립할 수 있고, 어느 쪽인지는 **더 그어야** 정해진다. 줄인 수단 둘은 원장에 남는다 — ⓐ 교점이 **두 선의 연장 위**에 있어야 한다(그린 구간 안의 교차는 모서리다: 틀림 15 → 3) ⓑ **무리 중심에서 먼** 교점을 고른다(소실점은 멀고 '공간의 한 점'은 가깝다). ⚠ 합성은 이 설계에 구조적으로 불리하다(AS-L24·L25) — 합성 잉크에는 축의 의도가 없다. **실획이 판정자다.**"
+    }
+  }
+}

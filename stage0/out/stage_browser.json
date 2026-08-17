@@ -19,7 +19,7 @@
     "camera": "요 35°·피치 15° 3점(f=1000px). **참 소실점을 규칙 슬롯에 직접 넣는다**(D-L37)"
   },
   "constants": {
-    "hash": "509615a1",
+    "hash": "54346ad1",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -68,7 +68,12 @@
         "screen_axis_deg": 4,
         "depth_min_deg": 8,
         "vertical_ask_deg": 45,
-        "min_vp_len_ratio": 0.04
+        "min_vp_len_ratio": 0.04,
+        "concurrent_deg": 3
+      },
+      "FOV_GATE": {
+        "severe_f_ratio": 0.5,
+        "ok_f_ratio": 0.87
       },
       "SNAP_TOL_AXIS": {
         "ambiguous_deg": 6
@@ -307,7 +312,7 @@
   },
   "home": {
     "pinned": true,
-    "ink_painted_px": 23693
+    "ink_painted_px": 24170
   },
   "guide_budget": {
     "canvas": [
@@ -320,7 +325,7 @@
     "note": "⚠ **대상이 사라졌다**(D-L37) — 가이드가 없어졌으므로 '가이드 길이'도 '요구 길이(`min_guide_ratio`)'도 없는 양이다. 빈 배열·`null`이고, 이 자리를 지우지 않는 이유는 왜 그 규칙이 있었는지가 근거이기 때문이다(#29의 숙제였다)."
   },
   "l_d3_save_roundtrip": {
-    "reload_ms": 1177,
+    "reload_ms": 1176,
     "views": 2,
     "lifted": 12,
     "pending_2d": 1,
@@ -445,7 +450,7 @@
         "mode": 0,
         "resolved": 0
       },
-      "last_note": ""
+      "last_note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)"
     },
     "what_this_does_not_say": [
       "고정이 오배정을 줄이는가 — **사용자 행동 의존이라 직접 측정이 불가능하다**(AS-L5)",
@@ -844,7 +849,7 @@
     "loss_fixture_provenance": {
       "how": "첫 픽스처(medium · jitter 0.006 · seed 12345)가 `dropped 0 · snapLost 0`이라 표시 경로를 안 지났다. **등급 2 × jitter 3 × 시드 3 = 18조합을 훑어** `dropped > 0 && snapLost > 0`인 것을 골랐다. 18조합 중 **셋**이 그랬다 (medium/0.04/4242 · coarse/0.02/4242 · coarse/0.04/4242).",
       "why_not_cherry_picking": "**결론을 만들려고 고른 것이 아니라 코드 경로를 지나려고 골랐다.** 이 테스트가 판정하는 것은 '표시가 뜨는가'이지 '얼마나 자주 잃는가'가 아니다 — 빈도는 `order_undo.json`이 216장면으로 잰다(내려감 176/216 · 스냅 끊김 94/216).",
-      "where_in_population": "⚠ **이 픽스처는 모집단의 꼬리 쪽이다.** 스냅 끊김 4/5 = 0.80인데 모집단은 295/1676 = **0.176**이고, 장면당 끊김은 중앙 **0** · p90 **4**다(`order_undo.json@509615a1`) — 즉 **p90 자리**다. 표시 경로를 지나려면 그래야 하지만, **이 수를 대표값으로 인용하면 안 된다.**",
+      "where_in_population": "⚠ **이 픽스처는 모집단의 꼬리 쪽이다.** 스냅 끊김 4/5 = 0.80인데 모집단은 295/1676 = **0.176**이고, 장면당 끊김은 중앙 **0** · p90 **4**다(`order_undo.json@54346ad1`) — 즉 **p90 자리**다. 표시 경로를 지나려면 그래야 하지만, **이 수를 대표값으로 인용하면 안 된다.**",
       "off_grid": "⚠ **격자 밖이 셋이다**(#12): jitter 0.04(격자 {0, 0.01, 0.03, 0.05}) · seed 4242(격자 {1..6}) · **skew 0.37**(하네스는 0.12 — 3배다). skew는 이 파일의 다른 브라우저 픽스처와 같은 값이고 **훑기에서 흔들지 않았다**(고정). 배선 확인용이고 여기서 나온 수치를 원장 값으로 쓰지 않는다."
     },
     "what_this_does_not_say": [
@@ -905,7 +910,7 @@
     },
     "stroke_latency_ms": {
       "n": 8,
-      "median": 1.5,
+      "median": 1.6,
       "max": 2.8,
       "note": "**개발 서버(번들 없음) · 상자 둘(24획 + 그린 획)** 기준이므로 상한으로 읽는다. ⚠ `e2e.json`의 값은 **옛 UI**라 같은 구간이 아니다 — 견주지 않는다.",
       "registered_pass": "중앙 10ms 미만(사전 등록). ⚠ **중앙값 자체를 문서에 인용하지 않는다** — 기계·실행마다 흔들린다. 판정은 자릿수다"
@@ -963,7 +968,7 @@
     },
     "screenshot_regression": {
       "identical": true,
-      "bytes": 173866,
+      "bytes": 176814,
       "note": "**결정론 확인이다**(설계 보장, #5) — 잉크가 LCG이고 자세가 고정이므로 같아야 한다. 임계를 걸지 않는다. ⚠ **기계 간 비교는 안 한다**(폰트·안티에일리어싱)."
     },
     "what_this_does_not_say": [

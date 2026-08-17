@@ -17,7 +17,7 @@ import type { Axis } from "../s3d/axis.js";
 import type { ViewPose } from "../s3d/viewCamera.js";
 import type { AccumulatorDump } from "../s3d/constraints.js";
 import type { RuleState } from "../s3d/vpRules.js";
-import { DEFAULT_CHANNEL } from "./doc.js";
+import { DEFAULT_CHANNEL, confirmViewOf } from "./doc.js";
 import type { DocState, SStroke, SView, SnapRef, Channel } from "./doc.js";
 
 export const DOC2_FORMAT = "s2s-doc/2";
@@ -57,6 +57,8 @@ export interface Doc2 {
     snapStart: SnapRef | null;
     /** 시작점의 겨냥 거리(px, 지시 K — 40px 프로브라 조리개 절단 없음). 옛 저장본에는 없다. */
     snapDistPx?: number | null;
+    /** 끝점의 겨냥 거리(px, 6차 항목 2 — 40px 프로브). 옛 저장본에는 없다. */
+    snapEndDistPx?: number | null;
     /** 조각의 출처 획 id(지시 I·K). */
     pieceOf?: string;
     /** **끝점 스냅**(오스냅, D-L46). 옛 저장본에는 없다 — 복원이 `null`로 채운다 */
@@ -105,6 +107,7 @@ export function serializeDoc2(s: Doc2Source): Doc2 {
       userAxis: t.userAxis,
       snapStart: t.snapStart ? { ...t.snapStart, at: [...t.snapStart.at] as Vec3 } : null,
       snapDistPx: t.snapDistPx ?? null,
+      snapEndDistPx: t.snapEndDistPx ?? null,
       pieceOf: t.pieceOf,
       snapEnd: t.snapEnd ? { ...t.snapEnd, at: [...t.snapEnd.at] as Vec3 } : null,
       channel: t.channel,
@@ -138,6 +141,7 @@ export function restoreDoc2(d: Doc2): Restored2 {
     userAxis: !!t.userAxis,
     snapStart: t.snapStart ?? null,
     snapDistPx: t.snapDistPx ?? null,
+    snapEndDistPx: t.snapEndDistPx ?? null,
     pieceOf: t.pieceOf,
     // **옛 저장본에는 이 필드가 없다** — 없으면 끝점 스냅이 아니었던 것이다
     snapEnd: t.snapEnd ?? null,
@@ -148,7 +152,8 @@ export function restoreDoc2(d: Doc2): Restored2 {
   }));
   // **없는 뷰를 가리키는 획을 남기지 않는다** — 그 획은 어디에도 안 그려지고 조용히 사라진다.
   const known = new Set(views.map(v => v.id));
-  const home = views.find(v => v.pose === null) ?? views[0];
+  // **확정 뷰 술어는 `doc.ts` 하나다**(#17) — 옛 판은 같은 식을 여기 따로 적었다
+  const home = confirmViewOf({ strokes: [], views, currentView: views[0].id });
   for (const t of strokes) if (!known.has(t.viewRef)) t.viewRef = home.id;
   const current = known.has(d.currentView) ? d.currentView : home.id;
 

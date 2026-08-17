@@ -69,8 +69,10 @@ describe("점 찍기 확정 (4차 지시 4-b)", () => {
   });
 
   it("**반례** — 소실점이 이미 서 있으면 null(확정 후 잠금, §1)", () => {
+    // **셋이 모여야 소실점이다**(6차 지시 11) — 둘까지는 대기다
     let st = withWaiting([[[100, 600], [500, 480]]]);
-    const r = stepRule(st, { a: [200, 640], b: [700, 500] }, SZ, "depth");
+    st = stepRule(st, { a: [200, 640], b: [700, 500] }, SZ, "depth").state;
+    const r = stepRule(st, { a: [150, 620], b: [600, 490] }, SZ, "depth");
     expect(r.event.type).toBe("vp_fixed");
     expect(pickVpAt(r.state, [400, 520], SZ, TOL)).toBeNull();
   });

@@ -111,11 +111,13 @@ describe("규칙 → 카메라 → 3D (전환이 실제로 되는가)", () => {
 
   it("**반례** — 가로선 없는 소실점 하나(NONE)는 3D를 안 세운다", () => {
     const cam = new CamState(SZ);
-    // 깊이선 **둘**(같은 소실점을 향한 짝, 4차 지시 3) — 교점으로 소실점은 서지만 상태는 NONE이다
+    // 깊이선 **셋**(같은 소실점으로 모인 묶음, 6차 지시 11) — 소실점은 서지만 상태는 NONE이다
     const r1 = representative(toVp([280, 240]))!;
     expect(cam.feed({ a: r1.a, b: r1.b }).event.type).toBe("waiting");
     const r2 = representative(toVp([680, 240]))!;   // 45° 물음(vertical_ask_deg)에 안 걸리는 얕은 각
-    const r = cam.feed({ a: r2.a, b: r2.b });
+    expect(cam.feed({ a: r2.a, b: r2.b }).event.type).toBe("waiting");
+    const r3 = representative(toVp([300, 460]))!;
+    const r = cam.feed({ a: r3.a, b: r3.b });
     expect(r.event.type).toBe("vp_fixed");
     expect(cam.order()).toBe(0);
     expect(cam.ctx()).toBeNull();

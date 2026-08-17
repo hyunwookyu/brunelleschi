@@ -91,8 +91,139 @@ export const RULE_TOL = {
    * ⚠ **이 임계가 몇 획을 걸렀는지 세는 곳이 아직 없다**(#38 덮는 대상 미상) — `DEFERRED.md`.
    */
   min_vp_len_ratio: 0.04,
+  /**
+   * **그 선이 이 점으로 모이는가**(2026-08-18 6차 지시 11 — "교점 쪽"의 판정).
+   *
+   * 선의 방향과 **선의 중점에서 그 점을 향하는 방향** 사이의 각(도). 이보다 작으면 그 선은
+   * 그 점으로 모인다.
+   *
+   * ⚠⚠ **`AXIS_TOL.vp_dist_ratio`를 쓰면 안 된다**(실제로 걸렸다). 그것은 **수직거리 ÷ 획
+   * 길이**라, 소실점이 멀 때만 각의 대용이 된다. 짧은 획과 **가까운** 교점에서는 같은 비가
+   * 훨씬 큰 각을 뜻하고, 그래서 **다른 축의 세 선이 한 점으로 모인 것처럼 읽혔다**
+   * (초판 구현이 그랬고 `vp_rules.test.ts`의 "2점이 한 번에" 시험이 잡았다 — 세 선의
+   * 지지 수가 3으로 나와 1점으로 굳었다). 여기서는 **각을 직접 잰다.**
+   *
+   * 값의 근거는 **실획**이다(6차 지시 머리말): 첫 표본에서 획의 2D 방향과 소실점 방향의 차가
+   * **Δ0.0~1.7°**였다. 그 상한의 약 두 배로 둔다 — 손 오차를 담되 다른 축을 안 삼키는 폭이다.
+   * ⚠ **동작점 하나이고 스윕을 안 돌렸다**(#12). 실획 표본이 `sessions/`에 들어오면
+   * `real_ink`가 이 값을 가르는 분포를 낸다.
+   */
+  concurrent_deg: 3,
 } as const;
 export type RuleCfg = Partial<typeof RULE_TOL>;
+
+/**
+ * **2점 확정의 화각 게이트**(2026-08-18 6차 지시 7 · 이론서 18.4).
+ *
+ * ---------------------------------------------------------------- 문제는 화면 밖이 아니다
+ *
+ * **소실점이 화면 밖으로 나가는 것은 정상이다.** 건축 투시도는 두 소실점이 화면 폭의
+ * 두세 배 떨어져 있는 것이 보통이고, **둘 다 화면 안에 있으면 화각이 극단적으로 넓다.**
+ * 화면 밖 좌표는 그대로 계산에 들어간다 — `isFiniteVp`의 문턱은 대각의 **50배**라
+ * (`VP_INFINITE_RATIO`) 클램프가 아니고, 실획 표본의 VP1(x = −231)도 그 안이다.
+ *
+ * 문제는 **너무 가까운 것**이다. 두 소실점 사이 거리 `d`가 짧으면 f가 작아지고
+ * (6.2: f² = |PV₁||PV₂|, P가 그 사이에 있을 때 최대 f = d/2) 화각이 넓어진다.
+ *
+ * ```
+ * f² ≤ 0        주점이 두 소실점 **사이에 없다** — 대응하는 카메라가 없다 → **거부**
+ * d < 0.50·W    화각이 90°를 크게 넘는다(그 대역의 상한 f = d/2 < W/4) → **경고**(심함)
+ * d < 0.87·W    아직 넓다 → **경고**
+ * d ≥ 0.87·W    정상
+ * ```
+ *
+ * ⚠ **경고는 확정을 막지 않는다**(지시 7-b "경고하고 확정하되 표시"). 막는 것은 f² ≤ 0
+ * 하나뿐이다 — 그때만 **서 있을 수 없는 카메라**이기 때문이다. 넓은 화각은 이상하지만
+ * 존재하는 시점이고, 이 도구는 **공간과 투시를 이해하는 사용자를 전제한다**(CLAUDE.md).
+ *
+ * ⚠ **3점에도 같은 게이트가 든다** — 3점의 수평 소실점 둘은 이 문을 이미 지나서 섰다
+ * (수직 소실점은 그 뒤에 `deriveVertical`이 얹는다). 예각 조건(6.5, f²<0)은 `recoverCamera`가
+ * 별개로 본다 — **화각과 다른 양이다**(지시 7-d).
+ */
+export const FOV_GATE = {
+  /**
+   * **시거리 f가 화면 폭의 이 배수 미만이면 심한 경고** — 화각 90° 초과.
+   * `2·atan((W/2)/f) = 90°` ⟺ `f = 0.5·W`(이론서 18.4).
+   */
+  severe_f_ratio: 0.50,
+  /** **이 배수 이상이면 정상** — 화각 60° 이하. `2·atan((W/2)/f) = 60°` ⟺ `f = 0.866·W`. */
+  ok_f_ratio: 0.87,
+} as const;
+
+export type FovBand = "ok" | "warn" | "severe" | "reject";
+
+export interface FovVerdict {
+  band: FovBand;
+  /** 두 소실점 사이 화면 거리(px). */
+  d: number;
+  /** `d / W` — 대역을 가르는 양. */
+  dOverW: number;
+  /** 6.2의 f(= 시거리). `null`이면 f² ≤ 0(주점이 사이에 없다). */
+  f: number | null;
+  /**
+   * **`f / W` — 대역을 가르는 양**(이론서 18.4의 시거리 기준).
+   *
+   * ⚠⚠ **`d / W`가 아니다**(6차 리뷰어 [5]·[4·5]). 초판이 지시문의 표기를 그대로 옮겨
+   * 소실점 사이 거리에 0.5·0.87을 걸었는데, 이론서 18.4의 그 값은 **시거리** 기준이다:
+   * `2·atan((W/2)/f)`가 90°·60°가 되는 자리가 `f = 0.5W`·`f = 0.866W`다.
+   * 주점이 정중앙일 때 `f = d/2`이므로 d에 걸면 **실효 임계가 정확히 두 배 느슨해진다** —
+   * 초판 쓸기의 `d/W = 0.87` 행이 화각 **97.95°인데 `ok`**였다(원장이 스스로 모순을 들었다).
+   * 그리고 f는 `|PV₁||PV₂|`라 **비대칭 배치도 담는다** — d/W는 못 담는다.
+   * 지시 7-b의 뜻("화각 90° 초과")을 그대로 살리려면 여기에 걸어야 한다.
+   */
+  fOverW: number | null;
+  /** 가로 화각(도). f가 없으면 `null`. */
+  fovDeg: number | null;
+  /** 사람이 읽는 사유. `ok`면 빈 문자열. */
+  why: string;
+}
+
+/**
+ * **두 수평 소실점이 서 있을 수 있는 카메라를 내는가**(지시 7-b).
+ *
+ * 주점 x는 **이미지 중심 가정**(16.2, AS-C5)이고 이 저장소가 2점 경로에서 이미 쓰는 것이다 —
+ * 새 가정을 들이지 않는다. 두 소실점은 롤 0이므로 같은 지평선 위에 있고, 그래서 f²의 부호는
+ * **주점 x가 둘 사이에 있는가** 하나로 갈린다.
+ */
+export function fovGate(
+  v0: Pt2, v1: Pt2, imgSize: [number, number], cfg: Partial<typeof FOV_GATE> = {},
+): FovVerdict {
+  const c = { ...FOV_GATE, ...cfg };
+  const [W, Himg] = imgSize;
+  const px = W / 2, py = Himg / 2;                    // 주점 = 이미지 중심(16.2, AS-C5)
+  const d = Math.hypot(v1[0] - v0[0], v1[1] - v0[1]);
+  const dOverW = W > 0 ? d / W : 0;
+  // ⚠⚠ **주점이 지평선 위에 있다고 가정하면 안 된다**(6차 리뷰어). 이론서 6.2의
+  // `f² = |PV₁||PV₂|`는 **주점도 지평선 위**일 때의 꼴이다(y 성분이 전부 같다). 일반형은
+  // `(V₁ − P)·(V₂ − P) = −f²`이고, 두 소실점이 같은 지평선 위(롤 0)이면 그 세로 어긋남
+  // `h = 주점 y − 지평선 y`가 **양쪽에 공통**이라 `f² = −Δx₁Δx₂ − h²`가 된다.
+  // h를 빼먹으면 f가 과대평가되고(실획 보고 행에서 506.11 대 474.2 — 6.7%)
+  // **거부 조건도 좁아진다**: h가 크면 주점 x가 둘 사이에 있어도 f² ≤ 0이 될 수 있다.
+  const lo = Math.min(v0[0], v1[0]), hi = Math.max(v0[0], v1[0]);
+  const h = py - (v0[1] + v1[1]) / 2;
+  const f2 = (px - lo) * (hi - px) - h * h;
+  if (!(f2 > 0)) {
+    return { band: "reject", d, dOverW, f: null, fOverW: null, fovDeg: null,
+             why: "**서 있을 수 없는 시점입니다** — 대응하는 카메라가 없습니다"
+                + "(f² ≤ 0, 이론서 6.2·6.5). 두 소실점이 화면 중심을 넉넉히 사이에 두도록,"
+                + " 그리고 지평선이 화면 중앙에서 너무 멀지 않게 그으세요" };
+  }
+  const f = Math.sqrt(f2);
+  const fOverW = W > 0 ? f / W : 0;
+  const fovDeg = (2 * Math.atan((W / 2) / f) * 180) / Math.PI;
+  const tail = `<span class="dim">(소실점 사이 ${Math.round(d)}px = 화면 폭의 `
+             + `${dOverW.toFixed(2)}배 · 시거리 ${Math.round(f)}px)</span>`;
+  if (fOverW < c.severe_f_ratio) {
+    return { band: "severe", d, dOverW, f, fOverW, fovDeg,
+             why: `**소실점이 너무 가깝습니다** — 화각 ${fovDeg.toFixed(0)}°로 서기 어려운 `
+                + `시점입니다. 깊이선의 기울기를 줄여 소실점을 더 벌리세요 ${tail}` };
+  }
+  if (fOverW < c.ok_f_ratio) {
+    return { band: "warn", d, dOverW, f, fOverW, fovDeg,
+             why: `화각이 ${fovDeg.toFixed(0)}°로 넓습니다 ${tail}` };
+  }
+  return { band: "ok", d, dOverW, f, fOverW, fovDeg, why: "" };
+}
 
 export interface RLine { a: Pt2; b: Pt2 }
 
@@ -263,7 +394,12 @@ export type RuleEvent =
   /** 소실점이 확정됐다. */
   | { type: "vp_fixed"; axis: 0 | 1 | 2; at: Pt2; source: VpSource; horizonSet: boolean;
       /** two_lines일 때 짝이 된 대기 선(측정용 — 5차 이월-2 리뷰어 [22]). 앱 동작에는 안 쓰인다. */
-      paired?: RLine }
+      paired?: RLine;
+      /**
+       * **화각 게이트의 판정**(6차 지시 7-b). 2점이 서는 순간에만 채워진다 —
+       * `ok`가 아니면 화면에 그대로 낸다(**확정은 됐고 시점이 이상하다**는 알림이다).
+       */
+      fov?: FovVerdict }
   // ⚠ **`promoted`(수평 축의 1점 → 2점 승격)를 뺐다**(2026-08-17 B). 화면 가로선을 그은 것은
   // **1점 투시를 선언한 것**이고 그것을 되돌리지 않는다 — 잘못 그었으면 처음부터 다시 그린다.
   // 남는 차수 승격은 **2점 → 3점**(`derived_vertical`) 하나다.
@@ -277,7 +413,15 @@ export type RuleEvent =
   /** 사용자에게 묻는다. */
   | { type: "ask"; question: "screen_or_depth" | "second_horizontal_or_vertical"; verdict: LineVerdict }
   /** 쓸 수 없다. `why`가 사유다. */
-  | { type: "rejected"; why: string };
+  | { type: "rejected"; why: string;
+      /** **화각 게이트가 막았다**(6차 지시 7-c) — 판정 값을 함께 낸다(원장이 읽는다). */
+      fov?: FovVerdict;
+      /**
+       * **사용자에게 알릴 거절인가**(6차 지시 7-c·11-3). 참이면 `why`를 화면에 그대로 낸다.
+       * 나머지 거절(짧은 획·잠긴 슬롯·발산하는 교점)은 **시스템 사정이라 안 낸다**(지시 3) —
+       * 알릴 것은 **사용자가 무엇을 다시 그어야 하는지**가 있는 둘뿐이다.
+       */
+      notify?: boolean };
 
 export interface StepResult { state: RuleState; event: RuleEvent }
 
@@ -328,6 +472,173 @@ export function perspectiveOrder(st: RuleState): POrder {
 function horizontalTarget(st: RuleState): { index: 0 | 1 } | null {
   for (const i of [0, 1] as const) if (!st.slots[i]) return { index: i };
   return null;
+}
+
+/**
+ * `used`를 채운 **뒤에** 남는 빈 수평 슬롯(6차 지시 11 — 2점이 한 번에 서는 경로).
+ * `st`는 아직 `used`를 안 채운 상태로 들어오므로 그 자리를 빼고 본다.
+ */
+function horizontalTargetAfter(st: RuleState, used: 0 | 1): 0 | 1 | null {
+  for (const i of [0, 1] as const) if (i !== used && !st.slots[i]) return i;
+  return null;
+}
+
+// ---------------------------------------------------------------- 소실점 확정 (6차 지시 11)
+
+/**
+ * **다른 축의 두 선이 만나는 것은 공간의 한 점이지 소실점이 아니다**(6차 지시 11).
+ *
+ * 옛 규칙(4차 지시 3)은 **대각선 둘의 교점을 곧바로 첫 소실점으로** 받았다. 그것이
+ * 실사용에서 정면으로 걸렸다: **빈 캔버스에서 서로 다른 방향의 대각선 둘을 그으면
+ * 2점을 그리려던 것인데 1점으로 확정된다** — 그리고 P1은 불가역이라(지시 1) 그림 전체가
+ * 갇힌다. 같은 축의 두 선이 만나야 소실점이다.
+ *
+ * ```
+ * 대각선 1개          축 하나. 대기
+ * 대각선 2개          같은 축인지 다른 축인지 **미정**. 대기 — 교점을 소실점으로 읽지 않는다
+ * + 교점 쪽 선(셋 한 축)   교점이 소실점                      → 첫 소실점 하나
+ * + 반대쪽 선(둘이 갈림)   가까운 둘이 한 축 · 나머지가 다른 축 → **2점이 한 번에 선다**
+ * ```
+ *
+ * ⚠ **"교점 쪽"은 각으로 잰다**(지시 11-1) — 세 번째 선을 연장했을 때 그 교점 근처를
+ * 지나는가. 실획에서 손 오차가 Δ0.0~1.7°였으므로 각 기준이 안정적이다. 판정은
+ * `axis.ts`의 부적합도(수직거리 ÷ 길이)를 그대로 쓴다(#17: 새 임계를 만들지 않는다).
+ */
+interface PoolPick {
+  at: Pt2;
+  /** 그 점으로 모이는 대기 선의 index. 길이가 곧 지지 수다. */
+  members: number[];
+  /** 짝의 각차(도) — 교점의 조건수. 동점일 때 가른다. */
+  sep: number;
+  /**
+   * **대기 선 무리의 중심에서 그 교점까지의 거리(px)**(6차 지시 11의 근거 그대로).
+   *
+   * "**다른 축의 두 선이 만나는 것은 공간의 한 점이지 소실점이 아니다**" — 그 한 점은
+   * 대개 **그림 안**에 있고, 진짜 소실점은 **그림 밖 멀리** 있다(같은 축의 선들은 거의
+   * 나란하므로 교점이 멀다). 그래서 **먼 쪽이 소실점이다.** 새 임계가 아니라 **순서**다.
+   */
+  far: number;
+}
+
+const repOfLine = (l: RLine): Rep =>
+  ({ a: l.a, b: l.b, len: Math.hypot(l.b[0] - l.a[0], l.b[1] - l.a[1]), bend: 0 });
+
+/**
+ * **그 선이 그 점으로 모이는 각(도)**. 선의 방향과 **중점 → 그 점** 방향의 각차다(0~90).
+ * 중점을 쓰는 이유: 끝점을 쓰면 그 끝이 점에 가까울 때 각이 무의미하게 커진다.
+ * 그 점이 선 위(중점 근처)면 방향이 정해지지 않으므로 0으로 본다.
+ */
+/**
+ * **그 점이 선분의 연장 위에 있는가**(6차 지시 11).
+ *
+ * ⚠⚠ **이것이 없으면 각 판정이 무너진다**(실측: 합성 120구도에서 15구도가 틀렸다).
+ * `convergeDeg`는 **각**이라, 점이 선분 **가까이**에 있으면 어느 선에 대해서도 각이 작다 —
+ * 그림 한복판의 교차점이 세 선 모두에 "모이는" 것으로 읽혔고, 그것이 곧 지시 11이 지목한
+ * **"공간의 한 점을 소실점으로 읽는"** 그 오류다.
+ *
+ * 종이 위 작도가 답을 준다: **소실점은 선을 연장해서 찾는다.** 그린 구간 안에서 가로지르는
+ * 자리는 모서리이지 소실점이 아니다. 그래서 교점은 **두 선 다의 밖**에 있어야 한다.
+ * 여유(`extend_ratio`)는 스냅의 그것을 그대로 쓴다(#17 — 새 임계를 안 만든다).
+ */
+export function beyondSegment(l: RLine, at: Pt2): boolean {
+  const dx = l.b[0] - l.a[0], dy = l.b[1] - l.a[1];
+  const L2 = dx * dx + dy * dy;
+  if (L2 < 1e-12) return false;
+  const t = ((at[0] - l.a[0]) * dx + (at[1] - l.a[1]) * dy) / L2;
+  const pad = SNAP_TOL.extend_ratio;
+  return t < -pad || t > 1 + pad;
+}
+
+export function convergeDeg(l: RLine, at: Pt2): number {
+  const m: Pt2 = [(l.a[0] + l.b[0]) / 2, (l.a[1] + l.b[1]) / 2];
+  const to: RLine = { a: m, b: at };
+  if (Math.hypot(at[0] - m[0], at[1] - m[1]) < 1e-9) return 0;
+  return sepDeg(l, to);
+}
+
+/**
+ * 대기 선 짝마다의 교점 후보. **끝점을 공유한 이음은 뺀다** — 이어 그린 두 선(ㄱ자 모서리·
+ * T자 접합)의 교점은 정확히 그 이음점이고, 그것을 소실점으로 받으면 **모든 꼭짓점이
+ * 소실점이 된다**(4차 지시 3의 판정 그대로, #17).
+ */
+function poolCandidates(pool: RLine[], imgSize: [number, number],
+                       cfg: RuleCfg = {}): PoolPick[] {
+  const c = { ...RULE_TOL, ...cfg };
+  const mergePx = SNAP_TOL.merge_ratio * Math.hypot(imgSize[0], imgSize[1]);
+  const out: PoolPick[] = [];
+  for (let i = 0; i < pool.length; i++) {
+    for (let j = i + 1; j < pool.length; j++) {
+      const at = lineIntersect(pool[i].a, pool[i].b, pool[j].a, pool[j].b);
+      if (!at || !isFiniteVp(at, imgSize)) continue;
+      const ends = [pool[i].a, pool[i].b, pool[j].a, pool[j].b];
+      if (ends.some(e => Math.hypot(e[0] - at[0], e[1] - at[1]) <= mergePx)) continue;
+      // **소실점은 두 선의 연장에서 만난다** — 그린 구간 안의 교차는 모서리다
+      if (!beyondSegment(pool[i], at) || !beyondSegment(pool[j], at)) continue;
+      const members = [i, j];
+      for (let k = 0; k < pool.length; k++) {
+        if (k === i || k === j) continue;
+        if (beyondSegment(pool[k], at) && convergeDeg(pool[k], at) <= c.concurrent_deg) {
+          members.push(k);
+        }
+      }
+      const cx = pool.reduce((t, l) => t + (l.a[0] + l.b[0]) / 2, 0) / pool.length;
+      const cy = pool.reduce((t, l) => t + (l.a[1] + l.b[1]) / 2, 0) / pool.length;
+      out.push({ at, members, sep: sepDeg(pool[i], pool[j]),
+                 far: Math.hypot(at[0] - cx, at[1] - cy) });
+    }
+  }
+  return out;
+}
+
+export interface PoolVerdict {
+  /** 첫 소실점. */
+  at: Pt2;
+  /** 그 점으로 모인 대기 선 수. */
+  support: number;
+  /** 그 점으로 모인 대기 선의 index. 앞 둘이 교점을 만든 짝이다(측정용 `paired`의 출처). */
+  members: number[];
+  /** 그 점에 안 모인 대기 선의 index — **두 번째 축의 후보다**(지시 11-1 넷째 줄). */
+  rest: number[];
+}
+
+/**
+ * **대기 선 묶음에서 소실점을 읽는다.** 못 읽으면 `null`(= 계속 대기).
+ *
+ * `unambiguous`는 **깊이축이 하나뿐임이 이미 선언된 상태**다(화면 가로축이 서 있는 P1).
+ * 그때는 모든 깊이선이 같은 축이므로 **두 선으로 충분하다** — 셋을 기다리는 이유(어느 둘이
+ * 같은 축인가)가 애초에 없다. 두 슬롯이 다 비어 있을 때만 셋째 선을 기다린다.
+ */
+export function resolvePool(
+  pool: RLine[], imgSize: [number, number], unambiguous: boolean, cfg: RuleCfg = {},
+): PoolVerdict | null {
+  const cands = poolCandidates(pool, imgSize, cfg);
+  if (!cands.length) return null;
+  const restOf = (c: PoolPick) =>
+    pool.map((_, k) => k).filter(k => !c.members.includes(k));
+
+  // ① **셋 이상이 한 점으로 모인다** — 그것이 소실점이다(지시 11-1 셋째 줄).
+  const concurrent = cands.filter(c => c.members.length >= 3)
+    .sort((a, b) => b.members.length - a.members.length || b.far - a.far);
+  if (concurrent.length) {
+    const c = concurrent[0];
+    return { at: c.at, support: c.members.length, members: c.members, rest: restOf(c) };
+  }
+  // ② **깊이축이 하나뿐인 것이 이미 선언됐다** — 두 선이면 정해진다.
+  if (unambiguous) {
+    const c = [...cands].sort((a, b) => b.far - a.far)[0];
+    return { at: c.at, support: c.members.length, members: c.members, rest: restOf(c) };
+  }
+  // ③ **두 선뿐이면 대기한다** — 같은 축인지 다른 축인지 갈리지 않는다(지시 11-1 둘째 줄).
+  //    이것이 이번 변경의 핵심이다: 옛 판은 여기서 확정했고 그래서 2점이 1점이 됐다.
+  if (pool.length < 3) return null;
+  // ④ **셋이 안 모인다 → 어느 둘이 같은 축인가**(지시 11-2). 지시문은 "각도 유사도"라 적었고
+  //    그 근거는 **같은 축의 두 선이 거의 나란하다**는 것이다. 같은 사실의 더 곧은 표현이
+  //    `far`다 — 나란할수록 교점이 멀다. 그리고 **멀다는 것이 곧 "소실점이지 공간의 한 점이
+  //    아니다"**라는 지시문의 근거 그 자체다(11 머리말). 합성 400구도에서 각차 기준은 399,
+  //    거리 기준은 400을 맞혔다(`confirm_rules.json`의 `vp_rule_three`).
+  //    나머지는 `rest`로 나가 **두 번째 소실점**이 된다.
+  const c = [...cands].sort((a, b) => b.far - a.far)[0];
+  return { at: c.at, support: c.members.length, members: c.members, rest: restOf(c) };
 }
 
 const finiteHorizontals = (st: RuleState): { i: 0 | 1; at: Pt2 }[] =>
@@ -481,7 +792,11 @@ export function stepRule(
     //      가파른 선이 물음도 없이 거절**됐고, 그러면 **3점으로 갈 입구가 아예 없다** —
     //      `horizon_pitch.json`에서 차수 3이 141/144 → **0**으로 무너진 것이 그 자리다.
     //      2점이 선 뒤에 세로 모서리를 긋는 것이 **정상적인 3점 작도 순서**다.
-    if (forced !== "depth" && order !== 1
+    //   ④ ⚠⚠ **축이 하나도 없으면 안 묻는다**(2026-08-18 6차 지시 11-5): 빈 캔버스의 첫
+    //      대각선은 **첫 깊이축**이다. 두 번째 수평축일 수 없고(첫 번째가 없다) 수직축일
+    //      수도 없다(3점은 2점 확정 뒤에만 — 지시 3-e). **축이 하나도 없을 때는 물을 것이
+    //      없다.** 실획 첫 표본에서 물음이 5획에 여섯 번 났고 그 대부분이 이 자리다.
+    if (forced !== "depth" && order !== 1 && finiteHorizontals(st).length > 0
         && v.toV < c.vertical_ask_deg && st.slots[2]?.kind !== "vp") {
       return { state: st0, event: { type: "ask", question: "second_horizontal_or_vertical", verdict: v } };
     }
@@ -489,59 +804,59 @@ export function stepRule(
       // ⛔ **거리점 획득을 지웠다**(2026-08-17 지시 2) — 대각선이 거리점인지 2점 승격인지
       // 기하로 구분 불가다. P1의 f는 임의값이다(`perspectiveOrder` 머리말).
       // 축을 안 향하는 깊이선은 카메라에 안 들어간다 — 획 자체는 문서에 남는다.
+      // ⚠ **세 번째 방향은 잘못 그은 것이다**(6차 지시 11-3): 투시도에서 수평 축은 둘뿐이고,
+      // 셋째 방향이 나오면 하나가 의도와 다르게 나간 것이다. **대기시키지 말고 알린다** —
+      // 셋을 다 살려 두면 어느 것이 틀렸는지 모른 채 계속 쌓인다.
       return { state: st0, event: { type: "rejected",
         why: order === 1
           ? "기존 소실점을 향하지 않는 깊이선입니다 — 1점 확정 뒤의 깊이선은 그 소실점을 향해야 합니다"
-          : "수평 소실점이 이미 둘입니다 — 소실점은 확정 후 잠깁니다(CLAUDE.md §1)" } };
+          : "**이 선이 어긋납니다** — 두 소실점 어느 쪽도 향하지 않습니다."
+            + " 지우고 다시 그으세요 <span class=\"dim\">(수평 축은 둘뿐입니다)</span>",
+        notify: order !== 1 } };
     }
 
     // ---- b. 첫 유한 수평 소실점이 아직 없다 — **그린 선끼리의 교점**으로만 선다(지시 3-a).
+    //
+    // ⚠⚠ **확정은 세 번째 선이 한다**(2026-08-18 6차 지시 11 — `resolvePool` 머리말).
+    // 옛 판은 대각선 둘의 교점을 곧바로 받았고, 그래서 **2점을 그리려던 것이 1점으로 굳었다.**
     if (finiteHorizontals(st).length === 0) {
       const pool = st.depthLines ?? (st.depthLines = []);
-      // ⚠⚠ **끝점을 공유한 이음은 소실점이 아니다.** 이어 그린 두 선(ㄱ자 모서리·T자 접합)의
-      // 직선 교점은 정확히 그 이음점이다 — 그것을 소실점으로 받으면 **모든 꼭짓점이 소실점이
-      // 된다**(2D 오스냅으로 잇는 것이 기본 동작이라 즉시 걸린다). 교점이 어느 선의 끝점
-      // 반경(스냅 병합과 같은 값, #17) 안이면 짝에서 뺀다 — 소실점은 **가로지르는** 교차나
-      // 연장선의 수렴에서만 나온다(종이 위 투시 작도가 그렇다).
-      const mergePx = SNAP_TOL.merge_ratio * Math.hypot(imgSize[0], imgSize[1]);
-      const atEndpoint = (at: Pt2, q: RLine): boolean =>
-        [q.a, q.b, line.a, line.b].some(e => Math.hypot(e[0] - at[0], e[1] - at[1]) <= mergePx);
-      let best: { at: Pt2; sep: number; idx: number } | null = null;
-      for (let k = 0; k < pool.length; k++) {
-        const q = pool[k];
-        const at = lineIntersect(q.a, q.b, line.a, line.b);
-        // 거의 나란한 짝은 교점이 발산한다 — 유한 판정만 걸고 새 임계를 안 만든다(#17).
-        // 짝이 여럿이면 **각차가 가장 큰**(조건수가 가장 좋은) 짝이다(`sepDeg` — 기존 수단).
-        if (!at || !isFiniteVp(at, imgSize) || atEndpoint(at, q)) continue;
-        const sep = sepDeg(q, line);
-        if (!best || sep > best.sep) best = { at, sep, idx: k };
+      pool.push({ a: [line.a[0], line.a[1]], b: [line.b[0], line.b[1]] });
+      // 화면 가로축이 이미 서 있으면 깊이축은 하나뿐이다 — 그때만 두 선으로 정한다
+      const unambiguous = order === 1;
+      const got = resolvePool(pool, imgSize, unambiguous, cfg);
+      if (!got) return { state: st, event: { type: "waiting", have: pool.length } };
+      st.slots[target.index] = { kind: "vp", at: got.at, source: "two_lines",
+                                 support: got.support };
+      // **소실점이 지평선을 정한다**(롤 0 — y가 지평선이다, D-L59 ②)
+      st.horizon = got.at[1];
+      // **모이지 않은 나머지가 두 번째 축이다**(지시 11-1 넷째 줄) — 그 선과 지평선의 교점.
+      // 각차가 가장 큰 것을 고른다(교점의 조건수가 가장 좋다 — `sepDeg`, 기존 수단 #17).
+      let second: { i: 0 | 1; at: Pt2; fov: FovVerdict } | null = null;
+      const other = horizontalTargetAfter(st, target.index);
+      if (other != null && got.rest.length) {
+        const cand = got.rest
+          .map(k => ({ k, at: vpOnHorizon(repOfLine(pool[k]), st.horizon) }))
+          .filter((x): x is { k: number; at: Pt2 } => !!x.at && isFiniteVp(x.at, imgSize))
+          .sort((a, b) => sepDeg(pool[b.k], pool[a.k]) - 0)[0];
+        if (cand) {
+          const fov = fovGate(got.at, cand.at, imgSize);
+          if (fov.band !== "reject") {
+            st.slots[other] = { kind: "vp", at: cand.at, source: "horizon_x_line", support: 1 };
+            second = { i: other, at: cand.at, fov };
+          }
+        }
       }
-      if (!best) {
-        pool.push({ a: [line.a[0], line.a[1]], b: [line.b[0], line.b[1]] });
-        return { state: st, event: { type: "waiting", have: pool.length } };
-      }
-      // **교점이 소실점이다** — 두 선 다 정확히 그 점을 지난다(교점의 정의). 그린 선은 안 움직인다.
-      st.slots[target.index] = { kind: "vp", at: best.at, source: "two_lines", support: 2 };
-      // **소실점이 지평선을 정한다**(롤 0 — y가 지평선이다). 옛 판(지평선이 소실점을 정함)의 역이다.
-      st.horizon = best.at[1];
-      // 짝이 안 된 나머지 대기 선: 그 소실점을 향하면 지지선으로 세고, 아니면 카메라 역할 없이
-      // 문서에만 남는다(획은 어디서도 안 지운다)
-      let extra = 0;
-      for (let k = 0; k < pool.length; k++) {
-        if (k === best.idx) continue;
-        const q = pool[k];
-        const qr: Rep = { a: q.a, b: q.b,
-                          len: Math.hypot(q.b[0] - q.a[0], q.b[1] - q.a[1]), bend: 0 };
-        if (vpMisfit(qr, best.at) <= AXIS_TOL.vp_dist_ratio) extra += 1;
-      }
-      (st.slots[target.index] as { support: number }).support += extra;
       st.depthLines = [];
       const st2 = deriveVertical(st, imgSize);
       return { state: st2,
-               event: { type: "vp_fixed", axis: target.index, at: best.at,
-                        source: "two_lines", horizonSet: true,
-                        paired: { a: [pool[best.idx].a[0], pool[best.idx].a[1]],
-                                  b: [pool[best.idx].b[0], pool[best.idx].b[1]] } } };
+               event: second
+                 ? { type: "vp_fixed", axis: second.i, at: second.at,
+                     source: "horizon_x_line", horizonSet: true, fov: second.fov }
+                 : { type: "vp_fixed", axis: target.index, at: got.at,
+                     source: "two_lines", horizonSet: true,
+                     paired: { a: [pool[got.members[0]].a[0], pool[got.members[0]].a[1]],
+                               b: [pool[got.members[0]].b[0], pool[got.members[0]].b[1]] } } };
     }
 
     // ---- c. 둘째 수평 소실점 — 지평선(= 첫 소실점의 y) × 선. 선 하나면 된다(지시 4-d 유지).
@@ -553,11 +868,19 @@ export function stepRule(
     if (!isFiniteVp(p, imgSize)) {
       return { state: st0, event: { type: "rejected", why: "교점이 사실상 무한원입니다(화면 평행)" } };
     }
+    // ---- **화각 게이트**(6차 지시 7-b, 이론서 18.4). 여기가 **2점이 서는 유일한 자리**다 —
+    // 첫 소실점(b·찍기)만으로는 f가 없으므로 잴 것이 없고, 3점의 수직 소실점은 이 문을 지난
+    // 두 수평 소실점 위에 얹힌다. **막는 것은 f² ≤ 0 하나뿐이다**(서 있을 수 없는 카메라).
+    const other = finiteHorizontals(st)[0];
+    const fov = fovGate(other.at, p, imgSize);
+    if (fov.band === "reject") {
+      return { state: st0, event: { type: "rejected", why: fov.why, fov, notify: true } };
+    }
     st.slots[target.index] = { kind: "vp", at: p, source: "horizon_x_line", support: 1 };
     const st2 = deriveVertical(st, imgSize);
     return { state: st2,
              event: { type: "vp_fixed", axis: target.index, at: p,
-                      source: "horizon_x_line", horizonSet: false } };
+                      source: "horizon_x_line", horizonSet: false, fov } };
   }
 
 }

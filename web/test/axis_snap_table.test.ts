@@ -92,6 +92,11 @@ function feed(st0: RuleState, lines: [Pt2, Pt2][],
 const DEPTH_A: [Pt2, Pt2] = [[300, 600], [140, 463.2]];
 const DEPTH_A2: [Pt2, Pt2] = [[500, 560], [260, 439.2]];
 const DEPTH_B: [Pt2, Pt2] = [[700, 620], [920, 475.2]];
+/**
+ * **A의 셋째 지지선**(2026-08-18 6차 지시 11) — 소실점은 **세** 선이 모여야 선다.
+ * 같은 V₁(-100, 258)을 지난다: (400,640)에서 V₁ 쪽으로 t = 0.35.
+ */
+const DEPTH_A3: [Pt2, Pt2] = [[400, 640], [225, 506.3]];
 const SCREEN_H: [Pt2, Pt2] = [[100, 200], [500, 200]];
 /**
  * 화면 수직에서 **17.4° 기운 선** — 3점의 유일한 입구다(A-4).
@@ -146,7 +151,8 @@ describe("스냅 표 — 상태마다 어느 축이 스냅되는가", () => {
    * "언제나 전부 스냅된다"가 아니라 **경로가 다르다**는 것이 표에 남는다(#30).
    */
   it("카메라가 안 서도(NONE·소실점 하나) 소실점 방향은 vp_dir로 스냅된다 (4차 지시 2)", () => {
-    const st = feed(newRuleState(SZ), [DEPTH_A, DEPTH_A2]);
+    // ⚠ **셋이 모여야 소실점이다**(6차 지시 11) — 옛 판은 둘이면 섰다
+    const st = feed(newRuleState(SZ), [DEPTH_A, DEPTH_A2, DEPTH_A3]);
     expect(rows(st, false)).toEqual(["vp/vp_dir", "-/-", "screen_v/screen_ortho"]);
     expect(snapAxisTable(st, false).filter(r => r.via).length).toBe(2);
     // 서면 같은 축이 3D 축 스냅으로 올라간다 — 경로 구분이 표에 남는다
@@ -233,11 +239,14 @@ describe("A-5 짧은 획은 소실점을 안 만든다", () => {
     const L = MIN_LEN + 5;
     const b: Pt2 = [300 + L * Math.cos(Math.PI / 6), 400 - L * Math.sin(Math.PI / 6)];
     const r = stepRule(newRuleState(SZ), { a: [300, 400], b }, SZ);
-    expect(r.event.type).toBe("waiting");
-    const r2 = stepRule(r.state, { a: [200, 560] as Pt2, b: [420, 428] as Pt2 }, SZ);
-    expect(r2.event.type).toBe("vp_fixed");
+    expect(r.event.type).toBe("waiting");        // **거절이 아니다** — 규칙에 들어갔다
+    // 같은 점 V(819.6, 100)으로 모이는 지지선 둘을 더 넣는다 — **셋이 모여야 소실점이다**(지시 11)
+    const r2 = stepRule(r.state, { a: [200, 560] as Pt2, b: [447.8, 376] as Pt2 }, SZ);
+    expect(r2.event.type).toBe("waiting");
+    const r3 = stepRule(r2.state, { a: [400, 620] as Pt2, b: [567.8, 412] as Pt2 }, SZ);
+    expect(r3.event.type).toBe("vp_fixed");
     // 소실점 하나 = **NONE**이다(지시 1) — 가로선이 오면 P1, 두 번째 소실점이 오면 P2
-    expect(perspectiveOrder(r2.state)).toBe(0);
+    expect(perspectiveOrder(r3.state)).toBe(0);
   });
 
   it("사용자가 답한 수직축 선언은 길이로 안 막는다 — 그것은 소실점 후보가 아니다", () => {

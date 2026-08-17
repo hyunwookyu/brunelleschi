@@ -19,17 +19,23 @@ const CENTER = defaultHorizon(SZ);      // 336
  * 깊이선 둘 — **화면 수평과 30°**라 `depth`로 판정되고(≥8°), 화면 수직과는 60°라
  * "두 번째 수평인가 수직인가" 물음(45°)에 안 걸린다. 서로 반대 방향이라 다른 소실점을 만든다.
  */
-const DEPTH_A: RLine = { a: [100, 500], b: [400, 327] };
-// ⚠ 4차 지시 3으로 지평선이 V1.y(257.8)가 되므로, B는 그 지평선에서 뚜렷이 오른쪽 소실점
-// (≈[1250, 257.8])을 향하게 잡는다 — V1과의 부적합도가 0.44라 지지선으로 안 오인된다
-const DEPTH_B: RLine = { a: [700, 620], b: [920, 475.2] };
 /**
- * **DEPTH_A의 짝**(4차 지시 3) — 첫 소실점은 그린 두 선의 교점이라 짝이 필요하다.
- * V1은 DEPTH_A의 연장 위 t=1.4 지점(끝점에서 150px 밖 — 끝점 이음 제외 반경과 안 겹친다).
- * 짝은 다른 시작점에서 같은 V1을 지난다 — 교점이 곧 V1이고, 그 y가 지평선이 된다.
+ * ⚠⚠ **V1을 주점 x(480)의 **왼쪽**으로 옮겼다**(2026-08-18 6차 지시 7).
+ * 옛 픽스처는 V1 = (520, 257.8)이라 **V1·V2가 둘 다 주점 오른쪽**이었고, 그러면
+ * f² = |PV₁||PV₂| < 0 — **대응하는 카메라가 존재하지 않는다**(6.2·6.5). 규칙 상태는 2점을
+ * 냈지만 `recoverCamera`는 설 수 없었다. 지시 7의 화각 게이트가 그 픽스처를 잡았다.
+ * 지금은 V1(-100) · V2(1250)이 주점을 사이에 두고 f = 668 · d = 1.41W(정상 대역)다.
  */
-const V1: [number, number] = [520, 257.8];
-const DEPTH_A2: RLine = { a: [80, 620], b: [(80 + (V1[0] - 80) * 0.45), (620 + (V1[1] - 620) * 0.45)] };
+const V1: [number, number] = [-100, 257.8];
+/** 셋 다 V1으로 모인다 — **소실점은 세 선이 모여야 선다**(6차 지시 11). */
+const towardV1 = (from: [number, number], t: number): RLine =>
+  ({ a: from, b: [from[0] + (V1[0] - from[0]) * t, from[1] + (V1[1] - from[1]) * t] });
+const DEPTH_A: RLine = towardV1([400, 500], 0.6);
+const DEPTH_A2: RLine = towardV1([600, 640], 0.5);
+const DEPTH_A3: RLine = towardV1([300, 560], 0.55);
+// ⚠ 지평선이 V1.y(257.8)이므로, B는 그 지평선에서 뚜렷이 오른쪽 소실점
+// (≈[1250, 257.8])을 향하게 잡는다 — V1과의 부적합도가 커 지지선으로 안 오인된다
+const DEPTH_B: RLine = { a: [700, 620], b: [920, 475.2] };
 
 function feed(st0: RuleState, lines: RLine[]): RuleState {
   let st = st0;
@@ -81,7 +87,7 @@ describe("지평선 끌기 — 조작 가능성", () => {
  */
 describe("2점에서는 피치를 판정하지 않는다 (2026-08-17 A-4)", () => {
   it("2점이 서고 수직축은 화면 수직이다 — 지평선은 첫 소실점의 y다(4차 지시 3)", () => {
-    const st = feed(newRuleState(SZ), [DEPTH_A, DEPTH_A2, DEPTH_B]);
+    const st = feed(newRuleState(SZ), [DEPTH_A, DEPTH_A2, DEPTH_A3, DEPTH_B]);
     expect(st.horizon).toBeCloseTo(V1[1], 3);           // **소실점이 지평선을 정한다**
     expect(perspectiveOrder(st)).toBe(2);
     expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
@@ -89,7 +95,7 @@ describe("2점에서는 피치를 판정하지 않는다 (2026-08-17 A-4)", () =
 
   it("**회귀** — 지평선을 옮겨 놓아도 3점이 안 된다. 같은 획이면 같은 2점이다", () => {
     // ⚠ 4차 지시 3으로 사전 지평선은 소실점 확정에 안 쓰인다 — 옮긴 값은 첫 소실점이 덮는다
-    const st = feed(withHorizon(newRuleState(SZ), 200, SZ), [DEPTH_A, DEPTH_A2, DEPTH_B]);
+    const st = feed(withHorizon(newRuleState(SZ), 200, SZ), [DEPTH_A, DEPTH_A2, DEPTH_A3, DEPTH_B]);
     expect(st.horizon).toBeCloseTo(V1[1], 3);
     expect(perspectiveOrder(st)).toBe(2);
     expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
@@ -100,11 +106,12 @@ describe("2점에서는 피치를 판정하지 않는다 (2026-08-17 A-4)", () =
    * 3점은 **사용자가 기울어진 수직선을 수직축이라 답할 때** 실제로 선다.
    */
   it("**양성** — 기울어진 수직선을 수직축이라 답하면 3점이 선다", () => {
-    let st = feed(withHorizon(newRuleState(SZ), 200, SZ), [DEPTH_A, DEPTH_A2, DEPTH_B]);
+    let st = feed(withHorizon(newRuleState(SZ), 200, SZ), [DEPTH_A, DEPTH_A2, DEPTH_A3, DEPTH_B]);
     // 화면 수직에서 **20.1° 기운 선** — 올려다보는 구도의 세로 모서리.
     // ⚠ ① `depth`(≥8°)여야 선 하나로 3점을 선언한다(4~8°는 손 오차 대역이다)
-    //    ② 소실점 삼각형이 **예각**이어야 한다(6.5) — V₁·V₂가 280px이므로 V₃는 지평선에서 140px 밖
-    const r = stepRule(st, { a: [700, 300], b: [590, 600] }, SZ, "vertical");
+    //    ② 소실점 삼각형이 **예각**이어야 한다(6.5) — V₁·V₂가 1350px 벌어졌으므로
+    //       V₃는 지평선에서 f = 668px 넘게 떨어져야 한다. 이 선은 V₃ = (480, 950)을 낸다
+    const r = stepRule(st, { a: [700, 300], b: [590, 625] }, SZ, "vertical");
     st = r.state;
     expect(perspectiveOrder(st)).toBe(3);
     const s2 = st.slots[2];

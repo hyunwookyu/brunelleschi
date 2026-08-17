@@ -67,6 +67,19 @@ export interface SStroke {
    */
   snapDistPx?: number | null;
   /**
+   * **끝점의 겨냥 거리(px)**(2026-08-18 6차 항목 2) — `snapDistPx`의 끝점 판이다.
+   *
+   * 왜 필요한가: 첫 실획 표본에서 `snapEnd`가 **전부 `null`**이었는데, 그것만으로는
+   * ① 반경이 좁은지 ② 후보가 아예 안 모이는지 ③ 판정이 안 도는지를 **가를 수 없다**(지시 2-b).
+   * 그래서 조리개 밖까지 보는 **40px 프로브**의 최근접 거리를 남긴다 —
+   * `null`이면 **후보가 하나도 없었다**(②), 값이 있는데 `snapEnd`가 `null`이면 **반경 문제**(①),
+   * 값이 조리개 안인데 `snapEnd`가 `null`이면 **판정이 안 돈 것**(③)이다.
+   *
+   * 프로브의 종류 필터는 `endSnapAt`과 **같다**(끝점 스냅은 정확한 대상만 — `on_edge`·
+   * `on_face` 제외, D-L46). 시작점 프로브가 `on_face`를 빼는 것과 같은 이유다(#3·#5).
+   */
+  snapEndDistPx?: number | null;
+  /**
    * **조각의 출처 획 id**(지시 I·K). 지우개·분할이 만든 조각은 사람이 그은 획과 **단위가
    * 다르므로**(#11 — 길이·다축 지표의 분모가 갈린다) 실획 측정이 이것으로 가른다.
    */
@@ -158,6 +171,23 @@ export const pendingElsewhere = (d: DocState, viewId = d.currentView): number =>
 
 export const viewOf = (d: DocState, id: string): SView | undefined =>
   d.views.find(v => v.id === id);
+
+/**
+ * **확정 뷰** — `pose === null`인 뷰 하나다(§9.2). 첫 카메라 자체이고 **자세가 항등이라
+ * 저장할 것이 없다**: `stage.pose()`는 물려 있을 때 `null`을 내고 `stage.pinTo()`가
+ * 카메라를 원점·항등에 놓는다. 즉 **`pose: null`은 결함이 아니라 확정 뷰의 정의다.**
+ *
+ * ⚠ 2026-08-18 6차 지시 1이 저장본의 `views[0].pose = null`을 "자세 저장이 빠졌다"로 읽었다.
+ * 그렇지 않다 — 자세를 채우면 오히려 **확정 뷰를 못 찾는다**(아래 세 쓰임이 전부 이 술어로
+ * 찾는다). 확정 카메라의 실제 정보(주점·f·소실점)는 `rules`·`cam`에 이미 담긴다.
+ *
+ * **판정을 여기 하나에 둔다**(#17) — 옛 판은 `mainL`·`docStore`가 같은 술어를 따로 적었다.
+ */
+export const confirmViewOf = (d: DocState): SView =>
+  d.views.find(v => v.pose === null) ?? d.views[0];
+
+/** 그 뷰가 확정 뷰인가 — 위와 **같은 술어**다(두 곳이 다른 답을 내지 않게). */
+export const isConfirmView = (v: SView): boolean => v.pose === null;
 
 /**
  * 뷰를 지우면 **그 안의 대기 획도 함께 사라진다**(§9.2). 승격된 획은 뷰 소속이 없으므로 남는다.

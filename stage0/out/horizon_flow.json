@@ -36,6 +36,9 @@
  "mid": {
   "visible": false
  },
+ "mid2": {
+  "visible": false
+ },
  "after": {
   "visible": true,
   "y": 279.253100590385,
@@ -71,7 +74,7 @@
  },
  "console_errors": [],
  "constants": {
-  "hash": "509615a1",
+  "hash": "54346ad1",
   "values": {
    "AXIS_TOL": {
     "vp_dist_ratio": 0.06,
@@ -120,7 +123,12 @@
     "screen_axis_deg": 4,
     "depth_min_deg": 8,
     "vertical_ask_deg": 45,
-    "min_vp_len_ratio": 0.04
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87
    },
    "SNAP_TOL_AXIS": {
     "ambiguous_deg": 6

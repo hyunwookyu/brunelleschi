@@ -12,6 +12,7 @@ import { cssSizeOf, deviceRatio } from "./capture/canvasFrame.js";
 import { Stage, FREE_FOV_DEG, type StageSeg } from "./ui/stage.js";
 import { CamState } from "./ui/camState.js";
 import { newDoc, newSStroke, newView, deleteView, lifted, pending, pendingElsewhere, liftable,
+         confirmViewOf, isConfirmView,
          type DocState, type SStroke, type Channel } from "./ui/doc.js";
 import { takeSnap, applySnap, type AppSnap } from "./ui/appSnap.js";
 // L-D.2 저장·내보내기 — **뷰 목록과 뷰별 2D 획**을 담는다(§9.2)
@@ -43,7 +44,8 @@ import { cutParams, piecesFromCuts, subtractIntervals, reanchorId, pointAt,
          type Seg3 } from "./s3d/split.js";
 import { promoteOrder, type OrderStroke } from "./s3d/promoteOrder.js";
 import { ViewCube } from "./ui/viewCube.js";
-import { AXIS_COLOR, guides as gridGuides, HORIZON_COLOR, GROUND_COLOR } from "./s3d/grid.js";
+import { AXIS_COLOR, guides as gridGuides, HORIZON_COLOR, GROUND_COLOR,
+         clipToRect } from "./s3d/grid.js";
 import { project, axisDirection, groundFrame, sub3, angleBetween,
          type Vec3 } from "./s3d/geom3d.js";
 import { lineIntersect, type Pt2 } from "./s3d/camera.js";
@@ -252,6 +254,23 @@ const OSNAP = {
  * 넣는다(D-L49의 예외와 같은 자리 — 어느 판정도 이 값을 안 읽는다. 원장은 값을 그대로 적는다).
  */
 const ERASER = { px: 12, min: 4, max: 60 };
+/**
+ * **겨냥 거리 프로브의 창(px)**(지시 K · 6차 항목 2). 조리개(`OSNAP.radiusPx`) **밖**까지
+ * 보는 진단용 창이다 — 스냅된 사건만 적으면 분포가 조리개에서 절단돼 "반경을 넓혀야
+ * 하는가"를 못 답한다(리뷰어 [7]).
+ *
+ * ⚠ **임계가 아니라 관측창이라 `test/constants.ts`에 안 넣는다**(D-L49·ERASER와 같은 예외):
+ * 어떤 판정도 이 값이 안 가른다 — 바꾸면 기록되는 분포의 **상한**만 변한다.
+ * 값 40 = 오스냅 반경 입력의 UI 상한(그보다 넓게 물어도 쓸 수 없다).
+ * 옛 판은 시작점 프로브 자리에 `40`을 **인라인으로** 적었다 — 끝점 프로브가 생기면서
+ * 두 자리가 갈릴 수 있게 되어 이름을 붙였다(#17).
+ */
+const SNAP_PROBE_PX = 40;
+/**
+ * **화면 밖 소실점의 가장자리 표식**(6차 지시 7-e). 표시 상수라 `test/constants.ts`에
+ * 안 넣는다(D-L49의 예외와 같은 자리 — 어느 판정도 이 값을 안 읽는다).
+ */
+const VP_EDGE = { padPx: 14, sizePx: 6 };
 
 /** 앱 조리개(px) → 하네스 규약(대각 비). **한 군데서만 환산한다**(#17). */
 const osnapCfg = () => ({ radius_ratio: OSNAP.radiusPx / Math.hypot(...cssSize()) });
@@ -481,21 +500,56 @@ function snapCtx(fr: Frame | null = frame(), from: Vec3 | null = null): SnapCtx 
  * ② **자기 자신은 대상이 아니다**(아직 3D 레이어에 없으므로 자동으로 빠진다).
  * `null`이면 끝점은 커서이고, 그때는 축이 방향을 준다(§3의 원래 경로).
  */
+/**
+ * **끝점 스냅의 종류 필터**(D-L46). ⚠⚠ **끝점 스냅은 "정확한" 대상만 쓴다**(라이노 기본값
+ * 그대로, A-3). 라이노에서 **Near(근처점)는 기본이 꺼져 있다** — 선 근처 어디서나 걸려 너무
+ * 잘 잡히기 때문이다. 여기서도 같은 일이 실제로 났다: 모서리를 따라 그으면 `on_edge`가
+ * **언제나** 걸려 모든 획이 두 점 배치가 됐다(종단 확인이 잡았다). 시작점 스냅은 종전대로
+ * 전부 쓴다 — 그 경로의 측정(`snap.json`)이 그 목록 위에 있다.
+ *
+ * **질의와 프로브가 같은 필터를 쓴다**(#17, 6차 항목 2) — 갈리면 프로브가 다른 것을 재고
+ * "반경이 좁은가"를 못 답한다.
+ */
+const endSnapKindOk = (c: SnapCand): boolean =>
+  OSNAP.kinds[c.kind] && c.kind !== "on_edge" && c.kind !== "on_face";
+
+/** **앵커 자신에 붙는 것은 선분이 아니다** — 길이 0을 만들지 않는다. */
+const notAnchor = (c: SnapCand, anchorAt: Vec3): boolean =>
+  Math.hypot(c.at[0] - anchorAt[0], c.at[1] - anchorAt[1], c.at[2] - anchorAt[2]) > 1e-9;
+
 function endSnapAt(fr: Frame, anchorAt: Vec3, p: Pt2): SnapCand | null {
   const sc = snapCtx(fr, anchorAt);
   if (!sc) return null;
   const segs = snapSegs(fr.toV);
-  // ⚠⚠ **끝점 스냅은 "정확한" 대상만 쓴다**(라이노 기본값 그대로, A-3).
-  // 라이노에서 **Near(근처점)는 기본이 꺼져 있다** — 선 근처 어디서나 걸려 너무 잘 잡히기
-  // 때문이다. 여기서도 같은 일이 실제로 났다: 모서리를 따라 그으면 `on_edge`가 **언제나**
-  // 걸려 모든 획이 두 점 배치가 됐다(종단 확인이 잡았다). 시작점 스냅은 종전대로 전부 쓴다 —
-  // 그 경로의 측정(`snap.json`)이 그 목록 위에 있다.
   const cand = snapCandidates(p, segs, sc, osnapCfg(), snapStatic(segs))
-    .find(c => OSNAP.kinds[c.kind] && c.kind !== "on_edge" && c.kind !== "on_face") ?? null;
-  // **앵커 자신에 붙는 것은 선분이 아니다** — 길이 0을 만들지 않는다
-  if (!cand) return null;
-  const d = Math.hypot(cand.at[0] - anchorAt[0], cand.at[1] - anchorAt[1], cand.at[2] - anchorAt[2]);
-  return d > 1e-9 ? cand : null;
+    .find(c => endSnapKindOk(c) && notAnchor(c, anchorAt)) ?? null;
+  return cand;
+}
+
+/**
+ * **끝점 겨냥 거리(px) — 조리개 밖까지 보는 프로브**(6차 항목 2-b). `snapEndDistPx`의 출처다.
+ *
+ * 스냅된 사건만 적으면 분포가 조리개에서 절단돼 "반경을 넓혀야 하는가"를 영영 못 답한다 —
+ * 시작점 프로브(지시 K·리뷰어 [7])와 **같은 논리·같은 창(`SNAP_PROBE_PX`)**이다.
+ * 후보가 하나도 없으면 `null`이고 그때는 **반경이 아니라 대상이 없는 것**이다.
+ */
+function endSnapProbe(fr: Frame, anchorAt: Vec3, p: Pt2): number | null {
+  const sc = snapCtx(fr, anchorAt);
+  if (!sc) return null;
+  const segs = snapSegs(fr.toV);
+  if (!segs.length) return null;
+  const c = snapCandidates(p, segs, sc,
+                           { radius_ratio: SNAP_PROBE_PX / Math.hypot(...cssSize()) },
+                           snapStatic(segs))
+    .find(x => endSnapKindOk(x) && notAnchor(x, anchorAt));
+  return c ? c.dist : null;
+}
+
+/** 끝점 스냅을 시도하고 **겨냥 거리를 함께 남긴다**(항목 2). 확정 경로만 부른다. */
+function endSnapRecord(st: SStroke, fr: Frame, anchorAt: Vec3, p: Pt2): SnapCand | null {
+  const cand = endSnapAt(fr, anchorAt, p);
+  st.snapEndDistPx = cand ? cand.dist : endSnapProbe(fr, anchorAt, p);
+  return cand;
 }
 
 /** 끝점 스냅을 획에 적는다 — 시작점 판(`applySnapToStart`)과 같은 규약이다(#34). */
@@ -560,7 +614,7 @@ function promoteChain(fr: Frame): number {
       if (!cand) continue;
       applySnapToStart(st, cand, fr.fromV(cand.at));
       // **대기 획도 양 끝 스냅으로 올라갈 수 있다**(D-L46) — 축이 없어도 두 점이면 놓인다
-      const endCand = endSnapAt(fr, cand.at, st.pts2d[st.pts2d.length - 1]);
+      const endCand = endSnapRecord(st, fr, cand.at, st.pts2d[st.pts2d.length - 1]);
       if (endCand) applySnapToEnd(st, endCand, fr.fromV(endCand.at));
       if (placeLive(st, fr, cand.at, endCand)) n += 1;
     }
@@ -727,8 +781,8 @@ function syncScene() {
 
 // ---------------------------------------------------------------- 뷰 시스템 (L-B.6, §9.2~§9.4)
 
-/** 확정 뷰 — `pose === null`인 것 하나다(§9.2). 첫 카메라 자체이고 자세가 항등이다. */
-const confirmView = () => doc.views.find(v => v.pose === null) ?? doc.views[0];
+/** 확정 뷰 — 술어는 `doc.ts`의 `confirmViewOf` 하나다(#17, 6차 항목 1). */
+const confirmView = () => confirmViewOf(doc);
 
 /**
  * **궤도 중심 — 3D 레이어 경계 상자의 중심**(4차 지시 7-a). 아무것도 없으면 **화면 중앙
@@ -812,12 +866,13 @@ function switchView(id: string) {
   if (!v) return;
   doc.currentView = id;
   const ctx = cam.ctx();
-  if (v.pose === null) {
+  if (isConfirmView(v)) {
     if (ctx) stage.pinTo(ctx.principal, ctx.f);
     tool = "draw";
     note = "";
   } else {
-    stage.setPose(v.pose, orbitTarget());
+    // `isConfirmView`가 거짓이므로 자세가 있다(확정 뷰만 `pose === null`이다 — `doc.ts`)
+    stage.setPose(v.pose!, orbitTarget());
     // **L-B.8이 열렸다** — 돌린 시점에서도 그린다. 그래서 전환 뒤 바로 그리기다.
     // 더 돌리려면 `궤도`를 누른다(SketchUp의 모드 전환과 같다).
     tool = "draw";
@@ -864,8 +919,8 @@ function viewIsCurrent(): boolean {
   const v = doc.views.find(x => x.id === doc.currentView);
   if (!v) return false;
   const p = stage.pose();
-  if (v.pose === null) return p === null;          // 확정 뷰는 물려 있을 때만 맞다
-  return p !== null && samePose(v.pose, p);
+  if (isConfirmView(v)) return p === null;          // 확정 뷰는 물려 있을 때만 맞다
+  return p !== null && samePose(v.pose!, p);   // 확정 뷰가 아니면 자세가 있다(`doc.ts`)
 }
 
 /** 두 자세가 같은가 — 전환 직후 미세한 수치 차이로 뷰가 늘어나는 것을 막는다. */
@@ -879,10 +934,10 @@ function renderViews() {
   const rows = doc.views.map(v => {
     const n = pending(doc, v.id).length;
     const on = v.id === doc.currentView;
-    const del = v.pose === null
+    const del = isConfirmView(v)
       ? `<button class="del" disabled title="확정 뷰는 지울 수 없습니다 — 첫 카메라입니다">✕</button>`
       : `<button class="del" data-delview="${v.id}" title="이 뷰와 그 안의 대기 획 ${n}개를 지웁니다">✕</button>`;
-    const ren = v.pose === null ? ""
+    const ren = isConfirmView(v) ? ""
       : `<button class="ren" data-renview="${v.id}" title="이름 바꾸기">✎</button>`;
     return `<div class="row"><button data-view="${v.id}"${on ? ' class="on"' : ""}>`
          + `${v.name}${n ? ` <span class="n">·2D ${n}</span>` : ""}</button>${ren}${del}</div>`;
@@ -1382,6 +1437,14 @@ function feedStroke(st: SStroke, forced?: "screen" | "depth" | "vertical"): void
   if (!rep) return;
   const line: RLine = { a: rep.a, b: rep.b };
   const r = feedCamera(line, forced);
+  // **알릴 규칙 사건은 둘뿐이다**(6차 지시 7-b·7-c·11-3). 나머지는 시스템 사정이라 안 낸다
+  // (지시 3): ① 화각 경고 — **섰지만 시점이 이상하다** ② 알림 표시가 붙은 거절 —
+  // **아무 일도 안 난 이유와 사용자가 다시 그을 것**.
+  if (r.event.type === "vp_fixed" && r.event.fov && r.event.fov.band !== "ok") {
+    note = r.event.fov.why;
+  } else if (r.event.type === "rejected" && r.event.notify) {
+    note = r.event.why;
+  }
   if (r.event.type === "ask") {
     // **카메라가 선 뒤에는 화면축/깊이 물음을 안 낸다**(지시 3 — 시스템 사정을 안 묻는다).
     // 그 물음은 카메라를 세우는 단계의 것이고, 선 뒤에 남는 유일한 물음은 **3점 입구**
@@ -1506,6 +1569,46 @@ function drawHorizon(ctx2: CanvasRenderingContext2D) {
   }
   // ⛔ **캡션("피치 0"·"내려다봄"·y값)을 지웠다**(지시 3) — 시스템 사정이다.
   // 선과 손잡이만 남는다: 선은 그림의 기준선이고 손잡이는 사용자가 조작하는 것이다.
+  ctx2.restore();
+}
+
+/**
+ * **잠정 그리드 — 소실점이 서기 전의 대기 깊이선**(6차 지시 11-4).
+ *
+ * 확정은 세 번째 선이 하므로(지시 11) 그전에 **대기가 길어진다.** 그동안 아무것도 안 보이면
+ * 사용자는 다음 선을 어디로 그어야 할지 모른다 — 대각선 하나만 있어도 연장하면 소실점이
+ * 그 위 어딘가이고, 둘이면 교점 후보가 나온다.
+ *
+ * **확정 그리드와 구분한다**: 파선이고 더 옅다. **스냅 대상이 아니다 — 표시만이다**(지시 11-4).
+ * ⚠ 교점 후보를 그리는 것은 **찍기 경로의 입구이기도 하다**(지시 11-6) — 그 자리를 톡 찍으면
+ * `pickVpAt`이 거기로 확정한다. 실획에서 찍기 사용이 0이었던 것은 **보이지 않았기 때문**이다.
+ */
+function drawPendingVpGuides(ctx2: CanvasRenderingContext2D) {
+  const pool = cam.rules.depthLines ?? [];
+  if (!pool.length) return;
+  const [w, h] = cssSize();
+  ctx2.save();
+  ctx2.strokeStyle = HORIZON_COLOR;
+  ctx2.lineWidth = 1;
+  ctx2.setLineDash([4, 6]);
+  ctx2.globalAlpha = 0.28;                      // 확정 그리드(0.14)보다 진하되 획보다 훨씬 옅다
+  for (const l of pool) {
+    const d: Pt2 = [l.b[0] - l.a[0], l.b[1] - l.a[1]];
+    const seg = clipToRect(l.a, d, w, h);
+    if (!seg) continue;
+    ctx2.beginPath();
+    ctx2.moveTo(seg[0][0], seg[0][1]); ctx2.lineTo(seg[1][0], seg[1][1]);
+    ctx2.stroke();
+  }
+  // 교점 후보 — **확정된 소실점 표식보다 옅고 작다**(아직 결과가 아니다)
+  ctx2.setLineDash([]);
+  ctx2.globalAlpha = 0.45;
+  ctx2.strokeStyle = HORIZON_COLOR;
+  for (let i = 0; i < pool.length; i++) for (let j = i + 1; j < pool.length; j++) {
+    const at = lineIntersect(pool[i].a, pool[i].b, pool[j].a, pool[j].b);
+    if (!at || at[0] < 0 || at[0] > w || at[1] < 0 || at[1] > h) continue;
+    ctx2.beginPath(); ctx2.arc(at[0], at[1], 4, 0, Math.PI * 2); ctx2.stroke();
+  }
   ctx2.restore();
 }
 
@@ -1808,15 +1911,43 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   drawLive2d(ctx2);                     // **카메라가 서기 전의 화면 직교·2D 오스냅**(A-2·지시 1)
   if (cam.standing() && !stage.isPinned) return;
   drawGrid(ctx2);
+  drawPendingVpGuides(ctx2);       // **잠정 그리드**(6차 지시 11-4) — 확정 전 대기 깊이선
   drawAsk(ctx2);
   const [w, h] = cssSize();
   // ⛔ **거리점 표시를 지웠다**(지시 2) — 거리점 경로 전체가 폐기됐다.
   cam.vps().forEach((v, i) => {
-    if (!v || v[0] < 0 || v[0] > w || v[1] < 0 || v[1] > h) return;
+    if (!v) return;
+    const inside = v[0] >= 0 && v[0] <= w && v[1] >= 0 && v[1] <= h;
     ctx2.save();
-    // **표식을 줄였다**(지시 5-6) — 소실점은 참조점이지 그림이 아니다
     ctx2.globalAlpha = 0.8; ctx2.fillStyle = AXIS_COLOR[i];
-    ctx2.beginPath(); ctx2.arc(v[0], v[1], 3, 0, Math.PI * 2); ctx2.fill();
+    if (inside) {
+      // **표식을 줄였다**(지시 5-6) — 소실점은 참조점이지 그림이 아니다
+      ctx2.beginPath(); ctx2.arc(v[0], v[1], 3, 0, Math.PI * 2); ctx2.fill();
+    } else {
+      // **화면 밖 소실점을 가장자리에 표시한다**(6차 지시 7-e). 화면 밖은 **정상**이고
+      // (건축 투시도는 폭의 두세 배가 보통이다) 사용자가 **어디 있는지 알아야 조정할 수 있다.**
+      // 축소 뷰 대신 가장자리 화살표를 쓴다 — 축소 뷰는 두 좌표계를 만든다(A-3: 단순한 쪽).
+      const cx = w / 2, cy = h / 2;
+      const dx = v[0] - cx, dy = v[1] - cy;
+      const L = Math.hypot(dx, dy) || 1;
+      // 화면 안쪽 여백까지 죈다 — 표식이 잘리지 않게
+      const pad = VP_EDGE.padPx;
+      const t = Math.min((cx - pad) / Math.abs(dx || 1e-9), (cy - pad) / Math.abs(dy || 1e-9));
+      const ex = cx + dx * t, ey = cy + dy * t;
+      const ux = dx / L, uy = dy / L, s = VP_EDGE.sizePx;
+      ctx2.beginPath();                                    // 바깥을 가리키는 삼각형
+      ctx2.moveTo(ex + ux * s, ey + uy * s);
+      ctx2.lineTo(ex - uy * s * 0.6 - ux * s * 0.4, ey + ux * s * 0.6 - uy * s * 0.4);
+      ctx2.lineTo(ex + uy * s * 0.6 - ux * s * 0.4, ey - ux * s * 0.6 - uy * s * 0.4);
+      ctx2.closePath(); ctx2.fill();
+      // 얼마나 먼가 — **화면 폭 배수**로 낸다(화각 게이트가 가르는 그 양이다, 지시 7-b)
+      ctx2.globalAlpha = 0.6;
+      ctx2.font = "11px system-ui, sans-serif";
+      ctx2.textAlign = ex > cx ? "right" : "left";
+      ctx2.textBaseline = ey > cy ? "bottom" : "top";
+      ctx2.fillText(`${(L / w).toFixed(1)}W`,
+                    ex - ux * s * 1.6, ey - uy * s * 1.6);
+    }
     ctx2.restore();
   });
 }
@@ -2005,7 +2136,7 @@ const ink = new InkCanvas(canvas, {
         applySnapToStart(s, cand, fr.fromV(cand.at));
         // **끝점도 붙는가**(오스냅, D-L46) — 붙으면 **축 없이 두 점으로** 확정된다.
         // 미리보기(`onLive`)와 **같은 함수**를 부른다(#17: 미리보기와 확정이 갈릴 여지 없음)
-        const endCand = endSnapAt(fr, cand.at, pts[pts.length - 1]);
+        const endCand = endSnapRecord(s, fr, cand.at, pts[pts.length - 1]);
         if (endCand) applySnapToEnd(s, endCand, fr.fromV(endCand.at));
         placeLive(s, fr, cand.at, endCand);
       } else {
@@ -2024,7 +2155,8 @@ const ink = new InkCanvas(canvas, {
           // 조리개에서 절단돼 "반경을 넓혀야 하는가"를 영영 못 답한다. 40px(UI 상한) 프로브.
           // ⚠ 프로브에서 **on_face를 뺀다**(재검 [7]) — 지면 스냅의 화면 거리는 정의상 0이라
           // 앞을 막으면 "스냅 실패"가 안 생겨 프로브가 영영 발화하지 않는다(#3·#5)
-          const probe = snapCandidates(pts[0], segs0, sc!, { radius_ratio: 40 / Math.hypot(...cssSize()) },
+          const probe = snapCandidates(pts[0], segs0, sc!,
+                                       { radius_ratio: SNAP_PROBE_PX / Math.hypot(...cssSize()) },
                                        snapStatic(segs0))
             .find(c => OSNAP.kinds[c.kind] && c.kind !== "on_face");
           s.snapDistPx = probe ? probe.dist : null;
@@ -2288,7 +2420,7 @@ function renderAsk(): string {
 
 /**
  * **승격 요약**(L-C.2, §6.2). 승격은 **품질을 올리고 배치를 줄인다**(L-C.1: 형태 오차 중앙
- * 0.1259 → 0.0913 · 배치 −168, `order_promote.json@509615a1`). 어느 쪽을 택할지는
+ * 0.1259 → 0.0913 · 배치 −168, `order_promote.json@54346ad1`). 어느 쪽을 택할지는
  * 그림마다 다르고 **자동 신호가 없으므로**(AS-L6이 §6.2의 재투영 잔차를 반증했다)
  * 사용자가 정한다. 정하려면 **무엇을 잃었는지 보여야 한다.**
  *
@@ -2619,6 +2751,16 @@ refresh();
   hoverSnap: () => hoverSnap,
   /** **끝점 스냅**(오스냅, D-L46) — 종단 확인이 앱 경로 그대로 부른다(#17). */
   endSnap: (from: Vec3, p: Pt2) => { const fr = frame(); return fr ? endSnapAt(fr, from, p) : null; },
+  /**
+   * **끝점 겨냥 거리 프로브**(6차 항목 2-b) — 조리개 밖까지 본 최근접 후보 거리.
+   * `null`이면 후보가 없다(반경 문제가 아니다). 원장이 이 셋을 갈라 읽는다.
+   */
+  endProbe: (from: Vec3, p: Pt2) => { const fr = frame(); return fr ? endSnapProbe(fr, from, p) : null; },
+  /** 획별 겨냥 거리 — 시작·끝. 실획 원장이 그대로 읽는다(#17). */
+  aimDist: () => doc.strokes.map(x => ({ id: x.id, start: x.snapDistPx ?? null,
+                                         end: x.snapEndDistPx ?? null,
+                                         startKind: x.snapStart?.kind ?? null,
+                                         endKind: x.snapEnd?.kind ?? null })),
   /** 양 끝 스냅으로 놓인 획 — 측정이 "대각선이 놓이는 비"를 읽는다 */
   twoPointStrokes: () => doc.strokes.filter(x => x.snapStart && x.snapEnd && x.seg3d)
                                     .map(x => ({ id: x.id, start: x.snapStart!.kind,
@@ -2638,7 +2780,7 @@ refresh();
   setAxisLock: (a: 0 | 1 | 2 | null) => { axisLock = a; relive(); },
   // L-B.6 — 뷰 시스템(§9.2~§9.4). **앱 경로 그대로**를 종단 확인이 부른다(#17)
   views: () => doc.views.map(v => ({ id: v.id, name: v.name, seq: v.seq,
-                                     isConfirm: v.pose === null,
+                                     isConfirm: isConfirmView(v),
                                      pending: pending(doc, v.id).length })),
   currentView: () => doc.currentView,
   switchView,

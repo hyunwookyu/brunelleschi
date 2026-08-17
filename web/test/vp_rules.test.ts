@@ -79,7 +79,7 @@ describe("a. 화면 가로세로 선은 축 자체다 (이론서 2.2)", () => {
   });
 });
 
-describe("b. 첫 소실점 = 그린 두 깊이선의 실제 교점 (4차 지시 3)", () => {
+describe("b. 첫 소실점 = 한 축으로 모인 **세** 깊이선의 교점 (6차 지시 11)", () => {
   // ⚠⚠ **이 절의 계약이 뒤집혔다**(2026-08-17 4차 지시 3 — 2차의 "지평선이 먼저"를 되돌린다).
   // 옛 계약: 지평선이 처음부터 있고 깊이선 **하나** × 지평선이 소실점이었다. 그 귀결이
   // "격자가 그린 선과 어긋난다"였다 — 소실점이 그린 선들의 교점이 아니라 미리 깔린 지평선
@@ -93,21 +93,66 @@ describe("b. 첫 소실점 = 그린 두 깊이선의 실제 교점 (4차 지시 
     expect(newRuleState(SZ).horizon).toBeCloseTo(H, 9);
   });
 
-  it("깊이선 하나는 **대기**하고, 둘째 선과의 교점으로 확정된다 — 교점이 정확히 소실점이다", () => {
+  it("깊이선 **둘까지는 대기**하고, 셋째 선이 교점을 확정한다 (6차 지시 11)", () => {
     const r1 = stepRule(newRuleState(SZ), toward([200, 600]), SZ);
     expect(r1.event.type).toBe("waiting");
     expect(r1.state.slots[0]).toBeNull();               // **아직 소실점이 없다**
+    // ⚠⚠ **여기가 6차 지시 11이 바꾼 자리다.** 옛 규칙은 이 둘째 선에서 확정했고, 그래서
+    // 서로 다른 축의 대각선 둘을 그으면 **2점을 그리려던 것이 1점으로 굳었다.**
     const r2 = stepRule(r1.state, toward([300, 640]), SZ);
-    expect(r2.event.type).toBe("vp_fixed");
-    const vp = (r2.state.slots[0] as { at: Pt2 }).at;
-    expect(vp[0]).toBeCloseTo(V[0], 6);                 // **그린 두 선의 교점 그대로다**
+    expect(r2.event.type).toBe("waiting");
+    expect(r2.state.slots[0]).toBeNull();
+    // 셋째 선이 **같은 점으로 모인다** — 그때 비로소 소실점이다
+    const r3 = stepRule(r2.state, toward([420, 660]), SZ);
+    expect(r3.event.type).toBe("vp_fixed");
+    const vp = (r3.state.slots[0] as { at: Pt2 }).at;
+    expect(vp[0]).toBeCloseTo(V[0], 6);                 // **그린 선들의 교점 그대로다**
     expect(vp[1]).toBeCloseTo(V[1], 6);
+    // 셋이 다 모였으므로 **둘째 슬롯은 비어 있다**(나머지가 없다)
+    expect(r3.state.slots[1]).toBeNull();
     // **소실점이 지평선을 정한다**(지시 4-c의 앞당김 — 롤 0이므로 y가 지평선이다)
-    expect(r2.state.horizon).toBeCloseTo(V[1], 6);
+    expect(r3.state.horizon).toBeCloseTo(V[1], 6);
     // **소실점 하나 = NONE이다**(지시 1) — 가로선이 오면 P1, 두 번째 소실점이 오면 P2
-    expect(perspectiveOrder(r2.state)).toBe(0);
+    expect(perspectiveOrder(r3.state)).toBe(0);
     // **회귀 팔**: 옛 규칙이면 소실점이 (선 ∩ 기본 지평선)에 놓여 y = 336이다 — 지금은 300이다
     expect(vp[1]).not.toBeCloseTo(H, 0);
+  });
+
+  /**
+   * **이번 변경의 이유 그대로**(6차 지시 11): 빈 캔버스에서 **서로 다른 축**의 대각선 둘은
+   * 소실점을 만들지 않는다. 그 교점은 **공간의 한 점**이지 소실점이 아니다.
+   *
+   * ⚠ **회귀 팔** — 옛 규칙에서는 이 둘째 선이 `vp_fixed`를 냈고 P1이 굳었다.
+   */
+  it("**반례** — 다른 축의 대각선 둘은 소실점이 아니다 (6차 지시 11의 이유)", () => {
+    let st = newRuleState(SZ);
+    st = stepRule(st, line([120, 620], [520, 470]), SZ).state;      // 왼쪽으로 가는 축
+    const r = stepRule(st, line([840, 620], [440, 470]), SZ);       // 오른쪽으로 가는 축
+    expect(r.event.type).toBe("waiting");
+    expect(r.state.slots[0]).toBeNull();
+    expect(r.state.slots[1]).toBeNull();
+    expect(perspectiveOrder(r.state)).toBe(0);
+  });
+
+  /**
+   * **셋이 안 모이면 2점이 한 번에 선다**(지시 11-1 넷째 줄). 가까운 둘이 한 축이고
+   * 나머지가 다른 축이다 — 그 나머지와 지평선의 교점이 두 번째 소실점이다.
+   */
+  it("셋째 선이 갈리면 **2점이 한 번에** 선다 (지시 11-1)", () => {
+    const VA: Pt2 = [1500, 336], VB: Pt2 = [-600, 336];
+    const seg = (from: Pt2, to: Pt2, t = 0.3): RLine =>
+      line(from, [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t]);
+    let st = newRuleState(SZ);
+    st = stepRule(st, seg([300, 640], VA), SZ).state;
+    st = stepRule(st, seg([420, 600], VA), SZ).state;
+    const r = stepRule(st, seg([600, 640], VB), SZ);
+    expect(r.event.type).toBe("vp_fixed");
+    expect(perspectiveOrder(r.state)).toBe(2);
+    const v0 = (r.state.slots[0] as { at: Pt2 }).at;
+    const v1 = (r.state.slots[1] as { at: Pt2 }).at;
+    expect(v0[0]).toBeCloseTo(VA[0], 3);
+    expect(v1[0]).toBeCloseTo(VB[0], 3);
+    expect(v1[1]).toBeCloseTo(v0[1], 9);                // 둘 다 같은 지평선 위다(롤 0)
   });
 
   it("**반례** — 나란한 짝은 교점이 발산하므로 대기가 이어진다", () => {
@@ -120,6 +165,10 @@ describe("b. 첫 소실점 = 그린 두 깊이선의 실제 교점 (4차 지시 
     expect(b.event.type).toBe("waiting");
     expect(b.state.slots[0]).toBeNull();
     expect(b.state.depthLines.length).toBe(2);
+    // 셋째도 나란하면 여전히 교점이 없다 — **대기는 개수가 아니라 기하가 푼다**
+    const c = stepRule(b.state, line([100, 680], [500, 560]), SZ);
+    expect(c.event.type).toBe("waiting");
+    expect(c.state.slots[0]).toBeNull();
   });
 
   it("**반례** — 끝점을 공유한 이음(ㄱ자)은 소실점이 아니다 — 모든 꼭짓점이 소실점이 되면 안 된다", () => {
@@ -137,7 +186,8 @@ describe("b. 첫 소실점 = 그린 두 깊이선의 실제 교점 (4차 지시 
     // 4° 미만이면 screen_h로 가므로 depth 강제 — 첫 축은 지평선을 안 쓰므로 거절 사유가 없다
     let st = newRuleState(SZ);
     st = stepRule(st, line([100, 500], [800, 470]), SZ, "depth").state;   // 얕은 깊이선
-    const r = stepRule(st, line([200, 640], [700, 500]), SZ, "depth");
+    st = stepRule(st, line([200, 640], [700, 500]), SZ, "depth").state;
+    const r = stepRule(st, line([150, 600], [650, 520]), SZ, "depth");    // 셋째(6차 지시 11)
     expect(r.event.type).toBe("vp_fixed");
   });
 
@@ -155,11 +205,13 @@ describe("b. 첫 소실점 = 그린 두 깊이선의 실제 교점 (4차 지시 
   it("소실점을 만든 두 선의 부적합도가 정확히 0이다 — 옛 규칙은 여기서 깨진다", () => {
     const l1 = toward([200, 600]);
     const l2 = toward([300, 640]);
+    const l3 = toward([420, 660]);                      // **셋째 선이 확정한다**(6차 지시 11)
     let st = newRuleState(SZ);
     st = stepRule(st, l1, SZ).state;
     st = stepRule(st, l2, SZ).state;
+    st = stepRule(st, l3, SZ).state;
     const vp = (st.slots[0] as { at: Pt2 }).at;
-    for (const l of [l1, l2]) {
+    for (const l of [l1, l2, l3]) {
       const len = Math.hypot(l.b[0] - l.a[0], l.b[1] - l.a[1]);
       expect(vpMisfit({ a: l.a, b: l.b, len, bend: 0 }, vp)).toBeLessThan(1e-12);
     }
@@ -187,6 +239,8 @@ describe("c. 두 번째 소실점도 같은 지평선 위다", () => {
     // 지평선과 같은 값이라 아래 c 절의 기대값(H)이 그대로 성립한다
     [seg(P0, V1)],
     [seg([560, 600], V1)],
+    // **셋째 선이 확정한다**(6차 지시 11) — 같은 소실점으로 모이므로 V1이 그대로 선다
+    [seg([420, 620], V1)],
   ]);
 
   it("선 하나로 2점이 된다", () => {
