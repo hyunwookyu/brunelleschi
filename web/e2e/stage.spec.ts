@@ -1141,8 +1141,10 @@ test("궤도 후 계속 그리기 — 새 각도가 새 뷰가 된다", async ({
     const pose = S.pose();
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
-    const f = vc.fFromFov(45, size[1]);
-    const principal: [number, number] = [size[0] / 2, size[1] / 2];
+    // **자유 시점은 확정 렌즈를 이어받는다**(7차 항목 1) — 앱과 같은 출처에서 읽는다(#17)
+    const fi = S.stage.freeIntrinsics();
+    const f = fi ? fi.f : vc.fFromFov(45, size[1]);
+    const principal: [number, number] = fi ? fi.principal : [size[0] / 2, size[1] / 2];
     // 3D 레이어의 한 끝점을 골라 그 화면 자리를 낸다
     const s0 = S.doc().strokes.filter((s: any) => s.seg3d)[0];
     const p = g3.project(vc.toView(pose, s0.seg3d[0]), principal, f);

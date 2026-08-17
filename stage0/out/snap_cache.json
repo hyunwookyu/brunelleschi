@@ -1,71 +1,43 @@
 {
-  "spec": "L-D.2 저장·복원 v2 — 뷰가 2D 획의 소유자라는 성질을 저장이 지키는가(§9.2)",
-  "plan": "docs/line_plan.md L-D.2 · §9.2",
-  "what_this_does_not_say": [
-    "**IndexedDB를 안 탄다** — 여기는 직렬화 함수의 왕복이다(구조적 복제는 JSON으로 흉내낸다). 실제 저장소 왕복은 `stage_browser.json`의 `l_d3_save_roundtrip`이다",
-    "성능 — 문서 크기·저장 지연을 안 잰다",
-    "v1 문서의 이전(migration) — **거절**이 설계다(아래 `v1_rejected`)"
-  ],
-  "v1_rejected": "v1 문서는 열지 않는다. **옛 UI(`index.html`)로 그린 저장은 새 UI에서 안 뜬다.** 이전 경로를 안 짜는 이유: v1에는 뷰가 없어 `viewRef`를 만들어 내야 하고, 그러면 **없는 소유 관계를 지어내는 것**이다(A-3: 애매하면 놓지 않는다). 키도 갈랐다(`current` 대 `current2`) — 같은 DB에서 서로 덮지 않는다(#34).",
-  "format": "s2s-doc/2",
-  "views_and_pending": {
-    "views": 2,
-    "pending_2d": 2,
-    "owners": 2,
-    "pose_survives": true
-  },
-  "bit_identical": {
-    "strokes": 3,
-    "fields": [
-      "pts2d",
-      "seg3d",
-      "snapStart",
-      "axis"
+  "setup": {
+    "canvas": [
+      1280,
+      675
     ],
-    "note": "**설계 보장이다**(#5) — 담기로 한 필드이므로 같을 수밖에 없다. 임계를 걸지 않는다. 깨지면 저장 포맷 결함이다"
+    "strokes": 12,
+    "hasCamera": true,
+    "boxes": 1,
+    "lifted": 12,
+    "standing": true
   },
-  "id_continues": {
-    "collides_without_setDocSeq": true,
-    "collides_with_setDocSeq": false,
-    "seq": {
-      "stroke": 3,
-      "view": 2
+  "before_roundtrip": [
+    {
+      "kind": "endpoint",
+      "dist": 3.78
     },
-    "note": "**반례가 실제로 걸린다**(#32) — 이어받지 않으면 같은 id가 난다"
+    {
+      "kind": "endpoint",
+      "dist": 4.24
+    }
+  ],
+  "after_roundtrip": [
+    {
+      "kind": "endpoint",
+      "dist": 3.78
+    },
+    {
+      "kind": "endpoint",
+      "dist": 4.24
+    }
+  ],
+  "stale_offset_px": {
+    "offsets": [
+      341.2,
+      293
+    ],
+    "behind_camera": 0
   },
-  "dangling_viewref": {
-    "rehomed_to": "확정 뷰(pose === null)",
-    "strokes_lost": 0,
-    "note": "손으로 고친 문서·낡은 판본에서 온다. **조용히 안 사라진다**"
-  },
-  "rejects": {
-    "s2s-doc/1(v1)": false,
-    "views 없음": false,
-    "빈 뷰": false,
-    "null": false,
-    "note": "**거절이 설계다** — 위 `v1_rejected` 참조"
-  },
-  "export_3d_only": {
-    "doc_strokes": 3,
-    "exported": 1,
-    "obj_has_face": false,
-    "obj_has_view": true,
-    "gltf_mode": 3,
-    "note": "2D 레이어는 좌표가 없으므로 안 나간다 — **미배치는 대기지 내보낼 것이 아니다**(§9.1)"
-  },
-  "camera_constraints": {
-    "axis0_status": "fixed",
-    "n_lines": 2,
-    "note": "**입력(선)을 담는다** — 푼 결과가 아니다. 그래야 열어서 이어 조정할 수 있고 차수 승격이 전부 다시 푼다(§6.1)"
-  },
-  "pose_integrity": {
-    "spec": "7차 항목 1-c — serializeDoc2가 확정 뷰 표식(pose null 정확히 1)·자세 유한성을 강제한다",
-    "throws_no_confirm": true,
-    "throws_two_confirm": true,
-    "throws_nan_pose": true,
-    "ok_normal": true,
-    "note": "정상 경로로는 안 만들어지는 상태다 — 걸리면 조용히 깨진 파일 대신 저장 실패를 기록한다(A-3)"
-  },
+  "spec": "7차 항목 2 — 스냅 정적 후보 캐시가 시점(poseKey)을 키로 갖는다: 뷰 왕복 직후 첫 질의가 끝점을 문다",
   "constants": {
     "hash": "509615a1",
     "values": {
@@ -214,5 +186,43 @@
     ],
     "source": "file",
     "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  },
+  "what_this_does_not_say": [
+    "실획 재현이 아니다 — 합성 상자·참 소실점 픽스처다(AS-C1)",
+    "dpr 1·데스크톱 뷰포트 1440×900·합성 포인터다(#21) — iPad 실기는 안 덮는다",
+    "반경 15px의 적정성은 여기서 안 갈린다 — 실획 snapDistPx 분포(수리된 측정)가 답한다",
+    "stale_offset_px.behind_camera는 낡은 후보가 카메라 뒤로 가 아예 죽는 경우의 수다 — 그때 옛 판은 후보를 잃었다"
+  ],
+  "gate": {
+    "registered": "⚠ 이 항목이 등록한 게이트다 — CLAUDE.md §2의 중단 조건(camera_gate)이 아니다(#41). 확정 뷰 ↔ 회전 시점 왕복(그 시점에서 기하 변경·호버 오염 포함) 직후의 첫 질의가 왕복 전과 같은 정밀 대상(끝점/정점/중점/교차점)을 문다",
+    "reachability": "음성 채널(#30) — 낡은 캐시의 후보가 확정 카메라에서 참 자리를 벗어나는 거리(stale_offset_px, 이 실행에서 잼). 조리개 15px과 자릿수로 갈리므로(수백 px 또는 카메라 뒤 소실) 낡은 캐시로는 이 게이트를 못 넘는다 — 기준이 판별력을 갖는 근거다",
+    "reachability_value": [
+      341.2,
+      293
+    ],
+    "reachability_source": "stale_offset_px/offsets",
+    "result": {
+      "before": [
+        {
+          "kind": "endpoint",
+          "dist": 3.78
+        },
+        {
+          "kind": "endpoint",
+          "dist": 4.24
+        }
+      ],
+      "after": [
+        {
+          "kind": "endpoint",
+          "dist": 3.78
+        },
+        {
+          "kind": "endpoint",
+          "dist": 4.24
+        }
+      ]
+    },
+    "note": "수정 전 재현(#21): 같은 스펙이 after에서 on_face를 물어 실패했다 — progress.md 7차 항목 2의 재현 기록"
   }
 }

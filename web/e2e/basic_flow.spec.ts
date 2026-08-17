@@ -193,8 +193,11 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
     const pose = S.pose();
+    // **자유 시점은 확정 렌즈를 이어받는다**(7차 항목 1) — 앱(frame())과 같은 내적 파라미터를
+    // 같은 출처(stage.freeIntrinsics)에서 읽는다(#17). 옛 45°·중심 주점은 낡은 값이다
     const ctx = vc.viewPlaceCtx(pose, S.cam.ctx().vps.map((v: any) =>
-      (v ? g3.axisDirection(v, S.cam.ctx().principal, S.cam.ctx().f) : null)), size, 45);
+      (v ? g3.axisDirection(v, S.cam.ctx().principal, S.cam.ctx().f) : null)), size, 45,
+      S.stage.freeIntrinsics());
     const st = S.doc().strokes.find((s: any) => s.seg3d)!;
     const p = g3.project(vc.toView(pose, st.seg3d[0]), ctx.principal, ctx.f);
     return p ? { x: p[0] / size[0], y: p[1] / size[1] } : null;
@@ -2219,7 +2222,7 @@ test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, �
       "무스냅 배치의 snapStart는 null 그대로다 — 스냅이 아니라 평면 배치다(2-3). 그 사실이 저장본에 남는다",
       "확정 뷰의 **지평선 아래**는 지면 스냅이 전부 받는다(지면 화면 거리 0 — 시작점이 지면 위 점이 된다) — 무스냅 평면 배치는 지평선 위·기하 밖에서 도달한다. 이 팔의 무스냅 획이 지평선 위(0.15H)인 이유다",
       "**깊이 성분은 1점 f(임의값 — D-L53)가 정하는 배율 위의 값이다**(이론서 16.4·AS-C4 — 2-R′ [B-7]): s4의 Δz 같은 깊이 좌표와 이 흐름으로 만든 입체의 깊이:폭 비는 그 상수에 달렸다. 직접·lift 두 경로가 같은 f를 쓰므로 동등성에는 안 닿는다",
-      "손 정렬 자동 스냅의 발화는 **궤도 종료(터치 제스처·마우스 궤도) 뒤**다(2-R′ [B-6]) — flyTo 복귀·저장본 복원·실행취소는 저장된 자세를 그대로 복원하므로 대상이 아니고, 그 자세가 근사 정렬이면 1점으로 안 선다(직접 경로는 정확 정렬만). 이 팔은 화살표 이동이라 항상 정확 정렬에서 출발한다",
+      "손 정렬 자동 스냅의 발화는 **궤도 종료(터치 제스처·마우스 궤도) 뒤**다(2-R′ [B-6]) — flyTo 복귀·저장본 복원·실행취소는 저장된 자세를 그대로 복원하므로 대상이 아니고, 그 자세가 근사 정렬이면 1점으로 안 선다(직접 경로는 정확 정렬만). 이 팔은 화살표 이동이라 항상 정확 정렬에서 출발한다. ⚠ 정정(7차 항목 1): '저장본 복원이 자세를 그대로 복원한다'는 **적힌 시점에 거짓이었다** — 옛 applyDoc2는 무대 자세를 아예 재수립하지 않았다(새로고침 뒤 생성 기본 자세). 7차가 복원을 setPose/pinTo(정확 복원)로 고쳐 이 문장이 참이 됐다 — 발화 범위 판단(복원은 자동 스냅 대상이 아니다) 자체는 정확 복원을 전제로 한 것이라 7차 이후 상태에서 유지된다(restore_pose.json이 그 정확성을 잠근다)",
       "pathStats는 확정 축 배치만 센다(미리보기 프레임 아님) — twoPoint(양 끝 스냅)는 별도 칸이고 **확정 단계에서 1**(상자 뼈대 중 한 획의 양 끝 스냅), 이후 전 단계 불변이다(2-R′ [B-2] — 초판 '0' 서술은 자기 데이터와 모순이었다)",
     ],
     thresholds: { plane_const_max: 1e-9, anchor_plane_max: 1e-6, moved_min: 1e-6,

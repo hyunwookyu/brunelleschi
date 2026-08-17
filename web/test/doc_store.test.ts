@@ -206,3 +206,43 @@ describe("6차 지시 3 — pathStats 저장(실획 측정 재료)", () => {
     expect(without.pathStats).toBeUndefined();
   });
 });
+
+describe("7차 항목 1-c — 저장 무결성(뷰 자세)", () => {
+  // `pose === null`은 **확정 뷰의 표식**이다(doc.ts — 자세 항등). 실획 첫 표본(2026-08-17)에서
+  // 이 표식이 "자세 저장 누락"으로 오독됐다 — 표식 자체는 설계이고, 실패로 기록해야 하는 것은
+  // **표식의 전제가 깨진 문서**다(확정 뷰 0개/2개·비유한 자세). 정상 경로로는 안 만들어지므로
+  // 걸리면 조용히 깨진 파일 대신 저장 실패를 남긴다.
+  it("확정 뷰가 없으면 던진다(반례)", () => {
+    const d = fixture();
+    d.views[0].pose = { R: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], C: [0, 0, 0] };  // 표식 파괴
+    expect(() => serializeDoc2(src(d))).toThrowError(/저장 무결성.*0개/);
+  });
+  it("확정 뷰가 둘이면 던진다(반례)", () => {
+    const d = fixture();
+    d.views[1].pose = null;                                    // 두 번째 확정 뷰
+    expect(() => serializeDoc2(src(d))).toThrowError(/저장 무결성.*2개/);
+  });
+  it("자세에 NaN이 섞이면 던진다(반례)", () => {
+    const d = fixture();
+    d.views[1].pose!.C = [NaN, 0, 0];
+    expect(() => serializeDoc2(src(d))).toThrowError(/저장 무결성.*유한/);
+  });
+  it("정상 문서(확정 뷰 하나 + 유한 자세)는 그대로 저장된다", () => {
+    const d = fixture();
+    expect(() => serializeDoc2(src(d))).not.toThrow();
+    // **원장에 남긴다**(#25 — 1-R′ [11] 대응): 반례 셋이 실제로 던지고 정상이 지나간다
+    const thrown = (mut: (x: DocState) => void): boolean => {
+      const f = fixture();
+      mut(f);
+      try { serializeDoc2(src(f)); return false; } catch { return true; }
+    };
+    led.pose_integrity = {
+      spec: "7차 항목 1-c — serializeDoc2가 확정 뷰 표식(pose null 정확히 1)·자세 유한성을 강제한다",
+      throws_no_confirm: thrown(x => { x.views[0].pose = { R: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], C: [0, 0, 0] }; }),
+      throws_two_confirm: thrown(x => { x.views[1].pose = null; }),
+      throws_nan_pose: thrown(x => { x.views[1].pose!.C = [NaN, 0, 0]; }),
+      ok_normal: true,
+      note: "정상 경로로는 안 만들어지는 상태다 — 걸리면 조용히 깨진 파일 대신 저장 실패를 기록한다(A-3)",
+    };
+  });
+});

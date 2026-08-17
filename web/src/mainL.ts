@@ -399,8 +399,18 @@ const snapSegs = (toV: (p: Vec3) => Vec3 = ID): SnapSeg[] =>
  * 질의 무관 후보 캐시. **교차점이 `O(n²)`이라 포인터가 움직일 때마다 만들면 안 된다** —
  * 대상 100선이면 매 프레임 5천 번의 최근접 계산이다. 기하가 바뀔 때만(=`syncScene`) 버린다.
  */
-let snapPre: StaticCand[] | null = null;
-const snapStatic = (segs: SnapSeg[]): StaticCand[] => (snapPre ??= staticCandidates(segs));
+/**
+ * ⚠⚠ **캐시 키는 시점이다**(7차 항목 2 — 실획 첫 표본이 잡은 결함). 후보의 `at`은 질의
+ * 시점의 **뷰 좌표**라, 기하가 안 바뀌어도 자세가 바뀌면 좌표계째 낡는다. 옛 판은
+ * `syncScene`(기하 변경)에만 무효화해서 궤도·뷰 전환 뒤 첫 획이 **이전 뷰 좌표의 후보**를
+ * 현재 카메라로 투영했다 — 끝점·정점·중점·교차점이 전부 엉뚱한 화면 자리로 가고, 캐시
+ * 밖에서 매번 계산되는 on_face·선 위·수선 발만 살아남았다("시작 전부 on_face·snapEnd 전무").
+ */
+let snapPre: { key: string; cands: StaticCand[] } | null = null;
+const snapStatic = (segs: SnapSeg[], poseKey: string): StaticCand[] => {
+  if (!snapPre || snapPre.key !== poseKey) snapPre = { key: poseKey, cands: staticCandidates(segs) };
+  return snapPre.cands;
+};
 
 /**
  * **2D 오스냅 대상 — 지금 뷰의 대기 획**(4차 지시 1). 카메라 확정 전에는 이것이 전부이고,
@@ -443,6 +453,14 @@ interface Frame {
   /** 세계 방향 → 시점 방향(평행이동 없음). */
   dirV: (d: Vec3) => Vec3;
   pinned: boolean;
+  /**
+   * **이 시점의 정체**(7차 항목 2). 스냅 정적 후보 캐시(`snapPre`)의 키다 — 후보의 `at`은
+   * **뷰 좌표**라(snapSegs(fr.toV)) 자세가 바뀌면 좌표계째 낡는다. 옛 판은 기하 변경에만
+   * 무효화해서 궤도·뷰 전환 뒤 **첫 획의 끝점·정점·중점·교차점 후보가 이전 뷰 좌표로
+   * 투영됐다** — 실획 첫 표본의 "snapEnd 전무·시작 전부 on_face"가 그 자리다(on_face·선 위·
+   * 수선 발은 캐시 밖이라 살아남는다 — 낡음이 조용했던 이유).
+   */
+  poseKey: string;
 }
 
 const ID = <T>(x: T) => x;
@@ -451,7 +469,7 @@ function frame(): Frame | null {
   // **"확정됐는가"는 계산이다**(지시 1) — 카메라가 서면 그 순간부터 확정이다(옛 `locked` 플래그 폐기).
   const c = cam.ctx();
   if (!c) return null;
-  if (stage.isPinned) return { ctx: c, toV: ID, fromV: ID, dirV: ID, pinned: true };
+  if (stage.isPinned) return { ctx: c, toV: ID, fromV: ID, dirV: ID, pinned: true, poseKey: "pin" };
   const pose = stage.pose();
   if (!pose) return null;
   // **세계 축 방향은 첫 카메라가 정한 것 그대로다.** 새로 추정하지 않는다.
@@ -460,11 +478,16 @@ function frame(): Frame | null {
   // 옛 판(vps만)은 그 축들을 돌린 시점에서 잃었다 — 입면 흐름(2-4)의 장애물이었다.
   const axes = c.axisDirs ?? c.vps.map(v => (v ? axisDirection(v, c.principal, c.f) : null));
   return {
-    ctx: viewPlaceCtx(pose, axes, cssSize(), FREE_FOV_DEG),
+    // **자유 시점도 확정 카메라의 렌즈를 이어받는다**(7차 항목 1) — 렌더러(stage)가 실제로
+    // 쓰는 내적 파라미터와 같은 값으로 배치 문맥을 세운다(#17). 이어받은 것이 없을 때만 45°다
+    ctx: viewPlaceCtx(pose, axes, cssSize(), FREE_FOV_DEG, stage.freeIntrinsics()),
     toV: (p) => toView(pose, p),
     fromV: (p) => fromView(pose, p),
     dirV: (d) => dirToView(pose, d),
     pinned: false,
+    // 전체 자릿수로 잇는다 — 감쇠 꼬리의 미세 이동도 다른 시점이다(정확성이 우선.
+    // 자세가 멎어 있는 보통의 경우에만 캐시가 맞으면 된다)
+    poseKey: [...pose.R[0], ...pose.R[1], ...pose.R[2], ...pose.C].join(","),
   };
 }
 
@@ -501,12 +524,31 @@ function endSnapAt(fr: Frame, anchorAt: Vec3, p: Pt2): SnapCand | null {
   // 때문이다. 여기서도 같은 일이 실제로 났다: 모서리를 따라 그으면 `on_edge`가 **언제나**
   // 걸려 모든 획이 두 점 배치가 됐다(종단 확인이 잡았다). 시작점 스냅은 종전대로 전부 쓴다 —
   // 그 경로의 측정(`snap.json`)이 그 목록 위에 있다.
-  const cand = snapCandidates(p, segs, sc, osnapCfg(), snapStatic(segs))
+  const cand = snapCandidates(p, segs, sc, osnapCfg(), snapStatic(segs, fr.poseKey))
     .find(c => OSNAP.kinds[c.kind] && c.kind !== "on_edge" && c.kind !== "on_face") ?? null;
   // **앵커 자신에 붙는 것은 선분이 아니다** — 길이 0을 만들지 않는다
   if (!cand) return null;
   const d = Math.hypot(cand.at[0] - anchorAt[0], cand.at[1] - anchorAt[1], cand.at[2] - anchorAt[2]);
   return d > 1e-9 ? cand : null;
+}
+
+/**
+ * **시작점의 겨냥 거리(px)**(지시 K · 7차 항목 2가 정의를 수리했다) — 40px 프로브 안에서
+ * **가장 가까운 정밀 대상**(on_face 제외)까지의 화면 거리. 없으면 `null`.
+ *
+ * ⚠ 옛 판의 두 결함: ① 스냅이 걸리면 `cand.dist`를 그대로 적었는데 핀 상태에서는 on_face가
+ * 항상 걸리므로 **전부 정의상 0**이 됐다(#3·#5 — 지표가 정의의 귀결을 쟀다. 실획 첫 표본의
+ * snapDistPx 전부 0이 그것이고, "반경이 좁은가"를 영영 못 답했다). ② 프로브가 우선순위
+ * 첫 후보를 집어 **더 가까운 낮은 순위 대상**(중점 등)을 지나쳤다 — 겨냥 거리는 최근접이다.
+ * 스냅 성패와 무관하게 **이 정의 하나로** 적는다(#17). 프로브 점은 스냅 전 원시 시작점이다.
+ */
+function aimDistPx(p: Pt2, segs: SnapSeg[], sc: SnapCtx, pre: StaticCand[]): number | null {
+  let best: number | null = null;
+  for (const c of snapCandidates(p, segs, sc, { radius_ratio: 40 / Math.hypot(...cssSize()) }, pre)) {
+    if (!OSNAP.kinds[c.kind] || c.kind === "on_face") continue;
+    if (best == null || c.dist < best) best = c.dist;
+  }
+  return best;
 }
 
 /** 끝점 스냅을 획에 적는다 — 시작점 판(`applySnapToStart`)과 같은 규약이다(#34). */
@@ -532,8 +574,8 @@ function applySnapToStart(st: SStroke, cand: SnapCand, atWorld: Vec3 = cand.at):
   // ⚠ **`at`은 세계 좌표로 적는다.** 돌린 시점에서는 `cand.at`이 **시점 좌표**다(L-B.8) —
   // 그대로 넣으면 뷰를 바꿀 때마다 같은 획의 `snapStart`가 다른 점을 가리킨다.
   st.snapStart = { kind: cand.kind, at: atWorld, ofId: cand.ofId };
-  // **겨냥 거리(px)를 남긴다**(지시 K) — 스냅 반경의 실측 근거. 스냅 후에는 못 잰다
-  st.snapDistPx = cand.dist;
+  // ⚠ `snapDistPx`는 여기서 안 적는다(7차 항목 2) — `cand.dist`는 on_face에서 정의상 0이라
+  // 겨냥 거리가 아니다(#3·#5). 호출부가 스냅 **전** 원시 시작점으로 `aimDistPx`를 적는다(#17)
   st.pts2d = [[cand.screen[0], cand.screen[1]], ...st.pts2d.slice(1)];
 }
 
@@ -567,9 +609,11 @@ function promoteChain(fr: Frame): number {
     let n = 0;
     for (const st of waiting) {
       if (!liftable(st)) continue;               // **주석은 승격 연쇄에도 안 들어간다**(D-3)
+      const aim0: Pt2 = [st.pts2d[0][0], st.pts2d[0][1]];   // 스냅 전 원시 시작점(겨냥 거리용)
       const cand = appSnapAt(st.pts2d[0], segs, sc, pre);
       if (!cand) continue;
       applySnapToStart(st, cand, fr.fromV(cand.at));
+      st.snapDistPx = aimDistPx(aim0, segs, sc, pre);       // 정의 하나(#17 — aimDistPx 머리말)
       // **대기 획도 양 끝 스냅으로 올라갈 수 있다**(D-L46) — 축이 없어도 두 점이면 놓인다
       const endCand = endSnapAt(fr, cand.at, st.pts2d[st.pts2d.length - 1]);
       if (endCand) applySnapToEnd(st, endCand, fr.fromV(endCand.at));
@@ -1124,7 +1168,7 @@ function relinkLostSnaps(): void {
   if (!fr || !sc) return;
   pushUndo();                                   // **되돌릴 수 있어야 한다** — 기하가 움직인다
   const segs = snapSegs(fr.toV);
-  const pre = snapStatic(segs);
+  const pre = snapStatic(segs, fr.poseKey);
   const still: string[] = [];
   const tried = promoteReport.snapLost.length;
   let ok = 0;
@@ -1422,7 +1466,7 @@ function standCamera() {
   const n = solveInto(ctx, targets);
   stage.pinTo(ctx.principal, ctx.f);
   // 확정 직후에도 연쇄를 한 번 돈다 — 놓인 것이 생겼으므로 대기 획이 붙을 수 있다
-  if (n) promoteChain(frame() ?? { ctx, toV: ID, fromV: ID, dirV: ID, pinned: true });
+  if (n) promoteChain(frame() ?? { ctx, toV: ID, fromV: ID, dirV: ID, pinned: true, poseKey: "pin" });
   // **이 차수의 표식**(§6.2) — `N점으로 되돌리기`의 자리다.
   // ⚠ **연쇄 뒤에 뜬다.** 앞에 뜨면 표식이 연쇄 전 절반만 든 상태가 된다 — 옛 판은
   // `소실점 다시`가 표식을 덮어써 이 순서 결함이 가려져 있었고, 그 버튼이 없어지자
@@ -1973,7 +2017,7 @@ const ink = new InkCanvas(canvas, {
     const fr = p ? frame() : null;
     const sc = fr ? snapCtx(fr) : null;
     const segs = snapSegs(fr?.toV);
-    const next = (sc && tool === "draw") ? appSnapAt(p!, segs, sc, snapStatic(segs)) : null;
+    const next = (sc && tool === "draw") ? appSnapAt(p!, segs, sc, snapStatic(segs, fr!.poseKey)) : null;
     // **2D 대기 획의 표식**(4차 지시 1) — 3D가 없거나(카메라 전) 못 붙을 때만. 3D가 이긴다
     const next2 = (p && tool === "draw" && !next) ? snap2At(p) : null;
     // 값이 안 바뀌면 다시 그리지 않는다 — 포인터마다 전체 재그리기가 돌면 안 된다
@@ -2014,7 +2058,7 @@ const ink = new InkCanvas(canvas, {
     const a0: Pt2 = [pts[0][0], pts[0][1]];
     const b0: Pt2 = [pts[pts.length - 1][0], pts[pts.length - 1][1]];
     const segs = snapSegs(fr.toV);
-    const anchor = live?.anchor ?? appSnapAt(a0, segs, sc, snapStatic(segs));
+    const anchor = live?.anchor ?? appSnapAt(a0, segs, sc, snapStatic(segs, fr.poseKey));
     if (!anchor) { live = null; refresh(); return; }
     // ⚠ **옛 판은 여기서 `Shift`가 잡은 축을 기억했다**(`shiftHeld`) — D-L44로 그 뜻이
     // 바뀌면서 죽은 코드가 됐고 지웠다. 지금 `Shift`는 `freeStroke`이고 `resolveLive`가 본다
@@ -2086,10 +2130,13 @@ const ink = new InkCanvas(canvas, {
       // **① 시작점 스냅**(§3). 붙으면 그 획의 3D가 확정된다.
       const sc = snapCtx(fr);
       const segs0 = snapSegs(fr.toV);
-      const cand = sc ? appSnapAt(pts[0], segs0, sc, snapStatic(segs0)) : null;
+      const cand = sc ? appSnapAt(pts[0], segs0, sc, snapStatic(segs0, fr.poseKey)) : null;
       lastSnapNote = "";
       if (cand) {
         applySnapToStart(s, cand, fr.fromV(cand.at));
+        // **겨냥 거리는 스냅 전 원시 시작점으로 잰다**(7차 항목 2 — aimDistPx 머리말).
+        // 옛 판은 `cand.dist`를 적어 on_face가 걸린 획이 전부 0이었다(실획 첫 표본)
+        s.snapDistPx = aimDistPx(pts[0], segs0, sc!, snapStatic(segs0, fr.poseKey));
         // **끝점도 붙는가**(오스냅, D-L46) — 붙으면 **축 없이 두 점으로** 확정된다.
         // 미리보기(`onLive`)와 **같은 함수**를 부른다(#17: 미리보기와 확정이 갈릴 여지 없음)
         const endCand = endSnapAt(fr, cand.at, pts[pts.length - 1]);
@@ -2114,12 +2161,8 @@ const ink = new InkCanvas(canvas, {
           lastSnapNote = "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다";
           // **조리개 밖 겨냥도 기록한다**(지시 K, 리뷰어 [7]) — 스냅된 사건만 적으면 분포가
           // 조리개에서 절단돼 "반경을 넓혀야 하는가"를 영영 못 답한다. 40px(UI 상한) 프로브.
-          // ⚠ 프로브에서 **on_face를 뺀다**(재검 [7]) — 지면 스냅의 화면 거리는 정의상 0이라
-          // 앞을 막으면 "스냅 실패"가 안 생겨 프로브가 영영 발화하지 않는다(#3·#5)
-          const probe = snapCandidates(pts[0], segs0, sc!, { radius_ratio: 40 / Math.hypot(...cssSize()) },
-                                       snapStatic(segs0))
-            .find(c => OSNAP.kinds[c.kind] && c.kind !== "on_face");
-          s.snapDistPx = probe ? probe.dist : null;
+          // 정의는 `aimDistPx` 하나다(#17 — 7차 항목 2: on_face 제외·최근접)
+          s.snapDistPx = aimDistPx(pts[0], segs0, sc!, snapStatic(segs0, fr.poseKey));
         } else if (c2 || e2c) {
           lastSnapNote = "2D 대기 획에 붙었습니다 — **2D로 대기**합니다";
         }
@@ -2257,6 +2300,26 @@ function applyDoc2(d: Doc2) {
   // ⚠ 옛 저장본의 `locked`·`order`·`lensMm`은 읽지 않는다 — 전부 `rules`에서 계산된다(지시 1)
   undoStack.length = 0; orderMarks.length = 0; promoteReport = null;
   picked = null; ask = null;
+  // ⚠⚠ **무대 카메라를 재수립한다**(7차 항목 1 — 실획 표본이 잡은 자리). 옛 판은 규칙만
+  // 복원하고 무대를 안 건드려, 새로고침 뒤 three 카메라가 **생성 기본 자세**(viewport.ts의
+  // `(3.2, 2.4, 3.6)`)에 비핀으로 남았다. 그 상태에서 frame()·궤도·viewForDrawing이 전부
+  // 기본 자세를 읽는다 — 그리드·지평선·2D 층은 숨고, 궤도는 기본 자세에서 출발하고,
+  // 그린 획은 유령 뷰로 간다("그릴 때마다 다른 곳"). 현재 뷰의 자세대로 무대를 세운다:
+  // 확정 뷰(pose null)면 확정 카메라에 물리고, 저장된 시점이면 그 자세로 돌아간다.
+  {
+    // ⚠ **캔버스 크기가 굳어 있을 수 있다**(#22 — 복원은 로드 직후라 레이아웃 전일 수 있고,
+    // 주점 `[W/2, 지평선 y]`·f가 크기에 딸린다). 쓰는 자리에서 자가 치유한다(refresh와 같은 규약)
+    if (sizeStale()) {
+      SIZE_HEAL.count += 1;
+      SIZE_HEAL.firstAtMs ??= Math.round(performance.now());
+      fit();
+    }
+    const c = cam.ctx();
+    const v = doc.views.find(x => x.id === doc.currentView);
+    if (c && v && v.pose) stage.setPose(v.pose, orbitTarget());
+    else if (c) stage.pinTo(c.principal, c.f);
+    else if (stage.isPinned) stage.unpin(null);   // 카메라가 안 서는 문서 — 핀 투영이 낡는다
+  }
   syncScene();
   note = "";   // ⛔ 복원 요약을 뺐다(지시 3) — 열린 그림 자체가 보인다
   refresh();
@@ -2518,9 +2581,14 @@ const onActClick = (e: Event) => {
       // **자체 형식** — 뷰 목록과 **2D 레이어까지** 담는 유일한 경로다(OBJ·glTF는 3D만 낸다).
       // 확장자는 `.brnl`(Brunelleschi)이고 **내용은 JSON 그대로다** — 텍스트 편집기로 열리고
       // `git diff`가 되고 디버깅이 쉽다(사람 지시). MIME도 `application/json`으로 둔다.
-      download(JSON.stringify(buildDoc2(), null, 2), `brunelleschi-${stamp}.brnl`,
-               "application/json");
-      note = `.brnl — 뷰 ${doc.views.length} · 획 ${doc.strokes.length} <span class="dim">(내용은 JSON이다)</span>`;
+      // **무결성이 깨진 문서는 내려받지 않는다**(7차 항목 1-c) — 실패를 기록한다
+      try {
+        download(JSON.stringify(buildDoc2(), null, 2), `brunelleschi-${stamp}.brnl`,
+                 "application/json");
+        note = `.brnl — 뷰 ${doc.views.length} · 획 ${doc.strokes.length} <span class="dim">(내용은 JSON이다)</span>`;
+      } catch (err) {
+        note = `<b>.brnl 저장 실패</b> — ${err instanceof Error ? err.message : String(err)}`;
+      }
     } else {
       // **채널이 내보내기를 가른다**(D-3): 결과선만 나가고 보조선은 옵션이다.
       // ⚠ **기본 채널이 보조선**이므로(D-1) 결과선을 한 번도 안 그으면 빈다 —
@@ -2672,8 +2740,12 @@ document.addEventListener("visibilitychange", () => refresh());
 fit();
 // **자동 저장 기동과 복원**(L-D.2). 문서가 비어 있지 않을 때만 연다 —
 // 빈 문서를 열면 "비우기" 직후의 새로고침이 아무 일도 안 한 것처럼 보인다.
-saver = autosaver2(buildDoc2, 600, (ok) => {
-  saveNote = ok ? `저장됨 ${new Date().toLocaleTimeString()}` : "저장 실패(브라우저 저장소)";
+saver = autosaver2(buildDoc2, 600, (ok, err) => {
+  // **무결성 실패는 저장소 실패와 갈라 적는다**(7차 항목 1-c) — 사유가 화면에 남아야
+  // "조용히 깨진 파일"이 안 생긴다. `serializeDoc2`가 무결성 위반이면 던진다
+  saveNote = ok ? `저장됨 ${new Date().toLocaleTimeString()}`
+    : err instanceof Error && err.message.startsWith("저장 무결성")
+      ? `<b>저장 실패</b> — ${err.message}` : "저장 실패(브라우저 저장소)";
 });
 window.addEventListener("pagehide", () => { void saver?.flush(); });
 // ⚠ **복원은 비동기라 늦게 도착한다.** 그 사이에 사용자가(또는 하네스가) 이미 그렸으면
@@ -2705,8 +2777,11 @@ refresh();
                                         { withGuides: EXPORT_GUIDES.on })),
   // L-B.3 — 종단 확인이 스냅을 앱 경로 그대로 부른다(PITFALLS #17)
   snap: (p: Pt2) => {
-    const sc = snapCtx(); const g = snapSegs();
-    return sc ? appSnapAt(p, g, sc, snapStatic(g)) : null;
+    // ⚠ **시점 좌표로 묻는다**(7차 항목 2 — 옛 판은 세계 좌표 segs에 시점 ctx를 섞었다)
+    const fr = frame(); const sc = snapCtx(fr);
+    if (!fr || !sc) return null;
+    const g = snapSegs(fr.toV);
+    return appSnapAt(p, g, sc, snapStatic(g, fr.poseKey));
   },
   snapTargets: () => snapSegs().length,
   hoverSnap: () => hoverSnap,

@@ -98,8 +98,17 @@ export function resolve2dCore(raw: Pt2[], ctx: Resolve2dCtx): Resolve2dOut {
   const end2 = (rep0 && rep0.bend <= AXIS_TOL.bend_max)
     ? snap2dAt(b0, ctx.cands, ctx.radiusPx, ctx.kinds) : null;
   if (end2) {
-    return { a, b: end2.at, ortho: null, vpdir: null, start2, end2, guides,
-             pts: [a, end2.at], engaged: true };
+    // **오스냅이 기하를 정하되, 방향 판정은 함께 낸다**(2026-08-17 7차 항목 2-c).
+    // 옛 판은 여기서 `ortho`·`vpdir`를 비운 채 반환했다 — 그러면 기존 깊이선 위에 **정확히
+    // 얹힌** 획도 `snapForced`가 없어, 분류가 모호 구간이면 **물음으로 갔다**(실획 첫 표본:
+    // 물음 6회/획 5. "스냅이 걸리면 묻지 않아도 될 것"이 그 자리). 판정 임계는 방향 스냅과
+    // 같은 것(`dirSnap2dCore` — 화면축 4°·vp_dist_ratio)이고 **점은 옮기지 않는다** —
+    // 두 끝은 오스냅이 정했다. `at`을 끝점으로 되돌려 표식이 다른 자리를 가리키지 않게 한다.
+    const dj = dirSnap2dCore(a, end2.at, ctx.vps);
+    return { a, b: end2.at,
+             ortho: dj.ortho ? { ...dj.ortho, at: [end2.at[0], end2.at[1]] } : null,
+             vpdir: dj.vpdir ? { ...dj.vpdir, at: [end2.at[0], end2.at[1]] } : null,
+             start2, end2, guides, pts: [a, end2.at], engaged: true };
   }
   // ③ 방향 — 화면 직교·소실점 방향(이동량이 작은 쪽, D-L58)
   const d = dirSnap2dCore(a, b0, ctx.vps);

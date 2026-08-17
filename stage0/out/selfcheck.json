@@ -1,5 +1,5 @@
 {
-  "n_flags": 1984,
+  "n_flags": 1991,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -5625,6 +5625,31 @@
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
+      "path": "restore_pose.json:confirm_reads.on_face_plane_residual",
+      "val": 1.1102230246251565e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "restore_pose.json:restore_viewpoint.pose_max_diff",
+      "val": 4.440892098500626e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "restore_pose.json:offcenter.place_gap_px",
+      "val": 2.842170943040401e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "restore_pose.json:gate.result.viewpoint_pose_max_diff",
+      "val": 4.440892098500626e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "restore_pose.json:gate.result.offcenter_place_gap_px",
+      "val": 2.842170943040401e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
       "path": "rule_camera.json:how.p1_f_ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -7192,7 +7217,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 2.1094237467877974e-13,
+      "val": 8.988365607365267e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7282,12 +7307,12 @@
     },
     {
       "path": "view_cube.json:after_face.fy",
-      "val": -7.955498332561311e-14,
+      "val": -1.1063905643292573e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_cube.json:after_retap.fy",
-      "val": -6.53026745952088e-17,
+      "val": -6.530267459520474e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7437,12 +7462,12 @@
     },
     {
       "path": "viewpoint_undo.json:orbited.q[0]",
-      "val": -2.8769789005790347e-17,
+      "val": -2.876978900576912e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[2]",
-      "val": -1.0471346843933976e-17,
+      "val": -1.0471346843992295e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7452,12 +7477,12 @@
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[0]",
-      "val": -2.876978900570191e-17,
+      "val": -2.8769789005701224e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[2]",
-      "val": -1.0471346844176958e-17,
+      "val": -1.047134684417882e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7467,27 +7492,27 @@
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[0]",
-      "val": -2.876978900569924e-17,
+      "val": -2.8769789005698876e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[2]",
-      "val": -1.047134684418429e-17,
+      "val": -1.0471346844185275e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dp",
-      "val": 1.7835304933020672e-12,
+      "val": 1.5697939871397962e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dq",
-      "val": 2.5487889322730176e-13,
+      "val": 2.2435522472586413e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.p[0]",
-      "val": -9.298891781923229e-14,
+      "val": -8.637684934189434e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7502,12 +7527,12 @@
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[1]",
-      "val": -1.3288085927876073e-14,
+      "val": -1.2343223506112351e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[2]",
-      "val": -4.068302974592105e-31,
+      "val": -3.7790222894802153e-31,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7517,17 +7542,17 @@
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[0]",
-      "val": -2.8769789005760376e-17,
+      "val": -2.876978900574591e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[2]",
-      "val": -1.0471346844016326e-17,
+      "val": -1.0471346844056065e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:return_gap",
-      "val": 2.003074522541458e-11,
+      "val": 1.5511270399152983e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -9861,6 +9886,16 @@
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
     },
     {
+      "path": "web/e2e/fixture.ts:86:wiringGapPx",
+      "val": "project(",
+      "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
+    },
+    {
+      "path": "web/e2e/restore_pose.spec.ts:227:diff",
+      "val": "project(",
+      "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
+    },
+    {
       "path": "web/e2e/stage.spec.ts:57:pixelGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
@@ -9945,12 +9980,12 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 169
+      "reads": 171
     },
     {
       "field": "pts2d",
       "writes": 7,
-      "reads": 90
+      "reads": 92
     },
     {
       "field": "pts3d",
@@ -9996,21 +10031,21 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 193,
+      "files_scanned": 196,
       "exts_declared": [
         ".md",
         ".py",
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 10,
+        ".md": 11,
         ".ts": 6,
         ".py": 2
       }
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 130,
+      "files_scanned": 131,
       "exts_declared": [
         ".ts"
       ],
@@ -10020,7 +10055,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 193,
+      "files_scanned": 196,
       "exts_declared": [
         ".md",
         ".py",
@@ -10029,12 +10064,12 @@
       "hits_by_ext": {
         ".md": 10,
         ".py": 4,
-        ".ts": 43
+        ".ts": 46
       }
     },
     {
       "sweep": "external_data",
-      "files_scanned": 86,
+      "files_scanned": 89,
       "exts_declared": [
         ".ts"
       ],
@@ -10061,16 +10096,16 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 157,
+      "targets": 161,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 32,
+      "targets": 34,
       "hits": 1,
-      "note": "값 대조를 **지난 것 7** · **면제 25**(`reachability_absent`) · 원장 64개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, elevation_flow.json:gate, horizon.json:gate, one_point_direct.json:gate, order_signal.json:gate / 면제: coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "note": "값 대조를 **지난 것 9** · **면제 25**(`reachability_absent`) · 원장 66개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, elevation_flow.json:gate, horizon.json:gate, one_point_direct.json:gate, order_signal.json:gate, restore_pose.json:gate, snap_cache.json:gate / 면제: coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -10126,10 +10161,12 @@
     "promote.json",
     "real_ink.json",
     "rel_snap_flow.json",
+    "restore_pose.json",
     "rule_camera.json",
     "segment_gate.json",
     "snap.json",
     "snap2d_flow.json",
+    "snap_cache.json",
     "snap_declare.json",
     "stage_browser.json",
     "stage_cam.json",

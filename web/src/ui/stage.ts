@@ -80,6 +80,17 @@ export class Stage {
   readonly viewport: Viewport;
   /** 지금 확정 카메라에 물려 있는가. 그렇지 않으면 자유 시점이다. */
   private pinned: { principal: Pt2; f: number } | null = null;
+  /**
+   * **자유 시점이 이어받은 내적 파라미터**(7차 항목 1 — "궤도가 확정 카메라에서 출발한다").
+   *
+   * ⚠ 옛 판은 `unpin`이 투영을 `FREE_FOV_DEG`(45°·중심 주점)로 갈아 끼웠다 — 확정 카메라의
+   * 주점은 지평선 높이(`[W/2, horizon y]`)이고 f도 소실점이 정한 값이라, 궤도를 시작하는
+   * 순간 **화면이 다른 렌즈로 점프**했다("손으로 돌리면 다른 카메라로 전환"의 실체).
+   * 자세는 이어받으면서 렌즈만 바꿀 이유가 없다 — SketchUp도 궤도 진입에서 렌즈를 유지한다.
+   * 확정 카메라 없이 자유 시점이 된 적이 없으면 `null`이고 그때만 `FREE_FOV_DEG`가 쓰인다.
+   * `frame()`(mainL)이 `freeIntrinsics()`로 **같은 값**을 읽는다(#17 — 렌더와 배치가 한 출처).
+   */
+  private freeIntr: { principal: Pt2; f: number } | null = null;
   private segs = new THREE.Group();
   /** 만들어 둔 재질·기하 — 굵기 셰이더가 화면 크기를 알아야 하므로 크기 변화 때 갱신한다. */
   private lineMats: LineMaterial[] = [];
@@ -111,6 +122,7 @@ export class Stage {
    */
   pinTo(principal: Pt2, f: number): void {
     this.pinned = { principal, f };
+    this.freeIntr = null;               // 핀이 내적 파라미터를 들고 있다 — 낡은 값을 안 남긴다
     const cam = this.viewport.camera;
     cam.position.set(0, 0, 0);
     cam.quaternion.identity();
@@ -168,12 +180,12 @@ export class Stage {
       q1.setFromRotationMatrix(m);
       p1 = new THREE.Vector3(C[0], C[1], C[2]);
     }
-    // 물려 있으면 비행 전에 자유 투영으로 — 핀 투영은 자세 항등을 전제한다
+    // 물려 있으면 비행 전에 자유 투영으로 — 핀 투영은 자세 항등을 전제한다.
+    // **렌즈는 이어받는다**(7차 항목 1) — 갈아 끼우면 비행 첫 프레임에 화면이 점프한다
     if (this.pinned) {
+      this.freeIntr = this.pinned;
       this.pinned = null;
-      this.viewport.projectionHook = (size) =>
-        applyFreeAspect(cam as unknown as CameraLike, size, FREE_FOV_DEG);
-      this.viewport.projectionHook(this.size());
+      this.applyFreeProjection();
       this.viewport.controls.enabled = true;
     }
     const seq = ++this.flySeq;
@@ -295,13 +307,32 @@ export class Stage {
     this.flyTo(pose, ms, finish);
   }
 
-  /** 확정 카메라를 벗어나 자유 시점으로. 지금 자세에서 이어 돌린다. */
-  unpin(target: Vec3 | null): void {
-    this.pinned = null;
+  /**
+   * **자유 시점의 투영을 건다** — 확정 카메라에서 이어받은 내적 파라미터가 있으면 그것,
+   * 없으면(확정 전 자유 시점 — 실사용에는 없다) `FREE_FOV_DEG`다. `unpin`·`flyTo`가 함께 쓴다.
+   */
+  private applyFreeProjection(): void {
     const cam = this.viewport.camera;
-    this.viewport.projectionHook = (size) =>
-      applyFreeAspect(cam as unknown as CameraLike, size, FREE_FOV_DEG);
+    const fi = this.freeIntr;
+    this.viewport.projectionHook = fi
+      ? (size) => applyIntrinsics(cam as unknown as CameraLike, threeIntrinsics(fi.principal, fi.f, size))
+      : (size) => applyFreeAspect(cam as unknown as CameraLike, size, FREE_FOV_DEG);
     this.viewport.projectionHook(this.size());
+  }
+
+  /**
+   * **지금 시점의 내적 파라미터**(주점·f) — 핀이든 자유든 렌더러가 실제로 쓰는 그 값이다.
+   * `frame()`이 배치 문맥을 만들 때 읽는다(#17). `null`이면 `FREE_FOV_DEG`로 세운 상태다.
+   */
+  freeIntrinsics(): { principal: Pt2; f: number } | null {
+    return this.pinned ?? this.freeIntr;
+  }
+
+  /** 확정 카메라를 벗어나 자유 시점으로. 지금 자세에서 이어 돌린다. **렌즈도 이어받는다**(7차 항목 1). */
+  unpin(target: Vec3 | null): void {
+    if (this.pinned) this.freeIntr = this.pinned;
+    this.pinned = null;
+    this.applyFreeProjection();
     // **시선 유지**(5차 지시 2-a) — 중심점만 바뀌고 카메라 위치·방향은 그대로여야
     // 첫 회전이 그리던 뷰에서 이어진다. 옛 판은 target을 중심점 그대로 놓아
     // update()가 카메라를 재조준했다 — 그것이 "회전 시 뷰가 튄다"였다.
