@@ -43,6 +43,12 @@ export interface InkOptions {
    */
   onLive?: (pts: number[][]) => void;
   /**
+   * **진행 중 획의 원시 직선을 숨길 것인가**(5차 지시 4). 스냅 미리보기가 걸려 있으면
+   * 참을 돌려 준다 — 그러면 화면에는 **스냅된 선 하나**만 보인다. 자유 선(스냅 없음)일 때만
+   * 원시 직선이 그대로 미리보기다.
+   */
+  liveHidden?: () => boolean;
+  /**
    * **카메라로 가는 포인터**(2026-08-17 G). 잉크가 아닌 포인터를 여기로 넘긴다 —
    * 터치는 언제나, 마우스는 `cameraMouse()`가 참일 때(궤도 모드).
    *
@@ -323,7 +329,9 @@ export class InkCanvas {
     this.ctx.lineCap = "round";
     // **그리는 도중에도 직선이 보인다** — 시작점에서 커서까지(§1.1 · 사람 지시 2-a·d).
     // 놓으면 그 직선이 그대로 확정되므로 **미리보기와 결과가 어긋날 여지가 없다.**
-    if (this.drawing) this.strokeLine(this.pts);
+    // ⚠ **스냅 미리보기가 걸려 있으면 원시 직선은 숨긴다**(5차 지시 4) — 두 선이 보이면
+    // 어느 것이 확정될지 헷갈린다. 스냅된 선만 보이고, 자유 선일 때만 궤적이 미리보기다
+    if (this.drawing && !this.opts.liveHidden?.()) this.strokeLine(this.pts);
     for (const s of this.strokes[this.frame]) this.strokeLine(s.points);
   }
 }

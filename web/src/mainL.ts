@@ -1760,6 +1760,8 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
 
 const ink = new InkCanvas(canvas, {
   onBackground: drawBelowInk,
+  // **스냅이 걸린 동안 원시 궤적을 숨긴다**(5차 지시 4) — 스냅된 미리보기 하나만 보인다
+  liveHidden: () => !!(live && live.seg) || !!live2d,
   // **입력 장치가 도구를 가른다**(G): 펜·마우스는 잉크, **터치는 언제나 카메라**다.
   // 마우스는 `궤도(마우스)`를 누른 동안만 카메라로 간다(데스크톱 확인용).
   onCamera: (id, phase, p) => gestures.onPointer(id, phase, p),

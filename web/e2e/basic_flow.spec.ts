@@ -903,7 +903,7 @@ test("회전 중심 — 경계 상자 중심을 시선에 투영한 점으로 �
       "픽스처 하나·dpr 1의 확인이다(#12·#21)",
       "7-c(빈 화면 기본점)는 **도달 불가**다 — 버튼·손가락 두 경로 모두 gestures.begin 하나를 지나고 begin이 lifted 0을 거른다(3D를 전부 지워도 같다 — standing은 남지만 begin이 막는다). 방어 기본값 [0,0,4]는 그래서 미측정으로 남는다(코드 경로 확인 — 실행 팔은 없다, 리뷰어 [6])",
       "잰 경로는 **궤도 버튼(begin)** 하나다(리뷰어 [5]) — 터치 unpin·setPose·뷰 전환이 같은 orbitTarget()을 부르는 것은 코드 읽기이지 측정이 아니다",
-      "픽스처의 y 성분이 축퇴다(리뷰어 [11]) — 모든 획이 같은 높이(지면 게이지 1)라 bbox와 평균이 y에서 같다. 판별(2.73)은 x·z만의 값이다",
+      "픽스처의 y 성분이 축퇴다(리뷰어 [11]) — 모든 획이 같은 높이(지면 게이지 1)라 bbox와 평균이 y에서 같다. ⚠ 개정 후 판별 필드(proj_gap_bbox_mean)는 시선 투영이 x·y를 지워 **z 성분 하나의 값**이다(재검 [2-4] — bbox_vs_mean 2.73의 x 성분은 판별에 안 든다)",
     ],
     thresholds: { target_to_proj_bbox_max: 1e-6, discriminate_min: 0.05, console_errors_max: 0 },
     gate: {
@@ -1176,7 +1176,17 @@ test("1점 확정 — 직전·직후 그린 선이 같은 자리다 (5차 지시
   });
   // 시작점은 자기 광선 위(§4.5 — 오차 0). 끝점은 축 스냅이 방향을 다시 정할 수 있어 별도다
   for (const g of led.reproject as any[]) expect(g.gap_a).toBeLessThan(1e-3);
+  led.reproject_start_max = Math.max(...(led.reproject as any[]).map((g: any) => g.gap_a));
   led.reproject_end_max = Math.max(...(led.reproject as any[]).map((g: any) => g.gap_b));
+
+  // **음성 대조**(재검 [1-3]) — 획이 없는 자리의 GL 어둡기. 중점 판정(<235)이 격자·지평선
+  // 같은 배경 요소로도 통과하는 것이 아닌지 가른다
+  led.gl_empty_spot = await page.evaluate(async (fn) => {
+    // eslint-disable-next-line no-eval
+    const r = await eval(fn)([[0.08 * document.getElementById("ink")!.getBoundingClientRect().width,
+                               0.08 * document.getElementById("ink")!.getBoundingClientRect().height]]);
+    return r[0].gl_dark;
+  }, VISIBLE_AT);
 
   led.console_errors = errors;
   expect(errors).toEqual([]);
@@ -1185,7 +1195,9 @@ test("1점 확정 — 직전·직후 그린 선이 같은 자리다 (5차 지시
   writeFileSync(resolve(OUT, "p1_invariance.json"), JSON.stringify({
     spec: "5차 지시 1 — 1점 확정 직전·직후 화면 불변: 그린 선의 중점이 같은 자리에 보이고, 일괄 풀이가 확정 뷰의 대기 획 전부를 올린다. Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
     what_this_does_not_say: [
-      "중점 표본 셋의 확인이다(#12) — 선 전체의 픽셀 일치가 아니다(안티에일리어싱·굵기 차로 완전 일치는 정의가 안 된다). 자리 불변의 판정은 9×9 창의 표시 유무다",
+      "중점 표본의 확인이다(#12 — **직전 표본은 둘**: 확정 전에 그려진 두 획. 확정 획 자신은 '직전'이 없어 재투영 팔(셋)만 지난다. 재검 [1-2]가 '셋' 오기를 잡았다) — 선 전체의 픽셀 일치가 아니다. 자리 불변의 판정은 9×9 창의 표시 유무이고, gl_empty_spot(획 없는 자리의 GL 어둡기)이 배경 요소 오탐의 음성 대조다(재검 [1-3])",
+      "reproject의 셋 중 둘은 gap이 정확히 0이다 — 화면 축(무한원) 방향의 배치는 시작점 광선 위 산술이 유리수 연산이라 잔차가 안 생기고, 유한 소실점 축(둘째 획)만 부동소수 잔차(3.5e-6px)가 남는다. 임계의 실효 표본이 좁다는 뜻이다(재검 [1-6])",
+      "**되살림 확인(A-4)의 값은 원장 밖이다**(#25 — 커밋되지 않는 임시 판이라 재현 불가): 옛 동작에서 이 팔의 lifted가 0으로 실패하는 것을 확인하고 복원했다. progress 산문에만 있다",
       "재투영 0은 시작점(자기 광선 위, §4.5 보장 #5)이고 **끝점은 별도로 적는다** — 축 스냅이 방향을 다시 정하면 끝점 상이 이동한다(그건 결함이 아니라 D-L42의 동작이다). reproject_end_max가 그 값이다",
       "dpr 1 실행이다(#21) — 아이패드(dpr 2·터치)의 확인은 실기(K)의 문이다",
       "옛 결함의 재현 조건(그림 전체가 지평선 위 — 눈높이 위 상자)을 픽스처에 박았다 — 확정 획 시작점이 지평선 아래면 옛 코드도 지면 스냅 연쇄로 우연히 올라가 이 팔이 그 결함을 못 본다. 지평선 아래 구도의 확정은 기본 흐름 스펙(①~③)이 덮는다",
@@ -1193,7 +1205,7 @@ test("1점 확정 — 직전·직후 그린 선이 같은 자리다 (5차 지시
     thresholds: { reproject_start_px_max: 1e-3, gl_dark_max: 235, ink_alpha_min: 30,
                   console_errors_max: 0 },
     gate: {
-      registered: "확정 직전 세 획 중점에 잉크가 있고 · 확정 직후 lifted=3(일괄 풀이 실행 — 옛 코드는 가짜 뷰 때문에 0)·숨은 뷰 대기 0 · 같은 중점이 직후에도 보이고(잉크 또는 GL<235) · 올라간 시작점의 재투영 오차 <1e-3px(§4.5 — 실측 3.5e-6px, 부동소수 잔차만 담는 배선 임계) · 콘솔 오류 0. "
+      registered: "확정 직전 **두 획**(확정 전에 그려진 것 전부) 중점에 잉크가 있고 · 확정 직후 lifted=3(일괄 풀이 실행 — 옛 코드는 가짜 뷰 때문에 0)·숨은 뷰 대기 0 · 같은 중점이 직후에도 보이고(잉크 또는 GL<235) · 올라간 시작점의 재투영 오차 <1e-3px(§4.5 — 실측 3.5e-6px, 부동소수 잔차만 담는 배선 임계) · 콘솔 오류 0. "
         + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
       reachability_absent: "**배선·보장 확인이라 도달 가능성 오라클이 성립하지 않는다** — 재투영 0은 §4.5의 설계 보장이고(#5) 임계 1e-3px는 배선 판정이다(실측 3.5e-6px — 부동소수 잔차만 걸린다)",
@@ -1312,6 +1324,25 @@ test("궤도 시작 — 손가락만 대면 화면이 같고, 첫 회전이 이�
       pointerId: 91001, pointerType: "touch", isPrimary: true, bubbles: true }));
   });
 
+  // **양성 채널**(#30, 재검 [2-2]) — 더 크게 돌리면 GL 서명이 실제로 움직인다.
+  //  서명 불변 판정(①)이 "지표 둔감"이 아님을 같은 실행에서 가른다
+  await page.evaluate(() => {
+    const el = document.getElementById("ink")!;
+    const r = el.getBoundingClientRect();
+    el.dispatchEvent(new PointerEvent("pointerdown", {
+      pointerId: 91002, pointerType: "touch", isPrimary: true, bubbles: true,
+      clientX: r.left + r.width * 0.6, clientY: r.top + r.height * 0.6, buttons: 1 }));
+    for (const dx of [20, 60, 120]) {
+      el.dispatchEvent(new PointerEvent("pointermove", {
+        pointerId: 91002, pointerType: "touch", isPrimary: true, bubbles: true,
+        clientX: r.left + r.width * 0.6 + dx, clientY: r.top + r.height * 0.6, buttons: 1 }));
+    }
+    el.dispatchEvent(new PointerEvent("pointerup", {
+      pointerId: 91002, pointerType: "touch", isPrimary: true, bubbles: true }));
+  });
+  led.sig_after_rotation = await page.evaluate(f => eval(f)(), GL_SIG);
+  expect((led.sig_after_rotation as any).sum).not.toBe((led.sig_before as any).sum);
+
   led.console_errors = errors;
   expect(errors).toEqual([]);
 
@@ -1320,7 +1351,9 @@ test("궤도 시작 — 손가락만 대면 화면이 같고, 첫 회전이 이�
     spec: "5차 지시 2 — 궤도 시작 불변: 손가락을 대기만 하면 화면이 같고(GL 서명 동일), 죽은 구간을 넘겨도 시선 변화가 미소 회전뿐이다(재조준 없음 — retarget이 중심을 시선 위로 투영).",
     what_this_does_not_say: [
       "GL 서명은 칠해진 픽셀 수 + 성긴 체크섬이다 — 완전한 프레임 대조가 아니다(같은 서명의 다른 프레임이 이론상 가능하나 재조준 크기의 변화는 못 지나간다)",
-      "시선 변화 1.5°는 2px 이동의 기대 회전(≈1.1°)과 재조준(경계 상자 방향, 수 도~수십 도)을 가르는 배선 임계다(#24 프레임: 도 단위·화면 높이 658px 기준) — 미소 회전의 정밀 검증이 아니다",
+      "시선 변화 1.5°는 **연속 회전(실측 0.24° — 감쇠·죽은 구간 소비로 명목 2px보다 작다, 재검 [2-7])**과 재조준(실측 9.78° — 되살림 실행)을 가르는 배선 임계다(#24 프레임: 도 단위·화면 높이 658px) — 미소 회전의 정밀 검증이 아니다",
+      "**되살림 확인(A-4)의 9.78°는 원장 밖이다**(#25 — 커밋되지 않는 임시 판이라 재현 불가). progress·D-L65 산문에만 있다",
+      "GL 서명 불변의 양성 채널은 sig_after_rotation(더 돌린 뒤 서명이 움직임 — #30)이다",
       "dpr 1·합성 터치다(#21·AS-C1) — 실기(아이패드) 확인은 K의 문이다",
       "한 구도(눈높이 위 상자)·중심 한 점의 확인이다(#12)",
     ],
@@ -1419,6 +1452,102 @@ test("스냅된 수평선 — 물음 없이 화면 축으로 확정된다 (5차 
       registered: "소실점이 선 상태에서 4° 안 수평선을 그으면 ask가 안 뜨고(askStats 불변) 화면 가로축이 선언되며 P1이 선다 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
       reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 무물음 확정은 설계 선언이고(#5) 판정은 그 배선이다",
+    },
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 1));
+});
+
+// ---------------------------------------------------------------- 5차 지시 4 — 궤적선 제거
+//
+// 그리는 동안 **스냅된 미리보기 하나만** 보인다 — 원시 스타일러스 궤적(시작→커서 직선)은
+// 스냅이 걸린 동안 숨는다. 자유 선일 때만 궤적이 그대로 미리보기다.
+test("그리는 중 — 스냅이 걸리면 궤적선이 안 보인다 (5차 지시 4)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+
+  const box = (await page.locator("#ink").boundingBox())!;
+  const W = box.width, H = box.height;
+  const led: Record<string, unknown> = {};
+
+  // 잉크 캔버스의 한 점 주변(±1px) 알파 픽셀 수
+  const INK_AT = `((sx, sy) => {
+    const el = document.getElementById("ink");
+    const dpr = el.width / el.getBoundingClientRect().width;
+    const d = el.getContext("2d").getImageData(0, 0, el.width, el.height).data;
+    let n = 0;
+    const cx = Math.round(sx * dpr), cy = Math.round(sy * dpr);
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const i = ((cy + dy) * el.width + (cx + dx)) * 4 + 3;
+      if (i >= 0 && i < d.length && d[i] > 30) n++;
+    }
+    return n;
+  })`;
+
+  // ---- 거의 수평(2.3° — 직교 스냅 안)으로 **끌던 중**: 스냅 선(수평)만 보이고 궤적은 숨는다
+  const x1 = 0.25 * W, y1 = 0.55 * H, x2 = 0.55 * W, y2 = y1 + 12;
+  await page.mouse.move(box.x + x1, box.y + y1);
+  await page.mouse.down();
+  for (let i = 1; i <= 8; i++) {
+    await page.mouse.move(box.x + x1 + (x2 - x1) * i / 8, box.y + y1 + (y2 - y1) * i / 8);
+  }
+  led.mid = await page.evaluate(({ fn, px, py, rx, ry }) => {
+    const S = window.S2S;
+    // eslint-disable-next-line no-eval
+    const at = eval(fn);
+    return { engaged: !!S.live2d(), preview_ink: at(px, py), raw_ink: at(rx, ry) };
+  }, { fn: INK_AT, px: (x1 + x2) / 2, py: y1, rx: (x1 + x2) / 2, ry: y1 + 6 });
+  // **스냅이 걸려 있다** — 이 팔의 전제(#38: 안 걸렸으면 공허하다)
+  expect((led.mid as any).engaged).toBe(true);
+  expect((led.mid as any).preview_ink).toBeGreaterThan(0);   // 스냅된 수평 미리보기가 보인다
+  expect((led.mid as any).raw_ink).toBe(0);                  // **궤적(6px 아래)은 안 보인다**
+  await page.mouse.up();
+  await page.waitForTimeout(50);
+
+  // ---- 자유 선(약 22°)은 궤적이 그대로 미리보기다(지시 4 둘째 문장)
+  const fy1 = y1 + 0.05 * H, fy2 = y1 + 0.18 * H;
+  await page.mouse.move(box.x + x1, box.y + fy1);
+  await page.mouse.down();
+  for (let i = 1; i <= 8; i++) {
+    await page.mouse.move(box.x + x1 + (0.3 * W) * i / 8, box.y + fy1 + (fy2 - fy1) * i / 8);
+  }
+  led.free = await page.evaluate(({ fn, mx, my }) => {
+    const S = window.S2S;
+    // eslint-disable-next-line no-eval
+    const at = eval(fn);
+    return { engaged2d: !!S.live2d(), mid_ink: at(mx, my) };
+  }, { fn: INK_AT, mx: x1 + 0.15 * W, my: (fy1 + fy2) / 2 });
+  expect((led.free as any).mid_ink).toBeGreaterThan(0);      // **자유 선은 궤적이 보인다**
+  await page.mouse.up();
+  await page.waitForTimeout(50);
+
+  led.console_errors = errors;
+  expect(errors).toEqual([]);
+
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "trace_hidden.json"), JSON.stringify({
+    spec: "5차 지시 4 — 그리는 중 스냅이 걸리면 원시 궤적선이 숨고 스냅된 미리보기 하나만 보인다. 자유 선은 궤적이 그대로 미리보기다. Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
+    what_this_does_not_say: [
+      "확정 전(live2d) 경로의 확인이다 — 확정 후(live.seg — 3D 축 스냅 미리보기)의 숨김은 같은 스위치(liveHidden)를 지나지만 이 팔은 안 잰다(#12)",
+      "한 각도(2.3°)·한 이탈(12px)의 확인이다(#12)",
+      "dpr 1·마우스 합성이다(#21·AS-C1)",
+    ],
+    thresholds: { raw_ink_max: 0, console_errors_max: 0 },
+    gate: {
+      registered: "스냅이 걸린 끌기 중 원시 궤적 자리(수평에서 6px 이탈점)의 잉크 0 · 스냅 미리보기 자리 잉크 >0 · engaged 참(#38 — 스냅이 실제로 걸렸다) · 자유 선의 궤적 잉크 >0 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
+      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 숨김은 표시 스위치의 보장이고(#5) 판정은 그 배선이다",
     },
     ...led,
     constants: constantsSnapshot(),
