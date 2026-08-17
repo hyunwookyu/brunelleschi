@@ -4079,6 +4079,26 @@
       }
     }
   },
+  "cross_check_vs_camera_gate": {
+    "what": "이 원장의 `truth_vps` 팔은 `camera_gate.json`의 `by_axis_err_all_compositions.deg_0`(축 오차 0 = 참 소실점, 5구도 합산)과 **같은 것을 재는 팔**이다. 두 하네스가 독립으로 세운 픽스처에서 값이 겹치면 대역이 우연이 아니다.",
+    "rule_gate_truth_vps": {
+      "silent_wrong_cut_0_2": {
+        "k": 1219,
+        "n": 3216,
+        "rate": 0.379
+      },
+      "shape_err_median": 0.1285,
+      "camera_ok": {
+        "k": 300,
+        "n": 300,
+        "rate": 1
+      }
+    },
+    "camera_gate_deg_0_all_compositions": {
+      "note": "그 원장을 그 자리에서 읽는다(여기 옮겨 적으면 재실행마다 낡는다 — #1). 경로: `camera_gate.json` → `by_axis_err_all_compositions` → `deg_0`."
+    },
+    "reading": "**겹친다**(실행 시점 실측: 조용히 틀림 0.379 대 0.3758 · 형태 중앙 0.1285 대 0.1237 · 카메라 300/300 양쪽). 남는 미세 차의 출처는 **f를 주는 방식** 하나다 — `camera_gate`는 모든 실행에 참 f(`fSetting: sc.f`)를 주고, 이 하네스는 앱과 같이 **소실점이 하나일 때만** 임의 f를 준다(D-L53). ⚠ **이 대조가 무엇을 정리하는가**: `truth_vps`가 '구성상 0인 항등이라 통과선이 도달 불가능하다'는 반론이 **안 선다**. 그 팔의 조용히 틀림은 0이 아니라 0.379이고 형태 중앙도 0이 아니다 — **참 카메라로도 이만큼 틀린다**는 실측이며, 통과선은 그 위에 1.1배·2.1배를 얹은 것이다. 규칙 팔은 그 선의 **두 배·네 배 밖**에 있다. (0인 것은 `axis_dir_err_deg` 하나뿐이고 그것은 판정 지표가 아니다.)"
+  },
   "selfcheck_flag_origins": {
     "truth_vps.axis_dir_err_deg = 0 (분포 전체)": "**보장이다**(#5). 참 소실점을 넣었으므로 복원 축 방향이 참 축과 같다 — 측정이 아니다. 그래서 이 팔은 **대역**으로만 쓰고 `reachability_value`에는 안 적는다(#40 ①).",
     "truth_vps.camera_ok.rate = 1 / placement.rate = 1": "**보장에 가깝다** — 참 소실점은 항상 유효한 카메라를 내고(예각 조건 만족) 배치도 거의 다 붙는다. 대역이 대역답다는 확인이지 성능 주장이 아니다.",

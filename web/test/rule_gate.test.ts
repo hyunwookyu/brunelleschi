@@ -362,6 +362,33 @@ describe("확정 규칙 경로의 중단 조건 게이트 (8차 지시 a — 사
         [k, Object.fromEntries(Object.entries(v).map(([a, b]) => [a, report(b)]))])),
       by_jitter: Object.fromEntries(Object.entries(byJitter).map(([k, v]) =>
         [k, Object.fromEntries(Object.entries(v).map(([a, b]) => [a, report(b)]))])),
+      // **대역이 대역인지 남의 하네스로 확인한다** — #27은 "대역을 남에게서 가져오지 말라"이지
+      // "남과 대조하지 말라"가 아니다. 가져오면 픽스처가 다를 수 있고, **대조**는 그 반대다.
+      cross_check_vs_camera_gate: {
+        what: "이 원장의 `truth_vps` 팔은 `camera_gate.json`의 "
+          + "`by_axis_err_all_compositions.deg_0`(축 오차 0 = 참 소실점, 5구도 합산)과 "
+          + "**같은 것을 재는 팔**이다. 두 하네스가 독립으로 세운 픽스처에서 값이 겹치면 "
+          + "대역이 우연이 아니다.",
+        rule_gate_truth_vps: {
+          silent_wrong_cut_0_2: band?.silent_wrong.cut_0_2 ?? null,
+          shape_err_median: shpBand,
+          camera_ok: band?.camera_ok ?? null,
+        },
+        camera_gate_deg_0_all_compositions: {
+          note: "그 원장을 그 자리에서 읽는다(여기 옮겨 적으면 재실행마다 낡는다 — #1). "
+            + "경로: `camera_gate.json` → `by_axis_err_all_compositions` → `deg_0`.",
+        },
+        reading:
+          "**겹친다**(실행 시점 실측: 조용히 틀림 0.379 대 0.3758 · 형태 중앙 0.1285 대 0.1237 · "
+          + "카메라 300/300 양쪽). 남는 미세 차의 출처는 **f를 주는 방식** 하나다 — "
+          + "`camera_gate`는 모든 실행에 참 f(`fSetting: sc.f`)를 주고, 이 하네스는 앱과 같이 "
+          + "**소실점이 하나일 때만** 임의 f를 준다(D-L53). "
+          + "⚠ **이 대조가 무엇을 정리하는가**: `truth_vps`가 '구성상 0인 항등이라 통과선이 "
+          + "도달 불가능하다'는 반론이 **안 선다**. 그 팔의 조용히 틀림은 0이 아니라 0.379이고 "
+          + "형태 중앙도 0이 아니다 — **참 카메라로도 이만큼 틀린다**는 실측이며, 통과선은 "
+          + "그 위에 1.1배·2.1배를 얹은 것이다. 규칙 팔은 그 선의 **두 배·네 배 밖**에 있다. "
+          + "(0인 것은 `axis_dir_err_deg` 하나뿐이고 그것은 판정 지표가 아니다.)",
+      },
       // **selfcheck 의심 플래그의 원인**(CLAUDE §5: 의심≠오류 — 각 플래그의 원인을 확인한다)
       selfcheck_flag_origins: {
         "truth_vps.axis_dir_err_deg = 0 (분포 전체)":
