@@ -63,7 +63,11 @@
       "asks_per_run": 3.396,
       "rejected_per_run": 3.992,
       "first_pair_sep_deg_median": 37.24,
-      "snap_engaged": 0
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 244
     },
     "rule_grouped": {
       "runs": 240,
@@ -77,7 +81,11 @@
       "asks_per_run": 2.767,
       "rejected_per_run": 3.092,
       "first_pair_sep_deg_median": 8.44,
-      "snap_engaged": 0
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 380
     },
     "rule_wide_pair": {
       "runs": 240,
@@ -91,7 +99,11 @@
       "asks_per_run": 2.75,
       "rejected_per_run": 3.271,
       "first_pair_sep_deg_median": 9.48,
-      "snap_engaged": 0
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 395
     },
     "rule_drawn_snap": {
       "runs": 240,
@@ -105,7 +117,11 @@
       "asks_per_run": 3.004,
       "rejected_per_run": 3.333,
       "first_pair_sep_deg_median": 32.27,
-      "snap_engaged": 664
+      "snap_engaged": 664,
+      "snap_queried": 879,
+      "first_pair_moved": 135,
+      "first_pair_runs": 235,
+      "screen_axes_total": 301
     },
     "rule_grouped_snap": {
       "runs": 240,
@@ -119,7 +135,11 @@
       "asks_per_run": 2.612,
       "rejected_per_run": 3.171,
       "first_pair_sep_deg_median": 8.2,
-      "snap_engaged": 341
+      "snap_engaged": 341,
+      "snap_queried": 557,
+      "first_pair_moved": 39,
+      "first_pair_runs": 235,
+      "screen_axes_total": 394
     },
     "rule_wide_pair_snap": {
       "runs": 240,
@@ -133,7 +153,101 @@
       "asks_per_run": 2.571,
       "rejected_per_run": 3.288,
       "first_pair_sep_deg_median": 8.78,
-      "snap_engaged": 324
+      "snap_engaged": 324,
+      "snap_queried": 593,
+      "first_pair_moved": 25,
+      "first_pair_runs": 231,
+      "screen_axes_total": 408
+    },
+    "rule_drawn_placebo": {
+      "runs": 240,
+      "camera_ok": 156,
+      "camera_ok_rate": 0.65,
+      "axes_measured": 265,
+      "deg_median": 18.329,
+      "deg_p90": 40.66,
+      "deg_max": 49.97,
+      "order_median": 2,
+      "asks_per_run": 3.292,
+      "rejected_per_run": 3.871,
+      "first_pair_sep_deg_median": 35.61,
+      "snap_engaged": 707,
+      "snap_queried": 918,
+      "first_pair_moved": 154,
+      "first_pair_runs": 235,
+      "screen_axes_total": 254
+    },
+    "rule_grouped_placebo": {
+      "runs": 240,
+      "camera_ok": 211,
+      "camera_ok_rate": 0.8792,
+      "axes_measured": 267,
+      "deg_median": 31.6083,
+      "deg_p90": 40.66,
+      "deg_max": 51.3517,
+      "order_median": 1,
+      "asks_per_run": 2.754,
+      "rejected_per_run": 3.092,
+      "first_pair_sep_deg_median": 8.64,
+      "snap_engaged": 372,
+      "snap_queried": 588,
+      "first_pair_moved": 52,
+      "first_pair_runs": 235,
+      "screen_axes_total": 379
+    },
+    "rule_wide_pair_placebo": {
+      "runs": 240,
+      "camera_ok": 205,
+      "camera_ok_rate": 0.8542,
+      "axes_measured": 251,
+      "deg_median": 31.6083,
+      "deg_p90": 40.66,
+      "deg_max": 51.791,
+      "order_median": 1,
+      "asks_per_run": 2.746,
+      "rejected_per_run": 3.217,
+      "first_pair_sep_deg_median": 10.41,
+      "snap_engaged": 363,
+      "snap_queried": 640,
+      "first_pair_moved": 50,
+      "first_pair_runs": 235,
+      "screen_axes_total": 382
+    },
+    "rule_grouped_snap_r4": {
+      "runs": 240,
+      "camera_ok": 213,
+      "camera_ok_rate": 0.8875,
+      "axes_measured": 254,
+      "deg_median": 31.6083,
+      "deg_p90": 40.66,
+      "deg_max": 51.2402,
+      "order_median": 1,
+      "asks_per_run": 2.6,
+      "rejected_per_run": 3.2,
+      "first_pair_sep_deg_median": 7.95,
+      "snap_engaged": 293,
+      "snap_queried": 547,
+      "first_pair_moved": 14,
+      "first_pair_runs": 235,
+      "screen_axes_total": 397
+    },
+    "rule_grouped_snap_r40": {
+      "runs": 240,
+      "camera_ok": 212,
+      "camera_ok_rate": 0.8833,
+      "axes_measured": 255,
+      "deg_median": 31.6083,
+      "deg_p90": 40.66,
+      "deg_max": 40.66,
+      "order_median": 1,
+      "asks_per_run": 2.679,
+      "rejected_per_run": 3.108,
+      "first_pair_sep_deg_median": 8.32,
+      "snap_engaged": 381,
+      "snap_queried": 577,
+      "first_pair_moved": 53,
+      "first_pair_runs": 235,
+      "screen_axes_total": 392
     },
     "detect": {
       "runs": 240,
@@ -147,7 +261,261 @@
       "asks_per_run": 0,
       "rejected_per_run": 0,
       "first_pair_sep_deg_median": null,
-      "snap_engaged": 0
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 0
+    }
+  },
+  "what_this_does_not_say": [
+    "합성 잉크는 짝을 의도하지 않는다(AS-L13의 자리) — 사람은 X 교차·연장 수렴으로 짝을 긋는다. 실획(K)이 최종 판정자다",
+    "시드별 분해가 없다(#14) — 팔 간 격차(1.8~3.4°)가 시드 폭 안인지 미확인이다. 짝지은 부분집합(paired_headline)이 표본 짝은 맞추지만 시드 폭은 못 댄다",
+    "물음 오라클이 참 축으로 답한다 — 스냅으로 펴진 선에도 원래 축으로 답하므로 어느 팔도 실사용 성능이 아니다(지시 3이 이 자리를 바꾼다)",
+    "카메라 확정 후 3D 오스냅·축 스냅의 효과는 2D 목록 근사 밖이다(§4.5 보장으로 화면 좌표는 같다)",
+    "무한원 축 제외는 원시 팔에서는 항등 제거지만 **스냅 팔에서는 선택이 될 수 있다**(리뷰어 [23]② — 직교 스냅이 얕은 축을 화면 축으로 펴면 그 축이 분모에서 빠진다). screen_axes_total이 그 대조 재료다"
+  ],
+  "headline_jit0_no_identity": {
+    "note": "**jit_0 층**(리뷰어 [21]) — endJitter 0이지만 등급 잉크 잡음은 남는 층. 4차 등록이 '항등'이라며 표제에서 뺐는데 그 사유가 틀렸다(실측이 0이 아니다). 모집단 연속성으로 표제는 유지하고 이 층을 따로 낸다 — 1pt 구도는 여기서도 뺐다(그쪽은 진짜 구성 항등).",
+    "rule_drawn": {
+      "runs": 48,
+      "camera_ok": 28,
+      "camera_ok_rate": 0.5833,
+      "axes_measured": 57,
+      "deg_median": 24.7805,
+      "deg_p90": 40.6549,
+      "deg_max": 49.8749,
+      "order_median": 2,
+      "asks_per_run": 3.354,
+      "rejected_per_run": 4.208,
+      "first_pair_sep_deg_median": 39.53,
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 46
+    },
+    "rule_grouped": {
+      "runs": 48,
+      "camera_ok": 48,
+      "camera_ok_rate": 1,
+      "axes_measured": 58,
+      "deg_median": 33.3042,
+      "deg_p90": 40.66,
+      "deg_max": 40.66,
+      "order_median": 1,
+      "asks_per_run": 2.146,
+      "rejected_per_run": 2.667,
+      "first_pair_sep_deg_median": 4.28,
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 86
+    },
+    "rule_wide_pair": {
+      "runs": 48,
+      "camera_ok": 48,
+      "camera_ok_rate": 1,
+      "axes_measured": 49,
+      "deg_median": 35,
+      "deg_p90": 40.66,
+      "deg_max": 40.66,
+      "order_median": 1,
+      "asks_per_run": 1.958,
+      "rejected_per_run": 2.896,
+      "first_pair_sep_deg_median": 4.28,
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 95
+    },
+    "rule_drawn_snap": {
+      "runs": 48,
+      "camera_ok": 45,
+      "camera_ok_rate": 0.9375,
+      "axes_measured": 56,
+      "deg_median": 35,
+      "deg_p90": 40.66,
+      "deg_max": 40.66,
+      "order_median": 1,
+      "asks_per_run": 2.354,
+      "rejected_per_run": 2.042,
+      "first_pair_sep_deg_median": 26.07,
+      "snap_engaged": 154,
+      "snap_queried": 202,
+      "first_pair_moved": 35,
+      "first_pair_runs": 48,
+      "screen_axes_total": 81
+    },
+    "rule_grouped_snap": {
+      "runs": 48,
+      "camera_ok": 48,
+      "camera_ok_rate": 1,
+      "axes_measured": 48,
+      "deg_median": 36.3492,
+      "deg_p90": 40.66,
+      "deg_max": 40.66,
+      "order_median": 1,
+      "asks_per_run": 1.792,
+      "rejected_per_run": 2.896,
+      "first_pair_sep_deg_median": 3.92,
+      "snap_engaged": 47,
+      "snap_queried": 95,
+      "first_pair_moved": 0,
+      "first_pair_runs": 48,
+      "screen_axes_total": 96
+    },
+    "rule_wide_pair_snap": {
+      "runs": 48,
+      "camera_ok": 48,
+      "camera_ok_rate": 1,
+      "axes_measured": 48,
+      "deg_median": 36.3492,
+      "deg_p90": 40.66,
+      "deg_max": 40.66,
+      "order_median": 1,
+      "asks_per_run": 1.938,
+      "rejected_per_run": 2.938,
+      "first_pair_sep_deg_median": 4.28,
+      "snap_engaged": 48,
+      "snap_queried": 96,
+      "first_pair_moved": 0,
+      "first_pair_runs": 48,
+      "screen_axes_total": 96
+    },
+    "rule_drawn_placebo": {
+      "runs": 48,
+      "camera_ok": 40,
+      "camera_ok_rate": 0.8333,
+      "axes_measured": 63,
+      "deg_median": 31.6083,
+      "deg_p90": 40.66,
+      "deg_max": 49.9334,
+      "order_median": 1,
+      "asks_per_run": 2.938,
+      "rejected_per_run": 3.021,
+      "first_pair_sep_deg_median": 34.12,
+      "snap_engaged": 175,
+      "snap_queried": 223,
+      "first_pair_moved": 44,
+      "first_pair_runs": 48,
+      "screen_axes_total": 64
+    },
+    "rule_grouped_placebo": {
+      "runs": 48,
+      "camera_ok": 48,
+      "camera_ok_rate": 1,
+      "axes_measured": 58,
+      "deg_median": 31.6083,
+      "deg_p90": 40.66,
+      "deg_max": 40.66,
+      "order_median": 1,
+      "asks_per_run": 2.104,
+      "rejected_per_run": 2.521,
+      "first_pair_sep_deg_median": 4.66,
+      "snap_engaged": 71,
+      "snap_queried": 119,
+      "first_pair_moved": 8,
+      "first_pair_runs": 48,
+      "screen_axes_total": 86
+    },
+    "rule_wide_pair_placebo": {
+      "runs": 48,
+      "camera_ok": 48,
+      "camera_ok_rate": 1,
+      "axes_measured": 53,
+      "deg_median": 35,
+      "deg_p90": 40.66,
+      "deg_max": 40.66,
+      "order_median": 1,
+      "asks_per_run": 2.104,
+      "rejected_per_run": 2.729,
+      "first_pair_sep_deg_median": 4.61,
+      "snap_engaged": 63,
+      "snap_queried": 111,
+      "first_pair_moved": 5,
+      "first_pair_runs": 48,
+      "screen_axes_total": 91
+    },
+    "rule_grouped_snap_r4": {
+      "runs": 48,
+      "camera_ok": 48,
+      "camera_ok_rate": 1,
+      "axes_measured": 48,
+      "deg_median": 36.3492,
+      "deg_p90": 40.66,
+      "deg_max": 40.66,
+      "order_median": 1,
+      "asks_per_run": 1.792,
+      "rejected_per_run": 2.896,
+      "first_pair_sep_deg_median": 3.92,
+      "snap_engaged": 47,
+      "snap_queried": 95,
+      "first_pair_moved": 0,
+      "first_pair_runs": 48,
+      "screen_axes_total": 96
+    },
+    "rule_grouped_snap_r40": {
+      "runs": 48,
+      "camera_ok": 48,
+      "camera_ok_rate": 1,
+      "axes_measured": 48,
+      "deg_median": 36.3492,
+      "deg_p90": 40.66,
+      "deg_max": 40.66,
+      "order_median": 1,
+      "asks_per_run": 1.792,
+      "rejected_per_run": 2.896,
+      "first_pair_sep_deg_median": 3.92,
+      "snap_engaged": 47,
+      "snap_queried": 95,
+      "first_pair_moved": 0,
+      "first_pair_runs": 48,
+      "screen_axes_total": 96
+    },
+    "detect": {
+      "runs": 48,
+      "camera_ok": 47,
+      "camera_ok_rate": 0.9792,
+      "axes_measured": 107,
+      "deg_median": 4.7573,
+      "deg_p90": 18.0452,
+      "deg_max": 40.66,
+      "order_median": 2,
+      "asks_per_run": 0,
+      "rejected_per_run": 0,
+      "first_pair_sep_deg_median": null,
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 0
+    }
+  },
+  "paired_headline": {
+    "note": "**짝지은 부분집합**(리뷰어 [23]①) — 표제 모집단에서 원시·스냅 둘 다 카메라가 선 픽스처만. 팔별 camera_ok 차이(예: drawn 109 대 138)가 중앙값을 흔드는 것을 가른다.",
+    "drawn": {
+      "fixtures_both_ok": 96,
+      "raw_deg_median": 26.6668,
+      "snap_deg_median": 27.5484,
+      "raw_axes": 198,
+      "snap_axes": 171
+    },
+    "grouped": {
+      "fixtures_both_ok": 165,
+      "raw_deg_median": 31.6083,
+      "snap_deg_median": 35,
+      "raw_axes": 214,
+      "snap_axes": 201
+    },
+    "wide_pair": {
+      "fixtures_both_ok": 163,
+      "raw_deg_median": 34.9871,
+      "snap_deg_median": 35,
+      "raw_axes": 201,
+      "snap_axes": 188
     }
   },
   "headline_no_identity": {
@@ -164,7 +532,11 @@
       "asks_per_run": 3.755,
       "rejected_per_run": 4.385,
       "first_pair_sep_deg_median": 39.85,
-      "snap_engaged": 0
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 149
     },
     "rule_grouped": {
       "runs": 192,
@@ -178,7 +550,11 @@
       "asks_per_run": 2.964,
       "rejected_per_run": 3.266,
       "first_pair_sep_deg_median": 6.58,
-      "snap_engaged": 0
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 285
     },
     "rule_wide_pair": {
       "runs": 192,
@@ -192,7 +568,11 @@
       "asks_per_run": 2.88,
       "rejected_per_run": 3.474,
       "first_pair_sep_deg_median": 7.7,
-      "snap_engaged": 0
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 300
     },
     "rule_drawn_snap": {
       "runs": 192,
@@ -206,7 +586,11 @@
       "asks_per_run": 3.281,
       "rejected_per_run": 3.542,
       "first_pair_sep_deg_median": 36.1,
-      "snap_engaged": 618
+      "snap_engaged": 618,
+      "snap_queried": 825,
+      "first_pair_moved": 133,
+      "first_pair_runs": 192,
+      "screen_axes_total": 205
     },
     "rule_grouped_snap": {
       "runs": 192,
@@ -220,7 +604,11 @@
       "asks_per_run": 2.797,
       "rejected_per_run": 3.344,
       "first_pair_sep_deg_median": 6.58,
-      "snap_engaged": 299
+      "snap_engaged": 299,
+      "snap_queried": 507,
+      "first_pair_moved": 39,
+      "first_pair_runs": 192,
+      "screen_axes_total": 298
     },
     "rule_wide_pair_snap": {
       "runs": 192,
@@ -234,7 +622,101 @@
       "asks_per_run": 2.719,
       "rejected_per_run": 3.469,
       "first_pair_sep_deg_median": 7.25,
-      "snap_engaged": 264
+      "snap_engaged": 264,
+      "snap_queried": 467,
+      "first_pair_moved": 22,
+      "first_pair_runs": 192,
+      "screen_axes_total": 313
+    },
+    "rule_drawn_placebo": {
+      "runs": 192,
+      "camera_ok": 113,
+      "camera_ok_rate": 0.5885,
+      "axes_measured": 222,
+      "deg_median": 26.7583,
+      "deg_p90": 41.3718,
+      "deg_max": 49.97,
+      "order_median": 2,
+      "asks_per_run": 3.63,
+      "rejected_per_run": 4.214,
+      "first_pair_sep_deg_median": 38.44,
+      "snap_engaged": 661,
+      "snap_queried": 864,
+      "first_pair_moved": 152,
+      "first_pair_runs": 192,
+      "screen_axes_total": 158
+    },
+    "rule_grouped_placebo": {
+      "runs": 192,
+      "camera_ok": 168,
+      "camera_ok_rate": 0.875,
+      "axes_measured": 224,
+      "deg_median": 31.6083,
+      "deg_p90": 40.66,
+      "deg_max": 51.3517,
+      "order_median": 1,
+      "asks_per_run": 2.953,
+      "rejected_per_run": 3.245,
+      "first_pair_sep_deg_median": 7.2,
+      "snap_engaged": 330,
+      "snap_queried": 538,
+      "first_pair_moved": 52,
+      "first_pair_runs": 192,
+      "screen_axes_total": 283
+    },
+    "rule_wide_pair_placebo": {
+      "runs": 192,
+      "camera_ok": 162,
+      "camera_ok_rate": 0.8438,
+      "axes_measured": 208,
+      "deg_median": 32.8639,
+      "deg_p90": 40.66,
+      "deg_max": 51.791,
+      "order_median": 1,
+      "asks_per_run": 2.896,
+      "rejected_per_run": 3.385,
+      "first_pair_sep_deg_median": 8.56,
+      "snap_engaged": 300,
+      "snap_queried": 508,
+      "first_pair_moved": 42,
+      "first_pair_runs": 192,
+      "screen_axes_total": 286
+    },
+    "rule_grouped_snap_r4": {
+      "runs": 192,
+      "camera_ok": 170,
+      "camera_ok_rate": 0.8854,
+      "axes_measured": 211,
+      "deg_median": 35,
+      "deg_p90": 40.66,
+      "deg_max": 51.2402,
+      "order_median": 1,
+      "asks_per_run": 2.781,
+      "rejected_per_run": 3.385,
+      "first_pair_sep_deg_median": 6.13,
+      "snap_engaged": 251,
+      "snap_queried": 496,
+      "first_pair_moved": 14,
+      "first_pair_runs": 192,
+      "screen_axes_total": 301
+    },
+    "rule_grouped_snap_r40": {
+      "runs": 192,
+      "camera_ok": 169,
+      "camera_ok_rate": 0.8802,
+      "axes_measured": 212,
+      "deg_median": 31.6083,
+      "deg_p90": 40.66,
+      "deg_max": 40.66,
+      "order_median": 1,
+      "asks_per_run": 2.88,
+      "rejected_per_run": 3.266,
+      "first_pair_sep_deg_median": 6.62,
+      "snap_engaged": 339,
+      "snap_queried": 527,
+      "first_pair_moved": 53,
+      "first_pair_runs": 192,
+      "screen_axes_total": 296
     },
     "detect": {
       "runs": 192,
@@ -248,7 +730,11 @@
       "asks_per_run": 0,
       "rejected_per_run": 0,
       "first_pair_sep_deg_median": null,
-      "snap_engaged": 0
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 0
     }
   },
   "by_jitter": {
@@ -265,7 +751,11 @@
         "asks_per_run": 2.85,
         "rejected_per_run": 3.767,
         "first_pair_sep_deg_median": 36.25,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 70
       },
       "rule_grouped": {
         "runs": 60,
@@ -279,7 +769,11 @@
         "asks_per_run": 1.883,
         "rejected_per_run": 2.533,
         "first_pair_sep_deg_median": 5.47,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 110
       },
       "rule_wide_pair": {
         "runs": 60,
@@ -293,7 +787,11 @@
         "asks_per_run": 1.733,
         "rejected_per_run": 2.717,
         "first_pair_sep_deg_median": 5.47,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 119
       },
       "rule_drawn_snap": {
         "runs": 60,
@@ -307,7 +805,11 @@
         "asks_per_run": 2.05,
         "rejected_per_run": 2.033,
         "first_pair_sep_deg_median": 26.07,
-        "snap_engaged": 166
+        "snap_engaged": 166,
+        "snap_queried": 214,
+        "first_pair_moved": 35,
+        "first_pair_runs": 60,
+        "screen_axes_total": 105
       },
       "rule_grouped_snap": {
         "runs": 60,
@@ -321,7 +823,11 @@
         "asks_per_run": 1.6,
         "rejected_per_run": 2.717,
         "first_pair_sep_deg_median": 4.66,
-        "snap_engaged": 59
+        "snap_engaged": 59,
+        "snap_queried": 107,
+        "first_pair_moved": 0,
+        "first_pair_runs": 60,
+        "screen_axes_total": 120
       },
       "rule_wide_pair_snap": {
         "runs": 60,
@@ -335,7 +841,101 @@
         "asks_per_run": 1.717,
         "rejected_per_run": 2.75,
         "first_pair_sep_deg_median": 4.98,
-        "snap_engaged": 60
+        "snap_engaged": 60,
+        "snap_queried": 132,
+        "first_pair_moved": 0,
+        "first_pair_runs": 60,
+        "screen_axes_total": 120
+      },
+      "rule_drawn_placebo": {
+        "runs": 60,
+        "camera_ok": 52,
+        "camera_ok_rate": 0.8667,
+        "axes_measured": 75,
+        "deg_median": 26.2848,
+        "deg_p90": 40.66,
+        "deg_max": 49.9334,
+        "order_median": 1,
+        "asks_per_run": 2.517,
+        "rejected_per_run": 2.817,
+        "first_pair_sep_deg_median": 28.61,
+        "snap_engaged": 187,
+        "snap_queried": 235,
+        "first_pair_moved": 44,
+        "first_pair_runs": 60,
+        "screen_axes_total": 88
+      },
+      "rule_grouped_placebo": {
+        "runs": 60,
+        "camera_ok": 60,
+        "camera_ok_rate": 1,
+        "axes_measured": 70,
+        "deg_median": 31.6083,
+        "deg_p90": 40.66,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 1.85,
+        "rejected_per_run": 2.417,
+        "first_pair_sep_deg_median": 6.05,
+        "snap_engaged": 83,
+        "snap_queried": 131,
+        "first_pair_moved": 8,
+        "first_pair_runs": 60,
+        "screen_axes_total": 110
+      },
+      "rule_wide_pair_placebo": {
+        "runs": 60,
+        "camera_ok": 60,
+        "camera_ok_rate": 1,
+        "axes_measured": 65,
+        "deg_median": 31.6083,
+        "deg_p90": 40.66,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 1.85,
+        "rejected_per_run": 2.583,
+        "first_pair_sep_deg_median": 6.05,
+        "snap_engaged": 75,
+        "snap_queried": 147,
+        "first_pair_moved": 5,
+        "first_pair_runs": 60,
+        "screen_axes_total": 115
+      },
+      "rule_grouped_snap_r4": {
+        "runs": 60,
+        "camera_ok": 60,
+        "camera_ok_rate": 1,
+        "axes_measured": 60,
+        "deg_median": 35,
+        "deg_p90": 40.66,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 1.6,
+        "rejected_per_run": 2.717,
+        "first_pair_sep_deg_median": 4.66,
+        "snap_engaged": 59,
+        "snap_queried": 107,
+        "first_pair_moved": 0,
+        "first_pair_runs": 60,
+        "screen_axes_total": 120
+      },
+      "rule_grouped_snap_r40": {
+        "runs": 60,
+        "camera_ok": 60,
+        "camera_ok_rate": 1,
+        "axes_measured": 60,
+        "deg_median": 35,
+        "deg_p90": 40.66,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 1.6,
+        "rejected_per_run": 2.717,
+        "first_pair_sep_deg_median": 4.66,
+        "snap_engaged": 59,
+        "snap_queried": 107,
+        "first_pair_moved": 0,
+        "first_pair_runs": 60,
+        "screen_axes_total": 120
       },
       "detect": {
         "runs": 60,
@@ -349,7 +949,11 @@
         "asks_per_run": 0,
         "rejected_per_run": 0,
         "first_pair_sep_deg_median": null,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 0
       }
     },
     "jit_0.005": {
@@ -365,7 +969,11 @@
         "asks_per_run": 2.817,
         "rejected_per_run": 3.85,
         "first_pair_sep_deg_median": 35.23,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 69
       },
       "rule_grouped": {
         "runs": 60,
@@ -379,7 +987,11 @@
         "asks_per_run": 1.717,
         "rejected_per_run": 2.467,
         "first_pair_sep_deg_median": 5.74,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 115
       },
       "rule_wide_pair": {
         "runs": 60,
@@ -393,7 +1005,11 @@
         "asks_per_run": 1.667,
         "rejected_per_run": 2.6,
         "first_pair_sep_deg_median": 5.87,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 118
       },
       "rule_drawn_snap": {
         "runs": 60,
@@ -407,7 +1023,11 @@
         "asks_per_run": 2.067,
         "rejected_per_run": 2.367,
         "first_pair_sep_deg_median": 27.43,
-        "snap_engaged": 169
+        "snap_engaged": 169,
+        "snap_queried": 218,
+        "first_pair_moved": 32,
+        "first_pair_runs": 59,
+        "screen_axes_total": 99
       },
       "rule_grouped_snap": {
         "runs": 60,
@@ -421,7 +1041,11 @@
         "asks_per_run": 1.583,
         "rejected_per_run": 2.617,
         "first_pair_sep_deg_median": 4.92,
-        "snap_engaged": 61
+        "snap_engaged": 61,
+        "snap_queried": 109,
+        "first_pair_moved": 1,
+        "first_pair_runs": 59,
+        "screen_axes_total": 119
       },
       "rule_wide_pair_snap": {
         "runs": 60,
@@ -435,7 +1059,101 @@
         "asks_per_run": 1.567,
         "rejected_per_run": 2.633,
         "first_pair_sep_deg_median": 5.48,
-        "snap_engaged": 59
+        "snap_engaged": 59,
+        "snap_queried": 125,
+        "first_pair_moved": 0,
+        "first_pair_runs": 57,
+        "screen_axes_total": 120
+      },
+      "rule_drawn_placebo": {
+        "runs": 60,
+        "camera_ok": 43,
+        "camera_ok_rate": 0.7167,
+        "axes_measured": 71,
+        "deg_median": 15.993,
+        "deg_p90": 40.66,
+        "deg_max": 44.088,
+        "order_median": 2,
+        "asks_per_run": 2.783,
+        "rejected_per_run": 3.433,
+        "first_pair_sep_deg_median": 31.74,
+        "snap_engaged": 210,
+        "snap_queried": 259,
+        "first_pair_moved": 43,
+        "first_pair_runs": 59,
+        "screen_axes_total": 75
+      },
+      "rule_grouped_placebo": {
+        "runs": 60,
+        "camera_ok": 59,
+        "camera_ok_rate": 0.9833,
+        "axes_measured": 68,
+        "deg_median": 31.6083,
+        "deg_p90": 40.66,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 1.783,
+        "rejected_per_run": 2.35,
+        "first_pair_sep_deg_median": 6.54,
+        "snap_engaged": 82,
+        "snap_queried": 130,
+        "first_pair_moved": 8,
+        "first_pair_runs": 59,
+        "screen_axes_total": 111
+      },
+      "rule_wide_pair_placebo": {
+        "runs": 60,
+        "camera_ok": 58,
+        "camera_ok_rate": 0.9667,
+        "axes_measured": 62,
+        "deg_median": 35,
+        "deg_p90": 40.66,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 1.667,
+        "rejected_per_run": 2.55,
+        "first_pair_sep_deg_median": 5.81,
+        "snap_engaged": 72,
+        "snap_queried": 139,
+        "first_pair_moved": 5,
+        "first_pair_runs": 58,
+        "screen_axes_total": 116
+      },
+      "rule_grouped_snap_r4": {
+        "runs": 60,
+        "camera_ok": 59,
+        "camera_ok_rate": 0.9833,
+        "axes_measured": 60,
+        "deg_median": 35,
+        "deg_p90": 40.66,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 1.583,
+        "rejected_per_run": 2.617,
+        "first_pair_sep_deg_median": 4.92,
+        "snap_engaged": 60,
+        "snap_queried": 109,
+        "first_pair_moved": 1,
+        "first_pair_runs": 59,
+        "screen_axes_total": 119
+      },
+      "rule_grouped_snap_r40": {
+        "runs": 60,
+        "camera_ok": 59,
+        "camera_ok_rate": 0.9833,
+        "axes_measured": 62,
+        "deg_median": 35,
+        "deg_p90": 40.66,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 1.6,
+        "rejected_per_run": 2.55,
+        "first_pair_sep_deg_median": 4.92,
+        "snap_engaged": 64,
+        "snap_queried": 112,
+        "first_pair_moved": 2,
+        "first_pair_runs": 59,
+        "screen_axes_total": 117
       },
       "detect": {
         "runs": 60,
@@ -449,7 +1167,11 @@
         "asks_per_run": 0,
         "rejected_per_run": 0,
         "first_pair_sep_deg_median": null,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 0
       }
     },
     "jit_0.01": {
@@ -465,7 +1187,11 @@
         "asks_per_run": 3.283,
         "rejected_per_run": 3.933,
         "first_pair_sep_deg_median": 37.09,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 66
       },
       "rule_grouped": {
         "runs": 60,
@@ -479,7 +1205,11 @@
         "asks_per_run": 2.533,
         "rejected_per_run": 2.417,
         "first_pair_sep_deg_median": 6.38,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 103
       },
       "rule_wide_pair": {
         "runs": 60,
@@ -493,7 +1223,11 @@
         "asks_per_run": 2.333,
         "rejected_per_run": 2.767,
         "first_pair_sep_deg_median": 7.45,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 112
       },
       "rule_drawn_snap": {
         "runs": 60,
@@ -507,7 +1241,11 @@
         "asks_per_run": 2.883,
         "rejected_per_run": 2.917,
         "first_pair_sep_deg_median": 28.65,
-        "snap_engaged": 182
+        "snap_engaged": 182,
+        "snap_queried": 233,
+        "first_pair_moved": 35,
+        "first_pair_runs": 58,
+        "screen_axes_total": 82
       },
       "rule_grouped_snap": {
         "runs": 60,
@@ -521,7 +1259,11 @@
         "asks_per_run": 2.217,
         "rejected_per_run": 2.467,
         "first_pair_sep_deg_median": 6.63,
-        "snap_engaged": 82
+        "snap_engaged": 82,
+        "snap_queried": 130,
+        "first_pair_moved": 8,
+        "first_pair_runs": 58,
+        "screen_axes_total": 110
       },
       "rule_wide_pair_snap": {
         "runs": 60,
@@ -535,7 +1277,101 @@
         "asks_per_run": 2.133,
         "rejected_per_run": 2.717,
         "first_pair_sep_deg_median": 6.11,
-        "snap_engaged": 66
+        "snap_engaged": 66,
+        "snap_queried": 128,
+        "first_pair_moved": 2,
+        "first_pair_runs": 57,
+        "screen_axes_total": 118
+      },
+      "rule_drawn_placebo": {
+        "runs": 60,
+        "camera_ok": 38,
+        "camera_ok_rate": 0.6333,
+        "axes_measured": 66,
+        "deg_median": 10.5721,
+        "deg_p90": 40.66,
+        "deg_max": 48.9103,
+        "order_median": 2,
+        "asks_per_run": 3.117,
+        "rejected_per_run": 3.717,
+        "first_pair_sep_deg_median": 32.54,
+        "snap_engaged": 202,
+        "snap_queried": 253,
+        "first_pair_moved": 44,
+        "first_pair_runs": 58,
+        "screen_axes_total": 67
+      },
+      "rule_grouped_placebo": {
+        "runs": 60,
+        "camera_ok": 58,
+        "camera_ok_rate": 0.9667,
+        "axes_measured": 73,
+        "deg_median": 16.1468,
+        "deg_p90": 40.66,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 2.4,
+        "rejected_per_run": 2.45,
+        "first_pair_sep_deg_median": 7.86,
+        "snap_engaged": 96,
+        "snap_queried": 144,
+        "first_pair_moved": 13,
+        "first_pair_runs": 58,
+        "screen_axes_total": 105
+      },
+      "rule_wide_pair_placebo": {
+        "runs": 60,
+        "camera_ok": 58,
+        "camera_ok_rate": 0.9667,
+        "axes_measured": 70,
+        "deg_median": 31.6083,
+        "deg_p90": 40.66,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 2.317,
+        "rejected_per_run": 2.533,
+        "first_pair_sep_deg_median": 7.71,
+        "snap_engaged": 86,
+        "snap_queried": 149,
+        "first_pair_moved": 10,
+        "first_pair_runs": 58,
+        "screen_axes_total": 108
+      },
+      "rule_grouped_snap_r4": {
+        "runs": 60,
+        "camera_ok": 58,
+        "camera_ok_rate": 0.9667,
+        "axes_measured": 66,
+        "deg_median": 31.6083,
+        "deg_p90": 40.66,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 2.183,
+        "rejected_per_run": 2.567,
+        "first_pair_sep_deg_median": 6.13,
+        "snap_engaged": 70,
+        "snap_queried": 124,
+        "first_pair_moved": 2,
+        "first_pair_runs": 58,
+        "screen_axes_total": 112
+      },
+      "rule_grouped_snap_r40": {
+        "runs": 60,
+        "camera_ok": 58,
+        "camera_ok_rate": 0.9667,
+        "axes_measured": 68,
+        "deg_median": 31.6083,
+        "deg_p90": 40.66,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 2.217,
+        "rejected_per_run": 2.5,
+        "first_pair_sep_deg_median": 6.63,
+        "snap_engaged": 81,
+        "snap_queried": 129,
+        "first_pair_moved": 8,
+        "first_pair_runs": 58,
+        "screen_axes_total": 110
       },
       "detect": {
         "runs": 60,
@@ -549,7 +1385,11 @@
         "asks_per_run": 0,
         "rejected_per_run": 0,
         "first_pair_sep_deg_median": null,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 0
       }
     },
     "jit_0.03": {
@@ -565,7 +1405,11 @@
         "asks_per_run": 3.9,
         "rejected_per_run": 3.75,
         "first_pair_sep_deg_median": 37.32,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 55
       },
       "rule_grouped": {
         "runs": 60,
@@ -579,7 +1423,11 @@
         "asks_per_run": 3.367,
         "rejected_per_run": 3.3,
         "first_pair_sep_deg_median": 10.83,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 89
       },
       "rule_wide_pair": {
         "runs": 60,
@@ -593,7 +1441,11 @@
         "asks_per_run": 3.4,
         "rejected_per_run": 3.35,
         "first_pair_sep_deg_median": 14.22,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 92
       },
       "rule_drawn_snap": {
         "runs": 60,
@@ -607,7 +1459,11 @@
         "asks_per_run": 3.65,
         "rejected_per_run": 3.683,
         "first_pair_sep_deg_median": 35.11,
-        "snap_engaged": 170
+        "snap_engaged": 170,
+        "snap_queried": 228,
+        "first_pair_moved": 37,
+        "first_pair_runs": 58,
+        "screen_axes_total": 60
       },
       "rule_grouped_snap": {
         "runs": 60,
@@ -621,7 +1477,11 @@
         "asks_per_run": 3.283,
         "rejected_per_run": 3.4,
         "first_pair_sep_deg_median": 9.42,
-        "snap_engaged": 95
+        "snap_engaged": 95,
+        "snap_queried": 154,
+        "first_pair_moved": 14,
+        "first_pair_runs": 58,
+        "screen_axes_total": 91
       },
       "rule_wide_pair_snap": {
         "runs": 60,
@@ -635,7 +1495,101 @@
         "asks_per_run": 3.25,
         "rejected_per_run": 3.367,
         "first_pair_sep_deg_median": 13.13,
-        "snap_engaged": 94
+        "snap_engaged": 94,
+        "snap_queried": 163,
+        "first_pair_moved": 8,
+        "first_pair_runs": 58,
+        "screen_axes_total": 95
+      },
+      "rule_drawn_placebo": {
+        "runs": 60,
+        "camera_ok": 33,
+        "camera_ok_rate": 0.55,
+        "axes_measured": 60,
+        "deg_median": 22.5435,
+        "deg_p90": 42.5022,
+        "deg_max": 49.97,
+        "order_median": 2,
+        "asks_per_run": 3.9,
+        "rejected_per_run": 3.917,
+        "first_pair_sep_deg_median": 39.46,
+        "snap_engaged": 155,
+        "snap_queried": 212,
+        "first_pair_moved": 37,
+        "first_pair_runs": 58,
+        "screen_axes_total": 51
+      },
+      "rule_grouped_placebo": {
+        "runs": 60,
+        "camera_ok": 50,
+        "camera_ok_rate": 0.8333,
+        "axes_measured": 62,
+        "deg_median": 31.6083,
+        "deg_p90": 37.6984,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 3.317,
+        "rejected_per_run": 3.267,
+        "first_pair_sep_deg_median": 9.32,
+        "snap_engaged": 91,
+        "snap_queried": 150,
+        "first_pair_moved": 12,
+        "first_pair_runs": 58,
+        "screen_axes_total": 94
+      },
+      "rule_wide_pair_placebo": {
+        "runs": 60,
+        "camera_ok": 48,
+        "camera_ok_rate": 0.8,
+        "axes_measured": 61,
+        "deg_median": 31.6083,
+        "deg_p90": 40.66,
+        "deg_max": 51.5541,
+        "order_median": 1,
+        "asks_per_run": 3.35,
+        "rejected_per_run": 3.383,
+        "first_pair_sep_deg_median": 16.47,
+        "snap_engaged": 102,
+        "snap_queried": 173,
+        "first_pair_moved": 15,
+        "first_pair_runs": 59,
+        "screen_axes_total": 89
+      },
+      "rule_grouped_snap_r4": {
+        "runs": 60,
+        "camera_ok": 49,
+        "camera_ok_rate": 0.8167,
+        "axes_measured": 62,
+        "deg_median": 31.6083,
+        "deg_p90": 37.6984,
+        "deg_max": 45.7182,
+        "order_median": 1,
+        "asks_per_run": 3.3,
+        "rejected_per_run": 3.433,
+        "first_pair_sep_deg_median": 10.1,
+        "snap_engaged": 80,
+        "snap_queried": 152,
+        "first_pair_moved": 5,
+        "first_pair_runs": 58,
+        "screen_axes_total": 91
+      },
+      "rule_grouped_snap_r40": {
+        "runs": 60,
+        "camera_ok": 48,
+        "camera_ok_rate": 0.8,
+        "axes_measured": 58,
+        "deg_median": 26.6916,
+        "deg_p90": 37.6984,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 3.3,
+        "rejected_per_run": 3.35,
+        "first_pair_sep_deg_median": 9.42,
+        "snap_engaged": 104,
+        "snap_queried": 156,
+        "first_pair_moved": 20,
+        "first_pair_runs": 58,
+        "screen_axes_total": 91
       },
       "detect": {
         "runs": 60,
@@ -649,7 +1603,11 @@
         "asks_per_run": 0,
         "rejected_per_run": 0,
         "first_pair_sep_deg_median": null,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 0
       }
     },
     "jit_0.05": {
@@ -665,7 +1623,11 @@
         "asks_per_run": 3.583,
         "rejected_per_run": 4.433,
         "first_pair_sep_deg_median": 38.97,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 54
       },
       "rule_grouped": {
         "runs": 60,
@@ -679,7 +1641,11 @@
         "asks_per_run": 3.45,
         "rejected_per_run": 4.183,
         "first_pair_sep_deg_median": 14.13,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 73
       },
       "rule_wide_pair": {
         "runs": 60,
@@ -693,7 +1659,11 @@
         "asks_per_run": 3.6,
         "rejected_per_run": 4.367,
         "first_pair_sep_deg_median": 17.93,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 73
       },
       "rule_drawn_snap": {
         "runs": 60,
@@ -707,7 +1677,11 @@
         "asks_per_run": 3.417,
         "rejected_per_run": 4.367,
         "first_pair_sep_deg_median": 43.01,
-        "snap_engaged": 143
+        "snap_engaged": 143,
+        "snap_queried": 200,
+        "first_pair_moved": 31,
+        "first_pair_runs": 60,
+        "screen_axes_total": 60
       },
       "rule_grouped_snap": {
         "runs": 60,
@@ -721,7 +1695,11 @@
         "asks_per_run": 3.367,
         "rejected_per_run": 4.2,
         "first_pair_sep_deg_median": 13.4,
-        "snap_engaged": 103
+        "snap_engaged": 103,
+        "snap_queried": 164,
+        "first_pair_moved": 16,
+        "first_pair_runs": 60,
+        "screen_axes_total": 74
       },
       "rule_wide_pair_snap": {
         "runs": 60,
@@ -735,7 +1713,101 @@
         "asks_per_run": 3.333,
         "rejected_per_run": 4.433,
         "first_pair_sep_deg_median": 17.69,
-        "snap_engaged": 105
+        "snap_engaged": 105,
+        "snap_queried": 177,
+        "first_pair_moved": 15,
+        "first_pair_runs": 59,
+        "screen_axes_total": 75
+      },
+      "rule_drawn_placebo": {
+        "runs": 60,
+        "camera_ok": 42,
+        "camera_ok_rate": 0.7,
+        "axes_measured": 68,
+        "deg_median": 28.399,
+        "deg_p90": 40.66,
+        "deg_max": 44.8708,
+        "order_median": 2,
+        "asks_per_run": 3.367,
+        "rejected_per_run": 4.417,
+        "first_pair_sep_deg_median": 42.45,
+        "snap_engaged": 140,
+        "snap_queried": 194,
+        "first_pair_moved": 30,
+        "first_pair_runs": 60,
+        "screen_axes_total": 61
+      },
+      "rule_grouped_placebo": {
+        "runs": 60,
+        "camera_ok": 44,
+        "camera_ok_rate": 0.7333,
+        "axes_measured": 64,
+        "deg_median": 23.106,
+        "deg_p90": 40.66,
+        "deg_max": 51.3517,
+        "order_median": 1,
+        "asks_per_run": 3.517,
+        "rejected_per_run": 4.3,
+        "first_pair_sep_deg_median": 14.04,
+        "snap_engaged": 103,
+        "snap_queried": 164,
+        "first_pair_moved": 19,
+        "first_pair_runs": 60,
+        "screen_axes_total": 69
+      },
+      "rule_wide_pair_placebo": {
+        "runs": 60,
+        "camera_ok": 41,
+        "camera_ok_rate": 0.6833,
+        "axes_measured": 58,
+        "deg_median": 22.643,
+        "deg_p90": 38.3582,
+        "deg_max": 51.791,
+        "order_median": 1,
+        "asks_per_run": 3.65,
+        "rejected_per_run": 4.4,
+        "first_pair_sep_deg_median": 19.12,
+        "snap_engaged": 103,
+        "snap_queried": 179,
+        "first_pair_moved": 20,
+        "first_pair_runs": 60,
+        "screen_axes_total": 69
+      },
+      "rule_grouped_snap_r4": {
+        "runs": 60,
+        "camera_ok": 47,
+        "camera_ok_rate": 0.7833,
+        "axes_measured": 66,
+        "deg_median": 29.8127,
+        "deg_p90": 40.66,
+        "deg_max": 51.2402,
+        "order_median": 1,
+        "asks_per_run": 3.333,
+        "rejected_per_run": 4.183,
+        "first_pair_sep_deg_median": 13.98,
+        "snap_engaged": 83,
+        "snap_queried": 162,
+        "first_pair_moved": 6,
+        "first_pair_runs": 60,
+        "screen_axes_total": 75
+      },
+      "rule_grouped_snap_r40": {
+        "runs": 60,
+        "camera_ok": 47,
+        "camera_ok_rate": 0.7833,
+        "axes_measured": 67,
+        "deg_median": 24.5454,
+        "deg_p90": 37.6984,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 3.6,
+        "rejected_per_run": 4.033,
+        "first_pair_sep_deg_median": 12.27,
+        "snap_engaged": 132,
+        "snap_queried": 180,
+        "first_pair_moved": 23,
+        "first_pair_runs": 60,
+        "screen_axes_total": 74
       },
       "detect": {
         "runs": 60,
@@ -749,7 +1821,11 @@
         "asks_per_run": 0,
         "rejected_per_run": 0,
         "first_pair_sep_deg_median": null,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 0
       }
     }
   },
@@ -767,7 +1843,11 @@
         "asks_per_run": 3.45,
         "rejected_per_run": 4.583,
         "first_pair_sep_deg_median": 44.47,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 42
       },
       "rule_grouped": {
         "runs": 60,
@@ -781,7 +1861,11 @@
         "asks_per_run": 3.05,
         "rejected_per_run": 3.117,
         "first_pair_sep_deg_median": 7.29,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 86
       },
       "rule_wide_pair": {
         "runs": 60,
@@ -795,7 +1879,11 @@
         "asks_per_run": 2.9,
         "rejected_per_run": 3.683,
         "first_pair_sep_deg_median": 7.52,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 97
       },
       "rule_drawn_snap": {
         "runs": 60,
@@ -809,7 +1897,11 @@
         "asks_per_run": 3.05,
         "rejected_per_run": 3.567,
         "first_pair_sep_deg_median": 34.94,
-        "snap_engaged": 201
+        "snap_engaged": 201,
+        "snap_queried": 259,
+        "first_pair_moved": 42,
+        "first_pair_runs": 60,
+        "screen_axes_total": 66
       },
       "rule_grouped_snap": {
         "runs": 60,
@@ -823,7 +1915,11 @@
         "asks_per_run": 2.817,
         "rejected_per_run": 3.367,
         "first_pair_sep_deg_median": 5.75,
-        "snap_engaged": 103
+        "snap_engaged": 103,
+        "snap_queried": 163,
+        "first_pair_moved": 16,
+        "first_pair_runs": 60,
+        "screen_axes_total": 93
       },
       "rule_wide_pair_snap": {
         "runs": 60,
@@ -837,7 +1933,101 @@
         "asks_per_run": 2.883,
         "rejected_per_run": 3.617,
         "first_pair_sep_deg_median": 7.52,
-        "snap_engaged": 84
+        "snap_engaged": 84,
+        "snap_queried": 145,
+        "first_pair_moved": 7,
+        "first_pair_runs": 60,
+        "screen_axes_total": 97
+      },
+      "rule_drawn_placebo": {
+        "runs": 60,
+        "camera_ok": 41,
+        "camera_ok_rate": 0.6833,
+        "axes_measured": 79,
+        "deg_median": 29.0925,
+        "deg_p90": 43.3594,
+        "deg_max": 49.97,
+        "order_median": 2,
+        "asks_per_run": 3.5,
+        "rejected_per_run": 4.1,
+        "first_pair_sep_deg_median": 40.06,
+        "snap_engaged": 214,
+        "snap_queried": 272,
+        "first_pair_moved": 57,
+        "first_pair_runs": 60,
+        "screen_axes_total": 50
+      },
+      "rule_grouped_placebo": {
+        "runs": 60,
+        "camera_ok": 56,
+        "camera_ok_rate": 0.9333,
+        "axes_measured": 92,
+        "deg_median": 13.9945,
+        "deg_p90": 37.6984,
+        "deg_max": 45.1004,
+        "order_median": 2,
+        "asks_per_run": 3.3,
+        "rejected_per_run": 2.833,
+        "first_pair_sep_deg_median": 7.64,
+        "snap_engaged": 146,
+        "snap_queried": 206,
+        "first_pair_moved": 30,
+        "first_pair_runs": 60,
+        "screen_axes_total": 76
+      },
+      "rule_wide_pair_placebo": {
+        "runs": 60,
+        "camera_ok": 49,
+        "camera_ok_rate": 0.8167,
+        "axes_measured": 68,
+        "deg_median": 37.6984,
+        "deg_p90": 37.6984,
+        "deg_max": 38.9357,
+        "order_median": 1,
+        "asks_per_run": 3.183,
+        "rejected_per_run": 3.35,
+        "first_pair_sep_deg_median": 8.36,
+        "snap_engaged": 117,
+        "snap_queried": 180,
+        "first_pair_moved": 20,
+        "first_pair_runs": 60,
+        "screen_axes_total": 80
+      },
+      "rule_grouped_snap_r4": {
+        "runs": 60,
+        "camera_ok": 55,
+        "camera_ok_rate": 0.9167,
+        "axes_measured": 71,
+        "deg_median": 37.6984,
+        "deg_p90": 37.6984,
+        "deg_max": 51.2402,
+        "order_median": 1,
+        "asks_per_run": 2.783,
+        "rejected_per_run": 3.467,
+        "first_pair_sep_deg_median": 5.18,
+        "snap_engaged": 87,
+        "snap_queried": 161,
+        "first_pair_moved": 4,
+        "first_pair_runs": 60,
+        "screen_axes_total": 94
+      },
+      "rule_grouped_snap_r40": {
+        "runs": 60,
+        "camera_ok": 52,
+        "camera_ok_rate": 0.8667,
+        "axes_measured": 68,
+        "deg_median": 37.6984,
+        "deg_p90": 37.6984,
+        "deg_max": 37.6984,
+        "order_median": 1,
+        "asks_per_run": 2.833,
+        "rejected_per_run": 3.283,
+        "first_pair_sep_deg_median": 5.28,
+        "snap_engaged": 110,
+        "snap_queried": 167,
+        "first_pair_moved": 19,
+        "first_pair_runs": 60,
+        "screen_axes_total": 89
       },
       "detect": {
         "runs": 60,
@@ -851,7 +2041,11 @@
         "asks_per_run": 0,
         "rejected_per_run": 0,
         "first_pair_sep_deg_median": null,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 0
       }
     },
     "3pt_yaw20_pitch25": {
@@ -867,7 +2061,11 @@
         "asks_per_run": 4.55,
         "rejected_per_run": 4.733,
         "first_pair_sep_deg_median": 73.66,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 26
       },
       "rule_grouped": {
         "runs": 60,
@@ -881,7 +2079,11 @@
         "asks_per_run": 2.867,
         "rejected_per_run": 4.267,
         "first_pair_sep_deg_median": 5.91,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 96
       },
       "rule_wide_pair": {
         "runs": 60,
@@ -895,7 +2097,11 @@
         "asks_per_run": 2.6,
         "rejected_per_run": 4.45,
         "first_pair_sep_deg_median": 5.69,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 106
       },
       "rule_drawn_snap": {
         "runs": 60,
@@ -909,7 +2115,11 @@
         "asks_per_run": 4.283,
         "rejected_per_run": 4.433,
         "first_pair_sep_deg_median": 72.67,
-        "snap_engaged": 192
+        "snap_engaged": 192,
+        "snap_queried": 272,
+        "first_pair_moved": 44,
+        "first_pair_runs": 60,
+        "screen_axes_total": 37
       },
       "rule_grouped_snap": {
         "runs": 60,
@@ -923,7 +2133,11 @@
         "asks_per_run": 2.667,
         "rejected_per_run": 4.383,
         "first_pair_sep_deg_median": 5.69,
-        "snap_engaged": 72
+        "snap_engaged": 72,
+        "snap_queried": 143,
+        "first_pair_moved": 3,
+        "first_pair_runs": 60,
+        "screen_axes_total": 102
       },
       "rule_wide_pair_snap": {
         "runs": 60,
@@ -937,7 +2151,101 @@
         "asks_per_run": 2.533,
         "rejected_per_run": 4.467,
         "first_pair_sep_deg_median": 5.69,
-        "snap_engaged": 67
+        "snap_engaged": 67,
+        "snap_queried": 132,
+        "first_pair_moved": 0,
+        "first_pair_runs": 60,
+        "screen_axes_total": 108
+      },
+      "rule_drawn_placebo": {
+        "runs": 60,
+        "camera_ok": 43,
+        "camera_ok_rate": 0.7167,
+        "axes_measured": 107,
+        "deg_median": 11.7088,
+        "deg_p90": 31.6083,
+        "deg_max": 44.8708,
+        "order_median": 3,
+        "asks_per_run": 4.533,
+        "rejected_per_run": 4.883,
+        "first_pair_sep_deg_median": 73.01,
+        "snap_engaged": 198,
+        "snap_queried": 276,
+        "first_pair_moved": 44,
+        "first_pair_runs": 60,
+        "screen_axes_total": 22
+      },
+      "rule_grouped_placebo": {
+        "runs": 60,
+        "camera_ok": 54,
+        "camera_ok_rate": 0.9,
+        "axes_measured": 62,
+        "deg_median": 31.6083,
+        "deg_p90": 31.6083,
+        "deg_max": 31.6083,
+        "order_median": 1,
+        "asks_per_run": 2.783,
+        "rejected_per_run": 4.333,
+        "first_pair_sep_deg_median": 5.69,
+        "snap_engaged": 72,
+        "snap_queried": 143,
+        "first_pair_moved": 4,
+        "first_pair_runs": 60,
+        "screen_axes_total": 100
+      },
+      "rule_wide_pair_placebo": {
+        "runs": 60,
+        "camera_ok": 56,
+        "camera_ok_rate": 0.9333,
+        "axes_measured": 66,
+        "deg_median": 31.6083,
+        "deg_p90": 31.6083,
+        "deg_max": 38.0687,
+        "order_median": 1,
+        "asks_per_run": 2.717,
+        "rejected_per_run": 4.417,
+        "first_pair_sep_deg_median": 6.24,
+        "snap_engaged": 70,
+        "snap_queried": 138,
+        "first_pair_moved": 3,
+        "first_pair_runs": 60,
+        "screen_axes_total": 102
+      },
+      "rule_grouped_snap_r4": {
+        "runs": 60,
+        "camera_ok": 55,
+        "camera_ok_rate": 0.9167,
+        "axes_measured": 63,
+        "deg_median": 31.6083,
+        "deg_p90": 31.6083,
+        "deg_max": 40.5561,
+        "order_median": 1,
+        "asks_per_run": 2.65,
+        "rejected_per_run": 4.35,
+        "first_pair_sep_deg_median": 5.69,
+        "snap_engaged": 67,
+        "snap_queried": 143,
+        "first_pair_moved": 1,
+        "first_pair_runs": 60,
+        "screen_axes_total": 102
+      },
+      "rule_grouped_snap_r40": {
+        "runs": 60,
+        "camera_ok": 55,
+        "camera_ok_rate": 0.9167,
+        "axes_measured": 63,
+        "deg_median": 31.6083,
+        "deg_p90": 31.6083,
+        "deg_max": 31.6083,
+        "order_median": 1,
+        "asks_per_run": 2.65,
+        "rejected_per_run": 4.367,
+        "first_pair_sep_deg_median": 5.69,
+        "snap_engaged": 78,
+        "snap_queried": 143,
+        "first_pair_moved": 6,
+        "first_pair_runs": 60,
+        "screen_axes_total": 102
       },
       "detect": {
         "runs": 60,
@@ -951,7 +2259,11 @@
         "asks_per_run": 0,
         "rejected_per_run": 0,
         "first_pair_sep_deg_median": null,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 0
       }
     },
     "3pt_yaw50_pitch8": {
@@ -967,7 +2279,11 @@
         "asks_per_run": 2.933,
         "rejected_per_run": 4.733,
         "first_pair_sep_deg_median": 35.34,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 47
       },
       "rule_grouped": {
         "runs": 60,
@@ -981,7 +2297,11 @@
         "asks_per_run": 2.05,
         "rejected_per_run": 2.917,
         "first_pair_sep_deg_median": 6.97,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 87
       },
       "rule_wide_pair": {
         "runs": 60,
@@ -995,7 +2315,11 @@
         "asks_per_run": 1.983,
         "rejected_per_run": 2.917,
         "first_pair_sep_deg_median": 9.08,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 92
       },
       "rule_drawn_snap": {
         "runs": 60,
@@ -1009,7 +2333,11 @@
         "asks_per_run": 2.167,
         "rejected_per_run": 3.15,
         "first_pair_sep_deg_median": 28.96,
-        "snap_engaged": 209
+        "snap_engaged": 209,
+        "snap_queried": 272,
+        "first_pair_moved": 52,
+        "first_pair_runs": 60,
+        "screen_axes_total": 76
       },
       "rule_grouped_snap": {
         "runs": 60,
@@ -1023,7 +2351,11 @@
         "asks_per_run": 1.85,
         "rejected_per_run": 2.867,
         "first_pair_sep_deg_median": 6.49,
-        "snap_engaged": 86
+        "snap_engaged": 86,
+        "snap_queried": 156,
+        "first_pair_moved": 9,
+        "first_pair_runs": 60,
+        "screen_axes_total": 91
       },
       "rule_wide_pair_snap": {
         "runs": 60,
@@ -1037,7 +2369,101 @@
         "asks_per_run": 1.8,
         "rejected_per_run": 2.867,
         "first_pair_sep_deg_median": 8.54,
-        "snap_engaged": 77
+        "snap_engaged": 77,
+        "snap_queried": 147,
+        "first_pair_moved": 7,
+        "first_pair_runs": 60,
+        "screen_axes_total": 94
+      },
+      "rule_drawn_placebo": {
+        "runs": 60,
+        "camera_ok": 29,
+        "camera_ok_rate": 0.4833,
+        "axes_measured": 48,
+        "deg_median": 40.66,
+        "deg_p90": 43.2501,
+        "deg_max": 49.9334,
+        "order_median": 2,
+        "asks_per_run": 2.567,
+        "rejected_per_run": 3.883,
+        "first_pair_sep_deg_median": 34.59,
+        "snap_engaged": 232,
+        "snap_queried": 293,
+        "first_pair_moved": 55,
+        "first_pair_runs": 60,
+        "screen_axes_total": 61
+      },
+      "rule_grouped_placebo": {
+        "runs": 60,
+        "camera_ok": 48,
+        "camera_ok_rate": 0.8,
+        "axes_measured": 60,
+        "deg_median": 40.66,
+        "deg_p90": 40.66,
+        "deg_max": 51.3517,
+        "order_median": 1,
+        "asks_per_run": 1.967,
+        "rejected_per_run": 2.917,
+        "first_pair_sep_deg_median": 6.95,
+        "snap_engaged": 97,
+        "snap_queried": 167,
+        "first_pair_moved": 15,
+        "first_pair_runs": 60,
+        "screen_axes_total": 85
+      },
+      "rule_wide_pair_placebo": {
+        "runs": 60,
+        "camera_ok": 50,
+        "camera_ok_rate": 0.8333,
+        "axes_measured": 60,
+        "deg_median": 40.66,
+        "deg_p90": 40.66,
+        "deg_max": 51.791,
+        "order_median": 1,
+        "asks_per_run": 1.917,
+        "rejected_per_run": 2.883,
+        "first_pair_sep_deg_median": 8.83,
+        "snap_engaged": 81,
+        "snap_queried": 151,
+        "first_pair_moved": 9,
+        "first_pair_runs": 60,
+        "screen_axes_total": 92
+      },
+      "rule_grouped_snap_r4": {
+        "runs": 60,
+        "camera_ok": 49,
+        "camera_ok_rate": 0.8167,
+        "axes_measured": 56,
+        "deg_median": 40.66,
+        "deg_p90": 40.66,
+        "deg_max": 50.9034,
+        "order_median": 1,
+        "asks_per_run": 1.85,
+        "rejected_per_run": 2.9,
+        "first_pair_sep_deg_median": 6.23,
+        "snap_engaged": 70,
+        "snap_queried": 152,
+        "first_pair_moved": 1,
+        "first_pair_runs": 60,
+        "screen_axes_total": 92
+      },
+      "rule_grouped_snap_r40": {
+        "runs": 60,
+        "camera_ok": 50,
+        "camera_ok_rate": 0.8333,
+        "axes_measured": 57,
+        "deg_median": 40.66,
+        "deg_p90": 40.66,
+        "deg_max": 40.66,
+        "order_median": 1,
+        "asks_per_run": 1.933,
+        "rejected_per_run": 2.8,
+        "first_pair_sep_deg_median": 6.63,
+        "snap_engaged": 107,
+        "snap_queried": 167,
+        "first_pair_moved": 16,
+        "first_pair_runs": 60,
+        "screen_axes_total": 93
       },
       "detect": {
         "runs": 60,
@@ -1051,7 +2477,11 @@
         "asks_per_run": 0,
         "rejected_per_run": 0,
         "first_pair_sep_deg_median": null,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 0
       }
     },
     "2pt_yaw35_pitch0": {
@@ -1067,7 +2497,11 @@
         "asks_per_run": 3.767,
         "rejected_per_run": 3.35,
         "first_pair_sep_deg_median": 20.38,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 80
       },
       "rule_grouped": {
         "runs": 60,
@@ -1081,7 +2515,11 @@
         "asks_per_run": 3.233,
         "rejected_per_run": 2.283,
         "first_pair_sep_deg_median": 3.98,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 102
       },
       "rule_wide_pair": {
         "runs": 60,
@@ -1095,7 +2533,11 @@
         "asks_per_run": 3.3,
         "rejected_per_run": 2.383,
         "first_pair_sep_deg_median": 4.73,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 100
       },
       "rule_drawn_snap": {
         "runs": 60,
@@ -1109,7 +2551,11 @@
         "asks_per_run": 2.883,
         "rejected_per_run": 1.817,
         "first_pair_sep_deg_median": 17.37,
-        "snap_engaged": 170
+        "snap_engaged": 170,
+        "snap_queried": 224,
+        "first_pair_moved": 30,
+        "first_pair_runs": 60,
+        "screen_axes_total": 107
       },
       "rule_grouped_snap": {
         "runs": 60,
@@ -1123,7 +2569,11 @@
         "asks_per_run": 3.05,
         "rejected_per_run": 2.4,
         "first_pair_sep_deg_median": 3.93,
-        "snap_engaged": 85
+        "snap_engaged": 85,
+        "snap_queried": 140,
+        "first_pair_moved": 11,
+        "first_pair_runs": 60,
+        "screen_axes_total": 108
       },
       "rule_wide_pair_snap": {
         "runs": 60,
@@ -1137,7 +2587,101 @@
         "asks_per_run": 3.033,
         "rejected_per_run": 2.5,
         "first_pair_sep_deg_median": 3.98,
-        "snap_engaged": 84
+        "snap_engaged": 84,
+        "snap_queried": 139,
+        "first_pair_moved": 8,
+        "first_pair_runs": 60,
+        "screen_axes_total": 110
+      },
+      "rule_drawn_placebo": {
+        "runs": 60,
+        "camera_ok": 40,
+        "camera_ok_rate": 0.6667,
+        "axes_measured": 51,
+        "deg_median": 35,
+        "deg_p90": 39.0074,
+        "deg_max": 46.9761,
+        "order_median": 2,
+        "asks_per_run": 3.367,
+        "rejected_per_run": 3.033,
+        "first_pair_sep_deg_median": 18.6,
+        "snap_engaged": 192,
+        "snap_queried": 246,
+        "first_pair_moved": 40,
+        "first_pair_runs": 60,
+        "screen_axes_total": 89
+      },
+      "rule_grouped_placebo": {
+        "runs": 60,
+        "camera_ok": 58,
+        "camera_ok_rate": 0.9667,
+        "axes_measured": 68,
+        "deg_median": 35,
+        "deg_p90": 35,
+        "deg_max": 35,
+        "order_median": 1,
+        "asks_per_run": 3.083,
+        "rejected_per_run": 2.317,
+        "first_pair_sep_deg_median": 3.84,
+        "snap_engaged": 86,
+        "snap_queried": 141,
+        "first_pair_moved": 11,
+        "first_pair_runs": 60,
+        "screen_axes_total": 108
+      },
+      "rule_wide_pair_placebo": {
+        "runs": 60,
+        "camera_ok": 55,
+        "camera_ok_rate": 0.9167,
+        "axes_measured": 67,
+        "deg_median": 35,
+        "deg_p90": 35,
+        "deg_max": 49.1833,
+        "order_median": 1,
+        "asks_per_run": 3.133,
+        "rejected_per_run": 2.367,
+        "first_pair_sep_deg_median": 4.38,
+        "snap_engaged": 95,
+        "snap_queried": 150,
+        "first_pair_moved": 15,
+        "first_pair_runs": 60,
+        "screen_axes_total": 103
+      },
+      "rule_grouped_snap_r4": {
+        "runs": 60,
+        "camera_ok": 59,
+        "camera_ok_rate": 0.9833,
+        "axes_measured": 69,
+        "deg_median": 35,
+        "deg_p90": 35,
+        "deg_max": 35,
+        "order_median": 1,
+        "asks_per_run": 3.05,
+        "rejected_per_run": 2.433,
+        "first_pair_sep_deg_median": 3.86,
+        "snap_engaged": 74,
+        "snap_queried": 135,
+        "first_pair_moved": 8,
+        "first_pair_runs": 60,
+        "screen_axes_total": 109
+      },
+      "rule_grouped_snap_r40": {
+        "runs": 60,
+        "camera_ok": 60,
+        "camera_ok_rate": 1,
+        "axes_measured": 72,
+        "deg_median": 35,
+        "deg_p90": 35,
+        "deg_max": 35,
+        "order_median": 1,
+        "asks_per_run": 3.233,
+        "rejected_per_run": 2.317,
+        "first_pair_sep_deg_median": 3.64,
+        "snap_engaged": 91,
+        "snap_queried": 145,
+        "first_pair_moved": 12,
+        "first_pair_runs": 60,
+        "screen_axes_total": 108
       },
       "detect": {
         "runs": 60,
@@ -1151,7 +2695,11 @@
         "asks_per_run": 0,
         "rejected_per_run": 0,
         "first_pair_sep_deg_median": null,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 0
       }
     },
     "1pt_yaw0_pitch0": {
@@ -1167,7 +2715,11 @@
         "asks_per_run": 1.733,
         "rejected_per_run": 2.333,
         "first_pair_sep_deg_median": 26.55,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 119
       },
       "rule_grouped": {
         "runs": 60,
@@ -1181,7 +2733,11 @@
         "asks_per_run": 1.75,
         "rejected_per_run": 2.317,
         "first_pair_sep_deg_median": 26.87,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 119
       },
       "rule_wide_pair": {
         "runs": 60,
@@ -1195,7 +2751,11 @@
         "asks_per_run": 1.95,
         "rejected_per_run": 2.367,
         "first_pair_sep_deg_median": 26.92,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 119
       },
       "rule_drawn_snap": {
         "runs": 60,
@@ -1209,7 +2769,11 @@
         "asks_per_run": 1.683,
         "rejected_per_run": 2.4,
         "first_pair_sep_deg_median": 26.55,
-        "snap_engaged": 58
+        "snap_engaged": 58,
+        "snap_queried": 66,
+        "first_pair_moved": 2,
+        "first_pair_runs": 55,
+        "screen_axes_total": 120
       },
       "rule_grouped_snap": {
         "runs": 60,
@@ -1223,7 +2787,11 @@
         "asks_per_run": 1.667,
         "rejected_per_run": 2.383,
         "first_pair_sep_deg_median": 26.87,
-        "snap_engaged": 54
+        "snap_engaged": 54,
+        "snap_queried": 62,
+        "first_pair_moved": 0,
+        "first_pair_runs": 55,
+        "screen_axes_total": 120
       },
       "rule_wide_pair_snap": {
         "runs": 60,
@@ -1237,7 +2805,101 @@
         "asks_per_run": 1.75,
         "rejected_per_run": 2.45,
         "first_pair_sep_deg_median": 26.76,
-        "snap_engaged": 72
+        "snap_engaged": 72,
+        "snap_queried": 162,
+        "first_pair_moved": 3,
+        "first_pair_runs": 51,
+        "screen_axes_total": 119
+      },
+      "rule_drawn_placebo": {
+        "runs": 60,
+        "camera_ok": 55,
+        "camera_ok_rate": 0.9167,
+        "axes_measured": 55,
+        "deg_median": 0,
+        "deg_p90": 0,
+        "deg_max": 0,
+        "order_median": 1,
+        "asks_per_run": 1.717,
+        "rejected_per_run": 2.4,
+        "first_pair_sep_deg_median": 26.55,
+        "snap_engaged": 58,
+        "snap_queried": 66,
+        "first_pair_moved": 2,
+        "first_pair_runs": 55,
+        "screen_axes_total": 120
+      },
+      "rule_grouped_placebo": {
+        "runs": 60,
+        "camera_ok": 55,
+        "camera_ok_rate": 0.9167,
+        "axes_measured": 55,
+        "deg_median": 0,
+        "deg_p90": 0,
+        "deg_max": 0,
+        "order_median": 1,
+        "asks_per_run": 1.733,
+        "rejected_per_run": 2.383,
+        "first_pair_sep_deg_median": 26.87,
+        "snap_engaged": 54,
+        "snap_queried": 62,
+        "first_pair_moved": 0,
+        "first_pair_runs": 55,
+        "screen_axes_total": 120
+      },
+      "rule_wide_pair_placebo": {
+        "runs": 60,
+        "camera_ok": 55,
+        "camera_ok_rate": 0.9167,
+        "axes_measured": 55,
+        "deg_median": 0,
+        "deg_p90": 0,
+        "deg_max": 0,
+        "order_median": 1,
+        "asks_per_run": 1.883,
+        "rejected_per_run": 2.433,
+        "first_pair_sep_deg_median": 26.76,
+        "snap_engaged": 75,
+        "snap_queried": 168,
+        "first_pair_moved": 8,
+        "first_pair_runs": 55,
+        "screen_axes_total": 120
+      },
+      "rule_grouped_snap_r4": {
+        "runs": 60,
+        "camera_ok": 55,
+        "camera_ok_rate": 0.9167,
+        "axes_measured": 55,
+        "deg_median": 0,
+        "deg_p90": 0,
+        "deg_max": 0,
+        "order_median": 1,
+        "asks_per_run": 1.667,
+        "rejected_per_run": 2.367,
+        "first_pair_sep_deg_median": 26.87,
+        "snap_engaged": 54,
+        "snap_queried": 63,
+        "first_pair_moved": 0,
+        "first_pair_runs": 55,
+        "screen_axes_total": 120
+      },
+      "rule_grouped_snap_r40": {
+        "runs": 60,
+        "camera_ok": 55,
+        "camera_ok_rate": 0.9167,
+        "axes_measured": 55,
+        "deg_median": 0,
+        "deg_p90": 0,
+        "deg_max": 0,
+        "order_median": 1,
+        "asks_per_run": 1.667,
+        "rejected_per_run": 2.383,
+        "first_pair_sep_deg_median": 26.87,
+        "snap_engaged": 54,
+        "snap_queried": 62,
+        "first_pair_moved": 0,
+        "first_pair_runs": 55,
+        "screen_axes_total": 120
       },
       "detect": {
         "runs": 60,
@@ -1251,7 +2913,11 @@
         "asks_per_run": 0,
         "rejected_per_run": 0,
         "first_pair_sep_deg_median": null,
-        "snap_engaged": 0
+        "snap_engaged": 0,
+        "snap_queried": 0,
+        "first_pair_moved": 0,
+        "first_pair_runs": 0,
+        "screen_axes_total": 0
       }
     }
   },
@@ -1268,7 +2934,11 @@
       "asks_per_run": 3.287,
       "rejected_per_run": 3.947,
       "first_pair_sep_deg_median": 37.21,
-      "snap_engaged": 0
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 314
     },
     "rule_grouped": {
       "runs": 300,
@@ -1282,7 +2952,11 @@
       "asks_per_run": 2.59,
       "rejected_per_run": 2.98,
       "first_pair_sep_deg_median": 7.92,
-      "snap_engaged": 0
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 490
     },
     "rule_wide_pair": {
       "runs": 300,
@@ -1296,7 +2970,11 @@
       "asks_per_run": 2.547,
       "rejected_per_run": 3.16,
       "first_pair_sep_deg_median": 8.68,
-      "snap_engaged": 0
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 514
     },
     "rule_drawn_snap": {
       "runs": 300,
@@ -1310,7 +2988,11 @@
       "asks_per_run": 2.813,
       "rejected_per_run": 3.073,
       "first_pair_sep_deg_median": 28.82,
-      "snap_engaged": 830
+      "snap_engaged": 830,
+      "snap_queried": 1093,
+      "first_pair_moved": 170,
+      "first_pair_runs": 295,
+      "screen_axes_total": 406
     },
     "rule_grouped_snap": {
       "runs": 300,
@@ -1324,7 +3006,11 @@
       "asks_per_run": 2.41,
       "rejected_per_run": 3.08,
       "first_pair_sep_deg_median": 7.16,
-      "snap_engaged": 400
+      "snap_engaged": 400,
+      "snap_queried": 664,
+      "first_pair_moved": 39,
+      "first_pair_runs": 295,
+      "screen_axes_total": 514
     },
     "rule_wide_pair_snap": {
       "runs": 300,
@@ -1338,7 +3024,101 @@
       "asks_per_run": 2.4,
       "rejected_per_run": 3.18,
       "first_pair_sep_deg_median": 8.2,
-      "snap_engaged": 384
+      "snap_engaged": 384,
+      "snap_queried": 725,
+      "first_pair_moved": 25,
+      "first_pair_runs": 291,
+      "screen_axes_total": 528
+    },
+    "rule_drawn_placebo": {
+      "runs": 300,
+      "camera_ok": 208,
+      "camera_ok_rate": 0.6933,
+      "axes_measured": 340,
+      "deg_median": 19.407,
+      "deg_p90": 40.66,
+      "deg_max": 49.97,
+      "order_median": 2,
+      "asks_per_run": 3.137,
+      "rejected_per_run": 3.66,
+      "first_pair_sep_deg_median": 34.2,
+      "snap_engaged": 894,
+      "snap_queried": 1153,
+      "first_pair_moved": 198,
+      "first_pair_runs": 295,
+      "screen_axes_total": 342
+    },
+    "rule_grouped_placebo": {
+      "runs": 300,
+      "camera_ok": 271,
+      "camera_ok_rate": 0.9033,
+      "axes_measured": 337,
+      "deg_median": 31.6083,
+      "deg_p90": 40.66,
+      "deg_max": 51.3517,
+      "order_median": 1,
+      "asks_per_run": 2.573,
+      "rejected_per_run": 2.957,
+      "first_pair_sep_deg_median": 7.74,
+      "snap_engaged": 455,
+      "snap_queried": 719,
+      "first_pair_moved": 60,
+      "first_pair_runs": 295,
+      "screen_axes_total": 489
+    },
+    "rule_wide_pair_placebo": {
+      "runs": 300,
+      "camera_ok": 265,
+      "camera_ok_rate": 0.8833,
+      "axes_measured": 316,
+      "deg_median": 31.6083,
+      "deg_p90": 40.66,
+      "deg_max": 51.791,
+      "order_median": 1,
+      "asks_per_run": 2.567,
+      "rejected_per_run": 3.09,
+      "first_pair_sep_deg_median": 9.28,
+      "snap_engaged": 438,
+      "snap_queried": 787,
+      "first_pair_moved": 55,
+      "first_pair_runs": 295,
+      "screen_axes_total": 497
+    },
+    "rule_grouped_snap_r4": {
+      "runs": 300,
+      "camera_ok": 273,
+      "camera_ok_rate": 0.91,
+      "axes_measured": 314,
+      "deg_median": 31.6083,
+      "deg_p90": 40.66,
+      "deg_max": 51.2402,
+      "order_median": 1,
+      "asks_per_run": 2.4,
+      "rejected_per_run": 3.103,
+      "first_pair_sep_deg_median": 6.91,
+      "snap_engaged": 352,
+      "snap_queried": 654,
+      "first_pair_moved": 14,
+      "first_pair_runs": 295,
+      "screen_axes_total": 517
+    },
+    "rule_grouped_snap_r40": {
+      "runs": 300,
+      "camera_ok": 272,
+      "camera_ok_rate": 0.9067,
+      "axes_measured": 315,
+      "deg_median": 31.6083,
+      "deg_p90": 40.66,
+      "deg_max": 40.66,
+      "order_median": 1,
+      "asks_per_run": 2.463,
+      "rejected_per_run": 3.03,
+      "first_pair_sep_deg_median": 7.2,
+      "snap_engaged": 440,
+      "snap_queried": 684,
+      "first_pair_moved": 53,
+      "first_pair_runs": 295,
+      "screen_axes_total": 512
     },
     "detect": {
       "runs": 300,
@@ -1352,13 +3132,17 @@
       "asks_per_run": 0,
       "rejected_per_run": 0,
       "first_pair_sep_deg_median": null,
-      "snap_engaged": 0
+      "snap_engaged": 0,
+      "snap_queried": 0,
+      "first_pair_moved": 0,
+      "first_pair_runs": 0,
+      "screen_axes_total": 0
     }
   },
   "gate": {
-    "registered": "규칙 팔의 축 방향 오차 중앙값(도)이 **같은 하네스·같은 픽스처**의 검출 팔보다 작다. 모집단은 5구도 × 6시드 × 등급 2 × 잡음 {0.005,0.01,0.03,0.05}이고 **잡음 0 행은 뺀다**(무오차 입력에서 교점은 정의상 참 소실점이라 오차 0 — 측정이 아니라 항등이다, #5). ⚠ 이것은 **이 항목이 등록한 게이트**이고 CLAUDE.md §2의 중단 조건(실측 축 오차 0.5°)이 아니다(#41). **[5차 이월-2 추가 등록]** 스냅 팔(`rule_*_snap`)은 같은 획을 앱의 확정 전 2D 판정(`resolve2dCore` — 오스냅·직교·vp_dir·정렬, mainL과 같은 함수 #17)에 통과시켜 먹인다 — 이것이 **앱 동작점**이다(원시 팔은 하네스가 낡아 있던 조건의 연속 기록). 추가 판정: `passed_snapped` = rule_grouped_snap 중앙 < detect 중앙. 원 판정(passed)은 그대로 둔다(#28 — 지표를 사유 없이 바꾸지 않는다; 바꾼 사유와 갈림은 D-L59·DEFERRED 스냅 반영 하네스 절).",
+    "registered": "규칙 팔의 축 방향 오차 중앙값(도)이 **같은 하네스·같은 픽스처**의 검출 팔보다 작다. 모집단은 5구도 × 6시드 × 등급 2 × 잡음 {0.005,0.01,0.03,0.05}이고 **잡음 0 행은 뺀다**(무오차 입력에서 교점은 정의상 참 소실점이라 오차 0 — 측정이 아니라 항등이다, #5). ⚠ 이것은 **이 항목이 등록한 게이트**이고 CLAUDE.md §2의 중단 조건(실측 축 오차 0.5°)이 아니다(#41). **[5차 이월-2 추가 등록]** 스냅 팔(`rule_*_snap`)은 같은 획을 앱의 확정 전 2D 판정(`resolve2dCore` — 오스냅·직교·vp_dir·정렬, mainL과 같은 함수 #17)에 통과시켜 먹인다 — 이것이 **앱 동작점**이다(원시 팔은 하네스가 낡아 있던 조건의 연속 기록). 추가 판정: `passed_snapped` = rule_grouped_snap 중앙 < detect 중앙. 원 판정(passed)은 그대로 둔다(#28 — 지표를 사유 없이 바꾸지 않는다; 바꾼 사유와 갈림은 D-L59·DEFERRED 스냅 반영 하네스 절). **[5차 정정 — 리뷰어 [21]]** 4차 등록의 '잡음 0 행은 항등' 사유는 **틀렸다**: 잡음(endJitter) 0이어도 등급 잉크 잡음(INK_GRADES)이 남아 jit_0의 축 오차는 0이 아니다(by_jitter.jit_0 실측 참조). 표제 모집단은 연속성으로 유지하고(#28) jit_0 층을 headline_jit0_no_identity로 따로 낸다.",
     "reachability": "**오라클이 없다.** 이 방식의 '완벽한 입력'은 참 투영이고, 그때 두 깊이선의 교점은 **정의상 참 소실점**이라 오차가 0이다 — 그것은 도달 가능성이 아니라 항등이다(PITFALLS #5 자기참조 유형 3 · #40 ②: 그 자리의 0은 측정이 아니라 보장이다). 그러므로 '기준을 못 넘으면 신호의 성질인가 기준의 성질인가'가 **갈리지 않는 상태**이고, 그 사실을 여기 남긴다(#35). ⚠ 기준을 낮추는 근거가 아니다.",
-    "reachability_absent": "무오차 입력에서 규칙의 축 오차는 정의상 0(`by_jitter.jit_0`이 그것이고 표제에서 뺐다). 항등이므로 오라클로 쓸 수 없다.",
+    "reachability_absent": "**오라클 팔이 없다**(위 reachability). ⚠ [5차 정정 — 리뷰어 [21]] 초판이 여기 적은 '무오차 입력 = jit_0 = 정의상 0'은 틀렸다 — jit_0은 endJitter만 0이고 등급 잉크 잡음이 남아 실측이 0이 아니다(headline_jit0_no_identity). 참 항등은 등급 잡음까지 끈 입력인데 그 팔은 안 돌렸다(돌리면 정의상 0이라 정보가 없다, #5).",
     "result": {
       "rule_grouped_median": 31.6083,
       "detect_median": 9.1742,
@@ -1366,7 +3150,36 @@
       "rule_drawn_snap_median": 29.6599,
       "rule_grouped_snap_median": 35,
       "rule_wide_pair_snap_median": 35,
-      "passed_snapped": false
+      "rule_drawn_placebo_median": 26.7583,
+      "rule_grouped_placebo_median": 31.6083,
+      "rule_wide_pair_placebo_median": 32.8639,
+      "rule_grouped_snap_r4_median": 35,
+      "rule_grouped_snap_r40_median": 31.6083,
+      "paired": {
+        "drawn": {
+          "fixtures_both_ok": 96,
+          "raw_deg_median": 26.6668,
+          "snap_deg_median": 27.5484,
+          "raw_axes": 198,
+          "snap_axes": 171
+        },
+        "grouped": {
+          "fixtures_both_ok": 165,
+          "raw_deg_median": 31.6083,
+          "snap_deg_median": 35,
+          "raw_axes": 214,
+          "snap_axes": 201
+        },
+        "wide_pair": {
+          "fixtures_both_ok": 163,
+          "raw_deg_median": 34.9871,
+          "snap_deg_median": 35,
+          "raw_axes": 201,
+          "snap_axes": 188
+        }
+      },
+      "passed_snapped": false,
+      "passed_snapped_note": "몰아(grouped) 팔을 강제하는 이유는 **원 판정(passed)과 같은 팔**이라는 연속성 하나다(리뷰어 [36]) — AS-L13 방향 뒤집힘으로 대표성 근거는 없다. 세 팔 중앙을 전부 적는다(#28 '못 고르면 둘 다')."
     },
     "note": "⚠ **이 항목이 등록한 게이트다.** CLAUDE.md §2의 중단 조건(실측 축 오차 0.5°)과 다른 게이트이고 같은 말로 부르지 않는다(PITFALLS #41)."
   },

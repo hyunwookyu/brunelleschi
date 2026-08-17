@@ -261,7 +261,9 @@ export type RuleEvent =
   /** 축이 선언됐다(무한원). */
   | { type: "screen_axis"; axis: 0 | 1 | 2; dir: "h" | "v" }
   /** 소실점이 확정됐다. */
-  | { type: "vp_fixed"; axis: 0 | 1 | 2; at: Pt2; source: VpSource; horizonSet: boolean }
+  | { type: "vp_fixed"; axis: 0 | 1 | 2; at: Pt2; source: VpSource; horizonSet: boolean;
+      /** two_lines일 때 짝이 된 대기 선(측정용 — 5차 이월-2 리뷰어 [22]). 앱 동작에는 안 쓰인다. */
+      paired?: RLine }
   // ⚠ **`promoted`(수평 축의 1점 → 2점 승격)를 뺐다**(2026-08-17 B). 화면 가로선을 그은 것은
   // **1점 투시를 선언한 것**이고 그것을 되돌리지 않는다 — 잘못 그었으면 처음부터 다시 그린다.
   // 남는 차수 승격은 **2점 → 3점**(`derived_vertical`) 하나다.
@@ -537,7 +539,9 @@ export function stepRule(
       const st2 = deriveVertical(st, imgSize);
       return { state: st2,
                event: { type: "vp_fixed", axis: target.index, at: best.at,
-                        source: "two_lines", horizonSet: true } };
+                        source: "two_lines", horizonSet: true,
+                        paired: { a: [pool[best.idx].a[0], pool[best.idx].a[1]],
+                                  b: [pool[best.idx].b[0], pool[best.idx].b[1]] } } };
     }
 
     // ---- c. 둘째 수평 소실점 — 지평선(= 첫 소실점의 y) × 선. 선 하나면 된다(지시 4-d 유지).

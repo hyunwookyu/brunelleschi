@@ -73,7 +73,10 @@ const REGISTERED =
   + "(`resolve2dCore` — 오스냅·직교·vp_dir·정렬, mainL과 같은 함수 #17)에 통과시켜 먹인다 — "
   + "이것이 **앱 동작점**이다(원시 팔은 하네스가 낡아 있던 조건의 연속 기록). 추가 판정: "
   + "`passed_snapped` = rule_grouped_snap 중앙 < detect 중앙. 원 판정(passed)은 그대로 둔다(#28 — "
-  + "지표를 사유 없이 바꾸지 않는다; 바꾼 사유와 갈림은 D-L59·DEFERRED 스냅 반영 하네스 절).";
+  + "지표를 사유 없이 바꾸지 않는다; 바꾼 사유와 갈림은 D-L59·DEFERRED 스냅 반영 하네스 절). "
+  + "**[5차 정정 — 리뷰어 [21]]** 4차 등록의 '잡음 0 행은 항등' 사유는 **틀렸다**: 잡음(endJitter) 0이어도 "
+  + "등급 잉크 잡음(INK_GRADES)이 남아 jit_0의 축 오차는 0이 아니다(by_jitter.jit_0 실측 참조). "
+  + "표제 모집단은 연속성으로 유지하고(#28) jit_0 층을 headline_jit0_no_identity로 따로 낸다.";
 
 // ---------------------------------------------------------------- 픽스처
 
@@ -99,51 +102,80 @@ interface RuleRun {
   rejected: number;
   /** 첫 소실점을 만든 두 선의 각차(도). **교점의 조건수**이고 오차의 지렛대다. */
   firstSep: number | null;
-  /** 스냅 팔에서 **실제로 스냅이 걸린 획 수**(#38 — 0이면 그 팔은 공허하다). 원시 팔은 0. */
+  /** 스냅/위약 팔에서 **실제로 끝점이 움직인 획 수**(#38 분자). 원시 팔은 0. */
   snapEngaged: number;
+  /** 2D 판정을 지난 획 수(#38 **분모** — 리뷰어 [22]. 확정 후 획은 앱에서도 안 지난다). */
+  snapQueried: number;
+  /** 첫 소실점(two_lines)을 만든 두 선 중 **끝점이 움직였던 것의 수**(0~2, 리뷰어 [22]).
+   * two_lines가 안 났거나 원시 팔이면 null. */
+  firstPairMoved: number | null;
+  /** 최종 상태의 화면 축 슬롯 수 — 직교 스냅이 축을 무한원으로 편 것을 세는 재료(리뷰어 [23]②). */
+  screenAxes: number;
 }
+
+type RunMode = "raw" | "snap" | "placebo";
 
 /**
  * **획을 차례로 규칙에 넣는다** — 앱의 `feedStroke`와 같은 경로다(#17).
  *
- * ⚠ **순서가 결과를 정한다.** 규칙 b는 "깊이선 **두 개**의 교점"이므로 처음 두 깊이선이
- * 서로 다른 축이면 엉뚱한 점이 나온다. 그래서 두 팔을 다 낸다:
- *   `grouped` — **축별로 몰아 긋는다**(사람이 면 단위로 그리는 방식. AS-6과 같은 가정).
- *               ⚠ 참 축 라벨을 쓰므로 **순서 오라클**이다. 그 사실이 결론에 붙는다
- *   `lattice` — 픽스처가 낸 순서 그대로(오라클 없음)
- *
- * 물음에는 **참 축으로 답한다**(오라클). 답한 횟수를 세어 남긴다 — 사람이 실제로 몇 번
- * 개입해야 하는가이고, 그것이 이 방식의 비용이다(#7: 추측하지 말고 센다).
+ * `mode`(5차 이월-2 + 리뷰어 대응):
+ *   `raw`     — 원시 선(4차까지의 하네스 조건).
+ *   `snap`    — 확정(order≥1) 전 획을 앱의 2D 판정(`resolve2dCore`)에 통과시킨다.
+ *   `placebo` — **같은 획에서 스냅이 옮겼을 크기만큼 임의 방향으로** 끝점을 옮긴다(#39,
+ *               리뷰어 [20]) — 나빠짐이 "스냅의 방향" 때문인지 "그 크기의 이동 일반" 때문인지 가른다.
  */
-function runRules(fx: Fx, order: Order, snapped = false): RuleRun {
+function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
+                  radiusPx = OSNAP_RADIUS_PX, rr?: () => number): RuleRun {
   const list = orderStrokes(fx, order);
   let st = newRuleState();
-  let asks = 0, rejected = 0, snapEngaged = 0;
+  let asks = 0, rejected = 0, snapEngaged = 0, snapQueried = 0;
   let firstSep: number | null = null;
+  let firstPairMoved: number | null = null;
   let prevWaiting: RLine | null = null;
   /**
-   * **스냅 팔의 대기 획**(5차 이월-2) — 앱의 `pend2Segs()` 자리. 여기 들어가는 것은
-   * **규칙에 먹인 최종 선**이다(앱이 스냅된 `pts2d`를 문서에 남기는 것과 같다).
-   * ⚠ 근사 하나: 앱에서는 카메라가 서면 획이 3D로 올라가 **3D 오스냅 대상**이 되는데,
+   * **스냅 팔의 대기 획** — 앱의 `pend2Segs()` 자리. 여기 들어가는 것은 규칙에 먹인 최종
+   * 선이다(앱이 스냅된 `pts2d`를 문서에 남기는 것과 같다).
+   * ⚠ 근사 하나: 앱에서는 카메라가 서면 획이 3D로 올라가 3D 오스냅 대상이 되는데,
    * §4.5 보장(승격이 화면 자리를 안 옮긴다)으로 화면 좌표가 같으므로 2D 목록으로 근사한다.
    */
   const fedSegs: Snap2Seg[] = [];
+  /** 먹인 선 좌표 → 끝점이 움직였는가(첫 짝 대조용 — 리뷰어 [22]). */
+  const movedByKey = new Map<string, boolean>();
+  const keyOf = (l: RLine) => `${l.a[0]},${l.a[1]},${l.b[0]},${l.b[1]}`;
   const diag = Math.hypot(SZ[0], SZ[1]);
   for (const e of list) {
     let pts = e.pts2d;
+    let moved = false;
     // **앱과 같은 조건**: 2D 판정(오스냅·직교·vp_dir·정렬)은 **카메라 확정 전**에만 돈다
     // (`mainL`: `frame() ? raw : snapped2d(raw)` — standing ⟺ order ≥ 1). 확정 후의 규칙
     // 입력은 앱에서도 원시 선이다(`feedStroke`가 3D 스냅보다 먼저 돈다).
-    if (snapped && perspectiveOrder(st) === 0) {
+    if (mode !== "raw" && perspectiveOrder(st) === 0) {
+      snapQueried += 1;
       const cands = fedSegs.length ? static2dCandidates(fedSegs, diag) : [];
-      const r2 = resolve2dCore(pts, { cands, vps: vpsOf(st), radiusPx: OSNAP_RADIUS_PX,
-                                      relSnap: true });
-      if (r2.engaged) snapEngaged += 1;
-      pts = r2.pts;
+      const r2 = resolve2dCore(pts, { cands, vps: vpsOf(st), radiusPx, relSnap: true });
+      const a0 = pts[0], b0 = pts[pts.length - 1];
+      const a2 = r2.pts[0], b2 = r2.pts[r2.pts.length - 1];
+      const dA = Math.hypot(a2[0] - a0[0], a2[1] - a0[1]);
+      const dB = Math.hypot(b2[0] - b0[0], b2[1] - b0[1]);
+      if (mode === "snap") {
+        pts = r2.pts;
+        moved = dA > 1e-9 || dB > 1e-9;
+      } else {
+        // **위약**: 같은 크기, 임의 방향(#39). 스냅이 안 움직였으면 위약도 안 움직인다
+        if ((dA > 1e-9 || dB > 1e-9) && rr) {
+          const th1 = 2 * Math.PI * rr(), th2 = 2 * Math.PI * rr();
+          const ap: Pt2 = [a0[0] + dA * Math.cos(th1), a0[1] + dA * Math.sin(th1)];
+          const bp: Pt2 = [b0[0] + dB * Math.cos(th2), b0[1] + dB * Math.sin(th2)];
+          pts = [ap, bp];
+          moved = true;
+        }
+      }
+      if (moved) snapEngaged += 1;
     }
     const rep = representative(pts);
     if (!rep) continue;
     const line: RLine = { a: rep.a, b: rep.b };
+    movedByKey.set(keyOf(line), moved);
     fedSegs.push({ id: `f${fedSegs.length}`, a: line.a, b: line.b });
     let r = stepRule(st, line, SZ);
     if (r.event.type === "ask") {
@@ -156,13 +188,18 @@ function runRules(fx: Fx, order: Order, snapped = false): RuleRun {
       r = stepRule(st, line, SZ, truth);
     }
     if (r.event.type === "rejected") { rejected += 1; continue; }
-    if (r.event.type === "vp_fixed" && r.event.source === "two_lines" && prevWaiting) {
-      firstSep = sepDeg(prevWaiting, line);
+    if (r.event.type === "vp_fixed" && r.event.source === "two_lines") {
+      if (prevWaiting) firstSep = sepDeg(prevWaiting, line);
+      if (mode !== "raw") {
+        const partner = r.event.paired ? movedByKey.get(keyOf(r.event.paired)) : undefined;
+        firstPairMoved = (moved ? 1 : 0) + (partner ? 1 : 0);
+      }
     }
     prevWaiting = r.event.type === "waiting" ? line : prevWaiting;
     st = r.state;
   }
-  return { st, asks, rejected, firstSep, snapEngaged };
+  const screenAxes = st.slots.filter(sl => sl && sl.kind === "screen").length;
+  return { st, asks, rejected, firstSep, snapEngaged, snapQueried, firstPairMoved, screenAxes };
 }
 
 type Order = "drawn" | "grouped" | "wide_pair";
@@ -235,11 +272,18 @@ interface Bag {
   asks: number;
   rejected: number;
   seps: number[];
-  /** 스냅 팔에서 실제로 스냅이 걸린 획 수(#38). 원시 팔은 0. */
+  /** 끝점이 움직인 획 수(#38 분자). 원시 팔은 0. */
   snapped: number;
+  /** 2D 판정을 지난 획 수(#38 분모 — 리뷰어 [22]). */
+  queried: number;
+  /** 첫 짝(two_lines) 중 움직였던 선 수의 합과, two_lines가 난 실행 수(리뷰어 [22]). */
+  firstPairMoved: number; firstPairRuns: number;
+  /** 화면 축 슬롯 수 합(리뷰어 [23]② — 직교 스냅의 무한원 편평화 대조). */
+  screenAxes: number;
 }
 const bag = (): Bag => ({ errs: [], runs: 0, ok: 0, order: [], asks: 0, rejected: 0, seps: [],
-                          snapped: 0 });
+                          snapped: 0, queried: 0, firstPairMoved: 0, firstPairRuns: 0,
+                          screenAxes: 0 });
 
 function summarize(b: Bag) {
   return {
@@ -256,6 +300,11 @@ function summarize(b: Bag) {
     rejected_per_run: round(b.runs ? b.rejected / b.runs : null, 3),
     first_pair_sep_deg_median: round(median(b.seps), 2),
     snap_engaged: b.snapped,
+    snap_queried: b.queried,
+    /** 첫 소실점을 만든 두 선 중 끝점이 움직였던 것(분자/분모 — 리뷰어 [22]). */
+    first_pair_moved: b.firstPairMoved,
+    first_pair_runs: b.firstPairRuns,
+    screen_axes_total: b.screenAxes,
   };
 }
 
@@ -265,10 +314,24 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
   it("규칙 팔과 검출 팔을 같은 픽스처에서 함께 낸다", () => {
     const ARMS = ["rule_drawn", "rule_grouped", "rule_wide_pair",
                   "rule_drawn_snap", "rule_grouped_snap", "rule_wide_pair_snap",
+                  "rule_drawn_placebo", "rule_grouped_placebo", "rule_wide_pair_placebo",
+                  "rule_grouped_snap_r4", "rule_grouped_snap_r40",
                   "detect"] as const;
     const newArms = (): Record<string, Bag> =>
       Object.fromEntries(ARMS.map(a => [a, bag()])) as Record<string, Bag>;
     const arms = newArms();
+    /** **짝지은 부분집합**(리뷰어 [23]①) — 표제 모집단에서 원시·스냅 둘 다 카메라가 선 픽스처. */
+    const paired: Record<string, { n: number; raw: number[]; snap: number[] }> = {
+      drawn: { n: 0, raw: [], snap: [] },
+      grouped: { n: 0, raw: [], snap: [] },
+      wide_pair: { n: 0, raw: [], snap: [] },
+    };
+    const camErrsOf = (vps: (Pt2 | null)[], fx: Fx): number[] | null => {
+      const nF = vps.filter(v => v && isFiniteVp(v, SZ)).length;
+      const cam = recoverCamera(vps, SZ, nF === 1 ? { fSetting: P1_F_RATIO * SZ[0] } : {});
+      if (!(cam.ok && cam.principalPoint && cam.f != null)) return null;
+      return axisDirErrors(vps, cam.principalPoint, cam.f, fx.sc.axes);
+    };
     const byJitter: Record<string, Record<string, Bag>> = {};
     const byComp: Record<string, Record<string, Bag>> = {};
     /** 잡음 × 구도 교차 — **항등 구도를 빼기 위해** 필요하다(아래 `headNoIdentity`). */
@@ -305,16 +368,42 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
                 t.asks += extra.asks ?? 0;
                 t.rejected += extra.rejected ?? 0;
                 t.snapped += extra.snapEngaged ?? 0;
+                t.queried += extra.snapQueried ?? 0;
+                if (extra.firstPairMoved != null) {
+                  t.firstPairMoved += extra.firstPairMoved; t.firstPairRuns += 1;
+                }
+                t.screenAxes += extra.screenAxes ?? 0;
                 if (extra.firstSep != null) t.seps.push(extra.firstSep);
               }
             };
 
-            for (const ord of ["drawn", "grouped", "wide_pair"] as const) {
+            const isHeadRow = jit > 0 && !COMPOSITIONS[ci].name.startsWith("1pt");
+            (["drawn", "grouped", "wide_pair"] as const).forEach((ord, oi) => {
               const r = runRules(fx, ord);
               record(`rule_${ord}`, vpsOf(r.st), r);
               // **스냅 팔**(5차 이월-2) — 같은 획을 앱의 2D 판정(resolve2dCore)에 통과시켜 먹인다
-              const rs = runRules(fx, ord, true);
+              const rs = runRules(fx, ord, "snap");
               record(`rule_${ord}_snap`, vpsOf(rs.st), rs);
+              // **위약 팔**(#39, 리뷰어 [20]) — 스냅이 옮겼을 크기만큼 임의 방향 이동
+              const rp = runRules(fx, ord, "placebo", OSNAP_RADIUS_PX,
+                                  rng32(seed * 104729 + ci * 613 + oi * 7 + 3));
+              record(`rule_${ord}_placebo`, vpsOf(rp.st), rp);
+              // **짝지은 부분집합**(리뷰어 [23]①) — 두 팔 다 카메라가 선 픽스처만
+              if (isHeadRow) {
+                const cr = camErrsOf(vpsOf(r.st), fx);
+                const cs = camErrsOf(vpsOf(rs.st), fx);
+                if (cr && cs) {
+                  paired[ord].n += 1;
+                  paired[ord].raw.push(...cr); paired[ord].snap.push(...cs);
+                }
+              }
+            });
+            // **조리개 스윕**(#12, 리뷰어 [25]) — 몰아 팔만, 4·40px
+            {
+              const r4 = runRules(fx, "grouped", "snap", 4);
+              record("rule_grouped_snap_r4", vpsOf(r4.st), r4);
+              const r40 = runRules(fx, "grouped", "snap", 40);
+              record("rule_grouped_snap_r40", vpsOf(r40.st), r40);
             }
             // **검출 팔 — 같은 획, 같은 실행**(#27). 대역을 다른 하네스에서 안 가져온다
             const lines = linesFromStrokes(
@@ -334,7 +423,9 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
         live[arm].errs.push(...b.errs); live[arm].runs += b.runs; live[arm].ok += b.ok;
         live[arm].order.push(...b.order); live[arm].asks += b.asks;
         live[arm].rejected += b.rejected; live[arm].seps.push(...b.seps);
-        live[arm].snapped += b.snapped;
+        live[arm].snapped += b.snapped; live[arm].queried += b.queried;
+        live[arm].firstPairMoved += b.firstPairMoved; live[arm].firstPairRuns += b.firstPairRuns;
+        live[arm].screenAxes += b.screenAxes;
       }
     }
     const head = Object.fromEntries(Object.entries(live).map(([k, v]) => [k, summarize(v)]));
@@ -354,12 +445,41 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
           const t = noIdentity[arm];
           t.errs.push(...b.errs); t.runs += b.runs; t.ok += b.ok;
           t.order.push(...b.order); t.asks += b.asks; t.rejected += b.rejected;
-          t.seps.push(...b.seps); t.snapped += b.snapped;
+          t.seps.push(...b.seps); t.snapped += b.snapped; t.queried += b.queried;
+          t.firstPairMoved += b.firstPairMoved; t.firstPairRuns += b.firstPairRuns;
+          t.screenAxes += b.screenAxes;
         }
       }
     }
     const headNoIdentity = Object.fromEntries(
       Object.entries(noIdentity).map(([k, v]) => [k, summarize(v)]));
+
+    // ---- **jit_0 층을 따로 낸다**(리뷰어 [21] — jit_0은 '무오차'가 아니다: endJitter만 0이고
+    // 등급 잉크 잡음(INK_GRADES)은 남는다. 4차 등록의 '항등' 사유는 그래서 **틀렸고**, 모집단은
+    // 연속성으로 유지하되(#28) 그 층의 실측을 표제 옆에 그대로 낸다).
+    const jit0NoIdentity: Record<string, Bag> = newArms();
+    for (const c of COMPOSITIONS) {
+      if (c.name.startsWith("1pt")) continue;
+      for (const arm of ARMS) {
+        const b = byJitterComp[`jit_0|${c.name}`]?.[arm];
+        if (!b) continue;
+        const t = jit0NoIdentity[arm];
+        t.errs.push(...b.errs); t.runs += b.runs; t.ok += b.ok;
+        t.order.push(...b.order); t.asks += b.asks; t.rejected += b.rejected;
+        t.seps.push(...b.seps); t.snapped += b.snapped; t.queried += b.queried;
+        t.firstPairMoved += b.firstPairMoved; t.firstPairRuns += b.firstPairRuns;
+        t.screenAxes += b.screenAxes;
+      }
+    }
+    const jit0Head = Object.fromEntries(
+      Object.entries(jit0NoIdentity).map(([k, v]) => [k, summarize(v)]));
+
+    const pairedSummary = Object.fromEntries(Object.entries(paired).map(([k, v]) => [k, {
+      fixtures_both_ok: v.n,
+      raw_deg_median: round(median(v.raw), 4),
+      snap_deg_median: round(median(v.snap), 4),
+      raw_axes: v.raw.length, snap_axes: v.snap.length,
+    }]));
     const ruleMed = headNoIdentity.rule_grouped.deg_median;
     const detMed = headNoIdentity.detect.deg_median;
     const passed = ruleMed != null && detMed != null && ruleMed < detMed;
@@ -407,6 +527,24 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
         note: "**잡음이 걸린 행만**(0.005·0.01·0.03·0.05). 잡음 0 행은 항등이라 뺐다(#5).",
         ...head,
       },
+      what_this_does_not_say: [
+        "합성 잉크는 짝을 의도하지 않는다(AS-L13의 자리) — 사람은 X 교차·연장 수렴으로 짝을 긋는다. 실획(K)이 최종 판정자다",
+        "시드별 분해가 없다(#14) — 팔 간 격차(1.8~3.4°)가 시드 폭 안인지 미확인이다. 짝지은 부분집합(paired_headline)이 표본 짝은 맞추지만 시드 폭은 못 댄다",
+        "물음 오라클이 참 축으로 답한다 — 스냅으로 펴진 선에도 원래 축으로 답하므로 어느 팔도 실사용 성능이 아니다(지시 3이 이 자리를 바꾼다)",
+        "카메라 확정 후 3D 오스냅·축 스냅의 효과는 2D 목록 근사 밖이다(§4.5 보장으로 화면 좌표는 같다)",
+        "무한원 축 제외는 원시 팔에서는 항등 제거지만 **스냅 팔에서는 선택이 될 수 있다**(리뷰어 [23]② — 직교 스냅이 얕은 축을 화면 축으로 펴면 그 축이 분모에서 빠진다). screen_axes_total이 그 대조 재료다",
+      ],
+      headline_jit0_no_identity: {
+        note: "**jit_0 층**(리뷰어 [21]) — endJitter 0이지만 등급 잉크 잡음은 남는 층. 4차 등록이 "
+          + "'항등'이라며 표제에서 뺐는데 그 사유가 틀렸다(실측이 0이 아니다). 모집단 연속성으로 "
+          + "표제는 유지하고 이 층을 따로 낸다 — 1pt 구도는 여기서도 뺐다(그쪽은 진짜 구성 항등).",
+        ...jit0Head,
+      },
+      paired_headline: {
+        note: "**짝지은 부분집합**(리뷰어 [23]①) — 표제 모집단에서 원시·스냅 둘 다 카메라가 선 "
+          + "픽스처만. 팔별 camera_ok 차이(예: drawn 109 대 138)가 중앙값을 흔드는 것을 가른다.",
+        ...pairedSummary,
+      },
       headline_no_identity: {
         note: "위에서 **`1pt_yaw0_pitch0` 구도를 더 뺐다.** 그 구도의 유일한 유한 소실점은 "
           + "주점 자리이고, 소실점 하나면 주점이 그 소실점이 되므로 축 방향이 **f와 무관하게 "
@@ -428,16 +566,30 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
           + "그러므로 '기준을 못 넘으면 신호의 성질인가 기준의 성질인가'가 **갈리지 않는 상태**이고, "
           + "그 사실을 여기 남긴다(#35). ⚠ 기준을 낮추는 근거가 아니다.",
         reachability_absent:
-          "무오차 입력에서 규칙의 축 오차는 정의상 0(`by_jitter.jit_0`이 그것이고 표제에서 뺐다). "
-          + "항등이므로 오라클로 쓸 수 없다.",
+          "**오라클 팔이 없다**(위 reachability). ⚠ [5차 정정 — 리뷰어 [21]] 초판이 여기 적은 "
+          + "'무오차 입력 = jit_0 = 정의상 0'은 틀렸다 — jit_0은 endJitter만 0이고 등급 잉크 "
+          + "잡음이 남아 실측이 0이 아니다(headline_jit0_no_identity). 참 항등은 등급 잡음까지 "
+          + "끈 입력인데 그 팔은 안 돌렸다(돌리면 정의상 0이라 정보가 없다, #5).",
         result: {
         rule_grouped_median: ruleMed, detect_median: detMed, passed,
         // **앱 동작점**(5차 이월-2) — 스냅 팔
         rule_drawn_snap_median: headNoIdentity.rule_drawn_snap.deg_median,
         rule_grouped_snap_median: headNoIdentity.rule_grouped_snap.deg_median,
         rule_wide_pair_snap_median: headNoIdentity.rule_wide_pair_snap.deg_median,
+        // **위약**(#39, 리뷰어 [20]) — 같은 크기 임의 방향 이동
+        rule_drawn_placebo_median: headNoIdentity.rule_drawn_placebo.deg_median,
+        rule_grouped_placebo_median: headNoIdentity.rule_grouped_placebo.deg_median,
+        rule_wide_pair_placebo_median: headNoIdentity.rule_wide_pair_placebo.deg_median,
+        // **조리개 스윕**(#12, 리뷰어 [25])
+        rule_grouped_snap_r4_median: headNoIdentity.rule_grouped_snap_r4.deg_median,
+        rule_grouped_snap_r40_median: headNoIdentity.rule_grouped_snap_r40.deg_median,
+        // **짝지은 부분집합**(리뷰어 [23]①)
+        paired: pairedSummary,
         passed_snapped: headNoIdentity.rule_grouped_snap.deg_median != null && detMed != null
           && headNoIdentity.rule_grouped_snap.deg_median < detMed,
+        passed_snapped_note: "몰아(grouped) 팔을 강제하는 이유는 **원 판정(passed)과 같은 팔**이라는 "
+          + "연속성 하나다(리뷰어 [36]) — AS-L13 방향 뒤집힘으로 대표성 근거는 없다. 세 팔 중앙을 "
+          + "전부 적는다(#28 '못 고르면 둘 다').",
       },
         note: "⚠ **이 항목이 등록한 게이트다.** CLAUDE.md §2의 중단 조건(실측 축 오차 0.5°)과 "
           + "다른 게이트이고 같은 말로 부르지 않는다(PITFALLS #41).",
