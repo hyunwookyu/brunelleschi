@@ -73,7 +73,19 @@ finiteHorizontals > 0`이면 **묻는다**)를 우회한다 — `mainL`의 `snap
 | **2. 지배항 규명** | `rule_gate`의 남는 몫(교점 조건수)이 어디서 오는가 — 첫 짝 각차(`firstSep`)와 형태 오차의 관계를 팔로 낸다. 그 전에는 항목 2·4를 올려도 35° 카메라 위에 얹는 것이다 |
 | **3. 항목 11 판단** | P1 가드 우회 제거(반사실 팔이 이미 실측) — 물음 증가가 대가다. 항목 11 본문과 함께 |
 | 4. 3·4-R 재검 | 7차 3·4-R 대응 표 16건(progress 7차 절 끝)을 다음 리뷰어가 재검한다(관례) |
-| 5. Actions 초록 | 이 브랜치 푸시의 실행 확인 |
+| 5. Pages 배포 | `deploy`는 **main 병합 뒤에만** 돈다(아래 CI 절) |
+
+## CI (Actions run 32050549209 · `workflow_dispatch`로 이 브랜치에 돌렸다)
+
+**`build` 초록**(tsc · 빌드 · `static_deploy.spec.ts` · artifact 업로드) ·
+**`measure` 초록**(`npx vitest run` — CI에는 `data/quickdraw`·`sessions/`가 없어 셋이 skip) ·
+**`deploy` 빨강 — 이것은 결함이 아니라 브랜치 제한이다.** `pages.yml`은 `push: [main, master]`
+트리거이고 `github-pages` 환경이 main으로 제한돼 있다(4차 브랜치가 같은 것을 기록했다:
+`git log origin/claude/vanishing-point-rules-overhaul-qxrqga` → "deploy는 브랜치 제한으로 막힌다").
+⇒ **배포는 main 병합이 있어야 돈다.** 이 브랜치에서 확인할 수 있는 초록은 build·measure 둘이다.
+
+⚠ 지시가 "화각 임계 수정이 배포되어야 사용자가 그 구도에서 경고를 본다"고 했는데
+**그 수정이 저장소에 없다**(상단 표) — 이 푸시에 배포할 화각 변경은 들어 있지 않다.
 
 ## 검증 현황 (마지막 커밋 기준)
 
