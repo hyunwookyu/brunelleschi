@@ -1664,3 +1664,149 @@ test("지우개 크기·도구 배치 — 슬라이더가 반경을 바꾸고 �
     metric_defs: metricsSnapshot(),
   }, null, 1));
 });
+
+// ---------------------------------------------------------------- 5차 지시 7 — 시점 저장·실행취소 분리
+//
+// 7-1: 돌려 보던 각도를 "시점"으로 저장하고, 목록에서 누르면 **날아서** 돌아온다(라이노
+// 명명된 뷰의 관행 — 이름만 부드럽게). 7-2: 실행취소는 **그림만** 되돌린다 — 돌린 카메라가
+// 실행취소로 튀면 안 된다(되살린 버그: restoreSnap이 무조건 pinTo).
+test("시점 저장·복귀 — 실행취소는 카메라를 안 건드린다 (5차 지시 7)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+
+  const box = (await page.locator("#ink").boundingBox())!;
+  const W = box.width, H = box.height;
+  const drawPx = async (x1: number, y1: number, x2: number, y2: number) => {
+    await page.mouse.move(box.x + x1, box.y + y1);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move(box.x + x1 + (x2 - x1) * i / 8, box.y + y1 + (y2 - y1) * i / 8);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(50);
+  };
+  const CAM = `(() => {
+    const c = window.S2S.stage.viewport.camera;
+    c.updateMatrixWorld(true);
+    return { p: [c.position.x, c.position.y, c.position.z],
+             q: [c.quaternion.x, c.quaternion.y, c.quaternion.z, c.quaternion.w],
+             pinned: window.S2S.stage.isPinned };
+  })`;
+  const led: Record<string, unknown> = {};
+  // **감쇠 정착 대기** — OrbitControls의 관성(dampingFactor 0.12)이 제스처 뒤에도 몇 프레임
+  // 카메라를 움직인다. 카메라 불변을 재려면 먼저 멈춰야 한다(#7 — 0.08 이동의 정체가 이것이었다)
+  const settle = async () => {
+    let prev = await page.evaluate(c => eval(c)(), CAM);
+    for (let i = 0; i < 40; i++) {
+      await page.waitForTimeout(100);
+      const cur = await page.evaluate(c => eval(c)(), CAM);
+      const d = Math.hypot(...(prev as any).p.map((v: number, k: number) => v - (cur as any).p[k]));
+      prev = cur;
+      if (d < 1e-10) break;
+    }
+    return prev;
+  };
+
+  // 확정 상태(눈높이 위 구도 — lifted 3)
+  await drawPx(0.25 * W, 0.30 * H, 0.45 * W, 0.301 * H);
+  await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
+  await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
+  expect(await page.evaluate(() => window.S2S.standing())).toBe(true);
+
+  // ---- 돌린다(터치 한 손가락 — 항목 2 팔과 같은 경로)
+  await page.evaluate(() => {
+    const el = document.getElementById("ink")!;
+    const r = el.getBoundingClientRect();
+    el.dispatchEvent(new PointerEvent("pointerdown", {
+      pointerId: 92001, pointerType: "touch", isPrimary: true, bubbles: true,
+      clientX: r.left + r.width * 0.6, clientY: r.top + r.height * 0.6, buttons: 1 }));
+    for (const dx of [15, 45, 90]) {
+      el.dispatchEvent(new PointerEvent("pointermove", {
+        pointerId: 92001, pointerType: "touch", isPrimary: true, bubbles: true,
+        clientX: r.left + r.width * 0.6 + dx, clientY: r.top + r.height * 0.6, buttons: 1 }));
+    }
+    el.dispatchEvent(new PointerEvent("pointerup", {
+      pointerId: 92001, pointerType: "touch", isPrimary: true, bubbles: true }));
+  });
+  led.orbited = await settle();                              // 감쇠가 멎은 자세
+  expect((led.orbited as any).pinned).toBe(false);
+
+  // ---- 7-1a: 시점 저장 — 목록에 pose 있는 "시점 1"이 는다
+  const viewsBefore = await page.evaluate(() => window.S2S.doc().views.length);
+  await page.click("#views button[data-saveview]");
+  led.saved = await page.evaluate(() => {
+    const d = window.S2S.doc();
+    const v = d.views[d.views.length - 1];
+    return { n: d.views.length, name: v.name, hasPose: !!v.pose, current: d.currentView === v.id };
+  });
+  expect((led.saved as any).n).toBe(viewsBefore + 1);
+  expect((led.saved as any).name).toBe("시점 1");
+  expect((led.saved as any).hasPose).toBe(true);
+
+  // ---- 7-2: 그리고 → 실행취소 → **카메라가 그대로다**(d의 반례 검사)
+  await drawPx(0.30 * W, 0.55 * H, 0.42 * W, 0.552 * H);   // 돌린 시점에서 한 획(L-B.8)
+  const nStrokes = await page.evaluate(() => window.S2S.doc().strokes.length);
+  led.before_undo = await settle();
+  await page.click('#tools button[data-act="undo"]');
+  await page.waitForTimeout(60);
+  led.after_undo = await page.evaluate(c => eval(c)(), CAM);
+  led.strokes_after_undo = await page.evaluate(() => window.S2S.doc().strokes.length);
+  expect(led.strokes_after_undo).toBe(nStrokes - 1);        // 그림은 되돌아갔다
+  const b = led.before_undo as any, a = led.after_undo as any;
+  const dp = Math.hypot(...b.p.map((v: number, i: number) => v - a.p[i]));
+  const dq = Math.hypot(...b.q.map((v: number, i: number) => v - a.q[i]));
+  led.cam_moved = { dp, dq };
+  expect(a.pinned).toBe(false);                              // **다시 물리지 않았다**
+  expect(dp).toBeLessThan(1e-9);                             // **카메라가 그대로다**(7-2d)
+  expect(dq).toBeLessThan(1e-9);
+
+  // ---- 7-1b: 확정 시점으로 **날아서** 복귀 → 그 뒤 시점 1로 날아서 복귀
+  await page.click(`#views button[data-view="v1"]`);
+  await page.waitForTimeout(500);                            // 비행 280ms + 마무리
+  led.at_confirm = await page.evaluate(c => eval(c)(), CAM);
+  expect((led.at_confirm as any).pinned).toBe(true);         // 확정 시점에 물렸다
+  const savedId = await page.evaluate(() => {
+    const d = window.S2S.doc();
+    return d.views.find((v: any) => v.name === "시점 1")!.id;
+  });
+  await page.click(`#views button[data-view="${savedId}"]`);
+  await page.waitForTimeout(500);
+  led.at_saved = await settle();
+  const s2 = led.at_saved as any, o = led.orbited as any;
+  led.return_gap = Math.hypot(...o.p.map((v: number, i: number) => v - s2.p[i]));
+  expect((led.at_saved as any).pinned).toBe(false);
+  expect(led.return_gap as number).toBeLessThan(1e-3);       // **저장한 자세로 돌아왔다**
+
+  led.console_errors = errors;
+  expect(errors).toEqual([]);
+
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "viewpoint_undo.json"), JSON.stringify({
+    spec: "5차 지시 7 — 시점 저장(자세 보존·기본 이름 번호)·목록 복귀(비행 후 자세 일치)·실행취소는 그림만(획 수 −1, 카메라 위치·방향 불변, 재물림 없음). Playwright 신뢰 이벤트·콘솔 오류 0",
+    what_this_does_not_say: [
+      "비행 중 프레임의 품질(투영 전환 시점)은 안 잰다 — 도착 자세 일치(<1e-3)만 판정한다(#12)",
+      "이름 바꾸기(✎·prompt)는 합성 클릭으로 안 잰다 — prompt는 Playwright 대화상자 처리라 별도 팔이 필요하고, 기본 이름 경로가 본체다",
+      "실행취소가 **확정 자체를 되돌리는** 경우(카메라가 안 서게 됨 — 물림 해제 경로)는 이 팔 밖이다(코드 경로: restoreSnap의 !c && isPinned → unpin)",
+      "dpr 1·합성 터치다(#21·AS-C1)",
+    ],
+    thresholds: { cam_delta_max: 1e-9, return_gap_max: 1e-3, console_errors_max: 0 },
+    gate: {
+      registered: "돌린 뒤 시점 저장 → 이름 '시점 1'·pose 보존 · 그리고 실행취소 → 획 수 −1이고 카메라 위치·방향 변화 <1e-9·재물림 없음(7-2 — 되살린 버그: restoreSnap 무조건 pinTo) · 확정 시점 복귀 후 pinned · 저장 시점 복귀 후 자세 오차 <1e-3 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
+      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 자세 보존·복귀는 자료구조(§9.2)의 보장이고(#5) 판정은 그 배선(저장 버튼→뷰→비행→복귀)이다",
+    },
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 1));
+});

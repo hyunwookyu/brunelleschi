@@ -146,6 +146,53 @@ export class Stage {
     tgt.copy(cam.position).addScaledVector(fwd, Math.max(1e-3, d));
   }
 
+  /** 진행 중인 시점 비행의 취소 토큰(5차 지시 7-1b). */
+  private flySeq = 0;
+
+  /**
+   * **시점으로 날아간다**(5차 지시 7-1b — 라이노 명명된 뷰의 복귀 애니메이션).
+   * 위치는 lerp·방향은 slerp로 280ms. 목표가 확정 시점(pose null)이면 항등 자세로 날고
+   * 끝에서 호출자가 pinTo로 마무리한다(투영 전환은 비행 양 끝에서 한 번씩 — 중간 프레임은
+   * 자유 화각으로 난다. 라이노도 렌즈는 끝에서 맞춘다).
+   */
+  flyTo(pose: ViewPose | null, ms: number, onDone: () => void): void {
+    const cam = this.viewport.camera;
+    cam.updateMatrixWorld(true);
+    const p0 = cam.position.clone(), q0 = cam.quaternion.clone();
+    let p1 = new THREE.Vector3(0, 0, 0), q1 = new THREE.Quaternion();
+    if (pose) {
+      const X = conv(pose.R[0]), Y = neg(conv(pose.R[1])), Z = neg(conv(pose.R[2]));
+      const C = conv(pose.C);
+      const m = new THREE.Matrix4().makeBasis(
+        new THREE.Vector3(...X), new THREE.Vector3(...Y), new THREE.Vector3(...Z));
+      q1.setFromRotationMatrix(m);
+      p1 = new THREE.Vector3(C[0], C[1], C[2]);
+    }
+    // 물려 있으면 비행 전에 자유 투영으로 — 핀 투영은 자세 항등을 전제한다
+    if (this.pinned) {
+      this.pinned = null;
+      this.viewport.projectionHook = (size) =>
+        applyFreeAspect(cam as unknown as CameraLike, size, FREE_FOV_DEG);
+      this.viewport.projectionHook(this.size());
+      this.viewport.controls.enabled = true;
+    }
+    const seq = ++this.flySeq;
+    const t0 = performance.now();
+    const ease = (t: number) => t * t * (3 - 2 * t);           // smoothstep
+    const step = () => {
+      if (seq !== this.flySeq) return;                          // 새 비행이 시작됐다
+      const t = Math.min(1, (performance.now() - t0) / ms);
+      const k = ease(t);
+      cam.position.lerpVectors(p0, p1, k);
+      cam.quaternion.slerpQuaternions(q0, q1, k);
+      cam.updateMatrixWorld(true);
+      this.viewport.invalidate();
+      if (t < 1) requestAnimationFrame(step);
+      else onDone();
+    };
+    requestAnimationFrame(step);
+  }
+
   /** 확정 카메라를 벗어나 자유 시점으로. 지금 자세에서 이어 돌린다. */
   unpin(target: Vec3 | null): void {
     this.pinned = null;

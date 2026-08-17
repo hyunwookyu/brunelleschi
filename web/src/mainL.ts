@@ -311,7 +311,12 @@ const appSnap = (): AppSnap => takeSnap(doc, cam,
 function restoreSnap(s: AppSnap) {
   doc = applySnap(cam, s);
   const c = cam.ctx();
-  if (c) stage.pinTo(c.principal, c.f);
+  // **실행취소는 그림만 되돌린다**(5차 지시 7-2) — 시점(카메라 자세)은 이력이 아니다.
+  // 돌려 보던 중이면(비핀) 그대로 둔다. 물려 있던 상태에서만 다시 물린다(f·주점이
+  // 되돌아갔을 수 있다). 카메라가 더는 안 서면(확정 자체를 되돌린 경우) 물림을 푼다 —
+  // 핀 투영이 낡기 때문이고, 그때 화면은 확정 전 2D 층으로 돌아간다.
+  if (c && stage.isPinned) stage.pinTo(c.principal, c.f);
+  else if (!c && stage.isPinned) stage.unpin(null);
   const rep = s.report as PromoteReport | null;
   promoteReport = rep ? { ...rep, snapLost: [...rep.snapLost] } : null;
   syncScene();
@@ -768,6 +773,28 @@ const gestures = new CamGestures({
  * 2D 대기 획은 `viewRef`가 소유하므로 **전환만으로 화면의 2D 층이 바뀐다** —
  * 숨기는 이유는 정리가 아니라 **좌표계**다(`doc.ts` 머리말).
  */
+/**
+ * **시점 저장**(5차 지시 7-1a — 라이노 '명명된 뷰', 이름은 '시점'). 지금 자세를 뷰로 등록한다.
+ * 확정 시점에 물려 있으면 저장할 것이 없다 — 확정 뷰가 이미 목록에 있다.
+ */
+function saveViewpoint(): void {
+  const p = stage.pose();
+  if (!p) { note = "확정 시점은 이미 목록에 있습니다"; refresh(); return; }
+  const n = doc.views.filter(v => v.pose).length + 1;
+  const v = newView(`시점 ${n}`, p);
+  doc.views.push(v);
+  doc.currentView = v.id;
+  note = `<b>${v.name}</b>을 저장했습니다 — 목록에서 누르면 돌아옵니다`;
+  refresh();
+}
+
+/** **누르면 그 시점으로 날아간다**(7-1b) — 도착해서 switchView로 마무리한다. */
+function switchViewAnimated(id: string): void {
+  const v = doc.views.find(x => x.id === id);
+  if (!v || id === doc.currentView) { if (v) switchView(id); return; }
+  stage.flyTo(v.pose, 280, () => switchView(id));
+}
+
 function switchView(id: string) {
   const v = doc.views.find(x => x.id === id);
   if (!v) return;
@@ -843,15 +870,31 @@ function renderViews() {
     const del = v.pose === null
       ? `<button class="del" disabled title="확정 뷰는 지울 수 없습니다 — 첫 카메라입니다">✕</button>`
       : `<button class="del" data-delview="${v.id}" title="이 뷰와 그 안의 대기 획 ${n}개를 지웁니다">✕</button>`;
+    const ren = v.pose === null ? ""
+      : `<button class="ren" data-renview="${v.id}" title="이름 바꾸기">✎</button>`;
     return `<div class="row"><button data-view="${v.id}"${on ? ' class="on"' : ""}>`
-         + `${v.name}${n ? ` <span class="n">·2D ${n}</span>` : ""}</button>${del}</div>`;
+         + `${v.name}${n ? ` <span class="n">·2D ${n}</span>` : ""}</button>${ren}${del}</div>`;
   });
-  viewsEl.innerHTML = `<div class="cap">뷰 ${doc.views.length}</div>` + rows.join("");
+  const canSave = cam.standing() && !stage.isPinned;
+  viewsEl.innerHTML = `<div class="cap">시점 ${doc.views.length}</div>` + rows.join("")
+    + `<div class="saverow"><button data-saveview${canSave ? "" : " disabled"}`
+    + ` title="지금 보는 각도를 시점으로 저장합니다 — 돌려 본 뒤에 누르세요">+ 시점 저장</button></div>`;
 }
 
 viewsEl.addEventListener("click", (e) => {
   const b = (e.target as HTMLElement).closest("button");
   if (!b || (b as HTMLButtonElement).disabled) return;
+  if ((b as HTMLButtonElement).dataset.saveview !== undefined) { saveViewpoint(); return; }
+  const ren = (b as HTMLButtonElement).dataset.renview;
+  if (ren) {
+    const v = doc.views.find(x => x.id === ren);
+    if (v) {
+      // eslint-disable-next-line no-alert
+      const name = prompt("시점 이름", v.name);
+      if (name && name.trim()) { v.name = name.trim().slice(0, 24); refresh(); }
+    }
+    return;
+  }
   const del = (b as HTMLButtonElement).dataset.delview;
   if (del) {
     pushUndo();
@@ -866,7 +909,7 @@ viewsEl.addEventListener("click", (e) => {
     return;
   }
   const to = (b as HTMLButtonElement).dataset.view;
-  if (to) switchView(to);
+  if (to) switchViewAnimated(to);        // **애니메이션으로 돌아간다**(7-1b)
 });
 
 /**
@@ -2688,6 +2731,8 @@ refresh();
   ask: () => ask && { strokeId: ask.strokeId, question: ask.question, toH: ask.toH, toV: ask.toV },
   /** 물음 카운터(5차 지시 3의 종단 확인이 읽는다 — #17). */
   askStats: () => ({ ...askStats }),
+  /** **시점 저장**(5차 지시 7-1) — 종단 확인이 앱 경로 그대로 부른다(#17). */
+  saveViewpoint: () => { saveViewpoint(); },
   /** **지우개 크기**(5차 지시 5) — 종단 확인이 앱 경로 그대로 읽고 쓴다(#17). */
   eraser: () => ({ ...ERASER }),
   setEraser: (px: number) => {
