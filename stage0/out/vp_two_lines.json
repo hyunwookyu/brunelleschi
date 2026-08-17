@@ -45,13 +45,13 @@
   "of": 3,
   "max_misfit": 0.018449294278577038
  },
- "asked": null,
+ "asked": "screen_or_depth",
  "grid": {
   "standing": true,
   "checked": 480,
   "maxSin": 1.2560206047907573e-14
  },
- "ink_px": 24569,
+ "ink_px": 27434,
  "console_errors": [],
  "constants": {
   "hash": "54346ad1",

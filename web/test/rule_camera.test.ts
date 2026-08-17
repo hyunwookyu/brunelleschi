@@ -66,7 +66,9 @@ const LIVE_JITTERS = JITTERS.filter(j => j > 0);
  */
 const REGISTERED =
   "규칙 팔의 축 방향 오차 중앙값(도)이 **같은 하네스·같은 픽스처**의 검출 팔보다 작다. "
-  + "모집단은 5구도 × 6시드 × 등급 2 × 잡음 {0.005,0.01,0.03,0.05}이고 **잡음 0 행은 뺀다**"
+  + "모집단은 **`headline_no_identity`**(7-R 리뷰어 [10] 정정 — 판정이 읽는 표를 등록문에 적는다): "
+  + "**4구도**(`1pt_yaw0_pitch0`을 뺀다 — 그 구도의 축 방향은 f와 무관해 어떤 오차에도 0이 나온다, #5) "
+  + "× 6시드 × 등급 2 × 잡음 {0.005,0.01,0.03,0.05}이고 **잡음 0 행은 뺀다**"
   + "(무오차 입력에서 교점은 정의상 참 소실점이라 오차 0 — 측정이 아니라 항등이다, #5). "
   + "⚠ 이것은 **이 항목이 등록한 게이트**이고 CLAUDE.md §2의 중단 조건(실측 축 오차 0.5°)이 아니다(#41). "
   + "**[5차 이월-2 추가 등록]** 스냅 팔(`rule_*_snap`)은 같은 획을 앱의 확정 전 2D 판정"
@@ -78,7 +80,11 @@ const REGISTERED =
   + "등급 잉크 잡음(INK_GRADES)이 남아 jit_0의 축 오차는 0이 아니다(by_jitter.jit_0 실측 참조). "
   + "표제 모집단은 연속성으로 유지하고(#28) jit_0 층을 headline_jit0_no_identity로 따로 낸다. "
   + "**[지시 3 배선]** 이 실행의 스냅 팔은 무물음 선언(스냅 = 선언)이다 — 물음 오라클 판"
-  + "(이전 동작점)의 원장은 git show d724ac0:stage0/out/rule_camera.json이다.";
+  + "(이전 동작점)의 원장은 git show d724ac0:stage0/out/rule_camera.json이다. "
+  + "**[7차 지시 1-a 배선 변경]** 그 '스냅 = 선언'을 **지웠다** — `forcedBySnap`이 `stepRule`의 "
+  + "P1 가드를 우회해 차수를 P1에 가두고 있었다. 이 실행의 스냅 팔은 **스냅된 좌표만** 먹이고 "
+  + "선언은 규칙이 한다. 옛 배선(우회 살림)의 원장은 git show b52bc7c:stage0/out/rule_camera.json이고, "
+  + "**차수·배치 귀결의 대조는 `order_lock.json`의 `bypass`/`fixed` 두 팔이 낸다**(#30 양성 채널).";
 
 // ---------------------------------------------------------------- 픽스처
 
@@ -148,8 +154,9 @@ function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
   for (const e of list) {
     let pts = e.pts2d;
     let moved = false;
-    /** **방향 스냅이 걸리면 그 축으로 강제한다**(5차 지시 3 — 앱과 같은 배선). 스냅 팔만. */
-    let forcedBySnap: "screen" | "depth" | undefined;
+    // ⛔ **`forcedBySnap`을 지웠다**(2026-08-18 7차 지시 1-a) — 앱의 `snapForced`가 없어졌으므로
+    //    하네스도 안 준다(#17: 측정 경로와 앱 경로가 갈라지지 않는다). 5차 지시 3의
+    //    "스냅이 곧 선언이다"가 `stepRule`의 **P1 가드를 우회**하고 있었다.
     // **앱과 같은 조건**: 2D 판정(오스냅·직교·vp_dir·정렬)은 **카메라 확정 전**에만 돈다
     // (`mainL`: `frame() ? raw : resolve2d(raw)` — standing ⟺ order ≥ 1). 확정 후의 규칙
     // 입력은 앱에서도 원시 선이다(`feedStroke`가 3D 스냅보다 먼저 돈다).
@@ -164,9 +171,7 @@ function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
       if (mode === "snap") {
         pts = r2.pts;
         moved = dA > 1e-9 || dB > 1e-9;
-        // **스냅이 곧 선언이다**(5차 지시 3-a·b) — 직교면 화면 축, 소실점 방향이면 깊이.
-        // 물음(판정)의 대상은 스냅이 안 걸린 자유 선뿐이다
-        forcedBySnap = r2.ortho ? "screen" : r2.vpdir ? "depth" : undefined;
+        // **스냅은 좌표만 옮긴다** — 선언은 규칙이 한다(7차 지시 1-a).
       } else {
         // **위약**: 같은 크기, 임의 방향(#39). 스냅이 안 움직였으면 위약도 안 움직인다
         if ((dA > 1e-9 || dB > 1e-9) && rr) {
@@ -184,7 +189,7 @@ function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
     const line: RLine = { a: rep.a, b: rep.b };
     movedByKey.set(keyOf(line), moved);
     fedSegs.push({ id: `f${fedSegs.length}`, a: line.a, b: line.b });
-    let r = stepRule(st, line, SZ, forcedBySnap);
+    let r = stepRule(st, line, SZ);
     if (r.event.type === "ask") {
       asks += 1;
       // **참 축으로 답한다**(오라클). 답한 횟수를 남긴다 — 사람이 개입해야 하는 횟수다
@@ -527,9 +532,13 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
             + "STALE이 안 뜬다. 사람이 본다). 종류 토글 전부 켬·관계 스냅 켬(앱 기본값)",
         },
         ask_policy:
-          "**스냅 팔은 방향 스냅이 걸린 선을 묻지 않고 그 축으로 강제한다**(지시 3 — 앱과 같은 "
-          + "배선). 남는 물음(자유 선·원시 팔 전부)에는 참 축으로 답했다(오라클). 답한 횟수는 "
-          + "`asks_per_run` — 사람이 실제로 몇 번 개입해야 하는가이고 그것이 이 방식의 비용이다.",
+          "⚠⚠ **7차 지시 1-a로 뒤집혔다**(7-R 리뷰어 [8] — 이 필드가 8-R′에 이어 **같은 자리에서 "
+          + "두 번째로 낡았다**, #34). 현행 배선: **스냅 팔도 강제하지 않는다** — 스냅은 좌표만 "
+          + "옮기고 선언은 규칙이 한다. 5차 지시 3의 '스냅 = 선언'은 `stepRule`의 P1 가드를 "
+          + "우회했고 그것이 D-L70으로 지워졌다. 물음에는 **모든 팔에서** 참 축으로 답한다(오라클). "
+          + "답한 횟수는 `asks_per_run` — 사람이 실제로 몇 번 개입해야 하는가이고 그것이 이 방식의 "
+          + "비용이다. 판 셋의 원장: 물음 오라클 `git show d724ac0:` · 무물음 선언 "
+          + "`git show b52bc7c:` · 현행(이 파일).",
       },
       headline: {
         note: "**잡음이 걸린 행만**(0.005·0.01·0.03·0.05). 잡음 0 행은 항등이라 뺐다(#5).",
@@ -538,7 +547,7 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
       what_this_does_not_say: [
         "합성 잉크는 짝을 의도하지 않는다(AS-L13의 자리) — 사람은 X 교차·연장 수렴으로 짝을 긋는다. 실획(K)이 최종 판정자다",
         "시드별 분해가 없다(#14) — 원시↔스냅 격차가 시드 폭 안인지 미확인이다(격차 값은 headline_no_identity를 그 자리에서 읽는다 — 수치를 여기 적으면 재실행마다 낡는다, #1). 짝지은 부분집합(paired_headline)이 표본 짝은 맞추지만 시드 폭은 못 대고, **축 분모는 여전히 다르다**(예: drawn 짝 층에서 raw_axes 대 snap_axes — 무한원 편평화의 선택 효과, 리뷰어 [3-6])",
-        "스냅 팔은 **무물음 선언 배선**(지시 3 — 직교→screen·vp_dir→depth 강제)이다. 남는 물음(자유 선)에는 참 축으로 답한다(오라클) — 어느 팔도 실사용 성능이 아니다. 물음 오라클 판(지시 3 이전)의 값은 git show d724ac0:stage0/out/rule_camera.json에 있다",
+        "⚠ **배선 판이 셋이다**(7차 지시 1-a로 하나 늘었다): ① 물음 오라클(지시 3 이전) `git show d724ac0:stage0/out/rule_camera.json` ② 무물음 선언(직교→screen·vp_dir→depth 강제) `git show b52bc7c:stage0/out/rule_camera.json` ③ **현행 — 강제 없음**(D-L70). 이 파일은 ③이다. 물음에는 참 축으로 답한다(오라클) — 어느 팔도 실사용 성능이 아니다",
         "카메라 확정 후 3D 오스냅·축 스냅의 효과는 2D 목록 근사 밖이다(§4.5 보장으로 화면 좌표는 같다)",
         "무한원 축 제외는 원시 팔에서는 항등 제거지만 **스냅 팔에서는 선택이 될 수 있다**(리뷰어 [23]② — 직교 스냅이 얕은 축을 화면 축으로 펴면 그 축이 분모에서 빠진다). screen_axes_total이 그 대조 재료다",
       ],

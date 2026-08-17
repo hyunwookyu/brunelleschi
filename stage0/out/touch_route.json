@@ -193,7 +193,7 @@
         "dollyOut"
       ],
       "api_complete": true,
-      "azimuth_delta": 0.7477623406817256,
+      "azimuth_delta": 0.02112,
       "dist_before": 0,
       "dist_ratio": null,
       "pitfall_as_written": "three 최신판은 `rotateLeft` 같은 공개 API가 없다",
@@ -220,9 +220,9 @@
         "steps": 6,
         "start": "확정 카메라(pinned)"
       },
-      "azimuth_delta": 1.0875938959012859,
-      "polar_delta": 1.3377404919589146,
-      "dist_delta": 6.470458873433536
+      "azimuth_delta": 1.0875938959011955,
+      "polar_delta": 1.3377404919589342,
+      "dist_delta": 6.470458873433533
     },
     "two_finger": {
       "input_px": {
@@ -230,9 +230,9 @@
         "d1": 196,
         "ratio": 1.96
       },
-      "dist_ratio": 0.5660261482031658,
+      "dist_ratio": 0.5660261482031643,
       "guarantee": "1/1.96 = 0.5102 — `dollyOut` 호출의 항등이다. 임계를 걸지 않는다",
-      "target_moved": 0.7120113812477554
+      "target_moved": 0.7120519837848577
     },
     "one_finger_already_free": {
       "input_px": {
@@ -247,9 +247,9 @@
         "steps": 6,
         "start": "자유 시점(이미 풀림) — **첫 팔과 같은 손짓**"
       },
-      "azimuth_delta": 1.0875938959011424,
-      "polar_delta": 0.23305583483594705,
-      "dist_delta": 3.2862601528904634e-14
+      "azimuth_delta": 1.0875938959011662,
+      "polar_delta": 0.2330558348359546,
+      "dist_delta": 4.8405723873656825e-14
     },
     "strokes_after_touch_only": {
       "before": 12,
@@ -324,25 +324,25 @@
     ],
     "arm_start_state": {
       "control": {
-        "dist": 6.470458873433544,
+        "dist": 6.470458873433533,
         "pinned": false
       },
       "op1": {
-        "dist": 6.89628890446559,
+        "dist": 6.896288904465579,
         "pinned": false
       },
       "op2": {
-        "dist": 6.89628890446559,
+        "dist": 6.896288904465579,
         "pinned": false
       },
       "pen_interrupts": {
-        "dist": 6.89628890446559,
+        "dist": 6.896288904465579,
         "pinned": false
       },
       "note": "팔들이 **같은 페이지 상태를 이어 쓴다** — 앞 팔이 뒤 팔의 시작을 정한다"
     },
     "control_no_pen": {
-      "moved": 1.6687944834906652,
+      "moved": 1.6687944834906787,
       "counters": {
         "rejected_down": 0,
         "cancelled_by_pen": 0,
@@ -419,8 +419,8 @@
     },
     "rotate": {
       "azimuth_delta": 1.087593895900961,
-      "dpr1_azimuth_delta": 1.0875938959012859,
-      "ratio": 0.9999999999997014,
+      "dpr1_azimuth_delta": 1.0875938959011955,
+      "ratio": 0.9999999999997844,
       "input_px": {
         "from": [
           500,
@@ -435,8 +435,8 @@
     },
     "positive_channel": {
       "azimuth_delta_half_input": 0.5437969479505123,
-      "azimuth_delta_full_free": 1.0875938959009617,
-      "ratio_to_single": 0.5000000000000289,
+      "azimuth_delta_full_free": 1.0875938959010274,
+      "ratio_to_single": 0.49999999999999867,
       "input_px": {
         "from": [
           500,
@@ -451,7 +451,7 @@
       "reading": "**0.5에 가까워야 지표가 민감한 것**이다. 1에 붙으면 앞의 비 1.0은 규약의 증거가 아니라 둔감의 증거다. ⚠ 두 배로 안 재는 이유: `getAzimuthalAngle()`이 `atan2`라 **감긴다**(두 배 입력에서 비 3.28이 나왔다)"
     },
     "pan": {
-      "target_moved": 0.6090756601912681,
+      "target_moved": 0.6001057596851295,
       "input_px": {
         "two_fingers_dx": 60,
         "note": "두 손가락을 나란히 60px 민다(거리 불변 → 줌 없음)"

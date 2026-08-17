@@ -736,6 +736,20 @@ function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = nul
     lastSnapNote = `${r.why} — **2D로 대기**합니다`;
     return false;
   }
+  // ⚠⚠ **확정된 방향이 `pts2d`에 남는다**(2026-08-18 7차 지시 1-c·1-e).
+  //
+  // 옛 판은 카메라가 선 뒤의 `pts2d`를 **원시 커서 궤적 그대로** 두었다(`onStrokeEnd`의
+  // `frame() ? raw : resolve2d(raw)`). 그래서 **미리보기는 소실점을 지나는데 확정된 선은
+  // 안 지났다** — 사용자가 본 그 증상이고, 규칙(`feedStroke`)도 그 원시 방향을 받았다.
+  // 되쓰기는 새 규약이 아니다: `applySnapToStart`·`applySnapToEnd`가 이미 스냅 결과를
+  // `pts2d`의 양 끝에 적는다(#17). 되쏘면 그 화면 점으로 정확히 돌아온다는 보장
+  // (`lift.ts`의 `segGap = 0`)이 이 되쓰기를 항등으로 만든다 — 양 끝 스냅 획에서는 실제로
+  // 아무것도 안 움직인다.
+  {
+    const p0 = project(r.seg[0], fr.ctx.principal, fr.ctx.f);
+    const p1 = project(r.seg[1], fr.ctx.principal, fr.ctx.f);
+    if (p0 && p1) st.pts2d = [[p0[0], p0[1]], [p1[0], p1[1]]];
+  }
   // **양 끝 스냅은 두 점이 기하를 정한다** — 축은 **기하를 안 바꾸는 라벨**로만 붙인다.
   //
   // ⚠ 라벨을 아예 안 붙이면 축 색·재분류·측정이 통째로 빠진다(종단 확인이 그것을 잡았다:
@@ -2106,8 +2120,12 @@ const ink = new InkCanvas(canvas, {
     // 남는다.
     const r2d = frame() ? null : resolve2d(raw);
     const pts = r2d ? r2d.pts : raw;
-    const snapForced: "screen" | "depth" | undefined =
-      r2d?.ortho ? "screen" : r2d?.vpdir ? "depth" : undefined;
+    // ⛔ **`snapForced`를 지웠다**(2026-08-18 7차 지시 1-a). 5차 지시 3의 "스냅이 곧 선언이다"가
+    // `stepRule`의 **P1 가드를 우회하고 있었다**: 직교 스냅이 걸린 선이 `forced === "screen"`으로
+    // 들어가면 736행의 물음(소실점이 하나라도 서 있으면 묻는다)을 건너뛰고 **조용히 화면 가로축을
+    // 선언**한다. P1은 불가역이므로(지시 1) 그 한 획이 그림 전체를 1점에 가둔다.
+    // D-L69 ②는 **끝점 오스냅 가지에서만** 이 우회를 뺐고(`resolve2dCore`의 `ortho: null`),
+    // 주 경로에는 살아 있었다. 지우는 쪽이 단순한 쪽이다(A-3).
     pushUndo();
     // **승격 요약은 그 전환의 설명이다** — 획을 더 그리면 설명이 낡는다(AS-C7과 같은 형태).
     // 차수 되돌리기 버튼은 남는다 — 그것이 §6.2의 지속 수단이다
@@ -2122,11 +2140,42 @@ const ink = new InkCanvas(canvas, {
     // 하기 때문이다. 확정·승격은 `feedCamera` 안에서 자동으로 난다(지시 1 — 버튼이 없다).
     // **주석은 규칙에도 3D에도 안 들어간다**(D-3). 해칭·지시선·메모는 기하가 아니다 —
     // 그것으로 카메라를 정하면 **조용히 틀린 카메라**가 된다(A-3).
-    if (liftable(s)) feedStroke(s, snapForced);
+    //
+    // ⚠⚠ **순서가 바뀌었다**(7차 지시 1-c): 카메라가 **이미 서 있으면 먼저 놓고 그 다음에**
+    // 규칙에 넣는다. `placeStroke`가 확정 방향을 `pts2d`에 되쓰므로(위 `placeLive`),
+    // 규칙이 받는 것이 **사용자가 본 그 선**이 된다. 옛 순서는 규칙이 원시 커서 궤적을 받았다.
+    // 카메라가 아직 안 섰으면 놓을 수가 없으므로(3D 대상이 없다) 종전대로 규칙이 먼저다 —
+    // 그때 규칙이 카메라를 세우면 아래에서 곧바로 놓는다.
+    const fr0 = liftable(s) ? frame() : null;
+    if (fr0) placeStroke(s, fr0);
+    if (liftable(s)) feedStroke(s);
     // 확정 뒤에는 그 자리에서 푼다 — **승격 연쇄**의 첫 형태다(§9.1).
     // **돌린 시점에서도 돈다**(L-B.8) — `frame()`이 좌표 변환을 들고 있다
-    const fr = liftable(s) ? frame() : null;
+    const fr = fr0 ?? (liftable(s) ? frame() : null);
     if (fr) {
+      if (!fr0) placeStroke(s, fr);                 // 방금 섰다 — 이제 놓을 수 있다
+      // **② 못 놓인 것은 일괄 풀이로** — 서로 이어진 2D 획들끼리 풀린다.
+      // ⚠ **확정 뷰에서만 돈다** — `liftAll`은 소실점을 쓰고 그 소실점은 확정 카메라의 것이다.
+      // 돌린 시점의 2D 획을 그 솔버에 넣으면 **다른 화면 좌표를 같은 카메라로 푸는 것**이다
+      if (!s.seg3d && fr.pinned) solveInto(fr.ctx, pending(doc, confirmView().id));
+      // **③ 승격 연쇄**(§9.1, L-B.7)
+      if (s.seg3d) promoteChain(fr);
+      syncScene();
+    }
+    hoverSnap = null; hover2d = null; live = null;
+    refresh();
+  },
+});
+
+/**
+ * **획 하나를 그 자리에서 놓는다** — 시작점 스냅 → 끝점 스냅 → 축.
+ * `onStrokeEnd`에서 떼어냈다(7차 지시 1-c): 카메라가 이미 서 있으면 **규칙보다 먼저** 돌아야
+ * 규칙이 확정 방향을 받는다. 몸통은 옮기기 전과 같다.
+ */
+function placeStroke(s: SStroke, fr: Frame): void {
+  {
+    {
+      const pts = s.pts2d;
       // **① 시작점 스냅**(§3). 붙으면 그 획의 3D가 확정된다.
       const sc = snapCtx(fr);
       const segs0 = snapSegs(fr.toV);
@@ -2164,18 +2213,9 @@ const ink = new InkCanvas(canvas, {
           lastSnapNote = "2D 대기 획에 붙었습니다 — **2D로 대기**합니다";
         }
       }
-      // **② 못 놓인 것은 일괄 풀이로** — 서로 이어진 2D 획들끼리 풀린다.
-      // ⚠ **확정 뷰에서만 돈다** — `liftAll`은 소실점을 쓰고 그 소실점은 확정 카메라의 것이다.
-      // 돌린 시점의 2D 획을 그 솔버에 넣으면 **다른 화면 좌표를 같은 카메라로 푸는 것**이다
-      if (!s.seg3d && fr.pinned) solveInto(fr.ctx, pending(doc, confirmView().id));
-      // **③ 승격 연쇄**(§9.1, L-B.7)
-      if (s.seg3d) promoteChain(fr);
-      syncScene();
     }
-    hoverSnap = null; hover2d = null; live = null;
-    refresh();
-  },
-});
+  }
+}
 ink.setFrame("persp");
 
 // ---------------------------------------------------------------- 화면
