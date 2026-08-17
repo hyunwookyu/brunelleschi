@@ -9309,7 +9309,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 188,
+      "files_scanned": 189,
       "exts_declared": [
         ".md",
         ".py",
@@ -9323,7 +9323,7 @@
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 124,
+      "files_scanned": 125,
       "exts_declared": [
         ".ts"
       ],
@@ -9333,7 +9333,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 188,
+      "files_scanned": 189,
       "exts_declared": [
         ".md",
         ".py",

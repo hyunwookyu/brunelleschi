@@ -740,6 +740,24 @@ test("관계 스냅 — 둘째 선의 끝이 첫 선의 끝과 같은 높이에 
   });
   expect((led.priority as any).gap_px).toBeLessThan(0.5);   // **점에 붙었다** — 좌표 정렬이 아니다
 
+  // ---- ④′ 판별력 대조 팔(이월-1 재검 [15]) — **같은 겨냥에서 오스냅을 끄면 다른 점이 나온다.**
+  //      정렬 단독이면 y 후보는 ③의 선 끝(y1−6, 거리 1px)이 첫 선 y(거리 5px)보다 가까워
+  //      (endB.x, y1−6)으로 가야 한다 — ④의 gap 0이 "어느 쪽이 이겨도 같은 점"이 아님을 잠근다
+  await page.evaluate(() => window.S2S.setOsnap({
+    kinds: { vertex: false, endpoint: false, midpoint: false, intersection: false } }));
+  await drawPx(0.45 * W, 0.32 * H, endB[0] + 6, endB[1] - 5);
+  led.priority_control = await page.evaluate(() => {
+    const sts = window.S2S.doc().strokes;
+    const st = sts[sts.length - 1];
+    const e = st.pts2d[st.pts2d.length - 1];
+    const b = sts[0].pts2d[sts[0].pts2d.length - 1];
+    return { end: e, target: b, gap_px: Math.hypot(e[0] - b[0], e[1] - b[1]) };
+  });
+  // 오스냅 없이는 그 점에 안 붙는다(gap > 2px) — ④가 판별하는 팔임의 증거
+  expect((led.priority_control as any).gap_px).toBeGreaterThan(2);
+  await page.evaluate(() => window.S2S.setOsnap({
+    kinds: { vertex: true, endpoint: true, midpoint: true, intersection: true } }));
+
   // ---- ⑤ 가이드 표시 팔([B-3], 지시 5-c) — 끌던 중(뗴기 전) 마젠타 가이드 픽셀이 실제로 있다
   await page.mouse.move(box.x + 0.32 * W, box.y + 0.35 * H);
   await page.mouse.down();
@@ -773,15 +791,18 @@ test("관계 스냅 — 둘째 선의 끝이 첫 선의 끝과 같은 높이에 
     what_this_does_not_say: [
       "정렬 후 좌표 일치(<1e-9)는 **보장 확인**이다(#5) — 스냅이 좌표를 그 값으로 놓는다. 판별력은 토글 끔 팔이 든다",
       "겨냥 오차 6px 한 점의 확인이다(#12) — 허용치 경계·근원 선택은 test/snap2d.test.ts의 alignAxes 반례가 덮는다",
-      "오스냅과의 우선순위는 ②에서는 25px 간격으로 회피했고 **④가 겹치는 자리를 직접 잰다**([B-2] — 끝점 6·5px 겨냥에서 정렬이 아니라 점에 붙는다)",
+      "오스냅과의 우선순위는 ②에서는 25px 간격으로 회피했고 **④가 겹치는 자리를 직접 잰다**([B-2] — 끝점 √61≈7.81px 겨냥에서 정렬이 아니라 점에 붙는다). ④의 gap 0 자체는 스냅의 보장(#5)이고 **판별력은 ④′(오스냅 끔 대조)가 든다** — 같은 겨냥에서 정렬 단독은 다른 점(gap>2px)으로 간다(이월-1 재검 [15])",
       "**정렬로 옮겨진 끝점은 규칙(stepRule)의 입력이 된다**([B-1] — D-L58 ③과 같은 원리): 확정 전 전용 배선은 곧 카메라가 정해지는 구간 전체다. 15px 정렬이 300px 획에서 최대 ≈2.9° 방향을 바꾸고 그 선의 교점이 불가역인 첫 소실점이다 — D-L61에 기록",
       "실획이 아니다(AS-C1) · dpr 1 실행이다(#21)",
     ],
-    thresholds: { aligned_gap_px_max: 1e-9, aim_offset_px: 6, toggle_off_gap_px_min: 2,
-                  priority_gap_px_max: 0.5, guide_px_min: 5,
+    // ⚠ `aim_offset_px` 6은 ②(정렬 팔)의 y 겨냥 오차다 — snap2d_flow의 같은 이름 필드(7.81 =
+    // 겨냥 거리)와 **다른 양**이라 이름을 갈랐다(이월-1 재검 [10]). ④의 겨냥 거리는 priority_aim_px
+    thresholds: { aligned_gap_px_max: 1e-9, aim_offset_y_px: 6, priority_aim_px: 7.81,
+                  toggle_off_gap_px_min: 2,
+                  priority_gap_px_max: 0.5, priority_control_gap_px_min: 2, guide_px_min: 5,
                   align_tol_px: 15, ink_px_min: 50, console_errors_max: 0 },
     gate: {
-      registered: "정렬 켬: 둘째 선 끝 y = 첫 선 y(오스냅 조리개 밖 자리) · 정렬 끔: 겨냥 오차 6px 그대로(>2px) · 겹치는 자리(끝점 √61≈7.81px 겨냥 — snap2d_flow와 같은 표기)는 오스냅이 이긴다(gap<0.5px, 5-d) · 끌던 중 마젠타 가이드 픽셀>5(5-c) · 콘솔 오류 0. "
+      registered: "정렬 켬: 둘째 선 끝 y = 첫 선 y(오스냅 조리개 밖 자리) · 정렬 끔: 겨냥 오차 6px 그대로(>2px) · 겹치는 자리(끝점 √61≈7.81px 겨냥 — snap2d_flow와 같은 표기)는 오스냅이 이긴다(gap<0.5px, 5-d) · **같은 겨냥에서 오스냅을 끄면 다른 점**(gap>2px — ④의 판별력, 이월-1 재검 [15]) · 끌던 중 마젠타 가이드 픽셀>5(5-c) · 콘솔 오류 0. "
         + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
       reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 끔 팔의 잔차는 픽스처 겨냥 오차(6px)의 항등이라 도달 가능성으로 적지 않는다(#40 ⚠⚠)",
@@ -872,7 +893,7 @@ test("회전 중심 — 3D 경계 상자의 중심으로 돈다 (4차 지시 7)"
   writeFileSync(resolve(OUT, "orbit_center.json"), JSON.stringify({
     spec: "4차 지시 7 — 궤도 회전 중심 = 3D 경계 상자 중심. 갱신은 궤도 시작 시(7-b — 그리는 중 옮기면 시점이 튄다). Playwright 신뢰 이벤트·콘솔 오류 0",
     what_this_does_not_say: [
-      "target_to_bbox 0은 **보장 확인**이다(#5 — begin이 그 값을 넣는다). 판별력은 평균과의 대조(target_to_mean > 0.05, 옛 동작)가 든다",
+      "target_to_bbox 0은 **보장 확인**이다(#5 — begin이 그 값을 넣는다). 판별력은 평균과의 대조(target_to_mean > 0.05, 옛 동작)가 든다. ⚠ 그럼에도 임계 1e-6을 거는 이유는 **배선 판정**(begin이 bboxCenter를 실제로 부르는가)이다 — 측정 임계가 아니다(§5.1 '보장이면 임계를 걸지 않는다'의 예외 사유, 이월-1 재검 #5 지적)",
       "픽스처 하나·dpr 1의 확인이다(#12·#21)",
       "7-c(빈 화면 기본점)는 **도달 불가**다 — 버튼·손가락 두 경로 모두 gestures.begin 하나를 지나고 begin이 lifted 0을 거른다(3D를 전부 지워도 같다 — standing은 남지만 begin이 막는다). 방어 기본값 [0,0,4]는 그래서 미측정으로 남는다(코드 경로 확인 — 실행 팔은 없다, 리뷰어 [6])",
       "잰 경로는 **궤도 버튼(begin)** 하나다(리뷰어 [5]) — 터치 unpin·setPose·뷰 전환이 같은 orbitTarget()을 부르는 것은 코드 읽기이지 측정이 아니다",
