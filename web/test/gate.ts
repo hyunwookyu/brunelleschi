@@ -54,6 +54,11 @@ export type Gate = {
   population_caveat?: string;
   /** 특정 층의 대역이 구성 산물이면 그 층을 근거로 세지 않는다고 적는다(#34 승계). */
   one_point_band_caveat?: string;
+  /**
+   * **어느 수를 어느 표에서 읽는가**(2026-08-17 8차 재검 [R11]). 판정 표·인용 표·유보 표가
+   * 갈리면 규칙이 원장 곳곳에 흩어지고 다음 읽기가 아무 표나 집는다. 한 자리에 모은다.
+   */
+  which_table?: string;
   /** 이 게이트가 살아 있는가 — 은퇴했으면 사유를 적는다 */
   status?: string;
   note?: string;
