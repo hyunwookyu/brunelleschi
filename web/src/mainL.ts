@@ -33,7 +33,8 @@ import { snapCandidates, staticCandidates, SNAP_ORDER, SNAP_LABEL, SNAP_COLOR, S
          type SnapCand, type SnapKind, type SnapSeg, type SnapCtx,
          type StaticCand } from "./s3d/snap.js";
 // **2D 오스냅**(4차 지시 1) — 카메라 확정 전·미승격 2D 획의 화면 스냅. 후보 규칙은 snap2d.ts 하나다
-import { static2dCandidates, snap2dAt, type Snap2Cand, type Snap2Seg } from "./s3d/snap2d.js";
+import { static2dCandidates, snap2dAt, alignAxes, type Snap2Cand, type Snap2Seg,
+         type AlignHit } from "./s3d/snap2d.js";
 import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "./s3d/liveLine.js";
 import { representative, AXIS_TOL } from "./s3d/axis.js";
 // **자동 분할**(지시 I) — 교차·접촉 절단점과 조각. SketchUp 선례. 순수 기하는 split.ts 하나다(#17)
@@ -149,7 +150,9 @@ let live2d: { a: Pt2; b: Pt2; ortho: ScreenOrtho | null;
               /** **2D 오스냅**(4차 지시 1) — 양 끝이 다른 2D 획의 끝점·중점·교차점에 붙었는가. */
               start2: Snap2Cand | null; end2: Snap2Cand | null;
               /** **소실점 방향 스냅**(4차 지시 2) — 카메라가 안 서도 그 방향으로 끌린다. */
-              vpdir: VpDirSnap | null } | null = null;
+              vpdir: VpDirSnap | null;
+              /** **관계 스냅 가이드**(4차 지시 5-c) — 근원점에서 끌린 자리까지 옅게 뻗는다. */
+              guides: { from: Pt2; to: Pt2 }[] } | null = null;
 /** 떠 있는 커서의 **2D 스냅**(4차 지시 1) — 3D 후보가 없거나 못 붙을 때의 표식. */
 let hover2d: Snap2Cand | null = null;
 
@@ -181,16 +184,92 @@ const orthoPts = (pts: Pt2[], o: ScreenOrtho | null): Pt2[] =>
  * 끝을 옮기면 두 점이 직선을 정하므로, 굽음이 `AXIS_TOL.bend_max`를 넘으면 끝 스냅을 버린다.
  * 시작점 스냅은 그대로 둔다 — 점 하나를 옮기는 것은 획을 펴는 것이 아니다.
  */
-function snapped2d(raw: Pt2[]): Pt2[] {
+function snapped2d(raw: Pt2[]): Pt2[] { return resolve2d(raw).pts; }
+
+/** `resolve2d`의 결과 — 미리보기(onLive)와 확정(onStrokeEnd)이 **같은 값**을 본다(#17·§11). */
+interface Resolve2d {
+  a: Pt2; b: Pt2;
+  ortho: ScreenOrtho | null; vpdir: VpDirSnap | null;
+  start2: Snap2Cand | null; end2: Snap2Cand | null;
+  /** 관계 스냅 가이드(4차 지시 5-c). */
+  guides: { from: Pt2; to: Pt2 }[];
+  /** 확정 시 문서에 남길 점열. */
+  pts: Pt2[];
+  /** 무엇이든 걸렸는가 — 미리보기 표시 여부. */
+  engaged: boolean;
+}
+
+/**
+ * **카메라 확정 전의 2D 판정 전부**(4차 지시 1·2·5 통합) — 우선순위는
+ * **오스냅 > 방향(화면 직교·소실점) > 관계 스냅(정렬)**이다(지시 5-d — 오스냅이 이긴다).
+ * 관계 스냅은 방향 스냅과 **성분으로 결합**한다: 직교 세로선이면 y만, 가로선이면 x만,
+ * 소실점 방향이면 그 직선 위에서 미끄러져 교점으로 — 방향을 깨지 않고 정렬한다.
+ */
+function resolve2d(raw: Pt2[]): Resolve2d {
   const a0 = raw[0], b0 = raw[raw.length - 1];
+  const guides: { from: Pt2; to: Pt2 }[] = [];
+  const tol = OSNAP.radiusPx;
+  const alignCands = (): Snap2Cand[] => {
+    const segs = pend2Segs();
+    return segs.length ? static2dCandidates(segs, Math.hypot(...cssSize())) : [];
+  };
+  // ① 시작점 — 오스냅이 이기고, 안 붙으면 정렬(끝점·중점의 x·y)
   const start2 = snap2At(a0);
-  const a = start2 ? start2.at : a0;
+  let a: Pt2 = start2 ? start2.at : [a0[0], a0[1]];
+  if (!start2 && REL_SNAP.on) {
+    const h = alignAxes(a, alignCands(), tol);
+    if (h.x) a = [h.x.v, a[1]];
+    if (h.y) a = [a[0], h.y.v];
+    if (h.x) guides.push({ from: h.x.from, to: [a[0], a[1]] });
+    if (h.y) guides.push({ from: h.y.from, to: [a[0], a[1]] });
+  }
+  // ② 끝점 — 오스냅(굽음 규약은 3D 양 끝 스냅 그대로, #34)
   const rep0 = representative(raw);
   const end2 = (rep0 && rep0.bend <= AXIS_TOL.bend_max) ? snap2At(b0) : null;
-  if (end2) return [a, end2.at];
+  if (end2) {
+    return { a, b: end2.at, ortho: null, vpdir: null, start2, end2, guides,
+             pts: [a, end2.at], engaged: true };
+  }
+  // ③ 방향 — 화면 직교·소실점 방향(이동량이 작은 쪽, D-L58)
   const d = dirSnap2d(a, b0);
-  if (d.ortho || d.vpdir) return [a, d.at];
-  return start2 ? [a, ...raw.slice(1)] : raw;
+  let b: Pt2 = [d.at[0], d.at[1]];
+  // ④ 관계 스냅 — 방향과 성분으로 결합한다
+  if (REL_SNAP.on) {
+    const h = alignAxes(b, alignCands(), tol);
+    const push = (hit: AlignHit) => guides.push({ from: hit.from, to: [b[0], b[1]] });
+    if (d.ortho) {
+      // 직교 스냅은 한 성분이 이미 앵커에 잠겨 있다 — 남은 성분만 정렬한다
+      if (d.ortho.dir === "v" && h.y) { b = [b[0], h.y.v]; push(h.y); }
+      if (d.ortho.dir === "h" && h.x) { b = [h.x.v, b[1]]; push(h.x); }
+    } else if (d.vpdir) {
+      // 방향선 위에서 미끄러져 정렬 — 가이드(x=cx·y=cy)와 방향선의 교점 중 이동이 작은 쪽
+      const u: Pt2 = [d.vpdir.vp[0] - a[0], d.vpdir.vp[1] - a[1]];
+      let best: { q: Pt2; hit: AlignHit; move: number } | null = null;
+      if (h.x && Math.abs(u[0]) > 1e-6) {
+        const t = (h.x.v - a[0]) / u[0];
+        const q: Pt2 = [h.x.v, a[1] + t * u[1]];
+        const move = Math.hypot(q[0] - b[0], q[1] - b[1]);
+        if (move <= tol) best = { q, hit: h.x, move };
+      }
+      if (h.y && Math.abs(u[1]) > 1e-6) {
+        const t = (h.y.v - a[1]) / u[1];
+        const q: Pt2 = [a[0] + t * u[0], h.y.v];
+        const move = Math.hypot(q[0] - b[0], q[1] - b[1]);
+        if (move <= tol && (!best || move < best.move)) best = { q, hit: h.y, move };
+      }
+      if (best) { b = best.q; guides.push({ from: best.hit.from, to: [b[0], b[1]] }); }
+    } else {
+      if (h.x) b = [h.x.v, b[1]];
+      if (h.y) b = [b[0], h.y.v];
+      if (h.x) push(h.x);
+      if (h.y) push(h.y);
+    }
+  }
+  const startMoved = a[0] !== a0[0] || a[1] !== a0[1];
+  const endMoved = !!d.ortho || !!d.vpdir || b[0] !== b0[0] || b[1] !== b0[1];
+  const pts: Pt2[] = endMoved ? [a, b] : startMoved ? [a, ...raw.slice(1)] : raw;
+  return { a, b, ortho: d.ortho, vpdir: d.vpdir, start2, end2: null, guides, pts,
+           engaged: !!start2 || endMoved || guides.length > 0 };
 }
 
 /**
@@ -239,6 +318,14 @@ const SHOW_GRID = { on: true };
  * 재는 하네스의 것이고, 여기는 **앱의 조리개**다 — 값을 바꾸면 전역 해시가 움직여 무관한
  * 원장이 STALE이 된다(D-L54의 동결과 같은 자리). 종류별 켜고 끄기도 라이노 그대로다.
  */
+/**
+ * **관계 스냅 토글**(4차 지시 5-e). 기본 켬 — 다른 선의 끝점·중점과 화면상 같은 x/y에
+ * 커서가 오면 그 좌표로 끌리고 가이드가 뜬다(인디자인·일러스트레이터·피그마 관행).
+ * 오스냅이 이긴다(지시 5-d). 카메라 확정 전(2D 단계) 전용 — 확정 후에는 축 스냅이 잇는다(5-a).
+ */
+const REL_SNAP = { on: true };
+/** **하단바 접이식 메뉴**(4차 지시 6-a) — 표시·스냅 토글이 접힌다. 기본 접힘. */
+const BAR_MENU = { open: false };
 const OSNAP = {
   radiusPx: 15,
   kinds: { vertex: true, endpoint: true, midpoint: true, intersection: true,
@@ -1374,13 +1461,31 @@ function drawAsk(ctx2: CanvasRenderingContext2D): void {
  *
  * ⚠ **끌 수 없는 상태면 잡히지 않는다** — 그때 그 자리는 그냥 그리는 자리다.
  */
+/**
+ * **지평선이 보이는가**(4차 지시 4-a) — **소실점이 결과로 정한 뒤에만** 있다.
+ * 옛 판은 처음부터 깔았고 그것이 첫 제약이었다 — 빈 종이 감각을 해쳤고, 소실점이
+ * (선 × 미리 깔린 지평선)으로 굳는 원인이었다(항목 3). 지평선은 전제가 아니라 결과다:
+ * 유한 수평 소실점이 서는 순간 그 y가 지평선이고(D-L59 ②) 그때부터 그린다.
+ */
+const horizonVisible = (): boolean =>
+  ([0, 1] as const).some(i => {
+    const s = cam.rules.slots[i];
+    return s != null && s.kind === "vp";
+  });
+
 function horizonGrab(p: Pt2): boolean {
+  // ⚠ 4차 지시 4로 **보이지 않는 지평선은 잡히지 않는다** — 확정 전에는 지평선이 없다.
+  // 확정 후에는 잠긴다(D-L45의 잠금 그대로) — 지시 4-e(확정 후 피치 끌기)는 전부 다시
+  // 풀기(승격 규약)가 필요해 DEFERRED로 미뤘다(D-L60).
+  if (!horizonVisible()) return false;
   if (tool !== "draw" || !cam.canSetHorizon()) return false;
   if (cam.standing() && !stage.isPinned) return false;      // 돌린 뷰의 화면 좌표가 아니다
   return Math.abs(p[1] - cam.rules.horizon) <= PICK_TOL.radius_ratio * Math.hypot(...cssSize());
 }
 
 function drawHorizon(ctx2: CanvasRenderingContext2D) {
+  // **소실점 확정 전에는 지평선이 없다**(4차 지시 4-a — 빈 종이). 결과이지 전제가 아니다
+  if (!horizonVisible()) return;
   // ⚠ **확정 시점에서만 그린다** — 지평선은 **확정 카메라의 화면 좌표**다(그리드·가이드와 같다).
   // 돌린 뷰에 그리면 화면에 붙어 따라다니는 유령이 된다(`drawBelowInk` 머리말).
   if (cam.standing() && !stage.isPinned) return;
@@ -1610,7 +1715,7 @@ function drawLivePreview(ctx2: CanvasRenderingContext2D) {
  */
 function drawLive2d(ctx2: CanvasRenderingContext2D) {
   if (!live2d) return;
-  const { a, b, ortho, start2, end2, vpdir } = live2d;
+  const { a, b, ortho, start2, end2, vpdir, guides } = live2d;
   ctx2.save();
   // **소실점 방향은 그 축 색으로**(4차 지시 2-c) — 색이 "이 방향이 축이 된다"를 말한다
   const tone = vpdir ? AXIS_COLOR[vpdir.axis] : "#555";
@@ -1635,6 +1740,17 @@ function drawLive2d(ctx2: CanvasRenderingContext2D) {
     ctx2.restore();
   }
   if (end2) drawSnapMark(ctx2, { kind: end2.kind, screen: end2.at }, false);
+  // **관계 스냅 가이드**(4차 지시 5-c) — 근원점에서 끌린 자리까지 옅게 뻗는다.
+  // 색은 정렬 도구 관행(마젠타 계열)이고 그리기 색과 안 겹친다
+  for (const g of guides) {
+    ctx2.save();
+    ctx2.strokeStyle = "#c0409a"; ctx2.fillStyle = "#c0409a";
+    ctx2.lineWidth = 1; ctx2.globalAlpha = 0.5; ctx2.setLineDash([4, 3]);
+    ctx2.beginPath(); ctx2.moveTo(g.from[0], g.from[1]); ctx2.lineTo(g.to[0], g.to[1]); ctx2.stroke();
+    ctx2.setLineDash([]);
+    ctx2.beginPath(); ctx2.arc(g.from[0], g.from[1], 2.5, 0, Math.PI * 2); ctx2.fill();
+    ctx2.restore();
+  }
 }
 
 /**
@@ -1798,18 +1914,12 @@ const ink = new InkCanvas(canvas, {
       live = null;
       live2d = (tool === "draw" && pts.length >= 2)
         ? (() => {
-            const a0: Pt2 = [pts[0][0], pts[0][1]];
-            const b0: Pt2 = [pts[pts.length - 1][0], pts[pts.length - 1][1]];
-            // **2D 오스냅이 먼저다**(4차 지시 1) — 붙으면 그 점이 끝이고 추론할 것이 없다
-            // (D-L46 "오스냅이 축 스냅을 이긴다"와 같은 순서). 확정(`snapped2d`)과 같은 함수·순서다(#17)
-            const start2 = snap2At(a0);
-            const a = start2 ? start2.at : a0;
-            const rep0 = representative(pts.map(q => [q[0], q[1]] as Pt2));
-            const end2 = (rep0 && rep0.bend <= AXIS_TOL.bend_max) ? snap2At(b0) : null;
-            const d = end2 ? null : dirSnap2d(a, b0);
-            const b = end2 ? end2.at : d ? d.at : b0;
-            return (start2 || end2 || d?.ortho || d?.vpdir)
-              ? { a, b, ortho: d?.ortho ?? null, start2, end2, vpdir: d?.vpdir ?? null } : null;
+            // **확정과 같은 함수**(`resolve2d`) — 오스냅 > 방향 > 관계 스냅(#17·§11)
+            const r = resolve2d(pts.map(q => [q[0], q[1]] as Pt2));
+            return r.engaged
+              ? { a: r.a, b: r.b, ortho: r.ortho, start2: r.start2, end2: r.end2,
+                  vpdir: r.vpdir, guides: r.guides }
+              : null;
           })()
         : null;
       refresh(); return;
@@ -1839,6 +1949,23 @@ const ink = new InkCanvas(canvas, {
     const raw = stroke.points.map(p => [p[0], p[1]] as Pt2);
     ink.clear();                         // 잉크 버퍼는 문서가 아니다 — 우리가 그린다
     live2d = null;
+    // **점 찍기 확정**(4차 지시 4-b) — 톡 찍은 자리가 대기 대각선 위의 점·교차점이면 그것이
+    // 첫 소실점이다. "찍기"의 판정은 획 길이 ≤ 고르기 반경(PICK_TOL — 새 임계 없음, #17).
+    if (tool === "draw" && raw.length >= 1 && !cam.standing()) {
+      const tapLen = Math.hypot(raw[raw.length - 1][0] - raw[0][0],
+                                raw[raw.length - 1][1] - raw[0][1]);
+      if (tapLen <= PICK_TOL.radius_ratio * Math.hypot(...cssSize())) {
+        pushUndo();
+        const at = cam.pickVp(raw[0], OSNAP.radiusPx);
+        if (at) {
+          if (cam.standing()) standCamera();     // P1이면 그 자리에서 선다(feedCamera와 같은 관문)
+          lastSnapNote = "소실점을 **찍은 자리**에 확정했습니다 — 지평선이 그 높이에 생깁니다";
+          hoverSnap = null; hover2d = null; live = null;
+          refresh(); return;
+        }
+        undoStack.pop();                         // 아무 일도 안 났다 — 스냅샷을 되물린다
+      }
+    }
     if (raw.length < 2 || tool !== "draw") { refresh(); return; }
     // **2D 오스냅 + 화면 직교 스냅**(A-2·4차 지시 1). 카메라가 서기 전에만 돈다 —
     // 그 뒤로는 3D 오스냅·축 스냅이 정한다. 미리보기(`onLive`)와 **같은 함수·같은 순서**를
@@ -2035,38 +2162,25 @@ function applyDoc2(d: Doc2) {
 }
 
 function renderBar() {
-  const btn = (id: string, label: string, on = false, dis = false) =>
-    `<button data-act="${id}"${on ? ' class="on"' : ""}${dis ? " disabled" : ""}>${label}</button>`;
+  // **4차 지시 6 — 성격별 재배치**: 도구·채널(왼쪽) · 표시·스냅 토글(접이식) ·
+  // 카메라(마우스 전용 — 아이패드는 손가락이 한다, 6-b) · 파일(오른쪽) · 편집.
+  // ⚠ 버튼의 `data-act`·처리기는 그대로다(#17 — 바뀌는 것은 배치뿐). 접힌 버튼도 DOM에는
+  // 남는다(#32 — 다만 display:none이라 클릭은 펼친 뒤에만 된다. e2e가 누르는 여섯 버튼
+  // (draw·edit·orbit·home·undo·clear)은 전부 접이식 밖이다 — 착수 표에서 확인).
+  const btn = (id: string, label: string, on = false, dis = false, cls = "") =>
+    `<button data-act="${id}"${on || cls ? ` class="${[on ? "on" : "", cls].filter(Boolean).join(" ")}"` : ""}`
+    + `${dis ? " disabled" : ""}>${label}</button>`;
+  const fold = BAR_MENU.open ? "" : "folded";
   barEl.innerHTML = [
-    // **펜 쪽 도구 선택**(2026-08-17 G-1) — 이 묶음이 **펜이 무엇을 하는가**를 정한다.
-    // 손가락은 여기에 안 걸린다(언제나 카메라다). ⚠ 지우개 둘(세그먼트·부분)이
-    // **이 자리에 들어온다** — 기능이 없는 버튼을 미리 두지 않는다(I에서 함께 넣는다)
+    // ---- 도구(왼쪽) — **현재 도구가 .on으로 보인다**(6-c)
+    '<span class="grp">도구</span>',
     btn("draw", "선 그리기", tool === "draw"),
     btn("edit", "선택", tool === "edit", !doc.strokes.length),
-    // **지우개 둘**(지시 I·G-1의 예약석) — 조각(교차점 사이가 통째로) · 부분(지나간 자리만)
     btn("erase_seg", "지우개(조각)", tool === "erase_seg", !doc.strokes.length),
     btn("erase_part", "지우개(부분)", tool === "erase_part", !lifted(doc).length),
     '<span class="sep"></span>',
-    // **궤도는 마우스 전용으로 남는다**(G-1) — 아이패드에서는 손가락이 이 버튼을 대신한다
-    `<button data-act="orbit"${tool === "orbit" ? ' class="on"' : ""}${!cam.standing() ? " disabled" : ""}`
-    + ` title="마우스 전용입니다 — 손가락 1개는 궤도, 2개는 팬·줌이라 버튼이 필요 없습니다">궤도(마우스)</button>`,
-    // **축 스냅 — 라이노 직교 모드**(사람 지시 1). 기본 켬. `F8`로도 토글한다
-    btn("axissnap", `축 스냅 ${AXIS_SNAP.on ? "켬" : "끔"}`, AXIS_SNAP.on),
-    // **보조선 표시 토글**(E). 기본 켬 — 돌리면 흐려지는 것은 이것과 별개다(자동)
-    btn("showguide", `보조선 ${SHOW_GUIDES.on ? "보임" : "숨김"}`, SHOW_GUIDES.on),
-    // **격자 토글**(지시 5-5). 기본 켬
-    btn("showgrid", `격자 ${SHOW_GRID.on ? "켬" : "끔"}`, SHOW_GRID.on),
-    // **오스냅 설정**(지시 H — 라이노 오스냅 도구막대 선례). 반경·종류별 토글
-    btn("osnap", `스냅 ${OSNAP.radiusPx}px`, OSNAP.open),
-    ...(OSNAP.open ? [
-      `<span class="osnap-panel">반경 <input type="number" min="4" max="40" step="1" `
-        + `value="${OSNAP.radiusPx}" data-osnap-radius style="width:3.2em"> px</span>`,
-      ...SNAP_ORDER.map(k =>
-        `<button data-osnap-kind="${k}"${OSNAP.kinds[k] ? ' class="on"' : ""}`
-        + ` title="${SNAP_TIP[k]}">${SNAP_LABEL[k]}</button>`),
-    ] : []),
-    '<span class="sep"></span>',
-    // **현재 채널이 화면에 보인다**(D-5). 모르고 그으면 나중에 고쳐야 한다
+    // ---- 채널 — **현재 채널이 .on + 왼쪽 색띠로 보인다**(D-5·6-c)
+    '<span class="grp">채널</span>',
     ...(["guide", "result", "note"] as Channel[]).map(k =>
       `<button data-act="ch_${k}"${channel === k ? ' class="on"' : ""}`
       + ` style="border-left:4px solid ${CHANNEL_UI[k].color}"`
@@ -2075,28 +2189,37 @@ function renderBar() {
                  : "해칭·지시선·메모 — 3D로 안 올라가고 그린 뷰에서만 보입니다"}"`
       + `>${CHANNEL_UI[k].name}</button>`),
     '<span class="sep"></span>',
-    // ⛔ **렌즈 슬라이더를 뺐다**(2026-08-17 C-1): "건축가는 투시도를 그릴 때 렌즈를
-    // 고려하지 않는다. 소실점 위치가 곧 렌즈이므로 이미 정하고 있다." 1점의 f는
-    // **그린 사각형의 대각선**에서 나온다(거리점, 이론서 7.4). 화면에 **렌즈·시거리 같은
-    // 말을 내지 않는다**(C-3) — 안내는 "바닥이나 벽을 하나 그려주세요"다.
-    // ⚠ **`확정` 버튼을 뺐다**(2026-08-17 F) — 카메라가 서는 순간 자동으로 잠기고 그때부터
-    // 돌릴 수 있다. 그 버튼은 **가이드를 조정하던 시절의 잔재**였다(D-L37이 가이드를 없앴다).
-    btn("home", "확정 시점으로", false, !cam.standing() || stage.isPinned),
-    // ⛔ **`차수 승격`·`소실점 다시` 버튼을 지웠다**(지시 1·2) — 승격은 전이(P2→P3)에서
-    // 자동으로 나고, 잠금·해제라는 상태 자체가 없어졌다(확정이거나 아니거나).
-    '<span class="sep"></span>',
+    // ---- 편집
     btn("undo", "실행취소", false, !undoStack.length),
-    // **차수를 명시한 되돌리기**(L-C.2, §6.2). `실행취소`와 다른 것은 **이름이 차수라는 것**이다 —
-    // 승격 뒤에 몇 획을 더 그렸어도 한 번에 돌아간다.
-    // **지금 차수의 표식은 안 낸다** — 있는 자리로 되돌아가는 버튼은 아무 일도 안 한다
     ...orderMarks.filter(m => m.order !== cam.order())
                  .map(m => btn(`revert${m.order}`, `${m.order}점으로 되돌리기`)),
     '<span class="sep"></span>',
-    // **보조선 내보내기 옵션**(D-3 "제외(옵션)"). 기본은 끔 — 결과선이 결과물이다
-    btn("expguide", `보조선 내보내기 ${EXPORT_GUIDES.on ? "켬" : "끔"}`, EXPORT_GUIDES.on),
+    // ---- 표시·스냅 토글 — **접이식**(6-a). 기본 접힘
+    btn("menu", `표시·스냅 ${BAR_MENU.open ? "▴" : "▾"}`, BAR_MENU.open),
+    btn("axissnap", `축 스냅 ${AXIS_SNAP.on ? "켬" : "끔"}`, AXIS_SNAP.on, false, fold),
+    btn("relsnap", `정렬 ${REL_SNAP.on ? "켬" : "끔"}`, REL_SNAP.on, false, fold),
+    btn("showgrid", `격자 ${SHOW_GRID.on ? "켬" : "끔"}`, SHOW_GRID.on, false, fold),
+    btn("showguide", `보조선 ${SHOW_GUIDES.on ? "보임" : "숨김"}`, SHOW_GUIDES.on, false, fold),
+    btn("osnap", `스냅 ${OSNAP.radiusPx}px`, OSNAP.open, false, fold),
+    ...(BAR_MENU.open && OSNAP.open ? [
+      `<span class="osnap-panel">반경 <input type="number" min="4" max="40" step="1" `
+        + `value="${OSNAP.radiusPx}" data-osnap-radius style="width:3.2em"> px</span>`,
+      ...SNAP_ORDER.map(k =>
+        `<button data-osnap-kind="${k}"${OSNAP.kinds[k] ? ' class="on"' : ""}`
+        + ` title="${SNAP_TIP[k]}">${SNAP_LABEL[k]}</button>`),
+    ] : []),
+    btn("expguide", `보조선 내보내기 ${EXPORT_GUIDES.on ? "켬" : "끔"}`, EXPORT_GUIDES.on, false, fold),
+    // ---- 카메라 — **마우스 전용**(6-b). 손가락 장치에서는 CSS가 숨긴다(l.html의 pointer: coarse)
+    '<span class="sep mouse-only"></span>',
+    `<button data-act="orbit" class="mouse-only${tool === "orbit" ? " on" : ""}"${!cam.standing() ? " disabled" : ""}`
+    + ` title="마우스 전용입니다 — 손가락 1개는 궤도, 2개는 팬·줌이라 버튼이 필요 없습니다">궤도(마우스)</button>`,
+    btn("home", "확정 시점으로", false, !cam.standing() || stage.isPinned, "mouse-only"),
+    // ---- 파일(오른쪽)
+    '<span class="spacer"></span>',
+    '<span class="grp">파일</span>',
+    btn("json", ".brnl 저장", false, !doc.strokes.length),
     btn("obj", "OBJ", false, !lifted(doc).length),
     btn("gltf", "glTF", false, !lifted(doc).length),
-    btn("json", ".brnl 저장", false, !doc.strokes.length),
     btn("clear", "비우기"),
   ].join("");
 }
@@ -2298,6 +2421,11 @@ barEl.addEventListener("click", (e) => {
   else if (act === "showgrid") {
     SHOW_GRID.on = !SHOW_GRID.on;
     note = "";
+  }
+  else if (act === "menu") { BAR_MENU.open = !BAR_MENU.open; }
+  else if (act === "relsnap") {
+    REL_SNAP.on = !REL_SNAP.on;
+    note = `정렬 스냅 **${REL_SNAP.on ? "켬" : "끔"}**`;
   }
   else if (act === "osnap") { OSNAP.open = !OSNAP.open; }
   else if (act === "showguide") {
@@ -2527,7 +2655,16 @@ refresh();
   // **규칙 경로를 종단 확인이 앱 경로 그대로 부른다**(#17)
   rules: () => cam.dumpRules(),
   // **지평선 끌기**(D-L45). 종단 확인이 손으로 끌지 않고도 같은 경로를 부른다(#17)
-  horizon: () => ({ y: cam.rules.horizon, adjustable: cam.canSetHorizon(), dragging: horizonDrag }),
+  horizon: () => ({ y: cam.rules.horizon, adjustable: cam.canSetHorizon(), dragging: horizonDrag,
+                    // **소실점 확정 전에는 지평선이 없다**(4차 지시 4-a) — 표시 조건을 그대로 낸다
+                    visible: horizonVisible() }),
+  /** **점 찍기 확정**(4차 지시 4-b) — 종단 확인이 앱 경로 그대로 부른다(#17). */
+  pickVp: (p: Pt2) => {
+    const at = cam.pickVp(p, OSNAP.radiusPx);
+    if (at && cam.standing()) standCamera();
+    refresh();
+    return at;
+  },
   setHorizon: (y: number) => { const ok = cam.setHorizon(y); refresh(); return ok; },
   /** 손잡이가 잡히는가 — **화면 좌표로** 묻는다(반경이 `PICK_TOL`이라 크기에 딸린다). */
   horizonGrab: (p: Pt2) => horizonGrab(p),
@@ -2571,6 +2708,9 @@ refresh();
   showGuides: () => SHOW_GUIDES.on,
   showGrid: () => SHOW_GRID.on,
   setShowGrid: (on: boolean) => { SHOW_GRID.on = on; refresh(); },
+  /** **관계 스냅**(4차 지시 5) — 종단 확인이 앱 경로 그대로 읽고 쓴다(#17). */
+  relSnap: () => REL_SNAP.on,
+  setRelSnap: (on: boolean) => { REL_SNAP.on = on; refresh(); },
   setShowGuides: (on: boolean) => { SHOW_GUIDES.on = on; syncScene(); refresh(); },
   setExportGuides: (on: boolean) => { EXPORT_GUIDES.on = on; refresh(); },
   channels: () => doc.strokes.map(x => ({ id: x.id, channel: x.channel, lifted: !!x.seg3d })),

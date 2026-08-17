@@ -20,30 +20,30 @@
  },
  "fix": {
   "vp": [
-   768.0000299010646,
-   269.9999941479089
+   749.6677201871213,
+   279.253100590385
   ],
   "misfits": [
-   2.1058348326888175e-16,
-   2.0380732121731793e-16
+   3.688056542639058e-17,
+   1.1623825108569246e-16
   ],
-  "horizon_y": 269.9999941479089,
+  "horizon_y": 279.253100590385,
   "order": 0,
   "standing": false
  },
  "fix_regression": {
-  "canvas_h": 675,
-  "default_horizon_y": 337.5,
-  "vp_off_px": 67.50000585209108,
-  "vp_off_ratio": 0.10000000866976456
+  "canvas_h": 674,
+  "default_horizon_y": 337,
+  "vp_off_px": 57.746899409615025,
+  "vp_off_ratio": 0.08567789229913209
  },
  "asked": "screen_or_depth",
  "grid": {
   "standing": true,
-  "checked": 467,
-  "maxSin": 1.64200102402366e-14
+  "checked": 480,
+  "maxSin": 1.2560206047907573e-14
  },
- "ink_px": 25819,
+ "ink_px": 24569,
  "console_errors": [],
  "constants": {
   "hash": "509615a1",

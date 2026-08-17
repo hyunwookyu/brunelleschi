@@ -20,7 +20,7 @@
 import { ConstraintAccumulator, type AxisId } from "../s3d/constraints.js";
 import {
   newRuleState, cloneRuleState, stepRule, vpsOf, axisDirsOf, defaultHorizon,
-  horizonAdjustable, withHorizon, perspectiveOrder, axisOfStroke, RULE_TOL,
+  horizonAdjustable, withHorizon, perspectiveOrder, axisOfStroke, pickVpAt, RULE_TOL,
   type RuleState, type RuleEvent, type RLine, type POrder,
 } from "../s3d/vpRules.js";
 import type { Pt2 } from "../s3d/camera.js";
@@ -105,6 +105,18 @@ export class CamState {
     const applied = r.event.type !== "ask" && r.event.type !== "rejected";
     if (applied) { this.rules = r.state; this.apply(); }
     return { event: r.event, applied };
+  }
+
+  /**
+   * **점 찍기 확정**(4차 지시 4-b) — 대기 깊이선 위의 점·교차점을 찍으면 그 자리가
+   * 첫 소실점이다. 성공하면 상태를 갈아 끼우고 그 점을 되돌린다.
+   */
+  pickVp(p: Pt2, tolPx: number): Pt2 | null {
+    const r = pickVpAt(this.rules, p, this.imgSize, tolPx);
+    if (!r) return null;
+    this.rules = r.state;
+    this.apply();
+    return r.at;
   }
 
   /**

@@ -1,0 +1,15 @@
+     note = `${act.toUpperCase()} — 선 ${r.strokes}개`
+           + (!EXPORT_GUIDES.on && guides
+              ? ` <span class="warn">(보조선 ${guides}획 제외 — <b>보조선 내보내기</b>로 켭니다)</span>` : "")
+           + (notes ? ` <span class="dim">(주석 ${notes}획은 3D가 없습니다)</span>` : "")
+           + (pend ? ` <span class="dim">(2D 대기 ${pend - notes}획도 빠집니다)</span>` : "");
+    }
+  }
+  else if (act === "showgrid") {
+    SHOW_GRID.on = !SHOW_GRID.on;
+    note = "";
+  }
+  else if (act === "osnap") { OSNAP.open = !OSNAP.open; }
+  else if (act === "showguide") {
+    SHOW_GUIDES.on = !SHOW_GUIDES.on;
+    syncScene();

@@ -5,8 +5,8 @@
       "name": "web",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev:5222"],
-      "cwd": "web",
-      "port": 5222
+      "port": 5222,
+      "cwd": "web"
     }
   ]
 }

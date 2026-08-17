@@ -137,3 +137,45 @@ describe("2D 오스냅 — 반례 (지시 검증 절)", () => {
     expect(near.map(c => c.kind)).not.toContain("intersection");
   });
 });
+
+// ---------------------------------------------------------------- 관계 스냅 (4차 지시 5)
+
+import { alignAxes } from "../src/s3d/snap2d.js";
+
+describe("관계 스냅 — 같은 화면 x/y 정렬 (4차 지시 5)", () => {
+  const segs: Snap2Seg[] = [
+    { id: "a", a: [100, 100], b: [300, 100] },
+    { id: "b", a: [500, 400], b: [700, 420] },
+  ];
+  const cands = static2dCandidates(segs, DIAG);
+
+  it("끝점·중점의 x·y에 각각 가장 가까운 값으로 끌린다", () => {
+    const h = alignAxes([305, 240], cands, 15);
+    expect(h.x).not.toBeNull();
+    expect(h.x!.v).toBe(300);                    // a의 끝점 x
+    expect(h.y).toBeNull();                      // 100·400·410·420 전부 15px 밖
+    const v = alignAxes([250, 108], cands, 15);
+    expect(v.y!.v).toBe(100);
+    expect(v.x).toBeNull();                      // 100(=150px)·200(=50px)·300(=50px) 전부 밖
+  });
+
+  it("같은 축에서는 더 가까운 근원이 이긴다", () => {
+    const h = alignAxes([610, 411], cands, 15);
+    expect(h.y).not.toBeNull();
+    expect(h.y!.v).toBe(410);                    // b의 중점 y(410)가 400·420보다 가깝다
+  });
+
+  it("**반례** — 허용치 밖은 null이다 · 교차점은 정렬 후보가 아니다", () => {
+    const far = alignAxes([500, 250], cands, 15);
+    expect(far.y).toBeNull();
+    const cross: Snap2Seg[] = [
+      { id: "a", a: [100, 100], b: [300, 100] },
+      { id: "b", a: [200, 20], b: [200, 220] },
+    ];
+    const cc = static2dCandidates(cross, DIAG).filter(c => c.kind === "intersection");
+    expect(cc.length).toBe(1);
+    // 교차점(200,100)의 x·y로는 안 끌린다 — 후보 종류가 끝점·정점·중점뿐이다(지시 5-b)
+    const h = alignAxes([203, 260], cc, 15);
+    expect(h.x).toBeNull();
+  });
+});

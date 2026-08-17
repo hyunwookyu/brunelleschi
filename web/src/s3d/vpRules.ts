@@ -115,7 +115,9 @@ export type VpSource =
    * **사용자가 "수직축"이라 답한 기울어진 선 × (x = 이미지 중심)**(2026-08-17 A-4).
    * 3점 투시의 유일한 입구이고 **측정**이다(옛 `orthocenter`는 가정의 귀결이었다).
    */
-  | "tilted_vertical";
+  | "tilted_vertical"
+  /** **대기 깊이선 위의 점을 사용자가 찍어 확정**(4차 지시 4-b — `pickVpAt`). 측정이다. */
+  | "picked_point";
 
 export interface RuleState {
   slots: [Slot | null, Slot | null, Slot | null];
@@ -634,6 +636,74 @@ export function deriveVertical(st0: RuleState, imgSize: [number, number],
   if (!isFiniteVp(v3, imgSize)) return st;            // 사실상 무한원 — 화면 수직으로 둔다
   st.slots[2] = { kind: "vp", at: v3, source: "tilted_vertical", support: lines.length };
   return st;
+}
+
+// ---------------------------------------------------------------- 점 찍기 확정 (4차 지시 4-b)
+
+/**
+ * **대각선 하나 위의 한 점을 찍어 소실점을 확정한다**(4차 지시 4-b의 둘째 경로).
+ *
+ * 대기 깊이선(`depthLines`) 위의 점(근처점) 또는 대기 깊이선끼리의 교차점을 사용자가
+ * 톡 찍으면 **그 자리가 첫 소실점**이다 — 두 선의 교점 경로(D-L59)와 달리 선 하나로도
+ * 확정할 수 있고, 어느 자리인지를 사용자가 정한다(옛 누산기의 "점 찍기 = 소실점 확정"
+ * 제스처와 같은 자유도 회계 — 이론서 5.3, 점 하나가 자유도 2를 먹는다).
+ *
+ * ```
+ * 후보   ① 대기 선끼리의 교차점(우선 — 정확한 것이 앞선다, SNAP_ORDER의 순서 그대로)
+ *        ② 대기 선 위로의 수직 투영(근처점)
+ * 반경   `tolPx`(앱 오스냅 조리개를 그대로 넘긴다, #17)
+ * 귀결   소실점 = 그 점 · 지평선 = 그 y(롤 0) · 대기 선 중 그 점을 향하는 것은 지지선
+ * ```
+ *
+ * 첫 유한 수평 소실점이 이미 있으면 아무것도 안 한다(`null`) — 소실점은 확정 후 잠긴다(§1).
+ */
+export function pickVpAt(
+  st0: RuleState, p: Pt2, imgSize: [number, number], tolPx: number,
+): { state: RuleState; at: Pt2 } | null {
+  if (finiteHorizontals(st0).length > 0) return null;
+  const pool = st0.depthLines ?? [];
+  if (!pool.length) return null;
+  const pad = 0.02;                                     // 선분 밖 여유 — snap.ts extend_ratio와 같은 값(#17)
+  // ① 교차점 — 대기 선끼리 화면에서 가로지르는 자리(끝점 이음 제외는 stepRule과 같은 규약)
+  let best: { at: Pt2; d: number; rank: 0 | 1 } | null = null;
+  const consider = (at: Pt2, rank: 0 | 1) => {
+    const d = Math.hypot(at[0] - p[0], at[1] - p[1]);
+    if (d > tolPx) return;
+    if (!best || rank < best.rank || (rank === best.rank && d < best.d)) best = { at, d, rank };
+  };
+  for (let i = 0; i < pool.length; i++) {
+    for (let j = i + 1; j < pool.length; j++) {
+      const at = lineIntersect(pool[i].a, pool[i].b, pool[j].a, pool[j].b);
+      if (at && isFiniteVp(at, imgSize)) consider(at, 0);
+    }
+    // ② 근처점 — 그 선 위로의 수직 투영(연장 여유는 선분 길이 대비)
+    const q = pool[i];
+    const dx = q.b[0] - q.a[0], dy = q.b[1] - q.a[1];
+    const L2 = dx * dx + dy * dy;
+    if (L2 < 1e-9) continue;
+    const t = ((p[0] - q.a[0]) * dx + (p[1] - q.a[1]) * dy) / L2;
+    if (t < -pad || t > 1 + pad) continue;
+    consider([q.a[0] + t * dx, q.a[1] + t * dy], 1);
+  }
+  if (!best) return null;
+  const at = (best as { at: Pt2 }).at;
+  if (!isFiniteVp(at, imgSize)) return null;
+  const st = cloneRuleState(st0);
+  const target = horizontalTarget(st);
+  if (!target) return null;
+  st.slots[target.index] = { kind: "vp", at: [at[0], at[1]], source: "picked_point", support: 0 };
+  // **소실점이 지평선을 정한다**(롤 0 — D-L59 ②와 같은 자리)
+  st.horizon = at[1];
+  // 그 점을 향하는 대기 선은 지지선이다 — 찍은 자리가 그 선 위면 정의상 지지한다
+  let sup = 0;
+  for (const q of st.depthLines ?? []) {
+    const len = Math.hypot(q.b[0] - q.a[0], q.b[1] - q.a[1]);
+    if (len < 1e-9) continue;
+    if (vpMisfit({ a: q.a, b: q.b, len, bend: 0 }, at) <= AXIS_TOL.vp_dist_ratio) sup += 1;
+  }
+  (st.slots[target.index] as { support: number }).support = Math.max(1, sup);
+  st.depthLines = [];
+  return { state: deriveVertical(st, imgSize), at };
 }
 
 // ---------------------------------------------------------------- 상태 → 카메라 입력

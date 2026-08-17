@@ -88,6 +88,39 @@ export function static2dCandidates(
   return out;
 }
 
+// ---------------------------------------------------------------- 관계 스냅 (4차 지시 5)
+
+/**
+ * **정렬 후보 — 같은 화면 x 또는 y**(4차 지시 5, 인디자인·일러스트레이터·피그마 관행).
+ *
+ * 다른 선의 끝점·중점과 화면상 같은 x(또는 y)에 점이 오면 그 좌표로 끌린다.
+ * 순수 2D 정렬이고 3D와 무관하다(지시 5-a) — 카메라가 서면 "같은 x"는 축 평행선이 되어
+ * 축 스냅이 그 역할을 이으므로, 이 스냅은 **확정 전(2D 단계)의 것**이다.
+ * 후보 종류는 끝점·정점·중점뿐이다(지시 5-b — 교차점은 자리 자체가 오스냅의 몫이다).
+ */
+export interface AlignHit {
+  /** 끌린 좌표값. */
+  v: number;
+  /** 그 값을 낸 근원점 — 가이드 선이 여기서 커서까지 뻗는다(지시 5-c). */
+  from: Pt2;
+  /** |커서 좌표 − v| (px). */
+  d: number;
+}
+
+export function alignAxes(
+  p: Pt2, cands: Snap2Cand[], tolPx: number,
+): { x: AlignHit | null; y: AlignHit | null } {
+  let x: AlignHit | null = null, y: AlignHit | null = null;
+  for (const c of cands) {
+    if (c.kind !== "endpoint" && c.kind !== "vertex" && c.kind !== "midpoint") continue;
+    const dx = Math.abs(c.at[0] - p[0]);
+    if (dx <= tolPx && (!x || dx < x.d)) x = { v: c.at[0], from: c.at, d: dx };
+    const dy = Math.abs(c.at[1] - p[1]);
+    if (dy <= tolPx && (!y || dy < y.d)) y = { v: c.at[1], from: c.at, d: dy };
+  }
+  return { x, y };
+}
+
 /**
  * **하나를 고른다** — 반경 안 후보 중 우선순위가 높은 것, 같으면 가까운 것(3D 판과 같은 규칙).
  * `kinds`는 앱의 종류 토글이다(`OSNAP.kinds` 그대로). 없으면 `null` — 애매하면 놓지 않는다(A-3).

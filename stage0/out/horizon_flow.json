@@ -1,70 +1,74 @@
 {
- "spec": "4차 지시 2 — 카메라 확정 전 소실점 방향 스냅 종단. Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
+ "spec": "4차 지시 4 — 지평선은 결과다(확정 전 없음 · 확정 후 소실점 y). 두 경로(교점·점 찍기). Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
  "what_this_does_not_say": [
-  "misfit 0은 측정이 아니라 **보장 확인**이다(#5) — 스냅이 끝점을 a→V 직선 위로 옮긴다. 1e-9는 그 배선의 판정 임계이고 아래 thresholds에 있다([B-4])",
-  "겨냥 오차 4px 한 점의 확인이다(#12) — 임계 경계의 거동은 test/vp_dir.test.ts의 반례가 덮는다",
-  "실획이 아니다(AS-C1) — Playwright 합성 마우스다",
-  "dpr 1 실행이다(#21) — 좌표 규약은 e2e/coords.spec.ts가 dpr 1·2·3에서 잠근다",
-  "스냅 주체의 판정 재료는 aim 블록이다([B-5]) — 겨냥 각이 직교 임계(4°) 밖이고 소실점이 기본 지평선 밖이라, 이 끌림은 vp_dir 외의 경로로는 안 나온다"
+  "horizon.y = vp.y·host_misfit 0은 **보장 확인**이다(#5) — D-L59 ②·투영의 정의다. 임계는 배선 판정용이고 아래 thresholds에 있다",
+  "지시 4-e(확정 후 지평선 끌기 = 피치)는 **미구현**이다(D-L60 — 전부 다시 풀기가 필요해 DEFERRED)",
+  "**찍기 경로의 소실점은 선 방향 위치를 그린 획이 구속하지 않는다**(리뷰어 [4·2]) — 근처점 투영은 자유도 하나를 사용자의 점이 정한다. 교점 경로(두 선이 두 자유도를 정함)와 정보량이 다르다 — D-L60에 기록",
+  "픽스처 하나·찍기 위치 하나·dpr 1의 확인이다(#12·#21 — 리뷰어 [4·5])",
+  "**옛 동작(초기 지평선)을 되살린 실행은 없다**([A-2]) — '0.5H 대역이 옛 동작에서 >0'은 옛 코드의 표시 조건(무조건 그림)에서 오는 추론이고 재현 실행으로 확인하지 않았다(#25 — 그 팔의 값은 원장 밖이다)",
+  "실획이 아니다(AS-C1)"
  ],
  "thresholds": {
-  "snap_misfit_max": 1e-9,
-  "aim_offset_px": 4,
-  "vp_dist_ratio_frame": 0.06,
-  "away_misfit_min": 0.06,
-  "ink_px_min": 50,
+  "row_ink_before_max": 0,
+  "row_ink_default_horizon_before_max": 0,
+  "row_ink_after_min": 20,
+  "band_half_px": 3,
+  "horizon_eq_vp_y_digits": 6,
+  "host_misfit_max": 0.000001,
   "console_errors_max": 0
  },
  "gate": {
-  "registered": "소실점 하나(NONE·짝 교점으로 확정)에서 그 방향을 겨냥한 선의 스냅 후 부적합도 < 1e-9 · 양성 채널(안 향하는 선)은 임계(0.06) 밖 그대로 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+  "registered": "확정 전 visible=false·예상 높이(0.40H)와 **옛 기본 지평선 자리(0.5H)** 두 대역 픽셀 0(후자가 옛 동작의 회귀 판별이다 — 리뷰어 [3·1]) · 교점 확정 후 visible=true·y=vp.y·파선 픽셀>20 · 점 찍기 경로도 같은 귀결 + 호스트 부적합도<1e-6 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
   "reachability": "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
-  "reachability_absent": "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다.** 양성 채널의 misfit는 스냅이 안 발동한 픽스처 각도의 항등이라 도달 가능성으로 적지 않는다(#40 ⚠⚠ — 항목 1 [7]과 같은 자리의 정정. 리뷰어 [B-3])"
+  "reachability_absent": "**배선·보장 확인이라 도달 가능성 오라클이 성립하지 않는다** — 판별력은 확정 전/후의 대조(visible·row_ink 0 → >20)가 들고, 그 값들은 표시 조건의 귀결이라 도달 가능성으로 적지 않는다(#40 ⚠⚠)"
  },
- "s1": {
-  "vps": [
-   [
-    749.6677201871213,
-    279.253100590385
-   ],
-   null,
-   null
-  ],
-  "standing": false,
-  "order": 0,
-  "horizon_y": 279.253100590385,
-  "default_horizon_y": null
+ "bands": {
+  "before_expected_vp_y": 269.6,
+  "before_default_y": 337,
+  "half_px": 3,
+  "after_band_center": "after.y(확정된 지평선 y — 실측)와 같다"
  },
- "aim": {
-  "a": [
-   448,
-   505.5
-  ],
-  "b_aim": [
-   598.8338600935606,
-   396.3765502951925
-  ],
-  "offset_px": 4,
-  "angle_to_screen_h_deg": 35.88452944296858,
+ "before": {
+  "visible": false,
+  "row_ink": 0,
+  "row_ink_default_horizon": 0
+ },
+ "mid": {
+  "visible": false
+ },
+ "after": {
+  "visible": true,
+  "y": 279.253100590385,
   "vp": [
    749.6677201871213,
    279.253100590385
+  ],
+  "row_ink": 2075
+ },
+ "pick_aim": {
+  "tap": [
+   608,
+   374.44000000000005
+  ],
+  "host_a": [
+   384,
+   471.79999999999995
+  ],
+  "host_b": [
+   704,
+   337
   ]
  },
- "aim_confound": {
-  "snap2d_at_aim": null,
-  "pending_2d": 2,
-  "snap_targets_3d": 0
+ "pick": {
+  "vp": [
+   609.0732921961716,
+   376.9878771679806
+  ],
+  "visible": true,
+  "y": 376.9878771679806,
+  "host_misfit": 4.289860679770448e-17,
+  "strokes": 1
  },
- "snap": {
-  "misfit": 1.0109591444801318e-16,
-  "n_pts": 2,
-  "order": 0,
-  "standing": false
- },
- "positive_away": {
-  "misfit": 0.4407218801472494
- },
- "ink_px": 4623,
  "console_errors": [],
  "constants": {
   "hash": "509615a1",

@@ -517,6 +517,281 @@ test("대각선 두 개 → 소실점 — 그 선들이 소실점을 정확히 �
   }, null, 1));
 });
 
+// ---------------------------------------------------------------- 4차 지시 4 — 지평선은 결과다
+//
+// "지평선이 소실점 확정 전에는 없고 확정 후 그 높이에 생기는가"(지시 검증 절).
+// 옛 판은 지평선이 처음부터 화면에 있었고 그것이 첫 제약이었다 — 이제 결과다(D-L60).
+// 두 경로를 다 확인한다: ① 대각선 두 개의 교점(D-L59) ② 대각선 하나 + 점 찍기(pickVp).
+test("지평선 — 확정 전에는 없고, 확정 후 그 높이에 생긴다 (4차 지시 4)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+
+  const box = (await page.locator("#ink").boundingBox())!;
+  const W = box.width, H = box.height;
+  const drawPx = async (x1: number, y1: number, x2: number, y2: number) => {
+    await page.mouse.move(box.x + x1, box.y + y1);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move(box.x + x1 + (x2 - x1) * i / 8, box.y + y1 + (y2 - y1) * i / 8);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(50);
+  };
+  /** 화면 가로줄 y±3px 대역의 칠해진 픽셀 수 — 지평선 파선이 실제로 그려졌는가의 픽셀 확인. */
+  const ROW_INK = `((yCss) => {
+    const el = document.getElementById("ink");
+    const ctx = el.getContext("2d");
+    const k = el.width / el.clientWidth;
+    const y0 = Math.max(0, Math.round(yCss * k) - 3);
+    const d = ctx.getImageData(0, y0, el.width, 7).data;
+    let n = 0;
+    for (let i = 3; i < d.length; i += 4) if (d[i] > 8) n++;
+    return n;
+  })`;
+  const led: Record<string, unknown> = {};
+
+  // ---- ① 확정 전 — 지평선이 없다. 대역 둘을 잰다(리뷰어 [3·1]):
+  //      ⓐ 확정될 소실점 높이(0.40H) — 확정 후와의 대조 ⓑ **옛 기본 지평선 자리(0.5H)** —
+  //      옛 동작(처음부터 깔림)을 되살리면 빈 화면에서도 여기 파선이 생긴다. 이것이 회귀 판별이다
+  // 대역 기록([A-1] 정정): before는 겨냥 높이(0.40H)와 옛 자리(0.5H), after는 **확정된 vp의
+  // 실측 y**(after.y — 마우스 반올림으로 겨냥과 수 px 어긋난다)를 중심으로 잰다
+  led.bands = { before_expected_vp_y: 0.40 * H, before_default_y: 0.5 * H, half_px: 3,
+                after_band_center: "after.y(확정된 지평선 y — 실측)와 같다" };
+  led.before = await page.evaluate((arg) => {
+    const S = window.S2S;
+    // eslint-disable-next-line no-eval
+    return { visible: S.horizon().visible, row_ink: (eval(arg.fn))(arg.y),
+             // eslint-disable-next-line no-eval
+             row_ink_default_horizon: (eval(arg.fn))(arg.yd) };
+  }, { fn: ROW_INK, y: 0.40 * H, yd: 0.5 * H });
+  expect((led.before as any).visible).toBe(false);
+  expect((led.before as any).row_ink).toBe(0);
+  expect((led.before as any).row_ink_default_horizon).toBe(0);   // **옛 동작의 자리가 비어 있다**
+
+  // ---- ② 대각선 두 개의 교점(0.60W, 0.40H)으로 소실점 → 그 높이에 지평선이 생긴다
+  await drawPx(0.30 * W, 0.70 * H, 0.465 * W, 0.535 * H);
+  led.mid = await page.evaluate(() => ({ visible: window.S2S.horizon().visible }));
+  expect((led.mid as any).visible).toBe(false);            // 한 선(대기)로는 아직 없다
+  await drawPx(0.25 * W, 0.55 * H, 0.4425 * W, 0.4675 * H);
+  led.after = await page.evaluate((arg) => {
+    const S = window.S2S;
+    const vp = (S.camSnapshot().vps as ([number, number] | null)[]).find((v: any) => v)!;
+    // eslint-disable-next-line no-eval
+    return { visible: S.horizon().visible, y: S.horizon().y, vp, row_ink: (eval(arg.fn))(vp[1]) };
+  }, { fn: ROW_INK, y: 0 });
+  expect((led.after as any).visible).toBe(true);
+  expect((led.after as any).y).toBeCloseTo((led.after as any).vp[1], 6);   // **그 높이다**(롤 0)
+  expect((led.after as any).row_ink).toBeGreaterThan(20);  // **파선이 실제로 그려졌다**
+
+  // ---- ③ 둘째 경로 — 대각선 하나 + 점 찍기(4-b). 새 문서에서 다시
+  await page.evaluate(() => window.S2S.doc().strokes.splice(0));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+  await drawPx(0.30 * W, 0.70 * H, 0.55 * W, 0.50 * H);    // 대각선 하나 — 대기
+  // 그 선 위(t=0.7 근처, 3px 어긋난 겨냥)를 **톡 찍는다** — 실제 포인터 탭
+  const tap: [number, number] = [box.x + 0.475 * W, box.y + 0.56 * H - 3];
+  await page.mouse.move(tap[0], tap[1]);
+  await page.mouse.down();
+  await page.mouse.move(tap[0] + 1, tap[1] + 1);
+  await page.mouse.up();
+  await page.waitForTimeout(60);
+  // **찍기의 겨냥을 원장에 남긴다**(리뷰어 [B-5 재발] — 주체 판정의 재료)
+  led.pick_aim = { tap: [0.475 * W, 0.56 * H - 3], host_a: [0.30 * W, 0.70 * H],
+                   host_b: [0.55 * W, 0.50 * H] };
+  led.pick = await page.evaluate(async () => {
+    const S = window.S2S;
+    const ax = await import("/src/s3d/axis.ts");
+    const vps = S.camSnapshot().vps as ([number, number] | null)[];
+    const vp = vps.find(v => v) ?? null;
+    if (!vp) return { vp: null };
+    const st = S.doc().strokes[0];
+    const rep = ax.representative(st.pts2d);
+    return { vp, visible: S.horizon().visible, y: S.horizon().y,
+             host_misfit: rep ? ax.vpMisfit(rep, vp) : null,
+             strokes: S.doc().strokes.length };
+  });
+  expect((led.pick as any).vp).toBeTruthy();               // **찍은 자리에 소실점이 섰다**
+  expect((led.pick as any).visible).toBe(true);
+  expect((led.pick as any).y).toBeCloseTo((led.pick as any).vp[1], 6);
+  // **호스트 대각선이 그 소실점을 정확히 향한다**(투영의 정의 — 보장 확인, #5)
+  expect((led.pick as any).host_misfit).toBeLessThan(1e-6);
+  expect((led.pick as any).strokes).toBe(1);               // 찍기는 획을 안 만든다
+
+  // ---- 픽셀 확인 + 콘솔 오류 0
+  led.console_errors = errors;
+  expect(errors).toEqual([]);
+
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "horizon_flow.json"), JSON.stringify({
+    spec: "4차 지시 4 — 지평선은 결과다(확정 전 없음 · 확정 후 소실점 y). 두 경로(교점·점 찍기). Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
+    what_this_does_not_say: [
+      "horizon.y = vp.y·host_misfit 0은 **보장 확인**이다(#5) — D-L59 ②·투영의 정의다. 임계는 배선 판정용이고 아래 thresholds에 있다",
+      "지시 4-e(확정 후 지평선 끌기 = 피치)는 **미구현**이다(D-L60 — 전부 다시 풀기가 필요해 DEFERRED)",
+      "**찍기 경로의 소실점은 선 방향 위치를 그린 획이 구속하지 않는다**(리뷰어 [4·2]) — 근처점 투영은 자유도 하나를 사용자의 점이 정한다. 교점 경로(두 선이 두 자유도를 정함)와 정보량이 다르다 — D-L60에 기록",
+      "픽스처 하나·찍기 위치 하나·dpr 1의 확인이다(#12·#21 — 리뷰어 [4·5])",
+      "**옛 동작(초기 지평선)을 되살린 실행은 없다**([A-2]) — '0.5H 대역이 옛 동작에서 >0'은 옛 코드의 표시 조건(무조건 그림)에서 오는 추론이고 재현 실행으로 확인하지 않았다(#25 — 그 팔의 값은 원장 밖이다)",
+      "실획이 아니다(AS-C1)",
+    ],
+    thresholds: { row_ink_before_max: 0, row_ink_default_horizon_before_max: 0,
+                  row_ink_after_min: 20, band_half_px: 3, horizon_eq_vp_y_digits: 6,
+                  host_misfit_max: 1e-6, console_errors_max: 0 },
+    gate: {
+      registered: "확정 전 visible=false·예상 높이(0.40H)와 **옛 기본 지평선 자리(0.5H)** 두 대역 픽셀 0(후자가 옛 동작의 회귀 판별이다 — 리뷰어 [3·1]) · 교점 확정 후 visible=true·y=vp.y·파선 픽셀>20 · 점 찍기 경로도 같은 귀결 + 호스트 부적합도<1e-6 · 콘솔 오류 0. "
+        + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
+      reachability_absent: "**배선·보장 확인이라 도달 가능성 오라클이 성립하지 않는다** — 판별력은 확정 전/후의 대조(visible·row_ink 0 → >20)가 들고, 그 값들은 표시 조건의 귀결이라 도달 가능성으로 적지 않는다(#40 ⚠⚠)",
+    },
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 1));
+});
+
+// ---------------------------------------------------------------- 4차 지시 5 — 관계 스냅
+//
+// 사각형 도구가 없으므로 선 네 개로 사각형을 만든다 — 두 번째 선의 끝을 첫 선의 끝과
+// **같은 높이**에 맞추는 것이 이 스냅의 사용 사례다(지시 5 원문). 오스냅이 이긴다(5-d) —
+// 여기서는 오스냅 조리개 밖(25px)의 정렬만 일어나는 자리를 재고, 토글 끔 팔이 판별력을 든다.
+test("관계 스냅 — 둘째 선의 끝이 첫 선의 끝과 같은 높이에 맞는다 (4차 지시 5)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+
+  const box = (await page.locator("#ink").boundingBox())!;
+  const W = box.width, H = box.height;
+  const drawPx = async (x1: number, y1: number, x2: number, y2: number) => {
+    await page.mouse.move(box.x + x1, box.y + y1);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move(box.x + x1 + (x2 - x1) * i / 8, box.y + y1 + (y2 - y1) * i / 8);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(50);
+  };
+  const led: Record<string, unknown> = {};
+
+  // ---- ① 첫 선 — 화면 가로(직교 스냅으로 y가 정확히 시작 높이가 된다)
+  await drawPx(0.30 * W, 0.60 * H, 0.50 * W, 0.601 * H);
+  const y1 = await page.evaluate(() => window.S2S.doc().strokes[0].pts2d[0][1] as number);
+  // ---- ② 둘째 선 — 세로로 내려 긋되 끝을 첫 선 높이에서 6px 못 미치게 겨냥한다.
+  //      시작 x(0.32W)는 첫 선 끝점들과 25px 이상 떨어져 **오스냅이 안 걸리는** 자리다(5-d 확인)
+  await drawPx(0.32 * W, 0.45 * H, 0.322 * W, y1 - 6);
+  led.aligned = await page.evaluate(() => {
+    const S = window.S2S;
+    const sts = S.doc().strokes;
+    const st = sts[sts.length - 1];
+    const e = st.pts2d[st.pts2d.length - 1];
+    return { end: e, y1: sts[0].pts2d[0][1], snap_start: !!st.snapStart, standing: S.standing() };
+  });
+  // **같은 높이에 정확히 맞았다** — 좌표 일치는 스냅의 보장(#5)이고 판별력은 ③이 든다
+  expect(Math.abs((led.aligned as any).end[1] - (led.aligned as any).y1)).toBeLessThan(1e-9);
+  expect((led.aligned as any).standing).toBe(false);       // 2D 단계다 — 이 스냅의 자리(5-a)
+
+  // ---- ③ 토글 끔 팔 — 같은 겨냥이 안 맞는다(겨냥 오차 6px이 그대로 남는다)
+  await page.evaluate(() => window.S2S.setRelSnap(false));
+  await drawPx(0.60 * W, 0.45 * H, 0.602 * W, y1 - 6);
+  led.toggled_off = await page.evaluate(() => {
+    const S = window.S2S;
+    const sts = S.doc().strokes;
+    const st = sts[sts.length - 1];
+    return { end_y: st.pts2d[st.pts2d.length - 1][1], y1: sts[0].pts2d[0][1] };
+  });
+  expect(Math.abs((led.toggled_off as any).end_y - (led.toggled_off as any).y1)).toBeGreaterThan(2);
+  await page.evaluate(() => window.S2S.setRelSnap(true));
+
+  // ---- ④ 우선순위 팔([B-2]) — 오스냅 후보(끝점)와 정렬 후보가 **동시에 조리개 안**이면
+  //      오스냅이 이긴다(5-d): 끝점 8px 옆을 겨냥하면 y 정렬이 아니라 **그 점 자체**에 붙는다
+  const endB = await page.evaluate(() => {
+    const st = window.S2S.doc().strokes[0];
+    return st.pts2d[st.pts2d.length - 1] as [number, number];
+  });
+  await drawPx(0.45 * W, 0.30 * H, endB[0] + 6, endB[1] - 5);
+  led.priority = await page.evaluate(() => {
+    const sts = window.S2S.doc().strokes;
+    const st = sts[sts.length - 1];
+    const e = st.pts2d[st.pts2d.length - 1];
+    const b = sts[0].pts2d[sts[0].pts2d.length - 1];
+    return { end: e, target: b, gap_px: Math.hypot(e[0] - b[0], e[1] - b[1]) };
+  });
+  expect((led.priority as any).gap_px).toBeLessThan(0.5);   // **점에 붙었다** — 좌표 정렬이 아니다
+
+  // ---- ⑤ 가이드 표시 팔([B-3], 지시 5-c) — 끌던 중(뗴기 전) 마젠타 가이드 픽셀이 실제로 있다
+  await page.mouse.move(box.x + 0.32 * W, box.y + 0.35 * H);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 0.322 * W, box.y + y1 - 6, { steps: 6 });
+  led.guide_px = await page.evaluate(() => {
+    const el = document.getElementById("ink") as HTMLCanvasElement;
+    const d = el.getContext("2d")!.getImageData(0, 0, el.width, el.height).data;
+    let n = 0;
+    for (let i = 0; i < d.length; i += 4) {
+      // 마젠타 가이드(#c0409a ≈ 192,64,154)의 채널 서명 — 다른 그리기 색과 안 겹친다
+      if (d[i + 3] > 8 && d[i] > 140 && d[i] < 230 && d[i + 1] < 120 && d[i + 2] > 100) n++;
+    }
+    return n;
+  });
+  await page.mouse.up();
+  await page.waitForTimeout(50);
+  expect(led.guide_px as number).toBeGreaterThan(5);        // **가이드가 실제로 그려졌다**(5-c)
+
+  // ---- 픽셀 확인 + 콘솔 오류 0
+  led.ink_px = await page.evaluate((inkExpr) => {
+    // eslint-disable-next-line no-eval
+    return eval(inkExpr) as number;
+  }, INK_PX);
+  expect(led.ink_px as number).toBeGreaterThan(50);
+  led.console_errors = errors;
+  expect(errors).toEqual([]);
+
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "rel_snap_flow.json"), JSON.stringify({
+    spec: "4차 지시 5 — 관계 스냅(정렬 가이드) 종단: 둘째 선의 끝이 첫 선의 높이에 맞는다. Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
+    what_this_does_not_say: [
+      "정렬 후 좌표 일치(<1e-9)는 **보장 확인**이다(#5) — 스냅이 좌표를 그 값으로 놓는다. 판별력은 토글 끔 팔이 든다",
+      "겨냥 오차 6px 한 점의 확인이다(#12) — 허용치 경계·근원 선택은 test/snap2d.test.ts의 alignAxes 반례가 덮는다",
+      "오스냅과의 우선순위는 ②에서는 25px 간격으로 회피했고 **④가 겹치는 자리를 직접 잰다**([B-2] — 끝점 6·5px 겨냥에서 정렬이 아니라 점에 붙는다)",
+      "**정렬로 옮겨진 끝점은 규칙(stepRule)의 입력이 된다**([B-1] — D-L58 ③과 같은 원리): 확정 전 전용 배선은 곧 카메라가 정해지는 구간 전체다. 15px 정렬이 300px 획에서 최대 ≈2.9° 방향을 바꾸고 그 선의 교점이 불가역인 첫 소실점이다 — D-L61에 기록",
+      "실획이 아니다(AS-C1) · dpr 1 실행이다(#21)",
+    ],
+    thresholds: { aligned_gap_px_max: 1e-9, aim_offset_px: 6, toggle_off_gap_px_min: 2,
+                  priority_gap_px_max: 0.5, guide_px_min: 5,
+                  align_tol_px: 15, ink_px_min: 50, console_errors_max: 0 },
+    gate: {
+      registered: "정렬 켬: 둘째 선 끝 y = 첫 선 y(오스냅 조리개 밖 자리) · 정렬 끔: 겨냥 오차 6px 그대로(>2px) · 겹치는 자리(끝점 8px 옆)는 오스냅이 이긴다(gap<0.5px, 5-d) · 끌던 중 마젠타 가이드 픽셀>5(5-c) · 콘솔 오류 0. "
+        + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
+      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 끔 팔의 잔차는 픽스처 겨냥 오차(6px)의 항등이라 도달 가능성으로 적지 않는다(#40 ⚠⚠)",
+    },
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 1));
+});
+
 // ---------------------------------------------------------------- 4차 지시 1 — 초기 화면 오스냅
 //
 // "빈 화면에서 두 선을 긋고 두 번째가 첫 번째 끝점에 붙는가"(지시 검증 절).
@@ -591,10 +866,12 @@ test("빈 화면 — 두 번째 획이 첫 획의 끝점에 붙는다 (4차 지�
   expect((led.snap as any).standing).toBe(false);                  // **여전히 카메라 확정 전이다**
 
   // ---- ③ 양성 채널 — 종류를 전부 끄면 안 붙는다(겨냥 오차가 그대로 남는다).
-  //         옛 상태의 재현이 아니라 **단언의 판별력 확인**이다(#30, 리뷰어 [6])
-  await page.evaluate(() => window.S2S.setOsnap({
+  //         옛 상태의 재현이 아니라 **단언의 판별력 확인**이다(#30, 리뷰어 [6]).
+  //         ⚠ 관계 스냅(4차 지시 5)도 함께 끈다 — 끝점 정렬(x·y 동시)이 같은 자리를 대신
+  //         붙여 "후보 0"의 재현이 안 된다(이 팔이 항목 5 추가 직후 실제로 그렇게 깨졌다)
+  await page.evaluate(() => { window.S2S.setRelSnap(false); window.S2S.setOsnap({
     kinds: { vertex: false, endpoint: false, midpoint: false, intersection: false,
-             perpendicular: false, on_edge: false, on_face: false } }));
+             perpendicular: false, on_edge: false, on_face: false } }); });
   const end2 = await page.evaluate(() => {
     const sts = window.S2S.doc().strokes;
     const st = sts[sts.length - 1];
@@ -608,6 +885,7 @@ test("빈 화면 — 두 번째 획이 첫 획의 끝점에 붙는다 (4차 지�
     return { gap_px: Math.hypot(e[0] - s[0], e[1] - s[1]) };
   });
   expect((led.positive_off as any).gap_px).toBeGreaterThan(2);     // **안 붙었다** — 겨냥 오차 그대로
+  await page.evaluate(() => window.S2S.setRelSnap(true));
 
   // ---- 픽셀 확인 + 콘솔 오류 0 (지시 검증 절)
   led.ink_px = await page.evaluate((inkExpr) => {
@@ -631,10 +909,10 @@ test("빈 화면 — 두 번째 획이 첫 획의 끝점에 붙는다 (4차 지�
     thresholds: { start_gap_px_max: 0.5, aim_offset_px: 7.81, osnap_radius_px_default: 15,
                   positive_off_gap_px_min: 2, ink_px_min: 50, console_errors_max: 0 },
     gate: {
-      registered: "스냅 직전 standing=false·3D 후보 0 기록(2D 경로 판정, 리뷰어 [1]) · 두 번째 획의 시작이 첫 획 끝점과 일치(gap < 0.5px) · 양성 채널(종류 전부 끔)은 겨냥 오차 그대로(> 2px) · 콘솔 오류 0. "
+      registered: "스냅 직전 standing=false·3D 후보 0 기록(2D 경로 판정, 리뷰어 [1]) · 두 번째 획의 시작이 첫 획 끝점과 일치(gap < 0.5px) · 양성 채널(**오스냅 종류 전부 끔 + 정렬 끔** — 4차 항목 5가 정렬을 더한 뒤 두 토글 조건이 됐다, D-L61)은 겨냥 오차 그대로(> 2px) · 콘솔 오류 0. "
         + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①: '없다'도 결론이고 명시한다)",
-      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다.** 판별력은 양성 채널(positive_off/gap_px — 종류를 끄면 겨냥 오차 √61이 그대로 남는다)이 확인하는데, 그 값은 픽스처가 준 겨냥 오차의 항등이라 도달 가능성 수치로 적지 않는다(#40 ⚠⚠ — segment_gate가 절대값으로 규칙을 피해 갔던 그 자리의 정정과 같다. 리뷰어 [7])",
+      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다.** 판별력은 양성 채널(positive_off/gap_px — 오스냅 종류와 정렬을 함께 끄면 겨냥 오차 √61이 그대로 남는다)이 확인하는데, 그 값은 픽스처가 준 겨냥 오차의 항등이라 도달 가능성 수치로 적지 않는다(#40 ⚠⚠ — segment_gate가 절대값으로 규칙을 피해 갔던 그 자리의 정정과 같다. 리뷰어 [7])",
     },
     ...led,
     constants: constantsSnapshot(),

@@ -1,5 +1,5 @@
 {
-  "n_flags": 1841,
+  "n_flags": 1846,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -1912,6 +1912,21 @@
       "path": "horizon.json:roll_control.rows.roll_10deg.roll_zero.silent_wrong.cut_0_5.rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "horizon_flow.json:thresholds.row_ink_default_horizon_before_max",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "horizon_flow.json:thresholds.console_errors_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "horizon_flow.json:pick.host_misfit",
+      "val": 4.289860679770448e-17,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "horizon_pitch.json:headline.center|grouped.horizon_offset_px_median",
@@ -5420,6 +5435,16 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "rel_snap_flow.json:thresholds.console_errors_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "rel_snap_flow.json:priority.gap_px",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
       "path": "rule_camera.json:how.p1_f_ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -5547,7 +5572,7 @@
     },
     {
       "path": "stage_browser.json:dpr_identity_px.css_frame",
-      "val": 1.4000577049868946e-13,
+      "val": 2.2914314707516465e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -6607,7 +6632,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 7.549516567451064e-15,
+      "val": 1.2434497875801753e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -8122,8 +8147,8 @@
     },
     {
       "path": "vp_dir_flow.json:snap.misfit",
-      "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+      "val": 1.0109591444801318e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "vp_homog.json:by_separation.sep_1deg.actual_sep_deg",
@@ -8177,17 +8202,17 @@
     },
     {
       "path": "vp_two_lines.json:fix.misfits[0]",
-      "val": 2.1058348326888175e-16,
+      "val": 3.688056542639058e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "vp_two_lines.json:fix.misfits[1]",
-      "val": 2.0380732121731793e-16,
+      "val": 1.1623825108569246e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "vp_two_lines.json:grid.maxSin",
-      "val": 1.64200102402366e-14,
+      "val": 1.2560206047907573e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -9279,7 +9304,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 187,
+      "files_scanned": 188,
       "exts_declared": [
         ".md",
         ".py",
@@ -9293,7 +9318,7 @@
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 123,
+      "files_scanned": 124,
       "exts_declared": [
         ".ts"
       ],
@@ -9303,7 +9328,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 187,
+      "files_scanned": 188,
       "exts_declared": [
         ".md",
         ".py",
@@ -9317,7 +9342,7 @@
     },
     {
       "sweep": "external_data",
-      "files_scanned": 82,
+      "files_scanned": 83,
       "exts_declared": [
         ".ts"
       ],
@@ -9351,9 +9376,9 @@
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 19,
+      "targets": 21,
       "hits": 0,
-      "note": "값 대조를 **지난 것 5** · **면제 14**(`reachability_absent`) · 원장 51개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, eraser.json:gate, guide_budget.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, osnap.json:gate, osnap_config.json:gate, preview_gap.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, stage_browser.json:l_b3.gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "note": "값 대조를 **지난 것 5** · **면제 16**(`reachability_absent`) · 원장 53개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, eraser.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, osnap.json:gate, osnap_config.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, stage_browser.json:l_b3.gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -9383,6 +9408,7 @@
     "free_curve.json",
     "guide_budget.json",
     "horizon.json",
+    "horizon_flow.json",
     "horizon_pitch.json",
     "incline_vp.json",
     "lift_gate.json",
@@ -9400,6 +9426,7 @@
     "preview_gap.json",
     "promote.json",
     "real_ink.json",
+    "rel_snap_flow.json",
     "rule_camera.json",
     "segment_gate.json",
     "snap.json",

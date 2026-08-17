@@ -47,6 +47,12 @@
     #bar button.on{background:#111;color:#fff;border-color:#111}
     #bar button:disabled{opacity:.38;cursor:default}
     #bar .sep{width:1px;height:20px;background:#e0e0e0;flex:0 0 auto}
+    /* 4차 지시 6 — 하단바 재배치: 도구·채널 왼쪽 · 표시 토글 접이식 · 파일 오른쪽 */
+    #bar .spacer{flex:1 1 auto}
+    #bar .grp{font-size:11px;color:#9a9a9a;flex:0 0 auto;margin:0 1px 0 5px}
+    #bar .folded{display:none}
+    /* 궤도·확정 시점은 마우스 전용(지시 6-b) — 손가락 장치(아이패드)에서는 제스처가 대신한다 */
+    @media (pointer: coarse){ #bar .mouse-only{display:none} }
     /* §9.2 뷰 목록 — 라이노의 명명된 뷰를 따르되 **2D 획을 소유한다**. */
     #views{position:absolute;right:10px;top:10px;z-index:3;min-width:15ch;max-width:30ch;
            background:rgba(255,255,255,.86);border:1px solid #e3e3e3;border-radius:8px;

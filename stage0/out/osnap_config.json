@@ -17,7 +17,7 @@
   "r15": "on_face",
   "r15_dist": 0,
   "r40": "endpoint",
-  "r40_dist": 21.2362448194269,
+  "r40_dist": 21.236244819426787,
   "no_endpoint": "on_edge",
   "perp_kind": "midpoint"
  },

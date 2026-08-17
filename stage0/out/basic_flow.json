@@ -20,7 +20,7 @@
   "reachability_source": "s4_result/result_dark_after"
  },
  "s1_horizontal": {
-  "ink_px": 2661,
+  "ink_px": 1542,
   "order": 1,
   "standing": false,
   "strokes": 1
@@ -34,7 +34,7 @@
    1,
    1
   ],
-  "gl_painted_px": 1905
+  "gl_painted_px": 2406
  },
  "s4_result": {
   "channel": "result",
@@ -45,7 +45,7 @@
  },
  "s5_orbit": {
   "pinned": false,
-  "gl_painted_px": 2152
+  "gl_painted_px": 2279
  },
  "s6_continue": {
   "snap_start": "vertex",
