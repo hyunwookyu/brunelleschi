@@ -22,15 +22,15 @@
  },
  "before": {
   "yaw": 0,
-  "fy": -0.08380170312091385,
+  "fy": -0.08380170315486167,
   "pinned": false,
   "vps_inside": 1,
   "cube_on": true,
   "cube_hidden": false
  },
  "after_snap": {
-  "yaw": -1.5707963267948966,
-  "fy": -0.08380170313587704,
+  "yaw": -1.5707963267948968,
+  "fy": -0.0838017031640286,
   "pinned": false,
   "vps_inside": 1,
   "cube_on": true,
@@ -39,7 +39,7 @@
  "dyaw_deg": 90,
  "after_drag": {
   "yaw": -1.3307963267948966,
-  "fy": -0.08380170313805471,
+  "fy": -0.0838017031651409,
   "pinned": false,
   "vps_inside": 1,
   "cube_on": true,
