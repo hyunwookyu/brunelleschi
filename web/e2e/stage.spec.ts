@@ -323,7 +323,7 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
     ctl.target.set(0.6, 0.4, -4.2);              // 우리 (0.6,-0.4,4.2) → three
     ctl.update();
     camT.updateMatrixWorld(true);
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="draw"]')!.click();
+    document.querySelector<HTMLButtonElement>('#tools button[data-act="draw"]')!.click();
     S.refresh();
     const v = S.viewForDrawing();
     S.doc().currentView = v;
@@ -1065,7 +1065,7 @@ test("뷰 시스템 — 목록·전환·삭제·소유", async ({ page }) => {
 
   // ---- 되돌리기가 뷰 삭제도 되돌린다(스냅샷이 뷰를 복사한다)
   l.undo_restores_view = await page.evaluate(() => {
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="undo"]')!.click();
+    document.querySelector<HTMLButtonElement>('#tools button[data-act="undo"]')!.click();
     return { views: window.S2S.doc().views.length,
              total: window.S2S.doc().strokes.length };
   });
@@ -1124,7 +1124,7 @@ test("궤도 후 계속 그리기 — 새 각도가 새 뷰가 된다", async ({
     ctl.update();
     camT.updateMatrixWorld(true);
     // 그리기로 돌아온다 — 여기서부터 잉크 캔버스가 포인터를 받는다
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="draw"]')!.click();
+    document.querySelector<HTMLButtonElement>('#tools button[data-act="draw"]')!.click();
     S.refresh();
     return { pinned: S.stage.isPinned, views: S.views().length,
              snap_targets: S.snapTargets(), has_pose: !!S.pose() };
@@ -1343,7 +1343,7 @@ test("차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린�
   // ---- ④ 되돌리기(§6.2 — 주 판정 수단)
   l.undo = await page.evaluate((arg: { seg0: number[][]; id: string }) => {
     const S = window.S2S;
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="undo"]')!.click();
+    document.querySelector<HTMLButtonElement>('#tools button[data-act="undo"]')!.click();
     const st0 = S.doc().strokes.find((s: any) => s.id === arg.id)!;
     const same = !!st0.seg3d && st0.seg3d.every((p: number[], i: number) =>
       p.every((v: number, k: number) => Math.abs(v - arg.seg0[i][k]) < 1e-12));
@@ -1452,7 +1452,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
   // 이제 존재하지 않는다 — 차수는 규칙에서 계산된다(지시 1).
   l.undo_restores_camera = await page.evaluate(() => {
     const S = window.S2S;
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="undo"]')!.click();
+    document.querySelector<HTMLButtonElement>('#tools button[data-act="undo"]')!.click();
     const c = S.camSnapshot();
     return { order: S.order(), guides: c.rules.slots.filter(Boolean).length,
              standing: c.standing,
@@ -1572,7 +1572,7 @@ test("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아
     relinkBtn?.click();
     const rep2 = S.promoteReport();
     // 되돌리기가 재연결도 되돌리는가 — 표시가 **다시 나와야** 한다
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="undo"]')!.click();
+    document.querySelector<HTMLButtonElement>('#tools button[data-act="undo"]')!.click();
     const rep3 = S.promoteReport();
     return {
       // ⚠ **매개변수를 원장에 남긴다**(#25 — 원장 밖 측정은 규칙이 있어도 안 걸린다)
@@ -1701,11 +1701,11 @@ test("고치기 — 획을 고르고, 축을 지정하고, 지운다", async ({ 
     S.setAxisLines(guides);
     S.cam.apply(); S.refresh();
     window.S2S.confirmNow();
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="edit"]')!.click();
+    document.querySelector<HTMLButtonElement>('#tools button[data-act="edit"]')!.click();
     return { strokes: S.doc().strokes.length,
              lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
              pending: S.doc().strokes.filter((s: any) => !s.seg3d).length,
-             tool_button_on: !!document.querySelector('#bar button[data-act="edit"].on') };
+             tool_button_on: !!document.querySelector('#tools button[data-act="edit"].on') };
   });
   const su = l.setup as any;
   expect(su.tool_button_on).toBe(true);
@@ -1780,7 +1780,7 @@ test("고치기 — 획을 고르고, 축을 지정하고, 지운다", async ({ 
     S.deletePicked();
     const afterN = S.doc().strokes.length, afterTargets = S.snapTargets();
     const gone = !S.doc().strokes.some((s: any) => s.id === st.id);
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="undo"]')!.click();
+    document.querySelector<HTMLButtonElement>('#tools button[data-act="undo"]')!.click();
     return { id: st.id, beforeN, afterN, gone, picked_cleared: S.picked() === null,
              // **씬·스냅 후보가 함께 줄었는가** — 문서에서만 지우면 여기가 안 움직인다
              snap_targets: [beforeTargets, afterTargets],

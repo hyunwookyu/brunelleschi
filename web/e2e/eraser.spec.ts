@@ -83,8 +83,8 @@ test("조각·부분 지우개 — 교차가 조각을 가르고, 앵커는 점�
   // ---- 실행취소가 지우개를 되돌린다
   const undone = await page.evaluate((n0) => {
     const S = window.S2S;
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="undo"]')!.click();
-    document.querySelector<HTMLButtonElement>('#bar button[data-act="undo"]')!.click();
+    document.querySelector<HTMLButtonElement>('#tools button[data-act="undo"]')!.click();
+    document.querySelector<HTMLButtonElement>('#tools button[data-act="undo"]')!.click();
     return { strokes: S.doc().strokes.length, back_to: n0 };
   }, setup.strokes);
   expect(undone.strokes).toBe(setup.strokes);

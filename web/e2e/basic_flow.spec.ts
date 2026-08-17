@@ -184,7 +184,7 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
   expect((led.s5_orbit as any).gl_painted_px).toBeGreaterThan(0);  // **형태가 보인다**
 
   // ---- ⑥ 돌린 뒤 이어 긋는다 → 붙는다
-  await page.click('#bar button[data-act="draw"]');
+  await page.click('#tools button[data-act="draw"]');
   const target = await page.evaluate(async () => {
     // 돌린 시점에서 3D 끝점 하나의 화면 자리를 계산한다 — 앱과 같은 변환(viewCamera)
     const S = window.S2S;
@@ -1548,6 +1548,116 @@ test("그리는 중 — 스냅이 걸리면 궤적선이 안 보인다 (5차 지
       registered: "스냅이 걸린 끌기 중 원시 궤적 자리(수평에서 6px 이탈점)의 잉크 0 · 스냅 미리보기 자리 잉크 >0 · engaged 참(#38 — 스냅이 실제로 걸렸다) · 자유 선의 궤적 잉크 >0 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
       reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 숨김은 표시 스위치의 보장이고(#5) 판정은 그 배선이다",
+    },
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 1));
+});
+
+// ---------------------------------------------------------------- 5차 지시 5·6 — 지우개 크기·배치
+//
+// 프로크리에이트식 배치(6): 도구·채널은 상단 우측 묶음(#tools), 크기 슬라이더는 좌측
+// 사이드바(#side — 지우개 도구일 때만), 하단바에는 파일·표시 토글만. 지우개 크기(5)는
+// 화면 px이고 슬라이더가 실제 지우기 반경을 바꾼다.
+test("지우개 크기·도구 배치 — 슬라이더가 반경을 바꾸고 묶음이 상단 우측에 있다 (5차 지시 5·6)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+
+  const box = (await page.locator("#ink").boundingBox())!;
+  const W = box.width, H = box.height;
+  const drawPx = async (x1: number, y1: number, x2: number, y2: number) => {
+    await page.mouse.move(box.x + x1, box.y + y1);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move(box.x + x1 + (x2 - x1) * i / 8, box.y + y1 + (y2 - y1) * i / 8);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(50);
+  };
+  const led: Record<string, unknown> = {};
+
+  // ---- ⑥ 배치: 도구·채널·실행취소가 #tools에, 하단바에는 없다. 사이드바는 그리기 땐 숨김
+  led.layout = await page.evaluate(() => ({
+    tools_in_cluster: ["draw", "erase_seg", "erase_part", "edit", "ch_guide", "ch_result", "ch_note", "undo"]
+      .map(a => !!document.querySelector(`#tools button[data-act="${a}"]`)),
+    tools_in_bar: ["draw", "erase_seg", "erase_part", "edit", "undo"]
+      .map(a => !!document.querySelector(`#bar button[data-act="${a}"]`)),
+    file_in_bar: ["json", "obj", "gltf", "clear", "menu"]
+      .map(a => !!document.querySelector(`#bar button[data-act="${a}"]`)),
+    side_hidden: document.getElementById("side")!.classList.contains("hidden"),
+  }));
+  expect((led.layout as any).tools_in_cluster.every(Boolean)).toBe(true);
+  expect((led.layout as any).tools_in_bar.some(Boolean)).toBe(false);
+  expect((led.layout as any).file_in_bar.every(Boolean)).toBe(true);
+  expect((led.layout as any).side_hidden).toBe(true);
+
+  // ---- 확정 상태 + 3D 획 하나(부분 지우개의 대상)
+  await drawPx(0.25 * W, 0.30 * H, 0.45 * W, 0.301 * H);
+  await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
+  await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
+  const ready = await page.evaluate(() => ({
+    standing: window.S2S.standing(),
+    lifted: window.S2S.doc().strokes.filter((s: any) => s.seg3d).length }));
+  expect(ready.standing).toBe(true);
+  expect(ready.lifted).toBe(3);
+
+  // ---- ⑤ 지우개 도구 → 사이드바가 보이고, 슬라이더가 ERASER.px를 바꾼다
+  await page.click('#tools button[data-act="erase_part"]');
+  led.side_visible = await page.evaluate(() =>
+    !document.getElementById("side")!.classList.contains("hidden"));
+  expect(led.side_visible).toBe(true);
+  await page.evaluate(() => {
+    const r = document.querySelector('#side input[data-eraser-size]') as HTMLInputElement;
+    r.value = "6";
+    r.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  led.eraser_after_slider = await page.evaluate(() => window.S2S.eraser().px);
+  expect(led.eraser_after_slider).toBe(6);
+
+  // ---- 반경이 실제로 지우기를 가른다: 획에서 12px 떨어진 자리 —
+  //      6px 지우개는 못 닿고, 30px 지우개는 닿는다(화면 px 기준, 지시 5)
+  const target = await page.evaluate(() => {
+    const S = window.S2S, fr = S.doc().strokes.find((s: any) => s.seg3d && s.axis === 0);
+    return fr.id;
+  });
+  const probe = { x: 0.35 * W, y: 0.30 * H + 12 };   // 가로 획(0.30H)에서 12px 아래
+  const pieces = () => page.evaluate(() => window.S2S.doc().strokes.length);
+  led.n_before = await pieces();
+  await drawPx(probe.x, probe.y, probe.x + 8, probe.y);   // 6px 지우개로 문지른다
+  led.n_small = await pieces();
+  expect(led.n_small).toBe(led.n_before);                 // **못 닿았다**(반경 6 < 거리 12)
+  await page.evaluate(() => window.S2S.setEraser(30));
+  await drawPx(probe.x, probe.y, probe.x + 8, probe.y);   // 30px 지우개
+  led.n_large = await pieces();
+  expect(led.n_large as number).not.toBe(led.n_before);   // **닿았다**(반경 30 > 거리 12)
+
+  led.console_errors = errors;
+  expect(errors).toEqual([]);
+
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "eraser_size.json"), JSON.stringify({
+    spec: "5차 지시 5·6 — 지우개 크기 슬라이더(좌측 사이드바, 화면 px)가 실제 반경을 바꾸고, 도구·채널·실행취소는 상단 우측 묶음(#tools)·하단바에는 파일·표시 토글만. Playwright 신뢰 이벤트·콘솔 오류 0",
+    what_this_does_not_say: [
+      "반경 판정은 두 동작점(6px 못 닿음·30px 닿음, 거리 12px)의 확인이다(#12) — 경계 정밀도는 안 잰다",
+      "아이패드 실기(손 가림 6-e)·dpr 2 확인은 K의 문이다(#21)",
+      "부분 지우개 경로의 확인이다 — 조각 지우개의 반경(pickStroke rPx)은 같은 ERASER.px를 읽는다(코드 경로 확인, 실행 팔 없음)",
+    ],
+    thresholds: { eraser_small_px: 6, eraser_large_px: 30, probe_offset_px: 12, console_errors_max: 0 },
+    gate: {
+      registered: "도구·채널·실행취소가 #tools에 있고 #bar에는 없다 · 파일·메뉴는 #bar에 있다 · 지우개 도구에서 사이드바가 보이고 슬라이더가 ERASER.px를 바꾼다 · 반경 6px는 12px 거리의 획을 못 지우고 30px는 지운다 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
+      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 반경이 지우기를 가르는 것은 erasePartSample의 정의이고(#5) 판정은 그 배선(슬라이더→ERASER→반경)이다",
     },
     ...led,
     constants: constantsSnapshot(),

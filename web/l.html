@@ -53,8 +53,25 @@
     #bar .folded{display:none}
     /* 궤도·확정 시점은 마우스 전용(지시 6-b) — 손가락 장치(아이패드)에서는 제스처가 대신한다 */
     @media (pointer: coarse){ #bar .mouse-only{display:none} }
+    /* 5차 지시 6 — 프로크리에이트식 배치: 도구·채널은 상단 우측 묶음, 크기 슬라이더는 좌측 사이드바 */
+    #tools{position:absolute;right:10px;top:10px;z-index:4;display:flex;flex-direction:column;gap:6px;
+           background:rgba(255,255,255,.9);border:1px solid #e3e3e3;border-radius:10px;padding:8px;
+           backdrop-filter:blur(2px)}
+    #tools .row{display:flex;gap:6px;justify-content:flex-end}
+    #tools button{font:inherit;padding:5px 11px;border:1px solid #d4d4d4;border-radius:6px;
+                  background:#fff;color:#111;cursor:pointer;white-space:nowrap}
+    #tools button.on{background:#111;color:#fff;border-color:#111}
+    #tools button:disabled{opacity:.38;cursor:default}
+    #side{position:absolute;left:10px;top:50%;transform:translateY(-50%);z-index:4;
+          background:rgba(255,255,255,.9);border:1px solid #e3e3e3;border-radius:10px;
+          padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;
+          backdrop-filter:blur(2px)}
+    /* 세로 슬라이더 — writing-mode 미지원이면 가로로 떨어져도 동작은 같다 */
+    #side input[type=range]{writing-mode:vertical-lr;direction:rtl;height:140px;width:26px}
+    #side .val{font-size:11px;color:#666}
+    #side.hidden{display:none}
     /* §9.2 뷰 목록 — 라이노의 명명된 뷰를 따르되 **2D 획을 소유한다**. */
-    #views{position:absolute;right:10px;top:10px;z-index:3;min-width:15ch;max-width:30ch;
+    #views{position:absolute;right:10px;top:118px;z-index:3;min-width:15ch;max-width:30ch;
            background:rgba(255,255,255,.86);border:1px solid #e3e3e3;border-radius:8px;
            padding:6px 8px;line-height:1.5;backdrop-filter:blur(2px)}
     #views .cap{font-size:12px;color:#888;margin-bottom:3px}
@@ -75,7 +92,9 @@
       <div id="stage"></div>
       <canvas id="ink"></canvas>
       <div id="status"></div>
-      <div id="views"></div>
+      <div id="tools"></div>
+  <div id="side" class="hidden"></div>
+  <div id="views"></div>
     </div>
     <div id="bar"></div>
   </div>

@@ -58,6 +58,8 @@ const canvas = document.getElementById("ink") as HTMLCanvasElement;
 const barEl = document.getElementById("bar")!;
 const statusEl = document.getElementById("status")!;
 const viewsEl = document.getElementById("views")!;
+const toolsEl = document.getElementById("tools")!;
+const sideEl = document.getElementById("side")!;
 
 const stage = new Stage(host);
 let doc: DocState = newDoc();
@@ -242,6 +244,14 @@ const OSNAP = {
            perpendicular: true, on_edge: true, on_face: true } as Record<SnapKind, boolean>,
   open: false,                       // 설정 패널이 열려 있는가
 };
+/**
+ * **지우개 크기(화면 px)**(5차 지시 5). 프로크리에이트처럼 좌측 사이드바 슬라이더로 조절한다.
+ * 옛 판은 PICK_TOL(대각 비 0.0145 ≈ 21px)을 그대로 써서 너무 컸다. 값은 부분 지우개의
+ * 화면 반경이자 조각 지우개의 집기 반경이다. 표시·도구 상수라 test/constants.ts에 안
+ * 넣는다(D-L49의 예외와 같은 자리 — 어느 판정도 이 값을 안 읽는다. 원장은 값을 그대로 적는다).
+ */
+const ERASER = { px: 12, min: 4, max: 60 };
+
 /** 앱 조리개(px) → 하네스 규약(대각 비). **한 군데서만 환산한다**(#17). */
 const osnapCfg = () => ({ radius_ratio: OSNAP.radiusPx / Math.hypot(...cssSize()) });
 /** **종류 필터를 지난 최선 후보** — 앱의 모든 스냅 질의가 이것을 지난다(#17). */
@@ -1083,7 +1093,7 @@ function replaceWithPieces(st: SStroke, keep: [number, number][]): { pieces: num
  * 2D 대기 획은 조각 개념이 없으므로(교차가 3D의 것) **획 전체**가 사라진다.
  */
 function eraseSegmentAt(p: Pt2): boolean {
-  const hit = pickStroke(p);
+  const hit = pickStroke(p, ERASER.px);          // **지우개 크기**(5차 지시 5 — 화면 px)
   if (!hit) return false;
   const st = doc.strokes.find(x => x.id === hit)!;
   pushUndo();
@@ -1113,7 +1123,7 @@ let partErase: Map<string, [number, number][]> | null = null;
 function erasePartSample(p: Pt2): void {
   const fr = frame();
   if (!fr) return;
-  const rPx = PICK_TOL.radius_ratio * Math.hypot(...cssSize());
+  const rPx = ERASER.px;                         // **지우개 크기**(5차 지시 5 — 화면 px)
   for (const st of lifted(doc)) {
     const a = project(fr.toV(st.seg3d![0]), fr.ctx.principal, fr.ctx.f);
     const b = project(fr.toV(st.seg3d![1]), fr.ctx.principal, fr.ctx.f);
@@ -1689,8 +1699,8 @@ function drawLive2d(ctx2: CanvasRenderingContext2D) {
  *
  * 3D 획은 **지금 시점으로 되쏜 선분**과 비교한다(L-B.8) — 돌린 뷰에서도 눈에 보이는 자리다.
  */
-function pickStroke(p: Pt2): string | null {
-  return nearestSeg(p, pickSegs(), PICK_TOL.radius_ratio * Math.hypot(...cssSize()));
+function pickStroke(p: Pt2, rPx?: number): string | null {
+  return nearestSeg(p, pickSegs(), rPx ?? PICK_TOL.radius_ratio * Math.hypot(...cssSize()));
 }
 
 /** 고를 수 있는 것들의 **화면 선분**. 3D는 지금 시점으로 되쏘고 2D는 그린 좌표 그대로다. */
@@ -2062,6 +2072,8 @@ function refresh() {
     // 통째로 지워진다.** 그리고 다음 `refresh()`가 없으면 빈 화면으로 남는다 —
     // `coords.spec`의 "닿은 자리에 잉크가 나온다"가 **0픽셀**로 그것을 잡았다.
     renderBar();
+    renderTools();          // 상단 우측 도구 묶음(5차 지시 6)
+    renderSide();           // 좌측 지우개 크기 슬라이더(5차 지시 5)
     renderStatus();
     renderViews();
     // 막대가 커졌으면 여기서 크기를 맞춘다(AS-C7의 자가 치유와 같은 자리)
@@ -2103,39 +2115,17 @@ function applyDoc2(d: Doc2) {
 }
 
 function renderBar() {
-  // **4차 지시 6 — 성격별 재배치**: 도구·채널(왼쪽) · 표시·스냅 토글(접이식) ·
-  // 카메라(마우스 전용 — 아이패드는 손가락이 한다, 6-b) · 파일(오른쪽) · 편집.
-  // ⚠ 버튼의 `data-act`·처리기는 그대로다(#17 — 바뀌는 것은 배치뿐). 접힌 버튼도 DOM에는
-  // 남는다(#32 — 다만 display:none이라 클릭은 펼친 뒤에만 된다. e2e가 누르는 여섯 버튼
-  // (draw·edit·orbit·home·undo·clear)은 전부 접이식 밖이다 — 착수 표에서 확인).
+  // **5차 지시 6-d — 하단바에는 파일·표시 토글(+마우스 전용 카메라·차수 되돌리기)만 남는다.**
+  // 도구·채널·실행취소는 상단 우측 묶음(renderTools)으로 옮겼다(프로크리에이트 관행, 6-a·b).
+  // ⚠ 버튼의 `data-act`·처리기는 그대로다(#17 — 바뀌는 것은 배치뿐).
   const btn = (id: string, label: string, on = false, dis = false, cls = "") =>
     `<button data-act="${id}"${on || cls ? ` class="${[on ? "on" : "", cls].filter(Boolean).join(" ")}"` : ""}`
     + `${dis ? " disabled" : ""}>${label}</button>`;
   const fold = BAR_MENU.open ? "" : "folded";
   barEl.innerHTML = [
-    // ---- 도구(왼쪽) — **현재 도구가 .on으로 보인다**(6-c)
-    '<span class="grp">도구</span>',
-    btn("draw", "선 그리기", tool === "draw"),
-    btn("edit", "선택", tool === "edit", !doc.strokes.length),
-    btn("erase_seg", "지우개(조각)", tool === "erase_seg", !doc.strokes.length),
-    btn("erase_part", "지우개(부분)", tool === "erase_part", !lifted(doc).length),
-    '<span class="sep"></span>',
-    // ---- 채널 — **현재 채널이 .on + 왼쪽 색띠로 보인다**(D-5·6-c)
-    '<span class="grp">채널</span>',
-    ...(["guide", "result", "note"] as Channel[]).map(k =>
-      `<button data-act="ch_${k}"${channel === k ? ' class="on"' : ""}`
-      + ` style="border-left:4px solid ${CHANNEL_UI[k].color}"`
-      + ` title="${k === "guide" ? "작도의 본체 — 3D로 올라가고 돌리면 흐려집니다"
-                 : k === "result" ? "보조선 위를 덧그어 확정합니다 — 내보내기에 포함됩니다"
-                 : "해칭·지시선·메모 — 3D로 안 올라가고 그린 뷰에서만 보입니다"}"`
-      + `>${CHANNEL_UI[k].name}</button>`),
-    '<span class="sep"></span>',
-    // ---- 편집
-    btn("undo", "실행취소", false, !undoStack.length),
     ...orderMarks.filter(m => m.order !== cam.order())
                  .map(m => btn(`revert${m.order}`, `${m.order}점으로 되돌리기`)),
-    '<span class="sep"></span>',
-    // ---- 표시·스냅 토글 — **접이식**(6-a). 기본 접힘
+    // ---- 표시·스냅 토글 — **접이식**(4차 6-a). 기본 접힘
     btn("menu", `표시·스냅 ${BAR_MENU.open ? "▴" : "▾"}`, BAR_MENU.open),
     btn("axissnap", `축 스냅 ${AXIS_SNAP.on ? "켬" : "끔"}`, AXIS_SNAP.on, false, fold),
     btn("relsnap", `정렬 ${REL_SNAP.on ? "켬" : "끔"}`, REL_SNAP.on, false, fold),
@@ -2150,7 +2140,7 @@ function renderBar() {
         + ` title="${SNAP_TIP[k]}">${SNAP_LABEL[k]}</button>`),
     ] : []),
     btn("expguide", `보조선 내보내기 ${EXPORT_GUIDES.on ? "켬" : "끔"}`, EXPORT_GUIDES.on, false, fold),
-    // ---- 카메라 — **마우스 전용**(6-b). 손가락 장치에서는 CSS가 숨긴다(l.html의 pointer: coarse)
+    // ---- 카메라 — **마우스 전용**(4차 6-b). 손가락 장치에서는 CSS가 숨긴다(l.html의 pointer: coarse)
     '<span class="sep mouse-only"></span>',
     `<button data-act="orbit" class="mouse-only${tool === "orbit" ? " on" : ""}"${!cam.standing() ? " disabled" : ""}`
     + ` title="마우스 전용입니다 — 손가락 1개는 궤도, 2개는 팬·줌이라 버튼이 필요 없습니다">궤도(마우스)</button>`,
@@ -2163,6 +2153,48 @@ function renderBar() {
     btn("gltf", "glTF", false, !lifted(doc).length),
     btn("clear", "비우기"),
   ].join("");
+}
+
+/**
+ * **상단 우측 도구 묶음**(5차 지시 6-a·b — 프로크리에이트 관행: 우측 상단 도구, 오른손잡이가
+ * 그리는 손에 안 가린다 6-e). 도구 네 개 + 채널 세 개 + 실행취소. 처리기는 하단바와 같은
+ * 것을 쓴다(#17 — data-act 위임 하나).
+ */
+function renderTools() {
+  const btn = (id: string, label: string, on = false, dis = false) =>
+    `<button data-act="${id}"${on ? ' class="on"' : ""}${dis ? " disabled" : ""}>${label}</button>`;
+  toolsEl.innerHTML = [
+    '<div class="row">',
+    btn("draw", "선 그리기", tool === "draw"),
+    btn("erase_seg", "지우개(조각)", tool === "erase_seg", !doc.strokes.length),
+    btn("erase_part", "지우개(부분)", tool === "erase_part", !lifted(doc).length),
+    btn("edit", "선택", tool === "edit", !doc.strokes.length),
+    '</div><div class="row">',
+    ...(["guide", "result", "note"] as Channel[]).map(k =>
+      `<button data-act="ch_${k}"${channel === k ? ' class="on"' : ""}`
+      + ` style="border-left:4px solid ${CHANNEL_UI[k].color}"`
+      + ` title="${k === "guide" ? "작도의 본체 — 3D로 올라가고 돌리면 흐려집니다"
+                 : k === "result" ? "보조선 위를 덧그어 확정합니다 — 내보내기에 포함됩니다"
+                 : "해칭·지시선·메모 — 3D로 안 올라가고 그린 뷰에서만 보입니다"}"`
+      + `>${CHANNEL_UI[k].name}</button>`),
+    btn("undo", "실행취소", false, !undoStack.length),
+    '</div>',
+  ].join("");
+}
+
+/**
+ * **좌측 사이드바 — 지우개 크기 슬라이더**(5차 지시 5-c, 프로크리에이트의 크기 사이드바 자리).
+ * 지우개 도구일 때만 보인다 — 다른 도구는 조절할 크기가 없다(선 굵기는 D-L62·지시 8의 고정값).
+ */
+function renderSide() {
+  const on = tool === "erase_seg" || tool === "erase_part";
+  sideEl.classList.toggle("hidden", !on);
+  if (!on) return;
+  sideEl.innerHTML =
+    `<span class="val">지우개</span>`
+    + `<input type="range" min="${ERASER.min}" max="${ERASER.max}" step="1" value="${ERASER.px}"`
+    + ` data-eraser-size aria-label="지우개 크기(px)">`
+    + `<span class="val" data-eraser-val>${ERASER.px}px</span>`;
 }
 
 /**
@@ -2278,7 +2310,8 @@ function renderStatus() {
 
 // ---------------------------------------------------------------- 배선
 
-barEl.addEventListener("click", (e) => {
+// **도구 묶음도 같은 처리기를 쓴다**(#17) — data-act 위임 하나
+const onActClick = (e: Event) => {
   const b = (e.target as HTMLElement).closest("button");
   if (!b) return;
   // **오스냅 종류 토글**(지시 H) — 라이노처럼 종류마다 켜고 끈다
@@ -2390,7 +2423,9 @@ barEl.addEventListener("click", (e) => {
     void deleteDoc2().catch(() => { /* 저장소가 없어도 화면은 비워졌다 */ });
   }
   refresh();
-});
+};
+barEl.addEventListener("click", onActClick);
+toolsEl.addEventListener("click", onActClick);
 
 // **승격 요약 패널 안의 버튼**(L-C.2). 도구 막대와 같은 규약(`data-act`)을 쓴다 —
 // 규약이 둘이 되면 다음 버튼을 어디에 다는지가 매번 판단거리가 된다
@@ -2458,6 +2493,17 @@ function relive() {
   }
   refresh();
 }
+
+// **지우개 크기 슬라이더**(5차 지시 5) — 화면 px. 끄는 동안 값 표시만 갱신하고
+// 놓을 때 refresh 없이도 즉시 반영된다(ERASER는 읽는 자리가 그때그때 읽는다)
+sideEl.addEventListener("input", (e) => {
+  const t = e.target as HTMLInputElement;
+  if (t?.dataset?.eraserSize === undefined) return;
+  const v = Math.max(ERASER.min, Math.min(ERASER.max, Number(t.value) || ERASER.px));
+  ERASER.px = v;
+  const lab = sideEl.querySelector("[data-eraser-val]");
+  if (lab) lab.textContent = `${v}px`;
+});
 
 // **오스냅 반경 입력**(지시 H). 4~40px로 죈다 — 0이나 음수는 스냅을 통째로 죽인다
 barEl.addEventListener("change", (e) => {
@@ -2642,6 +2688,12 @@ refresh();
   ask: () => ask && { strokeId: ask.strokeId, question: ask.question, toH: ask.toH, toV: ask.toV },
   /** 물음 카운터(5차 지시 3의 종단 확인이 읽는다 — #17). */
   askStats: () => ({ ...askStats }),
+  /** **지우개 크기**(5차 지시 5) — 종단 확인이 앱 경로 그대로 읽고 쓴다(#17). */
+  eraser: () => ({ ...ERASER }),
+  setEraser: (px: number) => {
+    ERASER.px = Math.max(ERASER.min, Math.min(ERASER.max, px));
+    refresh();
+  },
   answerAsk: (choice: "screen" | "depth" | "vertical") => { answerAsk(choice); },
   /** **펜 채널**(D) — 앱 경로 그대로를 종단 확인이 부른다(#17). */
   channel: () => channel,
