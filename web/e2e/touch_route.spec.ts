@@ -234,6 +234,13 @@ test("앱 종단 — 손가락 1개는 궤도, 2개는 팬·줌", async ({ page 
   const strokesAfterTouch = await page.evaluate(() => window.S2S.doc().strokes.length);
 
   const g = await page.evaluate(() => window.S2S.gestureTol());
+  // **산문이 인용할 값을 먼저 잰다**(8차 리뷰어 [2]) — 산문 안에 수를 박으면 낡는다(#1).
+  const g0 = { azimuth_delta: Math.abs(afterOne.azimuth - before.azimuth),
+               polar_delta: Math.abs(afterOne.polar - before.polar),
+               dist_delta: Math.abs(afterOne.dist - before.dist) };
+  const g1 = { azimuth_delta: Math.abs(afterAgain.azimuth - beforeAgain.azimuth),
+               polar_delta: Math.abs(afterAgain.polar - beforeAgain.polar),
+               dist_delta: Math.abs(afterAgain.dist - beforeAgain.dist) };
   led.app_gestures = {
     pinned_before: before.pinned,
     pinned_after_one_finger: afterOne.pinned,
@@ -241,12 +248,22 @@ test("앱 종단 — 손가락 1개는 궤도, 2개는 팬·줌", async ({ page 
                   azimuth_delta: Math.abs(afterOne.azimuth - before.azimuth),
                   polar_delta: Math.abs(afterOne.polar - before.polar),
                   dist_delta: Math.abs(afterOne.dist - before.dist) },
-    // ⚠⚠ **`dist_ratio`는 측정이 아니라 설계 보장이다**(#5 · 리뷰어 [4]) — 우리가 부른
-    // `dollyOut(끝거리/처음거리)`를 그대로 되받는다: 100 → 196px이므로 1/1.96 = 0.5102다.
-    // **읽을 것은 값이 아니라 부호와 경로**다(벌리면 가까워진다 · 두 손가락이 줌으로 갔다).
+    // ⚠⚠ **"설계 보장"이라던 서술을 철회한다**(2026-08-18 8차 리뷰어 [2] · #5).
+    //
+    // 옛 판은 "`dist_ratio`는 측정이 아니라 보장이다 — `dollyOut(끝거리/처음거리)`를 그대로
+    // 되받으므로 1/1.96 = **0.5102**이고 임계를 걸지 않는다"고 적었다. **실측이 그 말을
+    // 반증한다** — 아래 `dist_ratio`는 0.5102가 아니다(항등이면 그 값이어야 한다).
+    // `OrbitControls`의 dolly가 감쇠·한계를 지나므로 **호출 인자가 그대로 나오지 않는다.**
+    // 그러므로 이것은 **측정**이고, 보장이 아니면 "임계 없음"의 근거도 사라진다.
+    // ⚠ 다만 **임계는 여전히 안 건다** — 사유가 바뀌었다: 값이 **실행마다 흔들리기 때문**이다
+    // (팔들이 같은 페이지 상태를 이어 쓴다 — `arm_start_state`). 읽을 것은 **부호와 경로**다
+    // (벌리면 가까워진다 · 두 손가락이 줌으로 갔다).
     two_finger: { input_px: { d0: 100, d1: 196, ratio: 196 / 100 },
                   dist_ratio: afterTwo.dist / afterOne.dist,
-                  guarantee: "1/1.96 = 0.5102 — `dollyOut` 호출의 항등이다. 임계를 걸지 않는다",
+                  identity_if_guaranteed: 100 / 196,
+                  guarantee_retracted: "**보장이 아니다**(8차 리뷰어 [2]) — 항등이면 "
+                    + "`identity_if_guaranteed`(1/1.96)여야 하는데 `dist_ratio`가 그 값이 아니다. "
+                    + "임계를 안 거는 사유는 '항등이라서'가 아니라 **실행마다 흔들려서**다",
                   target_moved: Math.hypot(...afterTwo.target.map((v: number, i: number) =>
                                   v - afterOne.target[i])) },
     // **같은 손짓을 이미 풀린 상태에서 한 번 더** — 핀 해제 몫이 빠진 값이다
@@ -256,10 +273,18 @@ test("앱 종단 — 손가락 1개는 궤도, 2개는 팬·줌", async ({ page 
                                polar_delta: Math.abs(afterAgain.polar - beforeAgain.polar),
                                dist_delta: Math.abs(afterAgain.dist - beforeAgain.dist) },
     strokes_after_touch_only: { before: s.strokes, after: strokesAfterTouch },
+    // ⚠⚠ **산문을 동적으로 만든다**(2026-08-18 8차 리뷰어 [2]). 옛 판은 "첫 팔은 **세 성분
+    // 전부**에 핀 해제 재초기화가 섞여 있다(방위각도 **1.2551 대 1.0860**으로 13.5% 다르다)"를
+    // **문자로 박아 뒀고**, 그 뒤 `S2S.camPose()` 수리로 두 방위각이 같아졌는데도 산문이 그대로
+    // 남아 **자기 값과 모순**했다. 수를 박지 않고 그 자리에서 계산해 적는다(#1).
     reading: "손가락 하나가 **확정 카메라를 풀고**(pinned true → false) 방위각을 돌린다. "
            + "둘은 **거리를 줄이고**(벌림) 궤도 중심을 옮긴다. "
-           + "⚠ 첫 팔은 **세 성분 전부**에 핀 해제의 재초기화가 섞여 있다(방위각도 1.2551 대 1.0860으로 "
-           + "13.5% 다르다) — "
+           + `⚠ 핀 해제의 재초기화가 어느 성분에 섞이는지는 **두 팔의 차로 읽는다** — `
+           + `방위각 차 ${Math.abs(g0.azimuth_delta - g1.azimuth_delta).toExponential(1)} · `
+           + `앙각 차 ${Math.abs(g0.polar_delta - g1.polar_delta).toFixed(4)} · `
+           + `거리 차 ${Math.abs(g0.dist_delta - g1.dist_delta).toFixed(4)}. `
+           + "**방위각은 두 팔이 같고**(재초기화가 안 섞인다) 앙각·거리에만 섞인다 — "
+           + "옛 산문의 '세 성분 전부'와 '13.5%'는 `camPose()` 수리 이전 값이라 철회했다. "
            + "그 몫이 빠진 값이 `one_finger_already_free`다. "
            + "⚠ **터치만으로는 획이 안 생긴다**(`strokes_after_touch_only`).",
   };

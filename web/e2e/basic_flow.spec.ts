@@ -1177,6 +1177,40 @@ test("1점 확정 — 직전·직후 그린 선이 같은 자리다 (5차 지시
              pending_hidden: d.strokes.filter((s: any) => !s.seg3d
                && s.viewRef !== d.currentView).length };
   });
+  // ⚠⚠ **미앵커 배치의 서명을 원장에 남긴다**(2026-08-18 8차 리뷰어 [3]·[4] · #25).
+  //
+  // 8차 항목 0이 병합한 원격 갈래의 `placeUnanchored`·`planeAnchor`(D-L77)는 **앵커도 연결도
+  // 없는 획을 지면에 임의 깊이로** 놓는다. 그 사실을 지난 세션은 **브라우저에서 눈으로 보고
+  // 문서에만 적었고**(원장 밖 측정 — #25), 판정도 `lifted` **개수**로 걸었다. 개수는
+  // "**임의 깊이로 놓임**"과 "**연결이 정한 깊이로 놓임**"을 **못 가른다**(리뷰어 [4]).
+  //
+  // 그래서 **좌표로 남긴다**: 앵커 없이(`snapStart == null`) 놓인 획이 몇이고, 그 획의 3D y가
+  // **앞선 획들과 같은 지면 값**인가(= 임의 지면 스냅의 서명). **항목 4-5가 그것을 지우면
+  // `unanchored_placed`가 0이 되어야 하고, 그것이 양성 채널이다**(#30).
+  led.unanchored_place = await page.evaluate(() => {
+    const d = window.S2S.doc();
+    const placed = d.strokes.filter((s: any) => s.seg3d);
+    const ys = placed.map((s: any) => s.seg3d[0][1]);
+    const ground = ys.length ? ys[0] : null;
+    const un = placed.filter((s: any) => s.snapStart == null);
+    return {
+      placed: placed.length,
+      unanchored_placed: un.length,
+      // 앵커 없이 놓인 획의 y가 첫 획의 y와 같은가 — 지면 임의 스냅의 서명
+      unanchored_on_ground: un.filter((s: any) =>
+        ground != null && Math.abs(s.seg3d[0][1] - ground) < 1e-9).length,
+      ground_y: ground,
+      unanchored_segs: un.map((s: any) => ({ a: s.seg3d[0], b: s.seg3d[1] })),
+      note: "앵커 없이 놓인 획 = 좌표를 연결이 정하지 않은 배치(D-L77). "
+          + "**항목 4-5가 지우면 unanchored_placed가 0이 된다** — 개수(lifted)가 아니라 "
+          + "이 필드가 판정자다(8차 리뷰어 [4]).",
+    };
+  });
+  // **양성 채널의 현재 값**(8차 리뷰어 [4]) — 지금은 놓인 넷이 **전부** 앵커가 없다.
+  // ⚠ 지난 세션이 "넷째 획만 미앵커"라 적은 것은 **눈으로 본 것이라 부정확했다**(#25):
+  // 원장을 재니 `unanchored_placed = placed`다. **항목 4-5가 지우면 0이 되어야 한다.**
+  expect((led.unanchored_place as any).unanchored_placed)
+    .toBe((led.unanchored_place as any).placed);
   expect((led.after_state as any).standing).toBe(true);
   // **일괄 풀이가 실제로 돌았다** — 옛 코드는 가짜 뷰 때문에 0이었다(이 팔의 되살린 버그)
   // ⚠ **+1은 셋째 지지선을 픽스처에 넣었기 때문이다**(8차 지시 1-a) — 임계를 결과에 맞춘 것이 아니라 **입력이 한 획 늘었다**.
