@@ -100,8 +100,11 @@ export class CamState {
    *
    * `forced`는 사용자가 물음에 답한 것이다.
    */
-  feed(line: RLine, forced?: "screen" | "depth"): RuleFeedback {
-    const r = stepRule(this.rules, line, this.imgSize, forced);
+  feed(line: RLine, forced?: "screen" | "depth",
+       hint?: "screen" | "depth"): RuleFeedback {
+    // `hint`는 **커서가 이미 가른 것**이고 애매 구간에만 쓰인다(8차 지시 2-b) —
+    // P1 가드는 안 건드린다(D-L70의 결함을 안 되살린다).
+    const r = stepRule(this.rules, line, this.imgSize, forced, {}, hint);
     const applied = r.event.type !== "ask" && r.event.type !== "rejected";
     if (applied) { this.rules = r.state; this.apply(); }
     return { event: r.event, applied };

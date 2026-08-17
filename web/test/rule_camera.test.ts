@@ -154,6 +154,7 @@ function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
   for (const e of list) {
     let pts = e.pts2d;
     let moved = false;
+    let hint: "screen" | "depth" | undefined;
     // ⛔ **`forcedBySnap`을 지웠다**(2026-08-18 7차 지시 1-a) — 앱의 `snapForced`가 없어졌으므로
     //    하네스도 안 준다(#17: 측정 경로와 앱 경로가 갈라지지 않는다). 5차 지시 3의
     //    "스냅이 곧 선언이다"가 `stepRule`의 **P1 가드를 우회**하고 있었다.
@@ -172,6 +173,10 @@ function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
         pts = r2.pts;
         moved = dA > 1e-9 || dB > 1e-9;
         // **스냅은 좌표만 옮긴다** — 선언은 규칙이 한다(7차 지시 1-a).
+        // ⚠ **`hint`는 다르다**(8차 지시 2-b): 커서가 이미 가른 것을 **애매 구간에만** 넘긴다.
+        // `forced`가 아니므로 **P1 가드에 안 닿는다** — D-L70이 지운 그 우회가 아니다(#17:
+        // 앱의 `onStrokeEnd`가 같은 규칙으로 같은 값을 넘긴다).
+        hint = r2.ortho ? "screen" : r2.vpdir ? "depth" : undefined;
       } else {
         // **위약**: 같은 크기, 임의 방향(#39). 스냅이 안 움직였으면 위약도 안 움직인다
         if ((dA > 1e-9 || dB > 1e-9) && rr) {
@@ -189,7 +194,7 @@ function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
     const line: RLine = { a: rep.a, b: rep.b };
     movedByKey.set(keyOf(line), moved);
     fedSegs.push({ id: `f${fedSegs.length}`, a: line.a, b: line.b });
-    let r = stepRule(st, line, SZ);
+    let r = stepRule(st, line, SZ, undefined, {}, hint);
     if (r.event.type === "ask") {
       asks += 1;
       // **참 축으로 답한다**(오라클). 답한 횟수를 남긴다 — 사람이 개입해야 하는 횟수다

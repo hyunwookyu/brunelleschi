@@ -1394,9 +1394,10 @@ function standCamera() {
  *
  * 처음 서면 조용히 확정한다(`standCamera` — 무변화 전환). ⛔ **승격 갈래는 없다**(7차 지시 3-d).
  */
-function feedCamera(line: RLine, forced?: "screen" | "depth") {
+function feedCamera(line: RLine, forced?: "screen" | "depth",
+                    hint?: "screen" | "depth") {
   const wasStanding = cam.standing();
-  const r = cam.feed(line, forced);
+  const r = cam.feed(line, forced, hint);
   // ⛔ **차수 승격 분기를 지웠다**(2026-08-18 7차 지시 3-d). 남아 있던 전이는 P2 → P3
   // 하나였고 그 입구(기울어진 수직선의 "수직축" 답)를 3-b가 없앴다 — **차수 승격 개념이
   // 사라졌다.** 3점은 카메라를 기울인 시점의 성질이지 획이 만드는 전이가 아니다.
@@ -1414,11 +1415,12 @@ function feedCamera(line: RLine, forced?: "screen" | "depth") {
  * 애매하면 `ask`를 세우고 **그 획은 2D로 대기**한다. 답이 올 때까지 규칙은 안 움직인다 —
  * 이것이 "추정하지 않는다"의 구현이다(A-3: 애매하면 놓지 않는다).
  */
-function feedStroke(st: SStroke, forced?: "screen" | "depth"): void {
+function feedStroke(st: SStroke, forced?: "screen" | "depth",
+                    hint?: "screen" | "depth"): void {
   const rep = representative(st.pts2d);
   if (!rep) return;
   const line: RLine = { a: rep.a, b: rep.b };
-  const r = feedCamera(line, forced);
+  const r = feedCamera(line, forced, hint);
   // **알릴 규칙 사건은 둘뿐이다**(6차 지시 7-b·7-c·11-3). 나머지는 시스템 사정이라 안 낸다
   // (지시 3): ① 화각 경고 — **섰지만 시점이 이상하다** ② 알림 표시가 붙은 거절 —
   // **아무 일도 안 난 이유와 사용자가 다시 그을 것**.
@@ -2079,7 +2081,12 @@ const ink = new InkCanvas(canvas, {
     // 그때 규칙이 카메라를 세우면 아래에서 곧바로 놓는다.
     const fr0 = liftable(s) ? frame() : null;
     if (fr0) placeStroke(s, fr0);
-    if (liftable(s)) feedStroke(s);
+    // **커서가 이미 가른 것을 규칙에 넘긴다**(8차 지시 2-b) — 애매 구간의 물음은 조작이지
+    // 물음이 아니다. ⚠ `forced`가 아니라 `hint`다: **P1 가드에는 안 닿는다**(D-L70을 안 되살린다).
+    // 규칙은 `resolve2dCore`가 이미 쓴 그 규칙이다(#17 — 화면 직교 대 소실점 방향).
+    const hint2d: "screen" | "depth" | undefined =
+      r2d?.ortho ? "screen" : r2d?.vpdir ? "depth" : undefined;
+    if (liftable(s)) feedStroke(s, undefined, hint2d);
     // 확정 뒤에는 그 자리에서 푼다 — **승격 연쇄**의 첫 형태다(§9.1).
     // **돌린 시점에서도 돈다**(L-B.8) — `frame()`이 좌표 변환을 들고 있다
     const fr = fr0 ?? (liftable(s) ? frame() : null);

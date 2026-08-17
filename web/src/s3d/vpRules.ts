@@ -421,7 +421,19 @@ export type RuleEvent =
   | { type: "support"; axis: 0 | 1 | 2 }
   // ⛔ `distance_point` 사건을 지웠다(2026-08-17 지시 2) — 거리점 경로 전체가 폐기됐다
   /** 사용자에게 묻는다. */
-  | { type: "ask"; question: "screen_or_depth" | "second_horizontal_or_vertical"; verdict: LineVerdict }
+  | { type: "ask"; question: "screen_or_depth" | "second_horizontal_or_vertical";
+      /**
+       * **물음이 어디서 났는가**(2026-08-18 8차 지시 2-a). `question`만으로는 남은 물음이
+       * 전부 `screen_or_depth` 한 덩어리로 보여 **무엇을 없앨 수 있는지 못 가른다.**
+       * 두 자리는 성질이 다르다:
+       *   `ambiguous` — 화면 축과 깊이 사이 **애매 구간**(4~8°). **진짜 모호 판정**이고
+       *                 지시 2-b대로 **커서 위치로 가를 것**이지 물어볼 것이 아니다.
+       *   `p1_guard`  — 소실점이 이미 선 상태의 화면 수평선. 애매해서가 아니라
+       *                 **불가역 전이를 조용히 통과시키지 않으려고** 묻는다(D-L53).
+       *                 이것은 **없앨 대상이 아니다**.
+       */
+      site: "ambiguous" | "p1_guard";
+      verdict: LineVerdict }
   /** 쓸 수 없다. `why`가 사유다. */
   | { type: "rejected"; why: string;
       /** **화각 게이트가 막았다**(6차 지시 7-c) — 판정 값을 함께 낸다(원장이 읽는다). */
@@ -693,9 +705,24 @@ const finiteHorizontals = (st: RuleState): { i: 0 | 1; at: Pt2 }[] =>
  *
  * `forced`는 사용자가 애매에 답한 것이다 — 그때만 판정을 건너뛴다.
  */
+/**
+ * @param forced 사용자가 **물음에 답한 것**. 모든 판정을 건너뛴다.
+ * @param hint   **커서가 이미 가른 것**(2026-08-18 8차 지시 2-b). `forced`와 다르다 —
+ *   **애매 구간(`ambiguous`) 한 자리에만** 쓰이고 **`p1_guard`는 안 건드린다.**
+ *
+ *   지시 2-b: "모호 판정은 두 축이 화면에서 겹칠 때만이고, 그것도 **커서 위치로 가르므로
+ *   물음이 아니라 조작이다.**" 앱의 2D 경로(`resolve2dCore`)가 이미 그 규칙을 갖고 있다 —
+ *   화면 직교와 소실점 방향 중 **끝점 이동량이 작은 쪽**이 이긴다. 그 답을 여기 넘긴다.
+ *
+ *   ⚠⚠ **`snapForced`(D-L70)의 부활이 아니다.** 그것이 위험했던 이유는 `stepRule`의
+ *   **P1 가드를 건너뛰어** 불가역 전이를 조용히 통과시킨 것이고(축 오차 10.1° → 31.6° 붕괴),
+ *   `hint`는 **가드에 안 닿는다** — 애매 구간에서만 읽히고 가드는 그대로 묻는다.
+ *   그 분리가 가능해진 것은 물음에 `site`가 붙었기 때문이다(지시 2-a).
+ */
 export function stepRule(
   st0: RuleState, line: RLine, imgSize: [number, number],
   forced?: "screen" | "depth", cfg: RuleCfg = {},
+  hint?: "screen" | "depth",
 ): StepResult {
   const c = { ...RULE_TOL, ...cfg };
   const st = cloneRuleState(st0);
@@ -727,7 +754,13 @@ export function stepRule(
   if (forced === "screen") kind = v.toH <= v.toV ? "screen_h" : "screen_v";
   else if (forced === "depth") kind = "depth";
   else if (kind === "ambiguous") {
-    return { state: st0, event: { type: "ask", question: "screen_or_depth", verdict: v } };
+    // **커서가 이미 갈랐으면 묻지 않는다**(8차 지시 2-b) — 모호 판정은 **조작**이지 물음이 아니다.
+    // ⚠ 이 가지에만 쓰인다. 아래 P1 가드는 `hint`를 안 본다(D-L70의 결함을 안 되살린다).
+    if (hint) kind = hint === "screen" ? (v.toH <= v.toV ? "screen_h" : "screen_v") : "depth";
+    else {
+      return { state: st0, event: { type: "ask", question: "screen_or_depth",
+                                    site: "ambiguous", verdict: v } };
+    }
   }
 
   // ---- a. 화면 가로세로 선은 축 자체다 (무한원, 이론서 2.2)
@@ -759,7 +792,8 @@ export function stepRule(
     // 축 오차 중앙이 10.1° → **31.6°**로 무너졌다(`axis_snap.json` — D-L48의 141/144 → 21과
     // 같은 기전). 소실점이 없는 초기 상태에서는 그대로 받는다 — 첫 가로선은 의도가 분명하다.
     if (forced !== "screen" && finiteHorizontals(st).length > 0) {
-      return { state: st0, event: { type: "ask", question: "screen_or_depth", verdict: v } };
+      return { state: st0, event: { type: "ask", question: "screen_or_depth",
+                                    site: "p1_guard", verdict: v } };
     }
     const free = ([0, 1] as const).find(i => !st.slots[i]);
     if (free === undefined) {

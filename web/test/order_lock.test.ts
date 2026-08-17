@@ -199,7 +199,12 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
       let r = cam.feed(line, forced);
       if (r.event.type === "ask") {
         asks += 1;
-        askKinds[r.event.question] = (askKinds[r.event.question] ?? 0) + 1;
+        // **자리까지 센다**(2026-08-18 8차 지시 2-a) — `question`만으로는 남은 물음이
+        // `screen_or_depth` 한 덩어리로 보여 **무엇을 없앨 수 있는지 못 가른다.**
+        // `ambiguous`는 지시 2-b가 커서로 가르라는 **진짜 모호**이고,
+        // `p1_guard`는 불가역 전이의 안전 물음이라 **없앨 대상이 아니다**.
+        const key = `${r.event.question}/${r.event.site}`;
+        askKinds[key] = (askKinds[key] ?? 0) + 1;
         // **참 축으로 답한다**(오라클) — `rule_camera`와 같은 규약이다
         const truth: "screen" | "depth" =
           // ⛔ **"vertical" 답을 지웠다**(7차 지시 3-b) — 기울어진 선은 항상 깊이선이다.
