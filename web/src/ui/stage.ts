@@ -45,11 +45,13 @@ export interface StageSeg {
  * 지금은 **채널이 색을 정한다**: 결과선 검정 · 보조선 진한 무채 실선.
  */
 /**
- * **채널별 화면 굵기(px)**(지시 4 — "얇게 한다"). 거리·확대와 무관한 화면 픽셀이다.
- * 결과선이 결과물이므로 가장 굵고, 보조선은 그보다 얇다(지시 5-7의 위계).
+ * **채널별 화면 굵기(px)**(지시 4 — "얇게 한다" · **4차 지시 8이 더 줄였다**).
+ * 거리·확대와 무관한 화면 픽셀이다. 지시 8: "화면 픽셀 기준 1~1.5px 정도. 결과선과 보조선의
+ * 굵기 차이는 최소로 — 색과 톤으로 갈리면 된다"(위계는 `CHANNEL_3D`의 색·불투명도가 든다).
+ * 옛 값 2.2/1.4 → **1.5/1.3**.
  * ⚠ 표시 상수라 `test/constants.ts`에 안 넣는다(D-L49의 예외와 같은 자리 — 어느 하네스도 안 읽는다).
  */
-export const LINE_PX = { result: 2.2, guide: 1.4 } as const;
+export const LINE_PX = { result: 1.5, guide: 1.3 } as const;
 
 export const CHANNEL_3D = {
   result: { opacity: 1, color: "#111111" },
@@ -249,15 +251,22 @@ export class Stage {
     if (this.lastSegs.length) this.setSegments(this.lastSegs);
   }
 
-  /** 3D 레이어의 무게중심 — 궤도 회전의 중심으로 쓴다. 비었으면 `null`. */
+  /**
+   * **3D 레이어 경계 상자의 중심** — 궤도 회전의 중심으로 쓴다(4차 지시 7-a). 비었으면 `null`.
+   *
+   * ⚠ 옛 판은 **끝점 평균(무게중심)**이었다 — 짧은 선이 몰린 쪽으로 평균이 끌려, 긴 모서리
+   * 하나가 있는 그림에서 회전 중심이 오브젝트 밖처럼 느껴졌다. 지시가 경계 상자 중심을
+   * 명시했고 선례 확인(7-d)도 그쪽이 단순하다(SketchUp 커서 아래 기하 · 라이노 선택/뷰 중심).
+   */
   centroid(list: StageSeg[]): Vec3 | null {
     if (!list.length) return null;
-    let x = 0, y = 0, z = 0;
-    for (const s of list) {
-      x += s.a[0] + s.b[0]; y += s.a[1] + s.b[1]; z += s.a[2] + s.b[2];
+    const lo: Vec3 = [Infinity, Infinity, Infinity];
+    const hi: Vec3 = [-Infinity, -Infinity, -Infinity];
+    for (const s of list) for (const p of [s.a, s.b]) for (const k of [0, 1, 2] as const) {
+      if (p[k] < lo[k]) lo[k] = p[k];
+      if (p[k] > hi[k]) hi[k] = p[k];
     }
-    const n = list.length * 2;
-    return [x / n, y / n, z / n];
+    return [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2];
   }
 
   dispose(): void { this.viewport.dispose(); }

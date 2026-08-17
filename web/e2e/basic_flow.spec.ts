@@ -781,10 +781,109 @@ test("관계 스냅 — 둘째 선의 끝이 첫 선의 끝과 같은 높이에 
                   priority_gap_px_max: 0.5, guide_px_min: 5,
                   align_tol_px: 15, ink_px_min: 50, console_errors_max: 0 },
     gate: {
-      registered: "정렬 켬: 둘째 선 끝 y = 첫 선 y(오스냅 조리개 밖 자리) · 정렬 끔: 겨냥 오차 6px 그대로(>2px) · 겹치는 자리(끝점 8px 옆)는 오스냅이 이긴다(gap<0.5px, 5-d) · 끌던 중 마젠타 가이드 픽셀>5(5-c) · 콘솔 오류 0. "
+      registered: "정렬 켬: 둘째 선 끝 y = 첫 선 y(오스냅 조리개 밖 자리) · 정렬 끔: 겨냥 오차 6px 그대로(>2px) · 겹치는 자리(끝점 √61≈7.81px 겨냥 — snap2d_flow와 같은 표기)는 오스냅이 이긴다(gap<0.5px, 5-d) · 끌던 중 마젠타 가이드 픽셀>5(5-c) · 콘솔 오류 0. "
         + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
       reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 끔 팔의 잔차는 픽스처 겨냥 오차(6px)의 항등이라 도달 가능성으로 적지 않는다(#40 ⚠⚠)",
+    },
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 1));
+});
+
+// ---------------------------------------------------------------- 4차 지시 7 — 회전 중심
+//
+// 궤도가 **그려진 오브젝트(3D 경계 상자)의 중심**으로 돈다. 옛 판은 끝점 평균(무게중심)이라
+// 짧은 선이 몰린 쪽으로 끌렸다 — 회귀 판별은 "target = bbox 중심 ≠ 끝점 평균"의 대조다.
+test("회전 중심 — 3D 경계 상자의 중심으로 돈다 (4차 지시 7)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+
+  const box = (await page.locator("#ink").boundingBox())!;
+  const W = box.width, H = box.height;
+  const drawPx = async (x1: number, y1: number, x2: number, y2: number) => {
+    await page.mouse.move(box.x + x1, box.y + y1);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move(box.x + x1 + (x2 - x1) * i / 8, box.y + y1 + (y2 - y1) * i / 8);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(50);
+  };
+  const led: Record<string, unknown> = {};
+
+  // 카메라를 세운다(가로선 + 깊이 짝 — 항목 3의 계약) 그리고 **짧은 선을 한쪽에 몰아** 그린다
+  //  — 그래야 평균과 상자 중심이 뚜렷이 갈린다(판별력)
+  await drawPx(0.30 * W, 0.75 * H, 0.70 * W, 0.75 * H);
+  await drawPx(0.30 * W, 0.72 * H, 0.476 * W, 0.555 * H);
+  await drawPx(0.38 * W, 0.75 * H, 0.50 * W, 0.585 * H);
+  await drawPx(0.30 * W, 0.70 * H, 0.34 * W, 0.70 * H);
+  await drawPx(0.30 * W, 0.68 * H, 0.34 * W, 0.68 * H);
+  led.standing = await page.evaluate(() => window.S2S.standing());
+  expect(led.standing).toBe(true);
+
+  // 궤도를 돌린다 — 그 순간의 target이 회전 중심이다
+  await page.click('#bar button[data-act="orbit"]');
+  await page.mouse.move(box.x + 0.5 * W, box.y + 0.5 * H);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 0.58 * W, box.y + 0.44 * H, { steps: 5 });
+  await page.mouse.up();
+  await page.waitForTimeout(80);
+  led.center = await page.evaluate(() => {
+    const S = window.S2S;
+    const segs = S.doc().strokes.filter((s: any) => s.seg3d);
+    const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+    let mx = 0, my = 0, mz = 0, n = 0;
+    for (const s of segs) for (const p of [s.seg3d[0], s.seg3d[1]]) {
+      for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], p[k]); hi[k] = Math.max(hi[k], p[k]); }
+      mx += p[0]; my += p[1]; mz += p[2]; n += 1;
+    }
+    const bbox = [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2];
+    const mean = [mx / n, my / n, mz / n];
+    // camPose().target은 three 규약(y·z 반전) — 우리 규약으로 되돌린다(stage.unpin의 규약 그대로)
+    const t = S.camPose().target;
+    const target = [t[0], -t[1], -t[2]];
+    const d = (a: number[], b: number[]) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    return { n_lifted: segs.length, bbox, mean, target,
+             target_to_bbox: d(target, bbox), target_to_mean: d(target, mean),
+             bbox_vs_mean: d(bbox, mean) };
+  });
+  const c = led.center as any;
+  expect(c.n_lifted).toBeGreaterThanOrEqual(4);
+  expect(c.bbox_vs_mean).toBeGreaterThan(0.05);            // **판별력** — 두 중심이 실제로 다르다
+  expect(c.target_to_bbox).toBeLessThan(1e-6);             // **상자 중심으로 돈다**(7-a)
+  expect(c.target_to_mean).toBeGreaterThan(0.05);          // **평균(옛 동작)이 아니다** — 회귀 판별
+
+  led.console_errors = errors;
+  expect(errors).toEqual([]);
+
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "orbit_center.json"), JSON.stringify({
+    spec: "4차 지시 7 — 궤도 회전 중심 = 3D 경계 상자 중심. 갱신은 궤도 시작 시(7-b — 그리는 중 옮기면 시점이 튄다). Playwright 신뢰 이벤트·콘솔 오류 0",
+    what_this_does_not_say: [
+      "target_to_bbox 0은 **보장 확인**이다(#5 — begin이 그 값을 넣는다). 판별력은 평균과의 대조(target_to_mean > 0.05, 옛 동작)가 든다",
+      "픽스처 하나·dpr 1의 확인이다(#12·#21)",
+      "7-c(빈 화면 기본점)는 **도달 불가**다 — 버튼·손가락 두 경로 모두 gestures.begin 하나를 지나고 begin이 lifted 0을 거른다(3D를 전부 지워도 같다 — standing은 남지만 begin이 막는다). 방어 기본값 [0,0,4]는 그래서 미측정으로 남는다(코드 경로 확인 — 실행 팔은 없다, 리뷰어 [6])",
+      "잰 경로는 **궤도 버튼(begin)** 하나다(리뷰어 [5]) — 터치 unpin·setPose·뷰 전환이 같은 orbitTarget()을 부르는 것은 코드 읽기이지 측정이 아니다",
+      "픽스처의 y 성분이 축퇴다(리뷰어 [11]) — 모든 획이 같은 높이(지면 게이지 1)라 bbox와 평균이 y에서 같다. 판별(2.73)은 x·z만의 값이다",
+    ],
+    thresholds: { target_to_bbox_max: 1e-6, discriminate_min: 0.05, console_errors_max: 0 },
+    gate: {
+      registered: "궤도 시작 순간의 target = 3D 경계 상자 중심(<1e-6) · 끝점 평균(옛 동작)과 뚜렷이 다름(>0.05 — 회귀 판별) · 콘솔 오류 0. "
+        + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
+      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — bbox_vs_mean(판별 간격)은 픽스처(몰아 그린 짧은 선)의 항등이라 도달 가능성으로 적지 않는다(#40 ⚠⚠)",
     },
     ...led,
     constants: constantsSnapshot(),
