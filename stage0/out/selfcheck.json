@@ -1,5 +1,5 @@
 {
-  "n_flags": 1982,
+  "n_flags": 1980,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -4851,7 +4851,7 @@
     },
     {
       "path": "orbit_begin_invariance.json:dir_after[1]",
-      "val": -6.123233995736767e-17,
+      "val": -6.123233995736766e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7187,7 +7187,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 3.241851231905457e-14,
+      "val": 3.9968028886505635e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7274,16 +7274,6 @@
       "path": "view_cube.json:thresholds.console_errors_max",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
-    },
-    {
-      "path": "view_cube.json:after_snap.fy",
-      "val": -6.123233995736765e-17,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
-      "path": "view_cube.json:after_drag.fy",
-      "val": -6.123233995736766e-17,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_plane.json:by_orbit_deg.45.now.worst_end_ratio.n",
@@ -7427,57 +7417,57 @@
     },
     {
       "path": "viewpoint_undo.json:orbited.p[1]",
-      "val": 2.1424943051298652e-16,
+      "val": 2.1424943051298654e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[0]",
-      "val": -2.876436201775374e-17,
+      "val": -2.876436201773911e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[2]",
-      "val": -1.0486245365967137e-17,
+      "val": -1.0486245366007244e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.p[1]",
-      "val": 2.1424943051298662e-16,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
-      "path": "viewpoint_undo.json:before_undo.q[0]",
-      "val": -2.8764362017639205e-17,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
-      "path": "viewpoint_undo.json:before_undo.q[2]",
-      "val": -1.0486245366281312e-17,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
-      "path": "viewpoint_undo.json:after_undo.p[1]",
       "val": 2.1424943051298657e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
+      "path": "viewpoint_undo.json:before_undo.q[0]",
+      "val": -2.876436201764019e-17,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "viewpoint_undo.json:before_undo.q[2]",
+      "val": -1.048624536627857e-17,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "viewpoint_undo.json:after_undo.p[1]",
+      "val": 2.1424943051298662e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
       "path": "viewpoint_undo.json:after_undo.q[0]",
-      "val": -2.876436201763575e-17,
+      "val": -2.8764362017636284e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[2]",
-      "val": -1.048624536629079e-17,
+      "val": -1.0486245366289348e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dp",
-      "val": 2.3058614547594055e-12,
+      "val": 2.620807173901849e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dq",
-      "val": 3.2948069454238245e-13,
+      "val": 3.7464967412046723e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7522,7 +7512,7 @@
     },
     {
       "path": "viewpoint_undo.json:return_gap",
-      "val": 2.5902048019877624e-11,
+      "val": 1.614407302402222e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {

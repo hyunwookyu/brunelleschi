@@ -1444,6 +1444,7 @@ test("스냅된 수평선 — 물음 없이 화면 축으로 확정된다 (5차 
     spec: "5차 지시 3 — 직교 스냅이 걸린 수평선은 물음 없이 화면 축으로 확정된다(스냅이 곧 선언). 소실점 하나가 서 있는 상태(4차 가드가 묻던 자리)에서 확인. Playwright 신뢰 이벤트·콘솔 오류 0",
     what_this_does_not_say: [
       "합성 하네스(rule_camera 스냅 팔)에서는 이 선언이 **불리하게 찍힌다** — 합성 잉크는 수평 의도가 없어 4° 안 깊이 모서리가 조용히 화면 축이 된다(AS-L25). 실사용 의도의 판정자는 실획(K)이다",
+      "**되살림 확인(A-4)의 값은 원장 밖이다**(#25 — snapForced 미전달로 되돌리면 이 팔이 실패하는 것을 확인하고 복원했다. 커밋되지 않는 임시 판이라 재현 불가)",
       "한 각도(1.7°)의 확인이다(#12) — 직교 임계(4°) 경계는 test/axisSnap 반례가 덮는다",
       "dpr 1·마우스 합성이다(#21·AS-C1)",
     ],
@@ -1542,8 +1543,10 @@ test("그리는 중 — 스냅이 걸리면 궤적선이 안 보인다 (5차 지
       "확정 전(live2d) 경로의 확인이다 — 확정 후(live.seg — 3D 축 스냅 미리보기)의 숨김은 같은 스위치(liveHidden)를 지나지만 이 팔은 안 잰다(#12)",
       "한 각도(2.3°)·한 이탈(12px)의 확인이다(#12)",
       "dpr 1·마우스 합성이다(#21·AS-C1)",
+      "**되살림 확인(A-4)의 값은 원장 밖이다**(#25 — 숨김 스위치를 빼면 raw_ink 0 단언이 실패하는 것을 확인하고 복원했다)",
+      "겨냥 끝점의 이탈은 12px·프로브 지점(중점)의 이탈은 6px이다 — 두 수는 같은 획의 다른 자리다(재검 표기 지적)",
     ],
-    thresholds: { raw_ink_max: 0, console_errors_max: 0 },
+    thresholds: { raw_ink_max: 0, aim_end_offset_px: 12, probe_offset_px: 6, console_errors_max: 0 },
     gate: {
       registered: "스냅이 걸린 끌기 중 원시 궤적 자리(수평에서 6px 이탈점)의 잉크 0 · 스냅 미리보기 자리 잉크 >0 · engaged 참(#38 — 스냅이 실제로 걸렸다) · 자유 선의 궤적 잉크 >0 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
@@ -1797,6 +1800,7 @@ test("시점 저장·복귀 — 실행취소는 카메라를 안 건드린다 (5
       "비행 중 프레임의 품질(투영 전환 시점)은 안 잰다 — 도착 자세 일치(<1e-3)만 판정한다(#12)",
       "이름 바꾸기(✎·prompt)는 합성 클릭으로 안 잰다 — prompt는 Playwright 대화상자 처리라 별도 팔이 필요하고, 기본 이름 경로가 본체다",
       "실행취소가 **확정 자체를 되돌리는** 경우(카메라가 안 서게 됨 — 물림 해제 경로)는 이 팔 밖이다(코드 경로: restoreSnap의 !c && isPinned → unpin)",
+      "**되살림 확인(A-4)의 값은 원장 밖이다**(#25 — restoreSnap을 무조건 pinTo로 되돌리면 이 팔이 실패하는 것을 확인하고 복원했다)",
       "dpr 1·합성 터치다(#21·AS-C1)",
     ],
     thresholds: { cam_delta_max: 1e-9, return_gap_max: 1e-3, console_errors_max: 0 },
@@ -1868,7 +1872,9 @@ test("뷰 큐브 — 90° 스냅·연속 회전·피치 유지·소실점 하나
     for (let i = 0; i < 40; i++) {
       await page.waitForTimeout(100);
       const cur = await page.evaluate(c => eval(c)(), STATE);
-      const d = Math.abs((prev as any).yaw - (cur as any).yaw);
+      // ⚠ 요만 보면 수직 감쇠 꼬리를 놓친다(fy가 움직이는 동안 yaw는 이미 멎는다) — 둘 다 본다
+      const d = Math.abs((prev as any).yaw - (cur as any).yaw)
+              + Math.abs((prev as any).fy - (cur as any).fy);
       prev = cur;
       if (d < 1e-10) break;
     }
@@ -1879,7 +1885,24 @@ test("뷰 큐브 — 90° 스냅·연속 회전·피치 유지·소실점 하나
   await drawPx(0.25 * W, 0.30 * H, 0.45 * W, 0.301 * H);
   await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
   await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
-  led.before = await page.evaluate(c => eval(c)(), STATE);
+  // **피치를 먼저 준다**(재검 [5] — 확정 카메라는 fy=0이라 그 상태로는 '수직축 고정'과
+  // '국소 up 회전'이 같은 결과다. 아래로 15px 돌려 fy≠0을 만든 뒤에 재야 판별이 산다)
+  await page.evaluate(() => {
+    const el = document.getElementById("ink")!;
+    const r = el.getBoundingClientRect();
+    el.dispatchEvent(new PointerEvent("pointerdown", {
+      pointerId: 93001, pointerType: "touch", isPrimary: true, bubbles: true,
+      clientX: r.left + r.width * 0.6, clientY: r.top + r.height * 0.6, buttons: 1 }));
+    for (const dy of [6, 15]) {
+      el.dispatchEvent(new PointerEvent("pointermove", {
+        pointerId: 93001, pointerType: "touch", isPrimary: true, bubbles: true,
+        clientX: r.left + r.width * 0.6, clientY: r.top + r.height * 0.6 + dy, buttons: 1 }));
+    }
+    el.dispatchEvent(new PointerEvent("pointerup", {
+      pointerId: 93001, pointerType: "touch", isPrimary: true, bubbles: true }));
+  });
+  led.before = await settle();
+  expect(Math.abs((led.before as any).fy)).toBeGreaterThan(0.02);  // **피치≠0 — 판별력의 전제**
   expect((led.before as any).cube_on).toBe(true);            // 기본 켬(8-d)
   expect((led.before as any).cube_hidden).toBe(false);       // 확정 후 보인다
 
@@ -1930,6 +1953,9 @@ test("뷰 큐브 — 90° 스냅·연속 회전·피치 유지·소실점 하나
       "면 클릭의 구현은 단순화다(좌/우 1/3 = 그 방향 90°·가운데 = 가장 가까운 90° 정렬) — CAD 뷰 큐브의 3D 면 히트가 아니다. 위/아래 면은 없다: 회전 축이 수직축 고정이라(8-b) 피치를 바꾸는 면은 정의상 못 둔다",
       "vps_inside의 판정은 세계 수평 축 두 가족의 소실점 투영이다 — 그린 선의 실측 수렴점이 아니다(#5에 가까운 기하 계산). 화면 안 개수가 1인 것이 '같은 조건의 1점'의 판정이다",
       "한 구도·한 클릭 지점의 확인이다(#12) · dpr 1(#21)",
+      "판별의 전제로 **피치≠0을 먼저 만든다**(재검 [5]) — 확정 카메라(fy=0)에서는 수직축 회전과 국소 up 회전이 같은 결과라 이 게이트가 국소 up 구현을 통과시킨다. fy≠0 시작을 단언에 넣었다",
+      "드래그 팔의 하한(1°)은 공허 방지다(#38 — 안 돌았으면 이 팔은 아무것도 안 잰 것이다)",
+      "되살림 확인(A-4)은 별도로 안 했다 — 이 팔의 단언 자체가 배선 부재에서 실패한다(spinYaw 미배선이면 dyaw 0·드래그 0으로 하한이 깨진다). 그 판단을 여기 적는다(#25 — 원장 밖 실행 없음)",
     ],
     thresholds: { snap_deg_tol: 0.5, pitch_delta_max: 1e-6, drag_min_deg: 1, drag_max_deg: 45,
                   console_errors_max: 0 },

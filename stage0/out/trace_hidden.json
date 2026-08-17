@@ -3,10 +3,14 @@
  "what_this_does_not_say": [
   "확정 전(live2d) 경로의 확인이다 — 확정 후(live.seg — 3D 축 스냅 미리보기)의 숨김은 같은 스위치(liveHidden)를 지나지만 이 팔은 안 잰다(#12)",
   "한 각도(2.3°)·한 이탈(12px)의 확인이다(#12)",
-  "dpr 1·마우스 합성이다(#21·AS-C1)"
+  "dpr 1·마우스 합성이다(#21·AS-C1)",
+  "**되살림 확인(A-4)의 값은 원장 밖이다**(#25 — 숨김 스위치를 빼면 raw_ink 0 단언이 실패하는 것을 확인하고 복원했다)",
+  "겨냥 끝점의 이탈은 12px·프로브 지점(중점)의 이탈은 6px이다 — 두 수는 같은 획의 다른 자리다(재검 표기 지적)"
  ],
  "thresholds": {
   "raw_ink_max": 0,
+  "aim_end_offset_px": 12,
+  "probe_offset_px": 6,
   "console_errors_max": 0
  },
  "gate": {
