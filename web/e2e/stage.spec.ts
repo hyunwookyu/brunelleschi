@@ -613,8 +613,10 @@ test("스냅 — 대상·표식·시작점 확정", async ({
     return { a, b, originX: r.left, originY: r.top, id: s0.id, axis: s0.axis };
   });
   const cx = geo.originX, cy = geo.originY;
-  // 꼭짓점에서 **18px 어긋나게** 겨냥한다 — 손 획이 정확히 맞지 않는 것을 흉내낸다
-  await page.mouse.move(cx + geo.a[0] + 13, cy + geo.a[1] + 12);
+  // 꼭짓점에서 **10px 어긋나게** 겨냥한다 — 손 획이 정확히 맞지 않는 것을 흉내낸다.
+  // ⚠ 지시 H가 앱 조리개를 15px(라이노 선례)로 줄였다 — 옛 값(18px 오조준)은 이제
+  // 조리개 밖이라 모서리(on_edge)로 떨어진다. 반경 자체는 `osnap_config.spec`이 잠근다
+  await page.mouse.move(cx + geo.a[0] + 7, cy + geo.a[1] + 7);
   l.hover = await page.evaluate(() => {
     const S = window.S2S;
     const h = S.hoverSnap();

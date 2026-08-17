@@ -1,5 +1,5 @@
 {
-  "n_flags": 1834,
+  "n_flags": 1835,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -5410,6 +5410,11 @@
       "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
     },
     {
+      "path": "real_ink.json:k_metrics.n_docs",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "real_ink.json:n_sessions",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6602,7 +6607,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 4.884981308350689e-15,
+      "val": 2.220446049250313e-15,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -9193,7 +9198,7 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 138
+      "reads": 156
     },
     {
       "field": "pts2d",
@@ -9207,8 +9212,8 @@
     },
     {
       "field": "axis",
-      "writes": 5,
-      "reads": 65
+      "writes": 6,
+      "reads": 66
     },
     {
       "field": "rep",
@@ -9244,21 +9249,21 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 180,
+      "files_scanned": 184,
       "exts_declared": [
         ".md",
         ".py",
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 11,
+        ".md": 10,
         ".py": 2,
         ".ts": 5
       }
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 118,
+      "files_scanned": 120,
       "exts_declared": [
         ".ts"
       ],
@@ -9268,7 +9273,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 180,
+      "files_scanned": 184,
       "exts_declared": [
         ".md",
         ".py",
@@ -9282,7 +9287,7 @@
     },
     {
       "sweep": "external_data",
-      "files_scanned": 77,
+      "files_scanned": 80,
       "exts_declared": [
         ".ts"
       ],
@@ -9309,16 +9314,16 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 129,
+      "targets": 126,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 14,
+      "targets": 16,
       "hits": 0,
-      "note": "값 대조를 **지난 것 5** · **면제 9**(`reachability_absent`) · 원장 46개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, guide_budget.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, osnap.json:gate, preview_gap.json:gate, rule_camera.json:gate, segment_gate.json:gate, stage_browser.json:l_b3.gate"
+      "note": "값 대조를 **지난 것 7** · **면제 9**(`reachability_absent`) · 원장 48개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, eraser.json:gate, horizon.json:gate, order_signal.json:gate, osnap_config.json:gate / 면제: coords.json:gate, guide_budget.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, osnap.json:gate, preview_gap.json:gate, rule_camera.json:gate, segment_gate.json:gate, stage_browser.json:l_b3.gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -9342,6 +9347,7 @@
     "coords.json",
     "doc_store.json",
     "draft_recover.json",
+    "eraser.json",
     "face_diagonal.json",
     "fix_load.json",
     "free_curve.json",
@@ -9359,6 +9365,7 @@
     "order_signal.json",
     "order_undo.json",
     "osnap.json",
+    "osnap_config.json",
     "persist.json",
     "preview_gap.json",
     "promote.json",

@@ -60,7 +60,7 @@
 |---|---|---|
 | `scan_sweep_coverage`(#33) | 훑기 | **4** (훑기별 파일 수는 `sweeps[]`) |
 | `scan_citation_hashes`(#33 값 대조) | 인용 | **129**(2026-08-17 항목 0이 해시 없는 인용에 해시를 달아 99 → 129) — 옛 해시 23곳을 이 검사가 찾아냈다. ⚠ **"값 대조"는 해시 대조다** — 해시 없는 인용은 덮는 대상 밖이고, 해시가 맞아도 옮겨 적은 수치의 낡음은 안 잡는다(그 사각지대의 실증과 현행 방어는 `DEFERRED.md` 2026-08-17 절) |
-| `scan_gate_reachability`(#35·**#40**) | 게이트 블록 | **14**(2026-08-17 `basic_flow` 등록) — ⚠ **값 대조를 실제로 지난 것은 4**(`axis_snap`·`camera_gate`·`horizon`·`order_signal`)이고 **9는 `reachability_absent`로 면제**됐다(**`horizon_pitch`·`osnap`** 포함). **면제는 통과가 아니다** — 도달 가능성이 **미상**이라는 뜻이고 근거로 쓰지 않는다. ⚠⚠ **이 표는 두 세션 연속으로 낡았다**(리뷰어가 7에서, 다음 항목에서 12에서 잡았다) — **수를 인용하기 전에 `stage0/out/selfcheck.json`의 `coverage`를 그 자리에서 다시 읽는다** |
+| `scan_gate_reachability`(#35·**#40**) | 게이트 블록 | **16**(2026-08-17 `basic_flow`·`osnap_config`·`eraser` 등록) — ⚠ **값 대조를 지난 것과 면제의 수는 `selfcheck.json`의 `coverage`를 그 자리에서 읽는다**(이 칸에 적은 수가 이번 세션에만 네 번 낡았다). 면제(`reachability_absent`)(**`horizon_pitch`·`osnap`** 포함). **면제는 통과가 아니다** — 도달 가능성이 **미상**이라는 뜻이고 근거로 쓰지 않는다. ⚠⚠ **이 표는 두 세션 연속으로 낡았다**(리뷰어가 7에서, 다음 항목에서 12에서 잡았다) — **수를 인용하기 전에 `stage0/out/selfcheck.json`의 `coverage`를 그 자리에서 다시 읽는다** |
 | `scan_zero_denominator`(#36) | 하네스 파일 | **41**(D-L54 삭제 반영. ⚠ `web/e2e/`는 이 검사 밖이다 — `basic_flow`의 분모는 사람이 본다) (원장을 쓰는 `web/test/**.ts`) |
 
 ⚠ **덮는 수가 0이 아니라고 전수인 것은 아니다.** 게이트 발견은 **이름**으로 하므로

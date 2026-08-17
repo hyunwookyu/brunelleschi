@@ -43,6 +43,8 @@ export interface Doc2 {
   lensMm?: number | null;
   locked?: boolean;
   order?: number;
+  /** **모호 물음 카운터**(지시 K) — 실획 세션에서 묻는 빈도를 재기 위한 메타다. 선택. */
+  askStats?: { asked: number; screen: number; depth: number; vertical: number; skipped: number };
   views: { id: string; name: string; pose: ViewPose | null; seq: number }[];
   currentView: string;
   strokes: {
@@ -53,6 +55,10 @@ export interface Doc2 {
     axis: Axis;
     userAxis: boolean;
     snapStart: SnapRef | null;
+    /** 시작점의 겨냥 거리(px, 지시 K — 40px 프로브라 조리개 절단 없음). 옛 저장본에는 없다. */
+    snapDistPx?: number | null;
+    /** 조각의 출처 획 id(지시 I·K). */
+    pieceOf?: string;
     /** **끝점 스냅**(오스냅, D-L46). 옛 저장본에는 없다 — 복원이 `null`로 채운다 */
     snapEnd?: SnapRef | null;
     /** **펜 채널**(D). 옛 저장본에는 없다 — 보조선으로 읽는다. */
@@ -69,6 +75,7 @@ export interface Doc2Source {
   imgSize: [number, number];
   cam: AccumulatorDump | null;
   rules?: RuleState | null;
+  askStats?: { asked: number; screen: number; depth: number; vertical: number; skipped: number };
   doc: DocState;
   seq: { stroke: number; view: number };
 }
@@ -82,6 +89,7 @@ export function serializeDoc2(s: Doc2Source): Doc2 {
     imgSize: [s.imgSize[0], s.imgSize[1]],
     cam: s.cam,
     rules: s.rules ?? null,
+    askStats: s.askStats,
     views: s.doc.views.map(v => ({
       id: v.id, name: v.name, seq: v.seq,
       pose: v.pose ? { R: v.pose.R.map(r => [...r] as Vec3) as [Vec3, Vec3, Vec3],
@@ -96,6 +104,8 @@ export function serializeDoc2(s: Doc2Source): Doc2 {
       axis: t.axis,
       userAxis: t.userAxis,
       snapStart: t.snapStart ? { ...t.snapStart, at: [...t.snapStart.at] as Vec3 } : null,
+      snapDistPx: t.snapDistPx ?? null,
+      pieceOf: t.pieceOf,
       snapEnd: t.snapEnd ? { ...t.snapEnd, at: [...t.snapEnd.at] as Vec3 } : null,
       channel: t.channel,
       color: t.color,
@@ -127,6 +137,8 @@ export function restoreDoc2(d: Doc2): Restored2 {
     axis: t.axis,
     userAxis: !!t.userAxis,
     snapStart: t.snapStart ?? null,
+    snapDistPx: t.snapDistPx ?? null,
+    pieceOf: t.pieceOf,
     // **옛 저장본에는 이 필드가 없다** — 없으면 끝점 스냅이 아니었던 것이다
     snapEnd: t.snapEnd ?? null,
     // **옛 저장본은 채널이 없다** — 보조선으로 읽는다(D-1의 기본값)

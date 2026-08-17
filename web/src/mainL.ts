@@ -29,11 +29,14 @@ import { classifyLine, snapAxisTable as snapAxisRows, perspectiveOrder, RULE_TOL
 import { snapToAxis, screenOrthoSnap, SNAP_TOL_AXIS,
          type AxisCand, type ScreenOrtho } from "./s3d/axisSnap.js";
 import { liftAll, LIFT_TOL, type LiftStroke } from "./s3d/lift.js";
-import { snapAt, snapCandidates, staticCandidates, SNAP_TOL, SNAP_LABEL, SNAP_COLOR, SNAP_ICON, SNAP_TIP,
+import { snapCandidates, staticCandidates, SNAP_ORDER, SNAP_LABEL, SNAP_COLOR, SNAP_ICON, SNAP_TIP,
          type SnapCand, type SnapKind, type SnapSeg, type SnapCtx,
          type StaticCand } from "./s3d/snap.js";
 import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "./s3d/liveLine.js";
 import { representative, AXIS_TOL } from "./s3d/axis.js";
+// **자동 분할**(지시 I) — 교차·접촉 절단점과 조각. SketchUp 선례. 순수 기하는 split.ts 하나다(#17)
+import { cutParams, piecesFromCuts, subtractIntervals, reanchorId, pointAt,
+         type Seg3 } from "./s3d/split.js";
 import { promoteOrder, type OrderStroke } from "./s3d/promoteOrder.js";
 import { AXIS_COLOR, guides as gridGuides, HORIZON_COLOR, GROUND_COLOR } from "./s3d/grid.js";
 import { project, axisDirection, groundFrame, sub3, angleBetween,
@@ -43,7 +46,8 @@ import type { PlaceCtx } from "./s3d/stroke.js";
 import { viewPlaceCtx, toView, fromView, dirToView, type ViewPose } from "./s3d/viewCamera.js";
 
 // **가이드 조정 도구가 없어졌다** — 끌 가이드가 없다. 선만 그으면 카메라가 선다(사람 지시 1).
-type Tool = "draw" | "orbit" | "edit";
+// **지우개 둘**(지시 I) — 조각(닿으면 교차점 사이 조각이 통째로) · 부분(지나간 자리만).
+type Tool = "draw" | "orbit" | "edit" | "erase_seg" | "erase_part";
 
 const host = document.getElementById("stage")!;
 const canvas = document.getElementById("ink") as HTMLCanvasElement;
@@ -69,6 +73,8 @@ let note = "";
  */
 let ask: { strokeId: string; line: RLine; question: RuleEvent extends never ? never :
            "screen_or_depth" | "second_horizontal_or_vertical"; toH: number; toV: number } | null = null;
+/** **모호 물음 카운터**(지시 K) — 실획에서 묻는 빈도의 실측 근거. 저장본에 함께 담긴다. */
+const askStats = { asked: 0, screen: 0, depth: 0, vertical: 0, skipped: 0 };
 /** 떠 있는 커서의 스냅 — **누르기 전에 무엇에 붙을지 보인다**(SketchUp/Rhino 관행, L-B.3). */
 let hoverSnap: SnapCand | null = null;
 /** 마지막 획이 무엇에 붙었나 — 화면에 사유를 낸다(#7: 추측하지 말고 센다). */
@@ -177,6 +183,26 @@ const EXPORT_GUIDES = { on: false };
 const SHOW_GUIDES = { on: true };
 /** **격자 토글**(지시 5-5). 기본 켬 — 지면 정사각 격자의 투영이다(화면 각도 균등분할 아님). */
 const SHOW_GRID = { on: true };
+/**
+ * **오스냅 설정**(지시 H — 라이노 방식). 반경은 **화면 픽셀**이고 확대·축소와 무관하다
+ * (지시문 그대로 — 포인터 정밀도의 문제라 선례도 절대 px: SketchUp/Rhino 조리개 10~15px).
+ * 기본 15px — 옛 기본(`SNAP_TOL.radius_ratio` 0.05 = 960×672에서 58.6px)이 "너무 넓다"는
+ * 보고의 대응이다. ⚠ **측정 상수는 안 바꾼다**: `SNAP_TOL`은 합성 잉크의 겨냥 오차(비율)를
+ * 재는 하네스의 것이고, 여기는 **앱의 조리개**다 — 값을 바꾸면 전역 해시가 움직여 무관한
+ * 원장이 STALE이 된다(D-L54의 동결과 같은 자리). 종류별 켜고 끄기도 라이노 그대로다.
+ */
+const OSNAP = {
+  radiusPx: 15,
+  kinds: { vertex: true, endpoint: true, midpoint: true, intersection: true,
+           perpendicular: true, on_edge: true, on_face: true } as Record<SnapKind, boolean>,
+  open: false,                       // 설정 패널이 열려 있는가
+};
+/** 앱 조리개(px) → 하네스 규약(대각 비). **한 군데서만 환산한다**(#17). */
+const osnapCfg = () => ({ radius_ratio: OSNAP.radiusPx / Math.hypot(...cssSize()) });
+/** **종류 필터를 지난 최선 후보** — 앱의 모든 스냅 질의가 이것을 지난다(#17). */
+function appSnapAt(p: Pt2, segs: SnapSeg[], sc: SnapCtx, pre: StaticCand[]): SnapCand | null {
+  return snapCandidates(p, segs, sc, osnapCfg(), pre).find(c => OSNAP.kinds[c.kind]) ?? null;
+}
 
 /**
  * **선 표시 네 단계**(E). 위로 갈수록 진하다 — **결과선이 결과물이다.**
@@ -383,8 +409,8 @@ function endSnapAt(fr: Frame, anchorAt: Vec3, p: Pt2): SnapCand | null {
   // 때문이다. 여기서도 같은 일이 실제로 났다: 모서리를 따라 그으면 `on_edge`가 **언제나**
   // 걸려 모든 획이 두 점 배치가 됐다(종단 확인이 잡았다). 시작점 스냅은 종전대로 전부 쓴다 —
   // 그 경로의 측정(`snap.json`)이 그 목록 위에 있다.
-  const cand = snapCandidates(p, segs, sc, {}, snapStatic(segs))
-    .find(c => c.kind !== "on_edge" && c.kind !== "on_face") ?? null;
+  const cand = snapCandidates(p, segs, sc, osnapCfg(), snapStatic(segs))
+    .find(c => OSNAP.kinds[c.kind] && c.kind !== "on_edge" && c.kind !== "on_face") ?? null;
   // **앵커 자신에 붙는 것은 선분이 아니다** — 길이 0을 만들지 않는다
   if (!cand) return null;
   const d = Math.hypot(cand.at[0] - anchorAt[0], cand.at[1] - anchorAt[1], cand.at[2] - anchorAt[2]);
@@ -414,6 +440,8 @@ function applySnapToStart(st: SStroke, cand: SnapCand, atWorld: Vec3 = cand.at):
   // ⚠ **`at`은 세계 좌표로 적는다.** 돌린 시점에서는 `cand.at`이 **시점 좌표**다(L-B.8) —
   // 그대로 넣으면 뷰를 바꿀 때마다 같은 획의 `snapStart`가 다른 점을 가리킨다.
   st.snapStart = { kind: cand.kind, at: atWorld, ofId: cand.ofId };
+  // **겨냥 거리(px)를 남긴다**(지시 K) — 스냅 반경의 실측 근거. 스냅 후에는 못 잰다
+  st.snapDistPx = cand.dist;
   st.pts2d = [[cand.screen[0], cand.screen[1]], ...st.pts2d.slice(1)];
 }
 
@@ -447,7 +475,7 @@ function promoteChain(fr: Frame): number {
     let n = 0;
     for (const st of waiting) {
       if (!liftable(st)) continue;               // **주석은 승격 연쇄에도 안 들어간다**(D-3)
-      const cand = snapAt(st.pts2d[0], segs, sc, {}, pre);
+      const cand = appSnapAt(st.pts2d[0], segs, sc, pre);
       if (!cand) continue;
       applySnapToStart(st, cand, fr.fromV(cand.at));
       // **대기 획도 양 끝 스냅으로 올라갈 수 있다**(D-L46) — 축이 없어도 두 점이면 놓인다
@@ -868,8 +896,8 @@ function relinkLostSnaps(): void {
   for (const id of promoteReport.snapLost) {
     const s = doc.strokes.find(x => x.id === id);
     // 자기 자신에는 못 붙는다 — 대상 목록에서 뺀다(그리기 경로와 같은 규약)
-    const cand = s ? snapAt(s.pts2d[0], segs.filter(g => g.id !== id), sc,
-                            {}, pre.filter(c => c.ofId !== id && c.ofId2 !== id)) : null;
+    const cand = s ? appSnapAt(s.pts2d[0], segs.filter(g => g.id !== id), sc,
+                               pre.filter(c => c.ofId !== id && c.ofId2 !== id)) : null;
     if (!s || !cand) { still.push(id); continue; }
     applySnapToStart(s, cand, fr.fromV(cand.at));
     // **양 끝 스냅이었으면 끝점도 다시 붙여야 한다**(D-L46) — 시작점만 살리면 그 획은
@@ -905,6 +933,139 @@ function relinkLostSnaps(): void {
  * 이미 놓인 3D는 좌표가 있고, 그것을 지우는 것은 **사용자가 시키지 않은 삭제**다.
  * 대신 **끊긴 개수를 세어 알린다**(#7).
  */
+// ---------------------------------------------------------------- 분할 + 지우개 (지시 I)
+
+/** 3D 획 → 분할 기하. **조각의 경계는 다른 3D 획들과의 교차·접촉이다**(SketchUp). */
+const seg3Of = (st: SStroke): Seg3 => ({ id: st.id, a: st.seg3d![0], b: st.seg3d![1] });
+const otherSegs = (id: string): Seg3[] =>
+  lifted(doc).filter(x => x.id !== id).map(seg3Of);
+
+/** 화면 점 p가 3D 획 위 어느 매개변수에 해당하나(지금 시점의 투영으로). */
+function paramAtScreen(st: SStroke, p: Pt2, fr: Frame): number | null {
+  const a = project(fr.toV(st.seg3d![0]), fr.ctx.principal, fr.ctx.f);
+  const b = project(fr.toV(st.seg3d![1]), fr.ctx.principal, fr.ctx.f);
+  if (!a || !b) return null;
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const L2 = dx * dx + dy * dy;
+  if (L2 < 1e-9) return 0;
+  return Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L2));
+}
+
+/**
+ * **획 하나를 조각들로 갈아 끼운다** — 남길 매개 구간(`keep`)만 새 획으로 만든다.
+ *
+ * 조각의 `pts2d`는 **확정 카메라의 상**이다(§1.1 — 직선이라 양 끝 둘이면 된다). 원 획의
+ * `snapStart`는 t=0을 담은 조각만, `snapEnd`는 t=1을 담은 조각만 물려받는다.
+ *
+ * **앵커 이관**(지시 I의 종속성 정의 — 규칙 전문은 `split.ts`의 `reanchorId`): 이 획을
+ * 앵커로 쓰던 다른 획들은 ① 앵커 점을 담은 살아남은 조각으로 `ofId`를 넘기고
+ * ② 그 조각이 지워졌으면 **스냅 기록만 끊는다**(기하는 안 움직인다). 끊긴 수를 되돌린다.
+ */
+function replaceWithPieces(st: SStroke, keep: [number, number][]): { pieces: number; broken: number } {
+  const ctx = cam.ctx();
+  if (!ctx || !st.seg3d) return { pieces: 0, broken: 0 };
+  const s3 = seg3Of(st);
+  const mk = (t0: number, t1: number): SStroke | null => {
+    const A = pointAt(s3, t0), B = pointAt(s3, t1);
+    const a2 = project(A, ctx.principal, ctx.f), b2 = project(B, ctx.principal, ctx.f);
+    if (!a2 || !b2) return null;
+    const piece = newSStroke([a2, b2], st.viewRef, st.channel);
+    piece.pieceOf = st.pieceOf ?? st.id;   // **조각 표시**(지시 K의 분모 — 사람 획과 단위가 다르다, #11)
+    piece.axis = st.axis; piece.userAxis = st.userAxis;
+    piece.seg3d = [A, B];
+    piece.snapStart = t0 <= 1e-9 ? st.snapStart : null;
+    piece.snapEnd = t1 >= 1 - 1e-9 ? st.snapEnd ?? null : null;
+    return piece;
+  };
+  const pieces = keep.map(([t0, t1]) => mk(t0, t1)).filter((x): x is SStroke => !!x);
+  const i = doc.strokes.findIndex(x => x.id === st.id);
+  doc.strokes.splice(i, 1, ...pieces);
+  // **앵커 이관** — 점이 본체다. 담은 조각이 없으면 기록을 끊고 센다(#7)
+  const pieceSegs = pieces.map(seg3Of);
+  let broken = 0;
+  for (const other of doc.strokes) {
+    for (const key of ["snapStart", "snapEnd"] as const) {
+      const an = other[key];
+      if (!an || an.ofId !== st.id) continue;
+      const to = pieceSegs.length ? reanchorId(an.at, pieceSegs) : null;
+      if (to) an.ofId = to;
+      else { other[key] = null; broken += 1; }
+    }
+  }
+  return { pieces: pieces.length, broken };
+}
+
+/**
+ * **조각 지우개**(지시 I) — 닿은 자리의 조각(교차점 사이 구간)이 통째로 사라진다.
+ * 2D 대기 획은 조각 개념이 없으므로(교차가 3D의 것) **획 전체**가 사라진다.
+ */
+function eraseSegmentAt(p: Pt2): boolean {
+  const hit = pickStroke(p);
+  if (!hit) return false;
+  const st = doc.strokes.find(x => x.id === hit)!;
+  pushUndo();
+  if (!st.seg3d) {
+    doc.strokes = doc.strokes.filter(x => x.id !== hit);
+    syncScene();
+    note = "2D 획 하나를 지웠습니다";
+    return true;
+  }
+  const fr = frame();
+  const t = fr ? paramAtScreen(st, p, fr) : null;
+  if (t == null) { undoStack.pop(); return false; }
+  const cuts = cutParams(seg3Of(st), otherSegs(st.id));
+  const all = piecesFromCuts(cuts);
+  const keep = all.filter(([t0, t1]) => !(t >= t0 && t <= t1));
+  const r = replaceWithPieces(st, keep);
+  syncScene();
+  note = `조각을 지웠습니다 (${all.length}조각 중 1)`
+       + (r.broken ? ` — <b>${r.broken}개의 스냅 기록이 끊겼습니다</b>`
+                     + ' <span class="dim">(그 획들의 기하는 그대로입니다)</span>' : "");
+  return true;
+}
+
+/** **부분 지우개** — 끌면서 지나간 매개 구간만 깎는다. 분할의 특수한 경우다(지시 I). */
+let partErase: Map<string, [number, number][]> | null = null;
+
+function erasePartSample(p: Pt2): void {
+  const fr = frame();
+  if (!fr) return;
+  const rPx = PICK_TOL.radius_ratio * Math.hypot(...cssSize());
+  for (const st of lifted(doc)) {
+    const a = project(fr.toV(st.seg3d![0]), fr.ctx.principal, fr.ctx.f);
+    const b = project(fr.toV(st.seg3d![1]), fr.ctx.principal, fr.ctx.f);
+    if (!a || !b) continue;
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const L = Math.hypot(dx, dy);
+    if (L < 1e-9) continue;
+    const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (L * L)));
+    const foot: Pt2 = [a[0] + dx * t, a[1] + dy * t];
+    if (Math.hypot(foot[0] - p[0], foot[1] - p[1]) > rPx) continue;
+    const half = rPx / L;                       // 화면 반경 → 매개 구간 절반
+    const iv: [number, number] = [t - half, t + half];
+    (partErase!.get(st.id) ?? partErase!.set(st.id, []).get(st.id)!).push(iv);
+  }
+}
+
+function erasePartCommit(): void {
+  if (!partErase || !partErase.size) { partErase = null; return; }
+  pushUndo();
+  let erased = 0, broken = 0;
+  for (const [id, ivs] of partErase) {
+    const st = doc.strokes.find(x => x.id === id);
+    if (!st || !st.seg3d) continue;
+    const keep = subtractIntervals(ivs);
+    if (keep.length === 1 && keep[0][0] === 0 && keep[0][1] === 1) continue;
+    const r = replaceWithPieces(st, keep);
+    erased += 1; broken += r.broken;
+  }
+  partErase = null;
+  if (!erased) { undoStack.pop(); return; }
+  syncScene();
+  note = `부분 지우개 — ${erased}획을 깎았습니다`
+       + (broken ? ` — <b>${broken}개의 스냅 기록이 끊겼습니다</b>` : "");
+}
+
 function deletePicked(): void {
   if (!picked) return;
   const st = doc.strokes.find(x => x.id === picked);
@@ -1078,6 +1239,7 @@ function feedStroke(st: SStroke, forced?: "screen" | "depth" | "vertical"): void
     if (cam.standing() && r.event.question === "screen_or_depth") { ask = null; return; }
     ask = { strokeId: st.id, line, question: r.event.question,
             toH: r.event.verdict.toH, toV: r.event.verdict.toV };
+    askStats.asked += 1;
     return;
   }
   ask = null;
@@ -1086,6 +1248,7 @@ function feedStroke(st: SStroke, forced?: "screen" | "depth" | "vertical"): void
 /** 물음에 답한다 — 그 답을 규칙에 **강제로** 넣는다. */
 function answerAsk(choice: "screen" | "depth" | "vertical"): void {
   if (!ask) return;
+  askStats[choice] += 1;
   const st = doc.strokes.find(x => x.id === ask!.strokeId);
   const line = ask.line;
   ask = null;
@@ -1472,7 +1635,7 @@ const ink = new InkCanvas(canvas, {
   cameraMouse: () => tool === "orbit",
   onWheel: (d) => gestures.onWheel(d),
   // **위치로 갈리는 끌기가 생겼다**(D-L45) — 지평선 손잡이 위면 그리기가 아니라 끌기다
-  dragMode: (p) => tool === "edit" || horizonGrab(p),
+  dragMode: (p) => tool === "edit" || tool === "erase_seg" || tool === "erase_part" || horizonGrab(p),
   onDrag: (p, phase) => {
     // **지평선 끌기**(D-L45, QUESTIONS g) — 그리는 도구 안에서 손잡이 위에서만 시작한다.
     // 끄는 동안 카메라 피치가 돌고, 사용자는 **그림의 지평선을 옮긴다**고 인식한다
@@ -1485,6 +1648,20 @@ const ink = new InkCanvas(canvas, {
       if (!horizonDrag) return;
       cam.setHorizon(p[1]);
       if (phase === "up") horizonDrag = false;   // ⛔ 안내 문구를 뺐다(지시 3 — 시스템 사정)
+      refresh();
+      return;
+    }
+    // **지우개**(지시 I). 조각: 누르거나 스치면 그 조각이 사라진다(SketchUp).
+    // 부분: 끌면서 지나간 자리만 — 떼는 순간 확정한다(분할의 특수한 경우)
+    if (tool === "erase_seg") {
+      if (phase === "down" || phase === "move") eraseSegmentAt(p);
+      refresh();
+      return;
+    }
+    if (tool === "erase_part") {
+      if (phase === "down") partErase = new Map();
+      if (partErase && (phase === "down" || phase === "move")) erasePartSample(p);
+      if (phase === "up") erasePartCommit();
       refresh();
       return;
     }
@@ -1511,7 +1688,7 @@ const ink = new InkCanvas(canvas, {
     const fr = p ? frame() : null;
     const sc = fr ? snapCtx(fr) : null;
     const segs = snapSegs(fr?.toV);
-    const next = (sc && tool === "draw") ? snapAt(p!, segs, sc, {}, snapStatic(segs)) : null;
+    const next = (sc && tool === "draw") ? appSnapAt(p!, segs, sc, snapStatic(segs)) : null;
     // 값이 안 바뀌면 다시 그리지 않는다 — 포인터마다 전체 재그리기가 돌면 안 된다
     const same = (!next && !hoverSnap)
       || (!!next && !!hoverSnap && next.kind === hoverSnap.kind
@@ -1543,7 +1720,7 @@ const ink = new InkCanvas(canvas, {
     const a0: Pt2 = [pts[0][0], pts[0][1]];
     const b0: Pt2 = [pts[pts.length - 1][0], pts[pts.length - 1][1]];
     const segs = snapSegs(fr.toV);
-    const anchor = live?.anchor ?? snapAt(a0, segs, sc, {}, snapStatic(segs));
+    const anchor = live?.anchor ?? appSnapAt(a0, segs, sc, snapStatic(segs));
     if (!anchor) { live = null; refresh(); return; }
     // ⚠ **옛 판은 여기서 `Shift`가 잡은 축을 기억했다**(`shiftHeld`) — D-L44로 그 뜻이
     // 바뀌면서 죽은 코드가 됐고 지웠다. 지금 `Shift`는 `freeStroke`이고 `resolveLive`가 본다
@@ -1588,7 +1765,7 @@ const ink = new InkCanvas(canvas, {
       // **① 시작점 스냅**(§3). 붙으면 그 획의 3D가 확정된다.
       const sc = snapCtx(fr);
       const segs0 = snapSegs(fr.toV);
-      const cand = sc ? snapAt(pts[0], segs0, sc, {}, snapStatic(segs0)) : null;
+      const cand = sc ? appSnapAt(pts[0], segs0, sc, snapStatic(segs0)) : null;
       lastSnapNote = "";
       if (cand) {
         applySnapToStart(s, cand, fr.fromV(cand.at));
@@ -1599,6 +1776,11 @@ const ink = new InkCanvas(canvas, {
         placeLive(s, fr, cand.at, endCand);
       } else if (segs0.length) {
         lastSnapNote = "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다";
+        // **조리개 밖 겨냥도 기록한다**(지시 K, 리뷰어 [7]) — 스냅된 사건만 적으면 분포가
+        // 조리개에서 절단돼 "반경을 넓혀야 하는가"를 영영 못 답한다. 40px(UI 상한) 프로브.
+        const probe = snapCandidates(pts[0], segs0, sc!, { radius_ratio: 40 / Math.hypot(...cssSize()) },
+                                     snapStatic(segs0)).find(c => OSNAP.kinds[c.kind]);
+        s.snapDistPx = probe ? probe.dist : null;
       }
       // **② 못 놓인 것은 일괄 풀이로** — 서로 이어진 2D 획들끼리 풀린다.
       // ⚠ **확정 뷰에서만 돈다** — `liftAll`은 소실점을 쓰고 그 소실점은 확정 카메라의 것이다.
@@ -1713,6 +1895,7 @@ function buildDoc2(): Doc2 {
     // **규칙 상태가 카메라의 입력이다**(2026-08-16) — 누산기 덤프는 그 귀결이다.
     // ⚠ `locked`·`order`·`lensMm`은 더 이상 저장하지 않는다(지시 1 — 파생 상태는 계산한다)
     rules: cam.dumpRules(),
+    askStats: { ...askStats },
     doc,
     seq: docSeq(),
   });
@@ -1743,6 +1926,9 @@ function renderBar() {
     // **이 자리에 들어온다** — 기능이 없는 버튼을 미리 두지 않는다(I에서 함께 넣는다)
     btn("draw", "선 그리기", tool === "draw"),
     btn("edit", "선택", tool === "edit", !doc.strokes.length),
+    // **지우개 둘**(지시 I·G-1의 예약석) — 조각(교차점 사이가 통째로) · 부분(지나간 자리만)
+    btn("erase_seg", "지우개(조각)", tool === "erase_seg", !doc.strokes.length),
+    btn("erase_part", "지우개(부분)", tool === "erase_part", !lifted(doc).length),
     '<span class="sep"></span>',
     // **궤도는 마우스 전용으로 남는다**(G-1) — 아이패드에서는 손가락이 이 버튼을 대신한다
     `<button data-act="orbit"${tool === "orbit" ? ' class="on"' : ""}${!cam.standing() ? " disabled" : ""}`
@@ -1753,6 +1939,15 @@ function renderBar() {
     btn("showguide", `보조선 ${SHOW_GUIDES.on ? "보임" : "숨김"}`, SHOW_GUIDES.on),
     // **격자 토글**(지시 5-5). 기본 켬
     btn("showgrid", `격자 ${SHOW_GRID.on ? "켬" : "끔"}`, SHOW_GRID.on),
+    // **오스냅 설정**(지시 H — 라이노 오스냅 도구막대 선례). 반경·종류별 토글
+    btn("osnap", `스냅 ${OSNAP.radiusPx}px`, OSNAP.open),
+    ...(OSNAP.open ? [
+      `<span class="osnap-panel">반경 <input type="number" min="4" max="40" step="1" `
+        + `value="${OSNAP.radiusPx}" data-osnap-radius style="width:3.2em"> px</span>`,
+      ...SNAP_ORDER.map(k =>
+        `<button data-osnap-kind="${k}"${OSNAP.kinds[k] ? ' class="on"' : ""}`
+        + ` title="${SNAP_TIP[k]}">${SNAP_LABEL[k]}</button>`),
+    ] : []),
     '<span class="sep"></span>',
     // **현재 채널이 화면에 보인다**(D-5). 모르고 그으면 나중에 고쳐야 한다
     ...(["guide", "result", "note"] as Channel[]).map(k =>
@@ -1905,8 +2100,13 @@ function renderStatus() {
 barEl.addEventListener("click", (e) => {
   const b = (e.target as HTMLElement).closest("button");
   if (!b) return;
+  // **오스냅 종류 토글**(지시 H) — 라이노처럼 종류마다 켜고 끈다
+  const ok = (b as HTMLButtonElement).dataset.osnapKind as SnapKind | undefined;
+  if (ok) { OSNAP.kinds[ok] = !OSNAP.kinds[ok]; hoverSnap = null; refresh(); return; }
   const act = (b as HTMLButtonElement).dataset.act!;
-  if (act === "draw" || act === "orbit" || act === "edit") {
+  if (!act) return;
+  if (act === "draw" || act === "orbit" || act === "edit"
+      || act === "erase_seg" || act === "erase_part") {
     tool = act as Tool;
     if (act !== "edit") picked = null;
     if (act === "edit") {
@@ -1982,6 +2182,7 @@ barEl.addEventListener("click", (e) => {
     SHOW_GRID.on = !SHOW_GRID.on;
     note = "";
   }
+  else if (act === "osnap") { OSNAP.open = !OSNAP.open; }
   else if (act === "showguide") {
     SHOW_GUIDES.on = !SHOW_GUIDES.on;
     syncScene();
@@ -2017,6 +2218,7 @@ statusEl.addEventListener("click", (e) => {
   else if (act === "ask_vertical") answerAsk("vertical");
   else if (act === "ask_skip") {
     // **모른다고 답하는 것도 답이다** — 그 획은 2D로 남고 규칙은 안 움직인다(A-3)
+    askStats.skipped += 1;
     ask = null;
     refresh();
   }
@@ -2071,6 +2273,16 @@ function relive() {
   refresh();
 }
 
+// **오스냅 반경 입력**(지시 H). 4~40px로 죈다 — 0이나 음수는 스냅을 통째로 죽인다
+barEl.addEventListener("change", (e) => {
+  const t = e.target as HTMLInputElement;
+  if (t?.dataset?.osnapRadius === undefined) return;
+  const v = Math.max(4, Math.min(40, Math.round(Number(t.value) || 0)));
+  OSNAP.radiusPx = v;
+  hoverSnap = null;
+  refresh();
+});
+
 window.addEventListener("resize", () => refresh());
 // 숨은 탭에서 열리면 관찰자가 발화하지 않는다(PITFALLS #22) — 보이게 되는 순간 다시 본다
 document.addEventListener("visibilitychange", () => refresh());
@@ -2112,7 +2324,7 @@ refresh();
   // L-B.3 — 종단 확인이 스냅을 앱 경로 그대로 부른다(PITFALLS #17)
   snap: (p: Pt2) => {
     const sc = snapCtx(); const g = snapSegs();
-    return sc ? snapAt(p, g, sc, {}, snapStatic(g)) : null;
+    return sc ? appSnapAt(p, g, sc, snapStatic(g)) : null;
   },
   snapTargets: () => snapSegs().length,
   hoverSnap: () => hoverSnap,
@@ -2246,4 +2458,25 @@ refresh();
   // 축 스냅(사람 지시 1) — **앱 경로 그대로**를 종단 확인이 부른다(#17)
   axisSnap: () => ({ on: AXIS_SNAP.on, freeStroke }),
   setAxisSnap: (on: boolean) => { AXIS_SNAP.on = on; relive(); },
+  /** **지우개**(지시 I) — 앱 경로 그대로를 종단 확인이 부른다(#17). */
+  eraseSegmentAt: (p: Pt2) => { const ok = eraseSegmentAt(p); refresh(); return ok; },
+  erasePart: (path: Pt2[]) => {
+    partErase = new Map();
+    for (const p of path) erasePartSample(p);
+    erasePartCommit();
+    refresh();
+  },
+  /** 획의 조각 경계(매개변수) — 분할 판정을 원장이 읽는다. */
+  cutsOf: (id: string) => {
+    const st = doc.strokes.find(x => x.id === id);
+    return st?.seg3d ? cutParams(seg3Of(st), otherSegs(id)) : null;
+  },
+  /** **오스냅 설정**(지시 H) — 앱 경로 그대로를 종단 확인이 읽고 쓴다(#17). */
+  osnap: () => ({ radiusPx: OSNAP.radiusPx, kinds: { ...OSNAP.kinds } }),
+  setOsnap: (o: { radiusPx?: number; kinds?: Partial<Record<SnapKind, boolean>> }) => {
+    if (o.radiusPx != null) OSNAP.radiusPx = Math.max(4, Math.min(40, o.radiusPx));
+    if (o.kinds) Object.assign(OSNAP.kinds, o.kinds);
+    hoverSnap = null;
+    refresh();
+  },
 };
