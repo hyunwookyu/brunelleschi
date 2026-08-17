@@ -42,6 +42,12 @@
     "snap_dist_px": 4.56,
     "osnap_radius_px": 15
   },
+  "far_aim": {
+    "old_def_kind": "on_face",
+    "old_def_dist": 0,
+    "snap_start_kind": "on_face",
+    "snap_dist_px": 20.75
+  },
   "spec": "7차 항목 2 — 스냅 정적 후보 캐시가 시점(poseKey)을 키로 갖는다: 뷰 왕복 직후 첫 질의가 끝점을 문다",
   "constants": {
     "hash": "509615a1",
@@ -199,14 +205,20 @@
     "왕복 질의의 표본은 **끝점 2건**이다 — 정점·중점·교차점 표본 0(2-R″ [8]. 같은 정적 캐시의 종류들이라 기전은 같지만 값으로는 안 덮었다) · 반경·자세·캔버스도 각 하나다(#12)",
     "stale_offset_px.behind_camera는 낡은 후보가 카메라 뒤로 가 아예 죽는 경우의 수다 — 이 실행에서는 0(관측 없음)이고, 그때 옛 판이 후보를 잃는다는 것은 기하 서술이지 실측이 아니다"
   ],
+  "gate_oracle_values": [
+    341.2,
+    293,
+    20.75
+  ],
   "gate": {
-    "registered": "⚠ 이 항목이 등록한 게이트다 — CLAUDE.md §2의 중단 조건(camera_gate)이 아니다(#41). 확정 뷰 ↔ 회전 시점 왕복(그 시점에서 기하 변경·호버 오염 포함) 직후의 첫 질의가 왕복 전과 같은 **끝점**을 문다(정점·중점·교차점은 표본 0 — what_not_say). 그리고 끝점 곁 ~8px에서 그은 획의 snapDistPx가 0도 null도 아닌 조리개 안 값으로 적힌다",
-    "reachability": "음성 채널(#30) — 낡은 캐시의 후보가 확정 카메라에서 참 자리를 벗어나는 거리(stale_offset_px — 이 실행에서 잼: 수백 px대). 이 원장의 osnap_radius_px(aim_dist_px_sample.osnap_radius_px = 앱 설정값)와 자릿수로 갈리므로 낡은 캐시로는 이 게이트를 못 넘는다 — 기준이 판별력을 갖는 근거다",
+    "registered": "⚠ 이 항목이 등록한 게이트다 — CLAUDE.md §2의 중단 조건(camera_gate)이 아니다(#41). 확정 뷰 ↔ 회전 시점 왕복(그 시점에서 기하 변경·호버 오염 포함) 직후의 첫 질의가 왕복 전과 같은 **끝점**을 문다(정점·중점·교차점은 표본 0 — what_not_say). 그리고 끝점 곁 ~8px에서 그은 획의 snapDistPx가 0도 null도 아닌 조리개 안 값으로 적히고, 조리개 밖(~22px) 지면 시작 획의 snapDistPx도 실거리로 적힌다(옛 정의는 그 자리가 0 — far_aim.old_def_dist가 이 실행의 되살림이다). ⚠ 기준 등록 시점(#26): 스펙 작성(첫 실행 전)에 등록했고, [8] 대응의 '끝점' 좁힘과 far_aim 팔 추가는 측정 뒤의 **모집단 명시·팔 추가**다 — 통과선 수치는 안 움직였다",
+    "reachability": "음성 채널(#30) — ①(캐시): 낡은 캐시의 후보가 확정 카메라에서 참 자리를 벗어나는 거리(stale_offset_px 두 값 — 수백 px대. 이 원장의 osnap_radius_px = 15와 자릿수로 갈린다). ②(겨냥 거리): far_aim의 새 정의 값(셋째 값 — 조리개 밖 실거리). 옛 정의의 대응값은 far_aim.old_def_dist = 정확히 0(버그의 구성상 산물이라 reachability_value에 안 넣는다 — #40 ②의 0·1 규칙. 값 자체는 원장 far_aim에 있다)",
     "reachability_value": [
       341.2,
-      293
+      293,
+      20.75
     ],
-    "reachability_source": "stale_offset_px/offsets",
+    "reachability_source": "gate_oracle_values",
     "result": {
       "before": [
         {
@@ -232,6 +244,12 @@
         "snap_start_kind": "endpoint",
         "snap_dist_px": 4.56,
         "osnap_radius_px": 15
+      },
+      "far_aim": {
+        "old_def_kind": "on_face",
+        "old_def_dist": 0,
+        "snap_start_kind": "on_face",
+        "snap_dist_px": 20.75
       }
     },
     "note": "수정 전 재현(#21): 같은 스펙이 after에서 **on_edge**(캐시 밖 하위 대체)를 물어 실패했다 — progress.md 7차 항목 2의 재현 기록. 실획의 시작 스냅에서는 같은 자리가 on_face였다(획이 기존 기하에서 떨어진 곳에서 시작해 on_edge 후보도 멀었던 상태)"

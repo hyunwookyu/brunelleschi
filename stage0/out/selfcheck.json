@@ -1,5 +1,5 @@
 {
-  "n_flags": 1990,
+  "n_flags": 2037,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -5650,6 +5650,16 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "rule_camera.json:headline.rule_drawn_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline.rule_drawn_placebo.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:headline.detect.screen_axes_total",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -5661,6 +5671,11 @@
     },
     {
       "path": "rule_camera.json:headline_jit0_no_identity.rule_drawn.snap_queried",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_jit0_no_identity.rule_drawn.osnap_vpdir_forced",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -5690,6 +5705,11 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "rule_camera.json:headline_jit0_no_identity.rule_grouped.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:headline_jit0_no_identity.rule_grouped.first_pair_moved",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -5715,6 +5735,11 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "rule_camera.json:headline_jit0_no_identity.rule_wide_pair.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:headline_jit0_no_identity.rule_wide_pair.first_pair_moved",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -5730,9 +5755,19 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "rule_camera.json:headline_jit0_no_identity.rule_drawn_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:headline_jit0_no_identity.rule_grouped_snap.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_camera.json:headline_jit0_no_identity.rule_grouped_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "rule_camera.json:headline_jit0_no_identity.rule_grouped_snap.first_pair_moved",
@@ -5745,7 +5780,17 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "rule_camera.json:headline_jit0_no_identity.rule_wide_pair_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:headline_jit0_no_identity.rule_wide_pair_snap.first_pair_moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_jit0_no_identity.rule_drawn_placebo.osnap_vpdir_forced",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -5755,14 +5800,29 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "rule_camera.json:headline_jit0_no_identity.rule_grouped_placebo.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:headline_jit0_no_identity.rule_wide_pair_placebo.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "rule_camera.json:headline_jit0_no_identity.rule_wide_pair_placebo.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:headline_jit0_no_identity.rule_grouped_snap_r4.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_camera.json:headline_jit0_no_identity.rule_grouped_snap_r4.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "rule_camera.json:headline_jit0_no_identity.rule_grouped_snap_r4.first_pair_moved",
@@ -5773,6 +5833,11 @@
       "path": "rule_camera.json:headline_jit0_no_identity.rule_grouped_snap_r40.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_camera.json:headline_jit0_no_identity.rule_grouped_snap_r40.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "rule_camera.json:headline_jit0_no_identity.rule_grouped_snap_r40.first_pair_moved",
@@ -5796,6 +5861,11 @@
     },
     {
       "path": "rule_camera.json:headline_jit0_no_identity.detect.snap_queried",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_jit0_no_identity.detect.osnap_vpdir_forced",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -5825,6 +5895,11 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "rule_camera.json:headline_no_identity.rule_drawn.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:headline_no_identity.rule_drawn.first_pair_moved",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -5841,6 +5916,11 @@
     },
     {
       "path": "rule_camera.json:headline_no_identity.rule_grouped.snap_queried",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_no_identity.rule_grouped.osnap_vpdir_forced",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -5865,12 +5945,52 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "rule_camera.json:headline_no_identity.rule_wide_pair.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:headline_no_identity.rule_wide_pair.first_pair_moved",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "rule_camera.json:headline_no_identity.rule_wide_pair.first_pair_runs",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_no_identity.rule_drawn_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_no_identity.rule_grouped_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_no_identity.rule_wide_pair_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_no_identity.rule_drawn_placebo.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_no_identity.rule_grouped_placebo.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_no_identity.rule_wide_pair_placebo.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_no_identity.rule_grouped_snap_r4.osnap_vpdir_forced",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -5891,6 +6011,11 @@
     },
     {
       "path": "rule_camera.json:headline_no_identity.detect.snap_queried",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:headline_no_identity.detect.osnap_vpdir_forced",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -5925,6 +6050,11 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "rule_camera.json:by_jitter.jit_0.rule_drawn_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:by_jitter.jit_0.rule_grouped_snap.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -5933,6 +6063,11 @@
       "path": "rule_camera.json:by_jitter.jit_0.rule_wide_pair_snap.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_camera.json:by_jitter.jit_0.rule_drawn_placebo.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "rule_camera.json:by_jitter.jit_0.rule_grouped_placebo.camera_ok_rate",
@@ -5960,7 +6095,27 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "rule_camera.json:by_jitter.jit_0.005.rule_drawn_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:by_jitter.jit_0.005.rule_drawn_placebo.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:by_jitter.jit_0.005.detect.screen_axes_total",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:by_jitter.jit_0.01.rule_drawn_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:by_jitter.jit_0.01.rule_drawn_placebo.osnap_vpdir_forced",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -5970,7 +6125,27 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "rule_camera.json:by_jitter.jit_0.03.rule_drawn_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:by_jitter.jit_0.03.rule_drawn_placebo.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:by_jitter.jit_0.03.detect.screen_axes_total",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:by_jitter.jit_0.05.rule_drawn_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:by_jitter.jit_0.05.rule_drawn_placebo.osnap_vpdir_forced",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -5980,7 +6155,27 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "rule_camera.json:by_composition.3pt_yaw35_pitch15.rule_drawn_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:by_composition.3pt_yaw35_pitch15.rule_drawn_placebo.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:by_composition.3pt_yaw35_pitch15.detect.screen_axes_total",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:by_composition.3pt_yaw20_pitch25.rule_drawn_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:by_composition.3pt_yaw20_pitch25.rule_drawn_placebo.osnap_vpdir_forced",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -5990,7 +6185,27 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "rule_camera.json:by_composition.3pt_yaw50_pitch8.rule_drawn_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:by_composition.3pt_yaw50_pitch8.rule_drawn_placebo.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:by_composition.3pt_yaw50_pitch8.detect.screen_axes_total",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:by_composition.2pt_yaw35_pitch0.rule_drawn_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:by_composition.2pt_yaw35_pitch0.rule_drawn_placebo.osnap_vpdir_forced",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -6020,6 +6235,11 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "rule_camera.json:by_composition.1pt_yaw0_pitch0.rule_drawn_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:by_composition.1pt_yaw0_pitch0.rule_drawn_placebo.deg_median",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -6035,7 +6255,22 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "rule_camera.json:by_composition.1pt_yaw0_pitch0.rule_drawn_placebo.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "rule_camera.json:by_composition.1pt_yaw0_pitch0.detect.screen_axes_total",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:all_jitters.rule_drawn_snap.osnap_vpdir_forced",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_camera.json:all_jitters.rule_drawn_placebo.osnap_vpdir_forced",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -7212,7 +7447,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 1.042721464727947e-12,
+      "val": 1.000532989792191e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7302,12 +7537,12 @@
     },
     {
       "path": "view_cube.json:after_face.fy",
-      "val": -1.4283327500835466e-13,
+      "val": -1.7125626412591127e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_cube.json:after_retap.fy",
-      "val": -6.530267459520151e-17,
+      "val": -6.530267459519966e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7457,12 +7692,12 @@
     },
     {
       "path": "viewpoint_undo.json:orbited.q[0]",
-      "val": -2.876978900576912e-17,
+      "val": -2.876978900574591e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[2]",
-      "val": -1.0471346843992295e-17,
+      "val": -1.0471346844056062e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7472,12 +7707,12 @@
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[0]",
-      "val": -2.876978900570268e-17,
+      "val": -2.8769789005699646e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[2]",
-      "val": -1.0471346844174841e-17,
+      "val": -1.0471346844183172e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7487,27 +7722,27 @@
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[0]",
-      "val": -2.876978900570011e-17,
+      "val": -2.8769789005698044e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[2]",
-      "val": -1.0471346844181902e-17,
+      "val": -1.0471346844187572e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dp",
-      "val": 1.7176303434974421e-12,
+      "val": 1.0701644235051367e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dq",
-      "val": 2.4544573622674663e-13,
+      "val": 1.5293584102064903e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.p[0]",
-      "val": -1.2675040110509943e-13,
+      "val": -6.689023213036296e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7522,32 +7757,32 @@
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[1]",
-      "val": -1.8112590841754832e-14,
+      "val": -9.558592283133403e-15,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[2]",
-      "val": -5.54538159965518e-31,
+      "val": -2.926474860973478e-31,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.p[1]",
-      "val": 2.142494057865056e-16,
+      "val": 2.1424940578650555e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[0]",
-      "val": -2.876978900575268e-17,
+      "val": -2.876978900573009e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[2]",
-      "val": -1.0471346844037462e-17,
+      "val": -1.0471346844099516e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:return_gap",
-      "val": 1.0986286019308763e-11,
+      "val": 1.057018417930208e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -10033,7 +10268,7 @@
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 11,
+        ".md": 10,
         ".ts": 6,
         ".py": 2
       }
@@ -10091,7 +10326,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 164,
+      "targets": 166,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },

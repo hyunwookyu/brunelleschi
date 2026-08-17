@@ -65,6 +65,7 @@
       "first_pair_sep_deg_median": 37.24,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 244
@@ -83,6 +84,7 @@
       "first_pair_sep_deg_median": 8.44,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 380
@@ -101,6 +103,7 @@
       "first_pair_sep_deg_median": 9.48,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 395
@@ -119,6 +122,7 @@
       "first_pair_sep_deg_median": 32.27,
       "snap_engaged": 565,
       "snap_queried": 779,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 135,
       "first_pair_runs": 235,
       "screen_axes_total": 390
@@ -137,6 +141,7 @@
       "first_pair_sep_deg_median": 8.2,
       "snap_engaged": 319,
       "snap_queried": 535,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 39,
       "first_pair_runs": 235,
       "screen_axes_total": 422
@@ -155,6 +160,7 @@
       "first_pair_sep_deg_median": 8.78,
       "snap_engaged": 297,
       "snap_queried": 566,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 25,
       "first_pair_runs": 231,
       "screen_axes_total": 435
@@ -173,6 +179,7 @@
       "first_pair_sep_deg_median": 35.61,
       "snap_engaged": 707,
       "snap_queried": 918,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 154,
       "first_pair_runs": 235,
       "screen_axes_total": 254
@@ -191,6 +198,7 @@
       "first_pair_sep_deg_median": 8.64,
       "snap_engaged": 372,
       "snap_queried": 588,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 52,
       "first_pair_runs": 235,
       "screen_axes_total": 379
@@ -209,6 +217,7 @@
       "first_pair_sep_deg_median": 10.41,
       "snap_engaged": 363,
       "snap_queried": 640,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 50,
       "first_pair_runs": 235,
       "screen_axes_total": 382
@@ -227,6 +236,7 @@
       "first_pair_sep_deg_median": 7.95,
       "snap_engaged": 276,
       "snap_queried": 528,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 14,
       "first_pair_runs": 235,
       "screen_axes_total": 421
@@ -245,6 +255,7 @@
       "first_pair_sep_deg_median": 8.32,
       "snap_engaged": 353,
       "snap_queried": 549,
+      "osnap_vpdir_forced": 13,
       "first_pair_moved": 53,
       "first_pair_runs": 235,
       "screen_axes_total": 418
@@ -263,6 +274,7 @@
       "first_pair_sep_deg_median": null,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 0
@@ -272,6 +284,7 @@
     "합성 잉크는 짝을 의도하지 않는다(AS-L13의 자리) — 사람은 X 교차·연장 수렴으로 짝을 긋는다. 실획(K)이 최종 판정자다",
     "시드별 분해가 없다(#14) — 원시↔스냅 격차가 시드 폭 안인지 미확인이다(격차 값은 headline_no_identity를 그 자리에서 읽는다 — 수치를 여기 적으면 재실행마다 낡는다, #1). 짝지은 부분집합(paired_headline)이 표본 짝은 맞추지만 시드 폭은 못 대고, **축 분모는 여전히 다르다**(예: drawn 짝 층에서 raw_axes 대 snap_axes — 무한원 편평화의 선택 효과, 리뷰어 [3-6])",
     "스냅 팔은 **무물음 선언 배선**(지시 3 — 직교→screen·vp_dir→depth 강제)이다. 남는 물음(자유 선)에는 참 축으로 답한다(오라클) — 어느 팔도 실사용 성능이 아니다. 물음 오라클 판(지시 3 이전)의 값은 git show d724ac0:stage0/out/rule_camera.json에 있다",
+    "판(revision) 참조(3·4-R [4]): 7차 이전(6차 마감) 판은 git show 513c33d:stage0/out/rule_camera.json, 7차 초판(끝점 오스냅 현의 ortho+vpdir 강제 — P1 가드 우회로 기각된 판, D-L69 ②)은 git show b4f2d9b:stage0/out/rule_camera.json이다. 현행은 vpdir만 강제한다 — 발동 수는 osnap_vpdir_forced가 팔별로 센다(0이면 그 팔의 무변화는 미발동이다, #32)",
     "카메라 확정 후 3D 오스냅·축 스냅의 효과는 2D 목록 근사 밖이다(§4.5 보장으로 화면 좌표는 같다)",
     "무한원 축 제외는 원시 팔에서는 항등 제거지만 **스냅 팔에서는 선택이 될 수 있다**(리뷰어 [23]② — 직교 스냅이 얕은 축을 화면 축으로 펴면 그 축이 분모에서 빠진다). screen_axes_total이 그 대조 재료다"
   ],
@@ -292,6 +305,7 @@
       "first_pair_sep_deg_median": 39.53,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 46
@@ -310,6 +324,7 @@
       "first_pair_sep_deg_median": 4.28,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 86
@@ -328,6 +343,7 @@
       "first_pair_sep_deg_median": 4.28,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 95
@@ -346,6 +362,7 @@
       "first_pair_sep_deg_median": 26.07,
       "snap_engaged": 141,
       "snap_queried": 189,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 35,
       "first_pair_runs": 48,
       "screen_axes_total": 96
@@ -364,6 +381,7 @@
       "first_pair_sep_deg_median": 3.92,
       "snap_engaged": 47,
       "snap_queried": 95,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 48,
       "screen_axes_total": 96
@@ -382,6 +400,7 @@
       "first_pair_sep_deg_median": 4.28,
       "snap_engaged": 48,
       "snap_queried": 96,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 48,
       "screen_axes_total": 96
@@ -400,6 +419,7 @@
       "first_pair_sep_deg_median": 34.12,
       "snap_engaged": 175,
       "snap_queried": 223,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 44,
       "first_pair_runs": 48,
       "screen_axes_total": 64
@@ -418,6 +438,7 @@
       "first_pair_sep_deg_median": 4.66,
       "snap_engaged": 71,
       "snap_queried": 119,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 8,
       "first_pair_runs": 48,
       "screen_axes_total": 86
@@ -436,6 +457,7 @@
       "first_pair_sep_deg_median": 4.61,
       "snap_engaged": 63,
       "snap_queried": 111,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 5,
       "first_pair_runs": 48,
       "screen_axes_total": 91
@@ -454,6 +476,7 @@
       "first_pair_sep_deg_median": 3.92,
       "snap_engaged": 47,
       "snap_queried": 95,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 48,
       "screen_axes_total": 96
@@ -472,6 +495,7 @@
       "first_pair_sep_deg_median": 3.92,
       "snap_engaged": 47,
       "snap_queried": 95,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 48,
       "screen_axes_total": 96
@@ -490,6 +514,7 @@
       "first_pair_sep_deg_median": null,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 0
@@ -535,6 +560,7 @@
       "first_pair_sep_deg_median": 39.85,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 149
@@ -553,6 +579,7 @@
       "first_pair_sep_deg_median": 6.58,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 285
@@ -571,6 +598,7 @@
       "first_pair_sep_deg_median": 7.7,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 300
@@ -589,6 +617,7 @@
       "first_pair_sep_deg_median": 36.1,
       "snap_engaged": 519,
       "snap_queried": 725,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 133,
       "first_pair_runs": 192,
       "screen_axes_total": 294
@@ -607,6 +636,7 @@
       "first_pair_sep_deg_median": 6.58,
       "snap_engaged": 277,
       "snap_queried": 485,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 39,
       "first_pair_runs": 192,
       "screen_axes_total": 326
@@ -625,6 +655,7 @@
       "first_pair_sep_deg_median": 7.25,
       "snap_engaged": 237,
       "snap_queried": 440,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 22,
       "first_pair_runs": 192,
       "screen_axes_total": 340
@@ -643,6 +674,7 @@
       "first_pair_sep_deg_median": 38.44,
       "snap_engaged": 661,
       "snap_queried": 864,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 152,
       "first_pair_runs": 192,
       "screen_axes_total": 158
@@ -661,6 +693,7 @@
       "first_pair_sep_deg_median": 7.2,
       "snap_engaged": 330,
       "snap_queried": 538,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 52,
       "first_pair_runs": 192,
       "screen_axes_total": 283
@@ -679,6 +712,7 @@
       "first_pair_sep_deg_median": 8.56,
       "snap_engaged": 300,
       "snap_queried": 508,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 42,
       "first_pair_runs": 192,
       "screen_axes_total": 286
@@ -697,6 +731,7 @@
       "first_pair_sep_deg_median": 6.13,
       "snap_engaged": 232,
       "snap_queried": 475,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 14,
       "first_pair_runs": 192,
       "screen_axes_total": 326
@@ -715,6 +750,7 @@
       "first_pair_sep_deg_median": 6.62,
       "snap_engaged": 311,
       "snap_queried": 499,
+      "osnap_vpdir_forced": 13,
       "first_pair_moved": 53,
       "first_pair_runs": 192,
       "screen_axes_total": 322
@@ -733,6 +769,7 @@
       "first_pair_sep_deg_median": null,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 0
@@ -754,6 +791,7 @@
         "first_pair_sep_deg_median": 36.25,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 70
@@ -772,6 +810,7 @@
         "first_pair_sep_deg_median": 5.47,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 110
@@ -790,6 +829,7 @@
         "first_pair_sep_deg_median": 5.47,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 119
@@ -808,6 +848,7 @@
         "first_pair_sep_deg_median": 26.07,
         "snap_engaged": 153,
         "snap_queried": 201,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 35,
         "first_pair_runs": 60,
         "screen_axes_total": 120
@@ -826,6 +867,7 @@
         "first_pair_sep_deg_median": 4.66,
         "snap_engaged": 59,
         "snap_queried": 107,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 60,
         "screen_axes_total": 120
@@ -844,6 +886,7 @@
         "first_pair_sep_deg_median": 4.98,
         "snap_engaged": 60,
         "snap_queried": 132,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 60,
         "screen_axes_total": 120
@@ -862,6 +905,7 @@
         "first_pair_sep_deg_median": 28.61,
         "snap_engaged": 187,
         "snap_queried": 235,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 44,
         "first_pair_runs": 60,
         "screen_axes_total": 88
@@ -880,6 +924,7 @@
         "first_pair_sep_deg_median": 6.05,
         "snap_engaged": 83,
         "snap_queried": 131,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 8,
         "first_pair_runs": 60,
         "screen_axes_total": 110
@@ -898,6 +943,7 @@
         "first_pair_sep_deg_median": 6.05,
         "snap_engaged": 75,
         "snap_queried": 147,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 5,
         "first_pair_runs": 60,
         "screen_axes_total": 115
@@ -916,6 +962,7 @@
         "first_pair_sep_deg_median": 4.66,
         "snap_engaged": 59,
         "snap_queried": 107,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 60,
         "screen_axes_total": 120
@@ -934,6 +981,7 @@
         "first_pair_sep_deg_median": 4.66,
         "snap_engaged": 59,
         "snap_queried": 107,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 60,
         "screen_axes_total": 120
@@ -952,6 +1000,7 @@
         "first_pair_sep_deg_median": null,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 0
@@ -972,6 +1021,7 @@
         "first_pair_sep_deg_median": 35.23,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 69
@@ -990,6 +1040,7 @@
         "first_pair_sep_deg_median": 5.74,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 115
@@ -1008,6 +1059,7 @@
         "first_pair_sep_deg_median": 5.87,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 118
@@ -1026,6 +1078,7 @@
         "first_pair_sep_deg_median": 27.43,
         "snap_engaged": 150,
         "snap_queried": 199,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 32,
         "first_pair_runs": 59,
         "screen_axes_total": 119
@@ -1044,6 +1097,7 @@
         "first_pair_sep_deg_median": 4.92,
         "snap_engaged": 61,
         "snap_queried": 109,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 1,
         "first_pair_runs": 59,
         "screen_axes_total": 119
@@ -1062,6 +1116,7 @@
         "first_pair_sep_deg_median": 5.48,
         "snap_engaged": 59,
         "snap_queried": 125,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 57,
         "screen_axes_total": 120
@@ -1080,6 +1135,7 @@
         "first_pair_sep_deg_median": 31.74,
         "snap_engaged": 210,
         "snap_queried": 259,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 43,
         "first_pair_runs": 59,
         "screen_axes_total": 75
@@ -1098,6 +1154,7 @@
         "first_pair_sep_deg_median": 6.54,
         "snap_engaged": 82,
         "snap_queried": 130,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 8,
         "first_pair_runs": 59,
         "screen_axes_total": 111
@@ -1116,6 +1173,7 @@
         "first_pair_sep_deg_median": 5.81,
         "snap_engaged": 72,
         "snap_queried": 139,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 5,
         "first_pair_runs": 58,
         "screen_axes_total": 116
@@ -1134,6 +1192,7 @@
         "first_pair_sep_deg_median": 4.92,
         "snap_engaged": 60,
         "snap_queried": 109,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 1,
         "first_pair_runs": 59,
         "screen_axes_total": 119
@@ -1152,6 +1211,7 @@
         "first_pair_sep_deg_median": 4.92,
         "snap_engaged": 64,
         "snap_queried": 112,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 2,
         "first_pair_runs": 59,
         "screen_axes_total": 117
@@ -1170,6 +1230,7 @@
         "first_pair_sep_deg_median": null,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 0
@@ -1190,6 +1251,7 @@
         "first_pair_sep_deg_median": 37.09,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 66
@@ -1208,6 +1270,7 @@
         "first_pair_sep_deg_median": 6.38,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 103
@@ -1226,6 +1289,7 @@
         "first_pair_sep_deg_median": 7.45,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 112
@@ -1244,6 +1308,7 @@
         "first_pair_sep_deg_median": 28.65,
         "snap_engaged": 151,
         "snap_queried": 202,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 35,
         "first_pair_runs": 58,
         "screen_axes_total": 109
@@ -1262,6 +1327,7 @@
         "first_pair_sep_deg_median": 6.63,
         "snap_engaged": 81,
         "snap_queried": 129,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 8,
         "first_pair_runs": 58,
         "screen_axes_total": 111
@@ -1280,6 +1346,7 @@
         "first_pair_sep_deg_median": 6.11,
         "snap_engaged": 66,
         "snap_queried": 128,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 2,
         "first_pair_runs": 57,
         "screen_axes_total": 118
@@ -1298,6 +1365,7 @@
         "first_pair_sep_deg_median": 32.54,
         "snap_engaged": 202,
         "snap_queried": 253,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 44,
         "first_pair_runs": 58,
         "screen_axes_total": 67
@@ -1316,6 +1384,7 @@
         "first_pair_sep_deg_median": 7.86,
         "snap_engaged": 96,
         "snap_queried": 144,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 13,
         "first_pair_runs": 58,
         "screen_axes_total": 105
@@ -1334,6 +1403,7 @@
         "first_pair_sep_deg_median": 7.71,
         "snap_engaged": 86,
         "snap_queried": 149,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 10,
         "first_pair_runs": 58,
         "screen_axes_total": 108
@@ -1352,6 +1422,7 @@
         "first_pair_sep_deg_median": 6.13,
         "snap_engaged": 69,
         "snap_queried": 123,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 2,
         "first_pair_runs": 58,
         "screen_axes_total": 113
@@ -1370,6 +1441,7 @@
         "first_pair_sep_deg_median": 6.63,
         "snap_engaged": 80,
         "snap_queried": 128,
+        "osnap_vpdir_forced": 1,
         "first_pair_moved": 8,
         "first_pair_runs": 58,
         "screen_axes_total": 112
@@ -1388,6 +1460,7 @@
         "first_pair_sep_deg_median": null,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 0
@@ -1408,6 +1481,7 @@
         "first_pair_sep_deg_median": 37.32,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 55
@@ -1426,6 +1500,7 @@
         "first_pair_sep_deg_median": 10.83,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 89
@@ -1444,6 +1519,7 @@
         "first_pair_sep_deg_median": 14.22,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 92
@@ -1462,6 +1538,7 @@
         "first_pair_sep_deg_median": 35.11,
         "snap_engaged": 143,
         "snap_queried": 201,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 37,
         "first_pair_runs": 58,
         "screen_axes_total": 85
@@ -1480,6 +1557,7 @@
         "first_pair_sep_deg_median": 9.42,
         "snap_engaged": 85,
         "snap_queried": 144,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 14,
         "first_pair_runs": 58,
         "screen_axes_total": 104
@@ -1498,6 +1576,7 @@
         "first_pair_sep_deg_median": 13.13,
         "snap_engaged": 81,
         "snap_queried": 150,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 8,
         "first_pair_runs": 58,
         "screen_axes_total": 106
@@ -1516,6 +1595,7 @@
         "first_pair_sep_deg_median": 39.46,
         "snap_engaged": 155,
         "snap_queried": 212,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 37,
         "first_pair_runs": 58,
         "screen_axes_total": 51
@@ -1534,6 +1614,7 @@
         "first_pair_sep_deg_median": 9.32,
         "snap_engaged": 91,
         "snap_queried": 150,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 12,
         "first_pair_runs": 58,
         "screen_axes_total": 94
@@ -1552,6 +1633,7 @@
         "first_pair_sep_deg_median": 16.47,
         "snap_engaged": 102,
         "snap_queried": 173,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 15,
         "first_pair_runs": 59,
         "screen_axes_total": 89
@@ -1570,6 +1652,7 @@
         "first_pair_sep_deg_median": 10.1,
         "snap_engaged": 72,
         "snap_queried": 143,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 5,
         "first_pair_runs": 58,
         "screen_axes_total": 103
@@ -1588,6 +1671,7 @@
         "first_pair_sep_deg_median": 9.42,
         "snap_engaged": 92,
         "snap_queried": 144,
+        "osnap_vpdir_forced": 3,
         "first_pair_moved": 20,
         "first_pair_runs": 58,
         "screen_axes_total": 97
@@ -1606,6 +1690,7 @@
         "first_pair_sep_deg_median": null,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 0
@@ -1626,6 +1711,7 @@
         "first_pair_sep_deg_median": 38.97,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 54
@@ -1644,6 +1730,7 @@
         "first_pair_sep_deg_median": 14.13,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 73
@@ -1662,6 +1749,7 @@
         "first_pair_sep_deg_median": 17.93,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 73
@@ -1680,6 +1768,7 @@
         "first_pair_sep_deg_median": 43.01,
         "snap_engaged": 121,
         "snap_queried": 177,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 31,
         "first_pair_runs": 60,
         "screen_axes_total": 77
@@ -1698,6 +1787,7 @@
         "first_pair_sep_deg_median": 13.4,
         "snap_engaged": 92,
         "snap_queried": 153,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 16,
         "first_pair_runs": 60,
         "screen_axes_total": 88
@@ -1716,6 +1806,7 @@
         "first_pair_sep_deg_median": 17.69,
         "snap_engaged": 91,
         "snap_queried": 163,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 15,
         "first_pair_runs": 59,
         "screen_axes_total": 91
@@ -1734,6 +1825,7 @@
         "first_pair_sep_deg_median": 42.45,
         "snap_engaged": 140,
         "snap_queried": 194,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 30,
         "first_pair_runs": 60,
         "screen_axes_total": 61
@@ -1752,6 +1844,7 @@
         "first_pair_sep_deg_median": 14.04,
         "snap_engaged": 103,
         "snap_queried": 164,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 19,
         "first_pair_runs": 60,
         "screen_axes_total": 69
@@ -1770,6 +1863,7 @@
         "first_pair_sep_deg_median": 19.12,
         "snap_engaged": 103,
         "snap_queried": 179,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 20,
         "first_pair_runs": 60,
         "screen_axes_total": 69
@@ -1788,6 +1882,7 @@
         "first_pair_sep_deg_median": 13.98,
         "snap_engaged": 75,
         "snap_queried": 153,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 6,
         "first_pair_runs": 60,
         "screen_axes_total": 86
@@ -1806,6 +1901,7 @@
         "first_pair_sep_deg_median": 12.27,
         "snap_engaged": 117,
         "snap_queried": 165,
+        "osnap_vpdir_forced": 9,
         "first_pair_moved": 23,
         "first_pair_runs": 60,
         "screen_axes_total": 92
@@ -1824,6 +1920,7 @@
         "first_pair_sep_deg_median": null,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 0
@@ -1846,6 +1943,7 @@
         "first_pair_sep_deg_median": 44.47,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 42
@@ -1864,6 +1962,7 @@
         "first_pair_sep_deg_median": 7.29,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 86
@@ -1882,6 +1981,7 @@
         "first_pair_sep_deg_median": 7.52,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 97
@@ -1900,6 +2000,7 @@
         "first_pair_sep_deg_median": 34.94,
         "snap_engaged": 176,
         "snap_queried": 234,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 42,
         "first_pair_runs": 60,
         "screen_axes_total": 89
@@ -1918,6 +2019,7 @@
         "first_pair_sep_deg_median": 5.75,
         "snap_engaged": 99,
         "snap_queried": 159,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 16,
         "first_pair_runs": 60,
         "screen_axes_total": 97
@@ -1936,6 +2038,7 @@
         "first_pair_sep_deg_median": 7.52,
         "snap_engaged": 77,
         "snap_queried": 138,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 7,
         "first_pair_runs": 60,
         "screen_axes_total": 105
@@ -1954,6 +2057,7 @@
         "first_pair_sep_deg_median": 40.06,
         "snap_engaged": 214,
         "snap_queried": 272,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 57,
         "first_pair_runs": 60,
         "screen_axes_total": 50
@@ -1972,6 +2076,7 @@
         "first_pair_sep_deg_median": 7.64,
         "snap_engaged": 146,
         "snap_queried": 206,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 30,
         "first_pair_runs": 60,
         "screen_axes_total": 76
@@ -1990,6 +2095,7 @@
         "first_pair_sep_deg_median": 8.36,
         "snap_engaged": 117,
         "snap_queried": 180,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 20,
         "first_pair_runs": 60,
         "screen_axes_total": 80
@@ -2008,6 +2114,7 @@
         "first_pair_sep_deg_median": 5.18,
         "snap_engaged": 81,
         "snap_queried": 155,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 4,
         "first_pair_runs": 60,
         "screen_axes_total": 101
@@ -2026,6 +2133,7 @@
         "first_pair_sep_deg_median": 5.28,
         "snap_engaged": 105,
         "snap_queried": 162,
+        "osnap_vpdir_forced": 2,
         "first_pair_moved": 19,
         "first_pair_runs": 60,
         "screen_axes_total": 95
@@ -2044,6 +2152,7 @@
         "first_pair_sep_deg_median": null,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 0
@@ -2064,6 +2173,7 @@
         "first_pair_sep_deg_median": 73.66,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 26
@@ -2082,6 +2192,7 @@
         "first_pair_sep_deg_median": 5.91,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 96
@@ -2100,6 +2211,7 @@
         "first_pair_sep_deg_median": 5.69,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 106
@@ -2118,6 +2230,7 @@
         "first_pair_sep_deg_median": 72.67,
         "snap_engaged": 155,
         "snap_queried": 235,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 44,
         "first_pair_runs": 60,
         "screen_axes_total": 95
@@ -2136,6 +2249,7 @@
         "first_pair_sep_deg_median": 5.69,
         "snap_engaged": 64,
         "snap_queried": 135,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 3,
         "first_pair_runs": 60,
         "screen_axes_total": 112
@@ -2154,6 +2268,7 @@
         "first_pair_sep_deg_median": 5.69,
         "snap_engaged": 63,
         "snap_queried": 128,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 60,
         "screen_axes_total": 114
@@ -2172,6 +2287,7 @@
         "first_pair_sep_deg_median": 73.01,
         "snap_engaged": 198,
         "snap_queried": 276,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 44,
         "first_pair_runs": 60,
         "screen_axes_total": 22
@@ -2190,6 +2306,7 @@
         "first_pair_sep_deg_median": 5.69,
         "snap_engaged": 72,
         "snap_queried": 143,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 4,
         "first_pair_runs": 60,
         "screen_axes_total": 100
@@ -2208,6 +2325,7 @@
         "first_pair_sep_deg_median": 6.24,
         "snap_engaged": 70,
         "snap_queried": 138,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 3,
         "first_pair_runs": 60,
         "screen_axes_total": 102
@@ -2226,6 +2344,7 @@
         "first_pair_sep_deg_median": 5.69,
         "snap_engaged": 60,
         "snap_queried": 136,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 1,
         "first_pair_runs": 60,
         "screen_axes_total": 110
@@ -2244,6 +2363,7 @@
         "first_pair_sep_deg_median": 5.69,
         "snap_engaged": 68,
         "snap_queried": 133,
+        "osnap_vpdir_forced": 1,
         "first_pair_moved": 6,
         "first_pair_runs": 60,
         "screen_axes_total": 114
@@ -2262,6 +2382,7 @@
         "first_pair_sep_deg_median": null,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 0
@@ -2282,6 +2403,7 @@
         "first_pair_sep_deg_median": 35.34,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 47
@@ -2300,6 +2422,7 @@
         "first_pair_sep_deg_median": 6.97,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 87
@@ -2318,6 +2441,7 @@
         "first_pair_sep_deg_median": 9.08,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 92
@@ -2336,6 +2460,7 @@
         "first_pair_sep_deg_median": 28.96,
         "snap_engaged": 174,
         "snap_queried": 236,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 52,
         "first_pair_runs": 60,
         "screen_axes_total": 94
@@ -2354,6 +2479,7 @@
         "first_pair_sep_deg_median": 6.49,
         "snap_engaged": 79,
         "snap_queried": 149,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 9,
         "first_pair_runs": 60,
         "screen_axes_total": 102
@@ -2372,6 +2498,7 @@
         "first_pair_sep_deg_median": 8.54,
         "snap_engaged": 72,
         "snap_queried": 142,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 7,
         "first_pair_runs": 60,
         "screen_axes_total": 102
@@ -2390,6 +2517,7 @@
         "first_pair_sep_deg_median": 34.59,
         "snap_engaged": 232,
         "snap_queried": 293,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 55,
         "first_pair_runs": 60,
         "screen_axes_total": 61
@@ -2408,6 +2536,7 @@
         "first_pair_sep_deg_median": 6.95,
         "snap_engaged": 97,
         "snap_queried": 167,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 15,
         "first_pair_runs": 60,
         "screen_axes_total": 85
@@ -2426,6 +2555,7 @@
         "first_pair_sep_deg_median": 8.83,
         "snap_engaged": 81,
         "snap_queried": 151,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 9,
         "first_pair_runs": 60,
         "screen_axes_total": 92
@@ -2444,6 +2574,7 @@
         "first_pair_sep_deg_median": 6.23,
         "snap_engaged": 67,
         "snap_queried": 147,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 1,
         "first_pair_runs": 60,
         "screen_axes_total": 100
@@ -2462,6 +2593,7 @@
         "first_pair_sep_deg_median": 6.63,
         "snap_engaged": 94,
         "snap_queried": 154,
+        "osnap_vpdir_forced": 1,
         "first_pair_moved": 16,
         "first_pair_runs": 60,
         "screen_axes_total": 101
@@ -2480,6 +2612,7 @@
         "first_pair_sep_deg_median": null,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 0
@@ -2500,6 +2633,7 @@
         "first_pair_sep_deg_median": 20.38,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 80
@@ -2518,6 +2652,7 @@
         "first_pair_sep_deg_median": 3.98,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 102
@@ -2536,6 +2671,7 @@
         "first_pair_sep_deg_median": 4.73,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 100
@@ -2554,6 +2690,7 @@
         "first_pair_sep_deg_median": 17.37,
         "snap_engaged": 155,
         "snap_queried": 209,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 30,
         "first_pair_runs": 60,
         "screen_axes_total": 112
@@ -2572,6 +2709,7 @@
         "first_pair_sep_deg_median": 3.93,
         "snap_engaged": 82,
         "snap_queried": 137,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 11,
         "first_pair_runs": 60,
         "screen_axes_total": 111
@@ -2590,6 +2728,7 @@
         "first_pair_sep_deg_median": 3.98,
         "snap_engaged": 73,
         "snap_queried": 128,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 8,
         "first_pair_runs": 60,
         "screen_axes_total": 115
@@ -2608,6 +2747,7 @@
         "first_pair_sep_deg_median": 18.6,
         "snap_engaged": 192,
         "snap_queried": 246,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 40,
         "first_pair_runs": 60,
         "screen_axes_total": 89
@@ -2626,6 +2766,7 @@
         "first_pair_sep_deg_median": 3.84,
         "snap_engaged": 86,
         "snap_queried": 141,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 11,
         "first_pair_runs": 60,
         "screen_axes_total": 108
@@ -2644,6 +2785,7 @@
         "first_pair_sep_deg_median": 4.38,
         "snap_engaged": 95,
         "snap_queried": 150,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 15,
         "first_pair_runs": 60,
         "screen_axes_total": 103
@@ -2662,6 +2804,7 @@
         "first_pair_sep_deg_median": 3.86,
         "snap_engaged": 71,
         "snap_queried": 132,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 8,
         "first_pair_runs": 60,
         "screen_axes_total": 111
@@ -2680,6 +2823,7 @@
         "first_pair_sep_deg_median": 3.64,
         "snap_engaged": 91,
         "snap_queried": 145,
+        "osnap_vpdir_forced": 9,
         "first_pair_moved": 12,
         "first_pair_runs": 60,
         "screen_axes_total": 108
@@ -2698,6 +2842,7 @@
         "first_pair_sep_deg_median": null,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 0
@@ -2718,6 +2863,7 @@
         "first_pair_sep_deg_median": 26.55,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 119
@@ -2736,6 +2882,7 @@
         "first_pair_sep_deg_median": 26.87,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 119
@@ -2754,6 +2901,7 @@
         "first_pair_sep_deg_median": 26.92,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 119
@@ -2772,6 +2920,7 @@
         "first_pair_sep_deg_median": 26.55,
         "snap_engaged": 58,
         "snap_queried": 66,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 2,
         "first_pair_runs": 55,
         "screen_axes_total": 120
@@ -2790,6 +2939,7 @@
         "first_pair_sep_deg_median": 26.87,
         "snap_engaged": 54,
         "snap_queried": 62,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 55,
         "screen_axes_total": 120
@@ -2808,6 +2958,7 @@
         "first_pair_sep_deg_median": 26.76,
         "snap_engaged": 72,
         "snap_queried": 162,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 3,
         "first_pair_runs": 51,
         "screen_axes_total": 119
@@ -2826,6 +2977,7 @@
         "first_pair_sep_deg_median": 26.55,
         "snap_engaged": 58,
         "snap_queried": 66,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 2,
         "first_pair_runs": 55,
         "screen_axes_total": 120
@@ -2844,6 +2996,7 @@
         "first_pair_sep_deg_median": 26.87,
         "snap_engaged": 54,
         "snap_queried": 62,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 55,
         "screen_axes_total": 120
@@ -2862,6 +3015,7 @@
         "first_pair_sep_deg_median": 26.76,
         "snap_engaged": 75,
         "snap_queried": 168,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 8,
         "first_pair_runs": 55,
         "screen_axes_total": 120
@@ -2880,6 +3034,7 @@
         "first_pair_sep_deg_median": 26.87,
         "snap_engaged": 56,
         "snap_queried": 65,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 55,
         "screen_axes_total": 119
@@ -2898,6 +3053,7 @@
         "first_pair_sep_deg_median": 26.87,
         "snap_engaged": 54,
         "snap_queried": 62,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 55,
         "screen_axes_total": 120
@@ -2916,6 +3072,7 @@
         "first_pair_sep_deg_median": null,
         "snap_engaged": 0,
         "snap_queried": 0,
+        "osnap_vpdir_forced": 0,
         "first_pair_moved": 0,
         "first_pair_runs": 0,
         "screen_axes_total": 0
@@ -2937,6 +3094,7 @@
       "first_pair_sep_deg_median": 37.21,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 314
@@ -2955,6 +3113,7 @@
       "first_pair_sep_deg_median": 7.92,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 490
@@ -2973,6 +3132,7 @@
       "first_pair_sep_deg_median": 8.68,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 514
@@ -2991,6 +3151,7 @@
       "first_pair_sep_deg_median": 28.82,
       "snap_engaged": 718,
       "snap_queried": 980,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 170,
       "first_pair_runs": 295,
       "screen_axes_total": 510
@@ -3009,6 +3170,7 @@
       "first_pair_sep_deg_median": 7.16,
       "snap_engaged": 378,
       "snap_queried": 642,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 39,
       "first_pair_runs": 295,
       "screen_axes_total": 542
@@ -3027,6 +3189,7 @@
       "first_pair_sep_deg_median": 8.2,
       "snap_engaged": 357,
       "snap_queried": 698,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 25,
       "first_pair_runs": 291,
       "screen_axes_total": 555
@@ -3045,6 +3208,7 @@
       "first_pair_sep_deg_median": 34.2,
       "snap_engaged": 894,
       "snap_queried": 1153,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 198,
       "first_pair_runs": 295,
       "screen_axes_total": 342
@@ -3063,6 +3227,7 @@
       "first_pair_sep_deg_median": 7.74,
       "snap_engaged": 455,
       "snap_queried": 719,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 60,
       "first_pair_runs": 295,
       "screen_axes_total": 489
@@ -3081,6 +3246,7 @@
       "first_pair_sep_deg_median": 9.28,
       "snap_engaged": 438,
       "snap_queried": 787,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 55,
       "first_pair_runs": 295,
       "screen_axes_total": 497
@@ -3099,6 +3265,7 @@
       "first_pair_sep_deg_median": 6.91,
       "snap_engaged": 335,
       "snap_queried": 635,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 14,
       "first_pair_runs": 295,
       "screen_axes_total": 541
@@ -3117,6 +3284,7 @@
       "first_pair_sep_deg_median": 7.2,
       "snap_engaged": 412,
       "snap_queried": 656,
+      "osnap_vpdir_forced": 13,
       "first_pair_moved": 53,
       "first_pair_runs": 295,
       "screen_axes_total": 538
@@ -3135,6 +3303,7 @@
       "first_pair_sep_deg_median": null,
       "snap_engaged": 0,
       "snap_queried": 0,
+      "osnap_vpdir_forced": 0,
       "first_pair_moved": 0,
       "first_pair_runs": 0,
       "screen_axes_total": 0
