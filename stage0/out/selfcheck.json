@@ -1,5 +1,5 @@
 {
-  "n_flags": 1980,
+  "n_flags": 1983,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -602,6 +602,11 @@
       "path": "draft_recover.json:by_arm.neutral_ignores_drawing|snap3.guide_pair_separation_deg.n",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "elevation_flow.json:thresholds.console_errors_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
       "path": "eraser_size.json:thresholds.console_errors_max",
@@ -4840,6 +4845,16 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "one_point_direct.json:equality_identity.max_diff",
+      "val": 3.019806626980426e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "one_point_direct.json:equality_right_elevation.max_diff",
+      "val": 8.08242361927114e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
       "path": "one_stroke_one_axis.json:by_word.square.too_bent_rate",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -7177,7 +7192,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 2.8199664825478976e-13,
+      "val": 2.646771690706373e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7267,12 +7282,12 @@
     },
     {
       "path": "view_cube.json:after_face.fy",
-      "val": -6.990606687426031e-13,
+      "val": -1.0286803815609776e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_cube.json:after_retap.fy",
-      "val": -6.293024879530112e-17,
+      "val": -6.530267459520567e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7422,12 +7437,12 @@
     },
     {
       "path": "viewpoint_undo.json:orbited.q[0]",
-      "val": -2.876978900574591e-17,
+      "val": -2.876978900576912e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[2]",
-      "val": -1.0471346844056062e-17,
+      "val": -1.0471346843992295e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7437,12 +7452,12 @@
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[0]",
-      "val": -2.8769789005699646e-17,
+      "val": -2.8769789005701224e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[2]",
-      "val": -1.0471346844183172e-17,
+      "val": -1.047134684417882e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7452,27 +7467,27 @@
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[0]",
-      "val": -2.8769789005698044e-17,
+      "val": -2.8769789005698876e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[2]",
-      "val": -1.0471346844187572e-17,
+      "val": -1.0471346844185275e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dp",
-      "val": 1.0701644235051367e-12,
+      "val": 1.5697939871397962e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dq",
-      "val": 1.5293584102064903e-13,
+      "val": 2.2435522472586413e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.p[0]",
-      "val": -5.5765022547614946e-14,
+      "val": -8.637684934189434e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -7487,32 +7502,32 @@
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[1]",
-      "val": -7.968803474228577e-15,
+      "val": -1.2343223506112351e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[2]",
-      "val": -2.439742416937084e-31,
+      "val": -3.7790222894802153e-31,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.p[1]",
-      "val": 2.1424940578650555e-16,
+      "val": 2.1424940578650558e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[0]",
-      "val": -2.876978900573009e-17,
+      "val": -2.876978900574591e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[2]",
-      "val": -1.0471346844099516e-17,
+      "val": -1.0471346844056065e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:return_gap",
-      "val": 1.057018417930208e-11,
+      "val": 1.5511270399152983e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -9928,7 +9943,7 @@
     {
       "field": "pts2d",
       "writes": 7,
-      "reads": 89
+      "reads": 90
     },
     {
       "field": "pts3d",
@@ -9974,7 +9989,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 190,
+      "files_scanned": 193,
       "exts_declared": [
         ".md",
         ".py",
@@ -9988,7 +10003,7 @@
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 128,
+      "files_scanned": 130,
       "exts_declared": [
         ".ts"
       ],
@@ -9998,7 +10013,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 190,
+      "files_scanned": 193,
       "exts_declared": [
         ".md",
         ".py",
@@ -10012,7 +10027,7 @@
     },
     {
       "sweep": "external_data",
-      "files_scanned": 85,
+      "files_scanned": 86,
       "exts_declared": [
         ".ts"
       ],
@@ -10039,21 +10054,21 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 147,
+      "targets": 150,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 30,
+      "targets": 32,
       "hits": 0,
-      "note": "값 대조를 **지난 것 5** · **면제 25**(`reachability_absent`) · 원장 62개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "note": "값 대조를 **지난 것 7** · **면제 25**(`reachability_absent`) · 원장 64개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, elevation_flow.json:gate, horizon.json:gate, one_point_direct.json:gate, order_signal.json:gate / 면제: coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
       "unit": "하네스 파일",
-      "targets": 42,
+      "targets": 43,
       "hits": 11,
       "note": "원장을 쓰는 `web/test/**.ts`만 본다"
     }
@@ -10072,6 +10087,7 @@
     "coords.json",
     "doc_store.json",
     "draft_recover.json",
+    "elevation_flow.json",
     "eraser.json",
     "eraser_size.json",
     "face_diagonal.json",
@@ -10087,6 +10103,7 @@
     "metrics.json",
     "misassign_retry.json",
     "occlusion.json",
+    "one_point_direct.json",
     "one_stroke_one_axis.json",
     "orbit_begin_invariance.json",
     "orbit_center.json",

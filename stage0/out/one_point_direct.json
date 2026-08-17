@@ -1,47 +1,49 @@
 {
- "spec": "5차 지시 2 — 궤도 시작 불변: 손가락을 대기만 하면 화면이 같고(GL 서명 동일), 죽은 구간을 넘겨도 시선 변화가 미소 회전뿐이다(재조준 없음 — retarget이 중심을 시선 위로 투영).",
+ "spec": "6차 지시 2-5 — 1점 직접 좌표(directSegment)와 lift 경로(segmentFromAnchor)의 동등성. 끝 커서는 참 3D 끝점을 카메라 투영으로 되돌린 상('일부러 투영을 거치게') — 축 3 × 앵커 8 × 끝점 3, 확정 뷰 꼴(항등)과 우측면 입면 꼴(순열·부호) 두 프레임. 음성 대조: 2° 튼 카메라에서 갈라짐",
  "what_this_does_not_say": [
-  "GL 서명은 칠해진 픽셀 수 + 성긴 체크섬이다 — 완전한 프레임 대조가 아니다(같은 서명의 다른 프레임이 이론상 가능하나 재조준 크기의 변화는 못 지나간다)",
-  "시선 변화 1.5°는 **연속 회전(실측 0.24° — 감쇠·죽은 구간 소비로 명목 2px보다 작다, 재검 [2-7])**과 재조준(실측 9.78° — 되살림 실행)을 가르는 배선 임계다(#24 프레임: 도 단위·화면 높이 658px) — 미소 회전의 정밀 검증이 아니다",
-  "**되살림 확인(A-4)의 9.78°는 원장 밖이다**(#25 — 커밋되지 않는 임시 판이라 재현 불가). progress·D-L65 산문에만 있다",
-  "GL 서명 불변의 양성 채널은 sig_after_rotation(더 돌린 뒤 서명이 움직임 — #30)이다",
-  "dpr 1·합성 터치다(#21·AS-C1) — 실기(아이패드) 확인은 K의 문이다",
-  "한 구도(눈높이 위 상자)·중심 한 점의 확인이다(#12)"
+  "**동등성 자체는 같은 사영의 두 표현이라 보장에 가깝다**(#5) — 이 팔이 재는 것은 배선(공식이 그 교점을 실제로 내는가)이고, 판정력은 음성 대조(negative)가 진다(#39)",
+  "커서가 축의 화면 직선 **위**에 있는 표본이다 — 스냅된 획의 잉크가 그렇다(직교·소실점 방향 스냅이 획을 축 방향으로 편다). 선 밖 커서에서는 두 경로가 2차 소량으로 갈라진다(직접 = 화면 성분 읽기 · lift = 광선-직선 최근점) — 그 동작점은 이 원장 밖이다(#12)",
+  "앱 경로(resolveLive 안의 분기)는 여기 없다 — 종단은 elevation_flow(입면 흐름 e2e)가 잰다",
+  "ONE_POINT_TOL은 test/constants.ts 밖이다(D-L49·D-L51의 예외와 같은 자리 — 전역 해시 동결. 픽스처가 정확 정렬이라 어느 값도 align_eps에 의존하지 않는다) — 값은 algo_constants 필드",
+  "hand_deg(손 정렬 자동 스냅)의 동작은 이 하네스 밖이다(카메라·감쇠가 필요한 e2e 영역 — elevation_flow의 자동 정렬 팔)",
+  "planeAnchor 왕복(pa_roundtrip_px)은 **역함수의 정의 확인**이라 항등이다 — 임계를 걸지 않는다(#5·§5 유형 3)"
  ],
  "thresholds": {
-  "gaze_change_deg_max": 1.5,
-  "console_errors_max": 0
+  "eq_max": 1e-9,
+  "neg_min": 0.01,
+  "samples_min": 50
  },
+ "algo_constants": {
+  "ONE_POINT_TOL": {
+   "align_eps": 0.001,
+   "hand_deg": 2
+  }
+ },
+ "equality_identity": {
+  "n": 72,
+  "max_diff": 3.019806626980426e-14
+ },
+ "equality_right_elevation": {
+  "n": 72,
+  "max_diff": 8.08242361927114e-14
+ },
+ "negative_tilt2deg": {
+  "n": 72,
+  "max_diff": 0.25285179486414994,
+  "note": "직접 공식(항등 프레임 가정)에 참 방향이 2° 튼 lift를 대조 — 전제 붕괴 시 갈라지는 크기"
+ },
+ "frame_judgment": {
+  "tilt_half_deg_is_null": true,
+  "permutation_ok": true,
+  "degenerate_null": true
+ },
+ "pa_roundtrip_px": 0,
  "gate": {
-  "registered": "터치 다운(이동 0)에서 GL 서명 동일 · 죽은 구간을 넘긴 두 번째 이동(begin 실개방 — isPinned 해제 확인 #32)에서 시선 변화 <1.5°(재조준이면 실패) · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
-  "reachability": "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
-  "reachability_absent": "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 이동 0의 화면 불변은 설계 보장(#5 — 죽은 구간이 begin을 안 연다)이고, 판정은 그 배선(재조준 부재)이다"
+  "registered": "동등성 두 프레임 max_diff < 1e-9(표본 각 ≥50) · 음성 대조(2° 틀림) max_diff > 0.01 · 0.5° 튼 프레임 판정 null · 깊이 퇴화 null. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+  "reachability": "음성 대조가 오라클이다 — 전제가 무너진 카메라에서 직접↔lift가 갈라지는 크기가 eq_max(1e-9)의 일곱 자리 위에 있어, 동등성 통과가 '어떤 입력에도 같다'는 자명이 아님을 가른다",
+  "reachability_value": 0.25285179486414994,
+  "reachability_source": "negative_tilt2deg/max_diff"
  },
- "sig_before": {
-  "painted": 1344,
-  "sum": 41233143
- },
- "dir_before": [
-  0,
-  0,
-  -1
- ],
- "sig_touch": {
-  "painted": 1344,
-  "sum": 41233143
- },
- "began": true,
- "dir_after": [
-  0.005929951762767331,
-  -6.123233995736766e-17,
-  -0.9999824176814767
- ],
- "gaze_change_deg": 0.33976319999998816,
- "sig_after_rotation": {
-  "painted": 1040,
-  "sum": 341619322
- },
- "console_errors": [],
  "constants": {
   "hash": "509615a1",
   "values": {

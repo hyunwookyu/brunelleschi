@@ -74,6 +74,11 @@ export function viewPlaceCtx(
   return {
     principal, f, imgSize,
     vps: axes.map(a => (a ? vpOfDirection(pose, a, principal, f, imgSize) : null)),
+    // **축 방향도 시점 좌표로 함께 넘긴다**(6차 지시 2 — D-L40의 회전 판). 무한원 축
+    // (화면평행 — 소실점 null)도 방향은 있고, 돌린 시점에서는 그 축이 깊이축이 된다.
+    // 옛 판은 vps만 넘겨 **1점 확정의 화면평행 축 둘이 돌린 시점에서 사라졌다** —
+    // 우측면 입면에서 X축(깊이) 획을 못 올리던 자리다(네 입면 흐름 2-4의 장애물).
+    axisDirs: axes.map(a => (a ? unit3(dirToView(pose, a)) : null)),
   };
 }
 

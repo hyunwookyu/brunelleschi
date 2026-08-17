@@ -37,6 +37,8 @@ import { static2dCandidates, snap2dAt, type Snap2Cand, type Snap2Seg } from "./s
 // **확정 전 2D 판정의 단일 출처**(5차 이월-2) — 합성 하네스가 같은 함수를 부른다(#17)
 import { resolve2dCore, OSNAP_RADIUS_PX, type Resolve2dOut } from "./s3d/resolve2d.js";
 import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "./s3d/liveLine.js";
+import { onePointFrame, directSegment, planeAnchor, ONE_POINT_TOL } from "./s3d/onePoint.js";
+import { nearestOnePointDir } from "./ui/viewCube.js";
 import { representative, AXIS_TOL } from "./s3d/axis.js";
 // **자동 분할**(지시 I) — 교차·접촉 절단점과 조각. SketchUp 선례. 순수 기하는 split.ts 하나다(#17)
 import { cutParams, piecesFromCuts, subtractIntervals, reanchorId, pointAt,
@@ -82,6 +84,12 @@ let ask: { strokeId: string; line: RLine; question: RuleEvent extends never ? ne
            "screen_or_depth" | "second_horizontal_or_vertical"; toH: number; toV: number } | null = null;
 /** **모호 물음 카운터**(지시 K) — 실획에서 묻는 빈도의 실측 근거. 저장본에 함께 담긴다. */
 const askStats = { asked: 0, screen: 0, depth: 0, vertical: 0, skipped: 0 };
+/**
+ * **배치 경로 카운터**(6차 지시 2·3 — 실획 측정 "1점 직접 좌표 경로 사용 비율"의 분자·분모).
+ * `placeLive`의 축 경로 확정에서만 센다 — 미리보기 프레임은 안 센다(사용 비율이지 호출 수가
+ * 아니다). `twoPoint`(양 끝 스냅)는 축 경로 밖이라 따로 센다.
+ */
+const pathStats = { direct: 0, lift: 0, twoPoint: 0 };
 /** 떠 있는 커서의 스냅 — **누르기 전에 무엇에 붙을지 보인다**(SketchUp/Rhino 관행, L-B.3). */
 let hoverSnap: SnapCand | null = null;
 /** 마지막 획이 무엇에 붙었나 — 화면에 사유를 낸다(#7: 추측하지 말고 센다). */
@@ -446,8 +454,11 @@ function frame(): Frame | null {
   if (stage.isPinned) return { ctx: c, toV: ID, fromV: ID, dirV: ID, pinned: true };
   const pose = stage.pose();
   if (!pose) return null;
-  // **세계 축 방향은 첫 카메라가 정한 것 그대로다.** 새로 추정하지 않는다
-  const axes = c.vps.map(v => (v ? axisDirection(v, c.principal, c.f) : null));
+  // **세계 축 방향은 첫 카메라가 정한 것 그대로다.** 새로 추정하지 않는다.
+  // ⚠ `c.axisDirs`를 쓴다(6차 지시 2 — D-L40의 회전 판): 무한원 축(1점 확정의 화면평행
+  // 축 둘)은 소실점이 없지만 방향은 있고, 돌린 시점에서는 그 축이 깊이축이 된다.
+  // 옛 판(vps만)은 그 축들을 돌린 시점에서 잃었다 — 입면 흐름(2-4)의 장애물이었다.
+  const axes = c.axisDirs ?? c.vps.map(v => (v ? axisDirection(v, c.principal, c.f) : null));
   return {
     ctx: viewPlaceCtx(pose, axes, cssSize(), FREE_FOV_DEG),
     toV: (p) => toView(pose, p),
@@ -630,13 +641,19 @@ function resolveLive(c: PlaceCtx, at: Vec3, a2: Pt2, b2: Pt2, end: SnapCand | nu
              tied: [] as number[], twoPoint: false, why: "축 후보가 없습니다" };
   }
   const cand = ch.tied.find((t: AxisCand) => t.axis === ax) ?? ch.pick;
+  // **1점 직접 좌표**(6차 지시 2) — 시점 축이 정확히 화면 정렬이면(onePointFrame) 축 스냅
+  // 획은 카메라 투영(광선-직선 최근점)을 거치지 않고 화면 좌표에서 3D가 바로 나온다.
+  // 판정·미리보기·확정이 전부 이 한 자리를 지난다(#17). 실패하면 lift 경로 그대로다.
+  const opf = onePointFrame(dirs);
+  const direct = opf ? directSegment(opf, ax, at, b2, c) : null;
   // **고정 축은 후보 밖일 수 있다** — 그때는 그 축으로 직접 푼다(같은 함수다)
-  const seg = cand && cand.axis === ax ? cand.seg : segmentFromAnchor(at, dirs[ax], b2, c);
+  const seg = direct
+    ?? (cand && cand.axis === ax ? cand.seg : segmentFromAnchor(at, dirs[ax], b2, c));
   const deg = cand && cand.axis === ax ? cand.deg : null;
   const tied = ch.tied.map((t: AxisCand) => t.axis);
   return seg
     ? { axis: ax, deg, seg, locked: use != null, ambiguous: ch.ambiguous && use == null,
-        tied, twoPoint: false, why: "" }
+        tied, twoPoint: false, why: "", path: direct ? "direct" as const : "lift" as const }
     : { axis: ax, deg, seg: null, locked: use != null, ambiguous: false, tied, twoPoint: false,
         why: "끝점이 정해지지 않습니다" };
 }
@@ -696,6 +713,7 @@ function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = nul
     st.axis = lab;
     st.userAxis = false;
     st.seg3d = [fr.fromV(r.seg[0]), fr.fromV(r.seg[1])];
+    pathStats.twoPoint += 1;
     lastSnapNote = `**양 끝 스냅**으로 확정(축 ${typeof lab === "number" ? lab + 1 : "미분류"})`
                  + ` — ${SNAP_LABEL[st.snapStart!.kind as SnapKind]}`
                  + ` → ${SNAP_LABEL[(end?.kind ?? "endpoint") as SnapKind]}`
@@ -707,10 +725,65 @@ function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = nul
   st.userAxis = r.locked;
   // **시점 좌표로 푼 것을 세계로 되돌린다**(L-B.8). 확정 시점에서는 항등이다
   st.seg3d = [fr.fromV(r.seg[0]), fr.fromV(r.seg[1])];
+  // **경로 카운터**(6차 지시 2·3) — 확정된 축 획만 센다(미리보기 아님)
+  if ((r as { path?: string }).path === "direct") pathStats.direct += 1;
+  else pathStats.lift += 1;
   lastSnapNote = r.locked
     ? `축${(r.axis as number) + 1}로 **고정**해 확정`
     : `축${(r.axis as number) + 1}로 확정 (축과 ${r.deg != null ? r.deg.toFixed(1) : "?"}°)`;
   return true;
+}
+
+/**
+ * **시작점 스냅 없는 1점 배치**(6차 지시 2-3 — "없으면 궤도 중심의 깊이"). 앵커는 시작
+ * 화면점을 궤도 중심의 깊이 평면에 역투영한 점이다. 축이 안 정해지면 종전대로 2D 대기(false).
+ * `snapStart`는 그대로 `null`이다 — 스냅이 아니라 평면 배치이기 때문이다(원장에 명시).
+ */
+function placeUnanchored(st: SStroke, fr: Frame): boolean {
+  const z0 = fr.toV(orbitTarget())[2];
+  const anchor = planeAnchor(st.pts2d[0], z0, fr.ctx);
+  if (!anchor) return false;
+  return placeLive(st, fr, anchor);
+}
+
+/** 자동 정렬 감시 토큰 — 새 궤도가 시작되면 이전 감시는 죽는다. */
+let alignSeq = 0;
+
+/**
+ * **손 정렬 자동 스냅**(6차 지시 2-1 — "손으로 돌려 거의 정면이면 1점으로 본다".
+ * 선례: Blender의 축 근접 자동 정렬 #23). 궤도가 끝나면 감쇠 꼬리(dampingFactor 0.12,
+ * #7)가 멎기를 기다렸다가, 시선이 세계 축·수평의 `hand_deg` 안이면 **정확한** 1점 자세로
+ * 눌러 앉힌다 — 직접 좌표(onePointFrame)는 정확 정렬에서만 돌기 때문이다.
+ * 회전은 지금 궤도 중심(target) 둘레라 화면 이동이 hand_deg급으로 작다 —
+ * 중심 재조준은 하지 않는다(D-L65의 시선 유지와 같은 이유. 큐브 탭의 중심 조준과 다르다).
+ */
+function armOnePointAlign(): void {
+  if (!cam.standing() || stage.isPinned || !lifted(doc).length) return;
+  const seq = ++alignSeq;
+  const cam3 = stage.viewport.camera;
+  let last = cam3.quaternion.clone();
+  let still = 0;
+  const step = () => {
+    if (seq !== alignSeq) return;
+    const q = cam3.quaternion;
+    const d = Math.abs(q.x - last.x) + Math.abs(q.y - last.y)
+            + Math.abs(q.z - last.z) + Math.abs(q.w - last.w);
+    last = q.clone();
+    if (d > 1e-9) { still = 0; requestAnimationFrame(step); return; }
+    if (++still < 3) { requestAnimationFrame(step); return; }
+    const b = stage.basisOf();
+    const pitch = (Math.asin(Math.max(-1, Math.min(1, b.f[1]))) * 180) / Math.PI;
+    const yaw = (Math.atan2(b.f[0], -b.f[2]) * 180) / Math.PI;
+    const off = Math.abs(yaw - Math.round(yaw / 90) * 90);
+    const eps = 1e-6;
+    if (Math.abs(pitch) <= ONE_POINT_TOL.hand_deg && off <= ONE_POINT_TOL.hand_deg
+        && (Math.abs(pitch) > eps || off > eps)) {
+      stage.viewport.userMoved = true;
+      stage.snapToDir(nearestOnePointDir(b.f), null, 160, () => refresh());
+      refresh();
+    }
+  };
+  requestAnimationFrame(step);
 }
 
 // ---------------------------------------------------------------- 3D 레이어
@@ -785,7 +858,7 @@ const gestures = new CamGestures({
   controls: () => stage.viewport.controls,
   height: () => stage.size()[1],
   changed: () => stage.viewport.invalidate(),
-  ended: () => refresh(),
+  ended: () => { armOnePointAlign(); refresh(); },
 });
 
 /**
@@ -2017,6 +2090,11 @@ const ink = new InkCanvas(canvas, {
         const endCand = endSnapAt(fr, cand.at, pts[pts.length - 1]);
         if (endCand) applySnapToEnd(s, endCand, fr.fromV(endCand.at));
         placeLive(s, fr, cand.at, endCand);
+      } else if (onePointFrame(axisDirs(fr.ctx))
+                 && placeUnanchored(s, fr)) {
+        // **1점 상태면 스냅 없이도 놓인다**(6차 지시 2-3 — "없으면 궤도 중심의 깊이").
+        // 그리는 순간 3D에 있다 — **미승격이 없다**(지시 2). 시작점 스냅이 있으면 위
+        // 분기가 그 점의 깊이를 쓰므로, 여기는 빈 곳에서 시작한 획만 온다.
       } else {
         // **미승격 2D 획도 계속 후보다**(4차 지시 1-b) — 3D 대상에 못 붙으면 화면 좌표로
         // 다른 대기 획에 잇는다. 3D가 이긴다(붙으면 그 획의 3D가 확정되므로 정보가 더 많다).
@@ -2763,6 +2841,8 @@ refresh();
   viewCube: () => ({ on: viewCube.on }),
   /** **궤도 중심**(6차 지시 1 — 종단 확인이 거리 유지·중심 조준을 잴 때 읽는다, #17). */
   orbitCenter: () => orbitTarget(),
+  /** **배치 경로 카운터**(6차 지시 2·3 — 직접/lift/양끝. 실획 측정의 사용 비율 분자·분모). */
+  pathStats: () => ({ ...pathStats }),
   /** **시점 저장**(5차 지시 7-1) — 종단 확인이 앱 경로 그대로 부른다(#17). */
   saveViewpoint: () => { saveViewpoint(); },
   /** **지우개 크기**(5차 지시 5) — 종단 확인이 앱 경로 그대로 읽고 쓴다(#17). */
