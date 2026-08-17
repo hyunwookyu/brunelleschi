@@ -1,49 +1,39 @@
 {
- "spec": "4차 지시 3 — 소실점 = 그린 두 대각선의 실제 교점. 그 선·격자가 그 점을 정확히 향한다. Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
+ "spec": "5차 지시 3 — 직교 스냅이 걸린 수평선은 물음 없이 화면 축으로 확정된다(스냅이 곧 선언). 소실점 하나가 서 있는 상태(4차 가드가 묻던 자리)에서 확인. Playwright 신뢰 이벤트·콘솔 오류 0",
  "what_this_does_not_say": [
-  "misfit·maxSin의 0은 측정이 아니라 **보장 확인**이다(#5) — 교점·투영의 정의다. 1e-9·1e-6은 배선 판정 임계이고 아래 thresholds에 있다",
-  "손 오차의 크기·나란한 짝의 조건수는 여기서 안 잰다 — 반례는 test/vp_rules.test.ts(대기·이음 제외·회귀 팔)가 덮는다",
-  "실획이 아니다(AS-C1) — Playwright 합성 마우스다",
-  "dpr 1 실행이다(#21) — 좌표 규약은 e2e/coords.spec.ts가 dpr 1·2·3에서 잠근다"
+  "합성 하네스(rule_camera 스냅 팔)에서는 이 선언이 **불리하게 찍힌다** — 합성 잉크는 수평 의도가 없어 4° 안 깊이 모서리가 조용히 화면 축이 된다(AS-L25). 실사용 의도의 판정자는 실획(K)이다",
+  "한 각도(1.7°)의 확인이다(#12) — 직교 임계(4°) 경계는 test/axisSnap 반례가 덮는다",
+  "dpr 1·마우스 합성이다(#21·AS-C1)"
  ],
  "thresholds": {
-  "line_misfit_max": 1e-9,
-  "grid_sin_max": 0.000001,
-  "vp_off_default_horizon_min_ratio": 0.05,
-  "ink_px_min": 50,
   "console_errors_max": 0
  },
  "gate": {
-  "registered": "소실점 = 그린 두 선의 교점(각 선의 부적합도 < 1e-9) · 소실점 y ≠ 기본 지평선(옛 규칙 판별) · 지평선 = 소실점 y · 격자 조각 전부가 소실점으로 모인다(sin < 1e-6, 덮는 수 > 10) · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+  "registered": "소실점이 선 상태에서 4° 안 수평선을 그으면 ask가 안 뜨고(askStats 불변) 화면 가로축이 선언되며 P1이 선다 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
   "reachability": "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
-  "reachability_absent": "**배선·보장 확인이라 도달 가능성 오라클이 성립하지 않는다.** 회귀 판별값(|vp.y − 0.5H|)은 픽스처가 고른 소실점 높이의 항등이라 도달 가능성으로 적지 않는다(#40 ⚠⚠ — 항목 1 [7]·2 [B-3]과 같은 자리)"
+  "reachability_absent": "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 무물음 확정은 설계 선언이고(#5) 판정은 그 배선이다"
  },
- "fix": {
-  "vp": [
-   749.6677201871213,
-   279.253100590385
-  ],
-  "misfits": [
-   3.688056542639058e-17,
-   1.1623825108569246e-16
-  ],
-  "horizon_y": 279.253100590385,
+ "vp_state": {
+  "vps": 1,
   "order": 0,
-  "standing": false
+  "asked": 0
  },
- "fix_regression": {
-  "canvas_h": 674,
-  "default_horizon_y": 337,
-  "vp_off_px": 57.746899409615025,
-  "vp_off_ratio": 0.08567789229913209
- },
- "asked": null,
- "grid": {
+ "after": {
+  "ask": null,
+  "asked": 0,
+  "order": 1,
   "standing": true,
-  "checked": 480,
-  "maxSin": 1.2560206047907573e-14
+  "axis0": {
+   "axis": 1,
+   "why": "화면 가로축"
+  }
  },
- "ink_px": 24569,
+ "free_line": {
+  "axis": {
+   "axis": 0,
+   "why": "축1(부적합도 0.056)"
+  }
+ },
  "console_errors": [],
  "constants": {
   "hash": "509615a1",

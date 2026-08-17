@@ -185,7 +185,7 @@ const orthoPts = (pts: Pt2[], o: ScreenOrtho | null): Pt2[] =>
  * 끝을 옮기면 두 점이 직선을 정하므로, 굽음이 `AXIS_TOL.bend_max`를 넘으면 끝 스냅을 버린다.
  * 시작점 스냅은 그대로 둔다 — 점 하나를 옮기는 것은 획을 펴는 것이 아니다.
  */
-function snapped2d(raw: Pt2[]): Pt2[] { return resolve2d(raw).pts; }
+// ⛔ `snapped2d`는 지워졌다(5차 지시 3) — 확정 경로가 `resolve2d` 결과 전체(방향 스냅 → 강제 축)를 쓴다.
 
 /**
  * **카메라 확정 전의 2D 판정 전부**(4차 지시 1·2·5 통합) — 로직은 `s3d/resolve2d.ts`의
@@ -1900,7 +1900,16 @@ const ink = new InkCanvas(canvas, {
     // **2D 오스냅 + 화면 직교 스냅**(A-2·4차 지시 1). 카메라가 서기 전에만 돈다 —
     // 그 뒤로는 3D 오스냅·축 스냅이 정한다. 미리보기(`onLive`)와 **같은 함수·같은 순서**를
     // 부르므로 보인 대로 놓인다(§11 게이트).
-    const pts = frame() ? raw : snapped2d(raw);
+    //
+    // ⚠⚠ **방향 스냅이 걸린 선은 묻지 않고 그 축으로 확정한다**(5차 지시 3) — 축 스냅으로
+    // 수평이 된 선은 사용자가 수평을 **의도한** 것이다(스냅이 곧 선언이다). 판정(물음)의
+    // 대상은 **스냅이 안 걸린 자유 선뿐**이다(3-b). 4차의 "소실점이 있는 상태의 가로선은
+    // 묻는다"(D-L53의 가드)는 하네스 기준이었고 실사용과 안 맞았다 — 그 가드는 자유 선에만
+    // 남는다.
+    const r2d = frame() ? null : resolve2d(raw);
+    const pts = r2d ? r2d.pts : raw;
+    const snapForced: "screen" | "depth" | undefined =
+      r2d?.ortho ? "screen" : r2d?.vpdir ? "depth" : undefined;
     pushUndo();
     // **승격 요약은 그 전환의 설명이다** — 획을 더 그리면 설명이 낡는다(AS-C7과 같은 형태).
     // 차수 되돌리기 버튼은 남는다 — 그것이 §6.2의 지속 수단이다
@@ -1915,7 +1924,7 @@ const ink = new InkCanvas(canvas, {
     // 하기 때문이다. 확정·승격은 `feedCamera` 안에서 자동으로 난다(지시 1 — 버튼이 없다).
     // **주석은 규칙에도 3D에도 안 들어간다**(D-3). 해칭·지시선·메모는 기하가 아니다 —
     // 그것으로 카메라를 정하면 **조용히 틀린 카메라**가 된다(A-3).
-    if (liftable(s)) feedStroke(s);
+    if (liftable(s)) feedStroke(s, snapForced);
     // 확정 뒤에는 그 자리에서 푼다 — **승격 연쇄**의 첫 형태다(§9.1).
     // **돌린 시점에서도 돈다**(L-B.8) — `frame()`이 좌표 변환을 들고 있다
     const fr = liftable(s) ? frame() : null;
@@ -2629,6 +2638,8 @@ refresh();
   },
   classifyLine: (a: Pt2, b: Pt2) => classifyLine(a, b),
   ask: () => ask && { strokeId: ask.strokeId, question: ask.question, toH: ask.toH, toV: ask.toV },
+  /** 물음 카운터(5차 지시 3의 종단 확인이 읽는다 — #17). */
+  askStats: () => ({ ...askStats }),
   answerAsk: (choice: "screen" | "depth" | "vertical") => { answerAsk(choice); },
   /** **펜 채널**(D) — 앱 경로 그대로를 종단 확인이 부른다(#17). */
   channel: () => channel,

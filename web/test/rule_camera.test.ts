@@ -146,8 +146,10 @@ function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
   for (const e of list) {
     let pts = e.pts2d;
     let moved = false;
+    /** **방향 스냅이 걸리면 그 축으로 강제한다**(5차 지시 3 — 앱과 같은 배선). 스냅 팔만. */
+    let forcedBySnap: "screen" | "depth" | undefined;
     // **앱과 같은 조건**: 2D 판정(오스냅·직교·vp_dir·정렬)은 **카메라 확정 전**에만 돈다
-    // (`mainL`: `frame() ? raw : snapped2d(raw)` — standing ⟺ order ≥ 1). 확정 후의 규칙
+    // (`mainL`: `frame() ? raw : resolve2d(raw)` — standing ⟺ order ≥ 1). 확정 후의 규칙
     // 입력은 앱에서도 원시 선이다(`feedStroke`가 3D 스냅보다 먼저 돈다).
     if (mode !== "raw" && perspectiveOrder(st) === 0) {
       snapQueried += 1;
@@ -160,6 +162,9 @@ function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
       if (mode === "snap") {
         pts = r2.pts;
         moved = dA > 1e-9 || dB > 1e-9;
+        // **스냅이 곧 선언이다**(5차 지시 3-a·b) — 직교면 화면 축, 소실점 방향이면 깊이.
+        // 물음(판정)의 대상은 스냅이 안 걸린 자유 선뿐이다
+        forcedBySnap = r2.ortho ? "screen" : r2.vpdir ? "depth" : undefined;
       } else {
         // **위약**: 같은 크기, 임의 방향(#39). 스냅이 안 움직였으면 위약도 안 움직인다
         if ((dA > 1e-9 || dB > 1e-9) && rr) {
@@ -177,7 +182,7 @@ function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
     const line: RLine = { a: rep.a, b: rep.b };
     movedByKey.set(keyOf(line), moved);
     fedSegs.push({ id: `f${fedSegs.length}`, a: line.a, b: line.b });
-    let r = stepRule(st, line, SZ);
+    let r = stepRule(st, line, SZ, forcedBySnap);
     if (r.event.type === "ask") {
       asks += 1;
       // **참 축으로 답한다**(오라클). 답한 횟수를 남긴다 — 사람이 개입해야 하는 횟수다

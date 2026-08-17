@@ -1335,3 +1335,93 @@ test("궤도 시작 — 손가락만 대면 화면이 같고, 첫 회전이 이�
     metric_defs: metricsSnapshot(),
   }, null, 1));
 });
+
+// ---------------------------------------------------------------- 5차 지시 3 — 스냅된 수평선은 묻지 않는다
+//
+// 축 스냅으로 화면 수평이 된 선은 사용자가 수평을 **의도한** 것이다 — 묻지 않고 그 축으로
+// 확정한다(3-a). 판정(물음)의 대상은 스냅이 안 걸린 자유 선뿐이다(3-b).
+// 되살린 버그: 소실점이 있는 상태의 가로선이 ask를 띄우던 것(4차 D-L53 가드의 과잉).
+test("스냅된 수평선 — 물음 없이 화면 축으로 확정된다 (5차 지시 3)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+
+  const box = (await page.locator("#ink").boundingBox())!;
+  const W = box.width, H = box.height;
+  const drawPx = async (x1: number, y1: number, x2: number, y2: number) => {
+    await page.mouse.move(box.x + x1, box.y + y1);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move(box.x + x1 + (x2 - x1) * i / 8, box.y + y1 + (y2 - y1) * i / 8);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(50);
+  };
+  const led: Record<string, unknown> = {};
+
+  // ---- ① 깊이선 둘 → 소실점이 선다(아직 가로축 없음 — 물음 가드가 있던 그 상태)
+  await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
+  await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
+  led.vp_state = await page.evaluate(() => {
+    const S = window.S2S;
+    return { vps: S.cam.vps().filter((v: unknown) => v).length,
+             order: S.order(), asked: S.askStats().asked };
+  });
+  expect((led.vp_state as any).vps).toBe(1);               // 소실점 하나가 서 있다
+
+  // ---- ② **거의 수평선**(1.7° — 직교 스냅 4° 안)을 긋는다 → 물음 없이 화면 축 확정
+  await drawPx(0.25 * W, 0.55 * H, 0.45 * W, 0.556 * H);
+  led.after = await page.evaluate(() => {
+    const S = window.S2S;
+    return { ask: S.ask(), asked: S.askStats().asked, order: S.order(),
+             standing: S.standing(),
+             axis0: S.doc().strokes[S.doc().strokes.length - 1]
+               && S.cam.axisOf(S.doc().strokes[S.doc().strokes.length - 1].pts2d) };
+  });
+  expect((led.after as any).ask).toBeFalsy();              // **물음이 안 떴다**(3-a)
+  expect((led.after as any).asked).toBe((led.vp_state as any).asked);  // ask 카운터 불변
+  expect((led.after as any).order).toBe(1);                // 가로선 = 1점 확정(지시 1의 계약)
+  expect((led.after as any).standing).toBe(true);
+
+  // ---- ③ **자유 선**(9°)은 여전히 판정 대상이다(3-b) — 낮은 소실점 쪽이 아닌 사선.
+  //      1점 확정 뒤라 screen_or_depth 물음은 안 나온다(지시 3의 기존 규약) — 여기서 확인할
+  //      것은 ②의 무물음이 "물음 전부 제거"가 아니라는 것: 확정 전 자유 선의 판정은
+  //      test/vpRules 반례가 덮고, 여기서는 자유 선이 조용히 화면 축이 되지 **않는지**만 본다
+  await drawPx(0.25 * W, 0.60 * H, 0.44 * W, 0.630 * H);
+  led.free_line = await page.evaluate(() => {
+    const S = window.S2S;
+    const st = S.doc().strokes[S.doc().strokes.length - 1];
+    return { axis: S.cam.axisOf(st.pts2d) };
+  });
+
+  led.console_errors = errors;
+  expect(errors).toEqual([]);
+
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "snap_declare.json"), JSON.stringify({
+    spec: "5차 지시 3 — 직교 스냅이 걸린 수평선은 물음 없이 화면 축으로 확정된다(스냅이 곧 선언). 소실점 하나가 서 있는 상태(4차 가드가 묻던 자리)에서 확인. Playwright 신뢰 이벤트·콘솔 오류 0",
+    what_this_does_not_say: [
+      "합성 하네스(rule_camera 스냅 팔)에서는 이 선언이 **불리하게 찍힌다** — 합성 잉크는 수평 의도가 없어 4° 안 깊이 모서리가 조용히 화면 축이 된다(AS-L25). 실사용 의도의 판정자는 실획(K)이다",
+      "한 각도(1.7°)의 확인이다(#12) — 직교 임계(4°) 경계는 test/axisSnap 반례가 덮는다",
+      "dpr 1·마우스 합성이다(#21·AS-C1)",
+    ],
+    thresholds: { console_errors_max: 0 },
+    gate: {
+      registered: "소실점이 선 상태에서 4° 안 수평선을 그으면 ask가 안 뜨고(askStats 불변) 화면 가로축이 선언되며 P1이 선다 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
+      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 무물음 확정은 설계 선언이고(#5) 판정은 그 배선이다",
+    },
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 1));
+});
