@@ -2,90 +2,102 @@
 
 다음 세션은 이 문서를 읽고 이어서 진행한다. 사람의 개입은 그 한 줄뿐이다.
 
-## 현재 단계 — **2026-08-17 7차 지시(실획 첫 표본 대응) 전부 완료. 다음 사람 지시 대기**
+## 현재 단계 — **⛔ 중단. 신설 게이트 `rule_gate`가 첫 실행에서 실패했다(CLAUDE.md §2)**
 
-7차 지시는 넷이었다: ① 확정 뷰 pose null(근본 원인 의심) ② 끝점 스냅 전무 ③ 같은 면
-깊이 산포 ④ real_ink 측정. **①②는 수정·병합됐고(PR #1 → main), ③은 별도 결함 없음 판정 — 단 조건부다**(①②의 귀결 +
-y-down 규약 확인. 다음 표본에서 end_snapped·vertex_gap이 안 움직이면 다시 연다 — DEFERRED
-트리거), **④는 표본 파일이 저장소에 없어 지표 정비까지**(파일이 `sessions/`에 오면 vitest
-한 번으로 지시 4의 지표 전부가 나온다).
-리뷰어 3회(1-R′ 14건 · 2-R″ 13건 · 3·4-R 16건 — 마지막 대응 표는 progress 맨 끝 3·4-R).
+8차 지시의 **사정거리 항목(a·b)만 완료**했고, 그 결과가 **중단 조건**이다.
+나머지 항목은 아래 §"지시 전제가 저장소와 어긋난다"의 사유로 못 했다.
 
 프로그램 이름 **Brunelleschi**, 확장자 **`.brnl`**(JSON). 배포: <https://hyunwookyu.github.io/brunelleschi/>
 
-## ⚡ 착수 전에 `PITFALLS.md` 상단 "최근 다섯"부터 읽는다
+## ⚠⚠ 다음 세션이 **가장 먼저** 알아야 할 것 — 지시 전제가 저장소와 어긋난다
 
-읽은 증거는 걸리는 번호를 `progress.md`에 적는 것. ⚠ 7차 실증: **#42 ②(완료 대조)가
-같은 세션에서 또 재발했다** — 항목 2 완료 대조가 착수 표에 없는 #30·#25를 두고 "정합"이라
-적었고(2-R″ [2]), 항목 1 대조는 원장에 없는 #3·#30을 원장 인용으로 적었다(2-R″ [9]).
-**grep은 스펙이 아니라 원장 전문을, 대조는 grep 결과와 표를 실제로 견줘서** 한다.
+8차 지시 메시지는 **이미 끝난 작업 위에서** 쓰였는데 **그 작업이 저장소에 없다.**
+전수 확인했다(작업 트리 · `origin` 6브랜치 전부 · `git log` · 컨테이너 `find`):
 
-## 핵심 설계 변경 (7차, D-L68~D-L69)
-
-```
-D-L68  확정 뷰 자세 — pose null은 설계 표식(자세 항등)이고 "저장 누락"은 반증됐다.
-       실결함: ① applyDoc2가 무대 카메라를 재수립 안 함(새로고침 뒤 three 기본 자세
-       (3.2,2.4,3.6)·비핀 — 그리드 숨음·궤도 기본 자세 출발·유령 뷰) → 재핀/setPose
-       (+#22 크기 자가 치유) ② unpin/flyTo가 궤도 진입에서 렌즈를 FREE 45°·중심 주점으로
-       교체(화면 점프) → 확정 내적 이어받기(stage.freeIntrinsics — 렌더·배치 단일 출처,
-       2점 [W/2,지평선]=16.2+A-4 · 3점 수심=6.3 그대로). 저장 무결성: 확정 뷰(pose null)
-       정확히 1 + 유한 자세 아니면 serializeDoc2가 던지고 실패 기록(doc2PoseIntegrity).
-D-L69  겨냥 거리 정의 교체(aimDistPx) — 옛 판은 on_face의 정의상 0(cand.dist)로 오염,
-       프로브 분기는 죽어 있었다(실획 첫 표본 전부 0. D-L56의 "40px 프로브 배선"은 적힌
-       시점에 거짓 — 정정 병기됨). 새: 스냅 성패 무관·스냅 전 원시 시작점·40px 안 최근접
-       정밀 대상(on_face 제외)·없으면 null. 7차 이전 저장본의 0은 legacy로 갈라 센다.
-       물음 억제는 vpdir(기존 소실점 지지)만 — ⚠ ortho 강제는 stepRule P1 가드(D-L53,
-       10.1°→31.6° 붕괴 실측)를 우회해 기각(리뷰어 2-R″ [1]이 잡음).
-스냅 캐시  snapPre(끝점·정점·중점·교차점 — 뷰 좌표)의 캐시 키가 시점(frame().poseKey)이
-       됐다 — 옛 판은 기하 변경에만 무효화해 뷰 왕복 뒤 첫 획의 정밀 후보가 낡은 좌표계로
-       투영됐다(어긋남 실측 293~341px — "snapEnd 전무·시작 전부 on_face"의 기전).
-```
-
-## ⚠⚠ 지금 서 있는 사실 — 다음 세션이 먼저 알아야 할 것
-
-1. **실획 첫 표본 `.brnl` 파일은 저장소에 없다**(작업 트리·origin 전 브랜치·이슈 0건).
-   지시문의 수치(지평선 y=157 · Δ0.0~1.7° · 획 5 · asked 6 등)는 **사람 보고**로만
-   기록했다(#25 — 원장 표본 0 유지, AS-C1 7차 주석). **파일이 오면 `sessions/`에 넣고
-   `npx vitest run test/real_ink.test.ts`** — snap_use(끝점 스냅률)·vp_dir_err_deg(사람
-   보고 Δ 재현)·snap_dist_legacy_zero(그 표본의 0은 옛 정의 산물이라 갈려 나감) 포함
-   지시 4의 지표 전부가 나온다.
-2. **그 표본으로 잡은 결함 둘의 사람 보고**(원장 밖·미검증 — 기준선이 아니다, 3·4-R [8]):
-   끝점 스냅 0/획 5 · 물음 6회/획 5. 수정(캐시 시점 키·vpdir 억제)이 실사용에서 효과가
-   있는지는 **다음 표본이 판정**한다(합성에서 vpdir 강제 발동은 15px 팔 0 — 불변은
-   미발동이다. r40 팔 13 · asks −0.046, osnap_vpdir_forced 카운터).
-3. **rule_camera 게이트(규칙 ≤ 검출)는 여전히 `passed:false`** — 7차 개정판은 6차와
-   15px 팔 완전 동일(초판의 asks 감소는 ortho 우회의 양이었고 제거됨). CLAUDE §2 중단
-   조건의 판정 주체는 종전대로 `camera_gate.json`의 `deg_0.25` 행(통과선 안).
-4. **핀 상태 런타임 리사이즈에 재핀이 없다**(7차 파생 발견 — DEFERRED): fit()이 카메라를
-   다시 푸는데 핀 투영 훅은 옛 주점·f를 계속 쓴다. 복원 경로는 막았고(자가 치유 후 재핀)
-   창 크기 변경 경로가 남았다. P3(주점=수심)의 freeIntrinsics 동작점 실측도 없다(DEFERRED).
-5. `restore_pose.json`·`snap_cache.json`의 near-zero 의심 플래그들은 **보장의 배선
-   확인**(원장 what_not_say에 원인 명시 — 의심≠오류). 게이트 의심 1건은 기지의
-   elevation(음성 대조 count).
-6. 수는 적지 않는다 — **`selfcheck.json`의 `coverage`를 그 자리에서 읽는다.**
-
-## 다음에 할 일 — **사람 지시 대기.** 그 전에 할 수 있는 것
-
-| 항목 | 내용 |
+| 지시가 전제한 것 | 저장소의 사실 |
 |---|---|
-| **실획 표본 파일** | `.brnl`이 오면 **다른 일보다 먼저** `sessions/`에 넣고 real_ink 재실행 — 7차 수정 전 저장본이므로 legacy 분리가 자동으로 돈다. 수정 후 앱으로 **새로 그린 두 번째 표본**이 진짜 판정자다(끝점 스냅률·물음 빈도·vertex_gap) |
-| **3·4-R 재검** | 3·4-R 대응 표 16건(progress 맨 끝)을 다음 리뷰어가 재검한다(관례 절차) |
-| **Actions 초록** | 병합 커밋(PR #1)의 Pages 실행 확인 |
-| **iPad 실기** | 복원 재핀·궤도 렌즈 유지·끝점 스냅의 실기 확인 — 두 번째 표본과 같은 문 |
+| "항목 1 판단 승인 — 술어를 한 곳으로 모아 불변으로 잠갔다" | **그 변경이 없다** |
+| "리뷰어가 잡은 셋 승인 — 화각 임계가 소실점 간 거리에 붙어 있었다" | **그 결함도 수정도 없다.** 현행 `camera.gate(f,W)`는 `f/W`(시거리)이고 `axis.angleWiden`도 `hypot(m−principal)/f`(시거리)다 |
+| "커밋 둘을 푸시한다" | **그 커밋이 없다.** 세션 시작 시 HEAD = `origin/main` = 7차 마감(b438e04) |
+| "실획 파일을 이 지시와 함께 전달한다" | **파일이 없다.** `sessions/`는 README뿐 · 컨테이너 `find` 0건 · `/mnt/attach` 빔 |
+| 항목 3·5·8·9·10·12 | **본문이 없다.** 메시지가 내용을 인용한 것은 1·2·4·11뿐이고 나머지는 번호만 나온다 |
+
+⇒ **사람에게 다시 받아야 하는 것**: ① 8차 지시 **전문**(항목 1~12) ② `.brnl` 표본 파일
+③ 잃어버린 커밋 둘(있다면). 추측해 만들지 않았다(A-3 범위 금지).
+
+## 8차에 실제로 한 것 — 사정거리 a·b
+
+```
+D-L70  게이트 원장은 **사정거리**를 스스로 적는다(`scope_note`). 확정 규칙 경로는 **별도 게이트**다.
+       a. `rule_gate.json` 신설 — 획 → resolve2dCore → stepRule → recoverCamera → liftAll → 형태 오차.
+          대역은 **같은 하네스의 `truth_vps` 팔**(#27). 배수는 CLAUDE §2와 같은 1.1×·2.1×.
+       b. `camera_gate.json`에 `scope_note` — 지나는 구간·**안 지나는 구간**·"부동은 안전의 증거가
+          아니다". PITFALLS **#43** 신설(최근 다섯 갱신 — #38이 밀려났다, 본문에는 그대로).
+       먹이기(`runRules`)를 `rule_camera.test.ts` → **`web/test/ruleFeed.ts`로 옮겼다**(복사 아님).
+       옮기기 검증: `rule_camera.json` 재실행 `diff` **바이트 동일**.
+       `Gate` 타입에 `mechanism` 추가 — 실패한 게이트가 기전을 남기게 한다.
+```
+
+## ⛔ 중단 사유 — 수치는 `stage0/out/rule_gate.json`을 **그 자리에서 읽는다**
+
+실행 시점 판정 `passed: false`. **두 지표 다** 통과선 밖이고 **다섯 구도 중 다섯**에서 그렇다
+(1점 구도의 형태 하나만 선 안). 판정 팔은 `rule_drawn`(순서 오라클이 없는 유일한 팔).
+
+**기전 — 차수가 P1에 갇힌다.** `rule_drawn` 300실행의 차수 분포 **P1 243 · P2 24 · P3 33**,
+**3점 구도에서도 P1이 40~47/60**. P1은 **불가역**(D-L53)이라 한 획이 그림 전체를 1점에 가둔다.
+
+**반사실이 좁힌 것과 못 좁힌 것**(#39 · `rule_drawn_no_ortho_force` 팔):
+화면 직교 스냅의 `forced="screen"`이 `stepRule`의 P1 가드(`forced !== "screen" &&
+finiteHorizontals > 0`이면 **묻는다**)를 우회한다 — `mainL`의 `snapForced`가 그 자리이고
+하네스는 앱과 같은 배선이다(#17). **그 우회만 끄면 P1 243 → 181, 축 오차 중앙이 내려간다.
+그러나 배치는 안 낫는다**(조용히 틀림·형태 둘 다 통과선 밖 그대로, 물음만 는다).
+⇒ **기여이지 지배항이 아니다.** D-L69 ②가 끝점 오스냅 가지에서 뺀 그 우회가 **주 경로에는
+그대로 살아 있다.**
+
+**7차 내내 안 보였던 이유**(= 지시 b의 요지): `rule_camera.json`은 이 경로의 축 오차를
+**31.6°로 이미 적고 있었다.** 그런데 그 원장에는 **배치 귀결이 없었고**, 배치를 재는
+`camera_gate`는 **소실점을 직접 받아** 이 경로를 안 지났다. 두 원장 사이 구멍이 이 크기였다.
+
+**판정 재확인**(#41 ②): 프레임 동일(`perStrokeError` 한 정의) · 모집단 등록문 그대로 ·
+**신호의 성질이지 기준의 성질이 아니다**(같은 픽스처의 `truth_vps`가 통과선 안, 도달 가능성
+팔 `wide_pair`는 통과선의 네 배 초과). ⇒ 판정이 옳다. **멈춘다.**
+
+**안 한 것**: 확정 규칙을 고치지 않았다 — 지배항이 아니고, CLAUDE.md가 "고유한 것 둘"로
+못 박은 자리이며, 지시 **항목 11이 그 자리인데 본문이 없다**(DEFERRED 8차 절에 등재).
+
+## 다음에 할 일
+
+| 순서 | 내용 |
+|---|---|
+| **1. 사람 입력** | 8차 지시 전문 · `.brnl` 표본 · 잃어버린 커밋 둘 |
+| **2. 지배항 규명** | `rule_gate`의 남는 몫(교점 조건수)이 어디서 오는가 — 첫 짝 각차(`firstSep`)와 형태 오차의 관계를 팔로 낸다. 그 전에는 항목 2·4를 올려도 35° 카메라 위에 얹는 것이다 |
+| **3. 항목 11 판단** | P1 가드 우회 제거(반사실 팔이 이미 실측) — 물음 증가가 대가다. 항목 11 본문과 함께 |
+| 4. 3·4-R 재검 | 7차 3·4-R 대응 표 16건(progress 7차 절 끝)을 다음 리뷰어가 재검한다(관례) |
+| 5. Actions 초록 | 이 브랜치 푸시의 실행 확인 |
 
 ## 검증 현황 (마지막 커밋 기준)
 
-vitest **465 통과 · 3 건너뜀**(75파일 — 건너뜀 = quickdraw 2·sessions 1, 데이터 의존) ·
-tsc·빌드 통과 · Playwright **48 통과 · 2 건너뜀**(신설: restore_pose 4 · snap_cache 1) ·
-pytest **73** · selfcheck STALE 0 · 게이트 의심 1(위 사실 5) · 상수 해시 **509615a1**
-(7차는 SHARED_CONSTANTS를 안 건드렸다).
+Playwright **47 통과 · 1 실패 · 2 건너뜀** — ⚠ **실패는 이 세션의 것이 아니다**:
+`touch_route.spec.ts` dpr 2 회전 비교가 `|az−one| = 2.11e-6 > 1e-6`으로 깨진다.
+**base 커밋(b438e04)을 별도 worktree에 꺼내 돌려 같은 실패를 재현**했고(이 세션의 diff는
+`web/src`·`web/e2e`를 한 줄도 안 건드린다), 그 테스트의 주석이 이미 예고한 상황이다 —
+"환경 간 밴드가 다르다(원인 미상)". 잡는 대상(dpr 오배선)의 신호는 **0.5 rad**이라 2.11e-6은
+여전히 다섯 자리 아래다. **임계를 넓히지 않았다**(#26의 반대편 문) — DEFERRED에 등재했다.
+
+vitest **466 통과 · 3 건너뜀**(74파일 — ⚠ 7차 HANDOFF의 "75파일"은 낡은 수였다. 실측
+`ls web/test/*.test.ts | wc -l` = 74, 신설 `rule_gate.test.ts` 포함) · tsc·빌드 통과 ·
+pytest **73** · selfcheck **STALE 0** · `scan_gate_reachability` 게이트 블록 **35** ·
+플래그 **1**(기지의 `elevation_flow`) — 신설 `rule_gate.json:gate`는 **값 대조를 지났다** ·
+상수 해시 **509615a1**(8차는 SHARED_CONSTANTS를 안 건드렸다).
+⚠ `rule_gate.json`의 의심 플래그들은 원장 `selfcheck_flag_origins`에 원인이 적혀 있다
+(`truth_vps`의 0은 **보장**, `cut_*.rate = 1`은 **정말로 전부 틀린 것** — 자명한 1이 아니다).
+⚠ `stage0/out/tube_render.json`의 `build_ms_*`가 바뀐 것은 **컨테이너 성능 차**다(측정 결론 무관).
 
 ## ✋ 브라우저
 
-`cd web && npm run dev:5222` → `/l.html`. `window.S2S` 7차 변경분: `snap(p)`이 시점
-좌표로 정정(핀 밖에서도 옳다) · `stage.freeIntrinsics()`. 기존: `pathStats()` `orbitCenter()`
-`cubeSpin(rad,ms)` `viewCube()` `askStats()` `doc()` `cam` `order()` `standing()`
-`snap2d(p)` `pickVp(p)` `switchView(id)` 등.
+`cd web && npm run dev:5222` → `/l.html`. `window.S2S`: `snap(p)` `stage.freeIntrinsics()`
+`pathStats()` `orbitCenter()` `cubeSpin(rad,ms)` `viewCube()` `askStats()` `doc()` `cam`
+`order()` `standing()` `snap2d(p)` `pickVp(p)` `switchView(id)` 등.
 ⚠ 이 컨테이너의 Playwright는 `PW_EXECUTABLE=/opt/pw-browsers/chromium`이 필요하다.
 
 ## 개발 명령
@@ -98,11 +110,11 @@ cd web && npx vitest run && npx tsc --noEmit && npm run build && \
 python3 -m pytest tests/ -q && python selfcheck.py
 ```
 ⚠ `playwright` 앞에 `npm run build`. ⚠ `progress.md`는 루트 하나.
-⚠ 이 컨테이너는 pytest·numpy·cv2를 pip로 새로 깔아야 했다(`pip3 install numpy opencv-python-headless`).
+⚠ **새 컨테이너는 `cd web && npm ci`와 `pip3 install pytest numpy opencv-python-headless`가
+먼저다** — 안 하면 vitest가 "Cannot find package 'vite'"로 **exit 0**을 내며 조용히 통과한다.
 
 ## 반드시 읽는 것
 
-1. `CLAUDE.md` 2. **`PITFALLS.md`** 3. `docs/line_plan.md` 4. 이 문서
-5. `progress.md` 맨 끝(7차 절 전부 — 항목 1~4·1-R′·2-R″·3·4-R) ·
-`assumptions.md`(AS-C1·AS-L14의 7차 대조 주석) · `DECISIONS.md`(~**D-L69**) ·
-`DEFERRED.md`(2026-08-17 7차 절) · `QUESTIONS.md`
+1. `CLAUDE.md` 2. **`PITFALLS.md`**(#43이 새로 최근 다섯에) 3. `docs/line_plan.md` 4. 이 문서
+5. `progress.md` 맨 끝(8차 절) · `DECISIONS.md`(~**D-L70**) · `DEFERRED.md`(2026-08-17 8차 절) ·
+`assumptions.md` · `QUESTIONS.md`

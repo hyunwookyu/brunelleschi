@@ -1,0 +1,4246 @@
+{
+  "what": "**확정 규칙 경로 전체**의 형태 오차 — 획을 입력으로 주고 2D 판정·확정 규칙을 거쳐 나온 카메라로 배치한다. `camera_gate`(소실점 직접 주입)의 **사정거리 밖**이던 구간이다.",
+  "plan": "docs/line_plan.md §5.4 · CLAUDE.md §2 중단 조건 — 2026-08-17 8차 지시 a",
+  "why_this_exists": "**원장이 안 움직인 것은 안전의 증거가 아니다**(8차 지시 b · PITFALLS #43). `camera_gate`는 소실점을 직접 주고 `recoverCamera`만 부르므로 `stepRule`·`resolve2dCore` 변경이 그 원장을 **한 자리도 안 움직인다** — 그 부동이 '안전'으로 읽혔다. 이 원장이 그 구간을 덮는다. ⚠ 그래도 **전수는 아니다**: 아래 what_this_does_not_say 참조.",
+  "how": {
+    "fixtures": 300,
+    "fixture_failed": 0,
+    "compositions": [
+      "3pt_yaw35_pitch15",
+      "3pt_yaw20_pitch25",
+      "3pt_yaw50_pitch8",
+      "2pt_yaw35_pitch0",
+      "1pt_yaw0_pitch0"
+    ],
+    "jitters": [
+      0,
+      0.005,
+      0.01,
+      0.03,
+      0.05
+    ],
+    "grades": [
+      "precise",
+      "medium"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "orders": [
+      "drawn",
+      "grouped",
+      "wide_pair"
+    ],
+    "lattice_k": 1,
+    "p1_f_ratio": 1,
+    "path": "drawEdges → resolve2dCore(확정 전) → representative → stepRule(물음은 참 축 오라클) → vpsOf → recoverCamera → liftAll → perStrokeError",
+    "metric": "`metrics.perStrokeError` — `camera_gate`와 **같은 정의**(게이지 적합 뒤 대각 대비 오차)",
+    "arms": {
+      "rule_drawn": "축을 번갈아 긋는 순서. **순서 오라클 없음 — 판정 팔이다**",
+      "rule_grouped": "축별로 몰아 긋는 순서. ⚠ 참 축 라벨을 쓰는 **순서 오라클**",
+      "rule_wide_pair": "첫 축의 각차가 가장 큰 두 선을 먼저. ⚠ 순서 오라클이고 **이 경로가 얼마나 잘할 수 있는가**의 팔이다(#35 도달 가능성)",
+      "rule_drawn_no_ortho_force": "**반사실 진단 팔**(#39) — `rule_drawn`과 모든 것이 같고 **화면 직교 스냅이 축을 선언하지 않는 것**만 다르다. 앱은 선언한다(`mainL`의 `snapForced`)이고, 그 선언이 `stepRule`의 P1 가드(`forced !== screen`일 때만 묻는다)를 **우회한다**. 이 팔과 `rule_drawn`의 차이가 **그 우회의 몫**이다. ⚠ 앱 동작점이 아니다.",
+      "truth_vps": "참 소실점 → 같은 `recoverCamera`·같은 `liftAll`. **대역**이다(#27). 카메라 오차가 0이므로 **도달 가능성 수치로 쓰지 않는다**(#5·#40 ①)"
+    },
+    "ask_policy": "스냅이 방향을 선언한 획은 안 묻고, 남는 물음에는 **참 축으로 답했다**(오라클). `asks_per_scene`이 사람이 개입해야 하는 횟수이고 그것이 이 경로의 비용이다."
+  },
+  "gate": {
+    "registered": "**획 → 확정 전 2D 판정(`resolve2dCore`) → 확정 규칙(`stepRule`) → `recoverCamera` → `liftAll`** 경로 전체에서, `rule_drawn` 팔의 조용히 틀림(cut 0.2)이 **같은 하네스·같은 픽스처**의 `truth_vps` 팔 대비 **1.1배 이내**이고 형태 오차 중앙이 **2.1배 이내**다. 배수는 CLAUDE.md §2 중단 조건과 같은 값이고 **대역만 이 하네스에서 낸다**(#27). 모집단은 5구도 × 잡음 {0,0.005,0.01,0.03,0.05} × 등급 2 × 시드 6이고 **합산으로 판정**한다 — 구도별 분해(`by_composition`)를 원장에 함께 실어 **구도 하나로 통과를 주장하지 않는다**. 판정 팔이 `rule_drawn`인 이유는 **순서 오라클이 없는 유일한 팔**이기 때문이다(#2). ⚠ 이것은 **CLAUDE.md §2 중단 조건의 사정거리 확장분**이다(#41) — `camera_gate`가 확정 규칙을 안 지나므로 그 원장의 부동은 이 경로의 안전을 뜻하지 않는다(#43). **실패하면 실제로 멈춘다.**",
+    "reachability": "**측정 결과: 어느 팔도 통과선 근처에 없다.** 도달 가능성 팔로 등록한 것은 `rule_wide_pair`(첫 축의 각차가 가장 큰 두 선을 먼저 긋는 사용자 — 이 경로가 *얼마나 잘할 수 있는가*)이고 `reachability_value`가 그 값이다. 그 값은 통과선의 **네 배가 넘는다** — 순서를 최적으로 골라도 못 넘는다. 세 규칙 팔의 형태 중앙은 `headline`에서 그 자리에 읽는다(셋 다 같은 등급이다). **`truth_vps`를 여기 적지 않는다** — 그 팔은 대역의 출처 자체라 비가 정의상 1.0이고, 그것을 적으면 항등을 적고도 검사를 통과한다(#40 ①, `camera_gate` 초판이 그랬다). ⚠ **기준을 낮추지 않는다**(#26의 반대편 문) — 못 넘는다는 사실을 적기만 한다. ⚠ 사람이 `wide_pair` 순서로 긋는다는 것도 측정하지 않았다(#2 순서 오라클). 즉 이 게이트는 *신호의 성질*로 실패했고 *기준의 성질*로 실패한 것이 아니다 — 대역(`truth_vps`)이 **같은 픽스처·같은 배치**에서 통과선 안을 내므로 경로가 문제다.",
+    "reachability_value": 1.2882,
+    "reachability_source": "headline/rule_wide_pair/shape_err_median/median",
+    "result": {
+      "judged_arm": "rule_drawn",
+      "band_arm": "truth_vps",
+      "cut_0_2": {
+        "band": 0.379,
+        "value": 0.9088,
+        "pass_line": 0.4169,
+        "mult": 1.1
+      },
+      "shape_median": {
+        "band": 0.1285,
+        "value": 1.2144,
+        "pass_line": 0.2699,
+        "mult": 2.1
+      },
+      "passed": false,
+      "by_composition": {
+        "3pt_yaw35_pitch15": {
+          "cut_0_2": {
+            "band": 0.1438,
+            "value": 1,
+            "line": 0.1582,
+            "passed": false
+          },
+          "shape_median": {
+            "band": 0.0503,
+            "value": 1.2809,
+            "line": 0.1056,
+            "passed": false
+          }
+        },
+        "3pt_yaw20_pitch25": {
+          "cut_0_2": {
+            "band": 0.1736,
+            "value": 1,
+            "line": 0.191,
+            "passed": false
+          },
+          "shape_median": {
+            "band": 0.0539,
+            "value": 1.6066,
+            "line": 0.1132,
+            "passed": false
+          }
+        },
+        "3pt_yaw50_pitch8": {
+          "cut_0_2": {
+            "band": 0.3624,
+            "value": 1,
+            "line": 0.3986,
+            "passed": false
+          },
+          "shape_median": {
+            "band": 0.1069,
+            "value": 1.6781,
+            "line": 0.2245,
+            "passed": false
+          }
+        },
+        "2pt_yaw35_pitch0": {
+          "cut_0_2": {
+            "band": 0.364,
+            "value": 1,
+            "line": 0.4004,
+            "passed": false
+          },
+          "shape_median": {
+            "band": 0.1421,
+            "value": 2.1776,
+            "line": 0.2984,
+            "passed": false
+          }
+        },
+        "1pt_yaw0_pitch0": {
+          "cut_0_2": {
+            "band": 0.7694,
+            "value": 0.8651,
+            "line": 0.8463,
+            "passed": false
+          },
+          "shape_median": {
+            "band": 0.3515,
+            "value": 0.3868,
+            "line": 0.7381,
+            "passed": true
+          }
+        }
+      }
+    },
+    "status": "**살아 있다 — 그리고 첫 실행에서 실패했다.** CLAUDE.md §2 중단 조건의 **사정거리 확장분**이고 같은 배수를 쓴다(대역만 이 하네스 것이므로 `camera_gate`의 통과/실패와 같은 수가 아니다 — #41: 같은 말로 부르지 않는다). **실패했으므로 멈추고 보고했다**(#41: 판정과 행동을 어긋나게 두지 않는다). 기전은 `mechanism`에 있다 — 차수가 P1에 갇힌다.",
+    "mechanism": "**차수가 P1에 갇힌다.** `rule_drawn` 300실행의 차수 분포는 P1 243 · P2 24 · P3 33이고, 3점 구도에서도 P1이 40~47/60이다(`by_composition`의 `perspective_order_hist`). P1은 **불가역**이므로(D-L53, 2026-08-17 지시 1) 한 획이 그림 전체를 1점에 가둔다 — 그 뒤의 카메라는 3점 장면을 1점 렌즈로 푼 것이고 축 방향 오차 중앙이 그만큼 커진다. 그것이 조용히 틀림·형태 중앙의 출처다(값은 `result`를 그 자리에서 읽는다). ⚠ **반사실이 원인을 좁혔다**(`rule_drawn_no_ortho_force`): 화면 직교 스냅의 `forced=screen`이 `stepRule`의 P1 가드(`forced !== screen`일 때만 묻는다)를 우회하는데, **그 우회만 끄면 P1이 243 → 181로 줄고 축 오차 중앙이 내려간다.** 그러나 **배치는 안 낫는다**(조용히 틀림·형태가 통과선 밖 그대로 — 두 팔을 `headline`에서 나란히 읽는다). 즉 그 우회는 **기여이지 지배항이 아니다.** 남는 몫은 규칙이 소실점을 깊이선 두 개의 교점으로 푸는 것 자체의 조건수다 — `rule_camera`가 이미 축 오차 중앙 31.6°로 적고 있었는데 **그 원장에 배치 귀결이 없어서** 이 크기가 안 보였다(그것이 이 하네스가 생긴 이유다, #43).",
+    "note": "⚠ 이 게이트가 **통과해도** `camera_gate`의 상태는 안 바뀐다(별개의 두 구간이다)."
+  },
+  "headline": {
+    "note": "**5구도 · 5잡음 · 2등급 · 6시드 합산.** 잡음 0 행도 넣었다 — 이 경로는 잡음 0에서도 항등이 아니다(등급 잉크 잡음이 남고, 규칙이 고르는 짝이 순서에 달렸다).",
+    "rule_drawn": {
+      "scenes": 300,
+      "camera_ok": {
+        "k": 260,
+        "n": 300,
+        "rate": 0.8667
+      },
+      "placement": {
+        "k": 932,
+        "n": 1021,
+        "rate": 0.9128,
+        "of_all": {
+          "k": 932,
+          "n": 3600,
+          "rate": 0.2589
+        }
+      },
+      "silent_wrong": {
+        "cut_0_1": {
+          "k": 888,
+          "n": 932,
+          "rate": 0.9528
+        },
+        "cut_0_2": {
+          "k": 847,
+          "n": 932,
+          "rate": 0.9088
+        },
+        "cut_0_5": {
+          "k": 512,
+          "n": 932,
+          "rate": 0.5494
+        }
+      },
+      "shape_err_median": {
+        "n": 128,
+        "min": 0.2904,
+        "p10": 0.3503,
+        "median": 1.2144,
+        "p90": 3.42,
+        "max": 4.1907
+      },
+      "shape_err_p90": {
+        "n": 128,
+        "min": 0.3819,
+        "p10": 0.408,
+        "median": 1.4422,
+        "p90": 3.4884,
+        "max": 4.3617
+      },
+      "axis_dir_err_deg": {
+        "n": 293,
+        "min": 0,
+        "p10": 0,
+        "median": 35,
+        "p90": 40.66,
+        "max": 46.1513
+      },
+      "perspective_order_median": 1,
+      "perspective_order_hist": {
+        "p0": 0,
+        "p1": 243,
+        "p2": 24,
+        "p3": 33,
+        "n": 300
+      },
+      "asks_per_scene": 2.4,
+      "rejected_per_scene": 2.853,
+      "snap_engaged": 718,
+      "snap_queried": 980
+    },
+    "rule_grouped": {
+      "scenes": 300,
+      "camera_ok": {
+        "k": 280,
+        "n": 300,
+        "rate": 0.9333
+      },
+      "placement": {
+        "k": 1010,
+        "n": 1032,
+        "rate": 0.9787,
+        "of_all": {
+          "k": 1010,
+          "n": 3600,
+          "rate": 0.2806
+        }
+      },
+      "silent_wrong": {
+        "cut_0_1": {
+          "k": 953,
+          "n": 1010,
+          "rate": 0.9436
+        },
+        "cut_0_2": {
+          "k": 887,
+          "n": 1010,
+          "rate": 0.8782
+        },
+        "cut_0_5": {
+          "k": 504,
+          "n": 1010,
+          "rate": 0.499
+        }
+      },
+      "shape_err_median": {
+        "n": 129,
+        "min": 0.0542,
+        "p10": 0.3246,
+        "median": 0.9058,
+        "p90": 3.532,
+        "max": 4.2501
+      },
+      "shape_err_p90": {
+        "n": 129,
+        "min": 0.0614,
+        "p10": 0.3934,
+        "median": 0.9719,
+        "p90": 3.7312,
+        "max": 4.272
+      },
+      "axis_dir_err_deg": {
+        "n": 310,
+        "min": 0,
+        "p10": 0,
+        "median": 31.6083,
+        "p90": 40.66,
+        "max": 51.0353
+      },
+      "perspective_order_median": 1,
+      "perspective_order_hist": {
+        "p0": 0,
+        "p1": 262,
+        "p2": 18,
+        "p3": 20,
+        "n": 300
+      },
+      "asks_per_scene": 2.19,
+      "rejected_per_scene": 3.117,
+      "snap_engaged": 378,
+      "snap_queried": 642
+    },
+    "rule_wide_pair": {
+      "scenes": 300,
+      "camera_ok": {
+        "k": 274,
+        "n": 300,
+        "rate": 0.9133
+      },
+      "placement": {
+        "k": 868,
+        "n": 891,
+        "rate": 0.9742,
+        "of_all": {
+          "k": 868,
+          "n": 3600,
+          "rate": 0.2411
+        }
+      },
+      "silent_wrong": {
+        "cut_0_1": {
+          "k": 824,
+          "n": 868,
+          "rate": 0.9493
+        },
+        "cut_0_2": {
+          "k": 778,
+          "n": 868,
+          "rate": 0.8963
+        },
+        "cut_0_5": {
+          "k": 439,
+          "n": 868,
+          "rate": 0.5058
+        }
+      },
+      "shape_err_median": {
+        "n": 117,
+        "min": 0.0626,
+        "p10": 0.3499,
+        "median": 1.2882,
+        "p90": 3.8664,
+        "max": 4.2501
+      },
+      "shape_err_p90": {
+        "n": 117,
+        "min": 0.0684,
+        "p10": 0.4019,
+        "median": 1.5178,
+        "p90": 3.9023,
+        "max": 4.4733
+      },
+      "axis_dir_err_deg": {
+        "n": 288,
+        "min": 0,
+        "p10": 0,
+        "median": 35,
+        "p90": 40.66,
+        "max": 52.3348
+      },
+      "perspective_order_median": 1,
+      "perspective_order_hist": {
+        "p0": 0,
+        "p1": 272,
+        "p2": 11,
+        "p3": 17,
+        "n": 300
+      },
+      "asks_per_scene": 2.23,
+      "rejected_per_scene": 3.2,
+      "snap_engaged": 357,
+      "snap_queried": 698
+    },
+    "rule_drawn_no_ortho_force": {
+      "scenes": 300,
+      "camera_ok": {
+        "k": 238,
+        "n": 300,
+        "rate": 0.7933
+      },
+      "placement": {
+        "k": 1175,
+        "n": 1342,
+        "rate": 0.8756,
+        "of_all": {
+          "k": 1175,
+          "n": 3600,
+          "rate": 0.3264
+        }
+      },
+      "silent_wrong": {
+        "cut_0_1": {
+          "k": 1131,
+          "n": 1175,
+          "rate": 0.9626
+        },
+        "cut_0_2": {
+          "k": 1090,
+          "n": 1175,
+          "rate": 0.9277
+        },
+        "cut_0_5": {
+          "k": 753,
+          "n": 1175,
+          "rate": 0.6409
+        }
+      },
+      "shape_err_median": {
+        "n": 163,
+        "min": 0.2904,
+        "p10": 0.3551,
+        "median": 1.1853,
+        "p90": 2.9982,
+        "max": 4.1907
+      },
+      "shape_err_p90": {
+        "n": 163,
+        "min": 0.3819,
+        "p10": 0.4129,
+        "median": 1.6196,
+        "p90": 3.4,
+        "max": 4.215
+      },
+      "axis_dir_err_deg": {
+        "n": 343,
+        "min": 0,
+        "p10": 0,
+        "median": 24.8705,
+        "p90": 40.66,
+        "max": 47.5533
+      },
+      "perspective_order_median": 1,
+      "perspective_order_hist": {
+        "p0": 0,
+        "p1": 181,
+        "p2": 44,
+        "p3": 75,
+        "n": 300
+      },
+      "asks_per_scene": 2.807,
+      "rejected_per_scene": 3.073,
+      "snap_engaged": 830,
+      "snap_queried": 1093
+    },
+    "truth_vps": {
+      "scenes": 300,
+      "camera_ok": {
+        "k": 300,
+        "n": 300,
+        "rate": 1
+      },
+      "placement": {
+        "k": 3216,
+        "n": 3217,
+        "rate": 0.9997,
+        "of_all": {
+          "k": 3216,
+          "n": 3600,
+          "rate": 0.8933
+        }
+      },
+      "silent_wrong": {
+        "cut_0_1": {
+          "k": 1828,
+          "n": 3216,
+          "rate": 0.5684
+        },
+        "cut_0_2": {
+          "k": 1219,
+          "n": 3216,
+          "rate": 0.379
+        },
+        "cut_0_5": {
+          "k": 118,
+          "n": 3216,
+          "rate": 0.0367
+        }
+      },
+      "shape_err_median": {
+        "n": 300,
+        "min": 0.0084,
+        "p10": 0.0222,
+        "median": 0.1285,
+        "p90": 0.3604,
+        "max": 0.8406
+      },
+      "shape_err_p90": {
+        "n": 300,
+        "min": 0.016,
+        "p10": 0.0373,
+        "median": 0.2692,
+        "p90": 0.5286,
+        "max": 1.1439
+      },
+      "axis_dir_err_deg": {
+        "n": 720,
+        "min": 0,
+        "p10": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "perspective_order_median": null,
+      "perspective_order_hist": {
+        "p0": 0,
+        "p1": 0,
+        "p2": 0,
+        "p3": 0,
+        "n": 0
+      },
+      "asks_per_scene": 0,
+      "rejected_per_scene": 0,
+      "snap_engaged": 0,
+      "snap_queried": 0
+    }
+  },
+  "by_composition": {
+    "3pt_yaw35_pitch15": {
+      "rule_drawn": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 46,
+          "n": 60,
+          "rate": 0.7667
+        },
+        "placement": {
+          "k": 27,
+          "n": 44,
+          "rate": 0.6136,
+          "of_all": {
+            "k": 27,
+            "n": 720,
+            "rate": 0.0375
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 27,
+            "n": 27,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 27,
+            "n": 27,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 27,
+            "n": 27,
+            "rate": 1
+          }
+        },
+        "shape_err_median": {
+          "n": 6,
+          "min": 0.7664,
+          "p10": 1.0851,
+          "median": 1.2809,
+          "p90": 1.9523,
+          "max": 1.9523
+        },
+        "shape_err_p90": {
+          "n": 6,
+          "min": 1.2943,
+          "p10": 1.6528,
+          "median": 1.7742,
+          "p90": 2.2483,
+          "max": 2.2483
+        },
+        "axis_dir_err_deg": {
+          "n": 55,
+          "min": 7.3463,
+          "p10": 24.4444,
+          "median": 37.6984,
+          "p90": 37.6984,
+          "max": 37.6984
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 40,
+          "p2": 9,
+          "p3": 11,
+          "n": 60
+        },
+        "asks_per_scene": 2.65,
+        "rejected_per_scene": 3.417,
+        "snap_engaged": 176,
+        "snap_queried": 234
+      },
+      "rule_grouped": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 55,
+          "n": 60,
+          "rate": 0.9167
+        },
+        "placement": {
+          "k": 52,
+          "n": 52,
+          "rate": 1,
+          "of_all": {
+            "k": 52,
+            "n": 720,
+            "rate": 0.0722
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 40,
+            "n": 52,
+            "rate": 0.7692
+          },
+          "cut_0_2": {
+            "k": 33,
+            "n": 52,
+            "rate": 0.6346
+          },
+          "cut_0_5": {
+            "k": 28,
+            "n": 52,
+            "rate": 0.5385
+          }
+        },
+        "shape_err_median": {
+          "n": 10,
+          "min": 0.0542,
+          "p10": 0.0566,
+          "median": 0.1727,
+          "p90": 0.8359,
+          "max": 1.0009
+        },
+        "shape_err_p90": {
+          "n": 10,
+          "min": 0.0614,
+          "p10": 0.0684,
+          "median": 0.1829,
+          "p90": 0.9615,
+          "max": 1.2803
+        },
+        "axis_dir_err_deg": {
+          "n": 68,
+          "min": 0.8671,
+          "p10": 2.4225,
+          "median": 37.6984,
+          "p90": 37.6984,
+          "max": 37.6984
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 45,
+          "p2": 7,
+          "p3": 8,
+          "n": 60
+        },
+        "asks_per_scene": 2.533,
+        "rejected_per_scene": 3.35,
+        "snap_engaged": 99,
+        "snap_queried": 159
+      },
+      "rule_wide_pair": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 54,
+          "n": 60,
+          "rate": 0.9
+        },
+        "placement": {
+          "k": 12,
+          "n": 12,
+          "rate": 1,
+          "of_all": {
+            "k": 12,
+            "n": 720,
+            "rate": 0.0167
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 8,
+            "n": 12,
+            "rate": 0.6667
+          },
+          "cut_0_2": {
+            "k": 6,
+            "n": 12,
+            "rate": 0.5
+          },
+          "cut_0_5": {
+            "k": 2,
+            "n": 12,
+            "rate": 0.1667
+          }
+        },
+        "shape_err_median": {
+          "n": 4,
+          "min": 0.0626,
+          "p10": 0.0626,
+          "median": 0.2446,
+          "p90": 1.3899,
+          "max": 1.3899
+        },
+        "shape_err_p90": {
+          "n": 4,
+          "min": 0.0684,
+          "p10": 0.0684,
+          "median": 0.2602,
+          "p90": 1.6366,
+          "max": 1.6366
+        },
+        "axis_dir_err_deg": {
+          "n": 57,
+          "min": 0.8671,
+          "p10": 37.6984,
+          "median": 37.6984,
+          "p90": 37.6984,
+          "max": 37.6984
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 51,
+          "p2": 3,
+          "p3": 6,
+          "n": 60
+        },
+        "asks_per_scene": 2.667,
+        "rejected_per_scene": 3.583,
+        "snap_engaged": 77,
+        "snap_queried": 138
+      },
+      "rule_drawn_no_ortho_force": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 41,
+          "n": 60,
+          "rate": 0.6833
+        },
+        "placement": {
+          "k": 58,
+          "n": 97,
+          "rate": 0.5979,
+          "of_all": {
+            "k": 58,
+            "n": 720,
+            "rate": 0.0806
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 58,
+            "n": 58,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 58,
+            "n": 58,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 57,
+            "n": 58,
+            "rate": 0.9828
+          }
+        },
+        "shape_err_median": {
+          "n": 15,
+          "min": 0.566,
+          "p10": 0.7664,
+          "median": 1.3038,
+          "p90": 1.9916,
+          "max": 2.1657
+        },
+        "shape_err_p90": {
+          "n": 15,
+          "min": 0.566,
+          "p10": 0.9079,
+          "median": 1.7316,
+          "p90": 2.2483,
+          "max": 2.3627
+        },
+        "axis_dir_err_deg": {
+          "n": 64,
+          "min": 0.7942,
+          "p10": 7.3463,
+          "median": 37.008,
+          "p90": 37.6984,
+          "max": 47.5533
+        },
+        "perspective_order_median": 2,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 26,
+          "p2": 14,
+          "p3": 20,
+          "n": 60
+        },
+        "asks_per_scene": 3.05,
+        "rejected_per_scene": 3.567,
+        "snap_engaged": 201,
+        "snap_queried": 259
+      },
+      "truth_vps": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 60,
+          "n": 60,
+          "rate": 1
+        },
+        "placement": {
+          "k": 619,
+          "n": 619,
+          "rate": 1,
+          "of_all": {
+            "k": 619,
+            "n": 720,
+            "rate": 0.8597
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 173,
+            "n": 619,
+            "rate": 0.2795
+          },
+          "cut_0_2": {
+            "k": 89,
+            "n": 619,
+            "rate": 0.1438
+          },
+          "cut_0_5": {
+            "k": 13,
+            "n": 619,
+            "rate": 0.021
+          }
+        },
+        "shape_err_median": {
+          "n": 60,
+          "min": 0.0084,
+          "p10": 0.0152,
+          "median": 0.0503,
+          "p90": 0.2259,
+          "max": 0.4518
+        },
+        "shape_err_p90": {
+          "n": 60,
+          "min": 0.0197,
+          "p10": 0.0245,
+          "median": 0.0835,
+          "p90": 0.5342,
+          "max": 0.7044
+        },
+        "axis_dir_err_deg": {
+          "n": 180,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "perspective_order_median": null,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 0,
+          "p2": 0,
+          "p3": 0,
+          "n": 0
+        },
+        "asks_per_scene": 0,
+        "rejected_per_scene": 0,
+        "snap_engaged": 0,
+        "snap_queried": 0
+      }
+    },
+    "3pt_yaw20_pitch25": {
+      "rule_drawn": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 50,
+          "n": 60,
+          "rate": 0.8333
+        },
+        "placement": {
+          "k": 9,
+          "n": 14,
+          "rate": 0.6429,
+          "of_all": {
+            "k": 9,
+            "n": 720,
+            "rate": 0.0125
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 9,
+            "n": 9,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 9,
+            "n": 9,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 9,
+            "n": 9,
+            "rate": 1
+          }
+        },
+        "shape_err_median": {
+          "n": 3,
+          "min": 0.5497,
+          "p10": 0.5497,
+          "median": 1.6066,
+          "p90": 1.7316,
+          "max": 1.7316
+        },
+        "shape_err_p90": {
+          "n": 3,
+          "min": 0.6767,
+          "p10": 0.6767,
+          "median": 1.6196,
+          "p90": 1.7317,
+          "max": 1.7317
+        },
+        "axis_dir_err_deg": {
+          "n": 56,
+          "min": 5.672,
+          "p10": 16.3171,
+          "median": 31.6083,
+          "p90": 31.6083,
+          "max": 45.3835
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 47,
+          "p2": 1,
+          "p3": 12,
+          "n": 60
+        },
+        "asks_per_scene": 3.283,
+        "rejected_per_scene": 3.933,
+        "snap_engaged": 155,
+        "snap_queried": 235
+      },
+      "rule_grouped": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 59,
+          "n": 60,
+          "rate": 0.9833
+        },
+        "placement": {
+          "k": 12,
+          "n": 13,
+          "rate": 0.9231,
+          "of_all": {
+            "k": 12,
+            "n": 720,
+            "rate": 0.0167
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 12,
+            "n": 12,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 12,
+            "n": 12,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 12,
+            "n": 12,
+            "rate": 1
+          }
+        },
+        "shape_err_median": {
+          "n": 3,
+          "min": 0.5416,
+          "p10": 0.5416,
+          "median": 0.7655,
+          "p90": 1.2855,
+          "max": 1.2855
+        },
+        "shape_err_p90": {
+          "n": 3,
+          "min": 0.664,
+          "p10": 0.664,
+          "median": 0.8192,
+          "p90": 1.3364,
+          "max": 1.3364
+        },
+        "axis_dir_err_deg": {
+          "n": 65,
+          "min": 3.3536,
+          "p10": 13.9797,
+          "median": 31.6083,
+          "p90": 31.6083,
+          "max": 40.5561
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 56,
+          "p2": 0,
+          "p3": 4,
+          "n": 60
+        },
+        "asks_per_scene": 2.367,
+        "rejected_per_scene": 4.483,
+        "snap_engaged": 64,
+        "snap_queried": 135
+      },
+      "rule_wide_pair": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 59,
+          "n": 60,
+          "rate": 0.9833
+        },
+        "placement": {
+          "k": 11,
+          "n": 11,
+          "rate": 1,
+          "of_all": {
+            "k": 11,
+            "n": 720,
+            "rate": 0.0153
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 11,
+            "n": 11,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 11,
+            "n": 11,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 11,
+            "n": 11,
+            "rate": 1
+          }
+        },
+        "shape_err_median": {
+          "n": 3,
+          "min": 0.5416,
+          "p10": 0.5416,
+          "median": 1.193,
+          "p90": 1.2855,
+          "max": 1.2855
+        },
+        "shape_err_p90": {
+          "n": 3,
+          "min": 0.664,
+          "p10": 0.664,
+          "median": 1.3364,
+          "p90": 1.4356,
+          "max": 1.4356
+        },
+        "axis_dir_err_deg": {
+          "n": 63,
+          "min": 5.5085,
+          "p10": 31.6083,
+          "median": 31.6083,
+          "p90": 31.6083,
+          "max": 40.5561
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 57,
+          "p2": 0,
+          "p3": 3,
+          "n": 60
+        },
+        "asks_per_scene": 2.367,
+        "rejected_per_scene": 4.483,
+        "snap_engaged": 63,
+        "snap_queried": 128
+      },
+      "rule_drawn_no_ortho_force": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 46,
+          "n": 60,
+          "rate": 0.7667
+        },
+        "placement": {
+          "k": 201,
+          "n": 273,
+          "rate": 0.7363,
+          "of_all": {
+            "k": 201,
+            "n": 720,
+            "rate": 0.2792
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 201,
+            "n": 201,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 201,
+            "n": 201,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 200,
+            "n": 201,
+            "rate": 0.995
+          }
+        },
+        "shape_err_median": {
+          "n": 28,
+          "min": 0.5497,
+          "p10": 0.9949,
+          "median": 1.171,
+          "p90": 1.5079,
+          "max": 1.7316
+        },
+        "shape_err_p90": {
+          "n": 28,
+          "min": 0.6767,
+          "p10": 1.1843,
+          "median": 1.636,
+          "p90": 1.7223,
+          "max": 1.7324
+        },
+        "axis_dir_err_deg": {
+          "n": 102,
+          "min": 1.8986,
+          "p10": 5.7587,
+          "median": 12.1121,
+          "p90": 31.6083,
+          "max": 45.3835
+        },
+        "perspective_order_median": 3,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 18,
+          "p2": 1,
+          "p3": 41,
+          "n": 60
+        },
+        "asks_per_scene": 4.283,
+        "rejected_per_scene": 4.433,
+        "snap_engaged": 192,
+        "snap_queried": 272
+      },
+      "truth_vps": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 60,
+          "n": 60,
+          "rate": 1
+        },
+        "placement": {
+          "k": 530,
+          "n": 530,
+          "rate": 1,
+          "of_all": {
+            "k": 530,
+            "n": 720,
+            "rate": 0.7361
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 158,
+            "n": 530,
+            "rate": 0.2981
+          },
+          "cut_0_2": {
+            "k": 92,
+            "n": 530,
+            "rate": 0.1736
+          },
+          "cut_0_5": {
+            "k": 20,
+            "n": 530,
+            "rate": 0.0377
+          }
+        },
+        "shape_err_median": {
+          "n": 60,
+          "min": 0.011,
+          "p10": 0.0158,
+          "median": 0.0539,
+          "p90": 0.3086,
+          "max": 0.5395
+        },
+        "shape_err_p90": {
+          "n": 60,
+          "min": 0.016,
+          "p10": 0.034,
+          "median": 0.1055,
+          "p90": 0.5286,
+          "max": 1.1415
+        },
+        "axis_dir_err_deg": {
+          "n": 180,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "perspective_order_median": null,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 0,
+          "p2": 0,
+          "p3": 0,
+          "n": 0
+        },
+        "asks_per_scene": 0,
+        "rejected_per_scene": 0,
+        "snap_engaged": 0,
+        "snap_queried": 0
+      }
+    },
+    "3pt_yaw50_pitch8": {
+      "rule_drawn": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 52,
+          "n": 60,
+          "rate": 0.8667
+        },
+        "placement": {
+          "k": 30,
+          "n": 38,
+          "rate": 0.7895,
+          "of_all": {
+            "k": 30,
+            "n": 720,
+            "rate": 0.0417
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 30,
+            "n": 30,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 30,
+            "n": 30,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 30,
+            "n": 30,
+            "rate": 1
+          }
+        },
+        "shape_err_median": {
+          "n": 7,
+          "min": 1.1853,
+          "p10": 1.3021,
+          "median": 1.6781,
+          "p90": 2.0238,
+          "max": 2.0889
+        },
+        "shape_err_p90": {
+          "n": 7,
+          "min": 1.1853,
+          "p10": 1.7345,
+          "median": 1.9711,
+          "p90": 2.1363,
+          "max": 2.4408
+        },
+        "axis_dir_err_deg": {
+          "n": 65,
+          "min": 13.2268,
+          "p10": 25.7141,
+          "median": 40.66,
+          "p90": 40.8016,
+          "max": 46.1513
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 44,
+          "p2": 6,
+          "p3": 10,
+          "n": 60
+        },
+        "asks_per_scene": 1.717,
+        "rejected_per_scene": 2.75,
+        "snap_engaged": 174,
+        "snap_queried": 236
+      },
+      "rule_grouped": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 52,
+          "n": 60,
+          "rate": 0.8667
+        },
+        "placement": {
+          "k": 9,
+          "n": 9,
+          "rate": 1,
+          "of_all": {
+            "k": 9,
+            "n": 720,
+            "rate": 0.0125
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 9,
+            "n": 9,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 9,
+            "n": 9,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 9,
+            "n": 9,
+            "rate": 1
+          }
+        },
+        "shape_err_median": {
+          "n": 2,
+          "min": 1.7992,
+          "p10": 1.7992,
+          "median": 2.0357,
+          "p90": 2.2723,
+          "max": 2.2723
+        },
+        "shape_err_p90": {
+          "n": 2,
+          "min": 2.0402,
+          "p10": 2.0402,
+          "median": 2.1892,
+          "p90": 2.3381,
+          "max": 2.3381
+        },
+        "axis_dir_err_deg": {
+          "n": 55,
+          "min": 5.9439,
+          "p10": 40.66,
+          "median": 40.66,
+          "p90": 40.66,
+          "max": 51.0353
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 50,
+          "p2": 2,
+          "p3": 8,
+          "n": 60
+        },
+        "asks_per_scene": 1.633,
+        "rejected_per_scene": 2.933,
+        "snap_engaged": 79,
+        "snap_queried": 149
+      },
+      "rule_wide_pair": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 52,
+          "n": 60,
+          "rate": 0.8667
+        },
+        "placement": {
+          "k": 7,
+          "n": 7,
+          "rate": 1,
+          "of_all": {
+            "k": 7,
+            "n": 720,
+            "rate": 0.0097
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 7,
+            "n": 7,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 7,
+            "n": 7,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 7,
+            "n": 7,
+            "rate": 1
+          }
+        },
+        "shape_err_median": {
+          "n": 1,
+          "min": 1.7992,
+          "p10": 1.7992,
+          "median": 1.7992,
+          "p90": 1.7992,
+          "max": 1.7992
+        },
+        "shape_err_p90": {
+          "n": 1,
+          "min": 2.0402,
+          "p10": 2.0402,
+          "median": 2.0402,
+          "p90": 2.0402,
+          "max": 2.0402
+        },
+        "axis_dir_err_deg": {
+          "n": 55,
+          "min": 7.376,
+          "p10": 40.66,
+          "median": 40.66,
+          "p90": 40.66,
+          "max": 51.0353
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 50,
+          "p2": 2,
+          "p3": 8,
+          "n": 60
+        },
+        "asks_per_scene": 1.633,
+        "rejected_per_scene": 2.917,
+        "snap_engaged": 72,
+        "snap_queried": 142
+      },
+      "rule_drawn_no_ortho_force": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 42,
+          "n": 60,
+          "rate": 0.7
+        },
+        "placement": {
+          "k": 51,
+          "n": 62,
+          "rate": 0.8226,
+          "of_all": {
+            "k": 51,
+            "n": 720,
+            "rate": 0.0708
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 51,
+            "n": 51,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 51,
+            "n": 51,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 51,
+            "n": 51,
+            "rate": 1
+          }
+        },
+        "shape_err_median": {
+          "n": 11,
+          "min": 1.0654,
+          "p10": 1.1853,
+          "median": 1.7384,
+          "p90": 2.0889,
+          "max": 2.3215
+        },
+        "shape_err_p90": {
+          "n": 11,
+          "min": 1.1853,
+          "p10": 1.2234,
+          "median": 2.025,
+          "p90": 2.4408,
+          "max": 2.578
+        },
+        "axis_dir_err_deg": {
+          "n": 61,
+          "min": 3.7944,
+          "p10": 13.8811,
+          "median": 40.66,
+          "p90": 41.5123,
+          "max": 46.1513
+        },
+        "perspective_order_median": 1.5,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 30,
+          "p2": 16,
+          "p3": 14,
+          "n": 60
+        },
+        "asks_per_scene": 2.167,
+        "rejected_per_scene": 3.15,
+        "snap_engaged": 209,
+        "snap_queried": 272
+      },
+      "truth_vps": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 60,
+          "n": 60,
+          "rate": 1
+        },
+        "placement": {
+          "k": 643,
+          "n": 643,
+          "rate": 1,
+          "of_all": {
+            "k": 643,
+            "n": 720,
+            "rate": 0.8931
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 375,
+            "n": 643,
+            "rate": 0.5832
+          },
+          "cut_0_2": {
+            "k": 233,
+            "n": 643,
+            "rate": 0.3624
+          },
+          "cut_0_5": {
+            "k": 26,
+            "n": 643,
+            "rate": 0.0404
+          }
+        },
+        "shape_err_median": {
+          "n": 60,
+          "min": 0.0114,
+          "p10": 0.066,
+          "median": 0.1069,
+          "p90": 0.3434,
+          "max": 0.8406
+        },
+        "shape_err_p90": {
+          "n": 60,
+          "min": 0.021,
+          "p10": 0.141,
+          "median": 0.2705,
+          "p90": 0.5332,
+          "max": 0.9278
+        },
+        "axis_dir_err_deg": {
+          "n": 180,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "perspective_order_median": null,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 0,
+          "p2": 0,
+          "p3": 0,
+          "n": 0
+        },
+        "asks_per_scene": 0,
+        "rejected_per_scene": 0,
+        "snap_engaged": 0,
+        "snap_queried": 0
+      }
+    },
+    "2pt_yaw35_pitch0": {
+      "rule_drawn": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 57,
+          "n": 60,
+          "rate": 0.95
+        },
+        "placement": {
+          "k": 236,
+          "n": 286,
+          "rate": 0.8252,
+          "of_all": {
+            "k": 236,
+            "n": 720,
+            "rate": 0.3278
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 236,
+            "n": 236,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 236,
+            "n": 236,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 235,
+            "n": 236,
+            "rate": 0.9958
+          }
+        },
+        "shape_err_median": {
+          "n": 57,
+          "min": 0.6959,
+          "p10": 1.0869,
+          "median": 2.1776,
+          "p90": 3.7532,
+          "max": 4.1907
+        },
+        "shape_err_p90": {
+          "n": 57,
+          "min": 0.6959,
+          "p10": 1.3037,
+          "median": 2.354,
+          "p90": 4.0448,
+          "max": 4.3617
+        },
+        "axis_dir_err_deg": {
+          "n": 62,
+          "min": 13.9957,
+          "p10": 30.5924,
+          "median": 35,
+          "p90": 35,
+          "max": 38.0621
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 52,
+          "p2": 8,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 2.683,
+        "rejected_per_scene": 1.767,
+        "snap_engaged": 155,
+        "snap_queried": 209
+      },
+      "rule_grouped": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 59,
+          "n": 60,
+          "rate": 0.9833
+        },
+        "placement": {
+          "k": 295,
+          "n": 310,
+          "rate": 0.9516,
+          "of_all": {
+            "k": 295,
+            "n": 720,
+            "rate": 0.4097
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 294,
+            "n": 295,
+            "rate": 0.9966
+          },
+          "cut_0_2": {
+            "k": 284,
+            "n": 295,
+            "rate": 0.9627
+          },
+          "cut_0_5": {
+            "k": 236,
+            "n": 295,
+            "rate": 0.8
+          }
+        },
+        "shape_err_median": {
+          "n": 59,
+          "min": 0.1939,
+          "p10": 0.6959,
+          "median": 2.472,
+          "p90": 4.0519,
+          "max": 4.2501
+        },
+        "shape_err_p90": {
+          "n": 59,
+          "min": 0.3821,
+          "p10": 0.7006,
+          "median": 2.6547,
+          "p90": 4.1,
+          "max": 4.272
+        },
+        "axis_dir_err_deg": {
+          "n": 67,
+          "min": 3.6389,
+          "p10": 10.7701,
+          "median": 35,
+          "p90": 35,
+          "max": 35
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 51,
+          "p2": 9,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 2.75,
+        "rejected_per_scene": 2.433,
+        "snap_engaged": 82,
+        "snap_queried": 137
+      },
+      "rule_wide_pair": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 58,
+          "n": 60,
+          "rate": 0.9667
+        },
+        "placement": {
+          "k": 255,
+          "n": 275,
+          "rate": 0.9273,
+          "of_all": {
+            "k": 255,
+            "n": 720,
+            "rate": 0.3542
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 255,
+            "n": 255,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 254,
+            "n": 255,
+            "rate": 0.9961
+          },
+          "cut_0_5": {
+            "k": 245,
+            "n": 255,
+            "rate": 0.9608
+          }
+        },
+        "shape_err_median": {
+          "n": 58,
+          "min": 0.3613,
+          "p10": 1.2882,
+          "median": 2.5479,
+          "p90": 4.0826,
+          "max": 4.2501
+        },
+        "shape_err_p90": {
+          "n": 58,
+          "min": 0.6212,
+          "p10": 1.5178,
+          "median": 2.6964,
+          "p90": 4.1,
+          "max": 4.4733
+        },
+        "axis_dir_err_deg": {
+          "n": 61,
+          "min": 10.1484,
+          "p10": 35,
+          "median": 35,
+          "p90": 35,
+          "max": 52.3348
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 55,
+          "p2": 5,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 2.75,
+        "rejected_per_scene": 2.567,
+        "snap_engaged": 73,
+        "snap_queried": 128
+      },
+      "rule_drawn_no_ortho_force": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 54,
+          "n": 60,
+          "rate": 0.9
+        },
+        "placement": {
+          "k": 235,
+          "n": 271,
+          "rate": 0.8672,
+          "of_all": {
+            "k": 235,
+            "n": 720,
+            "rate": 0.3264
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 235,
+            "n": 235,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 235,
+            "n": 235,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 234,
+            "n": 235,
+            "rate": 0.9957
+          }
+        },
+        "shape_err_median": {
+          "n": 54,
+          "min": 0.6959,
+          "p10": 0.7486,
+          "median": 2.2334,
+          "p90": 3.7532,
+          "max": 4.1907
+        },
+        "shape_err_p90": {
+          "n": 54,
+          "min": 0.6959,
+          "p10": 0.7486,
+          "median": 2.3315,
+          "p90": 4.0448,
+          "max": 4.215
+        },
+        "axis_dir_err_deg": {
+          "n": 61,
+          "min": 7.7059,
+          "p10": 23.5952,
+          "median": 35,
+          "p90": 35,
+          "max": 38.0621
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 47,
+          "p2": 13,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 2.85,
+        "rejected_per_scene": 1.817,
+        "snap_engaged": 170,
+        "snap_queried": 224
+      },
+      "truth_vps": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 60,
+          "n": 60,
+          "rate": 1
+        },
+        "placement": {
+          "k": 717,
+          "n": 717,
+          "rate": 1,
+          "of_all": {
+            "k": 717,
+            "n": 720,
+            "rate": 0.9958
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 507,
+            "n": 717,
+            "rate": 0.7071
+          },
+          "cut_0_2": {
+            "k": 261,
+            "n": 717,
+            "rate": 0.364
+          },
+          "cut_0_5": {
+            "k": 4,
+            "n": 717,
+            "rate": 0.0056
+          }
+        },
+        "shape_err_median": {
+          "n": 60,
+          "min": 0.0875,
+          "p10": 0.0952,
+          "median": 0.1421,
+          "p90": 0.2317,
+          "max": 0.3604
+        },
+        "shape_err_p90": {
+          "n": 60,
+          "min": 0.1986,
+          "p10": 0.2294,
+          "median": 0.2638,
+          "p90": 0.3681,
+          "max": 0.4629
+        },
+        "axis_dir_err_deg": {
+          "n": 120,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "perspective_order_median": null,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 0,
+          "p2": 0,
+          "p3": 0,
+          "n": 0
+        },
+        "asks_per_scene": 0,
+        "rejected_per_scene": 0,
+        "snap_engaged": 0,
+        "snap_queried": 0
+      }
+    },
+    "1pt_yaw0_pitch0": {
+      "rule_drawn": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 55,
+          "n": 60,
+          "rate": 0.9167
+        },
+        "placement": {
+          "k": 630,
+          "n": 639,
+          "rate": 0.9859,
+          "of_all": {
+            "k": 630,
+            "n": 720,
+            "rate": 0.875
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 586,
+            "n": 630,
+            "rate": 0.9302
+          },
+          "cut_0_2": {
+            "k": 545,
+            "n": 630,
+            "rate": 0.8651
+          },
+          "cut_0_5": {
+            "k": 211,
+            "n": 630,
+            "rate": 0.3349
+          }
+        },
+        "shape_err_median": {
+          "n": 55,
+          "min": 0.2904,
+          "p10": 0.3321,
+          "median": 0.3868,
+          "p90": 1.086,
+          "max": 3.532
+        },
+        "shape_err_p90": {
+          "n": 55,
+          "min": 0.3819,
+          "p10": 0.3908,
+          "median": 0.4673,
+          "p90": 1.2171,
+          "max": 3.5912
+        },
+        "axis_dir_err_deg": {
+          "n": 55,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 60,
+          "p2": 0,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 1.667,
+        "rejected_per_scene": 2.4,
+        "snap_engaged": 58,
+        "snap_queried": 66
+      },
+      "rule_grouped": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 55,
+          "n": 60,
+          "rate": 0.9167
+        },
+        "placement": {
+          "k": 642,
+          "n": 648,
+          "rate": 0.9907,
+          "of_all": {
+            "k": 642,
+            "n": 720,
+            "rate": 0.8917
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 598,
+            "n": 642,
+            "rate": 0.9315
+          },
+          "cut_0_2": {
+            "k": 549,
+            "n": 642,
+            "rate": 0.8551
+          },
+          "cut_0_5": {
+            "k": 219,
+            "n": 642,
+            "rate": 0.3411
+          }
+        },
+        "shape_err_median": {
+          "n": 55,
+          "min": 0.2863,
+          "p10": 0.3275,
+          "median": 0.3825,
+          "p90": 1.6874,
+          "max": 3.532
+        },
+        "shape_err_p90": {
+          "n": 55,
+          "min": 0.3819,
+          "p10": 0.3908,
+          "median": 0.4673,
+          "p90": 2.1011,
+          "max": 3.5912
+        },
+        "axis_dir_err_deg": {
+          "n": 55,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 60,
+          "p2": 0,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 1.667,
+        "rejected_per_scene": 2.383,
+        "snap_engaged": 54,
+        "snap_queried": 62
+      },
+      "rule_wide_pair": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 51,
+          "n": 60,
+          "rate": 0.85
+        },
+        "placement": {
+          "k": 583,
+          "n": 586,
+          "rate": 0.9949,
+          "of_all": {
+            "k": 583,
+            "n": 720,
+            "rate": 0.8097
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 543,
+            "n": 583,
+            "rate": 0.9314
+          },
+          "cut_0_2": {
+            "k": 500,
+            "n": 583,
+            "rate": 0.8576
+          },
+          "cut_0_5": {
+            "k": 174,
+            "n": 583,
+            "rate": 0.2985
+          }
+        },
+        "shape_err_median": {
+          "n": 51,
+          "min": 0.2863,
+          "p10": 0.3275,
+          "median": 0.3868,
+          "p90": 1.2323,
+          "max": 3.3976
+        },
+        "shape_err_p90": {
+          "n": 51,
+          "min": 0.3819,
+          "p10": 0.3908,
+          "median": 0.4721,
+          "p90": 1.4478,
+          "max": 3.4583
+        },
+        "axis_dir_err_deg": {
+          "n": 52,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 45.212
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 59,
+          "p2": 1,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 1.733,
+        "rejected_per_scene": 2.45,
+        "snap_engaged": 72,
+        "snap_queried": 162
+      },
+      "rule_drawn_no_ortho_force": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 55,
+          "n": 60,
+          "rate": 0.9167
+        },
+        "placement": {
+          "k": 630,
+          "n": 639,
+          "rate": 0.9859,
+          "of_all": {
+            "k": 630,
+            "n": 720,
+            "rate": 0.875
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 586,
+            "n": 630,
+            "rate": 0.9302
+          },
+          "cut_0_2": {
+            "k": 545,
+            "n": 630,
+            "rate": 0.8651
+          },
+          "cut_0_5": {
+            "k": 211,
+            "n": 630,
+            "rate": 0.3349
+          }
+        },
+        "shape_err_median": {
+          "n": 55,
+          "min": 0.2904,
+          "p10": 0.3321,
+          "median": 0.3868,
+          "p90": 1.086,
+          "max": 3.532
+        },
+        "shape_err_p90": {
+          "n": 55,
+          "min": 0.3819,
+          "p10": 0.3908,
+          "median": 0.4673,
+          "p90": 1.2171,
+          "max": 3.5912
+        },
+        "axis_dir_err_deg": {
+          "n": 55,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 60,
+          "p2": 0,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 1.683,
+        "rejected_per_scene": 2.4,
+        "snap_engaged": 58,
+        "snap_queried": 66
+      },
+      "truth_vps": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 60,
+          "n": 60,
+          "rate": 1
+        },
+        "placement": {
+          "k": 707,
+          "n": 708,
+          "rate": 0.9986,
+          "of_all": {
+            "k": 707,
+            "n": 720,
+            "rate": 0.9819
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 615,
+            "n": 707,
+            "rate": 0.8699
+          },
+          "cut_0_2": {
+            "k": 544,
+            "n": 707,
+            "rate": 0.7694
+          },
+          "cut_0_5": {
+            "k": 55,
+            "n": 707,
+            "rate": 0.0778
+          }
+        },
+        "shape_err_median": {
+          "n": 60,
+          "min": 0.1963,
+          "p10": 0.3178,
+          "median": 0.3515,
+          "p90": 0.4013,
+          "max": 0.8294
+        },
+        "shape_err_p90": {
+          "n": 60,
+          "min": 0.3676,
+          "p10": 0.3868,
+          "median": 0.4143,
+          "p90": 0.6287,
+          "max": 1.1439
+        },
+        "axis_dir_err_deg": {
+          "n": 60,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "perspective_order_median": null,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 0,
+          "p2": 0,
+          "p3": 0,
+          "n": 0
+        },
+        "asks_per_scene": 0,
+        "rejected_per_scene": 0,
+        "snap_engaged": 0,
+        "snap_queried": 0
+      }
+    }
+  },
+  "by_jitter": {
+    "jit_0": {
+      "rule_drawn": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 60,
+          "n": 60,
+          "rate": 1
+        },
+        "placement": {
+          "k": 184,
+          "n": 192,
+          "rate": 0.9583,
+          "of_all": {
+            "k": 184,
+            "n": 720,
+            "rate": 0.2556
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 158,
+            "n": 184,
+            "rate": 0.8587
+          },
+          "cut_0_2": {
+            "k": 146,
+            "n": 184,
+            "rate": 0.7935
+          },
+          "cut_0_5": {
+            "k": 42,
+            "n": 184,
+            "rate": 0.2283
+          }
+        },
+        "shape_err_median": {
+          "n": 24,
+          "min": 0.3161,
+          "p10": 0.3275,
+          "median": 0.5466,
+          "p90": 3.5092,
+          "max": 4.0519
+        },
+        "shape_err_p90": {
+          "n": 24,
+          "min": 0.3819,
+          "p10": 0.3869,
+          "median": 0.6036,
+          "p90": 4.0081,
+          "max": 4.2011
+        },
+        "axis_dir_err_deg": {
+          "n": 60,
+          "min": 0,
+          "p10": 0,
+          "median": 35,
+          "p90": 40.66,
+          "max": 40.66
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 60,
+          "p2": 0,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 1.767,
+        "rejected_per_scene": 1.817,
+        "snap_engaged": 153,
+        "snap_queried": 201
+      },
+      "rule_grouped": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 60,
+          "n": 60,
+          "rate": 1
+        },
+        "placement": {
+          "k": 189,
+          "n": 192,
+          "rate": 0.9844,
+          "of_all": {
+            "k": 189,
+            "n": 720,
+            "rate": 0.2625
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 163,
+            "n": 189,
+            "rate": 0.8624
+          },
+          "cut_0_2": {
+            "k": 151,
+            "n": 189,
+            "rate": 0.7989
+          },
+          "cut_0_5": {
+            "k": 47,
+            "n": 189,
+            "rate": 0.2487
+          }
+        },
+        "shape_err_median": {
+          "n": 24,
+          "min": 0.3161,
+          "p10": 0.3275,
+          "median": 0.5393,
+          "p90": 4.0519,
+          "max": 4.1845
+        },
+        "shape_err_p90": {
+          "n": 24,
+          "min": 0.3819,
+          "p10": 0.3869,
+          "median": 0.5963,
+          "p90": 4.0699,
+          "max": 4.2081
+        },
+        "axis_dir_err_deg": {
+          "n": 60,
+          "min": 0,
+          "p10": 0,
+          "median": 35,
+          "p90": 40.66,
+          "max": 40.66
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 60,
+          "p2": 0,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 1.6,
+        "rejected_per_scene": 2.717,
+        "snap_engaged": 59,
+        "snap_queried": 107
+      },
+      "rule_wide_pair": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 60,
+          "n": 60,
+          "rate": 1
+        },
+        "placement": {
+          "k": 189,
+          "n": 192,
+          "rate": 0.9844,
+          "of_all": {
+            "k": 189,
+            "n": 720,
+            "rate": 0.2625
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 163,
+            "n": 189,
+            "rate": 0.8624
+          },
+          "cut_0_2": {
+            "k": 151,
+            "n": 189,
+            "rate": 0.7989
+          },
+          "cut_0_5": {
+            "k": 47,
+            "n": 189,
+            "rate": 0.2487
+          }
+        },
+        "shape_err_median": {
+          "n": 24,
+          "min": 0.3161,
+          "p10": 0.3275,
+          "median": 0.5393,
+          "p90": 4.0519,
+          "max": 4.1845
+        },
+        "shape_err_p90": {
+          "n": 24,
+          "min": 0.3819,
+          "p10": 0.3869,
+          "median": 0.5963,
+          "p90": 4.0699,
+          "max": 4.2081
+        },
+        "axis_dir_err_deg": {
+          "n": 60,
+          "min": 0,
+          "p10": 0,
+          "median": 35,
+          "p90": 40.66,
+          "max": 40.66
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 60,
+          "p2": 0,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 1.717,
+        "rejected_per_scene": 2.75,
+        "snap_engaged": 60,
+        "snap_queried": 132
+      },
+      "rule_drawn_no_ortho_force": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 57,
+          "n": 60,
+          "rate": 0.95
+        },
+        "placement": {
+          "k": 230,
+          "n": 254,
+          "rate": 0.9055,
+          "of_all": {
+            "k": 230,
+            "n": 720,
+            "rate": 0.3194
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 204,
+            "n": 230,
+            "rate": 0.887
+          },
+          "cut_0_2": {
+            "k": 192,
+            "n": 230,
+            "rate": 0.8348
+          },
+          "cut_0_5": {
+            "k": 88,
+            "n": 230,
+            "rate": 0.3826
+          }
+        },
+        "shape_err_median": {
+          "n": 30,
+          "min": 0.3161,
+          "p10": 0.3321,
+          "median": 0.9132,
+          "p90": 3.4486,
+          "max": 4.0519
+        },
+        "shape_err_p90": {
+          "n": 30,
+          "min": 0.3819,
+          "p10": 0.3892,
+          "median": 1.0904,
+          "p90": 3.5057,
+          "max": 4.2011
+        },
+        "axis_dir_err_deg": {
+          "n": 68,
+          "min": 0,
+          "p10": 0,
+          "median": 33.3042,
+          "p90": 40.66,
+          "max": 40.66
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 51,
+          "p2": 3,
+          "p3": 6,
+          "n": 60
+        },
+        "asks_per_scene": 2.05,
+        "rejected_per_scene": 2.033,
+        "snap_engaged": 166,
+        "snap_queried": 214
+      },
+      "truth_vps": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 60,
+          "n": 60,
+          "rate": 1
+        },
+        "placement": {
+          "k": 719,
+          "n": 719,
+          "rate": 1,
+          "of_all": {
+            "k": 719,
+            "n": 720,
+            "rate": 0.9986
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 271,
+            "n": 719,
+            "rate": 0.3769
+          },
+          "cut_0_2": {
+            "k": 165,
+            "n": 719,
+            "rate": 0.2295
+          },
+          "cut_0_5": {
+            "k": 1,
+            "n": 719,
+            "rate": 0.0014
+          }
+        },
+        "shape_err_median": {
+          "n": 60,
+          "min": 0.0084,
+          "p10": 0.0131,
+          "median": 0.0781,
+          "p90": 0.3515,
+          "max": 0.3701
+        },
+        "shape_err_p90": {
+          "n": 60,
+          "min": 0.016,
+          "p10": 0.0245,
+          "median": 0.2337,
+          "p90": 0.3932,
+          "max": 0.4838
+        },
+        "axis_dir_err_deg": {
+          "n": 144,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "perspective_order_median": null,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 0,
+          "p2": 0,
+          "p3": 0,
+          "n": 0
+        },
+        "asks_per_scene": 0,
+        "rejected_per_scene": 0,
+        "snap_engaged": 0,
+        "snap_queried": 0
+      }
+    },
+    "jit_0.005": {
+      "rule_drawn": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 59,
+          "n": 60,
+          "rate": 0.9833
+        },
+        "placement": {
+          "k": 174,
+          "n": 184,
+          "rate": 0.9457,
+          "of_all": {
+            "k": 174,
+            "n": 720,
+            "rate": 0.2417
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 160,
+            "n": 174,
+            "rate": 0.9195
+          },
+          "cut_0_2": {
+            "k": 147,
+            "n": 174,
+            "rate": 0.8448
+          },
+          "cut_0_5": {
+            "k": 45,
+            "n": 174,
+            "rate": 0.2586
+          }
+        },
+        "shape_err_median": {
+          "n": 24,
+          "min": 0.3246,
+          "p10": 0.3466,
+          "median": 0.7261,
+          "p90": 2.663,
+          "max": 4.0271
+        },
+        "shape_err_p90": {
+          "n": 24,
+          "min": 0.3898,
+          "p10": 0.4078,
+          "median": 0.7261,
+          "p90": 2.6901,
+          "max": 4.0448
+        },
+        "axis_dir_err_deg": {
+          "n": 60,
+          "min": 0,
+          "p10": 0,
+          "median": 35,
+          "p90": 40.66,
+          "max": 40.66
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 59,
+          "p2": 1,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 1.75,
+        "rejected_per_scene": 2.017,
+        "snap_engaged": 150,
+        "snap_queried": 199
+      },
+      "rule_grouped": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 59,
+          "n": 60,
+          "rate": 0.9833
+        },
+        "placement": {
+          "k": 177,
+          "n": 183,
+          "rate": 0.9672,
+          "of_all": {
+            "k": 177,
+            "n": 720,
+            "rate": 0.2458
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 160,
+            "n": 177,
+            "rate": 0.904
+          },
+          "cut_0_2": {
+            "k": 147,
+            "n": 177,
+            "rate": 0.8305
+          },
+          "cut_0_5": {
+            "k": 45,
+            "n": 177,
+            "rate": 0.2542
+          }
+        },
+        "shape_err_median": {
+          "n": 24,
+          "min": 0.0542,
+          "p10": 0.336,
+          "median": 0.5792,
+          "p90": 4.0271,
+          "max": 4.1717
+        },
+        "shape_err_p90": {
+          "n": 24,
+          "min": 0.0698,
+          "p10": 0.3961,
+          "median": 0.5968,
+          "p90": 4.0448,
+          "max": 4.1957
+        },
+        "axis_dir_err_deg": {
+          "n": 60,
+          "min": 0,
+          "p10": 0,
+          "median": 35,
+          "p90": 40.66,
+          "max": 40.66
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 59,
+          "p2": 1,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 1.567,
+        "rejected_per_scene": 2.617,
+        "snap_engaged": 61,
+        "snap_queried": 109
+      },
+      "rule_wide_pair": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 57,
+          "n": 60,
+          "rate": 0.95
+        },
+        "placement": {
+          "k": 150,
+          "n": 156,
+          "rate": 0.9615,
+          "of_all": {
+            "k": 150,
+            "n": 720,
+            "rate": 0.2083
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 138,
+            "n": 150,
+            "rate": 0.92
+          },
+          "cut_0_2": {
+            "k": 129,
+            "n": 150,
+            "rate": 0.86
+          },
+          "cut_0_5": {
+            "k": 44,
+            "n": 150,
+            "rate": 0.2933
+          }
+        },
+        "shape_err_median": {
+          "n": 21,
+          "min": 0.3246,
+          "p10": 0.352,
+          "median": 0.7337,
+          "p90": 4.0271,
+          "max": 4.1717
+        },
+        "shape_err_p90": {
+          "n": 21,
+          "min": 0.3898,
+          "p10": 0.4078,
+          "median": 0.7337,
+          "p90": 4.0448,
+          "max": 4.1957
+        },
+        "axis_dir_err_deg": {
+          "n": 57,
+          "min": 0,
+          "p10": 0,
+          "median": 35,
+          "p90": 40.66,
+          "max": 40.66
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 60,
+          "p2": 0,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 1.567,
+        "rejected_per_scene": 2.633,
+        "snap_engaged": 59,
+        "snap_queried": 125
+      },
+      "rule_drawn_no_ortho_force": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 56,
+          "n": 60,
+          "rate": 0.9333
+        },
+        "placement": {
+          "k": 241,
+          "n": 273,
+          "rate": 0.8828,
+          "of_all": {
+            "k": 241,
+            "n": 720,
+            "rate": 0.3347
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 227,
+            "n": 241,
+            "rate": 0.9419
+          },
+          "cut_0_2": {
+            "k": 214,
+            "n": 241,
+            "rate": 0.888
+          },
+          "cut_0_5": {
+            "k": 112,
+            "n": 241,
+            "rate": 0.4647
+          }
+        },
+        "shape_err_median": {
+          "n": 34,
+          "min": 0.3246,
+          "p10": 0.3503,
+          "median": 0.9948,
+          "p90": 2.4799,
+          "max": 4.0271
+        },
+        "shape_err_p90": {
+          "n": 34,
+          "min": 0.3898,
+          "p10": 0.4087,
+          "median": 1.2907,
+          "p90": 2.4929,
+          "max": 4.0448
+        },
+        "axis_dir_err_deg": {
+          "n": 74,
+          "min": 0,
+          "p10": 0,
+          "median": 30.5792,
+          "p90": 40.66,
+          "max": 47.5533
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 46,
+          "p2": 7,
+          "p3": 7,
+          "n": 60
+        },
+        "asks_per_scene": 2.067,
+        "rejected_per_scene": 2.367,
+        "snap_engaged": 169,
+        "snap_queried": 218
+      },
+      "truth_vps": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 60,
+          "n": 60,
+          "rate": 1
+        },
+        "placement": {
+          "k": 716,
+          "n": 716,
+          "rate": 1,
+          "of_all": {
+            "k": 716,
+            "n": 720,
+            "rate": 0.9944
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 301,
+            "n": 716,
+            "rate": 0.4204
+          },
+          "cut_0_2": {
+            "k": 206,
+            "n": 716,
+            "rate": 0.2877
+          },
+          "cut_0_5": {
+            "k": 3,
+            "n": 716,
+            "rate": 0.0042
+          }
+        },
+        "shape_err_median": {
+          "n": 60,
+          "min": 0.01,
+          "p10": 0.0167,
+          "median": 0.0965,
+          "p90": 0.3465,
+          "max": 0.3681
+        },
+        "shape_err_p90": {
+          "n": 60,
+          "min": 0.0206,
+          "p10": 0.0336,
+          "median": 0.2471,
+          "p90": 0.4064,
+          "max": 0.5855
+        },
+        "axis_dir_err_deg": {
+          "n": 144,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "perspective_order_median": null,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 0,
+          "p2": 0,
+          "p3": 0,
+          "n": 0
+        },
+        "asks_per_scene": 0,
+        "rejected_per_scene": 0,
+        "snap_engaged": 0,
+        "snap_queried": 0
+      }
+    },
+    "jit_0.01": {
+      "rule_drawn": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 52,
+          "n": 60,
+          "rate": 0.8667
+        },
+        "placement": {
+          "k": 178,
+          "n": 187,
+          "rate": 0.9519,
+          "of_all": {
+            "k": 178,
+            "n": 720,
+            "rate": 0.2472
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 174,
+            "n": 178,
+            "rate": 0.9775
+          },
+          "cut_0_2": {
+            "k": 158,
+            "n": 178,
+            "rate": 0.8876
+          },
+          "cut_0_5": {
+            "k": 86,
+            "n": 178,
+            "rate": 0.4831
+          }
+        },
+        "shape_err_median": {
+          "n": 25,
+          "min": 0.2904,
+          "p10": 0.3499,
+          "median": 1.4835,
+          "p90": 2.5218,
+          "max": 3.4391
+        },
+        "shape_err_p90": {
+          "n": 25,
+          "min": 0.3958,
+          "p10": 0.4097,
+          "median": 1.5696,
+          "p90": 2.5523,
+          "max": 3.4884
+        },
+        "axis_dir_err_deg": {
+          "n": 56,
+          "min": 0,
+          "p10": 0,
+          "median": 35,
+          "p90": 40.66,
+          "max": 44.1476
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 51,
+          "p2": 7,
+          "p3": 2,
+          "n": 60
+        },
+        "asks_per_scene": 2.317,
+        "rejected_per_scene": 2.533,
+        "snap_engaged": 151,
+        "snap_queried": 202
+      },
+      "rule_grouped": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 58,
+          "n": 60,
+          "rate": 0.9667
+        },
+        "placement": {
+          "k": 202,
+          "n": 208,
+          "rate": 0.9712,
+          "of_all": {
+            "k": 202,
+            "n": 720,
+            "rate": 0.2806
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 189,
+            "n": 202,
+            "rate": 0.9356
+          },
+          "cut_0_2": {
+            "k": 166,
+            "n": 202,
+            "rate": 0.8218
+          },
+          "cut_0_5": {
+            "k": 92,
+            "n": 202,
+            "rate": 0.4554
+          }
+        },
+        "shape_err_median": {
+          "n": 29,
+          "min": 0.0566,
+          "p10": 0.172,
+          "median": 0.592,
+          "p90": 3.4391,
+          "max": 4.2501
+        },
+        "shape_err_p90": {
+          "n": 29,
+          "min": 0.0614,
+          "p10": 0.1735,
+          "median": 0.6959,
+          "p90": 3.7462,
+          "max": 4.272
+        },
+        "axis_dir_err_deg": {
+          "n": 67,
+          "min": 0,
+          "p10": 0,
+          "median": 31.6083,
+          "p90": 40.66,
+          "max": 40.66
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 53,
+          "p2": 5,
+          "p3": 2,
+          "n": 60
+        },
+        "asks_per_scene": 2.083,
+        "rejected_per_scene": 2.467,
+        "snap_engaged": 81,
+        "snap_queried": 129
+      },
+      "rule_wide_pair": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 57,
+          "n": 60,
+          "rate": 0.95
+        },
+        "placement": {
+          "k": 158,
+          "n": 162,
+          "rate": 0.9753,
+          "of_all": {
+            "k": 158,
+            "n": 720,
+            "rate": 0.2194
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 152,
+            "n": 158,
+            "rate": 0.962
+          },
+          "cut_0_2": {
+            "k": 136,
+            "n": 158,
+            "rate": 0.8608
+          },
+          "cut_0_5": {
+            "k": 72,
+            "n": 158,
+            "rate": 0.4557
+          }
+        },
+        "shape_err_median": {
+          "n": 23,
+          "min": 0.0626,
+          "p10": 0.2904,
+          "median": 0.9245,
+          "p90": 3.9431,
+          "max": 4.2501
+        },
+        "shape_err_p90": {
+          "n": 23,
+          "min": 0.0684,
+          "p10": 0.4057,
+          "median": 0.9694,
+          "p90": 3.9648,
+          "max": 4.272
+        },
+        "axis_dir_err_deg": {
+          "n": 59,
+          "min": 0,
+          "p10": 0,
+          "median": 35,
+          "p90": 40.66,
+          "max": 40.66
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 58,
+          "p2": 2,
+          "p3": 0,
+          "n": 60
+        },
+        "asks_per_scene": 2.1,
+        "rejected_per_scene": 2.717,
+        "snap_engaged": 66,
+        "snap_queried": 128
+      },
+      "rule_drawn_no_ortho_force": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 47,
+          "n": 60,
+          "rate": 0.7833
+        },
+        "placement": {
+          "k": 263,
+          "n": 302,
+          "rate": 0.8709,
+          "of_all": {
+            "k": 263,
+            "n": 720,
+            "rate": 0.3653
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 259,
+            "n": 263,
+            "rate": 0.9848
+          },
+          "cut_0_2": {
+            "k": 243,
+            "n": 263,
+            "rate": 0.924
+          },
+          "cut_0_5": {
+            "k": 169,
+            "n": 263,
+            "rate": 0.6426
+          }
+        },
+        "shape_err_median": {
+          "n": 36,
+          "min": 0.2904,
+          "p10": 0.3868,
+          "median": 1.3243,
+          "p90": 2.5217,
+          "max": 3.4391
+        },
+        "shape_err_p90": {
+          "n": 36,
+          "min": 0.3958,
+          "p10": 0.446,
+          "median": 1.5747,
+          "p90": 2.5309,
+          "max": 3.4884
+        },
+        "axis_dir_err_deg": {
+          "n": 72,
+          "min": 0,
+          "p10": 0,
+          "median": 11.2028,
+          "p90": 40.66,
+          "max": 44.1476
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 35,
+          "p2": 12,
+          "p3": 13,
+          "n": 60
+        },
+        "asks_per_scene": 2.883,
+        "rejected_per_scene": 2.917,
+        "snap_engaged": 182,
+        "snap_queried": 233
+      },
+      "truth_vps": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 60,
+          "n": 60,
+          "rate": 1
+        },
+        "placement": {
+          "k": 710,
+          "n": 710,
+          "rate": 1,
+          "of_all": {
+            "k": 710,
+            "n": 720,
+            "rate": 0.9861
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 336,
+            "n": 710,
+            "rate": 0.4732
+          },
+          "cut_0_2": {
+            "k": 203,
+            "n": 710,
+            "rate": 0.2859
+          },
+          "cut_0_5": {
+            "k": 1,
+            "n": 710,
+            "rate": 0.0014
+          }
+        },
+        "shape_err_median": {
+          "n": 60,
+          "min": 0.0198,
+          "p10": 0.0252,
+          "median": 0.1,
+          "p90": 0.3505,
+          "max": 0.3884
+        },
+        "shape_err_p90": {
+          "n": 60,
+          "min": 0.0284,
+          "p10": 0.0435,
+          "median": 0.2443,
+          "p90": 0.4134,
+          "max": 0.4828
+        },
+        "axis_dir_err_deg": {
+          "n": 144,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "perspective_order_median": null,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 0,
+          "p2": 0,
+          "p3": 0,
+          "n": 0
+        },
+        "asks_per_scene": 0,
+        "rejected_per_scene": 0,
+        "snap_engaged": 0,
+        "snap_queried": 0
+      }
+    },
+    "jit_0.03": {
+      "rule_drawn": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 43,
+          "n": 60,
+          "rate": 0.7167
+        },
+        "placement": {
+          "k": 189,
+          "n": 223,
+          "rate": 0.8475,
+          "of_all": {
+            "k": 189,
+            "n": 720,
+            "rate": 0.2625
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 189,
+            "n": 189,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 189,
+            "n": 189,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 155,
+            "n": 189,
+            "rate": 0.8201
+          }
+        },
+        "shape_err_median": {
+          "n": 25,
+          "min": 0.3423,
+          "p10": 0.4129,
+          "median": 1.3325,
+          "p90": 3.7532,
+          "max": 4.1907
+        },
+        "shape_err_p90": {
+          "n": 25,
+          "min": 0.4385,
+          "p10": 0.7135,
+          "median": 1.7185,
+          "p90": 4.1318,
+          "max": 4.3617
+        },
+        "axis_dir_err_deg": {
+          "n": 55,
+          "min": 0,
+          "p10": 0,
+          "median": 31.6083,
+          "p90": 40.66,
+          "max": 46.1513
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 36,
+          "p2": 13,
+          "p3": 11,
+          "n": 60
+        },
+        "asks_per_scene": 3.183,
+        "rejected_per_scene": 3.517,
+        "snap_engaged": 143,
+        "snap_queried": 201
+      },
+      "rule_grouped": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 53,
+          "n": 60,
+          "rate": 0.8833
+        },
+        "placement": {
+          "k": 203,
+          "n": 208,
+          "rate": 0.976,
+          "of_all": {
+            "k": 203,
+            "n": 720,
+            "rate": 0.2819
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 202,
+            "n": 203,
+            "rate": 0.9951
+          },
+          "cut_0_2": {
+            "k": 193,
+            "n": 203,
+            "rate": 0.9507
+          },
+          "cut_0_5": {
+            "k": 126,
+            "n": 203,
+            "rate": 0.6207
+          }
+        },
+        "shape_err_median": {
+          "n": 24,
+          "min": 0.1939,
+          "p10": 0.3548,
+          "median": 0.8911,
+          "p90": 3.2686,
+          "max": 3.532
+        },
+        "shape_err_p90": {
+          "n": 24,
+          "min": 0.3821,
+          "p10": 0.4385,
+          "median": 0.9654,
+          "p90": 3.5912,
+          "max": 3.7312
+        },
+        "axis_dir_err_deg": {
+          "n": 61,
+          "min": 0,
+          "p10": 0,
+          "median": 31.6083,
+          "p90": 40.66,
+          "max": 40.66
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 48,
+          "p2": 8,
+          "p3": 4,
+          "n": 60
+        },
+        "asks_per_scene": 2.867,
+        "rejected_per_scene": 3.417,
+        "snap_engaged": 85,
+        "snap_queried": 144
+      },
+      "rule_wide_pair": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 52,
+          "n": 60,
+          "rate": 0.8667
+        },
+        "placement": {
+          "k": 177,
+          "n": 186,
+          "rate": 0.9516,
+          "of_all": {
+            "k": 177,
+            "n": 720,
+            "rate": 0.2458
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 177,
+            "n": 177,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 177,
+            "n": 177,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 113,
+            "n": 177,
+            "rate": 0.6384
+          }
+        },
+        "shape_err_median": {
+          "n": 23,
+          "min": 0.3158,
+          "p10": 0.4129,
+          "median": 1.8015,
+          "p90": 3.3976,
+          "max": 4.1237
+        },
+        "shape_err_p90": {
+          "n": 23,
+          "min": 0.328,
+          "p10": 0.4405,
+          "median": 1.886,
+          "p90": 3.7312,
+          "max": 4.4733
+        },
+        "axis_dir_err_deg": {
+          "n": 55,
+          "min": 0,
+          "p10": 0,
+          "median": 35,
+          "p90": 40.66,
+          "max": 52.3348
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 51,
+          "p2": 4,
+          "p3": 5,
+          "n": 60
+        },
+        "asks_per_scene": 2.933,
+        "rejected_per_scene": 3.4,
+        "snap_engaged": 81,
+        "snap_queried": 150
+      },
+      "rule_drawn_no_ortho_force": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 36,
+          "n": 60,
+          "rate": 0.6
+        },
+        "placement": {
+          "k": 211,
+          "n": 253,
+          "rate": 0.834,
+          "of_all": {
+            "k": 211,
+            "n": 720,
+            "rate": 0.2931
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 211,
+            "n": 211,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 211,
+            "n": 211,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 177,
+            "n": 211,
+            "rate": 0.8389
+          }
+        },
+        "shape_err_median": {
+          "n": 30,
+          "min": 0.3423,
+          "p10": 0.8764,
+          "median": 1.3173,
+          "p90": 2.7782,
+          "max": 4.1907
+        },
+        "shape_err_p90": {
+          "n": 30,
+          "min": 0.4385,
+          "p10": 0.9588,
+          "median": 1.7248,
+          "p90": 3.2276,
+          "max": 4.215
+        },
+        "axis_dir_err_deg": {
+          "n": 61,
+          "min": 0,
+          "p10": 0,
+          "median": 23.755,
+          "p90": 40.6619,
+          "max": 46.1513
+        },
+        "perspective_order_median": 2,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 22,
+          "p2": 16,
+          "p3": 22,
+          "n": 60
+        },
+        "asks_per_scene": 3.65,
+        "rejected_per_scene": 3.683,
+        "snap_engaged": 170,
+        "snap_queried": 228
+      },
+      "truth_vps": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 60,
+          "n": 60,
+          "rate": 1
+        },
+        "placement": {
+          "k": 592,
+          "n": 592,
+          "rate": 1,
+          "of_all": {
+            "k": 592,
+            "n": 720,
+            "rate": 0.8222
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 482,
+            "n": 592,
+            "rate": 0.8142
+          },
+          "cut_0_2": {
+            "k": 347,
+            "n": 592,
+            "rate": 0.5861
+          },
+          "cut_0_5": {
+            "k": 51,
+            "n": 592,
+            "rate": 0.0861
+          }
+        },
+        "shape_err_median": {
+          "n": 60,
+          "min": 0.048,
+          "p10": 0.0602,
+          "median": 0.2347,
+          "p90": 0.3879,
+          "max": 0.8294
+        },
+        "shape_err_p90": {
+          "n": 60,
+          "min": 0.061,
+          "p10": 0.1143,
+          "median": 0.4138,
+          "p90": 0.567,
+          "max": 1.1439
+        },
+        "axis_dir_err_deg": {
+          "n": 144,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "perspective_order_median": null,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 0,
+          "p2": 0,
+          "p3": 0,
+          "n": 0
+        },
+        "asks_per_scene": 0,
+        "rejected_per_scene": 0,
+        "snap_engaged": 0,
+        "snap_queried": 0
+      }
+    },
+    "jit_0.05": {
+      "rule_drawn": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 46,
+          "n": 60,
+          "rate": 0.7667
+        },
+        "placement": {
+          "k": 207,
+          "n": 235,
+          "rate": 0.8809,
+          "of_all": {
+            "k": 207,
+            "n": 720,
+            "rate": 0.2875
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 207,
+            "n": 207,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 207,
+            "n": 207,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 184,
+            "n": 207,
+            "rate": 0.8889
+          }
+        },
+        "shape_err_median": {
+          "n": 30,
+          "min": 0.3964,
+          "p10": 0.5817,
+          "median": 1.6273,
+          "p90": 2.9982,
+          "max": 4.052
+        },
+        "shape_err_p90": {
+          "n": 30,
+          "min": 0.5119,
+          "p10": 0.7327,
+          "median": 1.6771,
+          "p90": 3.4838,
+          "max": 4.1001
+        },
+        "axis_dir_err_deg": {
+          "n": 62,
+          "min": 0,
+          "p10": 0,
+          "median": 31.6083,
+          "p90": 40.66,
+          "max": 45.3835
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 37,
+          "p2": 3,
+          "p3": 20,
+          "n": 60
+        },
+        "asks_per_scene": 2.983,
+        "rejected_per_scene": 4.383,
+        "snap_engaged": 121,
+        "snap_queried": 177
+      },
+      "rule_grouped": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 50,
+          "n": 60,
+          "rate": 0.8333
+        },
+        "placement": {
+          "k": 239,
+          "n": 241,
+          "rate": 0.9917,
+          "of_all": {
+            "k": 239,
+            "n": 720,
+            "rate": 0.3319
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 239,
+            "n": 239,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 230,
+            "n": 239,
+            "rate": 0.9623
+          },
+          "cut_0_5": {
+            "k": 194,
+            "n": 239,
+            "rate": 0.8117
+          }
+        },
+        "shape_err_median": {
+          "n": 28,
+          "min": 0.2863,
+          "p10": 0.3613,
+          "median": 1.3285,
+          "p90": 2.7651,
+          "max": 3.5025
+        },
+        "shape_err_p90": {
+          "n": 28,
+          "min": 0.4451,
+          "p10": 0.6331,
+          "median": 1.6845,
+          "p90": 2.9479,
+          "max": 3.7914
+        },
+        "axis_dir_err_deg": {
+          "n": 62,
+          "min": 0,
+          "p10": 0,
+          "median": 31.6083,
+          "p90": 40.5561,
+          "max": 51.0353
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 42,
+          "p2": 4,
+          "p3": 14,
+          "n": 60
+        },
+        "asks_per_scene": 2.833,
+        "rejected_per_scene": 4.367,
+        "snap_engaged": 92,
+        "snap_queried": 153
+      },
+      "rule_wide_pair": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 48,
+          "n": 60,
+          "rate": 0.8
+        },
+        "placement": {
+          "k": 194,
+          "n": 195,
+          "rate": 0.9949,
+          "of_all": {
+            "k": 194,
+            "n": 720,
+            "rate": 0.2694
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 194,
+            "n": 194,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 185,
+            "n": 194,
+            "rate": 0.9536
+          },
+          "cut_0_5": {
+            "k": 163,
+            "n": 194,
+            "rate": 0.8402
+          }
+        },
+        "shape_err_median": {
+          "n": 26,
+          "min": 0.2863,
+          "p10": 0.5416,
+          "median": 1.3266,
+          "p90": 2.8232,
+          "max": 3.8664
+        },
+        "shape_err_p90": {
+          "n": 26,
+          "min": 0.6212,
+          "p10": 0.6637,
+          "median": 1.6273,
+          "p90": 2.9479,
+          "max": 3.9023
+        },
+        "axis_dir_err_deg": {
+          "n": 57,
+          "min": 0,
+          "p10": 0,
+          "median": 35,
+          "p90": 40.66,
+          "max": 51.0353
+        },
+        "perspective_order_median": 1,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 43,
+          "p2": 5,
+          "p3": 12,
+          "n": 60
+        },
+        "asks_per_scene": 2.833,
+        "rejected_per_scene": 4.5,
+        "snap_engaged": 91,
+        "snap_queried": 163
+      },
+      "rule_drawn_no_ortho_force": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 42,
+          "n": 60,
+          "rate": 0.7
+        },
+        "placement": {
+          "k": 230,
+          "n": 260,
+          "rate": 0.8846,
+          "of_all": {
+            "k": 230,
+            "n": 720,
+            "rate": 0.3194
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 230,
+            "n": 230,
+            "rate": 1
+          },
+          "cut_0_2": {
+            "k": 230,
+            "n": 230,
+            "rate": 1
+          },
+          "cut_0_5": {
+            "k": 207,
+            "n": 230,
+            "rate": 0.9
+          }
+        },
+        "shape_err_median": {
+          "n": 33,
+          "min": 0.3964,
+          "p10": 0.5817,
+          "median": 1.6066,
+          "p90": 2.9982,
+          "max": 4.052
+        },
+        "shape_err_p90": {
+          "n": 33,
+          "min": 0.5119,
+          "p10": 0.7327,
+          "median": 1.7345,
+          "p90": 3.4838,
+          "max": 4.1001
+        },
+        "axis_dir_err_deg": {
+          "n": 68,
+          "min": 0,
+          "p10": 0,
+          "median": 24.0324,
+          "p90": 39.3622,
+          "max": 45.3835
+        },
+        "perspective_order_median": 2,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 27,
+          "p2": 6,
+          "p3": 27,
+          "n": 60
+        },
+        "asks_per_scene": 3.383,
+        "rejected_per_scene": 4.367,
+        "snap_engaged": 143,
+        "snap_queried": 200
+      },
+      "truth_vps": {
+        "scenes": 60,
+        "camera_ok": {
+          "k": 60,
+          "n": 60,
+          "rate": 1
+        },
+        "placement": {
+          "k": 479,
+          "n": 480,
+          "rate": 0.9979,
+          "of_all": {
+            "k": 479,
+            "n": 720,
+            "rate": 0.6653
+          }
+        },
+        "silent_wrong": {
+          "cut_0_1": {
+            "k": 438,
+            "n": 479,
+            "rate": 0.9144
+          },
+          "cut_0_2": {
+            "k": 298,
+            "n": 479,
+            "rate": 0.6221
+          },
+          "cut_0_5": {
+            "k": 62,
+            "n": 479,
+            "rate": 0.1294
+          }
+        },
+        "shape_err_median": {
+          "n": 60,
+          "min": 0.0396,
+          "p10": 0.1012,
+          "median": 0.2307,
+          "p90": 0.4199,
+          "max": 0.8406
+        },
+        "shape_err_p90": {
+          "n": 60,
+          "min": 0.0409,
+          "p10": 0.1254,
+          "median": 0.417,
+          "p90": 0.6429,
+          "max": 1.1415
+        },
+        "axis_dir_err_deg": {
+          "n": 144,
+          "min": 0,
+          "p10": 0,
+          "median": 0,
+          "p90": 0,
+          "max": 0
+        },
+        "perspective_order_median": null,
+        "perspective_order_hist": {
+          "p0": 0,
+          "p1": 0,
+          "p2": 0,
+          "p3": 0,
+          "n": 0
+        },
+        "asks_per_scene": 0,
+        "rejected_per_scene": 0,
+        "snap_engaged": 0,
+        "snap_queried": 0
+      }
+    }
+  },
+  "selfcheck_flag_origins": {
+    "truth_vps.axis_dir_err_deg = 0 (분포 전체)": "**보장이다**(#5). 참 소실점을 넣었으므로 복원 축 방향이 참 축과 같다 — 측정이 아니다. 그래서 이 팔은 **대역**으로만 쓰고 `reachability_value`에는 안 적는다(#40 ①).",
+    "truth_vps.camera_ok.rate = 1 / placement.rate = 1": "**보장에 가깝다** — 참 소실점은 항상 유효한 카메라를 내고(예각 조건 만족) 배치도 거의 다 붙는다. 대역이 대역답다는 확인이지 성능 주장이 아니다.",
+    "rule_* .silent_wrong.cut_*.rate = 1 (여러 구도)": "**측정이다 — 그리고 이 게이트가 실패한 이유 그 자체다.** 3점 구도에서 규칙이 P1에 갇히면 배치가 **전부** 절단을 넘는다. 1.0이 자명해서가 아니라 **정말로 전부 틀려서**다 (같은 픽스처의 `truth_vps`가 같은 자리에서 1.0이 아닌 것이 그 대조다).",
+    "rule_drawn_no_ortho_force.perspective_order_hist.p0 = 0": "**정상이다.** p0(카메라 미확정)은 이 픽스처에서 안 난다 — 상자 열두 모서리면 규칙이 적어도 1차수는 세운다. 0인 것은 집계 미작동이 아니라 그 사건이 없다는 뜻이고, **같은 히스토그램의 p1/p2/p3가 0이 아닌 것**이 집계가 도는 증거다(#38).",
+    "how.p1_f_ratio = 1": "**상수다**(`camState.P1_F_RATIO` = 1.0 → 화각 약 53°). 1점 투시의 f는 임의값이고(D-L53) 이 값은 앱과 같은 기본 렌즈다 — 비율 지표가 아니다."
+  },
+  "what_this_does_not_say": [
+    "**스냅이 획 좌표를 옮긴 효과는 안 잰다.** 두 팔이 같은 원시 `pts2d`를 올리므로 차이가 카메라 하나로 좁혀진다 — 그것이 이 게이트가 재려는 양이지만, 앱에서는 스냅된 좌표가 문서에 남는다(그 몫은 `rule_camera`의 위약 팔과 다음 실획 표본이 본다)",
+    "**축 라벨은 참값이다** — 검출·판정의 오배정은 안 섞었다(카메라 경로만 보려는 것). 오배정은 `misassign`·`lift_gate`가 본다",
+    "**물음에 참 축으로 답했다**(오라클). 사람이 틀리게 답하는 경우는 이 원장 밖이다 — `asks_per_scene`이 그 노출량이다",
+    "**사람이 `wide_pair` 순서로 긋는다는 것은 측정하지 않았다**(#2 — 도달 가능성 팔은 순서 오라클이다). 실획 표본 0이 그대로다(AS-C1)",
+    "**`camera_gate`의 통과/실패와 같은 수가 아니다** — 대역이 다른 팔이고 경로가 다르다. 두 게이트를 합산해 하나의 '통과'로 읽지 않는다(#41)",
+    "**여전히 전수가 아니다**: 이 원장도 `liftAll` 뒤의 UI 경로(뷰 복원·궤도 렌즈·3D 오스냅)는 안 지난다. 그쪽 변경은 이 원장도 안 움직인다 — 부동을 안전으로 읽지 않는다(#43)"
+  ],
+  "constants": {
+    "hash": "509615a1",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "vertical_ask_deg": 45,
+        "min_vp_len_ratio": 0.04
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "a45078a5",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong",
+      "rate",
+      "fraction"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  }
+}

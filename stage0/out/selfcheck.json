@@ -1,5 +1,5 @@
 {
-  "n_flags": 2037,
+  "n_flags": 2154,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -6280,6 +6280,591 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "rule_gate.json:headline.truth_vps.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=720) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw35_pitch15.truth_vps.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=180) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.truth_vps.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=180) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.truth_vps.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=180) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.2pt_yaw35_pitch0.truth_vps.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=120) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.1pt_yaw0_pitch0.rule_drawn.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=55) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.1pt_yaw0_pitch0.rule_grouped.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=55) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.1pt_yaw0_pitch0.rule_drawn_no_ortho_force.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=55) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.1pt_yaw0_pitch0.truth_vps.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=60) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.truth_vps.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=144) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.005.truth_vps.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=144) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.01.truth_vps.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=144) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.03.truth_vps.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=144) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.05.truth_vps.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=144) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "rule_gate.json:how.p1_f_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:headline.rule_drawn_no_ortho_force.perspective_order_hist.p0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:headline.truth_vps.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:headline.truth_vps.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw35_pitch15.rule_drawn.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw35_pitch15.rule_drawn.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw35_pitch15.rule_drawn.silent_wrong.cut_0_5.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw35_pitch15.rule_grouped.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw35_pitch15.rule_wide_pair.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw35_pitch15.rule_drawn_no_ortho_force.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw35_pitch15.rule_drawn_no_ortho_force.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw35_pitch15.rule_drawn_no_ortho_force.perspective_order_hist.p0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw35_pitch15.truth_vps.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw35_pitch15.truth_vps.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw35_pitch15.truth_vps.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.rule_drawn.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.rule_drawn.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.rule_drawn.silent_wrong.cut_0_5.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.rule_grouped.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.rule_grouped.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.rule_grouped.silent_wrong.cut_0_5.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.rule_wide_pair.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.rule_wide_pair.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.rule_wide_pair.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.rule_wide_pair.silent_wrong.cut_0_5.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.rule_drawn_no_ortho_force.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.rule_drawn_no_ortho_force.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.rule_drawn_no_ortho_force.perspective_order_hist.p0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.truth_vps.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.truth_vps.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw20_pitch25.truth_vps.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_drawn.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_drawn.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_drawn.silent_wrong.cut_0_5.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_grouped.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_grouped.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_grouped.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_grouped.silent_wrong.cut_0_5.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_wide_pair.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_wide_pair.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_wide_pair.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_wide_pair.silent_wrong.cut_0_5.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_drawn_no_ortho_force.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_drawn_no_ortho_force.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_drawn_no_ortho_force.silent_wrong.cut_0_5.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.rule_drawn_no_ortho_force.perspective_order_hist.p0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.truth_vps.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.truth_vps.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.3pt_yaw50_pitch8.truth_vps.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.2pt_yaw35_pitch0.rule_drawn.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.2pt_yaw35_pitch0.rule_drawn.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.2pt_yaw35_pitch0.rule_wide_pair.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.2pt_yaw35_pitch0.rule_drawn_no_ortho_force.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.2pt_yaw35_pitch0.rule_drawn_no_ortho_force.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.2pt_yaw35_pitch0.rule_drawn_no_ortho_force.perspective_order_hist.p0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:by_composition.2pt_yaw35_pitch0.rule_drawn_no_ortho_force.perspective_order_hist.p3",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:by_composition.2pt_yaw35_pitch0.truth_vps.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.2pt_yaw35_pitch0.truth_vps.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.2pt_yaw35_pitch0.truth_vps.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.1pt_yaw0_pitch0.rule_drawn.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.1pt_yaw0_pitch0.rule_grouped.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.1pt_yaw0_pitch0.rule_wide_pair.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.1pt_yaw0_pitch0.rule_drawn_no_ortho_force.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.1pt_yaw0_pitch0.rule_drawn_no_ortho_force.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:by_composition.1pt_yaw0_pitch0.rule_drawn_no_ortho_force.perspective_order_hist.p0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:by_composition.1pt_yaw0_pitch0.rule_drawn_no_ortho_force.perspective_order_hist.p2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:by_composition.1pt_yaw0_pitch0.rule_drawn_no_ortho_force.perspective_order_hist.p3",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:by_composition.1pt_yaw0_pitch0.truth_vps.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_composition.1pt_yaw0_pitch0.truth_vps.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.rule_drawn.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.rule_grouped.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.rule_wide_pair.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.rule_drawn_no_ortho_force.perspective_order_hist.p0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.truth_vps.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.truth_vps.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.truth_vps.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.005.rule_drawn_no_ortho_force.perspective_order_hist.p0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.005.truth_vps.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.005.truth_vps.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.005.truth_vps.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.01.rule_drawn_no_ortho_force.perspective_order_hist.p0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.01.truth_vps.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.01.truth_vps.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.01.truth_vps.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.03.rule_drawn.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.03.rule_drawn.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.03.rule_wide_pair.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.03.rule_wide_pair.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.03.rule_drawn_no_ortho_force.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.03.rule_drawn_no_ortho_force.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.03.rule_drawn_no_ortho_force.perspective_order_hist.p0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.03.truth_vps.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.03.truth_vps.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.03.truth_vps.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.05.rule_drawn.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.05.rule_drawn.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.05.rule_grouped.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.05.rule_wide_pair.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.05.rule_drawn_no_ortho_force.silent_wrong.cut_0_1.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.05.rule_drawn_no_ortho_force.silent_wrong.cut_0_2.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.05.rule_drawn_no_ortho_force.perspective_order_hist.p0",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.05.truth_vps.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "rule_gate.json:by_jitter.jit_0.05.truth_vps.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
       "path": "segment_gate.json:by_cross_tol.tol_0.015_sup_2.first_view.silent_wrong_rate_of_placed",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -10261,7 +10846,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 196,
+      "files_scanned": 198,
       "exts_declared": [
         ".md",
         ".py",
@@ -10275,17 +10860,17 @@
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 131,
+      "files_scanned": 133,
       "exts_declared": [
         ".ts"
       ],
       "hits_by_ext": {
-        ".ts": 14
+        ".ts": 15
       }
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 196,
+      "files_scanned": 198,
       "exts_declared": [
         ".md",
         ".py",
@@ -10294,12 +10879,12 @@
       "hits_by_ext": {
         ".md": 10,
         ".py": 4,
-        ".ts": 46
+        ".ts": 48
       }
     },
     {
       "sweep": "external_data",
-      "files_scanned": 89,
+      "files_scanned": 91,
       "exts_declared": [
         ".ts"
       ],
@@ -10333,14 +10918,14 @@
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 34,
+      "targets": 35,
       "hits": 1,
-      "note": "값 대조를 **지난 것 9** · **면제 25**(`reachability_absent`) · 원장 66개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, elevation_flow.json:gate, horizon.json:gate, one_point_direct.json:gate, order_signal.json:gate, restore_pose.json:gate, snap_cache.json:gate / 면제: coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "note": "값 대조를 **지난 것 10** · **면제 25**(`reachability_absent`) · 원장 67개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, elevation_flow.json:gate, horizon.json:gate, one_point_direct.json:gate, order_signal.json:gate, restore_pose.json:gate, rule_gate.json:gate, snap_cache.json:gate / 면제: coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
       "unit": "하네스 파일",
-      "targets": 43,
+      "targets": 44,
       "hits": 11,
       "note": "원장을 쓰는 `web/test/**.ts`만 본다"
     }
@@ -10393,6 +10978,7 @@
     "rel_snap_flow.json",
     "restore_pose.json",
     "rule_camera.json",
+    "rule_gate.json",
     "segment_gate.json",
     "snap.json",
     "snap2d_flow.json",
