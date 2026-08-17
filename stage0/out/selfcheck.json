@@ -14663,6 +14663,13 @@
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
     {
+      "scan": "scan_cited_values",
+      "unit": "수치",
+      "targets": 96,
+      "hits": 0,
+      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다"
+    },
+    {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
       "targets": 38,

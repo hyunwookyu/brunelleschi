@@ -206,3 +206,95 @@ def test_stray_progress_quiet_when_only_root(tmp_path):
     """루트의 것만 있으면 **조용해야 한다** — 늘 우는 검사는 안 읽힌다."""
     (tmp_path / "progress.md").write_text("정본", encoding="utf-8")
     assert selfcheck.scan_stray_progress(tmp_path) == []
+
+
+# ---------------------------------------------------------------- #42 ⑥ 존재 대조
+# `scan_cited_values` — 인용한 수치가 원장에 **실재하는가**(2026-08-18 8차 지시 1-c).
+# 되살리는 버그: 6차의 "합성 400구도에서 각차 399 · 거리 400"이 **어느 원장에도 없었고**
+# 그것으로 설계가 뒤집혔다(7-R [①-a]·#25). 옛 검사는 해시만 봤으므로 안 걸렸다.
+
+def _reports(ledgers, hash_="54346ad1"):
+    """`{이름: 원장}` — 전부 같은 상수 해시를 든다(현재 해시로 인용된 줄만 대상이다).
+
+    ⚠ **키는 확장자를 포함한다**(`rule.json`) — `reports`의 실제 규약이 그렇고,
+    안 맞추면 인용이 하나도 안 풀려 **덮는 대상 0**으로 조용히 지나간다(#32).
+    """
+    return {n: dict(v, constants={"hash": hash_}) for n, v in ledgers.items()}
+
+
+def test_cited_values_fires_when_no_number_is_in_the_ledger(tmp_path):
+    """원장에 **하나도 없는** 수치로 주장하면 걸려야 한다 — 되살린 그 버그다."""
+    (tmp_path / "d.md").write_text(
+        "근거: `rule.json@54346ad1` 합성 400구도에서 각차 399 · 거리 400", encoding="utf-8")
+    flags = selfcheck.scan_cited_values(tmp_path, _reports({"rule.json": {"deg_median": 31.6083}}))
+    assert any("하나도 없다" in f["flag"] for f in flags), flags
+
+
+def test_cited_values_quiet_when_one_number_is_anchored(tmp_path):
+    """원장 값이 **하나라도** 있으면 조용해야 한다 — 유도값(합·비)까지 울면 안 읽힌다.
+
+    실측으로 정한 규칙이다: 수치별로 세니 1129 중 **272**가 걸렸고(24%) 대부분이
+    `938`(= 720 + 218)·`0.493`(= 938/1904) 같은 **산문의 산술**이었다(#38·#32).
+    """
+    (tmp_path / "d.md").write_text(
+        "`p.json@54346ad1`: 1회차 720 뒤 추가 218로 938(0.493)", encoding="utf-8")
+    assert selfcheck.scan_cited_values(tmp_path, _reports({"p.json": {"first": 720}})) == \
+        [f for f in selfcheck.scan_cited_values(tmp_path, _reports({"p.json": {"first": 720}}))
+         if f["path"] == "selfcheck:scan_cited_values"]
+
+
+def test_cited_values_counts_ledgers_named_without_a_hash(tmp_path):
+    """한 줄이 여러 원장을 인용한다 — 해시 없이 이름만 적힌 것도 대조 대상이다."""
+    (tmp_path / "d.md").write_text(
+        "`a.json@54346ad1`의 대역에서 가이드는 607.6px다(`b.json`)", encoding="utf-8")
+    flags = selfcheck.scan_cited_values(tmp_path, _reports({"a.json": {"x": 1}, "b.json": {"guide": 607.6}}))
+    assert not any("하나도 없다" in f["flag"] for f in flags), flags
+
+
+def test_cited_values_skips_history_lines(tmp_path):
+    """`git show <sha>:` 줄은 **과거 원장**의 기록이다 — 현재 원장을 주장하지 않는다."""
+    (tmp_path / "d.md").write_text(
+        "옛 값 2.521은 `git show d724ac0:stage0/out/r.json`에 있다 — `r.json@54346ad1`",
+        encoding="utf-8")
+    flags = selfcheck.scan_cited_values(tmp_path, _reports({"r.json": {"now": 2.367}}))
+    assert not any("하나도 없다" in f["flag"] for f in flags), flags
+
+
+def test_cited_values_ignores_reference_numbers(tmp_path):
+    """`#42`·`D-L70`·`§9.1`·연도는 수치가 아니다 — 그것만 있는 줄은 셈에서 빠진다."""
+    (tmp_path / "d.md").write_text(
+        "`r.json@54346ad1`(#42 · D-L70 · AS-L13 · §9.1 · 2026-08-18)", encoding="utf-8")
+    flags = selfcheck.scan_cited_values(tmp_path, _reports({"r.json": {"v": 9.99}}))
+    assert not any("하나도 없다" in f["flag"] for f in flags), flags
+
+
+def test_cited_values_rounds_to_the_documents_precision(tmp_path):
+    """원장 6자리 ↔ 문서 4자리. 반올림이 같은 값이면 실재로 친다."""
+    (tmp_path / "d.md").write_text("`r.json@54346ad1` 중앙 31.6083", encoding="utf-8")
+    flags = selfcheck.scan_cited_values(tmp_path, _reports({"r.json": {"deg": 31.60829999}}))
+    assert not any("하나도 없다" in f["flag"] for f in flags), flags
+
+
+def test_cited_values_ignores_stale_hash_lines(tmp_path):
+    """낡은 해시 줄은 `scan_citation_hashes`가 잡는다 — 두 번 세지 않는다."""
+    (tmp_path / "d.md").write_text("`r.json@509615a1` 각차 399", encoding="utf-8")
+    flags = selfcheck.scan_cited_values(tmp_path, _reports({"r.json": {"deg": 31.6083}}))
+    assert not any("하나도 없다" in f["flag"] for f in flags), flags
+
+
+def test_cited_values_flags_zero_coverage(tmp_path):
+    """덮는 대상이 0이면 **그 자체가 플래그**다(#38·#32) — 안 돈 것을 깨끗함으로 읽지 않는다.
+
+    이 검사가 실제로 그 함정에 빠졌다: `reports`의 키가 `rule.json`인데 `rule`로 찾아
+    인용이 하나도 안 풀렸고, **플래그 0건**이 나왔다. 이 팔이 그것을 잡는다.
+    """
+    (tmp_path / "d.md").write_text("인용 없는 산문 12345", encoding="utf-8")
+    flags = selfcheck.scan_cited_values(tmp_path, _reports({"r.json": {"deg": 31.6083}}))
+    assert any("덮는 대상이 0" in f["flag"] for f in flags), flags
+
+
+def test_cited_values_counts_what_it_covers(tmp_path):
+    """덮는 대상이 있으면 조용하다 — 늘 우는 검사는 안 읽힌다."""
+    (tmp_path / "d.md").write_text("`r.json@54346ad1` 31.6083", encoding="utf-8")
+    flags = selfcheck.scan_cited_values(tmp_path, _reports({"r.json": {"deg": 31.6083}}))
+    assert flags == [], flags

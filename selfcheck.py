@@ -561,6 +561,131 @@ def _resolve(root, dotted: str):
     return node
 
 
+def scan_cited_values(root: Path, reports: dict[str, dict]) -> list[dict]:
+    """**인용한 수치가 그 원장에 실재하는가**(PITFALLS #42 ⑥ · 2026-08-18 8차 지시 1-c).
+
+    `scan_citation_hashes`는 **해시만** 본다. 그래서 **원장에 아예 없는 수치**를 적어도
+    한 번도 안 걸렸다 — 6차의 "합성 400구도에서 각차 399 · 거리 400"이 **어느 원장에도
+    없었고 그것으로 설계가 뒤집혔다**(7-R [①-a] · #25). 옛 검사의 `unresolved`는
+    **원장 이름**이 없을 때만 걸었지 **수치의 존재**는 안 봤다.
+
+    규칙: `원장.json@해시`가 **현재 해시로** 적힌 줄은 **그 원장에 대한 현재 주장**이다.
+    그 줄의 수치가 그 원장 어디에도 없으면 플래그한다.
+
+    ⚠⚠ **줄 단위로 센다 — 수치 하나하나가 아니다.** 처음에 수치별로 짰더니
+    **1129 중 272가 걸렸다**(24%). 전부 거짓이 아니라 **이 저장소의 산문이 원장 값으로
+    산술을 하기 때문**이다: `938`(= 720 + 218) · `0.493`(= 938/1904) · `5.2배` 같은
+    **유도값은 원장에 문자로 없다.** 그 홍수는 안 읽히고, 안 읽히는 검사는 `#38`·`#32`의
+    바로 그 자리다.
+
+    그래서 판정을 바꿨다: **그 줄의 수치가 하나도 원장에 없을 때만** 플래그한다.
+    유도값은 거의 언제나 **원장에 그대로 있는 값 옆에** 붙으므로, "**하나도 안 걸린다**"는
+    것이 곧 **그 인용이 원장에 안 닿아 있다**는 서명이다 — 잡으려는 그 형태다
+    (6차의 "각차 399 · 거리 400"은 어느 원장에도 없었고, 그 줄에 원장 값이 **하나도** 없었다).
+
+    ⚠ 뺀 것과 사유:
+      · **낡은 해시로 적힌 줄** — 그것은 `scan_citation_hashes`가 이미 잡는다(두 번 세지 않는다)
+      · **참조 번호**(`#42` · `D-L70` · `AS-L13` · `§9.1` · `[3-1]` · 연도 2026) — 수치가 아니다
+      · **정수 0~3** — 개수·차수·항목 번호로 산문에 흔하고 원장에도 흔해 판별력이 없다
+      · **역사 기록**(`git show <sha>:`가 같은 줄에 있으면 그 줄은 과거 원장의 인용이다)
+      · **해시 없이 이름만 적힌 원장**(`` `stage_browser.json` ``)도 **대조 대상에 넣는다** —
+        한 줄이 여러 원장을 인용하는 것이 이 저장소의 상례다
+    남는 것은 **소수·큰 정수**, 즉 측정값의 꼴이다.
+
+    ⚠ **안 잡는 것**: 줄에 원장 값이 하나라도 있으면 **나머지 수치의 낡음은 안 본다.**
+    그것은 여전히 사람이 본다(#42 ⑥ — 원장을 재실행했으면 인용 문서를 전부 다시 읽는다).
+    """
+    import re
+    cur = {name: (rep.get("constants") or {}).get("hash")
+           for name, rep in reports.items()
+           if isinstance(rep.get("constants"), dict)}
+    cite = re.compile(r"([A-Za-z_0-9]+\.json)@([0-9a-f]{8})")
+    # 참조 번호를 **먼저 지운다** — 지우지 않으면 `#42`의 42가 수치로 잡힌다
+    ref = re.compile(r"(#\d+|D-[A-Z]+\d+|AS-[A-Z]*\d+|§[\d.]+|\[[\dA-Za-z\-·]+\]|20\d\d-\d\d-\d\d|20\d\d)")
+    num = re.compile(r"\d+(?:\.\d+)?(?:[eE][-+]?\d+)?")
+    bare = re.compile(r"[A-Za-z_0-9]+\.json")   # ⚠ `reports` 키는 **확장자를 포함한다**
+    SKIP = ("node_modules", "docs/archive", "stage0/out", "__pycache__", "dist",
+            "test-results", "tests/", "tests\\")
+
+    def literals(rep) -> set[str]:
+        """원장이 실제로 든 수치를 문자열 집합으로 편다(표기 차이를 흡수한다)."""
+        out: set[str] = set()
+
+        def walk(o):
+            if isinstance(o, dict):
+                for v in o.values():
+                    walk(v)
+            elif isinstance(o, list):
+                for v in o:
+                    walk(v)
+            elif isinstance(o, bool) or o is None:
+                pass
+            elif isinstance(o, (int, float)):
+                out.add(_norm_num(o))
+                for nd in range(0, 5):          # 원장 6자리 ↔ 문서 2~4자리 반올림
+                    out.add(_norm_num(round(float(o), nd)))
+            elif isinstance(o, str):
+                for m in num.findall(o):        # 원장 산문 안의 수치도 실재로 친다
+                    out.add(_norm_num(m))
+        walk(rep)
+        return out
+
+    flags, n_checked = [], 0
+    lits: dict[str, set[str]] = {}
+    for f in sorted(root.rglob("*")):
+        if not f.is_file() or f.suffix not in (".md", ".ts", ".py"):
+            continue
+        rel = str(f.relative_to(root)).replace("\\", "/")
+        if any(x in rel for x in SKIP):
+            continue
+        try:
+            txt = f.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        for i, line in enumerate(txt.splitlines(), 1):
+            hits = [(n, h) for n, h in cite.findall(line)
+                    if n in cur and cur[n] and h == cur[n]]
+            if not hits or "git show" in line:
+                continue
+            # 해시 없이 이름만 적힌 원장도 대조 대상에 넣는다(한 줄이 여럿을 인용한다)
+            names = {n for n, _ in hits}
+            names |= {n for n in bare.findall(line) if n in reports}
+            for n in names:
+                lits.setdefault(n, literals(reports[n]))
+            known: set[str] = set().union(*(lits[n] for n in names))
+            stripped = ref.sub(" ", cite.sub(" ", line))
+            toks = [t for t in num.findall(stripped)
+                    if _norm_num(t) is not None and not (t.isdigit() and int(t) <= 3)]
+            if not toks:
+                continue
+            n_checked += 1
+            if not any(_norm_num(t) in known for t in toks):
+                flags.append({
+                    "path": f"{rel}:{i}",
+                    "val": f"{len(toks)}개 전부 ∉ {'·'.join(sorted(names))}: "
+                           f"{', '.join(toks[:6])}",
+                    "flag": "**이 줄의 수치가 인용한 원장에 하나도 없다**(#42 ⑥ · #25) — "
+                            "그 인용은 원장에 안 닿아 있다. 원장을 다시 읽어 고치거나, "
+                            "과거 실행의 기록이면 `git show <sha>:` 꼴로 적는다"
+                            "(현재 원장을 인용한다고 주장하지 않는다)",
+                })
+    flags += _cover("scan_cited_values", "수치", n_checked, len(flags),
+                    note="현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 "
+                         "scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다")
+    return flags
+
+
+def _norm_num(x) -> str | None:
+    """`0.2450` · `0.245` · `2.45e-1`을 같은 문자열로 만든다. 못 읽으면 `None`."""
+    try:
+        f = float(x)
+    except (TypeError, ValueError):
+        return None
+    if f != f or f in (float("inf"), float("-inf")):
+        return None
+    return f"{f:.10g}"
+
+
 def _gate_value_checks(node: dict, fname: str, path: str, report: dict) -> list[dict]:
     """**도달 가능성이 산문뿐이거나 자명한 값인지 본다**(PITFALLS #40, 2026-08-16 사람 지시).
 
@@ -759,6 +884,7 @@ def main():
     flags += scan_sweep_coverage(ROOT)             # #33 자동화: 전수 훑기의 확장자 커버리지
     flags += scan_stray_progress(ROOT)             # 루트 밖 progress.md (세 번째 재발)
     flags += scan_citation_hashes(ROOT, reports)   # #33 값 대조: 인용 해시 ↔ 원장 현재 해시
+    flags += scan_cited_values(ROOT, reports)  # #42 ⑥ 존재 대조: 인용한 수치가 원장에 있는가
     flags += scan_gate_reachability(reports)       # #35 자동화: 게이트에 도달 가능성 필드
     flags += scan_zero_denominator(ROOT)           # #36 자동화: 분모 0을 1로 바꾸는 나눗셈
 
