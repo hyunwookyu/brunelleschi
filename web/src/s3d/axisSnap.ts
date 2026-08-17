@@ -28,6 +28,7 @@
 import { closestPoints, rayThrough, project, add3, mul3, unit3, norm3, type Vec3 } from "./geom3d.js";
 import type { Pt2 } from "./camera.js";
 import { RULE_TOL, type RuleCfg } from "./vpRules.js";
+import { vpMisfit, AXIS_TOL, type Rep } from "./axis.js";
 
 // ---------------------------------------------------------------- 화면 직교 스냅 (A-2)
 
@@ -64,6 +65,59 @@ export function screenOrthoSnap(a: Pt2, b: Pt2, cfg: RuleCfg = {}): ScreenOrtho 
   if (toH <= c.screen_axis_deg) return { dir: "h", at: [b[0], a[1]], deg: toH };
   if (toV <= c.screen_axis_deg) return { dir: "v", at: [a[0], b[1]], deg: toV };
   return null;
+}
+
+// ---------------------------------------------------------------- 소실점 방향 스냅 (4차 지시 2)
+
+/**
+ * **소실점 방향 스냅 — 카메라가 서기 전에도 돈다**(2026-08-17 4차 지시 2).
+ *
+ * 소실점이 하나 잡혔으면 그 점을 향하는 방향은 이미 정해진 것이다. 소실점을 지나는 화면
+ * 직선은 그 축에 평행한 3D 직선의 상이므로(이론서 2장) **f가 없어도 화면에서 성립한다** —
+ * 그런데 축 스냅(`snapToAxis`)은 3D 앵커와 f를 요구해 카메라가 안 서면 통째로 안 돌았다.
+ * 공간이 생기면 이 선들이 평행선이 된다 — 나중에 축이 될 것을 미리 스냅하는 것이고 손해가 없다.
+ *
+ * ```
+ * 시작점 a → 소실점 V 를 잇는 직선에 끝점 b를 수직 투영한다 (직교 스냅과 같은 규약)
+ * "향한다"의 판정 = vpMisfit ≤ AXIS_TOL.vp_dist_ratio (지지선 판정과 같은 값, #17)
+ * 소실점이 여럿이면 각각 후보 — 투영 이동량이 가장 작은 것이 이긴다 (chooseAxis의 커서 규칙)
+ * ```
+ *
+ * ⚠ **축 스냅과 달리 임계가 있다**(화면 직교 스냅과 같은 이유): 여기서 "언제나 어느
+ * 소실점으로" 가면 두 번째 소실점을 만들 대각선을 못 긋는다. 임계 밖은 그대로 둔다.
+ */
+export interface VpDirSnap {
+  axis: 0 | 1 | 2;
+  /** 끝점의 스냅 위치 — a→V 직선 위로의 수직 투영. */
+  at: Pt2;
+  vp: Pt2;
+  /** 겨냥 부적합도(수직거리 ÷ 길이) — 스냅 **전**의 값이다(스냅 후는 정의상 0, #5). */
+  misfit: number;
+}
+
+export function vpDirSnap(
+  a: Pt2, b: Pt2, vps: (Pt2 | null)[], cfg: { vp_dist_ratio?: number } = {},
+): VpDirSnap | null {
+  const tol = cfg.vp_dist_ratio ?? AXIS_TOL.vp_dist_ratio;
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  if (len < 1e-9) return null;
+  const rep: Rep = { a, b, len, bend: 0 };
+  let best: VpDirSnap | null = null;
+  let bestMove = Infinity;
+  for (let i = 0; i < vps.length && i < 3; i++) {
+    const v = vps[i];
+    if (!v) continue;
+    const dx = v[0] - a[0], dy = v[1] - a[1];
+    const D = Math.hypot(dx, dy);
+    if (D < 1e-6) continue;                       // 시작점이 소실점 위다 — 방향이 없다
+    const m = vpMisfit(rep, v);
+    if (m > tol) continue;
+    const t = ((b[0] - a[0]) * dx + (b[1] - a[1]) * dy) / (D * D);
+    const at: Pt2 = [a[0] + t * dx, a[1] + t * dy];
+    const move = Math.hypot(at[0] - b[0], at[1] - b[1]);
+    if (move < bestMove) { bestMove = move; best = { axis: i as 0 | 1 | 2, at, vp: v, misfit: m }; }
+  }
+  return best;
 }
 
 /** 축 스냅의 임계. **`test/constants.ts`에 등록한다**(D-C4). */

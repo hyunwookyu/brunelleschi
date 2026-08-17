@@ -63,8 +63,7 @@
 ## 검증 현황 (마지막 커밋 기준)
 
 vitest **417 통과 · 1 건너뜀** · tsc·빌드 통과 · Playwright **29 통과 · 2 건너뜀** ·
-pytest **73** · selfcheck STALE 0 · 상수 해시 **509615a1** · 인용 **131건 플래그 0** ·
-게이트 블록 **16**. ⚠ 수를 인용하기 전에 `stage0/out/selfcheck.json`의 `coverage`를 그 자리에서
+pytest **73** · selfcheck STALE 0 · 상수 해시 **509615a1** · 인용·게이트 수는 **`selfcheck.json`의 `coverage`를 그 자리에서 읽는다**(여기 적혔던 131·16이 적힐 때 이미 낡은 수였다 — 4차 리뷰어 [11]·[A-ii]가 잡았다). ⚠ 수를 인용하기 전에 `stage0/out/selfcheck.json`의 `coverage`를 그 자리에서
 다시 읽는다. ⚠ 건너뜀: vitest `real_ink`(sessions 비어 있음 — **대기 원장에 K 지표 정의 있음**) ·
 Playwright `coords` dpr1 양성 채널·`stage` 하나.
 

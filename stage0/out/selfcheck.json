@@ -1,5 +1,5 @@
 {
-  "n_flags": 1835,
+  "n_flags": 1841,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -80,11 +80,6 @@
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_off__grouped.ambiguous_right",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "axis_snap.json:by_arm_order.placebo_wrong_horizon__drawn.silent_0_2_rate",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "axis_snap.json:by_ambiguous_deg.deg_0.ambiguous_fire_rate",
@@ -5440,17 +5435,12 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "rule_camera.json:by_jitter.jit_0.005.rule_drawn.camera_ok_rate",
+      "path": "rule_camera.json:by_jitter.jit_0.rule_grouped.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "rule_camera.json:by_composition.2pt_yaw35_pitch0.rule_drawn.camera_ok_rate",
-      "val": 1,
-      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "rule_camera.json:by_composition.1pt_yaw0_pitch0.rule_grouped.camera_ok_rate",
+      "path": "rule_camera.json:by_jitter.jit_0.rule_wide_pair.camera_ok_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -5539,6 +5529,16 @@
         "vertex": 15076
       },
       "flag": "단일 범주 분포(n=15076) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "snap2d_flow.json:thresholds.console_errors_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "snap2d_flow.json:snap.gap_px",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
       "path": "stage_browser.json:confirm.view_offset.offsetY",
@@ -6607,7 +6607,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 2.220446049250313e-15,
+      "val": 7.549516567451064e-15,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -8116,6 +8116,16 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "vp_dir_flow.json:thresholds.console_errors_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "vp_dir_flow.json:snap.misfit",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
       "path": "vp_homog.json:by_separation.sep_1deg.actual_sep_deg",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -8159,6 +8169,26 @@
       "path": "vp_homog.json:by_separation.sep_60deg.camera_solvable.after",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "vp_two_lines.json:thresholds.console_errors_max",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "vp_two_lines.json:fix.misfits[0]",
+      "val": 2.1058348326888175e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "vp_two_lines.json:fix.misfits[1]",
+      "val": 2.0380732121731793e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "vp_two_lines.json:grid.maxSin",
+      "val": 1.64200102402366e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "wobble_plane.json:judged.screen.no_anchor_rate",
@@ -9198,12 +9228,12 @@
     {
       "field": "id",
       "writes": 0,
-      "reads": 156
+      "reads": 164
     },
     {
       "field": "pts2d",
-      "writes": 5,
-      "reads": 79
+      "writes": 7,
+      "reads": 89
     },
     {
       "field": "pts3d",
@@ -9213,7 +9243,7 @@
     {
       "field": "axis",
       "writes": 6,
-      "reads": 66
+      "reads": 68
     },
     {
       "field": "rep",
@@ -9249,7 +9279,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 184,
+      "files_scanned": 187,
       "exts_declared": [
         ".md",
         ".py",
@@ -9258,12 +9288,12 @@
       "hits_by_ext": {
         ".md": 10,
         ".py": 2,
-        ".ts": 5
+        ".ts": 6
       }
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 120,
+      "files_scanned": 123,
       "exts_declared": [
         ".ts"
       ],
@@ -9273,7 +9303,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 184,
+      "files_scanned": 187,
       "exts_declared": [
         ".md",
         ".py",
@@ -9287,7 +9317,7 @@
     },
     {
       "sweep": "external_data",
-      "files_scanned": 80,
+      "files_scanned": 82,
       "exts_declared": [
         ".ts"
       ],
@@ -9314,16 +9344,16 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 126,
+      "targets": 128,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 16,
+      "targets": 19,
       "hits": 0,
-      "note": "값 대조를 **지난 것 7** · **면제 9**(`reachability_absent`) · 원장 48개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, eraser.json:gate, horizon.json:gate, order_signal.json:gate, osnap_config.json:gate / 면제: coords.json:gate, guide_budget.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, osnap.json:gate, preview_gap.json:gate, rule_camera.json:gate, segment_gate.json:gate, stage_browser.json:l_b3.gate"
+      "note": "값 대조를 **지난 것 5** · **면제 14**(`reachability_absent`) · 원장 51개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, horizon.json:gate, order_signal.json:gate / 면제: coords.json:gate, eraser.json:gate, guide_budget.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, osnap.json:gate, osnap_config.json:gate, preview_gap.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, stage_browser.json:l_b3.gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -9373,6 +9403,7 @@
     "rule_camera.json",
     "segment_gate.json",
     "snap.json",
+    "snap2d_flow.json",
     "stage_browser.json",
     "stage_cam.json",
     "static_deploy.json",
@@ -9381,7 +9412,9 @@
     "tube_render.json",
     "view_plane.json",
     "vp_detect.json",
+    "vp_dir_flow.json",
     "vp_homog.json",
+    "vp_two_lines.json",
     "wiring.json",
     "wobble_plane.json"
   ],

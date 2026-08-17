@@ -10,9 +10,8 @@
  },
  "gate": {
   "registered": "① 22px 오조준이 15px 조리개에서 끝점으로 안 붙는다(잡혀도 dist ≤ 15) ② 40px로 넓히면 끝점이 붙는다 ③ 끝점·정점을 끄면 그 종류가 안 나온다 ④ 수직점(또는 같은 자리의 중점)이 발화한다. ⚠ 이 항목이 등록한 게이트다 — CLAUDE.md §2 중단 조건 아님(#41)",
-  "reachability": "오라클 = 현행 구현의 실측(#35)",
-  "reachability_value": 21.2362448194269,
-  "reachability_source": "measured/r40_dist"
+  "reachability": "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
+  "reachability_absent": "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 판정 조항의 측정값 밖에서 이 게이트를 넘을 수 있는 독립 값이 없다(4차 재검 [12-a])"
  },
  "measured": {
   "r15": "on_face",
@@ -23,7 +22,7 @@
   "perp_kind": "midpoint"
  },
  "what_this_does_not_say": [
-  "15px가 **옳은 기본값이라는 것** — 합성 측정은 반대를 가리킨다(D-L56: snap.json 스윕에서 그 대역의 맞음 0.53~0.63·미스 0.18~0.26 대 0.05의 0.90·0.013). 실획(snapDistPx)이 판정한다",
+  "15px가 **옳은 기본값이라는 것** — 합성 측정은 반대를 가리킨다(D-L56: `snap.json@509615a1` 스윕에서 그 대역의 맞음 0.53~0.63·미스 0.18~0.26 대 0.05의 0.90·0.013). 실획(snapDistPx)이 판정한다",
   "dpr 2 — dpr 1 실행이다(#21)"
  ],
  "constants": {

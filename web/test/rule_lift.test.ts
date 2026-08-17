@@ -81,8 +81,10 @@ describe("규칙 → 카메라 → 3D (전환이 실제로 되는가)", () => {
     // ⚠ **세 번째가 `screen_axis`에서 `support`로 바뀌었다**(2026-08-17 A-2):
     // 수직축은 **처음부터 화면 수직**이라 세로선이 축을 새로 세우지 않고 **지지선으로 센다**.
     expect(events.slice(0, 4)).toEqual(["screen_axis", "support", "support", "support"]);
-    // **지평선이 처음부터 있으므로 첫 깊이선에서 바로 선다**(2026-08-16 2차 지시)
-    expect(events[4]).toBe("vp_fixed");
+    // ⚠⚠ **첫 깊이선은 대기하고 둘째와의 교점에서 선다**(2026-08-17 4차 지시 3 —
+    // "소실점은 그린 선의 교점"이 2차의 "지평선 × 선 하나"를 되돌렸다)
+    expect(events[4]).toBe("waiting");
+    expect(events[5]).toBe("vp_fixed");
     expect(cam.rules.horizon).toBeCloseTo(VP[1], 6);
     expect(ctx).not.toBeNull();
     // **P1의 f는 임의값이고 출처가 화면에 남는다**(지시 1 · CLAUDE.md §1 fSource)
@@ -109,9 +111,11 @@ describe("규칙 → 카메라 → 3D (전환이 실제로 되는가)", () => {
 
   it("**반례** — 가로선 없는 소실점 하나(NONE)는 3D를 안 세운다", () => {
     const cam = new CamState(SZ);
-    // 깊이선 하나만 — 소실점은 서지만 상태는 NONE이다
-    const rep = representative(toVp([280, 240]))!;
-    const r = cam.feed({ a: rep.a, b: rep.b });
+    // 깊이선 **둘**(같은 소실점을 향한 짝, 4차 지시 3) — 교점으로 소실점은 서지만 상태는 NONE이다
+    const r1 = representative(toVp([280, 240]))!;
+    expect(cam.feed({ a: r1.a, b: r1.b }).event.type).toBe("waiting");
+    const r2 = representative(toVp([680, 240]))!;   // 45° 물음(vertical_ask_deg)에 안 걸리는 얕은 각
+    const r = cam.feed({ a: r2.a, b: r2.b });
     expect(r.event.type).toBe("vp_fixed");
     expect(cam.order()).toBe(0);
     expect(cam.ctx()).toBeNull();

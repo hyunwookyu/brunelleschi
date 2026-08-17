@@ -215,9 +215,9 @@
         "steps": 6,
         "start": "확정 카메라(pinned)"
       },
-      "azimuth_delta": 1.2550890458961828,
-      "polar_delta": 1.544105411062251,
-      "dist_delta": 6.677190436864309
+      "azimuth_delta": 1.2550890458962205,
+      "polar_delta": 1.5441054110622419,
+      "dist_delta": 6.67719043686431
     },
     "two_finger": {
       "input_px": {
@@ -225,9 +225,9 @@
         "d1": 196,
         "ratio": 1.96
       },
-      "dist_ratio": 0.5102040816326531,
+      "dist_ratio": 0.5102040816326527,
       "guarantee": "1/1.96 = 0.5102 — `dollyOut` 호출의 항등이다. 임계를 걸지 않는다",
-      "target_moved": 0.07100338113742552
+      "target_moved": 0.07096491282194602
     },
     "one_finger_already_free": {
       "input_px": {
@@ -242,9 +242,9 @@
         "steps": 6,
         "start": "자유 시점(이미 풀림) — **첫 팔과 같은 손짓**"
       },
-      "azimuth_delta": 1.085982645685033,
-      "polar_delta": 0.23271056693249648,
-      "dist_delta": 2.220446049250313e-15
+      "azimuth_delta": 1.0859826456850061,
+      "polar_delta": 0.2327105669324918,
+      "dist_delta": 7.549516567451064e-15
     },
     "strokes_after_touch_only": {
       "before": 12,
@@ -319,25 +319,25 @@
     ],
     "arm_start_state": {
       "control": {
-        "dist": 6.677190436864378,
+        "dist": 6.677190436864342,
         "pinned": false
       },
       "op1": {
-        "dist": 6.677190436864381,
+        "dist": 6.677190436864353,
         "pinned": false
       },
       "op2": {
-        "dist": 6.677190436864381,
+        "dist": 6.677190436864353,
         "pinned": false
       },
       "pen_interrupts": {
-        "dist": 6.677190436864381,
+        "dist": 6.677190436864353,
         "pinned": false
       },
       "note": "팔들이 **같은 페이지 상태를 이어 쓴다** — 앞 팔이 뒤 팔의 시작을 정한다"
     },
     "control_no_pen": {
-      "moved": 1.2411230236401603,
+      "moved": 1.2411230236401618,
       "counters": {
         "rejected_down": 0,
         "cancelled_by_pen": 0,
@@ -397,7 +397,7 @@
     },
     "camera_moved": {
       "by_pen": 0,
-      "by_mouse_in_orbit": 1.5514037795499984
+      "by_mouse_in_orbit": 1.5514037795500417
     },
     "reading": "펜·마우스는 잉크로, 터치는 카메라로 간다. 마우스는 `궤도(마우스)` 동안만 카메라다. ⚠ **`pointer-events: none` 전환을 지웠으므로** 궤도 중에도 잉크 캔버스가 사건을 받는다."
   },
@@ -413,9 +413,9 @@
       "reading": "**백버퍼가 css 폭의 2배**여야 dpr 섭동이 실제로 걸린 것이다. 1이면 회전 비 1.0은 '규약이 지켜졌다'가 아니라 '섭동이 안 걸렸다'다"
     },
     "rotate": {
-      "azimuth_delta": 1.2550890458957566,
-      "dpr1_azimuth_delta": 1.2550890458961828,
-      "ratio": 0.9999999999996605,
+      "azimuth_delta": 1.2550890458961832,
+      "dpr1_azimuth_delta": 1.2550890458962205,
+      "ratio": 0.9999999999999702,
       "input_px": {
         "from": [
           500,
@@ -429,9 +429,9 @@
       }
     },
     "positive_channel": {
-      "azimuth_delta_half_input": 0.5429913228422754,
-      "azimuth_delta_full_free": 1.0859826456845563,
-      "ratio_to_single": 0.49999999999999745,
+      "azimuth_delta_half_input": 0.5429913228423251,
+      "azimuth_delta_full_free": 1.0859826456848618,
+      "ratio_to_single": 0.4999999999999026,
       "input_px": {
         "from": [
           500,
@@ -446,7 +446,7 @@
       "reading": "**0.5에 가까워야 지표가 민감한 것**이다. 1에 붙으면 앞의 비 1.0은 규약의 증거가 아니라 둔감의 증거다. ⚠ 두 배로 안 재는 이유: `getAzimuthalAngle()`이 `atan2`라 **감긴다**(두 배 입력에서 비 3.28이 나왔다)"
     },
     "pan": {
-      "target_moved": 0.46729511980123584,
+      "target_moved": 0.5163771264849807,
       "input_px": {
         "two_fingers_dx": 60,
         "note": "두 손가락을 나란히 60px 민다(거리 불변 → 줌 없음)"

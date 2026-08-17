@@ -96,9 +96,10 @@ test("조각·부분 지우개 — 교차가 조각을 가르고, 앵커는 점�
       registered: "① 교차가 절단점을 만든다(cuts ≥ 1) ② 조각 지우개가 원 획을 조각으로 갈아 끼운다 "
         + "③ 앵커 ofId가 살아남은 조각으로 이관된다(끊기지 않음) ④ 부분 지우개가 조각 수를 안 줄인다 "
         + "⑤ 실행취소 2회가 완전 복원. ⚠ 이 항목이 등록한 게이트다 — CLAUDE.md §2 중단 조건 아님(#41)",
-      reachability: "오라클 = 현행 구현의 실측(#35). 앵커 규칙 전문은 split.ts의 reanchorId",
-      reachability_value: (setup.cuts as number[]).length,
-      reachability_source: "measured/setup/n_cuts",
+      reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①). 앵커 규칙 전문은 split.ts의 reanchorId",
+      // ⚠ 옛 판은 `n_cuts`(=2)를 값으로 적었다 — 게이트 조항 ①의 측정값이자 픽스처가
+      // 구성으로 만든 절단 수의 항등이다(#40 ⚠⚠ — 4차 재검 [12-a]가 잡았다)
+      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 판정 조항의 측정값 밖에서 이 게이트를 넘을 수 있는 독립 값이 없다(4차 재검 [12-a])",
     },
     measured: { setup: { cuts: setup.cuts, n_cuts: (setup.cuts as number[]).length,
                          strokes: setup.strokes },

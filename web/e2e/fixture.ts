@@ -67,7 +67,7 @@ export async function setupScene(page: Page, opts: { boxes?: 1 | 2 } = {}) {
         support: 2,
       })),
       horizon: sc.vps[0][1],
-      waiting: [], verticalLines: [],
+      waiting: [], depthLines: [], verticalLines: [],
     });
     S.refresh();
     window.__SC = sc;

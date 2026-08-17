@@ -35,6 +35,9 @@
 // 그것이 "추정"으로 되돌아가는 문이다. 뒤에 온 깊이선은 **지지선**으로 세기만 한다.
 import { lineIntersect, lsIntersection, isFiniteVp, type Pt2 } from "./camera.js";
 import { representative, vpMisfit, AXIS_TOL, type Axis, type Rep } from "./axis.js";
+// **끝점 병합 반경**(4차 지시 3) — 교점이 어느 선의 끝점 자리면 그것은 모서리 이음이지
+// 소실점이 아니다. 판정 반경은 2D 오스냅의 병합과 같은 값·같은 프레임이다(#17, D-L57).
+import { SNAP_TOL } from "./snap.js";
 // ⚠ `vpVerticalFromOrthocenter`는 **더 이상 안 부른다**(2026-08-17 A-4) — 그 유도가
 // 지평선 높이만으로 3점을 만들던 자리다. 함수는 `horizon.ts`에 남는다(D-L32·D-L43의 판정
 // 근거를 `horizon.test.ts`가 계속 재현한다 — CLAUDE.md의 폐기 코드 규칙).
@@ -117,12 +120,22 @@ export type VpSource =
 export interface RuleState {
   slots: [Slot | null, Slot | null, Slot | null];
   /**
-   * 지평선 높이(화면 y). **처음부터 있다** — 소실점이 정하는 것이 아니라 **카메라 피치**가
-   * 정한다(이론서 3.1 + 롤 0). 초기값은 화면 중앙(피치 0)이고, **소실점이 서기 전까지는
-   * 사용자가 끌어 바꾼다**(D-L45). 그 뒤로는 궤도가 바꾼다.
-   * ⚠ `null`은 **옛 저장본**에서만 온다 — `loadRules`가 기본값으로 채운다.
+   * 지평선 높이(화면 y). ⚠⚠ **뜻이 바뀌었다**(2026-08-17 4차 지시 3 — 2차의 "지평선이
+   * 먼저 있다"를 되돌린다): **첫 유한 소실점이 서기 전에는 소실점 확정에 안 쓰인다.**
+   * 첫 소실점은 **그린 두 깊이선의 실제 교점**이고(`two_lines`), 그 순간 이 값이 그 y로
+   * 맞춰진다(롤 0 — 소실점이 지평선을 정한다. 순서만 바뀌고 롤 0은 유지된다, 지시 4-c).
+   * 두 번째 수평 소실점부터는 종전대로 이 지평선 위에 놓인다(지시 4-d).
+   * 초기값은 화면 중앙이고 소실점 전까지 끌 수 있다(D-L45) — 그 조작은 이제 소실점을
+   * 만들지 않는다. ⚠ `null`은 **옛 저장본**에서만 온다 — `loadRules`가 기본값으로 채운다.
    */
   horizon: number;
+  /**
+   * **아직 소실점을 못 만든 깊이선들**(4차 지시 3). 첫 유한 수평 소실점이 없는 동안
+   * 깊이선이 여기 쌓이고, 새 깊이선과 **유한한 교점**을 내는 짝이 생기면 그 교점이
+   * 첫 소실점이다(짝이 여럿이면 각차가 가장 큰 — 조건수가 가장 좋은 — 짝).
+   * 확정되면 비운다. 옛 저장본에는 없다 — 기본 `[]`.
+   */
+  depthLines: RLine[];
   /** 사용자가 "수직축"이라 답한 획들의 대표선 — 유도된 V₃의 지지선으로 센다. */
   verticalLines: RLine[];
   // ⛔ **`distance`(거리점 f)를 지웠다**(2026-08-17 사람 지시 2). 대각선은 거리점인지
@@ -183,7 +196,7 @@ const screenVerticalSlot = (): Slot => ({ kind: "screen", dir: "v", support: 0 }
 
 export function newRuleState(imgSize: [number, number] = [960, 672]): RuleState {
   return { slots: [null, null, screenVerticalSlot()],
-           horizon: defaultHorizon(imgSize), verticalLines: [] };
+           horizon: defaultHorizon(imgSize), depthLines: [], verticalLines: [] };
 }
 
 export function cloneRuleState(s: RuleState): RuleState {
@@ -194,6 +207,8 @@ export function cloneRuleState(s: RuleState): RuleState {
       (x ? (x.kind === "vp" ? { ...x, at: [x.at[0], x.at[1]] as Pt2 } : { ...x }) : null),
     ) as RuleState["slots"],
     horizon: s.horizon,
+    // 옛 저장본에는 없다(4차 지시 3) — 기본 `[]`
+    depthLines: (s.depthLines ?? []).map(l => ({ a: [...l.a] as Pt2, b: [...l.b] as Pt2 })),
     verticalLines: s.verticalLines.map(l => ({ a: [...l.a] as Pt2, b: [...l.b] as Pt2 })),
   };
 }
@@ -429,16 +444,15 @@ export function stepRule(
   const target = horizontalTarget(st);
   const order = perspectiveOrder(st);
 
-  // b·c. **지평선은 언제나 있다** — 깊이선 하나면 소실점이 정해진다.
-  // 교점의 한 쪽(지평선)이 **오차 없이 정확**하므로 "두 선이 나란해져 교점이 날아가는" 실패가 없다.
+  // b. **첫 소실점은 그린 두 깊이선의 실제 교점이다**(2026-08-17 4차 지시 3 — 2차의
+  //    "지평선이 먼저 있다"를 되돌린다). 소실점은 그린 선의 교점이어야 하고 그린 선은 안
+  //    움직여야 한다 — 격자가 그린 선을 따라야지 반대가 아니다. 확정 순간 지평선이 그 y로
+  //    맞춰진다(롤 0 유지 — 순서만 바뀐다, 지시 4-c).
+  // c. **두 번째 수평 소실점부터는 그 지평선 위에 놓인다**(지시 4-d — 이건 그대로).
+  //    교점의 한 쪽(지평선)이 정확하므로 "두 선이 나란해져 교점이 날아가는" 실패가 없다.
   {
     const rep: Rep = { a: line.a, b: line.b,
                        len: Math.hypot(line.b[0] - line.a[0], line.b[1] - line.a[1]), bend: 0 };
-    const p = vpOnHorizon(rep, st.horizon);
-    if (!p) {
-      return { state: st0, event: { type: "rejected",
-        why: `지평선과 ${HORIZON_TOL.min_slope_deg}° 안이라 교점이 발산합니다` } };
-    }
     // 이미 있는 소실점을 향한 선인가 — **기하가 가른다**(추정이 아니다).
     //
     // ⚠ **지평선 위의 거리로 재면 안 된다.** 초판이 그랬고 실측에서 걸렸다: 소실점이 멀수록
@@ -475,6 +489,60 @@ export function stepRule(
         why: order === 1
           ? "기존 소실점을 향하지 않는 깊이선입니다 — 1점 확정 뒤의 깊이선은 그 소실점을 향해야 합니다"
           : "수평 소실점이 이미 둘입니다 — 소실점은 확정 후 잠깁니다(CLAUDE.md §1)" } };
+    }
+
+    // ---- b. 첫 유한 수평 소실점이 아직 없다 — **그린 선끼리의 교점**으로만 선다(지시 3-a).
+    if (finiteHorizontals(st).length === 0) {
+      const pool = st.depthLines ?? (st.depthLines = []);
+      // ⚠⚠ **끝점을 공유한 이음은 소실점이 아니다.** 이어 그린 두 선(ㄱ자 모서리·T자 접합)의
+      // 직선 교점은 정확히 그 이음점이다 — 그것을 소실점으로 받으면 **모든 꼭짓점이 소실점이
+      // 된다**(2D 오스냅으로 잇는 것이 기본 동작이라 즉시 걸린다). 교점이 어느 선의 끝점
+      // 반경(스냅 병합과 같은 값, #17) 안이면 짝에서 뺀다 — 소실점은 **가로지르는** 교차나
+      // 연장선의 수렴에서만 나온다(종이 위 투시 작도가 그렇다).
+      const mergePx = SNAP_TOL.merge_ratio * Math.hypot(imgSize[0], imgSize[1]);
+      const atEndpoint = (at: Pt2, q: RLine): boolean =>
+        [q.a, q.b, line.a, line.b].some(e => Math.hypot(e[0] - at[0], e[1] - at[1]) <= mergePx);
+      let best: { at: Pt2; sep: number; idx: number } | null = null;
+      for (let k = 0; k < pool.length; k++) {
+        const q = pool[k];
+        const at = lineIntersect(q.a, q.b, line.a, line.b);
+        // 거의 나란한 짝은 교점이 발산한다 — 유한 판정만 걸고 새 임계를 안 만든다(#17).
+        // 짝이 여럿이면 **각차가 가장 큰**(조건수가 가장 좋은) 짝이다(`sepDeg` — 기존 수단).
+        if (!at || !isFiniteVp(at, imgSize) || atEndpoint(at, q)) continue;
+        const sep = sepDeg(q, line);
+        if (!best || sep > best.sep) best = { at, sep, idx: k };
+      }
+      if (!best) {
+        pool.push({ a: [line.a[0], line.a[1]], b: [line.b[0], line.b[1]] });
+        return { state: st, event: { type: "waiting", have: pool.length } };
+      }
+      // **교점이 소실점이다** — 두 선 다 정확히 그 점을 지난다(교점의 정의). 그린 선은 안 움직인다.
+      st.slots[target.index] = { kind: "vp", at: best.at, source: "two_lines", support: 2 };
+      // **소실점이 지평선을 정한다**(롤 0 — y가 지평선이다). 옛 판(지평선이 소실점을 정함)의 역이다.
+      st.horizon = best.at[1];
+      // 짝이 안 된 나머지 대기 선: 그 소실점을 향하면 지지선으로 세고, 아니면 카메라 역할 없이
+      // 문서에만 남는다(획은 어디서도 안 지운다)
+      let extra = 0;
+      for (let k = 0; k < pool.length; k++) {
+        if (k === best.idx) continue;
+        const q = pool[k];
+        const qr: Rep = { a: q.a, b: q.b,
+                          len: Math.hypot(q.b[0] - q.a[0], q.b[1] - q.a[1]), bend: 0 };
+        if (vpMisfit(qr, best.at) <= AXIS_TOL.vp_dist_ratio) extra += 1;
+      }
+      (st.slots[target.index] as { support: number }).support += extra;
+      st.depthLines = [];
+      const st2 = deriveVertical(st, imgSize);
+      return { state: st2,
+               event: { type: "vp_fixed", axis: target.index, at: best.at,
+                        source: "two_lines", horizonSet: true } };
+    }
+
+    // ---- c. 둘째 수평 소실점 — 지평선(= 첫 소실점의 y) × 선. 선 하나면 된다(지시 4-d 유지).
+    const p = vpOnHorizon(rep, st.horizon);
+    if (!p) {
+      return { state: st0, event: { type: "rejected",
+        why: `지평선과 ${HORIZON_TOL.min_slope_deg}° 안이라 교점이 발산합니다` } };
     }
     if (!isFiniteVp(p, imgSize)) {
       return { state: st0, event: { type: "rejected", why: "교점이 사실상 무한원입니다(화면 평행)" } };
@@ -600,9 +668,11 @@ export function axisDirsOf(st: RuleState, principal: Pt2, f: number): ([number, 
  *
  * - `screen_ortho` — 화면 직교 스냅(`axisSnap.screenOrthoSnap`). **카메라가 없어도 돈다**(A-2).
  * - `axis_snap`    — 라이노 직교 모드(`axisSnap.snapToAxis`). 3D 앵커와 f가 필요하다.
+ * - `vp_dir`       — 소실점 방향 스냅(`axisSnap.vpDirSnap`, 4차 지시 2). **카메라가 안 서도**
+ *                    소실점만 있으면 그 방향으로 끌린다 — 화면 작도라 f가 필요 없다.
  * - `null`         — 지금은 그 축으로 못 긋는다.
  */
-export type SnapVia = "screen_ortho" | "axis_snap" | null;
+export type SnapVia = "screen_ortho" | "axis_snap" | "vp_dir" | null;
 export interface AxisSnapRow {
   axis: 0 | 1 | 2;
   /** 그 축이 무엇으로 정해져 있나. `null`이면 아직 미정이다. */
@@ -623,8 +693,9 @@ export interface AxisSnapRow {
  * | 2점 확정 | 소실점 | 소실점 | 화면 세로(축) |
  * | 3점 확정 | 소실점 | 소실점 | 소실점 |
  *
- * ⚠ **소실점이 있어도 카메라가 안 서면 못 쓴다** — 축 방향 `(V−P, f)`에 f가 필요하다.
- * 1점에서 f가 미정인 동안이 그 자리다(2026-08-17 C-3).
+ * ⚠ **카메라가 안 서도 소실점 방향은 스냅된다**(4차 지시 2 — 옛 계약을 뒤집었다):
+ * 3D 축 방향 `(V−P, f)`는 f가 필요하지만, **화면에서 소실점을 지나는 직선**은 f 없이
+ * 성립한다(이론서 2장) — 그 방향으로 끄는 것이 `vp_dir`(`axisSnap.vpDirSnap`)이다.
  */
 export function snapAxisTable(st: RuleState, cameraStanding: boolean): AxisSnapRow[] {
   return ([0, 1, 2] as const).map(i => {
@@ -634,7 +705,7 @@ export function snapAxisTable(st: RuleState, cameraStanding: boolean): AxisSnapR
     const via: SnapVia =
       kind == null ? null
       : cameraStanding ? "axis_snap"
-      : kind === "vp" ? null                 // f가 없으면 그 방향을 못 만든다
+      : kind === "vp" ? "vp_dir"             // 소실점이 있으면 화면 작도로 그 방향이 선다(지시 2)
       : "screen_ortho";
     return { axis: i, kind, via };
   });

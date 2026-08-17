@@ -135,3 +135,48 @@ describe("S-1 투시 가이드", () => {
     expect(g.every(l => Math.hypot(l.b[0] - l.a[0], l.b[1] - l.a[1]) < diag * 3)).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------- 4차 지시 3-c — 격자·소실점 정합
+
+/**
+ * **격자가 그 소실점에서 나오는가**(4차 지시 3-c). 그린 두 대각선의 교점으로 세운 소실점에
+ * 대해, 그 축 가족의 지면 격자 조각이 전부 정확히 그 소실점을 향해야 한다 — 격자가 그린 선을
+ * 따르는 것의 확인이다. **앱과 같은 경로**(`CamState.feed` → `acc.solve` → `groundGrid`)를 쓴다(#17).
+ */
+import { CamState } from "../src/ui/camState.js";
+
+describe("격자는 그린 선의 교점(소실점)에서 나온다 (4차 지시 3-c)", () => {
+  it("축 가족의 격자 조각이 전부 소실점을 정확히 향한다", () => {
+    const SZ2: [number, number] = [960, 672];
+    const cam = new CamState(SZ2);
+    // V1(-100, 258)을 지나는 짝 + V2(1250, 258)를 향한 선 (axis_snap_table의 픽스처 그대로)
+    for (const [a, b] of [[[300, 600], [140, 463.2]], [[500, 560], [260, 439.2]],
+                          [[700, 620], [920, 475.2]]] as [Pt2, Pt2][]) {
+      cam.feed({ a, b });
+    }
+    const vps = cam.vps();
+    expect(vps[0]).not.toBeNull();
+    expect(vps[1]).not.toBeNull();
+    // 소실점이 **그린 짝의 교점 그대로**다(지시 3-a — 지평선 보정이 안 끼었다)
+    expect(vps[0]![0]).toBeCloseTo(-100, 6);
+    expect(vps[0]![1]).toBeCloseTo(258, 6);
+    const r = cam.acc.solve();
+    const g = groundGrid(r.camera, vps, SZ2, undefined, undefined, cam.ctx()!.axisDirs);
+    let checked = 0;
+    for (const seg of g) {
+      if (seg.axis == null || seg.kind !== "ground") continue;
+      const vp = vps[seg.axis]!;
+      const dx = seg.b[0] - seg.a[0], dy = seg.b[1] - seg.a[1];
+      const L = Math.hypot(dx, dy);
+      if (L < 5) continue;                       // 먼지 조각은 방향이 무의미하다
+      const vx = vp[0] - seg.a[0], vy = vp[1] - seg.a[1];
+      const D = Math.hypot(vx, vy);
+      if (D < 1e-6) continue;
+      // 조각 방향과 (조각 → 소실점) 방향의 사인 — 정확히 그 점으로 모이면 0이다
+      const sin = Math.abs(dx * vy - dy * vx) / (L * D);
+      expect(sin).toBeLessThan(1e-6);
+      checked += 1;
+    }
+    expect(checked).toBeGreaterThan(10);         // **덮는 대상 수**(#38) — 공허하지 않다
+  });
+});

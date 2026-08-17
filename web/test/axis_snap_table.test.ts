@@ -83,9 +83,15 @@ function feed(st0: RuleState, lines: [Pt2, Pt2][],
   return st;
 }
 
-/** 깊이선 — 화면 수평과 30°(≥8°라 `depth`) · 수직과 60°(45° 물음에 안 걸린다). */
-const DEPTH_A: [Pt2, Pt2] = [[100, 500], [400, 327]];
-const DEPTH_B: [Pt2, Pt2] = [[860, 500], [560, 327]];
+/**
+ * 깊이선 — 화면 수평과 27~41°(≥8°라 `depth`) · 수직과 45° 밖(물음에 안 걸린다).
+ * ⚠ **4차 지시 3**: 첫 소실점은 그린 두 선의 교점이다 — A·A2가 같은 V₁(-100, 258)을
+ * 지나는 짝이고, B는 V₂(1250, 258)를 향한다(V₁과의 부적합도가 커 지지선으로 안 오인된다).
+ * V₁·V₂가 주점(480) 양쪽이라 2점 카메라가 선다(f² > 0, 6.2).
+ */
+const DEPTH_A: [Pt2, Pt2] = [[300, 600], [140, 463.2]];
+const DEPTH_A2: [Pt2, Pt2] = [[500, 560], [260, 439.2]];
+const DEPTH_B: [Pt2, Pt2] = [[700, 620], [920, 475.2]];
 const SCREEN_H: [Pt2, Pt2] = [[100, 200], [500, 200]];
 /**
  * 화면 수직에서 **17.4° 기운 선** — 3점의 유일한 입구다(A-4).
@@ -112,35 +118,39 @@ describe("스냅 표 — 상태마다 어느 축이 스냅되는가", () => {
   });
 
   it("1점 확정 — 소실점 하나 + 화면 가로 + 화면 세로. 셋 다 축 스냅이다", () => {
-    const st = feed(feed(newRuleState(SZ), [SCREEN_H]), [DEPTH_A]);
+    const st = feed(feed(newRuleState(SZ), [SCREEN_H]), [DEPTH_A, DEPTH_A2]);
     expect(perspectiveOrder(st)).toBe(1);
     expect(rows(st, true)).toEqual(["screen_h/axis_snap", "vp/axis_snap", "screen_v/axis_snap"]);
     expect(snapAxisTable(st, true).filter(r => r.via).length).toBe(3);
   });
 
   it("**A-1** 2점 확정 — 수직축이 화면 수직으로 **스냅 대상에 들어 있다**", () => {
-    const st = feed(newRuleState(SZ), [DEPTH_A, DEPTH_B]);
+    const st = feed(newRuleState(SZ), [DEPTH_A, DEPTH_A2, DEPTH_B]);
     expect(perspectiveOrder(st)).toBe(2);
     expect(rows(st, true)).toEqual(["vp/axis_snap", "vp/axis_snap", "screen_v/axis_snap"]);
     expect(snapAxisTable(st, true).filter(r => r.via).length).toBe(3);
   });
 
   it("3점 확정 — 셋 다 소실점", () => {
-    const st = feed(feed(newRuleState(SZ), [DEPTH_A, DEPTH_B]), [TILTED_V], "vertical");
+    const st = feed(feed(newRuleState(SZ), [DEPTH_A, DEPTH_A2, DEPTH_B]), [TILTED_V], "vertical");
     expect(perspectiveOrder(st)).toBe(3);
     expect(rows(st, true)).toEqual(["vp/axis_snap", "vp/axis_snap", "vp/axis_snap"]);
   });
 
   /**
-   * **반례** — 소실점이 있어도 **카메라가 안 서면** 그 방향을 못 만든다(축 방향이 `(V−P, f)`라
-   * f가 필요하다). **NONE에서 소실점이 하나뿐인 동안**이 그 자리다(지시 1 — 가로선 없는
-   * 소실점 하나는 3D를 안 세운다). 표가 "언제나 전부 스냅된다"를 내면 그것은 판정이 아니다(#30).
+   * ⚠ **계약이 바뀌었다**(2026-08-17 4차 지시 2 — 완화가 아니라 지시에 따른 변경).
+   * 옛 계약: "소실점이 있어도 카메라가 안 서면 그 방향을 못 만든다"(축 방향 `(V−P, f)`에
+   * f가 필요하다) — 그래서 이 자리가 `vp/-`였다. 지시 2가 그것을 뒤집었다:
+   * **소실점을 지나는 화면 직선은 f 없이 성립한다**(이론서 2장). 3D 축 스냅이 아니라
+   * **화면 작도**(`vpDirSnap`)로 끄는 것이고, 표는 그 경로를 `vp_dir`로 구분해 낸다 —
+   * "언제나 전부 스냅된다"가 아니라 **경로가 다르다**는 것이 표에 남는다(#30).
    */
-  it("**반례** — 카메라가 안 서면(NONE·소실점 하나) 소실점 축은 못 쓴다. 화면 축은 그래도 된다", () => {
-    const st = feed(newRuleState(SZ), [DEPTH_A]);
-    // 축1에 소실점이 **있는데도** `via`가 `-`다 — 카메라가 안 서서 그 방향을 못 만든다
-    expect(rows(st, false)).toEqual(["vp/-", "-/-", "screen_v/screen_ortho"]);
-    expect(snapAxisTable(st, false).filter(r => r.via).length).toBe(1);
+  it("카메라가 안 서도(NONE·소실점 하나) 소실점 방향은 vp_dir로 스냅된다 (4차 지시 2)", () => {
+    const st = feed(newRuleState(SZ), [DEPTH_A, DEPTH_A2]);
+    expect(rows(st, false)).toEqual(["vp/vp_dir", "-/-", "screen_v/screen_ortho"]);
+    expect(snapAxisTable(st, false).filter(r => r.via).length).toBe(2);
+    // 서면 같은 축이 3D 축 스냅으로 올라간다 — 경로 구분이 표에 남는다
+    expect(snapAxisTable(st, true)[0].via).toBe("axis_snap");
   });
 });
 
@@ -150,7 +160,7 @@ describe("A-1·A-3 축 후보가 실제로 나온다 (표가 아니라 기하)",
   /** 2점 카메라 — 깊이선 둘로 세우고 `CamState`가 f·주점을 낸다(앱 경로 그대로, #17). */
   function twoPoint() {
     const cam = new CamState(SZ);
-    for (const [a, b] of [DEPTH_A, DEPTH_B]) cam.feed({ a, b });
+    for (const [a, b] of [DEPTH_A, DEPTH_A2, DEPTH_B]) cam.feed({ a, b });
     const ctx = cam.ctx();
     expect(ctx).not.toBeNull();
     return { cam, ctx: ctx! };
@@ -219,13 +229,15 @@ describe("A-5 짧은 획은 소실점을 안 만든다", () => {
     expect(perspectiveOrder(r.state)).toBe(0);
   });
 
-  it("**반례** — 임계 위면 그대로 소실점이 선다", () => {
+  it("**반례** — 임계 위면 규칙에 들어간다(첫 선은 대기, 짝이 오면 소실점, 4차 지시 3)", () => {
     const L = MIN_LEN + 5;
     const b: Pt2 = [300 + L * Math.cos(Math.PI / 6), 400 - L * Math.sin(Math.PI / 6)];
     const r = stepRule(newRuleState(SZ), { a: [300, 400], b }, SZ);
-    expect(r.event.type).toBe("vp_fixed");
+    expect(r.event.type).toBe("waiting");
+    const r2 = stepRule(r.state, { a: [200, 560] as Pt2, b: [420, 428] as Pt2 }, SZ);
+    expect(r2.event.type).toBe("vp_fixed");
     // 소실점 하나 = **NONE**이다(지시 1) — 가로선이 오면 P1, 두 번째 소실점이 오면 P2
-    expect(perspectiveOrder(r.state)).toBe(0);
+    expect(perspectiveOrder(r2.state)).toBe(0);
   });
 
   it("사용자가 답한 수직축 선언은 길이로 안 막는다 — 그것은 소실점 후보가 아니다", () => {

@@ -74,8 +74,12 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
   expect((led.s1_horizontal as any).order).toBe(1);                // **가로선 = 1점 확정**(지시 1)
   expect((led.s1_horizontal as any).standing).toBe(false);         // 깊이 소실점 전 — 3D는 아직
 
-  // ---- ③ 깊이선 → 3D가 선다 (P1 임의 f — 지시 1·5-4)
-  await draw(0.30, 0.75, 0.45, 0.55);
+  // ---- ③ 깊이선 **둘**(같은 소실점을 향한 짝) → 3D가 선다 (P1 임의 f — 지시 1·5-4)
+  //
+  // ⚠ **4차 지시 3**: 첫 소실점은 그린 두 선의 실제 교점이다 — 한 선으로는 대기한다.
+  // 두 선 다 (0.62, 0.42)를 지나므로 교점 = 그 점이고, 지평선이 그 y로 맞춰진다.
+  await draw(0.30, 0.72, 0.476, 0.555);
+  await draw(0.38, 0.75, 0.50, 0.585);
   led.s3_depth = await page.evaluate(() => {
     const S = window.S2S;
     const vp = S.stage.viewport;
@@ -93,7 +97,7 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
              gl_painted_px: painted };
   });
   expect((led.s3_depth as any).standing).toBe(true);
-  expect((led.s3_depth as any).lifted).toBe(2);
+  expect((led.s3_depth as any).lifted).toBe(3);          // 가로선 + 깊이선 짝(4차 지시 3)
   // **축 배정**(5-3의 원장 근거, 리뷰어 [6]) — 가로선과 깊이선이 서로 다른 축이다
   expect(new Set((led.s3_depth as any).axes).size).toBe(2);
   expect((led.s3_depth as any).axes.every((a: unknown) => typeof a === "number")).toBe(true);
@@ -235,6 +239,402 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
         + "⚠ 두 팔의 실측값은 원장 밖이다(#25 — 임시 패치 실행이라 재현 스크립트가 없다)",
       reachability_value: (led.s4_result as any).result_dark_after,
       reachability_source: "s4_result/result_dark_after",
+    },
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 1));
+});
+
+// ---------------------------------------------------------------- 4차 지시 2 — 소실점 방향 스냅
+//
+// "소실점 하나만 있을 때 그 방향으로 스냅되는가"(지시 검증 절). 카메라가 안 섰어도(NONE)
+// 소실점이 있으면 그 방향으로 끌린다 — 붙은 선의 부적합도(vpMisfit)가 0이 되는 것을
+// 확인하고, 회귀 팔은 **소실점을 안 향하는 선**이 안 끌리는 것을 확인한다(#30 양성 채널).
+test("소실점 하나(카메라 전) — 그 방향으로 스냅된다 (4차 지시 2)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+
+  const box = (await page.locator("#ink").boundingBox())!;
+  const W = box.width, H = box.height;
+  const drawPx = async (x1: number, y1: number, x2: number, y2: number) => {
+    await page.mouse.move(box.x + x1, box.y + y1);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move(box.x + x1 + (x2 - x1) * i / 8, box.y + y1 + (y2 - y1) * i / 8);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(50);
+  };
+  const led: Record<string, unknown> = {};
+
+  // ---- ① 깊이선 **둘**(같은 소실점을 향한 짝, 4차 지시 3) → 소실점 하나.
+  //      카메라는 안 선다(NONE — 가로선 없는 소실점 하나). 두 선 다 (0.60W, 0.40H)를 지난다.
+  //      ⚠ 소실점 y(0.40H)가 기본 지평선(0.5H)과 **다르다** — 리뷰어 [B-5]의 교락(소실점이
+  //      지평선 위면 a→V 방향이 화면 수평과 겹칠 수 있다)을 픽스처가 배제한다
+  await drawPx(0.30 * W, 0.70 * H, 0.465 * W, 0.535 * H);
+  await drawPx(0.25 * W, 0.55 * H, 0.4425 * W, 0.4675 * H);
+  const st1 = await page.evaluate(() => {
+    const S = window.S2S;
+    return { vps: S.camSnapshot().vps, standing: S.standing(), order: S.order(),
+             horizon_y: S.horizon().y, default_horizon_y: null as number | null };
+  });
+  const vp = (st1.vps as ([number, number] | null)[]).find(v => v) as [number, number];
+  expect(vp).toBeTruthy();
+  expect(st1.standing).toBe(false);
+  // 소실점이 기본 지평선(화면 중앙) 밖에 섰다 — [B-5]의 직교 스냅 교락이 없다
+  expect(Math.abs(vp[1] - 0.5 * H)).toBeGreaterThan(0.05 * H);
+  led.s1 = st1;
+
+  // ---- ② 소실점을 향해(작은 겨냥 오차) 긋는다 → 그 방향으로 정확히 끌린다
+  const a: [number, number] = [0.35 * W, 0.75 * H];
+  const bTrue: [number, number] = [(a[0] + vp[0]) / 2, (a[1] + vp[1]) / 2];
+  // **스냅 직전의 겨냥을 원장에 남긴다**(리뷰어 [B-5] — 주체 판정의 재료): 화면 수평과의
+  // 각이 직교 스냅 임계(4°)를 뚜렷이 넘으므로 이 끌림은 vp_dir만이 만들 수 있다
+  led.aim = {
+    a, b_aim: [bTrue[0], bTrue[1] + 4], offset_px: 4,
+    angle_to_screen_h_deg: Math.abs(Math.atan2(bTrue[1] + 4 - a[1], bTrue[0] - a[0]) * 180 / Math.PI),
+    vp,
+  };
+  expect((led.aim as any).angle_to_screen_h_deg).toBeGreaterThan(8);
+  // **2D 오스냅 교락도 가른다**(항목 3 리뷰어 [9] — 항목 1의 "스냅 주체를 원장이 가른다" 규약):
+  // 겨냥점 조리개 안에 2D 후보가 없다 — 이 끌림은 2D 오스냅으로도 안 나온다
+  led.aim_confound = await page.evaluate((bAim) => ({
+    snap2d_at_aim: window.S2S.snap2d(bAim), pending_2d: window.S2S.pending2Targets(),
+    snap_targets_3d: window.S2S.snapTargets(),
+  }), [bTrue[0], bTrue[1] + 4]);
+  expect((led.aim_confound as any).snap2d_at_aim).toBeNull();
+  expect((led.aim_confound as any).snap_targets_3d).toBe(0);
+  await drawPx(a[0], a[1], bTrue[0], bTrue[1] + 4);       // 4px 겨냥 오차
+  led.snap = await page.evaluate((vpIn) => {
+    const S = window.S2S;
+    const sts = S.doc().strokes;
+    const st = sts[sts.length - 1];
+    const p = st.pts2d[0], q = st.pts2d[st.pts2d.length - 1];
+    const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    // vpMisfit과 같은 식(수직거리 ÷ 길이) — 먼 끝점 기준
+    const far = Math.hypot(vpIn[0] - p[0], vpIn[1] - p[1]) >= Math.hypot(vpIn[0] - q[0], vpIn[1] - q[1]) ? p : q;
+    const m = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+    const dx = vpIn[0] - far[0], dy = vpIn[1] - far[1];
+    const D = Math.hypot(dx, dy);
+    const misfit = Math.abs((m[0] - far[0]) * dy - (m[1] - far[1]) * dx) / D / len;
+    return { misfit, n_pts: st.pts2d.length, order: S.order(), standing: S.standing() };
+  }, vp);
+  // **그 소실점 방향으로 정확히 끌렸다** — 스냅 후 부적합도 0은 보장 확인이다(#5)
+  expect((led.snap as any).misfit).toBeLessThan(1e-9);
+  expect((led.snap as any).order).toBe(0);                 // 지지선일 뿐 — 여전히 NONE(하나뿐)
+
+  // ---- ③ 양성 채널 — 소실점을 안 향하는 선은 안 끌린다(#30). 겨냥이 그대로 남는다
+  //      (그 값은 픽스처 각도의 항등이라 도달 가능성이 아니다 — [B-3])
+  await drawPx(0.70 * W, 0.75 * H, 0.55 * W, 0.85 * H);
+  led.positive_away = await page.evaluate((vpIn) => {
+    const S = window.S2S;
+    const sts = S.doc().strokes;
+    const st = sts[sts.length - 1];
+    const p = st.pts2d[0], q = st.pts2d[st.pts2d.length - 1];
+    const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    const far = Math.hypot(vpIn[0] - p[0], vpIn[1] - p[1]) >= Math.hypot(vpIn[0] - q[0], vpIn[1] - q[1]) ? p : q;
+    const m = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+    const dx = vpIn[0] - far[0], dy = vpIn[1] - far[1];
+    const D = Math.hypot(dx, dy);
+    return { misfit: Math.abs((m[0] - far[0]) * dy - (m[1] - far[1]) * dx) / D / len };
+  }, vp);
+  expect((led.positive_away as any).misfit).toBeGreaterThan(0.06);   // AXIS_TOL.vp_dist_ratio 밖
+
+  // ---- 픽셀 확인 + 콘솔 오류 0
+  led.ink_px = await page.evaluate((inkExpr) => {
+    // eslint-disable-next-line no-eval
+    return eval(inkExpr) as number;
+  }, INK_PX);
+  expect(led.ink_px as number).toBeGreaterThan(50);
+  led.console_errors = errors;
+  expect(errors).toEqual([]);
+
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "vp_dir_flow.json"), JSON.stringify({
+    spec: "4차 지시 2 — 카메라 확정 전 소실점 방향 스냅 종단. Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
+    what_this_does_not_say: [
+      "misfit 0은 측정이 아니라 **보장 확인**이다(#5) — 스냅이 끝점을 a→V 직선 위로 옮긴다. 1e-9는 그 배선의 판정 임계이고 아래 thresholds에 있다([B-4])",
+      "겨냥 오차 4px 한 점의 확인이다(#12) — 임계 경계의 거동은 test/vp_dir.test.ts의 반례가 덮는다",
+      "실획이 아니다(AS-C1) — Playwright 합성 마우스다",
+      "dpr 1 실행이다(#21) — 좌표 규약은 e2e/coords.spec.ts가 dpr 1·2·3에서 잠근다",
+      "스냅 주체의 판정 재료는 aim 블록이다([B-5]) — 겨냥 각이 직교 임계(4°) 밖이고 소실점이 기본 지평선 밖이라, 이 끌림은 vp_dir 외의 경로로는 안 나온다",
+    ],
+    thresholds: { snap_misfit_max: 1e-9, aim_offset_px: 4, vp_dist_ratio_frame: 0.06,
+                  away_misfit_min: 0.06, ink_px_min: 50, console_errors_max: 0 },
+    gate: {
+      registered: "소실점 하나(NONE·짝 교점으로 확정)에서 그 방향을 겨냥한 선의 스냅 후 부적합도 < 1e-9 · 양성 채널(안 향하는 선)은 임계(0.06) 밖 그대로 · 콘솔 오류 0. "
+        + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
+      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다.** 양성 채널의 misfit는 스냅이 안 발동한 픽스처 각도의 항등이라 도달 가능성으로 적지 않는다(#40 ⚠⚠ — 항목 1 [7]과 같은 자리의 정정. 리뷰어 [B-3])",
+    },
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 1));
+});
+
+// ---------------------------------------------------------------- 4차 지시 3 — 소실점 = 그린 선의 교점
+//
+// "대각선 두 개로 소실점을 잡은 뒤 그 선들이 소실점을 정확히 향하는가"(지시 검증 절).
+// 옛 규칙은 소실점을 (선 ∩ 미리 깔린 지평선)에 뒀다 — 손으로 겨냥한 교점이 의도한 자리를
+// 벗어나고 격자가 그 벗어난 소실점 기준으로 생겨, 그린 대각선이 격자와 어긋난 채 남았다.
+// 새 규칙: 소실점 = 그린 두 선의 실제 교점. 그린 선은 안 움직인다. 격자가 그 선을 따른다.
+test("대각선 두 개 → 소실점 — 그 선들이 소실점을 정확히 향한다 (4차 지시 3)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+
+  const box = (await page.locator("#ink").boundingBox())!;
+  const W = box.width, H = box.height;
+  const drawPx = async (x1: number, y1: number, x2: number, y2: number) => {
+    await page.mouse.move(box.x + x1, box.y + y1);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move(box.x + x1 + (x2 - x1) * i / 8, box.y + y1 + (y2 - y1) * i / 8);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(50);
+  };
+  const led: Record<string, unknown> = {};
+
+  // ---- 대각선 두 개 — 둘 다 (0.60W, 0.40H)를 지난다(기본 지평선 0.5H **밖** — 회귀 판별의 재료)
+  await drawPx(0.30 * W, 0.70 * H, 0.465 * W, 0.535 * H);
+  await drawPx(0.25 * W, 0.55 * H, 0.4425 * W, 0.4675 * H);
+  led.fix = await page.evaluate(async () => {
+    const S = window.S2S;
+    const ax = await import("/src/s3d/axis.ts");
+    const vps = S.camSnapshot().vps as ([number, number] | null)[];
+    const vp = vps.find(v => v);
+    if (!vp) return { vp: null };
+    // **그 소실점을 만든 두 선**(규칙이 받은 대표 직선)이 정확히 그 점을 향하는가(지시 3-b·d)
+    const misfits = S.doc().strokes.map((st: any) => {
+      const rep = ax.representative(st.pts2d);
+      return rep ? ax.vpMisfit(rep, vp) : null;
+    });
+    return { vp, misfits, horizon_y: S.horizon().y, order: S.order(), standing: S.standing() };
+  });
+  const fix = led.fix as any;
+  expect(fix.vp).toBeTruthy();
+  // **회귀 판별값을 원장에 남긴다**(항목 3 리뷰어 [8], #40 ③) — 등록 조항의 측정값이 원장에 있어야 한다
+  led.fix_regression = { canvas_h: H, default_horizon_y: 0.5 * H,
+                         vp_off_px: Math.abs(fix.vp[1] - 0.5 * H),
+                         vp_off_ratio: Math.abs(fix.vp[1] - 0.5 * H) / H };
+  // **오차 0**(지시 3-d) — 교점의 정의다(보장 확인, #5). 판별력은 아래 회귀 판별이 든다
+  for (const m of fix.misfits) expect(m).toBeLessThan(1e-9);
+  // **회귀 판별** — 옛 규칙이면 소실점이 기본 지평선(0.5H) 위에 놓인다. 지금은 교점의 y다
+  expect(Math.abs(fix.vp[1] - 0.5 * H)).toBeGreaterThan(0.05 * H);
+  // **소실점이 지평선을 정한다**(지시 4-c의 앞당김 — 롤 0 유지)
+  expect(fix.horizon_y).toBeCloseTo(fix.vp[1], 6);
+
+  // ---- 격자가 그 소실점에서 나온다(지시 3-c) — 화면에 격자를 만들려면 카메라가 서야 하므로
+  //      가로선으로 P1을 세운다(그리드·정합의 세부는 test/grid.test.ts가 2점에서 잠근다)
+  await drawPx(0.30 * W, 0.85 * H, 0.70 * W, 0.85 * H);
+  // **소실점이 있으면 가로선은 묻는다**(D-L48 — 조용한 P1 가둠 방지) — 사람 대신 답한다
+  led.asked = await page.evaluate(() => {
+    const S = window.S2S;
+    const a = S.ask();
+    if (a) S.answerAsk("screen");
+    return a ? a.question : null;
+  });
+  led.grid = await page.evaluate(async () => {
+    const S = window.S2S;
+    const gr = await import("/src/s3d/grid.ts");
+    const r = S.cam.acc.solve();
+    const vps = S.cam.vps() as ([number, number] | null)[];
+    const el = document.getElementById("ink") as HTMLCanvasElement;
+    const size: [number, number] = [el.clientWidth, el.clientHeight];
+    const g = gr.groundGrid(r.camera, vps, size, undefined, undefined, S.cam.ctx()?.axisDirs ?? null);
+    let checked = 0, maxSin = 0;
+    for (const seg of g) {
+      if (seg.axis == null || seg.kind !== "ground") continue;
+      const vp = vps[seg.axis];
+      if (!vp) continue;                          // 무한원 축(화면 가로)은 방향 자체가 정확하다
+      const dx = seg.b[0] - seg.a[0], dy = seg.b[1] - seg.a[1];
+      const L = Math.hypot(dx, dy);
+      if (L < 5) continue;
+      const vx = vp[0] - seg.a[0], vy = vp[1] - seg.a[1];
+      const D = Math.hypot(vx, vy);
+      if (D < 1e-6) continue;
+      const sin = Math.abs(dx * vy - dy * vx) / (L * D);
+      maxSin = Math.max(maxSin, sin);
+      checked += 1;
+    }
+    return { standing: S.standing(), checked, maxSin };
+  });
+  expect((led.grid as any).standing).toBe(true);
+  expect((led.grid as any).checked).toBeGreaterThan(10);   // **덮는 대상 수**(#38)
+  expect((led.grid as any).maxSin).toBeLessThan(1e-6);     // **격자가 그 소실점으로 모인다**
+
+  // ---- 픽셀 확인 + 콘솔 오류 0
+  led.ink_px = await page.evaluate((inkExpr) => {
+    // eslint-disable-next-line no-eval
+    return eval(inkExpr) as number;
+  }, INK_PX);
+  expect(led.ink_px as number).toBeGreaterThan(50);
+  led.console_errors = errors;
+  expect(errors).toEqual([]);
+
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "vp_two_lines.json"), JSON.stringify({
+    spec: "4차 지시 3 — 소실점 = 그린 두 대각선의 실제 교점. 그 선·격자가 그 점을 정확히 향한다. Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
+    what_this_does_not_say: [
+      "misfit·maxSin의 0은 측정이 아니라 **보장 확인**이다(#5) — 교점·투영의 정의다. 1e-9·1e-6은 배선 판정 임계이고 아래 thresholds에 있다",
+      "손 오차의 크기·나란한 짝의 조건수는 여기서 안 잰다 — 반례는 test/vp_rules.test.ts(대기·이음 제외·회귀 팔)가 덮는다",
+      "실획이 아니다(AS-C1) — Playwright 합성 마우스다",
+      "dpr 1 실행이다(#21) — 좌표 규약은 e2e/coords.spec.ts가 dpr 1·2·3에서 잠근다",
+    ],
+    thresholds: { line_misfit_max: 1e-9, grid_sin_max: 1e-6, vp_off_default_horizon_min_ratio: 0.05,
+                  ink_px_min: 50, console_errors_max: 0 },
+    gate: {
+      registered: "소실점 = 그린 두 선의 교점(각 선의 부적합도 < 1e-9) · 소실점 y ≠ 기본 지평선(옛 규칙 판별) · 지평선 = 소실점 y · 격자 조각 전부가 소실점으로 모인다(sin < 1e-6, 덮는 수 > 10) · 콘솔 오류 0. "
+        + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
+      reachability_absent: "**배선·보장 확인이라 도달 가능성 오라클이 성립하지 않는다.** 회귀 판별값(|vp.y − 0.5H|)은 픽스처가 고른 소실점 높이의 항등이라 도달 가능성으로 적지 않는다(#40 ⚠⚠ — 항목 1 [7]·2 [B-3]과 같은 자리)",
+    },
+    ...led,
+    constants: constantsSnapshot(),
+    metric_defs: metricsSnapshot(),
+  }, null, 1));
+});
+
+// ---------------------------------------------------------------- 4차 지시 1 — 초기 화면 오스냅
+//
+// "빈 화면에서 두 선을 긋고 두 번째가 첫 번째 끝점에 붙는가"(지시 검증 절).
+// 카메라 확정 전에는 3D 후보가 0이라 오스냅이 통째로 안 돌던 자리다 — 2D 획의
+// 끝점·중점·교차점이 후보가 됐는지를 **실제 포인터**로 확인한다.
+//
+// **2D 경로였다는 것을 원장이 증명해야 한다**(리뷰어 [1], #32): 스냅 시점의
+// `standing:false`와 **3D 후보 0**을 함께 기록한다 — 두 번째 획은 첫 소실점의 지지선
+// 방향으로 그어 카메라가 서지 않게 한다(깊이선 둘이 서로 다른 소실점이면 P2가 서 버린다).
+//
+// **회귀 방어는 본 단언(gap 0)이 담당한다**: 배선이 3D 전용으로 회귀하면 3D 후보가 0이라
+// (기록됨) 붙을 수 없어 그 단언이 실패한다. "종류 전부 끔" 팔은 옛 상태의 재현이 **아니라**
+// (그 기전은 토글 경로 — `osnap_config.json` ③이 덮는다) 단언의 판별력을 확인하는
+// **양성 채널**이다(#30 · 리뷰어 [6] — 3차 리뷰어 [4]의 재분류와 같은 자리).
+test("빈 화면 — 두 번째 획이 첫 획의 끝점에 붙는다 (4차 지시 1)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(`pageerror: ${e}`));
+  page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await page.evaluate(() => new Promise<void>(res => {
+    const q = indexedDB.deleteDatabase("sketch2space");
+    q.onsuccess = q.onerror = q.onblocked = () => res();
+  }));
+  await page.reload();
+  await page.waitForFunction(() => !!window.S2S);
+
+  const box = (await page.locator("#ink").boundingBox())!;
+  const drawPx = async (x1: number, y1: number, x2: number, y2: number) => {
+    await page.mouse.move(box.x + x1, box.y + y1);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) {
+      await page.mouse.move(box.x + x1 + (x2 - x1) * i / 8, box.y + y1 + (y2 - y1) * i / 8);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(50);
+  };
+  const W = box.width, H = box.height;
+  const led: Record<string, unknown> = {};
+
+  // ---- ① 빈 화면에 깊이선 하나 (화면 축과 20° 이상 — 애매 물음이 안 뜨는 각)
+  await drawPx(0.30 * W, 0.70 * H, 0.50 * W, 0.55 * H);
+  // **스냅 직전 상태를 기록한다**(리뷰어 [1]) — 카메라가 안 섰고 3D 후보가 0이다.
+  // 이것이 "붙인 주체가 2D 경로"라는 판정의 재료다(#32: 실행 정보 없는 결과는 정보가 0이다)
+  led.before2 = await page.evaluate(() => ({
+    standing: window.S2S.standing(), order: window.S2S.order(),
+    snap_targets_3d: window.S2S.snapTargets(), pending_2d: window.S2S.pending2Targets(),
+  }));
+  expect((led.before2 as any).standing).toBe(false);
+  expect((led.before2 as any).snap_targets_3d).toBe(0);            // **3D 후보가 없다** — 2D뿐이다
+  // ---- ② 첫 획의 끝점 근처(조리개 15px 안, √61≈7.8px 겨냥 오차)에서 이어 긋는다.
+  //      ⚠ 4차 지시 3으로 깊이선 하나는 소실점을 안 만들고(대기), 끝점을 공유한 이음의
+  //      교점은 소실점에서 제외되므로 — 이 두 획으로는 카메라가 서지 않는다(확정 전 유지)
+  const end1 = await page.evaluate(() => {
+    const st = window.S2S.doc().strokes[0];
+    return st.pts2d[st.pts2d.length - 1] as [number, number];
+  });
+  await drawPx(end1[0] + 6, end1[1] + 5, end1[0] + 0.18 * W, end1[1] + 0.13 * H);
+  led.snap = await page.evaluate(() => {
+    const S = window.S2S;
+    const sts = S.doc().strokes;
+    const a = sts[0], b = sts[sts.length - 1];
+    const e = a.pts2d[a.pts2d.length - 1], s = b.pts2d[0];
+    return { strokes: sts.length, target: e, got: s,
+             gap_px: Math.hypot(e[0] - s[0], e[1] - s[1]),
+             standing: S.standing(), order: S.order() };
+  });
+  // **붙었다** — 시작점이 첫 획 끝점과 일치한다(스냅은 좌표를 그 점으로 옮긴다 — 보장 확인, #5).
+  // 0.5는 판정 임계다 — 원장 `thresholds`에 등록한다(리뷰어 [5])
+  expect((led.snap as any).gap_px).toBeLessThan(0.5);
+  expect((led.snap as any).standing).toBe(false);                  // **여전히 카메라 확정 전이다**
+
+  // ---- ③ 양성 채널 — 종류를 전부 끄면 안 붙는다(겨냥 오차가 그대로 남는다).
+  //         옛 상태의 재현이 아니라 **단언의 판별력 확인**이다(#30, 리뷰어 [6])
+  await page.evaluate(() => window.S2S.setOsnap({
+    kinds: { vertex: false, endpoint: false, midpoint: false, intersection: false,
+             perpendicular: false, on_edge: false, on_face: false } }));
+  const end2 = await page.evaluate(() => {
+    const sts = window.S2S.doc().strokes;
+    const st = sts[sts.length - 1];
+    return st.pts2d[st.pts2d.length - 1] as [number, number];
+  });
+  await drawPx(end2[0] + 6, end2[1] + 5, end2[0] - 0.15 * W, end2[1] + 0.10 * H);
+  led.positive_off = await page.evaluate(() => {
+    const sts = window.S2S.doc().strokes;
+    const prev = sts[sts.length - 2], st = sts[sts.length - 1];
+    const e = prev.pts2d[prev.pts2d.length - 1], s = st.pts2d[0];
+    return { gap_px: Math.hypot(e[0] - s[0], e[1] - s[1]) };
+  });
+  expect((led.positive_off as any).gap_px).toBeGreaterThan(2);     // **안 붙었다** — 겨냥 오차 그대로
+
+  // ---- 픽셀 확인 + 콘솔 오류 0 (지시 검증 절)
+  led.ink_px = await page.evaluate((inkExpr) => {
+    // eslint-disable-next-line no-eval
+    return eval(inkExpr) as number;
+  }, INK_PX);
+  expect(led.ink_px as number).toBeGreaterThan(50);
+  led.console_errors = errors;
+  expect(errors).toEqual([]);
+
+  mkdirSync(OUT, { recursive: true });
+  writeFileSync(resolve(OUT, "snap2d_flow.json"), JSON.stringify({
+    spec: "4차 지시 1 — 초기 화면(카메라 확정 전) 2D 오스냅 종단. Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
+    what_this_does_not_say: [
+      "gap_px 0은 **보장 확인**이다(#5) — 스냅이 좌표를 그 점으로 옮긴다. 0.5는 그 배선의 판정 임계이고 아래 thresholds에 있다(리뷰어 [5])",
+      "겨냥 √61≈7.8px 한 점의 확인이다(#12) — 조리개 경계(15px)·우선순위·연장 여유의 거동은 test/snap2d.test.ts의 반례가 덮는다",
+      "실획이 아니다(AS-C1) — Playwright 합성 마우스다",
+      "dpr 1 실행이다(#21) — 좌표 규약은 e2e/coords.spec.ts가 dpr 1·2·3에서 잠근다",
+      "2D 교차점 스냅이 만드는 접합은 **사용자가 고른 화면 교차**다 — 서로 다른 깊이의 두 획을 화면 교차에서 붙이면 승격에서 3D 접합으로 굳는다(AS-L2의 가림 교차와 같은 기하 — 자동 배치가 아니라 표식을 보고 고른 것이라는 점이 다르다. D-L57에 기록)",
+    ],
+    thresholds: { start_gap_px_max: 0.5, aim_offset_px: 7.81, osnap_radius_px_default: 15,
+                  positive_off_gap_px_min: 2, ink_px_min: 50, console_errors_max: 0 },
+    gate: {
+      registered: "스냅 직전 standing=false·3D 후보 0 기록(2D 경로 판정, 리뷰어 [1]) · 두 번째 획의 시작이 첫 획 끝점과 일치(gap < 0.5px) · 양성 채널(종류 전부 끔)은 겨냥 오차 그대로(> 2px) · 콘솔 오류 0. "
+        + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①: '없다'도 결론이고 명시한다)",
+      reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다.** 판별력은 양성 채널(positive_off/gap_px — 종류를 끄면 겨냥 오차 √61이 그대로 남는다)이 확인하는데, 그 값은 픽스처가 준 겨냥 오차의 항등이라 도달 가능성 수치로 적지 않는다(#40 ⚠⚠ — segment_gate가 절대값으로 규칙을 피해 갔던 그 자리의 정정과 같다. 리뷰어 [7])",
     },
     ...led,
     constants: constantsSnapshot(),
