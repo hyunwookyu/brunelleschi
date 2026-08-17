@@ -363,3 +363,6 @@ D-L22의 형태 오차와 **다른 양이다**) 중앙 **0.4483**, 면 경로로
   숨김은 CSS 미디어쿼리 한 줄이고 확인은 브라우저 수동(모바일 에뮬레이션 orbit_visible=false —
   progress 산문에만 있다, #25). Playwright의 emulateMedia가 pointer 미디어를 못 바꿔 e2e 잠금이
   바로 안 된다. 트리거: 모바일 프로젝트(deviceScaleFactor·hasTouch)를 e2e에 추가할 때 함께 잠근다.
+- ~~**eraser_size 원장의 자체 대조 명시가 이월됐다**~~ **해소(8-R″ [8], 2026-08-17)**:
+  8-R′ [4] 낮음이 미룬 명시("이 팔의 단언 자체가 배선 부재에서 실패한다")를 같은 세션의
+  e2e 전량 재실행에 얹어 `eraser_size.json` what_not_say에 넣었다 — 이월 소멸.

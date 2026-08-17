@@ -78,7 +78,10 @@ const REGISTERED =
   + "등급 잉크 잡음(INK_GRADES)이 남아 jit_0의 축 오차는 0이 아니다(by_jitter.jit_0 실측 참조). "
   + "표제 모집단은 연속성으로 유지하고(#28) jit_0 층을 headline_jit0_no_identity로 따로 낸다. "
   + "**[지시 3 배선]** 이 실행의 스냅 팔은 무물음 선언(스냅 = 선언)이다 — 물음 오라클 판"
-  + "(이전 동작점)의 원장은 git show d724ac0:stage0/out/rule_camera.json이다.";
+  + "(이전 동작점)의 원장은 git show d724ac0:stage0/out/rule_camera.json이다. "
+  + "**[8-R″ [6] 추가 등록]** 조리개 스윕(4·40px)에 번갈아(drawn) 팔을 추가한다 — 종전 스윕이 "
+  + "몰아 팔 하나였는데 결론('중앙값은 조리개에 둔감')에 팔 한정이 없었다(#12). 판정 지표는 "
+  + "그대로다(스윕은 판정이 아니라 민감도 재료).";
 
 // ---------------------------------------------------------------- 픽스처
 
@@ -323,6 +326,7 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
                   "rule_drawn_snap", "rule_grouped_snap", "rule_wide_pair_snap",
                   "rule_drawn_placebo", "rule_grouped_placebo", "rule_wide_pair_placebo",
                   "rule_grouped_snap_r4", "rule_grouped_snap_r40",
+                  "rule_drawn_snap_r4", "rule_drawn_snap_r40",
                   "detect"] as const;
     const newArms = (): Record<string, Bag> =>
       Object.fromEntries(ARMS.map(a => [a, bag()])) as Record<string, Bag>;
@@ -405,12 +409,17 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
                 }
               }
             });
-            // **조리개 스윕**(#12, 리뷰어 [25]) — 몰아 팔만, 4·40px
+            // **조리개 스윕**(#12, 리뷰어 [25]) — 4·40px. 8-R″ [6]으로 번갈아(drawn) 팔 추가:
+            // 원시↔스냅 격차가 큰 팔이 스윕에서 빠져 있었다(몰아 팔 하나의 둔감을 팔 한정 없이 적었다)
             {
               const r4 = runRules(fx, "grouped", "snap", 4);
               record("rule_grouped_snap_r4", vpsOf(r4.st), r4);
               const r40 = runRules(fx, "grouped", "snap", 40);
               record("rule_grouped_snap_r40", vpsOf(r40.st), r40);
+              const d4 = runRules(fx, "drawn", "snap", 4);
+              record("rule_drawn_snap_r4", vpsOf(d4.st), d4);
+              const d40 = runRules(fx, "drawn", "snap", 40);
+              record("rule_drawn_snap_r40", vpsOf(d40.st), d40);
             }
             // **검출 팔 — 같은 획, 같은 실행**(#27). 대역을 다른 하네스에서 안 가져온다
             const lines = linesFromStrokes(
@@ -480,6 +489,16 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
     }
     const jit0Head = Object.fromEntries(
       Object.entries(jit0NoIdentity).map(([k, v]) => [k, summarize(v)]));
+    // **jit_0 층의 조리개 정보량**(8-R″ [7] — #38: 관측은 원장에 남긴다. 산문 수치 대신 계산으로
+    // 남겨 재실행마다 스스로 갱신된다) — 스윕 팔 요약이 기본 조리개 팔과 자리까지 동일하면
+    // 그 층에서 조리개는 결정에 안 닿는다(정보량 0). 동일한 사유는 안 갈랐다.
+    const j0s = (a: string) => JSON.stringify(jit0Head[a] ?? null);
+    const jit0Aperture = {
+      grouped_sweep_identical: j0s("rule_grouped_snap_r4") === j0s("rule_grouped_snap")
+        && j0s("rule_grouped_snap_r40") === j0s("rule_grouped_snap"),
+      drawn_sweep_identical: j0s("rule_drawn_snap_r4") === j0s("rule_drawn_snap")
+        && j0s("rule_drawn_snap_r40") === j0s("rule_drawn_snap"),
+    };
 
     const pairedSummary = Object.fromEntries(Object.entries(paired).map(([k, v]) => [k, {
       fixtures_both_ok: v.n,
@@ -548,9 +567,18 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
           + "표제는 유지하고 이 층을 따로 낸다 — 1pt 구도는 여기서도 뺐다(그쪽은 진짜 구성 항등).",
         ...jit0Head,
       },
+      jit0_aperture: {
+        note: "**jit_0 층의 조리개 정보량**(8-R″ [7], #38) — true면 그 층에서 스윕 팔 요약이 "
+          + "기본 조리개 팔과 자리까지 동일하다(조리개가 결정에 안 닿는다 — 정보량 0). "
+          + "동일한 사유는 안 갈랐다(추정 — jit_0은 끝점 오차 0이라 오스냅 발동이 조리개에 "
+          + "안 걸리는 쪽 — 은 검증 안 됨).",
+        ...jit0Aperture,
+      },
       paired_headline: {
         note: "**짝지은 부분집합**(리뷰어 [23]①) — 표제 모집단에서 원시·스냅 둘 다 카메라가 선 "
-          + "픽스처만. 팔별 camera_ok 차이(예: drawn 109 대 138)가 중앙값을 흔드는 것을 가른다.",
+          + "픽스처만. 팔별 camera_ok 차이가 중앙값을 흔드는 것을 가른다(각 팔의 camera_ok는 "
+          + "headline_no_identity를 그 자리에서 읽는다 — 수치를 산문에 적으면 재실행마다 낡는다, "
+          + "#1 · 8-R″ [2]가 옛 판의 '109 대 138' 잔존을 잡았다).",
         ...pairedSummary,
       },
       headline_no_identity: {
@@ -588,9 +616,11 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
         rule_drawn_placebo_median: headNoIdentity.rule_drawn_placebo.deg_median,
         rule_grouped_placebo_median: headNoIdentity.rule_grouped_placebo.deg_median,
         rule_wide_pair_placebo_median: headNoIdentity.rule_wide_pair_placebo.deg_median,
-        // **조리개 스윕**(#12, 리뷰어 [25])
+        // **조리개 스윕**(#12, 리뷰어 [25] · 8-R″ [6] 번갈아 팔 추가)
         rule_grouped_snap_r4_median: headNoIdentity.rule_grouped_snap_r4.deg_median,
         rule_grouped_snap_r40_median: headNoIdentity.rule_grouped_snap_r40.deg_median,
+        rule_drawn_snap_r4_median: headNoIdentity.rule_drawn_snap_r4.deg_median,
+        rule_drawn_snap_r40_median: headNoIdentity.rule_drawn_snap_r40.deg_median,
         // **짝지은 부분집합**(리뷰어 [23]①)
         paired: pairedSummary,
         passed_snapped: headNoIdentity.rule_grouped_snap.deg_median != null && detMed != null

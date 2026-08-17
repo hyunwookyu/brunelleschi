@@ -1655,6 +1655,7 @@ test("지우개 크기·도구 배치 — 슬라이더가 반경을 바꾸고 �
       "반경 판정은 두 동작점(6px 못 닿음·30px 닿음, 거리 12px)의 확인이다(#12) — 경계 정밀도는 안 잰다",
       "아이패드 실기(손 가림 6-e)·dpr 2 확인은 K의 문이다(#21)",
       "부분 지우개 경로의 확인이다 — 조각 지우개의 반경(pickStroke rPx)은 같은 ERASER.px를 읽는다(코드 경로 확인, 실행 팔 없음)",
+      "되살림 확인(A-4)은 별도로 안 했다 — 이 팔의 단언 자체가 배선 부재에서 실패한다(슬라이더→ERASER 미배선이면 6px 팔의 '못 지움' 단언이 깨진다 — 반경이 옛 고정값 ≈21px로 남아 12px 거리 획이 지워진다). 그 판단을 여기 적는다(#25 — 원장 밖 실행 없음. 8-R′ [4]의 이월을 8-R″ [8]이 닫았다)",
     ],
     thresholds: { eraser_small_px: 6, eraser_large_px: 30, probe_offset_px: 12, console_errors_max: 0 },
     gate: {
@@ -1946,6 +1947,12 @@ test("뷰 큐브 — 90° 스냅·연속 회전·피치 유지·소실점 하나
   led.console_errors = errors;
   expect(errors).toEqual([]);
 
+  // **판별 여유를 원장 필드로 남긴다**(8-R″ [4]) — 국소 up 구현이면 90° 회전이 fy를 시작
+  // |fy| 크기 급으로 옮긴다(피치각 p에서 sin(p)·(1−cosθ) 급). 실측 Δfy와의 격차가 여유다.
+  led.fy_before = (led.before as any).fy;
+  led.fy_delta_snap = Math.abs((led.after_snap as any).fy - (led.before as any).fy);
+  led.fy_delta_drag = Math.abs((led.after_drag as any).fy - (led.before as any).fy);
+
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "view_cube.json"), JSON.stringify({
     spec: "5차 지시 8 — 뷰 큐브: 면 클릭 90° 스냅(수직축 고정·피치 유지·소실점 화면 안 1개 유지), 드래그 연속 회전, 토글(기본 켬). Playwright 신뢰 이벤트·콘솔 오류 0",
@@ -1953,11 +1960,13 @@ test("뷰 큐브 — 90° 스냅·연속 회전·피치 유지·소실점 하나
       "면 클릭의 구현은 단순화다(좌/우 1/3 = 그 방향 90°·가운데 = 가장 가까운 90° 정렬) — CAD 뷰 큐브의 3D 면 히트가 아니다. 위/아래 면은 없다: 회전 축이 수직축 고정이라(8-b) 피치를 바꾸는 면은 정의상 못 둔다",
       "vps_inside의 판정은 세계 수평 축 두 가족의 소실점 투영이다 — 그린 선의 실측 수렴점이 아니다(#5에 가까운 기하 계산). 화면 안 개수가 1인 것이 '같은 조건의 1점'의 판정이다",
       "한 구도·한 클릭 지점의 확인이다(#12) · dpr 1(#21)",
-      "판별의 전제로 **피치≠0을 먼저 만든다**(재검 [5]) — 확정 카메라(fy=0)에서는 수직축 회전과 국소 up 회전이 같은 결과라 이 게이트가 국소 up 구현을 통과시킨다. fy≠0 시작을 단언에 넣었다",
+      "판별의 전제로 **|fy| > fy_abs_min을 먼저 만든다**(재검 [5], 8-R″ [4]) — 확정 카메라(fy=0)에서는 수직축 회전과 국소 up 회전이 같은 결과라 이 게이트가 국소 up 구현을 통과시킨다. **절댓값 조건이다**(#24 — 이 구도의 fy_before는 음수: 아래로 끌어 만든 피치). 판별 여유: 국소 up 구현이면 90° 회전이 fy를 시작 |fy| 크기 급(sin p·(1−cos θ))으로 옮기고, 수직축 고정의 실측은 fy_delta_snap·fy_delta_drag(< pitch_delta_max)다 — 국소 up 판의 되살림 실행 값은 없다(#25, 이 여유 산정은 기하 추정)",
+      "settle의 정지 판정은 Δyaw + Δfy < settle_eps다(요만 보면 수직 감쇠 꼬리를 놓친다 — fy가 움직이는 동안 yaw는 이미 멎는다. 8-R′ [5] 수리를 필드로 남긴다)",
       "드래그 팔의 하한(1°)은 공허 방지다(#38 — 안 돌았으면 이 팔은 아무것도 안 잰 것이다)",
       "되살림 확인(A-4)은 별도로 안 했다 — 이 팔의 단언 자체가 배선 부재에서 실패한다(spinYaw 미배선이면 dyaw 0·드래그 0으로 하한이 깨진다). 그 판단을 여기 적는다(#25 — 원장 밖 실행 없음)",
     ],
-    thresholds: { snap_deg_tol: 0.5, pitch_delta_max: 1e-6, drag_min_deg: 1, drag_max_deg: 45,
+    thresholds: { snap_deg_tol: 0.5, fy_abs_min: 0.02, pitch_delta_max: 1e-6,
+                  drag_min_deg: 1, drag_max_deg: 45, settle_eps: 1e-10,
                   console_errors_max: 0 },
     gate: {
       registered: "면 클릭(우 1/3) 후 요 변화 90°±0.5° · 피치(시선 수직 성분) 변화 <1e-6 · 수평 축 소실점이 화면 안에 정확히 1개 · 드래그 20px 후 요 1~45°(연속 — 스냅 아님) · 토글로 숨김 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",

@@ -20,30 +20,30 @@
  },
  "fix": {
   "vp": [
-   749.6677201871213,
-   279.253100590385
+   749.6683002240412,
+   279.6671166610321
   ],
   "misfits": [
-   3.688056542639058e-17,
-   1.1623825108569246e-16
+   3.685674686347687e-17,
+   1.162265136918436e-16
   ],
-  "horizon_y": 279.253100590385,
+  "horizon_y": 279.6671166610321,
   "order": 0,
   "standing": false
  },
  "fix_regression": {
-  "canvas_h": 674,
-  "default_horizon_y": 337,
-  "vp_off_px": 57.746899409615025,
-  "vp_off_ratio": 0.08567789229913209
+  "canvas_h": 675,
+  "default_horizon_y": 337.5,
+  "vp_off_px": 57.83288333896792,
+  "vp_off_ratio": 0.08567834568735988
  },
  "asked": null,
  "grid": {
   "standing": true,
   "checked": 480,
-  "maxSin": 1.2560206047907573e-14
+  "maxSin": 1.1459452313442206e-14
  },
- "ink_px": 24569,
+ "ink_px": 23355,
  "console_errors": [],
  "constants": {
   "hash": "509615a1",

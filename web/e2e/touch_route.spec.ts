@@ -499,7 +499,11 @@ test.describe("dpr 2", () => {
     };
     expect(dpr.devicePixelRatio).toBe(2);
     expect(dpr.backing_ratio).toBe(2);        // 섭동이 렌더 경로까지 걸렸다
-    expect(az).toBeCloseTo(one!, 12);
+    // ⚠ 허용치의 근거(간헐 수리): 판별 대상은 **비 1 대 2**(dpr 곱)다 — 정밀도 12(<5e-13)는
+    // 그 판별이 아니라 감쇠 정착의 수치 결정성을 재고 있었고, 정착 요동(실측 ~3e-10)이
+    // 환경에 따라 그 선을 넘어 간헐이 됐다(HANDOFF 알려진 자리 — 이 컨테이너에선 3/3 상시).
+    // 1e-6은 요동보다 3자리 위, dpr 누출 신호(≈1.09)보다 6자리 아래다.
+    expect(Math.abs(az - one!)).toBeLessThan(1e-6);
     // 양성 채널: 절반 손짓은 절반 돈다(죽은 구간 한 걸음이 양쪽에서 같은 비율로 빠진다)
     expect(az2 / azFull).toBeGreaterThan(0.45);
     expect(az2 / azFull).toBeLessThan(0.55);
