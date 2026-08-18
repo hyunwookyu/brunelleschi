@@ -1061,8 +1061,56 @@ const orbitTarget = (): Vec3 => stage.centroid(lifted(doc).map(s =>
  * 절대 스냅(면·모서리·꼭짓점·가장 가까운 1점)은 stage.snapToDir 하나를 지난다(#17).
  * 기본 켬(지시 1-5).
  */
+/**
+ * **큐브의 기준 좌표계 = 그린 공간의 축**(10차 항목 6 · 7차 지시 8 — "자세가 도는 것과
+ * 기준계가 도는 것을 구분한다"). 옛 큐브는 three 세계 축이 기준이라, 2·3점 구도에서
+ * 면 탭이 **그린 상자의 입면이 아니라 카메라의 초기 방향**으로 갔다 — 사용자가 그린
+ * 상자와 큐브의 면이 안 맞았다. 기준계는 **카메라가 서는 순간 고정**되고(axisDirs 불변),
+ * 그 뒤 도는 것은 자세뿐이다.
+ *
+ * 변환은 이 경계 한 곳이다(#17): `basis`는 그린 축 좌표로 **내려** 주고, `snap`은 큐브
+ * 좌표(그린 축)를 세계로 **되올린다**. 상대 회전(spinYaw)은 기준계 무관이라 안 건드린다.
+ * P1(정면 확정)에서는 그린 축 = 세계 축이라 **항등**이다 — 옛 거동이 그대로 남는다.
+ */
+function drawnBasisThree(): { X: Vec3; Y: Vec3; Z: Vec3 } | null {
+  const dirs = cam.ctx()?.axisDirs;
+  if (!dirs || dirs.length < 3 || dirs.some(d => !d)) return null;
+  // 우리 규약(y 아래·z 안쪽) → three(y 위·z 앞) — 뒤집기는 viewport.ts 규약 그대로
+  const t = dirs.map(d => [d![0], -d![1], -d![2]] as Vec3);
+  const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const unit = (v: Vec3): Vec3 => {
+    const L = Math.hypot(v[0], v[1], v[2]);
+    return L < 1e-9 ? [0, 0, 0] : [v[0] / L, v[1] / L, v[2] / L];
+  };
+  const flip = (v: Vec3, ref: Vec3): Vec3 => (dot(v, ref) < 0 ? [-v[0], -v[1], -v[2]] : v);
+  // 큐브 +x ← 가로축(axis 0) · +y ← 수직축(axis 2, 위로) · +z ← 깊이축의 반대(카메라 쪽)
+  const X0 = flip(unit(t[0]), [1, 0, 0]);
+  const Y0 = flip(unit(t[2]), [0, 1, 0]);
+  // 그램-슈밋(소실점 잡음 직교화) + 오른손 좌표계 강제(큐브 히트가 그 규약이다)
+  const Y1 = unit([Y0[0] - dot(Y0, X0) * X0[0], Y0[1] - dot(Y0, X0) * X0[1],
+                   Y0[2] - dot(Y0, X0) * X0[2]]);
+  if (!Y1[0] && !Y1[1] && !Y1[2]) return null;
+  // +z는 X×Y가 정한다(오른손 좌표계 — 큐브 히트의 규약. 깊이축의 반대쪽이 저절로 나온다:
+  // 우리 삼중항(x우·y아래·z안)이 오른손이라 three로 뒤집어도 오른손이 유지된다)
+  const Z1: Vec3 = [X0[1] * Y1[2] - X0[2] * Y1[1], X0[2] * Y1[0] - X0[0] * Y1[2],
+                    X0[0] * Y1[1] - X0[1] * Y1[0]];
+  return { X: X0, Y: Y1, Z: Z1 };
+}
+const cubeDown = (v: Vec3, A: { X: Vec3; Y: Vec3; Z: Vec3 }): Vec3 => [
+  v[0] * A.X[0] + v[1] * A.X[1] + v[2] * A.X[2],
+  v[0] * A.Y[0] + v[1] * A.Y[1] + v[2] * A.Y[2],
+  v[0] * A.Z[0] + v[1] * A.Z[1] + v[2] * A.Z[2]];
+const cubeUp = (w: Vec3, A: { X: Vec3; Y: Vec3; Z: Vec3 }): Vec3 => [
+  w[0] * A.X[0] + w[1] * A.Y[0] + w[2] * A.Z[0],
+  w[0] * A.X[1] + w[1] * A.Y[1] + w[2] * A.Z[1],
+  w[0] * A.X[2] + w[1] * A.Y[2] + w[2] * A.Z[2]];
+
 const viewCube = new ViewCube(document.getElementById("cube") as HTMLCanvasElement, {
-  basis: () => stage.basisOf(),
+  basis: () => {
+    const b = stage.basisOf();
+    const A = drawnBasisThree();
+    return A ? { r: cubeDown(b.r, A), u: cubeDown(b.u, A), f: cubeDown(b.f, A) } : b;
+  },
   spin: (delta, ms) => {
     stage.viewport.userMoved = true;
     stage.spinYaw(delta, orbitTarget(), ms, () => refresh());
@@ -1070,7 +1118,8 @@ const viewCube = new ViewCube(document.getElementById("cube") as HTMLCanvasEleme
   },
   snap: (fwd) => {
     stage.viewport.userMoved = true;
-    stage.snapToDir(fwd, orbitTarget(), 280, () => refresh());
+    const A = drawnBasisThree();
+    stage.snapToDir(A ? cubeUp(fwd, A) : fwd, orbitTarget(), 280, () => refresh());
     refresh();
   },
   visible: () => cam.standing() && lifted(doc).length > 0,

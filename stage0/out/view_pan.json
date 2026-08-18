@@ -14,7 +14,7 @@
  "gate": {
   "registered": "핀 상태 두 손가락 뒤: 핀 유지·pose 불변·문서 불변·viewPan≈(60,40)·three 투영 이동=viewPan(±0.5px) · 밀린 화면에서 끝점 표시 위치를 겨냥한 획이 문서 끝점에 스냅(끝점/정점·문서 격차<1px) · 궤도 후 두 손가락: target 이동>0.01·viewPan 불변 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
   "reachability": "궤도 후 팔(④)이 음성 대조다 — 같은 두 손가락 손짓이 궤도 뒤에는 화면 팬이 아니라 공간 팬으로 간다(target_moved가 그 값). 화면 팬이 아무 데서나 받으면 ④의 viewPan이 움직여 실패한다",
-  "reachability_value": 0.8167136641809009,
+  "reachability_value": 0.8159521498123113,
   "reachability_source": "space_pan/target_moved"
  },
  "setup": {
@@ -55,7 +55,7 @@
    60,
    40
   ],
-  "target_moved": 0.8167136641809009
+  "target_moved": 0.8159521498123113
  },
  "console_errors": [],
  "constants": {
