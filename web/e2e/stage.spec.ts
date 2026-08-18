@@ -613,10 +613,11 @@ test("스냅 — 대상·표식·시작점 확정", async ({
     return { a, b, originX: r.left, originY: r.top, id: s0.id, axis: s0.axis };
   });
   const cx = geo.originX, cy = geo.originY;
-  // 꼭짓점에서 **10px 어긋나게** 겨냥한다 — 손 획이 정확히 맞지 않는 것을 흉내낸다.
-  // ⚠ 지시 H가 앱 조리개를 15px(라이노 선례)로 줄였다 — 옛 값(18px 오조준)은 이제
-  // 조리개 밖이라 모서리(on_edge)로 떨어진다. 반경 자체는 `osnap_config.spec`이 잠근다
-  await page.mouse.move(cx + geo.a[0] + 7, cy + geo.a[1] + 7);
+  // 꼭짓점에서 **7px 어긋나게** 겨냥한다 — 손 획이 정확히 맞지 않는 것을 흉내낸다.
+  // ⚠ 조리개 연혁: 지시 H가 15px(라이노 선례)로, D-L85(10차 항목 4)가 **8px**로 줄였다 —
+  // 옛 오조준 값(18px → 10px)은 각 시점의 조리개 밖이라 모서리(on_edge)로 떨어졌다.
+  // 반경 자체는 `osnap_config.spec`이 잠근다
+  await page.mouse.move(cx + geo.a[0] + 5, cy + geo.a[1] + 5);
   l.hover = await page.evaluate(() => {
     const S = window.S2S;
     const h = S.hoverSnap();
@@ -739,7 +740,9 @@ test("실시간 축 판정 — 미리보기와 확정이 같다", async ({ page 
   const cx = geo.originX, cy = geo.originY;
 
   // 꼭짓점 근처에서 시작해 같은 모서리 방향으로 **끌고 가는 도중** 상태를 읽는다
-  await page.mouse.move(cx + geo.a[0] + 11, cy + geo.a[1] + 9);
+  // (오조준 11,9 → 5,4 — D-L85가 조리개를 8px로 줄였다. 이 팔이 재는 것은 배선 항등이라
+  //  조리개 안에서 시작해야 한다 — 조리개 밖 거동은 snap_cache의 far_aim 팔이 잰다)
+  await page.mouse.move(cx + geo.a[0] + 5, cy + geo.a[1] + 4);
   await page.mouse.down();
   await page.mouse.move(cx + (geo.a[0] + geo.b[0]) / 2, cy + (geo.a[1] + geo.b[1]) / 2, { steps: 4 });
 
@@ -751,7 +754,7 @@ test("실시간 축 판정 — 미리보기와 확정이 같다", async ({ page 
   });
 
   // **미리보기와 확정의 일치**: 끌기 마지막 위치의 미리보기 3D와, 그 자리에서 뗀 확정 3D
-  const endX = cx + geo.b[0] - 7, endY = cy + geo.b[1] + 4;
+  const endX = cx + geo.b[0] - 5, endY = cy + geo.b[1] + 3;
   await page.mouse.move(endX, endY, { steps: 3 });
   const preview = await page.evaluate(() => {
     const S = window.S2S;
@@ -823,7 +826,8 @@ test("축 고정 — 추론이 거부한 획을 사용자가 강제한다", asyn
   // ("축이 안 맞으면 대기한다")이 아니라 **두 점 배치**를 재게 된다. 그래서 더 멀리 두고,
   // `snapEnd === null`을 **전제로 못 박는다**(전제가 깨지면 이 검사가 조용히 다른 것을 잰다).
   const wild = { x: cx + geo.a[0] + 250, y: cy + geo.a[1] - 300 };
-  await page.mouse.move(cx + geo.a[0] + 10, cy + geo.a[1] + 8);
+  // (오조준 10,8 → 5,4 — D-L85 조리개 8px. 시작 앵커가 잡혀야 "축 거부 대 고정"을 잰다)
+  await page.mouse.move(cx + geo.a[0] + 5, cy + geo.a[1] + 4);
   await page.mouse.down();
   await page.mouse.move(wild.x, wild.y, { steps: 5 });
   await page.mouse.up();
@@ -839,7 +843,7 @@ test("축 고정 — 추론이 거부한 획을 사용자가 강제한다", asyn
   // **그 앵커에서 실제로 뻗는 축**을 고정한다 — 임의의 축을 고르면 커서 광선과의
   // 최근접점이 카메라 뒤로 가서 끝점이 안 정해질 수 있다(그것은 고정의 실패가 아니다)
   await page.evaluate((ax) => window.S2S.setAxisLock(ax), geo.axis as 0 | 1 | 2);
-  await page.mouse.move(cx + geo.a[0] + 10, cy + geo.a[1] + 8);
+  await page.mouse.move(cx + geo.a[0] + 5, cy + geo.a[1] + 4);
   await page.mouse.down();
   await page.mouse.move(wild.x, wild.y, { steps: 5 });
   const midLocked = await page.evaluate(() => {

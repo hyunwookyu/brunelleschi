@@ -312,7 +312,7 @@
   },
   "home": {
     "pinned": true,
-    "ink_painted_px": 22155
+    "ink_painted_px": 21565
   },
   "guide_budget": {
     "canvas": [
@@ -325,7 +325,7 @@
     "note": "⚠ **대상이 사라졌다**(D-L37) — 가이드가 없어졌으므로 '가이드 길이'도 '요구 길이(`min_guide_ratio`)'도 없는 양이다. 빈 배열·`null`이고, 이 자리를 지우지 않는 이유는 왜 그 규칙이 있었는지가 근거이기 때문이다(#29의 숙제였다)."
   },
   "l_d3_save_roundtrip": {
-    "reload_ms": 1620,
+    "reload_ms": 1590,
     "views": 2,
     "lifted": 12,
     "pending_2d": 1,
@@ -383,7 +383,7 @@
     },
     "hover": {
       "kind": "endpoint",
-      "dist_px": 9.4
+      "dist_px": 6.6
     },
     "drawn": {
       "snap_kind": "endpoint",
@@ -484,8 +484,8 @@
       "max_abs": 0.7000000000000011
     },
     "ownership": {
-      "painted_before": 2886,
-      "painted_after": 2886,
+      "painted_before": 2823,
+      "painted_after": 2823,
       "delta_other_view": 0,
       "delta_same_view_control": 304,
       "views": [
@@ -566,7 +566,7 @@
     },
     "drawn_in_orbit": {
       "mid_drag": {
-        "axis": null,
+        "axis": 0,
         "has_preview": true
       },
       "views": [
@@ -589,7 +589,7 @@
       "new_view_created": true,
       "stroke_owned_by_current": true,
       "placed": true,
-      "axis": "free",
+      "axis": 0,
       "seg3d": [
         [
           2.283882456992493,
@@ -597,9 +597,9 @@
           6.982102040659803
         ],
         [
-          1.3381960786506453,
-          -1.0583471240832871,
-          7.57597990301393
+          1.402940601796806,
+          -0.6824207543518723,
+          6.386278298739913
         ]
       ],
       "snap_kind": "endpoint",
@@ -608,7 +608,7 @@
         -0.8420712448305965,
         6.982102040659803
       ],
-      "end_snapped": true
+      "end_snapped": false
     },
     "back_to_confirm": {
       "pinned": true,
@@ -620,9 +620,9 @@
           6.982102040659803
         ],
         [
-          1.3381960786506453,
-          -1.0583471240832871,
-          7.57597990301393
+          1.402940601796806,
+          -0.6824207543518723,
+          6.386278298739913
         ]
       ],
       "views": 2,
@@ -691,8 +691,8 @@
     },
     "stroke_latency_ms": {
       "n": 8,
-      "median": 5.5,
-      "max": 8.9,
+      "median": 4.5,
+      "max": 7.1,
       "note": "**개발 서버(번들 없음) · 상자 둘(24획 + 그린 획)** 기준이므로 상한으로 읽는다. ⚠ `e2e.json`의 값은 **옛 UI**라 같은 구간이 아니다 — 견주지 않는다.",
       "registered_pass": "중앙 10ms 미만(사전 등록). ⚠ **중앙값 자체를 문서에 인용하지 않는다** — 기계·실행마다 흔들린다. 판정은 자릿수다"
     },
@@ -712,17 +712,22 @@
         {
           "pass": 2,
           "waiting": 11,
-          "placed": 3
+          "placed": 2
         },
         {
           "pass": 3,
+          "waiting": 9,
+          "placed": 1
+        },
+        {
+          "pass": 4,
           "waiting": 8,
           "placed": 0
         }
       ],
       "lifted": 16,
       "pending": 8,
-      "rounds": 3,
+      "rounds": 4,
       "hit_cap": false,
       "reading": "**여러 회 돌았다** — 회차별 (대기 · 놓임)이 `trace`에 있다"
     },
@@ -731,7 +736,7 @@
     },
     "screenshot_regression": {
       "identical": true,
-      "bytes": 175986,
+      "bytes": 176626,
       "note": "**결정론 확인이다**(설계 보장, #5) — 잉크가 LCG이고 자세가 고정이므로 같아야 한다. 임계를 걸지 않는다. ⚠ **기계 간 비교는 안 한다**(폰트·안티에일리어싱)."
     },
     "what_this_does_not_say": [

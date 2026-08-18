@@ -2,7 +2,7 @@
  "spec": "4차 지시 1 — 초기 화면(카메라 확정 전) 2D 오스냅 종단. Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
  "what_this_does_not_say": [
   "gap_px 0은 **보장 확인**이다(#5) — 스냅이 좌표를 그 점으로 옮긴다. 0.5는 그 배선의 판정 임계이고 아래 thresholds에 있다(리뷰어 [5])",
-  "겨냥 √61≈7.8px 한 점의 확인이다(#12) — 조리개 경계(15px)·우선순위·연장 여유의 거동은 test/snap2d.test.ts의 반례가 덮는다",
+  "겨냥 √61≈7.8px 한 점의 확인이다(#12) — 조리개 경계(현행 기본 8px — D-L85. ⚠ 이 겨냥 7.8px은 그 경계 바로 안이다)·우선순위·연장 여유의 거동은 test/snap2d.test.ts의 반례가 덮는다",
   "실획이 아니다(AS-C1) — Playwright 합성 마우스다",
   "dpr 1 실행이다(#21) — 좌표 규약은 e2e/coords.spec.ts가 dpr 1·2·3에서 잠근다",
   "2D 교차점 스냅이 만드는 접합은 **사용자가 고른 화면 교차**다 — 서로 다른 깊이의 두 획을 화면 교차에서 붙이면 승격에서 3D 접합으로 굳는다(AS-L2의 가림 교차와 같은 기하 — 자동 배치가 아니라 표식을 보고 고른 것이라는 점이 다르다. D-L57에 기록)"
@@ -10,7 +10,7 @@
  "thresholds": {
   "start_gap_px_max": 0.5,
   "aim_offset_px": 7.81,
-  "osnap_radius_px_default": 15,
+  "osnap_radius_px_default": 8,
   "positive_off_gap_px_min": 2,
   "ink_px_min": 50,
   "console_errors_max": 0,

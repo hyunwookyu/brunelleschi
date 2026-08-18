@@ -9,6 +9,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { setupConfirmed } from "./fixture.js";
 import { constantsSnapshot } from "../test/constants.js";
+import { OSNAP_RADIUS_PX } from "../src/s3d/resolve2d.js";
 import { metricsSnapshot } from "../test/metrics.js";
 
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "stage0", "out");
@@ -28,7 +29,9 @@ test("반경·종류·수직점 — 설정이 스냅을 실제로 가른다", as
     const off: [number, number] = [pEnd[0] + 22, pEnd[1]];         // 끝점에서 22px 옆
 
     const out: Record<string, unknown> = {};
-    // ① 반경 15px(기본)에서는 22px 밖이라 안 붙는다 → 40px로 넓히면 붙는다
+    // ① 반경 15px(⚠ D-L85로 기본은 8이 됐다 — 이 팔은 **반경이 실제로 가르는가**의
+    //    메커니즘 확인이라 값 15·40을 명시적으로 쓴다)에서는 22px 밖이라 안 붙는다 →
+    //    40px로 넓히면 붙는다
     S.setOsnap({ radiusPx: 15 });
     const c15 = S.snap(off);
     out.r15 = c15?.kind ?? null;
@@ -40,7 +43,7 @@ test("반경·종류·수직점 — 설정이 스냅을 실제로 가른다", as
     // ② 끝점·정점을 끄면 같은 자리에서 그 종류가 안 나온다(라이노의 종류 토글)
     S.setOsnap({ kinds: { endpoint: false, vertex: false } });
     out.no_endpoint = S.snap(off)?.kind ?? null;
-    S.setOsnap({ radiusPx: 15, kinds: { endpoint: true, vertex: true } });   // 기본 복원
+    S.setOsnap({ radiusPx: 8, kinds: { endpoint: true, vertex: true } });    // 기본 복원(D-L85)
     // ③ **수직점** — 다른 획의 안쪽에 내린 수선의 발. `from`(앵커)이 있어야 정의된다
     const seg = S.doc().strokes.find((s: any) => s.seg3d && s.id !== st.id)!;
     const mid3 = [0, 1, 2].map(k => (seg.seg3d[0][k] + seg.seg3d[1][k]) / 2);
@@ -66,7 +69,7 @@ test("반경·종류·수직점 — 설정이 스냅을 실제로 가른다", as
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "osnap_config.json"), JSON.stringify({
     spec: "지시 H — 앱 조리개(px)·종류 토글·수직점 발화. 앱 경로(S2S.snap = appSnapAt) 그대로",
-    thresholds: { radius_px_default: 15, radius_px_ui_range: [4, 40],
+    thresholds: { radius_px_default: OSNAP_RADIUS_PX, radius_px_ui_range: [4, 40],
       note: "constants.ts 비등재 사유는 D-L56 — 전역 해시 눈사태(D-L51·54 선례). "
         + "⚠ CSS px 임계이고 dpr 2 실기 확인은 없다(#21 — DEFERRED)" },
     gate: {
@@ -82,7 +85,7 @@ test("반경·종류·수직점 — 설정이 스냅을 실제로 가른다", as
     },
     measured: r,
     what_this_does_not_say: [
-      "15px가 **옳은 기본값이라는 것** — 합성 측정은 반대를 가리킨다(D-L56: `snap.json@54346ad1` 스윕에서 "
+      "⚠ 기본값 서술은 D-L85(10차 항목 4)로 낡았다 — **기본은 8px**이고 이 팔의 15·40은 메커니즘 확인용 명시값이다. (구 서술:) 15px가 **옳은 기본값이라는 것** — 합성 측정은 반대를 가리킨다(D-L56: `snap.json@54346ad1` 스윕에서 "
         + "그 대역의 맞음 0.53~0.63·미스 0.18~0.26 대 0.05의 0.90·0.013). 실획(snapDistPx)이 판정한다",
       "dpr 2 — dpr 1 실행이다(#21)",
     ],

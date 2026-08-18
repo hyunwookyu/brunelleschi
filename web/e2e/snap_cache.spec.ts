@@ -181,7 +181,10 @@ test("뷰 왕복 직후 첫 질의가 끝점을 문다(캐시가 시점을 키�
   expect((led.far_aim as any).old_def_kind).toBe("on_face");   // 옛 정의가 잡던 그 후보
   expect((led.far_aim as any).old_def_dist).toBe(0);           // **옛 정의의 0 — 버그의 되살림**(#21)
   expect((led.far_aim as any).snap_dist_px).not.toBeNull();
-  expect((led.far_aim as any).snap_dist_px).toBeGreaterThan(15);   // 조리개 밖 겨냥이 이제 보인다
+  // **조리개 밖 겨냥이 이제 보인다** — 경계는 앱 기본 조리개다(D-L85로 15 → 8.
+  // 옛 15 단언은 "겨냥점 25px 밖"의 최근접 후보가 다른 정밀 후보일 때 깨진다 — 재는 것은
+  // "조리개 밖의 겨냥도 기록된다"이지 특정 거리가 아니다)
+  expect((led.far_aim as any).snap_dist_px).toBeGreaterThan(8);
   expect((led.far_aim as any).snap_dist_px).toBeLessThanOrEqual(40);
 });
 
@@ -192,7 +195,7 @@ test.afterAll(() => {
   led.what_this_does_not_say = [
     "실획 재현이 아니다 — 합성 상자·참 소실점 픽스처다(AS-C1)",
     "dpr 1·데스크톱 뷰포트 1440×900·합성 포인터다(#21) — iPad 실기는 안 덮는다",
-    "반경(기본 15px — resolve2d.OSNAP_RADIUS_PX, 설정 4~40px 가변)의 적정성은 여기서 안 " +
+    "반경(기본 8px — D-L85 · resolve2d.OSNAP_RADIUS_PX, 설정 4~40px 가변)의 적정성은 여기서 안 " +
       "갈린다 — 실획 snapDistPx 분포(수리된 정의 aimDistPx — 필드명은 그대로다)가 답한다",
     "왕복 질의의 표본은 **끝점 2건**이다 — 정점·중점·교차점 표본 0(2-R″ [8]. 같은 정적 캐시의 " +
       "종류들이라 기전은 같지만 값으로는 안 덮었다) · 반경·자세·캔버스도 각 하나다(#12)",

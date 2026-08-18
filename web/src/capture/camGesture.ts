@@ -61,6 +61,13 @@ export interface CamGestureHost {
   changed(): void;
   /** 손가락이 전부 떨어졌다 */
   ended?(): void;
+  /**
+   * **화면 팬**(2026-08-18 10차 항목 5) — 두 손가락 이동을 **종이 밀기**로 받겠는가.
+   * 참을 돌려 주면 카메라를 **열지 않는다**(핀도 안 푼다 — 공간은 불변이다).
+   * 확정 시점(그리는 중)에서 참, 궤도로 풀린 뒤에는 거짓 — 그때는 공간 팬(기존)이다.
+   * 선례: 종이 스케치 앱(프로크리에이트)의 두 손가락 = 종이 이동.
+   */
+  screenPan?(dx: number, dy: number): boolean;
 }
 
 export type Phase = "down" | "move" | "up" | "cancel";
@@ -162,10 +169,10 @@ export class CamGestures {
       else if (Math.hypot(a[0][0] - this.start[0], a[0][1] - this.start[1]) < GESTURE_TOL.dead_px) return;
       else { this.moved = true; this.resync(); return; }   // 죽은 구간만큼은 안 돌린다
     }
-    const c = this.open();
-    if (!c) return;
     const h = Math.max(1, this.host.height());
     if (a.length === 1) {
+      const c = this.open();
+      if (!c) return;
       const dx = (a[0][0] - this.ref[0]) * GESTURE_TOL.rotate_speed;
       const dy = (a[0][1] - this.ref[1]) * GESTURE_TOL.rotate_speed;
       c.rotateLeft((TWO_PI * dx) / h);       // three와 같은 규약 — 분모가 **높이**다
@@ -174,6 +181,16 @@ export class CamGestures {
     } else {
       const mid: [number, number] = [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2];
       const dist = Math.max(1e-6, Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]));
+      // **화면 팬이 먼저 받는다**(항목 5) — 확정 시점(그리는 중)의 두 손가락은 종이를
+      // 민다. 카메라(공간)는 안 열리고 핀도 안 풀린다 — 호스트가 거절하면(궤도 뒤)
+      // 종전대로 공간 팬·핀치다. ⚠ `open()` 앞이어야 한다 — open이 begin으로 핀을 푼다.
+      if (this.host.screenPan?.(mid[0] - this.ref[0], mid[1] - this.ref[1])) {
+        this.ref = mid;
+        this.refDist = dist;
+        return;                              // 다시 그리기는 호스트(refresh)가 했다
+      }
+      const c = this.open();
+      if (!c) return;
       c.pan((mid[0] - this.ref[0]) * GESTURE_TOL.pan_speed,
             (mid[1] - this.ref[1]) * GESTURE_TOL.pan_speed);
       // 벌리면(비 > 1) 가까워진다 — three의 `_handleTouchMoveDolly`와 같은 부호다

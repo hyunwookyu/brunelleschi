@@ -1097,6 +1097,15 @@ const gestures = new CamGestures({
   height: () => stage.size()[1],
   changed: () => stage.viewport.invalidate(),
   ended: () => { armOnePointAlign(); refresh(); },
+  // **화면 팬 대 공간 팬**(10차 항목 5 — 지시 문면 그대로): 그리는 중(핀 상태 또는
+  // 카메라 전)의 두 손가락은 **종이를 민다** — 카메라는 안 열리고 핀도 안 풀린다.
+  // 궤도로 풀린 뒤에는 거짓을 돌려 종전의 공간 팬(OrbitControls.pan)이 받는다.
+  screenPan: (dx, dy) => {
+    if (!(stage.isPinned || !cam.standing())) return false;
+    stage.setViewPan([stage.viewPan[0] + dx, stage.viewPan[1] + dy]);
+    refresh();
+    return true;
+  },
 });
 
 // **마우스 궤도의 종료에도 같은 자동 정렬**(2-R′ [B-6] — 터치 제스처만 덮으면 마우스 `궤도`
@@ -2124,6 +2133,9 @@ const ink = new InkCanvas(canvas, {
   onCamera: (id, phase, p) => gestures.onPointer(id, phase, p),
   cameraMouse: () => tool === "orbit",
   onWheel: (d) => gestures.onWheel(d),
+  // **화면 팬**(10차 항목 5) — 종이가 밀리는 것은 그리는 중(핀 또는 카메라 전)뿐이다.
+  // 궤도 시점의 표시는 카메라가 정하므로 오프셋이 없다(0). 입력·표시가 같은 훅을 지난다(#17)
+  viewOffset: () => ((stage.isPinned || !cam.standing()) ? stage.viewPan : [0, 0]),
   // **위치로 갈리는 끌기가 생겼다**(D-L45) — 지평선 손잡이 위면 그리기가 아니라 끌기다
   dragMode: (p) => tool === "edit" || tool === "erase_seg" || tool === "erase_part" || horizonGrab(p),
   onDrag: (p, phase) => {
@@ -3109,6 +3121,9 @@ refresh();
               ? cam.axisOf(s.pts2d).axis : "free")) })),
   /** 연쇄 확장 스위치(#30) — `false`가 옛 연쇄(시작점 오스냅만)다. 카운터는 안 지운다. */
   setChainExt: (on: boolean) => { CHAIN_EXT.on = on; },
+  /** **화면 팬**(항목 5) — 표시 오프셋(css px). 문서 좌표에는 절대 안 들어간다. */
+  viewPan: () => [stage.viewPan[0], stage.viewPan[1]],
+  setViewPan: (p: Pt2) => { stage.setViewPan(p); refresh(); },
   /** **배치 경로 카운터**(4-6) — 합이 배치 전체와 맞는지 원장이 검산한다. */
   placeBy: () => ({ ...placeBy }),
   /** **시점 저장**(5차 지시 7-1) — 종단 확인이 앱 경로 그대로 부른다(#17). */

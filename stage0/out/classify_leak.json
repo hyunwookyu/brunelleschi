@@ -238,66 +238,66 @@
   "osnap_arm": {
     "what": "앱은 P0에서 `resolve2dCore`를 먼저 돌린다. `screenOrthoSnap`이 **같은 4°**로 끝점을 축 위로 옮기므로 판정은 그 뒤에 온다 — 즉 4°가 **두 번** 쓰인다.",
     "leak_raw": "1035/2880",
-    "leak_after_osnap": "1246/2880",
-    "ortho_fired_depth": "526/2880",
-    "ortho_fired_screen": "218/720",
+    "leak_after_osnap": "1202/2880",
+    "ortho_fired_depth": "686/2880",
+    "ortho_fired_screen": "282/720",
     "screen_missed_raw": "168/720",
-    "screen_missed_after_osnap": "136/720",
+    "screen_missed_after_osnap": "133/720",
     "by_composition": {
       "3pt_yaw35_pitch15": {
         "n": 720,
         "raw": "258/720",
-        "after_osnap": "294/720"
+        "after_osnap": "299/720"
       },
       "3pt_yaw20_pitch25": {
         "n": 720,
         "raw": "237/720",
-        "after_osnap": "234/720"
+        "after_osnap": "257/720"
       },
       "3pt_yaw50_pitch8": {
         "n": 720,
         "raw": "349/720",
-        "after_osnap": "383/720"
+        "after_osnap": "381/720"
       },
       "2pt_yaw35_pitch0": {
         "n": 480,
         "raw": "178/480",
-        "after_osnap": "244/480"
+        "after_osnap": "206/480"
       },
       "1pt_yaw0_pitch0": {
         "n": 240,
         "raw": "13/240",
-        "after_osnap": "91/240"
+        "after_osnap": "59/240"
       }
     },
     "near_vp_only": {
       "n": 2400,
       "raw": "711/2400",
-      "after_osnap": "899/2400"
+      "after_osnap": "845/2400"
     },
     "newly_leaked": {
-      "n": 313,
-      "of_depth": "313/2880",
-      "ortho": "95/313",
-      "start_osnap": "167/313",
-      "end_osnap": "189/313",
-      "align_guides": "153/313",
-      "none_of_them": "0/313",
+      "n": 246,
+      "of_depth": "246/2880",
+      "ortho": "116/246",
+      "start_osnap": "108/246",
+      "end_osnap": "119/246",
+      "align_guides": "138/246",
+      "none_of_them": "0/246",
       "by_composition": {
-        "3pt_yaw35_pitch15": "64/720",
-        "3pt_yaw20_pitch25": "37/720",
-        "3pt_yaw50_pitch8": "56/720",
-        "2pt_yaw35_pitch0": "77/480",
-        "1pt_yaw0_pitch0": "79/240"
+        "3pt_yaw35_pitch15": "62/720",
+        "3pt_yaw20_pitch25": "43/720",
+        "3pt_yaw50_pitch8": "47/720",
+        "2pt_yaw35_pitch0": "46/480",
+        "1pt_yaw0_pitch0": "48/240"
       },
-      "from_raw_depth": "72/313",
-      "from_raw_ambiguous": "241/313",
+      "from_raw_depth": "35/246",
+      "from_raw_ambiguous": "211/246",
       "from_raw_depth_by_comp": {
-        "3pt_yaw35_pitch15": "3/720",
-        "3pt_yaw20_pitch25": "1/720",
+        "3pt_yaw35_pitch15": "1/720",
+        "3pt_yaw20_pitch25": "0/720",
         "3pt_yaw50_pitch8": "0/720",
-        "2pt_yaw35_pitch0": "13/480",
-        "1pt_yaw0_pitch0": "55/240"
+        "2pt_yaw35_pitch0": "3/480",
+        "1pt_yaw0_pitch0": "31/240"
       }
     },
     "ablation": [
@@ -393,31 +393,31 @@
       },
       {
         "arm": "guard_off",
-        "radiusPx": 15,
+        "radiusPx": 8,
         "relSnap": true,
         "kindFlipGuard": false,
-        "contradiction": "108/2880",
-        "contradiction_1pt": "71/240",
-        "leak": "1284/2880",
-        "newly_leaked": "353/2880",
-        "screen_missed": "107/720",
-        "onept": "107/240",
+        "contradiction": "48/2880",
+        "contradiction_1pt": "40/240",
+        "leak": "1211/2880",
+        "newly_leaked": "255/2880",
+        "screen_missed": "131/720",
+        "onept": "69/240",
         "by_composition": {
           "3pt_yaw35_pitch15": "298/720",
-          "3pt_yaw20_pitch25": "237/720",
-          "3pt_yaw50_pitch8": "378/720",
-          "2pt_yaw35_pitch0": "264/480",
-          "1pt_yaw0_pitch0": "107/240"
+          "3pt_yaw20_pitch25": "257/720",
+          "3pt_yaw50_pitch8": "379/720",
+          "2pt_yaw35_pitch0": "208/480",
+          "1pt_yaw0_pitch0": "69/240"
         }
       }
     ],
     "retry_cost_on_screen": {
-      "n": 4,
-      "of_screen": "4/720"
+      "n": 1,
+      "of_screen": "1/720"
     },
     "newly_fixed": {
-      "n": 102,
-      "of_depth": "102/2880"
+      "n": 79,
+      "of_depth": "79/2880"
     }
   },
   "by_vp_distance": [

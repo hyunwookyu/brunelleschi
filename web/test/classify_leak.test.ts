@@ -167,16 +167,18 @@ const BANDS = [0, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 20, 90];
 
 /**
  * **제거 실험**(#39의 형태) — 2D 스냅 사슬의 어느 부분이 깊이 획의 각을 바꾸는가.
- * 하나씩 끄고 같은 것을 잰다. ⚠ 위약이 필요하다: `r15_rel_on`은 **끈 것이 없는 팔**이고
- * 앱 그대로다 — 이 팔이 `osnap_arm`과 같은 값을 내야 실험이 성립한다.
+ * 하나씩 끄고 같은 것을 잰다. ⚠ 위약이 필요하다: **앱 기본과 같은 팔**(D-L85 이후
+ * `r8_rel_on`)이 끈 것이 없는 팔이고, `osnap_arm`과 같은 값을 내야 실험이 성립한다.
+ * ⚠ 팔 이름의 r15·r8은 **문자 그대로의 반경**이다(D-L85가 기본을 8로 내리며
+ * `OSNAP_RADIUS_PX` 참조를 리터럴로 바꿨다 — 상수가 움직여도 팔 이름이 거짓말하지 않게).
  */
 const ABLATIONS: Record<string, { radiusPx: number; relSnap: boolean;
                                   kindFlipGuard?: boolean;
                                   kinds?: Record<string, boolean> }> = {
-  r15_rel_on:  { radiusPx: OSNAP_RADIUS_PX, relSnap: true },   // 위약(앱 그대로 = 가드 켬)
-  r15_rel_off: { radiusPx: OSNAP_RADIUS_PX, relSnap: false },  // 관계 스냅만 끔
-  r8_rel_on:   { radiusPx: 8, relSnap: true },
-  r8_rel_off:  { radiusPx: 8, relSnap: false },
+  r15_rel_on:  { radiusPx: 15, relSnap: true },                // 옛 기본(D-L56)
+  r15_rel_off: { radiusPx: 15, relSnap: false },
+  r8_rel_on:   { radiusPx: 8, relSnap: true },                 // **위약(앱 그대로 — D-L85)**
+  r8_rel_off:  { radiusPx: 8, relSnap: false },                // 관계 스냅만 끔
   r0_rel_off:  { radiusPx: 0, relSnap: false },                // 오스냅 전부 끔(= 화면 직교만)
   // **양성 채널**(#30) — 가드를 끈 팔이 곧 옛 거동이다(D-L78 이전)
   guard_off:   { radiusPx: OSNAP_RADIUS_PX, relSnap: true, kindFlipGuard: false },

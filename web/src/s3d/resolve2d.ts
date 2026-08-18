@@ -24,14 +24,22 @@ import type { Pt2 } from "./camera.js";
 import type { SnapKind } from "./snap.js";
 
 /**
- * **오스냅 조리개 기본값(px)** — D-L56(15px). 앱(`mainL.OSNAP.radiusPx`)의 초기값이고
- * 하네스가 같은 값을 쓴다(#17: 한 출처).
+ * **오스냅 조리개 기본값(px)** — D-L85(8px · 2026-08-18 10차 항목 4 — D-L56의 15를 개정).
+ * 앱(`mainL.OSNAP.radiusPx`)의 초기값이고 하네스가 같은 값을 쓴다(#17: 한 출처).
+ *
+ * **근거는 원장이다**: `classify_leak.json`의 `osnap_arm.ablation` — 15에서 끝점 오스냅이
+ * 깊이 판정을 뒤집는 모순 72/2880(1점 55/240)이 8에서 **35/2880(31/240)**로 준다.
+ * 화면 획 미검출도 소폭 낫다(136 → 133/720). 사용자 조절(4~40)·종류별 토글은 그대로다.
+ * ⚠⚠ **대가**(#16): 연결을 놓치는 몫이 는다 — `osnap_two_sided.missed` 29.1% → 50.6%
+ * (⚠ 그 분모의 40px 창 절단 결함은 DEFERRED), 2D 단계의 조리개 병목(`snap_stage` —
+ * 겨냥 중앙 28.5px)이 **더 나빠진다**. 그 몫은 연쇄(4-3)와 방향 확정 대기가 받는다 —
+ * 놓치면 대기지 임의 배치가 아니므로(D-L83) 축소의 위험이 15 시절보다 작다.
  *
  * ⚠ **`SHARED_CONSTANTS`(전역 해시)에 안 넣는다** — D-L51·P1_F_RATIO와 같은 자리의 결정:
  * 전역 해시가 하나뿐이라 넣으면 이 값에 의존하지 않는 원장 40여 개가 STALE이 된다.
  * 대신 이 값을 쓰는 원장이 `how`에 값을 그대로 적는다(STALE 사각지대임을 병기).
  */
-export const OSNAP_RADIUS_PX = 15;
+export const OSNAP_RADIUS_PX = 8;
 
 /** 앱 상태를 인자로 뺀 것 — `mainL`이 채우고, 하네스는 합성 상태로 채운다. */
 export interface Resolve2dCtx {

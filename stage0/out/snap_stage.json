@@ -90,29 +90,29 @@
   },
   "d2_by_composition": {
     "3pt_yaw35_pitch15": {
-      "n": 292,
-      "engaged_end": "23/292",
-      "engaged_start": "36/292"
+      "n": 293,
+      "engaged_end": "11/293",
+      "engaged_start": "21/293"
     },
     "3pt_yaw20_pitch25": {
-      "n": 303,
-      "engaged_end": "22/303",
-      "engaged_start": "12/303"
+      "n": 302,
+      "engaged_end": "14/302",
+      "engaged_start": "8/302"
     },
     "3pt_yaw50_pitch8": {
-      "n": 293,
-      "engaged_end": "29/293",
-      "engaged_start": "33/293"
+      "n": 284,
+      "engaged_end": "12/284",
+      "engaged_start": "18/284"
     },
     "2pt_yaw35_pitch0": {
-      "n": 408,
-      "engaged_end": "173/408",
-      "engaged_start": "141/408"
+      "n": 326,
+      "engaged_end": "58/326",
+      "engaged_start": "53/326"
     },
     "1pt_yaw0_pitch0": {
-      "n": 604,
-      "engaged_end": "329/604",
-      "engaged_start": "327/604"
+      "n": 591,
+      "engaged_end": "286/591",
+      "engaged_start": "295/591"
     }
   },
   "d3_note": "**3D 단계에서는 `resolve2dCore`가 아예 안 돈다**(앱의 `frame() ? null : resolve2d`). 그 단계의 끝점 스냅은 `applySnapToEnd`(3D 참조)가 맡고 `snap_use`가 그것을 잰다 — **다른 원장·다른 분모다**(#11).",

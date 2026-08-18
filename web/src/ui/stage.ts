@@ -120,6 +120,22 @@ export class Stage {
    * `projectionHook`으로 걸어 두므로 **창 크기가 바뀌어도 유지된다**. 옛 `resize()`는
    * `aspect = w/h`로 덮어써서 주점을 중심으로 되돌렸을 것이다.
    */
+  /**
+   * **화면 팬**(2026-08-18 10차 항목 5, css px) — 핀 상태에서 종이를 미는 표시 오프셋.
+   * 카메라(공간)는 불변이다: 주점을 오프셋만큼 옮긴 창(`setViewOffset`)으로 다시 걸면
+   * 모든 투영이 같은 양만큼 이동한다(`sceneCam` 산식 — project = principal + f·x/z).
+   * 잉크 층은 `InkCanvas.viewOffset`이 같은 값을 쓴다 — 두 층이 함께 민다.
+   */
+  viewPan: Pt2 = [0, 0];
+
+  setViewPan(p: Pt2): void {
+    this.viewPan = [p[0], p[1]];
+    if (this.pinned && this.viewport.projectionHook) {
+      this.viewport.projectionHook(this.size());
+      this.viewport.invalidate();
+    }
+  }
+
   pinTo(principal: Pt2, f: number): void {
     this.pinned = { principal, f };
     this.freeIntr = null;               // 핀이 내적 파라미터를 들고 있다 — 낡은 값을 안 남긴다
@@ -128,8 +144,12 @@ export class Stage {
     cam.quaternion.identity();
     cam.updateMatrixWorld(true);
     this.viewport.controls.enabled = false;
+    // **화면 팬이 주점을 옮긴다**(항목 5) — 훅이 매번 현재 오프셋을 읽으므로
+    // 팬 변경은 훅 재실행(setViewPan)만으로 반영된다
     this.viewport.projectionHook = (size) =>
-      applyIntrinsics(cam as unknown as CameraLike, threeIntrinsics(principal, f, size));
+      applyIntrinsics(cam as unknown as CameraLike,
+                      threeIntrinsics([principal[0] + this.viewPan[0],
+                                       principal[1] + this.viewPan[1]], f, size));
     this.viewport.projectionHook(this.size());
     this.redrawChannels();               // **보조선의 흐림이 핀 상태로 갈린다**(E)
     this.viewport.invalidate();

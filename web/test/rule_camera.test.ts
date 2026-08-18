@@ -532,8 +532,8 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
           rule_wide_pair_snap: "rule_wide_pair의 스냅 판",
         },
         snap_cfg: {
-          radius_px: 15,
-          note: "오스냅 조리개 15px(D-L56) = resolve2d.OSNAP_RADIUS_PX — 앱 초기값과 같은 출처(#17). "
+          radius_px: OSNAP_RADIUS_PX,
+          note: `오스냅 조리개 ${OSNAP_RADIUS_PX}px(D-L85 — D-L56의 15를 개정) = resolve2d.OSNAP_RADIUS_PX — 앱 초기값과 같은 출처(#17). `
             + "⚠ 전역 상수 해시 밖이다(DEFERRED '의존 집합별 해시'와 같은 자리 — 값이 바뀌어도 "
             + "STALE이 안 뜬다. 사람이 본다). 종류 토글 전부 켬·관계 스냅 켬(앱 기본값)",
         },

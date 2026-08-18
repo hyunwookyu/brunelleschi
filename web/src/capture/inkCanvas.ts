@@ -65,6 +65,14 @@ export interface InkOptions {
               p: [number, number]) => void;
   /** 마우스가 카메라로 가는가(궤도 모드). 없으면 마우스는 언제나 잉크다 */
   cameraMouse?: () => boolean;
+  /**
+   * **화면 팬 오프셋**(2026-08-18 10차 항목 5, css px) — 표시 = 문서 좌표 + 오프셋.
+   * 입력(`local`)은 **빼서** 문서 좌표를 만들고, 그리기(`redraw`)는 **더해서** 표시한다 —
+   * 두 방향이 이 한 훅을 지나므로 어긋날 수 없다(#17). 없으면 [0,0](종전과 같다).
+   * ⚠ 문서(`pts2d`)에는 오프셋이 **절대 안 들어간다** — 표시 상태일 뿐이다(§6.1의
+   * 좌표계 단일성이 이 규약에 달렸다).
+   */
+  viewOffset?: () => [number, number];
   /** 휠 — 데스크톱 확인용 줌. 카메라 쪽으로 그대로 넘긴다 */
   onWheel?: (deltaY: number) => void;
 }
@@ -142,13 +150,13 @@ export class InkCanvas {
       const go = this.palm.touch(e.pointerId, phase);
       if (go === "forward" && this.opts.onCamera) {
         e.preventDefault();
-        this.opts.onCamera(e.pointerId, phase, this.local(e));
+        this.opts.onCamera(e.pointerId, phase, this.localRaw(e));
       }
       return true;                       // 터치는 **어느 쪽이든 잉크가 아니다**
     }
     if (e.pointerType === "mouse" && this.opts.cameraMouse?.() && this.opts.onCamera) {
       e.preventDefault();
-      this.opts.onCamera(e.pointerId, phase, this.local(e));
+      this.opts.onCamera(e.pointerId, phase, this.localRaw(e));
       return true;
     }
     return false;
@@ -180,6 +188,17 @@ export class InkCanvas {
    * **여기서 dpr을 곱하지 않는다** — 그리기 변환이 이미 그 일을 한다(이 버그의 원인이었다).
    */
   private local(e: PointerEvent): [number, number] {
+    const frame: CanvasFrame = this.frameNow();
+    const p = toLocal(this.canvas.getBoundingClientRect(), frame, e.clientX, e.clientY);
+    // **화면 팬을 되돌려 문서 좌표로**(항목 5) — 표시는 redraw가 같은 훅으로 더한다.
+    // ⚠ 카메라 경로는 `localRaw`를 쓴다 — 제스처는 표시 공간의 이동량이고, 여기서 빼면
+    // 팬이 쌓일수록 보고 좌표가 뒤로 밀리는 **되먹임**이 생긴다(view_pan 팔이 잡았다)
+    const off = this.opts.viewOffset?.() ?? [0, 0];
+    return [p[0] - off[0], p[1] - off[1]];
+  }
+
+  /** 포인터 → 표시 좌표(팬 미적용) — 카메라 제스처 전용. */
+  private localRaw(e: PointerEvent): [number, number] {
     const frame: CanvasFrame = this.frameNow();
     return toLocal(this.canvas.getBoundingClientRect(), frame, e.clientX, e.clientY);
   }
@@ -304,6 +323,11 @@ export class InkCanvas {
   redraw() {
     const frame = this.frameNow();
     this.ctx.clearRect(0, 0, frame.cssW, frame.cssH);   // 변환이 걸려 있으므로 CSS 크기다
+    // **화면 팬**(항목 5) — 문서 좌표로 그려진 모든 것(배경 층·힌트·잉크)이 함께 밀린다.
+    // 카메라 쪽은 stage가 같은 오프셋으로 주점을 옮긴다(setViewPan) — 두 층이 같이 간다
+    const off = this.opts.viewOffset?.() ?? [0, 0];
+    this.ctx.save();
+    this.ctx.translate(off[0], off[1]);
     if (this.opts.onBackground) {
       this.ctx.save();
       this.opts.onBackground(this.ctx);
@@ -333,5 +357,6 @@ export class InkCanvas {
     // 어느 것이 확정될지 헷갈린다. 스냅된 선만 보이고, 자유 선일 때만 궤적이 미리보기다
     if (this.drawing && !this.opts.liveHidden?.()) this.strokeLine(this.pts);
     for (const s of this.strokes[this.frame]) this.strokeLine(s.points);
+    this.ctx.restore();                                 // 화면 팬 변환 해제(항목 5)
   }
 }
