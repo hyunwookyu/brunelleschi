@@ -310,7 +310,14 @@
         "leak": "1246/2880",
         "newly_leaked": "313/2880",
         "screen_missed": "136/720",
-        "onept": "91/240"
+        "onept": "91/240",
+        "by_composition": {
+          "3pt_yaw35_pitch15": "294/720",
+          "3pt_yaw20_pitch25": "234/720",
+          "3pt_yaw50_pitch8": "383/720",
+          "2pt_yaw35_pitch0": "244/480",
+          "1pt_yaw0_pitch0": "91/240"
+        }
       },
       {
         "arm": "r15_rel_off",
@@ -321,7 +328,14 @@
         "leak": "1163/2880",
         "newly_leaked": "190/2880",
         "screen_missed": "153/720",
-        "onept": "10/240"
+        "onept": "10/240",
+        "by_composition": {
+          "3pt_yaw35_pitch15": "300/720",
+          "3pt_yaw20_pitch25": "251/720",
+          "3pt_yaw50_pitch8": "382/720",
+          "2pt_yaw35_pitch0": "220/480",
+          "1pt_yaw0_pitch0": "10/240"
+        }
       },
       {
         "arm": "r8_rel_on",
@@ -332,7 +346,14 @@
         "leak": "1202/2880",
         "newly_leaked": "246/2880",
         "screen_missed": "133/720",
-        "onept": "59/240"
+        "onept": "59/240",
+        "by_composition": {
+          "3pt_yaw35_pitch15": "299/720",
+          "3pt_yaw20_pitch25": "257/720",
+          "3pt_yaw50_pitch8": "381/720",
+          "2pt_yaw35_pitch0": "206/480",
+          "1pt_yaw0_pitch0": "59/240"
+        }
       },
       {
         "arm": "r8_rel_off",
@@ -343,7 +364,14 @@
         "leak": "1165/2880",
         "newly_leaked": "164/2880",
         "screen_missed": "122/720",
-        "onept": "14/240"
+        "onept": "14/240",
+        "by_composition": {
+          "3pt_yaw35_pitch15": "288/720",
+          "3pt_yaw20_pitch25": "264/720",
+          "3pt_yaw50_pitch8": "386/720",
+          "2pt_yaw35_pitch0": "213/480",
+          "1pt_yaw0_pitch0": "14/240"
+        }
       },
       {
         "arm": "r0_rel_off",
@@ -354,7 +382,14 @@
         "leak": "1180/2880",
         "newly_leaked": "145/2880",
         "screen_missed": "111/720",
-        "onept": "18/240"
+        "onept": "18/240",
+        "by_composition": {
+          "3pt_yaw35_pitch15": "295/720",
+          "3pt_yaw20_pitch25": "268/720",
+          "3pt_yaw50_pitch8": "386/720",
+          "2pt_yaw35_pitch0": "213/480",
+          "1pt_yaw0_pitch0": "18/240"
+        }
       },
       {
         "arm": "guard_off",
@@ -366,7 +401,14 @@
         "leak": "1284/2880",
         "newly_leaked": "353/2880",
         "screen_missed": "107/720",
-        "onept": "107/240"
+        "onept": "107/240",
+        "by_composition": {
+          "3pt_yaw35_pitch15": "298/720",
+          "3pt_yaw20_pitch25": "237/720",
+          "3pt_yaw50_pitch8": "378/720",
+          "2pt_yaw35_pitch0": "264/480",
+          "1pt_yaw0_pitch0": "107/240"
+        }
       }
     ],
     "retry_cost_on_screen": {
@@ -557,7 +599,7 @@
   },
   "what_this_does_not_say": [
     "**차수·배치를 안 잰다.** 여기는 판정 하나뿐이고 귀결은 `order_lock.json`이 낸다.",
-    "**앱의 2D 오스냅을 안 지난다** — `resolve2dCore`가 끝점을 옮기면 각이 바뀐다(#17).",
+    "⚠ **`angle`·`sweep`·`true_angle_arm`은 앱의 2D 오스냅을 안 지난다** — 원시 획의 각만 본다. 앱 경로(`resolve2dCore`를 지난 뒤)는 **`osnap_arm`과 `ablation`**이 따로 낸다(9-R′ [R3] — 초판은 이 줄을 한정 없이 적어 자기 원장의 절반과 모순했다).",
     "**합성이다**(AS-L24·L25). 실획의 손떨림 분포는 다를 수 있다."
   ],
   "gate": {

@@ -190,3 +190,42 @@ export function resolve2dCore(raw: Pt2[], ctx: Resolve2dCtx): Resolve2dOut {
   return { a, b, ortho: d.ortho, vpdir: d.vpdir, start2, end2: null, guides, pts,
            engaged: !!start2 || endMoved || guides.length > 0 };
 }
+
+// ---------------------------------------------------------------- 2D 단계의 스냅 기록 (D-L81)
+
+/**
+ * **확정 전(2D 단계) 오스냅의 기록**(2026-08-18 9차 항목 1).
+ *
+ * `snapStart`·`snapEnd`는 **3D 참조**다(`at`이 `Vec3`이고 `ofId`가 3D 획을 가리킨다).
+ * 카메라가 서기 전에는 3D가 없으므로 그 자리에 넣을 수 없고, 그래서 **8차까지 2D 단계의
+ * 스냅은 좌표만 옮기고 아무 기록도 안 남겼다** — 표식은 그려지는데 문서에는 흔적이 없었다.
+ * 그 결과 실획 표본의 `snapEnd` 0/5를 보고 **"끝점 스냅이 안 걸린다"인지 "걸렸는데 3D
+ * 획이 아니라 안 세어진다"인지 가를 수 없었다**(8차 2차 항목 4가 그 자리에서 무너졌다).
+ *
+ * `DEFERRED`가 4차에 이미 답을 적어 뒀다 — **별도 필드**다(A-3: 선례를 따른다).
+ *
+ * ⚠ **`snapStart`/`snapEnd`를 대신하지 않는다.** 카메라가 서면 그때 3D 참조가 따로 붙고,
+ * 이 필드는 **그리는 시점의 사실**로 남는다(둘은 다른 것을 뜻한다).
+ */
+export interface Snap2Ref {
+  kind: SnapKind;
+  /** **화면 좌표**다(3D 참조의 `Vec3`와 다르다 — 그래서 별도 필드다). */
+  at: Pt2;
+  /** 커서에서의 화면 거리(px). */
+  distPx: number;
+  ofId?: string;
+}
+
+const refOf = (c: Snap2Cand | null): Snap2Ref | null =>
+  c ? { kind: c.kind, at: [c.at[0], c.at[1]], distPx: c.dist, ofId: c.ofId } : null;
+
+/**
+ * **`resolve2dCore`의 결과에서 문서에 남길 것을 뽑는다.**
+ *
+ * ⚠ **앱과 하네스가 이 함수 하나를 부른다**(#17 — 기록 규칙을 두 곳에 안 짠다).
+ * 여기서 새로 판정하는 것이 없다 — `resolve2dCore`가 이미 정한 것을 **옮겨 적을 뿐**이고,
+ * 그래서 `engaged == recorded`는 **측정이 아니라 보장**이다(#5. 원장에 그렇게 적는다).
+ */
+export function snap2Refs(r: Resolve2dOut): { start: Snap2Ref | null; end: Snap2Ref | null } {
+  return { start: refOf(r.start2), end: refOf(r.end2) };
+}

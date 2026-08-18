@@ -1022,6 +1022,27 @@ test("빈 화면 — 두 번째 획이 첫 획의 끝점에 붙는다 (4차 지�
   expect((led.snap as any).gap_px).toBeLessThan(0.5);
   expect((led.snap as any).standing).toBe(false);                  // **여전히 카메라 확정 전이다**
 
+  // ---- ②′ **그 스냅이 문서에 남는가**(2026-08-18 9차 항목 1 · D-L81).
+  //      ⚠⚠ 항목 1 이전에는 **좌표가 옮겨지고 표식까지 그려지는데 문서에는 아무 흔적도
+  //      없었다** — `applySnapToEnd`의 호출자 둘이 전부 3D 경로였기 때문이다. 그래서
+  //      실획의 `snapEnd` 0/5가 "안 걸린다"인지 "안 세어진다"인지 갈리지 않았다.
+  //      **`snapStart`(3D 참조)는 여기서 여전히 `null`이어야 한다** — 카메라가 안 섰다.
+  led.snap2d_record = await page.evaluate(() => {
+    const st = window.S2S.doc().strokes.slice(-1)[0] as any;
+    return { has2dStart: !!st.snap2dStart, kind: st.snap2dStart?.kind ?? null,
+             at: st.snap2dStart?.at ?? null, distPx: st.snap2dStart?.distPx ?? null,
+             has3dStart: !!st.snapStart, has3dEnd: !!st.snapEnd };
+  });
+  {
+    const r = led.snap2d_record as any;
+    expect(r.has2dStart).toBe(true);                 // **기록이 남는다**(항목 1이 고친 것)
+    expect(r.has3dStart).toBe(false);                // 3D 참조는 아직 없다 — 단계가 갈린다
+    expect(r.distPx).toBeLessThanOrEqual(15);        // 조리개 안이다(기록이 거리도 남긴다)
+    // 기록한 좌표가 **실제로 옮겨간 그 점**이다(#5 보장 확인 — `snap2Refs`는 옮겨 적을 뿐이다)
+    const got = (led.snap as any).got as [number, number];
+    expect(Math.hypot(r.at[0] - got[0], r.at[1] - got[1])).toBeLessThan(0.5);
+  }
+
   // ---- ③ 양성 채널 — 종류를 전부 끄면 안 붙는다(겨냥 오차가 그대로 남는다).
   //         옛 상태의 재현이 아니라 **단언의 판별력 확인**이다(#30, 리뷰어 [6]).
   //         ⚠ 관계 스냅(4차 지시 5)도 함께 끈다 — 끝점 정렬(x·y 동시)이 같은 자리를 대신
@@ -1042,6 +1063,13 @@ test("빈 화면 — 두 번째 획이 첫 획의 끝점에 붙는다 (4차 지�
     return { gap_px: Math.hypot(e[0] - s[0], e[1] - s[1]) };
   });
   expect((led.positive_off as any).gap_px).toBeGreaterThan(2);     // **안 붙었다** — 겨냥 오차 그대로
+  // **양성 채널이 기록에도 걸린다**(#30) — 안 붙었으면 기록도 없다. 이 단언이 없으면
+  // 위 ②′는 "필드가 늘 채워진다"로도 통과한다(#32 — 판별력이 0인 검사).
+  led.snap2d_record_off = await page.evaluate(() => {
+    const st = window.S2S.doc().strokes.slice(-1)[0] as any;
+    return { has2dStart: !!st.snap2dStart, has2dEnd: !!st.snap2dEnd };
+  });
+  expect((led.snap2d_record_off as any).has2dStart).toBe(false);
   await page.evaluate(() => window.S2S.setRelSnap(true));
 
   // ---- 픽셀 확인 + 콘솔 오류 0 (지시 검증 절)
@@ -1064,9 +1092,12 @@ test("빈 화면 — 두 번째 획이 첫 획의 끝점에 붙는다 (4차 지�
       "2D 교차점 스냅이 만드는 접합은 **사용자가 고른 화면 교차**다 — 서로 다른 깊이의 두 획을 화면 교차에서 붙이면 승격에서 3D 접합으로 굳는다(AS-L2의 가림 교차와 같은 기하 — 자동 배치가 아니라 표식을 보고 고른 것이라는 점이 다르다. D-L57에 기록)",
     ],
     thresholds: { start_gap_px_max: 0.5, aim_offset_px: 7.81, osnap_radius_px_default: 15,
-                  positive_off_gap_px_min: 2, ink_px_min: 50, console_errors_max: 0 },
+                  positive_off_gap_px_min: 2, ink_px_min: 50, console_errors_max: 0,
+                  // **2D 기록의 좌표 일치**(9차 항목 1) — 보장 확인이라 임계가 아니라 배선 판정이다
+                  snap2d_record_at_gap_px_max: 0.5 },
     gate: {
       registered: "스냅 직전 standing=false·3D 후보 0 기록(2D 경로 판정, 리뷰어 [1]) · 두 번째 획의 시작이 첫 획 끝점과 일치(gap < 0.5px) · 양성 채널(**오스냅 종류 전부 끔 + 정렬 끔** — 4차 항목 5가 정렬을 더한 뒤 두 토글 조건이 됐다, D-L61)은 겨냥 오차 그대로(> 2px) · 콘솔 오류 0. "
+        + "**[9차 항목 1 추가 등록]** 그 스냅이 **문서에 남는다**: `snap2dStart`가 있고(`distPx` ≤ 15) 그 `at`이 실제로 옮겨간 점과 0.5px 안이며, **3D 참조(`snapStart`)는 `null`**이다(단계가 갈린다). 양성 채널에서는 **기록도 없다**(`snap2dStart` 없음) — 그 단언이 없으면 '필드가 늘 채워진다'로도 통과한다(#32). "
         + "⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①: '없다'도 결론이고 명시한다)",
       reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다.** 판별력은 양성 채널(positive_off/gap_px — 오스냅 종류와 정렬을 함께 끄면 겨냥 오차 √61이 그대로 남는다)이 확인하는데, 그 값은 픽스처가 준 겨냥 오차의 항등이라 도달 가능성 수치로 적지 않는다(#40 ⚠⚠ — segment_gate가 절대값으로 규칙을 피해 갔던 그 자리의 정정과 같다. 리뷰어 [7])",

@@ -1,0 +1,299 @@
+{
+  "what": "**2D 단계(확정 전)의 오스냅이 얼마나 걸리고 문서에 남는가.** 3D 단계와 **분모를 갈라** 센다(#11) — 8차가 `snap_use`(분모 = 3D 획)로 2D 갭을 설명하려다 무너진 자리다.",
+  "population": {
+    "compositions": 5,
+    "jitters": [
+      0,
+      0.005,
+      0.01,
+      0.03,
+      0.05
+    ],
+    "grades": [
+      "precise",
+      "medium"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "radii": [
+      8,
+      15,
+      30
+    ],
+    "rows": 10755,
+    "d2_strokes": 5656,
+    "d3_strokes": 5099
+  },
+  "stage_split": {
+    "d2": "5656/10755",
+    "d3": "5099/10755",
+    "note": "**2D 단계 획이 전체의 얼마인가.** 이 몫이 곧 항목 1의 수리가 닿는 범위다."
+  },
+  "d2_by_radius": {
+    "r8": {
+      "n": 1796,
+      "no_candidate": "300/1796",
+      "out_of_aperture": "1115/1796",
+      "in_aperture": "381/1796",
+      "engaged_end": "381/1796",
+      "engaged_start": "395/1796",
+      "recorded_end": "381/1796",
+      "recorded_start": "395/1796",
+      "in_aperture_not_engaged": "0/381",
+      "nearest_end_px": {
+        "n": 1496,
+        "p10": 2.582,
+        "median": 35.5947,
+        "p90": 251.1869
+      }
+    },
+    "r15": {
+      "n": 1900,
+      "no_candidate": "300/1900",
+      "out_of_aperture": "1024/1900",
+      "in_aperture": "576/1900",
+      "engaged_end": "576/1900",
+      "engaged_start": "549/1900",
+      "recorded_end": "576/1900",
+      "recorded_start": "549/1900",
+      "in_aperture_not_engaged": "0/576",
+      "nearest_end_px": {
+        "n": 1600,
+        "p10": 3.2589,
+        "median": 28.5377,
+        "p90": 248.1429
+      }
+    },
+    "r30": {
+      "n": 1960,
+      "no_candidate": "300/1960",
+      "out_of_aperture": "806/1960",
+      "in_aperture": "854/1960",
+      "engaged_end": "854/1960",
+      "engaged_start": "702/1960",
+      "recorded_end": "854/1960",
+      "recorded_start": "702/1960",
+      "in_aperture_not_engaged": "0/854",
+      "nearest_end_px": {
+        "n": 1660,
+        "p10": 3.3522,
+        "median": 28.0696,
+        "p90": 246.1095
+      }
+    }
+  },
+  "d2_by_composition": {
+    "3pt_yaw35_pitch15": {
+      "n": 292,
+      "engaged_end": "23/292",
+      "engaged_start": "36/292"
+    },
+    "3pt_yaw20_pitch25": {
+      "n": 303,
+      "engaged_end": "22/303",
+      "engaged_start": "12/303"
+    },
+    "3pt_yaw50_pitch8": {
+      "n": 293,
+      "engaged_end": "29/293",
+      "engaged_start": "33/293"
+    },
+    "2pt_yaw35_pitch0": {
+      "n": 408,
+      "engaged_end": "173/408",
+      "engaged_start": "141/408"
+    },
+    "1pt_yaw0_pitch0": {
+      "n": 604,
+      "engaged_end": "329/604",
+      "engaged_start": "327/604"
+    }
+  },
+  "d3_note": "**3D 단계에서는 `resolve2dCore`가 아예 안 돈다**(앱의 `frame() ? null : resolve2d`). 그 단계의 끝점 스냅은 `applySnapToEnd`(3D 참조)가 맡고 `snap_use`가 그것을 잰다 — **다른 원장·다른 분모다**(#11).",
+  "d3": {
+    "n": 5099,
+    "engaged_end": "0/5099",
+    "note": "**정의상 0이다** — 이 단계에서는 2D 경로가 안 돈다. 측정이 아니라 배선의 귀결이다(#5)."
+  },
+  "no_record_arm": {
+    "recorded_end": "0/5656",
+    "recorded_start": "0/5656",
+    "what": "**항목 1 이전의 앱이 이 팔이다** — `resolve2dCore`가 좌표를 옮기고 표식까지 그렸는데 문서에 남는 것이 **하나도 없었다**. `engaged`와 이 행의 차이가 곧 그 결함의 크기다."
+  },
+  "guarantee": {
+    "engaged_equals_recorded_mismatch": 0,
+    "note": "**보장이지 측정이 아니다**(#5 · CLAUDE.md §5) — `snap2Refs`가 `resolve2dCore`의 결과를 **옮겨 적을 뿐**이라 다를 수가 없다. **그래서 임계를 안 건다.** 이 값이 0이 아니면 배선이 갈라진 것이다."
+  },
+  "what_this_does_not_say": [
+    "**\"붙어야 할 곳에 붙었는가\"를 안 잰다** — 걸림 여부만 센다. 오스냅(안 붙어야 하는데 붙음)은 **항목 2**의 원장이다.",
+    "**실획이 아니다**(AS-L24·L25). 실획의 2D 단계 기록은 `.brnl`에 `snap2dEnd`가 담긴 뒤에 나온다 — **이 세션의 표본은 그 필드 이전에 저장됐다**.",
+    "**축 정확도·차수를 안 잰다.** 물음에는 전부 `depth`로 답했다 — 단계 분포만 보는 원장이다."
+  ],
+  "gate": {
+    "registered": "① **기록이 걸린 수와 같다**: 2D 단계에서 `resolve2dCore`가 끝점 오스냅을 건 획 수(`engaged_end`)와 `snap2Refs`가 문서에 남긴 수(`recorded_end`)가 **정확히 같다**. ⚠ 이것은 **보장이지 측정이 아니다**(#5) — `snap2Refs`가 같은 값을 옮겨 적을 뿐이다. 그래서 **임계를 안 걸고**, 대신 **양성 채널 `no_record` 팔**(기록을 건너뛴 팔)이 0을 내야 이 검사가 무엇을 잡는지 증명된다(#30·#32). ② **단계가 실제로 갈린다**: 2D 단계(P0)에서 그은 획이 **0이 아니다**. 0이면 이 원장이 재는 대상이 도달 불가이고(#35), 그러면 항목 1의 수리는 **닿지 않는 코드**다. 모집단은 5구도 × 6시드 × 등급 2 × 잡음 5 × 조리개 3 = 900실행 × 12획이고 **분모는 그 단계에서 그은 획**이다 — 2D와 3D는 **다른 모집단**이다(#11). ⚠ 이것은 이 항목이 등록한 게이트다(#41).",
+    "reachability": "**`no_record` 팔이 도달 가능성의 반대편이다**(#30·#35) — 항목 1 이전의 앱이 그 팔이고 `recorded`가 0이다. `engaged`가 0이 아니면 그 차이가 결함의 크기이고, `engaged`가 0이면 **2D 단계에서 끝점 스냅이 애초에 안 걸리는 것**이라 항목 1의 수리는 닿는 데가 없다. 즉 이 원장은 **수리의 대상이 존재하는지부터** 판정한다.",
+    "reachability_value": 1811,
+    "reachability_source": "d2_engaged_end_n"
+  },
+  "d2_engaged_end_n": 1811,
+  "constants": {
+    "hash": "54346ad1",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "vertical_ask_deg": 45,
+        "min_vp_len_ratio": 0.04,
+        "concurrent_deg": 3
+      },
+      "FOV_GATE": {
+        "severe_f_ratio": 0.5,
+        "ok_f_ratio": 0.87
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "a45078a5",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong",
+      "rate",
+      "fraction"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  }
+}

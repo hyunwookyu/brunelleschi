@@ -50,7 +50,10 @@ interface BrnlDoc {
   pathStats?: { direct: number; lift: number; twoPoint: number };
   strokes: { id: string; pts2d: number[][]; seg3d: [number[], number[]] | null;
              axis: number | string; channel?: string; snapDistPx?: number | null;
-             snapStart?: { kind: string } | null; snapEnd?: { kind: string } | null }[];
+             snapStart?: { kind: string } | null; snapEnd?: { kind: string } | null;
+             /** **2D 단계 오스냅 기록**(9차 항목 1 · D-L81). 옛 저장본에는 없다 */
+             snap2dStart?: { kind: string; at: [number, number]; distPx: number } | null;
+             snap2dEnd?: { kind: string; at: [number, number]; distPx: number } | null }[];
 }
 function loadBrnl(): BrnlDoc[] {
   if (!existsSync(SESSIONS)) return [];
@@ -160,7 +163,9 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
       snap_dist_px: "시작점의 겨냥 거리(px) — **7차 항목 2가 정의를 수리했다**(#23 정의 갱신 — ⚠ 이 정의들은 metric_defs 해시(metrics.ts 함수 집합) **밖**이라 정의 변경을 STALE이 못 잡는다(#33 — 부르는 하네스만 덮는다). 사람이 본다): 스냅 성패와 무관하게, 스냅 전 원시 시작점에서 40px 프로브 안 **최근접** 정밀 대상(on_face 제외)까지의 거리(aimDistPx 하나 — 없으면 null). 반경(현 15px)의 실측 근거. ⚠ **분포는 40px에서 절단된다**(#13 — 3·4-R [2]) — 그 밖은 null로 사라지므로 **null 건수와 분모를 `snap_dist_null`로 함께 낸다**(#11). null의 뜻은 셋이 섞여 있다(40px 밖 겨냥 · 3D 대상 없음 · 확정 전 획) — 기록 시점 갈래 필드는 다음 개정(DEFERRED). 40px·15px·프로브 규약은 표본 전에 박힌 **동작점**이다(#12 — 반경 판정은 null 몫을 보고 한다). ⚠ **7차 이전 저장본은 이 정의가 아니다** — 스냅이 걸리면 cand.dist를 적었고 핀 상태에서 on_face가 항상 걸려 **전부 0으로 오염**됐다(실획 첫 표본의 사람 보고가 그랬다 — 원장 밖·미검증). `snapStart.kind === on_face && snapDistPx === 0`인 표본은 분포에서 갈라 센다(#11)",
       snap_dist_legacy_zero: "7차 이전 저장본의 snapDistPx 0 오염 건수(on_face 시작 + 정확히 0 — isLegacySnapZero, D-L79). 분포(snap_dist_px)에 안 섞는 몫의 크기다",
       snap_dist_null: "snapDistPx가 null인 획 수 / 사람 획 수 — 40px 프로브 **밖**(절단 #13) 또는 3D 대상 없음·확정 전. 반경 판정은 이 몫과 함께 읽는다(#11 — 분모가 전부인가)",
-      ask: "모호 물음 횟수(asked/answered/skipped) — AS-L14의 실측",
+      ask: "모호 물음 횟수(asked/answered/skipped) — AS-L14의 실측. **내역(screen·depth·vertical)과 `unaccounted`(= asked − answered − skipped)를 함께 낸다**(9차 항목 1 · 9-R′ [R6]) — 첫 표본에서 asked 6 · answered 4로 **2가 어느 칸에도 안 잡혔고**, 그것이 취소인지 카운터 누락인지 원장이 답할 수 있어야 한다",
+      img_size: "문서의 캔버스 크기(px) 목록 — `stroke_len_ratio`·`below_min_vp_len`의 분모이고, 문서가 그 값을 인용할 때 원장에 있어야 한다(9-R′ [R7])",
+      snap2d_use: "**확정 전(2D 단계) 오스냅 기록**(9차 항목 1 · D-L81): 시작·끝 각각 기록된 획 수 / 사람 획 수, 그리고 `field_present`(필드가 하나라도 있는 문서에서 온 획 수). ⚠⚠ **`field_present`가 0이면 그 표본은 D-L81 이전 저장본**이라 `0/n`이 '안 걸렸다'가 아니라 **'안 적혔다'**다(#32 — 미실행을 반증으로 처리하지 않는다). 8차가 `snapEnd` 0/5에서 한 오독이 그 자리다",
       stroke_len_ratio: "사람 획 길이 ÷ 캔버스 대각 — min_vp_len_ratio(0.04)의 실측 근거",
       below_min_vp_len: "min_vp_len_ratio 미달 획 수 / 사람 획 수. ⚠ **조각(pieceOf)은 분모에서 뺀다**(#11 — 지우개 산물은 사람 획과 단위가 다르다)",
       vertex_gap_ratio: "서로 다른 획의 3D 끝점 최근접 거리 ÷ 그림 크기. ⚠ **공유점(스냅 보장 0)은 갈라 센다**(#5) — zero_pairs가 그것이고 분포에는 안 섞는다",
@@ -182,7 +187,12 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
           "**실획의 3D 축 방향 오차**(3·4-R [1]) — 참 축이 없다. vp_dir_err_deg는 화면(2D) 오차이고 합성의 deg_median(3D)과 비교 불가",
         ] };
       let n = 0, nPieces = 0, byChannel: Record<string, number> = {}, snapDists: number[] = [],
-          asked = 0, answered = 0, skipped = 0, shortShare = 0, zeroPairs = 0;
+          asked = 0, answered = 0, skipped = 0, shortShare = 0, zeroPairs = 0,
+          ansScreen = 0, ansDepth = 0, ansVertical = 0;
+    /** 캔버스 크기(문서마다 다를 수 있다 — 목록으로 남긴다). `stroke_len_ratio`의 분모다. */
+    const imgSizes: string[] = [];
+    /** 2D 단계 스냅 기록(9차 항목 1 · D-L81). **옛 저장본에는 필드가 아예 없다.** */
+    let snap2dStartN = 0, snap2dEndN = 0, snap2dFieldPresent = 0;
       let legacyZero = 0, nLifted = 0, nSnapEnd = 0, snapDistNull = 0;
       const snapStartKinds: Record<string, number> = {};
       const vpDirErrs: number[] = [];
@@ -205,6 +215,13 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
           } else snapDistNull += 1;         // 40px 밖·대상 없음·확정 전 — 절단의 몫(#13·#11)
           // **스냅 사용 분포**(7차 — 첫 표본의 결함 지표)
           if (st.snapStart) snapStartKinds[st.snapStart.kind] = (snapStartKinds[st.snapStart.kind] ?? 0) + 1;
+          // **2D 단계 기록**(9차 항목 1 · D-L81). 필드 자체의 유무를 함께 센다(#32)
+          {
+            const t = st as { snap2dStart?: unknown; snap2dEnd?: unknown };
+            if ("snap2dStart" in t || "snap2dEnd" in t) snap2dFieldPresent += 1;
+            if (t.snap2dStart) snap2dStartN += 1;
+            if (t.snap2dEnd) snap2dEndN += 1;
+          }
           if (st.seg3d) { nLifted += 1; if (st.snapEnd) nSnapEnd += 1; }
           // **소실점 방향 오차**(7차) — 수평축 배정 획의 현 방향 vs 시작점→소실점 방향
           if (typeof st.axis === "number" && st.axis <= 1 && st.pts2d.length >= 2) {
@@ -246,7 +263,12 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
           }
         }
         if (d.askStats) { asked += d.askStats.asked; skipped += d.askStats.skipped;
-          answered += d.askStats.screen + d.askStats.depth + d.askStats.vertical; }
+          answered += d.askStats.screen + d.askStats.depth + d.askStats.vertical;
+          // **답의 내역을 갈라 센다**(9-R′ [R6]) — `answered` 합만 두면 "6 중 4"의
+          // 나머지 2가 무엇인지 문서가 원장 밖에서 추측하게 된다
+          ansScreen += d.askStats.screen; ansDepth += d.askStats.depth;
+          ansVertical += d.askStats.vertical; }
+        imgSizes.push(`${d.imgSize[0]}x${d.imgSize[1]}`);
         if (d.pathStats) { pathUse.direct += d.pathStats.direct;
           pathUse.lift += d.pathStats.lift; pathUse.twoPoint += d.pathStats.twoPoint; }
         for (const sl of d.rules?.slots ?? []) {
@@ -270,7 +292,20 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
         vp_dir_err_deg: stat(vpDirErrs, 2),
         // **보장으로 갈라 센 몫**(#5) — 소실점을 만든 획이라 정의상 0이다
         vp_dir_guaranteed_zero: `${vpDirGuaranteed}/${vpDirGuaranteed + vpDirErrs.length}`,
-        ask: { asked, answered, skipped },
+        ask: { asked, answered, skipped,
+               // **내역**(9-R′ [R6]) — asked − answered − skipped가 **미상**의 크기다
+               screen: ansScreen, depth: ansDepth, vertical: ansVertical,
+               unaccounted: asked - answered - skipped },
+        /** 캔버스 크기(9-R′ [R7]) — `stroke_len_ratio`·`below_min_vp_len`의 분모다. */
+        img_size: imgSizes,
+        /**
+         * **2D 단계 스냅 기록**(9차 항목 1 · D-L81). ⚠⚠ **`0/n`의 뜻이 둘이다**(#32):
+         * `field_present`가 0이면 **필드 이전에 저장된 문서**라 "안 걸렸다"가 아니라
+         * **"안 적혔다"**이다. 그 둘을 갈라 세지 않으면 8차가 `snapEnd` 0/5에서 한 오독이
+         * 그대로 재발한다.
+         */
+        snap2d_use: { start: `${snap2dStartN}/${n}`, end: `${snap2dEndN}/${n}`,
+                      field_present: `${snap2dFieldPresent}/${n}` },
         vp_confirm_source: vpSource,
         path_use: pathUse,
         stroke_len_ratio: stat(lensR, 4),

@@ -380,6 +380,13 @@ describe("classify_leak — 4°가 무엇을 먹는가", () => {
           onept: fraction(depth.filter(r => r.comp === "1pt_yaw0_pitch0"
                                          && r.abl[k] <= RULE_TOL.screen_axis_deg).length,
                           depth.filter(r => r.comp === "1pt_yaw0_pitch0").length),
+          // **팔마다 구도별로 낸다**(9-R′ [R1]) — 초판은 `onept` 하나뿐이라
+          // 문서가 적은 나머지 넷의 출처가 원장에 없었다
+          by_composition: Object.fromEntries(COMPOSITIONS.map(C => {
+            const d = depth.filter(r => r.comp === C.name);
+            return [C.name, fraction(
+              d.filter(r => r.abl[k] <= RULE_TOL.screen_axis_deg).length, d.length)];
+          })),
         };
       }),
       // **되돌림이 화면 획을 다치게 하는가**(#15·#16) — 참 축이 화면인데 원본이 `depth`(≥8°)이고
@@ -441,7 +448,9 @@ describe("classify_leak — 4°가 무엇을 먹는가", () => {
       by_composition: byComp, by_seed: bySeed, by_jitter: byJitter,
       what_this_does_not_say: [
         "**차수·배치를 안 잰다.** 여기는 판정 하나뿐이고 귀결은 `order_lock.json`이 낸다.",
-        "**앱의 2D 오스냅을 안 지난다** — `resolve2dCore`가 끝점을 옮기면 각이 바뀐다(#17).",
+        "⚠ **`angle`·`sweep`·`true_angle_arm`은 앱의 2D 오스냅을 안 지난다** — 원시 획의 각만 본다. "
+        + "앱 경로(`resolve2dCore`를 지난 뒤)는 **`osnap_arm`과 `ablation`**이 따로 낸다(9-R′ [R3] — "
+        + "초판은 이 줄을 한정 없이 적어 자기 원장의 절반과 모순했다).",
         "**합성이다**(AS-L24·L25). 실획의 손떨림 분포는 다를 수 있다.",
       ],
       gate: gate({

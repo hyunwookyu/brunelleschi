@@ -36,7 +36,7 @@ import { snapCandidates, staticCandidates, SNAP_ORDER, SNAP_LABEL, SNAP_COLOR, S
 // **2D 오스냅**(4차 지시 1) — 카메라 확정 전·미승격 2D 획의 화면 스냅. 후보 규칙은 snap2d.ts 하나다
 import { static2dCandidates, snap2dAt, type Snap2Cand, type Snap2Seg } from "./s3d/snap2d.js";
 // **확정 전 2D 판정의 단일 출처**(5차 이월-2) — 합성 하네스가 같은 함수를 부른다(#17)
-import { resolve2dCore, OSNAP_RADIUS_PX, type Resolve2dOut } from "./s3d/resolve2d.js";
+import { resolve2dCore, snap2Refs, OSNAP_RADIUS_PX, type Resolve2dOut } from "./s3d/resolve2d.js";
 import { segmentFromAnchor, nearestAxisOnScreen, LIVE_TOL } from "./s3d/liveLine.js";
 import { onePointFrame, directSegment, planeAnchor, ONE_POINT_TOL } from "./s3d/onePoint.js";
 import { nearestOnePointDir } from "./ui/viewCube.js";
@@ -2066,6 +2066,18 @@ const ink = new InkCanvas(canvas, {
     // **§9.3 — 그리는 자리에서만 뷰가 생긴다.** 돌릴 때마다 만들면 뷰가 넘친다
     doc.currentView = viewForDrawing();
     const s = newSStroke(pts, doc.currentView, channel);
+    // **2D 단계에서 걸린 오스냅을 기록한다**(2026-08-18 9차 항목 1 · D-L81).
+    //
+    // ⚠⚠ **여기가 8차까지 비어 있던 자리다.** `resolve2d`가 좌표를 옮기고 표식까지 그렸는데
+    // 문서에는 아무 흔적도 안 남았다 — `applySnapToEnd`의 호출자 둘이 **전부 3D 경로**였고
+    // 3D 참조(`Vec3`)에는 2D 단계의 스냅을 넣을 자리가 없었기 때문이다.
+    // 새로 판정하는 것은 없다: `snap2Refs`가 `resolve2dCore`의 결과를 **옮겨 적을 뿐**이다
+    // (#17 — 하네스가 같은 함수를 부른다. 그래서 `engaged == recorded`는 **보장**이다, #5).
+    if (r2d) {
+      const ref2 = snap2Refs(r2d);
+      s.snap2dStart = ref2.start;
+      s.snap2dEnd = ref2.end;
+    }
     doc.strokes.push(s);
     // **① 규칙에 넣는다**(사람 지시 1) — 카메라를 세우고(NONE→P1·P2) 승격(P2→P3)하는
     // 유일한 경로다. 그은 선이 곧 제약이다: 화면 가로세로면 축 자체, 깊이면 교점.

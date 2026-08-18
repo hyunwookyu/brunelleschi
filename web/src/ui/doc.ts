@@ -14,6 +14,7 @@
 import type { Pt2 } from "../s3d/camera.js";
 import type { Vec3 } from "../s3d/geom3d.js";
 import type { Axis } from "../s3d/axis.js";
+import type { Snap2Ref } from "../s3d/resolve2d.js";
 import type { ViewPose } from "../s3d/viewCamera.js";
 
 /** 획의 시작점이 무엇에 붙었는가(§3 스냅). L-B.3에서 채운다. */
@@ -79,6 +80,21 @@ export interface SStroke {
    * `on_face` 제외, D-L46). 시작점 프로브가 `on_face`를 빼는 것과 같은 이유다(#3·#5).
    */
   snapEndDistPx?: number | null;
+  /**
+   * **확정 전(2D 단계)에 걸린 오스냅**(2026-08-18 9차 항목 1 · D-L81).
+   *
+   * `snapStart`/`snapEnd`는 **3D 참조**라(`at`이 `Vec3`) 카메라가 서기 전에는 못 쓴다.
+   * 8차까지 2D 단계 스냅은 **좌표만 옮기고 기록을 안 남겼고**, 그래서 실획의 `snapEnd` 0/5가
+   * "안 걸린다"인지 "안 세어진다"인지 갈리지 않았다. `DEFERRED`가 4차에 적어 둔 답 그대로
+   * **별도 필드**다(A-3).
+   *
+   * ⚠ **`snapStart`/`snapEnd`와 배타가 아니다** — 한 획이 둘 다 가질 수 있다(2D에서 붙고
+   * 나중에 카메라가 서서 3D 참조도 붙는 경우). 둘은 **다른 시점의 다른 사실**이다.
+   * ⚠ 옛 저장본에는 없다.
+   */
+  snap2dStart?: Snap2Ref | null;
+  /** 끝점 판. **항목 4가 "연결이 좌표를 정한다"에서 이것을 읽는다**(#18 — 쓰고 안 읽기 금지). */
+  snap2dEnd?: Snap2Ref | null;
   /**
    * **조각의 출처 획 id**(지시 I·K). 지우개·분할이 만든 조각은 사람이 그은 획과 **단위가
    * 다르므로**(#11 — 길이·다축 지표의 분모가 갈린다) 실획 측정이 이것으로 가른다.

@@ -18,6 +18,7 @@ import type { ViewPose } from "../s3d/viewCamera.js";
 import type { AccumulatorDump } from "../s3d/constraints.js";
 import type { RuleState } from "../s3d/vpRules.js";
 import { DEFAULT_CHANNEL, confirmViewOf } from "./doc.js";
+import type { Snap2Ref } from "../s3d/resolve2d.js";
 import type { DocState, SStroke, SView, SnapRef, Channel } from "./doc.js";
 
 export const DOC2_FORMAT = "s2s-doc/2";
@@ -65,6 +66,13 @@ export interface Doc2 {
     pieceOf?: string;
     /** **끝점 스냅**(오스냅, D-L46). 옛 저장본에는 없다 — 복원이 `null`로 채운다 */
     snapEnd?: SnapRef | null;
+    /**
+     * **확정 전(2D 단계)에 걸린 오스냅**(9차 항목 1 · D-L81). `at`이 **화면 좌표**라
+     * 3D 참조와 자료형이 다르다. 옛 저장본에는 없다 — 복원이 `null`로 채운다.
+     * ⚠ **`.brnl` 실획 표본이 이 필드로 2D 단계 스냅을 처음 보고한다**(항목 1-b).
+     */
+    snap2dStart?: Snap2Ref | null;
+    snap2dEnd?: Snap2Ref | null;
     /** **펜 채널**(D). 옛 저장본에는 없다 — 보조선으로 읽는다. */
     channel?: Channel;
     color?: string;
@@ -140,6 +148,9 @@ export function serializeDoc2(s: Doc2Source): Doc2 {
       snapEndDistPx: t.snapEndDistPx ?? null,
       pieceOf: t.pieceOf,
       snapEnd: t.snapEnd ? { ...t.snapEnd, at: [...t.snapEnd.at] as Vec3 } : null,
+      // **화면 좌표라 얕은 사본이면 배열이 공유된다**(`cloneRuleState`가 걸렸던 자리)
+      snap2dStart: t.snap2dStart ? { ...t.snap2dStart, at: [...t.snap2dStart.at] as Pt2 } : null,
+      snap2dEnd: t.snap2dEnd ? { ...t.snap2dEnd, at: [...t.snap2dEnd.at] as Pt2 } : null,
       channel: t.channel,
       color: t.color,
       width: t.width,
@@ -175,6 +186,10 @@ export function restoreDoc2(d: Doc2): Restored2 {
     pieceOf: t.pieceOf,
     // **옛 저장본에는 이 필드가 없다** — 없으면 끝점 스냅이 아니었던 것이다
     snapEnd: t.snapEnd ?? null,
+    // **옛 저장본에는 2D 단계 기록이 없다**(9차 항목 1 이전) — `null`이 "안 걸렸다"가
+    // 아니라 **"안 적혔다"**임을 실획 원장이 갈라 센다(#32 — 미실행을 반증으로 안 쓴다)
+    snap2dStart: t.snap2dStart ?? null,
+    snap2dEnd: t.snap2dEnd ?? null,
     // **옛 저장본은 채널이 없다** — 보조선으로 읽는다(D-1의 기본값)
     channel: t.channel ?? DEFAULT_CHANNEL,
     color: t.color,

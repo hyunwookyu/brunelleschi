@@ -13,10 +13,11 @@
   "osnap_radius_px_default": 15,
   "positive_off_gap_px_min": 2,
   "ink_px_min": 50,
-  "console_errors_max": 0
+  "console_errors_max": 0,
+  "snap2d_record_at_gap_px_max": 0.5
  },
  "gate": {
-  "registered": "스냅 직전 standing=false·3D 후보 0 기록(2D 경로 판정, 리뷰어 [1]) · 두 번째 획의 시작이 첫 획 끝점과 일치(gap < 0.5px) · 양성 채널(**오스냅 종류 전부 끔 + 정렬 끔** — 4차 항목 5가 정렬을 더한 뒤 두 토글 조건이 됐다, D-L61)은 겨냥 오차 그대로(> 2px) · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+  "registered": "스냅 직전 standing=false·3D 후보 0 기록(2D 경로 판정, 리뷰어 [1]) · 두 번째 획의 시작이 첫 획 끝점과 일치(gap < 0.5px) · 양성 채널(**오스냅 종류 전부 끔 + 정렬 끔** — 4차 항목 5가 정렬을 더한 뒤 두 토글 조건이 됐다, D-L61)은 겨냥 오차 그대로(> 2px) · 콘솔 오류 0. **[9차 항목 1 추가 등록]** 그 스냅이 **문서에 남는다**: `snap2dStart`가 있고(`distPx` ≤ 15) 그 `at`이 실제로 옮겨간 점과 0.5px 안이며, **3D 참조(`snapStart`)는 `null`**이다(단계가 갈린다). 양성 채널에서는 **기록도 없다**(`snap2dStart` 없음) — 그 단언이 없으면 '필드가 늘 채워진다'로도 통과한다(#32). ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
   "reachability": "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①: '없다'도 결론이고 명시한다)",
   "reachability_absent": "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다.** 판별력은 양성 채널(positive_off/gap_px — 오스냅 종류와 정렬을 함께 끄면 겨냥 오차 √61이 그대로 남는다)이 확인하는데, 그 값은 픽스처가 준 겨냥 오차의 항등이라 도달 가능성 수치로 적지 않는다(#40 ⚠⚠ — segment_gate가 절대값으로 규칙을 피해 갔던 그 자리의 정정과 같다. 리뷰어 [7])"
  },
@@ -40,8 +41,23 @@
   "standing": false,
   "order": 0
  },
+ "snap2d_record": {
+  "has2dStart": true,
+  "kind": "endpoint",
+  "at": [
+   640,
+   370.70001220703125
+  ],
+  "distPx": 7.810249675906656,
+  "has3dStart": false,
+  "has3dEnd": false
+ },
  "positive_off": {
   "gap_px": 7.810249675906656
+ },
+ "snap2d_record_off": {
+  "has2dStart": false,
+  "has2dEnd": false
  },
  "ink_px": 328,
  "console_errors": [],
