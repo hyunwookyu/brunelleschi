@@ -2,14 +2,14 @@
 
 다음 세션은 이 문서를 읽고 이어서 진행한다. 사람의 개입은 그 한 줄뿐이다.
 
-## 현재 단계 — **2026-08-18 9차(8차 3차 지시)**: 항목 0 완료 · 항목 1 진행 중
+## 현재 단계 — **2026-08-18 9차(8차 3차 지시)**: 항목 0·1·2·3 완료·푸시(`21c5a1f`). **4부터 남았다**
 
 | 9차 항목 | 내용 | 상태 |
 |---|---|---|
 | **0** | `classifyLine` 4° — **표제 주장 철회**(원인은 임계가 아니라 기하와 스냅) · **D-L80** 판정 뒤집기 가드 · `classify_leak.json` 신설 · `order_lock`에 `guard_off`·`p0_leak` 신설 | ✅ `4b524c0` |
 | **1** | 2D 단계 스냅 배선 — **D-L81** `snap2dStart`/`snap2dEnd` · `snap_stage.json` 신설 | ✅ `4dd29f1` |
-| **2** | 반경 — **D-L82 15 유지**(⚠ **"측정이 지지한다"가 아니라 "정할 근거를 못 갖췄다"**로 내렸다) · `osnap_two_sided.json` 신설 · **2D 수선 발 신설**(없었다) | ✅ |
-| **3** | dpr 2 임계 **1e-6 → 1e-11**(밴드 상단의 15배) · `by_tol` 신설 | ✅ |
+| **2** | 반경 — **D-L82 15 유지**(⚠ **"측정이 지지한다"가 아니라 "정할 근거를 못 갖췄다"**로 내렸다) · `osnap_two_sided.json` 신설 · **2D 수선 발 신설**(없었다) | ✅ `1058bdd` |
+| **3** | dpr 2 임계 **1e-6 → 1e-11**(밴드 상단의 15배) · `by_tol` 신설 | ✅ `21c5a1f` |
 | **4~8** | **방향 확정 상태(핵심)** · 팬 · 큐브 자세 · real_ink · 보조 소실점 | ⛔ **못 했다** |
 
 ⛔⛔ **다음 세션의 첫 일은 항목 4다.** 항목 1이 만든 `snap2dStart`/`snap2dEnd`에
@@ -412,7 +412,26 @@ D-L75  **차수 승격 개념을 지운다** — 승격 UI·되돌리기·잃은
 
 **이월**: 7차 이전의 남은 지적은 전부 `DEFERRED.md`에 있다(6-R 재검 · 7-R 신규 6건 포함).
 
-## 검증 현황 (`cc46f39` 기준)
+## 검증 현황 (`21c5a1f` 기준 — 2026-08-18 9차)
+
+vitest **492 통과 · 4 건너뜀 · 0 실패**(**80파일** — 9차 신규 넷:
+`classify_leak`·`kind_flip_guard`·`snap_stage`·`osnap_two_sided`·`perp2d`) ·
+tsc · 빌드 통과 · Playwright **47 통과 · 4 건너뜀 · 0 실패**(`touch_route` dpr 2 포함 —
+9차 항목 3이 임계를 밴드에 맞춘 뒤에도) · pytest **88** ·
+selfcheck 인용 **194 · 0** · 인용 줄 **106 · 0** · `pitfall_citations` **원장 55 · 0** ·
+게이트 블록 **40 · 1**(`elevation_flow` — 9차 이전부터) ·
+`scan_zero_denominator` **48 · 11**(6차 이전부터) · `n_stale` **3** ·
+상수 해시 **54346ad1**(9차에 **안 움직였다** — 새 임계를 `SHARED_CONSTANTS`에 안 넣었다).
+
+⚠⚠ **Playwright를 두 실행 동시에 돌리면 포트가 겹쳐 16 통과로 잘린다** —
+그것은 결함이 아니라 실행 방법이다(9차에서 실제로 오독할 뻔했다).
+
+⚠ **`camera_gate.json`(CLAUDE.md §2의 중단 조건)은 9차에 하나도 안 움직였다.**
+그 하네스는 소실점을 직접 받아 `resolve2dCore`를 안 지난다 — **사정거리 밖**이다.
+
+---
+
+## ⛔ 아래는 7차(`cc46f39`) 시점의 기록이다
 
 vitest **453 통과 · 5 건너뜀**(72파일 — `order_lock` 신규) · tsc · 빌드 통과 ·
 Playwright **40 통과 · 4 건너뜀 · 1 실패**(`touch_route` dpr 2) · pytest **73** ·
@@ -435,7 +454,13 @@ e2e `stage.spec` 둘(차수 승격 · 되돌리기 UI). 그리고 `RULE_TOL.vert
 
 ## ✋ 브라우저
 
-`cd web && npm run dev:5222` → `/l.html`(S2S_HTTP=1). `window.S2S` 7차에 **줄었다**:
+`cd web && npm run dev:5222` → `/l.html`(S2S_HTTP=1).
+⚠ **9차에 획에 필드 둘이 늘었다**(D-L81): `snap2dStart`·`snap2dEnd`
+(`{kind, at: Pt2, distPx, ofId?}` — **`at`이 화면 좌표**다. 3D 참조와 다른 자료형이고
+그것이 별도 필드인 이유다). `S2S.doc().strokes[i].snap2dEnd`로 본다.
+⚠ **확정 전(P0)에만 채워진다** — 카메라가 서면 `resolve2d`가 아예 안 돈다.
+
+`window.S2S` 7차에 **줄었다**:
 `promoteOrderNow`·`promoteReport`·`orderMarks`·`revertToOrder`·`relinkLostSnaps`가 없어졌다.
 남는 것: `doc()` `cam` `order()` `standing()` `snap2d(p)` `pickVp(p)` `switchView(id)`
 `askStats()` `cubeSpin(rad,ms)` `viewCube()` `endProbe(from,p)` `aimDist()` `confirmNow()`
