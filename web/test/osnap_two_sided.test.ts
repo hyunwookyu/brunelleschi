@@ -75,7 +75,8 @@ const FAR_OFFSET: Pt2 = [330, -60];
  * 그러면 반경 축이 그 간격을 실제로 넘나들 수 있다. 본 팔은 그대로 두고(인용된 값이라
  * 움직이지 않는다) **팔을 더한다**(#30 — 같은 실행 안의 대조).
  */
-const CALIB_SCALES = [1, 0.9, 0.8, 0.7, 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15];
+const CALIB_SCALES = [1.6, 1.4, 1.2, 1.1, 1, 0.9, 0.8, 0.7, 0.6, 0.55, 0.5, 0.45,
+                      0.4, 0.35, 0.3, 0.25, 0.2, 0.15];
 
 const REGISTERED =
   "① **두 지표가 반대로 움직인다**: 반경을 넓히면 `missed`(붙어야 하는데 안 붙음)가 **줄고** "
@@ -84,7 +85,10 @@ const REGISTERED =
   + "② **`wrong`이 0이 아닌 반경이 존재한다**: 어떤 반경에서도 `wrong`이 0이면 "
   + "**이 픽스처가 '안 붙어야 할 곳'을 못 만든 것**이고(#35 — 대상이 도달 불가), "
   + "그러면 이 원장은 8차의 스윕과 같은 편향을 반복한다. "
-  + "모집단은 5구도 × 6시드 × 등급 2 × 잡음 4 × 반경 10 = 2400실행이고 "
+  + "모집단은 **본 팔 기준 4구도**(하나는 겹침으로 판정 전에 뺐다 — "
+  + "`overlap_dropped_compositions`) × 6시드 × 등급 2 × 잡음 4 × 반경 10이고 "
+  + "**실제 수는 `population`을 그 자리에서 읽는다**(#47 — 초판이 '5구도 2400실행'을 "
+  + "산문에 박았고 그것은 뺀 구도를 안 센 수였다, 11차 리뷰어 [11]). "
   + "**두 지표의 분모가 다르다**(#11): `missed`의 분모는 **같은 덩어리 안에서 참 정점을 "
   + "겨냥한 끝점**, `wrong`의 분모는 **겨냥이 없는 끝점 전부**다. "
   + "**[11차 항목 3-a 추가 등록]** ③ **도달 가능성을 구도별로 본다**(#40 ③ 모집단 불일치): "
@@ -108,6 +112,11 @@ interface EndRow {
   wrong: boolean;
   /** 걸린 자리가 겨냥한 참 정점과 같은가(= 옳은 연결). */
   right: boolean;
+  /** **걸린 후보의 종류**(11차 리뷰어 [3]·#43) — `wrong`을 한 수로 세면 어느 후보가
+   *  만드는지 안 갈린다. D-L88의 주장("중점·교차점 후보가 뻗는다")은 이것으로만 선다. */
+  kind: string | null;
+  /** 걸린 자리까지의 거리(px) — `null`이면 안 걸렸다. */
+  gotPx: number | null;
 }
 
 interface Fx {
@@ -190,6 +199,8 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
                 // **걸렸으면 전부 잘못된 연결이다** — 후보가 첫 덩어리뿐이기 때문이다
                 wrong: !!got,
                 right: false,
+                kind: got ? got.kind : null,
+                gotPx: got ? round(Math.hypot(got.at[0] - q[0], got.at[1] - q[1]), 4) : null,
               });
               void na;
             }
@@ -198,86 +209,175 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
       }
     }
 
-    // ---- **보정 팔**(11차 항목 3-a) — 구도마다 오프셋을 줄여 참 정점 최소 간격을
-    //      40px 바로 위로 맞춘다. 본 팔은 안 건드린다(인용된 값이 움직이지 않게).
-    const rowsC: EndRow[] = [];
-    /** 구도별 보정 결과 — 무엇을 골랐고 그때 간격이 얼마인가(원장이 든다). */
-    const calib: Record<string, { scale: number; min_cross_px: number | null;
-                                  min_cand_px: number | null }> = {};
+    // ---- **보정 팔 둘**(11차 항목 3-a · 리뷰어 [1]·[5]로 두 판을 고쳤다).
+    //      본 팔은 안 건드린다(인용된 값이 움직이지 않게).
+    //
+    //      `adjacent`  — 참 정점 최소 간격만 배제선(40px) 바로 위로. **두 덩어리가 화면에서
+    //                    포개진다**(상자 겹침 실측) — "떨어진 곳에서 새로 시작"이 아니다.
+    //      `separated` — **`min_cand_px` > 40px**(UI 최대 반경 밖). 어떤 조리개로도 후보에
+    //                    안 닿으므로 붙는 것은 **잉크 지터**가 만든 것뿐이다.
+    //
+    //      **둘의 대조가 이 항목의 측정이다** — 같은 반경에서 어느 후보가 만드는가가
+    //      두 체제에서 갈린다(#30 — 대조군).
+    type CalMode = "adjacent" | "separated";
+    function calibratedArm(mode: CalMode, kinds?: Partial<Record<string, boolean>>) {
+      const rowsC: EndRow[] = [];
+      /** 구도별 보정 결과 — 무엇을 골랐고 그때 간격이 얼마인가(원장이 든다). */
+      const calib: Record<string, { scale: number; min_cross_px: number | null;
+                                    min_cand_px: number | null;
+                                    bbox_overlap_px2?: number | null;
+                                    bbox_overlap_share?: number | null }> = {};
 
-    for (let ci = 0; ci < COMPOSITIONS.length; ci++) {
-      const C = COMPOSITIONS[ci];
-      const sc = scene(C.yaw, C.pitch, 1000, SZ);
-      const O = groundPoint(sc, C.origin);
-      if (!O) continue;
-      const edgesA = boxLattice(sc, O, C.box[0], C.box[1], C.box[2], 1);
-      const vertsA = trueVerts(sc, edgesA);
+      for (let ci = 0; ci < COMPOSITIONS.length; ci++) {
+        const C = COMPOSITIONS[ci];
+        const sc = scene(C.yaw, C.pitch, 1000, SZ);
+        const O = groundPoint(sc, C.origin);
+        if (!O) continue;
+        const edgesA = boxLattice(sc, O, C.box[0], C.box[1], C.box[2], 1);
+        const vertsA = trueVerts(sc, edgesA);
 
-      // **간격이 40px 바로 위가 되는 배율을 고른다** — 결정론적 훑기다(난수 없음).
-      let pick: { scale: number; O2: [number, number, number]; minCross: number } | null = null;
-      for (const sf of CALIB_SCALES) {
-        const O2 = groundPoint(sc, [C.origin[0] + FAR_OFFSET[0] * sf,
-                                    C.origin[1] + FAR_OFFSET[1] * sf]);
-        if (!O2) continue;
-        const edgesB = boxLattice(sc, O2, C.box[0], C.box[1], C.box[2], 1);
-        const vertsB = trueVerts(sc, edgesB);
-        let mc = Infinity;
-        for (const p of vertsA) for (const q of vertsB)
-          mc = Math.min(mc, Math.hypot(p[0] - q[0], p[1] - q[1]));
-        if (!(mc > 40)) continue;
-        if (!pick || mc < pick.minCross) pick = { scale: sf, O2, minCross: mc };
-      }
-      if (!pick) { calib[C.name] = { scale: 0, min_cross_px: null, min_cand_px: null }; continue; }
-
-      const edgesB = boxLattice(sc, pick.O2, C.box[0], C.box[1], C.box[2], 1);
-      // **후보까지의 최소 거리**도 낸다 — 참 정점 간격보다 이것이 `wrong`의 실제 문턱이다
-      // (후보에는 중점·교차점·정점이 섞인다). 잡음 없는 기준 획으로 한 번만 잰다.
-      let minCand: number | null = null;
-      {
-        const rng = rng32(ci * 131 + 1);
-        const dA0 = drawEdges(sc, edgesA, "precise", rng, 0.12, 0, 0);
-        const dB0 = drawEdges(sc, edgesB, "precise", rng, 0.12, 0, 0);
-        if (dA0 && dB0) {
+        // **배율을 고른다 — 두 기준을 함께 건다**(11차 리뷰어 [1]·[5]로 초판을 고쳤다):
+        //   ① 참 정점 최소 거리 > 40px (본 팔의 배제선 그대로)
+        //   ② **경계 상자가 안 겹친다** — 초판은 ①만 걸었고, 그러면 오프셋을 줄일수록
+        //      두 덩어리가 **화면에서 포개진다**(초판 실측: 다섯 중 넷이 상자 겹침 0.59~0.89).
+        //      포개진 덩어리에 붙는 것은 "떨어진 곳에서 새로 시작한 획"이 아니다 —
+        //      `wrong`의 정의가 그 층에서 무너진다(#5). ①은 겹침의 대리로 **안 듣는다**.
+        // 그 둘을 만족하는 배율 중 **`min_cand_px`가 가장 작은 것**을 고른다 —
+        // 판정을 정하는 양이 참 정점 거리가 아니라 **가장 가까운 후보까지의 거리**이기 때문이다.
+        const bbox = (ps: Pt2[]) => ({ x0: Math.min(...ps.map(p => p[0])), x1: Math.max(...ps.map(p => p[0])),
+                                       y0: Math.min(...ps.map(p => p[1])), y1: Math.max(...ps.map(p => p[1])) });
+        const overlapPx2 = (pa: Pt2[], pb: Pt2[]) => {
+          const BA = bbox(pa), BB = bbox(pb);
+          const ox = Math.max(0, Math.min(BA.x1, BB.x1) - Math.max(BA.x0, BB.x0));
+          const oy = Math.max(0, Math.min(BA.y1, BB.y1) - Math.max(BA.y0, BB.y0));
+          return ox * oy;
+        };
+        /** 잡음 없는 기준 획으로 **가장 가까운 후보까지의 거리**를 잰다(배율 고르기용). */
+        const candDist = (edgesB2: TrueEdge[]): number | null => {
+          const rng0 = rng32(ci * 131 + 1);
+          const dA0 = drawEdges(sc, edgesA, "precise", rng0, 0.12, 0, 0);
+          const dB0 = drawEdges(sc, edgesB2, "precise", rng0, 0.12, 0, 0);
+          if (!dA0 || !dB0) return null;
           const segs0: Snap2Seg[] = dA0.map((e, i) => ({ id: `a${i}`, a: e.a2d, b: e.b2d }));
           const cands0 = static2dCandidates(segs0, Math.hypot(SZ[0], SZ[1]));
+          let best: number | null = null;
           for (const e of dB0) {
-            const raw = e.pts2d as Pt2[];
-            for (const q of [raw[0], raw[raw.length - 1]] as Pt2[])
+            const raw0 = e.pts2d as Pt2[];
+            for (const q of [raw0[0], raw0[raw0.length - 1]] as Pt2[])
               for (const c of cands0) {
                 const d = Math.hypot(c.at[0] - q[0], c.at[1] - q[1]);
-                if (minCand == null || d < minCand) minCand = d;
+                if (best == null || d < best) best = d;
               }
           }
+          return best;
+        };
+        let pick: { scale: number; O2: [number, number, number]; minCross: number;
+                    cand: number | null; ovl: number } | null = null;
+        for (const sf of CALIB_SCALES) {
+          const O2 = groundPoint(sc, [C.origin[0] + FAR_OFFSET[0] * sf,
+                                      C.origin[1] + FAR_OFFSET[1] * sf]);
+          if (!O2) continue;
+          const edgesB = boxLattice(sc, O2, C.box[0], C.box[1], C.box[2], 1);
+          const vertsB = trueVerts(sc, edgesB);
+          let mc = Infinity;
+          for (const p of vertsA) for (const q of vertsB)
+            mc = Math.min(mc, Math.hypot(p[0] - q[0], p[1] - q[1]));
+          if (!(mc > 40)) continue;
+          const ovl = overlapPx2(vertsA, vertsB);
+          const cd = candDist(edgesB);
+          if (cd == null) continue;
+          // ⚠⚠ **분리 기준을 조리개와 같은 단위로 잡는다**(11차 리뷰어 [1]·[5]로 두 번 고쳤다):
+          //   1판 — 참 정점 최소 거리 > 40px만: 오프셋을 줄이면 두 덩어리가 **포개졌다**
+          //          (실측 상자 겹침 0.59~0.89). "떨어진 곳에서 새로 시작"이 아니다.
+          //   2판 — 경계 상자 비겹침: **축 정렬 상자가 회전한 상자에 과대**라 3점 셋이
+          //          어떤 배율에서도 안 남았다(n = 0 · 도달 불가로 되돌아갔다).
+          //   3판(현행) — **`min_cand_px` > 40px**: 후보가 UI 최대 반경 **밖**이면 어떤
+          //          조리개로도 안 닿는다. 그 층에서 붙는 것은 **잉크 지터가 손을 그만큼
+          //          움직인 경우**뿐이고, 그것이 사용자가 말한 "안 붙어야 할 곳에 붙는다"다.
+          //          분리를 **조리개와 같은 단위**로 재는 것이 이 기준의 핵심이다.
+          // `separated`는 그 문턱을 걸고, `adjacent`는 **안 건다** — 후보가 조리개 안까지
+          // 들어온 체제를 일부러 고른다. 둘 다 `min_cand_px`를 최소화하므로 **같은 축 위의
+          // 두 끝**이다(#30 — 대조군).
+          if (mode === "separated" && !(cd > 40)) continue;
+          if (!pick || cd < (pick.cand ?? Infinity)) pick = { scale: sf, O2, minCross: mc, cand: cd, ovl };
         }
-      }
-      calib[C.name] = { scale: pick.scale, min_cross_px: round(pick.minCross, 4),
-                        min_cand_px: minCand == null ? null : round(minCand, 4) };
+        if (!pick) { calib[C.name] = { scale: 0, min_cross_px: null, min_cand_px: null,
+                                       bbox_overlap_px2: null, bbox_overlap_share: null }; continue; }
 
-      for (const jit of JITTERS) for (const grade of GRADES) for (const seed of SEEDS) {
-        const rng = rng32(seed * 7919 + ci * 131 + 1);
-        const dA = drawEdges(sc, edgesA, grade, rng, 0.12, jit, 0);
-        const dB = drawEdges(sc, edgesB, grade, rng, 0.12, jit, 0);
-        if (!dA || !dB) continue;
-        const segsA: Snap2Seg[] = dA.map((e, i) => ({ id: `a${i}`, a: e.a2d, b: e.b2d }));
-        for (const radius of RADII) {
-          const cands = static2dCandidates(segsA, Math.hypot(SZ[0], SZ[1]));
-          for (const e of dB) {
-            const raw = e.pts2d as Pt2[];
-            const r = resolve2dCore(raw, { cands, vps: [], radiusPx: radius,
-                                           relSnap: false, segs: segsA });
-            const a0 = raw[0], b0 = raw[raw.length - 1];
-            for (const which of ["start", "end"] as const) {
-              const got = which === "start" ? r.start2 : r.end2;
-              rowsC.push({
-                comp: C.name, jitter: jit, grade, seed, radius, which,
-                intended: false, aimPx: null,
-                engaged: !!got, wrong: !!got, right: false,
-              });
+        const edgesB = boxLattice(sc, pick.O2, C.box[0], C.box[1], C.box[2], 1);
+        // **후보까지의 최소 거리**도 낸다 — 참 정점 간격보다 이것이 `wrong`의 실제 문턱이다
+        // (후보에는 중점·교차점·정점이 섞인다). 잡음 없는 기준 획으로 한 번만 잰다.
+        let minCand: number | null = null;
+        {
+          const rng = rng32(ci * 131 + 1);
+          const dA0 = drawEdges(sc, edgesA, "precise", rng, 0.12, 0, 0);
+          const dB0 = drawEdges(sc, edgesB, "precise", rng, 0.12, 0, 0);
+          if (dA0 && dB0) {
+            const segs0: Snap2Seg[] = dA0.map((e, i) => ({ id: `a${i}`, a: e.a2d, b: e.b2d }));
+            const cands0 = static2dCandidates(segs0, Math.hypot(SZ[0], SZ[1]));
+            for (const e of dB0) {
+              const raw = e.pts2d as Pt2[];
+              for (const q of [raw[0], raw[raw.length - 1]] as Pt2[])
+                for (const c of cands0) {
+                  const d = Math.hypot(c.at[0] - q[0], c.at[1] - q[1]);
+                  if (minCand == null || d < minCand) minCand = d;
+                }
+            }
+          }
+        }
+        // **두 덩어리가 화면에서 실제로 겹치는가**(11차 리뷰어 [5]) — `min_cross_px`(참 정점
+        // 최소 거리)는 겹침의 대리로 안 듣는다. 오프셋 1/5로 줄인 구도가 배제선을 통과하는
+        // 것이 그 증거다. **경계 상자 교차 면적**을 원장이 직접 든다.
+        const vertsB2 = trueVerts(sc, edgesB);
+        const BB = bbox(vertsB2);
+        // **겹침 0은 고르기 조건의 확인이다**(#5 — 측정이 아니라 제약이 걸렸다는 표시).
+        calib[C.name] = { scale: pick.scale, min_cross_px: round(pick.minCross, 4),
+                          min_cand_px: minCand == null ? null : round(minCand, 4),
+                          bbox_overlap_px2: round(overlapPx2(vertsA, vertsB2), 1),
+                          bbox_overlap_share: round(overlapPx2(vertsA, vertsB2) /
+                            Math.max(1, (BB.x1 - BB.x0) * (BB.y1 - BB.y0)), 4) };
+
+        for (const jit of JITTERS) for (const grade of GRADES) for (const seed of SEEDS) {
+          const rng = rng32(seed * 7919 + ci * 131 + 1);
+          const dA = drawEdges(sc, edgesA, grade, rng, 0.12, jit, 0);
+          const dB = drawEdges(sc, edgesB, grade, rng, 0.12, jit, 0);
+          if (!dA || !dB) continue;
+          const segsA: Snap2Seg[] = dA.map((e, i) => ({ id: `a${i}`, a: e.a2d, b: e.b2d }));
+          for (const radius of RADII) {
+            const cands = static2dCandidates(segsA, Math.hypot(SZ[0], SZ[1]));
+            for (const e of dB) {
+              const raw = e.pts2d as Pt2[];
+              const r = resolve2dCore(raw, { cands, vps: [], radiusPx: radius,
+                                             relSnap: false, segs: segsA,
+                                             kinds: kinds as never });
+              for (const which of ["start", "end"] as const) {
+                const q = which === "start" ? raw[0] : raw[raw.length - 1];
+                const got = which === "start" ? r.start2 : r.end2;
+                rowsC.push({
+                  comp: C.name, jitter: jit, grade, seed, radius, which,
+                  intended: false, aimPx: null,
+                  engaged: !!got, wrong: !!got, right: false,
+                  kind: got ? got.kind : null,
+                  gotPx: got ? round(Math.hypot(got.at[0] - q[0], got.at[1] - q[1]), 4) : null,
+                });
+              }
             }
           }
         }
       }
+      return { rowsC, calib };
     }
+    const armSep = calibratedArm("separated");
+    const armAdj = calibratedArm("adjacent");
+    /**
+     * **개입 팔**(11차 리뷰어 [3]·#43·#30) — 인접 체제에서 **중점 후보만 끈다.**
+     * 관측(`wrong_kinds_r8`이 중점 지배)이 원인 주장을 만들면 그 주장에는 대조군이 있어야
+     * 한다. 앱에 이미 있는 종류 토글(`OSNAP.kinds.midpoint`)을 그대로 쓴다 — 새 스위치가
+     * 아니다. ⚠ **끄는 것을 권하는 팔이 아니다**(중점은 쓸모가 있다) — 크기를 재는 팔이다.
+     */
+    const armAdjNoMid = calibratedArm("adjacent", { midpoint: false });
+    const rowsC = armSep.rowsC, calib = armSep.calib;
+
 
     expect(rows.length).toBeGreaterThan(1000);
 
@@ -355,12 +455,23 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
         const f = all.filter(r => r.radius === R);
         return [`r${R}`, fraction(f.filter(r => r.wrong).length, f.length)];
       }));
+      const kindsAt = (R: number) => {
+        const f = all.filter(r => r.radius === R && r.wrong);
+        const acc: Record<string, number> = {};
+        for (const r of f) acc[r.kind ?? "?"] = (acc[r.kind ?? "?"] ?? 0) + 1;
+        return acc;
+      };
       return [C.name, {
         n: all.length,
         offset_scale: calib[C.name]?.scale ?? null,
         min_cross_px: calib[C.name]?.min_cross_px ?? null,
         min_cand_px: calib[C.name]?.min_cand_px ?? null,
+        bbox_overlap_px2: calib[C.name]?.bbox_overlap_px2 ?? null,
+        bbox_overlap_share: calib[C.name]?.bbox_overlap_share ?? null,
         by_radius: byR,
+        /** **어느 후보가 만드는가**(11차 리뷰어 [3] · #43) — 앱 기본 반경(8)과 최대(40). */
+        wrong_kinds_r8: kindsAt(8),
+        wrong_kinds_r40: kindsAt(40),
         reachable_any_radius: all.some(r => r.wrong),
         max_wrong_at: RADII.reduce((best, R) => {
           const k = all.filter(r => r.radius === R && r.wrong).length;
@@ -368,10 +479,36 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
         }, { r: 0, k: 0 }),
       }];
     }));
+    const byCompAdj = Object.fromEntries(COMPOSITIONS.map(C => {
+      const all = armAdj.rowsC.filter(r => r.comp === C.name);
+      const kindsAt = (R: number) => {
+        const acc: Record<string, number> = {};
+        for (const r of all.filter(x => x.radius === R && x.wrong)) acc[r.kind ?? "?"] = (acc[r.kind ?? "?"] ?? 0) + 1;
+        return acc;
+      };
+      const c = armAdj.calib[C.name];
+      return [C.name, {
+        n: all.length, offset_scale: c?.scale ?? null,
+        min_cross_px: c?.min_cross_px ?? null, min_cand_px: c?.min_cand_px ?? null,
+        bbox_overlap_px2: c?.bbox_overlap_px2 ?? null, bbox_overlap_share: c?.bbox_overlap_share ?? null,
+        by_radius: Object.fromEntries(RADII.map(R => {
+          const f = all.filter(r => r.radius === R);
+          return [`r${R}`, fraction(f.filter(r => r.wrong).length, f.length)];
+        })),
+        wrong_kinds_r8: kindsAt(8), wrong_kinds_r40: kindsAt(40),
+        reachable_any_radius: all.some(r => r.wrong),
+      }];
+    }));
+
     /** 보정 팔에서도 대상을 못 만든 구도(있으면 원장이 이름으로 든다 — 숨기지 않는다). */
     const calUnreachable = COMPOSITIONS.map(C => C.name)
       .filter(n => (byCompCal[n] as { n: number; reachable_any_radius: boolean }).n > 0
                 && !(byCompCal[n] as { reachable_any_radius: boolean }).reachable_any_radius);
+
+    /** [본 팔 합계(r40), **분리 팔 최약 구도**] — #28: 못 고르면 둘 다 적는다. */
+    const reachPair = [rows.filter(r => r.radius === 40 && r.wrong).length,
+                       Math.min(...COMPOSITIONS.map(C =>
+                         (byCompCal[C.name] as { max_wrong_at: { k: number } }).max_wrong_at.k))];
 
     const aimAll = connRows.filter(r => r.radius === RADII[0]).map(r => r.aimPx);
 
@@ -379,6 +516,10 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
       what: "**반경의 두 방향을 같은 축 위에 낸다**(9차 항목 2). 8차까지의 스윕은 "
           + "**모든 획이 이어지는 픽스처**에서 '붙는가'만 재서 반경이 클수록 좋아졌다 — "
           + "사용자 불만(**안 붙어야 할 곳에 붙는다**)은 그 스윕이 만들 수 없는 경우다.",
+      /** **실행 총수**(11차 리뷰어 [7] · #38) — `test_cost`의 자기보고가 이 필드를 읽는다.
+       *  팔을 더하면 여기서 늘어야 한다(초판은 `far_ends`만 있어 본 팔만 셌다). */
+      runs: rows.length + armSep.rowsC.length + armAdj.rowsC.length
+          + armAdjNoMid.rowsC.length + connRows.length,
       population: { compositions: COMPOSITIONS.length, jitters: JITTERS, grades: GRADES,
                     seeds: SEEDS, radii: RADII,
                     far_ends: rows.length, conn_starts: connRows.length,
@@ -393,19 +534,52 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
       sweep,
       by_composition: byComp,
       by_composition_calibrated: byCompCal,
+      by_composition_adjacent: byCompAdj,
+      /**
+       * **중점 후보를 끈 개입 팔**(인접 체제) — 같은 배율·같은 잉크·같은 반경 축이고
+       * **종류 토글 하나만** 다르다. `by_composition_adjacent`와 짝지어 읽는다.
+       */
+      midpoint_off_adjacent: Object.fromEntries(COMPOSITIONS.map(C => {
+        const all = armAdjNoMid.rowsC.filter(r => r.comp === C.name);
+        return [C.name, {
+          n: all.length,
+          by_radius: Object.fromEntries(RADII.map(R => {
+            const f = all.filter(r => r.radius === R);
+            return [`r${R}`, fraction(f.filter(r => r.wrong).length, f.length)];
+          })),
+          wrong_kinds_r8: (() => {
+            const acc: Record<string, number> = {};
+            for (const r of all.filter(x => x.radius === 8 && x.wrong)) acc[r.kind ?? "?"] = (acc[r.kind ?? "?"] ?? 0) + 1;
+            return acc;
+          })(),
+        }];
+      })),
       calibrated_unreachable_compositions: calUnreachable,
       selfcheck_notes: {
         "sweep[9].missed_rate = 0": "**정상이고 뜻이 있다** — 반경 40px은 이 픽스처의 "
           + "겨냥 거리 분포(p90 26.95px)를 통째로 덮어서 놓친 연결이 하나도 안 남는다. "
           + "**측정 미작동이 아니라 반경이 분포를 넘어선 것**이고, 같은 행의 `wrong` 536/4608이 "
           + "그 대가를 낸다(#5 — 0의 출처를 원장에 적는다).",
+        "by_composition_*.wrong_kinds_*의 단일 범주·1건 칸": "**작은 칸이다**(#14 — 시드 폭 "
+          + "미측정). `1pt`의 `wrong_kinds_r40`이 `endpoint` 하나인 것은 분리 체제에서 "
+          + "**중점·교차점 후보가 그 거리까지 안 뻗기 때문**이고(같은 구도의 인접 체제는 "
+          + "중점이 지배한다 — 두 팔을 짝지어 읽는다), 1건짜리 칸은 **결론에 안 쓴다**.",
+        "by_composition_*.bbox_overlap_px2 = 0": "**고르기 조건의 확인이지 측정이 아니다**(#5) — "
+          + "분리 팔은 `min_cand_px > 40`을 걸고 고르는데 그 배율에서 상자가 안 겹치는 것은 "
+          + "귀결이다. 값을 남기는 것은 인접 팔(겹침 0.12~0.80)과의 대조를 위해서다.",
         "by_composition_calibrated.*.by_radius 값의 크기": "**픽스처가 정한 인접도의 "
           + "귀결이다**(#46 · #5) — 보정이 두 덩어리를 배제선(40px) 바로 위까지 붙이므로 "
           + "이 팔은 **최악 인접**의 값이고 전형적 사용의 비율이 아니다. 이 팔이 싣는 정보는 "
           + "① **도달 가능성**(다섯 구도 전부 `wrong`이 난다 — 본 팔에서 1점·2점이 0이던 것이 "
-          + "픽스처 탓임을 보인다) ② **반경에 대한 단조성**(다섯 구도 전부에서 반경과 함께 "
-          + "늘어난다) ③ **구도 간 순서**(같은 인접도에서 1점이 3점보다 이르게 샌다)다. "
-          + "크기를 반경 결정의 근거로 인용하지 않는다.",
+          + "**오프셋 선택의 산물**임을 보인다) ② **반경에 대한 단조성**(다섯 구도 전부에서 "
+          + "반경과 함께 는다. ⚠ 2점은 열 칸 중 일곱이 0이라 그 층의 단조는 사실상 공허하다 — "
+          + "11차 리뷰어 [12ⓒ]) ③ **두 체제의 대조**(인접 ↔ 분리에서 **어느 후보가 만드는가**가 "
+          + "갈린다: 인접에서는 중점이 지배하고 분리에서는 끝점이 남는다)다. "
+          + "⛔ **초판이 정보 ③으로 적은 '같은 인접도에서 1점이 3점보다 이르게 샌다'는 "
+          + "이 원장의 수치가 반증한다**(11차 리뷰어 [3]): 인접 팔 r8에서 1점 152 < "
+          + "3pt_yaw50 167이고, 애초에 `min_cand_px`가 구도마다 달라 **같은 인접도가 아니다**. "
+          + "구도 간 크기 비교를 이 원장으로 하지 않는다. "
+          + "크기를 반경 결정의 근거로도 인용하지 않는다.",
         "by_composition.3pt_yaw35_pitch15.n = 0": "**판정 전에 뺐다**(#20). 그 구도는 "
           + "두 덩어리의 참 정점이 화면에서 40px 안으로 겹쳐 '안 붙어야 한다'가 흐려진다. "
           + "뺀 수는 `population.overlap_dropped_compositions`에 있다 — **뺄셈으로 만든 "
@@ -440,10 +614,13 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
           + "어떤 반경에서도 0이라 합계 도달 가능성이 그 층의 도달 불가를 덮고 있었다(#40 ③). "
           + "그래서 **보정 팔의 최약 구도 값**을 함께 든다: 다섯 구도 각각의 최대 `wrong` 중 "
           + "**가장 작은 것**(`calibrated_min_reachable_n`)이 0이면 게이트 ③이 깨진다.",
-        reachability_value: rows.filter(r => r.radius === 40 && r.wrong).length,
-        reachability_source: "wrong_at_40_n",
+        // **둘 다 적는다**(#28 · #40 ⑥ — 11차 리뷰어 [6]): 합계 하나만 두면 그 값이
+        // 층의 도달 불가를 덮는다. [합계, 분리 팔 최약 구도]다.
+        reachability_value: reachPair,
+        reachability_source: "reachability_pair",
       }),
       wrong_at_40_n: rows.filter(r => r.radius === 40 && r.wrong).length,
+      reachability_pair: reachPair,
       /** 보정 팔의 **최약 구도** 도달값(#40 ③ — 합계가 층의 0을 덮지 못하게 한다). */
       calibrated_min_reachable_n: Math.min(...COMPOSITIONS.map(C =>
         (byCompCal[C.name] as { max_wrong_at: { k: number } }).max_wrong_at.k)),
@@ -457,5 +634,10 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
     // 깨지면 픽스처가 다시 그 층의 대상을 못 만드는 것이고, 그때는 결론이 아니라
     // **픽스처의 성질**을 읽고 있는 것이다(#35·#40 ③).
     expect(calUnreachable).toEqual([]);
+    // **평가 자체가 빠진 구도가 없어야 한다**(11차 리뷰어 [2]·#11): `n = 0`은
+    // "도달 불가"가 아니라 **"배율을 못 찾았다"**인데, 위 단언은 그것을 통과시킨다
+    // (빈 구도는 `some`이 false여도 걸러진다). 분모를 따로 단언한다.
+    for (const C of COMPOSITIONS)
+      expect((byCompCal[C.name] as { n: number }).n, `${C.name} 미평가`).toBeGreaterThan(0);
   }, 300_000);
 });

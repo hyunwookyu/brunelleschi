@@ -1,0 +1,2233 @@
+{
+  "config": {
+    "argv": [
+      "/opt/node22/bin/node",
+      "/home/user/brunelleschi/web/node_modules/.bin/playwright",
+      "test",
+      "--reporter=json"
+    ],
+    "configFile": "/home/user/brunelleschi/web/playwright.config.ts",
+    "rootDir": "/home/user/brunelleschi/web/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/user/brunelleschi/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/user/brunelleschi/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": {
+      "command": "npx vite --port 5223 --strictPort",
+      "env": {
+        "S2S_HTTP": "1"
+      },
+      "url": "http://localhost:5223",
+      "reuseExistingServer": true,
+      "timeout": 60000
+    }
+  },
+  "suites": [
+    {
+      "title": "basic_flow.spec.ts",
+      "file": "basic_flow.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4410,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:42:38.493Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-7cfa78236f947935468f",
+          "file": "basic_flow.spec.ts",
+          "line": 35,
+          "column": 1
+        },
+        {
+          "title": "소실점 하나(카메라 전) — 그 방향으로 스냅된다 (4차 지시 2)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1762,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:42:43.393Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-9a17b303fcac3282b374",
+          "file": "basic_flow.spec.ts",
+          "line": 290,
+          "column": 1
+        },
+        {
+          "title": "대각선 두 개 → 소실점 — 그 선들이 소실점을 정확히 향한다 (4차 지시 3)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1739,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:42:45.167Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-494f71d465deb33c0350",
+          "file": "basic_flow.spec.ts",
+          "line": 431,
+          "column": 1
+        },
+        {
+          "title": "지평선 — 확정 전에는 없고, 확정 후 그 높이에 생긴다 (4차 지시 4)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2404,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:42:46.917Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-c71574dc6bd421058062",
+          "file": "basic_flow.spec.ts",
+          "line": 573,
+          "column": 1
+        },
+        {
+          "title": "관계 스냅 — 둘째 선의 끝이 첫 선의 끝과 같은 높이에 맞는다 (4차 지시 5)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1900,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:42:49.330Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-046ed00e3bf06051065f",
+          "file": "basic_flow.spec.ts",
+          "line": 724,
+          "column": 1
+        },
+        {
+          "title": "회전 중심 — 경계 상자 중심을 시선에 투영한 점으로 돈다 (4차 지시 7 · 5차 지시 2 개정)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2291,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:42:51.241Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-1489674914b61f775eb9",
+          "file": "basic_flow.spec.ts",
+          "line": 874,
+          "column": 1
+        },
+        {
+          "title": "빈 화면 — 두 번째 획이 첫 획의 끝점에 붙는다 (4차 지시 1)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1333,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:42:53.541Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-82cab57ccad6f15cd31b",
+          "file": "basic_flow.spec.ts",
+          "line": 994,
+          "column": 1
+        },
+        {
+          "title": "1점 확정 — 직전·직후 그린 선이 같은 자리다 (5차 지시 1)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1777,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:42:54.885Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-17ae1eb2b6eb635738ee",
+          "file": "basic_flow.spec.ts",
+          "line": 1146,
+          "column": 1
+        },
+        {
+          "title": "궤도 시작 — 손가락만 대면 화면이 같고, 첫 회전이 이어진다 (5차 지시 2)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1898,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:42:56.671Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-a7beca6519c51bf00e79",
+          "file": "basic_flow.spec.ts",
+          "line": 1374,
+          "column": 1
+        },
+        {
+          "title": "스냅된 수평선 — P1 가드를 우회하지 않는다 (7차 지시 1-a, 5차 지시 3 개정)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1541,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:42:58.582Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-0ccd73582c91377d857f",
+          "file": "basic_flow.spec.ts",
+          "line": 1532,
+          "column": 1
+        },
+        {
+          "title": "그리는 중 — 스냅이 걸리면 궤적선이 안 보인다 (5차 지시 4)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1127,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:00.135Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-3d70a495d36ede1899e3",
+          "file": "basic_flow.spec.ts",
+          "line": 1629,
+          "column": 1
+        },
+        {
+          "title": "지우개 크기·도구 배치 — 슬라이더가 반경을 바꾸고 묶음이 상단 우측에 있다 (5차 지시 5·6)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2029,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:01.274Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-2454d7581afadb55c37c",
+          "file": "basic_flow.spec.ts",
+          "line": 1728,
+          "column": 1
+        },
+        {
+          "title": "시점 저장·복귀 — 실행취소는 카메라를 안 건드린다 (5차 지시 7)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6455,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:03.318Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-7f904ecce03285ce83e3",
+          "file": "basic_flow.spec.ts",
+          "line": 1842,
+          "column": 1
+        },
+        {
+          "title": "3D 뷰 큐브 — 면=1점 스냅·꼭짓점=3점·드래그 연속·상대 90°·재탭=가장 가까운 1점 (6차 지시 1)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7123,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:09.785Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-57e02466da40e92567a3",
+          "file": "basic_flow.spec.ts",
+          "line": 1995,
+          "column": 1
+        },
+        {
+          "title": "네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, 직접 좌표 경로 (6차 지시 2)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4337,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:16.919Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "41c71c2af415f0b1c7e5-18ae78c740da37dd2d2d",
+          "file": "basic_flow.spec.ts",
+          "line": 2230,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "confirm_dir.spec.ts",
+      "file": "confirm_dir.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "확정된 선이 소실점을 지난다 — 미리보기와 각도 오차 0 (7차 지시 1-c·1-d·1-e)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1051,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:21.271Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "71159a19c750e3709eae-feb4481426fbf6c14334",
+          "file": "confirm_dir.spec.ts",
+          "line": 46,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "coords.spec.ts",
+      "file": "coords.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "dpr 1",
+          "file": "coords.spec.ts",
+          "line": 36,
+          "column": 8,
+          "specs": [
+            {
+              "title": "닿은 자리에 잉크가 나온다 — 기록·픽셀 둘 다",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 662,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-18T13:43:22.341Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "95f02472bd4165be9ffb-a918867d84ccfbd83e69",
+              "file": "coords.spec.ts",
+              "line": 39,
+              "column": 5
+            },
+            {
+              "title": "[양성 채널] ×dpr 자리에 일부러 칠하면 같은 탐침이 잡는다",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "dpr 1에서는 ×dpr 자리가 제자리다 — 가를 것이 없다",
+                      "location": {
+                        "file": "/home/user/brunelleschi/web/e2e/coords.spec.ts",
+                        "line": 149,
+                        "column": 12
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "skipped",
+                      "duration": 80,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-18T13:43:23.013Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "dpr 1에서는 ×dpr 자리가 제자리다 — 가를 것이 없다",
+                          "location": {
+                            "file": "/home/user/brunelleschi/web/e2e/coords.spec.ts",
+                            "line": 149,
+                            "column": 12
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "95f02472bd4165be9ffb-d5f6bbd459eec00bef38",
+              "file": "coords.spec.ts",
+              "line": 148,
+              "column": 5
+            },
+            {
+              "title": "창 크기가 바뀌어도 성립한다(ResizeObserver가 안 와도)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 462,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-18T13:43:23.103Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "95f02472bd4165be9ffb-cb7bb8a9b7ca10f4d42b",
+              "file": "coords.spec.ts",
+              "line": 188,
+              "column": 5
+            }
+          ]
+        },
+        {
+          "title": "dpr 2",
+          "file": "coords.spec.ts",
+          "line": 36,
+          "column": 8,
+          "specs": [
+            {
+              "title": "닿은 자리에 잉크가 나온다 — 기록·픽셀 둘 다",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1702,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-18T13:43:23.573Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "95f02472bd4165be9ffb-074d3efe1d644dded4b8",
+              "file": "coords.spec.ts",
+              "line": 39,
+              "column": 5
+            },
+            {
+              "title": "[양성 채널] ×dpr 자리에 일부러 칠하면 같은 탐침이 잡는다",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 623,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-18T13:43:25.283Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "95f02472bd4165be9ffb-49cfb10ed832daeadbe1",
+              "file": "coords.spec.ts",
+              "line": 148,
+              "column": 5
+            },
+            {
+              "title": "창 크기가 바뀌어도 성립한다(ResizeObserver가 안 와도)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1251,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-18T13:43:25.922Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "95f02472bd4165be9ffb-3c983874a786d58907f4",
+              "file": "coords.spec.ts",
+              "line": 188,
+              "column": 5
+            }
+          ]
+        },
+        {
+          "title": "dpr 3",
+          "file": "coords.spec.ts",
+          "line": 36,
+          "column": 8,
+          "specs": [
+            {
+              "title": "닿은 자리에 잉크가 나온다 — 기록·픽셀 둘 다",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2639,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-18T13:43:27.188Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "95f02472bd4165be9ffb-30e07e69929b7b26c91c",
+              "file": "coords.spec.ts",
+              "line": 39,
+              "column": 5
+            },
+            {
+              "title": "[양성 채널] ×dpr 자리에 일부러 칠하면 같은 탐침이 잡는다",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 663,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-18T13:43:29.844Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "95f02472bd4165be9ffb-caf8e67e4aaa80cd3f5e",
+              "file": "coords.spec.ts",
+              "line": 148,
+              "column": 5
+            },
+            {
+              "title": "창 크기가 바뀌어도 성립한다(ResizeObserver가 안 와도)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 765,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-18T13:43:30.516Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "95f02472bd4165be9ffb-98451e648a9c2403848a",
+              "file": "coords.spec.ts",
+              "line": 188,
+              "column": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "cube_frame.spec.ts",
+      "file": "cube_frame.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "큐브 정면 탭 — 그린 상자의 입면으로 난다 (10차 항목 6)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2179,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:31.309Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "f91d87fdd6b447ca78ad-5c49ffe29539dfb2f91f",
+          "file": "cube_frame.spec.ts",
+          "line": 18,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "dir_state.spec.ts",
+      "file": "dir_state.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운터 (10차 항목 1)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3115,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:33.505Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c25c711e45e336eb66fa-1ede5ae93c19c5e30608",
+          "file": "dir_state.spec.ts",
+          "line": 35,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "eraser.spec.ts",
+      "file": "eraser.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "조각·부분 지우개 — 교차가 조각을 가르고, 앵커는 점을 따라간다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 947,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:36.634Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "fcc86eedda2f8741692b-fac165c1f9311d5886ae",
+          "file": "eraser.spec.ts",
+          "line": 15,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "osnap_config.spec.ts",
+      "file": "osnap_config.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "반경·종류·수직점 — 설정이 스냅을 실제로 가른다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 793,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:37.595Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "db9d41e5518cc8936044-e06c368509dbd57b7272",
+          "file": "osnap_config.spec.ts",
+          "line": 19,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "restore_pose.spec.ts",
+      "file": "restore_pose.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "복원 — 확정 뷰가 무대에 다시 물린다(재핀)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1145,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:38.406Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b65f96cf93e9fda5b9f4-cb77a5645527a48732e0",
+          "file": "restore_pose.spec.ts",
+          "line": 51,
+          "column": 1
+        },
+        {
+          "title": "복원 — 저장된 시점(회전 뷰)이 자세 그대로 돌아온다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1212,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:39.560Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b65f96cf93e9fda5b9f4-d664347b7a8615e6af7a",
+          "file": "restore_pose.spec.ts",
+          "line": 152,
+          "column": 1
+        },
+        {
+          "title": "궤도 진입 — 렌즈(투영행렬)가 유지된다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 893,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:40.784Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b65f96cf93e9fda5b9f4-7ceb47db48b7f88f5cf3",
+          "file": "restore_pose.spec.ts",
+          "line": 207,
+          "column": 1
+        },
+        {
+          "title": "주점이 화면 중심 밖(지평선 0.23H) — 궤도 진입 렌즈·회전 시점 배치가 유지된다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 481,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:41.686Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "b65f96cf93e9fda5b9f4-1ed9fb4f3519ad65f771",
+          "file": "restore_pose.spec.ts",
+          "line": 251,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "snap_cache.spec.ts",
+      "file": "snap_cache.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "뷰 왕복 직후 첫 질의가 끝점을 문다(캐시가 시점을 키로 갖는다)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1357,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:42.190Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "cbc0804967e7add542de-ac4c883be49896331054",
+          "file": "snap_cache.spec.ts",
+          "line": 36,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "stage.spec.ts",
+      "file": "stage.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1499,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:43.593Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "28da3f562f6217aa5606-c78f35099e7b77d2d6c8",
+          "file": "stage.spec.ts",
+          "line": 86,
+          "column": 1
+        },
+        {
+          "title": "저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2547,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:45.104Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "28da3f562f6217aa5606-12bb6bd6e73082efd39b",
+          "file": "stage.spec.ts",
+          "line": 293,
+          "column": 1
+        },
+        {
+          "title": "가이드 조정 — 늘리기·민감도·선 끌기 (대상이 사라졌다, D-L37)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "location": {
+                    "file": "/home/user/brunelleschi/web/e2e/stage.spec.ts",
+                    "line": 494,
+                    "column": 6
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 0,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:47.660Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "location": {
+                        "file": "/home/user/brunelleschi/web/e2e/stage.spec.ts",
+                        "line": 494,
+                        "column": 6
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "28da3f562f6217aa5606-7e0e0f8b8989daa3863a",
+          "file": "stage.spec.ts",
+          "line": 494,
+          "column": 6
+        },
+        {
+          "title": "스냅 — 대상·표식·시작점 확정",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1172,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:47.660Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "28da3f562f6217aa5606-b06c20d2672c4dcb22ad",
+          "file": "stage.spec.ts",
+          "line": 586,
+          "column": 1
+        },
+        {
+          "title": "실시간 축 판정 — 미리보기와 확정이 같다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1061,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:48.843Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "28da3f562f6217aa5606-487220c0f867a7a472d9",
+          "file": "stage.spec.ts",
+          "line": 721,
+          "column": 1
+        },
+        {
+          "title": "축 고정 — 추론이 거부한 획을 사용자가 강제한다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1216,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:49.913Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "28da3f562f6217aa5606-4fe0be33af42a8202784",
+          "file": "stage.spec.ts",
+          "line": 799,
+          "column": 1
+        },
+        {
+          "title": "뷰 시스템 — 목록·전환·삭제·소유",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1010,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:51.141Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "28da3f562f6217aa5606-cdfae344732783225e14",
+          "file": "stage.spec.ts",
+          "line": 893,
+          "column": 1
+        },
+        {
+          "title": "궤도 후 계속 그리기 — 새 각도가 새 뷰가 된다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1245,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:52.161Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "28da3f562f6217aa5606-ed391e737064441c6be1",
+          "file": "stage.spec.ts",
+          "line": 1106,
+          "column": 1
+        },
+        {
+          "title": "차수 승격 — 소실점이 하나 더 잡히면 전부 다시 풀린다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "location": {
+                    "file": "/home/user/brunelleschi/web/e2e/stage.spec.ts",
+                    "line": 1262,
+                    "column": 6
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 0,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:53.415Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "location": {
+                        "file": "/home/user/brunelleschi/web/e2e/stage.spec.ts",
+                        "line": 1262,
+                        "column": 6
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "28da3f562f6217aa5606-c18ea6d6e949c3fb9290",
+          "file": "stage.spec.ts",
+          "line": 1262,
+          "column": 6
+        },
+        {
+          "title": "되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되돌아간다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "location": {
+                    "file": "/home/user/brunelleschi/web/e2e/stage.spec.ts",
+                    "line": 1269,
+                    "column": 6
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 0,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:53.416Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "location": {
+                        "file": "/home/user/brunelleschi/web/e2e/stage.spec.ts",
+                        "line": 1269,
+                        "column": 6
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "28da3f562f6217aa5606-3706ff36dbcdc2c4b229",
+          "file": "stage.spec.ts",
+          "line": 1269,
+          "column": 6
+        },
+        {
+          "title": "고치기 — 획을 고르고, 축을 지정하고, 지운다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 658,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:53.416Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "28da3f562f6217aa5606-4785edc16ceca7005642",
+          "file": "stage.spec.ts",
+          "line": 1270,
+          "column": 1
+        },
+        {
+          "title": "L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2742,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:54.083Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "28da3f562f6217aa5606-5d89a3e7aded71415ec6",
+          "file": "stage.spec.ts",
+          "line": 1429,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "static_deploy.spec.ts",
+      "file": "static_deploy.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "하위 경로에서 열리고, 서비스 워커가 잡히고, 오프라인에서도 뜬다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "빌드본이 없다 — `npm run build`를 먼저 돌린다(미실행은 반증이 아니다, #32)",
+                  "location": {
+                    "file": "/home/user/brunelleschi/web/e2e/static_deploy.spec.ts",
+                    "line": 39,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 0,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:56.856Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "빌드본이 없다 — `npm run build`를 먼저 돌린다(미실행은 반증이 아니다, #32)",
+                      "location": {
+                        "file": "/home/user/brunelleschi/web/e2e/static_deploy.spec.ts",
+                        "line": 39,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "87b32a97c8c92671f849-9f11801e4c5d6035bbb9",
+          "file": "static_deploy.spec.ts",
+          "line": 84,
+          "column": 1
+        },
+        {
+          "title": "[양성 채널] 캐시에서 번들을 지우면 오프라인 새로고침이 실제로 깨진다",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "빌드본이 없다 — `npm run build`를 먼저 돌린다(미실행은 반증이 아니다, #32)",
+                  "location": {
+                    "file": "/home/user/brunelleschi/web/e2e/static_deploy.spec.ts",
+                    "line": 39,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "timedOut",
+                  "duration": 0,
+                  "error": {
+                    "message": "\u001b[31m\"afterAll\" hook timeout of 120000ms exceeded.\u001b[39m",
+                    "stack": "\u001b[31m\"afterAll\" hook timeout of 120000ms exceeded.\u001b[39m\n    at /home/user/brunelleschi/web/e2e/static_deploy.spec.ts:58:6",
+                    "location": {
+                      "file": "/home/user/brunelleschi/web/e2e/static_deploy.spec.ts",
+                      "column": 6,
+                      "line": 58
+                    },
+                    "snippet": "  56 | });\n  57 |\n> 58 | test.afterAll(async () => {\n     |      ^\n  59 |   await new Promise<void>(r => server?.close(() => r()));\n  60 |   mkdirSync(OUT, { recursive: true });\n  61 |   writeFileSync(resolve(OUT, \"static_deploy.json\"), JSON.stringify({"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/user/brunelleschi/web/e2e/static_deploy.spec.ts",
+                        "column": 6,
+                        "line": 58
+                      },
+                      "message": "\u001b[31m\"afterAll\" hook timeout of 120000ms exceeded.\u001b[39m\n\n  56 | });\n  57 |\n> 58 | test.afterAll(async () => {\n     |      ^\n  59 |   await new Promise<void>(r => server?.close(() => r()));\n  60 |   mkdirSync(OUT, { recursive: true });\n  61 |   writeFileSync(resolve(OUT, \"static_deploy.json\"), JSON.stringify({\n    at /home/user/brunelleschi/web/e2e/static_deploy.spec.ts:58:6"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:43:56.865Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "빌드본이 없다 — `npm run build`를 먼저 돌린다(미실행은 반증이 아니다, #32)",
+                      "location": {
+                        "file": "/home/user/brunelleschi/web/e2e/static_deploy.spec.ts",
+                        "line": 39,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/user/brunelleschi/web/test-results/static_deploy--양성-채널-캐시에서-번들을-지우면-오프라인-새로고침이-실제로-깨진다-chromium/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/user/brunelleschi/web/e2e/static_deploy.spec.ts",
+                    "column": 6,
+                    "line": 58
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "87b32a97c8c92671f849-89ab2a0ba28d14e01505",
+          "file": "static_deploy.spec.ts",
+          "line": 159,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "touch_route.spec.ts",
+      "file": "touch_route.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "후보 셋 — 어느 함정이 실제로 걸리나",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 926,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:45:57.704Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2b0135b82ae274b094d7-ca713f81fb8083c154d2",
+          "file": "touch_route.spec.ts",
+          "line": 120,
+          "column": 1
+        },
+        {
+          "title": "앱 종단 — 손가락 1개는 궤도, 2개는 팬·줌",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8782,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:45:58.818Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2b0135b82ae274b094d7-8494efcb8c105557adde",
+          "file": "touch_route.spec.ts",
+          "line": 218,
+          "column": 1
+        },
+        {
+          "title": "팜 리젝션 — 펜이 닿아 있는 동안 손가락이 카메라를 안 움직인다(G-2)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9344,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:46:07.610Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2b0135b82ae274b094d7-21ed343a29195c313c54",
+          "file": "touch_route.spec.ts",
+          "line": 315,
+          "column": 1
+        },
+        {
+          "title": "펜과 마우스는 잉크로 간다 — 라우팅이 장치로 갈린다",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4789,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:46:16.963Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "2b0135b82ae274b094d7-c03b4038c97e6a254bad",
+          "file": "touch_route.spec.ts",
+          "line": 415,
+          "column": 1
+        }
+      ],
+      "suites": [
+        {
+          "title": "dpr 2",
+          "file": "touch_route.spec.ts",
+          "line": 460,
+          "column": 6,
+          "specs": [
+            {
+              "title": "같은 손짓이 같은 각을 돈다 — 제스처 좌표는 css 픽셀이다(#21)",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 21341,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m1e-11\u001b[39m\nReceived:   \u001b[31m1.722979980911532e-9\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m1e-11\u001b[39m\nReceived:   \u001b[31m1.722979980911532e-9\u001b[39m\n    at /home/user/brunelleschi/web/e2e/touch_route.spec.ts:578:33",
+                        "location": {
+                          "file": "/home/user/brunelleschi/web/e2e/touch_route.spec.ts",
+                          "column": 33,
+                          "line": 578
+                        },
+                        "snippet": "  576 |     // 1e-6은 그 상단의 **175만 배**다 — **0/12로 아무것도 안 가른다.** \"검사가 통과하는데\n  577 |     // 아무것도 안 재는\" 자리이고, 그것이 이 항목이 고친 것이다. **밴드 상단의 17.5배**로 내렸다.\n> 578 |     expect(Math.abs(az - one!)).toBeLessThan(AZ_TOL_RAD);\n      |                                 ^\n  579 |     // 양성 채널: 절반 손짓은 절반 돈다(죽은 구간 한 걸음이 양쪽에서 같은 비율로 빠진다)\n  580 |     expect(az2 / azFull).toBeGreaterThan(0.45);\n  581 |     expect(az2 / azFull).toBeLessThan(0.55);"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/user/brunelleschi/web/e2e/touch_route.spec.ts",
+                            "column": 33,
+                            "line": 578
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m1e-11\u001b[39m\nReceived:   \u001b[31m1.722979980911532e-9\u001b[39m\n\n  576 |     // 1e-6은 그 상단의 **175만 배**다 — **0/12로 아무것도 안 가른다.** \"검사가 통과하는데\n  577 |     // 아무것도 안 재는\" 자리이고, 그것이 이 항목이 고친 것이다. **밴드 상단의 17.5배**로 내렸다.\n> 578 |     expect(Math.abs(az - one!)).toBeLessThan(AZ_TOL_RAD);\n      |                                 ^\n  579 |     // 양성 채널: 절반 손짓은 절반 돈다(죽은 구간 한 걸음이 양쪽에서 같은 비율로 빠진다)\n  580 |     expect(az2 / azFull).toBeGreaterThan(0.45);\n  581 |     expect(az2 / azFull).toBeLessThan(0.55);\n    at /home/user/brunelleschi/web/e2e/touch_route.spec.ts:578:33"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-08-18T13:46:21.763Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/user/brunelleschi/web/test-results/touch_route-dpr-2-같은-손짓이-같은-각을-돈다-—-제스처-좌표는-css-픽셀이다-21--chromium/error-context.md"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/user/brunelleschi/web/test-results/touch_route-dpr-2-같은-손짓이-같은-각을-돈다-—-제스처-좌표는-css-픽셀이다-21--chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/user/brunelleschi/web/e2e/touch_route.spec.ts",
+                        "column": 33,
+                        "line": 578
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "2b0135b82ae274b094d7-cacfa02153aec50f10c7",
+              "file": "touch_route.spec.ts",
+              "line": 462,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "view_pan.spec.ts",
+      "file": "view_pan.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "화면 팬 — 그리는 중엔 종이가 밀리고, 궤도 뒤엔 공간이 민다 (10차 항목 5)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2500,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-18T13:46:43.936Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a885259a3e0f139c8596-7881b0e761480a50a4a5",
+          "file": "view_pan.spec.ts",
+          "line": 70,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-08-18T13:42:35.472Z",
+    "duration": 251277.333,
+    "expected": 47,
+    "skipped": 5,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

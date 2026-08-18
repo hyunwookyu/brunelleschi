@@ -220,9 +220,9 @@
         "steps": 6,
         "start": "확정 카메라(pinned)"
       },
-      "azimuth_delta": 1.0859826456813255,
-      "polar_delta": 1.3380857598633016,
-      "dist_delta": 6.470458873433548
+      "azimuth_delta": 1.0859826456842356,
+      "polar_delta": 1.3380857598625928,
+      "dist_delta": 6.470458873433549
     },
     "two_finger": {
       "input_px": {
@@ -230,10 +230,10 @@
         "d1": 196,
         "ratio": 1.96
       },
-      "dist_ratio": 0.5660004944940035,
+      "dist_ratio": 0.5660004944940352,
       "identity_if_guaranteed": 0.5102040816326531,
       "guarantee_retracted": "**보장이 아니다**(8차 리뷰어 [2]) — 항등이면 `identity_if_guaranteed`(1/1.96)여야 하는데 `dist_ratio`가 그 값이 아니다. 임계를 안 거는 사유는 '항등이라서'가 아니라 **실행마다 흔들려서**다",
-      "target_moved": 0.7103543475851753
+      "target_moved": 0.7103764057459342
     },
     "one_finger_already_free": {
       "input_px": {
@@ -248,15 +248,15 @@
         "steps": 6,
         "start": "자유 시점(이미 풀림) — **첫 팔과 같은 손짓**"
       },
-      "azimuth_delta": 1.0859826456837778,
-      "polar_delta": 0.2327105669321916,
-      "dist_delta": 5.213607323639735e-13
+      "azimuth_delta": 1.0859826456835597,
+      "polar_delta": 0.23271056693213832,
+      "dist_delta": 1.4477308241112041e-13
     },
     "strokes_after_touch_only": {
       "before": 12,
       "after": 12
     },
-    "reading": "손가락 하나가 **확정 카메라를 풀고**(pinned true → false) 방위각을 돌린다. 둘은 **거리를 줄이고**(벌림) 궤도 중심을 옮긴다. ⚠ 핀 해제의 재초기화가 어느 성분에 섞이는지는 **두 팔의 차로 읽는다** — 방위각 차 2.5e-12 · 앙각 차 1.1054 · 거리 차 6.4705. **방위각은 두 팔이 같고**(재초기화가 안 섞인다) 앙각·거리에만 섞인다 — 옛 산문의 '세 성분 전부'와 '13.5%'는 `camPose()` 수리 이전 값이라 철회했다. 그 몫이 빠진 값이 `one_finger_already_free`다. ⚠ **터치만으로는 획이 안 생긴다**(`strokes_after_touch_only`)."
+    "reading": "손가락 하나가 **확정 카메라를 풀고**(pinned true → false) 방위각을 돌린다. 둘은 **거리를 줄이고**(벌림) 궤도 중심을 옮긴다. ⚠ 핀 해제의 재초기화가 어느 성분에 섞이는지는 **두 팔의 차로 읽는다** — 방위각 차 6.8e-13 · 앙각 차 1.1054 · 거리 차 6.4705. **방위각은 두 팔이 같고**(재초기화가 안 섞인다) 앙각·거리에만 섞인다 — 옛 산문의 '세 성분 전부'와 '13.5%'는 `camPose()` 수리 이전 값이라 철회했다. 그 몫이 빠진 값이 `one_finger_already_free`다. ⚠ **터치만으로는 획이 안 생긴다**(`strokes_after_touch_only`)."
   },
   "gesture_tol": {
     "rotate_speed": 1,
@@ -325,25 +325,25 @@
     ],
     "arm_start_state": {
       "control": {
-        "dist": 6.470458873433544,
+        "dist": 6.470458873433542,
         "pinned": false
       },
       "op1": {
-        "dist": 6.895720180864572,
+        "dist": 6.895720180864872,
         "pinned": false
       },
       "op2": {
-        "dist": 6.895720180864572,
+        "dist": 6.895720180864872,
         "pinned": false
       },
       "pen_interrupts": {
-        "dist": 6.895720180864572,
+        "dist": 6.895720180864872,
         "pinned": false
       },
       "note": "팔들이 **같은 페이지 상태를 이어 쓴다** — 앞 팔이 뒤 팔의 시작을 정한다"
     },
     "control_no_pen": {
-      "moved": 1.6663843310693907,
+      "moved": 1.6663843310702684,
       "counters": {
         "rejected_down": 0,
         "cancelled_by_pen": 0,
@@ -403,7 +403,7 @@
     },
     "camera_moved": {
       "by_pen": 0,
-      "by_mouse_in_orbit": 1.5514037795428766
+      "by_mouse_in_orbit": 1.5514037795478905
     },
     "reading": "펜·마우스는 잉크로, 터치는 카메라로 간다. 마우스는 `궤도(마우스)` 동안만 카메라다. ⚠ **`pointer-events: none` 전환을 지웠으므로** 궤도 중에도 잉크 캔버스가 사건을 받는다."
   },
@@ -419,9 +419,9 @@
       "reading": "**백버퍼가 css 폭의 2배**여야 dpr 섭동이 실제로 걸린 것이다. 1이면 회전 비 1.0은 '규약이 지켜졌다'가 아니라 '섭동이 안 걸렸다'다"
     },
     "rotate": {
-      "azimuth_delta": 1.085980537205389,
-      "dpr1_azimuth_delta": 1.0859826456813255,
-      "ratio": 0.9999980584625869,
+      "azimuth_delta": 1.0859826439612557,
+      "dpr1_azimuth_delta": 1.0859826456842356,
+      "ratio": 0.9999999984134369,
       "az_tol_rad": 1e-11,
       "az_tol_basis": {
         "measured_band_n": 12,
@@ -447,9 +447,9 @@
       }
     },
     "positive_channel": {
-      "azimuth_delta_half_input": 0.542991073710458,
-      "azimuth_delta_full_free": 1.0859764843804867,
-      "ratio_to_single": 0.5000026073494733,
+      "azimuth_delta_half_input": 0.5429913227866896,
+      "azimuth_delta_full_free": 1.0859826443502147,
+      "ratio_to_single": 0.5000000005631602,
       "input_px": {
         "from": [
           500,
@@ -464,7 +464,7 @@
       "reading": "**0.5에 가까워야 지표가 민감한 것**이다. 1에 붙으면 앞의 비 1.0은 규약의 증거가 아니라 둔감의 증거다. ⚠ 두 배로 안 재는 이유: `getAzimuthalAngle()`이 `atan2`라 **감긴다**(두 배 입력에서 비 3.28이 나왔다)"
     },
     "pan": {
-      "target_moved": 0.4954840922958803,
+      "target_moved": 0.4913528011289926,
       "input_px": {
         "two_fingers_dx": 60,
         "note": "두 손가락을 나란히 60px 민다(거리 불변 → 줌 없음)"
