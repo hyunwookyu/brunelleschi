@@ -22892,7 +22892,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 207,
+      "files_scanned": 208,
       "exts_declared": [
         ".md",
         ".py",
@@ -22916,7 +22916,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 207,
+      "files_scanned": 208,
       "exts_declared": [
         ".md",
         ".py",
@@ -22957,16 +22957,16 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 201,
+      "targets": 203,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
     {
       "scan": "scan_cited_values",
       "unit": "인용 줄",
-      "targets": 111,
+      "targets": 113,
       "hits": 0,
-      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1370개이고 엄격 판정이면 294개(55줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
+      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1377개이고 엄격 판정이면 298개(56줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
     },
     {
       "scan": "scan_pitfall_citations",
@@ -23503,11 +23503,11 @@
     ]
   },
   "cited_value_population": {
-    "lines_checked": 111,
-    "tokens_checked": 1370,
+    "lines_checked": 113,
+    "tokens_checked": 1377,
     "flags_line_rule": 0,
-    "strict_tokens_flagged": 294,
-    "strict_lines_flagged": 55,
+    "strict_tokens_flagged": 298,
+    "strict_lines_flagged": 56,
     "hashless_only_lines_in_population": false,
     "note": "**모집단은 같고 판정만 둘이다.** `현재 해시로 적힌 인용 줄`이 모집단이고 (해시 없이 이름만 적힌 원장은 **줄을 모집단에 넣지 않는다** — 같은 줄에 현재 해시 인용이 있을 때 **대조 집합에만** 더한다), 그 위에서 엄격 판정(토큰별)과 현행 판정(줄에 하나도 없을 때만)의 수를 함께 낸다. `tokens_checked` ↔ `strict_tokens_flagged`가 옛 1129 ↔ 272와 같은 단위이고, `lines_checked` ↔ `flags_line_rule`이 96 ↔ 2와 같은 단위다"
   },
