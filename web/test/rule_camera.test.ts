@@ -533,9 +533,11 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
       fixtures_raw_ok: v.nRaw, fixtures_snap_ok: v.nSnap, fixtures_placebo_ok: v.nPlacebo,
       dropped_by_pairing: Math.max(v.nRaw, v.nSnap, v.nPlacebo) - v.n,
       /**
-       * ⚠ **이 팔에서 짝짓기가 새 정보를 만드는가**(11차 리뷰어 [2]). `false`면 이 층의
-       * 세 중앙값은 비짝지음 표(`headline_no_identity`)의 **글자 그대로 같은 수**이고,
-       * "짝지음 부재의 산물이 아니다"를 이 층으로 **주장할 수 없다**.
+       * ⚠ **정의를 박는다**(11차 리뷰어 2차 [6]): `dropped_by_pairing > 0`, 즉 **교집합이
+       * 하나라도 걷어냈는가**뿐이다. **중앙값이 움직였는가가 아니다** — 그것은
+       * `medians_moved_by_pairing`이 따로 든다. 둘이 어긋나는 팔(걷어냈는데 중앙값 불변)은
+       * **짝짓기가 표본은 바꿨지만 결론은 안 바꿨다**는 뜻이고, 그때 이 층의 값은
+       * 비짝지음 표와 같은 수다 — 그 팔에서는 이 층을 근거로 쓰지 않는다(#46의 형태).
        */
       pairing_informative: Math.max(v.nRaw, v.nSnap, v.nPlacebo) - v.n > 0,
       raw_deg_median: round(median(v.raw), 4),
@@ -646,9 +648,14 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
        * 그래서 `*_axes` 셋을 함께 낸다 — 크게 다르면 중앙값 비교를 그만큼 약하게 읽는다.
        */
       paired3_headline: {
-        note: "**셋 다 카메라가 선 픽스처만**(raw ∧ snap ∧ placebo). 결론이 쓰는 비교"
-            + "(스냅 ↔ 위약, #39)가 여기서 처음으로 같은 모집단 위에 선다 — `paired_headline`은 "
+        note: "**셋 다 카메라가 선 픽스처만**(raw ∧ snap ∧ placebo). `paired_headline`은 "
             + "raw ↔ snap만 맞춘 층이라 위약 비교에 못 쓴다(10차 리뷰어 5차 [15]). "
+            + "⛔ **초판이 '결론이 쓰는 비교가 여기서 처음으로 같은 모집단 위에 선다'고 적었고 "
+            + "그것은 과대다**(11차 리뷰어 2차 [5]): 맞춘 것은 **픽스처 단위**이고 지표의 "
+            + "**측정 단위는 축**인데 `raw_axes`·`snap_axes`·`placebo_axes`가 여전히 다르다"
+            + "(무한원 축 제외가 팔마다 다르게 걸린다). **픽스처를 맞춘 층이지 축을 맞춘 층이 "
+            + "아니다.** 그리고 `dropped_by_pairing`이 작고 `medians_moved_by_pairing`이 대부분 "
+            + "false라 이 층으로 말할 수 있는 것은 **'이 짝짓기에 판정이 둔감하다'**까지다. "
             + "`snap_beats_placebo`가 팔별 판정이고, **수를 산문에 안 박는다**(#47).",
         ...paired3Summary,
       },

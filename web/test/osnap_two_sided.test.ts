@@ -148,6 +148,13 @@ const near = (p: Pt2, list: Pt2[]): { at: Pt2; d: number } | null => {
 
 describe("osnap_two_sided — 반경의 두 방향", () => {
   it("놓친 연결과 잘못된 연결을 같은 축 위에 낸다", () => {
+    /**
+     * **본 팔**(고정 오프셋). `kinds`를 받는 이유는 **개입의 편익과 대가를 같은 픽스처에서**
+     * 재기 위해서다(11차 리뷰어 2차 [7]): 대가(`sweep_midpoint_off`의 놓친 연결)는 이 픽스처가
+     * 내는데 편익(잘못된 연결 감소)은 **인접 보정 팔**에서만 냈었다 — 두 곡선의 픽스처가
+     * 달랐고 그것을 "같은 축"이라 적었다(#27의 픽스처 판).
+     */
+    function farArm(kinds?: Partial<Record<string, boolean>>) {
     const rows: EndRow[] = [];
     /** 둘째 덩어리가 첫 덩어리와 화면에서 겹치는 실행 — 판정이 흐려지므로 뺀다(#11) */
     let overlapDropped = 0;
@@ -180,7 +187,8 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
             const e = dB[i];
             const raw = e.pts2d as Pt2[];
             const r = resolve2dCore(raw, { cands, vps: [], radiusPx: radius,
-                                           relSnap: false, segs: segsA });
+                                           relSnap: false, segs: segsA,
+                                           kinds: kinds as never });
             const a0 = raw[0], b0 = raw[raw.length - 1];
             for (const which of ["start", "end"] as const) {
               const q = which === "start" ? a0 : b0;
@@ -208,6 +216,13 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
         }
       }
     }
+
+    return { rows, overlapDropped };
+    }
+    const farMain = farArm();
+    const farNoMid = farArm({ midpoint: false });          // **같은 픽스처의 개입 팔**
+    const rows = farMain.rows;
+    const overlapDropped = farMain.overlapDropped;
 
     // ---- **보정 팔 둘**(11차 항목 3-a · 리뷰어 [1]·[5]로 두 판을 고쳤다).
     //      본 팔은 안 건드린다(인용된 값이 움직이지 않게).
@@ -452,7 +467,10 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
         by_radius: byR,
         // **이 구도에서 잘못된 연결이 한 번이라도 나는가** — 아니오면 결론이 이 층에
         // 기댈 수 없다(#35: 기준을 못 넘은 것이 신호의 성질인지 픽스처의 성질인지)
-        reachable_any_radius: all.some(r => r.wrong),
+        // ⚠ **분모가 0이면 `null`이다**(11차 리뷰어 2차 [10] · #36): 이 구도는 겹침으로
+        // **판정 전에 뺀** 것이라 도달 가능성은 `false`가 아니라 **미상**이다.
+        reachable_any_radius: all.length ? all.some(r => r.wrong) : null,
+        excluded_before_judgement: all.length === 0,
         max_wrong_at: RADII.reduce((best, R) => {
           const k = all.filter(r => r.radius === R && r.wrong).length;
           return k > best.k ? { r: R, k } : best;
@@ -544,14 +562,23 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
       },
       sweep,
       /**
-       * **중점을 끈 연결 팔**(개입의 대가). `sweep`의 `missed`와 **같은 분모·같은 축**이다 —
+       * **중점을 끈 팔**(개입의 편익과 대가). **`sweep`과 같은 픽스처·같은 반경 축**이고
        * 두 열을 나란히 읽으면 "중점을 끄면 잘못된 연결은 얼마나 줄고 놓친 연결은 얼마나
        * 느는가"가 한 표에서 나온다(#12 · #15 — 한쪽만 보면 언제나 한쪽이 이긴다).
+       * ⚠ **"같은 분모"는 `wrong`에만 참이다**(11차 리뷰어 2차 [8] · #11): `missed`의 분모는
+       * **40px 안에 이을 대상이 있던 시작점**이라 스냅 결과에 따라 달라진다 — 반경 20 이상에서
+       * 두 팔의 분모가 2~5 다르다(값은 이 표를 그 자리에서 읽는다). `wrong`의 분모는 고정이다.
        */
       sweep_midpoint_off: RADII.map(R => {
         const conn = connRowsNoMid.filter(r => r.radius === R);
         const missed = conn.filter(r => !r.hit).length;
-        return { radius_px: R, missed: fraction(missed, conn.length),
+        const far = farNoMid.rows.filter(r => r.radius === R);
+        const wrong = far.filter(r => r.wrong).length;
+        return { radius_px: R,
+                 // **편익** — 같은 본 팔 픽스처에서 잰다(11차 리뷰어 2차 [7])
+                 wrong: fraction(wrong, far.length), wrong_rate: rate(wrong, far.length),
+                 // **대가**
+                 missed: fraction(missed, conn.length),
                  missed_rate: rate(missed, conn.length),
                  connected: fraction(conn.length - missed, conn.length) };
       }),

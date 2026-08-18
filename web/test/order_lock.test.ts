@@ -1057,9 +1057,23 @@ describe("차수가 P1에 갇히는가 — 그리고 배치가 따라오는가 (
             expected_runs_in_one_box: round(lambdaRuns, 4),
             binomial_p_zero_runs: round(pZeroRuns, 6),
             alpha: 0.05,
-            verdict: one.runs_within_cut_0_2 === 0 && pZeroRuns < 0.05
-              ? "same_population_rejected"
-              : "not_rejected",
+            /**
+             * ⛔⛔ **이 검정이 이 표본에서 기각을 낼 수 있는가**(11차 리뷰어 2차 [3] · #35·#40 ②).
+             * 기각 방향의 **유일한 관측은 0**이고 그때 p = `binomial_p_zero_runs`다.
+             * 그 값이 이미 알파보다 크면 **어떤 관측으로도 기각이 안 난다** — 그때
+             * `not_rejected`는 자료의 값이 아니라 **표본 크기의 귀결**이다.
+             * 그래서 ① 이 표본에서 **도달 가능한 최소 p** ② 알파를 넘으려면 필요한 실행 수
+             * ③ 필요한 상대 팔 실행율을 함께 낸다.
+             */
+            min_attainable_p: round(pZeroRuns, 6),
+            runs_needed_for_alpha: rTwo > 0 && rTwo < 1
+              ? Math.ceil(Math.log(0.05) / Math.log(1 - rTwo)) : null,
+            run_rate_needed_at_this_n: one.runs > 0
+              ? round(1 - Math.pow(0.05, 1 / one.runs), 6) : null,
+            test_can_reject: pZeroRuns < 0.05,
+            verdict: !(pZeroRuns < 0.05)
+              ? "underpowered"                       // 관측이 무엇이든 기각선을 못 넘는다
+              : (one.runs_within_cut_0_2 === 0 ? "same_population_rejected" : "not_rejected"),
             note: "`same_population_rejected`면 **희소성 논증을 쓸 수 없다**(#9) — "
                 + "`one_box`의 0은 '표본이 작아서'로 설명되지 않는다. AS-L35의 반증"
                 + "(`two_box`의 절단 안이 0이 아니다)은 그 논증과 **무관하게** 선다. "
@@ -1077,7 +1091,16 @@ describe("차수가 P1에 갇히는가 — 그리고 배치가 따라오는가 (
                 + "구조적으로 높다 — 그 율을 그대로 쓰면 `one_box`의 기대가 **과대**해지고 "
                 + "P(0)는 과소해진다. 그렇게 부풀린 값에서도 안 기각된다. "
                 + "⚠ 반대 우려(실행 단위가 정보를 버린다)는 이 물음에는 안 걸린다 — 묻는 것이 "
-                + "**'성공 실행이 하나도 없는 것이 놀라운가'**이므로 단위가 실행인 것이 맞다.",
+                + "**'성공 실행이 하나도 없는 것이 놀라운가'**이므로 단위가 실행인 것이 맞다. "
+                + "⛔⛔ **`verdict`가 `underpowered`면 이 검정으로 아무 판정도 하지 않는다**"
+                + "(11차 리뷰어 2차 [3]): 기각 방향의 유일한 관측(0)에서 이미 p > 알파라 "
+                + "**어떤 관측도 기각선을 못 넘는다** — `not_rejected`를 '희소성 논증이 산다'로 "
+                + "읽으면 표본 크기를 증거로 쓰는 것이다(#35·#40 ②). 필요한 실행 수는 "
+                + "`runs_needed_for_alpha`가 든다. **두 단위의 p가 알파를 사이에 두고 갈리는 것**도 "
+                + "그래서 결론이 못 된다(#13 — 절단값이 결론을 정하면 그 결론은 없다). "
+                + "⚠ **분모는 배치(`placement`의 분자)이지 시도가 아니다** — AS-L34가 쓰는 "
+                + "분모 780(= P1 실행 × 획)과 **다른 양**이고, 이 율은 '배치까지 간 획'에 "
+                + "조건부다(배치율이 팔마다 다르다 — 리뷰어 2차 [12]).",
           };
         })(),
       },
