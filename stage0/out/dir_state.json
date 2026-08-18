@@ -1,0 +1,541 @@
+{
+ "spec": "10차 항목 1(지시 4-1~4-4·4-6) — 세 상태(계산)·무한직선 표시·연결이 좌표를 정하는 연쇄(기록된 연결 우선)·끝점 연결·경로별 배치 카운터의 합=전체. Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
+ "what_this_does_not_say": [
+  "**옛 연쇄(시작점만)에서 end_anchor·ref_anchor가 0이었다는 것은 코드 독해다**(#25) — 이전 판을 토글로 되살리는 팔은 없다. 이 원장이 실측하는 것은 현행 경로의 발화(카운터 1·1)와 그 획들이 실제로 올라갔다는 것이다",
+  "무한직선 픽셀 판정은 표본 두 점(연장부 하나·빗나간 점 하나)이다(#12) — 선 전체의 픽셀 검증이 아니다. 알파 값(0.12)의 시각 적정성은 안 잰다",
+  "연쇄 A→B→C의 인과는 스냅 참조(ofId)로 확인한다 — 세 획이 같은 연쇄 호출의 몇 번째 패스에서 올라갔는지는 chainTrace가 남지만 단언하지 않는다(같은 패스 안에서도 순서 연쇄가 성립한다 — 대기 목록이 문서 순서라 A가 먼저 놓이면 B가 같은 패스에서 잡힌다)",
+  "dpr 1·합성 마우스·한 구도의 확인이다(#12·#21·AS-C1)",
+  "placeBy는 **실행 누계**다 — 실행취소·삭제를 되돌리지 않는다. 합=전체 검산이 성립하는 것은 이 픽스처에 실행취소가 없기 때문이고, 원장 밖 일반 보장이 아니다"
+ ],
+ "thresholds": {
+  "infinite_px_min": 1,
+  "off_line_px_max": 0,
+  "console_errors_max": 0
+ },
+ "gate": {
+  "registered": "카메라 전 상태 전부 none · 확정 뒤 접합 성분 셋 coord(batch=3 — 4-4 첫 앵커)·지지선 dir · 무연결 가로선의 연장부 잉크 >0(빗나간 점 0) · V→D→F 연쇄(D.snapStart.ofId=V · F.snapEnd.ofId=D · ref_anchor=1 — #18 소비) · 끝점 연결 획이 올라간다(end_anchor=1) · 무연결 둘은 끝까지 dir · 경로 합=배치 전체 · unanchored=0(D-L83) · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+  "reachability": "새 두 경로의 발화 수가 값이다 — ref_anchor 1 · end_anchor 1(합 2). 자명값이 아닌 이유: 같은 실행에서 시작점 앵커(start_anchor 2)와 일괄 풀이(batch 3)가 **다른 경로로** 함께 발화해 카운터가 경로를 실제로 가른다는 것을 보인다. ⚠ 옛 코드 0 대조는 없다(#25 — what_this_does_not_say ①)",
+  "reachability_value": 2,
+  "reachability_source": "new_path_placements"
+ },
+ "pre_camera": {
+  "states": [
+   {
+    "id": "s1",
+    "state": "none",
+    "axis": "free"
+   },
+   {
+    "id": "s2",
+    "state": "none",
+    "axis": "free"
+   }
+  ],
+  "lifted": 0,
+  "placeBy": {
+   "ref_anchor": 0,
+   "start_anchor": 0,
+   "two_point": 0,
+   "end_anchor": 0,
+   "batch": 0,
+   "unanchored": 0
+  },
+  "guard": {
+   "on": true,
+   "start_attempts": 0,
+   "start_rejected": 0,
+   "unanchored_attempts": 0,
+   "unanchored_rejected": 0,
+   "rejected": 0
+  }
+ },
+ "confirmed": {
+  "states": [
+   {
+    "id": "s1",
+    "state": "coord",
+    "axis": 0
+   },
+   {
+    "id": "s2",
+    "state": "coord",
+    "axis": 1
+   },
+   {
+    "id": "s3",
+    "state": "coord",
+    "axis": 1
+   },
+   {
+    "id": "s4",
+    "state": "dir",
+    "axis": 1
+   }
+  ],
+  "lifted": 3,
+  "placeBy": {
+   "ref_anchor": 0,
+   "start_anchor": 0,
+   "two_point": 0,
+   "end_anchor": 0,
+   "batch": 3,
+   "unanchored": 0
+  },
+  "guard": {
+   "on": true,
+   "start_attempts": 0,
+   "start_rejected": 0,
+   "unanchored_attempts": 1,
+   "unanchored_rejected": 1,
+   "rejected": 1
+  }
+ },
+ "w1": {
+  "states": [
+   {
+    "id": "s1",
+    "state": "coord",
+    "axis": 0
+   },
+   {
+    "id": "s2",
+    "state": "coord",
+    "axis": 1
+   },
+   {
+    "id": "s3",
+    "state": "coord",
+    "axis": 1
+   },
+   {
+    "id": "s4",
+    "state": "dir",
+    "axis": 1
+   },
+   {
+    "id": "s5",
+    "state": "dir",
+    "axis": "free"
+   }
+  ],
+  "lifted": 3,
+  "placeBy": {
+   "ref_anchor": 0,
+   "start_anchor": 0,
+   "two_point": 0,
+   "end_anchor": 0,
+   "batch": 3,
+   "unanchored": 0
+  },
+  "guard": {
+   "on": true,
+   "start_attempts": 0,
+   "start_rejected": 0,
+   "unanchored_attempts": 2,
+   "unanchored_rejected": 2,
+   "rejected": 2
+  }
+ },
+ "infinite_px": {
+  "on_line": 18,
+  "off_line": 0
+ },
+ "f_ref": {
+  "end_ref": {
+   "kind": "endpoint",
+   "ofId": "s6"
+  }
+ },
+ "chain": {
+  "states": [
+   {
+    "id": "s1",
+    "state": "coord",
+    "axis": 0
+   },
+   {
+    "id": "s2",
+    "state": "coord",
+    "axis": 1
+   },
+   {
+    "id": "s3",
+    "state": "coord",
+    "axis": 1
+   },
+   {
+    "id": "s4",
+    "state": "dir",
+    "axis": 1
+   },
+   {
+    "id": "s5",
+    "state": "dir",
+    "axis": "free"
+   },
+   {
+    "id": "s6",
+    "state": "coord",
+    "axis": 1
+   },
+   {
+    "id": "s7",
+    "state": "coord",
+    "axis": 0
+   },
+   {
+    "id": "s8",
+    "state": "coord",
+    "axis": 2
+   }
+  ],
+  "lifted": 6,
+  "placeBy": {
+   "ref_anchor": 1,
+   "start_anchor": 2,
+   "two_point": 0,
+   "end_anchor": 0,
+   "batch": 3,
+   "unanchored": 0
+  },
+  "guard": {
+   "on": true,
+   "start_attempts": 2,
+   "start_rejected": 0,
+   "unanchored_attempts": 4,
+   "unanchored_rejected": 4,
+   "rejected": 4
+  }
+ },
+ "chain_detail": {
+  "D": {
+   "lifted": true,
+   "start": {
+    "kind": "endpoint",
+    "ofId": "s8"
+   },
+   "end": null
+  },
+  "F": {
+   "lifted": true,
+   "start": null,
+   "end": {
+    "kind": "endpoint",
+    "ofId": "s6"
+   }
+  },
+  "V": {
+   "lifted": true,
+   "start": {
+    "kind": "endpoint",
+    "ofId": "s2"
+   },
+   "end": null
+  },
+  "trace": [
+   {
+    "pass": 1,
+    "waiting": 4,
+    "placed": 2
+   },
+   {
+    "pass": 2,
+    "waiting": 2,
+    "placed": 0
+   }
+  ]
+ },
+ "end_anchor": {
+  "states": [
+   {
+    "id": "s1",
+    "state": "coord",
+    "axis": 0
+   },
+   {
+    "id": "s2",
+    "state": "coord",
+    "axis": 1
+   },
+   {
+    "id": "s3",
+    "state": "coord",
+    "axis": 1
+   },
+   {
+    "id": "s4",
+    "state": "dir",
+    "axis": 1
+   },
+   {
+    "id": "s5",
+    "state": "dir",
+    "axis": "free"
+   },
+   {
+    "id": "s6",
+    "state": "coord",
+    "axis": 1
+   },
+   {
+    "id": "s7",
+    "state": "coord",
+    "axis": 0
+   },
+   {
+    "id": "s8",
+    "state": "coord",
+    "axis": 2
+   },
+   {
+    "id": "s9",
+    "state": "coord",
+    "axis": 0
+   }
+  ],
+  "lifted": 7,
+  "placeBy": {
+   "ref_anchor": 1,
+   "start_anchor": 2,
+   "two_point": 0,
+   "end_anchor": 1,
+   "batch": 3,
+   "unanchored": 0
+  },
+  "guard": {
+   "on": true,
+   "start_attempts": 3,
+   "start_rejected": 0,
+   "unanchored_attempts": 5,
+   "unanchored_rejected": 5,
+   "rejected": 5
+  }
+ },
+ "e_detail": {
+  "end_kind": "vertex",
+  "start": null
+ },
+ "final": {
+  "states": [
+   {
+    "id": "s1",
+    "state": "coord",
+    "axis": 0
+   },
+   {
+    "id": "s2",
+    "state": "coord",
+    "axis": 1
+   },
+   {
+    "id": "s3",
+    "state": "coord",
+    "axis": 1
+   },
+   {
+    "id": "s4",
+    "state": "dir",
+    "axis": 1
+   },
+   {
+    "id": "s5",
+    "state": "dir",
+    "axis": "free"
+   },
+   {
+    "id": "s6",
+    "state": "coord",
+    "axis": 1
+   },
+   {
+    "id": "s7",
+    "state": "coord",
+    "axis": 0
+   },
+   {
+    "id": "s8",
+    "state": "coord",
+    "axis": 2
+   },
+   {
+    "id": "s9",
+    "state": "coord",
+    "axis": 0
+   }
+  ],
+  "lifted": 7,
+  "placeBy": {
+   "ref_anchor": 1,
+   "start_anchor": 2,
+   "two_point": 0,
+   "end_anchor": 1,
+   "batch": 3,
+   "unanchored": 0
+  },
+  "guard": {
+   "on": true,
+   "start_attempts": 3,
+   "start_rejected": 0,
+   "unanchored_attempts": 5,
+   "unanchored_rejected": 5,
+   "rejected": 5
+  }
+ },
+ "place_sum": 7,
+ "new_path_placements": 2,
+ "console_errors": [],
+ "constants": {
+  "hash": "54346ad1",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}

@@ -2,7 +2,7 @@
   "setup": {
     "canvas": [
       1280,
-      674
+      675
     ],
     "strokes": 12,
     "hasCamera": true,
@@ -45,7 +45,7 @@
   "far_aim": {
     "old_def_kind": "on_face",
     "old_def_dist": 0,
-    "snap_start_kind": "on_face",
+    "snap_start_kind": null,
     "snap_dist_px": 20.75
   },
   "spec": "7차 항목 2 — 스냅 정적 후보 캐시가 시점(poseKey)을 키로 갖는다: 뷰 왕복 직후 첫 질의가 끝점을 문다",
@@ -253,7 +253,7 @@
       "far_aim": {
         "old_def_kind": "on_face",
         "old_def_dist": 0,
-        "snap_start_kind": "on_face",
+        "snap_start_kind": null,
         "snap_dist_px": 20.75
       }
     },

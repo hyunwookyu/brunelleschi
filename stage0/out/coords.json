@@ -13,6 +13,98 @@
     "**두 캔버스의 배율 불일치** — 옛 UI가 잡던 그 실패 모드는 **대상이 사라졌다**(캔버스가 하나다). 지금 `view_vs_overlay`가 잡는 것은 잉크 ↔ 렌더러 상자 불일치다"
   ],
   "zero_note": "⚠ `drawn_vs_want_px`가 **정확히 0**이라 selfcheck가 플래그한다 — **원인은 항등이다**: 앱이 포인터의 CSS 좌표를 **그대로** `pts2d`에 적으므로(변환이 항등이어야 한다는 것이 이 규약의 내용이다) 어긋남이 0인 것이 통과다. **측정이 아니라 보장이므로 임계를 안 건다**(#5). 0이 아니게 되는 순간이 D-C3 위반이고 그때 `expect(<1)`이 잡는다.",
+  "dpr_1": {
+    "drawn_vs_want_px": [
+      0,
+      0
+    ],
+    "ink_at_mid": 36,
+    "ink_at_scaled": 36,
+    "stretch": [
+      1,
+      1
+    ],
+    "scale": [
+      1,
+      1
+    ],
+    "view_vs_overlay": {
+      "renderer": [
+        1280,
+        755
+      ],
+      "overlay": [
+        1280,
+        755
+      ],
+      "same": true
+    },
+    "size_heal": 1
+  },
+  "dpr_2": {
+    "drawn_vs_want_px": [
+      0,
+      0
+    ],
+    "ink_at_mid": 90,
+    "ink_at_scaled": 0,
+    "stretch": [
+      2,
+      2
+    ],
+    "scale": [
+      2,
+      2
+    ],
+    "view_vs_overlay": {
+      "renderer": [
+        1280,
+        755
+      ],
+      "overlay": [
+        1280,
+        755
+      ],
+      "same": true
+    },
+    "size_heal": 1
+  },
+  "probe_control_dpr_2": {
+    "before": 0,
+    "after": 102
+  },
+  "dpr_3": {
+    "drawn_vs_want_px": [
+      0,
+      0
+    ],
+    "ink_at_mid": 176,
+    "ink_at_scaled": 0,
+    "stretch": [
+      3,
+      3
+    ],
+    "scale": [
+      3,
+      3
+    ],
+    "view_vs_overlay": {
+      "renderer": [
+        1280,
+        755
+      ],
+      "overlay": [
+        1280,
+        755
+      ],
+      "same": true
+    },
+    "size_heal": 1
+  },
+  "probe_control_dpr_3": {
+    "before": 0,
+    "after": 175
+  },
   "constants": {
     "hash": "54346ad1",
     "values": {

@@ -4,6 +4,7 @@
   "배치 정확도 — 참값 대조가 없다(합성 픽스처도 없다 — 실제 손 순서만 있다)",
   "실획 — Playwright 합성 마우스 경로다(AS-C1 — '실포인터'라 부르지 않는다)",
   "⑥의 lifted 여부는 단언하지 않는다 — 돌린 시점의 배치는 앵커·각도에 따라 2D 대기가 옳을 수 있다(§9.1)",
+  "③의 lifted 2는 **D-L83(10차 항목 0 되살림)의 값**이다 — 무연결 깊이선 둘(s2·s4)은 대기한다. 옛 4는 on_face 임의 앵커(연쇄)와 그 임의 기하 위 양 끝 스냅의 값이었다. s3_guard가 가드 발동을 든다",
   "격자 픽셀은 안 잰다 — 격자 기하는 `test/grid.test.ts`의 9.5 잠금이 덮는다",
   "dpr 1 실행이다(#21) — 표시 값(LINE_PX·표식 반지름)은 CSS px라 장치 시각 크기는 같지만, 실기(아이패드) 확인은 K의 문이다"
  ],
@@ -28,14 +29,31 @@
  "s3_depth": {
   "standing": true,
   "order": 1,
-  "lifted": 4,
+  "lifted": 2,
   "axes": [
    0,
    1,
    1,
    1
   ],
-  "gl_painted_px": 2246
+  "gl_painted_px": 1385
+ },
+ "s3_guard": {
+  "on": true,
+  "start_attempts": 9,
+  "start_rejected": 9,
+  "unanchored_attempts": 1,
+  "unanchored_rejected": 1,
+  "rejected": 10
+ },
+ "s3_place_by": {
+  "ref_anchor": 0,
+  "start_anchor": 0,
+  "two_point": 0,
+  "end_anchor": 0,
+  "batch": 2,
+  "unanchored": 0,
+  "waiting": 2
  },
  "s4_result": {
   "channel": "result",
@@ -46,7 +64,7 @@
  },
  "s5_orbit": {
   "pinned": false,
-  "gl_painted_px": 5285
+  "gl_painted_px": 2124
  },
  "s6_continue": {
   "snap_start": "endpoint",

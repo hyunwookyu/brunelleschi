@@ -31,6 +31,7 @@ import { snapToAxis, screenOrthoSnap, vpDirSnap, SNAP_TOL_AXIS,
          type AxisCand, type ScreenOrtho, type VpDirSnap } from "./s3d/axisSnap.js";
 import { liftAll, LIFT_TOL, type LiftStroke } from "./s3d/lift.js";
 import { snapCandidates, staticCandidates, SNAP_ORDER, SNAP_LABEL, SNAP_COLOR, SNAP_ICON, SNAP_TIP,
+         SNAP_TOL,
          type SnapCand, type SnapKind, type SnapSeg, type SnapCtx,
          type StaticCand } from "./s3d/snap.js";
 // **2D 오스냅**(4차 지시 1) — 카메라 확정 전·미승격 2D 획의 화면 스냅. 후보 규칙은 snap2d.ts 하나다
@@ -49,6 +50,7 @@ import { ViewCube } from "./ui/viewCube.js";
 import { AXIS_COLOR, guides as gridGuides, HORIZON_COLOR, GROUND_COLOR,
          clipToRect } from "./s3d/grid.js";
 import { project, axisDirection, groundFrame, sub3, angleBetween,
+         rayThrough, closestPoints, norm3,
          type Vec3 } from "./s3d/geom3d.js";
 import { lineIntersect, type Pt2 } from "./s3d/camera.js";
 import type { PlaceCtx } from "./s3d/stroke.js";
@@ -92,6 +94,25 @@ const askStats = { asked: 0, screen: 0, depth: 0, vertical: 0, skipped: 0 };
  * 아니다). `twoPoint`(양 끝 스냅)는 축 경로 밖이라 따로 센다.
  */
 const pathStats = { direct: 0, lift: 0, twoPoint: 0 };
+/**
+ * **배치를 만든 경로의 카운터**(2026-08-18 10차 항목 1 · 지시 4-6 — "카운터를 경로별로
+ * 나눈다. 한 경로만 세면 0이 부재의 증거로 읽힌다. 합이 전체와 맞는지 확인한다").
+ * 9차 항목 4-5가 실증한 그 함정의 방어다: 초판 카운터가 경로 하나만 세어 `rejected 0`이
+ * "가드가 안 걸렸다"로 읽힐 뻔했다.
+ *
+ * ```
+ * ref_anchor    그린 시점의 연결 기록(snap2dStart/End)이 앵커 — 4-3의 새 경로(#18의 소비자)
+ * start_anchor  시작점 3D 오스냅(정밀 대상)
+ * two_point     양 끝 스냅(D-L46)
+ * end_anchor    끝점 3D 오스냅 — 연결은 어느 끝에서든 좌표를 정한다(4-3)
+ * batch         solveInto → liftAll(접합 성분의 일괄 풀이 — 카메라가 서는 순간)
+ * unanchored    placeUnanchored(D-L77 — D-L83 가드가 기본 차단. 가드를 끈 팔에서만 오른다)
+ * ```
+ * ⚠ **실행 누계다** — 실행취소·삭제를 되돌리지 않는다. 합=전체 검산은 실행취소 없는
+ * 픽스처에서 잰다(`dir_state.json`).
+ */
+const placeBy = { ref_anchor: 0, start_anchor: 0, two_point: 0, end_anchor: 0,
+                  batch: 0, unanchored: 0 };
 /** 떠 있는 커서의 스냅 — **누르기 전에 무엇에 붙을지 보인다**(SketchUp/Rhino 관행, L-B.3). */
 let hoverSnap: SnapCand | null = null;
 /** 마지막 획이 무엇에 붙었나 — 화면에 사유를 낸다(#7: 추측하지 말고 센다). */
@@ -288,6 +309,42 @@ const osnapCfg = () => ({ radius_ratio: OSNAP.radiusPx / Math.hypot(...cssSize()
 /** **종류 필터를 지난 최선 후보** — 앱의 모든 스냅 질의가 이것을 지난다(#17). */
 function appSnapAt(p: Pt2, segs: SnapSeg[], sc: SnapCtx, pre: StaticCand[]): SnapCand | null {
   return snapCandidates(p, segs, sc, osnapCfg(), pre).find(c => OSNAP.kinds[c.kind]) ?? null;
+}
+
+/**
+ * **좌표를 정할 자격 — 정밀 대상 다섯**(D-L83, 2026-08-18 9차 항목 4-5 · 10차 항목 0 되살림).
+ *
+ * `on_edge`·`on_face`는 **표시·미리보기는 그대로 두되 좌표 확정의 자격이 없다** — 선·면 위
+ * "어딘가"는 사용자가 겨냥한 점이 아니라 임의 좌표를 만든다(지시 4의 표제
+ * "좌표는 연결이 정한다"). `placeUnanchored`(D-L77 궤도 중심 깊이)도 같은 이유로 막는다.
+ * 막힌 획은 실패가 아니라 **대기**다(§9.1) — 연결이 잡히면 그때 놓인다(4-3의 연쇄).
+ */
+const ANCHOR_GRADE_KINDS = new Set<SnapKind>(
+  ["vertex", "endpoint", "midpoint", "intersection", "perpendicular"]);
+/** 측정 스위치 — `S2S.setAnchorGuard(false)`가 옛 거동이다(#30 — 전후 대조 팔). */
+const ANCHOR_GUARD = { on: true };
+/**
+ * 가드가 막은 횟수 — **경로별로, 분모(시도)와 함께 센다**(9차 4-5′ + 10차 리뷰어 [3]).
+ * 초판이 ①만 세어 `rejected = 0`이 "가드가 안 걸렸다"로 오독될 뻔했고, 분모가 없으면
+ * 0이 "시도 0"인지 "전부 통과"인지 안 갈린다(#11 — 비율보다 분자/분모).
+ * `*_attempts`가 분모다: 시작점은 **후보가 있었던 질의** 수, unanchored는 **분기 진입** 수.
+ */
+const anchorGuardStats = { start_attempts: 0, start_rejected: 0,
+                           unanchored_attempts: 0, unanchored_rejected: 0 };
+
+/**
+ * **시작점 앵커 자격 검사**(D-L83 ①). `appSnapAt`이 낸 후보가 정밀 다섯 밖이면 좌표 확정에
+ * 쓰지 않는다. 우선순위가 정밀 → on_edge → on_face 순이므로(SNAP_ORDER) 여기서 걸렸다는
+ * 것은 조리개 안에 정밀 후보가 **없었다**는 뜻이다 — 대체 후보 탐색은 필요 없다.
+ */
+function anchorCandAt(p: Pt2, segs: SnapSeg[], sc: SnapCtx, pre: StaticCand[]): SnapCand | null {
+  const cand = appSnapAt(p, segs, sc, pre);
+  if (cand) anchorGuardStats.start_attempts += 1;
+  if (cand && ANCHOR_GUARD.on && !ANCHOR_GRADE_KINDS.has(cand.kind)) {
+    anchorGuardStats.start_rejected += 1;
+    return null;
+  }
+  return cand;
 }
 
 /**
@@ -620,6 +677,55 @@ function applySnapToStart(st: SStroke, cand: SnapCand, atWorld: Vec3 = cand.at):
  */
 const chainTrace: { pass: number; waiting: number; placed: number }[] = [];
 
+/**
+ * **그린 시점의 연결 기록을 3D 앵커로 되푼다**(10차 항목 1 · 지시 4-3 — #18의 소비자).
+ *
+ * `snap2dStart`/`snap2dEnd`는 그 획이 **무엇에 붙었는지**(ofId)와 **어디서**(화면 점)를
+ * 안다. 대상이 3D로 올라와 있으면 연결점의 광선과 대상 3D 직선의 최근접점이 앵커다 —
+ * 새 솔버가 아니라 `closestPoints` 그대로다(#17). **재탐색(오스냅)보다 앞선다**:
+ * 기록은 사용자의 실제 손짓이고, 재탐색은 다른 더 가까운 후보를 집을 수 있다.
+ *
+ * ⚠ 대상 **선분 안**(연장 규약 `extend_ratio`)의 연결만 받는다 — 직선은 무한이라
+ * 선분 밖 최근접점은 연결이 아니다. ⚠ 정밀 다섯 밖의 kind는 가드 규약대로 버린다(D-L83).
+ */
+function refAnchorOf(st: SStroke, fr: Frame)
+: { atV: Vec3; end: boolean; kind: SnapKind; ofId: string } | null {
+  const refs = [{ ref: st.snap2dStart, end: false }, { ref: st.snap2dEnd, end: true }];
+  for (const { ref, end } of refs) {
+    if (!ref || !ref.ofId) continue;
+    if (ANCHOR_GUARD.on && !ANCHOR_GRADE_KINDS.has(ref.kind)) continue;
+    const target = doc.strokes.find(x => x.id === ref.ofId);
+    if (!target || !target.seg3d) continue;
+    const A = fr.toV(target.seg3d[0]), B = fr.toV(target.seg3d[1]);
+    const e = sub3(B, A);
+    const L = norm3(e);
+    if (L < 1e-9) continue;
+    const r = rayThrough(ref.at, fr.ctx.principal, fr.ctx.f);
+    const c = closestPoints([0, 0, 0], r, A, e);
+    if (c.parallel || !Number.isFinite(c.s)) continue;
+    if (c.s < -SNAP_TOL.extend_ratio * L || c.s > (1 + SNAP_TOL.extend_ratio) * L) continue;
+    // 화면 검증 — 연결점의 상이 그 자리로 돌아오는가(다른 뷰 좌표가 섞였으면 여기서 떨어진다)
+    const p = project(c.q, fr.ctx.principal, fr.ctx.f);
+    if (!p || Math.hypot(p[0] - ref.at[0], p[1] - ref.at[1]) > OSNAP.radiusPx) continue;
+    return { atV: c.q, end, kind: ref.kind, ofId: ref.ofId };
+  }
+  return null;
+}
+
+/**
+ * **어느 끝이든 앵커가 될 수 있다**(4-3 — 연결이 좌표를 정한다). `placeLive`는 시작점
+ * 앵커만 알므로, 끝 앵커는 점열을 **뒤집어 풀고 되뒤집는다** — 축·기하 판정은 방향에
+ * 대칭이라(소실점·직교) 같은 답이 나온다. 사용자의 획 방향(`pts2d` 순서)은 보존된다.
+ */
+function placeAnchored(st: SStroke, fr: Frame, atV: Vec3, atEnd: boolean): boolean {
+  if (!atEnd) return placeLive(st, fr, atV);
+  st.pts2d = [...st.pts2d].reverse();
+  const ok = placeLive(st, fr, atV);
+  st.pts2d = [...st.pts2d].reverse();
+  if (ok && st.seg3d) st.seg3d = [st.seg3d[1], st.seg3d[0]];
+  return ok;
+}
+
 function promoteChain(fr: Frame): number {
   let total = 0;
   chainTrace.length = 0;
@@ -636,15 +742,39 @@ function promoteChain(fr: Frame): number {
     let n = 0;
     for (const st of waiting) {
       if (!liftable(st)) continue;               // **주석은 승격 연쇄에도 안 들어간다**(D-3)
+      // ① **그린 시점의 연결 기록이 먼저다**(4-3 · #18) — 기록된 손짓이 재탐색을 이긴다
+      const ref = refAnchorOf(st, fr);
+      if (ref) {
+        if (placeAnchored(st, fr, ref.atV, ref.end)) {
+          const world = { kind: ref.kind, at: fr.fromV(ref.atV), ofId: ref.ofId };
+          if (ref.end) st.snapEnd = world; else st.snapStart = world;
+          n += 1; placeBy.ref_anchor += 1;
+        }
+        continue;
+      }
       const aim0: Pt2 = [st.pts2d[0][0], st.pts2d[0][1]];   // 스냅 전 원시 시작점(겨냥 거리용)
-      const cand = appSnapAt(st.pts2d[0], segs, sc, pre);
-      if (!cand) continue;
-      applySnapToStart(st, cand, fr.fromV(cand.at));
-      st.snapDistPx = aimDistPx(aim0, segs, sc, pre);       // 정의 하나(#17 — aimDistPx 머리말)
-      // **대기 획도 양 끝 스냅으로 올라갈 수 있다**(D-L46) — 축이 없어도 두 점이면 놓인다
-      const endCand = endSnapRecord(st, fr, cand.at, st.pts2d[st.pts2d.length - 1]);
-      if (endCand) applySnapToEnd(st, endCand, fr.fromV(endCand.at));
-      if (placeLive(st, fr, cand.at, endCand)) n += 1;
+      // ② **시작점 오스냅** — 연쇄도 같은 자격 검사를 지난다(D-L83 ① — 두 호출부 중 하나)
+      const cand = anchorCandAt(st.pts2d[0], segs, sc, pre);
+      if (cand) {
+        applySnapToStart(st, cand, fr.fromV(cand.at));
+        st.snapDistPx = aimDistPx(aim0, segs, sc, pre);     // 정의 하나(#17 — aimDistPx 머리말)
+        // **대기 획도 양 끝 스냅으로 올라갈 수 있다**(D-L46) — 축이 없어도 두 점이면 놓인다
+        const endCand = endSnapRecord(st, fr, cand.at, st.pts2d[st.pts2d.length - 1]);
+        if (endCand) applySnapToEnd(st, endCand, fr.fromV(endCand.at));
+        if (placeLive(st, fr, cand.at, endCand)) {
+          n += 1; placeBy[endCand ? "two_point" : "start_anchor"] += 1;
+        }
+        continue;
+      }
+      // ③ **끝점 오스냅** — 연결은 어느 끝에서든 좌표를 정한다(4-3). 시작점과 같은 자격
+      // 검사를 지난다. 옛 코드는 시작점만 봐서 **끝으로 이어진 획이 영영 안 올라갔다**.
+      const ec = anchorCandAt(st.pts2d[st.pts2d.length - 1], segs, sc, pre);
+      if (ec) {
+        if (placeAnchored(st, fr, ec.at, true)) {
+          st.snapEnd = { kind: ec.kind, at: fr.fromV(ec.at), ofId: ec.ofId };
+          n += 1; placeBy.end_anchor += 1;
+        }
+      }
     }
     chainTrace.push({ pass: pass + 1, waiting: waiting.length, placed: n });
     total += n;
@@ -828,7 +958,22 @@ function placeUnanchored(st: SStroke, fr: Frame): boolean {
   const z0 = fr.toV(orbitTarget())[2];
   const anchor = planeAnchor(st.pts2d[0], z0, fr.ctx);
   if (!anchor) return false;
-  return placeLive(st, fr, anchor);
+  const ok = placeLive(st, fr, anchor);
+  if (ok) placeBy.unanchored += 1;
+  return ok;
+}
+
+/**
+ * **D-L83 ② — 궤도 중심 깊이 배치를 가드가 막는다.** 앵커도 연결도 없는 획을 임의 깊이로
+ * 놓는 것이 "좌표는 연결이 정한다"(지시 4 표제)와 정면으로 어긋난다(D-L77과의 충돌은
+ * D-L77 항목의 충돌 절에 있다). 막힌 획은 2D로 **대기**한다 — 연쇄(4-3)가 나중에 놓는다.
+ * ⚠ 카운터는 **진입 차단 횟수**다 — 막지 않았을 때 실제로 놓였을지는 세지 않는다
+ * (`placeUnanchored`는 축이 안 정해지면 어차피 false다. 대조는 `setAnchorGuard(false)` 팔이 한다).
+ */
+function guardedPlaceUnanchored(st: SStroke, fr: Frame): boolean {
+  anchorGuardStats.unanchored_attempts += 1;
+  if (ANCHOR_GUARD.on) { anchorGuardStats.unanchored_rejected += 1; return false; }
+  return placeUnanchored(st, fr);
 }
 
 /** 자동 정렬 감시 토큰 — 새 궤도가 시작되면 이전 감시는 죽는다. */
@@ -1124,6 +1269,7 @@ function solveInto(ctx: PlaceCtx, targets: SStroke[]): number {
     s.seg3d = seg ? [seg.a, seg.b] : null;
     if (seg) n += 1;
   }
+  placeBy.batch += n;
   return n;
 }
 
@@ -1631,6 +1777,61 @@ function drawGrid(ctx2: CanvasRenderingContext2D) {
  * 다른 자세에서는 뜻이 없다. L-B.8 이전에는 "확정 시점일 때만"이었고, 뷰가 여럿이 된
  * 지금은 **뷰가 맞는가**로 판정한다.
  */
+/**
+ * **획의 세 상태**(10차 항목 1 · 지시 4-1). **저장하지 않고 계산한다** — 차수·확정과 같은
+ * 규약이다(D-L53 "상태는 계산이다").
+ *
+ * ```
+ * coord  좌표 확정      seg3d가 있다
+ * dir    방향 확정      카메라가 서 있고 축이 정해진다 — 무한직선(좌표 미정). 미배치가
+ *                       아니라 **정상 대기**다(§9.1) — 연결이 잡히면 좌표가 정해진다(4-3)
+ * none   방향 미정      카메라 전이거나 축 미분류·주석
+ * ```
+ */
+type StrokeState = "coord" | "dir" | "none";
+function strokeStateOf(s: SStroke): StrokeState {
+  if (s.seg3d) return "coord";
+  if (!cam.standing() || !liftable(s) || s.pts2d.length < 2) return "none";
+  const ax = s.userAxis ? s.axis : cam.axisOf(s.pts2d).axis;
+  return ax === "free" ? "none" : "dir";
+}
+
+/**
+ * **방향 확정 획의 무한직선**(10차 항목 1 · 지시 4-2) — "소실점부터 화면 끝까지.
+ * 그린 구간만 진하게, 연장부는 아주 옅게." 그린 구간은 `drawPending`이 그대로 그리고,
+ * 여기는 그 아래에 **전체 직선을 옅게** 깐다. 유한 소실점 축은 소실점을 지나는 직선,
+ * 화면 평행 축(무한원)은 그린 방향의 연장이다(이론서 2.2 — c=0의 소실점은 무한원에 있다).
+ * 표시만이다 — 스냅 대상이 아니다(잠정 그리드와 같은 규약, 6차 지시 11-4).
+ */
+function drawDirLines(ctx2: CanvasRenderingContext2D) {
+  if (!cam.standing() || !viewIsCurrent()) return;
+  const [w, h] = cssSize();
+  const vps = cam.vps();
+  ctx2.save();
+  ctx2.lineWidth = 1;
+  ctx2.setLineDash([]);
+  for (const s of pending(doc)) {
+    if (strokeStateOf(s) !== "dir") continue;
+    const rep = representative(s.pts2d);
+    if (!rep) continue;
+    const ax = s.userAxis ? s.axis : cam.axisOf(s.pts2d).axis;
+    const vp = typeof ax === "number" ? vps[ax] : null;
+    // 소실점이 있으면 그것을 지나는 직선(시작점 기준 — 앵커가 될 점이다), 없으면 그린 방향
+    const origin: Pt2 = vp ?? rep.a;
+    const toward: Pt2 = vp ? rep.a : rep.b;
+    const d: Pt2 = [toward[0] - origin[0], toward[1] - origin[1]];
+    const seg = clipToRect(origin, d, w, h);
+    if (!seg) continue;
+    const ui = CHANNEL_UI[s.channel] ?? CHANNEL_UI.guide;
+    ctx2.strokeStyle = ui.color;
+    ctx2.globalAlpha = 0.12;              // 그린 구간(drawPending의 0.35×알파)보다 한참 옅다
+    ctx2.beginPath();
+    ctx2.moveTo(seg[0][0], seg[0][1]); ctx2.lineTo(seg[1][0], seg[1][1]);
+    ctx2.stroke();
+  }
+  ctx2.restore();
+}
+
 function drawPending(ctx2: CanvasRenderingContext2D) {
   if (cam.standing() && !viewIsCurrent()) return;
   ctx2.save();
@@ -1854,6 +2055,7 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   // 화면에 붙어 따라다니는 유령이 된다 — 그래서 그 셋만 확정 시점으로 묶는다.
   // **스냅 표식과 미리보기는 지금 시점의 화면 좌표**라 어느 뷰에서든 옳다(L-B.8).
   drawHorizon(ctx2);          // **언제나 깔린다** — 카메라가 서기 전에도(사람 지시 2)
+  drawDirLines(ctx2);              // **무한직선**(4-2) — 그린 구간 아래에 옅게 깐다
   drawPending(ctx2);
   drawPicked(ctx2);
   // **2D 후보의 표식도 같은 자리에서 낸다**(4차 지시 1) — 3D가 있으면 3D가 이긴다(질의와 같은 순서)
@@ -2110,9 +2312,19 @@ const ink = new InkCanvas(canvas, {
       // **② 못 놓인 것은 일괄 풀이로** — 서로 이어진 2D 획들끼리 풀린다.
       // ⚠ **확정 뷰에서만 돈다** — `liftAll`은 소실점을 쓰고 그 소실점은 확정 카메라의 것이다.
       // 돌린 시점의 2D 획을 그 솔버에 넣으면 **다른 화면 좌표를 같은 카메라로 푸는 것**이다
-      if (!s.seg3d && fr.pinned) solveInto(fr.ctx, pending(doc, confirmView().id));
-      // **③ 승격 연쇄**(§9.1, L-B.7)
-      if (s.seg3d) promoteChain(fr);
+      // ⚠⚠ **3D가 하나도 없을 때만 돈다**(10차 항목 1 · 지시 4-3/4-4). 일괄 풀이의 스케일은
+      // **지면 게이지**(lift.ts — 성분의 최저점을 지면에)라, 확정 순간의 첫 성분(소실점을
+      // 만든 선들)에는 그것이 **첫 앵커**지만(4-4), 그 뒤에 생긴 **떠 있는 성분**에는
+      // 기존 기하와 무관한 **임의 좌표**다 — dir_state 픽스처에서 실측했다(허공의 깊이선+
+      // 가로선 짝이 지면으로 내려가 붙었다). 확정 뒤의 좌표는 **연결이 정한다**(연쇄 ③).
+      if (!s.seg3d && fr.pinned && !lifted(doc).length) {
+        solveInto(fr.ctx, pending(doc, confirmView().id));
+      }
+      // **③ 승격 연쇄**(§9.1, L-B.7). ⚠ **조건 없이 돈다**(10차 항목 1 · 4-3 — "나중에 생긴
+      // 연결에도 반응한다"): 옛 조건(`if (s.seg3d)`)은 **일괄 풀이가 남을 올린 턴**과
+      // **이번 획이 대기 획에 끝으로 이어진 턴**을 놓쳤다 — 연쇄 안에서 대기 목록이 비면
+      // 그 자리에서 끝나므로 비용은 자명하다.
+      promoteChain(fr);
       syncScene();
     }
     hoverSnap = null; hover2d = null; live = null;
@@ -2132,7 +2344,8 @@ function placeStroke(s: SStroke, fr: Frame): void {
       // **① 시작점 스냅**(§3). 붙으면 그 획의 3D가 확정된다.
       const sc = snapCtx(fr);
       const segs0 = snapSegs(fr.toV);
-      const cand = sc ? appSnapAt(pts[0], segs0, sc, snapStatic(segs0, fr.poseKey)) : null;
+      // **자격 검사를 지난 앵커만 좌표를 정한다**(D-L83 ①) — on_edge·on_face는 표시만
+      const cand = sc ? anchorCandAt(pts[0], segs0, sc, snapStatic(segs0, fr.poseKey)) : null;
       lastSnapNote = "";
       if (cand) {
         applySnapToStart(s, cand, fr.fromV(cand.at));
@@ -2143,12 +2356,15 @@ function placeStroke(s: SStroke, fr: Frame): void {
         // 미리보기(`onLive`)와 **같은 함수**를 부른다(#17: 미리보기와 확정이 갈릴 여지 없음)
         const endCand = endSnapRecord(s, fr, cand.at, pts[pts.length - 1]);
         if (endCand) applySnapToEnd(s, endCand, fr.fromV(endCand.at));
-        placeLive(s, fr, cand.at, endCand);
+        if (placeLive(s, fr, cand.at, endCand)) {
+          placeBy[endCand ? "two_point" : "start_anchor"] += 1;
+        }
       } else if (onePointFrame(axisDirs(fr.ctx))
-                 && placeUnanchored(s, fr)) {
+                 && guardedPlaceUnanchored(s, fr)) {
         // **1점 상태면 스냅 없이도 놓인다**(6차 지시 2-3 — "없으면 궤도 중심의 깊이").
         // 그리는 순간 3D에 있다 — **미승격이 없다**(지시 2). 시작점 스냅이 있으면 위
         // 분기가 그 점의 깊이를 쓰므로, 여기는 빈 곳에서 시작한 획만 온다.
+        // ⚠ **가드가 켜져 있으면 이 분기는 막힌다**(D-L83 ② — 궤도 중심 깊이는 임의 좌표다).
       } else {
         // **미승격 2D 획도 계속 후보다**(4차 지시 1-b) — 3D 대상에 못 붙으면 화면 좌표로
         // 다른 대기 획에 잇는다. 3D가 이긴다(붙으면 그 획의 3D가 확정되므로 정보가 더 많다).
@@ -2159,6 +2375,13 @@ function placeStroke(s: SStroke, fr: Frame): void {
         const e2c = (rep2 && rep2.bend <= AXIS_TOL.bend_max)
           ? snap2At(s.pts2d[s.pts2d.length - 1], s.id) : null;
         if (e2c) s.pts2d = [s.pts2d[0], e2c.at];
+        // **확정 뒤의 2D 연결도 같은 필드에 적는다**(10차 항목 1 · 4-3). D-L81의 필드는
+        // "확정 전에만" 채워졌는데, 연결은 확정 뒤 대기 획 사이에서도 생긴다 — 이 기록이
+        // 연쇄(`refAnchorOf`)의 재료다. 자료형은 같다(화면 좌표·distPx·ofId).
+        if (c2) s.snap2dStart = { kind: c2.kind, at: [c2.at[0], c2.at[1]],
+                                  distPx: c2.dist, ofId: c2.ofId };
+        if (e2c) s.snap2dEnd = { kind: e2c.kind, at: [e2c.at[0], e2c.at[1]],
+                                 distPx: e2c.dist, ofId: e2c.ofId };
         if (segs0.length) {
           lastSnapNote = "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다";
           // **조리개 밖 겨냥도 기록한다**(지시 K, 리뷰어 [7]) — 스냅된 사건만 적으면 분포가
@@ -2857,6 +3080,20 @@ refresh();
   orbitCenter: () => orbitTarget(),
   /** **배치 경로 카운터**(6차 지시 2·3 — 직접/lift/양끝. 실획 측정의 사용 비율 분자·분모). */
   pathStats: () => ({ ...pathStats }),
+  /**
+   * **D-L83 진단 창** — 가드 상태와 경로별 차단 횟수(9차 4-5′: 한 경로만 세면 0이 부재의
+   * 증거로 읽힌다). `rejected`는 두 경로의 합이다(옛 원장 필드명과의 연속성).
+   */
+  anchorGuard: () => ({ on: ANCHOR_GUARD.on, ...anchorGuardStats,
+                        rejected: anchorGuardStats.start_rejected
+                                + anchorGuardStats.unanchored_rejected }),
+  /** 측정 스위치(#30) — `false`가 옛 거동(가드 이전)이다. 카운터는 안 지운다. */
+  setAnchorGuard: (on: boolean) => { ANCHOR_GUARD.on = on; },
+  /** **세 상태**(4-1) — 저장 없이 계산한 상태를 획별로 낸다. 원장이 그대로 읽는다(#17). */
+  strokeStates: () => doc.strokes.map(s => ({ id: s.id, state: strokeStateOf(s),
+                                              axis: s.axis })),
+  /** **배치 경로 카운터**(4-6) — 합이 배치 전체와 맞는지 원장이 검산한다. */
+  placeBy: () => ({ ...placeBy }),
   /** **시점 저장**(5차 지시 7-1) — 종단 확인이 앱 경로 그대로 부른다(#17). */
   saveViewpoint: () => { saveViewpoint(); },
   /** **지우개 크기**(5차 지시 5) — 종단 확인이 앱 경로 그대로 읽고 쓴다(#17). */

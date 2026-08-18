@@ -31,11 +31,11 @@
   "strokes": 2,
   "target": [
    640,
-   370.70001220703125
+   371.25
   ],
   "got": [
    640,
-   370.70001220703125
+   371.25
   ],
   "gap_px": 0,
   "standing": false,
@@ -46,7 +46,7 @@
   "kind": "endpoint",
   "at": [
    640,
-   370.70001220703125
+   371.25
   ],
   "distPx": 7.810249675906656,
   "has3dStart": false,
@@ -59,7 +59,7 @@
   "has2dStart": false,
   "has2dEnd": false
  },
- "ink_px": 328,
+ "ink_px": 322,
  "console_errors": [],
  "constants": {
   "hash": "54346ad1",
