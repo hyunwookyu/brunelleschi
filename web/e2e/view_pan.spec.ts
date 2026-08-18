@@ -78,17 +78,23 @@ test("화면 팬 — 그리는 중엔 종이가 밀리고, 궤도 뒤엔 공간�
 
   // ---- ⓪ **카메라 전(P0) 화면 팬**(리뷰어 4차 [9]) — 서기 전에도 두 손가락은 종이다
   const p0Before = await page.evaluate(() => ({
-    standing: window.S2S.cam.standing(), pan: window.S2S.viewPan(),
+    standing: window.S2S.cam.standing(), pan: window.S2S.viewPan(), pose: window.S2S.camPose(),
   }));
   await twoFingerPan(page, [11, 12], 30, 20);
   const p0After = await page.evaluate(() => ({
-    standing: window.S2S.cam.standing(), pan: window.S2S.viewPan(),
+    standing: window.S2S.cam.standing(), pan: window.S2S.viewPan(), pose: window.S2S.camPose(),
   }));
   led.p0_screen_pan = { standing_before: (p0Before as any).standing,
                         standing_after: (p0After as any).standing,
-                        pan_before: (p0Before as any).pan, pan_after: (p0After as any).pan };
+                        pan_before: (p0Before as any).pan, pan_after: (p0After as any).pan,
+                        // 게이트의 "카메라 불개방"에 대응하는 값(리뷰어 5차 [11]) —
+                        // standing 불변만으로는 "제스처가 자세를 안 건드렸다"가 아니다
+                        pose_moved: Math.abs((p0After as any).pose.azimuth - (p0Before as any).pose.azimuth)
+                                  + Math.abs((p0After as any).pose.polar - (p0Before as any).pose.polar)
+                                  + Math.abs((p0After as any).pose.dist - (p0Before as any).pose.dist) };
   expect((led.p0_screen_pan as any).standing_before).toBe(false);
   expect((led.p0_screen_pan as any).standing_after).toBe(false);   // 카메라가 안 열렸다
+  expect((led.p0_screen_pan as any).pose_moved).toBe(0);           // 자세도 안 건드렸다
   expect((led.p0_screen_pan as any).pan_after[0]).toBeCloseTo(30, 0);
   expect((led.p0_screen_pan as any).pan_after[1]).toBeCloseTo(20, 0);
   // 이후 팔들이 (60,40)을 기준으로 재도록 되돌린다 — 픽스처 획도 문서 (0,0) 기준으로 긋는다
@@ -186,12 +192,17 @@ test("화면 팬 — 그리는 중엔 종이가 밀리고, 궤도 뒤엔 공간�
     const pan = S.viewPan();
     return { snap_start: st.snapStart ? st.snapStart.kind : null,
              start: [...st.pts2d[0]],
+             pan_at_draw: [...pan],                                 // 이 팔의 동작점(리뷰어 5차 [9])
              expected: [aim[0] - pan[0], aim[1] - pan[1]],
              gap: Math.hypot(st.pts2d[0][0] - (aim[0] - pan[0]),
-                             st.pts2d[0][1] - (aim[1] - pan[1])) };
+                             st.pts2d[0][1] - (aim[1] - pan[1])),
+             // 되돌림이 **안** 됐을 때의 격차 — 위 gap의 판별 간격이 실측으로 원장에 남는다
+             gap_if_unreverted: Math.hypot(st.pts2d[0][0] - aim[0], st.pts2d[0][1] - aim[1]) };
   }, rawAim);
   expect((led.draw_raw as any).snap_start).toBeNull();              // 스냅이 안 낀 원 입력이다
   expect((led.draw_raw as any).gap).toBeLessThan(1);                // pts2d = 표시 − viewPan
+  // 되돌림 없이는 |pan|≈72px — gap 0이 자명하지 않다는 것을 같은 실행이 든다
+  expect((led.draw_raw as any).gap_if_unreverted).toBeGreaterThan(OSNAP_RADIUS_PX * 3);
 
   // ---- ④ 궤도로 풀린 뒤 — 두 손가락은 **공간 팬**이고 viewPan은 안 움직인다
   await pointer(page, { type: "pointerdown", id: 41, kind: "touch", x: 500, y: 400 });
@@ -228,7 +239,8 @@ test("화면 팬 — 그리는 중엔 종이가 밀리고, 궤도 뒤엔 공간�
       "P0 팔(⓪)은 viewPan 축적과 카메라 불개방만 본다 — P0에는 3D 층·pinTo가 없어 three_shift 대응 확인이 성립하지 않는다",
       "dpr 1·합성 터치의 확인이다(#21·AS-C1) — 실기(아이패드)의 두 손가락 감각은 실기 확인의 문이다. **두 손가락 = 종이 밀기라는 의도 해석 자체도 전제다**(AS-L39)",
       "three_shift의 ±0.5px는 투영 산식 차(three 행렬 ↔ principal+f·x/z)의 부동소수 여유다 — 정확도 임계가 아니라 배선 판정이다(#5)",
-      "팬 크기는 (30,20)·(60,40)·(50,0) 세 동작점이다(#12) — 누적 한계(화면 몇 배를 밀 수 있는가)·큰 팬에서의 표식 클리핑은 안 쟀다(후자는 DEFERRED)",
+      "**화면 팬의 동작점은 (30,20)과 (60,40) 둘이고, 각 판정은 그중 하나 위에만 서 있다**(#12 — 리뷰어 5차 [9]: 초판의 '(50,0) 포함 셋'은 과대다 — (50,0)은 궤도 후 공간 팬 팔의 손짓 크기라 viewPan 동작점이 아니다). P0 팔은 (30,20)·핀 팔들은 (60,40) 하나씩이다. 누적 한계(화면 몇 배를 밀 수 있는가)·큰 팬에서의 표식 클리핑은 안 쟀다(후자는 DEFERRED)",
+      "**draw_raw의 gap 0은 정수 산술의 정확 일치이고, expected가 시험 대상과 같은 산식(표시 − viewPan)을 시험 코드에서 중복 계산한 값이다**(#5 유형 3 — 리뷰어 5차 [10]): 이 팔이 가르는 것은 **배선**(안 되돌리면 gap = gap_if_unreverted ≈ 72px — 같은 실행이 그 대안 격차를 실측으로 든다)이지 산식 자체의 옳음이 아니다",
     ],
     thresholds: { three_shift_tol_px: 0.5, start_doc_gap_max_px: 1, draw_raw_gap_max_px: 1,
       aim_offset_min_px: OSNAP_RADIUS_PX * 3, space_pan_target_moved_min: 0.01, console_errors_max: 0,

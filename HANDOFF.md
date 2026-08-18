@@ -209,8 +209,10 @@
 
 **이미 있어서 안 만들어도 되는 것**: `OSNAP.radiusPx`(⛔ 10차 정정: 기본 **8px** — D-L85) · `OSNAP.kinds`(7종 토글) ·
 하단바 패널 · 화면 픽셀 기준(확대·축소 무관, D-L56) · 3D `perpendicular`(`snap.ts` 228행).
-**없는 것**: **2D의 수선 발**(`snap2d.ts`는 `endpoint`·`midpoint`·`intersection` 셋뿐).
-⚠ 그러므로 **"7종 토글이 이미 있다"는 2D에서 과대다** — 2D에서 실효인 것은 **셋**이다.
+**없는 것**: ~~**2D의 수선 발**(`snap2d.ts`는 `endpoint`·`midpoint`·`intersection` 셋뿐)~~
+⛔ **제자리 정정(5차 [13] — 바로 위만 고치고 이 두 줄을 남겼던 자리, #34)**: 9차 항목 2가
+수선 발(`perp2dCandidates`)을 넣었고 `vertex`도 원래 있었다 — **2D 실효는 다섯**이고
+2D에서 안 걸리는 토글은 `on_edge`·`on_face` 둘이다(DEFERRED 그 행의 정정과 같다).
 ⚠⚠ ~~**기본 반경 축소는 측정이 반대한다**~~ ⛔⛔ **제자리 정정(10차 항목 4 · D-L85 —
 리뷰어 4차 [13])**: **축소는 완료됐다** — 기본 반경 8px(`OSNAP_RADIUS_PX`). 10차 지시가
 근거를 지목했다(반경 8이 D-L80 모순을 **72 → 35**로 줄인다 — `classify_leak.ablation`).
@@ -524,11 +526,15 @@ cd web && npx vitest run && npx tsc --noEmit && npm run build && npx playwright 
 ```
 | 갈래 | 파일 | 건수 | 시간 |
 |---|---|---|---|
-| **단위**(`test:unit`) | 36 | **360** | **6초** |
-| 측정(`test:measure`) | 44 | 132 | 약 2분 |
-| ↳ 그중 `camera_gate.test.ts` **하나** | 1 | 2 | **108.7초** |
+| **단위**(`test:unit`) | 36 | **364** | **약 6초**(벽시계 — 파일시간합은 1초 미만) |
+| 측정(`test:measure`) | 44 | 132 | 약 3~4분 |
+| ↳ 그중 `camera_gate.test.ts` **하나** | 1 | 2 | **179.9초** |
 
-⚠ **벽시계는 최장 파일이 정한다**(병렬 실행) — `camera_gate` 하나가 전량 121초의 바닥이다.
+(⛔ 5차 [7] 정정 — 이 표는 10차 `test_cost.json` 재실행 값이다. 9차 표는 360건·6초·
+camera_gate 108.7초였고 **시간은 컨테이너마다 크게 흔들린다** — 수는 `test_cost.json`을
+그 자리에서 읽는다.)
+⚠ **벽시계는 최장 파일이 정한다**(병렬 실행) — `camera_gate` 하나가 전량의 바닥이다
+(이 컨테이너 전량 약 250초).
 ⚠ 갈래는 **이름이 아니라 행동**으로 정한다(`stage0/out`에 쓰면 측정 — `tools/testSplit.mjs`).
 ⚠⚠ **느려졌으면 디스크부터 본다**: 9차에 전량이 **121s → 1h52m**이었고 원인은
 **여유 공간 0**이었다(`npm run test:cost` → `test_cost.json`의 `environment`).

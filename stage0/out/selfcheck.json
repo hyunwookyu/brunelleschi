@@ -1,5 +1,5 @@
 {
-  "n_flags": 4485,
+  "n_flags": 4486,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -20100,6 +20100,11 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "view_pan.json:p0_screen_pan.pose_moved",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "view_pan.json:screen_pan.pan_before[0]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -22971,7 +22976,7 @@
       "unit": "인용 줄",
       "targets": 109,
       "hits": 0,
-      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1347개이고 엄격 판정이면 294개(55줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
+      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1366개이고 엄격 판정이면 294개(55줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
     },
     {
       "scan": "scan_pitfall_citations",
@@ -23082,6 +23087,7 @@
       5,
       12,
       21,
+      28,
       40,
       41
     ],
@@ -23517,7 +23523,7 @@
   },
   "cited_value_population": {
     "lines_checked": 109,
-    "tokens_checked": 1347,
+    "tokens_checked": 1366,
     "flags_line_rule": 0,
     "strict_tokens_flagged": 294,
     "strict_lines_flagged": 55,

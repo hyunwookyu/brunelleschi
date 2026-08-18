@@ -7,7 +7,8 @@
   "P0 팔(⓪)은 viewPan 축적과 카메라 불개방만 본다 — P0에는 3D 층·pinTo가 없어 three_shift 대응 확인이 성립하지 않는다",
   "dpr 1·합성 터치의 확인이다(#21·AS-C1) — 실기(아이패드)의 두 손가락 감각은 실기 확인의 문이다. **두 손가락 = 종이 밀기라는 의도 해석 자체도 전제다**(AS-L39)",
   "three_shift의 ±0.5px는 투영 산식 차(three 행렬 ↔ principal+f·x/z)의 부동소수 여유다 — 정확도 임계가 아니라 배선 판정이다(#5)",
-  "팬 크기는 (30,20)·(60,40)·(50,0) 세 동작점이다(#12) — 누적 한계(화면 몇 배를 밀 수 있는가)·큰 팬에서의 표식 클리핑은 안 쟀다(후자는 DEFERRED)"
+  "**화면 팬의 동작점은 (30,20)과 (60,40) 둘이고, 각 판정은 그중 하나 위에만 서 있다**(#12 — 리뷰어 5차 [9]: 초판의 '(50,0) 포함 셋'은 과대다 — (50,0)은 궤도 후 공간 팬 팔의 손짓 크기라 viewPan 동작점이 아니다). P0 팔은 (30,20)·핀 팔들은 (60,40) 하나씩이다. 누적 한계(화면 몇 배를 밀 수 있는가)·큰 팬에서의 표식 클리핑은 안 쟀다(후자는 DEFERRED)",
+  "**draw_raw의 gap 0은 정수 산술의 정확 일치이고, expected가 시험 대상과 같은 산식(표시 − viewPan)을 시험 코드에서 중복 계산한 값이다**(#5 유형 3 — 리뷰어 5차 [10]): 이 팔이 가르는 것은 **배선**(안 되돌리면 gap = gap_if_unreverted ≈ 72px — 같은 실행이 그 대안 격차를 실측으로 든다)이지 산식 자체의 옳음이 아니다"
  ],
  "thresholds": {
   "three_shift_tol_px": 0.5,
@@ -21,7 +22,7 @@
  "gate": {
   "registered": "카메라 전 두 손가락: viewPan 축적·카메라 불개방 · 핀 상태 두 손가락 뒤: 핀 유지·pose 불변·문서 불변·주점(Camera.principal) 불변·viewPan≈(60,40)·three 투영 이동=viewPan(±0.5px) · 밀린 화면에서 끝점 표시 위치를 겨냥한 획이 문서 끝점에 스냅(끝점/정점·문서 격차<1px·겨냥 어긋남>24px) · 스냅 없는 자리의 획: pts2d=표시−viewPan(<1px) · 궤도 후 두 손가락: target 이동>0.01·viewPan 불변 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
   "reachability": "궤도 후 팔(④)이 음성 대조이고 **판별자는 둘이다**(#28 — 리뷰어 4차 [7]): (a) viewPan 불변(pan_unchanged == screen_pan.pan_after — 화면 팬이 아무 데서나 받으면 여기가 움직여 실패) (b) target_moved>0.01(같은 손짓이 공간 팬으로 갔다는 양성 증거). 수치 하나를 고르면 (b)다 — (a)는 등호 판정이라 값이 판별 간격을 안 보여 준다",
-  "reachability_value": 0.8164683469098245,
+  "reachability_value": 0.8161448915316528,
   "reachability_source": "space_pan/target_moved"
  },
  "p0_screen_pan": {
@@ -34,7 +35,8 @@
   "pan_after": [
    30,
    20
-  ]
+  ],
+  "pose_moved": 0
  },
  "setup": {
   "canvas": [
@@ -77,18 +79,23 @@
    820,
    120
   ],
+  "pan_at_draw": [
+   60,
+   40
+  ],
   "expected": [
    820,
    120
   ],
-  "gap": 0
+  "gap": 0,
+  "gap_if_unreverted": 72.11102550927978
  },
  "space_pan": {
   "pan_unchanged": [
    60,
    40
   ],
-  "target_moved": 0.8164683469098245
+  "target_moved": 0.8161448915316528
  },
  "console_errors": [],
  "constants": {
