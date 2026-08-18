@@ -1528,8 +1528,11 @@ test("궤도 시작 — 손가락만 대면 화면이 같고, 첫 회전이 이�
 //
 // 축 스냅으로 화면 수평이 된 선은 사용자가 수평을 **의도한** 것이다 — 묻지 않고 그 축으로
 // 확정한다(3-a). 판정(물음)의 대상은 스냅이 안 걸린 자유 선뿐이다(3-b).
-// 되살린 버그: 소실점이 있는 상태의 가로선이 ask를 띄우던 것(4차 D-L53 가드의 과잉).
-test("스냅된 수평선 — P1 가드를 우회하지 않는다 (7차 지시 1-a, 5차 지시 3 개정)", async ({ page }) => {
+// ⛔⛔ **12차 지시 4-a(D-L89)로 계약이 다시 뒤집혔다**: 스냅이 잡은 가로선은 **묻지 않고**
+// P1을 확정한다("붙은 것은 묻지 않는다"). 7차의 우회 우려(D-L70)와 다른 이유는
+// kindFlipGuard(D-L80)다 — 원 방향이 depth인 획에는 직교 스냅이 안 걸리므로,
+// hint "screen"은 원 방향이 화면 축 대역(≤4°)인 획에만 붙는다.
+test("스냅된 수평선 — 묻지 않고 P1이 선다 (12차 지시 4-a · D-L89)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
@@ -1568,51 +1571,39 @@ test("스냅된 수평선 — P1 가드를 우회하지 않는다 (7차 지시 1
   });
   expect((led.vp_state as any).vps).toBe(1);               // 소실점 하나가 서 있다
 
-  // ---- ② **거의 수평선**(1.7° — 직교 스냅 4° 안)을 긋는다 → **묻는다**(7차 지시 1-a).
-  //      옛 판(5차 지시 3)은 여기서 `snapForced = "screen"`을 넘겨 `stepRule`의 P1 가드를
-  //      **우회하고 조용히 화면 가로축을 선언**했다. P1은 불가역이므로 그 한 획이 그림 전체를
-  //      1점에 가둔다 — `order_lock.json`의 `bypass`/`fixed` 두 팔이 그 대가를 잰다.
+  // ---- ② **거의 수평선**(1.7° — 직교 스냅 4° 안)을 긋는다 → **묻지 않고 P1이 선다**
+  //      (12차 지시 4-a — D-L89 "붙은 것은 묻지 않는다"). 스냅 발동 = 사용자의 수평 의도이고
+  //      그 hint가 P1 가드를 지난다. kindFlipGuard(D-L80)가 원 방향 depth의 우회를 스냅
+  //      단계에서 이미 막으므로 D-L70의 붕괴 기전(조용한 방향 뒤집기)은 못 돌아온다.
   await drawPx(0.25 * W, 0.55 * H, 0.45 * W, 0.556 * H);
   led.after = await page.evaluate(() => {
     const S = window.S2S;
     return { ask: S.ask(), asked: S.askStats().asked, order: S.order(),
              standing: S.standing() };
   });
-  // **물음이 떴다** — 스냅은 좌표만 옮기고 선언은 규칙이 한다
-  expect((led.after as any).ask).toBeTruthy();
-  expect((led.after as any).ask.question).toBe("screen_or_depth");
-  expect((led.after as any).asked).toBe((led.vp_state as any).asked + 1);
-  // **조용히 P1이 되지 않았다** — 가둠의 문이 닫혔다
-  expect((led.after as any).order).toBe(0);
-
-  // ---- ③ **답하면 그때 선다**(A-3: 애매하면 놓지 않는다 — 놓지 않되 버리지 않는다).
-  //      물음은 사용자가 답할 수 있는 것이고, 답한 뒤의 P1은 **사용자가 정한 것**이다.
-  await page.evaluate(() => window.S2S.answerAsk("screen"));
-  await page.waitForTimeout(50);
-  led.answered = await page.evaluate(() => {
-    const S = window.S2S;
-    return { ask: S.ask(), order: S.order(), standing: S.standing(),
-             screen_choice: S.askStats().screen };
-  });
-  expect((led.answered as any).ask).toBeFalsy();
-  expect((led.answered as any).order).toBe(1);
-  expect((led.answered as any).standing).toBe(true);
+  // **물음이 없다** — 스냅이 곧 화면 축 판정이다(지시 4-b: 화면 축 판정은 스냅 단계에서만)
+  expect((led.after as any).ask).toBeFalsy();
+  expect((led.after as any).asked).toBe((led.vp_state as any).asked);
+  // **P1이 그 자리에서 섰다** — 답을 기다리지 않는다
+  expect((led.after as any).order).toBe(1);
+  expect((led.after as any).standing).toBe(true);
 
   led.console_errors = errors;
   expect(errors).toEqual([]);
 
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "snap_declare.json"), JSON.stringify({
-    spec: "**7차 지시 1-a로 뒤집혔다** — 직교 스냅이 걸린 수평선도 `stepRule`의 P1 가드를 **우회하지 않는다**. 소실점 하나가 선 상태에서 4° 안 수평선을 그으면 **묻고**, 답해야 P1이 선다. 5차 지시 3의 '스냅이 곧 선언이다'가 그 가드를 우회하고 있었고, P1이 불가역이라 한 획이 그림 전체를 1점에 가뒀다. Playwright 신뢰 이벤트·콘솔 오류 0",
+    spec: "**12차 지시 4-a(D-L89)로 다시 뒤집혔다** — 직교 스냅이 잡은 수평선은 **묻지 않고 P1을 확정한다**('붙은 것은 묻지 않는다'). 연혁: 5차 '스냅이 곧 선언'(D-L56) → 7차 물음 복원(D-L70 — snapForced가 원 방향 depth까지 뒤집어 P1에 가뒀다) → 12차 무물음 확정(D-L89 — kindFlipGuard(D-L80)가 방향 뒤집기를 스냅 단계에서 막으므로 hint 'screen'은 원 방향 ≤4°에만 붙는다. 그래서 7차가 막은 붕괴 기전과 다른 문이다). Playwright 신뢰 이벤트·콘솔 오류 0",
     what_this_does_not_say: [
       "**이 팔은 '우회가 없다'만 잰다.** 차수가 실제로 얼마나 풀리는지와 그것이 배치에 무엇을 하는지는 `order_lock.json`의 `bypass`/`fixed` 두 팔이다 — 그 원장이 **우회 제거만으로는 P1 잠김이 안 풀린다**(600실행 중 P1 519 → 499)고 적는다. 주 원인은 `screen_h`가 먼저 선언되는 것이고(first_declaration 497/600) 그것은 항목 3이 다룬다",
-      "**되살림 확인(A-4)**: `mainL.onStrokeEnd`에 `snapForced`를 되돌려 넣으면 ②의 `ask` 기대가 실패한다 — 지운 코드가 이 팔의 판정 대상이다(#25: 되살린 판은 커밋되지 않으므로 원장 밖이다)",
+      "**되살림 확인(A-4)**: `stepRule`의 P1 가드에서 `hint !== \"screen\"` 조건을 지우면(7차 판 복원) ②의 '물음 없음' 기대가 실패한다 — 그 조건이 이 팔의 판정 대상이다",
+      "**이 팔은 스냅이 잡은 가로선만 잰다** — 스냅이 안 걸린(수정자·토글 끔) 가로선의 물음은 남아 있고 그 잔여 경로는 이 원장이 안 덮는다",
       "한 각도(1.7°)의 확인이다(#12) — 직교 임계(4°) 경계는 test/axisSnap 반례가 덮는다",
       "dpr 1·마우스 합성이다(#21·AS-C1)",
     ],
     thresholds: { console_errors_max: 0 },
     gate: {
-      registered: "소실점이 선 상태에서 4° 안 수평선을 그으면 **ask가 뜨고**(askStats +1) 차수는 0에 머문다. `answerAsk(\"screen\")` 뒤에야 P1이 서고 카메라가 선다 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      registered: "소실점이 선 상태에서 4° 안 수평선을 그으면(직교 스냅 발동) **묻지 않고**(askStats 불변) **P1이 그 자리에서 선다**(order 1·standing). 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
       reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 물음 발생은 설계 선언이고(#5) 판정은 그 배선이다",
     },

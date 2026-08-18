@@ -50,7 +50,7 @@
   },
   "spec": "7차 항목 2 — 스냅 정적 후보 캐시가 시점(poseKey)을 키로 갖는다: 뷰 왕복 직후 첫 질의가 끝점을 문다",
   "constants": {
-    "hash": "54346ad1",
+    "hash": "f351839a",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -104,7 +104,8 @@
       },
       "FOV_GATE": {
         "severe_f_ratio": 0.5,
-        "ok_f_ratio": 0.87
+        "ok_f_ratio": 0.87,
+        "reject_fov_deg": 120
       },
       "SNAP_TOL_AXIS": {
         "ambiguous_deg": 6

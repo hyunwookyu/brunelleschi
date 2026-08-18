@@ -32,18 +32,18 @@
  },
  "began": true,
  "dir_after": [
-  0.007452340595308271,
+  0.005929951762767333,
   -6.123233995736765e-17,
-  -0.999972230924265
+  -0.9999824176814767
  ],
- "gaze_change_deg": 0.4269916159997021,
+ "gaze_change_deg": 0.33976319999998816,
  "sig_after_rotation": {
-  "painted": 1635,
-  "sum": 714647375
+  "painted": 1646,
+  "sum": 742363443
  },
  "console_errors": [],
  "constants": {
-  "hash": "54346ad1",
+  "hash": "f351839a",
   "values": {
    "AXIS_TOL": {
     "vp_dist_ratio": 0.06,
@@ -97,7 +97,8 @@
    },
    "FOV_GATE": {
     "severe_f_ratio": 0.5,
-    "ok_f_ratio": 0.87
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
    },
    "SNAP_TOL_AXIS": {
     "ambiguous_deg": 6

@@ -51,6 +51,7 @@
   "start_anchor": 0,
   "two_point": 0,
   "end_anchor": 0,
+  "cross_anchor": 0,
   "batch": 2,
   "unanchored": 0,
   "waiting": 2
@@ -64,7 +65,7 @@
  },
  "s5_orbit": {
   "pinned": false,
-  "gl_painted_px": 2123
+  "gl_painted_px": 2075
  },
  "s6_continue": {
   "snap_start": "endpoint",
@@ -72,7 +73,7 @@
  },
  "console_errors": [],
  "constants": {
-  "hash": "54346ad1",
+  "hash": "f351839a",
   "values": {
    "AXIS_TOL": {
     "vp_dist_ratio": 0.06,
@@ -126,7 +127,8 @@
    },
    "FOV_GATE": {
     "severe_f_ratio": 0.5,
-    "ok_f_ratio": 0.87
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
    },
    "SNAP_TOL_AXIS": {
     "ambiguous_deg": 6

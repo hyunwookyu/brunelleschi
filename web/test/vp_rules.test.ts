@@ -36,16 +36,18 @@ describe("유일한 판단 — 깊이인가 화면 가로세로인가", () => {
     expect(classifyLine([0, 300], [400, 0]).kind).toBe("depth");
   });
 
-  // **양성 채널**(#30) — 다 받으면 판정이 아니다. 사이 구간은 **애매**로 떨어져야 한다
-  it("두 임계 사이는 애매다 — 추정하지 않고 묻는다", () => {
+  // **양성 채널**(#30) — 다 받으면 판정이 아니다. 사이 구간은 **애매**로 분류된다.
+  // ⛔ **12차 지시 4-a(D-L89)**: 애매 구간의 **물음을 지웠다** — 스냅 없이 나온 대각선은
+  // 깊이선이다(화면에 나란한 선은 스냅이 잡고, 2D 유지는 주석 채널의 몫이다).
+  it("두 임계 사이는 애매로 분류되고 — 묻지 않고 깊이선으로 확정한다(12차 4-a)", () => {
     const mid = (RULE_TOL.screen_axis_deg + RULE_TOL.depth_min_deg) / 2;
     const t = Math.tan((mid * Math.PI) / 180);
     expect(classifyLine([0, 100], [400, 100 + 400 * t]).kind).toBe("ambiguous");
     const r = stepRule(newRuleState(SZ), line([0, 100], [400, 100 + 400 * t]), SZ);
-    expect(r.event.type).toBe("ask");
-    // **상태가 안 움직인다** — 답이 오기 전에는 규칙이 아무것도 안 한다.
-    // ⚠ 초기 상태는 이제 `[null, null, 화면 수직]`이다(2026-08-17 A-2)
-    expect(r.state.slots).toEqual(newRuleState(SZ).slots);
+    expect(r.event.type).not.toBe("ask");                      // 물음이 없다
+    expect(r.event.type).toBe("waiting");                      // 깊이선으로 대기 풀에 들어갔다
+    expect(r.state.depthLines?.length ?? 0).toBe(1);
+    expect(r.state.slots).toEqual(newRuleState(SZ).slots);     // 슬롯은 아직 안 움직인다
   });
 
   it("각차는 0~90에 든다", () => {
@@ -244,13 +246,16 @@ describe("b. 첫 소실점 = 한 축으로 모인 **세** 깊이선의 교점 (6
       const r = stepRule(newRuleState(SZ), line([260, 340], b), SZ);
       expect(r.event.type).not.toBe("ask");
     }
-    // **양성 채널**(#30) — 소실점이 하나 선 뒤에는 가파른 선이 실제로 물음을 낸다
+    // ⛔ **12차 4-a**: 소실점이 선 뒤의 가파른(애매 구간) 선도 이제 **묻지 않는다** —
+    // 깊이선으로 판정되고, 기하가 받든 거부하든 **조용한 물음은 없다**(A-3의 "애매하면
+    // 놓지 않는다"는 배치의 규칙이고, 여기서는 판정이 명시적 거부/대기로 나온다).
     let st = stepRule(newRuleState(SZ), toward([200, 600]), SZ).state;
     st = stepRule(st, toward([300, 640]), SZ).state;
     st = stepRule(st, toward([250, 620]), SZ).state;
     expect(vpsOf(st).filter(Boolean).length).toBeGreaterThan(0);
     const r2 = stepRule(st, line([300, 200], [340, 560]), SZ);
-    expect(r2.event.type).toBe("ask");
+    expect(r2.event.type).not.toBe("ask");
+    expect(["rejected", "waiting", "vp_fixed", "support"]).toContain(r2.event.type);
   });
 
   // ------------------------------------------------------------------ 7차 지시 4 (화각 게이트)
@@ -275,6 +280,44 @@ describe("b. 첫 소실점 = 한 축으로 모인 **세** 깊이선의 교점 (6
       expect(r.event.notify).toBe(true);               // **알린다**(지시 4-c)
     }
     expect(r.state.slots[1]).toBeNull();               // 두 번째 슬롯이 안 찼다
+  });
+
+  // ---------------------------------------------------------------- 12차 지시 1 (화각 상한)
+  //
+  // 실획 둘째 표본(보고): 소실점 간격 179px(W 1180) · f 87.2 · 화각 163°가 **확정을
+  // 지나갔다** — 옛 게이트는 f² ≤ 0만 막았다. `reject_fov_deg`(120°)가 그 문을 닫는다.
+  // 여기는 **배선**을 잠근다(임계 자체는 `confirm_rules.test.ts`의 fov_gate 절).
+  it("**12차 1-c** 화각이 상한을 넘으면 f² > 0이어도 확정을 거부한다 — 배선", () => {
+    const st = newRuleState(SZ);
+    st.slots[0] = { kind: "vp", at: [420, SZ[1] / 2], source: "two_lines", support: 2 };
+    st.horizon = SZ[1] / 2;
+    // (540, 336)으로 뻗는 45° 깊이선 — 두 소실점이 120px 간격이라 화각 166°다
+    const r = stepRule(st, { a: [640, 436], b: [590, 386] }, SZ);
+    expect(r.event.type).toBe("rejected");
+    if (r.event.type === "rejected") {
+      expect(r.event.fov?.band).toBe("reject");
+      expect(r.event.fov?.f).not.toBeNull();           // f² > 0 — 상한 거부가 f²≤0 거부와 갈린다
+      expect(r.event.fov?.fovDeg).toBeGreaterThan(120);
+      expect(r.event.notify).toBe(true);
+      expect(r.event.why).toContain("벌려");           // 지시 1-d — 고치는 법 안내가 실려 나간다
+    }
+    expect(r.state.slots[1]).toBeNull();
+  });
+
+  it("**12차 1-e** 경고 대역(90~120°)은 종전대로 확정하고 판정을 실어 낸다", () => {
+    const st = newRuleState(SZ);
+    // f/W = 0.431(파일1 보고값의 대역) — f = 414px가 되게 소실점을 ±414에 둔다
+    const fw = 0.431 * SZ[0];
+    st.slots[0] = { kind: "vp", at: [SZ[0] / 2 - fw, SZ[1] / 2], source: "two_lines", support: 2 };
+    st.horizon = SZ[1] / 2;
+    // (894, 336)으로 뻗는 깊이선 — 894 = 480 + 414
+    const to: Pt2 = [SZ[0] / 2 + fw, SZ[1] / 2];
+    const r = stepRule(st, { a: [to[0] - 200, to[1] + 200], b: [to[0] - 100, to[1] + 100] }, SZ);
+    expect(r.event.type).toBe("vp_fixed");
+    if (r.event.type === "vp_fixed") {
+      expect(r.event.fov?.band).toBe("severe");        // 경고가 표시로 나간다(mainL feedStroke)
+      expect(r.event.fov?.fovDeg).toBeLessThan(120);
+    }
   });
 
   it("**양성 채널** — 주점을 사이에 둔 두 소실점은 그대로 선다(#30)", () => {

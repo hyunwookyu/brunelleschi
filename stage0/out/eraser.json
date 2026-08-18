@@ -35,7 +35,7 @@
   "그리는 시점의 자동 분할은 배선하지 않았다(D-L56) — 분할은 지우개가 조각을 집을 때 계산된다"
  ],
  "constants": {
-  "hash": "54346ad1",
+  "hash": "f351839a",
   "values": {
    "AXIS_TOL": {
     "vp_dist_ratio": 0.06,
@@ -89,7 +89,8 @@
    },
    "FOV_GATE": {
     "severe_f_ratio": 0.5,
-    "ok_f_ratio": 0.87
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
    },
    "SNAP_TOL_AXIS": {
     "ambiguous_deg": 6

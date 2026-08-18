@@ -6,7 +6,7 @@
     "`python selfcheck.py`가 이 파일과 대조해 다르면 STALE 플래그(어느 상수가 다른지 함께).",
     "문서는 산출물을 **파일명@해시**로 인용한다 — 인용한 수치가 어느 실행인지 남는다."
   ],
-  "hash": "54346ad1",
+  "hash": "f351839a",
   "values": {
     "AXIS_TOL": {
       "vp_dist_ratio": 0.06,
@@ -60,7 +60,8 @@
     },
     "FOV_GATE": {
       "severe_f_ratio": 0.5,
-      "ok_f_ratio": 0.87
+      "ok_f_ratio": 0.87,
+      "reject_fov_deg": 120
     },
     "SNAP_TOL_AXIS": {
       "ambiguous_deg": 6

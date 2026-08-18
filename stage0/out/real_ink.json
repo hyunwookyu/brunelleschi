@@ -1,7 +1,7 @@
 {
   "spec": "실획 측정. 앱의 '획 내보내기'로 받은 세션을 sessions/ 에 넣으면 여기서 잰다.",
   "constants": {
-    "hash": "54346ad1",
+    "hash": "f351839a",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -55,7 +55,8 @@
       },
       "FOV_GATE": {
         "severe_f_ratio": 0.5,
-        "ok_f_ratio": 0.87
+        "ok_f_ratio": 0.87,
+        "reject_fov_deg": 120
       },
       "SNAP_TOL_AXIS": {
         "ambiguous_deg": 6
@@ -153,6 +154,76 @@
     ],
     "source": "file",
     "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  },
+  "reported_samples_12": {
+    "human_reported": true,
+    "source": "12차 지시문(2026-08-18) — brunelleschi-2026-08-18T15-16-18(파일1 · 13획) · …T15-18-25_brnl_2(파일2 · 11획). 파일은 sessions/에 없다",
+    "k_reported": {
+      "snap2d_fired": {
+        "file1": "0/13",
+        "file2": "6/11",
+        "note": "파일2에서 endpoint·vertex·intersection 전부 발화 — #18 닫힘(보고)"
+      },
+      "asked": {
+        "file1": "3/13",
+        "file2": "3/11",
+        "note": "이전 보고 6/5에서 감소. ⚠ D-L89(12차 항목 4)가 애매 물음을 지웠으므로 다음 표본의 이 수는 다른 규칙 아래 값이다"
+      },
+      "placed_3d": {
+        "file1": "0/13",
+        "file2": "6/11",
+        "note": "파일2 스냅 6 = seg3d 6 — D-L83이 의도대로(보고). 파일1은 스냅 0으로 전량 대기"
+      },
+      "f_over_w": {
+        "file1": 0.431,
+        "file2": 0.074,
+        "note": "지시 표기 'd/W'의 d는 시거리(= f) — 판독 근거는 confirm_rules.json의 real_ink_reported_12.source. 파일2는 화각 163°로 12차 상한(120°)의 거부 대역"
+      },
+      "vp_dir_err_deg_reported": {
+        "file1": [
+          [
+            "s42",
+            0,
+            1.33
+          ],
+          [
+            "s41",
+            0,
+            12.81
+          ],
+          [
+            "s44",
+            1,
+            10.32
+          ]
+        ],
+        "file2": [
+          [
+            "s78",
+            1,
+            0
+          ],
+          [
+            "s65",
+            0,
+            20.8
+          ],
+          [
+            "s66",
+            1,
+            16.59
+          ]
+        ],
+        "note": "[획 id, 축, Δ°]. s78만 snapStart 보유 — 항목 2가 그 상관(앵커 유무 = 방향 정착 유무)을 원인으로 확인했다. 이전 표본 보고 Δ0.0~1.7과 대푯값이 갈리고, 무엇이 갈랐는지는 표본이 와야 분해된다(RULE_TOL.concurrent_deg의 근거 주석 참조)"
+      },
+      "note_channel_leak": {
+        "strokes": [
+          "s52",
+          "s53"
+        ],
+        "note": "note 채널인데 축 판정을 탔다(보고) — 12차 항목 4-c가 수리"
+      }
+    }
   },
   "why": "AS-6·AS-12는 Quick,Draw 낙서에서 나온 수치이고 대상 사용자를 대표하지 않는다(AS-13). **그 수치로 설계 결정을 하지 않기로 했으므로** 재측정 수단을 먼저 세운다. 여기 값이 채워지기 전까지 두 전제는 잠정이다.",
   "metrics": {
@@ -298,6 +369,7 @@
       "as6_one_stroke_one_axis",
       "as_l24_l25_synthetic_bias"
     ],
+    "note_12": "보고 ≠ 파일 — 두 판정은 파일 도착까지 미개봉",
     "rows": [
       {
         "id": "end_snap_engages",
