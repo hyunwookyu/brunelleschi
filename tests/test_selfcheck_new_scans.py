@@ -298,3 +298,94 @@ def test_cited_values_counts_what_it_covers(tmp_path):
     (tmp_path / "d.md").write_text("`r.json@54346ad1` 31.6083", encoding="utf-8")
     flags = selfcheck.scan_cited_values(tmp_path, _reports({"r.json": {"deg": 31.6083}}))
     assert flags == [], flags
+
+
+# ── #42 ④·⑦ 자동화: 원장 전문이 인용한 `#N` 표 (2026-08-18 8차 2차 지시 항목 0) ──
+# 손 grep이 세 세션 연속 틀렸으므로 검사로 옮겼다. **반례를 건다** — 이 검사가
+# 실제로 원장 전문을 보는지, 죽은 참조를 무는지, 조용할 때가 깨끗함인지 가른다.
+
+def _pit(tmp_path, body: str):
+    (tmp_path / "PITFALLS.md").write_text(body, encoding="utf-8")
+
+
+def test_pitfall_citations_reads_whole_ledger_including_gate(tmp_path):
+    """`gate.reachability` 안의 번호도 읽어야 한다 — #42 ④가 명시한 자리다.
+
+    5차에서 다섯 원장 전부 reachability가 `#40`을 인용하는데 **본문만 grep해
+    다섯 번 다 놓쳤다**(여덟 자리 재발의 주범). 그 형태를 되살려 무는지 본다.
+    """
+    _pit(tmp_path, "40. **자동 검사의 필수 필드**\n41. **중단 조건**\n")
+    rep = {"what": "설명에는 번호가 없다",
+           "gate": {"reachability": "오라클이 없다(#40 규칙 ①)"}}
+    flags = selfcheck.scan_pitfall_citations(tmp_path, {"x.json": rep})
+    assert selfcheck.PITFALL_CITATIONS["x.json"] == [40], selfcheck.PITFALL_CITATIONS
+    assert flags == [], flags          # 40은 PITFALLS에 있으므로 죽은 참조가 아니다
+
+
+def test_pitfall_citations_flags_dead_reference(tmp_path):
+    """`PITFALLS.md`에 없는 번호를 원장이 인용하면 **걸려야 한다**."""
+    _pit(tmp_path, "40. **자동 검사의 필수 필드**\n")
+    rep = {"gate": {"registered": "#40 · #99"}}
+    flags = selfcheck.scan_pitfall_citations(tmp_path, {"x.json": rep})
+    assert any(f["val"] == "#99" for f in flags), flags
+    assert not any(f["val"] == "#40" for f in flags), flags
+
+
+def test_pitfall_citations_covers_zero_when_no_ledger_cites(tmp_path):
+    """아무 원장도 번호를 안 적으면 **덮는 대상 0**으로 울어야 한다(#32·#38).
+
+    플래그 0건이 "깨끗함"인지 "안 돎"인지 가르는 것은 덮는 수뿐이다.
+    """
+    _pit(tmp_path, "40. **자동 검사의 필수 필드**\n")
+    selfcheck.COVERAGE.clear()
+    flags = selfcheck.scan_pitfall_citations(tmp_path, {"x.json": {"what": "번호 없음"}})
+    assert any("덮는 대상 0" in str(f["val"]) for f in flags), flags
+
+
+def test_pitfall_citations_does_not_read_documents(tmp_path):
+    """대상은 **원장 전문**이지 문서가 아니다 — 못 잡는 것을 잡는다고 적지 않는다(#26)."""
+    _pit(tmp_path, "40. **자동 검사의 필수 필드**\n")
+    (tmp_path / "progress.md").write_text("이 항목은 #40에 걸린다", encoding="utf-8")
+    selfcheck.PITFALL_CITATIONS.clear()
+    selfcheck.scan_pitfall_citations(tmp_path, {"x.json": {"what": "번호 없음"}})
+    assert selfcheck.PITFALL_CITATIONS == {}, selfcheck.PITFALL_CITATIONS
+
+
+# ── [5] `scan_cited_values`의 모집단 분해 — 1129(토큰)와 96(줄)은 단위가 다르다 ──
+
+def test_cited_values_reports_both_units(tmp_path):
+    """**같은 모집단 위에서** 엄격 판정(토큰)과 현행 판정(줄)의 수를 함께 내야 한다.
+
+    리뷰어 [5]: `272/1129`와 `2/96`을 나란히 적으면 **분모가 다른 두 비율**이라
+    "판정 완화인가 모집단 축소인가"가 안 갈린다(#11·#40 ③).
+    """
+    rep = {"constants": {"hash": "aabbccdd"}, "v": 7.7742}
+    reports = {"led.json": rep}
+    # 한 줄에 원장 값 하나(7.7742)와 유도값 하나(15.5484 = 2배). 엄격이면 1토큰이 걸리고
+    # 현행이면 **줄이 안 걸린다** — 그 차이가 정확히 [5]가 갈라 달라던 것이다.
+    (tmp_path / "d.md").write_text(
+        "축 오차는 `led.json@aabbccdd`의 7.7742이고 두 배는 15.5484다", encoding="utf-8")
+    selfcheck.COVERAGE.clear()
+    selfcheck.CITED_VALUE_POP.clear()
+    flags = selfcheck.scan_cited_values(tmp_path, reports)
+    pop = selfcheck.CITED_VALUE_POP
+    assert pop["lines_checked"] == 1, pop
+    assert pop["tokens_checked"] == 2, pop
+    assert pop["strict_tokens_flagged"] == 1, pop      # 15.5484는 원장에 없다
+    assert pop["strict_lines_flagged"] == 1, pop
+    assert pop["flags_line_rule"] == 0, pop            # 7.7742가 있으므로 줄은 안 건다
+    assert not [f for f in flags if f["path"].startswith("d.md")], flags
+
+
+def test_cited_values_strict_and_line_rules_agree_when_nothing_matches(tmp_path):
+    """줄의 수치가 **하나도** 원장에 없으면 두 판정이 같은 답을 낸다 — 6차의 그 줄이다."""
+    reports = {"led.json": {"constants": {"hash": "aabbccdd"}, "v": 7.7742}}
+    (tmp_path / "d.md").write_text(
+        "합성 400구도에서 각차 399 · 거리 400 (`led.json@aabbccdd`)", encoding="utf-8")
+    selfcheck.COVERAGE.clear()
+    selfcheck.CITED_VALUE_POP.clear()
+    flags = selfcheck.scan_cited_values(tmp_path, reports)
+    pop = selfcheck.CITED_VALUE_POP
+    assert pop["lines_checked"] == 1 and pop["flags_line_rule"] == 1, pop
+    assert pop["strict_lines_flagged"] == 1, pop
+    assert any(f["path"].startswith("d.md") for f in flags), flags

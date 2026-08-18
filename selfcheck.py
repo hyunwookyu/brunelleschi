@@ -299,6 +299,8 @@ def scan_stale_metrics(outdir: Path, reports: dict[str, dict]) -> list[dict]:
 SCANNED_FIELDS: list[dict] = []
 SWEEP_SCANNED: list[dict] = []
 COVERAGE: list[dict] = []
+PITFALL_CITATIONS: dict[str, list[int]] = {}
+CITED_VALUE_POP: dict = {}
 
 
 def _cover(scan: str, unit: str, targets: int, hits: int, note: str = "") -> list[dict]:
@@ -631,6 +633,11 @@ def scan_cited_values(root: Path, reports: dict[str, dict]) -> list[dict]:
         return out
 
     flags, n_checked = [], 0
+    # **[5] 모집단을 갈라 센다** — 옛 기록의 `1129`와 `96`은 **단위가 다른 두 수**였다
+    # (1129 = 수치 토큰 · 96 = 인용 줄). 둘을 함께 내야 "판정 완화"와 "모집단 축소"가 갈린다.
+    n_tokens = 0                # 대조한 **수치 토큰** 수 (옛 1129와 같은 단위)
+    strict_tokens = 0           # 엄격 판정(토큰별)이 걸었을 토큰 수 (옛 272와 같은 단위)
+    strict_lines: set[str] = set()   # 그 토큰이 있던 줄
     lits: dict[str, set[str]] = {}
     for f in sorted(root.rglob("*")):
         if not f.is_file() or f.suffix not in (".md", ".ts", ".py"):
@@ -659,7 +666,12 @@ def scan_cited_values(root: Path, reports: dict[str, dict]) -> list[dict]:
             if not toks:
                 continue
             n_checked += 1
-            if not any(_norm_num(t) in known for t in toks):
+            n_tokens += len(toks)
+            miss = [t for t in toks if _norm_num(t) not in known]
+            if miss:
+                strict_tokens += len(miss)
+                strict_lines.add(f"{rel}:{i}")
+            if len(miss) == len(toks):
                 flags.append({
                     "path": f"{rel}:{i}",
                     "val": f"{len(toks)}개 전부 ∉ {'·'.join(sorted(names))}: "
@@ -669,9 +681,26 @@ def scan_cited_values(root: Path, reports: dict[str, dict]) -> list[dict]:
                             "과거 실행의 기록이면 `git show <sha>:` 꼴로 적는다"
                             "(현재 원장을 인용한다고 주장하지 않는다)",
                 })
-    flags += _cover("scan_cited_values", "수치", n_checked, len(flags),
-                    note="현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 "
-                         "scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다")
+    CITED_VALUE_POP.update({
+        "lines_checked": n_checked,
+        "tokens_checked": n_tokens,
+        "flags_line_rule": len(flags),
+        "strict_tokens_flagged": strict_tokens,
+        "strict_lines_flagged": len(strict_lines),
+        "hashless_only_lines_in_population": False,
+        "note": "**모집단은 같고 판정만 둘이다.** `현재 해시로 적힌 인용 줄`이 모집단이고 "
+                "(해시 없이 이름만 적힌 원장은 **줄을 모집단에 넣지 않는다** — 같은 줄에 "
+                "현재 해시 인용이 있을 때 **대조 집합에만** 더한다), 그 위에서 "
+                "엄격 판정(토큰별)과 현행 판정(줄에 하나도 없을 때만)의 수를 함께 낸다. "
+                "`tokens_checked` ↔ `strict_tokens_flagged`가 옛 1129 ↔ 272와 같은 단위이고, "
+                "`lines_checked` ↔ `flags_line_rule`이 96 ↔ 2와 같은 단위다",
+    })
+    flags += _cover("scan_cited_values", "인용 줄", n_checked, len(flags),
+                    note=f"현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 "
+                         f"scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. "
+                         f"⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 {n_tokens}개이고 "
+                         f"엄격 판정이면 {strict_tokens}개({len(strict_lines)}줄)가 걸린다. "
+                         f"두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)")
     return flags
 
 
@@ -736,6 +765,54 @@ def _gate_value_checks(node: dict, fname: str, path: str, report: dict) -> list[
                             "flag": "**도달 가능성 값이 원장과 다르다**(#40·#33 값 대조) — "
                                     "재측정 뒤 손으로 적은 수치를 안 고친 것이다"})
     return out
+
+
+def scan_pitfall_citations(root: Path, reports: dict[str, dict]) -> list[dict]:
+    """**원장 전문이 인용한 `#N`을 기계가 읽는 표로 남긴다**(PITFALLS #42 ④ · 8차 리뷰어 [11]).
+
+    #42 ④의 규칙은 "완료 대조의 grep은 **원장 전문**을 대상으로 한다 — `gate.reachability`
+    포함"이다. 그 규칙을 **세 세션 연속 손으로** 했고 **세 번 다 틀렸다**(4차 다섯 항목 ·
+    5차 여덟 자리 · 8차 항목 0). 손이 틀리는 것이 반복되면 고칠 곳은 **사람이 아니라
+    기록·검사 쪽**이다(#38의 요지와 같은 방향).
+
+    이 검사가 하는 것 **둘**:
+      ① 원장별 `#N` 목록을 `selfcheck.json`의 `pitfall_citations`에 남긴다 —
+         착수 표를 쓸 때 저장소 전체 grep이 아니라 **그 표를 읽으면 된다**.
+      ② 원장이 인용한 `#N` 중 **`PITFALLS.md`에 그 번호의 항목이 없는 것**을 플래그한다
+         (죽은 참조 — 번호를 잘못 적었거나 항목이 사라졌다).
+
+    ⚠⚠ **이 검사가 안 하는 것**(#26 — 못 잡는 것을 잡는다고 적지 않는다):
+      · **어느 원장이 이번 항목의 것인지 모른다.** 그러므로 "착수 표가 빠뜨렸다"를
+        **판정하지 않는다.** 판정은 여전히 사람이 하고, 이 검사가 바꾸는 것은
+        **대조 자료를 만드는 일**이다(그 자리에서 세 번 틀렸다).
+      · 문서(`.md`)의 인용은 안 본다 — 대상은 **원장 전문**이다.
+    """
+    import re
+    try:
+        pit = (root / "PITFALLS.md").read_text(encoding="utf-8")
+    except Exception:
+        pit = ""
+    known = {int(m) for m in re.findall(r"^(\d+)\. \*\*", pit, re.M)}
+    pat = re.compile(r"#(\d+)")
+    cited: dict[str, list[int]] = {}
+    flags: list[dict] = []
+    for name, rep in sorted(reports.items()):
+        txt = json.dumps(rep, ensure_ascii=False)
+        nums = sorted({int(x) for x in pat.findall(txt)})
+        if nums:
+            cited[name] = nums
+        for n in nums:
+            if known and n not in known:
+                flags.append({
+                    "path": f"stage0/out/{name}", "val": f"#{n}",
+                    "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. "
+                            "번호가 틀렸거나 항목이 사라졌다(#42 ④)",
+                })
+    PITFALL_CITATIONS.update(cited)
+    flags += _cover("scan_pitfall_citations", "원장", len(cited), len(flags),
+                    note="`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — "
+                         "어느 원장이 이번 항목의 것인지는 이 검사가 모른다")
+    return flags
 
 
 def scan_gate_reachability(reports: dict[str, dict]) -> list[dict]:
@@ -871,7 +948,8 @@ def main():
             f["path"] = f"{p.name}:{f['path']}"
             flags.append(f)
 
-    COVERAGE.clear()                                   # **덮은 대상 수**를 이번 실행 것만 남긴다
+    COVERAGE.clear()
+    CITED_VALUE_POP.clear()                                   # **덮은 대상 수**를 이번 실행 것만 남긴다
     stale = scan_stale_constants(outdir, reports)      # 하류 재측정 누락 (재발 유형 자동 탐지)
     flags += stale
     stale_m = scan_stale_metrics(outdir, reports)      # **정의** 낡음 (상수 스냅샷이 못 잡는 종류)
@@ -885,6 +963,8 @@ def main():
     flags += scan_stray_progress(ROOT)             # 루트 밖 progress.md (세 번째 재발)
     flags += scan_citation_hashes(ROOT, reports)   # #33 값 대조: 인용 해시 ↔ 원장 현재 해시
     flags += scan_cited_values(ROOT, reports)  # #42 ⑥ 존재 대조: 인용한 수치가 원장에 있는가
+    PITFALL_CITATIONS.clear()
+    flags += scan_pitfall_citations(ROOT, reports)  # #42 ④ 자동화: 원장 전문이 인용한 #N
     flags += scan_gate_reachability(reports)       # #35 자동화: 게이트에 도달 가능성 필드
     flags += scan_zero_denominator(ROOT)           # #36 자동화: 분모 0을 1로 바꾸는 나눗셈
 
@@ -897,6 +977,12 @@ def main():
            # **각 자동 검사가 덮은 대상 수.** 0이면 위 flags에 함께 뜬다 —
            # 플래그 0건이 "깨끗함"인지 "안 돎"인지 가르는 것은 이 수뿐이다(#32).
            "coverage": COVERAGE,
+           # **원장 전문이 인용한 `#N`**(#42 ④ · 8차 리뷰어 [11]). 착수 표를 쓸 때
+           # 저장소 전체 grep 대신 이 표를 읽는다. **판정이 아니라 대조 자료다.**
+           "pitfall_citations": PITFALL_CITATIONS,
+           # **`scan_cited_values`의 모집단 분해**(8차 리뷰어 [5]).
+           # 1129(토큰)와 96(줄)은 **단위가 다른 두 수**였다 — 함께 낸다.
+           "cited_value_population": CITED_VALUE_POP,
            "constants_hash": (reports.get("constants.json") or {}).get("hash"),
            "metrics_hash": (reports.get("metrics.json") or {}).get("hash"),
            "scanned": [p.name for p in sorted(outdir.glob("*.json")) if p.name not in skip],

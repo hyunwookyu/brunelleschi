@@ -30,6 +30,7 @@ import { CamState } from "../src/ui/camState.js";
 import { liftAll, type LiftStroke, type LiftCtx } from "../src/s3d/lift.js";
 import { representative, type Axis } from "../src/s3d/axis.js";
 import { isFiniteVp, type Pt2 } from "../src/s3d/camera.js";
+import { onePointFrame } from "../src/s3d/onePoint.js";
 import { perspectiveOrder, vpsOf, classifyLine, type RLine } from "../src/s3d/vpRules.js";
 import { resolve2dCore, OSNAP_RADIUS_PX } from "../src/s3d/resolve2d.js";
 import { static2dCandidates, type Snap2Seg } from "../src/s3d/snap2d.js";
@@ -86,12 +87,32 @@ const REGISTERED =
 
 interface Fx { sc: Scene; edges: TrueEdge[]; drawn: DrawnEdge[]; diag: number }
 
-function fixture(ci: number, jit: number, grade: InkGrade, seed: number): Fx | null {
+/**
+ * **상자 둘 픽스처**(2026-08-18 8차 2차 지시 1-d). 지시가 물은 것: *"합성 하네스가 이
+ * 구간을 만들어내는 조건이 실사용과 같은지 확인한다. 실획에서는 사용자가 계속 그으므로
+ * 결국 확정될 수 있다."*
+ *
+ * ⚠⚠ **세분(`k=2`)으로 획을 늘리면 안 된다** — `boxLattice`의 `step = a/k`라 늘어난 획이
+ * **1/k 길이**가 되고, 그러면 `min_vp_len_ratio`에 더 걸려 **반대 방향으로 간다**
+ * (`DEFERRED`의 "지렛대가 긴 획으로 획 수 늘리기" 리뷰어 [10]이 그 자리다).
+ * 그래서 **같은 크기의 상자를 하나 더** 놓는다 — 획 길이는 그대로이고 수만 두 배다.
+ * 이것이 "사용자가 계속 그었다"의 가장 단순한 합성판이다(A-3).
+ */
+const SECOND_BOX_OFFSET: Pt2 = [170, -25];
+
+function fixture(ci: number, jit: number, grade: InkGrade, seed: number,
+                 boxes: 1 | 2 = 1): Fx | null {
   const C = COMPOSITIONS[ci];
   const sc = scene(C.yaw, C.pitch, 1000, SZ);
   const O = groundPoint(sc, C.origin);
   if (!O) return null;
-  const edges = boxLattice(sc, O, C.box[0], C.box[1], C.box[2], 1);
+  let edges = boxLattice(sc, O, C.box[0], C.box[1], C.box[2], 1);
+  if (boxes === 2) {
+    const O2 = groundPoint(sc, [C.origin[0] + SECOND_BOX_OFFSET[0],
+                                C.origin[1] + SECOND_BOX_OFFSET[1]]);
+    if (!O2) return null;
+    edges = [...edges, ...boxLattice(sc, O2, C.box[0], C.box[1], C.box[2], 1)];
+  }
   const drawn = drawEdges(sc, edges, grade, rng32(seed * 7919 + ci * 131 + 1), 0.12, jit, 0);
   if (!drawn) return null;
   const ps = edges.flatMap(e => [e.a, e.b]);
@@ -129,13 +150,26 @@ function orderStrokes(fx: Fx, order: Order): DrawnEdge[] {
  * | `true_vp_rule_axis` | **참** | 규칙 | 없음 — **카메라 오차만** 뺀다 |
  * | `oracle` | **참** | **참** | — (도달 가능성 #35·#40) |
  */
-type Arm = "bypass" | "fixed" | "rule_vp_true_axis" | "true_vp_rule_axis" | "oracle";
-const ARM_SPEC: Record<Arm, { bypass: boolean; vp: "rule" | "true"; axis: "rule" | "true" }> = {
+type Arm = "bypass" | "fixed" | "rule_vp_true_axis" | "true_vp_rule_axis" | "oracle"
+         | "fixed_true_f";
+const ARM_SPEC: Record<Arm, { bypass: boolean; vp: "rule" | "true"; axis: "rule" | "true";
+                              trueF?: boolean }> = {
   bypass:            { bypass: true,  vp: "rule", axis: "rule" },
   fixed:             { bypass: false, vp: "rule", axis: "rule" },
   rule_vp_true_axis: { bypass: false, vp: "rule", axis: "true" },
   true_vp_rule_axis: { bypass: false, vp: "true", axis: "rule" },
   oracle:            { bypass: false, vp: "true", axis: "true" },
+  /**
+   * **f만 참으로 바꾼다**(2026-08-18 8차 2차 지시 2-b). 소실점도 축 라벨도 규칙 그대로이고
+   * **깊이 배율 하나만** 참값으로 준다.
+   *
+   * 왜 필요한가: P1의 f는 **임의값**이다(`P1_F_RATIO` — "깊이 배율일 뿐"이라는 D-L53의
+   * 판단). 지시 2-b가 물은 것은 *"축 방향은 맞고 깊이 배율만 임의라면 형태 비례가 틀린다"*이고,
+   * 그 물음은 **f 하나만 바꾼 팔**로만 답할 수 있다(#39 — 요인을 하나씩 뺀다).
+   * ⚠ P2·P3에서는 f가 소실점에서 나오므로 이 팔이 그 차수에서는 거의 무변화여야 한다 —
+   * **그 무변화가 이 팔의 위약 대조다**(#30: 안 움직여야 하는 곳이 안 움직이는가).
+   */
+  fixed_true_f:      { bypass: false, vp: "rule", axis: "rule", trueF: true },
 };
 
 const trueAxis = (sc: Scene, i: 0 | 1 | 2): Axis => (isFiniteVp(sc.vps[i], SZ) ? i : "screen");
@@ -159,6 +193,60 @@ interface RunOut {
   firstDecl: "screen_h" | "screen_v" | "vp" | "none";
   /** **물음 종류별 내역**(7-R [4-F] · #7) — "남는 물음이 전부 screen_or_depth"를 세서 확인한다. */
   askKinds: Record<string, number>;
+  /**
+   * **왜 카메라가 안 섰는가**(2026-08-18 8차 2차 지시 1-a·1-b). `order === 0`일 때만 채운다.
+   *
+   * 항목 1이 P1 잠김을 열자 `p0`가 **7 → 140실행**으로 늘었고 그 실행들은 **획을 긋고
+   * 하나도 안 놓는다**. "카메라가 안 선다"를 한 덩어리로 두면 무엇을 고쳐야 하는지
+   * 안 갈린다 — 지시 1-a가 물은 셋(깊이선이 하나뿐인가 · 둘인데 안 갈리는가 ·
+   * 화면 수평만 있는가)을 **상태에서 직접 읽어** 센다(#7 — 추측하지 말고 카운터).
+   */
+  p0?: {
+    /** 유한 수평 소실점 슬롯 수(0 또는 1 — 2 이상이면 P2라 여기 안 온다). */
+    nH: 0 | 1;
+    /** 화면 가로축 슬롯이 섰는가. */
+    screenH: boolean;
+    /** **아직 소실점을 못 만든 깊이선** 수(`RuleState.depthLines`). */
+    pending: number;
+    /** 대기 깊이선들 사이 **최대 각차**(도). 작으면 "둘인데 같은 축"이다. */
+    pendingMaxSepDeg: number | null;
+    reason: string;
+  };
+  /**
+   * **몇 번째 획에서 카메라가 섰는가**(1-based, 규칙에 넣은 순서). 끝까지 안 서면 `null`.
+   * **지시 1-d의 판정자다**: 이 분포가 획 예산(상자 하나 = 12획)의 **끝에 몰려 있으면**
+   * P0의 일부는 **하네스가 획을 그만 준 것**이지 규칙이 못 세운 것이 아니다(#32).
+   */
+  stoodAt: number | null;
+  /** **1점 직접 좌표 경로가 열리는가**(지시 2-a) — 앱은 이때 `directSegment`로 간다. */
+  opfFires: boolean;
+  /** **어디서 멈췄는가**(지시 1-b) — 거절 사유별 횟수. `why` 문자열을 안정 키로 접는다. */
+  rejects: Record<string, number>;
+  /** **획 하나가 어떤 사건이 됐는가**(지시 1-b) — `waiting`이 몇 개인지가 대기 깊이선의 출처다. */
+  events: Record<string, number>;
+  /**
+   * **참 축이 깊이인 획이 무엇이 됐는가**(지시 1-a). `events`만으로는 "깊이선이 하나뿐"의
+   * 원인이 안 갈린다 — 깊이 획이 애초에 적은 것인지, 있는데 다른 사건이 된 것인지.
+   * 키는 `` `${depth|screen}/${event}` ``이고 분모는 **규칙에 넣은 획 전부**다.
+   */
+  truthEvents: Record<string, number>;
+}
+
+/**
+ * 거절 사유(`why`는 사람이 읽는 산문이다)를 **안정 키**로 접는다.
+ * ⚠ 산문을 그대로 키로 쓰면 문구를 고칠 때 원장이 소리 없이 갈라진다(#23과 같은 자리).
+ */
+function rejectKey(why: string): string {
+  if (why.includes("한 점")) return "degenerate";
+  if (why.includes("짧아")) return "too_short";
+  if (why.includes("2점이 확정")) return "p2_fixed_no_screen_h";
+  if (why.includes("수평 축이 이미 둘")) return "both_h_slots_taken";
+  if (why.includes("수직축은 이미 유한")) return "v_is_finite_vp";
+  if (why.includes("기존 소실점을 향하지")) return "off_axis_p1";
+  if (why.includes("어긋납니다")) return "off_axis_p2";
+  if (why.includes("발산")) return "horizon_parallel";
+  if (why.includes("무한원")) return "second_vp_at_infinity";
+  return "fov_or_other";
 }
 
 function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
@@ -169,6 +257,10 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
   let asks = 0, fed = 0;
   let firstDecl: RunOut["firstDecl"] = "none";
   const askKinds: Record<string, number> = {};
+  const rejects: Record<string, number> = {};
+  const events: Record<string, number> = {};
+  const truthEvents: Record<string, number> = {};
+  let stoodAt: number | null = null, fedIdx = 0;
   /** 앱의 `pend2Segs()` 자리 — 확정 전 2D 오스냅 대상. `rule_camera`와 같은 근사다. */
   const fedSegs: Snap2Seg[] = [];
   /** 규칙에 먹인 최종 점열(= 앱의 `pts2d`). 배치도 이것으로 한다 — 앱이 그렇게 한다(#17). */
@@ -213,6 +305,18 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
         r = cam.feed(line, truth);
       }
       if (r.applied) fed += 1;
+      if (r.event.type === "rejected") {
+        const k = rejectKey(r.event.why);
+        rejects[k] = (rejects[k] ?? 0) + 1;
+      }
+      // **획 하나당 사건 하나**(물음에 답한 뒤의 최종 사건). 분모는 규칙에 넣은 획 수다.
+      events[r.event.type] = (events[r.event.type] ?? 0) + 1;
+      // **참 축과 함께 센다** — 깊이 획이 `support`·`rejected`로 새는지 여기서 보인다
+      const truth = isFiniteVp(fx.sc.vps[e.axis], SZ) ? "depth" : "screen";
+      const tk = `${truth}/${r.event.type}`;
+      truthEvents[tk] = (truthEvents[tk] ?? 0) + 1;
+      fedIdx += 1;
+      if (stoodAt == null && perspectiveOrder(cam.rules) >= 1) stoodAt = fedIdx;
       if (firstDecl === "none") {
         if (r.event.type === "screen_axis") firstDecl = r.event.dir === "h" ? "screen_h" : "screen_v";
         else if (r.event.type === "vp_fixed") firstDecl = "vp";
@@ -221,6 +325,8 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
   }
 
   const ord = arm === "oracle" ? 0 : cam.order();
+  // **P0의 사유를 상태에서 직접 읽는다**(지시 1-a). `oracle` 팔은 규칙을 안 돌므로 뺀다.
+  const p0 = (ord === 0 && arm !== "oracle") ? p0Diag(cam) : undefined;
   // ---- 배치. **여기가 이 하네스의 존재 이유다**(rule_camera에 없던 귀결)
   let ctx: LiftCtx | null = null;
   if (spec.vp === "true") {
@@ -228,12 +334,23 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
   } else {
     const c = cam.ctx();
     ctx = c ? { principal: c.principal, f: c.f, vps: c.vps, imgSize: SZ, axisDirs: c.axisDirs } : null;
+    // **f만 참으로**(지시 2-b) — 소실점·축 라벨은 규칙 그대로다
+    if (ctx && spec.trueF) ctx = { ...ctx, f: fx.sc.f };
   }
+  // **앱의 1점 직접 좌표 경로가 이 상태에서 열리는가**(지시 2-a).
+  //
+  // ⚠⚠ **이 하네스는 `liftAll`만 부른다.** 앱(`mainL`)은 1점 시점에서 `onePointFrame`이
+  // 서면 `directSegment`로 간다(D-L77). 그 갈림이 실재하면 **이 하네스의 P1 중앙 1.69는
+  // 앱을 서술하지 않는다**(#17 — 측정 경로와 앱 경로가 갈라진다). 그래서 **판정만 세어
+  // 둔다** — 직접 경로를 여기서 돌리지는 않는다(그것은 앱 배선을 하네스에 복제하는 일이라
+  // #17을 반대 방향으로 어긴다).
+  const opfFires = ctx?.axisDirs ? onePointFrame(ctx.axisDirs) != null : false;
   const axes: Axis[] = spec.axis === "true"
     ? list.map(e => trueAxis(fx.sc, e.axis))
     : finalPts.map(p => cam.axisOf(p).axis);
   if (!ctx) return { order: ord, cameraOk: false, drawnN: list.length, placedN: 0, errs: [],
-                     asks, fed, firstDecl, askKinds };
+                     asks, fed, firstDecl, askKinds, p0, rejects, events, truthEvents, stoodAt,
+                     opfFires: false };
   const strokes: LiftStroke[] = finalPts.map((pts, i) => ({
     // ⚠ **키 규약**: `metrics.edgeIndexOf`가 `s<인덱스>`를 참 모서리 인덱스로 읽는다.
     // `list`는 순서를 바꾼 것이므로 **원래 인덱스**를 붙여야 참값과 짝이 맞는다
@@ -242,7 +359,62 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
   const r = liftAll(strokes, ctx);
   const errs = perStrokeError(r.placed, fx.edges, fx.diag);
   return { order: ord, cameraOk: true, drawnN: list.length, placedN: r.placed.size, errs,
-           asks, fed, firstDecl, askKinds };
+           asks, fed, firstDecl, askKinds, p0, rejects, events, truthEvents, stoodAt,
+           opfFires };
+}
+
+/**
+ * **P0의 사유**(지시 1-a). 상태에서 직접 읽으므로 추정이 없다(#7).
+ *
+ * `perspectiveOrder`가 0을 내는 조건은 둘뿐이다 — 유한 수평 소실점이 **둘 미만**이고,
+ * (**가로선 + 소실점 하나**)도 아니다. 그 안을 넷으로 가른다:
+ *
+ * | 사유 | 상태 | 지시 1-a의 물음 |
+ * |---|---|---|
+ * | `vp_but_no_screen_h` | 소실점 1 · 가로선 없음 | — (P1에 한 걸음 모자라다) |
+ * | `one_depth_line` | 소실점 0 · 대기 깊이선 1 | "깊이선이 하나뿐인가" |
+ * | `depth_lines_no_vp` | 소실점 0 · 대기 ≥2 | "둘인데 같은 축인지 안 갈리는가" |
+ * | `screen_h_only` | 소실점 0 · 대기 0 · 가로선 있음 | "화면 수평만 있는가" |
+ * | `nothing` | 아무것도 안 섰다 | — |
+ *
+ * `pendingMaxSepDeg`가 `depth_lines_no_vp`를 다시 가른다: **작으면 같은 축**(평행이라
+ * 교점이 무한원), 크면 각차는 충분한데 다른 이유로 못 세운 것이다.
+ */
+function p0Diag(cam: CamState): NonNullable<RunOut["p0"]> {
+  const st = cam.rules;
+  const nH = ([0, 1] as const).filter(i => st.slots[i]?.kind === "vp").length as 0 | 1 | 2;
+  const screenH = ([0, 1] as const).some(i => {
+    const s = st.slots[i];
+    return s != null && s.kind === "screen" && s.dir === "h";
+  });
+  const pend = st.depthLines;
+  let maxSep: number | null = null;
+  if (pend.length >= 2) {
+    maxSep = 0;
+    const ang = (l: RLine) => Math.atan2(l.b[1] - l.a[1], l.b[0] - l.a[0]);
+    for (let i = 0; i < pend.length; i++) {
+      for (let j = i + 1; j < pend.length; j++) {
+        let d = Math.abs(ang(pend[i]) - ang(pend[j])) * 180 / Math.PI;
+        d = d % 180; if (d > 90) d = 180 - d;      // 선의 각차는 [0, 90]
+        maxSep = Math.max(maxSep, d);
+      }
+    }
+    maxSep = round(maxSep, 4);
+  }
+  // ⚠ `depth_lines_no_vp`를 **둘로 가른다**(지시 1-a "둘인데 갈리는가"의 답이 여기서 갈린다):
+  //   · `pending_2_awaiting_third` — 대기가 **정확히 둘**이다. `resolvePool` ③이
+  //     "둘뿐이면 대기"라 **설계대로** 안 세운다(셋째 선 요구 — 6차 지시 11).
+  //   · `pending_3plus_no_candidate` — 셋 이상인데도 못 세운다. 그때는 **후보 문**
+  //     (`beyondSegment`·이음점 병합·무한원)이 짝을 전부 걸렀다는 뜻이라 성질이 다르다.
+  const reason =
+    nH >= 1 ? "vp_but_no_screen_h"
+    : pend.length === 2 ? "pending_2_awaiting_third"
+    : pend.length >= 3 ? "pending_3plus_no_candidate"
+    : pend.length === 1 ? "one_depth_line"
+    : screenH ? "screen_h_only"
+    : "nothing";
+  return { nH: (nH >= 1 ? 1 : 0), screenH, pending: pend.length,
+           pendingMaxSepDeg: maxSep, reason };
 }
 
 // ---------------------------------------------------------------- 집계
@@ -261,6 +433,22 @@ interface Bag {
    * 아니면 P0(카메라가 안 섬)으로 빠졌는가. **층 내 개선과 층 구성 변화를 가른다**(#9).
    */
   byOrder: Record<string, { runs: number; drawnN: number; placedN: number; errs: number[] }>;
+  /**
+   * **P0 실행의 사유별 분해**(2026-08-18 8차 2차 지시 1-a). 분모는 **그 팔의 P0 실행 전부**이고,
+   * `drawnN`을 함께 세어 "몇 획을 긋고 0을 놓는가"를 사유별로도 낸다(#11 — 분모가 전부다).
+   */
+  p0: Record<string, { runs: number; drawnN: number; pending: number[]; maxSep: number[];
+                       rejects: Record<string, number>; events: Record<string, number>;
+                       truthEvents: Record<string, number> }>;
+  /** **거절 사유별 횟수**(지시 1-b) — 어디서 멈추는가. */
+  rejects: Record<string, number>;
+  /** **사건 종류별 횟수**(지시 1-b). */
+  events: Record<string, number>;
+  /** **카메라가 선 획 번호**(지시 1-d). `null`(끝까지 안 섬)은 따로 센다. */
+  stoodAt: number[];
+  neverStood: number;
+  /** **1점 직접 좌표 경로가 열린 실행 수**(지시 2-a). */
+  opfFires: number;
 }
 const orderBag = () => ({ runs: 0, drawnN: 0, placedN: 0, errs: [] as number[] });
 const bag = (): Bag => ({ runs: 0, cameraOk: 0, orders: { p0: 0, p1: 0, p2: 0, p3: 0 },
@@ -268,7 +456,8 @@ const bag = (): Bag => ({ runs: 0, cameraOk: 0, orders: { p0: 0, p1: 0, p2: 0, p
                           firstDecl: { screen_h: 0, screen_v: 0, vp: 0, none: 0 },
                           askKinds: {},
                           byOrder: { p0: orderBag(), p1: orderBag(),
-                                     p2: orderBag(), p3: orderBag() } });
+                                     p2: orderBag(), p3: orderBag() },
+                          p0: {}, rejects: {}, events: {}, stoodAt: [], neverStood: 0, opfFires: 0 });
 
 function add(b: Bag, r: RunOut) {
   b.runs += 1;
@@ -283,6 +472,22 @@ function add(b: Bag, r: RunOut) {
   const o = b.byOrder[`p${r.order}`];
   o.runs += 1; o.drawnN += r.drawnN; o.placedN += r.placedN;
   for (const e of r.errs) o.errs.push(e);
+  // **P0 사유별**(지시 1-a) · **거절 사유별**(1-b)
+  if (r.p0) {
+    const q = (b.p0[r.p0.reason] ??= { runs: 0, drawnN: 0, pending: [], maxSep: [],
+                                       rejects: {}, events: {}, truthEvents: {} });
+    q.runs += 1; q.drawnN += r.drawnN; q.pending.push(r.p0.pending);
+    if (r.p0.pendingMaxSepDeg != null) q.maxSep.push(r.p0.pendingMaxSepDeg);
+    // **그 사유의 실행 안에서만** 거절·사건을 센다(지시 1-b) — 전체 집계는 P2 실행에
+    // 지배되므로 "P0에서 어디서 멈추는가"를 못 낸다(#9 층 구성).
+    for (const [k, n] of Object.entries(r.rejects)) q.rejects[k] = (q.rejects[k] ?? 0) + n;
+    for (const [k, n] of Object.entries(r.events)) q.events[k] = (q.events[k] ?? 0) + n;
+    for (const [k, n] of Object.entries(r.truthEvents)) q.truthEvents[k] = (q.truthEvents[k] ?? 0) + n;
+  }
+  for (const [k, n] of Object.entries(r.rejects)) b.rejects[k] = (b.rejects[k] ?? 0) + n;
+  for (const [k, n] of Object.entries(r.events)) b.events[k] = (b.events[k] ?? 0) + n;
+  if (r.stoodAt == null) b.neverStood += 1; else b.stoodAt.push(r.stoodAt);
+  if (r.opfFires) b.opfFires += 1;
 }
 
 function summarize(b: Bag) {
@@ -322,6 +527,61 @@ function summarize(b: Bag) {
      */
     within_cut_0_2: b.errs.filter(e => e <= 0.2).length,
     beyond_cut_0_5: b.errs.filter(e => e > 0.5).length,
+    /**
+     * **P0의 사유별 분해**(2026-08-18 8차 2차 지시 1-a·1-b). `by_order.p0`는 "140실행이
+     * 1680획을 긋고 0을 놓는다"까지만 말하고 **왜 안 서는지는 안 말한다.**
+     *
+     * ⚠ **`placement`을 여기 안 낸다** — P0의 배치는 **정의상 0**이다(카메라가 없으면
+     * `liftAll`을 못 부른다). 그 0을 사유별로 적으면 측정이 아니라 보장이다(#5·#40 ②).
+     * 대신 **몇 획이 그 상태에 묶여 있는가**(`strokes`)를 낸다 — 그것이 항목 5-1이
+     * "방향 확정 · 좌표 미정"으로 흡수해야 할 몫의 크기다.
+     */
+    p0_reasons: Object.fromEntries(Object.entries(b.p0).map(([k, q]) => [k, {
+      runs: q.runs,
+      /** 그 사유로 묶인 **획 수** — 항목 5-1이 흡수할 몫. */
+      strokes: q.drawnN,
+      pending_median: q.pending.length ? round(median(q.pending), 4) : null,
+      pending_max: q.pending.length ? Math.max(...q.pending) : null,
+      /** 대기 깊이선 사이 **최대 각차**(도). 작으면 "둘인데 같은 축"이다. */
+      pending_sep_deg_median: q.maxSep.length ? round(median(q.maxSep), 4) : null,
+      pending_sep_deg_min: q.maxSep.length ? round(Math.min(...q.maxSep), 4) : null,
+      pending_sep_deg_max: q.maxSep.length ? round(Math.max(...q.maxSep), 4) : null,
+      /** 각차가 `concurrent_deg`(3°) **미만**인 실행 — 사실상 같은 축이다. */
+      sep_below_concurrent: q.maxSep.filter(d => d < 3).length,
+      /** **그 사유의 실행 안에서** 획이 무엇이 됐는가(지시 1-b). 분모는 `strokes`다. */
+      events: q.events,
+      rejects: q.rejects,
+      /** **참 축 × 사건**(지시 1-a) — 깊이 획이 어디로 새는가. */
+      truth_events: q.truthEvents,
+    }])),
+    /** **어디서 멈췄는가**(지시 1-b) — 거절 사유별 횟수. 분모는 `fed_strokes`가 아니라
+     *  `placement`의 분모(그은 획 전부)다. 한 획이 여러 번 거절되지는 않는다. */
+    rejects: b.rejects,
+    /** **사건 종류별**(지시 1-b) — 분모는 규칙에 넣은 획이다(`placement`의 분모와 같다). */
+    events: b.events,
+    /**
+     * **몇 번째 획에서 카메라가 섰는가**(지시 1-d). `never`는 그 실행이 P0으로 끝난 것이다.
+     * ⚠ **`p90`이 획 예산에 붙어 있으면 P0의 일부는 하네스가 획을 그만 준 것이다**(#32) —
+     * 그때 "카메라가 안 선다"는 규칙의 성질이 아니라 **픽스처의 성질**이다.
+     */
+    /**
+     * **1점 직접 좌표 경로가 열린 실행 수**(2026-08-18 8차 2차 지시 2-a).
+     *
+     * ⚠⚠ **이 하네스는 그 경로를 안 돌린다** — `liftAll`만 부른다. 앱은 1점 시점에서
+     * `onePointFrame`이 서면 `directSegment`로 간다(D-L77). 이 수가 **0이 아니면**
+     * 그만큼 **이 원장의 P1 수치가 앱을 서술하지 않는다**(#17). 0이면 갈림이 없다.
+     */
+    one_point_direct_open: b.opfFires,
+    stood_at: {
+      never: b.neverStood,
+      stood: b.stoodAt.length,
+      median: b.stoodAt.length ? round(median(b.stoodAt), 4) : null,
+      p90: b.stoodAt.length
+        ? [...b.stoodAt].sort((x, y) => x - y)[Math.min(b.stoodAt.length - 1,
+            Math.floor(0.9 * b.stoodAt.length))]
+        : null,
+      max: b.stoodAt.length ? Math.max(...b.stoodAt) : null,
+    },
     /** **차수별 분해**(지시 1-a) — 줄어든 배치가 어느 차수로 옮겨 갔는지 가른다(#9). */
     by_order: Object.fromEntries(Object.entries(b.byOrder).map(([k, o]) => [k, {
       runs: o.runs,
@@ -382,6 +642,28 @@ describe("차수가 P1에 갇히는가 — 그리고 배치가 따라오는가 (
                 add(slot(byComp, COMPOSITIONS[ci].name)[arm], r);
                 add(slot(bySeed, `seed_${seed}`)[arm], r);
               }
+            }
+          }
+        }
+      }
+    }
+
+    // ---- **획 예산 팔**(2026-08-18 8차 2차 지시 1-d) — 같은 구도·같은 시드에서
+    //      **상자를 하나 더** 놓아 획을 12 → 24로 늘린다. 획 길이는 그대로다(세분이 아니다).
+    //      ⚠ **`fixed` 팔만** 돌린다 — 묻는 것은 "획이 더 오면 서는가" 하나이고,
+    //      다섯 팔을 다 돌리면 실행 시간만 다섯 배다(A-3: 범위를 넓히지 않는다).
+    const twoBox = bag();
+    const oneBoxPaired = bag();     // **짝지은 대조**(#9) — 두 상자가 도는 픽스처만 센다
+    for (let ci = 0; ci < COMPOSITIONS.length; ci++) {
+      for (const jit of JITTERS) {
+        for (const grade of GRADES) {
+          for (const seed of SEEDS) {
+            const fx2 = fixture(ci, jit, grade, seed, 2);
+            const fx1 = fixture(ci, jit, grade, seed, 1);
+            if (!fx2 || !fx1) continue;
+            for (const ord of ["alternating", "grouped"] as Order[]) {
+              add(twoBox, runOne(fx2, ord, "fixed"));
+              add(oneBoxPaired, runOne(fx1, ord, "fixed"));
             }
           }
         }
@@ -472,12 +754,41 @@ describe("차수가 P1에 갇히는가 — 그리고 배치가 따라오는가 (
        * 배치 격차를 어디에도 못 돌렸다. 단일 요인 팔 둘이 그것을 가른다.
        */
       factor_split: {
-        note: "축 라벨만 참으로 바꾸면(rule_vp_true_axis) 형태 오차가 안 움직이고, "
-            + "소실점만 참으로 바꾸면(true_vp_rule_axis) 크게 움직인다 — **틀린 것은 카메라다.** "
-            + "⚠ 배치 수(분모가 아니라 분자)는 반대로 움직인다: 참 소실점 팔은 규칙 축 라벨이 "
-            + "그 카메라와 안 맞아 놓이는 획이 준다(#9 — 무엇이 섞였는지 먼저 가른다).",
+        // ⛔⛔ **옛 결론문을 지웠다**(2026-08-18 8차 2차 지시 항목 0 · 8-2R [3]).
+        // 옛 note: "축 라벨만 참으로 바꾸면 형태 오차가 **안 움직이고**(1.3329 → 1.3511),
+        // 소실점만 참으로 바꾸면 **크게 움직인다**(→ 0.2452)". **8차 항목 1이 그 값을 뒤집었고**
+        // 아무도 이 산문을 다시 안 읽었다(그 세 수는 현행 원장에 **없다**).
+        note: "**중앙값으로 읽으면 방향이 갈리지 않는다**(8차 항목 1 이후 재측정): "
+            + "축 라벨만 참으로(rule_vp_true_axis) → 중앙이 **나빠지고**, "
+            + "소실점만 참으로(true_vp_rule_axis) → 중앙이 **조금 좋아진다**. "
+            + "⚠⚠ **중앙은 이 비교에 못 쓴다** — 두 팔의 **놓인 수가 크게 다르기 때문**이다"
+            + "(#9·#15: 층 구성이 바뀌면 층 내 개선과 안 갈린다). 참 축 라벨 팔은 훨씬 많이 놓고"
+            + "(그 여분이 나쁜 것들이다) 참 소실점 팔은 훨씬 적게 놓는다. "
+            + "**분모가 같은 절대 개수로 읽어야 한다**: `within_cut_0_2`(분모는 그은 획 7200으로 "
+            + "모든 팔이 같다)에서 fixed **대** rule_vp_true_axis **대** true_vp_rule_axis가 "
+            + "갈리고, 거기서는 **소실점 쪽이 압도적이다.** 즉 **'틀린 것은 축 배정이 아니라 "
+            + "카메라다'라는 결론 자체는 유지되고, 그 근거가 중앙에서 절대 개수로 바뀐다** "
+            + "(#28: 지표를 사유 없이 바꾸지 않는다 — 사유는 중앙의 분모가 팔마다 다르다는 것이고, "
+            + "옛 판이 그것을 안 본 채 중앙을 비교했다). "
+            + "⚠⚠⚠ **시드 폭을 함께 읽는다**(#14 · 8-2R′ [2]): `by_seed`에서 `fixed`의 "
+            + "`within_cut_0_2`는 **0 · 0 · 0 · 15 · 16 · 15**로 **시드 절반이 0**이고, "
+            + "`rule_vp_true_axis`는 **1 · 1 · 0 · 8 · 2 · 1**이라 **시드 셋(1·2·3)에서는 "
+            + "축 라벨 참 팔이 fixed와 같거나 오히려 낫다** — 즉 **'축 라벨을 참으로 주면 "
+            + "나빠진다'는 시드 폭을 못 넘는다.** 반면 `true_vp_rule_axis`는 "
+            + "**158 · 127 · 170 · 149 · 155 · 149**로 **여섯 시드 전부에서 fixed의 열 배 위**다. "
+            + "**그러므로 이 원장이 시드 폭을 견디는 결론은 하나뿐이다: 소실점이 지배한다.** "
+            + "축 라벨의 방향(나빠지는가)은 **여기서 못 세운다.** "
+            + "⚠ **같은 양이 팔 조합에 따라 판별력이 다르다**(8-2R′ [11]): 이 원장의 "
+            + "`what_this_does_not_say`가 적듯 `bypass` ↔ `fixed`에서는 `within_cut_0_2`가 "
+            + "**46 대 46으로 정보가 0**이다. 요인 팔 사이(46 대 908)에서만 가른다 — "
+            + "**한 지표가 어디서나 판별력을 갖는다고 읽지 않는다.**",
         shape_err_median: Object.fromEntries(ARMS.map(a =>
           [a, round(median(head[a].errs), 4)])),
+        /** **분모가 팔마다 같은 유일한 지표**(8-2R [3]) — 판정은 이것으로 한다. */
+        within_cut_0_2: Object.fromEntries(ARMS.map(a =>
+          [a, head[a].errs.filter(e => e <= 0.2).length])),
+        /** 분모(그은 획)는 모든 팔에서 같다 — 위 개수가 비교 가능한 이유다. */
+        within_cut_0_2_denominator: head.fixed.drawnN,
         placement: Object.fromEntries(ARMS.map(a =>
           [a, fraction(head[a].placedN, head[a].drawnN)])),
         silent_wrong_cut_0_2: Object.fromEntries(ARMS.map(a =>
@@ -520,6 +831,24 @@ describe("차수가 P1에 갇히는가 — 그리고 배치가 따라오는가 (
           + "`screen_h_operating_point`가 **입력 쪽 카운터**를 2°·4°·8°로 낸다 — 규칙을 다시 돌리는 "
           + "스윕은 아니다(7-R [7])",
       ],
+      /**
+       * **획 예산이 P0를 만드는가**(2026-08-18 8차 2차 지시 1-d).
+       *
+       * 지시: *"합성 하네스가 이 구간을 만들어내는 조건이 실사용과 같은지 확인한다.
+       * 실획에서는 사용자가 계속 그으므로 결국 확정될 수 있다."*
+       *
+       * `one_box`는 현행 픽스처(상자 하나 = 12획), `two_box`는 **같은 크기의 상자를 하나 더**
+       * 놓은 것(24획)이다. **획 길이는 같다** — 세분(`k=2`)으로 늘리면 획이 1/k로 짧아져
+       * `min_vp_len_ratio`에 더 걸리고 반대 방향으로 간다(`DEFERRED` 리뷰어 [10]).
+       *
+       * ⚠ **이것은 실사용의 모형이지 실사용이 아니다**(#32) — 사람은 상자를 하나 더 그리는
+       * 대신 같은 상자에 선을 덧그을 수도 있고, 그 경우 획 수는 늘되 **새 정보는 안 는다**.
+       * 실획이 판정자다(`real_ink`, 표본 0).
+       */
+      stroke_budget: {
+        one_box: summarize(oneBoxPaired),
+        two_box: summarize(twoBox),
+      },
       constants: constantsSnapshot(),
       metric_defs: metricsSnapshot(),
     };
