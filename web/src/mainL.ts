@@ -1072,7 +1072,11 @@ const orbitTarget = (): Vec3 => stage.centroid(lifted(doc).map(s =>
  * 좌표(그린 축)를 세계로 **되올린다**. 상대 회전(spinYaw)은 기준계 무관이라 안 건드린다.
  * P1(정면 확정)에서는 그린 축 = 세계 축이라 **항등**이다 — 옛 거동이 그대로 남는다.
  */
+/** 기준계 대조 스위치(#30) — `false`가 옛 기준계(three 세계 축)다. 앱에서 안 끈다. */
+const CUBE_FRAME = { on: true };
+
 function drawnBasisThree(): { X: Vec3; Y: Vec3; Z: Vec3 } | null {
+  if (!CUBE_FRAME.on) return null;
   const dirs = cam.ctx()?.axisDirs;
   if (!dirs || dirs.length < 3 || dirs.some(d => !d)) return null;
   // 우리 규약(y 아래·z 안쪽) → three(y 위·z 앞) — 뒤집기는 viewport.ts 규약 그대로
@@ -3173,6 +3177,8 @@ refresh();
   /** **화면 팬**(항목 5) — 표시 오프셋(css px). 문서 좌표에는 절대 안 들어간다. */
   viewPan: () => [stage.viewPan[0], stage.viewPan[1]],
   setViewPan: (p: Pt2) => { stage.setViewPan(p); refresh(); },
+  /** 큐브 기준계 스위치(#30) — `false`가 옛 기준계(세계 축). cube_frame의 대조 팔이 쓴다. */
+  setCubeFrame: (on: boolean) => { CUBE_FRAME.on = on; },
   /** **배치 경로 카운터**(4-6) — 합이 배치 전체와 맞는지 원장이 검산한다. */
   placeBy: () => ({ ...placeBy }),
   /** **시점 저장**(5차 지시 7-1) — 종단 확인이 앱 경로 그대로 부른다(#17). */
