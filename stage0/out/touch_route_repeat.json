@@ -2,44 +2,98 @@
   "what": "`touch_route` dpr 2 회전 판정(|az − dpr1_az| < 1e-6)을 같은 커밋에서 N회 돌려 **실패 빈도와 차의 분포**를 남긴다(8차 2차 지시 항목 3). 7차가 '실행마다 갈린다'를 적고 **빈도를 안 남겼다**(DEFERRED).",
   "how": "`npx playwright test e2e/touch_route.spec.ts`를 **12회** 돌리고 매 실행의 `touch_route.json`의 `dpr2.rotate`를 읽는다. 파일 전체를 돌린다 — `-g`로 dpr 2만 돌리면 dpr 1 팔이 없어 `test.skip`이 걸린다.",
   "threshold": {
-    "az_tol_rad": 1e-06,
+    "az_tol_rad": 1e-11,
     "source": "`touch_route.spec.ts`의 판정 그대로(#17 — 새 임계를 만들지 않는다)"
   },
   "runs": 12,
   "fail_count": 0,
   "fail_rate": 0.0,
   "fail_rate_note": "N=12. **분자/분모로 읽는다** — 0/12은 '실패율 0'이 아니라 '12회에서 안 났다'이다(#14 · #38). 참 실패율 10%도 이 표본에서 0회일 확률이 상당하다.",
+  "by_tol": [
+    {
+      "tol": 5e-13,
+      "fail": "2/12",
+      "ratio_to_band_max": 0.7569075003984027
+    },
+    {
+      "tol": 1e-12,
+      "fail": "0/12",
+      "ratio_to_band_max": 1.5138150007968054
+    },
+    {
+      "tol": 5e-12,
+      "fail": "0/12",
+      "ratio_to_band_max": 7.569075003984026
+    },
+    {
+      "tol": 1e-11,
+      "fail": "0/12",
+      "ratio_to_band_max": 15.138150007968052
+    },
+    {
+      "tol": 1e-10,
+      "fail": "0/12",
+      "ratio_to_band_max": 151.38150007968054
+    },
+    {
+      "tol": 1e-08,
+      "fail": "0/12",
+      "ratio_to_band_max": 15138.150007968054
+    },
+    {
+      "tol": 1e-06,
+      "fail": "0/12",
+      "ratio_to_band_max": 1513815.0007968054
+    }
+  ],
+  "by_tol_note": "**임계가 밴드의 몇 배인가**(`ratio_to_band_max`)가 이 표의 읽는 축이다. 1보다 작으면 밴드 안이라 간헐 실패가 나고, 수만 배 위면 아무것도 안 잰다. 9차 항목 3이 고른 **1e-11은 밴드 상단의 약 17.5배**다 — 실패 0이면서 dpr 오배선(Δ≈0.5rad)과는 **열한 자리** 여유가 있다. ⚠ N이 작아 밴드 상단은 **과소추정**이다(#14).",
   "would_fail_at_old_tol_5e_13": {
     "tol": 5e-13,
-    "count": 1,
+    "count": 2,
     "denominator": 12,
-    "note": "옛 판정(`toBeCloseTo` 정밀도 12)의 임계다. **현행 1e-6은 이 머신의 밴드 (1e-13대)에서 다섯 자리 밖이라 아무것도 안 가른다** — 그래서 0/N이 나온다. 갈리는 것을 보려면 옛 임계로 센다. 그 수가 0이 아니면 **'실행마다 갈린다'는 이 머신에서도 참이고, 갈리게 만든 것은 임계이지 코드가 아니다**(#24 — 단위·임계를 바꾸는 것과 판정을 바꾸는 것은 다르다)."
+    "note": "옛 판정(`toBeCloseTo` 정밀도 12)의 임계다. **옛 1e-6은 이 머신의 밴드 (1e-13대)에서 다섯 자리 밖이라 아무것도 안 갈랐다** — 그래서 0/N이 나왔다. 갈리는 것을 보려면 옛 임계로 센다. 그 수가 0이 아니면 **'실행마다 갈린다'는 이 머신에서도 참이고, 갈리게 만든 것은 임계이지 코드가 아니다**(#24 — 단위·임계를 바꾸는 것과 판정을 바꾸는 것은 다르다). ⚠ **9차 항목 3이 스펙 임계를 1e-11로 내렸다** — 위 `by_tol`이 그 자리를 낸다."
   },
   "abs_diff": {
-    "min": 6.94999613415348e-14,
-    "median": 2.000621890374532e-13,
-    "max": 5.715428130770306e-13,
+    "min": 1.694200335577989e-13,
+    "median": 3.9257486150745535e-13,
+    "max": 6.605826996519681e-13,
     "note": "**분자/분모로 읽는다**(CLAUDE §5) — 실패 수 / 실행 수. N이 작으면 비율의 유효 자릿수가 1자리다(#14)."
   },
   "rows": [
     {
       "run": 1,
-      "azimuth_delta": 1.0875938959011509,
-      "dpr1_azimuth_delta": 1.0875938959012204,
-      "abs_diff": 6.94999613415348e-14,
+      "azimuth_delta": 1.0875938959008862,
+      "dpr1_azimuth_delta": 1.0875938959013065,
+      "abs_diff": 4.2033043712308427e-13,
       "within_tol": true,
       "process_exit": 0
     },
     {
       "run": 2,
-      "azimuth_delta": 1.0875938959007045,
-      "dpr1_azimuth_delta": 1.087593895901276,
-      "abs_diff": 5.715428130770306e-13,
+      "azimuth_delta": 1.087593895900961,
+      "dpr1_azimuth_delta": 1.0875938959013065,
+      "abs_diff": 3.455014052633487e-13,
       "within_tol": true,
       "process_exit": 0
     },
     {
       "run": 3,
+      "azimuth_delta": 1.0875938959008862,
+      "dpr1_azimuth_delta": 1.0875938959012788,
+      "abs_diff": 3.9257486150745535e-13,
+      "within_tol": true,
+      "process_exit": 0
+    },
+    {
+      "run": 4,
+      "azimuth_delta": 1.0875938959007045,
+      "dpr1_azimuth_delta": 1.0875938959013127,
+      "abs_diff": 6.081801728896608e-13,
+      "within_tol": true,
+      "process_exit": 0
+    },
+    {
+      "run": 5,
       "azimuth_delta": 1.0875938959008862,
       "dpr1_azimuth_delta": 1.0875938959012112,
       "abs_diff": 3.2507330161024584e-13,
@@ -47,74 +101,58 @@
       "process_exit": 0
     },
     {
-      "run": 4,
-      "azimuth_delta": 1.0875938959008862,
-      "dpr1_azimuth_delta": 1.087593895901236,
-      "abs_diff": 3.497202527569243e-13,
-      "within_tol": true,
-      "process_exit": 0
-    },
-    {
-      "run": 5,
-      "azimuth_delta": 1.087593895901027,
-      "dpr1_azimuth_delta": 1.0875938959011704,
-      "abs_diff": 1.4344081478157023e-13,
-      "within_tol": true,
-      "process_exit": 0
-    },
-    {
       "run": 6,
-      "azimuth_delta": 1.0875938959008011,
-      "dpr1_azimuth_delta": 1.0875938959012204,
-      "abs_diff": 4.192202140984591e-13,
+      "azimuth_delta": 1.0875938959008862,
+      "dpr1_azimuth_delta": 1.0875938959012552,
+      "abs_diff": 3.6903813338540203e-13,
       "within_tol": true,
       "process_exit": 0
     },
     {
       "run": 7,
-      "azimuth_delta": 1.0875938959010665,
-      "dpr1_azimuth_delta": 1.0875938959012665,
-      "abs_diff": 2.000621890374532e-13,
+      "azimuth_delta": 1.087593895901052,
+      "dpr1_azimuth_delta": 1.0875938959012472,
+      "abs_diff": 1.9517720772910252e-13,
       "within_tol": true,
       "process_exit": 0
     },
     {
       "run": 8,
-      "azimuth_delta": 1.087593895901085,
-      "dpr1_azimuth_delta": 1.0875938959012112,
-      "abs_diff": 1.2634338020234281e-13,
+      "azimuth_delta": 1.0875938959007705,
+      "dpr1_azimuth_delta": 1.0875938959011808,
+      "abs_diff": 4.1033842990145786e-13,
       "within_tol": true,
       "process_exit": 0
     },
     {
       "run": 9,
-      "azimuth_delta": 1.087593895901136,
-      "dpr1_azimuth_delta": 1.0875938959012441,
-      "abs_diff": 1.0813572259849025e-13,
+      "azimuth_delta": 1.0875938959005946,
+      "dpr1_azimuth_delta": 1.0875938959012552,
+      "abs_diff": 6.605826996519681e-13,
       "within_tol": true,
       "process_exit": 0
     },
     {
       "run": 10,
-      "azimuth_delta": 1.0875938959010323,
-      "dpr1_azimuth_delta": 1.0875938959012472,
-      "abs_diff": 2.149391775674303e-13,
+      "azimuth_delta": 1.0875938959010665,
+      "dpr1_azimuth_delta": 1.087593895901236,
+      "abs_diff": 1.694200335577989e-13,
       "within_tol": true,
       "process_exit": 0
     },
     {
       "run": 11,
       "azimuth_delta": 1.087593895901027,
-      "dpr1_azimuth_delta": 1.087593895901208,
-      "abs_diff": 1.8096635301390052e-13,
+      "dpr1_azimuth_delta": 1.0875938959012112,
+      "abs_diff": 1.8429702208777599e-13,
       "within_tol": true,
       "process_exit": 0
     },
     {
       "run": 12,
-      "azimuth_delta": 1.0875938959011198,
-      "dpr1_azimuth_delta": 1.0875938959011955,
-      "abs_diff": 7.571721027943568e-14,
+      "azimuth_delta": 1.0875938959008011,
+      "dpr1_azimuth_delta": 1.0875938959012579,
+      "abs_diff": 4.567457523307894e-13,
       "within_tol": true,
       "process_exit": 0
     }

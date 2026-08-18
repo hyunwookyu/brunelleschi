@@ -23,6 +23,20 @@ import { constantsSnapshot } from "../test/constants.js";
 import { metricsSnapshot } from "../test/metrics.js";
 import { setupScene, setupConfirmed } from "./fixture.js";
 
+/**
+ * **dpr 2 회전 판정의 허용치(rad)**(2026-08-18 9차 항목 3).
+ *
+ * ⚠ **`SHARED_CONSTANTS`(전역 해시)에 안 넣는다** — D-L51·`OSNAP_RADIUS_PX`와 같은 자리의
+ * 결정이다: 전역 해시가 하나뿐이라 넣으면 이 값에 의존한 적 없는 원장 50여 개가 STALE이 된다.
+ * 대신 **이 값을 쓰는 원장이 `az_tol_rad`와 `az_tol_basis`로 값과 근거를 그대로 적는다**
+ * (STALE 사각지대임을 병기 — D-C4의 예외이고 그 사유가 여기 있다).
+ *
+ * 근거: 같은 커밋 12회의 밴드가 **6.95e-14 ~ 5.72e-13**(`touch_route_repeat.json`)이고
+ * 이 값은 그 **상단의 17.5배**다. 옛 1e-6은 상단의 **175만 배**여서 아무것도 안 갈랐다.
+ */
+const AZ_TOL_RAD = 1e-11;
+
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
 const led: Record<string, unknown> = {};
@@ -504,7 +518,25 @@ test.describe("dpr 2", () => {
         reading: "**백버퍼가 css 폭의 2배**여야 dpr 섭동이 실제로 걸린 것이다. "
                + "1이면 회전 비 1.0은 '규약이 지켜졌다'가 아니라 '섭동이 안 걸렸다'다" },
       rotate: { azimuth_delta: az, dpr1_azimuth_delta: one, ratio: az / one!,
-                az_tol_rad: 1e-6,
+                az_tol_rad: AZ_TOL_RAD,
+                az_tol_basis: {
+                  measured_band_n: 12,
+                  measured_abs_diff_min: 1.694200335577989e-13,
+                  measured_abs_diff_median: 3.9257486150745535e-13,
+                  measured_abs_diff_max: 6.605826996519681e-13,
+                  ratio_to_band_max: 15.1,
+                  source: "`touch_route_repeat.json`(같은 커밋 12회) — **임계를 바꾼 뒤 다시 쟀다**",
+                  band_moved: "⚠⚠ **밴드 자체가 실행 묶음마다 움직인다**: 8차 2차의 12회는 "
+                    + "상단 **5.715e-13**, 9차 항목 3의 12회는 **6.606e-13**으로 **16% 크다**. "
+                    + "N=12의 상단은 그만큼 흔들리므로 **여유를 배수로 두는 것이 옳다**(#14).",
+                  why: "**옛 임계 1e-6은 이 기계 밴드의 175만 배**라 0/12로 아무것도 안 갈랐다"
+                     + "(#40 계열 — 검사가 통과하는데 아무것도 안 잰다). 밴드 상단의 **17.5배**로 "
+                     + "내렸다. ⚠ **오배선의 신호와는 여전히 다섯 자리 위 여유가 있다**: "
+                     + "dpr이 어딘가에서 곱해지면 비가 2가 되고 Δ ≈ 0.5rad이다. "
+                     + "⚠⚠ **N=12이라 밴드 상단은 과소추정이다**(#14 — 유효 자릿수 1). "
+                     + "이 임계에서 간헐 실패가 나면 **코드 결함이 아니라 밴드가 넓은 것**이므로 "
+                     + "`touch_route_repeat.py`를 다시 돌려 밴드부터 갱신한다.",
+                },
                 az_tol_note: "판정은 |az−dpr1| < 1e-6rad(6차 항목 1에서 개정, #28 — 옛 정밀도 12"
                   + "(5e-13)는 판정 의도(오배선 = 비 2, Δ≈0.5rad)보다 다섯 자리 과했다. 두 팔의 "
                   + "차는 이 원장의 azimuth_delta 두 필드가 이 실행의 값이다. 6차 컨테이너"
@@ -535,8 +567,13 @@ test.describe("dpr 2", () => {
     // ⚠ 정밀도 12(5e-13)는 판정 의도보다 다섯 자리 과했다 — dpr 오배선의 신호는 **비 2**
     // (Δ≈0.5rad)이지 1e-10대 잡음이 아니다. 이 컨테이너에서는 관측 4회 전부 1e-10대로
     // 실패했고(변경 전 코드에서도 재현), 5차 환경의 통과 기록은 그쪽 차가 5e-13 이하였다는
-    // 뜻이다 — 환경 간 밴드가 다르다(원인 미상). 1e-6rad은 오배선과 다섯 자리 여유로 갈린다.
-    expect(Math.abs(az - one!)).toBeLessThan(1e-6);
+    // 뜻이다 — 환경 간 밴드가 다르다(원인 미상).
+    //
+    // ⛔⛔ **그런데 1e-6은 반대 방향으로 과했다**(2026-08-18 9차 항목 3 · #40 계열):
+    // 이 기계의 밴드는 **6.95e-14 ~ 5.72e-13**(`touch_route_repeat.json`, 같은 커밋 12회)이고
+    // 1e-6은 그 상단의 **175만 배**다 — **0/12로 아무것도 안 가른다.** "검사가 통과하는데
+    // 아무것도 안 재는" 자리이고, 그것이 이 항목이 고친 것이다. **밴드 상단의 17.5배**로 내렸다.
+    expect(Math.abs(az - one!)).toBeLessThan(AZ_TOL_RAD);
     // 양성 채널: 절반 손짓은 절반 돈다(죽은 구간 한 걸음이 양쪽에서 같은 비율로 빠진다)
     expect(az2 / azFull).toBeGreaterThan(0.45);
     expect(az2 / azFull).toBeLessThan(0.55);

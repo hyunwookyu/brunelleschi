@@ -186,8 +186,8 @@
       "p90": 456,
       "max": 576
     },
-    "build_ms_total": 159.1,
-    "build_ms_per_stroke": 0.3648
+    "build_ms_total": 138.7,
+    "build_ms_per_stroke": 0.3182
   },
   "scale_note": "지연 예산(P1/P4/V-n) 확인용이다. 획 하나가 삼각형 수백 개 규모이고 생성이 밀리초 이하이면 **온디맨드 렌더로 충분**하다 — 매 프레임 도는 루프가 필요 없다.",
   "twist_ratio": {

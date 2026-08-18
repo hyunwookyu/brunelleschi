@@ -225,9 +225,28 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
       };
     });
 
+    // ⚠⚠ **반경 15 한 점만 내면 결론 층의 도달 가능성이 안 보인다**(9-R″ [3] · #35·#40 ②③):
+    // "1점·2점에서 15의 잘못된 연결이 0"이 **어떤 반경에서도 0**이면 그것은
+    // "반경이 안전하다"가 아니라 **이 픽스처가 그 층에서 대상을 못 만든 것**이다.
+    // 그래서 **구도 × 반경 전부**를 낸다.
     const byComp = Object.fromEntries(COMPOSITIONS.map(C => {
-      const far = rows.filter(r => r.comp === C.name && r.radius === 15);
-      return [C.name, { n: far.length, wrong: fraction(far.filter(r => r.wrong).length, far.length) }];
+      const all = rows.filter(r => r.comp === C.name);
+      const at15 = all.filter(r => r.radius === 15);
+      const byR = Object.fromEntries(RADII.map(R => {
+        const f = all.filter(r => r.radius === R);
+        return [`r${R}`, fraction(f.filter(r => r.wrong).length, f.length)];
+      }));
+      return [C.name, {
+        n: at15.length, wrong: fraction(at15.filter(r => r.wrong).length, at15.length),
+        by_radius: byR,
+        // **이 구도에서 잘못된 연결이 한 번이라도 나는가** — 아니오면 결론이 이 층에
+        // 기댈 수 없다(#35: 기준을 못 넘은 것이 신호의 성질인지 픽스처의 성질인지)
+        reachable_any_radius: all.some(r => r.wrong),
+        max_wrong_at: RADII.reduce((best, R) => {
+          const k = all.filter(r => r.radius === R && r.wrong).length;
+          return k > best.k ? { r: R, k } : best;
+        }, { r: 0, k: 0 }),
+      }];
     }));
 
     const aimAll = connRows.filter(r => r.radius === RADII[0]).map(r => r.aimPx);
@@ -248,13 +267,13 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
             + "그것은 **정의상 잘못된 연결**이다 — 그리는 사람은 새 덩어리를 시작한 것이다.",
       },
       sweep,
-      by_composition_at_15: byComp,
+      by_composition: byComp,
       selfcheck_notes: {
         "sweep[9].missed_rate = 0": "**정상이고 뜻이 있다** — 반경 40px은 이 픽스처의 "
           + "겨냥 거리 분포(p90 26.95px)를 통째로 덮어서 놓친 연결이 하나도 안 남는다. "
           + "**측정 미작동이 아니라 반경이 분포를 넘어선 것**이고, 같은 행의 `wrong` 536/4608이 "
           + "그 대가를 낸다(#5 — 0의 출처를 원장에 적는다).",
-        "by_composition_at_15.3pt_yaw35_pitch15.n = 0": "**판정 전에 뺐다**(#20). 그 구도는 "
+        "by_composition.3pt_yaw35_pitch15.n = 0": "**판정 전에 뺐다**(#20). 그 구도는 "
           + "두 덩어리의 참 정점이 화면에서 40px 안으로 겹쳐 '안 붙어야 한다'가 흐려진다. "
           + "뺀 수는 `population.overlap_dropped_compositions`에 있다 — **뺄셈으로 만든 "
           + "집합이 아니라 직접 센 것**이다(#10).",
