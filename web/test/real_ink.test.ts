@@ -186,6 +186,7 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
       let legacyZero = 0, nLifted = 0, nSnapEnd = 0, snapDistNull = 0;
       const snapStartKinds: Record<string, number> = {};
       const vpDirErrs: number[] = [];
+      let vpDirGuaranteed = 0;
       const vpSource: Record<string, number> = {};
       const pathUse = { direct: 0, lift: 0, twoPoint: 0 };
       const lensR: number[] = [], vertexGaps: number[] = [], horizonDelta: number[] = [];
@@ -212,7 +213,13 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
               const a0: Pt2 = [st.pts2d[0][0], st.pts2d[0][1]];
               const b0: Pt2 = [st.pts2d[st.pts2d.length - 1][0], st.pts2d[st.pts2d.length - 1][1]];
               const e = vpDirErrDeg(a0, b0, sl.at);
-              if (e != null) vpDirErrs.push(e);
+              // ⚠⚠ **소실점을 만든 획은 보장이지 측정이 아니다**(#5 · 2026-08-18 9-R [M10]).
+              // `horizon_x_line`은 그 획과 지평선의 **교점**을 소실점으로 두므로 그 획의
+              // 겨냥 오차는 **정의상 0**이고, 첫 실획 표본에서 실제로 정확히 0이 나왔다.
+              // 갈라 세지 않으면 **분포의 4분의 1이 항등**이라 중앙값이 아래로 끌린다.
+              // ⚠ `two_lines`는 **대표 직선**(`representative`)의 교점이라 원시 끝점 기준의
+              // 이 지표는 0이 아니다 — 그래서 **정확히 0인 것만** 보장으로 뺀다(관측된 성질).
+              if (e != null) { if (e < 1e-9) vpDirGuaranteed += 1; else vpDirErrs.push(e); }
             }
           }
           const pts = st.pts2d;
@@ -261,6 +268,8 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
         snap_dist_null: `${snapDistNull}/${n}`,
         snap_use: { start_kinds: snapStartKinds, end_snapped: `${nSnapEnd}/${nLifted}` },
         vp_dir_err_deg: stat(vpDirErrs, 2),
+        // **보장으로 갈라 센 몫**(#5) — 소실점을 만든 획이라 정의상 0이다
+        vp_dir_guaranteed_zero: `${vpDirGuaranteed}/${vpDirGuaranteed + vpDirErrs.length}`,
         ask: { asked, answered, skipped },
         vp_confirm_source: vpSource,
         path_use: pathUse,
@@ -280,12 +289,27 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
       writeFileSync(resolve(OUT, "real_ink.json"), JSON.stringify({
         ...base,
         k_metrics: kMetrics,
-        status: "awaiting_samples",
+        // ⚠ **`s2s-session/1`이 없다**는 뜻이고, `.brnl`(Doc2)은 `k_metrics`가 따로 잰다.
+        // 갈라 적는다(#11 — 분모가 무엇인지). 위 상태만 보고 "표본 0"으로 읽으면
+        // 실제로 있는 Doc2 측정을 놓친다.
+        status: kMetrics.status === "measured" ? "brnl_only" : "awaiting_samples",
         n_sessions: 0, n_strokes: 0,
-        note: "**표본 없음.** 수단은 서 있고 측정은 사용자 획이 들어온 뒤다. AS-6·AS-12는 그때까지 잠정.",
+        note: kMetrics.status === "measured"
+          ? "**옛 `s2s-session/1` 표본은 없고 `.brnl`(Doc2)이 있다** — 측정은 `k_metrics`에 있다. "
+            + "AS-6·AS-12(이 절의 지표)는 그 형식으로는 아직 못 잰다."
+          : "**표본 없음.** 수단은 서 있고 측정은 사용자 획이 들어온 뒤다. AS-6·AS-12는 그때까지 잠정.",
       }, null, 2), "utf-8");
       // **통과로 세지 않는다**(#32) — 여기서 끝내면 "측정이 돌았다"로 읽힌다.
       // vitest의 동적 건너뛰기로 **skip으로 보고**한다.
+      // ⚠⚠ **`.brnl`(Doc2)만 있는 경우를 가른다**(2026-08-18 9차 — 첫 실획 표본이 도착해
+      // 실제로 걸렸다). 옛 판은 `s2s-session/1`이 비면 무조건 여기로 왔고, 그러면
+      // **`sessions/`에 파일이 있는데** `skipReason`이 null을 내서 이 단언이 **실패**했다.
+      // `k_metrics`는 그 위에서 이미 `.brnl`을 재고 있었으므로 **측정은 돌았는데 테스트가
+      // 깨지는** 모양이었다(#32의 반대편 — 돌았는데 안 돈 것으로 보고된다).
+      if (kMetrics.status === "measured") {
+        expect(kMetrics.n_strokes).toBeGreaterThan(0);
+        return;
+      }
       expect(NO_SESSIONS, "`sessions/`가 비었는데 등록처가 그것을 못 봤다").not.toBeNull();
       ctx.skip();
       return;

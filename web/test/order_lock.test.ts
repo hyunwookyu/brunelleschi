@@ -151,9 +151,9 @@ function orderStrokes(fx: Fx, order: Order): DrawnEdge[] {
  * | `oracle` | **참** | **참** | — (도달 가능성 #35·#40) |
  */
 type Arm = "bypass" | "fixed" | "rule_vp_true_axis" | "true_vp_rule_axis" | "oracle"
-         | "fixed_true_f" | "fixed_f_half" | "fixed_f_double";
+         | "fixed_true_f" | "fixed_f_half" | "fixed_f_double" | "guard_off";
 const ARM_SPEC: Record<Arm, { bypass: boolean; vp: "rule" | "true"; axis: "rule" | "true";
-                              trueF?: boolean; fMul?: number }> = {
+                              trueF?: boolean; fMul?: number; guardOff?: boolean }> = {
   bypass:            { bypass: true,  vp: "rule", axis: "rule" },
   fixed:             { bypass: false, vp: "rule", axis: "rule" },
   rule_vp_true_axis: { bypass: false, vp: "rule", axis: "true" },
@@ -184,6 +184,16 @@ const ARM_SPEC: Record<Arm, { bypass: boolean; vp: "rule" | "true"; axis: "rule"
    */
   fixed_f_half:      { bypass: false, vp: "rule", axis: "rule", fMul: 0.5 },
   fixed_f_double:    { bypass: false, vp: "rule", axis: "rule", fMul: 2 },
+  /**
+   * **양성 채널 — 판정 뒤집기 가드를 끈다**(2026-08-18 9차 항목 0 · D-L80 · 9-R [H3]).
+   *
+   * ⚠⚠ **이 팔이 없으면 D-L80의 귀결이 커밋 사이 비교뿐이다.** 이 원장의 등록 게이트가
+   * 스스로 "셋 다 **팔 사이** 비교라 **커밋 사이의 변화는 못 잡는다**"고 적는데,
+   * 초판은 P0 140 → 122를 **이전 커밋의 원장**과 비교해 놓고 그것을 양성 채널이라 불렀다
+   * (#30 위반 — 리뷰어가 잡았다). 여기서는 **같은 실행 안에서** 갈린다:
+   * `fixed`(가드 켬) ↔ `guard_off`(가드 끔)이고 나머지는 전부 같다.
+   */
+  guard_off:         { bypass: false, vp: "rule", axis: "rule", guardOff: true },
 };
 
 const trueAxis = (sc: Scene, i: 0 | 1 | 2): Axis => (isFiniteVp(sc.vps[i], SZ) ? i : "screen");
@@ -296,7 +306,9 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
       if (perspectiveOrder(cam.rules) === 0) {
         const cands = fedSegs.length ? static2dCandidates(fedSegs, diag) : [];
         const r2 = resolve2dCore(pts, { cands, vps: vpsOf(cam.rules),
-                                        radiusPx: OSNAP_RADIUS_PX, relSnap: true });
+                                        radiusPx: OSNAP_RADIUS_PX, relSnap: true,
+                                        // **D-L80의 양성 채널**(#30) — 이 팔만 옛 거동이다
+                                        kindFlipGuard: !spec.guardOff });
         pts = r2.pts;
         // ⚠ **여기가 갈리는 유일한 지점이다** — 우회를 살릴 것인가.
         if (spec.bypass) forced = r2.ortho ? "screen" : r2.vpdir ? "depth" : undefined;
@@ -580,6 +592,42 @@ function summarize(b: Bag) {
       /** **참 축 × 사건**(지시 1-a) — 깊이 획이 어디로 새는가. */
       truth_events: q.truthEvents,
     }])),
+    /**
+     * **P0 전체의 누수**(2026-08-18 9차 항목 0-c의 양성 채널).
+     *
+     * `p0_reasons.*.truth_events`를 사유 전체로 합친다 — 8차 2차가 이 값을 **손으로**
+     * 더해 `progress.md`에 "351/772 (45.5%)"로 적었고, 그러면 원장을 다시 돌릴 때마다
+     * 문서가 낡는다(#1). **원장이 스스로 낸다.**
+     *
+     * `leak` = 참 축이 깊이인데 **화면 축으로 읽힌 것**(`support` + `screen_axis`).
+     * ⚠ **`support`가 전부 화면 축은 아니다** — 소실점이 선 실행(`vp_but_no_screen_h`)에서는
+     * 깊이축의 지지일 수 있다. 그래서 그 사유는 **따로도** 낸다(#11 — 분모가 무엇인가).
+     */
+    p0_leak: (() => {
+      const sum = (pick: (t: Record<string, number>) => number) =>
+        Object.values(b.p0).reduce((n, q) => n + pick(q.truthEvents), 0);
+      const g = (t: Record<string, number>, k: string) => t[k] ?? 0;
+      const depthAll = sum(t => g(t, "depth/waiting") + g(t, "depth/support")
+                              + g(t, "depth/screen_axis") + g(t, "depth/rejected")
+                              + g(t, "depth/vp_fixed") + g(t, "depth/ask"));
+      const leak = sum(t => g(t, "depth/support") + g(t, "depth/screen_axis"));
+      const byReason = Object.fromEntries(Object.entries(b.p0).map(([k, q]) => {
+        const t = q.truthEvents;
+        const d = g(t, "depth/waiting") + g(t, "depth/support") + g(t, "depth/screen_axis")
+                + g(t, "depth/rejected") + g(t, "depth/vp_fixed") + g(t, "depth/ask");
+        return [k, { depth_truth: d, leak: fraction(g(t, "depth/support") + g(t, "depth/screen_axis"), d),
+                     leak_rate: rate(g(t, "depth/support") + g(t, "depth/screen_axis"), d),
+                     too_short: fraction(g(t, "depth/rejected"), d) }];
+      }));
+      return {
+        what: "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). "
+            + "분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
+        leak: fraction(leak, depthAll), leak_rate: rate(leak, depthAll),
+        too_short: fraction(sum(t => g(t, "depth/rejected")), depthAll),
+        in_pool: fraction(sum(t => g(t, "depth/waiting")), depthAll),
+        by_reason: byReason,
+      };
+    })(),
     /** **어디서 멈췄는가**(지시 1-b) — 거절 사유별 횟수. 분모는 `fed_strokes`가 아니라
      *  `placement`의 분모(그은 획 전부)다. 한 획이 여러 번 거절되지는 않는다. */
     rejects: b.rejects,

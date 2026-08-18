@@ -1,0 +1,736 @@
+{
+  "what": "`classifyLine`의 화면 축 임계(4°)가 참 축이 깊이인 획을 얼마나 먹는가 — 판정만 본다(상태 전이 없음). `order_lock.truth_events`가 세는 귀결의 **원인 쪽**이다.",
+  "population": {
+    "compositions": 5,
+    "jitters": [
+      0,
+      0.005,
+      0.01,
+      0.03,
+      0.05
+    ],
+    "grades": [
+      "precise",
+      "medium"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "strokes": 3600,
+    "depth_truth": 2880,
+    "screen_truth": 720
+  },
+  "angle": {
+    "depth_drawn": {
+      "n": 2880,
+      "min": 0.0022,
+      "p10": 0.9591,
+      "median": 6.548,
+      "p90": 25.7496,
+      "max": 44.8198
+    },
+    "depth_true": {
+      "n": 2880,
+      "min": 0,
+      "p10": 0.1172,
+      "median": 4.7034,
+      "p90": 25.2328,
+      "max": 34.1415
+    },
+    "screen_drawn": {
+      "n": 720,
+      "min": 0.0005,
+      "p10": 0.3153,
+      "median": 1.8355,
+      "p90": 6.9988,
+      "max": 27.9056
+    },
+    "screen_true": {
+      "n": 720,
+      "min": 0,
+      "p10": 0,
+      "median": 0,
+      "p90": 0,
+      "max": 0
+    },
+    "note_screen_true": "**보장이다**(#5) — 화면 평행 축은 참 투영선이 정확히 0°/90°다(이론서 2.2, c=0 · 롤 0). 임계를 걸지 않는다. 임계를 정하는 것은 `screen_drawn`이다.",
+    "hist_depth_drawn": {
+      "0-0.5": 143,
+      "0.5-1": 156,
+      "1-1.5": 152,
+      "1.5-2": 130,
+      "2-3": 251,
+      "3-4": 203,
+      "4-6": 324,
+      "6-8": 239,
+      "8-12": 343,
+      "12-20": 481,
+      "20-90": 458
+    },
+    "hist_screen_drawn": {
+      "0-0.5": 105,
+      "0.5-1": 112,
+      "1-1.5": 81,
+      "1.5-2": 87,
+      "2-3": 105,
+      "3-4": 62,
+      "4-6": 82,
+      "6-8": 30,
+      "8-12": 34,
+      "12-20": 19,
+      "20-90": 3
+    }
+  },
+  "sweep": [
+    {
+      "screen_axis_deg": 0.25,
+      "depth_min_deg": 8,
+      "leak": "68/2880",
+      "leak_rate": 0.0236,
+      "depth_ambiguous": "1530/2880",
+      "screen_missed": "663/720",
+      "screen_missed_rate": 0.9208,
+      "screen_ambiguous": "607/720",
+      "screen_as_depth": "56/720"
+    },
+    {
+      "screen_axis_deg": 0.5,
+      "depth_min_deg": 8,
+      "leak": "143/2880",
+      "leak_rate": 0.0497,
+      "depth_ambiguous": "1455/2880",
+      "screen_missed": "615/720",
+      "screen_missed_rate": 0.8542,
+      "screen_ambiguous": "559/720",
+      "screen_as_depth": "56/720"
+    },
+    {
+      "screen_axis_deg": 0.75,
+      "depth_min_deg": 8,
+      "leak": "231/2880",
+      "leak_rate": 0.0802,
+      "depth_ambiguous": "1367/2880",
+      "screen_missed": "559/720",
+      "screen_missed_rate": 0.7764,
+      "screen_ambiguous": "503/720",
+      "screen_as_depth": "56/720"
+    },
+    {
+      "screen_axis_deg": 1,
+      "depth_min_deg": 8,
+      "leak": "299/2880",
+      "leak_rate": 0.1038,
+      "depth_ambiguous": "1299/2880",
+      "screen_missed": "503/720",
+      "screen_missed_rate": 0.6986,
+      "screen_ambiguous": "447/720",
+      "screen_as_depth": "56/720"
+    },
+    {
+      "screen_axis_deg": 1.5,
+      "depth_min_deg": 8,
+      "leak": "451/2880",
+      "leak_rate": 0.1566,
+      "depth_ambiguous": "1147/2880",
+      "screen_missed": "422/720",
+      "screen_missed_rate": 0.5861,
+      "screen_ambiguous": "366/720",
+      "screen_as_depth": "56/720"
+    },
+    {
+      "screen_axis_deg": 2,
+      "depth_min_deg": 8,
+      "leak": "581/2880",
+      "leak_rate": 0.2017,
+      "depth_ambiguous": "1017/2880",
+      "screen_missed": "335/720",
+      "screen_missed_rate": 0.4653,
+      "screen_ambiguous": "279/720",
+      "screen_as_depth": "56/720"
+    },
+    {
+      "screen_axis_deg": 3,
+      "depth_min_deg": 8,
+      "leak": "832/2880",
+      "leak_rate": 0.2889,
+      "depth_ambiguous": "766/2880",
+      "screen_missed": "230/720",
+      "screen_missed_rate": 0.3194,
+      "screen_ambiguous": "174/720",
+      "screen_as_depth": "56/720"
+    },
+    {
+      "screen_axis_deg": 4,
+      "depth_min_deg": 8,
+      "leak": "1035/2880",
+      "leak_rate": 0.3594,
+      "depth_ambiguous": "563/2880",
+      "screen_missed": "168/720",
+      "screen_missed_rate": 0.2333,
+      "screen_ambiguous": "112/720",
+      "screen_as_depth": "56/720"
+    }
+  ],
+  "true_angle_arm": [
+    {
+      "screen_axis_deg": 0.25,
+      "leak_n": 360,
+      "leak": "360/2880",
+      "screen_missed": "0/720"
+    },
+    {
+      "screen_axis_deg": 0.5,
+      "leak_n": 360,
+      "leak": "360/2880",
+      "screen_missed": "0/720"
+    },
+    {
+      "screen_axis_deg": 0.75,
+      "leak_n": 360,
+      "leak": "360/2880",
+      "screen_missed": "0/720"
+    },
+    {
+      "screen_axis_deg": 1,
+      "leak_n": 540,
+      "leak": "540/2880",
+      "screen_missed": "0/720"
+    },
+    {
+      "screen_axis_deg": 1.5,
+      "leak_n": 780,
+      "leak": "780/2880",
+      "screen_missed": "0/720"
+    },
+    {
+      "screen_axis_deg": 2,
+      "leak_n": 840,
+      "leak": "840/2880",
+      "screen_missed": "0/720"
+    },
+    {
+      "screen_axis_deg": 3,
+      "leak_n": 1080,
+      "leak": "1080/2880",
+      "screen_missed": "0/720"
+    },
+    {
+      "screen_axis_deg": 4,
+      "leak_n": 1320,
+      "leak": "1320/2880",
+      "screen_missed": "0/720"
+    }
+  ],
+  "at_current_4deg": {
+    "leak": "1035/2880",
+    "geom_shallow": "871/2880",
+    "hand_pushed": "164/2880",
+    "side": {
+      "h": 607,
+      "v": 428
+    }
+  },
+  "osnap_arm": {
+    "what": "앱은 P0에서 `resolve2dCore`를 먼저 돌린다. `screenOrthoSnap`이 **같은 4°**로 끝점을 축 위로 옮기므로 판정은 그 뒤에 온다 — 즉 4°가 **두 번** 쓰인다.",
+    "leak_raw": "1035/2880",
+    "leak_after_osnap": "1246/2880",
+    "ortho_fired_depth": "526/2880",
+    "ortho_fired_screen": "218/720",
+    "screen_missed_raw": "168/720",
+    "screen_missed_after_osnap": "136/720",
+    "by_composition": {
+      "3pt_yaw35_pitch15": {
+        "n": 720,
+        "raw": "258/720",
+        "after_osnap": "294/720"
+      },
+      "3pt_yaw20_pitch25": {
+        "n": 720,
+        "raw": "237/720",
+        "after_osnap": "234/720"
+      },
+      "3pt_yaw50_pitch8": {
+        "n": 720,
+        "raw": "349/720",
+        "after_osnap": "383/720"
+      },
+      "2pt_yaw35_pitch0": {
+        "n": 480,
+        "raw": "178/480",
+        "after_osnap": "244/480"
+      },
+      "1pt_yaw0_pitch0": {
+        "n": 240,
+        "raw": "13/240",
+        "after_osnap": "91/240"
+      }
+    },
+    "near_vp_only": {
+      "n": 2400,
+      "raw": "711/2400",
+      "after_osnap": "899/2400"
+    },
+    "newly_leaked": {
+      "n": 313,
+      "of_depth": "313/2880",
+      "ortho": "95/313",
+      "start_osnap": "167/313",
+      "end_osnap": "189/313",
+      "align_guides": "153/313",
+      "none_of_them": "0/313",
+      "by_composition": {
+        "3pt_yaw35_pitch15": "64/720",
+        "3pt_yaw20_pitch25": "37/720",
+        "3pt_yaw50_pitch8": "56/720",
+        "2pt_yaw35_pitch0": "77/480",
+        "1pt_yaw0_pitch0": "79/240"
+      },
+      "from_raw_depth": "72/313",
+      "from_raw_ambiguous": "241/313",
+      "from_raw_depth_by_comp": {
+        "3pt_yaw35_pitch15": "3/720",
+        "3pt_yaw20_pitch25": "1/720",
+        "3pt_yaw50_pitch8": "0/720",
+        "2pt_yaw35_pitch0": "13/480",
+        "1pt_yaw0_pitch0": "55/240"
+      }
+    },
+    "ablation": [
+      {
+        "arm": "r15_rel_on",
+        "radiusPx": 15,
+        "relSnap": true,
+        "contradiction": "72/2880",
+        "contradiction_1pt": "55/240",
+        "leak": "1246/2880",
+        "newly_leaked": "313/2880",
+        "screen_missed": "136/720",
+        "onept": "91/240"
+      },
+      {
+        "arm": "r15_rel_off",
+        "radiusPx": 15,
+        "relSnap": false,
+        "contradiction": "13/2880",
+        "contradiction_1pt": "1/240",
+        "leak": "1163/2880",
+        "newly_leaked": "190/2880",
+        "screen_missed": "153/720",
+        "onept": "10/240"
+      },
+      {
+        "arm": "r8_rel_on",
+        "radiusPx": 8,
+        "relSnap": true,
+        "contradiction": "35/2880",
+        "contradiction_1pt": "31/240",
+        "leak": "1202/2880",
+        "newly_leaked": "246/2880",
+        "screen_missed": "133/720",
+        "onept": "59/240"
+      },
+      {
+        "arm": "r8_rel_off",
+        "radiusPx": 8,
+        "relSnap": false,
+        "contradiction": "3/2880",
+        "contradiction_1pt": "1/240",
+        "leak": "1165/2880",
+        "newly_leaked": "164/2880",
+        "screen_missed": "122/720",
+        "onept": "14/240"
+      },
+      {
+        "arm": "r0_rel_off",
+        "radiusPx": 0,
+        "relSnap": false,
+        "contradiction": "0/2880",
+        "contradiction_1pt": "0/240",
+        "leak": "1180/2880",
+        "newly_leaked": "145/2880",
+        "screen_missed": "111/720",
+        "onept": "18/240"
+      },
+      {
+        "arm": "guard_off",
+        "radiusPx": 15,
+        "relSnap": true,
+        "kindFlipGuard": false,
+        "contradiction": "108/2880",
+        "contradiction_1pt": "71/240",
+        "leak": "1284/2880",
+        "newly_leaked": "353/2880",
+        "screen_missed": "107/720",
+        "onept": "107/240"
+      }
+    ],
+    "retry_cost_on_screen": {
+      "n": 4,
+      "of_screen": "4/720"
+    },
+    "newly_fixed": {
+      "n": 102,
+      "of_depth": "102/2880"
+    }
+  },
+  "by_vp_distance": [
+    {
+      "vp_dist_diag": "0-1",
+      "n": 1200,
+      "leak": "232/1200",
+      "leak_rate": 0.1933,
+      "true_shallow": "240/1200",
+      "near_true_median": 14.6737
+    },
+    {
+      "vp_dist_diag": "1-2",
+      "n": 960,
+      "leak": "376/960",
+      "leak_rate": 0.3917,
+      "true_shallow": "480/960",
+      "near_true_median": 4.184
+    },
+    {
+      "vp_dist_diag": "2-3",
+      "n": 240,
+      "leak": "103/240",
+      "leak_rate": 0.4292,
+      "true_shallow": "120/240",
+      "near_true_median": 4.248
+    },
+    {
+      "vp_dist_diag": "3-5",
+      "n": 240,
+      "leak": "147/240",
+      "leak_rate": 0.6125,
+      "true_shallow": "240/240",
+      "near_true_median": 2.0621
+    },
+    {
+      "vp_dist_diag": "5-10",
+      "n": 240,
+      "leak": "177/240",
+      "leak_rate": 0.7375,
+      "true_shallow": "240/240",
+      "near_true_median": 0.8133
+    },
+    {
+      "vp_dist_diag": "10-50",
+      "n": 0,
+      "leak": "0/0",
+      "leak_rate": null,
+      "true_shallow": "0/0",
+      "near_true_median": null
+    },
+    {
+      "vp_dist_diag": "50-1000000000",
+      "n": 0,
+      "leak": "0/0",
+      "leak_rate": null,
+      "true_shallow": "0/0",
+      "near_true_median": null
+    }
+  ],
+  "near_vp_only": {
+    "what": "**소실점이 화면 대각 3배 안**인 깊이 획만 — 사람이 수렴을 실제로 보는 구간이다. `isFiniteVp`(50대각)의 과포함을 뺀 분모다(#11).",
+    "n": 2400,
+    "leak": "711/2400",
+    "leak_rate": 0.2963,
+    "true_shallow": "840/2400",
+    "sweep": [
+      {
+        "screen_axis_deg": 0.25,
+        "leak": "40/2400",
+        "leak_rate": 0.0167,
+        "ambiguous": "1131/2400"
+      },
+      {
+        "screen_axis_deg": 0.5,
+        "leak": "88/2400",
+        "leak_rate": 0.0367,
+        "ambiguous": "1083/2400"
+      },
+      {
+        "screen_axis_deg": 0.75,
+        "leak": "151/2400",
+        "leak_rate": 0.0629,
+        "ambiguous": "1020/2400"
+      },
+      {
+        "screen_axis_deg": 1,
+        "leak": "195/2400",
+        "leak_rate": 0.0813,
+        "ambiguous": "976/2400"
+      },
+      {
+        "screen_axis_deg": 1.5,
+        "leak": "308/2400",
+        "leak_rate": 0.1283,
+        "ambiguous": "863/2400"
+      },
+      {
+        "screen_axis_deg": 2,
+        "leak": "388/2400",
+        "leak_rate": 0.1617,
+        "ambiguous": "783/2400"
+      },
+      {
+        "screen_axis_deg": 3,
+        "leak": "561/2400",
+        "leak_rate": 0.2338,
+        "ambiguous": "610/2400"
+      },
+      {
+        "screen_axis_deg": 4,
+        "leak": "711/2400",
+        "leak_rate": 0.2963,
+        "ambiguous": "460/2400"
+      }
+    ]
+  },
+  "by_composition": {
+    "3pt_yaw35_pitch15": {
+      "leak": "258/720",
+      "geom_shallow": "221/720",
+      "near_median": 6.0371
+    },
+    "3pt_yaw20_pitch25": {
+      "leak": "237/720",
+      "geom_shallow": "162/720",
+      "near_median": 7.4925
+    },
+    "3pt_yaw50_pitch8": {
+      "leak": "349/720",
+      "geom_shallow": "343/720",
+      "near_median": 4.3018
+    },
+    "2pt_yaw35_pitch0": {
+      "leak": "178/480",
+      "geom_shallow": "145/480",
+      "near_median": 5.6569
+    },
+    "1pt_yaw0_pitch0": {
+      "leak": "13/240",
+      "geom_shallow": "0/240",
+      "near_median": 23.9396
+    }
+  },
+  "by_seed": {
+    "seed_1": "177/480",
+    "seed_2": "186/480",
+    "seed_3": "171/480",
+    "seed_4": "176/480",
+    "seed_5": "173/480",
+    "seed_6": "152/480"
+  },
+  "by_jitter": {
+    "jit_0": {
+      "depth_leak": "247/576",
+      "screen_near_p90": 2.9854,
+      "screen_near_max": 5.9439
+    },
+    "jit_0.005": {
+      "depth_leak": "255/576",
+      "screen_near_p90": 3.3697,
+      "screen_near_max": 6.5072
+    },
+    "jit_0.01": {
+      "depth_leak": "228/576",
+      "screen_near_p90": 4.4249,
+      "screen_near_max": 7.554
+    },
+    "jit_0.03": {
+      "depth_leak": "170/576",
+      "screen_near_p90": 8.0341,
+      "screen_near_max": 15.052
+    },
+    "jit_0.05": {
+      "depth_leak": "135/576",
+      "screen_near_p90": 12.8686,
+      "screen_near_max": 27.9056
+    }
+  },
+  "what_this_does_not_say": [
+    "**차수·배치를 안 잰다.** 여기는 판정 하나뿐이고 귀결은 `order_lock.json`이 낸다.",
+    "**앱의 2D 오스냅을 안 지난다** — `resolve2dCore`가 끝점을 옮기면 각이 바뀐다(#17).",
+    "**합성이다**(AS-L24·L25). 실획의 손떨림 분포는 다를 수 있다."
+  ],
+  "gate": {
+    "registered": "① **참 각도 팔이 누수를 만들지 않는다**: 손떨림·잉크가 없는 참 투영선(`true_angle_arm`)에서 참 축이 깊이인 획이 화면 축으로 읽히는 수가 **깊이 획의 5% 미만**이다. 이 팔이 크게 새면 누수의 원인은 임계가 아니라 **기하 자체**이고 임계를 좁혀도 안 준다. ② **임계 스윕이 단조롭다**: `screen_axis_deg`를 좁히면 깊이 누수(`leak`)가 **줄고** 화면 획의 미검출(`screen_missed` = 참 축이 화면인데 `depth`·`ambiguous`로 읽힘)이 **는다**. 두 곡선이 갈리는 자리가 있어야 임계를 고를 수 있다 — 없으면 임계로 못 가른다. 모집단은 5구도 × 6시드 × 등급 2 × 잡음 {0,0.005,0.01,0.03,0.05} = 300픽스처 × 12획 = 3600획이고 **분모는 참 축이 깊이인 획 전부**다(#11). ⚠ 이것은 이 항목이 등록한 게이트다(#41).",
+    "reachability": "**참 투영선 팔**(`true_angle_arm`)이 도달 가능성이다 — 손떨림·잉크가 없는 이상적 입력에서 같은 임계가 얼마나 새는지. 그 값이 누수의 **기하 하한**이고, 임계를 아무리 좁혀도 그 아래로는 못 간다(⚠ 하한이 크면 기준을 낮추는 것이 아니라 **임계가 아닌 다른 기전이 필요하다**는 뜻이다 — #35).",
+    "reachability_value": 1320,
+    "reachability_source": "true_angle_arm/7/leak_n",
+    "result": {
+      "registered_1_true_arm_under_5pct": {
+        "passed": false,
+        "at_4deg": "1320/2880",
+        "at_0p25deg": "360/2880",
+        "note": "⛔ **실패다** — 4°에서 45.8% · 가장 좁은 0.25°에서도 12.5%. **임계로는 못 가른다**는 이 항목의 결론이 바로 이 실패다."
+      },
+      "registered_2_sweep_monotone": {
+        "leak_monotone_down": true,
+        "screen_missed_monotone_up": true,
+        "note": "두 곡선이 반대로 움직인다 — 그러나 **교차점이 쓸 만한 자리에 없다**: 누수를 68/2880까지 낮추는 0.25°에서 화면 획을 663/720 놓친다."
+      }
+    }
+  },
+  "constants": {
+    "hash": "54346ad1",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "vertical_ask_deg": 45,
+        "min_vp_len_ratio": 0.04,
+        "concurrent_deg": 3
+      },
+      "FOV_GATE": {
+        "severe_f_ratio": 0.5,
+        "ok_f_ratio": 0.87
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "a45078a5",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong",
+      "rate",
+      "fraction"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  }
+}

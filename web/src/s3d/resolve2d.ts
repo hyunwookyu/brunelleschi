@@ -18,6 +18,7 @@
 import { snap2dAt, alignAxes, type Snap2Cand, type AlignHit } from "./snap2d.js";
 import { screenOrthoSnap, vpDirSnap, type ScreenOrtho, type VpDirSnap } from "./axisSnap.js";
 import { representative, AXIS_TOL } from "./axis.js";
+import { classifyLine } from "./vpRules.js";
 import type { Pt2 } from "./camera.js";
 import type { SnapKind } from "./snap.js";
 
@@ -43,6 +44,14 @@ export interface Resolve2dCtx {
   kinds?: Partial<Record<SnapKind, boolean>>;
   /** 관계 스냅(정렬) 켬 여부(`REL_SNAP.on`). */
   relSnap: boolean;
+  /**
+   * **판정 뒤집기 가드**(D-L80). 기본 **켬** — 앱은 항상 켠 상태로 부른다.
+   *
+   * ⚠ 이 스위치는 **측정을 위해서만** 있다(`order_lock`의 `bypass`와 같은 자리) —
+   * 끄면 옛 거동(방향·관계 스냅이 `depth` 획을 화면 축으로 옮긴다)이 그대로 돌아오고,
+   * 그것이 이 가드의 **양성 채널**이다(#30). 앱 코드에서 끄지 않는다.
+   */
+  kindFlipGuard?: boolean;
 }
 
 /** `resolve2dCore`의 결과 — 미리보기와 확정이 **같은 값**을 본다(#17·§11). */
@@ -83,10 +92,28 @@ export function resolve2dCore(raw: Pt2[], ctx: Resolve2dCtx): Resolve2dOut {
   const a0 = raw[0], b0 = raw[raw.length - 1];
   const guides: { from: Pt2; to: Pt2 }[] = [];
   const tol = ctx.radiusPx;
+  // ⚠⚠ **방향을 바꾸는 스냅은 `depth` 판정을 뒤집지 못한다**(2026-08-18 9차 항목 0 · D-L80).
+  //
+  // **D-L70의 나머지 절반이다.** 거기서 지운 것은 `snapForced`(스냅이 곧 **선언**이다)인데,
+  // **좌표 이동 자체가 선언이었다** — `screenOrthoSnap`과 `alignAxes`가 획을 정확히 0°/90°로
+  // 옮겨 놓으면 `classifyLine`은 **반드시** 화면 축을 낸다(`axisSnap.ts` 주석이 그렇게 적고
+  // 있다). 규칙은 선택의 여지가 없고, 그러면 규칙이 판정한 것이 아니라 **스냅이 판정한 것**이다.
+  //
+  // 측정(`classify_leak.json`): 원본 각이 **8° 밖**(= `depth`)인데 스냅 뒤 화면 축이 된 획이
+  // **108/2880**이고 그 중 **1점 구도가 71/240**(29.6%)이다 — P0의 지배 구도가 거기다.
+  // 되돌림의 대가는 참 축이 화면인 획 **10/720**(1.4%)뿐이다.
+  //
+  // **위치 스냅(오스냅)은 그대로 둔다** — "이 점이 저 점이다"는 위치의 진술이지 방향의
+  // 진술이 아니다. 막는 것은 **방향·관계 스냅**뿐이다(화면 직교 · `alignAxes` 정렬).
+  // ⚠ **소실점 방향 스냅(`vpdir`)은 안 막는다** — 그것은 `depth` 판정과 **같은 방향**이다.
+  const rep0 = representative(raw);
+  const rawDepth = (ctx.kindFlipGuard ?? true)
+    && (rep0 ? classifyLine(rep0.a, rep0.b).kind === "depth" : false);
+  const rel = ctx.relSnap && !rawDepth;
   // ① 시작점 — 오스냅이 이기고, 안 붙으면 정렬(끝점·중점의 x·y)
   const start2 = snap2dAt(a0, ctx.cands, ctx.radiusPx, ctx.kinds);
   let a: Pt2 = start2 ? start2.at : [a0[0], a0[1]];
-  if (!start2 && ctx.relSnap) {
+  if (!start2 && rel) {
     const h = alignAxes(a, ctx.cands, tol);
     if (h.x) a = [h.x.v, a[1]];
     if (h.y) a = [a[0], h.y.v];
@@ -94,7 +121,6 @@ export function resolve2dCore(raw: Pt2[], ctx: Resolve2dCtx): Resolve2dOut {
     if (h.y) guides.push({ from: h.y.from, to: [a[0], a[1]] });
   }
   // ② 끝점 — 오스냅(굽음 규약은 3D 양 끝 스냅 그대로, #34)
-  const rep0 = representative(raw);
   const end2 = (rep0 && rep0.bend <= AXIS_TOL.bend_max)
     ? snap2dAt(b0, ctx.cands, ctx.radiusPx, ctx.kinds) : null;
   if (end2) {
@@ -118,10 +144,16 @@ export function resolve2dCore(raw: Pt2[], ctx: Resolve2dCtx): Resolve2dOut {
              start2, end2, guides, pts: [a, end2.at], engaged: true };
   }
   // ③ 방향 — 화면 직교·소실점 방향(이동량이 작은 쪽, D-L58)
-  const d = dirSnap2dCore(a, b0, ctx.vps);
+  // ⚠ `rawDepth`면 **화면 직교만** 끈다(D-L80) — 소실점 방향은 판정과 같은 편이라 남긴다.
+  const d0 = dirSnap2dCore(a, b0, ctx.vps);
+  const d = (rawDepth && d0.ortho)
+    ? (() => { const dv = vpDirSnap(a, b0, ctx.vps);
+               return dv ? { at: dv.at, ortho: null, vpdir: dv }
+                         : { at: b0, ortho: null, vpdir: null }; })()
+    : d0;
   let b: Pt2 = [d.at[0], d.at[1]];
   // ④ 관계 스냅 — 방향과 성분으로 결합한다
-  if (ctx.relSnap) {
+  if (rel) {
     const h = alignAxes(b, ctx.cands, tol);
     const push = (hit: AlignHit) => guides.push({ from: hit.from, to: [b[0], b[1]] });
     if (d.ortho) {

@@ -169,8 +169,10 @@
     "4. 받은 JSON을 저장소의 `sessions/`에 넣고 `npx vitest run test/real_ink.test.ts`."
   ],
   "k_metrics": {
-    "status": "awaiting_samples",
-    "n_docs": 0,
+    "status": "measured",
+    "n_docs": 1,
+    "n_strokes": 5,
+    "n_pieces": 0,
     "metrics": {
       "channel_share": "채널(보조선/결과선/주석)별 획 수 — 지시 D의 사용 비율",
       "snap_dist_px": "시작점의 겨냥 거리(px) — **7차 항목 2가 정의를 수리했다**(#23 정의 갱신 — ⚠ 이 정의들은 metric_defs 해시(metrics.ts 함수 집합) **밖**이라 정의 변경을 STALE이 못 잡는다(#33 — 부르는 하네스만 덮는다). 사람이 본다): 스냅 성패와 무관하게, 스냅 전 원시 시작점에서 40px 프로브 안 **최근접** 정밀 대상(on_face 제외)까지의 거리(aimDistPx 하나 — 없으면 null). 반경(현 15px)의 실측 근거. ⚠ **분포는 40px에서 절단된다**(#13 — 3·4-R [2]) — 그 밖은 null로 사라지므로 **null 건수와 분모를 `snap_dist_null`로 함께 낸다**(#11). null의 뜻은 셋이 섞여 있다(40px 밖 겨냥 · 3D 대상 없음 · 확정 전 획) — 기록 시점 갈래 필드는 다음 개정(DEFERRED). 40px·15px·프로브 규약은 표본 전에 박힌 **동작점**이다(#12 — 반경 판정은 null 몫을 보고 한다). ⚠ **7차 이전 저장본은 이 정의가 아니다** — 스냅이 걸리면 cand.dist를 적었고 핀 상태에서 on_face가 항상 걸려 **전부 0으로 오염**됐다(실획 첫 표본의 사람 보고가 그랬다 — 원장 밖·미검증). `snapStart.kind === on_face && snapDistPx === 0`인 표본은 분포에서 갈라 센다(#11)",
@@ -188,16 +190,78 @@
       "snap_use": "스냅 사용 분포(7차 지시 항목 2·4 — 실획 첫 표본의 결함 지표): snapStart 종류별 획 수 · snapEnd 있는 획 수 / 3D 획 수. **끝점 스냅이 실제로 걸리는지**가 여기서 나온다. ⚠ 첫 표본의 **사람 보고**(파일 미도착 — 원장 밖·미검증, AS-C1 7차 주석)는 끝점 스냅 0/획 5이었다 — 보고이지 기준선이 아니다(3·4-R [8]). 파일이 오면 이 지표가 실측한다",
       "vp_dir_err_deg": "수평축(0·1) 배정 획의 **2D 현 방향**과 시작점→그 축 소실점 방향의 각차(°) — 사람이 소실점을 향해 얼마나 정확히 긋는가의 화면 오차. 첫 표본의 사람 보고(원장 밖·미검증) Δ0.0~1.7°를 하네스가 재현하는 자리다. ⚠⚠ **합성의 축 오차(rule_camera deg_median — 3D 축 방향 오차)와는 다른 양·다른 프레임이다**(3·4-R [1]): 화면 오차는 3D 각으로 증폭된다(AS-L8 — 먼 소실점 100px ≈ 2~3°). 실획의 3D 축 오차는 참 축이 없어 못 잰다(what_this_cannot_measure). ⚠ **선택 절단이 있다**(#5): 축 배정 자체가 같은 각류 판정(vpMisfit ≤ 0.06)을 지나므로 분포가 배정 허용치 안에 갇힌다 — 배정 밖(미분류) 획의 겨냥 오차는 이 지표에 안 나온다. 축 배정은 정답 라벨도 아니다(caveat와 같은 유보)"
     },
-    "what_this_cannot_measure": [
-      "AS-L9(지평선 ±120px 창) — 참 지평선이 없다. 대리 재적합 팔 미구현(DEFERRED)",
-      "QUESTIONS f(축 스냅 손익분기 배수) — 참 카메라가 없다. AS-L9와 같은 구조(DEFERRED)",
-      "QUESTIONS d·e(지평선 수평·롤) — 지평선이 스칼라 y라 자료구조상 항등(QUESTIONS d의 '박혀 있다')",
-      "**확정 전(2D 오스냅) 겨냥**(4차 재검 [5]) — snap_dist_px의 표본이 3D 오스냅뿐이라 보조선 단계(작도의 본체)의 겨냥 분포는 이 계기로 안 잡힌다(D-L56 덮는 범위 축소 · DEFERRED '2D 오스냅의 겨냥 거리 기록')",
-      "**실획의 3D 축 방향 오차**(3·4-R [1]) — 참 축이 없다. vp_dir_err_deg는 화면(2D) 오차이고 합성의 deg_median(3D)과 비교 불가"
-    ]
+    "channel_share": {
+      "guide": 5
+    },
+    "snap_dist_px": {
+      "n": 0,
+      "min": null,
+      "p10": null,
+      "median": null,
+      "p90": null,
+      "max": null
+    },
+    "snap_dist_legacy_zero": 5,
+    "snap_dist_null": "0/5",
+    "snap_use": {
+      "start_kinds": {
+        "on_face": 5
+      },
+      "end_snapped": "0/5"
+    },
+    "vp_dir_err_deg": {
+      "n": 3,
+      "min": 1.74,
+      "p10": 1.74,
+      "median": 5.61,
+      "p90": 9.15,
+      "max": 9.15
+    },
+    "vp_dir_guaranteed_zero": "1/4",
+    "ask": {
+      "asked": 6,
+      "answered": 4,
+      "skipped": 0
+    },
+    "vp_confirm_source": {
+      "two_lines": 1,
+      "horizon_x_line": 1
+    },
+    "path_use": {
+      "direct": 16,
+      "lift": 18,
+      "twoPoint": 3
+    },
+    "stroke_len_ratio": {
+      "n": 5,
+      "min": 0.2744,
+      "p10": 0.2744,
+      "median": 0.3086,
+      "p90": 0.4269,
+      "max": 0.4269
+    },
+    "below_min_vp_len": "0/5",
+    "vertex_gap_ratio": {
+      "n": 10,
+      "min": 0.0122,
+      "p10": 0.0122,
+      "median": 0.0881,
+      "p90": 0.3667,
+      "max": 0.6168
+    },
+    "vertex_zero_pairs": 0,
+    "horizon_vp_dy_px": {
+      "n": 2,
+      "min": 0,
+      "p10": 0,
+      "median": 0,
+      "p90": 0,
+      "max": 0
+    },
+    "note_horizon": "**보장 확인이다**(#5) — 규칙상 수평 소실점은 지평선 위에 놓이므로 0이어야 하고, 0이 아니면 저장·복원 경로가 어긋난 것이다. AS-L9(사람이 ±120px 창에 드는가)는 **참 지평선이 없어 실획으로 직접 못 잰다** — 대리 재적합 팔은 미구현(DEFERRED)"
   },
-  "status": "awaiting_samples",
+  "status": "brnl_only",
   "n_sessions": 0,
   "n_strokes": 0,
-  "note": "**표본 없음.** 수단은 서 있고 측정은 사용자 획이 들어온 뒤다. AS-6·AS-12는 그때까지 잠정."
+  "note": "**옛 `s2s-session/1` 표본은 없고 `.brnl`(Doc2)이 있다** — 측정은 `k_metrics`에 있다. AS-6·AS-12(이 절의 지표)는 그 형식으로는 아직 못 잰다."
 }

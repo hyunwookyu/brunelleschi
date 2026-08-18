@@ -24,8 +24,8 @@
   "raw_ink": 0
  },
  "free": {
-  "engaged2d": true,
-  "mid_ink": 9
+  "engaged2d": false,
+  "mid_ink": 8
  },
  "console_errors": [],
  "constants": {
