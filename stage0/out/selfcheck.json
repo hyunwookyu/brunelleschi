@@ -21599,16 +21599,16 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 183,
+      "targets": 194,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
     {
       "scan": "scan_cited_values",
       "unit": "인용 줄",
-      "targets": 101,
+      "targets": 106,
       "hits": 0,
-      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1232개이고 엄격 판정이면 226개(47줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
+      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1249개이고 엄격 판정이면 226개(47줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
     },
     {
       "scan": "scan_pitfall_citations",
@@ -22076,8 +22076,8 @@
     ]
   },
   "cited_value_population": {
-    "lines_checked": 101,
-    "tokens_checked": 1232,
+    "lines_checked": 106,
+    "tokens_checked": 1249,
     "flags_line_rule": 0,
     "strict_tokens_flagged": 226,
     "strict_lines_flagged": 47,
