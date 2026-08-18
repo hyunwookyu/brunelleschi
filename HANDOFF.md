@@ -468,9 +468,28 @@ e2e `stage.spec` 둘(차수 승격 · 되돌리기 UI). 그리고 `RULE_TOL.vert
 
 ## 개발 명령
 
+⚙️ **항목마다 도는 것**(2026-08-18 9차 지시 b·d) — **약 6초**:
+```bash
+cd web && npm run test:unit && npx tsc --noEmit
+```
+**원장을 건드린 항목만** 추가로:
+```bash
+cd web && npm run test:measure
+```
+전량(병합 전에만):
 ```bash
 cd web && npx vitest run && npx tsc --noEmit && npm run build && npx playwright test
 ```
+| 갈래 | 파일 | 건수 | 시간 |
+|---|---|---|---|
+| **단위**(`test:unit`) | 36 | **360** | **6초** |
+| 측정(`test:measure`) | 44 | 132 | 약 2분 |
+| ↳ 그중 `camera_gate.test.ts` **하나** | 1 | 2 | **108.7초** |
+
+⚠ **벽시계는 최장 파일이 정한다**(병렬 실행) — `camera_gate` 하나가 전량 121초의 바닥이다.
+⚠ 갈래는 **이름이 아니라 행동**으로 정한다(`stage0/out`에 쓰면 측정 — `tools/testSplit.mjs`).
+⚠⚠ **느려졌으면 디스크부터 본다**: 9차에 전량이 **121s → 1h52m**이었고 원인은
+**여유 공간 0**이었다(`npm run test:cost` → `test_cost.json`의 `environment`).
 ⚠⚠ **`PW_EXECUTABLE=/opt/pw-browsers/chromium`를 붙이지 않는다**(2026-08-18 8차 2차 지시에서 걸렸다).
 그것은 리눅스 경로이고 Git Bash가 `C:/Program Files/Git/opt/...`로 풀어서 **48개가 전부
 `executable doesn't exist`로 실패한다** — 코드 결함으로 오독하기 딱 좋은 형태다.

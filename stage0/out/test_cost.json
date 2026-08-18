@@ -1,0 +1,519 @@
+{
+  "what": "**검증 비용의 원장**(9차 지시 c) — 파일별 시간·건수, 단위/측정 갈래별 합계, 하네스가 스스로 적은 실행 수. **팔이 늘면 여기서 보인다.**",
+  "how": "`npx vitest run --reporter=json --outputFile=../stage0/out/_vitest_timing.json` 뒤 `npm run test:cost`. 갈래는 `tools/testSplit.mjs`가 **소스를 읽어** 정한다(이름 규약이 아니다 — 사람이 지켜야 하는 규약은 샌다, #19·#38).",
+  "environment": {
+    "disk_free_bytes": 350072832,
+    "disk_free_note": "⚠⚠ **여유가 0이면 아래 시간은 전부 무의미하다.** 9차에 전량 실행이 **121s → 1h52m**(59배)로 늘었고 원인은 하네스가 아니라 **디스크가 100% 찬 것**이었다. 느려졌다는 보고를 받으면 **여기부터 본다**(#7 — 추측 대신 카운터)."
+  },
+  "wall_note": "⚠ **파일 시간의 합은 벽시계가 아니다**(병렬 실행). **벽시계는 최장 파일이 바닥**이므로 지배항 하나를 떼는 것이 전체를 줄이는 유일한 길이다.",
+  "totals": {
+    "files": 80,
+    "tests": 496,
+    "file_seconds_sum": 169.44,
+    "measure": {
+      "files": 44,
+      "tests": 132,
+      "seconds": 168.94,
+      "share": 0.997
+    },
+    "unit": {
+      "files": 36,
+      "tests": 364,
+      "seconds": 0.5,
+      "share": 0.003
+    }
+  },
+  "dominant": [
+    {
+      "file": "camera_gate.test.ts",
+      "seconds": 108.69,
+      "tests": 2,
+      "share": 0.6415,
+      "kind": "measure"
+    },
+    {
+      "file": "snap_measure.test.ts",
+      "seconds": 15.04,
+      "tests": 1,
+      "share": 0.0888,
+      "kind": "measure"
+    },
+    {
+      "file": "place_measure.test.ts",
+      "seconds": 6.21,
+      "tests": 2,
+      "share": 0.0367,
+      "kind": "measure"
+    },
+    {
+      "file": "axis_live.test.ts",
+      "seconds": 5.33,
+      "tests": 1,
+      "share": 0.0315,
+      "kind": "measure"
+    },
+    {
+      "file": "misassign.test.ts",
+      "seconds": 4.17,
+      "tests": 2,
+      "share": 0.0246,
+      "kind": "measure"
+    },
+    {
+      "file": "lift_gate.test.ts",
+      "seconds": 3.56,
+      "tests": 2,
+      "share": 0.021,
+      "kind": "measure"
+    },
+    {
+      "file": "order_lock.test.ts",
+      "seconds": 3.36,
+      "tests": 1,
+      "share": 0.0198,
+      "kind": "measure"
+    },
+    {
+      "file": "view_plane.test.ts",
+      "seconds": 2.14,
+      "tests": 1,
+      "share": 0.0126,
+      "kind": "measure"
+    }
+  ],
+  "by_file": [
+    {
+      "file": "camera_gate.test.ts",
+      "seconds": 108.69,
+      "tests": 2
+    },
+    {
+      "file": "snap_measure.test.ts",
+      "seconds": 15.04,
+      "tests": 1
+    },
+    {
+      "file": "place_measure.test.ts",
+      "seconds": 6.21,
+      "tests": 2
+    },
+    {
+      "file": "axis_live.test.ts",
+      "seconds": 5.33,
+      "tests": 1
+    },
+    {
+      "file": "misassign.test.ts",
+      "seconds": 4.17,
+      "tests": 2
+    },
+    {
+      "file": "lift_gate.test.ts",
+      "seconds": 3.56,
+      "tests": 2
+    },
+    {
+      "file": "order_lock.test.ts",
+      "seconds": 3.36,
+      "tests": 1
+    },
+    {
+      "file": "view_plane.test.ts",
+      "seconds": 2.14,
+      "tests": 1
+    },
+    {
+      "file": "promote.test.ts",
+      "seconds": 2.09,
+      "tests": 1
+    },
+    {
+      "file": "lift_grade.test.ts",
+      "seconds": 1.72,
+      "tests": 1
+    },
+    {
+      "file": "incline.test.ts",
+      "seconds": 1.66,
+      "tests": 3
+    },
+    {
+      "file": "warp.test.ts",
+      "seconds": 1.35,
+      "tests": 5
+    },
+    {
+      "file": "view_measure.test.ts",
+      "seconds": 1.24,
+      "tests": 1
+    },
+    {
+      "file": "axis_snap_measure.test.ts",
+      "seconds": 1.09,
+      "tests": 1
+    },
+    {
+      "file": "order_signal.test.ts",
+      "seconds": 0.97,
+      "tests": 1
+    },
+    {
+      "file": "rule_camera.test.ts",
+      "seconds": 0.94,
+      "tests": 1
+    },
+    {
+      "file": "stage_measure.test.ts",
+      "seconds": 0.88,
+      "tests": 1
+    },
+    {
+      "file": "free_curve.test.ts",
+      "seconds": 0.86,
+      "tests": 2
+    },
+    {
+      "file": "one_stroke_one_axis.test.ts",
+      "seconds": 0.81,
+      "tests": 3
+    },
+    {
+      "file": "osnap_two_sided.test.ts",
+      "seconds": 0.78,
+      "tests": 1
+    },
+    {
+      "file": "segment_gate.test.ts",
+      "seconds": 0.76,
+      "tests": 1
+    },
+    {
+      "file": "fix_load.test.ts",
+      "seconds": 0.7,
+      "tests": 1
+    },
+    {
+      "file": "occlusion.test.ts",
+      "seconds": 0.67,
+      "tests": 1
+    },
+    {
+      "file": "horizon_pitch.test.ts",
+      "seconds": 0.55,
+      "tests": 1
+    },
+    {
+      "file": "classify_leak.test.ts",
+      "seconds": 0.5,
+      "tests": 1
+    },
+    {
+      "file": "order_promote.test.ts",
+      "seconds": 0.38,
+      "tests": 1
+    },
+    {
+      "file": "axis.test.ts",
+      "seconds": 0.36,
+      "tests": 9
+    },
+    {
+      "file": "tube_measure.test.ts",
+      "seconds": 0.34,
+      "tests": 1
+    },
+    {
+      "file": "order_undo.test.ts",
+      "seconds": 0.32,
+      "tests": 1
+    },
+    {
+      "file": "persist.test.ts",
+      "seconds": 0.31,
+      "tests": 11
+    },
+    {
+      "file": "bend_share.test.ts",
+      "seconds": 0.3,
+      "tests": 3
+    },
+    {
+      "file": "snap_stage.test.ts",
+      "seconds": 0.29,
+      "tests": 1
+    },
+    {
+      "file": "pick_vp.test.ts",
+      "seconds": 0.26,
+      "tests": 1
+    },
+    {
+      "file": "face_diag.test.ts",
+      "seconds": 0.09,
+      "tests": 3
+    },
+    {
+      "file": "osnap_measure.test.ts",
+      "seconds": 0.08,
+      "tests": 1
+    },
+    {
+      "file": "confirm_rules.test.ts",
+      "seconds": 0.06,
+      "tests": 3
+    },
+    {
+      "file": "grid.test.ts",
+      "seconds": 0.06,
+      "tests": 10
+    },
+    {
+      "file": "data_deps.test.ts",
+      "seconds": 0.04,
+      "tests": 6
+    },
+    {
+      "file": "lift.test.ts",
+      "seconds": 0.04,
+      "tests": 9
+    },
+    {
+      "file": "user_place.test.ts",
+      "seconds": 0.03,
+      "tests": 9
+    },
+    {
+      "file": "canvas_frame.test.ts",
+      "seconds": 0.02,
+      "tests": 9
+    },
+    {
+      "file": "place.test.ts",
+      "seconds": 0.02,
+      "tests": 18
+    },
+    {
+      "file": "rule_lift.test.ts",
+      "seconds": 0.02,
+      "tests": 5
+    },
+    {
+      "file": "segment.test.ts",
+      "seconds": 0.02,
+      "tests": 15
+    },
+    {
+      "file": "tube.test.ts",
+      "seconds": 0.02,
+      "tests": 13
+    },
+    {
+      "file": "vp_detect.test.ts",
+      "seconds": 0.02,
+      "tests": 11
+    },
+    {
+      "file": "vp_rules.test.ts",
+      "seconds": 0.02,
+      "tests": 33
+    },
+    {
+      "file": "axis_snap.test.ts",
+      "seconds": 0.01,
+      "tests": 11
+    },
+    {
+      "file": "axis_snap_table.test.ts",
+      "seconds": 0.01,
+      "tests": 16
+    },
+    {
+      "file": "camera_parity.test.ts",
+      "seconds": 0.01,
+      "tests": 13
+    },
+    {
+      "file": "cam_gesture.test.ts",
+      "seconds": 0.01,
+      "tests": 15
+    },
+    {
+      "file": "channel.test.ts",
+      "seconds": 0.01,
+      "tests": 9
+    },
+    {
+      "file": "constraints.test.ts",
+      "seconds": 0.01,
+      "tests": 10
+    },
+    {
+      "file": "doc_store.test.ts",
+      "seconds": 0.01,
+      "tests": 12
+    },
+    {
+      "file": "gate.test.ts",
+      "seconds": 0.01,
+      "tests": 7
+    },
+    {
+      "file": "geom3d.test.ts",
+      "seconds": 0.01,
+      "tests": 10
+    },
+    {
+      "file": "horizon_drag.test.ts",
+      "seconds": 0.01,
+      "tests": 10
+    },
+    {
+      "file": "kind_flip_guard.test.ts",
+      "seconds": 0.01,
+      "tests": 6
+    },
+    {
+      "file": "metrics.test.ts",
+      "seconds": 0.01,
+      "tests": 13
+    },
+    {
+      "file": "one_point_direct.test.ts",
+      "seconds": 0.01,
+      "tests": 1
+    },
+    {
+      "file": "osnap.test.ts",
+      "seconds": 0.01,
+      "tests": 7
+    },
+    {
+      "file": "promoteDiff.test.ts",
+      "seconds": 0.01,
+      "tests": 8
+    },
+    {
+      "file": "real_ink.test.ts",
+      "seconds": 0.01,
+      "tests": 3
+    },
+    {
+      "file": "scene_cam.test.ts",
+      "seconds": 0.01,
+      "tests": 14
+    },
+    {
+      "file": "snap.test.ts",
+      "seconds": 0.01,
+      "tests": 11
+    },
+    {
+      "file": "snap2d.test.ts",
+      "seconds": 0.01,
+      "tests": 14
+    },
+    {
+      "file": "split.test.ts",
+      "seconds": 0.01,
+      "tests": 13
+    },
+    {
+      "file": "view_camera.test.ts",
+      "seconds": 0.01,
+      "tests": 8
+    },
+    {
+      "file": "view_cube_hit.test.ts",
+      "seconds": 0.01,
+      "tests": 11
+    },
+    {
+      "file": "view_system.test.ts",
+      "seconds": 0.01,
+      "tests": 12
+    },
+    {
+      "file": "vp_homog.test.ts",
+      "seconds": 0.01,
+      "tests": 7
+    },
+    {
+      "file": "vp_homog_measure.test.ts",
+      "seconds": 0.01,
+      "tests": 1
+    },
+    {
+      "file": "vp_pick.test.ts",
+      "seconds": 0.01,
+      "tests": 5
+    },
+    {
+      "file": "wiring.test.ts",
+      "seconds": 0.01,
+      "tests": 7
+    },
+    {
+      "file": "constants.test.ts",
+      "seconds": 0,
+      "tests": 4
+    },
+    {
+      "file": "perp2d.test.ts",
+      "seconds": 0,
+      "tests": 5
+    },
+    {
+      "file": "pick.test.ts",
+      "seconds": 0,
+      "tests": 10
+    },
+    {
+      "file": "prefilter.test.ts",
+      "seconds": 0,
+      "tests": 4
+    },
+    {
+      "file": "resolve2d_end2.test.ts",
+      "seconds": 0,
+      "tests": 3
+    },
+    {
+      "file": "vp_dir.test.ts",
+      "seconds": 0,
+      "tests": 5
+    }
+  ],
+  "declared_scenarios": {
+    "classify_leak.json": {
+      "scenarios": 3600,
+      "arms": 8
+    },
+    "free_curve.json": {
+      "scenarios": null,
+      "arms": 4
+    },
+    "order_lock.json": {
+      "scenarios": 5400,
+      "arms": 9
+    },
+    "osnap_two_sided.json": {
+      "scenarios": 46080,
+      "arms": 10
+    },
+    "snap_stage.json": {
+      "scenarios": 10755,
+      "arms": null
+    },
+    "touch_route_repeat.json": {
+      "scenarios": 12,
+      "arms": null
+    }
+  },
+  "declared_note": "원장이 스스로 적은 실행 수·팔 수다. **손으로 세지 않는다**(#17) — 팔을 더하면 이 수가 늘고, 그 증가가 위 `by_file`의 시간과 짝지어 보인다.",
+  "constants_absent": "⚠ **`constants`·`metric_defs` 스냅샷을 일부러 안 넣는다**(#40 — 필수 필드를 자명한 값으로 채우지 않는다). 이 원장은 **제품이 아니라 검증 스위트 자체**를 재므로 `SHARED_CONSTANTS`·`metrics.ts`에 **의존하지 않는다**. 넣으면 무관한 상수가 바뀔 때마다 이 원장이 **거짓 STALE**로 뜨고, 그것은 검사를 약화시키는 방향이다(#19). selfcheck가 이 둘을 플래그하는 것은 정상이고 **원인이 이 줄이다**.",
+  "what_this_does_not_say": [
+    "**절대 초는 이 기계의 것이다**(#27). 다른 기계·다른 부하에서는 다르다 — 읽을 것은 **비중**이다.",
+    "**e2e(Playwright)는 안 잰다** — 별도 실행기다. 그쪽은 `npm run e2e`이고 4분대다.",
+    "**단위 쪽이 느려지는 것은 이 갈래가 못 막는다** — 원장을 안 쓰면서 느린 파일은 단위에 남는다. 그때는 위 `dominant`의 `kind`가 `unit`으로 뜬다."
+  ]
+}

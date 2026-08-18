@@ -17,3 +17,4 @@ files.zip
 web/vite.log
 web/test-results/
 web/playwright-report/
+stage0/out/_vitest_timing.json
