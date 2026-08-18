@@ -274,7 +274,8 @@ const REL_SNAP = { on: true };
 /** **하단바 접이식 메뉴**(4차 지시 6-a) — 표시·스냅 토글이 접힌다. 기본 접힘. */
 const BAR_MENU = { open: false };
 const OSNAP = {
-  radiusPx: OSNAP_RADIUS_PX,           // D-L56 15px — 출처는 resolve2d.ts 하나(#17)
+  radiusPx: OSNAP_RADIUS_PX,           // 출처는 resolve2d.ts 하나(#17). 값은 그 상수를 읽는다
+                                       // (D-L56 신설 → D-L85 개정 — 수를 여기 안 적는다, #47)
   kinds: { vertex: true, endpoint: true, midpoint: true, intersection: true,
            perpendicular: true, on_edge: true, on_face: true } as Record<SnapKind, boolean>,
   open: false,                       // 설정 패널이 열려 있는가

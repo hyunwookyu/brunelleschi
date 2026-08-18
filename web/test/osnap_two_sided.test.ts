@@ -64,6 +64,19 @@ const RADII = [4, 6, 8, 10, 12, 15, 20, 25, 30, 40];
  */
 const FAR_OFFSET: Pt2 = [330, -60];
 
+/**
+ * **구도별 보정 오프셋**(2026-08-18 11차 항목 3-a). 고정 오프셋 하나(`FAR_OFFSET`)는
+ * 구도마다 **다른 화면 간격**을 만든다 — 3점 구도에서는 두 덩어리가 40~60px로 가깝고
+ * 1점·2점에서는 훨씬 멀어서, **반경 40px에서도 잘못된 연결이 원리적으로 안 난다**
+ * (`by_composition`의 `reachable_any_radius: false` 둘). 그 구도에서 `wrong = 0`은
+ * "반경이 안전하다"가 아니라 **이 픽스처가 그 층에서 대상을 못 만든 것**이다(#35·#40 ③).
+ *
+ * 보정 팔은 오프셋을 구도마다 줄여 **참 정점 사이 최소 간격을 40px 바로 위**로 맞춘다 —
+ * 그러면 반경 축이 그 간격을 실제로 넘나들 수 있다. 본 팔은 그대로 두고(인용된 값이라
+ * 움직이지 않는다) **팔을 더한다**(#30 — 같은 실행 안의 대조).
+ */
+const CALIB_SCALES = [1, 0.9, 0.8, 0.7, 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15];
+
 const REGISTERED =
   "① **두 지표가 반대로 움직인다**: 반경을 넓히면 `missed`(붙어야 하는데 안 붙음)가 **줄고** "
   + "`wrong`(안 붙어야 하는데 붙음)이 **는다**. 둘 중 하나라도 반경에 대해 **단조가 아니면** "
@@ -74,6 +87,11 @@ const REGISTERED =
   + "모집단은 5구도 × 6시드 × 등급 2 × 잡음 4 × 반경 10 = 2400실행이고 "
   + "**두 지표의 분모가 다르다**(#11): `missed`의 분모는 **같은 덩어리 안에서 참 정점을 "
   + "겨냥한 끝점**, `wrong`의 분모는 **겨냥이 없는 끝점 전부**다. "
+  + "**[11차 항목 3-a 추가 등록]** ③ **도달 가능성을 구도별로 본다**(#40 ③ 모집단 불일치): "
+  + "본 팔의 합계가 0이 아니어도 **1점·2점 구도가 어떤 반경에서도 0**이면 그 층의 결론은 "
+  + "픽스처가 만든 것이다. **보정 팔**(`by_composition_calibrated`)이 구도마다 오프셋을 "
+  + "줄여 참 정점 간격을 40px 바로 위로 맞추고, **다섯 구도 전부에서 `wrong`이 도달 "
+  + "가능한지**를 낸다. 도달 불가 구도가 남으면 그 사실을 원장이 든다. "
   + "⚠ 이것은 이 항목이 등록한 게이트다(#41).";
 
 /** 한 획의 끝 하나에 대한 판정. */
@@ -179,6 +197,88 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
         }
       }
     }
+
+    // ---- **보정 팔**(11차 항목 3-a) — 구도마다 오프셋을 줄여 참 정점 최소 간격을
+    //      40px 바로 위로 맞춘다. 본 팔은 안 건드린다(인용된 값이 움직이지 않게).
+    const rowsC: EndRow[] = [];
+    /** 구도별 보정 결과 — 무엇을 골랐고 그때 간격이 얼마인가(원장이 든다). */
+    const calib: Record<string, { scale: number; min_cross_px: number | null;
+                                  min_cand_px: number | null }> = {};
+
+    for (let ci = 0; ci < COMPOSITIONS.length; ci++) {
+      const C = COMPOSITIONS[ci];
+      const sc = scene(C.yaw, C.pitch, 1000, SZ);
+      const O = groundPoint(sc, C.origin);
+      if (!O) continue;
+      const edgesA = boxLattice(sc, O, C.box[0], C.box[1], C.box[2], 1);
+      const vertsA = trueVerts(sc, edgesA);
+
+      // **간격이 40px 바로 위가 되는 배율을 고른다** — 결정론적 훑기다(난수 없음).
+      let pick: { scale: number; O2: [number, number, number]; minCross: number } | null = null;
+      for (const sf of CALIB_SCALES) {
+        const O2 = groundPoint(sc, [C.origin[0] + FAR_OFFSET[0] * sf,
+                                    C.origin[1] + FAR_OFFSET[1] * sf]);
+        if (!O2) continue;
+        const edgesB = boxLattice(sc, O2, C.box[0], C.box[1], C.box[2], 1);
+        const vertsB = trueVerts(sc, edgesB);
+        let mc = Infinity;
+        for (const p of vertsA) for (const q of vertsB)
+          mc = Math.min(mc, Math.hypot(p[0] - q[0], p[1] - q[1]));
+        if (!(mc > 40)) continue;
+        if (!pick || mc < pick.minCross) pick = { scale: sf, O2, minCross: mc };
+      }
+      if (!pick) { calib[C.name] = { scale: 0, min_cross_px: null, min_cand_px: null }; continue; }
+
+      const edgesB = boxLattice(sc, pick.O2, C.box[0], C.box[1], C.box[2], 1);
+      // **후보까지의 최소 거리**도 낸다 — 참 정점 간격보다 이것이 `wrong`의 실제 문턱이다
+      // (후보에는 중점·교차점·정점이 섞인다). 잡음 없는 기준 획으로 한 번만 잰다.
+      let minCand: number | null = null;
+      {
+        const rng = rng32(ci * 131 + 1);
+        const dA0 = drawEdges(sc, edgesA, "precise", rng, 0.12, 0, 0);
+        const dB0 = drawEdges(sc, edgesB, "precise", rng, 0.12, 0, 0);
+        if (dA0 && dB0) {
+          const segs0: Snap2Seg[] = dA0.map((e, i) => ({ id: `a${i}`, a: e.a2d, b: e.b2d }));
+          const cands0 = static2dCandidates(segs0, Math.hypot(SZ[0], SZ[1]));
+          for (const e of dB0) {
+            const raw = e.pts2d as Pt2[];
+            for (const q of [raw[0], raw[raw.length - 1]] as Pt2[])
+              for (const c of cands0) {
+                const d = Math.hypot(c.at[0] - q[0], c.at[1] - q[1]);
+                if (minCand == null || d < minCand) minCand = d;
+              }
+          }
+        }
+      }
+      calib[C.name] = { scale: pick.scale, min_cross_px: round(pick.minCross, 4),
+                        min_cand_px: minCand == null ? null : round(minCand, 4) };
+
+      for (const jit of JITTERS) for (const grade of GRADES) for (const seed of SEEDS) {
+        const rng = rng32(seed * 7919 + ci * 131 + 1);
+        const dA = drawEdges(sc, edgesA, grade, rng, 0.12, jit, 0);
+        const dB = drawEdges(sc, edgesB, grade, rng, 0.12, jit, 0);
+        if (!dA || !dB) continue;
+        const segsA: Snap2Seg[] = dA.map((e, i) => ({ id: `a${i}`, a: e.a2d, b: e.b2d }));
+        for (const radius of RADII) {
+          const cands = static2dCandidates(segsA, Math.hypot(SZ[0], SZ[1]));
+          for (const e of dB) {
+            const raw = e.pts2d as Pt2[];
+            const r = resolve2dCore(raw, { cands, vps: [], radiusPx: radius,
+                                           relSnap: false, segs: segsA });
+            const a0 = raw[0], b0 = raw[raw.length - 1];
+            for (const which of ["start", "end"] as const) {
+              const got = which === "start" ? r.start2 : r.end2;
+              rowsC.push({
+                comp: C.name, jitter: jit, grade, seed, radius, which,
+                intended: false, aimPx: null,
+                engaged: !!got, wrong: !!got, right: false,
+              });
+            }
+          }
+        }
+      }
+    }
+
     expect(rows.length).toBeGreaterThan(1000);
 
     // ---- **붙어야 할 곳** 팔: 같은 덩어리 안에서 이어 긋는다(8차 스윕과 같은 조건).
@@ -249,6 +349,30 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
       }];
     }));
 
+    const byCompCal = Object.fromEntries(COMPOSITIONS.map(C => {
+      const all = rowsC.filter(r => r.comp === C.name);
+      const byR = Object.fromEntries(RADII.map(R => {
+        const f = all.filter(r => r.radius === R);
+        return [`r${R}`, fraction(f.filter(r => r.wrong).length, f.length)];
+      }));
+      return [C.name, {
+        n: all.length,
+        offset_scale: calib[C.name]?.scale ?? null,
+        min_cross_px: calib[C.name]?.min_cross_px ?? null,
+        min_cand_px: calib[C.name]?.min_cand_px ?? null,
+        by_radius: byR,
+        reachable_any_radius: all.some(r => r.wrong),
+        max_wrong_at: RADII.reduce((best, R) => {
+          const k = all.filter(r => r.radius === R && r.wrong).length;
+          return k > best.k ? { r: R, k } : best;
+        }, { r: 0, k: 0 }),
+      }];
+    }));
+    /** 보정 팔에서도 대상을 못 만든 구도(있으면 원장이 이름으로 든다 — 숨기지 않는다). */
+    const calUnreachable = COMPOSITIONS.map(C => C.name)
+      .filter(n => (byCompCal[n] as { n: number; reachable_any_radius: boolean }).n > 0
+                && !(byCompCal[n] as { reachable_any_radius: boolean }).reachable_any_radius);
+
     const aimAll = connRows.filter(r => r.radius === RADII[0]).map(r => r.aimPx);
 
     const out = {
@@ -268,11 +392,20 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
       },
       sweep,
       by_composition: byComp,
+      by_composition_calibrated: byCompCal,
+      calibrated_unreachable_compositions: calUnreachable,
       selfcheck_notes: {
         "sweep[9].missed_rate = 0": "**정상이고 뜻이 있다** — 반경 40px은 이 픽스처의 "
           + "겨냥 거리 분포(p90 26.95px)를 통째로 덮어서 놓친 연결이 하나도 안 남는다. "
           + "**측정 미작동이 아니라 반경이 분포를 넘어선 것**이고, 같은 행의 `wrong` 536/4608이 "
           + "그 대가를 낸다(#5 — 0의 출처를 원장에 적는다).",
+        "by_composition_calibrated.*.by_radius 값의 크기": "**픽스처가 정한 인접도의 "
+          + "귀결이다**(#46 · #5) — 보정이 두 덩어리를 배제선(40px) 바로 위까지 붙이므로 "
+          + "이 팔은 **최악 인접**의 값이고 전형적 사용의 비율이 아니다. 이 팔이 싣는 정보는 "
+          + "① **도달 가능성**(다섯 구도 전부 `wrong`이 난다 — 본 팔에서 1점·2점이 0이던 것이 "
+          + "픽스처 탓임을 보인다) ② **반경에 대한 단조성**(다섯 구도 전부에서 반경과 함께 "
+          + "늘어난다) ③ **구도 간 순서**(같은 인접도에서 1점이 3점보다 이르게 샌다)다. "
+          + "크기를 반경 결정의 근거로 인용하지 않는다.",
         "by_composition.3pt_yaw35_pitch15.n = 0": "**판정 전에 뺐다**(#20). 그 구도는 "
           + "두 덩어리의 참 정점이 화면에서 40px 안으로 겹쳐 '안 붙어야 한다'가 흐려진다. "
           + "뺀 수는 `population.overlap_dropped_compositions`에 있다 — **뺄셈으로 만든 "
@@ -288,22 +421,41 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
         "**`wrong`의 정의가 픽스처에 기댄다**(#5) — '떨어진 덩어리에 붙으면 틀렸다'는 이 픽스처가 만든 규약이다. 실제로는 사용자가 두 덩어리를 잇고 싶을 수도 있다.",
         "**관계 스냅(`alignAxes`)을 껐다** — 반경 하나만 보기 위해서다. 켠 상태의 거동은 `snap_stage`·`rel_snap_flow`가 따로 낸다.",
         "**3D 오스냅을 안 잰다** — 확정 전(2D 단계)뿐이다. 3D 판의 반경 거동은 `snap.json`이 낸다.",
+        "**이 원장이 '잘못된 연결'의 유일한 측정이 아니다**(11차 항목 3-b): `snap.json`의 "
+          + "`unintended_snap`이 **먼저** 같은 쪽을 재고 있었다 — 캔버스 균등 난수 24점/픽스처에서 "
+          + "스냅이 끼어드는 비율이고, 반경 축(비율 0.008~0.280)에서 단조 증가하며 **0인 칸이 "
+          + "없다**(밀도 k1~k3 전부). 즉 도달 가능성 결함은 이 픽스처의 것이지 '측정이 없었다'가 "
+          + "아니다. 두 지표는 **질의 분포가 다르다**: `unintended_snap`은 화면 전역 난수, "
+          + "이 원장은 **사람이 실제로 새 덩어리를 시작할 자리**(떨어진 상자의 모서리)다.",
+        "**보정 팔의 오프셋 배율은 구도마다 다르다**(0.2~0.8) — 그러므로 구도 간 크기 비교는 "
+          + "같은 인접도에서의 비교이지 같은 손짓에서의 비교가 아니다(#24).",
       ],
       gate: gate({
         registered: REGISTERED,
         reachability: "**이 픽스처가 '안 붙어야 할 곳'을 실제로 만드는가**가 도달 가능성이다"
           + "(#35). 어떤 반경에서도 `wrong`이 0이면 그것은 반경이 안전하다는 뜻이 아니라 "
           + "**픽스처가 그 경우를 못 만든 것**이고, 그러면 이 원장은 8차 스윕과 같은 편향을 "
-          + "반복한다. 가장 큰 반경(40px)의 `wrong` 수가 그 판정값이다.",
+          + "반복한다. 가장 큰 반경(40px)의 `wrong` 수가 그 판정값이다. "
+          + "**[11차 항목 3-a]** 그 합계는 **3점 구도 둘이 혼자 만든다** — 본 팔의 1점·2점은 "
+          + "어떤 반경에서도 0이라 합계 도달 가능성이 그 층의 도달 불가를 덮고 있었다(#40 ③). "
+          + "그래서 **보정 팔의 최약 구도 값**을 함께 든다: 다섯 구도 각각의 최대 `wrong` 중 "
+          + "**가장 작은 것**(`calibrated_min_reachable_n`)이 0이면 게이트 ③이 깨진다.",
         reachability_value: rows.filter(r => r.radius === 40 && r.wrong).length,
         reachability_source: "wrong_at_40_n",
       }),
       wrong_at_40_n: rows.filter(r => r.radius === 40 && r.wrong).length,
+      /** 보정 팔의 **최약 구도** 도달값(#40 ③ — 합계가 층의 0을 덮지 못하게 한다). */
+      calibrated_min_reachable_n: Math.min(...COMPOSITIONS.map(C =>
+        (byCompCal[C.name] as { max_wrong_at: { k: number } }).max_wrong_at.k)),
       constants: constantsSnapshot(),
       metric_defs: metricsSnapshot(),
     };
     mkdirSync(OUT, { recursive: true });
     writeFileSync(resolve(OUT, "osnap_two_sided.json"), JSON.stringify(out, null, 2), "utf8");
     expect(connRows.length).toBeGreaterThan(100);
+    // **게이트 ③**(11차 항목 3-a): 보정 팔에서 다섯 구도 전부 `wrong`이 도달 가능해야 한다.
+    // 깨지면 픽스처가 다시 그 층의 대상을 못 만드는 것이고, 그때는 결론이 아니라
+    // **픽스처의 성질**을 읽고 있는 것이다(#35·#40 ③).
+    expect(calUnreachable).toEqual([]);
   }, 300_000);
 });

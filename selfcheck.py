@@ -832,6 +832,12 @@ def scan_gate_reachability(reports: dict[str, dict]) -> list[dict]:
     # **지난 것이 아니라 면제된 것**이다. 합쳐 세면 "일곱 전부 통과"로 읽힌다(#38·#32).
     verified: list[str] = []
     exempt: list[str] = []
+    # **셋째 갈래**(2026-08-18 11차 · PITFALLS #46 · 리뷰어 [8]): 값이 있긴 한데
+    # **픽스처가 정한 상수**라 실행 정보가 0인 것. 값 대조는 지나므로 예전에는
+    # `verified`에 섞여 "검증됨"으로 세어졌다 — 그것이 정보량 0인 값을 자동 검사가
+    # 인증하는 상태다. 원장이 `reachability_value_fixture_determined: true`로
+    # **스스로 표시**하면 여기로 갈라 센다(그 필드를 읽는 쪽이 이 검사다 — #18).
+    fixture_det: list[str] = []
     def walk(node, path, fname):
         if isinstance(node, dict):
             keys = {k.lower() for k in node}
@@ -847,7 +853,10 @@ def scan_gate_reachability(reports: dict[str, dict]) -> list[dict]:
                                           "넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"})
                 flags.extend(_gate_value_checks(node, fname, path, reports.get(fname) or {}))
                 if "reachability_value" in node:
-                    verified.append(f"{fname}:{path}")
+                    if node.get("reachability_value_fixture_determined") is True:
+                        fixture_det.append(f"{fname}:{path}")
+                    else:
+                        verified.append(f"{fname}:{path}")
                 elif str(node.get("reachability_absent", "")).strip():
                     exempt.append(f"{fname}:{path}")
             for k, v in node.items():
@@ -858,10 +867,14 @@ def scan_gate_reachability(reports: dict[str, dict]) -> list[dict]:
     for fname, rep in reports.items():
         walk(rep, "", fname)
     flags += _cover("scan_gate_reachability", "게이트 블록", len(seen), len(flags),
-                    note=f"값 대조를 **지난 것 {len(verified)}** · **면제 {len(exempt)}**"
+                    note=f"값 대조를 **지난 것 {len(verified)}** · **픽스처가 정한 값 "
+                         f"{len(fixture_det)}** · **면제 {len(exempt)}**"
                          f"(`reachability_absent`) · 원장 {len(reports)}개 훑음. "
                          f"⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 "
-                         f"근거로 쓰지 않는다. 검증: {', '.join(verified) or '없음'} / "
+                         f"근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — "
+                         f"크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 "
+                         f"산문이 따로 든다. 검증: {', '.join(verified) or '없음'} / "
+                         f"픽스처 결정: {', '.join(fixture_det) or '없음'} / "
                          f"면제: {', '.join(exempt) or '없음'}")
     return flags
 

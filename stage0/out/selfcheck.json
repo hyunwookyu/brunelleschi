@@ -1,5 +1,5 @@
 {
-  "n_flags": 4486,
+  "n_flags": 4484,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -22705,11 +22705,6 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
-      "path": "_vitest_timing.json",
-      "val": null,
-      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
-    },
-    {
       "path": "draft_recover.json@509615a1",
       "val": "FOV_GATE.ok_f_ratio: None → 0.87; FOV_GATE.severe_f_ratio: None → 0.5; RULE_TOL.concurrent_deg: None → 3",
       "flag": "**STALE** — 현재 상수(54346ad1)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
@@ -22728,11 +22723,6 @@
       "path": "test_cost.json",
       "val": null,
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
-    },
-    {
-      "path": "_vitest_timing.json",
-      "val": null,
-      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
     {
       "path": "test_cost.json",
@@ -22902,7 +22892,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 208,
+      "files_scanned": 207,
       "exts_declared": [
         ".md",
         ".py",
@@ -22926,7 +22916,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 208,
+      "files_scanned": 207,
       "exts_declared": [
         ".md",
         ".py",
@@ -22967,21 +22957,21 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 198,
+      "targets": 201,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
     {
       "scan": "scan_cited_values",
       "unit": "인용 줄",
-      "targets": 109,
+      "targets": 111,
       "hits": 0,
-      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1366개이고 엄격 판정이면 294개(55줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
+      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1370개이고 엄격 판정이면 294개(55줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
     },
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 60,
+      "targets": 59,
       "hits": 0,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
@@ -22990,7 +22980,7 @@
       "unit": "게이트 블록",
       "targets": 44,
       "hits": 2,
-      "note": "값 대조를 **지난 것 18** · **면제 26**(`reachability_absent`) · 원장 78개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_rules.json:fov_gate.gate, confirm_rules.json:vp_rule_three.gate, cube_frame.json:gate, dir_state.json:gate, elevation_flow.json:gate, horizon.json:gate, one_point_direct.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, restore_pose.json:gate, snap_cache.json:gate, snap_stage.json:gate, view_pan.json:gate / 면제: confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "note": "값 대조를 **지난 것 17** · **픽스처가 정한 값 1** · **면제 26**(`reachability_absent`) · 원장 77개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_rules.json:fov_gate.gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, horizon.json:gate, one_point_direct.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, restore_pose.json:gate, snap_cache.json:gate, snap_stage.json:gate, view_pan.json:gate / 픽스처 결정: cube_frame.json:gate / 면제: confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -23001,21 +22991,6 @@
     }
   ],
   "pitfall_citations": {
-    "_vitest_timing.json": [
-      5,
-      6,
-      11,
-      13,
-      14,
-      24,
-      26,
-      30,
-      32,
-      33,
-      35,
-      38,
-      40
-    ],
     "axis_live.json": [
       4,
       7,
@@ -23227,7 +23202,9 @@
       35,
       39,
       40,
-      41
+      41,
+      42,
+      47
     ],
     "order_promote.json": [
       1,
@@ -23271,15 +23248,19 @@
     "osnap_config.json": [
       21,
       40,
-      41
+      41,
+      46
     ],
     "osnap_two_sided.json": [
       5,
       10,
       11,
       20,
+      24,
       35,
-      41
+      40,
+      41,
+      46
     ],
     "p1_invariance.json": [
       5,
@@ -23522,8 +23503,8 @@
     ]
   },
   "cited_value_population": {
-    "lines_checked": 109,
-    "tokens_checked": 1366,
+    "lines_checked": 111,
+    "tokens_checked": 1370,
     "flags_line_rule": 0,
     "strict_tokens_flagged": 294,
     "strict_lines_flagged": 55,
@@ -23533,7 +23514,6 @@
   "constants_hash": "54346ad1",
   "metrics_hash": "a45078a5",
   "scanned": [
-    "_vitest_timing.json",
     "axis_judgement.json",
     "axis_live.json",
     "axis_snap.json",

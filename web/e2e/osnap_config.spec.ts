@@ -46,13 +46,33 @@ test("반경·종류·수직점 — 설정이 스냅을 실제로 가른다", as
     S.setOsnap({ radiusPx: 8, kinds: { endpoint: true, vertex: true } });    // 기본 복원(D-L85)
     // ③ **수직점** — 다른 획의 안쪽에 내린 수선의 발. `from`(앵커)이 있어야 정의된다
     const seg = S.doc().strokes.find((s: any) => s.seg3d && s.id !== st.id)!;
-    const mid3 = [0, 1, 2].map(k => (seg.seg3d[0][k] + seg.seg3d[1][k]) / 2);
-    // 앵커를 그 선분에서 비켜 세운다(수선이 안쪽에 떨어지게 중점 근처를 겨냥)
-    const from = [mid3[0] + 0.4, mid3[1] - 0.3, mid3[2] + 0.2];
-    const foot2 = g3.project(mid3, ctx.principal, ctx.f)!;
+    // ⚠ **초판은 수선 발을 중점에 두었다**(11차 항목 3-d · #46): 그러면 중점 스냅이 늘
+    // 이기고 단언 `["perpendicular","midpoint"]`는 **픽스처가 보장하는 통과**였다 —
+    // 수직점이 안 돌아도 통과한다. 발을 **t = 0.3**으로 옮겨 중점과 갈라 놓고
+    // `perpendicular`를 **정확히** 요구한다.
+    const A = seg.seg3d[0] as number[], B = seg.seg3d[1] as number[];
+    const T = 0.3;
+    const foot3 = [0, 1, 2].map(k => A[k] + (B[k] - A[k]) * T);
+    const mid3 = [0, 1, 2].map(k => (A[k] + B[k]) / 2);
+    // 앵커는 **선분에 수직으로** 비켜 세운다 — 그래야 수선의 발이 정확히 t=0.3이다
+    const d = [0, 1, 2].map(k => B[k] - A[k]);
+    const dn = Math.hypot(d[0], d[1], d[2]) || 1;
+    const u = d.map(v => v / dn);
+    const pick = Math.abs(u[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+    const dot = pick[0] * u[0] + pick[1] * u[1] + pick[2] * u[2];
+    const w = pick.map((v, k) => v - dot * u[k]);
+    const wn = Math.hypot(w[0], w[1], w[2]) || 1;
+    const from = foot3.map((v, k) => v + (w[k] / wn) * 0.5);
+    const foot2 = g3.project(foot3, ctx.principal, ctx.f)!;
+    const mid2 = g3.project(mid3, ctx.principal, ctx.f)!;
     const near: [number, number] = [foot2[0] + 4, foot2[1] + 3];
     const cand = S.endSnap(from, near);
     out.perp_kind = cand?.kind ?? null;
+    out.perp_t = T;
+    // **중점이 이 자리를 못 먹는다는 실측** — 겨냥점에서 중점까지의 화면 거리(px).
+    // 조리개(8px)보다 크면 중점은 후보가 아니다(그 사실이 판별을 만든다).
+    out.perp_mid_px = Math.hypot(mid2[0] - near[0], mid2[1] - near[1]);
+    out.perp_foot_px = Math.hypot(foot2[0] - near[0], foot2[1] - near[1]);
     return out;
   });
 
@@ -62,9 +82,12 @@ test("반경·종류·수직점 — 설정이 스냅을 실제로 가른다", as
   if (r.r15 != null) expect(r.r15_dist as number).toBeLessThanOrEqual(15);
   expect(["endpoint", "vertex"]).toContain(r.r40 as string);
   expect(["endpoint", "vertex"]).not.toContain(r.no_endpoint as string);  // **종류 토글이 가른다**
-  // **수직점이 발화한다** — 끝점·중점이 이길 수 있는 자리라 종류만 확인한다(중점도 정답이면
-  // 그 자리가 수선 발과 겹친 것이므로 perpendicular 또는 midpoint를 받는다)
-  expect(["perpendicular", "midpoint"]).toContain(r.perp_kind as string);
+  // **수직점이 발화한다**(11차 항목 3-d — 판별이 서는 형태로 고쳤다): 발을 t=0.3에 두어
+  // 중점과 갈라 놓았으므로 `perpendicular`를 정확히 요구한다. 중점이 조리개 밖이라는 것을
+  // 같은 실행이 실측으로 든다(그 값이 판별의 근거다 — #46: 상수가 아니라 실행의 양이다)
+  expect(r.perp_kind as string).toBe("perpendicular");
+  expect(r.perp_mid_px as number).toBeGreaterThan(8);
+  expect(r.perp_foot_px as number).toBeLessThanOrEqual(8);
 
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "osnap_config.json"), JSON.stringify({
@@ -75,7 +98,7 @@ test("반경·종류·수직점 — 설정이 스냅을 실제로 가른다", as
     gate: {
       registered: "① 22px 오조준이 15px 조리개에서 끝점으로 안 붙는다(잡혀도 dist ≤ 15) "
         + "② 40px로 넓히면 끝점이 붙는다 ③ 끝점·정점을 끄면 그 종류가 안 나온다 "
-        + "④ 수직점(또는 같은 자리의 중점)이 발화한다. ⚠ 이 항목이 등록한 게이트다 — "
+        + "④ **수직점이 발화한다** — 발을 t=0.3에 두어 중점과 갈라 놓고 `perpendicular`를 정확히 요구한다(11차 항목 3-d. 옛 조항 ‘수직점 **또는 같은 자리의 중점**’은 중점이 늘 이기는 자리라 **픽스처가 보장하는 통과**였다 — #46). 같은 실행이 중점까지의 화면 거리(`perp_mid_px`)와 발까지의 거리(`perp_foot_px`)를 실측으로 든다. ⚠ 이 항목이 등록한 게이트다 — "
         + "CLAUDE.md §2 중단 조건 아님(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
       // ⚠ 옛 판은 `r40_dist`를 값으로 적었다 — 그것은 게이트 조항 ②의 측정값 자신이자

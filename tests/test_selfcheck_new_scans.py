@@ -389,3 +389,29 @@ def test_cited_values_strict_and_line_rules_agree_when_nothing_matches(tmp_path)
     assert pop["lines_checked"] == 1 and pop["flags_line_rule"] == 1, pop
     assert pop["strict_lines_flagged"] == 1, pop
     assert any(f["path"].startswith("d.md") for f in flags), flags
+
+
+def test_gate_reachability_fixture_determined_is_split_out():
+    """**픽스처가 정한 도달값은 '검증됨'에 안 섞인다**(2026-08-18 11차 · PITFALLS #46).
+
+    값 대조는 지나므로(값이 원장에 실제로 있다) 예전 판은 `verified`로 세었다 —
+    정보량 0인 값을 자동 검사가 인증하는 상태다. 원장이 스스로 표시한 플래그를
+    이 검사가 **읽어** 갈라 세는지 확인한다(#18 — 써 놓고 안 읽는 필드를 만들지 않는다).
+    """
+    plain = {"gate": {"registered": "r", "reachability": "오라클 0.97",
+                      "reachability_value": 0.97, "reachability_source": "oracle/best"},
+             "oracle": {"best": 0.97}}
+    fixed = {"gate": {"registered": "r", "reachability": "픽스처 상수다",
+                      "reachability_value": 0.97, "reachability_source": "oracle/best",
+                      "reachability_value_fixture_determined": True},
+             "oracle": {"best": 0.97}}
+    flags = selfcheck.scan_gate_reachability({"a.json": plain, "b.json": fixed})
+    assert flags == [], flags
+    note = _cov("scan_gate_reachability")["note"]
+    assert "픽스처가 정한 값 1" in note, note
+    assert "지난 것 1" in note, note
+    assert "픽스처 결정: b.json:gate" in note, note
+    # **반례** — 표시가 없으면 둘 다 검증으로 세어진다(그것이 고치기 전의 상태다)
+    flags2 = selfcheck.scan_gate_reachability({"a.json": plain, "b.json": plain})
+    assert flags2 == [], flags2
+    assert "픽스처가 정한 값 0" in _cov("scan_gate_reachability")["note"]
