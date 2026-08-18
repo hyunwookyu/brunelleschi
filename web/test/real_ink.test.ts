@@ -339,43 +339,54 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
       const n = (v: unknown): number | null =>
         (v && typeof v === "object" && typeof (v as { n?: unknown }).n === "number")
           ? (v as { n: number }).n : null;
-      const rows = [
-        { id: "end_snap_engages",
+      const rows: {
+        id: string; what: string; field: string; ok: boolean;
+        blocked_by: string; opens: boolean; caveat?: string;
+      }[] = [
+        { id: "end_snap_engages", opens: true,
           what: "끝점 스냅이 실제로 걸리는지 — 단계별로 갈려 기록되는가(2D 단계 ↔ 3D)",
           field: "snap2d_use.field_present",
           ok: (num(g("snap2d_use.field_present")) ?? 0) > 0,
           blocked_by: "필드 이전 저장본이면 `0/n`이 '안 걸렸다'가 아니라 '안 적혔다'다(#32 · D-L81)" },
-        { id: "vp_dir_axis_snap_holds",
+        { id: "vp_dir_axis_snap_holds", opens: false,
           what: "소실점 방향 축 스냅이 확정에서도 유지되는지",
           field: "vp_dir_err_deg.n",
-          ok: (n(g("vp_dir_err_deg")) ?? 0) > 0,
-          blocked_by: "표본에 소실점 방향 획이 없으면 분포가 안 선다. ⚠ 보장 몫(`vp_dir_guaranteed_zero`)은 갈라 센다(#5)" },
-        { id: "ask_volume",
+          // ⛔ **11차 리뷰어 [7]로 내렸다**: 이 지표는 축 배정을 **통과한 획**만 담는다 —
+          // 같은 각류 판정(`vpMisfit`)을 지나므로 분포가 허용치 안에 갇힌다(#5 선택 절단).
+          // "유지되는가"를 유지된 것만으로 재는 것은 순환이다.
+          ok: false,
+          blocked_by: "**선택 절단으로 순환이다**(#5) — 이 원장의 정의가 스스로 적는다: 축 배정이 같은 각류 판정을 지나므로 분포가 배정 허용치 안에 갇힌다. 유지 실패는 이 필드에 **안 나타난다**. 배정에서 떨어진 획의 각차를 함께 세는 필드가 선행이다",
+          caveat: "표본이 와도 이 필드로는 못 답한다 — 하네스를 먼저 고친다" },
+        { id: "ask_volume", opens: false,
           what: "물음이 얼마나 뜨는지",
           field: "ask.unaccounted",
           ok: g("ask.unaccounted") === 0,
-          blocked_by: "`asked − answered − skipped`가 0이 아니면 그 몫이 취소인지 카운터 누락인지 미상이다(#11)" },
-        { id: "snap_radius_width",
+          blocked_by: "`asked − answered − skipped`가 0이 아니면 그 몫이 취소인지 카운터 누락인지 미상이다(#11)",
+          caveat: "⚠ **새 표본이 와도 같은 모호함이 다시 난다** — 물음 UI가 닫기·바깥 탭을 `skipped`로 세는지 확인하는 것이 선행이고 그것은 미이행 등재 상태다(DEFERRED)" },
+        { id: "snap_radius_width", opens: true,
           what: "스냅 반경이 좁은지 넓은지 — 겨냥 분포 중앙이 조리개의 어디인가",
           field: "snap_dist_px.n",
           ok: (n(g("snap_dist_px")) ?? 0) > 0,
-          blocked_by: "`snap_dist_legacy_zero`가 분모를 다 먹으면 분포가 비어 있다(D-L79 이전 저장본)" },
-        { id: "as6_one_stroke_one_axis",
+          blocked_by: "`snap_dist_legacy_zero`가 분모를 다 먹으면 분포가 비어 있다(D-L79 이전 저장본)",
+          caveat: "⚠ **분포는 40px 프로브에서 절단된다**(#13) — 그 밖 겨냥은 `snap_dist_null`로 사라진다. 중앙값은 **절단된 분포의 중앙**이다" },
+        { id: "as6_one_stroke_one_axis", opens: false,
           what: "AS-6 — 한 획에 방향이 둘 이상인 비율",
           field: "status",
           ok: false,
           blocked_by: "`k_metrics`(`.brnl`)는 이 지표를 안 낸다 — `as6_multi_axis_rate`는 옛 `s2s-session/1` 형식 전용이다. **형식이 아니라 하네스의 한계다**" },
-        { id: "vp_dir_error",
+        { id: "vp_dir_error", opens: true,
           what: "소실점 방향 오차의 분포",
           field: "vp_dir_err_deg.n",
           ok: (n(g("vp_dir_err_deg")) ?? 0) > 0,
-          blocked_by: "위와 같다" },
-        { id: "confirm_path_share",
+          blocked_by: "표본에 소실점 방향 획이 없으면 분포가 안 선다",
+          caveat: "⚠ **n이 한 자릿수다**(#12·#14) · 보장 몫(`vp_dir_guaranteed_zero` — 자기 소실점을 만든 획)은 갈라 센 뒤의 수다(#5) · 축 배정을 통과한 획만 담는다(위 항목과 같은 절단 — 여기서는 **분포를 보는 것**이라 절단을 명시하고 쓴다)" },
+        { id: "confirm_path_share", opens: true,
           what: "확정 경로 분포(찍기 ↔ 두 선의 교점)",
           field: "vp_confirm_source",
           ok: !!g("vp_confirm_source") && Object.keys(g("vp_confirm_source") as object).length > 0,
-          blocked_by: "확정을 지난 문서가 없으면 빈 분포다" },
-        { id: "as_l24_l25_synthetic_bias",
+          blocked_by: "확정을 지난 문서가 없으면 빈 분포다",
+          caveat: "⚠ **현 표본의 합이 한 자릿수이고 `picked_point`가 0이다**(#12) — 동기였던 '실사용에서 어느 쪽을 쓰는가'는 이 크기로는 못 답한다" },
+        { id: "as_l24_l25_synthetic_bias", opens: false,
           what: "AS-L24·L25 — 합성이 이 설계에 편향됐다는 것이 실획으로 지지되는가(4-d)",
           field: "(없다)",
           ok: false,
@@ -387,8 +398,18 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
             + "막힘이 풀렸는지는 `field`가 가리키는 자리를 그 자리에서 읽어 확인한다(#47).",
         answerable: rows.filter(r => r.ok).map(r => r.id),
         blocked: rows.filter(r => !r.ok).map(r => r.id),
+        /**
+         * ⚙️ **새 표본 하나가 실제로 여는 것**(11차 리뷰어 [1]) — 막힌 것 전부가 표본으로
+         * 열리는 것이 아니다. 하네스의 한계(`as6`)·대리 지표 부재(`as_l24_l25`)·순환
+         * (`vp_dir_axis_snap_holds`)·UI 카운터 미수리(`ask_volume`)는 **표본과 무관하다.**
+         * 사람에게 요청할 때 이 목록의 크기로 말한다.
+         */
+        opens_with_new_sample: rows.filter(r => !r.ok && r.opens).map(r => r.id),
+        blocked_regardless_of_sample: rows.filter(r => !r.ok && !r.opens).map(r => r.id),
         rows: rows.map(r => ({ id: r.id, what: r.what, field: r.field,
-                               answerable: r.ok, blocked_by: r.ok ? null : r.blocked_by })),
+                               answerable: r.ok, opens_with_new_sample: r.ok ? null : r.opens,
+                               blocked_by: r.ok ? null : r.blocked_by,
+                               caveat: r.caveat ?? null })),
       };
     })();
 

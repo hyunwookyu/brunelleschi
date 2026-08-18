@@ -474,7 +474,8 @@ interface Bag {
    * 130이 어디로 갔는지 알 수 없다 — P1에서는 틀리더라도 놓였고 P2에서는 안 놓이는가,
    * 아니면 P0(카메라가 안 섬)으로 빠졌는가. **층 내 개선과 층 구성 변화를 가른다**(#9).
    */
-  byOrder: Record<string, { runs: number; drawnN: number; placedN: number; errs: number[] }>;
+  byOrder: Record<string, { runs: number; drawnN: number; placedN: number; errs: number[];
+                            runsWithinCut: number }>;
   /**
    * **P0 실행의 사유별 분해**(2026-08-18 8차 2차 지시 1-a). 분모는 **그 팔의 P0 실행 전부**이고,
    * `drawnN`을 함께 세어 "몇 획을 긋고 0을 놓는가"를 사유별로도 낸다(#11 — 분모가 전부다).
@@ -494,7 +495,12 @@ interface Bag {
   /** **f 개입의 크기**(#39) — 이 팔이 쓴 f / 참 f. */
   fRatios: number[];
 }
-const orderBag = () => ({ runs: 0, drawnN: 0, placedN: 0, errs: [] as number[] });
+const orderBag = () => ({ runs: 0, drawnN: 0, placedN: 0, errs: [] as number[],
+                          /** **실행 단위 성공 수**(2026-08-18 11차 리뷰어 [3] · #11):
+                           *  한 실행의 획들은 **같은 카메라**를 공유하므로 배치는 독립 시행이
+                           *  아니다. 절단 0.2 안이 하나라도 난 **실행 수**를 따로 센다 —
+                           *  포아송 검정의 단위가 이것이다. */
+                          runsWithinCut: 0 });
 const bag = (): Bag => ({ runs: 0, cameraOk: 0, orders: { p0: 0, p1: 0, p2: 0, p3: 0 },
                           drawnN: 0, placedN: 0, errs: [], asks: 0, fed: 0,
                           firstDecl: { screen_h: 0, screen_v: 0, vp: 0, none: 0 },
@@ -516,6 +522,7 @@ function add(b: Bag, r: RunOut) {
   const o = b.byOrder[`p${r.order}`];
   o.runs += 1; o.drawnN += r.drawnN; o.placedN += r.placedN;
   for (const e of r.errs) o.errs.push(e);
+  if (r.errs.some(e => e <= 0.2)) o.runsWithinCut += 1;
   // **P0 사유별**(지시 1-a) · **거절 사유별**(1-b)
   if (r.p0) {
     const q = (b.p0[r.p0.reason] ??= { runs: 0, drawnN: 0, pending: [], maxSep: [],
@@ -690,6 +697,8 @@ function summarize(b: Bag) {
       placement: fraction(o.placedN, o.drawnN),
       placement_rate: rate(o.placedN, o.drawnN),
       within_cut_0_2: o.errs.filter(e => e <= 0.2).length,
+      /** 절단 0.2 안이 **하나라도** 난 실행 수(독립 단위 — 리뷰어 [3]). */
+      runs_within_cut_0_2: o.runsWithinCut,
       beyond_cut_0_5: o.errs.filter(e => e > 0.5).length,
       silent_wrong: silentWrong(o.errs),
       shape_err_median: o.errs.length ? round(median(o.errs), 4) : null,
@@ -1017,29 +1026,52 @@ describe("차수가 P1에 갇히는가 — 그리고 배치가 따라오는가 (
          * ⚠ 수를 산문에 안 박는다(**#47**) — 값은 이 블록의 필드가 든다.
          */
         p1_cross_arm: (() => {
-          const one = summarize(oneBoxPaired).by_order.p1 as
-            { placement: string; within_cut_0_2: number } | undefined;
-          const two = summarize(twoBox).by_order.p1 as
-            { placement: string; within_cut_0_2: number } | undefined;
+          type P1Row = { runs: number; placement: string;
+                         within_cut_0_2: number; runs_within_cut_0_2: number };
+          const one = summarize(oneBoxPaired).by_order.p1 as P1Row | undefined;
+          const two = summarize(twoBox).by_order.p1 as P1Row | undefined;
           if (!one || !two) return null;
           const nOne = +String(one.placement).split("/")[0];
           const nTwo = +String(two.placement).split("/")[0];
           const pTwo = nTwo ? two.within_cut_0_2 / nTwo : 0;
           const lambda = nOne * pTwo;
+          // **실행 단위 검정**(리뷰어 [3]) — 한 실행의 획은 같은 카메라를 공유하므로
+          // 배치 단위 포아송은 표본 크기를 부풀린다. 성공을 **실행 수**로 세어 다시 낸다.
+          const rTwo = two.runs ? two.runs_within_cut_0_2 / two.runs : 0;
+          const lambdaRuns = one.runs * rTwo;
+          const pZeroRuns = Math.pow(1 - rTwo, one.runs);      // 이항 P(성공 0회)
           return {
+            one_box_p1_runs: one.runs,
             one_box_p1_placed: nOne,
             one_box_p1_within_cut_0_2: one.within_cut_0_2,
+            one_box_p1_runs_within_cut_0_2: one.runs_within_cut_0_2,
+            two_box_p1_runs: two.runs,
             two_box_p1_placed: nTwo,
             two_box_p1_within_cut_0_2: two.within_cut_0_2,
+            two_box_p1_runs_within_cut_0_2: two.runs_within_cut_0_2,
             two_box_rate: round(pTwo, 6),
             expected_in_one_box: round(lambda, 4),
             poisson_p_zero: round(Math.exp(-lambda), 6),
-            verdict: one.within_cut_0_2 === 0 && Math.exp(-lambda) < 0.05
+            /** ⚙️ **판정은 이 줄이 한다** — 배치 단위(위 둘)는 독립이 아니다. */
+            two_box_run_rate: round(rTwo, 6),
+            expected_runs_in_one_box: round(lambdaRuns, 4),
+            binomial_p_zero_runs: round(pZeroRuns, 6),
+            alpha: 0.05,
+            verdict: one.runs_within_cut_0_2 === 0 && pZeroRuns < 0.05
               ? "same_population_rejected"
               : "not_rejected",
             note: "`same_population_rejected`면 **희소성 논증을 쓸 수 없다**(#9) — "
                 + "`one_box`의 0은 '표본이 작아서'로 설명되지 않는다. AS-L35의 반증"
-                + "(`two_box`의 절단 안이 0이 아니다)은 그 논증과 **무관하게** 선다.",
+                + "(`two_box`의 절단 안이 0이 아니다)은 그 논증과 **무관하게** 선다. "
+                + "⚠⚠ **판정의 단위는 실행이다**(11차 리뷰어 [3]): 한 실행의 획들은 같은 "
+                + "카메라를 공유하므로 배치 단위 포아송은 표본을 부풀린다 — `binomial_p_zero_runs`가 "
+                + "판정하고 배치 단위 둘은 **연혁·대조용**이다. "
+                + "⚠⚠ **기각의 귀속은 이 원장이 못 가른다**(11차 리뷰어 [10] · #24): "
+                + "`within_cut_0_2`는 **자기 게이지**(`fitGauge`) 정규화 뒤의 양이고 그 적합이 "
+                + "실행 단위인데 두 팔의 획 수가 12 ↔ 24로 다르다 — 그러므로 기각은 "
+                + "'P1 배치 품질이 다르다'일 수도 **'두 팔의 절단 0.2가 같은 양이 아니다'**일 수도 "
+                + "있다. **어느 쪽이든 두 팔 사이의 율 비교는 못 쓴다**는 결론은 같다. "
+                + "⚠ 시드 폭 미측정(#14) — 관측이 0에서 1로만 바뀌어도 판정이 뒤집힐 수 있다.",
           };
         })(),
       },

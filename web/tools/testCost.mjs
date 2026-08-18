@@ -134,8 +134,25 @@ const out = {
      */
     e2e: eFiles
       ? { files: eFiles.length, tests: sum(eFiles.map(f => f.tests)),
-          seconds: sum(eFiles.map(f => f.seconds)) }
+          seconds: sum(eFiles.map(f => f.seconds)),
+          /**
+           * ⚠⚠ **벽시계는 따로 든다**(11차 리뷰어 [4]). 위 `seconds`는 **테스트 결과 시간의
+           * 합**이라 **훅(`beforeAll`/`afterAll`)·브라우저 기동·dev 서버 대기가 빠진다** —
+           * 실측에서 그 차가 절반에 이른다. 그리고 훅에서 난 시간 초과는 **그 파일의
+           * `seconds`가 0으로 기록되는** 형태로 샌다(`static_deploy`의 `afterAll` 120s).
+           * 9차 지시 c가 묻는 양(항목마다 돌릴 수 있는가)은 **벽시계**이므로 그 값을 든다.
+           */
+          wall_seconds: e2eRaw?.stats?.duration != null
+            ? +(e2eRaw.stats.duration / 1000).toFixed(2) : null,
+          unaccounted_seconds: e2eRaw?.stats?.duration != null
+            ? +(e2eRaw.stats.duration / 1000 - sum(eFiles.map(f => f.seconds))).toFixed(2) : null,
+          stats: e2eRaw?.stats
+            ? { expected: e2eRaw.stats.expected, skipped: e2eRaw.stats.skipped,
+                unexpected: e2eRaw.stats.unexpected, flaky: e2eRaw.stats.flaky }
+            : null }
       : null,
+    /** ⚠ 위 `files`·`tests`·`file_seconds_sum`은 **vitest 갈래만**이다(#11 — 분모가 무엇인가). */
+    vitest_only: true,
   },
   dominant: files.slice(0, 8).map(f => ({ ...f, share: +(f.seconds / totalSec).toFixed(4),
                                           kind: measSet.has(f.file) ? "measure" : "unit" })),
@@ -160,7 +177,7 @@ const out = {
   what_this_does_not_say: [
     "**절대 초는 이 기계의 것이다**(#27). 다른 기계·다른 부하에서는 다르다 — 읽을 것은 **비중**이다.",
     "**e2e는 이제 잰다**(11차 항목 5) — 다만 **`_e2e_timing.json`이 있을 때만**이다. 없으면 `totals.e2e`가 `null`이고 그것이 '안 쟀다'의 표시다(0이 아니다). ⚠ **두 갈래의 시간을 한 비율로 합치지 않는다** — 실행기가 다르고 분모가 다르다.",
-    "**e2e의 실패 실행도 시간에 든다** — 이 컨테이너에서 `touch_route` dpr 2는 결정적으로 실패하고(DEFERRED) 그 시간이 합에 포함된다. 시간은 '통과의 비용'이 아니라 '실행의 비용'이다.",
+    "⛔ **`e2e_by_file`의 시간은 '실행의 비용'이 아니다**(11차 리뷰어 [4]로 정정 — 초판이 그렇게 적었다): **테스트 결과 시간의 합**이라 훅·기동·대기가 빠지고, **훅에서 난 시간 초과는 그 파일이 0초로 기록된다**(`static_deploy`의 `afterAll` 120s가 그 자리다). 실행의 비용은 `totals.e2e.wall_seconds`이고 그 차가 `unaccounted_seconds`다. ⚠ 본문에서 실패한 실행(`touch_route` dpr 2)의 시간은 `by_file`에 든다 — 훅 실패만 안 든다.",
     "**단위 쪽이 느려지는 것은 이 갈래가 못 막는다** — 원장을 안 쓰면서 느린 파일은 단위에 남는다. 그때는 위 `dominant`의 `kind`가 `unit`으로 뜬다.",
   ],
 };

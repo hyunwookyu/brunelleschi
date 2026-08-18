@@ -351,10 +351,11 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
      * **짝지은 층이 아니었다.** 여기서 **셋 다 카메라가 선 픽스처만** 모은다.
      * ⚠ 기존 `paired`는 안 건드린다 — 인용된 값이 움직이지 않게(#42 ⑥).
      */
-    const paired3: Record<string, { n: number; raw: number[]; snap: number[]; placebo: number[] }> = {
-      drawn: { n: 0, raw: [], snap: [], placebo: [] },
-      grouped: { n: 0, raw: [], snap: [], placebo: [] },
-      wide_pair: { n: 0, raw: [], snap: [], placebo: [] },
+    const paired3: Record<string, { n: number; raw: number[]; snap: number[]; placebo: number[];
+                                    nRaw: number; nSnap: number; nPlacebo: number }> = {
+      drawn: { n: 0, raw: [], snap: [], placebo: [], nRaw: 0, nSnap: 0, nPlacebo: 0 },
+      grouped: { n: 0, raw: [], snap: [], placebo: [], nRaw: 0, nSnap: 0, nPlacebo: 0 },
+      wide_pair: { n: 0, raw: [], snap: [], placebo: [], nRaw: 0, nSnap: 0, nPlacebo: 0 },
     };
     const camErrsOf = (vps: (Pt2 | null)[], fx: Fx): number[] | null => {
       const nF = vps.filter(v => v && isFiniteVp(v, SZ)).length;
@@ -427,6 +428,12 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
                   paired[ord].raw.push(...cr); paired[ord].snap.push(...cs);
                 }
                 const cp = camErrsOf(vpsOf(rp.st), fx);
+                // **짝짓기가 실제로 무엇을 걷어냈는가**(11차 리뷰어 [2]) — 팔별 단독 성립 수를
+                // 함께 센다. 셋이 같으면 교집합이 **아무것도 안 걷어낸 것**이고, 그때 이 층은
+                // 비짝지음 자료의 재인용이라 **새 정보가 0이다**(#5 · #40 ②).
+                if (cr) paired3[ord].nRaw += 1;
+                if (cs) paired3[ord].nSnap += 1;
+                if (cp) paired3[ord].nPlacebo += 1;
                 if (cr && cs && cp) {
                   paired3[ord].n += 1;
                   paired3[ord].raw.push(...cr); paired3[ord].snap.push(...cs);
@@ -517,8 +524,20 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
       raw_axes: v.raw.length, snap_axes: v.snap.length,
     }]));
     /** 셋 다 선 층의 요약 — **같은 픽스처 집합** 위의 세 중앙값이다. */
+    /** 비짝지음 표의 같은 팔 값 — **짝짓기가 중앙값을 움직였는지** 원장이 스스로 대조한다. */
+    const unpairedMed = (ord: string, mode: "snap" | "placebo") =>
+      (headNoIdentity as Record<string, { deg_median: number | null }>)[`rule_${ord}_${mode}`]?.deg_median ?? null;
     const paired3Summary = Object.fromEntries(Object.entries(paired3).map(([k, v]) => [k, {
       fixtures_all_ok: v.n,
+      /** 팔별 단독 성립 수 — 셋과 `fixtures_all_ok`가 같으면 짝짓기가 아무것도 안 걷어냈다. */
+      fixtures_raw_ok: v.nRaw, fixtures_snap_ok: v.nSnap, fixtures_placebo_ok: v.nPlacebo,
+      dropped_by_pairing: Math.max(v.nRaw, v.nSnap, v.nPlacebo) - v.n,
+      /**
+       * ⚠ **이 팔에서 짝짓기가 새 정보를 만드는가**(11차 리뷰어 [2]). `false`면 이 층의
+       * 세 중앙값은 비짝지음 표(`headline_no_identity`)의 **글자 그대로 같은 수**이고,
+       * "짝지음 부재의 산물이 아니다"를 이 층으로 **주장할 수 없다**.
+       */
+      pairing_informative: Math.max(v.nRaw, v.nSnap, v.nPlacebo) - v.n > 0,
       raw_deg_median: round(median(v.raw), 4),
       snap_deg_median: round(median(v.snap), 4),
       placebo_deg_median: round(median(v.placebo), 4),
@@ -527,12 +546,30 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
         const sm = median(v.snap), pm = median(v.placebo);
         return sm != null && pm != null ? sm < pm : null;
       })(),
+      /**
+       * ⚠⚠ **짝짓기가 중앙값을 움직였는가**(11차 리뷰어 [2]). `false`면 이 팔의 두 중앙값은
+       * 비짝지음 표의 값과 **글자 그대로 같고**, 그 팔에서는 이 층이 **같은 자료의 재인용**이다.
+       * 그때 "판정이 짝지음 부재의 산물이 아니다"는 **이 층으로 못 세운다** — 말할 수 있는 것은
+       * "이 짝짓기(픽스처 1~3개 제거)에 판정이 둔감하다"까지다.
+       */
+      medians_moved_by_pairing: (() => {
+        const su = unpairedMed(k, "snap"), pu = unpairedMed(k, "placebo");
+        const sm = round(median(v.snap), 4), pm = round(median(v.placebo), 4);
+        return { snap: su != null && sm != null ? su !== sm : null,
+                 placebo: pu != null && pm != null ? pu !== pm : null };
+      })(),
     }]));
     const ruleMed = headNoIdentity.rule_grouped.deg_median;
     const detMed = headNoIdentity.detect.deg_median;
     const passed = ruleMed != null && detMed != null && ruleMed < detMed;
 
     const out = {
+      /**
+       * **자기보고 실행 수**(11차 리뷰어 [12] · #38 · 9차 지시 c) — `test_cost`의
+       * `declared_scenarios`가 이 필드를 읽는다. 팔을 더하면 **여기서 늘어야 한다**.
+       * 픽스처 수 × 팔 수로 센다(짝지은 층은 같은 실행의 재집계라 안 더한다).
+       */
+      runs: fixtures * (Object.keys(arms).length),
       what: "규칙 기반 소실점 확정(그은 선이 곧 제약)의 축 방향 오차. 검출 기반과 같은 픽스처에서 대조.",
       how: {
         fixtures, fixture_failed: fixtureFailed,

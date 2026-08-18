@@ -1,4 +1,5 @@
 {
+  "runs": 3600,
   "what": "규칙 기반 소실점 확정(그은 선이 곧 제약)의 축 방향 오차. 검출 기반과 같은 픽스처에서 대조.",
   "how": {
     "fixtures": 300,
@@ -499,33 +500,60 @@
     "note": "**셋 다 카메라가 선 픽스처만**(raw ∧ snap ∧ placebo). 결론이 쓰는 비교(스냅 ↔ 위약, #39)가 여기서 처음으로 같은 모집단 위에 선다 — `paired_headline`은 raw ↔ snap만 맞춘 층이라 위약 비교에 못 쓴다(10차 리뷰어 5차 [15]). `snap_beats_placebo`가 팔별 판정이고, **수를 산문에 안 박는다**(#47).",
     "drawn": {
       "fixtures_all_ok": 190,
+      "fixtures_raw_ok": 192,
+      "fixtures_snap_ok": 190,
+      "fixtures_placebo_ok": 191,
+      "dropped_by_pairing": 2,
+      "pairing_informative": true,
       "raw_deg_median": 7.359,
       "snap_deg_median": 7.5752,
       "placebo_deg_median": 8.4455,
       "raw_axes": 354,
       "snap_axes": 359,
       "placebo_axes": 355,
-      "snap_beats_placebo": true
+      "snap_beats_placebo": true,
+      "medians_moved_by_pairing": {
+        "snap": false,
+        "placebo": true
+      }
     },
     "grouped": {
       "fixtures_all_ok": 191,
+      "fixtures_raw_ok": 192,
+      "fixtures_snap_ok": 191,
+      "fixtures_placebo_ok": 191,
+      "dropped_by_pairing": 1,
+      "pairing_informative": true,
       "raw_deg_median": 7.9382,
       "snap_deg_median": 7.3165,
       "placebo_deg_median": 6.7125,
       "raw_axes": 345,
       "snap_axes": 357,
       "placebo_axes": 351,
-      "snap_beats_placebo": false
+      "snap_beats_placebo": false,
+      "medians_moved_by_pairing": {
+        "snap": false,
+        "placebo": false
+      }
     },
     "wide_pair": {
       "fixtures_all_ok": 189,
+      "fixtures_raw_ok": 192,
+      "fixtures_snap_ok": 191,
+      "fixtures_placebo_ok": 189,
+      "dropped_by_pairing": 3,
+      "pairing_informative": true,
       "raw_deg_median": 8.8793,
       "snap_deg_median": 8.1738,
       "placebo_deg_median": 10.3657,
       "raw_axes": 323,
       "snap_axes": 338,
       "placebo_axes": 327,
-      "snap_beats_placebo": true
+      "snap_beats_placebo": true,
+      "medians_moved_by_pairing": {
+        "snap": true,
+        "placebo": false
+      }
     }
   },
   "paired_headline": {

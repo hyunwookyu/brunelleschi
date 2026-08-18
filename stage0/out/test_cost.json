@@ -2,7 +2,7 @@
   "what": "**검증 비용의 원장**(9차 지시 c) — 파일별 시간·건수, 단위/측정 갈래별 합계, 하네스가 스스로 적은 실행 수. **팔이 늘면 여기서 보인다.**",
   "how": "`npx vitest run --reporter=json --outputFile=../stage0/out/_vitest_timing.json` 뒤 `npm run test:cost`. 갈래는 `tools/testSplit.mjs`가 **소스를 읽어** 정한다(이름 규약이 아니다 — 사람이 지켜야 하는 규약은 샌다, #19·#38).",
   "environment": {
-    "disk_free_bytes": 262492516352,
+    "disk_free_bytes": 262488145920,
     "disk_free_note": "⚠⚠ **여유가 0이면 아래 시간은 전부 무의미하다.** 9차에 전량 실행이 **121s → 1h52m**(59배)로 늘었고 원인은 하네스가 아니라 **디스크가 100% 찬 것**이었다. 느려졌다는 보고를 받으면 **여기부터 본다**(#7 — 추측 대신 카운터)."
   },
   "wall_note": "⚠ **파일 시간의 합은 벽시계가 아니다**(병렬 실행). **벽시계는 최장 파일이 바닥**이므로 지배항 하나를 떼는 것이 전체를 줄이는 유일한 길이다.",
@@ -25,8 +25,17 @@
     "e2e": {
       "files": 13,
       "tests": 54,
-      "seconds": 128.82
-    }
+      "seconds": 128.82,
+      "wall_seconds": 253.76,
+      "unaccounted_seconds": 124.94,
+      "stats": {
+        "expected": 47,
+        "skipped": 5,
+        "unexpected": 2,
+        "flaky": 0
+      }
+    },
+    "vitest_only": true
   },
   "dominant": [
     {
@@ -570,8 +579,12 @@
       "arms": 9
     },
     "osnap_two_sided.json": {
-      "scenarios": 235373,
+      "scenarios": 251877,
       "arms": 10
+    },
+    "rule_camera.json": {
+      "scenarios": 3600,
+      "arms": null
     },
     "snap_stage.json": {
       "scenarios": 10755,
@@ -587,7 +600,7 @@
   "what_this_does_not_say": [
     "**절대 초는 이 기계의 것이다**(#27). 다른 기계·다른 부하에서는 다르다 — 읽을 것은 **비중**이다.",
     "**e2e는 이제 잰다**(11차 항목 5) — 다만 **`_e2e_timing.json`이 있을 때만**이다. 없으면 `totals.e2e`가 `null`이고 그것이 '안 쟀다'의 표시다(0이 아니다). ⚠ **두 갈래의 시간을 한 비율로 합치지 않는다** — 실행기가 다르고 분모가 다르다.",
-    "**e2e의 실패 실행도 시간에 든다** — 이 컨테이너에서 `touch_route` dpr 2는 결정적으로 실패하고(DEFERRED) 그 시간이 합에 포함된다. 시간은 '통과의 비용'이 아니라 '실행의 비용'이다.",
+    "⛔ **`e2e_by_file`의 시간은 '실행의 비용'이 아니다**(11차 리뷰어 [4]로 정정 — 초판이 그렇게 적었다): **테스트 결과 시간의 합**이라 훅·기동·대기가 빠지고, **훅에서 난 시간 초과는 그 파일이 0초로 기록된다**(`static_deploy`의 `afterAll` 120s가 그 자리다). 실행의 비용은 `totals.e2e.wall_seconds`이고 그 차가 `unaccounted_seconds`다. ⚠ 본문에서 실패한 실행(`touch_route` dpr 2)의 시간은 `by_file`에 든다 — 훅 실패만 안 든다.",
     "**단위 쪽이 느려지는 것은 이 갈래가 못 막는다** — 원장을 안 쓰면서 느린 파일은 단위에 남는다. 그때는 위 `dominant`의 `kind`가 `unit`으로 뜬다."
   ]
 }
