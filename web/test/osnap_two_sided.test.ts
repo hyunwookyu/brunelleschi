@@ -383,6 +383,7 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
 
     // ---- **붙어야 할 곳** 팔: 같은 덩어리 안에서 이어 긋는다(8차 스윕과 같은 조건).
     //      두 팔의 분모가 다르므로 **갈라 낸다**(#11).
+    function connArm(kinds?: Partial<Record<string, boolean>>) {
     const connRows: { radius: number; hit: boolean; aimPx: number }[] = [];
     for (let ci = 0; ci < COMPOSITIONS.length; ci++) {
       const C = COMPOSITIONS[ci];
@@ -399,7 +400,7 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
             const raw = e.pts2d as Pt2[];
             const cands = segs.length ? static2dCandidates(segs, Math.hypot(SZ[0], SZ[1])) : [];
             const r = resolve2dCore(raw, { cands, vps: [], radiusPx: radius,
-                                           relSnap: false, segs });
+                                           relSnap: false, segs, kinds: kinds as never });
             // **겨냥한 것은 이미 그린 획의 끝점 중 최근접**이다(그 획들과 이어 그리는 상황)
             const prevEnds: Pt2[] = segs.flatMap(sg => [sg.a, sg.b]);
             const nb = near(raw[0], prevEnds);
@@ -409,6 +410,16 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
         }
       }
     }
+    return connRows;
+    }
+    const connRows = connArm();
+    /**
+     * **개입 팔의 대가**(2026-08-18 11차 항목 5의 DEFERRED를 그 자리에서 닫는다).
+     * `midpoint_off_adjacent`가 잘못된 연결을 얼마나 줄이는지는 쟀는데 **놓친 연결이
+     * 얼마나 느는지**를 안 쟀다 — 이 원장의 존재 이유가 **두 곡선을 같은 축에 놓는 것**
+     * 인데 개입 팔에는 한 곡선만 있었다. 같은 연결 팔을 **중점만 끄고** 다시 돈다.
+     */
+    const connRowsNoMid = connArm({ midpoint: false });
 
     const sweep = RADII.map(R => {
       const far = rows.filter(r => r.radius === R);
@@ -519,7 +530,7 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
       /** **실행 총수**(11차 리뷰어 [7] · #38) — `test_cost`의 자기보고가 이 필드를 읽는다.
        *  팔을 더하면 여기서 늘어야 한다(초판은 `far_ends`만 있어 본 팔만 셌다). */
       runs: rows.length + armSep.rowsC.length + armAdj.rowsC.length
-          + armAdjNoMid.rowsC.length + connRows.length,
+          + armAdjNoMid.rowsC.length + connRows.length + connRowsNoMid.length,
       population: { compositions: COMPOSITIONS.length, jitters: JITTERS, grades: GRADES,
                     seeds: SEEDS, radii: RADII,
                     far_ends: rows.length, conn_starts: connRows.length,
@@ -532,6 +543,18 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
             + "그것은 **정의상 잘못된 연결**이다 — 그리는 사람은 새 덩어리를 시작한 것이다.",
       },
       sweep,
+      /**
+       * **중점을 끈 연결 팔**(개입의 대가). `sweep`의 `missed`와 **같은 분모·같은 축**이다 —
+       * 두 열을 나란히 읽으면 "중점을 끄면 잘못된 연결은 얼마나 줄고 놓친 연결은 얼마나
+       * 느는가"가 한 표에서 나온다(#12 · #15 — 한쪽만 보면 언제나 한쪽이 이긴다).
+       */
+      sweep_midpoint_off: RADII.map(R => {
+        const conn = connRowsNoMid.filter(r => r.radius === R);
+        const missed = conn.filter(r => !r.hit).length;
+        return { radius_px: R, missed: fraction(missed, conn.length),
+                 missed_rate: rate(missed, conn.length),
+                 connected: fraction(conn.length - missed, conn.length) };
+      }),
       by_composition: byComp,
       by_composition_calibrated: byCompCal,
       by_composition_adjacent: byCompAdj,
@@ -595,6 +618,12 @@ describe("osnap_two_sided — 반경의 두 방향", () => {
         "**`wrong`의 정의가 픽스처에 기댄다**(#5) — '떨어진 덩어리에 붙으면 틀렸다'는 이 픽스처가 만든 규약이다. 실제로는 사용자가 두 덩어리를 잇고 싶을 수도 있다.",
         "**관계 스냅(`alignAxes`)을 껐다** — 반경 하나만 보기 위해서다. 켠 상태의 거동은 `snap_stage`·`rel_snap_flow`가 따로 낸다.",
         "**3D 오스냅을 안 잰다** — 확정 전(2D 단계)뿐이다. 3D 판의 반경 거동은 `snap.json`이 낸다.",
+        "⚠⚠ **`sweep_midpoint_off`는 중점의 효용을 구조적으로 과소평가한다**(11차 항목 5 · #11·#5): "
+          + "연결 팔의 `missed` 분모는 **이미 그린 획의 끝점을 겨냥한 시작점**이다 — "
+          + "**중점을 겨냥한 연결은 이 모집단에 아예 없다.** 그러므로 이 열이 '중점을 꺼도 "
+          + "놓친 연결이 거의 안 는다'를 보이더라도 그것은 **끝점 겨냥에 한정된 사실**이고, "
+          + "'중점을 꺼도 된다'로 읽으면 안 된다. 중점을 겨냥하는 사람(선분 가운데에 맞물리게 "
+          + "긋는 조작)이 이 픽스처에 없다는 뜻이다.",
         "**이 원장이 '잘못된 연결'의 유일한 측정이 아니다**(11차 항목 3-b): `snap.json`의 "
           + "`unintended_snap`이 **먼저** 같은 쪽을 재고 있었다 — 캔버스 균등 난수 24점/픽스처에서 "
           + "스냅이 끼어드는 비율이고, 반경 축(비율 0.008~0.280)에서 단조 증가하며 **0인 칸이 "
