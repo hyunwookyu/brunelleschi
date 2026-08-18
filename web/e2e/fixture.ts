@@ -19,7 +19,12 @@ declare global {
  *   ③ 지연·스크린샷 회귀가 **획 24개 규모**에서 어떤지 모른다
  * 두 번째 상자는 `axes[0]` 방향으로 첫 상자의 `a`만큼 밀어 **면을 공유**한다.
  */
-export async function setupScene(page: Page, opts: { boxes?: 1 | 2 } = {}) {
+/**
+ * ⚙️ **요·피치를 받는다**(2026-08-18 11차 항목 5 — `cube_frame` 둘째 구도의 선행 조건이었다).
+ * 기본은 종전 값(35·15)이라 기존 호출부는 **글자 그대로 같은 픽스처**다.
+ */
+export async function setupScene(page: Page,
+                                 opts: { boxes?: 1 | 2; yaw?: number; pitch?: number } = {}) {
   // ⚠⚠ **저장 복원 경쟁을 픽스처에서 끊는다**(2026-08-17 3차에서 간헐 실패로 드러났다).
   // `getDoc2` 복원은 비동기라, 아래 `clear` 클릭과 획 주입 사이의 `await import` 틈에
   // **앞 시험의 자동 저장본**이 끼어들 수 있다 — 그러면 획 수·규칙 상태가 실행마다 갈리고,
@@ -31,7 +36,8 @@ export async function setupScene(page: Page, opts: { boxes?: 1 | 2 } = {}) {
   }));
   await page.reload();
   await page.waitForFunction(() => !!(window as unknown as { S2S: unknown }).S2S);
-  return page.evaluate(async ({ boxes }) => {
+  const yaw = opts.yaw ?? 35, pitch = opts.pitch ?? 15;
+  return page.evaluate(async ({ boxes, yaw, pitch }) => {
     const S = window.S2S;
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
     const m = await import("/test/scene3d.ts");
@@ -39,7 +45,7 @@ export async function setupScene(page: Page, opts: { boxes?: 1 | 2 } = {}) {
 
     const el = document.getElementById("ink") as HTMLCanvasElement;
     const size: [number, number] = [el.clientWidth, el.clientHeight];
-    const sc = m.scene(35, 15, 1000, size);
+    const sc = m.scene(yaw, pitch, 1000, size);
     const O: [number, number, number] = [0.6, -0.4, 4.2];
     const A = 1.2;
     const edges = m.boxEdges(sc, O, A, 1.0, 0.9);
@@ -74,7 +80,7 @@ export async function setupScene(page: Page, opts: { boxes?: 1 | 2 } = {}) {
     return { canvas: size, strokes: S.doc().strokes.length, hasCamera: !!S.cam.ctx(),
              boxes: boxes ?? 1,
              lifted: S.doc().strokes.filter((s: { seg3d?: unknown }) => s.seg3d).length };
-  }, { boxes: opts.boxes ?? 1 });
+  }, { boxes: opts.boxes ?? 1, yaw, pitch });
 }
 
 /**
@@ -116,7 +122,8 @@ export async function wiringGapPx(page: Page): Promise<{ max: number; n: number 
  * 픽스처 + **자동 잠금까지**(F: 카메라가 서는 순간 잠긴다 — `confirmNow`가 그 앱 경로다).
  * 3D가 서 있어야 하는 하네스는 이것을 부른다.
  */
-export async function setupConfirmed(page: Page, opts: { boxes?: 1 | 2 } = {}) {
+export async function setupConfirmed(page: Page,
+                                    opts: { boxes?: 1 | 2; yaw?: number; pitch?: number } = {}) {
   const s = await setupScene(page, opts);
   return page.evaluate(async (s) => {
     window.S2S.confirmNow();

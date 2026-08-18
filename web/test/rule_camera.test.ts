@@ -344,6 +344,18 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
       grouped: { n: 0, raw: [], snap: [] },
       wide_pair: { n: 0, raw: [], snap: [] },
     };
+    /**
+     * **위약까지 짝지은 층**(2026-08-18 11차 항목 5 — 10차 리뷰어 5차 [15] · #11·#39).
+     * `paired`는 raw ↔ snap만 맞춘다. 그런데 결론이 실제로 쓰는 비교는 **snap ↔ placebo**
+     * (스냅이 위약을 이기는가 — #39)이고, 그 둘은 `axes_measured`가 최대 열네 축 달라
+     * **짝지은 층이 아니었다.** 여기서 **셋 다 카메라가 선 픽스처만** 모은다.
+     * ⚠ 기존 `paired`는 안 건드린다 — 인용된 값이 움직이지 않게(#42 ⑥).
+     */
+    const paired3: Record<string, { n: number; raw: number[]; snap: number[]; placebo: number[] }> = {
+      drawn: { n: 0, raw: [], snap: [], placebo: [] },
+      grouped: { n: 0, raw: [], snap: [], placebo: [] },
+      wide_pair: { n: 0, raw: [], snap: [], placebo: [] },
+    };
     const camErrsOf = (vps: (Pt2 | null)[], fx: Fx): number[] | null => {
       const nF = vps.filter(v => v && isFiniteVp(v, SZ)).length;
       const cam = recoverCamera(vps, SZ, nF === 1 ? { fSetting: P1_F_RATIO * SZ[0] } : {});
@@ -413,6 +425,12 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
                 if (cr && cs) {
                   paired[ord].n += 1;
                   paired[ord].raw.push(...cr); paired[ord].snap.push(...cs);
+                }
+                const cp = camErrsOf(vpsOf(rp.st), fx);
+                if (cr && cs && cp) {
+                  paired3[ord].n += 1;
+                  paired3[ord].raw.push(...cr); paired3[ord].snap.push(...cs);
+                  paired3[ord].placebo.push(...cp);
                 }
               }
             });
@@ -498,6 +516,18 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
       snap_deg_median: round(median(v.snap), 4),
       raw_axes: v.raw.length, snap_axes: v.snap.length,
     }]));
+    /** 셋 다 선 층의 요약 — **같은 픽스처 집합** 위의 세 중앙값이다. */
+    const paired3Summary = Object.fromEntries(Object.entries(paired3).map(([k, v]) => [k, {
+      fixtures_all_ok: v.n,
+      raw_deg_median: round(median(v.raw), 4),
+      snap_deg_median: round(median(v.snap), 4),
+      placebo_deg_median: round(median(v.placebo), 4),
+      raw_axes: v.raw.length, snap_axes: v.snap.length, placebo_axes: v.placebo.length,
+      snap_beats_placebo: (() => {
+        const sm = median(v.snap), pm = median(v.placebo);
+        return sm != null && pm != null ? sm < pm : null;
+      })(),
+    }]));
     const ruleMed = headNoIdentity.rule_grouped.deg_median;
     const detMed = headNoIdentity.detect.deg_median;
     const passed = ruleMed != null && detMed != null && ruleMed < detMed;
@@ -572,6 +602,18 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
           + "움직인다). 즉 반경이 결정에 안 묶이는 **포화**이고, '정보량 0'은 그 관측의 이름이지 "
           + "기전 판정이 아니다 — 거리 분포 자체는 안 쟀다(#32 대응 관측 병기).",
         ...jit0Head,
+      },
+      /**
+       * **위약까지 짝지은 층**(11차 항목 5). ⚠ **축 수(`*_axes`)는 여전히 팔마다 다를 수
+       * 있다** — 픽스처는 맞췄지만 무한원 축 제외가 팔마다 다른 수를 남긴다(#11의 잔여).
+       * 그래서 `*_axes` 셋을 함께 낸다 — 크게 다르면 중앙값 비교를 그만큼 약하게 읽는다.
+       */
+      paired3_headline: {
+        note: "**셋 다 카메라가 선 픽스처만**(raw ∧ snap ∧ placebo). 결론이 쓰는 비교"
+            + "(스냅 ↔ 위약, #39)가 여기서 처음으로 같은 모집단 위에 선다 — `paired_headline`은 "
+            + "raw ↔ snap만 맞춘 층이라 위약 비교에 못 쓴다(10차 리뷰어 5차 [15]). "
+            + "`snap_beats_placebo`가 팔별 판정이고, **수를 산문에 안 박는다**(#47).",
+        ...paired3Summary,
       },
       paired_headline: {
         note: "**짝지은 부분집합**(리뷰어 [23]①) — 표제 모집단에서 원시·스냅 둘 다 카메라가 선 "

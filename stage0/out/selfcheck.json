@@ -1,5 +1,5 @@
 {
-  "n_flags": 4512,
+  "n_flags": 4516,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[9].specs[2].tests[0].results[0].duration",
@@ -622,6 +622,21 @@
       "path": "cube_frame.json:thresholds.console_errors_max",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "cube_frame.json:old_frame.forward[1]",
+      "val": -6.61179190730312e-17,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "cube_frame.json:compositions[0].old_frame.forward[1]",
+      "val": -6.61179190730312e-17,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "cube_frame.json:compositions[1].old_frame.forward[1]",
+      "val": -6.690271614703226e-17,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "dir_state.json:thresholds.console_errors_max",
@@ -5231,7 +5246,7 @@
     },
     {
       "path": "orbit_begin_invariance.json:dir_after[1]",
-      "val": -6.123233995736766e-17,
+      "val": -6.123233995736765e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -16969,6 +16984,11 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "order_lock.json:stroke_budget.p1_cross_arm.one_box_p1_within_cut_0_2",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "order_promote.json:spurious_promotion_control.per_stroke.same",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -19983,7 +20003,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 1.4477308241112041e-13,
+      "val": 8.482103908136196e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20198,12 +20218,12 @@
     },
     {
       "path": "view_cube.json:after_face.fy",
-      "val": -7.95549834165705e-14,
+      "val": -8.577506317887444e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_cube.json:after_retap.fy",
-      "val": -6.530267466987111e-17,
+      "val": -6.530267466987015e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20408,12 +20428,12 @@
     },
     {
       "path": "viewpoint_undo.json:orbited.q[0]",
-      "val": -2.8769789005803184e-17,
+      "val": -2.876978900579035e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[2]",
-      "val": -1.047134684389871e-17,
+      "val": -1.0471346843933963e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20498,7 +20518,7 @@
     },
     {
       "path": "viewpoint_undo.json:return_gap",
-      "val": 2.2760026357699447e-11,
+      "val": 1.418546290682295e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -22882,7 +22902,7 @@
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
     },
     {
-      "path": "web/e2e/fixture.ts:86:wiringGapPx",
+      "path": "web/e2e/fixture.ts:92:wiringGapPx",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
@@ -23108,7 +23128,7 @@
       "unit": "인용 줄",
       "targets": 113,
       "hits": 0,
-      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1377개이고 엄격 판정이면 298개(56줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
+      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1379개이고 엄격 판정이면 298개(56줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
     },
     {
       "scan": "scan_pitfall_citations",
@@ -23224,6 +23244,7 @@
       12,
       21,
       28,
+      32,
       40,
       41
     ],
@@ -23505,8 +23526,10 @@
       34,
       35,
       38,
+      39,
       40,
-      41
+      41,
+      47
     ],
     "segment_gate.json": [
       26,
@@ -23670,7 +23693,7 @@
   },
   "cited_value_population": {
     "lines_checked": 113,
-    "tokens_checked": 1377,
+    "tokens_checked": 1379,
     "flags_line_rule": 0,
     "strict_tokens_flagged": 298,
     "strict_lines_flagged": 56,

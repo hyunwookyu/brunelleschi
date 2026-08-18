@@ -1001,6 +1001,47 @@ describe("차수가 P1에 갇히는가 — 그리고 배치가 따라오는가 (
       stroke_budget: {
         one_box: summarize(oneBoxPaired),
         two_box: summarize(twoBox),
+        /**
+         * **AS-L35의 희소성 논증을 원장이 스스로 검정한다**(2026-08-18 11차 항목 5).
+         *
+         * 8-2R″ [3]이 세운 논증은 *"`one_box`의 P1 절단 안 0은 **표본이 작아서**다"*였다.
+         * 그 논증은 **두 팔의 P1이 같은 모집단**이라고 전제한다 — 그러면 `two_box`의 율로
+         * `one_box`의 기대 건수를 계산할 수 있고, 그 기대가 작으면 0이 자연스럽다.
+         *
+         * **여기서 그 전제를 검정한다**: λ = one_box P1 배치 수 × two_box P1 절단 안 율.
+         * 포아송 P(0) = e^(−λ)가 작으면 **전제가 깨진 것**이고(#9 — 모집단이 다르면
+         * 비교가 아니다), 그러면 희소성 논증은 **못 쓴다.**
+         *
+         * ⚠ **이것은 성능 지표가 아니다** — 두 팔을 한 모집단으로 볼 수 있는가의 검정이고,
+         * 답이 "아니오"면 **두 팔 사이의 어떤 율 비교도** 근거가 안 된다(배수 포함).
+         * ⚠ 수를 산문에 안 박는다(**#47**) — 값은 이 블록의 필드가 든다.
+         */
+        p1_cross_arm: (() => {
+          const one = summarize(oneBoxPaired).by_order.p1 as
+            { placement: string; within_cut_0_2: number } | undefined;
+          const two = summarize(twoBox).by_order.p1 as
+            { placement: string; within_cut_0_2: number } | undefined;
+          if (!one || !two) return null;
+          const nOne = +String(one.placement).split("/")[0];
+          const nTwo = +String(two.placement).split("/")[0];
+          const pTwo = nTwo ? two.within_cut_0_2 / nTwo : 0;
+          const lambda = nOne * pTwo;
+          return {
+            one_box_p1_placed: nOne,
+            one_box_p1_within_cut_0_2: one.within_cut_0_2,
+            two_box_p1_placed: nTwo,
+            two_box_p1_within_cut_0_2: two.within_cut_0_2,
+            two_box_rate: round(pTwo, 6),
+            expected_in_one_box: round(lambda, 4),
+            poisson_p_zero: round(Math.exp(-lambda), 6),
+            verdict: one.within_cut_0_2 === 0 && Math.exp(-lambda) < 0.05
+              ? "same_population_rejected"
+              : "not_rejected",
+            note: "`same_population_rejected`면 **희소성 논증을 쓸 수 없다**(#9) — "
+                + "`one_box`의 0은 '표본이 작아서'로 설명되지 않는다. AS-L35의 반증"
+                + "(`two_box`의 절단 안이 0이 아니다)은 그 논증과 **무관하게** 선다.",
+          };
+        })(),
       },
       constants: constantsSnapshot(),
       metric_defs: metricsSnapshot(),

@@ -495,6 +495,39 @@
       "screen_axes_total": 0
     }
   },
+  "paired3_headline": {
+    "note": "**셋 다 카메라가 선 픽스처만**(raw ∧ snap ∧ placebo). 결론이 쓰는 비교(스냅 ↔ 위약, #39)가 여기서 처음으로 같은 모집단 위에 선다 — `paired_headline`은 raw ↔ snap만 맞춘 층이라 위약 비교에 못 쓴다(10차 리뷰어 5차 [15]). `snap_beats_placebo`가 팔별 판정이고, **수를 산문에 안 박는다**(#47).",
+    "drawn": {
+      "fixtures_all_ok": 190,
+      "raw_deg_median": 7.359,
+      "snap_deg_median": 7.5752,
+      "placebo_deg_median": 8.4455,
+      "raw_axes": 354,
+      "snap_axes": 359,
+      "placebo_axes": 355,
+      "snap_beats_placebo": true
+    },
+    "grouped": {
+      "fixtures_all_ok": 191,
+      "raw_deg_median": 7.9382,
+      "snap_deg_median": 7.3165,
+      "placebo_deg_median": 6.7125,
+      "raw_axes": 345,
+      "snap_axes": 357,
+      "placebo_axes": 351,
+      "snap_beats_placebo": false
+    },
+    "wide_pair": {
+      "fixtures_all_ok": 189,
+      "raw_deg_median": 8.8793,
+      "snap_deg_median": 8.1738,
+      "placebo_deg_median": 10.3657,
+      "raw_axes": 323,
+      "snap_axes": 338,
+      "placebo_axes": 327,
+      "snap_beats_placebo": true
+    }
+  },
   "paired_headline": {
     "note": "**짝지은 부분집합**(리뷰어 [23]①) — 표제 모집단에서 원시·스냅 둘 다 카메라가 선 픽스처만. 팔별 camera_ok 차이(예: drawn 109 대 138)가 중앙값을 흔드는 것을 가른다.",
     "drawn": {

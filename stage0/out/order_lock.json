@@ -35615,6 +35615,17 @@
           "shape_err_median": null
         }
       }
+    },
+    "p1_cross_arm": {
+      "one_box_p1_placed": 330,
+      "one_box_p1_within_cut_0_2": 0,
+      "two_box_p1_placed": 2642,
+      "two_box_p1_within_cut_0_2": 33,
+      "two_box_rate": 0.012491,
+      "expected_in_one_box": 4.1219,
+      "poisson_p_zero": 0.016214,
+      "verdict": "same_population_rejected",
+      "note": "`same_population_rejected`면 **희소성 논증을 쓸 수 없다**(#9) — `one_box`의 0은 '표본이 작아서'로 설명되지 않는다. AS-L35의 반증(`two_box`의 절단 안이 0이 아니다)은 그 논증과 **무관하게** 선다."
     }
   },
   "constants": {
