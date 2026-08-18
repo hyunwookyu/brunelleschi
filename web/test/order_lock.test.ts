@@ -151,9 +151,9 @@ function orderStrokes(fx: Fx, order: Order): DrawnEdge[] {
  * | `oracle` | **참** | **참** | — (도달 가능성 #35·#40) |
  */
 type Arm = "bypass" | "fixed" | "rule_vp_true_axis" | "true_vp_rule_axis" | "oracle"
-         | "fixed_true_f";
+         | "fixed_true_f" | "fixed_f_half" | "fixed_f_double";
 const ARM_SPEC: Record<Arm, { bypass: boolean; vp: "rule" | "true"; axis: "rule" | "true";
-                              trueF?: boolean }> = {
+                              trueF?: boolean; fMul?: number }> = {
   bypass:            { bypass: true,  vp: "rule", axis: "rule" },
   fixed:             { bypass: false, vp: "rule", axis: "rule" },
   rule_vp_true_axis: { bypass: false, vp: "rule", axis: "true" },
@@ -170,6 +170,20 @@ const ARM_SPEC: Record<Arm, { bypass: boolean; vp: "rule" | "true"; axis: "rule"
    * **그 무변화가 이 팔의 위약 대조다**(#30: 안 움직여야 하는 곳이 안 움직이는가).
    */
   fixed_true_f:      { bypass: false, vp: "rule", axis: "rule", trueF: true },
+  /**
+   * **양성 채널 — f를 크게 흔든다**(2026-08-18 8-2R″ [2][12] · #30·#39).
+   *
+   * ⚠⚠ **`fixed_true_f`만으로는 아무것도 못 말한다**: 이 픽스처의 참 f는 **1000**이고
+   * P1의 임의 f는 `P1_F_RATIO(1.0) × 960 = 960`이라 **개입이 4%뿐**이다. 무효과가
+   * "f는 원인이 아니다"인지 **"f를 거의 안 옮겼다"**인지 갈리지 않는다(#32 —
+   * 미실행을 반증으로 처리하지 않는다).
+   *
+   * → **×0.5 · ×2로 흔든다.** 그때도 형태 오차가 안 움직이면 **지표가 f에 둔감한 것**이고
+   * (`perStrokeError`가 `fitGauge`로 전역 배율을 적합한다 — #35가 실증한 그 자리),
+   * 움직이면 **4%가 작았을 뿐**이다. 둘은 정반대의 결론이다.
+   */
+  fixed_f_half:      { bypass: false, vp: "rule", axis: "rule", fMul: 0.5 },
+  fixed_f_double:    { bypass: false, vp: "rule", axis: "rule", fMul: 2 },
 };
 
 const trueAxis = (sc: Scene, i: 0 | 1 | 2): Axis => (isFiniteVp(sc.vps[i], SZ) ? i : "screen");
@@ -220,6 +234,9 @@ interface RunOut {
   stoodAt: number | null;
   /** **1점 직접 좌표 경로가 열리는가**(지시 2-a) — 앱은 이때 `directSegment`로 간다. */
   opfFires: boolean;
+  /** **이 실행이 실제로 쓴 f와 참 f**(#39 — 개입의 크기를 기록한다). */
+  fUsed: number | null;
+  fTrue: number | null;
   /** **어디서 멈췄는가**(지시 1-b) — 거절 사유별 횟수. `why` 문자열을 안정 키로 접는다. */
   rejects: Record<string, number>;
   /** **획 하나가 어떤 사건이 됐는가**(지시 1-b) — `waiting`이 몇 개인지가 대기 깊이선의 출처다. */
@@ -261,6 +278,7 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
   const events: Record<string, number> = {};
   const truthEvents: Record<string, number> = {};
   let stoodAt: number | null = null, fedIdx = 0;
+  let fUsed: number | null = null, fTrue: number | null = null;
   /** 앱의 `pend2Segs()` 자리 — 확정 전 2D 오스냅 대상. `rule_camera`와 같은 근사다. */
   const fedSegs: Snap2Seg[] = [];
   /** 규칙에 먹인 최종 점열(= 앱의 `pts2d`). 배치도 이것으로 한다 — 앱이 그렇게 한다(#17). */
@@ -284,7 +302,7 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
         if (spec.bypass) forced = r2.ortho ? "screen" : r2.vpdir ? "depth" : undefined;
       }
       const rep = representative(pts);
-      if (!rep) continue;
+      if (!rep) { events.no_representative = (events.no_representative ?? 0) + 1; continue; }
       const line: RLine = { a: rep.a, b: rep.b };
       fedSegs.push({ id: `f${fedSegs.length}`, a: line.a, b: line.b });
       finalPts.push(pts);
@@ -336,6 +354,11 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
     ctx = c ? { principal: c.principal, f: c.f, vps: c.vps, imgSize: SZ, axisDirs: c.axisDirs } : null;
     // **f만 참으로**(지시 2-b) — 소실점·축 라벨은 규칙 그대로다
     if (ctx && spec.trueF) ctx = { ...ctx, f: fx.sc.f };
+    // **f를 배수로 흔든다**(양성 채널 · 8-2R″ [2][12])
+    if (ctx && spec.fMul) ctx = { ...ctx, f: ctx.f * spec.fMul };
+    // **개입의 크기를 기록한다**(#39의 나머지 절반) — 안 적으면 무효과가
+    // "원인이 아니다"인지 "안 옮겼다"인지 갈리지 않는다
+    if (ctx) { fUsed = ctx.f; fTrue = fx.sc.f; }
   }
   // **앱의 1점 직접 좌표 경로가 이 상태에서 열리는가**(지시 2-a).
   //
@@ -350,7 +373,7 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
     : finalPts.map(p => cam.axisOf(p).axis);
   if (!ctx) return { order: ord, cameraOk: false, drawnN: list.length, placedN: 0, errs: [],
                      asks, fed, firstDecl, askKinds, p0, rejects, events, truthEvents, stoodAt,
-                     opfFires: false };
+                     opfFires: false, fUsed: null, fTrue: null };
   const strokes: LiftStroke[] = finalPts.map((pts, i) => ({
     // ⚠ **키 규약**: `metrics.edgeIndexOf`가 `s<인덱스>`를 참 모서리 인덱스로 읽는다.
     // `list`는 순서를 바꾼 것이므로 **원래 인덱스**를 붙여야 참값과 짝이 맞는다
@@ -360,7 +383,7 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
   const errs = perStrokeError(r.placed, fx.edges, fx.diag);
   return { order: ord, cameraOk: true, drawnN: list.length, placedN: r.placed.size, errs,
            asks, fed, firstDecl, askKinds, p0, rejects, events, truthEvents, stoodAt,
-           opfFires };
+           opfFires, fUsed, fTrue };
 }
 
 /**
@@ -449,6 +472,8 @@ interface Bag {
   neverStood: number;
   /** **1점 직접 좌표 경로가 열린 실행 수**(지시 2-a). */
   opfFires: number;
+  /** **f 개입의 크기**(#39) — 이 팔이 쓴 f / 참 f. */
+  fRatios: number[];
 }
 const orderBag = () => ({ runs: 0, drawnN: 0, placedN: 0, errs: [] as number[] });
 const bag = (): Bag => ({ runs: 0, cameraOk: 0, orders: { p0: 0, p1: 0, p2: 0, p3: 0 },
@@ -457,7 +482,7 @@ const bag = (): Bag => ({ runs: 0, cameraOk: 0, orders: { p0: 0, p1: 0, p2: 0, p
                           askKinds: {},
                           byOrder: { p0: orderBag(), p1: orderBag(),
                                      p2: orderBag(), p3: orderBag() },
-                          p0: {}, rejects: {}, events: {}, stoodAt: [], neverStood: 0, opfFires: 0 });
+                          p0: {}, rejects: {}, events: {}, stoodAt: [], neverStood: 0, opfFires: 0, fRatios: [] });
 
 function add(b: Bag, r: RunOut) {
   b.runs += 1;
@@ -488,6 +513,7 @@ function add(b: Bag, r: RunOut) {
   for (const [k, n] of Object.entries(r.events)) b.events[k] = (b.events[k] ?? 0) + n;
   if (r.stoodAt == null) b.neverStood += 1; else b.stoodAt.push(r.stoodAt);
   if (r.opfFires) b.opfFires += 1;
+  if (r.fUsed != null && r.fTrue) b.fRatios.push(r.fUsed / r.fTrue);
 }
 
 function summarize(b: Bag) {
@@ -572,6 +598,27 @@ function summarize(b: Bag) {
      * 그만큼 **이 원장의 P1 수치가 앱을 서술하지 않는다**(#17). 0이면 갈림이 없다.
      */
     one_point_direct_open: b.opfFires,
+    /**
+     * **f 개입의 크기**(#39의 나머지 절반 · 8-2R″ [2]) — 이 팔이 쓴 f ÷ 참 f.
+     * **1에 가까우면 그 팔은 f를 거의 안 옮긴 것**이고, 그때의 무효과는
+     * "f는 원인이 아니다"가 아니라 **"안 옮겼다"**다(#32).
+     * ⚠ 이 픽스처의 참 f는 **1000**이고 P1의 임의 f는 `P1_F_RATIO(1.0) × 960 = 960`이라
+     * `fixed`의 비가 **0.96**이다 — `fixed_true_f`의 개입은 **4%뿐**이다.
+     */
+    f_intervention: {
+      ratio_median: b.fRatios.length ? round(median(b.fRatios), 4) : null,
+      ratio_min: b.fRatios.length ? round(Math.min(...b.fRatios), 4) : null,
+      ratio_max: b.fRatios.length ? round(Math.max(...b.fRatios), 4) : null,
+      n: b.fRatios.length,
+    },
+    /**
+     * **형태 오차의 게이지**(#35 · 8-2R″ [12]). `perStrokeError`에 `gauge`를 안 넘기므로
+     * **자기 게이지**(`fitGauge` — 놓인 것과 참값 사이 전역 배율을 최소제곱으로 적합)다.
+     * ⚠⚠ **그것이 이 항목에서 결정적이다**: 자기 게이지는 **전역 배율을 나눠 버리므로**
+     * 깊이 배율 오차의 등방 성분을 지운다(#35가 실증한 그 자리 — "사용자가 보는 성분을
+     * 지웠다"). 그러므로 **f 팔의 무효과를 읽을 때 이 사실을 함께 읽어야 한다.**
+     */
+    shape_err_gauge: "fit (fitGauge — 자기 게이지)",
     stood_at: {
       never: b.neverStood,
       stood: b.stoodAt.length,
@@ -795,6 +842,25 @@ describe("차수가 P1에 갇히는가 — 그리고 배치가 따라오는가 (
           [a, silentWrong(head[a].errs).cut_0_2])),
       },
       what_this_does_not_say: [
+        "⚠⚠ **`stroke_budget`(상자 하나 ↔ 둘)은 '획만 두 배'가 아니다**(8-2R″ [5]) — "
+          + "둘째 상자가 다른 자리에 서므로 **지지선의 배치(정보량)도 늘린다**. 실측: "
+          + "`pending_2_awaiting_third`의 대기선 각차가 중앙 19.8833 → 43.9619 · 최소 6.367 → 24.2011. "
+          + "**P0 140 → 63을 획 수에만 귀속할 수 없다.** 정보를 안 늘리는 획 증가(같은 상자에 "
+          + "덧그리기)가 위약인데 **그 팔이 없다**(#39).",
+        "⚠⚠ **`fixed_true_f`는 개입이 거의 없는 팔이다**(8-2R″ [2]) — 이 픽스처의 참 f는 1000, "
+          + "P1의 임의 f는 960이라 P1에서 **4%**이고 `f_intervention.ratio_median`이 **1.0021**이다. "
+          + "그 팔의 무효과는 **'f는 원인이 아니다'가 아니라 '안 옮겼다'**다(#32). 판별력을 가진 것은 "
+          + "**`fixed_f_half`·`fixed_f_double`**(양성 채널 — ×0.5에서 P1 중앙 1.6914 → 2.0866).",
+        "⚠⚠ **`one_point_direct_open`은 규칙 팔에서 P1 실행 수와 항등이다**(8-2R″ [8] · #40 ②) — "
+          + "규칙 P1은 화면 가로축 슬롯이 무한원이라 **정의상** 정확히 정렬된다. 그 필드가 나르는 것은 "
+          + "'규칙 P1 ⟹ 직접 경로가 열린다'는 **구조의 서술**이지 새 측정이 아니다. **그리고 앱이 같은 "
+          + "술어를 쓴다는 것은 이 원장에 근거가 없다**(#17 — 배선 시험도 필드도 없다).",
+        "⚠ **`p0_reasons.strokes`와 `events` 합이 다를 수 있다**(8-2R″ [11]) — `representative()`가 "
+          + "방향을 못 내는 획은 규칙에 **안 들어가므로** 사건이 없다. 그 수를 `events.no_representative`로 "
+          + "센다. **비를 낼 때 분모를 무엇으로 잡았는지 함께 적는다**(#11).",
+        "⚠ **형태 오차의 게이지는 자기 게이지다**(`shape_err_gauge` — `fitGauge`, #35). 전역 배율을 "
+          + "적합해 나누므로 **등방 배율 오차는 지워진다**. f 오차는 깊이축에만 걸리는 비등방 오차라 "
+          + "남지만, 그 사실을 모르고 읽으면 안 된다.",
         "**합성이다.** 실획은 `sessions/`에 표본이 오면 `real_ink`가 잰다(항목 9) — "
           + "AS-L24·L25가 '합성이 이 설계에 구조적으로 불리하다'를 열어 두었다",
         "**축 라벨은 규칙이 붙인다**(`CamState.axisOf`) — 오배정이 배치 오차에 섞여 들어온다. "

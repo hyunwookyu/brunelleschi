@@ -1,0 +1,262 @@
+{
+  "what": "`touch_route` dpr 2 회전 판정(|az − dpr1_az| < 1e-6)을 같은 커밋에서 N회 돌려 **실패 빈도와 차의 분포**를 남긴다(8차 2차 지시 항목 3). 7차가 '실행마다 갈린다'를 적고 **빈도를 안 남겼다**(DEFERRED).",
+  "how": "`npx playwright test e2e/touch_route.spec.ts`를 **12회** 돌리고 매 실행의 `touch_route.json`의 `dpr2.rotate`를 읽는다. 파일 전체를 돌린다 — `-g`로 dpr 2만 돌리면 dpr 1 팔이 없어 `test.skip`이 걸린다.",
+  "threshold": {
+    "az_tol_rad": 1e-06,
+    "source": "`touch_route.spec.ts`의 판정 그대로(#17 — 새 임계를 만들지 않는다)"
+  },
+  "runs": 12,
+  "fail_count": 0,
+  "fail_rate": 0.0,
+  "fail_rate_note": "N=12. **분자/분모로 읽는다** — 0/12은 '실패율 0'이 아니라 '12회에서 안 났다'이다(#14 · #38). 참 실패율 10%도 이 표본에서 0회일 확률이 상당하다.",
+  "would_fail_at_old_tol_5e_13": {
+    "tol": 5e-13,
+    "count": 1,
+    "denominator": 12,
+    "note": "옛 판정(`toBeCloseTo` 정밀도 12)의 임계다. **현행 1e-6은 이 머신의 밴드 (1e-13대)에서 다섯 자리 밖이라 아무것도 안 가른다** — 그래서 0/N이 나온다. 갈리는 것을 보려면 옛 임계로 센다. 그 수가 0이 아니면 **'실행마다 갈린다'는 이 머신에서도 참이고, 갈리게 만든 것은 임계이지 코드가 아니다**(#24 — 단위·임계를 바꾸는 것과 판정을 바꾸는 것은 다르다)."
+  },
+  "abs_diff": {
+    "min": 6.94999613415348e-14,
+    "median": 2.000621890374532e-13,
+    "max": 5.715428130770306e-13,
+    "note": "**분자/분모로 읽는다**(CLAUDE §5) — 실패 수 / 실행 수. N이 작으면 비율의 유효 자릿수가 1자리다(#14)."
+  },
+  "rows": [
+    {
+      "run": 1,
+      "azimuth_delta": 1.0875938959011509,
+      "dpr1_azimuth_delta": 1.0875938959012204,
+      "abs_diff": 6.94999613415348e-14,
+      "within_tol": true,
+      "process_exit": 0
+    },
+    {
+      "run": 2,
+      "azimuth_delta": 1.0875938959007045,
+      "dpr1_azimuth_delta": 1.087593895901276,
+      "abs_diff": 5.715428130770306e-13,
+      "within_tol": true,
+      "process_exit": 0
+    },
+    {
+      "run": 3,
+      "azimuth_delta": 1.0875938959008862,
+      "dpr1_azimuth_delta": 1.0875938959012112,
+      "abs_diff": 3.2507330161024584e-13,
+      "within_tol": true,
+      "process_exit": 0
+    },
+    {
+      "run": 4,
+      "azimuth_delta": 1.0875938959008862,
+      "dpr1_azimuth_delta": 1.087593895901236,
+      "abs_diff": 3.497202527569243e-13,
+      "within_tol": true,
+      "process_exit": 0
+    },
+    {
+      "run": 5,
+      "azimuth_delta": 1.087593895901027,
+      "dpr1_azimuth_delta": 1.0875938959011704,
+      "abs_diff": 1.4344081478157023e-13,
+      "within_tol": true,
+      "process_exit": 0
+    },
+    {
+      "run": 6,
+      "azimuth_delta": 1.0875938959008011,
+      "dpr1_azimuth_delta": 1.0875938959012204,
+      "abs_diff": 4.192202140984591e-13,
+      "within_tol": true,
+      "process_exit": 0
+    },
+    {
+      "run": 7,
+      "azimuth_delta": 1.0875938959010665,
+      "dpr1_azimuth_delta": 1.0875938959012665,
+      "abs_diff": 2.000621890374532e-13,
+      "within_tol": true,
+      "process_exit": 0
+    },
+    {
+      "run": 8,
+      "azimuth_delta": 1.087593895901085,
+      "dpr1_azimuth_delta": 1.0875938959012112,
+      "abs_diff": 1.2634338020234281e-13,
+      "within_tol": true,
+      "process_exit": 0
+    },
+    {
+      "run": 9,
+      "azimuth_delta": 1.087593895901136,
+      "dpr1_azimuth_delta": 1.0875938959012441,
+      "abs_diff": 1.0813572259849025e-13,
+      "within_tol": true,
+      "process_exit": 0
+    },
+    {
+      "run": 10,
+      "azimuth_delta": 1.0875938959010323,
+      "dpr1_azimuth_delta": 1.0875938959012472,
+      "abs_diff": 2.149391775674303e-13,
+      "within_tol": true,
+      "process_exit": 0
+    },
+    {
+      "run": 11,
+      "azimuth_delta": 1.087593895901027,
+      "dpr1_azimuth_delta": 1.087593895901208,
+      "abs_diff": 1.8096635301390052e-13,
+      "within_tol": true,
+      "process_exit": 0
+    },
+    {
+      "run": 12,
+      "azimuth_delta": 1.0875938959011198,
+      "dpr1_azimuth_delta": 1.0875938959011955,
+      "abs_diff": 7.571721027943568e-14,
+      "within_tol": true,
+      "process_exit": 0
+    }
+  ],
+  "what_this_does_not_say": [
+    "**원인이 환경이라는 것을 안 잰다**(#32) — 이 원장이 내는 것은 **분산이 있다는 것**뿐이다. 7차 컨테이너와 이 머신이 다른 밴드라는 주장은 **두 환경의 값을 나란히 놓아야** 서고, 여기에는 한 환경의 값만 있다(#27).",
+    "**코드 전후 비교가 아니다** — 같은 커밋을 N회 돌린 것이다.",
+    "**임계를 넓히자는 근거가 아니다** — 지시문이 '임계를 안 넓힌 판단이 맞다. 그대로 둔다'고 명시했다. 이 원장은 **그 판단의 대가를 수치로 적는 것**이다(#26 — 판정을 사후에 안 바꾼다).",
+    "**dpr 2의 다른 팔(양성 채널·팬)은 안 센다** — 갈리는 것은 회전 판정 하나다.",
+    "**현행 임계(1e-6)로는 판별력이 0이다** — 이 머신의 차가 1e-13대라 다섯 자리 밖이다. 그러므로 `fail_rate` 0은 '안정하다'가 아니라 **'이 임계가 이 밴드를 안 건드린다'**이다(#32 · #38 — 덮는 대상이 사실상 0인 판정). 정보를 가진 것은 `abs_diff` 분포와 `would_fail_at_old_tol_5e_13`이다."
+  ],
+  "constants": {
+    "hash": "54346ad1",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-09
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "vertical_ask_deg": 45,
+        "min_vp_len_ratio": 0.04,
+        "concurrent_deg": 3
+      },
+      "FOV_GATE": {
+        "severe_f_ratio": 0.5,
+        "ok_f_ratio": 0.87
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  }
+}
