@@ -209,6 +209,9 @@ function resolve2d(raw: Pt2[]): Resolve2dOut {
   const segs = pend2Segs();
   const cands = segs.length ? static2dCandidates(segs, Math.hypot(...cssSize())) : [];
   return resolve2dCore(raw, { cands, vps: cam.vps(), radiusPx: OSNAP.radiusPx,
+                              // **수선 발의 재료**(9차 항목 2-f) — 질의점에 따라 달라져서
+                              // 정적 후보로 못 만든다(3D 판의 `ctx.from`과 같은 자리, #17)
+                              segs,
                               kinds: OSNAP.kinds, relSnap: REL_SNAP.on });
 }
 

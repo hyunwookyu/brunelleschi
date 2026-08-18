@@ -1,0 +1,329 @@
+{
+  "what": "**반경의 두 방향을 같은 축 위에 낸다**(9차 항목 2). 8차까지의 스윕은 **모든 획이 이어지는 픽스처**에서 '붙는가'만 재서 반경이 클수록 좋아졌다 — 사용자 불만(**안 붙어야 할 곳에 붙는다**)은 그 스윕이 만들 수 없는 경우다.",
+  "population": {
+    "compositions": 5,
+    "jitters": [
+      0.005,
+      0.01,
+      0.03,
+      0.05
+    ],
+    "grades": [
+      "precise",
+      "medium"
+    ],
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "radii": [
+      4,
+      6,
+      8,
+      10,
+      12,
+      15,
+      20,
+      25,
+      30,
+      40
+    ],
+    "far_ends": 46080,
+    "conn_starts": 16493,
+    "overlap_dropped_compositions": 1
+  },
+  "fixture": {
+    "far_offset_px": [
+      330,
+      -60
+    ],
+    "min_cross_px_min": 40,
+    "note": "**둘째 덩어리는 첫 덩어리에서 화면으로 떨어져 있다**(참 정점 사이 최소 40px). 후보는 **첫 덩어리에서만** 나오므로 둘째 덩어리의 끝이 스냅에 걸리면 그것은 **정의상 잘못된 연결**이다 — 그리는 사람은 새 덩어리를 시작한 것이다."
+  },
+  "sweep": [
+    {
+      "radius_px": 4,
+      "wrong": "19/4608",
+      "wrong_rate": 0.0041,
+      "missed": "1200/1656",
+      "missed_rate": 0.7246,
+      "connected": "456/1656"
+    },
+    {
+      "radius_px": 6,
+      "wrong": "30/4608",
+      "wrong_rate": 0.0065,
+      "missed": "984/1656",
+      "missed_rate": 0.5942,
+      "connected": "672/1656"
+    },
+    {
+      "radius_px": 8,
+      "wrong": "49/4608",
+      "wrong_rate": 0.0106,
+      "missed": "838/1656",
+      "missed_rate": 0.506,
+      "connected": "818/1656"
+    },
+    {
+      "radius_px": 10,
+      "wrong": "67/4608",
+      "wrong_rate": 0.0145,
+      "missed": "692/1655",
+      "missed_rate": 0.4181,
+      "connected": "963/1655"
+    },
+    {
+      "radius_px": 12,
+      "wrong": "89/4608",
+      "wrong_rate": 0.0193,
+      "missed": "597/1655",
+      "missed_rate": 0.3607,
+      "connected": "1058/1655"
+    },
+    {
+      "radius_px": 15,
+      "wrong": "123/4608",
+      "wrong_rate": 0.0267,
+      "missed": "481/1653",
+      "missed_rate": 0.291,
+      "connected": "1172/1653"
+    },
+    {
+      "radius_px": 20,
+      "wrong": "199/4608",
+      "wrong_rate": 0.0432,
+      "missed": "317/1649",
+      "missed_rate": 0.1922,
+      "connected": "1332/1649"
+    },
+    {
+      "radius_px": 25,
+      "wrong": "263/4608",
+      "wrong_rate": 0.0571,
+      "missed": "206/1645",
+      "missed_rate": 0.1252,
+      "connected": "1439/1645"
+    },
+    {
+      "radius_px": 30,
+      "wrong": "345/4608",
+      "wrong_rate": 0.0749,
+      "missed": "112/1641",
+      "missed_rate": 0.0683,
+      "connected": "1529/1641"
+    },
+    {
+      "radius_px": 40,
+      "wrong": "536/4608",
+      "wrong_rate": 0.1163,
+      "missed": "0/1627",
+      "missed_rate": 0,
+      "connected": "1627/1627"
+    }
+  ],
+  "by_composition_at_15": {
+    "3pt_yaw35_pitch15": {
+      "n": 0,
+      "wrong": "0/0"
+    },
+    "3pt_yaw20_pitch25": {
+      "n": 1152,
+      "wrong": "57/1152"
+    },
+    "3pt_yaw50_pitch8": {
+      "n": 1152,
+      "wrong": "66/1152"
+    },
+    "2pt_yaw35_pitch0": {
+      "n": 1152,
+      "wrong": "0/1152"
+    },
+    "1pt_yaw0_pitch0": {
+      "n": 1152,
+      "wrong": "0/1152"
+    }
+  },
+  "selfcheck_notes": {
+    "sweep[9].missed_rate = 0": "**정상이고 뜻이 있다** — 반경 40px은 이 픽스처의 겨냥 거리 분포(p90 26.95px)를 통째로 덮어서 놓친 연결이 하나도 안 남는다. **측정 미작동이 아니라 반경이 분포를 넘어선 것**이고, 같은 행의 `wrong` 536/4608이 그 대가를 낸다(#5 — 0의 출처를 원장에 적는다).",
+    "by_composition_at_15.3pt_yaw35_pitch15.n = 0": "**판정 전에 뺐다**(#20). 그 구도는 두 덩어리의 참 정점이 화면에서 40px 안으로 겹쳐 '안 붙어야 한다'가 흐려진다. 뺀 수는 `population.overlap_dropped_compositions`에 있다 — **뺄셈으로 만든 집합이 아니라 직접 센 것**이다(#10)."
+  },
+  "aim_px_when_connecting": {
+    "n": 1656,
+    "p10": 1.9581,
+    "median": 7.941,
+    "p90": 26.9512,
+    "note": "**이을 때의 겨냥 거리** — 반경이 이 분포의 어디를 덮는지가 `missed`를 정한다."
+  },
+  "what_this_does_not_say": [
+    "**실획이 아니다**(AS-L24·L25). 합성 잉크의 끝점 지터 분포가 실제 손과 다르면 두 곡선의 교차점도 다르다.",
+    "**`wrong`의 정의가 픽스처에 기댄다**(#5) — '떨어진 덩어리에 붙으면 틀렸다'는 이 픽스처가 만든 규약이다. 실제로는 사용자가 두 덩어리를 잇고 싶을 수도 있다.",
+    "**관계 스냅(`alignAxes`)을 껐다** — 반경 하나만 보기 위해서다. 켠 상태의 거동은 `snap_stage`·`rel_snap_flow`가 따로 낸다.",
+    "**3D 오스냅을 안 잰다** — 확정 전(2D 단계)뿐이다. 3D 판의 반경 거동은 `snap.json`이 낸다."
+  ],
+  "gate": {
+    "registered": "① **두 지표가 반대로 움직인다**: 반경을 넓히면 `missed`(붙어야 하는데 안 붙음)가 **줄고** `wrong`(안 붙어야 하는데 붙음)이 **는다**. 둘 중 하나라도 반경에 대해 **단조가 아니면** 이 픽스처는 반경을 못 정한다(그때는 그 사실을 적고 반경을 안 바꾼다). ② **`wrong`이 0이 아닌 반경이 존재한다**: 어떤 반경에서도 `wrong`이 0이면 **이 픽스처가 '안 붙어야 할 곳'을 못 만든 것**이고(#35 — 대상이 도달 불가), 그러면 이 원장은 8차의 스윕과 같은 편향을 반복한다. 모집단은 5구도 × 6시드 × 등급 2 × 잡음 4 × 반경 10 = 2400실행이고 **두 지표의 분모가 다르다**(#11): `missed`의 분모는 **같은 덩어리 안에서 참 정점을 겨냥한 끝점**, `wrong`의 분모는 **겨냥이 없는 끝점 전부**다. ⚠ 이것은 이 항목이 등록한 게이트다(#41).",
+    "reachability": "**이 픽스처가 '안 붙어야 할 곳'을 실제로 만드는가**가 도달 가능성이다(#35). 어떤 반경에서도 `wrong`이 0이면 그것은 반경이 안전하다는 뜻이 아니라 **픽스처가 그 경우를 못 만든 것**이고, 그러면 이 원장은 8차 스윕과 같은 편향을 반복한다. 가장 큰 반경(40px)의 `wrong` 수가 그 판정값이다.",
+    "reachability_value": 536,
+    "reachability_source": "wrong_at_40_n"
+  },
+  "wrong_at_40_n": 536,
+  "constants": {
+    "hash": "54346ad1",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "vertical_ask_deg": 45,
+        "min_vp_len_ratio": 0.04,
+        "concurrent_deg": 3
+      },
+      "FOV_GATE": {
+        "severe_f_ratio": 0.5,
+        "ok_f_ratio": 0.87
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "a45078a5",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong",
+      "rate",
+      "fraction"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  }
+}

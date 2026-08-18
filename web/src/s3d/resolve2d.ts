@@ -15,7 +15,8 @@
 // ⚠ **꺾인 획은 끝점 스냅으로 펴지 않는다**(#34 — `placeLive`의 양 끝 스냅 규약 그대로):
 // 끝을 옮기면 두 점이 직선을 정하므로, 굽음이 `AXIS_TOL.bend_max`를 넘으면 끝 스냅을
 // 버린다. 시작점 스냅은 그대로 둔다.
-import { snap2dAt, alignAxes, type Snap2Cand, type AlignHit } from "./snap2d.js";
+import { snap2dAt, alignAxes, perp2dCandidates,
+         type Snap2Cand, type AlignHit, type Snap2Seg } from "./snap2d.js";
 import { screenOrthoSnap, vpDirSnap, type ScreenOrtho, type VpDirSnap } from "./axisSnap.js";
 import { representative, AXIS_TOL } from "./axis.js";
 import { classifyLine } from "./vpRules.js";
@@ -44,6 +45,14 @@ export interface Resolve2dCtx {
   kinds?: Partial<Record<SnapKind, boolean>>;
   /** 관계 스냅(정렬) 켬 여부(`REL_SNAP.on`). */
   relSnap: boolean;
+  /**
+   * **수선 발 후보의 재료**(9차 항목 2-f). 대기 획의 선분들이다.
+   *
+   * `cands`(정적 후보)와 **따로 받는 이유**: 수선 발은 **질의점에 따라 달라져서**
+   * 미리 만들 수 없다(3D 판이 `ctx.from`을 받는 것과 같은 자리, #17).
+   * 없으면 수선 발이 안 돈다 — 옛 부르는 쪽을 안 깬다.
+   */
+  segs?: Snap2Seg[];
   /**
    * **판정 뒤집기 가드**(D-L80). 기본 **켬** — 앱은 항상 켠 상태로 부른다.
    *
@@ -121,8 +130,12 @@ export function resolve2dCore(raw: Pt2[], ctx: Resolve2dCtx): Resolve2dOut {
     if (h.y) guides.push({ from: h.y.from, to: [a[0], a[1]] });
   }
   // ② 끝점 — 오스냅(굽음 규약은 3D 양 끝 스냅 그대로, #34)
+  // **끝점 후보에 수선 발을 더한다**(9차 항목 2-f) — 기준점은 **확정된 시작점** `a`다.
+  // 라이노 `Perp`와 같고 3D 판(`ctx.from`)과 같은 규약이다(#17).
+  const endCands = ctx.segs?.length
+    ? [...ctx.cands, ...perp2dCandidates(a, ctx.segs)] : ctx.cands;
   const end2 = (rep0 && rep0.bend <= AXIS_TOL.bend_max)
-    ? snap2dAt(b0, ctx.cands, ctx.radiusPx, ctx.kinds) : null;
+    ? snap2dAt(b0, endCands, ctx.radiusPx, ctx.kinds) : null;
   if (end2) {
     // **오스냅이 기하를 정하되, 소실점 방향 판정은 함께 낸다**(2026-08-17 7차 항목 2-c).
     // 옛 판은 여기서 `vpdir`를 비운 채 반환했다 — 기존 깊이선 위에 **정확히 얹힌** 획도

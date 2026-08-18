@@ -122,6 +122,34 @@ export function alignAxes(
 }
 
 /**
+ * **수선 발 후보 — 기준점이 있어야 정해진다**(2026-08-18 9차 항목 2-f).
+ *
+ * ⚠⚠ **2D 단계에는 이것이 없었다.** 3D 경로(`snap.snapCandidates`)는 `ctx.from`이 있으면
+ * `perpendicular`를 내는데(라이노 `Perp`와 같다), `static2dCandidates`는 **질의와 무관한**
+ * 후보만 만드는 함수라 여기 들어갈 자리가 없었다. 그래서 화면에는 종류 토글에 "수선 발"이
+ * 있는데 **2D 단계에서는 한 번도 안 걸렸다**(8차 리뷰어 [12]의 "2D에서 실효인 것은 셋"이
+ * 그 자리다 — 실효는 넷이고 수선 발은 빠져 있었다).
+ *
+ * 3D 판과 **같은 규약**이다(#17·A-3: 선례를 따른다): 기준점에서 각 선분에 내린 수선의 발,
+ * 매개변수가 `extend_ratio` 밖이면 버린다.
+ */
+export function perp2dCandidates(
+  from: Pt2, segs: Snap2Seg[], cfg: { extend_ratio?: number } = {},
+): Snap2Cand[] {
+  const pad = cfg.extend_ratio ?? SNAP_TOL.extend_ratio;
+  const out: Snap2Cand[] = [];
+  for (const s of segs) {
+    const ex = s.b[0] - s.a[0], ey = s.b[1] - s.a[1];
+    const L2 = ex * ex + ey * ey;
+    if (L2 < 1e-12) continue;
+    const t = ((from[0] - s.a[0]) * ex + (from[1] - s.a[1]) * ey) / L2;
+    if (t < -pad || t > 1 + pad) continue;
+    out.push({ kind: "perpendicular", at: [s.a[0] + t * ex, s.a[1] + t * ey], dist: 0, ofId: s.id });
+  }
+  return out;
+}
+
+/**
  * **하나를 고른다** — 반경 안 후보 중 우선순위가 높은 것, 같으면 가까운 것(3D 판과 같은 규칙).
  * `kinds`는 앱의 종류 토글이다(`OSNAP.kinds` 그대로). 없으면 `null` — 애매하면 놓지 않는다(A-3).
  */
