@@ -319,11 +319,85 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
       };
     })();
 
+    /**
+     * **판정 대기 표**(2026-08-18 11차 항목 4-c·4-d). 지시가 재수집 표본으로 **판정할 것**
+     * 여덟을 이름으로 들었다. 그 각각이 **지금 표본으로 답할 수 있는가**를 원장이 스스로
+     * 낸다 — 산문으로만 두면 다음 세션이 "값이 있으니 답이 있다"로 읽는다(#32의 자리).
+     *
+     * ⚠ **막힘의 사유는 필드 이름으로 적는다**(#47) — 수를 여기 안 박고, 무엇을 읽으면
+     * 막힘이 풀렸는지 알 수 있게 한다.
+     */
+    const pendingJudgements = (() => {
+      const k = kMetrics as Record<string, unknown>;
+      if (k.status !== "measured") return null;
+      const g = (path: string): unknown =>
+        path.split(".").reduce<unknown>((o, key) =>
+          (o && typeof o === "object") ? (o as Record<string, unknown>)[key] : undefined, k);
+      /** `"a/b"` 꼴에서 분자를 읽는다(없으면 null). */
+      const num = (v: unknown): number | null =>
+        typeof v === "string" && /^\d+\/\d+$/.test(v) ? +v.split("/")[0] : null;
+      const n = (v: unknown): number | null =>
+        (v && typeof v === "object" && typeof (v as { n?: unknown }).n === "number")
+          ? (v as { n: number }).n : null;
+      const rows = [
+        { id: "end_snap_engages",
+          what: "끝점 스냅이 실제로 걸리는지 — 단계별로 갈려 기록되는가(2D 단계 ↔ 3D)",
+          field: "snap2d_use.field_present",
+          ok: (num(g("snap2d_use.field_present")) ?? 0) > 0,
+          blocked_by: "필드 이전 저장본이면 `0/n`이 '안 걸렸다'가 아니라 '안 적혔다'다(#32 · D-L81)" },
+        { id: "vp_dir_axis_snap_holds",
+          what: "소실점 방향 축 스냅이 확정에서도 유지되는지",
+          field: "vp_dir_err_deg.n",
+          ok: (n(g("vp_dir_err_deg")) ?? 0) > 0,
+          blocked_by: "표본에 소실점 방향 획이 없으면 분포가 안 선다. ⚠ 보장 몫(`vp_dir_guaranteed_zero`)은 갈라 센다(#5)" },
+        { id: "ask_volume",
+          what: "물음이 얼마나 뜨는지",
+          field: "ask.unaccounted",
+          ok: g("ask.unaccounted") === 0,
+          blocked_by: "`asked − answered − skipped`가 0이 아니면 그 몫이 취소인지 카운터 누락인지 미상이다(#11)" },
+        { id: "snap_radius_width",
+          what: "스냅 반경이 좁은지 넓은지 — 겨냥 분포 중앙이 조리개의 어디인가",
+          field: "snap_dist_px.n",
+          ok: (n(g("snap_dist_px")) ?? 0) > 0,
+          blocked_by: "`snap_dist_legacy_zero`가 분모를 다 먹으면 분포가 비어 있다(D-L79 이전 저장본)" },
+        { id: "as6_one_stroke_one_axis",
+          what: "AS-6 — 한 획에 방향이 둘 이상인 비율",
+          field: "status",
+          ok: false,
+          blocked_by: "`k_metrics`(`.brnl`)는 이 지표를 안 낸다 — `as6_multi_axis_rate`는 옛 `s2s-session/1` 형식 전용이다. **형식이 아니라 하네스의 한계다**" },
+        { id: "vp_dir_error",
+          what: "소실점 방향 오차의 분포",
+          field: "vp_dir_err_deg.n",
+          ok: (n(g("vp_dir_err_deg")) ?? 0) > 0,
+          blocked_by: "위와 같다" },
+        { id: "confirm_path_share",
+          what: "확정 경로 분포(찍기 ↔ 두 선의 교점)",
+          field: "vp_confirm_source",
+          ok: !!g("vp_confirm_source") && Object.keys(g("vp_confirm_source") as object).length > 0,
+          blocked_by: "확정을 지난 문서가 없으면 빈 분포다" },
+        { id: "as_l24_l25_synthetic_bias",
+          what: "AS-L24·L25 — 합성이 이 설계에 편향됐다는 것이 실획으로 지지되는가(4-d)",
+          field: "(없다)",
+          ok: false,
+          blocked_by: "**대응량이 원장에 없다.** `rule_camera`가 재는 것은 **3D 축 방향 오차**(참값 대조)인데 실획에는 참값이 없다(`caveat`). 실획에서 잴 수 있는 것은 겨냥 각차(`vp_dir_err_deg`)뿐이고 **프레임이 다르다**(#24 — AS-L26이 걸렸던 그 자리). 대리 지표를 먼저 정해야 한다" },
+      ];
+      return {
+        note: "**지시 4-c·4-d가 든 판정 여덟.** `answerable`이 false면 그 판정은 "
+            + "**이 표본으로는 못 한다** — 값이 있어도 다른 것을 재고 있다는 뜻이다. "
+            + "막힘이 풀렸는지는 `field`가 가리키는 자리를 그 자리에서 읽어 확인한다(#47).",
+        answerable: rows.filter(r => r.ok).map(r => r.id),
+        blocked: rows.filter(r => !r.ok).map(r => r.id),
+        rows: rows.map(r => ({ id: r.id, what: r.what, field: r.field,
+                               answerable: r.ok, blocked_by: r.ok ? null : r.blocked_by })),
+      };
+    })();
+
     if (!sessions.length) {
       mkdirSync(OUT, { recursive: true });
       writeFileSync(resolve(OUT, "real_ink.json"), JSON.stringify({
         ...base,
         k_metrics: kMetrics,
+        pending_judgements: pendingJudgements,
         // ⚠ **`s2s-session/1`이 없다**는 뜻이고, `.brnl`(Doc2)은 `k_metrics`가 따로 잰다.
         // 갈라 적는다(#11 — 분모가 무엇인지). 위 상태만 보고 "표본 0"으로 읽으면
         // 실제로 있는 Doc2 측정을 놓친다.
@@ -343,6 +417,12 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
       // 깨지는** 모양이었다(#32의 반대편 — 돌았는데 안 돈 것으로 보고된다).
       if (kMetrics.status === "measured") {
         expect(kMetrics.n_strokes).toBeGreaterThan(0);
+        // **판정 대기 표가 여덟을 전부 든다**(11차 항목 4) — 빠지면 그 판정은 조용히
+        // 사라진다. 막힌 행은 사유를 반드시 갖는다(빈 사유 = 왜 못 하는지 모른다).
+        expect(pendingJudgements).not.toBeNull();
+        expect(pendingJudgements!.rows.length).toBe(8);
+        for (const r of pendingJudgements!.rows)
+          if (!r.answerable) expect(r.blocked_by, r.id).toBeTruthy();
         return;
       }
       expect(NO_SESSIONS, "`sessions/`가 비었는데 등록처가 그것을 못 봤다").not.toBeNull();
@@ -390,6 +470,7 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
     const report = {
       ...base,
       k_metrics: kMetrics,
+      pending_judgements: pendingJudgements,
       status: "measured",
       n_sessions: sessions.length,
       n_strokes: nStrokes,

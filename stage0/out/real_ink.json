@@ -274,6 +274,79 @@
     },
     "note_horizon": "**보장 확인이다**(#5) — 규칙상 수평 소실점은 지평선 위에 놓이므로 0이어야 하고, 0이 아니면 저장·복원 경로가 어긋난 것이다. AS-L9(사람이 ±120px 창에 드는가)는 **참 지평선이 없어 실획으로 직접 못 잰다** — 대리 재적합 팔은 미구현(DEFERRED)"
   },
+  "pending_judgements": {
+    "note": "**지시 4-c·4-d가 든 판정 여덟.** `answerable`이 false면 그 판정은 **이 표본으로는 못 한다** — 값이 있어도 다른 것을 재고 있다는 뜻이다. 막힘이 풀렸는지는 `field`가 가리키는 자리를 그 자리에서 읽어 확인한다(#47).",
+    "answerable": [
+      "vp_dir_axis_snap_holds",
+      "vp_dir_error",
+      "confirm_path_share"
+    ],
+    "blocked": [
+      "end_snap_engages",
+      "ask_volume",
+      "snap_radius_width",
+      "as6_one_stroke_one_axis",
+      "as_l24_l25_synthetic_bias"
+    ],
+    "rows": [
+      {
+        "id": "end_snap_engages",
+        "what": "끝점 스냅이 실제로 걸리는지 — 단계별로 갈려 기록되는가(2D 단계 ↔ 3D)",
+        "field": "snap2d_use.field_present",
+        "answerable": false,
+        "blocked_by": "필드 이전 저장본이면 `0/n`이 '안 걸렸다'가 아니라 '안 적혔다'다(#32 · D-L81)"
+      },
+      {
+        "id": "vp_dir_axis_snap_holds",
+        "what": "소실점 방향 축 스냅이 확정에서도 유지되는지",
+        "field": "vp_dir_err_deg.n",
+        "answerable": true,
+        "blocked_by": null
+      },
+      {
+        "id": "ask_volume",
+        "what": "물음이 얼마나 뜨는지",
+        "field": "ask.unaccounted",
+        "answerable": false,
+        "blocked_by": "`asked − answered − skipped`가 0이 아니면 그 몫이 취소인지 카운터 누락인지 미상이다(#11)"
+      },
+      {
+        "id": "snap_radius_width",
+        "what": "스냅 반경이 좁은지 넓은지 — 겨냥 분포 중앙이 조리개의 어디인가",
+        "field": "snap_dist_px.n",
+        "answerable": false,
+        "blocked_by": "`snap_dist_legacy_zero`가 분모를 다 먹으면 분포가 비어 있다(D-L79 이전 저장본)"
+      },
+      {
+        "id": "as6_one_stroke_one_axis",
+        "what": "AS-6 — 한 획에 방향이 둘 이상인 비율",
+        "field": "status",
+        "answerable": false,
+        "blocked_by": "`k_metrics`(`.brnl`)는 이 지표를 안 낸다 — `as6_multi_axis_rate`는 옛 `s2s-session/1` 형식 전용이다. **형식이 아니라 하네스의 한계다**"
+      },
+      {
+        "id": "vp_dir_error",
+        "what": "소실점 방향 오차의 분포",
+        "field": "vp_dir_err_deg.n",
+        "answerable": true,
+        "blocked_by": null
+      },
+      {
+        "id": "confirm_path_share",
+        "what": "확정 경로 분포(찍기 ↔ 두 선의 교점)",
+        "field": "vp_confirm_source",
+        "answerable": true,
+        "blocked_by": null
+      },
+      {
+        "id": "as_l24_l25_synthetic_bias",
+        "what": "AS-L24·L25 — 합성이 이 설계에 편향됐다는 것이 실획으로 지지되는가(4-d)",
+        "field": "(없다)",
+        "answerable": false,
+        "blocked_by": "**대응량이 원장에 없다.** `rule_camera`가 재는 것은 **3D 축 방향 오차**(참값 대조)인데 실획에는 참값이 없다(`caveat`). 실획에서 잴 수 있는 것은 겨냥 각차(`vp_dir_err_deg`)뿐이고 **프레임이 다르다**(#24 — AS-L26이 걸렸던 그 자리). 대리 지표를 먼저 정해야 한다"
+      }
+    ]
+  },
   "status": "brnl_only",
   "n_sessions": 0,
   "n_strokes": 0,
