@@ -156,6 +156,26 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
     led.new_path_placements = pb.ref_anchor + pb.end_anchor;
   }
 
+  // ---- ⑦ **옛 연쇄 대조 팔**(#30 — 10차 리뷰어 2차 [9]). 확장(기록 연결·끝점 오스냅)을
+  //      끄면 끝점 연결 획이 **안 올라간다** — "옛 코드가 못 올리던 경로"가 코드 독해가
+  //      아니라 측정이 된다. 다시 켜면 다음 턴의 연쇄가 회수한다.
+  await page.evaluate(() => window.S2S.setChainExt(false));
+  await drawPx(0.66 * W, 0.35 * H, 0.66 * W, 0.301 * H);       // 끝이 E(s9)의 시작 끝점
+  const oldChainBefore = await states();
+  await page.evaluate(() => window.S2S.setChainExt(true));
+  await drawPx(0.85 * W, 0.60 * H, 0.92 * W, 0.60 * H);        // 무관한 획 — 턴만 돌린다
+  const oldChainAfter = await states();
+  led.old_chain = {
+    ext_off_lifted: (oldChainBefore as any).lifted,            // 7 그대로 — 안 올라갔다
+    ext_on_lifted: (oldChainAfter as any).lifted,              // 8 — 다음 턴의 연쇄가 회수
+    end_anchor_after: (oldChainAfter as any).placeBy.end_anchor,
+    // **판별값** — 확장을 켰을 때만 올라간 획 수(끄면 0이었을 값). 게이트 도달 가능성의 출처
+    recovered: (oldChainAfter as any).lifted - (oldChainBefore as any).lifted,
+  };
+  expect((led.old_chain as any).ext_off_lifted).toBe(7);
+  expect((led.old_chain as any).ext_on_lifted).toBe(8);
+  expect((led.old_chain as any).end_anchor_after).toBe(2);
+
   led.console_errors = errors;
   expect(errors).toEqual([]);
 
@@ -163,7 +183,9 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
   writeFileSync(resolve(OUT, "dir_state.json"), JSON.stringify({
     spec: "10차 항목 1(지시 4-1~4-4·4-6) — 세 상태(계산)·무한직선 표시·연결이 좌표를 정하는 연쇄(기록된 연결 우선)·끝점 연결·경로별 배치 카운터의 합=전체. Playwright 신뢰 이벤트·픽셀·콘솔 오류 0",
     what_this_does_not_say: [
-      "**옛 연쇄(시작점만)에서 end_anchor·ref_anchor가 0이었다는 것은 코드 독해다**(#25) — 이전 판을 토글로 되살리는 팔은 없다. 이 원장이 실측하는 것은 현행 경로의 발화(카운터 1·1)와 그 획들이 실제로 올라갔다는 것이다",
+      "옛 연쇄와의 대조는 old_chain 팔이 든다(#30 — setChainExt(false)에서 끝점 연결 획이 안 올라가고, 켜면 다음 턴에 회수된다). ⚠ ref_anchor 경로의 옛 대조는 그 팔에 없다 — F가 이미 올라간 뒤라서다. ref의 발화 실측은 chain 팔의 카운터 1이다",
+      "**unanchored_attempts == unanchored_rejected는 가드 켬에서 항등이다**(리뷰어 2차 [6] — 가드가 그 분기를 무조건 막는다). 그 분모의 정보는 '거절 0이 시도 0인지'를 가르는 것뿐이고, 판별은 가드 끔 팔(setAnchorGuard(false))의 몫이다. 같은 이유로 아래 게이트의 'unanchored 0'은 판정이 아니라 **보장 명시**다(#5)",
+      "무한직선 픽셀 판정은 **그 직선이 소실점을 지나는지 안 잰다**(4-2의 방향 정합은 코드 경로(drawDirLines의 vp 분기)이지 이 픽셀 표본의 판정이 아니다) — 소실점 쪽 연장부는 잠정 그리드(drawPendingVpGuides)의 파선과 픽셀로 안 갈린다",
       "무한직선 픽셀 판정은 표본 두 점(연장부 하나·빗나간 점 하나)이다(#12) — 선 전체의 픽셀 검증이 아니다. 알파 값(0.12)의 시각 적정성은 안 잰다",
       "연쇄 A→B→C의 인과는 스냅 참조(ofId)로 확인한다 — 세 획이 같은 연쇄 호출의 몇 번째 패스에서 올라갔는지는 chainTrace가 남지만 단언하지 않는다(같은 패스 안에서도 순서 연쇄가 성립한다 — 대기 목록이 문서 순서라 A가 먼저 놓이면 B가 같은 패스에서 잡힌다)",
       "dpr 1·합성 마우스·한 구도의 확인이다(#12·#21·AS-C1)",
@@ -171,10 +193,10 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
     ],
     thresholds: { infinite_px_min: 1, off_line_px_max: 0, console_errors_max: 0 },
     gate: {
-      registered: "카메라 전 상태 전부 none · 확정 뒤 접합 성분 셋 coord(batch=3 — 4-4 첫 앵커)·지지선 dir · 무연결 가로선의 연장부 잉크 >0(빗나간 점 0) · V→D→F 연쇄(D.snapStart.ofId=V · F.snapEnd.ofId=D · ref_anchor=1 — #18 소비) · 끝점 연결 획이 올라간다(end_anchor=1) · 무연결 둘은 끝까지 dir · 경로 합=배치 전체 · unanchored=0(D-L83) · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
-      reachability: "새 두 경로의 발화 수가 값이다 — ref_anchor 1 · end_anchor 1(합 2). 자명값이 아닌 이유: 같은 실행에서 시작점 앵커(start_anchor 2)와 일괄 풀이(batch 3)가 **다른 경로로** 함께 발화해 카운터가 경로를 실제로 가른다는 것을 보인다. ⚠ 옛 코드 0 대조는 없다(#25 — what_this_does_not_say ①)",
-      reachability_value: 2,
-      reachability_source: "new_path_placements",
+      registered: "카메라 전 상태 전부 none · 확정 뒤 접합 성분 셋 coord(batch=3 — 4-4 첫 앵커)·지지선 dir · 무연결 가로선의 연장부 잉크 >0(빗나간 점 0) · V→D→F 연쇄(D.snapStart.ofId=V · F.snapEnd.ofId=D · ref_anchor=1 — #18 소비) · 끝점 연결 획이 올라간다(end_anchor=1) · **옛 연쇄 대조**(ext_off에서 같은 형태가 안 올라가고 ext_on 다음 턴에 회수 — #30) · 무연결 둘은 끝까지 dir · 경로 합=배치 전체 · 콘솔 오류 0(잠금 — 임계 아님). ⚠ 'unanchored 0'은 가드 켬의 보장이라 판정 조항에서 뺐다(#5·리뷰어 2차 [6]). ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "**옛 연쇄 팔이 오라클이다**(#30 · 리뷰어 2차 [9]): setChainExt(false)에서 끝점 연결 획이 안 올라가고(old_chain.ext_off_lifted 7 — 불변) 켜면 다음 턴에 올라간다(8). 그 대조가 end_anchor 경로의 판별을 든다. ⚠ 값이 정확히 1이라 #40 검사가 플래그한다 — 원인은 대조 팔이 회수 대상 획을 하나만 두기 때문이다(의심≠오류, §5). 옛 초판 값 2(ref+end 발화 합)는 픽스처 구성의 귀결이라 오라클에서 뺐다(#40 ⚠)",
+      reachability_value: 1,
+      reachability_source: "old_chain/recovered",
     },
     ...led,
     constants: constantsSnapshot(),

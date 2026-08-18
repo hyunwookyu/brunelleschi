@@ -1,5 +1,5 @@
 {
-  "n_flags": 4530,
+  "n_flags": 4531,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -20199,7 +20199,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 4.68070027181966e-13,
+      "val": 1.616484723854228e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20414,12 +20414,12 @@
     },
     {
       "path": "view_cube.json:after_face.fy",
-      "val": -4.535270755822731e-14,
+      "val": -9.754587028811636e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_cube.json:after_retap.fy",
-      "val": -6.530267466987367e-17,
+      "val": -6.530267466986865e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20569,12 +20569,12 @@
     },
     {
       "path": "viewpoint_undo.json:orbited.q[0]",
-      "val": -2.876978900576912e-17,
+      "val": -2.8769789005760376e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[2]",
-      "val": -1.047134684399228e-17,
+      "val": -1.0471346844016303e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20584,12 +20584,12 @@
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[0]",
-      "val": -2.876978900570123e-17,
+      "val": -2.8769789005700115e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[2]",
-      "val": -1.0471346844178816e-17,
+      "val": -1.0471346844181904e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20599,27 +20599,27 @@
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[0]",
-      "val": -2.876978900569888e-17,
+      "val": -2.876978900569857e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[2]",
-      "val": -1.0471346844185273e-17,
+      "val": -1.0471346844186136e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dp",
-      "val": 1.5703650030798019e-12,
+      "val": 1.030420280698918e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dq",
-      "val": 2.244595579432715e-13,
+      "val": 1.4717832020195133e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.p[0]",
-      "val": -9.298891771419295e-14,
+      "val": -7.666365479776921e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20634,32 +20634,32 @@
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[1]",
-      "val": -1.3288085927876074e-14,
+      "val": -1.0955211196552074e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[2]",
-      "val": -4.068302974592105e-31,
+      "val": -3.3540660814601856e-31,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.p[1]",
-      "val": 2.142494055444917e-16,
+      "val": 2.1424940554449166e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[0]",
-      "val": -2.876978900574591e-17,
+      "val": -2.876978900573995e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[2]",
-      "val": -1.0471346844056057e-17,
+      "val": -1.0471346844072423e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:return_gap",
-      "val": 1.551286188949293e-11,
+      "val": 1.3650808877443736e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -23048,6 +23048,13 @@
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
+      "path": "dir_state.json:gate.reachability_value",
+      "val": [
+        1
+      ],
+      "flag": "**도달 가능성 값이 정확히 0 또는 1이다**(#40) — 그 자리의 0/1은 대개 측정이 아니라 **설계 보장**이다(#5). 항등을 도달 가능성으로 쓰면 정보량이 0이다. 다른 팔의 수치를 적는다"
+    },
+    {
       "path": "elevation_flow.json:gate.reachability_value",
       "val": [
         1
@@ -23122,7 +23129,7 @@
     {
       "field": "pts2d",
       "writes": 9,
-      "reads": 93
+      "reads": 95
     },
     {
       "field": "pts3d",
@@ -23132,7 +23139,7 @@
     {
       "field": "axis",
       "writes": 6,
-      "reads": 71
+      "reads": 73
     },
     {
       "field": "rep",
@@ -23233,7 +23240,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 195,
+      "targets": 196,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
@@ -23242,7 +23249,7 @@
       "unit": "인용 줄",
       "targets": 107,
       "hits": 0,
-      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1283개이고 엄격 판정이면 279개(53줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
+      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1287개이고 엄격 판정이면 278개(53줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
     },
     {
       "scan": "scan_pitfall_citations",
@@ -23255,7 +23262,7 @@
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
       "targets": 42,
-      "hits": 1,
+      "hits": 2,
       "note": "값 대조를 **지난 것 16** · **면제 26**(`reachability_absent`) · 원장 75개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. 검증: axis_snap.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_rules.json:fov_gate.gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, horizon.json:gate, one_point_direct.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, restore_pose.json:gate, snap_cache.json:gate, snap_stage.json:gate / 면제: confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
@@ -23335,10 +23342,12 @@
       30
     ],
     "dir_state.json": [
+      5,
       12,
       18,
       21,
-      25,
+      30,
+      40,
       41
     ],
     "doc_store.json": [
@@ -23756,9 +23765,9 @@
   },
   "cited_value_population": {
     "lines_checked": 107,
-    "tokens_checked": 1283,
+    "tokens_checked": 1287,
     "flags_line_rule": 0,
-    "strict_tokens_flagged": 279,
+    "strict_tokens_flagged": 278,
     "strict_lines_flagged": 53,
     "hashless_only_lines_in_population": false,
     "note": "**모집단은 같고 판정만 둘이다.** `현재 해시로 적힌 인용 줄`이 모집단이고 (해시 없이 이름만 적힌 원장은 **줄을 모집단에 넣지 않는다** — 같은 줄에 현재 해시 인용이 있을 때 **대조 집합에만** 더한다), 그 위에서 엄격 판정(토큰별)과 현행 판정(줄에 하나도 없을 때만)의 수를 함께 낸다. `tokens_checked` ↔ `strict_tokens_flagged`가 옛 1129 ↔ 272와 같은 단위이고, `lines_checked` ↔ `flags_line_rule`이 96 ↔ 2와 같은 단위다"

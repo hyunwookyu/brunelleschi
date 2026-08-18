@@ -726,6 +726,13 @@ function placeAnchored(st: SStroke, fr: Frame, atV: Vec3, atEnd: boolean): boole
   return ok;
 }
 
+/**
+ * **연쇄 확장의 측정 스위치**(#30 · 10차 리뷰어 2차 [9]) — `false`면 옛 연쇄(시작점
+ * 오스냅만)다. `setAnchorGuard`와 같은 자리의 결정: 옛 거동을 토글로 되살릴 수 있어야
+ * "새 경로가 아니면 안 올라간다"가 코드 독해가 아니라 **측정**이 된다. 앱에서 안 끈다.
+ */
+const CHAIN_EXT = { on: true };
+
 function promoteChain(fr: Frame): number {
   let total = 0;
   chainTrace.length = 0;
@@ -743,7 +750,7 @@ function promoteChain(fr: Frame): number {
     for (const st of waiting) {
       if (!liftable(st)) continue;               // **주석은 승격 연쇄에도 안 들어간다**(D-3)
       // ① **그린 시점의 연결 기록이 먼저다**(4-3 · #18) — 기록된 손짓이 재탐색을 이긴다
-      const ref = refAnchorOf(st, fr);
+      const ref = CHAIN_EXT.on ? refAnchorOf(st, fr) : null;
       if (ref) {
         if (placeAnchored(st, fr, ref.atV, ref.end)) {
           const world = { kind: ref.kind, at: fr.fromV(ref.atV), ofId: ref.ofId };
@@ -768,7 +775,8 @@ function promoteChain(fr: Frame): number {
       }
       // ③ **끝점 오스냅** — 연결은 어느 끝에서든 좌표를 정한다(4-3). 시작점과 같은 자격
       // 검사를 지난다. 옛 코드는 시작점만 봐서 **끝으로 이어진 획이 영영 안 올라갔다**.
-      const ec = anchorCandAt(st.pts2d[st.pts2d.length - 1], segs, sc, pre);
+      const ec = CHAIN_EXT.on
+        ? anchorCandAt(st.pts2d[st.pts2d.length - 1], segs, sc, pre) : null;
       if (ec) {
         if (placeAnchored(st, fr, ec.at, true)) {
           st.snapEnd = { kind: ec.kind, at: fr.fromV(ec.at), ofId: ec.ofId };
@@ -3089,9 +3097,18 @@ refresh();
                                 + anchorGuardStats.unanchored_rejected }),
   /** 측정 스위치(#30) — `false`가 옛 거동(가드 이전)이다. 카운터는 안 지운다. */
   setAnchorGuard: (on: boolean) => { ANCHOR_GUARD.on = on; },
-  /** **세 상태**(4-1) — 저장 없이 계산한 상태를 획별로 낸다. 원장이 그대로 읽는다(#17). */
+  /**
+   * **세 상태**(4-1) — 저장 없이 계산한 상태를 획별로 낸다. 원장이 그대로 읽는다(#17).
+   * ⚠ `axis`는 **상태 판정이 실제로 쓴 계산 축**이다(대기 획의 저장 필드 `s.axis`는 배치
+   * 때만 갱신되는 낡은 값이라 여기 안 낸다 — 10차 리뷰어 2차 [7]이 그 혼선을 잡았다).
+   */
   strokeStates: () => doc.strokes.map(s => ({ id: s.id, state: strokeStateOf(s),
-                                              axis: s.axis })),
+    axis: s.seg3d ? s.axis
+        : (s.userAxis ? s.axis
+           : (cam.standing() && liftable(s) && s.pts2d.length >= 2
+              ? cam.axisOf(s.pts2d).axis : "free")) })),
+  /** 연쇄 확장 스위치(#30) — `false`가 옛 연쇄(시작점 오스냅만)다. 카운터는 안 지운다. */
+  setChainExt: (on: boolean) => { CHAIN_EXT.on = on; },
   /** **배치 경로 카운터**(4-6) — 합이 배치 전체와 맞는지 원장이 검산한다. */
   placeBy: () => ({ ...placeBy }),
   /** **시점 저장**(5차 지시 7-1) — 종단 확인이 앱 경로 그대로 부른다(#17). */
