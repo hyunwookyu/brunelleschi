@@ -1,5 +1,5 @@
 {
-  "n_flags": 4494,
+  "n_flags": 4518,
   "flags": [
     {
       "path": "axis_snap.json:by_arm_order.snap_off__horizon_on__drawn.snapped_strokes",
@@ -125,6 +125,46 @@
       "path": "camera_gate.json:by_axis_err_baseline_3pt_jitter_le_0_01.deg_0.axis_dir_err_deg",
       "val": 0,
       "flag": "분포 전체가 0(n=108) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_1.true_camera_oracle.f_rel_err",
+      "val": 0,
+      "flag": "분포 전체가 0(n=300) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_1.true_camera_oracle.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=720) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_2.true_camera_oracle.f_rel_err",
+      "val": 0,
+      "flag": "분포 전체가 0(n=300) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_2.true_camera_oracle.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=720) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_3.true_camera_oracle.f_rel_err",
+      "val": 0,
+      "flag": "분포 전체가 0(n=54) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_3.true_camera_oracle.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=162) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_4.true_camera_oracle.f_rel_err",
+      "val": 0,
+      "flag": "분포 전체가 0(n=18) → 항등/측정 미작동 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_4.true_camera_oracle.axis_dir_err_deg",
+      "val": 0,
+      "flag": "분포 전체가 0(n=54) → 항등/측정 미작동 확인"
     },
     {
       "path": "camera_gate.json:by_axis_err_all_compositions.deg_0.camera_ok.rate",
@@ -255,6 +295,86 @@
       "path": "camera_gate.json:by_axis_err_baseline_3pt_jitter_le_0_01.deg_8.silent_wrong.cut_0_2.rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_1.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_1.true_camera_oracle.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_1.true_camera_oracle.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_1.true_camera_oracle.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_2.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_2.true_camera_oracle.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_2.true_camera_oracle.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_2.true_camera_oracle.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_3.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_3.true_camera_oracle.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_3.true_camera_oracle.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_3.true_camera_oracle.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_4.detected_camera.placement.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_4.true_camera_oracle.camera_ok.rate",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_4.true_camera_oracle.f_rel_err.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
+    },
+    {
+      "path": "camera_gate.json:by_strokes_per_axis.k_4.true_camera_oracle.axis_dir_err_deg.median",
+      "val": 0,
+      "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
     },
     {
       "path": "classify_leak.json:angle.screen_true",
@@ -20224,12 +20344,12 @@
     },
     {
       "path": "view_cube.json:after_face.fy",
-      "val": -1.3949957819750096e-13,
+      "val": -1.1730010988715205e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_cube.json:after_retap.fy",
-      "val": -6.353597112292812e-17,
+      "val": -6.353597112292933e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20379,12 +20499,12 @@
     },
     {
       "path": "viewpoint_undo.json:orbited.q[0]",
-      "val": -2.87643620176757e-17,
+      "val": -2.876436201768848e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[2]",
-      "val": -1.0486245366181197e-17,
+      "val": -1.0486245366146178e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20394,12 +20514,12 @@
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[0]",
-      "val": -2.876436201763488e-17,
+      "val": -2.876436201763575e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[2]",
-      "val": -1.0486245366293199e-17,
+      "val": -1.0486245366290809e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20409,27 +20529,27 @@
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[0]",
-      "val": -2.876436201763346e-17,
+      "val": -2.8764362017633677e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[2]",
-      "val": -1.0486245366297075e-17,
+      "val": -1.0486245366296483e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dp",
-      "val": 1.2122065561378764e-12,
+      "val": 1.7748387934325172e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dq",
-      "val": 1.346909194361133e-13,
+      "val": 1.9722258957766807e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.p[0]",
-      "val": -6.976774487404038e-14,
+      "val": -9.360242291818374e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20444,32 +20564,32 @@
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[1]",
-      "val": -7.756536619349386e-15,
+      "val": -1.0406393704361603e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[2]",
-      "val": -2.3747544358388647e-31,
+      "val": -3.186039185178402e-31,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.p[1]",
-      "val": 2.7538336256475196e-16,
+      "val": 2.75383362564752e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[0]",
-      "val": -2.8764362017665817e-17,
+      "val": -2.8764362017675696e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[2]",
-      "val": -1.0486245366208313e-17,
+      "val": -1.0486245366181196e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:return_gap",
-      "val": 8.47976049069533e-12,
+      "val": 1.0950962364633486e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -23498,7 +23618,8 @@
       17,
       19,
       27,
-      38
+      38,
+      40
     ],
     "touch_route.json": [
       6,
