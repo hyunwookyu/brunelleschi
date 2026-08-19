@@ -13,6 +13,37 @@ import { networkInterfaces } from "node:os";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
+
+/**
+ * **빌드 식별자**(2026-08-19 17차 지시 0-1). 화면에 이것을 찍어야
+ * *"업데이트가 안 된다"*를 **확인할 수 있다** — 지금까지는 화면만 보고 알 방법이 없었다.
+ *
+ * `package.json`의 `version`은 **손으로 올리는 값이라 안 맞는다.** 그래서 빌드 시각에
+ * `git rev-parse --short=7 HEAD`를 읽어 상수로 박는다(지시 0-1 문면 그대로).
+ *
+ * ⚠ **빌드 시각이 들어가므로 같은 커밋을 다시 빌드해도 판본이 바뀐다.** 그것이 목적이다 —
+ * 옛 판은 판본을 **파일 이름 목록**에서만 만들었고(`sha256(list)`), `l.html`처럼
+ * **이름이 안 바뀌는 파일만 고친 빌드**는 `sw.js`가 바이트까지 같아져 브라우저가
+ * *"새 워커 없음"*으로 읽었다. 그 상태에서는 cache-first가 옛 문서를 **영구히** 준다.
+ */
+function buildStamp() {
+  const git = (args: string[]) => {
+    try { return execFileSync("git", args, { encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] }).trim(); }
+    catch { return ""; }
+  };
+  // git이 없거나 저장소가 아니면 `unknown` — **0으로 위장하지 않는다**(#32: 미실행은 반증이 아니다)
+  const head = git(["rev-parse", "--short=7", "HEAD"]) || "unknown";
+  // 커밋되지 않은 변경이 섞인 빌드는 그 사실을 라벨이 말한다 — 해시만 보면 맞는 것처럼 보인다
+  const dirty = head !== "unknown" && git(["status", "--porcelain"]) !== "";
+  return {
+    commit: dirty ? head + "+" : head,
+    // 재현 빌드를 위한 문(비어 있으면 지금 시각). 값 자체는 표시용이다
+    time: process.env.S2S_BUILD_TIME || new Date().toISOString(),
+  };
+}
+
+const STAMP = buildStamp();
 
 function lanAddresses(): string[] {
   const out: string[] = [];
@@ -74,13 +105,22 @@ function swPrecache() {
         .map(f => "./" + f.replace(/\\/g, "/"));
       const list = ["./", "./manifest.webmanifest", "./icon.svg",
                     "./icon-192.png", "./icon-512.png", ...files];
-      // 목록 자체로 판본을 만든다 — 내용이 같으면 같은 이름이라 재설치가 안 일어난다.
-      const build = createHash("sha256").update(list.join("|")).digest("hex").slice(0, 8);
+      // ⚠⚠ **판본을 목록만으로 만들지 않는다**(2026-08-19 17차 지시 0-2c).
+      // 옛 판은 `sha256(list)`였고 주석에 *"내용이 같으면 같은 이름이라 재설치가 안 일어난다"*고
+      // 적혀 있었다 — 그런데 `l.html`은 **이름이 안 바뀌는 파일**이다. 그 파일만 고친 빌드는
+      // 목록이 그대로라 `sw.js`가 **바이트까지 같아지고**, 브라우저는 "새 워커 없음"으로 읽는다.
+      // 그러면 cache-first가 옛 문서를 영구히 준다 — 사람이 캐시를 지워야 했던 그 상태다.
+      // **커밋과 빌드 시각을 판본에 넣어** 빌드마다 캐시 이름이 바뀌게 한다(지시 0-2c 문면).
+      const build = createHash("sha256")
+        .update([...list, STAMP.commit, STAMP.time].join("|")).digest("hex").slice(0, 8);
       writeFileSync(sw,
         `self.__PRECACHE__ = ${JSON.stringify([...new Set(list)])};\n`
         + `self.__BUILD__ = ${JSON.stringify(build)};\n`
+        // 화면 표시(`buildInfo.ts`)와 **같은 값**을 워커도 든다 — 진단이 둘로 갈리지 않는다(#17)
+        + `self.__COMMIT__ = ${JSON.stringify(STAMP.commit)};\n`
+        + `self.__BUILD_TIME__ = ${JSON.stringify(STAMP.time)};\n`
         + readFileSync(sw, "utf-8"), "utf-8");
-      console.log(`  sw.js — 사전 캐시 ${list.length}개 · 판본 ${build}`);
+      console.log(`  sw.js — 사전 캐시 ${list.length}개 · 판본 ${build} · 커밋 ${STAMP.commit}`);
     },
   };
 }
@@ -104,6 +144,16 @@ export default defineConfig({
   // host: true → 0.0.0.0 바인딩(LAN 노출). 기존 127.0.0.1 고정을 대체한다.
   server: { host: true, port: PORT, strictPort: true },
   plugins: [...(useHttps ? [basicSsl()] : []), printLanUrls(useHttps, PORT), swPrecache()],
+  /**
+   * **빌드 식별자를 상수로 박는다**(지시 0-1). `src/ui/buildInfo.ts`가 이 둘을 읽고
+   * 하단바 구석에 찍는다. 개발 서버에서도 정의되므로 `dev`에서도 같은 자리에 뜬다.
+   * ⚠ vitest도 이 설정을 쓰므로 단위 테스트에서도 정의된다 — `buildInfo.ts`의 `typeof` 방어는
+   * 그 밖(순수 `tsc`·다른 번들러)에서의 안전장치다.
+   */
+  define: {
+    __S2S_COMMIT__: JSON.stringify(STAMP.commit),
+    __S2S_BUILD_TIME__: JSON.stringify(STAMP.time),
+  },
   // **화면은 `l.html` 하나다** — L-D.3 종단 검증을 통과한 뒤 옛 UI(`index.html`·`main.ts`·
   // `cameraPanel.ts`)를 지웠다(2026-08-16, A-4: 폐기 코드를 지우기 전에 게이트를 통과시킨다).
   // 루트로 들어온 사람은 `public/index.html`(리다이렉트 한 장)이 `l.html`로 보낸다.

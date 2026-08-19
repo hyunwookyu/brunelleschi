@@ -51,6 +51,10 @@
     #bar .spacer{flex:1 1 auto}
     #bar .grp{font-size:11px;color:#9a9a9a;flex:0 0 auto;margin:0 1px 0 5px}
     #bar .folded{display:none}
+    /* 17차 지시 0-1 — **빌드 식별자**. 하단바 오른쪽 구석에 작게.
+       표시가 있어야 "업데이트가 안 된다"를 확인할 수 있다(README §1.5 배포 후 확인 절차). */
+    #bar .build{font-size:11px;color:#9a9a9a;flex:0 0 auto;margin-left:8px;
+                font-variant-numeric:tabular-nums;white-space:nowrap;user-select:text}
     /* 궤도·확정 시점은 마우스 전용(지시 6-b) — 손가락 장치(아이패드)에서는 제스처가 대신한다 */
     @media (pointer: coarse){ #bar .mouse-only{display:none} }
     /* 5차 지시 6 — 프로크리에이트식 배치: 도구·채널은 상단 우측 묶음, 크기 슬라이더는 좌측 사이드바 */
@@ -91,6 +95,16 @@
     #views .row .ren{flex:0 0 auto;color:#888;padding:2px 6px}
     #views .row .del:disabled{opacity:.3;cursor:default;color:#888}
     #views .n{color:#888;font-size:12px}
+    /* 17차 지시 0-3 — **갱신 알림.** 새 판이 잡히면 뜬다. 누르면 워커를 교체하고 다시 로드한다.
+       이것이 있어야 사용자가 캐시를 지울 일이 없어진다(표준 PWA 관행). */
+    #update{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:6;
+            display:flex;gap:10px;align-items:center;padding:8px 12px;
+            background:#111;color:#fff;border-radius:8px;font-size:13px;
+            box-shadow:0 2px 12px rgba(0,0,0,.28)}
+    #update[hidden]{display:none}
+    #update button{font:inherit;font-size:13px;padding:3px 10px;border:1px solid #fff;
+                   border-radius:5px;background:#fff;color:#111;cursor:pointer}
+    #update .x{border-color:#555;background:transparent;color:#bbb;padding:3px 8px}
   </style>
 </head>
 <body>
@@ -103,6 +117,7 @@
   <div id="side" class="hidden"></div>
   <canvas id="cube" width="108" height="108"></canvas>
   <div id="views"></div>
+  <div id="update" hidden></div>
     </div>
     <div id="bar"></div>
   </div>

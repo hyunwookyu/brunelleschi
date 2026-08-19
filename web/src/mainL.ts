@@ -64,6 +64,9 @@ import { project, axisDirection, groundFrame, sub3, angleBetween,
 import { lineIntersect, type Pt2 } from "./s3d/camera.js";
 import type { PlaceCtx } from "./s3d/stroke.js";
 import { viewPlaceCtx, toView, fromView, dirToView, type ViewPose } from "./s3d/viewCamera.js";
+// **빌드 식별자와 갱신**(2026-08-19 17차 지시 0) — 표시가 없으면 "업데이트가 안 된다"를 확인 못 한다
+import { BUILD, buildLabel, buildTitle } from "./ui/buildInfo.js";
+import { watchUpdates, pollUpdates, applyUpdate, type RegistrationLike } from "./ui/swUpdate.js";
 
 // **가이드 조정 도구가 없어졌다** — 끌 가이드가 없다. 선만 그으면 카메라가 선다(사람 지시 1).
 // **지우개 둘**(지시 I) — 조각(닿으면 교차점 사이 조각이 통째로) · 부분(지나간 자리만).
@@ -76,6 +79,7 @@ const statusEl = document.getElementById("status")!;
 const viewsEl = document.getElementById("views")!;
 const toolsEl = document.getElementById("tools")!;
 const sideEl = document.getElementById("side")!;
+const updateEl = document.getElementById("update")!;
 
 const stage = new Stage(host);
 let doc: DocState = newDoc();
@@ -3788,6 +3792,8 @@ function renderBar() {
     btn("obj", "OBJ", false, !lifted(doc).length),
     btn("gltf", "glTF", false, !lifted(doc).length),
     btn("clear", "비우기"),
+    // ---- **빌드 식별자**(17차 지시 0-1) — 구석에 작게. 커밋 앞 7자 + 빌드 시각
+    `<span class="build" title="${buildTitle()}">${buildLabel()}</span>`,
   ].join("");
 }
 
@@ -4170,11 +4176,42 @@ window.addEventListener("pagehide", () => { void saver?.flush(); });
 getDoc2().then(d => { if (d && d.strokes.length && !doc.strokes.length) applyDoc2(d); })
          .catch(() => { /* 저장소가 없어도 도구는 동작한다 */ });
 
-// **PWA — 오프라인 동작**(L-D.2). 개발 서버에서는 등록하지 않는다(HMR과 충돌한다).
+// **PWA — 오프라인 동작**(L-D.2) **과 갱신 알림**(17차 지시 0-3).
+// 개발 서버에서는 등록하지 않는다(HMR과 충돌한다).
 // 경로는 **상대**여야 한다 — Pages의 하위 경로에서 `/sw.js`는 남의 자리를 가리킨다.
+let swReg: RegistrationLike | null = null;
+
+/**
+ * **새 버전이 있습니다. 새로고침**(지시 0-3). 누르면 워커를 교체하고 다시 로드한다.
+ * ⚠ **저절로 새로고침하지 않는다** — 그리던 중이면 사용자가 시점을 고른다.
+ * 자동 저장이 돌지만(`autosaver2`) 방금 그은 획이 아직 안 실렸을 수 있고,
+ * 그때 화면이 튀면 그것은 "업데이트가 안 된다"보다 나쁜 고장이다.
+ */
+function showUpdateBanner() {
+  updateEl.innerHTML =
+    '<span>새 버전이 있습니다.</span>'
+    + '<button data-update="reload">새로고침</button>'
+    + '<button class="x" data-update="dismiss" title="이 탭에서는 다시 안 보입니다">✕</button>';
+  updateEl.hidden = false;
+}
+
+updateEl.addEventListener("click", (e) => {
+  const act = (e.target as HTMLElement)?.closest("[data-update]")
+    ?.getAttribute("data-update");
+  if (act === "dismiss") { updateEl.hidden = true; return; }
+  if (act === "reload") {
+    updateEl.hidden = true;
+    // 그리던 것을 먼저 내려놓고 다시 로드한다 — 새로고침이 획을 버리면 안 된다
+    void Promise.resolve(saver?.flush()).catch(() => null)
+      .then(() => applyUpdate(swReg, () => location.reload()));
+  }
+});
+
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => { /* 오프라인 없이도 동작한다 */ });
+    void watchUpdates(navigator.serviceWorker as unknown as Parameters<typeof watchUpdates>[0],
+                      "./sw.js", showUpdateBanner)
+      .then(({ reg }) => { swReg = reg; if (reg) pollUpdates(reg); });
   });
 }
 
@@ -4183,6 +4220,13 @@ refresh();
 // 브라우저 콘솔 진단용. 측정 하네스와 같은 픽스처를 쓰려면 여기서 문서를 꺼낸다.
 (window as unknown as Record<string, unknown>).S2S = {
   doc: () => doc, cam, stage, refresh, SIZE_HEAL,
+  /**
+   * **빌드 식별자**(17차 지시 0-1). 화면의 하단바 구석과 **같은 값**이다(#17 — 한 출처).
+   * 배포 확인 절차(README §1.5)와 `e2e/static_deploy.spec.ts`가 이것을 읽는다.
+   */
+  version: () => ({ ...BUILD, label: buildLabel() }),
+  /** 갱신 알림이 떠 있는가 — 회귀 팔이 읽는다(사람은 화면으로 본다) */
+  updateShown: () => !updateEl.hidden,
   /** D-C3 좌표 규약 진단(#21) — `e2e/coords.spec.ts`가 dpr 1·2·3에서 이것을 잠근다 */
   diag: frameDiag,
   // L-D.2 저장·내보내기 — **앱 경로 그대로**를 종단 확인이 부른다(#17)

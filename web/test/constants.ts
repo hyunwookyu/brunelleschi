@@ -29,6 +29,7 @@ import { SNAP_TOL_AXIS } from "../src/s3d/axisSnap.js";
 import { LIVE_TOL } from "../src/s3d/liveLine.js";
 import { PICK_TOL } from "../src/ui/pick.js";
 import { INK_GRADES } from "../src/s3d/synthInk.js";
+import { SW_UPDATE_POLL_MS } from "../src/ui/swUpdate.js";
 
 /**
  * **측정 결과를 바꿀 수 있는 모든 공유 상수.** 여기 빠진 것이 바뀌면 STALE이 안 잡힌다 —
@@ -75,6 +76,24 @@ export const SHARED_CONSTANTS = {
   EYE_HEIGHT,
   VP_INFINITE_RATIO,
   INK_GRADES,
+} as const;
+
+/**
+ * **해시 밖에 두는 임계** — D-C4("새 임계는 여기 넣는다")를 지키되 `SHARED_CONSTANTS`에는
+ * **안 넣는다.** 사유(2026-08-19 17차 항목 0 · `DECISIONS.md` D-L108):
+ *
+ * - 해시는 **전역 하나**다. 키를 더하면 이 값에 의존한 적 없는 원장 **전부**가 STALE이 된다 —
+ *   `DRAFT_TOL`·`SENS_TOL`을 **동결 리터럴로 남긴 결정**(D-L51 선례)과 같은 자리다.
+ * - STALE이 잡으려는 것은 **낡은 측정**인데, 이 값에 의존하는 원장 값이 **하나도 없다.**
+ *   회귀 팔(`e2e/static_deploy.spec.ts`)은 주기를 기다리지 않고 `registration.update()`를
+ *   **직접 부른다** — 주기를 바꿔도 그 원장의 어떤 수도 안 움직인다.
+ * - 그래도 **여기 적는다**: 다음 세션이 임계를 찾을 자리는 이 파일 하나여야 한다.
+ *
+ * ⚠ 이 목록의 값이 **측정에 들어가게 되면** 그때 `SHARED_CONSTANTS`로 옮긴다.
+ */
+export const UNHASHED_THRESHOLDS = {
+  // 서비스 워커 갱신 확인 주기(ms) — `src/ui/swUpdate.ts`. 화면 동작이지 측정이 아니다
+  SW_UPDATE_POLL_MS,
 } as const;
 
 /** 키 순서에 무관한 정준 문자열. 객체 리터럴 순서가 바뀌어도 해시가 안 흔들린다. */
