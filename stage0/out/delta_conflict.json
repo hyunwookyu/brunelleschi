@@ -454,8 +454,8 @@
   "refeed_gate": {
     "note": "① 후반 — 같은 두 소실점을 현행 확정 게이트에 넣은 판. ⛔ 14차 지시 1(D-L93 — 상한 제거)로 이 판이 **severe(확정 통과)**가 됐다: 신규 확정으로도 이 카메라가 선다. 13차의 'reject = 재현 불가'는 12차 상한 아래의 기록이다. 복원↔신규 확정의 비대칭(DEFERRED 그 행)도 상한 제거로 해소.",
     "band": "severe",
-    "fov_deg": 166.05,
-    "principal_convention": "fovGate: [W/2, H/2] — real_ink per_doc([W/2, horizon_y])와 다르다. 인용 시 규약을 함께 적는다",
+    "fov_deg": 163.18,
+    "principal_convention": "fovGate: [W/2, horizon_y] — 14차 항목 2(D-L95)로 real_ink per_doc·앱 ctx와 통일됐다",
     "reject_threshold_removed": "14차 지시 1 · D-L93"
   },
   "gate": {

@@ -238,7 +238,8 @@ export class ConstraintAccumulator {
     if (camera.case === "2pt" && !camera.ok) {
       warnings.push({
         level: "error",
-        text: "두 소실점이 화면 중심의 같은 쪽에 있습니다 — 직교하는 두 방향이 아닙니다(6.2)",
+        // 14차 지시 2-d — 화면 중심을 조건으로 말하지 않는다(주점 x 가정은 16.2의 것이다)
+        text: "두 소실점이 시선의 같은 쪽에 모여 있습니다 — 직교하는 두 방향이 아닙니다(6.2)",
       });
     }
     // 18.4 화각

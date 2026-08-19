@@ -158,6 +158,17 @@ function fovSection() {
   const sameSide = fovGate([520, H], [1250, H], SZ);
   // **화면 밖 소실점은 정상이다** — 클램프가 없는지 확인한다(지시 7-a)
   const farOff = fovGate([-2400, H], [3600, H], SZ);
+  // ---- **주점 = [W/2, 지평선 y]**(14차 항목 2 · D-L95) 회귀 팔.
+  // (e-1) **지평선이 화면 상단에 있는 구도가 통과한다** — 낮은 시점은 구도 선택이다.
+  //       버그 되살림(#30·A-4): 옛 공식(주점 [W/2,H/2] · h² 벌점)을 이 자리에서 직접
+  //       계산하면 같은 입력이 f² ≤ 0으로 **거부됐다** — 그 차가 수리의 판별이다.
+  const topY = 0.05 * SZ[1];
+  const highHorizon = fovGate([SZ[0] / 2 - 200, topY], [SZ[0] / 2 + 220, topY], SZ);
+  const hOld = SZ[1] / 2 - topY;
+  const f2OldFormula = 200 * 220 - hOld * hOld;       // 옛 식: −Δx₁Δx₂ − h² (부호 정리 후)
+  // (e-2) **소실점 둘이 화면 왼쪽 절반에 몰린 구도가 통과한다** — 몰림 자체는 정상이다
+  //       (주점 x 가정(16.2)의 사이에만 있으면 된다).
+  const clustered = fovGate([0.05 * SZ[0], H], [0.55 * SZ[0], H], SZ);
   /**
    * **실획 첫 표본의 값**(지시 7-f). 아래 입력은 **6차 지시문이 보고한 수**다.
    * ⚠ **파일이 도착했다**(2026-08-19 — `sessions/brunelleschi-2026-08-17T11-41-36`): 그 파일의
@@ -244,9 +255,10 @@ function fovSection() {
      * 쓸기 행 + 반례(f²≤0) + 화면 밖 + 실획 보고 셋(6차 · 12차 파일1·파일2) +
      * 옛 게이트 팔 + 확정 차단 배선 팔.
      */
-    covered: sweep.length + 7,
+    covered: sweep.length + 9,
     covered_note: "sweep + counter_example + off_screen + real_ink_reported + "
-                + "reported_12(file1·file2) + extreme_fov_confirms + f2_negative_blocks",
+                + "reported_12(file1·file2) + extreme_fov_confirms + f2_negative_blocks + "
+                + "principal_on_horizon(high_horizon·clustered — 14차 항목 2)",
     sweep,
     /**
      * `gate.reachability_value`가 가리키는 자리 — **reject · severe · warn · ok** 순(#40 값
@@ -258,6 +270,20 @@ function fovSection() {
     counter_example: {
       what: "주점(480) 오른쪽에 둘 다 있는 소실점 — f² ≤ 0",
       band: sameSide.band, f: sameSide.f, why: sameSide.why,
+    },
+    /**
+     * **주점 규약 수리 팔**(14차 항목 2 · D-L95 — 주점 = [W/2, 지평선 y]).
+     * 옛 공식(주점 [W/2, H/2] + h² 벌점 — 6차 리뷰어가 넣었던 그것)은 지평선이 화면
+     * 중앙에서 멀면 f²를 깎아 거부를 만들었다 — 14차 지시 2-b가 그것을 뒤집었다
+     * (지평선 높이는 시선 높이 — 구도 선택이지 제약이 아니다). `f2_old_formula`가
+     * 옛 식의 되살림 값이다(#30·A-4 — 음수 = 옛 판이 거부했을 입력).
+     */
+    principal_on_horizon: {
+      high_horizon: { horizon_y_ratio: 0.05, band: highHorizon.band,
+                      f: highHorizon.f == null ? null : Math.round(highHorizon.f * 100) / 100,
+                      f2_old_formula: f2OldFormula },
+      clustered_left_half: { band: clustered.band,
+                             f: clustered.f == null ? null : Math.round(clustered.f * 100) / 100 },
     },
     off_screen_is_normal: {
       what: "화면 밖 소실점(±2400·3600)이 클램프 없이 계산에 들어가는가(지시 7-a)",
@@ -336,7 +362,12 @@ function fovSection() {
                 + "참고. 화각 경고 표시는 제거). 화면 밖 소실점은 **정상**이므로 거르지 않는다. "
                 + "⚠ 옛 등록문의 연혁(d/W → f/W 단위 정정 · 12차 상한 신설)은 12차 원장이 "
                 + "든다. 확정 경로 배선은 `vp_rules.test.ts` 배선 팔 + 아래 stepRule 팔 둘이 "
-                + "잠근다.",
+                + "잠근다. **[14차 항목 2 · D-L95] 주점 = [W/2, 지평선 y]** — h² 벌점(6차 "
+                + "리뷰어의 것)을 지웠다: 2점은 피치 0이라 주점이 지평선 위다. 앱 카메라"
+                + "(ConstraintAccumulator)·real_ink per_doc과 규약이 하나가 됐다(#17·#24). "
+                + "지평선이 화면 어디에 있든, 소실점이 한쪽에 몰렸든 — 주점 x(16.2 가정)를 "
+                + "사이에 두면 선다(principal_on_horizon 팔·옛 식 되살림 f2_old_formula<0). "
+                + "안내문은 화면 중앙·지평선을 조건으로 말하지 않는다(지시 2-d).",
       reachability: "거부(f² ≤ 0)의 도달 가능성은 `counter_example`(fovGate 직접)과 "
                   + "`f2_negative_blocks`(stepRule 배선 — 확정이 실제로 안 선다)가 든다. "
                   + "참고 대역 셋은 쓸기가 낸다 — `band_counts_ordered`의 severe·warn·ok가 "
@@ -728,6 +759,13 @@ describe("6차 지시 1·2·7·11 — 확정 뷰 · 끝점 프로브 · 화각 �
     // ---- 7. 화각 게이트
     expect(fov_gate.counter_example.band).toBe("reject");
     expect(fov_gate.off_screen_is_normal.band).toBe("ok");              // 화면 밖은 정상이다
+    // ---- 14차 항목 2(D-L95) — 주점 = [W/2, 지평선 y]. 지평선 위치·몰림은 조건이 아니다
+    expect(fov_gate.principal_on_horizon.high_horizon.band).not.toBe("reject");
+    expect(fov_gate.principal_on_horizon.high_horizon.f2_old_formula).toBeLessThan(0); // 옛 판은 거부
+    expect(fov_gate.principal_on_horizon.clustered_left_half.band).not.toBe("reject");
+    // 문구가 화면 중앙·지평선을 조건으로 말하지 않는다(지시 2-d)
+    expect(fov_gate.counter_example.why).not.toContain("화면 중심");
+    expect(fov_gate.counter_example.why).not.toContain("지평선");
     expect(fov_gate.sweep.find(s => s.f_over_w === 0.4)!.band).toBe("severe");
     expect(fov_gate.sweep.find(s => s.f_over_w === 1.5)!.band).toBe("ok");
     // **경계가 화각과 맞는가**(리뷰어 [5]) — f/W = 0.5가 정확히 90°, 0.87이 60° 언저리다

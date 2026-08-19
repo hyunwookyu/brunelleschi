@@ -261,12 +261,11 @@ describe("Δ 대푯값 충돌 — 후보 셋의 분해(13차 항목 4)", () => {
             + "복원↔신규 확정의 비대칭(DEFERRED 그 행)도 상한 제거로 해소.",
         band: verdict.band, fov_deg: verdict.fovDeg == null ? null : +verdict.fovDeg.toFixed(2),
         /**
-         * **주점 규약**(리뷰어 4-R [B-6] · #24 — 13차 1차 [9]가 세운 병기 규약): 이 화각은
-         * `fovGate`의 주점 = **[W/2, H/2]**에서 나온 값이다. `real_ink.per_doc[*]
-         * .camera_assumed_principal_center`(주점 = [W/2, 지평선 y] — 앱 ctx와 같은 규약)와
-         * 같은 카메라라도 값이 갈린다(163.18 쪽). 거부 판정은 어느 규약에서도 같은 대역이다.
+         * **주점 규약**(리뷰어 4-R [B-6] · #24): ⛔ 14차 항목 2(D-L95)로 `fovGate`의 주점이
+         * **[W/2, 지평선 y]**가 됐다 — real_ink per_doc·앱 ctx와 **같은 규약 하나**다.
+         * 13차의 병기(163.19 ↔ 163.18)는 규약이 둘이던 시절의 것이고 이제 값이 수렴한다.
          */
-        principal_convention: "fovGate: [W/2, H/2] — real_ink per_doc([W/2, horizon_y])와 다르다. 인용 시 규약을 함께 적는다",
+        principal_convention: "fovGate: [W/2, horizon_y] — 14차 항목 2(D-L95)로 real_ink per_doc·앱 ctx와 통일됐다",
         /** ⛔ 옛 `reject_threshold_deg`(120)는 D-L93으로 제거됐다 — 거부는 f² ≤ 0뿐. */
         reject_threshold_removed: "14차 지시 1 · D-L93",
       },
