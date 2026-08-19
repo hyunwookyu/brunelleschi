@@ -44,6 +44,8 @@
    "end_anchor": 0,
    "cross_anchor": 0,
    "batch": 0,
+   "ground": 0,
+   "extension": 0,
    "unanchored": 0
   },
   "guard": {
@@ -94,6 +96,8 @@
    "end_anchor": 0,
    "cross_anchor": 0,
    "batch": 3,
+   "ground": 0,
+   "extension": 0,
    "unanchored": 0
   },
   "guard": {
@@ -149,6 +153,8 @@
    "end_anchor": 0,
    "cross_anchor": 0,
    "batch": 3,
+   "ground": 0,
+   "extension": 0,
    "unanchored": 0
   },
   "guard": {
@@ -229,6 +235,8 @@
    "end_anchor": 0,
    "cross_anchor": 1,
    "batch": 3,
+   "ground": 0,
+   "extension": 0,
    "unanchored": 0
   },
   "guard": {
@@ -342,6 +350,8 @@
    "end_anchor": 1,
    "cross_anchor": 1,
    "batch": 3,
+   "ground": 0,
+   "extension": 0,
    "unanchored": 0
   },
   "guard": {
@@ -421,6 +431,8 @@
    "end_anchor": 1,
    "cross_anchor": 1,
    "batch": 3,
+   "ground": 0,
+   "extension": 0,
    "unanchored": 0
   },
   "guard": {

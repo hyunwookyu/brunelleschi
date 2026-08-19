@@ -162,9 +162,14 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
     expect(st.s5).toBe("dir");                                 // 연결이 없으면 좌표도 없다
     const pb = (led.final as any).placeBy;
     const sum = pb.ref_anchor + pb.start_anchor + pb.two_point + pb.end_anchor
-              + pb.cross_anchor + pb.batch + pb.unanchored;
+              + pb.cross_anchor + pb.batch + pb.ground + pb.extension + pb.unanchored;
     expect(sum).toBe((led.final as any).lifted);               // 합 = 배치 전체
     expect(pb.unanchored).toBe(0);                             // 가드가 임의 배치를 다 막았다
+    // **지면 첫 앵커는 이 픽스처에서 안 돈다**(13차 항목 2의 게이트 — 일괄 풀이가 놓은
+    // 확정이므로 n>0. 지면 경로의 양성 채널은 ground_anchor.json이다). 연장선(항목 3)도
+    // 이 픽스처에는 연장 방향 획이 없어 0이 명세다 — 그 양성 채널은 extension_snap.spec.ts
+    expect(pb.ground).toBe(0);
+    expect(pb.extension).toBe(0);
     led.place_sum = sum;
     // **새 두 경로(ref·end)의 발화 합** — 게이트 도달 가능성 값의 출처(selfcheck가 경로를 푼다)
     led.new_path_placements = pb.ref_anchor + pb.end_anchor;

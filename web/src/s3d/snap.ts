@@ -29,7 +29,8 @@ import { project, closestPoints, rayThrough, add3, sub3, mul3, dot3, norm3,
 import type { Pt2 } from "./camera.js";
 
 export type SnapKind =
-  | "vertex" | "endpoint" | "midpoint" | "intersection" | "perpendicular" | "on_edge" | "on_face";
+  | "vertex" | "endpoint" | "midpoint" | "intersection" | "perpendicular"
+  | "extension" | "on_edge" | "on_face";
 
 /**
  * **우선순위**(앞이 높다). 선례 그대로 — 정확한 것이 앞선다.
@@ -40,8 +41,16 @@ export type SnapKind =
  * 끝점보다 앞이지만 **위치는 같다**(같은 3D 점의 다른 이름이므로 붙는 자리가 안 바뀐다) —
  * 바뀌는 것은 **표시**뿐이고, 그래서 이 순위 변경은 배치를 안 움직인다.
  */
+/**
+ * ⚠ **`extension`(연장선, 13차 항목 3)은 점 후보가 아니라 방향 스냅이다** — 후보 생성
+ * (`snapCandidates`·`staticCandidates`)에는 안 나오고 확정·미리보기(`resolveLive`)가 따로
+ * 판정한다(`extension.ts`). 이 목록에 있는 이유는 **우선순위와 종류별 토글**(지시 3-f·3-g)
+ * 이다: 끝점·중점·교차점(점 스냅 — 시작 앵커를 정하는 것들) 다음, 근처점(on_edge)보다 앞.
+ * Rhino도 Extension을 오스냅 토글 목록에 나란히 둔다(선례 A-3).
+ */
 export const SNAP_ORDER: readonly SnapKind[] =
-  ["vertex", "endpoint", "midpoint", "intersection", "perpendicular", "on_edge", "on_face"] as const;
+  ["vertex", "endpoint", "midpoint", "intersection", "perpendicular",
+   "extension", "on_edge", "on_face"] as const;
 
 const RANK = new Map<SnapKind, number>(SNAP_ORDER.map((k, i) => [k, i]));
 
@@ -263,11 +272,11 @@ export function snapAt(
 /** 화면 표시용 — 종류별 라벨과 색. SketchUp의 관행(종류마다 다른 표식)을 따른다. */
 export const SNAP_LABEL: Record<SnapKind, string> = {
   vertex: "정점", endpoint: "끝점", midpoint: "중점", intersection: "교차점",
-  perpendicular: "수선 발", on_edge: "선 위", on_face: "면 위",
+  perpendicular: "수선 발", extension: "연장선", on_edge: "선 위", on_face: "면 위",
 };
 export const SNAP_COLOR: Record<SnapKind, string> = {
   vertex: "#0c7a0c", endpoint: "#20a020", midpoint: "#1f77d0", intersection: "#c02090",
-  perpendicular: "#d06a00", on_edge: "#7a7a7a", on_face: "#8a6d3b",
+  perpendicular: "#d06a00", extension: "#9b59b6", on_edge: "#7a7a7a", on_face: "#8a6d3b",
 };
 /**
  * **종류별 표식 모양**(§3 "표시"). 색만으로는 안 갈린다 — 선례가 모양을 함께 쓴다
@@ -275,7 +284,7 @@ export const SNAP_COLOR: Record<SnapKind, string> = {
  */
 export const SNAP_ICON: Record<SnapKind, "square" | "diamond" | "cross" | "triangle" | "circle" | "tee"> = {
   vertex: "square", endpoint: "square", midpoint: "diamond", intersection: "cross",
-  perpendicular: "tee", on_edge: "circle", on_face: "triangle",
+  perpendicular: "tee", extension: "circle", on_edge: "circle", on_face: "triangle",
 };
 /** 툴팁 — **무엇에 붙는지와 그것이 무엇을 정하는지**를 한 줄로. */
 export const SNAP_TIP: Record<SnapKind, string> = {
@@ -284,6 +293,7 @@ export const SNAP_TIP: Record<SnapKind, string> = {
   midpoint: "획의 3D 중점(화면 중점이 아닙니다)",
   intersection: "3D에서 실제로 만나는 교차점(겉보기 교차는 제외)",
   perpendicular: "시작점에서 그 획에 내린 수선의 발",
+  extension: "끝점에서 그 선의 방향을 그대로 이어 긋습니다 — 같은 3D 직선 위에 놓입니다",
   on_edge: "그 획 위에서 커서에 가장 가까운 점",
   on_face: "지면 위의 점(시선과 지면의 교점)",
 };

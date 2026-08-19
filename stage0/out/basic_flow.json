@@ -53,6 +53,8 @@
   "end_anchor": 0,
   "cross_anchor": 0,
   "batch": 2,
+  "ground": 0,
+  "extension": 0,
   "unanchored": 0,
   "waiting": 2
  },
@@ -65,7 +67,7 @@
  },
  "s5_orbit": {
   "pinned": false,
-  "gl_painted_px": 2057
+  "gl_painted_px": 2124
  },
  "s6_continue": {
   "snap_start": "endpoint",

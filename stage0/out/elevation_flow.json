@@ -16,8 +16,8 @@
   "plane_const_max": 1e-9,
   "anchor_plane_max": 0.000001,
   "moved_min": 0.000001,
-  "direct_min": 3,
-  "lift_min_after_free": 1,
+  "direct_or_extension_min": 3,
+  "lift_or_ext_min_after_free": 1,
   "console_errors_max": 0
  },
  "algo_constants_note": "ONE_POINT_TOL은 one_point_direct.json의 algo_constants에 있다",
@@ -60,10 +60,13 @@
   "free": "큐브 드래그 +20px"
  },
  "gate": {
-  "registered": "정면 이어 그리기 direct≥1·X축 평면(y·z<1e-9) · 무스냅 시작은 **가드가 막아 대기**(lifted 불변·unanchored_rejected≥1 — D-L83, 10차 항목 0이 옛 조항 '깊이=궤도 중심 z<1e-6'을 갈아 끼웠다: D-L77 동작이 지시로 뒤집혔다) · 우측면 Z축 선(x·y<1e-9·z 이동>1e-6·앵커 깊이면) · 배면 X축 선 · 세 획 direct·lift 0 · 자유 시점 GL>0·lift≥1(음성 대조 — 1점 밖에서는 직접 경로가 안 돈다·direct 불변) · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
-  "reachability": "음성 대조가 오라클이다(2-R′ [B-1] — 초판은 통과 기준 자체(direct_min=4)를 도달 가능성으로 적었다: #40 ① 지표 불일치) — 자유 시점(격자 밖 요)에서 **같은 그리기가 lift로 간 수**가 값이다. 1이 자명값이 아닌 이유: 같은 그리기가 격자 안에서는 direct로 갔다(s2~s5 네 번). 이 값이 0이면 direct 카운터는 아무 데서나 오르는 것이고 이 게이트는 무효다. ⚠ 정확히 1이라 selfcheck #40 검사가 의심 플래그를 낸다 — 그 플래그의 원인 확인이 이 문장이다(의심≠오류, §5)",
-  "reachability_value": 1,
-  "reachability_source": "s6_free/path/lift"
+  "registered": "정면 이어 그리기 direct≥1·X축 평면(y·z<1e-9) · 무스냅 시작은 **가드가 막아 대기**(lifted 불변·unanchored_rejected≥1 — D-L83, 10차 항목 0이 옛 조항 '깊이=궤도 중심 z<1e-6'을 갈아 끼웠다: D-L77 동작이 지시로 뒤집혔다) · 우측면 Z축 선(x·y<1e-9·z 이동>1e-6·앵커 깊이면) · 배면 X축 선 · 세 획 direct+연장(합 ≥ 3 — 13차 항목 3: 이어 그리기는 연장선 경로일 수 있다)·lift 0 · 자유 시점 GL>0·(lift+연장)≥1(음성 대조 — 1점 밖에서는 직접 경로가 안 돈다·direct 불변. 13차 항목 3: 연장선이 그 자리를 정당하게 차지할 수 있다) · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+  "reachability": "음성 대조가 오라클이다(2-R′ [B-1] — 초판은 통과 기준 자체(direct_min=4)를 도달 가능성으로 적었다: #40 ① 지표 불일치) — 자유 시점(격자 밖 요)에서 **같은 그리기가 직접이 아닌 경로(lift 또는 연장)로 간 수**가 값이다(⚠ 13차 항목 3 정정: 연장선 스냅이 이 획을 가로챌 수 있다 — s1의 꼭짓점에서 s1의 상 방향이라 정당 발동이고 기하는 같은 직선이다. 옛 값 출처 s6_free/path/lift는 그래서 0이 될 수 있어 **격자 안 direct ↔ 밖 lift/연장의 쌍**(s6_pair)으로 갈았다 — 리뷰어 [6]: 판별력은 값이 아니라 그 대조에 있다). 1이 자명값이 아닌 이유: 같은 그리기가 격자 안에서는 direct로 갔다. 이 값이 0이면 direct 카운터는 아무 데서나 오르는 것이고 이 게이트는 무효다. ⚠ 정확히 1이라 selfcheck #40 검사가 의심 플래그를 낸다 — 그 플래그의 원인 확인이 이 문장이다(의심≠오류, §5). ⚠ path 카운터에는 합=전체 검산이 없다(그 검산은 placeBy 쪽 — ground_anchor.json ④가 한다. 13차 1·2 리뷰어 2차 [8]로 명시)",
+  "reachability_value": [
+   2,
+   1
+  ],
+  "reachability_source": "s6_pair_values"
  },
  "s1_confirm": {
   "lifted": 3,
@@ -404,24 +407,35 @@
      1.999999972184889
     ],
     [
-     0.2195700712563019,
-     -0.29539454196875803,
+     0.21929543588093015,
+     -0.2953945419687582,
      1.999999972184889
     ]
    ]
   ],
   "path": {
-   "direct": 3,
+   "direct": 2,
    "lift": 0,
    "twoPoint": 0
   },
   "center": [
-   -0.26076232699027235,
-   -0.295394541968758,
+   -0.26089964467795823,
+   -0.29539454196875803,
    3.498958323226918
   ],
   "gl_painted_px": 1038,
   "yaw": -3.1415926535897927
+ },
+ "s5_place_by": {
+  "ref_anchor": 0,
+  "start_anchor": 2,
+  "two_point": 0,
+  "end_anchor": 0,
+  "cross_anchor": 0,
+  "batch": 3,
+  "ground": 0,
+  "extension": 1,
+  "unanchored": 0
  },
  "s6_free": {
   "lifted": 7,
@@ -493,37 +507,64 @@
      1.999999972184889
     ],
     [
-     0.2195700712563019,
-     -0.29539454196875803,
+     0.21929543588093015,
+     -0.2953945419687582,
      1.999999972184889
     ]
    ],
    [
     [
-     -0.7410947132925285,
+     -0.7410947132925284,
      -0.2953945419687579,
      1.9999999721848862
     ],
     [
-     -1.3184742836582892,
-     -0.2953945419687579,
+     -1.3184743838215889,
+     -0.29539454196875775,
      1.9999999721848862
     ]
    ]
   ],
   "path": {
-   "direct": 3,
-   "lift": 1,
+   "direct": 2,
+   "lift": 0,
    "twoPoint": 0
   },
   "center": [
-   -0.5494521062009936,
+   -0.5495894739703293,
    -0.295394541968758,
    3.498958323226918
   ],
   "gl_painted_px": 1742,
   "yaw": -2.9015926535897925
  },
+ "s6_place": {
+  "pb": {
+   "ref_anchor": 0,
+   "start_anchor": 2,
+   "two_point": 0,
+   "end_anchor": 0,
+   "cross_anchor": 0,
+   "batch": 3,
+   "ground": 0,
+   "extension": 2,
+   "unanchored": 0
+  },
+  "lastAxis": 0,
+  "lastStart": {
+   "kind": "vertex",
+   "ofId": "s1"
+  }
+ },
+ "s6_lift_or_ext": 1,
+ "s6_pair": {
+  "in_grid_direct": 2,
+  "out_grid_lift_or_ext": 1
+ },
+ "s6_pair_values": [
+  2,
+  1
+ ],
  "console_errors": [],
  "constants": {
   "hash": "f351839a",

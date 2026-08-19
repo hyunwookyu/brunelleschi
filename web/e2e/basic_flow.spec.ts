@@ -128,7 +128,10 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
   expect((led.s3_place_by as any).batch).toBe(2);
   expect((led.s3_place_by as any).start_anchor + (led.s3_place_by as any).two_point
        + (led.s3_place_by as any).end_anchor + (led.s3_place_by as any).ref_anchor
+       + (led.s3_place_by as any).ground + (led.s3_place_by as any).extension
        + (led.s3_place_by as any).unanchored).toBe(0);
+  // ⚠ ground 0이 이 픽스처의 명세다(13차 항목 2) — 일괄 풀이가 놓는 확정(n>0)에서는
+  // 지면 첫 앵커가 안 돈다. 무연결 둘의 대기가 그대로인 것이 그 가드의 회귀 확인이다.
   expect((led.s3_place_by as any).waiting).toBe(2);
   // **축 배정**(5-3의 원장 근거, 리뷰어 [6]) — 가로선과 깊이선이 서로 다른 축이다
   expect(new Set((led.s3_depth as any).axes).size).toBe(2);
@@ -2347,8 +2350,14 @@ test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, �
     expect(Math.abs(s[0][2] - s[1][2])).toBeLessThan(1e-9);              // z 불변
     expect(Math.abs(s[1][0] - s[0][0])).toBeGreaterThan(1e-6);           // x가 실제로 움직였다
   }
-  // **세 획**(정면·우측면·배면) 전부 직접 경로 — 무스냅 획은 D-L83이 막아 여기 안 든다
-  expect((led.s5_back as any).path.direct).toBeGreaterThanOrEqual(3);
+  // **세 획**(정면·우측면·배면) — 무스냅 획은 D-L83이 막아 여기 안 든다.
+  // ⚠ 13차 항목 3: 정면의 이어 그리기(같은 X선의 끝점에서 같은 방향)는 이제 **연장선
+  // 경로**(placeBy.extension)로 놓인다 — 우선순위가 축 직접보다 앞이고, 기하는 위
+  // 불변 단언들(y·z 불변)이 그대로 잡는다(같은 3D 직선이라 결과가 같다).
+  led.s5_place_by = await page.evaluate(() => window.S2S.placeBy());
+  expect((led.s5_back as any).path.direct + (led.s5_place_by as any).extension)
+    .toBeGreaterThanOrEqual(3);
+  expect((led.s5_place_by as any).extension).toBeGreaterThanOrEqual(1);
   expect((led.s5_back as any).path.lift).toBe(0);                        // 1점에서는 lift가 안 돈다
 
   // ---- ⑥ 자유 시점(큐브 드래그 — 격자 밖 요) → 형태 확인 + **음성 대조**: 이제 lift 경로다
@@ -2365,9 +2374,29 @@ test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, �
     await drawPx(p.x - box.x, p.y - box.y, p.x - box.x + 0.1 * W, p.y - box.y + 3);
   }
   led.s6_free = await state();
+  led.s6_place = await page.evaluate(() => {
+    const st = window.S2S.doc().strokes;
+    const last = st[st.length - 1];
+    return { pb: window.S2S.placeBy(), lastAxis: last.axis,
+             lastStart: last.snapStart ? { kind: last.snapStart.kind, ofId: last.snapStart.ofId } : null };
+  });
   expect((led.s6_free as any).gl_painted_px).toBeGreaterThan(0);         // **형태가 보인다**
-  expect((led.s6_free as any).path.lift).toBeGreaterThanOrEqual(1);      // 1점 밖 — lift 경로(음성 대조)
+  // ⚠ 13차 항목 3: 이 획은 s1의 시작 꼭짓점에서 s1의 상 방향으로 긋는 것이라(배면 계열
+  // 시점 — 상이 좌우 반전이라 "바깥"이 +x다) **연장선 경로**로 놓일 수 있다. 음성 대조의
+  // 뜻(1점 밖에서는 direct가 안 돈다)은 direct 불변 단언이 그대로 잡고, 배치 경로는
+  // lift 또는 extension이다(둘 다 카메라 투영 계열 — 같은 3D 직선).
+  expect((led.s6_free as any).path.lift
+       + ((led.s6_place as any).pb.extension - (led.s5_place_by as any).extension))
+    .toBeGreaterThanOrEqual(1);
   expect((led.s6_free as any).path.direct).toBe((led.s5_back as any).path.direct);
+  // 게이트 값의 재료(13차 항목 3 — 자유 시점 배치가 lift 또는 연장 경로로 간 수)
+  (led as any).s6_lift_or_ext = (led.s6_free as any).path.lift
+    + ((led.s6_place as any).pb.extension - (led.s5_place_by as any).extension);
+  // **격자 안↔밖 쌍**(13차 항목 3 리뷰어 [6] — 판별은 대조다): 같은 그리기가 격자 안에서는
+  // direct, 밖에서는 lift/연장으로 간다 — 쌍이 게이트 도달 가능성의 값이다
+  (led as any).s6_pair = { in_grid_direct: (led.s5_back as any).path.direct,
+                           out_grid_lift_or_ext: (led as any).s6_lift_or_ext };
+  (led as any).s6_pair_values = [(led.s5_back as any).path.direct, (led as any).s6_lift_or_ext];
 
   led.console_errors = errors;
   expect(errors).toEqual([]);
@@ -2388,7 +2417,9 @@ test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, �
       "pathStats는 확정 축 배치만 센다(미리보기 프레임 아님) — twoPoint(양 끝 스냅)는 별도 칸이고 **확정 단계에서 1**(상자 뼈대 중 한 획의 양 끝 스냅), 이후 전 단계 불변이다(2-R′ [B-2] — 초판 '0' 서술은 자기 데이터와 모순이었다)",
     ],
     thresholds: { plane_const_max: 1e-9, anchor_plane_max: 1e-6, moved_min: 1e-6,
-                  direct_min: 3, lift_min_after_free: 1, console_errors_max: 0 },
+                  /** ⚠ 13차 항목 3 개명: 이어 그리기가 연장선 경로로 갈 수 있어 합에 건다 */
+                  direct_or_extension_min: 3, lift_or_ext_min_after_free: 1,
+                  console_errors_max: 0 },
     algo_constants_note: "ONE_POINT_TOL은 one_point_direct.json의 algo_constants에 있다",
     inputs: {
       note: "재현 좌표(#12) — 비율은 잉크 캔버스 크기 대비",
@@ -2398,10 +2429,11 @@ test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, �
       free: "큐브 드래그 +20px",
     },
     gate: {
-      registered: "정면 이어 그리기 direct≥1·X축 평면(y·z<1e-9) · 무스냅 시작은 **가드가 막아 대기**(lifted 불변·unanchored_rejected≥1 — D-L83, 10차 항목 0이 옛 조항 '깊이=궤도 중심 z<1e-6'을 갈아 끼웠다: D-L77 동작이 지시로 뒤집혔다) · 우측면 Z축 선(x·y<1e-9·z 이동>1e-6·앵커 깊이면) · 배면 X축 선 · 세 획 direct·lift 0 · 자유 시점 GL>0·lift≥1(음성 대조 — 1점 밖에서는 직접 경로가 안 돈다·direct 불변) · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
-      reachability: "음성 대조가 오라클이다(2-R′ [B-1] — 초판은 통과 기준 자체(direct_min=4)를 도달 가능성으로 적었다: #40 ① 지표 불일치) — 자유 시점(격자 밖 요)에서 **같은 그리기가 lift로 간 수**가 값이다. 1이 자명값이 아닌 이유: 같은 그리기가 격자 안에서는 direct로 갔다(s2~s5 네 번). 이 값이 0이면 direct 카운터는 아무 데서나 오르는 것이고 이 게이트는 무효다. ⚠ 정확히 1이라 selfcheck #40 검사가 의심 플래그를 낸다 — 그 플래그의 원인 확인이 이 문장이다(의심≠오류, §5)",
-      reachability_value: 1,
-      reachability_source: "s6_free/path/lift",
+      registered: "정면 이어 그리기 direct≥1·X축 평면(y·z<1e-9) · 무스냅 시작은 **가드가 막아 대기**(lifted 불변·unanchored_rejected≥1 — D-L83, 10차 항목 0이 옛 조항 '깊이=궤도 중심 z<1e-6'을 갈아 끼웠다: D-L77 동작이 지시로 뒤집혔다) · 우측면 Z축 선(x·y<1e-9·z 이동>1e-6·앵커 깊이면) · 배면 X축 선 · 세 획 direct+연장(합 ≥ 3 — 13차 항목 3: 이어 그리기는 연장선 경로일 수 있다)·lift 0 · 자유 시점 GL>0·(lift+연장)≥1(음성 대조 — 1점 밖에서는 직접 경로가 안 돈다·direct 불변. 13차 항목 3: 연장선이 그 자리를 정당하게 차지할 수 있다) · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "음성 대조가 오라클이다(2-R′ [B-1] — 초판은 통과 기준 자체(direct_min=4)를 도달 가능성으로 적었다: #40 ① 지표 불일치) — 자유 시점(격자 밖 요)에서 **같은 그리기가 직접이 아닌 경로(lift 또는 연장)로 간 수**가 값이다(⚠ 13차 항목 3 정정: 연장선 스냅이 이 획을 가로챌 수 있다 — s1의 꼭짓점에서 s1의 상 방향이라 정당 발동이고 기하는 같은 직선이다. 옛 값 출처 s6_free/path/lift는 그래서 0이 될 수 있어 **격자 안 direct ↔ 밖 lift/연장의 쌍**(s6_pair)으로 갈았다 — 리뷰어 [6]: 판별력은 값이 아니라 그 대조에 있다). 1이 자명값이 아닌 이유: 같은 그리기가 격자 안에서는 direct로 갔다. 이 값이 0이면 direct 카운터는 아무 데서나 오르는 것이고 이 게이트는 무효다. ⚠ 정확히 1이라 selfcheck #40 검사가 의심 플래그를 낸다 — 그 플래그의 원인 확인이 이 문장이다(의심≠오류, §5). ⚠ path 카운터에는 합=전체 검산이 없다(그 검산은 placeBy 쪽 — ground_anchor.json ④가 한다. 13차 1·2 리뷰어 2차 [8]로 명시)",
+      reachability_value: [(led as any).s6_pair.in_grid_direct,
+                           (led as any).s6_pair.out_grid_lift_or_ext],
+      reachability_source: "s6_pair_values",
     },
     ...led,
     constants: constantsSnapshot(),

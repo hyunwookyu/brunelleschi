@@ -155,8 +155,11 @@ describe("L-B.3 스냅 — 선례를 그대로 따르는가", () => {
   it("우선순위 목록이 계획서 §3 그대로다", () => {
     // **`vertex`가 앞에 붙었다**(2026-08-16 사람 지시 — 오스냅의 대상 목록에 정점이 있다).
     // 위치는 끝점과 같으므로 **붙는 자리가 안 바뀐다** — 바뀌는 것은 표시다(`snap.ts` 머리말)
+    // **`extension`(연장선, 13차 항목 3)**: 끝점·중점·교차점 다음 · 근처점(on_edge)보다 앞
+    // (지시 3-f — Rhino 오스냅 목록의 자리). 점 후보가 아니라 방향 스냅이다(snap.ts 머리말).
     expect([...SNAP_ORDER]).toEqual(
-      ["vertex", "endpoint", "midpoint", "intersection", "perpendicular", "on_edge", "on_face"]);
+      ["vertex", "endpoint", "midpoint", "intersection", "perpendicular",
+       "extension", "on_edge", "on_face"]);
     expect(SNAP_TOL.radius_ratio).toBeGreaterThan(0);
   });
 });
