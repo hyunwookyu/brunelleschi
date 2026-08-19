@@ -1,0 +1,237 @@
+{
+ "spec": "14차 항목 6(D-L97) — 작도 화면 복귀 종단: 확정(핀·작도) → 임의 궤도(모델링 — 지평선 소멸·그리기 차단) → 「작도 시점으로」(2점 복귀 — 소실점·지평선 재표시·그리기·스냅 복원) → 큐브 면 탭(1점 복귀 — D-L66 재탭). 합성 마우스 이벤트 — 앱 버튼·큐브 경로 그대로(#17)",
+ "what_this_does_not_say": [
+  "**지평선 행 덮임(ratio)의 값은 픽스처 상수다**(#46) — 판정은 범주(작도 >0.8 ↔ 모델링 <0.2)이고 두 문턱 사이 간격이 판별 간격이다. 획이 그 행을 가로지르면 모델링 쪽이 0이 아니게 되는 것까지가 이 지표의 잡음 여유다",
+  "**동작점이 하나씩이다**(#12) — 모델링 자세 한 종류(급한 내려보기)·복귀 두 경로(버튼·큐브 면 탭) 각 1회. 임의 요·피치 스윕은 안 돌렸고, 수직 응시 특이점(draftPose의 기본값 갈래)은 단위 팔이 잰다",
+  "**viewState·draftOverlay는 앱의 같은 출처다**(#17 — viewOverlayCtx/frame()): 이 원장이 재는 것은 그 출처가 화면에 실제로 칠해지는가(지평선 행 픽셀)와 상태 전환·차단·복원의 범주다. 소실점 좌표의 참값 대조는 안 한다(그 수학은 viewCamera 단위 팔·이론서 2.2의 자리다)",
+  "**1점 복귀의 큐브 탭은 면 중앙 클릭 하나다** — 재탭 임계(retap_cos 30°)의 경계 스윕은 view_cube 팔(basic_flow)이 잰다. 여기서는 '실제로 도는가'(지시 6-b의 물음)만 잰다",
+  "드로잉 차단(②)은 **획 수 불변**으로 잰다 — 잉크 캔버스에 순간 표시가 있는지는 안 본다(포인터 캡처 자체를 안 하므로 구성상 없다 — 보장이지 측정이 아니다 #5)"
+ ],
+ "thresholds": {
+  "horizon_row_draft_min": 0.8,
+  "horizon_row_model_max": 0.2,
+  "settle_ms": 450,
+  "console_errors_max": 0,
+  "note": "e2e 배선 임계라 SHARED_CONSTANTS 비등재(D-L51 사유 — 전역 해시 눈사태). 값은 이 원장이 자기 안에 든다"
+ },
+ "gate": {
+  "registered": "⓪ 확정 직후 draft_pinned·지평선 행 덮임 > horizon_row_draft_min · ① 급한 내려보기 궤도 뒤 model·같은 행 덮임 < horizon_row_model_max · ② model에서 획 시작 차단(획 수 불변) · ③ 「작도 시점으로」 뒤 draft_two·수직축 소실점 무한원·수평 유한 ≥ 1·지평선 행 재덮임 · ④ 복귀 시점에서 3D 끝점 겨냥 획이 스냅으로 붙고 획 수가 는다 · ⑤ 큐브 면 탭 뒤 draft_one·수평 유한 정확히 1 · 콘솔 오류 0. ⚠ 이 항목이 등록한 게이트다 — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+  "reachability": "판별자는 지평선 행 덮임의 **왕복**(draft >0.8 → model <0.2 → draft >0.8)과 획 수(차단 0 ↔ 복원 +1)다(#28 — 둘 다 적는다). 덮임 왕복이 수치 판별자다 — 표시 게이트가 죽으면(옛 판: 핀 전용) ③⑤의 재덮임이 model 쪽 값에 머문다",
+  "reachability_value": [
+   1,
+   0,
+   1
+  ],
+  "reachability_source": "pinned/model/returned horizon_row.ratio"
+ },
+ "setup": {
+  "canvas": [
+   1280,
+   675
+  ],
+  "strokes": 12,
+  "hasCamera": true,
+  "boxes": 1,
+  "lifted": 12,
+  "standing": true
+ },
+ "pinned_state": "draft_pinned",
+ "pinned_horizon_row": {
+  "hit": 159,
+  "n": 159,
+  "ratio": 1
+ },
+ "model_state": "model",
+ "model_horizon_row": {
+  "hit": 0,
+  "n": 159,
+  "ratio": 0
+ },
+ "model_blocked": {
+  "strokes_before": 12,
+  "strokes_after": 12,
+  "note_mentions_return": true
+ },
+ "returned_state": "draft_two",
+ "returned_overlay": {
+  "horizon_y": 175.22571501468946,
+  "vps_h_finite": 2,
+  "vp_vertical_infinite": true
+ },
+ "returned_horizon_row": {
+  "hit": 159,
+  "n": 159,
+  "ratio": 1
+ },
+ "draw_after_return": {
+  "strokes_grew": true,
+  "snap_start": "endpoint"
+ },
+ "one_point_state": "draft_one",
+ "one_point_overlay": {
+  "horizon_y": 337.5,
+  "vps_h_finite": 1,
+  "vp_vertical_infinite": true
+ },
+ "one_point_horizon_row": {
+  "hit": 159,
+  "n": 159,
+  "ratio": 1
+ },
+ "console_errors": [],
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}

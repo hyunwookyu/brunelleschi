@@ -67,8 +67,13 @@
  },
  "s5_orbit": {
   "pinned": false,
-  "gl_painted_px": 2159
+  "gl_painted_px": 2109
  },
+ "s6_blocked": {
+  "state": "model",
+  "strokes": 5
+ },
+ "s6_view_state": "draft_two",
  "s6_continue": {
   "snap_start": "endpoint",
   "lifted": true
