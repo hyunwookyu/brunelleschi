@@ -137,6 +137,23 @@ export function maxTurn(pts: Pt2[], windowRatio: number): number {
 }
 
 /**
+ * 두 현(chord)의 **선 각도 차**(도). 부호·진행 방향 무시 — 축은 부호가 없다(3-c와 같은 규약).
+ *
+ * 확정 후 배치(승격 연쇄·교차 앵커)가 `pts2d`를 축 투영으로 되쓸 때, 그 되쓰기가
+ * **사용자가 그은(그리고 그리는 중 스냅으로 받아들인) 현**을 얼마나 돌리는지 재는 단위다 —
+ * 판정을 정하는 양(화면에서 보이는 형태 변화)의 단위로 조건을 쓴다(#49).
+ * 어느 한쪽 현이 퇴화(길이 0)면 0을 낸다 — 각이 정의되지 않으므로 가드가 판정하지 않는다.
+ */
+export function chordTurnDeg(a0: Pt2, b0: Pt2, a1: Pt2, b1: Pt2): number {
+  const ux = b0[0] - a0[0], uy = b0[1] - a0[1];
+  const vx = b1[0] - a1[0], vy = b1[1] - a1[1];
+  const lu = Math.hypot(ux, uy), lv = Math.hypot(vx, vy);
+  if (lu < 1e-9 || lv < 1e-9) return 0;
+  const c = Math.min(1, Math.abs((ux * vx + uy * vy) / (lu * lv)));
+  return (Math.acos(c) * 180) / Math.PI;
+}
+
+/**
  * **부호 있는** 부적합도 — 대표 직선을 연장했을 때 소실점이 **어느 쪽으로** 빗나갔는가.
  *
  * 크기만으로는 체계적 왜곡을 다룰 수 없다. 왜곡은 방향이 있으므로 이웃 획들이 **같은 쪽으로**

@@ -130,7 +130,7 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
   {
     const c = (led.chain as any).cross;
     expect(c.attempts).toBe(c.placed + c.no_crossing + c.skipped_bend
-                          + c.skipped_axis + c.rejected_ends);
+                          + c.skipped_axis + c.rejected_ends + c.rejected_dir);
     expect(c.placed).toBe(1);
     expect(c.attempts).toBeGreaterThan(1);                     // s4 외의 대기 획도 검토됐다
   }
@@ -222,6 +222,71 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
     expect((led.dir_snap_unanchored as any).err_deg).toBeLessThan(0.05);
   }
 
+  // ---- ⑨ **확정 후 재계산 가드 짝 대조**(14차 항목 0 · D-L92 · #30·A-4 — 버그 되살림).
+  //      축과 크게(≈39°) 어긋나게 그은 대기 획 G의 시작점에 나중에 끝점이 생기면,
+  //      옛 거동(setChainDirGuard(false))은 연쇄가 G를 축 투영으로 **회전시켜** 올렸다 —
+  //      사용자가 안 본 재계산. 가드 켬에서는 대기로 남고 pts2d가 그은 그대로다.
+  {
+    // G — 허공에서 40°로 긋는다(vp 방향 ≈1°·화면축 0°/90° 어느 것과도 12° 밖).
+    const gx = 0.5523 * W + 6, gy = 0.578 * H;      // H의 끝점이 6px 안에 오게(조리개 8)
+    const th = (40 * Math.PI) / 180;
+    await drawPx(gx, gy, gx + 150 * Math.cos(th), gy + 150 * Math.sin(th));
+    const gId = await page.evaluate(() => {
+      const d = window.S2S.doc();
+      return d.strokes[d.strokes.length - 1].id as string;
+    });
+    const snap = (id: string) => page.evaluate((sid) => {
+      const s = window.S2S.doc().strokes.find((x: any) => x.id === sid);
+      return { lifted: !!s.seg3d, pts: s.pts2d.map((q: number[]) => [q[0], q[1]]),
+               snapStart: !!s.snapStart, guard: window.S2S.chainDirGuard() };
+    }, id);
+    const g0 = await snap(gId);
+    expect(g0.lifted).toBe(false);                  // 40° — 어떤 스냅에도 안 걸리고 대기
+    // H — s3의 끝점에서 수직으로 내려 긋는다. 끝점이 G의 시작 6px 안에 선다 —
+    // 다음 연쇄가 G를 시작점 오스냅으로 집는다.
+    await drawPx(0.5523 * W, 0.468 * H, 0.5523 * W, 0.578 * H);
+    const g1 = await snap(gId);
+    // **가드 켬**: 회전 배치가 거절되고, applySnapToStart의 절반 변경도 되물려졌다
+    expect(g1.lifted).toBe(false);
+    expect(g1.snapStart).toBe(false);
+    expect(g1.guard.rejected).toBeGreaterThanOrEqual(1);
+    expect(g1.guard.attempts).toBeGreaterThanOrEqual(g1.guard.rejected);
+    const turnOf = (a: number[][], b: number[][]) => {
+      const u = [a[a.length - 1][0] - a[0][0], a[a.length - 1][1] - a[0][1]];
+      const v = [b[b.length - 1][0] - b[0][0], b[b.length - 1][1] - b[0][1]];
+      const c = Math.abs(u[0] * v[0] + u[1] * v[1])
+              / (Math.hypot(u[0], u[1]) * Math.hypot(v[0], v[1]));
+      return (Math.acos(Math.min(1, c)) * 180) / Math.PI;
+    };
+    expect(turnOf(g0.pts, g1.pts)).toBeLessThan(0.01);   // 그은 그대로 — 좌표 불변
+    // **가드 끔 = 옛 거동 되살림**: 다음 연쇄 턴이 G를 회전시켜 올린다(그 회전이 버그다)
+    await page.evaluate(() => window.S2S.setChainDirGuard(false));
+    await drawPx(0.10 * W, 0.65 * H, 0.18 * W, 0.65 * H);  // 무관한 획 — 턴만 돌린다
+    const g2 = await snap(gId);
+    await page.evaluate(() => window.S2S.setChainDirGuard(true));
+    expect(g2.lifted).toBe(true);                   // 옛 거동은 올린다 —
+    const revivedTurn = turnOf(g0.pts, g2.pts);
+    // — 그리고 크게 돌린다. ⚠ 크기(≈그은 각 그대로 — 최근접 축이 화면 가로축이라)는
+    // 픽스처가 정한다(#46) — 판정을 지는 것은 lifted 범주와 "임계를 훨씬 넘는 회전이
+    // 실제로 들어갔다"는 사실이고, 30은 임계 후보들(5·12)을 다 웃도는 하한이다
+    expect(revivedTurn).toBeGreaterThan(30);
+    // **0-c의 앱 실증**: 가드 켬에서 정상 연쇄로 올라간 D(s6)는 그은(스냅된) 방향 그대로다
+    const dTurn = await page.evaluate(({ fn, ax, ay, bx, by }) => {
+      // eslint-disable-next-line no-eval
+      const f = eval(fn);
+      const s = window.S2S.doc().strokes.find((x: any) => x.id === "s6");
+      return f(s.pts2d, [[ax, ay], [bx, by]]);
+    }, { fn: `(${turnOf.toString()})`, ax: 0.4167 * W, ay: 0.526 * H,
+         bx: 0.52 * W, by: 0.5534 * H });
+    expect(dTurn).toBeLessThan(1.5);                // 그은 현과 배치된 현이 같은 방향이다
+    led.chain_dir_guard = {
+      on: { lifted: g1.lifted, snap_start_restored: !g1.snapStart,
+            pts_turn_deg: turnOf(g0.pts, g1.pts), guard: g1.guard },
+      off_revived: { lifted: g2.lifted, pts_turn_deg: revivedTurn },
+      coord_preserved_d_turn_deg: dTurn,
+    };
+  }
+
   led.console_errors = errors;
   expect(errors).toEqual([]);
 
@@ -239,11 +304,12 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
       "**교차 앵커의 가림 교차 위험은 이 픽스처가 안 잰다**(12차 항목 3-a — #23: 화면 교차가 3D 접촉이 아닌 비율이 상자 하나에서 3/27이었다). s4×V는 참 접촉 교차다. 가림 교차가 조용히 틀린 깊이를 만드는 몫은 실획 표본이 와야 재진다 — DEFERRED 등재. ⚠ crossAnchorOf의 재투영 검사는 검증이 아니라 **수치 항등 가드**다(#5 — 광선이 해석 평면 안이라 교점 재투영은 정의상 교차점이다. 3차 리뷰어 [1]) — 가림 교차의 실질 완화는 얕은 교차 거름 하나뿐이다",
       "**팔 ⑧의 err_deg 0은 구성의 항등이다**(#5 · 3차 리뷰어 [9] — vpDirSnap이 끝점을 a→VP 직선 위로 투영하므로 발동하면 정의상 0이다). 그 팔이 재는 것은 **4° 겨냥에서 스냅이 발동했는가**(범주)이고, <0.05 단언은 임계 판정이 아니라 항등 가드다. 발동 경계 양쪽은 단위 갈래(vp_dir_consistency)가 든다",
       "**교차 조항(cross_anchor=1)은 사후 등록이다**(#26의 반대편 문 — 3차 리뷰어 [8]: 픽스처를 돌려 s4의 교차를 관측한 뒤 조항을 고쳤다). 그 조항의 전용 대조 팔(교차만 없앤 픽스처에서 s4가 dir로 남는 것)은 없다 — ext_off 팔은 s4가 이미 놓인 뒤라 못 가른다. DEFERRED 등재",
+      "**팔 ⑨(확정 후 재계산 가드)는 한 각도(그은 각 40°)·시작점 오스냅 경로 하나의 짝 대조다**(#12) — 정보를 나르는 것은 **범주**(off에서 lifted true ↔ on에서 false)다. `off_revived.pts_turn_deg`의 **크기는 픽스처가 정한다**(#46 — 최근접 축이 화면 가로축이라 그은 각 40°가 그대로 회전량이다. 크기를 근거로 인용하지 않는다). `on.pts_turn_deg`(~1e-6)는 **스냅샷 되물림의 항등 가드**다(#5 — 잔여는 acos 부동소수 잡음이지 측정이 아니다. 그래서 thresholds에 안 넣었다). 경계(임계±1°)의 절단은 단위 갈래(confirm_recalc.test.ts의 경계 팔)가 들고, **교차 앵커 경로(rejected_dir)는 이 픽스처에서 발화 0**이다(도달 가능성 미상 #35 — DEFERRED). coord_preserved_d_turn_deg < 1.5°는 vp 방향 스냅(그리는 중)과 연쇄 되쓰기가 같은 직선을 내는 것의 실증이지 픽셀 항등이 아니다. 임계 대역(5~12°) 안의 발생 빈도는 실획 표본이 판정자다(D-L92)",
     ],
     thresholds: { infinite_px_min: 1, off_line_px_max: 0, console_errors_max: 0 },
     gate: {
-      registered: "카메라 전 상태 전부 none · 확정 뒤 접합 성분 셋 coord(batch=3 — 4-4 첫 앵커)·지지선 dir(→ 12차: V가 선 뒤 s4는 **교차 앵커**로 coord가 된다 — cross_anchor=1, 지시 3-a) · 무연결 가로선의 연장부 잉크 >0(빗나간 점 0) · V→D→F 연쇄(D.snapStart.ofId=V · F.snapEnd.ofId=D · ref_anchor=1 — #18 소비) · 끝점 연결 획이 올라간다(end_anchor=1) · **옛 연쇄 대조**(ext_off에서 같은 형태가 안 올라가고 ext_on 다음 턴에 회수 — #30) · 무연결 둘은 끝까지 dir · 경로 합=배치 전체 · 콘솔 오류 0(잠금 — 임계 아님). ⚠ 'unanchored 0'은 가드 켬의 보장이라 판정 조항에서 뺐다(#5·리뷰어 2차 [6]). ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
-      reachability: "**옛 연쇄 팔이 오라클이다**(#30 · 리뷰어 2차 [9]): setChainExt(false)에서 끝점 연결 획이 안 올라가고(old_chain.ext_off_lifted 7 — 불변) 켜면 다음 턴에 올라간다(8). 그 대조가 end_anchor 경로의 판별을 든다. ⚠ 값이 정확히 1이라 #40 검사가 플래그한다 — 원인은 대조 팔이 회수 대상 획을 하나만 두기 때문이다(의심≠오류, §5). 옛 초판 값 2(ref+end 발화 합)는 픽스처 구성의 귀결이라 오라클에서 뺐다(#40 ⚠)",
+      registered: "카메라 전 상태 전부 none · 확정 뒤 접합 성분 셋 coord(batch=3 — 4-4 첫 앵커)·지지선 dir(→ 12차: V가 선 뒤 s4는 **교차 앵커**로 coord가 된다 — cross_anchor=1, 지시 3-a) · 무연결 가로선의 연장부 잉크 >0(빗나간 점 0) · V→D→F 연쇄(D.snapStart.ofId=V · F.snapEnd.ofId=D · ref_anchor=1 — #18 소비) · 끝점 연결 획이 올라간다(end_anchor=1) · **옛 연쇄 대조**(ext_off에서 같은 형태가 안 올라가고 ext_on 다음 턴에 회수 — #30) · 무연결 둘은 끝까지 dir · 경로 합=배치 전체 · **확정 후 재계산 가드 짝 대조**(⑨ — 14차 항목 0·D-L92: 가드 켬에서 40° 어긋난 대기 획이 안 올라가고 pts2d 불변·기록 되물림, setChainDirGuard(false)에서 같은 획이 12° 넘게 회전해 올라간다 = 옛 거동 되살림 #30·A-4, 정상 연쇄 획 D의 배치 현은 그은 현과 1.5° 안) · 콘솔 오류 0(잠금 — 임계 아님). ⚠ 'unanchored 0'은 가드 켬의 보장이라 판정 조항에서 뺐다(#5·리뷰어 2차 [6]). ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "**옛 연쇄 팔이 오라클이다**(#30 · 리뷰어 2차 [9]): setChainExt(false)에서 끝점 연결 획이 안 올라가고(old_chain.ext_off_lifted 7 — 불변) 켜면 다음 턴에 올라간다(8). 그 대조가 end_anchor 경로의 판별을 든다. ⚠ 값이 정확히 1이라 #40 검사가 플래그한다 — 원인은 대조 팔이 회수 대상 획을 하나만 두기 때문이다(의심≠오류, §5). 옛 초판 값 2(ref+end 발화 합)는 픽스처 구성의 귀결이라 오라클에서 뺐다(#40 ⚠). **⑨ 조항(14차)의 도달 가능성은 chain_dir_guard의 범주 짝이 든다**(#46 ⚙ — 범주 측정): on.lifted=false ↔ off_revived.lifted=true, 거절 카운터 on.guard.rejected ≥ 1. pts_turn_deg의 크기는 픽스처가 정하므로(#46) 근거로 안 쓴다",
       reachability_value: 1,
       reachability_source: "old_chain/recovered",
     },

@@ -44,7 +44,7 @@ import { segmentFromAnchor, nearestAxisOnScreen, endFromCursor, LIVE_TOL } from 
 import { crossAnchorOf } from "./s3d/crossAnchor.js";
 import { onePointFrame, directSegment, planeAnchor, ONE_POINT_TOL } from "./s3d/onePoint.js";
 import { nearestOnePointDir } from "./ui/viewCube.js";
-import { representative, AXIS_TOL } from "./s3d/axis.js";
+import { representative, AXIS_TOL, chordTurnDeg } from "./s3d/axis.js";
 // **자동 분할**(지시 I) — 교차·접촉 절단점과 조각. SketchUp 선례. 순수 기하는 split.ts 하나다(#17)
 import { cutParams, piecesFromCuts, subtractIntervals, reanchorId, pointAt,
          type Seg3 } from "./s3d/split.js";
@@ -125,10 +125,38 @@ const placeBy = { ref_anchor: 0, start_anchor: 0, two_point: 0, end_anchor: 0,
 /**
  * **교차 앵커의 경로별 진단**(#43 — 12차 3차 리뷰어 [7]). `placeBy.cross_anchor`는 분자이고
  * 여기가 분모·거절 사유다: attempts(연쇄가 검토한 대기 획·회차 누계) = placed +
- * no_crossing + skipped_bend + skipped_axis + rejected_ends. 원장(dir_state)이 검산한다.
+ * no_crossing + skipped_bend + skipped_axis + rejected_ends + rejected_dir.
+ * 원장(dir_state)이 검산한다.
  */
 const crossStats = { attempts: 0, placed: 0, no_crossing: 0,
-                     skipped_bend: 0, skipped_axis: 0, rejected_ends: 0 };
+                     skipped_bend: 0, skipped_axis: 0, rejected_ends: 0,
+                     /** 방향 가드(아래 CHAIN_DIR_GUARD)가 막은 몫 — 합=attempts에 든다. */
+                     rejected_dir: 0 };
+/**
+ * **확정 후 재계산 가드**(2026-08-19 14차 항목 0). 승격 연쇄·교차 앵커는 **사용자가 안 보는
+ * 시점**에 대기 획을 놓는다 — 그 배치의 축 경로는 `pts2d`를 축 투영으로 되쓰는데, 축 스냅은
+ * "언제나 어느 축으로 간다"(각도 무제한)라서 그리는 중이라면 미리보기로 보였을 회전이
+ * 여기서는 **조용히** 들어간다. 원칙(지시 머리말): 그리는 도중 스냅은 사용자가 보고 받아들인
+ * 것이고, 확정 후 재계산은 사용자가 안 본 변경이다.
+ *
+ * 가드: 되쓰기 전후 현의 선 각도 차(`chordTurnDeg`)가 `LIFT_TOL.parallel_deg`(5° —
+ * 나란함 판정 재사용, 새 임계 아님 #17)를 넘으면 놓지 않는다 — 그 획은 **대기**로
+ * 남는다(실패가 아니다 §9.1).
+ *
+ * ⚠⚠ **임계 선택은 리뷰어 두 라운드가 다퉜다**(D-L92의 그 절): 1차는 12°
+ * (`LIVE_TOL.axis_deg` — "축으로 인정")를, 2차는 그 교체가 **사용자가 못 본 회전의
+ * 허용치를 2.4배 넓힌 것**이라 기각했다. 두 상수 모두 "안 보인 채 얼마나 돌려도 되는가"
+ * 라는 이 가드의 물음에 정확히 답하는 등록값이 아니다 — 그 물음의 실측(5~12° 대역의
+ * 발생 빈도·체감)은 실획 표본이 판정자다(DEFERRED). 그때까지는 A-3(애매하면 놓지
+ * 않는다 — 미배치는 대기라 비용이 낮다)대로 **엄격한 쪽**(나란함 5°)을 쓴다: 임계 안의
+ * 되쓰기는 "같은 방향"으로 읽히는 정렬이고, 연장선 발동 판정과 같은 값이다(#17).
+ * 그리는 순간의 배치(placeStroke)는 이 가드를 안 지난다 — 미리보기가 같은 것을 보였다.
+ *
+ * 측정 스위치(#30) — `S2S.setChainDirGuard(false)`가 옛 거동(무제한 회전 배치)이다.
+ * 카운터는 경로별·분모와 함께다(#43): attempts = 가드가 검토한 축 경로 배치 시도.
+ */
+const CHAIN_DIR_GUARD = { on: true };
+const chainDirGuardStats = { attempts: 0, rejected: 0 };
 /** 떠 있는 커서의 스냅 — **누르기 전에 무엇에 붙을지 보인다**(SketchUp/Rhino 관행, L-B.3). */
 let hoverSnap: SnapCand | null = null;
 /** 마지막 획이 무엇에 붙었나 — 화면에 사유를 낸다(#7: 추측하지 말고 센다). */
@@ -364,12 +392,23 @@ const anchorGuardStats = { start_attempts: 0, start_rejected: 0,
 function anchorCandAt(p: Pt2, segs: SnapSeg[], sc: SnapCtx, pre: StaticCand[]): SnapCand | null {
   const cand = appSnapAt(p, segs, sc, pre);
   if (cand) anchorGuardStats.start_attempts += 1;
-  if (cand && ANCHOR_GUARD.on && !ANCHOR_GRADE_KINDS.has(cand.kind)) {
+  if (cand && !anchorQualified(cand.kind)) {
     anchorGuardStats.start_rejected += 1;
     return null;
   }
   return cand;
 }
+
+/**
+ * **자격 판정 하나를 미리보기와 확정이 같이 쓴다**(2026-08-19 14차 항목 0-a · #17).
+ *
+ * 옛 판은 미리보기(`onLive`)가 `appSnapAt`(자격 검사 없음)으로 앵커를 잡고 확정
+ * (`placeStroke`)은 `anchorCandAt`(D-L83 자격 검사)을 지났다 — on_edge·on_face 앵커에서
+ * **미리보기는 3D 축 선을 보이는데 확정은 2D 대기로 갔다**("미리보기는 붙는데 확정이
+ * 다르다"의 구조적 원인). 카운터를 안 만지는 판정만 뽑아 미리보기가 같은 것을 본다.
+ */
+const anchorQualified = (k: SnapKind): boolean =>
+  !ANCHOR_GUARD.on || ANCHOR_GRADE_KINDS.has(k);
 
 /**
  * **선 표시 네 단계**(E). 위로 갈수록 진하다 — **결과선이 결과물이다.**
@@ -741,10 +780,11 @@ function refAnchorOf(st: SStroke, fr: Frame)
  * 앵커만 알므로, 끝 앵커는 점열을 **뒤집어 풀고 되뒤집는다** — 축·기하 판정은 방향에
  * 대칭이라(소실점·직교) 같은 답이 나온다. 사용자의 획 방향(`pts2d` 순서)은 보존된다.
  */
-function placeAnchored(st: SStroke, fr: Frame, atV: Vec3, atEnd: boolean): boolean {
-  if (!atEnd) return !!placeLive(st, fr, atV);
+function placeAnchored(st: SStroke, fr: Frame, atV: Vec3, atEnd: boolean,
+                       dirGuard = false): boolean {
+  if (!atEnd) return !!placeLive(st, fr, atV, null, dirGuard);
   st.pts2d = [...st.pts2d].reverse();
-  const ok = !!placeLive(st, fr, atV);
+  const ok = !!placeLive(st, fr, atV, null, dirGuard);
   st.pts2d = [...st.pts2d].reverse();
   if (ok && st.seg3d) st.seg3d = [st.seg3d[1], st.seg3d[0]];
   return ok;
@@ -776,7 +816,7 @@ function promoteChain(fr: Frame): number {
       // ① **그린 시점의 연결 기록이 먼저다**(4-3 · #18) — 기록된 손짓이 재탐색을 이긴다
       const ref = CHAIN_EXT.on ? refAnchorOf(st, fr) : null;
       if (ref) {
-        if (placeAnchored(st, fr, ref.atV, ref.end)) {
+        if (placeAnchored(st, fr, ref.atV, ref.end, true)) {
           const world = { kind: ref.kind, at: fr.fromV(ref.atV), ofId: ref.ofId };
           if (ref.end) st.snapEnd = world; else st.snapStart = world;
           n += 1; placeBy.ref_anchor += 1;
@@ -787,15 +827,26 @@ function promoteChain(fr: Frame): number {
       // ② **시작점 오스냅** — 연쇄도 같은 자격 검사를 지난다(D-L83 ① — 두 호출부 중 하나)
       const cand = anchorCandAt(st.pts2d[0], segs, sc, pre);
       if (cand) {
+        // **가드 거절 시 되물릴 스냅샷**(14차 항목 0) — 아래 applySnapTo*가 좌표·기록을
+        // 먼저 옮기는데, 방향 가드가 배치를 막으면 그 절반 변경도 남기지 않는다(그은 그대로).
+        const keep = { pts: st.pts2d.map(q => [q[0], q[1]] as Pt2),
+                       snapStart: st.snapStart, snapEnd: st.snapEnd,
+                       snapDistPx: st.snapDistPx };
         applySnapToStart(st, cand, fr.fromV(cand.at));
         st.snapDistPx = aimDistPx(aim0, segs, sc, pre);     // 정의 하나(#17 — aimDistPx 머리말)
         // **대기 획도 양 끝 스냅으로 올라갈 수 있다**(D-L46) — 축이 없어도 두 점이면 놓인다
         const endCand = endSnapRecord(st, fr, cand.at, st.pts2d[st.pts2d.length - 1]);
         if (endCand) applySnapToEnd(st, endCand, fr.fromV(endCand.at));
         {
-          const path = placeLive(st, fr, cand.at, endCand);
+          const rej0 = chainDirGuardStats.rejected;
+          const path = placeLive(st, fr, cand.at, endCand, true);
           // **연장선도 연쇄의 연결 수단이다**(지시 3-c — 대기 중인 선을 확정하는 데 쓰인다)
           if (path) { n += 1; placeBy[path === "axis" ? "start_anchor" : path] += 1; }
+          else if (chainDirGuardStats.rejected > rej0) {
+            st.pts2d = keep.pts;
+            st.snapStart = keep.snapStart; st.snapEnd = keep.snapEnd;
+            st.snapDistPx = keep.snapDistPx;
+          }
         }
         continue;
       }
@@ -804,7 +855,7 @@ function promoteChain(fr: Frame): number {
       const ec = CHAIN_EXT.on
         ? anchorCandAt(st.pts2d[st.pts2d.length - 1], segs, sc, pre) : null;
       if (ec) {
-        if (placeAnchored(st, fr, ec.at, true)) {
+        if (placeAnchored(st, fr, ec.at, true, true)) {
           st.snapEnd = { kind: ec.kind, at: fr.fromV(ec.at), ofId: ec.ofId };
           n += 1; placeBy.end_anchor += 1;
         }
@@ -832,13 +883,23 @@ function promoteChain(fr: Frame): number {
             const e2 = endFromCursor(hit.atV, dirs[ax],
                                      st.pts2d[st.pts2d.length - 1], fr.ctx);
             if (e1 && e2 && norm3(sub3(e2, e1)) > 1e-9) {
-              st.axis = ax;
-              st.seg3d = [fr.fromV(e1), fr.fromV(e2)];
-              // **확정된 방향이 pts2d에 남는다**(D-L71 — 앵커 경로와 같은 규약, #17)
               const p0 = project(e1, fr.ctx.principal, fr.ctx.f);
               const p1 = project(e2, fr.ctx.principal, fr.ctx.f);
-              if (p0 && p1) st.pts2d = [[p0[0], p0[1]], [p1[0], p1[1]]];
-              n += 1; placeBy.cross_anchor += 1; crossStats.placed += 1;
+              // **확정 후 재계산 가드**(14차 항목 0 — CHAIN_DIR_GUARD 머리말). 여기의 축은
+              // 분류(`cam.axisOf` — angleWiden·rank_margin 완화 포함)가 골랐고, 되쓰기는
+              // 그 **라벨 판정이 형태를 바꾸는** 유일한 자리였다(지시 0-b). 되쓰기 회전이
+              // 나란함 임계를 넘으면 놓지 않는다 — 라벨은 기하를 안 바꾼다.
+              const turn = p0 && p1
+                ? chordTurnDeg(rep.a, rep.b, [p0[0], p0[1]], [p1[0], p1[1]]) : null;
+              if (CHAIN_DIR_GUARD.on && turn != null && turn > LIFT_TOL.parallel_deg) {
+                crossStats.rejected_dir += 1;
+              } else {
+                st.axis = ax;
+                st.seg3d = [fr.fromV(e1), fr.fromV(e2)];
+                // **확정된 방향이 pts2d에 남는다**(D-L71 — 앵커 경로와 같은 규약, #17)
+                if (p0 && p1) st.pts2d = [[p0[0], p0[1]], [p1[0], p1[1]]];
+                n += 1; placeBy.cross_anchor += 1; crossStats.placed += 1;
+              }
             } else crossStats.rejected_ends += 1;
           }
         }
@@ -988,7 +1049,8 @@ function extensionOf(cand: { kind: SnapKind; at: Vec3; ofId?: string } | null,
  * 축이 안 정해지면 `false`이고 그 획은 2D로 **대기**한다(§9.1).
  * 반환은 놓은 **경로 이름**이다(false = 대기) — 호출부가 placeBy를 경로별로 센다(#43).
  */
-function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = null)
+function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = null,
+                   dirGuard = false)
 : false | "two_point" | "extension" | "axis" {
   // ⚠⚠ **꺾인 획은 두 점으로 놓지 않는다**(리뷰어 지적, 2026-08-16).
   //
@@ -1030,6 +1092,20 @@ function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = nul
   {
     const p0 = project(r.seg[0], fr.ctx.principal, fr.ctx.f);
     const p1 = project(r.seg[1], fr.ctx.principal, fr.ctx.f);
+    // **확정 후 재계산 가드**(14차 항목 0 — CHAIN_DIR_GUARD 머리말). 연쇄(dirGuard)의
+    // **축 경로**만 잰다: 양 끝 스냅은 두 점이 기하를 정하고(회전이 조리개에 매인다),
+    // 연장선은 발동 판정(extensionDir)이 이미 같은 임계로 각을 가른다. 축 경로만
+    // 무제한이다("언제나 어느 축으로 간다").
+    if (dirGuard && !r.twoPoint && !rExt && p0 && p1) {
+      chainDirGuardStats.attempts += 1;
+      const q0 = st.pts2d[0], q1 = st.pts2d[st.pts2d.length - 1];
+      const turn = chordTurnDeg(q0, q1, [p0[0], p0[1]], [p1[0], p1[1]]);
+      if (CHAIN_DIR_GUARD.on && turn > LIFT_TOL.parallel_deg) {
+        chainDirGuardStats.rejected += 1;
+        lastSnapNote = `축과 ${turn.toFixed(1)}° 어긋난 그대로 둡니다 — **2D로 대기**합니다`;
+        return false;                  // 되쓰기 전이다 — 아무것도 안 움직였다
+      }
+    }
     if (p0 && p1) st.pts2d = [[p0[0], p0[1]], [p1[0], p1[1]]];
   }
   // **양 끝 스냅은 두 점이 기하를 정한다** — 축은 **기하를 안 바꾸는 라벨**로만 붙인다.
@@ -2461,7 +2537,11 @@ const ink = new InkCanvas(canvas, {
     const a0: Pt2 = [pts[0][0], pts[0][1]];
     const b0: Pt2 = [pts[pts.length - 1][0], pts[pts.length - 1][1]];
     const segs = snapSegs(fr.toV);
-    const anchor = live?.anchor ?? appSnapAt(a0, segs, sc, snapStatic(segs, fr.poseKey));
+    // **자격 검사를 미리보기도 지난다**(14차 항목 0-a · #17 — `anchorQualified` 머리말):
+    // on_edge·on_face는 확정이 앵커로 안 쓰므로(D-L83) 미리보기도 그 앵커의 3D 축 선을
+    // 보이면 안 된다 — 표식(hoverSnap)은 그대로 남는다("표시·미리보기는 그대로"의 표시 몫).
+    const cand0 = live?.anchor ?? appSnapAt(a0, segs, sc, snapStatic(segs, fr.poseKey));
+    const anchor = cand0 && anchorQualified(cand0.kind as SnapKind) ? cand0 : null;
     if (!anchor) {
       live = null;
       // **무앵커 획도 미리보기가 확정과 같은 판을 보인다**(12차 항목 2 · #17 · §11).
@@ -3381,6 +3461,10 @@ refresh();
               ? cam.axisOf(s.pts2d).axis : "free")) })),
   /** 연쇄 확장 스위치(#30) — `false`가 옛 연쇄(시작점 오스냅만)다. 카운터는 안 지운다. */
   setChainExt: (on: boolean) => { CHAIN_EXT.on = on; },
+  /** **확정 후 재계산 가드**(14차 항목 0) — 분모(attempts)와 함께 낸다(#43). */
+  chainDirGuard: () => ({ on: CHAIN_DIR_GUARD.on, ...chainDirGuardStats }),
+  /** 측정 스위치(#30) — `false`가 옛 거동(연쇄가 각도 무제한으로 축 되쓰기)이다. */
+  setChainDirGuard: (on: boolean) => { CHAIN_DIR_GUARD.on = on; },
   /** **화면 팬**(항목 5) — 표시 오프셋(css px). 문서 좌표에는 절대 안 들어간다. */
   viewPan: () => [stage.viewPan[0], stage.viewPan[1]],
   setViewPan: (p: Pt2) => { stage.setViewPan(p); refresh(); },
