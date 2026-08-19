@@ -73,8 +73,17 @@ export interface InkOptions {
    * 좌표계 단일성이 이 규약에 달렸다).
    */
   viewOffset?: () => [number, number];
-  /** 휠 — 데스크톱 확인용 줌. 카메라 쪽으로 그대로 넘긴다 */
-  onWheel?: (deltaY: number) => void;
+  /**
+   * **화면 줌 배율**(2026-08-19 14차 항목 5 — D-L94, 표시 = 문서 좌표 × 배율 + 오프셋).
+   * `viewOffset`과 같은 규약: 입력은 (표시 − 오프셋) ÷ 배율로 문서 좌표를 만들고,
+   * 그리기는 배율·오프셋을 걸어 표시한다 — 두 방향이 한 훅을 지난다(#17).
+   * 문서(`pts2d`)에는 절대 안 들어간다(§6.1). 없으면 1(종전과 같다).
+   * ⚠ 선 굵기도 함께 확대된다(종이 확대 — 프로크리에이트 선례. 3D 층의 화면 굵기는
+   * 불변이라 배율≠1에서 두 층의 굵기가 갈린다 — 알려진 표시 한계, D-L94).
+   */
+  viewScale?: () => number;
+  /** 휠 — 데스크톱 확인용 줌. `at`은 커서의 **표시 좌표**(팬·줌 미적용 로컬)다. */
+  onWheel?: (deltaY: number, at: [number, number]) => void;
 }
 
 // 프레임별 획 버퍼 + 라이브 잉크 렌더. 프레임 전환은 setFrame으로.
@@ -112,7 +121,10 @@ export class InkCanvas {
     canvas.addEventListener("wheel", (ev) => {
       if (!this.opts.onWheel) return;
       ev.preventDefault();
-      this.opts.onWheel(ev.deltaY);
+      // **표시 좌표**를 함께 넘긴다(항목 5) — 화면 줌은 커서 자리를 고정점으로 돈다
+      const fr = this.frameNow();
+      this.opts.onWheel(ev.deltaY,
+                        toLocal(canvas.getBoundingClientRect(), fr, ev.clientX, ev.clientY));
     }, { passive: false });
   }
 
@@ -194,7 +206,8 @@ export class InkCanvas {
     // ⚠ 카메라 경로는 `localRaw`를 쓴다 — 제스처는 표시 공간의 이동량이고, 여기서 빼면
     // 팬이 쌓일수록 보고 좌표가 뒤로 밀리는 **되먹임**이 생긴다(view_pan 팔이 잡았다)
     const off = this.opts.viewOffset?.() ?? [0, 0];
-    return [p[0] - off[0], p[1] - off[1]];
+    const s = this.opts.viewScale?.() ?? 1;
+    return [(p[0] - off[0]) / s, (p[1] - off[1]) / s];
   }
 
   /** 포인터 → 표시 좌표(팬 미적용) — 카메라 제스처 전용. */
@@ -326,8 +339,10 @@ export class InkCanvas {
     // **화면 팬**(항목 5) — 문서 좌표로 그려진 모든 것(배경 층·힌트·잉크)이 함께 밀린다.
     // 카메라 쪽은 stage가 같은 오프셋으로 주점을 옮긴다(setViewPan) — 두 층이 같이 간다
     const off = this.opts.viewOffset?.() ?? [0, 0];
+    const zs = this.opts.viewScale?.() ?? 1;
     this.ctx.save();
     this.ctx.translate(off[0], off[1]);
+    this.ctx.scale(zs, zs);                             // **화면 줌**(항목 5) — 종이 확대
     if (this.opts.onBackground) {
       this.ctx.save();
       this.opts.onBackground(this.ctx);

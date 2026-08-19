@@ -128,8 +128,38 @@ export class Stage {
    */
   viewPan: Pt2 = [0, 0];
 
+  /**
+   * **화면 줌 배율**(2026-08-19 14차 항목 5 · D-L94) — 종이 확대. 표시 = 문서 × 배율 + 팬.
+   * f를 바꾸는 달리가 아니다: 카메라(공간)·주점·f는 불변이고, three 표시 창의 내적
+   * 파라미터(주점·f에 배율)만 움직인다 — project = principal + f·x/z이므로
+   * 배율 z는 (z·principal + pan, z·f)와 정확히 같은 화면 변환이다.
+   * 소실점·지평선·그린 선이 전부 같은 배율로 움직여 원근 관계가 그대로다(지시 5 머리말).
+   */
+  viewZoom = 1;
+  /** 배율 한계 — 표시 상수(D-L49 계열: 조작 범위지 측정 임계가 아니다). */
+  static readonly VIEW_ZOOM_LIM = { min: 0.2, max: 8 };
+
   setViewPan(p: Pt2): void {
     this.viewPan = [p[0], p[1]];
+    if (this.pinned && this.viewport.projectionHook) {
+      this.viewport.projectionHook(this.size());
+      this.viewport.invalidate();
+    }
+  }
+
+  /**
+   * 화면 줌 — `center`(표시 좌표)를 고정점으로 배율을 바꾼다(핀치 중점·휠 커서).
+   * 고정점 규약: 표시 = 문서×z + 팬에서 center의 문서 좌표가 불변이도록
+   * 팬' = center − (z'/z)·(center − 팬).
+   */
+  setViewZoom(z: number, center?: Pt2): void {
+    const zc = Math.min(Stage.VIEW_ZOOM_LIM.max, Math.max(Stage.VIEW_ZOOM_LIM.min, z));
+    if (center) {
+      const k = zc / this.viewZoom;
+      this.viewPan = [center[0] - k * (center[0] - this.viewPan[0]),
+                      center[1] - k * (center[1] - this.viewPan[1])];
+    }
+    this.viewZoom = zc;
     if (this.pinned && this.viewport.projectionHook) {
       this.viewport.projectionHook(this.size());
       this.viewport.invalidate();
@@ -144,12 +174,14 @@ export class Stage {
     cam.quaternion.identity();
     cam.updateMatrixWorld(true);
     this.viewport.controls.enabled = false;
-    // **화면 팬이 주점을 옮긴다**(항목 5) — 훅이 매번 현재 오프셋을 읽으므로
-    // 팬 변경은 훅 재실행(setViewPan)만으로 반영된다
+    // **화면 팬·줌이 표시 창의 내적 파라미터를 옮긴다**(항목 5 — 10차 팬 + 14차 줌 D-L94).
+    // 훅이 매번 현재 오프셋·배율을 읽으므로 변경은 훅 재실행(setViewPan/Zoom)만으로 반영된다.
+    // 표시 = 문서×z + 팬 ⟺ 주점' = z·주점 + 팬 · f' = z·f (project = principal + f·x/z).
     this.viewport.projectionHook = (size) =>
       applyIntrinsics(cam as unknown as CameraLike,
-                      threeIntrinsics([principal[0] + this.viewPan[0],
-                                       principal[1] + this.viewPan[1]], f, size));
+                      threeIntrinsics([principal[0] * this.viewZoom + this.viewPan[0],
+                                       principal[1] * this.viewZoom + this.viewPan[1]],
+                                      f * this.viewZoom, size));
     this.viewport.projectionHook(this.size());
     this.redrawChannels();               // **보조선의 흐림이 핀 상태로 갈린다**(E)
     this.viewport.invalidate();

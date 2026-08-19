@@ -68,6 +68,14 @@ export interface CamGestureHost {
    * 선례: 종이 스케치 앱(프로크리에이트)의 두 손가락 = 종이 이동.
    */
   screenPan?(dx: number, dy: number): boolean;
+  /**
+   * **화면 줌**(2026-08-19 14차 항목 5 · D-L94) — 핀치의 배율 변화를 **종이 확대**로
+   * 받겠는가. `screenPan`이 참인 상태(확정 시점·카메라 전)에서만 불린다 — 옛 판은 이
+   * 배율을 **버렸다**(핀 상태에서 줌이 아예 없었고, 그래서 확대하려면 궤도로 풀 수밖에
+   * 없었다 — 사용자가 본 "확대하려는데 카메라가 3D에서 움직인다"의 원인).
+   * `at`은 핀치 중점(표시 좌표) — 고정점이다.
+   */
+  screenZoom?(scale: number, at: [number, number]): void;
 }
 
 export type Phase = "down" | "move" | "up" | "cancel";
@@ -185,6 +193,11 @@ export class CamGestures {
       // 민다. 카메라(공간)는 안 열리고 핀도 안 풀린다 — 호스트가 거절하면(궤도 뒤)
       // 종전대로 공간 팬·핀치다. ⚠ `open()` 앞이어야 한다 — open이 begin으로 핀을 푼다.
       if (this.host.screenPan?.(mid[0] - this.ref[0], mid[1] - this.ref[1])) {
+        // **핀치는 화면 줌이다**(항목 5 — D-L94): 옛 판은 이 배율을 버려서 핀 상태에
+        // 줌이 없었다. 팬과 같은 문(호스트)이 받는다 — 고정점은 핀치 중점.
+        if (Math.abs(dist / this.refDist - 1) > 1e-6) {
+          this.host.screenZoom?.(dist / this.refDist, mid);
+        }
         this.ref = mid;
         this.refDist = dist;
         return;                              // 다시 그리기는 호스트(refresh)가 했다

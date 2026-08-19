@@ -280,7 +280,8 @@ const orthoPts = (pts: Pt2[], o: ScreenOrtho | null): Pt2[] =>
 function resolve2d(raw: Pt2[], excludeId?: string): Resolve2dOut {
   const segs = pend2Segs(excludeId);
   const cands = segs.length ? static2dCandidates(segs, Math.hypot(...cssSize())) : [];
-  return resolve2dCore(raw, { cands, vps: cam.vps(), radiusPx: OSNAP.radiusPx,
+  // 조리개는 표시 px 기준 — 표시 배율을 되돌린다(D-L94 · viewZoomNow 머리말)
+  return resolve2dCore(raw, { cands, vps: cam.vps(), radiusPx: OSNAP.radiusPx / viewZoomNow(),
                               // **수선 발의 재료**(9차 항목 2-f) — 질의점에 따라 달라져서
                               // 정적 후보로 못 만든다(3D 판의 `ctx.from`과 같은 자리, #17)
                               segs,
@@ -357,7 +358,15 @@ const SNAP_PROBE_PX = 40;
 const VP_EDGE = { padPx: 14, sizePx: 6 };
 
 /** 앱 조리개(px) → 하네스 규약(대각 비). **한 군데서만 환산한다**(#17). */
-const osnapCfg = () => ({ radius_ratio: OSNAP.radiusPx / Math.hypot(...cssSize()) });
+/**
+ * **표시 배율 아래의 유효 조리개**(14차 항목 5 · D-L94): 조리개는 **표시 px** 기준이다
+ * (D-L56 — 확대·축소 무관). 스냅 질의는 문서 좌표에서 돌므로 표시 배율 z에서 문서 조리개
+ * = radiusPx / z다. 확대하면 문서 기준으로 좁아진다 — 세부를 확대해 정밀하게 겨냥하는
+ * 그 용도 그대로다. 궤도 시점(z 미적용)은 1.
+ */
+const viewZoomNow = () => ((stage.isPinned || !cam.standing()) ? stage.viewZoom : 1);
+const osnapCfg = () =>
+  ({ radius_ratio: OSNAP.radiusPx / viewZoomNow() / Math.hypot(...cssSize()) });
 /** **종류 필터를 지난 최선 후보** — 앱의 모든 스냅 질의가 이것을 지난다(#17). */
 function appSnapAt(p: Pt2, segs: SnapSeg[], sc: SnapCtx, pre: StaticCand[]): SnapCand | null {
   return snapCandidates(p, segs, sc, osnapCfg(), pre).find(c => OSNAP.kinds[c.kind]) ?? null;
@@ -1350,6 +1359,12 @@ const gestures = new CamGestures({
     stage.setViewPan([stage.viewPan[0] + dx, stage.viewPan[1] + dy]);
     refresh();
     return true;
+  },
+  // **핀치는 화면 줌**(14차 항목 5 · D-L94) — screenPan이 참인 상태에서만 불린다.
+  // 옛 판은 이 배율을 버렸다(핀 상태에 줌이 없어서 확대하려면 궤도로 풀 수밖에 없었다).
+  screenZoom: (scale, at) => {
+    stage.setViewZoom(stage.viewZoom * scale, at);
+    refresh();
   },
 });
 
@@ -2441,10 +2456,24 @@ const ink = new InkCanvas(canvas, {
   // 마우스는 `궤도(마우스)`를 누른 동안만 카메라로 간다(데스크톱 확인용).
   onCamera: (id, phase, p) => gestures.onPointer(id, phase, p),
   cameraMouse: () => tool === "orbit",
-  onWheel: (d) => gestures.onWheel(d),
+  // **휠 — 그리는 중에는 화면 줌**(14차 항목 5 · D-L94: 옛 판은 gestures.onWheel이
+  // begin()으로 핀을 풀고 달리를 돌렸다 — "확대하려는데 카메라가 3D에서 움직인다"의
+  // 데스크톱 경로). 커서 자리를 고정점으로 종이를 확대한다. 궤도 뒤에는 종전대로 달리다.
+  onWheel: (d, at) => {
+    if (stage.isPinned || !cam.standing()) {
+      // 배율 환산은 three의 휠 규약 그대로다(camGesture.onWheel과 같은 밑 — #17)
+      const k = Math.pow(GESTURE_TOL.wheel_base, Math.abs(d) * 0.01);
+      stage.setViewZoom(stage.viewZoom * (d < 0 ? 1 / k : k), at);
+      refresh();
+      return;
+    }
+    gestures.onWheel(d);
+  },
   // **화면 팬**(10차 항목 5) — 종이가 밀리는 것은 그리는 중(핀 또는 카메라 전)뿐이다.
   // 궤도 시점의 표시는 카메라가 정하므로 오프셋이 없다(0). 입력·표시가 같은 훅을 지난다(#17)
   viewOffset: () => ((stage.isPinned || !cam.standing()) ? stage.viewPan : [0, 0]),
+  // **화면 줌**(14차 항목 5 · D-L94) — 같은 조건에서 표시 배율. 궤도 시점은 1이다
+  viewScale: () => ((stage.isPinned || !cam.standing()) ? stage.viewZoom : 1),
   // **위치로 갈리는 끌기가 생겼다**(D-L45) — 지평선 손잡이 위면 그리기가 아니라 끌기다
   dragMode: (p) => tool === "edit" || tool === "erase_seg" || tool === "erase_part" || horizonGrab(p),
   onDrag: (p, phase) => {
@@ -3472,6 +3501,9 @@ refresh();
   /** **화면 팬**(항목 5) — 표시 오프셋(css px). 문서 좌표에는 절대 안 들어간다. */
   viewPan: () => [stage.viewPan[0], stage.viewPan[1]],
   setViewPan: (p: Pt2) => { stage.setViewPan(p); refresh(); },
+  /** **화면 줌**(14차 항목 5 · D-L94) — 표시 배율. 문서 좌표에는 절대 안 들어간다. */
+  viewZoom: () => stage.viewZoom,
+  setViewZoom: (z: number, center?: Pt2) => { stage.setViewZoom(z, center); refresh(); },
   /** 큐브 기준계 스위치(#30) — `false`가 옛 기준계(세계 축). cube_frame의 대조 팔이 쓴다. */
   setCubeFrame: (on: boolean) => { CUBE_FRAME.on = on; },
   /** **배치 경로 카운터**(4-6) — 합이 배치 전체와 맞는지 원장이 검산한다. */

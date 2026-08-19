@@ -111,9 +111,9 @@
    "rejected": 1
   },
   "cross": {
-   "attempts": 2,
+   "attempts": 1,
    "placed": 0,
-   "no_crossing": 2,
+   "no_crossing": 1,
    "skipped_bend": 0,
    "skipped_axis": 0,
    "rejected_ends": 0,
@@ -169,9 +169,9 @@
    "rejected": 2
   },
   "cross": {
-   "attempts": 4,
+   "attempts": 3,
    "placed": 0,
-   "no_crossing": 4,
+   "no_crossing": 3,
    "skipped_bend": 0,
    "skipped_axis": 0,
    "rejected_ends": 0,
@@ -252,9 +252,9 @@
    "rejected": 4
   },
   "cross": {
-   "attempts": 14,
+   "attempts": 13,
    "placed": 1,
-   "no_crossing": 13,
+   "no_crossing": 12,
    "skipped_bend": 0,
    "skipped_axis": 0,
    "rejected_ends": 0,
@@ -368,9 +368,9 @@
    "rejected": 5
   },
   "cross": {
-   "attempts": 16,
+   "attempts": 15,
    "placed": 1,
-   "no_crossing": 15,
+   "no_crossing": 14,
    "skipped_bend": 0,
    "skipped_axis": 0,
    "rejected_ends": 0,
@@ -450,9 +450,9 @@
    "rejected": 5
   },
   "cross": {
-   "attempts": 16,
+   "attempts": 15,
    "placed": 1,
-   "no_crossing": 15,
+   "no_crossing": 14,
    "skipped_bend": 0,
    "skipped_axis": 0,
    "rejected_ends": 0,
