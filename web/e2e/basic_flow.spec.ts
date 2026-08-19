@@ -87,6 +87,9 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
   await draw(0.38, 0.75, 0.50, 0.585);
   // **셋째 지지선**(8차 지시 1-a) — 위 둘의 교점 (0.62, 0.42)를 지난다. 화면 가로축만으로는
   // P1이 아니게 되면서 두 선 지름길이 없어졌다(D-L69의 기본 경로).
+  // ⚠ **14차 D-L96**: 이 픽스처의 가로선은 정확히 수평이라 **선언**(직교 스냅 = D-L89)이고,
+  // 선언 아래서는 두 선 지름길이 복원됐다(11-1) — 확정은 위 둘째 깊이선에서 이미 났고
+  // 이 선은 확정 **뒤의** 획이다(아래 축 배정 판정의 주석).
   await draw(0.36, 0.70, 0.50, 0.549);
   led.s3_depth = await page.evaluate(() => {
     const S = window.S2S;
@@ -133,9 +136,19 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
   // ⚠ ground 0이 이 픽스처의 명세다(13차 항목 2) — 일괄 풀이가 놓는 확정(n>0)에서는
   // 지면 첫 앵커가 안 돈다. 무연결 둘의 대기가 그대로인 것이 그 가드의 회귀 확인이다.
   expect((led.s3_place_by as any).waiting).toBe(2);
-  // **축 배정**(5-3의 원장 근거, 리뷰어 [6]) — 가로선과 깊이선이 서로 다른 축이다
-  expect(new Set((led.s3_depth as any).axes).size).toBe(2);
-  expect((led.s3_depth as any).axes.every((a: unknown) => typeof a === "number")).toBe(true);
+  // **축 배정**(5-3의 원장 근거, 리뷰어 [6]) — 가로선과 깊이선이 서로 다른 축이다.
+  // ⚠⚠ **14차 D-L96으로 대상이 좁아졌다**: 가로선이 정확히 수평(직교 스냅 = 선언)이라
+  // 확정이 **둘째 깊이선에서** 난다(11-1 복원 — 옛 판은 셋째 지지선이 확정자였다).
+  // 지지선(s4)은 확정 **뒤에** 도착하고, 무연결·무스냅이라 D-L83대로 **2D 대기**한다 —
+  // 대기 획은 그릴 때의 `free` 라벨을 유지한다(라벨 재부여는 배치 때 — solveInto).
+  // 그래서 판정은 "숫자 축을 받은 획들이 두 축으로 갈린다 + 대기 획은 free"다(§9.1).
+  {
+    const axes = (led.s3_depth as any).axes as unknown[];
+    const numeric = axes.filter((a) => typeof a === "number");
+    expect(new Set(numeric).size).toBe(2);                          // 가로축 + 깊이축
+    expect(numeric.length).toBe(3);                                 // s1·s2·s3
+    expect(axes[axes.length - 1]).toBe("free");                     // s4 — 확정 뒤 무연결 대기
+  }
   expect((led.s3_depth as any).gl_painted_px).toBeGreaterThan(0);  // **3D가 실제로 그려졌다**
 
   // ---- ④ 결과선으로 덧긋는다 → 검정으로 남고, 보조선 끝점에 붙는다

@@ -60,12 +60,15 @@ test("지면 첫 앵커 — 몸통 교차 보조선으로 세운 카메라가 3D
               + pb.cross_anchor + pb.batch + pb.ground + pb.extension + pb.unanchored;
     return { lifted, placeBy: pb, place_sum: sum, states: window.S2S.strokeStates() };
   });
-  /** 몸통 교차 확정 재료 — 가로선 + 같은 소실점(0.52W, 0.40H)을 향한 깊이선 셋. */
+  /** 몸통 교차 확정 재료 — 가로선 + 같은 소실점(0.52W, 0.40H)을 향한 깊이선 셋.
+   *  ⚠ 14차 D-L96: 가로선이 정확히 수평(직교 스냅 = 선언)이라 **깊이선 2가 확정자**다
+   *  (11-1 복원 — 13차 작성 시점에는 셋째가 확정자였다). 깊이선 3은 확정 **뒤의** 획이고,
+   *  가로선(이미 3D)을 몸통에서 가로지르므로 **교차 앵커 연쇄**(13차 항목 3 경로)로 오른다. */
   const drawConfirm = async () => {
     await drawPx(0.15 * W, 0.65 * H, 0.85 * W, 0.65 * H);           // 가로선(지면 격자)
     await drawPx(0.22 * W, 0.72 * H, 0.42 * W, 0.5067 * H);         // 깊이선 1 → VP
-    await drawPx(0.85 * W, 0.75 * H, 0.62 * W, 0.5061 * H);         // 깊이선 2 → VP
-    await drawPx(0.40 * W, 0.78 * H, 0.46 * W, 0.59 * H);           // 깊이선 3 → VP(확정자)
+    await drawPx(0.85 * W, 0.75 * H, 0.62 * W, 0.5061 * H);         // 깊이선 2 → VP(확정자 — D-L96)
+    await drawPx(0.40 * W, 0.78 * H, 0.46 * W, 0.59 * H);           // 깊이선 3 → VP(확정 뒤·교차 연쇄)
   };
   const led: Record<string, unknown> = {};
 
@@ -85,9 +88,14 @@ test("지면 첫 앵커 — 몸통 교차 보조선으로 세운 카메라가 3D
   // ---- ① 같은 입력, 경로 켬 — 확정 순간 지면 첫 앵커로 오른다
   await drawConfirm();
   led.confirmed = await states();
-  // **회귀 단언(지시 2-d)** — 값은 원장 arms가 든다(#47): 조건은 "전부 ground 경로"다
+  // **회귀 단언(지시 2-d)** — 값은 원장 arms가 든다(#47). ⚠ 14차 D-L96 개정: 확정이
+  // 둘째 깊이선에서 나므로 조건은 "확정 순간의 풀은 전부 ground 경로 + 확정 뒤 도착한
+  // 깊이선 3은 교차 앵커 연쇄 + batch 0"이다(옛 조건 "전부 ground"는 셋째-확정자 시절).
   expect((led.confirmed as any).lifted).toBeGreaterThan(0);
-  expect((led.confirmed as any).placeBy.ground).toBe((led.confirmed as any).lifted);
+  expect((led.confirmed as any).placeBy.ground).toBeGreaterThan(0);
+  expect((led.confirmed as any).placeBy.ground + (led.confirmed as any).placeBy.cross_anchor)
+    .toBe((led.confirmed as any).lifted);
+  expect((led.confirmed as any).placeBy.cross_anchor).toBe(1);      // 깊이선 3 — 연쇄 경로
   expect((led.confirmed as any).placeBy.batch).toBe(0);
   expect((led.confirmed as any).place_sum).toBe((led.confirmed as any).lifted);   // ④ #43
 
@@ -134,7 +142,9 @@ test("지면 첫 앵커 — 몸통 교차 보조선으로 세운 카메라가 3D
     /** ⓪↔①의 차 — 이 수리가 같은 입력에서 연 배치 수(#30의 짝 대조). */
     recovered_by_ground: recovered,
     gate: gate({
-      registered: "⓪ 끔 팔에서 lifted 0 · ① 켬 팔에서 lifted == placeBy.ground > 0이고 batch 0 "
+      registered: "⓪ 끔 팔에서 lifted 0 · ① 켬 팔에서 ground > 0·ground + cross_anchor == "
+                + "lifted·cross_anchor == 1(확정 뒤 도착한 깊이선 3 — 14차 D-L96으로 확정자가 "
+                + "둘째 깊이선이 되면서 조건 개정: 옛 '전부 ground'는 셋째-확정자 시절)·batch 0 "
                 + "· ② 연쇄 팔에서 cross_anchor ≥ 1이 켬 팔 lifted에 +1 · ③ 허공 팔에서 ground "
                 + "불변·마지막 획 dir 대기 · ④ 모든 팔에서 placeBy 합 == lifted(#43). "
                 + "값은 arms가 든다(#47 — 산문에 수를 안 박는다)",
