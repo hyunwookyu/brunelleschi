@@ -26,9 +26,11 @@
   등식은 **집합으로 깨진다** — 시작점 앵커 없는 배치 셋(`lifted_no_snapstart_ids`)이 있고,
   일괄 풀이 몫으로 모순 없이 설명되나 증명은 아니다(`first_anchor.json@f351839a`의
   `contrast_15_18_25` — 재구성이 저장본보다 더 놓는 초과 배치 `beyond_saved_ids`도 실측).
-- **Δ 대푯값 충돌은 13차 항목 4가 분해했다**(`delta_conflict.json@f351839a` — 4-R 리뷰어
-  대응으로 정밀화): ①(angleWiden)·③(rank_margin)은 개입 팔 실측으로 **기각**(widen 꺼도
-  배정 동일·relative 0 — 도달 가능성은 `widen_positive_arm`), 최상위 꼬리의 기전은
+- **Δ 대푯값 충돌은 13차 항목 4가 분해했다**(`delta_conflict.json@f351839a` — 리뷰어 두
+  라운드로 정밀화): ①(angleWiden)은 **기각**(근거는 배정 행 misfit_raw < 기본 임계 —
+  widen 불요. ⚠ 개입 팔은 스냅 후 저장 기하라 구성상 무정보 #32 — 2차-2 [1]),
+  ③(rank_margin)은 **이 저장본에서 비적용**(같은 이유로 발화 불가 — 도달 가능성은
+  `widen_positive_arm`·`rank_positive_arm`, 둘 다 다른 픽스처 #40 ③), 최상위 꼬리의 기전은
   **지표의 근접 퇴화 = 지렛대 증폭**(원시 시작점 손떨림 이탈 ÷ 소실점 거리 —
   `per_stroke`의 `start_off_fit_px`·`jitter_lever_deg` ≈ `vp_dir_err_deg`. misfit 0은
   `fit_through_vp` 구성의 반올림 — `misfit_raw`·`misfit_wrong_axis`가 #5 판별). 퇴화
@@ -60,7 +62,7 @@
 | **1** | 15-16-18 첫 3D 부재 진단 | ✅ **원인: liftAll 접합(끝점 근접)이 몸통 교차 스타일을 못 쓴다** — joints 0·몸통 교차 7(`first_anchor.json@f351839a`). D-L83·교차 앵커는 의도대로(못 닿는 층) |
 | **2** | 첫 앵커 — **지면 배치(D-L90)** | ✅ 확정 순간 수평 평면 축 보조선을 지면에(`placeBy.ground` · 끔 스위치 `setGroundAnchor`). 첫 앵커 전용(3D 전무 시) — 10차가 막은 임의 배치를 안 되살림. 종단 `ground_anchor.json@f351839a`(끔↔켬 짝 대조·합=전체 — 그 검산이 확정 획 이중 배치 버그를 잡아 수리). 전제는 **AS-L42**(위반 비용 `ground_truth` 필드 — 깊이 1/(1−h)배·방향 보존). 리뷰어 두 라운드(14+12건) 대응 |
 | **3** | **연장선 스냅(D-L91)** | ✅ Rhino Extension 선례 — 끝점 앵커 + 원 선 방향 임계(`LIFT_TOL.parallel_deg` 재사용 #17) 안이면 같은 3D 직선 위에 즉시(`placeBy.extension` · SnapKind `extension` 토글·파선 안내선). 단축 상 가드(상 < 조리개면 발동 안 함 — `guard_sweep` 동작점). ⚠ **기존 입면 흐름의 '이어 그리기'가 이 경로로 이관**("기하 동일"은 정확 겨냥 원 선에 한함 — divergence_arm · AS-L43·L44) |
-| **4** | Δ 대푯값 충돌 분해 | ✅ `delta_conflict.json@f351839a` — ①(angleWiden)·③(rank_margin) **기각**(개입 팔 공집합 · 도달 가능성은 `widen_positive_arm`), 꼬리는 **지표의 근접 퇴화 = 지렛대 증폭**(`start_off_fit_px`÷`vp_dist_px` ≈ Δ 실측. misfit 0은 `fit_through_vp` 구성의 반올림 — `misfit_raw`가 #5 판별. real_ink에 `near_vp_degenerate`(⚠ 극단 카메라 전용 아님)·`vp_dir_err_deg_stable`(+no_snap n=1·절단 감도) 신설 — AS-L26은 "반증 방향·표본 부족"으로 내림). ② 사거리 스윕(°경계 실획 이식 금지 — fixture 필드)·재투입 거부(refeed reject — 규약 병기). **답: 카메라 품질(소실점 근접 → 지렛대 증폭)로 설명** |
+| **4** | Δ 대푯값 충돌 분해 | ✅ `delta_conflict.json@f351839a` — ① **기각**(misfit_raw < 기본 임계 — widen 불요. 개입 팔은 구성상 무정보 #32)·③ **비적용**(발화 불가 — 도달 가능성 팔 둘은 다른 픽스처 #40 ③), 꼬리는 **지렛대 분해**(`jitter_lever_correspondence` — 정보 행 s65·s66. #5: 독립 측정 아닌 기하 분해). real_ink에 `near_vp_degenerate`(대리 조건 — **과잉 표식 실측**: s44·s45는 퇴화 아님, `near_vp_lever` 세 파일 전부)·stable(+no_snap n=1·절단 감도) — AS-L26 "반증 방향·표본 부족". **답(사거리 축소): 소실점 근접(지렛대)은 163° 파일 꼬리의 귀속이고 15-16-18의 큰 Δ는 다른 기전(실제 방향 이탈)** |
 | **5** | 스냅 반경 | ✅ 신규 구현 없음 — a는 항목 0(reopen false), b·c는 **이미 있음**(`osnap_config.json` e2e가 반경 조절·종류 토글·수직점 발화를 잠근다), d는 **중점 발화 0으로 성립 불가** → `pending_judgements` 아홉째 행(`midpoint_wrong_connection` — 다음 표본이 판정자) |
 | **6** | camera_gate 비용 | ✅ 기록만(200s 미도달 — 여유 12%) — 실행 수 불변·**자기보고 신설**(`camera_gate.json`의 `runs` → test_cost declared 편입). ⛔ "증가는 병행 부하 몫" 철회 — **단독 실행이 같은 자릿수 재현**(추이·값은 progress [6]-b). diff 0의 두 번째 읽기(placeBy 새 경로 미경유)를 원장 `what_this_does_not_say`에 박음 |
 | **7** | DEFERRED 잔여 | ✅ 가림 교차 **실측 도착·절반 해소**(`first_anchor.json@f351839a`의 `cross_occlusion` — 교차 3 중 참 접촉 최대 1. ⚠ 어긋남 **크기**의 실측이지 가림 **비율**이 아니다(n=1) · 검증은 허용치 의존(`verify_survival_boundary`). 정책은 남음 — 설계 입력·관측 판정자 등재) · e2e 비용 행은 **낡은 중복 — 닫음** · cube_frame 둘째 구도는 이미 닫힘(+행 모순 제자리 정정) · 위약 짝층은 이월(관측 판정자로 조건 재작성) · 보조 소실점 등재만(현행 유지) |

@@ -198,10 +198,11 @@ describe("첫 3D 부재 — 15-16-18 재구성(13차 항목 1)", () => {
         rows.push({ id: st.id, n_crossings: anchors.length,
                     pairwise_line_offset_ratio: stat(offs, 4) });
       }
-      // **"켜면 죽는다"의 임계 의존을 값으로 낸다**(5·6·7 리뷰어 7[2] · #13): 검증을
-      // "교차 둘 이상이 허용치 안에서 일치해야 채택"으로 정의하면, 생존 경계는 **최소
-      // 쌍별 이탈**이다 — 그보다 작은 허용치는 전부 기각(회복 0), 큰 허용치는 통과.
+      // **"켜면 죽는다"의 임계 의존을 값으로 낸다**(5·6·7 리뷰어 7[2] · #13): 생존 경계는
+      // **검증 술어에 따라 다르다**(2차 [8] · #28 — 못 고르므로 둘 다 낸다):
+      // "한 쌍이라도 일치하면 채택"이면 최소 쌍별 이탈, "모든 쌍 일치 요구"면 최대다.
       const minOff = allOffs.length ? Math.min(...allOffs) : null;
+      const maxOff = allOffs.length ? Math.max(...allOffs) : null;
       return {
         note: "대기 획별: 지면 획들과의 교차 수 · 각 교차 앵커로 세운 축 직선들의 **쌍별 평행선 "
             + "거리 ÷ 평균 앵커 거리**(상대 — ⚠ 이 분모가 문서들이 '장면 규모'라 부른 그 양의 "
@@ -216,8 +217,15 @@ describe("첫 3D 부재 — 15-16-18 재구성(13차 항목 1)", () => {
             + "아직 없다(liftAll의 reject_mult는 다른 층의 양 — 허용치 미정). 정책(어느 교차가 "
             + "참인가)은 DEFERRED 그대로 열려 있고 이 실측이 그 판단 재료다",
         rows,
-        /** '2+ 교차 일치' 검증의 생존 경계(상대 이탈) — 이보다 작은 허용치면 s49 회복이 죽는다 */
-        verify_survival_boundary: minOff == null ? null : +minOff.toFixed(4),
+        /**
+         * '2+ 교차 일치' 검증의 생존 경계(상대 이탈 — 술어별, 2차 [8] · #28): 허용치가
+         * `any_pair_agrees`(한 쌍 채택) 아래면 어느 술어에서도 s49 회복이 죽고,
+         * `all_pairs_agree`(전 쌍 요구) 위여야 그 술어에서 산다. 정책 미정이라 둘 다 든다.
+         */
+        verify_survival_boundary: {
+          any_pair_agrees: minOff == null ? null : +minOff.toFixed(4),
+          all_pairs_agree: maxOff == null ? null : +maxOff.toFixed(4),
+        },
       };
     })();
 

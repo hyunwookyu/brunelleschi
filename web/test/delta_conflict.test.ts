@@ -125,6 +125,23 @@ describe("Δ 대푯값 충돌 — 후보 셋의 분해(13차 항목 4)", () => {
     //      "기각"이려면 그 필드가 0 아닌 값을 **낼 수 있는** 입력이 있어야 한다. 주점에서
     //      먼 자리(widen>1)에 겨냥을 조금 빗나간 합성 획을 δ 스윕으로 놓고, 기본 배정은
     //      축·relax 0 배정은 free가 되는 행을 찾는다 — 찾으면 0은 도달 가능한 판정이다.
+    // ---- ③ **rank_only의 양성 채널**(2차 리뷰어 [2] — ①만 채널을 받고 ③이 빠졌었다):
+    //      relative 배정은 best.m > tol일 때만 열리는데 이 저장본은 misfit_raw 1e-16대라
+    //      **구조상 발화 불가**다. 그 필드가 true를 낼 수 있는 입력의 존재 증명 —
+    //      기본 임계 밖·천장 안의 misfit + 큰 2등 격차를 합성으로 만든다.
+    const rankPositive = (() => {
+      const found: { delta_deg: number; axis: unknown; relative: boolean }[] = [];
+      const twoVps: (Pt2 | null)[] = [VP0, [P[0] + F, P[1]], null];
+      for (const delta of [4, 5, 6, 7, 8, 10, 12]) {
+        const b = aimed(delta, 300);
+        const v = classifyStroke([A0, b], twoVps, [W, H], {}, { principal: P, f: F });
+        if (typeof v.axis === "number" && v.relative) {
+          found.push({ delta_deg: delta, axis: v.axis, relative: true });
+        }
+      }
+      return found;
+    })();
+
     const wpBase: Pt2 = [980, 560];
     const widenPositive = (() => {
       const found: { delta_deg: number; axis: unknown; axis_no_widen: unknown;
@@ -176,31 +193,62 @@ describe("Δ 대푯값 충돌 — 후보 셋의 분해(13차 항목 4)", () => {
         rows: snapSweep,
       },
       widen_positive_arm: {
-        note: "①의 **양성 채널**([B-3] · #30·#35) — widen_dependent가 0 아닌 값을 낼 수 "
-            + "있는 입력의 존재 증명. 주점에서 먼 합성 획의 δ 스윕에서 기본 배정=축 · "
-            + "relax 0=free인 행들이다. 실파일의 widen_dependent 0은 이로써 '도달 불가'가 "
-            + "아니라 '기각'으로 읽힌다 — 실파일 쪽 0의 구성 원인은 per_stroke.fit_through_vp "
-            + "(전 배정 행 true — 스냅 후 저장 기하는 어떤 배수에서도 배정이 같다)",
+        note: "①의 **필드 도달 가능성**([B-3] · #30·#35 — ⚠ 2차 [1]로 읽기 정정: 이것은 "
+            + "widen_dependent가 0 아닌 값을 낼 수 있다는 **다른 픽스처**(주점에서 먼 합성 획, "
+            + "widen 1.34)의 존재 증명이지, 실파일(widen 2.83~7.50 · misfit_raw 1e-16 — "
+            + "구성상 발화 불가)의 모집단이 아니다(#40 ③). 실파일 ① 기각의 근거는 "
+            + "file_15_18_25.note가 든다 — misfit_raw < 기본 임계)",
         base_px: wpBase,
         found_rows: widenPositive,
       },
+      rank_positive_arm: {
+        note: "③의 **필드 도달 가능성**(2차 [2] — ①만 채널을 받았었다): relative=true가 "
+            + "나오는 합성 입력(기본 임계 밖·천장 안 misfit + 큰 2등 격차)의 존재 증명. "
+            + "widen_positive_arm과 같은 유보 — 실파일 모집단이 아니다",
+        found_rows: rankPositive,
+      },
       file_15_18_25: {
         note: "화각 163° 카메라(복원 경로 — first_anchor.contrast의 그 실측)의 획별 분해. "
-            + "`axis_no_widen`이 free인 축 배정 획 = **angleWiden 없이는 배정되지 않았을 획**"
-            + "(① — 큰 Δ가 표에 나타난 것 자체가 widen의 산물인지의 직접 판별). "
-            + "`relative` = 상대 순위 배정(③). ⚠ **실측이 ①·③을 이 파일에서 기각했다** — "
-            + "widen_dependent·rank_only 둘 다 공집합인데(양성 채널은 widen_positive_arm) "
-            + "Δ20.8·16.6 행이 있다. **기전은 지렛대비다**(4-R [B-1]로 초판의 'misfit·vp_dist "
-            + "짝' 서술을 정정 — 배정 misfit은 전 행 1e-16대(misfit_raw)라 짝의 분자가 못 "
-            + "된다. fit_through_vp 참: 대표 직선이 구성상 소실점을 지난다): Δ는 **원시 "
-            + "시작점의 손떨림 이탈(start_off_fit_px) ÷ 소실점 거리(vp_dist_px)의 지렛대각**"
-            + "이고 jitter_lever_deg ≈ vp_dir_err_deg가 행마다 성립한다. 소실점이 가까울수록"
-            + "(극단 카메라의 성질) 같은 손떨림이 큰 Δ로 증폭된다 — 두 표본의 차이는 카메라 "
-            + "품질(소실점 근접)로 설명되고(지시 4-c), Δ는 겨냥 오차가 아니라 지표 자체의 "
-            + "퇴화다(real_ink의 near_vp_degenerate 표식이 같은 판정).",
+            + "⚠⚠ **①·③의 판은 개입 팔이 아니라 misfit_raw가 든다**(2차 리뷰어 [1]·[2] 정정 — "
+            + "이 저장본은 스냅 후 기하라 배정 행 misfit_raw가 1e-16대: angle_relax 0 개입도 "
+            + "상대 순위 경로도 **구성상 발화 불가**여서 widen_dependent 0·rank_only 0은 "
+            + "이 파일에서 정보량 0이다(#32 — 무변화 개입은 기각의 증거가 아니다). "
+            + "①을 기각하는 실제 근거: **배정 행 전부 misfit_raw < 기본 임계 "
+            + "AXIS_TOL.vp_dist_ratio** — 큰 Δ 행의 배정에 widen이 필요하지 않았다(배수와 "
+            + "무관하게 배정된다). ③ 비적용의 근거도 같다 — relative는 misfit > 임계에서만 "
+            + "열린다. 두 필드의 도달 가능성은 widen_positive_arm·rank_positive_arm이 "
+            + "**다른 픽스처로** 증명한다(모집단 불일치 명시 — #40 ③). "
+            + "**Δ 꼬리의 기전은 지렛대 분해다**(4-R [B-1] · 2차 [4]로 성격 명시): "
+            + "fit_through_vp 행에서 Δ ≈ atan(start_off_fit_px ÷ vp_dist_px)는 **독립 측정이 "
+            + "아니라 기하 분해**다(대표 직선이 소실점을 지나므로 대수적으로 근접 — #5. "
+            + "말해 주는 것: Δ는 겨냥이 아니라 손떨림 이탈×지렛대의 몫이다). 대응의 강도는 "
+            + "jitter_lever_correspondence가 행별로 든다 — real_ink의 near_vp_degenerate "
+            + "표식이 같은 판정이고, 다른 두 파일의 지렛대 값은 real_ink의 "
+            + "per_doc[*].near_vp_lever가 든다(2차 [5]·[9]).",
         per_stroke: perStroke,
         widen_dependent_ids: widenDependent.map(r => r.id),
         rank_only_ids: rankOnly.map(r => r.id),
+        /**
+         * **지렛대 분해의 대응 강도**(2차 리뷰어 [4] — "행마다 성립"의 모집단·임계를 값으로):
+         * 대상은 수평축 배정 행 중 **보장(Δ 정확 0 — s78, #5)을 뺀** 지렛대 값 보유 행이다.
+         * ratio = jitter_lever ÷ Δ. 밴드(±3°)보다 값이 작은 행(s75)은 판별력이 없어
+         * informative에서 뺀다 — 남는 정보 행은 그 목록이 든다(잔차 10~20%는 계통적 —
+         * 현 방향과 대표 직선 방향의 차 몫).
+         */
+        jitter_lever_correspondence: {
+          band_deg: 3,
+          rows: perStroke
+            .filter(r => r.jitter_lever_deg != null && r.vp_dir_err_deg != null)
+            .map(r => ({ id: r.id, lever: r.jitter_lever_deg, delta: r.vp_dir_err_deg,
+                         ratio: r.vp_dir_err_deg! > 1e-9
+                           ? +(r.jitter_lever_deg! / r.vp_dir_err_deg!).toFixed(4) : null,
+                         guaranteed_zero: r.vp_dir_err_deg === 0,
+                         below_band: r.vp_dir_err_deg! < 3 })),
+          informative_ids: perStroke
+            .filter(r => r.jitter_lever_deg != null && r.vp_dir_err_deg != null
+                      && r.vp_dir_err_deg > 3)
+            .map(r => r.id),
+        },
       },
       /** ② 사거리의 크기 — 스윕에서 발동한 행 수(경계 전이의 존재는 아래 단언이 잠근다). */
       sweep_engaged_rows: snapSweep.filter(r => r.engaged).length,
@@ -223,22 +271,24 @@ describe("Δ 대푯값 충돌 — 후보 셋의 분해(13차 항목 4)", () => {
         // 조건에서 내렸다(리뷰어 4-R [B-7] — 항목 3 [9]와 같은 정정. 항등은 위 rows가
         // 기록으로 들고, 단언은 아래 vitest 단언이 별도로 잠근다).
         registered: "② 스윕에 **경계 전이가 존재한다**(engaged 행과 미발동 행이 둘 다 있다) "
-                  + "· ① 실좌표에서 widen_dependent_ids가 큰 Δ 획을 포함하는가가 판별이고 "
-                  + "widen_positive_arm이 그 필드의 양성 채널이다 · refeed_gate.band = "
-                  + "reject(신규 확정 재현 불가) · ③ rank_only_ids를 갈라 낸다. 값은 필드가 든다(#47)",
+                  + "· ① 실좌표의 판별은 **배정 행 misfit_raw < 기본 임계**(widen 불요 — 2차 "
+                  + "[1]로 재근거: 개입 팔은 이 저장본에서 구성상 무정보) · refeed_gate.band = "
+                  + "reject(신규 확정 재현 불가) · ③ rank_only는 같은 이유로 이 저장본에서 "
+                  + "비적용. 값은 필드가 든다(#47)",
         reachability: "값은 ② 스윕의 발동 행 수(사거리의 크기 — 0도 8도 아니면 경계가 스윕 "
-                    + "안에 있다). ①의 판별력은 widen 끔 팔(angle_relax 0)과 본 팔의 **배정 "
-                    + "차이**이고 결과는 result.widen_dependent = 0 — **도달 가능성은 "
-                    + "widen_positive_arm.found_rows(비공집합)가 증명하므로**([B-3] · #30·#35) "
-                    + "이 0은 기각의 실측값이다. 실파일 0의 구성 원인은 fit_through_vp(스냅 후 "
-                    + "저장 기하 — 어떤 배수에서도 배정 불변). selfcheck의 '정확히 0' 의심은 "
-                    + "이 문장이 원인 확인이다",
+                    + "안에 있다). ⚠ ①의 widen_dependent 0·③의 rank_only 0은 **이 저장본에서 "
+                    + "정보량 0이다**(2차 [1]·[2] — misfit_raw 1e-16대라 두 경로 다 구성상 발화 "
+                    + "불가 · #32). 두 필드의 도달 가능성은 widen_positive_arm·rank_positive_arm"
+                    + "(각각 비공집합 — 단 다른 픽스처, #40 ③ 명시)이 든다. selfcheck의 "
+                    + "'정확히 0' 의심은 이 문장이 원인 확인이다(발화 불가의 구성 원인: "
+                    + "fit_through_vp — 스냅 후 저장 기하)",
         reachability_value: snapSweep.filter(r => r.engaged).length,
         reachability_source: "sweep_engaged_rows",
         /** 이 값은 스윕 격자(0.5~20°의 8점)가 정하는 수다([B-8] · #46) — 격자를 바꾸면 함께 변한다 */
         reachability_value_fixture_determined: true,
         result: { widen_dependent: widenDependent.length, rank_only: rankOnly.length,
-                  widen_positive_rows: widenPositive.length, refeed_band: verdict.band },
+                  widen_positive_rows: widenPositive.length,
+                  rank_positive_rows: rankPositive.length, refeed_band: verdict.band },
         note: "이 원장이 걸리는 번호: #49(경계의 단위 — 부적합도. **°경계를 실획에 옮기지 "
             + "않는다** — fixture 필드와 per_stroke의 misfit_raw가 각자 자기 단위로 답한다) · "
             + "#12(동작점 — fixture 필드·파일 하나·격자 공백 7~12°) · #30(widen 끔 개입 팔 + "
@@ -258,8 +308,9 @@ describe("Δ 대푯값 충돌 — 후보 셋의 분해(13차 항목 4)", () => {
     }
     // ① 재투입은 거부 대역이다(12차 상한의 사거리)
     expect(verdict.band).toBe("reject");
-    // ---- [B-3] widen_dependent의 양성 채널이 비지 않았다 — 실파일 0은 도달 가능한 기각이다
+    // ---- [B-3]·2차 [2] 두 필드의 도달 가능성 팔이 비지 않았다(다른 픽스처 — #40 ③ 유보)
     expect(widenPositive.length).toBeGreaterThan(0);
+    expect(rankPositive.length).toBeGreaterThan(0);
     // ---- [B-1] misfit은 측정이다(#5 판별) — 배정 축과 틀린 축의 값이 자릿수로 갈린다.
     //      그리고 배정 행의 원값은 구성상 0(fit_through_vp)이다 — 두 사실이 함께 참이어야
     //      "0은 반올림된 구성값, 함수는 판별력 있음"이 성립한다.
@@ -271,13 +322,13 @@ describe("Δ 대푯값 충돌 — 후보 셋의 분해(13차 항목 4)", () => {
           `${r.id}: 틀린 축 misfit이 판별 여유(1e-3) 위여야 측정이다`).toBeGreaterThan(1e-3);
       }
     }
-    // ---- [B-1]·[B-4] Δ의 기전: jitter_lever_deg가 vp_dir_err_deg를 ±3° 안에서 예측한다
-    //      (수평축 배정 행 — s65 18.8↔20.8, s66 14.8↔16.6, s75 2.2↔2.8, s78 0↔0).
-    //      차이의 잔여는 현 방향과 대표 직선 방향의 차(굽은 획) 몫이다.
+    // ---- [B-1]·[B-4]·2차 [4] Δ의 지렛대 분해: 수평축 배정 행 중 지렛대 값이 있는 행에서
+    //      |Δ − lever| < 3°. ⚠ 정보 행은 jitter_lever_correspondence.informative_ids가
+    //      가른다(보장 0 행·밴드보다 작은 행은 판별력이 없다 — 단언은 기계적 상한 확인).
     for (const r of perStroke) {
       if (typeof r.axis !== "number" || r.vp_dir_err_deg == null || r.jitter_lever_deg == null) continue;
       expect(Math.abs(r.vp_dir_err_deg - r.jitter_lever_deg),
-        `${r.id}: Δ와 지렛대 예측의 차가 3°를 넘는다 — 기전 서술을 재검한다`).toBeLessThan(3);
+        `${r.id}: Δ와 지렛대 분해의 차가 3°를 넘는다 — 기전 서술을 재검한다`).toBeLessThan(3);
     }
   });
 });

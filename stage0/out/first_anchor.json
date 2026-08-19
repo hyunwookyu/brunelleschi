@@ -272,7 +272,10 @@
         }
       }
     ],
-    "verify_survival_boundary": 0.1563
+    "verify_survival_boundary": {
+      "any_pair_agrees": 0.1563,
+      "all_pairs_agree": 0.6758
+    }
   },
   "crossing_breakdown": {
     "note": "findJoints의 세 거름 조건별 모집단 — 같은 축(parallel) · 선분 밖(off_segment) · **몸통 교차(body_crossings — 두 선분 위 교차인데 어느 끝점에서도 touch 반경 밖)**. 교점(joint)이 0인데 몸통 교차가 여럿이면, 멈춘 자리는 교차 부재가 아니라 **끝점 근접(endNear) 조건**이다 — 이 사용자의 보조선은 모서리 접합이 아니라 길게 긋고 가운데서 가로지르는 스타일이다(교차 앵커 D-L89 계열과 같은 관찰).",

@@ -207,7 +207,7 @@
     ]
   },
   "widen_positive_arm": {
-    "note": "①의 **양성 채널**([B-3] · #30·#35) — widen_dependent가 0 아닌 값을 낼 수 있는 입력의 존재 증명. 주점에서 먼 합성 획의 δ 스윕에서 기본 배정=축 · relax 0=free인 행들이다. 실파일의 widen_dependent 0은 이로써 '도달 불가'가 아니라 '기각'으로 읽힌다 — 실파일 쪽 0의 구성 원인은 per_stroke.fit_through_vp (전 배정 행 true — 스냅 후 저장 기하는 어떤 배수에서도 배정이 같다)",
+    "note": "①의 **필드 도달 가능성**([B-3] · #30·#35 — ⚠ 2차 [1]로 읽기 정정: 이것은 widen_dependent가 0 아닌 값을 낼 수 있다는 **다른 픽스처**(주점에서 먼 합성 획, widen 1.34)의 존재 증명이지, 실파일(widen 2.83~7.50 · misfit_raw 1e-16 — 구성상 발화 불가)의 모집단이 아니다(#40 ③). 실파일 ① 기각의 근거는 file_15_18_25.note가 든다 — misfit_raw < 기본 임계)",
     "base_px": [
       980,
       560
@@ -222,8 +222,23 @@
       }
     ]
   },
+  "rank_positive_arm": {
+    "note": "③의 **필드 도달 가능성**(2차 [2] — ①만 채널을 받았었다): relative=true가 나오는 합성 입력(기본 임계 밖·천장 안 misfit + 큰 2등 격차)의 존재 증명. widen_positive_arm과 같은 유보 — 실파일 모집단이 아니다",
+    "found_rows": [
+      {
+        "delta_deg": 10,
+        "axis": 0,
+        "relative": true
+      },
+      {
+        "delta_deg": 12,
+        "axis": 0,
+        "relative": true
+      }
+    ]
+  },
   "file_15_18_25": {
-    "note": "화각 163° 카메라(복원 경로 — first_anchor.contrast의 그 실측)의 획별 분해. `axis_no_widen`이 free인 축 배정 획 = **angleWiden 없이는 배정되지 않았을 획**(① — 큰 Δ가 표에 나타난 것 자체가 widen의 산물인지의 직접 판별). `relative` = 상대 순위 배정(③). ⚠ **실측이 ①·③을 이 파일에서 기각했다** — widen_dependent·rank_only 둘 다 공집합인데(양성 채널은 widen_positive_arm) Δ20.8·16.6 행이 있다. **기전은 지렛대비다**(4-R [B-1]로 초판의 'misfit·vp_dist 짝' 서술을 정정 — 배정 misfit은 전 행 1e-16대(misfit_raw)라 짝의 분자가 못 된다. fit_through_vp 참: 대표 직선이 구성상 소실점을 지난다): Δ는 **원시 시작점의 손떨림 이탈(start_off_fit_px) ÷ 소실점 거리(vp_dist_px)의 지렛대각**이고 jitter_lever_deg ≈ vp_dir_err_deg가 행마다 성립한다. 소실점이 가까울수록(극단 카메라의 성질) 같은 손떨림이 큰 Δ로 증폭된다 — 두 표본의 차이는 카메라 품질(소실점 근접)로 설명되고(지시 4-c), Δ는 겨냥 오차가 아니라 지표 자체의 퇴화다(real_ink의 near_vp_degenerate 표식이 같은 판정).",
+    "note": "화각 163° 카메라(복원 경로 — first_anchor.contrast의 그 실측)의 획별 분해. ⚠⚠ **①·③의 판은 개입 팔이 아니라 misfit_raw가 든다**(2차 리뷰어 [1]·[2] 정정 — 이 저장본은 스냅 후 기하라 배정 행 misfit_raw가 1e-16대: angle_relax 0 개입도 상대 순위 경로도 **구성상 발화 불가**여서 widen_dependent 0·rank_only 0은 이 파일에서 정보량 0이다(#32 — 무변화 개입은 기각의 증거가 아니다). ①을 기각하는 실제 근거: **배정 행 전부 misfit_raw < 기본 임계 AXIS_TOL.vp_dist_ratio** — 큰 Δ 행의 배정에 widen이 필요하지 않았다(배수와 무관하게 배정된다). ③ 비적용의 근거도 같다 — relative는 misfit > 임계에서만 열린다. 두 필드의 도달 가능성은 widen_positive_arm·rank_positive_arm이 **다른 픽스처로** 증명한다(모집단 불일치 명시 — #40 ③). **Δ 꼬리의 기전은 지렛대 분해다**(4-R [B-1] · 2차 [4]로 성격 명시): fit_through_vp 행에서 Δ ≈ atan(start_off_fit_px ÷ vp_dist_px)는 **독립 측정이 아니라 기하 분해**다(대표 직선이 소실점을 지나므로 대수적으로 근접 — #5. 말해 주는 것: Δ는 겨냥이 아니라 손떨림 이탈×지렛대의 몫이다). 대응의 강도는 jitter_lever_correspondence가 행별로 든다 — real_ink의 near_vp_degenerate 표식이 같은 판정이고, 다른 두 파일의 지렛대 값은 real_ink의 per_doc[*].near_vp_lever가 든다(2차 [5]·[9]).",
     "per_stroke": [
       {
         "id": "s65",
@@ -392,7 +407,48 @@
       }
     ],
     "widen_dependent_ids": [],
-    "rank_only_ids": []
+    "rank_only_ids": [],
+    "jitter_lever_correspondence": {
+      "band_deg": 3,
+      "rows": [
+        {
+          "id": "s65",
+          "lever": 18.7509,
+          "delta": 20.7987,
+          "ratio": 0.9015,
+          "guaranteed_zero": false,
+          "below_band": false
+        },
+        {
+          "id": "s66",
+          "lever": 14.844,
+          "delta": 16.5899,
+          "ratio": 0.8948,
+          "guaranteed_zero": false,
+          "below_band": false
+        },
+        {
+          "id": "s75",
+          "lever": 2.2347,
+          "delta": 2.7806,
+          "ratio": 0.8037,
+          "guaranteed_zero": false,
+          "below_band": true
+        },
+        {
+          "id": "s78",
+          "lever": 0,
+          "delta": 0,
+          "ratio": null,
+          "guaranteed_zero": true,
+          "below_band": true
+        }
+      ],
+      "informative_ids": [
+        "s65",
+        "s66"
+      ]
+    }
   },
   "sweep_engaged_rows": 6,
   "refeed_gate": {
@@ -403,8 +459,8 @@
     "reject_threshold_deg": 120
   },
   "gate": {
-    "registered": "② 스윕에 **경계 전이가 존재한다**(engaged 행과 미발동 행이 둘 다 있다) · ① 실좌표에서 widen_dependent_ids가 큰 Δ 획을 포함하는가가 판별이고 widen_positive_arm이 그 필드의 양성 채널이다 · refeed_gate.band = reject(신규 확정 재현 불가) · ③ rank_only_ids를 갈라 낸다. 값은 필드가 든다(#47)",
-    "reachability": "값은 ② 스윕의 발동 행 수(사거리의 크기 — 0도 8도 아니면 경계가 스윕 안에 있다). ①의 판별력은 widen 끔 팔(angle_relax 0)과 본 팔의 **배정 차이**이고 결과는 result.widen_dependent = 0 — **도달 가능성은 widen_positive_arm.found_rows(비공집합)가 증명하므로**([B-3] · #30·#35) 이 0은 기각의 실측값이다. 실파일 0의 구성 원인은 fit_through_vp(스냅 후 저장 기하 — 어떤 배수에서도 배정 불변). selfcheck의 '정확히 0' 의심은 이 문장이 원인 확인이다",
+    "registered": "② 스윕에 **경계 전이가 존재한다**(engaged 행과 미발동 행이 둘 다 있다) · ① 실좌표의 판별은 **배정 행 misfit_raw < 기본 임계**(widen 불요 — 2차 [1]로 재근거: 개입 팔은 이 저장본에서 구성상 무정보) · refeed_gate.band = reject(신규 확정 재현 불가) · ③ rank_only는 같은 이유로 이 저장본에서 비적용. 값은 필드가 든다(#47)",
+    "reachability": "값은 ② 스윕의 발동 행 수(사거리의 크기 — 0도 8도 아니면 경계가 스윕 안에 있다). ⚠ ①의 widen_dependent 0·③의 rank_only 0은 **이 저장본에서 정보량 0이다**(2차 [1]·[2] — misfit_raw 1e-16대라 두 경로 다 구성상 발화 불가 · #32). 두 필드의 도달 가능성은 widen_positive_arm·rank_positive_arm(각각 비공집합 — 단 다른 픽스처, #40 ③ 명시)이 든다. selfcheck의 '정확히 0' 의심은 이 문장이 원인 확인이다(발화 불가의 구성 원인: fit_through_vp — 스냅 후 저장 기하)",
     "reachability_value": 6,
     "reachability_source": "sweep_engaged_rows",
     "reachability_value_fixture_determined": true,
@@ -412,6 +468,7 @@
       "widen_dependent": 0,
       "rank_only": 0,
       "widen_positive_rows": 1,
+      "rank_positive_rows": 2,
       "refeed_band": "reject"
     },
     "note": "이 원장이 걸리는 번호: #49(경계의 단위 — 부적합도. **°경계를 실획에 옮기지 않는다** — fixture 필드와 per_stroke의 misfit_raw가 각자 자기 단위로 답한다) · #12(동작점 — fixture 필드·파일 하나·격자 공백 7~12°) · #30(widen 끔 개입 팔 + 양성 채널) · #5(Δ 표 자체가 배정 통과 획만 담는 선택 절단 — 그 절단의 폭을 widen이 정한다는 것이 ①의 내용이다)"
