@@ -168,6 +168,233 @@
     "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다.",
     "uses_metrics": false
   },
+  "candidates": {
+    "note": "세 후보를 같은 페이지에서 실행했다. **③이 양성 채널**이다(#30).",
+    "c1_redispatch": {
+      "threw": true,
+      "message": "Uncaught NotFoundError: Failed to execute 'setPointerCapture' on 'Element': No active pointer with the given id is found.",
+      "azimuth_delta": 0,
+      "pitfall": "합성 pointerId에서 `setPointerCapture`가 던진다",
+      "scope": "합성 포인터 사건에 한한다. 실기기에서 활성 포인터를 그대로 재발행하는 경우는 **미측정**",
+      "verdict": "함정 실재(합성 조건) — 던졌다"
+    },
+    "c2_controls_on_ink": {
+      "pen_orbits": true,
+      "azimuth_delta": 1.117010721276371,
+      "pitfall": "three가 `pointerType !== 'touch'`를 마우스로 본다 → **펜이 궤도를 돈다**",
+      "harness_intervention": "①과 섞이지 않게 `setPointerCapture`를 무력화하고 쟀다",
+      "verdict": "함정 실재 — 펜이 궤도를 돌렸다"
+    },
+    "c3_direct": {
+      "public_api": [
+        "rotateLeft",
+        "rotateUp",
+        "pan",
+        "dollyIn",
+        "dollyOut"
+      ],
+      "api_complete": true,
+      "azimuth_delta": 0.02112,
+      "dist_before": 0,
+      "dist_ratio": null,
+      "pitfall_as_written": "three 최신판은 `rotateLeft` 같은 공개 API가 없다",
+      "damping_note": "감쇠(0.12) 때문에 한 프레임에는 요구량의 일부만 적용된다 — 재는 것은 **움직였는가**다",
+      "dist_note": "`dist_before = 0`이면 확정 카메라에 물린 상태(궤도 반지름 0)라 줌을 못 잰다 → 앱 팔에서 잰다",
+      "verdict": "**함정이 사실이 아니다** — r185에 다섯 다 **있고**, 이 팔에서 **회전**이 실제로 움직였다(줌·팬의 작동은 앱 팔에서 잰다). #23: 계획과 실제가 어긋나면 실제를 따른다",
+      "source": "node_modules/three/examples/jsm/controls/OrbitControls.js"
+    },
+    "chosen": "③ — 라우팅만 직접 하고 **카메라는 `OrbitControls` 공개 API**로 움직인다(A-3)"
+  },
+  "app_gestures": {
+    "pinned_before": true,
+    "pinned_after_one_finger": false,
+    "one_finger": {
+      "input_px": {
+        "from": [
+          500,
+          400
+        ],
+        "to": [
+          640,
+          430
+        ],
+        "steps": 6,
+        "start": "확정 카메라(pinned)"
+      },
+      "azimuth_delta": 1.0859826456839083,
+      "polar_delta": 1.3380857598626725,
+      "dist_delta": 6.470458873433549
+    },
+    "two_finger": {
+      "input_px": {
+        "d0": 100,
+        "d1": 196,
+        "ratio": 1.96
+      },
+      "dist_ratio": 0.5660004944940298,
+      "identity_if_guaranteed": 0.5102040816326531,
+      "guarantee_retracted": "**보장이 아니다**(8차 리뷰어 [2]) — 항등이면 `identity_if_guaranteed`(1/1.96)여야 하는데 `dist_ratio`가 그 값이 아니다. 임계를 안 거는 사유는 '항등이라서'가 아니라 **실행마다 흔들려서**다",
+      "target_moved": 0.7103627537003598
+    },
+    "one_finger_already_free": {
+      "input_px": {
+        "from": [
+          500,
+          400
+        ],
+        "to": [
+          640,
+          430
+        ],
+        "steps": 6,
+        "start": "자유 시점(이미 풀림) — **첫 팔과 같은 손짓**"
+      },
+      "azimuth_delta": 1.0859826456823536,
+      "polar_delta": 0.23271056693184522,
+      "dist_delta": 2.255973186038318e-13
+    },
+    "strokes_after_touch_only": {
+      "before": 12,
+      "after": 12
+    },
+    "reading": "손가락 하나가 **확정 카메라를 풀고**(pinned true → false) 방위각을 돌린다. 둘은 **거리를 줄이고**(벌림) 궤도 중심을 옮긴다. ⚠ 핀 해제의 재초기화가 어느 성분에 섞이는지는 **두 팔의 차로 읽는다** — 방위각 차 1.6e-12 · 앙각 차 1.1054 · 거리 차 6.4705. **방위각은 두 팔이 같고**(재초기화가 안 섞인다) 앙각·거리에만 섞인다 — 옛 산문의 '세 성분 전부'와 '13.5%'는 `camPose()` 수리 이전 값이라 철회했다. 그 몫이 빠진 값이 `one_finger_already_free`다. ⚠ **터치만으로는 획이 안 생긴다**(`strokes_after_touch_only`)."
+  },
+  "gesture_tol": {
+    "rotate_speed": 1,
+    "pan_speed": 1,
+    "wheel_base": 0.95,
+    "dead_px": 3
+  },
+  "palm_rejection": {
+    "input_px": {
+      "control_no_pen": {
+        "from": [
+          500,
+          400
+        ],
+        "to": [
+          620,
+          440
+        ],
+        "steps": 6
+      },
+      "op1_pen_touching": {
+        "from": [
+          500,
+          400
+        ],
+        "to": [
+          620,
+          440
+        ],
+        "steps": 6,
+        "note": "**대조군과 같다**"
+      },
+      "op2_held_after_pen_up": {
+        "from": [
+          500,
+          400
+        ],
+        "to": [
+          620,
+          442
+        ],
+        "steps": 6
+      },
+      "pen_interrupts_gesture": {
+        "from": [
+          540,
+          410
+        ],
+        "to": [
+          660,
+          452
+        ],
+        "steps": 6
+      },
+      "pen_at": [
+        300,
+        300
+      ],
+      "control_covers": "대조군의 짝은 **①뿐이다**(같은 손짓). ②는 끝점이 2px 다르고 '펜이 끊기'는 시작점이 40px 다르다 — 그 둘의 0은 ①의 대조군을 **빌려 읽는다**"
+    },
+    "arm_order": [
+      "control_no_pen",
+      "op1_pen_touching",
+      "op2_held_after_pen_up",
+      "pen_interrupts_gesture"
+    ],
+    "arm_start_state": {
+      "control": {
+        "dist": 6.470458873433533,
+        "pinned": false
+      },
+      "op1": {
+        "dist": 6.895720180864389,
+        "pinned": false
+      },
+      "op2": {
+        "dist": 6.895720180864389,
+        "pinned": false
+      },
+      "pen_interrupts": {
+        "dist": 6.895720180864389,
+        "pinned": false
+      },
+      "note": "팔들이 **같은 페이지 상태를 이어 쓴다** — 앞 팔이 뒤 팔의 시작을 정한다"
+    },
+    "control_no_pen": {
+      "moved": 1.666384331068223,
+      "counters": {
+        "rejected_down": 0,
+        "cancelled_by_pen": 0,
+        "held_after_pen_up": 0,
+        "forwarded_down": 1
+      }
+    },
+    "op1_pen_touching": {
+      "moved": 0,
+      "counters": {
+        "rejected_down": 1,
+        "cancelled_by_pen": 0,
+        "held_after_pen_up": 0,
+        "forwarded_down": 0
+      }
+    },
+    "op2_held_after_pen_up": {
+      "moved": 0,
+      "counters": {
+        "rejected_down": 1,
+        "cancelled_by_pen": 0,
+        "held_after_pen_up": 1,
+        "forwarded_down": 0
+      }
+    },
+    "pen_interrupts_gesture": {
+      "moved": 0,
+      "counters": {
+        "rejected_down": 0,
+        "cancelled_by_pen": 1,
+        "held_after_pen_up": 1,
+        "forwarded_down": 1
+      }
+    },
+    "counters_before_arms": {
+      "rejected_down": 0,
+      "cancelled_by_pen": 0,
+      "held_after_pen_up": 0,
+      "forwarded_down": 1,
+      "pen_touching": false
+    },
+    "counters_total": {
+      "rejected_down": 2,
+      "cancelled_by_pen": 1,
+      "held_after_pen_up": 2,
+      "forwarded_down": 3,
+      "pen_touching": false
+    },
+    "reading": "대조군은 움직이고 나머지 셋은 0이다. **대조군이 없으면 '터치가 원래 안 먹는 것'과 구분이 안 된다**(#6). 동작점 둘을 다 잰다(#12) — ②가 없으면 쉬고 있던 손바닥이 펜을 떼는 순간 궤도가 된다. **팔별 카운터 증분**이 각 팔이 자기 문을 실제로 지났음을 낸다 — 총계만으로는 앞 팔의 상태가 막은 것과 구분이 안 된다(#32). ⚠ `moved`는 |Δ방위각|+|Δ앙각|+|Δ거리|의 합이고 `app_gestures`의 축별 델타와 **다른 지표**다 — 두 표의 수를 견주지 않는다."
+  },
   "device_routing": {
     "strokes": {
       "start": 12,
@@ -177,8 +404,75 @@
     },
     "camera_moved": {
       "by_pen": 0,
-      "by_mouse_in_orbit": 1.5514037795487288
+      "by_mouse_in_orbit": 1.5514037795466264
     },
     "reading": "펜·마우스는 잉크로, 터치는 카메라로 간다. 마우스는 `궤도(마우스)` 동안만 카메라다. ⚠ **`pointer-events: none` 전환을 지웠으므로** 궤도 중에도 잉크 캔버스가 사건을 받는다."
+  },
+  "dpr2": {
+    "dpr": {
+      "devicePixelRatio": 2,
+      "css_w": 1280,
+      "backing_w": 2560,
+      "backing_ratio": 2
+    },
+    "perturbation_applied": {
+      "backing_ratio": 2,
+      "reading": "**백버퍼가 css 폭의 2배**여야 dpr 섭동이 실제로 걸린 것이다. 1이면 회전 비 1.0은 '규약이 지켜졌다'가 아니라 '섭동이 안 걸렸다'다"
+    },
+    "rotate": {
+      "azimuth_delta": 1.0859826454346935,
+      "dpr1_azimuth_delta": 1.0859826456839083,
+      "ratio": 0.9999999997705167,
+      "az_tol_rad": 1e-11,
+      "az_tol_basis": {
+        "measured_band_n": 12,
+        "measured_abs_diff_min": 1.694200335577989e-13,
+        "measured_abs_diff_median": 3.9257486150745535e-13,
+        "measured_abs_diff_max": 6.605826996519681e-13,
+        "ratio_to_band_max": 15.1,
+        "source": "`touch_route_repeat.json`(같은 커밋 12회) — **임계를 바꾼 뒤 다시 쟀다**",
+        "band_moved": "⚠⚠ **밴드 자체가 실행 묶음마다 움직인다**: 8차 2차의 12회는 상단 **5.715e-13**, 9차 항목 3의 12회는 **6.606e-13**으로 **16% 크다**. N=12의 상단은 그만큼 흔들리므로 **여유를 배수로 두는 것이 옳다**(#14).",
+        "why": "**옛 임계 1e-6은 이 기계 밴드의 175만 배**라 0/12로 아무것도 안 갈랐다(#40 계열 — 검사가 통과하는데 아무것도 안 잰다). 밴드 상단의 17.5배로 내렸다(**선정 시점의 배수** — 밴드가 실행 묶음마다 움직이므로 현행 배수는 ratio_to_band_max 필드를 읽는다, 10차 정정). ⚠ **오배선의 신호와는 여전히 다섯 자리 위 여유가 있다**: dpr이 어딘가에서 곱해지면 비가 2가 되고 Δ ≈ 0.5rad이다. ⚠⚠ **N=12이라 밴드 상단은 과소추정이다**(#14 — 유효 자릿수 1). 이 임계에서 간헐 실패가 나면 **코드 결함이 아니라 밴드가 넓은 것**이므로 `touch_route_repeat.py`를 다시 돌려 밴드부터 갱신한다."
+      },
+      "az_tol_note": "판정은 |az−dpr1| < az_tol_rad(⚠ 10차 정정: 아래 '1e-6' 연혁 서술은 6차 개정 시점의 값이고 **현행 임계는 az_tol_rad 필드**다 — 9차 항목 3이 1e-11로 내렸다). 연혁: 6차 항목 1에서 1e-6으로 개정(#28 — 옛 정밀도 12(5e-13)는 판정 의도(오배선 = 비 2, Δ≈0.5rad)보다 다섯 자리 과했다. 두 팔의 차는 이 원장의 azimuth_delta 두 필드가 이 실행의 값이다. 6차 컨테이너(chromium-1194)에서는 관측 4회 전부 1e-10대로 5e-13을 넘어 실패했고 변경 전 코드에서도 재현됐다(코드 결함 아님). ⚠ 5차 기록(전량·단독 통과)은 그 환경의 차가 5e-13 이하였다는 뜻이므로 **환경 간 밴드가 다르다(원인 미상 — 감쇠 적분 타이밍·브라우저 빌드 추정, 2-R′ [A-2])** — '같은 밴드의 간헐'이 아니다)",
+      "input_px": {
+        "from": [
+          500,
+          400
+        ],
+        "to": [
+          640,
+          430
+        ],
+        "note": "dpr 1 팔과 같은 좌표"
+      }
+    },
+    "positive_channel": {
+      "azimuth_delta_half_input": 0.5429913227207992,
+      "azimuth_delta_full_free": 1.0859826449807626,
+      "ratio_to_single": 0.5000000002121746,
+      "input_px": {
+        "from": [
+          500,
+          400
+        ],
+        "to": [
+          570,
+          415
+        ],
+        "note": "Δx가 절반. 기준은 **자유 상태의 전체 손짓**이다 — 첫 팔은 핀 해제를 포함해 회전량이 다르다"
+      },
+      "reading": "**0.5에 가까워야 지표가 민감한 것**이다. 1에 붙으면 앞의 비 1.0은 규약의 증거가 아니라 둔감의 증거다. ⚠ 두 배로 안 재는 이유: `getAzimuthalAngle()`이 `atan2`라 **감긴다**(두 배 입력에서 비 3.28이 나왔다)"
+    },
+    "pan": {
+      "target_moved": 0.5145831545976357,
+      "input_px": {
+        "two_fingers_dx": 60,
+        "note": "두 손가락을 나란히 60px 민다(거리 불변 → 줌 없음)"
+      },
+      "is_verdict": false,
+      "reading": "⚠ **판정이 아니라 기록이다** — 같은 궤도 반지름의 dpr 1 팬 팔이 없어 견줄 대상이 없다(값이 반지름에 비례한다). 여기서 말하는 것은 'dpr 2에서 팬 경로가 돈다'까지다"
+    },
+    "reading": "회전 비가 1이면 css 픽셀 규약이 지켜진 것이다. **2면 dpr이 어딘가에서 곱해졌다.**"
   }
 }

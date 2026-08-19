@@ -1,0 +1,466 @@
+{
+ "what": "각도로 만든 **보조 소실점**이 서고, 지평선 위 틱·화면 밖 표시·탈레스/측점·경사 보조가 돌고, 그 방향으로 그으면 **붙되 축은 안 바뀌는가**(지시 7).",
+ "how": {
+  "place": "자리는 `S2S.auxVps`(그리는 쪽과 **같은 출처** `viewOverlayCtx`)가 낸다 — 하네스가 투영을 다시 짜지 않는다(#17).",
+  "snap": "스냅은 **실제로 획을 그어** `placeBy.aux`의 증분으로 잰다(#49: 단위는 배치 경로다). 되살림은 `clearAux()` 뒤 **같은 손짓**이다(#30) — 보조가 없으면 축으로 끌려가야 한다(축 스냅은 «각도로 거르지 않는다»).",
+  "theory": "이론서와의 일치(6.2의 f · 15.1의 위/아래 · 7.3의 |VM| = |VE|)는 **단위 팔**(`test/aux_vp.test.ts`)이 정답을 밖에 두고 잰다. 여기서는 **배선**을 잰다."
+ },
+ "what_this_does_not_say": [
+  "dpr 1·마우스·한 픽스처(확정된 합성 상자)다(#12·#21).",
+  "**보조 각도가 옳은지는 안 잰다** — 사용자가 준 값이다. 이 원장이 재는 것은 그 값이 **뜻대로 방향이 되는가**이고, 그 방향이 그리려는 벽과 맞는지는 사용자의 몫이다.",
+  "**칠해진 픽셀은 안 잰다** — 틱·반원·측점의 **자리**만 든다(`drawAuxVps`·`drawThales`가 그 값을 그대로 받는다).",
+  "**무한원 보조는 이 픽스처에서 안 났다**(#35) — 축과 정확히 화면 평행이 되는 각도가 있어야 하고 그 자리는 안 만들었다. 그 갈래는 **안 쟀다**(0으로 안 센다, #36).",
+  "**보조가 축을 이기는 경계**(같은 화면 각일 때)는 안 쟀다 — 규약은 «비기면 축»이고 그 반례 팔은 없다.",
+  "**저장/복원은 안 쟀다** — 보조는 `Camera`가 아니라 앱 상태라 `.brnl`에 안 들어간다(그 결정과 대가는 `DEFERRED`)."
+ ],
+ "setup": {
+  "canvas": [
+   1280,
+   675
+  ],
+  "arms": 6,
+  "angles_deg": [
+   45,
+   30,
+   60,
+   2
+  ],
+  "slopes_deg": [
+   25,
+   -25
+  ]
+ },
+ "made": {
+  "ids": [
+   "aux1",
+   "aux2",
+   "aux3"
+  ],
+  "dirs": [
+   {
+    "id": "aux1",
+    "of": 0,
+    "yawDeg": 45,
+    "pitchDeg": 0
+   },
+   {
+    "id": "aux2",
+    "of": 0,
+    "yawDeg": 30,
+    "pitchDeg": 0
+   },
+   {
+    "id": "aux3",
+    "of": 0,
+    "yawDeg": 60,
+    "pitchDeg": 0
+   }
+  ]
+ },
+ "placed": {
+  "aux": [
+   {
+    "id": "aux1",
+    "yaw": 45,
+    "pitch": 0,
+    "at": [
+     822.55,
+     69.55
+    ],
+    "dist": 324.22
+   },
+   {
+    "id": "aux2",
+    "yaw": 30,
+    "pitch": 0,
+    "at": [
+     1122.76,
+     69.55
+    ],
+    "dist": 552.13
+   },
+   {
+    "id": "aux3",
+    "yaw": 60,
+    "pitch": 0,
+    "at": [
+     549.43,
+     69.55
+    ],
+    "dist": 282.84
+   }
+  ],
+  "horizon_y": [
+   69.55,
+   69.55
+  ],
+  "gap_to_horizon_px": [
+   0,
+   0,
+   0
+  ],
+  "principal": [
+   640,
+   337.5
+  ]
+ },
+ "thales": {
+  "f_from_thales": 1000,
+  "f_camera": 1000,
+  "f_rel_gap": 0,
+  "E": [
+   640,
+   1104.83
+  ],
+  "measuring": [
+   [
+    313.58,
+    69.55
+   ],
+   [
+    1178.93,
+    69.55
+   ]
+  ]
+ },
+ "slope": {
+  "h": [
+   822.547,
+   69.551
+  ],
+  "up": [
+   849.073,
+   -511.691
+  ],
+  "dn": [
+   801.994,
+   519.909
+  ],
+  "vertical_vp": [
+   640,
+   4069.551
+  ],
+  "vertical_infinite": false,
+  "line_off_up": 0,
+  "line_off_dn": 0,
+  "dx_up": 26.526,
+  "dx_dn": 20.553,
+  "up_above": true,
+  "dn_below": true
+ },
+ "snap": {
+  "on": {
+   "aux_id": "aux1",
+   "before_aux": 0,
+   "after_aux": 2,
+   "delta_aux": 2,
+   "place_delta": {
+    "aux": 2
+   },
+   "stroke_axis": "free",
+   "stroke_aux_id": "aux1",
+   "lifted": true
+  },
+  "off": {
+   "kept_ids": [
+    "aux1",
+    "aux2",
+    "aux3",
+    "aux4",
+    "aux5"
+   ],
+   "delta_aux": 0,
+   "place_delta": {
+    "two_point": 1
+   },
+   "stroke_axis": "free",
+   "stroke_aux_id": null,
+   "lifted": true
+  }
+ },
+ "offscreen": {
+  "at": [
+   2014,
+   70
+  ],
+  "infinite": false,
+  "inside": false,
+  "canvas": [
+   1280,
+   675
+  ]
+ },
+ "summary": {
+  "aux_count": 3,
+  "gap_to_horizon_px": [
+   0,
+   0,
+   0
+  ],
+  "f_rel_gap": 0,
+  "slope_line_off_px": [
+   0,
+   0
+  ],
+  "slope_dx_screen_px": [
+   26.526,
+   20.553
+  ],
+  "vertical_vp_finite": true,
+  "slope_up_above": true,
+  "slope_dn_below": true,
+  "snap_delta_aux": [
+   2,
+   0
+  ],
+  "snap_axis": [
+   "free",
+   "free"
+  ],
+  "snap_aux_id": [
+   "aux1",
+   null
+  ],
+  "snap_place_delta": [
+   {
+    "aux": 2
+   },
+   {
+    "two_point": 1
+   }
+  ],
+  "offscreen_inside": false
+ },
+ "gate": {
+  "registered": "보조 소실점이 지평선 위에 서고(`gap_to_horizon_px` ≈ 0), 경사 보조가 대응 수평 소실점과 **수직축 소실점을 잇는 직선 위**에 있고(`slope_line_off_px` ≈ 0 — 이론서 15.1의 일반형), 그 방향으로 그은 획이 **보조 경로로** 놓이며(`snap_delta_aux[0]` = 1) **축은 free**다. 판정은 `summary`의 필드가 든다(#47).",
+  "registered_note": "⚠ **이 항목이 등록한 게이트다 — CLAUDE.md §2 중단 조건 아님**(#41).",
+  "reachability": "**보조가 없으면 그 손짓이 어디로 가는가** — 되살림 팔(`snap.off`)이 그 답이다. 값은 `snap_delta_aux`(켬 1 · 끔 0)와 `snap_axis`(켬 free · 끔 축 번호)의 쌍이다. 끔에서도 1이면 이 원장은 아무것도 안 말한다(#32·#40).",
+  "reachability_value": [
+   2,
+   0
+  ],
+  "reachability_source": "summary/snap_delta_aux",
+  "reachability_value_fixture_determined": true,
+  "result": {
+   "aux_count": 3,
+   "gap_to_horizon_px": [
+    0,
+    0,
+    0
+   ],
+   "f_rel_gap": 0,
+   "slope_line_off_px": [
+    0,
+    0
+   ],
+   "slope_dx_screen_px": [
+    26.526,
+    20.553
+   ],
+   "vertical_vp_finite": true,
+   "slope_up_above": true,
+   "slope_dn_below": true,
+   "snap_delta_aux": [
+    2,
+    0
+   ],
+   "snap_axis": [
+    "free",
+    "free"
+   ],
+   "snap_aux_id": [
+    "aux1",
+    null
+   ],
+   "snap_place_delta": [
+    {
+     "aux": 2
+    },
+    {
+     "two_point": 1
+    }
+   ],
+   "offscreen_inside": false
+  }
+ },
+ "selfcheck_notes": {
+  "gap_zero": "`gap_to_horizon_px`가 0인 것은 **이론의 귀결이지 이 구현의 보장이 아니다**(#5) — 수평 방향(경사 0)의 소실점은 지평선 위에 있다(이론서 6.2의 전제). 구현이 수직 성분을 잘못 더하면 이 값이 0을 벗어난다. 그래서 임계를 건다.",
+  "slope_line_off_zero": "`slope_line_off_px`가 0인 것은 **이론의 판정**이다 — 경사 소실점은 «대응 수평 소실점 ↔ 수직축 소실점» 직선 위에 있다(이론서 15.1의 일반형). 정답이 밖에 있으므로 보장이 아니고 임계를 건다. ⚠ **15.1의 문면**(«바로 위/아래»)은 수직축이 무한원일 때(2점)의 특수해다 — 이 픽스처는 3점이라 `slope_dx_screen_px`가 0이 아니고, 그것이 AS-L54의 실측이다.",
+  "f_rel_gap_zero": "`f_rel_gap`이 0인 것도 **이론의 판정**이다(#5) — 탈레스 작도가 카메라의 f를 되돌리는지 본다. 구현이 2점 식(`|PE|`)을 3점에 그대로 쓰면 이 값이 0.2대로 뛴다(초판이 그랬다 — AS-L55). 보장이 아니라 실측이고 임계를 건다.",
+  "off_delta_zero": "`snap_delta_aux[1]`(끔 팔)이 0인 것은 **되살림의 성립**이다 — 보조가 없으면 그 경로가 안 돈다. 0이 나와야 대비가 선다. 그 손짓이 **대신 어디로 갔는지는** `snap_place_delta[1]`가 든다(#43: 경로별 카운터).",
+  "on_delta_gt_one": "`snap_delta_aux[0]`이 1보다 클 수 있다 — 확정 뒤 **승격 연쇄**가 대기 획을 같은 보조 방향으로 함께 올리기 때문이다(`promoteChain`). 판정은 «0보다 큰가»이지 정확한 수가 아니다."
+ },
+ "pitfall_citations": [
+  5,
+  12,
+  17,
+  21,
+  30,
+  32,
+  35,
+  36,
+  38,
+  40,
+  41,
+  43,
+  46,
+  47,
+  49
+ ],
+ "errors": [],
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}

@@ -131,9 +131,15 @@ export const auxVpsAt = (
 export interface Thales {
   center: Pt2;
   r: number;
-  /** 시점의 회전 위치(rabatment). 반원 위, P에서 올린 수직선과의 교점. */
+  /** 그 변 위의 수선 발 — 주점에서 `V₁V₂`에 내린 발이다(3점에서는 수심의 성질로 `V₃`의 발과 같다). */
+  foot: Pt2;
+  /** 시점의 회전 위치(rabatment). 반원 위, 발에서 올린 수직선과의 교점. */
   E: Pt2;
-  /** |PE| — 이론서 6.2의 f. */
+  /** `|foot−E|` — 회전한 시점이 그 변까지 가는 거리. 2점에서는 이것이 곧 f다. */
+  edgeDist: number;
+  /** 주점이 그 변에서 떨어진 거리. 2점(주점이 지평선 위)에서는 0이다. */
+  principalOffset: number;
+  /** 초점거리. `f² = edgeDist² − principalOffset²`(아래 머리말). */
   f: number;
 }
 
@@ -141,19 +147,29 @@ export function thales(v1: Pt2, v2: Pt2, principal: Pt2): Thales | null {
   const center: Pt2 = [(v1[0] + v2[0]) / 2, (v1[1] + v2[1]) / 2];
   const r = Math.hypot(v2[0] - v1[0], v2[1] - v1[1]) / 2;
   if (r < 1e-9) return null;
-  // 지평선 방향과 그 법선 — 롤이 있어도 선다(D-L101의 지평선이 선분인 것과 같은 자리)
+  // 변의 방향과 그 법선 — 롤이 있어도 선다(D-L101의 지평선이 선분인 것과 같은 자리)
   const ux = (v2[0] - v1[0]) / (2 * r), uy = (v2[1] - v1[1]) / (2 * r);
-  // 주점을 지평선 위로 내린 발까지의 부호 있는 거리
+  // 주점을 그 변 위로 내린 발까지의 **부호 있는 거리**(중심 기준)
   const t = (principal[0] - center[0]) * ux + (principal[1] - center[1]) * uy;
   const h2 = r * r - t * t;
   if (h2 <= 0) return null;                 // 예각 조건이 깨졌다(이론서 6.5 — f² < 0)
   const h = Math.sqrt(h2);
-  // 반원은 주점이 있는 쪽으로 세운다 — 주점에서 올린 수직선과의 교점이 E다
   const nx = -uy, ny = ux;
   const foot: Pt2 = [center[0] + t * ux, center[1] + t * uy];
   const sgn = ((principal[0] - foot[0]) * nx + (principal[1] - foot[1]) * ny) >= 0 ? 1 : -1;
   const E: Pt2 = [foot[0] + sgn * h * nx, foot[1] + sgn * h * ny];
-  return { center, r, E, f: Math.hypot(E[0] - principal[0], E[1] - principal[1]) };
+  const off = Math.hypot(principal[0] - foot[0], principal[1] - foot[1]);
+  // ⚠⚠ **`|PE| = f`는 2점 전용이다**(이론서 6.2의 전제: 주점이 지평선 **위에** 있다).
+  //
+  // 3점에서는 주점이 수심이라 어느 변 위에도 없다 — 그때 반원이 주는 것은 **그 변까지의
+  // 회전 거리**(`edgeDist` = |foot−E|)이고, 눈은 그 변에서 `edgeDist`, 화면에서 `f` 떨어져
+  // 있으며 발–주점–눈이 직각삼각형을 이룬다(이론서 6.3의 수심 정리와 7.6의 «변마다 E가
+  // 다르다»가 같은 말이다). 그러므로
+  //     f² = edgeDist² − principalOffset²
+  // 이고, 2점에서는 `principalOffset = 0`이라 `f = |PE|`로 되돌아간다.
+  const f2 = h * h - off * off;
+  if (f2 <= 0) return null;                 // 그 변으로는 f가 안 선다 — 근사를 안 만든다
+  return { center, r, foot, E, edgeDist: h, principalOffset: off, f: Math.sqrt(f2) };
 }
 
 /**

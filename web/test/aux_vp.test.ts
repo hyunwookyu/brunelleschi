@@ -69,6 +69,32 @@ describe("보조 방향", () => {
     }
   });
 
+  it("**일반형** — 경사 소실점은 대응 수평 소실점과 **수직축 소실점**을 잇는 직선 위에 있다", () => {
+    // ⚠ 이론서 15.1의 «바로 위/아래»는 **2점 전용**이다(수직축이 화면 세로일 때).
+    // 3점(피치가 있는 카메라)에서는 수직축 소실점이 유한하고, 경사 소실점은 그 점과
+    // 수평 소실점을 잇는 직선 위로 간다 — 15.1은 그 직선이 화면 세로가 되는 특수해다.
+    const t = (35 * Math.PI) / 180, q = (18 * Math.PI) / 180;
+    const cy = Math.cos(q), sy = Math.sin(q);
+    const rotX = (v: Vec3): Vec3 => [v[0], cy * v[1] - sy * v[2], sy * v[1] + cy * v[2]];
+    const A3: (Vec3 | null)[] = [rotX([Math.cos(t), 0, Math.sin(t)]),
+                                 rotX([-Math.sin(t), 0, Math.cos(t)]),
+                                 rotX([0, 1, 0])];
+    const vUp = axisVpAt(A3[2], P, F, IMG)!.at!;
+    expect(vUp).not.toBeNull();
+    for (const g of [0, 30, 70]) {
+      const h = auxVpAt(aux({ yawDeg: g }), A3, P, F, IMG)!.at!;
+      for (const pitch of [10, 25, -25, -40]) {
+        const v = auxVpAt(aux({ yawDeg: g, pitchDeg: pitch }), A3, P, F, IMG)!.at!;
+        const ex = vUp[0] - h[0], ey = vUp[1] - h[1], L = Math.hypot(ex, ey);
+        const off = Math.abs((v[0] - h[0]) * ey - (v[1] - h[1]) * ex) / L;
+        expect(off).toBeLessThan(1e-6);          // 그 직선 위다
+      }
+      // **반례** — 화면 세로선 위는 **아니다**(15.1의 문면이 여기서 깨진다)
+      const v25 = auxVpAt(aux({ yawDeg: g, pitchDeg: 25 }), A3, P, F, IMG)!.at!;
+      expect(Math.abs(v25[0] - h[0])).toBeGreaterThan(1);
+    }
+  });
+
   it("경사각이 커지면 지평선에서 더 멀어진다(단조)", () => {
     const A = axes();
     const h = auxVpAt(aux({ yawDeg: 30 }), A, P, F, IMG)!;
@@ -117,6 +143,38 @@ describe("탈레스 반원 (이론서 6.2)", () => {
         expect(Math.abs(t.f - f) / f).toBeLessThan(1e-9);
       }
     }
+  });
+
+  it("**3점에서도 f를 되돌린다** — |PE| = f는 2점 전용이다(이론서 6.3·7.6)", () => {
+    // 피치를 준 3점 카메라: 축 셋이 다 유한 소실점을 갖는다
+    const t = (35 * Math.PI) / 180, q = (18 * Math.PI) / 180;
+    const cy = Math.cos(q), sy = Math.sin(q);
+    const rotX = (v: Vec3): Vec3 => [v[0], cy * v[1] - sy * v[2], sy * v[1] + cy * v[2]];
+    const A3: (Vec3 | null)[] = [rotX([Math.cos(t), 0, Math.sin(t)]),
+                                 rotX([-Math.sin(t), 0, Math.cos(t)]),
+                                 rotX([0, 1, 0])];
+    const v1 = axisVpAt(A3[0], P, F, IMG)!.at!;
+    const v2 = axisVpAt(A3[1], P, F, IMG)!.at!;
+    const v3 = axisVpAt(A3[2], P, F, IMG)!.at!;
+    expect(v3).not.toBeNull();                        // 3점이 맞다(수직축도 유한하다)
+    const th = thales(v1, v2, P)!;
+    expect(th).not.toBeNull();
+    // 주점이 그 변 위에 **없다** — 2점과 다른 자리다
+    expect(th.principalOffset).toBeGreaterThan(1);
+    // 그래도 f는 되돌아온다(f² = edgeDist² − principalOffset²)
+    expect(Math.abs(th.f - F) / F).toBeLessThan(1e-9);
+    // **반례** — 옛 식(|PE|)은 이 자리에서 틀린다
+    const oldF = Math.hypot(th.E[0] - P[0], th.E[1] - P[1]);
+    expect(Math.abs(oldF - F) / F).toBeGreaterThan(0.01);
+  });
+
+  it("2점에서는 principalOffset이 0이고 f = |PE|다(옛 식이 특수해다)", () => {
+    const A = axes();
+    const v1 = axisVpAt(A[0], P, F, IMG)!.at!;
+    const v2 = axisVpAt(A[1], P, F, IMG)!.at!;
+    const th = thales(v1, v2, P)!;
+    expect(th.principalOffset).toBeLessThan(1e-9);
+    expect(Math.abs(th.f - Math.hypot(th.E[0] - P[0], th.E[1] - P[1]))).toBeLessThan(1e-9);
   });
 
   it("**반례** — 주점이 두 소실점 사이에 없으면 null이다(이론서 6.5, f² < 0)", () => {

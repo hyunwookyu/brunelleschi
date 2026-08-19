@@ -999,6 +999,28 @@ function promoteChain(fr: Frame): number {
  * **보조 방향들(3D)** — 그 시점의 축 방향에서 각도로 만든다(`auxVp.auxDirVec`).
  * 축 방향이 없으면 그 보조도 없다. 순서는 `AUX.dirs` 그대로다.
  */
+/**
+ * **보조 소실점 하나를 만든다**(지시 7-c 각도 입력). 기준 축은 **축 0**이다 —
+ * 각 0이 그 축이고 90°가 다른 수평축이다(`auxDirVec`의 규약).
+ *
+ * ⚠ **같은 각도를 두 번 안 만든다** — 같은 방향의 표식이 겹치면 사용자가 못 고른다.
+ * 경사 보조는 **대응 수평 보조를 함께 만든다**(이론서 15.1의 «바로 위/아래»를 그리려면
+ * 그 수평 소실점이 있어야 한다) — id에 `:h`를 붙여 짝을 표시한다.
+ */
+function addAux(yawDeg: number, pitchDeg: number): string | null {
+  const same = AUX.dirs.find(d => Math.abs(d.yawDeg - yawDeg) < 1e-6
+                               && Math.abs(d.pitchDeg - pitchDeg) < 1e-6);
+  if (same) return same.id;
+  const id = `aux${AUX.nextId++}`;
+  if (Math.abs(pitchDeg) > 1e-9
+      && !AUX.dirs.some(d => Math.abs(d.yawDeg - yawDeg) < 1e-6 && d.pitchDeg === 0)) {
+    AUX.dirs.push({ id: `${id}:h`, of: 0, yawDeg, pitchDeg: 0 });
+  }
+  AUX.dirs.push({ id, of: 0, yawDeg, pitchDeg });
+  refresh();
+  return id;
+}
+
 function auxVecsFor(c: PlaceCtx): { id: string; dir: Vec3 }[] {
   if (!AUX.dirs.length) return [];
   const dirs = axisDirs(c);
@@ -2307,6 +2329,12 @@ function viewOverlayCtx(): {
   axisVps: (AxisVpAt | null)[];
   /** **지평선 = 수평 소실점 둘을 잇는 선**(지시 8-b). 화면 가로선이 아니다. */
   horizonLine: { a: Pt2; b: Pt2 } | null;
+  /** **보조 소실점**(15차 항목 7 · D-L106) — 각도로 만든 방향의 소실점. */
+  auxVps: (AuxVpAt | null)[];
+  /** **탈레스 작도**(이론서 6.2) — 예각 조건이 깨지면 `null`. */
+  thales: { center: Pt2; r: number; E: Pt2; f: number } | null;
+  /** **측점 둘**(이론서 7.3) — 축 0·1의 소실점에 대한 것. */
+  measuring: ({ at: Pt2; both: [Pt2, Pt2] } | null)[];
 } | null {
   if (!cam.standing()) return null;
   const pack = (vps: (Pt2 | null)[], principal: Pt2, f: number,
@@ -2319,8 +2347,18 @@ function viewOverlayCtx(): {
                                                distFromPrincipal: Math.hypot(v[0] - principal[0],
                                                                              v[1] - principal[1]) }
                                            : null));
+    // **보조 소실점**(15차 항목 7 · D-L106) — 각도와 카메라가 함께 정한다. 상태가 아니다
+    const aux = auxVpsAt(AUX.dirs, dirs ?? [], principal, f, imgSize);
+    // **탈레스 반원과 측점**(이론서 6.2·7.3) — 두 수평 소실점이 유한할 때만 선다
+    const h0 = av[0]?.at ?? null, h1 = av[1]?.at ?? null;
+    const th = (h0 && h1) ? thales(h0, h1, principal) : null;
+    const mps = (th && h0 && h1)
+      ? [measuringPoint(h0, th.E, h0, h1, principal),
+         measuringPoint(h1, th.E, h0, h1, principal)]
+      : [null, null];
     return { vps, horizonY: hy, principal, f, axisDirs: dirs, imgSize,
-             axisVps: av, horizonLine: horizonThrough(av[0], av[1], imgSize) };
+             axisVps: av, horizonLine: horizonThrough(av[0], av[1], imgSize),
+             auxVps: aux, thales: th, measuring: mps };
   };
   if (stage.isPinned) {
     const c = cam.ctx();
@@ -2345,6 +2383,105 @@ function horizonGrab(p: Pt2): boolean {
   if (tool !== "draw" || !cam.canSetHorizon()) return false;
   if (cam.standing() && !stage.isPinned) return false;      // 돌린 뷰의 화면 좌표가 아니다
   return Math.abs(p[1] - cam.rules.horizon) <= PICK_TOL.radius_ratio * Math.hypot(...cssSize());
+}
+
+/** 보조 소실점의 표시 색 — 축 색과 갈라 둔다(위계가 눈에 보여야 한다). */
+const AUX_COLOR = "#8a5cd0";
+
+/**
+ * **보조 소실점을 그린다**(지시 7-a·7-d) — 화면 안이면 **틱**(지평선을 가로지르는 짧은
+ * 선분), 화면 밖이면 가장자리 표식. 무한원이면 방향 화살촉이다.
+ *
+ * 자리 계산은 `overlayAxisMarks`가 아니라 여기서 한다 — 그 함수는 축 셋의 타입을 받는다.
+ * ⚠ **규약은 같다**(가장자리 여백 `VP_EDGE.padPx`) — 값을 새로 만들지 않는다(#17).
+ */
+function drawAuxVps(ctx2: CanvasRenderingContext2D,
+                    o: NonNullable<ReturnType<typeof viewOverlayCtx>>,
+                    w: number, h: number) {
+  ctx2.save();
+  ctx2.strokeStyle = AUX_COLOR; ctx2.fillStyle = AUX_COLOR;
+  for (const v of o.auxVps) {
+    if (!v) continue;
+    if (!v.at) {
+      // 무한원 보조 — 방향만 있다(이론서 2.2). 가장자리에 짧은 화살촉
+      ctx2.globalAlpha = 0.4; ctx2.lineWidth = 1.5;
+      const cx = w / 2, cy = h / 2;
+      const px = cx + v.screenDir[0] * (w / 2 - VP_EDGE.padPx);
+      const py = cy + v.screenDir[1] * (h / 2 - VP_EDGE.padPx);
+      ctx2.beginPath(); ctx2.moveTo(cx, cy); ctx2.lineTo(px, py); ctx2.stroke();
+      continue;
+    }
+    const inside = v.at[0] >= 0 && v.at[0] <= w && v.at[1] >= 0 && v.at[1] <= h;
+    if (inside) {
+      // **틱** — 지평선(또는 그 소실점 높이)을 가로지르는 짧은 세로 선분
+      ctx2.globalAlpha = 0.75; ctx2.lineWidth = 1.5;
+      ctx2.beginPath();
+      ctx2.moveTo(v.at[0], v.at[1] - 7); ctx2.lineTo(v.at[0], v.at[1] + 7); ctx2.stroke();
+      // 경사 보조는 대응 수평 소실점과 잇는다(이론서 15.1: 바로 위/아래에 있다)
+      if (Math.abs(v.pitchDeg) > 1e-9) {
+        const hv = o.auxVps.find(x => x && x.at && x.id === v.id + ":h");
+        ctx2.globalAlpha = 0.25;
+        ctx2.setLineDash([3, 3]);
+        ctx2.beginPath();
+        ctx2.moveTo(v.at[0], v.at[1]);
+        ctx2.lineTo(v.at[0], hv?.at ? hv.at[1] : (o.horizonY ?? v.at[1]));
+        ctx2.stroke();
+        ctx2.setLineDash([]);
+      }
+      ctx2.globalAlpha = 0.6;
+      ctx2.font = "10px system-ui, sans-serif";
+      ctx2.fillText(v.label ?? `${v.yawDeg}°${v.pitchDeg ? `/${v.pitchDeg}°` : ""}`,
+                    v.at[0] + 5, v.at[1] - 9);
+    } else {
+      // **화면 밖**(지시 7-d) — 가장자리에 죈다. 주 소실점의 가장자리 규약과 같다
+      const cx = w / 2, cy = h / 2;
+      const dx = v.at[0] - cx, dy = v.at[1] - cy;
+      const pad = VP_EDGE.padPx;
+      const t = Math.min((cx - pad) / Math.abs(dx || 1e-9), (cy - pad) / Math.abs(dy || 1e-9));
+      const ex = cx + dx * t, ey = cy + dy * t;
+      ctx2.globalAlpha = 0.5; ctx2.lineWidth = 1.5;
+      const L = Math.hypot(dx, dy) || 1;
+      const ux = dx / L, uy = dy / L;
+      ctx2.beginPath();
+      ctx2.moveTo(ex - ux * 8 - uy * 5, ey - uy * 8 + ux * 5);
+      ctx2.lineTo(ex, ey);
+      ctx2.lineTo(ex - ux * 8 + uy * 5, ey - uy * 8 - ux * 5);
+      ctx2.stroke();
+    }
+  }
+  ctx2.restore();
+}
+
+/**
+ * **탈레스 반원과 측점**(이론서 6.2·7.3) — 두 수평 소실점을 지름으로 하는 반원, 주점에서
+ * 올린 수직선, 그 교점 `E`(= 회전한 시점), 그리고 각 소실점의 측점 `M`.
+ *
+ * **작도선이지 결과선이 아니다** — 아주 옅게, 파선으로.
+ */
+function drawThales(ctx2: CanvasRenderingContext2D,
+                    o: NonNullable<ReturnType<typeof viewOverlayCtx>>) {
+  const t = o.thales;
+  if (!t) return;
+  ctx2.save();
+  ctx2.strokeStyle = AUX_COLOR; ctx2.fillStyle = AUX_COLOR;
+  ctx2.globalAlpha = 0.3; ctx2.lineWidth = 1; ctx2.setLineDash([4, 4]);
+  ctx2.beginPath(); ctx2.arc(t.center[0], t.center[1], t.r, 0, Math.PI * 2); ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.moveTo(o.principal[0], o.principal[1]); ctx2.lineTo(t.E[0], t.E[1]); ctx2.stroke();
+  ctx2.setLineDash([]);
+  ctx2.globalAlpha = 0.7;
+  ctx2.beginPath(); ctx2.arc(t.E[0], t.E[1], 3, 0, Math.PI * 2); ctx2.fill();
+  ctx2.font = "10px system-ui, sans-serif";
+  ctx2.fillText("E", t.E[0] + 5, t.E[1] - 5);
+  for (let i = 0; i < o.measuring.length; i++) {
+    const m = o.measuring[i];
+    if (!m) continue;
+    ctx2.globalAlpha = 0.7;
+    ctx2.beginPath();
+    ctx2.moveTo(m.at[0], m.at[1] - 6); ctx2.lineTo(m.at[0], m.at[1] + 6); ctx2.stroke();
+    ctx2.fillText(`M${i + 1}`, m.at[0] + 4, m.at[1] + 14);
+  }
+  ctx2.restore();
 }
 
 /** 지평선 선분 하나를 긋는다 — 표시 규약은 가로선 판과 같다(색·파선·알파). */
@@ -2839,6 +2976,14 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
       ctx2.restore();
     }
   }
+  // ---- **보조 소실점**(15차 항목 7 · D-L106) — 지평선 위 틱과 화면 밖 표시.
+  //
+  // ⚠ **주 소실점과 다르게 그린다**(위계): 색이 옅고 표식이 **틱**(짧은 선분)이다 —
+  // 점은 축의 것이다. 그래야 "이건 내가 만든 것"이 보인다.
+  if (ovl && AUX.dirs.length) drawAuxVps(ctx2, ovl, w, h);
+  // ---- **탈레스 반원과 측점**(이론서 6.2·7.3) — 토글이 켜졌을 때만. 작도선은 요청할 때
+  // 긋는 것이지 늘 떠 있는 것이 아니다(종이에서도 그렇다).
+  if (ovl && AUX.showThales) drawThales(ctx2, ovl);
   // ⛔ **거리점 표시를 지웠다**(지시 2) — 거리점 경로 전체가 폐기됐다.
   vpsNow.forEach((v, i) => {
     if (!v) return;
@@ -3453,6 +3598,19 @@ function renderBar() {
         `<button data-osnap-kind="${k}"${OSNAP.kinds[k] ? ' class="on"' : ""}`
         + ` title="${SNAP_TIP[k]}">${SNAP_LABEL[k]}</button>`),
     ] : []),
+    // **보조 소실점**(15차 항목 7 · D-L106) — 각도로 만든다. 개수가 라벨에 나온다
+    btn("aux", `보조 VP ${AUX.dirs.length}`, AUX.open, !cam.standing(), fold),
+    ...(BAR_MENU.open && AUX.open ? [
+      `<span class="osnap-panel">각 <input type="number" min="-180" max="180" step="1" `
+        + `value="45" data-aux-yaw style="width:3.6em"> ° · 경사 `
+        + `<input type="number" min="-89" max="89" step="1" value="0" data-aux-pitch `
+        + `style="width:3.2em"> °</span>`,
+      `<button data-act="aux_add">추가</button>`,
+      ...AUX.dirs.map(d =>
+        `<button data-aux-del="${d.id}" title="지웁니다">`
+        + `${d.yawDeg}°${d.pitchDeg ? ` / ${d.pitchDeg}°` : ""} ✕</button>`),
+      btn("aux_thales", `탈레스·측점 ${AUX.showThales ? "켬" : "끔"}`, AUX.showThales),
+    ] : []),
     btn("expguide", `보조선 내보내기 ${EXPORT_GUIDES.on ? "켬" : "끔"}`, EXPORT_GUIDES.on, false, fold),
     btn("viewcube", `뷰 큐브 ${viewCube.on ? "켬" : "끔"}`, viewCube.on, false, fold),
     // ---- 카메라 — **마우스 전용**(4차 6-b). 손가락 장치에서는 CSS가 숨긴다(l.html의 pointer: coarse)
@@ -3591,6 +3749,14 @@ const onActClick = (e: Event) => {
   // **오스냅 종류 토글**(지시 H) — 라이노처럼 종류마다 켜고 끈다
   const ok = (b as HTMLButtonElement).dataset.osnapKind as SnapKind | undefined;
   if (ok) { OSNAP.kinds[ok] = !OSNAP.kinds[ok]; hoverSnap = null; hover2d = null; refresh(); return; }
+  const adel = (e.target as HTMLElement).closest<HTMLElement>("[data-aux-del]")
+    ?.getAttribute("data-aux-del");
+  if (adel) {
+    // **지워도 그 방향으로 놓인 획은 안 바뀐다** — 이미 3D에 있다(`auxId`는 이력으로 남는다)
+    AUX.dirs = AUX.dirs.filter(d => d.id !== adel);
+    note = "보조 소실점을 지웠습니다 <span class=\"dim\">(그 방향으로 놓인 획은 그대로입니다)</span>";
+    refresh(); return;
+  }
   const act = (b as HTMLButtonElement).dataset.act!;
   if (!act) return;
   if (act === "draw" || act === "orbit" || act === "edit"
@@ -3679,6 +3845,27 @@ const onActClick = (e: Event) => {
   else if (act === "showgrid") {
     SHOW_GRID.on = !SHOW_GRID.on;
     note = "";
+  }
+  else if (act === "aux") { AUX.open = !AUX.open; }
+  else if (act === "aux_thales") {
+    AUX.showThales = !AUX.showThales;
+    note = AUX.showThales
+      ? "**탈레스 반원·측점**을 보입니다 <span class=\"dim\">(이론서 6.2·7.3 — "
+        + "두 수평 소실점을 지름으로 한 반원, 주점에서 올린 E, 각 소실점의 측점 M)</span>"
+      : "";
+  }
+  else if (act === "aux_add") {
+    const yEl = barEl.querySelector<HTMLInputElement>("[data-aux-yaw]");
+    const pEl = barEl.querySelector<HTMLInputElement>("[data-aux-pitch]");
+    const yaw = Math.max(-180, Math.min(180, Number(yEl?.value ?? 45)));
+    const pitch = Math.max(-89, Math.min(89, Number(pEl?.value ?? 0)));
+    if (!Number.isFinite(yaw) || !Number.isFinite(pitch)) {
+      note = "각도를 읽지 못했습니다";
+    } else {
+      addAux(yaw, pitch);
+      note = `보조 소실점 **${yaw}°**${pitch ? ` · 경사 ${pitch}°` : ""}를 만들었습니다`
+           + ' <span class="dim">(그 방향으로 그으면 붙습니다 — 축은 안 바뀝니다)</span>';
+    }
   }
   else if (act === "showhorizon") {
     // **소실점이 선 뒤에는 못 켠다**(D-L104 — 그 지평선은 결과이고 안 끌린다). 버튼도
@@ -4128,6 +4315,20 @@ refresh();
                         visible: horizonVisible() }),
   /** 측정 스위치(#30) — `false`가 수리 전 거동(끌기가 어느 상태에서도 안 열린다)이다. */
   setShowHorizon: (on: boolean) => { SHOW_HORIZON.on = on; refresh(); },
+  /** **보조 소실점**(15차 항목 7 · D-L106) — 저장된 **각도** 목록. 자리는 계산이다. */
+  aux: () => ({ dirs: AUX.dirs.map(d => ({ ...d })), showThales: AUX.showThales,
+                ...auxStats }),
+  /** 각도로 하나 만든다 — 앱의 「추가」 버튼과 **같은 함수**다(#17). id를 낸다. */
+  addAux: (yawDeg: number, pitchDeg = 0) => addAux(yawDeg, pitchDeg),
+  clearAux: () => { AUX.dirs = []; refresh(); },
+  setThales: (on: boolean) => { AUX.showThales = on; refresh(); },
+  /** 지금 시점의 보조 소실점 자리 — 그리는 쪽과 **같은 출처**(`viewOverlayCtx`)다(#17). */
+  auxVps: () => viewOverlayCtx()?.auxVps ?? null,
+  /** 탈레스 작도와 측점(이론서 6.2·7.3) — 예각 조건이 깨지면 `thales`가 `null`이다. */
+  thales: () => {
+    const o = viewOverlayCtx();
+    return o ? { thales: o.thales, measuring: o.measuring, principal: o.principal } : null;
+  },
   /** **관계 스냅**(4차 지시 5) — 종단 확인이 앱 경로 그대로 읽고 쓴다(#17). */
   relSnap: () => REL_SNAP.on,
   setRelSnap: (on: boolean) => { REL_SNAP.on = on; refresh(); },
