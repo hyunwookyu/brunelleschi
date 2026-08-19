@@ -161,6 +161,31 @@ const CHAIN_DIR_GUARD = { on: true };
 const chainDirGuardStats = { attempts: 0, rejected: 0 };
 /** 떠 있는 커서의 스냅 — **누르기 전에 무엇에 붙을지 보인다**(SketchUp/Rhino 관행, L-B.3). */
 let hoverSnap: SnapCand | null = null;
+/** 마지막 호버 질의점(화면 좌표) — 착지가 그 자리에서 얼마나 벗어났는지를 잰다. */
+let hoverAt: Pt2 | null = null;
+/**
+ * **호버에서 본 후보를 펜을 대는 순간 잠근다**(2026-08-19 15차 항목 4 · D-L103).
+ *
+ * 스타일러스는 **화면에 대는 순간 그리기가 시작된다** — 댄 뒤에는 조준할 수 없다.
+ * 그래서 조준은 호버에서 끝나 있어야 하고, 착지가 몇 px 빗나가도 **사용자가 보고
+ * 고른 후보**가 시작점이 된다("호버에서 본 것과 댄 뒤가 같아야 한다" — 지시 4-b).
+ * 옛 판은 착지점으로 스냅을 **다시 물었고**, 조리개(8px) 밖이면 표식이 떠 있었는데도
+ * 시작점이 안 붙었다(재현: 호버 `vertex` → 12px 착지 → `start_kind` null).
+ *
+ * 잠그는 조건은 **착지가 마지막 호버 자리 근처**일 것 하나다 — 반경은 `PICK_TOL`을
+ * 그대로 쓴다(#17: 새 임계를 안 만든다. 손잡이 잡기·탭 판정과 같은 반경).
+ * 그보다 멀면 호버는 낡았고 종전대로 착지점으로 묻는다.
+ *
+ * 측정 스위치(#30) — `S2S.setHoverLock(false)`가 옛 거동(착지점 재질의)이다.
+ * 카운터는 분모와 함께다(#43): downs = 획 시작 수(전부), locked_* = 잠근 수.
+ */
+const HOVER_LOCK = { on: true };
+const hoverLockStats = { downs: 0, locked3d: 0, locked2d: 0, no_hover: 0, stale: 0,
+                        maxLandGapPx: 0 };
+/** 이번 획이 잠근 3D 후보(없으면 null) — 획이 끝나면 지운다. */
+let strokeAnchor: SnapCand | null = null;
+/** 이번 획이 잠근 2D 후보(없으면 null) — `resolve2d`의 `pinStart`로 간다. */
+let stroke2dAnchor: Snap2Cand | null = null;
 /** 마지막 획이 무엇에 붙었나 — 화면에 사유를 낸다(#7: 추측하지 말고 센다). */
 let lastSnapNote = "";
 /**
@@ -284,6 +309,9 @@ function resolve2d(raw: Pt2[], excludeId?: string): Resolve2dOut {
   const cands = segs.length ? static2dCandidates(segs, Math.hypot(...cssSize())) : [];
   // 조리개는 표시 px 기준 — 표시 배율을 되돌린다(D-L94 · viewZoomNow 머리말)
   return resolve2dCore(raw, { cands, vps: cam.vps(), radiusPx: OSNAP.radiusPx / viewZoomNow(),
+                              // **호버에서 잠근 시작점**(D-L103) — 있으면 시작점 질의를
+                              // 안 한다. 사용자가 **보고 조준한** 후보이기 때문이다
+                              pinStart: HOVER_LOCK.on ? stroke2dAnchor : null,
                               // **수선 발의 재료**(9차 항목 2-f) — 질의점에 따라 달라져서
                               // 정적 후보로 못 만든다(3D 판의 `ctx.from`과 같은 자리, #17)
                               segs,
@@ -2826,6 +2854,31 @@ const ink = new InkCanvas(canvas, {
       return;
     }
   },
+  /**
+   * **펜이 닿는 순간 — 호버에서 본 후보를 잠근다**(15차 항목 4 · D-L103).
+   *
+   * 지시 4-b "펜을 대면 그 시점의 후보가 확정된다. 호버에서 본 것과 댄 뒤가 같아야 한다".
+   * 여기서 잠근 것을 미리보기(`onLive`)·확정(`placeStroke`)·2D 판(`resolve2d`)이 전부
+   * 쓴다 — **세 경로가 같은 후보를 본다**(#17).
+   *
+   * 호버가 없는 기기(터치)는 `onHover`가 안 돌아 `hoverSnap`·`hover2d`가 null이고,
+   * 그러면 잠글 것이 없어 **종전 경로 그대로**다(지시 4-c).
+   */
+  onStrokeStart: (p) => {
+    strokeAnchor = null; stroke2dAnchor = null;
+    hoverLockStats.downs += 1;
+    if (!HOVER_LOCK.on) return;
+    if (!hoverAt || (!hoverSnap && !hover2d)) { hoverLockStats.no_hover += 1; return; }
+    // 착지가 마지막 호버 자리에서 얼마나 벗어났나 — 반경은 `PICK_TOL`(#17: 새 임계 없음)
+    const gap = Math.hypot(p[0] - hoverAt[0], p[1] - hoverAt[1]);
+    hoverLockStats.maxLandGapPx = Math.max(hoverLockStats.maxLandGapPx, gap);
+    if (gap > PICK_TOL.radius_ratio * Math.hypot(...cssSize())) {
+      hoverLockStats.stale += 1;   // 호버가 낡았다 — 종전대로 착지점으로 묻는다
+      return;
+    }
+    if (hoverSnap) { strokeAnchor = hoverSnap; hoverLockStats.locked3d += 1; }
+    else if (hover2d) { stroke2dAnchor = hover2d; hoverLockStats.locked2d += 1; }
+  },
   onHover: (p) => {
     const fr = p ? frame() : null;
     const sc = fr ? snapCtx(fr) : null;
@@ -2844,6 +2897,7 @@ const ink = new InkCanvas(canvas, {
           && Math.abs(next2.at[1] - hover2d.at[1]) < 0.5);
     hoverSnap = next;
     hover2d = next2;
+    hoverAt = p ? [p[0], p[1]] : null;   // 착지 거리를 재는 기준(D-L103)
     if (!same || !same2) refresh();
   },
   onLive: (pts) => {
@@ -2875,7 +2929,10 @@ const ink = new InkCanvas(canvas, {
     // **자격 검사를 미리보기도 지난다**(14차 항목 0-a · #17 — `anchorQualified` 머리말):
     // on_edge·on_face는 확정이 앵커로 안 쓰므로(D-L83) 미리보기도 그 앵커의 3D 축 선을
     // 보이면 안 된다 — 표식(hoverSnap)은 그대로 남는다("표시·미리보기는 그대로"의 표시 몫).
-    const cand0 = live?.anchor ?? appSnapAt(a0, segs, sc, snapStatic(segs, fr.poseKey));
+    // **호버에서 잠근 후보가 있으면 그것이 앵커다**(D-L103) — 미리보기와 확정이 같은
+    // 후보를 쓴다(#17). 자격 검사(`anchorQualified`)는 아래에서 종전대로 지난다
+    const cand0 = live?.anchor ?? (HOVER_LOCK.on ? strokeAnchor : null)
+                  ?? appSnapAt(a0, segs, sc, snapStatic(segs, fr.poseKey));
     const anchor = cand0 && anchorQualified(cand0.kind as SnapKind) ? cand0 : null;
     if (!anchor) {
       live = null;
@@ -2924,6 +2981,7 @@ const ink = new InkCanvas(canvas, {
           if (cam.standing()) standCamera();     // P1이면 그 자리에서 선다(feedCamera와 같은 관문)
           lastSnapNote = "소실점을 **찍은 자리**에 확정했습니다 — 지평선이 그 높이에 생깁니다";
           hoverSnap = null; hover2d = null; live = null;
+          strokeAnchor = null; stroke2dAnchor = null;   // 호버 잠금 해제(D-L103)
           refresh(); return;
         }
         undoStack.pop();                         // 아무 일도 안 났다 — 스냅샷을 되물린다
@@ -3030,6 +3088,7 @@ const ink = new InkCanvas(canvas, {
       syncScene();
     }
     hoverSnap = null; hover2d = null; live = null;
+    strokeAnchor = null; stroke2dAnchor = null;   // 호버 잠금 해제(D-L103)
     refresh();
   },
 });
@@ -3048,7 +3107,11 @@ function placeStroke(s: SStroke, fr: Frame): PlacePath {
       const sc = snapCtx(fr);
       const segs0 = snapSegs(fr.toV);
       // **자격 검사를 지난 앵커만 좌표를 정한다**(D-L83 ①) — on_edge·on_face는 표시만
-      const cand = sc ? anchorCandAt(pts[0], segs0, sc, snapStatic(segs0, fr.poseKey)) : null;
+      // **호버 잠금이 있으면 그것을 쓴다**(D-L103) — 자격 검사는 그대로 지난다
+      // (`anchorCandAt`이 하는 일과 같은 판정 하나, #17)
+      const pin = HOVER_LOCK.on && strokeAnchor && anchorQualified(strokeAnchor.kind)
+        ? strokeAnchor : null;
+      const cand = pin ?? (sc ? anchorCandAt(pts[0], segs0, sc, snapStatic(segs0, fr.poseKey)) : null);
       lastSnapNote = "";
       if (cand) {
         applySnapToStart(s, cand, fr.fromV(cand.at));
@@ -3830,6 +3893,15 @@ refresh();
   chainDirGuard: () => ({ on: CHAIN_DIR_GUARD.on, ...chainDirGuardStats }),
   /** 측정 스위치(#30) — `false`가 옛 거동(연쇄가 각도 무제한으로 축 되쓰기)이다. */
   setChainDirGuard: (on: boolean) => { CHAIN_DIR_GUARD.on = on; },
+  /**
+   * **호버 잠금**(15차 항목 4 · D-L103) — 분모(`downs`)와 함께 낸다(#43).
+   * `locked3d + locked2d + no_hover + stale = downs`가 성립한다(`HOVER_LOCK.on`일 때).
+   */
+  hoverLock: () => ({ on: HOVER_LOCK.on, ...hoverLockStats,
+                      pinned3d: strokeAnchor ? strokeAnchor.kind : null,
+                      pinned2d: stroke2dAnchor ? stroke2dAnchor.kind : null }),
+  /** 측정 스위치(#30) — `false`가 수리 전 거동(착지점으로 스냅을 다시 묻는다)이다. */
+  setHoverLock: (on: boolean) => { HOVER_LOCK.on = on; },
   /** **확정 배치 연결 되맞춤**(15차 항목 1 · D-L98) — 분모(attempts)와 함께 낸다(#43). */
   liftAnchor: () => ({ on: LIFT_ANCHOR.on, ...liftAnchorStats }),
   /** 측정 스위치(#30) — `false`가 수리 전 거동(rep 끝점 그대로)이다. */

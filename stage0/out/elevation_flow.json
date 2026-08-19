@@ -253,7 +253,7 @@
  },
  "s3_guard": {
   "on": true,
-  "start_attempts": 1,
+  "start_attempts": 0,
   "start_rejected": 0,
   "unanchored_attempts": 2,
   "unanchored_rejected": 2,

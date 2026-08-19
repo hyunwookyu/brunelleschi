@@ -245,7 +245,7 @@
   },
   "guard": {
    "on": true,
-   "start_attempts": 2,
+   "start_attempts": 1,
    "start_rejected": 0,
    "unanchored_attempts": 4,
    "unanchored_rejected": 4,
@@ -361,7 +361,7 @@
   },
   "guard": {
    "on": true,
-   "start_attempts": 3,
+   "start_attempts": 2,
    "start_rejected": 0,
    "unanchored_attempts": 5,
    "unanchored_rejected": 5,
@@ -443,7 +443,7 @@
   },
   "guard": {
    "on": true,
-   "start_attempts": 3,
+   "start_attempts": 2,
    "start_rejected": 0,
    "unanchored_attempts": 5,
    "unanchored_rejected": 5,

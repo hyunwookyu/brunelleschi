@@ -8,6 +8,12 @@ export type Frame = "plan" | "persp";
 
 export interface InkOptions {
   onStrokeEnd: (stroke: Stroke, frame: Frame) => void;   // pointerup 시 완성 획
+  /**
+   * **획이 시작된 자리**(2026-08-19 15차 항목 4 · D-L103) — 호버에서 보고 있던 스냅 후보를
+   * 그 순간 **잠그기** 위한 훅이다. 스타일러스는 화면에 대는 순간 그리기가 시작되므로
+   * **댄 뒤에는 조준할 수 없다** — 조준은 호버에서 끝나 있어야 한다.
+   */
+  onStrokeStart?: (p: [number, number]) => void;
   color?: string;
   onInputMode?: (penSeen: boolean) => void;              // 펜 감지 시 팜 리젝션 정책 알림
   // 잉크 아래 층(투시 가이드·소실점 등, W-1). redraw가 캔버스를 지우므로 여기서 다시 깐다.
@@ -264,6 +270,7 @@ export class InkCanvas {
     this.activeId = e.pointerId;
     this.t0 = performance.now();
     this.pts = [this.sample(e, 0)];
+    this.opts.onStrokeStart?.(this.local(e));
   };
 
   private onMove = (e: PointerEvent) => {

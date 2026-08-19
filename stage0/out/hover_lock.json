@@ -1,0 +1,602 @@
+{
+ "what": "호버에서 뜬 오스냅 후보가 **펜을 대는 순간 잠기는가** — 착지가 조리개 밖으로 빗나가도 그 후보로 시작하는가(지시 4-b).",
+ "how": {
+  "arms": "같은 네 동작점(착지 어긋남 0·6.7·12.5px + 낡은 호버)을 **잠금 켬/끔**으로 두 번 돈다. 끔이 수리 전 거동이다(#30) — 두 팔 사이에 문서를 되돌린다.",
+  "judge": "`same_kind` — 호버에서 본 후보 종류와 놓인 획의 시작점 종류가 같은가(#49: 판정이 드는 양은 **종류**다. 거리 px는 조건이지 판정이 아니다).",
+  "lock_radius": "잠금 조건은 **착지가 마지막 호버 자리에서 벗어난 px**가 `PICK_TOL.radius_ratio × 화면 대각` 이내일 것 — 새 임계가 아니다(#17). 조리개(`OSNAP_RADIUS_PX`)와는 **다른 양**이다(#49)."
+ },
+ "what_this_does_not_say": [
+  "dpr 1·합성 `PointerEvent`·한 픽스처다(#12·#21). **실기(아이패드) 확인은 없다** — 애플펜슬의 실제 호버 표본이 오면 그때 판정한다.",
+  "**호버가 없는 기기는 이 팔이 안 돈다**(#35) — 터치는 `onHover`가 안 불려 `hoverSnap`·`hover2d`가 null이고 `no_hover`가 그 갈래를 센다(지시 4-c: 종전대로). 그 경로의 종단 팔은 `touch_route.spec.ts`가 따로 든다.",
+  "**호버 표식이 화면에 칠해지는가는 안 잰다** — 잰 것은 `S2S.hoverSnap()`이 낸 후보다. 칠하기는 `drawSnapMark`가 그 값을 그대로 받는다(배선 공유, #17).",
+  "**카메라 전 2D 갈래는 동작점 하나뿐이다**(⑤ — 조리개 밖 착지). 어긋남 곡선은 3D 갈래(①②③④)가 든다.",
+  "**잠근 후보가 3D에 옳게 놓이는가는 안 잰다** — `lifted`(놓였는가)까지다. 옳음은 `confirm_link`·`dir_state`의 자리다(그 둘은 확정 시점 행을 든다).",
+  "`same_kind`는 **보장이 아니다**(#5) — 끔 팔의 ③에서 실제로 거짓이 나오는 것이 이 원장의 판별이다. 참이 자동으로 성립하는 구성이 아니다."
+ ],
+ "selfcheck_notes": {
+  "land_gap_zero": "`land_gap_px[0]`이 정확히 0인 것은 **구성의 귀결**이다 — 동작점 ①은 호버와 착지를 **같은 좌표로** 합성했다(어긋남 0이 그 동작점의 정의다). 임계를 안 건다(#5).",
+  "pre_camera_3d_zero": "`counters.pre_camera.locked3d`·`stale` 0은 그 팔의 구성이다 — 카메라가 안 서서 3D 후보가 **없고**(`hoverSnap` null), 착지가 늘 잠금 반경 안이라 낡은 호버가 안 생긴다. 그 두 갈래는 확정 뒤 팔(①~④)이 든다.",
+  "locked2d_zero": "`counters.on`·`off`의 `locked2d` 0은 **3D가 이기기 때문이다**(`onHover`가 3D 후보가 있으면 `hover2d`를 안 만든다 — 4차 지시 1의 순서). 2D 갈래는 `counters.pre_camera`가 든다.",
+  "no_hover_zero": "`counters.on`·`off`의 `no_hover` 0은 그 팔의 동작점이 전부 **호버를 먼저 합성**하기 때문이다(`pre_camera`의 1은 씨앗 획 — 호버 없이 그었다). 호버가 없는 기기(터치)의 갈래는 여기서 **도달 불가**이고 안전으로 안 읽는다(#35) — 그 경로는 `touch_route.spec.ts`가 따로 든다."
+ },
+ "arms": {
+  "on": {
+   "on": true,
+   "rows": [
+    {
+     "label": "① 호버 = 착지(정확)",
+     "land_gap_px": 0,
+     "hover": {
+      "layer": "3d",
+      "kind": "endpoint",
+      "at": [
+       789.8,
+       242.1
+      ],
+      "ofId": "s1"
+     },
+     "after": {
+      "added": true,
+      "start_kind": "endpoint",
+      "start_layer": "3d",
+      "lifted": true
+     },
+     "same_kind": true
+    },
+    {
+     "label": "② 착지가 6.7px 빗나감(조리개 안)",
+     "land_gap_px": 6.7,
+     "hover": {
+      "layer": "3d",
+      "kind": "vertex",
+      "at": [
+       789.8,
+       242.1
+      ],
+      "ofId": "s1"
+     },
+     "after": {
+      "added": true,
+      "start_kind": "vertex",
+      "start_layer": "3d",
+      "lifted": true
+     },
+     "same_kind": true
+    },
+    {
+     "label": "③ 착지가 12.5px 빗나감(조리개 밖)",
+     "land_gap_px": 12.5,
+     "hover": {
+      "layer": "3d",
+      "kind": "vertex",
+      "at": [
+       789.8,
+       242.1
+      ],
+      "ofId": "s1"
+     },
+     "after": {
+      "added": true,
+      "start_kind": "vertex",
+      "start_layer": "3d",
+      "lifted": true
+     },
+     "same_kind": true
+    },
+    {
+     "label": "④ 호버가 낡았다(먼 자리에 착지)",
+     "land_gap_px": 150,
+     "hover": {
+      "layer": "3d",
+      "kind": "vertex",
+      "at": [
+       789.8,
+       242.1
+      ],
+      "ofId": "s1"
+     },
+     "after": {
+      "added": true,
+      "start_kind": null,
+      "start_layer": null,
+      "lifted": false
+     },
+     "same_kind": false
+    }
+   ],
+   "stats": {
+    "on": true,
+    "downs": 4,
+    "locked3d": 3,
+    "locked2d": 0,
+    "no_hover": 0,
+    "stale": 1,
+    "maxLandGapPx": 149.99999999999997,
+    "pinned3d": null,
+    "pinned2d": null
+   }
+  },
+  "off": {
+   "on": false,
+   "rows": [
+    {
+     "label": "① 호버 = 착지(정확)",
+     "land_gap_px": 0,
+     "hover": {
+      "layer": "3d",
+      "kind": "endpoint",
+      "at": [
+       789.8,
+       242.1
+      ],
+      "ofId": "s1"
+     },
+     "after": {
+      "added": true,
+      "start_kind": "endpoint",
+      "start_layer": "3d",
+      "lifted": true
+     },
+     "same_kind": true
+    },
+    {
+     "label": "② 착지가 6.7px 빗나감(조리개 안)",
+     "land_gap_px": 6.7,
+     "hover": {
+      "layer": "3d",
+      "kind": "vertex",
+      "at": [
+       789.8,
+       242.1
+      ],
+      "ofId": "s1"
+     },
+     "after": {
+      "added": true,
+      "start_kind": "vertex",
+      "start_layer": "3d",
+      "lifted": true
+     },
+     "same_kind": true
+    },
+    {
+     "label": "③ 착지가 12.5px 빗나감(조리개 밖)",
+     "land_gap_px": 12.5,
+     "hover": {
+      "layer": "3d",
+      "kind": "vertex",
+      "at": [
+       789.8,
+       242.1
+      ],
+      "ofId": "s1"
+     },
+     "after": {
+      "added": true,
+      "start_kind": null,
+      "start_layer": null,
+      "lifted": false
+     },
+     "same_kind": false
+    },
+    {
+     "label": "④ 호버가 낡았다(먼 자리에 착지)",
+     "land_gap_px": 150,
+     "hover": {
+      "layer": "3d",
+      "kind": "vertex",
+      "at": [
+       789.8,
+       242.1
+      ],
+      "ofId": "s1"
+     },
+     "after": {
+      "added": true,
+      "start_kind": null,
+      "start_layer": null,
+      "lifted": false
+     },
+     "same_kind": false
+    }
+   ],
+   "stats": {
+    "on": false,
+    "downs": 8,
+    "locked3d": 3,
+    "locked2d": 0,
+    "no_hover": 0,
+    "stale": 1,
+    "maxLandGapPx": 149.99999999999997,
+    "pinned3d": null,
+    "pinned2d": null
+   }
+  },
+  "pre_camera": {
+   "on": {
+    "label": "⑤ 카메라 전 · 조리개 밖 착지(2D)",
+    "land_gap_px": 12.5,
+    "hover": {
+     "layer": "2d",
+     "kind": "endpoint",
+     "at": [
+      500,
+      470
+     ],
+     "ofId": "s1"
+    },
+    "after": {
+     "added": true,
+     "start_kind": "endpoint",
+     "start_layer": "2d",
+     "lifted": false
+    },
+    "same_kind": true
+   },
+   "off": {
+    "label": "⑤ 카메라 전 · 조리개 밖 착지(2D) — 잠금 끔",
+    "land_gap_px": 12.5,
+    "hover": {
+     "layer": "2d",
+     "kind": "vertex",
+     "at": [
+      500,
+      470
+     ],
+     "ofId": "s1"
+    },
+    "after": {
+     "added": true,
+     "start_kind": null,
+     "start_layer": null,
+     "lifted": false
+    },
+    "same_kind": false
+   },
+   "stats": {
+    "on": true,
+    "downs": 3,
+    "locked3d": 0,
+    "locked2d": 1,
+    "no_hover": 1,
+    "stale": 0,
+    "maxLandGapPx": 12.529964086141668,
+    "pinned3d": null,
+    "pinned2d": null
+   }
+  }
+ },
+ "summary": {
+  "on_same_kind": [
+   true,
+   true,
+   true,
+   false
+  ],
+  "off_same_kind": [
+   true,
+   true,
+   false,
+   false
+  ],
+  "on_start_kind": [
+   "endpoint",
+   "vertex",
+   "vertex",
+   null
+  ],
+  "off_start_kind": [
+   "endpoint",
+   "vertex",
+   null,
+   null
+  ],
+  "on_lifted": [
+   true,
+   true,
+   true,
+   false
+  ],
+  "off_lifted": [
+   true,
+   true,
+   false,
+   false
+  ],
+  "land_gap_px": [
+   0,
+   6.7,
+   12.5,
+   150
+  ],
+  "lost_by_old_path": 1,
+  "recovered_land_gap_px": [
+   12.5
+  ],
+  "pre_camera_same_kind": [
+   true,
+   false
+  ],
+  "pre_camera_start_kind": [
+   "endpoint",
+   null
+  ]
+ },
+ "gate": {
+  "registered": "호버에서 본 후보가 착지에서 그대로 쓰인다. 판정은 `summary.on_same_kind`(잠금 켬)와 `summary.off_same_kind`(수리 전)의 대비가 든다(#47).",
+  "reachability": "**옛 경로가 실제로 잃던 스냅이 있는가** — 값은 `recovered_land_gap_px`(잠금이 되찾은 착지 어긋남 px)다. **빈 배열이면 이 원장은 아무것도 안 말한다**(#32·#40). 수(`lost_by_old_path`)를 값으로 안 쓴다 — 0/1은 정보량이 0이다(#5). 이 px는 조리개(8px)를 **얼마나 넘어** 닿았는지를 든다.",
+  "reachability_value": [
+   12.5
+  ],
+  "reachability_source": "summary/recovered_land_gap_px",
+  "reachability_value_fixture_determined": false,
+  "result": {
+   "on_same_kind": [
+    true,
+    true,
+    true,
+    false
+   ],
+   "off_same_kind": [
+    true,
+    true,
+    false,
+    false
+   ],
+   "on_start_kind": [
+    "endpoint",
+    "vertex",
+    "vertex",
+    null
+   ],
+   "off_start_kind": [
+    "endpoint",
+    "vertex",
+    null,
+    null
+   ],
+   "on_lifted": [
+    true,
+    true,
+    true,
+    false
+   ],
+   "off_lifted": [
+    true,
+    true,
+    false,
+    false
+   ],
+   "land_gap_px": [
+    0,
+    6.7,
+    12.5,
+    150
+   ],
+   "lost_by_old_path": 1,
+   "recovered_land_gap_px": [
+    12.5
+   ],
+   "pre_camera_same_kind": [
+    true,
+    false
+   ],
+   "pre_camera_start_kind": [
+    "endpoint",
+    null
+   ]
+  }
+ },
+ "counters": {
+  "pre_camera": {
+   "on": true,
+   "downs": 3,
+   "locked3d": 0,
+   "locked2d": 1,
+   "no_hover": 1,
+   "stale": 0,
+   "maxLandGapPx": 12.529964086141668,
+   "pinned3d": null,
+   "pinned2d": null
+  },
+  "on": {
+   "on": true,
+   "downs": 4,
+   "locked3d": 3,
+   "locked2d": 0,
+   "no_hover": 0,
+   "stale": 1,
+   "maxLandGapPx": 149.99999999999997,
+   "pinned3d": null,
+   "pinned2d": null
+  },
+  "off": {
+   "on": false,
+   "downs": 8,
+   "locked3d": 3,
+   "locked2d": 0,
+   "no_hover": 0,
+   "stale": 1,
+   "maxLandGapPx": 149.99999999999997,
+   "pinned3d": null,
+   "pinned2d": null
+  }
+ },
+ "ui_constants": {
+  "pick_radius_ratio": 0.0145
+ },
+ "pitfall_citations": [
+  5,
+  12,
+  17,
+  21,
+  30,
+  32,
+  35,
+  36,
+  40,
+  42,
+  43,
+  46,
+  47,
+  48,
+  49,
+  50
+ ],
+ "errors": [],
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}

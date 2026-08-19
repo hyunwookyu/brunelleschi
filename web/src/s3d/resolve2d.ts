@@ -69,6 +69,14 @@ export interface Resolve2dCtx {
    * 그것이 이 가드의 **양성 채널**이다(#30). 앱 코드에서 끄지 않는다.
    */
   kindFlipGuard?: boolean;
+  /**
+   * **호버에서 잠근 시작점 후보**(2026-08-19 15차 항목 4 · D-L103). 있으면 시작점 질의를
+   * **하지 않고** 이것을 쓴다 — 사용자가 **보고 조준한** 후보이기 때문이다.
+   *
+   * ⚠ 잠글지는 부르는 쪽이 정한다(착지가 그 표식에서 얼마나 멀어도 되는가는 앱의 물음이다).
+   * 여기서는 "주어지면 그것이 시작점 후보다"까지만 한다 — 판정을 두 곳에 안 둔다(#17).
+   */
+  pinStart?: Snap2Cand | null;
 }
 
 /** `resolve2dCore`의 결과 — 미리보기와 확정이 **같은 값**을 본다(#17·§11). */
@@ -128,7 +136,7 @@ export function resolve2dCore(raw: Pt2[], ctx: Resolve2dCtx): Resolve2dOut {
     && (rep0 ? classifyLine(rep0.a, rep0.b).kind === "depth" : false);
   const rel = ctx.relSnap && !rawDepth;
   // ① 시작점 — 오스냅이 이기고, 안 붙으면 정렬(끝점·중점의 x·y)
-  const start2 = snap2dAt(a0, ctx.cands, ctx.radiusPx, ctx.kinds);
+  const start2 = ctx.pinStart ?? snap2dAt(a0, ctx.cands, ctx.radiusPx, ctx.kinds);
   let a: Pt2 = start2 ? start2.at : [a0[0], a0[1]];
   if (!start2 && rel) {
     const h = alignAxes(a, ctx.cands, tol);
