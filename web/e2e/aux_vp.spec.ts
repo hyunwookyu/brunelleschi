@@ -205,6 +205,62 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
              stroke_axis: after.axis, stroke_aux_id: after.auxId, lifted: after.lifted };
   })();
 
+  // ---- ⑦ **위계 — 비기면 축이 이긴다**(지시 7 "위계"). 각 **0°** 보조는 축 0과
+  // 정확히 같은 방향이므로 화면 각이 **같다**. 그때 축이 이겨야 한다(엄격 비교).
+  // ⚠ 이 팔이 없으면 위계는 **선언뿐**이다 — 규약을 재는 자리가 여기다.
+  const tie = await (async () => {
+    const box = (await page.locator("#frame").boundingBox())!;
+    const g = await page.evaluate(async () => {
+      const S = window.S2S;
+      const g3 = await import("/src/s3d/geom3d.ts");
+      const c = S.cam.ctx();
+      S.clearAux();
+      S.addAux(0, 0);                                  // ← 축 0과 **같은 방향**
+      // ⚠ **앵커를 고를 때 연장선 경로를 피한다**(우선순위: 양 끝 스냅 > 연장선 > 축·보조).
+      // 축 0을 따라 놓인 획의 끝점에서 축 0 쪽으로 그으면 **연장선**이 먼저 잡아서
+      // 경쟁 자체가 안 열린다 — 첫 판이 그 자리에 걸렸다. **축 0이 아닌 획**의 끝점을 쓴다.
+      const st = S.doc().strokes.find((x: any) => x.seg3d && x.axis !== 0 && x.axis !== "free")
+              ?? S.doc().strokes.find((x: any) => x.seg3d)!;
+      const a = g3.project(st.seg3d[0], c.principal, c.f)!;
+      // 축 0의 소실점 쪽으로 긋는다 — 보조도 같은 소실점이다(각 0이므로)
+      const av = S.draftOverlay().axisVps[0];
+      if (!av || !av.at) return null;
+      const dx = av.at[0] - a[0], dy = av.at[1] - a[1], L = Math.hypot(dx, dy) || 1;
+      return { a, b: [a[0] + (dx / L) * 160, a[1] + (dy / L) * 160],
+               aux_at: S.auxVps()[0]?.at ?? null, axis_at: av.at };
+    });
+    if (!g) return null;
+    const before = await page.evaluate(() => ({ pb: { ...window.S2S.placeBy() },
+                                                ax: { ...window.S2S.aux() } }));
+    await page.mouse.move(box.x + g.a[0], box.y + g.a[1]);
+    await page.mouse.down();
+    for (let i = 1; i <= 6; i++) {
+      await page.mouse.move(box.x + g.a[0] + (g.b[0] - g.a[0]) * i / 6,
+                            box.y + g.a[1] + (g.b[1] - g.a[1]) * i / 6);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(70);
+    const after = await page.evaluate(() => {
+      const S = window.S2S, sts = S.doc().strokes, s = sts[sts.length - 1];
+      return { placeBy: { ...S.placeBy() }, axis: s.axis, auxId: s.auxId ?? null,
+               aux: { ...S.aux() } };
+    });
+    const dp: Record<string, number> = {};
+    for (const k of Object.keys(after.placeBy)) {
+      const d = (after.placeBy as any)[k] - (before.pb as any)[k];
+      if (d) dp[k] = d;
+    }
+    return { aux_at: g.aux_at, axis_at: g.axis_at,
+             /** 두 소실점이 같은 자리인가 — «비긴다»의 구성 확인 */
+             same_vp_px: g.aux_at ? Math.round(Math.hypot(g.aux_at[0] - g.axis_at[0],
+                                                          g.aux_at[1] - g.axis_at[1]) * 1000) / 1000
+                                  : null,
+             place_delta: dp, stroke_axis: after.axis, stroke_aux_id: after.auxId,
+             /** **이 손짓의 몫**(누적이 아니다) — 경쟁이 실제로 열렸고 보조가 졌는가 */
+             competed_delta: after.aux.competed - before.ax.competed,
+             won_delta: after.aux.won - before.ax.won };
+  })();
+
   // ---- ⑥ **화면 밖 처리**(지시 7-d) — 아주 얕은 각은 소실점이 화면 밖으로 나간다
   const offscreen = await page.evaluate(() => {
     const S = window.S2S;
@@ -239,15 +295,17 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
       + "그 값을 그대로 받는다).",
       "**무한원 보조는 이 픽스처에서 안 났다**(#35) — 축과 정확히 화면 평행이 되는 각도가 "
       + "있어야 하고 그 자리는 안 만들었다. 그 갈래는 **안 쟀다**(0으로 안 센다, #36).",
-      "**보조가 축을 이기는 경계**(같은 화면 각일 때)는 안 쟀다 — 규약은 «비기면 축»이고 "
-      + "그 반례 팔은 없다.",
+      "**비긴 자리는 쟀다**(⑦ — 각 0° 보조는 축 0과 같은 방향이라 화면 각이 같다). "
+      + "그런데 **비슷하지만 안 비긴 자리**(축에서 1~3° 떨어진 보조)는 안 쟀다 — 그 대역의 "
+      + "경계 스윕은 `DEFERRED`다.",
       "**저장/복원은 안 쟀다** — 보조는 `Camera`가 아니라 앱 상태라 `.brnl`에 안 들어간다"
       + "(그 결정과 대가는 `DEFERRED`).",
     ],
-    setup: { canvas: offscreen.canvas, arms: 6,
+    setup: { canvas: offscreen.canvas, arms: 7,
              angles_deg: [45, 30, 60, 2], slopes_deg: [25, -25] },
     made, placed, thales: th, slope,
     snap: { on: snapOn, off: snapOff },
+    tie,
     offscreen,
     summary: {
       aux_count: made.dirs.length,
@@ -265,6 +323,13 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
       /** 그 손짓이 늘린 경로 전부 — 켬은 `aux`, 끔은 다른 경로여야 한다(#43) */
       snap_place_delta: [snapOn ? snapOn.place_delta : null, snapOff ? snapOff.place_delta : null],
       offscreen_inside: offscreen.inside,
+      /** **위계** — 같은 방향(각 0°)에서 축이 이기는가. 보조 경로가 안 늘어야 한다 */
+      tie_place_delta: tie ? tie.place_delta : null,
+      tie_stroke_axis: tie ? tie.stroke_axis : null,
+      tie_same_vp_px: tie ? tie.same_vp_px : null,
+      /** 경쟁이 실제로 열렸는가(>0) · 보조가 이겼는가(0이어야 한다) */
+      tie_competed: tie ? tie.competed_delta : null,
+      tie_won: tie ? tie.won_delta : null,
     },
     gate: {
       registered: "보조 소실점이 지평선 위에 서고(`gap_to_horizon_px` ≈ 0), 경사 보조가 "
@@ -345,6 +410,15 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
   expect(snapOff!.stroke_aux_id).toBeNull();
   // 그 손짓은 **다른 경로**로 놓인다(어느 경로인지는 원장이 든다 — 여기서 이름을 안 박는다)
   expect(Object.keys(snapOff!.place_delta).length).toBeGreaterThan(0);
+  // **⑦ 위계** — 같은 방향에서는 **축이 이긴다**(보조 경로가 안 늘고 축 번호가 붙는다)
+  expect(tie).not.toBeNull();
+  expect(tie!.same_vp_px!).toBeLessThan(0.01);      // 구성 확인: 두 소실점이 같은 자리다
+  // **경쟁이 실제로 열렸다** — 안 열리면 이 팔은 위계를 안 잰 것이다(#32)
+  expect(tie!.competed_delta).toBeGreaterThan(0);
+  expect(tie!.won_delta).toBe(0);
+  expect(tie!.place_delta.aux ?? 0).toBe(0);
+  expect(tie!.stroke_aux_id).toBeNull();
+  expect(typeof tie!.stroke_axis).toBe("number");
   // **⑥ 화면 밖 처리** — 얕은 각의 소실점은 화면 밖이고 그래도 값이 있다
   expect(offscreen.inside).toBe(false);
   expect(offscreen.at).not.toBeNull();
