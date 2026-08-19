@@ -418,6 +418,8 @@ const VP_EDGE = { padPx: 14, sizePx: 6 };
  * 그 용도 그대로다. 궤도 시점(z 미적용)은 1.
  */
 const viewZoomNow = () => ((stage.isPinned || !cam.standing()) ? stage.viewZoom : 1);
+/** **꺼진 오스냅 종류의 수**(15차 항목 6 · D-L105) — 라벨이 이것을 말한다. */
+const osnapOffCount = (): number => SNAP_ORDER.filter(k => !OSNAP.kinds[k]).length;
 const osnapCfg = () =>
   ({ radius_ratio: OSNAP.radiusPx / viewZoomNow() / Math.hypot(...cssSize()) });
 /** **종류 필터를 지난 최선 후보** — 앱의 모든 스냅 질의가 이것을 지난다(#17). */
@@ -3360,7 +3362,11 @@ function renderBar() {
                                                     : "잠김"}`,
         SHOW_HORIZON.on && cam.canSetHorizon(), !cam.canSetHorizon(), fold),
     btn("showguide", `보조선 ${SHOW_GUIDES.on ? "보임" : "숨김"}`, SHOW_GUIDES.on, false, fold),
-    btn("osnap", `스냅 ${OSNAP.radiusPx}px`, OSNAP.open, false, fold),
+    // **꺼진 종류가 있으면 라벨이 그것을 말한다**(2026-08-19 15차 항목 6 · D-L105) —
+    // 옛 판은 패널을 두 번 열어야만 무엇이 꺼졌는지 알 수 있었고, 그래서 "스냅이 안 걸린다"가
+    // 고장으로 읽혔다. 라이노는 오스냅 막대가 늘 떠 있어 켜진 것이 한눈에 보인다(A-3: 선례)
+    btn("osnap", `스냅 ${OSNAP.radiusPx}px${osnapOffCount() ? ` · ${osnapOffCount()} 끔` : ""}`,
+        OSNAP.open, false, fold),
     ...(BAR_MENU.open && OSNAP.open ? [
       `<span class="osnap-panel">반경 <input type="number" min="4" max="40" step="1" `
         + `value="${OSNAP.radiusPx}" data-osnap-radius style="width:3.2em"> px</span>`,
@@ -3774,6 +3780,24 @@ refresh();
     if (!fr || !sc) return null;
     const g = snapSegs(fr.toV);
     return appSnapAt(p, g, sc, snapStatic(g, fr.poseKey));
+  },
+  /**
+   * **그 자리의 스냅 후보 **전부**(2026-08-19 15차 항목 6) — 이긴 것 하나가 아니라
+   * 순위대로 낸다. `S2S.snap`과 **같은 함수**(`snapCandidates`)를 지나므로 앱 경로다(#17).
+   *
+   * 왜 필요한가: 종류별 토글이 **여덟 종류 전부에서** 도는지 재려면 각 종류가 이기는
+   * 자리를 찾아야 하는데, 그것을 손으로 만들면 픽스처가 답을 정한다(#46). 후보 목록에서
+   * 고르면 픽스처가 아니라 **장면이 정한다**. `from`은 수선 발의 재료다(없으면 안 나온다).
+   */
+  snapCands: (p: Pt2, from?: Vec3) => {
+    const fr = frame(); const sc = snapCtx(fr, from);
+    if (!fr || !sc) return [];
+    const g = snapSegs(fr.toV);
+    // ⚠ **종류 필터는 `snapCandidates`가 아니라 `appSnapAt`이 건다** — 그러므로 여기서
+    // 그 판정을 그대로 붙여 낸다(#17). 안 붙이면 측정이 앱보다 넓은 것을 보게 된다.
+    return snapCandidates(p, g, sc, osnapCfg(), snapStatic(g, fr.poseKey))
+      .map(c => ({ kind: c.kind, dist: c.dist, screen: c.screen, ofId: c.ofId ?? null,
+                   enabled: !!OSNAP.kinds[c.kind] }));
   },
   snapTargets: () => snapSegs().length,
   hoverSnap: () => hoverSnap,

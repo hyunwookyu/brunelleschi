@@ -288,12 +288,13 @@ export const SNAP_ICON: Record<SnapKind, "square" | "diamond" | "cross" | "trian
 };
 /** 툴팁 — **무엇에 붙는지와 그것이 무엇을 정하는지**를 한 줄로. */
 export const SNAP_TIP: Record<SnapKind, string> = {
-  vertex: "여러 획이 만나는 꼭짓점 — 가장 확실한 대상입니다",
-  endpoint: "획의 끝점",
-  midpoint: "획의 3D 중점(화면 중점이 아닙니다)",
-  intersection: "3D에서 실제로 만나는 교차점(겉보기 교차는 제외)",
-  perpendicular: "시작점에서 그 획에 내린 수선의 발",
-  extension: "끝점에서 그 선의 방향을 그대로 이어 긋습니다 — 같은 3D 직선 위에 놓입니다",
-  on_edge: "그 획 위에서 커서에 가장 가까운 점",
-  on_face: "지면 위의 점(시선과 지면의 교점)",
+  vertex: "여러 획이 만나는 꼭짓점 — 가장 확실한 대상입니다 (라이노: Vertex)",
+  endpoint: "획의 끝점 (라이노: End)",
+  midpoint: "획의 3D 중점(화면 중점이 아닙니다) (라이노: Mid)",
+  intersection: "3D에서 실제로 만나는 교차점(겉보기 교차는 제외) (라이노: Int)",
+  perpendicular: "시작점에서 그 획에 내린 수선의 발 (라이노: Perp)",
+  extension: "끝점에서 그 선의 방향을 그대로 이어 긋습니다 — 같은 3D 직선 위에 놓입니다"
+    + " (라이노: Extension)",
+  on_edge: "그 획 위에서 커서에 가장 가까운 점 — 라이노의 **근처점(Near)**입니다",
+  on_face: "지면 위의 점(시선과 지면의 교점) — 라이노의 면 위(OnSrf)에 해당합니다",
 };
