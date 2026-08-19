@@ -205,7 +205,9 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
                          + "(DEFERRED — 획별 placeBy 저장). 'D-L83이 의도대로'를 이 등식으로 인용하지 않는다" },
           f_over_w: { file1: 0.431, file2: 0.074,
                       note: "지시 표기 'd/W'의 d는 시거리(= f) — 판독 근거는 confirm_rules.json의 "
-                          + "real_ink_reported_12.source. 파일2는 화각 163°로 12차 상한(120°)의 거부 대역" },
+                          + "real_ink_reported_12.source. 파일2는 화각 163° — ⛔ 12차 상한의 "
+                          + "거부 대역이었으나 14차 지시 1(D-L93)로 상한이 제거돼 확정이 서는 "
+                          + "것이 현행 명세다(층화 절단은 vp_dir_err_deg_fov_ok_cutoff)" },
           vp_dir_err_deg_reported: {
             file1: [["s42", 0, 1.33], ["s41", 0, 12.81], ["s44", 1, 10.32]],
             file2: [["s78", 1, 0.0], ["s65", 0, 20.8], ["s66", 1, 16.59]],
@@ -592,6 +594,18 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
          * 원장이 스스로 낸다. 주점 가정·보장 0 제외 규약은 `vp_dir_err_deg`와 같다.
          */
         vp_dir_err_deg_fov_ok: stat(vpDirErrsFovOk, 2),
+        /**
+         * 위 분포의 절단 정의(1-R [8] — 절단값이 원장 밖이면 #13·#25).
+         * ⚠ 이름의 `ok`는 화각 대역 `ok`(f/W ≥ 0.87)와 **다른 뜻**이다 — 이 절단은
+         * "분석 층화로 극단 카메라 문서를 뺐다"이고 98° severe 문서도 안에 든다.
+         * 이름은 AS-L26 등 기존 인용의 연속성 때문에 유지하고 이 필드가 뜻을 못 박는다.
+         */
+        vp_dir_err_deg_fov_ok_cutoff: {
+          cutoff_deg: STABLE_FOV_CUTOFF_DEG,
+          meaning: "camera_assumed_principal_center.fov_deg < cutoff인 문서만의 Δ — 분석 층화"
+                 + "(지렛대 증폭 문서 제외). ⛔ 앱 게이트 아님(14차 D-L93으로 상한 제거 — "
+                 + "옛 FOV_GATE.reject_fov_deg의 값을 층화 상수로만 승계)",
+        },
         // **보장으로 갈라 센 몫**(#5) — 소실점을 만든 획이라 정의상 0이다
         vp_dir_guaranteed_zero: `${vpDirGuaranteed}/${vpDirGuaranteed + vpDirErrs.length}`,
         ask: { asked, answered, skipped,

@@ -1856,13 +1856,17 @@ function feedStroke(st: SStroke, forced?: "screen" | "depth",
   if (!rep) return;
   const line: RLine = { a: rep.a, b: rep.b };
   const r = feedCamera(line, forced, hint);
-  // **알릴 규칙 사건은 하나뿐이다** — 알림 표시가 붙은 거절(**아무 일도 안 난 이유와
-  // 사용자가 다시 그을 것**). ⛔ **화각 경고는 지웠다**(2026-08-19 14차 지시 1-b ·
-  // D-L93): 넓은 화각은 결함이 아니라 선택이고, 결과는 돌려보면 즉시 보인다 — 알림이
-  // 하나 더 뜨는 것이 방해다(상태 표시를 없앤 지시 3의 결정과 일관). 대역(ok/warn/
-  // severe)은 원장·진단의 참고로만 남는다(fovGate 머리말).
+  // **알릴 규칙 사건은 둘이다** — ① 알림 표시가 붙은 거절(**아무 일도 안 난 이유와
+  // 사용자가 다시 그을 것**) ② **f² ≤ 0으로 두 번째 축이 조용히 안 선 채 1점이 된 경우**
+  // (D-L73 — 두 축이 한 번에 서는 경로에서 둘째가 막히면 알린다. 조용히 1점이 되면
+  // 사용자는 2점을 그렸다고 믿는다). ⛔ **화각 경고는 지웠다**(2026-08-19 14차 지시
+  // 1-b · D-L93): 넓은 화각은 결함이 아니라 선택 — warn/severe 대역의 why는 이제 빈
+  // 문자열이라 ②의 조건(band reject — f² ≤ 0뿐)에만 문구가 실린다. 1차 리뷰어 [3]이
+  // 초판(vp_fixed 알림 전체 삭제)이 D-L73까지 무효화한 것을 잡았다.
   if (r.event.type === "rejected" && r.event.notify) {
     note = r.event.why;
+  } else if (r.event.type === "vp_fixed" && r.event.fov?.band === "reject") {
+    note = r.event.fov.why;
   }
   if (r.event.type === "ask") {
     // **카메라가 선 뒤에는 화면축/깊이 물음을 안 낸다**(지시 3 — 시스템 사정을 안 묻는다).

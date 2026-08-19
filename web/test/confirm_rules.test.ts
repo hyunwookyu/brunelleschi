@@ -17,7 +17,8 @@ import {
   newRuleState, stepRule, resolvePool, convergeDeg, fovGate, perspectiveOrder,
   sepDeg, beyondSegment, RULE_TOL, FOV_GATE, type RLine,
 } from "../src/s3d/vpRules.js";
-import { lineIntersect, isFiniteVp, type Pt2 } from "../src/s3d/camera.js";
+import { lineIntersect, isFiniteVp, recoverCamera, fFromTwoVps,
+         type Pt2 } from "../src/s3d/camera.js";
 import { vpMisfit, AXIS_TOL } from "../src/s3d/axis.js";
 import { newDoc, newView, confirmViewOf, isConfirmView, type DocState } from "../src/ui/doc.js";
 import { serializeDoc2, restoreDoc2 } from "../src/ui/docStore.js";
@@ -158,17 +159,35 @@ function fovSection() {
   const sameSide = fovGate([520, H], [1250, H], SZ);
   // **화면 밖 소실점은 정상이다** — 클램프가 없는지 확인한다(지시 7-a)
   const farOff = fovGate([-2400, H], [3600, H], SZ);
-  // ---- **주점 = [W/2, 지평선 y]**(14차 항목 2 · D-L95) 회귀 팔.
-  // (e-1) **지평선이 화면 상단에 있는 구도가 통과한다** — 낮은 시점은 구도 선택이다.
-  //       버그 되살림(#30·A-4): 옛 공식(주점 [W/2,H/2] · h² 벌점)을 이 자리에서 직접
-  //       계산하면 같은 입력이 f² ≤ 0으로 **거부됐다** — 그 차가 수리의 판별이다.
-  const topY = 0.05 * SZ[1];
+  // ---- **주점 = [W/2, 지평선 y]**(14차 항목 2 · D-L95) 팔.
+  // (e-1) **지평선이 화면 상단/하단에 있는 구도가 통과한다** — ⚠ **이것은 측정이 아니라
+  //       설계 보장이다**(#5 · 2-R [2]): 새 식 f² = (pₓ−lo)(hi−pₓ)에 지평선 y가 아예
+  //       없으므로 어느 높이에서도 정의상 같다(상단·하단 두 팔의 f가 같은 것이 그 보장의
+  //       표시다). **정보를 나르는 것은 `f2_old_formula`의 부호뿐이다** — 옛 공식(주점
+  //       [W/2,H/2] · h² 벌점)이 같은 입력을 거부했다는 되살림. ⚠ 그 값은 (나)형이다
+  //       (2-R [7]): 변경 전 코드 경로가 아니라 **하네스가 옛 식을 다시 쓴 것**이고
+  //       크기는 픽스처(h = 0.45·H)가 정한다(#46 — 부호만 인용한다).
+  const topY = 0.05 * SZ[1], botY = 0.95 * SZ[1];
   const highHorizon = fovGate([SZ[0] / 2 - 200, topY], [SZ[0] / 2 + 220, topY], SZ);
+  const lowHorizon = fovGate([SZ[0] / 2 - 200, botY], [SZ[0] / 2 + 220, botY], SZ);
   const hOld = SZ[1] / 2 - topY;
   const f2OldFormula = 200 * 220 - hOld * hOld;       // 옛 식: −Δx₁Δx₂ − h² (부호 정리 후)
-  // (e-2) **소실점 둘이 화면 왼쪽 절반에 몰린 구도가 통과한다** — 몰림 자체는 정상이다
-  //       (주점 x 가정(16.2)의 사이에만 있으면 된다).
-  const clustered = fovGate([0.05 * SZ[0], H], [0.55 * SZ[0], H], SZ);
+  // (e-2) **비대칭 배치(주점 x에서 한쪽으로 크게 치우침)가 통과한다.**
+  //       ⚠⚠ **지시 c의 "한쪽 몰림"을 온전히는 못 연다**(2-R [1] — 지시 미이행의 기록):
+  //       주점 x = W/2 **가정**(16.2 — 두 소실점만으로는 f² = |PV₁||PV₂| 하나의 방정식에
+  //       미지수가 둘(x, f)이라 x가 결정되지 않는다. 지시 2-a의 "x는 두 소실점에서
+  //       나온다"가 자유도상 성립하지 않는 이유이기도 하다)을 유지하는 한, 두 소실점이
+  //       **둘 다** W/2의 같은 쪽인 구도는 원리적으로 f² ≤ 0이다. 이 팔이 여는 것은
+  //       "왼쪽으로 크게 치우쳤지만 W/2를 사이에 두는" 비대칭까지다 — 진짜 같은쪽
+  //       몰림을 열려면 x를 다른 곳(그린 기하)에서 가져와야 한다(DEFERRED).
+  const clusteredVps: [Pt2, Pt2] = [[0.05 * SZ[0], H], [0.55 * SZ[0], H]];
+  const clustered = fovGate(clusteredVps[0], clusteredVps[1], SZ);
+  // (e-3) **규약 배선**(#17 · 2-R [9]) — 같은 두 소실점·지평선을 앱 카메라 경로
+  //       (`fFromTwoVps` + 주점 [W/2, 지평선 y] — ConstraintAccumulator.solve가 넣는
+  //       그 값)와 fovGate에 넣으면 f가 같다. 규약 통일이 코드 독해가 아니라 실행이 된다.
+  const wireVps: [Pt2, Pt2] = [[SZ[0] / 2 - 260, topY], [SZ[0] / 2 + 300, topY]];
+  const wireCam = fFromTwoVps(wireVps[0], wireVps[1], SZ, [SZ[0] / 2, topY]);
+  const wireGate = fovGate(wireVps[0], wireVps[1], SZ);
   /**
    * **실획 첫 표본의 값**(지시 7-f). 아래 입력은 **6차 지시문이 보고한 수**다.
    * ⚠ **파일이 도착했다**(2026-08-19 — `sessions/brunelleschi-2026-08-17T11-41-36`): 그 파일의
@@ -235,6 +254,11 @@ function fovSection() {
   stNeg.horizon = SZ[1] / 2;
   const rNeg = stepRule(stNeg, { a: [200, SZ[1] / 2 + 150], b: [290, SZ[1] / 2 + 60] }, SZ);
   const f2NegativeBlocks = rNeg.event.type === "rejected" && rNeg.state.slots[1] == null;
+  // **1점 경로에는 화각 문이 없다**(14차 지시 1-d의 재검토 — 1-R [10]: 코드 독해가 아니라
+  // 실행으로 남긴다 #42 ⑪): 임의 f가 극단(f = 0.1·W — 화각 157°대)이어도 1점 카메라는
+  // 선다. 1점의 f는 깊이 배율일 뿐이고(D-L53) gate() 판정은 참고 필드로만 실린다.
+  const onePt = recoverCamera([[SZ[0] / 2, SZ[1] / 2], null, null], SZ,
+                              { fSetting: 0.1 * SZ[0] });
   // **양성 채널**(#30 · 2차 리뷰어 [10]) — 같은 프로브 구성에서 소실점 간격만 벌리면
   // (severe 대역) 확정이 **선다**. 이것 없이는 위 true가 "게이트가 막았다"인지
   // "이 구성에서는 애초에 아무것도 안 선다"인지 안 갈린다(#40 ②).
@@ -273,17 +297,28 @@ function fovSection() {
     },
     /**
      * **주점 규약 수리 팔**(14차 항목 2 · D-L95 — 주점 = [W/2, 지평선 y]).
-     * 옛 공식(주점 [W/2, H/2] + h² 벌점 — 6차 리뷰어가 넣었던 그것)은 지평선이 화면
-     * 중앙에서 멀면 f²를 깎아 거부를 만들었다 — 14차 지시 2-b가 그것을 뒤집었다
-     * (지평선 높이는 시선 높이 — 구도 선택이지 제약이 아니다). `f2_old_formula`가
-     * 옛 식의 되살림 값이다(#30·A-4 — 음수 = 옛 판이 거부했을 입력).
+     * ⚠ high/low 통과는 **설계 보장**이다(#5 — 새 식에 지평선 y가 없다. 위 주석).
+     * 정보는 `f2_old_formula`의 **부호**(옛 식 되살림 — (나)형: 하네스가 옛 식을 다시
+     * 쓴 값, 크기는 픽스처 상수 #46)와 high == low의 등가성뿐이다.
      */
     principal_on_horizon: {
+      inputs: { W: SZ[0], H: SZ[1], vp_dx: [-200, 220], horizon_y_ratio: [0.05, 0.95],
+                h_old_formula_px: hOld },                       // 2-R [11] — 판정 입력을 든다
       high_horizon: { horizon_y_ratio: 0.05, band: highHorizon.band,
                       f: highHorizon.f == null ? null : Math.round(highHorizon.f * 100) / 100,
-                      f2_old_formula: f2OldFormula },
-      clustered_left_half: { band: clustered.band,
+                      f2_old_formula: f2OldFormula,
+                      f2_old_formula_fixture_determined: true },
+      low_horizon: { horizon_y_ratio: 0.95, band: lowHorizon.band,
+                     f: lowHorizon.f == null ? null : Math.round(lowHorizon.f * 100) / 100 },
+      /** ⚠ 이름 주의(2-R [1]) — **W/2를 사이에 둔 비대칭**이지 같은쪽 몰림이 아니다. */
+      clustered_left_half: { inputs: { vps_x: [clusteredVps[0][0], clusteredVps[1][0]], W: SZ[0] },
+                             straddles_assumed_px: true,
+                             band: clustered.band,
                              f: clustered.f == null ? null : Math.round(clustered.f * 100) / 100 },
+      /** **규약 배선**(#17 — 앱 카메라 경로 fFromTwoVps([W/2, 지평선 y]) ↔ fovGate). */
+      wiring: { inputs: { vps_x: [wireVps[0][0], wireVps[1][0]], horizon_y: topY, W: SZ[0] },
+                f_app_camera: wireCam.ok ? Math.round(wireCam.f! * 100) / 100 : null,
+                f_fov_gate: wireGate.f == null ? null : Math.round(wireGate.f * 100) / 100 },
     },
     off_screen_is_normal: {
       what: "화면 밖 소실점(±2400·3600)이 클램프 없이 계산에 들어가는가(지시 7-a)",
@@ -368,23 +403,36 @@ function fovSection() {
                 + "지평선이 화면 어디에 있든, 소실점이 한쪽에 몰렸든 — 주점 x(16.2 가정)를 "
                 + "사이에 두면 선다(principal_on_horizon 팔·옛 식 되살림 f2_old_formula<0). "
                 + "안내문은 화면 중앙·지평선을 조건으로 말하지 않는다(지시 2-d).",
-      reachability: "거부(f² ≤ 0)의 도달 가능성은 `counter_example`(fovGate 직접)과 "
-                  + "`f2_negative_blocks`(stepRule 배선 — 확정이 실제로 안 선다)가 든다. "
-                  + "참고 대역 셋은 쓸기가 낸다 — `band_counts_ordered`의 severe·warn·ok가 "
-                  + "전부 0이 아니다(reject 칸은 f² > 0 격자라 **구조적 0** — 위 주석). "
-                  + "극단 화각의 확정은 `extreme_fov_confirms`(양성 채널 #30)가 든다",
-      reachability_value: bandCounts,
-      reachability_source: "fov_gate/band_counts_ordered",
+      reachability: "등록 기준(거부는 f² ≤ 0뿐)의 도달 가능성 — 거부 쪽은 "
+                  + "`counter_example`(fovGate 직접)과 `f2_negative_blocks`(stepRule 배선), "
+                  + "확정 쪽은 `extreme_fov_confirms`(#30 양성 채널)가 **범주 짝**으로 든다"
+                  + "(#46 ⚙). `reachability_value`는 극단 확정 팔의 실행 화각(도)이다 — "
+                  + "⚠ 크기는 픽스처(소실점 간격 120px)가 정하므로(#46) "
+                  + "`_fixture_determined`로 표시하고 크기를 근거로 인용하지 않는다. "
+                  + "대역 분포는 `band_counts_ordered`(판정에 안 쓰는 참고 — 1-R [6]으로 "
+                  + "도달 가능성 자리에서 내렸다: reject 칸 0은 f를 직접 주는 이 격자의 "
+                  + "자명값이다 #40 ②). **D-L95 조항(주점 = [W/2, 지평선 y])의 판별**은 "
+                  + "`principal_on_horizon`이 든다(2-R [13] · #28 다지표 병기) — 통과 자체는 "
+                  + "보장이고(#5) 판별은 `f2_old_formula`의 부호(옛 식 되살림)와 "
+                  + "`wiring.f_app_camera == f_fov_gate`(앱 카메라 경로와의 규약 배선 #17)다",
+      reachability_value: blockFov?.fovDeg ?? undefined,
+      reachability_source: "fov_gate/gate.result.extreme_fov_deg",
+      reachability_value_fixture_determined: true,
       result: { same_side_rejected: sameSide.band === "reject",
                 real_ink_band: reported.band, real_ink_fov_deg: reported.fovDeg,
                 reported12_file1_band: reported1.band,
                 reported12_file2_band: reported2.band,
-                /** **극단 화각(166°)이 확정을 지나간다**(14차 지시 1-e — stepRule 실행). */
+                /** **극단 화각이 확정을 지나간다**(14차 지시 1-e — stepRule 실행). */
                 extreme_fov_confirms: extremeFovConfirms,
+                /** 그 팔의 화각(도) — 동작점 기록(1-R [7]). 크기는 픽스처가 정한다(#46). */
+                extreme_fov_deg: blockFov?.fovDeg ?? null,
                 /** **f² ≤ 0은 여전히 막는다**(유일한 거부 — stepRule 배선). */
                 f2_negative_blocks: f2NegativeBlocks,
                 /** severe 대역(간격만 벌림) 확정 — 12차 2차 [10]의 팔 그대로. */
-                severe_band_confirms: severeBandConfirms },
+                severe_band_confirms: severeBandConfirms,
+                /** **1점 경로에는 화각 문이 없다**(1-d 재검토 — #42 ⑪ 실행 기록). */
+                one_point_extreme_f_stands: onePt.ok === true,
+                one_point_fov_deg: onePt.fovDeg ?? null },
     }),
   };
 }
@@ -759,10 +807,17 @@ describe("6차 지시 1·2·7·11 — 확정 뷰 · 끝점 프로브 · 화각 �
     // ---- 7. 화각 게이트
     expect(fov_gate.counter_example.band).toBe("reject");
     expect(fov_gate.off_screen_is_normal.band).toBe("ok");              // 화면 밖은 정상이다
-    // ---- 14차 항목 2(D-L95) — 주점 = [W/2, 지평선 y]. 지평선 위치·몰림은 조건이 아니다
+    // ---- 14차 항목 2(D-L95) — 주점 = [W/2, 지평선 y]. ⚠ 통과 자체는 보장이다(#5) —
+    //      판별은 옛 식 부호와 상·하 등가성, 그리고 규약 배선이다
     expect(fov_gate.principal_on_horizon.high_horizon.band).not.toBe("reject");
+    expect(fov_gate.principal_on_horizon.low_horizon.band).not.toBe("reject");
+    expect(fov_gate.principal_on_horizon.high_horizon.f)
+      .toBe(fov_gate.principal_on_horizon.low_horizon.f);      // 등가성 = 보장의 표시(#5)
     expect(fov_gate.principal_on_horizon.high_horizon.f2_old_formula).toBeLessThan(0); // 옛 판은 거부
     expect(fov_gate.principal_on_horizon.clustered_left_half.band).not.toBe("reject");
+    // **규약 배선**(#17) — 앱 카메라 경로와 fovGate의 f가 같다
+    expect(fov_gate.principal_on_horizon.wiring.f_app_camera)
+      .toBe(fov_gate.principal_on_horizon.wiring.f_fov_gate);
     // 문구가 화면 중앙·지평선을 조건으로 말하지 않는다(지시 2-d)
     expect(fov_gate.counter_example.why).not.toContain("화면 중심");
     expect(fov_gate.counter_example.why).not.toContain("지평선");
@@ -794,6 +849,11 @@ describe("6차 지시 1·2·7·11 — 확정 뷰 · 끝점 프로브 · 화각 �
     // **f² ≤ 0은 여전히 막는다** — 유일한 거부의 stepRule 배선(반례 #30)
     expect((fov_gate.gate.result as { f2_negative_blocks: boolean })
       .f2_negative_blocks).toBe(true);
+    // **1점 경로에는 화각 문이 없다**(1-d — 극단 임의 f로도 선다. 실행 기록 #42 ⑪)
+    expect((fov_gate.gate.result as { one_point_extreme_f_stands: boolean })
+      .one_point_extreme_f_stands).toBe(true);
+    expect((fov_gate.gate.result as { one_point_fov_deg: number | null })
+      .one_point_fov_deg!).toBeGreaterThan(120);
     // severe 대역 확정(12차 2차 [10]의 팔 그대로)
     expect((fov_gate.gate.result as { severe_band_confirms: boolean })
       .severe_band_confirms).toBe(true);

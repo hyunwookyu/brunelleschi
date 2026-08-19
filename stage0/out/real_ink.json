@@ -180,7 +180,7 @@
       "f_over_w": {
         "file1": 0.431,
         "file2": 0.074,
-        "note": "지시 표기 'd/W'의 d는 시거리(= f) — 판독 근거는 confirm_rules.json의 real_ink_reported_12.source. 파일2는 화각 163°로 12차 상한(120°)의 거부 대역"
+        "note": "지시 표기 'd/W'의 d는 시거리(= f) — 판독 근거는 confirm_rules.json의 real_ink_reported_12.source. 파일2는 화각 163° — ⛔ 12차 상한의 거부 대역이었으나 14차 지시 1(D-L93)로 상한이 제거돼 확정이 서는 것이 현행 명세다(층화 절단은 vp_dir_err_deg_fov_ok_cutoff)"
       },
       "vp_dir_err_deg_reported": {
         "file1": [
@@ -743,6 +743,10 @@
       "median": 5.61,
       "p90": 10.32,
       "max": 12.81
+    },
+    "vp_dir_err_deg_fov_ok_cutoff": {
+      "cutoff_deg": 120,
+      "meaning": "camera_assumed_principal_center.fov_deg < cutoff인 문서만의 Δ — 분석 층화(지렛대 증폭 문서 제외). ⛔ 앱 게이트 아님(14차 D-L93으로 상한 제거 — 옛 FOV_GATE.reject_fov_deg의 값을 층화 상수로만 승계)"
     },
     "vp_dir_guaranteed_zero": "2/14",
     "ask": {

@@ -350,15 +350,54 @@
       "why": "**서 있을 수 없는 시점입니다** — 두 소실점이 시선의 같은 쪽에 모여 있습니다(f² ≤ 0, 이론서 6.2). 직교하는 두 가로 축의 소실점은 서로 반대쪽으로 물러나야 합니다 — 한 축의 깊이선 기울기를 반대쪽으로 트세요"
     },
     "principal_on_horizon": {
+      "inputs": {
+        "W": 960,
+        "H": 672,
+        "vp_dx": [
+          -200,
+          220
+        ],
+        "horizon_y_ratio": [
+          0.05,
+          0.95
+        ],
+        "h_old_formula_px": 302.4
+      },
       "high_horizon": {
         "horizon_y_ratio": 0.05,
         "band": "severe",
         "f": 209.76,
-        "f2_old_formula": -47445.75999999998
+        "f2_old_formula": -47445.75999999998,
+        "f2_old_formula_fixture_determined": true
+      },
+      "low_horizon": {
+        "horizon_y_ratio": 0.95,
+        "band": "severe",
+        "f": 209.76
       },
       "clustered_left_half": {
+        "inputs": {
+          "vps_x": [
+            48,
+            528
+          ],
+          "W": 960
+        },
+        "straddles_assumed_px": true,
         "band": "severe",
         "f": 144
+      },
+      "wiring": {
+        "inputs": {
+          "vps_x": [
+            220,
+            780
+          ],
+          "horizon_y": 33.6,
+          "W": 960
+        },
+        "f_app_camera": 279.28,
+        "f_fov_gate": 279.28
       }
     },
     "off_screen_is_normal": {
@@ -414,14 +453,10 @@
     },
     "gate": {
       "registered": "**거부는 f² ≤ 0 하나다**(14차 지시 1 · D-L93 — 수학적으로 카메라가 없는 경우. ⛔ 12차 지시 1-c의 화각 상한 120°는 이 항목이 **되돌렸다** — 판정 지표를 바꾼 사유(#28)는 지시문이다: 상한은 임의 기준이었고 넓은 화각은 의도일 수 있다. 실획 둘째 표본(163°)은 이제 **확정이 지나가는 것이 명세다** — `real_ink_reported_12.file2`·`extreme_fov_confirms`). 대역(ok/warn/severe)은 **참고 진단**이고 확정도 표시도 안 가른다(지시 1-b·1-d — 이론서 18.4는 참고. 화각 경고 표시는 제거). 화면 밖 소실점은 **정상**이므로 거르지 않는다. ⚠ 옛 등록문의 연혁(d/W → f/W 단위 정정 · 12차 상한 신설)은 12차 원장이 든다. 확정 경로 배선은 `vp_rules.test.ts` 배선 팔 + 아래 stepRule 팔 둘이 잠근다. **[14차 항목 2 · D-L95] 주점 = [W/2, 지평선 y]** — h² 벌점(6차 리뷰어의 것)을 지웠다: 2점은 피치 0이라 주점이 지평선 위다. 앱 카메라(ConstraintAccumulator)·real_ink per_doc과 규약이 하나가 됐다(#17·#24). 지평선이 화면 어디에 있든, 소실점이 한쪽에 몰렸든 — 주점 x(16.2 가정)를 사이에 두면 선다(principal_on_horizon 팔·옛 식 되살림 f2_old_formula<0). 안내문은 화면 중앙·지평선을 조건으로 말하지 않는다(지시 2-d).",
-      "reachability": "거부(f² ≤ 0)의 도달 가능성은 `counter_example`(fovGate 직접)과 `f2_negative_blocks`(stepRule 배선 — 확정이 실제로 안 선다)가 든다. 참고 대역 셋은 쓸기가 낸다 — `band_counts_ordered`의 severe·warn·ok가 전부 0이 아니다(reject 칸은 f² > 0 격자라 **구조적 0** — 위 주석). 극단 화각의 확정은 `extreme_fov_confirms`(양성 채널 #30)가 든다",
-      "reachability_value": [
-        0,
-        5,
-        3,
-        5
-      ],
-      "reachability_source": "fov_gate/band_counts_ordered",
+      "reachability": "등록 기준(거부는 f² ≤ 0뿐)의 도달 가능성 — 거부 쪽은 `counter_example`(fovGate 직접)과 `f2_negative_blocks`(stepRule 배선), 확정 쪽은 `extreme_fov_confirms`(#30 양성 채널)가 **범주 짝**으로 든다(#46 ⚙). `reachability_value`는 극단 확정 팔의 실행 화각(도)이다 — ⚠ 크기는 픽스처(소실점 간격 120px)가 정하므로(#46) `_fixture_determined`로 표시하고 크기를 근거로 인용하지 않는다. 대역 분포는 `band_counts_ordered`(판정에 안 쓰는 참고 — 1-R [6]으로 도달 가능성 자리에서 내렸다: reject 칸 0은 f를 직접 주는 이 격자의 자명값이다 #40 ②). **D-L95 조항(주점 = [W/2, 지평선 y])의 판별**은 `principal_on_horizon`이 든다(2-R [13] · #28 다지표 병기) — 통과 자체는 보장이고(#5) 판별은 `f2_old_formula`의 부호(옛 식 되살림)와 `wiring.f_app_camera == f_fov_gate`(앱 카메라 경로와의 규약 배선 #17)다",
+      "reachability_value": 165.74996730219638,
+      "reachability_source": "fov_gate/gate.result.extreme_fov_deg",
+      "reachability_value_fixture_determined": true,
       "result": {
         "same_side_rejected": true,
         "real_ink_band": "severe",
@@ -429,8 +464,11 @@
         "reported12_file1_band": "severe",
         "reported12_file2_band": "severe",
         "extreme_fov_confirms": true,
+        "extreme_fov_deg": 165.74996730219638,
         "f2_negative_blocks": true,
-        "severe_band_confirms": true
+        "severe_band_confirms": true,
+        "one_point_extreme_f_stands": true,
+        "one_point_fov_deg": 157.38
       }
     }
   },
