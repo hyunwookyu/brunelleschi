@@ -242,6 +242,9 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
     if ((before as any).state === "model") {
       await draw(0.25, 0.3, 0.4, 0.35);                   // 막힌다 — 획이 안 는다
       const after = await page.evaluate(() => window.S2S.doc().strokes.length);
+      // **쌍으로 남긴다**(6-R2 [N7] — 한 수로는 "불변"이 원장에서 안 읽힌다 #11)
+      led.s6_blocked = { ...(before as any), strokes_before: (before as any).strokes,
+                         strokes_after: after };
       expect(after).toBe((before as any).strokes);
       await page.evaluate(() => {
         document.querySelector<HTMLButtonElement>('#bar button[data-act="draft"]')!.click();

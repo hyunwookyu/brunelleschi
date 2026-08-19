@@ -44,7 +44,6 @@ import { segmentFromAnchor, nearestAxisOnScreen, endFromCursor, LIVE_TOL } from 
 import { crossAnchorOf } from "./s3d/crossAnchor.js";
 import { onePointFrame, directSegment, planeAnchor, ONE_POINT_TOL } from "./s3d/onePoint.js";
 import { judgeDraftPose } from "./s3d/draftPose.js";
-import { nearestOnePointDir } from "./ui/viewCube.js";
 import { representative, AXIS_TOL, chordTurnDeg } from "./s3d/axis.js";
 // **자동 분할**(지시 I) — 교차·접촉 절단점과 조각. SketchUp 선례. 순수 기하는 split.ts 하나다(#17)
 import { cutParams, piecesFromCuts, subtractIntervals, reanchorId, pointAt,
@@ -1211,15 +1210,19 @@ function armOnePointAlign(): void {
     last = q.clone();
     if (d > 1e-9) { still = 0; requestAnimationFrame(step); return; }
     if (++still < 3) { requestAnimationFrame(step); return; }
-    const b = stage.basisOf();
-    const pitch = (Math.asin(Math.max(-1, Math.min(1, b.f[1]))) * 180) / Math.PI;
-    const yaw = (Math.atan2(b.f[0], -b.f[2]) * 180) / Math.PI;
-    const off = Math.abs(yaw - Math.round(yaw / 90) * 90);
+    // ⚠⚠ **그린 축 기준계로 판정한다**(14차 항목 6 R2 [N1] — 옛 판은 세계 기준계였다:
+    // "1·2점 확정에서는 차이 없음"이 이월 사유였는데 그것이 틀렸다 — D-L87이 이미 적었듯
+    // 항등은 **P1(화면 축 확정)뿐**이고, 2점 구도(보통 상태)에서 세계-축 스냅은 그린
+    // 축과 요 각도만큼 어긋난 곳으로 갔다. 큐브·작도 복귀와 같은 단일 출처(#17 —
+    // draftGazeDrawn·judgeDraftPose)로 갈아 끼웠다.
+    const f = draftGazeDrawn();
+    if (!f) return;
+    const j = judgeDraftPose(f, ONE_POINT_TOL.hand_deg);
     const eps = 1e-6;
-    if (Math.abs(pitch) <= ONE_POINT_TOL.hand_deg && off <= ONE_POINT_TOL.hand_deg
-        && (Math.abs(pitch) > eps || off > eps)) {
+    if (j.kind === "one_point" && (Math.abs(j.pitchDeg) > eps || j.yawOffDeg > eps)) {
+      const A = drawnBasisThree();
       stage.viewport.userMoved = true;
-      stage.snapToDir(nearestOnePointDir(b.f), null, 160, () => refresh());
+      stage.snapToDir(A ? cubeUp(j.returnDir, A) : j.returnDir, null, 160, () => refresh());
       refresh();
     }
   };

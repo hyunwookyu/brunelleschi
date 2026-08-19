@@ -11685,11 +11685,18 @@ dir_state e2e 통과 · **selfcheck 재실행**(리뷰어 [2] 정정 — 초판�
 통과(원장 신설) · stage.spec·basic_flow 갱신판 통과 · **전량 e2e**: expected 50 ·
 unexpected **2** — 그 둘은 이 항목과 무관한 **기존 환경 실패**(static_deploy·touch_route
 dpr 2 — HANDOFF·DEFERRED 등재분. `test_cost.json`의 `totals.e2e.stats`가 정본) ·
-selfcheck 재실행(draft_return 플래그의 원인은 원장 주석 — 포화 [1,0,1]은
-fixture_determined 표시).
+selfcheck 재실행 — draft_return 플래그는 **세 종류**이고(6-R2 [N9] — 종류별로 적는다)
+원인이 전부 원장 주석에 있다: ① 포화(덮임 ratio 1/0·roundtrip [1,0,1] —
+fixture_determined·ws ①) ② near-zero(복귀 피치 ~1e-15·주점 정합 ~1e-13·정렬 소실점
+~1e-13 — 정확 스냅 보장, ws) ③ 정확 0(vps_y_gap·요 이탈 — 직교 픽스처·축 스냅 보장,
+ws · console_errors_max는 임계 자체).
 
-**#42 완료 대조**(6-R1 [10] — `pitfall_citations`의 draft_return 행 = [5, 12, 17, 28,
-41, 46]을 그 자리에서 읽었다. 착수 표 밖 다섯의 판정): **#5** 차단 팔의 "잉크 표시
+**#42 완료 대조**(6-R1 [10] · 6-R2 [N4] 재정정 — 대응이 원장에 #47·#49 인용을 새로
+넣어 행이 자랐다. 현행 행 = **[5, 12, 17, 28, 41, 46, 47, 49]**를 그 자리에서 다시
+읽었다): **#47** 값은 필드가 든다 — 재탭 임계는 view_cube.json 필드 참조(R2 [N6]로 경로
+정정)·hand_deg는 algo_constants·수리 전 700px는 원장 밖 산문 기록으로 명시(#25, R2
+[N3]) · **#49** 각도 필드(judge)가 전 상태에 있고 요 임계 이름을 분리(yaw_snap_max_deg —
+R2 [N8]). 착수 표 밖 나머지 다섯의 판정: **#5** 차단 팔의 "잉크 표시
 없음"은 보장임을 원장이 명시(ws ⑤ — 판정은 획 수)·상태 문자열의 자기참조성은 **실측
 각도 필드**(judge.pitchDeg — 6-R1 [2] 대응)가 끊는다 · **#12** 동작점 한계를 ws ②가
 든다(모델링 자세 둘·복귀 세 경로·밴드 끝 미측정 명시) · **#17** viewState·draftOverlay·
@@ -11720,3 +11727,18 @@ fixture_determined 표시).
 | [12] 낮음 | retap_cos 30°·hand_deg 2° 산문 수치(#47) | **수용** — 필드 참조로 교체(view_cube.json cube_tol·algo_constants) |
 | [13] 중간 | "전량은 아래" 끊김·unexpected 2 미귀속 | **수용** — 검증 절 완결(전량 50/2 — 기존 환경 실패 귀속·수는 test_cost 정본) |
 | [14] 낮음 | 버튼 켜짐 왕복 미측정(6-d) | **수용** — draft_btn_enabled 왕복 필드(핀 꺼짐→모델링 켜짐→복귀 꺼짐) 신설 |
+
+
+### 14차 항목 6 — 리뷰어 2차 지적 대응 (9건: 높음 1 / 중간 4 / 낮음 4)
+
+| # | 지적 | 대응 |
+|---|---|---|
+| [N1] 높음 | "1·2점 = 세계 축" 주장이 D-L87·700px 실측과 모순 | **수용** — 답 (가): 아니오(항등은 P1뿐 — 2점 픽스처의 그린 축이 세계 축과 요 35°). D-L97·DEFERRED 정정. **armOnePointAlign 이월 사유가 무너졌으므로 미루지 않고 수리** — draftGazeDrawn·judgeDraftPose(큐브·복귀와 단일 출처 #17)로 교체, DEFERRED 행 해소 |
+| [N2] 중간 | 얕은 팔의 주사 행이 원장에 없음 | **수용** — 답: 예(would-be 행 158.6에서 쟀다 — 코드가 shallowOv.horizonY를 넘긴다). row_y 필드를 모든 덮임 팔에 신설해 물음 자체를 소거 |
+| [N3] 중간 | 700px·175↔337이 원장 밖(#25) | **수용** — 답: 아니오(수리 전 코드·기운 픽스처가 필요해 재현 팔 불가 — 항목 3 초판 붕괴와 같은 유형). 두 자리에 "원장 밖 실행 산문 기록(#25)" 명시·수리 후 정본 필드 지목 |
+| [N4] 중간 | 완료 대조가 재실행 전 목록(#42 ⑥) | **수용** — 여덟 번호로 재작성(#47·#49 판정 추가) |
+| [N5] 중간 | drawnBasisThree 변경의 하류 확인 기록 없음(#42 ⑨·#34) | **수용** — 답: 예. 수리 커밋 뒤 재실행 목록을 여기 남긴다: draft_return·basic_flow(view_cube 팔 포함)·stage.spec·cube_frame **전부 통과**(11:20 실행 — cube_frame의 reachability 0.7912·자리바꿈 불변은 R2 리뷰어도 대조 확인). 같은 조건의 다른 호출부: cubeDown/cubeUp(큐브 탭 — 같은 A를 받는다)·armOnePointAlign([N1]로 같은 출처로 통일)·onePointFrame은 axisDirs를 직접 받아 이 함수를 안 지난다 |
+| [N6] 낮음 | ws ⑤ 재탭 참조 경로·주체 오류 | **수용** — ui_constants.CUBE_TOL.retap_cos·view_cube_hit(vitest)로 정정 |
+| [N7] 낮음 | s6_blocked가 한 수(#11) | **수용** — strokes_before/after 쌍으로 |
+| [N8] 낮음 | 요 이탈을 피치 임계 이름으로·정확 0 미주석 | **수용** — yaw_snap_max_deg 분리·요 정확 0을 보장 목록에 추가 |
+| [N9] 낮음 | 플래그 원인 서술이 한 종류(항목 5 [F] 재발형) | **수용** — 검증 절을 세 종류로 재작성 |
