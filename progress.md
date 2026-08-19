@@ -11293,3 +11293,51 @@ reachability 산문에 등재) · #41(이 게이트는 중단 조건 아님). �
 
 §4의 2회 반복 완료 — 잔여 구조 항목(5~12° 대역 빈도·교차 가드 발화 픽스처·on_face 표식)은
 DEFERRED에 있다.
+
+---
+
+## [2/7] 항목 1 — 화각 상한을 제거한다 (D-L93)
+
+**착수 PITFALLS 대조**(최근 5+상시): #50 해당 없음 · #49 해당 없음(임계 제거) · #48 해당
+없음 · #47 **해당** — 대역·값은 필드가 들고 산문은 상수 이름만 · #46 해당 없음 ·
+#42 완료 시 대조(아래). 본문 추가 해당: **#1**(상수 키 제거의 STALE 파급 — 동결 리터럴
+선례로 해시 고정) · **#28·#26**(판정 지표 변경 — 사유는 지시문, 등록문에 명기) ·
+**#30**(f²≤0 차단·극단 확정의 팔 분리) · **#5**(file2 f 재구성 항등 유지).
+
+- **a. `reject_fov_deg` 제거** — fovGate의 상한 거부 가지 삭제(거부는 f² ≤ 0뿐).
+  상수는 `SHARED_CONSTANTS`에 동결 리터럴(D-L51 선례)로 남겨 전역 해시 f351839a 불변 —
+  키 제거는 무관 원장 60여 개를 STALE로 만든다(12차 실증 — "원장 전량 재실행·인용
+  183곳"의 반복을 피하는 쪽이 단순하다 A-3). 코드가 그 키를 안 읽는 것은 grep으로 확인.
+- **b. 화각 경고 제거** — mainL feedStroke의 vp_fixed·fov 알림 삭제(대역은 참고 진단 —
+  이벤트에 실려는 가되 화면에 안 나온다). why 문구도 빈 문자열(경고 산문 삭제).
+- **c. DECISIONS D-L93** — 12차 결정의 반전 사유·파급·되돌릴 조건 등재.
+- **d. 18.4는 참고로만** — FOV_GATE의 severe/ok 비율은 참고 대역 주석으로 강등.
+  1점 형태가정 경로의 게이트 재검토: `camera.ts gate()`(18.4 하한 판정)는
+  constraints.ts 경고로만 흘러가고 그 경고는 UI에 안 나온다 — 이미 참고였다(확인만).
+- **하네스 재작성**(#42 ⑥ — 값이 움직인 원장): `confirm_rules.json` fov_gate 절
+  (`extreme_fov_confirms` 신설 — 12차 `reject_blocks_confirmation`의 반전 ·
+  `f2_negative_blocks` 신설 — 유일한 거부의 stepRule 배선 · `band_under_old_gate` 팔
+  내림 — 상수가 없어졌다 · band_counts [0, 5, 3, 5]: reject 칸은 f²>0 격자의 구조적 0) ·
+  `vp_rules.test.ts` 12차 1-c 배선 팔 반전(166° 확정이 선다·fov.why 빈 문자열) ·
+  `delta_conflict.json` refeed_gate reject → **severe(확정 통과 — 그 자리에서 읽음
+  163.19°)** · `real_ink` fov_ok 절단을 분석 상수로 지역화 · `first_anchor` 복원 경로
+  산문 정정. **낡은 인용 정리**: DEFERRED 복원 행 닫음 · HANDOFF ③ 닫음 · AS 계열은
+  연혁 서술이라 유지(현재 주장만 정정).
+- **회귀 팔**: 극단 화각(166°) 확정이 선다(stepRule) · f²≤0은 여전히 막힌다(신설 배선 팔)
+  · 163° 재구성(file2) severe 확정 · 참고 대역 셋의 도달(band_counts).
+
+**검증**: tsc 깨끗 · 영향 하네스 5파일 46통과(confirm_rules·vp_rules·delta_conflict·
+real_ink·constants — 원장 재생성, 해시 f351839a 불변) · 전체 test:unit은 아래 검증 절.
+
+### 항목 0 후속 — e2e 전량 재실행 검증(2차 리뷰어 [1·6] 이행)
+
+같은 경로(연쇄·교차 앵커)를 재는 e2e 원장 전부를 가드 켬으로 재실행했다.
+**무변화**(git diff 없음): elevation_flow · extension_snap · ground_anchor ·
+p1_invariance · promote — 카운터 불변(정렬 픽스처라 가드 임계 안). **잡음만**:
+basic_flow(칠한 px ±6) · touch_route·view_cube·view_pan·viewpoint_undo·tube_render
+(부동소수 끝자리·시간). **실질 변화 하나**: `stage_browser.json`의 `promote_chain` —
+lifted 16 → 8, `dir_guard` rejected 21/24(팔에 신설 — 값은 원장을 읽는다 #47).
+⚠ 이 픽스처는 획을 문서에 직접 밀어 넣어 **그리는 중 2D 스냅을 우회**하므로 가드
+거절률의 **상한**이다(앱 경로는 임계 안 겨냥이 그리는 중 정렬됨). D-L92 후속 절에 등재 —
+실사용 몫은 실획이 판정자(#16: 병목 이동을 기록한다 — 회전 배치가 대기로 옮겨 갔다).
+e2e 49통과·2실패는 등재된 환경 실패 그대로.

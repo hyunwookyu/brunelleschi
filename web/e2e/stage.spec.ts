@@ -1530,7 +1530,13 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
     //    그것은 살아 있다. 세 번째 축을 세우는 부분만 뺀다.
     return { before, order: S.order(), trace: S.chainTrace(),
              lifted: S.doc().strokes.filter((s: any) => s.seg3d).length,
-             pending: S.doc().strokes.filter((s: any) => !s.seg3d).length };
+             pending: S.doc().strokes.filter((s: any) => !s.seg3d).length,
+             // **확정 후 재계산 가드의 합성 대가**(14차 항목 0 · D-L92 — #16: 병목이 옮겨간
+             // 것을 기록한다): medium 잉크의 손떨림이 5°(LIFT_TOL.parallel_deg)를 넘는
+             // 획은 연쇄가 회전 배치하지 않고 **대기**로 남긴다. 이 팔의 배치 감소가 그
+             // 크기다(D-L92 이전 lifted 16 → 이후 8 — 합성 medium 한 동작점, 실획이
+             // 판정자다. 5~12° 대역 빈도 물음의 첫 합성 자료점).
+             dir_guard: S.chainDirGuard() };
   });
   const pc = l.promote_chain as any;
   expect(pc.before.order).toBe(2);

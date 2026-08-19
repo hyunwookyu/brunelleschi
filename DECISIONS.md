@@ -1281,3 +1281,41 @@ e2e `extension_snap.json`(발동 +1·공선성(배선 확인 — #5 보장이라
   대기 잔류가 과도해지면(`chainDirGuardStats.rejected/attempts` 비율이 판정자 — 특히
   5~12° 대역의 몫) 임계·방식을 재검토한다.
   측정 스위치 `S2S.setChainDirGuard(false)` = 옛 거동(#30).
+
+## D-L93 — 화각 상한을 제거한다: 거부는 f² ≤ 0뿐이다 (2026-08-19 14차 항목 1)
+
+**12차 지시 1-c(D 없음 — `FOV_GATE.reject_fov_deg = 120°` 신설)를 지시가 스스로 되돌렸다.**
+14차 지시 1: "내 12차 지시가 틀렸다. reject_fov_deg = 120°는 임의 기준이었고 근거가 없다.
+거부는 f² ≤ 0만이다 — 수학적으로 카메라가 존재하지 않는 경우. 물리적 한계이고 그 위로는
+전부 유효하다. 극단적으로 넓게 그리는 것은 결함이 아니라 선택이다."
+
+- **제거한 것**: `FOV_GATE.reject_fov_deg`(코드) · fovGate의 상한 거부 가지 ·
+  화각 경고 표시(mainL feedStroke의 vp_fixed·fov 알림 — 지시 1-b: 결과는 돌려보면 즉시
+  보이고, 상태 표시를 없앤 결정과 일관). 대역(ok/warn/severe)은 **참고 진단**으로만
+  남는다(지시 1-d — 이론서 18.4는 판정이 아니라 참고. camera.ts의 `gate()` 판정도 확인:
+  constraints.ts 경고에만 흘러가고 그 경고는 UI에 안 나온다 — 이미 참고였다).
+- **해시 안정**: `reject_fov_deg`는 `SHARED_CONSTANTS`에 **동결 리터럴**로 남는다(D-L51·
+  DRAFT_TOL 선례 — 키를 빼면 무관한 원장 60여 개가 STALE. 코드는 그 값을 안 읽는다).
+  전역 해시 f351839a 불변 — 진짜로 낡은 원장(confirm_rules·delta_conflict·real_ink·
+  first_anchor·vp_rules 배선 팔)은 이 항목이 재실행·재작성했다(#42 ⑥).
+- **파급 정리**: 12차의 `reject_blocks_confirmation` 팔은 `extreme_fov_confirms`(166°가
+  선다)로 반전 · f²≤0 차단은 `f2_negative_blocks` 신설 팔이 든다 · 13차 refeed_gate
+  reject → severe(확정 통과) · **DEFERRED "복원 경로가 화각 상한 밖" 행 닫힘**(복원↔신규
+  확정 비대칭 소멸 — 상한이 없으니 같은 조건이다) · real_ink의 fov_ok 분포 절단은 앱
+  게이트가 아니라 **분석 층화 상수**(STABLE_FOV_CUTOFF_DEG 120, 하네스 지역)로 남는다.
+- **판정 지표 변경의 사유**(#28·#26): 지시문 자체다. 되돌릴 조건: 극단 화각 확정이
+  실사용에서 조용히 틀린 배치를 양산한다는 실측이 나오면 — 그때도 상한이 아니라 다른
+  수단(예: 시점 복귀 보조)을 먼저 검토한다(넓은 화각은 의도일 수 있다는 전제 유지).
+
+### D-L92 후속 — 합성 대가의 실측 (14차 항목 0 검증, e2e 전량 재실행)
+
+`stage_browser.json`의 `promote_chain` 팔(상자 둘 · medium 잉크)에서 가드가 연쇄 배치를
+크게 줄였다: **lifted 16 → 8 · dir_guard rejected 21/24**(그 원장 `l_d3.promote_chain`을
+그 자리에서 읽는다). ⚠ **상한값으로 읽는다** — 이 픽스처는 획을 `doc.strokes`에 직접
+밀어 넣어 **그리는 중 2D 방향 스냅(resolve2d)을 우회한다**: 앱 경로에서는 소실점 임계 안
+겨냥이 그리는 중에 정확히 정렬되므로 연쇄 되쓰기가 항등에 가깝다. 그 밖(원시 손떨림
+2~6°)이 가드에 걸리는 몫이고, 실사용에서 그 몫이 얼마인지는 실획 `chainDirGuardStats`가
+판정자다(DEFERRED 그 행). 나머지 e2e 원장 검증: elevation_flow·extension_snap·
+ground_anchor·p1_invariance·promote는 **재실행에서 무변화**(git — 카운터 불변),
+basic_flow 등 일곱은 부동소수 끝자리·시간 잡음뿐. e2e 49통과·5건너뜀·2실패(등재된 환경
+실패 둘 그대로 — touch_route dpr2·static_deploy).
