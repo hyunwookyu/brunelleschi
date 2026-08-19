@@ -116,6 +116,13 @@ const pathStats = { direct: 0, lift: 0, twoPoint: 0 };
  */
 const placeBy = { ref_anchor: 0, start_anchor: 0, two_point: 0, end_anchor: 0,
                   cross_anchor: 0, batch: 0, unanchored: 0 };
+/**
+ * **교차 앵커의 경로별 진단**(#43 — 12차 3차 리뷰어 [7]). `placeBy.cross_anchor`는 분자이고
+ * 여기가 분모·거절 사유다: attempts(연쇄가 검토한 대기 획·회차 누계) = placed +
+ * no_crossing + skipped_bend + skipped_axis + rejected_ends. 원장(dir_state)이 검산한다.
+ */
+const crossStats = { attempts: 0, placed: 0, no_crossing: 0,
+                     skipped_bend: 0, skipped_axis: 0, rejected_ends: 0 };
 /** 떠 있는 커서의 스냅 — **누르기 전에 무엇에 붙을지 보인다**(SketchUp/Rhino 관행, L-B.3). */
 let hoverSnap: SnapCand | null = null;
 /** 마지막 획이 무엇에 붙었나 — 화면에 사유를 낸다(#7: 추측하지 말고 센다). */
@@ -797,14 +804,19 @@ function promoteChain(fr: Frame): number {
       // 교차는 두 직선이 정하는 한 점이라 D-L83이 배제한 미끄러지는 대상(on_edge)이
       // 아니다(crossAnchor.ts 머리말). 축이 분류돼 있어야 한다(A-3: 애매하면 놓지 않는다) —
       // 화면 축·미분류는 건너뛴다(수직/수평 화면 축의 방향 선택이 남는 모호 — DEFERRED).
+      // ⚠ **카운터는 경로별 + 분모다**(#43 — 3차 리뷰어 [7]: placeBy 0이 "가로지른 획이
+      // 없었다"인지 "거절됐다"인지 안 갈린다). crossStats가 사유별로 센다.
       if (CHAIN_EXT.on && !st.seg3d) {
+        crossStats.attempts += 1;
         const rep = representative(st.pts2d);
         const ax = st.userAxis ? st.axis : cam.axisOf(st.pts2d).axis;
         const dirs = axisDirs(fr.ctx);
-        if (rep && rep.bend <= AXIS_TOL.bend_max
-            && typeof ax === "number" && dirs[ax]) {
+        if (!rep || rep.bend > AXIS_TOL.bend_max) crossStats.skipped_bend += 1;
+        else if (!(typeof ax === "number" && dirs[ax])) crossStats.skipped_axis += 1;
+        else {
           const hit = crossAnchorOf(rep.a, rep.b, segs, fr.ctx, OSNAP.radiusPx);
-          if (hit) {
+          if (!hit) crossStats.no_crossing += 1;
+          else {
             const e1 = endFromCursor(hit.atV, dirs[ax], st.pts2d[0], fr.ctx);
             const e2 = endFromCursor(hit.atV, dirs[ax],
                                      st.pts2d[st.pts2d.length - 1], fr.ctx);
@@ -815,8 +827,8 @@ function promoteChain(fr: Frame): number {
               const p0 = project(e1, fr.ctx.principal, fr.ctx.f);
               const p1 = project(e2, fr.ctx.principal, fr.ctx.f);
               if (p0 && p1) st.pts2d = [[p0[0], p0[1]], [p1[0], p1[1]]];
-              n += 1; placeBy.cross_anchor += 1;
-            }
+              n += 1; placeBy.cross_anchor += 1; crossStats.placed += 1;
+            } else crossStats.rejected_ends += 1;
           }
         }
       }
@@ -3247,6 +3259,8 @@ refresh();
   setCubeFrame: (on: boolean) => { CUBE_FRAME.on = on; },
   /** **배치 경로 카운터**(4-6) — 합이 배치 전체와 맞는지 원장이 검산한다. */
   placeBy: () => ({ ...placeBy }),
+  /** 교차 앵커 분모·사유(#43 — 합=attempts 검산은 원장이 한다). */
+  crossStats: () => ({ ...crossStats }),
   /** **시점 저장**(5차 지시 7-1) — 종단 확인이 앱 경로 그대로 부른다(#17). */
   saveViewpoint: () => { saveViewpoint(); },
   /** **지우개 크기**(5차 지시 5) — 종단 확인이 앱 경로 그대로 읽고 쓴다(#17). */

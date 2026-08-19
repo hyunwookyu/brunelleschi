@@ -62,6 +62,7 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
     lifted: window.S2S.doc().strokes.filter((s: any) => s.seg3d).length,
     placeBy: window.S2S.placeBy(),
     guard: window.S2S.anchorGuard(),
+    cross: window.S2S.crossStats(),
   }));
   const led: Record<string, unknown> = {};
 
@@ -125,6 +126,14 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
   // 함께 올라간다 — 옛 기대 6(V·D·F)이 7이 됐다. 끝점 겨냥 없는 연결의 e2e 실증이다.
   expect((led.chain as any).lifted).toBe(7);                   // V·D·F + s4(교차)
   expect((led.chain as any).placeBy.cross_anchor).toBe(1);     // 교차 앵커 경로가 발화했다
+  // **분모 검산**(#43 — 3차 리뷰어 [7]): 시도 = 사유별 합. 0이 "시도 없음"인지 갈린다
+  {
+    const c = (led.chain as any).cross;
+    expect(c.attempts).toBe(c.placed + c.no_crossing + c.skipped_bend
+                          + c.skipped_axis + c.rejected_ends);
+    expect(c.placed).toBe(1);
+    expect(c.attempts).toBeGreaterThan(1);                     // s4 외의 대기 획도 검토됐다
+  }
   expect((led.chain_detail as any).V.lifted).toBe(true);
   expect((led.chain_detail as any).D.lifted).toBe(true);
   expect((led.chain_detail as any).D.start.ofId).toBe("s8");   // D는 V의 끝점에(연쇄의 인과)
@@ -222,7 +231,9 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
       "연쇄 A→B→C의 인과는 스냅 참조(ofId)로 확인한다 — 세 획이 같은 연쇄 호출의 몇 번째 패스에서 올라갔는지는 chainTrace가 남지만 단언하지 않는다(같은 패스 안에서도 순서 연쇄가 성립한다 — 대기 목록이 문서 순서라 A가 먼저 놓이면 B가 같은 패스에서 잡힌다)",
       "dpr 1·합성 마우스·한 구도의 확인이다(#12·#21·AS-C1)",
       "placeBy는 **실행 누계**다 — 실행취소·삭제를 되돌리지 않는다. 합=전체 검산이 성립하는 것은 이 픽스처에 실행취소가 없기 때문이고, 원장 밖 일반 보장이 아니다",
-      "**교차 앵커의 가림 교차 위험은 이 픽스처가 안 잰다**(12차 항목 3-a — #23: 화면 교차가 3D 접촉이 아닌 비율이 상자 하나에서 3/27이었다). s4×V는 참 접촉 교차다. 가림 교차가 조용히 틀린 깊이를 만드는 몫은 실획 표본이 와야 재진다 — DEFERRED 등재",
+      "**교차 앵커의 가림 교차 위험은 이 픽스처가 안 잰다**(12차 항목 3-a — #23: 화면 교차가 3D 접촉이 아닌 비율이 상자 하나에서 3/27이었다). s4×V는 참 접촉 교차다. 가림 교차가 조용히 틀린 깊이를 만드는 몫은 실획 표본이 와야 재진다 — DEFERRED 등재. ⚠ crossAnchorOf의 재투영 검사는 검증이 아니라 **수치 항등 가드**다(#5 — 광선이 해석 평면 안이라 교점 재투영은 정의상 교차점이다. 3차 리뷰어 [1]) — 가림 교차의 실질 완화는 얕은 교차 거름 하나뿐이다",
+      "**팔 ⑧의 err_deg 0은 구성의 항등이다**(#5 · 3차 리뷰어 [9] — vpDirSnap이 끝점을 a→VP 직선 위로 투영하므로 발동하면 정의상 0이다). 그 팔이 재는 것은 **4° 겨냥에서 스냅이 발동했는가**(범주)이고, <0.05 단언은 임계 판정이 아니라 항등 가드다. 발동 경계 양쪽은 단위 갈래(vp_dir_consistency)가 든다",
+      "**교차 조항(cross_anchor=1)은 사후 등록이다**(#26의 반대편 문 — 3차 리뷰어 [8]: 픽스처를 돌려 s4의 교차를 관측한 뒤 조항을 고쳤다). 그 조항의 전용 대조 팔(교차만 없앤 픽스처에서 s4가 dir로 남는 것)은 없다 — ext_off 팔은 s4가 이미 놓인 뒤라 못 가른다. DEFERRED 등재",
     ],
     thresholds: { infinite_px_min: 1, off_line_px_max: 0, console_errors_max: 0 },
     gate: {

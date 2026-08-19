@@ -23125,12 +23125,12 @@
     },
     {
       "path": "view_cube.json:after_face.fy",
-      "val": -6.623323778391762e-14,
+      "val": -7.532663523169552e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_cube.json:after_retap.fy",
-      "val": -6.530267466987192e-17,
+      "val": -6.530267466987035e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -23335,57 +23335,57 @@
     },
     {
       "path": "viewpoint_undo.json:orbited.q[0]",
-      "val": -2.8769789005760376e-17,
+      "val": -2.8769789005803184e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[2]",
-      "val": -1.0471346844016303e-17,
+      "val": -1.047134684389871e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.p[1]",
-      "val": 2.142494055444916e-16,
+      "val": 2.1424940554449163e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[0]",
-      "val": -2.876978900570123e-17,
+      "val": -2.876978900570456e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[2]",
-      "val": -1.0471346844178816e-17,
+      "val": -1.0471346844169695e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.p[1]",
-      "val": 2.1424940554449158e-16,
+      "val": 2.142494055444916e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[0]",
-      "val": -2.876978900569888e-17,
+      "val": -2.876978900570063e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[2]",
-      "val": -1.0471346844185273e-17,
+      "val": -1.0471346844180457e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dp",
-      "val": 1.5703650030798019e-12,
+      "val": 2.618467516156954e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dq",
-      "val": 2.244595579432715e-13,
+      "val": 3.7410875407226114e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.p[0]",
-      "val": -8.637684924432388e-14,
+      "val": -1.440345465476403e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -23400,32 +23400,32 @@
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[1]",
-      "val": -1.2343223506112346e-14,
+      "val": -2.0582489592903223e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[2]",
-      "val": -3.779022289480214e-31,
+      "val": -6.301569999608161e-31,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.p[1]",
-      "val": 2.142494055444917e-16,
+      "val": 2.1424940554449168e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[0]",
-      "val": -2.876978900574591e-17,
+      "val": -2.8769789005779056e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[2]",
-      "val": -1.0471346844056051e-17,
+      "val": -1.047134684396499e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:return_gap",
-      "val": 9.668381222609649e-12,
+      "val": 1.612154945652925e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -26036,16 +26036,16 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 214,
+      "targets": 215,
       "hits": 0,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 0건"
     },
     {
       "scan": "scan_cited_values",
       "unit": "인용 줄",
-      "targets": 121,
+      "targets": 122,
       "hits": 0,
-      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1446개이고 엄격 판정이면 326개(58줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
+      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1448개이고 엄격 판정이면 326개(58줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
     },
     {
       "scan": "scan_pitfall_citations",
@@ -26156,6 +26156,7 @@
       18,
       21,
       23,
+      26,
       30,
       40,
       41
@@ -26477,7 +26478,8 @@
       12,
       21,
       40,
-      41
+      41,
+      47
     ],
     "snap_stage.json": [
       5,
@@ -26596,8 +26598,8 @@
     ]
   },
   "cited_value_population": {
-    "lines_checked": 121,
-    "tokens_checked": 1446,
+    "lines_checked": 122,
+    "tokens_checked": 1448,
     "flags_line_rule": 0,
     "strict_tokens_flagged": 326,
     "strict_lines_flagged": 58,
