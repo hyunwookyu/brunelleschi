@@ -1,0 +1,339 @@
+{
+  "spec": "지면 첫 앵커 종단(13차 항목 2) — 경로 끔 대조 · 몸통 교차 확정 · 교차 앵커 연쇄 · 허공 대기 · 합=전체(#43)",
+  "constants": {
+    "hash": "f351839a",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "vertical_ask_deg": 45,
+        "min_vp_len_ratio": 0.04,
+        "concurrent_deg": 3
+      },
+      "FOV_GATE": {
+        "severe_f_ratio": 0.5,
+        "ok_f_ratio": 0.87,
+        "reject_fov_deg": 120
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "a45078a5",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong",
+      "rate",
+      "fraction"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  },
+  "why": "실획 15-16-18(카메라 섰는데 seg3d 0/13 — first_anchor.json)의 회귀 팔. 일괄 풀이의 접합(끝점 근접)이 몸통 교차 스타일을 못 쓰므로, 확정 순간 수평 평면 축 보조선을 지면에 놓는 첫 앵커 경로(groundAnchor.ts)를 13차 항목 2가 넣었다. 양성 채널은 ⓪↔① 짝이다(#30 — 같은 입력·경로 토글만 다름).",
+  "what_this_does_not_say": [
+    "**옳음(참값 대비)을 여기서 재지 않는다**(#15·#16) — 이 원장은 배치 수와 경로만 센다. 지면 전제가 틀린 획(허공·상자 윗면의 수평선)의 조용히 틀린 깊이는 first_anchor.json의 ground_truth 팔이 합성 참값으로 잰다.",
+    "**동작점이 하나다**(#12) — 구도 한 종류(2점 계열·피치 0)·확정 재료 한 벌이다. 스윕을 안 돌렸다.",
+    "arms의 lifted·ground 값은 **픽스처가 정하는 수**다(#46) — 판정은 값의 크기가 아니라 조건(전부 ground 경로·합=전체·끔 팔 0)이다."
+  ],
+  "arms": {
+    "ground_off": {
+      "lifted": 0,
+      "placeBy": {
+        "ref_anchor": 0,
+        "start_anchor": 0,
+        "two_point": 0,
+        "end_anchor": 0,
+        "cross_anchor": 0,
+        "batch": 0,
+        "ground": 0,
+        "extension": 0,
+        "unanchored": 0
+      },
+      "place_sum": 0,
+      "states": [
+        {
+          "id": "s1",
+          "state": "dir",
+          "axis": 0
+        },
+        {
+          "id": "s2",
+          "state": "dir",
+          "axis": 1
+        },
+        {
+          "id": "s3",
+          "state": "dir",
+          "axis": 1
+        },
+        {
+          "id": "s4",
+          "state": "dir",
+          "axis": 1
+        }
+      ]
+    },
+    "confirmed": {
+      "lifted": 4,
+      "placeBy": {
+        "ref_anchor": 0,
+        "start_anchor": 0,
+        "two_point": 0,
+        "end_anchor": 0,
+        "cross_anchor": 0,
+        "batch": 0,
+        "ground": 4,
+        "extension": 0,
+        "unanchored": 0
+      },
+      "place_sum": 4,
+      "states": [
+        {
+          "id": "s5",
+          "state": "coord",
+          "axis": 0
+        },
+        {
+          "id": "s6",
+          "state": "coord",
+          "axis": 1
+        },
+        {
+          "id": "s7",
+          "state": "coord",
+          "axis": 1
+        },
+        {
+          "id": "s8",
+          "state": "coord",
+          "axis": 1
+        }
+      ]
+    },
+    "chained": {
+      "lifted": 5,
+      "placeBy": {
+        "ref_anchor": 0,
+        "start_anchor": 0,
+        "two_point": 0,
+        "end_anchor": 0,
+        "cross_anchor": 1,
+        "batch": 0,
+        "ground": 4,
+        "extension": 0,
+        "unanchored": 0
+      },
+      "place_sum": 5,
+      "states": [
+        {
+          "id": "s5",
+          "state": "coord",
+          "axis": 0
+        },
+        {
+          "id": "s6",
+          "state": "coord",
+          "axis": 1
+        },
+        {
+          "id": "s7",
+          "state": "coord",
+          "axis": 1
+        },
+        {
+          "id": "s8",
+          "state": "coord",
+          "axis": 1
+        },
+        {
+          "id": "s9",
+          "state": "coord",
+          "axis": 2
+        }
+      ]
+    },
+    "air": {
+      "lifted": 5,
+      "placeBy": {
+        "ref_anchor": 0,
+        "start_anchor": 0,
+        "two_point": 0,
+        "end_anchor": 0,
+        "cross_anchor": 1,
+        "batch": 0,
+        "ground": 4,
+        "extension": 0,
+        "unanchored": 0
+      },
+      "place_sum": 5,
+      "states": [
+        {
+          "id": "s5",
+          "state": "coord",
+          "axis": 0
+        },
+        {
+          "id": "s6",
+          "state": "coord",
+          "axis": 1
+        },
+        {
+          "id": "s7",
+          "state": "coord",
+          "axis": 1
+        },
+        {
+          "id": "s8",
+          "state": "coord",
+          "axis": 1
+        },
+        {
+          "id": "s9",
+          "state": "coord",
+          "axis": 2
+        },
+        {
+          "id": "s10",
+          "state": "dir",
+          "axis": 0
+        }
+      ]
+    }
+  },
+  "recovered_by_ground": 4,
+  "gate": {
+    "registered": "⓪ 끔 팔에서 lifted 0 · ① 켬 팔에서 lifted == placeBy.ground > 0이고 batch 0 · ② 연쇄 팔에서 cross_anchor ≥ 1이 켬 팔 lifted에 +1 · ③ 허공 팔에서 ground 불변·마지막 획 dir 대기 · ④ 모든 팔에서 placeBy 합 == lifted(#43). 값은 arms가 든다(#47 — 산문에 수를 안 박는다)",
+    "reachability": "도달 가능성은 ⓪↔① **짝 대조**다(#30 · 13차 1·2 리뷰어 [4·1]) — 같은 입력·같은 앱에서 경로 토글만 다르고, 끔 팔 0 → 켬 팔 >0이 이 경로가 여는 양이다. ⚠ 값(recovered_by_ground)은 픽스처가 정하는 수다(#46) — 크기가 아니라 0에서 양수로의 전이가 판정이다(reachability_value_fixture_determined)",
+    "reachability_value": 4,
+    "reachability_value_fixture_determined": true,
+    "reachability_source": "recovered_by_ground",
+    "note": "이 항목이 걸리는 번호: #30(짝 대조) · #43(합=전체 — 실제로 확정 획의 이중 배치를 잡았다) · #46(픽스처 결정값) · #12(동작점 하나)"
+  },
+  "page_errors": []
+}

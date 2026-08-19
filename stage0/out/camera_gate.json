@@ -965,8 +965,12 @@
       }
     }
   },
+  "runs": 3696,
+  "what_this_does_not_say": [
+    "**앱의 배치 경로를 지나지 않는다**(13차 5·6·7 리뷰어 6[6] · #17 — DEFERRED 8차 2차 항목 1·2와 같은 유형): 배치는 `liftWith`(일괄 풀이 상당)로 하고, 앱의 `placeBy` 아홉 경로(12차 cross_anchor · 13차 ground·extension 포함)는 이 원장에 **안 잡힌다**. 그래서 그 경로들이 늘거나 바뀌어도 이 산출물은 바이트 동일할 수 있다 — diff 0은 '카메라 수학이 안 변했다'까지이고 '배치가 안 변했다'가 아니다."
+  ],
   "constants": {
-    "hash": "54346ad1",
+    "hash": "f351839a",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -1020,7 +1024,8 @@
       },
       "FOV_GATE": {
         "severe_f_ratio": 0.5,
-        "ok_f_ratio": 0.87
+        "ok_f_ratio": 0.87,
+        "reject_fov_deg": 120
       },
       "SNAP_TOL_AXIS": {
         "ambiguous_deg": 6
@@ -1693,5 +1698,6 @@
       }
     }
   },
+  "runs_note": "두 팔의 lift 실행 수 합(축 오차 팔 + 격자 팔 det·tru). 행별 내역은 by_strokes_per_axis[*].seeds_used·jitters_used·compositions_used",
   "lattice_note": "k등분 격자 상자. 축당 획 수 = (k+1)²·k → 4 / 18 / 48 / 100. **선분으로 낸다** — 관통선으로 하면 서로 몸통에서 교차해 `findJoints`가 하나도 안 잡는다(끝점 근처만 제약으로 쓰므로, L-A.3)."
 }

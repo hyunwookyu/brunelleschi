@@ -62,6 +62,7 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
     lifted: window.S2S.doc().strokes.filter((s: any) => s.seg3d).length,
     placeBy: window.S2S.placeBy(),
     guard: window.S2S.anchorGuard(),
+    cross: window.S2S.crossStats(),
   }));
   const led: Record<string, unknown> = {};
 
@@ -121,7 +122,18 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
     };
     return { D: of("s6"), F: of("s7"), V: of("s8"), trace: window.S2S.chainTrace() };
   });
-  expect((led.chain as any).lifted).toBe(6);                   // V·D·F 셋이 함께 올라갔다
+  // **12차 항목 3-a**: V가 서는 순간 s4(지지선)가 V의 상을 **가로지르므로** 교차 앵커로
+  // 함께 올라간다 — 옛 기대 6(V·D·F)이 7이 됐다. 끝점 겨냥 없는 연결의 e2e 실증이다.
+  expect((led.chain as any).lifted).toBe(7);                   // V·D·F + s4(교차)
+  expect((led.chain as any).placeBy.cross_anchor).toBe(1);     // 교차 앵커 경로가 발화했다
+  // **분모 검산**(#43 — 3차 리뷰어 [7]): 시도 = 사유별 합. 0이 "시도 없음"인지 갈린다
+  {
+    const c = (led.chain as any).cross;
+    expect(c.attempts).toBe(c.placed + c.no_crossing + c.skipped_bend
+                          + c.skipped_axis + c.rejected_ends);
+    expect(c.placed).toBe(1);
+    expect(c.attempts).toBeGreaterThan(1);                     // s4 외의 대기 획도 검토됐다
+  }
   expect((led.chain_detail as any).V.lifted).toBe(true);
   expect((led.chain_detail as any).D.lifted).toBe(true);
   expect((led.chain_detail as any).D.start.ofId).toBe("s8");   // D는 V의 끝점에(연쇄의 인과)
@@ -133,7 +145,7 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
   //      옛 연쇄는 시작점만 봐서 이 획을 영영 안 올렸다 — end_anchor 경로가 올린다
   await drawPx(0.66 * W, 0.301 * H, 0.45 * W, 0.301 * H);
   led.end_anchor = await states();
-  expect((led.end_anchor as any).lifted).toBe(7);
+  expect((led.end_anchor as any).lifted).toBe(8);
   expect((led.end_anchor as any).placeBy.end_anchor).toBe(1);
   led.e_detail = await page.evaluate(() => {
     const s = window.S2S.doc().strokes.find((x: any) => x.id === "s9");
@@ -141,16 +153,23 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
   });
   expect(["endpoint", "vertex"]).toContain((led.e_detail as any).end_kind);
 
-  // ---- ⑤·⑥ 무연결 획 둘(s4·W1)은 끝까지 dir(무한직선)로 남고, **경로 합 = 전체**다
+  // ---- ⑤·⑥ 무연결 획(W1)은 끝까지 dir(무한직선)로 남고, **경로 합 = 전체**다
+  //      (⚠ 12차: s4는 이제 **교차 연결**로 coord다 — 무연결 증인은 W1 하나다)
   led.final = await states();
   {
     const st = Object.fromEntries((led.final as any).states.map((s: any) => [s.id, s.state]));
-    expect(st.s4).toBe("dir"); expect(st.s5).toBe("dir");      // 연결이 없으면 좌표도 없다
+    expect(st.s4).toBe("coord");                               // 12차 — 교차가 연결이다(3-a)
+    expect(st.s5).toBe("dir");                                 // 연결이 없으면 좌표도 없다
     const pb = (led.final as any).placeBy;
     const sum = pb.ref_anchor + pb.start_anchor + pb.two_point + pb.end_anchor
-              + pb.batch + pb.unanchored;
+              + pb.cross_anchor + pb.batch + pb.ground + pb.extension + pb.unanchored;
     expect(sum).toBe((led.final as any).lifted);               // 합 = 배치 전체
     expect(pb.unanchored).toBe(0);                             // 가드가 임의 배치를 다 막았다
+    // **지면 첫 앵커는 이 픽스처에서 안 돈다**(13차 항목 2의 게이트 — 일괄 풀이가 놓은
+    // 확정이므로 n>0. 지면 경로의 양성 채널은 ground_anchor.json이다). 연장선(항목 3)도
+    // 이 픽스처에는 연장 방향 획이 없어 0이 명세다 — 그 양성 채널은 extension_snap.spec.ts
+    expect(pb.ground).toBe(0);
+    expect(pb.extension).toBe(0);
     led.place_sum = sum;
     // **새 두 경로(ref·end)의 발화 합** — 게이트 도달 가능성 값의 출처(selfcheck가 경로를 푼다)
     led.new_path_placements = pb.ref_anchor + pb.end_anchor;
@@ -166,15 +185,42 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
   await drawPx(0.85 * W, 0.60 * H, 0.92 * W, 0.60 * H);        // 무관한 획 — 턴만 돌린다
   const oldChainAfter = await states();
   led.old_chain = {
-    ext_off_lifted: (oldChainBefore as any).lifted,            // 7 그대로 — 안 올라갔다
-    ext_on_lifted: (oldChainAfter as any).lifted,              // 8 — 다음 턴의 연쇄가 회수
+    ext_off_lifted: (oldChainBefore as any).lifted,            // 8 그대로 — 안 올라갔다
+    ext_on_lifted: (oldChainAfter as any).lifted,              // 9 — 다음 턴의 연쇄가 회수
     end_anchor_after: (oldChainAfter as any).placeBy.end_anchor,
     // **판별값** — 확장을 켰을 때만 올라간 획 수(끄면 0이었을 값). 게이트 도달 가능성의 출처
     recovered: (oldChainAfter as any).lifted - (oldChainBefore as any).lifted,
   };
-  expect((led.old_chain as any).ext_off_lifted).toBe(7);
-  expect((led.old_chain as any).ext_on_lifted).toBe(8);
+  expect((led.old_chain as any).ext_off_lifted).toBe(8);
+  expect((led.old_chain as any).ext_on_lifted).toBe(9);
   expect((led.old_chain as any).end_anchor_after).toBe(2);
+
+  // ---- ⑧ **확정 카메라 아래 무앵커 획의 방향 스냅**(12차 항목 2 — 2차 리뷰어 [2]가
+  //      "이 배선을 단언하는 e2e가 없다"를 잡았다). 빈 곳에서 소실점을 4°(발동 경계
+  //      ≈6.89° 안) 벗어나게 겨냥한 획이, 확정 시 소실점을 **정확히** 지나는 방향으로
+  //      되쓰인다 — `placeStroke` 대기 가지의 `resolve2d` 배선을 앱 수준에서 잰다.
+  {
+    const vp = await page.evaluate(() => {
+      const sl = window.S2S.rules().slots.find((s: any) => s && s.kind === "vp");
+      return sl.at as [number, number];
+    });
+    const ax2 = 0.80 * W, ay2 = 0.75 * H;
+    const th = Math.atan2(vp[1] - ay2, vp[0] - ax2) + (4 * Math.PI) / 180;
+    await drawPx(ax2, ay2, ax2 + 150 * Math.cos(th), ay2 + 150 * Math.sin(th));
+    led.dir_snap_unanchored = await page.evaluate(() => {
+      const d = window.S2S.doc();
+      const s = d.strokes[d.strokes.length - 1];
+      const sl = window.S2S.rules().slots.find((x: any) => x && x.kind === "vp");
+      const a = s.pts2d[0], b = s.pts2d[s.pts2d.length - 1];
+      const u = [b[0] - a[0], b[1] - a[1]], v = [sl.at[0] - a[0], sl.at[1] - a[1]];
+      const lu = Math.hypot(u[0], u[1]), lv = Math.hypot(v[0], v[1]);
+      const c = Math.min(1, Math.abs(u[0] * v[0] + u[1] * v[1]) / (lu * lv));
+      return { aimed_off_deg: 4, err_deg: (Math.acos(c) * 180) / Math.PI,
+               lifted: !!s.seg3d, snap_start_3d: !!s.snapStart };
+    });
+    // 겨냥 4°가 0에 가깝게 되쓰였다 — 배선이 실제로 돈다(경계 밖 팔은 단위 갈래가 든다)
+    expect((led.dir_snap_unanchored as any).err_deg).toBeLessThan(0.05);
+  }
 
   led.console_errors = errors;
   expect(errors).toEqual([]);
@@ -190,10 +236,13 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
       "연쇄 A→B→C의 인과는 스냅 참조(ofId)로 확인한다 — 세 획이 같은 연쇄 호출의 몇 번째 패스에서 올라갔는지는 chainTrace가 남지만 단언하지 않는다(같은 패스 안에서도 순서 연쇄가 성립한다 — 대기 목록이 문서 순서라 A가 먼저 놓이면 B가 같은 패스에서 잡힌다)",
       "dpr 1·합성 마우스·한 구도의 확인이다(#12·#21·AS-C1)",
       "placeBy는 **실행 누계**다 — 실행취소·삭제를 되돌리지 않는다. 합=전체 검산이 성립하는 것은 이 픽스처에 실행취소가 없기 때문이고, 원장 밖 일반 보장이 아니다",
+      "**교차 앵커의 가림 교차 위험은 이 픽스처가 안 잰다**(12차 항목 3-a — #23: 화면 교차가 3D 접촉이 아닌 비율이 상자 하나에서 3/27이었다). s4×V는 참 접촉 교차다. 가림 교차가 조용히 틀린 깊이를 만드는 몫은 실획 표본이 와야 재진다 — DEFERRED 등재. ⚠ crossAnchorOf의 재투영 검사는 검증이 아니라 **수치 항등 가드**다(#5 — 광선이 해석 평면 안이라 교점 재투영은 정의상 교차점이다. 3차 리뷰어 [1]) — 가림 교차의 실질 완화는 얕은 교차 거름 하나뿐이다",
+      "**팔 ⑧의 err_deg 0은 구성의 항등이다**(#5 · 3차 리뷰어 [9] — vpDirSnap이 끝점을 a→VP 직선 위로 투영하므로 발동하면 정의상 0이다). 그 팔이 재는 것은 **4° 겨냥에서 스냅이 발동했는가**(범주)이고, <0.05 단언은 임계 판정이 아니라 항등 가드다. 발동 경계 양쪽은 단위 갈래(vp_dir_consistency)가 든다",
+      "**교차 조항(cross_anchor=1)은 사후 등록이다**(#26의 반대편 문 — 3차 리뷰어 [8]: 픽스처를 돌려 s4의 교차를 관측한 뒤 조항을 고쳤다). 그 조항의 전용 대조 팔(교차만 없앤 픽스처에서 s4가 dir로 남는 것)은 없다 — ext_off 팔은 s4가 이미 놓인 뒤라 못 가른다. DEFERRED 등재",
     ],
     thresholds: { infinite_px_min: 1, off_line_px_max: 0, console_errors_max: 0 },
     gate: {
-      registered: "카메라 전 상태 전부 none · 확정 뒤 접합 성분 셋 coord(batch=3 — 4-4 첫 앵커)·지지선 dir · 무연결 가로선의 연장부 잉크 >0(빗나간 점 0) · V→D→F 연쇄(D.snapStart.ofId=V · F.snapEnd.ofId=D · ref_anchor=1 — #18 소비) · 끝점 연결 획이 올라간다(end_anchor=1) · **옛 연쇄 대조**(ext_off에서 같은 형태가 안 올라가고 ext_on 다음 턴에 회수 — #30) · 무연결 둘은 끝까지 dir · 경로 합=배치 전체 · 콘솔 오류 0(잠금 — 임계 아님). ⚠ 'unanchored 0'은 가드 켬의 보장이라 판정 조항에서 뺐다(#5·리뷰어 2차 [6]). ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      registered: "카메라 전 상태 전부 none · 확정 뒤 접합 성분 셋 coord(batch=3 — 4-4 첫 앵커)·지지선 dir(→ 12차: V가 선 뒤 s4는 **교차 앵커**로 coord가 된다 — cross_anchor=1, 지시 3-a) · 무연결 가로선의 연장부 잉크 >0(빗나간 점 0) · V→D→F 연쇄(D.snapStart.ofId=V · F.snapEnd.ofId=D · ref_anchor=1 — #18 소비) · 끝점 연결 획이 올라간다(end_anchor=1) · **옛 연쇄 대조**(ext_off에서 같은 형태가 안 올라가고 ext_on 다음 턴에 회수 — #30) · 무연결 둘은 끝까지 dir · 경로 합=배치 전체 · 콘솔 오류 0(잠금 — 임계 아님). ⚠ 'unanchored 0'은 가드 켬의 보장이라 판정 조항에서 뺐다(#5·리뷰어 2차 [6]). ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "**옛 연쇄 팔이 오라클이다**(#30 · 리뷰어 2차 [9]): setChainExt(false)에서 끝점 연결 획이 안 올라가고(old_chain.ext_off_lifted 7 — 불변) 켜면 다음 턴에 올라간다(8). 그 대조가 end_anchor 경로의 판별을 든다. ⚠ 값이 정확히 1이라 #40 검사가 플래그한다 — 원인은 대조 팔이 회수 대상 획을 하나만 두기 때문이다(의심≠오류, §5). 옛 초판 값 2(ref+end 발화 합)는 픽스처 구성의 귀결이라 오라클에서 뺐다(#40 ⚠)",
       reachability_value: 1,
       reachability_source: "old_chain/recovered",

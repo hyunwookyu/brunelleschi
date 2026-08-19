@@ -1,0 +1,287 @@
+{
+  "spec": "연장선 스냅 종단(13차 항목 3) — 발동·공선성·토글 끔 폴백",
+  "constants": {
+    "hash": "f351839a",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "vertical_ask_deg": 45,
+        "min_vp_len_ratio": 0.04,
+        "concurrent_deg": 3
+      },
+      "FOV_GATE": {
+        "severe_f_ratio": 0.5,
+        "ok_f_ratio": 0.87,
+        "reject_fov_deg": 120
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "a45078a5",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong",
+      "rate",
+      "fraction"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  },
+  "why": "Rhino Extension·SketchUp 선 위 연장 선례(A-3). 끝점 앵커 + 원 선 방향이라 좌표가 즉시 정해지는 셋째 연결 수단(지시 3-c). 판정 임계(LIFT_TOL.parallel_deg 재사용 #17)의 반례는 unit이 잰다 — 이 원장은 앱 배선의 회귀다.",
+  "thresholds": {
+    "note": "이 실행의 동작점(리뷰어 [4] — 조리개는 전역 해시 밖·사용자 4~40px 가변이라 원장이 자기 값을 든다). collinear_dev는 임계가 아니라 배선 확인이다(#5 — 아래 gate)",
+    "parallel_deg": 5,
+    "aperture_px_at_run": 8,
+    "min_image_px_at_run": 8
+  },
+  "what_this_does_not_say": [
+    "**동작점이 하나다**(#12) — 카메라 한 구도·끝점 두 곳이다. 각 스윕은 unit의 임계 경계 팔이, 가드 동작점은 guard_sweep이 대신한다.",
+    "arms의 수는 픽스처가 정한다(#46) — 판정은 조건(경로 전이·토글 불변·합=전체)이다.",
+    "**공선성은 게이트 조건이 아니다**(#5 — 구성의 성질: endFromCursor는 정의상 그 직선 위 점을 낸다. 배선 확인으로만 남긴다 — collinear·diagonal_arm.collinear_dev의 0 근처 값이 selfcheck의 near-zero 의심에 걸리면 이 문장이 그 원인 확인이다).",
+    "**연장선의 '옳음'은 원 선의 옳음에 상속된다**(divergence_arm — 원 선이 축에서 3° 튼 픽스처에서 연장은 원 선을 따르고 축 경로와 정확히 그만큼 갈린다. 그것이 이 기능의 정의다(같은 3D 직선 — 3-c). '기하는 같다'는 정확 겨냥 원 선에 한한 문장이다 — 리뷰어 [5]로 사거리를 좁혔다)."
+  ],
+  "arms": {
+    "extended": {
+      "pb": {
+        "ref_anchor": 0,
+        "start_anchor": 0,
+        "two_point": 0,
+        "end_anchor": 0,
+        "cross_anchor": 0,
+        "batch": 0,
+        "ground": 4,
+        "extension": 1,
+        "unanchored": 0
+      },
+      "place_sum": 5,
+      "lifted": 5,
+      "last": {
+        "seg3d": [
+          [
+            -1.7779337136670887,
+            1,
+            5.926709935845639
+          ],
+          [
+            -1.7779617680742446,
+            1,
+            4.558993172400026
+          ]
+        ],
+        "axis": 1,
+        "start": "endpoint"
+      }
+    },
+    "collinear": {
+      "d0": 0,
+      "d1": 6.031953186951788e-17
+    },
+    "toggled_off": {
+      "pb": {
+        "ref_anchor": 0,
+        "start_anchor": 1,
+        "two_point": 0,
+        "end_anchor": 0,
+        "cross_anchor": 0,
+        "batch": 0,
+        "ground": 4,
+        "extension": 1,
+        "unanchored": 0
+      },
+      "place_sum": 6,
+      "lifted": 6
+    },
+    "off_angle": {
+      "pb": {
+        "ref_anchor": 0,
+        "start_anchor": 2,
+        "two_point": 0,
+        "end_anchor": 0,
+        "cross_anchor": 0,
+        "batch": 0,
+        "ground": 4,
+        "extension": 1,
+        "unanchored": 0
+      },
+      "lifted": 7,
+      "lastAxis": 1,
+      "lastSeg": true
+    }
+  },
+  "diagonal_arm": {
+    "engaged": true,
+    "collinear_dev": 2.48e-16,
+    "axis_involved": false
+  },
+  "divergence_arm": {
+    "engaged": true,
+    "orig_off_axis_deg": 3,
+    "ext_vs_axis_deg": 2.9417,
+    "ext_vs_orig_deg": 0
+  },
+  "guard_sweep": {
+    "image_len_px": 6.06,
+    "rows": [
+      {
+        "min_image_px": 0,
+        "engaged": true
+      },
+      {
+        "min_image_px": 4,
+        "engaged": true
+      },
+      {
+        "min_image_px": 8,
+        "engaged": false
+      },
+      {
+        "min_image_px": 40,
+        "engaged": false
+      }
+    ],
+    "note": "가드 0(끔 팔 — #30)이면 몇 px 상도 발동한다 — 그 방향은 잡음이다(입면의 깊이축 선이 실측 사례 — basic_flow 네 입면). 가드가 조리개 값에 묶여 있으므로 사용자가 40px로 올리면 상 40px 미만 선의 연장이 죽는다 — 그 맞바꿈이 이 표다(#12 동작점)"
+  },
+  "toggle_contrast": {
+    "note": "placeBy는 페이지 누적이다 — 팔별 증분이 판정이다: 켬 팔 Δ(+1) ↔ 끔 팔 Δ(0). recovered = Δon − Δoff가 이 경로가 실제로 가르는 양이다(ground_anchor의 recovered_by_ground와 같은 형태)",
+    "delta_on": 1,
+    "delta_off": 0,
+    "recovered": 1
+  },
+  "gate": {
+    "registered": "① 끝점 바깥 이어 긋기가 placeBy.extension을 팔 증분 +1로 즉시 놓는다(3-c) ② 토글 끄면 증분 0·start_anchor 폴백(3-a·3-g) ③ 임계 밖 손짓은 축 경로로 놓인다(off_angle 팔 — 3-a 후반) ④ 두 확정 팔의 place_sum == lifted(#43). 공선성은 게이트 조건이 아니다(#5 — what_this_does_not_say). 값은 arms·toggle_contrast가 든다(#47)",
+    "reachability": "도달 가능성은 토글 **짝 대조의 증분 차**다(#30 · 리뷰어 [1][2] — 판정 필드 자체를 적던 초판을 ground_anchor의 recovered 형태로 갈았다): Δon(+1) − Δoff(0). ⚠ 값은 픽스처가 정한다(#46) — 0에서 양수로의 전이가 판정",
+    "reachability_value": 1,
+    "reachability_value_fixture_determined": true,
+    "reachability_source": "toggle_contrast/recovered",
+    "note": "이 항목이 걸리는 번호: #30(토글·가드 끔 대조) · #46(픽스처 결정값) · #12(동작점 — guard_sweep이 가드의 동작점을 든다) · #17(임계 재사용) · #5(공선성·diagonal_arm은 구성의 성질 — 판별은 divergence_arm과 경로 전이) · #25(순수 팔을 원장 안에)"
+  },
+  "page_errors": []
+}

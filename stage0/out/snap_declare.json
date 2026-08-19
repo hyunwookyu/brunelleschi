@@ -1,8 +1,9 @@
 {
- "spec": "**7차 지시 1-a로 뒤집혔다** — 직교 스냅이 걸린 수평선도 `stepRule`의 P1 가드를 **우회하지 않는다**. 소실점 하나가 선 상태에서 4° 안 수평선을 그으면 **묻고**, 답해야 P1이 선다. 5차 지시 3의 '스냅이 곧 선언이다'가 그 가드를 우회하고 있었고, P1이 불가역이라 한 획이 그림 전체를 1점에 가뒀다. Playwright 신뢰 이벤트·콘솔 오류 0",
+ "spec": "**12차 지시 4-a(D-L89)로 다시 뒤집혔다** — 직교 스냅이 잡은 수평선은 **묻지 않고 P1을 확정한다**('붙은 것은 묻지 않는다'). 연혁: 5차 '스냅이 곧 선언'(D-L56) → 7차 물음 복원(D-L70 — snapForced가 원 방향 depth까지 뒤집어 P1에 가뒀다) → 12차 무물음 확정(D-L89 — kindFlipGuard(D-L80)가 방향 뒤집기를 스냅 단계에서 막으므로 hint 'screen'은 원 방향 ≤4°에만 붙는다. 그래서 7차가 막은 붕괴 기전과 다른 문이다). Playwright 신뢰 이벤트·콘솔 오류 0",
  "what_this_does_not_say": [
-  "**이 팔은 '우회가 없다'만 잰다.** 차수가 실제로 얼마나 풀리는지와 그것이 배치에 무엇을 하는지는 `order_lock.json`의 `bypass`/`fixed` 두 팔이다 — 그 원장이 **우회 제거만으로는 P1 잠김이 안 풀린다**(600실행 중 P1 519 → 499)고 적는다. 주 원인은 `screen_h`가 먼저 선언되는 것이고(first_declaration 497/600) 그것은 항목 3이 다룬다",
-  "**되살림 확인(A-4)**: `mainL.onStrokeEnd`에 `snapForced`를 되돌려 넣으면 ②의 `ask` 기대가 실패한다 — 지운 코드가 이 팔의 판정 대상이다(#25: 되살린 판은 커밋되지 않으므로 원장 밖이다)",
+  "**이 팔은 '스냅된 가로선의 무물음 P1'만 잰다.** 차수 분포와 배치의 몫은 `order_lock.json`의 `arms.fixed`/`arms.bypass`가 든다 — 수치는 그 원장의 `arms.*.headline.order_counts`·`first_declaration`을 그 자리에서 읽는다(⚠ 3차 리뷰어 [3]: 옛 산문이 남의 원장 수치(519→499·497/600)를 박았고 셋 다 현행에 없었다 — #47. 산문에 수를 안 박는다)",
+  "**되살림 확인(A-4)**: `stepRule`의 P1 가드에서 `hint !== \"screen\"` 조건을 지우면(7차 판 복원) ②의 '물음 없음' 기대가 실패한다 — 그 조건이 이 팔의 판정 대상이다",
+  "**이 팔은 스냅이 잡은 가로선만 잰다** — 스냅이 안 걸린(수정자·토글 끔) 가로선의 물음은 남아 있고 그 잔여 경로는 이 원장이 안 덮는다",
   "한 각도(1.7°)의 확인이다(#12) — 직교 임계(4°) 경계는 test/axisSnap 반례가 덮는다",
   "dpr 1·마우스 합성이다(#21·AS-C1)"
  ],
@@ -10,7 +11,7 @@
   "console_errors_max": 0
  },
  "gate": {
-  "registered": "소실점이 선 상태에서 4° 안 수평선을 그으면 **ask가 뜨고**(askStats +1) 차수는 0에 머문다. `answerAsk(\"screen\")` 뒤에야 P1이 서고 카메라가 선다 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+  "registered": "소실점이 선 상태에서 4° 안 수평선을 그으면(직교 스냅 발동) **묻지 않고**(askStats 불변) **P1이 그 자리에서 선다**(order 1·standing). 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
   "reachability": "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
   "reachability_absent": "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 물음 발생은 설계 선언이고(#5) 판정은 그 배선이다"
  },
@@ -20,25 +21,14 @@
   "asked": 0
  },
  "after": {
-  "ask": {
-   "strokeId": "s4",
-   "question": "screen_or_depth",
-   "toH": 0,
-   "toV": 90
-  },
-  "asked": 1,
-  "order": 0,
-  "standing": false
- },
- "answered": {
   "ask": null,
+  "asked": 0,
   "order": 1,
-  "standing": true,
-  "screen_choice": 1
+  "standing": true
  },
  "console_errors": [],
  "constants": {
-  "hash": "54346ad1",
+  "hash": "f351839a",
   "values": {
    "AXIS_TOL": {
     "vp_dist_ratio": 0.06,
@@ -92,7 +82,8 @@
    },
    "FOV_GATE": {
     "severe_f_ratio": 0.5,
-    "ok_f_ratio": 0.87
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
    },
    "SNAP_TOL_AXIS": {
     "ambiguous_deg": 6

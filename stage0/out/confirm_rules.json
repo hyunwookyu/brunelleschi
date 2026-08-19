@@ -1,7 +1,7 @@
 {
   "spec": "2026-08-18 6차 지시 1·2·7·11. 앱과 하네스가 같은 함수를 부른다(#17).",
   "constants": {
-    "hash": "54346ad1",
+    "hash": "f351839a",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -55,7 +55,8 @@
       },
       "FOV_GATE": {
         "severe_f_ratio": 0.5,
-        "ok_f_ratio": 0.87
+        "ok_f_ratio": 0.87,
+        "reject_fov_deg": 120
       },
       "SNAP_TOL_AXIS": {
         "ambiguous_deg": 6
@@ -154,9 +155,9 @@
     "source": "file",
     "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
   },
-  "why": "실획 첫 표본의 보고가 넷을 짚었다: 확정 뷰 자세 null · 끝점 스냅 전무 · 2점 확정의 화각 게이트 부재 · 다른 축의 대각선 둘이 1점으로 굳음. **파일 자체는 저장소에 없다** — `sessions/`가 비어 있고 `real_ink`는 `awaiting_samples`다. 그래서 여기서는 보고된 증상을 **코드에서** 재현·판정하고, 수치가 필요한 자리는 합성 구도로 잰다.",
+  "why": "실획 첫 표본의 보고가 넷을 짚었다: 확정 뷰 자세 null · 끝점 스냅 전무 · 2점 확정의 화각 게이트 부재 · 다른 축의 대각선 둘이 1점으로 굳음. ⚠ **2026-08-19 정정: 표본 파일 셋이 전부 sessions/에 있다**(6차 보고 파일 = 8-17 표본 — real_ink_reported의 좌표 일치 · 12차 두 표본 도착). 실좌표 측정은 `real_ink.k_metrics.per_doc`이 낸다. 여기의 재현·판정은 보고된 증상의 **코드 회귀 팔**로 남는다.",
   "what_this_does_not_say": [
-    "**실획이 아니다.** `sessions/`가 비어 있어 `real_ink`는 `awaiting_samples`다 — `fov_gate.real_ink_reported`의 입력은 **지시문이 보고한 수**이고 파일 측정이 아니다.",
+    "**`fov_gate.real_ink_reported*`의 입력은 지시문이 보고한 수다** — 파일 측정이 아니다. ⚠ 2026-08-19: 파일 셋이 sessions/에 도착해 실좌표 측정은 `real_ink.k_metrics.per_doc`이 낸다(보고 f/W와의 대조 포함). 이 블록은 보고값 회귀 팔로 남는다.",
     "**`confirm_view`의 분모는 뷰 하나다.** 지시 1을 기각한 근거는 술어의 성질이지 표본이 아니다 — 이 절은 통계가 아니라 불변 확인이다(6차 리뷰어 [4]).",
     "**그리드의 방향이 맞다는 것을 여기서 재지 않았다** — 확정 카메라의 격자와 사용자 깊이선의 각차를 잰 값이 원장에 없다(리뷰어 [4]ⓒ). `DEFERRED`에 등재했다.",
     "**`fov_gate.sweep`는 주점 정중앙 배치뿐이다.** 대역은 `f/W`가 가르므로 비대칭 배치도 담기지만 **그 방향의 동작점은 안 쟀다**(리뷰어 [4·5]).",
@@ -239,16 +240,32 @@
     "what": "두 수평 소실점이 서 있을 수 있는 카메라를 내는가 — 대역과 거부",
     "thresholds": {
       "severe_f_ratio": 0.5,
-      "ok_f_ratio": 0.87
+      "ok_f_ratio": 0.87,
+      "reject_fov_deg": 120
     },
-    "covered": 13,
+    "covered": 20,
+    "covered_note": "sweep + counter_example + off_screen + real_ink_reported + reported_12(file1·file2·old_gate) + reject_blocks_confirmation",
     "sweep": [
       {
         "f_over_w": 0.2,
         "d_over_w": 0.4,
-        "band": "severe",
+        "band": "reject",
         "f": 192,
         "fov_deg": 136.4
+      },
+      {
+        "f_over_w": 0.28,
+        "d_over_w": 0.56,
+        "band": "reject",
+        "f": 268.8,
+        "fov_deg": 121.5
+      },
+      {
+        "f_over_w": 0.29,
+        "d_over_w": 0.58,
+        "band": "severe",
+        "f": 278.4,
+        "fov_deg": 119.77
       },
       {
         "f_over_w": 0.4,
@@ -322,6 +339,7 @@
       }
     ],
     "band_counts_ordered": [
+      2,
       3,
       3,
       5
@@ -340,7 +358,7 @@
       "clamped": false
     },
     "real_ink_reported": {
-      "source": "6차 지시문 보고 — **파일이 sessions/에 없다**(real_ink는 awaiting_samples)",
+      "source": "6차 지시문 보고 — ⚠ 2026-08-19 정정: **그 파일이 8-17 표본이었다** — sessions/의 brunelleschi-2026-08-17T11-41-36 슬롯 좌표(901.95, −231.04)가 이 보고와 반올림 차이로 일치한다. 실좌표는 real_ink.k_metrics.per_doc이 잰다",
       "vp0": [
         902,
         157
@@ -357,10 +375,38 @@
       "fov_deg": 102.43,
       "band": "severe"
     },
+    "real_ink_reported_12": {
+      "source": "12차 지시문 보고 — ⚠ 2026-08-19: **파일이 sessions/에 도착했다**. 이 블록은 보고값 기준 회귀 팔이고 실좌표 측정은 real_ink.k_metrics.per_doc이 낸다. reported: brunelleschi-2026-08-18T15-16-18(13획) · reported_2: …T15-18-25_brnl_2(11획). ⚠⚠ **지시문 표기 'd/W'의 d는 소실점 간격이 아니라 시거리(= f)다**(#24 — 이 게이트가 이미 한 번 빠진 단위 함정): 판독 근거는 파일 2가 f = 87.2와 'd/W = 0.074'를 나란히 들었고 87.2/1180 = 0.0739가 그 값이라는 것이다 — 소실점 간격이면 179/1180 = 0.152라 안 맞는다. 그러므로 파일 1의 0.431도 f/W다. ⚠ 이 원장의 `d`·`reported_d` 필드는 반대로 **소실점 간격**이다 — 이름이 겹치므로 여기 적는다(2차 리뷰어 [8])",
+      "file1": {
+        "reported_f_over_w": 0.431,
+        "reported_absolute_px": null,
+        "f": 508.58,
+        "f_over_w": 0.431,
+        "fov_deg": 98.48,
+        "band": "severe",
+        "note": "경고(severe) 대역 — **확정은 지나간다**(지시 1-e: 표시가 남는 것이 맞는 동작). ⚠ **파일 1은 비율(f/W) 하나만 보고됐고 절대 px(f·소실점 간격)가 없다**(리뷰어 [11] — 파일 2와 필드가 비대칭인 이유). 2026-08-19 파일 도착 — 실좌표는 real_ink.k_metrics.per_doc의 camera_assumed_principal_center가 낸다"
+      },
+      "file2": {
+        "reported_d": 179,
+        "reported_f": 87.2,
+        "reconstructed_offsets_px": [
+          109.66,
+          69.34
+        ],
+        "d": 179,
+        "f": 87.2,
+        "f_over_w": 0.074,
+        "fov_deg": 163.19,
+        "band": "reject",
+        "band_under_old_gate": "severe",
+        "note": "화각 상한 초과 — 거부. `band_under_old_gate`가 **버그 되살림**이다(A-4): 상한이 없으면 severe로 확정을 지나간다 — 표본이 실측한 그 구멍. ⚠ **`f`와 `reported_f`의 일치는 구성의 항등이다**(#5 유형 3 · 2차 리뷰어 [9]): `reconstructed_offsets_px`가 a·b = f²의 해라서 f를 되뽑으면 정의상 87.2다 — 재구성 대수의 오타를 잡는 배선 확인일 뿐 측정이 아니다"
+      }
+    },
     "gate": {
-      "registered": "f² ≤ 0이면 **거부**한다. **f/W**(시거리 ÷ 화면 폭) < 0.87이면 경고하되 **확정은 막지 않는다**(지시 7-b: 경고하고 확정하되 표시). 화면 밖 소실점은 **정상**이므로 거르지 않는다. ⚠ **초판은 이 문장을 `d/W`로 적었고 6-R이 대역을 f/W로 옮겼는데 등록문이 안 따라왔다** — 7차 항목 4에서 정정했다(#24: 단위가 다르면 같은 임계가 아니다. d에 걸면 실효 임계가 정확히 두 배 느슨해진다). **[7차 항목 4 추가]** 그 게이트가 **확정 경로에 걸려 있는지**는 `vp_rules.test.ts`의 배선 팔 셋이 잠근다(거부 · 양성 채널 · 2점 동시 경로).",
-      "reachability": "대역이 실제로 갈리는가 — **쓸기 11행은 severe·warn·ok 셋을 내고 reject는 `counter_example`이 낸다**(쓸기는 f² > 0 격자라 reject가 안 나온다). 한 대역만 나오면 판정이 아니다(#30). `reachability_value`는 `band_counts_ordered` = **[severe, warn, ok]** 순이다",
+      "registered": "f² ≤ 0이면 **거부**한다. **화각이 `FOV_GATE.reject_fov_deg`(120°)를 넘으면 f² > 0이어도 거부한다**(12차 지시 1-c — 물리적으로 가능해도 쓸 수 없는 구간이 있다. 실획 둘째 표본의 보고 기하가 그 증거다 — `real_ink_reported_12.file2`). **f/W**(시거리 ÷ 화면 폭) < 0.87이면 경고하되 **확정은 막지 않는다**(지시 7-b: 경고하고 확정하되 표시). 화면 밖 소실점은 **정상**이므로 거르지 않는다. ⚠ **초판은 이 문장을 `d/W`로 적었고 6-R이 대역을 f/W로 옮겼는데 등록문이 안 따라왔다** — 7차 항목 4에서 정정했다(#24: 단위가 다르면 같은 임계가 아니다). **[7차 항목 4 추가]** 그 게이트가 **확정 경로에 걸려 있는지**는 `vp_rules.test.ts`의 배선 팔이 잠근다(거부 · 양성 채널 · 2점 동시 경로 · 12차의 화각 상한 배선 둘).",
+      "reachability": "대역이 실제로 갈리는가 — **쓸기가 네 대역 전부를 낸다**(12차부터 상한 거부가 f² > 0 격자에서도 나온다 — 0.2·0.28 행). f² ≤ 0 거부는 `counter_example`이 따로 낸다. 한 대역만 나오면 판정이 아니다(#30). `reachability_value`는 `band_counts_ordered` = **[reject, severe, warn, ok]** 순이다",
       "reachability_value": [
+        2,
         3,
         3,
         5
@@ -369,7 +415,12 @@
       "result": {
         "same_side_rejected": true,
         "real_ink_band": "severe",
-        "real_ink_fov_deg": 102.42561961283505
+        "real_ink_fov_deg": 102.42561961283505,
+        "reported12_file1_band": "severe",
+        "reported12_file2_band": "reject",
+        "reported12_file2_band_under_old_gate": "severe",
+        "reject_blocks_confirmation": true,
+        "severe_band_confirms": true
       }
     }
   },

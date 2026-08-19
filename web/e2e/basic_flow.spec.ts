@@ -128,7 +128,10 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
   expect((led.s3_place_by as any).batch).toBe(2);
   expect((led.s3_place_by as any).start_anchor + (led.s3_place_by as any).two_point
        + (led.s3_place_by as any).end_anchor + (led.s3_place_by as any).ref_anchor
+       + (led.s3_place_by as any).ground + (led.s3_place_by as any).extension
        + (led.s3_place_by as any).unanchored).toBe(0);
+  // ⚠ ground 0이 이 픽스처의 명세다(13차 항목 2) — 일괄 풀이가 놓는 확정(n>0)에서는
+  // 지면 첫 앵커가 안 돈다. 무연결 둘의 대기가 그대로인 것이 그 가드의 회귀 확인이다.
   expect((led.s3_place_by as any).waiting).toBe(2);
   // **축 배정**(5-3의 원장 근거, 리뷰어 [6]) — 가로선과 깊이선이 서로 다른 축이다
   expect(new Set((led.s3_depth as any).axes).size).toBe(2);
@@ -1528,8 +1531,11 @@ test("궤도 시작 — 손가락만 대면 화면이 같고, 첫 회전이 이�
 //
 // 축 스냅으로 화면 수평이 된 선은 사용자가 수평을 **의도한** 것이다 — 묻지 않고 그 축으로
 // 확정한다(3-a). 판정(물음)의 대상은 스냅이 안 걸린 자유 선뿐이다(3-b).
-// 되살린 버그: 소실점이 있는 상태의 가로선이 ask를 띄우던 것(4차 D-L53 가드의 과잉).
-test("스냅된 수평선 — P1 가드를 우회하지 않는다 (7차 지시 1-a, 5차 지시 3 개정)", async ({ page }) => {
+// ⛔⛔ **12차 지시 4-a(D-L89)로 계약이 다시 뒤집혔다**: 스냅이 잡은 가로선은 **묻지 않고**
+// P1을 확정한다("붙은 것은 묻지 않는다"). 7차의 우회 우려(D-L70)와 다른 이유는
+// kindFlipGuard(D-L80)다 — 원 방향이 depth인 획에는 직교 스냅이 안 걸리므로,
+// hint "screen"은 원 방향이 화면 축 대역(≤4°)인 획에만 붙는다.
+test("스냅된 수평선 — 묻지 않고 P1이 선다 (12차 지시 4-a · D-L89)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
@@ -1568,51 +1574,39 @@ test("스냅된 수평선 — P1 가드를 우회하지 않는다 (7차 지시 1
   });
   expect((led.vp_state as any).vps).toBe(1);               // 소실점 하나가 서 있다
 
-  // ---- ② **거의 수평선**(1.7° — 직교 스냅 4° 안)을 긋는다 → **묻는다**(7차 지시 1-a).
-  //      옛 판(5차 지시 3)은 여기서 `snapForced = "screen"`을 넘겨 `stepRule`의 P1 가드를
-  //      **우회하고 조용히 화면 가로축을 선언**했다. P1은 불가역이므로 그 한 획이 그림 전체를
-  //      1점에 가둔다 — `order_lock.json`의 `bypass`/`fixed` 두 팔이 그 대가를 잰다.
+  // ---- ② **거의 수평선**(1.7° — 직교 스냅 4° 안)을 긋는다 → **묻지 않고 P1이 선다**
+  //      (12차 지시 4-a — D-L89 "붙은 것은 묻지 않는다"). 스냅 발동 = 사용자의 수평 의도이고
+  //      그 hint가 P1 가드를 지난다. kindFlipGuard(D-L80)가 원 방향 depth의 우회를 스냅
+  //      단계에서 이미 막으므로 D-L70의 붕괴 기전(조용한 방향 뒤집기)은 못 돌아온다.
   await drawPx(0.25 * W, 0.55 * H, 0.45 * W, 0.556 * H);
   led.after = await page.evaluate(() => {
     const S = window.S2S;
     return { ask: S.ask(), asked: S.askStats().asked, order: S.order(),
              standing: S.standing() };
   });
-  // **물음이 떴다** — 스냅은 좌표만 옮기고 선언은 규칙이 한다
-  expect((led.after as any).ask).toBeTruthy();
-  expect((led.after as any).ask.question).toBe("screen_or_depth");
-  expect((led.after as any).asked).toBe((led.vp_state as any).asked + 1);
-  // **조용히 P1이 되지 않았다** — 가둠의 문이 닫혔다
-  expect((led.after as any).order).toBe(0);
-
-  // ---- ③ **답하면 그때 선다**(A-3: 애매하면 놓지 않는다 — 놓지 않되 버리지 않는다).
-  //      물음은 사용자가 답할 수 있는 것이고, 답한 뒤의 P1은 **사용자가 정한 것**이다.
-  await page.evaluate(() => window.S2S.answerAsk("screen"));
-  await page.waitForTimeout(50);
-  led.answered = await page.evaluate(() => {
-    const S = window.S2S;
-    return { ask: S.ask(), order: S.order(), standing: S.standing(),
-             screen_choice: S.askStats().screen };
-  });
-  expect((led.answered as any).ask).toBeFalsy();
-  expect((led.answered as any).order).toBe(1);
-  expect((led.answered as any).standing).toBe(true);
+  // **물음이 없다** — 스냅이 곧 화면 축 판정이다(지시 4-b: 화면 축 판정은 스냅 단계에서만)
+  expect((led.after as any).ask).toBeFalsy();
+  expect((led.after as any).asked).toBe((led.vp_state as any).asked);
+  // **P1이 그 자리에서 섰다** — 답을 기다리지 않는다
+  expect((led.after as any).order).toBe(1);
+  expect((led.after as any).standing).toBe(true);
 
   led.console_errors = errors;
   expect(errors).toEqual([]);
 
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "snap_declare.json"), JSON.stringify({
-    spec: "**7차 지시 1-a로 뒤집혔다** — 직교 스냅이 걸린 수평선도 `stepRule`의 P1 가드를 **우회하지 않는다**. 소실점 하나가 선 상태에서 4° 안 수평선을 그으면 **묻고**, 답해야 P1이 선다. 5차 지시 3의 '스냅이 곧 선언이다'가 그 가드를 우회하고 있었고, P1이 불가역이라 한 획이 그림 전체를 1점에 가뒀다. Playwright 신뢰 이벤트·콘솔 오류 0",
+    spec: "**12차 지시 4-a(D-L89)로 다시 뒤집혔다** — 직교 스냅이 잡은 수평선은 **묻지 않고 P1을 확정한다**('붙은 것은 묻지 않는다'). 연혁: 5차 '스냅이 곧 선언'(D-L56) → 7차 물음 복원(D-L70 — snapForced가 원 방향 depth까지 뒤집어 P1에 가뒀다) → 12차 무물음 확정(D-L89 — kindFlipGuard(D-L80)가 방향 뒤집기를 스냅 단계에서 막으므로 hint 'screen'은 원 방향 ≤4°에만 붙는다. 그래서 7차가 막은 붕괴 기전과 다른 문이다). Playwright 신뢰 이벤트·콘솔 오류 0",
     what_this_does_not_say: [
-      "**이 팔은 '우회가 없다'만 잰다.** 차수가 실제로 얼마나 풀리는지와 그것이 배치에 무엇을 하는지는 `order_lock.json`의 `bypass`/`fixed` 두 팔이다 — 그 원장이 **우회 제거만으로는 P1 잠김이 안 풀린다**(600실행 중 P1 519 → 499)고 적는다. 주 원인은 `screen_h`가 먼저 선언되는 것이고(first_declaration 497/600) 그것은 항목 3이 다룬다",
-      "**되살림 확인(A-4)**: `mainL.onStrokeEnd`에 `snapForced`를 되돌려 넣으면 ②의 `ask` 기대가 실패한다 — 지운 코드가 이 팔의 판정 대상이다(#25: 되살린 판은 커밋되지 않으므로 원장 밖이다)",
+      "**이 팔은 '스냅된 가로선의 무물음 P1'만 잰다.** 차수 분포와 배치의 몫은 `order_lock.json`의 `arms.fixed`/`arms.bypass`가 든다 — 수치는 그 원장의 `arms.*.headline.order_counts`·`first_declaration`을 그 자리에서 읽는다(⚠ 3차 리뷰어 [3]: 옛 산문이 남의 원장 수치(519→499·497/600)를 박았고 셋 다 현행에 없었다 — #47. 산문에 수를 안 박는다)",
+      "**되살림 확인(A-4)**: `stepRule`의 P1 가드에서 `hint !== \"screen\"` 조건을 지우면(7차 판 복원) ②의 '물음 없음' 기대가 실패한다 — 그 조건이 이 팔의 판정 대상이다",
+      "**이 팔은 스냅이 잡은 가로선만 잰다** — 스냅이 안 걸린(수정자·토글 끔) 가로선의 물음은 남아 있고 그 잔여 경로는 이 원장이 안 덮는다",
       "한 각도(1.7°)의 확인이다(#12) — 직교 임계(4°) 경계는 test/axisSnap 반례가 덮는다",
       "dpr 1·마우스 합성이다(#21·AS-C1)",
     ],
     thresholds: { console_errors_max: 0 },
     gate: {
-      registered: "소실점이 선 상태에서 4° 안 수평선을 그으면 **ask가 뜨고**(askStats +1) 차수는 0에 머문다. `answerAsk(\"screen\")` 뒤에야 P1이 서고 카메라가 선다 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      registered: "소실점이 선 상태에서 4° 안 수평선을 그으면(직교 스냅 발동) **묻지 않고**(askStats 불변) **P1이 그 자리에서 선다**(order 1·standing). 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
       reachability: "오라클 없음 — `reachability_absent` 참조(#40 규칙 ①)",
       reachability_absent: "**배선 확인이라 도달 가능성 오라클이 성립하지 않는다** — 물음 발생은 설계 선언이고(#5) 판정은 그 배선이다",
     },
@@ -2356,8 +2350,14 @@ test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, �
     expect(Math.abs(s[0][2] - s[1][2])).toBeLessThan(1e-9);              // z 불변
     expect(Math.abs(s[1][0] - s[0][0])).toBeGreaterThan(1e-6);           // x가 실제로 움직였다
   }
-  // **세 획**(정면·우측면·배면) 전부 직접 경로 — 무스냅 획은 D-L83이 막아 여기 안 든다
-  expect((led.s5_back as any).path.direct).toBeGreaterThanOrEqual(3);
+  // **세 획**(정면·우측면·배면) — 무스냅 획은 D-L83이 막아 여기 안 든다.
+  // ⚠ 13차 항목 3: 정면의 이어 그리기(같은 X선의 끝점에서 같은 방향)는 이제 **연장선
+  // 경로**(placeBy.extension)로 놓인다 — 우선순위가 축 직접보다 앞이고, 기하는 위
+  // 불변 단언들(y·z 불변)이 그대로 잡는다(같은 3D 직선이라 결과가 같다).
+  led.s5_place_by = await page.evaluate(() => window.S2S.placeBy());
+  expect((led.s5_back as any).path.direct + (led.s5_place_by as any).extension)
+    .toBeGreaterThanOrEqual(3);
+  expect((led.s5_place_by as any).extension).toBeGreaterThanOrEqual(1);
   expect((led.s5_back as any).path.lift).toBe(0);                        // 1점에서는 lift가 안 돈다
 
   // ---- ⑥ 자유 시점(큐브 드래그 — 격자 밖 요) → 형태 확인 + **음성 대조**: 이제 lift 경로다
@@ -2374,9 +2374,29 @@ test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, �
     await drawPx(p.x - box.x, p.y - box.y, p.x - box.x + 0.1 * W, p.y - box.y + 3);
   }
   led.s6_free = await state();
+  led.s6_place = await page.evaluate(() => {
+    const st = window.S2S.doc().strokes;
+    const last = st[st.length - 1];
+    return { pb: window.S2S.placeBy(), lastAxis: last.axis,
+             lastStart: last.snapStart ? { kind: last.snapStart.kind, ofId: last.snapStart.ofId } : null };
+  });
   expect((led.s6_free as any).gl_painted_px).toBeGreaterThan(0);         // **형태가 보인다**
-  expect((led.s6_free as any).path.lift).toBeGreaterThanOrEqual(1);      // 1점 밖 — lift 경로(음성 대조)
+  // ⚠ 13차 항목 3: 이 획은 s1의 시작 꼭짓점에서 s1의 상 방향으로 긋는 것이라(배면 계열
+  // 시점 — 상이 좌우 반전이라 "바깥"이 +x다) **연장선 경로**로 놓일 수 있다. 음성 대조의
+  // 뜻(1점 밖에서는 direct가 안 돈다)은 direct 불변 단언이 그대로 잡고, 배치 경로는
+  // lift 또는 extension이다(둘 다 카메라 투영 계열 — 같은 3D 직선).
+  expect((led.s6_free as any).path.lift
+       + ((led.s6_place as any).pb.extension - (led.s5_place_by as any).extension))
+    .toBeGreaterThanOrEqual(1);
   expect((led.s6_free as any).path.direct).toBe((led.s5_back as any).path.direct);
+  // 게이트 값의 재료(13차 항목 3 — 자유 시점 배치가 lift 또는 연장 경로로 간 수)
+  (led as any).s6_lift_or_ext = (led.s6_free as any).path.lift
+    + ((led.s6_place as any).pb.extension - (led.s5_place_by as any).extension);
+  // **격자 안↔밖 쌍**(13차 항목 3 리뷰어 [6] — 판별은 대조다): 같은 그리기가 격자 안에서는
+  // direct, 밖에서는 lift/연장으로 간다 — 쌍이 게이트 도달 가능성의 값이다
+  (led as any).s6_pair = { in_grid_direct: (led.s5_back as any).path.direct,
+                           out_grid_lift_or_ext: (led as any).s6_lift_or_ext };
+  (led as any).s6_pair_values = [(led.s5_back as any).path.direct, (led as any).s6_lift_or_ext];
 
   led.console_errors = errors;
   expect(errors).toEqual([]);
@@ -2397,7 +2417,9 @@ test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, �
       "pathStats는 확정 축 배치만 센다(미리보기 프레임 아님) — twoPoint(양 끝 스냅)는 별도 칸이고 **확정 단계에서 1**(상자 뼈대 중 한 획의 양 끝 스냅), 이후 전 단계 불변이다(2-R′ [B-2] — 초판 '0' 서술은 자기 데이터와 모순이었다)",
     ],
     thresholds: { plane_const_max: 1e-9, anchor_plane_max: 1e-6, moved_min: 1e-6,
-                  direct_min: 3, lift_min_after_free: 1, console_errors_max: 0 },
+                  /** ⚠ 13차 항목 3 개명: 이어 그리기가 연장선 경로로 갈 수 있어 합에 건다 */
+                  direct_or_extension_min: 3, lift_or_ext_min_after_free: 1,
+                  console_errors_max: 0 },
     algo_constants_note: "ONE_POINT_TOL은 one_point_direct.json의 algo_constants에 있다",
     inputs: {
       note: "재현 좌표(#12) — 비율은 잉크 캔버스 크기 대비",
@@ -2407,10 +2429,11 @@ test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, �
       free: "큐브 드래그 +20px",
     },
     gate: {
-      registered: "정면 이어 그리기 direct≥1·X축 평면(y·z<1e-9) · 무스냅 시작은 **가드가 막아 대기**(lifted 불변·unanchored_rejected≥1 — D-L83, 10차 항목 0이 옛 조항 '깊이=궤도 중심 z<1e-6'을 갈아 끼웠다: D-L77 동작이 지시로 뒤집혔다) · 우측면 Z축 선(x·y<1e-9·z 이동>1e-6·앵커 깊이면) · 배면 X축 선 · 세 획 direct·lift 0 · 자유 시점 GL>0·lift≥1(음성 대조 — 1점 밖에서는 직접 경로가 안 돈다·direct 불변) · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
-      reachability: "음성 대조가 오라클이다(2-R′ [B-1] — 초판은 통과 기준 자체(direct_min=4)를 도달 가능성으로 적었다: #40 ① 지표 불일치) — 자유 시점(격자 밖 요)에서 **같은 그리기가 lift로 간 수**가 값이다. 1이 자명값이 아닌 이유: 같은 그리기가 격자 안에서는 direct로 갔다(s2~s5 네 번). 이 값이 0이면 direct 카운터는 아무 데서나 오르는 것이고 이 게이트는 무효다. ⚠ 정확히 1이라 selfcheck #40 검사가 의심 플래그를 낸다 — 그 플래그의 원인 확인이 이 문장이다(의심≠오류, §5)",
-      reachability_value: 1,
-      reachability_source: "s6_free/path/lift",
+      registered: "정면 이어 그리기 direct≥1·X축 평면(y·z<1e-9) · 무스냅 시작은 **가드가 막아 대기**(lifted 불변·unanchored_rejected≥1 — D-L83, 10차 항목 0이 옛 조항 '깊이=궤도 중심 z<1e-6'을 갈아 끼웠다: D-L77 동작이 지시로 뒤집혔다) · 우측면 Z축 선(x·y<1e-9·z 이동>1e-6·앵커 깊이면) · 배면 X축 선 · 세 획 direct+연장(합 ≥ 3 — 13차 항목 3: 이어 그리기는 연장선 경로일 수 있다)·lift 0 · 자유 시점 GL>0·(lift+연장)≥1(음성 대조 — 1점 밖에서는 직접 경로가 안 돈다·direct 불변. 13차 항목 3: 연장선이 그 자리를 정당하게 차지할 수 있다) · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "음성 대조가 오라클이다(2-R′ [B-1] — 초판은 통과 기준 자체(direct_min=4)를 도달 가능성으로 적었다: #40 ① 지표 불일치) — 자유 시점(격자 밖 요)에서 **같은 그리기가 직접이 아닌 경로(lift 또는 연장)로 간 수**가 값이다(⚠ 13차 항목 3 정정: 연장선 스냅이 이 획을 가로챌 수 있다 — s1의 꼭짓점에서 s1의 상 방향이라 정당 발동이고 기하는 같은 직선이다. 옛 값 출처 s6_free/path/lift는 그래서 0이 될 수 있어 **격자 안 direct ↔ 밖 lift/연장의 쌍**(s6_pair)으로 갈았다 — 리뷰어 [6]: 판별력은 값이 아니라 그 대조에 있다). 1이 자명값이 아닌 이유: 같은 그리기가 격자 안에서는 direct로 갔다. 이 값이 0이면 direct 카운터는 아무 데서나 오르는 것이고 이 게이트는 무효다. ⚠ 정확히 1이라 selfcheck #40 검사가 의심 플래그를 낸다 — 그 플래그의 원인 확인이 이 문장이다(의심≠오류, §5). ⚠ path 카운터에는 합=전체 검산이 없다(그 검산은 placeBy 쪽 — ground_anchor.json ④가 한다. 13차 1·2 리뷰어 2차 [8]로 명시)",
+      reachability_value: [(led as any).s6_pair.in_grid_direct,
+                           (led as any).s6_pair.out_grid_lift_or_ext],
+      reachability_source: "s6_pair_values",
     },
     ...led,
     constants: constantsSnapshot(),

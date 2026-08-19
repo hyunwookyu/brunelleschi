@@ -56,8 +56,10 @@ export const DATA_DEPS: DataDep[] = [
   {
     name: "sessions",
     path: "sessions",
-    why: "**아직 하나도 없다**(AS-C1: 실획 표본 0). 사람이 그려 넣어야 생긴다",
-    used_by: ["test/real_ink.test.ts"],
+    why: "사람이 그려 넣어야 생긴다(AS-C1). ⚠ 2026-08-19부터 표본 셋이 **커밋돼 있다** — "
+      + "그래서 CI에도 있고, `first_anchor`(특정 파일 재구성)는 없으면 건너뛰지 않고 "
+      + "**실패**한다(#32 — 커밋된 재현 재료의 소실은 조용히 넘어갈 일이 아니다)",
+    used_by: ["test/real_ink.test.ts", "test/first_anchor.test.ts", "test/delta_conflict.test.ts"],
     how: "앱에서 `획 내보내기` → 받은 JSON을 `sessions/`에 넣는다(README 0절)",
   },
   {

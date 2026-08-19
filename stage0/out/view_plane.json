@@ -1,7 +1,7 @@
 {
   "spec": "S-7 (0) 돌린 시점의 평면 경로. **같은 획이 시점에 따라 갈리면 안 된다.**",
   "constants": {
-    "hash": "54346ad1",
+    "hash": "f351839a",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -55,7 +55,8 @@
       },
       "FOV_GATE": {
         "severe_f_ratio": 0.5,
-        "ok_f_ratio": 0.87
+        "ok_f_ratio": 0.87,
+        "reject_fov_deg": 120
       },
       "SNAP_TOL_AXIS": {
         "ambiguous_deg": 6
