@@ -3504,6 +3504,8 @@ refresh();
   /** **화면 줌**(14차 항목 5 · D-L94) — 표시 배율. 문서 좌표에는 절대 안 들어간다. */
   viewZoom: () => stage.viewZoom,
   setViewZoom: (z: number, center?: Pt2) => { stage.setViewZoom(z, center); refresh(); },
+  /** 배율 클램프 값 — 원장이 측정 동작점이 클램프에 닿았는지 판독하는 데 쓴다. */
+  viewZoomLim: () => ({ ...Stage.VIEW_ZOOM_LIM }),
   /** 큐브 기준계 스위치(#30) — `false`가 옛 기준계(세계 축). cube_frame의 대조 팔이 쓴다. */
   setCubeFrame: (on: boolean) => { CUBE_FRAME.on = on; },
   /** **배치 경로 카운터**(4-6) — 합이 배치 전체와 맞는지 원장이 검산한다. */
