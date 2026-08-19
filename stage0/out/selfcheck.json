@@ -20895,7 +20895,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 2.509104035652854e-13,
+      "val": 1.1590728377086634e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -21110,12 +21110,12 @@
     },
     {
       "path": "view_cube.json:after_face.fy",
-      "val": -9.754587028811832e-14,
+      "val": -6.623323778391751e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_cube.json:after_retap.fy",
-      "val": -6.530267466986998e-17,
+      "val": -6.530267466987183e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -21385,57 +21385,57 @@
     },
     {
       "path": "viewpoint_undo.json:orbited.q[0]",
-      "val": -2.876978900581776e-17,
+      "val": -2.876978900576912e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[2]",
-      "val": -1.047134684385865e-17,
+      "val": -1.047134684399228e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.p[1]",
-      "val": 2.1424940554449163e-16,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
-      "path": "viewpoint_undo.json:before_undo.q[0]",
-      "val": -2.8769789005703554e-17,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
-      "path": "viewpoint_undo.json:before_undo.q[2]",
-      "val": -1.0471346844172427e-17,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
-      "path": "viewpoint_undo.json:after_undo.p[1]",
       "val": 2.142494055444916e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
-      "path": "viewpoint_undo.json:after_undo.q[0]",
+      "path": "viewpoint_undo.json:before_undo.q[0]",
       "val": -2.8769789005700115e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
-      "path": "viewpoint_undo.json:after_undo.q[2]",
+      "path": "viewpoint_undo.json:before_undo.q[2]",
       "val": -1.0471346844181904e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
+      "path": "viewpoint_undo.json:after_undo.p[1]",
+      "val": 2.1424940554449158e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "viewpoint_undo.json:after_undo.q[0]",
+      "val": -2.876978900569857e-17,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "viewpoint_undo.json:after_undo.q[2]",
+      "val": -1.0471346844186136e-17,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
       "path": "viewpoint_undo.json:cam_moved.dp",
-      "val": 2.304201361529231e-12,
+      "val": 1.030420280698918e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dq",
-      "val": 3.294426648393288e-13,
+      "val": 1.4717832020195133e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.p[0]",
-      "val": -1.5243734635656275e-13,
+      "val": -9.899748811695404e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -21450,32 +21450,32 @@
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[1]",
-      "val": -2.1783246937330942e-14,
+      "val": -1.4146708673233565e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[2]",
-      "val": -6.66919590920968e-31,
+      "val": -4.3311803737863965e-31,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.p[1]",
-      "val": 2.1424940554449166e-16,
+      "val": 2.1424940554449168e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[0]",
-      "val": -2.876978900577905e-17,
+      "val": -2.876978900574591e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[2]",
-      "val": -1.0471346843965002e-17,
+      "val": -1.0471346844056062e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:return_gap",
-      "val": 2.5868343739428026e-11,
+      "val": 1.551405844305105e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
