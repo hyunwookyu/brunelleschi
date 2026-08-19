@@ -1,7 +1,9 @@
 // **작도 시점 판정·복귀 방향**(14차 항목 6 · D-L97) — `judgeDraftPose`의 계약.
 //
 // 판정 단위는 각도다(#49 — 피치·요 이탈). 임계는 D-L66의 `ONE_POINT_TOL.hand_deg`(2°)
-// 재사용이라 새 상수가 없다. 반례 팔(#30): 모델링 판정(피치 큰 쪽)과 경계 ±1°.
+// 재사용이라 새 상수가 없다. 반례 팔(#30): 3점 판정(피치 큰 쪽)과 경계 ±1°.
+// ⛔ **2026-08-19 15차 항목 3(D-L102)로 계약이 뒤집혔다** — 피치는 작도 여부가 아니라
+// **이름**을 정한다. 작도/모델링의 판정은 `mainL.draftStateNow`가 기준계 유무로 한다.
 
 import { describe, it, expect } from "vitest";
 import { judgeDraftPose } from "../src/s3d/draftPose.js";
@@ -33,22 +35,25 @@ describe("judgeDraftPose — 작도/모델링 판정 (14차 항목 6-d)", () => 
     expect(j.returnDir[1]).toBe(0);
   });
 
-  it("반례(#30): 피치가 임계 밖이면 모델링이다 — 요 정렬이어도", () => {
-    expect(judgeDraftPose(gaze(0, H + 1), H).kind).toBeNull();
-    expect(judgeDraftPose(gaze(0, 30), H).kind).toBeNull();
-    expect(judgeDraftPose(gaze(45, -25), H).kind).toBeNull();
+  // ⛔⛔ **14차 계약이 뒤집혔다**(2026-08-19 15차 항목 3 · D-L102): 피치가 임계 밖이면
+  // **모델링**이었는데 그것이 **3점을 통째로 모델링으로 읽었다**(3점 시점의 피치는 정의상
+  // 0이 아니다). 이제 피치는 **이름을 정할 뿐** 작도 여부를 정하지 않는다.
+  it("피치가 임계 밖이면 **3점**이다 — 요 정렬이어도(D-L102로 뒤집힘)", () => {
+    expect(judgeDraftPose(gaze(0, H + 1), H).kind).toBe("three_point");
+    expect(judgeDraftPose(gaze(0, 30), H).kind).toBe("three_point");
+    expect(judgeDraftPose(gaze(45, -25), H).kind).toBe("three_point");
   });
 
-  it("경계 ±1°: 피치 임계 안은 작도·밖은 모델링, 요 이탈 임계 안은 1점·밖은 2점", () => {
+  it("경계 ±1°: 피치 임계 안은 1·2점·밖은 3점, 요 이탈 임계 안은 1점·밖은 2점", () => {
     expect(judgeDraftPose(gaze(0, H - 1), H).kind).toBe("one_point");
-    expect(judgeDraftPose(gaze(0, H + 1), H).kind).toBeNull();
+    expect(judgeDraftPose(gaze(0, H + 1), H).kind).toBe("three_point");
     expect(judgeDraftPose(gaze(H - 1, 0), H).kind).toBe("one_point");
     expect(judgeDraftPose(gaze(H + 1, 0), H).kind).toBe("two_point");
   });
 
-  it("모델링 시점의 복귀 방향: 피치를 접고 요를 유지한다(2점 복귀 — 최소 회전)", () => {
+  it("3점 시점의 복귀 방향: 피치를 접고 요를 유지한다(2점 복귀 — 최소 회전)", () => {
     const j = judgeDraftPose(gaze(30, 25), H);
-    expect(j.kind).toBeNull();
+    expect(j.kind).toBe("three_point");
     expect(j.returnDir[1]).toBe(0);                                  // 피치 0
     expect(Math.atan2(j.returnDir[0], -j.returnDir[2])).toBeCloseTo(rad(30), 9);
     expect(Math.hypot(...j.returnDir)).toBeCloseTo(1, 9);
@@ -72,7 +77,7 @@ describe("judgeDraftPose — 작도/모델링 판정 (14차 항목 6-d)", () => 
 
   it("특이점(수직 응시)은 결정론적 기본값(정면)이다 — 요 유지가 성립하지 않는 자리", () => {
     const j = judgeDraftPose([0, 1, 0], H);
-    expect(j.kind).toBeNull();
+    expect(j.kind).toBe("three_point");
     expect(j.returnDir).toEqual([0, 0, -1]);
   });
 

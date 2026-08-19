@@ -256,7 +256,12 @@ test("단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다", asyn
              ink_pointer_events: getComputedStyle(el).pointerEvents,
              gl_painted_px: gl3d, ink_painted_px: ink };
   });
-  expect((led.orbit as any).ink_painted_px).toBe(0);
+  // ⛔ **`ink_painted_px === 0`이 뒤집혔다**(2026-08-19 15차 항목 8 · D-L101): 돌린 시점에도
+  // **축 소실점·지평선·격자**가 그 시점의 값으로 그려진다(지시 8: "어느 시점에서든"). 잉크
+  // 캔버스가 그 표시를 담으므로 0이 아니다. 재는 뜻(3D는 GL이 그린다)은 그대로다 —
+  // **잉크 캔버스에 3D 획이 안 그려진다**는 것은 `gl_painted_px`가 든다.
+  // ⚠ **지우지 않고 뒤집는다**(2차 리뷰어 [11]) — 새 거동도 이 팔이 잠근다
+  expect((led.orbit as any).ink_painted_px).toBeGreaterThan(0);
   expect((led.orbit as any).gl_painted_px).toBeGreaterThan(0);
 
   led.home = await page.evaluate(async () => {
@@ -1146,16 +1151,22 @@ test("궤도 후 계속 그리기 — 새 각도가 새 뷰가 된다", async ({
   {
     const before = await page.evaluate(() => ({
       state: window.S2S.viewState(), strokes: window.S2S.doc().strokes.length }));
-    expect((before as any).state).toBe("model");
+    // ⛔ **계약이 뒤집혔다**(2026-08-19 15차 항목 3 · D-L102): 피치가 있는 자세도 **작도**다
+    // (`draft_three`). 그리기가 안 막히므로 아래 "차단" 팔은 **그려진다**를 잠근다
+    expect((before as any).state).toBe("draft_three");
     const fb = await page.locator("#frame").boundingBox();
     await page.mouse.move(fb!.x + 200, fb!.y + 200);
     await page.mouse.down();
     await page.mouse.move(fb!.x + 320, fb!.y + 230, { steps: 4 });
     await page.mouse.up();
-    l.model_blocked = await page.evaluate((n) => ({
+    // ⚠ **이름은 옛것이고 뜻은 뒤집혔다**(2차 리뷰어 [12]): 이제 «차단»이 아니라
+    // **그려짐**을 잰다(D-L102). 다음 세션이 이름으로 grep해도 안 헷갈리게 여기 박는다
+    l.model_blocked_now_draws = await page.evaluate((n) => ({
       strokes_before: n, strokes_after: window.S2S.doc().strokes.length,
       state: window.S2S.viewState() }), (before as any).strokes);
-    expect((l.model_blocked as any).strokes_after).toBe((l.model_blocked as any).strokes_before);
+    // D-L102 — 막히지 않는다. 획이 하나 는다
+    expect((l.model_blocked_now_draws as any).strokes_after)
+      .toBe((l.model_blocked_now_draws as any).strokes_before + 1);
     // **복귀**(지시 6-a·f) — 앱 버튼 경로 그대로. 피치를 접은 2점 작도 시점으로 간다
     await page.evaluate(() => {
       document.querySelector<HTMLButtonElement>('#bar button[data-act="draft"]')!.click();
@@ -1212,7 +1223,10 @@ test("궤도 후 계속 그리기 — 새 각도가 새 뷰가 된다", async ({
     return {
       mid_drag: m,
       views: S.views(), current: cur,
-      new_view_created: S.views().length === 2,
+      // ⛔ **`=== 2`에서 넓혔다**(15차 항목 3 · D-L102): 앞의 팔이 이제 안 막히므로
+      // 그 획도 자기 각도의 뷰를 만든다 — 판정은 "새 뷰가 생겼는가"이지 개수가 아니다
+      new_view_created: S.views().length >= 2,
+      view_count: S.views().length,
       stroke_owned_by_current: st.viewRef === cur,
       placed: !!st.seg3d, axis: st.axis,
       seg3d: st.seg3d,

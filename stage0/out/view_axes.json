@@ -1,0 +1,1083 @@
+{
+ "what": "돌린 시점(3점 포함)에서 축 소실점·지평선이 서고 그릴 수 있는가.",
+ "how": {
+  "poses": "참 소실점 3점 픽스처를 확정하고 자세 다섯을 돈다(핀·요 둘·배면·윗면). 자세마다 축 소실점·지평선·작도 상태를 읽고 **한 획을 그어** 문서에 남는지 본다.",
+  "horizon": "지평선의 옳음은 **두 수평 소실점까지의 점-선 거리**로 잰다(#49) — `horizon_gap_px`. 옛 판(화면 가로선)의 어긋남은 `old_flat_gap_px`다(#30).",
+  "stroke_built": "빈 화면에서 3점 상자를 그려 본다 — **이 항목이 안 고친 자리**의 실측."
+ },
+ "what_this_does_not_say": [
+  "dpr 1·마우스 합성·한 픽스처다(#12·#21).",
+  "`horizon_gap_px`가 0인 것은 **설계 보장**이다(#5) — 지평선을 그 두 점으로 만들었다. 판정은 `old_flat_gap_px`(옛 판이 벗어난 크기)가 든다.",
+  "**획으로 3점 카메라를 만드는 것은 안 고쳤다** — 규칙에 P2 → P3 전이가 없다(7차 지시 3-d로 삭제). `stroke_built`가 그 결과를 실측으로 든다: 기울어진 세로 모서리들이 깊이선으로 읽혀 **엉뚱한 수평 소실점**이 선다. 판정은 `DEFERRED`.",
+  "표식은 `overlayAxisMarks`가 낸 **자리**를 잰다 — 그리는 쪽과 같은 함수다(#17). **칠해진 픽셀은 안 잰다**: 그 배선(canvas 호출)의 실측은 없다.",
+  "**지시 8-c의 «축소 뷰»는 안 만들었다** — 가장자리 표시 하나로 간다(A-3: 축소 뷰는 좌표계를 둘로 만든다. 6차 지시 7-e가 같은 자리에서 같은 선택을 했다).",
+  "자세 다섯에서는 축 셋이 다 유한이라 `infinite` 표식이 안 나온다(#35 — 도달 불가를 안전으로 안 읽는다). 그 갈래는 `infinite_arm`(2점 규칙을 넣어 수직축을 무한원으로 만든 팔)이 든다.",
+  "**지시 3-c의 «소실점이 극단인 경우»는 안 좁혔다.** ⛔ 초판은 그 말을 «주점으로 붕괴»로 읽었는데 **틀렸다**(2차 리뷰어 [1]) — 이 저장소가 쓰는 뜻은 **화면 밖 먼 소실점**이다(D-L97의 6-e·`docs/line_plan.md` §9.3). 그 대역은 이 원장 안에 **실재한다**: `poses[*].axis_vps[*].dist`가 화면 대각의 몇 배까지 간다. 그런데 그 자세들에서 **그리기는 정상이고**(`stroke_added` 참·`blocked_now` 거짓) 먼 소실점이 무엇을 망가뜨리는지 재는 팔이 없다 — 그래서 안 좁혔다. 판정은 `DEFERRED`.",
+  "그릴 수 있는가는 **획이 문서에 남는가**로만 본다 — 그 획이 3D에 옳게 놓이는가는 다른 원장의 자리다(`dir_state`·`confirm_link`)."
+ ],
+ "selfcheck_notes": {
+  "zeros": "`horizon_gap_px`가 전부 0인 것은 **설계 보장**이다(#5) — 지평선을 그 두 소실점으로 만들었으므로 그 선까지의 거리는 0이다. **임계를 안 건다**: 판정은 `old_flat_gap_px_rotated`(옛 가로선이 둘째 소실점에서 벗어난 px)가 든다.",
+  "pinned_zero": "`old_flat_gap_px[0]`(핀 자세)이 0인 것도 구성의 귀결이다 — 확정 시점은 롤 0이라 두 수평 소실점의 y가 같고, 그 자리에서는 **옛 가로선이 맞았다**. 그래서 도달 가능성 값에서 뺐다.",
+  "screen_dir_zero": "`axis_vps[*].screen_dir`의 성분 0은 축이 화면 가로·세로와 정확히 나란할 때의 값이다(픽스처가 정한 자리 — #46)."
+ },
+ "setup": {
+  "canvas": [
+   1280,
+   675
+  ],
+  "strokes": 12,
+  "hasCamera": true,
+  "boxes": 1,
+  "lifted": 0
+ },
+ "infinite_arm": {
+  "marks": [
+   {
+    "axis": 0,
+    "kind": "edge",
+    "dir": [
+     0.984,
+     -0.178
+    ]
+   },
+   {
+    "axis": 1,
+    "kind": "edge",
+    "dir": [
+     -0.938,
+     -0.347
+    ]
+   },
+   {
+    "axis": 2,
+    "kind": "infinite",
+    "dir": [
+     0,
+     1
+    ]
+   }
+  ],
+  "view_state": "draft_pinned",
+  "finite_axes": 2,
+  "has_horizon_line": true
+ },
+ "hand_deg": 2,
+ "poses": [
+  {
+   "label": "① 확정 시점(핀) — 3점",
+   "view_state": "draft_pinned",
+   "judge_kind": "three_point",
+   "pitch_deg": -15,
+   "yaw_off_deg": 35,
+   "axis_vps": [
+    {
+     "axis": 0,
+     "at": [
+      2119,
+      70
+     ],
+     "screen_dir": [
+      0.984,
+      -0.178
+     ],
+     "dist": 1503
+    },
+    {
+     "axis": 1,
+     "at": [
+      -85,
+      70
+     ],
+     "screen_dir": [
+      -0.938,
+      -0.347
+     ],
+     "dist": 773
+    },
+    {
+     "axis": 2,
+     "at": [
+      640,
+      4070
+     ],
+     "screen_dir": [
+      0,
+      1
+     ],
+     "dist": 3732
+    }
+   ],
+   "finite_axes": 3,
+   "horizon_line": {
+    "a": [
+     7907,
+     70
+    ],
+    "b": [
+     -3670,
+     70
+    ]
+   },
+   "horizon_gap_px": [
+    0,
+    0
+   ],
+   "old_flat_gap_px": 0,
+   "horizon_scalar_y": 70,
+   "marks": [
+    {
+     "axis": 0,
+     "kind": "edge",
+     "at": [
+      919,
+      287
+     ],
+     "dir": [
+      0.984,
+      -0.178
+     ]
+    },
+    {
+     "axis": 1,
+     "kind": "edge",
+     "at": [
+      374,
+      239
+     ],
+     "dir": [
+      -0.938,
+      -0.347
+     ]
+    },
+    {
+     "axis": 2,
+     "kind": "edge",
+     "at": [
+      640,
+      621
+     ],
+     "dir": [
+      0,
+      1
+     ]
+    }
+   ],
+   "stroke_added": true,
+   "blocked": false
+  },
+  {
+   "label": "② 요만 조금(0.15rad)",
+   "view_state": "draft_three",
+   "judge_kind": "three_point",
+   "pitch_deg": -14.83,
+   "yaw_off_deg": 26.11,
+   "axis_vps": [
+    {
+     "axis": 0,
+     "at": [
+      2739,
+      -11
+     ],
+     "screen_dir": [
+      0.986,
+      -0.164
+     ],
+     "dist": 2127
+    },
+    {
+     "axis": 1,
+     "at": [
+      123,
+      93
+     ],
+     "screen_dir": [
+      -0.904,
+      -0.427
+     ],
+     "dist": 572
+    },
+    {
+     "axis": 2,
+     "at": [
+      791,
+      4112
+     ],
+     "screen_dir": [
+      0.04,
+      0.999
+     ],
+     "dist": 3777
+    }
+   ],
+   "finite_axes": 3,
+   "horizon_line": {
+    "a": [
+     8522,
+     -243
+    ],
+    "b": [
+     -3045,
+     220
+    ]
+   },
+   "horizon_gap_px": [
+    0,
+    0
+   ],
+   "old_flat_gap_px": 104.739,
+   "horizon_scalar_y": -11,
+   "marks": [
+    {
+     "axis": 0,
+     "kind": "edge",
+     "at": [
+      920,
+      291
+     ],
+     "dir": [
+      0.986,
+      -0.164
+     ]
+    },
+    {
+     "axis": 1,
+     "kind": "point",
+     "at": [
+      123,
+      93
+     ],
+     "dir": [
+      0,
+      0
+     ]
+    },
+    {
+     "axis": 2,
+     "kind": "edge",
+     "at": [
+      651,
+      621
+     ],
+     "dir": [
+      0.04,
+      0.999
+     ]
+    }
+   ],
+   "stroke_added": true,
+   "blocked": false
+  },
+  {
+   "label": "③ 더 돌린다(+0.6rad)",
+   "view_state": "draft_three",
+   "judge_kind": "three_point",
+   "pitch_deg": -10.92,
+   "yaw_off_deg": 8.96,
+   "axis_vps": [
+    {
+     "axis": 0,
+     "at": [
+      -5746,
+      1308
+     ],
+     "screen_dir": [
+      -0.989,
+      0.15
+     ],
+     "dist": 6460
+    },
+    {
+     "axis": 1,
+     "at": [
+      763,
+      119
+     ],
+     "screen_dir": [
+      0.492,
+      -0.871
+     ],
+     "dist": 251
+    },
+    {
+     "axis": 2,
+     "at": [
+      1572,
+      5438
+     ],
+     "screen_dir": [
+      0.18,
+      0.984
+     ],
+     "dist": 5185
+    }
+   ],
+   "finite_axes": 3,
+   "horizon_line": {
+    "a": [
+     -11440,
+     2348
+    ],
+    "b": [
+     -52,
+     268
+    ]
+   },
+   "horizon_gap_px": [
+    0,
+    0
+   ],
+   "old_flat_gap_px": 1188.952,
+   "horizon_scalar_y": 1308,
+   "marks": [
+    {
+     "axis": 0,
+     "kind": "edge",
+     "at": [
+      360,
+      380
+     ],
+     "dir": [
+      -0.989,
+      0.15
+     ]
+    },
+    {
+     "axis": 1,
+     "kind": "point",
+     "at": [
+      763,
+      119
+     ],
+     "dir": [
+      0,
+      0
+     ]
+    },
+    {
+     "axis": 2,
+     "kind": "edge",
+     "at": [
+      691,
+      616
+     ],
+     "dir": [
+      0.18,
+      0.984
+     ]
+    }
+   ],
+   "stroke_added": true,
+   "blocked": false
+  },
+  {
+   "label": "④ 배면 쪽으로(+2.2rad)",
+   "view_state": "draft_three",
+   "judge_kind": "three_point",
+   "pitch_deg": 14.72,
+   "yaw_off_deg": 43.65,
+   "axis_vps": [
+    {
+     "axis": 0,
+     "at": [
+      1638,
+      550
+     ],
+     "screen_dir": [
+      0.978,
+      0.208
+     ],
+     "dist": 1021
+    },
+    {
+     "axis": 1,
+     "at": [
+      -429,
+      655
+     ],
+     "screen_dir": [
+      -0.959,
+      0.285
+     ],
+     "dist": 1115
+    },
+    {
+     "axis": 2,
+     "at": [
+      446,
+      -3464
+     ],
+     "screen_dir": [
+      -0.051,
+      -0.999
+     ],
+     "dist": 3807
+    }
+   ],
+   "finite_axes": 3,
+   "horizon_line": {
+    "a": [
+     7419,
+     255
+    ],
+    "b": [
+     -4143,
+     845
+    ]
+   },
+   "horizon_gap_px": [
+    0,
+    0
+   ],
+   "old_flat_gap_px": 105.491,
+   "horizon_scalar_y": 550,
+   "marks": [
+    {
+     "axis": 0,
+     "kind": "edge",
+     "at": [
+      917,
+      396
+     ],
+     "dir": [
+      0.978,
+      0.208
+     ]
+    },
+    {
+     "axis": 1,
+     "kind": "edge",
+     "at": [
+      368,
+      418
+     ],
+     "dir": [
+      -0.959,
+      0.285
+     ]
+    },
+    {
+     "axis": 2,
+     "kind": "edge",
+     "at": [
+      626,
+      54
+     ],
+     "dir": [
+      -0.051,
+      -0.999
+     ]
+    }
+   ],
+   "stroke_added": true,
+   "blocked": false
+  },
+  {
+   "label": "⑤ 윗면 쪽(카메라를 위로)",
+   "view_state": "draft_three",
+   "judge_kind": "three_point",
+   "pitch_deg": -52.79,
+   "yaw_off_deg": 28,
+   "axis_vps": [
+    {
+     "axis": 0,
+     "at": [
+      3695,
+      -1103
+     ],
+     "screen_dir": [
+      0.905,
+      -0.426
+     ],
+     "dist": 3377
+    },
+    {
+     "axis": 1,
+     "at": [
+      -291,
+      -943
+     ],
+     "screen_dir": [
+      -0.588,
+      -0.809
+     ],
+     "dist": 1584
+    },
+    {
+     "axis": 2,
+     "at": [
+      670,
+      1096
+     ],
+     "screen_dir": [
+      0.04,
+      0.999
+     ],
+     "dist": 759
+    }
+   ],
+   "finite_axes": 3,
+   "horizon_line": {
+    "a": [
+     9479,
+     -1334
+    ],
+    "b": [
+     -2089,
+     -872
+    ]
+   },
+   "horizon_gap_px": [
+    0,
+    0
+   ],
+   "old_flat_gap_px": 159.376,
+   "horizon_scalar_y": -1103,
+   "marks": [
+    {
+     "axis": 0,
+     "kind": "edge",
+     "at": [
+      896,
+      217
+     ],
+     "dir": [
+      0.905,
+      -0.426
+     ]
+    },
+    {
+     "axis": 1,
+     "kind": "edge",
+     "at": [
+      473,
+      108
+     ],
+     "dir": [
+      -0.588,
+      -0.809
+     ]
+    },
+    {
+     "axis": 2,
+     "kind": "edge",
+     "at": [
+      651,
+      621
+     ],
+     "dir": [
+      0.04,
+      0.999
+     ]
+    }
+   ],
+   "stroke_added": true,
+   "blocked": false
+  }
+ ],
+ "stroke_built": [
+  {
+   "order": 0,
+   "standing": false,
+   "slots": [
+    null,
+    null,
+    "screen"
+   ],
+   "horizon_y": 338,
+   "lifted": 0,
+   "total": 1,
+   "note": ""
+  },
+  {
+   "order": 0,
+   "standing": false,
+   "slots": [
+    null,
+    null,
+    "screen"
+   ],
+   "horizon_y": 338,
+   "lifted": 0,
+   "total": 2,
+   "note": ""
+  },
+  {
+   "order": 0,
+   "standing": false,
+   "slots": [
+    null,
+    null,
+    "screen"
+   ],
+   "horizon_y": 338,
+   "lifted": 0,
+   "total": 3,
+   "note": ""
+  },
+  {
+   "order": 2,
+   "standing": true,
+   "slots": [
+    "vp@748,2863",
+    "vp@-10813,2863",
+    "screen"
+   ],
+   "horizon_y": 2863,
+   "lifted": 3,
+   "total": 4,
+   "note": "축과 23.2° 어긋난 그대로 둡니다 — **2D로 대기**합니다"
+  },
+  {
+   "order": 2,
+   "standing": true,
+   "slots": [
+    "vp@748,2863",
+    "vp@-10813,2863",
+    "screen"
+   ],
+   "horizon_y": 2863,
+   "lifted": 3,
+   "total": 5,
+   "note": "축과 23.2° 어긋난 그대로 둡니다 — **2D로 대기**합니다"
+  }
+ ],
+ "summary": {
+  "view_states": [
+   "draft_pinned",
+   "draft_three",
+   "draft_three",
+   "draft_three",
+   "draft_three"
+  ],
+  "judge_kinds": [
+   "three_point",
+   "three_point",
+   "three_point",
+   "three_point",
+   "three_point"
+  ],
+  "pitch_deg": [
+   -15,
+   -14.83,
+   -10.92,
+   14.72,
+   -52.79
+  ],
+  "blocked_by_old_pitch_rule": [
+   "② 요만 조금(0.15rad)",
+   "③ 더 돌린다(+0.6rad)",
+   "④ 배면 쪽으로(+2.2rad)",
+   "⑤ 윗면 쪽(카메라를 위로)"
+  ],
+  "pitch_beyond_hand_deg": [
+   "① 확정 시점(핀) — 3점",
+   "② 요만 조금(0.15rad)",
+   "③ 더 돌린다(+0.6rad)",
+   "④ 배면 쪽으로(+2.2rad)",
+   "⑤ 윗면 쪽(카메라를 위로)"
+  ],
+  "stroke_added": [
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "blocked_now": [
+   false,
+   false,
+   false,
+   false,
+   false
+  ],
+  "finite_axes": [
+   3,
+   3,
+   3,
+   3,
+   3
+  ],
+  "mark_kinds": [
+   [
+    "edge",
+    "edge",
+    "edge"
+   ],
+   [
+    "edge",
+    "point",
+    "edge"
+   ],
+   [
+    "edge",
+    "point",
+    "edge"
+   ],
+   [
+    "edge",
+    "edge",
+    "edge"
+   ],
+   [
+    "edge",
+    "edge",
+    "edge"
+   ]
+  ],
+  "infinite_arm_kinds": [
+   "edge",
+   "edge",
+   "infinite"
+  ],
+  "horizon_gap_px": [
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ]
+  ],
+  "old_flat_gap_px": [
+   0,
+   104.739,
+   1188.952,
+   105.491,
+   159.376
+  ],
+  "old_flat_gap_px_rotated": [
+   104.739,
+   1188.952,
+   105.491,
+   159.376
+  ],
+  "built_final_order": 2,
+  "built_final_slots": [
+   "vp@748,2863",
+   "vp@-10813,2863",
+   "screen"
+  ],
+  "built_lifted": "3/5"
+ },
+ "gate": {
+  "registered": "돌린 3점 시점에서 **그릴 수 있고** 축 소실점·지평선이 선다. 판정은 `summary.stroke_added`·`blocked_now`·`finite_axes`가 든다(#47).",
+  "reachability": "옛 조건(|피치| > hand_deg → 모델링)이 실제로 막았을 자세가 `blocked_by_old_pitch_rule`에 있다 — 비어 있으면 이 원장은 아무것도 안 말한다. 지평선 쪽의 도달 가능성은 **`old_flat_gap_px_rotated`**(옛 가로선이 둘째 소실점에서 벗어난 px — **핀 자세를 뺀 것**)이고 그것이 값이다. 핀을 뺀 이유는 `selfcheck_notes.pinned_zero`가 든다.",
+  "reachability_value": [
+   104.739,
+   1188.952,
+   105.491,
+   159.376
+  ],
+  "reachability_source": "summary/old_flat_gap_px_rotated",
+  "result": {
+   "view_states": [
+    "draft_pinned",
+    "draft_three",
+    "draft_three",
+    "draft_three",
+    "draft_three"
+   ],
+   "judge_kinds": [
+    "three_point",
+    "three_point",
+    "three_point",
+    "three_point",
+    "three_point"
+   ],
+   "pitch_deg": [
+    -15,
+    -14.83,
+    -10.92,
+    14.72,
+    -52.79
+   ],
+   "blocked_by_old_pitch_rule": [
+    "② 요만 조금(0.15rad)",
+    "③ 더 돌린다(+0.6rad)",
+    "④ 배면 쪽으로(+2.2rad)",
+    "⑤ 윗면 쪽(카메라를 위로)"
+   ],
+   "pitch_beyond_hand_deg": [
+    "① 확정 시점(핀) — 3점",
+    "② 요만 조금(0.15rad)",
+    "③ 더 돌린다(+0.6rad)",
+    "④ 배면 쪽으로(+2.2rad)",
+    "⑤ 윗면 쪽(카메라를 위로)"
+   ],
+   "stroke_added": [
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "blocked_now": [
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "finite_axes": [
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   "mark_kinds": [
+    [
+     "edge",
+     "edge",
+     "edge"
+    ],
+    [
+     "edge",
+     "point",
+     "edge"
+    ],
+    [
+     "edge",
+     "point",
+     "edge"
+    ],
+    [
+     "edge",
+     "edge",
+     "edge"
+    ],
+    [
+     "edge",
+     "edge",
+     "edge"
+    ]
+   ],
+   "infinite_arm_kinds": [
+    "edge",
+    "edge",
+    "infinite"
+   ],
+   "horizon_gap_px": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "old_flat_gap_px": [
+    0,
+    104.739,
+    1188.952,
+    105.491,
+    159.376
+   ],
+   "old_flat_gap_px_rotated": [
+    104.739,
+    1188.952,
+    105.491,
+    159.376
+   ],
+   "built_final_order": 2,
+   "built_final_slots": [
+    "vp@748,2863",
+    "vp@-10813,2863",
+    "screen"
+   ],
+   "built_lifted": "3/5"
+  }
+ },
+ "pitfall_citations": [
+  5,
+  12,
+  17,
+  21,
+  30,
+  32,
+  40,
+  49
+ ],
+ "errors": [],
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}

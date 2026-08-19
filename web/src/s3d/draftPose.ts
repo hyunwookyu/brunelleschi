@@ -13,8 +13,17 @@
 import type { Vec3 } from "./geom3d.js";
 
 export interface DraftJudge {
-  /** null = 모델링 시점(작도 아님). */
-  kind: "one_point" | "two_point" | null;
+  /**
+   * **축 기준계가 서 있으면 작도다**(2026-08-19 15차 항목 3 · D-L102) — 1점·2점·3점 전부.
+   * `null`은 이 함수가 안 낸다: 기준계가 없는 경우(카메라 미확정 등)는 호출부가 판정한다.
+   *
+   * ⛔ **14차 판은 `|pitch| > hand_deg`이면 `null`(모델링)이었다.** 그 조건이
+   * **3점을 통째로 모델링으로 읽었다** — 3점 확정 시점의 피치는 정의상 0이 아니다
+   * (기운 카메라가 곧 3점이다). 재현: 참 3점 픽스처에서 `pitchDeg` −15° · `kind: null`,
+   * 살짝만 돌려도 `view_state: "model"`이 되어 **그리기가 막혔다**(지시 3-a).
+   * 피치는 이제 **이름을 정할 뿐** 작도 여부를 정하지 않는다.
+   */
+  kind: "one_point" | "two_point" | "three_point";
   /** 시선의 그린-수직 성분 각(도). 작도 화면의 정의 조건이 |pitch| ≤ hand_deg다(지시 6-d). */
   pitchDeg: number;
   /** 요의 최근접 축 이탈 각(도, 0~45). one_point 판정의 조건이다. */
@@ -35,8 +44,10 @@ export function judgeDraftPose(f: Vec3, handDeg: number): DraftJudge {
   const pitchDeg = (Math.asin(clamp1(f[1])) * 180) / Math.PI;
   const yawDeg = (Math.atan2(f[0], -f[2]) * 180) / Math.PI;
   const yawOffDeg = Math.abs(yawDeg - Math.round(yawDeg / 90) * 90);
+  // **피치가 이름을 정한다 — 작도 여부가 아니다**(D-L102). 피치가 서 있으면 수직축이
+  // 유한 소실점을 갖는 시점이고 그것이 3점이다.
   const kind: DraftJudge["kind"] =
-    Math.abs(pitchDeg) > handDeg ? null
+    Math.abs(pitchDeg) > handDeg ? "three_point"
     : yawOffDeg <= handDeg ? "one_point" : "two_point";
   let returnDir: Vec3;
   const hLen = Math.hypot(f[0], f[2]);

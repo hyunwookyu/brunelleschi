@@ -93,33 +93,46 @@ test("작도 화면 복귀 — 돌린 뒤 소실점·지평선·그리기가 돌
     document.querySelector<HTMLButtonElement>('#tools button[data-act="draw"]')!.click();
     S.refresh();
   }, [py, ty]);
+  // ⛔⛔ **14차 계약이 뒤집혔다**(2026-08-19 15차 항목 3 · D-L102). 이 절은 원래 "급한 궤도 =
+  // 모델링 = 표시 없음 + 그리기 차단"을 잠갔다. 그런데 그 조건("축 정렬 + 피치 0")이
+  // **3점을 통째로 배제했다** — 3점 시점의 피치는 정의상 0이 아니다. 이제 그 자세는
+  // **`draft_three`**이고 표시도 그리기도 산다. 피치 조건은 **버튼의 조건**으로만 남는다.
   await setPose(6.0, 0.4);
-  led.model = await stateNow(page);
-  expect((led.model as any).state).toBe("model");
-  expect(Math.abs((led.model as any).judge.pitchDeg))
-    .toBeGreaterThan(ONE_POINT_TOL.hand_deg);                        // **각도로 잰 모델링**(#49)
-  expect((led.model as any).draft_btn_enabled).toBe(true);           // 모델링에서 켜진다(6-d·f)
+  led.rotated_three = await stateNow(page);
+  expect((led.rotated_three as any).state).toBe("draft_three");
+  expect(Math.abs((led.rotated_three as any).judge.pitchDeg))
+    .toBeGreaterThan(ONE_POINT_TOL.hand_deg);                        // **각도로 잰 3점**(#49)
+  expect((led.rotated_three as any).draft_btn_enabled).toBe(true);   // 정렬 시점이 아니면 켜진다
+  // **확정 시점의 지평선 행은 비어 있다** — 지평선이 그 자세의 자리로 옮겨 갔기 때문이다
+  // (표시 게이트가 죽어서가 아니다. 아래 `rotated_three_own_horizon`이 그것을 가른다)
   led.model_horizon_row = await horizonRowCoverage(page, (pinnedOverlay as any).horizonY);
   expect((led.model_horizon_row as any).ratio).toBeLessThan(0.2);
+  led.rotated_three_own_horizon = await page.evaluate(() => {
+    const o = window.S2S.draftOverlay();
+    return { has_line: !!(o && o.horizonLine), finite_axes: o
+      ? o.axisVps.filter((a: any) => a && a.at).length : null };
+  });
+  expect((led.rotated_three_own_horizon as any).has_line).toBe(true);   // 지시 8-b
 
-  // ---- ② 모델링에서는 안 그려진다(6-e) — 획 수 불변 + 복귀 안내
+  // ---- ② **이제 그려진다**(D-L102 — 옛 판은 차단이었다): 획 수가 는다 + 차단 안내가 없다
   const frameBox = (await page.locator("#frame").boundingBox())!;
   const strokesBefore = await page.evaluate(() => window.S2S.doc().strokes.length);
   await page.mouse.move(frameBox.x + 180, frameBox.y + 180);
   await page.mouse.down();
   await page.mouse.move(frameBox.x + 320, frameBox.y + 210, { steps: 5 });
   await page.mouse.up();
-  led.model_blocked = await page.evaluate((n) => ({
+  // ⚠ **이름은 옛것이고 뜻은 뒤집혔다**(2차 리뷰어 [12]): 이제 그려짐을 잰다(D-L102)
+  led.model_blocked_now_draws = await page.evaluate((n) => ({
     strokes_before: n, strokes_after: window.S2S.doc().strokes.length,
     note_mentions_return: /모델링 화면/.test(window.S2S.snapNote() ?? "") }), strokesBefore);
-  expect((led.model_blocked as any).strokes_after).toBe(strokesBefore);
-  expect((led.model_blocked as any).note_mentions_return).toBe(true);
+  expect((led.model_blocked_now_draws as any).strokes_after).toBe(strokesBefore + 1);
+  expect((led.model_blocked_now_draws as any).note_mentions_return).toBe(false);
 
-  // ---- ①′ 얕은 내려보기(모델링) — **지평선이 화면 안일 자세**에서도 그 행이 비어 있다:
-  //      덮임 0의 원인이 "화면 밖"이 아니라 **표시 게이트**임을 가른다(6-R1 [7])
+  // ---- ①′ 얕은 내려보기 — **지평선이 화면 안인 자세**에서 그 행이 실제로 덮인다.
+  //      옛 판은 여기서 비어 있었고(표시 게이트) 그것이 6-R1 [7]이 가른 자리다.
   await setPose(1.6, 0.4);                                           // 완만한 내려보기
   led.model_shallow = await stateNow(page);
-  expect((led.model_shallow as any).state).toBe("model");
+  expect((led.model_shallow as any).state).not.toBe("model");
   const shallowOv = await page.evaluate(() => window.S2S.draftOverlay());
   led.model_shallow_would_be_horizon = {
     y: (shallowOv as any)?.horizonY ?? null,
@@ -129,7 +142,6 @@ test("작도 화면 복귀 — 돌린 뒤 소실점·지평선·그리기가 돌
   };
   expect((led.model_shallow_would_be_horizon as any).on_screen).toBe(true);
   led.model_shallow_horizon_row = await horizonRowCoverage(page, (shallowOv as any).horizonY);
-  expect((led.model_shallow_horizon_row as any).ratio).toBeLessThan(0.2);
 
   // ---- ③ 「작도 시점으로」 → 2점 작도. 실측 피치 ≈ 0 · 소실점·지평선·주점의 정합(6-c)
   await page.evaluate(() => {
@@ -242,15 +254,15 @@ test("작도 화면 복귀 — 돌린 뒤 소실점·지평선·그리기가 돌
 
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "draft_return.json"), JSON.stringify({
-    spec: "14차 항목 6(D-L97) — 작도 화면 복귀 종단: 확정(핀 작도·버튼 꺼짐) → 급한 궤도(모델링 — 실측 피치 임계 밖·지평선 소멸·그리기 차단·버튼 켜짐) → 얕은 궤도(지평선이 화면 안일 자세에서도 덮임 0 — 표시 게이트의 귀속) → 「작도 시점으로」(2점 — 피치 실측 0·수평 소실점 y 일치=지평선=주점 행·재덮임·그리기·스냅) → 큐브 면 탭(1점 — D-L76 재탭·그리기·스냅) → 큐브 모서리 탭(2점). 합성 마우스 — 앱 버튼·큐브 경로 그대로(#17). 픽스처는 직립 그린 축(피치 0 확정)",
+    spec: "14차 항목 6(D-L97) — 작도 화면 복귀 종단. ⛔ **2026-08-19 15차 항목 3(D-L102)로 계약이 뒤집혔다**: 급한 궤도는 이제 **모델링이 아니라 `draft_three`**이고 표시도 그리기도 산다(옛 조건 '축 정렬 + 피치 0'이 3점을 통째로 배제했다). 이 원장이 지금 잠그는 것: 확정(핀 작도·버튼 꺼짐) → 급한 궤도(draft_three — 실측 피치 임계 밖·**자기 자세의 지평선이 선다**·**그려진다**·버튼 켜짐) → 얕은 궤도 → 「작도 시점으로」(2점 — 피치 실측 0·수평 소실점 y 일치=지평선=주점 행·재덮임·그리기·스냅) → 큐브 면 탭(1점 — D-L76 재탭) → 큐브 모서리 탭(2점). 합성 마우스 — 앱 버튼·큐브 경로 그대로(#17). 픽스처는 직립 그린 축(피치 0 확정)",
     what_this_does_not_say: [
-      "**지평선 행 덮임(ratio)의 값은 픽스처 상수다**(#46) — 판정은 범주(작도 > thresholds.horizon_row_draft_min ↔ 모델링 < horizon_row_model_max)이고 두 문턱 사이 간격이 판별 간격이다. 이 픽스처에서 1/0으로 포화하는 것은 지평선이 전폭 파선이라는 구성의 귀결이다",
+      "**지평선 행 덮임(ratio)의 값은 픽스처 상수다**(#46) — 판정은 범주(정렬 작도 시점 > thresholds.horizon_row_draft_min ↔ 돌린 시점의 **확정 행** < horizon_row_model_max)이고 두 문턱 사이 간격이 판별 간격이다. 이 픽스처에서 1/0으로 포화하는 것은 지평선이 전폭 파선이라는 구성의 귀결이다. ⛔ **D-L102 뒤 `model_horizon_row`의 0은 \"표시가 죽었다\"가 아니다** — 지평선이 **그 자세의 자리로 옮겨 간 것**이고, 그 사실은 `rotated_three_own_horizon.has_line`이 든다",
       "**동작점**(#12): 모델링 자세 둘(급함·얕음)·복귀 세 경로(버튼·면 탭·모서리 탭) 각 1회. 임의 요·피치 스윕은 안 돌렸고, 수직 응시 특이점은 draft_pose 단위 팔이 잰다. ⚠ **작도 밴드의 끝(피치 ≈ hand_deg)은 안 쟀다** — 게이트의 '수직축 무한원'은 **정확 복귀(피치 0)의 서명**이지 밴드 전체의 성질이 아니다(피치가 임계 안이라도 0이 아니면 수직 소실점이 유한 원거리일 수 있다 — 판정 상태와 무한원 표기는 그 경계에서 갈린다)",
       "**픽스처가 직립 그린 축(피치 0 확정)이다** — 그린 수직축이 기운 구도(3점)에서는 복귀 뷰(up = 세계 Y)의 그린 지평선이 화면에서 기울어 수평 소실점 둘의 y가 어긋나고, 한 y의 수평선 표시는 근사가 된다(6-R1 [1]이 기운 픽스처에서 실측한 어긋남 — D-L97 한계·DEFERRED. 이 원장의 정합 판정 vps_y_gap·horizon_vs_principal은 직립 픽스처의 것이다)",
       "**격자 픽셀은 안 잰다**(6-R1 [7]) — 표시 셋(소실점·지평선·격자) 중 잰 것은 지평선 행과 소실점 유한/무한원 가족뿐이다. 격자는 같은 게이트(drawBelowInk)와 같은 문맥(viewOverlayCtx)을 지나므로 배선은 공유하나, 칠해짐 자체의 실측은 없다",
       "**재탭 임계의 경계 스윕은 view_cube_hit 단위 팔(vitest)이 잰다**(R2 [N6] 정정 — 종단 경계 팔은 없다: view_cube.json ws의 그 문장 그대로) — 값은 view_cube.json의 ui_constants.CUBE_TOL.retap_cos 필드가 든다(#47). 여기서는 '실제로 도는가'(지시 6-b)만 잰다",
       "**복귀 뒤 각도·정합의 near-zero/정확 0(피치 ~1e-15·요 이탈 정확 0 — 축 스냅의 귀결 · vps_y_gap 0·주점 정합 ~1e-13)은 정확 스냅의 보장 서명이다**(selfcheck near-zero 플래그의 원인 — §5): snapToDir가 정확한 방향으로 돌리고 픽스처 축이 정확 직교라 잔차가 부동소수 꼬리뿐이다. 판정 임계(pitch_return_max_deg 0.1·coherence_max_px 1)는 그 보장이 깨졌을 때(스냅이 다른 프레임으로 가거나 표시가 다른 출처를 쓸 때)를 가르는 배선 여유다 — 정확도 측정이 아니다",
-      "드로잉 차단(②)은 **획 수 불변**으로 잰다 — 포인터 캡처 자체를 안 하므로 잉크 표시가 없는 것은 구성의 귀결이다(보장 — #5)",
+      "⛔ **②는 이제 차단이 아니라 그려짐을 잰다**(D-L102) — 획 수가 하나 늘고 차단 안내가 없다. 그 획이 3D에 **옳게** 놓이는지는 여기서 안 잰다(다른 원장의 자리)",
     ],
     /** 판별자(왕복) 한 자리 — gate.reachability_source가 이 필드를 가리킨다(#40 값 대조). */
     horizon_row_roundtrip: [
@@ -270,8 +282,8 @@ test("작도 화면 복귀 — 돌린 뒤 소실점·지평선·그리기가 돌
       settle_ms: 450, console_errors_max: 0,
       note: "e2e 배선 임계라 SHARED_CONSTANTS 비등재(D-L51 사유 — 전역 해시 눈사태). 값은 이 원장이 자기 안에 든다" },
     gate: gate({
-      registered: "⓪ 확정 직후 draft_pinned·복귀 버튼 꺼짐·지평선 행 덮임 > horizon_row_draft_min · ① 급한 궤도 뒤 model·실측 |pitchDeg| > hand_deg·버튼 켜짐·같은 행 덮임 < horizon_row_model_max · ② model에서 획 시작 차단(획 수 불변·안내 문구) · ①′ 얕은 궤도(지평선이 화면 안)에서도 덮임 < model_max — 소멸의 귀속은 표시 게이트다 · ③ 「작도 시점으로」 뒤 draft_two·|pitchDeg| < pitch_return_max_deg·요는 축 사이·버튼 꺼짐·수평 유한 2·수직 무한원(정확 복귀의 서명 — 밴드 전체의 성질이 아니다)·수평 소실점 y 격차 < coherence_max_px·지평선 = 주점 행(± coherence_max_px)·재덮임 · ④ 2점 시점에서 3D 끝점 겨냥 획이 붙고 획 수가 는다 · ⑤ 면 탭 뒤 draft_one·요 이탈 < yaw_snap_max_deg·정렬 축 소실점 = 주점(± coherence_max_px — 유한 수는 기록만: 직교 잔차로 둘일 수 있다)·지평선 = 주점 행·같은 그리기·스냅 · ⑥ 모서리 탭 뒤 draft_two·수평 유한 2 · 콘솔 오류 0. ⚠ 이 항목이 등록한 게이트다 — CLAUDE.md §2의 중단 조건이 아니다(#41)",
-      reachability: "판별자는 지평선 행 덮임의 **왕복**(draft → model → draft — horizon_row_roundtrip)과 획 수(차단 0 ↔ 복원 +1)와 **실측 각도**(model의 pitchDeg > hand_deg ↔ 복귀의 pitchDeg < 0.1 — 판정이 쓰는 단위 #49)다(#28 — 셋 다 적는다). 표시 게이트가 죽으면(옛 판: 핀 전용) ③⑤의 재덮임이 model 쪽 값에 머물고, 복귀가 죽으면 pitchDeg가 안 접힌다",
+      registered: "⓪ 확정 직후 draft_pinned·복귀 버튼 꺼짐·지평선 행 덮임 > horizon_row_draft_min · ① 급한 궤도 뒤 **draft_three**·실측 |pitchDeg| > hand_deg·버튼 켜짐·**확정 행** 덮임 < horizon_row_model_max·**자기 자세의 지평선이 선다**(rotated_three_own_horizon) · ② 그 자세에서 **그려진다**(획 +1·차단 안내 없음) · ①′ 얕은 궤도에서 지평선이 화면 안이다 · ③ 「작도 시점으로」 뒤 draft_two·|pitchDeg| < pitch_return_max_deg·요는 축 사이·버튼 꺼짐·수평 유한 2·수직 무한원(정확 복귀의 서명 — 밴드 전체의 성질이 아니다)·수평 소실점 y 격차 < coherence_max_px·지평선 = 주점 행(± coherence_max_px)·재덮임 · ④ 2점 시점에서 3D 끝점 겨냥 획이 붙고 획 수가 는다 · ⑤ 면 탭 뒤 draft_one·요 이탈 < yaw_snap_max_deg·정렬 축 소실점 = 주점(± coherence_max_px — 유한 수는 기록만: 직교 잔차로 둘일 수 있다)·지평선 = 주점 행·같은 그리기·스냅 · ⑥ 모서리 탭 뒤 draft_two·수평 유한 2 · 콘솔 오류 0. ⚠ 이 항목이 등록한 게이트다 — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "판별자는 지평선 행 덮임의 **왕복**(정렬 → 돌린 자세의 확정 행 → 정렬 — horizon_row_roundtrip)과 **실측 각도**(돌린 자세의 pitchDeg > hand_deg ↔ 복귀의 pitchDeg < 0.1 — 판정이 쓰는 단위 #49)다(#28 — 둘 다 적는다). 표시가 죽으면 ③⑤의 재덮임이 가운데 값에 머물고, 복귀가 죽으면 pitchDeg가 안 접힌다. ⛔ **획 수 판별자는 D-L102로 뜻이 뒤집혔다** — 차단이 없어졌으므로 이제 \"돌린 자세에서도 +1\"이 그 자리다",
       reachability_value: [
         (led.pinned_horizon_row as any).ratio,
         (led.model_horizon_row as any).ratio,

@@ -1,5 +1,5 @@
 {
-  "n_flags": 5049,
+  "n_flags": 5104,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[14].specs[2].tests[0].results[0].duration",
@@ -2379,19 +2379,9 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "draft_return.json:model_shallow_horizon_row.hit",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
       "path": "draft_return.json:model_shallow_horizon_row.ratio",
-      "val": 0,
-      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
-    },
-    {
-      "path": "draft_return.json:model_shallow_horizon_row.ratio",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "draft_return.json:returned.judge.pitchDeg",
@@ -21499,41 +21489,6 @@
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
-      "path": "stage_browser.json:l_b3.drawn.start_reprojection_gap_px_IDENTITY",
-      "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
-    },
-    {
-      "path": "stage_browser.json:l_b3.drawn.start_reprojection_gap_px_IDENTITY",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "stage_browser.json:l_b4.preview_vs_confirm.gap",
-      "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
-    },
-    {
-      "path": "stage_browser.json:l_b8.drawn_in_orbit.mid_drag.axis",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "stage_browser.json:l_b8.drawn_in_orbit.views[0].pending",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "stage_browser.json:l_b8.drawn_in_orbit.views[1].pending",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "stage_browser.json:l_b8.drawn_in_orbit.axis",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
       "path": "stage_cam.json:guarantees.seg_gap_px_max",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
@@ -22555,7 +22510,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 1.3278267374516872e-13,
+      "val": 4.662936703425657e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -22764,18 +22719,338 @@
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
+      "path": "view_axes.json:poses[0].axis_vps[2].screen_dir[0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:poses[0].horizon_gap_px[0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:poses[0].horizon_gap_px[0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:poses[0].horizon_gap_px[1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:poses[0].horizon_gap_px[1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:poses[0].old_flat_gap_px",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:poses[1].horizon_gap_px[0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:poses[1].horizon_gap_px[0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:poses[1].horizon_gap_px[1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:poses[1].horizon_gap_px[1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:poses[2].horizon_gap_px[0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:poses[2].horizon_gap_px[0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:poses[2].horizon_gap_px[1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:poses[2].horizon_gap_px[1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:poses[3].horizon_gap_px[0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:poses[3].horizon_gap_px[0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:poses[3].horizon_gap_px[1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:poses[3].horizon_gap_px[1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:poses[4].horizon_gap_px[0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:poses[4].horizon_gap_px[0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:poses[4].horizon_gap_px[1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:poses[4].horizon_gap_px[1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[0][0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[0][0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[0][1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[0][1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[1][0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[1][0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[1][1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[1][1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[2][0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[2][0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[2][1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[2][1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[3][0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[3][0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[3][1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[3][1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[4][0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[4][0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[4][1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:summary.horizon_gap_px[4][1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:summary.old_flat_gap_px[0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[0][0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[0][0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[0][1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[0][1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[1][0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[1][0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[1][1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[1][1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[2][0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[2][0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[2][1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[2][1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[3][0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[3][0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[3][1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[3][1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[4][0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[4][0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[4][1]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view_axes.json:gate.result.horizon_gap_px[4][1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view_axes.json:gate.result.old_flat_gap_px[0]",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
       "path": "view_cube.json:thresholds.console_errors_max",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
       "path": "view_cube.json:after_face.fy",
-      "val": -5.846221844489314e-14,
+      "val": -9.754586853063828e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_cube.json:after_retap.fy",
-      "val": -6.53026734933182e-17,
+      "val": -6.530267349331433e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -23045,12 +23320,12 @@
     },
     {
       "path": "viewpoint_undo.json:orbited.q[0]",
-      "val": -2.876978900577905e-17,
+      "val": -2.876978900576037e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[2]",
-      "val": -1.047134684396501e-17,
+      "val": -1.0471346844016331e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -23060,12 +23335,12 @@
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[0]",
-      "val": -2.8769789005701224e-17,
+      "val": -2.876978900570011e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[2]",
-      "val": -1.0471346844178833e-17,
+      "val": -1.0471346844181915e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -23075,27 +23350,27 @@
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[0]",
-      "val": -2.8769789005698876e-17,
+      "val": -2.876978900569856e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[2]",
-      "val": -1.0471346844185281e-17,
+      "val": -1.0471346844186145e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dp",
-      "val": 1.568488009271089e-12,
+      "val": 1.0297946184344262e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dq",
-      "val": 2.2414657757126509e-13,
+      "val": 1.4717832020195133e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.p[0]",
-      "val": -8.637685078700965e-14,
+      "val": -7.601162869256851e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -23110,12 +23385,12 @@
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[1]",
-      "val": -1.2343223506112346e-14,
+      "val": -1.0862036685378868e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[2]",
-      "val": -3.779022289480214e-31,
+      "val": -3.3255396147425894e-31,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -23125,17 +23400,17 @@
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[0]",
-      "val": -2.876978900575268e-17,
+      "val": -2.876978900573994e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[2]",
-      "val": -1.0471346844037476e-17,
+      "val": -1.0471346844072451e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:return_gap",
-      "val": 1.7625959508782343e-11,
+      "val": 1.36501832294569e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -25684,7 +25959,7 @@
     {
       "field": "axis",
       "writes": 8,
-      "reads": 76
+      "reads": 77
     },
     {
       "field": "rep",
@@ -25720,7 +25995,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 229,
+      "files_scanned": 232,
       "exts_declared": [
         ".md",
         ".py",
@@ -25734,7 +26009,7 @@
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 155,
+      "files_scanned": 157,
       "exts_declared": [
         ".ts"
       ],
@@ -25744,7 +26019,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 229,
+      "files_scanned": 232,
       "exts_declared": [
         ".md",
         ".py",
@@ -25753,12 +26028,12 @@
       "hits_by_ext": {
         ".md": 10,
         ".py": 4,
-        ".ts": 61
+        ".ts": 63
       }
     },
     {
       "sweep": "external_data",
-      "files_scanned": 117,
+      "files_scanned": 119,
       "exts_declared": [
         ".ts"
       ],
@@ -25785,21 +26060,21 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 314,
+      "targets": 322,
       "hits": 1,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 1건"
     },
     {
       "scan": "scan_cited_values",
       "unit": "인용 줄",
-      "targets": 174,
+      "targets": 177,
       "hits": 0,
-      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1807개이고 엄격 판정이면 363개(71줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
+      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1823개이고 엄격 판정이면 367개(72줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
     },
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 69,
+      "targets": 70,
       "hits": 0,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
@@ -25808,7 +26083,7 @@
       "unit": "게이트 블록",
       "targets": 52,
       "hits": 5,
-      "note": "값 대조를 **지난 것 20** · **픽스처가 정한 값 6** · **면제 26**(`reachability_absent`) · 원장 87개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, horizon.json:gate, one_point_direct.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, restore_pose.json:gate, snap_cache.json:gate, snap_stage.json:gate, view_pan.json:gate / 픽스처 결정: confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate / 면제: confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "note": "값 대조를 **지난 것 21** · **픽스처가 정한 값 6** · **면제 25**(`reachability_absent`) · 원장 88개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, horizon.json:gate, one_point_direct.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, restore_pose.json:gate, snap_cache.json:gate, snap_stage.json:gate, view_axes.json:gate, view_pan.json:gate / 픽스처 결정: confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate / 면제: confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -25978,7 +26253,6 @@
       30
     ],
     "draft_return.json": [
-      5,
       12,
       17,
       28,
@@ -26338,17 +26612,11 @@
       41
     ],
     "stage_browser.json": [
-      3,
       5,
       6,
       12,
-      17,
-      18,
       21,
-      23,
-      26,
-      29,
-      30
+      29
     ],
     "stage_cam.json": [
       5,
@@ -26397,6 +26665,17 @@
       38,
       40,
       41
+    ],
+    "view_axes.json": [
+      5,
+      12,
+      17,
+      21,
+      30,
+      35,
+      46,
+      47,
+      49
     ],
     "view_cube.json": [
       5,
@@ -26449,11 +26728,11 @@
     ]
   },
   "cited_value_population": {
-    "lines_checked": 174,
-    "tokens_checked": 1807,
+    "lines_checked": 177,
+    "tokens_checked": 1823,
     "flags_line_rule": 0,
-    "strict_tokens_flagged": 363,
-    "strict_lines_flagged": 71,
+    "strict_tokens_flagged": 367,
+    "strict_lines_flagged": 72,
     "hashless_only_lines_in_population": false,
     "note": "**모집단은 같고 판정만 둘이다.** `현재 해시로 적힌 인용 줄`이 모집단이고 (해시 없이 이름만 적힌 원장은 **줄을 모집단에 넣지 않는다** — 같은 줄에 현재 해시 인용이 있을 때 **대조 집합에만** 더한다), 그 위에서 엄격 판정(토큰별)과 현행 판정(줄에 하나도 없을 때만)의 수를 함께 낸다. `tokens_checked` ↔ `strict_tokens_flagged`가 옛 1129 ↔ 272와 같은 단위이고, `lines_checked` ↔ `flags_line_rule`이 96 ↔ 2와 같은 단위다"
   },
@@ -26537,6 +26816,7 @@
     "touch_route_repeat.json",
     "trace_hidden.json",
     "tube_render.json",
+    "view_axes.json",
     "view_cube.json",
     "view_pan.json",
     "view_plane.json",

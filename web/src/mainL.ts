@@ -45,6 +45,7 @@ import { crossAnchorOf } from "./s3d/crossAnchor.js";
 import { anchorToTarget } from "./s3d/liftAnchor.js";
 import { onePointFrame, directSegment, planeAnchor, ONE_POINT_TOL } from "./s3d/onePoint.js";
 import { judgeDraftPose } from "./s3d/draftPose.js";
+import { axisVpsAt, horizonThrough, overlayAxisMarks, type AxisVpAt } from "./s3d/axisVp.js";
 import { representative, AXIS_TOL, chordTurnDeg } from "./s3d/axis.js";
 // **자동 분할**(지시 I) — 교차·접촉 절단점과 조각. SketchUp 선례. 순수 기하는 split.ts 하나다(#17)
 import { cutParams, piecesFromCuts, subtractIntervals, reanchorId, pointAt,
@@ -1345,20 +1346,41 @@ function draftGazeDrawn(): Vec3 | null {
 }
 
 /**
- * **작도 화면인가 모델링 화면인가**(지시 6-d) — 상태는 저장하지 않는다: 자세에서 매번
- * 계산한다(§1의 규약 그대로). 작도 = 핀(확정 시점) 또는 **축 정렬 + 피치 0**(임계는
- * D-L77의 `hand_deg` 재사용): 1점(요도 축 정렬) / 2점(요가 축 사이). 그 밖은 모델링 —
- * 소실점·지평선·그리드가 없고 그리기가 막힌다(지시 6-e — A-3: 그리려면 복귀한다).
+ * **작도 화면인가 모델링 화면인가**(지시 6-d · 2026-08-19 15차 항목 3으로 **넓혔다** — D-L102).
+ * 상태는 저장하지 않는다: 자세에서 매번 계산한다(§1의 규약 그대로).
+ *
+ * ```
+ * 작도 = 카메라가 서 있고 **축 기준계가 선다** — 1점·2점·3점 전부
+ * 모델링 = 기준계가 없다(카메라 미확정이 아닌데 그린 축을 못 세운다)
+ * ```
+ *
+ * ⛔⛔ **14차 판은 "축 정렬 + 피치 0"을 작도 조건으로 뒀고 그것이 과했다**(지시 3-c).
+ * 3점 시점의 피치는 **정의상 0이 아니므로**(기운 카메라가 곧 3점이다) 3점이 통째로
+ * 모델링으로 읽혔다 — 참 3점 픽스처에서 살짝만 돌려도 그리기가 막혔다(재현: 지시 3-a).
+ * 화면에 붙는 유령을 막으려던 것이 원래 이유인데, 그 몫은 이미 다른 자리가 한다:
+ * 소실점·지평선·격자가 전부 **지금 시점의 값**으로 다시 계산된다(`viewOverlayCtx`·
+ * `drawGrid`·D-L101). 그러므로 남는 조건은 **기준계가 서는가** 하나다.
  */
-function draftStateNow(): "pre" | "draft_pinned" | "draft_one" | "draft_two" | "model" {
+function draftStateNow():
+  "pre" | "draft_pinned" | "draft_one" | "draft_two" | "draft_three" | "model" {
   if (!cam.standing()) return "pre";
   if (stage.isPinned) return "draft_pinned";
   const f = draftGazeDrawn();
   if (!f) return "model";
   const j = judgeDraftPose(f, ONE_POINT_TOL.hand_deg);
-  return j.kind === "one_point" ? "draft_one" : j.kind === "two_point" ? "draft_two" : "model";
+  return j.kind === "one_point" ? "draft_one"
+       : j.kind === "two_point" ? "draft_two" : "draft_three";
 }
 const draftingNow = (): boolean => draftStateNow() !== "model";
+
+/**
+ * **이미 정렬된 작도 시점인가** — 피치가 접혀 있어 「작도 시점으로」가 갈 곳이 없는 상태.
+ * D-L102로 그리기 게이트에서 물러난 피치 조건이 **버튼의 조건**으로 남은 자리다.
+ */
+function alignedDraftNow(): boolean {
+  const st = draftStateNow();
+  return st === "draft_pinned" || st === "draft_one" || st === "draft_two";
+}
 
 /**
  * **가장 가까운 작도 시점으로 복귀**(지시 6-a·f). 피치를 0으로 접고, 요는 축 이탈이
@@ -2145,23 +2167,38 @@ const horizonVisible = (): boolean =>
 function viewOverlayCtx(): {
   vps: (Pt2 | null)[]; horizonY: number | null; principal: Pt2; f: number;
   axisDirs: (Vec3 | null)[] | null; imgSize: [number, number];
+  /** **축 셋의 시점별 소실점**(15차 항목 8 · D-L101) — 무한원 축은 `at: null`·방향만. */
+  axisVps: (AxisVpAt | null)[];
+  /** **지평선 = 수평 소실점 둘을 잇는 선**(지시 8-b). 화면 가로선이 아니다. */
+  horizonLine: { a: Pt2; b: Pt2 } | null;
 } | null {
   if (!cam.standing()) return null;
+  const pack = (vps: (Pt2 | null)[], principal: Pt2, f: number,
+                dirs: (Vec3 | null)[] | null, imgSize: [number, number], hy: number | null) => {
+    // **축 방향에서 낸다**(D-L101) — 방향이 없으면 규칙이 든 소실점으로 되돌아간다(#17:
+    // 두 출처가 아니라 하나의 우선순위. 확정 시점에서는 둘이 같은 값이다).
+    const av = dirs ? axisVpsAt(dirs, principal, f, imgSize)
+                    : vps.map((v, i) => (v ? { axis: i as 0 | 1 | 2, at: v,
+                                               screenDir: [1, 0] as Pt2,
+                                               distFromPrincipal: Math.hypot(v[0] - principal[0],
+                                                                             v[1] - principal[1]) }
+                                           : null));
+    return { vps, horizonY: hy, principal, f, axisDirs: dirs, imgSize,
+             axisVps: av, horizonLine: horizonThrough(av[0], av[1], imgSize) };
+  };
   if (stage.isPinned) {
     const c = cam.ctx();
     if (!c) return null;
-    return { vps: cam.vps(), horizonY: horizonVisible() ? cam.rules.horizon : null,
-             principal: c.principal, f: c.f, axisDirs: c.axisDirs ?? null,
-             imgSize: cam.imgSize };
+    return pack(cam.vps(), c.principal, c.f, c.axisDirs ?? null, cam.imgSize,
+                horizonVisible() ? cam.rules.horizon : null);
   }
   const fr = frame();
   if (!fr) return null;
   const vv = fr.ctx.vps;
-  // 지평선 = 수평축(슬롯 0·1) 유한 소실점의 y. 피치 0이면 두 유한 소실점의 y가 같고,
-  // 축 하나가 시선과 나란한 1점 시점에서도 그 축의 소실점은 항상 화면 안이다(f·tanθ).
+  // 지평선의 **스칼라 y**는 격자(`gridGuides`)가 여전히 쓰는 옛 규약이다 — 표시용 선분은
+  // `horizonLine`이 든다(둘이 갈리는 것은 롤이 있는 시점이고, 그것이 이 항목의 자리다).
   const hy = vv[0] ? vv[0][1] : vv[1] ? vv[1][1] : null;
-  return { vps: vv, horizonY: hy, principal: fr.ctx.principal, f: fr.ctx.f,
-           axisDirs: fr.ctx.axisDirs ?? null, imgSize: fr.ctx.imgSize };
+  return pack(vv, fr.ctx.principal, fr.ctx.f, fr.ctx.axisDirs ?? null, fr.ctx.imgSize, hy);
 }
 
 function horizonGrab(p: Pt2): boolean {
@@ -2174,6 +2211,18 @@ function horizonGrab(p: Pt2): boolean {
   return Math.abs(p[1] - cam.rules.horizon) <= PICK_TOL.radius_ratio * Math.hypot(...cssSize());
 }
 
+/** 지평선 선분 하나를 긋는다 — 표시 규약은 가로선 판과 같다(색·파선·알파). */
+function drawHorizonSeg(ctx2: CanvasRenderingContext2D, l: { a: Pt2; b: Pt2 }) {
+  ctx2.save();
+  ctx2.strokeStyle = HORIZON_COLOR;
+  ctx2.lineWidth = 1;
+  ctx2.setLineDash([6, 4]);
+  ctx2.globalAlpha = 0.35;
+  ctx2.beginPath(); ctx2.moveTo(l.a[0], l.a[1]); ctx2.lineTo(l.b[0], l.b[1]); ctx2.stroke();
+  ctx2.setLineDash([]);
+  ctx2.restore();
+}
+
 function drawHorizon(ctx2: CanvasRenderingContext2D) {
   // **소실점 확정 전에는 지평선이 없다**(4차 지시 4-a — 빈 종이). 결과이지 전제가 아니다
   if (!horizonVisible()) return;
@@ -2181,11 +2230,14 @@ function drawHorizon(ctx2: CanvasRenderingContext2D) {
   // (축 정렬 + 피치 0)에서는 그 시점의 수평 소실점 y로 다시 낸다(`viewOverlayCtx` — 지시
   // 6-c). 모델링 시점에 그리면 화면에 붙어 따라다니는 유령이 된다(`drawBelowInk` 머리말).
   let y = cam.rules.horizon;
+  // **돌린 시점의 지평선은 화면 가로선이 아니다**(15차 항목 8 · D-L101) — 수평 소실점
+  // 둘을 잇는 선이다. 롤이 있으면 기울고, 배면·윗면에서도 그 선은 계산된다.
   if (cam.standing() && !stage.isPinned) {
     if (!draftingNow()) return;
-    const hy = viewOverlayCtx()?.horizonY;
-    if (hy == null) return;
-    y = hy;
+    const o = viewOverlayCtx();
+    if (o?.horizonLine) { drawHorizonSeg(ctx2, o.horizonLine); return; }
+    if (o?.horizonY == null) return;
+    y = o.horizonY;
   }
   const [w] = cssSize();
   const grabbable = cam.canSetHorizon() && (!cam.standing() || stage.isPinned);
@@ -2626,7 +2678,31 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   }
   const [w, h] = cssSize();
   // **소실점은 지금 시점의 값이다**(항목 6-c) — 핀이면 확정 카메라 값과 같다(#17)
-  const vpsNow = viewOverlayCtx()?.vps ?? cam.vps();
+  const ovl = viewOverlayCtx();
+  const vpsNow = ovl?.vps ?? cam.vps();
+  // **무한원 축은 소실점이 없으므로 방향으로 표시한다**(15차 항목 8-e · D-L101).
+  // 화면 가장자리에 그 축 색의 짧은 이중 화살촉을 둔다 — 유한 소실점의 가장자리 표시와
+  // 같은 자리·같은 색이되 **점이 아니라 방향**이라는 것이 보이게.
+  // ⚠ 표식 자리 계산은 `overlayAxisMarks` 하나다(#17) — 종단이 같은 함수를 읽는다.
+  if (ovl) {
+    for (const m of overlayAxisMarks(ovl.axisVps, [w, h])) {
+      if (m.kind !== "infinite") continue;        // 유한 소실점은 아래 루프가 그린다
+      ctx2.save();
+      ctx2.globalAlpha = 0.5; ctx2.strokeStyle = AXIS_COLOR[m.axis]; ctx2.lineWidth = 2;
+      const cx = w / 2, cy = h / 2;
+      for (const s2 of [1, -1]) {
+        const px = cx + (m.at[0] - cx) * s2, py = cy + (m.at[1] - cy) * s2;
+        ctx2.beginPath();
+        ctx2.moveTo(px - m.dir[0] * 12 * s2 - m.dir[1] * 6,
+                    py - m.dir[1] * 12 * s2 + m.dir[0] * 6);
+        ctx2.lineTo(px, py);
+        ctx2.lineTo(px - m.dir[0] * 12 * s2 + m.dir[1] * 6,
+                    py - m.dir[1] * 12 * s2 - m.dir[0] * 6);
+        ctx2.stroke();
+      }
+      ctx2.restore();
+    }
+  }
   // ⛔ **거리점 표시를 지웠다**(지시 2) — 거리점 경로 전체가 폐기됐다.
   vpsNow.forEach((v, i) => {
     if (!v) return;
@@ -3207,7 +3283,11 @@ function renderBar() {
     // 겸한다 — 지시 6-d "전환이 명확해야"). 터치에서도 보인다(복귀 조작이 눈에 띄어야 한다).
     // 옛 "확정 시점으로"(home — 핀 복귀·마우스 전용)는 그대로 둔다: 확정 프레임 정확 복귀는
     // 다른 물음이고 stage.spec의 세계 좌표 팔이 그 경로를 잰다.
-    btn("draft", "작도 시점으로", false, !cam.standing() || draftingNow()),
+    // ⚠ **버튼의 조건은 "이미 정렬된 작도 시점인가"다**(2026-08-19 15차 항목 3 · D-L102).
+    // 옛 판은 `draftingNow()`(= 모델링이 아닌가)였는데 D-L102가 모델링을 사실상 없앴다 —
+    // 그러면 버튼이 영영 안 켜진다. 피치 조건은 **그리기를 막는 자리에서 물러나** 여기
+    // 남는다: 피치가 접혀 있으면 복귀할 곳이 없고, 서 있으면 접을 것이 있다.
+    btn("draft", "작도 시점으로", false, !cam.standing() || stage.isPinned || alignedDraftNow()),
     btn("home", "확정 시점으로", false, !cam.standing() || stage.isPinned, "mouse-only"),
     // ---- 파일(오른쪽)
     '<span class="spacer"></span>',
@@ -3782,6 +3862,14 @@ refresh();
   returnToDraft: () => { returnToDraft(); },
   /** 지금 시점의 표시 문맥(소실점·지평선 y) — 원장이 표시 계산의 출처를 대조하는 데 쓴다. */
   draftOverlay: () => viewOverlayCtx(),
+  /**
+   * **축 표식 목록**(15차 항목 8-c·8-e · D-L101) — 그리는 쪽과 **같은 함수**다(#17).
+   * `point`(화면 안) · `edge`(화면 밖 가장자리) · `infinite`(무한원 축의 방향 표시).
+   */
+  axisMarks: () => {
+    const o = viewOverlayCtx();
+    return o ? overlayAxisMarks(o.axisVps, [cssSize()[0], cssSize()[1]]) : null;
+  },
   /** 마지막 스냅·차단 안내문 — 종단 확인이 차단 안내(항목 6-e)를 그대로 읽는다(#17). */
   snapNote: () => lastSnapNote,
   /** 큐브 기준계 스위치(#30) — `false`가 옛 기준계(세계 축). cube_frame의 대조 팔이 쓴다. */

@@ -252,7 +252,9 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
       await page.waitForTimeout(450);
     }
     led.s6_view_state = await page.evaluate(() => window.S2S.viewState());
-    expect(["draft_two", "draft_one"]).toContain(led.s6_view_state as string);
+    // ⛔ **`draft_three`가 늘었다**(2026-08-19 15차 항목 3 · D-L102) — 피치가 서 있는
+    // 시점도 작도다. 옛 판은 그 자세를 `model`로 읽어 그리기를 막았다
+    expect(["draft_two", "draft_one", "draft_three"]).toContain(led.s6_view_state as string);
   }
   const target = await page.evaluate(async () => {
     // 돌린 시점에서 3D 끝점 하나의 화면 자리를 계산한다 — 앱과 같은 변환(viewCamera)

@@ -67,15 +67,13 @@
  },
  "s5_orbit": {
   "pinned": false,
-  "gl_painted_px": 2140
+  "gl_painted_px": 2106
  },
  "s6_blocked": {
-  "state": "model",
-  "strokes": 5,
-  "strokes_before": 5,
-  "strokes_after": 5
+  "state": "draft_three",
+  "strokes": 5
  },
- "s6_view_state": "draft_two",
+ "s6_view_state": "draft_three",
  "s6_continue": {
   "snap_start": "endpoint",
   "lifted": true
