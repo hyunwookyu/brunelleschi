@@ -67,18 +67,12 @@ function loadBrnl(): BrnlDoc[] {
 const xy = (s: SessionStroke): Pt2[] => s.raw.map(p => [p[0], p[1]] as Pt2);
 
 /**
- * **소실점 방향 오차(°)**(7차) — 획 현(a→b)과 시작점→소실점 방향의 각차. 방향 부호는
- * 무시한다(축은 부호가 없다). 퇴화(길이 0·시작점=소실점)는 null.
- * 집계와 반례 테스트가 **같은 함수**를 쓴다(#17).
+ * **소실점 방향 오차(°)**(7차) — 정의는 `vpDirErr.ts` 하나다(#17 — 12차에 옮겼다:
+ * 회귀 팔 `vp_dir_consistency.test.ts`가 하네스 파일을 import하지 않고 같은 함수를
+ * 쓰기 위해서다). 집계와 반례 테스트가 같은 함수를 쓴다.
  */
-export function vpDirErrDeg(a0: Pt2, b0: Pt2, vp: Pt2): number | null {
-  const u: Pt2 = [b0[0] - a0[0], b0[1] - a0[1]];
-  const v: Pt2 = [vp[0] - a0[0], vp[1] - a0[1]];
-  const lu = Math.hypot(u[0], u[1]), lv = Math.hypot(v[0], v[1]);
-  if (lu < 1e-9 || lv < 1e-9) return null;
-  const c = Math.min(1, Math.abs(u[0] * v[0] + u[1] * v[1]) / (lu * lv));
-  return (Math.acos(c) * 180) / Math.PI;
-}
+import { vpDirErrDeg } from "./vpDirErr.js";
+export { vpDirErrDeg };
 
 /**
  * **7차 이전 저장본의 snapDistPx 0 오염인가** — 옛 정의는 스냅이 걸리면 `cand.dist`를
@@ -142,6 +136,40 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
       spec: "실획 측정. 앱의 '획 내보내기'로 받은 세션을 sessions/ 에 넣으면 여기서 잰다.",
       constants: constantsSnapshot(),
       metric_defs: metricsSnapshot(),
+      /**
+       * **12차 두 표본의 사람 보고 등재**(2026-08-18 12차 지시 · 항목 5).
+       * ⚠⚠ **측정이 아니다** — 파일이 이번에도 저장소에 도착하지 않았다(b4f2d9b 선례:
+       * 지시문 수치는 사람 보고로만 기록). 파일이 오면 이 하네스가 같은 K 지표를
+       * 실좌표로 내고 이 블록은 대조 기록이 된다. 값은 원장 밖 검증 불가(#25의 자리 —
+       * 그래서 `human_reported: true`를 모든 판에 박고 어떤 임계·게이트도 안 건다).
+       */
+      reported_samples_12: {
+        human_reported: true,
+        source: "12차 지시문(2026-08-18) — brunelleschi-2026-08-18T15-16-18(파일1 · 13획) · "
+              + "…T15-18-25_brnl_2(파일2 · 11획). 파일은 sessions/에 없다",
+        k_reported: {
+          snap2d_fired: { file1: "0/13", file2: "6/11",
+                          note: "파일2에서 endpoint·vertex·intersection 전부 발화 — #18 닫힘(보고)" },
+          asked: { file1: "3/13", file2: "3/11", note: "이전 보고 6/5에서 감소. ⚠ D-L89(12차 "
+                 + "항목 4)가 애매 물음을 지웠으므로 다음 표본의 이 수는 다른 규칙 아래 값이다" },
+          placed_3d: { file1: "0/13", file2: "6/11",
+                       note: "파일2 스냅 6 = seg3d 6 — D-L83이 의도대로(보고). 파일1은 스냅 0으로 전량 대기" },
+          f_over_w: { file1: 0.431, file2: 0.074,
+                      note: "지시 표기 'd/W'의 d는 시거리(= f) — 판독 근거는 confirm_rules.json의 "
+                          + "real_ink_reported_12.source. 파일2는 화각 163°로 12차 상한(120°)의 거부 대역" },
+          vp_dir_err_deg_reported: {
+            file1: [["s42", 0, 1.33], ["s41", 0, 12.81], ["s44", 1, 10.32]],
+            file2: [["s78", 1, 0.0], ["s65", 0, 20.8], ["s66", 1, 16.59]],
+            note: "[획 id, 축, Δ°]. s78만 snapStart 보유 — 항목 2가 그 상관(앵커 유무 = 방향 "
+                + "정착 유무)을 원인으로 확인했다. 이전 표본 보고 Δ0.0~1.7과 대푯값이 갈리고, "
+                + "무엇이 갈랐는지는 표본이 와야 분해된다(RULE_TOL.concurrent_deg의 근거 주석 참조)" },
+          note_channel_leak: { strokes: ["s52", "s53"],
+                               note: "note 채널인데 축 판정을 탔다(보고) — 12차 항목 4-c가 배선을 "
+                                   + "바꿨다(그리기·미리보기의 판정 제외 + 주석 전환 시 axis 소거). "
+                                   + "⚠ **수리 주장이지 관측이 아니다**(3차 리뷰어 [13]) — 전용 회귀 "
+                                   + "팔이 없고 파일 부재로 실측 불가. 파일이 오면 이 획들이 대조다" },
+        },
+      },
       why: (
         "AS-6·AS-12는 Quick,Draw 낙서에서 나온 수치이고 대상 사용자를 대표하지 않는다(AS-13). "
         + "**그 수치로 설계 결정을 하지 않기로 했으므로** 재측정 수단을 먼저 세운다. "
@@ -406,6 +434,13 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
          */
         opens_with_new_sample: rows.filter(r => !r.ok && r.opens).map(r => r.id),
         blocked_regardless_of_sample: rows.filter(r => !r.ok && !r.opens).map(r => r.id),
+        /**
+         * ⚠ **12차(2026-08-18)에 표본 둘이 보고됐으나 파일이 저장소에 도착하지 않았다**
+         * (`reported_samples_12` — 사람 보고 수치만 있다). 그러므로 `opens_with_new_sample`의
+         * 두 판정은 **여전히 안 열렸다** — 보고는 snap2d 발화(6/11)를 말하지만 분포
+         * (`snap_dist_px`)가 없어 사전등록된 반경 되돌림 조건(p10 > 조리개)을 평가할 수 없다.
+         */
+        note_12: "보고 ≠ 파일 — 두 판정은 파일 도착까지 미개봉",
         rows: rows.map(r => ({ id: r.id, what: r.what, field: r.field,
                                answerable: r.ok, opens_with_new_sample: r.ok ? null : r.opens,
                                blocked_by: r.ok ? null : r.blocked_by,

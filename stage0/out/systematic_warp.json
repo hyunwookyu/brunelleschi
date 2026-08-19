@@ -25,7 +25,7 @@
   },
   "three_numbers": "assigned_rate만 오르는 것은 개선이 아니다. **silent_wrong_rate(조용히 틀린 축)**를 함께 본다 — A-3이 금지하는 것이 그것이다. 구제된 획이 틀린 수(rescued_wrong)도 낸다.",
   "constants": {
-    "hash": "54346ad1",
+    "hash": "f351839a",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -79,7 +79,8 @@
       },
       "FOV_GATE": {
         "severe_f_ratio": 0.5,
-        "ok_f_ratio": 0.87
+        "ok_f_ratio": 0.87,
+        "reject_fov_deg": 120
       },
       "SNAP_TOL_AXIS": {
         "ambiguous_deg": 6

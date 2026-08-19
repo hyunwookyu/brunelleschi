@@ -2,24 +2,25 @@
   "what": "**검증 비용의 원장**(9차 지시 c) — 파일별 시간·건수, 단위/측정 갈래별 합계, 하네스가 스스로 적은 실행 수. **팔이 늘면 여기서 보인다.**",
   "how": "`npx vitest run --reporter=json --outputFile=../stage0/out/_vitest_timing.json` 뒤 `npm run test:cost`. 갈래는 `tools/testSplit.mjs`가 **소스를 읽어** 정한다(이름 규약이 아니다 — 사람이 지켜야 하는 규약은 샌다, #19·#38).",
   "environment": {
-    "disk_free_bytes": 262488145920,
-    "disk_free_note": "⚠⚠ **여유가 0이면 아래 시간은 전부 무의미하다.** 9차에 전량 실행이 **121s → 1h52m**(59배)로 늘었고 원인은 하네스가 아니라 **디스크가 100% 찬 것**이었다. 느려졌다는 보고를 받으면 **여기부터 본다**(#7 — 추측 대신 카운터)."
+    "disk_avail_bytes": 31804596224,
+    "disk_free_bytes": 262576881664,
+    "disk_free_note": "⚠⚠ **여유가 0이면 아래 시간은 전부 무의미하다.** 9차에 전량 실행이 **121s → 1h52m**(59배)로 늘었고 원인은 하네스가 아니라 **디스크가 100% 찬 것**이었다. 느려졌다는 보고를 받으면 **여기부터 본다**(#7 — 추측 대신 카운터). ⚠⚠ **읽는 필드는 `disk_avail_bytes`다**(2026-08-19 정정 · #45·#49): `disk_free_bytes`는 `bfree`라 세션 할당량 밖까지 세고, 실측에서 둘이 **244.5G ↔ 29.6G**로 갈렸다. ⚠ **그리고 이 블록은 이 하네스가 마지막으로 돈 시각의 스냅샷이다** — 느려졌다는 보고를 받은 **그 시점**의 값은 `df`(또는 이 하네스 재실행)로 읽는다."
   },
   "wall_note": "⚠ **파일 시간의 합은 벽시계가 아니다**(병렬 실행). **벽시계는 최장 파일이 바닥**이므로 지배항 하나를 떼는 것이 전체를 줄이는 유일한 길이다.",
   "totals": {
-    "files": 80,
-    "tests": 496,
-    "file_seconds_sum": 153.22,
+    "files": 82,
+    "tests": 509,
+    "file_seconds_sum": 180.78,
     "measure": {
       "files": 44,
       "tests": 132,
-      "seconds": 152.74,
+      "seconds": 180.22,
       "share": 0.9969
     },
     "unit": {
-      "files": 36,
-      "tests": 364,
-      "seconds": 0.48,
+      "files": 38,
+      "tests": 377,
+      "seconds": 0.56,
       "share": 0.0031
     },
     "e2e": {
@@ -40,191 +41,196 @@
   "dominant": [
     {
       "file": "camera_gate.test.ts",
-      "seconds": 104.39,
+      "seconds": 124.71,
       "tests": 2,
-      "share": 0.6813,
+      "share": 0.6898,
       "kind": "measure"
     },
     {
       "file": "snap_measure.test.ts",
-      "seconds": 11.34,
+      "seconds": 13.28,
       "tests": 1,
-      "share": 0.074,
+      "share": 0.0735,
       "kind": "measure"
     },
     {
       "file": "place_measure.test.ts",
-      "seconds": 4.23,
+      "seconds": 5.09,
       "tests": 2,
-      "share": 0.0276,
+      "share": 0.0282,
       "kind": "measure"
     },
     {
       "file": "axis_live.test.ts",
-      "seconds": 3.85,
+      "seconds": 4.3,
       "tests": 1,
-      "share": 0.0251,
+      "share": 0.0238,
       "kind": "measure"
     },
     {
       "file": "misassign.test.ts",
-      "seconds": 3.39,
+      "seconds": 3.75,
       "tests": 2,
-      "share": 0.0221,
+      "share": 0.0207,
       "kind": "measure"
     },
     {
       "file": "lift_gate.test.ts",
-      "seconds": 2.96,
+      "seconds": 3.54,
       "tests": 2,
-      "share": 0.0193,
+      "share": 0.0196,
       "kind": "measure"
     },
     {
       "file": "order_lock.test.ts",
-      "seconds": 2.96,
+      "seconds": 3.35,
       "tests": 1,
-      "share": 0.0193,
+      "share": 0.0185,
       "kind": "measure"
     },
     {
-      "file": "promote.test.ts",
-      "seconds": 1.96,
+      "file": "osnap_two_sided.test.ts",
+      "seconds": 2.72,
       "tests": 1,
-      "share": 0.0128,
+      "share": 0.015,
       "kind": "measure"
     }
   ],
   "by_file": [
     {
       "file": "camera_gate.test.ts",
-      "seconds": 104.39,
+      "seconds": 124.71,
       "tests": 2
     },
     {
       "file": "snap_measure.test.ts",
-      "seconds": 11.34,
+      "seconds": 13.28,
       "tests": 1
     },
     {
       "file": "place_measure.test.ts",
-      "seconds": 4.23,
+      "seconds": 5.09,
       "tests": 2
     },
     {
       "file": "axis_live.test.ts",
-      "seconds": 3.85,
+      "seconds": 4.3,
       "tests": 1
     },
     {
       "file": "misassign.test.ts",
-      "seconds": 3.39,
+      "seconds": 3.75,
       "tests": 2
     },
     {
       "file": "lift_gate.test.ts",
-      "seconds": 2.96,
+      "seconds": 3.54,
       "tests": 2
     },
     {
       "file": "order_lock.test.ts",
-      "seconds": 2.96,
-      "tests": 1
-    },
-    {
-      "file": "promote.test.ts",
-      "seconds": 1.96,
+      "seconds": 3.35,
       "tests": 1
     },
     {
       "file": "osnap_two_sided.test.ts",
-      "seconds": 1.82,
+      "seconds": 2.72,
       "tests": 1
     },
     {
       "file": "view_plane.test.ts",
-      "seconds": 1.58,
+      "seconds": 1.92,
+      "tests": 1
+    },
+    {
+      "file": "promote.test.ts",
+      "seconds": 1.9,
       "tests": 1
     },
     {
       "file": "lift_grade.test.ts",
-      "seconds": 1.35,
+      "seconds": 1.51,
       "tests": 1
     },
     {
       "file": "incline.test.ts",
-      "seconds": 1.29,
+      "seconds": 1.45,
       "tests": 3
     },
     {
       "file": "warp.test.ts",
-      "seconds": 1.24,
+      "seconds": 1.44,
       "tests": 5
     },
     {
-      "file": "axis_snap_measure.test.ts",
-      "seconds": 0.97,
-      "tests": 1
-    },
-    {
       "file": "view_measure.test.ts",
-      "seconds": 0.94,
+      "seconds": 1.09,
       "tests": 1
     },
     {
-      "file": "rule_camera.test.ts",
-      "seconds": 0.92,
+      "file": "axis_snap_measure.test.ts",
+      "seconds": 1.02,
       "tests": 1
     },
     {
       "file": "order_signal.test.ts",
-      "seconds": 0.71,
+      "seconds": 0.85,
+      "tests": 1
+    },
+    {
+      "file": "rule_camera.test.ts",
+      "seconds": 0.82,
       "tests": 1
     },
     {
       "file": "stage_measure.test.ts",
-      "seconds": 0.7,
+      "seconds": 0.8,
       "tests": 1
     },
     {
-      "file": "segment_gate.test.ts",
-      "seconds": 0.67,
+      "file": "occlusion.test.ts",
+      "seconds": 0.73,
       "tests": 1
     },
     {
       "file": "fix_load.test.ts",
-      "seconds": 0.65,
+      "seconds": 0.72,
+      "tests": 1
+    },
+    {
+      "file": "segment_gate.test.ts",
+      "seconds": 0.71,
       "tests": 1
     },
     {
       "file": "free_curve.test.ts",
-      "seconds": 0.6,
+      "seconds": 0.66,
       "tests": 2
     },
     {
-      "file": "occlusion.test.ts",
-      "seconds": 0.58,
-      "tests": 1
-    },
-    {
       "file": "horizon_pitch.test.ts",
-      "seconds": 0.5,
+      "seconds": 0.56,
       "tests": 1
     },
     {
       "file": "classify_leak.test.ts",
-      "seconds": 0.41,
+      "seconds": 0.49,
       "tests": 1
     },
     {
       "file": "order_promote.test.ts",
-      "seconds": 0.41,
+      "seconds": 0.42,
       "tests": 1
     },
     {
       "file": "axis.test.ts",
-      "seconds": 0.39,
+      "seconds": 0.38,
       "tests": 9
+    },
+    {
+      "file": "pick_vp.test.ts",
+      "seconds": 0.37,
+      "tests": 1
     },
     {
       "file": "snap_stage.test.ts",
@@ -233,27 +239,22 @@
     },
     {
       "file": "order_undo.test.ts",
-      "seconds": 0.31,
-      "tests": 1
-    },
-    {
-      "file": "pick_vp.test.ts",
-      "seconds": 0.31,
+      "seconds": 0.32,
       "tests": 1
     },
     {
       "file": "persist.test.ts",
-      "seconds": 0.28,
+      "seconds": 0.27,
       "tests": 11
     },
     {
       "file": "tube_measure.test.ts",
-      "seconds": 0.26,
+      "seconds": 0.27,
       "tests": 1
     },
     {
       "file": "face_diag.test.ts",
-      "seconds": 0.15,
+      "seconds": 0.14,
       "tests": 3
     },
     {
@@ -262,17 +263,17 @@
       "tests": 1
     },
     {
-      "file": "user_place.test.ts",
-      "seconds": 0.05,
-      "tests": 9
-    },
-    {
       "file": "grid.test.ts",
-      "seconds": 0.04,
+      "seconds": 0.06,
       "tests": 10
     },
     {
       "file": "lift.test.ts",
+      "seconds": 0.04,
+      "tests": 9
+    },
+    {
+      "file": "user_place.test.ts",
       "seconds": 0.04,
       "tests": 9
     },
@@ -282,9 +283,24 @@
       "tests": 3
     },
     {
+      "file": "place.test.ts",
+      "seconds": 0.03,
+      "tests": 18
+    },
+    {
+      "file": "scene_cam.test.ts",
+      "seconds": 0.03,
+      "tests": 14
+    },
+    {
       "file": "segment.test.ts",
       "seconds": 0.03,
       "tests": 15
+    },
+    {
+      "file": "vp_rules.test.ts",
+      "seconds": 0.03,
+      "tests": 35
     },
     {
       "file": "axis_snap_table.test.ts",
@@ -307,9 +323,14 @@
       "tests": 6
     },
     {
-      "file": "place.test.ts",
+      "file": "doc_store.test.ts",
       "seconds": 0.02,
-      "tests": 18
+      "tests": 12
+    },
+    {
+      "file": "osnap.test.ts",
+      "seconds": 0.02,
+      "tests": 7
     },
     {
       "file": "rule_lift.test.ts",
@@ -325,11 +346,6 @@
       "file": "vp_detect.test.ts",
       "seconds": 0.02,
       "tests": 11
-    },
-    {
-      "file": "vp_rules.test.ts",
-      "seconds": 0.02,
-      "tests": 33
     },
     {
       "file": "axis_snap.test.ts",
@@ -357,11 +373,6 @@
       "tests": 10
     },
     {
-      "file": "doc_store.test.ts",
-      "seconds": 0.01,
-      "tests": 12
-    },
-    {
       "file": "geom3d.test.ts",
       "seconds": 0.01,
       "tests": 10
@@ -370,6 +381,11 @@
       "file": "horizon_drag.test.ts",
       "seconds": 0.01,
       "tests": 10
+    },
+    {
+      "file": "kind_flip_guard.test.ts",
+      "seconds": 0.01,
+      "tests": 6
     },
     {
       "file": "metrics.test.ts",
@@ -382,9 +398,9 @@
       "tests": 1
     },
     {
-      "file": "osnap.test.ts",
+      "file": "prefilter.test.ts",
       "seconds": 0.01,
-      "tests": 7
+      "tests": 4
     },
     {
       "file": "promoteDiff.test.ts",
@@ -395,11 +411,6 @@
       "file": "real_ink.test.ts",
       "seconds": 0.01,
       "tests": 3
-    },
-    {
-      "file": "scene_cam.test.ts",
-      "seconds": 0.01,
-      "tests": 14
     },
     {
       "file": "snap.test.ts",
@@ -432,6 +443,11 @@
       "tests": 12
     },
     {
+      "file": "vp_dir_consistency.test.ts",
+      "seconds": 0.01,
+      "tests": 6
+    },
+    {
       "file": "vp_homog.test.ts",
       "seconds": 0.01,
       "tests": 7
@@ -457,14 +473,14 @@
       "tests": 4
     },
     {
+      "file": "cross_anchor.test.ts",
+      "seconds": 0,
+      "tests": 5
+    },
+    {
       "file": "gate.test.ts",
       "seconds": 0,
       "tests": 7
-    },
-    {
-      "file": "kind_flip_guard.test.ts",
-      "seconds": 0,
-      "tests": 6
     },
     {
       "file": "one_stroke_one_axis.test.ts",
@@ -480,11 +496,6 @@
       "file": "pick.test.ts",
       "seconds": 0,
       "tests": 10
-    },
-    {
-      "file": "prefilter.test.ts",
-      "seconds": 0,
-      "tests": 4
     },
     {
       "file": "resolve2d_end2.test.ts",
@@ -569,6 +580,10 @@
     "classify_leak.json": {
       "scenarios": 3600,
       "arms": 8
+    },
+    "cube_frame.json": {
+      "scenarios": 4,
+      "arms": null
     },
     "free_curve.json": {
       "scenarios": null,

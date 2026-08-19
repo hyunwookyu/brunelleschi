@@ -4787,10 +4787,10 @@
       "placement": 0.887,
       "silent_wrong": 0.278
     },
-    "source": "docs/archive/segment_plan.md 머리말 · segment_gate.json@54346ad1"
+    "source": "docs/archive/segment_plan.md 머리말 · segment_gate.json@f351839a"
   },
   "constants": {
-    "hash": "54346ad1",
+    "hash": "f351839a",
     "values": {
       "AXIS_TOL": {
         "vp_dist_ratio": 0.06,
@@ -4844,7 +4844,8 @@
       },
       "FOV_GATE": {
         "severe_f_ratio": 0.5,
-        "ok_f_ratio": 0.87
+        "ok_f_ratio": 0.87,
+        "reject_fov_deg": 120
       },
       "SNAP_TOL_AXIS": {
         "ambiguous_deg": 6
