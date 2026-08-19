@@ -1,0 +1,27 @@
+{
+ "what": "전량 e2e 실행에서 난 unexpected 실패의 **서명 기록**(2026-08-20 16차 항목 4 · 2차 리뷰어 [10]). 통과한 재실행이 `_e2e_timing.json`을 덮어쓰면 실패의 흔적이 원장에서 사라진다 — 간헐 실패는 서명이 남아야 다음 실패와 «같은 것인가»를 비교할 수 있다.",
+ "how": "실패한 실행의 Playwright JSON 리포터 출력에서 실패 행을 옮겨 적는다. **추가 전용**(entries에 덧붙인다 — 덮어쓰지 않는다).",
+ "caveat_25": "⚠ 이 파일의 첫 두 항목은 **세션 기록에서 옮긴 것**이다(#25 — 그 실행의 리포터 출력은 통과 재실행이 덮어썼고, 세션이 덮어쓰기 전에 읽은 값을 여기 남긴다). 이후 항목부터는 실패 직후 그 자리에서 옮겨 적는 것이 규약이다.",
+ "entries": [
+  {
+   "at_utc": "2026-08-19T22:02:35.970Z",
+   "run": "전량 1차(16차 세션) — stats: expected 59 · unexpected 2 · flaky 0",
+   "spec": "touch_route.spec.ts",
+   "test": "앱 종단 — 손가락 1개는 궤도, 2개는 팬·줌 (dpr 1)",
+   "error_head": "page.evaluate: TypeError: Cannot read properties of undefined (reading 'camPose')",
+   "error_site": "pose() → settle() → touch_route.spec.ts:246",
+   "diagnosis": "window.S2S가 실행 중 undefined — 문서 상태가 아니라 **페이지 생애**의 문제(재시작·크래시 유력, 전량 실행의 자원 부하 하). 등재된 환경 실패(dpr 2 회전 밴드)와 **서명이 다르다**. 단독 실행 5/5 통과 · 전량 재실행 unexpected 0 · 반복 12회 통과 — 원인 미특정.",
+   "matches_registered_failure": false
+  },
+  {
+   "at_utc": "2026-08-19T22:02:35.970Z",
+   "run": "같은 전량 1차",
+   "spec": "basic_flow.spec.ts",
+   "test": "지평선 — 확정 전에는 없고, 확정 후 그 높이에 생긴다 (4차 지시 4)",
+   "error_head": "expect(row_ink_default_horizon).toBe(0) — received 64",
+   "error_site": "basic_flow.spec.ts:666",
+   "diagnosis": "16차 항목 0의 끔 상태 토글 손잡이(가장자리 고리 — D-L107 ③)가 «빈 종이» 픽셀 검사의 전폭 대역에 걸렸다. **원인 특정·수리 완료**: 검사 대역에서 가장자리 40px 제외(회귀 대상은 전폭 파선 — 검사 주석에 사유). 재실행 통과.",
+   "matches_registered_failure": false
+  }
+ ]
+}

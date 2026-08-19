@@ -31,8 +31,10 @@ import { setupScene, setupConfirmed } from "./fixture.js";
  * 대신 **이 값을 쓰는 원장이 `az_tol_rad`와 `az_tol_basis`로 값과 근거를 그대로 적는다**
  * (STALE 사각지대임을 병기 — D-C4의 예외이고 그 사유가 여기 있다).
  *
- * 근거: 같은 커밋 12회의 밴드가 **6.95e-14 ~ 5.72e-13**(`touch_route_repeat.json`)이고
- * 이 값은 그 **상단의 17.5배**다. 옛 1e-6은 상단의 **175만 배**여서 아무것도 안 갈랐다.
+ * 근거(선정 시점 — 8차 2차의 12회): 밴드 **6.95e-14 ~ 5.72e-13**, 이 값은 그 상단의
+ * 17.5배였다. 옛 1e-6은 상단의 175만 배여서 아무것도 안 갈랐다. ⚠ 밴드는 실행 묶음마다
+ * 움직인다(9차 상단 6.61e-13 · 16차 5.81e-13) — **현행 밴드·배수는
+ * `touch_route_repeat.json`을 그 자리에서 읽는다**(#47 — 이 주석의 수는 선정 근거의 동결이다).
  */
 const AZ_TOL_RAD = 1e-11;
 
@@ -520,12 +522,19 @@ test.describe("dpr 2", () => {
       rotate: { azimuth_delta: az, dpr1_azimuth_delta: one, ratio: az / one!,
                 az_tol_rad: AZ_TOL_RAD,
                 az_tol_basis: {
+                  // ⚠⚠ **아래 넷은 임계를 고른 시점(9차 항목 3)의 12회 기록이다** — 살아 있는
+                  // 값이 아니다(2026-08-20 16차 2차 리뷰어 [2]: 16차의 12회가
+                  // `touch_route_repeat.json`을 갱신하자 두 원장이 같은 양을 다른 값으로
+                  // 말하게 됐다). **현행 밴드는 그 원장을 그 자리에서 읽는다** — 여기 수치를
+                  // 갱신-복사하면 다음 재실행에서 또 낡는다(#47). 남겨 두는 이유는 «임계
+                  // 1e-11이 어느 밴드를 보고 정해졌는가»의 근거가 이 넷이기 때문이다.
+                  basis_epoch: "9차 항목 3 (임계 선정 시점의 기록 — 현행은 touch_route_repeat.json)",
                   measured_band_n: 12,
                   measured_abs_diff_min: 1.694200335577989e-13,
                   measured_abs_diff_median: 3.9257486150745535e-13,
                   measured_abs_diff_max: 6.605826996519681e-13,
                   ratio_to_band_max: 15.1,
-                  source: "`touch_route_repeat.json`(같은 커밋 12회) — **임계를 바꾼 뒤 다시 쟀다**",
+                  source: "`touch_route_repeat.json`(9차 — 같은 커밋 12회. **선정 근거의 동결 사본**이고 현행 값은 그 파일이 정본)",
                   band_moved: "⚠⚠ **밴드 자체가 실행 묶음마다 움직인다**: 8차 2차의 12회는 "
                     + "상단 **5.715e-13**, 9차 항목 3의 12회는 **6.606e-13**으로 **16% 크다**. "
                     + "N=12의 상단은 그만큼 흔들리므로 **여유를 배수로 두는 것이 옳다**(#14).",

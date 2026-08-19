@@ -180,7 +180,7 @@
     },
     "c2_controls_on_ink": {
       "pen_orbits": true,
-      "azimuth_delta": 1.117010721276371,
+      "azimuth_delta": 1.1186680072129827,
       "pitfall": "three가 `pointerType !== 'touch'`를 마우스로 본다 → **펜이 궤도를 돈다**",
       "harness_intervention": "①과 섞이지 않게 `setPointerCapture`를 무력화하고 쟀다",
       "verdict": "함정 실재 — 펜이 궤도를 돌렸다"
@@ -221,9 +221,9 @@
         "steps": 6,
         "start": "확정 카메라(pinned)"
       },
-      "azimuth_delta": 1.0859826456834119,
-      "polar_delta": 1.3380857598627927,
-      "dist_delta": 6.470458873433528
+      "azimuth_delta": 1.0875938959012081,
+      "polar_delta": 1.3377404919589324,
+      "dist_delta": 6.4704588734335315
     },
     "two_finger": {
       "input_px": {
@@ -231,10 +231,10 @@
         "d1": 196,
         "ratio": 1.96
       },
-      "dist_ratio": 0.5660004944940231,
+      "dist_ratio": 0.5660261482031643,
       "identity_if_guaranteed": 0.5102040816326531,
       "guarantee_retracted": "**보장이 아니다**(8차 리뷰어 [2]) — 항등이면 `identity_if_guaranteed`(1/1.96)여야 하는데 `dist_ratio`가 그 값이 아니다. 임계를 안 거는 사유는 '항등이라서'가 아니라 **실행마다 흔들려서**다",
-      "target_moved": 0.7103701597342514
+      "target_moved": 0.7106407489121223
     },
     "one_finger_already_free": {
       "input_px": {
@@ -249,15 +249,15 @@
         "steps": 6,
         "start": "자유 시점(이미 풀림) — **첫 팔과 같은 손짓**"
       },
-      "azimuth_delta": 1.0859826456833905,
-      "polar_delta": 0.23271056693209857,
-      "dist_delta": 2.90878432451791e-13
+      "azimuth_delta": 1.0875938959012084,
+      "polar_delta": 0.2330558348359637,
+      "dist_delta": 4.884981308350689e-14
     },
     "strokes_after_touch_only": {
       "before": 12,
       "after": 12
     },
-    "reading": "손가락 하나가 **확정 카메라를 풀고**(pinned true → false) 방위각을 돌린다. 둘은 **거리를 줄이고**(벌림) 궤도 중심을 옮긴다. ⚠ 핀 해제의 재초기화가 어느 성분에 섞이는지는 **두 팔의 차로 읽는다** — 방위각 차 2.1e-14 · 앙각 차 1.1054 · 거리 차 6.4705. **방위각은 두 팔이 같고**(재초기화가 안 섞인다) 앙각·거리에만 섞인다 — 옛 산문의 '세 성분 전부'와 '13.5%'는 `camPose()` 수리 이전 값이라 철회했다. 그 몫이 빠진 값이 `one_finger_already_free`다. ⚠ **터치만으로는 획이 안 생긴다**(`strokes_after_touch_only`)."
+    "reading": "손가락 하나가 **확정 카메라를 풀고**(pinned true → false) 방위각을 돌린다. 둘은 **거리를 줄이고**(벌림) 궤도 중심을 옮긴다. ⚠ 핀 해제의 재초기화가 어느 성분에 섞이는지는 **두 팔의 차로 읽는다** — 방위각 차 2.2e-16 · 앙각 차 1.1047 · 거리 차 6.4705. **방위각은 두 팔이 같고**(재초기화가 안 섞인다) 앙각·거리에만 섞인다 — 옛 산문의 '세 성분 전부'와 '13.5%'는 `camPose()` 수리 이전 값이라 철회했다. 그 몫이 빠진 값이 `one_finger_already_free`다. ⚠ **터치만으로는 획이 안 생긴다**(`strokes_after_touch_only`)."
   },
   "gesture_tol": {
     "rotate_speed": 1,
@@ -326,25 +326,25 @@
     ],
     "arm_start_state": {
       "control": {
-        "dist": 6.470458873433543,
+        "dist": 6.4704588734335395,
         "pinned": false
       },
       "op1": {
-        "dist": 6.895720180864109,
+        "dist": 6.896288904465503,
         "pinned": false
       },
       "op2": {
-        "dist": 6.895720180864109,
+        "dist": 6.896288904465503,
         "pinned": false
       },
       "pen_interrupts": {
-        "dist": 6.895720180864109,
+        "dist": 6.896288904465503,
         "pinned": false
       },
       "note": "팔들이 **같은 페이지 상태를 이어 쓴다** — 앞 팔이 뒤 팔의 시작을 정한다"
     },
     "control_no_pen": {
-      "moved": 1.666384331069268,
+      "moved": 1.6687944834906991,
       "counters": {
         "rejected_down": 0,
         "cancelled_by_pen": 0,
@@ -404,7 +404,7 @@
     },
     "camera_moved": {
       "by_pen": 0,
-      "by_mouse_in_orbit": 1.5514037795453366
+      "by_mouse_in_orbit": 1.5537055655731218
     },
     "reading": "펜·마우스는 잉크로, 터치는 카메라로 간다. 마우스는 `궤도(마우스)` 동안만 카메라다. ⚠ **`pointer-events: none` 전환을 지웠으므로** 궤도 중에도 잉크 캔버스가 사건을 받는다."
   },
@@ -420,17 +420,18 @@
       "reading": "**백버퍼가 css 폭의 2배**여야 dpr 섭동이 실제로 걸린 것이다. 1이면 회전 비 1.0은 '규약이 지켜졌다'가 아니라 '섭동이 안 걸렸다'다"
     },
     "rotate": {
-      "azimuth_delta": 1.0859826454113548,
-      "dpr1_azimuth_delta": 1.0859826456834119,
-      "ratio": 0.9999999997494831,
+      "azimuth_delta": 1.087593895901085,
+      "dpr1_azimuth_delta": 1.0875938959012081,
+      "ratio": 0.9999999999998866,
       "az_tol_rad": 1e-11,
       "az_tol_basis": {
+        "basis_epoch": "9차 항목 3 (임계 선정 시점의 기록 — 현행은 touch_route_repeat.json)",
         "measured_band_n": 12,
         "measured_abs_diff_min": 1.694200335577989e-13,
         "measured_abs_diff_median": 3.9257486150745535e-13,
         "measured_abs_diff_max": 6.605826996519681e-13,
         "ratio_to_band_max": 15.1,
-        "source": "`touch_route_repeat.json`(같은 커밋 12회) — **임계를 바꾼 뒤 다시 쟀다**",
+        "source": "`touch_route_repeat.json`(9차 — 같은 커밋 12회. **선정 근거의 동결 사본**이고 현행 값은 그 파일이 정본)",
         "band_moved": "⚠⚠ **밴드 자체가 실행 묶음마다 움직인다**: 8차 2차의 12회는 상단 **5.715e-13**, 9차 항목 3의 12회는 **6.606e-13**으로 **16% 크다**. N=12의 상단은 그만큼 흔들리므로 **여유를 배수로 두는 것이 옳다**(#14).",
         "why": "**옛 임계 1e-6은 이 기계 밴드의 175만 배**라 0/12로 아무것도 안 갈랐다(#40 계열 — 검사가 통과하는데 아무것도 안 잰다). 밴드 상단의 17.5배로 내렸다(**선정 시점의 배수** — 밴드가 실행 묶음마다 움직이므로 현행 배수는 ratio_to_band_max 필드를 읽는다, 10차 정정). ⚠ **오배선의 신호와는 여전히 다섯 자리 위 여유가 있다**: dpr이 어딘가에서 곱해지면 비가 2가 되고 Δ ≈ 0.5rad이다. ⚠⚠ **N=12이라 밴드 상단은 과소추정이다**(#14 — 유효 자릿수 1). 이 임계에서 간헐 실패가 나면 **코드 결함이 아니라 밴드가 넓은 것**이므로 `touch_route_repeat.py`를 다시 돌려 밴드부터 갱신한다."
       },
@@ -448,9 +449,9 @@
       }
     },
     "positive_channel": {
-      "azimuth_delta_half_input": 0.5429913227596228,
-      "azimuth_delta_full_free": 1.085982645205198,
-      "ratio_to_single": 0.5000000001445914,
+      "azimuth_delta_half_input": 0.5437969479505944,
+      "azimuth_delta_full_free": 1.087593895901086,
+      "ratio_to_single": 0.5000000000000473,
       "input_px": {
         "from": [
           500,
@@ -465,7 +466,7 @@
       "reading": "**0.5에 가까워야 지표가 민감한 것**이다. 1에 붙으면 앞의 비 1.0은 규약의 증거가 아니라 둔감의 증거다. ⚠ 두 배로 안 재는 이유: `getAzimuthalAngle()`이 `atan2`라 **감긴다**(두 배 입력에서 비 3.28이 나왔다)"
     },
     "pan": {
-      "target_moved": 0.499448959630437,
+      "target_moved": 0.5192594113486895,
       "input_px": {
         "two_fingers_dx": 60,
         "note": "두 손가락을 나란히 60px 민다(거리 불변 → 줌 없음)"
