@@ -407,7 +407,7 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
                   // 15-18-25에만 있어 표식의 배제 근거가 대리 조건(dVp<len)뿐이었고,
                   // 결론 6의 파일 간 비교도 재료가 없었다): 원시 시작점의 대표 직선 수직
                   // 이탈(off) · 소실점 거리(dVp) · 지렛대각 atan(off/dVp) · Δ.
-                  const rp = representative(st.pts2d);
+                  const rp = representative(st.pts2d.map(p => [p[0], p[1]] as Pt2));
                   if (rp) {
                     const ux = (rp.b[0] - rp.a[0]) / rp.len, uy = (rp.b[1] - rp.a[1]) / rp.len;
                     const off = Math.abs((a0[0] - rp.a[0]) * -uy + (a0[1] - rp.a[1]) * ux);
