@@ -8,7 +8,9 @@
     "**사전 캐시 목록만의 몫** — 앱이 페이지마다 자기 서비스 워커를 다시 등록하므로 '그 목록이 없었으면 어땠는가'를 이 설계로 못 가른다. **미측정이다**(아래 대조군의 `reading`)",
     "**재배포 팔은 `vite build`를 두 번 돌린 것이 아니다**(#32 — 미실행을 반증으로 안 쓴다) — `dist/`의 **변형본**이다. ④의 ①단계는 `l.html`만, ②단계는 번들 이름·번들 안의 커밋 상수·`sw.js` 판본 머리까지 바꾼다(실제 재빌드의 서명). 변형본을 쓰는 이유는 대조군이 성립해야 하기 때문이다: 두 팔의 차이가 **fetch 전략 하나**여야 하므로 두 판본의 `sw.js`가 바이트까지 같아야 한다(`sw_bytes_equal`이 그 조건을 잰다)",
     "**HTTP 캐시의 몫** — 이 서버는 `Cache-Control`·`ETag`를 안 보낸다. 실제 Pages는 `max-age`를 보내므로 **CDN·브라우저 HTTP 캐시가 추가로 늦출 수 있다.** 여기서 재는 것은 **서비스 워커 전략**뿐이다",
-    "**아이패드 사파리의 갱신 거동** — 여기는 chromium이다"
+    "**아이패드 사파리의 갱신 거동** — 여기는 chromium이다",
+    "**주기 폴링의 실제 발화**(`swUpdate.ts`의 폴링 주기 상수 · 17차 리뷰어 [10]) — ⚠ 그 상수 이름을 여기 적지 않는다: `selfcheck.scan_unhashed_thresholds`가 «해시 밖 임계가 원장에 나타났다»로 잡는다(그 검사가 지키는 전제는 «어떤 원장 값도 그 상수에 의존하지 않는다»이고, 이름이 원장에 있으면 그 전제가 흐려진다). ④의 ②단계는 주기를 기다리지 않고 `registration.update()`를 **직접 부른다**. 즉 «열어 둔 탭이 스스로 새 판을 알아채는가»는 **이 스펙이 안 잰다**. 단위 팔(`test/sw_update.test.ts`)이 가짜 문서로 «보이면 부르고 숨으면 안 부른다»까지만 든다 — 실제 타이머 발화는 미측정",
+    "**«영구히 안 바뀐다»는 관측이 아니라 기전 논증이다**(17차 리뷰어 [5] · #12) — 대조군이 실제로 관측한 것은 **새로고침 3회**다(`sw_strategy_control.reloads_seen`, n = 3). «영구히»는 «워커 바이트가 같으면 브라우저가 새 워커를 안 잡고, cache-first는 캐시가 있는 한 네트워크를 안 본다»는 기전에서 나온 것이지 이 팔의 수가 아니다"
   ],
   "condition": {
     "server": "Node 정적 서버(이 스펙이 띄운다) · 하위 경로 /SKETCH2SPACE(재배포 팔은 /DEPLOY_NEW·/DEPLOY_OLD) · 포트 8901",
@@ -178,7 +180,14 @@
     "api_time": "2026-08-19T23:18:16.182Z",
     "sw_commit": "02d1bc1+",
     "display_matches_worker": true,
-    "reading": "**하단바 구석의 값 = 앱이 든 값 = 워커가 든 값.** 셋이 한 출처(`vite.config.ts`의 `STAMP`)에서 온다. ⚠ 해시 자체는 **매 빌드 바뀌므로 문서에 안 적는다**(#47) — 적는 것은 이 필드의 자리뿐이다"
+    "positive_channel": {
+      "arm": "번들 안의 커밋만 `deadbee`로 틀고 `sw.js`는 그대로 둔 판본(scope /DEPLOY_SKEW)",
+      "app_commit": "deadbee",
+      "sw_commit": "02d1bc1+",
+      "display_matches_worker": false,
+      "reading": "**틀어 놓으면 거짓이 된다** — 그러므로 위의 참은 항등이 아니라 배선의 관측이다(#5의 판별법: 틀린 값을 넣어 지표가 움직이는지 본다)."
+    },
+    "reading": "**하단바 구석의 값 = 앱이 든 값 = 워커가 든 값.** 셋이 한 출처(`vite.config.ts`의 `STAMP`)에서 오지만 **경로가 갈린다** — 하나는 번들에 인라인되고 하나는 `sw.js` 머리에 붙는다. 그 둘이 갈리는 빌드가 실제로 만들어질 수 있고(위 양성 채널이 그 판본이다), 그때 이 필드가 거짓이 된다. ⚠ 해시 자체는 **매 빌드 바뀌므로 문서에 안 적는다**(#47) — 적는 것은 이 필드의 자리뿐이다"
   },
   "l_d2": {
     "subpath_opens": true,
@@ -202,9 +211,29 @@
     "reading": "**③이 배제하는 것은 '캐시에 번들이 있다'이다.** 지우기 전에는 문서·앱 둘 다 살고, `.js`만 지우면 **문서는 살고 앱은 죽는다** — 즉 그 확인은 눈이 떠 있다. ⚠⚠ **초판의 팔 A(사전 캐시 목록에서 `.js`를 뺀 별도 워커)는 무효였다** — 앱이 자기 서비스 워커를 매번 다시 등록하므로 같은 scope에 워커 둘이 경쟁했다. 거기서 읽은 '③의 통과는 사전 캐시의 효력이 아니다'를 **철회한다**. **사전 캐시 목록만의 몫은 이 설계로 안 갈린다**(앱의 등록을 못 끄기 때문이다) — 미측정이다."
   },
   "sw_update": {
+    "gate": {
+      "registered": "① `l.html`만 바뀐 재배포가 **새로고침 1회**에 문서로 나온다(`after_doc_only.marker === \"B\"`) · ② `sw.js`까지 바뀐 재배포에서 **알림이 뜨고**(`shown_before_click`) 그 버튼이 **번들 안의 값까지** 새 판으로 연다(`after_rebuild.commit === \"c0ffee1\"`). 기준은 측정 전에 박았다(#26).",
+      "reachability": "**하한 대조군이 도달 가능성의 반대편을 든다**(#35) — 같은 재배포를 옛 판에 주면 새로고침 3회로도 못 받는다(`sw_strategy_control.reloads_seen`). 즉 이 기준은 «어느 워커든 통과하는 자명한 기준»이 아니다. 상한 쪽 오라클은 자명하다(서비스 워커가 아예 없는 브라우저는 늘 새 문서를 받는다) — 그래서 이 게이트에서 물어야 할 것은 상한이 아니라 **하한이고, 그 자리를 대조군이 든다.**",
+      "reachability_absent": "**도달 가능성의 수치가 없다 — 판정량이 연속량이 아니기 때문이다.** 이 게이트가 재는 것은 «어떤 문서·번들이 왔는가»(문자열 일치)라 오라클 수치를 만들 자리가 없다. 억지로 수를 적으면 그 수는 0·1이 되고 그것이 #40이 금지하는 자명한 값이다. ⚠ **면제는 통과가 아니다**(#35) — 대신 이 게이트는 `sw_strategy_control`(하한 대조군)과 `version_display.positive_channel`(틀어 놓으면 거짓이 되는가)을 **짝으로 요구한다**. 둘 중 하나라도 무너지면 이 게이트의 통과는 근거를 잃는다.",
+      "result": {
+        "doc_only_marker": "B",
+        "rebuild_commit": "c0ffee1",
+        "banner_shown_before_click": true
+      }
+    },
     "sw_bytes_equal": {
       "a_vs_b": true,
       "a_vs_c": false
+    },
+    "sw_traits": {
+      "new_strategy": {
+        "network_first_documents": true,
+        "stale_while_revalidate_assets": true,
+        "skip_waiting": true,
+        "clients_claim": true,
+        "body_reads_commit": true,
+        "body_bytes": 4025
+      }
     },
     "before": {
       "marker": null,
@@ -222,13 +251,39 @@
       "marker": "C",
       "commit": "c0ffee1",
       "updateShown": false,
-      "controlled": true
+      "controlled": true,
+      "shown_before_click": true
     },
     "banner_text": "새 버전이 있습니다.\n새로고침\n✕",
-    "reading": "**1회 새로고침에 문서가 바뀌고**(`after_doc_only.marker`), 워커가 바뀐 재배포에서는 **알림이 뜨고 그 버튼이 번들까지 새 판으로 연다**(`after_rebuild.commit`). ⚠ `after_doc_only.updateShown`이 **거짓인 것이 반례다** — 알림은 워커가 바뀔 때만 뜬다."
+    "reading": "**1회 새로고침에 문서가 바뀌고**(`after_doc_only.marker`), 워커가 바뀐 재배포에서는 **알림이 뜨고**(`after_rebuild.shown_before_click`) 그 버튼이 번들까지 새 판으로 연다(`after_rebuild.commit`). ⚠ `after_doc_only.updateShown`이 **거짓인 것이 반례다** — 알림은 워커가 바뀔 때만 뜬다. ⚠⚠ 세 행의 `updateShown`은 **클릭 뒤의 값**이라 ②에서도 거짓이다(눌러서 사라졌다) — «떴다»를 드는 필드는 `shown_before_click` 하나다."
   },
   "sw_strategy_control": {
-    "sw_bytes_equal": true,
+    "legacy_source": {
+      "file": "web/e2e/fixtures/legacy_sw.js",
+      "provenance": "2026-08-19 17차 지시 0-2 **이전**의 `web/public/sw.js` 본문을 그대로 뜬 것(`git show HEAD:web/public/sw.js`의 본문부 — 빌드가 넣는 머리 4줄은 이 팔이 현행 빌드의 것을 그대로 얹는다). 앱 쪽을 고쳐도 이 파일은 안 고친다 — 비교 대상이 «옛 판»이어야 비교가 성립한다"
+    },
+    "sw_bytes_equal": {
+      "a_vs_b": true
+    },
+    "sw_traits": {
+      "legacy": {
+        "network_first_documents": false,
+        "stale_while_revalidate_assets": false,
+        "skip_waiting": true,
+        "clients_claim": true,
+        "body_reads_commit": false,
+        "body_bytes": 1573
+      },
+      "new_strategy": {
+        "network_first_documents": true,
+        "stale_while_revalidate_assets": true,
+        "skip_waiting": true,
+        "clients_claim": true,
+        "body_reads_commit": true,
+        "body_bytes": 4025
+      }
+    },
+    "same_operation_as_arm4": "`registration.update()`를 새로고침마다 부른다(④의 ②단계와 같다)",
     "before": null,
     "reloads_seen": [
       null,
@@ -236,6 +291,6 @@
       null
     ],
     "after_cache_clear": "B",
-    "reading": "**옛 판은 새로고침 3회로도 못 받고**(`reloads_seen`이 전부 `null`) **캐시를 지우면 받는다**(`after_cache_clear`). 사람이 겪은 그 상황이 이 팔이다 — *'새로고침 여러 번으로도 안 바뀌었고, 캐시를 지워야 했다'*. ④의 통과는 따라서 **문서를 network-first로 돌린 것의 효력**이다. ⚠ 두 판본의 `sw.js`가 **바이트까지 같다**(`sw_bytes_equal`) — 두 팔의 차이는 전략 하나뿐이다."
+    "reading": "**옛 판은 새로고침 3회로도 못 받고**(`reloads_seen`이 전부 `null`) **캐시를 지우면 받는다**(`after_cache_clear`). 사람이 겪은 그 상황이 이 팔이다 — *'새로고침 여러 번으로도 안 바뀌었고, 캐시를 지워야 했다'*. ④의 통과는 따라서 **문서를 network-first로 돌린 것의 효력**이다. ⚠ 두 판본의 `sw.js`가 **바이트까지 같다**(`sw_bytes_equal.a_vs_b`) — 이 팔 **안에서** 재배포가 워커를 안 바꾼다는 뜻이다. **두 팔 사이의 차이**는 `sw_traits`가 든다: 옛 판은 `network_first_documents`·`stale_while_revalidate_assets`·`body_reads_commit`이 거짓이고 `skip_waiting`·`clients_claim`은 **둘 다 참**이다 — 즉 «즉시 인계»는 두 판이 같다. ⚠⚠ 그러므로 «두 팔의 차이가 fetch 전략 하나»는 **본문만 보면 정확하지 않다**: 판본을 무엇으로 만드는가도 함께 다르다(그것이 이 고장의 나머지 절반이다). **다만 이 팔에서는 그 차이가 발화하지 않는다** — 두 판본의 `sw.js`가 바이트까지 같고(`sw_bytes_equal.a_vs_b`), 어느 판본 규칙이든 같은 바이트는 같은 판본이다. 그래서 **이 팔에서 실제로 갈리는 것은 문서를 어디서 가져오는가 하나**이고, 그 하나가 «3회로도 못 받는다»를 만든다. ⚠ 주입된 머리 4줄은 두 변형본이 **같은 빌드의 것을 공유**하므로 대조 대상이 아니다(`swTraits`가 머리를 뺀 본문만 본다)."
   }
 }

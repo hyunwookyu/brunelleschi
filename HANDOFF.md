@@ -72,7 +72,47 @@
 
 다음 세션은 이 문서를 읽고 이어서 진행한다. 사람의 개입은 그 한 줄뿐이다.
 
-## 현재 단계 — **2026-08-20 16차**: 원문 대조·PITFALLS·재수집·DEFERRED·dpr 2 — **다섯 전부 완료**
+## 현재 단계 — **2026-08-19 17차 지시 0**: 버전 표시와 서비스 워커 갱신 — **0-1~0-5 전부 완료**
+
+**증상**: *"브라우저에서 업데이트가 안 돼 옛 번들이 계속 나온다. 새로고침 여러 번으로도
+안 바뀌었고, 캐시를 지워야 했다."* **원인이 둘 겹쳐 있었다.**
+
+| 항목 | 결과 | 어디 |
+|---|---|---|
+| 0-1 버전 표시 | 빌드 시각에 `git rev-parse --short=7 HEAD` + 시각을 `define`으로 박고 **하단바 오른쪽 구석**에 찍는다. 콘솔은 `S2S.version()`. **화면·앱·워커가 한 출처**(원장의 `display_matches_worker`) | `vite.config.ts`의 `buildStamp` · `src/ui/buildInfo.ts` |
+| 0-2 워커 전략 | 옛 판은 **문서까지 cache-first**였고, 판본이 **파일 이름 목록의 해시**라 `l.html`만 고친 배포는 `sw.js`가 **바이트까지 같아져** 워커가 안 바뀌었다(= 영구히 안 바뀜). 고침: 판본에 **커밋·빌드 시각** · 문서 **network-first** · js/css **SWR** · 나머지 cache-first(오프라인 그대로) | `public/sw.js` |
+| 0-3 갱신 알림 | 「새 버전이 있습니다. 새로고침」. `skipWaiting` 때문에 `waiting`이 거의 안 보여 **`controllerchange`도 함께** 본다. **첫 방문은 갱신이 아니다**(`hadController`) — 반례 포함 16건 | `src/ui/swUpdate.ts` · `test/sw_update.test.ts` |
+| 0-4 회귀 팔 | ④ 재배포가 새로고침 한 번에 나간다 · 워커가 바뀐 배포에서는 알림이 뜨고 버튼이 번들까지 새 판으로 연다 ⑤ **대조군**: 같은 재배포를 옛 판에 주면 **3회로도 못 받고 캐시를 지워야 받는다** | `e2e/static_deploy.spec.ts` · `e2e/fixtures/legacy_sw.js` · `static_deploy.json` |
+| 0-5 확인 절차 | README §1.5 「배포 후 확인 절차」 — 구석의 해시를 방금 푸시한 커밋과 대조. **캐시 지우기는 마지막 줄** | `README.md` |
+
+결정: **D-L108**(기각 넷의 사유 포함 — 그중 `SW_UPDATE_POLL_MS`를 공유 상수에 안 넣은 것:
+전역 해시라 무관한 원장 전부가 STALE이 된다. `UNHASHED_THRESHOLDS`에 사유와 함께 뒀다).
+
+리뷰어 1차 **14건(높음 1 / 중간 8 / 낮음 5) 전건 대응** — 13 수용 · 1 기각(반증).
+가장 큰 것 넷: ① **완료 대조(#42 ④⑦)가 통째로 없었고**, 그 대조가 실제로 착수 표의 빠진
+번호 **다섯**(#12·#35·#40·#26·#5)을 냈다 ② `display_matches_worker`에 **양성 채널** 신설
+(번들 커밋만 틀면 거짓이 된다 — #5의 판별법) ③ 배포를 막는 스펙이라 **게이트 등록**
+(`sw_update.gate`. 초판의 `reachability_value: [0,3]`을 selfcheck가 «정확히 0»으로 잡아
+`reachability_absent`로 바꿨다) ④ **`selfcheck.scan_unhashed_thresholds` 신설** — D-C4 면제의
+전제를 기계가 지킨다. ⚙️ **그 검사가 만들어지자마자 내 원장을 잡았다**(산문이 상수 이름을
+들고 있었다). 지시 원문은 이제 [`docs/instructions/17.md`](docs/instructions/17.md)에 있고
+**문면 대조 표**가 붙어 있다(어긋난 곳 하나: 0-4의 «빌드를 두 번»이 실제로는 변형본이다).
+
+검증: `tsc` 통과 · `test:unit` **47파일 · 487 통과 + 4 건너뜀 = 491건** · `static_deploy`
+**4/4** · selfcheck **static_deploy 플래그 0** · 전량 e2e **64 통과 · 4 건너뜀 · 1 실패** ·
+**비용 원장 재생성**(`test_cost.json` — vitest·e2e 둘 다 JSON 리포터로 재실행. 새 팔이
+그 원장에 보인다: `sw_update.test.ts` 16건 · `static_deploy.spec.ts` 2 → **4**건 9.99s.
+수치는 그 파일을 그 자리에서 읽는다 — 여기 수는 낡는다 #47).
+
+⚠ **그 1 실패는 이 변경 탓이 아니다** — `touch_route`의 dpr 2 회전 밴드이고 **HEAD에서도
+같은 자리에서 실패한다**(레이아웃 불변도 실측: `#bar` 45px · `#ink` 855px 변경 전후 동일).
+서명은 `e2e_unexpected_log.json`의 세 번째 항목, 밴드 재측정은 `DEFERRED.md` 「17차가 새로 미룬 것」.
+
+⚠ **전량 e2e가 다시 쓴 원장 35개는 커밋하지 않았다**(#42 ⑥의 파급을 안 만든다) — 값 차이는
+컨테이너 밴드다. 커밋한 원장은 `static_deploy`·`e2e_unexpected_log`·`test_cost`·
+`_e2e_timing`·`selfcheck` 다섯.
+
+## 이전 단계 — **2026-08-20 16차**: 원문 대조·PITFALLS·재수집·DEFERRED·dpr 2 — **다섯 전부 완료**
 
 **지시 원문이 이제 저장소에 있다**: [`docs/instructions/16.md`](docs/instructions/16.md)
 (15차 5·6·7의 부분 원문은 `15-partial.md` — ⚠ 섞임 유보 표기 있음). **이 회차부터

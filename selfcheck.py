@@ -484,6 +484,43 @@ def scan_stray_progress(root: Path) -> list[dict]:
     return flags
 
 
+def scan_unhashed_thresholds(root: Path, reports: dict[str, dict]) -> list[dict]:
+    """**해시 밖에 둔 임계가 조용히 측정에 들어가는 것**을 잡는다(2026-08-19 17차 리뷰어 [10]).
+
+    `web/test/constants.ts`의 `UNHASHED_THRESHOLDS`는 D-C4("새 임계는 이 파일에")를 지키되
+    `SHARED_CONSTANTS`에는 **안 넣은** 값들이다 — 전역 해시가 하나뿐이라 키를 더하면 그 값에
+    의존한 적 없는 원장 **전부**가 STALE이 되기 때문이다(`DRAFT_TOL`·`SENS_TOL`의 D-L51 선례).
+
+    **그 면제는 "어떤 원장 값도 이 상수에 의존하지 않는다"를 전제로 한다.** 전제가 깨지면
+    (= 어떤 원장이 그 이름을 인용하면) 그 원장은 STALE 탐지 **밖**에서 낡을 수 있다.
+    ⚠ 그런데 그 전제를 지키는 것이 **사람이 기억하는 규약**이었다 — 같은 파일(`test_cost.json`)이
+    *"사람이 지켜야 하는 규약은 샌다(#19·#38)"*고 적는다. 그래서 기계가 본다.
+
+    잡으면 할 일은 둘 중 하나다: **그 상수를 `SHARED_CONSTANTS`로 옮기거나**(그러면 STALE이
+    잡는다), **원장이 그 이름을 안 쓰게** 한다.
+    """
+    import re
+    src = root / "web" / "test" / "constants.ts"
+    if not src.exists():
+        return _cover("scan_unhashed_thresholds", "면제 임계", 0, 0, note="constants.ts 없음")
+    text = src.read_text(encoding="utf-8")
+    m = re.search(r"export const UNHASHED_THRESHOLDS\s*=\s*\{(.*?)\n\}", text, re.S)
+    if not m:
+        return _cover("scan_unhashed_thresholds", "면제 임계", 0, 0,
+                      note="UNHASHED_THRESHOLDS 선언 없음 — 면제가 없으면 이 검사는 할 일이 없다")
+    names = re.findall(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*,", m.group(1), re.M)
+    flags = []
+    for name in names:
+        for led, rep in sorted(reports.items()):
+            if name in json.dumps(rep, ensure_ascii=False):
+                flags.append({"path": f"{led}:{name}", "val": name,
+                              "flag": "**해시 밖 임계가 원장에 나타났다**(#1 / D-C4의 면제 전제가 "
+                                      "깨졌다) — 이 원장은 그 상수가 바뀌어도 **STALE이 안 잡힌다**. "
+                                      "`SHARED_CONSTANTS`로 옮기거나 원장이 그 이름을 안 쓰게 한다"})
+    flags += _cover("scan_unhashed_thresholds", "면제 임계", len(names), len(flags))
+    return flags
+
+
 def scan_citation_hashes(root: Path, reports: dict[str, dict]) -> list[dict]:
     """**인용한 해시가 그 원장의 현재 해시와 맞는가**(PITFALLS #33의 값 대조, 2026-08-16).
 
@@ -974,6 +1011,7 @@ def main():
     flags += scan_roundtrip_metrics(ROOT)          # 자기참조 3: 복원↔역연산 왕복 지표
     flags += scan_sweep_coverage(ROOT)             # #33 자동화: 전수 훑기의 확장자 커버리지
     flags += scan_stray_progress(ROOT)             # 루트 밖 progress.md (세 번째 재발)
+    flags += scan_unhashed_thresholds(ROOT, reports)  # D-C4 면제의 전제가 깨졌는가(17차)
     flags += scan_citation_hashes(ROOT, reports)   # #33 값 대조: 인용 해시 ↔ 원장 현재 해시
     flags += scan_cited_values(ROOT, reports)  # #42 ⑥ 존재 대조: 인용한 수치가 원장에 있는가
     PITFALL_CITATIONS.clear()

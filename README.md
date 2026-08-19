@@ -233,8 +233,14 @@ cd web && S2S_BASE=/my-path/ npm run build
 
 **확인은 자동이다**: `web/e2e/static_deploy.spec.ts`가 빌드본을 **하위 경로에 올려**
 ① 열리는지 ② 서비스 워커가 그 경로를 scope로 잡는지 ③ **오프라인 새로고침에서도 뜨는지**
-④ **두 번째 배포가 실제로 나가고 갱신 알림이 뜨는지** ⑤ **옛 전략이었다면 못 받았을 것인지**를
-실제로 잰다. 로컬에서 같은 확인:
+④ **두 번째 배포가 나가고 갱신 알림이 뜨는지** ⑤ **옛 전략이었다면 못 받았을 것인지**를 잰다.
+
+⚠ **④·⑤가 안 재는 것 셋**(원장의 `what_this_does_not_say`가 정본이다):
+④의 "두 번째 배포"는 `vite build` 재실행이 아니라 **산출물 변형본**이다(두 팔의 차이를
+전략 하나로 남기려면 두 판본의 `sw.js`가 바이트까지 같아야 한다) · 서버가 **로컬 정적
+서버**라 실제 Pages의 **HTTP·CDN 캐시 몫은 미측정**이다 · **chromium**이다(사파리 아니다).
+
+로컬에서 같은 확인:
 
 ```bash
 cd web && npm run build && npx playwright test e2e/static_deploy.spec.ts
