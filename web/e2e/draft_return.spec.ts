@@ -178,6 +178,12 @@ test("작도 화면 복귀 — 돌린 뒤 소실점·지평선·그리기가 돌
       "**1점 복귀의 큐브 탭은 면 중앙 클릭 하나다** — 재탭 임계(retap_cos 30°)의 경계 스윕은 view_cube 팔(basic_flow)이 잰다. 여기서는 '실제로 도는가'(지시 6-b의 물음)만 잰다",
       "드로잉 차단(②)은 **획 수 불변**으로 잰다 — 잉크 캔버스에 순간 표시가 있는지는 안 본다(포인터 캡처 자체를 안 하므로 구성상 없다 — 보장이지 측정이 아니다 #5)",
     ],
+    /** 판별자(왕복) 한 자리 — gate.reachability_source가 이 필드를 가리킨다(#40 값 대조). */
+    horizon_row_roundtrip: [
+      (led.pinned_horizon_row as any).ratio,
+      (led.model_horizon_row as any).ratio,
+      (led.returned_horizon_row as any).ratio,
+    ],
     thresholds: { horizon_row_draft_min: 0.8, horizon_row_model_max: 0.2,
       settle_ms: 450, console_errors_max: 0,
       note: "e2e 배선 임계라 SHARED_CONSTANTS 비등재(D-L51 사유 — 전역 해시 눈사태). 값은 이 원장이 자기 안에 든다" },
@@ -189,7 +195,13 @@ test("작도 화면 복귀 — 돌린 뒤 소실점·지평선·그리기가 돌
         (led.model_horizon_row as any).ratio,
         (led.returned_horizon_row as any).ratio,
       ],
-      reachability_source: "pinned/model/returned horizon_row.ratio",
+      reachability_source: "horizon_row_roundtrip",
+      // ⚠ 값이 정확히 [1, 0, 1]로 포화한다(#40 ② 플래그 자리 — selfcheck가 잡는 것이
+      // 맞고 원인은 이것이다 §5) — 이 픽스처에서 지평선 행은 전폭 파선이라 덮임이
+      // 전부/전무로 갈리는 것이 구성의 귀결이고, 판정은 크기가 아니라 **문턱(0.8/0.2)
+      // 횡단의 왕복**이다. 획이 그 행을 지나는 픽스처면 0·1이 아니게 된다(잡음 여유 —
+      // what_this_does_not_say [0]).
+      reachability_value_fixture_determined: true,
     }),
     ...led,
     constants: constantsSnapshot(),

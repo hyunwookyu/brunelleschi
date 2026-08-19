@@ -7,6 +7,11 @@
   "**1점 복귀의 큐브 탭은 면 중앙 클릭 하나다** — 재탭 임계(retap_cos 30°)의 경계 스윕은 view_cube 팔(basic_flow)이 잰다. 여기서는 '실제로 도는가'(지시 6-b의 물음)만 잰다",
   "드로잉 차단(②)은 **획 수 불변**으로 잰다 — 잉크 캔버스에 순간 표시가 있는지는 안 본다(포인터 캡처 자체를 안 하므로 구성상 없다 — 보장이지 측정이 아니다 #5)"
  ],
+ "horizon_row_roundtrip": [
+  1,
+  0,
+  1
+ ],
  "thresholds": {
   "horizon_row_draft_min": 0.8,
   "horizon_row_model_max": 0.2,
@@ -22,7 +27,8 @@
    0,
    1
   ],
-  "reachability_source": "pinned/model/returned horizon_row.ratio"
+  "reachability_source": "horizon_row_roundtrip",
+  "reachability_value_fixture_determined": true
  },
  "setup": {
   "canvas": [
