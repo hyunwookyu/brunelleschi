@@ -84,6 +84,14 @@ export interface InkOptions {
   viewScale?: () => number;
   /** 휠 — 데스크톱 확인용 줌. `at`은 커서의 **표시 좌표**(팬·줌 미적용 로컬)다. */
   onWheel?: (deltaY: number, at: [number, number]) => void;
+  /**
+   * **잉크 입력을 받는가**(2026-08-19 14차 항목 6-e — 모델링 화면에서는 안 그린다).
+   * false면 잉크 라우팅 자체를 막는다(그리기·끌기·호버 표식) — 카메라 라우팅(`onCamera`)은
+   * 그대로다. 없으면 항상 받는다(종전과 같다).
+   */
+  inkAllowed?: () => boolean;
+  /** 위 게이트가 막은 순간의 알림 — 사용자에게 복귀 안내를 낼 자리다. */
+  onInkBlocked?: () => void;
 }
 
 // 프레임별 획 버퍼 + 라이브 잉크 렌더. 프레임 전환은 setFrame으로.
@@ -240,6 +248,11 @@ export class InkCanvas {
     }
     if (this.drawing || this.dragging) return; // 멀티터치/멀티펜 방어: 한 번에 하나
     if (!this.inkable(e)) return;
+    // **모델링 화면에서는 잉크가 막힌다**(14차 항목 6-e) — 획이 아예 시작되지 않는다
+    if (this.opts.inkAllowed && !this.opts.inkAllowed()) {
+      this.opts.onInkBlocked?.();
+      return;
+    }
     e.preventDefault();
     try { this.canvas.setPointerCapture(e.pointerId); } catch { /* 합성 이벤트 등 */ }
     if (this.opts.dragMode?.(this.local(e))) {
@@ -261,8 +274,11 @@ export class InkCanvas {
       return;
     }
     if (!this.drawing) {
-      // 떠 있는 커서 — 스냅 표식을 미리 보인다(L-B.3)
-      if (this.opts.onHover && this.inkable(e)) this.opts.onHover(this.local(e));
+      // 떠 있는 커서 — 스냅 표식을 미리 보인다(L-B.3). 잉크가 막힌 화면에서는 표식도 없다
+      if (this.opts.onHover && this.inkable(e)
+          && (this.opts.inkAllowed ? this.opts.inkAllowed() : true)) {
+        this.opts.onHover(this.local(e));
+      }
       return;
     }
     if (e.pointerId !== this.activeId || !this.inkable(e)) return;

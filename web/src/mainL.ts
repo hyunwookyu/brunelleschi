@@ -43,6 +43,7 @@ import { resolve2dCore, snap2Refs, OSNAP_RADIUS_PX, type Resolve2dOut } from "./
 import { segmentFromAnchor, nearestAxisOnScreen, endFromCursor, LIVE_TOL } from "./s3d/liveLine.js";
 import { crossAnchorOf } from "./s3d/crossAnchor.js";
 import { onePointFrame, directSegment, planeAnchor, ONE_POINT_TOL } from "./s3d/onePoint.js";
+import { judgeDraftPose } from "./s3d/draftPose.js";
 import { nearestOnePointDir } from "./ui/viewCube.js";
 import { representative, AXIS_TOL, chordTurnDeg } from "./s3d/axis.js";
 // **자동 분할**(지시 I) — 교차·접촉 절단점과 조각. SketchUp 선례. 순수 기하는 split.ts 하나다(#17)
@@ -1310,6 +1311,49 @@ const cubeUp = (w: Vec3, A: { X: Vec3; Y: Vec3; Z: Vec3 }): Vec3 => [
   w[0] * A.X[1] + w[1] * A.Y[1] + w[2] * A.Z[1],
   w[0] * A.X[2] + w[1] * A.Y[2] + w[2] * A.Z[2]];
 
+// ---------------------------------------------------------------- 작도/모델링 상태 (14차 항목 6)
+
+/** 시선을 큐브 기준계(그린 축 — D-L87)로 내린 것. 큐브 탭·복귀가 같은 기준계를 쓴다. */
+function draftGazeDrawn(): Vec3 | null {
+  if (!cam.standing()) return null;
+  const b = stage.basisOf();
+  const A = drawnBasisThree();
+  return A ? cubeDown(b.f, A) : b.f;
+}
+
+/**
+ * **작도 화면인가 모델링 화면인가**(지시 6-d) — 상태는 저장하지 않는다: 자세에서 매번
+ * 계산한다(§1의 규약 그대로). 작도 = 핀(확정 시점) 또는 **축 정렬 + 피치 0**(임계는
+ * D-L66의 `hand_deg` 재사용): 1점(요도 축 정렬) / 2점(요가 축 사이). 그 밖은 모델링 —
+ * 소실점·지평선·그리드가 없고 그리기가 막힌다(지시 6-e — A-3: 그리려면 복귀한다).
+ */
+function draftStateNow(): "pre" | "draft_pinned" | "draft_one" | "draft_two" | "model" {
+  if (!cam.standing()) return "pre";
+  if (stage.isPinned) return "draft_pinned";
+  const f = draftGazeDrawn();
+  if (!f) return "model";
+  const j = judgeDraftPose(f, ONE_POINT_TOL.hand_deg);
+  return j.kind === "one_point" ? "draft_one" : j.kind === "two_point" ? "draft_two" : "model";
+}
+const draftingNow = (): boolean => draftStateNow() !== "model";
+
+/**
+ * **가장 가까운 작도 시점으로 복귀**(지시 6-a·f). 피치를 0으로 접고, 요는 축 이탈이
+ * `hand_deg` 안이면 그 축으로(1점 — 큐브 재탭 D-L66과 같은 답), 밖이면 유지한다(2점).
+ * 카메라 이동은 큐브 탭과 같은 경로(`snapToDir` — 거리·중심 유지)다(#17).
+ */
+function returnToDraft(): void {
+  if (!cam.standing() || stage.isPinned) return;
+  const f = draftGazeDrawn();
+  if (!f) return;
+  const j = judgeDraftPose(f, ONE_POINT_TOL.hand_deg);
+  const A = drawnBasisThree();
+  stage.viewport.userMoved = true;
+  stage.snapToDir(A ? cubeUp(j.returnDir, A) : j.returnDir, orbitTarget(), 280, () => refresh());
+  tool = "draw";
+  refresh();
+}
+
 const viewCube = new ViewCube(document.getElementById("cube") as HTMLCanvasElement, {
   basis: () => {
     const b = stage.basisOf();
@@ -1969,6 +2013,34 @@ const horizonVisible = (): boolean =>
     return s != null && s.kind === "vp";
   });
 
+/**
+ * **지금 시점의 표시 문맥**(14차 항목 6-c) — 소실점·지평선·그리드를 돌린 작도 시점에서도
+ * 낸다. 출처는 배치와 같은 `frame()`(→ `viewPlaceCtx`)이다(#17) — 각 축 방향을 지금
+ * 시점으로 투영하면 소실점이고(이론서 2.2), 수평 소실점의 y가 지평선이다(지시 6-c
+ * "계산은 자명하다"). 핀 상태에서는 종전 그대로 확정 카메라의 값이다.
+ */
+function viewOverlayCtx(): {
+  vps: (Pt2 | null)[]; horizonY: number | null; principal: Pt2; f: number;
+  axisDirs: (Vec3 | null)[] | null; imgSize: [number, number];
+} | null {
+  if (!cam.standing()) return null;
+  if (stage.isPinned) {
+    const c = cam.ctx();
+    if (!c) return null;
+    return { vps: cam.vps(), horizonY: horizonVisible() ? cam.rules.horizon : null,
+             principal: c.principal, f: c.f, axisDirs: c.axisDirs ?? null,
+             imgSize: cam.imgSize };
+  }
+  const fr = frame();
+  if (!fr) return null;
+  const vv = fr.ctx.vps;
+  // 지평선 = 수평축(슬롯 0·1) 유한 소실점의 y. 피치 0이면 두 유한 소실점의 y가 같고,
+  // 축 하나가 시선과 나란한 1점 시점에서도 그 축의 소실점은 항상 화면 안이다(f·tanθ).
+  const hy = vv[0] ? vv[0][1] : vv[1] ? vv[1][1] : null;
+  return { vps: vv, horizonY: hy, principal: fr.ctx.principal, f: fr.ctx.f,
+           axisDirs: fr.ctx.axisDirs ?? null, imgSize: fr.ctx.imgSize };
+}
+
 function horizonGrab(p: Pt2): boolean {
   // ⚠ 4차 지시 4로 **보이지 않는 지평선은 잡히지 않는다** — 확정 전에는 지평선이 없다.
   // 확정 후에는 잠긴다(D-L45의 잠금 그대로) — 지시 4-e(확정 후 피치 끌기)는 전부 다시
@@ -1982,11 +2054,17 @@ function horizonGrab(p: Pt2): boolean {
 function drawHorizon(ctx2: CanvasRenderingContext2D) {
   // **소실점 확정 전에는 지평선이 없다**(4차 지시 4-a — 빈 종이). 결과이지 전제가 아니다
   if (!horizonVisible()) return;
-  // ⚠ **확정 시점에서만 그린다** — 지평선은 **확정 카메라의 화면 좌표**다(그리드·가이드와 같다).
-  // 돌린 뷰에 그리면 화면에 붙어 따라다니는 유령이 된다(`drawBelowInk` 머리말).
-  if (cam.standing() && !stage.isPinned) return;
+  // ⚠ **작도 화면에서만 그린다**(14차 항목 6 — 옛 판은 핀 전용이었다): 돌린 작도 시점
+  // (축 정렬 + 피치 0)에서는 그 시점의 수평 소실점 y로 다시 낸다(`viewOverlayCtx` — 지시
+  // 6-c). 모델링 시점에 그리면 화면에 붙어 따라다니는 유령이 된다(`drawBelowInk` 머리말).
+  let y = cam.rules.horizon;
+  if (cam.standing() && !stage.isPinned) {
+    if (!draftingNow()) return;
+    const hy = viewOverlayCtx()?.horizonY;
+    if (hy == null) return;
+    y = hy;
+  }
   const [w] = cssSize();
-  const y = cam.rules.horizon;
   const grabbable = cam.canSetHorizon() && (!cam.standing() || stage.isPinned);
   ctx2.save();
   ctx2.strokeStyle = HORIZON_COLOR;
@@ -2052,11 +2130,22 @@ function drawPendingVpGuides(ctx2: CanvasRenderingContext2D) {
 
 function drawGrid(ctx2: CanvasRenderingContext2D) {
   if (!SHOW_GRID.on) return;
-  const r = cam.acc.solve();
-  // **1점에서도 격자가 선다**(지시 5-5) — 무한원 축의 방향(`axisDirs`)을 넘긴다(D-L40)
-  const lines = gridGuides(r.camera, cam.vps(), cam.imgSize,
-                           r.camera.principalPoint ? r.camera.principalPoint[1] : null,
-                           cam.ctx()?.axisDirs ?? null);
+  // **돌린 작도 시점에서도 격자가 선다**(14차 항목 6-d) — 배치와 같은 출처(`frame()`)의
+  // 시점 소실점·축 방향·렌즈로 같은 함수를 부른다(#17). 격자 계산은 전부 화면·카메라
+  // 좌표량이라(`grid.ts`의 `GridCam`) 시점 프레임을 그대로 받는다.
+  let lines: ReturnType<typeof gridGuides>;
+  if (cam.standing() && !stage.isPinned) {
+    const o = viewOverlayCtx();
+    if (!o) return;
+    lines = gridGuides({ ok: true, f: o.f, principalPoint: o.principal },
+                       o.vps, o.imgSize, o.horizonY, o.axisDirs);
+  } else {
+    const r = cam.acc.solve();
+    // **1점에서도 격자가 선다**(지시 5-5) — 무한원 축의 방향(`axisDirs`)을 넘긴다(D-L40)
+    lines = gridGuides(r.camera, cam.vps(), cam.imgSize,
+                       r.camera.principalPoint ? r.camera.principalPoint[1] : null,
+                       cam.ctx()?.axisDirs ?? null);
+  }
   ctx2.save();
   for (const l of lines) {
     ctx2.beginPath();
@@ -2403,13 +2492,20 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   drawSnapMark(ctx2, hoverSnap ?? (hover2d ? { kind: hover2d.kind, screen: hover2d.at } : null));
   drawLivePreview(ctx2);
   drawLive2d(ctx2);                     // **카메라가 서기 전의 화면 직교·2D 오스냅**(A-2·지시 1)
-  if (cam.standing() && !stage.isPinned) return;
+  // **작도 화면이면 돌린 시점에서도 그린다**(14차 항목 6 — 옛 판은 핀 전용). 모델링
+  // 시점(축 비정렬·피치≠0)에서만 숨긴다 — 거기 그리면 화면에 붙은 유령이 된다.
+  if (cam.standing() && !stage.isPinned && !draftingNow()) return;
   drawGrid(ctx2);
-  drawPendingVpGuides(ctx2);       // **잠정 그리드**(6차 지시 11-4) — 확정 전 대기 깊이선
-  drawAsk(ctx2);
+  if (!cam.standing() || stage.isPinned) {
+    // 대기 풀 가이드·물음은 **확정 카메라의 화면 좌표**다 — 돌린 작도 시점에는 안 그린다
+    drawPendingVpGuides(ctx2);     // **잠정 그리드**(6차 지시 11-4) — 확정 전 대기 깊이선
+    drawAsk(ctx2);
+  }
   const [w, h] = cssSize();
+  // **소실점은 지금 시점의 값이다**(항목 6-c) — 핀이면 확정 카메라 값과 같다(#17)
+  const vpsNow = viewOverlayCtx()?.vps ?? cam.vps();
   // ⛔ **거리점 표시를 지웠다**(지시 2) — 거리점 경로 전체가 폐기됐다.
-  cam.vps().forEach((v, i) => {
+  vpsNow.forEach((v, i) => {
     if (!v) return;
     const inside = v[0] >= 0 && v[0] <= w && v[1] >= 0 && v[1] <= h;
     ctx2.save();
@@ -2450,6 +2546,13 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
 
 const ink = new InkCanvas(canvas, {
   onBackground: drawBelowInk,
+  // **모델링 화면에서는 안 그린다**(14차 항목 6-e — A-3: 축 스냅은 어느 시점에서든 서지만
+  // 소실점이 화면 밖 극단이면 무의미해진다. 단순한 쪽 = 그리려면 복귀). 카메라 조작은 그대로다.
+  inkAllowed: () => draftingNow(),
+  onInkBlocked: () => {
+    lastSnapNote = "**모델링 화면**입니다 — 그리려면 「작도 시점으로」 버튼이나 큐브 면 탭으로 복귀하세요";
+    refresh();
+  },
   // **스냅이 걸린 동안 원시 궤적을 숨긴다**(5차 지시 4) — 스냅된 미리보기 하나만 보인다
   liveHidden: () => !!(live && live.seg) || !!live2d,
   // **입력 장치가 도구를 가른다**(G): 펜·마우스는 잉크, **터치는 언제나 카메라**다.
@@ -2962,6 +3065,11 @@ function renderBar() {
     '<span class="sep mouse-only"></span>',
     `<button data-act="orbit" class="mouse-only${tool === "orbit" ? " on" : ""}"${!cam.standing() ? " disabled" : ""}`
     + ` title="마우스 전용입니다 — 손가락 1개는 궤도, 2개는 팬·줌이라 버튼이 필요 없습니다">궤도(마우스)</button>`,
+    // **작도 시점 복귀**(14차 항목 6-f) — 모델링 화면에서만 켜진다(그 켜짐이 상태 표시를
+    // 겸한다 — 지시 6-d "전환이 명확해야"). 터치에서도 보인다(복귀 조작이 눈에 띄어야 한다).
+    // 옛 "확정 시점으로"(home — 핀 복귀·마우스 전용)는 그대로 둔다: 확정 프레임 정확 복귀는
+    // 다른 물음이고 stage.spec의 세계 좌표 팔이 그 경로를 잰다.
+    btn("draft", "작도 시점으로", false, !cam.standing() || draftingNow()),
     btn("home", "확정 시점으로", false, !cam.standing() || stage.isPinned, "mouse-only"),
     // ---- 파일(오른쪽)
     '<span class="spacer"></span>',
@@ -3116,6 +3224,12 @@ const onActClick = (e: Event) => {
             : "그은 대로 놓입니다. 축이 안 정해지면 **2D로 대기**합니다")
          + " <span class=\"dim\">· <b>F8</b>(라이노 직교 모드)</span>";
     relive();
+  }
+  else if (act === "draft") {
+    // **가장 가까운 작도 시점으로**(14차 항목 6-a·f) — 피치를 접고(2점) 축이 가까우면
+    // 그 축으로(1점) 간다. 확정 프레임 정확 복귀는 home(아래)이 따로 한다.
+    returnToDraft();
+    note = "";
   }
   else if (act === "home") {
     const ctx = cam.ctx();
@@ -3506,6 +3620,14 @@ refresh();
   setViewZoom: (z: number, center?: Pt2) => { stage.setViewZoom(z, center); refresh(); },
   /** 배율 클램프 값 — 원장이 측정 동작점이 클램프에 닿았는지 판독하는 데 쓴다. */
   viewZoomLim: () => ({ ...Stage.VIEW_ZOOM_LIM }),
+  /** **작도/모델링 상태**(14차 항목 6-d) — 저장 없는 계산값. 종단 확인이 그대로 읽는다(#17). */
+  viewState: () => draftStateNow(),
+  /** **작도 시점 복귀**(14차 항목 6-a) — 버튼과 같은 함수다(#17). */
+  returnToDraft: () => { returnToDraft(); },
+  /** 지금 시점의 표시 문맥(소실점·지평선 y) — 원장이 표시 계산의 출처를 대조하는 데 쓴다. */
+  draftOverlay: () => viewOverlayCtx(),
+  /** 마지막 스냅·차단 안내문 — 종단 확인이 차단 안내(항목 6-e)를 그대로 읽는다(#17). */
+  snapNote: () => lastSnapNote,
   /** 큐브 기준계 스위치(#30) — `false`가 옛 기준계(세계 축). cube_frame의 대조 팔이 쓴다. */
   setCubeFrame: (on: boolean) => { CUBE_FRAME.on = on; },
   /** **배치 경로 카운터**(4-6) — 합이 배치 전체와 맞는지 원장이 검산한다. */

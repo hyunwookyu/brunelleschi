@@ -694,7 +694,9 @@ e2e `stage.spec` 둘(차수 승격 · 되돌리기 UI). 그리고 `RULE_TOL.vert
 배치 카운터) · `anchorGuard()`/`setAnchorGuard(sw)`(D-L83) · `setChainExt(sw)`(연쇄 확장
 대조) · `viewPan()`/`setViewPan(p)`(화면 팬 — D-L86) ·
 **14차**: `viewZoom()`/`setViewZoom(z, center?)`/`viewZoomLim()`(화면 줌 — D-L94.
-view_pan ③″ 팔이 복원·검증에 쓴다) · `chainDirGuard()`/`setChainDirGuard(sw)`(D-L92).
+view_pan ③″ 팔이 복원·검증에 쓴다) · `chainDirGuard()`/`setChainDirGuard(sw)`(D-L92) ·
+`viewState()`/`returnToDraft()`/`draftOverlay()`/`snapNote()`(작도/모델링 상태 — D-L97.
+버튼은 `data-act="draft"` 「작도 시점으로」).
 ⚠ `snap2dStart/End`는 이제 **확정
 뒤에도** 적힌다(대기 분기의 2D 연결 — D-L81 확장) 그리고 **연쇄가 소비한다**(#18 닫힘).
 ⚠ **9차에 획에 필드 둘이 늘었다**(D-L81): `snap2dStart`·`snap2dEnd`

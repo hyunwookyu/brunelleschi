@@ -231,8 +231,26 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
   expect((led.s5_orbit as any).pinned).toBe(false);                // 궤도가 실제로 풀렸다
   expect((led.s5_orbit as any).gl_painted_px).toBeGreaterThan(0);  // **형태가 보인다**
 
-  // ---- ⑥ 돌린 뒤 이어 긋는다 → 붙는다
+  // ---- ⑥ 돌린 뒤 이어 긋는다 → 붙는다.
+  //      ⚠ 14차 항목 6-e 계약 갱신: 궤도가 만든 임의 자세는 **모델링 화면**이라 그리기가
+  //      막힌다 — 「작도 시점으로」 복귀 뒤에 이어 긋는다(막힘 자체가 음성 대조다 #30).
   await page.click('#tools button[data-act="draw"]');
+  {
+    const before = await page.evaluate(() => ({
+      state: window.S2S.viewState(), strokes: window.S2S.doc().strokes.length }));
+    led.s6_blocked = before;
+    if ((before as any).state === "model") {
+      await draw(0.25, 0.3, 0.4, 0.35);                   // 막힌다 — 획이 안 는다
+      const after = await page.evaluate(() => window.S2S.doc().strokes.length);
+      expect(after).toBe((before as any).strokes);
+      await page.evaluate(() => {
+        document.querySelector<HTMLButtonElement>('#bar button[data-act="draft"]')!.click();
+      });
+      await page.waitForTimeout(450);
+    }
+    led.s6_view_state = await page.evaluate(() => window.S2S.viewState());
+    expect(["draft_two", "draft_one"]).toContain(led.s6_view_state as string);
+  }
   const target = await page.evaluate(async () => {
     // 돌린 시점에서 3D 끝점 하나의 화면 자리를 계산한다 — 앱과 같은 변환(viewCamera)
     const S = window.S2S;

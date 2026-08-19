@@ -44,9 +44,15 @@ export function clipToRect(p: Pt2, d: Pt2, w: number, h: number): [Pt2, Pt2] | n
 // 지시이고 그것은 `groundGrid`(지면 격자 투영)가 한다. 이론서 9.5: 등간격 지면선의 화면
 // 좌표는 1/(V−uₙ)이 등차수열 — 3D 격자를 투영하면 그 성질이 저절로 성립한다.
 
+/**
+ * 격자가 카메라에서 읽는 것은 셋뿐이다(14차 항목 6) — 돌린 작도 시점의 표시 문맥
+ * (`viewPlaceCtx`의 principal·f)도 같은 함수로 들어올 수 있게 필요한 최소로 좁혔다.
+ */
+export type GridCam = Pick<CameraSolution, "ok" | "f" | "principalPoint">;
+
 /** 카메라 상태 → 가이드선. **지평선 + 지면 격자**뿐이다 — 모르는 것을 그리지 않는다. */
 export function guides(
-  cam: CameraSolution, vps: (Pt2 | null)[], imgSize: [number, number],
+  cam: GridCam, vps: (Pt2 | null)[], imgSize: [number, number],
   horizonY?: number | null,
   axisDirs?: (Vec3 | null)[] | null,
 ): GuideLine[] {
@@ -80,7 +86,7 @@ export const GROUND_COLOR = "#7f8c8d";
  * 기울어 있어 지면이 y = const 가 아니다(S-3에서 드러났다).
  */
 export function groundGrid(
-  cam: CameraSolution, vps: (Pt2 | null)[], imgSize: [number, number],
+  cam: GridCam, vps: (Pt2 | null)[], imgSize: [number, number],
   half = 6, step = 1,
   axisDirs?: (Vec3 | null)[] | null,
 ): GuideLine[] {

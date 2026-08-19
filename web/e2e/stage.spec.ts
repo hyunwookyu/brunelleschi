@@ -1117,7 +1117,10 @@ test("궤도 후 계속 그리기 — 새 각도가 새 뷰가 된다", async ({
     const S = window.S2S;
     document.querySelector<HTMLButtonElement>('#bar button[data-act="orbit"]')!.click();
     const camT = S.stage.viewport.camera;
-    camT.position.set(1.6, -1.1, 2.2);
+    // ⚠ 14차 항목 6: 시선이 그린 수직축과 충분히 안 직교해야 **모델링 화면**이다(이 픽스처의
+    // 그린 수직축은 세계 Y에서 ~15° 기울어 있어 얕은 자세는 작도 대역에 든다) — 급한
+    // 내려보기(~40°)로 둬 어느 기준계로도 모델링이게 한다. ⓪′가 그 상태를 단언한다
+    camT.position.set(1.6, 6.0, 2.2);
     // ⚠⚠ **자세를 `lookAt`만으로 주면 안 된다**(2026-08-17 G에서 잡았다 — 이 시험은 **간헐적으로**
     // 실패하고 있었다): 렌더 루프의 `controls.update()`가 카메라를 자기 `target`으로 **다시 겨눈다**.
     // 두 `evaluate` 사이에 프레임이 도느냐에 따라 자세가 갈렸고, 안 돌면 상자가 **카메라 뒤**라
@@ -1136,6 +1139,33 @@ test("궤도 후 계속 그리기 — 새 각도가 새 뷰가 된다", async ({
   expect((l.after_orbit as any).pinned).toBe(false);
   // **스냅 대상이 있다** — 돌린 시점에서도 3D 레이어가 대상이다(L-B.8이 연 것)
   expect((l.after_orbit as any).snap_targets).toBe(12);
+
+  // ---- ⓪′ **모델링 화면에서는 안 그린다**(14차 항목 6-e — 계약 갱신): 위 자세는 피치가
+  //      있어 작도 화면이 아니다. 획 시작 자체가 막히고(§9.3의 "돌린 시점에서 그린다"는
+  //      이제 **돌린 작도 시점**의 이야기다 — 아래 ①~④가 그 판이다), 복귀 뒤에 그린다.
+  {
+    const before = await page.evaluate(() => ({
+      state: window.S2S.viewState(), strokes: window.S2S.doc().strokes.length }));
+    expect((before as any).state).toBe("model");
+    const fb = await page.locator("#frame").boundingBox();
+    await page.mouse.move(fb!.x + 200, fb!.y + 200);
+    await page.mouse.down();
+    await page.mouse.move(fb!.x + 320, fb!.y + 230, { steps: 4 });
+    await page.mouse.up();
+    l.model_blocked = await page.evaluate((n) => ({
+      strokes_before: n, strokes_after: window.S2S.doc().strokes.length,
+      state: window.S2S.viewState() }), (before as any).strokes);
+    expect((l.model_blocked as any).strokes_after).toBe((l.model_blocked as any).strokes_before);
+    // **복귀**(지시 6-a·f) — 앱 버튼 경로 그대로. 피치를 접은 2점 작도 시점으로 간다
+    await page.evaluate(() => {
+      document.querySelector<HTMLButtonElement>('#bar button[data-act="draft"]')!.click();
+    });
+    await page.waitForTimeout(450);                       // snapToDir 280ms + 여유
+    l.returned = await page.evaluate(() => ({
+      state: window.S2S.viewState(), pinned: window.S2S.stage.isPinned }));
+    expect(["draft_two", "draft_one"]).toContain((l.returned as any).state);
+    expect((l.returned as any).pinned).toBe(false);       // 확정 시점 복귀가 아니라 작도 복귀다
+  }
 
   // ---- ① 돌린 시점에서 스냅이 도는가. 참 꼭짓점의 **이 시점 화면 좌표**를 겨냥한다
   const target = await page.evaluate(async () => {
