@@ -171,6 +171,7 @@ describe("첫 3D 부재 — 15-16-18 재구성(13차 항목 1)", () => {
     const crossResidual = (() => {
       const dirs = (ctx as { axisDirs?: (Vec3 | null)[] } | null)?.axisDirs ?? [];
       const rows: Record<string, unknown>[] = [];
+      const allOffs: number[] = [];
       for (const st of waitingClassified) {
         const ax = st.axis as 0 | 1 | 2;
         const d3 = dirs[ax];
@@ -193,18 +194,30 @@ describe("첫 3D 부재 — 15-16-18 재구성(13차 항목 1)", () => {
           const perp: Vec3 = [v[0] - t * d3[0], v[1] - t * d3[1], v[2] - t * d3[2]];
           offs.push(Math.hypot(perp[0], perp[1], perp[2]) / scale);
         }
+        allOffs.push(...offs);
         rows.push({ id: st.id, n_crossings: anchors.length,
                     pairwise_line_offset_ratio: stat(offs, 4) });
       }
+      // **"켜면 죽는다"의 임계 의존을 값으로 낸다**(5·6·7 리뷰어 7[2] · #13): 검증을
+      // "교차 둘 이상이 허용치 안에서 일치해야 채택"으로 정의하면, 생존 경계는 **최소
+      // 쌍별 이탈**이다 — 그보다 작은 허용치는 전부 기각(회복 0), 큰 허용치는 통과.
+      const minOff = allOffs.length ? Math.min(...allOffs) : null;
       return {
         note: "대기 획별: 지면 획들과의 교차 수 · 각 교차 앵커로 세운 축 직선들의 **쌍별 평행선 "
-            + "거리 ÷ 평균 앵커 거리**(상대). 참 접촉은 최대 하나이므로 교차가 2+이고 이 값이 "
-            + "크면 **나머지는 가림**이다 — 현행 crossAnchorOf(최근접 교차 채택)이 무엇을 두고 "
+            + "거리 ÷ 평균 앵커 거리**(상대 — ⚠ 이 분모가 문서들이 '장면 규모'라 부른 그 양의 "
+            + "대리다. 7[4]로 대응을 명시: 같은 획의 앵커들 원점 거리 평균이고, 별도 '장면 "
+            + "규모' 지표는 없다). 참 접촉은 최대 하나이므로 교차가 2+이고 이 값이 크면 "
+            + "**나머지는 가림**이다 — 현행 crossAnchorOf(최근접 교차 채택)이 무엇을 두고 "
             + "고르는지의 실측이고, 잔차 검증 팔(2+ 교차의 일치 요구)의 설계 입력이다. "
-            + "⚠ 잔차 검증을 켜면 이 파일의 회복(s49) 자체가 죽는다 — 바닥 격자를 가로지르는 "
-            + "수직선은 교차 대부분이 가림인 것이 **정상**이다. 정책(어느 교차가 참인가)은 "
-            + "DEFERRED 그대로 열려 있고 이 실측이 그 판단 재료다",
+            + "⚠⚠ **이 팔은 가림 비율(합성 3/27 같은 분자/분모)을 안 낸다**(7[1] — 실측 획 "
+            + "n=1 · 쌍 3이라 비율의 분모가 없다. DEFERRED #23 행의 '절반'은 어긋남 **크기**의 "
+            + "실측이지 비율이 아니다). ⚠ '잔차 검증을 켜면 회복이 죽는다'는 **허용치 의존**"
+            + "이다(7[2] · #13) — 경계값이 verify_survival_boundary이고, 앱에는 대응 임계가 "
+            + "아직 없다(liftAll의 reject_mult는 다른 층의 양 — 허용치 미정). 정책(어느 교차가 "
+            + "참인가)은 DEFERRED 그대로 열려 있고 이 실측이 그 판단 재료다",
         rows,
+        /** '2+ 교차 일치' 검증의 생존 경계(상대 이탈) — 이보다 작은 허용치면 s49 회복이 죽는다 */
+        verify_survival_boundary: minOff == null ? null : +minOff.toFixed(4),
       };
     })();
 

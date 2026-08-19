@@ -9,7 +9,7 @@
 // 산출: `stage0/out/real_ink.json`.
 import { describe, it, expect } from "vitest";
 import { skipReason } from "./dataDeps.js";
-import { RULE_TOL, FOV_GATE } from "../src/s3d/vpRules.js";
+import { RULE_TOL, FOV_GATE, beyondSegment } from "../src/s3d/vpRules.js";
 import { writeFileSync, mkdirSync, readdirSync, readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -259,9 +259,12 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
       vp_confirm_source: "소실점 확정 경로 분포(6차 지시 3 — rules.slots[*].source): picked_point=찍기 · two_lines=교점 · 그 외. 이월-3의 합성 대조(찍기 pick_0 축 오차 2.67° 대 two_lines 31.61°, pick_vp.json)가 동기다 — **실사용에서 어느 쪽을 쓰는지**가 여기서 나온다",
       path_use: "배치 경로 분포(6차 지시 3 — pathStats): direct=1점 직접 좌표 · lift=카메라 투영 · twoPoint=양 끝 스냅. **지시 2(1점 직접)가 실제로 쓰이는지**의 분자·분모다. ⚠ 카운터는 저장 시점의 세션 것이다(불러오기로 이어지지 않는다 — askStats와 같은 규약)",
       snap_use: "스냅 사용 분포(7차 지시 항목 2·4 — 실획 첫 표본의 결함 지표): snapStart 종류별 획 수 · snapEnd 있는 획 수 / 3D 획 수. **끝점 스냅이 실제로 걸리는지**가 여기서 나온다. ⚠ 첫 표본의 **사람 보고**(파일 미도착 — 원장 밖·미검증, AS-C1 7차 주석)는 끝점 스냅 0/획 5이었다 — 보고이지 기준선이 아니다(3·4-R [8]). 파일이 오면 이 지표가 실측한다",
-      per_doc: "**파일별 분해**(2026-08-19 지시 0 — 표본 셋 도착): 합산은 D-L81 이전/이후 저장본을 한 분모에 섞으므로(#11) 문서 단위로 낸다. `vp_dir_err_strokes`는 [획 id, 축, Δ°(, guaranteed)] — `reported_samples_12.k_reported.vp_dir_err_deg_reported`와 같은 꼴이라 행 단위 대조가 선다. `camera_assumed_principal_center`는 주점=화면 중앙 **가정**(이론서 16.2·AS-C5)의 유도값(f/W·화각)이다. ⚠ 이 표본들은 **12차 수리(화각 상한·무앵커 방향 스냅·교차 앵커·D-L89) 이전에 그려졌다** — 파일이 재현하는 것은 12차 이전 상태이고, 수리가 같은 기하를 어떻게 바꾸는지는 재구성 픽스처가 대조한다(지시 0-e)",
+      per_doc: "**파일별 분해**(2026-08-19 지시 0 — 표본 셋 도착): 합산은 D-L81 이전/이후 저장본을 한 분모에 섞으므로(#11) 문서 단위로 낸다. `vp_dir_err_strokes`는 [획 id, 축, Δ°, 스냅 표식(snap3d:종류·snap2d:종류·no_snap)(, \"guaranteed\")(, \"near_vp_degenerate\")] — 4번째 이후는 있을 때만 붙는 표식이다(리뷰어 4-R [B-9]로 정의를 행 꼴에 맞춤). 앞 셋은 `reported_samples_12.k_reported.vp_dir_err_deg_reported`와 같은 꼴이라 행 단위 대조가 선다. `camera_assumed_principal_center`는 주점=화면 중앙 **가정**(이론서 16.2·AS-C5)의 유도값(f/W·화각)이다. ⚠ 이 표본들은 **12차 수리(화각 상한·무앵커 방향 스냅·교차 앵커·D-L89) 이전에 그려졌다** — 파일이 재현하는 것은 12차 이전 상태이고, 수리가 같은 기하를 어떻게 바꾸는지는 재구성 픽스처가 대조한다(지시 0-e)",
       radius8_revert_condition: "사전등록 조건(11차 리뷰어 [9] · #12)의 평가 — `snap_dist_px.p10 > OSNAP_RADIUS_PX`면 반경 8(D-L85)을 다시 연다. 같은 실행의 값으로 원장이 스스로 판을 낸다(#47)",
       vp_dir_err_deg: "수평축(0·1) 배정 획의 **2D 현 방향**과 시작점→그 축 소실점 방향의 각차(°) — 사람이 소실점을 향해 얼마나 정확히 긋는가의 화면 오차. 첫 표본의 사람 보고(원장 밖·미검증) Δ0.0~1.7°를 하네스가 재현하는 자리다. ⚠⚠ **합성의 축 오차(rule_camera deg_median — 3D 축 방향 오차)와는 다른 양·다른 프레임이다**(3·4-R [1]): 화면 오차는 3D 각으로 증폭된다(AS-L8 — 먼 소실점 100px ≈ 2~3°). 실획의 3D 축 오차는 참 축이 없어 못 잰다(what_this_cannot_measure). ⚠ **선택 절단이 있다**(#5): 축 배정 자체가 같은 각류 판정(vpMisfit ≤ 0.06)을 지나므로 분포가 배정 허용치 안에 갇힌다 — 배정 밖(미분류) 획의 겨냥 오차는 이 지표에 안 나온다. 축 배정은 정답 라벨도 아니다(caveat와 같은 유보)",
+      near_vp_degenerate: "**행 표식**(13차 항목 4 — 리뷰어 4-R [B-9]로 정의 등재): 시작점→배정 소실점 거리(dVp) < 현 길이(lenChord)면 붙는다. 뜻: Δ의 분모(지렛대)가 획 길이보다 짧아 **원시 시작점의 손떨림 이탈이 지렛대비로 증폭된 값**이 Δ를 지배한다(delta_conflict.per_stroke의 start_off_fit_px÷vp_dist_px ≈ Δ 실측 — jitter_lever_deg). ⚠⚠ **극단 카메라 전용이 아니다**([B-2] 정정 — 초판 서술이 틀렸다): 화각 98° 파일들의 행에도 붙는다(dVp가 작은 것은 소실점 근접의 문제이고, 그것은 그린 위치↔소실점의 상대 관계라 카메라 화각만으로 정해지지 않는다). 표식 행의 Δ는 겨냥 오차로 읽지 않는다 — **어느 결론에도 겨냥의 증거로 쓰지 않는다**(사거리 논의 포함)",
+      vp_dir_err_deg_stable: "vp_dir_err_deg에서 near_vp_degenerate 행(과 보장 0)을 뺀 분포([B-9]로 정의 등재). **절단값은 dVp ≥ 1×lenChord**이고 그 선택이 분모를 정하므로(#13) 절단 감도(0.5×·2×)를 `vp_dir_err_stable_cutoff` 필드가 함께 낸다. AS-L26 논의는 이 분포(및 no_snap 부분집합)를 쓴다",
+      vp_dir_err_deg_stable_no_snap: "위 stable에서 **스냅 표식이 no_snap인 행만**([B-5] — 앵커·스냅된 획의 잔여 Δ는 무앵커 기전(②)의 몫이 아니므로 갈라 센다). ②(무앵커 무스냅 겨냥)의 논의는 이 분포가 모집단이다",
     };
     const kMetrics = (() => {
       if (!brnl.length) return { status: "awaiting_samples", n_docs: 0, metrics: K_DEFS,
@@ -283,6 +286,9 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
       const snapStartKinds: Record<string, number> = {};
       const vpDirErrs: number[] = [];
       const vpDirErrsStable: number[] = [];
+      const vpDirErrsStableNoSnap: number[] = [];
+      const vpDirErrsStableHalf: number[] = [];
+      const vpDirErrsStableTwo: number[] = [];
       const vpDirErrsFovOk: number[] = [];
       let vpDirGuaranteed = 0;
       const vpSource: Record<string, number> = {};
@@ -305,7 +311,8 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
                     // 시작점 앵커(snapStart)가 없는 획
                     snappedIds: [] as string[], liftedIds: [] as string[],
                     liftedNoSnapStart: [] as string[],
-                    s2dFired: [] as (string | number)[][] };
+                    s2dFired: [] as (string | number)[][],
+                    nearVpBeyond: [] as (string | boolean)[][] };
         const diag = Math.hypot(d.imgSize[0], d.imgSize[1]) || 1;
         const ends: number[][] = [];
         for (const st of d.strokes) {
@@ -353,8 +360,11 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
               const b0: Pt2 = [st.pts2d[st.pts2d.length - 1][0], st.pts2d[st.pts2d.length - 1][1]];
               const e = vpDirErrDeg(a0, b0, sl.at);
               // **근접 퇴화 판정**(13차 항목 4 — delta_conflict가 가른 기전): 시작점→소실점
-              // 거리가 현 길이보다 짧으면 시작점 기준 방향각은 지렛대가 획 안에 있어
-              // 무의미해진다(15-18-25의 Δ20.8·16.6이 그 산물 — misfit은 0인데 각만 크다).
+              // 거리(지렛대 분모)가 현 길이보다 짧으면 Δ는 원시 시작점의 손떨림 이탈이
+              // 지렛대비(atan(off/dVp))로 증폭된 값이 지배한다 — 15-18-25의 Δ20.8·16.6이
+              // 그 실측이다(delta_conflict.per_stroke.jitter_lever_deg ≈ Δ).
+              // ⚠⚠ 이 표식은 **극단 카메라 전용이 아니다**(리뷰어 4-R [B-2]로 초판 서술
+              // 정정) — 화각 98° 파일의 행에도 붙는다. 정의·읽기 규약은 K_DEFS가 든다.
               const lenChord = Math.hypot(b0[0] - a0[0], b0[1] - a0[1]);
               const dVp = Math.hypot(sl.at[0] - a0[0], sl.at[1] - a0[1]);
               const nearVp = dVp < lenChord;
@@ -365,21 +375,34 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
               // ⚠ `two_lines`는 **대표 직선**(`representative`)의 교점이라 원시 끝점 기준의
               // 이 지표는 0이 아니다 — 그래서 **정확히 0인 것만** 보장으로 뺀다(관측된 성질).
               if (e != null) {
+                const snapTag = st.snapStart ? `snap3d:${st.snapStart.kind}`
+                              : (st as { snap2dStart?: { kind: string } | null }).snap2dStart
+                                ? `snap2d:${(st as { snap2dStart?: { kind: string } }).snap2dStart!.kind}`
+                                : "no_snap";
                 if (e < 1e-9) vpDirGuaranteed += 1; else vpDirErrs.push(e);
-                if (e >= 1e-9 && !nearVp) vpDirErrsStable.push(e);
+                if (e >= 1e-9 && !nearVp) {
+                  vpDirErrsStable.push(e);
+                  // **no_snap 부분집합**([B-5]) — 앵커·스냅 행의 잔여는 ②의 몫이 아니다
+                  if (snapTag === "no_snap") vpDirErrsStableNoSnap.push(e);
+                }
+                // **절단 감도**([B-9] · #13 — 절단값 1×이 분모를 정하므로 0.5×·2×도 센다)
+                if (e >= 1e-9 && dVp >= 0.5 * lenChord) vpDirErrsStableHalf.push(e);
+                if (e >= 1e-9 && dVp >= 2 * lenChord) vpDirErrsStableTwo.push(e);
                 // 획별 행(0-f — 보고 대조): [id, 축, Δ°, 스냅 표식, (보장이면) "guaranteed"].
                 // ⚠ 스냅 표식을 함께 낸다(13차 리뷰어 [2] — "스냅과 Δ의 상관"을 원장 밖에서
                 // 주장하지 않게 획별로 기록한다). ⚠⚠ **정확히 0은 보장이지 측정이 아니다**(#5) —
                 // 자기 소실점을 만든 획의 항등이거나 되쓰기의 항등이고, 어느 쪽이어도
                 // **기전 판정의 증거로 쓰지 않는다**(13차 리뷰어 [1]).
-                const snapTag = st.snapStart ? `snap3d:${st.snapStart.kind}`
-                              : (st as { snap2dStart?: { kind: string } | null }).snap2dStart
-                                ? `snap2d:${(st as { snap2dStart?: { kind: string } }).snap2dStart!.kind}`
-                                : "no_snap";
                 const row: (string | number)[] = e < 1e-9
                   ? [st.id, st.axis, 0, snapTag, "guaranteed"]
                   : [st.id, st.axis, +e.toFixed(4), snapTag];
-                if (nearVp) row.push("near_vp_degenerate");
+                if (nearVp) {
+                  row.push("near_vp_degenerate");
+                  // **AS-L28 대조 재료**(리뷰어 4-R [B-10]): dVp < lenChord가 곧 "소실점이
+                  // 그린 구간 안"은 아니다 — 검출 규칙의 그 판정(`beyondSegment` — 투영
+                  // 매개변수가 [−pad, 1+pad] 밖)을 같은 현에 그대로 물어 불리언으로 남긴다.
+                  D.nearVpBeyond.push([st.id, beyondSegment({ a: a0, b: b0 }, sl.at)]);
+                }
                 D.vpErrs.push(row);
               }
             }
@@ -461,6 +484,12 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
           snap_dist_null: `${D.distNull}/${D.n}`,
           ask: d.askStats ?? null,
           vp_dir_err_strokes: D.vpErrs,
+          /**
+           * near_vp_degenerate 행의 `beyondSegment` 판([B-10] — AS-L28 대조): [id, bool].
+           * true = 검출 규칙 기준으로도 소실점이 그린 구간(±extend_ratio) **밖** —
+           * dVp < lenChord(표식 조건)와 "구간 안"은 다른 판정이다.
+           */
+          near_vp_beyond_segment: D.nearVpBeyond,
           camera_assumed_principal_center: fovAssumed,
         });
       }
@@ -490,7 +519,7 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
            * 조리개도 저장본에 없다 — DEFERRED). 그러므로 reopen=false는 "조건 불충족"이지
            * "반경이 맞다"가 아니고, **n이 이 자릿수인 동안 이 판은 정보량이 0에 가깝다.**
            */
-          reachability: `near_zero_in_dist > 0이면 n ≤ 10에서 p10이 0으로 고정된다 — 이번 실행 near_zero ${snapDists.filter(v => v < 1e-9).length}/${snapDists.length}. 구조 0 의심(#5)은 갈래 필드 부재로 미해소(DEFERRED)`,
+          reachability: `near_zero_in_dist > 0이면 n ≤ 10에서 p10이 0으로 고정된다 — 이번 실행 near_zero ${snapDists.filter(v => v < 1e-9).length}/${snapDists.length}. 구조 0 의심(#5)은 갈래 필드 부재로 미해소(DEFERRED). ⚠ 분위수 선택의 몫(5·6·7-R [3] · #35): n=4에서 p10은 사실상 최솟값이라 조건은 '전부 초과'를 요구한다 — 다음 표본에서도 n이 한 자릿수면 판정 통계를 p10 대신 중앙(또는 초과 건수/전체)으로 읽는 쪽이 사전등록 의도('반경이 겨냥 분포를 자른다')에 맞다. 어느 쪽으로 읽어도 이번 값에서는 reopen=false`,
           caveat: "⚠ 분포는 40px 프로브에서 절단되고(#13 — 그 밖은 snap_dist_null) n이 한 자릿수다(#14). "
                 + "판은 '열지 않는다'까지다 — '측정이 8을 지지한다'로 읽지 않는다(D-L85 근거는 모순 지표)",
         },
@@ -502,12 +531,26 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
         vp_dir_err_deg: stat(vpDirErrs, 2),
         /**
          * **근접 퇴화 행을 뺀 분포**(13차 항목 4 — `delta_conflict.json`이 가른 기전):
-         * 시작점→소실점 거리 < 현 길이면 시작점 기준 방향각은 퇴화한다(지렛대가 획 안).
-         * 극단 카메라(소실점이 그림 안)에서만 생기는 몫이라, 겨냥 정확도 논의(AS-L26)는
-         * 이 분포를 쓴다 — 퇴화 행은 `per_doc[*].vp_dir_err_strokes`의 `near_vp_degenerate`
-         * 표식이 든다.
+         * 시작점→소실점 거리 < 현 길이면 Δ는 손떨림 이탈의 지렛대 증폭이 지배한다
+         * (jitter_lever_deg ≈ Δ — delta_conflict.per_stroke). ⚠⚠ **극단 카메라 전용이
+         * 아니다**(리뷰어 4-R [B-2]로 초판 '극단 카메라에서만' 정정 — 화각 98° 파일 행에도
+         * 붙는다). 겨냥 정확도 논의(AS-L26)는 이 분포(무앵커 기전은 아래 no_snap 부분집합)를
+         * 쓰고, 퇴화 행은 `per_doc[*].vp_dir_err_strokes`의 `near_vp_degenerate` 표식이 든다 —
+         * **표식 행의 Δ는 어느 결론에도 겨냥 증거로 쓰지 않는다**(K_DEFS).
          */
         vp_dir_err_deg_stable: stat(vpDirErrsStable, 2),
+        /** stable 중 **무스냅 행만**([B-5]) — ②(무앵커 무스냅 겨냥) 논의의 모집단이다 */
+        vp_dir_err_deg_stable_no_snap: stat(vpDirErrsStableNoSnap, 2),
+        /**
+         * **절단 감도**([B-9] · #13 — dVp ≥ k×lenChord의 k가 stable의 분모를 정한다):
+         * k = 0.5 · 1(본 분포) · 2 각각의 분포. n이 k에 민감하면 절단이 결론을 정하는
+         * 자리이므로 결론은 그만큼 유보한다.
+         */
+        vp_dir_err_stable_cutoff: {
+          half: stat(vpDirErrsStableHalf, 2),
+          one_is_main: "vp_dir_err_deg_stable",
+          two: stat(vpDirErrsStableTwo, 2),
+        },
         /**
          * 화각 거부 대역(FOV_GATE.reject_fov_deg) **안** 문서만의 Δ 분포(리뷰어 2차 [14]) —
          * "극단 카메라 파일을 빼도 분포가 넓은가"의 강건성 판을 원장이 스스로 낸다.
@@ -618,7 +661,7 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
           // intersection뿐이라(그 목록은 per_doc이 든다) 중점 연결 자체가 관측되지 않았다.
           ok: (k as { per_doc?: { snap2d?: { fired?: unknown[][] } }[] }).per_doc
                 ?.some(p => p.snap2d?.fired?.some(row => row[2] === "midpoint")) ?? false,
-          blocked_by: "**중점 발화가 0이다** — 잘못된 연결이든 옳은 연결이든 중점 스냅 자체가 이 표본에 없어 D-L88의 실획 확인이 성립 불가다(#32 — 미발화를 반증으로 안 읽는다). 11차 팔의 분모 제한(끝점 겨냥 한정)은 실획에 없지만, 분자가 서려면 중점을 겨냥한 손짓이 표본에 있어야 한다" },
+          blocked_by: "**중점 발화가 0이다**(⚠ 분모 규약 — 5·6·7-R [1]·#11: 관측 가능한 분모는 field_present 있는 두 파일 24획 · 그 2D 발화 3건(endpoint·vertex·intersection)이고, field_present 0인 첫 파일은 '안 적혔다'라 분모가 아니다. 세는 단위는 **발화 3건 중 midpoint 0**이다 — #48) — 잘못된 연결이든 옳은 연결이든 중점 스냅 자체가 이 표본에 없어 D-L88의 실획 확인이 성립 불가다(#32 — 미발화를 반증으로 안 읽는다). ⚠⚠ **다음 표본으로 열리려면 셋이 더 필요하다**(5·6·7-R [3]): ① 중점을 겨냥한 손짓 ② 그 표본의 기록 시점 조리개·종류 토글 스냅샷(저장 형식에 없다 — DEFERRED 그 행. 없으면 D-L88의 'r8 동작점' 귀속이 안 선다) ③ '잘못됨'의 대리 신호(되돌리기 직후 재획 등 — 계측기 없음, DEFERRED 8차). opens=true는 ①의 도착 가능성까지이고 ②③ 없이는 판정이 약하다" },
         { id: "as_l24_l25_synthetic_bias", opens: false,
           what: "AS-L24·L25 — 합성이 이 설계에 편향됐다는 것이 실획으로 지지되는가(4-d)",
           field: "(없다)",

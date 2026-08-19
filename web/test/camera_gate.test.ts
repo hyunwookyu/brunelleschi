@@ -174,6 +174,9 @@ describe("L-A.5d·L-A.6 카메라 정확도 (§5.4·§5.5)", () => {
   it("축 방향 오차 → 형태 오차 곡선을 원장에 낸다", () => {
     const byErr: Record<string, unknown> = {};
     const byErrBase: Record<string, unknown> = {};
+    // **실행 수를 스스로 센다**(13차 5·6·7 리뷰어 6[1] — test_cost의 declared_scenarios가
+    // 이 원장을 못 접던 원인: 자기보고 필드가 없었다. 손으로 안 센다 #17)
+    let liftRuns = 0;
     for (const deg of AXIS_ERRS) {
       const all = bag(), base = bag();
       for (let ci = 0; ci < COMPOSITIONS.length; ci++) {
@@ -181,8 +184,8 @@ describe("L-A.5d·L-A.6 카메라 정확도 (§5.4·§5.5)", () => {
           const fx = fixture(ci, jit, g, sd);
           if (!fx) continue;
           const vps = perturbedVps(fx.sc, deg, rng32(sd * 3571 + ci * 97 + 5));
-          liftWith(fx, vps, all);
-          if (ci === 0 && jit <= 0.01) liftWith(fx, vps, base);
+          liftWith(fx, vps, all); liftRuns += 1;
+          if (ci === 0 && jit <= 0.01) { liftWith(fx, vps, base); liftRuns += 1; }
         }
       }
       byErr[`deg_${deg}`] = report(all);
@@ -243,6 +246,15 @@ describe("L-A.5d·L-A.6 카메라 정확도 (§5.4·§5.5)", () => {
                            why: "`lift_gate` 출처. 분모가 최대 연결 성분이고 검출 오배정이 섞였다." } },
       by_axis_err_all_compositions: byErr,
       by_axis_err_baseline_3pt_jitter_le_0_01: byErrBase,
+      /** 이 팔의 lift 실행 수(자기보고 — 6[1]). 격자 팔이 아래에서 더한다. */
+      runs: liftRuns,
+      what_this_does_not_say: [
+        "**앱의 배치 경로를 지나지 않는다**(13차 5·6·7 리뷰어 6[6] · #17 — DEFERRED 8차 "
+          + "2차 항목 1·2와 같은 유형): 배치는 `liftWith`(일괄 풀이 상당)로 하고, 앱의 "
+          + "`placeBy` 아홉 경로(12차 cross_anchor · 13차 ground·extension 포함)는 이 원장에 "
+          + "**안 잡힌다**. 그래서 그 경로들이 늘거나 바뀌어도 이 산출물은 바이트 동일할 수 "
+          + "있다 — diff 0은 '카메라 수학이 안 변했다'까지이고 '배치가 안 변했다'가 아니다.",
+      ],
       constants: constantsSnapshot(),
       metric_defs: metricsSnapshot(),
     };
@@ -253,6 +265,7 @@ describe("L-A.5d·L-A.6 카메라 정확도 (§5.4·§5.5)", () => {
 
   it("획 수 → 축 방향 오차 곡선을 원장에 낸다", () => {
     const byK: Record<string, unknown> = {};
+    const latticeRuns: Record<number, number> = {};
     for (const k of LATTICE_K) {
       // 큰 격자는 검출이 O(n³)이라 시드를 줄인다. **줄인 사실을 적는다**(PITFALLS: 조용한 절단 금지)
       const seeds = k <= 2 ? SEEDS : k === 3 ? [1, 2, 3] : [1];
@@ -260,10 +273,12 @@ describe("L-A.5d·L-A.6 카메라 정확도 (§5.4·§5.5)", () => {
       const comps = k <= 2 ? [0, 1, 2, 3, 4] : BIG_K_COMPS;
       const det = bag(), tru = bag();
       let perAxis = 0, nLines = 0, nStrokes = 0;
+      latticeRuns[k] = 0;
       for (const ci of comps) {
         for (const jit of jits) for (const g of GRADES) for (const sd of seeds) {
           const fx = fixture(ci, jit, g, sd, k);
           if (!fx) continue;
+          latticeRuns[k] += 2;                    // det + tru 두 lift(자기보고 — 6[1])
           perAxis = fx.edges.filter(e => e.axis === 0).length;
           nStrokes = fx.edges.length;
           const lines = linesFromStrokes(fx.strokes, SZ);
@@ -289,6 +304,11 @@ describe("L-A.5d·L-A.6 카메라 정확도 (§5.4·§5.5)", () => {
 
     const doc = JSON.parse(readFileSync(resolve(OUT, "camera_gate.json"), "utf-8"));
     doc.by_strokes_per_axis = byK;
+    // **실행 수 자기보고를 합친다**(6[1]) — 첫 팔의 runs에 격자 팔의 lift 수를 더한다.
+    // test_cost의 declared_scenarios가 이 값을 접는다(`led.runs`).
+    doc.runs = (doc.runs ?? 0) + Object.values(latticeRuns).reduce((s, x) => s + x, 0);
+    doc.runs_note = "두 팔의 lift 실행 수 합(축 오차 팔 + 격자 팔 det·tru). 행별 내역은 "
+      + "by_strokes_per_axis[*].seeds_used·jitters_used·compositions_used";
     doc.lattice_note = "k등분 격자 상자. 축당 획 수 = (k+1)²·k → 4 / 18 / 48 / 100. "
       + "**선분으로 낸다** — 관통선으로 하면 서로 몸통에서 교차해 `findJoints`가 하나도 "
       + "안 잡는다(끝점 근처만 제약으로 쓰므로, L-A.3).";
