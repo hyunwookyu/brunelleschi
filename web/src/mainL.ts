@@ -40,12 +40,15 @@ import { snapCandidates, staticCandidates, SNAP_ORDER, SNAP_LABEL, SNAP_COLOR, S
 import { static2dCandidates, snap2dAt, type Snap2Cand, type Snap2Seg } from "./s3d/snap2d.js";
 // **확정 전 2D 판정의 단일 출처**(5차 이월-2) — 합성 하네스가 같은 함수를 부른다(#17)
 import { resolve2dCore, snap2Refs, OSNAP_RADIUS_PX, type Resolve2dOut } from "./s3d/resolve2d.js";
-import { segmentFromAnchor, nearestAxisOnScreen, endFromCursor, LIVE_TOL } from "./s3d/liveLine.js";
+import { segmentFromAnchor, nearestAxisOnScreen, nearestDirOnScreen,
+         endFromCursor, LIVE_TOL } from "./s3d/liveLine.js";
 import { crossAnchorOf } from "./s3d/crossAnchor.js";
 import { anchorToTarget } from "./s3d/liftAnchor.js";
 import { onePointFrame, directSegment, planeAnchor, ONE_POINT_TOL } from "./s3d/onePoint.js";
 import { judgeDraftPose } from "./s3d/draftPose.js";
 import { axisVpsAt, horizonThrough, overlayAxisMarks, type AxisVpAt } from "./s3d/axisVp.js";
+import { auxVpsAt, auxDirVec, thales, measuringPoint,
+         type AuxDir, type AuxVpAt } from "./s3d/auxVp.js";
 import { representative, AXIS_TOL, chordTurnDeg } from "./s3d/axis.js";
 // **자동 분할**(지시 I) — 교차·접촉 절단점과 조각. SketchUp 선례. 순수 기하는 split.ts 하나다(#17)
 import { cutParams, piecesFromCuts, subtractIntervals, reanchorId, pointAt,
@@ -123,7 +126,9 @@ const pathStats = { direct: 0, lift: 0, twoPoint: 0 };
  * 픽스처에서 잰다(`dir_state.json`).
  */
 const placeBy = { ref_anchor: 0, start_anchor: 0, two_point: 0, end_anchor: 0,
-                  cross_anchor: 0, batch: 0, ground: 0, extension: 0, unanchored: 0 };
+                  cross_anchor: 0, batch: 0, ground: 0, extension: 0, unanchored: 0,
+                  /** **보조 소실점 방향으로 놓인 획**(15차 항목 7 · D-L106) */
+                  aux: 0 };
 /**
  * **교차 앵커의 경로별 진단**(#43 — 12차 3차 리뷰어 [7]). `placeBy.cross_anchor`는 분자이고
  * 여기가 분모·거절 사유다: attempts(연쇄가 검토한 대기 획·회차 누계) = placed +
@@ -362,6 +367,18 @@ const SHOW_GRID = { on: true };
  * 측정 스위치(#30)를 겸한다 — `S2S.setShowHorizon(false)`가 수리 전 거동(끌기 도달 불가)이다.
  */
 const SHOW_HORIZON = { on: false };
+/**
+ * **보조 소실점**(2026-08-19 15차 항목 7 · D-L106). 저장하는 것은 **각도**이고 소실점
+ * 자리는 매번 계산이다(`auxVp.ts` 머리말 — 상태를 안 늘린다).
+ *
+ * `showThales`는 탈레스 반원·측점 표시(이론서 6.2·7.3)다 — 기본 **끔**(작도선이 늘 떠
+ * 있으면 그림을 가린다. 종이에서도 필요할 때만 긋는다).
+ *
+ * **위계**(지시 7): 보조는 방향만 준다 — 축을 배정하지 않고, 카메라에 기여하지 않고,
+ * 차수를 안 바꾼다. 경쟁에서 **비기면 주 축이 이긴다**(아래 `resolveLive`).
+ */
+const AUX = { dirs: [] as AuxDir[], open: false, showThales: false, nextId: 1 };
+const auxStats = { placed: 0, competed: 0, won: 0 };
 /**
  * **오스냅 설정**(지시 H — 라이노 방식). 반경은 **화면 픽셀**이고 확대·축소와 무관하다
  * (지시문 그대로 — 포인터 정밀도의 문제라 선례도 절대 px: SketchUp/Rhino 조리개 10~15px).
@@ -978,6 +995,21 @@ function promoteChain(fr: Frame): number {
   return total;
 }
 
+/**
+ * **보조 방향들(3D)** — 그 시점의 축 방향에서 각도로 만든다(`auxVp.auxDirVec`).
+ * 축 방향이 없으면 그 보조도 없다. 순서는 `AUX.dirs` 그대로다.
+ */
+function auxVecsFor(c: PlaceCtx): { id: string; dir: Vec3 }[] {
+  if (!AUX.dirs.length) return [];
+  const dirs = axisDirs(c);
+  const out: { id: string; dir: Vec3 }[] = [];
+  for (const d of AUX.dirs) {
+    const v = auxDirVec(d, dirs);
+    if (v) out.push({ id: d.id, dir: v });
+  }
+  return out;
+}
+
 /** 축 방향들 — 소실점이 없는 축은 `null`. 실시간 판정과 확정이 **같은 것을 쓴다**(#17). */
 const axisDirs = (c: PlaceCtx) =>
   // **무한원 축의 방향도 함께 온다**(D-L40) — 소실점이 없다고 축이 없는 것이 아니다
@@ -1050,6 +1082,34 @@ function resolveLive(c: PlaceCtx, at: Vec3, a2: Pt2, b2: Pt2, end: SnapCand | nu
   // ---- **축 스냅**(사람 지시 1). 각도로 거르지 않는다 — 언제나 어느 축으로 간다.
   // 모호 구간이면 **커서에 가까운 쪽**이 이긴다(사람 지시 3).
   const ch = snapToAxis(at, dirs, a2, b2, c);
+  // ---- **보조 소실점 방향과의 경쟁**(15차 항목 7 · D-L106 — 위계).
+  //
+  // ⚠⚠ **여기가 유일한 자리다**: 축 스냅은 "각도로 거르지 않는다 — 언제나 어느 축으로
+  // 간다"(위 주석). 그래서 45° 벽을 모서리에서 그으면 **반드시 어느 축으로 끌려간다** —
+  // 나중에 걸러낼 «거부» 상태가 없다. 보조가 뜻을 가지려면 **같은 경쟁에 들어와야** 한다.
+  //
+  // 비교는 `nearestDirOnScreen` **하나**가 한다(#17 — 축과 보조가 다른 자로 재면 안 된다).
+  // **비기면 주 축이 이긴다**(`<`가 아니라 `<`로 엄격 비교 — 위계의 전부다):
+  // 보조는 사용자가 만든 것이라 틀릴 수 있고, 틀린 보조가 축을 이기면 조용히 틀린 배치다.
+  // 강제 축(`use`)이 있으면 경쟁 자체를 안 한다 — 수정자가 이긴다.
+  if (use == null) {
+    const av = auxVecsFor(c);
+    if (av.length) {
+      auxStats.competed += 1;
+      const nAx = nearestDirOnScreen(at, dirs.slice(0, 3), a2, b2, c);
+      const nAux = nearestDirOnScreen(at, av.map(x => x.dir), a2, b2, c);
+      if (nAux && (!nAx || nAux.deg < nAx.deg)) {
+        const pick = av[nAux.index];
+        const eEnd = endFromCursor(at, pick.dir, b2, c);
+        if (eEnd && norm3(sub3(eEnd, at)) > 1e-9) {
+          auxStats.won += 1;
+          return { axis: null, deg: nAux.deg, seg: [at, eEnd] as [Vec3, Vec3],
+                   locked: false, ambiguous: false, tied: [] as number[],
+                   twoPoint: false, aux: pick.id, why: "" };
+        }
+      }
+    }
+  }
   const ax = (use ?? ch.pick?.axis ?? null);
   if (ax == null) {
     return { axis: null, deg: null, seg: null, locked: false, ambiguous: false,
@@ -1115,7 +1175,7 @@ function extensionOf(cand: { kind: SnapKind; at: Vec3; ofId?: string } | null,
  */
 function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = null,
                    dirGuard = false)
-: false | "two_point" | "extension" | "axis" {
+: false | "two_point" | "extension" | "axis" | "aux" {
   // ⚠⚠ **꺾인 획은 두 점으로 놓지 않는다**(리뷰어 지적, 2026-08-16).
   //
   // 양 끝 스냅은 **축을 우회하는 경로**라, 축 판정이 걸러 주던 "한 획에 방향이 둘"이
@@ -1140,7 +1200,10 @@ function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = nul
     : null;
   const r = resolveLive(fr.ctx, atV, st.pts2d[0], st.pts2d[st.pts2d.length - 1], end, extD);
   const rExt = (r as { extension?: boolean }).extension === true;
-  if (!r.seg || (r.axis == null && !r.twoPoint && !rExt)) {
+  // **보조 소실점 경로**(15차 항목 7 · D-L106) — 축이 아니지만 방향이 정해진 갈래다.
+  // 양 끝 스냅·연장선과 **같은 모양**이다: 기하가 정해지고 라벨은 안 붙는다(위계)
+  const rAux = (r as { aux?: string }).aux ?? null;
+  if (!r.seg || (r.axis == null && !r.twoPoint && !rExt && !rAux)) {
     lastSnapNote = `${r.why} — **2D로 대기**합니다`;
     return false;
   }
@@ -1181,6 +1244,22 @@ function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = nul
   //
   // **판정은 앱의 단일 출처를 그대로 쓴다**(#17) — `cam.axisOf`는 규칙이 정해 둔 소실점에
   // 획을 붙이는 그 함수이고, 대각선처럼 어느 축도 아니면 **미분류**를 낸다(새 임계 없음).
+  if (rAux) {
+    // **보조는 축을 안 붙인다**(위계) — `free`로 두고 어느 보조였는지만 기록한다.
+    // 라벨을 붙이면 재분류·풀이가 그것을 축으로 읽어 **카메라에 되먹임**된다.
+    st.axis = "free";
+    st.userAxis = false;
+    st.seg3d = [fr.fromV(r.seg[0]), fr.fromV(r.seg[1])];
+    st.auxId = rAux;
+    auxStats.placed += 1;
+    placeBy.aux += 1;
+    const d = AUX.dirs.find(x => x.id === rAux);
+    lastSnapNote = `**보조 소실점**으로 확정`
+                 + (d ? ` <span class="dim">(${d.label ?? `${d.yawDeg}°`}`
+                        + (d.pitchDeg ? ` · 경사 ${d.pitchDeg}°` : "")
+                        + `${r.deg != null ? ` · 화면 ${r.deg.toFixed(1)}°` : ""})</span>` : "");
+    return "aux";
+  }
   if (r.twoPoint || rExt) {
     const lab = r.axis ?? "free";
     st.axis = lab;
@@ -1730,7 +1809,7 @@ function solveInto(ctx: PlaceCtx, targets: SStroke[]): number {
  * **배치 경로 이름**(`placeLive`의 반환) — `placeStroke`가 이것을 되돌려 `feedStroke`가
  * "이 획의 기하를 무엇이 정했나"를 안다(15차 항목 2 · D-L100).
  */
-type PlacePath = "two_point" | "extension" | "axis" | null;
+type PlacePath = "two_point" | "extension" | "axis" | "aux" | null;
 
 /**
  * **알림은 이 획의 것이다**(15차 항목 2 · D-L100 (c)) — 획마다 `note`를 비운다.

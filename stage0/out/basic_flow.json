@@ -56,6 +56,7 @@
   "ground": 0,
   "extension": 0,
   "unanchored": 0,
+  "aux": 0,
   "waiting": 2
  },
  "s4_result": {
@@ -67,7 +68,7 @@
  },
  "s5_orbit": {
   "pinned": false,
-  "gl_painted_px": 2108
+  "gl_painted_px": 2154
  },
  "s6_blocked": {
   "state": "draft_three",

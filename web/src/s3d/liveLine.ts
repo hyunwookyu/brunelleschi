@@ -75,12 +75,26 @@ export function segmentFromAnchor(
 export function nearestAxisOnScreen(
   anchor: Vec3, dirs: (Vec3 | null)[], a2: Pt2, b2: Pt2, ctx: LiveCtx,
 ): { axis: 0 | 1 | 2; deg: number } | null {
+  const r = nearestDirOnScreen(anchor, dirs.slice(0, 3), a2, b2, ctx);
+  return r ? { axis: r.index as 0 | 1 | 2, deg: r.deg } : null;
+}
+
+/**
+ * **커서 방향에 가장 가까운 방향**(15차 항목 7 · D-L106에서 일반화). 축 셋만이 아니라
+ * **임의 방향 목록**을 받는다 — 보조 소실점의 방향이 같은 판정을 지나야 하기 때문이다(#17).
+ *
+ * `nearestAxisOnScreen`은 이제 이 함수의 얇은 포장이다(축 셋으로 잘라 부른다) — 판정이
+ * 두 곳에 있으면 축과 보조가 **다른 자로 재게 된다.**
+ */
+export function nearestDirOnScreen(
+  anchor: Vec3, dirs: (Vec3 | null)[], a2: Pt2, b2: Pt2, ctx: LiveCtx,
+): { index: number; deg: number } | null {
   const sx = b2[0] - a2[0], sy = b2[1] - a2[1];
   const L = Math.hypot(sx, sy);
   if (L < 1e-9) return null;
   const ux = sx / L, uy = sy / L;
-  let best: { axis: 0 | 1 | 2; deg: number } | null = null;
-  for (let i = 0; i < dirs.length && i < 3; i++) {
+  let best: { index: number; deg: number } | null = null;
+  for (let i = 0; i < dirs.length; i++) {
     const d = dirs[i];
     if (!d) continue;
     // 앵커에서 축 방향으로 조금 간 점의 상 — 그 차가 축의 **화면 방향**이다
@@ -97,7 +111,7 @@ export function nearestAxisOnScreen(
     // **부호를 무시한다** — 축을 어느 쪽으로 긋든 같은 축이다
     const c = Math.min(1, Math.abs((ux * vx + uy * vy) / M));
     const deg = (Math.acos(c) * 180) / Math.PI;
-    if (!best || deg < best.deg) best = { axis: i as 0 | 1 | 2, deg };
+    if (!best || deg < best.deg) best = { index: i, deg };
   }
   return best;
 }

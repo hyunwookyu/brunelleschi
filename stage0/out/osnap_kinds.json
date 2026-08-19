@@ -8,24 +8,27 @@
  },
  "what_this_does_not_say": [
   "dpr 1·합성·한 픽스처(확정된 합성 상자)다(#12·#21). 종류마다 **자리 하나**다.",
+  "**`perpendicular`는 다른 경로에서 잰다** — 앵커가 있어야 정의되므로 시작점 질의(`S2S.snap`)의 격자에 안 나온다. 앱 경로는 끝점 스냅(`S2S.endSnap`)이고 그 필터(`endSnapKindOk`)가 같은 `OSNAP.kinds`를 지난다. 자리는 `osnap_config`가 쓰던 t = 0.3 발이다(픽스처가 정한 자리 — `fixture_determined` 참).",
   "**패널 안 버튼의 `class=\"on\"` 표시는 안 잰다** — 잰 것은 하단바 스냅 버튼의 **글자**(`label_arm`)다. 종류별 버튼이 켜짐을 어떻게 칠하는지는 안 든다.",
   "**반경 조절은 여기서 안 잰다** — `osnap_config.json`의 15/40 팔이 그 자리다.",
   "**못 찾은 종류는 «되는 것»이 아니다**(#35·#36) — 이 픽스처가 그 종류를 1등으로 만드는 자리를 안 낸 것이고, `unreached`가 그 이름을 든다. 그 종류의 토글은 **이 원장이 아무 말도 안 한다.** ⚠ `covered_elsewhere`는 그것과 **다르다** — 구성상 여기서 못 재는 것이고 어느 원장이 재는지를 이름으로 든다.",
   "**정점 팔은 장면을 만들었다** — 합성 잉크는 끝점이 흔들려 있어 «여러 획이 만난 끝점»이 없다. 앱으로 기존 끝점에서 획 하나를 그어 그 자리를 만들었고(그 시작점은 후보의 3D 좌표로 정확히 놓인다), **승자는 그 뒤에 물었다**(#46: 장면을 만든 것이지 답을 만든 것이 아니다). 다른 일곱은 격자가 장면에서 찾았다.",
-  "격자 훑기라 **각 종류의 자리는 그 종류가 이기는 여러 자리 중 하나**다 — 대표성을 주장하지 않는다."
+  "격자 훑기라 **각 종류의 자리는 그 종류가 이기는 여러 자리 중 하나**다 — 대표성을 주장하지 않는다. 훑은 점 수는 `setup.queries`가 든다(#38: 하네스가 스스로 적는다).",
+  "**확정 후(3D) 단계뿐이다**(1차 리뷰어 [10]) — 확정 **전** 2D 단계에서는 여덟 중 `on_edge`·`on_face` 둘이 아예 안 걸린다는 기록이 따로 있다(`DEFERRED`의 그 행). 이 원장의 `gated` 7/7은 그 단계를 안 든다.",
+  "**정점 행은 다른 여섯과 성질이 다르다** — 장면을 구성해 만들었고 그 구성이 승자쌍을 정한다(`kinds[].fixture_determined` 참, 1차 리뷰어 [3]). 나머지는 격자가 찾았다."
  ],
  "covered_elsewhere": {
-  "extension": "점 후보가 아니라 방향 스냅이다(`extension.ts`) — 토글은 `extension_snap.json`의 `toggle_contrast` 팔이 든다(끄면 배치 증분 0)"
+  "extension": "점 후보가 아니라 방향 스냅이다(`extension.ts`) — 토글은 `extension_snap.json`의 `toggle_contrast` 팔이 든다(끄면 배치 증분 0). ⚠ **단위가 다르다**(#49 · 1차 리뷰어 [5]): 여기의 판정은 «앱의 승자에서 그 종류가 사라지는가»(종류)이고 그쪽은 **배치 경로 카운터의 증분**이다. ⚠⚠ 그리고 그쪽 게이트의 도달 가능성은 `selfcheck.json`이 **«픽스처 결정 = 통과가 아니다»**로 분류한 값이다(`reachability_value` [1] · `..._fixture_determined` 참). 즉 «다른 원장이 덮는다»는 **덮는 강도가 여기와 같지 않다**."
  },
  "setup": {
   "canvas": [
    1280,
    675
   ],
-  "grid_step_px": 9,
-  "find_radius_px": 40,
-  "gate_radius_px": 8,
-  "default_radius_px": 8
+  "grid_step_px": 5,
+  "radius_px": 8,
+  "queries": 34170,
+  "arms": 9
  },
  "kinds": [
   {
@@ -43,15 +46,16 @@
    "off_has_kind": false,
    "gated": true,
    "winner_changed": true,
-   "built_by": "앱으로 기존 끝점에서 획 하나를 그었다(장면 구성)"
+   "built_by": "앱으로 기존 끝점에서 획 하나를 그었다(장면 구성)",
+   "fixture_determined": true
   },
   {
    "kind": "endpoint",
    "label": "끝점",
    "found": true,
    "at": [
-    603,
-    9
+    780,
+    10
    ],
    "runner_up": "on_edge",
    "on_winner": "endpoint",
@@ -66,12 +70,12 @@
    "label": "중점",
    "found": true,
    "at": [
-    684,
-    9
+    890,
+    15
    ],
-   "runner_up": "intersection",
+   "runner_up": "on_edge",
    "on_winner": "midpoint",
-   "off_winner": "intersection",
+   "off_winner": "on_edge",
    "on_has_kind": true,
    "off_has_kind": false,
    "gated": true,
@@ -82,8 +86,8 @@
    "label": "교차점",
    "found": true,
    "at": [
-    693,
-    63
+    700,
+    25
    ],
    "runner_up": "on_edge",
    "on_winner": "intersection",
@@ -98,16 +102,18 @@
    "label": "수선 발",
    "found": true,
    "at": [
-    765,
-    63
+    687,
+    225
    ],
-   "runner_up": "on_edge",
+   "path": "endSnap(앵커가 있어야 정의된다)",
    "on_winner": "perpendicular",
-   "off_winner": "on_edge",
+   "off_winner": null,
    "on_has_kind": true,
    "off_has_kind": false,
    "gated": true,
-   "winner_changed": true
+   "winner_changed": true,
+   "runner_up": null,
+   "fixture_determined": true
   },
   {
    "kind": "extension",
@@ -119,8 +125,8 @@
    "label": "선 위",
    "found": true,
    "at": [
-    1026,
-    18
+    780,
+    5
    ],
    "runner_up": null,
    "on_winner": "on_edge",
@@ -135,8 +141,8 @@
    "label": "면 위",
    "found": true,
    "at": [
-    9,
-    72
+    5,
+    70
    ],
    "runner_up": null,
    "on_winner": "on_face",
@@ -150,7 +156,13 @@
  "label_arm": {
   "all_on": "스냅 8px",
   "two_off": "스냅 8px · 2 끔",
-  "says_off_count": true
+  "opened_menu": true,
+  "opened_panel": true,
+  "hit_mid": true,
+  "hit_int": true,
+  "kinds_off_after_click": true,
+  "says_off_count": true,
+  "restored": true
  },
  "summary": {
   "order": [
@@ -206,18 +218,19 @@
   "off_winner": [
    "endpoint",
    "on_edge",
-   "intersection",
    "on_edge",
    "on_edge",
+   null,
    null,
    null,
    null
   ],
   "unreached": [],
   "covered_elsewhere": {
-   "extension": "점 후보가 아니라 방향 스냅이다(`extension.ts`) — 토글은 `extension_snap.json`의 `toggle_contrast` 팔이 든다(끄면 배치 증분 0)"
+   "extension": "점 후보가 아니라 방향 스냅이다(`extension.ts`) — 토글은 `extension_snap.json`의 `toggle_contrast` 팔이 든다(끄면 배치 증분 0). ⚠ **단위가 다르다**(#49 · 1차 리뷰어 [5]): 여기의 판정은 «앱의 승자에서 그 종류가 사라지는가»(종류)이고 그쪽은 **배치 경로 카운터의 증분**이다. ⚠⚠ 그리고 그쪽 게이트의 도달 가능성은 `selfcheck.json`이 **«픽스처 결정 = 통과가 아니다»**로 분류한 값이다(`reachability_value` [1] · `..._fixture_determined` 참). 즉 «다른 원장이 덮는다»는 **덮는 강도가 여기와 같지 않다**."
   },
-  "covered_before": [
+  "covered_before_individually": [],
+  "touched_before": [
    "endpoint",
    "vertex",
    "perpendicular"
@@ -226,19 +239,54 @@
  },
  "gate": {
   "registered": "**찾은 종류는 전부** 그 종류만 껐을 때 후보에서 사라진다. 판정은 `summary.gated`와 `summary.found`가 든다(#47).",
-  "reachability": "값은 **종류별 승자쌍**(`on_winner` → `off_winner`)이다 — 끄기 전후로 실제로 다른 종류가 이겼다는 것이 그 자리의 증거다. 수(가른 종류의 개수)를 값으로 안 쓴다(#46: 그 수는 여덟이라는 상수에 갇힌다). `unreached`가 비지 않으면 그 종류들에 대해 이 원장은 **아무것도 안 말한다**(#32·#35).",
+  "registered_note": "⚠ **이 항목이 등록한 게이트다 — CLAUDE.md §2 중단 조건 아님**(#41). 실패하면 A-2대로 우회한다.",
+  "reachability": "값은 **종류별 승자쌍**(`on_winner` → `off_winner`)이다. ⛔ **연속량이 아니다**(1차 리뷰어 [2]): `off_winner`는 켬 상태 후보 목록의 **2등**과 7/7 같고, 실제로 재는 것은 **«그 종류가 앱의 승자에서 사라지는가»의 1비트 × 종류 수**다. 그것을 `reachability_bits`가 그대로 든다. `unreached`가 비지 않으면 그 종류들에 대해 이 원장은 **아무것도 안 말한다**(#32·#35).",
   "reachability_value": [
    "endpoint",
    "on_edge",
-   "intersection",
    "on_edge",
    "on_edge",
+   null,
    null,
    null,
    null
   ],
   "reachability_source": "summary/off_winner",
-  "reachability_value_fixture_determined": false,
+  "reachability_bits": [
+   {
+    "kind": "vertex",
+    "gated": true
+   },
+   {
+    "kind": "endpoint",
+    "gated": true
+   },
+   {
+    "kind": "midpoint",
+    "gated": true
+   },
+   {
+    "kind": "intersection",
+    "gated": true
+   },
+   {
+    "kind": "perpendicular",
+    "gated": true
+   },
+   {
+    "kind": "extension",
+    "gated": false
+   },
+   {
+    "kind": "on_edge",
+    "gated": true
+   },
+   {
+    "kind": "on_face",
+    "gated": true
+   }
+  ],
+  "reachability_value_fixture_determined": true,
   "result": {
    "order": [
     "vertex",
@@ -293,18 +341,19 @@
    "off_winner": [
     "endpoint",
     "on_edge",
-    "intersection",
     "on_edge",
     "on_edge",
+    null,
     null,
     null,
     null
    ],
    "unreached": [],
    "covered_elsewhere": {
-    "extension": "점 후보가 아니라 방향 스냅이다(`extension.ts`) — 토글은 `extension_snap.json`의 `toggle_contrast` 팔이 든다(끄면 배치 증분 0)"
+    "extension": "점 후보가 아니라 방향 스냅이다(`extension.ts`) — 토글은 `extension_snap.json`의 `toggle_contrast` 팔이 든다(끄면 배치 증분 0). ⚠ **단위가 다르다**(#49 · 1차 리뷰어 [5]): 여기의 판정은 «앱의 승자에서 그 종류가 사라지는가»(종류)이고 그쪽은 **배치 경로 카운터의 증분**이다. ⚠⚠ 그리고 그쪽 게이트의 도달 가능성은 `selfcheck.json`이 **«픽스처 결정 = 통과가 아니다»**로 분류한 값이다(`reachability_value` [1] · `..._fixture_determined` 참). 즉 «다른 원장이 덮는다»는 **덮는 강도가 여기와 같지 않다**."
    },
-   "covered_before": [
+   "covered_before_individually": [],
+   "touched_before": [
     "endpoint",
     "vertex",
     "perpendicular"

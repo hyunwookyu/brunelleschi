@@ -179,7 +179,8 @@
         "batch": 0,
         "ground": 3,
         "extension": 1,
-        "unanchored": 0
+        "unanchored": 0,
+        "aux": 0
       },
       "place_sum": 5,
       "lifted": 5,
@@ -214,7 +215,8 @@
         "batch": 0,
         "ground": 3,
         "extension": 1,
-        "unanchored": 0
+        "unanchored": 0,
+        "aux": 0
       },
       "place_sum": 6,
       "lifted": 6
@@ -229,7 +231,8 @@
         "batch": 0,
         "ground": 3,
         "extension": 1,
-        "unanchored": 0
+        "unanchored": 0,
+        "aux": 0
       },
       "lifted": 7,
       "lastAxis": 1,

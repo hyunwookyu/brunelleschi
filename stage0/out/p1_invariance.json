@@ -76,7 +76,8 @@
   "batch": 3,
   "ground": 0,
   "extension": 0,
-  "unanchored": 0
+  "unanchored": 0,
+  "aux": 0
  },
  "after": [
   {

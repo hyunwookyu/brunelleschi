@@ -41,7 +41,8 @@
     "batch": 2,
     "ground": 0,
     "extension": 0,
-    "unanchored": 0
+    "unanchored": 0,
+    "aux": 0
    },
    "chainDirGuard": {
     "on": true,
@@ -106,7 +107,8 @@
     "batch": 3,
     "ground": 0,
     "extension": 0,
-    "unanchored": 0
+    "unanchored": 0,
+    "aux": 0
    },
    "chainDirGuard": {
     "on": true,
@@ -171,7 +173,8 @@
     "batch": 3,
     "ground": 0,
     "extension": 0,
-    "unanchored": 0
+    "unanchored": 0,
+    "aux": 0
    },
    "chainDirGuard": {
     "on": true,
@@ -236,7 +239,8 @@
     "batch": 1,
     "ground": 0,
     "extension": 0,
-    "unanchored": 0
+    "unanchored": 0,
+    "aux": 0
    },
    "chainDirGuard": {
     "on": true,
@@ -298,7 +302,8 @@
     "batch": 3,
     "ground": 0,
     "extension": 0,
-    "unanchored": 0
+    "unanchored": 0,
+    "aux": 0
    },
    "chainDirGuard": {
     "on": true,
@@ -363,7 +368,8 @@
     "batch": 0,
     "ground": 0,
     "extension": 0,
-    "unanchored": 0
+    "unanchored": 0,
+    "aux": 0
    },
    "chainDirGuard": {
     "on": true,
