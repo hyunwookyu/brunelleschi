@@ -57,6 +57,10 @@
 > `20cd34f` — 병합 전 전량 검증은 progress 13차 그 절: vitest 전량 초록 · e2e 49통과·
 > 5건너뜀·2실패는 등재된 환경 실패 그대로). 리뷰어 일곱 라운드(0 2회·1·2 2회·3 3회·4 2회·
 > 5·6·7 2회) 대응 완료 — 2차-2 잔여 셋은 DEFERRED "13차 리뷰어 2차-2" 절.
+> ⚠ 첫 병합 직후 Pages가 **tsc에서 한 번 깨졌다**(be8d48e — near_vp_lever의
+> `representative` 인자 타입. vitest·test:unit은 타입 검사를 안 해 로컬에서 안 잡혔다).
+> 한 줄 수리 후 `4ad814e`에서 **Pages success 확인**. 교훈: **main 병합 전에
+> `npx tsc --noEmit`을 돌린다** — CI의 빌드 게이트가 그것이다.
 
 지시 여덟 항목 **전부 완료**(0 실획 → 1 첫 3D 부재 → 2 첫 앵커 → 3 연장선 → 4 Δ 충돌 →
 5 스냅 반경 → 6 camera_gate 비용 → 7 DEFERRED 잔여).
