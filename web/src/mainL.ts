@@ -1280,9 +1280,28 @@ const CUBE_FRAME = { on: true };
 function drawnBasisThree(): { X: Vec3; Y: Vec3; Z: Vec3 } | null {
   if (!CUBE_FRAME.on) return null;
   const dirs = cam.ctx()?.axisDirs;
-  if (!dirs || dirs.length < 3 || dirs.some(d => !d)) return null;
+  if (!dirs || dirs.length < 3) return null;
   // 우리 규약(y 아래·z 안쪽) → three(y 위·z 앞) — 뒤집기는 viewport.ts 규약 그대로
-  const t = dirs.map(d => [d![0], -d![1], -d![2]] as Vec3);
+  // ⚠ 유한성 검사까지가 "빈 슬롯" 판정이다 — 이 픽스처 계열의 수직 슬롯이 [NaN, NaN]
+  // 소실점을 들고 와 방향이 NaN이 되고, NaN은 truthy라 옛 널 검사를 그대로 지나
+  // 기저 전체를 오염시켰다(그램-슈밋 끝의 영벡터 가드가 그것을 조용히 null로 접었다)
+  const tt = dirs.map(d =>
+    (d && d.every(Number.isFinite) ? [d[0], -d[1], -d[2]] as Vec3 : null));
+  // ⚠ **빈 슬롯 보완**(14차 항목 6 — 6-R1 [1]의 뿌리): 옛 판은 axisDirs에 널이 하나라도
+  // 있으면 통째로 포기하고 **세계 축**으로 떨어졌다 — 수직축 미선언(P1·P2의 보통 상태)
+  // 에서 큐브·작도 복귀가 그린 축과 35°씩 어긋나던 자리다. 수직이 비면 화면 수직이
+  // 그 방향이고(2점 = 수직 무한원의 전제 — 이론서 2.2), 가로축(slot 0)이 비면 수직과
+  // 남은 수평축의 외적으로 세운다(부호는 아래 flip이 잡는다). 그래도 못 세우면 종전대로
+  // 세계 축이다.
+  const Yseed: Vec3 = tt[2] ?? [0, 1, 0];
+  let Xseed: Vec3 | null = tt[0];
+  if (!Xseed) {
+    if (!tt[1]) return null;
+    Xseed = [Yseed[1] * tt[1][2] - Yseed[2] * tt[1][1],
+             Yseed[2] * tt[1][0] - Yseed[0] * tt[1][2],
+             Yseed[0] * tt[1][1] - Yseed[1] * tt[1][0]];
+  }
+  const t = [Xseed, tt[1] ?? [0, 0, 1], Yseed] as Vec3[];
   const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
   const unit = (v: Vec3): Vec3 => {
     const L = Math.hypot(v[0], v[1], v[2]);
@@ -1324,7 +1343,7 @@ function draftGazeDrawn(): Vec3 | null {
 /**
  * **작도 화면인가 모델링 화면인가**(지시 6-d) — 상태는 저장하지 않는다: 자세에서 매번
  * 계산한다(§1의 규약 그대로). 작도 = 핀(확정 시점) 또는 **축 정렬 + 피치 0**(임계는
- * D-L66의 `hand_deg` 재사용): 1점(요도 축 정렬) / 2점(요가 축 사이). 그 밖은 모델링 —
+ * D-L77의 `hand_deg` 재사용): 1점(요도 축 정렬) / 2점(요가 축 사이). 그 밖은 모델링 —
  * 소실점·지평선·그리드가 없고 그리기가 막힌다(지시 6-e — A-3: 그리려면 복귀한다).
  */
 function draftStateNow(): "pre" | "draft_pinned" | "draft_one" | "draft_two" | "model" {
@@ -1339,7 +1358,7 @@ const draftingNow = (): boolean => draftStateNow() !== "model";
 
 /**
  * **가장 가까운 작도 시점으로 복귀**(지시 6-a·f). 피치를 0으로 접고, 요는 축 이탈이
- * `hand_deg` 안이면 그 축으로(1점 — 큐브 재탭 D-L66과 같은 답), 밖이면 유지한다(2점).
+ * `hand_deg` 안이면 그 축으로(1점 — 큐브 재탭 D-L76과 같은 답), 밖이면 유지한다(2점).
  * 카메라 이동은 큐브 탭과 같은 경로(`snapToDir` — 거리·중심 유지)다(#17).
  */
 function returnToDraft(): void {
@@ -3622,6 +3641,11 @@ refresh();
   viewZoomLim: () => ({ ...Stage.VIEW_ZOOM_LIM }),
   /** **작도/모델링 상태**(14차 항목 6-d) — 저장 없는 계산값. 종단 확인이 그대로 읽는다(#17). */
   viewState: () => draftStateNow(),
+  /** 판정의 실측 각(#49 — 피치·요 이탈, 그린 축 기준계). 원장이 각도를 직접 든다(6-R1 [2]). */
+  draftJudge: () => {
+    const f = draftGazeDrawn();
+    return f ? judgeDraftPose(f, ONE_POINT_TOL.hand_deg) : null;
+  },
   /** **작도 시점 복귀**(14차 항목 6-a) — 버튼과 같은 함수다(#17). */
   returnToDraft: () => { returnToDraft(); },
   /** 지금 시점의 표시 문맥(소실점·지평선 y) — 원장이 표시 계산의 출처를 대조하는 데 쓴다. */
