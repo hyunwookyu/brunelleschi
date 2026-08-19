@@ -7,6 +7,7 @@
  },
  "what_this_does_not_say": [
   "dpr 1·마우스·한 픽스처(확정된 합성 상자)다(#12·#21).",
+  "**위계 셋 중 셋을 다 잰다**(1차 리뷰어 [6]) — ① 축 미배정(`snap_aux_id`·`stroke_axis`) ② 카메라 불변(`cam_unchanged_by_aux` — 차수·슬롯·유한 소실점 수·f) ③ 강제 축이면 경쟁 없음(`forced_competed` = 0). 초판은 ①만 쟀다.",
   "**보조 각도가 옳은지는 안 잰다** — 사용자가 준 값이다. 이 원장이 재는 것은 그 값이 **뜻대로 방향이 되는가**이고, 그 방향이 그리려는 벽과 맞는지는 사용자의 몫이다.",
   "**칠해진 픽셀은 안 잰다** — 틱·반원·측점의 **자리**만 든다(`drawAuxVps`·`drawThales`가 그 값을 그대로 받는다).",
   "**무한원 보조는 이 픽스처에서 안 났다**(#35) — 축과 정확히 화면 평행이 되는 각도가 있어야 하고 그 자리는 안 만들었다. 그 갈래는 **안 쟀다**(0으로 안 센다, #36).",
@@ -18,7 +19,7 @@
    1280,
    675
   ],
-  "arms": 7,
+  "arms": 8,
   "angles_deg": [
    45,
    30,
@@ -55,7 +56,8 @@
     "yawDeg": 60,
     "pitchDeg": 0
    }
-  ]
+  ],
+  "count_after_make": 3
  },
  "placed": {
   "aux": [
@@ -95,9 +97,9 @@
    69.55
   ],
   "gap_to_horizon_px": [
-   0,
-   0,
-   0
+   2.341019521996756e-14,
+   3.1154903639916866e-14,
+   1.6364293888858563e-14
   ],
   "principal": [
    640,
@@ -153,6 +155,8 @@
    "aux_id": "aux1",
    "before_aux": 0,
    "after_aux": 2,
+   "strokes_before": 12,
+   "pending_before": 0,
    "delta_aux": 2,
    "place_delta": {
     "aux": 2
@@ -162,13 +166,16 @@
    "lifted": true
   },
   "off": {
-   "kept_ids": [
+   "ids_before_clear": [
     "aux1",
     "aux2",
     "aux3",
     "aux4",
     "aux5"
    ],
+   "ids_after_clear": [],
+   "strokes_before": 13,
+   "pending_before": 0,
    "delta_aux": 0,
    "place_delta": {
     "two_point": 1
@@ -196,6 +203,37 @@
   "competed_delta": 7,
   "won_delta": 0
  },
+ "hierarchy": {
+  "cam_before": {
+   "order": 3,
+   "slots": [
+    "vp",
+    "vp",
+    "vp"
+   ],
+   "vps_finite": 3,
+   "standing": true,
+   "f": 1000
+  },
+  "cam_after": {
+   "order": 3,
+   "slots": [
+    "vp",
+    "vp",
+    "vp"
+   ],
+   "vps_finite": 3,
+   "standing": true,
+   "f": 1000
+  },
+  "forced": {
+   "stroke_axis": 0,
+   "stroke_aux_id": null,
+   "delta_aux": 0,
+   "competed_delta": 0,
+   "won_delta": 0
+  }
+ },
  "offscreen": {
   "at": [
    2014,
@@ -209,11 +247,11 @@
   ]
  },
  "summary": {
-  "aux_count": 3,
+  "aux_count_after_make": 3,
   "gap_to_horizon_px": [
-   0,
-   0,
-   0
+   2.341019521996756e-14,
+   3.1154903639916866e-14,
+   1.6364293888858563e-14
   ],
   "f_rel_gap": 0,
   "slope_line_off_px": [
@@ -254,24 +292,58 @@
   "tie_stroke_axis": 0,
   "tie_same_vp_px": 0,
   "tie_competed": 7,
-  "tie_won": 0
+  "tie_won": 0,
+  "cam_unchanged_by_aux": true,
+  "cam_before_after": [
+   {
+    "order": 3,
+    "slots": [
+     "vp",
+     "vp",
+     "vp"
+    ],
+    "vps_finite": 3,
+    "standing": true,
+    "f": 1000
+   },
+   {
+    "order": 3,
+    "slots": [
+     "vp",
+     "vp",
+     "vp"
+    ],
+    "vps_finite": 3,
+    "standing": true,
+    "f": 1000
+   }
+  ],
+  "forced_competed": 0,
+  "forced_delta_aux": 0,
+  "forced_stroke_axis": 0
  },
  "gate": {
-  "registered": "보조 소실점이 지평선 위에 서고(`gap_to_horizon_px` ≈ 0), 경사 보조가 대응 수평 소실점과 **수직축 소실점을 잇는 직선 위**에 있고(`slope_line_off_px` ≈ 0 — 이론서 15.1의 일반형), 그 방향으로 그은 획이 **보조 경로로** 놓이며(`snap_delta_aux[0]` = 1) **축은 free**다. 판정은 `summary`의 필드가 든다(#47).",
+  "registered": "보조 소실점이 지평선 위에 서고(`gap_to_horizon_px` ≈ 0), 경사 보조가 «대응 수평 소실점 ↔ 수직축 소실점» **직선 위**에 있고(`slope_line_off_px` ≈ 0 — 이론서 15.1의 일반형), 그 방향으로 그은 획이 **보조 경로로** 놓이고(`snap_delta_aux[0]` **> 0** · `snap_place_delta[0]`에 `aux`가 있다) **축은 `free`이며 `auxId`가 붙는다**. ⛔ 초판은 여기에 «= 1»을 박았는데 실제 값은 그보다 크다(승격 연쇄가 함께 올린다) — 수치를 산문에 안 박는다(#47 · 1차 리뷰어 [1]). 판정은 `summary`의 필드가 든다.",
   "registered_note": "⚠ **이 항목이 등록한 게이트다 — CLAUDE.md §2 중단 조건 아님**(#41).",
-  "reachability": "**보조가 없으면 그 손짓이 어디로 가는가** — 되살림 팔(`snap.off`)이 그 답이다. 값은 `snap_delta_aux`(켬 1 · 끔 0)와 `snap_axis`(켬 free · 끔 축 번호)의 쌍이다. 끔에서도 1이면 이 원장은 아무것도 안 말한다(#32·#40).",
+  "reachability": "**보조가 없으면 그 손짓이 어디로 가는가** — 되살림 팔(`snap.off`)이 그 답이다. 값은 `snap_delta_aux`의 **비트 쌍**(켬 > 0 · 끔 = 0)이고 «대신 어디로 갔는가»는 `snap_place_delta`가 든다. ⛔ 초판은 «끔은 축 번호»라고 적었는데 **틀렸다**(1차 리뷰어 [1]): 이 픽스처에서 끔 팔은 **양 끝 스냅**으로 놓여 축도 `free`다 — «보조가 없으면 축으로 끌려간다»는 이 손짓에서 성립하지 않는다. 끔에서도 `aux`가 늘면 이 원장은 아무것도 안 말한다(#32·#40).",
   "reachability_value": [
    2,
    0
   ],
   "reachability_source": "summary/snap_delta_aux",
   "reachability_value_fixture_determined": true,
+  "reachability_bits": {
+   "on_used_aux": true,
+   "off_used_aux": false,
+   "tie_aux_won": false,
+   "forced_competed": false
+  },
   "result": {
-   "aux_count": 3,
+   "aux_count_after_make": 3,
    "gap_to_horizon_px": [
-    0,
-    0,
-    0
+    2.341019521996756e-14,
+    3.1154903639916866e-14,
+    1.6364293888858563e-14
    ],
    "f_rel_gap": 0,
    "slope_line_off_px": [
@@ -312,13 +384,43 @@
    "tie_stroke_axis": 0,
    "tie_same_vp_px": 0,
    "tie_competed": 7,
-   "tie_won": 0
+   "tie_won": 0,
+   "cam_unchanged_by_aux": true,
+   "cam_before_after": [
+    {
+     "order": 3,
+     "slots": [
+      "vp",
+      "vp",
+      "vp"
+     ],
+     "vps_finite": 3,
+     "standing": true,
+     "f": 1000
+    },
+    {
+     "order": 3,
+     "slots": [
+      "vp",
+      "vp",
+      "vp"
+     ],
+     "vps_finite": 3,
+     "standing": true,
+     "f": 1000
+    }
+   ],
+   "forced_competed": 0,
+   "forced_delta_aux": 0,
+   "forced_stroke_axis": 0
   }
  },
  "selfcheck_notes": {
-  "gap_zero": "`gap_to_horizon_px`가 0인 것은 **이론의 귀결이지 이 구현의 보장이 아니다**(#5) — 수평 방향(경사 0)의 소실점은 지평선 위에 있다(이론서 6.2의 전제). 구현이 수직 성분을 잘못 더하면 이 값이 0을 벗어난다. 그래서 임계를 건다.",
+  "gap_near_zero": "`gap_to_horizon_px`는 **부동소수 꼬리**(1e-14대)이지 정확한 0이 아니다 — ⛔ 초판은 2자리로 반올림한 좌표의 차를 써서 0으로 찍혔고, 그러면 5e-3px 미만의 오배선을 못 잡는다(1차 리뷰어 [8]). 지금은 배정도 값의 차다. 0에 가까운 것은 **이론의 귀결이지 이 구현의 보장이 아니다**(#5) — 수평 방향의 소실점은 지평선 위에 있다. 구현이 수직 성분을 잘못 더하면 이 값이 벗어난다.",
   "slope_line_off_zero": "`slope_line_off_px`가 0인 것은 **이론의 판정**이다 — 경사 소실점은 «대응 수평 소실점 ↔ 수직축 소실점» 직선 위에 있다(이론서 15.1의 일반형). 정답이 밖에 있으므로 보장이 아니고 임계를 건다. ⚠ **15.1의 문면**(«바로 위/아래»)은 수직축이 무한원일 때(2점)의 특수해다 — 이 픽스처는 3점이라 `slope_dx_screen_px`가 0이 아니고, 그것이 AS-L54의 실측이다.",
-  "f_rel_gap_zero": "`f_rel_gap`이 0인 것도 **이론의 판정**이다(#5) — 탈레스 작도가 카메라의 f를 되돌리는지 본다. 구현이 2점 식(`|PE|`)을 3점에 그대로 쓰면 이 값이 0.2대로 뛴다(초판이 그랬다 — AS-L55). 보장이 아니라 실측이고 임계를 건다.",
+  "f_rel_gap_zero": "`f_rel_gap`이 **정확히 0**인 것은 **왕복이기 때문이다**(#5 자기참조 유형 3): 같은 카메라의 축을 소실점으로 투영하고 그 소실점에서 f를 되돌린다 — 식이 대수적으로 역이면 배정도에서 0이 나온다. **그러므로 이것은 잡음의 크기가 아니라 «식이 맞는가»의 판별이다.** 판별력이 있다는 증거: 2점 식(`|PE|`)을 3점에 그대로 쓴 초판이 **0.23**을 냈다(AS-L55). 그래서 임계를 건다 — 잰 것은 오차가 아니라 **식의 옳음**이다.",
+  "won_zero": "`tie.won_delta`·`hierarchy.forced.won_delta`가 0인 것은 **이 원장이 재려는 결론 자체다**(위계) — 비긴 자리에서 보조가 안 이기고, 강제 축이면 경쟁조차 안 한다. 0이 나와야 규약이 선다. 집계가 도는 것은 같은 팔의 `competed_delta`가 든다(비긴 팔은 > 0, 강제 팔은 0이 결론이다).",
+  "reachability_value_flagged": "`gate.reachability_value` = [2, 0]이 #40 검사에 걸린다 — **맞는 지적이고 원장이 그렇게 적는다**: 크기(2·0)는 승격 연쇄가 정하는 수라 정보가 아니고, **실제로 재는 것은 `gate.reachability_bits`의 네 비트**다(`_fixture_determined: true`). 자동 검사가 배열의 0을 보고 거는 플래그이고, 사유가 여기 있다.",
   "off_delta_zero": "`snap_delta_aux[1]`(끔 팔)이 0인 것은 **되살림의 성립**이다 — 보조가 없으면 그 경로가 안 돈다. 0이 나와야 대비가 선다. 그 손짓이 **대신 어디로 갔는지는** `snap_place_delta[1]`가 든다(#43: 경로별 카운터).",
   "on_delta_gt_one": "`snap_delta_aux[0]`이 1보다 클 수 있다 — 확정 뒤 **승격 연쇄**가 대기 획을 같은 보조 방향으로 함께 올리기 때문이다(`promoteChain`). 판정은 «0보다 큰가»이지 정확한 수가 아니다."
  },

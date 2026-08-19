@@ -254,17 +254,36 @@ async function noHoverArms(page: any) {
   await touchEv("pointerup", t[0] + 110, t[1] + 35);
   await page.waitForTimeout(60);
   const t1 = await page.evaluate(() => window.S2S.hoverLock());
+  // ⚠⚠ **터치는 궤도로 갔다** — 손가락 하나가 카메라를 돌린다(2026-08-17 지시 G).
+  // 그러므로 이 팔은 **시점을 바꾼다.** 그 사실을 값으로 남기고(그 자체가 ⑥의 결론을
+  // 강화한다) 다음 팔은 **장면을 새로 연다**. 초판은 안 열어서, 전량 실행에서 ⑦이
+  // 돌아간 시점의 옛 좌표로 대는 바람에 스냅이 안 걸렸다(단독 실행에서는 회전이 작아
+  // 통과했다 — 순서 의존 결함이지 흔들림이 아니다).
+  const pinnedAfterTouch = await page.evaluate(() => window.S2S.stage.isPinned);
   const touch = { strokes_added: (await page.evaluate(() => window.S2S.doc().strokes.length)) - n0,
-                  stats: statDelta(t0, t1) };
+                  stats: statDelta(t0, t1),
+                  /** 터치가 **카메라를 돌렸는가** — 잉크가 아니라 궤도라는 것의 실측 */
+                  unpinned_view: !pinnedAfterTouch };
 
   // ---- ⑦ 무호버 펜: 호버 없이 바로 댄다 — 잠글 것이 없어 착지 질의로 간다
+  // **장면을 새로 연다**(위 ⚠⚠) — 터치 팔이 시점을 바꿨다
+  await page.goto("/l.html");
+  await page.waitForFunction(() => !!window.S2S);
+  await setupScene(page);
+  await page.evaluate(() => window.S2S.confirmNow());
+  await page.waitForTimeout(80);
+  await page.evaluate(() => window.S2S.setHoverLock(true));
+  const t2 = await page.evaluate(() => {
+    const s0 = window.S2S.doc().strokes.filter((x: any) => x.seg3d)[0];
+    return s0.pts2d[0];
+  });
   await page.evaluate(() => window.S2S.clearHover());
   const p0 = await page.evaluate(() => window.S2S.hoverLock());
   const hoverBefore = await page.evaluate(() => window.S2S.hoverSnap());
-  await pen(page, "pointerdown", t[0], t[1]);
+  await pen(page, "pointerdown", t2[0], t2[1]);
   const during = await page.evaluate(() => window.S2S.hoverLock());
-  for (let i = 1; i <= 5; i++) await pen(page, "pointermove", t[0] + i * 22, t[1] + i * 7);
-  await pen(page, "pointerup", t[0] + 110, t[1] + 35);
+  for (let i = 1; i <= 5; i++) await pen(page, "pointermove", t2[0] + i * 22, t2[1] + i * 7);
+  await pen(page, "pointerup", t2[0] + 110, t2[1] + 35);
   await page.waitForTimeout(60);
   const p1 = await page.evaluate(() => window.S2S.hoverLock());
   const after = await page.evaluate(() => {
@@ -339,6 +358,10 @@ test("호버에서 본 후보가 착지에서 그대로 쓰인다", async ({ pag
     what_this_does_not_say: [
       "dpr 1·합성 `PointerEvent`·한 픽스처다(#12·#21). **실기(아이패드) 확인은 없다** — "
       + "애플펜슬의 실제 호버 표본이 오면 그때 판정한다.",
+      "⚠ **터치 팔은 시점을 바꾼다** — 손가락 하나가 궤도이기 때문이다(그것이 그 팔의 "
+      + "결론이고 `touch_unpinned_view`가 그 실측이다). 그래서 무호버 펜 팔은 **장면을 "
+      + "새로 연다**. 초판은 안 열어서 전량 실행에서만 실패했다 — **순서 의존 결함이지 "
+      + "흔들림이 아니다**(단독 실행에서는 회전이 작아 통과했다).",
       "**호버 없는 갈래는 `arms.no_hover`가 직접 잰다**(지시 4-c). ⛔ 초판은 그 대역을 "
       + "`touch_route.spec.ts`로 위임했는데 **그 원장은 잠금을 안 든다**(2026-08-17 지시 G의 "
       + "입력 라우팅 하네스다). 1차 리뷰어 [6]으로 여기에 팔을 만들었고, 만들면서 "
@@ -426,6 +449,8 @@ test("호버에서 본 후보가 착지에서 그대로 쓰인다", async ({ pag
       /** ⑥ 터치는 **잉크가 아니다** — 획이 안 생기고 카운터도 안 는다(지시 4-c의 실제 자리) */
       touch_strokes_added: noHover.touch.strokes_added,
       touch_downs: noHover.touch.stats.downs,
+      /** 터치가 카메라를 돌렸는가 — «잉크가 아니라 궤도»의 실측 */
+      touch_unpinned_view: noHover.touch.unpinned_view,
       /** ⑦ 무호버 펜 — 잠글 것이 없어 착지 질의로 간다(거동 불변) */
       pen_no_hover_pinned: noHover.pen_no_hover.pinned_during,
       pen_no_hover_start_kind: noHover.pen_no_hover.after.start_kind,
@@ -506,6 +531,8 @@ test("호버에서 본 후보가 착지에서 그대로 쓰인다", async ({ pag
   // **지시 4-c ⑥** — 터치는 잉크가 아니다: 획도 카운터도 안 생긴다(궤도로 간다)
   expect(noHover.touch.strokes_added).toBe(0);
   expect(noHover.touch.stats.downs).toBe(0);
+  // 그리고 **궤도로 갔다** — 그것이 «터치는 잉크가 아니다»의 다른 쪽 증거다
+  expect(noHover.touch.unpinned_view).toBe(true);
   // **지시 4-c ⑦** — 무호버 펜은 잠글 것이 없어 착지 질의로 간다(거동 불변)
   expect(noHover.pen_no_hover.hover_before_down).toBeNull();
   expect(noHover.pen_no_hover.pinned_during).toBeNull();

@@ -168,6 +168,36 @@ describe("탈레스 반원 (이론서 6.2)", () => {
     expect(Math.abs(oldF - F) / F).toBeGreaterThan(0.01);
   });
 
+  it("**롤이 있는 3점**에서도 f를 되돌린다 — E의 x가 주점 x와 다른 자리", () => {
+    // ⚠ 앞 팔의 픽스처는 롤 0이라 `V₃ₓ = pₓ`였고, 그때 "E는 V₃에서 내린 수선의 발 위"와
+    // "E는 주점 바로 위"가 **같은 점을 준다**(1차 리뷰어 [9]). 롤을 넣어 그 둘을 가른다.
+    const rz = (14 * Math.PI) / 180, cz = Math.cos(rz), sz = Math.sin(rz);
+    const rotZ = (v: Vec3): Vec3 => [cz * v[0] - sz * v[1], sz * v[0] + cz * v[1], v[2]];
+    const t = (35 * Math.PI) / 180, q = (18 * Math.PI) / 180;
+    const cy = Math.cos(q), sy = Math.sin(q);
+    const rotX = (v: Vec3): Vec3 => [v[0], cy * v[1] - sy * v[2], sy * v[1] + cy * v[2]];
+    const R = (v: Vec3) => rotZ(rotX(v));
+    const A: (Vec3 | null)[] = [R([Math.cos(t), 0, Math.sin(t)]),
+                                R([-Math.sin(t), 0, Math.cos(t)]),
+                                R([0, 1, 0])];
+    const v1 = axisVpAt(A[0], P, F, IMG)!.at!;
+    const v2 = axisVpAt(A[1], P, F, IMG)!.at!;
+    const v3 = axisVpAt(A[2], P, F, IMG)!.at!;
+    const th = thales(v1, v2, P)!;
+    expect(th).not.toBeNull();
+    // 이 픽스처가 실제로 앞 팔과 다른 자리인지 **먼저 확인한다**(#12: 동작점이 새로운가)
+    expect(Math.abs(v3[0] - P[0])).toBeGreaterThan(1);      // 수직 소실점이 주점 x 위가 아니다
+    expect(Math.abs(th.E[0] - P[0])).toBeGreaterThan(1);    // E도 주점 x 위가 아니다
+    expect(th.principalOffset).toBeGreaterThan(1);
+    // 그래도 f는 되돌아온다
+    expect(Math.abs(th.f - F) / F).toBeLessThan(1e-9);
+    // **수심 성질** — 주점의 발이 V₃에서 내린 수선의 발과 같다(7.6이 든 그 점)
+    const ux = (v2[0] - v1[0]), uy = (v2[1] - v1[1]), L = Math.hypot(ux, uy);
+    const foot3 = ((v3[0] - v1[0]) * ux + (v3[1] - v1[1]) * uy) / (L * L);
+    const f3: [number, number] = [v1[0] + foot3 * ux, v1[1] + foot3 * uy];
+    expect(Math.hypot(th.foot[0] - f3[0], th.foot[1] - f3[1])).toBeLessThan(1e-6);
+  });
+
   it("2점에서는 principalOffset이 0이고 f = |PE|다(옛 식이 특수해다)", () => {
     const A = axes();
     const v1 = axisVpAt(A[0], P, F, IMG)!.at!;

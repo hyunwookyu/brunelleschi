@@ -7,6 +7,7 @@
  },
  "what_this_does_not_say": [
   "dpr 1·합성 `PointerEvent`·한 픽스처다(#12·#21). **실기(아이패드) 확인은 없다** — 애플펜슬의 실제 호버 표본이 오면 그때 판정한다.",
+  "⚠ **터치 팔은 시점을 바꾼다** — 손가락 하나가 궤도이기 때문이다(그것이 그 팔의 결론이고 `touch_unpinned_view`가 그 실측이다). 그래서 무호버 펜 팔은 **장면을 새로 연다**. 초판은 안 열어서 전량 실행에서만 실패했다 — **순서 의존 결함이지 흔들림이 아니다**(단독 실행에서는 회전이 작아 통과했다).",
   "**호버 없는 갈래는 `arms.no_hover`가 직접 잰다**(지시 4-c). ⛔ 초판은 그 대역을 `touch_route.spec.ts`로 위임했는데 **그 원장은 잠금을 안 든다**(2026-08-17 지시 G의 입력 라우팅 하네스다). 1차 리뷰어 [6]으로 여기에 팔을 만들었고, 만들면서 **터치는 애초에 그리기가 아니라는 것**이 드러났다(`inkable`: 손가락 하나는 궤도, 둘은 팬·줌) — 그래서 갈래를 둘로 갈랐다: ⑥ 터치(획이 안 생긴다) · ⑦ 무호버 펜(호버를 안 거친 펜 — 종전 경로로 간다). ⑦이 지시 4-c가 뜻하는 자리다.",
   "`no_hover`는 «호버 후보가 없는 채로 시작한 획»을 센다 — **기기 종류가 아니다**(#49). 터치 갈래는 `arms.touch`가 `pointerType: \"touch\"`로 직접 가른다. 씨앗 획처럼 펜이지만 호버를 안 거친 획도 같은 칸에 든다.",
   "**`pinned3d`·`pinned2d`는 획이 도는 동안에만 값이 있다**(획 수명의 상태다). 그래서 `rows[].pinned_during`이 **pointerdown 직후** 읽은 것이고, `counters`의 그 필드는 획 사이 값이라 늘 null이다(1차 리뷰어 [8]).",
@@ -527,7 +528,8 @@
      "no_hover": 0,
      "stale": 0,
      "maxLandGapPx_cumulative": 0
-    }
+    },
+    "unpinned_view": true
    },
    "pen_no_hover": {
     "hover_before_down": null,
@@ -624,6 +626,7 @@
   "mouse_same_kind": true,
   "touch_strokes_added": 0,
   "touch_downs": 0,
+  "touch_unpinned_view": true,
   "pen_no_hover_pinned": null,
   "pen_no_hover_start_kind": "endpoint",
   "pen_no_hover_counter": 1
@@ -718,6 +721,7 @@
    "mouse_same_kind": true,
    "touch_strokes_added": 0,
    "touch_downs": 0,
+   "touch_unpinned_view": true,
    "pen_no_hover_pinned": null,
    "pen_no_hover_start_kind": "endpoint",
    "pen_no_hover_counter": 1

@@ -1,5 +1,5 @@
 {
-  "n_flags": 5170,
+  "n_flags": 5163,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[18].specs[2].tests[0].results[0].duration",
@@ -18,33 +18,18 @@
     },
     {
       "path": "aux_vp.json:placed.gap_to_horizon_px[0]",
-      "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
-    },
-    {
-      "path": "aux_vp.json:placed.gap_to_horizon_px[0]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "val": 2.341019521996756e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "aux_vp.json:placed.gap_to_horizon_px[1]",
-      "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
-    },
-    {
-      "path": "aux_vp.json:placed.gap_to_horizon_px[1]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "val": 3.1154903639916866e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "aux_vp.json:placed.gap_to_horizon_px[2]",
-      "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
-    },
-    {
-      "path": "aux_vp.json:placed.gap_to_horizon_px[2]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "val": 1.6364293888858563e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "aux_vp.json:thales.f_rel_gap",
@@ -52,34 +37,29 @@
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
-      "path": "aux_vp.json:summary.gap_to_horizon_px[0]",
+      "path": "aux_vp.json:tie.won_delta",
       "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "aux_vp.json:hierarchy.forced.won_delta",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "aux_vp.json:summary.gap_to_horizon_px[0]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "val": 2.341019521996756e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "aux_vp.json:summary.gap_to_horizon_px[1]",
-      "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
-    },
-    {
-      "path": "aux_vp.json:summary.gap_to_horizon_px[1]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "val": 3.1154903639916866e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "aux_vp.json:summary.gap_to_horizon_px[2]",
-      "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
-    },
-    {
-      "path": "aux_vp.json:summary.gap_to_horizon_px[2]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "val": 1.6364293888858563e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "aux_vp.json:summary.f_rel_gap",
@@ -88,33 +68,18 @@
     },
     {
       "path": "aux_vp.json:gate.result.gap_to_horizon_px[0]",
-      "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
-    },
-    {
-      "path": "aux_vp.json:gate.result.gap_to_horizon_px[0]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "val": 2.341019521996756e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "aux_vp.json:gate.result.gap_to_horizon_px[1]",
-      "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
-    },
-    {
-      "path": "aux_vp.json:gate.result.gap_to_horizon_px[1]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "val": 3.1154903639916866e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "aux_vp.json:gate.result.gap_to_horizon_px[2]",
-      "val": 0,
-      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
-    },
-    {
-      "path": "aux_vp.json:gate.result.gap_to_horizon_px[2]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "val": 1.6364293888858563e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "aux_vp.json:gate.result.f_rel_gap",
@@ -22840,7 +22805,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 2.255973186038318e-13,
+      "val": 2.90878432451791e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -23375,12 +23340,12 @@
     },
     {
       "path": "view_cube.json:after_face.fy",
-      "val": -5.157278639134876e-14,
+      "val": -5.84622184448933e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_cube.json:after_retap.fy",
-      "val": -6.530267349331909e-17,
+      "val": -6.53026734933183e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -23645,17 +23610,17 @@
     },
     {
       "path": "viewpoint_undo.json:orbited.p[1]",
-      "val": 2.142494093709743e-16,
+      "val": 2.1424940937097438e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[0]",
-      "val": -2.876978900581775e-17,
+      "val": -2.8769789005853154e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[2]",
-      "val": -1.0471346843858679e-17,
+      "val": -1.0471346843761433e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -23680,27 +23645,27 @@
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[0]",
-      "val": -2.876978900570063e-17,
+      "val": -2.8769789005701224e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[2]",
-      "val": -1.0471346844180472e-17,
+      "val": -1.0471346844178833e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dp",
-      "val": 2.6172709068531485e-12,
+      "val": 2.218511197746302e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dq",
-      "val": 3.740803357661473e-13,
+      "val": 3.1702161858063903e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.p[0]",
-      "val": -1.4403454912008934e-13,
+      "val": -1.6367562400010155e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -23715,32 +23680,32 @@
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[1]",
-      "val": -2.0582489592903217e-14,
+      "val": -2.3389192719208207e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[2]",
-      "val": -6.301569999608158e-31,
+      "val": -7.1608749995547275e-31,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.p[1]",
-      "val": 2.1424940937097423e-16,
+      "val": 2.142494093709743e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[0]",
-      "val": -2.8769789005779044e-17,
+      "val": -2.8769789005803166e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[2]",
-      "val": -1.0471346843965015e-17,
+      "val": -1.0471346843898743e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:return_gap",
-      "val": 2.58648205884528e-11,
+      "val": 3.3399184161535756e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -26335,7 +26300,7 @@
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 11,
+        ".md": 12,
         ".ts": 9,
         ".py": 2
       }
@@ -26393,7 +26358,7 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 338,
+      "targets": 340,
       "hits": 1,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 1건"
     },
@@ -26402,7 +26367,7 @@
       "unit": "인용 줄",
       "targets": 187,
       "hits": 0,
-      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1859개이고 엄격 판정이면 378개(80줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
+      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1860개이고 엄격 판정이면 377개(80줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
     },
     {
       "scan": "scan_pitfall_citations",
@@ -27119,9 +27084,9 @@
   },
   "cited_value_population": {
     "lines_checked": 187,
-    "tokens_checked": 1859,
+    "tokens_checked": 1860,
     "flags_line_rule": 0,
-    "strict_tokens_flagged": 378,
+    "strict_tokens_flagged": 377,
     "strict_lines_flagged": 80,
     "hashless_only_lines_in_population": false,
     "note": "**모집단은 같고 판정만 둘이다.** `현재 해시로 적힌 인용 줄`이 모집단이고 (해시 없이 이름만 적힌 원장은 **줄을 모집단에 넣지 않는다** — 같은 줄에 현재 해시 인용이 있을 때 **대조 집합에만** 더한다), 그 위에서 엄격 판정(토큰별)과 현행 판정(줄에 하나도 없을 때만)의 수를 함께 낸다. `tokens_checked` ↔ `strict_tokens_flagged`가 옛 1129 ↔ 272와 같은 단위이고, `lines_checked` ↔ `flags_line_rule`이 96 ↔ 2와 같은 단위다"

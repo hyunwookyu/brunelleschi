@@ -42,7 +42,7 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
     const S = window.S2S;
     S.clearAux();
     const ids = [S.addAux(45, 0), S.addAux(30, 0), S.addAux(60, 0)];
-    return { ids, dirs: S.aux().dirs };
+    return { ids, dirs: S.aux().dirs, count_after_make: S.aux().dirs.length };
   });
 
   // ---- ② **자리**(지시 7-a) — 수평 보조는 **지평선 위**에 선다
@@ -51,7 +51,8 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
     const o = S.thales();
     const av = S.auxVps();
     const ov = S.draftOverlay();
-    const hv = ov.axisVps.filter((a: any) => a && a.at).map((a: any) => a.at);
+    const hvRaw = ov.axisVps.filter((a: any) => a && a.at).map((a: any) => a.at);
+    const hv = hvRaw;
     const r = (v: number) => Math.round(v * 100) / 100;
     return {
       aux: av.map((a: any) => a && ({ id: a.id, yaw: a.yawDeg, pitch: a.pitchDeg,
@@ -60,12 +61,14 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
                                             : r(a.distFromPrincipal) })),
       horizon_y: hv.length >= 2 ? [r(hv[0][1]), r(hv[1][1])] : null,
       // 지평선(두 수평 소실점을 잇는 선)까지의 점-선 거리 — 0이어야 한다(이론서: 수평 방향)
+      // ⚠ **반올림 전 배정도 값이다**(1차 리뷰어 [8] — 초판은 2자리로 반올림한 좌표의
+      // 차라서 5e-3px 미만의 오배선을 0으로 찍었다). 좌표(`hvRaw`)도 안 반올림한 것을 쓴다
       gap_to_horizon_px: (() => {
-        if (hv.length < 2) return null;
-        const [a, b] = hv;
+        if (hvRaw.length < 2) return null;
+        const [a, b] = hvRaw;
         const ex = b[0] - a[0], ey = b[1] - a[1], L = Math.hypot(ex, ey);
         return av.filter((x: any) => x && x.at).map((x: any) =>
-          r(Math.abs((x.at[0] - a[0]) * ey - (x.at[1] - a[1]) * ex) / L));
+          Math.abs((x.at[0] - a[0]) * ey - (x.at[1] - a[1]) * ex) / L);
       })(),
       principal: o ? o.principal.map(r) : null,
     };
@@ -138,6 +141,9 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
     }, auxId);
     if (!g) return null;
     const before = await page.evaluate(() => ({ ...window.S2S.placeBy() }));
+    const strokesBefore = await page.evaluate(() => window.S2S.doc().strokes.length);
+    const pendingBefore = await page.evaluate(
+      () => window.S2S.doc().strokes.filter((s: any) => !s.seg3d).length);
     await page.mouse.move(box.x + g.a[0], box.y + g.a[1]);
     await page.mouse.down();
     for (let i = 1; i <= 6; i++) {
@@ -157,6 +163,7 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
       if (d) dp[k] = d;
     }
     return { aux_id: auxId, before_aux: before.aux, after_aux: after.placeBy.aux,
+             strokes_before: strokesBefore, pending_before: pendingBefore,
              delta_aux: after.placeBy.aux - before.aux,
              /** 그 손짓이 늘린 **모든** 경로 카운터 — 어디로 갔는지가 여기 있다(#43) */
              place_delta: dp,
@@ -165,7 +172,10 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
   const snapOn = await drawAlong("aux1");
   // **되살림**(#30) — 보조를 지우고 **같은 손짓**을 다시 한다: 축으로 끌려가야 한다
   const snapOff = await (async () => {
-    const keepIds = await page.evaluate(() => window.S2S.aux().dirs.map((d: any) => d.id));
+    const idsBefore = await page.evaluate(() => window.S2S.aux().dirs.map((d: any) => d.id));
+    const strokesBefore = await page.evaluate(() => window.S2S.doc().strokes.length);
+    const pendingBefore = await page.evaluate(
+      () => window.S2S.doc().strokes.filter((s: any) => !s.seg3d).length);
     const at = await page.evaluate((id: string) => {
       const v = window.S2S.auxVps().find((x: any) => x && x.id === id);
       return v && v.at ? v.at : null;
@@ -201,7 +211,13 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
       const d = (after.placeBy as any)[k] - (before as any)[k];
       if (d) dp[k] = d;
     }
-    return { kept_ids: keepIds, delta_aux: after.placeBy.aux - before.aux, place_delta: dp,
+    const idsAfter = await page.evaluate(() => window.S2S.aux().dirs.map((d: any) => d.id));
+    return { /** ⚠ 이름을 고쳤다(1차 리뷰어 [2]) — 초판의 `kept_ids`는 **지우기 전** 목록이라
+              *  "다섯이 남아 있다"로 읽혔다. 지운 뒤가 `ids_after_clear`이고 비어야 한다 */
+             ids_before_clear: idsBefore, ids_after_clear: idsAfter,
+             /** 두 팔의 문서 상태 — 같은 손짓이 같은 분모 위에서 돌았는지의 재료(#38) */
+             strokes_before: strokesBefore, pending_before: pendingBefore,
+             delta_aux: after.placeBy.aux - before.aux, place_delta: dp,
              stroke_axis: after.axis, stroke_aux_id: after.auxId, lifted: after.lifted };
   })();
 
@@ -261,6 +277,63 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
              won_delta: after.aux.won - before.ax.won };
   })();
 
+  // ---- ⑧ **위계 ②③**(1차 리뷰어 [6]) — 선언만 있고 안 재던 둘.
+  //   ② 보조는 **카메라에 기여하지 않는다**: 차수·소실점 개수가 안 바뀐다
+  //   ③ **강제 축이 있으면 경쟁 자체를 안 한다**: 축 키로 고정하고 보조 방향으로 그어 본다
+  const hierarchy = await (async () => {
+    const box = (await page.locator("#frame").boundingBox())!;
+    const snap = () => page.evaluate(() => {
+      const S = window.S2S, r = S.rules();
+      return { order: S.order(),
+               slots: r.slots.map((x: any) => x ? x.kind : null),
+               vps_finite: S.cam.vps().filter(Boolean).length,
+               standing: S.cam.standing(), f: S.cam.ctx()?.f ?? null };
+    });
+    await page.evaluate(() => { window.S2S.clearAux(); });
+    const camBefore = await snap();
+    await page.evaluate(() => {
+      const S = window.S2S;
+      S.addAux(45, 0); S.addAux(20, 0); S.addAux(70, 12);
+    });
+    const camAfter = await snap();
+    // ③ 강제 축 — `Shift`가 아니라 **축 키**로 고정한다(D-L44 이후의 규약)
+    const g = await page.evaluate(async () => {
+      const S = window.S2S;
+      const g3 = await import("/src/s3d/geom3d.ts");
+      const c = S.cam.ctx();
+      const st = S.doc().strokes.find((x: any) => x.seg3d && x.axis !== 0 && x.axis !== "free")
+              ?? S.doc().strokes.find((x: any) => x.seg3d)!;
+      const a = g3.project(st.seg3d[0], c.principal, c.f)!;
+      const v = S.auxVps().find((x: any) => x && x.at && x.yawDeg === 45);
+      if (!v) return null;
+      const dx = v.at[0] - a[0], dy = v.at[1] - a[1], L = Math.hypot(dx, dy) || 1;
+      return { a, b: [a[0] + (dx / L) * 160, a[1] + (dy / L) * 160] };
+    });
+    if (!g) return { cam_before: camBefore, cam_after: camAfter, forced: null };
+    const before = await page.evaluate(() => ({ pb: { ...window.S2S.placeBy() },
+                                                ax: { ...window.S2S.aux() } }));
+    await page.keyboard.press("ArrowLeft");                 // 축1 고정(왼쪽 = 축1)
+    await page.mouse.move(box.x + g.a[0], box.y + g.a[1]);
+    await page.mouse.down();
+    for (let i = 1; i <= 6; i++) {
+      await page.mouse.move(box.x + g.a[0] + (g.b[0] - g.a[0]) * i / 6,
+                            box.y + g.a[1] + (g.b[1] - g.a[1]) * i / 6);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(70);
+    const after = await page.evaluate(() => {
+      const S = window.S2S, sts = S.doc().strokes, s = sts[sts.length - 1];
+      return { pb: { ...S.placeBy() }, ax: { ...S.aux() }, axis: s.axis,
+               auxId: s.auxId ?? null };
+    });
+    return { cam_before: camBefore, cam_after: camAfter,
+             forced: { stroke_axis: after.axis,
+                       stroke_aux_id: after.auxId,
+                       delta_aux: after.pb.aux - before.pb.aux,
+                       competed_delta: after.ax.competed - before.ax.competed,
+                       won_delta: after.ax.won - before.ax.won } };
+  })();
+
   // ---- ⑥ **화면 밖 처리**(지시 7-d) — 아주 얕은 각은 소실점이 화면 밖으로 나간다
   const offscreen = await page.evaluate(() => {
     const S = window.S2S;
@@ -289,6 +362,9 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
     },
     what_this_does_not_say: [
       "dpr 1·마우스·한 픽스처(확정된 합성 상자)다(#12·#21).",
+      "**위계 셋 중 셋을 다 잰다**(1차 리뷰어 [6]) — ① 축 미배정(`snap_aux_id`·`stroke_axis`) "
+      + "② 카메라 불변(`cam_unchanged_by_aux` — 차수·슬롯·유한 소실점 수·f) "
+      + "③ 강제 축이면 경쟁 없음(`forced_competed` = 0). 초판은 ①만 쟀다.",
       "**보조 각도가 옳은지는 안 잰다** — 사용자가 준 값이다. 이 원장이 재는 것은 그 값이 "
       + "**뜻대로 방향이 되는가**이고, 그 방향이 그리려는 벽과 맞는지는 사용자의 몫이다.",
       "**칠해진 픽셀은 안 잰다** — 틱·반원·측점의 **자리**만 든다(`drawAuxVps`·`drawThales`가 "
@@ -301,14 +377,20 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
       "**저장/복원은 안 쟀다** — 보조는 `Camera`가 아니라 앱 상태라 `.brnl`에 안 들어간다"
       + "(그 결정과 대가는 `DEFERRED`).",
     ],
-    setup: { canvas: offscreen.canvas, arms: 7,
+    setup: { canvas: offscreen.canvas, arms: 8,
              angles_deg: [45, 30, 60, 2], slopes_deg: [25, -25] },
     made, placed, thales: th, slope,
     snap: { on: snapOn, off: snapOff },
-    tie,
+    tie, hierarchy,
     offscreen,
     summary: {
-      aux_count: made.dirs.length,
+      /**
+       * ⚠ **모집단을 하나로 적는다**(1차 리뷰어 [10] — 초판은 3·4·5를 함의했다):
+       * `aux_count_after_make`는 ① 직후의 수이고, 그 뒤 팔들이 더 만든다 —
+       * 경사 팔(④)이 경사 둘 + **대응 수평 하나**를 더하고, 화면 밖 팔(⑥)과 위계 팔(⑦)은
+       * `clearAux()`로 시작해 하나만 둔다. 단계별 수는 `aux_count_by_stage`가 든다.
+       */
+      aux_count_after_make: made.count_after_make,
       gap_to_horizon_px: placed.gap_to_horizon_px,
       f_rel_gap: th ? th.f_rel_gap : null,
       slope_line_off_px: [slope.line_off_up, slope.line_off_dn],
@@ -330,17 +412,30 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
       /** 경쟁이 실제로 열렸는가(>0) · 보조가 이겼는가(0이어야 한다) */
       tie_competed: tie ? tie.competed_delta : null,
       tie_won: tie ? tie.won_delta : null,
+      /** **위계 ②** — 보조를 셋 더해도 차수·소실점 개수·f가 안 바뀐다 */
+      cam_unchanged_by_aux: JSON.stringify(hierarchy.cam_before)
+                         === JSON.stringify(hierarchy.cam_after),
+      cam_before_after: [hierarchy.cam_before, hierarchy.cam_after],
+      /** **위계 ③** — 강제 축이 걸리면 경쟁 자체를 안 한다(`competed`가 안 는다) */
+      forced_competed: hierarchy.forced ? hierarchy.forced.competed_delta : null,
+      forced_delta_aux: hierarchy.forced ? hierarchy.forced.delta_aux : null,
+      forced_stroke_axis: hierarchy.forced ? hierarchy.forced.stroke_axis : null,
     },
     gate: {
       registered: "보조 소실점이 지평선 위에 서고(`gap_to_horizon_px` ≈ 0), 경사 보조가 "
-        + "대응 수평 소실점과 **수직축 소실점을 잇는 직선 위**에 있고"
-        + "(`slope_line_off_px` ≈ 0 — 이론서 15.1의 일반형), 그 방향으로 그은 획이 "
-        + "**보조 경로로** 놓이며(`snap_delta_aux[0]` = 1) **축은 free**다. 판정은 "
-        + "`summary`의 필드가 든다(#47).",
+        + "«대응 수평 소실점 ↔ 수직축 소실점» **직선 위**에 있고(`slope_line_off_px` ≈ 0 — "
+        + "이론서 15.1의 일반형), 그 방향으로 그은 획이 **보조 경로로** 놓이고"
+        + "(`snap_delta_aux[0]` **> 0** · `snap_place_delta[0]`에 `aux`가 있다) **축은 "
+        + "`free`이며 `auxId`가 붙는다**. ⛔ 초판은 여기에 «= 1»을 박았는데 실제 값은 "
+        + "그보다 크다(승격 연쇄가 함께 올린다) — 수치를 산문에 안 박는다(#47 · 1차 "
+        + "리뷰어 [1]). 판정은 `summary`의 필드가 든다.",
       registered_note: "⚠ **이 항목이 등록한 게이트다 — CLAUDE.md §2 중단 조건 아님**(#41).",
       reachability: "**보조가 없으면 그 손짓이 어디로 가는가** — 되살림 팔(`snap.off`)이 "
-        + "그 답이다. 값은 `snap_delta_aux`(켬 1 · 끔 0)와 `snap_axis`(켬 free · 끔 축 번호)의 "
-        + "쌍이다. 끔에서도 1이면 이 원장은 아무것도 안 말한다(#32·#40).",
+        + "그 답이다. 값은 `snap_delta_aux`의 **비트 쌍**(켬 > 0 · 끔 = 0)이고 «대신 어디로 "
+        + "갔는가»는 `snap_place_delta`가 든다. ⛔ 초판은 «끔은 축 번호»라고 적었는데 **틀렸다**"
+        + "(1차 리뷰어 [1]): 이 픽스처에서 끔 팔은 **양 끝 스냅**으로 놓여 축도 `free`다 — "
+        + "«보조가 없으면 축으로 끌려간다»는 이 손짓에서 성립하지 않는다. 끔에서도 `aux`가 "
+        + "늘면 이 원장은 아무것도 안 말한다(#32·#40).",
       reachability_value: null as unknown,
       reachability_source: "summary/snap_delta_aux",
       /**
@@ -350,20 +445,41 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
        * 보조를 지우면 같은 손짓이 **축으로** 간다는 것이 대비의 내용이다.
        */
       reachability_value_fixture_determined: true,
+      /**
+       * **실제로 재는 양**(#46의 뒤 절반 — 항목 5·6이 세운 표기, #42 ⑩).
+       * `reachability_value`의 크기(2·0)는 승격 연쇄가 정하는 수라 정보가 아니고,
+       * 판정은 **비트**다: 보조 경로가 돌았는가 / 안 돌았는가.
+       * ⛔ 초판은 표시만 달고 이 필드를 안 만들었다(1차 리뷰어 [7] — 세 항목째 재발).
+       */
+      reachability_bits: null as unknown,
       result: {} as Record<string, unknown>,
     },
     selfcheck_notes: {
-      gap_zero: "`gap_to_horizon_px`가 0인 것은 **이론의 귀결이지 이 구현의 보장이 아니다**"
-        + "(#5) — 수평 방향(경사 0)의 소실점은 지평선 위에 있다(이론서 6.2의 전제). 구현이 "
-        + "수직 성분을 잘못 더하면 이 값이 0을 벗어난다. 그래서 임계를 건다.",
+      gap_near_zero: "`gap_to_horizon_px`는 **부동소수 꼬리**(1e-14대)이지 정확한 0이 "
+        + "아니다 — ⛔ 초판은 2자리로 반올림한 좌표의 차를 써서 0으로 찍혔고, 그러면 "
+        + "5e-3px 미만의 오배선을 못 잡는다(1차 리뷰어 [8]). 지금은 배정도 값의 차다. "
+        + "0에 가까운 것은 **이론의 귀결이지 이 구현의 보장이 아니다**(#5) — 수평 방향의 "
+        + "소실점은 지평선 위에 있다. 구현이 수직 성분을 잘못 더하면 이 값이 벗어난다.",
       slope_line_off_zero: "`slope_line_off_px`가 0인 것은 **이론의 판정**이다 — 경사 "
         + "소실점은 «대응 수평 소실점 ↔ 수직축 소실점» 직선 위에 있다(이론서 15.1의 일반형). "
         + "정답이 밖에 있으므로 보장이 아니고 임계를 건다. ⚠ **15.1의 문면**(«바로 위/아래»)은 "
         + "수직축이 무한원일 때(2점)의 특수해다 — 이 픽스처는 3점이라 `slope_dx_screen_px`가 "
         + "0이 아니고, 그것이 AS-L54의 실측이다.",
-      f_rel_gap_zero: "`f_rel_gap`이 0인 것도 **이론의 판정**이다(#5) — 탈레스 작도가 "
-        + "카메라의 f를 되돌리는지 본다. 구현이 2점 식(`|PE|`)을 3점에 그대로 쓰면 이 값이 "
-        + "0.2대로 뛴다(초판이 그랬다 — AS-L55). 보장이 아니라 실측이고 임계를 건다.",
+      f_rel_gap_zero: "`f_rel_gap`이 **정확히 0**인 것은 **왕복이기 때문이다**(#5 자기참조 "
+        + "유형 3): 같은 카메라의 축을 소실점으로 투영하고 그 소실점에서 f를 되돌린다 — "
+        + "식이 대수적으로 역이면 배정도에서 0이 나온다. **그러므로 이것은 잡음의 크기가 "
+        + "아니라 «식이 맞는가»의 판별이다.** 판별력이 있다는 증거: 2점 식(`|PE|`)을 3점에 "
+        + "그대로 쓴 초판이 **0.23**을 냈다(AS-L55). 그래서 임계를 건다 — 잰 것은 오차가 "
+        + "아니라 **식의 옳음**이다.",
+      won_zero: "`tie.won_delta`·`hierarchy.forced.won_delta`가 0인 것은 **이 원장이 재려는 "
+        + "결론 자체다**(위계) — 비긴 자리에서 보조가 안 이기고, 강제 축이면 경쟁조차 안 "
+        + "한다. 0이 나와야 규약이 선다. 집계가 도는 것은 같은 팔의 `competed_delta`가 "
+        + "든다(비긴 팔은 > 0, 강제 팔은 0이 결론이다).",
+      reachability_value_flagged: "`gate.reachability_value` = [2, 0]이 #40 검사에 걸린다 — "
+        + "**맞는 지적이고 원장이 그렇게 적는다**: 크기(2·0)는 승격 연쇄가 정하는 수라 "
+        + "정보가 아니고, **실제로 재는 것은 `gate.reachability_bits`의 네 비트**다"
+        + "(`_fixture_determined: true`). 자동 검사가 배열의 0을 보고 거는 플래그이고, "
+        + "사유가 여기 있다.",
       off_delta_zero: "`snap_delta_aux[1]`(끔 팔)이 0인 것은 **되살림의 성립**이다 — "
         + "보조가 없으면 그 경로가 안 돈다. 0이 나와야 대비가 선다. 그 손짓이 **대신 어디로 "
         + "갔는지는** `snap_place_delta[1]`가 든다(#43: 경로별 카운터).",
@@ -377,6 +493,12 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
     metric_defs: metricsSnapshot(),
   };
   led.gate.reachability_value = led.summary.snap_delta_aux;
+  led.gate.reachability_bits = {
+    on_used_aux: (snapOn?.delta_aux ?? 0) > 0,
+    off_used_aux: (snapOff?.delta_aux ?? 0) > 0,
+    tie_aux_won: (tie?.won_delta ?? 0) > 0,
+    forced_competed: (hierarchy.forced?.competed_delta ?? 0) > 0,
+  };
   led.gate.result = { ...led.summary };
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "aux_vp.json"), JSON.stringify(led, null, 1));
@@ -419,6 +541,13 @@ test("보조 소실점 — 각도로 만들고, 그 방향으로 그으면 붙�
   expect(tie!.place_delta.aux ?? 0).toBe(0);
   expect(tie!.stroke_aux_id).toBeNull();
   expect(typeof tie!.stroke_axis).toBe("number");
+  // **⑧ 위계 ②** — 보조를 더해도 카메라가 안 바뀐다(차수·소실점 개수·f)
+  expect(hierarchy.cam_before).toEqual(hierarchy.cam_after);
+  // **⑧ 위계 ③** — 강제 축이 걸리면 경쟁 자체를 안 하고 보조로 안 놓인다
+  expect(hierarchy.forced).not.toBeNull();
+  expect(hierarchy.forced!.competed_delta).toBe(0);
+  expect(hierarchy.forced!.delta_aux).toBe(0);
+  expect(hierarchy.forced!.stroke_aux_id).toBeNull();
   // **⑥ 화면 밖 처리** — 얕은 각의 소실점은 화면 밖이고 그래도 값이 있다
   expect(offscreen.inside).toBe(false);
   expect(offscreen.at).not.toBeNull();
