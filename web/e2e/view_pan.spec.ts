@@ -210,6 +210,7 @@ test("화면 팬 — 그리는 중엔 종이가 밀리고, 궤도 뒤엔 공간�
     return { snap_start: st.snapStart ? st.snapStart.kind : null,
              start: [...st.pts2d[0]],
              pan_at_draw: [...pan],                                 // 이 팔의 동작점(리뷰어 5차 [9])
+             zoom_at_draw: S.viewZoom(),                            // gap 꼬리의 귀속 재료(2차 [H])
              expected: [aim[0] - pan[0], aim[1] - pan[1]],
              gap: Math.hypot(st.pts2d[0][0] - (aim[0] - pan[0]),
                              st.pts2d[0][1] - (aim[1] - pan[1])),
@@ -270,6 +271,14 @@ test("화면 팬 — 그리는 중엔 종이가 밀리고, 궤도 뒤엔 공간�
       fixed_point_gap: Math.hypot(
         (PINCH_C[0] - pan[0]) / zc - (PINCH_C[0] - z0p[0]) / z0z,
         (PINCH_C[1] - pan[1]) / zc - (PINCH_C[1] - z0p[1]) / z0z),
+      // 반사실(2차 [A] — #5 판별법): 중점이 **문서 좌표로** setViewZoom에 들어갔다면
+      // 팬이 어디로 갔을지의 격차 — 좌표계 오배선이 만들 값. 측정 pan0·z0·z1로 계산.
+      fixed_point_gap_if_doc_center: (() => {
+        const cd = [(PINCH_C[0] - z0p[0]) / z0z, (PINCH_C[1] - z0p[1]) / z0z];
+        const k = zc / z0z;
+        const pw = [cd[0] - k * (cd[0] - z0p[0]), cd[1] - k * (cd[1] - z0p[1])];
+        return Math.hypot((PINCH_C[0] - pw[0]) / zc - cd[0], (PINCH_C[1] - pw[1]) / zc - cd[1]);
+      })(),
       pinned_after: (z1 as any).pose.pinned,
       pose_moved: Math.abs((z1 as any).pose.azimuth - (z0 as any).pose.azimuth)
                 + Math.abs((z1 as any).pose.polar - (z0 as any).pose.polar)
@@ -305,6 +314,7 @@ test("화면 팬 — 그리는 중엔 종이가 밀리고, 궤도 뒤엔 공간�
     expect((led.screen_zoom as any).zoom_after).toBeGreaterThan(1.8);
     expect((led.screen_zoom as any).zoom_after).toBeLessThan(2.2);
     expect((led.screen_zoom as any).fixed_point_gap).toBeLessThan(0.5);
+    expect((led.screen_zoom as any).fixed_point_gap_if_doc_center).toBeGreaterThan(5); // 오배선 대안값
     expect((led.screen_zoom as any).three_gap).toBeLessThan(0.5);
     expect((led.screen_zoom as any).three_gap_if_unscaled).toBeGreaterThan(50); // 판별 간격
     // **잉크 층이 실제로 확대돼 그려졌다**(리뷰어 [15] — 픽셀 대조): 픽스처 획 중간점의
@@ -323,6 +333,9 @@ test("화면 팬 — 그리는 중엔 종이가 밀리고, 궤도 뒤엔 공간�
       };
       const sx = mx * zz + px, sy = my * zz + py;
       return { scaled_display: [sx, sy], painted_alpha: sampleMax(sx, sy),
+               // 비배율 위치의 alpha — **단언 없이 기록만**(2차 [E]: 그 자리에 다른 획이
+               // 있을 수 있어 공백 단언은 픽스처 의존. 값 자체는 음성 채널의 재료다 #30)
+               alpha_at_unscaled_unasserted: sampleMax(mx + px, my + py),
                gap_if_unscaled: Math.hypot(sx - (mx + px), sy - (my + py)) };
     }, [(inkFix as any).mid[0], (inkFix as any).mid[1], zc, pan[0], pan[1]]);
     expect((led.ink_zoom_pixels as any).painted_alpha).toBeGreaterThan(0);
@@ -386,25 +399,34 @@ test("화면 팬 — 그리는 중엔 종이가 밀리고, 궤도 뒤엔 공간�
     }, WHEEL_C);
     const w1 = await page.evaluate(() => ({ zoom: window.S2S.viewZoom(), pan: window.S2S.viewPan(),
                                             pose: window.S2S.camPose() }));
-    led.wheel_zoom = { zoom_before: (w0 as any).zoom, zoom_after: (w1 as any).zoom,
-                       pinned_after: (w1 as any).pose.pinned,
-                       cursor_display: WHEEL_C,
-                       // 커서 아래 문서점 (C−팬)/z 의 휠 전후 격차 — 고정점 실측(문서 px)
-                       fixed_point_gap: Math.hypot(
-                         (WHEEL_C[0] - (w1 as any).pan[0]) / (w1 as any).zoom
-                           - (WHEEL_C[0] - (w0 as any).pan[0]) / (w0 as any).zoom,
-                         (WHEEL_C[1] - (w1 as any).pan[1]) / (w1 as any).zoom
-                           - (WHEEL_C[1] - (w0 as any).pan[1]) / (w0 as any).zoom) };
+    led.wheel_zoom = (() => {
+      const p0w = (w0 as any).pan, z0w = (w0 as any).zoom, p1w = (w1 as any).pan, z1w = (w1 as any).zoom;
+      const cd = [(WHEEL_C[0] - p0w[0]) / z0w, (WHEEL_C[1] - p0w[1]) / z0w];
+      const k = z1w / z0w;
+      const pw = [cd[0] - k * (cd[0] - p0w[0]), cd[1] - k * (cd[1] - p0w[1])];
+      return { zoom_before: z0w, zoom_after: z1w,
+               pinned_after: (w1 as any).pose.pinned,
+               cursor_display: WHEEL_C,
+               // 커서 아래 문서점 (C−팬)/z 의 휠 전후 격차 — 고정점 실측(문서 px)
+               fixed_point_gap: Math.hypot((WHEEL_C[0] - p1w[0]) / z1w - cd[0],
+                                           (WHEEL_C[1] - p1w[1]) / z1w - cd[1]),
+               // 반사실(2차 [A]): 커서가 문서 좌표로 들어갔다면의 격차 — 좌표계 오배선 값
+               fixed_point_gap_if_doc_center: Math.hypot(
+                 (WHEEL_C[0] - pw[0]) / z1w - cd[0], (WHEEL_C[1] - pw[1]) / z1w - cd[1]) };
+    })();
     expect((led.wheel_zoom as any).zoom_after).toBeGreaterThan((led.wheel_zoom as any).zoom_before);
     expect((led.wheel_zoom as any).pinned_after).toBe(true);        // 휠이 핀을 안 푼다
     expect((led.wheel_zoom as any).fixed_point_gap).toBeLessThan(0.5);
+    expect((led.wheel_zoom as any).fixed_point_gap_if_doc_center).toBeGreaterThan(1);
     // **z<1(축소) 동작점**(리뷰어 [11] — #12: 확대 한쪽뿐이었다): 축소에서는 문서 조리개
     // = radiusPx/z 가 **커진다** — 표시 6px 겨냥은 문서 12px인데 표시 px 조리개(8px)라
     // **붙는다**. 문서 px 조리개(8px)였다면 12>8이라 거부 — 확대 팔과 반대 방향의 판별이다.
     await page.evaluate(() => window.S2S.setViewZoom(1));           // 배율만 1로(팬 유지)
+    const zoPre = await page.evaluate(() => ({ zoom: window.S2S.viewZoom(), pan: window.S2S.viewPan() }));
     await twoFingerPinch(page, [56, 57], PINCH_C[0], PINCH_C[1], 240, 120); // 비 0.5 — 축소
     const zo = await page.evaluate(() => ({ zoom: window.S2S.viewZoom(), pan: window.S2S.viewPan(),
                                             pose: window.S2S.camPose() }));
+    const projOut = await projectFirst(page);
     const zoDisp: [number, number] = [
       (docPt as any).pt[0] * (zo as any).zoom + (zo as any).pan[0],
       (docPt as any).pt[1] * (zo as any).zoom + (zo as any).pan[1]];
@@ -412,12 +434,21 @@ test("화면 팬 — 그리는 중엔 종이가 밀리고, 궤도 뒤엔 공간�
     led.zoom_out_draw = {
       zoom_at_draw: (zo as any).zoom, pinned_after: (zo as any).pose.pinned,
       snap_start: (outAim as any).snap_start,
+      // z<1 동작점의 three 아핀·고정점(2차 [D] — #12: 확대 한 점 위의 조항을 축소에서도)
+      three_gap_out: Math.hypot(projOut.x - zoDisp[0], projOut.y - zoDisp[1]),
+      fixed_point_gap_out: Math.hypot(
+        (PINCH_C[0] - (zo as any).pan[0]) / (zo as any).zoom
+          - (PINCH_C[0] - (zoPre as any).pan[0]) / (zoPre as any).zoom,
+        (PINCH_C[1] - (zo as any).pan[1]) / (zo as any).zoom
+          - (PINCH_C[1] - (zoPre as any).pan[1]) / (zoPre as any).zoom),
       // 겨냥의 문서 어긋남 — 조리개 판정이 실제로 받은 값(표시 6px ÷ z)
       aim_doc_offset: 6 / (zo as any).zoom,
       doc_gap: Math.hypot((outAim as any).start[0] - (docPt as any).pt[0],
                           (outAim as any).start[1] - (docPt as any).pt[1]) };
     expect((led.zoom_out_draw as any).zoom_at_draw).toBeGreaterThan(0.45);
     expect((led.zoom_out_draw as any).zoom_at_draw).toBeLessThan(0.55);
+    expect((led.zoom_out_draw as any).three_gap_out).toBeLessThan(0.5);
+    expect((led.zoom_out_draw as any).fixed_point_gap_out).toBeLessThan(0.5);
     expect((led.zoom_out_draw as any).aim_doc_offset).toBeGreaterThan(OSNAP_RADIUS_PX); // 문서 조리개면 거부되는 구도
     expect(["endpoint", "vertex"]).toContain((led.zoom_out_draw as any).snap_start);    // 그런데 붙었다 — 표시 px다
     expect((led.zoom_out_draw as any).doc_gap).toBeLessThan(1);
@@ -456,28 +487,31 @@ test("화면 팬 — 그리는 중엔 종이가 밀리고, 궤도 뒤엔 공간�
   writeFileSync(resolve(OUT, "view_pan.json"), JSON.stringify({
     spec: "10차 항목 5(팬) + 14차 항목 5(줌 — D-L94) — 화면 팬·줌 대 공간 조작: 핀 상태(그리는 중)의 두 손가락 이동·핀치·휠은 종이를 밀고 확대하며(카메라·문서·주점 불변 — 표시 오프셋·배율만), 3D 층이 같은 아핀으로 따라오고, 입력은 배율·오프셋을 되돌려 문서 좌표에 스냅된다(조리개는 표시 px — D-L56). 궤도로 풀린 뒤에는 종전의 공간 팬·달리다. 합성 PointerEvent — 앱 라우터를 그대로 지난다(#17)",
     what_this_does_not_say: [
-      "⛔ (14차 항목 5로 닫힘) ~~핀치(줌)의 화면/공간 구분은 안 다뤘다~~ — ③″ 팔이 든다. 남은 것: 핀치·휠의 **감도 곡선**(배율 한계의 체감 — 값은 screen_zoom.view_zoom_lim 필드가 든다. 측정 최대 zoom≈2.26·최소≈0.5는 클램프 [0.2, 8]에 안 닿았다)은 실기 확인의 문이고, 잉크 층 선 굵기가 배율을 따라 확대되는데 3D 층 화면 굵기는 불변이라 배율≠1에서 두 층의 굵기가 갈린다(알려진 표시 한계 — D-L94·DEFERRED 14차 행)",
+      "⛔ (14차 항목 5로 닫힘) ~~핀치(줌)의 화면/공간 구분은 안 다뤘다~~ — ③″ 팔이 든다. 남은 것: 핀치·휠의 **감도 곡선**(배율 한계의 체감 — 클램프는 screen_zoom.view_zoom_lim, 측정 동작점은 wheel_zoom.zoom_after·zoom_out_draw.zoom_at_draw 필드가 들고 클램프에 안 닿았다 — 2차 [I]: 값은 필드가 정본)은 실기 확인의 문이고, 잉크 층 선 굵기가 배율을 따라 확대되는데 3D 층 화면 굵기는 불변이라 배율≠1에서 두 층의 굵기가 갈린다(알려진 표시 한계 — D-L94·DEFERRED 14차 행. '잉크 굵기가 배율을 따른다' 자체도 산문 주장이다 — 측정 필드 없음, 같은 행)",
+      "**줌 조항의 동작점 한계**(2차 [D] — #12): three 아핀·고정점은 z≈2(핀치)·2.26(휠)·0.5(축소 — three_gap_out·fixed_point_gap_out)의 셋, 조리개 판별은 z=2·0.5 둘 위에 선다. **잉크 픽셀·무스냅 되돌림(zoom_draw_raw)은 z≈2 하나뿐이다** — 축소 쪽 그 두 조항은 안 쟀다",
       "**vp_relative_gap은 독립 측정이 아니다**(#5 유형 3 — 리뷰어 [3]): 소실점의 표시 좌표를 시험 코드가 three_gap과 같은 아핀(×z+팬)으로 계산하므로 three_gap이 서면 대수적으로 그 이하다. 임계를 안 걸고 값만 남긴다(§5 — 보장이면 임계를 걸지 않는다). 독립 판별은 three_gap_if_unscaled(비배율 대안값)와 잉크 픽셀 팔이 진다",
       "**잉크 픽셀 팔은 배율 위치에 칠이 있다는 것만 잰다** — 비배율 위치의 공백은 안 잰다(그 자리에 다른 획이 있을 수 있어 공백 단언이 픽스처 의존이 된다). 판별 간격은 gap_if_unscaled(배율↔비배율 위치 거리)가 든다",
-      "**줌 팔의 정확 0·near-zero는 selfcheck가 플래그하는 자리들이고 원인은 셋이다**(§5 — 각 플래그의 원인 확인): ① zoom_draw_near·zoom_out_draw의 doc_gap 0 = 스냅이 저장 좌표를 돌려주는 설계 보장(③ start_doc_gap과 같은 성격 — 판정은 snap_start의 붙음/거부가 진다) ② zoom_draw_raw.gap 0 = expected가 같은 산식의 중복 계산(#5 유형 3 — draw_raw 주석과 같은 성격. 판별은 gap_if_undivided가 진다) ③ fixed_point_gap의 near-zero = 배선 판정 — 중점·커서가 엉뚱한 좌표계(예: 문서 좌표)로 setViewZoom에 들어가면 고정점이 어긋나 커진다. 정확도 임계가 아니다",
+      "**줌 팔의 정확 0·near-zero는 selfcheck가 플래그하는 자리들이고 원인은 넷이다**(§5 — 2차 [F] 정정: 초판 '셋'은 불변 카운터와 three_gap을 빠뜨렸다): ① zoom_draw_near·zoom_out_draw의 doc_gap 0 = 스냅이 저장 좌표를 돌려주는 설계 보장(③ start_doc_gap과 같은 성격 — 판정은 snap_start의 붙음/거부가 진다) ② zoom_draw_raw.gap 0 = expected가 같은 산식의 중복 계산(#5 유형 3 — draw_raw 주석과 같은 성격. 판별은 gap_if_undivided가 진다) ③ fixed_point_gap·three_gap의 near-zero = 배선 판정(±0.5px 허용은 three_shift와 같은 부동소수 여유) — 반사실은 각각 fixed_point_gap_if_doc_center(중점·커서가 문서 좌표로 들어간 오배선의 값 — #40 ②: 휠의 정확 0은 (C−팬')/z' = (C−팬)/z 가 대수 항등이 되는 옳은 배선의 서명이고, 오배선이면 이 항등이 깨진다)와 three_gap_if_unscaled가 든다 ④ screen_zoom의 pose_moved·doc_moved·principal_moved 0 = 불변 단언(카운터가 아니라 '안 움직였다'의 판정값)",
       "화면 밖 소실점 가장자리 표식·잠정 그리드의 클리핑은 **문서 좌표의 화면 사각형** 기준 그대로다 — 팬이 크면 표식이 표시 밖으로 나갈 수 있다(표시 결함이지 좌표 결함이 아니다. DEFERRED)",
       "**③의 start_doc_gap<1은 되돌림의 정밀도를 재지 않는다**(리뷰어 4차 [6] · #5) — 스냅이 저장된 좌표를 돌려주므로 문 순간 격차는 자동으로 준다. ③이 재는 것은 되돌린 입력이 조리개(8px) 안에 들었다는 **성패**(겨냥 어긋남 ≈72px ≫ 8px라 되돌림 없이는 불가능)이고, 되돌림의 **수치 자체**는 ③′(draw_raw — 스냅 없는 팔)의 gap<1px이 잰다",
       "P0 팔(⓪)은 viewPan 축적과 카메라 불개방만 본다 — P0에는 3D 층·pinTo가 없어 three_shift 대응 확인이 성립하지 않는다",
       "dpr 1·합성 터치의 확인이다(#21·AS-C1) — 실기(아이패드)의 두 손가락 감각은 실기 확인의 문이다. **두 손가락 = 종이 밀기라는 의도 해석 자체도 전제다**(AS-L39)",
       "three_shift의 ±0.5px는 투영 산식 차(three 행렬 ↔ principal+f·x/z)의 부동소수 여유다 — 정확도 임계가 아니라 배선 판정이다(#5)",
       "**화면 팬의 동작점은 (30,20)과 (60,40) 둘이고, 각 판정은 그중 하나 위에만 서 있다**(#12 — 리뷰어 5차 [9]: 초판의 '(50,0) 포함 셋'은 과대다 — (50,0)은 궤도 후 공간 팬 팔의 손짓 크기라 viewPan 동작점이 아니다). P0 팔은 (30,20)·핀 팔들은 (60,40) 하나씩이다. 누적 한계(화면 몇 배를 밀 수 있는가)·큰 팬에서의 표식 클리핑은 안 쟀다(후자는 DEFERRED)",
-      "**draw_raw의 expected는 시험 대상과 같은 산식(표시 − viewPan)/z 을 시험 코드에서 중복 계산한 값이다**(#5 유형 3 — 리뷰어 5차 [10]): 이 팔이 가르는 것은 **배선**(안 되돌리면 gap = gap_if_unreverted ≈ 72px — 같은 실행이 그 대안 격차를 실측으로 든다)이지 산식 자체의 옳음이 아니다. ⚠ 14차 정정(리뷰어 [14]): 초판의 'gap 0 정수 산술 정확 일치'는 /z 나눗셈 도입으로 깨졌다 — 현행 gap은 ~2e-13(부동소수 꼬리)이고 '그대로'가 아니라 산술 경로가 바뀐 것이다",
+      "**draw_raw의 expected는 시험 대상과 같은 산식(표시 − viewPan)/z 을 시험 코드에서 중복 계산한 값이다**(#5 유형 3 — 리뷰어 5차 [10]): 이 팔이 가르는 것은 **배선**(안 되돌리면 gap = gap_if_unreverted ≈ 72px — 같은 실행이 그 대안 격차를 실측으로 든다)이지 산식 자체의 옳음이 아니다. ⚠ 14차 재정정(2차 [H] — 초판 귀속 '/z 나눗셈 도입으로'가 부정확했다): 꼬리의 실제 출처는 **이 팔 시점의 viewZoom이 정확히 1이 아닌 것**(draw_raw.zoom_at_draw 필드 — 팬 제스처의 두 손가락 순차 pointermove가 만드는 과도 거리 왕복이 screenZoom을 미세 왕복시켜 곱이 1±3e-16으로 복귀)이다. expected는 z를 안 나누고 앱은 그 z로 나눠 ~2e-13이 남는다. 같은 /z를 지나는 zoom_draw_raw.gap이 정확 0인 것(시험 expected도 같은 z로 나눔 — 같은 부동소수 연산)이 그 귀속의 대조다",
     ],
     thresholds: { three_shift_tol_px: 0.5, start_doc_gap_max_px: 1, draw_raw_gap_max_px: 1,
       aim_offset_min_px: OSNAP_RADIUS_PX * 3, space_pan_target_moved_min: 0.01, console_errors_max: 0,
       // 14차 ③″(리뷰어 [13] — 산문에만 있던 셋을 필드로): 줌 팔의 판정 값 전부
       zoom_band: [1.8, 2.2], zoom_out_band: [0.45, 0.55], zoom_affine_tol_px: 0.5,
       zoom_fixed_point_tol_px: 0.5, zoom_aim_display_near_px: 6, zoom_aim_display_far_px: 12,
-      zoom_counterfactual_min_px: { three_unscaled: 50, ink_unscaled: 50, draw_undivided: 100 },
+      zoom_counterfactual_min_px: { three_unscaled: 50, ink_unscaled: 50, draw_undivided: 100,
+        fixed_point_doc_center_pinch: 5, fixed_point_doc_center_wheel: 1 },
+      painted_alpha_min: 1,
       note: "e2e 배선 임계라 SHARED_CONSTANTS 비등재(D-L51·basic_flow thresholds와 같은 사유 — 전역 해시 눈사태). 값은 이 원장이 자기 안에 든다" },
     gate: {
-      registered: "카메라 전 두 손가락: viewPan 축적·카메라 불개방 · 핀 상태 두 손가락 뒤: 핀 유지·pose 불변·문서 불변·주점(Camera.principal) 불변·viewPan≈(60,40)·three 투영 이동=viewPan(±0.5px) · 밀린 화면에서 끝점 표시 위치를 겨냥한 획이 문서 끝점에 스냅(끝점/정점·문서 격차<1px·겨냥 어긋남>24px) · 스냅 없는 자리의 획: pts2d=표시−viewPan(<1px) · **[14차 ③″] 핀 상태 핀치(비 2.0): 핀 유지·pose 0·문서 0·주점 0·viewZoom∈zoom_band·핀치 중점 고정점(문서 <0.5px)·three 투영=문서×z+팬(±0.5px, 비배율 대안값 >50px)·잉크 층 배율 위치에 칠(픽셀 대조) · 확대 화면 그리기: 표시 6px 겨냥 스냅·표시 12px(문서 6px) 겨냥 불스냅·스냅 없는 자리 pts2d=(표시−팬)/z(<1px, /z 부재 대안값 >100px) · 휠(핀): viewZoom 증가·핀 유지·커서 고정점(문서 <0.5px) · 축소(비 0.5): 표시 6px(문서 12px) 겨냥이 붙는다(문서 px 조리개면 12>8 거부 — 반대 방향 판별)** · 궤도 후 두 손가락: target 이동>0.01·viewPan 불변 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
-      reachability: "궤도 후 팔(④)이 음성 대조이고 **판별자는 둘이다**(#28 — 리뷰어 4차 [7]): (a) viewPan 불변(pan_unchanged == screen_pan.pan_after — 화면 팬이 아무 데서나 받으면 여기가 움직여 실패) (b) target_moved>0.01(같은 손짓이 공간 팬으로 갔다는 양성 증거). 수치 하나를 고르면 (b)다 — (a)는 등호 판정이라 값이 판별 간격을 안 보여 준다",
+      registered: "카메라 전 두 손가락: viewPan 축적·카메라 불개방 · 핀 상태 두 손가락 뒤: 핀 유지·pose 불변·문서 불변·주점(Camera.principal) 불변·viewPan≈(60,40)·three 투영 이동=viewPan(±0.5px) · 밀린 화면에서 끝점 표시 위치를 겨냥한 획이 문서 끝점에 스냅(끝점/정점·문서 격차<1px·겨냥 어긋남>24px) · 스냅 없는 자리의 획: pts2d=표시−viewPan(<1px) · **[14차 ③″] 핀 상태 핀치(비 2.0): 핀 유지·pose 0·문서 0·주점 0·viewZoom∈zoom_band·핀치 중점 고정점(문서 <0.5px)·three 투영=문서×z+팬(±0.5px, 비배율 대안값 >50px)·잉크 층 배율 위치에 칠(픽셀 대조) · 확대 화면 그리기: 표시 6px 겨냥 스냅·표시 12px(문서 6px) 겨냥 불스냅·스냅 없는 자리 pts2d=(표시−팬)/z(<1px, /z 부재 대안값 >100px) · 휠(핀): viewZoom 증가·핀 유지·커서 고정점(문서 <0.5px) · 축소(비 0.5): 표시 6px(문서 12px) 겨냥이 붙는다(문서 px 조리개면 12>8 거부 — 반대 방향 판별)·three 투영·고정점 같은 판정(three_gap_out·fixed_point_gap_out)** · 궤도 후 두 손가락: target 이동>0.01·viewPan 불변 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
+      reachability: "궤도 후 팔(④)이 음성 대조이고 **판별자는 둘이다**(#28 — 리뷰어 4차 [7]): (a) viewPan 불변(pan_unchanged == screen_pan.pan_after — 화면 팬이 아무 데서나 받으면 여기가 움직여 실패) (b) target_moved>0.01(같은 손짓이 공간 팬으로 갔다는 양성 증거). 수치 하나를 고르면 (b)다 — (a)는 등호 판정이라 값이 판별 간격을 안 보여 준다. **[14차 ③″]의 판별자는 reachability_zoom이 든다**(2차 [B] — #40 ⑥·#28: 값 하나로 못 줄인다): 문서 조리개 반사실 양방향(6<8 붙음 / 12>8 거부)과 비배율·비나눗셈·오배선 대안값 다섯 — reachability_value/_source는 팬 팔의 것이고 줌 조항의 도달 가능성은 그 블록이 정본이다",
       reachability_value: (led.space_pan as any).target_moved,
       reachability_source: "space_pan/target_moved",
       // [14차 ③″]의 도달 가능성(리뷰어 [12] — #40 ⑥: 조항을 더했으면 값도 더한다):
@@ -486,7 +520,7 @@ test("화면 팬 — 그리는 중엔 종이가 밀리고, 궤도 뒤엔 공간�
         aperture_doc_would_attach: { value: (led.zoom_draw_far as any).doc_offset, threshold: OSNAP_RADIUS_PX,
           note: "확대 팔: 문서 px 조리개였다면 6<8이라 붙는다 — 불스냅이 판별" },
         aperture_doc_would_reject: { value: (led.zoom_out_draw as any).aim_doc_offset, threshold: OSNAP_RADIUS_PX,
-          note: "축소 팔: 문서 px 조리개였다면 12>8이라 거부 — 스냅이 판별(반대 방향)" },
+          note: "축소 팔: 문서 px 조리개였다면 12>8이라 거부 — 스냅이 판별(반대 방향). threshold는 앱 상수를 실행 시점에 읽은 값이다(OSNAP_RADIUS_PX import — 2차 [J]: 리터럴이 아니라 상수가 움직이면 함께 움직인다)" },
         three_gap_if_unscaled: (led.screen_zoom as any).three_gap_if_unscaled,
         draw_gap_if_undivided: (led.zoom_draw_raw as any).gap_if_undivided,
         ink_gap_if_unscaled: (led.ink_zoom_pixels as any).gap_if_unscaled,

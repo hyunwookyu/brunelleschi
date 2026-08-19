@@ -593,9 +593,14 @@ D-L75  **차수 승격 개념을 지운다** — 승격 UI·되돌리기·잃은
 5. ⛔ **정정(8차 2차 지시 항목 0): 그 게이트는 이제 통과다.** ~~`rule_camera`의 등록 게이트는
    여전히 실패다(`passed: false`·`passed_snapped: false` — 규칙 31.6083 대 검출 9.1742).~~
    **8차 항목 1이 P1 잠김을 열면서 뒤집혔다**(`d233ec4`): `passed: true` · `passed_snapped: true`,
-   ⛔ **재정정(14차 항목 3 · D-L96)**: `passed_snapped`는 다시 **false**다 — 선언 게이트
-   아래서 스냅 모사 팔이 오배정 고원에 재진입(33.2719 > 9.1742). `passed`(원시)는 true 유지.
-   대가 회계는 D-L96·DEFERRED 12행이 정본이다.
+   ⛔ **재정정(14차 항목 3 · D-L96 · 2차 [B] — 이 불릿의 형제 수치 전부)**: `passed_snapped`는
+   다시 **false**다 — 선언 게이트 아래서 스냅 모사 팔이 오배정 고원에 재진입(33.2719 >
+   9.1742). `passed`(원시)는 true 유지 — 현행 몰아 **7.6889**(여유 1.4853 — 아래 7.9567은
+   낡음), `rule_wide_pair` **8.9443**(여유 0.2299). ⚠⚠ 아래의 "`rule_grouped_snap_r40`
+   6.9637로 좋아졌다"는 **방향까지 반전됐다** — 현행 **31.6083**(고원). "정확히 1인 팔
+   열둘 중 넷"도 낡음 — 현행 **둘**(grouped_snap·wide_pair_snap, `camera_ok_rate`).
+   "열두 팔 전부 다른 값(6.93~10.86)"·"p90 35 여섯" 문장도 낡음 — 스냅 셋의 p90이
+   **40.66으로 몰렸다**(고원 서명). 대가 회계는 D-L96·DEFERRED 12행이 정본이다.
    규칙 몰아 **7.9567** 대 검출 **9.1742**. ⚠⚠ **여유는 1.2175°이고 시드 폭은 미측정이다**
    (같은 원장이 "1~3° 급 격차는 강도가 약하다"고 스스로 적는다 — #14). **다른 규칙 팔은 여유가
    더 좁거나 음이다**: `rule_wide_pair` 9.0578(여유 0.1164) · ~~`rule_grouped_snap_r40` **10.557 >
@@ -687,7 +692,10 @@ e2e `stage.spec` 둘(차수 승격 · 되돌리기 UI). 그리고 `RULE_TOL.vert
 `cd web && npm run dev:5222` → `/l.html`(S2S_HTTP=1).
 ⚠ **10차의 새 창들**: `S2S.strokeStates()`(세 상태 — coord/dir/none) · `placeBy()`(경로별
 배치 카운터) · `anchorGuard()`/`setAnchorGuard(sw)`(D-L83) · `setChainExt(sw)`(연쇄 확장
-대조) · `viewPan()`/`setViewPan(p)`(화면 팬 — D-L86). ⚠ `snap2dStart/End`는 이제 **확정
+대조) · `viewPan()`/`setViewPan(p)`(화면 팬 — D-L86) ·
+**14차**: `viewZoom()`/`setViewZoom(z, center?)`/`viewZoomLim()`(화면 줌 — D-L94.
+view_pan ③″ 팔이 복원·검증에 쓴다) · `chainDirGuard()`/`setChainDirGuard(sw)`(D-L92).
+⚠ `snap2dStart/End`는 이제 **확정
 뒤에도** 적힌다(대기 분기의 2D 연결 — D-L81 확장) 그리고 **연쇄가 소비한다**(#18 닫힘).
 ⚠ **9차에 획에 필드 둘이 늘었다**(D-L81): `snap2dStart`·`snap2dEnd`
 (`{kind, at: Pt2, distPx, ofId?}` — **`at`이 화면 좌표**다. 3D 참조와 다른 자료형이고
