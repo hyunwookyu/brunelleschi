@@ -22,6 +22,17 @@
    "error_site": "basic_flow.spec.ts:666",
    "diagnosis": "16차 항목 0의 끔 상태 토글 손잡이(가장자리 고리 — D-L107 ③)가 «빈 종이» 픽셀 검사의 전폭 대역에 걸렸다. **원인 특정·수리 완료**: 검사 대역에서 가장자리 40px 제외(회귀 대상은 전폭 파선 — 검사 주석에 사유). 재실행 통과.",
    "matches_registered_failure": false
+  },
+  {
+   "at_utc": "2026-08-19T23:40:00Z",
+   "run": "전량 1차(17차 세션 · 항목 0) — stats: 64 passed · 4 skipped · **1 failed**",
+   "spec": "touch_route.spec.ts",
+   "test": "dpr 2 › 같은 손짓이 같은 각을 돈다 — 제스처 좌표는 css 픽셀이다(#21)",
+   "error_head": "expect(Math.abs(az - one)).toBeLessThan(1e-11) — received 3.112372581881573e-10",
+   "error_site": "touch_route.spec.ts:587",
+   "diagnosis": "**등재된 환경 실패와 같은 서명이다**(회전 밴드) — `az_tol_basis.why`가 미리 적어 둔 그 자리다: *«이 임계에서 간헐 실패가 나면 코드 결함이 아니라 밴드가 넓은 것»*. ⚠ **이번 것은 간헐이 아니라 결정적이다**: 단독 2/2 실패. **이 세션의 변경 탓이 아님을 반증했다** — ① 변경을 `git stash`로 걷어낸 **HEAD에서도 같은 자리에서 실패한다**(단독 1회) ② 이 항목이 건드린 화면(하단바의 빌드 식별자 span·숨은 갱신 알림 div)이 레이아웃을 안 바꾼다: `#bar` 높이 **45px** · `#ink` 높이 **855px** · `#bar` 가로 넘침 없음(scrollWidth = clientWidth = 1440)이 변경 전후로 **동일**(dev 서버 · 1440×900 · dpr 1 실측). 즉 이 컨테이너의 밴드가 등재 밴드(상단 6.6e-13)보다 **세 자릿수 넓다** — 16차의 «환경 간 밴드가 다르다»의 세 번째 사례다(5차 환경: 5e-13 이하 통과 · 6차 컨테이너: 1e-10대 · 여기: 3.1e-10).",
+   "matches_registered_failure": true,
+   "not_fixed_here": "**이 항목이 임계를 안 만진다**(범위를 안 넓힌다). 고치려면 `touch_route_repeat`을 이 기계에서 다시 돌려 밴드부터 갱신해야 하고, 그것은 그 원장을 인용한 문서 전부를 다시 읽는 일이다(#42 ⑥⑨). **다음 세션의 항목으로 남긴다** — `DEFERRED.md` 참조."
   }
  ]
 }

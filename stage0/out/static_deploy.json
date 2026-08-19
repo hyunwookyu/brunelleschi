@@ -5,12 +5,16 @@
     "**실제 GitHub Pages에서 도는가** — 이 스펙은 **로컬 정적 서버**를 잰다. 실제 배포는 2026-08-16에 처음 돌았고(https://hyunwookyu.github.io/brunelleschi/) 사람이 브라우저로 확인했다 — ⚠ **그것은 원장 밖 관측이다**(#25)",
     "아이패드 사파리 — 여기는 chromium이다. 인앱 브라우저의 서비스 워커 제한은 별개다",
     "설치형 PWA 동작 — manifest가 있다는 것과 설치되는 것은 다르다",
-    "**사전 캐시 목록만의 몫** — 앱이 페이지마다 자기 서비스 워커를 다시 등록하므로 '그 목록이 없었으면 어땠는가'를 이 설계로 못 가른다. **미측정이다**(아래 대조군의 `reading`)"
+    "**사전 캐시 목록만의 몫** — 앱이 페이지마다 자기 서비스 워커를 다시 등록하므로 '그 목록이 없었으면 어땠는가'를 이 설계로 못 가른다. **미측정이다**(아래 대조군의 `reading`)",
+    "**재배포 팔은 `vite build`를 두 번 돌린 것이 아니다**(#32 — 미실행을 반증으로 안 쓴다) — `dist/`의 **변형본**이다. ④의 ①단계는 `l.html`만, ②단계는 번들 이름·번들 안의 커밋 상수·`sw.js` 판본 머리까지 바꾼다(실제 재빌드의 서명). 변형본을 쓰는 이유는 대조군이 성립해야 하기 때문이다: 두 팔의 차이가 **fetch 전략 하나**여야 하므로 두 판본의 `sw.js`가 바이트까지 같아야 한다(`sw_bytes_equal`이 그 조건을 잰다)",
+    "**HTTP 캐시의 몫** — 이 서버는 `Cache-Control`·`ETag`를 안 보낸다. 실제 Pages는 `max-age`를 보내므로 **CDN·브라우저 HTTP 캐시가 추가로 늦출 수 있다.** 여기서 재는 것은 **서비스 워커 전략**뿐이다",
+    "**아이패드 사파리의 갱신 거동** — 여기는 chromium이다"
   ],
   "condition": {
-    "server": "Node 정적 서버(이 스펙이 띄운다) · 하위 경로 /SKETCH2SPACE · 포트 8901",
+    "server": "Node 정적 서버(이 스펙이 띄운다) · 하위 경로 /SKETCH2SPACE(재배포 팔은 /DEPLOY_NEW·/DEPLOY_OLD) · 포트 8901",
     "build": "`npm run build` 산출물(`dist/`). 빌드본이 없으면 **건너뛴다**(#32)",
-    "browser": "chromium(Playwright) · 1440×900 · deviceScaleFactor 1"
+    "browser": "chromium(Playwright) · 1440×900 · deviceScaleFactor 1",
+    "scopes": "재배포 팔은 **scope를 가른다**(#53) — 앞 팔의 워커·캐시가 뒤 팔을 잡으면 결론이 뒤집힌다"
   },
   "constants": {
     "hash": "f351839a",
@@ -167,6 +171,15 @@
     "source": "file",
     "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
   },
+  "version_display": {
+    "bar_text": "02d1bc1+ · 08-19 23:18",
+    "bar_title": "빌드 02d1bc1+ · 2026-08-19T23:18:16.182Z",
+    "api_commit": "02d1bc1+",
+    "api_time": "2026-08-19T23:18:16.182Z",
+    "sw_commit": "02d1bc1+",
+    "display_matches_worker": true,
+    "reading": "**하단바 구석의 값 = 앱이 든 값 = 워커가 든 값.** 셋이 한 출처(`vite.config.ts`의 `STAMP`)에서 온다. ⚠ 해시 자체는 **매 빌드 바뀌므로 문서에 안 적는다**(#47) — 적는 것은 이 필드의 자리뿐이다"
+  },
   "l_d2": {
     "subpath_opens": true,
     "views": 1,
@@ -187,5 +200,42 @@
       "app": false
     },
     "reading": "**③이 배제하는 것은 '캐시에 번들이 있다'이다.** 지우기 전에는 문서·앱 둘 다 살고, `.js`만 지우면 **문서는 살고 앱은 죽는다** — 즉 그 확인은 눈이 떠 있다. ⚠⚠ **초판의 팔 A(사전 캐시 목록에서 `.js`를 뺀 별도 워커)는 무효였다** — 앱이 자기 서비스 워커를 매번 다시 등록하므로 같은 scope에 워커 둘이 경쟁했다. 거기서 읽은 '③의 통과는 사전 캐시의 효력이 아니다'를 **철회한다**. **사전 캐시 목록만의 몫은 이 설계로 안 갈린다**(앱의 등록을 못 끄기 때문이다) — 미측정이다."
+  },
+  "sw_update": {
+    "sw_bytes_equal": {
+      "a_vs_b": true,
+      "a_vs_c": false
+    },
+    "before": {
+      "marker": null,
+      "commit": "02d1bc1+",
+      "updateShown": false,
+      "controlled": true
+    },
+    "after_doc_only": {
+      "marker": "B",
+      "commit": "02d1bc1+",
+      "updateShown": false,
+      "controlled": true
+    },
+    "after_rebuild": {
+      "marker": "C",
+      "commit": "c0ffee1",
+      "updateShown": false,
+      "controlled": true
+    },
+    "banner_text": "새 버전이 있습니다.\n새로고침\n✕",
+    "reading": "**1회 새로고침에 문서가 바뀌고**(`after_doc_only.marker`), 워커가 바뀐 재배포에서는 **알림이 뜨고 그 버튼이 번들까지 새 판으로 연다**(`after_rebuild.commit`). ⚠ `after_doc_only.updateShown`이 **거짓인 것이 반례다** — 알림은 워커가 바뀔 때만 뜬다."
+  },
+  "sw_strategy_control": {
+    "sw_bytes_equal": true,
+    "before": null,
+    "reloads_seen": [
+      null,
+      null,
+      null
+    ],
+    "after_cache_clear": "B",
+    "reading": "**옛 판은 새로고침 3회로도 못 받고**(`reloads_seen`이 전부 `null`) **캐시를 지우면 받는다**(`after_cache_clear`). 사람이 겪은 그 상황이 이 팔이다 — *'새로고침 여러 번으로도 안 바뀌었고, 캐시를 지워야 했다'*. ④의 통과는 따라서 **문서를 network-first로 돌린 것의 효력**이다. ⚠ 두 판본의 `sw.js`가 **바이트까지 같다**(`sw_bytes_equal`) — 두 팔의 차이는 전략 하나뿐이다."
   }
 }
