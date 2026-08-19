@@ -73,6 +73,14 @@ export interface Doc2 {
      */
     snap2dStart?: Snap2Ref | null;
     snap2dEnd?: Snap2Ref | null;
+    /**
+     * **보조 소실점 이력**(15차 항목 7 · D-L106 — 저장은 2026-08-20 16차). 옛 저장본에는
+     * 없다. ⚠ **보조 방향 자체(각도)는 여전히 저장 밖이다**(DEFERRED — 앱 상태) — 이
+     * 필드는 «그 문서가 보조를 썼는가»의 판정자다: DEFERRED 그 행의 되살릴 조건이
+     * `auxId` 보유 획 수 > 0인데, 16차 전에는 **직렬화가 이 필드를 버려서 그 조건이
+     * 구성상 만족 불가였다**(#35의 모양 — 판정자가 관측 불가능했다).
+     */
+    auxId?: string | null;
     /** **펜 채널**(D). 옛 저장본에는 없다 — 보조선으로 읽는다. */
     channel?: Channel;
     color?: string;
@@ -151,6 +159,7 @@ export function serializeDoc2(s: Doc2Source): Doc2 {
       // **화면 좌표라 얕은 사본이면 배열이 공유된다**(`cloneRuleState`가 걸렸던 자리)
       snap2dStart: t.snap2dStart ? { ...t.snap2dStart, at: [...t.snap2dStart.at] as Pt2 } : null,
       snap2dEnd: t.snap2dEnd ? { ...t.snap2dEnd, at: [...t.snap2dEnd.at] as Pt2 } : null,
+      auxId: t.auxId ?? null,
       channel: t.channel,
       color: t.color,
       width: t.width,
@@ -190,6 +199,8 @@ export function restoreDoc2(d: Doc2): Restored2 {
     // 아니라 **"안 적혔다"**임을 실획 원장이 갈라 센다(#32 — 미실행을 반증으로 안 쓴다)
     snap2dStart: t.snap2dStart ?? null,
     snap2dEnd: t.snap2dEnd ?? null,
+    // 옛 저장본에는 없다 — null이 «보조를 안 썼다»가 아니라 «안 적혔다»일 수 있다(#32)
+    auxId: t.auxId ?? null,
     // **옛 저장본은 채널이 없다** — 보조선으로 읽는다(D-1의 기본값)
     channel: t.channel ?? DEFAULT_CHANNEL,
     color: t.color,

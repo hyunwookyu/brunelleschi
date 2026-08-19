@@ -318,6 +318,7 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
       const perDoc: Record<string, unknown>[] = [];
       for (const { file, doc: d } of brnl) {
         const D = { n: 0, lifted: 0, s2dStart: 0, s2dEnd: 0, s2dPresent: 0, snapEnd: 0,
+                    auxUsed: 0, auxPresent: 0,
                     legacyZero: 0, distNull: 0, dists: [] as number[],
                     vpErrs: [] as (string | number)[][],
                     // **획 집합 셋**(13차 리뷰어 [4] — "스냅 n = 배치 n" 같은 등식은 수가 아니라
@@ -357,6 +358,14 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
               snap2dEndN += 1; D.s2dEnd += 1;
               D.s2dFired.push([st.id, "end", t.snap2dEnd.kind, +t.snap2dEnd.distPx.toFixed(2)]);
             }
+          }
+          // **보조 소실점 사용**(16차 지시 2-c 다섯째 물음 · DEFERRED «보조 저장» 행의
+          // 판정자). 필드 유무를 함께 센다(#32) — 16차 이전 저장본은 직렬화가 이 필드를
+          // 버렸으므로 0이 «안 썼다»가 아니라 «안 적혔다»다.
+          {
+            const t = st as { auxId?: string | null };
+            if ("auxId" in t) D.auxPresent += 1;
+            if (t.auxId) D.auxUsed += 1;
           }
           if (st.seg3d) { nLifted += 1; D.lifted += 1; if (st.snapEnd) { nSnapEnd += 1; D.snapEnd += 1; } }
           {
@@ -503,6 +512,12 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
                     /** 발화 상세 [id, start|end, kind, distPx] — 리뷰어 2차 [5] */
                     fired: D.s2dFired },
           snap3d: { end_snapped: `${D.snapEnd}/${D.lifted}` },
+          /**
+           * **보조 소실점 사용**(16차 지시 2-c · D-L106). `used` > 0이면 DEFERRED
+           * «보조 소실점이 저장에 안 들어간다» 행이 열린다 — 그 행의 판정자다.
+           * `field_present` 0이면 16차 이전 저장본이라 0이 반증이 아니다(#32).
+           */
+          aux_use: { used: `${D.auxUsed}/${D.n}`, field_present: `${D.auxPresent}/${D.n}` },
           /** 집합 대조(리뷰어 [4]) — 스냅 획 집합과 3D 획 집합은 **다를 수 있다**. */
           snapped_any_ids: D.snappedIds,
           lifted_ids: D.liftedIds,

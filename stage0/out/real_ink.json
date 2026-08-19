@@ -287,6 +287,10 @@
         "snap3d": {
           "end_snapped": "0/5"
         },
+        "aux_use": {
+          "used": "0/5",
+          "field_present": "0/5"
+        },
         "snapped_any_ids": [
           "s40",
           "s41",
@@ -391,6 +395,10 @@
         },
         "snap3d": {
           "end_snapped": "0/0"
+        },
+        "aux_use": {
+          "used": "0/13",
+          "field_present": "0/13"
         },
         "snapped_any_ids": [],
         "lifted_ids": [],
@@ -550,6 +558,10 @@
         },
         "snap3d": {
           "end_snapped": "1/6"
+        },
+        "aux_use": {
+          "used": "0/11",
+          "field_present": "0/11"
         },
         "snapped_any_ids": [
           "s69",
