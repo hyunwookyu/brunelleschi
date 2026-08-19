@@ -236,3 +236,157 @@ export function auxDirSnap(
   }
   return best;
 }
+
+// ================================================================ 각도를 **어떻게 주는가**
+//
+// **2026-08-20 16차 지시 0-b**: *"각도기 광선 경로가 들어갔는지 확인한다. «각도가 상태이고
+// 자리는 계산»이라 했는데, **각도를 어떻게 주는지가 핵심이다**."*
+//
+// 15차는 경로 하나(숫자 입력)만 냈고 나머지 둘을 «각도의 다른 표기»라며 기각했다.
+// **그 기각이 지시와 어긋났다** — 원문은 만드는 경로를 **셋** 준다:
+//
+// ```
+// ① 지평선 위 탭        → 그 자리가 곧 소실점이다.    yawFromScreenPoint
+// ② 각도기 광선          → 평면상 카메라 위치에서 쏜다. protractorAngle / protractorVp
+// ③ 각도 입력            → 같은 것이다.                addAux(yaw)
+// ```
+//
+// 셋은 **같은 양의 세 표기**여야 한다 — 그것이 이 절의 주장이고 단위 팔이 그것을 잰다.
+//
+// ---------------------------------------------------------------- ②의 근거 (지시 원문)
+//
+// > *"두 소실점을 지름으로 하는 반원 위 직각점이 **평면상 카메라 위치**다(탈레스 정리,
+// > 이론서 7.5). 주점에서 아래로 f만큼 내려간 점이고 f² = |PV₁|·|PV₂|다.
+// > **그 점에서 쏜 광선의 각도가 곧 세계 각도다.** X축 소실점 방향 0°, Z축 90°."*
+//
+// 그 점이 `thales()`의 `E`다. 왜 각도가 보존되는지는 **회전(rabatment)**이다:
+//
+// ```
+// 눈 O = P + f·n 을 지평선 L 을 축으로 화면평면 안으로 돌린 것이 E 다.
+// L 위의 점은 회전이 안 옮긴다 → 소실점들은 제자리
+// 회전은 등거리사상 → O 에서 잰 각 = E 에서 잰 각
+// 수평면 안 두 방향의 O 에서의 각 = 그 두 방향의 세계 각
+// ⇒ E 에서 V₀ → V 로 잰 각 = 세계 yaw
+// ```
+//
+// ⚠ **`|PE| = f`는 2점 전용이다**(15차 AS-L55 — 이 파일 위쪽 `thales` 머리말). 지시 원문의
+// *"주점에서 아래로 f만큼"*도 그 2점 문면이다. **그래도 ②는 전 차수에서 성립한다** —
+// 회전 논증이 쓰는 것은 `|O−foot| = edgeDist`이지 `|PE| = f`가 아니기 때문이다.
+// 3점에서 달라지는 것은 **E가 주점 수직선 위에 없다**는 것뿐이고 `thales()`는 이미
+// 그렇게 낸다(발은 `foot`, 높이는 `edgeDist`). **단위 팔이 3점에서도 돈다**(PITFALLS 1-a).
+//
+// ⚠⚠ **`a ⊥ b`는 구성이 보장한다** — `E`가 `V₀V₁`을 지름으로 하는 원 위에 있으므로
+// ∠V₀EV₁ = 90°(탈레스)이고, 세계에서도 축 0 ⊥ 축 1이다. 그래서 `(a, b)`를 정규직교
+// 틀로 써서 `cos θ·a + sin θ·b`로 쏘면 **θ = 0에서 V₀, θ = 90°에서 V₁**이 되고 그 사이가
+// 자동으로 맞는다. 부호(어느 쪽이 양수인가)도 그 둘이 정한다 — 회전의 방향을 따로 안 고른다.
+
+/**
+ * **yaw를 정규화한다** — 소실점은 `d`와 `−d`를 구분 못 하므로 각은 **180° 주기**다
+ * (`axisVpAt` 머리말). 대표값을 `(−90, 90]`로 잡는다: 0이 축 0, 90이 축 1이다.
+ */
+export function normYaw(deg: number): number {
+  let y = ((deg + 90) % 180 + 180) % 180 - 90;
+  if (y <= -90) y += 180;
+  return Object.is(y, -0) ? 0 : y;
+}
+
+/**
+ * **경로 ① — 화면점 하나가 각을 정한다**(지시 7 «지평선 위 탭»).
+ *
+ * 찍은 점의 방향은 `axisDirection`의 역투영이고(새 함수를 안 만든다 #17), 그 방향을
+ * **수평면(축 0·1이 편다)에 사영해** 축 0과의 각을 잰다. 지평선에서 몇 px 벗어난 탭도
+ * 답이 있다 — 벗어난 만큼은 수직 성분이고 사영이 그것을 버린다(= 수평 보조를 만든다).
+ *
+ * ⚠ **탈레스가 없어도 선다** — 1점처럼 수평 소실점이 하나뿐이면 `thales()`가 `null`인데
+ * 이 경로는 축 방향 둘만 쓰므로 그대로 돈다. 그래서 ①이 ②의 특수한 경우가 **아니다**.
+ */
+export function yawFromScreenPoint(
+  at: Pt2, axisDirs: (Vec3 | null)[], principal: Pt2, f: number,
+): number | null {
+  const e0 = axisDirs[0], e1 = axisDirs[1];
+  if (!e0 || !e1) return null;
+  const d: Vec3 = [at[0] - principal[0], at[1] - principal[1], f];
+  const c = d[0] * e0[0] + d[1] * e0[1] + d[2] * e0[2];
+  const s = d[0] * e1[0] + d[1] * e1[1] + d[2] * e1[2];
+  if (Math.hypot(c, s) < 1e-12) return null;         // 수평면에 사영하면 0이다 — 각이 없다
+  return normYaw(Math.atan2(s, c) / RAD);
+}
+
+/**
+ * **경로 ② 정방향 — 각 → 광선 → 지평선 위의 자리.**
+ *
+ * `E`에서 `cos θ·a + sin θ·b` 로 쏜 광선이 `V₀V₁`(지평선)과 만나는 점이다.
+ * 광선이 지평선과 나란하면(그 방향이 무한원 소실점이면) `null`이다 — 근사를 안 만든다.
+ */
+export function protractorVp(E: Pt2, v0: Pt2, v1: Pt2, yawDeg: number): Pt2 | null {
+  const a0 = v0[0] - E[0], a1 = v0[1] - E[1], la = Math.hypot(a0, a1);
+  const b0 = v1[0] - E[0], b1 = v1[1] - E[1], lb = Math.hypot(b0, b1);
+  if (la < 1e-9 || lb < 1e-9) return null;
+  const ax = a0 / la, ay = a1 / la, bx = b0 / lb, by = b1 / lb;
+  const c = Math.cos(yawDeg * RAD), s = Math.sin(yawDeg * RAD);
+  const rx = c * ax + s * bx, ry = c * ay + s * by;
+  // 지평선 = V₀V₁ 직선. 광선 E + t·r 과의 교점 — 나란하면 분모가 0이다
+  const hx = v1[0] - v0[0], hy = v1[1] - v0[1];
+  const den = rx * hy - ry * hx;
+  if (Math.abs(den) < 1e-12) return null;
+  const t = ((v0[0] - E[0]) * hy - (v0[1] - E[1]) * hx) / den;
+  return [E[0] + t * rx, E[1] + t * ry];
+}
+
+/**
+ * **경로 ② 역방향 — 화면점 → 각도기 눈금.** 손이 끄는 동안 읽히는 값이다.
+ *
+ * `E`에서 `V₀` 쪽을 0°로, `V₁` 쪽을 +90°로 잰다. `protractorVp`의 역이고 `normYaw`로
+ * 대표값을 낸다(광선의 두 갈래가 같은 소실점을 낸다).
+ */
+export function protractorAngle(E: Pt2, v0: Pt2, v1: Pt2, p: Pt2): number | null {
+  const a0 = v0[0] - E[0], a1 = v0[1] - E[1], la = Math.hypot(a0, a1);
+  const b0 = v1[0] - E[0], b1 = v1[1] - E[1], lb = Math.hypot(b0, b1);
+  const p0 = p[0] - E[0], p1 = p[1] - E[1], lp = Math.hypot(p0, p1);
+  if (la < 1e-9 || lb < 1e-9 || lp < 1e-9) return null;
+  const c = (p0 * a0 + p1 * a1) / la, s = (p0 * b0 + p1 * b1) / lb;
+  if (Math.hypot(c, s) < 1e-12) return null;
+  return normYaw(Math.atan2(s, c) / RAD);
+}
+
+/**
+ * **경사 각도기**(지시 7 «30도 경사 계단이면 30도로 쏜다»).
+ *
+ * 원문은 *"경사 소실점은 기준선만 그 수평 소실점을 지나는 **수직선**으로"*라고 적는데
+ * ⛔ **그 «수직선»은 2점 문면이다**(15차 AS-L54 · 이론서 15.1의 좌표 규약 `(a,0,c)`).
+ * 일반형은 «**대응 수평 소실점 ↔ 수직축 소실점**을 잇는 직선»이고, 수직축이 무한원(2점)일
+ * 때 그것이 화면 세로가 되어 원문의 문면으로 돌아온다. **측정이 그렇게 말했으므로 일반형을
+ * 따른다**(A-3) — 그리고 이 함수가 두 문면의 차이를 **재는 자리**이기도 하다.
+ *
+ * 쏘는 자리는 그 방향의 **측점 M**이다(이론서 7.3·15.2의 2점 작도). 그 자리에서 지평선과
+ * `pitch`의 각으로 쏜 광선이 기준선과 만나는 점이 경사 소실점이다.
+ *
+ * ⚠⚠ **이 작도 전체가 2점 전용이다**(측점이 지평선 위에 놓이는 것이 7.5의 rabatment
+ * 전제를 물려받는다 — D-L106이 15.2에 대해 적은 그대로). 3점에서는 **틀린 답을 낸다**.
+ * 그래서 앱은 이것으로 소실점을 만들지 않는다 — 만드는 것은 `auxDirVec`의 3D 투영이고
+ * (전 차수에서 옳다) 이 함수는 **원장이 그 어긋남을 재는 팔**이다. 안 재면 «2점 전용»이
+ * 다시 산문으로만 남는다(PITFALLS 1-a가 가리키는 자리).
+ */
+export function slopeByMeasuringPoint(
+  M: Pt2, vHoriz: Pt2, baseDirEnd: Pt2, v0: Pt2, v1: Pt2, pitchDeg: number,
+): Pt2 | null {
+  const hx = v1[0] - v0[0], hy = v1[1] - v0[1], lh = Math.hypot(hx, hy);
+  if (lh < 1e-9) return null;
+  // 지평선 위에서 M → Vh 쪽이 «앞»이다(그 방향으로 재야 오르막이 위로 간다)
+  let ux = hx / lh, uy = hy / lh;
+  if ((vHoriz[0] - M[0]) * ux + (vHoriz[1] - M[1]) * uy < 0) { ux = -ux; uy = -uy; }
+  // 기준선 = Vh 를 지나 `baseDirEnd` 쪽으로 가는 직선(수직축 소실점 또는 화면 세로)
+  let bx = baseDirEnd[0] - vHoriz[0], by = baseDirEnd[1] - vHoriz[1];
+  const lb = Math.hypot(bx, by);
+  if (lb < 1e-9) return null;
+  bx /= lb; by /= lb;
+  // 오르막은 화면 위쪽이다(y 아래가 양) — 기준선 방향의 부호를 그 조건으로 정한다
+  const upSign = by <= 0 ? 1 : -1;
+  const c = Math.cos(pitchDeg * RAD), s = Math.sin(pitchDeg * RAD);
+  const rx = c * ux + s * upSign * bx, ry = c * uy + s * upSign * by;
+  // 광선 M + t·r 과 기준선 Vh + u·b 의 교점
+  const den = rx * by - ry * bx;
+  if (Math.abs(den) < 1e-12) return null;
+  const t = ((vHoriz[0] - M[0]) * by - (vHoriz[1] - M[1]) * bx) / den;
+  return [M[0] + t * rx, M[1] + t * ry];
+}

@@ -8,6 +8,8 @@
 //   · 7.4  1점 투시의 거리점은 |PD| = f (측점법의 특수해)
 import { describe, it, expect } from "vitest";
 import { auxDirVec, auxVpAt, auxVpsAt, thales, measuringPoint, auxDirSnap,
+         normYaw, yawFromScreenPoint, protractorVp, protractorAngle,
+         slopeByMeasuringPoint,
          type AuxDir } from "../src/s3d/auxVp.js";
 import { axisVpAt } from "../src/s3d/axisVp.js";
 import type { Vec3 } from "../src/s3d/geom3d.js";
@@ -292,5 +294,208 @@ describe("보조 방향 스냅 — 위계", () => {
     expect(auxDirSnap([10, 10], [200, 200],
                       [{ id: "z", at: null, screenDir: [1, 0], distFromPrincipal: null,
                          yawDeg: 0, pitchDeg: 0 }], 0.06)).toBeNull();
+  });
+});
+
+// ================================================================ 16차 항목 0 — 만드는 경로 셋
+//
+// 지시 원문(`docs/instructions/16.md`): *"만드는 경로 셋 — 지평선 위 탭 · 각도기 광선 ·
+// 각도 입력 → **같은 것이다**."* 15차는 셋 중 하나만 냈고 «같은 것»이라는 주장을 **안 쟀다**.
+// 여기가 그 자리다.
+//
+// ⚠ **팔이 전 차수를 돈다**(PITFALLS #51 — 16차 지시 1-a가 등재한 그 함정). 15차의
+// `|PE| = f` 오적용이 «단위 팔이 2점만 돌아» 종단에서 났다. 아래 팔들은 **2점·3점·롤 3점**
+// 셋을 전부 돈다 — 픽스처 하나가 셋을 다 낸다.
+
+/** 세 차수의 축 방향. 이름이 곧 그 팔의 라벨이다(#42 ⑨). */
+const ORDERS: { name: string; A: (Vec3 | null)[] }[] = (() => {
+  const rx = (q: number) => (v: Vec3): Vec3 => {
+    const c = Math.cos(q), s = Math.sin(q);
+    return [v[0], c * v[1] - s * v[2], s * v[1] + c * v[2]];
+  };
+  const rz = (q: number) => (v: Vec3): Vec3 => {
+    const c = Math.cos(q), s = Math.sin(q);
+    return [c * v[0] - s * v[1], s * v[0] + c * v[1], v[2]];
+  };
+  const frame = (yaw: number, R: (v: Vec3) => Vec3): (Vec3 | null)[] => {
+    const t = (yaw * Math.PI) / 180;
+    return [R([Math.cos(t), 0, Math.sin(t)]), R([-Math.sin(t), 0, Math.cos(t)]), R([0, 1, 0])];
+  };
+  const id = (v: Vec3) => v;
+  const d = (x: number) => (x * Math.PI) / 180;
+  return [
+    { name: "two_point", A: frame(35, id) },
+    { name: "three_point", A: frame(35, rx(d(18))) },
+    { name: "three_point_roll", A: frame(35, v => rz(d(14))(rx(d(18))(v))) },
+  ];
+})();
+
+describe("만드는 경로 셋은 같은 양의 세 표기다 (16차 지시 0)", () => {
+  for (const { name, A } of ORDERS) {
+    it(`[${name}] **각도기 광선의 각 = 세계 각**(지시 원문의 그 문장)`, () => {
+      const v0 = axisVpAt(A[0], P, F, IMG)!.at!;
+      const v1 = axisVpAt(A[1], P, F, IMG)!.at!;
+      const th = thales(v0, v1, P)!;
+      expect(th).not.toBeNull();
+      // ∠V₀EV₁ = 90° — 탈레스가 보장한다(구성이므로 #5: 이것은 보장이지 측정이 아니다)
+      const a: Pt2 = [v0[0] - th.E[0], v0[1] - th.E[1]];
+      const b: Pt2 = [v1[0] - th.E[0], v1[1] - th.E[1]];
+      const cosAB = (a[0] * b[0] + a[1] * b[1]) / (Math.hypot(a[0], a[1]) * Math.hypot(b[0], b[1]));
+      expect(Math.abs(cosAB)).toBeLessThan(1e-9);
+      // **측정은 이것이다** — E에서 θ로 쏜 광선이 만나는 자리가, 세계에서 yaw θ로 돌린
+      // 방향의 소실점과 **같은 점**인가. 두 계산은 서로 독립이다(2D 작도 ↔ 3D 투영).
+      // ⚠ g = −35는 이 픽스처(요 35°)의 **퇴화각**이다 — 그 방향이 화면과 나란해 소실점이
+      // 무한원이고, 광선도 지평선과 나란하다. **두 경로가 같은 각에서 함께 닫히는 것**이
+      // 일치의 일부이므로 건너뛰지 않고 «둘 다 null»을 단언한다.
+      let compared = 0;
+      for (const g of [-70, -35, -10, 0, 15, 30, 45, 60, 80, 90]) {
+        const byRay = protractorVp(th.E, v0, v1, g);
+        const by3d = auxVpAt(aux({ yawDeg: g }), A, P, F, IMG)!.at;
+        expect(byRay === null).toBe(by3d === null);
+        if (byRay && by3d) {
+          expect(Math.hypot(byRay[0] - by3d[0], byRay[1] - by3d[1])).toBeLessThan(1e-6);
+          compared++;
+        }
+      }
+      expect(compared).toBeGreaterThanOrEqual(8);   // #36 — 전부 닫혀 있으면 잰 것이 없다
+    });
+
+    it(`[${name}] 각도기의 역(화면점 → 눈금)이 정방향과 맞물린다`, () => {
+      const v0 = axisVpAt(A[0], P, F, IMG)!.at!;
+      const v1 = axisVpAt(A[1], P, F, IMG)!.at!;
+      const th = thales(v0, v1, P)!;
+      for (const g of [-80, -45, 0, 20, 55, 90]) {
+        const p = protractorVp(th.E, v0, v1, g)!;
+        expect(protractorAngle(th.E, v0, v1, p)!).toBeCloseTo(normYaw(g), 9);
+      }
+      // 눈금 0·90은 두 축 소실점 자신이다(지시: "X축 소실점 방향 0°, Z축 90°")
+      expect(protractorAngle(th.E, v0, v1, v0)!).toBeCloseTo(0, 9);
+      expect(protractorAngle(th.E, v0, v1, v1)!).toBeCloseTo(90, 9);
+    });
+
+    it(`[${name}] **지평선 위 탭 = 같은 각** — 역투영이 각도기와 같은 답을 낸다`, () => {
+      const v0 = axisVpAt(A[0], P, F, IMG)!.at!;
+      const v1 = axisVpAt(A[1], P, F, IMG)!.at!;
+      const th = thales(v0, v1, P)!;
+      for (const g of [-75, -30, 0, 25, 50, 85]) {
+        const p = protractorVp(th.E, v0, v1, g)!;
+        // 경로 ①: 그 점을 **탭했다면** 나오는 각(역투영 — 탈레스를 안 쓴다)
+        expect(yawFromScreenPoint(p, A, P, F)!).toBeCloseTo(normYaw(g), 6);
+      }
+      // 축 소실점을 탭하면 0°·90°다
+      expect(yawFromScreenPoint(v0, A, P, F)!).toBeCloseTo(0, 6);
+      expect(yawFromScreenPoint(v1, A, P, F)!).toBeCloseTo(90, 6);
+    });
+
+    it(`[${name}] 탭 → 각 → 소실점 왕복이 제자리로 온다`, () => {
+      // ⚠ **왕복은 설계 보장에 가깝다**(#5 유형 3) — 그래서 이 팔은 «맞는가»가 아니라
+      // «어긋나는 자리가 없는가»만 본다. 경로가 같은 양임을 재는 것은 위 세 팔이다.
+      for (const g of [-60, -20, 5, 40, 70]) {
+        const src = auxVpAt(aux({ yawDeg: g }), A, P, F, IMG)!.at!;
+        const back = yawFromScreenPoint(src, A, P, F)!;
+        const again = auxVpAt(aux({ yawDeg: back }), A, P, F, IMG)!.at!;
+        expect(Math.hypot(again[0] - src[0], again[1] - src[1])).toBeLessThan(1e-6);
+      }
+    });
+  }
+
+  it("**반례** — 지평선에서 벗어난 탭은 수평 성분만 남긴다(수직 성분을 버린다)", () => {
+    const A = ORDERS[0].A;
+    const v0 = axisVpAt(A[0], P, F, IMG)!.at!;
+    const on = yawFromScreenPoint(v0, A, P, F)!;
+    // 지평선에서 40px 위로 벗어난 탭 — **각이 안 바뀐다**(그 벗어남은 pitch이지 yaw가 아니다)
+    const off = yawFromScreenPoint([v0[0], v0[1] - 40], A, P, F)!;
+    expect(off).toBeCloseTo(on, 6);
+  });
+
+  it("**반례** — 축 방향이 없으면 각이 없다 · 기준이 겹치면 자리가 없다", () => {
+    expect(yawFromScreenPoint([100, 100], [null, null, null], P, F)).toBeNull();
+    // E가 소실점 위에 겹치면 광선의 기준이 없다
+    expect(protractorVp([0, 0], [0, 0], [100, 0], 30)).toBeNull();
+    expect(protractorAngle([0, 0], [0, 0], [100, 0], [5, 5])).toBeNull();
+  });
+
+  it("**반례** — 주점이 두 소실점 사이에 없으면 각도기 자체가 없다(이론서 6.5)", () => {
+    // 예각 조건이 깨진 구도 — `thales`가 null이므로 경로 ②가 **닫힌다**. ①·③은 그래도 산다
+    expect(thales([100, 300], [300, 300], [900, 300])).toBeNull();
+  });
+
+  it("**1점에서는 ②가 닫히고 ①이 산다** — 둘이 같은 경로가 아니라는 증거", () => {
+    // 축 1이 화면과 나란해 소실점이 무한원이다(1점) → 탈레스의 재료가 없다
+    const A1: (Vec3 | null)[] = [[0, 0, 1], [1, 0, 0], [0, 1, 0]];
+    expect(axisVpAt(A1[1], P, F, IMG)!.at).toBeNull();
+    // ①은 축 방향 둘만 쓰므로 돈다 — 축 0의 소실점(= 주점)을 탭하면 0°다
+    expect(yawFromScreenPoint(P, A1, P, F)).toBeCloseTo(0, 6);
+    // 유한 소실점을 가진 임의 각의 왕복 — ⚠ **P + 200px 탭은 90°가 아니다**: 90° 방향
+    // (축 1 = 화면 나란)의 소실점은 **무한원**이고, 그 탭이 주는 것은 atan2(200, f)의
+    // 방향이다. 탭이 «자리»를 주고 각은 역투영이 정한다 — 그것이 이 경로의 정의다.
+    expect(yawFromScreenPoint([P[0] + 200, P[1]], A1, P, F))
+      .toBeCloseTo(Math.atan2(200, F) / (Math.PI / 180), 6);
+    for (const g of [12, 30, -25]) {
+      const at = auxVpAt(aux({ yawDeg: g }), A1, P, F, IMG)!.at!;
+      expect(yawFromScreenPoint(at, A1, P, F)!).toBeCloseTo(g, 6);
+    }
+  });
+
+  it("normYaw는 180° 주기다 — 소실점이 d와 −d를 구분 못 한다", () => {
+    expect(normYaw(0)).toBe(0);
+    expect(normYaw(90)).toBe(90);
+    expect(normYaw(135)).toBeCloseTo(-45, 12);
+    expect(normYaw(-135)).toBeCloseTo(45, 12);
+    expect(normYaw(270)).toBeCloseTo(90, 12);
+    expect(normYaw(-90)).toBeCloseTo(90, 12);
+  });
+});
+
+describe("경사 각도기 — 이론서 15.2 작도는 **2점 전용**이다 (PITFALLS #51)", () => {
+  // 지시 원문: *"경사 소실점은 기준선만 그 수평 소실점을 지나는 수직선으로. 30도 경사
+  // 계단이면 30도로 쏜다."* — 그 «수직선»과 «쏜다»가 **2점 문면**임을 여기가 잰다.
+  const slopeArm = (A: (Vec3 | null)[], yaw: number, pitch: number) => {
+    const v0 = axisVpAt(A[0], P, F, IMG)!.at!;
+    const v1 = axisVpAt(A[1], P, F, IMG)!.at!;
+    const th = thales(v0, v1, P)!;
+    const vh = auxVpAt(aux({ yawDeg: yaw }), A, P, F, IMG)!.at!;
+    const M = measuringPoint(vh, th.E, v0, v1, P)!.at;
+    const v2 = axisVpAt(A[2], P, F, IMG);
+    // 기준선의 끝점 — 수직축 소실점이 유한하면 그 점, 무한원이면 화면 세로(2점의 문면)
+    const baseEnd: Pt2 = v2?.at ?? [vh[0], vh[1] - 1000];
+    const drawn = slopeByMeasuringPoint(M, vh, baseEnd, v0, v1, pitch)!;
+    const truth = auxVpAt(aux({ yawDeg: yaw, pitchDeg: pitch }), A, P, F, IMG)!.at!;
+    return { drawn, truth, gap: Math.hypot(drawn[0] - truth[0], drawn[1] - truth[1]) };
+  };
+
+  it("**2점에서는 맞는다** — 측점에서 30°로 쏜 광선이 참 경사 소실점에 닿는다", () => {
+    for (const [yaw, pitch] of [[0, 30], [35, 30], [-25, 15], [60, 45]]) {
+      const r = slopeArm(ORDERS[0].A, yaw, pitch);
+      expect(r.gap).toBeLessThan(1e-6);
+    }
+  });
+
+  it("**3점에서는 틀린다** — «수직선»도 «측점에서 쏜다»도 2점 규약이다", () => {
+    // ⚠ 이것이 **반례 팔**이다: 안 재면 «2점 전용»이 산문으로만 남는다(15차가 그래서
+    // `|PE| = f`를 종단까지 들고 갔다). 어긋남의 **크기**를 박는다 — 0이 아님만이 아니라
+    let worst = 0;
+    for (const [yaw, pitch] of [[0, 30], [35, 30], [-25, 15]]) {
+      const r = slopeArm(ORDERS[1].A, yaw, pitch);
+      worst = Math.max(worst, r.gap);
+    }
+    expect(worst).toBeGreaterThan(1);          // px — 반올림이 아니다
+    // 롤까지 들어간 3점에서도 마찬가지다
+    expect(slopeArm(ORDERS[2].A, 35, 30).gap).toBeGreaterThan(1);
+  });
+
+  it("앱이 쓰는 것은 3D 투영이므로 **전 차수에서 옳다**(작도는 표시·검증용이다)", () => {
+    // 일반형의 주장: 경사 소실점은 «대응 수평 소실점 ↔ 수직축 소실점» 직선 위다(D-L106)
+    for (const { A } of ORDERS) {
+      const v2 = axisVpAt(A[2], P, F, IMG)?.at;
+      for (const [yaw, pitch] of [[35, 30], [-25, 15]]) {
+        const vh = auxVpAt(aux({ yawDeg: yaw }), A, P, F, IMG)!.at!;
+        const vs = auxVpAt(aux({ yawDeg: yaw, pitchDeg: pitch }), A, P, F, IMG)!.at!;
+        const end: Pt2 = v2 ?? [vh[0], vh[1] - 1000];
+        const ex = end[0] - vh[0], ey = end[1] - vh[1], L = Math.hypot(ex, ey);
+        const off = Math.abs((vs[0] - vh[0]) * ey - (vs[1] - vh[1]) * ex) / L;
+        expect(off).toBeLessThan(1e-6);
+      }
+    }
   });
 });

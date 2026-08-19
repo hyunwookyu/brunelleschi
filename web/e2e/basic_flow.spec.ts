@@ -634,13 +634,22 @@ test("지평선 — 확정 전에는 없고, 확정 후 그 높이에 생긴다 
     await page.mouse.up();
     await page.waitForTimeout(50);
   };
-  /** 화면 가로줄 y±3px 대역의 칠해진 픽셀 수 — 지평선 파선이 실제로 그려졌는가의 픽셀 확인. */
+  /**
+   * 화면 가로줄 y±3px 대역의 칠해진 픽셀 수 — 지평선 파선이 실제로 그려졌는가의 픽셀 확인.
+   *
+   * ⚠ **오른쪽 가장자리 40px는 대역에서 뺀다**(2026-08-20 16차 지시 5): 그 자리에 지평선
+   * **토글 손잡이**가 산다 — 끔 상태에도 흐린 고리가 있다(«켜고 끄기를 그 자리에서»,
+   * `horizonChipAt` = w−20). 이 검사의 회귀 대상은 **화면 전폭의 기본 지평선 파선**(4차
+   * 이전의 «처음부터 깔림»)이고, 그 회귀는 가장자리 40px를 빼도 그대로 잡힌다.
+   * 손잡이 자체의 판정은 `horizon_chip.json`이 든다.
+   */
   const ROW_INK = `((yCss) => {
     const el = document.getElementById("ink");
     const ctx = el.getContext("2d");
     const k = el.width / el.clientWidth;
     const y0 = Math.max(0, Math.round(yCss * k) - 3);
-    const d = ctx.getImageData(0, y0, el.width, 7).data;
+    const wSpan = Math.max(1, el.width - Math.round(40 * k));
+    const d = ctx.getImageData(0, y0, wSpan, 7).data;
     let n = 0;
     for (let i = 3; i < d.length; i += 4) if (d[i] > 8) n++;
     return n;

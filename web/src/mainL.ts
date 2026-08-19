@@ -22,7 +22,7 @@ import { serializeDoc2, restoreDoc2, autosaver2, getDoc2, deleteDoc2,
          type Doc2 } from "./ui/docStore.js";
 import { toObj, toGltf, download, linesFromDoc } from "./ui/exportGeom.js";
 import { setDocSeq, docSeq } from "./ui/doc.js";
-import { nearestSeg, PICK_TOL, type PickSeg } from "./ui/pick.js";
+import { nearestSeg, distToSeg, PICK_TOL, type PickSeg } from "./ui/pick.js";
 import { diffPlacement, diffSummary, type PlacementDiff } from "./s3d/promoteDiff.js";
 // **규칙 기반 소실점**(2026-08-16 전면 교체). 검출 초안·가이드·민감도 경로는 전부 빠졌다.
 // **상태는 넷뿐이고 차수는 계산한다**(2026-08-17 지시 1) — `perspectiveOrder` 하나를 부른다.
@@ -48,6 +48,7 @@ import { onePointFrame, directSegment, planeAnchor, ONE_POINT_TOL } from "./s3d/
 import { judgeDraftPose } from "./s3d/draftPose.js";
 import { axisVpsAt, horizonThrough, overlayAxisMarks, type AxisVpAt } from "./s3d/axisVp.js";
 import { auxVpsAt, auxDirVec, thales, measuringPoint,
+         yawFromScreenPoint, protractorAngle, normYaw,
          type AuxDir, type AuxVpAt } from "./s3d/auxVp.js";
 import { representative, AXIS_TOL, chordTurnDeg } from "./s3d/axis.js";
 // **자동 분할**(지시 I) — 교차·접촉 절단점과 조각. SketchUp 선례. 순수 기하는 split.ts 하나다(#17)
@@ -526,6 +527,8 @@ let freeStroke = false;
  * 떨어지고 그것이 D-L32가 실패한 자리다.
  */
 let horizonDrag = false;
+/** 끌기의 시작점 — 무이동 탭(= 손잡이 토글, 16차 지시 5)을 가르는 데 쓴다. */
+let horizonDragFrom: Pt2 | null = null;
 // ⛔ **`lockedOrder`를 지웠다**(2026-08-17 지시 1) — 차수는 저장하지 않고 `cam.order()`가
 // 계산한다. 표시도 판정도 그 함수를 부른다. 어긋날 자리가 없다.
 /** 하네스가 넣은 축 직선(위 `setAxisLines`). **앱은 안 쓴다** — 화면에 가이드가 없다. */
@@ -2385,6 +2388,60 @@ function horizonGrab(p: Pt2): boolean {
   return Math.abs(p[1] - cam.rules.horizon) <= PICK_TOL.radius_ratio * Math.hypot(...cssSize());
 }
 
+/**
+ * **지평선 토글 손잡이의 자리**(16차 지시 5 — «지평선에 토글을 붙인다. 켜고 끄기를
+ * 그 자리에서»). 오른쪽 가장자리, 지평선 높이다 — 끌기 손잡이(`drawHorizon`)와 같은
+ * 자리라서 «그 자리»가 하나로 모인다. 끔 상태에서도 이 자리에 흐린 표식이 남아
+ * 켤 곳을 알린다(없으면 하단바를 열어야만 켤 수 있다 — 15차 판의 그 어긋남이다).
+ */
+function horizonChipAt(): Pt2 {
+  const [w] = cssSize();
+  return [w - 20, cam.rules.horizon];
+}
+/** 손잡이 판정 — 반경은 PICK_TOL 그대로(#17). */
+function horizonChipHit(p: Pt2): boolean {
+  const c = horizonChipAt();
+  return Math.hypot(p[0] - c[0], p[1] - c[1]) <= PICK_TOL.radius_ratio * Math.hypot(...cssSize());
+}
+
+/**
+ * **탭 하나가 보조 소실점을 만든다**(16차 지시 7 — 만드는 경로 ①·②).
+ *
+ * ```
+ * ① 지평선 위 탭   그 자리가 소실점이다 — 역투영이 각을 낸다(yawFromScreenPoint).
+ *                   지평선에서 벗어난 만큼은 pitch라 사영이 버린다(수평 보조가 된다)
+ * ② 각도기 광선    탈레스가 켜져 있으면 지평선 밖 탭은 **평면상 카메라 위치 E에서
+ *                   그 점으로 쏜 광선**이다 — 광선의 각이 곧 세계 각이다(지시 원문:
+ *                   «그 점에서 쏜 광선의 각도가 곧 세계 각도다» · 단위 팔이 ③과의
+ *                   일치를 전 차수에서 잰다). E가 화면 밖이어도 계산은 실제 위치다
+ * ```
+ *
+ * 셋째 경로(각도 입력)와 같은 `addAux`로 모인다 — «같은 것이다»가 구조로 선다.
+ * 각은 0.1°로 반올림해 저장한다: 상태는 각도이고(D-L106) 소수 여섯 자리는 손이 고른
+ * 값이 아니다. 판정 띠는 PICK_TOL 그대로(#17).
+ */
+function auxTapCreate(p: Pt2): boolean {
+  const o = viewOverlayCtx();
+  if (!o || !o.axisDirs) return false;
+  const band = PICK_TOL.radius_ratio * Math.hypot(...cssSize());
+  const hl = o.horizonLine;
+  let yaw: number | null = null;
+  let how = "";
+  if (hl && distToSeg(p, hl.a, hl.b) <= band) {
+    yaw = yawFromScreenPoint(p, o.axisDirs, o.principal, o.f);
+    how = "지평선 탭";
+  } else if (AUX.showThales && o.thales) {
+    const v0 = o.axisVps[0]?.at ?? null, v1 = o.axisVps[1]?.at ?? null;
+    if (v0 && v1) { yaw = protractorAngle(o.thales.E, v0, v1, p); how = "각도기 광선"; }
+  }
+  if (yaw == null) return false;
+  const r = Math.round(normYaw(yaw) * 10) / 10;
+  addAux(r, 0);
+  note = `보조 소실점 **${r}°** <span class="dim">(${how} — 각도 입력과 같은 것입니다.`
+       + " 그 방향으로 그으면 붙습니다 — 축은 안 바뀝니다)</span>";
+  return true;
+}
+
 /** 보조 소실점의 표시 색 — 축 색과 갈라 둔다(위계가 눈에 보여야 한다). */
 const AUX_COLOR = "#8a5cd0";
 
@@ -2417,14 +2474,20 @@ function drawAuxVps(ctx2: CanvasRenderingContext2D,
       ctx2.globalAlpha = 0.75; ctx2.lineWidth = 1.5;
       ctx2.beginPath();
       ctx2.moveTo(v.at[0], v.at[1] - 7); ctx2.lineTo(v.at[0], v.at[1] + 7); ctx2.stroke();
-      // 경사 보조는 대응 수평 소실점과 잇는다(이론서 15.1: 바로 위/아래에 있다)
+      // 경사 보조는 대응 수평 소실점과 잇는다 — ⚠ **화면 세로선이 아니다**(16차 항목 0):
+      // «바로 위/아래»(이론서 15.1)는 2점 문면이고, 일반형은 «수평 보조 ↔ 수직축 소실점»
+      // 직선이다(AS-L54 · 단위 팔 «전 차수에서 옳다»가 그 직선 위임을 잰다). 경사 보조가
+      // 그 직선 위에 있으므로 **짝 소실점의 실제 좌표로 이으면** 두 문면이 한 코드가 된다
+      // (2점에서는 짝의 x가 같아 세로선으로 되돌아온다). 옛 판은 `v.at[0]`을 양 끝에 써서
+      // 3점에서 선이 짝을 빗나갔다.
       if (Math.abs(v.pitchDeg) > 1e-9) {
         const hv = o.auxVps.find(x => x && x.at && x.id === v.id + ":h");
         ctx2.globalAlpha = 0.25;
         ctx2.setLineDash([3, 3]);
         ctx2.beginPath();
         ctx2.moveTo(v.at[0], v.at[1]);
-        ctx2.lineTo(v.at[0], hv?.at ? hv.at[1] : (o.horizonY ?? v.at[1]));
+        if (hv?.at) ctx2.lineTo(hv.at[0], hv.at[1]);
+        else ctx2.lineTo(v.at[0], o.horizonY ?? v.at[1]);   // 짝이 무한원·부재 — 옛 근사
         ctx2.stroke();
         ctx2.setLineDash([]);
       }
@@ -2462,6 +2525,7 @@ function drawThales(ctx2: CanvasRenderingContext2D,
                     o: NonNullable<ReturnType<typeof viewOverlayCtx>>) {
   const t = o.thales;
   if (!t) return;
+  const [w, h] = cssSize();
   ctx2.save();
   ctx2.strokeStyle = AUX_COLOR; ctx2.fillStyle = AUX_COLOR;
   ctx2.globalAlpha = 0.3; ctx2.lineWidth = 1; ctx2.setLineDash([4, 4]);
@@ -2469,10 +2533,34 @@ function drawThales(ctx2: CanvasRenderingContext2D,
   ctx2.beginPath();
   ctx2.moveTo(o.principal[0], o.principal[1]); ctx2.lineTo(t.E[0], t.E[1]); ctx2.stroke();
   ctx2.setLineDash([]);
-  ctx2.globalAlpha = 0.7;
-  ctx2.beginPath(); ctx2.arc(t.E[0], t.E[1], 3, 0, Math.PI * 2); ctx2.fill();
-  ctx2.font = "10px system-ui, sans-serif";
-  ctx2.fillText("E", t.E[0] + 5, t.E[1] - 5);
+  const eInside = t.E[0] >= 0 && t.E[0] <= w && t.E[1] >= 0 && t.E[1] <= h;
+  if (eInside) {
+    ctx2.globalAlpha = 0.7;
+    ctx2.beginPath(); ctx2.arc(t.E[0], t.E[1], 3, 0, Math.PI * 2); ctx2.fill();
+    ctx2.font = "10px system-ui, sans-serif";
+    ctx2.fillText("E", t.E[0] + 5, t.E[1] - 5);
+  } else {
+    // **E가 화면 밖이다**(16차 지시 7 — «f가 크면 카메라 위치가 화면 밖이다. 가장자리
+    // 다이얼이나 축소 뷰. 계산은 실제 위치로»). 계산은 위에서 이미 실제 E로 했다 —
+    // 표시는 가장자리 표식이다. 규약은 화면 밖 소실점의 것 그대로(#17 — `drawAuxVps`의
+    // else 가지와 같은 죔·화살촉). 다이얼(끌어서 각도를 주는 조작)은 탭·각도 입력이
+    // 이미 각을 주므로 안 만든다(A-3: 가장 단순한 것 — 기각은 progress가 든다).
+    const cx = w / 2, cy = h / 2;
+    const dx = t.E[0] - cx, dy = t.E[1] - cy;
+    const pad = VP_EDGE.padPx;
+    const tc = Math.min((cx - pad) / Math.abs(dx || 1e-9), (cy - pad) / Math.abs(dy || 1e-9));
+    const ex = cx + dx * tc, ey = cy + dy * tc;
+    ctx2.globalAlpha = 0.6;
+    const L = Math.hypot(dx, dy) || 1;
+    const ux = dx / L, uy = dy / L;
+    ctx2.beginPath();
+    ctx2.moveTo(ex - ux * 8 - uy * 5, ey - uy * 8 + ux * 5);
+    ctx2.lineTo(ex, ey);
+    ctx2.lineTo(ex - ux * 8 + uy * 5, ey - uy * 8 - ux * 5);
+    ctx2.stroke();
+    ctx2.font = "10px system-ui, sans-serif";
+    ctx2.fillText("E(밖)", ex - ux * 14 - 10, ey - uy * 14);
+  }
   for (let i = 0; i < o.measuring.length; i++) {
     const m = o.measuring[i];
     if (!m) continue;
@@ -2498,7 +2586,22 @@ function drawHorizonSeg(ctx2: CanvasRenderingContext2D, l: { a: Pt2; b: Pt2 }) {
 
 function drawHorizon(ctx2: CanvasRenderingContext2D) {
   // **소실점 확정 전에는 지평선이 없다**(4차 지시 4-a — 빈 종이). 결과이지 전제가 아니다
-  if (!horizonVisible()) return;
+  if (!horizonVisible()) {
+    // **끔 상태의 토글 손잡이**(16차 지시 5 — «켜고 끄기를 그 자리에서»). 선은 없어도
+    // 켤 자리는 있어야 한다 — 없으면 하단바를 열어야만 켤 수 있다(그 어긋남이 이 절의
+    // 이유다). 흐린 고리 하나다 — 빈 종이 감각(4차 4-a)을 해치지 않는 최소한.
+    if (tool === "draw" && cam.canSetHorizon() && !cam.standing()) {
+      const c = horizonChipAt();
+      ctx2.save();
+      ctx2.strokeStyle = HORIZON_COLOR;
+      ctx2.globalAlpha = 0.3;
+      ctx2.lineWidth = 1.5;
+      ctx2.beginPath(); ctx2.arc(c[0], c[1], 6, 0, Math.PI * 2); ctx2.stroke();
+      ctx2.beginPath(); ctx2.moveTo(c[0] - 10, c[1]); ctx2.lineTo(c[0] + 10, c[1]); ctx2.stroke();
+      ctx2.restore();
+    }
+    return;
+  }
   // ⚠ **작도 화면에서만 그린다**(14차 항목 6 — 옛 판은 핀 전용이었다): 돌린 작도 시점
   // (축 정렬 + 피치 0)에서는 그 시점의 수평 소실점 y로 다시 낸다(`viewOverlayCtx` — 지시
   // 6-c). 모델링 시점에 그리면 화면에 붙어 따라다니는 유령이 된다(`drawBelowInk` 머리말).
@@ -3067,10 +3170,29 @@ const ink = new InkCanvas(canvas, {
         if (!horizonGrab(p)) return;
         pushUndo();                      // 되돌리기가 지평선을 담는다(`appSnap`의 `rules`)
         horizonDrag = true;
+        horizonDragFrom = p;
       }
       if (!horizonDrag) return;
-      cam.setHorizon(p[1]);
-      if (phase === "up") horizonDrag = false;   // ⛔ 안내 문구를 뺐다(지시 3 — 시스템 사정)
+      // **손잡이 위의 무이동 탭은 끔이다**(16차 지시 5 — «켜고 끄기를 그 자리에서»).
+      // 탭 판정은 다른 탭들과 같은 PICK_TOL이다(#17) — 손잡이에서 시작한 그보다 짧은
+      // 끌기는 토글로 읽힌다(비용을 알고 고른 규약: 끌기는 보통 선 가운데서 시작한다).
+      // 끌기 자체(setHorizon)는 down에서 안 적용한다 — 탭이면 아무것도 안 바꾼 채 끝나야
+      // 되물리기(undo 스냅샷 pop)가 참이 되기 때문이다.
+      if (phase === "move") cam.setHorizon(p[1]);
+      if (phase === "up") {
+        horizonDrag = false;
+        const moved = horizonDragFrom
+          ? Math.hypot(p[0] - horizonDragFrom[0], p[1] - horizonDragFrom[1]) : Infinity;
+        if (moved <= PICK_TOL.radius_ratio * Math.hypot(...cssSize())
+            && horizonDragFrom && horizonChipHit(horizonDragFrom)) {
+          SHOW_HORIZON.on = false;
+          undoStack.pop();               // 지평선은 안 움직였다 — 스냅샷을 되물린다
+          note = "지평선 **끔**";
+        } else {
+          cam.setHorizon(p[1]);
+        }
+        horizonDragFrom = null;
+      }
       refresh();
       return;
     }
@@ -3222,6 +3344,31 @@ const ink = new InkCanvas(canvas, {
     const raw = stroke.points.map(p => [p[0], p[1]] as Pt2);
     ink.clear();                         // 잉크 버퍼는 문서가 아니다 — 우리가 그린다
     live2d = null;
+    // **지평선 토글을 그 자리에서 켠다**(16차 지시 5 — «켜고 끄기를 그 자리에서»).
+    // 끔 상태에서는 선이 없어 끌기가 안 열리고(horizonGrab 거짓) 탭이 여기로 온다 —
+    // 가장자리 손잡이 자리를 짚으면 켠다. 켬→끔은 같은 손잡이의 탭이 끈다(onDrag의 무이동 탭).
+    if (tool === "draw" && raw.length >= 1 && !SHOW_HORIZON.on
+        && cam.canSetHorizon() && !cam.standing()) {
+      const tapLen = Math.hypot(raw[raw.length - 1][0] - raw[0][0],
+                                raw[raw.length - 1][1] - raw[0][1]);
+      if (tapLen <= PICK_TOL.radius_ratio * Math.hypot(...cssSize())
+          && horizonChipHit(raw[0])) {
+        SHOW_HORIZON.on = true;
+        note = "지평선 **켬** <span class=\"dim\">(선 위 어디서나 끌 수 있습니다 —"
+             + " 같은 손잡이를 톡 치면 다시 끕니다)</span>";
+        refresh(); return;
+      }
+    }
+    // **보조 소실점을 탭으로 만든다**(16차 지시 7 — 만드는 경로 ①·②. ③(각도 입력)과
+    // «같은 것»이므로 셋 다 `addAux` 하나로 모인다 — 단위 팔이 그 일치를 잰다).
+    // 보조 패널이 열려 있을 때만 탭을 가로챈다 — 닫혀 있으면 탭은 그리기의 것이다(A-3:
+    // 조용히 다른 뜻을 만들지 않는다).
+    if (tool === "draw" && raw.length >= 1 && cam.standing() && AUX.open) {
+      const tapLen = Math.hypot(raw[raw.length - 1][0] - raw[0][0],
+                                raw[raw.length - 1][1] - raw[0][1]);
+      if (tapLen <= PICK_TOL.radius_ratio * Math.hypot(...cssSize())
+          && auxTapCreate(raw[0])) { refresh(); return; }
+    }
     // **점 찍기 확정**(4차 지시 4-b) — 톡 찍은 자리가 대기 대각선 위의 점·교차점이면 그것이
     // 첫 소실점이다. "찍기"의 판정은 획 길이 ≤ 고르기 반경(PICK_TOL — 새 임계 없음, #17).
     if (tool === "draw" && raw.length >= 1 && !cam.standing()) {
@@ -3589,9 +3736,14 @@ function renderBar() {
     // **꺼진 종류가 있으면 라벨이 그것을 말한다**(2026-08-19 15차 항목 6 · D-L105) —
     // 옛 판은 패널을 두 번 열어야만 무엇이 꺼졌는지 알 수 있었고, 그래서 "스냅이 안 걸린다"가
     // 고장으로 읽혔다. 라이노는 오스냅 막대가 늘 떠 있어 켜진 것이 한눈에 보인다(A-3: 선례)
+    //
+    // ⚠ **버튼과 패널이 메뉴 접힘의 밖으로 나왔다**(16차 항목 0 — 지시 원문: «현재 켜진
+    // 것이 **한눈에** 보인다. 반경 조절도 같은 자리에»). 15차 판은 「표시·스냅 ▾」을 먼저
+    // 열어야 이 버튼이 보였다 — 두 번 열기가 «한눈에»와 어긋난다. 이제 버튼은 늘 보이고
+    // 한 번의 탭이 종류·반경을 펼친다(라이노의 상시 막대에 한 단계 더 가깝다).
     btn("osnap", `스냅 ${OSNAP.radiusPx}px${osnapOffCount() ? ` · ${osnapOffCount()} 끔` : ""}`,
-        OSNAP.open, false, fold),
-    ...(BAR_MENU.open && OSNAP.open ? [
+        OSNAP.open),
+    ...(OSNAP.open ? [
       `<span class="osnap-panel">반경 <input type="number" min="4" max="40" step="1" `
         + `value="${OSNAP.radiusPx}" data-osnap-radius style="width:3.2em"> px</span>`,
       ...SNAP_ORDER.map(k =>
@@ -4315,6 +4467,10 @@ refresh();
                         visible: horizonVisible() }),
   /** 측정 스위치(#30) — `false`가 수리 전 거동(끌기가 어느 상태에서도 안 열린다)이다. */
   setShowHorizon: (on: boolean) => { SHOW_HORIZON.on = on; refresh(); },
+  /** **선 위 토글 손잡이의 자리**(16차 지시 5) — 종단이 실제 좌표로 탭하는 데 쓴다(#17). */
+  horizonChip: () => ({ at: horizonChipAt(), hit: (p: Pt2) => horizonChipHit(p) }),
+  /** **보조 패널 열림**(16차 지시 7 — 탭 경로는 패널이 열려 있을 때만 탭을 가로챈다). */
+  auxOpen: () => AUX.open,
   /** **보조 소실점**(15차 항목 7 · D-L106) — 저장된 **각도** 목록. 자리는 계산이다. */
   aux: () => ({ dirs: AUX.dirs.map(d => ({ ...d })), showThales: AUX.showThales,
                 ...auxStats }),

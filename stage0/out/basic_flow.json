@@ -21,7 +21,7 @@
   "reachability_source": "s4_result/result_dark_after"
  },
  "s1_horizontal": {
-  "ink_px": 1542,
+  "ink_px": 1653,
   "order": 0,
   "standing": false,
   "strokes": 1
@@ -36,7 +36,7 @@
    1,
    "free"
   ],
-  "gl_painted_px": 1385
+  "gl_painted_px": 1388
  },
  "s3_guard": {
   "on": true,
@@ -68,7 +68,7 @@
  },
  "s5_orbit": {
   "pinned": false,
-  "gl_painted_px": 2108
+  "gl_painted_px": 2131
  },
  "s6_blocked": {
   "state": "draft_three",

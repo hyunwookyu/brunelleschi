@@ -1,0 +1,308 @@
+{
+ "what": "실제 포인터 탭이 보조 소실점을 만드는가 — ① 지평선 위 탭은 **그 자리에**, ② 각도기 광선(탈레스 켬 · 지평선 밖 탭)은 **E→탭점 광선 위에**(16차 지시 7).",
+ "how": {
+  "wiring": "탭은 Playwright 마우스(신뢰 이벤트)다. 패널 열기는 **실제 버튼**을 누른다 — API로 걸면 «패널이 열려 있을 때만 가로챈다»는 배선이 안 지나간다.",
+  "ray": "②의 판정은 **공선성**(E·탭점·소실점의 점-직선 px)이다 — 하네스가 앱의 각도 공식을 다시 쓰면 앱을 지워도 같은 답이 나온다(#52·16차 지시 1-b). 세 점이 한 직선인 것은 그 공식과 독립인 기하 명제다.",
+  "identity": "**경로 ③(각도 입력)과의 «같은 것» 판정은 단위 팔이 든다**(`test/aux_vp.test.ts` «만드는 경로 셋» — 2점·3점·롤 3점). 여기는 배선 원장이다."
+ },
+ "what_this_does_not_say": [
+  "dpr 1·마우스·한 픽스처다(#12·#21). ⛔ 초판이 이 픽스처를 «2점»이라 적었는데 **3점이다**(1차 리뷰어 [9] — `setupConfirmed`는 `aux_vp.json`과 같은 픽스처이고 그 원장의 `cam_before.order` = 3, 수직 소실점 유한). **전 차수는 단위 팔이 돈다**(#51) — 이 종단이 한 차수 하나인 것은 15차의 그 함정과 같은 모양이므로 명시한다.",
+  "탭의 **손떨림**은 없다 — 마우스 합성이라 탭점이 정확하다. 실획의 탭 정밀도는 실획 표본이 판정자다.",
+  "`tap_gap_px`는 0.1° 반올림의 지렛대를 **포함한** 값이다 — 배선 오차와 반올림 이동을 여기서 안 가른다(가르려면 반올림 전 각을 원장에 남겨야 하고, 그 상태는 앱에 없다).",
+  "**광선 팔의 E는 화면 밖이다**(`ray.E_inside` — 1차 리뷰어 [12]): 지시 7의 «계산은 실제 위치로»가 실제로 그 갈래에서 돌았다는 뜻이기도 하다. 착수 표의 `unreached` 갈래(탭 자리가 화면 밖이라 팔이 못 도는 경우)는 이 실행에서 안 났다 — 필드가 없는 것이 «났는데 안 적음»이 아니라 «안 났음»이다."
+ ],
+ "setup": {
+  "canvas": [
+   1280,
+   674
+  ],
+  "band_px": 20.98,
+  "arms": 4,
+  "queries": 4
+ },
+ "opened": {
+  "menu": true,
+  "aux": true,
+  "open": true
+ },
+ "horizon_taps": [
+  {
+   "fx": 0.42,
+   "tap_at": [
+    537.6,
+    69.05
+   ],
+   "delta_n": 1,
+   "made": {
+    "yaw": 60.6,
+    "pitch": 0
+   },
+   "vp_at": [
+    538.49,
+    69.05
+   ],
+   "tap_gap_px": 0.89
+  },
+  {
+   "fx": 0.65,
+   "tap_at": [
+    832,
+    69.05
+   ],
+   "delta_n": 1,
+   "made": {
+    "yaw": 44.5,
+    "pitch": 0
+   },
+   "vp_at": [
+    831.88,
+    69.05
+   ],
+   "tap_gap_px": 0.12
+  }
+ ],
+ "ray": {
+  "tap_at": [
+   730.59,
+   188.47
+  ],
+  "E": [
+   640,
+   1104.33
+  ],
+  "E_inside": false,
+  "delta_n": 1,
+  "made": {
+   "yaw": 49.4,
+   "pitch": 0
+  },
+  "vp_at": [
+   741.51,
+   69.05
+  ],
+  "ray_off_px": 0.89
+ },
+ "closed": {
+  "open": false,
+  "delta_n": 0
+ },
+ "summary": {
+  "tap_delta_n": [
+   1,
+   1
+  ],
+  "tap_gap_px": [
+   0.89,
+   0.12
+  ],
+  "tap_pitch_zero": true,
+  "ray_delta_n": 1,
+  "ray_off_px": 0.89,
+  "closed_delta_n": 0
+ },
+ "gate": {
+  "registered": "지평선 탭이 보조를 만들고(`tap_delta_n` 전부 > 0) 그 소실점이 탭점의 판정 띠 안이며(`tap_gap_px` < `setup.band_px`), 광선 탭의 소실점이 E→탭점 직선 위이고(`ray_off_px` — 공선성 px), 패널이 닫히면 같은 탭이 아무것도 안 만든다(`closed_delta_n` = 0).",
+  "registered_note": "⚠ **이 항목이 등록한 게이트다 — CLAUDE.md §2 중단 조건 아님**(#41).",
+  "reachability": "패널 닫힘 팔(`closed`)이 되살림이다(#30) — 탭이 그리기로 돌아간다.",
+  "reachability_bits": {
+   "horizon_tap_creates": true,
+   "ray_tap_creates": true,
+   "closed_tap_ignored": true
+  },
+  "reachability_absent": "오라클 팔 없음 — tap_gap_px·ray_off_px는 이 게이트의 결과 자체라 도달 가능성으로 못 쓴다. 띠를 넘는 것은 «다른 각을 주는 배선»인데 그 팔은 없다(되살림 팔은 경로 차단만 잰다).",
+  "result": {
+   "tap_delta_n": [
+    1,
+    1
+   ],
+   "tap_gap_px": [
+    0.89,
+    0.12
+   ],
+   "tap_pitch_zero": true,
+   "ray_delta_n": 1,
+   "ray_off_px": 0.89,
+   "closed_delta_n": 0
+  }
+ },
+ "selfcheck_notes": {
+  "ray_gap_is_dx": "`ray_off_px`와 `tap_gap_px[0]`이 같은 자릿수(px 소수 둘)에서 겹칠 수 있다(1차 리뷰어 [11]) — 이 픽스처의 광선이 거의 세로라 점-직선 거리 ≈ Δx이고, 탭 판정도 Δx가 지배한다. **두 팔은 다른 기하를 재지만 이 픽스처에서는 수치가 수렴한다** — 게이트 기준은 띠(#17 재사용)로 두고 실측을 필드가 든다: 띠보다 20배 작은 실측이 «0.1° 반올림 지렛대» 크기라는 것이 그 대비의 내용이다.",
+  "pitch_zero": "`horizon_taps[*].made.pitch` = 0은 **경로 ①의 정의다** — 지평선 탭은 수평 보조를 만든다(벗어난 성분은 pitch라 사영이 버린다 — 단위 반례 팔이 잰다). 0이 나와야 «탭은 yaw만 준다»가 선다.",
+  "closed_zero": "`closed_delta_n` = 0은 **되살림의 성립**이다(#30) — 패널이 닫히면 탭이 보조를 안 만든다. 0이 나와야 «열려 있을 때만»이 선다.",
+  "ray_off_small": "`ray_off_px`가 0에 가까운 것은 보장이 아니라 **배선의 판정**이다 — 탭→각→소실점이 다른 공식을 지나므로(각도기 역산 ↔ 3D 투영) 배선이 틀리면 직선에서 벗어난다. 크기가 정확히 0이 아닌 것은 0.1° 반올림의 지렛대다."
+ },
+ "pitfall_citations": [
+  12,
+  17,
+  21,
+  30,
+  32,
+  35,
+  36,
+  38,
+  40,
+  41,
+  43,
+  46,
+  47,
+  51,
+  52,
+  53
+ ],
+ "errors": [],
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}
