@@ -1,0 +1,304 @@
+{
+  "spec": "실획 15-16-18 재구성 — 일괄 풀이(solveInto 경로)가 배치 0인 원인의 특정(13차 항목 1) · 지면 첫 앵커의 양성 채널(13차 항목 2)",
+  "constants": {
+    "hash": "f351839a",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "vertical_ask_deg": 45,
+        "min_vp_len_ratio": 0.04,
+        "concurrent_deg": 3
+      },
+      "FOV_GATE": {
+        "severe_f_ratio": 0.5,
+        "ok_f_ratio": 0.87,
+        "reject_fov_deg": 120
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "a45078a5",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong",
+      "rate",
+      "fraction"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  },
+  "why": "카메라가 섰는데 seg3d 0/13(real_ink.per_doc). 확정 경로는 D-L83(앵커 자격)이 3D 대상 부재로 전부 대기시키는 것이 의도대로이고, 교차 앵커(12차)는 첫 3D 뒤의 연결 폭이라 여기 도달하지 못한다(12차 리뷰어 [2]). 남는 후보는 확정 순간의 일괄 풀이 하나 — 그것이 왜 0인지가 이 원장이다.",
+  "file": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+  "reconstruction": {
+    "camera_standing": true,
+    "n_strokes_nonnote": 11,
+    "axes": [
+      "s41:0",
+      "s42:0",
+      "s43:1",
+      "s44:1",
+      "s45:1",
+      "s46:1",
+      "s47:free",
+      "s48:free",
+      "s49:2",
+      "s50:free",
+      "s51:free"
+    ],
+    "n_framed": 7,
+    "n_axis_unclassified": 4
+  },
+  "batch_solve": {
+    "joints": 0,
+    "components": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "placed": 0,
+    "unplaced_reasons": {
+      "축이 미분류다": 4,
+      "어느 획과도 교점이 없다": 7
+    }
+  },
+  "contrast_15_18_25": {
+    "camera_standing": true,
+    "placed": 7,
+    "placed_ids": [
+      "s65",
+      "s69",
+      "s70",
+      "s75",
+      "s76",
+      "s77",
+      "s78"
+    ],
+    "saved_lifted_ids": [
+      "s65",
+      "s69",
+      "s70",
+      "s76",
+      "s77",
+      "s78"
+    ],
+    "beyond_saved_ids": [
+      "s75"
+    ],
+    "note": "⚠ 이 재구성은 **저장 당시의 순차 흐름이 아니다**(확정 시점의 대기 집합을 모른다) — 일괄 풀이가 이 기하에서 무엇을 놓을 수 있는지의 재료일 뿐, 저장본의 seg3d가 이 경로로 났다는 증명이 아니다. `beyond_saved_ids`(재구성이 저장본보다 더 놓은 획)가 비어 있지 않은 것이 그 실측 증거다(리뷰어 2차 [8]). real_ink의 `lifted_no_snapstart_ids`가 전부 placed_ids 안이면 무앵커 배치는 일괄 풀이 몫으로 **모순 없이** 설명된다(증명 아님). ⚠ 화각 163°(상한 거부 대역)인데 여기서 카메라가 선 것은 **복원 경로**라서다 — 12차 상한은 신규 확정(stepRule)을 막고, 저장된 슬롯의 ctx 풀이는 지나간다(실측: camera_standing true). 의도인지 미상 — DEFERRED 등재(복원 경로의 상한 처리)"
+  },
+  "ground_recovery": {
+    "note": "수리 후 같은 파일이 어디까지 풀리는가 — `ground_placed`(확정 순간 지면 첫 앵커) + `crossable_after`(그 지면 획을 가로질러 교차 앵커가 닿는, **축을 받은** 대기 획 — 분자/분모). 미분류 대기는 분모 밖이고 따로 센다(#11). 앱 종단은 `ground_anchor.json`(e2e)이 재고, 여기는 같은 함수의 파일 재료 팔이다. ⚠ crossable은 도달 가능성이지 배치가 아니다 — 연쇄의 실제 배치는 축·양끝 조건을 더 지난다",
+    "ground_placed": 6,
+    "ground_placed_ids": [
+      "s41",
+      "s42",
+      "s43",
+      "s44",
+      "s45",
+      "s46"
+    ],
+    "crossable_after": "1/1",
+    "crossable_ids": [
+      "s49"
+    ],
+    "unclassified_waiting": 4
+  },
+  "ground_truth": {
+    "note": "합성 참 카메라(피치 0 · 지면 y=+1)의 두 팔(#25 — 여기 있어야 AS-L42·D-L90의 인용이 원장 안이다). ① identity_on_plane_err: 참으로 지면 위인 선의 복원 오차 — **구성의 항등**(#5: 같은 평면×광선 교점이라 0일 수밖에 없다. 보장이므로 임계를 안 건다 — selfcheck 규약대로 그렇게 적는다). ② offplane: 지면 위 높이 h(눈높이 비율)의 수평선을 지면에 놓았을 때 — depth_ratio = 1/(1−h)로 깊이가 조용히 늘고 dir_dot_abs = 1로 **방향은 보존된다**(등고선의 그림자는 순수 배율 — 방향 지표에 안 잡히는 이유. AS-L42 위반 비용의 크기다. ⚠ 이 배율은 닫힌 형식의 귀결이라 '실측'의 몫은 구현 확인이다 — 2차 리뷰어 PITFALLS 대조의 #5 주의 그대로)",
+    "identity_on_plane_err": 9.485749680535094e-16,
+    "offplane": [
+      {
+        "h_over_eye": 0.25,
+        "depth_ratio": 1.3333,
+        "dir_dot_abs": 1
+      },
+      {
+        "h_over_eye": 0.5,
+        "depth_ratio": 2,
+        "dir_dot_abs": 1
+      },
+      {
+        "h_over_eye": 0.75,
+        "depth_ratio": 4,
+        "dir_dot_abs": 1
+      }
+    ]
+  },
+  "cross_occlusion": {
+    "note": "대기 획별: 지면 획들과의 교차 수 · 각 교차 앵커로 세운 축 직선들의 **쌍별 평행선 거리 ÷ 평균 앵커 거리**(상대). 참 접촉은 최대 하나이므로 교차가 2+이고 이 값이 크면 **나머지는 가림**이다 — 현행 crossAnchorOf(최근접 교차 채택)이 무엇을 두고 고르는지의 실측이고, 잔차 검증 팔(2+ 교차의 일치 요구)의 설계 입력이다. ⚠ 잔차 검증을 켜면 이 파일의 회복(s49) 자체가 죽는다 — 바닥 격자를 가로지르는 수직선은 교차 대부분이 가림인 것이 **정상**이다. 정책(어느 교차가 참인가)은 DEFERRED 그대로 열려 있고 이 실측이 그 판단 재료다",
+    "rows": [
+      {
+        "id": "s49",
+        "n_crossings": 3,
+        "pairwise_line_offset_ratio": {
+          "n": 3,
+          "min": 0.1563,
+          "p10": 0.1563,
+          "median": 0.5195,
+          "p90": 0.6758,
+          "max": 0.6758
+        }
+      }
+    ]
+  },
+  "crossing_breakdown": {
+    "note": "findJoints의 세 거름 조건별 모집단 — 같은 축(parallel) · 선분 밖(off_segment) · **몸통 교차(body_crossings — 두 선분 위 교차인데 어느 끝점에서도 touch 반경 밖)**. 교점(joint)이 0인데 몸통 교차가 여럿이면, 멈춘 자리는 교차 부재가 아니라 **끝점 근접(endNear) 조건**이다 — 이 사용자의 보조선은 모서리 접합이 아니라 길게 긋고 가운데서 가로지르는 스타일이다(교차 앵커 D-L89 계열과 같은 관찰).",
+    "touch_radius_px": 20.34,
+    "parallel_pairs": 5,
+    "off_segment": 9,
+    "body_crossings": 7,
+    "min_end_dist_px": {
+      "n": 7,
+      "min": 46,
+      "p10": 60,
+      "median": 84,
+      "p90": 163.2,
+      "max": 200.2
+    }
+  },
+  "gate": {
+    "registered": "재현 팔(#30): placed = 0 · joints = 0 · body_crossings > 0 — 즉 '교차가 없어서'가 아니라 '끝점 접합이 아니라서'다. ⚠ 이 팔은 liftAll 재료만 지나므로 수리(solveInto 꼬리의 지면 경로)와 무관하게 0이 유지된다 — '수리 전 상태'가 아니라 **일괄 풀이 층의 불변**으로 읽는다(1·2 리뷰어 #44 긴장의 해소). 같은 입력·같은 앱의 수리 전 거동은 ground_anchor.json의 끔 팔이 잰다. 항목 2(첫 앵커)의 양성 채널: ground_recovery.ground_placed > 0",
+    "reachability": "재현 조건(placed = 0)이 항등이 아님을 **형제 파일의 같은 솔버**가 보인다 — contrast_15_18_25.placed > 0(끝점 접합이 있으면 이 일괄 풀이는 실제로 놓는다). ⚠ 초판은 body_crossings(판정 조건 자체)를 여기 적었고 리뷰어 2차 [9]가 #40의 그 형태(기준선을 도달 가능성으로)로 잡아 바꿨다",
+    "reachability_value": 7,
+    "reachability_source": "contrast_15_18_25/placed",
+    "result": {
+      "placed": 0,
+      "joints": 0,
+      "body_crossings": 7,
+      "ground_placed": 6,
+      "crossable_after": "1/1"
+    }
+  }
+}

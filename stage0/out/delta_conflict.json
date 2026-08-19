@@ -1,0 +1,340 @@
+{
+  "spec": "Δ 대푯값 충돌의 분해(13차 항목 4) — ① angleWiden ② 무앵커 방향 스냅 사거리 ③ rank_margin",
+  "constants": {
+    "hash": "f351839a",
+    "values": {
+      "AXIS_TOL": {
+        "vp_dist_ratio": 0.06,
+        "screen_parallel": 0.05,
+        "ambiguity_margin": 1.5,
+        "ambiguity_floor": 0.008,
+        "min_len_ratio": 0.02,
+        "bend_max": 0.18,
+        "turn_deg": 45,
+        "turn_window_ratio": 0.12,
+        "angle_relax": 1.2,
+        "angle_t60": 0.5773502692,
+        "rank_margin": 2.5,
+        "vp_dist_ceiling": 0.22,
+        "angle_max_deg": 0
+      },
+      "PICK_TOL": {
+        "radius_ratio": 0.0145
+      },
+      "VP_TOL": {
+        "support_deg": 2.5,
+        "min_reach": 1,
+        "min_spread_mult": 1.5,
+        "min_support": 3,
+        "min_len_ratio": 0.02,
+        "refit_passes": 2,
+        "max_vps": 3,
+        "seed_pairs_max": 6000
+      },
+      "LIFT_TOL": {
+        "touch_ratio": 0.015,
+        "parallel_deg": 5,
+        "reject_passes": 2,
+        "reject_mult": 4,
+        "gauge_height": 1
+      },
+      "HOMOG_TOL": {
+        "snap_deg": 3,
+        "degenerate_cross": 1e-9
+      },
+      "HORIZON_TOL": {
+        "min_slope_deg": 3.75,
+        "min_vp_sep_ratio": 0.15
+      },
+      "RULE_TOL": {
+        "screen_axis_deg": 4,
+        "depth_min_deg": 8,
+        "vertical_ask_deg": 45,
+        "min_vp_len_ratio": 0.04,
+        "concurrent_deg": 3
+      },
+      "FOV_GATE": {
+        "severe_f_ratio": 0.5,
+        "ok_f_ratio": 0.87,
+        "reject_fov_deg": 120
+      },
+      "SNAP_TOL_AXIS": {
+        "ambiguous_deg": 6
+      },
+      "DRAFT_TOL": {
+        "handle_ratio": 0.018,
+        "margin_ratio": 0.03,
+        "min_guide_ratio": 0.45,
+        "support_pick": "len_x_sep",
+        "fill_missing_axes": true
+      },
+      "SENS_TOL": {
+        "probe_px": 1,
+        "probe_dirs": 8,
+        "budget_deg": 0.5,
+        "unusable_px": 1
+      },
+      "SNAP_TOL": {
+        "radius_ratio": 0.05,
+        "meet_ratio": 0.01,
+        "extend_ratio": 0.02,
+        "merge_ratio": 0.002
+      },
+      "LIVE_TOL": {
+        "axis_deg": 12
+      },
+      "CONSENSUS_TOL": {
+        "radius_ratio": 0.45,
+        "min_support": 3,
+        "max_spread_ratio": 1,
+        "rescue_ceiling": 2.5
+      },
+      "PLACE_TOL": {
+        "join_ratio": 0.015,
+        "view_depth_guard": 0.05,
+        "far_end_check": 1,
+        "view_depth_envelope": 0.5,
+        "retry_as_face": 0,
+        "face_far_end": 1,
+        "span_far_end": 1,
+        "fix_candidate_radius_mult": 3,
+        "same_view_px": 2,
+        "eye_height": 1
+      },
+      "TUBE_TOL": {
+        "radial_segments": 6,
+        "speed_gamma": 0.5,
+        "width_min": 0.55,
+        "width_max": 1.6,
+        "smooth_window": 5,
+        "base_width_px": 3.2
+      },
+      "EYE_HEIGHT": 1,
+      "VP_INFINITE_RATIO": 50,
+      "INK_GRADES": {
+        "precise": {
+          "lf_bow": 0.0315,
+          "hf_sigma": 0.031,
+          "overshoot": 0.1229,
+          "spacing": 0.0134
+        },
+        "medium": {
+          "lf_bow": 0.0558,
+          "hf_sigma": 0.0336,
+          "overshoot": 0.1134,
+          "spacing": 0.0148
+        },
+        "coarse": {
+          "lf_bow": 0.0937,
+          "hf_sigma": 0.0314,
+          "overshoot": 0.1623,
+          "spacing": 0.0163
+        }
+      }
+    },
+    "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+  },
+  "metric_defs": {
+    "hash": "a45078a5",
+    "names": [
+      "pairEnds",
+      "fitGauge",
+      "segShapeError",
+      "perStrokeErrorMap",
+      "perStrokeError",
+      "axisDirErrors",
+      "silentWrong",
+      "rate",
+      "fraction"
+    ],
+    "cuts": [
+      0.1,
+      0.2,
+      0.5
+    ],
+    "source": "file",
+    "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+  },
+  "why": "두 표본의 vp_dir 대푯값(중앙 ~5.6° ↔ 최대 20.8°)이 갈린 후보 셋(vpRules.ts concurrent_deg 주석)을 실측·합성으로 가른다. real_ink.per_doc의 실좌표 Δ가 재료다.",
+  "axis_snap_repair_sweep": {
+    "note": "② 12차 수리(무앵커 확정 획의 2D 방향 스냅)의 사거리 — engaged면 Δ가 0으로 당겨지고, 밖이면 그린 대로 남는다. 경계의 단위는 부적합도(수직거리÷길이 — AXIS_TOL.vp_dist_ratio · 직선 현에서 sin δ 상당)다(#49). ⚠ 동작점: 길이 150px·소실점 거리 이 픽스처 한 벌(#12)",
+    "rows": [
+      {
+        "delta_before_deg": 0.5,
+        "engaged": true,
+        "delta_after_deg": 0
+      },
+      {
+        "delta_before_deg": 1,
+        "engaged": true,
+        "delta_after_deg": 0
+      },
+      {
+        "delta_before_deg": 2,
+        "engaged": true,
+        "delta_after_deg": 0
+      },
+      {
+        "delta_before_deg": 3,
+        "engaged": true,
+        "delta_after_deg": 0
+      },
+      {
+        "delta_before_deg": 4,
+        "engaged": true,
+        "delta_after_deg": 0
+      },
+      {
+        "delta_before_deg": 6,
+        "engaged": true,
+        "delta_after_deg": 0
+      },
+      {
+        "delta_before_deg": 12,
+        "engaged": false,
+        "delta_after_deg": 12
+      },
+      {
+        "delta_before_deg": 20,
+        "engaged": false,
+        "delta_after_deg": 20
+      }
+    ]
+  },
+  "file_15_18_25": {
+    "note": "화각 163° 카메라(복원 경로 — first_anchor.contrast의 그 실측)의 획별 분해. `axis_no_widen`이 free인 축 배정 획 = **angleWiden 없이는 배정되지 않았을 획**(① — 큰 Δ가 표에 나타난 것 자체가 widen의 산물인지의 직접 판별). `relative` = 상대 순위 배정(③). ⚠ **실측이 ①·③을 이 파일에서 기각했다** — widen_dependent·rank_only 둘 다 공집합인데 Δ20.8·16.6 행이 있다. 기전은 misfit·vp_dist_px 짝이 보인다: 배정이 재는 것은 부적합도(수직거리÷길이)이고 **소실점이 가까우면(극단 카메라의 성질) 같은 비가 훨씬 큰 각을 뜻한다** — vpRules.ts가 지평선 거리 함정에서 이미 적은 그 기하다. 즉 두 표본의 차이는 카메라 품질(소실점 근접)로 설명되고(지시 4-c), 경로는 widen 배수가 아니라 비율 임계의 각 대응 자체다.",
+    "per_stroke": [
+      {
+        "id": "s65",
+        "axis": 0,
+        "axis_no_widen": 0,
+        "widen_factor": 5.612,
+        "relative": false,
+        "misfit": 0,
+        "vp_dist_px": 27.4,
+        "vp_dir_err_deg": 20.7987
+      },
+      {
+        "id": "s66",
+        "axis": 1,
+        "axis_no_widen": 1,
+        "widen_factor": 5.942,
+        "relative": false,
+        "misfit": 0,
+        "vp_dist_px": 26.1,
+        "vp_dir_err_deg": 16.5899
+      },
+      {
+        "id": "s69",
+        "axis": "screen",
+        "axis_no_widen": "screen",
+        "widen_factor": 3.939,
+        "relative": false,
+        "misfit": 0,
+        "vp_dist_px": null,
+        "vp_dir_err_deg": null
+      },
+      {
+        "id": "s70",
+        "axis": "screen",
+        "axis_no_widen": "screen",
+        "widen_factor": 2.83,
+        "relative": false,
+        "misfit": 0,
+        "vp_dist_px": null,
+        "vp_dir_err_deg": null
+      },
+      {
+        "id": "s73",
+        "axis": "screen",
+        "axis_no_widen": "screen",
+        "widen_factor": 3.636,
+        "relative": false,
+        "misfit": 0,
+        "vp_dist_px": null,
+        "vp_dir_err_deg": null
+      },
+      {
+        "id": "s75",
+        "axis": 1,
+        "axis_no_widen": 1,
+        "widen_factor": 7.498,
+        "relative": false,
+        "misfit": 0,
+        "vp_dist_px": 159.2,
+        "vp_dir_err_deg": 2.7806
+      },
+      {
+        "id": "s76",
+        "axis": "screen",
+        "axis_no_widen": "screen",
+        "widen_factor": 4.409,
+        "relative": false,
+        "misfit": 0,
+        "vp_dist_px": null,
+        "vp_dir_err_deg": null
+      },
+      {
+        "id": "s77",
+        "axis": "screen",
+        "axis_no_widen": "screen",
+        "widen_factor": 6.982,
+        "relative": false,
+        "misfit": 0,
+        "vp_dist_px": null,
+        "vp_dir_err_deg": null
+      },
+      {
+        "id": "s78",
+        "axis": 1,
+        "axis_no_widen": 1,
+        "widen_factor": 3.807,
+        "relative": false,
+        "misfit": 0,
+        "vp_dist_px": 324.4,
+        "vp_dir_err_deg": 0
+      },
+      {
+        "id": "s79",
+        "axis": "free",
+        "axis_no_widen": "free",
+        "widen_factor": 5.017,
+        "relative": false,
+        "misfit": null,
+        "vp_dist_px": null,
+        "vp_dir_err_deg": null
+      },
+      {
+        "id": "s80",
+        "axis": "free",
+        "axis_no_widen": "free",
+        "widen_factor": 3.016,
+        "relative": false,
+        "misfit": null,
+        "vp_dist_px": null,
+        "vp_dir_err_deg": null
+      }
+    ],
+    "widen_dependent_ids": [],
+    "rank_only_ids": []
+  },
+  "sweep_engaged_rows": 6,
+  "refeed_gate": {
+    "note": "① 후반 — 같은 두 소실점을 현행 확정 게이트에 재투입한 판. reject면 신규 확정으로는 이 카메라(와 그 아래의 Δ 분포)가 재현되지 않는다 — 12차 상한의 사거리 확인. 복원 경로는 여전히 지나간다(DEFERRED 그 행).",
+    "band": "reject",
+    "fov_deg": 166.05,
+    "reject_threshold_deg": 120
+  },
+  "gate": {
+    "registered": "② 스윕에서 engaged 행의 delta_after = 0, 미발동 행은 delta_after = delta_before(경계 전이가 스윕 안에 존재한다) · ① 실좌표에서 widen_dependent_ids가 큰 Δ 획을 포함하는가가 판별이고, refeed_gate.band = reject(신규 확정 재현 불가) · ③ rank_only_ids를 갈라 낸다. 값은 필드가 든다(#47)",
+    "reachability": "값은 ② 스윕의 발동 행 수(사거리의 크기 — 0도 8도 아니면 경계가 스윕 안에 있다). ①의 판별력은 widen 끔 팔(angle_relax 0)과 본 팔의 **배정 차이**이고 결과는 result.widen_dependent = 0(공집합 = 기각 — #30 개입 팔. 정확히 0이라 selfcheck 의심이 뜨면 이 문장이 원인 확인이다: 기각의 실측값이지 항등이 아니다. 카메라 품질의 실제 경로는 misfit↔각 대응의 붕괴 — note)",
+    "reachability_value": 6,
+    "reachability_source": "sweep_engaged_rows",
+    "result": {
+      "widen_dependent": 0,
+      "rank_only": 0,
+      "refeed_band": "reject"
+    },
+    "note": "이 원장이 걸리는 번호: #49(경계의 단위 — 부적합도) · #12(동작점 — 스윕 한 벌·파일 하나) · #30(widen 끔 개입 팔) · #5(Δ 표 자체가 배정 통과 획만 담는 선택 절단 — 그 절단의 폭을 widen이 정한다는 것이 ①의 내용이다)"
+  }
+}

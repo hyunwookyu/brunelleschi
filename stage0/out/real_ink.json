@@ -157,12 +157,14 @@
   },
   "reported_samples_12": {
     "human_reported": true,
-    "source": "12차 지시문(2026-08-18) — brunelleschi-2026-08-18T15-16-18(파일1 · 13획) · …T15-18-25_brnl_2(파일2 · 11획). 파일은 sessions/에 없다",
+    "superseded_by_measurement": "k_metrics.per_doc (2026-08-19 — sessions/에 세 파일)",
+    "source": "12차 지시문(2026-08-18) — brunelleschi-2026-08-18T15-16-18(파일1 · 13획) · …T15-18-25_brnl_2(파일2 · 11획). 당시 파일은 sessions/에 없었다 — 2026-08-19에 도착",
     "k_reported": {
       "snap2d_fired": {
         "file1": "0/13",
         "file2": "6/11",
-        "note": "파일2에서 endpoint·vertex·intersection 전부 발화 — #18 닫힘(보고)"
+        "note": "파일2에서 endpoint·vertex·intersection 전부 발화 — #18 닫힘(보고)",
+        "discrepancy_2026_08_19": "⚠ 실측과 **어긋난다**(13차 리뷰어 [4]): 2D 시작 발화는 `per_doc[15-18-25].snap2d.start`(3)다. 보고의 6은 2D·3D·시작·끝을 합친 **스냅 기록 보유 획 수**로 읽으면 실측과 맞는다 — `snapped_any_ids`가 그 집합이다"
       },
       "asked": {
         "file1": "3/13",
@@ -172,7 +174,8 @@
       "placed_3d": {
         "file1": "0/13",
         "file2": "6/11",
-        "note": "파일2 스냅 6 = seg3d 6 — D-L83이 의도대로(보고). 파일1은 스냅 0으로 전량 대기"
+        "note": "파일2 스냅 6 = seg3d 6 — D-L83이 의도대로(보고). 파일1은 스냅 0으로 전량 대기",
+        "discrepancy_2026_08_19": "⚠⚠ **등식이 집합으로는 깨진다**(13차 리뷰어 [4]): 6 = 6은 수만 같고 `snapped_any_ids` ≠ `lifted_ids`다 — 스냅인데 미배치인 획과 **시작점 앵커 없이 배치된 획**(`lifted_no_snapstart_ids`)이 둘 다 있다. 후자의 경로(일괄 풀이/twoPoint/direct)는 저장본이 획별로 안 적어 못 가른다(DEFERRED — 획별 placeBy 저장). 'D-L83이 의도대로'를 이 등식으로 인용하지 않는다"
       },
       "f_over_w": {
         "file1": 0.431,
@@ -214,14 +217,16 @@
             16.59
           ]
         ],
-        "note": "[획 id, 축, Δ°]. s78만 snapStart 보유 — 항목 2가 그 상관(앵커 유무 = 방향 정착 유무)을 원인으로 확인했다. 이전 표본 보고 Δ0.0~1.7과 대푯값이 갈리고, 무엇이 갈랐는지는 표본이 와야 분해된다(RULE_TOL.concurrent_deg의 근거 주석 참조)"
+        "note": "[획 id, 축, Δ°]. (12차 보고 시점 산문 — **연혁이다**, 13차 리뷰어 2차 [6]: 아래 caveat가 현행 판정이다) s78만 snapStart 보유 — 항목 2가 그 상관(앵커 유무 = 방향 정착 유무)을 원인으로 확인했다고 적었다. 이전 표본 보고 Δ0.0~1.7과 대푯값이 갈리고, 무엇이 갈랐는지는 표본이 와야 분해된다(RULE_TOL.concurrent_deg의 근거 주석)",
+        "caveat_2026_08_19": "⚠⚠ 실측에서 s78의 Δ는 **정확히 0 = 보장**으로 갈린다(#5 — `per_doc[*].vp_dir_err_strokes`의 guaranteed 표식. 자기 소실점의 항등이든 되쓰기의 항등이든 구조 산물이다). **그 0을 '무앵커가 Δ를 키운다'(후보 ②)의 증거로 쓰지 않는다**(13차 리뷰어 [1]) — 위 note의 인과 문장은 그래서 연혁으로 내린다. '스냅 획만 Δ≈0'도 성립하지 않는다: 08-17 파일의 on_face 스냅 획들이 Δ≠0인데, ⚠ 그 기록 자체가 옛 on_face 자동 부착(핀 상태에서 항상 걸림 — legacy 오염, K_DEFS.snap_dist_px)의 것이라 **방향 스냅의 반례가 아니라 '자동 on_face는 방향을 정착시키지 않는다'까지만** 말한다(리뷰어 2차 [7] — 철회의 주 근거는 #5 하나로 선다)"
       },
       "note_channel_leak": {
         "strokes": [
           "s52",
           "s53"
         ],
-        "note": "note 채널인데 축 판정을 탔다(보고) — 12차 항목 4-c가 배선을 바꿨다(그리기·미리보기의 판정 제외 + 주석 전환 시 axis 소거). ⚠ **수리 주장이지 관측이 아니다**(3차 리뷰어 [13]) — 전용 회귀 팔이 없고 파일 부재로 실측 불가. 파일이 오면 이 획들이 대조다"
+        "note": "note 채널인데 축 판정을 탔다(보고) — 12차 항목 4-c가 배선을 바꿨다(그리기·미리보기의 판정 제외 + 주석 전환 시 axis 소거). ⚠ **수리 주장이지 관측이 아니다**(3차 리뷰어 [13]) — 전용 회귀 팔이 없고 파일 부재로 실측 불가. 파일이 오면 이 획들이 대조다",
+        "checked_2026_08_19": "파일 대조 결과(13차 리뷰어 [6]) — **저장본으로는 확인 불가다**: s52·s53은 axis \"free\"·seg3d null로 저장돼 있어 '판정을 탔다'(물음이 떴다·축이 붙었다)의 흔적이 필드에 안 남는 형태다. 획별 물음 기록이 없고(askStats는 세션 합계) 이 표본은 수리 이전 저장본이라 수리의 회귀 검증도 아니다. 확인 불가로 남긴다 — 전용 회귀 팔은 DEFERRED 그대로"
       }
     }
   },
@@ -241,8 +246,8 @@
   ],
   "k_metrics": {
     "status": "measured",
-    "n_docs": 1,
-    "n_strokes": 5,
+    "n_docs": 3,
+    "n_strokes": 29,
     "n_pieces": 0,
     "metrics": {
       "channel_share": "채널(보조선/결과선/주석)별 획 수 — 지시 D의 사용 비율",
@@ -251,7 +256,7 @@
       "snap_dist_null": "snapDistPx가 null인 획 수 / 사람 획 수 — 40px 프로브 **밖**(절단 #13) 또는 3D 대상 없음·확정 전. 반경 판정은 이 몫과 함께 읽는다(#11 — 분모가 전부인가)",
       "ask": "모호 물음 횟수(asked/answered/skipped) — AS-L14의 실측. **내역(screen·depth·vertical)과 `unaccounted`(= asked − answered − skipped)를 함께 낸다**(9차 항목 1 · 9-R′ [R6]) — 첫 표본에서 asked 6 · answered 4로 **2가 어느 칸에도 안 잡혔고**, 그것이 취소인지 카운터 누락인지 원장이 답할 수 있어야 한다",
       "img_size": "문서의 캔버스 크기(px) 목록 — `stroke_len_ratio`·`below_min_vp_len`의 분모이고, 문서가 그 값을 인용할 때 원장에 있어야 한다(9-R′ [R7])",
-      "snap2d_use": "**확정 전(2D 단계) 오스냅 기록**(9차 항목 1 · D-L81): 시작·끝 각각 기록된 획 수 / 사람 획 수, 그리고 `field_present`(필드가 하나라도 있는 문서에서 온 획 수). ⚠⚠ **`field_present`가 0이면 그 표본은 D-L81 이전 저장본**이라 `0/n`이 '안 걸렸다'가 아니라 **'안 적혔다'**다(#32 — 미실행을 반증으로 처리하지 않는다). 8차가 `snapEnd` 0/5에서 한 오독이 그 자리다",
+      "snap2d_use": "**확정 전(2D 단계) 오스냅 기록**(9차 항목 1 · D-L81): 시작·끝 각각 기록된 획 수 / 사람 획 수, 그리고 `field_present` — **획에 `snap2dStart`/`snap2dEnd` 키가 존재하는 획 수다(값이 null이어도 센다)**. D-L81 이후 저장 형식은 안 걸린 획에도 키를 null로 쓰므로 키 존재가 형식의 서명이고, 그래서 발화 0과 미기록이 갈린다(13차 리뷰어 [7]로 정의를 명확화 — '필드가 있는 문서'라는 옛 문구는 키 존재를 뜻했다). ⚠⚠ **`field_present`가 0이면 그 표본은 D-L81 이전 저장본**이라 `0/n`이 '안 걸렸다'가 아니라 **'안 적혔다'**다(#32 — 미실행을 반증으로 처리하지 않는다). 8차가 `snapEnd` 0/5에서 한 오독이 그 자리다",
       "stroke_len_ratio": "사람 획 길이 ÷ 캔버스 대각 — min_vp_len_ratio(0.04)의 실측 근거",
       "below_min_vp_len": "min_vp_len_ratio 미달 획 수 / 사람 획 수. ⚠ **조각(pieceOf)은 분모에서 뺀다**(#11 — 지우개 산물은 사람 획과 단위가 다르다)",
       "vertex_gap_ratio": "서로 다른 획의 3D 끝점 최근접 거리 ÷ 그림 크기. ⚠ **공유점(스냅 보장 0)은 갈라 센다**(#5) — zero_pairs가 그것이고 분포에는 안 섞는다",
@@ -261,82 +266,381 @@
       "vp_confirm_source": "소실점 확정 경로 분포(6차 지시 3 — rules.slots[*].source): picked_point=찍기 · two_lines=교점 · 그 외. 이월-3의 합성 대조(찍기 pick_0 축 오차 2.67° 대 two_lines 31.61°, pick_vp.json)가 동기다 — **실사용에서 어느 쪽을 쓰는지**가 여기서 나온다",
       "path_use": "배치 경로 분포(6차 지시 3 — pathStats): direct=1점 직접 좌표 · lift=카메라 투영 · twoPoint=양 끝 스냅. **지시 2(1점 직접)가 실제로 쓰이는지**의 분자·분모다. ⚠ 카운터는 저장 시점의 세션 것이다(불러오기로 이어지지 않는다 — askStats와 같은 규약)",
       "snap_use": "스냅 사용 분포(7차 지시 항목 2·4 — 실획 첫 표본의 결함 지표): snapStart 종류별 획 수 · snapEnd 있는 획 수 / 3D 획 수. **끝점 스냅이 실제로 걸리는지**가 여기서 나온다. ⚠ 첫 표본의 **사람 보고**(파일 미도착 — 원장 밖·미검증, AS-C1 7차 주석)는 끝점 스냅 0/획 5이었다 — 보고이지 기준선이 아니다(3·4-R [8]). 파일이 오면 이 지표가 실측한다",
+      "per_doc": "**파일별 분해**(2026-08-19 지시 0 — 표본 셋 도착): 합산은 D-L81 이전/이후 저장본을 한 분모에 섞으므로(#11) 문서 단위로 낸다. `vp_dir_err_strokes`는 [획 id, 축, Δ°(, guaranteed)] — `reported_samples_12.k_reported.vp_dir_err_deg_reported`와 같은 꼴이라 행 단위 대조가 선다. `camera_assumed_principal_center`는 주점=화면 중앙 **가정**(이론서 16.2·AS-C5)의 유도값(f/W·화각)이다. ⚠ 이 표본들은 **12차 수리(화각 상한·무앵커 방향 스냅·교차 앵커·D-L89) 이전에 그려졌다** — 파일이 재현하는 것은 12차 이전 상태이고, 수리가 같은 기하를 어떻게 바꾸는지는 재구성 픽스처가 대조한다(지시 0-e)",
+      "radius8_revert_condition": "사전등록 조건(11차 리뷰어 [9] · #12)의 평가 — `snap_dist_px.p10 > OSNAP_RADIUS_PX`면 반경 8(D-L85)을 다시 연다. 같은 실행의 값으로 원장이 스스로 판을 낸다(#47)",
       "vp_dir_err_deg": "수평축(0·1) 배정 획의 **2D 현 방향**과 시작점→그 축 소실점 방향의 각차(°) — 사람이 소실점을 향해 얼마나 정확히 긋는가의 화면 오차. 첫 표본의 사람 보고(원장 밖·미검증) Δ0.0~1.7°를 하네스가 재현하는 자리다. ⚠⚠ **합성의 축 오차(rule_camera deg_median — 3D 축 방향 오차)와는 다른 양·다른 프레임이다**(3·4-R [1]): 화면 오차는 3D 각으로 증폭된다(AS-L8 — 먼 소실점 100px ≈ 2~3°). 실획의 3D 축 오차는 참 축이 없어 못 잰다(what_this_cannot_measure). ⚠ **선택 절단이 있다**(#5): 축 배정 자체가 같은 각류 판정(vpMisfit ≤ 0.06)을 지나므로 분포가 배정 허용치 안에 갇힌다 — 배정 밖(미분류) 획의 겨냥 오차는 이 지표에 안 나온다. 축 배정은 정답 라벨도 아니다(caveat와 같은 유보)"
     },
+    "per_doc": [
+      {
+        "file": "brunelleschi-2026-08-17T11-41-36.brnl.json",
+        "n_strokes": 5,
+        "lifted_3d": "5/5",
+        "snap2d": {
+          "start": "0/5",
+          "end": "0/5",
+          "field_present": "0/5",
+          "fired": []
+        },
+        "snap3d": {
+          "end_snapped": "0/5"
+        },
+        "snapped_any_ids": [
+          "s40",
+          "s41",
+          "s42",
+          "s46",
+          "s47"
+        ],
+        "lifted_ids": [
+          "s40",
+          "s41",
+          "s42",
+          "s46",
+          "s47"
+        ],
+        "lifted_no_snapstart_ids": [],
+        "snap_dist_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "snap_dist_legacy_zero": 5,
+        "snap_dist_null": "0/5",
+        "ask": {
+          "asked": 6,
+          "screen": 0,
+          "depth": 4,
+          "vertical": 0,
+          "skipped": 0
+        },
+        "vp_dir_err_strokes": [
+          [
+            "s40",
+            0,
+            1.7354,
+            "snap3d:on_face",
+            "near_vp_degenerate"
+          ],
+          [
+            "s41",
+            0,
+            5.6124,
+            "snap3d:on_face",
+            "near_vp_degenerate"
+          ],
+          [
+            "s42",
+            1,
+            0,
+            "snap3d:on_face",
+            "guaranteed"
+          ],
+          [
+            "s46",
+            1,
+            9.1462,
+            "snap3d:on_face"
+          ]
+        ],
+        "camera_assumed_principal_center": {
+          "f_over_w": 0.4289,
+          "fov_deg": 98.76
+        }
+      },
+      {
+        "file": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+        "n_strokes": 13,
+        "lifted_3d": "0/13",
+        "snap2d": {
+          "start": "0/13",
+          "end": "0/13",
+          "field_present": "13/13",
+          "fired": []
+        },
+        "snap3d": {
+          "end_snapped": "0/0"
+        },
+        "snapped_any_ids": [],
+        "lifted_ids": [],
+        "lifted_no_snapstart_ids": [],
+        "snap_dist_px": {
+          "n": 0,
+          "min": null,
+          "p10": null,
+          "median": null,
+          "p90": null,
+          "max": null
+        },
+        "snap_dist_legacy_zero": 0,
+        "snap_dist_null": "13/13",
+        "ask": {
+          "asked": 3,
+          "screen": 0,
+          "depth": 3,
+          "vertical": 0,
+          "skipped": 0
+        },
+        "vp_dir_err_strokes": [
+          [
+            "s41",
+            0,
+            12.8105,
+            "no_snap",
+            "near_vp_degenerate"
+          ],
+          [
+            "s42",
+            0,
+            1.3335,
+            "no_snap",
+            "near_vp_degenerate"
+          ],
+          [
+            "s43",
+            1,
+            0.3458,
+            "no_snap",
+            "near_vp_degenerate"
+          ],
+          [
+            "s44",
+            1,
+            10.3207,
+            "no_snap",
+            "near_vp_degenerate"
+          ],
+          [
+            "s45",
+            1,
+            7.1107,
+            "no_snap",
+            "near_vp_degenerate"
+          ],
+          [
+            "s46",
+            1,
+            4.9375,
+            "no_snap"
+          ]
+        ],
+        "camera_assumed_principal_center": {
+          "f_over_w": 0.4311,
+          "fov_deg": 98.46
+        }
+      },
+      {
+        "file": "brunelleschi-2026-08-18T15-18-25.brnl.json",
+        "n_strokes": 11,
+        "lifted_3d": "6/11",
+        "snap2d": {
+          "start": "3/11",
+          "end": "0/11",
+          "field_present": "11/11",
+          "fired": [
+            [
+              "s69",
+              "start",
+              "endpoint",
+              5
+            ],
+            [
+              "s70",
+              "start",
+              "vertex",
+              5
+            ],
+            [
+              "s73",
+              "start",
+              "intersection",
+              7.83
+            ]
+          ]
+        },
+        "snap3d": {
+          "end_snapped": "1/6"
+        },
+        "snapped_any_ids": [
+          "s69",
+          "s70",
+          "s73",
+          "s76",
+          "s77",
+          "s78"
+        ],
+        "lifted_ids": [
+          "s65",
+          "s69",
+          "s70",
+          "s76",
+          "s77",
+          "s78"
+        ],
+        "lifted_no_snapstart_ids": [
+          "s65",
+          "s69",
+          "s77"
+        ],
+        "snap_dist_px": {
+          "n": 4,
+          "min": 0,
+          "p10": 0,
+          "median": 1.68,
+          "p90": 15.28,
+          "max": 15.28
+        },
+        "snap_dist_legacy_zero": 0,
+        "snap_dist_null": "7/11",
+        "ask": {
+          "asked": 3,
+          "screen": 0,
+          "depth": 3,
+          "vertical": 0,
+          "skipped": 0
+        },
+        "vp_dir_err_strokes": [
+          [
+            "s65",
+            0,
+            20.7987,
+            "no_snap",
+            "near_vp_degenerate"
+          ],
+          [
+            "s66",
+            1,
+            16.5899,
+            "no_snap",
+            "near_vp_degenerate"
+          ],
+          [
+            "s75",
+            1,
+            2.7806,
+            "no_snap",
+            "near_vp_degenerate"
+          ],
+          [
+            "s78",
+            1,
+            0,
+            "snap3d:vertex",
+            "guaranteed"
+          ]
+        ],
+        "camera_assumed_principal_center": {
+          "f_over_w": 0.0739,
+          "fov_deg": 163.18
+        }
+      }
+    ],
+    "radius8_revert_condition": {
+      "preregistered": "p10 > 조리개(OSNAP_RADIUS_PX)면 반경 8(D-L85)을 다시 연다 — 11차 리뷰어 [9] 사전등록(#12)",
+      "aperture_px": 8,
+      "p10": 0,
+      "reopen": false,
+      "near_zero_in_dist": 2,
+      "reachability": "near_zero_in_dist > 0이면 n ≤ 10에서 p10이 0으로 고정된다 — 이번 실행 near_zero 2/4. 구조 0 의심(#5)은 갈래 필드 부재로 미해소(DEFERRED)",
+      "caveat": "⚠ 분포는 40px 프로브에서 절단되고(#13 — 그 밖은 snap_dist_null) n이 한 자릿수다(#14). 판은 '열지 않는다'까지다 — '측정이 8을 지지한다'로 읽지 않는다(D-L85 근거는 모순 지표)"
+    },
     "channel_share": {
-      "guide": 5
+      "guide": 27,
+      "note": 2
     },
     "snap_dist_px": {
-      "n": 0,
-      "min": null,
-      "p10": null,
-      "median": null,
-      "p90": null,
-      "max": null
+      "n": 4,
+      "min": 0,
+      "p10": 0,
+      "median": 1.68,
+      "p90": 15.28,
+      "max": 15.28
     },
     "snap_dist_legacy_zero": 5,
-    "snap_dist_null": "0/5",
+    "snap_dist_null": "20/29",
     "snap_use": {
       "start_kinds": {
-        "on_face": 5
+        "on_face": 5,
+        "endpoint": 2,
+        "vertex": 1
       },
-      "end_snapped": "0/5"
+      "end_snapped": "1/11"
     },
     "vp_dir_err_deg": {
-      "n": 3,
-      "min": 1.74,
-      "p10": 1.74,
-      "median": 5.61,
+      "n": 12,
+      "min": 0.35,
+      "p10": 1.33,
+      "median": 6.36,
+      "p90": 16.59,
+      "max": 20.8
+    },
+    "vp_dir_err_deg_stable": {
+      "n": 2,
+      "min": 4.94,
+      "p10": 4.94,
+      "median": 7.04,
       "p90": 9.15,
       "max": 9.15
     },
-    "vp_dir_guaranteed_zero": "1/4",
+    "vp_dir_err_deg_fov_ok": {
+      "n": 9,
+      "min": 0.35,
+      "p10": 1.33,
+      "median": 5.61,
+      "p90": 10.32,
+      "max": 12.81
+    },
+    "vp_dir_guaranteed_zero": "2/14",
     "ask": {
-      "asked": 6,
-      "answered": 4,
+      "asked": 12,
+      "answered": 10,
       "skipped": 0,
       "screen": 0,
-      "depth": 4,
+      "depth": 10,
       "vertical": 0,
       "unaccounted": 2
     },
     "img_size": [
+      "1180x668",
+      "1180x668",
       "1180x668"
     ],
     "snap2d_use": {
-      "start": "0/5",
-      "end": "0/5",
-      "field_present": "0/5"
+      "start": "3/29",
+      "end": "0/29",
+      "field_present": "24/29"
     },
     "vp_confirm_source": {
-      "two_lines": 1,
-      "horizon_x_line": 1
+      "two_lines": 3,
+      "horizon_x_line": 3
     },
     "path_use": {
-      "direct": 16,
-      "lift": 18,
-      "twoPoint": 3
+      "direct": 18,
+      "lift": 22,
+      "twoPoint": 4
     },
     "stroke_len_ratio": {
-      "n": 5,
-      "min": 0.2744,
-      "p10": 0.2744,
-      "median": 0.3086,
-      "p90": 0.4269,
-      "max": 0.4269
+      "n": 29,
+      "min": 0.0214,
+      "p10": 0.1653,
+      "median": 0.2641,
+      "p90": 0.4203,
+      "max": 0.5629
     },
-    "below_min_vp_len": "0/5",
+    "below_min_vp_len": "2/29",
     "vertex_gap_ratio": {
-      "n": 10,
+      "n": 16,
       "min": 0.0122,
-      "p10": 0.0122,
-      "median": 0.0881,
-      "p90": 0.3667,
-      "max": 0.6168
+      "p10": 0.0229,
+      "median": 0.0677,
+      "p90": 0.6168,
+      "max": 0.7774
     },
-    "vertex_zero_pairs": 0,
+    "vertex_zero_pairs": 6,
     "horizon_vp_dy_px": {
-      "n": 2,
+      "n": 6,
       "min": 0,
       "p10": 0,
       "median": 0,
@@ -346,22 +650,22 @@
     "note_horizon": "**보장 확인이다**(#5) — 규칙상 수평 소실점은 지평선 위에 놓이므로 0이어야 하고, 0이 아니면 저장·복원 경로가 어긋난 것이다. AS-L9(사람이 ±120px 창에 드는가)는 **참 지평선이 없어 실획으로 직접 못 잰다** — 대리 재적합 팔은 미구현(DEFERRED)"
   },
   "pending_judgements": {
-    "note": "**지시 4-c·4-d가 든 판정 여덟.** `answerable`이 false면 그 판정은 **이 표본으로는 못 한다** — 값이 있어도 다른 것을 재고 있다는 뜻이다. 막힘이 풀렸는지는 `field`가 가리키는 자리를 그 자리에서 읽어 확인한다(#47).",
+    "note": "**지시 4-c·4-d가 든 판정 여덟 + 13차 지시 5-d의 중점 행.** `answerable`이 false면 그 판정은 **이 표본으로는 못 한다** — 값이 있어도 다른 것을 재고 있다는 뜻이다. 막힘이 풀렸는지는 `field`가 가리키는 자리를 그 자리에서 읽어 확인한다(#47).",
     "answerable": [
+      "end_snap_engages",
+      "snap_radius_width",
       "vp_dir_error",
       "confirm_path_share"
     ],
     "blocked": [
-      "end_snap_engages",
       "vp_dir_axis_snap_holds",
       "ask_volume",
-      "snap_radius_width",
       "as6_one_stroke_one_axis",
+      "midpoint_wrong_connection",
       "as_l24_l25_synthetic_bias"
     ],
     "opens_with_new_sample": [
-      "end_snap_engages",
-      "snap_radius_width"
+      "midpoint_wrong_connection"
     ],
     "blocked_regardless_of_sample": [
       "vp_dir_axis_snap_holds",
@@ -369,16 +673,16 @@
       "as6_one_stroke_one_axis",
       "as_l24_l25_synthetic_bias"
     ],
-    "note_12": "보고 ≠ 파일 — 두 판정은 파일 도착까지 미개봉",
+    "note_12": "파일 도착(2026-08-19) — 12차 미개봉 둘이 열렸다. 보고 블록은 대조 기록이 됐다",
     "rows": [
       {
         "id": "end_snap_engages",
         "what": "끝점 스냅이 실제로 걸리는지 — 단계별로 갈려 기록되는가(2D 단계 ↔ 3D)",
         "field": "snap2d_use.field_present",
-        "answerable": false,
-        "opens_with_new_sample": true,
-        "blocked_by": "필드 이전 저장본이면 `0/n`이 '안 걸렸다'가 아니라 '안 적혔다'다(#32 · D-L81)",
-        "caveat": null
+        "answerable": true,
+        "opens_with_new_sample": null,
+        "blocked_by": null,
+        "caveat": "⚠ 합산 분모는 D-L81 이전 저장본(첫 표본)을 섞는다 — 판정은 `per_doc`의 필드 있는 문서로 한다(#11)"
       },
       {
         "id": "vp_dir_axis_snap_holds",
@@ -402,10 +706,10 @@
         "id": "snap_radius_width",
         "what": "스냅 반경이 좁은지 넓은지 — 겨냥 분포 중앙이 조리개의 어디인가",
         "field": "snap_dist_px.n",
-        "answerable": false,
-        "opens_with_new_sample": true,
-        "blocked_by": "`snap_dist_legacy_zero`가 분모를 다 먹으면 분포가 비어 있다(D-L79 이전 저장본)",
-        "caveat": "⚠ **분포는 40px 프로브에서 절단된다**(#13) — 그 밖 겨냥은 `snap_dist_null`로 사라진다. 중앙값은 **절단된 분포의 중앙**이다"
+        "answerable": true,
+        "opens_with_new_sample": null,
+        "blocked_by": null,
+        "caveat": "⚠ **분포는 40px 프로브에서 절단된다**(#13) — 그 밖 겨냥은 `snap_dist_null`로 사라진다. 중앙값은 **절단된 분포의 중앙**이다. 사전등록된 반경 판은 `radius8_revert_condition`이 같은 실행에서 낸다(#12)"
       },
       {
         "id": "as6_one_stroke_one_axis",
@@ -433,6 +737,15 @@
         "opens_with_new_sample": null,
         "blocked_by": null,
         "caveat": "⚠ **현 표본의 합이 한 자릿수이고 `picked_point`가 0이다**(#12) — 동기였던 '실사용에서 어느 쪽을 쓰는가'는 이 크기로는 못 답한다"
+      },
+      {
+        "id": "midpoint_wrong_connection",
+        "what": "작은 조리개의 잘못된 연결을 중점 후보가 만든다(11차 D-L88)가 실획에서 확인되는가(13차 지시 5-d)",
+        "field": "per_doc[*].snap2d.fired",
+        "answerable": false,
+        "opens_with_new_sample": true,
+        "blocked_by": "**중점 발화가 0이다** — 잘못된 연결이든 옳은 연결이든 중점 스냅 자체가 이 표본에 없어 D-L88의 실획 확인이 성립 불가다(#32 — 미발화를 반증으로 안 읽는다). 11차 팔의 분모 제한(끝점 겨냥 한정)은 실획에 없지만, 분자가 서려면 중점을 겨냥한 손짓이 표본에 있어야 한다",
+        "caveat": null
       },
       {
         "id": "as_l24_l25_synthetic_bias",
