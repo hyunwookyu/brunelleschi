@@ -20985,7 +20985,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 4.014566457044566e-13,
+      "val": 6.039613253960852e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -21200,12 +21200,12 @@
     },
     {
       "path": "view_cube.json:after_face.fy",
-      "val": -1.0286803827371664e-13,
+      "val": -1.168591363217353e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_cube.json:after_retap.fy",
-      "val": -6.530267466987252e-17,
+      "val": -6.53026746698716e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -21475,12 +21475,12 @@
     },
     {
       "path": "viewpoint_undo.json:orbited.q[0]",
-      "val": -2.876978900579035e-17,
+      "val": -2.8769789005760376e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:orbited.q[2]",
-      "val": -1.0471346843933963e-17,
+      "val": -1.0471346844016303e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -21490,12 +21490,12 @@
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[0]",
-      "val": -2.876978900569924e-17,
+      "val": -2.8769789005698044e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:before_undo.q[2]",
-      "val": -1.0471346844184287e-17,
+      "val": -1.0471346844187568e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -21505,27 +21505,27 @@
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[0]",
-      "val": -2.876978900569748e-17,
+      "val": -2.876978900569733e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:after_undo.q[2]",
-      "val": -1.0471346844189131e-17,
+      "val": -1.0471346844189535e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dp",
-      "val": 1.1786516661211501e-12,
+      "val": 4.782486165312988e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:cam_moved.dq",
-      "val": 1.6829728710306226e-13,
+      "val": 6.845540099805064e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.p[0]",
-      "val": -4.8243124705211373e-14,
+      "val": -4.31844334120923e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -21540,12 +21540,12 @@
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[1]",
-      "val": -6.893926741705099e-15,
+      "val": -6.17104141044261e-15,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_confirm.q[2]",
-      "val": -2.110656329446373e-31,
+      "val": -1.8893365276760775e-31,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -21555,17 +21555,17 @@
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[0]",
-      "val": -2.8769789005760376e-17,
+      "val": -2.876978900573996e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:at_saved.q[2]",
-      "val": -1.0471346844016314e-17,
+      "val": -1.0471346844072423e-17,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "viewpoint_undo.json:return_gap",
-      "val": 2.0031140124658606e-11,
+      "val": 1.3650468693486108e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
