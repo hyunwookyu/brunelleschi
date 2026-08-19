@@ -18,7 +18,7 @@
   "on": {
    "on": true,
    "empty": {
-    "y": 337.5,
+    "y": 337,
     "visible": true,
     "adjustable": true,
     "toggle": {
@@ -44,13 +44,13 @@
    },
    "dragged": {
     "requested_dy_px": 60,
-    "y_before": 337.5,
-    "y_after": 397.5,
+    "y_before": 337,
+    "y_after": 397,
     "moved_px": 60,
     "strokes": 0
    },
    "stood": {
-    "y": 69.6,
+    "y": 69.1,
     "visible": true,
     "adjustable": false,
     "toggle": {
@@ -75,7 +75,7 @@
     "grab_off": false
    },
    "confirmed": {
-    "y": 69.6,
+    "y": 69.1,
     "visible": true,
     "adjustable": false,
     "toggle": {
@@ -103,7 +103,7 @@
   "off": {
    "on": false,
    "empty": {
-    "y": 337.5,
+    "y": 337,
     "visible": false,
     "adjustable": true,
     "toggle": {
@@ -129,13 +129,13 @@
    },
    "dragged": {
     "requested_dy_px": 60,
-    "y_before": 337.5,
-    "y_after": 337.5,
+    "y_before": 337,
+    "y_after": 337,
     "moved_px": 0,
     "strokes": 1
    },
    "stood": {
-    "y": 69.6,
+    "y": 69.1,
     "visible": true,
     "adjustable": false,
     "toggle": {
@@ -160,7 +160,7 @@
     "grab_off": false
    },
    "confirmed": {
-    "y": 69.6,
+    "y": 69.1,
     "visible": true,
     "adjustable": false,
     "toggle": {
@@ -237,9 +237,9 @@
   ],
   "on_drag_overwritten": true,
   "on_drag_y": [
-   337.5,
-   397.5,
-   69.6
+   337,
+   397,
+   69.1
   ],
   "stage_stood": {
    "slots": [
@@ -321,9 +321,9 @@
    ],
    "on_drag_overwritten": true,
    "on_drag_y": [
-    337.5,
-    397.5,
-    69.6
+    337,
+    397,
+    69.1
    ],
    "stage_stood": {
     "slots": [
@@ -352,7 +352,7 @@
  "setup": {
   "canvas": [
    1280,
-   675
+   674
   ],
   "band_px": 20.98,
   "band_ratio": 0.0145,

@@ -21,7 +21,7 @@ import { test, expect } from "@playwright/test";
 import { constantsSnapshot } from "../test/constants.js";
 import { metricsSnapshot } from "../test/metrics.js";
 import { PICK_TOL } from "../src/ui/pick.js";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { setupConfirmed } from "./fixture.js";
@@ -110,7 +110,9 @@ test("지평선 토글 — 선 위 손잡이가 켜고 끈다", async ({ page })
         + "시작**의 논리곱이다 — 선 가운데서 시작한 끌기는 토글에 안 걸린다(③이 그 반례다).",
     },
     what_this_does_not_say: [
-      "dpr 1·마우스뿐이다(#21). 손가락 탭의 정밀도는 실획 표본이 판정자다.",
+      "본 팔 다섯은 dpr 1·마우스다(#21) — **탭 켬/끔은 dpr 2 팔이 따로 돈다**(아래 "
+      + "«dpr 2» 스위트가 이 원장의 `dpr2` 블록에 값을 남긴다). 끌기·잠김 팔의 dpr 2와 "
+      + "손가락 탭의 정밀도는 안 쟀다 — 후자는 실획 표본이 판정자다.",
       "잠김(확정 후) 상태의 **잠김 표시**(버튼 라벨·disabled)는 `horizon_drag.json`의 "
       + "확정 팔이 들고, **그 상태의 손잡이 자리 탭**은 이 원장의 ⑤ 팔이 든다(1차 리뷰어 "
       + "[10]로 추가 — 초판은 위임처가 다른 양(표시)을 재는데 «든다»라고 적었다).",
@@ -187,7 +189,15 @@ test("지평선 토글 — 선 위 손잡이가 켜고 끈다", async ({ page })
     constants: constantsSnapshot(),
     metric_defs: metricsSnapshot(),
   };
-  led.gate.reachability_bits = { ...led.summary };
+  // **실제로 재는 비트만**(#46 — 2차 리뷰어 [9]: summary 통째 복사는 «따로 둔 것»이 아니라
+  // result의 복사다). 연속량(off_tap_moved_px·drag_follow_ratio)과 부속 필드는 result가 든다.
+  led.gate.reachability_bits = {
+    tap_turns_on: led.summary.tap_turns_on,
+    tap_turns_off: led.summary.tap_turns_off,
+    drag_kept_on: led.summary.drag_kept_on,
+    far_tap_no_toggle: led.summary.far_tap_no_toggle,
+    locked_tap_no_toggle: led.summary.locked_tap_no_toggle,
+  };
   led.gate.result = { ...led.summary };
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "horizon_chip.json"), JSON.stringify(led, null, 1));
@@ -248,5 +258,19 @@ test.describe("dpr 2", () => {
     await page.waitForTimeout(60);
     const s2: any = await read();
     expect(s2.on).toBe(false);
+    // **측정을 원장에 남긴다**(#25 — 2차 리뷰어 [1]: 원장 밖 «통과»는 섭동이 안 걸린
+    // 실행과 갈리지 않는다). 본 팔이 쓴 원장을 읽어 `dpr2` 블록을 덧붙인다 — 파일 순서상
+    // 본 팔이 먼저 돌므로(직렬 실행) 덮어쓰기가 아니라 병합이다.
+    const ledPath = resolve(OUT, "horizon_chip.json");
+    const led = JSON.parse(readFileSync(ledPath, "utf8"));
+    led.dpr2 = {
+      /** 섭동이 실제로 걸렸는가 — 1이면 «통과»는 dpr 1을 두 번 잰 것이다(#40 ⑤) */
+      backing_ratio: s0.backing_ratio,
+      tap_on: { before: s0.on, after: s1.on },
+      tap_off: { before: s1.on, after: s2.on },
+      note: "탭 켬/끔만 잰다 — 끌기·잠김 팔의 dpr 2는 안 쟀다(wtdns).",
+    };
+    writeFileSync(ledPath, JSON.stringify(led, null, 1));
+    expect(s0.backing_ratio).toBeGreaterThan(1.5);
   });
 });

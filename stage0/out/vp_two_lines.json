@@ -22,36 +22,36 @@
  },
  "fix": {
   "vp": [
-   768.0000701166648,
-   269.9999729404649
+   768.0001388085473,
+   269.59995601609165
   ],
   "misfits": [
-   7.019448707162414e-17,
-   1.2867887009481978e-8,
-   1.7067916194916195e-16
+   1.9202147614623113e-8,
+   2.665555478521659e-16,
+   1.7071835973685352e-16
   ],
-  "horizon_y": 269.9999729404649,
+  "horizon_y": 269.59995601609165,
   "order": 0,
   "standing": false
  },
  "fix_regression": {
-  "canvas_h": 675,
-  "default_horizon_y": 337.5,
-  "vp_off_px": 67.50002705953511,
-  "vp_off_ratio": 0.10000004008820017
+  "canvas_h": 674,
+  "default_horizon_y": 337,
+  "vp_off_px": 67.40004398390835,
+  "vp_off_ratio": 0.10000006525802425
  },
  "fix_concurrency": {
   "exact_zero": 2,
   "of": 3,
-  "max_misfit": 1.2867887009481978e-8
+  "max_misfit": 1.9202147614623113e-8
  },
  "asked": null,
  "grid": {
   "standing": true,
-  "checked": 467,
-  "maxSin": 1.429785471616631e-14
+  "checked": 468,
+  "maxSin": 1.8324882786414202e-14
  },
- "ink_px": 25559,
+ "ink_px": 25488,
  "console_errors": [],
  "constants": {
   "hash": "f351839a",

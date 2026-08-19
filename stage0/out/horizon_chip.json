@@ -5,7 +5,7 @@
   "split": "«탭 = 토글 · 끌기 = 이동»의 갈림은 **무이동**(`PICK_TOL` 띠)과 **손잡이 위 시작**의 논리곱이다 — 선 가운데서 시작한 끌기는 토글에 안 걸린다(③이 그 반례다)."
  },
  "what_this_does_not_say": [
-  "dpr 1·마우스뿐이다(#21). 손가락 탭의 정밀도는 실획 표본이 판정자다.",
+  "본 팔 다섯은 dpr 1·마우스다(#21) — **탭 켬/끔은 dpr 2 팔이 따로 돈다**(아래 «dpr 2» 스위트가 이 원장의 `dpr2` 블록에 값을 남긴다). 끌기·잠김 팔의 dpr 2와 손가락 탭의 정밀도는 안 쟀다 — 후자는 실획 표본이 판정자다.",
   "잠김(확정 후) 상태의 **잠김 표시**(버튼 라벨·disabled)는 `horizon_drag.json`의 확정 팔이 들고, **그 상태의 손잡이 자리 탭**은 이 원장의 ⑤ 팔이 든다(1차 리뷰어 [10]로 추가 — 초판은 위임처가 다른 양(표시)을 재는데 «든다»라고 적었다).",
   "손잡이에서 시작한 **띠보다 짧은 끌기**는 토글로 읽힌다 — 그 경계의 비용은 알고 고른 규약이다(끌기는 보통 선 가운데서 시작한다). 경계 스윕은 안 했다."
  ],
@@ -155,23 +155,9 @@
   "reachability_bits": {
    "tap_turns_on": true,
    "tap_turns_off": true,
-   "off_tap_moved_px": 0,
    "drag_kept_on": true,
-   "drag_moved_px": 50,
-   "drag_commanded_px": 50,
-   "drag_follow_ratio": 1,
    "far_tap_no_toggle": true,
-   "locked_after_confirm": true,
-   "locked_tap_no_toggle": true,
-   "locked_tap_strokes_delta": 0,
-   "locked_spot_element": {
-    "id": null,
-    "tag": "BUTTON",
-    "in_tools": true,
-    "in_bar": false
-   },
-   "far_tap_strokes_delta": 1,
-   "chip_tap_strokes_delta": 0
+   "locked_tap_no_toggle": true
   },
   "reachability_absent": "오라클 팔 없음 — drag_follow_ratio는 이 게이트의 결과 자체다. 기준을 넘는 것(비 0)은 «탭 가로챔이 끌기를 삼키는 배선»인데 그 되살림 팔은 없다.",
   "result": {
@@ -368,5 +354,17 @@
   ],
   "source": "file",
   "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ },
+ "dpr2": {
+  "backing_ratio": 2,
+  "tap_on": {
+   "before": false,
+   "after": true
+  },
+  "tap_off": {
+   "before": true,
+   "after": false
+  },
+  "note": "탭 켬/끔만 잰다 — 끌기·잠김 팔의 dpr 2는 안 쟀다(wtdns)."
  }
 }

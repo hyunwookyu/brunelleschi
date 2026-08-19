@@ -45,7 +45,7 @@
  "setup": {
   "canvas": [
    1280,
-   675
+   674
   ],
   "strokes": 12,
   "hasCamera": true,
@@ -68,7 +68,7 @@
   "draft_btn_enabled": false
  },
  "pinned_horizon_row": {
-  "row_y": 337.5,
+  "row_y": 337,
   "hit": 159,
   "n": 159,
   "ratio": 1
@@ -77,8 +77,8 @@
   "state": "draft_three",
   "judge": {
    "kind": "three_point",
-   "pitchDeg": -39.8550855540265,
-   "yawOffDeg": 24.69515353123396,
+   "pitchDeg": -39.85508555402651,
+   "yawOffDeg": 24.695153531233967,
    "returnDir": [
     0.41779022447308056,
     0,
@@ -88,7 +88,7 @@
   "draft_btn_enabled": true
  },
  "model_horizon_row": {
-  "row_y": 337.5,
+  "row_y": 337,
   "hit": 0,
   "n": 159,
   "ratio": 0
@@ -117,11 +117,11 @@
   "draft_btn_enabled": true
  },
  "model_shallow_would_be_horizon": {
-  "y": 158.6145618000168,
+  "y": 158.1145618000168,
   "on_screen": true
  },
  "model_shallow_horizon_row": {
-  "row_y": 158.6145618000168,
+  "row_y": 158.1145618000168,
   "hit": 159,
   "n": 159,
   "ratio": 1
@@ -141,16 +141,16 @@
   "draft_btn_enabled": false
  },
  "returned_overlay": {
-  "horizon_y": 337.49999999999994,
-  "principal_y": 337.5,
+  "horizon_y": 336.99999999999994,
+  "principal_y": 337,
   "vps_h": [
    [
     2814.640446593664,
-    337.49999999999994
+    336.99999999999994
    ],
    [
     180.15386701448023,
-    337.49999999999994
+    336.99999999999994
    ]
   ],
   "vps_h_finite": 2,
@@ -159,7 +159,7 @@
   "horizon_vs_principal": 5.684341886080802e-14
  },
  "returned_horizon_row": {
-  "row_y": 337.49999999999994,
+  "row_y": 336.99999999999994,
   "hit": 159,
   "n": 159,
   "ratio": 1
@@ -172,8 +172,8 @@
   "state": "draft_one",
   "judge": {
    "kind": "one_point",
-   "pitchDeg": -4.016950313234508e-15,
-   "yawOffDeg": 1.2722218725854067e-14,
+   "pitchDeg": -4.016950313234509e-15,
+   "yawOffDeg": 0,
    "returnDir": [
     0,
     0,
@@ -183,15 +183,15 @@
   "draft_btn_enabled": false
  },
  "one_point_overlay": {
-  "horizon_y": 337.49999999999994,
-  "principal_y": 337.5,
+  "horizon_y": 336.99999999999994,
+  "principal_y": 337,
   "vps_h_finite": 1,
   "vp_vertical_infinite": true,
   "horizon_vs_principal": 5.684341886080802e-14,
   "aligned_vp_dist_to_principal": 1.2710574864626038e-13
  },
  "one_point_horizon_row": {
-  "row_y": 337.49999999999994,
+  "row_y": 336.99999999999994,
   "hit": 159,
   "n": 159,
   "ratio": 1
@@ -204,12 +204,12 @@
   "state": "draft_two",
   "judge": {
    "kind": "two_point",
-   "pitchDeg": -4.0169503132345094e-15,
-   "yawOffDeg": 44.99999999999999,
+   "pitchDeg": -4.016950313234509e-15,
+   "yawOffDeg": 45,
    "returnDir": [
-    -0.7071067811865476,
+    -0.7071067811865475,
     0,
-    -0.7071067811865474
+    -0.7071067811865476
    ]
   },
   "draft_btn_enabled": false

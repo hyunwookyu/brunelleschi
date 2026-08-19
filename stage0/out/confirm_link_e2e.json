@@ -50,7 +50,7 @@
     "rejected": 0
    },
    "snap_records": 2,
-   "size": 7.968,
+   "size": 7.99,
    "rows": [
     {
      "id": "s2",
@@ -116,7 +116,7 @@
     "rejected": 0
    },
    "snap_records": 2,
-   "size": 7.968,
+   "size": 7.99,
    "rows": [
     {
      "id": "s2",
@@ -127,7 +127,7 @@
      "targetLifted": true,
      "ref3d": false,
      "gap3d": 0.0153,
-     "gap_rel": 0.00192,
+     "gap_rel": 0.00191,
      "break_px": 0
     },
     {
@@ -139,7 +139,7 @@
      "targetLifted": true,
      "ref3d": false,
      "gap3d": 0.01448,
-     "gap_rel": 0.00182,
+     "gap_rel": 0.00181,
      "break_px": 9.27
     }
    ]
@@ -160,7 +160,7 @@
     "no_target": 0,
     "rejected": 0,
     "target_moved": 2,
-    "maxMovedPx": 9.26888467114533,
+    "maxMovedPx": 9.26888287923833,
     "maxTurnDeg": 0
    },
    "liftDeclared": true,
@@ -182,7 +182,7 @@
     "rejected": 0
    },
    "snap_records": 2,
-   "size": 7.968,
+   "size": 7.99,
    "rows": [
     {
      "id": "s2",
@@ -206,7 +206,7 @@
      "ref3d": true,
      "gap3d": 0,
      "gap_rel": 0,
-     "break_px": 17.78
+     "break_px": 17.82
     }
    ]
   },
@@ -248,7 +248,7 @@
     "rejected": 3
    },
    "snap_records": 2,
-   "size": 12.641,
+   "size": 12.662,
    "rows": [
     {
      "id": "s2",
@@ -396,7 +396,7 @@
   "declared_only_lifted": "3/3",
   "on_lifted": "3/3",
   "off_gap_rel_max_end_anchor_bypassed": 0,
-  "declared_only_gap_rel_max": 0.00192,
+  "declared_only_gap_rel_max": 0.00191,
   "on_gap_rel_max": 0,
   "closed_standing": true,
   "closed_order": 1,
@@ -426,10 +426,10 @@
  "gate": {
   "registered": "확정 순간 붙여 그은 두 획이 붙어 있는가(앱 종단). 판정은 **끈 팔의 값**이 든다 — 켠 팔의 0은 설계 보장이라(#5) 임계를 안 건다.",
   "reachability": "(b)의 되살림 팔은 `declared_only`다(선언 제약 켬 · 되맞춤 끔). ⚠ **완전 `off` 팔은 되살림 팔이 아니다** — 선언 제약이 없으면 일괄 풀이가 획 하나를 못 담고 승격 연쇄의 **끝점 앵커**가 대신 놓아(`arms[0].placeBy.end_anchor`) 간격이 0으로 나온다. 그 사실 자체가 이 원장의 관측이다.",
-  "reachability_value": 0.00192,
+  "reachability_value": 0.00191,
   "reachability_source": "summary/declared_only_gap_rel_max",
   "result": {
-   "declared_only_gap_rel_max": 0.00192,
+   "declared_only_gap_rel_max": 0.00191,
    "off_place_by_end_anchor": 1,
    "straight_gap_rel_max": 0
   }
