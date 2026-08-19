@@ -4,70 +4,42 @@
     "bypass": {
       "headline": {
         "runs": 600,
-        "camera_ok": "524/600",
-        "camera_ok_rate": 0.8733,
+        "camera_ok": "560/600",
+        "camera_ok_rate": 0.9333,
         "order_counts": {
-          "p0": 76,
-          "p1": 70,
-          "p2": 454,
+          "p0": 40,
+          "p1": 470,
+          "p2": 90,
           "p3": 0
         },
-        "placement": "3384/7200",
-        "placement_rate": 0.47,
+        "placement": "3626/7200",
+        "placement_rate": 0.5036,
         "silent_wrong": {
-          "cut_0_1": "3373/3384",
-          "cut_0_2": "3298/3384",
-          "cut_0_5": "2153/3384"
+          "cut_0_1": "3597/3626",
+          "cut_0_2": "3562/3626",
+          "cut_0_5": "3165/3626"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 0.9967,
-          "cut_0_2": 0.9746,
-          "cut_0_5": 0.6362
+          "cut_0_1": 0.992,
+          "cut_0_2": 0.9823,
+          "cut_0_5": 0.8729
         },
-        "shape_err_median": 0.595,
-        "fed_strokes": 5197,
+        "shape_err_median": 1.4938,
+        "fed_strokes": 5099,
         "asks_total": 3,
         "ask_kinds": {
           "screen_or_depth/p1_guard": 3
         },
         "asks_per_stroke": 0.0004,
         "first_declaration": {
-          "screen_h": 496,
+          "screen_h": 478,
           "screen_v": 0,
-          "vp": 104,
+          "vp": 122,
           "none": 0
         },
-        "within_cut_0_2": 86,
-        "beyond_cut_0_5": 2153,
+        "within_cut_0_2": 64,
+        "beyond_cut_0_5": 3165,
         "p0_reasons": {
-          "pending_2_awaiting_third": {
-            "runs": 37,
-            "strokes": 444,
-            "pending_median": 2,
-            "pending_max": 2,
-            "pending_sep_deg_median": 23.8291,
-            "pending_sep_deg_min": 4.0033,
-            "pending_sep_deg_max": 51.871,
-            "sep_below_concurrent": 0,
-            "events": {
-              "screen_axis": 37,
-              "waiting": 74,
-              "support": 259,
-              "rejected": 74
-            },
-            "rejects": {
-              "too_short": 74
-            },
-            "truth_events": {
-              "depth/screen_axis": 2,
-              "depth/waiting": 72,
-              "screen/support": 251,
-              "depth/support": 8,
-              "depth/rejected": 74,
-              "screen/screen_axis": 35,
-              "screen/waiting": 2
-            }
-          },
           "one_depth_line": {
             "runs": 38,
             "strokes": 456,
@@ -93,6 +65,33 @@
               "depth/waiting": 38,
               "depth/support": 39,
               "screen/screen_axis": 37
+            }
+          },
+          "pending_2_awaiting_third": {
+            "runs": 1,
+            "strokes": 12,
+            "pending_median": 2,
+            "pending_max": 2,
+            "pending_sep_deg_median": 51.871,
+            "pending_sep_deg_min": 51.871,
+            "pending_sep_deg_max": 51.871,
+            "sep_below_concurrent": 0,
+            "events": {
+              "screen_axis": 1,
+              "waiting": 2,
+              "support": 7,
+              "rejected": 2
+            },
+            "rejects": {
+              "too_short": 2
+            },
+            "truth_events": {
+              "screen/screen_axis": 1,
+              "depth/waiting": 1,
+              "screen/support": 6,
+              "depth/support": 1,
+              "screen/waiting": 1,
+              "depth/rejected": 2
             }
           },
           "pending_3plus_no_candidate": {
@@ -125,22 +124,22 @@
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "51/316",
-          "leak_rate": 0.1614,
-          "too_short": "154/316",
-          "in_pool": "111/316",
+          "leak": "42/164",
+          "leak_rate": 0.2561,
+          "too_short": "82/164",
+          "in_pool": "40/164",
           "by_reason": {
-            "pending_2_awaiting_third": {
-              "depth_truth": 156,
-              "leak": "10/156",
-              "leak_rate": 0.0641,
-              "too_short": "74/156"
-            },
             "one_depth_line": {
               "depth_truth": 156,
               "leak": "40/156",
               "leak_rate": 0.2564,
               "too_short": "78/156"
+            },
+            "pending_2_awaiting_third": {
+              "depth_truth": 4,
+              "leak": "1/4",
+              "leak_rate": 0.25,
+              "too_short": "2/4"
             },
             "pending_3plus_no_candidate": {
               "depth_truth": 4,
@@ -151,39 +150,39 @@
           }
         },
         "rejects": {
-          "p2_fixed_no_screen_h": 522,
-          "off_axis_p2": 987,
-          "off_axis_p1": 247,
+          "off_axis_p1": 1440,
+          "off_axis_p2": 307,
+          "p2_fixed_no_screen_h": 105,
           "fov_or_other": 15,
           "horizon_parallel": 2,
-          "too_short": 230
+          "too_short": 232
         },
         "events": {
-          "waiting": 1181,
-          "support": 2942,
-          "screen_axis": 513,
-          "vp_fixed": 561,
-          "rejected": 2003
+          "waiting": 948,
+          "support": 3059,
+          "screen_axis": 495,
+          "vp_fixed": 597,
+          "rejected": 2101
         },
-        "one_point_direct_open": 70,
+        "one_point_direct_open": 470,
         "f_intervention": {
           "ratio_median": 0.96,
-          "ratio_min": 0.0181,
-          "ratio_max": 32.2803,
-          "n": 524
+          "ratio_min": 0.0226,
+          "ratio_max": 28.5246,
+          "n": 560
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 76,
-          "stood": 524,
+          "never": 40,
+          "stood": 560,
           "median": 5,
           "p90": 7,
           "max": 11
         },
         "by_order": {
           "p0": {
-            "runs": 76,
-            "placement": "0/912",
+            "runs": 40,
+            "placement": "0/480",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -196,32 +195,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 70,
-            "placement": "343/840",
-            "placement_rate": 0.4083,
-            "within_cut_0_2": 1,
-            "runs_within_cut_0_2": 1,
-            "beyond_cut_0_5": 324,
+            "runs": 470,
+            "placement": "3200/5640",
+            "placement_rate": 0.5674,
+            "within_cut_0_2": 63,
+            "runs_within_cut_0_2": 24,
+            "beyond_cut_0_5": 2819,
             "silent_wrong": {
-              "cut_0_1": "343/343",
-              "cut_0_2": "342/343",
-              "cut_0_5": "324/343"
+              "cut_0_1": "3171/3200",
+              "cut_0_2": "3137/3200",
+              "cut_0_5": "2819/3200"
             },
-            "shape_err_median": 1.9753
+            "shape_err_median": 1.5921
           },
           "p2": {
-            "runs": 454,
-            "placement": "3041/5448",
-            "placement_rate": 0.5582,
-            "within_cut_0_2": 85,
-            "runs_within_cut_0_2": 23,
-            "beyond_cut_0_5": 1829,
+            "runs": 90,
+            "placement": "426/1080",
+            "placement_rate": 0.3944,
+            "within_cut_0_2": 1,
+            "runs_within_cut_0_2": 1,
+            "beyond_cut_0_5": 346,
             "silent_wrong": {
-              "cut_0_1": "3030/3041",
-              "cut_0_2": "2956/3041",
-              "cut_0_5": "1829/3041"
+              "cut_0_1": "426/426",
+              "cut_0_2": "425/426",
+              "cut_0_5": "346/426"
             },
-            "shape_err_median": 0.5619
+            "shape_err_median": 0.658
           },
           "p3": {
             "runs": 0,
@@ -2040,65 +2039,40 @@
     "jit_0": {
       "bypass": {
         "runs": 120,
-        "camera_ok": "96/120",
-        "camera_ok_rate": 0.8,
+        "camera_ok": "101/120",
+        "camera_ok_rate": 0.8417,
         "order_counts": {
-          "p0": 24,
-          "p1": 0,
-          "p2": 96,
+          "p0": 19,
+          "p1": 101,
+          "p2": 0,
           "p3": 0
         },
-        "placement": "805/1440",
-        "placement_rate": 0.559,
+        "placement": "819/1440",
+        "placement_rate": 0.5687,
         "silent_wrong": {
-          "cut_0_1": "803/805",
-          "cut_0_2": "786/805",
-          "cut_0_5": "417/805"
+          "cut_0_1": "810/819",
+          "cut_0_2": "802/819",
+          "cut_0_5": "753/819"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 0.9975,
-          "cut_0_2": 0.9764,
-          "cut_0_5": 0.518
+          "cut_0_1": 0.989,
+          "cut_0_2": 0.9792,
+          "cut_0_5": 0.9194
         },
-        "shape_err_median": 0.5092,
-        "fed_strokes": 1135,
+        "shape_err_median": 1.6565,
+        "fed_strokes": 1121,
         "asks_total": 0,
         "ask_kinds": {},
         "asks_per_stroke": 0,
         "first_declaration": {
-          "screen_h": 120,
+          "screen_h": 119,
           "screen_v": 0,
-          "vp": 0,
+          "vp": 1,
           "none": 0
         },
-        "within_cut_0_2": 19,
-        "beyond_cut_0_5": 417,
+        "within_cut_0_2": 17,
+        "beyond_cut_0_5": 753,
         "p0_reasons": {
-          "pending_2_awaiting_third": {
-            "runs": 5,
-            "strokes": 60,
-            "pending_median": 2,
-            "pending_max": 2,
-            "pending_sep_deg_median": 25.0223,
-            "pending_sep_deg_min": 22.047,
-            "pending_sep_deg_max": 28.2478,
-            "sep_below_concurrent": 0,
-            "events": {
-              "screen_axis": 5,
-              "waiting": 10,
-              "support": 35,
-              "rejected": 10
-            },
-            "rejects": {
-              "too_short": 10
-            },
-            "truth_events": {
-              "screen/screen_axis": 5,
-              "depth/waiting": 10,
-              "screen/support": 35,
-              "depth/rejected": 10
-            }
-          },
           "one_depth_line": {
             "runs": 19,
             "strokes": 228,
@@ -2128,17 +2102,11 @@
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "19/96",
-          "leak_rate": 0.1979,
-          "too_short": "48/96",
-          "in_pool": "29/96",
+          "leak": "19/76",
+          "leak_rate": 0.25,
+          "too_short": "38/76",
+          "in_pool": "19/76",
           "by_reason": {
-            "pending_2_awaiting_third": {
-              "depth_truth": 20,
-              "leak": "0/20",
-              "leak_rate": 0,
-              "too_short": "10/20"
-            },
             "one_depth_line": {
               "depth_truth": 76,
               "leak": "19/76",
@@ -2148,36 +2116,35 @@
           }
         },
         "rejects": {
-          "p2_fixed_no_screen_h": 127,
-          "off_axis_p2": 130,
+          "off_axis_p1": 271,
           "too_short": 48
         },
         "events": {
-          "waiting": 221,
-          "support": 698,
-          "screen_axis": 120,
-          "vp_fixed": 96,
-          "rejected": 305
+          "waiting": 170,
+          "support": 731,
+          "screen_axis": 119,
+          "vp_fixed": 101,
+          "rejected": 319
         },
-        "one_point_direct_open": 0,
+        "one_point_direct_open": 101,
         "f_intervention": {
-          "ratio_median": 0.8561,
-          "ratio_min": 0.2489,
-          "ratio_max": 25.1464,
-          "n": 96
+          "ratio_median": 0.96,
+          "ratio_min": 0.96,
+          "ratio_max": 0.96,
+          "n": 101
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 24,
-          "stood": 96,
+          "never": 19,
+          "stood": 101,
           "median": 5,
           "p90": 7,
           "max": 8
         },
         "by_order": {
           "p0": {
-            "runs": 24,
-            "placement": "0/288",
+            "runs": 19,
+            "placement": "0/228",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -2190,6 +2157,20 @@
             "shape_err_median": null
           },
           "p1": {
+            "runs": 101,
+            "placement": "819/1212",
+            "placement_rate": 0.6757,
+            "within_cut_0_2": 17,
+            "runs_within_cut_0_2": 5,
+            "beyond_cut_0_5": 753,
+            "silent_wrong": {
+              "cut_0_1": "810/819",
+              "cut_0_2": "802/819",
+              "cut_0_5": "753/819"
+            },
+            "shape_err_median": 1.6565
+          },
+          "p2": {
             "runs": 0,
             "placement": "0/0",
             "placement_rate": null,
@@ -2202,20 +2183,6 @@
               "cut_0_5": "0/0"
             },
             "shape_err_median": null
-          },
-          "p2": {
-            "runs": 96,
-            "placement": "805/1152",
-            "placement_rate": 0.6988,
-            "within_cut_0_2": 19,
-            "runs_within_cut_0_2": 6,
-            "beyond_cut_0_5": 417,
-            "silent_wrong": {
-              "cut_0_1": "803/805",
-              "cut_0_2": "786/805",
-              "cut_0_5": "417/805"
-            },
-            "shape_err_median": 0.5092
           },
           "p3": {
             "runs": 0,
@@ -3691,67 +3658,40 @@
     "jit_0.005": {
       "bypass": {
         "runs": 120,
-        "camera_ok": "95/120",
-        "camera_ok_rate": 0.7917,
+        "camera_ok": "112/120",
+        "camera_ok_rate": 0.9333,
         "order_counts": {
-          "p0": 25,
-          "p1": 0,
-          "p2": 95,
+          "p0": 8,
+          "p1": 110,
+          "p2": 2,
           "p3": 0
         },
-        "placement": "832/1440",
-        "placement_rate": 0.5778,
+        "placement": "937/1440",
+        "placement_rate": 0.6507,
         "silent_wrong": {
-          "cut_0_1": "823/832",
-          "cut_0_2": "797/832",
-          "cut_0_5": "435/832"
+          "cut_0_1": "919/937",
+          "cut_0_2": "898/937",
+          "cut_0_5": "762/937"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 0.9892,
-          "cut_0_2": 0.9579,
-          "cut_0_5": 0.5228
+          "cut_0_1": 0.9808,
+          "cut_0_2": 0.9584,
+          "cut_0_5": 0.8132
         },
-        "shape_err_median": 0.5122,
-        "fed_strokes": 1147,
+        "shape_err_median": 1.537,
+        "fed_strokes": 1139,
         "asks_total": 0,
         "ask_kinds": {},
         "asks_per_stroke": 0,
         "first_declaration": {
-          "screen_h": 118,
+          "screen_h": 117,
           "screen_v": 0,
-          "vp": 2,
+          "vp": 3,
           "none": 0
         },
-        "within_cut_0_2": 35,
-        "beyond_cut_0_5": 435,
+        "within_cut_0_2": 39,
+        "beyond_cut_0_5": 762,
         "p0_reasons": {
-          "pending_2_awaiting_third": {
-            "runs": 17,
-            "strokes": 204,
-            "pending_median": 2,
-            "pending_max": 2,
-            "pending_sep_deg_median": 23.8291,
-            "pending_sep_deg_min": 10.0366,
-            "pending_sep_deg_max": 29.6859,
-            "sep_below_concurrent": 0,
-            "events": {
-              "screen_axis": 17,
-              "waiting": 34,
-              "support": 121,
-              "rejected": 32
-            },
-            "rejects": {
-              "too_short": 32
-            },
-            "truth_events": {
-              "depth/screen_axis": 1,
-              "depth/waiting": 34,
-              "screen/support": 116,
-              "depth/support": 5,
-              "screen/screen_axis": 16,
-              "depth/rejected": 32
-            }
-          },
           "one_depth_line": {
             "runs": 8,
             "strokes": 96,
@@ -3781,17 +3721,11 @@
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "14/104",
-          "leak_rate": 0.1346,
-          "too_short": "48/104",
-          "in_pool": "42/104",
+          "leak": "8/32",
+          "leak_rate": 0.25,
+          "too_short": "16/32",
+          "in_pool": "8/32",
           "by_reason": {
-            "pending_2_awaiting_third": {
-              "depth_truth": 72,
-              "leak": "6/72",
-              "leak_rate": 0.0833,
-              "too_short": "32/72"
-            },
             "one_depth_line": {
               "depth_truth": 32,
               "leak": "8/32",
@@ -3801,36 +3735,37 @@
           }
         },
         "rejects": {
-          "off_axis_p2": 115,
-          "p2_fixed_no_screen_h": 130,
+          "off_axis_p1": 247,
+          "off_axis_p2": 3,
+          "p2_fixed_no_screen_h": 3,
           "too_short": 48
         },
         "events": {
-          "waiting": 232,
-          "support": 701,
-          "screen_axis": 118,
-          "vp_fixed": 96,
-          "rejected": 293
+          "waiting": 172,
+          "support": 737,
+          "screen_axis": 117,
+          "vp_fixed": 113,
+          "rejected": 301
         },
-        "one_point_direct_open": 0,
+        "one_point_direct_open": 110,
         "f_intervention": {
-          "ratio_median": 0.9115,
-          "ratio_min": 0.3477,
-          "ratio_max": 32.2803,
-          "n": 95
+          "ratio_median": 0.96,
+          "ratio_min": 0.96,
+          "ratio_max": 1.3029,
+          "n": 112
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 25,
-          "stood": 95,
+          "never": 8,
+          "stood": 112,
           "median": 5,
           "p90": 7,
           "max": 8
         },
         "by_order": {
           "p0": {
-            "runs": 25,
-            "placement": "0/300",
+            "runs": 8,
+            "placement": "0/96",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -3843,32 +3778,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 0,
-            "placement": "0/0",
-            "placement_rate": null,
-            "within_cut_0_2": 0,
-            "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 0,
+            "runs": 110,
+            "placement": "917/1320",
+            "placement_rate": 0.6947,
+            "within_cut_0_2": 39,
+            "runs_within_cut_0_2": 14,
+            "beyond_cut_0_5": 746,
             "silent_wrong": {
-              "cut_0_1": "0/0",
-              "cut_0_2": "0/0",
-              "cut_0_5": "0/0"
+              "cut_0_1": "899/917",
+              "cut_0_2": "878/917",
+              "cut_0_5": "746/917"
             },
-            "shape_err_median": null
+            "shape_err_median": 1.5588
           },
           "p2": {
-            "runs": 95,
-            "placement": "832/1140",
-            "placement_rate": 0.7298,
-            "within_cut_0_2": 35,
-            "runs_within_cut_0_2": 8,
-            "beyond_cut_0_5": 435,
+            "runs": 2,
+            "placement": "20/24",
+            "placement_rate": 0.8333,
+            "within_cut_0_2": 0,
+            "runs_within_cut_0_2": 0,
+            "beyond_cut_0_5": 16,
             "silent_wrong": {
-              "cut_0_1": "823/832",
-              "cut_0_2": "797/832",
-              "cut_0_5": "435/832"
+              "cut_0_1": "20/20",
+              "cut_0_2": "20/20",
+              "cut_0_5": "16/20"
             },
-            "shape_err_median": 0.5122
+            "shape_err_median": 0.5895
           },
           "p3": {
             "runs": 0,
@@ -5387,39 +5322,39 @@
     "jit_0.01": {
       "bypass": {
         "runs": 120,
-        "camera_ok": "97/120",
-        "camera_ok_rate": 0.8083,
+        "camera_ok": "109/120",
+        "camera_ok_rate": 0.9083,
         "order_counts": {
-          "p0": 23,
-          "p1": 8,
-          "p2": 89,
+          "p0": 11,
+          "p1": 97,
+          "p2": 12,
           "p3": 0
         },
-        "placement": "799/1440",
-        "placement_rate": 0.5549,
+        "placement": "862/1440",
+        "placement_rate": 0.5986,
         "silent_wrong": {
-          "cut_0_1": "799/799",
-          "cut_0_2": "768/799",
-          "cut_0_5": "465/799"
+          "cut_0_1": "861/862",
+          "cut_0_2": "857/862",
+          "cut_0_5": "759/862"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 1,
-          "cut_0_2": 0.9612,
-          "cut_0_5": 0.582
+          "cut_0_1": 0.9988,
+          "cut_0_2": 0.9942,
+          "cut_0_5": 0.8805
         },
-        "shape_err_median": 0.545,
-        "fed_strokes": 1121,
+        "shape_err_median": 1.4229,
+        "fed_strokes": 1096,
         "asks_total": 0,
         "ask_kinds": {},
         "asks_per_stroke": 0,
         "first_declaration": {
-          "screen_h": 107,
+          "screen_h": 105,
           "screen_v": 0,
-          "vp": 13,
+          "vp": 15,
           "none": 0
         },
-        "within_cut_0_2": 31,
-        "beyond_cut_0_5": 465,
+        "within_cut_0_2": 5,
+        "beyond_cut_0_5": 759,
         "p0_reasons": {
           "one_depth_line": {
             "runs": 10,
@@ -5448,39 +5383,39 @@
             }
           },
           "pending_2_awaiting_third": {
-            "runs": 13,
-            "strokes": 156,
+            "runs": 1,
+            "strokes": 12,
             "pending_median": 2,
             "pending_max": 2,
-            "pending_sep_deg_median": 20.7225,
-            "pending_sep_deg_min": 13.8733,
+            "pending_sep_deg_median": 51.871,
+            "pending_sep_deg_min": 51.871,
             "pending_sep_deg_max": 51.871,
             "sep_below_concurrent": 0,
             "events": {
-              "screen_axis": 13,
-              "support": 91,
-              "waiting": 26,
-              "rejected": 26
+              "screen_axis": 1,
+              "waiting": 2,
+              "support": 7,
+              "rejected": 2
             },
             "rejects": {
-              "too_short": 26
+              "too_short": 2
             },
             "truth_events": {
-              "screen/screen_axis": 13,
-              "screen/support": 89,
-              "depth/waiting": 24,
-              "depth/rejected": 26,
-              "depth/support": 2,
-              "screen/waiting": 2
+              "screen/screen_axis": 1,
+              "depth/waiting": 1,
+              "screen/support": 6,
+              "depth/support": 1,
+              "screen/waiting": 1,
+              "depth/rejected": 2
             }
           }
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "12/92",
-          "leak_rate": 0.1304,
-          "too_short": "46/92",
-          "in_pool": "34/92",
+          "leak": "11/44",
+          "leak_rate": 0.25,
+          "too_short": "22/44",
+          "in_pool": "11/44",
           "by_reason": {
             "one_depth_line": {
               "depth_truth": 40,
@@ -5489,45 +5424,45 @@
               "too_short": "20/40"
             },
             "pending_2_awaiting_third": {
-              "depth_truth": 52,
-              "leak": "2/52",
-              "leak_rate": 0.0385,
-              "too_short": "26/52"
+              "depth_truth": 4,
+              "leak": "1/4",
+              "leak_rate": 0.25,
+              "too_short": "2/4"
             }
           }
         },
         "rejects": {
-          "off_axis_p2": 139,
-          "p2_fixed_no_screen_h": 110,
-          "off_axis_p1": 22,
+          "off_axis_p2": 22,
+          "p2_fixed_no_screen_h": 13,
+          "off_axis_p1": 261,
           "too_short": 48
         },
         "events": {
-          "waiting": 230,
-          "support": 681,
-          "vp_fixed": 102,
-          "rejected": 319,
-          "screen_axis": 108
+          "waiting": 178,
+          "support": 698,
+          "vp_fixed": 114,
+          "rejected": 344,
+          "screen_axis": 106
         },
-        "one_point_direct_open": 8,
+        "one_point_direct_open": 97,
         "f_intervention": {
-          "ratio_median": 0.9724,
-          "ratio_min": 0.2021,
-          "ratio_max": 22.5536,
-          "n": 97
+          "ratio_median": 0.96,
+          "ratio_min": 0.96,
+          "ratio_max": 3.5696,
+          "n": 109
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 23,
-          "stood": 97,
+          "never": 11,
+          "stood": 109,
           "median": 5,
           "p90": 7,
           "max": 10
         },
         "by_order": {
           "p0": {
-            "runs": 23,
-            "placement": "0/276",
+            "runs": 11,
+            "placement": "0/132",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -5540,32 +5475,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 8,
-            "placement": "58/96",
-            "placement_rate": 0.6042,
-            "within_cut_0_2": 1,
-            "runs_within_cut_0_2": 1,
-            "beyond_cut_0_5": 48,
+            "runs": 97,
+            "placement": "748/1164",
+            "placement_rate": 0.6426,
+            "within_cut_0_2": 5,
+            "runs_within_cut_0_2": 4,
+            "beyond_cut_0_5": 659,
             "silent_wrong": {
-              "cut_0_1": "58/58",
-              "cut_0_2": "57/58",
-              "cut_0_5": "48/58"
+              "cut_0_1": "747/748",
+              "cut_0_2": "743/748",
+              "cut_0_5": "659/748"
             },
-            "shape_err_median": 1.5779
+            "shape_err_median": 1.5837
           },
           "p2": {
-            "runs": 89,
-            "placement": "741/1068",
-            "placement_rate": 0.6938,
-            "within_cut_0_2": 30,
-            "runs_within_cut_0_2": 8,
-            "beyond_cut_0_5": 417,
+            "runs": 12,
+            "placement": "114/144",
+            "placement_rate": 0.7917,
+            "within_cut_0_2": 0,
+            "runs_within_cut_0_2": 0,
+            "beyond_cut_0_5": 100,
             "silent_wrong": {
-              "cut_0_1": "741/741",
-              "cut_0_2": "711/741",
-              "cut_0_5": "417/741"
+              "cut_0_1": "114/114",
+              "cut_0_2": "114/114",
+              "cut_0_5": "100/114"
             },
-            "shape_err_median": 0.5345
+            "shape_err_median": 0.6141
           },
           "p3": {
             "runs": 0,
@@ -7107,67 +7042,42 @@
     "jit_0.03": {
       "bypass": {
         "runs": 120,
-        "camera_ok": "118/120",
-        "camera_ok_rate": 0.9833,
+        "camera_ok": "119/120",
+        "camera_ok_rate": 0.9917,
         "order_counts": {
-          "p0": 2,
-          "p1": 31,
-          "p2": 87,
+          "p0": 1,
+          "p1": 87,
+          "p2": 32,
           "p3": 0
         },
-        "placement": "575/1440",
-        "placement_rate": 0.3993,
+        "placement": "618/1440",
+        "placement_rate": 0.4292,
         "silent_wrong": {
-          "cut_0_1": "575/575",
-          "cut_0_2": "574/575",
-          "cut_0_5": "487/575"
+          "cut_0_1": "617/618",
+          "cut_0_2": "615/618",
+          "cut_0_5": "525/618"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 1,
-          "cut_0_2": 0.9983,
-          "cut_0_5": 0.847
+          "cut_0_1": 0.9984,
+          "cut_0_2": 0.9951,
+          "cut_0_5": 0.8495
         },
-        "shape_err_median": 1.0161,
-        "fed_strokes": 944,
+        "shape_err_median": 1.2124,
+        "fed_strokes": 926,
         "asks_total": 1,
         "ask_kinds": {
           "screen_or_depth/p1_guard": 1
         },
         "asks_per_stroke": 0.0007,
         "first_declaration": {
-          "screen_h": 82,
+          "screen_h": 75,
           "screen_v": 0,
-          "vp": 38,
+          "vp": 45,
           "none": 0
         },
-        "within_cut_0_2": 1,
-        "beyond_cut_0_5": 487,
+        "within_cut_0_2": 3,
+        "beyond_cut_0_5": 525,
         "p0_reasons": {
-          "pending_2_awaiting_third": {
-            "runs": 1,
-            "strokes": 12,
-            "pending_median": 2,
-            "pending_max": 2,
-            "pending_sep_deg_median": 27.3956,
-            "pending_sep_deg_min": 27.3956,
-            "pending_sep_deg_max": 27.3956,
-            "sep_below_concurrent": 0,
-            "events": {
-              "screen_axis": 1,
-              "waiting": 2,
-              "support": 7,
-              "rejected": 2
-            },
-            "rejects": {
-              "too_short": 2
-            },
-            "truth_events": {
-              "screen/screen_axis": 1,
-              "depth/waiting": 2,
-              "screen/support": 7,
-              "depth/rejected": 2
-            }
-          },
           "pending_3plus_no_candidate": {
             "runs": 1,
             "strokes": 12,
@@ -7198,17 +7108,11 @@
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "1/8",
-          "leak_rate": 0.125,
-          "too_short": "4/8",
-          "in_pool": "3/8",
+          "leak": "1/4",
+          "leak_rate": 0.25,
+          "too_short": "2/4",
+          "in_pool": "1/4",
           "by_reason": {
-            "pending_2_awaiting_third": {
-              "depth_truth": 4,
-              "leak": "0/4",
-              "leak_rate": 0,
-              "too_short": "2/4"
-            },
             "pending_3plus_no_candidate": {
               "depth_truth": 4,
               "leak": "1/4",
@@ -7218,39 +7122,39 @@
           }
         },
         "rejects": {
-          "off_axis_p1": 107,
-          "off_axis_p2": 261,
-          "p2_fixed_no_screen_h": 85,
+          "off_axis_p1": 328,
           "fov_or_other": 6,
+          "off_axis_p2": 100,
+          "p2_fixed_no_screen_h": 43,
           "horizon_parallel": 1,
           "too_short": 36
         },
         "events": {
-          "waiting": 244,
-          "vp_fixed": 131,
-          "screen_axis": 89,
-          "rejected": 496,
-          "support": 480
+          "waiting": 210,
+          "vp_fixed": 132,
+          "screen_axis": 82,
+          "rejected": 514,
+          "support": 502
         },
-        "one_point_direct_open": 31,
+        "one_point_direct_open": 87,
         "f_intervention": {
           "ratio_median": 0.96,
           "ratio_min": 0.0226,
           "ratio_max": 25.6815,
-          "n": 118
+          "n": 119
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 2,
-          "stood": 118,
+          "never": 1,
+          "stood": 119,
           "median": 5,
-          "p90": 7,
+          "p90": 6,
           "max": 11
         },
         "by_order": {
           "p0": {
-            "runs": 2,
-            "placement": "0/24",
+            "runs": 1,
+            "placement": "0/12",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -7263,32 +7167,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 31,
-            "placement": "168/372",
-            "placement_rate": 0.4516,
-            "within_cut_0_2": 0,
-            "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 159,
+            "runs": 87,
+            "placement": "451/1044",
+            "placement_rate": 0.432,
+            "within_cut_0_2": 2,
+            "runs_within_cut_0_2": 1,
+            "beyond_cut_0_5": 404,
             "silent_wrong": {
-              "cut_0_1": "168/168",
-              "cut_0_2": "168/168",
-              "cut_0_5": "159/168"
+              "cut_0_1": "450/451",
+              "cut_0_2": "449/451",
+              "cut_0_5": "404/451"
             },
-            "shape_err_median": 1.964
+            "shape_err_median": 1.5193
           },
           "p2": {
-            "runs": 87,
-            "placement": "407/1044",
-            "placement_rate": 0.3898,
+            "runs": 32,
+            "placement": "167/384",
+            "placement_rate": 0.4349,
             "within_cut_0_2": 1,
             "runs_within_cut_0_2": 1,
-            "beyond_cut_0_5": 328,
+            "beyond_cut_0_5": 121,
             "silent_wrong": {
-              "cut_0_1": "407/407",
-              "cut_0_2": "406/407",
-              "cut_0_5": "328/407"
+              "cut_0_1": "167/167",
+              "cut_0_2": "166/167",
+              "cut_0_5": "121/167"
             },
-            "shape_err_median": 0.8086
+            "shape_err_median": 0.6496
           },
           "p3": {
             "runs": 0,
@@ -8838,41 +8742,41 @@
     "jit_0.05": {
       "bypass": {
         "runs": 120,
-        "camera_ok": "118/120",
-        "camera_ok_rate": 0.9833,
+        "camera_ok": "119/120",
+        "camera_ok_rate": 0.9917,
         "order_counts": {
-          "p0": 2,
-          "p1": 31,
-          "p2": 87,
+          "p0": 1,
+          "p1": 75,
+          "p2": 44,
           "p3": 0
         },
-        "placement": "373/1440",
-        "placement_rate": 0.259,
+        "placement": "390/1440",
+        "placement_rate": 0.2708,
         "silent_wrong": {
-          "cut_0_1": "373/373",
-          "cut_0_2": "373/373",
-          "cut_0_5": "349/373"
+          "cut_0_1": "390/390",
+          "cut_0_2": "390/390",
+          "cut_0_5": "366/390"
         },
         "silent_wrong_rate": {
           "cut_0_1": 1,
           "cut_0_2": 1,
-          "cut_0_5": 0.9357
+          "cut_0_5": 0.9385
         },
-        "shape_err_median": 1.2162,
-        "fed_strokes": 850,
+        "shape_err_median": 1.3672,
+        "fed_strokes": 817,
         "asks_total": 2,
         "ask_kinds": {
           "screen_or_depth/p1_guard": 2
         },
         "asks_per_stroke": 0.0014,
         "first_declaration": {
-          "screen_h": 69,
+          "screen_h": 62,
           "screen_v": 0,
-          "vp": 51,
+          "vp": 58,
           "none": 0
         },
         "within_cut_0_2": 0,
-        "beyond_cut_0_5": 349,
+        "beyond_cut_0_5": 366,
         "p0_reasons": {
           "one_depth_line": {
             "runs": 1,
@@ -8899,89 +8803,57 @@
               "depth/waiting": 1,
               "depth/support": 2
             }
-          },
-          "pending_2_awaiting_third": {
-            "runs": 1,
-            "strokes": 12,
-            "pending_median": 2,
-            "pending_max": 2,
-            "pending_sep_deg_median": 4.0033,
-            "pending_sep_deg_min": 4.0033,
-            "pending_sep_deg_max": 4.0033,
-            "sep_below_concurrent": 0,
-            "events": {
-              "screen_axis": 1,
-              "waiting": 2,
-              "support": 5,
-              "rejected": 4
-            },
-            "rejects": {
-              "too_short": 4
-            },
-            "truth_events": {
-              "depth/screen_axis": 1,
-              "depth/waiting": 2,
-              "depth/support": 1,
-              "depth/rejected": 4,
-              "screen/support": 4
-            }
           }
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "5/16",
-          "leak_rate": 0.3125,
-          "too_short": "8/16",
-          "in_pool": "3/16",
+          "leak": "3/8",
+          "leak_rate": 0.375,
+          "too_short": "4/8",
+          "in_pool": "1/8",
           "by_reason": {
             "one_depth_line": {
               "depth_truth": 8,
               "leak": "3/8",
               "leak_rate": 0.375,
               "too_short": "4/8"
-            },
-            "pending_2_awaiting_third": {
-              "depth_truth": 8,
-              "leak": "2/8",
-              "leak_rate": 0.25,
-              "too_short": "4/8"
             }
           }
         },
         "rejects": {
-          "off_axis_p1": 118,
-          "off_axis_p2": 342,
-          "p2_fixed_no_screen_h": 70,
+          "off_axis_p1": 333,
+          "off_axis_p2": 182,
+          "p2_fixed_no_screen_h": 46,
           "fov_or_other": 9,
-          "too_short": 50,
+          "too_short": 52,
           "horizon_parallel": 1
         },
         "events": {
-          "screen_axis": 78,
-          "waiting": 254,
-          "support": 382,
-          "vp_fixed": 136,
-          "rejected": 590
+          "screen_axis": 71,
+          "waiting": 218,
+          "support": 391,
+          "vp_fixed": 137,
+          "rejected": 623
         },
-        "one_point_direct_open": 31,
+        "one_point_direct_open": 75,
         "f_intervention": {
           "ratio_median": 0.96,
-          "ratio_min": 0.0181,
+          "ratio_min": 0.0661,
           "ratio_max": 28.5246,
-          "n": 118
+          "n": 119
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 2,
-          "stood": 118,
-          "median": 5,
-          "p90": 7,
-          "max": 10
+          "never": 1,
+          "stood": 119,
+          "median": 4,
+          "p90": 6,
+          "max": 9
         },
         "by_order": {
           "p0": {
-            "runs": 2,
-            "placement": "0/24",
+            "runs": 1,
+            "placement": "0/12",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -8994,32 +8866,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 31,
-            "placement": "117/372",
-            "placement_rate": 0.3145,
+            "runs": 75,
+            "placement": "265/900",
+            "placement_rate": 0.2944,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 117,
+            "beyond_cut_0_5": 257,
             "silent_wrong": {
-              "cut_0_1": "117/117",
-              "cut_0_2": "117/117",
-              "cut_0_5": "117/117"
+              "cut_0_1": "265/265",
+              "cut_0_2": "265/265",
+              "cut_0_5": "257/265"
             },
-            "shape_err_median": 2.3119
+            "shape_err_median": 1.6934
           },
           "p2": {
-            "runs": 87,
-            "placement": "256/1044",
-            "placement_rate": 0.2452,
+            "runs": 44,
+            "placement": "125/528",
+            "placement_rate": 0.2367,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 232,
+            "beyond_cut_0_5": 109,
             "silent_wrong": {
-              "cut_0_1": "256/256",
-              "cut_0_2": "256/256",
-              "cut_0_5": "232/256"
+              "cut_0_1": "125/125",
+              "cut_0_2": "125/125",
+              "cut_0_5": "109/125"
             },
-            "shape_err_median": 0.9161
+            "shape_err_median": 0.8252
           },
           "p3": {
             "runs": 0,
@@ -10570,70 +10442,42 @@
     "alternating": {
       "bypass": {
         "runs": 300,
-        "camera_ok": "261/300",
-        "camera_ok_rate": 0.87,
+        "camera_ok": "283/300",
+        "camera_ok_rate": 0.9433,
         "order_counts": {
-          "p0": 39,
-          "p1": 29,
-          "p2": 232,
+          "p0": 17,
+          "p1": 231,
+          "p2": 52,
           "p3": 0
         },
-        "placement": "1675/3600",
-        "placement_rate": 0.4653,
+        "placement": "1930/3600",
+        "placement_rate": 0.5361,
         "silent_wrong": {
-          "cut_0_1": "1664/1675",
-          "cut_0_2": "1620/1675",
-          "cut_0_5": "1031/1675"
+          "cut_0_1": "1908/1930",
+          "cut_0_2": "1885/1930",
+          "cut_0_5": "1664/1930"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 0.9934,
-          "cut_0_2": 0.9672,
-          "cut_0_5": 0.6155
+          "cut_0_1": 0.9886,
+          "cut_0_2": 0.9767,
+          "cut_0_5": 0.8622
         },
-        "shape_err_median": 0.5784,
-        "fed_strokes": 2580,
+        "shape_err_median": 1.3802,
+        "fed_strokes": 2665,
         "asks_total": 1,
         "ask_kinds": {
           "screen_or_depth/p1_guard": 1
         },
         "asks_per_stroke": 0.0003,
         "first_declaration": {
-          "screen_h": 242,
+          "screen_h": 232,
           "screen_v": 0,
-          "vp": 58,
+          "vp": 68,
           "none": 0
         },
-        "within_cut_0_2": 55,
-        "beyond_cut_0_5": 1031,
+        "within_cut_0_2": 45,
+        "beyond_cut_0_5": 1664,
         "p0_reasons": {
-          "pending_2_awaiting_third": {
-            "runs": 23,
-            "strokes": 276,
-            "pending_median": 2,
-            "pending_max": 2,
-            "pending_sep_deg_median": 24.9987,
-            "pending_sep_deg_min": 10.0366,
-            "pending_sep_deg_max": 51.871,
-            "sep_below_concurrent": 0,
-            "events": {
-              "screen_axis": 23,
-              "waiting": 46,
-              "support": 163,
-              "rejected": 44
-            },
-            "rejects": {
-              "too_short": 44
-            },
-            "truth_events": {
-              "depth/screen_axis": 1,
-              "depth/waiting": 44,
-              "screen/support": 156,
-              "depth/support": 7,
-              "screen/screen_axis": 22,
-              "depth/rejected": 44,
-              "screen/waiting": 2
-            }
-          },
           "one_depth_line": {
             "runs": 16,
             "strokes": 192,
@@ -10660,63 +10504,90 @@
               "depth/support": 17,
               "screen/screen_axis": 15
             }
+          },
+          "pending_2_awaiting_third": {
+            "runs": 1,
+            "strokes": 12,
+            "pending_median": 2,
+            "pending_max": 2,
+            "pending_sep_deg_median": 51.871,
+            "pending_sep_deg_min": 51.871,
+            "pending_sep_deg_max": 51.871,
+            "sep_below_concurrent": 0,
+            "events": {
+              "screen_axis": 1,
+              "waiting": 2,
+              "support": 7,
+              "rejected": 2
+            },
+            "rejects": {
+              "too_short": 2
+            },
+            "truth_events": {
+              "screen/screen_axis": 1,
+              "depth/waiting": 1,
+              "screen/support": 6,
+              "depth/support": 1,
+              "screen/waiting": 1,
+              "depth/rejected": 2
+            }
           }
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "26/164",
-          "leak_rate": 0.1585,
-          "too_short": "78/164",
-          "in_pool": "60/164",
+          "leak": "19/72",
+          "leak_rate": 0.2639,
+          "too_short": "36/72",
+          "in_pool": "17/72",
           "by_reason": {
-            "pending_2_awaiting_third": {
-              "depth_truth": 96,
-              "leak": "8/96",
-              "leak_rate": 0.0833,
-              "too_short": "44/96"
-            },
             "one_depth_line": {
               "depth_truth": 68,
               "leak": "18/68",
               "leak_rate": 0.2647,
               "too_short": "34/68"
+            },
+            "pending_2_awaiting_third": {
+              "depth_truth": 4,
+              "leak": "1/4",
+              "leak_rate": 0.25,
+              "too_short": "2/4"
             }
           }
         },
         "rejects": {
-          "p2_fixed_no_screen_h": 329,
-          "off_axis_p2": 469,
-          "off_axis_p1": 93,
+          "off_axis_p1": 564,
+          "off_axis_p2": 172,
+          "p2_fixed_no_screen_h": 70,
           "fov_or_other": 12,
           "horizon_parallel": 1,
           "too_short": 116
         },
         "events": {
-          "waiting": 602,
-          "support": 1458,
-          "screen_axis": 250,
-          "vp_fixed": 270,
-          "rejected": 1020
+          "waiting": 561,
+          "support": 1572,
+          "screen_axis": 240,
+          "vp_fixed": 292,
+          "rejected": 935
         },
-        "one_point_direct_open": 29,
+        "one_point_direct_open": 231,
         "f_intervention": {
-          "ratio_median": 0.8922,
-          "ratio_min": 0.0181,
+          "ratio_median": 0.96,
+          "ratio_min": 0.0226,
           "ratio_max": 27.6416,
-          "n": 261
+          "n": 283
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 39,
-          "stood": 261,
+          "never": 17,
+          "stood": 283,
           "median": 5,
           "p90": 7,
           "max": 10
         },
         "by_order": {
           "p0": {
-            "runs": 39,
-            "placement": "0/468",
+            "runs": 17,
+            "placement": "0/204",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -10729,32 +10600,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 29,
-            "placement": "144/348",
-            "placement_rate": 0.4138,
-            "within_cut_0_2": 0,
-            "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 134,
+            "runs": 231,
+            "placement": "1688/2772",
+            "placement_rate": 0.6089,
+            "within_cut_0_2": 44,
+            "runs_within_cut_0_2": 15,
+            "beyond_cut_0_5": 1463,
             "silent_wrong": {
-              "cut_0_1": "144/144",
-              "cut_0_2": "144/144",
-              "cut_0_5": "134/144"
+              "cut_0_1": "1666/1688",
+              "cut_0_2": "1644/1688",
+              "cut_0_5": "1463/1688"
             },
-            "shape_err_median": 1.8274
+            "shape_err_median": 1.474
           },
           "p2": {
-            "runs": 232,
-            "placement": "1531/2784",
-            "placement_rate": 0.5499,
-            "within_cut_0_2": 55,
-            "runs_within_cut_0_2": 16,
-            "beyond_cut_0_5": 897,
+            "runs": 52,
+            "placement": "242/624",
+            "placement_rate": 0.3878,
+            "within_cut_0_2": 1,
+            "runs_within_cut_0_2": 1,
+            "beyond_cut_0_5": 201,
             "silent_wrong": {
-              "cut_0_1": "1520/1531",
-              "cut_0_2": "1476/1531",
-              "cut_0_5": "897/1531"
+              "cut_0_1": "242/242",
+              "cut_0_2": "241/242",
+              "cut_0_5": "201/242"
             },
-            "shape_err_median": 0.5475
+            "shape_err_median": 0.6599
           },
           "p3": {
             "runs": 0,
@@ -12323,69 +12194,42 @@
     "grouped": {
       "bypass": {
         "runs": 300,
-        "camera_ok": "263/300",
-        "camera_ok_rate": 0.8767,
+        "camera_ok": "277/300",
+        "camera_ok_rate": 0.9233,
         "order_counts": {
-          "p0": 37,
-          "p1": 41,
-          "p2": 222,
+          "p0": 23,
+          "p1": 239,
+          "p2": 38,
           "p3": 0
         },
-        "placement": "1709/3600",
-        "placement_rate": 0.4747,
+        "placement": "1696/3600",
+        "placement_rate": 0.4711,
         "silent_wrong": {
-          "cut_0_1": "1709/1709",
-          "cut_0_2": "1678/1709",
-          "cut_0_5": "1122/1709"
+          "cut_0_1": "1689/1696",
+          "cut_0_2": "1677/1696",
+          "cut_0_5": "1501/1696"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 1,
-          "cut_0_2": 0.9819,
-          "cut_0_5": 0.6565
+          "cut_0_1": 0.9959,
+          "cut_0_2": 0.9888,
+          "cut_0_5": 0.885
         },
-        "shape_err_median": 0.6108,
-        "fed_strokes": 2617,
+        "shape_err_median": 1.6261,
+        "fed_strokes": 2434,
         "asks_total": 2,
         "ask_kinds": {
           "screen_or_depth/p1_guard": 2
         },
         "asks_per_stroke": 0.0006,
         "first_declaration": {
-          "screen_h": 254,
+          "screen_h": 246,
           "screen_v": 0,
-          "vp": 46,
+          "vp": 54,
           "none": 0
         },
-        "within_cut_0_2": 31,
-        "beyond_cut_0_5": 1122,
+        "within_cut_0_2": 19,
+        "beyond_cut_0_5": 1501,
         "p0_reasons": {
-          "pending_2_awaiting_third": {
-            "runs": 14,
-            "strokes": 168,
-            "pending_median": 2,
-            "pending_max": 2,
-            "pending_sep_deg_median": 21.8811,
-            "pending_sep_deg_min": 4.0033,
-            "pending_sep_deg_max": 26.9613,
-            "sep_below_concurrent": 0,
-            "events": {
-              "screen_axis": 14,
-              "waiting": 28,
-              "support": 96,
-              "rejected": 30
-            },
-            "rejects": {
-              "too_short": 30
-            },
-            "truth_events": {
-              "depth/screen_axis": 1,
-              "depth/waiting": 28,
-              "depth/support": 1,
-              "depth/rejected": 30,
-              "screen/support": 95,
-              "screen/screen_axis": 13
-            }
-          },
           "one_depth_line": {
             "runs": 22,
             "strokes": 264,
@@ -12442,17 +12286,11 @@
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "25/152",
-          "leak_rate": 0.1645,
-          "too_short": "76/152",
-          "in_pool": "51/152",
+          "leak": "23/92",
+          "leak_rate": 0.25,
+          "too_short": "46/92",
+          "in_pool": "23/92",
           "by_reason": {
-            "pending_2_awaiting_third": {
-              "depth_truth": 60,
-              "leak": "2/60",
-              "leak_rate": 0.0333,
-              "too_short": "30/60"
-            },
             "one_depth_line": {
               "depth_truth": 88,
               "leak": "22/88",
@@ -12468,39 +12306,39 @@
           }
         },
         "rejects": {
-          "p2_fixed_no_screen_h": 193,
-          "off_axis_p2": 518,
-          "off_axis_p1": 154,
+          "off_axis_p1": 876,
+          "p2_fixed_no_screen_h": 35,
+          "off_axis_p2": 135,
           "fov_or_other": 3,
-          "too_short": 114,
+          "too_short": 116,
           "horizon_parallel": 1
         },
         "events": {
-          "waiting": 579,
-          "screen_axis": 263,
-          "support": 1484,
-          "vp_fixed": 291,
-          "rejected": 983
+          "waiting": 387,
+          "screen_axis": 255,
+          "vp_fixed": 305,
+          "support": 1487,
+          "rejected": 1166
         },
-        "one_point_direct_open": 41,
+        "one_point_direct_open": 239,
         "f_intervention": {
           "ratio_median": 0.96,
-          "ratio_min": 0.0442,
-          "ratio_max": 32.2803,
-          "n": 263
+          "ratio_min": 0.3282,
+          "ratio_max": 28.5246,
+          "n": 277
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 37,
-          "stood": 263,
-          "median": 5,
+          "never": 23,
+          "stood": 277,
+          "median": 3,
           "p90": 6,
           "max": 11
         },
         "by_order": {
           "p0": {
-            "runs": 37,
-            "placement": "0/444",
+            "runs": 23,
+            "placement": "0/276",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -12513,32 +12351,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 41,
-            "placement": "199/492",
-            "placement_rate": 0.4045,
-            "within_cut_0_2": 1,
-            "runs_within_cut_0_2": 1,
-            "beyond_cut_0_5": 190,
+            "runs": 239,
+            "placement": "1512/2868",
+            "placement_rate": 0.5272,
+            "within_cut_0_2": 19,
+            "runs_within_cut_0_2": 9,
+            "beyond_cut_0_5": 1356,
             "silent_wrong": {
-              "cut_0_1": "199/199",
-              "cut_0_2": "198/199",
-              "cut_0_5": "190/199"
+              "cut_0_1": "1505/1512",
+              "cut_0_2": "1493/1512",
+              "cut_0_5": "1356/1512"
             },
-            "shape_err_median": 2.0938
+            "shape_err_median": 1.7186
           },
           "p2": {
-            "runs": 222,
-            "placement": "1510/2664",
-            "placement_rate": 0.5668,
-            "within_cut_0_2": 30,
-            "runs_within_cut_0_2": 7,
-            "beyond_cut_0_5": 932,
+            "runs": 38,
+            "placement": "184/456",
+            "placement_rate": 0.4035,
+            "within_cut_0_2": 0,
+            "runs_within_cut_0_2": 0,
+            "beyond_cut_0_5": 145,
             "silent_wrong": {
-              "cut_0_1": "1510/1510",
-              "cut_0_2": "1480/1510",
-              "cut_0_5": "932/1510"
+              "cut_0_1": "184/184",
+              "cut_0_2": "184/184",
+              "cut_0_5": "145/184"
             },
-            "shape_err_median": 0.5751
+            "shape_err_median": 0.658
           },
           "p3": {
             "runs": 0,
@@ -14331,35 +14169,35 @@
         "camera_ok_rate": 1,
         "order_counts": {
           "p0": 0,
-          "p1": 10,
-          "p2": 110,
+          "p1": 92,
+          "p2": 28,
           "p3": 0
         },
-        "placement": "833/1440",
-        "placement_rate": 0.5785,
+        "placement": "708/1440",
+        "placement_rate": 0.4917,
         "silent_wrong": {
-          "cut_0_1": "833/833",
-          "cut_0_2": "833/833",
-          "cut_0_5": "607/833"
+          "cut_0_1": "708/708",
+          "cut_0_2": "708/708",
+          "cut_0_5": "679/708"
         },
         "silent_wrong_rate": {
           "cut_0_1": 1,
           "cut_0_2": 1,
-          "cut_0_5": 0.7287
+          "cut_0_5": 0.959
         },
-        "shape_err_median": 0.5829,
-        "fed_strokes": 1044,
+        "shape_err_median": 1.4402,
+        "fed_strokes": 975,
         "asks_total": 0,
         "ask_kinds": {},
         "asks_per_stroke": 0,
         "first_declaration": {
-          "screen_h": 90,
+          "screen_h": 87,
           "screen_v": 0,
-          "vp": 30,
+          "vp": 33,
           "none": 0
         },
         "within_cut_0_2": 0,
-        "beyond_cut_0_5": 607,
+        "beyond_cut_0_5": 679,
         "p0_reasons": {},
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
@@ -14370,22 +14208,22 @@
           "by_reason": {}
         },
         "rejects": {
-          "p2_fixed_no_screen_h": 86,
-          "off_axis_p2": 253,
-          "off_axis_p1": 54,
+          "off_axis_p1": 356,
+          "off_axis_p2": 81,
+          "p2_fixed_no_screen_h": 25,
           "fov_or_other": 3
         },
         "events": {
-          "waiting": 244,
-          "support": 574,
-          "screen_axis": 92,
+          "waiting": 203,
+          "support": 549,
+          "screen_axis": 89,
           "vp_fixed": 134,
-          "rejected": 396
+          "rejected": 465
         },
-        "one_point_direct_open": 10,
+        "one_point_direct_open": 92,
         "f_intervention": {
-          "ratio_median": 1.0254,
-          "ratio_min": 0.0706,
+          "ratio_median": 0.96,
+          "ratio_min": 0.2448,
           "ratio_max": 28.5246,
           "n": 120
         },
@@ -14393,7 +14231,7 @@
         "stood_at": {
           "never": 0,
           "stood": 120,
-          "median": 5,
+          "median": 4,
           "p90": 5,
           "max": 7
         },
@@ -14413,32 +14251,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 10,
-            "placement": "30/120",
-            "placement_rate": 0.25,
+            "runs": 92,
+            "placement": "531/1104",
+            "placement_rate": 0.481,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 29,
+            "beyond_cut_0_5": 529,
             "silent_wrong": {
-              "cut_0_1": "30/30",
-              "cut_0_2": "30/30",
-              "cut_0_5": "29/30"
+              "cut_0_1": "531/531",
+              "cut_0_2": "531/531",
+              "cut_0_5": "529/531"
             },
-            "shape_err_median": 1.8944
+            "shape_err_median": 1.5615
           },
           "p2": {
-            "runs": 110,
-            "placement": "803/1320",
-            "placement_rate": 0.6083,
+            "runs": 28,
+            "placement": "177/336",
+            "placement_rate": 0.5268,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 578,
+            "beyond_cut_0_5": 150,
             "silent_wrong": {
-              "cut_0_1": "803/803",
-              "cut_0_2": "803/803",
-              "cut_0_5": "578/803"
+              "cut_0_1": "177/177",
+              "cut_0_2": "177/177",
+              "cut_0_5": "150/177"
             },
-            "shape_err_median": 0.5767
+            "shape_err_median": 0.6296
           },
           "p3": {
             "runs": 0,
@@ -15522,37 +15360,37 @@
         "camera_ok_rate": 1,
         "order_counts": {
           "p0": 0,
-          "p1": 13,
-          "p2": 107,
+          "p1": 105,
+          "p2": 15,
           "p3": 0
         },
-        "placement": "410/1440",
-        "placement_rate": 0.2847,
+        "placement": "393/1440",
+        "placement_rate": 0.2729,
         "silent_wrong": {
-          "cut_0_1": "410/410",
-          "cut_0_2": "410/410",
-          "cut_0_5": "328/410"
+          "cut_0_1": "393/393",
+          "cut_0_2": "393/393",
+          "cut_0_5": "374/393"
         },
         "silent_wrong_rate": {
           "cut_0_1": 1,
           "cut_0_2": 1,
-          "cut_0_5": 0.8
+          "cut_0_5": 0.9517
         },
-        "shape_err_median": 0.6882,
-        "fed_strokes": 885,
+        "shape_err_median": 1.1472,
+        "fed_strokes": 854,
         "asks_total": 1,
         "ask_kinds": {
           "screen_or_depth/p1_guard": 1
         },
         "asks_per_stroke": 0.0007,
         "first_declaration": {
-          "screen_h": 103,
+          "screen_h": 96,
           "screen_v": 0,
-          "vp": 17,
+          "vp": 24,
           "none": 0
         },
         "within_cut_0_2": 0,
-        "beyond_cut_0_5": 328,
+        "beyond_cut_0_5": 374,
         "p0_reasons": {},
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
@@ -15563,33 +15401,33 @@
           "by_reason": {}
         },
         "rejects": {
-          "off_axis_p2": 383,
-          "p2_fixed_no_screen_h": 102,
-          "off_axis_p1": 61,
+          "off_axis_p1": 499,
+          "off_axis_p2": 61,
+          "p2_fixed_no_screen_h": 17,
           "fov_or_other": 6,
           "horizon_parallel": 1,
           "too_short": 2
         },
         "events": {
-          "waiting": 245,
-          "support": 407,
-          "screen_axis": 107,
+          "waiting": 198,
+          "support": 430,
+          "screen_axis": 100,
           "vp_fixed": 126,
-          "rejected": 555
+          "rejected": 586
         },
-        "one_point_direct_open": 13,
+        "one_point_direct_open": 105,
         "f_intervention": {
-          "ratio_median": 0.7911,
+          "ratio_median": 0.96,
           "ratio_min": 0.0562,
-          "ratio_max": 6.8761,
+          "ratio_max": 4.2508,
           "n": 120
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
           "never": 0,
           "stood": 120,
-          "median": 5,
-          "p90": 6,
+          "median": 4,
+          "p90": 5,
           "max": 8
         },
         "by_order": {
@@ -15608,32 +15446,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 13,
-            "placement": "30/156",
-            "placement_rate": 0.1923,
+            "runs": 105,
+            "placement": "368/1260",
+            "placement_rate": 0.2921,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 29,
+            "beyond_cut_0_5": 353,
             "silent_wrong": {
-              "cut_0_1": "30/30",
-              "cut_0_2": "30/30",
-              "cut_0_5": "29/30"
+              "cut_0_1": "368/368",
+              "cut_0_2": "368/368",
+              "cut_0_5": "353/368"
             },
-            "shape_err_median": 1.1281
+            "shape_err_median": 1.1797
           },
           "p2": {
-            "runs": 107,
-            "placement": "380/1284",
-            "placement_rate": 0.296,
+            "runs": 15,
+            "placement": "25/180",
+            "placement_rate": 0.1389,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 299,
+            "beyond_cut_0_5": 21,
             "silent_wrong": {
-              "cut_0_1": "380/380",
-              "cut_0_2": "380/380",
-              "cut_0_5": "299/380"
+              "cut_0_1": "25/25",
+              "cut_0_2": "25/25",
+              "cut_0_5": "21/25"
             },
-            "shape_err_median": 0.6603
+            "shape_err_median": 0.8279
           },
           "p3": {
             "runs": 0,
@@ -16723,37 +16561,37 @@
         "camera_ok_rate": 1,
         "order_counts": {
           "p0": 0,
-          "p1": 11,
-          "p2": 109,
+          "p1": 92,
+          "p2": 28,
           "p3": 0
         },
-        "placement": "898/1440",
-        "placement_rate": 0.6236,
+        "placement": "869/1440",
+        "placement_rate": 0.6035,
         "silent_wrong": {
-          "cut_0_1": "898/898",
-          "cut_0_2": "896/898",
-          "cut_0_5": "391/898"
+          "cut_0_1": "869/869",
+          "cut_0_2": "869/869",
+          "cut_0_5": "843/869"
         },
         "silent_wrong_rate": {
           "cut_0_1": 1,
-          "cut_0_2": 0.9978,
-          "cut_0_5": 0.4354
+          "cut_0_2": 1,
+          "cut_0_5": 0.9701
         },
-        "shape_err_median": 0.4616,
-        "fed_strokes": 1054,
+        "shape_err_median": 1.4932,
+        "fed_strokes": 1058,
         "asks_total": 1,
         "ask_kinds": {
           "screen_or_depth/p1_guard": 1
         },
         "asks_per_stroke": 0.0007,
         "first_declaration": {
-          "screen_h": 88,
+          "screen_h": 83,
           "screen_v": 0,
-          "vp": 32,
+          "vp": 37,
           "none": 0
         },
-        "within_cut_0_2": 2,
-        "beyond_cut_0_5": 391,
+        "within_cut_0_2": 0,
+        "beyond_cut_0_5": 843,
         "p0_reasons": {},
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
@@ -16764,22 +16602,22 @@
           "by_reason": {}
         },
         "rejects": {
-          "p2_fixed_no_screen_h": 175,
-          "off_axis_p2": 168,
-          "off_axis_p1": 41,
+          "off_axis_p1": 237,
+          "p2_fixed_no_screen_h": 39,
+          "off_axis_p2": 104,
           "fov_or_other": 1,
           "horizon_parallel": 1
         },
         "events": {
-          "waiting": 245,
-          "support": 588,
-          "screen_axis": 93,
+          "waiting": 203,
+          "support": 639,
+          "screen_axis": 88,
           "vp_fixed": 128,
-          "rejected": 386
+          "rejected": 382
         },
-        "one_point_direct_open": 11,
+        "one_point_direct_open": 92,
         "f_intervention": {
-          "ratio_median": 1.0969,
+          "ratio_median": 0.96,
           "ratio_min": 0.0226,
           "ratio_max": 27.6416,
           "n": 120
@@ -16788,9 +16626,9 @@
         "stood_at": {
           "never": 0,
           "stood": 120,
-          "median": 5,
+          "median": 4,
           "p90": 7,
-          "max": 8
+          "max": 7
         },
         "by_order": {
           "p0": {
@@ -16808,32 +16646,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 11,
-            "placement": "62/132",
-            "placement_rate": 0.4697,
+            "runs": 92,
+            "placement": "754/1104",
+            "placement_rate": 0.683,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 62,
+            "beyond_cut_0_5": 753,
             "silent_wrong": {
-              "cut_0_1": "62/62",
-              "cut_0_2": "62/62",
-              "cut_0_5": "62/62"
+              "cut_0_1": "754/754",
+              "cut_0_2": "754/754",
+              "cut_0_5": "753/754"
             },
-            "shape_err_median": 1.9669
+            "shape_err_median": 1.6176
           },
           "p2": {
-            "runs": 109,
-            "placement": "836/1308",
-            "placement_rate": 0.6391,
-            "within_cut_0_2": 2,
-            "runs_within_cut_0_2": 2,
-            "beyond_cut_0_5": 329,
+            "runs": 28,
+            "placement": "115/336",
+            "placement_rate": 0.3423,
+            "within_cut_0_2": 0,
+            "runs_within_cut_0_2": 0,
+            "beyond_cut_0_5": 90,
             "silent_wrong": {
-              "cut_0_1": "836/836",
-              "cut_0_2": "834/836",
-              "cut_0_5": "329/836"
+              "cut_0_1": "115/115",
+              "cut_0_2": "115/115",
+              "cut_0_5": "90/115"
             },
-            "shape_err_median": 0.4403
+            "shape_err_median": 0.6438
           },
           "p3": {
             "runs": 0,
@@ -17913,68 +17751,42 @@
     "2pt_yaw35_pitch0": {
       "bypass": {
         "runs": 120,
-        "camera_ok": "117/120",
-        "camera_ok_rate": 0.975,
+        "camera_ok": "119/120",
+        "camera_ok_rate": 0.9917,
         "order_counts": {
-          "p0": 3,
-          "p1": 13,
-          "p2": 104,
+          "p0": 1,
+          "p1": 101,
+          "p2": 18,
           "p3": 0
         },
-        "placement": "1010/1440",
-        "placement_rate": 0.7014,
+        "placement": "1020/1440",
+        "placement_rate": 0.7083,
         "silent_wrong": {
-          "cut_0_1": "999/1010",
-          "cut_0_2": "927/1010",
-          "cut_0_5": "612/1010"
+          "cut_0_1": "1020/1020",
+          "cut_0_2": "1019/1020",
+          "cut_0_5": "996/1020"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 0.9891,
-          "cut_0_2": 0.9178,
-          "cut_0_5": 0.6059
+          "cut_0_1": 1,
+          "cut_0_2": 0.999,
+          "cut_0_5": 0.9765
         },
-        "shape_err_median": 0.6304,
-        "fed_strokes": 1112,
+        "shape_err_median": 2.7912,
+        "fed_strokes": 1137,
         "asks_total": 1,
         "ask_kinds": {
           "screen_or_depth/p1_guard": 1
         },
         "asks_per_stroke": 0.0007,
         "first_declaration": {
-          "screen_h": 100,
+          "screen_h": 98,
           "screen_v": 0,
-          "vp": 20,
+          "vp": 22,
           "none": 0
         },
-        "within_cut_0_2": 83,
-        "beyond_cut_0_5": 612,
+        "within_cut_0_2": 1,
+        "beyond_cut_0_5": 996,
         "p0_reasons": {
-          "pending_2_awaiting_third": {
-            "runs": 2,
-            "strokes": 24,
-            "pending_median": 2,
-            "pending_max": 2,
-            "pending_sep_deg_median": 7.0199,
-            "pending_sep_deg_min": 4.0033,
-            "pending_sep_deg_max": 10.0366,
-            "sep_below_concurrent": 0,
-            "events": {
-              "screen_axis": 2,
-              "waiting": 4,
-              "support": 14,
-              "rejected": 4
-            },
-            "rejects": {
-              "too_short": 4
-            },
-            "truth_events": {
-              "depth/screen_axis": 2,
-              "depth/waiting": 4,
-              "screen/support": 8,
-              "depth/support": 6,
-              "depth/rejected": 4
-            }
-          },
           "one_depth_line": {
             "runs": 1,
             "strokes": 12,
@@ -18004,17 +17816,11 @@
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "11/24",
-          "leak_rate": 0.4583,
-          "too_short": "8/24",
-          "in_pool": "5/24",
+          "leak": "3/8",
+          "leak_rate": 0.375,
+          "too_short": "4/8",
+          "in_pool": "1/8",
           "by_reason": {
-            "pending_2_awaiting_third": {
-              "depth_truth": 16,
-              "leak": "8/16",
-              "leak_rate": 0.5,
-              "too_short": "4/16"
-            },
             "one_depth_line": {
               "depth_truth": 8,
               "leak": "3/8",
@@ -18024,38 +17830,38 @@
           }
         },
         "rejects": {
-          "off_axis_p2": 129,
-          "p2_fixed_no_screen_h": 149,
-          "off_axis_p1": 36,
+          "off_axis_p1": 208,
+          "off_axis_p2": 56,
+          "p2_fixed_no_screen_h": 24,
           "fov_or_other": 3,
-          "too_short": 11
+          "too_short": 12
         },
         "events": {
-          "waiting": 242,
-          "support": 642,
-          "screen_axis": 102,
-          "vp_fixed": 126,
-          "rejected": 328
+          "waiting": 197,
+          "support": 712,
+          "screen_axis": 100,
+          "vp_fixed": 128,
+          "rejected": 303
         },
-        "one_point_direct_open": 13,
+        "one_point_direct_open": 101,
         "f_intervention": {
           "ratio_median": 0.96,
-          "ratio_min": 0.0998,
-          "ratio_max": 32.2803,
-          "n": 117
+          "ratio_min": 0.1723,
+          "ratio_max": 6.7259,
+          "n": 119
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 3,
-          "stood": 117,
+          "never": 1,
+          "stood": 119,
           "median": 5,
-          "p90": 8,
+          "p90": 7,
           "max": 11
         },
         "by_order": {
           "p0": {
-            "runs": 3,
-            "placement": "0/36",
+            "runs": 1,
+            "placement": "0/12",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -18068,32 +17874,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 13,
-            "placement": "94/156",
-            "placement_rate": 0.6026,
+            "runs": 101,
+            "placement": "914/1212",
+            "placement_rate": 0.7541,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 94,
+            "beyond_cut_0_5": 914,
             "silent_wrong": {
-              "cut_0_1": "94/94",
-              "cut_0_2": "94/94",
-              "cut_0_5": "94/94"
+              "cut_0_1": "914/914",
+              "cut_0_2": "914/914",
+              "cut_0_5": "914/914"
             },
-            "shape_err_median": 2.6569
+            "shape_err_median": 2.9125
           },
           "p2": {
-            "runs": 104,
-            "placement": "916/1248",
-            "placement_rate": 0.734,
-            "within_cut_0_2": 83,
-            "runs_within_cut_0_2": 21,
-            "beyond_cut_0_5": 518,
+            "runs": 18,
+            "placement": "106/216",
+            "placement_rate": 0.4907,
+            "within_cut_0_2": 1,
+            "runs_within_cut_0_2": 1,
+            "beyond_cut_0_5": 82,
             "silent_wrong": {
-              "cut_0_1": "905/916",
-              "cut_0_2": "833/916",
-              "cut_0_5": "518/916"
+              "cut_0_1": "106/106",
+              "cut_0_2": "105/106",
+              "cut_0_5": "82/106"
             },
-            "shape_err_median": 0.5677
+            "shape_err_median": 0.9588
           },
           "p3": {
             "runs": 0,
@@ -19642,67 +19448,40 @@
     "1pt_yaw0_pitch0": {
       "bypass": {
         "runs": 120,
-        "camera_ok": "47/120",
-        "camera_ok_rate": 0.3917,
+        "camera_ok": "81/120",
+        "camera_ok_rate": 0.675,
         "order_counts": {
-          "p0": 73,
-          "p1": 23,
-          "p2": 24,
+          "p0": 39,
+          "p1": 80,
+          "p2": 1,
           "p3": 0
         },
-        "placement": "233/1440",
-        "placement_rate": 0.1618,
+        "placement": "636/1440",
+        "placement_rate": 0.4417,
         "silent_wrong": {
-          "cut_0_1": "233/233",
-          "cut_0_2": "232/233",
-          "cut_0_5": "215/233"
+          "cut_0_1": "607/636",
+          "cut_0_2": "573/636",
+          "cut_0_5": "273/636"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 1,
-          "cut_0_2": 0.9957,
-          "cut_0_5": 0.9227
+          "cut_0_1": 0.9544,
+          "cut_0_2": 0.9009,
+          "cut_0_5": 0.4292
         },
-        "shape_err_median": 1.7854,
-        "fed_strokes": 1102,
+        "shape_err_median": 0.4323,
+        "fed_strokes": 1075,
         "asks_total": 0,
         "ask_kinds": {},
         "asks_per_stroke": 0,
         "first_declaration": {
-          "screen_h": 115,
+          "screen_h": 114,
           "screen_v": 0,
-          "vp": 5,
+          "vp": 6,
           "none": 0
         },
-        "within_cut_0_2": 1,
-        "beyond_cut_0_5": 215,
+        "within_cut_0_2": 63,
+        "beyond_cut_0_5": 273,
         "p0_reasons": {
-          "pending_2_awaiting_third": {
-            "runs": 35,
-            "strokes": 420,
-            "pending_median": 2,
-            "pending_max": 2,
-            "pending_sep_deg_median": 23.9113,
-            "pending_sep_deg_min": 13.8733,
-            "pending_sep_deg_max": 51.871,
-            "sep_below_concurrent": 0,
-            "events": {
-              "screen_axis": 35,
-              "waiting": 70,
-              "support": 245,
-              "rejected": 70
-            },
-            "rejects": {
-              "too_short": 70
-            },
-            "truth_events": {
-              "screen/screen_axis": 35,
-              "depth/waiting": 68,
-              "screen/support": 243,
-              "depth/rejected": 70,
-              "depth/support": 2,
-              "screen/waiting": 2
-            }
-          },
           "one_depth_line": {
             "runs": 37,
             "strokes": 444,
@@ -19727,6 +19506,33 @@
               "depth/waiting": 37,
               "depth/support": 37,
               "depth/rejected": 74
+            }
+          },
+          "pending_2_awaiting_third": {
+            "runs": 1,
+            "strokes": 12,
+            "pending_median": 2,
+            "pending_max": 2,
+            "pending_sep_deg_median": 51.871,
+            "pending_sep_deg_min": 51.871,
+            "pending_sep_deg_max": 51.871,
+            "sep_below_concurrent": 0,
+            "events": {
+              "screen_axis": 1,
+              "waiting": 2,
+              "support": 7,
+              "rejected": 2
+            },
+            "rejects": {
+              "too_short": 2
+            },
+            "truth_events": {
+              "screen/screen_axis": 1,
+              "depth/waiting": 1,
+              "screen/support": 6,
+              "depth/support": 1,
+              "screen/waiting": 1,
+              "depth/rejected": 2
             }
           },
           "pending_3plus_no_candidate": {
@@ -19759,22 +19565,22 @@
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "40/292",
-          "leak_rate": 0.137,
-          "too_short": "146/292",
-          "in_pool": "106/292",
+          "leak": "39/156",
+          "leak_rate": 0.25,
+          "too_short": "78/156",
+          "in_pool": "39/156",
           "by_reason": {
-            "pending_2_awaiting_third": {
-              "depth_truth": 140,
-              "leak": "2/140",
-              "leak_rate": 0.0143,
-              "too_short": "70/140"
-            },
             "one_depth_line": {
               "depth_truth": 148,
               "leak": "37/148",
               "leak_rate": 0.25,
               "too_short": "74/148"
+            },
+            "pending_2_awaiting_third": {
+              "depth_truth": 4,
+              "leak": "1/4",
+              "leak_rate": 0.25,
+              "too_short": "2/4"
             },
             "pending_3plus_no_candidate": {
               "depth_truth": 4,
@@ -19785,38 +19591,37 @@
           }
         },
         "rejects": {
-          "too_short": 217,
-          "off_axis_p2": 54,
-          "p2_fixed_no_screen_h": 10,
-          "off_axis_p1": 55,
-          "fov_or_other": 2
+          "too_short": 218,
+          "off_axis_p1": 140,
+          "fov_or_other": 2,
+          "off_axis_p2": 5
         },
         "events": {
-          "screen_axis": 119,
-          "waiting": 205,
-          "support": 731,
-          "rejected": 338,
-          "vp_fixed": 47
+          "screen_axis": 118,
+          "waiting": 147,
+          "support": 729,
+          "vp_fixed": 81,
+          "rejected": 365
         },
-        "one_point_direct_open": 23,
+        "one_point_direct_open": 80,
         "f_intervention": {
           "ratio_median": 0.96,
-          "ratio_min": 0.0181,
-          "ratio_max": 6.8124,
-          "n": 47
+          "ratio_min": 0.96,
+          "ratio_max": 0.9663,
+          "n": 81
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 73,
-          "stood": 47,
-          "median": 6,
-          "p90": 9,
-          "max": 11
+          "never": 39,
+          "stood": 81,
+          "median": 5,
+          "p90": 7,
+          "max": 10
         },
         "by_order": {
           "p0": {
-            "runs": 73,
-            "placement": "0/876",
+            "runs": 39,
+            "placement": "0/468",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -19829,32 +19634,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 23,
-            "placement": "127/276",
-            "placement_rate": 0.4601,
-            "within_cut_0_2": 1,
-            "runs_within_cut_0_2": 1,
-            "beyond_cut_0_5": 110,
+            "runs": 80,
+            "placement": "633/960",
+            "placement_rate": 0.6594,
+            "within_cut_0_2": 63,
+            "runs_within_cut_0_2": 24,
+            "beyond_cut_0_5": 270,
             "silent_wrong": {
-              "cut_0_1": "127/127",
-              "cut_0_2": "126/127",
-              "cut_0_5": "110/127"
+              "cut_0_1": "604/633",
+              "cut_0_2": "570/633",
+              "cut_0_5": "270/633"
             },
-            "shape_err_median": 1.8418
+            "shape_err_median": 0.4311
           },
           "p2": {
-            "runs": 24,
-            "placement": "106/288",
-            "placement_rate": 0.3681,
+            "runs": 1,
+            "placement": "3/12",
+            "placement_rate": 0.25,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 105,
+            "beyond_cut_0_5": 3,
             "silent_wrong": {
-              "cut_0_1": "106/106",
-              "cut_0_2": "106/106",
-              "cut_0_5": "105/106"
+              "cut_0_1": "3/3",
+              "cut_0_2": "3/3",
+              "cut_0_5": "3/3"
             },
-            "shape_err_median": 1.7023
+            "shape_err_median": 1.1019
           },
           "p3": {
             "runs": 0,
@@ -21643,39 +21448,39 @@
     "seed_1": {
       "bypass": {
         "runs": 100,
-        "camera_ok": "86/100",
-        "camera_ok_rate": 0.86,
+        "camera_ok": "95/100",
+        "camera_ok_rate": 0.95,
         "order_counts": {
-          "p0": 14,
-          "p1": 15,
-          "p2": 71,
+          "p0": 5,
+          "p1": 79,
+          "p2": 16,
           "p3": 0
         },
-        "placement": "576/1200",
-        "placement_rate": 0.48,
+        "placement": "620/1200",
+        "placement_rate": 0.5167,
         "silent_wrong": {
-          "cut_0_1": "576/576",
-          "cut_0_2": "570/576",
-          "cut_0_5": "343/576"
+          "cut_0_1": "617/620",
+          "cut_0_2": "613/620",
+          "cut_0_5": "531/620"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 1,
-          "cut_0_2": 0.9896,
-          "cut_0_5": 0.5955
+          "cut_0_1": 0.9952,
+          "cut_0_2": 0.9887,
+          "cut_0_5": 0.8565
         },
-        "shape_err_median": 0.5503,
-        "fed_strokes": 860,
+        "shape_err_median": 1.4916,
+        "fed_strokes": 830,
         "asks_total": 0,
         "ask_kinds": {},
         "asks_per_stroke": 0,
         "first_declaration": {
-          "screen_h": 78,
+          "screen_h": 71,
           "screen_v": 0,
-          "vp": 22,
+          "vp": 29,
           "none": 0
         },
-        "within_cut_0_2": 6,
-        "beyond_cut_0_5": 343,
+        "within_cut_0_2": 7,
+        "beyond_cut_0_5": 531,
         "p0_reasons": {
           "one_depth_line": {
             "runs": 5,
@@ -21703,89 +21508,56 @@
               "depth/support": 6,
               "screen/screen_axis": 4
             }
-          },
-          "pending_2_awaiting_third": {
-            "runs": 9,
-            "strokes": 108,
-            "pending_median": 2,
-            "pending_max": 2,
-            "pending_sep_deg_median": 21.5302,
-            "pending_sep_deg_min": 4.0033,
-            "pending_sep_deg_max": 26.9613,
-            "sep_below_concurrent": 0,
-            "events": {
-              "screen_axis": 9,
-              "waiting": 18,
-              "support": 61,
-              "rejected": 20
-            },
-            "rejects": {
-              "too_short": 20
-            },
-            "truth_events": {
-              "depth/screen_axis": 1,
-              "depth/waiting": 18,
-              "depth/support": 1,
-              "depth/rejected": 20,
-              "screen/support": 60,
-              "screen/screen_axis": 8
-            }
           }
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "9/64",
-          "leak_rate": 0.1406,
-          "too_short": "32/64",
-          "in_pool": "23/64",
+          "leak": "7/24",
+          "leak_rate": 0.2917,
+          "too_short": "12/24",
+          "in_pool": "5/24",
           "by_reason": {
             "one_depth_line": {
               "depth_truth": 24,
               "leak": "7/24",
               "leak_rate": 0.2917,
               "too_short": "12/24"
-            },
-            "pending_2_awaiting_third": {
-              "depth_truth": 40,
-              "leak": "2/40",
-              "leak_rate": 0.05,
-              "too_short": "20/40"
             }
           }
         },
         "rejects": {
-          "p2_fixed_no_screen_h": 84,
-          "off_axis_p2": 140,
-          "off_axis_p1": 65,
-          "too_short": 49,
+          "off_axis_p1": 244,
+          "off_axis_p2": 58,
+          "p2_fixed_no_screen_h": 16,
+          "too_short": 50,
           "fov_or_other": 2
         },
         "events": {
-          "waiting": 196,
-          "support": 489,
-          "screen_axis": 85,
-          "vp_fixed": 90,
-          "rejected": 340
+          "waiting": 157,
+          "support": 496,
+          "screen_axis": 78,
+          "vp_fixed": 99,
+          "rejected": 370
         },
-        "one_point_direct_open": 15,
+        "one_point_direct_open": 79,
         "f_intervention": {
           "ratio_median": 0.96,
           "ratio_min": 0.0562,
           "ratio_max": 7.6596,
-          "n": 86
+          "n": 95
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 14,
-          "stood": 86,
-          "median": 5,
-          "p90": 7,
+          "never": 5,
+          "stood": 95,
+          "median": 4,
+          "p90": 6,
           "max": 9
         },
         "by_order": {
           "p0": {
-            "runs": 14,
-            "placement": "0/168",
+            "runs": 5,
+            "placement": "0/60",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -21798,32 +21570,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 15,
-            "placement": "61/180",
-            "placement_rate": 0.3389,
-            "within_cut_0_2": 0,
-            "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 61,
+            "runs": 79,
+            "placement": "542/948",
+            "placement_rate": 0.5717,
+            "within_cut_0_2": 7,
+            "runs_within_cut_0_2": 3,
+            "beyond_cut_0_5": 463,
             "silent_wrong": {
-              "cut_0_1": "61/61",
-              "cut_0_2": "61/61",
-              "cut_0_5": "61/61"
+              "cut_0_1": "539/542",
+              "cut_0_2": "535/542",
+              "cut_0_5": "463/542"
             },
-            "shape_err_median": 2.0447
+            "shape_err_median": 1.59
           },
           "p2": {
-            "runs": 71,
-            "placement": "515/852",
-            "placement_rate": 0.6045,
-            "within_cut_0_2": 6,
-            "runs_within_cut_0_2": 3,
-            "beyond_cut_0_5": 282,
+            "runs": 16,
+            "placement": "78/192",
+            "placement_rate": 0.4063,
+            "within_cut_0_2": 0,
+            "runs_within_cut_0_2": 0,
+            "beyond_cut_0_5": 68,
             "silent_wrong": {
-              "cut_0_1": "515/515",
-              "cut_0_2": "509/515",
-              "cut_0_5": "282/515"
+              "cut_0_1": "78/78",
+              "cut_0_2": "78/78",
+              "cut_0_5": "68/78"
             },
-            "shape_err_median": 0.5232
+            "shape_err_median": 0.7229
           },
           "p3": {
             "runs": 0,
@@ -23386,68 +23158,40 @@
     "seed_2": {
       "bypass": {
         "runs": 100,
-        "camera_ok": "88/100",
-        "camera_ok_rate": 0.88,
+        "camera_ok": "97/100",
+        "camera_ok_rate": 0.97,
         "order_counts": {
-          "p0": 12,
-          "p1": 16,
-          "p2": 72,
+          "p0": 3,
+          "p1": 89,
+          "p2": 8,
           "p3": 0
         },
-        "placement": "543/1200",
-        "placement_rate": 0.4525,
+        "placement": "659/1200",
+        "placement_rate": 0.5492,
         "silent_wrong": {
-          "cut_0_1": "543/543",
-          "cut_0_2": "534/543",
-          "cut_0_5": "367/543"
+          "cut_0_1": "643/659",
+          "cut_0_2": "636/659",
+          "cut_0_5": "552/659"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 1,
-          "cut_0_2": 0.9834,
-          "cut_0_5": 0.6759
+          "cut_0_1": 0.9757,
+          "cut_0_2": 0.9651,
+          "cut_0_5": 0.8376
         },
-        "shape_err_median": 0.6268,
-        "fed_strokes": 889,
+        "shape_err_median": 1.4642,
+        "fed_strokes": 887,
         "asks_total": 0,
         "ask_kinds": {},
         "asks_per_stroke": 0,
         "first_declaration": {
-          "screen_h": 90,
+          "screen_h": 88,
           "screen_v": 0,
-          "vp": 10,
+          "vp": 12,
           "none": 0
         },
-        "within_cut_0_2": 9,
-        "beyond_cut_0_5": 367,
+        "within_cut_0_2": 23,
+        "beyond_cut_0_5": 552,
         "p0_reasons": {
-          "pending_2_awaiting_third": {
-            "runs": 9,
-            "strokes": 108,
-            "pending_median": 2,
-            "pending_max": 2,
-            "pending_sep_deg_median": 24.3449,
-            "pending_sep_deg_min": 10.0366,
-            "pending_sep_deg_max": 29.5112,
-            "sep_below_concurrent": 0,
-            "events": {
-              "screen_axis": 9,
-              "waiting": 18,
-              "support": 65,
-              "rejected": 16
-            },
-            "rejects": {
-              "too_short": 16
-            },
-            "truth_events": {
-              "depth/screen_axis": 1,
-              "depth/waiting": 17,
-              "screen/support": 59,
-              "depth/support": 6,
-              "screen/screen_axis": 8,
-              "depth/rejected": 16,
-              "screen/waiting": 1
-            }
-          },
           "one_depth_line": {
             "runs": 3,
             "strokes": 36,
@@ -23477,17 +23221,11 @@
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "10/52",
-          "leak_rate": 0.1923,
-          "too_short": "22/52",
-          "in_pool": "20/52",
+          "leak": "3/12",
+          "leak_rate": 0.25,
+          "too_short": "6/12",
+          "in_pool": "3/12",
           "by_reason": {
-            "pending_2_awaiting_third": {
-              "depth_truth": 40,
-              "leak": "7/40",
-              "leak_rate": 0.175,
-              "too_short": "16/40"
-            },
             "one_depth_line": {
               "depth_truth": 12,
               "leak": "3/12",
@@ -23497,38 +23235,38 @@
           }
         },
         "rejects": {
-          "off_axis_p2": 147,
-          "p2_fixed_no_screen_h": 83,
-          "off_axis_p1": 45,
+          "off_axis_p1": 238,
+          "off_axis_p2": 28,
+          "p2_fixed_no_screen_h": 11,
           "fov_or_other": 2,
           "too_short": 34
         },
         "events": {
-          "waiting": 202,
-          "support": 504,
-          "screen_axis": 92,
-          "vp_fixed": 91,
-          "rejected": 311
+          "waiting": 157,
+          "support": 540,
+          "screen_axis": 90,
+          "vp_fixed": 100,
+          "rejected": 313
         },
-        "one_point_direct_open": 16,
+        "one_point_direct_open": 89,
         "f_intervention": {
-          "ratio_median": 0.9539,
-          "ratio_min": 0.0181,
-          "ratio_max": 15.9288,
-          "n": 88
+          "ratio_median": 0.96,
+          "ratio_min": 0.1991,
+          "ratio_max": 3.7668,
+          "n": 97
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 12,
-          "stood": 88,
+          "never": 3,
+          "stood": 97,
           "median": 5,
-          "p90": 8,
+          "p90": 7,
           "max": 11
         },
         "by_order": {
           "p0": {
-            "runs": 12,
-            "placement": "0/144",
+            "runs": 3,
+            "placement": "0/36",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -23541,32 +23279,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 16,
-            "placement": "90/192",
-            "placement_rate": 0.4688,
-            "within_cut_0_2": 1,
-            "runs_within_cut_0_2": 1,
-            "beyond_cut_0_5": 81,
+            "runs": 89,
+            "placement": "631/1068",
+            "placement_rate": 0.5908,
+            "within_cut_0_2": 23,
+            "runs_within_cut_0_2": 8,
+            "beyond_cut_0_5": 532,
             "silent_wrong": {
-              "cut_0_1": "90/90",
-              "cut_0_2": "89/90",
-              "cut_0_5": "81/90"
+              "cut_0_1": "615/631",
+              "cut_0_2": "608/631",
+              "cut_0_5": "532/631"
             },
-            "shape_err_median": 1.9141
+            "shape_err_median": 1.4985
           },
           "p2": {
-            "runs": 72,
-            "placement": "453/864",
-            "placement_rate": 0.5243,
-            "within_cut_0_2": 8,
-            "runs_within_cut_0_2": 4,
-            "beyond_cut_0_5": 286,
+            "runs": 8,
+            "placement": "28/96",
+            "placement_rate": 0.2917,
+            "within_cut_0_2": 0,
+            "runs_within_cut_0_2": 0,
+            "beyond_cut_0_5": 20,
             "silent_wrong": {
-              "cut_0_1": "453/453",
-              "cut_0_2": "445/453",
-              "cut_0_5": "286/453"
+              "cut_0_1": "28/28",
+              "cut_0_2": "28/28",
+              "cut_0_5": "20/28"
             },
-            "shape_err_median": 0.5768
+            "shape_err_median": 0.6161
           },
           "p3": {
             "runs": 0,
@@ -25128,39 +24866,39 @@
     "seed_3": {
       "bypass": {
         "runs": 100,
-        "camera_ok": "87/100",
-        "camera_ok_rate": 0.87,
+        "camera_ok": "90/100",
+        "camera_ok_rate": 0.9,
         "order_counts": {
-          "p0": 13,
-          "p1": 10,
-          "p2": 77,
+          "p0": 10,
+          "p1": 75,
+          "p2": 15,
           "p3": 0
         },
-        "placement": "562/1200",
-        "placement_rate": 0.4683,
+        "placement": "552/1200",
+        "placement_rate": 0.46,
         "silent_wrong": {
-          "cut_0_1": "559/562",
-          "cut_0_2": "547/562",
-          "cut_0_5": "366/562"
+          "cut_0_1": "549/552",
+          "cut_0_2": "546/552",
+          "cut_0_5": "502/552"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 0.9947,
-          "cut_0_2": 0.9733,
-          "cut_0_5": 0.6512
+          "cut_0_1": 0.9946,
+          "cut_0_2": 0.9891,
+          "cut_0_5": 0.9094
         },
-        "shape_err_median": 0.6044,
-        "fed_strokes": 858,
+        "shape_err_median": 1.5405,
+        "fed_strokes": 837,
         "asks_total": 0,
         "ask_kinds": {},
         "asks_per_stroke": 0,
         "first_declaration": {
-          "screen_h": 85,
+          "screen_h": 82,
           "screen_v": 0,
-          "vp": 15,
+          "vp": 18,
           "none": 0
         },
-        "within_cut_0_2": 15,
-        "beyond_cut_0_5": 366,
+        "within_cut_0_2": 6,
+        "beyond_cut_0_5": 502,
         "p0_reasons": {
           "one_depth_line": {
             "runs": 10,
@@ -25187,87 +24925,56 @@
               "depth/support": 10,
               "depth/rejected": 20
             }
-          },
-          "pending_2_awaiting_third": {
-            "runs": 3,
-            "strokes": 36,
-            "pending_median": 2,
-            "pending_max": 2,
-            "pending_sep_deg_median": 26.9794,
-            "pending_sep_deg_min": 25.1645,
-            "pending_sep_deg_max": 27.3956,
-            "sep_below_concurrent": 0,
-            "events": {
-              "screen_axis": 3,
-              "waiting": 6,
-              "support": 21,
-              "rejected": 6
-            },
-            "rejects": {
-              "too_short": 6
-            },
-            "truth_events": {
-              "screen/screen_axis": 3,
-              "depth/waiting": 6,
-              "screen/support": 21,
-              "depth/rejected": 6
-            }
           }
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "10/52",
-          "leak_rate": 0.1923,
-          "too_short": "26/52",
-          "in_pool": "16/52",
+          "leak": "10/40",
+          "leak_rate": 0.25,
+          "too_short": "20/40",
+          "in_pool": "10/40",
           "by_reason": {
             "one_depth_line": {
               "depth_truth": 40,
               "leak": "10/40",
               "leak_rate": 0.25,
               "too_short": "20/40"
-            },
-            "pending_2_awaiting_third": {
-              "depth_truth": 12,
-              "leak": "0/12",
-              "leak_rate": 0,
-              "too_short": "6/12"
             }
           }
         },
         "rejects": {
-          "p2_fixed_no_screen_h": 86,
-          "off_axis_p2": 182,
-          "off_axis_p1": 32,
+          "off_axis_p1": 252,
+          "off_axis_p2": 53,
+          "p2_fixed_no_screen_h": 16,
           "fov_or_other": 2,
           "too_short": 40
         },
         "events": {
-          "waiting": 194,
-          "support": 485,
-          "screen_axis": 86,
-          "vp_fixed": 93,
-          "rejected": 342
+          "waiting": 157,
+          "support": 501,
+          "screen_axis": 83,
+          "vp_fixed": 96,
+          "rejected": 363
         },
-        "one_point_direct_open": 10,
+        "one_point_direct_open": 75,
         "f_intervention": {
           "ratio_median": 0.96,
           "ratio_min": 0.1723,
-          "ratio_max": 32.2803,
-          "n": 87
+          "ratio_max": 7.6327,
+          "n": 90
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 13,
-          "stood": 87,
-          "median": 5,
+          "never": 10,
+          "stood": 90,
+          "median": 4,
           "p90": 7,
-          "max": 11
+          "max": 10
         },
         "by_order": {
           "p0": {
-            "runs": 13,
-            "placement": "0/156",
+            "runs": 10,
+            "placement": "0/120",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -25280,32 +24987,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 10,
-            "placement": "43/120",
-            "placement_rate": 0.3583,
-            "within_cut_0_2": 0,
-            "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 38,
+            "runs": 75,
+            "placement": "474/900",
+            "placement_rate": 0.5267,
+            "within_cut_0_2": 6,
+            "runs_within_cut_0_2": 2,
+            "beyond_cut_0_5": 432,
             "silent_wrong": {
-              "cut_0_1": "43/43",
-              "cut_0_2": "43/43",
-              "cut_0_5": "38/43"
+              "cut_0_1": "471/474",
+              "cut_0_2": "468/474",
+              "cut_0_5": "432/474"
             },
-            "shape_err_median": 1.4363
+            "shape_err_median": 1.6241
           },
           "p2": {
-            "runs": 77,
-            "placement": "519/924",
-            "placement_rate": 0.5617,
-            "within_cut_0_2": 15,
-            "runs_within_cut_0_2": 4,
-            "beyond_cut_0_5": 328,
+            "runs": 15,
+            "placement": "78/180",
+            "placement_rate": 0.4333,
+            "within_cut_0_2": 0,
+            "runs_within_cut_0_2": 0,
+            "beyond_cut_0_5": 70,
             "silent_wrong": {
-              "cut_0_1": "516/519",
-              "cut_0_2": "504/519",
-              "cut_0_5": "328/519"
+              "cut_0_1": "78/78",
+              "cut_0_2": "78/78",
+              "cut_0_5": "70/78"
             },
-            "shape_err_median": 0.585
+            "shape_err_median": 0.7187
           },
           "p3": {
             "runs": 0,
@@ -26847,41 +26554,41 @@
     "seed_4": {
       "bypass": {
         "runs": 100,
-        "camera_ok": "87/100",
-        "camera_ok_rate": 0.87,
+        "camera_ok": "90/100",
+        "camera_ok_rate": 0.9,
         "order_counts": {
-          "p0": 13,
-          "p1": 10,
-          "p2": 77,
+          "p0": 10,
+          "p1": 78,
+          "p2": 12,
           "p3": 0
         },
-        "placement": "579/1200",
-        "placement_rate": 0.4825,
+        "placement": "603/1200",
+        "placement_rate": 0.5025,
         "silent_wrong": {
-          "cut_0_1": "573/579",
-          "cut_0_2": "562/579",
-          "cut_0_5": "372/579"
+          "cut_0_1": "602/603",
+          "cut_0_2": "593/603",
+          "cut_0_5": "555/603"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 0.9896,
-          "cut_0_2": 0.9706,
-          "cut_0_5": 0.6425
+          "cut_0_1": 0.9983,
+          "cut_0_2": 0.9834,
+          "cut_0_5": 0.9204
         },
-        "shape_err_median": 0.6041,
-        "fed_strokes": 867,
+        "shape_err_median": 1.5615,
+        "fed_strokes": 853,
         "asks_total": 1,
         "ask_kinds": {
           "screen_or_depth/p1_guard": 1
         },
         "asks_per_stroke": 0.0008,
         "first_declaration": {
-          "screen_h": 84,
+          "screen_h": 83,
           "screen_v": 0,
-          "vp": 16,
+          "vp": 17,
           "none": 0
         },
-        "within_cut_0_2": 17,
-        "beyond_cut_0_5": 372,
+        "within_cut_0_2": 10,
+        "beyond_cut_0_5": 555,
         "p0_reasons": {
           "one_depth_line": {
             "runs": 8,
@@ -26910,30 +26617,30 @@
             }
           },
           "pending_2_awaiting_third": {
-            "runs": 4,
-            "strokes": 48,
+            "runs": 1,
+            "strokes": 12,
             "pending_median": 2,
             "pending_max": 2,
-            "pending_sep_deg_median": 26.7575,
-            "pending_sep_deg_min": 22.047,
+            "pending_sep_deg_median": 51.871,
+            "pending_sep_deg_min": 51.871,
             "pending_sep_deg_max": 51.871,
             "sep_below_concurrent": 0,
             "events": {
-              "screen_axis": 4,
-              "waiting": 8,
-              "support": 28,
-              "rejected": 8
+              "screen_axis": 1,
+              "waiting": 2,
+              "support": 7,
+              "rejected": 2
             },
             "rejects": {
-              "too_short": 8
+              "too_short": 2
             },
             "truth_events": {
-              "screen/screen_axis": 4,
-              "depth/waiting": 7,
-              "screen/support": 27,
-              "depth/rejected": 8,
+              "screen/screen_axis": 1,
+              "depth/waiting": 1,
+              "screen/support": 6,
               "depth/support": 1,
-              "screen/waiting": 1
+              "screen/waiting": 1,
+              "depth/rejected": 2
             }
           },
           "pending_3plus_no_candidate": {
@@ -26966,10 +26673,10 @@
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "10/52",
-          "leak_rate": 0.1923,
-          "too_short": "26/52",
-          "in_pool": "16/52",
+          "leak": "10/40",
+          "leak_rate": 0.25,
+          "too_short": "20/40",
+          "in_pool": "10/40",
           "by_reason": {
             "one_depth_line": {
               "depth_truth": 32,
@@ -26978,10 +26685,10 @@
               "too_short": "16/32"
             },
             "pending_2_awaiting_third": {
-              "depth_truth": 16,
-              "leak": "1/16",
-              "leak_rate": 0.0625,
-              "too_short": "8/16"
+              "depth_truth": 4,
+              "leak": "1/4",
+              "leak_rate": 0.25,
+              "too_short": "2/4"
             },
             "pending_3plus_no_candidate": {
               "depth_truth": 4,
@@ -26992,39 +26699,39 @@
           }
         },
         "rejects": {
-          "off_axis_p2": 168,
-          "p2_fixed_no_screen_h": 86,
+          "off_axis_p1": 253,
           "fov_or_other": 3,
-          "off_axis_p1": 39,
+          "off_axis_p2": 36,
+          "p2_fixed_no_screen_h": 18,
           "horizon_parallel": 1,
           "too_short": 36
         },
         "events": {
-          "waiting": 195,
-          "support": 492,
-          "screen_axis": 88,
-          "vp_fixed": 92,
-          "rejected": 333
+          "waiting": 158,
+          "support": 513,
+          "screen_axis": 87,
+          "vp_fixed": 95,
+          "rejected": 347
         },
-        "one_point_direct_open": 10,
+        "one_point_direct_open": 78,
         "f_intervention": {
           "ratio_median": 0.96,
           "ratio_min": 0.1816,
-          "ratio_max": 22.5536,
-          "n": 87
+          "ratio_max": 15.6247,
+          "n": 90
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 13,
-          "stood": 87,
+          "never": 10,
+          "stood": 90,
           "median": 5,
           "p90": 7,
           "max": 10
         },
         "by_order": {
           "p0": {
-            "runs": 13,
-            "placement": "0/156",
+            "runs": 10,
+            "placement": "0/120",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -27037,32 +26744,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 10,
-            "placement": "46/120",
-            "placement_rate": 0.3833,
-            "within_cut_0_2": 0,
-            "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 42,
+            "runs": 78,
+            "placement": "538/936",
+            "placement_rate": 0.5748,
+            "within_cut_0_2": 10,
+            "runs_within_cut_0_2": 3,
+            "beyond_cut_0_5": 499,
             "silent_wrong": {
-              "cut_0_1": "46/46",
-              "cut_0_2": "46/46",
-              "cut_0_5": "42/46"
+              "cut_0_1": "537/538",
+              "cut_0_2": "528/538",
+              "cut_0_5": "499/538"
             },
-            "shape_err_median": 1.8227
+            "shape_err_median": 1.6302
           },
           "p2": {
-            "runs": 77,
-            "placement": "533/924",
-            "placement_rate": 0.5768,
-            "within_cut_0_2": 17,
-            "runs_within_cut_0_2": 4,
-            "beyond_cut_0_5": 330,
+            "runs": 12,
+            "placement": "65/144",
+            "placement_rate": 0.4514,
+            "within_cut_0_2": 0,
+            "runs_within_cut_0_2": 0,
+            "beyond_cut_0_5": 56,
             "silent_wrong": {
-              "cut_0_1": "527/533",
-              "cut_0_2": "516/533",
-              "cut_0_5": "330/533"
+              "cut_0_1": "65/65",
+              "cut_0_2": "65/65",
+              "cut_0_5": "56/65"
             },
-            "shape_err_median": 0.5824
+            "shape_err_median": 0.6647
           },
           "p3": {
             "runs": 0,
@@ -28849,39 +28556,39 @@
     "seed_5": {
       "bypass": {
         "runs": 100,
-        "camera_ok": "88/100",
-        "camera_ok_rate": 0.88,
+        "camera_ok": "97/100",
+        "camera_ok_rate": 0.97,
         "order_counts": {
-          "p0": 12,
-          "p1": 9,
-          "p2": 79,
+          "p0": 3,
+          "p1": 75,
+          "p2": 22,
           "p3": 0
         },
-        "placement": "566/1200",
-        "placement_rate": 0.4717,
+        "placement": "652/1200",
+        "placement_rate": 0.5433,
         "silent_wrong": {
-          "cut_0_1": "566/566",
-          "cut_0_2": "543/566",
-          "cut_0_5": "358/566"
+          "cut_0_1": "646/652",
+          "cut_0_2": "636/652",
+          "cut_0_5": "519/652"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 1,
-          "cut_0_2": 0.9594,
-          "cut_0_5": 0.6325
+          "cut_0_1": 0.9908,
+          "cut_0_2": 0.9755,
+          "cut_0_5": 0.796
         },
-        "shape_err_median": 0.6003,
-        "fed_strokes": 874,
+        "shape_err_median": 1.3984,
+        "fed_strokes": 864,
         "asks_total": 0,
         "ask_kinds": {},
         "asks_per_stroke": 0,
         "first_declaration": {
-          "screen_h": 77,
+          "screen_h": 72,
           "screen_v": 0,
-          "vp": 23,
+          "vp": 28,
           "none": 0
         },
-        "within_cut_0_2": 23,
-        "beyond_cut_0_5": 358,
+        "within_cut_0_2": 16,
+        "beyond_cut_0_5": 519,
         "p0_reasons": {
           "one_depth_line": {
             "runs": 3,
@@ -28908,87 +28615,56 @@
               "depth/support": 3,
               "depth/rejected": 6
             }
-          },
-          "pending_2_awaiting_third": {
-            "runs": 9,
-            "strokes": 108,
-            "pending_median": 2,
-            "pending_max": 2,
-            "pending_sep_deg_median": 22.262,
-            "pending_sep_deg_min": 17.3834,
-            "pending_sep_deg_max": 28.2478,
-            "sep_below_concurrent": 0,
-            "events": {
-              "screen_axis": 9,
-              "waiting": 18,
-              "support": 63,
-              "rejected": 18
-            },
-            "rejects": {
-              "too_short": 18
-            },
-            "truth_events": {
-              "screen/screen_axis": 9,
-              "depth/waiting": 18,
-              "screen/support": 63,
-              "depth/rejected": 18
-            }
           }
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "3/48",
-          "leak_rate": 0.0625,
-          "too_short": "24/48",
-          "in_pool": "21/48",
+          "leak": "3/12",
+          "leak_rate": 0.25,
+          "too_short": "6/12",
+          "in_pool": "3/12",
           "by_reason": {
             "one_depth_line": {
               "depth_truth": 12,
               "leak": "3/12",
               "leak_rate": 0.25,
               "too_short": "6/12"
-            },
-            "pending_2_awaiting_third": {
-              "depth_truth": 36,
-              "leak": "0/36",
-              "leak_rate": 0,
-              "too_short": "18/36"
             }
           }
         },
         "rejects": {
-          "p2_fixed_no_screen_h": 100,
-          "off_axis_p2": 157,
-          "off_axis_p1": 33,
+          "off_axis_p1": 202,
+          "p2_fixed_no_screen_h": 26,
+          "off_axis_p2": 72,
           "fov_or_other": 4,
           "too_short": 32
         },
         "events": {
-          "waiting": 200,
-          "support": 499,
-          "screen_axis": 79,
-          "vp_fixed": 96,
-          "rejected": 326
+          "waiting": 162,
+          "support": 523,
+          "screen_axis": 74,
+          "vp_fixed": 105,
+          "rejected": 336
         },
-        "one_point_direct_open": 9,
+        "one_point_direct_open": 75,
         "f_intervention": {
-          "ratio_median": 0.9533,
+          "ratio_median": 0.96,
           "ratio_min": 0.0322,
           "ratio_max": 27.6416,
-          "n": 88
+          "n": 97
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 12,
-          "stood": 88,
+          "never": 3,
+          "stood": 97,
           "median": 5,
           "p90": 7,
-          "max": 9
+          "max": 8
         },
         "by_order": {
           "p0": {
-            "runs": 12,
-            "placement": "0/144",
+            "runs": 3,
+            "placement": "0/36",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -29001,32 +28677,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 9,
-            "placement": "50/108",
-            "placement_rate": 0.463,
-            "within_cut_0_2": 0,
-            "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 49,
+            "runs": 75,
+            "placement": "553/900",
+            "placement_rate": 0.6144,
+            "within_cut_0_2": 15,
+            "runs_within_cut_0_2": 7,
+            "beyond_cut_0_5": 449,
             "silent_wrong": {
-              "cut_0_1": "50/50",
-              "cut_0_2": "50/50",
-              "cut_0_5": "49/50"
+              "cut_0_1": "547/553",
+              "cut_0_2": "538/553",
+              "cut_0_5": "449/553"
             },
-            "shape_err_median": 2.2138
+            "shape_err_median": 1.5383
           },
           "p2": {
-            "runs": 79,
-            "placement": "516/948",
-            "placement_rate": 0.5443,
-            "within_cut_0_2": 23,
-            "runs_within_cut_0_2": 5,
-            "beyond_cut_0_5": 309,
+            "runs": 22,
+            "placement": "99/264",
+            "placement_rate": 0.375,
+            "within_cut_0_2": 1,
+            "runs_within_cut_0_2": 1,
+            "beyond_cut_0_5": 70,
             "silent_wrong": {
-              "cut_0_1": "516/516",
-              "cut_0_2": "493/516",
-              "cut_0_5": "309/516"
+              "cut_0_1": "99/99",
+              "cut_0_2": "98/99",
+              "cut_0_5": "70/99"
             },
-            "shape_err_median": 0.5763
+            "shape_err_median": 0.6014
           },
           "p3": {
             "runs": 0,
@@ -30568,28 +30244,28 @@
     "seed_6": {
       "bypass": {
         "runs": 100,
-        "camera_ok": "88/100",
-        "camera_ok_rate": 0.88,
+        "camera_ok": "91/100",
+        "camera_ok_rate": 0.91,
         "order_counts": {
-          "p0": 12,
-          "p1": 10,
-          "p2": 78,
+          "p0": 9,
+          "p1": 74,
+          "p2": 17,
           "p3": 0
         },
-        "placement": "558/1200",
-        "placement_rate": 0.465,
+        "placement": "540/1200",
+        "placement_rate": 0.45,
         "silent_wrong": {
-          "cut_0_1": "556/558",
-          "cut_0_2": "542/558",
-          "cut_0_5": "347/558"
+          "cut_0_1": "540/540",
+          "cut_0_2": "538/540",
+          "cut_0_5": "506/540"
         },
         "silent_wrong_rate": {
-          "cut_0_1": 0.9964,
-          "cut_0_2": 0.9713,
-          "cut_0_5": 0.6219
+          "cut_0_1": 1,
+          "cut_0_2": 0.9963,
+          "cut_0_5": 0.937
         },
-        "shape_err_median": 0.5789,
-        "fed_strokes": 849,
+        "shape_err_median": 1.5457,
+        "fed_strokes": 828,
         "asks_total": 2,
         "ask_kinds": {
           "screen_or_depth/p1_guard": 2
@@ -30601,8 +30277,8 @@
           "vp": 18,
           "none": 0
         },
-        "within_cut_0_2": 16,
-        "beyond_cut_0_5": 347,
+        "within_cut_0_2": 2,
+        "beyond_cut_0_5": 506,
         "p0_reasons": {
           "one_depth_line": {
             "runs": 9,
@@ -30629,88 +30305,57 @@
               "depth/support": 9,
               "depth/rejected": 18
             }
-          },
-          "pending_2_awaiting_third": {
-            "runs": 3,
-            "strokes": 36,
-            "pending_median": 2,
-            "pending_max": 2,
-            "pending_sep_deg_median": 15.3601,
-            "pending_sep_deg_min": 13.8733,
-            "pending_sep_deg_max": 21.9466,
-            "sep_below_concurrent": 0,
-            "events": {
-              "screen_axis": 3,
-              "support": 21,
-              "waiting": 6,
-              "rejected": 6
-            },
-            "rejects": {
-              "too_short": 6
-            },
-            "truth_events": {
-              "screen/screen_axis": 3,
-              "screen/support": 21,
-              "depth/waiting": 6,
-              "depth/rejected": 6
-            }
           }
         },
         "p0_leak": {
           "what": "참 축이 깊이인 P0 획 중 **화면 축으로 읽힌** 것(`support` + `screen_axis`). 분모는 **P0 실행 안의 깊이 획 전부**이고 사유마다 다르다(#11).",
-          "leak": "9/48",
-          "leak_rate": 0.1875,
-          "too_short": "24/48",
-          "in_pool": "15/48",
+          "leak": "9/36",
+          "leak_rate": 0.25,
+          "too_short": "18/36",
+          "in_pool": "9/36",
           "by_reason": {
             "one_depth_line": {
               "depth_truth": 36,
               "leak": "9/36",
               "leak_rate": 0.25,
               "too_short": "18/36"
-            },
-            "pending_2_awaiting_third": {
-              "depth_truth": 12,
-              "leak": "0/12",
-              "leak_rate": 0,
-              "too_short": "6/12"
             }
           }
         },
         "rejects": {
-          "off_axis_p2": 193,
-          "p2_fixed_no_screen_h": 83,
+          "off_axis_p1": 251,
+          "off_axis_p2": 60,
+          "p2_fixed_no_screen_h": 18,
           "fov_or_other": 2,
-          "off_axis_p1": 33,
           "horizon_parallel": 1,
-          "too_short": 39
+          "too_short": 40
         },
         "events": {
-          "waiting": 194,
-          "support": 473,
+          "waiting": 157,
+          "support": 486,
           "screen_axis": 83,
-          "vp_fixed": 99,
-          "rejected": 351
+          "vp_fixed": 102,
+          "rejected": 372
         },
-        "one_point_direct_open": 10,
+        "one_point_direct_open": 74,
         "f_intervention": {
-          "ratio_median": 1.0569,
+          "ratio_median": 0.96,
           "ratio_min": 0.0226,
           "ratio_max": 28.5246,
-          "n": 88
+          "n": 91
         },
         "shape_err_gauge": "fit (fitGauge — 자기 게이지)",
         "stood_at": {
-          "never": 12,
-          "stood": 88,
+          "never": 9,
+          "stood": 91,
           "median": 5,
           "p90": 7,
-          "max": 8
+          "max": 7
         },
         "by_order": {
           "p0": {
-            "runs": 12,
-            "placement": "0/144",
+            "runs": 9,
+            "placement": "0/108",
             "placement_rate": 0,
             "within_cut_0_2": 0,
             "runs_within_cut_0_2": 0,
@@ -30723,32 +30368,32 @@
             "shape_err_median": null
           },
           "p1": {
-            "runs": 10,
-            "placement": "53/120",
-            "placement_rate": 0.4417,
-            "within_cut_0_2": 0,
-            "runs_within_cut_0_2": 0,
-            "beyond_cut_0_5": 53,
+            "runs": 74,
+            "placement": "462/888",
+            "placement_rate": 0.5203,
+            "within_cut_0_2": 2,
+            "runs_within_cut_0_2": 1,
+            "beyond_cut_0_5": 444,
             "silent_wrong": {
-              "cut_0_1": "53/53",
-              "cut_0_2": "53/53",
-              "cut_0_5": "53/53"
+              "cut_0_1": "462/462",
+              "cut_0_2": "460/462",
+              "cut_0_5": "444/462"
             },
-            "shape_err_median": 2.3349
+            "shape_err_median": 1.7386
           },
           "p2": {
-            "runs": 78,
-            "placement": "505/936",
-            "placement_rate": 0.5395,
-            "within_cut_0_2": 16,
-            "runs_within_cut_0_2": 3,
-            "beyond_cut_0_5": 294,
+            "runs": 17,
+            "placement": "78/204",
+            "placement_rate": 0.3824,
+            "within_cut_0_2": 0,
+            "runs_within_cut_0_2": 0,
+            "beyond_cut_0_5": 62,
             "silent_wrong": {
-              "cut_0_1": "503/505",
-              "cut_0_2": "489/505",
-              "cut_0_5": "294/505"
+              "cut_0_1": "78/78",
+              "cut_0_2": "78/78",
+              "cut_0_5": "62/78"
             },
-            "shape_err_median": 0.545
+            "shape_err_median": 0.6492
           },
           "p3": {
             "runs": 0,
@@ -32313,24 +31958,24 @@
     "reachability_source": "arms/oracle/headline/silent_wrong_rate/cut_0_2",
     "result": {
       "pass_order": true,
-      "p1_bypass": 70,
+      "p1_bypass": 470,
       "p1_fixed": 56,
       "p3_bypass": 0,
       "p3_fixed": 0,
-      "p0_bypass": 76,
+      "p0_bypass": 40,
       "p0_fixed": 76,
-      "camera_ok_bypass": "524/600",
+      "camera_ok_bypass": "560/600",
       "camera_ok_fixed": "524/600",
       "pass_floor": true,
       "fixed_cut_0_2": "3307/3393",
-      "bypass_cut_0_2": "3298/3384",
+      "bypass_cut_0_2": "3562/3626",
       "within_cut_0_2_fixed": 86,
-      "within_cut_0_2_bypass": 86,
-      "floor_gate_discriminates": false,
+      "within_cut_0_2_bypass": 64,
+      "floor_gate_discriminates": true,
       "oracle_cut_0_2": "2428/6432",
-      "within_cut_0_2_delta": 0,
+      "within_cut_0_2_delta": 22,
       "beyond_cut_0_5_fixed": 2143,
-      "beyond_cut_0_5_bypass": 2153,
+      "beyond_cut_0_5_bypass": 3165,
       "pass_two_sided": true,
       "two_sided_note": "③ **정확이 안 줄고 파국이 안 는다**(지시 1-d). ⚠ 팔 사이 비교라 커밋 사이의 176 → 46은 못 잡는다 — 그 값은 이전 커밋의 원장에서 읽는다.",
       "within_cut_0_2_guard_off": 65,
@@ -32343,7 +31988,7 @@
   "factor_split": {
     "note": "**중앙값으로 읽으면 방향이 갈리지 않는다**(8차 항목 1 이후 재측정): 축 라벨만 참으로(rule_vp_true_axis) → 중앙이 **나빠지고**, 소실점만 참으로(true_vp_rule_axis) → 중앙이 **조금 좋아진다**. ⚠⚠ **중앙은 이 비교에 못 쓴다** — 두 팔의 **놓인 수가 크게 다르기 때문**이다(#9·#15: 층 구성이 바뀌면 층 내 개선과 안 갈린다). 참 축 라벨 팔은 훨씬 많이 놓고(그 여분이 나쁜 것들이다) 참 소실점 팔은 훨씬 적게 놓는다. **분모가 같은 절대 개수로 읽어야 한다**: `within_cut_0_2`(분모는 그은 획 7200으로 모든 팔이 같다)에서 fixed **대** rule_vp_true_axis **대** true_vp_rule_axis가 갈리고, 거기서는 **소실점 쪽이 압도적이다.** 즉 **'틀린 것은 축 배정이 아니라 카메라다'라는 결론 자체는 유지되고, 그 근거가 중앙에서 절대 개수로 바뀐다** (#28: 지표를 사유 없이 바꾸지 않는다 — 사유는 중앙의 분모가 팔마다 다르다는 것이고, 옛 판이 그것을 안 본 채 중앙을 비교했다). ⚠⚠⚠ **시드 폭을 함께 읽는다**(#14 · 8-2R′ [2]): `by_seed`에서 `fixed`의 `within_cut_0_2`는 **0 · 0 · 0 · 15 · 16 · 15**로 **시드 절반이 0**이고, `rule_vp_true_axis`는 **1 · 1 · 0 · 8 · 2 · 1**이라 **시드 셋(1·2·3)에서는 축 라벨 참 팔이 fixed와 같거나 오히려 낫다** — 즉 **'축 라벨을 참으로 주면 나빠진다'는 시드 폭을 못 넘는다.** 반면 `true_vp_rule_axis`는 **158 · 127 · 170 · 149 · 155 · 149**로 **여섯 시드 전부에서 fixed의 열 배 위**다. **그러므로 이 원장이 시드 폭을 견디는 결론은 하나뿐이다: 소실점이 지배한다.** 축 라벨의 방향(나빠지는가)은 **여기서 못 세운다.** ⚠ **같은 양이 팔 조합에 따라 판별력이 다르다**(8-2R′ [11]): 이 원장의 `what_this_does_not_say`가 적듯 `bypass` ↔ `fixed`에서는 `within_cut_0_2`가 **같은 값이라 정보가 0**이다. 요인 팔 사이에서만 가른다 — **한 지표가 어디서나 판별력을 갖는다고 읽지 않는다.** ⛔⛔ **제자리 정정(9차 항목 1 · 9-R′ [R4])**: 이 자리에 적혀 있던 **'46 대 46'과 '46 대 908'은 낡았다** — 9차 항목 0이 `guard_off` 팔을 넣고 원장을 다시 돌렸다. **수를 여기 다시 박지 않는다**(#1 — 손으로 적은 수는 재실행마다 낡는다): 값은 바로 아래 `within_cut_0_2` 표를 **그 자리에서 읽는다**. ⛔ **제자리 정정(11차 리뷰어 [6] · #47)**: 그 정정문 자체가 낡아 있었다 — *‘46은 이제 `guard_off`의 값’*이라 적었는데 그 뒤 D-L85(반경 8)로 `within_cut_0_2_guard_off`가 다시 움직였다. **수를 문장에 안 박는다는 규칙을 세운 문장 자체가 수를 박고 있었다.** 어느 팔이 어느 값인지는 `gate.result`의 `within_cut_0_2_{fixed,bypass,guard_off}`를 **팔 이름과 함께** 그 자리에서 읽는다(#42 ⑨ — 팔 이름 없는 인용은 세로로 오독된다).",
     "shape_err_median": {
-      "bypass": 0.595,
+      "bypass": 1.4938,
       "fixed": 0.5918,
       "rule_vp_true_axis": 0.865,
       "true_vp_rule_axis": 0.5874,
@@ -32354,7 +31999,7 @@
       "guard_off": 0.5834
     },
     "within_cut_0_2": {
-      "bypass": 86,
+      "bypass": 64,
       "fixed": 86,
       "rule_vp_true_axis": 59,
       "true_vp_rule_axis": 743,
@@ -32366,7 +32011,7 @@
     },
     "within_cut_0_2_denominator": 7200,
     "placement": {
-      "bypass": "3384/7200",
+      "bypass": "3626/7200",
       "fixed": "3393/7200",
       "rule_vp_true_axis": "5432/7200",
       "true_vp_rule_axis": "2552/7200",
@@ -32377,7 +32022,7 @@
       "guard_off": "3471/7200"
     },
     "silent_wrong_cut_0_2": {
-      "bypass": "3298/3384",
+      "bypass": "3562/3626",
       "fixed": "3307/3393",
       "rule_vp_true_axis": "5373/5432",
       "true_vp_rule_axis": "1809/2552",
@@ -32398,9 +32043,9 @@
     "**축 라벨은 규칙이 붙인다**(`CamState.axisOf`) — 오배정이 배치 오차에 섞여 들어온다. 그것이 의도다(#27: 축 오차만 재면 오배정이 안 보인다). 갈라 보려면 `oracle` 팔과 견준다",
     "**물음에는 참 축으로 답한다**(오라클) — 사람이 틀리게 답하는 몫은 안 잰다",
     "⚠⚠ **이 팔은 지시 1-c·1-d에 대한 정보가 0이다**(7-R 리뷰어 [5], #32·#17). 시작점 스냅(3D 오스냅)이 없고 `liftAll` 일괄 풀이만 쓰므로 앱의 `placeStroke` 경로를 **안 탄다**. 게다가 `liftAll`은 방향을 축과 앵커에서 **다시 세우므로** 1-c의 `pts2d` 되쓰기는 이 팔에서 **구조적으로 항등**이다. 즉 여기서 '배치가 안 좋아졌다'가 말하는 것은 **1-a(우회 제거)에 대한 것뿐**이다. 1-c·1-d의 판정자는 `confirm_dir.json`이다",
-    "⚠ **게이트 ②(바닥 탈출)는 개입에 대한 정보가 0이다**(7-R [2]) — 절단 0.2 안에 든 배치가 `fixed` 86 · `bypass` 86로 같다. 그 게이트가 말하는 것은 '이 하네스가 바닥에 붙어 있지 않다'는 **하네스의 성질**이지 1-a의 성질이 아니다. `gate.result.floor_gate_discriminates`가 그 사실을 낸다(#40의 자매 유형: 값이 0·1이 아니어도 대조 팔에서 같으면 자명하다)",
-    "⚠ **P1이 줄어든 몫에 손실이 섞여 있다**(7-R [4]·#15·#16) — 이 실행의 내역: P1 70 → 56 · P2 454 → 468 · P3 0 → 0 · **P0 76 → 76** · 카메라가 선 실행 524 → 524. P0은 차수가 풀린 것이 아니라 카메라가 아예 안 선 것이다 — '차수가 풀린다'를 P1 개수만으로 읽으면 그 손실이 안 보인다",
-    "**조용히 틀림의 분모가 팔마다 다르다**(#11) — `bypass` 3384 · `fixed` 3393 · `rule_vp_true_axis` 5432 · `true_vp_rule_axis` 2552 · `oracle` 6432 · `fixed_true_f` 3454 · `fixed_f_half` 3382 · `fixed_f_double` 3456 · `guard_off` 3471. 행 간 비율 비교는 **같은 양의 비교가 아니다**. 그래서 분자/분모를 그대로 낸다",
+    "⚠ **게이트 ②(바닥 탈출)는 개입에 대한 정보가 0이다**(7-R [2]) — 절단 0.2 안에 든 배치가 `fixed` 86 · `bypass` 64로 같다. 그 게이트가 말하는 것은 '이 하네스가 바닥에 붙어 있지 않다'는 **하네스의 성질**이지 1-a의 성질이 아니다. `gate.result.floor_gate_discriminates`가 그 사실을 낸다(#40의 자매 유형: 값이 0·1이 아니어도 대조 팔에서 같으면 자명하다)",
+    "⚠ **P1이 줄어든 몫에 손실이 섞여 있다**(7-R [4]·#15·#16) — 이 실행의 내역: P1 470 → 56 · P2 90 → 468 · P3 0 → 0 · **P0 40 → 76** · 카메라가 선 실행 560 → 524. P0은 차수가 풀린 것이 아니라 카메라가 아예 안 선 것이다 — '차수가 풀린다'를 P1 개수만으로 읽으면 그 손실이 안 보인다",
+    "**조용히 틀림의 분모가 팔마다 다르다**(#11) — `bypass` 3626 · `fixed` 3393 · `rule_vp_true_axis` 5432 · `true_vp_rule_axis` 2552 · `oracle` 6432 · `fixed_true_f` 3454 · `fixed_f_half` 3382 · `fixed_f_double` 3456 · `guard_off` 3471. 행 간 비율 비교는 **같은 양의 비교가 아니다**. 그래서 분자/분모를 그대로 낸다",
     "⚠⚠ **3점 세 구도에서 조용히 틀림이 정확히 1.000이다**(7-R [4-A] · #40 ②) — `by_composition`을 그 자리에서 읽는다. 집계 형태 오차가 좋아지는 것은 **층 구성**이 바뀐 것일 수 있다(카메라가 선 실행이 늘면 저오차 층인 1pt 구도의 비중이 는다, #9). 층 내 개선과 층 구성 변화를 이 원장은 **안 가른다**",
     "**위약 팔이 없다**(#39) — `bypass`는 양성 채널(옛 배선)이지 위약이 아니다. 다만 이번 개입은 '해를 얼마나 옮기는가'가 아니라 **배선 제거**라 위약의 대상이 애매하다",
     "**#12·#13**: 절단 셋·잡음 다섯·등급 둘·순서 둘·시드 여섯(`by_seed`)을 다 냈지만 **조리개(8px)와 `RULE_TOL.screen_axis_deg`(4°)는 동작점 하나다**. 4°가 결론을 지탱하므로 `screen_h_operating_point`가 **입력 쪽 카운터**를 2°·4°·8°로 낸다 — 규칙을 다시 돌리는 스윕은 아니다(7-R [7])"

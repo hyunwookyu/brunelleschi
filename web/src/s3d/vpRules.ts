@@ -264,7 +264,16 @@ export interface RLine { a: Pt2; b: Pt2 }
 /** 축 슬롯 하나. 0·1은 수평(지평선 위), 2는 수직 — `PlaceCtx.vps`의 관례와 같다. */
 export type Slot =
   /** 화면 평행 축 — 소실점이 무한원이다(c=0). `dir`이 화면에서의 방향이다. */
-  | { kind: "screen"; dir: "h" | "v"; support: number }
+  | { kind: "screen"; dir: "h" | "v"; support: number;
+      /**
+       * **의도 선언이었는가**(2026-08-19 14차 항목 3 · D-L96 — D-L89의 연장): 직교
+       * 스냅이 잡았거나(hint "screen" — 사용자가 스냅을 보고 받아들였다) 물음에
+       * "화면"이라 답한(forced) 가로축만 true다. 얕은 참-깊이선의 **우연 분류**(≤4°,
+       * 무스냅 하네스 경로)는 undefined로 남는다 — 그 구분이 unambiguous(깊이선 둘
+       * 확정)의 문이다: 우연 분류에 그 문을 열면 2점을 그리려던 것이 1점으로 굳는다
+       * (무잡음 합성에서 31.6° 붕괴로 실측). 옛 저장본에는 이 키가 없다(= 미선언).
+       */
+      declared?: boolean }
   /** 유한 소실점. `source`가 **어떻게 정해졌는지**이고 화면에 그대로 낸다. */
   | { kind: "vp"; at: Pt2; source: VpSource; support: number };
 
@@ -750,6 +759,30 @@ const finiteHorizontals = (st: RuleState): { i: 0 | 1; at: Pt2 }[] =>
  *   `hint`는 **가드에 안 닿는다** — 애매 구간에서만 읽히고 가드는 그대로 묻는다.
  *   그 분리가 가능해진 것은 물음에 `site`가 붙었기 때문이다(지시 2-a).
  */
+/**
+ * **가로축이 선언되는 순간 대기 깊이선 풀을 재해결한다**(14차 항목 3 · D-L96).
+ * 선언 아래서는 깊이축이 하나뿐이므로 수렴한 두 선이면 소실점이다(resolvePool의
+ * unambiguous). 성립하면 확정 사건을, 아니면 null(호출부가 종전 사건을 낸다).
+ * `st`는 이미 복제본이다(stepRule 안에서만 부른다).
+ */
+function resolveDeclaredPool(
+  st: RuleState, imgSize: [number, number], cfg: RuleCfg,
+): StepResult | null {
+  if ((st.depthLines?.length ?? 0) < 2) return null;
+  if (finiteHorizontals(st).length > 0) return null;
+  const got = resolvePool(st.depthLines!, imgSize, true, cfg);
+  const slot = ([0, 1] as const).find(i => !st.slots[i]);
+  if (!got || slot == null) return null;
+  const pair = st.depthLines![got.members[0]];
+  st.slots[slot] = { kind: "vp", at: got.at, source: "two_lines", support: got.support };
+  st.horizon = got.at[1];
+  st.depthLines = [];
+  return { state: st,
+           event: { type: "vp_fixed", axis: slot, at: got.at, source: "two_lines",
+                    horizonSet: true,
+                    paired: { a: [pair.a[0], pair.a[1]], b: [pair.b[0], pair.b[1]] } } };
+}
+
 export function stepRule(
   st0: RuleState, line: RLine, imgSize: [number, number],
   forced?: "screen" | "depth", cfg: RuleCfg = {},
@@ -800,10 +833,22 @@ export function stepRule(
   }
 
   // ---- a. 화면 가로세로 선은 축 자체다 (무한원, 이론서 2.2)
+  const screenIntent = forced === "screen" || hint === "screen";
   if (kind === "screen_h") {
     for (const i of [0, 1] as const) {
       const s = st.slots[i];
-      if (s && s.kind === "screen" && s.dir === "h") { s.support += 1; return { state: st, event: { type: "support", axis: i } }; }
+      if (s && s.kind === "screen" && s.dir === "h") {
+        s.support += 1;
+        // **의도가 뒤늦게 확인되면 선언으로 승격한다**(D-L96) — 스냅이 잡은 가로선이
+        // 하나라도 오면 그 축은 선언이다. 그리고 선언 순간 대기 풀을 재해결한다(아래
+        // 신규 선언 가지와 같은 규약 — 순서 무관).
+        if (screenIntent && !s.declared) {
+          s.declared = true;
+          const got2 = resolveDeclaredPool(st, imgSize, cfg);
+          if (got2) return got2;
+        }
+        return { state: st, event: { type: "support", axis: i } };
+      }
     }
     // ⚠⚠ **P2가 확정된 뒤에는 가로선이 축이 아니다**(2026-08-17 지시 1 — P2 → P1 전이는 없다).
     //
@@ -843,7 +888,17 @@ export function stepRule(
       return { state: st0, event: { type: "rejected",
         why: "수평 축이 이미 둘 다 정해졌습니다 — 이 선은 축이 아니라 그 축들 중 하나의 지지선입니다" } };
     }
-    st.slots[free] = { kind: "screen", dir: "h", support: 1 };
+    st.slots[free] = { kind: "screen", dir: "h", support: 1,
+                       ...(screenIntent ? { declared: true } : {}) };
+    // **선언된 가로선이 대기 깊이선들을 그 자리에서 확정시킨다**(14차 항목 3 · D-L96 —
+    // 11-1의 "+수평선 → 1점 확정"). 선언(스냅·답변 — screenIntent)이면 깊이축이
+    // 하나뿐이므로 이미 수렴해 있는 대기 깊이선 둘의 교점이 소실점이다 — 옛 판은
+    // 깊이선이 **나중에** 올 때만 풀을 봐서, 재현 기하(깊이 둘 → 수직 → 수평)에서
+    // 넷이 전부 대기로 남았다. 우연 분류(무의도)는 종전대로 축 기록만 하고 대기한다.
+    if (screenIntent) {
+      const got = resolveDeclaredPool(st, imgSize, cfg);
+      if (got) return got;
+    }
     return { state: st, event: { type: "screen_axis", axis: free, dir: "h" } };
   }
   if (kind === "screen_v") {
@@ -910,13 +965,21 @@ export function stepRule(
     if (finiteHorizontals(st).length === 0) {
       const pool = st.depthLines ?? (st.depthLines = []);
       pool.push({ a: [line.a[0], line.a[1]], b: [line.b[0], line.b[1]] });
-      // ⚠⚠ **8차 항목 1-a가 이 조건을 죽였다.** 옛 판은 `order === 1`이면 두 선으로 정했고
-      // ("화면 가로축이 이미 서 있으면 깊이축은 하나뿐이다"), P1이 **가로선만으로** 섰으므로
-      // 그 지름길이 실제로 자주 열렸다. 이제 P1은 **깊이 소실점이 있어야** 서므로
-      // (`perspectiveOrder`) **유한 수평 소실점이 0인 이 가지에서 order는 1일 수 없다.**
-      // 그래서 **언제나 세 번째 선을 기다린다** — 화면 가로선이 기록돼 있어도 마찬가지다.
-      // 그것이 지시 1-a의 "깊이 소실점이 없으면 축만 기록하고 대기"다(D-L69의 기본 경로).
-      const unambiguous = false;
+      // **선언된 화면 가로축이 있으면 깊이축은 하나뿐이다**(2026-08-19 14차 항목 3 ·
+      // D-L96 — 11차 지시 11-1의 "+수평선 → 1점 확정" 복원).
+      //
+      // ⚠ 8차 1-a는 여기서 **언제나 셋째 선을 기다렸다**(unambiguous를 상수 false로).
+      // 대기의 이유는 "어느 둘이 같은 축인가"이고, 가로축이 **선언**돼 있으면 남은
+      // 수평축이 하나라 그 물음이 없다(`horizontalTarget` 머리말의 그 논리). 실측
+      // 재현(14차 지시 3): 깊이선 둘(수렴)+수직+수평이 넷 다 대기였다.
+      // ⚠⚠ **선언(declared)만 연다 — 슬롯 존재로 열면 안 된다**(초판이 그랬고 무잡음
+      // 합성에서 31.6° 붕괴로 실측됐다): 얕은(≤4°) 참-깊이선의 우연 screen_h 분류가
+      // 슬롯을 차지한 상태에서 다른 축 두 선이 이 지름길로 굳으면 **2점이 1점이 된다** —
+      // 6차·8차가 막은 그 결함이다. 선언의 정의는 D-L89와 같다(스냅이 잡았거나 답했다).
+      const unambiguous = ([0, 1] as const).some(i => {
+        const s = st.slots[i];
+        return s != null && s.kind === "screen" && s.dir === "h" && s.declared === true;
+      });
       const got = resolvePool(pool, imgSize, unambiguous, cfg);
       if (!got) return { state: st, event: { type: "waiting", have: pool.length } };
       st.slots[target.index] = { kind: "vp", at: got.at, source: "two_lines",
@@ -943,7 +1006,14 @@ export function stepRule(
         i => i !== target.index && st.slots[i]?.kind === "screen");
       const other = emptyOther ?? tentativeH ?? null;
       const displacedScreenH = emptyOther == null && tentativeH != null;
-      if (other != null && got.rest.length) {
+      // ⚠ **unambiguous(화면 가로축 선언)면 두 번째 축 탐색·밀어내기를 안 한다**(14차
+      // 항목 3): 그 선언 아래서 모이지 않은 나머지는 같은 축의 어긋난 선이지 두 번째
+      // 축이 아니고, 선언된 가로축을 밀어내면 사용자의 1점 선언을 뒤집는 것이다.
+      // ⚠⚠ 그 귀결로 **8차 1-d의 밀어내기(displacedScreenH)는 도달 불가가 됐다**(D-L96):
+      // tentativeH가 있으면 unambiguous라 깊이선 둘에서 이미 확정이 나고, 세 선이 두
+      // 축으로 갈리는 상태(밀어내기의 유일한 입구)에 못 간다. emptyOther 경로(순수
+      // 깊이선만의 두 축 동시 확정)는 그대로 산다 — 코드는 그 경로가 쓴다.
+      if (!unambiguous && other != null && got.rest.length) {
         const cand = got.rest
           .map(k => ({ k, at: vpOnHorizon(repOfLine(pool[k]), st.horizon) }))
           .filter((x): x is { k: number; at: Pt2 } => !!x.at && isFiniteVp(x.at, imgSize))

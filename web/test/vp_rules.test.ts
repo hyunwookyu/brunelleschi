@@ -198,15 +198,16 @@ describe("b. 첫 소실점 = 한 축으로 모인 **세** 깊이선의 교점 (6
   //
   // 지시 2-1의 **대기 규칙 표**를 그대로 시험으로 옮긴다. 위 시험들이 세 행(대각선 1·2·셋이
   // 한 축·셋이 갈림)을 이미 덮으므로 여기서는 **남은 세 행**과 **2-5**(빈 캔버스 첫 대각선)를 낸다.
-  it("**2-1 표** — 수평선이 오면 화면 평행 축이 생기지만 **1점은 아직이다**", () => {
+  it("**2-1 표** — **무의도**(분류뿐) 수평선이 오면 축만 생기고 1점은 아직이다", () => {
     // 대각선 둘로 대기 중인 상태에서 수평선을 그으면 그것이 축이다(표 다섯째 줄)
+    // ⚠⚠ **14차 항목 3(D-L96)이 이 자리를 갈랐다**: hint "screen"(스냅·답변 = 선언)이면
+    // 그 자리에서 1점이 선다 — 그 팔은 "14차 항목 3" 절에 있다. 여기(무의도 —
+    // 얕은 오분류의 자리)는 8차 1-a의 대기가 그대로다.
     let st = stepRule(newRuleState(SZ), toward([200, 600]), SZ).state;
     st = stepRule(st, toward([300, 640]), SZ).state;
     expect(perspectiveOrder(st)).toBe(0);
     const r = stepRule(st, line([120, 500], [520, 500]), SZ);
     expect(r.event.type).toBe("screen_axis");
-    // ⚠⚠ **1 → 0으로 뒤집혔다**(8차 지시 1-a). 축은 생겼지만 **깊이 소실점이 아직 없다** —
-    // 대각선 둘은 여전히 대기이고(셋째 선이 정한다, D-L69) 카메라는 안 섰다.
     expect(perspectiveOrder(r.state)).toBe(0);
     expect(r.state.slots[0]).toMatchObject({ kind: "screen", dir: "h" });
   });
@@ -346,6 +347,76 @@ describe("b. 첫 소실점 = 한 축으로 모인 **세** 깊이선의 교점 (6
     expect(r.state.slots[1]).toBeNull();
   });
 
+  describe("14차 항목 3 — **선언된** 수평선이 깊이축을 하나로 만든다 (D-L96 · 11-1 복원)", () => {
+    const V3: Pt2 = [700, 300];
+    const toward3 = (from: Pt2, t = 0.4): RLine =>
+      line(from, [from[0] + (V3[0] - from[0]) * t, from[1] + (V3[1] - from[1]) * t]);
+    // **선언 = 스냅이 잡았거나 답했다**(D-L89) — 앱 경로는 직교 스냅이 hint "screen"을
+    // 싣는다(mainL hint2d). 하네스는 그 신호를 그대로 흉내 낸다(#17).
+    const declareH = (st: RuleState, l: RLine) => stepRule(st, l, SZ, undefined, {}, "screen");
+
+    it("**재현 기하** — 깊이선 둘(수렴) + 수직 + **스냅 잡힌** 수평: 수평선이 그 자리에서 1점을 세운다", () => {
+      // 14차 지시 3의 실측 재현: 이 넷이 **전부 대기**였다(8차 1-a가 unambiguous를 죽여서)
+      let st = newRuleState(SZ);
+      st = stepRule(st, toward3([200, 600]), SZ).state;          // 깊이 1 — 대기
+      st = stepRule(st, toward3([300, 640]), SZ).state;          // 깊이 2 — (옛 판은 계속) 대기
+      expect(st.slots[0]).toBeNull();                            // 아직 안 선다 — 11차 규칙 그대로
+      st = stepRule(st, line([100, 50], [100, 500]), SZ).state;  // 수직 → 화면 세로축
+      const r = declareH(st, line([100, 620], [400, 620]));      // 수평(스냅) — **여기서 선다**
+      expect(r.event.type).toBe("vp_fixed");
+      if (r.event.type === "vp_fixed") {
+        // 소실점은 **그린 두 깊이선의 실제 교점**이다 — 수평선이 만든 점이 아니다
+        expect(r.event.at[0]).toBeCloseTo(V3[0], 6);
+        expect(r.event.at[1]).toBeCloseTo(V3[1], 6);
+        expect(r.state.horizon).toBeCloseTo(V3[1], 6);           // 지평선 = 그 y(롤 0)
+      }
+      expect(perspectiveOrder(r.state)).toBe(1);                 // 화면 가로축 + 깊이 소실점
+      expect(r.state.depthLines ?? []).toHaveLength(0);          // 풀이 비워졌다
+    });
+
+    it("선언이 **먼저**면 둘째 깊이선이 확정한다 — unambiguous의 복원", () => {
+      const st = declareH(newRuleState(SZ), line([0, 100], [400, 100])).state;  // 가로 선언
+      const r1 = stepRule(st, toward3([200, 600]), SZ);
+      expect(r1.event.type).toBe("waiting");                     // 하나로는 교점이 없다
+      const r2 = stepRule(r1.state, toward3([340, 650]), SZ);
+      expect(r2.event.type).toBe("vp_fixed");                    // **둘로 선다** — 축이 하나뿐
+      expect(perspectiveOrder(r2.state)).toBe(1);
+    });
+
+    it("**지지선이 뒤늦게 선언을 만들면 그 순간 선다** — 우연 분류 뒤 스냅 가로선", () => {
+      let st = stepRule(newRuleState(SZ), line([0, 100], [400, 100]), SZ).state; // 우연(무의도)
+      st = stepRule(st, toward3([200, 600]), SZ).state;
+      st = stepRule(st, toward3([300, 640]), SZ).state;          // 무의도라 아직 대기다
+      expect(([0, 1] as const).every(i => st.slots[i]?.kind !== "vp")).toBe(true);
+      const r = declareH(st, line([0, 300], [400, 300]));        // 스냅 가로선 → 선언 승격
+      expect(r.event.type).toBe("vp_fixed");
+      expect(perspectiveOrder(r.state)).toBe(1);
+    });
+
+    it("**반례**(#30) — 수평 선언이 없으면 종전대로 두 선은 대기다(11차 규칙 불변)", () => {
+      let st = newRuleState(SZ);
+      st = stepRule(st, toward3([200, 600]), SZ).state;
+      const r = stepRule(st, toward3([300, 640]), SZ);
+      expect(r.event.type).toBe("waiting");                      // 세 번째 선이 정한다
+      expect(r.state.slots[0]).toBeNull();
+      // 수직 선언은 수평이 아니다 — 깊이축의 개수를 안 줄인다(같은 대기)
+      const st2 = stepRule(r.state, line([100, 50], [100, 500]), SZ).state;
+      expect(([0, 1] as const).every(i => st2.slots[i] == null || st2.slots[i]!.kind !== "vp"))
+        .toBe(true);
+    });
+
+    it("**반례**(#30 — 무잡음 붕괴의 재현 방지) — **우연 분류** 가로축 아래서는 두 선이 안 선다", () => {
+      // hint 없이 분류만으로 들어온 가로축(얕은 참-깊이선의 오분류 자리) — 슬롯은 차지만
+      // 선언이 아니므로 unambiguous가 안 열린다. 초판(슬롯 존재로 열기)은 여기서
+      // 다른 축 두 선의 교점(공간의 한 점)을 소실점으로 굳혔다 — 31.6° 붕괴의 기전.
+      let st = stepRule(newRuleState(SZ), line([0, 100], [400, 100]), SZ).state;
+      expect(st.slots[0]).toMatchObject({ kind: "screen", dir: "h" });
+      st = stepRule(st, toward3([200, 600]), SZ).state;
+      const r = stepRule(st, toward3([300, 640]), SZ);
+      expect(r.event.type).toBe("waiting");                      // 종전대로 셋째를 기다린다
+    });
+  });
+
   it("화면 가로축이 이미 있으면 소실점은 다른 슬롯으로 간다", () => {
     // ⚠ 깊이선이 **셋**이다(8차 지시 1-a): 옛 판은 화면 가로축이 있으면 둘로 정했는데
     // (`unambiguous = order === 1`), P1이 가로선만으로 서던 그 지름길이 없어졌다.
@@ -430,23 +501,17 @@ describe("c. 두 번째 소실점도 같은 지평선 위다", () => {
    *
    * 이 시험이 그 **회귀 팔**이다 — 대체를 되살리면 여기가 먼저 깨진다.
    */
-  // ⚠⚠⚠ **이 칸의 계약이 2026-08-18 8차 지시 1-d로 뒤집혔다.**
-  //
-  // 옛 시험의 이름은 "화면 가로축 선언은 두 번째 소실점이 **못 밀어낸다**"였고, 근거는
-  // "화면 가로선을 그은 것은 1점 투시를 **선언**한 것"이었다. **그 전제가 틀렸다** —
-  // 가로선은 수평축의 존재를 말할 뿐 카메라가 섰다는 뜻이 아니고(지시 1-a), 손 오차로
-  // 얕아진 깊이 모서리가 그 자리에 들어오면 **P2가 영영 도달 불가**가 됐다
-  // (`first_declaration.screen_h` 497/600 — 그 잠김의 두 번째 층).
-  //
-  // 새 계약: **카메라가 서기 전의 가로축 기록은 잠정**이고, 두 축이 한 번에 정해지면
-  // 밀려난다. **P1이 실제로 선 뒤에는 여전히 불가역이다**(아래 둘째 팔이 그것을 지킨다).
-  it("**1-d** — 잠정 화면 가로축은 두 번째 소실점이 **밀어낸다**(P2가 도달 가능해야 한다)", () => {
+  // ⚠⚠⚠ **이 칸의 계약이 2026-08-18 8차 지시 1-d로 뒤집혔고, 14차 항목 3(D-L96)이
+  // 사거리를 갈랐다**: 밀어내기는 **무의도 잠정 가로축**(분류뿐 — 얕은 오분류의 자리)에만
+  // 남는다. **선언된 가로축**(스냅·답변)은 깊이선 둘에서 P1을 세우므로 밀어내기 입구에
+  // 못 가고, 그 뒤의 다른 축 선은 P1 불가역(D-L53)으로 거절된다(아래 14차 팔).
+  it("**1-d** — **무의도** 잠정 가로축은 두 번째 소실점이 밀어낸다(P2가 도달 가능해야 한다)", () => {
     let st = feed([[line([0, 100], [400, 100])], [line([100, 50], [100, 500])]]);
     expect(st.slots[0]).toMatchObject({ kind: "screen", dir: "h" });
     expect(perspectiveOrder(st)).toBe(0);                      // 아직 카메라가 안 섰다
     // V1로 둘 + V2로 하나 → 갈리므로 **2점이 한 번에 선다**(D-L69)
     st = feed([[seg(P0, V1)], [seg([560, 600], V1)]], st);
-    expect(perspectiveOrder(st)).toBe(0);                      // 둘까지는 대기
+    expect(perspectiveOrder(st)).toBe(0);                      // 무의도라 둘까지는 대기
     const r = stepRule(st, seg(P0, V2), SZ);
     expect(r.event.type).toBe("vp_fixed");
     expect(perspectiveOrder(r.state)).toBe(2);                 // **P2에 도달했다**
@@ -454,6 +519,22 @@ describe("c. 두 번째 소실점도 같은 지평선 위다", () => {
     expect(r.state.slots[1]).toMatchObject({ kind: "vp" });
     // **조용히 바꾸지 않는다**(A-3) — 밀어낸 사실을 사건에 실어 알린다
     if (r.event.type === "vp_fixed") expect(r.event.displacedScreenH).toBe(true);
+  });
+
+  it("**14차 3** — **선언된** 가로축 아래 깊이선 둘이 P1을 세우고, 이후 다른 축 선은 거절된다(D-L53)", () => {
+    let st = stepRule(newRuleState(SZ), line([0, 100], [400, 100]), SZ,
+                      undefined, {}, "screen").state;          // 스냅이 잡은 가로선 = 선언
+    st = feed([[line([100, 50], [100, 500])]], st);
+    expect(perspectiveOrder(st)).toBe(0);                      // 아직 카메라가 안 섰다
+    st = feed([[seg(P0, V1)]], st);
+    expect(perspectiveOrder(st)).toBe(0);                      // 한 선으로는 교점이 없다
+    const r1 = stepRule(st, seg([560, 600], V1), SZ);
+    expect(r1.event.type).toBe("vp_fixed");                    // **둘째 선이 P1을 세운다**
+    expect(perspectiveOrder(r1.state)).toBe(1);
+    const r2 = stepRule(r1.state, seg(P0, V2), SZ);
+    expect(r2.event.type).toBe("rejected");                    // P1 불가역 — 안 밀린다
+    expect(perspectiveOrder(r2.state)).toBe(1);
+    expect(([0, 1] as const).some(i => r2.state.slots[i]?.kind === "screen")).toBe(true);
   });
 
   it("**회귀** — P1이 **실제로 선 뒤에는** 축을 안 향하는 깊이선이 거절되고 안 밀린다", () => {
