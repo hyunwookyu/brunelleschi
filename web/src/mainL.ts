@@ -340,6 +340,29 @@ const SHOW_GUIDES = { on: true };
 /** **격자 토글**(지시 5-5). 기본 켬 — 지면 정사각 격자의 투영이다(화면 각도 균등분할 아님). */
 const SHOW_GRID = { on: true };
 /**
+ * **지평선 토글**(2026-08-19 15차 항목 5 · D-L104). 기본 **끔**.
+ *
+ * 두 지시가 여기서 만난다.
+ *   · 4차 지시 4-a: **미리 깔린 지평선은 빈 종이 감각을 해친다** — 지평선은 결과다(D-L59 ②).
+ *   · 15차 지시 5: **선 위에서 드래그** — 그런데 D-L45의 끌기는 "소실점이 서기 전에만"이다.
+ *
+ * 두 술어가 **상호배타**여서 끌기 경로가 통째로 죽어 있었다(`horizonVisible()`은 소실점이
+ * 서야 참이고 `horizonAdjustable()`은 소실점이 서면 거짓 — 둘 다 요구하던 `horizonGrab`이
+ * 어느 상태에서도 참이 안 됐다). 값은 `horizon_drag.json`의 `arms.off`가 든다.
+ *
+ * **토글이 그 충돌을 푼다**: 기본은 끔이라 빈 종이가 그대로고(4차 4-a), 켜면 소실점이
+ * 서기 전의 지평선이 보이고 **끌린다**(D-L45의 원래 의도 — "조작은 소실점이 서기 전에만
+ * 열린다. 그 뒤로는 궤도가 지평선을 바꾼다").
+ *
+ * ⚠ **소실점이 선 뒤에는 이 토글과 무관하게 보이고, 무관하게 안 끌린다** — 그 지평선은
+ * 결과이고(D-L59 ②) 옮기면 소실점이 자기 지지선에서 떨어진다(D-L32의 실측: 사후 사영이
+ * 배치를 2049 → 792로 떨어뜨렸다). 15차 지시 5의 "확정 후 조작 가능 여부 판단"에 대한
+ * 이 항목의 답은 **못 옮긴다**이고, 근거는 새로 재지 않고 D-L32를 든다.
+ *
+ * 측정 스위치(#30)를 겸한다 — `S2S.setShowHorizon(false)`가 수리 전 거동(끌기 도달 불가)이다.
+ */
+const SHOW_HORIZON = { on: false };
+/**
  * **오스냅 설정**(지시 H — 라이노 방식). 반경은 **화면 픽셀**이고 확대·축소와 무관하다
  * (지시문 그대로 — 포인터 정밀도의 문제라 선례도 절대 px: SketchUp/Rhino 조리개 10~15px).
  * 기본 15px — 옛 기본(`SNAP_TOL.radius_ratio` 0.05 = 960×672에서 58.6px)이 "너무 넓다"는
@@ -2184,7 +2207,11 @@ const horizonVisible = (): boolean =>
   ([0, 1] as const).some(i => {
     const s = cam.rules.slots[i];
     return s != null && s.kind === "vp";
-  });
+  })
+  // **토글이 켜져 있고 아직 끌 수 있으면 보인다**(15차 항목 5 · D-L104) — 이 갈래가
+  // 없으면 "보인다"와 "끌 수 있다"가 상호배타라 끌기가 **어느 상태에서도 안 열린다**.
+  // 기본이 끔이라 빈 종이 감각(4차 지시 4-a)은 그대로다.
+  || (SHOW_HORIZON.on && cam.canSetHorizon());
 
 /**
  * **지금 시점의 표시 문맥**(14차 항목 6-c) — 소실점·지평선·그리드를 돌린 작도 시점에서도
@@ -3327,6 +3354,11 @@ function renderBar() {
     btn("axissnap", `축 스냅 ${AXIS_SNAP.on ? "켬" : "끔"}`, AXIS_SNAP.on, false, fold),
     btn("relsnap", `정렬 ${REL_SNAP.on ? "켬" : "끔"}`, REL_SNAP.on, false, fold),
     btn("showgrid", `격자 ${SHOW_GRID.on ? "켬" : "끔"}`, SHOW_GRID.on, false, fold),
+    // **지평선 토글**(15차 항목 5 · D-L104) — 소실점이 선 뒤에는 **잠긴다**(D-L32).
+    // 잠김을 라벨이 말한다: 아무 말 없이 안 잡히면 사용자는 고장으로 읽는다
+    btn("showhorizon", `지평선 ${cam.canSetHorizon() ? (SHOW_HORIZON.on ? "켬" : "끔")
+                                                    : "잠김"}`,
+        SHOW_HORIZON.on && cam.canSetHorizon(), !cam.canSetHorizon(), fold),
     btn("showguide", `보조선 ${SHOW_GUIDES.on ? "보임" : "숨김"}`, SHOW_GUIDES.on, false, fold),
     btn("osnap", `스냅 ${OSNAP.radiusPx}px`, OSNAP.open, false, fold),
     ...(BAR_MENU.open && OSNAP.open ? [
@@ -3562,6 +3594,19 @@ const onActClick = (e: Event) => {
   else if (act === "showgrid") {
     SHOW_GRID.on = !SHOW_GRID.on;
     note = "";
+  }
+  else if (act === "showhorizon") {
+    // **소실점이 선 뒤에는 못 켠다**(D-L104 — 그 지평선은 결과이고 안 끌린다). 버튼도
+    // `disabled`이지만 여기서 한 번 더 막는다: 판정을 표시와 처리 둘로 안 나눈다(#17)
+    if (!cam.canSetHorizon()) {
+      note = "지평선은 **소실점이 서면서 잠겼습니다** — 그 뒤로는 궤도가 지평선을 바꿉니다";
+    } else {
+      SHOW_HORIZON.on = !SHOW_HORIZON.on;
+      note = SHOW_HORIZON.on
+        ? "지평선 **켬** <span class=\"dim\">(선 위 어디서나 끌 수 있습니다 — 끄는 것은"
+          + " 카메라 피치를 주는 것입니다. 소실점이 서면 잠깁니다)</span>"
+        : "지평선 **끔**";
+    }
   }
   else if (act === "menu") { BAR_MENU.open = !BAR_MENU.open; }
   else if (act === "relsnap") {
@@ -3904,6 +3949,12 @@ refresh();
                       pinned2d: stroke2dAnchor ? stroke2dAnchor.kind : null }),
   /** 측정 스위치(#30) — `false`가 수리 전 거동(착지점으로 스냅을 다시 묻는다)이다. */
   setHoverLock: (on: boolean) => { HOVER_LOCK.on = on; },
+  /**
+   * **호버 상태를 지운다** — 하네스가 «호버를 안 거친 획»을 만들 때 쓴다(지시 4-c ⑦).
+   * 앱 경로는 이 함수를 안 부른다(호버가 지워지는 자리는 획 끝·도구 전환이고 그것은
+   * 각자 지운다) — 여기 두는 이유는 종단이 그 상태를 **만들 수단이 없기** 때문이다.
+   */
+  clearHover: () => { hoverSnap = null; hover2d = null; hoverAt = null; refresh(); },
   /** **확정 배치 연결 되맞춤**(15차 항목 1 · D-L98) — 분모(attempts)와 함께 낸다(#43). */
   liftAnchor: () => ({ on: LIFT_ANCHOR.on, ...liftAnchorStats }),
   /** 측정 스위치(#30) — `false`가 수리 전 거동(rep 끝점 그대로)이다. */
@@ -3969,6 +4020,11 @@ refresh();
   showGuides: () => SHOW_GUIDES.on,
   showGrid: () => SHOW_GRID.on,
   setShowGrid: (on: boolean) => { SHOW_GRID.on = on; refresh(); },
+  /** **지평선 토글**(15차 항목 5 · D-L104) — 켜짐과 **잠김**을 갈라 낸다. */
+  showHorizon: () => ({ on: SHOW_HORIZON.on, locked: !cam.canSetHorizon(),
+                        visible: horizonVisible() }),
+  /** 측정 스위치(#30) — `false`가 수리 전 거동(끌기가 어느 상태에서도 안 열린다)이다. */
+  setShowHorizon: (on: boolean) => { SHOW_HORIZON.on = on; refresh(); },
   /** **관계 스냅**(4차 지시 5) — 종단 확인이 앱 경로 그대로 읽고 쓴다(#17). */
   relSnap: () => REL_SNAP.on,
   setRelSnap: (on: boolean) => { REL_SNAP.on = on; refresh(); },

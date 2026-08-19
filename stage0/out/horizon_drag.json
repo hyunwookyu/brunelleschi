@@ -1,0 +1,419 @@
+{
+ "what": "지평선이 **선 위 어디서나** 끌리는가, 그리고 소실점이 선 뒤에는 잠기고 그 잠김이 화면에 말해지는가(지시 5).",
+ "how": {
+  "arms": "상태 넷(빈 화면 · 끌기 · 소실점 섬 · 확정 후)을 **토글 켬/끔**으로 두 번 돈다. 끔이 수리 전 거동이다(#30) — 그 팔에서 `grab_at`이 **전부 거짓**인 것이 재현이다.",
+  "grab": "`grab_at`은 선 위 **세 자리**(가로 15%·50%·85%)에서 묻는다 — 손잡이 하나가 아니라 «선 위에서»가 지시이기 때문이다. `grab_off`는 선에서 70px 떨어진 반례다.",
+  "moved": "끌기의 효과는 **실제로 옮겨진 px**(`dragged.moved_px`)로 잰다 — 요청한 dy가 아니다(#49: 판정이 드는 양은 결과다). 화면 경계에서 잘리므로 둘이 갈릴 수 있다."
+ },
+ "what_this_does_not_say": [
+  "dpr 1·마우스·한 픽스처다(#12·#21). 터치의 지평선 끌기는 여기서 안 돈다 — 그 라우팅은 `touch_route.spec.ts`가 든다.",
+  "**«확정 후 못 옮긴다»의 근거를 여기서 재지 않는다**(#5) — 그 값은 D-L32의 실측(사후 사영 배치 2049 → 792)이고 이 원장은 **잠겼는가와 그것을 말하는가**만 든다.",
+  "**지평선을 옮긴 뒤의 배치 정확도는 안 잰다** — 옮기는 것이 열리는 상태에는 놓인 획이 아직 없다(소실점이 서기 전이다). 그래서 잴 배치가 구성상 없다.",
+  "**롤이 있는 시점의 잡기는 안 잰다**(#49의 잔여): 그려지는 지평선은 두 소실점을 잇는 **선분**인데(D-L101) 잡기 판정은 스칼라 y 밴드다. 둘이 갈리는 것은 소실점이 선 뒤이고 그때는 **안 잡히므로** 지금은 갈릴 자리가 없다 — 확정 후 끌기가 열리면 그때 점-선분 거리로 옮긴다(`DEFERRED`).",
+  "토글 자체의 화면 칠해짐(버튼 라벨·`disabled`)은 `toggle.locked`로만 잰다 — 픽셀은 안 잰다."
+ ],
+ "arms": {
+  "on": {
+   "on": true,
+   "empty": {
+    "y": 337.5,
+    "visible": true,
+    "adjustable": true,
+    "toggle": {
+     "on": true,
+     "locked": false,
+     "visible": true
+    },
+    "grab_at": [
+     true,
+     true,
+     true
+    ],
+    "grab_off": false
+   },
+   "dragged": {
+    "requested_dy_px": 60,
+    "y_before": 337.5,
+    "y_after": 397.5,
+    "moved_px": 60,
+    "strokes": 0
+   },
+   "stood": {
+    "y": 69.6,
+    "visible": true,
+    "adjustable": false,
+    "toggle": {
+     "on": true,
+     "locked": true,
+     "visible": true
+    },
+    "grab_at": [
+     false,
+     false,
+     false
+    ],
+    "grab_off": false
+   },
+   "confirmed": {
+    "y": 69.6,
+    "visible": true,
+    "adjustable": false,
+    "toggle": {
+     "on": true,
+     "locked": true,
+     "visible": true
+    },
+    "grab_at": [
+     false,
+     false,
+     false
+    ],
+    "grab_off": false
+   }
+  },
+  "off": {
+   "on": false,
+   "empty": {
+    "y": 337.5,
+    "visible": false,
+    "adjustable": true,
+    "toggle": {
+     "on": false,
+     "locked": false,
+     "visible": false
+    },
+    "grab_at": [
+     false,
+     false,
+     false
+    ],
+    "grab_off": false
+   },
+   "dragged": {
+    "requested_dy_px": 60,
+    "y_before": 337.5,
+    "y_after": 337.5,
+    "moved_px": 0,
+    "strokes": 1
+   },
+   "stood": {
+    "y": 69.6,
+    "visible": true,
+    "adjustable": false,
+    "toggle": {
+     "on": false,
+     "locked": true,
+     "visible": true
+    },
+    "grab_at": [
+     false,
+     false,
+     false
+    ],
+    "grab_off": false
+   },
+   "confirmed": {
+    "y": 69.6,
+    "visible": true,
+    "adjustable": false,
+    "toggle": {
+     "on": false,
+     "locked": true,
+     "visible": true
+    },
+    "grab_at": [
+     false,
+     false,
+     false
+    ],
+    "grab_off": false
+   }
+  }
+ },
+ "summary": {
+  "on_grab_empty": [
+   true,
+   true,
+   true
+  ],
+  "off_grab_empty": [
+   false,
+   false,
+   false
+  ],
+  "on_grab_confirmed": [
+   false,
+   false,
+   false
+  ],
+  "off_grab_confirmed": [
+   false,
+   false,
+   false
+  ],
+  "on_visible": [
+   true,
+   true,
+   true
+  ],
+  "off_visible": [
+   false,
+   true,
+   true
+  ],
+  "locked": [
+   false,
+   true,
+   true
+  ],
+  "moved_px": [
+   60,
+   0
+  ],
+  "moved_gap_px": 60,
+  "strokes_after_drag": [
+   0,
+   1
+  ],
+  "grab_off_line": [
+   false,
+   false
+  ]
+ },
+ "gate": {
+  "registered": "지평선이 선 위 세 자리에서 잡히고 실제로 옮겨지며, 소실점이 선 뒤에는 잠기고 그 잠김이 `toggle.locked`로 나온다. 판정은 `summary`의 필드가 든다(#47).",
+  "reachability": "**옛 경로가 실제로 못 끌었는가** — 값은 두 팔의 **차**(`moved_gap_px` = 켬에서 옮겨진 px − 끔에서 옮겨진 px)다. 0이면 이 원장은 아무것도 안 말한다(#32·#40). 상태 **수**를 값으로 안 쓴다(#46) — 옮겨진 px가 연속량이다. 두 팔의 값 자체는 `summary.moved_px`가 든다.",
+  "reachability_value": 60,
+  "reachability_source": "summary/moved_gap_px",
+  "reachability_value_fixture_determined": false,
+  "result": {
+   "on_grab_empty": [
+    true,
+    true,
+    true
+   ],
+   "off_grab_empty": [
+    false,
+    false,
+    false
+   ],
+   "on_grab_confirmed": [
+    false,
+    false,
+    false
+   ],
+   "off_grab_confirmed": [
+    false,
+    false,
+    false
+   ],
+   "on_visible": [
+    true,
+    true,
+    true
+   ],
+   "off_visible": [
+    false,
+    true,
+    true
+   ],
+   "locked": [
+    false,
+    true,
+    true
+   ],
+   "moved_px": [
+    60,
+    0
+   ],
+   "moved_gap_px": 60,
+   "strokes_after_drag": [
+    0,
+    1
+   ],
+   "grab_off_line": [
+    false,
+    false
+   ]
+  }
+ },
+ "selfcheck_notes": {
+  "off_moved_zero": "`moved_px[1]`(끔 팔)이 정확히 0인 것은 **수리 전 거동의 재현**이다 — 보장이 아니라 이 원장이 재려는 결함 자체이고, 그래서 임계를 건다(#5와 반대 방향: 0이 나와야 재현이 성립한다).",
+  "strokes_zero": "`strokes_after_drag` 0은 **끌기가 획으로 안 샌다**는 뜻이다(D-L45의 `dragMode` 분기). 끔 팔의 0은 다른 이유다 — 잡히지 않아 그 자리가 그리는 자리가 되는데, 그 끌기는 획으로 남을 수도 있다(그 수가 여기 그대로 나온다)."
+ },
+ "ui_constants": {
+  "pick_radius_ratio": 0.0145
+ },
+ "pitfall_citations": [
+  5,
+  12,
+  17,
+  21,
+  25,
+  30,
+  32,
+  35,
+  40,
+  42,
+  46,
+  47,
+  49,
+  50
+ ],
+ "errors": [],
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}
