@@ -240,23 +240,22 @@
     "what": "두 수평 소실점이 서 있을 수 있는 카메라를 내는가 — 대역과 거부",
     "thresholds": {
       "severe_f_ratio": 0.5,
-      "ok_f_ratio": 0.87,
-      "reject_fov_deg": 120
+      "ok_f_ratio": 0.87
     },
     "covered": 20,
-    "covered_note": "sweep + counter_example + off_screen + real_ink_reported + reported_12(file1·file2·old_gate) + reject_blocks_confirmation",
+    "covered_note": "sweep + counter_example + off_screen + real_ink_reported + reported_12(file1·file2) + extreme_fov_confirms + f2_negative_blocks",
     "sweep": [
       {
         "f_over_w": 0.2,
         "d_over_w": 0.4,
-        "band": "reject",
+        "band": "severe",
         "f": 192,
         "fov_deg": 136.4
       },
       {
         "f_over_w": 0.28,
         "d_over_w": 0.56,
-        "band": "reject",
+        "band": "severe",
         "f": 268.8,
         "fov_deg": 121.5
       },
@@ -339,8 +338,8 @@
       }
     ],
     "band_counts_ordered": [
-      2,
-      3,
+      0,
+      5,
       3,
       5
     ],
@@ -397,17 +396,16 @@
         "f": 87.2,
         "f_over_w": 0.074,
         "fov_deg": 163.19,
-        "band": "reject",
-        "band_under_old_gate": "severe",
-        "note": "화각 상한 초과 — 거부. `band_under_old_gate`가 **버그 되살림**이다(A-4): 상한이 없으면 severe로 확정을 지나간다 — 표본이 실측한 그 구멍. ⚠ **`f`와 `reported_f`의 일치는 구성의 항등이다**(#5 유형 3 · 2차 리뷰어 [9]): `reconstructed_offsets_px`가 a·b = f²의 해라서 f를 되뽑으면 정의상 87.2다 — 재구성 대수의 오타를 잡는 배선 확인일 뿐 측정이 아니다"
+        "band": "severe",
+        "note": "화각 163° — severe(참고 진단)로 **확정이 지나간다**(14차 지시 1 · D-L93: 12차의 상한 거부를 지시가 되돌렸다 — 넓은 화각은 결함이 아니라 선택. 12차의 `band_under_old_gate` 팔은 상수 제거로 함께 내렸다 — 옛 거동의 기록은 12차 원장 연혁이 든다). ⚠ **`f`와 `reported_f`의 일치는 구성의 항등이다**(#5 유형 3 · 2차 리뷰어 [9]): `reconstructed_offsets_px`가 a·b = f²의 해라서 f를 되뽑으면 정의상 87.2다 — 재구성 대수의 오타를 잡는 배선 확인일 뿐 측정이 아니다"
       }
     },
     "gate": {
-      "registered": "f² ≤ 0이면 **거부**한다. **화각이 `FOV_GATE.reject_fov_deg`(120°)를 넘으면 f² > 0이어도 거부한다**(12차 지시 1-c — 물리적으로 가능해도 쓸 수 없는 구간이 있다. 실획 둘째 표본의 보고 기하가 그 증거다 — `real_ink_reported_12.file2`). **f/W**(시거리 ÷ 화면 폭) < 0.87이면 경고하되 **확정은 막지 않는다**(지시 7-b: 경고하고 확정하되 표시). 화면 밖 소실점은 **정상**이므로 거르지 않는다. ⚠ **초판은 이 문장을 `d/W`로 적었고 6-R이 대역을 f/W로 옮겼는데 등록문이 안 따라왔다** — 7차 항목 4에서 정정했다(#24: 단위가 다르면 같은 임계가 아니다). **[7차 항목 4 추가]** 그 게이트가 **확정 경로에 걸려 있는지**는 `vp_rules.test.ts`의 배선 팔이 잠근다(거부 · 양성 채널 · 2점 동시 경로 · 12차의 화각 상한 배선 둘).",
-      "reachability": "대역이 실제로 갈리는가 — **쓸기가 네 대역 전부를 낸다**(12차부터 상한 거부가 f² > 0 격자에서도 나온다 — 0.2·0.28 행). f² ≤ 0 거부는 `counter_example`이 따로 낸다. 한 대역만 나오면 판정이 아니다(#30). `reachability_value`는 `band_counts_ordered` = **[reject, severe, warn, ok]** 순이다",
+      "registered": "**거부는 f² ≤ 0 하나다**(14차 지시 1 · D-L93 — 수학적으로 카메라가 없는 경우. ⛔ 12차 지시 1-c의 화각 상한 120°는 이 항목이 **되돌렸다** — 판정 지표를 바꾼 사유(#28)는 지시문이다: 상한은 임의 기준이었고 넓은 화각은 의도일 수 있다. 실획 둘째 표본(163°)은 이제 **확정이 지나가는 것이 명세다** — `real_ink_reported_12.file2`·`extreme_fov_confirms`). 대역(ok/warn/severe)은 **참고 진단**이고 확정도 표시도 안 가른다(지시 1-b·1-d — 이론서 18.4는 참고. 화각 경고 표시는 제거). 화면 밖 소실점은 **정상**이므로 거르지 않는다. ⚠ 옛 등록문의 연혁(d/W → f/W 단위 정정 · 12차 상한 신설)은 12차 원장이 든다. 확정 경로 배선은 `vp_rules.test.ts` 배선 팔 + 아래 stepRule 팔 둘이 잠근다.",
+      "reachability": "거부(f² ≤ 0)의 도달 가능성은 `counter_example`(fovGate 직접)과 `f2_negative_blocks`(stepRule 배선 — 확정이 실제로 안 선다)가 든다. 참고 대역 셋은 쓸기가 낸다 — `band_counts_ordered`의 severe·warn·ok가 전부 0이 아니다(reject 칸은 f² > 0 격자라 **구조적 0** — 위 주석). 극단 화각의 확정은 `extreme_fov_confirms`(양성 채널 #30)가 든다",
       "reachability_value": [
-        2,
-        3,
+        0,
+        5,
         3,
         5
       ],
@@ -417,9 +415,9 @@
         "real_ink_band": "severe",
         "real_ink_fov_deg": 102.42561961283505,
         "reported12_file1_band": "severe",
-        "reported12_file2_band": "reject",
-        "reported12_file2_band_under_old_gate": "severe",
-        "reject_blocks_confirmation": true,
+        "reported12_file2_band": "severe",
+        "extreme_fov_confirms": true,
+        "f2_negative_blocks": true,
         "severe_band_confirms": true
       }
     }

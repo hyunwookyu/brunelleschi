@@ -144,8 +144,9 @@ function fovSection() {
   // d/W를 쓸어 대역 경계를 낸다. 주점(480)을 사이에 두게 대칭으로 벌린다
   // **f/W를 쓴다**(리뷰어 [5]) — 대역을 가르는 양이 시거리이기 때문이다(이론서 18.4).
   // 대칭 배치이므로 d = 2f로 놓으면 원하는 f/W가 나온다
-  // 0.28·0.29는 **화각 상한(120°) 경계**를 사이에 둔다(12차 지시 1-c — `reject_fov_deg`):
-  // 0.5/tan60° ≈ 0.2887이 정확히 120°이고, 그 아래(0.2·0.28)는 f² > 0인데도 거부다.
+  // ⛔ 0.28·0.29가 사이에 두던 **화각 상한(120°)은 14차 지시 1로 제거됐다**(D-L93 —
+  // 거부는 f² ≤ 0뿐, 대역은 참고 진단). 그 행들은 이제 severe다 — f² > 0 격자라
+  // reject가 안 나온다(12차 이전의 그 문장이 다시 참이다).
   const sweep = [0.2, 0.28, 0.29, 0.4, 0.49, 0.5, 0.6, 0.86, 0.87, 1.0, 1.5, 2.0, 3.0].map(rf => {
     const c = SZ[0] / 2, d = 2 * rf * SZ[0];
     const v = fovGate([c - d / 2, H], [c + d / 2, H], SZ);
@@ -186,16 +187,13 @@ function fovSection() {
    * 기하이지 실제 획의 좌표가 아니다 — 파일이 오면 `real_ink`가 실좌표로 다시 낸다(#17).
    */
   const rw2 = 1180, rc2 = rw2 / 2, rh2 = 668 / 2;
-  // 파일 2(brnl_2 · 11획 보고): 소실점 간격 d = 179px · f = 87.2 → 화각 163° — **거부 대역**
+  // 파일 2(brnl_2 · 11획 보고): 소실점 간격 d = 179px · f = 87.2 → 화각 163° —
+  // ⛔ 12차의 거부 대역이었으나 **14차 지시 1로 확정이 지나간다**(D-L93 — 넓은 화각은
+  // 결함이 아니라 선택이다. 12차 "구멍을 막았다"의 상한 몫은 지시가 스스로 되돌렸다).
   const rd2 = 179, rf2 = 87.2;
   const disc2 = Math.sqrt(rd2 * rd2 - 4 * rf2 * rf2);
   const reported2 = fovGate(
     [rc2 - (rd2 + disc2) / 2, rh2], [rc2 + (rd2 - disc2) / 2, rh2], [rw2, 668]);
-  // **버그 되살림**(A-4) — 상한이 없던 옛 게이트(reject_fov_deg = ∞)에서는 같은 입력이
-  // **severe로 확정을 지나간다**. 이것이 표본이 실측한 그 구멍이다.
-  const reported2Old = fovGate(
-    [rc2 - (rd2 + disc2) / 2, rh2], [rc2 + (rd2 - disc2) / 2, rh2], [rw2, 668],
-    { reject_fov_deg: Infinity });
   // 파일 1(15-16-18 · 13획 보고): f/W = 0.431 → 화각 98.6° — **경고(severe) 대역, 확정한다**
   const rf1 = 0.431 * rw2;
   const reported1 = fovGate([rc2 - rf1, rh2], [rc2 + rf1, rh2], [rw2, 668]);
@@ -205,18 +203,27 @@ function fovSection() {
     sweep.filter(s => s.band === "warn").length,
     sweep.filter(s => s.band === "ok").length,
   ];
-  // **거부가 확정을 실제로 막는가**(12차 리뷰어 [7]) — 결함 진술("severe 경고만 받고
-  // 확정을 지나갔다")의 판정 대상은 대역이 아니라 **확정 여부**인데 원장 필드가 없었다
-  // (#40 ⑥의 자리). `stepRule`의 실제 확정 경로를 이 자리에서 돌린다 —
-  // `vp_rules.test.ts` 배선 팔과 같은 픽스처(#17): 소실점 간격 120px → 화각 166°.
+  // **극단 화각이 확정을 지나가는가**(14차 지시 1-e 회귀 팔 — D-L93). 12차의
+  // `reject_blocks_confirmation`(같은 픽스처: 간격 120px → 화각 166°)이 **정반대로
+  // 뒤집혔다** — 판정 지표를 바꾼 사유는 14차 지시 1이다(#28: 상한이 임의 기준이었다).
+  // 확정이 서는 것이 이제 맞는 동작이다. f² > 0의 유일한 거부였던 상한이 없어졌으므로
+  // f² ≤ 0 차단의 배선은 아래 `f2_negative_blocks`가 따로 든다.
   const stBlock = newRuleState(SZ);
   stBlock.slots[0] = { kind: "vp", at: [420, SZ[1] / 2], source: "two_lines", support: 2 };
   stBlock.horizon = SZ[1] / 2;
   const rBlock = stepRule(stBlock, { a: [640, 436], b: [590, 386] }, SZ);
-  const blockFov = rBlock.event.type === "rejected" ? rBlock.event.fov : undefined;
-  const rejectBlocksConfirmation = rBlock.event.type === "rejected"
-    && rBlock.state.slots[1] == null && blockFov?.band === "reject"
-    && blockFov?.f != null;                        // f² > 0 — 상한 거부이지 f²≤0 거부가 아니다
+  const blockFov = rBlock.event.type === "vp_fixed" ? rBlock.event.fov : undefined;
+  const extremeFovConfirms = rBlock.event.type === "vp_fixed"
+    && rBlock.state.slots[1] != null && blockFov?.band === "severe"
+    && (blockFov?.fovDeg ?? 0) > 150;              // 12차라면 거부였을 화각 — 이제 선다
+  // **f² ≤ 0은 여전히 확정을 막는다**(거부의 유일한 문 — stepRule 배선). 주점 x(= W/2 =
+  // 480 가정) 왼쪽에 첫 소실점(420)이 있고, 새 깊이선이 지평선과 **같은 왼쪽**(350)에서
+  // 만나면 카메라가 없다 — 두 소실점이 주점 기준 같은 쪽이다.
+  const stNeg = newRuleState(SZ);
+  stNeg.slots[0] = { kind: "vp", at: [420, SZ[1] / 2], source: "two_lines", support: 2 };
+  stNeg.horizon = SZ[1] / 2;
+  const rNeg = stepRule(stNeg, { a: [200, SZ[1] / 2 + 150], b: [290, SZ[1] / 2 + 60] }, SZ);
+  const f2NegativeBlocks = rNeg.event.type === "rejected" && rNeg.state.slots[1] == null;
   // **양성 채널**(#30 · 2차 리뷰어 [10]) — 같은 프로브 구성에서 소실점 간격만 벌리면
   // (severe 대역) 확정이 **선다**. 이것 없이는 위 true가 "게이트가 막았다"인지
   // "이 구성에서는 애초에 아무것도 안 선다"인지 안 갈린다(#40 ②).
@@ -239,13 +246,13 @@ function fovSection() {
      */
     covered: sweep.length + 7,
     covered_note: "sweep + counter_example + off_screen + real_ink_reported + "
-                + "reported_12(file1·file2·old_gate) + reject_blocks_confirmation",
+                + "reported_12(file1·file2) + extreme_fov_confirms + f2_negative_blocks",
     sweep,
     /**
      * `gate.reachability_value`가 가리키는 자리 — **reject · severe · warn · ok** 순(#40 값
-     * 대조). ⚠ 12차 지시 1-c(화각 상한)로 **reject 칸이 앞에 늘었다** — 상한 전에는 f² > 0
-     * 격자에서 reject가 안 나왔다(옛 산문 "쓸기는 f² > 0 격자라 reject가 안 나온다"는 그때의
-     * 사실이고 지금은 거짓이다).
+     * 대조). ⛔ 14차 지시 1(D-L93)로 **reject 칸은 이 격자에서 구조적으로 0이다** —
+     * f² > 0 격자라 거부(f² ≤ 0뿐)가 안 나온다. reject의 도달 가능성은
+     * `counter_example`(fovGate)과 `f2_negative_blocks`(stepRule 배선)가 따로 든다.
      */
     band_counts_ordered: bandCounts,
     counter_example: {
@@ -310,40 +317,42 @@ function fovSection() {
         f_over_w: reported2.fOverW == null ? null : Math.round(reported2.fOverW * 1000) / 1000,
         fov_deg: reported2.fovDeg == null ? null : Math.round(reported2.fovDeg * 100) / 100,
         band: reported2.band,
-        band_under_old_gate: reported2Old.band,
-        note: "화각 상한 초과 — 거부. `band_under_old_gate`가 **버그 되살림**이다(A-4): "
-            + "상한이 없으면 severe로 확정을 지나간다 — 표본이 실측한 그 구멍. "
+        note: "화각 163° — severe(참고 진단)로 **확정이 지나간다**(14차 지시 1 · D-L93: "
+            + "12차의 상한 거부를 지시가 되돌렸다 — 넓은 화각은 결함이 아니라 선택. 12차의 "
+            + "`band_under_old_gate` 팔은 상수 제거로 함께 내렸다 — 옛 거동의 기록은 12차 "
+            + "원장 연혁이 든다). "
             + "⚠ **`f`와 `reported_f`의 일치는 구성의 항등이다**(#5 유형 3 · 2차 리뷰어 [9]): "
             + "`reconstructed_offsets_px`가 a·b = f²의 해라서 f를 되뽑으면 정의상 87.2다 — "
             + "재구성 대수의 오타를 잡는 배선 확인일 뿐 측정이 아니다",
       },
     },
     gate: gate({
-      registered: "f² ≤ 0이면 **거부**한다. **화각이 `FOV_GATE.reject_fov_deg`(120°)를 넘으면 "
-                + "f² > 0이어도 거부한다**(12차 지시 1-c — 물리적으로 가능해도 쓸 수 없는 구간이 "
-                + "있다. 실획 둘째 표본의 보고 기하가 그 증거다 — `real_ink_reported_12.file2`). "
-                + "**f/W**(시거리 ÷ 화면 폭) < 0.87이면 경고하되 **확정은 막지 않는다**"
-                + "(지시 7-b: 경고하고 확정하되 표시). 화면 밖 소실점은 **정상**이므로 거르지 "
-                + "않는다. ⚠ **초판은 이 문장을 `d/W`로 적었고 6-R이 대역을 f/W로 옮겼는데 "
-                + "등록문이 안 따라왔다** — 7차 항목 4에서 정정했다(#24: 단위가 다르면 같은 "
-                + "임계가 아니다). **[7차 항목 4 추가]** 그 게이트가 **확정 경로에 걸려 있는지**는 "
-                + "`vp_rules.test.ts`의 배선 팔이 잠근다(거부 · 양성 채널 · 2점 동시 경로 · "
-                + "12차의 화각 상한 배선 둘).",
-      reachability: "대역이 실제로 갈리는가 — **쓸기가 네 대역 전부를 낸다**(12차부터 상한 "
-                  + "거부가 f² > 0 격자에서도 나온다 — 0.2·0.28 행). f² ≤ 0 거부는 "
-                  + "`counter_example`이 따로 낸다. 한 대역만 나오면 판정이 아니다(#30). "
-                  + "`reachability_value`는 `band_counts_ordered` = **[reject, severe, warn, ok]** "
-                  + "순이다",
+      registered: "**거부는 f² ≤ 0 하나다**(14차 지시 1 · D-L93 — 수학적으로 카메라가 없는 "
+                + "경우. ⛔ 12차 지시 1-c의 화각 상한 120°는 이 항목이 **되돌렸다** — 판정 "
+                + "지표를 바꾼 사유(#28)는 지시문이다: 상한은 임의 기준이었고 넓은 화각은 "
+                + "의도일 수 있다. 실획 둘째 표본(163°)은 이제 **확정이 지나가는 것이 명세다** "
+                + "— `real_ink_reported_12.file2`·`extreme_fov_confirms`). 대역(ok/warn/severe)은 "
+                + "**참고 진단**이고 확정도 표시도 안 가른다(지시 1-b·1-d — 이론서 18.4는 "
+                + "참고. 화각 경고 표시는 제거). 화면 밖 소실점은 **정상**이므로 거르지 않는다. "
+                + "⚠ 옛 등록문의 연혁(d/W → f/W 단위 정정 · 12차 상한 신설)은 12차 원장이 "
+                + "든다. 확정 경로 배선은 `vp_rules.test.ts` 배선 팔 + 아래 stepRule 팔 둘이 "
+                + "잠근다.",
+      reachability: "거부(f² ≤ 0)의 도달 가능성은 `counter_example`(fovGate 직접)과 "
+                  + "`f2_negative_blocks`(stepRule 배선 — 확정이 실제로 안 선다)가 든다. "
+                  + "참고 대역 셋은 쓸기가 낸다 — `band_counts_ordered`의 severe·warn·ok가 "
+                  + "전부 0이 아니다(reject 칸은 f² > 0 격자라 **구조적 0** — 위 주석). "
+                  + "극단 화각의 확정은 `extreme_fov_confirms`(양성 채널 #30)가 든다",
       reachability_value: bandCounts,
       reachability_source: "fov_gate/band_counts_ordered",
       result: { same_side_rejected: sameSide.band === "reject",
                 real_ink_band: reported.band, real_ink_fov_deg: reported.fovDeg,
                 reported12_file1_band: reported1.band,
                 reported12_file2_band: reported2.band,
-                reported12_file2_band_under_old_gate: reported2Old.band,
-                /** 거부 대역에서 **확정이 실제로 안 선다**(stepRule 실행 — 리뷰어 [7]). */
-                reject_blocks_confirmation: rejectBlocksConfirmation,
-                /** 그 양성 채널 — severe 대역(간격만 벌림)은 확정이 선다(2차 리뷰어 [10]). */
+                /** **극단 화각(166°)이 확정을 지나간다**(14차 지시 1-e — stepRule 실행). */
+                extreme_fov_confirms: extremeFovConfirms,
+                /** **f² ≤ 0은 여전히 막는다**(유일한 거부 — stepRule 배선). */
+                f2_negative_blocks: f2NegativeBlocks,
+                /** severe 대역(간격만 벌림) 확정 — 12차 2차 [10]의 팔 그대로. */
                 severe_band_confirms: severeBandConfirms },
     }),
   };
@@ -726,24 +735,28 @@ describe("6차 지시 1·2·7·11 — 확정 뷰 · 끝점 프로브 · 화각 �
     expect(fov_gate.sweep.find(s => s.f_over_w === 0.87)!.fov_deg!).toBeLessThan(60.5);
     // **실획 보고 값은 화각 98.75°다** — 초판은 d에 임계를 걸어 이것을 `ok`라 했다(리뷰어 [5])
     expect(fov_gate.real_ink_reported.band).toBe("severe");
-    // ---- 12차 지시 1-c — **화각 상한**. 경계(0.5/tan60° ≈ 0.2887)를 사이에 둔 두 행이 갈린다
-    expect(fov_gate.sweep.find(s => s.f_over_w === 0.28)!.band).toBe("reject");
+    // ---- 14차 지시 1(D-L93) — **화각 상한 제거**. 12차가 거부하던 행들이 severe(참고)로
+    // 돌아왔고 확정을 안 막는다. 12차의 상한 경계 팔(0.28 reject)은 **정반대로 뒤집혔다** —
+    // 사유는 지시 1이다(#28: 상한이 임의 기준이었다).
+    expect(fov_gate.sweep.find(s => s.f_over_w === 0.28)!.band).toBe("severe");
     expect(fov_gate.sweep.find(s => s.f_over_w === 0.29)!.band).toBe("severe");
-    expect(fov_gate.sweep.find(s => s.f_over_w === 0.2)!.band).toBe("reject");
-    // 12차 두 표본(보고 기하 재구성, 지시 1-f) — 파일1은 경고 후 확정, 파일2는 거부
+    expect(fov_gate.sweep.find(s => s.f_over_w === 0.2)!.band).toBe("severe");
+    // 12차 두 표본(보고 기하 재구성, 지시 1-f) — 이제 **둘 다 확정이 지나간다**(163°도 의도)
     expect(fov_gate.real_ink_reported_12.file1.band).toBe("severe");
-    expect(fov_gate.real_ink_reported_12.file2.band).toBe("reject");
+    expect(fov_gate.real_ink_reported_12.file2.band).toBe("severe");
     expect(fov_gate.real_ink_reported_12.file2.fov_deg!).toBeGreaterThan(160);
-    // **버그 되살림**(A-4) — 상한을 빼면(∞) 같은 입력이 severe로 확정을 지나간다
-    expect(fov_gate.real_ink_reported_12.file2.band_under_old_gate).toBe("severe");
     // ⚠ **구성의 항등이다**(#5 유형 3 · 리뷰어 [9] — 초판이 "검산"이라 불렀다):
     // a·b = f²의 해에서 f를 되뽑으면 정의상 87.2다. 재구성 대수의 오타를 잡는 배선
     // 확인일 뿐이고 측정 정보가 없다 — 임계가 아니라 항등 가드로 둔다.
     expect(fov_gate.real_ink_reported_12.file2.f!).toBeCloseTo(87.2, 1);
-    // **거부가 확정을 실제로 막는다**(리뷰어 [7]) — stepRule 실행의 결과다
-    expect((fov_gate.gate.result as { reject_blocks_confirmation: boolean })
-      .reject_blocks_confirmation).toBe(true);
-    // 그 양성 채널(#30 · 2차 [10]) — severe 대역은 같은 프로브에서 확정이 선다
+    // **극단 화각(166°)이 확정을 지나간다**(14차 지시 1-e — stepRule 실행. 12차
+    // reject_blocks_confirmation의 자리 — 같은 픽스처가 반대 방향을 잠근다)
+    expect((fov_gate.gate.result as { extreme_fov_confirms: boolean })
+      .extreme_fov_confirms).toBe(true);
+    // **f² ≤ 0은 여전히 막는다** — 유일한 거부의 stepRule 배선(반례 #30)
+    expect((fov_gate.gate.result as { f2_negative_blocks: boolean })
+      .f2_negative_blocks).toBe(true);
+    // severe 대역 확정(12차 2차 [10]의 팔 그대로)
     expect((fov_gate.gate.result as { severe_band_confirms: boolean })
       .severe_band_confirms).toBe(true);
 

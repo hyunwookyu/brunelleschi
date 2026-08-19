@@ -11236,7 +11236,8 @@ e2e ⑨는 위 절(짝 대조·되물림·좌표 보존).
 
 **검증**: `npm run test:unit` 40파일 386통과(4건너뜀) · `npx tsc --noEmit` 깨끗 ·
 dir_state e2e 1통과(원장 재생성 — 해시 f351839a 불변) · `npm run test:cost` 재실행(단위
-갈래 수치는 `test_cost.json@f351839a`의 `totals.unit`이 정본 #47 — 파일 39 → 40) ·
+갈래 수치는 test_cost 원장의 `totals.unit`이 정본 #47 — 파일 39 → 40. ⚠ 그 원장은
+constants 블록이 없어 해시 없이 인용한다 — 2차 [1]) ·
 `python selfcheck.py` — 게이트 플래그 3은 전부 기존 등재분(dir_state의 1은 원장
 reachability 산문이 스스로 "의심≠오류" 사유를 든다 · elevation_flow · extension_snap),
 이 항목 신설분 아님. 부수 재생성: `tube_render.json`(끝자리 잡음 4줄).
@@ -11265,7 +11266,8 @@ reachability 산문이 스스로 "의심≠오류" 사유를 든다 · elevation
 
 **#42 완료 대조**(② — 2차 리뷰어 [1]로 재작성: 초판이 원장 행과 다른 번호를 "대조
 완료"라 적었다 — #42 ⑩의 재발): 이 항목이 딛는 원장은 `dir_state.json@f351839a` ·
-`constants.json@f351839a` · `delta_conflict.json@f351839a` · `test_cost.json`(⚠ 이 원장에는
+`stage0/out/constants.json`(현재 값의 출처 — 해시의 정의라 해시 병기가 자기참조다) ·
+`delta_conflict.json@f351839a` · test_cost 원장(⚠ 이 원장에는
 constants 블록이 없어 **해시 없이 인용한다** — 2차 [1] 지적으로 정정. 비용 원장은 시간
 측정이라 상수 의존이 없다). `pitfall_citations`의 dir_state 행(그 자리에서 읽음):
 **[5, 12, 18, 21, 23, 26, 30, 40, 41]** — 이 아홉이 완료 대조의 정본이다. 착수 표 대비
@@ -11341,3 +11343,9 @@ lifted 16 → 8, `dir_guard` rejected 21/24(팔에 신설 — 값은 원장을 �
 거절률의 **상한**이다(앱 경로는 임계 안 겨냥이 그리는 중 정렬됨). D-L92 후속 절에 등재 —
 실사용 몫은 실획이 판정자(#16: 병목 이동을 기록한다 — 회전 배치가 대기로 옮겨 갔다).
 e2e 49통과·2실패는 등재된 환경 실패 그대로.
+
+**검증 추가**: 전체 `test:unit` 40파일 386통과 · selfcheck — 인용 플래그 0(초판의 없는
+해시 인용 둘은 정정: test_cost는 constants 블록이 없어 해시 없이, constants.json은 해시의
+출처라 병기가 자기참조), 게이트 플래그 4 중 신규 1은 `confirm_rules`의
+reachability_value [0,5,3,5] — **0은 f²>0 격자의 구조적 0**이고 원장 reachability 산문이
+원인을 스스로 든다(reject의 도달은 counter_example·f2_negative_blocks — 의심≠오류 §5).

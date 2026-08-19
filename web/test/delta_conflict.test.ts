@@ -12,7 +12,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { classifyStroke, angleWiden, representative, vpMisfit, AXIS_TOL } from "../src/s3d/axis.js";
 import { dirSnap2dCore } from "../src/s3d/resolve2d.js";
-import { fovGate, FOV_GATE } from "../src/s3d/vpRules.js";
+import { fovGate } from "../src/s3d/vpRules.js";
 import { CamState } from "../src/ui/camState.js";
 import { axisDirection } from "../src/s3d/geom3d.js";
 import type { Pt2 } from "../src/s3d/camera.js";
@@ -164,8 +164,10 @@ describe("Δ 대푯값 충돌 — 후보 셋의 분해(13차 항목 4)", () => {
       return found;
     })();
 
-    // ---- ① **같은 기하의 재투입**(4-b 후반): 두 소실점을 현행 확정 게이트에 넣으면
-    //      상한(reject_fov_deg)이 거부한다 — 신규 확정으로는 이 카메라가 다시 안 선다.
+    // ---- ① **같은 기하의 재투입**(4-b 후반): 두 소실점을 현행 확정 게이트에 넣은 판.
+    //      ⛔ 14차 지시 1(D-L93)로 화각 상한이 제거됐다 — 이 카메라(163°)는 f² > 0이므로
+    //      **신규 확정으로도 선다**(13차의 "재현 불가"가 명세 변경으로 뒤집혔다. 복원과
+    //      신규 확정의 비대칭 — DEFERRED "복원 경로가 상한 밖" 행 — 도 함께 해소됐다).
     const hs = d.rules.slots.slice(0, 2) as { kind: string; at: [number, number] }[];
     const verdict = fovGate(hs[0].at, hs[1].at, d.imgSize);
 
@@ -253,9 +255,10 @@ describe("Δ 대푯값 충돌 — 후보 셋의 분해(13차 항목 4)", () => {
       /** ② 사거리의 크기 — 스윕에서 발동한 행 수(경계 전이의 존재는 아래 단언이 잠근다). */
       sweep_engaged_rows: snapSweep.filter(r => r.engaged).length,
       refeed_gate: {
-        note: "① 후반 — 같은 두 소실점을 현행 확정 게이트에 넣은 판. reject면 신규 "
-            + "확정으로는 이 카메라(와 그 아래의 Δ 분포)가 재현되지 않는다 — 12차 상한의 "
-            + "사거리 확인. 복원 경로는 여전히 지나간다(DEFERRED 그 행).",
+        note: "① 후반 — 같은 두 소실점을 현행 확정 게이트에 넣은 판. ⛔ 14차 지시 1"
+            + "(D-L93 — 상한 제거)로 이 판이 **severe(확정 통과)**가 됐다: 신규 확정으로도 "
+            + "이 카메라가 선다. 13차의 'reject = 재현 불가'는 12차 상한 아래의 기록이다. "
+            + "복원↔신규 확정의 비대칭(DEFERRED 그 행)도 상한 제거로 해소.",
         band: verdict.band, fov_deg: verdict.fovDeg == null ? null : +verdict.fovDeg.toFixed(2),
         /**
          * **주점 규약**(리뷰어 4-R [B-6] · #24 — 13차 1차 [9]가 세운 병기 규약): 이 화각은
@@ -264,7 +267,8 @@ describe("Δ 대푯값 충돌 — 후보 셋의 분해(13차 항목 4)", () => {
          * 같은 카메라라도 값이 갈린다(163.18 쪽). 거부 판정은 어느 규약에서도 같은 대역이다.
          */
         principal_convention: "fovGate: [W/2, H/2] — real_ink per_doc([W/2, horizon_y])와 다르다. 인용 시 규약을 함께 적는다",
-        reject_threshold_deg: FOV_GATE.reject_fov_deg,
+        /** ⛔ 옛 `reject_threshold_deg`(120)는 D-L93으로 제거됐다 — 거부는 f² ≤ 0뿐. */
+        reject_threshold_removed: "14차 지시 1 · D-L93",
       },
       gate: gate({
         // ⚠ engaged 행의 delta_after = 0은 **스냅 후 항등(#5 — 설계 보장)**이라 게이트
@@ -273,8 +277,9 @@ describe("Δ 대푯값 충돌 — 후보 셋의 분해(13차 항목 4)", () => {
         registered: "② 스윕에 **경계 전이가 존재한다**(engaged 행과 미발동 행이 둘 다 있다) "
                   + "· ① 실좌표의 판별은 **배정 행 misfit_raw < 기본 임계**(widen 불요 — 2차 "
                   + "[1]로 재근거: 개입 팔은 이 저장본에서 구성상 무정보) · refeed_gate.band = "
-                  + "reject(신규 확정 재현 불가) · ③ rank_only는 같은 이유로 이 저장본에서 "
-                  + "비적용. 값은 필드가 든다(#47)",
+                  + "severe — 확정 통과(⛔ 14차 지시 1·D-L93이 12차 상한을 제거해 13차의 "
+                  + "reject 조항을 **사유와 함께** 바꿨다, #28) · ③ rank_only는 같은 이유로 "
+                  + "이 저장본에서 비적용. 값은 필드가 든다(#47)",
         reachability: "값은 ② 스윕의 발동 행 수(사거리의 크기 — 0도 8도 아니면 경계가 스윕 "
                     + "안에 있다). ⚠ ①의 widen_dependent 0·③의 rank_only 0은 **이 저장본에서 "
                     + "정보량 0이다**(2차 [1]·[2] — misfit_raw 1e-16대라 두 경로 다 구성상 발화 "
@@ -306,8 +311,10 @@ describe("Δ 대푯값 충돌 — 후보 셋의 분해(13차 항목 4)", () => {
       if (r.engaged) expect(r.delta_after_deg).toBeLessThan(1e-6);
       else expect(Math.abs(r.delta_after_deg - r.delta_before_deg)).toBeLessThan(1e-6);
     }
-    // ① 재투입은 거부 대역이다(12차 상한의 사거리)
-    expect(verdict.band).toBe("reject");
+    // ① 재투입은 **확정을 지나간다**(14차 지시 1 · D-L93 — 상한 제거. f² > 0인 극단
+    //    화각은 참고 대역 severe로만 표시 없이 남는다)
+    expect(verdict.band).toBe("severe");
+    expect(verdict.f).not.toBeNull();
     // ---- [B-3]·2차 [2] 두 필드의 도달 가능성 팔이 비지 않았다(다른 픽스처 — #40 ③ 유보)
     expect(widenPositive.length).toBeGreaterThan(0);
     expect(rankPositive.length).toBeGreaterThan(0);

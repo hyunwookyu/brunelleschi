@@ -49,7 +49,14 @@ export const SHARED_CONSTANTS = {
   // 거부/경고 대역이 바뀌면 확정 여부가 바뀌고, 그러면 그 위의 측정이 전부 낡는다.
   // 하네스 `test/confirm_rules.test.ts`(`fov_gate` 절)와 `test/vp_rules.test.ts`가 읽는다
   // ⚠ 초판 주석은 없는 파일(`test/fov_gate.test.ts`)을 가리켰다 — 7차 항목 4에서 정정
-  FOV_GATE,
+  // ⛔⛔ **`reject_fov_deg`(120)는 2026-08-19 14차 지시 1로 코드에서 제거됐다**(D-L93 —
+  // 거부는 f² ≤ 0뿐이다). 여기 **동결 리터럴로 남기는 이유는 해시 안정성 하나다** —
+  // DRAFT_TOL·SENS_TOL과 같은 자리의 결정(D-L51 선례): 키를 빼면 이 값에 의존한 적 없는
+  // 원장 60여 개가 전부 STALE이 된다. **어떤 코드도 이 값을 더는 읽지 않는다** —
+  // fovGate의 현행 거동은 이 스냅샷이 아니라 vpRules.ts가 정본이다. 진짜로 낡은 원장
+  // (confirm_rules·delta_conflict·real_ink의 화각 판정 행)은 이 항목이 재실행했다 —
+  // 값 대조는 그 원장들의 gate 산문이 든다. 의존 집합별 해시가 서면 그때 뺀다.
+  FOV_GATE: { ...FOV_GATE, reject_fov_deg: 120 },
   // **축 스냅 — 라이노 직교 모드**(2026-08-16 2차 지시). 하네스 `test/axis_snap_measure.test.ts`
   SNAP_TOL_AXIS,
   // ⛔ **`vpDraft.ts`·`vpSensitivity.ts`는 2026-08-17 지시 2로 삭제됐다**(검출 초안 경로).

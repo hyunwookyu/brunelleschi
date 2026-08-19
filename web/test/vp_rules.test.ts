@@ -282,26 +282,25 @@ describe("b. 첫 소실점 = 한 축으로 모인 **세** 깊이선의 교점 (6
     expect(r.state.slots[1]).toBeNull();               // 두 번째 슬롯이 안 찼다
   });
 
-  // ---------------------------------------------------------------- 12차 지시 1 (화각 상한)
+  // ---------------------------------------------------------------- 14차 지시 1 (화각 상한 제거)
   //
-  // 실획 둘째 표본(보고): 소실점 간격 179px(W 1180) · f 87.2 · 화각 163°가 **확정을
-  // 지나갔다** — 옛 게이트는 f² ≤ 0만 막았다. `reject_fov_deg`(120°)가 그 문을 닫는다.
-  // 여기는 **배선**을 잠근다(임계 자체는 `confirm_rules.test.ts`의 fov_gate 절).
-  it("**12차 1-c** 화각이 상한을 넘으면 f² > 0이어도 확정을 거부한다 — 배선", () => {
+  // ⛔ 12차 지시 1-c의 상한(120° 거부)은 **14차 지시 1이 되돌렸다**(D-L93 — 상한은 임의
+  // 기준이었고 넓은 화각은 의도일 수 있다. #28: 판정을 바꾼 사유는 지시문이다). 12차의
+  // 배선 팔(같은 픽스처 — 간격 120px · 화각 166°)이 정반대 방향을 잠근다:
+  // **f² > 0이면 화각이 얼마든 확정이 선다.** f² ≤ 0 차단은 위 4-a 팔이 그대로 든다.
+  it("**14차 1** 화각이 아무리 넓어도 f² > 0이면 확정이 선다 — 상한 제거의 배선", () => {
     const st = newRuleState(SZ);
     st.slots[0] = { kind: "vp", at: [420, SZ[1] / 2], source: "two_lines", support: 2 };
     st.horizon = SZ[1] / 2;
     // (540, 336)으로 뻗는 45° 깊이선 — 두 소실점이 120px 간격이라 화각 166°다
     const r = stepRule(st, { a: [640, 436], b: [590, 386] }, SZ);
-    expect(r.event.type).toBe("rejected");
-    if (r.event.type === "rejected") {
-      expect(r.event.fov?.band).toBe("reject");
-      expect(r.event.fov?.f).not.toBeNull();           // f² > 0 — 상한 거부가 f²≤0 거부와 갈린다
+    expect(r.event.type).toBe("vp_fixed");
+    if (r.event.type === "vp_fixed") {
+      expect(r.event.fov?.band).toBe("severe");        // 대역은 참고 진단으로만 남는다(1-d)
       expect(r.event.fov?.fovDeg).toBeGreaterThan(120);
-      expect(r.event.notify).toBe(true);
-      expect(r.event.why).toContain("벌려");           // 지시 1-d — 고치는 법 안내가 실려 나간다
+      expect(r.event.fov?.why).toBe("");               // 화각 안내 문구도 없다(1-b)
     }
-    expect(r.state.slots[1]).toBeNull();
+    expect(r.state.slots[1]).not.toBeNull();
   });
 
   it("**12차 1-e** 경고 대역(90~120°)은 종전대로 확정하고 판정을 실어 낸다", () => {

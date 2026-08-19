@@ -9,7 +9,7 @@
 // 산출: `stage0/out/real_ink.json`.
 import { describe, it, expect } from "vitest";
 import { skipReason } from "./dataDeps.js";
-import { RULE_TOL, FOV_GATE, beyondSegment } from "../src/s3d/vpRules.js";
+import { RULE_TOL, beyondSegment } from "../src/s3d/vpRules.js";
 import { writeFileSync, mkdirSync, readdirSync, readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -30,6 +30,14 @@ const SESSIONS = resolve(ROOT, "sessions");
 /** AS-6과 같은 임계를 쓴다 — 두 수치를 비교하려면 같은 자로 재야 한다. */
 const TURN_DEG = 45;
 const TURN_WINDOW = 0.12;
+/**
+ * **`vp_dir_err_deg_fov_ok` 분포의 층화 절단**(분석 기준 — 앱 판정 아님).
+ * ⛔ 옛 출처는 `FOV_GATE.reject_fov_deg`(120 — 12차 상한)였고 14차 지시 1(D-L93)이 그
+ * 상한을 앱에서 제거했다. 이 분포의 정의("극단 카메라 문서를 뺀 Δ")는 유지할 가치가
+ * 있으므로(지렛대 증폭 층화 — 13차 리뷰어 2차 [14]) 값을 그대로 분석 상수로 남긴다.
+ * 이론서 18.4의 참고 기준 연장이고, 확정 여부와 무관하다.
+ */
+const STABLE_FOV_CUTOFF_DEG = 120;
 
 function loadSessions(): Session[] {
   if (!existsSync(SESSIONS)) return [];
@@ -468,9 +476,14 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
         const hs = (d.rules?.slots ?? []).slice(0, 2);
         const fovAssumed = (hs.length === 2 && hs.every(s => s && s.kind === "vp" && s.at))
           ? assumedFov(hs[0]!.at![0], hs[1]!.at![0], d.imgSize[0]) : null;
-        // **거부 대역 제외 분포의 재료**(리뷰어 2차 [14] — "163° 파일을 빼도"를 원장 밖에서
-        // 세지 않게): 화각이 현행 상한 안인 문서의 Δ만 모은다(보장 0 제외 규약은 위와 같다)
-        if (fovAssumed && fovAssumed.fov_deg < FOV_GATE.reject_fov_deg) {
+        // **극단 화각 제외 분포의 재료**(리뷰어 2차 [14] — "163° 파일을 빼도"를 원장 밖에서
+        // 세지 않게): 화각이 분석 절단(아래 STABLE_FOV_CUTOFF_DEG) 안인 문서의 Δ만 모은다
+        // (보장 0 제외 규약은 위와 같다). ⛔ 옛 조건은 `FOV_GATE.reject_fov_deg`(앱 게이트)
+        // 였는데 14차 지시 1(D-L93)이 그 상한을 **앱에서 제거**했다 — 이 절단은 앱 판정이
+        // 아니라 **분석의 층화 기준**으로만 남는다(이론서 18.4 참고 기준의 연장. 지렛대
+        // 증폭이 지배하는 극단 카메라 문서를 갈라 보는 용도 — 값은 옛 상한을 유지해
+        // 분포 정의의 연속성을 지킨다).
+        if (fovAssumed && fovAssumed.fov_deg < STABLE_FOV_CUTOFF_DEG) {
           for (const row of D.vpErrs) {
             if (row[row.length - 1] !== "guaranteed") vpDirErrsFovOk.push(row[2] as number);
           }
@@ -573,9 +586,10 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
           two: stat(vpDirErrsStableTwo, 2),
         },
         /**
-         * 화각 거부 대역(FOV_GATE.reject_fov_deg) **안** 문서만의 Δ 분포(리뷰어 2차 [14]) —
-         * "극단 카메라 파일을 빼도 분포가 넓은가"의 강건성 판을 원장이 스스로 낸다.
-         * 주점 가정·보장 0 제외 규약은 `vp_dir_err_deg`와 같다.
+         * 화각 절단(STABLE_FOV_CUTOFF_DEG — **분석 층화 기준**. ⛔ 옛 앱 상한
+         * reject_fov_deg는 14차 지시 1·D-L93으로 제거됐다) **안** 문서만의 Δ 분포
+         * (리뷰어 2차 [14]) — "극단 카메라 파일을 빼도 분포가 넓은가"의 강건성 판을
+         * 원장이 스스로 낸다. 주점 가정·보장 0 제외 규약은 `vp_dir_err_deg`와 같다.
          */
         vp_dir_err_deg_fov_ok: stat(vpDirErrsFovOk, 2),
         // **보장으로 갈라 센 몫**(#5) — 소실점을 만든 획이라 정의상 0이다

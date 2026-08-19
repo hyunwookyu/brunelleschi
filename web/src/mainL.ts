@@ -1856,12 +1856,12 @@ function feedStroke(st: SStroke, forced?: "screen" | "depth",
   if (!rep) return;
   const line: RLine = { a: rep.a, b: rep.b };
   const r = feedCamera(line, forced, hint);
-  // **알릴 규칙 사건은 둘뿐이다**(6차 지시 7-b·7-c·11-3). 나머지는 시스템 사정이라 안 낸다
-  // (지시 3): ① 화각 경고 — **섰지만 시점이 이상하다** ② 알림 표시가 붙은 거절 —
-  // **아무 일도 안 난 이유와 사용자가 다시 그을 것**.
-  if (r.event.type === "vp_fixed" && r.event.fov && r.event.fov.band !== "ok") {
-    note = r.event.fov.why;
-  } else if (r.event.type === "rejected" && r.event.notify) {
+  // **알릴 규칙 사건은 하나뿐이다** — 알림 표시가 붙은 거절(**아무 일도 안 난 이유와
+  // 사용자가 다시 그을 것**). ⛔ **화각 경고는 지웠다**(2026-08-19 14차 지시 1-b ·
+  // D-L93): 넓은 화각은 결함이 아니라 선택이고, 결과는 돌려보면 즉시 보인다 — 알림이
+  // 하나 더 뜨는 것이 방해다(상태 표시를 없앤 지시 3의 결정과 일관). 대역(ok/warn/
+  // severe)은 원장·진단의 참고로만 남는다(fovGate 머리말).
+  if (r.event.type === "rejected" && r.event.notify) {
     note = r.event.why;
   }
   if (r.event.type === "ask") {
