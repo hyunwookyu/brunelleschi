@@ -1,0 +1,696 @@
+{
+ "what": "«이 선이 어긋납니다»가 어느 획에 뜨는가 — 앱 종단(차수 둘) + 규칙 층((b) 갈래).",
+ "how": {
+  "end_to_end": "참 소실점 픽스처(setupScene). **차수 둘**을 만든다: 3점은 수직 슬롯도 참 소실점, 2점은 화면 무한원. 실제 포인터로 아홉 획(수리 팔 여섯 + 되살림 셋).",
+  "warned": "상태줄(.note)에 «어긋납니다»가 있는가.",
+  "why_not_warned": "`warned` 거짓의 출처는 셋이다(#43) — `misfit_min`이 임계 (`vp_dist_ratio`) 아래거나, `path`가 `two_point`·`extension`이라 억제됐거나, 앞 획의 경고가 비워졌거나. 팔마다 그 셋을 함께 낸다.",
+  "rule_layer": "(b)는 유한 수직 소실점의 갈래라 2점에서는 성립할 수 없고 3점 픽스처에서는 그 소실점이 멀어 그쪽 선이 `screen_v`로 분류된다(거리는 `slot2`) — 그래서 `rule_arms`가 `stepRule`을 직접 부른다."
+ },
+ "what_this_does_not_say": [
+  "dpr 1·마우스 합성이다(#21).",
+  "**경고를 없앤 것이 아니다**(#32) — ④·④″ 팔이 그 자리를 지킨다. 바뀐 것은 **대상**이다.",
+  "③이 3D에 **옳게** 놓였는가는 여기서 안 잰다(`lifted`와 두 끝의 스냅 종류만 낸다). 양 끝 스냅 기하의 옳음은 D-L46의 자리다 — 그러므로 **양 끝 스냅 경로에서 정말로 잘못 놓인 획**에도 경고가 안 뜬다는 것은 이 원장이 감수한 대가다(2차 리뷰어 [2]).",
+  "`diag_screen_angle_to_vp_deg`(하네스)와 `snap_note`의 «가장 가까운 축과 …°»(앱)는 **다른 양**이다(#33): 앞은 화면에서 시작점→소실점 방향과의 각이고, 뒤는 `nearestAxisOnScreen`이 낸 **3D 축 방향**과의 각이다. 두 수가 다른 것이 정상이다.",
+  "④의 겨냥 방향은 스펙이 고른 좌표다 — `reachability_value`는 그 좌표가 정하는 값이고 임계 근처 팔(④′·④″)이 그 축의 감도를 든다(#12·#46)."
+ ],
+ "setup": {
+  "canvas": [
+   1280,
+   675
+  ],
+  "strokes": 12,
+  "hasCamera": true,
+  "boxes": 1,
+  "lifted": 0
+ },
+ "slot2": {
+  "at": [
+   640,
+   4070
+  ],
+  "diag": 1447,
+  "dist_from_center": 3732,
+  "principal": null
+ },
+ "vp_dist_ratio": 0.06,
+ "vp_infinite_ratio": 50,
+ "by_order": [
+  {
+   "order": 3,
+   "cases": [
+    {
+     "label": "① 앵커 + 축 스냅(정확 겨냥)",
+     "note": null,
+     "snap_note": "축1로 확정 (축과 0.5°)",
+     "order": 3,
+     "misfit_min": 0,
+     "lifted": true,
+     "axis": 0,
+     "start_kind": "endpoint",
+     "end_kind": null,
+     "warned": false,
+     "path": "start_anchor"
+    },
+    {
+     "label": "② 앵커 + 축 스냅(10° 어긋나게 겨냥 — 스냅이 고친다)",
+     "note": null,
+     "snap_note": "축2로 확정 (축과 9.1°)",
+     "order": 3,
+     "misfit_min": 0,
+     "lifted": true,
+     "axis": 1,
+     "start_kind": "vertex",
+     "end_kind": null,
+     "warned": false,
+     "path": "start_anchor"
+    },
+    {
+     "label": "③ 양 끝 스냅(면 대각선)",
+     "note": null,
+     "snap_note": "**양 끝 스냅**으로 확정(축 미분류) — 끝점 → 끝점 <span class=\"dim\">(가장 가까운 축과 44.5°)</span>",
+     "order": 3,
+     "misfit_min": 0.3184,
+     "lifted": true,
+     "axis": "free",
+     "start_kind": "endpoint",
+     "end_kind": "endpoint",
+     "warned": false,
+     "path": "two_point"
+    },
+    {
+     "label": "④ 무앵커 + 어느 소실점도 안 향함",
+     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "order": 3,
+     "misfit_min": 0.25,
+     "lifted": false,
+     "axis": "free",
+     "start_kind": null,
+     "end_kind": null,
+     "warned": true,
+     "path": null
+    },
+    {
+     "label": "④′ 무앵커 + 1° 어긋남(임계 근처)",
+     "note": null,
+     "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "order": 3,
+     "misfit_min": 0,
+     "lifted": false,
+     "axis": "free",
+     "start_kind": null,
+     "end_kind": null,
+     "warned": false,
+     "path": null
+    },
+    {
+     "label": "④″ 무앵커 + 3° 어긋남(임계 근처)",
+     "note": null,
+     "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "order": 3,
+     "misfit_min": 0,
+     "lifted": false,
+     "axis": "free",
+     "start_kind": null,
+     "end_kind": null,
+     "warned": false,
+     "path": null
+    },
+    {
+     "label": "⑤ 경고 뒤에 다시 축 스냅으로(경고가 남는가)",
+     "note": null,
+     "snap_note": "**양 끝 스냅**으로 확정(축 1) — 정점 → 끝점 <span class=\"dim\">(가장 가까운 축과 0.0°)</span>",
+     "order": 3,
+     "misfit_min": 0,
+     "lifted": true,
+     "axis": 0,
+     "start_kind": "vertex",
+     "end_kind": "endpoint",
+     "warned": false,
+     "path": "two_point"
+    },
+    {
+     "label": "⑥ [되살림] 연결 억제 끔 — 면 대각선",
+     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "snap_note": "**양 끝 스냅**으로 확정(축 미분류) — 정점 → 정점 <span class=\"dim\">(가장 가까운 축과 44.5°)</span>",
+     "order": 3,
+     "misfit_min": 0.3184,
+     "lifted": true,
+     "axis": "free",
+     "start_kind": "vertex",
+     "end_kind": "vertex",
+     "warned": true,
+     "path": "two_point"
+    },
+    {
+     "label": "⑦ [되살림] 알림 비우기 끔 — 어긋난 획",
+     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "order": 3,
+     "misfit_min": 0.25,
+     "lifted": false,
+     "axis": "free",
+     "start_kind": null,
+     "end_kind": null,
+     "warned": true,
+     "path": null
+    },
+    {
+     "label": "⑧ [되살림] 그 뒤에 축 스냅으로",
+     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "snap_note": "**양 끝 스냅**으로 확정(축 1) — 정점 → 정점 <span class=\"dim\">(가장 가까운 축과 0.0°)</span>",
+     "order": 3,
+     "misfit_min": 0,
+     "lifted": true,
+     "axis": 0,
+     "start_kind": "vertex",
+     "end_kind": "vertex",
+     "warned": true,
+     "path": "two_point"
+    }
+   ],
+   "diag_screen_angle_to_vp_deg": 42.99,
+   "diag_from_screen_axis_deg": 40.86
+  },
+  {
+   "order": 2,
+   "cases": [
+    {
+     "label": "① 앵커 + 축 스냅(정확 겨냥)",
+     "note": null,
+     "snap_note": "축1로 확정 (축과 0.5°)",
+     "order": 2,
+     "misfit_min": 0,
+     "lifted": true,
+     "axis": 0,
+     "start_kind": "endpoint",
+     "end_kind": null,
+     "warned": false,
+     "path": "start_anchor"
+    },
+    {
+     "label": "② 앵커 + 축 스냅(10° 어긋나게 겨냥 — 스냅이 고친다)",
+     "note": null,
+     "snap_note": "축2로 확정 (축과 9.1°)",
+     "order": 2,
+     "misfit_min": 0,
+     "lifted": true,
+     "axis": 1,
+     "start_kind": "vertex",
+     "end_kind": null,
+     "warned": false,
+     "path": "start_anchor"
+    },
+    {
+     "label": "③ 양 끝 스냅(면 대각선)",
+     "note": null,
+     "snap_note": "**양 끝 스냅**으로 확정(축 미분류) — 끝점 → 끝점 <span class=\"dim\">(가장 가까운 축과 11.7°)</span>",
+     "order": 2,
+     "misfit_min": 0.4723,
+     "lifted": true,
+     "axis": "free",
+     "start_kind": "endpoint",
+     "end_kind": "endpoint",
+     "warned": false,
+     "path": "two_point"
+    },
+    {
+     "label": "④ 무앵커 + 어느 소실점도 안 향함",
+     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "order": 2,
+     "misfit_min": 0.25,
+     "lifted": false,
+     "axis": "free",
+     "start_kind": null,
+     "end_kind": null,
+     "warned": true,
+     "path": null
+    },
+    {
+     "label": "④′ 무앵커 + 1° 어긋남(임계 근처)",
+     "note": null,
+     "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "order": 2,
+     "misfit_min": 0,
+     "lifted": false,
+     "axis": "free",
+     "start_kind": null,
+     "end_kind": null,
+     "warned": false,
+     "path": null
+    },
+    {
+     "label": "④″ 무앵커 + 3° 어긋남(임계 근처)",
+     "note": null,
+     "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "order": 2,
+     "misfit_min": 0,
+     "lifted": false,
+     "axis": "free",
+     "start_kind": null,
+     "end_kind": null,
+     "warned": false,
+     "path": null
+    },
+    {
+     "label": "⑤ 경고 뒤에 다시 축 스냅으로(경고가 남는가)",
+     "note": null,
+     "snap_note": "**양 끝 스냅**으로 확정(축 1) — 정점 → 끝점 <span class=\"dim\">(가장 가까운 축과 0.0°)</span>",
+     "order": 2,
+     "misfit_min": 0,
+     "lifted": true,
+     "axis": 0,
+     "start_kind": "vertex",
+     "end_kind": "endpoint",
+     "warned": false,
+     "path": "two_point"
+    },
+    {
+     "label": "⑥ [되살림] 연결 억제 끔 — 면 대각선",
+     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "snap_note": "**양 끝 스냅**으로 확정(축 미분류) — 정점 → 정점 <span class=\"dim\">(가장 가까운 축과 11.7°)</span>",
+     "order": 2,
+     "misfit_min": 0.4723,
+     "lifted": true,
+     "axis": "free",
+     "start_kind": "vertex",
+     "end_kind": "vertex",
+     "warned": true,
+     "path": "two_point"
+    },
+    {
+     "label": "⑦ [되살림] 알림 비우기 끔 — 어긋난 획",
+     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "order": 2,
+     "misfit_min": 0.25,
+     "lifted": false,
+     "axis": "free",
+     "start_kind": null,
+     "end_kind": null,
+     "warned": true,
+     "path": null
+    },
+    {
+     "label": "⑧ [되살림] 그 뒤에 축 스냅으로",
+     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "snap_note": "**양 끝 스냅**으로 확정(축 1) — 정점 → 정점 <span class=\"dim\">(가장 가까운 축과 0.0°)</span>",
+     "order": 2,
+     "misfit_min": 0,
+     "lifted": true,
+     "axis": 0,
+     "start_kind": "vertex",
+     "end_kind": "vertex",
+     "warned": true,
+     "path": "two_point"
+    }
+   ],
+   "diag_screen_angle_to_vp_deg": 70.52,
+   "diag_from_screen_axis_deg": 12.2
+  }
+ ],
+ "rule_arms": {
+  "what": "(b) — 유한 수직 소실점을 향한 깊이선. 종단 픽스처가 못 만드는 갈래라 규칙 층에서 잰다.",
+  "vertical_vp": [
+   900,
+   900
+  ],
+  "from": [
+   400,
+   500
+  ],
+  "rows": [
+   {
+    "name": "[되살림] 수직 슬롯이 무한원 — 옛 거동",
+    "event": "rejected",
+    "axis": null,
+    "notify": true,
+    "why": "**이 선이 어긋납니다** — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 <span class=\"dim\">(수평 축은 둘뿐입니다)</span>"
+   },
+   {
+    "name": "수직 슬롯이 유한 — 수리 후",
+    "event": "support",
+    "axis": 2,
+    "notify": false,
+    "why": null
+   },
+   {
+    "name": "[반례] 어느 소실점도 안 향함",
+    "event": "rejected",
+    "axis": null,
+    "notify": true,
+    "why": "**이 선이 어긋납니다** — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 <span class=\"dim\">(수평 축은 둘뿐입니다)</span>"
+   },
+   {
+    "name": "[반례] 수평 소실점을 향함(순서 불변)",
+    "event": "support",
+    "axis": 0,
+    "notify": false,
+    "why": null
+   },
+   {
+    "name": "[반례] 화면 수직선(갈래 불변)",
+    "event": "rejected",
+    "axis": null,
+    "notify": false,
+    "why": "수직축은 이미 유한 소실점입니다(3점 투시) — 화면 수직선은 그 축이 아닙니다"
+   }
+  ]
+ },
+ "summary": {
+  "warned_by_order": [
+   {
+    "order": 3,
+    "warned": [
+     false,
+     false,
+     false,
+     true,
+     false,
+     false,
+     false,
+     true,
+     true,
+     true
+    ]
+   },
+   {
+    "order": 2,
+    "warned": [
+     false,
+     false,
+     false,
+     true,
+     false,
+     false,
+     false,
+     true,
+     true,
+     true
+    ]
+   }
+  ],
+  "axis_snap_warned": [
+   false,
+   false
+  ],
+  "two_point_warned": [
+   false,
+   false
+  ],
+  "two_point_warned_when_quiet_off": [
+   true,
+   true
+  ],
+  "two_point_misfit": [
+   0.3184,
+   0.4723
+  ],
+  "two_point_path": [
+   "two_point",
+   "two_point"
+  ],
+  "persisted_to_next": [
+   false,
+   false
+  ],
+  "persisted_to_next_when_off": [
+   true,
+   true
+  ],
+  "revive_note_arm_warned": [
+   true,
+   true
+  ],
+  "genuinely_off_misfit": [
+   0.25,
+   0.25
+  ],
+  "genuinely_off_warned": [
+   true,
+   true
+  ],
+  "rule_revive_event": "rejected",
+  "rule_fixed_event": "support",
+  "rule_fixed_axis": 2
+ },
+ "gate": {
+  "registered": "경고는 **어긋난 획에만** 뜬다. 팔별 판정은 `summary.warned_by_order`가 든다 — 산문에 결과를 안 박는다(#47).",
+  "reachability": "④가 실제로 경고를 낸다. 값은 ④가 판정 임계를 넘은 **크기**(`genuinely_off_misfit`, 판정이 쓰는 `vpMisfit` 그대로)이고 임계는 `vp_dist_ratio`다. ⚠ 다른 팔의 `warned = false`가 전부 임계 아래인 것은 **아니다** — ③·⑤는 임계 위이고 경로 억제·알림 비움이 사유다. 그 갈림은 팔마다의 `misfit_min`·`path`가 든다(#43).",
+  "reachability_value": [
+   0.25,
+   0.25
+  ],
+  "reachability_source": "summary/genuinely_off_misfit",
+  "result": {
+   "warned_by_order": [
+    {
+     "order": 3,
+     "warned": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+     ]
+    },
+    {
+     "order": 2,
+     "warned": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+     ]
+    }
+   ],
+   "axis_snap_warned": [
+    false,
+    false
+   ],
+   "two_point_warned": [
+    false,
+    false
+   ],
+   "two_point_warned_when_quiet_off": [
+    true,
+    true
+   ],
+   "two_point_misfit": [
+    0.3184,
+    0.4723
+   ],
+   "two_point_path": [
+    "two_point",
+    "two_point"
+   ],
+   "persisted_to_next": [
+    false,
+    false
+   ],
+   "persisted_to_next_when_off": [
+    true,
+    true
+   ],
+   "revive_note_arm_warned": [
+    true,
+    true
+   ],
+   "genuinely_off_misfit": [
+    0.25,
+    0.25
+   ],
+   "genuinely_off_warned": [
+    true,
+    true
+   ],
+   "rule_revive_event": "rejected",
+   "rule_fixed_event": "support",
+   "rule_fixed_axis": 2
+  }
+ },
+ "pitfall_citations": [
+  7,
+  12,
+  17,
+  21,
+  24,
+  25,
+  30,
+  32,
+  33,
+  35,
+  40,
+  43,
+  46,
+  47
+ ],
+ "errors": [],
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}

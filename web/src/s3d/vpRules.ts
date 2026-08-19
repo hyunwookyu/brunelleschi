@@ -637,12 +637,48 @@ export function convergeDeg(l: RLine, at: Pt2): number {
 }
 
 /**
+ * **교점이 그 선분의 안쪽을 가로지르는가**(2026-08-19 15차 항목 1 · D-L99).
+ *
+ * `beyondSegment`(연장 위)의 **여집합이 아니다** — 그 사이에 **끝**이 있다.
+ * 세 자리를 가른다:
+ * ```
+ * 연장 위 (t < −pad · t > 1+pad)   소실점의 자리 — beyondSegment
+ * 끝      (|t| ≤ pad · |1−t| ≤ pad) 이어 그린 이음점. 두 선이 거기서 **끝난다**
+ * 안쪽                              모서리다 — 지시 11의 "공간의 한 점"
+ * ```
+ * 여유는 스냅의 `extend_ratio`를 그대로 쓴다(#17 — 새 임계를 안 만든다).
+ */
+export function insideSegment(l: RLine, at: Pt2): boolean {
+  const dx = l.b[0] - l.a[0], dy = l.b[1] - l.a[1];
+  const L2 = dx * dx + dy * dy;
+  if (L2 < 1e-12) return false;
+  const t = ((at[0] - l.a[0]) * dx + (at[1] - l.a[1]) * dy) / L2;
+  const pad = SNAP_TOL.extend_ratio;
+  return t > pad && t < 1 - pad;
+}
+
+/**
  * 대기 선 짝마다의 교점 후보. **끝점을 공유한 이음은 뺀다** — 이어 그린 두 선(ㄱ자 모서리·
  * T자 접합)의 교점은 정확히 그 이음점이고, 그것을 소실점으로 받으면 **모든 꼭짓점이
  * 소실점이 된다**(4차 지시 3의 판정 그대로, #17).
+ *
+ * ⚠⚠ **`unambiguous`면 그 두 문을 푼다**(2026-08-19 15차 항목 1 · D-L99).
+ * `unambiguous`는 **깊이축이 하나뿐임이 이미 선언된 상태**(가로축이 선 P1)다. 그러면
+ * 대기 깊이선은 전부 **같은 축**이고, 3D에서 나란한 두 직선의 상은 **소실점에서만** 만난다 —
+ * 그 교점이 이음점이든 아니든 **소실점이다**. "모든 꼭짓점이 소실점이 된다"는 위험은
+ * 두 선이 **다른 축일 수 있을 때**의 것이고, 선언 아래서는 그 경우가 없다.
+ *
+ * 사용자 보고(15차 ①·②): *"깊이선 하나를 긋고 그 끝점을 소실점 삼아 새 깊이선을 뻗으면
+ * 공간이 안 선다"* · *"삼각형으로 공간을 정의할 때 … 공간이 정의되지 않는다"*.
+ * 재현: 가로축을 선언하고 깊이선 둘을 **한 점에서 만나게** 그으면 두 문이 그 짝을 통째로
+ * 버려 `resolvePool`이 `null`을 내고 **카메라가 영영 안 선다**(`vp_rules.test.ts`의 되살림 팔).
+ * 닫힌 삼각형(사선 → 수평 → 사선이 첫 점으로 돌아오는 것)이 정확히 그 형태다.
+ *
+ * ⚠ **안쪽 교차는 선언 아래서도 막는다** — 두 선이 서로의 **몸통**을 가로지르면 그것은
+ * 같은 축일 수 없다(나란한 직선은 서로를 안 가로지른다). 오분류의 방어가 거기 남는다.
  */
 function poolCandidates(pool: RLine[], imgSize: [number, number],
-                       cfg: RuleCfg = {}): PoolPick[] {
+                       cfg: RuleCfg = {}, unambiguous = false): PoolPick[] {
   const c = { ...RULE_TOL, ...cfg };
   const mergePx = SNAP_TOL.merge_ratio * Math.hypot(imgSize[0], imgSize[1]);
   const out: PoolPick[] = [];
@@ -651,9 +687,13 @@ function poolCandidates(pool: RLine[], imgSize: [number, number],
       const at = lineIntersect(pool[i].a, pool[i].b, pool[j].a, pool[j].b);
       if (!at || !isFiniteVp(at, imgSize)) continue;
       const ends = [pool[i].a, pool[i].b, pool[j].a, pool[j].b];
-      if (ends.some(e => Math.hypot(e[0] - at[0], e[1] - at[1]) <= mergePx)) continue;
-      // **소실점은 두 선의 연장에서 만난다** — 그린 구간 안의 교차는 모서리다
-      if (!beyondSegment(pool[i], at) || !beyondSegment(pool[j], at)) continue;
+      if (!unambiguous
+          && ends.some(e => Math.hypot(e[0] - at[0], e[1] - at[1]) <= mergePx)) continue;
+      // **소실점은 두 선의 연장에서 만난다** — 그린 구간 **안**의 교차는 모서리다.
+      // 선언 아래서는 "연장 위"까지 요구하지 않고 "안쪽이 아님"만 요구한다(D-L99)
+      const okI = unambiguous ? !insideSegment(pool[i], at) : beyondSegment(pool[i], at);
+      const okJ = unambiguous ? !insideSegment(pool[j], at) : beyondSegment(pool[j], at);
+      if (!okI || !okJ) continue;
       const members = [i, j];
       for (let k = 0; k < pool.length; k++) {
         if (k === i || k === j) continue;
@@ -691,7 +731,7 @@ export interface PoolVerdict {
 export function resolvePool(
   pool: RLine[], imgSize: [number, number], unambiguous: boolean, cfg: RuleCfg = {},
 ): PoolVerdict | null {
-  const cands = poolCandidates(pool, imgSize, cfg);
+  const cands = poolCandidates(pool, imgSize, cfg, unambiguous);
   if (!cands.length) return null;
   const restOf = (c: PoolPick) =>
     pool.map((_, k) => k).filter(k => !c.members.includes(k));
@@ -936,6 +976,20 @@ export function stepRule(
       if (vpMisfit(rep, at) <= AXIS_TOL.vp_dist_ratio) {
         (st.slots[i] as { support: number }).support += 1;
         return { state: st, event: { type: "support", axis: i } };
+      }
+    }
+    // **수직축이 유한 소실점이면 그쪽도 본다**(2026-08-19 15차 항목 2 · D-L100).
+    //
+    // 옛 판은 **수평 둘만** 봤다. 그런데 3점 구도에서 수직축은 유한 소실점이고, 그 소실점이
+    // 주점에 가까우면 그쪽으로 그은 선이 `screen_v` 임계(4°) 밖이라 **`depth`로 분류된다** —
+    // 그러면 아래 거절문이 "두 소실점 어느 쪽도 향하지 않습니다"라고 말한다. **셋째 소실점을
+    // 안 세고 한 말이다.** 2D 방향 스냅(`vpDirSnap`)은 이미 **소실점 셋 전부**를 후보로 보므로
+    // (그 함수의 `i < 3` 루프) 스냅과 판정이 서로 다른 집합을 보고 있었다 — #17의 자리다.
+    {
+      const s2 = st.slots[2];
+      if (s2 && s2.kind === "vp" && vpMisfit(rep, s2.at) <= AXIS_TOL.vp_dist_ratio) {
+        s2.support += 1;
+        return { state: st, event: { type: "support", axis: 2 } };
       }
     }
     // ⛔ **"두 번째 수평축입니까, 수직축입니까" 물음을 지웠다**(7차 지시 3-b).

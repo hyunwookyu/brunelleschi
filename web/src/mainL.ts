@@ -31,7 +31,7 @@ import { classifyLine, snapAxisTable as snapAxisRows, perspectiveOrder, RULE_TOL
 // **축 스냅**(사람 지시 1·3) — 그리는 동안 축으로 강제하고, 모호하면 커서가 가른다
 import { snapToAxis, screenOrthoSnap, vpDirSnap, SNAP_TOL_AXIS,
          type AxisCand, type ScreenOrtho, type VpDirSnap } from "./s3d/axisSnap.js";
-import { liftAll, LIFT_TOL, type LiftStroke } from "./s3d/lift.js";
+import { liftAll, LIFT_TOL, type LiftStroke, type DeclaredJoint } from "./s3d/lift.js";
 import { snapCandidates, staticCandidates, SNAP_ORDER, SNAP_LABEL, SNAP_COLOR, SNAP_ICON, SNAP_TIP,
          SNAP_TOL,
          type SnapCand, type SnapKind, type SnapSeg, type SnapCtx,
@@ -42,6 +42,7 @@ import { static2dCandidates, snap2dAt, type Snap2Cand, type Snap2Seg } from "./s
 import { resolve2dCore, snap2Refs, OSNAP_RADIUS_PX, type Resolve2dOut } from "./s3d/resolve2d.js";
 import { segmentFromAnchor, nearestAxisOnScreen, endFromCursor, LIVE_TOL } from "./s3d/liveLine.js";
 import { crossAnchorOf } from "./s3d/crossAnchor.js";
+import { anchorToTarget } from "./s3d/liftAnchor.js";
 import { onePointFrame, directSegment, planeAnchor, ONE_POINT_TOL } from "./s3d/onePoint.js";
 import { judgeDraftPose } from "./s3d/draftPose.js";
 import { representative, AXIS_TOL, chordTurnDeg } from "./s3d/axis.js";
@@ -1604,13 +1605,24 @@ function solveInto(ctx: PlaceCtx, targets: SStroke[]): number {
   }
   const input: LiftStroke[] = targets.filter(liftable)
     .map(s => ({ id: s.id, pts2d: s.pts2d, axis: s.axis }));
+  // **그리며 선언된 연결을 제약으로 넘긴다**(15차 항목 1 · D-L98 · lift.ts `DeclaredJoint`).
+  // 검출(`findJoints`)은 대표 직선 교점을 접합 반경 안에서 찾는데, 프리핸드 획에서는
+  // 그 교점이 그린 모서리에서 접합 반경 밖으로 나간다(합성 사슬 실측 35px > 21.7px) —
+  // **사용자가 붙여 그은 획이 "구조에 안 이어졌다"로 떨어져 2D에 남았다.**
+  const declared: DeclaredJoint[] = [];
+  for (const s of LIFT_DECLARED.on ? targets : []) {
+    if (!liftable(s)) continue;
+    for (const ref of [s.snap2dStart, s.snap2dEnd]) {
+      if (ref?.ofId) declared.push({ i: s.id, j: ref.ofId, q: ref.at });
+    }
+  }
   const r = liftAll(input, { principal: ctx.principal, f: ctx.f, vps: ctx.vps,
-                             imgSize: ctx.imgSize, axisDirs: ctx.axisDirs });
+                             imgSize: ctx.imgSize, axisDirs: ctx.axisDirs }, {}, declared);
   let n = 0;
   for (const s of targets) {
     const seg = r.placed.get(s.id);
     s.seg3d = seg ? [seg.a, seg.b] : null;
-    if (seg) n += 1;
+    if (seg) { n += 1; reanchorLifted(s, ctx, id => doc.strokes.find(x => x.id === id)); }
   }
   // ⚠ **여기에는 D-L71 되쓰기가 없다 — 필요 없어서다**(12차 항목 2에서 실측으로 확인).
   // `liftAll`의 끝점은 그 화면점의 **광선 위**에 있으므로(λ·ray — lift.ts) 재투영이
@@ -1618,6 +1630,10 @@ function solveInto(ctx: PlaceCtx, targets: SStroke[]): number {
   // 맞추는 것은 배치가 아니라 **확정 시점의 2D 방향 스냅**의 몫이다(`placeStroke`의
   // 대기 가지 — 조리개 안 겨냥이 소실점을 정확히 지나게 옮겨 두면, 그 획은 여기서
   // 정확한 축으로 풀린다. `vp_dir_consistency.test.ts`가 그 사슬을 잠근다).
+  // ⚠⚠ **그 자기일관은 `rep`에 대한 것이다**(15차 항목 1 · D-L98). 그린 끝점에 대해서는
+  // 자기일관이 아니다 — `rep`는 PCA 극단이고 오스냅 후보는 `pts2d`의 양 끝이라,
+  // 프리핸드 획에서 둘이 중앙 6.5px 어긋난다(`confirm_link.json@f351839a`의
+  // `real_ink_rep_offset`). 그 몫을 `reanchorLifted`가 되맞춘다.
   placeBy.batch += n;
   // **첫 앵커 — 지면 배치**(13차 항목 2 · groundAnchor.ts 머리말). 일괄 풀이가 아무것도
   // 못 올렸고 **문서에 3D가 하나도 없을 때만**: 카메라를 세운 보조선들(수평 평면 축)은
@@ -1635,8 +1651,79 @@ function solveInto(ctx: PlaceCtx, targets: SStroke[]): number {
   return n;
 }
 
+/**
+ * **배치 경로 이름**(`placeLive`의 반환) — `placeStroke`가 이것을 되돌려 `feedStroke`가
+ * "이 획의 기하를 무엇이 정했나"를 안다(15차 항목 2 · D-L100).
+ */
+type PlacePath = "two_point" | "extension" | "axis" | null;
+
+/**
+ * **알림은 이 획의 것이다**(15차 항목 2 · D-L100 (c)) — 획마다 `note`를 비운다.
+ * 측정 스위치(#30) — `S2S.setNoteClear(false)`가 수리 전 거동(앞 획의 경고가 남는다)이다.
+ */
+const NOTE_CLEAR = { on: true };
+
+/**
+ * **연결이 기하를 정한 획에는 거절 알림을 안 낸다**(15차 항목 2 · D-L100 (a)).
+ * 측정 스위치(#30) — `S2S.setConnectionQuiet(false)`가 수리 전 거동(그 획에도 경고)이다.
+ */
+const CONNECTION_QUIET = { on: true };
+
 /** 측정 스위치(#30 — D-L83 `setAnchorGuard` 선례) — 끄면 수리 전 거동(첫 앵커 없음)이다. */
 const GROUND_ANCHOR = { on: true };
+
+/**
+ * **확정 배치의 연결 되맞춤**(2026-08-19 15차 항목 1 · D-L98 · `liftAnchor.ts` 머리말).
+ *
+ * 일괄 풀이가 놓은 끝점은 `rep`(PCA 극단)의 광선 위인데, 사용자가 붙인 연결점은 `pts2d`의
+ * 양 끝이다. 프리핸드 획에서 그 둘이 어긋나(`confirm_link.json@f351839a` — 실획 22획 중앙 6.5px) **확정
+ * 순간 붙여 그린 두 획이 떨어진다.** 여기서 두 획의 그 끝을 **대상 직선 위의 한 점**으로
+ * 모은다 — 규약은 `placeLive`의 그것 그대로다(#17: 좌표는 연결이 정한다, D-L83).
+ *
+ * 되맞춤이 서면 **3D 참조도 붙인다** — 일괄 풀이 경로는 여태 `snapStart`/`snapEnd`를
+ * 아예 안 남겼고(실측: 확정 획 전부 null), 그래서 분할·지우개의 앵커 이관과
+ * `refAnchorOf`의 재료가 없었다. 기록이 있는데 3D 참조가 없는 상태를 없앤다.
+ *
+ * ⚠ **대상이 아직 안 놓였으면 아무것도 안 한다** — 그 연결은 이 회차의 몫이 아니다.
+ * 그래서 **문서 순서로 돈다**: 앞선 획이 먼저 놓이고 그 위에 뒤 획이 붙는다(사슬).
+ *
+ * 측정 스위치(#30) — `S2S.setLiftAnchor(false)`가 수리 전 거동이다.
+ */
+const LIFT_ANCHOR = { on: true };
+/**
+ * **선언된 연결을 제약으로 넘기는가**(D-L98의 앞 절반 — `lift.ts`의 `DeclaredJoint`).
+ * 측정 스위치(#30) — `S2S.setLiftDeclared(false)`가 수리 전 거동(검출 교점만)이다.
+ * 되맞춤(`LIFT_ANCHOR`)과 **따로 끈다**: 두 결함이 다른 것이고 각자의 몫이 갈려야 한다.
+ */
+const LIFT_DECLARED = { on: true };
+/**
+ * 분자·분모와 사유(#43) — `attempts`는 **기록이 있는 확정 획의 기록 수**다.
+ * `attempts = applied + no_target + rejected`.
+ */
+const liftAnchorStats = { attempts: 0, applied: 0, no_target: 0, rejected: 0,
+                          target_moved: 0, maxMovedPx: 0, maxTurnDeg: 0 };
+
+function reanchorLifted(s: SStroke, ctx: PlaceCtx, by: (id: string) => SStroke | undefined): void {
+  if (!LIFT_ANCHOR.on || !s.seg3d) return;
+  const refs = [{ ref: s.snap2dStart, end: false }, { ref: s.snap2dEnd, end: true }] as const;
+  for (const { ref } of refs) {
+    if (!ref?.ofId) continue;
+    liftAnchorStats.attempts += 1;
+    const t = by(ref.ofId);
+    if (!t?.seg3d || t.id === s.id) { liftAnchorStats.no_target += 1; continue; }
+    const r = anchorToTarget(s.seg3d, t.seg3d, ref.at, ref.kind, ctx);
+    if (!r) { liftAnchorStats.rejected += 1; continue; }
+    s.seg3d = r.seg;
+    if (r.targetSlot != null) { t.seg3d = r.target; liftAnchorStats.target_moved += 1; }
+    liftAnchorStats.applied += 1;
+    liftAnchorStats.maxMovedPx = Math.max(liftAnchorStats.maxMovedPx, r.movedPx);
+    liftAnchorStats.maxTurnDeg = Math.max(liftAnchorStats.maxTurnDeg, r.turnDeg);
+    // **3D 참조를 붙인다** — 세계 = 시점이다(일괄 풀이는 핀 상태에서만 돈다)
+    const world = { kind: ref.kind, at: r.at3, ofId: ref.ofId };
+    if (ref === s.snap2dEnd) s.snapEnd = world; else s.snapStart = world;
+  }
+}
+
 
 // ⛔ **차수 승격 블록을 지웠다**(2026-08-18 7차 지시 3-d) — `autoPromoteOrder`(§6.1의
 // 전부 다시 풀기)와 `relinkLostSnaps`(잃은 스냅 재연결)가 여기 있었다. 승격 전이가
@@ -1932,7 +2019,7 @@ function feedCamera(line: RLine, forced?: "screen" | "depth",
  * 이것이 "추정하지 않는다"의 구현이다(A-3: 애매하면 놓지 않는다).
  */
 function feedStroke(st: SStroke, forced?: "screen" | "depth",
-                    hint?: "screen" | "depth"): void {
+                    hint?: "screen" | "depth", byConnection = false): void {
   const rep = representative(st.pts2d);
   if (!rep) return;
   const line: RLine = { a: rep.a, b: rep.b };
@@ -1944,7 +2031,21 @@ function feedStroke(st: SStroke, forced?: "screen" | "depth",
   // 1-b · D-L93): 넓은 화각은 결함이 아니라 선택 — warn/severe 대역의 why는 이제 빈
   // 문자열이라 ②의 조건(band reject — f² ≤ 0뿐)에만 문구가 실린다. 1차 리뷰어 [3]이
   // 초판(vp_fixed 알림 전체 삭제)이 D-L73까지 무효화한 것을 잡았다.
-  if (r.event.type === "rejected" && r.event.notify) {
+  // ⚠⚠ **연결이 기하를 정한 획에는 "어긋납니다"를 안 낸다**(2026-08-19 15차 항목 2 · D-L100).
+  //
+  // 그 거절문(6차 지시 11-3 — "셋째 방향은 잘못 그은 것이다")은 **축을 겨냥했는데 어디에도
+  // 안 닿은 획**에 대한 말이고, 그래서 "지우고 다시 그으세요"라고 한다. 그런데 **양 끝
+  // 스냅·연장선으로 놓인 획은 축을 겨냥한 것이 아니다** — `resolveLive`가 그 경로를 두면서
+  // 스스로 적었다: "축을 벗어난 선(면 위 사선·자유 세그먼트)이 이 경로로 놓인다. 각도는
+  // 표시용으로만 낸다(축을 붙이지 않는다)." 그 획은 **이미 3D에 정확히 있고** 두 끝이
+  // 사용자가 고른 실제 점에 붙어 있다. 재현(15차 항목 2): 면 대각선이 양 끝 스냅으로
+  // 3D에 놓인 그 순간 "지우고 다시 그으세요"가 떴다.
+  //
+  // ⚠ **규칙 상태는 그대로 거절한다** — 그 선은 소실점을 만들지 않는다(`state: st0`).
+  // 바뀌는 것은 **알림뿐**이고, 무슨 일이 났는지는 `lastSnapNote`가 이미 말한다
+  // ("양 끝 스냅으로 확정(축 미분류) — … 가장 가까운 축과 44.5°").
+  if (r.event.type === "rejected" && r.event.notify
+      && !(byConnection && CONNECTION_QUIET.on)) {
     note = r.event.why;
   } else if (r.event.type === "vp_fixed" && r.event.fov?.band === "reject") {
     note = r.event.fov.why;
@@ -2775,6 +2876,13 @@ const ink = new InkCanvas(canvas, {
     // D-L79 ②는 **끝점 오스냅 가지에서만** 이 우회를 뺐고(`resolve2dCore`의 `ortho: null`),
     // 주 경로에는 살아 있었다. 지우는 쪽이 단순한 쪽이다(A-3).
     pushUndo();
+    // ⚠⚠ **알림은 이 획의 것이다 — 앞 획의 것을 안 물려받는다**(2026-08-19 15차 항목 2).
+    // `note`는 누가 다시 쓸 때까지 남는데, 그 자리에 **"지우고 다시 그으세요"**가 있으면
+    // 그다음에 잘 그은 획에도 그 경고가 붙어 보인다 — 종단 실측이 그것을 잡았다
+    // (⑧ 팔: 경고 뒤에 정확히 겨냥해 그은 획에서도 같은 문구가 그대로 남았다).
+    // `lastSnapNote`는 이미 획마다 비운다(`placeStroke`) — 같은 규약을 여기 맞춘다(#17).
+    // 측정 스위치(#30) — `S2S.setNoteClear(false)`가 수리 전 거동(경고가 남는다)이다.
+    if (NOTE_CLEAR.on) note = "";
     // **승격 요약은 그 전환의 설명이다** — 획을 더 그리면 설명이 낡는다(AS-C7과 같은 형태).
     // 차수 되돌리기 버튼은 남는다 — 그것이 §6.2의 지속 수단이다
     // **§9.3 — 그리는 자리에서만 뷰가 생긴다.** 돌릴 때마다 만들면 뷰가 넘친다
@@ -2806,13 +2914,18 @@ const ink = new InkCanvas(canvas, {
     // 카메라가 아직 안 섰으면 놓을 수가 없으므로(3D 대상이 없다) 종전대로 규칙이 먼저다 —
     // 그때 규칙이 카메라를 세우면 아래에서 곧바로 놓는다.
     const fr0 = liftable(s) ? frame() : null;
-    if (fr0) placeStroke(s, fr0);
+    // **무엇이 이 획의 기하를 정했나** — 연결(양 끝 스냅·연장선)이면 규칙의 거절 알림을
+    // 안 낸다(15차 항목 2 · D-L100 · `feedStroke`의 그 자리)
+    const path0 = fr0 ? placeStroke(s, fr0) : null;
     // **커서가 이미 가른 것을 규칙에 넘긴다**(8차 지시 2-b) — 애매 구간의 물음은 조작이지
     // 물음이 아니다. ⚠ `forced`가 아니라 `hint`다: **P1 가드에는 안 닿는다**(D-L70을 안 되살린다).
     // 규칙은 `resolve2dCore`가 이미 쓴 그 규칙이다(#17 — 화면 직교 대 소실점 방향).
     const hint2d: "screen" | "depth" | undefined =
       r2d?.ortho ? "screen" : r2d?.vpdir ? "depth" : undefined;
-    if (liftable(s)) feedStroke(s, undefined, hint2d);
+    if (liftable(s)) {
+      feedStroke(s, undefined, hint2d,
+                 path0 === "two_point" || path0 === "extension");
+    }
     // 확정 뒤에는 그 자리에서 푼다 — **승격 연쇄**의 첫 형태다(§9.1).
     // **돌린 시점에서도 돈다**(L-B.8) — `frame()`이 좌표 변환을 들고 있다
     const fr = fr0 ?? (liftable(s) ? frame() : null);
@@ -2850,7 +2963,8 @@ const ink = new InkCanvas(canvas, {
  * `onStrokeEnd`에서 떼어냈다(7차 지시 1-c): 카메라가 이미 서 있으면 **규칙보다 먼저** 돌아야
  * 규칙이 확정 방향을 받는다. 몸통은 옮기기 전과 같다.
  */
-function placeStroke(s: SStroke, fr: Frame): void {
+function placeStroke(s: SStroke, fr: Frame): PlacePath {
+  let path: PlacePath = null;
   {
     {
       const pts = s.pts2d;
@@ -2870,9 +2984,10 @@ function placeStroke(s: SStroke, fr: Frame): void {
         const endCand = endSnapRecord(s, fr, cand.at, pts[pts.length - 1]);
         if (endCand) applySnapToEnd(s, endCand, fr.fromV(endCand.at));
         {
-          const path = placeLive(s, fr, cand.at, endCand);
+          const p = placeLive(s, fr, cand.at, endCand);
+          path = p || null;
           // 경로 이름으로 센다(#43) — 연장선(13차 항목 3)은 자기 칸이 있다
-          if (path) placeBy[path === "axis" ? "start_anchor" : path] += 1;
+          if (p) placeBy[p === "axis" ? "start_anchor" : p] += 1;
         }
       } else if (onePointFrame(axisDirs(fr.ctx))
                  && guardedPlaceUnanchored(s, fr)) {
@@ -2911,6 +3026,7 @@ function placeStroke(s: SStroke, fr: Frame): void {
       }
     }
   }
+  return path;
 }
 ink.setFrame("persp");
 
@@ -3634,6 +3750,19 @@ refresh();
   chainDirGuard: () => ({ on: CHAIN_DIR_GUARD.on, ...chainDirGuardStats }),
   /** 측정 스위치(#30) — `false`가 옛 거동(연쇄가 각도 무제한으로 축 되쓰기)이다. */
   setChainDirGuard: (on: boolean) => { CHAIN_DIR_GUARD.on = on; },
+  /** **확정 배치 연결 되맞춤**(15차 항목 1 · D-L98) — 분모(attempts)와 함께 낸다(#43). */
+  liftAnchor: () => ({ on: LIFT_ANCHOR.on, ...liftAnchorStats }),
+  /** 측정 스위치(#30) — `false`가 수리 전 거동(rep 끝점 그대로)이다. */
+  setLiftAnchor: (on: boolean) => { LIFT_ANCHOR.on = on; },
+  /** 측정 스위치(#30) — `false`가 수리 전 거동(선언 없이 검출 교점만)이다. */
+  liftDeclared: () => LIFT_DECLARED.on,
+  setLiftDeclared: (on: boolean) => { LIFT_DECLARED.on = on; },
+  /** **알림 비우기**(15차 항목 2 · D-L100 (c)) — `false`가 수리 전 거동(경고가 남는다)이다. */
+  noteClear: () => NOTE_CLEAR.on,
+  setNoteClear: (on: boolean) => { NOTE_CLEAR.on = on; },
+  /** **연결 획의 알림 억제**(15차 항목 2 · D-L100 (a)) — `false`가 수리 전 거동이다. */
+  connectionQuiet: () => CONNECTION_QUIET.on,
+  setConnectionQuiet: (on: boolean) => { CONNECTION_QUIET.on = on; },
   /** **화면 팬**(항목 5) — 표시 오프셋(css px). 문서 좌표에는 절대 안 들어간다. */
   viewPan: () => [stage.viewPan[0], stage.viewPan[1]],
   setViewPan: (p: Pt2) => { stage.setViewPan(p); refresh(); },

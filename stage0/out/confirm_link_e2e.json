@@ -1,0 +1,596 @@
+{
+ "what": "사용자 보고 ②의 종단 재현 — 사선 → 끝점 스냅 수평선 → 그 끝점 스냅 사선.",
+ "how": "실제 포인터로 **떨림을 넣어** 긋는다(프리핸드 형태). 팔은 측정 스위치 둘로 가른다: off(수리 전) · declared_only(선언 제약만) · on(선언 + 되맞춤).",
+ "what_this_does_not_say": [
+  "한 구도·한 떨림 폭·dpr 1이다(#12·#21) — 폭과 구도의 감도는 안 잰다.",
+  "수리 후의 간격 0은 **보장**이다(#5) — 판정은 off 팔의 값이 든다.",
+  "스냅 **기록**은 세 팔 모두에서 보존된다(`snap_records`) — 사라진 적이 없다. 사용자가 본 '스냅이 풀린다'의 실체는 기록이 아니라 **기하**다.",
+  "⚠ **`off` 팔은 (b)의 되살림 팔이 아니다** — 선언 제약이 없으면 일괄 풀이가 획 하나를 못 담고, 그 획을 **승격 연쇄의 끝점 앵커**가 대신 놓는다(`placeBy.end_anchor`). 그 경로는 앵커를 정확히 쓰므로 간격이 0이다. (b)의 되살림 팔은 **`declared_only`**(선언 제약은 켜고 되맞춤만 끈 팔)다.",
+  "`break_px`(확정된 끝점 ↔ 기록된 화면점)는 수리 후에도 0이 아니다 — 연결점이 **대상 획의 대표 직선 위**라서다. 그 값은 프리핸드를 버린 대가(§1.1)의 크기이고 이 항목의 범위가 아니다(`DEFERRED`: 전 끝점 되맞춤).",
+  "⚠ **`declared_only_straight`의 0은 구성상 0이다**(#5 · 2차 리뷰어 [5]) — 떨림이 없으면 방향·끝점 스냅이 `pts2d`를 두 점으로 접고 `rep`가 그 두 점을 **정확히** 지난다. 측정이 아니라 그 구성의 귀결이므로 **임계를 안 건다**; 이 팔이 말하는 것은 '프리핸드가 조건이다'까지다.",
+  "⚠ **`size`(기하 크기 = `gap_rel`의 분모)가 팔마다 다르다**(#24 · 2차 리뷰어 [6]): 떨림이 2D 입력을 바꾸면 복원된 3D의 전역 배율(`liftAll`의 지면 게이지)이 함께 바뀐다. 그러므로 `declared_only`(떨림 6)와 `declared_only_straight`(떨림 0)는 **같은 스위치·같은 손짓이되 복원 기하 크기가 다른 두 팔**이다 — 비교는 '0인가 아닌가'까지만 하고 크기 비는 안 읽는다.",
+  "`closed_triangle` 팔이 재는 것은 **카메라가 서는가**(D-L99)이지 획이 전부 올라가는가가 아니다. 자기 소실점까지 그은 획은 그 끝의 깊이가 무한이라 세그먼트가 안 정해진다 — 그 획이 2D로 남는 것은 기하의 사실이고 결함이 아니다(§9.1: 미배치는 대기다)."
+ ],
+ "arms": [
+  {
+   "name": "off",
+   "wobble_px": 6,
+   "anchor": false,
+   "declared": false,
+   "order": 1,
+   "standing": true,
+   "lifted": 3,
+   "total": 3,
+   "liftAnchor": {
+    "on": false,
+    "attempts": 0,
+    "applied": 0,
+    "no_target": 0,
+    "rejected": 0,
+    "target_moved": 0,
+    "maxMovedPx": 0,
+    "maxTurnDeg": 0
+   },
+   "liftDeclared": false,
+   "placeBy": {
+    "ref_anchor": 0,
+    "start_anchor": 0,
+    "two_point": 0,
+    "end_anchor": 1,
+    "cross_anchor": 0,
+    "batch": 2,
+    "ground": 0,
+    "extension": 0,
+    "unanchored": 0
+   },
+   "chainDirGuard": {
+    "on": true,
+    "attempts": 1,
+    "rejected": 0
+   },
+   "snap_records": 2,
+   "size": 7.968,
+   "rows": [
+    {
+     "id": "s2",
+     "key": "snap2dStart",
+     "ofId": "s1",
+     "kind": "endpoint",
+     "lifted": true,
+     "targetLifted": true,
+     "ref3d": false,
+     "gap3d": 0,
+     "gap_rel": 0,
+     "break_px": 0
+    },
+    {
+     "id": "s3",
+     "key": "snap2dStart",
+     "ofId": "s2",
+     "kind": "endpoint",
+     "lifted": true,
+     "targetLifted": true,
+     "ref3d": false,
+     "gap3d": 0,
+     "gap_rel": 0,
+     "break_px": 0
+    }
+   ]
+  },
+  {
+   "name": "declared_only",
+   "wobble_px": 6,
+   "anchor": false,
+   "declared": true,
+   "order": 1,
+   "standing": true,
+   "lifted": 3,
+   "total": 3,
+   "liftAnchor": {
+    "on": false,
+    "attempts": 0,
+    "applied": 0,
+    "no_target": 0,
+    "rejected": 0,
+    "target_moved": 0,
+    "maxMovedPx": 0,
+    "maxTurnDeg": 0
+   },
+   "liftDeclared": true,
+   "placeBy": {
+    "ref_anchor": 0,
+    "start_anchor": 0,
+    "two_point": 0,
+    "end_anchor": 0,
+    "cross_anchor": 0,
+    "batch": 3,
+    "ground": 0,
+    "extension": 0,
+    "unanchored": 0
+   },
+   "chainDirGuard": {
+    "on": true,
+    "attempts": 0,
+    "rejected": 0
+   },
+   "snap_records": 2,
+   "size": 7.968,
+   "rows": [
+    {
+     "id": "s2",
+     "key": "snap2dStart",
+     "ofId": "s1",
+     "kind": "endpoint",
+     "lifted": true,
+     "targetLifted": true,
+     "ref3d": false,
+     "gap3d": 0.0153,
+     "gap_rel": 0.00192,
+     "break_px": 0
+    },
+    {
+     "id": "s3",
+     "key": "snap2dStart",
+     "ofId": "s2",
+     "kind": "endpoint",
+     "lifted": true,
+     "targetLifted": true,
+     "ref3d": false,
+     "gap3d": 0.01448,
+     "gap_rel": 0.00182,
+     "break_px": 9.27
+    }
+   ]
+  },
+  {
+   "name": "on",
+   "wobble_px": 6,
+   "anchor": true,
+   "declared": true,
+   "order": 1,
+   "standing": true,
+   "lifted": 3,
+   "total": 3,
+   "liftAnchor": {
+    "on": true,
+    "attempts": 2,
+    "applied": 2,
+    "no_target": 0,
+    "rejected": 0,
+    "target_moved": 2,
+    "maxMovedPx": 9.26888467114533,
+    "maxTurnDeg": 0
+   },
+   "liftDeclared": true,
+   "placeBy": {
+    "ref_anchor": 0,
+    "start_anchor": 0,
+    "two_point": 0,
+    "end_anchor": 0,
+    "cross_anchor": 0,
+    "batch": 3,
+    "ground": 0,
+    "extension": 0,
+    "unanchored": 0
+   },
+   "chainDirGuard": {
+    "on": true,
+    "attempts": 0,
+    "rejected": 0
+   },
+   "snap_records": 2,
+   "size": 7.968,
+   "rows": [
+    {
+     "id": "s2",
+     "key": "snap2dStart",
+     "ofId": "s1",
+     "kind": "endpoint",
+     "lifted": true,
+     "targetLifted": true,
+     "ref3d": true,
+     "gap3d": 0,
+     "gap_rel": 0,
+     "break_px": 9.79
+    },
+    {
+     "id": "s3",
+     "key": "snap2dStart",
+     "ofId": "s2",
+     "kind": "endpoint",
+     "lifted": true,
+     "targetLifted": true,
+     "ref3d": true,
+     "gap3d": 0,
+     "gap_rel": 0,
+     "break_px": 17.78
+    }
+   ]
+  },
+  {
+   "name": "closed_triangle",
+   "wobble_px": 6,
+   "anchor": true,
+   "declared": true,
+   "order": 1,
+   "standing": true,
+   "lifted": 2,
+   "total": 3,
+   "liftAnchor": {
+    "on": true,
+    "attempts": 1,
+    "applied": 0,
+    "no_target": 1,
+    "rejected": 0,
+    "target_moved": 0,
+    "maxMovedPx": 0,
+    "maxTurnDeg": 0
+   },
+   "liftDeclared": true,
+   "placeBy": {
+    "ref_anchor": 0,
+    "start_anchor": 1,
+    "two_point": 0,
+    "end_anchor": 0,
+    "cross_anchor": 0,
+    "batch": 1,
+    "ground": 0,
+    "extension": 0,
+    "unanchored": 0
+   },
+   "chainDirGuard": {
+    "on": true,
+    "attempts": 3,
+    "rejected": 3
+   },
+   "snap_records": 2,
+   "size": 12.641,
+   "rows": [
+    {
+     "id": "s2",
+     "key": "snap2dStart",
+     "ofId": "s1",
+     "kind": "endpoint",
+     "lifted": true,
+     "targetLifted": false,
+     "ref3d": false
+    },
+    {
+     "id": "s3",
+     "key": "snap2dStart",
+     "ofId": "s2",
+     "kind": "endpoint",
+     "lifted": true,
+     "targetLifted": true,
+     "ref3d": true,
+     "gap3d": 0,
+     "gap_rel": 0,
+     "break_px": 0
+    }
+   ]
+  },
+  {
+   "name": "declared_only_straight",
+   "wobble_px": 0,
+   "anchor": false,
+   "declared": true,
+   "order": 1,
+   "standing": true,
+   "lifted": 3,
+   "total": 3,
+   "liftAnchor": {
+    "on": false,
+    "attempts": 0,
+    "applied": 0,
+    "no_target": 0,
+    "rejected": 0,
+    "target_moved": 0,
+    "maxMovedPx": 0,
+    "maxTurnDeg": 0
+   },
+   "liftDeclared": true,
+   "placeBy": {
+    "ref_anchor": 0,
+    "start_anchor": 0,
+    "two_point": 0,
+    "end_anchor": 0,
+    "cross_anchor": 0,
+    "batch": 3,
+    "ground": 0,
+    "extension": 0,
+    "unanchored": 0
+   },
+   "chainDirGuard": {
+    "on": true,
+    "attempts": 0,
+    "rejected": 0
+   },
+   "snap_records": 2,
+   "size": 3.293,
+   "rows": [
+    {
+     "id": "s2",
+     "key": "snap2dStart",
+     "ofId": "s1",
+     "kind": "endpoint",
+     "lifted": true,
+     "targetLifted": true,
+     "ref3d": false,
+     "gap3d": 0,
+     "gap_rel": 0,
+     "break_px": 0
+    },
+    {
+     "id": "s3",
+     "key": "snap2dStart",
+     "ofId": "s2",
+     "kind": "endpoint",
+     "lifted": true,
+     "targetLifted": true,
+     "ref3d": false,
+     "gap3d": 0,
+     "gap_rel": 0,
+     "break_px": 0
+    }
+   ]
+  },
+  {
+   "name": "symptom1_two_depth_shared_vertex",
+   "wobble_px": 0,
+   "anchor": true,
+   "declared": true,
+   "order": 0,
+   "standing": false,
+   "lifted": 0,
+   "total": 2,
+   "liftAnchor": {
+    "on": true,
+    "attempts": 0,
+    "applied": 0,
+    "no_target": 0,
+    "rejected": 0,
+    "target_moved": 0,
+    "maxMovedPx": 0,
+    "maxTurnDeg": 0
+   },
+   "liftDeclared": true,
+   "placeBy": {
+    "ref_anchor": 0,
+    "start_anchor": 0,
+    "two_point": 0,
+    "end_anchor": 0,
+    "cross_anchor": 0,
+    "batch": 0,
+    "ground": 0,
+    "extension": 0,
+    "unanchored": 0
+   },
+   "chainDirGuard": {
+    "on": true,
+    "attempts": 0,
+    "rejected": 0
+   },
+   "snap_records": 1,
+   "size": 0,
+   "rows": [
+    {
+     "id": "s2",
+     "key": "snap2dStart",
+     "ofId": "s1",
+     "kind": "endpoint",
+     "lifted": false,
+     "targetLifted": false,
+     "ref3d": false
+    }
+   ]
+  }
+ ],
+ "summary": {
+  "off_lifted": "3/3",
+  "declared_only_lifted": "3/3",
+  "on_lifted": "3/3",
+  "off_gap_rel_max_end_anchor_bypassed": 0,
+  "declared_only_gap_rel_max": 0.00192,
+  "on_gap_rel_max": 0,
+  "closed_standing": true,
+  "closed_order": 1,
+  "closed_lifted": "2/3",
+  "straight_gap_rel_max": 0,
+  "straight_wobble_px": 0,
+  "chain_dir_guard_attempts": [
+   1,
+   0,
+   0,
+   3,
+   0,
+   0
+  ],
+  "chain_dir_guard_rejected": [
+   0,
+   0,
+   0,
+   3,
+   0,
+   0
+  ],
+  "symptom1_standing": false,
+  "symptom1_order": 0,
+  "symptom1_lifted": "0/2"
+ },
+ "gate": {
+  "registered": "확정 순간 붙여 그은 두 획이 붙어 있는가(앱 종단). 판정은 **끈 팔의 값**이 든다 — 켠 팔의 0은 설계 보장이라(#5) 임계를 안 건다.",
+  "reachability": "(b)의 되살림 팔은 `declared_only`다(선언 제약 켬 · 되맞춤 끔). ⚠ **완전 `off` 팔은 되살림 팔이 아니다** — 선언 제약이 없으면 일괄 풀이가 획 하나를 못 담고 승격 연쇄의 **끝점 앵커**가 대신 놓아(`arms[0].placeBy.end_anchor`) 간격이 0으로 나온다. 그 사실 자체가 이 원장의 관측이다.",
+  "reachability_value": 0.00192,
+  "reachability_source": "summary/declared_only_gap_rel_max",
+  "result": {
+   "declared_only_gap_rel_max": 0.00192,
+   "off_place_by_end_anchor": 1,
+   "straight_gap_rel_max": 0
+  }
+ },
+ "pitfall_citations": [
+  5,
+  12,
+  17,
+  21,
+  25,
+  30,
+  40
+ ],
+ "errors": [],
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}

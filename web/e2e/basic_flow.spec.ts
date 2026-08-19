@@ -1302,10 +1302,13 @@ test("1점 확정 — 직전·직후 그린 선이 같은 자리다 (5차 지시
       unanchored_segs: un.map((s: any) => ({ a: s.seg3d[0], b: s.seg3d[1] })),
       note: "앵커 없이(snapStart·snapEnd 없이) 놓인 획. ⛔⛔ **'0이 판정'이라는 예측은 두 번 "
           + "틀렸다**: 8차의 '4-5가 지우면 0'은 9차 실측 4 → 3으로, 10차의 '4-3이 0으로 만든다'는 "
-          + "4-3 완료 뒤에도 **3**으로. 남은 셋은 확정 순간의 일괄 풀이(첫 앵커 — D-L84 ③이 "
-          + "그 배치를 정당한 것으로 못 박았다)라 **이 수는 0이 될 수 없다.** 판정자 역할은 "
+          + "4-3 완료 뒤에도 **3**으로. 판정자 역할은 "
           + "경로별 카운터(place_by — batch/unanchored/앵커 셋)로 옮겨 갔다. 임의 배치의 "
-          + "판정은 place_by.unanchored와 가드 카운터다(10차 리뷰어 2차 [2]).",
+          + "판정은 place_by.unanchored와 가드 카운터다(10차 리뷰어 2차 [2]). "
+          + "⛔⛔ **15차 항목 1(D-L98)로 3 → 1이 됐다**: 일괄 풀이가 **그리며 선언된 연결**을 "
+          + "쓰게 되면서 그 획들에 3D 참조(snapStart/snapEnd)가 붙는다 — 이 픽스처의 셋 중 "
+          + "둘이 2D 스냅 기록을 갖고 있었다. 남는 하나(첫 획)는 아무것에도 안 붙여 그은 획이라 "
+          + "앵커가 없는 것이 맞다. **이 수는 이제 '기록 없이 일괄로 놓인 획'을 센다.**",
     };
   });
   // **D-L83 가드 상태를 원장에 남긴다**(10차 항목 0-c — rejected와 lifted를 함께 기록한다)
@@ -1323,8 +1326,12 @@ test("1점 확정 — 직전·직후 그린 선이 같은 자리다 (5차 지시
   expect((led.place_by as any).start_anchor + (led.place_by as any).two_point
        + (led.place_by as any).end_anchor + (led.place_by as any).ref_anchor
        + (led.place_by as any).unanchored).toBe(0);
-  expect((led.unanchored_place as any).unanchored_placed)
-    .toBe((led.unanchored_place as any).placed);
+  // ⛔ **등식이 깨졌다 — 그것이 D-L98이다**(15차 항목 1). 위 주석이 예고한 그대로:
+  // "이 등식이 깨지는 것은 연결 앵커(ref/start/end)가 이 픽스처에 생긴 뒤다."
+  // 일괄 풀이가 선언된 연결을 쓰면서 그 획들에 3D 참조가 붙는다 — 앵커 없이 놓인 획은
+  // **아무것에도 안 붙여 그은 첫 획 하나**만 남는다.
+  expect((led.unanchored_place as any).unanchored_placed).toBe(1);
+  expect((led.unanchored_place as any).placed).toBe(3);
   expect((led.after_state as any).standing).toBe(true);
   // **일괄 풀이가 실제로 돌았다** — 옛 코드는 가짜 뷰 때문에 0이었다(이 팔의 되살린 버그)
   // ⚠⚠ **4 → 3은 D-L83 되살림(10차 항목 0)의 값이고 이 흐름에서는 3이 옳다**: 밑선(s1)과

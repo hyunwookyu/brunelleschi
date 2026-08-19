@@ -1,0 +1,3150 @@
+{
+ "what": "확정 순간 붙여 그은 두 획이 떨어지는가 — 조건(rep 어긋남)과 크기(연결 간격).",
+ "how": {
+  "real_ink": "sessions/의 실획 획마다 |rep 끝 − 그린 끝|(px). 두 점 획은 정의상 0이라 뺀다.",
+  "chain": "상자 모서리 셋(축 0·1·2)을 프리핸드로 긋고 오스냅처럼 시작점을 이은 사슬. 팔은 선언 제약(DeclaredJoint) on/off × 되맞춤(anchorToTarget) on/off.",
+  "unit": "간격은 **두 획의 그 끝 사이 3D 거리 ÷ 기하 크기**다(#49 — 연결이 쓰는 단위). `residual`(깊이 불일치)이 아니다.",
+  "aperture_px": 8,
+  "touch_ratio": 0.015
+ },
+ "selfcheck_notes": {
+  "zeros": "`chain_arms[*].gap_rel`·`turn_deg`와 `summary.on_*`의 **분포 전체가 0** 플래그는 전부 **설계 보장**이다(#5): 되맞춤은 두 끝을 같은 점으로 **모으는 연산**이라 그 뒤 간격이 0이고, `keepDir`는 방향을 앵커에 **물리는 연산**이라 그 뒤 회전이 0이다. **임계를 안 건다** — 판정은 끈 팔(`off_placed`·`b_only_gap_rel_max`·`no_keepdir_turn_deg_max`)이 든다.",
+  "who_moves_them": "코드를 틀리게 하면 움직인다(#46의 판별법): `anchorToTarget`이 `at3` 대신 원래 끝점을 두면 `gap_rel`이 `b_only` 값으로 돌아가고, `keepDir`를 false로 두면 `turn_deg`가 `no_keepdir` 분포가 된다 — 그 두 팔이 원장에 있다."
+ },
+ "what_this_does_not_say": [
+  "수리 후 팔의 간격 0은 **설계 보장**이다(#5) — 두 끝을 같은 점으로 모으는 연산이다. 임계를 걸지 않는다. 판정은 off 팔의 값이 든다.",
+  "실획 표본 셋은 12차 수리 이전에 그려졌다 — 여기서 쓰는 것은 **획 형태**(rep 어긋남)뿐이고 그 값은 수리와 무관하다.",
+  "합성 사슬은 획 셋·한 카메라다. 획 수·구도가 늘 때의 거동은 안 잰다(#12).",
+  "실획 표본에는 이 사슬에 대응하는 snap2d 기록이 거의 없다 — 선언 제약의 **효과**를 실획에서 잰 것이 아니라 **조건**만 실획에서 잰 것이다."
+ ],
+ "real_ink_rep_offset": {
+  "n_strokes": 22,
+  "n_strokes_all": 29,
+  "n_excluded_two_point": 7,
+  "excluded_why": "점열이 두 점인 획은 `representative`가 그 두 점을 정확히 지나 어긋남이 **정의상 0**이다(방향·끝점 스냅이 걸려 `resolve2dCore`가 `pts = [a, b]`를 낸 획). 그 획들은 이 결함의 대상이 아니다 — **모집단은 원시 점열이 남은 획**이다.",
+  "px": {
+   "n": 44,
+   "min": 0.15,
+   "p10": 1.69,
+   "median": 6.515,
+   "p90": 16.45,
+   "max": 79.42
+  },
+  "start_px": {
+   "n": 22,
+   "min": 1.15,
+   "p10": 2.79,
+   "median": 7.005,
+   "p90": 16.45,
+   "max": 33.5
+  },
+  "over_aperture_start": 8,
+  "rows": [
+   {
+    "doc": "brunelleschi-2026-08-17T11-41-36.brnl.json",
+    "id": "s40",
+    "n": 170,
+    "len": 418.43,
+    "bend": 0.0134,
+    "start": 5.62,
+    "end": 4.69
+   },
+   {
+    "doc": "brunelleschi-2026-08-17T11-41-36.brnl.json",
+    "id": "s41",
+    "n": 121,
+    "len": 371.81,
+    "bend": 0.0238,
+    "start": 5.43,
+    "end": 8.85
+   },
+   {
+    "doc": "brunelleschi-2026-08-17T11-41-36.brnl.json",
+    "id": "s46",
+    "n": 724,
+    "len": 450.9,
+    "bend": 0.0874,
+    "start": 33.5,
+    "end": 13.14
+   },
+   {
+    "doc": "brunelleschi-2026-08-17T11-41-36.brnl.json",
+    "id": "s47",
+    "n": 865,
+    "len": 404.11,
+    "bend": 0.1004,
+    "start": 2.79,
+    "end": 24.81
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+    "id": "s41",
+    "n": 433,
+    "len": 613.32,
+    "bend": 0.0569,
+    "start": 28.29,
+    "end": 13.11
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+    "id": "s42",
+    "n": 309,
+    "len": 228.43,
+    "bend": 0.0126,
+    "start": 3.75,
+    "end": 2.77
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+    "id": "s43",
+    "n": 445,
+    "len": 773.07,
+    "bend": 0.0203,
+    "start": 10.15,
+    "end": 15.06
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+    "id": "s44",
+    "n": 449,
+    "len": 393.1,
+    "bend": 0.0409,
+    "start": 5.43,
+    "end": 4.81
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+    "id": "s45",
+    "n": 300,
+    "len": 429.3,
+    "bend": 0.0094,
+    "start": 7.51,
+    "end": 2.23
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+    "id": "s46",
+    "n": 223,
+    "len": 314.1,
+    "bend": 0.0119,
+    "start": 1.15,
+    "end": 0.79
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+    "id": "s47",
+    "n": 362,
+    "len": 430.49,
+    "bend": 0.0135,
+    "start": 1.25,
+    "end": 1.69
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+    "id": "s48",
+    "n": 389,
+    "len": 418.51,
+    "bend": 0.0442,
+    "start": 16.45,
+    "end": 8.05
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+    "id": "s49",
+    "n": 294,
+    "len": 360.07,
+    "bend": 0.0408,
+    "start": 4.72,
+    "end": 14.52
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+    "id": "s50",
+    "n": 289,
+    "len": 323.42,
+    "bend": 0.0283,
+    "start": 9.16,
+    "end": 6.82
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+    "id": "s51",
+    "n": 388,
+    "len": 575.05,
+    "bend": 0.0105,
+    "start": 7.69,
+    "end": 6.03
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+    "id": "s52",
+    "n": 511,
+    "len": 362.28,
+    "bend": 0.0295,
+    "start": 3.78,
+    "end": 2.39
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-16-18.brnl.json",
+    "id": "s53",
+    "n": 277,
+    "len": 304.84,
+    "bend": 0.0233,
+    "start": 7.09,
+    "end": 5.78
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-18-25.brnl.json",
+    "id": "s65",
+    "n": 98,
+    "len": 234.53,
+    "bend": 0.0397,
+    "start": 9.32,
+    "end": 5.41
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-18-25.brnl.json",
+    "id": "s66",
+    "n": 111,
+    "len": 331.96,
+    "bend": 0.0209,
+    "start": 6.92,
+    "end": 0.15
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-18-25.brnl.json",
+    "id": "s75",
+    "n": 301,
+    "len": 395.25,
+    "bend": 0.0206,
+    "start": 6.21,
+    "end": 2.71
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-18-25.brnl.json",
+    "id": "s79",
+    "n": 298,
+    "len": 72.25,
+    "bend": 0.1491,
+    "start": 11.19,
+    "end": 8.13
+   },
+   {
+    "doc": "brunelleschi-2026-08-18T15-18-25.brnl.json",
+    "id": "s80",
+    "n": 1445,
+    "len": 315.63,
+    "bend": 0.1419,
+    "start": 8.61,
+    "end": 79.42
+   }
+  ]
+ },
+ "chain_arms": [
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.012526,
+    "p10": 0.012526,
+    "median": 0.017727,
+    "p90": 0.022928,
+    "max": 0.022928
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "precise",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 3.4233,
+    "p10": 3.4233,
+    "median": 3.5213,
+    "p90": 3.6192,
+    "max": 3.6192
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.007198,
+    "p10": 0.007198,
+    "median": 0.007224,
+    "p90": 0.007251,
+    "max": 0.007251
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "precise",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 1.6717,
+    "p10": 1.6717,
+    "median": 1.8392,
+    "p90": 2.0067,
+    "max": 2.0067
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 11,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.002184,
+    "p10": 0.002184,
+    "median": 0.004499,
+    "p90": 0.006815,
+    "max": 0.006815
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "precise",
+   "seed": 11,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0.3864,
+    "p10": 0.3864,
+    "median": 0.9021,
+    "p90": 1.4179,
+    "max": 1.4179
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 11,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 11,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.001628,
+    "p10": 0.001628,
+    "median": 0.001919,
+    "p90": 0.002209,
+    "max": 0.002209
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "precise",
+   "seed": 11,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0.2416,
+    "p10": 0.2416,
+    "median": 0.3843,
+    "p90": 0.5271,
+    "max": 0.5271
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 11,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.009407,
+    "p10": 0.009407,
+    "median": 0.010231,
+    "p90": 0.011054,
+    "max": 0.011054
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "precise",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 1.6519,
+    "p10": 1.6519,
+    "median": 2.1108,
+    "p90": 2.5697,
+    "max": 2.5697
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.003598,
+    "p10": 0.003598,
+    "median": 0.004527,
+    "p90": 0.005456,
+    "max": 0.005456
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "precise",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0.7851,
+    "p10": 0.7851,
+    "median": 1.1437,
+    "p90": 1.5024,
+    "max": 1.5024
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.001581,
+    "p10": 0.001581,
+    "median": 0.006272,
+    "p90": 0.010963,
+    "max": 0.010963
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "precise",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0.1932,
+    "p10": 0.1932,
+    "median": 1.5807,
+    "p90": 2.9683,
+    "max": 2.9683
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.000594,
+    "p10": 0.000594,
+    "median": 0.003463,
+    "p90": 0.006332,
+    "max": 0.006332
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "precise",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0.1136,
+    "p10": 0.1136,
+    "median": 0.9302,
+    "p90": 1.7469,
+    "max": 1.7469
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.00169,
+    "p10": 0.00169,
+    "median": 0.004097,
+    "p90": 0.006505,
+    "max": 0.006505
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "precise",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0.4261,
+    "p10": 0.4261,
+    "median": 1.1093,
+    "p90": 1.7925,
+    "max": 1.7925
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.001131,
+    "p10": 0.001131,
+    "median": 0.002513,
+    "p90": 0.003894,
+    "max": 0.003894
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "precise",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0.2255,
+    "p10": 0.2255,
+    "median": 0.6412,
+    "p90": 1.057,
+    "max": 1.057
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "precise",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 7,
+   "placed": 2,
+   "total": 3,
+   "links_measured": 1,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 1,
+    "min": 0.014555,
+    "p10": 0.014555,
+    "median": 0.014555,
+    "p90": 0.014555,
+    "max": 0.014555
+   },
+   "turn_deg": null,
+   "unplaced_reasons": [
+    "구조에 이어지지 않았다"
+   ]
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "medium",
+   "seed": 7,
+   "placed": 2,
+   "total": 3,
+   "links_measured": 1,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 1,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 1,
+    "min": 3.8631,
+    "p10": 3.8631,
+    "median": 3.8631,
+    "p90": 3.8631,
+    "max": 3.8631
+   },
+   "unplaced_reasons": [
+    "구조에 이어지지 않았다"
+   ]
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 7,
+   "placed": 2,
+   "total": 3,
+   "links_measured": 1,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 1,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 1,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": [
+    "구조에 이어지지 않았다"
+   ]
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.008497,
+    "p10": 0.008497,
+    "median": 0.012299,
+    "p90": 0.016102,
+    "max": 0.016102
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "medium",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 2.3439,
+    "p10": 2.3439,
+    "median": 3.0595,
+    "p90": 3.7751,
+    "max": 3.7751
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 11,
+   "placed": 2,
+   "total": 3,
+   "links_measured": 1,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 1,
+    "min": 0.026158,
+    "p10": 0.026158,
+    "median": 0.026158,
+    "p90": 0.026158,
+    "max": 0.026158
+   },
+   "turn_deg": null,
+   "unplaced_reasons": [
+    "구조에 이어지지 않았다"
+   ]
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "medium",
+   "seed": 11,
+   "placed": 2,
+   "total": 3,
+   "links_measured": 1,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 1,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 1,
+    "min": 6.8757,
+    "p10": 6.8757,
+    "median": 6.8757,
+    "p90": 6.8757,
+    "max": 6.8757
+   },
+   "unplaced_reasons": [
+    "구조에 이어지지 않았다"
+   ]
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 11,
+   "placed": 2,
+   "total": 3,
+   "links_measured": 1,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 1,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 1,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": [
+    "구조에 이어지지 않았다"
+   ]
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 11,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.00972,
+    "p10": 0.00972,
+    "median": 0.012258,
+    "p90": 0.014795,
+    "max": 0.014795
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "medium",
+   "seed": 11,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 2.3901,
+    "p10": 2.3901,
+    "median": 3.1878,
+    "p90": 3.9855,
+    "max": 3.9855
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 11,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.003723,
+    "p10": 0.003723,
+    "median": 0.014757,
+    "p90": 0.025791,
+    "max": 0.025791
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "medium",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 1.0031,
+    "p10": 1.0031,
+    "median": 2.4614,
+    "p90": 3.9197,
+    "max": 3.9197
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.002134,
+    "p10": 0.002134,
+    "median": 0.005236,
+    "p90": 0.008339,
+    "max": 0.008339
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "medium",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0.5886,
+    "p10": 0.5886,
+    "median": 1.245,
+    "p90": 1.9015,
+    "max": 1.9015
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.019211,
+    "p10": 0.019211,
+    "median": 0.027491,
+    "p90": 0.035771,
+    "max": 0.035771
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "medium",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 4.789,
+    "p10": 4.789,
+    "median": 6.0791,
+    "p90": 7.3692,
+    "max": 7.3692
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.010211,
+    "p10": 0.010211,
+    "median": 0.010545,
+    "p90": 0.010879,
+    "max": 0.010879
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "medium",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 2.5331,
+    "p10": 2.5331,
+    "median": 2.6586,
+    "p90": 2.7841,
+    "max": 2.7841
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.008931,
+    "p10": 0.008931,
+    "median": 0.019228,
+    "p90": 0.029525,
+    "max": 0.029525
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "medium",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 2.4972,
+    "p10": 2.4972,
+    "median": 4.143,
+    "p90": 5.7887,
+    "max": 5.7887
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.005414,
+    "p10": 0.005414,
+    "median": 0.006627,
+    "p90": 0.007841,
+    "max": 0.007841
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "medium",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 1.4583,
+    "p10": 1.4583,
+    "median": 1.6894,
+    "p90": 1.9206,
+    "max": 1.9206
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "medium",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.01663,
+    "p10": 0.01663,
+    "median": 0.035651,
+    "p90": 0.054672,
+    "max": 0.054672
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "coarse",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0.6928,
+    "p10": 0.6928,
+    "median": 7.4187,
+    "p90": 14.1446,
+    "max": 14.1446
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.01067,
+    "p10": 0.01067,
+    "median": 0.02072,
+    "p90": 0.03077,
+    "max": 0.03077
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "coarse",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 1.6751,
+    "p10": 1.6751,
+    "median": 4.9994,
+    "p90": 8.3237,
+    "max": 8.3237
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 7,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 11,
+   "placed": 0,
+   "total": 3,
+   "links_measured": 0,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 0,
+    "min": null,
+    "p10": null,
+    "median": null,
+    "p90": null,
+    "max": null
+   },
+   "turn_deg": null,
+   "unplaced_reasons": [
+    "어느 획과도 교점이 없다",
+    "어느 획과도 교점이 없다",
+    "어느 획과도 교점이 없다"
+   ]
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "coarse",
+   "seed": 11,
+   "placed": 0,
+   "total": 3,
+   "links_measured": 0,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 0,
+    "min": null,
+    "p10": null,
+    "median": null,
+    "p90": null,
+    "max": null
+   },
+   "turn_deg": null,
+   "unplaced_reasons": [
+    "어느 획과도 교점이 없다",
+    "어느 획과도 교점이 없다",
+    "어느 획과도 교점이 없다"
+   ]
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 11,
+   "placed": 0,
+   "total": 3,
+   "links_measured": 0,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 0,
+    "min": null,
+    "p10": null,
+    "median": null,
+    "p90": null,
+    "max": null
+   },
+   "turn_deg": null,
+   "unplaced_reasons": [
+    "어느 획과도 교점이 없다",
+    "어느 획과도 교점이 없다",
+    "어느 획과도 교점이 없다"
+   ]
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 11,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.021855,
+    "p10": 0.021855,
+    "median": 0.022258,
+    "p90": 0.022661,
+    "max": 0.022661
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "coarse",
+   "seed": 11,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 5.6152,
+    "p10": 5.6152,
+    "median": 5.8012,
+    "p90": 5.9873,
+    "max": 5.9873
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 11,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.0049,
+    "p10": 0.0049,
+    "median": 0.006371,
+    "p90": 0.007841,
+    "max": 0.007841
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "coarse",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0.7092,
+    "p10": 0.7092,
+    "median": 0.8874,
+    "p90": 1.0657,
+    "max": 1.0657
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.003789,
+    "p10": 0.003789,
+    "median": 0.005745,
+    "p90": 0.0077,
+    "max": 0.0077
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "coarse",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0.4754,
+    "p10": 0.4754,
+    "median": 0.8849,
+    "p90": 1.2943,
+    "max": 1.2943
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 23,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.006278,
+    "p10": 0.006278,
+    "median": 0.010823,
+    "p90": 0.015369,
+    "max": 0.015369
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "coarse",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 1.6798,
+    "p10": 1.6798,
+    "median": 2.2049,
+    "p90": 2.73,
+    "max": 2.73
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.003588,
+    "p10": 0.003588,
+    "median": 0.003809,
+    "p90": 0.00403,
+    "max": 0.00403
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "coarse",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0.9561,
+    "p10": 0.9561,
+    "median": 0.9703,
+    "p90": 0.9846,
+    "max": 0.9846
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 41,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": false,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 59,
+   "placed": 2,
+   "total": 3,
+   "links_measured": 1,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 1,
+    "min": 0.016218,
+    "p10": 0.016218,
+    "median": 0.016218,
+    "p90": 0.016218,
+    "max": 0.016218
+   },
+   "turn_deg": null,
+   "unplaced_reasons": [
+    "구조에 이어지지 않았다"
+   ]
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "coarse",
+   "seed": 59,
+   "placed": 2,
+   "total": 3,
+   "links_measured": 1,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 1,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 1,
+    "min": 3.8974,
+    "p10": 3.8974,
+    "median": 3.8974,
+    "p90": 3.8974,
+    "max": 3.8974
+   },
+   "unplaced_reasons": [
+    "구조에 이어지지 않았다"
+   ]
+  },
+  {
+   "declared": false,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 59,
+   "placed": 2,
+   "total": 3,
+   "links_measured": 1,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 1,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 1,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": [
+    "구조에 이어지지 않았다"
+   ]
+  },
+  {
+   "declared": true,
+   "anchor": false,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0.010376,
+    "p10": 0.010376,
+    "median": 0.012555,
+    "p90": 0.014733,
+    "max": 0.014733
+   },
+   "turn_deg": null,
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": false,
+   "grade": "coarse",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 2.5173,
+    "p10": 2.5173,
+    "median": 3.0975,
+    "p90": 3.6777,
+    "max": 3.6777
+   },
+   "unplaced_reasons": []
+  },
+  {
+   "declared": true,
+   "anchor": true,
+   "keep_dir": true,
+   "grade": "coarse",
+   "seed": 59,
+   "placed": 3,
+   "total": 3,
+   "links_measured": 2,
+   "links_total": 2,
+   "gap_rel": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "turn_deg": {
+    "n": 2,
+    "min": 0,
+    "p10": 0,
+    "median": 0,
+    "p90": 0,
+    "max": 0
+   },
+   "unplaced_reasons": []
+  }
+ ],
+ "pool_gate_exposure": {
+  "rows": [
+   {
+    "name": "꼭짓점 방사(사용자 보고 ①의 형태)",
+    "intent": "vp",
+    "off": false,
+    "on": true,
+    "at": [
+     1050,
+     250
+    ]
+   },
+   {
+    "name": "닫힌 삼각형(사용자 보고 ②′)",
+    "intent": "vp",
+    "off": false,
+    "on": true,
+    "at": [
+     330,
+     290
+    ]
+   },
+   {
+    "name": "서로 다른 축의 모서리 꼭짓점(완화의 대가)",
+    "intent": "corner",
+    "off": false,
+    "on": true,
+    "at": [
+     640,
+     340
+    ]
+   },
+   {
+    "name": "몸통 교차",
+    "intent": "corner",
+    "off": false,
+    "on": false,
+    "at": null
+   },
+   {
+    "name": "T자 접합",
+    "intent": "corner",
+    "off": false,
+    "on": false,
+    "at": null
+   },
+   {
+    "name": "나란함",
+    "intent": "corner",
+    "off": false,
+    "on": false,
+    "at": null
+   }
+  ],
+  "opened": [
+   "꼭짓점 방사(사용자 보고 ①의 형태)",
+   "닫힌 삼각형(사용자 보고 ②′)",
+   "서로 다른 축의 모서리 꼭짓점(완화의 대가)"
+  ],
+  "opened_intended_vp": 2,
+  "opened_corner": 1,
+  "n": 6,
+  "what_this_says": "완화가 새로 받는 기하 중 **의도가 소실점인 것**과 **꼭짓점인 것**의 수. 꼭짓점 몫이 0이 아니면 그것이 D-L3(#23)의 실패로 가는 문이고, 그 문이 열리는 조건은 **선언이 틀린 것**이다(D-L96의 물음 — DEFERRED). ⚠ 여섯 기하는 **손으로 고른 것**이고 실사용 분포가 아니다(#12) — 이 표가 재는 것은 **문이 열리는가**이지 빈도가 아니다."
+ },
+ "rep_intersect_offset": {
+  "tol_px": 21.71,
+  "by_fixture": [
+   {
+    "grade": "precise",
+    "seed": 7,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 15.88
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 7.54
+     }
+    ]
+   },
+   {
+    "grade": "precise",
+    "seed": 11,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 5.81
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 1.7
+     }
+    ]
+   },
+   {
+    "grade": "precise",
+    "seed": 23,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 8.03
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 5.7
+     }
+    ]
+   },
+   {
+    "grade": "precise",
+    "seed": 41,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 1.49
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 6.69
+     }
+    ]
+   },
+   {
+    "grade": "precise",
+    "seed": 59,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 2.94
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 4.09
+     }
+    ]
+   },
+   {
+    "grade": "medium",
+    "seed": 7,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 34.4
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 8.76
+     }
+    ]
+   },
+   {
+    "grade": "medium",
+    "seed": 11,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 23.99
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 16.01
+     }
+    ]
+   },
+   {
+    "grade": "medium",
+    "seed": 23,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 17.9
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 2.23
+     }
+    ]
+   },
+   {
+    "grade": "medium",
+    "seed": 41,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 23.74
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 11.75
+     }
+    ]
+   },
+   {
+    "grade": "medium",
+    "seed": 59,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 19.49
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 5.69
+     }
+    ]
+   },
+   {
+    "grade": "coarse",
+    "seed": 7,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 18.93
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 34.34
+     }
+    ]
+   },
+   {
+    "grade": "coarse",
+    "seed": 11,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 53.83
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 23.01
+     }
+    ]
+   },
+   {
+    "grade": "coarse",
+    "seed": 23,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 14.41
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 4.06
+     }
+    ]
+   },
+   {
+    "grade": "coarse",
+    "seed": 41,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 10.31
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 3.79
+     }
+    ]
+   },
+   {
+    "grade": "coarse",
+    "seed": 59,
+    "tol_px": 21.71,
+    "rows": [
+     {
+      "id": "c1",
+      "ofId": "c0",
+      "offset_px": 51.51
+     },
+     {
+      "id": "c2",
+      "ofId": "c1",
+      "offset_px": 10.56
+     }
+    ]
+   }
+  ],
+  "px": {
+   "n": 30,
+   "min": 1.49,
+   "p10": 2.94,
+   "median": 10.435,
+   "p90": 34.34,
+   "max": 53.83
+  },
+  "over_tol": 7,
+  "n": 30
+ },
+ "summary": {
+  "off_placed": {
+   "n": 15,
+   "min": 0,
+   "p10": 2,
+   "median": 3,
+   "p90": 3,
+   "max": 3
+  },
+  "on_placed": {
+   "n": 15,
+   "min": 3,
+   "p10": 3,
+   "median": 3,
+   "p90": 3,
+   "max": 3
+  },
+  "off_gap_rel_max": {
+   "n": 14,
+   "min": 0.006505,
+   "p10": 0.006815,
+   "median": 0.015794,
+   "p90": 0.035771,
+   "max": 0.054672
+  },
+  "off_arms_unmeasured": 1,
+  "b_only_gap_rel_max": {
+   "n": 15,
+   "min": 0.002209,
+   "p10": 0.003894,
+   "median": 0.007841,
+   "p90": 0.022661,
+   "max": 0.03077
+  },
+  "b_only_arms_unmeasured": 0,
+  "on_gap_rel_max": {
+   "n": 15,
+   "min": 0,
+   "p10": 0,
+   "median": 0,
+   "p90": 0,
+   "max": 0
+  },
+  "on_turn_deg_max": {
+   "n": 15,
+   "min": 0,
+   "p10": 0,
+   "median": 0,
+   "p90": 0,
+   "max": 0
+  },
+  "no_keepdir_turn_deg_max": {
+   "n": 29,
+   "min": 0.5271,
+   "p10": 1.0657,
+   "median": 2.7841,
+   "p90": 6.8757,
+   "max": 14.1446
+  },
+  "parallel_deg": 5,
+  "arms_total": 90,
+  "no_keepdir_arms_unmeasured": 1,
+  "arms_not_summarised": 15
+ },
+ "gate": {
+  "registered": "확정 순간 붙여 그은 두 획이 붙어 있는가. 판정은 **끈 팔의 값**이 든다 — 켠 팔의 0은 설계 보장이라(#5) 임계를 안 건다.",
+  "reachability": "끈 팔이 결함을 낸다: (a)는 `summary.off_placed.min`이 3 미만이고 (b)는 `summary.b_only_gap_rel_max.max`가 0보다 크다. 그 둘이 0/3이면 이 원장은 아무것도 안 말한다.",
+  "reachability_value": 0.03077,
+  "reachability_source": "summary/b_only_gap_rel_max/max",
+  "result": {
+   "a_off_placed_min": 0,
+   "b_only_gap_rel_max": 0.03077,
+   "on_gap_rel_max": 0
+  }
+ },
+ "pitfall_citations": [
+  5,
+  11,
+  12,
+  17,
+  21,
+  25,
+  30,
+  32,
+  36,
+  40,
+  43,
+  47,
+  49
+ ],
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}

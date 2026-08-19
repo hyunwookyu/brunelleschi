@@ -114,6 +114,7 @@ describe("전수 확인 — `web/` 밖을 읽는 하네스가 전부 등록됐�
     // 걸러져 나오는지 본다. 안 나오면 거름이 너무 좁아진 것이고 그때 이 테스트가 죽는다.
     expect(examined.sort(), "거름이 아무것도 못 잡았다 — 이 확인이 공허하다")
       .toEqual(["e2e/static_deploy.spec.ts", "test/bend_share.test.ts",
+                "test/confirm_link.test.ts",
                 "test/delta_conflict.test.ts", "test/first_anchor.test.ts",
                 "test/one_stroke_one_axis.test.ts", "test/real_ink.test.ts"].sort());
   });

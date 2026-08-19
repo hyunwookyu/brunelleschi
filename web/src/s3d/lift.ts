@@ -92,7 +92,26 @@ export interface Joint {
   residual?: number;
   /** 이상점으로 버렸는가. */
   dropped?: boolean;
+  /**
+   * **사용자가 그리며 선언한 연결인가**(2026-08-19 15차 항목 1 · D-L98).
+   * 선언된 제약은 이상점 제거에서 **빼지 않는다** — 그것은 추정이 아니라 입력이다.
+   */
+  declared?: boolean;
 }
+
+/**
+ * **그리며 선언된 연결**(D-L98) — 오스냅이 붙여 준 그 점이다. `q`는 **기록된 화면점**
+ * (`Snap2Ref.at`)이고, `findJoints`가 대표 직선 교점에서 다시 찾는 그 점이 **아니다**.
+ *
+ * ⚠⚠ 왜 따로 받아야 하는가(실측): 프리핸드 획의 `representative`는 PCA 극단이라 그린
+ * 끝점과 **중앙 6.5px · 최대 79.4px** 어긋나고(`confirm_link.json@f351839a`의
+ * `real_ink_rep_offset` — 실획 22획), 두 대표 직선의 교점은 그린 모서리에서 그보다 더
+ * 벌어진다 — 합성 사슬 픽스처에서 **35px**이었다. 접합 반경
+ * (`touch_ratio` = 화면 대각의 1.5% ≈ 21.7px)을 넘으면 `endNear`가 떨어뜨리고,
+ * 그 획은 **구조에 안 이어진 것**이 되어 2D로 남는다. 사용자가 붙여 그은 획이 그렇게
+ * 사라졌다(13차 항목 1의 `joints 0`이 같은 자리다).
+ */
+export interface DeclaredJoint { i: string; j: string; q: Pt2 }
 
 export interface LiftSeg { a: Vec3; b: Vec3 }
 
@@ -220,6 +239,33 @@ export function findJoints(frames: Frame[], ctx: LiftCtx, cfg: LiftCfg = {}): Jo
   return out;
 }
 
+const pairKey = (a: string, b: string) => (a < b ? `${a}\u0000${b}` : `${b}\u0000${a}`);
+
+/**
+ * **선언된 연결을 제약으로 바꾼다**(D-L98). 프레임이 있는 짝만, **같은 축은 뺀다** —
+ * 3D에서 나란한 두 직선은 (같은 직선이 아닌 한) 한 점을 공유할 수 없으므로 그 선언은
+ * 제약이 아니라 퇴화다(`findJoints`의 같은 판정과 한 규약, #17).
+ */
+function declaredJoints(
+  declared: DeclaredJoint[], frames: Map<string, Frame>, c: typeof LIFT_TOL,
+): Joint[] {
+  const cosPar = Math.cos((c.parallel_deg * Math.PI) / 180);
+  const seen = new Set<string>();
+  const out: Joint[] = [];
+  for (const d of declared) {
+    if (d.i === d.j) continue;
+    const F = frames.get(d.i), G = frames.get(d.j);
+    if (!F || !G) continue;
+    if (!Number.isFinite(d.q[0]) || !Number.isFinite(d.q[1])) continue;
+    if (Math.abs(dot3(F.d, G.d)) >= cosPar) continue;          // 같은 축 — 퇴화
+    const k = pairKey(d.i, d.j);
+    if (seen.has(k)) continue;                                  // 같은 짝은 한 번만
+    seen.add(k);
+    out.push({ i: d.i, j: d.j, q: [d.q[0], d.q[1]], declared: true });
+  }
+  return out;
+}
+
 /** 연결 성분 — 교점으로 이어진 획 묶음. 가장 큰 것만 푼다(나머지는 미배치, §5.2). */
 export function components(ids: string[], joints: Joint[]): string[][] {
   const idx = new Map(ids.map((id, i) => [id, i]));
@@ -274,7 +320,8 @@ function solveNull(ids: string[], frames: Map<string, Frame>, joints: Joint[], c
  * 반환하는 것은 획마다 **3D 세그먼트 하나**다(프리핸드는 미뤘다, 계획서 §1.1).
  * `pts2d`는 호출자가 계속 보존한다 — 승격 때 처음부터 다시 올린다(§6.1).
  */
-export function liftAll(strokes: LiftStroke[], ctx: LiftCtx, cfg: LiftCfg = {}): LiftResult {
+export function liftAll(strokes: LiftStroke[], ctx: LiftCtx, cfg: LiftCfg = {},
+                        declared: DeclaredJoint[] = []): LiftResult {
   const c = { ...LIFT_TOL, ...cfg };
   const frames = new Map<string, Frame>();
   const unplaced: { id: string; reason: string }[] = [];
@@ -294,7 +341,11 @@ export function liftAll(strokes: LiftStroke[], ctx: LiftCtx, cfg: LiftCfg = {}):
     return empty;
   }
 
-  const allJoints = findJoints(fl, ctx, c);
+  // **선언된 연결이 검출된 교점을 이긴다**(D-L98) — 기록은 사용자의 실제 손짓이고
+  // 검출은 대표 직선의 추정이다. 같은 짝이 둘 다 있으면 검출 쪽을 버린다(#17: 한 출처).
+  const decl = declaredJoints(declared, frames, c);
+  const dkey = new Set(decl.map(j => pairKey(j.i, j.j)));
+  const allJoints = [...findJoints(fl, ctx, c).filter(j => !dkey.has(pairKey(j.i, j.j))), ...decl];
   const comps = components(ids, allJoints);
   const comp = comps[0] ?? [];
   if (comp.length < 2) {
@@ -326,7 +377,8 @@ export function liftAll(strokes: LiftStroke[], ctx: LiftCtx, cfg: LiftCfg = {}):
     if (pass >= c.reject_passes) break;
     const med = quant(res, 0.5);
     if (med == null || !(med > 0)) break;
-    const keep = live.filter((jt, k) => res[k] <= med * c.reject_mult);
+    // **선언된 제약은 안 버린다** — 추정이 아니라 입력이다(D-L98)
+    const keep = live.filter((jt, k) => jt.declared || res[k] <= med * c.reject_mult);
     // 제약이 성분을 쪼갤 만큼 버리면 되돌린다 — 형태가 안 정해진다
     if (keep.length === live.length || keep.length < comp.length - 1) break;
     const stillOne = components(comp, keep)[0]?.length === comp.length;
