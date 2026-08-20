@@ -1,0 +1,344 @@
+{
+ "what": "새 절차 후 사람이 보고한 결함 넷이 다시 나면 잡는다(19차 지시).",
+ "how": {
+  "A": "작도선 — 소실점을 만든 획이 «그리기 첫 획»까지 화면에 남는가. `seeds`(앱이 그리는 목록)와 `px_line*`(실제 칠해진 픽셀)을 **함께** 읽는다(지시 1-d).",
+  "A_old": "`setSeedLines(false)`가 18차 거동이다 — 그 팔에서 `seeds`가 0이고 픽셀이 **작다**. 두 팔의 차이가 이 회귀 팔의 판별력이다(#30·#38).",
+  "B": "지평선 y — 상단·중앙·하단에 그은 y가 그대로 쓰이는가(지시 3-d) · 18차 이전 형식 저장본(«화면 중앙» 기본값)이 절차를 막는가.",
+  "B_positive": "소실점이 얹힌 저장본은 지평선을 **지킨다** — 게이트가 무차별이 아님을 보인다.",
+  "C": "면 위 — 기하 0에서 후보 0인가(지시 4-b) · 기하가 생기면 돌아오는가."
+ },
+ "what_this_does_not_say": [
+  "dpr 1 · 마우스 합성 · 한 구도다(#12·#21).",
+  "**그린 선이 3D에 옳게 놓이는가는 안 잰다** — 여기서 재는 것은 이 네 결함의 자리다.",
+  "`px_line*` 띠에는 **그리드도 지난다** — 절대값이 «작도선의 굵기»가 아니다. 읽는 것은 **같은 띠의 팔 사이 차**뿐이다(#5: 절대값은 구성의 몫이 섞여 있다).",
+  "B의 옛 저장본은 **이 팔이 만든 것**이고 실제 사용자 파일이 아니다 — 재현한 것은 «그 형식이 오면 어떻게 되는가»이지 «사용자 파일이 그 형식이다»가 아니다.",
+  "C의 `on_face`가 돌아오는 것은 **기하가 생겼을 때**다. 그 기하가 옳게 놓였는지는 이 팔의 물음이 아니다."
+ ],
+ "selfcheck_notes": {
+  "zero_strokes": "A2·A3에서 `strokes`가 0인 것은 **설계 그대로다**(18차 지시 4 — 소실점을 만든 획은 문서에 안 남는다). 19차가 바꾼 것은 «문서에서 뺀다»가 아니라 «화면에서 언제 지우는가»이고, 그것을 재는 필드는 `seeds`와 `px_line*`이다.",
+  "zero_on_face": "`face.empty.on_face_cands`가 0인 것이 **이 팔이 재현하려는 수리**다 — 집계가 안 돈 것이 아니다. 같은 실행의 `face.with_geometry`가 0이 아니다.",
+  "zero_restored": "`horizon.restored_old_save_no_vp`의 `order`·`lifted`·`seeds`가 0인 것은 **그 저장본의 정의**다 — 소실점이 없으니 차수 0이고, 3D도 작도선도 없다. 같은 블록의 `strokes`가 **1**인 것이 «복원이 실제로 일어났다»의 증거이고, `horizon_y`가 `null`인 것이 이 팔이 재는 수리다. 같은 실행의 `restored_old_save_with_vp`가 차수 2를 낸다 — 게이트가 무차별이 아니다."
+ },
+ "arms": {
+  "A": [
+   {
+    "label": "A0 빈 화면",
+    "order": 0,
+    "standing": false,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": null,
+    "seeds": 0,
+    "px_line1": 0,
+    "px_line2": 0
+   },
+   {
+    "label": "A1 지평선",
+    "order": 0,
+    "standing": false,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 0,
+    "px_line1": 0,
+    "px_line2": 0
+   },
+   {
+    "label": "A2 깊이선1 → 1점",
+    "order": 1,
+    "standing": true,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 1,
+    "px_line1": 2296,
+    "px_line2": 1890
+   },
+   {
+    "label": "A3 깊이선2 → 2점",
+    "order": 2,
+    "standing": true,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 2,
+    "px_line1": 1798,
+    "px_line2": 1716
+   },
+   {
+    "label": "A4 그리기 첫 획",
+    "order": 2,
+    "standing": true,
+    "strokes": 1,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 0,
+    "px_line1": 1134,
+    "px_line2": 1072
+   }
+  ],
+  "A_old_behavior": [
+   {
+    "label": "A2' 깊이선1 → 1점 (옛 거동)",
+    "order": 1,
+    "standing": true,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 0,
+    "px_line1": 1687,
+    "px_line2": 1890
+   },
+   {
+    "label": "A3' 깊이선2 → 2점 (옛 거동)",
+    "order": 2,
+    "standing": true,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 0,
+    "px_line1": 1134,
+    "px_line2": 1072
+   }
+  ]
+ },
+ "seed_px": {
+  "old": [
+   1687,
+   1072
+  ],
+  "new": [
+   2296,
+   1716
+  ]
+ },
+ "horizon": {
+  "thirds": [
+   {
+    "label": "상단",
+    "y": 101,
+    "got": 101
+   },
+   {
+    "label": "중앙",
+    "y": 337,
+    "got": 337
+   },
+   {
+    "label": "하단",
+    "y": 573,
+    "got": 573
+   }
+  ],
+  "restored_old_save_no_vp": {
+   "order": 0,
+   "standing": false,
+   "strokes": 1,
+   "lifted": 0,
+   "horizon_y": null,
+   "seeds": 0
+  },
+  "after_drawing_top": {
+   "order": 0,
+   "standing": false,
+   "strokes": 1,
+   "lifted": 0,
+   "horizon_y": 121,
+   "seeds": 0
+  },
+  "restored_old_save_with_vp": {
+   "order": 2,
+   "standing": true,
+   "strokes": 1,
+   "lifted": 0,
+   "horizon_y": 337,
+   "seeds": 0
+  }
+ },
+ "face": {
+  "empty": {
+   "kinds": [
+    null,
+    null,
+    null,
+    null
+   ],
+   "on_face_cands": 0,
+   "lifted": 0
+  },
+  "with_geometry": {
+   "kinds": [
+    "on_face",
+    "on_face",
+    "on_face",
+    "on_face"
+   ],
+   "on_face_cands": 4,
+   "lifted": 1
+  }
+ },
+ "gate": {
+  "registered": "① 깊이선1 뒤 `seeds` 1이고 그 띠의 픽셀이 옛 거동보다 **크다** ② 깊이선2 뒤 `seeds` 2 ③ 그리기 첫 획에서 `seeds` 0 ④ 상단·중앙·하단에 그은 y가 그대로 `horizon_y`다 ⑤ 소실점 없는 옛 저장본은 `horizon_y`가 `null`이고, 소실점 있는 것은 지켜진다 ⑥ 기하 0에서 `on_face` 후보가 0이고 기하가 생기면 0이 아니다.",
+  "reachability": "되살릴 것은 **18차 거동**이다 — `setSeedLines(false)` 팔이 그것이고 거기서 `seeds`가 0이다. **넘어야 할 바닥은 그 팔의 픽셀**(`seed_px.old`)이고, `seed_px.new`가 그보다 크다는 것이 «화면에 남았다»의 실측이다. B는 옛 형식 저장본 자체가 되살림이고(복원 뒤 `horizon_y`가 337이 되던 자리), C는 기하를 만들면 `on_face`가 돌아오는 것이 도달 가능성이다.",
+  "reachability_source": "seed_px/old",
+  "reachability_value": [
+   1687,
+   1072
+  ]
+ },
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}

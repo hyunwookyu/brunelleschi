@@ -46,7 +46,7 @@
  "gate": {
   "registered": "카메라 전 두 손가락: viewPan 축적·카메라 불개방 · 핀 상태 두 손가락 뒤: 핀 유지·pose 불변·문서 불변·주점(Camera.principal) 불변·viewPan≈(60,40)·three 투영 이동=viewPan(±0.5px) · 밀린 화면에서 끝점 표시 위치를 겨냥한 획이 문서 끝점에 스냅(끝점/정점·문서 격차<1px·겨냥 어긋남>24px) · 스냅 없는 자리의 획: pts2d=표시−viewPan(<1px) · **[14차 ③″] 핀 상태 핀치(비 2.0): 핀 유지·pose 0·문서 0·주점 0·viewZoom∈zoom_band·핀치 중점 고정점(문서 <0.5px)·three 투영=문서×z+팬(±0.5px, 비배율 대안값 >50px)·잉크 층 배율 위치에 칠(픽셀 대조) · 확대 화면 그리기: 표시 6px 겨냥 스냅·표시 12px(문서 6px) 겨냥 불스냅·스냅 없는 자리 pts2d=(표시−팬)/z(<1px, /z 부재 대안값 >100px) · 휠(핀): viewZoom 증가·핀 유지·커서 고정점(문서 <0.5px) · 축소(비 0.5): 표시 6px(문서 12px) 겨냥이 붙는다(문서 px 조리개면 12>8 거부 — 반대 방향 판별)·three 투영·고정점 같은 판정(three_gap_out·fixed_point_gap_out)** · 궤도 후 두 손가락: target 이동>0.01·viewPan 불변 · 콘솔 오류 0. ⚠ **이 항목이 등록한 게이트다** — CLAUDE.md §2의 중단 조건이 아니다(#41)",
   "reachability": "궤도 후 팔(④)이 음성 대조이고 **판별자는 둘이다**(#28 — 리뷰어 4차 [7]): (a) viewPan 불변(pan_unchanged == screen_pan.pan_after — 화면 팬이 아무 데서나 받으면 여기가 움직여 실패) (b) target_moved>0.01(같은 손짓이 공간 팬으로 갔다는 양성 증거). 수치 하나를 고르면 (b)다 — (a)는 등호 판정이라 값이 판별 간격을 안 보여 준다. **[14차 ③″]의 판별자는 reachability_zoom이 든다**(2차 [B] — #40 ⑥·#28: 값 하나로 못 줄인다): 문서 조리개 반사실 양방향(6<8 붙음 / 12>8 거부)과 비배율·비나눗셈·오배선 대안값 다섯 — reachability_value/_source는 팬 팔의 것이고 줌 조항의 도달 가능성은 그 블록이 정본이다",
-  "reachability_value": 1.0091082665500009,
+  "reachability_value": 1.0071563408446607,
   "reachability_source": "space_pan/target_moved",
   "reachability_zoom": {
    "aperture_doc_would_attach": {
@@ -59,7 +59,7 @@
     "threshold": 8,
     "note": "축소 팔: 문서 px 조리개였다면 12>8이라 거부 — 스냅이 판별(반대 방향). threshold는 앱 상수를 실행 시점에 읽은 값이다(OSNAP_RADIUS_PX import — 2차 [J]: 리터럴이 아니라 상수가 움직이면 함께 움직인다)"
    },
-   "three_gap_if_unscaled": 990.3934484263426,
+   "three_gap_if_unscaled": 990.284046041416,
    "draw_gap_if_undivided": 674.4627491566895,
    "ink_gap_if_unscaled": 574.2821606144487
   }
@@ -80,7 +80,7 @@
  "setup": {
   "canvas": [
    1280,
-   675
+   674
   ],
   "strokes": 12,
   "hasCamera": true,
@@ -103,8 +103,8 @@
   "doc_moved": 0,
   "principal_moved": 0,
   "three_shift": [
-   59.99999999999966,
-   40.000000000000085
+   59.99999999999943,
+   39.99999999999997
   ]
  },
  "draw_panned": {
@@ -151,9 +151,9 @@
   "pose_moved": 0,
   "doc_moved": 0,
   "principal_moved": 0,
-  "three_gap": 4.547473508864641e-13,
-  "three_gap_if_unscaled": 990.3934484263426,
-  "vp_relative_gap": 9.112693272687351e-13,
+  "three_gap": 2.3437142008433856e-13,
+  "three_gap_if_unscaled": 990.284046041416,
+  "vp_relative_gap": 4.582862941503293e-13,
   "view_zoom_lim": {
    "min": 0.2,
    "max": 8
@@ -172,7 +172,7 @@
   "snap_start": "vertex",
   "start": [
    966.3414789315613,
-   216.94084166469713
+   216.44084166469713
   ],
   "doc_gap": 0
  },
@@ -219,7 +219,7 @@
    60,
    40.000000000000114
   ],
-  "target_moved": 1.0091082665500009
+  "target_moved": 1.0071563408446607
  },
  "console_errors": [],
  "constants": {

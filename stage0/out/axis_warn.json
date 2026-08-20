@@ -16,7 +16,7 @@
  "setup": {
   "canvas": [
    1280,
-   675
+   674
   ],
   "strokes": 12,
   "hasCamera": true,
@@ -26,7 +26,7 @@
  "slot2": {
   "at": [
    640,
-   4070
+   4069
   ],
   "diag": 1447,
   "dist_from_center": 3732,
