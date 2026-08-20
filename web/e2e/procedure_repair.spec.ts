@@ -155,15 +155,26 @@ test("새 절차 후 결함 넷 — 작도선·지평선 y·면 위", async ({ p
   // ---- B-1'. **기울어진 획**은 y가 어떻게 정해지나(리뷰어 [13] — 사람이 그은 선은 기운다).
   // 앱은 **끝점의 y**를 쓴다(화면 수평으로 강제하므로 y 하나다). 그것을 값으로 잠근다 —
   // 「그은 y가 쓰인다」가 **완전 수평 합성 획에서만** 성립하는 항등이 아님을 보인다.
-  await fresh(page);
-  const tiltA: [number, number] = [W * 0.2, Math.round(H * 0.30)];
-  const tiltB: [number, number] = [W * 0.8, Math.round(H * 0.36)];
-  await drawOn(page, tiltA, tiltB);
+  //
+  // ⚠⚠ **기울기를 `HORIZON_TOL.min_slope_deg`(3.75°) 아래와 위 둘 다에서 잰다**(#12 —
+  // 2차 리뷰어 [R6]). 초판은 3.06° 한 점이었고 그것은 그 임계 **아래** 하나뿐이었다.
+  // 사람이 손으로 긋는 지평선은 그 임계를 쉽게 넘고, 결함 3이 바로 손으로 그은 획에서 났다.
+  const tiltRun = async (dy: number) => {
+    await fresh(page);
+    const a: [number, number] = [W * 0.2, Math.round(H * 0.30)];
+    const b: [number, number] = [W * 0.8, Math.round(H * 0.30) + dy];
+    await drawOn(page, a, b);
+    return { start_y: a[1], end_y: b[1],
+             slope_deg: Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI,
+             got: (await state(page)).horizon_y };
+  };
   const tilted = {
-    start_y: tiltA[1], end_y: tiltB[1],
-    slope_deg: Math.atan2(tiltB[1] - tiltA[1], tiltB[0] - tiltA[0]) * 180 / Math.PI,
-    got: (await state(page)).horizon_y,
-    rule: "끝점의 y를 쓴다 — 지평선은 화면 수평으로 강제되므로(18차 지시 j) y 하나다",
+    below_threshold: await tiltRun(Math.round(H * 0.06)),
+    above_threshold: await tiltRun(Math.round(H * 0.22)),
+    /** 같은 원장의 `constants.values.HORIZON_TOL.min_slope_deg`와 대는 자리다. */
+    rule: "**끝점의 y를 쓴다**(D-L117) — 지평선은 화면 수평으로 강제되므로(18차 지시 j) "
+      + "y 하나이고, 그 하나를 손이 마지막으로 있던 자리로 정한다. "
+      + "⚠ **방향 의존이다**: 같은 획을 반대로 그으면 시작점의 y가 된다(D-L117의 대가).",
   };
 
   // ---- B-2. **옛 저장본이 절차를 막는가** — 결함 3을 만든 입력 그대로 심는다
@@ -294,13 +305,19 @@ test("새 절차 후 결함 넷 — 작도선·지평선 y·면 위", async ({ p
       zero_lifted: "**`lifted` 0이 세 곳에 있고 셋 다 이 세션의 변경과 무관하다**"
         + "(리뷰어 [2]가 물었다): ① `arms.*`의 4행(보통 획) — 확정 뒤 첫 획은 붙을 3D "
         + "대상이 없어 **2D 대기**다(D-L83이 `on_edge`·`on_face`를 앵커에서 뺐다). "
-        + "같은 좌표에서 수리 **전에도** 0이었다. ⚠ `horizon_first.json`의 ④는 `lifted` 1인데 "
-        + "**다른 좌표**라 지면 배치(D-L90)가 걸린 것이다 — 같은 상황이 아니다. "
+        + "⚠ «수리 전에도 0이었다»는 **이 원장이 안 든다** — 그 확인은 세션 중 손으로 한 "
+        + "브라우저 실행이고(#55: 어떻게 알았는지 함께 적는다), 구조로는 D-L114가 만진 "
+        + "가지(`vp_fixed`)에 보통 획이 안 들어간다는 것이다. "
+        + "⚠ `horizon_first.json`의 ④는 `lifted` 1인데 **다른 좌표라 결과가 다르다**. "
+        + "⛔ 무엇이 그것을 놓았는지는 **모른다** — 그 원장에 `placeBy`가 없다"
+        + "(#55 ②: 확인 못 한 것을 확인한 것으로 안 적는다). "
         + "② `restored_old_save_*` — 복원은 **다시 풀지 않는다**(`applyDoc2` 머리말: "
         + "`seg3d`가 화면에 있던 그것이다). 심은 저장본의 획에 `seg3d`가 없으므로 0이 맞다. "
         + "③ `face.empty` — 그것이 이 팔이 재는 상태 자체다. "
         + "**이 원장의 0 카운터는 그래서 다섯 갈래다**: `strokes`(A2·A3) · `seeds`(A0·A1·A4) · "
-        + "`on_face_cands`(face.empty) · `order`(no_vp) · `lifted`(위 셋).",
+        + "`on_face_cands`(face.empty) · `order`(no_vp) · `lifted`(위 셋) · "
+        + "`placeBy`의 경로별 0(안 지난 경로다 — 합이 놓인 수라 0이 정상이고, "
+        + "`ground`만 0 → 1로 움직이는 것이 D-L116의 «안 건드렸다» 확인이다).",
     },
     arms: { A: armA, A_old_behavior: armAOld },
     /**
@@ -328,6 +345,21 @@ test("새 절차 후 결함 넷 — 작도선·지평선 y·면 위", async ({ p
     plain_ink: {
       new: (armA[4].px_plain as number) - (armA[3].px_plain as number),
       old: (armAOld[4].px_plain as number) - (armAOld[3].px_plain as number),
+      /**
+       * ⚠⚠ **두 팔이 같은 것은 측정이 아니라 구성상 보장이다**(#5 — 2차 리뷰어 [R2]).
+       * 두 팔을 가르는 것은 `setSeedLines` 하나이고 그 스위치는 **작도선 표시**만 만진다 —
+       * 보통 획의 렌더는 그 경로를 안 지난다. 그러니 `new === old`를 **근거로 쓰지 않는다.**
+       * **측정으로 서는 것은 «지금 보통 획의 잉크가 0보다 크다»뿐이다.**
+       * 「18차 코드에서도 안 사라졌다」의 근거는 이 등식이 아니라 **변경의 범위**다:
+       * D-L114가 만진 가지는 `ruleEvent === "vp_fixed"` 하나이고 보통 획은 거기 안 들어간다.
+       * 그것은 코드 읽기이고 이 원장은 그 주장을 안 든다.
+       */
+      why_equal: "구성상 보장(#5) — 스위치가 이 경로를 안 지난다. 등식을 근거로 안 쓴다",
+      /**
+       * ⚠ 이 값은 **단계 3 → 4의 차**다. `how.A_old`가 «단계 사이의 차는 안 쓴다»를 세웠는데
+       * 그 규칙이 막는 것은 **확정이 그리드를 바꾸는 전이**다 — 3 → 4에는 확정이 없다.
+       */
+      why_step_diff_ok: "3 → 4에는 확정이 없다 — 그리드가 안 바뀐다",
     },
     horizon: {
       thirds, tilted,
@@ -342,14 +374,20 @@ test("새 절차 후 결함 넷 — 작도선·지평선 y·면 위", async ({ p
         + "④ 세 높이에 그은 y가 그대로 `horizon_y`다(셋 다 화면 중앙이 아니다) "
         + "⑤ 소실점 없는 옛 저장본은 `horizon_y`가 `null`이고, 소실점 있는 것은 "
         + "**기본값이 아닌 y**로 지켜진다 "
-        + "⑥ 기하 0에서 `on_face` 후보가 0이고 기하가 생기면 0이 아니다.",
+        + "⑥ 기하 0에서 `on_face` 후보가 0이고 기하가 생기면 0이 아니다 "
+        + "⑦ `plain_ink.new` > 0 — 확정 뒤의 **보통 획**이 그린 자리에 잉크를 더한다"
+        + "(D-L114의 「사거리」 절이 이 값에 얹혀 있다).",
       reachability: "**A** — 되살릴 것은 18차 거동이고 `setSeedLines(false)` 팔이 그것이다. "
         + "넘어야 할 바닥은 그 팔의 픽셀(`seed_px.old`)이고 `seed_ink`가 그 차다. "
         + "**B** — 되살림은 **저장본이 아니라 수리를 되돌리는 것**이다(저장본만 심으면 이 "
         + "원장은 수리된 값 `null`을 낸다). 손으로 되돌려 확인했고 그때 `horizon_y`가 "
         + "`gate.revert_check.B_horizon_y`로 잡힌다. **C** — 같은 방식으로 되돌리면 "
         + "`gate.revert_check.C_on_face_cands`가 잡힌다. "
-        + "⚠ **A만 같은 실행 안의 대조이고 B·C는 손으로 되돌린 확인이다**(비대칭을 적는다).",
+        + "⚠ **A만 같은 실행 안의 대조이고 B·C는 손으로 되돌린 확인이다**(비대칭을 적는다). "
+        + "⛔ **조항 ④(세 높이)와 ⑦(보통 획)에는 도달 가능성이 없다**(#40 ⑥): ④는 저장본 "
+        + "없는 새 페이지 팔이라 **이 버그로 깨진 적이 없고**(결함 3의 재현 경로는 "
+        + "`after_drawing_top`이다), ⑦은 이 세션의 변경이 안 닿는 경로라 되살릴 스위치가 "
+        + "없다. 둘 다 **«지금 그렇다»를 잠그는 조항이지 «고쳤다»의 증거가 아니다**.",
       /**
        * **수리를 되돌렸을 때 이 팔이 잡는 값.** 같은 실행이 아니라 **손으로 두 줄을
        * 되돌려** 얻은 것이다(#55 — 어떻게 얻었는지 함께 적는다). 자동 대조 대상이 아니다.
@@ -393,6 +431,7 @@ test("새 절차 후 결함 넷 — 작도선·지평선 y·면 위", async ({ p
   // 이것이 결함 1의 사거리를 «승격 획»으로 좁힌다: 18차 거동에서도 보통 획은 안 사라졌다.
   expect(ledger.plain_ink.new).toBeGreaterThan(0);
   expect(ledger.plain_ink.old).toBeGreaterThan(0);
+  // ⚠ **두 값이 같은 것은 안 잠근다** — 구성상 보장이라 정보가 0이다(#5 · `why_equal`)
   expect(armAOld[4].strokes).toBe(1);
 
   // ---- B. 지평선 y(지시 3)
@@ -400,10 +439,16 @@ test("새 절차 후 결함 넷 — 작도선·지평선 y·면 위", async ({ p
     expect(t.got).toBeCloseTo(t.y, 0);
     expect(t.is_center).toBe(false);                // 판별력 0인 행을 두지 않는다(#38)
   }
-  // **기울어진 획에서도 규칙이 하나다** — 끝점의 y다(합성 완전 수평에서만 성립하는 항등이 아니다)
-  expect(Math.abs(tilted.slope_deg)).toBeGreaterThan(0.5);
-  expect(tilted.got).toBeCloseTo(tilted.end_y, 0);
-  expect(tilted.got).not.toBeCloseTo(tilted.start_y, 0);
+  // **기울어진 획에서도 규칙이 하나다** — 끝점의 y다(합성 완전 수평에서만 성립하는 항등이
+  // 아니다). **임계 아래와 위 둘 다**에서 같은 규칙이 선다(#12 — 동작점 하나를 안 둔다)
+  const slopeTol = (ledger.constants as { values: { HORIZON_TOL: { min_slope_deg: number } } })
+    .values.HORIZON_TOL.min_slope_deg;
+  expect(Math.abs(tilted.below_threshold.slope_deg)).toBeLessThan(slopeTol);
+  expect(Math.abs(tilted.above_threshold.slope_deg)).toBeGreaterThan(slopeTol);
+  for (const t of [tilted.below_threshold, tilted.above_threshold]) {
+    expect(t.got).toBeCloseTo(t.end_y, 0);
+    expect(t.got).not.toBeCloseTo(t.start_y, 0);
+  }
   expect(restoredNoVp.strokes).toBe(1);             // 복원은 실제로 일어났다
   expect(restoredNoVp.horizon_y).toBeNull();        // **옛 기본값을 안 읽는다**
   expect(restoredNoVp.order).toBe(0);

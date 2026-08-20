@@ -19,7 +19,7 @@
   "zero_strokes": "A2·A3에서 `strokes`가 0인 것은 **설계 그대로다**(18차 지시 4 — 소실점을 만든 획은 문서에 안 남는다). 19차가 바꾼 것은 «문서에서 뺀다»가 아니라 «화면에서 언제 지우는가»이고, 그것을 재는 필드는 `seeds`와 `px_line*`이다.",
   "zero_on_face": "`face.empty.on_face_cands`가 0인 것이 **이 팔이 재현하려는 수리**다 — 집계가 안 돈 것이 아니다. 같은 실행의 `face.with_geometry`가 0이 아니다.",
   "zero_restored": "`horizon.restored_old_save_no_vp`의 `order`·`lifted`·`seeds`가 0인 것은 **그 저장본의 정의**다 — 소실점이 없으니 차수 0이고, 3D도 작도선도 없다. 같은 블록의 `strokes`가 **1**인 것이 «복원이 실제로 일어났다»의 증거이고, `horizon_y`가 `null`인 것이 이 팔이 재는 수리다. 같은 실행의 `restored_old_save_with_vp`가 차수 2를 낸다 — 게이트가 무차별이 아니다.",
-  "zero_lifted": "**`lifted` 0이 세 곳에 있고 셋 다 이 세션의 변경과 무관하다**(리뷰어 [2]가 물었다): ① `arms.*`의 4행(보통 획) — 확정 뒤 첫 획은 붙을 3D 대상이 없어 **2D 대기**다(D-L83이 `on_edge`·`on_face`를 앵커에서 뺐다). 같은 좌표에서 수리 **전에도** 0이었다. ⚠ `horizon_first.json`의 ④는 `lifted` 1인데 **다른 좌표**라 지면 배치(D-L90)가 걸린 것이다 — 같은 상황이 아니다. ② `restored_old_save_*` — 복원은 **다시 풀지 않는다**(`applyDoc2` 머리말: `seg3d`가 화면에 있던 그것이다). 심은 저장본의 획에 `seg3d`가 없으므로 0이 맞다. ③ `face.empty` — 그것이 이 팔이 재는 상태 자체다. **이 원장의 0 카운터는 그래서 다섯 갈래다**: `strokes`(A2·A3) · `seeds`(A0·A1·A4) · `on_face_cands`(face.empty) · `order`(no_vp) · `lifted`(위 셋)."
+  "zero_lifted": "**`lifted` 0이 세 곳에 있고 셋 다 이 세션의 변경과 무관하다**(리뷰어 [2]가 물었다): ① `arms.*`의 4행(보통 획) — 확정 뒤 첫 획은 붙을 3D 대상이 없어 **2D 대기**다(D-L83이 `on_edge`·`on_face`를 앵커에서 뺐다). ⚠ «수리 전에도 0이었다»는 **이 원장이 안 든다** — 그 확인은 세션 중 손으로 한 브라우저 실행이고(#55: 어떻게 알았는지 함께 적는다), 구조로는 D-L114가 만진 가지(`vp_fixed`)에 보통 획이 안 들어간다는 것이다. ⚠ `horizon_first.json`의 ④는 `lifted` 1인데 **다른 좌표라 결과가 다르다**. ⛔ 무엇이 그것을 놓았는지는 **모른다** — 그 원장에 `placeBy`가 없다(#55 ②: 확인 못 한 것을 확인한 것으로 안 적는다). ② `restored_old_save_*` — 복원은 **다시 풀지 않는다**(`applyDoc2` 머리말: `seg3d`가 화면에 있던 그것이다). 심은 저장본의 획에 `seg3d`가 없으므로 0이 맞다. ③ `face.empty` — 그것이 이 팔이 재는 상태 자체다. **이 원장의 0 카운터는 그래서 다섯 갈래다**: `strokes`(A2·A3) · `seeds`(A0·A1·A4) · `on_face_cands`(face.empty) · `order`(no_vp) · `lifted`(위 셋) · `placeBy`의 경로별 0(안 지난 경로다 — 합이 놓인 수라 0이 정상이고, `ground`만 0 → 1로 움직이는 것이 D-L116의 «안 건드렸다» 확인이다)."
  },
  "arms": {
   "A": [
@@ -163,7 +163,9 @@
  ],
  "plain_ink": {
   "new": 954,
-  "old": 954
+  "old": 954,
+  "why_equal": "구성상 보장(#5) — 스위치가 이 경로를 안 지난다. 등식을 근거로 안 쓴다",
+  "why_step_diff_ok": "3 → 4에는 확정이 없다 — 그리드가 안 바뀐다"
  },
  "horizon": {
   "thirds": [
@@ -187,11 +189,19 @@
    }
   ],
   "tilted": {
-   "start_y": 202,
-   "end_y": 243,
-   "slope_deg": 3.0558581975426655,
-   "got": 243,
-   "rule": "끝점의 y를 쓴다 — 지평선은 화면 수평으로 강제되므로(18차 지시 j) y 하나다"
+   "below_threshold": {
+    "start_y": 202,
+    "end_y": 242,
+    "slope_deg": 2.981461219982192,
+    "got": 242
+   },
+   "above_threshold": {
+    "start_y": 202,
+    "end_y": 350,
+    "slope_deg": 10.9076617954981,
+    "got": 350
+   },
+   "rule": "**끝점의 y를 쓴다**(D-L117) — 지평선은 화면 수평으로 강제되므로(18차 지시 j) y 하나이고, 그 하나를 손이 마지막으로 있던 자리로 정한다. ⚠ **방향 의존이다**: 같은 획을 반대로 그으면 시작점의 y가 된다(D-L117의 대가)."
   },
   "restored_old_save_no_vp": {
    "order": 0,
@@ -267,8 +277,8 @@
   }
  },
  "gate": {
-  "registered": "① 깊이선1 뒤 `seeds` 1이고 `seed_ink[0]` > 0 ② 깊이선2 뒤 `seeds` 2이고 `seed_ink[1]` > 0 ③ 그리기 첫 획에서 `seeds` 0 ④ 세 높이에 그은 y가 그대로 `horizon_y`다(셋 다 화면 중앙이 아니다) ⑤ 소실점 없는 옛 저장본은 `horizon_y`가 `null`이고, 소실점 있는 것은 **기본값이 아닌 y**로 지켜진다 ⑥ 기하 0에서 `on_face` 후보가 0이고 기하가 생기면 0이 아니다.",
-  "reachability": "**A** — 되살릴 것은 18차 거동이고 `setSeedLines(false)` 팔이 그것이다. 넘어야 할 바닥은 그 팔의 픽셀(`seed_px.old`)이고 `seed_ink`가 그 차다. **B** — 되살림은 **저장본이 아니라 수리를 되돌리는 것**이다(저장본만 심으면 이 원장은 수리된 값 `null`을 낸다). 손으로 되돌려 확인했고 그때 `horizon_y`가 `gate.revert_check.B_horizon_y`로 잡힌다. **C** — 같은 방식으로 되돌리면 `gate.revert_check.C_on_face_cands`가 잡힌다. ⚠ **A만 같은 실행 안의 대조이고 B·C는 손으로 되돌린 확인이다**(비대칭을 적는다).",
+  "registered": "① 깊이선1 뒤 `seeds` 1이고 `seed_ink[0]` > 0 ② 깊이선2 뒤 `seeds` 2이고 `seed_ink[1]` > 0 ③ 그리기 첫 획에서 `seeds` 0 ④ 세 높이에 그은 y가 그대로 `horizon_y`다(셋 다 화면 중앙이 아니다) ⑤ 소실점 없는 옛 저장본은 `horizon_y`가 `null`이고, 소실점 있는 것은 **기본값이 아닌 y**로 지켜진다 ⑥ 기하 0에서 `on_face` 후보가 0이고 기하가 생기면 0이 아니다 ⑦ `plain_ink.new` > 0 — 확정 뒤의 **보통 획**이 그린 자리에 잉크를 더한다(D-L114의 「사거리」 절이 이 값에 얹혀 있다).",
+  "reachability": "**A** — 되살릴 것은 18차 거동이고 `setSeedLines(false)` 팔이 그것이다. 넘어야 할 바닥은 그 팔의 픽셀(`seed_px.old`)이고 `seed_ink`가 그 차다. **B** — 되살림은 **저장본이 아니라 수리를 되돌리는 것**이다(저장본만 심으면 이 원장은 수리된 값 `null`을 낸다). 손으로 되돌려 확인했고 그때 `horizon_y`가 `gate.revert_check.B_horizon_y`로 잡힌다. **C** — 같은 방식으로 되돌리면 `gate.revert_check.C_on_face_cands`가 잡힌다. ⚠ **A만 같은 실행 안의 대조이고 B·C는 손으로 되돌린 확인이다**(비대칭을 적는다). ⛔ **조항 ④(세 높이)와 ⑦(보통 획)에는 도달 가능성이 없다**(#40 ⑥): ④는 저장본 없는 새 페이지 팔이라 **이 버그로 깨진 적이 없고**(결함 3의 재현 경로는 `after_drawing_top`이다), ⑦은 이 세션의 변경이 안 닿는 경로라 되살릴 스위치가 없다. 둘 다 **«지금 그렇다»를 잠그는 조항이지 «고쳤다»의 증거가 아니다**.",
   "revert_check": {
    "B_horizon_y": 337,
    "C_on_face_cands": 4,

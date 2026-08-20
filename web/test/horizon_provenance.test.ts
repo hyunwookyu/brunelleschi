@@ -17,6 +17,12 @@
 //
 // 착수 시 `PITFALLS.md`를 읽었다(`tail -40`). 걸리는 번호는 `progress.md` 19차 착수 표가 든다.
 import { describe, it, expect } from "vitest";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+// **외부 데이터 의존은 등록한다**(`dataDeps.ts` 머리말 · #32) — 안 하면 CI에서 조용히
+// 0건이 된다. 등록 누락은 `data_deps.test.ts`의 전수 확인이 잡는다(실제로 잡혔다)
+import { skipReason } from "./dataDeps.js";
 import { CamState } from "../src/ui/camState.js";
 import { newRuleState, type RuleState } from "../src/s3d/vpRules.js";
 import { takeSnap, applySnap, snapDiff, type SeedLine } from "../src/ui/appSnap.js";
@@ -83,6 +89,53 @@ describe("지평선의 출처 — 저장본이 옛 기본값을 되살리지 않
     expect(a.rules.horizon).toBe(150);
     expect(b.rules.horizon).toBeNull();
   });
+});
+
+/**
+ * **게이트를 실제 저장본에 대 본다**(2차 리뷰어 [R9]).
+ *
+ * D-L115의 대가 서술은 «닿는 상태 둘»을 논증으로만 들었다. `sessions/`에는 **18차 이전에
+ * 그린 실제 파일 셋**이 이미 있고 전부 그 게이트를 지나므로, «이 게이트가 실제 파일의
+ * 지평선을 죽이는가»는 **지금 잴 수 있다** — 미룰 이유가 없었다.
+ *
+ * ⚠ 이 팔은 «지금 있는 표본에서 안 죽는다»까지만 말한다 — 표본 셋이고, 전부 **소실점이
+ * 선 문서**다(그리다 만 문서는 이 폴더에 없다). 그 대역은 위 ① 팔이 값으로 든다.
+ * ⚠⚠ **`real_ink`는 이 경로를 안 지난다**(19차 #56 확인) — 그 하네스는 파일을 직접 읽고
+ * 앱의 복원(`applyDoc2` → `loadRulesFromDocument`)을 건너뛴다. 그래서 여기가 그 자리다.
+ */
+describe("실제 저장본 — 게이트가 지금 있는 표본의 지평선을 죽이는가 (D-L115)", () => {
+  const SESSIONS = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "sessions");
+  const files = existsSync(SESSIONS)
+    ? readdirSync(SESSIONS).filter(f => f.endsWith(".json"))
+    : [];
+
+  const NO_SESSIONS = skipReason("sessions");
+
+  it(`\`sessions/\`의 저장본이 하나라도 있다${NO_SESSIONS ? ` — 건너뜀: ${NO_SESSIONS}` : ""}`,
+     ctx => {
+    // 없으면 아래가 **공집합을 통과**한다(#32) — 그것을 여기서 막는다.
+    // ⚠ 표본은 2026-08-19부터 **커밋돼 있다**(`dataDeps.ts`) — 그래서 CI에서도 돈다.
+    // 사유는 **이름에 뜬다**(`dataDeps.ts` 규칙 ① — 조용한 건너뛰기를 안 만든다).
+    if (NO_SESSIONS) { ctx.skip(); return; }
+    expect(files.length).toBeGreaterThan(0);
+  });
+
+  for (const f of files) {
+    it(`${f} — 복원 입구를 지나도 지평선이 산다`, () => {
+      const doc = JSON.parse(readFileSync(resolve(SESSIONS, f), "utf-8")) as {
+        imgSize?: [number, number]; rules?: RuleState | null;
+      };
+      const sz = (doc.imgSize ?? SZ) as [number, number];
+      const saved = doc.rules?.horizon ?? null;
+      const cam = new CamState(sz);
+      cam.loadRulesFromDocument(doc.rules ?? null);
+      // **이 표본들은 전부 소실점이 선 문서다** — 그러니 지평선이 그대로 있어야 한다.
+      // 여기가 깨지면 D-L115가 실제 파일을 죽이는 것이고, 그것이 이 팔의 존재 이유다.
+      expect(saved).not.toBeNull();
+      expect(cam.rules.horizon).toBe(saved);
+      expect(cam.hasHorizon()).toBe(true);
+    });
+  }
 });
 
 describe("작도선 스냅샷 — 되돌리기가 함께 되돌린다 (D-L114)", () => {

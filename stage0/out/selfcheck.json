@@ -4565,7 +4565,7 @@
     },
     {
       "path": "lens_roll_osnap.json:s_start_check.dist_px",
-      "val": 5.821876208512438e-11,
+      "val": 5.8150261837808516e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20098,7 +20098,7 @@
     },
     {
       "path": "restore_pose.json:restore_viewpoint.pose_max_diff",
-      "val": 2.6645352591003757e-15,
+      "val": 8.881784197001252e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20108,7 +20108,7 @@
     },
     {
       "path": "restore_pose.json:gate.result.viewpoint_pose_max_diff",
-      "val": 2.6645352591003757e-15,
+      "val": 8.881784197001252e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -22644,7 +22644,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 4.218847493575595e-14,
+      "val": 4.440892098500626e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -26645,7 +26645,7 @@
       "val": [
         "DEFERRED.md:885 test_cost.json",
         "progress.md:11820 test_cost.json",
-        "progress.md:13844 test_cost.json"
+        "progress.md:13857 test_cost.json"
       ],
       "flag": "**없는 원장을 인용한다**(3건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
     },
@@ -26871,7 +26871,7 @@
         ".ts"
       ],
       "hits_by_ext": {
-        ".ts": 12
+        ".ts": 13
       }
     }
   ],
@@ -26907,16 +26907,16 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 363,
+      "targets": 364,
       "hits": 1,
       "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 3건"
     },
     {
       "scan": "scan_cited_values",
       "unit": "인용 줄",
-      "targets": 194,
+      "targets": 193,
       "hits": 0,
-      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1900개이고 엄격 판정이면 425개(83줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
+      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1899개이고 엄격 판정이면 425개(83줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
     },
     {
       "scan": "scan_pitfall_citations",
@@ -27438,7 +27438,9 @@
       5,
       12,
       21,
-      38
+      38,
+      40,
+      55
     ],
     "promote.json": [
       3,
@@ -27702,8 +27704,8 @@
     ]
   },
   "cited_value_population": {
-    "lines_checked": 194,
-    "tokens_checked": 1900,
+    "lines_checked": 193,
+    "tokens_checked": 1899,
     "flags_line_rule": 0,
     "strict_tokens_flagged": 425,
     "strict_lines_flagged": 83,

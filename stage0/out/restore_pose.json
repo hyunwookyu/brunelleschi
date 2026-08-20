@@ -53,7 +53,7 @@
     "restored_view": "v3",
     "views": 2,
     "pinned": false,
-    "pose_max_diff": 2.6645352591003757e-15,
+    "pose_max_diff": 8.881784197001252e-16,
     "negative_default_pose_diff": 6.101156841858836
   },
   "orbit_lens": {
@@ -279,7 +279,7 @@
     "reachability_source": "negative_arms/values",
     "result": {
       "pinned_after_reload": true,
-      "viewpoint_pose_max_diff": 2.6645352591003757e-15
+      "viewpoint_pose_max_diff": 8.881784197001252e-16
     }
   }
 }
