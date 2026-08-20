@@ -53,6 +53,7 @@
  },
  "off30_pairs": [
   {
+   "order": 3,
    "a": [
     200,
     600
@@ -61,16 +62,17 @@
     374.24242966985696,
     645.161661868724
    ],
-   "gate_off": {
+   "gate_off_arm4": {
     "warned": true,
     "misfit": 0.25
    },
-   "gate_on": {
+   "gate_on_arm9": {
     "warned": false,
     "misfit": 0.25
    }
   },
   {
+   "order": 2,
    "a": [
     200,
     600
@@ -79,11 +81,11 @@
     374.24242966985696,
     645.161661868724
    ],
-   "gate_off": {
+   "gate_off_arm4": {
     "warned": true,
     "misfit": 0.25
    },
-   "gate_on": {
+   "gate_on_arm9": {
     "warned": false,
     "misfit": 0.25
    }
@@ -570,6 +572,9 @@
    true,
    true
   ],
+  "product_path_warned": true,
+  "product_path_in_doc": true,
+  "product_path_order": 2,
   "rule_revive_event": "rejected",
   "rule_fixed_event": "support",
   "rule_fixed_axis": 2
@@ -582,6 +587,8 @@
    0.25
   ],
   "reachability_source": "summary/genuinely_off_misfit",
+  "reachability_value_product_path": true,
+  "reachability_source_product_path": "summary/product_path_warned",
   "result": {
    "warned_by_order": [
     {
@@ -665,6 +672,9 @@
     true,
     true
    ],
+   "product_path_warned": true,
+   "product_path_in_doc": true,
+   "product_path_order": 2,
    "rule_revive_event": "rejected",
    "rule_fixed_event": "support",
    "rule_fixed_axis": 2

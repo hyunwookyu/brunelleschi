@@ -21,37 +21,37 @@
    "skip": 0
   },
   "liftable": {
-   "pass": 9,
+   "pass": 8,
    "reject": 0,
    "skip": 0
   },
   "camera_frame": {
-   "pass": 8,
+   "pass": 7,
    "reject": 0,
    "skip": 1
   },
   "feed_rule": {
-   "pass": 5,
+   "pass": 4,
    "reject": 0,
    "skip": 4
   },
   "vp_fixed_delete": {
    "pass": 0,
-   "reject": 3,
+   "reject": 2,
    "skip": 0
   },
   "start_osnap": {
    "pass": 1,
    "reject": 0,
-   "skip": 8
+   "skip": 7
   },
   "anchor_guard": {
    "pass": 0,
-   "reject": 5,
+   "reject": 4,
    "skip": 0
   },
   "wait_2d": {
-   "pass": 8,
+   "pass": 7,
    "reject": 0,
    "skip": 0
   },
@@ -81,7 +81,45 @@
    "skip": 0
   }
  },
- "final_removed_count": 3,
+ "verdicts_by_site_revived": {
+  "liftable": {
+   "pass": 1,
+   "reject": 0,
+   "skip": 0
+  },
+  "camera_frame": {
+   "pass": 1,
+   "reject": 0,
+   "skip": 0
+  },
+  "start_osnap": {
+   "pass": 0,
+   "reject": 0,
+   "skip": 1
+  },
+  "anchor_guard": {
+   "pass": 0,
+   "reject": 1,
+   "skip": 0
+  },
+  "wait_2d": {
+   "pass": 1,
+   "reject": 0,
+   "skip": 0
+  },
+  "feed_rule": {
+   "pass": 1,
+   "reject": 0,
+   "skip": 0
+  },
+  "vp_fixed_delete": {
+   "pass": 0,
+   "reject": 1,
+   "skip": 0
+  }
+ },
+ "final_removed_count": 2,
+ "final_removed_count_revived": 1,
  "reading": {
   "vp_fixed_delete": "문서에서 획이 빠지는 **유일한** 자리다 — 발화 목록은 아래 게이트가 든다(A1·B0 작도선 + C1 되살림 팔뿐이어야 한다).",
   "waiting_visible": "2D 대기 획은 전부 `drawn_alpha` > 0이어야 한다 — 대기는 실패가 아니라 상태다(§9.1). null이면 저장은 됐는데 안 그려진 것이다(지시 3-c).",
@@ -674,30 +712,24 @@
   "revived": {
    "order_before": 1,
    "order": 2,
-   "strokes": 1
+   "strokes": 1,
+   "removed": 1
   }
  },
  "gate": {
-  "registered": "① 문서에서 획이 빠지는 자리는 `vp_fixed_delete` 하나이고 발화는 작도선(A1·B0)과 되살림 팔(C1)뿐이다 ② 작도선이 아닌 확정 후 획은 전부 문서에 남고, 대기면 `drawn_alpha`>0 · 3D면 three 층 등재다 ③ C1(수리 전 거동)에서는 같은 사선이 소비되고 차수가 1→2로 움직인다.",
-  "reachability": "되살림 팔 C1이 도달 가능성이다 — 수리 전 거동에서 같은 좌표의 사선이 실제로 사라지고(`in_doc` false) 차수가 움직인다(`state.revived`).",
-  "reachability_source": "state/revived",
-  "reachability_value": {
-   "order_before": 1,
-   "order": 2,
-   "strokes": 1
-  }
+  "registered": "① 문서에서 획이 빠지는 자리는 `vp_fixed_delete` 하나이고 발화는 작도선(A1·B0)과 되살림 팔(C1)뿐이다 ② 작도선이 아닌 확정 후 획은 전부 문서에 남고, 대기면 `drawn_alpha`>0 · 3D면 three 층 등재다 ③ C1(수리 전 거동)에서는 같은 사선이 소비되고 차수가 1→2로 움직인다(`state.revived`의 order_before → order).",
+  "reachability": "되살림 팔 C1이 도달 가능성이다 — 수리 전 거동에서 같은 좌표의 사선이 실제로 사라지고(`state.revived.removed` = 소비 수) 차수가 움직인다(`state.revived.order_before` → `order`).",
+  "reachability_source": "state/revived/order",
+  "reachability_value": 2
  },
  "selfcheck_notes": {
-  "zero_verdicts": "`verdicts_by_site`의 0은 **그 장면에서 그 갈래가 안 났다**다 — horizon_draft는 통과만 있는 자리(지평선이 되면 획이 아니다)라 reject·skip이 정의상 0이고, chain_cross의 pass·skip 0은 이 장면의 대기 획이 교차 전에 굽음·축 미분류로 걸렸기 때문이다(reject 행이 그 사유를 든다). 분모(합)는 같은 표의 세 칸 합이다."
+  "zero_verdicts": "`verdicts_by_site`의 0은 **그 장면에서 그 갈래가 안 났다**다 — horizon_draft는 통과만 있는 자리(지평선이 되면 획이 아니다)라 reject·skip이 정의상 0이고, chain_cross의 pass·skip 0은 이 장면의 대기 획이 교차 전에 굽음·축 미분류로 걸렸기 때문이다(reject 행이 그 사유를 든다). 분모(합)는 같은 표의 세 칸 합이다. **행이 없는 자리는 이 실행에서 한 번도 안 지났다**(bend_gate·chain_dir_guard·gesture_gate·render:* — 이 장면의 획이 그 조건에 안 닿았다는 뜻이지 그 자리가 없다는 뜻이 아니다)."
  },
  "pitfall_citations": [
   12,
   21,
-  25,
   38,
-  43,
-  52,
-  53
+  52
  ],
  "errors": [],
  "constants": {

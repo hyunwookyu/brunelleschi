@@ -266,9 +266,9 @@ test("경고는 **어긋난 획에만** 뜬다 (D-L100)", async ({ page }) => {
 
     return { order: n, cases, c3, c4, c5, r3, r6, r7, c9,
              /** ④와 ⑨가 **같은 획**이다(1차 리뷰어 [6] ②) — 같은 좌표·같은 겨냥. */
-             off30_pair: { a: offs.a, b: offs.deg30,
-                           gate_off: { warned: c4.warned, misfit: c4.misfit_min },
-                           gate_on: { warned: c9.warned, misfit: c9.misfit_min } },
+             off30_pair: { order: n, a: offs.a, b: offs.deg30,
+                           gate_off_arm4: { warned: c4.warned, misfit: c4.misfit_min },
+                           gate_on_arm9: { warned: c9.warned, misfit: c9.misfit_min } },
              diag_screen_angle_to_vp_deg: Math.round(diag.worst * 100) / 100,
              diag_from_screen_axis_deg: Math.round(diag.screen_deg * 100) / 100 };
   };
@@ -390,6 +390,12 @@ test("경고는 **어긋난 획에만** 뜬다 (D-L100)", async ({ page }) => {
       /** D-L118 — 그리기 국면(게이트 켬)에서는 같은 어긋난 획에 경고가 없고 획이 남는다 */
       draft_gate_on_warned: [o3.c9.warned, o2.c9.warned],
       draft_gate_on_in_doc: [(o3.c9 as any).in_doc, (o2.c9 as any).in_doc],
+      /** ⑩ — **제품 경로**(게이트 켬 · 작도 국면)의 경고 도달성(2차 [R7] — 게이트 결과에 든다).
+       *  ⚠ 차수 하나(P2)다: 그린 절차로 도달 가능한 작도 국면이 P2까지다(P3는 그린 절차로
+       *  못 만든다 — 기울어진 수직선 경로를 7차 3-b가 지웠다). */
+      product_path_warned: draftWarn.warned,
+      product_path_in_doc: draftWarn.in_doc,
+      product_path_order: draftWarn.order,
       /** (b) — 규칙 층 */
       rule_revive_event: ruleArms().rows[0].event,
       rule_fixed_event: ruleArms().rows[1].event,
@@ -409,6 +415,10 @@ test("경고는 **어긋난 획에만** 뜬다 (D-L100)", async ({ page }) => {
         + "`misfit_min`·`path`가 든다(#43).",
       reachability_value: null as unknown,
       reachability_source: "summary/genuinely_off_misfit",
+      /** **못 고르면 둘 다 적는다**(#28 · 2차 [R7]) — 제품 경로(⑩)의 도달성은 이 둘이다.
+       *  ⑩이 뒤집히면 `result`의 `product_path_*`가 함께 뒤집힌다. */
+      reachability_value_product_path: null as unknown,
+      reachability_source_product_path: "summary/product_path_warned",
       result: {} as Record<string, unknown>,
     },
     pitfall_citations: [7, 12, 17, 21, 24, 25, 30, 32, 33, 35, 40, 43, 46, 47],
@@ -417,6 +427,7 @@ test("경고는 **어긋난 획에만** 뜬다 (D-L100)", async ({ page }) => {
     metric_defs: metricsSnapshot(),
   };
   led.gate.reachability_value = led.summary.genuinely_off_misfit;
+  led.gate.reachability_value_product_path = led.summary.product_path_warned;
   led.gate.result = { ...led.summary };
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "axis_warn.json"), JSON.stringify(led, null, 1));

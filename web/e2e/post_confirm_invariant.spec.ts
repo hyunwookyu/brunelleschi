@@ -171,8 +171,9 @@ test("불변식 — 확정 후 그은 획은 반드시 화면에 남는다 (20�
   // **한 번뿐이다**(첫 vp_fixed가 암묵 슬롯을 닫아 차수가 2가 되면 뒤 사선은 거절로
   // 남는다). 그래서 이어 그으면 «사라진 수»가 항상 1로 나와 방향별 취약성이 안 갈린다 —
   // 방향마다 P1 그리기 국면을 새로 만들어 «이 방향이 첫 사선이었다면 사라졌는가»를 잰다.
-  const revRows: { dir: number; id: string | null; in_doc: boolean; order: number;
-                   feed: string | null }[] = [];
+  const revRows: { dir: number; a: [number, number]; b: [number, number];
+                   id: string | null; in_doc: boolean; order: number;
+                   feed: string | null; note: string | null }[] = [];
   {
     // **P1 팔과 같은 두 부채 전부**다 — 어느 방향이 소비 부류인지가 이 표의 답이다.
     const dirs = [...fan(W * 0.18, H * 0.32, W, H), ...fan(W * 0.58, H * 0.50, W, H)];
@@ -185,7 +186,7 @@ test("불변식 — 확정 후 그은 획은 반드시 화면에 남는다 (20�
       await drawOn(page, dirs[k][0], dirs[k][1]);
       const id = await lastId(page);
       revRows.push({
-        dir: k, id,
+        dir: k, a: dirs[k][0], b: dirs[k][1], id,
         in_doc: id != null && await page.evaluate(
           (sid) => window.S2S.doc().strokes.some((x: any) => x.id === sid), id),
         order: await page.evaluate(() => window.S2S.order()),
@@ -194,6 +195,10 @@ test("불변식 — 확정 후 그은 획은 반드시 화면에 남는다 (20�
           const s = window.S2S.lastTrace().steps.find((x: any) => x.at === "feed_rule");
           return s ? (s.why ?? null) : null;
         }),
+        // **앱 자신의 알림**을 그대로 싣는다(#52 — 하네스가 f² 조건을 다시 계산하지
+        // 않는다). 거절 사유(f² ≤ 0 등)가 이 문구에 있다 — 기전 서술의 근거가 원장 안이다.
+        note: await page.evaluate(() =>
+          (document.getElementById("status")?.textContent ?? "").slice(0, 80) || null),
       });
     }
   }
@@ -207,8 +212,12 @@ test("불변식 — 확정 후 그은 획은 반드시 화면에 남는다 (20�
       + "밖이다 — 그 사선은 설계대로 작도선이 된다(DEFERRED 20차 3행).",
     how: "P1·P2 각각에서 그리기 국면에 들어간 뒤 고정 표의 방향·길이로 수십 획을 긋고, "
       + "획마다 in_doc · (대기면) drawn_alpha와 중점 9×9 픽셀 · (3D면) three 층 등재를 "
-      + "읽는다. 되살림 팔은 setDraftGate(false)로 수리 전 거동을 켜고 **같은 고정 표를 "
-      + "전수로** 다시 긋는다(#30 · #12).",
+      + "읽는다. 되살림 팔은 setDraftGate(false)로 수리 전 거동을 켜고 같은 고정 표를 "
+      + "**방향마다 새 P1 장면에서** 다시 긋는다(#30 · #12). ⚠ 한 장면에서 소비는 **최대 "
+      + "1획**이다(첫 vp_fixed가 암묵 슬롯을 닫아 P2가 되면 뒤 사선은 거절로 남는다) — "
+      + "그래서 `revived_fan`의 «사라진 수»는 «한 장면의 손실»이 아니라 **방향별 소비 "
+      + "성향**이다. 수리 전 한 장면의 실제 손실은 «첫 해당 사선 1획 + 그 뒤 전 획이 "
+      + "조용히 바뀐 카메라(P2) 아래 놓이는 것»이다.",
     counts: {
       p1_drawn: p1rows.length, p2_drawn: p2rows.length,
       p1_lifted: p1rows.filter(r => r.seg3d).length,
@@ -236,11 +245,14 @@ test("불변식 — 확정 후 그은 획은 반드시 화면에 남는다 (20�
      * 사선이었다면 사라졌는가». 방향마다 새 P1 장면이다(한 장면에서는 소비가 한 번뿐이라서
      * — 첫 승격이 암묵 슬롯을 닫는다). `vanished`가 곧 수리가 되돌린 방향 수다.
      *
-     * **소비 부류는 방향 전부가 아니다** — 이 표가 그것을 가른다: 기존 소실점의 **반대쪽**
-     * 에서 지평선과 만나는 사선만 f² > 0이라 소비되고(vp_fixed), 같은 쪽은 화각 게이트
-     * (f² ≤ 0)가 거절해 **경고와 함께 남았다**(rows의 `feed`가 사유다). 즉 수리 전에도
-     * 전 획이 사라진 것은 아니고, 사라지는 방향이 구도에 딸려 있었다 — 재발 보고가
-     * 간헐로 보인 이유의 후보다.
+     * **소비 부류는 방향 전부가 아니다** — 이 표가 그것을 가른다. 살아남은 사유는 행마다
+     * `feed`(규칙 사건)와 `note`(앱 자신의 알림 — 거절이면 f² ≤ 0 문구가 그대로 실린다,
+     * #52)가 들고, 좌표는 `a`·`b`다. **가르는 조건의 서술은 «후보»다**(2차 [R5] — 원장 밖
+     * 손 관측을 단정으로 적지 않는다): 소비 행의 공통점은 그 사선의 지평선 교점이 기존
+     * 소실점과 화각 게이트를 지나는 짝(f² > 0)이 되는 것으로 보이고, 거절 행의 `note`가
+     * f² ≤ 0 문구를 드는 것이 그 방증이다 — 확정 판정은 행별 f² 부호를 내는 팔이 생길
+     * 때다. 수리 전에도 전 획이 사라진 것은 아니었고, 사라지는 방향이 구도에 딸려
+     * 있었다 — 재발 보고가 간헐로 보인 이유의 후보다.
      */
     revived_fan: {
       drawn: revRows.length,
@@ -257,11 +269,16 @@ test("불변식 — 확정 후 그은 획은 반드시 화면에 남는다 (20�
         + "3D면 three 층 등재다 ② P1 팔의 차수가 사선 수십 획 뒤에도 1이다(조용한 승격 "
         + "없음) ③ 되살림(수리 전 거동)에서는 같은 사선이 사라지고 차수가 1→2로 움직인다.",
       reachability: "되살림 팔이 도달 가능성이다 — 수리 전 거동에서 첫 사선이 소비되고"
-        + "(`revived_bug`) 같은 고정 표에서 사라진 수가 0이 아니다(`revived_fan.vanished`).",
+        + "(`revived_bug`) 같은 고정 표에서 사라진 수가 0이 아니다(`revived_fan.vanished`). "
+        + "⚠ **재는 것은 범주다**(vanished > 0 — 되살림이 실제로 죽인다). 크기(그 수 자체)는 "
+        + "이 좌표 표가 정하므로(#46) 크기를 근거로 쓰지 않는다.",
       reachability_source: "revived_fan/vanished",
       reachability_value: null as unknown,
+      /** #46 ⚙️ — 값이 픽스처(좌표 표) 결정임을 자동이 읽는 자리. */
+      reachability_value_fixture_determined: true,
     },
-    pitfall_citations: [12, 21, 30, 38, 53],
+    /** ⚠ 이 배열은 **이 원장 본문이 실제로 인용한 번호**와 일치시킨다(2차 [R2]). */
+    pitfall_citations: [12, 21, 30, 46],
     errors,
     constants: constantsSnapshot(),
     metric_defs: metricsSnapshot(),

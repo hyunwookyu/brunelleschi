@@ -153,15 +153,23 @@ test("확정 후 획 경로 표식 — 전수 원장 (20차 지시 1)", async ({
   // **자리별 통과/거부/미도달 수를 함께 낸다**(#43 — 거부 수만 내면 0이 «시도 없음»인지
   // «전부 통과»인지 안 갈린다). `final`은 거부 지점이 아니라 **결과 요약**이라 따로 낸다.
   const sites = await page.evaluate(() => window.S2S.traceRejectSites());
-  const bySite: Record<string, { pass: number; reject: number; skip: number }> = {};
-  let finalRemoved = 0;
-  for (const r of rows) {
-    for (const s of (r.steps as { at: string; verdict: "pass" | "reject" | "skip" }[])) {
-      if (s.at === "final") { if (s.verdict === "reject") finalRemoved += 1; continue; }
-      const b = bySite[s.at] ?? (bySite[s.at] = { pass: 0, reject: 0, skip: 0 });
-      b[s.verdict] += 1;
+  // **게이트 켬(수리 후) 팔과 되살림(C1) 팔을 한 분모에 안 합친다**(#43 · 2차 [R9]).
+  type SiteRow = { pass: number; reject: number; skip: number };
+  const mkTable = (sel: (label: string) => boolean) => {
+    const t: Record<string, SiteRow> = {};
+    let removed = 0;
+    for (const r of rows) {
+      if (!sel(r.label as string)) continue;
+      for (const s of (r.steps as { at: string; verdict: "pass" | "reject" | "skip" }[])) {
+        if (s.at === "final") { if (s.verdict === "reject") removed += 1; continue; }
+        const b = t[s.at] ?? (t[s.at] = { pass: 0, reject: 0, skip: 0 });
+        b[s.verdict] += 1;
+      }
     }
-  }
+    return { table: t, removed };
+  };
+  const gateOn = mkTable(l => !l.startsWith("C1"));
+  const revivedT = mkTable(l => l.startsWith("C1"));
 
   const ledger = {
     what: "확정 후 획이 3D가 되기까지 지나는 판정의 전수 표식(20차 지시 1). "
@@ -173,9 +181,16 @@ test("확정 후 획 경로 표식 — 전수 원장 (20차 지시 1)", async ({
       + "`S2S.renderTrace()`(drawPending이 실제 그린 것)를 읽는다. 표식은 코드의 그 분기 "
       + "자리에서 적히고 하네스는 조건을 다시 계산하지 않는다(#52).",
     reject_sites_total: sites,
-    /** 자리별 (통과·거부·미도달) — 분모가 함께 있다(#43). `final`은 결과 요약이라 별도다. */
-    verdicts_by_site: bySite,
-    final_removed_count: finalRemoved,
+    /**
+     * 자리별 (통과·거부·미도달) — 분모가 함께 있고(#43), **게이트 켬 팔과 되살림 팔을
+     * 안 합친다**(2차 [R9]). `final`은 결과 요약이라 별도다.
+     * ⚠ **행이 없는 자리는 이 실행에서 한 번도 안 지났다**는 뜻이다(2차 [R8]) —
+     * 0행을 채우지 않는 이유는 채우면 «지났는데 전부 통과»와 안 갈리기 때문이다.
+     */
+    verdicts_by_site: gateOn.table,
+    verdicts_by_site_revived: revivedT.table,
+    final_removed_count: gateOn.removed,
+    final_removed_count_revived: revivedT.removed,
     reading: {
       vp_fixed_delete: "문서에서 획이 빠지는 **유일한** 자리다 — 발화 목록은 아래 게이트가 "
         + "든다(A1·B0 작도선 + C1 되살림 팔뿐이어야 한다).",
@@ -196,26 +211,34 @@ test("확정 후 획 경로 표식 — 전수 원장 (20차 지시 1)", async ({
     ],
     arms: rows,
     state: { after_A: stateA, after_B: stateB,
-             revived: { order_before: orderBeforeRevive, ...stateC } },
+             revived: { order_before: orderBeforeRevive, ...stateC,
+                        removed: revivedT.removed } },
     gate: {
       registered: "① 문서에서 획이 빠지는 자리는 `vp_fixed_delete` 하나이고 발화는 "
         + "작도선(A1·B0)과 되살림 팔(C1)뿐이다 ② 작도선이 아닌 확정 후 획은 전부 문서에 "
         + "남고, 대기면 `drawn_alpha`>0 · 3D면 three 층 등재다 ③ C1(수리 전 거동)에서는 "
-        + "같은 사선이 소비되고 차수가 1→2로 움직인다.",
+        + "같은 사선이 소비되고 차수가 1→2로 움직인다(`state.revived`의 order_before → order).",
       reachability: "되살림 팔 C1이 도달 가능성이다 — 수리 전 거동에서 같은 좌표의 사선이 "
-        + "실제로 사라지고(`in_doc` false) 차수가 움직인다(`state.revived`).",
-      reachability_source: "state/revived",
-      // ⚠ 출처 필드와 **같은 모양**으로 적는다(selfcheck의 값-출처 대조가 그대로 맞대본다)
-      reachability_value: { order_before: orderBeforeRevive, ...stateC },
+        + "실제로 사라지고(`state.revived.removed` = 소비 수) 차수가 움직인다"
+        + "(`state.revived.order_before` → `order`).",
+      // **스칼라로 적는다**(18차 이관 규칙 — HANDOFF · 2차 [R3]): 배열·객체로 적으면
+      // 자명값이 섞여 selfcheck가 못 가른다. 값은 **되살림 후 차수**(2)다 — 소비 수(1)는
+      // 0/1이라 정보량 검사(#40)에 걸리고, 차수 이동(1→2)이 «조용한 카메라 변경»의
+      // 크기를 든다(전 값은 `state.revived.order_before`).
+      reachability_source: "state/revived/order",
+      reachability_value: stateC.order,
     },
     selfcheck_notes: {
       zero_verdicts: "`verdicts_by_site`의 0은 **그 장면에서 그 갈래가 안 났다**다 — "
         + "horizon_draft는 통과만 있는 자리(지평선이 되면 획이 아니다)라 reject·skip이 "
         + "정의상 0이고, chain_cross의 pass·skip 0은 이 장면의 대기 획이 교차 전에 "
         + "굽음·축 미분류로 걸렸기 때문이다(reject 행이 그 사유를 든다). "
-        + "분모(합)는 같은 표의 세 칸 합이다.",
+        + "분모(합)는 같은 표의 세 칸 합이다. **행이 없는 자리는 이 실행에서 한 번도 안 "
+        + "지났다**(bend_gate·chain_dir_guard·gesture_gate·render:* — 이 장면의 획이 그 "
+        + "조건에 안 닿았다는 뜻이지 그 자리가 없다는 뜻이 아니다).",
     },
-    pitfall_citations: [12, 21, 25, 38, 43, 52, 53],
+    /** ⚠ 이 배열은 **이 원장 본문이 실제로 인용한 번호**와 일치시킨다(2차 [R2]). */
+    pitfall_citations: [12, 21, 38, 52],
     errors,
     constants: constantsSnapshot(),
     metric_defs: metricsSnapshot(),
