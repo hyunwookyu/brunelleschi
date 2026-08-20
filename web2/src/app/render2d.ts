@@ -4,9 +4,10 @@
 
 import type { App } from './state'
 import { isDrawPose } from './state'
-import { screenAxes, DRAW_POSE, type Role } from '../core/camera'
+import { screenAxes, type Role } from '../core/camera'
 import { C } from '../core/constants'
-import type { Pt } from '../core/vec'
+import type { OsnapHit } from '../core/osnap'
+import type { Pt, V3 } from '../core/vec'
 
 export interface Draft {
   start: Pt
@@ -14,7 +15,9 @@ export interface Draft {
   raw: Pt[]
   /** 미리보기 라벨 — 'horizon' | 'vp' | 축id | null(자유) */
   label: string | null
-  startHit: boolean
+  startSnap: OsnapHit | null
+  startP3: V3 | null
+  endSnap: OsnapHit | null
 }
 
 export function resize2d(canvas: HTMLCanvasElement, W: number, H: number, dpr: number) {
@@ -36,7 +39,7 @@ const COL = {
   snap: '#1a9c50',
 }
 
-export function draw2d(ctx: CanvasRenderingContext2D, app: App, draft: Draft | null, hover: Pt | null) {
+export function draw2d(ctx: CanvasRenderingContext2D, app: App, draft: Draft | null, hover: OsnapHit | null) {
   const an = app.lift.an
   const { W, H } = app.doc.frame
   ctx.clearRect(0, 0, W, H)
@@ -90,14 +93,37 @@ export function draw2d(ctx: CanvasRenderingContext2D, app: App, draft: Draft | n
     ctx.strokeStyle = COL.preview
     ctx.lineWidth = C.LINE_W_RESULT
     ctx.beginPath(); ctx.moveTo(draft.start.x, draft.start.y); ctx.lineTo(draft.end.x, draft.end.y); ctx.stroke()
-    if (draft.startHit) mark(ctx, draft.start, COL.snap)
+    if (draft.startSnap) mark(ctx, draft.startSnap)
+    if (draft.endSnap) mark(ctx, draft.endSnap)
   } else if (hover) {
-    mark(ctx, hover, COL.snap)
+    mark(ctx, hover)
   }
 }
 
-function mark(ctx: CanvasRenderingContext2D, p: Pt, col: string) {
-  ctx.strokeStyle = col
+/** 오스냅 표식 — Rhino 관행의 형태 구분: 끝 □ · 정점 ◆ · 중 △ · 교차 ✕ · 수선 ⊥ · 연장 ▫ · 근처 ○ */
+function mark(ctx: CanvasRenderingContext2D, h: OsnapHit) {
+  const { x, y } = h.p
+  ctx.strokeStyle = COL.snap
   ctx.lineWidth = 1.5
-  ctx.strokeRect(p.x - 4, p.y - 4, 8, 8)
+  ctx.setLineDash([])
+  ctx.beginPath()
+  switch (h.kind) {
+    case 'end':
+      ctx.strokeRect(x - 4, y - 4, 8, 8); return
+    case 'vertex':
+      ctx.moveTo(x, y - 5); ctx.lineTo(x + 5, y); ctx.lineTo(x, y + 5); ctx.lineTo(x - 5, y); ctx.closePath(); break
+    case 'mid':
+      ctx.moveTo(x, y - 5); ctx.lineTo(x + 5, y + 4); ctx.lineTo(x - 5, y + 4); ctx.closePath(); break
+    case 'int':
+      ctx.moveTo(x - 4, y - 4); ctx.lineTo(x + 4, y + 4)
+      ctx.moveTo(x - 4, y + 4); ctx.lineTo(x + 4, y - 4); break
+    case 'perp':
+      ctx.moveTo(x - 4, y - 4); ctx.lineTo(x - 4, y + 4); ctx.lineTo(x + 4, y + 4)
+      ctx.moveTo(x - 4, y); ctx.lineTo(x + 1, y); break
+    case 'ext':
+      ctx.setLineDash([2, 2]); ctx.strokeRect(x - 4, y - 4, 8, 8); ctx.setLineDash([]); return
+    case 'near':
+      ctx.arc(x, y, 4, 0, Math.PI * 2); break
+  }
+  ctx.stroke()
 }

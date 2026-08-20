@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { snapDir, snapStart } from '../src/core/snap'
+import { snapDir } from '../src/core/snap'
 import { analyze, DRAW_POSE } from '../src/core/camera'
-import { liftAll } from '../src/core/lift'
 import { constructedDoc } from './fixtures'
 import { pt } from '../src/core/vec'
 
@@ -39,21 +38,4 @@ describe('축 스냅 — 커서 방향과 축 방향의 각차 (0.06 · 0.05)', 
   })
 })
 
-describe('시작점 스냅 — 승격 끝점, 반경 8px', () => {
-  const b = constructedDoc()
-  b.add(500, 500, 500, 300) // 앵커 — 끝점 (500,500)·(500,300)
-  const lift = liftAll(b.doc)
-
-  it('반경 안이면 정확한 끝점 좌표로 붙는다', () => {
-    const s = snapStart(lift, DRAW_POSE, pt(505, 305))
-    expect(s.hit).toBe(true)
-    expect(s.p.x).toBeCloseTo(500, 6)
-    expect(s.p.y).toBeCloseTo(300, 6)
-  })
-
-  it('반례: 반경 밖이면 그대로', () => {
-    const s = snapStart(lift, DRAW_POSE, pt(507, 306.5)) // 거리 ≈ 9.5 > 8
-    expect(s.hit).toBe(false)
-    expect(s.p).toEqual(pt(507, 306.5))
-  })
-})
+// 시작점 스냅은 오스냅(osnap.test.ts)이 덮는다

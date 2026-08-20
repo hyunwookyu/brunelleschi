@@ -3,8 +3,9 @@
 // 데스크톱 선례(SketchUp): 중버튼 궤도, 우버튼 팬, 휠 줌.
 
 import type { App } from './state'
-import { setPose, orbitPivot, isDrawPose } from './state'
-import { snapStart, snapDir } from '../core/snap'
+import { setPose, orbitPivot } from './state'
+import { snapDir } from '../core/snap'
+import { osnap, type OsnapHit } from '../core/osnap'
 import { classifyNext } from '../core/camera'
 import type { Draft } from './render2d'
 import {
@@ -14,7 +15,7 @@ import {
 
 export interface InputCallbacks {
   onDraftChange: (d: Draft | null) => void
-  onHover: (p: Pt | null) => void
+  onHover: (h: OsnapHit | null) => void
   onCommit: (a: Pt, b: Pt, raw: Pt[]) => void
 }
 
@@ -33,31 +34,48 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
   }
 
   // ── 획 미리보기 — 확정과 같은 함수로(스냅이 그대로 확정된다, 원칙 d) ──
+  // 끝점 결정: 오스냅(점)이 축 스냅(방향)을 이긴다 — Rhino 선례.
   function updateDraft(cur: Pt) {
     if (!draft) return
     const an = app.lift.an
     draft.raw.push(cur)
+    draft.endSnap = null
     if (an.horizonY === null) {
       // 지평선 — 수평 강제
       draft.end = pt(cur.x, draft.start.y)
       draft.label = 'horizon'
     } else {
-      const ds = snapDir(an, app.pose, draft.start, cur)
-      if (ds.axis) {
-        draft.end = ds.end
-        draft.label = ds.axis
+      const oh = osnap(app.lift, app.pose, cur, app.osnap, { p3: draft.startP3 })
+      if (oh) {
+        draft.end = oh.p
+        draft.endSnap = oh
+        draft.label = null
       } else {
-        draft.end = cur
-        const cls = classifyNext(an, draft.start, cur)
-        draft.label = cls.role === 'vp' ? 'vp' : null
+        const ds = snapDir(an, app.pose, draft.start, cur)
+        if (ds.axis) {
+          draft.end = ds.end
+          draft.label = ds.axis
+        } else {
+          draft.end = cur
+          const cls = classifyNext(an, draft.start, cur)
+          draft.label = cls.role === 'vp' ? 'vp' : null
+        }
       }
     }
     cb.onDraftChange(draft)
   }
 
   function beginDraft(p: Pt) {
-    const ss = snapStart(app.lift, app.pose, p)
-    draft = { start: ss.p, end: ss.p, raw: [ss.p], label: null, startHit: ss.hit }
+    const oh = osnap(app.lift, app.pose, p, app.osnap)
+    draft = {
+      start: oh ? oh.p : p,
+      end: oh ? oh.p : p,
+      raw: [p],
+      label: null,
+      startSnap: oh,
+      startP3: oh?.p3 ?? null,
+      endSnap: null,
+    }
     cb.onDraftChange(draft)
   }
 
@@ -161,8 +179,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
     }
     if (e.buttons === 0) {
       // 호버 — 와콤 EMR 펜·마우스. 스냅 후보 표식.
-      const ss = snapStart(app.lift, app.pose, toPt(e))
-      cb.onHover(ss.hit ? ss.p : null)
+      cb.onHover(osnap(app.lift, app.pose, toPt(e), app.osnap))
     }
   })
 

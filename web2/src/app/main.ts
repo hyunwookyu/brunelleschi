@@ -5,6 +5,7 @@ import { initInput } from './input'
 import { resize2d, draw2d, type Draft } from './render2d'
 import { initR3D, syncStrokes, render3d } from './render3d'
 import { initNotice, notify, status } from './notice'
+import { OSNAP_ORDER, type OsnapHit } from '../core/osnap'
 import type { Pt } from '../core/vec'
 
 const W = window.innerWidth
@@ -20,7 +21,7 @@ const ctx = resize2d(ink, W, H, dpr)
 const r3d = initR3D(gl, W, H, dpr)
 
 let draft: Draft | null = null
-let hover: Pt | null = null
+let hover: OsnapHit | null = null
 let dirty = true
 const invalidate = () => { dirty = true }
 
@@ -58,6 +59,25 @@ initInput(ink, app, {
     }
   },
 })
+
+// 오스냅 설정 패널(임시 UI — 7단계에서 세로바로) — 종류별 토글·반경
+const osnapPanel = document.getElementById('osnap-kinds')!
+const KIND_LABEL: Record<string, string> = {
+  vertex: '정점', end: '끝점', mid: '중점', int: '교차점',
+  perp: '수선 발', ext: '연장선', near: '근처점',
+}
+for (const kind of OSNAP_ORDER) {
+  const label = document.createElement('label')
+  const box = document.createElement('input')
+  box.type = 'checkbox'
+  box.checked = app.osnap.kinds[kind]
+  box.addEventListener('change', () => { app.osnap.kinds[kind] = box.checked })
+  label.append(box, ` ${KIND_LABEL[kind]}`)
+  osnapPanel.append(label)
+}
+const radius = document.getElementById('osnap-radius') as HTMLInputElement
+radius.value = String(app.osnap.radius)
+radius.addEventListener('input', () => { app.osnap.radius = Number(radius.value) })
 
 document.getElementById('btn-undo')!.addEventListener('click', () => undo(app))
 document.getElementById('btn-redo')!.addEventListener('click', () => redo(app))

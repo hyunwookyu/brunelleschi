@@ -3,7 +3,8 @@
 import { emptyDoc, type Doc, type Stroke, type CamPose } from '../core/types'
 import { liftAll, type LiftResult } from '../core/lift'
 import { DRAW_POSE } from '../core/camera'
-import { type Pt, type V3, v3, QID } from '../core/vec'
+import { defaultOsnap, type OsnapSettings } from '../core/osnap'
+import { type Pt, type V3, v3 } from '../core/vec'
 
 export interface App {
   doc: Doc
@@ -14,6 +15,8 @@ export interface App {
   lift: LiftResult
   /** 문서 변경 카운터 — 렌더가 기하 재구축 시점을 안다 (포즈 변경과 구분) */
   docVersion: number
+  /** 오스냅 설정 — 종류별 켜고 끄기, 반경 (Rhino 관행) */
+  osnap: OsnapSettings
   listeners: (() => void)[]
 }
 
@@ -26,6 +29,7 @@ export function createApp(W: number, H: number): App {
     nextId: 1,
     lift: liftAll(doc),
     docVersion: 0,
+    osnap: defaultOsnap(),
     listeners: [],
   }
 }

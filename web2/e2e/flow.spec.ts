@@ -158,4 +158,19 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   s = await summary(page)
   expect(Math.abs(s.pose.q.y)).toBeLessThan(1e-12)
   expect(await inkPixels(page, 0, 397, 1200, 404)).toBeGreaterThan(100)
+
+  // ── 2단계: 오스냅 ────────────────────────────────────────────────────
+  // 호버 — 수직획 중간 근처에서 근처점 표식이 뜬다
+  await page.mouse.move(200, 100) // 먼저 빈 곳
+  await settle(page)
+  expect(await inkPixels(page, 492, 442, 512, 462)).toBe(0)
+  await page.mouse.move(502, 450)
+  await settle(page)
+  expect(await inkPixels(page, 492, 442, 512, 462)).toBeGreaterThan(5) // 표식 픽셀
+
+  // 선분 위 시작 — 수직획 사영 위 (500,450)에서 수평으로 → 3D로 올라간다
+  const liftedBefore = (await summary(page)).lifted
+  await drawLine(page, 502, 450, 650, 452) // 오스냅이 (500,450)으로, 축 스냅이 수평으로
+  s = await summary(page)
+  expect(s.lifted).toBe(liftedBefore + 1)
 })

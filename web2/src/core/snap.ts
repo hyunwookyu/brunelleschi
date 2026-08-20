@@ -5,31 +5,9 @@
 import type { CamPose } from './types'
 import { C } from './constants'
 import {
-  type Analysis, type AxisId, screenAxes, project, classifyNext,
+  type Analysis, type AxisId, screenAxes, classifyNext,
 } from './camera'
-import type { LiftResult } from './lift'
-import { type Pt, pt, dist2 } from './vec'
-
-export interface StartSnap {
-  p: Pt
-  /** 붙은 대상이 있으면 표시용 */
-  hit: boolean
-}
-
-/** 시작점 스냅 — 현재 포즈에서 보이는 승격 끝점에 붙인다 */
-export function snapStart(lift: LiftResult, pose: CamPose, p: Pt): StartSnap {
-  let best: Pt | null = null
-  let bestD: number = C.OSNAP_RADIUS_PX
-  for (const seg of lift.lifted.values()) {
-    for (const p3 of [seg.a3, seg.b3]) {
-      const pr = project(lift.an, pose, p3)
-      if (!pr) continue
-      const d = dist2(pr, p)
-      if (d <= bestD) { best = pr; bestD = d }
-    }
-  }
-  return best ? { p: best, hit: true } : { p, hit: false }
-}
+import { type Pt, pt } from './vec'
 
 export interface DirSnap {
   axis: AxisId | null

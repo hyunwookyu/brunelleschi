@@ -26,6 +26,8 @@ export interface LiftResult {
   waiting: number[]
   /** 게이지 앵커가 된 획 (전역 스케일의 게이지 — 유일한 자유 선택) */
   anchorId: number | null
+  /** id → 획 (문서에서 그대로 — 조회 편의) */
+  strokes: Map<number, Stroke>
 }
 
 /** 직선 P0+t·a 와 광선의 최근접점(직선 위의 점). 평행이면 null. */
@@ -75,23 +77,41 @@ export function liftAll(doc: Doc): LiftResult {
   const lifted = new Map<number, LiftedSeg>()
   let anchorId: number | null = null
 
+  const strokes = new Map(doc.strokes.map(s => [s.id, s]))
   const content = doc.strokes.filter(s => an.roles.get(s.id) === 'content')
   if (!an.principal || an.f === null) {
-    return { an, lifted, waiting: content.map(s => s.id), anchorId }
+    return { an, lifted, waiting: content.map(s => s.id), anchorId, strokes }
   }
 
   const mergeTol = C.MERGE_RATIO * an.diag
   const pending = new Set(content.map(s => s.id))
-  const byId = new Map(content.map(s => [s.id, s]))
 
-  // 승격된 끝점 목록 — 시작점 매칭 대상
+  // 승격된 끝점·선분 목록 — 시작점 매칭 대상
   const endpoints: V3[] = []
-  const pushEnd = (p: V3) => { endpoints.push(p) }
+  const segs: { a3: V3; b3: V3 }[] = []
 
+  // 시작점·끝점의 3D 결정 — 끝점이 붙었거나, 확정된 선(선분 위) 위에 있으면 그 좌표.
+  // "3D가 확정된 선과 교차하거나 끝점이 붙으면 그때 좌표가 정해진다"
   const matchPoint = (s2: Pt, pose: CamPose): V3 | null => {
     let best: V3 | null = null
     let bestD = mergeTol
     for (const p3 of endpoints) {
+      const pr = project(an, pose, p3)
+      if (!pr) continue
+      const d = dist2(pr, s2)
+      if (d <= bestD) { best = p3; bestD = d }
+    }
+    if (best) return best
+    // 선분 위 — 광선과 선분 직선의 최근접점이 선분 안이고 사영이 일치할 때
+    const ray = rayThrough(an, pose, s2)
+    if (!ray) return null
+    for (const seg of segs) {
+      const dir = sub3(seg.b3, seg.a3)
+      const p3 = closestOnLineToRay(seg.a3, norm3(dir), ray)
+      if (!p3) continue
+      const L = Math.hypot(dir.x, dir.y, dir.z)
+      const t = L > 1e-12 ? dot3(sub3(p3, seg.a3), dir) / (L * L) : -1
+      if (t < 0 || t > 1) continue
       const pr = project(an, pose, p3)
       if (!pr) continue
       const d = dist2(pr, s2)
@@ -129,11 +149,12 @@ export function liftAll(doc: Doc): LiftResult {
       if (!b3) { if (anchorId === s.id) anchorId = null; continue }
 
       lifted.set(s.id, { a3, b3, axis })
-      pushEnd(a3); pushEnd(b3)
+      endpoints.push(a3, b3)
+      segs.push({ a3, b3 })
       pending.delete(s.id)
       progressed = true
     }
   }
 
-  return { an, lifted, waiting: [...pending], anchorId }
+  return { an, lifted, waiting: [...pending], anchorId, strokes }
 }
