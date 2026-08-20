@@ -163,10 +163,10 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   // 호버 — 수직획 중간 근처에서 근처점 표식이 뜬다
   await page.mouse.move(200, 100) // 먼저 빈 곳
   await settle(page)
-  expect(await inkPixels(page, 492, 442, 512, 462)).toBe(0)
+  const baseInk = await inkPixels(page, 492, 442, 512, 462) // 흑연 입자 질감이 있을 수 있다
   await page.mouse.move(502, 450)
   await settle(page)
-  expect(await inkPixels(page, 492, 442, 512, 462)).toBeGreaterThan(5) // 표식 픽셀
+  expect(await inkPixels(page, 492, 442, 512, 462)).toBeGreaterThan(baseInk + 5) // 표식 픽셀 증가
 
   // 선분 위 시작 — 수직획 사영 위 (500,450)에서 수평으로 → 3D로 올라간다
   const liftedBefore = (await summary(page)).lifted
@@ -181,8 +181,8 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   const liftedT = s.lifted
   expect(await glPixels(page, 612, 444, 645, 457)).toBeGreaterThan(5) // 오른쪽 조각이 있다
 
-  // 지우개 — 오른쪽 조각만 지운다
-  await page.click('#btn-eraser')
+  // 지우개 — 오른쪽 조각만 지운다 (기본 심 HB → 연필 지우개)
+  await page.click('#btn-eraser-pencil')
   await page.mouse.move(630, 450)
   await page.mouse.down()
   await page.mouse.up()
@@ -239,6 +239,28 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(await glPixels(page, 0, 0, 1200, 800)).toBeGreaterThan(20) // 형태가 보인다
 
   await page.click('#btn-draw-view')
+
+  // ── 6단계: 재료 — 잉크 위 연필 지우개는 잉크를 안 건드린다 (선따기) ──
+  const setGrade = (v: string) => page.evaluate((val) => {
+    const el = document.getElementById('grade-slider') as HTMLInputElement
+    el.value = val
+    el.dispatchEvent(new Event('input'))
+  }, v)
+  await setGrade('6') // 잉크
+  expect(await page.evaluate(() => (window as any).__b2.app.grade)).toBe('INK')
+  await drawLine(page, 500, 500, 500, 300)      // 기존 흑연 수직획 위에 잉크로 덧긋기
+  s = await summary(page)
+  expect(s.lifted).toBeGreaterThan(0)
+  await page.click('#btn-eraser-pencil')
+  await page.mouse.move(500, 380)
+  await page.mouse.down()
+  await page.mouse.up()
+  await settle(page)
+  // 흑연 조각은 지워졌지만 잉크 선은 그 자리에 남아 있다
+  expect(await glPixels(page, 495, 360, 505, 400)).toBeGreaterThan(5)
+  await page.click('#btn-pen')
+  await setGrade('3') // HB로 복귀
+  await settle(page)
 
   // ── 5단계: 자동 저장 — 새로고침해도 그림과 카메라(재계산)가 남는다 ──
   const beforeReload = await summary(page)

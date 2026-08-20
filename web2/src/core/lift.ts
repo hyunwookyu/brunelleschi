@@ -129,6 +129,16 @@ export function liftAll(doc: Doc): LiftResult {
       const axis = axisOfStroke(an, pose, s.a, s.b)
 
       let a3 = matchPoint(s.a, pose)
+      let b3: V3 | null = null
+      if (!a3 && axis) {
+        // 연결은 방향이 없다 — 끝점 쪽이 먼저 확정돼 있으면 그쪽에서 시작점을 푼다
+        b3 = matchPoint(s.b, pose)
+        if (b3) {
+          const dir = axisDir(an, axis)
+          const ray = rayThrough(an, pose, s.a)
+          if (dir && ray) a3 = closestOnLineToRay(b3, dir, ray)
+        }
+      }
       if (!a3 && lifted.size === 0 && anchorId === null && (axis === 'H' || axis === 'V')) {
         // 첫 앵커 — 화면 평행 획이 게이지 평면(z=−f)에서 연쇄를 시작한다.
         // 전역 스케일은 원리적으로 모호하므로 이것은 단위 선택이지 임의 좌표가 아니다.
@@ -137,14 +147,15 @@ export function liftAll(doc: Doc): LiftResult {
       }
       if (!a3) continue
 
-      let b3: V3 | null = null
-      if (axis) {
-        const dir = axisDir(an, axis)
-        const ray = rayThrough(an, pose, s.b)
-        if (dir && ray) b3 = closestOnLineToRay(a3, dir, ray)
-      } else {
-        // 자유 방향 — 끝점도 기존 3D에 붙어야 확정된다. 아니면 대기.
-        b3 = matchPoint(s.b, pose)
+      if (!b3) {
+        if (axis) {
+          const dir = axisDir(an, axis)
+          const ray = rayThrough(an, pose, s.b)
+          if (dir && ray) b3 = closestOnLineToRay(a3, dir, ray)
+        } else {
+          // 자유 방향 — 끝점도 기존 3D에 붙어야 확정된다. 아니면 대기.
+          b3 = matchPoint(s.b, pose)
+        }
       }
       if (!b3) { if (anchorId === s.id) anchorId = null; continue }
 

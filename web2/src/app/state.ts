@@ -3,7 +3,8 @@
 // 실행취소는 op 단위다: 획 추가 op, 지우개 한 번의 드래그 op.
 // 그림만 되돌린다 — 작도(카메라)는 op에 들어가지 않는다.
 
-import { emptyDoc, type Doc, type Stroke, type CamPose, type ViewOffset } from '../core/types'
+import { emptyDoc, type Doc, type Stroke, type CamPose, type ViewOffset, type Grade } from '../core/types'
+import { isInk } from '../core/material'
 export type { ViewOffset }
 import { liftAll, type LiftResult } from '../core/lift'
 import { DRAW_POSE } from '../core/camera'
@@ -29,7 +30,10 @@ export interface App {
   docVersion: number
   /** 오스냅 설정 — 종류별 켜고 끄기, 반경 (Rhino 관행) */
   osnap: OsnapSettings
-  tool: 'pen' | 'eraser'
+  /** 지우개는 둘 — 연필 지우개는 흑연만, 펜 지우개는 잉크만 (선따기) */
+  tool: 'pen' | 'eraser-pencil' | 'eraser-ink'
+  /** 현재 심 — 경도 슬라이더 */
+  grade: Grade
   eraserRadius: number
   /** 지우개 드래그 한 번의 누적 op (드래그가 끝나면 undoStack으로) */
   activeErase: Op | null
@@ -53,6 +57,7 @@ export function createApp(W: number, H: number): App {
     docVersion: 0,
     osnap: defaultOsnap(),
     tool: 'pen',
+    grade: 'HB',
     eraserRadius: C.ERASER_PX,
     activeErase: null,
     view: { s: 1, ox: 0, oy: 0 },
@@ -78,10 +83,12 @@ function recompute(app: App) {
   for (const l of app.listeners) l()
 }
 
-export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[]) {
+export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number) {
   const s: Stroke = { id: app.nextId++, a, b }
   if (raw && raw.length > 2) s.raw = raw
   if (!isDrawPose(app.pose)) s.view = { p: { ...app.pose.p }, q: { ...app.pose.q } }
+  s.mat = { grade: app.grade }
+  if (press !== undefined) s.mat.press = press
   app.doc.strokes.push(s)
   // 작도 획(지평선·깊이선)은 실행취소 대상이 아니다 — role은 추가 후 계산으로 안다
   recompute(app)
@@ -144,12 +151,18 @@ export function eraseAt(app: App, p: Pt) {
     // 작도 획은 지우개가 못 지운다 — 카메라는 별개다
     const role = app.lift.an.roles.get(id)
     if (role !== 'content') continue
+    // 재료 필터 — 연필 지우개는 흑연만, 펜 지우개는 잉크만. 겹쳐 있어도 서로 안 건드린다.
+    const target = app.lift.strokes.get(id)
+    if (!target) continue
+    if (app.tool === 'eraser-pencil' && isInk(target)) continue
+    if (app.tool === 'eraser-ink' && !isInk(target)) continue
     const kept = ps.filter(x => x.strokeId === id && !hit.includes(x))
     const rm = removeById(app.doc, id)
     if (!rm) continue
     const newStrokes: Stroke[] = kept.map(k => {
       const s: Stroke = { id: app.nextId++, a: k.a, b: k.b }
       if (!isDrawPose(app.pose)) s.view = { p: { ...app.pose.p }, q: { ...app.pose.q } }
+      if (target.mat) s.mat = { ...target.mat } // 조각도 같은 재료
       return s
     })
     app.doc.strokes.push(...newStrokes)

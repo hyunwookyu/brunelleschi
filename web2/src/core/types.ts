@@ -10,6 +10,9 @@ export interface CamPose {
 /** 화면 조작(뷰 오프셋) — 문서 좌표는 안 바뀐다 */
 export interface ViewOffset { s: number; ox: number; oy: number }
 
+/** 재료 — 보조선·결과선 같은 분류가 없다. 재료만 있다. */
+export type Grade = '2H' | 'H' | 'F' | 'HB' | 'B' | '2B' | 'INK'
+
 /** 획 — 확정된 끝점 둘(스냅 반영, 원칙 d: 미리보기가 그대로 확정).
  *  raw는 손 획 원본(표현 계층에서 나중에 쓴다). */
 export interface Stroke {
@@ -19,6 +22,8 @@ export interface Stroke {
   raw?: Pt[]
   /** 작도 포즈가 아닌 시점에 그렸으면 그 포즈 */
   view?: CamPose
+  /** 재료 — 없으면 HB */
+  mat?: { grade: Grade; press?: number }
 }
 
 /** 문서 — 획 목록과 그린 캔버스 크기(CSS px, 첫 획 시점).

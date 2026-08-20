@@ -20,7 +20,8 @@ import {
 export interface InputCallbacks {
   onDraftChange: (d: Draft | null) => void
   onHover: (h: OsnapHit | null) => void
-  onCommit: (a: Pt, b: Pt, raw: Pt[]) => void
+  /** press — 펜 필압 평균 (마우스는 undefined) */
+  onCommit: (a: Pt, b: Pt, raw: Pt[], press?: number) => void
   /** 지우개 커서 위치 (지우개 도구일 때) */
   onEraserMove: (p: Pt | null) => void
 }
@@ -29,6 +30,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
   let draft: Draft | null = null
   let penDown = false
   let drawingPointer: number | null = null
+  let pressSamples: number[] = []
   const touches = new Map<number, Pt>()
   let lastTouchMid: Pt | null = null
   let lastTouchDist = 0
@@ -95,8 +97,12 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
     const d = draft
     draft = null
     cb.onDraftChange(null)
+    const press = pressSamples.length > 0
+      ? pressSamples.reduce((a, b) => a + b, 0) / pressSamples.length
+      : undefined
+    pressSamples = []
     if (Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) < 2) return // 탭 잡음
-    cb.onCommit(d.start, d.end, d.raw)
+    cb.onCommit(d.start, d.end, d.raw, press)
   }
 
   // ── 카메라 조작 ──────────────────────────────────────────────────────
@@ -183,12 +189,13 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
     if (tryCube(toScreen(e))) return
     drawingPointer = e.pointerId
     canvas.setPointerCapture(e.pointerId)
-    if (app.tool === 'eraser') {
+    if (app.tool !== 'pen') {
       beginErase(app)
       eraseAt(app, toPt(e))
       cb.onEraserMove(toPt(e))
       return
     }
+    pressSamples = e.pointerType === 'pen' && e.pressure > 0 ? [e.pressure] : []
     beginDraft(toPt(e))
   })
 
@@ -222,16 +229,19 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
       return
     }
     if (drawingPointer === e.pointerId) {
-      if (app.tool === 'eraser') {
+      if (app.tool !== 'pen') {
         eraseAt(app, toPt(e))
         cb.onEraserMove(toPt(e))
         return
       }
-      if (draft) updateDraft(toPt(e))
+      if (draft) {
+        if (e.pointerType === 'pen' && e.pressure > 0) pressSamples.push(e.pressure)
+        updateDraft(toPt(e))
+      }
       return
     }
     if (e.buttons === 0) {
-      if (app.tool === 'eraser') {
+      if (app.tool !== 'pen') {
         cb.onEraserMove(toPt(e))
         cb.onHover(null)
         return
@@ -253,7 +263,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
     if (orbitBtn && e.pointerType === 'mouse' && e.button !== 0) { orbitBtn = null; return }
     if (drawingPointer === e.pointerId) {
       drawingPointer = null
-      if (app.tool === 'eraser') { endErase(app); return }
+      if (app.tool !== 'pen') { endErase(app); return }
       endDraft()
     }
   }

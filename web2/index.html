@@ -47,7 +47,14 @@
       <button id="btn-undo" title="실행취소 (Ctrl+Z)">↶</button>
       <button id="btn-redo" title="다시실행 (Ctrl+Y)">↷</button>
       <button id="btn-pen" title="펜">펜</button>
-      <button id="btn-eraser" title="지우개 — 닿은 조각이 지워진다">지우개</button>
+      <!-- 현재 심 — 홀더펜 인디케이터. 경도 슬라이더: 2H·H·F·HB·B·2B·잉크 -->
+      <label style="background:#fffdf8;border:1px solid #ccc;border-radius:3px;padding:4px 8px;display:flex;align-items:center;gap:6px">
+        <span id="lead" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#5a5a5a"></span>
+        <span id="grade-label" style="min-width:20px">HB</span>
+        <input id="grade-slider" type="range" min="0" max="6" step="1" value="3" style="width:70px">
+      </label>
+      <button id="btn-eraser-pencil" title="연필 지우개 — 흑연만 지운다">연필 지우개</button>
+      <button id="btn-eraser-ink" title="펜 지우개 — 잉크만 지운다">펜 지우개</button>
       <label style="background:#fffdf8;border:1px solid #ccc;border-radius:3px;padding:4px 8px">
         크기 <input id="eraser-size" type="range" min="4" max="60" step="1" style="width:60px;vertical-align:middle">
       </label>

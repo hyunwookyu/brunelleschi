@@ -45,6 +45,23 @@ describe('리프팅 — 확정 후 경로에 판정이 없다(원칙 c)', () => 
     expect(b.doc.strokes.some(x => x.id === s.id)).toBe(true)
   })
 
+  it('연결은 방향이 없다 — 끝점 쪽이 확정돼 있으면 시작점을 그쪽에서 푼다', () => {
+    const b = constructedDoc()
+    const E = b.add(500, 450, 700, 450)  // 앵커 (H)
+    const X = b.add(500, 500, 500, 450)  // 시작은 허공, 끝이 E의 시작점에 닿는다
+    const r = liftAll(b.doc)
+    expect(r.anchorId).toBe(E.id)
+    expect(r.lifted.has(X.id)).toBe(true)
+    const seg = r.lifted.get(X.id)!
+    // 끝이 E의 시작 3D와 같고, 시작은 그 축 직선 위 광선 교점
+    const e3 = r.lifted.get(E.id)!.a3
+    expect(seg.b3.x).toBeCloseTo(e3.x, 6)
+    expect(seg.b3.y).toBeCloseTo(e3.y, 6)
+    expect(seg.b3.z).toBeCloseTo(e3.z, 6)
+    const pa = project(r.an, DRAW_POSE, seg.a3)!
+    expect(approxPt(pa, X.a, 1e-6)).toBe(true)
+  })
+
   it('승격은 연쇄한다 — 먼저 그린 대기 획이 나중 앵커로 올라간다', () => {
     const b = constructedDoc()
     const sA = b.add(500, 500, 700, 450) // vp0 방향((900,400)에서 (500,500) 지나는 직선 위), 시작 미확정 → 대기

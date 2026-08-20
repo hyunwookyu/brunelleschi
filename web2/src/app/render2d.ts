@@ -6,9 +6,10 @@
 
 import type { App } from './state'
 import { isDrawPose } from './state'
-import { screenAxes, type Role } from '../core/camera'
+import { screenAxes, project, type Role } from '../core/camera'
 import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
+import { MAT, gradeOf, rng32 } from '../core/material'
 import type { OsnapHit } from '../core/osnap'
 import type { Pt, V3 } from '../core/vec'
 
@@ -81,16 +82,33 @@ export function draw2d(
     }
   }
 
-  // 대기 획 — 사라지지 않는다(불변식 j). 자기 포즈가 아니면 흐리게.
+  // 대기 획 — 사라지지 않는다(불변식 j). 자기 포즈가 아니면 흐리게. 색은 재료.
   for (const id of app.lift.waiting) {
     const s = app.lift.strokes.get(id)
     if (!s) continue
     const own = s.view ? !atDraw : atDraw
-    ctx.strokeStyle = own ? COL.waiting : COL.waitingDim
-    ctx.lineWidth = C.LINE_W_RESULT * is
+    const m = MAT[gradeOf(s)]
+    ctx.strokeStyle = m.color
+    ctx.globalAlpha = own ? m.alpha : m.alpha * 0.3
+    ctx.lineWidth = m.width * is
     ctx.setLineDash([5 * is, 4 * is])
     ctx.beginPath(); ctx.moveTo(s.a.x, s.a.y); ctx.lineTo(s.b.x, s.b.y); ctx.stroke()
     ctx.setLineDash([])
+    ctx.globalAlpha = 1
+    if (m.grain > 0 && own) grain(ctx, s.id, s.a, s.b, m.grain, m.alpha, s.mat?.press, is)
+  }
+
+  // 질감 — 흑연 입자. 자로 그은(승격된) 선에도 재료가 보인다.
+  // 획별 시드 고정(rng32) — 프레임마다 같은 입자, Math.random 없음.
+  for (const [id, seg] of app.lift.lifted) {
+    const s = app.lift.strokes.get(id)
+    if (!s) continue
+    const m = MAT[gradeOf(s)]
+    if (m.grain <= 0) continue // 잉크는 균일하고 선명하다
+    const a = project(an, app.pose, seg.a3)
+    const b = project(an, app.pose, seg.b3)
+    if (!a || !b) continue
+    grain(ctx, s.id, a, b, m.grain, m.alpha, s.mat?.press, is)
   }
 
   // 소실점 표식 — 현재 포즈 기준(불변식 i: 표시=스냅=그리드가 같은 출처)
@@ -105,10 +123,12 @@ export function draw2d(
     ctx.stroke()
   }
 
-  // 미리보기 — 붙은 좌표가 그대로 확정된다(원칙 d)
+  // 미리보기 — 붙은 좌표가 그대로 확정된다(원칙 d). 작도 중엔 안내색, 이후엔 재료색.
   if (draft) {
-    ctx.strokeStyle = COL.preview
-    ctx.lineWidth = C.LINE_W_RESULT * is
+    const m = MAT[app.grade]
+    const constructing = draft.label === 'horizon' || draft.label === 'vp' || !an.constructionDone
+    ctx.strokeStyle = constructing ? COL.preview : m.color
+    ctx.lineWidth = (constructing ? C.LINE_W_RESULT : m.width) * is
     ctx.beginPath(); ctx.moveTo(draft.start.x, draft.start.y); ctx.lineTo(draft.end.x, draft.end.y); ctx.stroke()
     if (draft.startSnap) mark(ctx, draft.startSnap, is)
     if (draft.endSnap) mark(ctx, draft.endSnap, is)
@@ -117,7 +137,7 @@ export function draw2d(
   }
 
   // 지우개 커서 — 반경은 화면 px
-  if (eraser && app.tool === 'eraser') {
+  if (eraser && app.tool !== 'pen') {
     ctx.strokeStyle = '#b04a3a'
     ctx.lineWidth = 1 * is
     ctx.beginPath()
@@ -144,6 +164,29 @@ export function draw2d(
       ctx.stroke()
     }
   }
+}
+
+/** 흑연 입자 — 종이 결에 걸리는 알갱이. 필압이 밀도·진하기에 얹힌다. */
+function grain(
+  ctx: CanvasRenderingContext2D, seed: number, a: Pt, b: Pt,
+  amount: number, alpha: number, press: number | undefined, is: number,
+) {
+  const dx = b.x - a.x, dy = b.y - a.y
+  const L = Math.hypot(dx, dy)
+  if (L < 2) return
+  const px = -dy / L, py = dx / L
+  const p = press ?? 0.5
+  const rnd = rng32(seed * 2654435761)
+  const n = Math.min(400, Math.round(L * amount * (0.5 + p)))
+  ctx.fillStyle = '#404040'
+  ctx.globalAlpha = alpha * 0.28 * (0.5 + p)
+  for (let i = 0; i < n; i++) {
+    const t = rnd()
+    const off = (rnd() + rnd() - 1) * 1.6 * is // 결 폭
+    const r = (0.4 + rnd() * 0.7) * is
+    ctx.fillRect(a.x + dx * t + px * off, a.y + dy * t + py * off, r, r)
+  }
+  ctx.globalAlpha = 1
 }
 
 /** 오스냅 표식 — Rhino 관행의 형태 구분: 끝 □ · 정점 ◆ · 중 △ · 교차 ✕ · 수선 ⊥ · 연장 ▫ · 근처 ○ */

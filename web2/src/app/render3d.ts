@@ -7,14 +7,16 @@ import { Line2 } from 'three/addons/lines/Line2.js'
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js'
 import type { App } from './state'
-import { C } from '../core/constants'
+import { MAT, GRADES, gradeOf } from '../core/material'
+import type { Grade } from '../core/types'
 
 export interface R3D {
   renderer: THREE.WebGLRenderer
   scene: THREE.Scene
   camera: THREE.PerspectiveCamera
   group: THREE.Group
-  material: LineMaterial
+  /** 재료별 재질 — 화면 고정 굵기(worldUnits=false), 경도별 색·굵기·투명도 */
+  materials: Record<Grade, LineMaterial>
   /** 캔버스 CSS 크기 — NDC 매핑 기준 (문서 프레임과 다를 수 있다) */
   W: number
   H: number
@@ -32,32 +34,41 @@ export function initR3D(canvas: HTMLCanvasElement, W: number, H: number, dpr: nu
   camera.matrixAutoUpdate = false
   const group = new THREE.Group()
   scene.add(group)
-  const material = new LineMaterial({
-    color: 0x222222,
-    linewidth: C.LINE_W_RESULT, // px — 거리에 따라 안 변한다(원칙 e)
-    worldUnits: false,
-  })
-  material.resolution.set(W, H)
-  return { renderer, scene, camera, group, material, W, H }
+  const materials = {} as Record<Grade, LineMaterial>
+  for (const g of GRADES) {
+    const m = MAT[g]
+    materials[g] = new LineMaterial({
+      color: m.colorNum,
+      linewidth: m.width, // px — 거리에 따라 안 변한다(원칙 e)
+      worldUnits: false,
+      transparent: m.alpha < 1,
+      opacity: m.alpha,
+    })
+    materials[g].resolution.set(W, H)
+  }
+  return { renderer, scene, camera, group, materials, W, H }
 }
 
 export function resize3d(r: R3D, W: number, H: number, dpr: number) {
   r.W = W; r.H = H
   r.renderer.setPixelRatio(dpr)
   r.renderer.setSize(W, H)
-  r.material.resolution.set(W, H)
+  for (const g of GRADES) r.materials[g].resolution.set(W, H)
 }
 
-/** 승격 기하 갱신 — 문서가 바뀔 때마다 전부 다시 만든다(부분 유지 없음) */
+/** 승격 기하 갱신 — 문서가 바뀔 때마다 전부 다시 만든다(부분 유지 없음).
+ *  재료가 재질을 정한다 — 필압은 흑연 투명도에 얹는다. */
 export function syncStrokes(r: R3D, app: App) {
   for (const child of [...r.group.children]) {
     r.group.remove(child)
     ;(child as Line2).geometry?.dispose()
   }
-  for (const seg of app.lift.lifted.values()) {
+  for (const [id, seg] of app.lift.lifted) {
+    const stroke = app.lift.strokes.get(id)
+    const grade = stroke ? gradeOf(stroke) : 'HB'
     const g = new LineGeometry()
     g.setPositions([seg.a3.x, seg.a3.y, seg.a3.z, seg.b3.x, seg.b3.y, seg.b3.z])
-    r.group.add(new Line2(g, r.material))
+    r.group.add(new Line2(g, r.materials[grade]))
   }
 }
 

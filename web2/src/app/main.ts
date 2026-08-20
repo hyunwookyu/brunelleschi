@@ -5,9 +5,10 @@ import { initInput } from './input'
 import { resize2d, draw2d, type Draft } from './render2d'
 import { initR3D, syncStrokes, render3d, resize3d } from './render3d'
 import { serializeBrnl, parseBrnl } from '../core/file'
-import { toOBJ, toGLTF } from '../core/export'
+import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status } from './notice'
 import { OSNAP_ORDER, type OsnapHit } from '../core/osnap'
+import { GRADES, MAT } from '../core/material'
 import type { Pt } from '../core/vec'
 
 const W = window.innerWidth
@@ -93,8 +94,8 @@ initInput(ink, app, {
   onDraftChange(d) { draft = d; invalidate() },
   onHover(p) { hover = p; invalidate() },
   onEraserMove(p) { eraserPos = p; invalidate() },
-  onCommit(a, b, raw) {
-    const s = commitStroke(app, a, b, raw)
+  onCommit(a, b, raw, press) {
+    const s = commitStroke(app, a, b, raw, press)
     const an = app.lift.an
     const reject = an.rejects.get(s.id)
     if (reject) notify(reject)
@@ -106,21 +107,39 @@ initInput(ink, app, {
   },
 })
 
-// 도구 전환 — 펜 / 지우개 (임시 UI)
-const btnPen = document.getElementById('btn-pen') as HTMLButtonElement
-const btnEraser = document.getElementById('btn-eraser') as HTMLButtonElement
-function setTool(t: 'pen' | 'eraser') {
-  app.tool = t
-  btnPen.style.fontWeight = t === 'pen' ? 'bold' : 'normal'
-  btnEraser.style.fontWeight = t === 'eraser' ? 'bold' : 'normal'
-  if (t !== 'eraser') { eraserPos = null; invalidate() }
+// 도구 전환 — 펜 / 연필 지우개(흑연만) / 펜 지우개(잉크만) (임시 UI)
+const toolButtons: Record<string, HTMLButtonElement> = {
+  'pen': document.getElementById('btn-pen') as HTMLButtonElement,
+  'eraser-pencil': document.getElementById('btn-eraser-pencil') as HTMLButtonElement,
+  'eraser-ink': document.getElementById('btn-eraser-ink') as HTMLButtonElement,
 }
-btnPen.addEventListener('click', () => setTool('pen'))
-btnEraser.addEventListener('click', () => setTool('eraser'))
+function setTool(t: 'pen' | 'eraser-pencil' | 'eraser-ink') {
+  app.tool = t
+  for (const [k, b] of Object.entries(toolButtons)) b.style.fontWeight = k === t ? 'bold' : 'normal'
+  if (t === 'pen') { eraserPos = null }
+  invalidate()
+}
+for (const k of Object.keys(toolButtons) as ('pen' | 'eraser-pencil' | 'eraser-ink')[]) {
+  toolButtons[k]!.addEventListener('click', () => setTool(k))
+}
 setTool('pen')
 const erSize = document.getElementById('eraser-size') as HTMLInputElement
 erSize.value = String(app.eraserRadius)
 erSize.addEventListener('input', () => { app.eraserRadius = Number(erSize.value) })
+
+// 현재 심 — 경도 슬라이더와 인디케이터
+const gradeSlider = document.getElementById('grade-slider') as HTMLInputElement
+const gradeLabel = document.getElementById('grade-label')!
+const lead = document.getElementById('lead') as HTMLElement
+function syncGrade() {
+  const g = GRADES[Number(gradeSlider.value)] ?? 'HB'
+  app.grade = g
+  gradeLabel.textContent = g === 'INK' ? '잉크' : g
+  lead.style.background = MAT[g].color
+  invalidate()
+}
+gradeSlider.addEventListener('input', syncGrade)
+syncGrade()
 
 // 오스냅 설정 패널(임시 UI — 7단계에서 세로바로) — 종류별 토글·반경
 const osnapPanel = document.getElementById('osnap-kinds')!
@@ -169,6 +188,7 @@ fileOpen.addEventListener('change', async () => {
 })
 document.getElementById('btn-obj')!.addEventListener('click', () => {
   download('drawing.obj', toOBJ(app.lift), 'text/plain')
+  download('drawing.mtl', toMTL(), 'text/plain') // 재료 → 레이어 색상
 })
 document.getElementById('btn-gltf')!.addEventListener('click', () => {
   download('drawing.gltf', toGLTF(app.lift), 'model/gltf+json')

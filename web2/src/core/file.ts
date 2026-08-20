@@ -1,7 +1,8 @@
 // .brnl 저장·복원 — 문서(획·프레임)와 시점만 담는다.
 // 카메라·소실점·리프팅은 파생이므로 저장하지 않는다(원칙 b) — 복원 후 다시 계산된다.
 
-import type { Doc, Stroke, CamPose, ViewOffset } from './types'
+import type { Doc, Stroke, CamPose, ViewOffset, Grade } from './types'
+import { GRADES } from './material'
 
 export interface BrnlData {
   doc: Doc
@@ -39,6 +40,11 @@ export function parseBrnl(text: string): BrnlData | null {
     if (s.view) {
       if (!isV3(s.view.p) || !isQuat(s.view.q)) return null
       st.view = { p: { ...s.view.p }, q: { ...s.view.q } }
+    }
+    if (s.mat) {
+      if (!GRADES.includes(s.mat.grade as Grade)) return null
+      st.mat = { grade: s.mat.grade as Grade }
+      if (isNum(s.mat.press)) st.mat.press = s.mat.press
     }
     strokes.push(st)
   }

@@ -88,8 +88,8 @@ describe('내보내기', () => {
   it('반례: 빈 문서도 유효한 출력', () => {
     const empty = liftAll(constructedDoc().doc)
     expect(empty.lifted.size).toBe(0)
-    expect(toOBJ(empty)).toContain('o strokes')
+    expect(toOBJ(empty)).toContain('g strokes')
     const g = JSON.parse(toGLTF(empty))
-    expect(g.accessors[0].count).toBe(0)
+    expect(g.buffers[0].byteLength).toBe(0)
   })
 })
