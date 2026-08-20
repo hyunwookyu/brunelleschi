@@ -2574,31 +2574,22 @@
     "name": "꼭짓점 방사(사용자 보고 ①의 형태)",
     "intent": "vp",
     "off": false,
-    "on": true,
-    "at": [
-     1050,
-     250
-    ]
+    "on": false,
+    "at": null
    },
    {
     "name": "닫힌 삼각형(사용자 보고 ②′)",
     "intent": "vp",
     "off": false,
-    "on": true,
-    "at": [
-     330,
-     290
-    ]
+    "on": false,
+    "at": null
    },
    {
     "name": "서로 다른 축의 모서리 꼭짓점(완화의 대가)",
     "intent": "corner",
     "off": false,
-    "on": true,
-    "at": [
-     640,
-     340
-    ]
+    "on": false,
+    "at": null
    },
    {
     "name": "몸통 교차",
@@ -2622,13 +2613,9 @@
     "at": null
    }
   ],
-  "opened": [
-   "꼭짓점 방사(사용자 보고 ①의 형태)",
-   "닫힌 삼각형(사용자 보고 ②′)",
-   "서로 다른 축의 모서리 꼭짓점(완화의 대가)"
-  ],
-  "opened_intended_vp": 2,
-  "opened_corner": 1,
+  "opened": [],
+  "opened_intended_vp": 0,
+  "opened_corner": 0,
   "n": 6,
   "what_this_says": "완화가 새로 받는 기하 중 **의도가 소실점인 것**과 **꼭짓점인 것**의 수. 꼭짓점 몫이 0이 아니면 그것이 D-L3(#23)의 실패로 가는 문이고, 그 문이 열리는 조건은 **선언이 틀린 것**이다(D-L96의 물음 — DEFERRED). ⚠ 여섯 기하는 **손으로 고른 것**이고 실사용 분포가 아니다(#12) — 이 표가 재는 것은 **문이 열리는가**이지 빈도가 아니다."
  },

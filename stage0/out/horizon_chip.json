@@ -12,30 +12,17 @@
  "setup": {
   "canvas": [
    1280,
-   674
+   675
   ],
   "band_px": 20.98,
   "arms": 5,
   "chip_at": [
    1260,
-   337
+   338
   ]
  },
  "states": {
   "initial": {
-   "toggle": {
-    "on": false,
-    "locked": false,
-    "visible": false
-   },
-   "chip_at": [
-    1260,
-    337
-   ],
-   "y": 337,
-   "strokes": 0
-  },
-  "after_tap_on": {
    "toggle": {
     "on": true,
     "locked": false,
@@ -43,12 +30,12 @@
    },
    "chip_at": [
     1260,
-    337
+    338
    ],
-   "y": 337,
+   "y": 338,
    "strokes": 0
   },
-  "after_tap_off": {
+  "after_tap_on": {
    "toggle": {
     "on": false,
     "locked": false,
@@ -56,9 +43,22 @@
    },
    "chip_at": [
     1260,
-    337
+    338
    ],
-   "y": 337,
+   "y": 338,
+   "strokes": 0
+  },
+  "after_tap_off": {
+   "toggle": {
+    "on": true,
+    "locked": false,
+    "visible": true
+   },
+   "chip_at": [
+    1260,
+    338
+   ],
+   "y": 338,
    "strokes": 0
   },
   "re_on": {
@@ -69,9 +69,9 @@
    },
    "chip_at": [
     1260,
-    337
+    338
    ],
-   "y": 337,
+   "y": 338,
    "strokes": 0
   },
   "after_drag": {
@@ -82,9 +82,9 @@
    },
    "chip_at": [
     1260,
-    387
+    388
    ],
-   "y": 387,
+   "y": 388,
    "strokes": 0
   },
   "after_far_tap": {
@@ -95,9 +95,9 @@
    },
    "chip_at": [
     1260,
-    387
+    388
    ],
-   "y": 387,
+   "y": 388,
    "strokes": 1
   },
   "confirmed": {
@@ -108,9 +108,9 @@
    },
    "chip_at": [
     1260,
-    69.1
+    69.6
    ],
-   "y": 69.1,
+   "y": 69.6,
    "strokes": 12
   },
   "after_locked_tap": {
@@ -121,15 +121,15 @@
    },
    "chip_at": [
     1260,
-    69.1
+    69.6
    ],
-   "y": 69.1,
+   "y": 69.6,
    "strokes": 12
   }
  },
  "summary": {
-  "tap_turns_on": true,
-  "tap_turns_off": true,
+  "tap_turns_on": false,
+  "tap_turns_off": false,
   "off_tap_moved_px": 0,
   "drag_kept_on": true,
   "drag_moved_px": 50,
@@ -153,16 +153,16 @@
   "registered_note": "⚠ **이 항목이 등록한 게이트다 — CLAUDE.md §2 중단 조건 아님**(#41).",
   "reachability": "하단바 버튼 경로가 남아 있으므로(#30) 이 손잡이가 죽어도 토글은 된다 — 이 원장이 재는 것은 **자리**다.",
   "reachability_bits": {
-   "tap_turns_on": true,
-   "tap_turns_off": true,
+   "tap_turns_on": false,
+   "tap_turns_off": false,
    "drag_kept_on": true,
    "far_tap_no_toggle": true,
    "locked_tap_no_toggle": true
   },
   "reachability_absent": "오라클 팔 없음 — drag_follow_ratio는 이 게이트의 결과 자체다. 기준을 넘는 것(비 0)은 «탭 가로챔이 끌기를 삼키는 배선»인데 그 되살림 팔은 없다.",
   "result": {
-   "tap_turns_on": true,
-   "tap_turns_off": true,
+   "tap_turns_on": false,
+   "tap_turns_off": false,
    "off_tap_moved_px": 0,
    "drag_kept_on": true,
    "drag_moved_px": 50,
@@ -358,12 +358,12 @@
  "dpr2": {
   "backing_ratio": 2,
   "tap_on": {
-   "before": false,
-   "after": true
-  },
-  "tap_off": {
    "before": true,
    "after": false
+  },
+  "tap_off": {
+   "before": false,
+   "after": true
   },
   "note": "탭 켬/끔만 잰다 — 끌기·잠김 팔의 dpr 2는 안 쟀다(wtdns)."
  }

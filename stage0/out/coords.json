@@ -31,11 +31,11 @@
     "view_vs_overlay": {
       "renderer": [
         1280,
-        754
+        755
       ],
       "overlay": [
         1280,
-        754
+        755
       ],
       "same": true
     },
@@ -46,7 +46,7 @@
       0,
       0
     ],
-    "ink_at_mid": 91,
+    "ink_at_mid": 101,
     "ink_at_scaled": 0,
     "stretch": [
       2,
@@ -59,11 +59,11 @@
     "view_vs_overlay": {
       "renderer": [
         1280,
-        754
+        755
       ],
       "overlay": [
         1280,
-        754
+        755
       ],
       "same": true
     },
@@ -71,14 +71,14 @@
   },
   "probe_control_dpr_2": {
     "before": 0,
-    "after": 119
+    "after": 102
   },
   "dpr_3": {
     "drawn_vs_want_px": [
       0,
       0
     ],
-    "ink_at_mid": 185,
+    "ink_at_mid": 207,
     "ink_at_scaled": 0,
     "stretch": [
       3,
@@ -91,11 +91,11 @@
     "view_vs_overlay": {
       "renderer": [
         1280,
-        754
+        755
       ],
       "overlay": [
         1280,
-        754
+        755
       ],
       "same": true
     },

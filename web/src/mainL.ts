@@ -12,6 +12,8 @@ import { extensionDir } from "./s3d/extension.js";
 import { CamGestures, GESTURE_TOL } from "./capture/camGesture.js";
 import { cssSizeOf, deviceRatio } from "./capture/canvasFrame.js";
 import { Stage, FREE_FOV_DEG, type StageSeg } from "./ui/stage.js";
+import { fovDegFromF, fFromFovDeg, mm35FromF, fFromMm35, clampMm,
+         LENS_MM } from "./s3d/lens.js";
 import { CamState } from "./ui/camState.js";
 import { newDoc, newSStroke, newView, deleteView, lifted, pending, pendingElsewhere, liftable,
          confirmViewOf, isConfirmView,
@@ -215,6 +217,41 @@ let noteStrokeId: string | null = null;
 function say(text: string, acts: NoteAct[] = []): void {
   note = text; noteActs = acts; noteActsFor = acts.length ? text : "";
 }
+/**
+ * **렌즈 조절**(2026-08-20 18차 지시 r · D-L111) — **정렬·확인 시점에서만**이다.
+ *
+ * 작도 중(확정 전·핀)에는 **소실점이 f를 정하므로 물어볼 것이 없다**(r-1). 정렬·확인
+ * 시점은 다르다: 큐브로 정면에 서면 그 시점의 화각을 정하고 싶고, 그것은 **무엇을 얼마나
+ * 담을지**의 문제다. 3D가 이미 있으므로 라이노처럼 **카메라 조작**이다(A-3: 선례).
+ */
+const LENS = { open: false };
+/** 지금 렌즈를 조절할 수 있는가 — 서 있고 **핀이 아닐 때**만이다(r-1). */
+const lensAdjustable = (): boolean => cam.standing() && !stage.isPinned;
+/** 지금 시점의 f(px)와 화면 폭 — 표시·조작이 같은 값을 읽는다(#17). */
+function lensNow(): { f: number; widthPx: number; mm: number; fovDeg: number } | null {
+  const fi = stage.freeIntrinsics();
+  if (!fi) return null;
+  const w = cssSize()[0];
+  return { f: fi.f, widthPx: w, mm: mm35FromF(fi.f, w), fovDeg: fovDegFromF(fi.f, w) };
+}
+/** 35mm 환산으로 렌즈를 바꾼다 — **하나를 바꾸면 다른 것이 따라온다**(r-2). */
+function setLensMm(mm: number): boolean {
+  const l = lensNow();
+  if (!l || !lensAdjustable()) return false;
+  const ok = stage.setFreeF(fFromMm35(clampMm(mm), l.widthPx));
+  if (ok) refresh();
+  return ok;
+}
+/**
+ * **가로 화각으로도 바꾼다**(r-2의 나머지 절반 — «하나를 바꾸면 다른 것이 따라온다»는
+ * **양방향**이다). 화각을 f로 바꾼 뒤 `setLensMm`에 넘긴다 — **죄는 자리를 한 곳에 둔다**(#54).
+ */
+function setLensFovDeg(deg: number): boolean {
+  const l = lensNow();
+  if (!l || !lensAdjustable() || !(deg > 0) || deg >= 180) return false;
+  return setLensMm(mm35FromF(fFromFovDeg(deg, l.widthPx), l.widthPx));
+}
+
 /** 알림을 비운다 — 평소에는 아무것도 안 띄운다(지시 g). */
 function clearNote(): void { say(""); }
 
@@ -1455,7 +1492,8 @@ function armOnePointAlign(): void {
     if (j.kind === "one_point" && (Math.abs(j.pitchDeg) > eps || j.yawOffDeg > eps)) {
       const A = drawnBasisThree();
       stage.viewport.userMoved = true;
-      stage.snapToDir(A ? cubeUp(j.returnDir, A) : j.returnDir, null, 160, () => refresh());
+      stage.snapToDir(A ? cubeUp(j.returnDir, A) : j.returnDir, null, 160, () => refresh(),
+                      A ? { up: A.Y, right: A.X } : null);
       refresh();
     }
   };
@@ -1625,7 +1663,9 @@ function returnToDraft(): void {
   const j = judgeDraftPose(f, ONE_POINT_TOL.hand_deg);
   const A = drawnBasisThree();
   stage.viewport.userMoved = true;
-  stage.snapToDir(A ? cubeUp(j.returnDir, A) : j.returnDir, orbitTarget(), 280, () => refresh());
+  // **「작도 시점으로」도 같은 처리다**(18차 지시 s-4)
+  stage.snapToDir(A ? cubeUp(j.returnDir, A) : j.returnDir, orbitTarget(), 280, () => refresh(),
+                  A ? { up: A.Y, right: A.X } : null);
   tool = "draw";
   refresh();
 }
@@ -1644,7 +1684,9 @@ const viewCube = new ViewCube(document.getElementById("cube") as HTMLCanvasEleme
   snap: (fwd) => {
     stage.viewport.userMoved = true;
     const A = drawnBasisThree();
-    stage.snapToDir(A ? cubeUp(fwd, A) : fwd, orbitTarget(), 280, () => refresh());
+    // **롤도 그 기준계로 접는다**(18차 지시 s-2·s-5) — 방향만 바꾸면 롤이 남는다
+    stage.snapToDir(A ? cubeUp(fwd, A) : fwd, orbitTarget(), 280, () => refresh(),
+                    A ? { up: A.Y, right: A.X } : null);
     refresh();
   },
   visible: () => cam.standing() && lifted(doc).length > 0,
@@ -1803,14 +1845,58 @@ function renderViews() {
          + `${v.name}${n ? ` <span class="n">·2D ${n}</span>` : ""}</button>${ren}${del}</div>`;
   });
   const canSave = cam.standing() && !stage.isPinned;
-  viewsEl.innerHTML = `<div class="cap">시점 ${doc.views.length}</div>` + rows.join("")
+  // **렌즈는 시점 패널 안이다**(18차 지시 r-5 — "큐브 옆이나 시점 패널"). 이 패널이
+  // 큐브 바로 아래이므로 둘을 동시에 만족한다. **작도 중에는 비활성**이다(r-1):
+  // 그 시점의 f는 소실점이 정한 것이라 조절 대상이 아니다.
+  // ⚠ 하단바에 두지 않는다 — 지시가 고른 두 자리가 아니고, 지시 t로 줄바꿈이 된 바에
+  // 슬라이더를 얹으면 바 높이가 화면을 더 먹는다.
+  //
+  // ⚠⚠ **머리 줄에 얹는다 — 줄을 늘리면 지평선 손잡이를 덮는다.**
+  // 손잡이 자리는 `[w-20, 지평선 y]`(오른쪽 끝)이고 이 패널이 그 열에 있다. 초판은
+  // 렌즈를 **새 줄**로 붙였고, 패널 아래끝이 327px → **357px**로 내려가 손잡이(y 338)를
+  // 삼켰다 — `horizon_chip` 팔 둘이 그것을 잡았다(`elementFromPoint`가 렌즈 버튼을 냈다).
+  // 그래서 **닫혀 있는 동안 높이를 안 늘린다**: 「시점 N」 머리 줄의 오른쪽에 붙인다.
+  // (열면 조절 줄이 한 줄 생긴다 — 그것은 사용자가 연 상태이고 닫으면 원래대로다.)
+  const l = lensNow();
+  const lensOn = lensAdjustable();
+  const lensBtn = `<button data-lens-open${lensOn ? "" : " disabled"}`
+    + `${LENS.open && lensOn ? ' class="on"' : ""}`
+    + ` title="${lensOn ? "이 시점의 렌즈를 바꿉니다 — 3D는 안 움직입니다"
+                       : "작도 중에는 소실점이 초점거리를 정합니다"}">`
+    + `${l ? `${Math.round(l.mm)}mm` : "렌즈"}</button>`;
+  const lensCtl = lensOn && LENS.open && l
+    ? `<div class="lensctl">`
+      + `<input type="range" min="${LENS_MM.min}" max="${LENS_MM.max}" step="1" `
+      + `value="${Math.round(l.mm)}" data-lens-mm>`
+      + `<input type="number" min="${LENS_MM.min}" max="${LENS_MM.max}" step="1" `
+      + `value="${Math.round(l.mm)}" data-lens-mm> mm`
+      // **화각도 입력이다**(r-2 — 둘 다 보이고 **어느 쪽을 바꿔도** 다른 쪽이 따라온다)
+      + `<input type="number" min="5" max="170" step="1" `
+      + `value="${Math.round(l.fovDeg)}" data-lens-fov> ° 가로</div>`
+    : "";
+  viewsEl.innerHTML = `<div class="cap">시점 ${doc.views.length}${lensBtn}</div>`
+    + rows.join("")
     + `<div class="saverow"><button data-saveview${canSave ? "" : " disabled"}`
-    + ` title="지금 보는 각도를 시점으로 저장합니다 — 돌려 본 뒤에 누르세요">+ 시점 저장</button></div>`;
+    + ` title="지금 보는 각도를 시점으로 저장합니다 — 돌려 본 뒤에 누르세요">+ 시점 저장</button></div>`
+    + lensCtl;
+}
+
+// **렌즈 입력**(18차 지시 r-2) — 슬라이더는 끄는 동안(`input`), 숫자는 확정할 때(`change`).
+// 둘 다 **35mm 환산 mm 하나**를 넘긴다: 화각은 그 값에서 계산된다(#54 — 두 곳에 안 둔다).
+for (const ev of ["input", "change"] as const) {
+  viewsEl.addEventListener(ev, (e) => {
+    const t = e.target as HTMLInputElement;
+    if (t?.dataset?.lensMm !== undefined) setLensMm(Math.round(Number(t.value) || 0));
+    else if (t?.dataset?.lensFov !== undefined) setLensFovDeg(Number(t.value) || 0);
+  });
 }
 
 viewsEl.addEventListener("click", (e) => {
   const b = (e.target as HTMLElement).closest("button");
   if (!b || (b as HTMLButtonElement).disabled) return;
+  if ((b as HTMLButtonElement).dataset.lensOpen !== undefined) {
+    LENS.open = !LENS.open; refresh(); return;
+  }
   if ((b as HTMLButtonElement).dataset.saveview !== undefined) { saveViewpoint(); return; }
   const ren = (b as HTMLButtonElement).dataset.renview;
   if (ren) {
@@ -4400,6 +4486,17 @@ refresh();
     stage.spinYaw(deltaRad, orbitTarget(), ms, () => refresh());
   },
   cubeYaw: () => stage.yawOf(),
+  /**
+   * **렌즈**(18차 지시 r) — 지금 시점의 f와 그 세 표현. `adjustable`이 r-1의 갈래다.
+   * 종단이 앱 경로 그대로 읽고 쓴다(#17).
+   */
+  lens: () => ({ ...(lensNow() ?? { f: null, widthPx: null, mm: null, fovDeg: null }),
+                 adjustable: lensAdjustable(), open: LENS.open }),
+  setLensMm: (mm: number) => setLensMm(mm),
+  /** **화각으로도 바꾼다**(r-2 양방향) — 앱의 화각 입력과 **같은 함수**다(#17). */
+  setLensFovDeg: (deg: number) => setLensFovDeg(deg),
+  /** 렌즈 패널을 앱 경로 그대로 연다·닫는다(#17) — 종단이 «보이는가»를 DOM으로 잰다. */
+  openLens: (on: boolean) => { LENS.open = on; refresh(); return LENS.open; },
   /**
    * **뷰 큐브의 토글과 표시가 다른 양이다**(17차 지시 e) — 하단바의 「켬」은 `on`이고,
    * 그려지는 조건은 `visible`(카메라가 서고 **3D가 하나라도 있을 때**)이다. 둘을 갈라 낸다.

@@ -184,11 +184,6 @@
           "axis": 0
         },
         {
-          "id": "s2",
-          "state": "dir",
-          "axis": 1
-        },
-        {
           "id": "s3",
           "state": "dir",
           "axis": 1
@@ -201,30 +196,25 @@
       ]
     },
     "confirmed": {
-      "lifted": 4,
+      "lifted": 3,
       "placeBy": {
         "ref_anchor": 0,
         "start_anchor": 0,
         "two_point": 0,
         "end_anchor": 0,
-        "cross_anchor": 1,
+        "cross_anchor": 2,
         "batch": 0,
-        "ground": 3,
+        "ground": 1,
         "extension": 0,
         "unanchored": 0,
         "aux": 0
       },
-      "place_sum": 4,
+      "place_sum": 3,
       "states": [
         {
           "id": "s5",
           "state": "coord",
           "axis": 0
-        },
-        {
-          "id": "s6",
-          "state": "coord",
-          "axis": 1
         },
         {
           "id": "s7",
@@ -239,30 +229,25 @@
       ]
     },
     "chained": {
-      "lifted": 5,
+      "lifted": 4,
       "placeBy": {
         "ref_anchor": 0,
         "start_anchor": 0,
         "two_point": 0,
         "end_anchor": 0,
-        "cross_anchor": 2,
+        "cross_anchor": 3,
         "batch": 0,
-        "ground": 3,
+        "ground": 1,
         "extension": 0,
         "unanchored": 0,
         "aux": 0
       },
-      "place_sum": 5,
+      "place_sum": 4,
       "states": [
         {
           "id": "s5",
           "state": "coord",
           "axis": 0
-        },
-        {
-          "id": "s6",
-          "state": "coord",
-          "axis": 1
         },
         {
           "id": "s7",
@@ -282,30 +267,25 @@
       ]
     },
     "air": {
-      "lifted": 5,
+      "lifted": 4,
       "placeBy": {
         "ref_anchor": 0,
         "start_anchor": 0,
         "two_point": 0,
         "end_anchor": 0,
-        "cross_anchor": 2,
+        "cross_anchor": 3,
         "batch": 0,
-        "ground": 3,
+        "ground": 1,
         "extension": 0,
         "unanchored": 0,
         "aux": 0
       },
-      "place_sum": 5,
+      "place_sum": 4,
       "states": [
         {
           "id": "s5",
           "state": "coord",
           "axis": 0
-        },
-        {
-          "id": "s6",
-          "state": "coord",
-          "axis": 1
         },
         {
           "id": "s7",
@@ -330,11 +310,11 @@
       ]
     }
   },
-  "recovered_by_ground": 4,
+  "recovered_by_ground": 3,
   "gate": {
     "registered": "⓪ 끔 팔에서 lifted 0 · ① 켬 팔에서 ground > 0·ground + cross_anchor == lifted·cross_anchor == 1(확정 뒤 도착한 깊이선 3 — 14차 D-L96으로 확정자가 둘째 깊이선이 되면서 조건 개정: 옛 '전부 ground'는 셋째-확정자 시절)·batch 0 · ② 연쇄 팔에서 cross_anchor ≥ 1이 켬 팔 lifted에 +1 · ③ 허공 팔에서 ground 불변·마지막 획 dir 대기 · ④ 모든 팔에서 placeBy 합 == lifted(#43). 값은 arms가 든다(#47 — 산문에 수를 안 박는다)",
     "reachability": "도달 가능성은 ⓪↔① **짝 대조**다(#30 · 13차 1·2 리뷰어 [4·1]) — 같은 입력·같은 앱에서 경로 토글만 다르고, 끔 팔 0 → 켬 팔 >0이 이 경로가 여는 양이다. ⚠ 값(recovered_by_ground)은 픽스처가 정하는 수다(#46) — 크기가 아니라 0에서 양수로의 전이가 판정이다(reachability_value_fixture_determined)",
-    "reachability_value": 4,
+    "reachability_value": 3,
     "reachability_value_fixture_determined": true,
     "reachability_source": "recovered_by_ground",
     "note": "이 항목이 걸리는 번호: #30(짝 대조) · #43(합=전체 — 실제로 확정 획의 이중 배치를 잡았다) · #46(픽스처 결정값) · #12(동작점 하나)"

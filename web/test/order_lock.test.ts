@@ -40,6 +40,7 @@ import { scene, boxLattice, drawEdges, groundPoint, round, median,
          type Scene, type DrawnEdge, type TrueEdge } from "./scene3d.js";
 import { perStrokeError, silentWrong, rate, fraction, metricsSnapshot } from "./metrics.js";
 import { constantsSnapshot } from "./constants.js";
+import { trueHorizonY } from "./ruleState.js";
 import { gate } from "./gate.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -293,6 +294,11 @@ function runOne(fx: Fx, order: Order, arm: Arm): RunOut {
   const list = orderStrokes(fx, order);
   const diag = Math.hypot(SZ[0], SZ[1]);
   const cam = new CamState(SZ);
+  // **지평선을 먼저 긋는다**(2026-08-20 18차 · D-L109) — 새 절차에서 지평선이 없으면
+  // 깊이선이 전부 거절돼 이 원장이 통째로 0이 된다(`camera_ok 0/300`으로 실제로 그랬고,
+  // 이 하네스는 그것을 **깨지지 않고** 냈다 — 그래서 더 위험했다).
+  // 값은 픽스처의 **참 지평선**이고 손 오차가 없다(`ruleState.trueHorizonY`의 ⚠ 참조).
+  cam.setHorizon(trueHorizonY(fx.sc.vps, SZ));
   let asks = 0, fed = 0;
   let firstDecl: RunOut["firstDecl"] = "none";
   const askKinds: Record<string, number> = {};
@@ -944,6 +950,16 @@ describe("차수가 P1에 갇히는가 — 그리고 배치가 따라오는가 (
           [a, silentWrong(head[a].errs).cut_0_2])),
       },
       what_this_does_not_say: [
+        "⛔⛔ **이 원장의 두 팔이 이제 같은 값을 낸다**(2026-08-20 18차 · D-L109). "
+        + "`bypass` ↔ `fixed`를 가르던 것은 `screen_or_depth` 물음의 «우회 살림»인데 "
+        + "**새 절차가 그 물음 자체를 지웠다** — 그래서 `forced`가 아무것도 안 바꾼다. "
+        + "`gate.result.floor_gate_discriminates`가 `false`이고 `within_cut_0_2_delta`가 0이다. "
+        + "**즉 조항 ①·③은 지금 아무것도 안 가른다** — 통과는 «가르고 통과»가 아니라 "
+        + "«가를 것이 없어서 통과»다(#38). 살아 있는 대조는 `fixed` ↔ `guard_off`(D-L80의 "
+        + "종류 뒤집기 가드)뿐이다. ⚠ 이 원장의 재목적/폐기는 `DEFERRED.md` 18차에 있다.",
+        "⚠ **지평선을 먼저 긋고 시작한다**(D-L109) — 안 그으면 깊이선이 전부 거절돼 "
+        + "이 원장이 `camera_ok 0/300`으로 죽는다(실제로 그 상태였고 **시험은 안 깨졌다**). "
+        + "값은 픽스처의 참 지평선이고 **손 오차가 없다**.",
         "⚠⚠ **`stroke_budget`(상자 하나 ↔ 둘)은 '획만 두 배'가 아니다**(8-2R″ [5]) — "
           + "둘째 상자가 다른 자리에 서므로 **지지선의 배치(정보량)도 늘 수 있다**. 실측은 "
           + "`stroke_budget.*.p0_reasons.pending_2_awaiting_third`의 `pending_sep_deg_*`를 "

@@ -16,7 +16,7 @@
  "setup": {
   "canvas": [
    1280,
-   674
+   675
   ],
   "strokes": 12,
   "hasCamera": true,
@@ -26,7 +26,7 @@
  "slot2": {
   "at": [
    640,
-   4069
+   4070
   ],
   "diag": 1447,
   "dist_from_center": 3732,
@@ -40,8 +40,9 @@
    "cases": [
     {
      "label": "① 앵커 + 축 스냅(정확 겨냥)",
-     "note": null,
+     "note": "",
      "snap_note": "축1로 확정 (축과 0.5°)",
+     "note_acts": [],
      "order": 3,
      "misfit_min": 0,
      "lifted": true,
@@ -53,8 +54,9 @@
     },
     {
      "label": "② 앵커 + 축 스냅(10° 어긋나게 겨냥 — 스냅이 고친다)",
-     "note": null,
+     "note": "",
      "snap_note": "축2로 확정 (축과 9.1°)",
+     "note_acts": [],
      "order": 3,
      "misfit_min": 0,
      "lifted": true,
@@ -66,8 +68,9 @@
     },
     {
      "label": "③ 양 끝 스냅(면 대각선)",
-     "note": null,
+     "note": "",
      "snap_note": "**양 끝 스냅**으로 확정(축 미분류) — 끝점 → 끝점 <span class=\"dim\">(가장 가까운 축과 44.5°)</span>",
+     "note_acts": [],
      "order": 3,
      "misfit_min": 0.3184,
      "lifted": true,
@@ -79,8 +82,12 @@
     },
     {
      "label": "④ 무앵커 + 어느 소실점도 안 향함",
-     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "note": "이 선이 두 소실점 어디도 향하지 않습니다지우기무시",
      "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "note_acts": [
+      "note_erase",
+      "note_ignore"
+     ],
      "order": 3,
      "misfit_min": 0.25,
      "lifted": false,
@@ -92,8 +99,9 @@
     },
     {
      "label": "④′ 무앵커 + 1° 어긋남(임계 근처)",
-     "note": null,
+     "note": "",
      "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "note_acts": [],
      "order": 3,
      "misfit_min": 0,
      "lifted": false,
@@ -105,8 +113,9 @@
     },
     {
      "label": "④″ 무앵커 + 3° 어긋남(임계 근처)",
-     "note": null,
+     "note": "",
      "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "note_acts": [],
      "order": 3,
      "misfit_min": 0,
      "lifted": false,
@@ -118,8 +127,9 @@
     },
     {
      "label": "⑤ 경고 뒤에 다시 축 스냅으로(경고가 남는가)",
-     "note": null,
+     "note": "",
      "snap_note": "**양 끝 스냅**으로 확정(축 1) — 정점 → 끝점 <span class=\"dim\">(가장 가까운 축과 0.0°)</span>",
+     "note_acts": [],
      "order": 3,
      "misfit_min": 0,
      "lifted": true,
@@ -131,8 +141,12 @@
     },
     {
      "label": "⑥ [되살림] 연결 억제 끔 — 면 대각선",
-     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "note": "이 선이 두 소실점 어디도 향하지 않습니다지우기무시",
      "snap_note": "**양 끝 스냅**으로 확정(축 미분류) — 정점 → 정점 <span class=\"dim\">(가장 가까운 축과 44.5°)</span>",
+     "note_acts": [
+      "note_erase",
+      "note_ignore"
+     ],
      "order": 3,
      "misfit_min": 0.3184,
      "lifted": true,
@@ -144,8 +158,12 @@
     },
     {
      "label": "⑦ [되살림] 알림 비우기 끔 — 어긋난 획",
-     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "note": "이 선이 두 소실점 어디도 향하지 않습니다지우기무시",
      "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "note_acts": [
+      "note_erase",
+      "note_ignore"
+     ],
      "order": 3,
      "misfit_min": 0.25,
      "lifted": false,
@@ -157,8 +175,12 @@
     },
     {
      "label": "⑧ [되살림] 그 뒤에 축 스냅으로",
-     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "note": "이 선이 두 소실점 어디도 향하지 않습니다지우기무시",
      "snap_note": "**양 끝 스냅**으로 확정(축 1) — 정점 → 정점 <span class=\"dim\">(가장 가까운 축과 0.0°)</span>",
+     "note_acts": [
+      "note_erase",
+      "note_ignore"
+     ],
      "order": 3,
      "misfit_min": 0,
      "lifted": true,
@@ -177,8 +199,9 @@
    "cases": [
     {
      "label": "① 앵커 + 축 스냅(정확 겨냥)",
-     "note": null,
+     "note": "",
      "snap_note": "축1로 확정 (축과 0.5°)",
+     "note_acts": [],
      "order": 2,
      "misfit_min": 0,
      "lifted": true,
@@ -190,8 +213,9 @@
     },
     {
      "label": "② 앵커 + 축 스냅(10° 어긋나게 겨냥 — 스냅이 고친다)",
-     "note": null,
+     "note": "",
      "snap_note": "축2로 확정 (축과 9.1°)",
+     "note_acts": [],
      "order": 2,
      "misfit_min": 0,
      "lifted": true,
@@ -203,8 +227,9 @@
     },
     {
      "label": "③ 양 끝 스냅(면 대각선)",
-     "note": null,
+     "note": "",
      "snap_note": "**양 끝 스냅**으로 확정(축 미분류) — 끝점 → 끝점 <span class=\"dim\">(가장 가까운 축과 11.7°)</span>",
+     "note_acts": [],
      "order": 2,
      "misfit_min": 0.4723,
      "lifted": true,
@@ -216,8 +241,12 @@
     },
     {
      "label": "④ 무앵커 + 어느 소실점도 안 향함",
-     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "note": "이 선이 두 소실점 어디도 향하지 않습니다지우기무시",
      "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "note_acts": [
+      "note_erase",
+      "note_ignore"
+     ],
      "order": 2,
      "misfit_min": 0.25,
      "lifted": false,
@@ -229,8 +258,9 @@
     },
     {
      "label": "④′ 무앵커 + 1° 어긋남(임계 근처)",
-     "note": null,
+     "note": "",
      "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "note_acts": [],
      "order": 2,
      "misfit_min": 0,
      "lifted": false,
@@ -242,8 +272,9 @@
     },
     {
      "label": "④″ 무앵커 + 3° 어긋남(임계 근처)",
-     "note": null,
+     "note": "",
      "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "note_acts": [],
      "order": 2,
      "misfit_min": 0,
      "lifted": false,
@@ -255,8 +286,9 @@
     },
     {
      "label": "⑤ 경고 뒤에 다시 축 스냅으로(경고가 남는가)",
-     "note": null,
+     "note": "",
      "snap_note": "**양 끝 스냅**으로 확정(축 1) — 정점 → 끝점 <span class=\"dim\">(가장 가까운 축과 0.0°)</span>",
+     "note_acts": [],
      "order": 2,
      "misfit_min": 0,
      "lifted": true,
@@ -268,8 +300,12 @@
     },
     {
      "label": "⑥ [되살림] 연결 억제 끔 — 면 대각선",
-     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "note": "이 선이 두 소실점 어디도 향하지 않습니다지우기무시",
      "snap_note": "**양 끝 스냅**으로 확정(축 미분류) — 정점 → 정점 <span class=\"dim\">(가장 가까운 축과 11.7°)</span>",
+     "note_acts": [
+      "note_erase",
+      "note_ignore"
+     ],
      "order": 2,
      "misfit_min": 0.4723,
      "lifted": true,
@@ -281,8 +317,12 @@
     },
     {
      "label": "⑦ [되살림] 알림 비우기 끔 — 어긋난 획",
-     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "note": "이 선이 두 소실점 어디도 향하지 않습니다지우기무시",
      "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "note_acts": [
+      "note_erase",
+      "note_ignore"
+     ],
      "order": 2,
      "misfit_min": 0.25,
      "lifted": false,
@@ -294,8 +334,12 @@
     },
     {
      "label": "⑧ [되살림] 그 뒤에 축 스냅으로",
-     "note": "이 선이 어긋납니다 — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 (수평 축은 둘뿐입니다)",
+     "note": "이 선이 두 소실점 어디도 향하지 않습니다지우기무시",
      "snap_note": "**양 끝 스냅**으로 확정(축 1) — 정점 → 정점 <span class=\"dim\">(가장 가까운 축과 0.0°)</span>",
+     "note_acts": [
+      "note_erase",
+      "note_ignore"
+     ],
      "order": 2,
      "misfit_min": 0,
      "lifted": true,
@@ -326,7 +370,7 @@
     "event": "rejected",
     "axis": null,
     "notify": true,
-    "why": "**이 선이 어긋납니다** — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 <span class=\"dim\">(수평 축은 둘뿐입니다)</span>"
+    "why": "이 선이 두 소실점 어디도 향하지 않습니다"
    },
    {
     "name": "수직 슬롯이 유한 — 수리 후",
@@ -340,7 +384,7 @@
     "event": "rejected",
     "axis": null,
     "notify": true,
-    "why": "**이 선이 어긋납니다** — 두 소실점 어느 쪽도 향하지 않습니다. 지우고 다시 그으세요 <span class=\"dim\">(수평 축은 둘뿐입니다)</span>"
+    "why": "이 선이 두 소실점 어디도 향하지 않습니다"
    },
    {
     "name": "[반례] 수평 소실점을 향함(순서 불변)",

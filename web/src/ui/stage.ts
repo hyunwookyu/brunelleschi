@@ -326,7 +326,8 @@ export class Stage {
    * 시선이 수직에 너무 가까우면(윗면·아랫면) 피치를 89.5°로 눌러 `OrbitControls`의
    * up=+Y 특이를 피한다 — CAD 뷰 큐브의 탑뷰도 실제로는 같은 처리를 한다.
    */
-  snapToDir(fwdThree: Vec3, center: Vec3 | null, ms: number, onDone?: () => void): void {
+  snapToDir(fwdThree: Vec3, center: Vec3 | null, ms: number, onDone?: () => void,
+            frame?: { up: Vec3; right: Vec3 } | null): void {
     const cam = this.viewport.camera;
     cam.updateMatrixWorld(true);
     const c3 = center
@@ -335,7 +336,7 @@ export class Stage {
     const f = new THREE.Vector3(...fwdThree).normalize();
     const horiz = Math.hypot(f.x, f.z);
     const MAX_PITCH = (89.5 * Math.PI) / 180;
-    if (horiz < Math.cos(MAX_PITCH)) {
+    if (!frame && horiz < Math.cos(MAX_PITCH)) {
       // 수직 특이 회피 — 지금 요를 유지한 채 피치만 한계로 누른다
       const yaw = this.yawOf();
       const s = f.y >= 0 ? 1 : -1;
@@ -344,8 +345,29 @@ export class Stage {
     }
     const d = Math.max(1e-3, c3.distanceTo(cam.position));
     const eye = c3.clone().addScaledVector(f, -d);
-    // three 기저: right = f × y↑ (요만 있는 up 규약 — OrbitControls와 같다)
-    const right = f.clone().cross(new THREE.Vector3(0, 1, 0)).normalize();
+    // ---- **롤을 0으로 접는다**(2026-08-20 18차 지시 s · D-L112).
+    //
+    // 옛 판은 `right = f × y↑`로 **세계 Y** 기준의 롤 0을 만들었다. 그런데 1점 투시가
+    // 요구하는 것은 **그린 수직축**이 화면 수직에 오는 것이다 — 둘이 다르면 롤이 남고,
+    // 실측에서 면 탭 뒤 축 방향이 **−8.7°·−98.7°**였다(0°·−90°여야 한다).
+    // `frame`이 오면 그 기준계로 접는다(`drawnBasisThree` — 큐브가 방향을 바꿀 때 쓰는
+    // 그 기준계와 **같은 값**이다, s-5·#17).
+    //
+    // ⚠ **윗면·아랫면은 특수하다**(s-3): 시선이 수직축과 나란하면 롤의 기준이 없다.
+    // A-3에 따라 **가장 단순한 쪽**을 고른다 — 그 기준계의 **X를 화면 수평**으로 둔다
+    // (마지막 요를 기억하는 것보다 단순하고, 결과가 자세 이력에 안 매인다).
+    const upRef = frame
+      ? new THREE.Vector3(frame.up[0], frame.up[1], frame.up[2]).normalize()
+      : new THREE.Vector3(0, 1, 0);
+    let right = f.clone().cross(upRef);
+    if (right.lengthSq() < 1e-8) {
+      right = frame
+        ? new THREE.Vector3(frame.right[0], frame.right[1], frame.right[2])
+        : new THREE.Vector3(1, 0, 0);
+      // 시선 성분을 뺀다(그램-슈밋) — 남는 것이 화면 수평이다
+      right.addScaledVector(f, -right.dot(f));
+    }
+    right.normalize();
     const up = right.clone().cross(f).normalize();
     // three → 우리 규약(ViewPose 행 = 오른쪽·아래·앞) — pose()의 역과 같은 변환이다
     const pose: ViewPose = {
@@ -378,6 +400,25 @@ export class Stage {
    */
   freeIntrinsics(): { principal: Pt2; f: number } | null {
     return this.pinned ?? this.freeIntr;
+  }
+
+  /**
+   * **정렬·확인 시점의 렌즈를 바꾼다**(2026-08-20 18차 지시 r · D-L111).
+   *
+   * 작도 중에는 **조절 대상이 아니다** — 소실점이 f를 정하므로 물어볼 것이 없다(r-1).
+   * 그래서 **핀 상태에서는 아무것도 안 한다**(`false`를 낸다): 그 시점의 f는 소실점의 것이고
+   * 바꾸면 그린 선과 화면이 갈린다.
+   *
+   * ⚠ **그린 선의 3D 좌표는 안 움직인다**(r-3) — 바뀌는 것은 **투영**뿐이다.
+   * 그것이 카메라 조작의 정의다(라이노의 렌즈와 같은 자리, A-3).
+   * ⚠ **확정 시점으로 돌아오면 원래 f로 복귀한다**(r-4) — `pinTo`가 `freeIntr`를 비운다.
+   */
+  setFreeF(f: number): boolean {
+    if (this.pinned || !this.freeIntr || !Number.isFinite(f) || f <= 0) return false;
+    this.freeIntr = { principal: this.freeIntr.principal, f };
+    this.applyFreeProjection();
+    this.viewport.invalidate();
+    return true;
   }
 
   /** 확정 카메라를 벗어나 자유 시점으로. 지금 자세에서 이어 돌린다. **렌즈도 이어받는다**(7차 항목 1). */
@@ -438,7 +479,12 @@ export class Stage {
     // 자세만 넣고 `target`을 안 옮기면 방향이 덮여 **왕복이 안 맞는다.** 실제로 걸렸다:
     // 뷰로 돌아가 그릴 때마다 `samePose`가 어긋나 **뷰가 하나씩 늘어났다**(L-B.8 종단 확인).
     // 그래서 `target`을 **이 자세의 시선 위**에 둔다 — 그러면 `update()`가 항등이 된다.
-    // 굴림(roll)은 `OrbitControls`가 위를 +Y로 고정하므로 원래 표현할 수 없다(자세도 거기서 왔다).
+    // ⛔ **정정**(2026-08-20 18차 · D-L112): 옛 주석은 "굴림(roll)은 `OrbitControls`가 위를
+    // +Y로 고정하므로 표현할 수 없다"였다. **표현할 수 없는 것이 아니라 안 넘겨준 것이었다** —
+    // `camera.up`을 이 자세의 위로 세우면 `OrbitControls`가 그것을 그대로 쓴다.
+    // 그 한 줄이 빠져 있어서 큐브 면 스냅이 **−8.7°·−98.7°**로 기울었다(그 실측은
+    // `stage0/out/lens_roll_osnap.json`의 `s_roll.reproduced_before_fix`).
+    cam.up.set(Y[0], Y[1], Y[2]);                    // **이 자세의 위**(롤을 지키는 자리)
     const fwd = conv(p.R[2]);                        // three 세계에서 카메라가 보는 방향
     const tgt = this.viewport.controls.target;
     const d = target ? Math.max(1e-3, Math.hypot(...(conv(target).map((v, i) => v - C[i])) as [number, number, number]))

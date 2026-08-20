@@ -21,11 +21,12 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { recoverCamera, isFiniteVp, lineIntersect, type Pt2 } from "../src/s3d/camera.js";
+import { trueHorizonY } from "./ruleState.js";
 import { fPixelsFrom35mm } from "../src/s3d/constraints.js";
 import { P1_F_RATIO } from "../src/ui/camState.js";
 import { representative } from "../src/s3d/axis.js";
 import {
-  newRuleState, stepRule, vpsOf, axisDirsOf, axisOfStroke,
+  newRuleState, withHorizon, stepRule, vpsOf, axisDirsOf, axisOfStroke,
   type RuleState, type RLine,
 } from "../src/s3d/vpRules.js";
 import { snapToAxis, SNAP_TOL_AXIS } from "../src/s3d/axisSnap.js";
@@ -129,7 +130,9 @@ interface RunOut {
  */
 function runOne(fx: Fx, order: (typeof ORDERS)[number], arm: Arm): RunOut {
   const list = orderStrokes(fx, order);
-  let st = newRuleState(SZ);
+  // **지평선을 먼저 긋는다**(18차 D-L109) — 지평선이 없으면 깊이선이 전부 거절된다.
+  // 참 지평선이고 손 오차는 없다(`ruleState.trueHorizonY`의 ⚠가 그 한계를 든다).
+  let st = withHorizon(newRuleState(SZ), trueHorizonY(fx.sc.vps, SZ), SZ);
   if (!arm.horizon) {
     // **지평선 제약을 끈 팔**: 소실점을 지평선에 안 묶는다 — 옛 규칙처럼 **두 선의 교점**으로 낸다.
     // 그래서 이 팔은 `stepRule`을 안 쓰고 아래에서 따로 푼다.
@@ -372,6 +375,11 @@ describe("축 스냅 × 지평선 제약 — 네 팔 (사람 지시 4)", () => {
         jitters: JITTERS, grades: GRADES, seeds: SEEDS, orders: ORDERS,
         ambiguous_sweep: AMBIG_SWEEP,
         jitter_0_excluded: "무오차 입력은 항등이라 안 돈다(#5).",
+        horizon_drawn_first: "⚠⚠ **지평선을 먼저 긋고 시작한다**(2026-08-20 18차 · D-L109) — "
+          + "새 절차에서 지평선이 없으면 깊이선이 전부 거절된다(그래서 이 하네스가 한 번 "
+          + "통째로 0이 됐다). 값은 픽스처의 **참 지평선**이고 **손 오차가 없다** — "
+          + "그러므로 아래 수는 «지평선을 정확히 그었을 때»의 것이고, 사람이 그은 지평선의 "
+          + "오차는 **안 들어 있다**(#32). `placebo_wrong_horizon` 팔만 그 자리를 흉내 낸다.",
         arms: {
           snap_on: "확정 후 획을 **앵커에서 축으로 강제**한다(`snapToAxis`). 커서를 안 따라간다",
           snap_off: "그은 대로 푼다(`liftAll`의 결과 그대로)",

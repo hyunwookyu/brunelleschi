@@ -23,7 +23,7 @@
  "setup": {
   "canvas": [
    1280,
-   674
+   675
   ],
   "strokes": 12,
   "hasCamera": true,
@@ -74,7 +74,7 @@
      "axis": 0,
      "at": [
       2119,
-      69
+      70
      ],
      "screen_dir": [
       0.984,
@@ -86,7 +86,7 @@
      "axis": 1,
      "at": [
       -85,
-      69
+      70
      ],
      "screen_dir": [
       -0.938,
@@ -98,7 +98,7 @@
      "axis": 2,
      "at": [
       640,
-      4069
+      4070
      ],
      "screen_dir": [
       0,
@@ -110,12 +110,12 @@
    "finite_axes": 3,
    "horizon_line": {
     "a": [
-     7905,
-     69
+     7907,
+     70
     ],
     "b": [
-     -3668,
-     69
+     -3670,
+     70
     ]
    },
    "horizon_gap_px": [
@@ -123,7 +123,7 @@
     0
    ],
    "old_flat_gap_px": 0,
-   "horizon_scalar_y": 69,
+   "horizon_scalar_y": 70,
    "marks": [
     {
      "axis": 0,
@@ -154,7 +154,7 @@
      "kind": "edge",
      "at": [
       640,
-      620
+      621
      ],
      "dir": [
       0,
@@ -176,7 +176,7 @@
      "axis": 0,
      "at": [
       2739,
-      -12
+      -11
      ],
      "screen_dir": [
       0.986,
@@ -200,7 +200,7 @@
      "axis": 2,
      "at": [
       791,
-      4111
+      4112
      ],
      "screen_dir": [
       0.04,
@@ -212,11 +212,11 @@
    "finite_axes": 3,
    "horizon_line": {
     "a": [
-     8520,
+     8522,
      -243
     ],
     "b": [
-     -3043,
+     -3045,
      220
     ]
    },
@@ -225,13 +225,13 @@
     0
    ],
    "old_flat_gap_px": 104.739,
-   "horizon_scalar_y": -12,
+   "horizon_scalar_y": -11,
    "marks": [
     {
      "axis": 0,
      "kind": "edge",
      "at": [
-      919,
+      920,
       291
      ],
      "dir": [
@@ -256,7 +256,7 @@
      "kind": "edge",
      "at": [
       651,
-      620
+      621
      ],
      "dir": [
       0.04,
@@ -278,7 +278,7 @@
      "axis": 0,
      "at": [
       -5746,
-      1307
+      1308
      ],
      "screen_dir": [
       -0.989,
@@ -290,7 +290,7 @@
      "axis": 1,
      "at": [
       763,
-      118
+      119
      ],
      "screen_dir": [
       0.492,
@@ -314,11 +314,11 @@
    "finite_axes": 3,
    "horizon_line": {
     "a": [
-     -11439,
-     2347
+     -11440,
+     2348
     ],
     "b": [
-     -54,
+     -52,
      268
     ]
    },
@@ -327,7 +327,7 @@
     0
    ],
    "old_flat_gap_px": 1188.952,
-   "horizon_scalar_y": 1307,
+   "horizon_scalar_y": 1308,
    "marks": [
     {
      "axis": 0,
@@ -346,7 +346,7 @@
      "kind": "point",
      "at": [
       763,
-      118
+      119
      ],
      "dir": [
       0,
@@ -358,7 +358,7 @@
      "kind": "edge",
      "at": [
       691,
-      615
+      616
      ],
      "dir": [
       0.18,
@@ -380,7 +380,7 @@
      "axis": 0,
      "at": [
       1638,
-      549
+      550
      ],
      "screen_dir": [
       0.978,
@@ -404,7 +404,7 @@
      "axis": 2,
      "at": [
       446,
-      -3465
+      -3464
      ],
      "screen_dir": [
       -0.051,
@@ -416,12 +416,12 @@
    "finite_axes": 3,
    "horizon_line": {
     "a": [
-     7417,
-     254
+     7419,
+     255
     ],
     "b": [
-     -4141,
-     844
+     -4143,
+     845
     ]
    },
    "horizon_gap_px": [
@@ -429,7 +429,7 @@
     0
    ],
    "old_flat_gap_px": 105.491,
-   "horizon_scalar_y": 549,
+   "horizon_scalar_y": 550,
    "marks": [
     {
      "axis": 0,
@@ -447,7 +447,7 @@
      "axis": 1,
      "kind": "edge",
      "at": [
-      369,
+      368,
       418
      ],
      "dir": [
@@ -494,7 +494,7 @@
      "axis": 1,
      "at": [
       -291,
-      -944
+      -943
      ],
      "screen_dir": [
       -0.588,
@@ -518,11 +518,11 @@
    "finite_axes": 3,
    "horizon_line": {
     "a": [
-     9477,
+     9479,
      -1334
     ],
     "b": [
-     -2087,
+     -2089,
      -872
     ]
    },
@@ -538,7 +538,7 @@
      "kind": "edge",
      "at": [
       896,
-      216
+      217
      ],
      "dir": [
       0.905,
@@ -549,7 +549,7 @@
      "axis": 1,
      "kind": "edge",
      "at": [
-      474,
+      473,
       108
      ],
      "dir": [
@@ -562,7 +562,7 @@
      "kind": "edge",
      "at": [
       651,
-      620
+      621
      ],
      "dir": [
       0.04,
@@ -576,69 +576,69 @@
  ],
  "stroke_built": [
   {
-   "order": 0,
-   "standing": false,
+   "order": 1,
+   "standing": true,
    "slots": [
-    null,
-    null,
+    "vp@-41,338",
+    "screen",
     "screen"
    ],
-   "horizon_y": 337,
+   "horizon_y": 338,
+   "lifted": 0,
+   "total": 0,
+   "note": ""
+  },
+  {
+   "order": 2,
+   "standing": true,
+   "slots": [
+    "vp@-41,338",
+    "vp@1308,338",
+    "screen"
+   ],
+   "horizon_y": 338,
+   "lifted": 0,
+   "total": 0,
+   "note": ""
+  },
+  {
+   "order": 2,
+   "standing": true,
+   "slots": [
+    "vp@-41,338",
+    "vp@1308,338",
+    "screen"
+   ],
+   "horizon_y": 338,
    "lifted": 0,
    "total": 1,
    "note": ""
   },
   {
-   "order": 0,
-   "standing": false,
+   "order": 2,
+   "standing": true,
    "slots": [
-    null,
-    null,
+    "vp@-41,338",
+    "vp@1308,338",
     "screen"
    ],
-   "horizon_y": 337,
+   "horizon_y": 338,
    "lifted": 0,
    "total": 2,
    "note": ""
   },
   {
-   "order": 0,
-   "standing": false,
+   "order": 2,
+   "standing": true,
    "slots": [
-    null,
-    null,
+    "vp@-41,338",
+    "vp@1308,338",
     "screen"
    ],
-   "horizon_y": 337,
+   "horizon_y": 338,
    "lifted": 0,
    "total": 3,
    "note": ""
-  },
-  {
-   "order": 2,
-   "standing": true,
-   "slots": [
-    "vp@748,2858",
-    "vp@-10813,2858",
-    "screen"
-   ],
-   "horizon_y": 2858,
-   "lifted": 3,
-   "total": 4,
-   "note": "축과 23.1° 어긋난 그대로 둡니다 — **2D로 대기**합니다"
-  },
-  {
-   "order": 2,
-   "standing": true,
-   "slots": [
-    "vp@748,2858",
-    "vp@-10813,2858",
-    "screen"
-   ],
-   "horizon_y": 2858,
-   "lifted": 3,
-   "total": 5,
-   "note": "축과 23.1° 어긋난 그대로 둡니다 — **2D로 대기**합니다"
   }
  ],
  "summary": {
@@ -766,11 +766,11 @@
   ],
   "built_final_order": 2,
   "built_final_slots": [
-   "vp@748,2858",
-   "vp@-10813,2858",
+   "vp@-41,338",
+   "vp@1308,338",
    "screen"
   ],
-  "built_lifted": "3/5"
+  "built_lifted": "0/3"
  },
  "gate": {
   "registered": "돌린 3점 시점에서 **그릴 수 있고** 축 소실점·지평선이 선다. 판정은 `summary.stroke_added`·`blocked_now`·`finite_axes`가 든다(#47).",
@@ -908,11 +908,11 @@
    ],
    "built_final_order": 2,
    "built_final_slots": [
-    "vp@748,2858",
-    "vp@-10813,2858",
+    "vp@-41,338",
+    "vp@1308,338",
     "screen"
    ],
-   "built_lifted": "3/5"
+   "built_lifted": "0/3"
   }
  },
  "pitfall_citations": [

@@ -26,104 +26,104 @@
       15,
       30
     ],
-    "rows": 10755,
-    "d2_strokes": 5656,
-    "d3_strokes": 5099
+    "rows": 10741,
+    "d2_strokes": 10741,
+    "d3_strokes": 0
   },
   "stage_split": {
-    "d2": "5656/10755",
-    "d3": "5099/10755",
+    "d2": "10741/10741",
+    "d3": "0/10741",
     "note": "**2D 단계 획이 전체의 얼마인가.** 이 몫이 곧 항목 1의 수리가 닿는 범위다."
   },
   "d2_by_radius": {
     "r8": {
-      "n": 1796,
-      "no_candidate": "300/1796",
-      "out_of_aperture": "1115/1796",
-      "in_aperture": "381/1796",
-      "engaged_end": "381/1796",
-      "engaged_start": "395/1796",
-      "recorded_end": "381/1796",
-      "recorded_start": "395/1796",
-      "in_aperture_not_engaged": "0/381",
+      "n": 3600,
+      "no_candidate": "300/3600",
+      "out_of_aperture": "2113/3600",
+      "in_aperture": "1187/3600",
+      "engaged_end": "1187/3600",
+      "engaged_start": "1207/3600",
+      "recorded_end": "1187/3600",
+      "recorded_start": "1207/3600",
+      "in_aperture_not_engaged": "0/1187",
       "nearest_end_px": {
-        "n": 1496,
-        "p10": 2.582,
-        "median": 35.5947,
-        "p90": 251.1869
+        "n": 3300,
+        "p10": 2.0862,
+        "median": 13.5953,
+        "p90": 120.6843
       }
     },
     "r15": {
-      "n": 1900,
-      "no_candidate": "300/1900",
-      "out_of_aperture": "1024/1900",
-      "in_aperture": "576/1900",
-      "engaged_end": "576/1900",
-      "engaged_start": "549/1900",
-      "recorded_end": "576/1900",
-      "recorded_start": "549/1900",
-      "in_aperture_not_engaged": "0/576",
+      "n": 3596,
+      "no_candidate": "300/3596",
+      "out_of_aperture": "1654/3596",
+      "in_aperture": "1642/3596",
+      "engaged_end": "1642/3596",
+      "engaged_start": "1573/3596",
+      "recorded_end": "1642/3596",
+      "recorded_start": "1573/3596",
+      "in_aperture_not_engaged": "0/1642",
       "nearest_end_px": {
-        "n": 1600,
-        "p10": 3.2589,
-        "median": 28.5377,
-        "p90": 248.1429
+        "n": 3296,
+        "p10": 2.5617,
+        "median": 15.0986,
+        "p90": 120.7435
       }
     },
     "r30": {
-      "n": 1960,
-      "no_candidate": "300/1960",
-      "out_of_aperture": "806/1960",
-      "in_aperture": "854/1960",
-      "engaged_end": "854/1960",
-      "engaged_start": "702/1960",
-      "recorded_end": "854/1960",
-      "recorded_start": "702/1960",
-      "in_aperture_not_engaged": "0/854",
+      "n": 3545,
+      "no_candidate": "300/3545",
+      "out_of_aperture": "1138/3545",
+      "in_aperture": "2107/3545",
+      "engaged_end": "2107/3545",
+      "engaged_start": "1941/3545",
+      "recorded_end": "2107/3545",
+      "recorded_start": "1941/3545",
+      "in_aperture_not_engaged": "0/2107",
       "nearest_end_px": {
-        "n": 1660,
-        "p10": 3.3522,
-        "median": 28.0696,
-        "p90": 246.1095
+        "n": 3245,
+        "p10": 3.2589,
+        "median": 19.0884,
+        "p90": 121.7999
       }
     }
   },
   "d2_by_composition": {
     "3pt_yaw35_pitch15": {
-      "n": 293,
-      "engaged_end": "11/293",
-      "engaged_start": "21/293"
+      "n": 720,
+      "engaged_end": "179/720",
+      "engaged_start": "198/720"
     },
     "3pt_yaw20_pitch25": {
-      "n": 302,
-      "engaged_end": "14/302",
-      "engaged_start": "8/302"
+      "n": 720,
+      "engaged_end": "168/720",
+      "engaged_start": "132/720"
     },
     "3pt_yaw50_pitch8": {
-      "n": 284,
-      "engaged_end": "12/284",
-      "engaged_start": "18/284"
+      "n": 720,
+      "engaged_end": "225/720",
+      "engaged_start": "221/720"
     },
     "2pt_yaw35_pitch0": {
-      "n": 326,
-      "engaged_end": "58/326",
-      "engaged_start": "53/326"
+      "n": 720,
+      "engaged_end": "295/720",
+      "engaged_start": "325/720"
     },
     "1pt_yaw0_pitch0": {
-      "n": 591,
-      "engaged_end": "286/591",
-      "engaged_start": "295/591"
+      "n": 720,
+      "engaged_end": "320/720",
+      "engaged_start": "331/720"
     }
   },
   "d3_note": "**3D 단계에서는 `resolve2dCore`가 아예 안 돈다**(앱의 `frame() ? null : resolve2d`). 그 단계의 끝점 스냅은 `applySnapToEnd`(3D 참조)가 맡고 `snap_use`가 그것을 잰다 — **다른 원장·다른 분모다**(#11).",
   "d3": {
-    "n": 5099,
-    "engaged_end": "0/5099",
+    "n": 0,
+    "engaged_end": "0/0",
     "note": "**정의상 0이다** — 이 단계에서는 2D 경로가 안 돈다. 측정이 아니라 배선의 귀결이다(#5)."
   },
   "no_record_arm": {
-    "recorded_end": "0/5656",
-    "recorded_start": "0/5656",
+    "recorded_end": "0/10741",
+    "recorded_start": "0/10741",
     "what": "**항목 1 이전의 앱이 이 팔이다** — `resolve2dCore`가 좌표를 옮기고 표식까지 그렸는데 문서에 남는 것이 **하나도 없었다**. `engaged`와 이 행의 차이가 곧 그 결함의 크기다."
   },
   "guarantee": {
@@ -138,10 +138,10 @@
   "gate": {
     "registered": "① **기록이 걸린 수와 같다**: 2D 단계에서 `resolve2dCore`가 끝점 오스냅을 건 획 수(`engaged_end`)와 `snap2Refs`가 문서에 남긴 수(`recorded_end`)가 **정확히 같다**. ⚠ 이것은 **보장이지 측정이 아니다**(#5) — `snap2Refs`가 같은 값을 옮겨 적을 뿐이다. 그래서 **임계를 안 걸고**, 대신 **양성 채널 `no_record` 팔**(기록을 건너뛴 팔)이 0을 내야 이 검사가 무엇을 잡는지 증명된다(#30·#32). ② **단계가 실제로 갈린다**: 2D 단계(P0)에서 그은 획이 **0이 아니다**. 0이면 이 원장이 재는 대상이 도달 불가이고(#35), 그러면 항목 1의 수리는 **닿지 않는 코드**다. 모집단은 5구도 × 6시드 × 등급 2 × 잡음 5 × 조리개 3 = 900실행 × 12획이고 **분모는 그 단계에서 그은 획**이다 — 2D와 3D는 **다른 모집단**이다(#11). ⚠ 이것은 이 항목이 등록한 게이트다(#41).",
     "reachability": "**`no_record` 팔이 도달 가능성의 반대편이다**(#30·#35) — 항목 1 이전의 앱이 그 팔이고 `recorded`가 0이다. `engaged`가 0이 아니면 그 차이가 결함의 크기이고, `engaged`가 0이면 **2D 단계에서 끝점 스냅이 애초에 안 걸리는 것**이라 항목 1의 수리는 닿는 데가 없다. 즉 이 원장은 **수리의 대상이 존재하는지부터** 판정한다.",
-    "reachability_value": 1811,
+    "reachability_value": 4936,
     "reachability_source": "d2_engaged_end_n"
   },
-  "d2_engaged_end_n": 1811,
+  "d2_engaged_end_n": 4936,
   "constants": {
     "hash": "f351839a",
     "values": {

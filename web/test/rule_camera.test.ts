@@ -23,10 +23,11 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { detectVps, linesFromStrokes, assignAxes } from "../src/s3d/vpDetect.js";
 import { recoverCamera, isFiniteVp, type Pt2 } from "../src/s3d/camera.js";
+import { trueHorizonY } from "./ruleState.js";
 import { P1_F_RATIO } from "../src/ui/camState.js";
 import { representative } from "../src/s3d/axis.js";
 import {
-  newRuleState, stepRule, vpsOf, perspectiveOrder, sepDeg,
+  newRuleState, withHorizon, stepRule, vpsOf, perspectiveOrder, sepDeg,
   type RuleState, type RLine,
 } from "../src/s3d/vpRules.js";
 // **스냅 팔**(5차 이월-2) — 앱이 확정 전에 쓰는 2D 판정 그 함수다(#17: mainL과 같은 출처)
@@ -135,7 +136,11 @@ type RunMode = "raw" | "snap" | "placebo";
 function runRules(fx: Fx, order: Order, mode: RunMode = "raw",
                   radiusPx = OSNAP_RADIUS_PX, rr?: () => number): RuleRun {
   const list = orderStrokes(fx, order);
-  let st = newRuleState();
+  // **지평선을 먼저 긋는다**(18차 D-L109) — 새 절차에서 규칙은 지평선 없이는 깊이선을
+  // 소실점으로 못 바꾼다. `newRuleState()`에서 시작하면 **전부 거절돼 원장이 0이 된다**
+  // (실제로 그렇게 깨져 있었다). 값은 픽스처의 **참 지평선**이고, 손 오차는 없다 —
+  // 그 한계는 `what_this_does_not_say`가 든다.
+  let st = withHorizon(newRuleState(SZ), trueHorizonY(fx.sc.vps, SZ), SZ);
   let asks = 0, rejected = 0, snapEngaged = 0, snapQueried = 0;
   let firstSep: number | null = null;
   let firstPairMoved: number | null = null;
@@ -624,6 +629,11 @@ describe("규칙 기반 카메라 — 축 방향 오차 (사람 지시 4)", () =
         ...head,
       },
       what_this_does_not_say: [
+        "⚠⚠ **지평선은 픽스처의 참값이고 손 오차가 없다**(2026-08-20 18차 · D-L109). "
+        + "새 절차에서 규칙은 지평선 없이는 깊이선을 소실점으로 못 바꾸므로 하네스가 "
+        + "**먼저 긋는다**. 그러므로 아래 축 오차는 **지평선을 정확히 그었을 때**의 값이고 "
+        + "사람이 그은 지평선의 오차는 **안 들어 있다**(#32 — 안 잰 것이지 «영향 없음»이 아니다). "
+        + "그 오차의 크기는 다음 세션이 지평선에 섭동을 주어 잰다.",
         "합성 잉크는 짝을 의도하지 않는다(AS-L13의 자리) — 사람은 X 교차·연장 수렴으로 짝을 긋는다. 실획(K)이 최종 판정자다",
         "시드별 분해가 없다(#14) — 원시↔스냅 격차가 시드 폭 안인지 미확인이다(격차 값은 headline_no_identity를 그 자리에서 읽는다 — 수치를 여기 적으면 재실행마다 낡는다, #1). 짝지은 부분집합(paired_headline)이 표본 짝은 맞추지만 시드 폭은 못 대고, **축 분모는 여전히 다르다**(예: drawn 짝 층에서 raw_axes 대 snap_axes — 무한원 편평화의 선택 효과, 리뷰어 [3-6])",
         "⚠ **배선 판이 넷이다**(7차 지시 1-a로 하나, 8차 항목 1로 하나 늘었다): ① 물음 오라클(지시 3 이전) `git show d724ac0:stage0/out/rule_camera.json` ② 무물음 선언(직교→screen·vp_dir→depth 강제) `git show b52bc7c:stage0/out/rule_camera.json` ③ 강제 없음(D-L70) `git show d85dca8:stage0/out/rule_camera.json` ④ **현행 — P1 잠김을 연 판**(8차 항목 1, `d233ec4` — `perspectiveOrder`가 화면 가로축만으로 1을 내던 것을 고쳤다). **이 파일은 ④다.** ⚠⚠ ③ → ④에서 이 하네스가 **크게 움직였다**(표제 축 오차 중앙 31.6083 → 7.9567 · 등록 게이트 false → true) — ③의 수치를 인용한 문서는 전부 낡았다(8차 2차 지시 항목 0에서 정정). ⚠ 그 뒤집힘의 여유는 **1.2175°**이고 아래 [1]이 적은 **시드 폭이 미측정**이라 강도는 약하다(#14). 병합 전 원격 갈래의 판 둘도 남는다(8차 항목 0): 6차 마감 `git show 513c33d:...`, 끝점 오스냅 ortho+vpdir 강제(P1 가드 우회로 기각) `git show b4f2d9b:...` — 그 갈래의 `osnap_vpdir_forced` 카운터는 강제가 없어진 ③에서 대상이 사라졌다. 물음에는 참 축으로 답한다(오라클) — 어느 팔도 실사용 성능이 아니다",

@@ -355,11 +355,11 @@
         "near_vp_beyond_segment": [
           [
             "s40",
-            true
+            "폐기"
           ],
           [
             "s41",
-            true
+            "폐기"
           ]
         ],
         "near_vp_lever": [
@@ -466,23 +466,23 @@
         "near_vp_beyond_segment": [
           [
             "s41",
-            true
+            "폐기"
           ],
           [
             "s42",
-            true
+            "폐기"
           ],
           [
             "s43",
-            true
+            "폐기"
           ],
           [
             "s44",
-            true
+            "폐기"
           ],
           [
             "s45",
-            true
+            "폐기"
           ]
         ],
         "near_vp_lever": [
@@ -634,15 +634,15 @@
         "near_vp_beyond_segment": [
           [
             "s65",
-            true
+            "폐기"
           ],
           [
             "s66",
-            true
+            "폐기"
           ],
           [
             "s75",
-            true
+            "폐기"
           ]
         ],
         "near_vp_lever": [

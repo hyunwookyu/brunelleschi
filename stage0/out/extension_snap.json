@@ -175,9 +175,9 @@
         "start_anchor": 0,
         "two_point": 0,
         "end_anchor": 0,
-        "cross_anchor": 1,
+        "cross_anchor": 3,
         "batch": 0,
-        "ground": 3,
+        "ground": 1,
         "extension": 1,
         "unanchored": 0,
         "aux": 0
@@ -187,14 +187,14 @@
       "last": {
         "seg3d": [
           [
-            -1.7806935899694536,
-            1,
-            5.935705964229754
+            -1.7780555000847031,
+            0.9999999999999999,
+            5.92592592592592
           ],
           [
-            -1.780693584643854,
-            1,
-            4.5658772918505806
+            -1.7780555000847031,
+            0.9999999999999999,
+            4.558529347922373
           ]
         ],
         "axis": 1,
@@ -203,7 +203,7 @@
     },
     "collinear": {
       "d0": 0,
-      "d1": 9.756017539405093e-17
+      "d1": 0
     },
     "toggled_off": {
       "pb": {
@@ -211,9 +211,9 @@
         "start_anchor": 1,
         "two_point": 0,
         "end_anchor": 0,
-        "cross_anchor": 1,
+        "cross_anchor": 3,
         "batch": 0,
-        "ground": 3,
+        "ground": 1,
         "extension": 1,
         "unanchored": 0,
         "aux": 0
@@ -227,9 +227,9 @@
         "start_anchor": 2,
         "two_point": 0,
         "end_anchor": 0,
-        "cross_anchor": 1,
+        "cross_anchor": 3,
         "batch": 0,
-        "ground": 3,
+        "ground": 1,
         "extension": 1,
         "unanchored": 0,
         "aux": 0

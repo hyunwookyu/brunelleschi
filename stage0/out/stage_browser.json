@@ -176,7 +176,7 @@
   "setup": {
     "canvas": [
       1280,
-      674
+      675
     ],
     "strokes": 12,
     "hasCamera": true,
@@ -190,86 +190,86 @@
     "true_f_px": 1000,
     "principal": [
       640.0000000000001,
-      336.99999999999994
+      337.49999999999994
     ],
     "canvas_center": [
       640,
-      337
+      337.5
     ],
     "view_offset": {
       "enabled": true,
       "fullWidth": 1280.0000000000002,
-      "fullHeight": 674.0000000000001,
+      "fullHeight": 675.0000000000001,
       "offsetX": 0,
       "offsetY": 1.1368683772161603e-13,
       "width": 1280,
-      "height": 674
+      "height": 675
     }
   },
   "wiring_identity_px": {
-    "max": 2.2914314707516465e-13,
+    "max": 1.2409095402129096e-13,
     "n": 24,
     "note": "**보장의 배선 확인**이다(PITFALLS #5). 0에 가까워야 하고, 아니면 규약 오류다."
   },
   "offcenter_principal": {
     "principal": [
       600,
-      329.0638057217184
+      329.5638057217184
     ],
     "canvas_center": [
       640,
-      337
+      337.5
     ],
     "vps": [
       [
         2118.52761348025,
-        69.05080756887736
+        69.55080756887736
       ],
       [
         -84.90818565209554,
-        69.0508075688773
+        69.5508075688773
       ],
       [
         600,
-        4069.050807568878
+        4069.550807568878
       ]
     ],
     "view_offset": {
       "enabled": true,
       "fullWidth": 1360,
-      "fullHeight": 689.8723885565632,
+      "fullHeight": 690.8723885565632,
       "offsetX": 80,
       "offsetY": 15.872388556563237,
       "width": 1280,
-      "height": 674
+      "height": 675
     }
   },
   "offcenter_identity_px": {
-    "max": 1.3406493525361332e-13,
+    "max": 1.2710574864626038e-13,
     "n": 24
   },
   "dpr": {
     "dpr": 2,
     "ink_backbuffer": [
       2560,
-      1348
+      1350
     ],
     "ink_css": [
       1280,
-      674
+      675
     ],
     "gl_backbuffer": [
       2560,
-      1348
+      1350
     ],
     "cam_imgSize": [
       1280,
-      674
+      675
     ]
   },
   "dpr_identity_px": {
-    "css_frame": 2.2914314707516465e-13,
-    "backbuffer_frame_control": 991.0195472755912,
+    "css_frame": 1.2409095402129096e-13,
+    "backbuffer_frame_control": 991.1288457224102,
     "control_stat": "24점의 **최댓값**(css_frame과 같은 통계·같은 분모)",
     "note": "**대조군이 요점이다**(#6). dpr 2에서 CSS 프레임으로 비교하면 0이고, 백버퍼 프레임으로 비교하면 벌어진다 — 벌어지지 않으면 이 행은 아무것도 검사하지 않는다.",
     "what_this_is_not": "⚠ **앱의 dpr 규약을 되살린 것이 아니다**(리뷰어 2회차 [8][9]). 되살린 것은 **측정 쪽 비교 프레임**이고, 앱의 `canvasFrame` 규약을 잠그는 것은 `e2e/coords.spec.ts`(dpr 1·2·3 프로젝트)다. 여기서 dpr 2는 `deviceScaleFactor`가 아니라 **페이지 안에서 흉내낸 것**이라 브라우저 합성 경로를 타지 않는다 — PITFALLS #21이 기록한 실패 자리가 바로 그 조건이다."
@@ -278,23 +278,23 @@
     "before": {
       "enabled": true,
       "fullWidth": 1280.0000000000002,
-      "fullHeight": 674.0000000000001,
+      "fullHeight": 675.0000000000001,
       "offsetX": 0,
       "offsetY": 1.1368683772161603e-13,
       "width": 1280,
-      "height": 674
+      "height": 675
     },
     "after": {
       "enabled": true,
       "fullWidth": 1280.0000000000002,
-      "fullHeight": 674.0000000000001,
+      "fullHeight": 675.0000000000001,
       "offsetX": 0,
       "offsetY": 1.1368683772161603e-13,
       "width": 820,
-      "height": 674,
+      "height": 675,
       "imgSize": [
         820,
-        674
+        675
       ]
     },
     "size_heal_count": 3
@@ -308,25 +308,25 @@
     "pinned": false,
     "controls": true,
     "ink_pointer_events": "auto",
-    "gl_painted_px": 3542,
-    "ink_painted_px": 21849
+    "gl_painted_px": 3551,
+    "ink_painted_px": 21715
   },
   "home": {
     "pinned": true,
-    "ink_painted_px": 23082
+    "ink_painted_px": 21565
   },
   "guide_budget": {
     "canvas": [
       1280,
-      674
+      675
     ],
-    "diag": 1446.6084473692251,
+    "diag": 1447.074635255556,
     "required_min_len_px": null,
     "actual_guide_len_px": [],
     "note": "⚠ **대상이 사라졌다**(D-L37) — 가이드가 없어졌으므로 '가이드 길이'도 '요구 길이(`min_guide_ratio`)'도 없는 양이다. 빈 배열·`null`이고, 이 자리를 지우지 않는 이유는 왜 그 규칙이 있었는지가 근거이기 때문이다(#29의 숙제였다)."
   },
   "l_d3_save_roundtrip": {
-    "reload_ms": 1183,
+    "reload_ms": 1640,
     "views": 2,
     "lifted": 12,
     "pending_2d": 1,
@@ -482,11 +482,11 @@
       "current": "v3"
     },
     "roundtrip_wrong_pose_control": {
-      "max_abs": 0.7000000000000002
+      "max_abs": 0.7000000000000011
     },
     "ownership": {
-      "painted_before": 2998,
-      "painted_after": 2998,
+      "painted_before": 2823,
+      "painted_after": 2823,
       "delta_other_view": 0,
       "delta_same_view_control": 304,
       "views": [
@@ -511,7 +511,7 @@
       "lifted_in_v2": 1,
       "canvas_css": [
         1280,
-        674
+        675
       ],
       "size_heal_count": 1
     },
@@ -535,11 +535,11 @@
       "rows": 1,
       "canvas_css": [
         1280,
-        674
+        675
       ],
       "canvas_css_after": [
         1280,
-        674
+        675
       ],
       "size_heal_count": 1
     },
@@ -610,21 +610,21 @@
       "axis": 0,
       "seg3d": [
         [
-          2.283882456992492,
-          -0.8420712448305963,
-          6.9821020406598
+          2.2838824569924925,
+          -0.842071244830596,
+          6.982102040659802
         ],
         [
-          1.3952090902104286,
-          -0.6810195953427651,
-          6.381049102128442
+          1.3952094394892294,
+          -0.6810196586415302,
+          6.381049338362649
         ]
       ],
       "snap_kind": "endpoint",
       "snap_at": [
-        2.283882456992492,
-        -0.8420712448305963,
-        6.9821020406598
+        2.2838824569924925,
+        -0.842071244830596,
+        6.982102040659802
       ],
       "end_snapped": false
     },
@@ -633,14 +633,14 @@
       "unchanged": true,
       "seg3d": [
         [
-          2.283882456992492,
-          -0.8420712448305963,
-          6.9821020406598
+          2.2838824569924925,
+          -0.842071244830596,
+          6.982102040659802
         ],
         [
-          1.3952090902104286,
-          -0.6810195953427651,
-          6.381049102128442
+          1.3952094394892294,
+          -0.6810196586415302,
+          6.381049338362649
         ]
       ],
       "views": 3,
@@ -709,8 +709,8 @@
     },
     "stroke_latency_ms": {
       "n": 8,
-      "median": 2.2,
-      "max": 4.3,
+      "median": 4.9,
+      "max": 8.3,
       "note": "**개발 서버(번들 없음) · 상자 둘(24획 + 그린 획)** 기준이므로 상한으로 읽는다. ⚠ `e2e.json`의 값은 **옛 UI**라 같은 구간이 아니다 — 견주지 않는다.",
       "registered_pass": "중앙 10ms 미만(사전 등록). ⚠ **중앙값 자체를 문서에 인용하지 않는다** — 기계·실행마다 흔들린다. 판정은 자릿수다"
     },
@@ -754,7 +754,7 @@
     },
     "screenshot_regression": {
       "identical": true,
-      "bytes": 178490,
+      "bytes": 176626,
       "note": "**결정론 확인이다**(설계 보장, #5) — 잉크가 LCG이고 자세가 고정이므로 같아야 한다. 임계를 걸지 않는다. ⚠ **기계 간 비교는 안 한다**(폰트·안티에일리어싱)."
     },
     "what_this_does_not_say": [
