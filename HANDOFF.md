@@ -85,11 +85,13 @@
 같은 화면 안에서도 `drawDirLines`(방향 확정 획의 옅은 무한직선)만 확정 시점 값을 읽어
 **그 직선들이 표식이 아닌 점으로 모였다.**
 
-**관측이 그 상태였다는 근거**(1차 리뷰어 [1]에 답한 자리): 상태 표시 「뷰 1」은 뷰의
-**이름**이고, `viewForDrawing()`은 **카메라가 서 있고 핀이 아닐 때만** 그 이름을 만든다 —
-**회전이 필요 없다.** 앱 경로 재현이 원장의 `signature`·`observation_match`에 있다
-(보고된 다섯이 자세 ①에서 함께 난다). ⚠ 그 자세에 **어떤 조작으로** 왔는지는 특정하지
-못했다 — 후보는 `applyDoc2`의 복원 갈래와 `restoreSnap`(비핀 유지)이다.
+**관측이 그 상태였다는 근거**(리뷰어 두 라운드가 다듬은 자리): 「뷰 1」은 뷰의 **이름**이고
+`viewForDrawing()`은 **카메라가 서 있고 핀이 아닐 때만** 그 이름을 만들며, **획도 자세가
+맞을 때만** 그 뷰로 간다. 그러므로 「2D 4」의 넷은 **그 상태에서 그어졌다** — 사용자가
+어긋남을 본 것도 «그을 때»다. **회전은 필요 없다.**
+⚠⚠ **주장의 한계**: 「뷰 1」은 «화면을 찍은 그 순간이 비핀»의 증거가 **아니다** — 자세 ②는
+**핀인데도** 현재 뷰 이름이 「뷰 1」이다(원장의 `view_name_counterexample`). 그리고 그 자세에
+**어떤 조작으로** 왔는지, `lifted = 0`이 **왜** 그랬는지는 특정하지 못했다.
 
 **수리**: `web/src/ui/vpSource.ts`의 `screenVps()` 하나가 규칙을 든다 —
 「핀·미확정이면 규칙 상태의 값, 돌린 시점이면 그 시점의 투영」. `mainL`의 `vpsOnScreen()`이
@@ -110,7 +112,9 @@
   핀으로 막혀 있다 — **막힘이 풀리면 같은 자리가 다시 열린다**(D-L108의 «잠정인 것»).
 
 **팔**: 단위 `web/test/vp_source.test.ts` · 종단 `web/e2e/vp_source.spec.ts` →
-`vp_source.json`(dpr 1) · `vp_source_dpr2.json`(dpr 2 — #21·D-C3).
+`vp_source.json`(dpr 1) · `vp_source_dpr2.json`(dpr 2 — #21·D-C3. **dpr가 실제로 걸린 증거는
+`backing_ratio`**가 1 ↔ 2인 것이고, 그 위에서 나머지가 같으므로 «배선이 dpr에서 안 갈린다»가
+지지된다).
 되살림 스위치 `S2S.setVpSource(false)`가 수리 전 배선을 그 자리에서 되살린다(#30).
 판정 값은 원장의 `summary`가 든다 — `fixed_not_engaged`·`fixed_wrong_axis`(측정) ·
 `legacy_not_engaged_rotated`·`legacy_wrong_point_rotated`(되살림, **갈라 센다**) ·

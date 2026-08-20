@@ -106,9 +106,18 @@ test(`표시된 소실점으로 스냅되는가 — 자세 여섯 (dpr ${dpr})`,
       const marks = (S.axisMarks() || []).map((m: any) => ({
         axis: m.axis, kind: m.kind, at: m.at.map((v: number) => Math.round(v)),
       }));
+      const cur = S.views().find((v: any) => v.id === S.currentView());
+      const el2 = document.getElementById("ink") as HTMLCanvasElement;
       return {
         pinned: S.camPose().pinned, view_state: S.viewState(), standing: S.standing(),
+        /** **dpr가 실제로 걸렸는가**(2차 리뷰어 [7]) — 백킹 스토어가 css 크기의 배수여야 한다. */
         dpr: window.devicePixelRatio,
+        canvas_css: [el2.clientWidth, el2.clientHeight],
+        canvas_backing: [el2.width, el2.height],
+        backing_ratio: el2.clientWidth ? el2.width / el2.clientWidth : null,
+        /** **음성 대조**(2차 리뷰어 [1]) — 핀이면 현재 뷰가 「확정 뷰」다. 「뷰 N」이 아니다. */
+        current_view_name: cur ? cur.name : null,
+        current_is_confirm: cur ? cur.isConfirm : null,
         disp_vps: o ? o.vps : null, cam_vps: S.camSnapshot().vps,
         lifted: S.doc().strokes.filter((x: any) => x.seg3d).length,
         strokes: S.doc().strokes.length,
@@ -117,6 +126,8 @@ test(`표시된 소실점으로 스냅되는가 — 자세 여섯 (dpr ${dpr})`,
         axis_horizon_dist_px: o ? [0,1,2].map(i => toLine(o.vps[i])) : null,
         /** 지시 d — 표식의 종류와 자리. `edge`가 화면 밖 소실점의 가장자리 표식이다. */
         marks,
+        /** 지시 d — **표식의 화면 자리**가 지평선에서 떨어진 px(관측이 물은 그 양이다). */
+        mark_horizon_dist_px: marks.map((m: any) => toLine(m.at)),
         /** 지시 e — 토글(`on`)과 표시(`visible`·`drawn`)는 **다른 양**이다. */
         view_cube: S.viewCubeState(),
         fixed, legacy,
@@ -152,6 +163,39 @@ test(`표시된 소실점으로 스냅되는가 — 자세 여섯 (dpr ${dpr})`,
            + "`applyDoc2`의 복원 갈래(`stage.setPose(v.pose)`)와 `restoreSnap`(비핀이면 "
            + "그대로 둔다)이 후보다. 여기서는 픽스처가 만든다.");
 
+
+  // ---- **관측의 서명을 자세 ① 안에서 만든다**(2차 리뷰어 [2]) — 「뷰 N」이 붙는 것과
+  //      `lifted = 0`이 **한 상태**에서 함께 나야 «다섯이 한 자세에서»가 성립한다.
+  const before = await page.evaluate(() => ({
+    views: window.S2S.views().length,
+    lifted: window.S2S.doc().strokes.filter((x: any) => x.seg3d).length,
+  }));
+  const sa: [number, number] = [0.30 * box.width, 0.55 * box.height];
+  const sb: [number, number] = [0.58 * box.width, 0.50 * box.height];
+  await page.mouse.move(box.x + sa[0], box.y + sa[1]);
+  await page.mouse.down();
+  for (let i = 1; i <= 10; i++)
+    await page.mouse.move(box.x + sa[0] + (sb[0] - sa[0]) * i / 10,
+                          box.y + sa[1] + (sb[1] - sa[1]) * i / 10);
+  await page.mouse.up();
+  await page.waitForTimeout(120);
+  const signature = await page.evaluate(([bv]) => {
+    const S = window.S2S;
+    const cur = S.views().find((v: any) => v.id === S.currentView());
+    const last = S.doc().strokes[S.doc().strokes.length - 1];
+    return {
+      at_pose: "① 확정됐으나 비핀 · 확정 카메라와 무관한 자유 자세",
+      views_before: (bv as any).views, views_after: S.views().length,
+      current_view_name: cur ? cur.name : null,
+      current_is_confirm: cur ? cur.isConfirm : null,
+      pending_in_current: cur ? cur.pending : null,
+      stroke_axis: last ? last.axis : null,
+      stroke_has_3d: last ? !!last.seg3d : null,
+      lifted: S.doc().strokes.filter((x: any) => x.seg3d).length,
+      view_cube: S.viewCubeState(),
+    };
+  }, [before]);
+
   // ② 핀 — 앱의 확정 경로(`standCamera` → `stage.pinTo`)가 만든다(#17)
   await page.evaluate(() => window.S2S.confirmNow());
   await page.waitForTimeout(200);
@@ -176,36 +220,6 @@ test(`표시된 소실점으로 스냅되는가 — 자세 여섯 (dpr ${dpr})`,
   });
   await page.waitForTimeout(220);
   await at("⑤ 윗면(피치)", "");
-
-  // ---- **관측의 서명을 앱 경로로 만든다**: 비핀 상태에서 한 획을 그으면 「뷰 N」이 생기고
-  //      그 획이 2D로 남는가. 상태 표시 「뷰 1 · 2D 4」가 이 모양이다.
-  const before = await page.evaluate(() => ({
-    views: window.S2S.views().length, lifted: window.S2S.doc().strokes.filter((x: any) => x.seg3d).length,
-  }));
-  const a: [number, number] = [0.30 * box.width, 0.55 * box.height];
-  const b: [number, number] = [0.58 * box.width, 0.50 * box.height];
-  await page.mouse.move(box.x + a[0], box.y + a[1]);
-  await page.mouse.down();
-  for (let i = 1; i <= 10; i++)
-    await page.mouse.move(box.x + a[0] + (b[0] - a[0]) * i / 10, box.y + a[1] + (b[1] - a[1]) * i / 10);
-  await page.mouse.up();
-  await page.waitForTimeout(120);
-  const signature = await page.evaluate(([bv]) => {
-    const S = window.S2S;
-    const cur = S.views().find((v: any) => v.id === S.currentView());
-    const last = S.doc().strokes[S.doc().strokes.length - 1];
-    return {
-      views_before: (bv as any).views, views_after: S.views().length,
-      current_view_name: cur ? cur.name : null,
-      current_is_confirm: cur ? cur.isConfirm : null,
-      pending_in_current: cur ? cur.pending : null,
-      stroke_axis: last ? last.axis : null,
-      stroke_has_3d: last ? !!last.seg3d : null,
-      lifted: S.doc().strokes.filter((x: any) => x.seg3d).length,
-      /** 지시 e — 토글(`on`)과 표시(`visible`·`drawn`)가 **다른 양**임을 실측으로 든다. */
-      view_cube: S.viewCubeState(),
-    };
-  }, [before]);
 
   // ---------------------------------------------------------------- 집계
   const finite = (rows: any[]) => rows.filter(r => r.disp);
@@ -232,7 +246,18 @@ test(`표시된 소실점으로 스냅되는가 — 자세 여섯 (dpr ${dpr})`,
     axis2_off_horizon_px: p1.axis_horizon_dist_px ? p1.axis_horizon_dist_px[2] : null,
     source_aim_deg: p1.legacy.filter((r: any) => r.disp).map((r: any) => r.source_aim_deg),
     what_is_not_shown: "그 사용자가 **어떤 조작으로** 이 자세에 왔는지는 특정하지 못했다 — "
-      + "픽스처가 만든 상태다. 후보는 `applyDoc2`의 복원 갈래와 `restoreSnap`(비핀 유지)이다.",
+      + "픽스처가 만든 상태다. 후보는 `applyDoc2`의 복원 갈래와 `restoreSnap`(비핀 유지)이다. "
+      + "⚠ 그리고 `lifted = 0`도 이 픽스처의 설정이지 이 자세의 귀결이 아니다"
+      + "(같은 12획인 자세 ②~⑤는 `lifted = 12`다) — 자유도 하나가 증상 셋을 낳는 것은 "
+      + "`answers.b`가 적는다(2차 리뷰어 [3]).",
+    view_name_counterexample: "⚠⚠ **「뷰 N」은 «지금 핀이 아니다»의 증거가 아니다**"
+      + "(2차 리뷰어 [1]의 반례를 원장이 든다): 자세 ②는 **핀인데** `current_view_name`이 "
+      + "「뷰 1」이다 — 이름은 **만들어질 때** 정해지고 `doc.currentView`는 확정으로 안 돌아간다. "
+      + "「뷰 1」이 증명하는 것은 **그 뷰가 만들어진 시점**과 **그 뷰에 배정된 획이 그어진 "
+      + "시점**이 «서 있고 핀이 아님»이라는 것이다(`viewForDrawing`이 자세까지 대조한다). "
+      + "관측의 「2D 4」가 그 뷰의 대기 획 수이므로 **그 넷은 그 상태에서 그어졌다** — "
+      + "그리고 사용자가 어긋남을 본 것도 «그을 때»다. **화면을 찍은 그 순간이 비핀이었는지는 "
+      + "증명되지 않는다.**",
   };
 
   const led = {
@@ -298,12 +323,22 @@ test(`표시된 소실점으로 스냅되는가 — 자세 여섯 (dpr ${dpr})`,
       observation_lifted_zero: "`observation_match.lifted = 0`은 **재현하려는 증상 자체**다 "
         + "(3D가 없다) — 집계가 안 돈 것이 아니다. 같은 자세의 `view_cube.drawn`이 거짓인 "
         + "것과 짝이다.",
+      backing_ratio_one: "`backing_ratio`가 dpr 1에서 정확히 1인 것은 **정상**이다 — "
+        + "백킹 스토어가 css 크기의 dpr배라는 규약(`canvasFrame`)의 값이다. 이 필드의 "
+        + "쓸모는 **dpr 2 원장에서 2가 되는 것**이고, 그것이 «두 번째 실행에 "
+        + "deviceScaleFactor가 실제로 걸렸다»의 증거다(2차 리뷰어 [7]).",
+      arms_runs_equal: "`arms.fixed`와 `arms.legacy`의 `runs`가 같은 것은 **구성의 귀결**이다 "
+        + "— 두 팔이 **같은 자세·같은 축**을 돈다(그래야 되살림이 같은 자리를 잰다). "
+        + "분포가 아니라 **실행 수 선언**이고, 비용 원장(`test_cost.json`의 "
+        + "`declared_scenarios`)이 그 수를 읽는다(#33).",
       pose3_near_zero: "자세 ③(핀 해제·자세 보존)의 `legacy` 값이 1e-13대인 것은 "
         + "**음성 대조가 성립한 것**이다 — 비핀이지만 자세가 확정 카메라 그대로라 두 출처가 "
         + "같은 점을 낸다(부동소수 잔차만 남는다).",
-      entries_agree_all_true: "`entries_agree`가 전부 참인 것도 스위치가 켜진 동안의 "
-        + "**보장**이다(두 진입점이 같은 규칙을 부른다) — 스위치가 꺼진 `legacy` 쪽에서는 "
-        + "이 필드를 안 읽는다.",
+      entries_agree_is_measurement: "`entries_agree`는 **보장이 아니라 배선 측정**이다"
+        + "(2차 리뷰어 [4]): 진입점이 둘(`vpsOnScreen`·`vpsForSnap`)이라 누군가 한쪽만 "
+        + "고치면 갈린다 — 코드 형태가 강제하지 않는다. 그래서 게이트에 **등록하고** "
+        + "검사도 건다. 스위치가 꺼진 `legacy` 쪽에서는 이 필드를 안 읽는다(그때는 "
+        + "갈리는 것이 의도다).",
     },
     tolerances: { vp_dist_ratio: AXIS_TOL.vp_dist_ratio },
     answers: {
@@ -315,13 +350,22 @@ test(`표시된 소실점으로 스냅되는가 — 자세 여섯 (dpr ${dpr})`,
         + "**위치**를 낸다(`marks`의 `axis: 2 · kind: \"edge\"`와 그 `at`). 색은 "
         + "`AXIS_COLOR[2] = #2471a3`이고 「W」 라벨은 **주 소실점 가장자리 갈래에만** 있다 "
         + "(보조 소실점 표식·탈레스 `E(밖)`는 다른 문자열이다 — 그 대조는 구현 독해다). "
-        + "**지평선 위가 아닌 것이 정상이다** — c의 `axis_horizon_dist_px[2]`가 그 값이다.",
+        + "**지평선 위가 아닌 것이 정상이다.** ⚠ 관측이 물은 것은 «표식의 화면 자리»이므로 "
+        + "그 양은 `mark_horizon_dist_px`다(2차 리뷰어 [6]) — `axis_horizon_dist_px`(소실점의 "
+        + "자리)와 두 자릿수 다르다. 그리고 그 값이 말하는 것은 더 넓다: **화면 밖 소실점의 "
+        + "가장자리 표식은 축을 가리지 않고 지평선에서 떨어진다** — 표식이 화면 가장자리로 "
+        + "죄이므로(`VP_EDGE.padPx`) **수평 소실점의 표식도** 지평선 위에 안 온다"
+        + "(`mark_horizon_dist_px[0]`·`[1]`이 0이 아닌 것이 그것이다). 즉 «지평선 위가 "
+        + "아니다»는 수직축이라서가 아니라 **화면 밖이라서**다.",
       e: "「뷰 큐브 켬」은 토글(`view_cube.on`)이고 그려지는 조건은 "
         + "`view_cube.visible = cam.standing() && lifted > 0`이다. `poses[0]`(미확정)에서 "
         + "`on: true`인데 `visible`·`drawn`이 거짓인 것이 그 실측이다 — **결함이 아니라 "
         + "두 양이 다른 것**이고, 3D가 없는 것과 같은 뿌리다.",
       b: "3D 부재와의 인과 — 궤도(`gestures.begin`)와 뷰 큐브는 `lifted > 0` 하나가 "
-        + "가른다(**설명이지 측정이 아니다**). **반대 방향의 인과**는 되살림 팔이 든다: "
+        + "가른다(**설명이지 측정이 아니다**). ⚠ 그래서 보고된 증상 셋(3D 없음·뷰 안 돌아감·"
+        + "큐브 안 보임)은 **독립 관찰이 아니다** — `lifted = 0` 자유도 **하나**가 셋을 낳는다"
+        + "(2차 리뷰어 [3]). `observation_match`의 다섯도 그 뜻으로 읽는다: 독립 다섯이 "
+        + "아니라 «한 자세에서 함께 관측된다»이다. **반대 방향의 인과**는 되살림 팔이 든다: "
         + "표시와 다른 점을 겨냥한 스냅은 `legacy_not_engaged_rotated`만큼 **아예 안 걸리고** "
         + "그 획은 대기로 남는다. ⚠ 나머지 `legacy_wrong_point_rotated`는 반대다 — "
         + "**걸리되 다른 점**이고 그것이 조용히 틀린 배치다(A-3이 가장 경계하는 것). "
@@ -349,15 +393,23 @@ test(`표시된 소실점으로 스냅되는가 — 자세 여섯 (dpr ${dpr})`,
         `${notEngaged(legacyRot) + wrongPoint(legacyRot)}/${legacyRot.length}`,
       /** 되살림에서 두 출처가 벌어진 **각**(도) — 스냅이 보는 단위. 핀·미확정 제외. */
       legacy_source_aim_deg_rotated: legacyDeg.map(x => Math.round(x * 10) / 10),
-      legacy_source_aim_deg_max: legacyDeg.length ? Math.round(Math.max(...legacyDeg) * 10) / 10 : null,
+      /** ⚠ **걸리지 않은 행을 포함한다** — 그 행의 각은 «스냅이 못 본 각»이다(2차 리뷰어 [12]). */
+      legacy_source_aim_deg_max_all: legacyDeg.length ? Math.round(Math.max(...legacyDeg) * 10) / 10 : null,
+      /** 걸린 행만의 최댓값 — «걸렸는데 다른 점»의 크기다. */
+      legacy_source_aim_deg_max_engaged: (() => {
+        const d = nums(legacyRot.filter((r: any) => r.engaged).map((r: any) => r.source_aim_deg));
+        return d.length ? Math.round(Math.max(...d) * 10) / 10 : null;
+      })(),
       /** 같은 것의 px — **인상용**이다(#49: 스냅이 보는 양이 아니다). */
       legacy_source_gap_px_rotated: legacyPx.map(x => Math.round(x * 10) / 10),
       entries_disagree: entriesDisagree,
     },
     gate: {
-      registered: "표시와 스냅이 같은 소실점을 가리킨다 — 판정은 **개수**가 든다: "
-        + "`summary.fixed_not_engaged`·`fixed_wrong_axis`가 0/n이고 "
-        + "`summary.legacy_miss_rotated`가 **0이 아닌 것**이 함께 든다(#30).",
+      registered: "표시와 스냅이 같은 소실점을 가리킨다 — 판정은 **개수**가, 그리고 "
+        + "**같은 분모**(비핀 자세)로 든다: `summary.fixed_not_engaged_rotated`와 "
+        + "`fixed_wrong_axis_rotated`가 0/n이고 `summary.legacy_miss_rotated`가 **0이 아닌 "
+        + "것**이 함께 든다(#30·#11). 셋째로 `summary.entries_disagree`가 0이다"
+        + "(진입점 둘의 배선 — 보장이 아니라 측정이다, `selfcheck_notes`).",
       /** 등록 지표와 **같은 양·같은 분모**로 적는다(1차 리뷰어 [2] · #40 ①·③). */
       reachability: "되살림 스위치(`S2S.setVpSource(false)`)로 수리 전 배선을 세우면 "
         + "같은 자세·같은 분모에서 `legacy_miss_rotated`가 0이 아니다. 크기의 값은 "
@@ -367,6 +419,15 @@ test(`표시된 소실점으로 스냅되는가 — 자세 여섯 (dpr ${dpr})`,
       reachability_magnitude_source: "summary/legacy_source_aim_deg_rotated",
       reachability_magnitude_value: null as unknown,
     },
+    /**
+     * **비용 원장이 이 팔을 센다**(#33 · 9차 지시 c — `testCost.mjs`가 `arms`·`runs`를 읽는다).
+     * 팔 둘(수리 후 · 되살림) × 자세 여섯 × 축 셋이 한 dpr의 실행 수다.
+     */
+    arms: {
+      fixed: { headline: { runs: poses.length * 3 } },
+      legacy: { headline: { runs: poses.length * 3 } },
+    },
+    runs: poses.length * 3 * 2,
     constants: constantsSnapshot(),
     metric_defs: metricsSnapshot(),
   };
@@ -386,7 +447,7 @@ test(`표시된 소실점으로 스냅되는가 — 자세 여섯 (dpr ${dpr})`,
   expect(legacyRot.length).toBeGreaterThan(0);
   expect(notEngaged(legacyRot) + wrongPoint(legacyRot)).toBeGreaterThan(0);
   // **어긋남의 크기가 스냅 임계를 넘는다** — 도달 가능성(#40)
-  expect(led.summary.legacy_source_aim_deg_max).toBeGreaterThan(1);
+  expect(led.summary.legacy_source_aim_deg_max_all).toBeGreaterThan(1);
   // **관측의 서명** — 비핀에서 그으면 「뷰 N」이 생긴다(「뷰 1 · 2D 4」의 「뷰 1」이 그것이다)
   expect(signature.current_is_confirm).toBe(false);
   expect(signature.current_view_name).toMatch(/^뷰 \d+$/);

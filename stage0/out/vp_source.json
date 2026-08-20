@@ -23,17 +23,19 @@
   "pinned_zero": "핀·미확정 자세는 `legacy`도 0이다 — 자세가 항등이면 두 출처가 정의상 같은 자리다. 그래서 집계 분모(`*_rotated`)에서 뺀다.",
   "horizon_dist_zero": "`axis_horizon_dist_px[0]`·`[1]`이 0(또는 1e-13대)인 것은 **보장**이다(#5) — 지평선을 그 두 소실점으로 만든다(`horizonThrough`). **값이 있는 자리는 [2]**(수직축이 지평선에서 떨어진 px)이고 그것이 지시 c·d의 답이다.",
   "observation_lifted_zero": "`observation_match.lifted = 0`은 **재현하려는 증상 자체**다 (3D가 없다) — 집계가 안 돈 것이 아니다. 같은 자세의 `view_cube.drawn`이 거짓인 것과 짝이다.",
+  "backing_ratio_one": "`backing_ratio`가 dpr 1에서 정확히 1인 것은 **정상**이다 — 백킹 스토어가 css 크기의 dpr배라는 규약(`canvasFrame`)의 값이다. 이 필드의 쓸모는 **dpr 2 원장에서 2가 되는 것**이고, 그것이 «두 번째 실행에 deviceScaleFactor가 실제로 걸렸다»의 증거다(2차 리뷰어 [7]).",
+  "arms_runs_equal": "`arms.fixed`와 `arms.legacy`의 `runs`가 같은 것은 **구성의 귀결**이다 — 두 팔이 **같은 자세·같은 축**을 돈다(그래야 되살림이 같은 자리를 잰다). 분포가 아니라 **실행 수 선언**이고, 비용 원장(`test_cost.json`의 `declared_scenarios`)이 그 수를 읽는다(#33).",
   "pose3_near_zero": "자세 ③(핀 해제·자세 보존)의 `legacy` 값이 1e-13대인 것은 **음성 대조가 성립한 것**이다 — 비핀이지만 자세가 확정 카메라 그대로라 두 출처가 같은 점을 낸다(부동소수 잔차만 남는다).",
-  "entries_agree_all_true": "`entries_agree`가 전부 참인 것도 스위치가 켜진 동안의 **보장**이다(두 진입점이 같은 규칙을 부른다) — 스위치가 꺼진 `legacy` 쪽에서는 이 필드를 안 읽는다."
+  "entries_agree_is_measurement": "`entries_agree`는 **보장이 아니라 배선 측정**이다(2차 리뷰어 [4]): 진입점이 둘(`vpsOnScreen`·`vpsForSnap`)이라 누군가 한쪽만 고치면 갈린다 — 코드 형태가 강제하지 않는다. 그래서 게이트에 **등록하고** 검사도 건다. 스위치가 꺼진 `legacy` 쪽에서는 이 필드를 안 읽는다(그때는 갈리는 것이 의도다)."
  },
  "tolerances": {
   "vp_dist_ratio": 0.06
  },
  "answers": {
   "c": "표시된 **수평** 소실점은 지평선 위에 있다 — `poses[*].axis_horizon_dist_px[0..1]`이 0이고 그것은 **보장**이다(#5: 지평선을 그 두 점으로 만든다). **수직축(축 2)은 지평선 위가 아니다** — 같은 배열의 [2]가 그 거리다. 갈린 것은 표시 지평선이 아니라 `cam.rules.horizon`(확정 시점 값)이고, 그것을 읽는 자리는 핀으로 막혀 있다.",
-  "d": "「5.4W」 파란 삼각형 = **축 2(수직축)의 화면 밖 소실점 가장자리 표식**이고 **위치**를 낸다(`marks`의 `axis: 2 · kind: \"edge\"`와 그 `at`). 색은 `AXIS_COLOR[2] = #2471a3`이고 「W」 라벨은 **주 소실점 가장자리 갈래에만** 있다 (보조 소실점 표식·탈레스 `E(밖)`는 다른 문자열이다 — 그 대조는 구현 독해다). **지평선 위가 아닌 것이 정상이다** — c의 `axis_horizon_dist_px[2]`가 그 값이다.",
+  "d": "「5.4W」 파란 삼각형 = **축 2(수직축)의 화면 밖 소실점 가장자리 표식**이고 **위치**를 낸다(`marks`의 `axis: 2 · kind: \"edge\"`와 그 `at`). 색은 `AXIS_COLOR[2] = #2471a3`이고 「W」 라벨은 **주 소실점 가장자리 갈래에만** 있다 (보조 소실점 표식·탈레스 `E(밖)`는 다른 문자열이다 — 그 대조는 구현 독해다). **지평선 위가 아닌 것이 정상이다.** ⚠ 관측이 물은 것은 «표식의 화면 자리»이므로 그 양은 `mark_horizon_dist_px`다(2차 리뷰어 [6]) — `axis_horizon_dist_px`(소실점의 자리)와 두 자릿수 다르다. 그리고 그 값이 말하는 것은 더 넓다: **화면 밖 소실점의 가장자리 표식은 축을 가리지 않고 지평선에서 떨어진다** — 표식이 화면 가장자리로 죄이므로(`VP_EDGE.padPx`) **수평 소실점의 표식도** 지평선 위에 안 온다(`mark_horizon_dist_px[0]`·`[1]`이 0이 아닌 것이 그것이다). 즉 «지평선 위가 아니다»는 수직축이라서가 아니라 **화면 밖이라서**다.",
   "e": "「뷰 큐브 켬」은 토글(`view_cube.on`)이고 그려지는 조건은 `view_cube.visible = cam.standing() && lifted > 0`이다. `poses[0]`(미확정)에서 `on: true`인데 `visible`·`drawn`이 거짓인 것이 그 실측이다 — **결함이 아니라 두 양이 다른 것**이고, 3D가 없는 것과 같은 뿌리다.",
-  "b": "3D 부재와의 인과 — 궤도(`gestures.begin`)와 뷰 큐브는 `lifted > 0` 하나가 가른다(**설명이지 측정이 아니다**). **반대 방향의 인과**는 되살림 팔이 든다: 표시와 다른 점을 겨냥한 스냅은 `legacy_not_engaged_rotated`만큼 **아예 안 걸리고** 그 획은 대기로 남는다. ⚠ 나머지 `legacy_wrong_point_rotated`는 반대다 — **걸리되 다른 점**이고 그것이 조용히 틀린 배치다(A-3이 가장 경계하는 것). «3D가 왜 안 섰나»의 전체 인과는 이 원장이 안 잰다."
+  "b": "3D 부재와의 인과 — 궤도(`gestures.begin`)와 뷰 큐브는 `lifted > 0` 하나가 가른다(**설명이지 측정이 아니다**). ⚠ 그래서 보고된 증상 셋(3D 없음·뷰 안 돌아감·큐브 안 보임)은 **독립 관찰이 아니다** — `lifted = 0` 자유도 **하나**가 셋을 낳는다(2차 리뷰어 [3]). `observation_match`의 다섯도 그 뜻으로 읽는다: 독립 다섯이 아니라 «한 자세에서 함께 관측된다»이다. **반대 방향의 인과**는 되살림 팔이 든다: 표시와 다른 점을 겨냥한 스냅은 `legacy_not_engaged_rotated`만큼 **아예 안 걸리고** 그 획은 대기로 남는다. ⚠ 나머지 `legacy_wrong_point_rotated`는 반대다 — **걸리되 다른 점**이고 그것이 조용히 틀린 배치다(A-3이 가장 경계하는 것). «3D가 왜 안 섰나»의 전체 인과는 이 원장이 안 잰다."
  },
  "observation_match": {
   "pose": "① 확정됐으나 비핀 · 확정 카메라와 무관한 자유 자세",
@@ -54,7 +56,8 @@
    79.00685265942049,
    15.246731225856118
   ],
-  "what_is_not_shown": "그 사용자가 **어떤 조작으로** 이 자세에 왔는지는 특정하지 못했다 — 픽스처가 만든 상태다. 후보는 `applyDoc2`의 복원 갈래와 `restoreSnap`(비핀 유지)이다."
+  "what_is_not_shown": "그 사용자가 **어떤 조작으로** 이 자세에 왔는지는 특정하지 못했다 — 픽스처가 만든 상태다. 후보는 `applyDoc2`의 복원 갈래와 `restoreSnap`(비핀 유지)이다. ⚠ 그리고 `lifted = 0`도 이 픽스처의 설정이지 이 자세의 귀결이 아니다(같은 12획인 자세 ②~⑤는 `lifted = 12`다) — 자유도 하나가 증상 셋을 낳는 것은 `answers.b`가 적는다(2차 리뷰어 [3]).",
+  "view_name_counterexample": "⚠⚠ **「뷰 N」은 «지금 핀이 아니다»의 증거가 아니다**(2차 리뷰어 [1]의 반례를 원장이 든다): 자세 ②는 **핀인데** `current_view_name`이 「뷰 1」이다 — 이름은 **만들어질 때** 정해지고 `doc.currentView`는 확정으로 안 돌아간다. 「뷰 1」이 증명하는 것은 **그 뷰가 만들어진 시점**과 **그 뷰에 배정된 획이 그어진 시점**이 «서 있고 핀이 아님»이라는 것이다(`viewForDrawing`이 자세까지 대조한다). 관측의 「2D 4」가 그 뷰의 대기 획 수이므로 **그 넷은 그 상태에서 그어졌다** — 그리고 사용자가 어긋남을 본 것도 «그을 때»다. **화면을 찍은 그 순간이 비핀이었는지는 증명되지 않는다.**"
  },
  "poses": [
   {
@@ -64,6 +67,17 @@
    "view_state": "pre",
    "standing": false,
    "dpr": 1,
+   "canvas_css": [
+    1280,
+    675
+   ],
+   "canvas_backing": [
+    1280,
+    675
+   ],
+   "backing_ratio": 1,
+   "current_view_name": "확정 뷰",
+   "current_is_confirm": true,
    "disp_vps": null,
    "cam_vps": [
     [
@@ -79,6 +93,7 @@
    "horizon_scalar_y": null,
    "axis_horizon_dist_px": null,
    "marks": [],
+   "mark_horizon_dist_px": [],
    "view_cube": {
     "on": true,
     "visible": false,
@@ -180,6 +195,17 @@
    "view_state": "draft_three",
    "standing": true,
    "dpr": 1,
+   "canvas_css": [
+    1280,
+    675
+   ],
+   "canvas_backing": [
+    1280,
+    675
+   ],
+   "backing_ratio": 1,
+   "current_view_name": "확정 뷰",
+   "current_is_confirm": true,
    "disp_vps": [
     [
      -3732.5885089521917,
@@ -251,6 +277,11 @@
       614
      ]
     }
+   ],
+   "mark_horizon_dist_px": [
+    577.313240044341,
+    352.9699438498952,
+    900.5212158101119
    ],
    "view_cube": {
     "on": true,
@@ -455,6 +486,17 @@
    "view_state": "draft_pinned",
    "standing": true,
    "dpr": 1,
+   "canvas_css": [
+    1280,
+    675
+   ],
+   "canvas_backing": [
+    1280,
+    675
+   ],
+   "backing_ratio": 1,
+   "current_view_name": "뷰 1",
+   "current_is_confirm": false,
    "disp_vps": [
     [
      2118.52761348025,
@@ -484,7 +526,7 @@
     ]
    ],
    "lifted": 12,
-   "strokes": 12,
+   "strokes": 13,
    "horizon_line": {
     "a": [
      7906.826154502473,
@@ -526,6 +568,11 @@
       621
      ]
     }
+   ],
+   "mark_horizon_dist_px": [
+    217.44919243112267,
+    169.44919243112267,
+    551.4491924311227
    ],
    "view_cube": {
     "on": true,
@@ -736,6 +783,17 @@
    "view_state": "draft_three",
    "standing": true,
    "dpr": 1,
+   "canvas_css": [
+    1280,
+    675
+   ],
+   "canvas_backing": [
+    1280,
+    675
+   ],
+   "backing_ratio": 1,
+   "current_view_name": "뷰 1",
+   "current_is_confirm": false,
    "disp_vps": [
     [
      2118.52761348025,
@@ -765,7 +823,7 @@
     ]
    ],
    "lifted": 12,
-   "strokes": 12,
+   "strokes": 13,
    "horizon_line": {
     "a": [
      7906.826154502473,
@@ -807,6 +865,11 @@
       621
      ]
     }
+   ],
+   "mark_horizon_dist_px": [
+    217.4491924311227,
+    169.44919243112273,
+    551.4491924311227
    ],
    "view_cube": {
     "on": true,
@@ -1017,6 +1080,17 @@
    "view_state": "draft_three",
    "standing": true,
    "dpr": 1,
+   "canvas_css": [
+    1280,
+    675
+   ],
+   "canvas_backing": [
+    1280,
+    675
+   ],
+   "backing_ratio": 1,
+   "current_view_name": "뷰 1",
+   "current_is_confirm": false,
    "disp_vps": [
     [
      4645.159613001462,
@@ -1046,7 +1120,7 @@
     ]
    ],
    "lifted": 12,
-   "strokes": 12,
+   "strokes": 13,
    "horizon_line": {
     "a": [
      10409.179971928326,
@@ -1088,6 +1162,11 @@
       620
      ]
     }
+   ],
+   "mark_horizon_dist_px": [
+    232.9491461750225,
+    0.0185125048895372,
+    534.3423568498415
    ],
    "view_cube": {
     "on": true,
@@ -1295,6 +1374,17 @@
    "view_state": "draft_three",
    "standing": true,
    "dpr": 1,
+   "canvas_css": [
+    1280,
+    675
+   ],
+   "canvas_backing": [
+    1280,
+    675
+   ],
+   "backing_ratio": 1,
+   "current_view_name": "뷰 1",
+   "current_is_confirm": false,
    "disp_vps": [
     [
      3694.8410360368293,
@@ -1324,7 +1414,7 @@
     ]
    ],
    "lifted": 12,
-   "strokes": 12,
+   "strokes": 13,
    "horizon_line": {
     "a": [
      9478.518470992567,
@@ -1366,6 +1456,11 @@
       621
      ]
     }
+   ],
+   "mark_horizon_dist_px": [
+    1206.9211099054833,
+    1081.1089292574782,
+    1600.8106218779046
    ],
    "view_cube": {
     "on": true,
@@ -1565,6 +1660,7 @@
   }
  ],
  "signature": {
+  "at_pose": "① 확정됐으나 비핀 · 확정 카메라와 무관한 자유 자세",
   "views_before": 1,
   "views_after": 2,
   "current_view_name": "뷰 1",
@@ -1572,11 +1668,11 @@
   "pending_in_current": 1,
   "stroke_axis": "free",
   "stroke_has_3d": false,
-  "lifted": 12,
+  "lifted": 0,
   "view_cube": {
    "on": true,
-   "visible": true,
-   "drawn": true
+   "visible": false,
+   "drawn": false
   }
  },
  "summary": {
@@ -1626,7 +1722,8 @@
    32.1,
    6.4
   ],
-  "legacy_source_aim_deg_max": 79,
+  "legacy_source_aim_deg_max_all": 79,
+  "legacy_source_aim_deg_max_engaged": 7.1,
   "legacy_source_gap_px_rotated": [
    5882,
    912.8,
@@ -1644,7 +1741,7 @@
   "entries_disagree": 0
  },
  "gate": {
-  "registered": "표시와 스냅이 같은 소실점을 가리킨다 — 판정은 **개수**가 든다: `summary.fixed_not_engaged`·`fixed_wrong_axis`가 0/n이고 `summary.legacy_miss_rotated`가 **0이 아닌 것**이 함께 든다(#30).",
+  "registered": "표시와 스냅이 같은 소실점을 가리킨다 — 판정은 **개수**가, 그리고 **같은 분모**(비핀 자세)로 든다: `summary.fixed_not_engaged_rotated`와 `fixed_wrong_axis_rotated`가 0/n이고 `summary.legacy_miss_rotated`가 **0이 아닌 것**이 함께 든다(#30·#11). 셋째로 `summary.entries_disagree`가 0이다(진입점 둘의 배선 — 보장이 아니라 측정이다, `selfcheck_notes`).",
   "reachability": "되살림 스위치(`S2S.setVpSource(false)`)로 수리 전 배선을 세우면 같은 자세·같은 분모에서 `legacy_miss_rotated`가 0이 아니다. 크기의 값은 `legacy_source_aim_deg_rotated`(도 — 스냅이 보는 단위)가 든다.",
   "reachability_source": "summary/legacy_miss_rotated",
   "reachability_value": "9/12",
@@ -1664,6 +1761,19 @@
    6.4
   ]
  },
+ "arms": {
+  "fixed": {
+   "headline": {
+    "runs": 18
+   }
+  },
+  "legacy": {
+   "headline": {
+    "runs": 18
+   }
+  }
+ },
+ "runs": 36,
  "constants": {
   "hash": "f351839a",
   "values": {

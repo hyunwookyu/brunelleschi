@@ -1,5 +1,5 @@
 {
-  "n_flags": 5291,
+  "n_flags": 5301,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[20].specs[2].tests[0].results[0].duration",
@@ -25094,9 +25094,28 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "vp_source.json:arms.fixed.headline",
+      "val": {
+        "runs": 18
+      },
+      "flag": "단일 범주 분포(n=18) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "vp_source.json:arms.legacy.headline",
+      "val": {
+        "runs": 18
+      },
+      "flag": "단일 범주 분포(n=18) → 변별력 없음/단위 불일치 의심"
+    },
+    {
       "path": "vp_source.json:observation_match.lifted",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "vp_source.json:poses[0].backing_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "vp_source.json:poses[0].fixed[0].gap_px",
@@ -25117,6 +25136,11 @@
       "path": "vp_source.json:poses[0].legacy[0].source_gap_px",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "vp_source.json:poses[1].backing_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "vp_source.json:poses[1].axis_horizon_dist_px[0]",
@@ -25157,6 +25181,11 @@
       "path": "vp_source.json:poses[1].fixed[2].source_gap_px",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "vp_source.json:poses[2].backing_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "vp_source.json:poses[2].axis_horizon_dist_px[0]",
@@ -25229,6 +25258,11 @@
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
+      "path": "vp_source.json:poses[3].backing_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "vp_source.json:poses[3].axis_horizon_dist_px[0]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -25299,6 +25333,11 @@
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
+      "path": "vp_source.json:poses[4].backing_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "vp_source.json:poses[4].axis_horizon_dist_px[0]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -25337,6 +25376,11 @@
       "path": "vp_source.json:poses[4].fixed[2].source_gap_px",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "vp_source.json:poses[5].backing_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "vp_source.json:poses[5].axis_horizon_dist_px[0]",
@@ -25392,6 +25436,20 @@
       "path": "vp_source.json:summary.legacy_source_gap_px_rotated[5]",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "vp_source_dpr2.json:arms.fixed.headline",
+      "val": {
+        "runs": 18
+      },
+      "flag": "단일 범주 분포(n=18) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "vp_source_dpr2.json:arms.legacy.headline",
+      "val": {
+        "runs": 18
+      },
+      "flag": "단일 범주 분포(n=18) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "vp_source_dpr2.json:observation_match.lifted",
@@ -27743,6 +27801,7 @@
       12,
       21,
       30,
+      33,
       49,
       52,
       2471
@@ -27753,6 +27812,7 @@
       12,
       21,
       30,
+      33,
       49,
       52,
       2471
