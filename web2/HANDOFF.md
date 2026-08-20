@@ -6,7 +6,8 @@
   타입(`npm run typecheck`) · 프로덕션 빌드(sw.js·빌드 식별자 확인).
 - 결정·측정·게이지·함정은 전부 [NOTES.md](NOTES.md)에 있다. 문서는 그것 하나다.
 
-**배포는 web2다** (2026-08-21 전환, `pages.yml` working-directory = `web2`).
+**배포는 web2다** (2026-08-21 전환 완료·확인됨, `pages.yml` working-directory = `web2`).
+확인 방법: 화면 우하단의 빌드 식별자가 배포된 커밋 해시와 같으면 새 것이 나간 것이다.
 주소 그대로 `https://hyunwookyu.github.io/brunelleschi/`. `web/`은 안 지웠고 배포만 안 된다.
 전환 설계(옛 워커 인계·`l.html` 리다이렉트·`?reset` 탈출구)와 남은 위험은 NOTES의
 「배포 전환」 절에 있다.
