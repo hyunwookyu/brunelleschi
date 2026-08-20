@@ -27054,6 +27054,13 @@
       "note": null
     },
     {
+      "scan": "scan_pitfalls_table_last",
+      "unit": "PITFALLS 파일",
+      "targets": 1,
+      "hits": 0,
+      "note": null
+    },
+    {
       "scan": "scan_citation_hashes",
       "unit": "인용",
       "targets": 345,

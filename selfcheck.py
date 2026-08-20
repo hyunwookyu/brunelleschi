@@ -8,7 +8,7 @@
 의심 ≠ 오류. 각 플래그는 원인(자기참조·무노이즈·측정범위·미작동)을 사람이 확인할 대상.
 """
 from __future__ import annotations
-import json, sys
+import json, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -481,6 +481,57 @@ def scan_stray_progress(root: Path) -> list[dict]:
                               "루트로 옮기고 지운다"})
     flags += _cover("scan_stray_progress", "진행 기록 파일",
                     len(list(root.rglob("progress.md"))), len(flags))
+    return flags
+
+
+def scan_pitfalls_table_last(root: Path) -> list[dict]:
+    """**「최근 다섯」 표가 `PITFALLS.md`의 마지막 절인가**(2026-08-20 17차 후속 · #55).
+
+    그 표는 오래 **파일 상단**에 있었다. 파일이 길어지면서 `tail`로 읽는 유인이 생겼고,
+    17차가 실제로 `tail -80`으로 읽어 **표를 지나쳤다**(그 80줄이 우연히 #49~#53이라
+    결과만 같았다 — 규약을 지킨 것이 아니다). 그래서 표를 **파일 끝으로 옮겼다**:
+    유인을 이기려 하지 말고 **읽는 자리에 표를 둔다**(A-3).
+
+    그러면 새 결함이 하나 생긴다 — **새 항목을 파일 끝에 이으면 표가 다시 위로 밀린다.**
+    사람이 매번 세는 종류가 아니므로(#38: 손이 반복해 틀리면 고칠 곳은 검사 쪽이다)
+    여기서 지킨다. 판정은 둘이다: ① ⚡ 절이 마지막 `## ` 절인가
+    ② 착수 명령(`tail -N`)이 그 절 전체를 덮는가(N이 절 길이보다 크거나 같은가).
+    """
+    flags = []
+    p = root / "PITFALLS.md"
+    if not p.exists():
+        return flags + _cover("scan_pitfalls_table_last", "PITFALLS 파일", 0, 0)
+    lines = p.read_text(encoding="utf-8").split("\n")
+    heads = [(k, l) for k, l in enumerate(lines) if l.startswith("## ")]
+    marker = "## ⚡ 항목 착수 전에"
+    hits = [k for k, l in heads if l.startswith(marker)]
+    if not hits:
+        flags.append({"path": "PITFALLS.md", "val": None,
+                      "flag": "**「최근 다섯」 절을 못 찾았다**(`## ⚡ 항목 착수 전에`) — "
+                              "머리글이 바뀌었으면 이 검사도 함께 고친다(#17)"})
+        return flags + _cover("scan_pitfalls_table_last", "PITFALLS 파일", 1, len(flags))
+    i = hits[-1]
+    if heads[-1][0] != i:
+        flags.append({"path": "PITFALLS.md", "val": f"뒤에 절 {len(heads) - 1 - heads.index((i, lines[i]))}개",
+                      "flag": "**「최근 다섯」 표가 파일의 마지막 절이 아니다**(#55) — 새 항목을 "
+                              "그 절 **뒤**에 이었다. `tail`로 읽으면 표를 지나친다. "
+                              "**표를 다시 맨 끝으로 옮긴다**"})
+    else:
+        span = len([l for l in lines[i:] if True])
+        want = None
+        for l in lines[i:]:
+            m = re.search(r"tail -(\d+) PITFALLS\.md", l)
+            if m:
+                want = int(m.group(1)); break
+        if want is None:
+            flags.append({"path": "PITFALLS.md", "val": None,
+                          "flag": "**착수 명령(`tail -N PITFALLS.md`)이 그 절 안에 없다**(#55) — "
+                                  "읽는 명령을 그 자리에 적어야 다음 세션이 같은 것을 읽는다"})
+        elif want < span:
+            flags.append({"path": "PITFALLS.md", "val": f"tail -{want} < 절 {span}줄",
+                          "flag": "**착수 명령이 그 절을 다 못 덮는다**(#55) — 표가 잘려 읽힌다. "
+                                  "`tail -N`의 N을 절 길이 이상으로 올린다"})
+    flags += _cover("scan_pitfalls_table_last", "PITFALLS 파일", 1, len(flags))
     return flags
 
 
@@ -974,6 +1025,7 @@ def main():
     flags += scan_roundtrip_metrics(ROOT)          # 자기참조 3: 복원↔역연산 왕복 지표
     flags += scan_sweep_coverage(ROOT)             # #33 자동화: 전수 훑기의 확장자 커버리지
     flags += scan_stray_progress(ROOT)             # 루트 밖 progress.md (세 번째 재발)
+    flags += scan_pitfalls_table_last(ROOT)        # #55: 「최근 다섯」 표가 파일 끝에 있는가
     flags += scan_citation_hashes(ROOT, reports)   # #33 값 대조: 인용 해시 ↔ 원장 현재 해시
     flags += scan_cited_values(ROOT, reports)  # #42 ⑥ 존재 대조: 인용한 수치가 원장에 있는가
     PITFALL_CITATIONS.clear()
