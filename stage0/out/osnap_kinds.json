@@ -23,7 +23,7 @@
  "setup": {
   "canvas": [
    1280,
-   675
+   674
   ],
   "grid_step_px": 5,
   "radius_px": 8,
@@ -37,7 +37,7 @@
    "found": true,
    "at": [
     966,
-    217
+    216
    ],
    "runner_up": "endpoint",
    "on_winner": "vertex",
@@ -86,8 +86,8 @@
    "label": "교차점",
    "found": true,
    "at": [
-    700,
-    25
+    705,
+    20
    ],
    "runner_up": "on_edge",
    "on_winner": "intersection",

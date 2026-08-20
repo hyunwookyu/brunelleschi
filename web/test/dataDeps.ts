@@ -60,7 +60,10 @@ export const DATA_DEPS: DataDep[] = [
       + "그래서 CI에도 있고, `first_anchor`(특정 파일 재구성)는 없으면 건너뛰지 않고 "
       + "**실패**한다(#32 — 커밋된 재현 재료의 소실은 조용히 넘어갈 일이 아니다)",
     used_by: ["test/real_ink.test.ts", "test/first_anchor.test.ts", "test/delta_conflict.test.ts",
-              "test/confirm_link.test.ts"],
+              "test/confirm_link.test.ts",
+              // 19차 — **실제 저장본이 D-L115의 복원 게이트를 지나는가**(2차 리뷰어 [R9]).
+              // 표본이 커밋돼 있으므로 CI에서도 돈다. 없으면 그 절만 건너뛴다.
+              "test/horizon_provenance.test.ts"],
     how: "앱에서 `획 내보내기` → 받은 JSON을 `sessions/`에 넣는다(README 0절)",
   },
   {

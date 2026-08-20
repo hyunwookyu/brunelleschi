@@ -18,7 +18,7 @@ import { CamState } from "./ui/camState.js";
 import { newDoc, newSStroke, newView, deleteView, lifted, pending, pendingElsewhere, liftable,
          confirmViewOf, isConfirmView,
          type DocState, type SStroke, type Channel } from "./ui/doc.js";
-import { takeSnap, applySnap, type AppSnap } from "./ui/appSnap.js";
+import { takeSnap, applySnap, type AppSnap, type SeedLine } from "./ui/appSnap.js";
 import { screenVps, type VpSourceState } from "./ui/vpSource.js";
 // L-D.2 저장·내보내기 — **뷰 목록과 뷰별 2D 획**을 담는다(§9.2)
 import { serializeDoc2, restoreDoc2, autosaver2, getDoc2, deleteDoc2,
@@ -202,6 +202,29 @@ let lastSnapNote = "";
  * 지평선은 **첫 동작**이고 화면 수평으로 강제된다(롤 0). 안내는 없다(지시 g).
  */
 let horizonDraft: number | null = null;
+/**
+ * **작도선** — 소실점을 만든 획이 남긴 **표시 전용** 자취(2026-08-20 19차 지시 2 · D-L114).
+ *
+ * 18차는 소실점이 서는 **그 순간** 그 획을 `doc.strokes`에서 지웠다(지시 4·m). 사람이
+ * 그려 보고 그것이 둘로 걸렸다(19차 지시 1·2): ① 1점이 선 **뒤에** 그은 둘째 깊이선도
+ * 같은 가지에 걸려 **눈앞에서 사라진다**(«확정 후 그린 선이 즉시 사라진다») ② 첫 깊이선이
+ * 1점 확정 순간 없어져 **둘째를 겨냥할 방향이 화면에 없다**.
+ *
+ * 그래서 **삭제 시점을 옮긴다**: 소실점을 만든 획은 여기 자취로 남아 **옅게 보이고**,
+ * **사용자가 그리기로 넘어가는 첫 획**에서 한꺼번에 사라진다(지시 2-a·2-b — «2점까지
+ * 기다린다»가 아니다: 1점으로 끝낼 수도 있으므로 그 조건은 안 선다).
+ *
+ * ⚠ **획이 아니다.** `doc.strokes`에 안 들어가므로 «2D 레이어에도 안 남는다»(18차 지시 4)가
+ * 그대로 지켜진다 — 스냅 대상도, 일괄 풀이 대상도, 저장 대상도 아니다. 표시뿐이다.
+ * ⚠ **되돌리기가 함께 되돌린다** — `AppSnap`이 이 목록을 담는다(18차 지시 p: 실행 취소로
+ * 지평선 단계까지 돌아간다). 안 담으면 되돌린 뒤 **주인 없는 옅은 선**이 화면에 남는다.
+ */
+let seedLines: SeedLine[] = [];
+/**
+ * **측정 스위치**(#30) — `false`가 **18차 거동**이다: 소실점을 만든 획이 그 순간 화면에서도
+ * 사라진다. 회귀 팔이 이것으로 **버그를 되살려 실제로 잡는지** 확인한다(A-4).
+ */
+const SEED_LINES = { on: true };
 
 /** 알림 한 줄에 붙는 **캐드식 동작**(지시 f) — 밑줄 친 단어를 누른다. */
 interface NoteAct { label: string; act: string }
@@ -615,11 +638,14 @@ const cssSize = (): [number, number] => cssSizeOf(canvas);
 
 // ⚠ **`report` 자리는 이제 언제나 `null`이다**(7차 지시 3-d — 승격 요약이 없어졌다).
 // `appSnap.ts`의 자료구조는 그대로 두어 **옛 저장본이 그대로 열린다**(읽는 쪽이 무시한다).
-const appSnap = (): AppSnap => takeSnap(doc, cam, null);
+const appSnap = (): AppSnap => takeSnap(doc, cam, null, seedLines);
 
 /** 스냅샷을 그대로 되돌린다. **문서만 되돌리지 않는다**(`appSnap.ts` 머리말). */
 function restoreSnap(s: AppSnap) {
   doc = applySnap(cam, s);
+  // **작도선도 함께 되돌린다**(19차 지시 2 · D-L114) — 안 되돌리면 실행 취소로 지평선
+  // 단계에 돌아갔는데 소실점을 만들던 옅은 선이 화면에 남는다(주인 없는 표시).
+  seedLines = (s.seeds ?? []).map(l => ({ a: [l.a[0], l.a[1]] as Pt2, b: [l.b[0], l.b[1]] as Pt2 }));
   const c = cam.ctx();
   // **실행취소는 그림만 되돌린다**(5차 지시 7-2) — 시점(카메라 자세)은 이력이 아니다.
   // 돌려 보던 중이면(비핀) 그대로 둔다. 물려 있던 상태에서만 다시 물린다(f·주점이
@@ -804,13 +830,29 @@ function vpsForSnap(fr: Frame | null = frame()): (Pt2 | null)[] {
  * ⚠ **지면은 확정 시점에서만 낸다.** 돌린 시점의 지면 평면은 시점 좌표로 다시 세워야 하는데
  * `groundFrame`은 소실점에서 세우고 그 소실점은 시점마다 다르다 — **없는 것을 지어내지 않는다**(A-3).
  * 지면 스냅의 화면 거리는 정의상 0이라 성공률 측정에도 못 섞는 종류다(`snap.json`).
+ *
+ * ⚠⚠ **3D 기하가 하나도 없으면 지면도 안 낸다**(2026-08-20 19차 지시 4 · D-L116).
+ *
+ * 사람이 보고한 것: **아무것도 안 그렸는데 「면 위」가 걸린다.** 실측으로 재현했다 —
+ * 1점 확정 직후 `doc.strokes` 0 · `lifted` 0인데 화면 어느 점에서 물어도 `on_face`가
+ * `dist 0`으로 나온다(지면과 시선의 교점은 **언제나 있기 때문**이다).
+ *
+ * D-L83이 막은 것은 **앵커 자격**(좌표 확정)이고 **후보 목록이 아니었다** — 표식은 그대로
+ * 떴다. 지시 4-b가 그 자리를 정한다: **면이 없으면 후보에도 없어야 한다.** 여기서
+ * «면이 있다»의 대리는 **3D 기하가 하나라도 있는가**다. 지면은 그 위에 놓인 기하를
+ * 짚기 위한 면이고, 짚을 것이 없으면 그 면은 **임의 좌표를 만드는 장치**일 뿐이다
+ * (D-L83이 `on_face`를 앵커에서 뺀 것과 같은 논거의 표시 층 판본).
+ *
+ * ⚠ **첫 앵커의 지면 배치(D-L90)는 안 건드린다** — 그 경로는 `groundAnchor.ts`가 자기
+ * `groundFrame`을 직접 세우고, 조건이 «3D가 하나도 없을 때»라 여기와 **정반대 자리**다.
  */
 function snapCtx(fr: Frame | null = frame(), from: Vec3 | null = null): SnapCtx | null {
   if (!fr) return null;
   const { ctx } = fr;
   return { principal: ctx.principal, f: ctx.f, imgSize: ctx.imgSize,
            // 면 생성이 범위 밖이라 지금 있는 면은 지면 하나다(§3 "면 위 점")
-           ground: fr.pinned ? groundFrame(ctx.vps[2] ?? null, ctx.principal, ctx.f) : null,
+           ground: fr.pinned && lifted(doc).length
+             ? groundFrame(ctx.vps[2] ?? null, ctx.principal, ctx.f) : null,
            // **수선 발은 시작점이 있어야 정해진다**(Rhino `Perp`와 같다) — 끝점을 스냅할 때만 온다
            from };
 }
@@ -2854,6 +2896,33 @@ function strokeStateOf(s: SStroke): StrokeState {
 }
 
 /**
+ * **작도선**(2026-08-20 19차 지시 2-c · D-L114) — "지우기 전까지 그 선들은 옅게 남아
+ * 방향을 보인다".
+ *
+ * 소실점을 만든 획의 자취다. **획이 아니라 표시**이므로 문서·스냅·저장 어디에도 없다
+ * (18차 지시 4의 «2D 레이어에도 안 남는다»가 그대로 지켜진다). 사용자가 그리기로 넘어가는
+ * 첫 획에서 목록이 비고, 그때 이 함수는 아무것도 안 그린다.
+ *
+ * 좌표는 **확정 화면(핀)의 것**이라 돌린 시점에는 안 그린다 — 그 좌표를 다른 자세에
+ * 그리면 화면에 붙은 유령이 된다(`drawDirLines`의 `viewIsCurrent`와 같은 규약, #17).
+ */
+function drawSeedLines(ctx2: CanvasRenderingContext2D) {
+  if (!seedLines.length) return;
+  if (cam.standing() && !stage.isPinned) return;
+  ctx2.save();
+  ctx2.strokeStyle = HORIZON_COLOR;    // 지평선과 한 벌이다 — 둘 다 «공간을 정한 선»이다
+  ctx2.lineWidth = 1.5;
+  ctx2.setLineDash([]);
+  ctx2.globalAlpha = 0.28;             // 그린 획보다 옅고 무한직선(0.12)보다는 보인다
+  for (const l of seedLines) {
+    ctx2.beginPath();
+    ctx2.moveTo(l.a[0], l.a[1]); ctx2.lineTo(l.b[0], l.b[1]);
+    ctx2.stroke();
+  }
+  ctx2.restore();
+}
+
+/**
  * **방향 확정 획의 무한직선**(10차 항목 1 · 지시 4-2) — "소실점부터 화면 끝까지.
  * 그린 구간만 진하게, 연장부는 아주 옅게." 그린 구간은 `drawPending`이 그대로 그리고,
  * 여기는 그 아래에 **전체 직선을 옅게** 깐다. 유한 소실점 축은 소실점을 지나는 직선,
@@ -3157,6 +3226,7 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   drawSnapMark(ctx2, hoverSnap ?? (hover2d ? { kind: hover2d.kind, screen: hover2d.at } : null));
   drawLivePreview(ctx2);
   drawLive2d(ctx2);                     // **카메라가 서기 전의 화면 직교·2D 오스냅**(A-2·지시 1)
+  drawSeedLines(ctx2);             // **작도선**(19차 지시 2-c) — 지우기 전까지 옅게 남는다
   // **지평선을 긋는 중**(18차 지시 j) — 화면 수평으로 강제된 선 하나. 안내 문구는 없다.
   if (horizonDraft != null && !cam.hasHorizon()) {
     const [w2] = cssSize();
@@ -3587,13 +3657,21 @@ const ink = new InkCanvas(canvas, {
       ruleEvent = feedStroke(s, undefined, hint2d,
                              path0 === "two_point" || path0 === "extension");
     }
-    // ---- **소실점을 만든 획은 그 순간 사라진다**(2026-08-20 18차 지시 4·m).
+    // ---- **소실점을 만든 획은 작도선이 된다**(18차 지시 4·m → **19차 지시 2로 시점 이동**).
     //
     // 그 선은 «이 방향의 소실점이 여기다»를 말한 **작도선**이고, 말이 끝나면 역할이 끝난다.
-    // 남는 것은 소실점·계산된 지평선·그리드다. 그린 지평선도 같은 규약으로 사라진다 —
-    // 다만 그것은 획이 아니라 `rules.horizon`이라 **확정 뒤에는 계산된 지평선이 같은 y에**
-    // 그려진다(소실점 = 선 × 지평선이므로 그 y가 곧 지평선이다 — 전환이 안 느껴진다).
-    // ⚠ **2D 레이어에도 안 남긴다**(지시 4) — 문서에서 뺀다.
+    // ⚠ **2D 레이어에도 안 남긴다**(18차 지시 4) — 문서에서 뺀다. 그것은 그대로다.
+    //
+    // ⚠⚠ **바뀐 것은 «언제 화면에서 지우는가»다**(19차 지시 1·2 · D-L114). 18차는 여기서
+    // 곧바로 화면에서도 지웠고, 사람이 그려 보니 그것이 둘로 걸렸다:
+    //   ① 1점이 선 **뒤에** 그은 둘째 깊이선(1점 → 2점 승격)도 이 가지에 걸려 **눈앞에서
+    //      사라진다** — «확정 후 그린 선이 즉시 사라진다»의 정체다. 삭제가 «확정 시점 한 번»이
+    //      아니라 **획마다** 도는 것이 원인이었다(19차 지시 1-b의 물음에 대한 실측 답).
+    //   ② 첫 깊이선이 1점 확정 순간 없어져 **둘째를 겨냥할 방향이 화면에 없다**(지시 2).
+    // 그래서 자취를 `seedLines`에 남겨 **옅게 보이고**(지시 2-c), **사용자가 그리기로
+    // 넘어가는 첫 획**에서 한꺼번에 지운다(아래 `clearSeedLines`, 지시 2-a·2-b).
+    // «2점까지 기다린다»는 안 고른다 — **1점으로 끝낼 수도 있으므로** 그 조건은 안 선다(2-b).
+    //
     // ⚠⚠ **배치 카운터도 되돌린다**(#43 — 경로별 합 = 놓인 수). 카메라가 이미 서 있는
     // 상태에서 온 두 번째 깊이선은 **놓인 뒤에** 작도선이 되므로, 안 되돌리면 합이 하나 뜬다.
     if (ruleEvent === "vp_fixed") {
@@ -3601,6 +3679,14 @@ const ink = new InkCanvas(canvas, {
       if (k >= 0) doc.strokes.splice(k, 1);      // 이미 확정 직전에 빠졌으면 여기는 무해하다
       // 카메라가 **이미 서 있던** 갈래에서는 이 획이 놓인 뒤에 작도선이 됐다 — 되돌린다
       if (path0) placeBy[path0 === "axis" ? "start_anchor" : path0] -= 1;
+      if (SEED_LINES.on) {
+        seedLines.push({ a: [pts[0][0], pts[0][1]],
+                         b: [pts[pts.length - 1][0], pts[pts.length - 1][1]] });
+      }
+    } else {
+      // **사용자가 그리기로 넘어갔다** — 작도선의 역할이 끝난다(지시 2-a·2-b).
+      // 남은 획(지지선·거절된 획·화면 축 선언)은 전부 «그리기»다: 소실점을 만들지 않는다.
+      seedLines = [];
     }
     // 확정 뒤에는 그 자리에서 푼다 — **승격 연쇄**의 첫 형태다(§9.1).
     // **돌린 시점에서도 돈다**(L-B.8) — `frame()`이 좌표 변환을 들고 있다
@@ -3826,8 +3912,12 @@ function applyDoc2(d: Doc2) {
   setDocSeq(r.seq);
   // **규칙 상태를 되살린다** — 그것이 카메라의 입력이다(가이드가 아니다).
   // 옛 저장본(`rules`가 없다)은 규칙이 비어 카메라가 안 선다 — **조용히 틀리게 세우지 않는다**(A-3).
-  cam.loadRules(d.rules ?? null);
+  // ⚠ **문서 전용 입구다**(19차 지시 3 · D-L115) — 소실점이 얹혀 있지 않은 지평선은
+  // 옛 판의 «화면 중앙» 기본값일 수 있어 안 읽는다. 되돌리기는 이 게이트를 안 지난다.
+  cam.loadRulesFromDocument(d.rules ?? null);
   // ⚠ 옛 저장본의 `locked`·`order`·`lensMm`은 읽지 않는다 — 전부 `rules`에서 계산된다(지시 1)
+  // **작도선은 저장되지 않는다**(19차 지시 2 — 획이 아니라 표시다). 연 문서에는 없다.
+  seedLines = [];
   undoStack.length = 0;
   picked = null;
   // ⚠⚠ **무대 카메라를 재수립한다**(7차 항목 1 — 실획 표본이 잡은 자리). 옛 판은 규칙만
@@ -4180,6 +4270,7 @@ const onActClick = (e: Event) => {
   else if (act === "clear") {
     pushUndo();
     doc = newDoc(); cam.reset();
+    seedLines = [];                  // 작도선도 비운다(19차 지시 2) — 규칙이 비면 자취도 없다
     syncScene(); clearNote();
     // **저장본도 지운다** — 안 지우면 새로고침에서 방금 버린 작업이 되살아난다
     void deleteDoc2().catch(() => { /* 저장소가 없어도 화면은 비워졌다 */ });
@@ -4626,6 +4717,16 @@ refresh();
   setShowHorizon: (on: boolean) => { SHOW_HORIZON.on = on; refresh(); },
   /** **선 위 토글 손잡이의 자리**(16차 지시 5) — 종단이 실제 좌표로 탭하는 데 쓴다(#17). */
   horizonChip: () => ({ at: horizonChipAt(), hit: (p: Pt2) => horizonChipHit(p) }),
+  /**
+   * **작도선**(19차 지시 2 · D-L114) — 소실점을 만든 획의 표시 전용 자취.
+   *
+   * 종단이 «둘째 깊이선을 그을 때 첫 선이 화면에 있는가»(지시 2-d)와 «그리기 첫 획에서
+   * 사라지는가»(지시 2-a)를 이 하나로 읽는다. ⚠ **여기서 판정을 다시 하지 않는다**(#52) —
+   * 앱이 그리는 목록 그대로를 낸다. 그려지는지는 종단이 **픽셀로** 따로 본다.
+   */
+  seedLines: () => seedLines.map(l => ({ a: [l.a[0], l.a[1]] as Pt2, b: [l.b[0], l.b[1]] as Pt2 })),
+  /** 측정 스위치(#30) — `false`가 **18차 거동**(소실점을 만든 획이 그 순간 화면에서 사라진다). */
+  setSeedLines: (on: boolean) => { SEED_LINES.on = on; if (!on) seedLines = []; refresh(); },
   /** **보조 패널 열림**(16차 지시 7 — 탭 경로는 패널이 열려 있을 때만 탭을 가로챈다). */
   auxOpen: () => AUX.open,
   /** **보조 소실점**(15차 항목 7 · D-L106) — 저장된 **각도** 목록. 자리는 계산이다. */

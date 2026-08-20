@@ -20,12 +20,12 @@
  },
  "mid": {
   "engaged": true,
-  "preview_ink": 9,
+  "preview_ink": 6,
   "raw_ink": 0
  },
  "free": {
   "engaged2d": false,
-  "mid_ink": 7
+  "mid_ink": 8
  },
  "console_errors": [],
  "constants": {

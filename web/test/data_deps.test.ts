@@ -116,6 +116,8 @@ describe("전수 확인 — `web/` 밖을 읽는 하네스가 전부 등록됐�
       .toEqual(["e2e/static_deploy.spec.ts", "test/bend_share.test.ts",
                 "test/confirm_link.test.ts",
                 "test/delta_conflict.test.ts", "test/first_anchor.test.ts",
+                // 19차 신설 — 실제 저장본이 D-L115의 복원 게이트를 지나는가(2차 리뷰어 [R9])
+                "test/horizon_provenance.test.ts",
                 "test/one_stroke_one_axis.test.ts", "test/real_ink.test.ts"].sort());
   });
 });

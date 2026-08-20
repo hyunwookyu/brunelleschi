@@ -898,6 +898,12 @@ def scan_pitfall_citations(root: Path, reports: dict[str, dict]) -> list[dict]:
         pit = (root / "PITFALLS.md").read_text(encoding="utf-8")
     except Exception:
         pit = ""
+    # ⚠ **여기를 넓히지 않는다**(#38 · #19). 19차가 «#57이 없는 번호로 잡힌다»를 만나
+    # 정규식을 넓혔다가 리뷰어에게 걸렸다 — #38이 그 형태를 **이름으로** 규정한다:
+    # "고칠 곳은 검사가 아니라 기록하는 쪽이다 — 검사의 이름 목록을 넓혀 0을 지우는 것은
+    # #19(검사 약화)와 같은 방향이다." 실제 원인은 18차가 #56·#57을 `## #56 — …` 절로
+    # 등재해 **번호 목록의 형식을 벗어난 것**이었고, 고친 자리는 `PITFALLS.md`다.
+    # → **새 항목은 `N. **제목.**` 줄을 반드시 갖는다.** 그 줄이 이 검사의 등록부다.
     known = {int(m) for m in re.findall(r"^(\d+)\. \*\*", pit, re.M)}
     pat = re.compile(r"#(\d+)")
     cited: dict[str, list[int]] = {}

@@ -1,0 +1,448 @@
+{
+ "what": "새 절차 후 사람이 보고한 결함 넷이 다시 나면 잡는다(19차 지시).",
+ "how": {
+  "A": "작도선 — 소실점을 만든 획이 «그리기 첫 획»까지 화면에 남는가. `seeds`(앱이 그리는 목록)와 `px_line*`(실제 칠해진 픽셀)을 **함께** 읽는다(지시 1-d).",
+  "A_old": "`setSeedLines(false)`가 18차 거동이다 — 두 팔이 **같은 좌표·같은 순서**를 돌므로 각 단계의 그리드가 같고, **팔 사이 차만 획의 잉크**다(`seed_ink`). ⚠ **단계 사이의 차는 안 쓴다** — 확정이 그리드를 바꾸므로 거기엔 그리드 몫이 섞인다(초판이 그런 차 하나를 표제로 썼고 리뷰어가 잡았다).",
+  "A_plain": "지시 1의 문면은 «공간이 정의된 뒤 선을 그으면»이라 **승격 획만으로는 안 덮인다**. `px_plain`이 그 나머지다 — 소실점을 **안** 만드는 보통 획이 **두 팔 다에서** 남는지(픽셀이 느는지) 본다. 그것이 결함 1의 사거리를 «승격 획»으로 좁히는 근거다.",
+  "B": "지평선 y — 세 높이에 그은 y가 그대로 쓰이는가(지시 3-d) · 기울어진 획에서는 무엇이 y가 되는가 · 18차 이전 형식 저장본(«화면 중앙» 기본값)이 절차를 막는가.",
+  "B_positive": "소실점이 얹힌 저장본은 지평선을 **지킨다** — 게이트가 무차별이 아님을 보인다. ⚠ 그 y는 **기본값이 아닌 값**이다(H·0.31) — H/2면 «지켰다»와 «기본값이 다시 채워졌다»가 같은 수라 판별력이 0이다(#38).",
+  "C": "면 위 — 기하 0에서 후보 0인가(지시 4-b) · 기하가 생기면 돌아오는가 · **첫 앵커의 지면 배치(D-L90)가 살아 있는가**(`placeBy.ground`)."
+ },
+ "what_this_does_not_say": [
+  "dpr 1 · 마우스 합성 · 한 구도다(#12·#21).",
+  "**그린 선이 3D에 옳게 놓이는가는 안 잰다** — 여기서 재는 것은 이 네 결함의 자리다.",
+  "`px_line*` 띠에는 **그리드도 지난다** — 절대값이 «작도선의 굵기»가 아니다. 읽는 것은 **같은 띠의 팔 사이 차**뿐이다(#5: 절대값은 구성의 몫이 섞여 있다).",
+  "B의 옛 저장본은 **이 팔이 만든 것**이고 실제 사용자 파일이 아니다 — 재현한 것은 «그 형식이 오면 어떻게 되는가»이지 «사용자 파일이 그 형식이다»가 아니다.",
+  "C의 `on_face`가 돌아오는 것은 **기하가 생겼을 때**다. 그 기하가 옳게 놓였는지는 이 팔의 물음이 아니다."
+ ],
+ "selfcheck_notes": {
+  "zero_strokes": "A2·A3에서 `strokes`가 0인 것은 **설계 그대로다**(18차 지시 4 — 소실점을 만든 획은 문서에 안 남는다). 19차가 바꾼 것은 «문서에서 뺀다»가 아니라 «화면에서 언제 지우는가»이고, 그것을 재는 필드는 `seeds`와 `px_line*`이다.",
+  "zero_on_face": "`face.empty.on_face_cands`가 0인 것이 **이 팔이 재현하려는 수리**다 — 집계가 안 돈 것이 아니다. 같은 실행의 `face.with_geometry`가 0이 아니다.",
+  "zero_restored": "`horizon.restored_old_save_no_vp`의 `order`·`lifted`·`seeds`가 0인 것은 **그 저장본의 정의**다 — 소실점이 없으니 차수 0이고, 3D도 작도선도 없다. 같은 블록의 `strokes`가 **1**인 것이 «복원이 실제로 일어났다»의 증거이고, `horizon_y`가 `null`인 것이 이 팔이 재는 수리다. 같은 실행의 `restored_old_save_with_vp`가 차수 2를 낸다 — 게이트가 무차별이 아니다.",
+  "zero_lifted": "**`lifted` 0이 세 곳에 있고 셋 다 이 세션의 변경과 무관하다**(리뷰어 [2]가 물었다): ① `arms.*`의 4행(보통 획) — 확정 뒤 첫 획은 붙을 3D 대상이 없어 **2D 대기**다(D-L83이 `on_edge`·`on_face`를 앵커에서 뺐다). ⚠ «수리 전에도 0이었다»는 **이 원장이 안 든다** — 그 확인은 세션 중 손으로 한 브라우저 실행이고(#55: 어떻게 알았는지 함께 적는다), 구조로는 D-L114가 만진 가지(`vp_fixed`)에 보통 획이 안 들어간다는 것이다. ⚠ `horizon_first.json`의 ④는 `lifted` 1인데 **다른 좌표라 결과가 다르다**. ⛔ 무엇이 그것을 놓았는지는 **모른다** — 그 원장에 `placeBy`가 없다(#55 ②: 확인 못 한 것을 확인한 것으로 안 적는다). ② `restored_old_save_*` — 복원은 **다시 풀지 않는다**(`applyDoc2` 머리말: `seg3d`가 화면에 있던 그것이다). 심은 저장본의 획에 `seg3d`가 없으므로 0이 맞다. ③ `face.empty` — 그것이 이 팔이 재는 상태 자체다. **이 원장의 0 카운터는 그래서 다섯 갈래다**: `strokes`(A2·A3) · `seeds`(A0·A1·A4) · `on_face_cands`(face.empty) · `order`(no_vp) · `lifted`(위 셋) · `placeBy`의 경로별 0(안 지난 경로다 — 합이 놓인 수라 0이 정상이고, `ground`만 0 → 1로 움직이는 것이 D-L116의 «안 건드렸다» 확인이다)."
+ },
+ "arms": {
+  "A": [
+   {
+    "label": "0 빈 화면",
+    "order": 0,
+    "standing": false,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": null,
+    "seeds": 0,
+    "px_line1": 0,
+    "px_line2": 0,
+    "px_plain": 0
+   },
+   {
+    "label": "1 지평선",
+    "order": 0,
+    "standing": false,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 0,
+    "px_line1": 0,
+    "px_line2": 0,
+    "px_plain": 0
+   },
+   {
+    "label": "2 깊이선1 → 1점",
+    "order": 1,
+    "standing": true,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 1,
+    "px_line1": 2296,
+    "px_line2": 1890,
+    "px_plain": 1080
+   },
+   {
+    "label": "3 깊이선2 → 2점",
+    "order": 2,
+    "standing": true,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 2,
+    "px_line1": 1798,
+    "px_line2": 1716,
+    "px_plain": 325
+   },
+   {
+    "label": "4 그리기 첫 획(보통 획)",
+    "order": 2,
+    "standing": true,
+    "strokes": 1,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 0,
+    "px_line1": 1134,
+    "px_line2": 1072,
+    "px_plain": 1279
+   }
+  ],
+  "A_old_behavior": [
+   {
+    "label": "0 빈 화면",
+    "order": 0,
+    "standing": false,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": null,
+    "seeds": 0,
+    "px_line1": 0,
+    "px_line2": 0,
+    "px_plain": 0
+   },
+   {
+    "label": "1 지평선",
+    "order": 0,
+    "standing": false,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 0,
+    "px_line1": 0,
+    "px_line2": 0,
+    "px_plain": 0
+   },
+   {
+    "label": "2 깊이선1 → 1점",
+    "order": 1,
+    "standing": true,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 0,
+    "px_line1": 1687,
+    "px_line2": 1890,
+    "px_plain": 1080
+   },
+   {
+    "label": "3 깊이선2 → 2점",
+    "order": 2,
+    "standing": true,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 0,
+    "px_line1": 1134,
+    "px_line2": 1072,
+    "px_plain": 325
+   },
+   {
+    "label": "4 그리기 첫 획(보통 획)",
+    "order": 2,
+    "standing": true,
+    "strokes": 1,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 0,
+    "px_line1": 1134,
+    "px_line2": 1072,
+    "px_plain": 1279
+   }
+  ]
+ },
+ "seed_px": {
+  "old": [
+   1687,
+   1072
+  ],
+  "new": [
+   2296,
+   1716
+  ]
+ },
+ "seed_ink": [
+  609,
+  644
+ ],
+ "plain_ink": {
+  "new": 954,
+  "old": 954,
+  "why_equal": "구성상 보장(#5) — 스위치가 이 경로를 안 지난다. 등식을 근거로 안 쓴다",
+  "why_step_diff_ok": "3 → 4에는 확정이 없다 — 그리드가 안 바뀐다"
+ },
+ "horizon": {
+  "thirds": [
+   {
+    "label": "상단",
+    "y": 101,
+    "got": 101,
+    "is_center": false
+   },
+   {
+    "label": "중간위",
+    "y": 283,
+    "got": 283,
+    "is_center": false
+   },
+   {
+    "label": "하단",
+    "y": 573,
+    "got": 573,
+    "is_center": false
+   }
+  ],
+  "tilted": {
+   "below_threshold": {
+    "start_y": 202,
+    "end_y": 242,
+    "slope_deg": 2.981461219982192,
+    "got": 242
+   },
+   "above_threshold": {
+    "start_y": 202,
+    "end_y": 350,
+    "slope_deg": 10.9076617954981,
+    "got": 350
+   },
+   "rule": "**끝점의 y를 쓴다**(D-L117) — 지평선은 화면 수평으로 강제되므로(18차 지시 j) y 하나이고, 그 하나를 손이 마지막으로 있던 자리로 정한다. ⚠ **방향 의존이다**: 같은 획을 반대로 그으면 시작점의 y가 된다(D-L117의 대가)."
+  },
+  "restored_old_save_no_vp": {
+   "order": 0,
+   "standing": false,
+   "strokes": 1,
+   "lifted": 0,
+   "horizon_y": null,
+   "seeds": 0
+  },
+  "after_drawing_top": {
+   "drawn_y": 121,
+   "order": 0,
+   "standing": false,
+   "strokes": 1,
+   "lifted": 0,
+   "horizon_y": 121,
+   "seeds": 0
+  },
+  "restored_old_save_with_vp": {
+   "seeded_y": 209,
+   "order": 2,
+   "standing": true,
+   "strokes": 1,
+   "lifted": 0,
+   "horizon_y": 209,
+   "seeds": 0
+  }
+ },
+ "face": {
+  "empty": {
+   "kinds": [
+    null,
+    null,
+    null,
+    null
+   ],
+   "on_face_cands": 0,
+   "lifted": 0,
+   "placeBy": {
+    "ref_anchor": 0,
+    "start_anchor": 0,
+    "two_point": 0,
+    "end_anchor": 0,
+    "cross_anchor": 0,
+    "batch": 0,
+    "ground": 0,
+    "extension": 0,
+    "unanchored": 0,
+    "aux": 0
+   }
+  },
+  "with_geometry": {
+   "kinds": [
+    "on_face",
+    "on_face",
+    "on_face",
+    "on_face"
+   ],
+   "on_face_cands": 4,
+   "lifted": 1,
+   "placeBy": {
+    "ref_anchor": 0,
+    "start_anchor": 0,
+    "two_point": 0,
+    "end_anchor": 0,
+    "cross_anchor": 0,
+    "batch": 0,
+    "ground": 1,
+    "extension": 0,
+    "unanchored": 0,
+    "aux": 0
+   }
+  }
+ },
+ "gate": {
+  "registered": "① 깊이선1 뒤 `seeds` 1이고 `seed_ink[0]` > 0 ② 깊이선2 뒤 `seeds` 2이고 `seed_ink[1]` > 0 ③ 그리기 첫 획에서 `seeds` 0 ④ 세 높이에 그은 y가 그대로 `horizon_y`다(셋 다 화면 중앙이 아니다) ⑤ 소실점 없는 옛 저장본은 `horizon_y`가 `null`이고, 소실점 있는 것은 **기본값이 아닌 y**로 지켜진다 ⑥ 기하 0에서 `on_face` 후보가 0이고 기하가 생기면 0이 아니다 ⑦ `plain_ink.new` > 0 — 확정 뒤의 **보통 획**이 그린 자리에 잉크를 더한다(D-L114의 「사거리」 절이 이 값에 얹혀 있다).",
+  "reachability": "**A** — 되살릴 것은 18차 거동이고 `setSeedLines(false)` 팔이 그것이다. 넘어야 할 바닥은 그 팔의 픽셀(`seed_px.old`)이고 `seed_ink`가 그 차다. **B** — 되살림은 **저장본이 아니라 수리를 되돌리는 것**이다(저장본만 심으면 이 원장은 수리된 값 `null`을 낸다). 손으로 되돌려 확인했고 그때 `horizon_y`가 `gate.revert_check.B_horizon_y`로 잡힌다. **C** — 같은 방식으로 되돌리면 `gate.revert_check.C_on_face_cands`가 잡힌다. ⚠ **A만 같은 실행 안의 대조이고 B·C는 손으로 되돌린 확인이다**(비대칭을 적는다). ⛔ **조항 ④(세 높이)와 ⑦(보통 획)에는 도달 가능성이 없다**(#40 ⑥): ④는 저장본 없는 새 페이지 팔이라 **이 버그로 깨진 적이 없고**(결함 3의 재현 경로는 `after_drawing_top`이다), ⑦은 이 세션의 변경이 안 닿는 경로라 되살릴 스위치가 없다. 둘 다 **«지금 그렇다»를 잠그는 조항이지 «고쳤다»의 증거가 아니다**.",
+  "revert_check": {
+   "B_horizon_y": 337,
+   "C_on_face_cands": 4,
+   "how": "`camState`의 지평선 게이트와 `mainL`의 `snapCtx` 지면 조건을 각각 한 줄씩 되돌리고 이 팔을 돌렸다. 각각 `restored_old_save_no_vp.horizon_y` 337과 `face.empty.on_face_cands` 4에서 실패한다. 337은 그 실행의 **H/2**이고 (잉크 캔버스 높이 674) 그것이 곧 옛 `defaultHorizon`이다 — 이 원장의 `horizon.restored_old_save_no_vp`가 심은 값과 같은 자리다."
+  },
+  "reachability_source": "seed_px/old",
+  "reachability_value": [
+   1687,
+   1072
+  ]
+ },
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}

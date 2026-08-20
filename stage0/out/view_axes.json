@@ -23,7 +23,7 @@
  "setup": {
   "canvas": [
    1280,
-   675
+   674
   ],
   "strokes": 12,
   "hasCamera": true,
@@ -74,7 +74,7 @@
      "axis": 0,
      "at": [
       2119,
-      70
+      69
      ],
      "screen_dir": [
       0.984,
@@ -86,7 +86,7 @@
      "axis": 1,
      "at": [
       -85,
-      70
+      69
      ],
      "screen_dir": [
       -0.938,
@@ -98,7 +98,7 @@
      "axis": 2,
      "at": [
       640,
-      4070
+      4069
      ],
      "screen_dir": [
       0,
@@ -110,12 +110,12 @@
    "finite_axes": 3,
    "horizon_line": {
     "a": [
-     7907,
-     70
+     7905,
+     69
     ],
     "b": [
-     -3670,
-     70
+     -3668,
+     69
     ]
    },
    "horizon_gap_px": [
@@ -123,7 +123,7 @@
     0
    ],
    "old_flat_gap_px": 0,
-   "horizon_scalar_y": 70,
+   "horizon_scalar_y": 69,
    "marks": [
     {
      "axis": 0,
@@ -154,7 +154,7 @@
      "kind": "edge",
      "at": [
       640,
-      621
+      620
      ],
      "dir": [
       0,
@@ -176,7 +176,7 @@
      "axis": 0,
      "at": [
       2739,
-      -11
+      -12
      ],
      "screen_dir": [
       0.986,
@@ -200,7 +200,7 @@
      "axis": 2,
      "at": [
       791,
-      4112
+      4111
      ],
      "screen_dir": [
       0.04,
@@ -212,11 +212,11 @@
    "finite_axes": 3,
    "horizon_line": {
     "a": [
-     8522,
+     8520,
      -243
     ],
     "b": [
-     -3045,
+     -3043,
      220
     ]
    },
@@ -225,13 +225,13 @@
     0
    ],
    "old_flat_gap_px": 104.739,
-   "horizon_scalar_y": -11,
+   "horizon_scalar_y": -12,
    "marks": [
     {
      "axis": 0,
      "kind": "edge",
      "at": [
-      920,
+      919,
       291
      ],
      "dir": [
@@ -256,7 +256,7 @@
      "kind": "edge",
      "at": [
       651,
-      621
+      620
      ],
      "dir": [
       0.04,
@@ -278,7 +278,7 @@
      "axis": 0,
      "at": [
       -5746,
-      1308
+      1307
      ],
      "screen_dir": [
       -0.989,
@@ -290,7 +290,7 @@
      "axis": 1,
      "at": [
       763,
-      119
+      118
      ],
      "screen_dir": [
       0.492,
@@ -314,11 +314,11 @@
    "finite_axes": 3,
    "horizon_line": {
     "a": [
-     -11440,
-     2348
+     -11439,
+     2347
     ],
     "b": [
-     -52,
+     -54,
      268
     ]
    },
@@ -327,7 +327,7 @@
     0
    ],
    "old_flat_gap_px": 1188.952,
-   "horizon_scalar_y": 1308,
+   "horizon_scalar_y": 1307,
    "marks": [
     {
      "axis": 0,
@@ -346,7 +346,7 @@
      "kind": "point",
      "at": [
       763,
-      119
+      118
      ],
      "dir": [
       0,
@@ -358,7 +358,7 @@
      "kind": "edge",
      "at": [
       691,
-      616
+      615
      ],
      "dir": [
       0.18,
@@ -380,7 +380,7 @@
      "axis": 0,
      "at": [
       1638,
-      550
+      549
      ],
      "screen_dir": [
       0.978,
@@ -404,7 +404,7 @@
      "axis": 2,
      "at": [
       446,
-      -3464
+      -3465
      ],
      "screen_dir": [
       -0.051,
@@ -416,12 +416,12 @@
    "finite_axes": 3,
    "horizon_line": {
     "a": [
-     7419,
-     255
+     7417,
+     254
     ],
     "b": [
-     -4143,
-     845
+     -4141,
+     844
     ]
    },
    "horizon_gap_px": [
@@ -429,7 +429,7 @@
     0
    ],
    "old_flat_gap_px": 105.491,
-   "horizon_scalar_y": 550,
+   "horizon_scalar_y": 549,
    "marks": [
     {
      "axis": 0,
@@ -447,7 +447,7 @@
      "axis": 1,
      "kind": "edge",
      "at": [
-      368,
+      369,
       418
      ],
      "dir": [
@@ -494,7 +494,7 @@
      "axis": 1,
      "at": [
       -291,
-      -943
+      -944
      ],
      "screen_dir": [
       -0.588,
@@ -518,11 +518,11 @@
    "finite_axes": 3,
    "horizon_line": {
     "a": [
-     9479,
+     9477,
      -1334
     ],
     "b": [
-     -2089,
+     -2087,
      -872
     ]
    },
@@ -538,7 +538,7 @@
      "kind": "edge",
      "at": [
       896,
-      217
+      216
      ],
      "dir": [
       0.905,
@@ -549,7 +549,7 @@
      "axis": 1,
      "kind": "edge",
      "at": [
-      473,
+      474,
       108
      ],
      "dir": [
@@ -562,7 +562,7 @@
      "kind": "edge",
      "at": [
       651,
-      621
+      620
      ],
      "dir": [
       0.04,
@@ -579,11 +579,11 @@
    "order": 1,
    "standing": true,
    "slots": [
-    "vp@-41,338",
+    "vp@-38,337",
     "screen",
     "screen"
    ],
-   "horizon_y": 338,
+   "horizon_y": 337,
    "lifted": 0,
    "total": 0,
    "note": ""
@@ -592,11 +592,11 @@
    "order": 2,
    "standing": true,
    "slots": [
-    "vp@-41,338",
-    "vp@1308,338",
+    "vp@-38,337",
+    "vp@1306,337",
     "screen"
    ],
-   "horizon_y": 338,
+   "horizon_y": 337,
    "lifted": 0,
    "total": 0,
    "note": ""
@@ -605,11 +605,11 @@
    "order": 2,
    "standing": true,
    "slots": [
-    "vp@-41,338",
-    "vp@1308,338",
+    "vp@-38,337",
+    "vp@1306,337",
     "screen"
    ],
-   "horizon_y": 338,
+   "horizon_y": 337,
    "lifted": 0,
    "total": 1,
    "note": ""
@@ -618,11 +618,11 @@
    "order": 2,
    "standing": true,
    "slots": [
-    "vp@-41,338",
-    "vp@1308,338",
+    "vp@-38,337",
+    "vp@1306,337",
     "screen"
    ],
-   "horizon_y": 338,
+   "horizon_y": 337,
    "lifted": 0,
    "total": 2,
    "note": ""
@@ -631,11 +631,11 @@
    "order": 2,
    "standing": true,
    "slots": [
-    "vp@-41,338",
-    "vp@1308,338",
+    "vp@-38,337",
+    "vp@1306,337",
     "screen"
    ],
-   "horizon_y": 338,
+   "horizon_y": 337,
    "lifted": 0,
    "total": 3,
    "note": ""
@@ -766,8 +766,8 @@
   ],
   "built_final_order": 2,
   "built_final_slots": [
-   "vp@-41,338",
-   "vp@1308,338",
+   "vp@-38,337",
+   "vp@1306,337",
    "screen"
   ],
   "built_lifted": "0/3"
@@ -908,8 +908,8 @@
    ],
    "built_final_order": 2,
    "built_final_slots": [
-    "vp@-41,338",
-    "vp@1308,338",
+    "vp@-38,337",
+    "vp@1306,337",
     "screen"
    ],
    "built_lifted": "0/3"

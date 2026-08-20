@@ -1,5 +1,5 @@
 {
-  "n_flags": 5337,
+  "n_flags": 5344,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -2590,7 +2590,7 @@
     },
     {
       "path": "draft_return.json:edge_tap.judge.pitchDeg",
-      "val": -4.0169503132345094e-15,
+      "val": -4.016950313234509e-15,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -4530,7 +4530,7 @@
     },
     {
       "path": "lens_roll_osnap.json:s_roll.degen_dist_px[1]",
-      "val": 5.684341886080802e-14,
+      "val": 1.6077746776921858e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -4562,6 +4562,11 @@
       "path": "lens_roll_osnap.json:s_roll.return_judge_at_700ms.returnDir[1]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lens_roll_osnap.json:s_start_check.dist_px",
+      "val": 5.8150261837808516e-11,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "lens_roll_osnap.json:summary.s_more_vertical_off_ortho_deg.return_to_draft",
@@ -7393,6 +7398,16 @@
       "path": "orbit_center.json:thresholds.console_errors_max",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "orbit_center.json:center.target[1]",
+      "val": 1.9721522630525293e-31,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "orbit_center.json:center.target_to_proj_bbox",
+      "val": 3.552713678800501e-15,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "order_lock.json:arms.bypass.headline.camera_ok_rate",
@@ -19922,6 +19937,26 @@
       "flag": "통계 대표값이 정확히 0 → 항등/자기참조 확인"
     },
     {
+      "path": "procedure_repair.json:horizon.restored_old_save_no_vp.order",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "procedure_repair.json:horizon.restored_old_save_no_vp.lifted",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "procedure_repair.json:horizon.restored_old_save_no_vp.seeds",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "procedure_repair.json:face.empty.on_face_cands",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "promote.json:by_arm.base.committed_drift",
       "val": 0,
       "flag": "분포 전체가 0(n=338) → 항등/측정 미작동 확인"
@@ -20063,17 +20098,17 @@
     },
     {
       "path": "restore_pose.json:restore_viewpoint.pose_max_diff",
-      "val": 1.7763568394002505e-15,
+      "val": 8.881784197001252e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "restore_pose.json:offcenter.place_gap_px",
-      "val": 2.842170943040401e-14,
+      "val": 5.684341886080802e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "restore_pose.json:gate.result.viewpoint_pose_max_diff",
-      "val": 1.7763568394002505e-15,
+      "val": 8.881784197001252e-16,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -21539,7 +21574,7 @@
     },
     {
       "path": "stage_browser.json:dpr_identity_px.css_frame",
-      "val": 1.2409095402129096e-13,
+      "val": 2.2914314707516465e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -22609,7 +22644,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 2.304822999121825e-13,
+      "val": 4.440892098500626e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -23234,12 +23269,12 @@
     },
     {
       "path": "view_pan.json:screen_zoom.three_gap",
-      "val": 4.547473508864641e-13,
+      "val": 2.3437142008433856e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "view_pan.json:screen_zoom.vp_relative_gap",
-      "val": 9.112693272687351e-13,
+      "val": 4.582862941503293e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -24918,7 +24953,7 @@
     },
     {
       "path": "vp_source.json:poses[1].axis_horizon_dist_px[0]",
-      "val": 4.826924015831804e-13,
+      "val": 3.2189863688034044e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -24968,7 +25003,7 @@
     },
     {
       "path": "vp_source.json:poses[2].axis_horizon_dist_px[1]",
-      "val": 2.6628010986697162e-15,
+      "val": 2.6819777314046436e-15,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -25043,7 +25078,7 @@
     },
     {
       "path": "vp_source.json:poses[3].axis_horizon_dist_px[1]",
-      "val": 2.6628010986697162e-15,
+      "val": 2.6819777314046436e-15,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -25113,8 +25148,8 @@
     },
     {
       "path": "vp_source.json:poses[4].axis_horizon_dist_px[0]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "val": 1.6094931844017022e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "vp_source.json:poses[4].axis_horizon_dist_px[1]",
@@ -25158,13 +25193,13 @@
     },
     {
       "path": "vp_source.json:poses[5].axis_horizon_dist_px[0]",
-      "val": 2.011218339929918e-13,
+      "val": 2.8166130727029793e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "vp_source.json:poses[5].axis_horizon_dist_px[1]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "val": 8.047465922008512e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "vp_source.json:poses[5].fixed[0].gap_px",
@@ -25252,7 +25287,7 @@
     },
     {
       "path": "vp_source_dpr2.json:poses[1].axis_horizon_dist_px[0]",
-      "val": 4.826924015831804e-13,
+      "val": 3.2189863688034044e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -25297,7 +25332,7 @@
     },
     {
       "path": "vp_source_dpr2.json:poses[2].axis_horizon_dist_px[1]",
-      "val": 2.6628010986697162e-15,
+      "val": 2.6819777314046436e-15,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -25367,7 +25402,7 @@
     },
     {
       "path": "vp_source_dpr2.json:poses[3].axis_horizon_dist_px[1]",
-      "val": 2.6628010986697162e-15,
+      "val": 2.6819777314046436e-15,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -25432,8 +25467,8 @@
     },
     {
       "path": "vp_source_dpr2.json:poses[4].axis_horizon_dist_px[0]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "val": 1.6094931844017022e-13,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "vp_source_dpr2.json:poses[4].axis_horizon_dist_px[1]",
@@ -25472,13 +25507,13 @@
     },
     {
       "path": "vp_source_dpr2.json:poses[5].axis_horizon_dist_px[0]",
-      "val": 2.011218339929918e-13,
+      "val": 2.8166130727029793e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "vp_source_dpr2.json:poses[5].axis_horizon_dist_px[1]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+      "val": 8.047465922008512e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "vp_source_dpr2.json:poses[5].fixed[0].gap_px",
@@ -26566,27 +26601,27 @@
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
     },
     {
-      "path": "web/e2e/fixture.ts:92:wiringGapPx",
+      "path": "web\\e2e\\fixture.ts:92:wiringGapPx",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/e2e/restore_pose.spec.ts:230:diff",
+      "path": "web\\e2e\\restore_pose.spec.ts:230:diff",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/e2e/stage.spec.ts:57:pixelGap",
+      "path": "web\\e2e\\stage.spec.ts:57:pixelGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/src/s3d/lift.ts:467:transitionGap",
+      "path": "web\\src\\s3d\\lift.ts:467:transitionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/src/s3d/stroke.ts:313:reprojectionGap",
+      "path": "web\\src\\s3d\\stroke.ts:313:reprojectionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
@@ -26608,9 +26643,11 @@
     {
       "path": "scan_citation_hashes",
       "val": [
-        "progress.md:11820 test_cost.json"
+        "DEFERRED.md:885 test_cost.json",
+        "progress.md:11820 test_cost.json",
+        "progress.md:13857 test_cost.json"
       ],
-      "flag": "**없는 원장을 인용한다**(1건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
+      "flag": "**없는 원장을 인용한다**(3건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
     },
     {
       "path": "stage0/out/vp_source.json",
@@ -26678,57 +26715,57 @@
       "flag": "**도달 가능성 값이 정확히 0 또는 1이다**(#40) — 그 자리의 0/1은 대개 측정이 아니라 **설계 보장**이다(#5). 항등을 도달 가능성으로 쓰면 정보량이 0이다. 다른 팔의 수치를 적는다"
     },
     {
-      "path": "web/test/axis_live.test.ts",
+      "path": "web\\test\\axis_live.test.ts",
       "val": "18건 (줄 [111, 119, 137, 142, 145])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/lift_grade.test.ts",
+      "path": "web\\test\\lift_grade.test.ts",
       "val": "1건 (줄 [104])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/metrics.ts",
+      "path": "web\\test\\metrics.ts",
       "val": "1건 (줄 [135])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/order_promote.test.ts",
+      "path": "web\\test\\order_promote.test.ts",
       "val": "3건 (줄 [127, 252, 260])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/order_signal.test.ts",
+      "path": "web\\test\\order_signal.test.ts",
       "val": "3건 (줄 [322, 323, 346])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/order_undo.test.ts",
+      "path": "web\\test\\order_undo.test.ts",
       "val": "1건 (줄 [251])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/persist.test.ts",
+      "path": "web\\test\\persist.test.ts",
       "val": "1건 (줄 [363])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/promote.test.ts",
+      "path": "web\\test\\promote.test.ts",
       "val": "35건 (줄 [161, 189, 211, 212, 217])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/snap_measure.test.ts",
+      "path": "web\\test\\snap_measure.test.ts",
       "val": "3건 (줄 [92, 93, 537])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/stage_measure.test.ts",
+      "path": "web\\test\\stage_measure.test.ts",
       "val": "2건 (줄 [179, 221])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/tube_measure.test.ts",
+      "path": "web\\test\\tube_measure.test.ts",
       "val": "1건 (줄 [176])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     }
@@ -26791,7 +26828,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 250,
+      "files_scanned": 255,
       "exts_declared": [
         ".md",
         ".py",
@@ -26799,13 +26836,13 @@
       ],
       "hits_by_ext": {
         ".md": 12,
-        ".ts": 9,
-        ".py": 2
+        ".py": 2,
+        ".ts": 9
       }
     },
     {
       "sweep": "metric_definition",
-      "files_scanned": 161,
+      "files_scanned": 162,
       "exts_declared": [
         ".ts"
       ],
@@ -26815,26 +26852,26 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 250,
+      "files_scanned": 255,
       "exts_declared": [
         ".md",
         ".py",
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 13,
+        ".md": 14,
         ".py": 4,
-        ".ts": 70
+        ".ts": 72
       }
     },
     {
       "sweep": "external_data",
-      "files_scanned": 129,
+      "files_scanned": 131,
       "exts_declared": [
         ".ts"
       ],
       "hits_by_ext": {
-        ".ts": 12
+        ".ts": 13
       }
     }
   ],
@@ -26856,7 +26893,7 @@
     {
       "scan": "scan_dead_ledger",
       "unit": "원장",
-      "targets": 98,
+      "targets": 99,
       "hits": 3,
       "note": null
     },
@@ -26870,30 +26907,30 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 354,
+      "targets": 364,
       "hits": 1,
-      "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 1건"
+      "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 3건"
     },
     {
       "scan": "scan_cited_values",
       "unit": "인용 줄",
-      "targets": 191,
+      "targets": 193,
       "hits": 0,
-      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1885개이고 엄격 판정이면 423개(82줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
+      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1899개이고 엄격 판정이면 425개(83줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
     },
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 81,
+      "targets": 82,
       "hits": 2,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 63,
+      "targets": 64,
       "hits": 7,
-      "note": "값 대조를 **지난 것 26** · **픽스처가 정한 값 9** · **면제 28**(`reachability_absent`) · 원장 99개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, lens_roll_osnap.json:gate, one_point_direct.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, restore_pose.json:gate, snap_cache.json:gate, snap_stage.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, osnap_kinds.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "note": "값 대조를 **지난 것 27** · **픽스처가 정한 값 9** · **면제 28**(`reachability_absent`) · 원장 100개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, lens_roll_osnap.json:gate, one_point_direct.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, procedure_repair.json:gate, restore_pose.json:gate, snap_cache.json:gate, snap_stage.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, osnap_kinds.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -26923,7 +26960,6 @@
       35,
       38,
       40,
-      49,
       51
     ],
     "aux_tap.json": [
@@ -27193,7 +27229,8 @@
       5,
       12,
       17,
-      21
+      21,
+      57
     ],
     "horizon_flow.json": [
       5,
@@ -27396,6 +27433,14 @@
     "preview_gap.json": [
       26,
       35
+    ],
+    "procedure_repair.json": [
+      5,
+      12,
+      21,
+      38,
+      40,
+      55
     ],
     "promote.json": [
       3,
@@ -27659,11 +27704,11 @@
     ]
   },
   "cited_value_population": {
-    "lines_checked": 191,
-    "tokens_checked": 1885,
+    "lines_checked": 193,
+    "tokens_checked": 1899,
     "flags_line_rule": 0,
-    "strict_tokens_flagged": 423,
-    "strict_lines_flagged": 82,
+    "strict_tokens_flagged": 425,
+    "strict_lines_flagged": 83,
     "hashless_only_lines_in_population": false,
     "note": "**모집단은 같고 판정만 둘이다.** `현재 해시로 적힌 인용 줄`이 모집단이고 (해시 없이 이름만 적힌 원장은 **줄을 모집단에 넣지 않는다** — 같은 줄에 현재 해시 인용이 있을 때 **대조 집합에만** 더한다), 그 위에서 엄격 판정(토큰별)과 현행 판정(줄에 하나도 없을 때만)의 수를 함께 낸다. `tokens_checked` ↔ `strict_tokens_flagged`가 옛 1129 ↔ 272와 같은 단위이고, `lines_checked` ↔ `flags_line_rule`이 96 ↔ 2와 같은 단위다"
   },
@@ -27736,6 +27781,7 @@
     "persist.json",
     "pick_vp.json",
     "preview_gap.json",
+    "procedure_repair.json",
     "promote.json",
     "real_ink.json",
     "rel_snap_flow.json",

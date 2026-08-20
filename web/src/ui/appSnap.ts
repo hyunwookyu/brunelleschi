@@ -22,6 +22,14 @@
 import { snapshotDoc, type DocState } from "./doc.js";
 import type { CamState } from "./camState.js";
 import { cloneRuleState, type RuleState } from "../s3d/vpRules.js";
+import type { Pt2 } from "../s3d/camera.js";
+
+/**
+ * **작도선 하나**(2026-08-20 19차 지시 2 · D-L114) — 소실점을 만든 획이 남긴 표시 전용 자취.
+ * 획이 아니므로 `DocState`에 안 들어간다. 그러나 **되돌리기는 함께 되돌려야 한다** —
+ * 안 그러면 실행 취소로 지평선 단계에 돌아갔는데 **주인 없는 옅은 선**이 화면에 남는다.
+ */
+export interface SeedLine { a: Pt2; b: Pt2 }
 
 export interface AppSnap {
   doc: DocState;
@@ -33,6 +41,10 @@ export interface AppSnap {
   rules: RuleState;
   /** 승격 요약(불투명). 재연결을 되돌리면 표시가 **다시 나와야** 한다. */
   report: unknown | null;
+  /**
+   * **작도선 자취**(19차 지시 2). 옛 스냅샷에는 없다 — 읽는 쪽이 `?? []`로 받는다.
+   */
+  seeds?: SeedLine[];
 }
 
 /** 규칙 상태 깊은 사본 — 스냅샷이 나중의 획에 딸려 움직이면 안 된다. */
@@ -40,8 +52,12 @@ export const copyRules = (r: RuleState): RuleState => cloneRuleState(r);
 
 export function takeSnap(
   doc: DocState, cam: CamState, report: unknown | null = null,
+  seeds: readonly SeedLine[] = [],
 ): AppSnap {
-  return { doc: snapshotDoc(doc), rules: copyRules(cam.rules), report };
+  return { doc: snapshotDoc(doc), rules: copyRules(cam.rules), report,
+           // **깊은 사본이다** — 얕게 담으면 스냅샷이 나중의 작도선에 딸려 움직인다
+           // (`cloneRuleState`가 걸렸던 자리와 같은 형태)
+           seeds: seeds.map(l => ({ a: [l.a[0], l.a[1]] as Pt2, b: [l.b[0], l.b[1]] as Pt2 })) };
 }
 
 /**
@@ -75,6 +91,17 @@ export function snapDiff(a: AppSnap, b: AppSnap): string[] {
     if (p.kind === "vp" && q.kind === "vp"
         && (p.at[0] !== q.at[0] || p.at[1] !== q.at[1] || p.source !== q.source)) {
       w.push(`rules.slots[${i}].vp`);
+    }
+  }
+
+  // **작도선도 본다**(19차 지시 2) — 되돌리기가 이것을 안 되돌리면 «주인 없는 옅은 선»이
+  // 남는데, 대조가 그 자리를 안 짚으면 왕복 통과가 그 결함을 덮는다(#30 양성 채널).
+  const as = a.seeds ?? [], bs = b.seeds ?? [];
+  if (as.length !== bs.length) w.push("seeds.length");
+  else for (let i = 0; i < as.length; i++) {
+    if (as[i].a[0] !== bs[i].a[0] || as[i].a[1] !== bs[i].a[1]
+        || as[i].b[0] !== bs[i].b[0] || as[i].b[1] !== bs[i].b[1]) {
+      w.push(`seeds[${i}]`); break;
     }
   }
 
