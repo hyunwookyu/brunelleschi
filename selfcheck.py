@@ -898,7 +898,12 @@ def scan_pitfall_citations(root: Path, reports: dict[str, dict]) -> list[dict]:
         pit = (root / "PITFALLS.md").read_text(encoding="utf-8")
     except Exception:
         pit = ""
+    # **항목의 머리 형식이 둘이다** — `1.`~`55.`는 번호 목록이고, 18차가 등재한 #56·#57은
+    # `## #56 — **…**` 절이다. 초판의 정규식은 앞의 것만 알아서 **실재하는 항목을
+    # «죽은 참조»로 냈다**(19차에 새 원장이 #57을 인용하다 걸렸다). 검사를 약하게 하는 것이
+    # 아니라 **거짓 양성을 없애는 것**이다(#18과 반대 방향 — 없는 것을 있다고 하지 않는다).
     known = {int(m) for m in re.findall(r"^(\d+)\. \*\*", pit, re.M)}
+    known |= {int(m) for m in re.findall(r"^#+\s*#(\d+)\s*[—-]", pit, re.M)}
     pat = re.compile(r"#(\d+)")
     cited: dict[str, list[int]] = {}
     flags: list[dict] = []
