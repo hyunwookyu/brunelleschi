@@ -239,4 +239,19 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(await glPixels(page, 0, 0, 1200, 800)).toBeGreaterThan(20) // 형태가 보인다
 
   await page.click('#btn-draw-view')
+
+  // ── 5단계: 자동 저장 — 새로고침해도 그림과 카메라(재계산)가 남는다 ──
+  const beforeReload = await summary(page)
+  await page.waitForTimeout(600) // 자동 저장 디바운스
+  await page.reload()
+  await page.waitForFunction(() => (window as any).__b2)
+  await settle(page)
+  s = await summary(page)
+  expect(s.strokes).toBe(beforeReload.strokes)
+  expect(s.vps).toHaveLength(2)
+  expect(s.lifted).toBe(beforeReload.lifted)
+  expect(await glPixels(page, 0, 0, 1200, 800)).toBeGreaterThan(20)
+  // 빌드 식별자가 보인다
+  const buildId = await page.textContent('#buildid')
+  expect(buildId && buildId.length).toBeGreaterThan(3)
 })

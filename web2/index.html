@@ -27,6 +27,11 @@
       background: #fffdf8; border: 1px solid #ccc; border-radius: 3px;
       padding: 4px 8px; cursor: pointer; color: #333;
     }
+    /* 빌드 식별자 — 배포 확인용. 없으면 저장소를 뒤져야 한다 */
+    #buildid {
+      position: fixed; right: 6px; bottom: 4px; z-index: 10;
+      font: 10px monospace; color: #999; pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -34,6 +39,7 @@
     <canvas id="gl"></canvas>
     <canvas id="ink"></canvas>
     <div id="notice"></div>
+    <div id="buildid"></div>
     <div id="tmpbar">
       <button id="btn-draw-view" title="작도 시점으로">작도 시점</button>
       <button id="btn-save-view" title="현재 시점 저장">시점 저장</button>
@@ -45,6 +51,11 @@
       <label style="background:#fffdf8;border:1px solid #ccc;border-radius:3px;padding:4px 8px">
         크기 <input id="eraser-size" type="range" min="4" max="60" step="1" style="width:60px;vertical-align:middle">
       </label>
+      <button id="btn-save" title=".brnl 저장">저장</button>
+      <button id="btn-open" title=".brnl 열기">열기</button>
+      <button id="btn-obj" title="OBJ 내보내기">OBJ</button>
+      <button id="btn-gltf" title="glTF 내보내기">glTF</button>
+      <input id="file-open" type="file" accept=".brnl,application/json" style="display:none">
       <details id="osnap-panel">
         <summary>오스냅</summary>
         <div id="osnap-kinds" style="display:flex;flex-direction:column;gap:2px;background:#fffdf8;border:1px solid #ccc;border-radius:3px;padding:6px"></div>

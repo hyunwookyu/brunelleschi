@@ -7,6 +7,9 @@ export interface CamPose {
   q: Quat
 }
 
+/** 화면 조작(뷰 오프셋) — 문서 좌표는 안 바뀐다 */
+export interface ViewOffset { s: number; ox: number; oy: number }
+
 /** 획 — 확정된 끝점 둘(스냅 반영, 원칙 d: 미리보기가 그대로 확정).
  *  raw는 손 획 원본(표현 계층에서 나중에 쓴다). */
 export interface Stroke {

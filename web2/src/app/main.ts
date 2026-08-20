@@ -1,9 +1,11 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView, loadDoc } from './state'
 import { initInput } from './input'
 import { resize2d, draw2d, type Draft } from './render2d'
-import { initR3D, syncStrokes, render3d } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d } from './render3d'
+import { serializeBrnl, parseBrnl } from '../core/file'
+import { toOBJ, toGLTF } from '../core/export'
 import { initNotice, notify, status } from './notice'
 import { OSNAP_ORDER, type OsnapHit } from '../core/osnap'
 import type { Pt } from '../core/vec'
@@ -17,8 +19,34 @@ const gl = document.getElementById('gl') as HTMLCanvasElement
 initNotice(document.getElementById('notice')!)
 
 const app = createApp(W, H)
-const ctx = resize2d(ink, W, H, dpr)
+let ctx = resize2d(ink, W, H, dpr)
 const r3d = initR3D(gl, W, H, dpr)
+
+// 빌드 식별자 — 배포됐는지 화면에서 바로 안다
+declare const __BUILD_ID__: string
+document.getElementById('buildid')!.textContent = __BUILD_ID__
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => { /* 오프라인 강화일 뿐 — 실패해도 동작 */ })
+}
+
+// 자동 저장 복원 — 문서 프레임이 창과 다르면 화면 배율로 맞춘다(문서 좌표 불변)
+const AUTOSAVE_KEY = 'b2-autosave'
+function fitViewToFrame() {
+  const fw = app.doc.frame.W, fh = app.doc.frame.H
+  if (fw === W && fh === H) return
+  const s = Math.min(W / fw, H / fh)
+  app.view = { s, ox: (W - fw * s) / 2, oy: (H - fh * s) / 2 }
+}
+try {
+  const saved = localStorage.getItem(AUTOSAVE_KEY)
+  if (saved) {
+    const data = parseBrnl(saved)
+    if (data && data.doc.strokes.length > 0) {
+      loadDoc(app, data)
+      fitViewToFrame()
+    }
+  }
+} catch { /* 저장소가 없으면 그냥 새 문서 */ }
 
 let draft: Draft | null = null
 let hover: OsnapHit | null = null
@@ -36,6 +64,19 @@ app.listeners.push(() => {
   invalidate()
 })
 
+// 자동 저장 — 문서·시점이 바뀌면 잠시 뒤 localStorage로
+let autosaveTimer: number | undefined
+app.listeners.push(() => {
+  clearTimeout(autosaveTimer)
+  autosaveTimer = window.setTimeout(() => {
+    try {
+      localStorage.setItem(AUTOSAVE_KEY, serializeBrnl({
+        doc: app.doc, nextId: app.nextId, savedViews: app.savedViews,
+      }))
+    } catch { /* 큰 문서로 quota가 넘칠 수 있다 — 수동 저장이 있다 */ }
+  }, 400)
+})
+
 function updateStatus() {
   const an = app.lift.an
   if (an.horizonY === null) status('지평선을 긋는다 — 수평이 강제된다')
@@ -43,6 +84,9 @@ function updateStatus() {
   else if (an.vps.length === 1) status('다른 방향 깊이선을 그으면 두 번째 소실점 (1/2)')
   else status('') // 작도 끝 — 평소에는 아무것도 안 띄운다(원칙 g)
 }
+// 시작 동기화 — 자동 저장 복원분 포함
+syncStrokes(r3d, app)
+syncedVersion = app.docVersion
 updateStatus()
 
 initInput(ink, app, {
@@ -97,16 +141,52 @@ const radius = document.getElementById('osnap-radius') as HTMLInputElement
 radius.value = String(app.osnap.radius)
 radius.addEventListener('input', () => { app.osnap.radius = Number(radius.value) })
 
+// 파일 — 저장·열기·내보내기
+function download(name: string, text: string, type: string) {
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(new Blob([text], { type }))
+  a.download = name
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+document.getElementById('btn-save')!.addEventListener('click', () => {
+  download('drawing.brnl', serializeBrnl({
+    doc: app.doc, nextId: app.nextId, savedViews: app.savedViews,
+  }), 'application/json')
+})
+const fileOpen = document.getElementById('file-open') as HTMLInputElement
+document.getElementById('btn-open')!.addEventListener('click', () => fileOpen.click())
+fileOpen.addEventListener('change', async () => {
+  const f = fileOpen.files?.[0]
+  fileOpen.value = ''
+  if (!f) return
+  const data = parseBrnl(await f.text())
+  if (!data) { notify('.brnl 파일이 아니거나 손상됐다'); return }
+  loadDoc(app, data)
+  fitViewToFrame()
+  viewsEl.textContent = ''
+  app.savedViews.forEach((_, i) => addViewButton(i))
+})
+document.getElementById('btn-obj')!.addEventListener('click', () => {
+  download('drawing.obj', toOBJ(app.lift), 'text/plain')
+})
+document.getElementById('btn-gltf')!.addEventListener('click', () => {
+  download('drawing.gltf', toGLTF(app.lift), 'model/gltf+json')
+})
+
 // 시점 저장·복귀
 const viewsEl = document.getElementById('views')!
-document.getElementById('btn-save-view')!.addEventListener('click', () => {
-  saveView(app)
-  const i = app.savedViews.length - 1
+function addViewButton(i: number) {
   const btn = document.createElement('button')
   btn.textContent = `시점 ${i + 1}`
   btn.addEventListener('click', () => gotoView(app, i))
   viewsEl.append(btn)
+}
+document.getElementById('btn-save-view')!.addEventListener('click', () => {
+  saveView(app)
+  addViewButton(app.savedViews.length - 1)
 })
+app.savedViews.forEach((_, i) => addViewButton(i)) // 자동 저장에서 복원된 시점들
 
 document.getElementById('btn-undo')!.addEventListener('click', () => undo(app))
 document.getElementById('btn-redo')!.addEventListener('click', () => redo(app))
@@ -116,6 +196,16 @@ window.addEventListener('keydown', (e) => {
   else if ((e.ctrlKey && e.key.toLowerCase() === 'y') || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z')) {
     e.preventDefault(); redo(app)
   }
+})
+
+// 창 크기 변경 — 캔버스만 따라간다. 문서 프레임(좌표계)은 불변.
+window.addEventListener('resize', () => {
+  const nw = window.innerWidth, nh = window.innerHeight
+  const nd = window.devicePixelRatio || 1
+  ctx = resize2d(ink, nw, nh, nd)
+  resize3d(r3d, nw, nh, nd)
+  app.cubeLayout = { cx: nw - 180, cy: 80, size: 80 }
+  invalidate()
 })
 
 function frame() {

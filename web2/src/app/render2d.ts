@@ -49,18 +49,18 @@ export function draw2d(
   draft: Draft | null, hover: OsnapHit | null, eraser: Pt | null,
 ) {
   const an = app.lift.an
-  const { W, H } = app.doc.frame
   const dpr = window.devicePixelRatio || 1
   const v = app.view
   const is = 1 / v.s // 화면 고정 크기 보정
+  const cw = ctx.canvas.width / dpr, ch = ctx.canvas.height / dpr
 
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-  ctx.clearRect(0, 0, W, H)
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
   ctx.setTransform(dpr * v.s, 0, 0, dpr * v.s, dpr * v.ox, dpr * v.oy)
 
-  // 보이는 문서 영역
-  const x0 = -v.ox * is, x1 = (W - v.ox) * is
-  const y0 = -v.oy * is, y1 = (H - v.oy) * is
+  // 보이는 문서 영역 (캔버스 기준)
+  const x0 = -v.ox * is, x1 = (cw - v.ox) * is
+  const y0 = -v.oy * is, y1 = (ch - v.oy) * is
 
   const atDraw = isDrawPose(app.pose)
 

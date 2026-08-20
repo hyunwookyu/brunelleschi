@@ -15,6 +15,9 @@ export interface R3D {
   camera: THREE.PerspectiveCamera
   group: THREE.Group
   material: LineMaterial
+  /** 캔버스 CSS 크기 — NDC 매핑 기준 (문서 프레임과 다를 수 있다) */
+  W: number
+  H: number
 }
 
 export function initR3D(canvas: HTMLCanvasElement, W: number, H: number, dpr: number): R3D {
@@ -35,7 +38,14 @@ export function initR3D(canvas: HTMLCanvasElement, W: number, H: number, dpr: nu
     worldUnits: false,
   })
   material.resolution.set(W, H)
-  return { renderer, scene, camera, group, material }
+  return { renderer, scene, camera, group, material, W, H }
+}
+
+export function resize3d(r: R3D, W: number, H: number, dpr: number) {
+  r.W = W; r.H = H
+  r.renderer.setPixelRatio(dpr)
+  r.renderer.setSize(W, H)
+  r.material.resolution.set(W, H)
 }
 
 /** 승격 기하 갱신 — 문서가 바뀔 때마다 전부 다시 만든다(부분 유지 없음) */
@@ -56,7 +66,7 @@ export function syncStrokes(r: R3D, app: App) {
  *  s·(px + f·X/−Z) + ox = (s·px+ox) + (s·f)·X/−Z */
 export function syncCamera(r: R3D, app: App) {
   const an = app.lift.an
-  const { W, H } = app.doc.frame
+  const { W, H } = r // NDC는 캔버스 크기 기준 — 주점·f는 문서 좌표에서 뷰 변환으로
   if (!an.principal || an.f === null) return
   const v = app.view
   const px = an.principal.x * v.s + v.ox

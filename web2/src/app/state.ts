@@ -3,7 +3,8 @@
 // 실행취소는 op 단위다: 획 추가 op, 지우개 한 번의 드래그 op.
 // 그림만 되돌린다 — 작도(카메라)는 op에 들어가지 않는다.
 
-import { emptyDoc, type Doc, type Stroke, type CamPose } from '../core/types'
+import { emptyDoc, type Doc, type Stroke, type CamPose, type ViewOffset } from '../core/types'
+export type { ViewOffset }
 import { liftAll, type LiftResult } from '../core/lift'
 import { DRAW_POSE } from '../core/camera'
 import { defaultOsnap, type OsnapSettings } from '../core/osnap'
@@ -39,8 +40,6 @@ export interface App {
   cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
 }
-
-export interface ViewOffset { s: number; ox: number; oy: number }
 
 export function createApp(W: number, H: number): App {
   const doc = emptyDoc(W, H)
@@ -193,6 +192,19 @@ export function saveView(app: App) {
     pose: { p: { ...app.pose.p }, q: { ...app.pose.q } },
     view: { ...app.view },
   })
+  for (const l of app.listeners) l() // 자동 저장이 듣는다
+}
+
+/** .brnl 복원 — 문서·시점만 갈아끼우고 나머지는 전부 다시 계산 */
+export function loadDoc(app: App, data: { doc: Doc; nextId: number; savedViews: App['savedViews'] }) {
+  app.doc = data.doc
+  app.nextId = data.nextId
+  app.savedViews = data.savedViews
+  app.undoStack = []
+  app.redoStack = []
+  app.pose = DRAW_POSE
+  app.view = { s: 1, ox: 0, oy: 0 }
+  recompute(app)
 }
 
 export function gotoView(app: App, i: number) {
