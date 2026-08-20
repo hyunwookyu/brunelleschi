@@ -171,6 +171,12 @@ export function project(an: Analysis, pose: CamPose, P: V3): Pt | null {
   return pt(an.principal.x + an.f * pc.x / -pc.z, an.principal.y - an.f * pc.y / -pc.z)
 }
 
+/** 세계 방향 → 카메라 프레임 — 사영이 아닌 방향 변환(뷰 큐브 위젯 등)도
+ *  출처는 여기다(원칙 a — 밖에서 quatConj를 직접 쓰지 않는다) */
+export function dirInCamera(pose: CamPose, d: V3): V3 {
+  return quatRotate(quatConj(pose.q), d)
+}
+
 export interface Ray { o: V3; d: V3 }
 
 /** 화면 점 → 세계 광선 */

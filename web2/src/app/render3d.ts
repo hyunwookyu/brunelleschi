@@ -51,13 +51,17 @@ export function syncStrokes(r: R3D, app: App) {
   }
 }
 
-/** 카메라 동기화 — core 모델(주점 px,py · f · 화면 y 아래)을 투영 행렬로 옮긴다 */
+/** 카메라 동기화 — core 모델(주점 px,py · f · 화면 y 아래)을 투영 행렬로 옮긴다.
+ *  뷰 오프셋(화면 팬·줌)은 f·주점의 화면 변환으로 정확히 얹힌다:
+ *  s·(px + f·X/−Z) + ox = (s·px+ox) + (s·f)·X/−Z */
 export function syncCamera(r: R3D, app: App) {
   const an = app.lift.an
   const { W, H } = app.doc.frame
   if (!an.principal || an.f === null) return
-  const { x: px, y: py } = an.principal
-  const f = an.f
+  const v = app.view
+  const px = an.principal.x * v.s + v.ox
+  const py = an.principal.y * v.s + v.oy
+  const f = an.f * v.s
   const near = 1, far = 1e6
   r.camera.projectionMatrix.set(
     2 * f / W, 0, 1 - 2 * px / W, 0,

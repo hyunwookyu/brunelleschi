@@ -3,10 +3,14 @@
 // 데스크톱 선례(SketchUp): 중버튼 궤도, 우버튼 팬, 휠 줌.
 
 import type { App } from './state'
-import { setPose, orbitPivot, beginErase, eraseAt, endErase } from './state'
+import {
+  setPose, setView, orbitPivot, beginErase, eraseAt, endErase,
+  screenToDoc, isDrawPose,
+} from './state'
 import { snapDir } from '../core/snap'
 import { osnap, type OsnapHit } from '../core/osnap'
 import { classifyNext } from '../core/camera'
+import { cubeGeom, cubeHit, poseForElem } from '../core/viewcube'
 import type { Draft } from './render2d'
 import {
   type Pt, type V3, pt, v3, add3, sub3, mul3, dot3,
@@ -30,10 +34,15 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
   let lastTouchDist = 0
   let orbitBtn: { last: Pt; mode: 'orbit' | 'pan' } | null = null
 
-  const toPt = (e: PointerEvent): Pt => {
+  /** 화면 좌표 (뷰 오프셋 적용 전) */
+  const toScreen = (e: PointerEvent | WheelEvent): Pt => {
     const r = canvas.getBoundingClientRect()
     return pt(e.clientX - r.left, e.clientY - r.top)
   }
+  /** 문서 좌표 — 그리기·스냅·지우개는 이것 */
+  const toPt = (e: PointerEvent): Pt => screenToDoc(app, toScreen(e))
+  /** 오스냅 반경은 화면 px — 문서 좌표용으로 배율 보정 */
+  const osnapSet = () => ({ ...app.osnap, radius: app.osnap.radius / app.view.s })
 
   // ── 획 미리보기 — 확정과 같은 함수로(스냅이 그대로 확정된다, 원칙 d) ──
   // 끝점 결정: 오스냅(점)이 축 스냅(방향)을 이긴다 — Rhino 선례.
@@ -47,7 +56,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
       draft.end = pt(cur.x, draft.start.y)
       draft.label = 'horizon'
     } else {
-      const oh = osnap(app.lift, app.pose, cur, app.osnap, { p3: draft.startP3 })
+      const oh = osnap(app.lift, app.pose, cur, osnapSet(), { p3: draft.startP3 })
       if (oh) {
         draft.end = oh.p
         draft.endSnap = oh
@@ -68,7 +77,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
   }
 
   function beginDraft(p: Pt) {
-    const oh = osnap(app.lift, app.pose, p, app.osnap)
+    const oh = osnap(app.lift, app.pose, p, osnapSet())
     draft = {
       start: oh ? oh.p : p,
       end: oh ? oh.p : p,
@@ -106,7 +115,16 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
     rotateAroundPivot(right, -dy * 0.005, pivot)
   }
 
-  function dolly(scale: number) {
+  // 팬·줌 — 그리는 중(작도 포즈)에는 화면 조작(뷰 오프셋), 궤도 후에는 공간 조작.
+  // dx·dy·중심은 화면 좌표다.
+  function dolly(scale: number, center: Pt) {
+    if (isDrawPose(app.pose)) {
+      const v = app.view
+      const s = Math.min(8, Math.max(0.2, v.s * scale))
+      const k = s / v.s
+      setView(app, { s, ox: center.x - k * (center.x - v.ox), oy: center.y - k * (center.y - v.oy) })
+      return
+    }
     if (!app.lift.an.constructionDone) return
     const pivot = orbitPivot(app)
     const p = add3(pivot, mul3(sub3(app.pose.p, pivot), 1 / scale))
@@ -114,6 +132,11 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
   }
 
   function pan(dx: number, dy: number) {
+    if (isDrawPose(app.pose)) {
+      const v = app.view
+      setView(app, { s: v.s, ox: v.ox + dx, oy: v.oy + dy })
+      return
+    }
     if (!app.lift.an.constructionDone) return
     const pivot = orbitPivot(app)
     const view = quatRotate(app.pose.q, v3(0, 0, -1))
@@ -125,22 +148,39 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
     setPose(app, { p, q: app.pose.q })
   }
 
+  // 뷰 큐브 — 화면 좌표로 판정. 잡히면 그 시점으로.
+  function tryCube(sp: Pt): boolean {
+    const geom = cubeGeom(app.lift.an, app.pose, app.cubeLayout)
+    if (!geom) return false
+    if (Math.hypot(sp.x - app.cubeLayout.cx, sp.y - app.cubeLayout.cy) > app.cubeLayout.size) return false
+    const elem = cubeHit(geom, sp)
+    if (!elem) return false
+    const pivot = orbitPivot(app)
+    const dist = Math.max(1, Math.hypot(
+      app.pose.p.x - pivot.x, app.pose.p.y - pivot.y, app.pose.p.z - pivot.z))
+    const pose = poseForElem(app.lift.an, elem, pivot, dist)
+    if (pose) setPose(app, pose)
+    return true
+  }
+
   // ── 포인터 이벤트 ────────────────────────────────────────────────────
   canvas.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'touch') {
       if (penDown) return // 팜 리젝션
-      touches.set(e.pointerId, toPt(e))
+      if (touches.size === 0 && tryCube(toScreen(e))) return
+      touches.set(e.pointerId, toScreen(e))
       lastTouchMid = null
       lastTouchDist = 0
       return
     }
     if (e.pointerType === 'pen') penDown = true
     if (e.pointerType === 'mouse' && e.button !== 0) {
-      orbitBtn = { last: toPt(e), mode: e.button === 1 ? 'orbit' : 'pan' }
+      orbitBtn = { last: toScreen(e), mode: e.button === 1 ? 'orbit' : 'pan' }
       canvas.setPointerCapture(e.pointerId)
       e.preventDefault()
       return
     }
+    if (tryCube(toScreen(e))) return
     drawingPointer = e.pointerId
     canvas.setPointerCapture(e.pointerId)
     if (app.tool === 'eraser') {
@@ -156,7 +196,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
     if (e.pointerType === 'touch') {
       if (penDown) return
       if (!touches.has(e.pointerId)) return
-      touches.set(e.pointerId, toPt(e))
+      touches.set(e.pointerId, toScreen(e))
       const pts = [...touches.values()]
       if (pts.length === 1) {
         const p = pts[0]!
@@ -167,7 +207,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
         const dist = Math.hypot(pts[0]!.x - pts[1]!.x, pts[0]!.y - pts[1]!.y)
         if (lastTouchMid && lastTouchDist > 0) {
           pan(mid.x - lastTouchMid.x, mid.y - lastTouchMid.y)
-          dolly(dist / lastTouchDist)
+          dolly(dist / lastTouchDist, mid)
         }
         lastTouchMid = mid
         lastTouchDist = dist
@@ -175,7 +215,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
       return
     }
     if (orbitBtn) {
-      const p = toPt(e)
+      const p = toScreen(e)
       if (orbitBtn.mode === 'orbit') orbit(p.x - orbitBtn.last.x, p.y - orbitBtn.last.y)
       else pan(p.x - orbitBtn.last.x, p.y - orbitBtn.last.y)
       orbitBtn.last = p
@@ -198,7 +238,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
       }
       cb.onEraserMove(null)
       // 호버 — 와콤 EMR 펜·마우스. 스냅 후보 표식.
-      cb.onHover(osnap(app.lift, app.pose, toPt(e), app.osnap))
+      cb.onHover(osnap(app.lift, app.pose, toPt(e), osnapSet()))
     }
   })
 
@@ -222,7 +262,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
 
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault()
-    dolly(Math.exp(-e.deltaY * 0.001))
+    dolly(Math.exp(-e.deltaY * 0.001), toScreen(e))
   }, { passive: false })
 
   canvas.addEventListener('contextmenu', (e) => e.preventDefault())

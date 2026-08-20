@@ -32,8 +32,15 @@ export interface App {
   eraserRadius: number
   /** 지우개 드래그 한 번의 누적 op (드래그가 끝나면 undoStack으로) */
   activeErase: Op | null
+  /** 화면 조작(뷰 오프셋) — 그리는 중의 팬·줌. 문서 좌표는 안 바뀐다. */
+  view: ViewOffset
+  /** 저장된 시점 */
+  savedViews: { pose: CamPose; view: ViewOffset }[]
+  cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
 }
+
+export interface ViewOffset { s: number; ox: number; oy: number }
 
 export function createApp(W: number, H: number): App {
   const doc = emptyDoc(W, H)
@@ -49,9 +56,18 @@ export function createApp(W: number, H: number): App {
     tool: 'pen',
     eraserRadius: C.ERASER_PX,
     activeErase: null,
+    view: { s: 1, ox: 0, oy: 0 },
+    savedViews: [],
+    cubeLayout: { cx: W - 180, cy: 80, size: 80 },
     listeners: [],
   }
 }
+
+/** 화면 좌표 ↔ 문서 좌표 — 뷰 오프셋의 단일 출처 */
+export const screenToDoc = (app: App, p: Pt): Pt =>
+  ({ x: (p.x - app.view.ox) / app.view.s, y: (p.y - app.view.oy) / app.view.s })
+export const docToScreen = (app: App, p: Pt): Pt =>
+  ({ x: p.x * app.view.s + app.view.ox, y: p.y * app.view.s + app.view.oy })
 
 export const isDrawPose = (pose: CamPose): boolean =>
   Math.abs(pose.p.x) + Math.abs(pose.p.y) + Math.abs(pose.p.z) < 1e-12 &&
@@ -115,7 +131,8 @@ export function beginErase(app: App) {
 export function eraseAt(app: App, p: Pt) {
   if (!app.activeErase) return
   const ps = pieces(app.lift, app.pose)
-  const hits = ps.filter(x => distToPiece(p, x) <= app.eraserRadius)
+  // 지우개 반경은 화면 px — 문서 좌표에서는 배율로 나눈다
+  const hits = ps.filter(x => distToPiece(p, x) <= app.eraserRadius / app.view.s)
   if (hits.length === 0) return
   const byStroke = new Map<number, Piece[]>()
   for (const h of hits) {
@@ -160,7 +177,30 @@ export function setPose(app: App, pose: CamPose) {
   for (const l of app.listeners) l()
 }
 
-export function resetPose(app: App) { setPose(app, DRAW_POSE) }
+export function setView(app: App, v: ViewOffset) {
+  app.view = v
+  for (const l of app.listeners) l()
+}
+
+/** 작도 시점 — 포즈와 뷰 오프셋 둘 다 원래대로 */
+export function resetPose(app: App) {
+  app.view = { s: 1, ox: 0, oy: 0 }
+  setPose(app, DRAW_POSE)
+}
+
+export function saveView(app: App) {
+  app.savedViews.push({
+    pose: { p: { ...app.pose.p }, q: { ...app.pose.q } },
+    view: { ...app.view },
+  })
+}
+
+export function gotoView(app: App, i: number) {
+  const v = app.savedViews[i]
+  if (!v) return
+  app.view = { ...v.view }
+  setPose(app, { p: { ...v.pose.p }, q: { ...v.pose.q } })
+}
 
 /** 궤도 중심 — 승격 기하의 무게중심, 없으면 게이지 깊이의 시선 위 점 */
 export function orbitPivot(app: App): V3 {

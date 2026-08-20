@@ -46,6 +46,27 @@ export function quatMul(a: Quat, b: Quat): Quat {
 
 export const quatConj = (q: Quat): Quat => ({ x: -q.x, y: -q.y, z: -q.z, w: q.w })
 
+/** 정규직교 기저(열벡터 x·y·z) → 쿼터니언 */
+export function quatFromBasis(x: V3, y: V3, z: V3): Quat {
+  const m00 = x.x, m01 = y.x, m02 = z.x
+  const m10 = x.y, m11 = y.y, m12 = z.y
+  const m20 = x.z, m21 = y.z, m22 = z.z
+  const tr = m00 + m11 + m22
+  if (tr > 0) {
+    const s = Math.sqrt(tr + 1) * 2
+    return { w: s / 4, x: (m21 - m12) / s, y: (m02 - m20) / s, z: (m10 - m01) / s }
+  } else if (m00 > m11 && m00 > m22) {
+    const s = Math.sqrt(1 + m00 - m11 - m22) * 2
+    return { w: (m21 - m12) / s, x: s / 4, y: (m01 + m10) / s, z: (m02 + m20) / s }
+  } else if (m11 > m22) {
+    const s = Math.sqrt(1 + m11 - m00 - m22) * 2
+    return { w: (m02 - m20) / s, x: (m01 + m10) / s, y: s / 4, z: (m12 + m21) / s }
+  } else {
+    const s = Math.sqrt(1 + m22 - m00 - m11) * 2
+    return { w: (m10 - m01) / s, x: (m02 + m20) / s, y: (m12 + m21) / s, z: s / 4 }
+  }
+}
+
 /** q로 벡터 회전 */
 export function quatRotate(q: Quat, p: V3): V3 {
   // v' = v + 2*cross(q.xyz, cross(q.xyz, v) + w*v)

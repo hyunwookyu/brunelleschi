@@ -197,4 +197,46 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await settle(page)
   expect(await glPixels(page, 612, 444, 645, 457)).toBeGreaterThan(5)
   await page.click('#btn-pen')
+
+  // ── 4단계: 화면 줌(뷰 오프셋) · 뷰 큐브 ─────────────────────────────
+  // 그리는 중(작도 포즈)의 줌은 화면 조작 — 문서 좌표는 안 바뀐다
+  await page.mouse.move(600, 300)
+  await page.mouse.wheel(0, -300)
+  await settle(page)
+  s = await summary(page)
+  expect(s.view.s).toBeGreaterThan(1.05)
+  const hy = Math.round(400 * s.view.s + s.view.oy)
+  expect(await inkPixels(page, 0, hy - 3, 1200, hy + 4)).toBeGreaterThan(100) // 지평선이 새 화면 위치에
+
+  // 확대 상태에서도 그리기가 성립한다 — 화면 좌표는 역변환되어 문서로
+  const sx = 500 * s.view.s + s.view.ox, sy = 450 * s.view.s + s.view.oy
+  const liftedZ = s.lifted
+  await drawLine(page, sx, sy, sx + 100, sy + 2)
+  s = await summary(page)
+  expect(s.lifted).toBe(liftedZ + 1)
+
+  // 작도 시점 — 뷰 오프셋도 같이 돌아온다
+  await page.click('#btn-draw-view')
+  await settle(page)
+  s = await summary(page)
+  expect(s.view.s).toBe(1)
+
+  // 뷰 큐브 — 보이고, 면을 클릭하면 롤 0 시점으로 선다
+  expect(await inkPixels(page, 970, 30, 1070, 130)).toBeGreaterThan(10)
+  await page.mouse.move(1020, 80)
+  await page.mouse.down()
+  await page.mouse.up()
+  await settle(page)
+  s = await summary(page)
+  const movedDist = Math.hypot(s.pose.p.x, s.pose.p.y, s.pose.p.z)
+  expect(movedDist).toBeGreaterThan(1) // 시점이 섰다
+  const rightY = await page.evaluate(() => {
+    const q = (window as any).__b2.app.pose.q
+    // right = q · (1,0,0) 의 y 성분 — 롤 0이면 0
+    return 2 * (q.x * q.y + q.w * q.z) // 회전행렬 m10
+  })
+  expect(Math.abs(rightY)).toBeLessThan(1e-6)
+  expect(await glPixels(page, 0, 0, 1200, 800)).toBeGreaterThan(20) // 형태가 보인다
+
+  await page.click('#btn-draw-view')
 })

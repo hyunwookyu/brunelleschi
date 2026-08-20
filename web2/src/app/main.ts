@@ -1,6 +1,6 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView } from './state'
 import { initInput } from './input'
 import { resize2d, draw2d, type Draft } from './render2d'
 import { initR3D, syncStrokes, render3d } from './render3d'
@@ -97,6 +97,17 @@ const radius = document.getElementById('osnap-radius') as HTMLInputElement
 radius.value = String(app.osnap.radius)
 radius.addEventListener('input', () => { app.osnap.radius = Number(radius.value) })
 
+// 시점 저장·복귀
+const viewsEl = document.getElementById('views')!
+document.getElementById('btn-save-view')!.addEventListener('click', () => {
+  saveView(app)
+  const i = app.savedViews.length - 1
+  const btn = document.createElement('button')
+  btn.textContent = `시점 ${i + 1}`
+  btn.addEventListener('click', () => gotoView(app, i))
+  viewsEl.append(btn)
+})
+
 document.getElementById('btn-undo')!.addEventListener('click', () => undo(app))
 document.getElementById('btn-redo')!.addEventListener('click', () => redo(app))
 document.getElementById('btn-draw-view')!.addEventListener('click', () => resetPose(app))
@@ -141,6 +152,7 @@ const diag = {
     waiting: app.lift.waiting,
     strokes: app.doc.strokes.length,
     pose: app.pose,
+    view: app.view,
   }),
 }
 
