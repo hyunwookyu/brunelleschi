@@ -4,6 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Brunelleschi</title>
+  <!-- 설치된 PWA가 안 깨지게 옛 앱(web/)과 같은 매니페스트·아이콘을 그대로 쓴다.
+       옛 start_url이 `./`라 전환 후 이 화면으로 들어온다. -->
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon-192.png">
   <style>
     html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #f5f3ee; }
     #app { position: fixed; inset: 0; touch-action: none; }

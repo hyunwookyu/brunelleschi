@@ -23,10 +23,29 @@ const app = createApp(W, H)
 let ctx = resize2d(ink, W, H, dpr)
 const r3d = initR3D(gl, W, H, dpr)
 
-// 빌드 식별자 — 배포됐는지 화면에서 바로 안다
+// 빌드 식별자 — 배포됐는지 화면에서 바로 안다.
+// ⚠ 이것 하나가 앱을 죽이면 안 된다 — 설정이 낡은 dev 서버에서 치환이 안 돼
+// 여기서 앱 전체가 서지 않은 적이 있다(2026-08-21).
 declare const __BUILD_ID__: string
-document.getElementById('buildid')!.textContent = __BUILD_ID__
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+try {
+  document.getElementById('buildid')!.textContent = __BUILD_ID__
+} catch { /* 치환이 안 됐다 — 화면에만 안 뜬다 */ }
+
+// **탈출구** — `?reset`으로 열면 워커 등록과 캐시를 전부 버리고 새로 받는다.
+// 배포 전환(web/ → web2)은 같은 주소에 다른 앱이 오는 것이라 캐시가 꼬일 수 있고,
+// 그때 사람이 개발자 도구 없이 스스로 빠져나올 길이 필요하다.
+// ⚠ 그림(자동 저장)은 안 건드린다 — 캐시만 버린다.
+if (location.search.includes('reset')) {
+  void (async () => {
+    if ('serviceWorker' in navigator) {
+      for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister()
+    }
+    if ('caches' in window) {
+      for (const k of await caches.keys()) await caches.delete(k)
+    }
+    location.replace(location.pathname)
+  })()
+} else if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(() => { /* 오프라인 강화일 뿐 — 실패해도 동작 */ })
 }
 

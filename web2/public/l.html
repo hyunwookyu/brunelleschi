@@ -1,0 +1,11 @@
+<!-- **옛 진입점의 자리**(2026-08-21, web/ → web2/ 배포 전환).
+     옛 앱(web/)의 화면은 `l.html`이었다. 그 URL을 연 사람·북마크·**열려 있던 탭**이
+     전환 후 404를 보지 않게 루트로 보낸다.
+     ⚠ 서비스 워커가 인계할 때 열린 창을 **그 창의 URL로** 다시 부르므로
+     (`sw` activate의 client.navigate), 이 파일이 없으면 그 재적재가 404가 된다.
+     `public/`에 두므로 vite가 그대로 복사한다(번들 진입점이 아니다). -->
+<!doctype html><meta charset="utf-8">
+<title>Brunelleschi</title>
+<meta http-equiv="refresh" content="0; url=./">
+<link rel="canonical" href="./">
+<p>화면은 <a href="./">여기</a>로 옮겼습니다.</p>
