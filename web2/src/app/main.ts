@@ -46,7 +46,10 @@ if (location.search.includes('reset')) {
     location.replace(location.pathname)
   })()
 } else if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => { /* 오프라인 강화일 뿐 — 실패해도 동작 */ })
+  // updateViaCache: 'none' — 워커 스크립트도 Pages의 max-age=600에 걸린다.
+  // 갱신 확인이 HTTP 캐시에서 오면 새 워커를 늦게 본다.
+  navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+    .catch(() => { /* 오프라인 강화일 뿐 — 실패해도 동작 */ })
 }
 
 // 자동 저장 복원 — 문서 프레임이 창과 다르면 화면 배율로 맞춘다(문서 좌표 불변)

@@ -44,6 +44,8 @@ const OLD_DOC = `<!doctype html><meta charset="utf-8"><title>Brunelleschi</title
 
 /** 배포 국면 — true면 옛 배포(web/)를 준다. 전환은 이 값 하나를 뒤집는 것이다. */
 let oldDeploy = false
+/** 새 빌드를 흉내 낸다 — 문서에 이 표식을 심는다(빌드 식별자가 바뀌는 것과 같은 자리) */
+let deployMark = ''
 let server: Server
 
 test.beforeAll(async () => {
@@ -68,6 +70,15 @@ test.beforeAll(async () => {
     try {
       const buf = await readFile(join(DIST, p))
       res.setHeader('Content-Type', MIME[extname(p)] ?? 'application/octet-stream')
+      // ⚠ **GitHub Pages와 같은 캐시 헤더를 준다**(실측: `Cache-Control: max-age=600`).
+      // 이게 없으면 "새 빌드가 한 번에 나간다"를 못 잰다 — 워커의 network-first가
+      // HTTP 캐시에 가려지는 것이 실배포에서 실제로 일어났다(2026-08-21).
+      res.setHeader('Cache-Control', 'max-age=600')
+      if (p.endsWith('index.html') && deployMark) {
+        res.end(buf.toString().replace('<body>',
+          `<body><script>window.__DEPLOY_MARK__=${JSON.stringify(deployMark)}<\/script>`))
+        return
+      }
       res.end(buf)
     } catch {
       res.statusCode = 404; res.end('not found')
@@ -82,7 +93,7 @@ test.afterAll(async () => {
   await new Promise<void>(r => server?.close(() => r()))
 })
 
-test.beforeEach(() => { oldDeploy = false })
+test.beforeEach(() => { oldDeploy = false; deployMark = '' })
 
 test('하위 경로에서 열리고, 워커 scope가 그 경로이고, 오프라인에서도 뜬다', async ({ page, context }) => {
   const errors: string[] = []
@@ -195,4 +206,24 @@ test('탈출구 — ?reset이 워커와 캐시를 전부 버린다', async ({ pa
   // 그림은 안 지운다 — 캐시만 버린다
   expect(await page.evaluate(() => localStorage.getItem('b2-autosave') !== undefined)).toBe(true)
   void after.regs
+})
+
+test('새 빌드가 한 번에 나간다 — HTTP 캐시가 문서를 붙잡지 않는다', async ({ page, context }) => {
+  // 실배포에서 겪은 것: Pages가 문서에 max-age=600을 주므로, 워커가 network-first여도
+  // 그 fetch가 **브라우저 HTTP 캐시**에서 오면 10분간 옛 문서가 나간다.
+  // 워커가 no-store로 받아야 이 팔이 산다(빼 보면 실제로 깨진다 — 되살려 확인했다).
+  await page.goto(`${BASE}/`)
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller, undefined, { timeout: 15_000 })
+  expect(await page.evaluate(() => (window as any).__DEPLOY_MARK__)).toBeUndefined()
+
+  // **새 빌드를 올린다** — 문서 내용이 바뀐다
+  deployMark = 'v2'
+
+  // 새로고침이 아니라 **평범한 이동**으로 본다 — 새로고침은 HTTP 캐시를 재검증해
+  // 이 함정을 가린다(같은 컨텍스트라 워커와 HTTP 캐시를 공유한다)
+  const p2 = await context.newPage()
+  await p2.goto(`${BASE}/`)
+  await p2.waitForFunction(() => (window as any).__b2)
+  expect(await p2.evaluate(() => (window as any).__DEPLOY_MARK__)).toBe('v2')
+  await p2.close()
 })

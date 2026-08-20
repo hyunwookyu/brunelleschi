@@ -39,9 +39,12 @@ self.addEventListener('fetch', (e) => {
   const req = e.request
   if (req.method !== 'GET') return
   if (req.mode === 'navigate') {
-    // 문서는 network-first — 새 빌드가 한 번에 나가야 한다
+    // 문서는 network-first — 새 빌드가 한 번에 나가야 한다.
+    // ⚠ **cache: 'no-store'가 핵심이다.** 그냥 fetch(req)를 부르면 그 요청이
+    // **브라우저 HTTP 캐시**를 거치고, GitHub Pages는 문서에 max-age=600을 준다 —
+    // 워커가 network-first여도 10분간 옛 문서가 나갔다(2026-08-21 실배포에서 관측).
     e.respondWith(
-      fetch(req).then(r => {
+      fetch(req, { cache: 'no-store' }).then(r => {
         const c = r.clone()
         caches.open(CACHE).then(x => x.put(req, c))
         return r
