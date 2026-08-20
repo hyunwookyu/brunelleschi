@@ -1,5 +1,5 @@
 {
-  "n_flags": 5343,
+  "n_flags": 5344,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -4562,6 +4562,11 @@
       "path": "lens_roll_osnap.json:s_roll.return_judge_at_700ms.returnDir[1]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lens_roll_osnap.json:s_start_check.dist_px",
+      "val": 5.821876208512438e-11,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "lens_roll_osnap.json:summary.s_more_vertical_off_ortho_deg.return_to_draft",
@@ -22639,7 +22644,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 3.1530333899354446e-14,
+      "val": 4.218847493575595e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -26638,9 +26643,11 @@
     {
       "path": "scan_citation_hashes",
       "val": [
-        "progress.md:11820 test_cost.json"
+        "DEFERRED.md:885 test_cost.json",
+        "progress.md:11820 test_cost.json",
+        "progress.md:13844 test_cost.json"
       ],
-      "flag": "**없는 원장을 인용한다**(1건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
+      "flag": "**없는 원장을 인용한다**(3건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
     },
     {
       "path": "stage0/out/vp_source.json",
@@ -26900,16 +26907,16 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 354,
+      "targets": 363,
       "hits": 1,
-      "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 1건"
+      "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 3건"
     },
     {
       "scan": "scan_cited_values",
       "unit": "인용 줄",
-      "targets": 191,
+      "targets": 194,
       "hits": 0,
-      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1885개이고 엄격 판정이면 424개(82줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
+      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1900개이고 엄격 판정이면 425개(83줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
     },
     {
       "scan": "scan_pitfall_citations",
@@ -27431,7 +27438,6 @@
       5,
       12,
       21,
-      30,
       38
     ],
     "promote.json": [
@@ -27696,11 +27702,11 @@
     ]
   },
   "cited_value_population": {
-    "lines_checked": 191,
-    "tokens_checked": 1885,
+    "lines_checked": 194,
+    "tokens_checked": 1900,
     "flags_line_rule": 0,
-    "strict_tokens_flagged": 424,
-    "strict_lines_flagged": 82,
+    "strict_tokens_flagged": 425,
+    "strict_lines_flagged": 83,
     "hashless_only_lines_in_population": false,
     "note": "**모집단은 같고 판정만 둘이다.** `현재 해시로 적힌 인용 줄`이 모집단이고 (해시 없이 이름만 적힌 원장은 **줄을 모집단에 넣지 않는다** — 같은 줄에 현재 해시 인용이 있을 때 **대조 집합에만** 더한다), 그 위에서 엄격 판정(토큰별)과 현행 판정(줄에 하나도 없을 때만)의 수를 함께 낸다. `tokens_checked` ↔ `strict_tokens_flagged`가 옛 1129 ↔ 272와 같은 단위이고, `lines_checked` ↔ `flags_line_rule`이 96 ↔ 2와 같은 단위다"
   },

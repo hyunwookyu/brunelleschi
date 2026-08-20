@@ -221,9 +221,9 @@
         "steps": 6,
         "start": "확정 카메라(pinned)"
       },
-      "azimuth_delta": 1.0875938959012788,
-      "polar_delta": 1.3377404919589144,
-      "dist_delta": 6.470458873433525
+      "azimuth_delta": 1.0875938959012472,
+      "polar_delta": 1.3377404919589222,
+      "dist_delta": 6.470458873433526
     },
     "two_finger": {
       "input_px": {
@@ -231,10 +231,10 @@
         "d1": 196,
         "ratio": 1.96
       },
-      "dist_ratio": 0.5660261482031655,
+      "dist_ratio": 0.5660261482031649,
       "identity_if_guaranteed": 0.5102040816326531,
       "guarantee_retracted": "**보장이 아니다**(8차 리뷰어 [2]) — 항등이면 `identity_if_guaranteed`(1/1.96)여야 하는데 `dist_ratio`가 그 값이 아니다. 임계를 안 거는 사유는 '항등이라서'가 아니라 **실행마다 흔들려서**다",
-      "target_moved": 0.7106446117989195
+      "target_moved": 0.7106491022133663
     },
     "one_finger_already_free": {
       "input_px": {
@@ -249,15 +249,15 @@
         "steps": 6,
         "start": "자유 시점(이미 풀림) — **첫 팔과 같은 손짓**"
       },
-      "azimuth_delta": 1.0875938959012381,
-      "polar_delta": 0.23305583483597236,
-      "dist_delta": 3.1530333899354446e-14
+      "azimuth_delta": 1.0875938959011402,
+      "polar_delta": 0.2330558348359475,
+      "dist_delta": 4.218847493575595e-14
     },
     "strokes_after_touch_only": {
       "before": 12,
       "after": 12
     },
-    "reading": "손가락 하나가 **확정 카메라를 풀고**(pinned true → false) 방위각을 돌린다. 둘은 **거리를 줄이고**(벌림) 궤도 중심을 옮긴다. ⚠ 핀 해제의 재초기화가 어느 성분에 섞이는지는 **두 팔의 차로 읽는다** — 방위각 차 4.1e-14 · 앙각 차 1.1047 · 거리 차 6.4705. **방위각은 두 팔이 같고**(재초기화가 안 섞인다) 앙각·거리에만 섞인다 — 옛 산문의 '세 성분 전부'와 '13.5%'는 `camPose()` 수리 이전 값이라 철회했다. 그 몫이 빠진 값이 `one_finger_already_free`다. ⚠ **터치만으로는 획이 안 생긴다**(`strokes_after_touch_only`)."
+    "reading": "손가락 하나가 **확정 카메라를 풀고**(pinned true → false) 방위각을 돌린다. 둘은 **거리를 줄이고**(벌림) 궤도 중심을 옮긴다. ⚠ 핀 해제의 재초기화가 어느 성분에 섞이는지는 **두 팔의 차로 읽는다** — 방위각 차 1.1e-13 · 앙각 차 1.1047 · 거리 차 6.4705. **방위각은 두 팔이 같고**(재초기화가 안 섞인다) 앙각·거리에만 섞인다 — 옛 산문의 '세 성분 전부'와 '13.5%'는 `camPose()` 수리 이전 값이라 철회했다. 그 몫이 빠진 값이 `one_finger_already_free`다. ⚠ **터치만으로는 획이 안 생긴다**(`strokes_after_touch_only`)."
   },
   "gesture_tol": {
     "rotate_speed": 1,
@@ -326,25 +326,25 @@
     ],
     "arm_start_state": {
       "control": {
-        "dist": 6.470458873433533,
+        "dist": 6.470458873433536,
         "pinned": false
       },
       "op1": {
-        "dist": 6.896288904465576,
+        "dist": 6.896288904465592,
         "pinned": false
       },
       "op2": {
-        "dist": 6.896288904465576,
+        "dist": 6.896288904465592,
         "pinned": false
       },
       "pen_interrupts": {
-        "dist": 6.896288904465576,
+        "dist": 6.896288904465592,
         "pinned": false
       },
       "note": "팔들이 **같은 페이지 상태를 이어 쓴다** — 앞 팔이 뒤 팔의 시작을 정한다"
     },
     "control_no_pen": {
-      "moved": 1.6687944834906592,
+      "moved": 1.66879448349072,
       "counters": {
         "rejected_down": 0,
         "cancelled_by_pen": 0,
@@ -420,9 +420,9 @@
       "reading": "**백버퍼가 css 폭의 2배**여야 dpr 섭동이 실제로 걸린 것이다. 1이면 회전 비 1.0은 '규약이 지켜졌다'가 아니라 '섭동이 안 걸렸다'다"
     },
     "rotate": {
-      "azimuth_delta": 1.0875938959009182,
-      "dpr1_azimuth_delta": 1.0875938959012788,
-      "ratio": 0.9999999999996685,
+      "azimuth_delta": 1.0875938959008593,
+      "dpr1_azimuth_delta": 1.0875938959012472,
+      "ratio": 0.9999999999996433,
       "az_tol_rad": 1e-11,
       "az_tol_basis": {
         "basis_epoch": "9차 항목 3 (임계 선정 시점의 기록 — 현행은 touch_route_repeat.json)",
@@ -449,9 +449,9 @@
       }
     },
     "positive_channel": {
-      "azimuth_delta_half_input": 0.5437969479504421,
-      "azimuth_delta_full_free": 1.0875938959004703,
-      "ratio_to_single": 0.5000000000001903,
+      "azimuth_delta_half_input": 0.5437969479504616,
+      "azimuth_delta_full_free": 1.0875938959010083,
+      "ratio_to_single": 0.4999999999999609,
       "input_px": {
         "from": [
           500,
@@ -466,7 +466,7 @@
       "reading": "**0.5에 가까워야 지표가 민감한 것**이다. 1에 붙으면 앞의 비 1.0은 규약의 증거가 아니라 둔감의 증거다. ⚠ 두 배로 안 재는 이유: `getAzimuthalAngle()`이 `atan2`라 **감긴다**(두 배 입력에서 비 3.28이 나왔다)"
     },
     "pan": {
-      "target_moved": 0.4958380374185284,
+      "target_moved": 0.5168163482889403,
       "input_px": {
         "two_fingers_dx": 60,
         "note": "두 손가락을 나란히 60px 민다(거리 불변 → 줌 없음)"

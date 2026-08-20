@@ -2,10 +2,11 @@
  "what": "새 절차 후 사람이 보고한 결함 넷이 다시 나면 잡는다(19차 지시).",
  "how": {
   "A": "작도선 — 소실점을 만든 획이 «그리기 첫 획»까지 화면에 남는가. `seeds`(앱이 그리는 목록)와 `px_line*`(실제 칠해진 픽셀)을 **함께** 읽는다(지시 1-d).",
-  "A_old": "`setSeedLines(false)`가 18차 거동이다 — 그 팔에서 `seeds`가 0이고 픽셀이 **작다**. 두 팔의 차이가 이 회귀 팔의 판별력이다(#30·#38).",
-  "B": "지평선 y — 상단·중앙·하단에 그은 y가 그대로 쓰이는가(지시 3-d) · 18차 이전 형식 저장본(«화면 중앙» 기본값)이 절차를 막는가.",
-  "B_positive": "소실점이 얹힌 저장본은 지평선을 **지킨다** — 게이트가 무차별이 아님을 보인다.",
-  "C": "면 위 — 기하 0에서 후보 0인가(지시 4-b) · 기하가 생기면 돌아오는가."
+  "A_old": "`setSeedLines(false)`가 18차 거동이다 — 두 팔이 **같은 좌표·같은 순서**를 돌므로 각 단계의 그리드가 같고, **팔 사이 차만 획의 잉크**다(`seed_ink`). ⚠ **단계 사이의 차는 안 쓴다** — 확정이 그리드를 바꾸므로 거기엔 그리드 몫이 섞인다(초판이 그런 차 하나를 표제로 썼고 리뷰어가 잡았다).",
+  "A_plain": "지시 1의 문면은 «공간이 정의된 뒤 선을 그으면»이라 **승격 획만으로는 안 덮인다**. `px_plain`이 그 나머지다 — 소실점을 **안** 만드는 보통 획이 **두 팔 다에서** 남는지(픽셀이 느는지) 본다. 그것이 결함 1의 사거리를 «승격 획»으로 좁히는 근거다.",
+  "B": "지평선 y — 세 높이에 그은 y가 그대로 쓰이는가(지시 3-d) · 기울어진 획에서는 무엇이 y가 되는가 · 18차 이전 형식 저장본(«화면 중앙» 기본값)이 절차를 막는가.",
+  "B_positive": "소실점이 얹힌 저장본은 지평선을 **지킨다** — 게이트가 무차별이 아님을 보인다. ⚠ 그 y는 **기본값이 아닌 값**이다(H·0.31) — H/2면 «지켰다»와 «기본값이 다시 채워졌다»가 같은 수라 판별력이 0이다(#38).",
+  "C": "면 위 — 기하 0에서 후보 0인가(지시 4-b) · 기하가 생기면 돌아오는가 · **첫 앵커의 지면 배치(D-L90)가 살아 있는가**(`placeBy.ground`)."
  },
  "what_this_does_not_say": [
   "dpr 1 · 마우스 합성 · 한 구도다(#12·#21).",
@@ -17,12 +18,13 @@
  "selfcheck_notes": {
   "zero_strokes": "A2·A3에서 `strokes`가 0인 것은 **설계 그대로다**(18차 지시 4 — 소실점을 만든 획은 문서에 안 남는다). 19차가 바꾼 것은 «문서에서 뺀다»가 아니라 «화면에서 언제 지우는가»이고, 그것을 재는 필드는 `seeds`와 `px_line*`이다.",
   "zero_on_face": "`face.empty.on_face_cands`가 0인 것이 **이 팔이 재현하려는 수리**다 — 집계가 안 돈 것이 아니다. 같은 실행의 `face.with_geometry`가 0이 아니다.",
-  "zero_restored": "`horizon.restored_old_save_no_vp`의 `order`·`lifted`·`seeds`가 0인 것은 **그 저장본의 정의**다 — 소실점이 없으니 차수 0이고, 3D도 작도선도 없다. 같은 블록의 `strokes`가 **1**인 것이 «복원이 실제로 일어났다»의 증거이고, `horizon_y`가 `null`인 것이 이 팔이 재는 수리다. 같은 실행의 `restored_old_save_with_vp`가 차수 2를 낸다 — 게이트가 무차별이 아니다."
+  "zero_restored": "`horizon.restored_old_save_no_vp`의 `order`·`lifted`·`seeds`가 0인 것은 **그 저장본의 정의**다 — 소실점이 없으니 차수 0이고, 3D도 작도선도 없다. 같은 블록의 `strokes`가 **1**인 것이 «복원이 실제로 일어났다»의 증거이고, `horizon_y`가 `null`인 것이 이 팔이 재는 수리다. 같은 실행의 `restored_old_save_with_vp`가 차수 2를 낸다 — 게이트가 무차별이 아니다.",
+  "zero_lifted": "**`lifted` 0이 세 곳에 있고 셋 다 이 세션의 변경과 무관하다**(리뷰어 [2]가 물었다): ① `arms.*`의 4행(보통 획) — 확정 뒤 첫 획은 붙을 3D 대상이 없어 **2D 대기**다(D-L83이 `on_edge`·`on_face`를 앵커에서 뺐다). 같은 좌표에서 수리 **전에도** 0이었다. ⚠ `horizon_first.json`의 ④는 `lifted` 1인데 **다른 좌표**라 지면 배치(D-L90)가 걸린 것이다 — 같은 상황이 아니다. ② `restored_old_save_*` — 복원은 **다시 풀지 않는다**(`applyDoc2` 머리말: `seg3d`가 화면에 있던 그것이다). 심은 저장본의 획에 `seg3d`가 없으므로 0이 맞다. ③ `face.empty` — 그것이 이 팔이 재는 상태 자체다. **이 원장의 0 카운터는 그래서 다섯 갈래다**: `strokes`(A2·A3) · `seeds`(A0·A1·A4) · `on_face_cands`(face.empty) · `order`(no_vp) · `lifted`(위 셋)."
  },
  "arms": {
   "A": [
    {
-    "label": "A0 빈 화면",
+    "label": "0 빈 화면",
     "order": 0,
     "standing": false,
     "strokes": 0,
@@ -30,10 +32,11 @@
     "horizon_y": null,
     "seeds": 0,
     "px_line1": 0,
-    "px_line2": 0
+    "px_line2": 0,
+    "px_plain": 0
    },
    {
-    "label": "A1 지평선",
+    "label": "1 지평선",
     "order": 0,
     "standing": false,
     "strokes": 0,
@@ -41,10 +44,11 @@
     "horizon_y": 148,
     "seeds": 0,
     "px_line1": 0,
-    "px_line2": 0
+    "px_line2": 0,
+    "px_plain": 0
    },
    {
-    "label": "A2 깊이선1 → 1점",
+    "label": "2 깊이선1 → 1점",
     "order": 1,
     "standing": true,
     "strokes": 0,
@@ -52,10 +56,11 @@
     "horizon_y": 148,
     "seeds": 1,
     "px_line1": 2296,
-    "px_line2": 1890
+    "px_line2": 1890,
+    "px_plain": 1080
    },
    {
-    "label": "A3 깊이선2 → 2점",
+    "label": "3 깊이선2 → 2점",
     "order": 2,
     "standing": true,
     "strokes": 0,
@@ -63,10 +68,11 @@
     "horizon_y": 148,
     "seeds": 2,
     "px_line1": 1798,
-    "px_line2": 1716
+    "px_line2": 1716,
+    "px_plain": 325
    },
    {
-    "label": "A4 그리기 첫 획",
+    "label": "4 그리기 첫 획(보통 획)",
     "order": 2,
     "standing": true,
     "strokes": 1,
@@ -74,12 +80,37 @@
     "horizon_y": 148,
     "seeds": 0,
     "px_line1": 1134,
-    "px_line2": 1072
+    "px_line2": 1072,
+    "px_plain": 1279
    }
   ],
   "A_old_behavior": [
    {
-    "label": "A2' 깊이선1 → 1점 (옛 거동)",
+    "label": "0 빈 화면",
+    "order": 0,
+    "standing": false,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": null,
+    "seeds": 0,
+    "px_line1": 0,
+    "px_line2": 0,
+    "px_plain": 0
+   },
+   {
+    "label": "1 지평선",
+    "order": 0,
+    "standing": false,
+    "strokes": 0,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 0,
+    "px_line1": 0,
+    "px_line2": 0,
+    "px_plain": 0
+   },
+   {
+    "label": "2 깊이선1 → 1점",
     "order": 1,
     "standing": true,
     "strokes": 0,
@@ -87,10 +118,11 @@
     "horizon_y": 148,
     "seeds": 0,
     "px_line1": 1687,
-    "px_line2": 1890
+    "px_line2": 1890,
+    "px_plain": 1080
    },
    {
-    "label": "A3' 깊이선2 → 2점 (옛 거동)",
+    "label": "3 깊이선2 → 2점",
     "order": 2,
     "standing": true,
     "strokes": 0,
@@ -98,7 +130,20 @@
     "horizon_y": 148,
     "seeds": 0,
     "px_line1": 1134,
-    "px_line2": 1072
+    "px_line2": 1072,
+    "px_plain": 325
+   },
+   {
+    "label": "4 그리기 첫 획(보통 획)",
+    "order": 2,
+    "standing": true,
+    "strokes": 1,
+    "lifted": 0,
+    "horizon_y": 148,
+    "seeds": 0,
+    "px_line1": 1134,
+    "px_line2": 1072,
+    "px_plain": 1279
    }
   ]
  },
@@ -112,24 +157,42 @@
    1716
   ]
  },
+ "seed_ink": [
+  609,
+  644
+ ],
+ "plain_ink": {
+  "new": 954,
+  "old": 954
+ },
  "horizon": {
   "thirds": [
    {
     "label": "상단",
     "y": 101,
-    "got": 101
+    "got": 101,
+    "is_center": false
    },
    {
-    "label": "중앙",
-    "y": 337,
-    "got": 337
+    "label": "중간위",
+    "y": 283,
+    "got": 283,
+    "is_center": false
    },
    {
     "label": "하단",
     "y": 573,
-    "got": 573
+    "got": 573,
+    "is_center": false
    }
   ],
+  "tilted": {
+   "start_y": 202,
+   "end_y": 243,
+   "slope_deg": 3.0558581975426655,
+   "got": 243,
+   "rule": "끝점의 y를 쓴다 — 지평선은 화면 수평으로 강제되므로(18차 지시 j) y 하나다"
+  },
   "restored_old_save_no_vp": {
    "order": 0,
    "standing": false,
@@ -139,6 +202,7 @@
    "seeds": 0
   },
   "after_drawing_top": {
+   "drawn_y": 121,
    "order": 0,
    "standing": false,
    "strokes": 1,
@@ -147,11 +211,12 @@
    "seeds": 0
   },
   "restored_old_save_with_vp": {
+   "seeded_y": 209,
    "order": 2,
    "standing": true,
    "strokes": 1,
    "lifted": 0,
-   "horizon_y": 337,
+   "horizon_y": 209,
    "seeds": 0
   }
  },
@@ -164,7 +229,19 @@
     null
    ],
    "on_face_cands": 0,
-   "lifted": 0
+   "lifted": 0,
+   "placeBy": {
+    "ref_anchor": 0,
+    "start_anchor": 0,
+    "two_point": 0,
+    "end_anchor": 0,
+    "cross_anchor": 0,
+    "batch": 0,
+    "ground": 0,
+    "extension": 0,
+    "unanchored": 0,
+    "aux": 0
+   }
   },
   "with_geometry": {
    "kinds": [
@@ -174,12 +251,29 @@
     "on_face"
    ],
    "on_face_cands": 4,
-   "lifted": 1
+   "lifted": 1,
+   "placeBy": {
+    "ref_anchor": 0,
+    "start_anchor": 0,
+    "two_point": 0,
+    "end_anchor": 0,
+    "cross_anchor": 0,
+    "batch": 0,
+    "ground": 1,
+    "extension": 0,
+    "unanchored": 0,
+    "aux": 0
+   }
   }
  },
  "gate": {
-  "registered": "① 깊이선1 뒤 `seeds` 1이고 그 띠의 픽셀이 옛 거동보다 **크다** ② 깊이선2 뒤 `seeds` 2 ③ 그리기 첫 획에서 `seeds` 0 ④ 상단·중앙·하단에 그은 y가 그대로 `horizon_y`다 ⑤ 소실점 없는 옛 저장본은 `horizon_y`가 `null`이고, 소실점 있는 것은 지켜진다 ⑥ 기하 0에서 `on_face` 후보가 0이고 기하가 생기면 0이 아니다.",
-  "reachability": "되살릴 것은 **18차 거동**이다 — `setSeedLines(false)` 팔이 그것이고 거기서 `seeds`가 0이다. **넘어야 할 바닥은 그 팔의 픽셀**(`seed_px.old`)이고, `seed_px.new`가 그보다 크다는 것이 «화면에 남았다»의 실측이다. B는 옛 형식 저장본 자체가 되살림이고(복원 뒤 `horizon_y`가 337이 되던 자리), C는 기하를 만들면 `on_face`가 돌아오는 것이 도달 가능성이다.",
+  "registered": "① 깊이선1 뒤 `seeds` 1이고 `seed_ink[0]` > 0 ② 깊이선2 뒤 `seeds` 2이고 `seed_ink[1]` > 0 ③ 그리기 첫 획에서 `seeds` 0 ④ 세 높이에 그은 y가 그대로 `horizon_y`다(셋 다 화면 중앙이 아니다) ⑤ 소실점 없는 옛 저장본은 `horizon_y`가 `null`이고, 소실점 있는 것은 **기본값이 아닌 y**로 지켜진다 ⑥ 기하 0에서 `on_face` 후보가 0이고 기하가 생기면 0이 아니다.",
+  "reachability": "**A** — 되살릴 것은 18차 거동이고 `setSeedLines(false)` 팔이 그것이다. 넘어야 할 바닥은 그 팔의 픽셀(`seed_px.old`)이고 `seed_ink`가 그 차다. **B** — 되살림은 **저장본이 아니라 수리를 되돌리는 것**이다(저장본만 심으면 이 원장은 수리된 값 `null`을 낸다). 손으로 되돌려 확인했고 그때 `horizon_y`가 `gate.revert_check.B_horizon_y`로 잡힌다. **C** — 같은 방식으로 되돌리면 `gate.revert_check.C_on_face_cands`가 잡힌다. ⚠ **A만 같은 실행 안의 대조이고 B·C는 손으로 되돌린 확인이다**(비대칭을 적는다).",
+  "revert_check": {
+   "B_horizon_y": 337,
+   "C_on_face_cands": 4,
+   "how": "`camState`의 지평선 게이트와 `mainL`의 `snapCtx` 지면 조건을 각각 한 줄씩 되돌리고 이 팔을 돌렸다. 각각 `restored_old_save_no_vp.horizon_y` 337과 `face.empty.on_face_cands` 4에서 실패한다. 337은 그 실행의 **H/2**이고 (잉크 캔버스 높이 674) 그것이 곧 옛 `defaultHorizon`이다 — 이 원장의 `horizon.restored_old_save_no_vp`가 심은 값과 같은 자리다."
+  },
   "reachability_source": "seed_px/old",
   "reachability_value": [
    1687,
