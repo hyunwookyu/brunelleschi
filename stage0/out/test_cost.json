@@ -2,8 +2,8 @@
   "what": "**검증 비용의 원장**(9차 지시 c) — 파일별 시간·건수, 단위/측정 갈래별 합계, 하네스가 스스로 적은 실행 수. **팔이 늘면 여기서 보인다.**",
   "how": "`npx vitest run --reporter=json --outputFile=../stage0/out/_vitest_timing.json` 뒤 `npm run test:cost`. 갈래는 `tools/testSplit.mjs`가 **소스를 읽어** 정한다(이름 규약이 아니다 — 사람이 지켜야 하는 규약은 샌다, #19·#38).",
   "environment": {
-    "disk_avail_bytes": 31980802048,
-    "disk_free_bytes": 262753087488,
+    "disk_avail_bytes": 31975579648,
+    "disk_free_bytes": 262747865088,
     "disk_free_note": "⚠⚠ **여유가 0이면 아래 시간은 전부 무의미하다.** 9차에 전량 실행이 **121s → 1h52m**(59배)로 늘었고 원인은 하네스가 아니라 **디스크가 100% 찬 것**이었다. 느려졌다는 보고를 받으면 **여기부터 본다**(#7 — 추측 대신 카운터). ⚠⚠ **읽는 필드는 `disk_avail_bytes`다**(2026-08-19 정정 · #45·#49): `disk_free_bytes`는 `bfree`라 세션 할당량 밖까지 세고, 실측에서 둘이 **244.5G ↔ 29.6G**로 갈렸다. ⚠ **그리고 이 블록은 이 하네스가 마지막으로 돈 시각의 스냅샷이다** — 느려졌다는 보고를 받은 **그 시점**의 값은 `df`(또는 이 하네스 재실행)로 읽는다."
   },
   "wall_note": "⚠ **파일 시간의 합은 벽시계가 아니다**(병렬 실행). **벽시계는 최장 파일이 바닥**이므로 지배항 하나를 떼는 것이 전체를 줄이는 유일한 길이다.",
@@ -26,9 +26,9 @@
     "e2e": {
       "files": 25,
       "tests": 69,
-      "seconds": 184.24,
-      "wall_seconds": 188.23,
-      "unaccounted_seconds": 3.99,
+      "seconds": 184.34,
+      "wall_seconds": 188.32,
+      "unaccounted_seconds": 3.98,
       "stats": {
         "expected": 64,
         "skipped": 4,
@@ -576,112 +576,112 @@
   "e2e_by_file": [
     {
       "file": "touch_route.spec.ts",
-      "seconds": 43.2,
+      "seconds": 42.23,
       "tests": 5
     },
     {
       "file": "basic_flow.spec.ts",
-      "seconds": 39.51,
+      "seconds": 38.92,
       "tests": 15
     },
     {
       "file": "confirm_link.spec.ts",
-      "seconds": 16.51,
+      "seconds": 15.77,
       "tests": 1
-    },
-    {
-      "file": "stage.spec.ts",
-      "seconds": 13.57,
-      "tests": 12
     },
     {
       "file": "static_deploy.spec.ts",
-      "seconds": 9.99,
+      "seconds": 14.5,
       "tests": 4
     },
     {
-      "file": "coords.spec.ts",
-      "seconds": 7.93,
-      "tests": 9
+      "file": "stage.spec.ts",
+      "seconds": 13.2,
+      "tests": 12
     },
     {
       "file": "hover_lock.spec.ts",
-      "seconds": 7.53,
+      "seconds": 7.55,
       "tests": 1
     },
     {
+      "file": "coords.spec.ts",
+      "seconds": 6.5,
+      "tests": 9
+    },
+    {
       "file": "axis_warn.spec.ts",
-      "seconds": 5.85,
+      "seconds": 5.86,
       "tests": 1
     },
     {
       "file": "view_axes.spec.ts",
-      "seconds": 5.09,
+      "seconds": 5.1,
       "tests": 1
     },
     {
       "file": "dir_state.spec.ts",
-      "seconds": 3.99,
+      "seconds": 3.96,
+      "tests": 1
+    },
+    {
+      "file": "cube_frame.spec.ts",
+      "seconds": 3.56,
       "tests": 1
     },
     {
       "file": "restore_pose.spec.ts",
-      "seconds": 3.68,
+      "seconds": 3.56,
       "tests": 4
     },
     {
-      "file": "cube_frame.spec.ts",
-      "seconds": 3.62,
-      "tests": 1
-    },
-    {
       "file": "view_pan.spec.ts",
-      "seconds": 3.17,
+      "seconds": 3.04,
       "tests": 1
     },
     {
       "file": "ground_anchor.spec.ts",
-      "seconds": 2.89,
+      "seconds": 2.92,
       "tests": 1
     },
     {
       "file": "draft_return.spec.ts",
-      "seconds": 2.68,
+      "seconds": 2.66,
       "tests": 1
     },
     {
       "file": "horizon_chip.spec.ts",
-      "seconds": 2.34,
+      "seconds": 2.31,
       "tests": 2
     },
     {
       "file": "extension_snap.spec.ts",
-      "seconds": 2.22,
+      "seconds": 2.18,
       "tests": 1
     },
     {
       "file": "horizon_drag.spec.ts",
-      "seconds": 1.81,
+      "seconds": 1.83,
       "tests": 1
     },
     {
       "file": "aux_vp.spec.ts",
-      "seconds": 1.68,
+      "seconds": 1.72,
       "tests": 1
     },
     {
       "file": "aux_tap.spec.ts",
-      "seconds": 1.59,
+      "seconds": 1.6,
       "tests": 1
     },
     {
       "file": "osnap_kinds.spec.ts",
-      "seconds": 1.42,
+      "seconds": 1.4,
       "tests": 1
     },
     {
       "file": "snap_cache.spec.ts",
-      "seconds": 1.29,
+      "seconds": 1.32,
       "tests": 1
     },
     {
@@ -691,12 +691,12 @@
     },
     {
       "file": "eraser.spec.ts",
-      "seconds": 0.92,
+      "seconds": 0.9,
       "tests": 1
     },
     {
       "file": "osnap_config.spec.ts",
-      "seconds": 0.75,
+      "seconds": 0.74,
       "tests": 1
     }
   ],
@@ -753,6 +753,10 @@
     "snap_stage.json": {
       "scenarios": 10755,
       "arms": null
+    },
+    "static_deploy.json": {
+      "scenarios": null,
+      "arms": 7
     },
     "touch_route_repeat.json": {
       "scenarios": 12,

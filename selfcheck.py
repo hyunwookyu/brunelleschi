@@ -500,16 +500,18 @@ def scan_unhashed_thresholds(root: Path, reports: dict[str, dict]) -> list[dict]
     잡는다), **원장이 그 이름을 안 쓰게** 한다.
     """
     import re
-    src = root / "web" / "test" / "constants.ts"
-    if not src.exists():
+    decl = root / "web" / "test" / "constants.ts"      # 목록을 선언한 파일
+    if not decl.exists():
         return _cover("scan_unhashed_thresholds", "면제 임계", 0, 0, note="constants.ts 없음")
-    text = src.read_text(encoding="utf-8")
+    text = decl.read_text(encoding="utf-8")
     m = re.search(r"export const UNHASHED_THRESHOLDS\s*=\s*\{(.*?)\n\}", text, re.S)
     if not m:
         return _cover("scan_unhashed_thresholds", "면제 임계", 0, 0,
                       note="UNHASHED_THRESHOLDS 선언 없음 — 면제가 없으면 이 검사는 할 일이 없다")
     names = re.findall(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*,", m.group(1), re.M)
     flags = []
+    # ① **이름이 원장에 나타났는가.** ⚠ 이것은 «의존»이 아니라 «언급»을 벌한다 — 의도적이다:
+    #    이름이 원장에 있으면 다음 세션이 그 값을 **원장의 일부로** 읽는다(그리고 낡아도 안 잡힌다).
     for name in names:
         for led, rep in sorted(reports.items()):
             if name in json.dumps(rep, ensure_ascii=False):
@@ -517,7 +519,91 @@ def scan_unhashed_thresholds(root: Path, reports: dict[str, dict]) -> list[dict]
                               "flag": "**해시 밖 임계가 원장에 나타났다**(#1 / D-C4의 면제 전제가 "
                                       "깨졌다) — 이 원장은 그 상수가 바뀌어도 **STALE이 안 잡힌다**. "
                                       "`SHARED_CONSTANTS`로 옮기거나 원장이 그 이름을 안 쓰게 한다"})
-    flags += _cover("scan_unhashed_thresholds", "면제 임계", len(names), len(flags))
+    # ② **원장을 쓰는 하네스가 그 상수를 import하는가**(2026-08-20 17차 2차 리뷰어 [11]).
+    #    ①은 이름이 원장 텍스트에 나올 때만 잡는다 — 하네스가 import해 **파생 수치**를 적으면
+    #    이름이 안 나타나고, 그것이 진짜 위험이다. 그래서 소스 쪽도 본다.
+    n_src = 0
+    for d in ("test", "e2e"):
+        base = root / "web" / d
+        if not base.exists():
+            continue
+        for f in sorted(base.rglob("*.ts")):
+            # **선언한 파일 자신은 뺀다** — `constants.ts`가 이 목록을 만드는 자리이고,
+            # 같은 파일이 `stage0/out/constants.json`을 문자열로 든다(스냅샷 설명). 자기를
+            # 잡으면 이 검사는 **영구히 1건**을 내고 그 1건이 진짜 발화를 가린다.
+            if f.resolve() == decl.resolve():
+                continue
+            # ⚠⚠ **주석을 벗기고 본다.** 재는 것은 «의존»이지 «언급»이 아니다 — 안 벗기면
+            #    *"이 파일은 원장을 안 쓴다"*고 적은 주석이 그 파일을 대상으로 만들고,
+            #    상수 이름을 설명한 주석이 의존으로 세어진다(초판이 셋 다 그렇게 잡았다).
+            #    ⚠ #19는 그 반대 방향이었다(주석이 검사를 **약화**시켰다) — 여기서는
+            #    주석이 검사를 **거짓 발화**시킨다. 대상이 «코드»인 것은 두 경우에 같다.
+            code = strip_ts_comments(f.read_text(encoding="utf-8", errors="ignore"))
+            if "stage0/out" not in code and '"stage0"' not in code:
+                continue                 # 원장을 안 쓰는 파일은 대상이 아니다
+            n_src += 1
+            for name in names:
+                if re.search(rf"\b{re.escape(name)}\b", code):
+                    flags.append({"path": f"{f.relative_to(root)}:{name}", "val": name,
+                                  "flag": "**원장을 쓰는 하네스가 해시 밖 임계를 읽는다**(#1 / "
+                                          "D-C4의 면제 전제) — 그 원장 값이 이 상수에 의존하면 "
+                                          "**STALE이 안 잡힌다**. `SHARED_CONSTANTS`로 옮기거나 "
+                                          "그 하네스가 이 상수를 안 읽게 한다"})
+    flags += _cover("scan_unhashed_thresholds", "면제 임계 × (원장 + 하네스)",
+                    len(names) * (len(reports) + n_src), len(flags),
+                    note="⚠ **못 잡는 것 셋**(2차 리뷰어 [11]): ① 값(숫자)만 원장에 적히는 경우 "
+                         "② 상수를 다른 이름으로 감싸 쓰는 경우 ③ `src/`의 앱 코드가 그 값으로 "
+                         "만든 결과를 하네스가 간접 관측하는 경우. 셋 다 사람이 본다")
+    return flags
+
+
+def scan_absent_pairs(reports: dict[str, dict]) -> list[dict]:
+    """**`reachability_absent` 면제가 무조건 통과가 되지 않게 한다**(#40 ⑤ · 17차 2차 리뷰어 [5]).
+
+    `PITFALLS.md`가 #40의 못 잡는 여섯 중 ⑤로 *"`absent` 면제의 무조건 통과"*를 이미 등재해
+    뒀는데, 그 자리를 메우는 검사가 없었다 — 지금 원장의 면제는 스무 건이 넘고 어느 것도
+    «그럼 무엇이 그 자리를 메우는가»를 기계에 대고 말하지 않는다.
+
+    **점진적으로 조인다**(범위를 안 넓힌다): 게이트가 `reachability_absent_pair`를 **적었으면**
+    그 경로들이 **같은 원장에서 실제로 풀리는지** 본다. 안 풀리면 그 짝은 말뿐이다.
+    ⚠ **아직 «적지 않은» 게이트는 플래그하지 않는다** — 그러면 기존 면제 전부가 한꺼번에
+    뜬다. 대신 «짝이 없는 면제»의 **수를 센다**(`note`). 그 수가 이 규약의 미이행 잔량이다.
+    """
+    n_absent = n_pair = 0
+    flags = []
+
+    def walk(node, fname, path):
+        nonlocal n_absent, n_pair
+        if isinstance(node, dict):
+            keys = {k.lower() for k in node}
+            if "reachability_absent" in keys:
+                n_absent += 1
+                pair = node.get("reachability_absent_pair")
+                if isinstance(pair, list) and pair:
+                    n_pair += 1
+                    for ref in pair:
+                        try:
+                            _resolve(reports.get(fname) or {}, str(ref))
+                        except Exception:
+                            flags.append({"path": f"{fname}:{path}.reachability_absent_pair",
+                                          "val": ref,
+                                          "flag": "**면제가 든 «짝»의 경로가 이 원장에서 안 "
+                                                  "풀린다**(#40 ⑤) — 면제를 메운다던 근거가 "
+                                                  "말뿐이다. ⚠ 구분자는 `/`다(`_resolve` 규약 — "
+                                                  "점은 키 이름에 들 수 있다). 경로를 고치거나 "
+                                                  "그 근거를 만든다"})
+            for k, v in node.items():
+                walk(v, fname, f"{path}.{k}" if path else str(k))
+        elif isinstance(node, list):
+            for i, v in enumerate(node):
+                walk(v, fname, f"{path}[{i}]")
+
+    for fname, rep in sorted(reports.items()):
+        walk(rep, fname, "")
+    flags += _cover("scan_absent_pairs", "면제 게이트", n_absent, len(flags),
+                    note=f"짝을 적은 면제 {n_pair} / 전체 {n_absent} — "
+                         f"**나머지 {n_absent - n_pair}은 여전히 무조건 통과다**(#40 ⑤의 잔량). "
+                         "게이트를 다음에 여는 세션이 그 원장의 짝을 적는다")
     return flags
 
 
@@ -1012,6 +1098,7 @@ def main():
     flags += scan_sweep_coverage(ROOT)             # #33 자동화: 전수 훑기의 확장자 커버리지
     flags += scan_stray_progress(ROOT)             # 루트 밖 progress.md (세 번째 재발)
     flags += scan_unhashed_thresholds(ROOT, reports)  # D-C4 면제의 전제가 깨졌는가(17차)
+    flags += scan_absent_pairs(reports)            # #40 ⑤: absent 면제가 든 «짝»이 실제인가
     flags += scan_citation_hashes(ROOT, reports)   # #33 값 대조: 인용 해시 ↔ 원장 현재 해시
     flags += scan_cited_values(ROOT, reports)  # #42 ⑥ 존재 대조: 인용한 수치가 원장에 있는가
     PITFALL_CITATIONS.clear()

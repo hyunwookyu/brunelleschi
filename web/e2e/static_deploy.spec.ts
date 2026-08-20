@@ -22,6 +22,7 @@ import { readFile } from "node:fs/promises";
 import { existsSync, writeFileSync, readFileSync, mkdirSync, mkdtempSync,
          cpSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { spawnSync } from "node:child_process";
 import { resolve, dirname, extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { constantsSnapshot } from "../test/constants.js";
@@ -145,6 +146,35 @@ function variant(name: string, opts: VariantOpts = {}): string {
   return dir;
 }
 
+/**
+ * **실제 두 번째 `vite build`**(2026-08-20 17차 2차 리뷰어 [8] — 지시 0-4 «빌드를 두 번 하고»).
+ *
+ * 변형본으로 하던 것을 **진짜 재빌드**로 바꾼다. 대조군(⑤)은 여전히 변형본을 써야 하지만
+ * (두 판본의 `sw.js`가 바이트까지 같아야 «전략 하나»의 비교가 선다), ④의 ②단계는 그 제약이
+ * **없는 자리**다 — 거기서는 워커가 바뀌는 것이 요점이기 때문이다.
+ *
+ * 커밋은 같으므로 갈리는 것은 **빌드 시각**이다. 그리고 그것이 이 항목이 고친 바로 그 자리다:
+ * 옛 판본 규칙(`sha256(파일 이름 목록)`)에서는 **같은 커밋의 재빌드가 같은 `sw.js`를 냈다.**
+ * 이제는 시각이 판본에 들어가므로 `sw.js`가 바뀌고, 화면의 빌드 시각도 바뀐다 —
+ * **표식을 심을 필요가 없다. `S2S.version().time`이 그 자리를 든다.**
+ *
+ * 빌드가 안 되면 **건너뛴다**(#32 — 미실행을 반증으로 안 쓴다).
+ */
+function realRebuild(name: string, buildTime: string): { dir: string; err: string } {
+  const dir = join(TMP, name);
+  const npx = process.platform === "win32" ? "npx.cmd" : "npx";
+  const r = spawnSync(npx, ["vite", "build", "--outDir", dir, "--emptyOutDir"], {
+    cwd: resolve(HERE, ".."),
+    env: { ...process.env, S2S_BUILD_TIME: buildTime },
+    encoding: "utf-8",
+    shell: process.platform === "win32",
+  });
+  if (r.status !== 0 || !existsSync(join(dir, "l.html")) || !existsSync(join(dir, "sw.js"))) {
+    return { dir, err: `vite build 실패(status ${r.status}) — ${String(r.stderr).slice(0, 300)}` };
+  }
+  return { dir, err: "" };
+}
+
 /** 두 디렉터리의 `sw.js`가 바이트까지 같은가 — 대조가 «전략 하나»의 비교인지 확인한다 */
 function sameSw(a: string, b: string): boolean {
   return readFileSync(join(a, "sw.js"), "utf-8") === readFileSync(join(b, "sw.js"), "utf-8");
@@ -181,7 +211,11 @@ test.beforeAll(async () => {
   TMP = mkdtempSync(join(tmpdir(), "s2s-deploy-"));
   server = createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
-    const prefix = [...ROOTS.keys()].find(k => url.pathname.startsWith(k));
+    // ⚠ **경계를 보고 긴 것부터 고른다.** 단순 `startsWith`면 `/DEPLOY_OLD2/l.html`이
+    //   `/DEPLOY_OLD`에 걸려 남은 경로가 `2/l.html`이 된다(실제로 걸렸다 — 새 팔이
+    //   120초 타임아웃으로 죽었고 원인은 서버 라우팅이었다).
+    const prefix = [...ROOTS.keys()].sort((a, b) => b.length - a.length)
+      .find(k => url.pathname === k || url.pathname.startsWith(k + "/"));
     if (!prefix) { res.statusCode = 404; res.end("nope"); return; }
     let p = url.pathname.slice(prefix.length) || "/";
     if (p.endsWith("/")) p += "l.html";
@@ -213,9 +247,12 @@ test.afterAll(async () => {
         + "'그 목록이 없었으면 어땠는가'를 이 설계로 못 가른다. **미측정이다**(아래 대조군의 `reading`)",
       "**재배포 팔은 `vite build`를 두 번 돌린 것이 아니다**(#32 — 미실행을 반증으로 안 쓴다) — "
         + "`dist/`의 **변형본**이다. ④의 ①단계는 `l.html`만, ②단계는 번들 이름·번들 안의 커밋 "
-        + "상수·`sw.js` 판본 머리까지 바꾼다(실제 재빌드의 서명). 변형본을 쓰는 이유는 대조군이 "
-        + "성립해야 하기 때문이다: 두 팔의 차이가 **fetch 전략 하나**여야 하므로 두 판본의 "
-        + "`sw.js`가 바이트까지 같아야 한다(`sw_bytes_equal`이 그 조건을 잰다)",
+        + "⚠ **④의 ②단계는 2026-08-20에 진짜 `vite build` 재실행으로 바꿨다**(2차 리뷰어 [8]) — "
+        + "변형본이 남은 곳은 **④의 ①단계와 대조군 ⑤**다. 거기서 변형본을 쓰는 이유는 "
+        + "**그 팔 안에서 두 판본의 `sw.js`가 바이트까지 같아야** 하기 때문이다"
+        + "(`sw_bytes_equal`이 그 조건을 잰다). ⚠⚠ 그것은 **팔 안의 성질**이고 "
+        + "**두 팔 사이의 차이를 «fetch 전략 하나»로 만들지 않는다** — 두 본문은 판본 규칙도 "
+        + "다르다(`sw_traits`). 그 정정은 `sw_strategy_control.reading`에 있다",
       "**HTTP 캐시의 몫** — 이 서버는 `Cache-Control`·`ETag`를 안 보낸다. 실제 Pages는 "
         + "`max-age`를 보내므로 **CDN·브라우저 HTTP 캐시가 추가로 늦출 수 있다.** "
         + "여기서 재는 것은 **서비스 워커 전략**뿐이다",
@@ -234,10 +271,27 @@ test.afterAll(async () => {
         + "있는 한 네트워크를 안 본다»는 기전에서 나온 것이지 이 팔의 수가 아니다",
     ],
     condition: {
-      server: `Node 정적 서버(이 스펙이 띄운다) · 하위 경로 ${SUB}(재배포 팔은 ${SUB_NEW}·${SUB_OLD}) · 포트 ${PORT}`,
+      server: `Node 정적 서버(이 스펙이 띄운다) · 하위 경로 ${SUB} · 포트 ${PORT}. `
+        + `**팔마다 scope를 가른다**(#53): ${SUB_NEW}(재배포) · ${SUB_OLD}(옛 판 · 문서만) · `
+        + `${SUB_OLD}2(옛 판 · 재빌드) · /DEPLOY_SKEW(표시↔워커 양성 채널). `
+        + `⚠ 서버는 **경계를 보고 긴 접두사부터** 고른다 — 단순 접두사 비교면 `
+        + `${SUB_OLD}2가 ${SUB_OLD}에 걸린다(실제로 걸렸다)`,
       build: "`npm run build` 산출물(`dist/`). 빌드본이 없으면 **건너뛴다**(#32)",
       browser: "chromium(Playwright) · 1440×900 · deviceScaleFactor 1",
       scopes: "재배포 팔은 **scope를 가른다**(#53) — 앞 팔의 워커·캐시가 뒤 팔을 잡으면 결론이 뒤집힌다",
+    },
+    /**
+     * **팔 수를 스스로 적는다**(9차 지시 c · 2026-08-20 2차 리뷰어 [9]) —
+     * `tools/testCost.mjs`의 `declared_scenarios`가 이 필드를 읽는다. 팔이 늘면 이 수가 는다.
+     */
+    arms: {
+      l_d2: "① 하위 경로 열림 ② scope ③ 오프라인 + 빌드 식별자 표시",
+      version_skew: "표시↔워커 양성 채널(번들 커밋만 틀어 놓은 판본)",
+      offline_control: "캐시에서 번들을 지우면 오프라인 새로고침이 깨진다",
+      redeploy_doc_only: "④① 문서만 바뀐 재배포 — 새로고침 1회",
+      redeploy_rebuild: "④② 진짜 두 번째 vite build — 알림 + 번들·캐시 교체",
+      legacy_doc_only: "⑤ 옛 판 · 문서만 바뀐 재배포(3회)",
+      legacy_rebuild: "⑤ 옛 판 · 워커가 바뀌는 재배포(3회) — ②의 하한",
     },
     constants: constantsSnapshot(),
     metric_defs: metricsSnapshot(),
@@ -289,6 +343,9 @@ test("하위 경로에서 열리고, 서비스 워커가 잡히고, 오프라인
   await skewPage.goto(`http://localhost:${PORT}${SKEW}/l.html`);
   await skewPage.waitForFunction(() => !!(window as any).S2S);
   const skew = await skewPage.evaluate(() => (window as any).S2S.version().commit);
+  // 「화면 = 앱」 다리도 틀어 놓은 팔에서 관측한다(2차 리뷰어 [4])
+  const skewBar = await skewPage.evaluate(() =>
+    document.querySelector("#bar .build")?.textContent ?? null);
   await skewPage.close();
   const skewSwSaid = /self\.__COMMIT__ = "([^"]*)"/
     .exec(readFileSync(join(ROOTS.get(SKEW)!, "sw.js"), "utf-8"))?.[1] ?? null;
@@ -301,10 +358,18 @@ test("하위 경로에서 열리고, 서비스 워커가 잡히고, 오프라인
     sw_commit: swSaid, display_matches_worker: shown.api.commit === swSaid,
     positive_channel: {
       arm: "번들 안의 커밋만 `deadbee`로 틀고 `sw.js`는 그대로 둔 판본(scope " + SKEW + ")",
-      app_commit: skew, sw_commit: skewSwSaid, display_matches_worker: skew === skewSwSaid,
+      app_commit: skew, bar_text: skewBar, sw_commit: skewSwSaid,
+      display_matches_worker: skew === skewSwSaid,
+      bar_matches_app: !!skewBar && skewBar.includes(skew),
       reading: "**틀어 놓으면 거짓이 된다** — 그러므로 위의 참은 항등이 아니라 배선의 관측이다"
         + "(#5의 판별법: 틀린 값을 넣어 지표가 움직이는지 본다).",
     },
+    what_this_does_not_say: "⚠⚠ **이 값은 «옛 번들이 왔다»를 못 잡는다**(2026-08-20 2차 "
+      + "리뷰어 [4]). 사람이 겪은 고장에서는 옛 번들과 옛 워커가 **함께** 남으므로 둘이 서로 "
+      + "일치하고 이 필드는 **참**이 된다. 이 필드가 잡는 것은 «한 배포 안에서 번들과 워커가 "
+      + "갈린 빌드»(양성 채널이 만든 그 판본)뿐이다. **«지금 뜬 것이 최신인가»를 판정하는 것은 "
+      + "이 필드가 아니라 사람이다** — 화면의 해시를 방금 푸시한 커밋과 견주는 절차"
+      + "(README §1.5)가 그 자리이고, 자동으로 하는 것은 ④의 재배포 팔이다.",
     reading: "**하단바 구석의 값 = 앱이 든 값 = 워커가 든 값.** 셋이 한 출처(`vite.config.ts`의 "
       + "`STAMP`)에서 오지만 **경로가 갈린다** — 하나는 번들에 인라인되고 하나는 `sw.js` 머리에 "
       + "붙는다. 그 둘이 갈리는 빌드가 실제로 만들어질 수 있고(위 양성 채널이 그 판본이다), "
@@ -433,7 +498,8 @@ test("[양성 채널] 캐시에서 번들을 지우면 오프라인 새로고침
  * 두 단계로 나눈 이유는 **두 고장이 따로이기 때문**이다:
  *   ① `l.html`만 바뀐 배포 — `sw.js`가 **바이트까지 같다.** 워커는 안 바뀌므로
  *      **cache-first면 영영 못 받는다.** 새 전략(network-first 문서)은 한 번에 받는다
- *   ② 번들까지 바뀐 배포 — 워커가 바뀐다. **갱신 알림**이 뜨고 그 버튼이 새 판을 연다
+ *   ② **진짜 두 번째 `vite build`** — 워커가 바뀐다. **갱신 알림**이 뜨고 그 버튼이 새 판을 연다
+ *      (2026-08-20 2차 리뷰어 [8]로 변형본에서 실제 재빌드로 바꿨다 — 지시 0-4 문면)
  *
  * ⚠ ①에서 **알림은 안 뜬다**(워커가 안 바뀌었다). 그것을 반례로 함께 잰다 —
  * 알림이 아무 때나 뜨면 사용자는 그것을 무시하게 되고, 그러면 ②가 무의미해진다.
@@ -441,18 +507,26 @@ test("[양성 채널] 캐시에서 번들을 지우면 오프라인 새로고침
 test("[회귀] 재배포가 나간다 — 문서만 바뀐 배포 · 번들까지 바뀐 배포 · 갱신 알림", async ({ page }) => {
   const A = variant("new_a");                              // 1차 배포
   const B = variant("new_b", { marker: "B" });             // ① 문서만 바뀐 배포
-  const C = variant("new_c", { marker: "C",                // ② 진짜 2차 빌드
-    rebuild: { commit: "c0ffee1", time: "2026-08-19T09:00:00.000Z", tag: "cccccccc" } });
+  // ② **진짜 두 번째 `vite build`**(2차 리뷰어 [8] — 지시 0-4 문면). 변형본이 아니다.
+  //    커밋은 같고 **빌드 시각이 다르다** — 그것이 이 항목이 고친 자리다(옛 판본 규칙에서는
+  //    같은 커밋의 재빌드가 같은 `sw.js`를 냈다). 표식을 안 심는다: `version().time`이 든다.
+  const REBUILD_TIME = "2026-08-20T09:00:00.000Z";
+  const built = realRebuild("new_c", REBUILD_TIME);
+  test.skip(!!built.err, `두 번째 빌드가 안 돌았다 — ${built.err} (미실행은 반증이 아니다, #32)`);
+  const C = built.dir;
   // 대조 조건 — ①은 워커가 **바이트까지 같아야** "전략의 몫"이 갈린다
   expect(sameSw(A, B)).toBe(true);
-  expect(sameSw(A, C)).toBe(false);
+  expect(sameSw(A, C)).toBe(false);        // 재빌드는 판본이 바뀐다(시각이 들어간다)
 
   const read = () => page.evaluate(() => ({
     marker: document.querySelector('meta[name="s2s-deploy"]')?.getAttribute("content") ?? null,
     commit: (window as any).S2S?.version?.().commit ?? null,
+    build_time: (window as any).S2S?.version?.().time ?? null,
     updateShown: !!(window as any).S2S?.updateShown?.(),
     controlled: !!navigator.serviceWorker.controller,
   }));
+  /** **남아 있는 캐시 이름**(2차 리뷰어 [13]) — 0-2c «옛 캐시 무효화»를 원장이 들게 한다 */
+  const cacheNames = () => page.evaluate(() => caches.keys());
 
   ROOTS.set(SUB_NEW, A);
   await page.goto(`http://localhost:${PORT}${SUB_NEW}/l.html`);
@@ -462,7 +536,7 @@ test("[회귀] 재배포가 나간다 — 문서만 바뀐 배포 · 번들까�
   await page.waitForFunction(() => !!(window as any).S2S);
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
   // **기준선을 팔 안에서 읽는다**(#53) — 앞 팔이 남긴 장면을 물려받지 않는다
-  const before = await read();
+  const before = { ...await read(), shown_before_click: false, caches: await cacheNames() };
   expect(before.marker).toBe(null);
   expect(before.controlled).toBe(true);
 
@@ -470,10 +544,15 @@ test("[회귀] 재배포가 나간다 — 문서만 바뀐 배포 · 번들까�
   ROOTS.set(SUB_NEW, B);
   await page.reload();
   await page.waitForFunction(() => !!(window as any).S2S);
-  const afterDoc = await read();
+  // ⚠ **«떴다»를 이 행도 자기 필드로 든다**(2차 리뷰어 [3]) — `updateShown` 하나로는
+  //   «안 떴다»와 «눌러서 사라졌다»가 안 갈린다. 이 행은 누른 적이 없으므로 둘이 같다
+  const afterDoc = { ...await read(), shown_before_click: await page.evaluate(
+    () => !!(window as any).S2S.updateShown()), caches: await cacheNames() };
   expect(afterDoc.marker).toBe("B");
   // **반례**: 워커가 안 바뀌었으므로 알림이 뜰 이유가 없다
-  expect(afterDoc.updateShown).toBe(false);
+  expect(afterDoc.shown_before_click).toBe(false);
+  // 그리고 **캐시 이름이 그대로다** — 판본이 안 바뀌었으니 무효화할 것도 없다
+  expect(afterDoc.caches).toEqual(before.caches);
 
   // ---- ② 번들까지 바뀐 배포 → 알림이 뜬다
   ROOTS.set(SUB_NEW, C);
@@ -497,31 +576,58 @@ test("[회귀] 재배포가 나간다 — 문서만 바뀐 배포 · 번들까�
     page.click('#update [data-update="reload"]'),
   ]);
   await page.waitForFunction(() => !!(window as any).S2S);
-  const afterBundle = await read();
-  expect(afterBundle.marker).toBe("C");
-  expect(afterBundle.commit).toBe("c0ffee1");     // **번들 안의 값까지 새 판이다**
+  const afterBundle = { ...await read(), caches: await cacheNames() };
+  // **번들 안의 값까지 새 판이다** — 진짜 재빌드라 커밋은 같고 **빌드 시각이 갈린다**
+  expect(afterBundle.build_time).toBe(REBUILD_TIME);
+  expect(afterBundle.build_time).not.toBe(before.build_time);
   expect(afterBundle.updateShown).toBe(false);    // 눌렀으니 사라진다
+  // **옛 캐시가 무효화됐다**(0-2c) — 남은 이름이 하나이고 그것이 전과 다르다
+  expect(afterBundle.caches).not.toEqual(before.caches);
+  expect(afterBundle.caches.length).toBe(1);
 
   led.sw_update = {
     gate: gate({
       registered: "① `l.html`만 바뀐 재배포가 **새로고침 1회**에 문서로 나온다"
-        + "(`after_doc_only.marker === \"B\"`) · ② `sw.js`까지 바뀐 재배포에서 **알림이 뜨고**"
-        + "(`shown_before_click`) 그 버튼이 **번들 안의 값까지** 새 판으로 연다"
-        + "(`after_rebuild.commit === \"c0ffee1\"`). 기준은 측정 전에 박았다(#26).",
-      reachability: "**하한 대조군이 도달 가능성의 반대편을 든다**(#35) — 같은 재배포를 옛 판에 "
-        + "주면 새로고침 3회로도 못 받는다(`sw_strategy_control.reloads_seen`). 즉 이 기준은 "
-        + "«어느 워커든 통과하는 자명한 기준»이 아니다. 상한 쪽 오라클은 자명하다"
-        + "(서비스 워커가 아예 없는 브라우저는 늘 새 문서를 받는다) — 그래서 이 게이트에서 "
-        + "물어야 할 것은 상한이 아니라 **하한이고, 그 자리를 대조군이 든다.**",
+        + "(`after_doc_only.marker === \"B\"`) · ② **진짜 두 번째 `vite build`**에서 알림이 뜨고"
+        + "(`after_rebuild.shown_before_click`) 그 버튼이 **번들 안의 빌드 시각까지** 새 판으로 "
+        + "연다(`after_rebuild.build_time`) · ③ 그때 **옛 캐시가 사라진다**(0-2c — `caches` 비교). "
+        + "⚠ **#26 표기를 정정한다**(2차 리뷰어 [6]): 이 세 조항의 **단언은 커밋 `9c2e137`의 "
+        + "스펙에 이미 있었지만**(측정 전 등록), **`gate` 블록 자체는 1차 리뷰어 [6] 대응으로 "
+        + "뒤에 쓰였다.** 즉 «사전 등록된 단언의 사후 게이트화»다. "
+        + "⚠⚠ 기준값 `\"B\"`·빌드 시각은 **픽스처가 정한 값이다**(#46) — 그 크기에 정보가 "
+        + "없다. 이 게이트가 재는 것은 크기가 아니라 **어느 판본이 왔는가**다.",
+      reachability: "**조항마다 하한이 다르다**(2026-08-20 2차 리뷰어 [2] — 초판은 하나로 "
+        + "뭉뚱그렸다). ① **하한이 있다**: 같은 재배포(문서만)를 옛 판에 주면 새로고침 3회로도 "
+        + "못 받는다(`sw_strategy_control.reloads_seen`) — 자명한 기준이 아니다. "
+        + "② **하한이 없다 — 그리고 그것이 관측이다**: 옛 판에 **재빌드**를 주면 "
+        + "`sw_strategy_control.rebuild_arm`이 그 결과를 든다. 워커 바이트가 바뀌면 "
+        + "옛 판도 `skipWaiting`+`clients.claim`을 갖고 있어(`sw_traits.legacy`) 통과할 수 "
+        + "있다 — 즉 ②를 «옛 판이 못 하는 일»로 읽으면 안 된다. **②가 잡는 것은 알림이지 "
+        + "전달이 아니다**(알림은 옛 판에 아예 없다). ③은 판본 규칙의 귀결이라 하한이 "
+        + "옛 판본 규칙 자체다. 상한 쪽 오라클은 자명하다(서비스 워커가 없는 브라우저는 늘 "
+        + "새 문서를 받는다).",
       reachability_absent: "**도달 가능성의 수치가 없다 — 판정량이 연속량이 아니기 때문이다.** "
         + "이 게이트가 재는 것은 «어떤 문서·번들이 왔는가»(문자열 일치)라 오라클 수치를 "
         + "만들 자리가 없다. 억지로 수를 적으면 그 수는 0·1이 되고 그것이 #40이 금지하는 "
-        + "자명한 값이다. ⚠ **면제는 통과가 아니다**(#35) — 대신 이 게이트는 "
-        + "`sw_strategy_control`(하한 대조군)과 `version_display.positive_channel`"
-        + "(틀어 놓으면 거짓이 되는가)을 **짝으로 요구한다**. 둘 중 하나라도 무너지면 "
-        + "이 게이트의 통과는 근거를 잃는다.",
-      result: { doc_only_marker: afterDoc.marker, rebuild_commit: afterBundle.commit,
-                banner_shown_before_click: shownBeforeClick },
+        + "자명한 값이다. ⚠ **면제는 통과가 아니다**(#35) — 대신 이 게이트는 아래 "
+        + "`reachability_absent_pair`의 경로들이 이 원장 안에서 **실제로 풀리는 것**을 요구한다. "
+        + "⚠⚠ **`version_display.positive_channel`은 이 짝에서 뺐다**(2차 리뷰어 [4]): 그 팔이 "
+        + "움직이는 값(`display_matches_worker`)은 이 게이트의 판정량이 아니고, 사람이 겪은 "
+        + "고장(옛 번들 + 옛 워커가 함께 남음)에서는 **참이 된다** — 게이트 조항을 뒤집는 "
+        + "채널이 아니다.",
+      /**
+       * **면제가 무조건 통과가 되지 않게 한다**(#40 ⑤ · 2차 리뷰어 [5]).
+       * `selfcheck.scan_absent_pairs`가 이 경로들이 같은 원장에서 풀리는지 본다.
+       */
+      // ⚠ 구분자는 `/`다 — `selfcheck._resolve`의 규약(점은 키 이름에 들 수 있다)
+      reachability_absent_pair: [
+        "sw_strategy_control/reloads_seen",      // ①의 하한
+        "sw_strategy_control/rebuild_arm",       // ②의 하한(관측 — 통과할 수도 있다)
+        "sw_update/sw_traits",                   // 두 판본이 무엇이 다른가
+      ],
+      result: { doc_only_marker: afterDoc.marker, rebuild_build_time: afterBundle.build_time,
+                banner_shown_before_click: shownBeforeClick,
+                caches_before: before.caches, caches_after: afterBundle.caches },
     }),
     sw_bytes_equal: { a_vs_b: sameSw(A, B), a_vs_c: sameSw(A, C) },
     sw_traits: { new_strategy: swTraits(A) },
@@ -546,7 +652,7 @@ test("[회귀] 재배포가 나간다 — 문서만 바뀐 배포 · 번들까�
  * ⚠ scope를 가른다(`/DEPLOY_OLD`) — 앞 팔의 워커가 이 팔의 새로고침을 잡으면 결론이 뒤집힌다.
  * 이 스펙은 실제로 그렇게 한 번 무효가 됐다(위 「팔 A」 철회문 · #53).
  */
-test("[양성 채널] 옛 판(전부 cache-first)은 같은 재배포를 못 받는다", async ({ page }) => {
+test("[양성 채널] 옛 판은 문서만 바뀐 재배포를 못 받는다 — 워커가 바뀌면 받지만 알리지 않는다", async ({ page }) => {
   const A = variant("old_a", { legacySw: true });
   const B = variant("old_b", { marker: "B", legacySw: true });
   const NEW_REF = variant("old_ref");     // 같은 빌드의 **현행** sw.js — 전략 표지 대조용
@@ -588,7 +694,55 @@ test("[양성 채널] 옛 판(전부 cache-first)은 같은 재배포를 못 받
   const afterClear = await marker();
   expect(afterClear).toBe("B");
 
+  // ---- **②의 하한도 잰다**(2차 리뷰어 [2]) — 옛 판에 **워커가 바뀌는 재배포**를 준다.
+  //      옛 판도 `skipWaiting`+`clients.claim`을 갖고 있으므로 **받을 수 있다**. 받는다면
+  //      «옛 판이 못 하는 일»은 «문서만 바뀐 배포»와 «알림» 둘로 좁혀진다 — 그 좁힘이 결론이다.
+  //      ⚠ 별도 scope에서 돌린다(#53) — 이 팔의 캐시·워커를 물려받지 않는다.
+  const SUB_OLD2 = "/DEPLOY_OLD2";
+  const A2 = variant("old2_a", { legacySw: true });
+  const C2 = variant("old2_c", { marker: "C2", legacySw: true,
+    rebuild: { commit: "0ldbee1", time: "2026-08-20T10:00:00.000Z", tag: "dddddddd" } });
+  ROOTS.set(SUB_OLD2, A2);
+  const p2 = await page.context().newPage();
+  await p2.goto(`http://localhost:${PORT}${SUB_OLD2}/l.html`);
+  await p2.waitForFunction(() => !!(window as any).S2S);
+  await p2.waitForFunction(() => !!navigator.serviceWorker.controller);
+  await p2.reload();
+  await p2.waitForFunction(() => !!navigator.serviceWorker.controller);
+  const mark2 = () => p2.evaluate(() =>
+    document.querySelector('meta[name="s2s-deploy"]')?.getAttribute("content") ?? null);
+  const before2 = await mark2();
+  expect(before2).toBe(null);            // 픽스처가 실제로 섰다(안 서면 아래 null이 무의미하다)
+  ROOTS.set(SUB_OLD2, C2);
+  const seen2: (string | null)[] = [];
+  for (let i = 0; i < 3; i++) {
+    await p2.evaluate(() => navigator.serviceWorker.getRegistration()
+      .then(r => r?.update()).catch(() => null));
+    await p2.reload();
+    await p2.waitForFunction(() => !!(window as any).S2S);
+    seen2.push(await mark2());
+  }
+  // 알림은 **옛 판에 아예 없다** — 코드에 그 경로가 없으므로 워커가 바뀌어도 안 뜬다
+  const banner2 = await p2.evaluate(() => !!(window as any).S2S?.updateShown?.());
+  await p2.close();
+  expect(banner2).toBe(false);
+  expect(sameSw(A2, C2)).toBe(false);      // 이 팔의 재배포는 워커를 바꾼다
+
   led.sw_strategy_control = {
+    /**
+     * **②의 하한**(2차 리뷰어 [2]) — 옛 판에 워커가 바뀌는 재배포를 줬을 때.
+     * ⚠ **여기서 «옛 판도 받는다»가 나와도 그것은 실패가 아니다** — 그것이 관측이고,
+     * 그 관측이 ②의 주장을 «전달»에서 «알림»으로 좁힌다.
+     */
+    rebuild_arm: {
+      sw_bytes_equal: { a2_vs_c2: sameSw(A2, C2) },
+      scope: SUB_OLD2, before: before2, reloads_seen: seen2, banner_shown: banner2,
+      reading: "옛 판에 **워커가 바뀌는** 재배포를 주면 `reloads_seen`이 그 결과를 든다 — "
+        + "옛 판도 `skipWaiting`+`clients.claim`을 가지므로 새 워커가 서면 새 캐시를 채운다. "
+        + "**알림은 어느 경우에도 안 뜬다**(`banner_shown` — 옛 판에 그 경로가 없다). "
+        + "즉 옛 판이 **못 하는 일 둘**은 ① 문서만 바뀐 배포를 받는 것 ② 새 판이 있다고 "
+        + "말하는 것이고, 전달 자체는 워커가 바뀌면 결국 된다.",
+    },
     // **옛 판이 어디서 왔는가**(17차 리뷰어 [4]) — 재구성한 스텁이 아니라 **그 커밋의 본문**이다
     legacy_source: {
       file: "web/e2e/fixtures/legacy_sw.js",
