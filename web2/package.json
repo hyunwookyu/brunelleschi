@@ -1,0 +1,27 @@
+{
+  "name": "brunelleschi-web2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Brunelleschi web2 — 투시도를 그리면서 그것이 3D가 된다",
+  "scripts": {
+    "dev": "vite --port 5301 --strictPort",
+    "build": "vite build",
+    "preview": "vite preview --port 5302 --strictPort",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.2.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "dependencies": {
+    "@types/three": "^0.185.4",
+    "three": "^0.185.1",
+    "vite": "^5.4.21"
+  }
+}
