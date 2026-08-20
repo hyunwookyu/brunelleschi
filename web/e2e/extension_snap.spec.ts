@@ -6,6 +6,7 @@
 //      가고 **다른 스냅**(축 스냅 — start_anchor 경로)으로 넘어간다(지시 3-a의 후반).
 // 발동 임계·안쪽 배제 등 판정 자체의 반례는 unit(extension_snap.test.ts)이 잰다.
 import { test, expect } from "@playwright/test";
+import { openDrawing } from "./fixture.js";
 import { constantsSnapshot } from "../test/constants.js";
 import { metricsSnapshot } from "../test/metrics.js";
 import { gate } from "../test/gate.js";
@@ -35,6 +36,9 @@ test("연장선 스냅 — 끝점에서 이어 그으면 같은 3D 직선, 토�
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  // **지평선을 픽스처의 소실점 높이에 긋는다**(18차 지시 j) — 이 픽스처의 깊이선들이
+  // 겨냥하는 VP가 0.40H에 있다(아래 ① 주석). 그 높이가 곧 시선 높이다.
+  await openDrawing(page, (await page.locator("#ink").boundingBox())!.height * 0.40);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -54,6 +58,10 @@ test("연장선 스냅 — 끝점에서 이어 그으면 같은 3D 직선, 토�
   await drawPx(0.22 * W, 0.72 * H, 0.42 * W, 0.5067 * H);
   await drawPx(0.85 * W, 0.75 * H, 0.62 * W, 0.5061 * H);
   await drawPx(0.40 * W, 0.78 * H, 0.46 * W, 0.59 * H);
+  // ⚠⚠ **깊이선 1은 소실점을 만들고 사라졌다**(18차 지시 4·m) — 작도선이기 때문이다.
+  // 연장선은 **남아 있는 획의 끝점**에서 나가므로, 같은 자리에 한 번 더 긋는다:
+  // 그 획은 이미 있는 소실점의 **지지선**이라 사라지지 않고 3D로 놓인다.
+  await drawPx(0.22 * W, 0.72 * H, 0.42 * W, 0.5067 * H);
   const base = await page.evaluate(() => ({
     lifted: window.S2S.doc().strokes.filter((s: any) => s.seg3d).length,
     pb: window.S2S.placeBy(),

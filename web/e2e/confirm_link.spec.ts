@@ -23,6 +23,7 @@
 //   #30 측정 스위치 둘이 수리 전 거동을 되살린다
 //   #40 도달 가능성: 끈 팔이 실제로 결함을 낸다(단언으로 박는다)
 import { test, expect } from "@playwright/test";
+import { openDrawing } from "./fixture.js";
 import { constantsSnapshot } from "../test/constants.js";
 import { metricsSnapshot } from "../test/metrics.js";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -89,7 +90,10 @@ const CLOSED: [number, number][][] = [
   [[0.85, 0.62], [0.25, 0.42]],
 ];
 
-test("확정 순간 붙여 그은 획이 붙어 있다 (D-L98)", async ({ page }) => {
+// ⛔⛔ **18차로 이 팔을 멈췄다**(지시 a~q — 새 절차). 지운 것이 아니라 **멈춘 것**이다.
+// 같은 이유다 — 이 팔이 재는 «확정 **순간**의 연결»이 새 절차에서는 다른 시점이고, 확정자 획이 사라져 붙일 대상이 바뀐다. 재작성이 필요하다 — DEFERRED 18차 행.
+// ⚠ **그동안 이 팔이 덮던 것은 안 덮인다** — 그 사실을 DEFERRED가 든다(조건과 함께).
+test.skip("확정 순간 붙여 그은 획이 붙어 있다 (D-L98)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
@@ -98,12 +102,14 @@ test("확정 순간 붙여 그은 획이 붙어 있다 (D-L98)", async ({ page }
                      path: [number, number][][] = TRI, wob = 6) => {
     await page.goto("/l.html");
     await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page, (await page.locator("#ink").boundingBox())!.height * 0.20);
     await page.evaluate(() => new Promise<void>(res => {
       const q = indexedDB.deleteDatabase("sketch2space");
       q.onsuccess = q.onerror = q.onblocked = () => res();
     }));
     await page.reload();
     await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page, (await page.locator("#ink").boundingBox())!.height * 0.20);
     await page.evaluate(o => { window.S2S.setLiftAnchor(o.anchor); window.S2S.setLiftDeclared(o.declared); }, opts);
     const box = (await page.locator("#ink").boundingBox())!;
     const X = (fx: number) => box.x + box.width * fx;

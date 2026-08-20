@@ -30,7 +30,7 @@ import { ONE_POINT_TOL } from "../src/s3d/onePoint.js";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { setupScene } from "./fixture.js";
+import { setupScene, openDrawing } from "./fixture.js";
 
 declare global { interface Window { S2S: any; __SC: any } }
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "stage0", "out");
@@ -78,6 +78,7 @@ test("어느 시점에서든 축이 보이고 그릴 수 있다 (D-L101·D-L102)
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const setup = await setupScene(page);
   await page.evaluate(() => window.S2S.confirmNow());
   await page.waitForTimeout(80);
@@ -133,6 +134,7 @@ test("어느 시점에서든 축이 보이고 그릴 수 있다 (D-L101·D-L102)
   // 안 나왔다). 새 문서에서 다시 세운다.
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await setupScene(page);
   const infiniteArm = await page.evaluate(() => {
     const S = window.S2S, sc = window.__SC;
@@ -160,12 +162,14 @@ test("어느 시점에서든 축이 보이고 그릴 수 있다 (D-L101·D-L102)
   // **획으로 3점을 만들 수 있는가** — 빈 화면에서(이 항목이 안 고친 자리)
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const b2 = (await page.locator("#ink").boundingBox())!;
   const W = b2.width, H = b2.height;
   const strokes: [number, number][][] = [

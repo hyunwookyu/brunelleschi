@@ -21,7 +21,7 @@ import { metricsSnapshot } from "../test/metrics.js";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { setupConfirmed } from "./fixture.js";
+import { setupConfirmed, openDrawing } from "./fixture.js";
 import { OSNAP_RADIUS_PX } from "../src/s3d/resolve2d.js";
 
 declare global { interface Window { S2S: any } }
@@ -91,6 +91,7 @@ test("화면 팬 — 그리는 중엔 종이가 밀리고, 궤도 뒤엔 공간�
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const led: Record<string, unknown> = {};
 
   // ---- ⓪ **카메라 전(P0) 화면 팬**(리뷰어 4차 [9]) — 서기 전에도 두 손가락은 종이다

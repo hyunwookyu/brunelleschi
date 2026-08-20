@@ -24,7 +24,7 @@ import { PICK_TOL } from "../src/ui/pick.js";
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { setupConfirmed } from "./fixture.js";
+import { setupConfirmed, openDrawing } from "./fixture.js";
 
 declare global { interface Window { S2S: any } }
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "stage0", "out");
@@ -34,6 +34,8 @@ test("지평선 토글 — 선 위 손잡이가 켜고 끈다", async ({ page })
   page.on("pageerror", e => errors.push(`${e}`));
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  // **지평선을 먼저 긋는다**(18차 지시 j) — 이 팔이 재는 것은 «그은 뒤의 토글·끌기»다
+  await openDrawing(page);
   const box = (await page.locator("#frame").boundingBox())!;
 
   const read = () => page.evaluate(() => {
@@ -62,7 +64,11 @@ test("지평선 토글 — 선 위 손잡이가 켜고 끈다", async ({ page })
   const s2: any = await read();
 
   // ---- ③ 다시 켜고, 손잡이 **밖**(선 가운데)에서 끌면 — 토글이 아니라 끌기다(갈림의 다른 쪽)
-  await tap(s2.chip_at);
+  // ⚠ **18차로 패리티가 하나 밀렸다**(긋는 순간 켜지므로 출발점이 켬이다). 이 단계가
+  // 재는 것은 «끌기가 토글이 아니다»이므로 켜는 것은 **앱 경로로 세운다**(#17) —
+  // 탭이 켜고 끄는 것은 위 ①②가 이미 잠갔다.
+  await page.evaluate(() => window.S2S.setShowHorizon(true));
+  await page.waitForTimeout(40);
   const s3: any = await read();
   const dragDy = 50;
   await page.mouse.move(box.x + box.width * 0.5, box.y + s3.y);
@@ -203,9 +209,13 @@ test("지평선 토글 — 선 위 손잡이가 켜고 끈다", async ({ page })
   writeFileSync(resolve(OUT, "horizon_chip.json"), JSON.stringify(led, null, 1));
 
   expect(errors).toEqual([]);
-  expect(s0.toggle.on).toBe(false);                    // 기본 끔(D-L104 그대로)
-  expect(s1.toggle.on).toBe(true);
-  expect(s2.toggle.on).toBe(false);
+  // ⚠⚠ **18차로 기본값이 뒤집혔다**: 지평선은 **사용자가 긋는 것**이라 그은 선이 안 보이면
+  // 안 된다(지시 j). 토글은 이제 «끄기»로만 뜻이 있다 — 첫 탭이 끄고, 다음 탭이 켠다.
+  // ⚠ **18차**: 기본값은 그대로 끔이고(D-L104), **긋는 순간 켜진다**(`drawHorizonAt`).
+  // 이 팔은 `openDrawing`으로 그은 뒤에 시작하므로 출발점이 **켬**이다.
+  expect(s0.toggle.on).toBe(true);
+  expect(s1.toggle.on).toBe(false);
+  expect(s2.toggle.on).toBe(true);
   expect(led.summary.off_tap_moved_px).toBe(0);
   expect(s3.toggle.on).toBe(true);
   expect(s4.toggle.on).toBe(true);                     // 끌기는 토글이 아니다
@@ -233,6 +243,8 @@ test.describe("dpr 2", () => {
   test("손잡이 탭 켬/끔이 dpr 2에서도 선다", async ({ page }) => {
     await page.goto("/l.html");
     await page.waitForFunction(() => !!window.S2S);
+  // **지평선을 먼저 긋는다**(18차 지시 j) — 이 팔이 재는 것은 «그은 뒤의 토글·끌기»다
+  await openDrawing(page);
     const box = (await page.locator("#frame").boundingBox())!;
     const read = () => page.evaluate(() => {
       const S = window.S2S;
@@ -249,15 +261,15 @@ test.describe("dpr 2", () => {
     await page.mouse.up();
     await page.waitForTimeout(60);
     const s1: any = await read();
-    expect(s0.on).toBe(false);
-    expect(s1.on).toBe(true);
+    expect(s0.on).toBe(true);                          // 기본 **켬**(18차 지시 j)
+    expect(s1.on).toBe(false);
     await page.mouse.move(box.x + s1.chip_at[0], box.y + s1.chip_at[1]);
     await page.mouse.down();
     await page.mouse.move(box.x + s1.chip_at[0] + 1, box.y + s1.chip_at[1]);
     await page.mouse.up();
     await page.waitForTimeout(60);
     const s2: any = await read();
-    expect(s2.on).toBe(false);
+    expect(s2.on).toBe(true);                          // 켬 → 끔 → 켬(기본이 켬이다)
     // **측정을 원장에 남긴다**(#25 — 2차 리뷰어 [1]: 원장 밖 «통과»는 섭동이 안 걸린
     // 실행과 갈리지 않는다). 본 팔이 쓴 원장을 읽어 `dpr2` 블록을 덧붙인다 — 파일 순서상
     // 본 팔이 먼저 돌므로(직렬 실행) 덮어쓰기가 아니라 병합이다.

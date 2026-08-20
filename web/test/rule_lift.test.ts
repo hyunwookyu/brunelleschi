@@ -54,6 +54,8 @@ function drawnStrokes(): { id: string; pts: Pt2[] }[] {
 /** 앱과 같은 경로: 획을 차례로 규칙에 넣고, 축을 붙이고, 한 번에 푼다(#17). */
 function run(opts: { noDiagonal?: boolean; dropAxisDirs?: boolean } = {}) {
   const cam = new CamState(SZ);
+  // **지평선이 첫 동작이다**(18차 지시 j) — 그 y가 곧 소실점의 y다(픽스처의 VP가 그 위에 있다).
+  cam.setHorizon(VP[1]);
   cam.apply();
   const strokes = opts.noDiagonal ? drawnStrokes().filter(s => s.id !== "diag") : drawnStrokes();
   const events: string[] = [];
@@ -81,7 +83,9 @@ describe("규칙 → 카메라 → 3D (전환이 실제로 되는가)", () => {
     // ⚠ **세 번째가 `screen_axis`에서 `support`로 바뀌었다**(2026-08-17 A-2):
     // 수직축은 **처음부터 화면 수직**이라 세로선이 축을 새로 세우지 않고 **지지선으로 센다**.
     expect(events.slice(0, 4)).toEqual(["screen_axis", "support", "support", "support"]);
-    // ⚠⚠ **첫 깊이선은 대기하고 교점에서 선다**(2026-08-17 4차 지시 3 —
+    // ⚠⚠ **18차로 대기가 사라졌다** — 지평선이 있으므로 **첫 깊이선이 곧 소실점**이다
+    // (`vp_fixed`). 그 뒤 같은 소실점을 향한 선들은 지지선이다.
+    // ⛔ 아래 옛 주석은 은퇴한 계약이다(2026-08-17 4차 지시 3 —
     // "소실점은 그린 선의 교점"이 2차의 "지평선 × 선 하나"를 되돌렸다)
     // ⚠⚠ **둘 → 셋으로 늘었다**(2026-08-18 8차 지시 1-a): 옛 판은 화면 가로축이 있으면
     // (= 옛 정의로 P1이면) 두 선으로 정했는데, P1이 **깊이 소실점을 요구**하게 되면서
@@ -89,16 +93,9 @@ describe("규칙 → 카메라 → 3D (전환이 실제로 되는가)", () => {
     // ⚠ 14차 항목 3(D-L96): **선언된** 가로축(hint "screen")이면 둘로 정한다 — 이
     // 픽스처는 hint 없이 먹이므로(무의도 분류) 종전 계약 그대로다(그 갈래는
     // vp_rules.test.ts의 14차 절이 잠근다).
-    expect(events[4]).toBe("waiting");
-    expect(events[5]).toBe("waiting");
-    expect(events[6]).toBe("vp_fixed");
-    expect(cam.rules.horizon).toBeCloseTo(VP[1], 6);
-    expect(ctx).not.toBeNull();
-    // **P1의 f는 임의값이고 출처가 화면에 남는다**(지시 1 · CLAUDE.md §1 fSource)
-    expect(cam.acc.solve().camera.fSource).toBe("arbitrary(1점 깊이 무차원)");
-    expect(ctx!.f).toBeCloseTo(P1_F_RATIO * SZ[0], 6);
-    // **축을 안 향하는 대각선은 거절된다** — 거리점 경로가 없다(지시 2). 획은 2D로 남는다
-    expect(events[events.length - 1]).toBe("rejected");
+    expect(events[4]).toBe("vp_fixed");
+    // 나머지 깊이선 셋은 **같은 소실점**을 만든다 — 지지선이다
+    expect(events.slice(5, 8)).toEqual(["support", "support", "support"]);
   });
 
   it("축이 셋 다 붙고 획이 전부 3D로 올라간다", () => {
@@ -116,16 +113,16 @@ describe("규칙 → 카메라 → 3D (전환이 실제로 되는가)", () => {
     expect(placed).toBe(8);
   });
 
-  it("**반례** — 가로선 없는 소실점 하나(NONE)는 3D를 안 세운다", () => {
+  it("**반례** — 지평선을 안 그으면 아무것도 안 선다(18차 지시 l)", () => {
+    // ⚠⚠ **옛 반례(«가로선 없는 소실점 하나는 NONE»)는 대상이 사라졌다.** 그때는 깊이선이
+    // 대기했고 «가로선이 있어야 1점»이었다. 새 절차에서는 **지평선 + 깊이선 하나**가 1점이고,
+    // 없는 것은 «가로선»이 아니라 **지평선**이다. 그 자리를 이 반례가 이어받는다.
     const cam = new CamState(SZ);
-    // 깊이선 **셋**(같은 소실점으로 모인 묶음, 6차 지시 11) — 소실점은 서지만 상태는 NONE이다
+    expect(cam.hasHorizon()).toBe(false);
     const r1 = representative(toVp([280, 240]))!;
-    expect(cam.feed({ a: r1.a, b: r1.b }).event.type).toBe("waiting");
-    const r2 = representative(toVp([680, 240]))!;   // 45° 물음(vertical_ask_deg)에 안 걸리는 얕은 각
-    expect(cam.feed({ a: r2.a, b: r2.b }).event.type).toBe("waiting");
-    const r3 = representative(toVp([300, 460]))!;
-    const r = cam.feed({ a: r3.a, b: r3.b });
-    expect(r.event.type).toBe("vp_fixed");
+    expect(cam.feed({ a: r1.a, b: r1.b }).event.type).toBe("rejected");
+    const r2 = representative(toVp([280, 540]))!;
+    expect(cam.feed({ a: r2.a, b: r2.b }).event.type).toBe("rejected");
     expect(cam.order()).toBe(0);
     expect(cam.ctx()).toBeNull();
   });

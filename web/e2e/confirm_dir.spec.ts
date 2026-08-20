@@ -31,7 +31,7 @@ import { metricsSnapshot } from "../test/metrics.js";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { setupScene } from "./fixture.js";
+import { setupScene, openDrawing } from "./fixture.js";
 
 declare global { interface Window { S2S: any; __SC: any } }
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "stage0", "out");
@@ -50,6 +50,7 @@ test("확정된 선이 소실점을 지난다 — 미리보기와 각도 오차 
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const setup = await setupScene(page);
   expect(setup.hasCamera).toBe(true);
   // **획을 3D로 올린다** — 앱의 확정 경로 그대로다(`stage.spec.ts`와 같은 관문, #17)

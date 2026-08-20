@@ -17,13 +17,14 @@
 //   #32 "전부 통과"로 안 넓힌다 — 어느 소실점도 안 향하는 선은 **여전히 거절**한다(반례)
 //   #40 도달 가능성: 되살림 팔이 실제로 거절을 낸다
 import { describe, it, expect } from "vitest";
+import { drawnHorizon } from "./ruleState.js";
 import { stepRule, newRuleState, type RuleState, type RLine } from "../src/s3d/vpRules.js";
 
 const SZ: [number, number] = [1280, 675];
 
 /** 3점 상태 — 수평 둘과 **가까운 수직 소실점**. 가까워야 그쪽 선이 `depth`로 분류된다. */
 function threePoint(vertical: [number, number] | null): RuleState {
-  const st = newRuleState(SZ);
+  const st = drawnHorizon(SZ);
   st.slots[0] = { kind: "vp", at: [2100, 300], source: "two_lines", support: 2 };
   st.slots[1] = { kind: "vp", at: [-800, 300], source: "horizon_x_line", support: 2 };
   st.slots[2] = vertical
@@ -67,7 +68,7 @@ describe("깊이선 거절의 대상 (D-L100)", () => {
     expect(r.event.type).toBe("rejected");
     if (r.event.type === "rejected") {
       expect(r.event.notify).toBe(true);
-      expect(r.event.why).toContain("어긋납니다");
+      expect(r.event.why).toContain("어디도 향하지 않습니다");
     }
   });
 

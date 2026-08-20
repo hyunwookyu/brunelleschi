@@ -38,7 +38,7 @@ import { fPixelsFrom35mm } from "../src/s3d/constraints.js";
 import { P1_F_RATIO } from "../src/ui/camState.js";
 import { representative } from "../src/s3d/axis.js";
 import {
-  newRuleState, stepRule, vpsOf, defaultHorizon, type RuleState, type RLine,
+  newRuleState, stepRule, vpsOf, type RuleState, type RLine,
 } from "../src/s3d/vpRules.js";
 import { rng32, type InkGrade } from "../src/s3d/synthInk.js";
 import { scene, boxLattice, drawEdges, groundPoint, round, median,
@@ -104,7 +104,7 @@ function fixture(ci: number, jit: number, grade: InkGrade, seed: number): Fx | n
 /** **참 지평선**(화면 y) — 수평 축 소실점의 y다(이론서 3.1 + 롤 0). */
 function trueHorizon(sc: Scene): number {
   for (const i of [0, 1] as const) if (isFiniteVp(sc.vps[i], SZ)) return sc.vps[i][1];
-  return defaultHorizon(SZ);
+  return (SZ[1] / 2);
 }
 
 // ---------------------------------------------------------------- 규칙 팔
@@ -233,7 +233,7 @@ describe("지평선 = 피치 — 사용자가 끌면 3점이 초기부터 서는
             byComp[ck] ??= newArms();
             byJitterComp[`${jk}|${ck}`] ??= newArms();
 
-            const center = defaultHorizon(SZ);
+            const center = (SZ[1] / 2);
             const truth = trueHorizon(fx.sc);
             const horizons: Record<string, number> = {
               center,

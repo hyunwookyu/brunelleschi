@@ -18,7 +18,7 @@
 // 지평선이 화면에서 기울어 한 y로 못 그린다(6-R1 [1]이 잡은 기울임 픽스처의 어긋남 —
 // D-L97 한계·DEFERRED). 판정은 범주 + 실측 각도(#49)다. 값 자체는 원장 필드가 든다(#47).
 import { test, expect } from "@playwright/test";
-import { setupConfirmed } from "./fixture.js";
+import { setupConfirmed, openDrawing } from "./fixture.js";
 import { ONE_POINT_TOL } from "../src/s3d/onePoint.js";
 import { constantsSnapshot } from "../test/constants.js";
 import { metricsSnapshot } from "../test/metrics.js";
@@ -66,6 +66,7 @@ test("작도 화면 복귀 — 돌린 뒤 소실점·지평선·그리기가 돌
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const led: Record<string, unknown> = {};
 
   led.setup = await setupConfirmed(page, { pitch: 0 });   // **직립 그린 축**(머리말)

@@ -10,7 +10,7 @@ import { metricsSnapshot } from "../test/metrics.js";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { setupConfirmed } from "./fixture.js";
+import { setupConfirmed, openDrawing } from "./fixture.js";
 
 declare global { interface Window { S2S: any; __SC: any } }
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "stage0", "out");
@@ -22,6 +22,7 @@ test("큐브 정면 탭 — 그린 상자의 입면으로 난다 (10차 항목 6
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const led: Record<string, unknown> = {};
   /**
    * **구도 하나를 도는 절차**(11차 항목 5 — 둘째 구도가 DEFERRED에 있었다).

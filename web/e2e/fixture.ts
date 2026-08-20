@@ -131,3 +131,23 @@ export async function setupConfirmed(page: Page,
              lifted: window.S2S.doc().strokes.filter((x: { seg3d?: unknown }) => x.seg3d).length };
   }, s);
 }
+
+
+/**
+ * **그리기를 연다**(2026-08-20 18차 지시 l · D-L109).
+ *
+ * 새 절차에서 **첫 동작은 지평선 긋기**이고 그 전에는 획이 문서에 안 남는다. 그래서
+ * «빈 화면에서 바로 긋는» 옛 픽스처는 전부 첫 획을 잃는다 — 그 획이 지평선이 되기 때문이다.
+ * 여기서 **앱 경로 그대로**(`S2S.setHorizon` — 끌기 손잡이와 같은 함수, #17) 지평선을 세운다.
+ *
+ * ⚠ **이미 소실점이 서 있으면 아무것도 안 한다**(`canSetHorizon`이 false) — 되풀이해 불러도 안전하다.
+ * ⚠ 지평선 자체를 재는 팔(`horizon_first`·`horizon_drag`·`horizon_chip`)은 이것을 안 쓴다 —
+ * 그 팔들이 재는 것이 **긋는 동작**이다.
+ */
+export async function openDrawing(page: Page, y?: number): Promise<void> {
+  await page.evaluate((yy) => {
+    const el = document.getElementById("ink") as HTMLCanvasElement;
+    (window as unknown as { S2S: { setHorizon(v: number): boolean } }).S2S
+      .setHorizon(yy ?? Math.round(el.clientHeight * 0.5));
+  }, y);
+}

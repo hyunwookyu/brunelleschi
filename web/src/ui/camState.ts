@@ -19,8 +19,8 @@
 // 규칙이 낸 소실점을 `vp_point`로 넣으면 그대로 동작한다. 바뀐 것은 **무엇이 그 점을 정하는가**다.
 import { ConstraintAccumulator, type AxisId } from "../s3d/constraints.js";
 import {
-  newRuleState, cloneRuleState, stepRule, vpsOf, axisDirsOf, defaultHorizon,
-  horizonAdjustable, withHorizon, perspectiveOrder, axisOfStroke, pickVpAt, RULE_TOL,
+  newRuleState, cloneRuleState, stepRule, vpsOf, axisDirsOf, hasHorizon,
+  horizonAdjustable, withHorizon, perspectiveOrder, axisOfStroke, RULE_TOL,
   type RuleState, type RuleEvent, type RLine, type POrder,
 } from "../s3d/vpRules.js";
 import type { Pt2 } from "../s3d/camera.js";
@@ -68,9 +68,13 @@ export class CamState {
     // ⚠⚠ **레이아웃 전에는 캔버스 높이가 1px일 수 있다**(첫 `fit()` 전). 그 상태의 y는 뜻이
     // 없으므로 비례로 늘리지 않고 **기본값으로 다시 잡는다** — 브라우저에서 실제로 걸렸다:
     // 높이 1에서 `setHorizon(200)`이 1로 잘리고, 그 1이 675로 늘어나 **화면 바닥에 붙었다**.
-    if (horizonAdjustable(this.rules)) {
+    // **아직 안 그었으면 아무것도 안 한다**(지시 j — 기본 위치가 없다).
+    if (this.rules.horizon != null && horizonAdjustable(this.rules)) {
+      const y = this.rules.horizon;
       this.rules = cloneRuleState(this.rules);
-      this.rules.horizon = oldH > 2 ? (this.rules.horizon * s[1]) / oldH : defaultHorizon(s);
+      // ⚠⚠ 레이아웃 전에는 높이가 1px일 수 있다 — 그 y는 뜻이 없으므로 **비운다**
+      // (옛 판은 기본값으로 되돌렸는데, 기본값이 없어졌다).
+      this.rules.horizon = oldH > 2 ? (y * s[1]) / oldH : null;
     }
     this.apply();
   }
@@ -81,7 +85,9 @@ export class CamState {
     // **2점 투시에서 지평선은 주점 y다**(2026-08-17 A-4). 피치가 아니다:
     // 수직축이 화면 수직이면 피치는 정의상 0이고, 그때 지평선 y = 주점 y가 **강제된다**
     // (이론서 3.1 + 롤 0). 3점(수직 소실점이 유한)에서는 주점이 **수심**이므로 안 쓰인다.
-    this.acc.add({ kind: "horizon", a: [0, this.rules.horizon], b: [1, this.rules.horizon] });
+    if (this.rules.horizon != null) {
+      this.acc.add({ kind: "horizon", a: [0, this.rules.horizon], b: [1, this.rules.horizon] });
+    }
 
     for (const ax of [0, 1, 2] as AxisId[]) {
       this.acc.setLines(ax, []);                     // 선 제약은 쓰지 않는다 — 규칙이 점을 준다
@@ -110,17 +116,7 @@ export class CamState {
     return { event: r.event, applied };
   }
 
-  /**
-   * **점 찍기 확정**(4차 지시 4-b) — 대기 깊이선 위의 점·교차점을 찍으면 그 자리가
-   * 첫 소실점이다. 성공하면 상태를 갈아 끼우고 그 점을 되돌린다.
-   */
-  pickVp(p: Pt2, tolPx: number): Pt2 | null {
-    const r = pickVpAt(this.rules, p, this.imgSize, tolPx);
-    if (!r) return null;
-    this.rules = r.state;
-    this.apply();
-    return r.at;
-  }
+  // ⛔ **`pickVp`(점 찍기 확정)를 지웠다**(18차 지시 a) — 대기 풀이 없어 찍을 대상이 없다.
 
   /**
    * **지평선을 끌 수 있는가**(D-L45). **유한 소실점이 아직 없을 때**만이다.
@@ -137,6 +133,9 @@ export class CamState {
   }
 
   vps(): (Pt2 | null)[] { return vpsOf(this.rules); }
+
+  /** **지평선을 그었는가** — 그리기가 열리는 조건이다(지시 l). */
+  hasHorizon(): boolean { return hasHorizon(this.rules); }
 
   /** **차수 = 계산**(지시 1). NONE 0 · P1 1 · P2 2 · P3 3. 표시도 판정도 이것을 부른다. */
   order(): POrder { return perspectiveOrder(this.rules); }
@@ -162,9 +161,10 @@ export class CamState {
   dumpRules(): RuleState { return cloneRuleState(this.rules); }
   loadRules(s: RuleState | null): void {
     this.rules = s ? cloneRuleState(s) : newRuleState(this.imgSize);
-    // **옛 저장본은 지평선이 `null`이거나 없다** — 기본값(피치 0 = 화면 중앙)으로 채운다.
+    // **옛 저장본의 지평선은 그대로 읽는다.** 없거나 유한하지 않으면 `null`이다 —
+    // 기본값으로 채우지 않는다(지시 j). 그 문서는 «지평선을 아직 안 그은 것»이 된다.
     if (typeof this.rules.horizon !== "number" || !Number.isFinite(this.rules.horizon)) {
-      this.rules.horizon = defaultHorizon(this.imgSize);
+      this.rules.horizon = null;
     }
     this.apply();
   }

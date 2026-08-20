@@ -9,7 +9,7 @@
 // 산출: `stage0/out/real_ink.json`.
 import { describe, it, expect } from "vitest";
 import { skipReason } from "./dataDeps.js";
-import { RULE_TOL, beyondSegment } from "../src/s3d/vpRules.js";
+import { RULE_TOL } from "../src/s3d/vpRules.js";
 import { writeFileSync, mkdirSync, readdirSync, readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -425,7 +425,7 @@ describe("실획 측정 (AS-6·AS-12 재측정 — S-10)", () => {
                   // **AS-L28 대조 재료**(리뷰어 4-R [B-10]): dVp < lenChord가 곧 "소실점이
                   // 그린 구간 안"은 아니다 — 검출 규칙의 그 판정(`beyondSegment` — 투영
                   // 매개변수가 [−pad, 1+pad] 밖)을 같은 현에 그대로 물어 불리언으로 남긴다.
-                  D.nearVpBeyond.push([st.id, beyondSegment({ a: a0, b: b0 }, sl.at)]);
+                  D.nearVpBeyond.push([st.id, "폐기"]);   // ⛔ `beyondSegment` 폐기(18차 지시 a) — 판정 자체가 없다
                   // **기전량을 세 파일 전부에서 낸다**(2차 리뷰어 [5]·[9] — 지렛대 값이
                   // 15-18-25에만 있어 표식의 배제 근거가 대리 조건(dVp<len)뿐이었고,
                   // 결론 6의 파일 간 비교도 재료가 없었다): 원시 시작점의 대표 직선 수직

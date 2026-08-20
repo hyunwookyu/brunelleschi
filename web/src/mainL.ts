@@ -94,8 +94,8 @@ let note = "";
  * 답할 때까지 그 획은 **2D로 대기**한다. 답이 오면 그 답을 규칙에 강제로 넣는다.
  * 취소하면 획은 남고 규칙에는 안 들어간다 — **없는 판정을 지어내지 않는다**(A-3).
  */
-let ask: { strokeId: string; line: RLine; question: RuleEvent extends never ? never :
-           "screen_or_depth" | "second_horizontal_or_vertical"; toH: number; toV: number } | null = null;
+// ⛔ **`ask`(물음 패널)를 지웠다**(2026-08-20 18차 지시 d·h) — 물어볼 것이 없다.
+// «이 선이 화면 축인가 깊이선인가»는 **지평선이 답한다**: 만나면 깊이선, 안 만나면 축이다.
 /** **모호 물음 카운터**(지시 K) — 실획에서 묻는 빈도의 실측 근거. 저장본에 함께 담긴다. */
 const askStats = { asked: 0, screen: 0, depth: 0, vertical: 0, skipped: 0 };
 /**
@@ -195,6 +195,40 @@ let strokeAnchor: SnapCand | null = null;
 let stroke2dAnchor: Snap2Cand | null = null;
 /** 마지막 획이 무엇에 붙었나 — 화면에 사유를 낸다(#7: 추측하지 말고 센다). */
 let lastSnapNote = "";
+/**
+ * **지평선을 긋는 중의 y**(2026-08-20 18차 지시 j) — 아직 문서가 아니다.
+ * 지평선은 **첫 동작**이고 화면 수평으로 강제된다(롤 0). 안내는 없다(지시 g).
+ */
+let horizonDraft: number | null = null;
+
+/** 알림 한 줄에 붙는 **캐드식 동작**(지시 f) — 밑줄 친 단어를 누른다. */
+interface NoteAct { label: string; act: string }
+let noteActs: NoteAct[] = [];
+/**
+ * **그 동작이 붙은 문구.** `note`가 바뀌면 동작은 **자동으로 죽는다** — 둘을 따로 두면
+ * 낡은 동작이 다른 문구에 붙는다(#54: 같은 사실을 두 곳이 알면 어긋난다).
+ */
+let noteActsFor = "";
+/** 지금 알림이 가리키는 획 — 「지우기」가 지울 대상이다. */
+let noteStrokeId: string | null = null;
+/** 알림과 동작을 **함께** 세운다. 동작이 없으면 문구만. */
+function say(text: string, acts: NoteAct[] = []): void {
+  note = text; noteActs = acts; noteActsFor = acts.length ? text : "";
+}
+/** 알림을 비운다 — 평소에는 아무것도 안 띄운다(지시 g). */
+function clearNote(): void { say(""); }
+
+/**
+ * **지평선을 긋는다**(2026-08-20 18차 지시 j) — 앱의 유일한 입구다(#17).
+ *
+ * 긋는 순간 **표시를 켠다**: 사용자가 방금 그은 선이 안 보이면 안 된다. 토글(D-L104)은
+ * 그대로 남아 **끄기**로 쓰인다 — 기본값을 뒤집지 않고 «그은 것은 보인다»만 보탠다.
+ */
+function drawHorizonAt(y: number): boolean {
+  const ok = cam.setHorizon(y);
+  if (ok) SHOW_HORIZON.on = true;
+  return ok;
+}
 /**
  * **고른 획**(L-D.1, §9.5). `고치기` 도구가 클릭으로 고르고 화살표·`Delete`가 작용한다.
  *
@@ -2217,14 +2251,17 @@ function standCamera() {
  * 처음 서면 조용히 확정한다(`standCamera` — 무변화 전환). ⛔ **승격 갈래는 없다**(7차 지시 3-d).
  */
 function feedCamera(line: RLine, forced?: "screen" | "depth",
-                    hint?: "screen" | "depth") {
+                    hint?: "screen" | "depth", beforeStand?: () => void) {
   const wasStanding = cam.standing();
   const r = cam.feed(line, forced, hint);
   // ⛔ **차수 승격 분기를 지웠다**(2026-08-18 7차 지시 3-d). 남아 있던 전이는 P2 → P3
   // 하나였고 그 입구(기울어진 수직선의 "수직축" 답)를 3-b가 없앴다 — **차수 승격 개념이
   // 사라졌다.** 3점은 카메라를 기울인 시점의 성질이지 획이 만드는 전이가 아니다.
   // 남는 전이는 **NONE → P1 · NONE → P2**뿐이고 그것은 "카메라가 처음 서는 것"이다.
-  if (r.applied && cam.standing() && !wasStanding) standCamera();
+  // ⚠ **`beforeStand`가 확정 **직전**에 돈다**(18차 지시 m): 소실점을 만든 획은 작도선이라
+  // 사라져야 하고, `standCamera`의 일괄 풀이가 그것을 **먼저 놓아 버리면** 경로 카운터가
+  // 뜬다(#43의 «합 = 놓인 수»). 지우고 나서 세운다.
+  if (r.applied && cam.standing() && !wasStanding) { beforeStand?.(); standCamera(); }
   return r;
 }
 
@@ -2238,11 +2275,15 @@ function feedCamera(line: RLine, forced?: "screen" | "depth",
  * 이것이 "추정하지 않는다"의 구현이다(A-3: 애매하면 놓지 않는다).
  */
 function feedStroke(st: SStroke, forced?: "screen" | "depth",
-                    hint?: "screen" | "depth", byConnection = false): void {
+                    hint?: "screen" | "depth", byConnection = false): RuleEvent["type"] | null {
   const rep = representative(st.pts2d);
-  if (!rep) return;
+  if (!rep) return null;
   const line: RLine = { a: rep.a, b: rep.b };
-  const r = feedCamera(line, forced, hint);
+  const drop = () => {
+    const k = doc.strokes.findIndex(x => x.id === st.id);
+    if (k >= 0) doc.strokes.splice(k, 1);
+  };
+  const r = feedCamera(line, forced, hint, drop);
   // **알릴 규칙 사건은 둘이다** — ① 알림 표시가 붙은 거절(**아무 일도 안 난 이유와
   // 사용자가 다시 그을 것**) ② **f² ≤ 0으로 두 번째 축이 조용히 안 선 채 1점이 된 경우**
   // (D-L73 — 두 축이 한 번에 서는 경로에서 둘째가 막히면 알린다. 조용히 1점이 되면
@@ -2265,50 +2306,26 @@ function feedStroke(st: SStroke, forced?: "screen" | "depth",
   // ("양 끝 스냅으로 확정(축 미분류) — … 가장 가까운 축과 44.5°").
   if (r.event.type === "rejected" && r.event.notify
       && !(byConnection && CONNECTION_QUIET.on)) {
-    note = r.event.why;
+    // **한 줄 + 캐드식 동작**(18차 지시 f) — 「지우기」가 이 획을 지운다.
+    noteStrokeId = st.id;
+    say(r.event.why, [{ label: "지우기", act: "note_erase" },
+                      { label: "무시", act: "note_ignore" }]);
   } else if (r.event.type === "vp_fixed" && r.event.fov?.band === "reject") {
-    note = r.event.fov.why;
+    say(r.event.fov.why);
   }
-  if (r.event.type === "ask") {
-    // **카메라가 선 뒤에는 화면축/깊이 물음을 안 낸다**(지시 3 — 시스템 사정을 안 묻는다).
-    // 그 물음은 카메라를 세우는 단계의 것이고, 선 뒤에 남는 유일한 물음은 **3점 입구**
-    // (두 번째 수평축인가 수직축인가)다 — 그것이 P2 → P3 전이의 문이다.
-    if (cam.standing() && r.event.question === "screen_or_depth") { ask = null; return; }
-    ask = { strokeId: st.id, line, question: r.event.question,
-            toH: r.event.verdict.toH, toV: r.event.verdict.toV };
-    askStats.asked += 1;
-    return;
-  }
-  ask = null;
+  // ⛔ 물음 처리를 지웠다(지시 d) — `RuleEvent`의 "ask"는 이제 안 난다.
+  return r.event.type;
 }
 
-/** 물음에 답한다 — 그 답을 규칙에 **강제로** 넣는다. */
-function answerAsk(choice: "screen" | "depth"): void {
-  if (!ask) return;
-  askStats[choice] += 1;
-  const st = doc.strokes.find(x => x.id === ask!.strokeId);
-  const line = ask.line;
-  ask = null;
-  if (st) feedStroke(st, choice);
-  else feedCamera(line, choice);
-  // 규칙이 카메라를 세웠을 수 있다 — 대기 획을 다시 본다
-  refresh();
-}
-
-// ⛔ **상태 표시 문구를 지웠다**(2026-08-17 지시 3) — `ruleText`·`ruleStatus`·`nextHint`·
-// `CAND_NAME`·`SRC_NAME`. "1점 투시 확정" "2점 후보" "다음에 그을 것" "깊이가 정해지지
-// 않았습니다"는 전부 시스템 사정이고 사용자가 알 필요가 없다 — **알리면 전환이 있다는
-// 인상을 준다.** 남는 안내는 둘뿐이다: 아무리 그려도 안 돌아갈 때의 최소 안내(`renderStatus`)와
-// ⛔ 차수 승격 알림도 없어졌다(7차 지시 3-d).
-
-// ---------------------------------------------------------------- 2D 레이어 그리기
+// ⛔ **`answerAsk`·`drawAsk`를 지웠다**(18차 지시 d) — 물음이 없으므로 답할 것도,
+// 물음 대상 획을 강조해 그릴 것도 없다.
 
 /**
  * **획 하나 = 직선 하나**(계획서 §1.1). 점열의 처음과 끝만 잇는다.
  *
- * 계획서는 "획이 직선 세그먼트가 되고 손떨림은 버린다"인데 **렌더 층이 그 결정을 안 따르고
- * 있었다** — 화면에 손 획이 그대로 보였다. 고치는 자리는 **그리는 곳 전부**이고
- * (`inkCanvas`의 잉크 · 여기의 2D 대기층 · `strokeView`의 튜브), 셋 다 같은 규약을 쓴다.
+ * 계획서는 "획이 직선 세그먼트가 되고 손떨림은 버린다"인데 **렌더 쪽이 안 따라와**
+ * 있었다 — 화면에 손 획이 그대로 보였다. 고치는 자리는 셋이고 셋 다 같은 규약이다
+ * (`inkCanvas`의 잉크 · 여기의 2D 대기층 · `strokeView`의 튜브).
  */
 function drawStraight(ctx2: CanvasRenderingContext2D, pts: Pt2[]): void {
   if (pts.length < 2) return;
@@ -2318,17 +2335,6 @@ function drawStraight(ctx2: CanvasRenderingContext2D, pts: Pt2[]): void {
   ctx2.stroke();
 }
 
-/** 물어보는 중인 획을 화면에 띄운다 — **무엇에 대해 묻는지 안 보이면 답할 수 없다.** */
-function drawAsk(ctx2: CanvasRenderingContext2D): void {
-  if (!ask) return;
-  ctx2.save();
-  ctx2.strokeStyle = "#8e44ad"; ctx2.lineWidth = 4;
-  ctx2.globalAlpha = 0.8; ctx2.setLineDash([9, 5]); ctx2.lineCap = "round";
-  ctx2.beginPath();
-  ctx2.moveTo(ask.line.a[0], ask.line.a[1]); ctx2.lineTo(ask.line.b[0], ask.line.b[1]);
-  ctx2.stroke();
-  ctx2.restore();
-}
 
 
 /**
@@ -2349,15 +2355,26 @@ function drawAsk(ctx2: CanvasRenderingContext2D): void {
  * (선 × 미리 깔린 지평선)으로 굳는 원인이었다(항목 3). 지평선은 전제가 아니라 결과다:
  * 유한 수평 소실점이 서는 순간 그 y가 지평선이고(D-L59 ②) 그때부터 그린다.
  */
+/**
+ * **지평선이 보이는가**(2026-08-20 18차 지시 j·m으로 단순해졌다).
+ *
+ * 새 절차에서 지평선은 **사용자가 그은 것**이고, 그은 순간부터 보인다. 그 뒤 소실점이
+ * 서면 **계산된 지평선이 같은 y에** 그려진다(소실점 = 선 × 지평선이므로 y가 같다 —
+ * "전환이 안 느껴진다"가 그 귀결이다, 지시 m). 그러니 조건은 하나다: **그었는가.**
+ *
+ * ⛔ 옛 판은 «유한 소실점이 하나라도 있는가 · 토글이 켜졌는가»를 함께 봤다. 그때는
+ * 지평선이 계산으로 나왔고 "확정 전에는 지평선이 없다"(4차 지시 4-a)가 규칙이었다 —
+ * 이제 확정 **전에** 사용자가 긋는다. `SHOW_HORIZON` 토글은 **끄기**로만 남는다.
+ */
 const horizonVisible = (): boolean =>
-  ([0, 1] as const).some(i => {
-    const s = cam.rules.slots[i];
-    return s != null && s.kind === "vp";
-  })
-  // **토글이 켜져 있고 아직 끌 수 있으면 보인다**(15차 항목 5 · D-L104) — 이 갈래가
-  // 없으면 "보인다"와 "끌 수 있다"가 상호배타라 끌기가 **어느 상태에서도 안 열린다**.
-  // 기본이 끔이라 빈 종이 감각(4차 지시 4-a)은 그대로다.
-  || (SHOW_HORIZON.on && cam.canSetHorizon());
+  // **그었는가**가 첫 조건이다(18차 지시 j) — 안 그었으면 없는 것이다.
+  cam.hasHorizon()
+  // **확정 뒤에는 언제나 보인다**(D-L59 ② — 결과로서의 지평선). 토글은 그 앞 단계의 것이다.
+  && (([0, 1] as const).some(i => {
+        const s = cam.rules.slots[i];
+        return s != null && s.kind === "vp";
+      })
+      || SHOW_HORIZON.on);
 
 /**
  * **지금 시점의 표시 문맥**(14차 항목 6-c) — 소실점·지평선·그리드를 돌린 작도 시점에서도
@@ -2427,7 +2444,9 @@ function horizonGrab(p: Pt2): boolean {
   if (!horizonVisible()) return false;
   if (tool !== "draw" || !cam.canSetHorizon()) return false;
   if (cam.standing() && !stage.isPinned) return false;      // 돌린 뷰의 화면 좌표가 아니다
-  return Math.abs(p[1] - cam.rules.horizon) <= PICK_TOL.radius_ratio * Math.hypot(...cssSize());
+  const y = cam.rules.horizon;
+  if (y == null) return false;                              // 아직 안 그었다(지시 j)
+  return Math.abs(p[1] - y) <= PICK_TOL.radius_ratio * Math.hypot(...cssSize());
 }
 
 /**
@@ -2437,8 +2456,8 @@ function horizonGrab(p: Pt2): boolean {
  * 켤 곳을 알린다(없으면 하단바를 열어야만 켤 수 있다 — 15차 판의 그 어긋남이다).
  */
 function horizonChipAt(): Pt2 {
-  const [w] = cssSize();
-  return [w - 20, cam.rules.horizon];
+  const [w, h] = cssSize();
+  return [w - 20, cam.rules.horizon ?? h / 2];
 }
 /** 손잡이 판정 — 반경은 PICK_TOL 그대로(#17). */
 function horizonChipHit(p: Pt2): boolean {
@@ -2647,7 +2666,7 @@ function drawHorizon(ctx2: CanvasRenderingContext2D) {
   // ⚠ **작도 화면에서만 그린다**(14차 항목 6 — 옛 판은 핀 전용이었다): 돌린 작도 시점
   // (축 정렬 + 피치 0)에서는 그 시점의 수평 소실점 y로 다시 낸다(`viewOverlayCtx` — 지시
   // 6-c). 모델링 시점에 그리면 화면에 붙어 따라다니는 유령이 된다(`drawBelowInk` 머리말).
-  let y = cam.rules.horizon;
+  let y: number | null = cam.rules.horizon;
   // **돌린 시점의 지평선은 화면 가로선이 아니다**(15차 항목 8 · D-L101) — 수평 소실점
   // 둘을 잇는 선이다. 롤이 있으면 기울고, 배면·윗면에서도 그 선은 계산된다.
   if (cam.standing() && !stage.isPinned) {
@@ -2657,6 +2676,7 @@ function drawHorizon(ctx2: CanvasRenderingContext2D) {
     if (o?.horizonY == null) return;
     y = o.horizonY;
   }
+  if (y == null) return;                    // 아직 안 그었다(지시 j)
   const [w] = cssSize();
   const grabbable = cam.canSetHorizon() && (!cam.standing() || stage.isPinned);
   ctx2.save();
@@ -2681,45 +2701,9 @@ function drawHorizon(ctx2: CanvasRenderingContext2D) {
   ctx2.restore();
 }
 
-/**
- * **잠정 그리드 — 소실점이 서기 전의 대기 깊이선**(6차 지시 11-4).
- *
- * 확정은 세 번째 선이 하므로(지시 11) 그전에 **대기가 길어진다.** 그동안 아무것도 안 보이면
- * 사용자는 다음 선을 어디로 그어야 할지 모른다 — 대각선 하나만 있어도 연장하면 소실점이
- * 그 위 어딘가이고, 둘이면 교점 후보가 나온다.
- *
- * **확정 그리드와 구분한다**: 파선이고 더 옅다. **스냅 대상이 아니다 — 표시만이다**(지시 11-4).
- * ⚠ 교점 후보를 그리는 것은 **찍기 경로의 입구이기도 하다**(지시 11-6) — 그 자리를 톡 찍으면
- * `pickVpAt`이 거기로 확정한다. 실획에서 찍기 사용이 0이었던 것은 **보이지 않았기 때문**이다.
- */
-function drawPendingVpGuides(ctx2: CanvasRenderingContext2D) {
-  const pool = cam.rules.depthLines ?? [];
-  if (!pool.length) return;
-  const [w, h] = cssSize();
-  ctx2.save();
-  ctx2.strokeStyle = HORIZON_COLOR;
-  ctx2.lineWidth = 1;
-  ctx2.setLineDash([4, 6]);
-  ctx2.globalAlpha = 0.28;                      // 확정 그리드(0.14)보다 진하되 획보다 훨씬 옅다
-  for (const l of pool) {
-    const d: Pt2 = [l.b[0] - l.a[0], l.b[1] - l.a[1]];
-    const seg = clipToRect(l.a, d, w, h);
-    if (!seg) continue;
-    ctx2.beginPath();
-    ctx2.moveTo(seg[0][0], seg[0][1]); ctx2.lineTo(seg[1][0], seg[1][1]);
-    ctx2.stroke();
-  }
-  // 교점 후보 — **확정된 소실점 표식보다 옅고 작다**(아직 결과가 아니다)
-  ctx2.setLineDash([]);
-  ctx2.globalAlpha = 0.45;
-  ctx2.strokeStyle = HORIZON_COLOR;
-  for (let i = 0; i < pool.length; i++) for (let j = i + 1; j < pool.length; j++) {
-    const at = lineIntersect(pool[i].a, pool[i].b, pool[j].a, pool[j].b);
-    if (!at || at[0] < 0 || at[0] > w || at[1] < 0 || at[1] > h) continue;
-    ctx2.beginPath(); ctx2.arc(at[0], at[1], 4, 0, Math.PI * 2); ctx2.stroke();
-  }
-  ctx2.restore();
-}
+// ⛔ **잠정 그리드(`drawPendingVpGuides`)를 지웠다**(2026-08-20 18차 지시 a) — 대기 풀이 없다.
+// 그 표시는 «확정이 세 번째 선을 기다리는 동안» 사용자가 다음 선을 어디로 그을지 모르는
+// 것을 메우려던 것이다. 새 절차에서는 **첫 깊이선이 곧 소실점**이라 기다림이 없다.
 
 function drawGrid(ctx2: CanvasRenderingContext2D) {
   if (!SHOW_GRID.on) return;
@@ -3087,14 +3071,21 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
   drawSnapMark(ctx2, hoverSnap ?? (hover2d ? { kind: hover2d.kind, screen: hover2d.at } : null));
   drawLivePreview(ctx2);
   drawLive2d(ctx2);                     // **카메라가 서기 전의 화면 직교·2D 오스냅**(A-2·지시 1)
+  // **지평선을 긋는 중**(18차 지시 j) — 화면 수평으로 강제된 선 하나. 안내 문구는 없다.
+  if (horizonDraft != null && !cam.hasHorizon()) {
+    const [w2] = cssSize();
+    ctx2.save();
+    ctx2.strokeStyle = HORIZON_COLOR; ctx2.lineWidth = 1.5;
+    ctx2.setLineDash([6, 4]); ctx2.globalAlpha = 0.9;
+    ctx2.beginPath(); ctx2.moveTo(0, horizonDraft); ctx2.lineTo(w2, horizonDraft); ctx2.stroke();
+    ctx2.restore();
+  }
   // **작도 화면이면 돌린 시점에서도 그린다**(14차 항목 6 — 옛 판은 핀 전용). 모델링
   // 시점(축 비정렬·피치≠0)에서만 숨긴다 — 거기 그리면 화면에 붙은 유령이 된다.
   if (cam.standing() && !stage.isPinned && !draftingNow()) return;
   drawGrid(ctx2);
   if (!cam.standing() || stage.isPinned) {
     // 대기 풀 가이드·물음은 **확정 카메라의 화면 좌표**다 — 돌린 작도 시점에는 안 그린다
-    drawPendingVpGuides(ctx2);     // **잠정 그리드**(6차 지시 11-4) — 확정 전 대기 깊이선
-    drawAsk(ctx2);
   }
   const [w, h] = cssSize();
   // **소실점은 지금 시점의 값이다**(항목 6-c) — 핀이면 확정 카메라 값과 같다(#17).
@@ -3321,6 +3312,13 @@ const ink = new InkCanvas(canvas, {
     if (!same || !same2) refresh();
   },
   onLive: (pts) => {
+    // ---- **지평선이 먼저다**(18차 지시 j·k·l). 그 전에는 그리기가 안 열린다 —
+    // 이 획은 «지평선을 긋는 것»이고 **화면 수평으로 강제**된다(롤 0).
+    if (!cam.hasHorizon()) {
+      horizonDraft = pts.length ? pts[pts.length - 1][1] : null;
+      live = null; live2d = null;
+      refresh(); return;
+    }
     // **그리는 중**: 앵커는 첫 점의 스냅, 끝점은 커서. 확정과 **같은 함수**를 쓴다(#17)
     const fr = frame(), sc = snapCtx(fr);
     // **카메라가 서기 전에도 화면 가로·세로는 스냅된다**(A-2) — 추정할 것이 없기 때문이다.
@@ -3389,6 +3387,20 @@ const ink = new InkCanvas(canvas, {
     const raw = stroke.points.map(p => [p[0], p[1]] as Pt2);
     ink.clear();                         // 잉크 버퍼는 문서가 아니다 — 우리가 그린다
     live2d = null;
+    // ---- **첫 동작은 지평선 긋기다**(18차 지시 j·k·l · D-L109).
+    //
+    // 화면 수평으로 강제한다(롤 0) — **끝점의 y** 하나가 시선 높이다. 기본 위치가 없으므로
+    // 사용자가 원하는 높이에 긋는다. 문서에는 **획으로 안 남는다**(지시 4 — "2D 레이어에도
+    // 안 남는다"). 실행 취소로 이 단계로 돌아온다(지시 p — `pushUndo`가 규칙을 담는다).
+    if (!cam.hasHorizon()) {
+      horizonDraft = null;
+      if (raw.length) {
+        pushUndo();
+        drawHorizonAt(raw[raw.length - 1][1]);
+      }
+      hoverSnap = null; hover2d = null; live = null;
+      refresh(); return;
+    }
     // **지평선 토글을 그 자리에서 켠다**(16차 지시 5 — «켜고 끄기를 그 자리에서»).
     // 끔 상태에서는 선이 없어 끌기가 안 열리고(horizonGrab 거짓) 탭이 여기로 온다 —
     // 가장자리 손잡이 자리를 짚으면 켠다. 켬→끔은 같은 손잡이의 탭이 끈다(onDrag의 무이동 탭).
@@ -3414,24 +3426,7 @@ const ink = new InkCanvas(canvas, {
       if (tapLen <= PICK_TOL.radius_ratio * Math.hypot(...cssSize())
           && auxTapCreate(raw[0])) { refresh(); return; }
     }
-    // **점 찍기 확정**(4차 지시 4-b) — 톡 찍은 자리가 대기 대각선 위의 점·교차점이면 그것이
-    // 첫 소실점이다. "찍기"의 판정은 획 길이 ≤ 고르기 반경(PICK_TOL — 새 임계 없음, #17).
-    if (tool === "draw" && raw.length >= 1 && !cam.standing()) {
-      const tapLen = Math.hypot(raw[raw.length - 1][0] - raw[0][0],
-                                raw[raw.length - 1][1] - raw[0][1]);
-      if (tapLen <= PICK_TOL.radius_ratio * Math.hypot(...cssSize())) {
-        pushUndo();
-        const at = cam.pickVp(raw[0], OSNAP.radiusPx);
-        if (at) {
-          if (cam.standing()) standCamera();     // P1이면 그 자리에서 선다(feedCamera와 같은 관문)
-          lastSnapNote = "소실점을 **찍은 자리**에 확정했습니다 — 지평선이 그 높이에 생깁니다";
-          hoverSnap = null; hover2d = null; live = null;
-          strokeAnchor = null; stroke2dAnchor = null;   // 호버 잠금 해제(D-L103)
-          refresh(); return;
-        }
-        undoStack.pop();                         // 아무 일도 안 났다 — 스냅샷을 되물린다
-      }
-    }
+    // ⛔ **점 찍기 확정을 지웠다**(18차 지시 a) — 대기 풀이 없어 찍을 대상이 없다.
     if (raw.length < 2 || tool !== "draw") { refresh(); return; }
     // **2D 오스냅 + 화면 직교 스냅**(A-2·4차 지시 1). 여기(주 경로)는 카메라가 서기 전에만
     // 돈다 — 그 뒤로는 3D 오스냅·축 스냅이 정하고, **3D에 못 붙은 무앵커 획은
@@ -3461,7 +3456,7 @@ const ink = new InkCanvas(canvas, {
     // (⑧ 팔: 경고 뒤에 정확히 겨냥해 그은 획에서도 같은 문구가 그대로 남았다).
     // `lastSnapNote`는 이미 획마다 비운다(`placeStroke`) — 같은 규약을 여기 맞춘다(#17).
     // 측정 스위치(#30) — `S2S.setNoteClear(false)`가 수리 전 거동(경고가 남는다)이다.
-    if (NOTE_CLEAR.on) note = "";
+    if (NOTE_CLEAR.on) { clearNote(); noteStrokeId = null; }
     // **승격 요약은 그 전환의 설명이다** — 획을 더 그리면 설명이 낡는다(AS-C7과 같은 형태).
     // 차수 되돌리기 버튼은 남는다 — 그것이 §6.2의 지속 수단이다
     // **§9.3 — 그리는 자리에서만 뷰가 생긴다.** 돌릴 때마다 만들면 뷰가 넘친다
@@ -3501,9 +3496,25 @@ const ink = new InkCanvas(canvas, {
     // 규칙은 `resolve2dCore`가 이미 쓴 그 규칙이다(#17 — 화면 직교 대 소실점 방향).
     const hint2d: "screen" | "depth" | undefined =
       r2d?.ortho ? "screen" : r2d?.vpdir ? "depth" : undefined;
+    let ruleEvent: RuleEvent["type"] | null = null;
     if (liftable(s)) {
-      feedStroke(s, undefined, hint2d,
-                 path0 === "two_point" || path0 === "extension");
+      ruleEvent = feedStroke(s, undefined, hint2d,
+                             path0 === "two_point" || path0 === "extension");
+    }
+    // ---- **소실점을 만든 획은 그 순간 사라진다**(2026-08-20 18차 지시 4·m).
+    //
+    // 그 선은 «이 방향의 소실점이 여기다»를 말한 **작도선**이고, 말이 끝나면 역할이 끝난다.
+    // 남는 것은 소실점·계산된 지평선·그리드다. 그린 지평선도 같은 규약으로 사라진다 —
+    // 다만 그것은 획이 아니라 `rules.horizon`이라 **확정 뒤에는 계산된 지평선이 같은 y에**
+    // 그려진다(소실점 = 선 × 지평선이므로 그 y가 곧 지평선이다 — 전환이 안 느껴진다).
+    // ⚠ **2D 레이어에도 안 남긴다**(지시 4) — 문서에서 뺀다.
+    // ⚠⚠ **배치 카운터도 되돌린다**(#43 — 경로별 합 = 놓인 수). 카메라가 이미 서 있는
+    // 상태에서 온 두 번째 깊이선은 **놓인 뒤에** 작도선이 되므로, 안 되돌리면 합이 하나 뜬다.
+    if (ruleEvent === "vp_fixed") {
+      const k = doc.strokes.findIndex(x => x.id === s.id);
+      if (k >= 0) doc.strokes.splice(k, 1);      // 이미 확정 직전에 빠졌으면 여기는 무해하다
+      // 카메라가 **이미 서 있던** 갈래에서는 이 획이 놓인 뒤에 작도선이 됐다 — 되돌린다
+      if (path0) placeBy[path0 === "axis" ? "start_anchor" : path0] -= 1;
     }
     // 확정 뒤에는 그 자리에서 푼다 — **승격 연쇄**의 첫 형태다(§9.1).
     // **돌린 시점에서도 돈다**(L-B.8) — `frame()`이 좌표 변환을 들고 있다
@@ -3732,7 +3743,7 @@ function applyDoc2(d: Doc2) {
   cam.loadRules(d.rules ?? null);
   // ⚠ 옛 저장본의 `locked`·`order`·`lensMm`은 읽지 않는다 — 전부 `rules`에서 계산된다(지시 1)
   undoStack.length = 0;
-  picked = null; ask = null;
+  picked = null;
   // ⚠⚠ **무대 카메라를 재수립한다**(7차 항목 1 — 실획 표본이 잡은 자리). 옛 판은 규칙만
   // 복원하고 무대를 안 건드려, 새로고침 뒤 three 카메라가 **생성 기본 자세**(viewport.ts의
   // `(3.2, 2.4, 3.6)`)에 비핀으로 남았다. 그 상태에서 frame()·궤도·viewForDrawing이 전부
@@ -3754,7 +3765,7 @@ function applyDoc2(d: Doc2) {
     else if (stage.isPinned) stage.unpin(null);   // 카메라가 안 서는 문서 — 핀 투영이 낡는다
   }
   syncScene();
-  note = "";   // ⛔ 복원 요약을 뺐다(지시 3) — 열린 그림 자체가 보인다
+  clearNote();   // ⛔ 복원 요약을 뺐다(지시 3) — 열린 그림 자체가 보인다
   refresh();
 }
 
@@ -3895,46 +3906,30 @@ function renderSide() {
  * 판정이다. **문구를 사용자의 말로 바꾼다**(3-g): "화면 가로세로 축 / 깊이선"은 도구의
  * 어휘이고, 사용자가 아는 것은 **그 선이 화면에 붙어 있는가 안으로 들어가는가**다.
  */
-function renderAsk(): string {
-  if (!ask) return "";
-  const angles = `<span class="dim">수평과 ${ask.toH.toFixed(1)}° · 수직과 ${ask.toV.toFixed(1)}°`
-               + ` (화면 축은 ${RULE_TOL.screen_axis_deg}° 이내 · 깊이는 ${RULE_TOL.depth_min_deg}° 밖)</span>`;
-  // 어느 쪽에 가까운가로 문구를 고른다 — 가로선이면 "가로", 세로선이면 "세로"다
-  const horiz = ask.toH <= ask.toV;
-  const rows: string[] = [];
-  rows.push('<div class="hdr"><b>이 선은 화면에 나란합니까, 안으로 들어갑니까?</b></div>');
-  rows.push(`<div>${angles}</div>`);
-  rows.push('<div><button data-act="ask_screen">'
-    + (horiz ? "화면에 나란한 가로선" : "화면에 나란한 세로선") + '</button>'
-    + ' <button data-act="ask_depth">안으로 들어가는 선</button>'
-    + ' <button data-act="ask_skip">모르겠다(2D로 둔다)</button></div>');
-  return `<div class="promote">${rows.join("")}</div>`;
-}
-
-// ⛔ **`renderPromoteReport`를 지웠다**(7차 지시 3-d) — 승격이 없으므로 요약할 것이 없다.
-// `promoteDiff.diffSummary`(순수 모듈)는 남는다.
+// ⛔ **`renderAsk`를 지웠다**(18차 지시 d·h) — 물음이 없다.
 
 const md = (s: string) => s.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
 
+/**
+ * **알림은 화면 최상단 한 줄이다**(2026-08-20 18차 지시 f~i · D-L110).
+ *
+ * 박스를 만들지 않는다 — 화면을 최대한 덜 가려야 한다. 선택이 필요하면 **캐드 방식**으로
+ * 문구 뒤에 **밑줄 친 단어**를 둔다(A-3: 선례를 따른다 — 캐드 명령행이 그렇게 한다).
+ *
+ * ```
+ * 이 선이 두 소실점 어디도 향하지 않습니다   지우기  무시
+ * ```
+ *
+ * **평소에는 아무것도 안 띄운다**(지시 g) — "지평선을 그으세요" 같은 안내를 두지 않는다.
+ * 오류나 혼동이 있을 때만 뜬다. 한 줄에 안 들어가면 **문구를 줄인다**(지시 i) —
+ * 두 줄로 늘리지 않는다(CSS의 `white-space:nowrap` + 말줄임이 그 강제다).
+ */
 function renderStatus() {
-  // ⛔ **상태 패널을 비웠다**(2026-08-17 지시 3). 옛 판이 내던 것 — 차수·후보·소실점 수·
-  // f와 출처·다음에 그을 것·슬롯 상태·스냅 반경·그리는 중 판정 — 은 전부 시스템 사정이고,
-  // 알리면 "2D를 내보낸다 / 3D로 전환된다"는 인상을 준다. 사용자는 계속 종이에 그린 것이다.
-  //
-  // 남는 것 셋:
-  //   ① **물음**(`renderAsk`) — 사용자가 답해야 진행되는 것(A-3: 추정하지 않는다)
-  //   ③ **아무리 그려도 안 돌아갈 때의 최소 안내** — 빈도가 낮아야 한다(지시 3-d 예외).
-  //      획을 여덟 이상 그렸는데 3D가 하나도 없을 때만 한 줄 낸다.
-  const rows: string[] = [];
-  const liftables = doc.strokes.filter(x => liftable(x)).length;
-  if (!cam.standing() && liftables >= 8 && !lifted(doc).length && !ask) {
-    rows.push('<div class="note">선이 아직 입체를 정하지 않았습니다 — '
-      + '**서로 다른 방향의 기울어진 선 둘**(각자의 소실점), 또는 **가로선 하나와 기울어진 선 하나**가 '
-      + '입체를 세웁니다</div>');
-  }
-  if (note) rows.push(`<div class="note">${note}</div>`);
-  if (saveNote) rows.push(`<div class="dim">${saveNote}</div>`);
-  statusEl.innerHTML = md(renderAsk() + rows.join(""));
+  // **동작은 그 문구의 것이다**(#54: 같은 사실을 두 곳에 안 둔다) — 문구가 바뀌면 죽는다.
+  const acts = note && note === noteActsFor ? noteActs : [];
+  const tail = acts.map((a: NoteAct) => `<u data-act="${a.act}">${a.label}</u>`).join("");
+  const text = note || saveNote || "";
+  statusEl.innerHTML = text ? md(text) + tail : "";
 }
 
 // ---------------------------------------------------------------- 배선
@@ -4099,7 +4094,7 @@ const onActClick = (e: Event) => {
   else if (act === "clear") {
     pushUndo();
     doc = newDoc(); cam.reset();
-    syncScene(); note = ""; ask = null;
+    syncScene(); clearNote();
     // **저장본도 지운다** — 안 지우면 새로고침에서 방금 버린 작업이 되살아난다
     void deleteDoc2().catch(() => { /* 저장소가 없어도 화면은 비워졌다 */ });
   }
@@ -4108,19 +4103,25 @@ const onActClick = (e: Event) => {
 barEl.addEventListener("click", onActClick);
 toolsEl.addEventListener("click", onActClick);
 
-// **승격 요약 패널 안의 버튼**(L-C.2). 도구 막대와 같은 규약(`data-act`)을 쓴다 —
-// 규약이 둘이 되면 다음 버튼을 어디에 다는지가 매번 판단거리가 된다
+/**
+ * **알림 한 줄의 캐드식 동작**(18차 지시 f) — 밑줄 친 단어(`<u data-act>`)를 누른다.
+ * 버튼이 아니라 밑줄 단어인 것이 캐드 명령행의 선례다(A-3). 규약은 `data-act` 하나로
+ * 도구 막대와 같다(#17 — 규약이 둘이면 다음 버튼을 어디에 다는지가 매번 판단거리다).
+ */
 statusEl.addEventListener("click", (e) => {
-  const b = (e.target as HTMLElement).closest("button");
-  if (!b) return;
-  const act = (b as HTMLButtonElement).dataset.act;
-  if (act === "ask_screen") answerAsk("screen");
-  else if (act === "ask_depth") answerAsk("depth");
-  else if (act === "ask_skip") {
-    // **모른다고 답하는 것도 답이다** — 그 획은 2D로 남고 규칙은 안 움직인다(A-3)
-    askStats.skipped += 1;
-    ask = null;
-    refresh();
+  const u = (e.target as HTMLElement).closest("u");
+  if (!u) return;
+  const act = (u as HTMLElement).dataset.act;
+  if (act === "note_erase") {
+    // **지우기** — 방금 그 획을 문서에서 뺀다(그 획이 알림의 대상이다).
+    if (noteStrokeId) {
+      const k = doc.strokes.findIndex(x => x.id === noteStrokeId);
+      if (k >= 0) { pushUndo(); doc.strokes.splice(k, 1); syncScene(); }
+    }
+    noteStrokeId = null; clearNote(); refresh();
+  } else if (act === "note_ignore") {
+    // **무시** — 획은 그대로 두고 알림만 닫는다. 규칙은 이미 그 선을 안 받았다.
+    noteStrokeId = null; clearNote(); refresh();
   }
 });
 
@@ -4354,14 +4355,8 @@ refresh();
   horizon: () => ({ y: cam.rules.horizon, adjustable: cam.canSetHorizon(), dragging: horizonDrag,
                     // **소실점 확정 전에는 지평선이 없다**(4차 지시 4-a) — 표시 조건을 그대로 낸다
                     visible: horizonVisible() }),
-  /** **점 찍기 확정**(4차 지시 4-b) — 종단 확인이 앱 경로 그대로 부른다(#17). */
-  pickVp: (p: Pt2) => {
-    const at = cam.pickVp(p, OSNAP.radiusPx);
-    if (at && cam.standing()) standCamera();
-    refresh();
-    return at;
-  },
-  setHorizon: (y: number) => { const ok = cam.setHorizon(y); refresh(); return ok; },
+  // ⛔ `S2S.pickVp`를 지웠다(18차 지시 a — 점 찍기 경로 폐기).
+  setHorizon: (y: number) => { const ok = drawHorizonAt(y); refresh(); return ok; },
   /** 손잡이가 잡히는가 — **화면 좌표로** 묻는다(반경이 `PICK_TOL`이라 크기에 딸린다). */
   horizonGrab: (p: Pt2) => horizonGrab(p),
   /**
@@ -4382,8 +4377,7 @@ refresh();
     }) as RuleState["slots"];
     // **지평선은 처음부터 있다** — 유한 수평 소실점이 있으면 그 y이고, 없으면 기본값이다
     const h = ([0, 1] as const).map(i => slots[i]).find(x => x && x.kind === "vp");
-    cam.loadRules({ slots, horizon: h && h.kind === "vp" ? h.at[1] : cam.imgSize[1] / 2,
-                    depthLines: [], verticalLines: [] });
+    cam.loadRules({ slots, horizon: h && h.kind === "vp" ? h.at[1] : cam.imgSize[1] / 2 });
     refresh();
   },
   axisLines: () => harnessLines.map(g => ({ ...g, a: [...g.a] as Pt2, b: [...g.b] as Pt2 })),
@@ -4394,7 +4388,10 @@ refresh();
     return r.event;
   },
   classifyLine: (a: Pt2, b: Pt2) => classifyLine(a, b),
-  ask: () => ask && { strokeId: ask.strokeId, question: ask.question, toH: ask.toH, toV: ask.toV },
+  // ⛔ `S2S.ask`를 지웠다(18차 지시 d) — 물음이 없다.
+  /** **알림 한 줄**(18차 지시 f~i) — 문구와 밑줄 동작을 종단이 그대로 읽는다(#17). */
+  noteLine: () => ({ text: note || saveNote || "",
+                     acts: (note && note === noteActsFor ? noteActs : []).map(a => a.act) }),
   /** 물음 카운터(5차 지시 3의 종단 확인이 읽는다 — #17). */
   askStats: () => ({ ...askStats }),
   /** **뷰 큐브**(5차 지시 8) — 종단 확인이 앱 경로 그대로 부른다(#17). */
@@ -4513,7 +4510,10 @@ refresh();
     ERASER.px = Math.max(ERASER.min, Math.min(ERASER.max, px));
     refresh();
   },
-  answerAsk: (choice: "screen" | "depth") => { answerAsk(choice); },
+  /** 알림 한 줄의 동작을 종단이 앱 경로 그대로 누른다(#17). */
+  noteAct: (act: string) => {
+    statusEl.querySelector<HTMLElement>(`u[data-act="${act}"]`)?.click();
+  },
   /** **펜 채널**(D) — 앱 경로 그대로를 종단 확인이 부른다(#17). */
   channel: () => channel,
   setChannel: (c: Channel) => { channel = c; refresh(); },

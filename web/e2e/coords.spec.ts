@@ -20,6 +20,7 @@
 // "탐침이 눈이 멀었다" 하나다. **#21이 요구하는 것(앱 쪽에 dpr 곱을 되살려 이 스펙이 실제로
 // 실패하는지)은 아직 안 했다** — `DEFERRED.md`에 적었다.
 import { test, expect } from "@playwright/test";
+import { openDrawing } from "./fixture.js";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -44,6 +45,7 @@ for (const dpr of [1, 2, 3]) {
       }));
       await page.reload();
       await page.waitForFunction(() => !!(window as any).S2S);
+      await openDrawing(page);
 
       const r = await page.evaluate(() => {
         const S = (window as any).S2S;
@@ -64,11 +66,17 @@ for (const dpr of [1, 2, 3]) {
           cv.dispatchEvent(new PointerEvent(type, {
             clientX: rect.left + x, clientY: rect.top + y, pointerId: 1, pointerType: "mouse",
             isPrimary: true, bubbles: true, cancelable: true, button: 0, buttons }));
-        ev("pointerdown", A[0], A[1], 1);
-        for (let i = 1; i <= 10; i++) {
-          ev("pointermove", A[0] + ((B[0] - A[0]) * i) / 10, A[1] + ((B[1] - A[1]) * i) / 10, 1);
+        // ⚠⚠ **두 번 긋는다**(2026-08-20 18차 지시 4·m): 첫 깊이선은 **소실점을 만들고
+        // 사라진다**(작도선이다). 이 스펙이 재는 것은 좌표 규약이므로 **남는 획**이 필요하고,
+        // 같은 선을 한 번 더 그으면 그것은 지지선이라 그대로 남는다(방향이 이미 그 소실점을
+        // 향하므로 방향 스냅이 좌표를 안 옮긴다 — 아래 `raw_gap`이 그 확인이다).
+        for (let pass = 0; pass < 2; pass++) {
+          ev("pointerdown", A[0], A[1], 1);
+          for (let i = 1; i <= 10; i++) {
+            ev("pointermove", A[0] + ((B[0] - A[0]) * i) / 10, A[1] + ((B[1] - A[1]) * i) / 10, 1);
+          }
+          ev("pointerup", B[0], B[1], 0);
         }
-        ev("pointerup", B[0], B[1], 0);
 
         const st = S.doc().strokes;
         const s = st[st.length - 1];
@@ -149,6 +157,7 @@ for (const dpr of [1, 2, 3]) {
       test.skip(dpr === 1, "dpr 1에서는 ×dpr 자리가 제자리다 — 가를 것이 없다");
       await page.goto("/l.html");
       await page.waitForFunction(() => !!(window as any).S2S);
+      await openDrawing(page);
       const r = await page.evaluate(() => {
         const S = (window as any).S2S;
         const cv = document.getElementById("ink") as HTMLCanvasElement;
@@ -187,8 +196,16 @@ for (const dpr of [1, 2, 3]) {
 
     test("창 크기가 바뀌어도 성립한다(ResizeObserver가 안 와도)", async ({ page }) => {
       await page.goto("/l.html");
+      // ⚠ **앞 팔의 문서를 물려받지 않는다**(#53) — 물려받으면 소실점이 이미 서 있어
+      // 지평선이 잠기고(«그리기가 안 열린다») 이 팔이 재는 좌표 규약과 무관한 곳에서 깨진다.
+      await page.evaluate(() => new Promise<void>(res => {
+        const q = indexedDB.deleteDatabase("sketch2space");
+        q.onsuccess = q.onerror = q.onblocked = () => res();
+      }));
+      await page.reload();
       await page.waitForFunction(() => !!(window as any).S2S);
       await page.setViewportSize({ width: 900, height: 600 });
+      await openDrawing(page);
       // **리사이즈 이벤트를 기다리지 않는다** — 그리기 직전 `ensureFit`이 회복해야 한다.
       const r = await page.evaluate(() => {
         const S = (window as any).S2S;
@@ -204,15 +221,19 @@ for (const dpr of [1, 2, 3]) {
           cv.dispatchEvent(new PointerEvent(type, {
             clientX: rect.left + x, clientY: rect.top + y, pointerId: 1, pointerType: "mouse",
             isPrimary: true, bubbles: true, cancelable: true, button: 0, buttons }));
-        ev("pointerdown", P[0], P[1], 1);
-        ev("pointermove", P[0] + 40, P[1] + 30, 1);
-        ev("pointerup", P[0] + 40, P[1] + 30, 0);
+        // **두 번 긋는다** — 첫 깊이선은 소실점을 만들고 사라진다(18차 지시 4·m).
+        for (let pass = 0; pass < 2; pass++) {
+          ev("pointerdown", P[0], P[1], 1);
+          for (let i = 1; i <= 8; i++) ev("pointermove", P[0] + 40 * i / 8, P[1] + 30 * i / 8, 1);
+          ev("pointerup", P[0] + 40, P[1] + 30, 0);
+        }
         const st = S.doc().strokes;
         const s = st[st.length - 1];
-        return { got: s.pts2d[0], want: P, frame: S.diag() };
+        return { got: s ? s.pts2d[0] : null, want: P, frame: S.diag(),
+                 dbg: { n: st.length, horizon: S.horizon(), order: S.order() } };
       });
-      expect(Math.abs(r.got[0] - r.want[0])).toBeLessThan(1);
-      expect(Math.abs(r.got[1] - r.want[1])).toBeLessThan(1);
+      expect(Math.abs(r.got![0] - r.want[0])).toBeLessThan(1);
+      expect(Math.abs(r.got![1] - r.want[1])).toBeLessThan(1);
       // 백버퍼가 새 CSS 상자에 맞춰졌다(늘어난 채로 굳지 않았다)
       expect(r.frame.ink.stretch[0]).toBeCloseTo(dpr, 2);
       expect(r.frame.ink.stretch[1]).toBeCloseTo(dpr, 2);

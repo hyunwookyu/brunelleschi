@@ -25,7 +25,7 @@ import { fPixelsFrom35mm } from "../src/s3d/constraints.js";
 import { P1_F_RATIO } from "../src/ui/camState.js";
 import { representative } from "../src/s3d/axis.js";
 import {
-  newRuleState, stepRule, vpsOf, axisDirsOf, axisOfStroke, defaultHorizon,
+  newRuleState, stepRule, vpsOf, axisDirsOf, axisOfStroke,
   type RuleState, type RLine,
 } from "../src/s3d/vpRules.js";
 import { snapToAxis, SNAP_TOL_AXIS } from "../src/s3d/axisSnap.js";
@@ -136,7 +136,7 @@ function runOne(fx: Fx, order: (typeof ORDERS)[number], arm: Arm): RunOut {
   }
   if (arm.placebo) {
     // **위약**(#39): 지평선을 **틀린 높이**로 옮긴다. 제약의 형태는 그대로이고 값만 틀리다
-    st = { ...st, horizon: defaultHorizon(SZ) + 0.18 * SZ[1] };
+    st = { ...st, horizon: SZ[1] / 2 + 0.18 * SZ[1] };
   }
 
   let ambigFired = 0, ambigRight = 0, ambigTotal = 0;
@@ -189,7 +189,7 @@ function runOne(fx: Fx, order: (typeof ORDERS)[number], arm: Arm): RunOut {
         if (idx != null) slots[idx] = { kind: "vp", at, source: "two_lines", support: ls.length };
       }
     }
-    st = { slots, horizon: defaultHorizon(SZ), depthLines: [], verticalLines: [] };
+    st = { slots, horizon: SZ[1] / 2 };
     // 지평선 없는 팔에서는 **축마다 두 선이 필요**하므로, 각 축의 셋째 획부터가 "확정 뒤"다
     const seen: Record<number, number> = { 0: 0, 1: 0, 2: 0 };
     for (const { e } of reps) {

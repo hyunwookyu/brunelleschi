@@ -1,0 +1,440 @@
+{
+ "what": "지평선을 먼저 긋는 새 절차가 앱에서 도는가(18차 지시 q).",
+ "how": {
+  "steps": "빈 화면 → 지평선 한 획 → 깊이선 → 다른 방향 깊이선 → 그 뒤의 획. **실제 포인터 사건**으로 그린다(#17 — 하네스가 함수를 부르지 않는다).",
+  "erase": "지시 m — 소실점을 만든 획은 그 순간 사라진다. `strokes`가 그 실측이다.",
+  "same_y": "지시 m — 계산된 지평선이 그은 자리와 같은 y인가. 소실점 = 선 × 지평선이므로 **같은 것이 구성의 귀결**이다(#5) — 값이 아니라 배선을 잰다.",
+  "one_line": "지시 f~i — `status_ui`가 그 실측이다: `boxes`(div·button 수)가 0이고 `nowrap`이 `nowrap`이며 `top`이 0이다."
+ },
+ "what_this_does_not_say": [
+  "dpr 1 · 마우스 합성 · 한 구도다(#12·#21).",
+  "**그린 선이 3D에 옳게 놓이는가는 안 잰다** — 여기서 재는 것은 절차의 배선이다.",
+  "`same_y`가 0인 것은 **설계 보장**이다(#5) — 소실점의 y가 곧 지평선이다. 값으로 안 읽는다. 측정인 것은 `strokes`(사라졌는가)와 `status_ui`다.",
+  "지시 l(«지평선 전에는 그리기가 안 열린다»)이 실사용을 막는지는 **안 쟀다** — 그 판단은 사람이 그려 봐야 나온다. `DEFERRED`에 되살릴 조건을 적었다."
+ ],
+ "selfcheck_notes": {
+  "zero_strokes": "확정 뒤 `strokes`가 0인 것은 **재현하려는 동작 자체**다(지시 4·m) — 집계가 안 돈 것이 아니다. 그 뒤 ④에서 1로 는다.",
+  "same_y_zero": "`overlay_horizon_y − horizon.y`가 0인 것은 보장이다(위 `how.same_y`)."
+ },
+ "steps": [
+  {
+   "label": "⓪ 빈 화면",
+   "horizon": {
+    "y": null,
+    "adjustable": true,
+    "dragging": false,
+    "visible": false
+   },
+   "order": 0,
+   "standing": false,
+   "vps": [
+    null,
+    null,
+    null
+   ],
+   "strokes": 0,
+   "lifted": 0,
+   "overlay_horizon_y": null,
+   "note": {
+    "text": "",
+    "acts": []
+   },
+   "status_ui": {
+    "text": "",
+    "boxes": 0,
+    "acts": 0,
+    "top": 0,
+    "lines": 0,
+    "nowrap": "nowrap"
+   }
+  },
+  {
+   "label": "① 지평선",
+   "horizon": {
+    "y": 284,
+    "adjustable": true,
+    "dragging": false,
+    "visible": true
+   },
+   "order": 0,
+   "standing": false,
+   "vps": [
+    null,
+    null,
+    null
+   ],
+   "strokes": 0,
+   "lifted": 0,
+   "overlay_horizon_y": null,
+   "note": {
+    "text": "",
+    "acts": []
+   },
+   "status_ui": {
+    "text": "",
+    "boxes": 0,
+    "acts": 0,
+    "top": 0,
+    "lines": 0,
+    "nowrap": "nowrap"
+   }
+  },
+  {
+   "label": "② 깊이선 하나(1점)",
+   "horizon": {
+    "y": 284,
+    "adjustable": false,
+    "dragging": false,
+    "visible": true
+   },
+   "order": 1,
+   "standing": true,
+   "vps": [
+    [
+     -413.3925326987667,
+     284
+    ],
+    null,
+    null
+   ],
+   "strokes": 0,
+   "lifted": 0,
+   "overlay_horizon_y": 284,
+   "note": {
+    "text": "",
+    "acts": []
+   },
+   "status_ui": {
+    "text": "",
+    "boxes": 0,
+    "acts": 0,
+    "top": 0,
+    "lines": 0,
+    "nowrap": "nowrap"
+   }
+  },
+  {
+   "label": "③ 깊이선 둘(2점)",
+   "horizon": {
+    "y": 284,
+    "adjustable": false,
+    "dragging": false,
+    "visible": true
+   },
+   "order": 2,
+   "standing": true,
+   "vps": [
+    [
+     -413.3925326987667,
+     284
+    ],
+    [
+     1953.320809423758,
+     284
+    ],
+    null
+   ],
+   "strokes": 0,
+   "lifted": 0,
+   "overlay_horizon_y": 284,
+   "note": {
+    "text": "",
+    "acts": []
+   },
+   "status_ui": {
+    "text": "",
+    "boxes": 0,
+    "acts": 0,
+    "top": 0,
+    "lines": 0,
+    "nowrap": "nowrap"
+   }
+  },
+  {
+   "label": "④ 확정 뒤의 획",
+   "horizon": {
+    "y": 284,
+    "adjustable": false,
+    "dragging": false,
+    "visible": true
+   },
+   "order": 2,
+   "standing": true,
+   "vps": [
+    [
+     -413.3925326987667,
+     284
+    ],
+    [
+     1953.320809423758,
+     284
+    ],
+    null
+   ],
+   "strokes": 1,
+   "lifted": 1,
+   "overlay_horizon_y": 284,
+   "note": {
+    "text": "",
+    "acts": []
+   },
+   "status_ui": {
+    "text": "",
+    "boxes": 0,
+    "acts": 0,
+    "top": 0,
+    "lines": 0,
+    "nowrap": "nowrap"
+   },
+   "stroke": {
+    "axis": 0,
+    "has3d": true
+   }
+  }
+ ],
+ "aux": {
+  "at": [
+   393.2650231572428,
+   284
+  ],
+  "horizonY": 284,
+  "dy": 0
+ },
+ "summary": {
+  "orders": [
+   0,
+   0,
+   1,
+   2,
+   2
+  ],
+  "strokes": [
+   0,
+   0,
+   0,
+   0,
+   1
+  ],
+  "horizon_y": [
+   null,
+   284,
+   284,
+   284,
+   284
+  ],
+  "overlay_horizon_y": [
+   null,
+   null,
+   284,
+   284,
+   284
+  ],
+  "same_y_gap": [
+   null,
+   null,
+   0,
+   0,
+   0
+  ],
+  "status_boxes": [
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "status_top": [
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "status_nowrap": [
+   "nowrap",
+   "nowrap",
+   "nowrap",
+   "nowrap",
+   "nowrap"
+  ],
+  "note_texts": [
+   "",
+   "",
+   "",
+   "",
+   ""
+  ],
+  "aux_on_horizon_px": 0,
+  "final_stroke": {
+   "axis": 0,
+   "has3d": true
+  }
+ },
+ "gate": {
+  "registered": "지평선 → 깊이선 → 깊이선으로 **2점**이 서고(`summary.orders`), 소실점을 만든 획이 **사라지며**(`summary.strokes`), 알림은 **박스 없는 한 줄**이다(`summary.status_boxes` 전부 0).",
+  "reachability": "되살릴 것은 «옛 절차»다 — 지평선 없이 깊이선을 먼저 그으면 **아무것도 안 선다**(`steps[0]`의 차수 0에서 ①까지 0을 유지한다). 그 0이 «지평선이 실제로 문을 연다»의 증거다.",
+  "reachability_source": "summary/orders",
+  "reachability_value": [
+   0,
+   0,
+   1,
+   2,
+   2
+  ]
+ },
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}

@@ -18,6 +18,7 @@
 //   ④ **placeBy 합 = lifted**(#43 — 세 팔 전부에서 검산한다. 이 검산이 실제로
 //      확정 획의 이중 배치(자기 양 끝 스냅 재배치)를 잡았다 — 리뷰어 [1]).
 import { test, expect } from "@playwright/test";
+import { openDrawing } from "./fixture.js";
 import { constantsSnapshot } from "../test/constants.js";
 import { metricsSnapshot } from "../test/metrics.js";
 import { gate } from "../test/gate.js";
@@ -35,12 +36,14 @@ test("지면 첫 앵커 — 몸통 교차 보조선으로 세운 카메라가 3D
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page, (await page.locator("#ink").boundingBox())!.height * 0.40);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page, (await page.locator("#ink").boundingBox())!.height * 0.40);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -83,6 +86,7 @@ test("지면 첫 앵커 — 몸통 교차 보조선으로 세운 카메라가 3D
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();
     window.S2S.setGroundAnchor(true);
   });
+  await openDrawing(page, (await page.locator("#ink").boundingBox())!.height * 0.40);
   await page.waitForTimeout(60);
 
   // ---- ① 같은 입력, 경로 켬 — 확정 순간 지면 첫 앵커로 오른다
@@ -95,7 +99,10 @@ test("지면 첫 앵커 — 몸통 교차 보조선으로 세운 카메라가 3D
   expect((led.confirmed as any).placeBy.ground).toBeGreaterThan(0);
   expect((led.confirmed as any).placeBy.ground + (led.confirmed as any).placeBy.cross_anchor)
     .toBe((led.confirmed as any).lifted);
-  expect((led.confirmed as any).placeBy.cross_anchor).toBe(1);      // 깊이선 3 — 연쇄 경로
+  // ⚠⚠ **18차로 갈래가 하나 옮겨졌다**: 새 절차에서는 **첫 깊이선이 곧 확정**이라
+  // (지평선이 이미 있다) 확정 순간의 대기 풀이 작고, 나머지 깊이선이 **확정 뒤에** 도착해
+  // 연쇄(교차 앵커) 경로로 간다. 합 = 놓인 수(#43)는 위에서 그대로 잠긴다.
+  expect((led.confirmed as any).placeBy.cross_anchor).toBe(2);      // 깊이선 2·3 — 연쇄 경로
   expect((led.confirmed as any).placeBy.batch).toBe(0);
   expect((led.confirmed as any).place_sum).toBe((led.confirmed as any).lifted);   // ④ #43
 

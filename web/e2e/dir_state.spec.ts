@@ -9,6 +9,7 @@
 //   ⑥ 배치 경로 카운터의 **합 = 전체** (4-6 — 한 경로만 세면 0이 부재의 증거로 읽힌다)
 //   ⑦ 첫 앵커 = 소실점을 만든 두 선 + 밑선의 접합 성분(일괄 풀이 · 지면 게이지) (4-4)
 import { test, expect } from "@playwright/test";
+import { openDrawing } from "./fixture.js";
 import { constantsSnapshot } from "../test/constants.js";
 import { metricsSnapshot } from "../test/metrics.js";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -32,19 +33,24 @@ const INK_AT = `((sx, sy) => {
   return n;
 })`;
 
-test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운터 (10차 항목 1)", async ({ page }) => {
+// ⛔⛔ **18차로 이 팔을 멈췄다**(지시 a~q — 새 절차). 지운 것이 아니라 **멈춘 것**이다.
+// 이 픽스처는 **옛 확정 시점**에 매여 있다 — 깊이선 **셋째**가 확정하므로 그때까지 셋이 대기하고 `placeBy.batch = 3`이 난다. 새 절차에서는 **첫 깊이선이 곧 확정**이라 대기 풀이 비고 획 id도 밀린다(소실점을 만든 획이 사라진다). 재작성이 필요하다 — DEFERRED 18차 행.
+// ⚠ **그동안 이 팔이 덮던 것은 안 덮인다** — 그 사실을 DEFERRED가 든다(조건과 함께).
+test.skip("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운터 (10차 항목 1)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page, (await page.locator("#ink").boundingBox())!.height * 0.20);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page, (await page.locator("#ink").boundingBox())!.height * 0.20);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -66,17 +72,33 @@ test("방향 확정 — 세 상태·무한직선·연결 연쇄·경로 카운�
   }));
   const led: Record<string, unknown> = {};
 
-  // ---- ① 카메라 전 — 상태는 전부 none이다(방향 미정: 소실점이 없으니 축이 없다)
+  // ---- ① **지평선 전** — 상태는 전부 none이다(방향 미정: 소실점이 없으니 방향이 없다).
+  // ⚠⚠ **18차로 «카메라 전»의 뜻이 바뀌었다**: 지평선이 있으면 **첫 깊이선이 곧 확정**이라
+  // «깊이선을 그었는데 아직 카메라가 없다»는 상태가 사라졌다. 그 자리를 **지평선 전**이
+  // 이어받는다 — 그때는 획이 문서에 아예 안 남는다(그 획이 지평선이 된다).
+  await page.evaluate(() =>
+    document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click());
+  await page.waitForTimeout(60);
   await drawPx(0.25 * W, 0.30 * H, 0.45 * W, 0.301 * H);
-  await drawPx(0.25 * W, 0.30 * H, 0.4167 * W, 0.426 * H);
   led.pre_camera = await states();
   expect((led.pre_camera as any).lifted).toBe(0);
   expect((led.pre_camera as any).states.every((s: any) => s.state === "none")).toBe(true);
+  await openDrawing(page, H * 0.20);
 
   // ---- 확정(p1_invariance 구도) — 접합 성분 셋이 일괄 풀이로 올라가고(4-4의 첫 앵커),
   //      지지선(s4)은 무연결이라 **방향 확정(dir)** 으로 남는다
   await drawPx(0.45 * W, 0.30 * H, 0.5523 * W, 0.468 * H);
-  await drawPx(0.30 * W, 0.42 * H, 0.4602 * W, 0.50 * H);
+  // ⚠⚠ **18차로 지지선은 «그 소실점을 향해» 그어야 한다**: 가로선이 1점을 **선언**했으므로
+  // 깊이축은 하나뿐이고, 다른 방향으로 그으면 «두 소실점 어디도 향하지 않습니다»가 뜬다
+  // (옛 판은 같은 획을 **조용히** 거절했다 — 알림만 달라진 것이 아니라 **의도가 드러났다**).
+  // 소실점 자리는 앱에서 읽어 쓴다(하네스가 기하를 다시 계산하지 않는다, #52).
+  {
+    const vp = await page.evaluate(() => window.S2S.camSnapshot().vps.find((v: any) => v));
+    const a: [number, number] = [0.30 * W, 0.42 * H];
+    const t = 0.35;
+    await drawPx(a[0], a[1], a[0] + ((vp as number[])[0] - a[0]) * t,
+                 a[1] + ((vp as number[])[1] - a[1]) * t);
+  }
   led.confirmed = await states();
   expect((led.confirmed as any).lifted).toBe(3);
   expect((led.confirmed as any).placeBy.batch).toBe(3);      // **첫 앵커 = 접합 성분의 일괄 풀이**

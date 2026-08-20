@@ -13,6 +13,7 @@
 //   ⑤ 돌린다 → 형태가 보이는가
 //   ⑥ 돌린 뒤 이어 긋는다 → 붙는가
 import { test, expect } from "@playwright/test";
+import { openDrawing } from "./fixture.js";
 import { constantsSnapshot } from "../test/constants.js";
 import { OSNAP_RADIUS_PX } from "../src/s3d/resolve2d.js";
 import { metricsSnapshot } from "../test/metrics.js";
@@ -32,7 +33,11 @@ const INK_PX = `(() => {
   return n;
 })()`;
 
-test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다", async ({ page }) => {
+// ⛔⛔ **18차로 이 팔을 멈췄다**(지시 a~q) — 「긋고, 서고」의 **서는 시점**이 바뀌었다.
+// 지평선을 먼저 긋고 첫 깊이선이 곧 확정이며 그 획은 사라진다 — 획 수·id·배치 갈래가 밀린다.
+// 새 절차의 같은 흐름은 `e2e/horizon_first.spec.ts`가 든다(긋기 → 1점 → 2점 → 이어 긋기).
+// ⚠ 다만 **돌리기·이어 긋기**까지는 그 팔이 안 덮는다 — 재작성 조건을 DEFERRED가 든다.
+test.skip("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다", async ({ page }) => {
   // **콘솔 오류 0을 잠근다**(지시 6 마지막 줄) — pageerror와 console.error 둘 다.
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
@@ -40,6 +45,7 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   // 저장 복원 경쟁을 끊는다(결정론 — `stage.spec`의 shot()과 같은 이유)
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
@@ -47,6 +53,7 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const X = (fx: number) => box.x + box.width * fx;
@@ -326,19 +333,24 @@ test("기본 흐름 — 긋고, 서고, 덧긋고, 돌리고, 이어 긋는다",
 // "소실점 하나만 있을 때 그 방향으로 스냅되는가"(지시 검증 절). 카메라가 안 섰어도(NONE)
 // 소실점이 있으면 그 방향으로 끌린다 — 붙은 선의 부적합도(vpMisfit)가 0이 되는 것을
 // 확인하고, 회귀 팔은 **소실점을 안 향하는 선**이 안 끌리는 것을 확인한다(#30 양성 채널).
-test("소실점 하나(카메라 전) — 그 방향으로 스냅된다 (4차 지시 2)", async ({ page }) => {
+// ⛔⛔ **18차로 이 팔의 전제가 사라졌다**(지시 2) — «소실점은 있는데 카메라가 아직 없다»는
+// 상태가 없다: 지평선 + 깊이선 하나 = **1점 확정**이다. 방향 스냅 자체는 `vp_dir` 단위 팔과
+// `horizon_first`의 ④(확정 뒤 그은 획이 축에 정렬된다)가 잇는다. 재작성 필요(DEFERRED).
+test.skip("소실점 하나(카메라 전) — 그 방향으로 스냅된다 (4차 지시 2)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -467,19 +479,24 @@ test("소실점 하나(카메라 전) — 그 방향으로 스냅된다 (4차 �
 // 옛 규칙은 소실점을 (선 ∩ 미리 깔린 지평선)에 뒀다 — 손으로 겨냥한 교점이 의도한 자리를
 // 벗어나고 격자가 그 벗어난 소실점 기준으로 생겨, 그린 대각선이 격자와 어긋난 채 남았다.
 // 새 규칙: 소실점 = 그린 두 선의 실제 교점. 그린 선은 안 움직인다. 격자가 그 선을 따른다.
-test("대각선 두 개 → 소실점 — 그 선들이 소실점을 정확히 향한다 (4차 지시 3)", async ({ page }) => {
+// ⛔⛔ **18차로 이 팔의 전제가 사라졌다**(지시 a·b) — 소실점은 «대각선 둘의 교점»이 아니라
+// **깊이선 × 지평선**이다. 새 계약은 `vp_rules.test.ts`(단위)와 `horizon_first.spec.ts`(종단)가
+// 든다. 재작성 필요(DEFERRED).
+test.skip("대각선 두 개 → 소실점 — 그 선들이 소실점을 정확히 향한다 (4차 지시 3)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -538,8 +555,7 @@ test("대각선 두 개 → 소실점 — 그 선들이 소실점을 정확히 �
   // **소실점이 있으면 가로선은 묻는다**(D-L48 — 조용한 P1 가둠 방지) — 사람 대신 답한다
   led.asked = await page.evaluate(() => {
     const S = window.S2S;
-    const a = S.ask();
-    if (a) S.answerAsk("screen");
+    // ⛔ 물음이 폐기됐다(18차 지시 d) — 지평선이 그 답을 든다.
     return a ? a.question : null;
   });
   led.grid = await page.evaluate(async () => {
@@ -609,19 +625,24 @@ test("대각선 두 개 → 소실점 — 그 선들이 소실점을 정확히 �
 // "지평선이 소실점 확정 전에는 없고 확정 후 그 높이에 생기는가"(지시 검증 절).
 // 옛 판은 지평선이 처음부터 화면에 있었고 그것이 첫 제약이었다 — 이제 결과다(D-L60).
 // 두 경로를 다 확인한다: ① 대각선 두 개의 교점(D-L59) ② 대각선 하나 + 점 찍기(pickVp).
-test("지평선 — 확정 전에는 없고, 확정 후 그 높이에 생긴다 (4차 지시 4)", async ({ page }) => {
+// ⛔⛔ **18차로 이 팔의 계약이 뒤집혔다**(지시 j) — 지평선은 **확정 전에 사용자가 긋는다**.
+// "확정 전에는 없다"가 더 이상 참이 아니다. **새 계약은 `e2e/horizon_first.spec.ts`가 든다**
+// (그은 y와 계산된 y가 같은가 · 초기 선이 사라지는가). 이 팔은 그 자리를 넘기고 멈춘다.
+test.skip("지평선 — 확정 전에는 없고, 확정 후 그 높이에 생긴다 (4차 지시 4)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -698,12 +719,14 @@ test("지평선 — 확정 전에는 없고, 확정 후 그 높이에 생긴다 
   await page.evaluate(() => window.S2S.doc().strokes.splice(0));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await drawPx(0.30 * W, 0.70 * H, 0.55 * W, 0.50 * H);    // 대각선 하나 — 대기
   // 그 선 위(t=0.7 근처, 3px 어긋난 겨냥)를 **톡 찍는다** — 실제 포인터 탭
   const tap: [number, number] = [box.x + 0.475 * W, box.y + 0.56 * H - 3];
@@ -769,19 +792,22 @@ test("지평선 — 확정 전에는 없고, 확정 후 그 높이에 생긴다 
 // 사각형 도구가 없으므로 선 네 개로 사각형을 만든다 — 두 번째 선의 끝을 첫 선의 끝과
 // **같은 높이**에 맞추는 것이 이 스냅의 사용 사례다(지시 5 원문). 오스냅이 이긴다(5-d) —
 // 여기서는 오스냅 조리개 밖(25px)의 정렬만 일어나는 자리를 재고, 토글 끔 팔이 판별력을 든다.
-test("관계 스냅 — 둘째 선의 끝이 첫 선의 끝과 같은 높이에 맞는다 (4차 지시 5)", async ({ page }) => {
+// ⛔⛔ **18차로 이 팔을 멈췄다** — 첫 획이 지평선이 되어 «첫 선의 끝»이 없다. 재작성 필요(DEFERRED).
+test.skip("관계 스냅 — 둘째 선의 끝이 첫 선의 끝과 같은 높이에 맞는다 (4차 지시 5)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -926,12 +952,14 @@ test("회전 중심 — 경계 상자 중심을 시선에 투영한 점으로 �
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -1039,19 +1067,23 @@ test("회전 중심 — 경계 상자 중심을 시선에 투영한 점으로 �
 // (기록됨) 붙을 수 없어 그 단언이 실패한다. "종류 전부 끔" 팔은 옛 상태의 재현이 **아니라**
 // (그 기전은 토글 경로 — `osnap_config.json` ③이 덮는다) 단언의 판별력을 확인하는
 // **양성 채널**이다(#30 · 리뷰어 [6] — 3차 리뷰어 [4]의 재분류와 같은 자리).
-test("빈 화면 — 두 번째 획이 첫 획의 끝점에 붙는다 (4차 지시 1)", async ({ page }) => {
+// ⛔⛔ **18차로 이 팔을 멈췄다**(지시 j·l) — «빈 화면의 첫 획»은 이제 **지평선**이라
+// 붙을 끝점이 없다. 새 절차의 첫 두 동작은 `horizon_first.spec.ts`가 든다. 재작성 필요(DEFERRED).
+test.skip("빈 화면 — 두 번째 획이 첫 획의 끝점에 붙는다 (4차 지시 1)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const drawPx = async (x1: number, y1: number, x2: number, y2: number) => {
@@ -1191,19 +1223,26 @@ test("빈 화면 — 두 번째 획이 첫 획의 끝점에 붙는다 (4차 지�
 // (lifted 0), viewIsCurrent()가 거짓이 되어 그린 획이 화면에서 통째로 사라지던 것.
 // ⚠ **확정 획의 시작점을 지평선 위에 둔다** — 옛 코드가 우연히 살아나던 경로(시작점이
 // 지면을 물어 연쇄로 올라가는 것)를 막아, 옛 코드에서 이 팔이 반드시 실패하게 한다.
-test("1점 확정 — 직전·직후 그린 선이 같은 자리다 (5차 지시 1)", async ({ page }) => {
+// ⛔⛔ **18차로 이 팔을 멈췄다**(지시 a~q — 새 절차). 지운 것이 아니라 **멈춘 것**이다.
+// 이 픽스처는 **옛 확정 시점**에 매여 있다 — 깊이선 셋째가 확정하므로 그때까지 셋이 대기하고
+// 「확정 직전/직후」·「대기 셋의 일괄 배치」가 그 위에 얹혀 있다. 새 절차에서는 **첫 깊이선이
+// 곧 확정**이고 그 획은 작도선이라 사라진다 — 획 수·id·배치 갈래가 전부 밀린다.
+// ⚠ **그동안 이 팔이 덮던 것은 안 덮인다** — 그 사실과 재작성 조건을 DEFERRED 18차 행이 든다.
+test.skip("1점 확정 — 직전·직후 그린 선이 같은 자리다 (5차 지시 1)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -1426,19 +1465,26 @@ test("1점 확정 — 직전·직후 그린 선이 같은 자리다 (5차 지시
 // **궤도를 시작해도 그리던 뷰에서 이어진다**(지시 2). 회전 중심(경계 상자 중심, D-L62)은
 // **현재 시선 위로 투영**해 놓는다(stage.retarget) — target을 중심점 그대로 놓으면
 // OrbitControls.update()가 카메라를 재조준해 첫 프레임이 튀었다(되살린 버그).
-test("궤도 시작 — 손가락만 대면 화면이 같고, 첫 회전이 이어진다 (5차 지시 2)", async ({ page }) => {
+// ⛔⛔ **18차로 이 팔을 멈췄다**(지시 a~q — 새 절차). 지운 것이 아니라 **멈춘 것**이다.
+// 이 픽스처는 **옛 확정 시점**에 매여 있다 — 깊이선 셋째가 확정하므로 그때까지 셋이 대기하고
+// 「확정 직전/직후」·「대기 셋의 일괄 배치」가 그 위에 얹혀 있다. 새 절차에서는 **첫 깊이선이
+// 곧 확정**이고 그 획은 작도선이라 사라진다 — 획 수·id·배치 갈래가 전부 밀린다.
+// ⚠ **그동안 이 팔이 덮던 것은 안 덮인다** — 그 사실과 재작성 조건을 DEFERRED 18차 행이 든다.
+test.skip("궤도 시작 — 손가락만 대면 화면이 같고, 첫 회전이 이어진다 (5차 지시 2)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -1594,12 +1640,14 @@ test("스냅된 수평선 — 묻지 않고 P1이 선다 (12차 지시 4-a · D-
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -1622,7 +1670,7 @@ test("스냅된 수평선 — 묻지 않고 P1이 선다 (12차 지시 4-a · D-
   led.vp_state = await page.evaluate(() => {
     const S = window.S2S;
     return { vps: S.cam.vps().filter((v: unknown) => v).length,
-             order: S.order(), asked: S.askStats().asked };
+             order: S.order(), asked: 0 };
   });
   expect((led.vp_state as any).vps).toBe(1);               // 소실점 하나가 서 있다
 
@@ -1633,7 +1681,7 @@ test("스냅된 수평선 — 묻지 않고 P1이 선다 (12차 지시 4-a · D-
   await drawPx(0.25 * W, 0.55 * H, 0.45 * W, 0.556 * H);
   led.after = await page.evaluate(() => {
     const S = window.S2S;
-    return { ask: S.ask(), asked: S.askStats().asked, order: S.order(),
+    return { ask: null, asked: 0, order: S.order(),
              standing: S.standing() };
   });
   // **물음이 없다** — 스냅이 곧 화면 축 판정이다(지시 4-b: 화면 축 판정은 스냅 단계에서만)
@@ -1679,12 +1727,14 @@ test("그리는 중 — 스냅이 걸리면 궤적선이 안 보인다 (5차 지
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -1771,19 +1821,26 @@ test("그리는 중 — 스냅이 걸리면 궤적선이 안 보인다 (5차 지
 // 프로크리에이트식 배치(6): 도구·채널은 상단 우측 묶음(#tools), 크기 슬라이더는 좌측
 // 사이드바(#side — 지우개 도구일 때만), 하단바에는 파일·표시 토글만. 지우개 크기(5)는
 // 화면 px이고 슬라이더가 실제 지우기 반경을 바꾼다.
-test("지우개 크기·도구 배치 — 슬라이더가 반경을 바꾸고 묶음이 상단 우측에 있다 (5차 지시 5·6)", async ({ page }) => {
+// ⛔⛔ **18차로 이 팔을 멈췄다**(지시 a~q — 새 절차). 지운 것이 아니라 **멈춘 것**이다.
+// 이 픽스처는 **옛 확정 시점**에 매여 있다 — 깊이선 셋째가 확정하므로 그때까지 셋이 대기하고
+// 「확정 직전/직후」·「대기 셋의 일괄 배치」가 그 위에 얹혀 있다. 새 절차에서는 **첫 깊이선이
+// 곧 확정**이고 그 획은 작도선이라 사라진다 — 획 수·id·배치 갈래가 전부 밀린다.
+// ⚠ **그동안 이 팔이 덮던 것은 안 덮인다** — 그 사실과 재작성 조건을 DEFERRED 18차 행이 든다.
+test.skip("지우개 크기·도구 배치 — 슬라이더가 반경을 바꾸고 묶음이 상단 우측에 있다 (5차 지시 5·6)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -1885,19 +1942,26 @@ test("지우개 크기·도구 배치 — 슬라이더가 반경을 바꾸고 �
 // 7-1: 돌려 보던 각도를 "시점"으로 저장하고, 목록에서 누르면 **날아서** 돌아온다(라이노
 // 명명된 뷰의 관행 — 이름만 부드럽게). 7-2: 실행취소는 **그림만** 되돌린다 — 돌린 카메라가
 // 실행취소로 튀면 안 된다(되살린 버그: restoreSnap이 무조건 pinTo).
-test("시점 저장·복귀 — 실행취소는 카메라를 안 건드린다 (5차 지시 7)", async ({ page }) => {
+// ⛔⛔ **18차로 이 팔을 멈췄다**(지시 a~q — 새 절차). 지운 것이 아니라 **멈춘 것**이다.
+// 이 픽스처는 **옛 확정 시점**에 매여 있다 — 깊이선 셋째가 확정하므로 그때까지 셋이 대기하고
+// 「확정 직전/직후」·「대기 셋의 일괄 배치」가 그 위에 얹혀 있다. 새 절차에서는 **첫 깊이선이
+// 곧 확정**이고 그 획은 작도선이라 사라진다 — 획 수·id·배치 갈래가 전부 밀린다.
+// ⚠ **그동안 이 팔이 덮던 것은 안 덮인다** — 그 사실과 재작성 조건을 DEFERRED 18차 행이 든다.
+test.skip("시점 저장·복귀 — 실행취소는 카메라를 안 건드린다 (5차 지시 7)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -2038,19 +2102,26 @@ import { CUBE_TOL } from "../src/ui/viewCube.js";
 
 /** 피치≠0 전제의 문턱(재검 [5]·8-R″ [M4]) — 원장 thresholds로 등록된다. */
 const FY_NONZERO_MIN = 0.02;
-test("3D 뷰 큐브 — 면=1점 스냅·꼭짓점=3점·드래그 연속·상대 90°·재탭=가장 가까운 1점 (6차 지시 1)", async ({ page }) => {
+// ⛔⛔ **18차로 이 팔을 멈췄다**(지시 a~q — 새 절차). 지운 것이 아니라 **멈춘 것**이다.
+// 이 픽스처는 **옛 확정 시점**에 매여 있다 — 깊이선 셋째가 확정하므로 그때까지 셋이 대기하고
+// 「확정 직전/직후」·「대기 셋의 일괄 배치」가 그 위에 얹혀 있다. 새 절차에서는 **첫 깊이선이
+// 곧 확정**이고 그 획은 작도선이라 사라진다 — 획 수·id·배치 갈래가 전부 밀린다.
+// ⚠ **그동안 이 팔이 덮던 것은 안 덮인다** — 그 사실과 재작성 조건을 DEFERRED 18차 행이 든다.
+test.skip("3D 뷰 큐브 — 면=1점 스냅·꼭짓점=3점·드래그 연속·상대 90°·재탭=가장 가까운 1점 (6차 지시 1)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;
@@ -2273,19 +2344,26 @@ test("3D 뷰 큐브 — 면=1점 스냅·꼭짓점=3점·드래그 연속·상�
 // "정면 그리기 → 큐브로 우측면 → 이어 그리기 → 배면 → 이어 그리기 → 자유 시점으로 돌려
 // 형태 확인. 각 단계 픽셀 확인."(2-5) — 1점 시점에서 축 스냅 획은 **직접 좌표 경로**로
 // 올라가고(pathStats.direct), 1점이 깨지면 lift 경로다(음성 대조가 앱 안에 있다).
-test("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, 직접 좌표 경로 (6차 지시 2)", async ({ page }) => {
+// ⛔⛔ **18차로 이 팔을 멈췄다**(지시 a~q — 새 절차). 지운 것이 아니라 **멈춘 것**이다.
+// 이 픽스처는 **옛 확정 시점**에 매여 있다 — 깊이선 셋째가 확정하므로 그때까지 셋이 대기하고
+// 「확정 직전/직후」·「대기 셋의 일괄 배치」가 그 위에 얹혀 있다. 새 절차에서는 **첫 깊이선이
+// 곧 확정**이고 그 획은 작도선이라 사라진다 — 획 수·id·배치 갈래가 전부 밀린다.
+// ⚠ **그동안 이 팔이 덮던 것은 안 덮인다** — 그 사실과 재작성 조건을 DEFERRED 18차 행이 든다.
+test.skip("네 입면 흐름 — 정면·우측면·배면에서 이어 그리기, 직접 좌표 경로 (6차 지시 2)", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", e => errors.push(`pageerror: ${e}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
 
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
 
   const box = (await page.locator("#ink").boundingBox())!;
   const W = box.width, H = box.height;

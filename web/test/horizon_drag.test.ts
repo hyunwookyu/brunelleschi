@@ -6,14 +6,13 @@
 // D-L32가 실패한 자리다(사후 사영: 배치 2049 → 792).
 import { describe, it, expect } from "vitest";
 import {
-  newRuleState, stepRule, perspectiveOrder, horizonAdjustable, withHorizon, defaultHorizon,
-  type RuleState, type RLine,
+  newRuleState, stepRule, perspectiveOrder, horizonAdjustable, withHorizon,   type RuleState, type RLine,
 } from "../src/s3d/vpRules.js";
 import { CamState } from "../src/ui/camState.js";
 import { vpSlot, rulesOf } from "./ruleFixture.js";
 
 const SZ: [number, number] = [960, 672];
-const CENTER = defaultHorizon(SZ);      // 336
+const CENTER = (SZ[1] / 2);      // 336
 
 /**
  * 깊이선 둘 — **화면 수평과 30°**라 `depth`로 판정되고(≥8°), 화면 수직과는 60°라
@@ -48,11 +47,13 @@ function feed(st0: RuleState, lines: RLine[]): RuleState {
 
 describe("지평선 끌기 — 조작 가능성", () => {
   it("소실점이 없으면 끌 수 있고, 값이 실제로 바뀐다", () => {
+    // **긋기 전에는 `null`이다**(18차 지시 j — 기본 위치가 없다)
     const st = newRuleState(SZ);
+    expect(st.horizon).toBeNull();
     expect(horizonAdjustable(st)).toBe(true);
     const moved = withHorizon(st, 200, SZ);
     expect(moved.horizon).toBe(200);
-    expect(st.horizon).toBe(CENTER);          // 원본은 안 바뀐다(스냅샷 되돌리기 전제)
+    expect(st.horizon).toBeNull();            // 원본은 안 바뀐다(스냅샷 되돌리기 전제)
   });
 
   it("**반례** — 유한 소실점이 서면 잠기고 상태가 안 바뀐다", () => {
@@ -87,16 +88,18 @@ describe("지평선 끌기 — 조작 가능성", () => {
  */
 describe("2점에서는 피치를 판정하지 않는다 (2026-08-17 A-4)", () => {
   it("2점이 서고 수직축은 화면 수직이다 — 지평선은 첫 소실점의 y다(4차 지시 3)", () => {
-    const st = feed(newRuleState(SZ), [DEPTH_A, DEPTH_A2, DEPTH_A3, DEPTH_B]);
-    expect(st.horizon).toBeCloseTo(V1[1], 3);           // **소실점이 지평선을 정한다**
+    // **지평선을 먼저 긋는다**(18차) — 그 y가 곧 소실점의 y다(같은 값이 되는 것이 계약이다)
+    const st = feed(withHorizon(newRuleState(SZ), V1[1], SZ), [DEPTH_A, DEPTH_A2, DEPTH_A3, DEPTH_B]);
+    expect(st.horizon).toBeCloseTo(V1[1], 3);           // **지평선이 소실점을 정한다**(방향이 뒤집혔다)
     expect(perspectiveOrder(st)).toBe(2);
     expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
   });
 
   it("**회귀** — 지평선을 옮겨 놓아도 3점이 안 된다. 같은 획이면 같은 2점이다", () => {
-    // ⚠ 4차 지시 3으로 사전 지평선은 소실점 확정에 안 쓰인다 — 옮긴 값은 첫 소실점이 덮는다
+    // ⚠⚠ **18차로 방향이 뒤집혔다**: 지평선이 소실점을 정하므로 **옮긴 값이 남는다**.
+    // 그래도 3점은 안 된다 — 수직축은 화면 수직이고 3점은 카메라를 기울인 시점의 성질이다(지시 o).
     const st = feed(withHorizon(newRuleState(SZ), 200, SZ), [DEPTH_A, DEPTH_A2, DEPTH_A3, DEPTH_B]);
-    expect(st.horizon).toBeCloseTo(V1[1], 3);
+    expect(st.horizon).toBeCloseTo(200, 3);
     expect(perspectiveOrder(st)).toBe(2);
     expect(st.slots[2]).toMatchObject({ kind: "screen", dir: "v" });
   });
@@ -136,7 +139,10 @@ describe("지평선 끌기 — 앱 경로(CamState)", () => {
     expect(cam.setHorizon(200)).toBe(true);
     expect(cam.rules.horizon).toBe(1);          // 그 캔버스에서는 이것이 맞다(화면 밖 금지)
     cam.resize([1280, 675]);
-    expect(cam.rules.horizon).toBe(337.5);      // **바닥(675)이 아니라 중앙**
+    // ⚠⚠ **18차로 답이 바뀌었다**: 기본 위치가 없으므로(지시 j) 뜻 없는 y는 **비운다**.
+    // 바닥에 안 붙는다는 것이 이 회귀의 요지이고, «중앙으로 되돌린다»는 옛 기본값의 것이었다.
+    // 비우면 사용자가 **다시 긋는다** — 그것이 새 절차의 첫 동작이다.
+    expect(cam.rules.horizon).toBeNull();       // **바닥(675)도 중앙도 아니다 — 다시 긋는다**
   });
 
   it("창이 바뀌면 지평선이 화면 비율을 지킨다", () => {

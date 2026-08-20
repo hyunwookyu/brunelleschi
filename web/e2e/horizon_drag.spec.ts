@@ -37,7 +37,7 @@ import { PICK_TOL } from "../src/ui/pick.js";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { setupScene } from "./fixture.js";
+import { setupScene, openDrawing } from "./fixture.js";
 
 declare global { interface Window { S2S: any } }
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "stage0", "out");
@@ -84,6 +84,8 @@ async function drag(page: any, dy: number) {
 async function suite(page: any, on: boolean) {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  // **지평선을 먼저 긋는다**(18차 지시 j) — 이 팔이 재는 것은 «그은 뒤의 토글·끌기»다
+  await openDrawing(page);
   await page.evaluate((v: boolean) => window.S2S.setShowHorizon(v), on);
   const empty = await page.evaluate(READ);
   const dragged = await drag(page, 60);

@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 import { constantsSnapshot } from "../test/constants.js";
 import { metricsSnapshot } from "../test/metrics.js";
 import { gate } from "../test/gate.js";
-import { setupScene } from "./fixture.js";
+import { setupScene, openDrawing } from "./fixture.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -86,6 +86,7 @@ async function pixelGap(page: Page, mode: "css" | "backbuffer") {
 test("단일 뷰포트 — 확정 시 3D가 잉크 자리에 그려진다", async ({ page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   led.setup = await setup(page);
 
   led.confirm = await page.evaluate(() => {
@@ -301,12 +302,14 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
   //   #34(v1 `store.ts`가 같은 DB를 쓴다 — 키가 갈렸는지 여기서 함께 본다)
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await page.evaluate(() => new Promise<void>(res => {
     const q = indexedDB.deleteDatabase("sketch2space");
     q.onsuccess = q.onerror = q.onblocked = () => res();
   }));
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await setup(page);
 
   // 확정 → 3D. 그 뒤 **궤도를 돌려 새 뷰**를 만들고 거기서 한 획 더 긋는다(2D 레이어).
@@ -418,6 +421,7 @@ test("저장·복원 — 뷰와 2D 레이어가 새로고침을 넘는다(L-D.2)
   });
   await page.reload();
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const cleared = await page.evaluate(() => window.S2S.doc().strokes.length);
   expect(cleared).toBe(0);
 
@@ -499,6 +503,7 @@ test.afterAll(() => {
 test.skip("가이드 조정 — 늘리기·민감도·선 끌기 (대상이 사라졌다, D-L37)", async ({ page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const l: Record<string, unknown> = {};
 
   // ① 검출 초안만으로는 카메라가 안 선다 — **그 사실 자체가 §5.1의 근거다**
@@ -592,6 +597,7 @@ test("스냅 — 대상·표식·시작점 확정", async ({
  page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const l: Record<string, unknown> = {};
 
   await setup(page);
@@ -726,6 +732,7 @@ test("스냅 — 대상·표식·시작점 확정", async ({
 test("실시간 축 판정 — 미리보기와 확정이 같다", async ({ page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const l: Record<string, unknown> = {};
 
   await setup(page);
@@ -804,6 +811,7 @@ test("실시간 축 판정 — 미리보기와 확정이 같다", async ({ page 
 test("축 고정 — 추론이 거부한 획을 사용자가 강제한다", async ({ page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const l: Record<string, unknown> = {};
 
   await setup(page);
@@ -898,6 +906,7 @@ test("축 고정 — 추론이 거부한 획을 사용자가 강제한다", asyn
 test("뷰 시스템 — 목록·전환·삭제·소유", async ({ page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const l: Record<string, unknown> = {};
 
   await setup(page);
@@ -1111,6 +1120,7 @@ test("뷰 시스템 — 목록·전환·삭제·소유", async ({ page }) => {
 test("궤도 후 계속 그리기 — 새 각도가 새 뷰가 된다", async ({ page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const l: Record<string, unknown> = {};
 
   await setup(page);
@@ -1314,6 +1324,7 @@ test.skip("되돌리기 UI — 승격이 잃은 것이 보이고, 차수로 되�
 test("고치기 — 획을 고르고, 축을 지정하고, 지운다", async ({ page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const l: Record<string, unknown> = {};
 
   l.setup = await page.evaluate(async () => {
@@ -1473,6 +1484,7 @@ test("고치기 — 획을 고르고, 축을 지정하고, 지운다", async ({ 
 test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", async ({ page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const l: Record<string, unknown> = {};
 
   // ---- ① 상자 둘 픽스처. **하나짜리와 규모가 실제로 다른지** 센다
@@ -1611,6 +1623,7 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
   const shot = async () => {
     await page.goto("/l.html");
     await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
     // ⚠ **저장 복원 경쟁을 끊는다**(2026-08-17 3차에서 간헐 실패로 드러났다): `getDoc2` 복원이
     // 비동기라, 앞 판의 자동 저장본이 `setup`의 획 주입과 **경주**한다 — 복원이 먼저 오면
     // 두 판의 그림이 달라진다. 저장소를 지우고 다시 연 뒤에 세운다(출발점을 같게).
@@ -1620,6 +1633,7 @@ test("L-D.3 종단 — 상자 둘에서 연쇄·표식 다중·지연·회귀", 
     }));
     await page.reload();
     await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
     await setup(page, { boxes: 2 });
     await page.evaluate(() => {
       window.S2S.confirmNow();

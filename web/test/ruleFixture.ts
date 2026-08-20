@@ -26,8 +26,6 @@ export function rulesOf(slots: [Slot | null, Slot | null, Slot | null],
   return {
     slots,
     horizon: h && h.kind === "vp" ? h.at[1] : imgSize[1] / 2,
-    depthLines: [],
-    verticalLines: [],
     // **1점 투시의 f는 거리점에서 온다**(C-2) — 픽스처는 소실점을 직접 넣으므로 `null`이다.
     // 소실점이 둘 이상이면 안 쓰인다(f가 6.2·6.3에서 나온다).
   };

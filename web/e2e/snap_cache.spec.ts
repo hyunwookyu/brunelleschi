@@ -23,7 +23,7 @@ import { fileURLToPath } from "node:url";
 import { constantsSnapshot } from "../test/constants.js";
 import { metricsSnapshot } from "../test/metrics.js";
 import { gate } from "../test/gate.js";
-import { setupConfirmed } from "./fixture.js";
+import { setupConfirmed, openDrawing } from "./fixture.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -36,6 +36,7 @@ declare global {
 test("뷰 왕복 직후 첫 질의가 끝점을 문다(캐시가 시점을 키로 갖는다)", async ({ page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   led.setup = await setupConfirmed(page);
 
   // ---- 확정 뷰에서 3D 끝점 둘의 화면 자리(참조) — 왕복 뒤 이 자리를 겨냥한다

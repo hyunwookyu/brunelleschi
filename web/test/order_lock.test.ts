@@ -434,7 +434,7 @@ function p0Diag(cam: CamState): NonNullable<RunOut["p0"]> {
     const s = st.slots[i];
     return s != null && s.kind === "screen" && s.dir === "h";
   });
-  const pend = st.depthLines;
+  const pend: { a: [number, number]; b: [number, number] }[] = [];   // ⛔ 대기 풀 폐기(18차 지시 a)
   let maxSep: number | null = null;
   if (pend.length >= 2) {
     maxSep = 0;

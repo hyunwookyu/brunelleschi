@@ -20,26 +20,22 @@
     #stage{position:absolute;inset:0}
     #stage canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
     #ink{position:absolute;inset:0;width:100%;height:100%;touch-action:none;z-index:2}
-    #status{position:absolute;left:10px;top:10px;z-index:3;max-width:min(46ch,60%);
-            background:rgba(255,255,255,.86);border:1px solid #e3e3e3;border-radius:8px;
-            padding:8px 10px;line-height:1.55;pointer-events:none;backdrop-filter:blur(2px)}
-    #status .hdr{font-size:13px;margin-bottom:2px}
-    #status .lock{background:#111;color:#fff;border-radius:4px;padding:0 5px;font-size:11px}
-    #status .dim{color:#888}
-    #status .f{color:#2471a3}
-    #status .warn{color:#b9770e}
-    #status .error{color:#c0392b}
-    #status .note{margin-top:4px;color:#444;border-top:1px solid #eee;padding-top:4px}
+    /* **알림은 화면 최상단 한 줄이다**(2026-08-20 18차 지시 f~i · D-L110).
+       박스를 만들지 않는다 — 화면을 최대한 덜 가려야 한다.
+       ⚠ **두 줄로 안 늘어난다**: `nowrap` + 말줄임이 "한 줄에 안 들어가면 문구를 줄인다"(지시 i)를
+       코드로 강제한다. 평소에는 비어 있고(지시 g) `:empty`가 자리마저 없앤다. */
+    #status{position:absolute;left:0;right:0;top:0;z-index:6;
+            font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+            color:#111;padding:7px 14px;pointer-events:none;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+            background:linear-gradient(rgba(255,255,255,.94),rgba(255,255,255,.72) 70%,rgba(255,255,255,0))}
+    #status:empty{display:none}
     #status b{font-weight:600}
-    /* §6.2 승격 요약 — **눈에 띄어야 한다.** 승격은 품질을 올리고 배치를 줄이므로
-       사용자가 되돌릴 이유가 실제로 있고(L-C.1), 자동 신호가 없어 이 표시가 유일한 판정 수단이다.
-       ⚠ `#status`가 `pointer-events:none`이라 **여기서 되살려야** 재연결 버튼이 눌린다. */
-    #status .promote{pointer-events:auto;margin:-8px -10px 8px;padding:8px 10px;
-                     background:#fff6e5;border-bottom:1px solid #f0d9b0;
-                     border-radius:8px 8px 0 0}
-    #status .promote button{font:inherit;font-size:13px;padding:3px 9px;margin:3px 0;
-                            border:1px solid #d4a95c;border-radius:5px;
-                            background:#fff;color:#111;cursor:pointer}
+    #status .dim{color:#888}
+    /* **선택은 밑줄 친 단어다**(지시 f) — 캐드 명령행의 선례(A-3). 버튼 상자가 아니다. */
+    #status u{pointer-events:auto;cursor:pointer;margin-left:16px;
+              text-underline-offset:3px;text-decoration-thickness:1px}
+    #status u:hover{color:#c0392b}
     #bar{flex:0 0 auto;display:flex;gap:6px;align-items:center;padding:7px 10px;
          border-top:1px solid #e3e3e3;background:#fafafa;overflow-x:auto}
     #bar button{font:inherit;padding:5px 11px;border:1px solid #d4d4d4;border-radius:6px;

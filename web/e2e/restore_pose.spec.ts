@@ -30,7 +30,7 @@ import { fileURLToPath } from "node:url";
 import { constantsSnapshot } from "../test/constants.js";
 import { metricsSnapshot } from "../test/metrics.js";
 import { gate } from "../test/gate.js";
-import { setupConfirmed, wiringGapPx } from "./fixture.js";
+import { setupConfirmed, wiringGapPx, openDrawing } from "./fixture.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT = resolve(ROOT, "stage0", "out");
@@ -51,6 +51,7 @@ async function saveAndReload(page: import("@playwright/test").Page) {
 test("복원 — 확정 뷰가 무대에 다시 물린다(재핀)", async ({ page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   led.setup = await setupConfirmed(page);
   const before = await page.evaluate(() => ({
     pinned: window.S2S.camPose().pinned,
@@ -152,6 +153,7 @@ test("복원 — 확정 뷰가 무대에 다시 물린다(재핀)", async ({ pag
 test("복원 — 저장된 시점(회전 뷰)이 자세 그대로 돌아온다", async ({ page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await setupConfirmed(page);
   // 결정론적 회전 시점: 뷰 큐브의 절대 스냅과 같은 경로(snapToDir, ms=0)로 자세를 만들고
   // `시점 저장`(앱 경로)으로 뷰에 담는다.
@@ -207,6 +209,7 @@ test("복원 — 저장된 시점(회전 뷰)이 자세 그대로 돌아온다",
 test("궤도 진입 — 렌즈(투영행렬)가 유지된다", async ({ page }) => {
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   await setupConfirmed(page);
   const r = await page.evaluate(async () => {
     const S = window.S2S;
@@ -254,6 +257,7 @@ test("주점이 화면 중심 밖(지평선 0.23H) — 궤도 진입 렌즈·회
   // 이어받기가 **구성상 0으로만** 지나갔다 — 여기서 그 절반을 실측한다(#12 동작점 추가).
   await page.goto("/l.html");
   await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
   const r = await page.evaluate(async () => {
     const S = window.S2S;
     document.querySelector<HTMLButtonElement>('#bar button[data-act="clear"]')!.click();

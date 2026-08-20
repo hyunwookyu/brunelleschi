@@ -21,7 +21,7 @@ import { writeFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { skipReason } from "./dataDeps.js";
-import { resolvePool, type RLine } from "../src/s3d/vpRules.js";
+import { type RLine } from "../src/s3d/vpRules.js";
 import { liftAll, LIFT_TOL, type LiftStroke, type LiftCtx, type DeclaredJoint }
   from "../src/s3d/lift.js";
 import { anchorToTarget } from "../src/s3d/liftAnchor.js";
@@ -156,11 +156,12 @@ function poolGateExposure() {
   const SZP: [number, number] = [1280, 675];
   const rows: { name: string; intent: "vp" | "corner"; off: boolean; on: boolean;
                 at: [number, number] | null }[] = [];
-  const put = (name: string, intent: "vp" | "corner", pool: RLine[]) => {
-    const off = resolvePool(pool, SZP, false);
-    const on = resolvePool(pool, SZP, true);
-    rows.push({ name, intent, off: !!off, on: !!on,
-                at: on ? [Math.round(on.at[0]), Math.round(on.at[1])] : null });
+  // ⛔ **`resolvePool` 갈래를 은퇴시켰다**(2026-08-20 18차 지시 a) — 대기 규칙이 폐기됐다.
+  // 재던 것은 «선언 아래서 두 문(이음점·`beyondSegment`)을 푸는가»였고, 새 절차에는
+  // 그 문도 그 선언도 없다(소실점 = 선 × 지평선). 사용자 보고의 재현은
+  // `vp_rules.test.ts`의 «끝점을 공유해도 선다»가 이어받았다.
+  const put = (name: string, intent: "vp" | "corner", _pool: RLine[]) => {
+    rows.push({ name, intent, off: false, on: false, at: null });
   };
   const V: [number, number] = [1050, 250];
   put("꼭짓점 방사(사용자 보고 ①의 형태)", "vp",

@@ -40,25 +40,29 @@ import { metricsSnapshot } from "../test/metrics.js";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { setupScene } from "./fixture.js";
+import { setupScene, openDrawing } from "./fixture.js";
 import { AXIS_TOL } from "../src/s3d/axis.js";
 import { stepRule, newRuleState, type RuleState, type RLine } from "../src/s3d/vpRules.js";
 import { VP_INFINITE_RATIO } from "../src/s3d/camera.js";
 
 declare global { interface Window { S2S: any; __SC: any } }
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "stage0", "out");
-const MISALIGNED = "어긋납니다";
+// ⚠⚠ **18차로 문구가 한 줄이 됐다**(지시 f~i) — 박스가 없어졌고 마크업도 빠졌다.
+// 판정자는 **그 한 줄의 내용**이다(`#status`의 텍스트 = `S2S.noteLine().text`).
+const MISALIGNED = "어디도 향하지 않습니다";
 
 /** 한 획을 그은 뒤 읽는 것 — `warned`와 **그 이유를 가르는 값들**. */
 const READ = `(async () => {
   const S = window.S2S;
   const ax = await import("/src/s3d/axis.ts");
-  const el = document.querySelector(".note");
+  const el = document.getElementById("status");
   const sts = S.doc().strokes;
   const last = sts[sts.length-1];
   const rep = last ? ax.representative(last.pts2d) : null;
   const vps = S.cam.vps().filter(Boolean);
   return { note: el ? el.textContent : null, snap_note: S.snapNote(),
+           /** 지시 f — 알림에 붙은 캐드식 동작(밑줄 단어). 경고면 「지우기·무시」가 붙는다. */
+           note_acts: S.noteLine().acts,
            order: S.order(),
            /** **판정이 쓰는 양**(#49) — 이 획이 어느 소실점에 얼마나 안 맞나 */
            misfit_min: rep && vps.length
@@ -125,6 +129,7 @@ test("경고는 **어긋난 획에만** 뜬다 (D-L100)", async ({ page }) => {
   const setOrder = async (n: 2 | 3) => {
     await page.goto("/l.html");
     await page.waitForFunction(() => !!window.S2S);
+  await openDrawing(page);
     setup = await setupScene(page);
     box = (await page.locator("#ink").boundingBox())!;
     await page.evaluate(k => {
