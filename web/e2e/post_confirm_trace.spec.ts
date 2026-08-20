@@ -205,7 +205,15 @@ test("확정 후 획 경로 표식 — 전수 원장 (20차 지시 1)", async ({
       reachability: "되살림 팔 C1이 도달 가능성이다 — 수리 전 거동에서 같은 좌표의 사선이 "
         + "실제로 사라지고(`in_doc` false) 차수가 움직인다(`state.revived`).",
       reachability_source: "state/revived",
-      reachability_value: { order_before: orderBeforeRevive, order_after: stateC.order },
+      // ⚠ 출처 필드와 **같은 모양**으로 적는다(selfcheck의 값-출처 대조가 그대로 맞대본다)
+      reachability_value: { order_before: orderBeforeRevive, ...stateC },
+    },
+    selfcheck_notes: {
+      zero_verdicts: "`verdicts_by_site`의 0은 **그 장면에서 그 갈래가 안 났다**다 — "
+        + "horizon_draft는 통과만 있는 자리(지평선이 되면 획이 아니다)라 reject·skip이 "
+        + "정의상 0이고, chain_cross의 pass·skip 0은 이 장면의 대기 획이 교차 전에 "
+        + "굽음·축 미분류로 걸렸기 때문이다(reject 행이 그 사유를 든다). "
+        + "분모(합)는 같은 표의 세 칸 합이다.",
     },
     pitfall_citations: [12, 21, 25, 38, 43, 52, 53],
     errors,

@@ -1,0 +1,809 @@
+{
+ "what": "불변식(20차 지시 3 · D-L118): **그리기 국면에 들어간 뒤** 그은 획은 반드시 화면에 남는다 — 문서와 픽셀 둘 다. ⚠ 작도 국면(확정 직후 연속 작도)은 사거리 밖이다 — 그 사선은 설계대로 작도선이 된다(DEFERRED 20차 3행).",
+ "how": "P1·P2 각각에서 그리기 국면에 들어간 뒤 고정 표의 방향·길이로 수십 획을 긋고, 획마다 in_doc · (대기면) drawn_alpha와 중점 9×9 픽셀 · (3D면) three 층 등재를 읽는다. 되살림 팔은 setDraftGate(false)로 수리 전 거동을 켜고 **같은 고정 표를 전수로** 다시 긋는다(#30 · #12).",
+ "counts": {
+  "p1_drawn": 25,
+  "p2_drawn": 25,
+  "p1_lifted": 1,
+  "p2_lifted": 1,
+  "p1_waiting": 24,
+  "p2_waiting": 24
+ },
+ "what_this_does_not_say": [
+  "dpr 1 · 마우스 합성 · 두 구도다(#12·#21).",
+  "**작도 국면(확정 직후 첫 사선)은 이 팔 밖이다** — 그 획은 설계대로 작도선이 되어 사라진다(18차 지시 4 · DEFERRED 20차 3행이 그 잔존 사거리를 든다).",
+  "3D로 올라간 획의 «화면에 있다»는 three 층 등재(`lifted_ids`)로 재고 WebGL 픽셀은 안 읽는다(preserveDrawingBuffer 없음) — 그 층의 픽셀 검증은 `stage.spec`의 몫이다.",
+  "놓인 좌표가 옳은가는 안 잰다 — 재는 것은 «남는가»뿐이다.",
+  "궤도를 돌린 상태의 2D 대기 층(§9.4 — 다른 뷰 소유)은 이 팔 밖이다(뷰 불일치는 render:other_view 표식이 들고, 그 획은 뷰로 돌아오면 다시 그려진다 — 삭제가 아니다).",
+  "되살림 방향별 팔의 «사라진 수»는 이 좌표 표의 값이다 — 지평선에 유한 교점을 만드는 방향만 소비되므로, 표가 달라지면 그 수도 달라진다(#46)."
+ ],
+ "p1": {
+  "state": {
+   "order": 1,
+   "strokes": 25,
+   "lifted": 1,
+   "drafting": {
+    "drafting": false,
+    "gate_on": true
+   }
+  },
+  "rows": [
+   {
+    "id": "s2",
+    "in_doc": true,
+    "seg3d": true,
+    "drawn_alpha": null,
+    "midpoint_px": null,
+    "in_lifted_layer": true
+   },
+   {
+    "id": "s3",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 26,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s4",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 31,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s5",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 33,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s6",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 33,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s7",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 30,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s8",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 27,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s9",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 25,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s10",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 36,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s11",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 51,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s12",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 24,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s13",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 31,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s14",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 27,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s15",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 26,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s16",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 30,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s17",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 39,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s18",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 25,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s19",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 29,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s20",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 40,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s21",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 26,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s22",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 36,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s23",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 57,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s24",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 25,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s25",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 39,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s26",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 44,
+    "in_lifted_layer": false
+   }
+  ]
+ },
+ "p2": {
+  "state": {
+   "order": 2,
+   "strokes": 25,
+   "lifted": 1,
+   "drafting": {
+    "drafting": false,
+    "gate_on": true
+   }
+  },
+  "rows": [
+   {
+    "id": "s3",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 27,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s4",
+    "in_doc": true,
+    "seg3d": true,
+    "drawn_alpha": null,
+    "midpoint_px": null,
+    "in_lifted_layer": true
+   },
+   {
+    "id": "s5",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 43,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s6",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 37,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s7",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 32,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s8",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 34,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s9",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 29,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s10",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 26,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s11",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 31,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s12",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 48,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s13",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 35,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s14",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 28,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s15",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 27,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s16",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 25,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s17",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 29,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s18",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 34,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s19",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 25,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s20",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 29,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s21",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 29,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s22",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 26,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s23",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 35,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s24",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 46,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s25",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 36,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s26",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 45,
+    "in_lifted_layer": false
+   },
+   {
+    "id": "s27",
+    "in_doc": true,
+    "seg3d": false,
+    "drawn_alpha": 0.315,
+    "midpoint_px": 48,
+    "in_lifted_layer": false
+   }
+  ]
+ },
+ "revived_bug": {
+  "id": "s3",
+  "survival": {
+   "id": "s3",
+   "in_doc": false,
+   "seg3d": false,
+   "drawn_alpha": null,
+   "midpoint_px": null,
+   "in_lifted_layer": false
+  },
+  "order_before": 1,
+  "order": 2,
+  "fired": true
+ },
+ "revived_fan": {
+  "drawn": 24,
+  "vanished": 6,
+  "survived": 18,
+  "by_feed_event": {
+   "사건: rejected": 16,
+   "사건: support": 2,
+   "vp_fixed(소비)": 6
+  },
+  "rows": [
+   {
+    "dir": 0,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 1,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 2,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 3,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 4,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 5,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 6,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: support"
+   },
+   {
+    "dir": 7,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 8,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 9,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 10,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 11,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 12,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 13,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 14,
+    "id": "s3",
+    "in_doc": false,
+    "order": 2,
+    "feed": "사건: vp_fixed"
+   },
+   {
+    "dir": 15,
+    "id": "s3",
+    "in_doc": false,
+    "order": 2,
+    "feed": "사건: vp_fixed"
+   },
+   {
+    "dir": 16,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 17,
+    "id": "s3",
+    "in_doc": false,
+    "order": 2,
+    "feed": "사건: vp_fixed"
+   },
+   {
+    "dir": 18,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: support"
+   },
+   {
+    "dir": 19,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 20,
+    "id": "s3",
+    "in_doc": true,
+    "order": 1,
+    "feed": "사건: rejected"
+   },
+   {
+    "dir": 21,
+    "id": "s3",
+    "in_doc": false,
+    "order": 2,
+    "feed": "사건: vp_fixed"
+   },
+   {
+    "dir": 22,
+    "id": "s3",
+    "in_doc": false,
+    "order": 2,
+    "feed": "사건: vp_fixed"
+   },
+   {
+    "dir": 23,
+    "id": "s3",
+    "in_doc": false,
+    "order": 2,
+    "feed": "사건: vp_fixed"
+   }
+  ]
+ },
+ "gate": {
+  "registered": "① 그리기 국면의 전 획(p1·p2 합 40+)이 문서에 남고, 대기면 중점 픽셀>0 · 3D면 three 층 등재다 ② P1 팔의 차수가 사선 수십 획 뒤에도 1이다(조용한 승격 없음) ③ 되살림(수리 전 거동)에서는 같은 사선이 사라지고 차수가 1→2로 움직인다.",
+  "reachability": "되살림 팔이 도달 가능성이다 — 수리 전 거동에서 첫 사선이 소비되고(`revived_bug`) 같은 고정 표에서 사라진 수가 0이 아니다(`revived_fan.vanished`).",
+  "reachability_source": "revived_fan/vanished",
+  "reachability_value": 6
+ },
+ "pitfall_citations": [
+  12,
+  21,
+  30,
+  38,
+  53
+ ],
+ "errors": [],
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}

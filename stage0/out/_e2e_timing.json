@@ -1,13 +1,13 @@
 {
   "config": {
     "argv": [
-      "/opt/node22/bin/node",
-      "/home/user/brunelleschi/web/node_modules/.bin/playwright",
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\node_modules\\@playwright\\test\\cli.js",
       "test",
       "--reporter=json"
     ],
-    "configFile": "/home/user/brunelleschi/web/playwright.config.ts",
-    "rootDir": "/home/user/brunelleschi/web/e2e",
+    "configFile": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\playwright.config.ts",
+    "rootDir": "C:/Users/home/Downloads/SKETCH2SPACE/web/e2e",
     "failOnFlakyTests": false,
     "forbidOnly": false,
     "fullyParallel": false,
@@ -23,7 +23,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/home/user/brunelleschi/web/test-results",
+        "outputDir": "C:/Users/home/Downloads/SKETCH2SPACE/web/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -31,7 +31,7 @@
         },
         "id": "chromium",
         "name": "chromium",
-        "testDir": "/home/user/brunelleschi/web/e2e",
+        "testDir": "C:/Users/home/Downloads/SKETCH2SPACE/web/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -88,12 +88,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 2025,
+                  "duration": 1230,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:20.237Z",
+                  "startTime": "2026-08-20T15:13:09.655Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -130,12 +130,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 2227,
+                  "duration": 1431,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:22.515Z",
+                  "startTime": "2026-08-20T15:13:11.101Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -172,12 +172,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 7780,
+                  "duration": 7020,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:24.771Z",
+                  "startTime": "2026-08-20T15:13:12.565Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -209,7 +209,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                     "line": 40,
                     "column": 6
                   }
@@ -228,12 +228,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:32.637Z",
+                  "startTime": "2026-08-20T15:13:19.633Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                         "line": 40,
                         "column": 6
                       }
@@ -261,7 +261,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                     "line": 339,
                     "column": 6
                   }
@@ -280,12 +280,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:32.638Z",
+                  "startTime": "2026-08-20T15:13:19.634Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                         "line": 339,
                         "column": 6
                       }
@@ -313,7 +313,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                     "line": 485,
                     "column": 6
                   }
@@ -332,12 +332,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:32.638Z",
+                  "startTime": "2026-08-20T15:13:19.634Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                         "line": 485,
                         "column": 6
                       }
@@ -365,7 +365,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                     "line": 631,
                     "column": 6
                   }
@@ -384,12 +384,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:32.638Z",
+                  "startTime": "2026-08-20T15:13:19.634Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                         "line": 631,
                         "column": 6
                       }
@@ -417,7 +417,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                     "line": 796,
                     "column": 6
                   }
@@ -436,12 +436,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:32.638Z",
+                  "startTime": "2026-08-20T15:13:19.634Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                         "line": 796,
                         "column": 6
                       }
@@ -474,12 +474,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 3348,
+                  "duration": 1986,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:32.638Z",
+                  "startTime": "2026-08-20T15:13:19.634Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -503,7 +503,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                     "line": 1072,
                     "column": 6
                   }
@@ -522,12 +522,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:36.003Z",
+                  "startTime": "2026-08-20T15:13:21.629Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                         "line": 1072,
                         "column": 6
                       }
@@ -555,7 +555,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                     "line": 1231,
                     "column": 6
                   }
@@ -574,12 +574,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:36.003Z",
+                  "startTime": "2026-08-20T15:13:21.629Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                         "line": 1231,
                         "column": 6
                       }
@@ -607,7 +607,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                     "line": 1473,
                     "column": 6
                   }
@@ -626,12 +626,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:36.003Z",
+                  "startTime": "2026-08-20T15:13:21.629Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                         "line": 1473,
                         "column": 6
                       }
@@ -664,12 +664,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1956,
+                  "duration": 1281,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:36.003Z",
+                  "startTime": "2026-08-20T15:13:21.629Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -698,12 +698,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1366,
+                  "duration": 898,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:37.976Z",
+                  "startTime": "2026-08-20T15:13:22.918Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -727,7 +727,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                     "line": 1829,
                     "column": 6
                   }
@@ -746,12 +746,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:39.355Z",
+                  "startTime": "2026-08-20T15:13:23.825Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                         "line": 1829,
                         "column": 6
                       }
@@ -779,7 +779,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                     "line": 1950,
                     "column": 6
                   }
@@ -798,12 +798,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:39.355Z",
+                  "startTime": "2026-08-20T15:13:23.825Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                         "line": 1950,
                         "column": 6
                       }
@@ -831,7 +831,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                     "line": 2110,
                     "column": 6
                   }
@@ -850,12 +850,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:39.355Z",
+                  "startTime": "2026-08-20T15:13:23.825Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                         "line": 2110,
                         "column": 6
                       }
@@ -883,7 +883,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                     "line": 2352,
                     "column": 6
                   }
@@ -902,12 +902,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:39.355Z",
+                  "startTime": "2026-08-20T15:13:23.825Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/basic_flow.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\basic_flow.spec.ts",
                         "line": 2352,
                         "column": 6
                       }
@@ -948,12 +948,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1290,
+                  "duration": 767,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:39.364Z",
+                  "startTime": "2026-08-20T15:13:23.846Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -985,7 +985,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/confirm_link.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\confirm_link.spec.ts",
                     "line": 96,
                     "column": 6
                   }
@@ -1004,12 +1004,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:40.666Z",
+                  "startTime": "2026-08-20T15:13:24.621Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/confirm_link.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\confirm_link.spec.ts",
                         "line": 96,
                         "column": 6
                       }
@@ -1057,12 +1057,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 905,
+                      "duration": 453,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-20T08:58:40.679Z",
+                      "startTime": "2026-08-20T15:13:24.638Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1087,7 +1087,7 @@
                       "type": "skip",
                       "description": "dpr 1에서는 ×dpr 자리가 제자리다 — 가를 것이 없다",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/coords.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\coords.spec.ts",
                         "line": 157,
                         "column": 12
                       }
@@ -1106,13 +1106,13 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-20T08:58:41.596Z",
+                      "startTime": "2026-08-20T15:13:25.099Z",
                       "annotations": [
                         {
                           "type": "skip",
                           "description": "dpr 1에서는 ×dpr 자리가 제자리다 — 가를 것이 없다",
                           "location": {
-                            "file": "/home/user/brunelleschi/web/e2e/coords.spec.ts",
+                            "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\coords.spec.ts",
                             "line": 157,
                             "column": 12
                           }
@@ -1145,12 +1145,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 987,
+                      "duration": 472,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-20T08:58:41.714Z",
+                      "startTime": "2026-08-20T15:13:25.209Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1187,12 +1187,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1530,
+                      "duration": 678,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-20T08:58:42.719Z",
+                      "startTime": "2026-08-20T15:13:25.689Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1221,12 +1221,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 812,
+                      "duration": 408,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-20T08:58:44.263Z",
+                      "startTime": "2026-08-20T15:13:26.375Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1255,12 +1255,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1689,
+                      "duration": 743,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-20T08:58:45.088Z",
+                      "startTime": "2026-08-20T15:13:26.791Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1297,12 +1297,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1858,
+                      "duration": 733,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-20T08:58:46.791Z",
+                      "startTime": "2026-08-20T15:13:27.542Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1331,12 +1331,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 963,
+                      "duration": 428,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-20T08:58:48.664Z",
+                      "startTime": "2026-08-20T15:13:28.283Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1365,12 +1365,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2964,
+                      "duration": 805,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-20T08:58:49.641Z",
+                      "startTime": "2026-08-20T15:13:28.719Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1409,12 +1409,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 4070,
+                  "duration": 3157,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:52.643Z",
+                  "startTime": "2026-08-20T15:13:29.551Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1446,7 +1446,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/dir_state.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\dir_state.spec.ts",
                     "line": 39,
                     "column": 6
                   }
@@ -1465,12 +1465,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:56.728Z",
+                  "startTime": "2026-08-20T15:13:32.716Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/dir_state.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\dir_state.spec.ts",
                         "line": 39,
                         "column": 6
                       }
@@ -1511,12 +1511,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 3257,
+                  "duration": 2281,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:58:56.743Z",
+                  "startTime": "2026-08-20T15:13:32.731Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1553,12 +1553,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1240,
+                  "duration": 585,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:00.022Z",
+                  "startTime": "2026-08-20T15:13:35.036Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1595,12 +1595,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 2910,
+                  "duration": 2178,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:01.285Z",
+                  "startTime": "2026-08-20T15:13:35.646Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1637,12 +1637,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 3472,
+                  "duration": 2827,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:04.219Z",
+                  "startTime": "2026-08-20T15:13:37.851Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1679,12 +1679,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1763,
+                  "duration": 1152,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:07.715Z",
+                  "startTime": "2026-08-20T15:13:40.704Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1721,12 +1721,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1189,
+                      "duration": 644,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-20T08:59:09.490Z",
+                      "startTime": "2026-08-20T15:13:41.863Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1765,12 +1765,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 2326,
+                  "duration": 1283,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:10.711Z",
+                  "startTime": "2026-08-20T15:13:42.533Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1807,12 +1807,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 2042,
+                  "duration": 1476,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:13.062Z",
+                  "startTime": "2026-08-20T15:13:43.834Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1844,7 +1844,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/hover_lock.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\hover_lock.spec.ts",
                     "line": 306,
                     "column": 6
                   }
@@ -1863,12 +1863,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:15.116Z",
+                  "startTime": "2026-08-20T15:13:45.319Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/hover_lock.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\hover_lock.spec.ts",
                         "line": 306,
                         "column": 6
                       }
@@ -1909,12 +1909,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 10984,
+                  "duration": 9322,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:15.134Z",
+                  "startTime": "2026-08-20T15:13:45.341Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1951,12 +1951,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1072,
+                  "duration": 463,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:26.137Z",
+                  "startTime": "2026-08-20T15:13:54.695Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1993,12 +1993,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 2001,
+                  "duration": 1074,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:27.237Z",
+                  "startTime": "2026-08-20T15:13:55.182Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2009,6 +2009,132 @@
           "id": "105ecfddc14d4c67e08c-ef83bb1ba271b2f077ca",
           "file": "osnap_kinds.spec.ts",
           "line": 36,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "post_confirm_invariant.spec.ts",
+      "file": "post_confirm_invariant.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "불변식 — 확정 후 그은 획은 반드시 화면에 남는다 (20차 지시 3)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 45819,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-20T15:13:56.280Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e06150b66109e07945e9-77edd5aed46c2e94c89e",
+          "file": "post_confirm_invariant.spec.ts",
+          "line": 101,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "post_confirm_trace.spec.ts",
+      "file": "post_confirm_trace.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "확정 후 획 경로 표식 — 전수 원장 (20차 지시 1)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4759,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-20T15:14:42.119Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e86cea0da2e296dc04a2-5dcde72eb2e1ef729e56",
+          "file": "post_confirm_trace.spec.ts",
+          "line": 68,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "procedure_repair.spec.ts",
+      "file": "procedure_repair.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "새 절차 후 결함 넷 — 작도선·지평선 y·면 위",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7649,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-08-20T15:14:46.902Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "67bff5a8dc85ca2c503e-9f603620065e156fd835",
+          "file": "procedure_repair.spec.ts",
+          "line": 90,
           "column": 1
         }
       ]
@@ -2035,12 +2161,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1567,
+                  "duration": 678,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:29.264Z",
+                  "startTime": "2026-08-20T15:14:54.579Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2069,12 +2195,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1568,
+                  "duration": 672,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:30.844Z",
+                  "startTime": "2026-08-20T15:14:55.264Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2103,12 +2229,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1169,
+                  "duration": 451,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:32.425Z",
+                  "startTime": "2026-08-20T15:14:55.944Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2137,12 +2263,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 691,
+                  "duration": 307,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:33.607Z",
+                  "startTime": "2026-08-20T15:14:56.402Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2179,12 +2305,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1733,
+                  "duration": 832,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:34.336Z",
+                  "startTime": "2026-08-20T15:14:56.741Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2221,12 +2347,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 2124,
+                  "duration": 873,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:36.132Z",
+                  "startTime": "2026-08-20T15:14:57.614Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2255,12 +2381,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 3142,
+                  "duration": 1790,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:38.270Z",
+                  "startTime": "2026-08-20T15:14:58.494Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2284,7 +2410,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/stage.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\stage.spec.ts",
                     "line": 503,
                     "column": 6
                   }
@@ -2303,12 +2429,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:41.428Z",
+                  "startTime": "2026-08-20T15:15:00.291Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/stage.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\stage.spec.ts",
                         "line": 503,
                         "column": 6
                       }
@@ -2341,12 +2467,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1574,
+                  "duration": 766,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:41.428Z",
+                  "startTime": "2026-08-20T15:15:00.291Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2375,12 +2501,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1274,
+                  "duration": 630,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:43.019Z",
+                  "startTime": "2026-08-20T15:15:01.064Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2409,12 +2535,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1558,
+                  "duration": 728,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:44.310Z",
+                  "startTime": "2026-08-20T15:15:01.701Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2443,12 +2569,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1490,
+                  "duration": 666,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:45.884Z",
+                  "startTime": "2026-08-20T15:15:02.436Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2477,12 +2603,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 2312,
+                  "duration": 1282,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:47.390Z",
+                  "startTime": "2026-08-20T15:15:03.110Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2506,7 +2632,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/stage.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\stage.spec.ts",
                     "line": 1316,
                     "column": 6
                   }
@@ -2525,12 +2651,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:49.716Z",
+                  "startTime": "2026-08-20T15:15:04.399Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/stage.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\stage.spec.ts",
                         "line": 1316,
                         "column": 6
                       }
@@ -2558,7 +2684,7 @@
                 {
                   "type": "skip",
                   "location": {
-                    "file": "/home/user/brunelleschi/web/e2e/stage.spec.ts",
+                    "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\stage.spec.ts",
                     "line": 1323,
                     "column": 6
                   }
@@ -2577,12 +2703,12 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:49.716Z",
+                  "startTime": "2026-08-20T15:15:04.399Z",
                   "annotations": [
                     {
                       "type": "skip",
                       "location": {
-                        "file": "/home/user/brunelleschi/web/e2e/stage.spec.ts",
+                        "file": "C:\\Users\\home\\Downloads\\SKETCH2SPACE\\web\\e2e\\stage.spec.ts",
                         "line": 1323,
                         "column": 6
                       }
@@ -2615,12 +2741,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 871,
+                  "duration": 403,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:49.716Z",
+                  "startTime": "2026-08-20T15:15:04.399Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2649,12 +2775,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 3911,
+                  "duration": 1468,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:50.601Z",
+                  "startTime": "2026-08-20T15:15:04.810Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2691,12 +2817,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 999,
+                  "duration": 478,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:54.555Z",
+                  "startTime": "2026-08-20T15:15:06.314Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2725,12 +2851,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 6024,
+                  "duration": 5485,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T08:59:55.588Z",
+                  "startTime": "2026-08-20T15:15:06.810Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2767,12 +2893,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1108,
+                  "duration": 468,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T09:00:01.671Z",
+                  "startTime": "2026-08-20T15:15:12.337Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2801,12 +2927,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 9106,
+                  "duration": 8413,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T09:00:02.794Z",
+                  "startTime": "2026-08-20T15:15:12.813Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2835,12 +2961,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 9861,
+                  "duration": 9202,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T09:00:11.915Z",
+                  "startTime": "2026-08-20T15:15:21.234Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2869,12 +2995,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 5138,
+                  "duration": 4654,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T09:00:21.791Z",
+                  "startTime": "2026-08-20T15:15:30.444Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -2897,7 +3023,7 @@
           "specs": [
             {
               "title": "같은 손짓이 같은 각을 돈다 — 제스처 좌표는 css 픽셀이다(#21)",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -2910,53 +3036,18 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 26654,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m1e-11\u001b[39m\nReceived:   \u001b[31m0.0000016507364959394977\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m1e-11\u001b[39m\nReceived:   \u001b[31m0.0000016507364959394977\u001b[39m\n    at /home/user/brunelleschi/web/e2e/touch_route.spec.ts:587:33",
-                        "location": {
-                          "file": "/home/user/brunelleschi/web/e2e/touch_route.spec.ts",
-                          "column": 33,
-                          "line": 587
-                        },
-                        "snippet": "  585 |     // 1e-6은 그 상단의 **175만 배**다 — **0/12로 아무것도 안 가른다.** \"검사가 통과하는데\n  586 |     // 아무것도 안 재는\" 자리이고, 그것이 이 항목이 고친 것이다. **밴드 상단의 17.5배**로 내렸다.\n> 587 |     expect(Math.abs(az - one!)).toBeLessThan(AZ_TOL_RAD);\n      |                                 ^\n  588 |     // 양성 채널: 절반 손짓은 절반 돈다(죽은 구간 한 걸음이 양쪽에서 같은 비율로 빠진다)\n  589 |     expect(az2 / azFull).toBeGreaterThan(0.45);\n  590 |     expect(az2 / azFull).toBeLessThan(0.55);"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/user/brunelleschi/web/e2e/touch_route.spec.ts",
-                            "column": 33,
-                            "line": 587
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: < \u001b[32m1e-11\u001b[39m\nReceived:   \u001b[31m0.0000016507364959394977\u001b[39m\n\n  585 |     // 1e-6은 그 상단의 **175만 배**다 — **0/12로 아무것도 안 가른다.** \"검사가 통과하는데\n  586 |     // 아무것도 안 재는\" 자리이고, 그것이 이 항목이 고친 것이다. **밴드 상단의 17.5배**로 내렸다.\n> 587 |     expect(Math.abs(az - one!)).toBeLessThan(AZ_TOL_RAD);\n      |                                 ^\n  588 |     // 양성 채널: 절반 손짓은 절반 돈다(죽은 구간 한 걸음이 양쪽에서 같은 비율로 빠진다)\n  589 |     expect(az2 / azFull).toBeGreaterThan(0.45);\n  590 |     expect(az2 / azFull).toBeLessThan(0.55);\n    at /home/user/brunelleschi/web/e2e/touch_route.spec.ts:587:33"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 17334,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-20T09:00:26.945Z",
+                      "startTime": "2026-08-20T15:15:35.105Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/user/brunelleschi/web/test-results/touch_route-dpr-2-같은-손짓이-같은-각을-돈다-—-제스처-좌표는-css-픽셀이다-21--chromium/error-context.md"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/user/brunelleschi/web/test-results/touch_route-dpr-2-같은-손짓이-같은-각을-돈다-—-제스처-좌표는-css-픽셀이다-21--chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/user/brunelleschi/web/e2e/touch_route.spec.ts",
-                        "column": 33,
-                        "line": 587
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "2b0135b82ae274b094d7-cacfa02153aec50f10c7",
@@ -2987,15 +3078,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 1,
+                  "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 6210,
+                  "duration": 4180,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T09:00:54.752Z",
+                  "startTime": "2026-08-20T15:15:52.469Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -3029,15 +3120,15 @@
               "projectName": "chromium",
               "results": [
                 {
-                  "workerIndex": 1,
+                  "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 5083,
+                  "duration": 2263,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-08-20T09:01:01.211Z",
+                  "startTime": "2026-08-20T15:15:56.672Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -3078,15 +3169,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2510,
+                      "duration": 1712,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-20T09:01:06.323Z",
+                      "startTime": "2026-08-20T15:15:58.963Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -3120,15 +3211,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3470,
+                      "duration": 2044,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-08-20T09:01:08.849Z",
+                      "startTime": "2026-08-20T15:16:00.684Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -3148,11 +3239,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-20T08:58:18.877Z",
-    "duration": 173557.885,
-    "expected": 51,
+    "startTime": "2026-08-20T15:13:06.413Z",
+    "duration": 176711.773,
+    "expected": 55,
     "skipped": 19,
-    "unexpected": 1,
+    "unexpected": 0,
     "flaky": 0
   }
 }

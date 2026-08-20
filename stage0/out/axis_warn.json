@@ -1,7 +1,8 @@
 {
  "what": "«이 선이 어긋납니다»가 어느 획에 뜨는가 — 앱 종단(차수 둘) + 규칙 층((b) 갈래).",
+ "scope_change": "⚠⚠ **D-L118(20차) 이후 이 경고들은 작도 국면(또는 되살림 스위치)의 것이다** — 그리기 국면에서는 규칙 자체가 안 돌아 경고가 없다(⑨ 팔이 그 기본 거동을 든다). ①~⑧ 팔은 전부 `setDraftGate(false)`(수리 전 거동) 아래서 돈다 — 그래야 D-L100의 선별(어긋난 획에만)이 판별력을 유지한다(#38·#57).",
  "how": {
-  "end_to_end": "참 소실점 픽스처(setupScene). **차수 둘**을 만든다: 3점은 수직 슬롯도 참 소실점, 2점은 화면 무한원. 실제 포인터로 아홉 획(수리 팔 여섯 + 되살림 셋).",
+  "end_to_end": "참 소실점 픽스처(setupScene). **차수 둘**을 만든다: 3점은 수직 슬롯도 참 소실점, 2점은 화면 무한원. 실제 포인터로 열 획(수리 팔 여섯 + 되살림 셋 + D-L118 팔).",
   "warned": "상태줄(.note)에 «어긋납니다»가 있는가.",
   "why_not_warned": "`warned` 거짓의 출처는 셋이다(#43) — `misfit_min`이 임계 (`vp_dist_ratio`) 아래거나, `path`가 `two_point`·`extension`이라 억제됐거나, 앞 획의 경고가 비워졌거나. 팔마다 그 셋을 함께 낸다.",
   "rule_layer": "(b)는 유한 수직 소실점의 갈래라 2점에서는 성립할 수 없고 3점 픽스처에서는 그 소실점이 멀어 그쪽 선이 `screen_v`로 분류된다(거리는 `slot2`) — 그래서 `rule_arms`가 `stepRule`을 직접 부른다."
@@ -34,6 +35,60 @@
  },
  "vp_dist_ratio": 0.06,
  "vp_infinite_ratio": 50,
+ "draft_phase_warn": {
+  "order": 2,
+  "drafting": {
+   "drafting": true,
+   "gate_on": true
+  },
+  "warned": true,
+  "in_doc": true,
+  "feed": [
+   {
+    "at": "feed_rule",
+    "verdict": "pass",
+    "why": "사건: rejected"
+   }
+  ]
+ },
+ "off30_pairs": [
+  {
+   "a": [
+    200,
+    600
+   ],
+   "b": [
+    374.24242966985696,
+    645.161661868724
+   ],
+   "gate_off": {
+    "warned": true,
+    "misfit": 0.25
+   },
+   "gate_on": {
+    "warned": false,
+    "misfit": 0.25
+   }
+  },
+  {
+   "a": [
+    200,
+    600
+   ],
+   "b": [
+    374.24242966985696,
+    645.161661868724
+   ],
+   "gate_off": {
+    "warned": true,
+    "misfit": 0.25
+   },
+   "gate_on": {
+    "warned": false,
+    "misfit": 0.25
+   }
+  }
+ ],
  "by_order": [
   {
    "order": 3,
@@ -189,6 +244,21 @@
      "end_kind": "vertex",
      "warned": true,
      "path": "two_point"
+    },
+    {
+     "label": "⑨ [D-L118] 그리기 국면 — 같은 어긋난 획",
+     "note": "",
+     "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "note_acts": [],
+     "order": 3,
+     "misfit_min": 0.25,
+     "lifted": false,
+     "axis": "free",
+     "start_kind": null,
+     "end_kind": null,
+     "warned": false,
+     "path": null,
+     "in_doc": true
     }
    ],
    "diag_screen_angle_to_vp_deg": 42.99,
@@ -348,6 +418,21 @@
      "end_kind": "vertex",
      "warned": true,
      "path": "two_point"
+    },
+    {
+     "label": "⑨ [D-L118] 그리기 국면 — 같은 어긋난 획",
+     "note": "",
+     "snap_note": "시작점이 아무 대상에도 안 붙었습니다 — **2D로 대기**합니다",
+     "note_acts": [],
+     "order": 2,
+     "misfit_min": 0.25,
+     "lifted": false,
+     "axis": "free",
+     "start_kind": null,
+     "end_kind": null,
+     "warned": false,
+     "path": null,
+     "in_doc": true
     }
    ],
    "diag_screen_angle_to_vp_deg": 70.52,
@@ -416,7 +501,8 @@
      false,
      true,
      true,
-     true
+     true,
+     false
     ]
    },
    {
@@ -431,7 +517,8 @@
      false,
      true,
      true,
-     true
+     true,
+     false
     ]
    }
   ],
@@ -475,13 +562,21 @@
    true,
    true
   ],
+  "draft_gate_on_warned": [
+   false,
+   false
+  ],
+  "draft_gate_on_in_doc": [
+   true,
+   true
+  ],
   "rule_revive_event": "rejected",
   "rule_fixed_event": "support",
   "rule_fixed_axis": 2
  },
  "gate": {
-  "registered": "경고는 **어긋난 획에만** 뜬다. 팔별 판정은 `summary.warned_by_order`가 든다 — 산문에 결과를 안 박는다(#47).",
-  "reachability": "④가 실제로 경고를 낸다. 값은 ④가 판정 임계를 넘은 **크기**(`genuinely_off_misfit`, 판정이 쓰는 `vpMisfit` 그대로)이고 임계는 `vp_dist_ratio`다. ⚠ 다른 팔의 `warned = false`가 전부 임계 아래인 것은 **아니다** — ③·⑤는 임계 위이고 경로 억제·알림 비움이 사유다. 그 갈림은 팔마다의 `misfit_min`·`path`가 든다(#43).",
+  "registered": "경고는 **어긋난 획에만** 뜬다 — 그리고 **작도 국면(또는 되살림 스위치)의 성질이다**(D-L118 이후): 그리기 국면에서는 규칙이 안 돌아 경고 자체가 없다(⑨). ①~⑧의 선별은 `setDraftGate(false)` 아래의 값이고, 제품 경로의 경고 도달성은 ⑩(`draft_phase_warn` — 게이트 켬·작도 국면)이 든다. 팔별 판정은 `summary.warned_by_order`가 든다 — 산문에 결과를 안 박는다(#47).",
+  "reachability": "④가 실제로 경고를 낸다(되살림 아래). **제품 경로의 도달성은 ⑩이다** — 게이트 켬·작도 국면에서 `draft_phase_warn.warned`가 참이다. 값은 ④가 판정 임계를 넘은 **크기**(`genuinely_off_misfit`, 판정이 쓰는 `vpMisfit` 그대로)이고 임계는 `vp_dist_ratio`다. ⚠ 다른 팔의 `warned = false`가 전부 임계 아래인 것은 **아니다** — ③·⑤는 임계 위이고 경로 억제·알림 비움이 사유다. 그 갈림은 팔마다의 `misfit_min`·`path`가 든다(#43).",
   "reachability_value": [
    0.25,
    0.25
@@ -501,7 +596,8 @@
       false,
       true,
       true,
-      true
+      true,
+      false
      ]
     },
     {
@@ -516,7 +612,8 @@
       false,
       true,
       true,
-      true
+      true,
+      false
      ]
     }
    ],
@@ -557,6 +654,14 @@
     0.25
    ],
    "genuinely_off_warned": [
+    true,
+    true
+   ],
+   "draft_gate_on_warned": [
+    false,
+    false
+   ],
+   "draft_gate_on_in_doc": [
     true,
     true
    ],
