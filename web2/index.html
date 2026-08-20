@@ -38,6 +38,11 @@
       <button id="btn-draw-view" title="작도 시점으로">작도 시점</button>
       <button id="btn-undo" title="실행취소 (Ctrl+Z)">↶</button>
       <button id="btn-redo" title="다시실행 (Ctrl+Y)">↷</button>
+      <button id="btn-pen" title="펜">펜</button>
+      <button id="btn-eraser" title="지우개 — 닿은 조각이 지워진다">지우개</button>
+      <label style="background:#fffdf8;border:1px solid #ccc;border-radius:3px;padding:4px 8px">
+        크기 <input id="eraser-size" type="range" min="4" max="60" step="1" style="width:60px;vertical-align:middle">
+      </label>
       <details id="osnap-panel">
         <summary>오스냅</summary>
         <div id="osnap-kinds" style="display:flex;flex-direction:column;gap:2px;background:#fffdf8;border:1px solid #ccc;border-radius:3px;padding:6px"></div>

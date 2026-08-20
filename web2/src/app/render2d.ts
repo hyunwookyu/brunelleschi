@@ -39,7 +39,10 @@ const COL = {
   snap: '#1a9c50',
 }
 
-export function draw2d(ctx: CanvasRenderingContext2D, app: App, draft: Draft | null, hover: OsnapHit | null) {
+export function draw2d(
+  ctx: CanvasRenderingContext2D, app: App,
+  draft: Draft | null, hover: OsnapHit | null, eraser: Pt | null,
+) {
   const an = app.lift.an
   const { W, H } = app.doc.frame
   ctx.clearRect(0, 0, W, H)
@@ -97,6 +100,15 @@ export function draw2d(ctx: CanvasRenderingContext2D, app: App, draft: Draft | n
     if (draft.endSnap) mark(ctx, draft.endSnap)
   } else if (hover) {
     mark(ctx, hover)
+  }
+
+  // 지우개 커서 — 반경 원
+  if (eraser && app.tool === 'eraser') {
+    ctx.strokeStyle = '#b04a3a'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.arc(eraser.x, eraser.y, app.eraserRadius, 0, Math.PI * 2)
+    ctx.stroke()
   }
 }
 

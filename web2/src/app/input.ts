@@ -3,7 +3,7 @@
 // 데스크톱 선례(SketchUp): 중버튼 궤도, 우버튼 팬, 휠 줌.
 
 import type { App } from './state'
-import { setPose, orbitPivot } from './state'
+import { setPose, orbitPivot, beginErase, eraseAt, endErase } from './state'
 import { snapDir } from '../core/snap'
 import { osnap, type OsnapHit } from '../core/osnap'
 import { classifyNext } from '../core/camera'
@@ -17,6 +17,8 @@ export interface InputCallbacks {
   onDraftChange: (d: Draft | null) => void
   onHover: (h: OsnapHit | null) => void
   onCommit: (a: Pt, b: Pt, raw: Pt[]) => void
+  /** 지우개 커서 위치 (지우개 도구일 때) */
+  onEraserMove: (p: Pt | null) => void
 }
 
 export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallbacks) {
@@ -141,6 +143,12 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
     }
     drawingPointer = e.pointerId
     canvas.setPointerCapture(e.pointerId)
+    if (app.tool === 'eraser') {
+      beginErase(app)
+      eraseAt(app, toPt(e))
+      cb.onEraserMove(toPt(e))
+      return
+    }
     beginDraft(toPt(e))
   })
 
@@ -173,11 +181,22 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
       orbitBtn.last = p
       return
     }
-    if (drawingPointer === e.pointerId && draft) {
-      updateDraft(toPt(e))
+    if (drawingPointer === e.pointerId) {
+      if (app.tool === 'eraser') {
+        eraseAt(app, toPt(e))
+        cb.onEraserMove(toPt(e))
+        return
+      }
+      if (draft) updateDraft(toPt(e))
       return
     }
     if (e.buttons === 0) {
+      if (app.tool === 'eraser') {
+        cb.onEraserMove(toPt(e))
+        cb.onHover(null)
+        return
+      }
+      cb.onEraserMove(null)
       // 호버 — 와콤 EMR 펜·마우스. 스냅 후보 표식.
       cb.onHover(osnap(app.lift, app.pose, toPt(e), app.osnap))
     }
@@ -194,6 +213,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
     if (orbitBtn && e.pointerType === 'mouse' && e.button !== 0) { orbitBtn = null; return }
     if (drawingPointer === e.pointerId) {
       drawingPointer = null
+      if (app.tool === 'eraser') { endErase(app); return }
       endDraft()
     }
   }

@@ -22,6 +22,7 @@ const r3d = initR3D(gl, W, H, dpr)
 
 let draft: Draft | null = null
 let hover: OsnapHit | null = null
+let eraserPos: Pt | null = null
 let dirty = true
 const invalidate = () => { dirty = true }
 
@@ -47,6 +48,7 @@ updateStatus()
 initInput(ink, app, {
   onDraftChange(d) { draft = d; invalidate() },
   onHover(p) { hover = p; invalidate() },
+  onEraserMove(p) { eraserPos = p; invalidate() },
   onCommit(a, b, raw) {
     const s = commitStroke(app, a, b, raw)
     const an = app.lift.an
@@ -59,6 +61,22 @@ initInput(ink, app, {
     }
   },
 })
+
+// 도구 전환 — 펜 / 지우개 (임시 UI)
+const btnPen = document.getElementById('btn-pen') as HTMLButtonElement
+const btnEraser = document.getElementById('btn-eraser') as HTMLButtonElement
+function setTool(t: 'pen' | 'eraser') {
+  app.tool = t
+  btnPen.style.fontWeight = t === 'pen' ? 'bold' : 'normal'
+  btnEraser.style.fontWeight = t === 'eraser' ? 'bold' : 'normal'
+  if (t !== 'eraser') { eraserPos = null; invalidate() }
+}
+btnPen.addEventListener('click', () => setTool('pen'))
+btnEraser.addEventListener('click', () => setTool('eraser'))
+setTool('pen')
+const erSize = document.getElementById('eraser-size') as HTMLInputElement
+erSize.value = String(app.eraserRadius)
+erSize.addEventListener('input', () => { app.eraserRadius = Number(erSize.value) })
 
 // 오스냅 설정 패널(임시 UI — 7단계에서 세로바로) — 종류별 토글·반경
 const osnapPanel = document.getElementById('osnap-kinds')!
@@ -93,7 +111,7 @@ function frame() {
   if (dirty) {
     dirty = false
     render3d(r3d, app)
-    draw2d(ctx, app, draft, hover)
+    draw2d(ctx, app, draft, hover, eraserPos)
   }
   requestAnimationFrame(frame)
 }

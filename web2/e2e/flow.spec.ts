@@ -173,4 +173,28 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await drawLine(page, 502, 450, 650, 452) // 오스냅이 (500,450)으로, 축 스냅이 수평으로
   s = await summary(page)
   expect(s.lifted).toBe(liftedBefore + 1)
+
+  // ── 3단계: 자동 분할 + 지우개 ────────────────────────────────────────
+  // 수평획을 관통하는 세로획 → T자에서 수평획이 갈린다
+  await drawLine(page, 600, 450, 600, 520)
+  s = await summary(page)
+  const liftedT = s.lifted
+  expect(await glPixels(page, 612, 444, 645, 457)).toBeGreaterThan(5) // 오른쪽 조각이 있다
+
+  // 지우개 — 오른쪽 조각만 지운다
+  await page.click('#btn-eraser')
+  await page.mouse.move(630, 450)
+  await page.mouse.down()
+  await page.mouse.up()
+  await settle(page)
+  s = await summary(page)
+  expect(s.lifted).toBe(liftedT) // 조각 교체 — 남은 왼쪽 + 세로획은 그대로
+  expect(await glPixels(page, 612, 444, 645, 457)).toBe(0) // 지운 자리가 비었다
+  expect(await glPixels(page, 500, 444, 596, 457)).toBeGreaterThan(5) // 왼쪽 조각은 남았다
+
+  // 실행취소 — 지우개 한 번이 통째로 돌아온다
+  await page.keyboard.press('Control+z')
+  await settle(page)
+  expect(await glPixels(page, 612, 444, 645, 457)).toBeGreaterThan(5)
+  await page.click('#btn-pen')
 })
