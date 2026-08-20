@@ -17,6 +17,7 @@ import { newDoc, newSStroke, newView, deleteView, lifted, pending, pendingElsewh
          confirmViewOf, isConfirmView,
          type DocState, type SStroke, type Channel } from "./ui/doc.js";
 import { takeSnap, applySnap, type AppSnap } from "./ui/appSnap.js";
+import { screenVps, type VpSourceState } from "./ui/vpSource.js";
 // L-D.2 저장·내보내기 — **뷰 목록과 뷰별 2D 획**을 담는다(§9.2)
 import { serializeDoc2, restoreDoc2, autosaver2, getDoc2, deleteDoc2,
          type Doc2 } from "./ui/docStore.js";
@@ -310,11 +311,13 @@ const orthoPts = (pts: Pt2[], o: ScreenOrtho | null): Pt2[] =>
  * 무앵커 획의 몫이다(`placeStroke`의 대기 가지). `excludeId`는 그 경우의 자기 스냅 방지다 —
  * 확정 경로에서는 획이 이미 문서에 들어가 있어 자기 자신이 대기 후보에 잡힌다.
  */
-function resolve2d(raw: Pt2[], excludeId?: string): Resolve2dOut {
+function resolve2d(raw: Pt2[], excludeId?: string,
+                   fr: Frame | null = frame()): Resolve2dOut {
   const segs = pend2Segs(excludeId);
   const cands = segs.length ? static2dCandidates(segs, Math.hypot(...cssSize())) : [];
   // 조리개는 표시 px 기준 — 표시 배율을 되돌린다(D-L94 · viewZoomNow 머리말)
-  return resolve2dCore(raw, { cands, vps: cam.vps(), radiusPx: OSNAP.radiusPx / viewZoomNow(),
+  // **소실점은 화면의 것이다**(17차) — 표식이 선 그 자리로 스냅한다(`vpsOnScreen`)
+  return resolve2dCore(raw, { cands, vps: vpsForSnap(fr), radiusPx: OSNAP.radiusPx / viewZoomNow(),
                               // **호버에서 잠근 시작점**(D-L103) — 있으면 시작점 질의를
                               // 안 한다. 사용자가 **보고 조준한** 후보이기 때문이다
                               pinStart: HOVER_LOCK.on ? stroke2dAnchor : null,
@@ -685,6 +688,43 @@ function frame(): Frame | null {
     // 자세가 멎어 있는 보통의 경우에만 캐시가 맞으면 된다)
     poseKey: [...pose.R[0], ...pose.R[1], ...pose.R[2], ...pose.C].join(","),
   };
+}
+
+/**
+ * **소실점 출처 스위치**(#30) — `S2S.setVpSource(false)`가 수리 전 거동이다:
+ * 스냅이 언제나 확정 시점의 `cam.vps()`를 읽어 **표시와 갈린다**. 회귀 팔이 이것으로
+ * 버그를 되살려 "실제로 잡는지"를 확인한다(A-4).
+ */
+const VP_SOURCE = { view: true };
+
+/**
+ * **지금 화면의 소실점 — 표시와 스냅의 단일 출처**(2026-08-20 17차, 사람 지시).
+ *
+ * 표식(`drawBelowInk`의 `vpsNow`)·무한직선(`drawDirLines`)·2D 방향 스냅(`resolve2d`)이
+ * **전부 여기를 지난다**. 옛 판은 표시가 `viewOverlayCtx().vps`(지금 시점의 투영)를,
+ * 스냅이 `cam.vps()`(확정 시점의 값)를 읽어 **돌린 화면에서 갈렸다** — 그리면 선들이
+ * 표식이 아닌 다른 점으로 모였다. 규칙은 `ui/vpSource.ts` 하나가 든다(#17).
+ *
+ * `fr`을 받는 것은 **같은 프레임에서 `frame()`을 두 번 풀지 않기 위해서**다(그 안에
+ * `acc.solve()`가 있다). 안 주면 그 자리에서 푼다.
+ */
+const vpState = (fr: Frame | null): VpSourceState =>
+  ({ camVps: cam.vps(), viewVps: fr ? fr.ctx.vps : null, pinned: !fr || fr.pinned });
+
+function vpsOnScreen(fr: Frame | null = frame()): (Pt2 | null)[] {
+  return screenVps(vpState(fr));
+}
+
+/**
+ * **스냅이 읽는 소실점.** 평시에는 `vpsOnScreen`과 **같은 값이다** — 그것이 이 항목의
+ * 수리다. `VP_SOURCE.view = false`(측정 스위치 #30)일 때만 수리 전 배선(확정 시점의
+ * `cam.vps()`)으로 되돌아간다.
+ *
+ * ⚠ **스위치는 스냅 쪽만 움직인다** — 표시까지 함께 옮기면 되살림 팔이 **자기 자신을
+ * 재고**(#52) 어긋남이 안 나타난다. 초판이 그랬고 회귀 팔이 0/12로 그것을 잡았다.
+ */
+function vpsForSnap(fr: Frame | null = frame()): (Pt2 | null)[] {
+  return screenVps(vpState(fr), !VP_SOURCE.view);
 }
 
 /**
@@ -2366,12 +2406,14 @@ function viewOverlayCtx(): {
   if (stage.isPinned) {
     const c = cam.ctx();
     if (!c) return null;
-    return pack(cam.vps(), c.principal, c.f, c.axisDirs ?? null, cam.imgSize,
+    return pack(vpsOnScreen(null), c.principal, c.f, c.axisDirs ?? null, cam.imgSize,
                 horizonVisible() ? cam.rules.horizon : null);
   }
   const fr = frame();
   if (!fr) return null;
-  const vv = fr.ctx.vps;
+  // **표시도 스냅과 같은 함수를 지난다**(17차 · #17) — 여기가 갈리면 그리는 자리와
+  // 표식이 다른 점을 가리킨다(사람 보고의 그 어긋남이다).
+  const vv = vpsOnScreen(fr);
   // 지평선의 **스칼라 y**는 격자(`gridGuides`)가 여전히 쓰는 옛 규약이다 — 표시용 선분은
   // `horizonLine`이 든다(둘이 갈리는 것은 롤이 있는 시점이고, 그것이 이 항목의 자리다).
   const hy = vv[0] ? vv[0][1] : vv[1] ? vv[1][1] : null;
@@ -2751,7 +2793,9 @@ function strokeStateOf(s: SStroke): StrokeState {
 function drawDirLines(ctx2: CanvasRenderingContext2D) {
   if (!cam.standing() || !viewIsCurrent()) return;
   const [w, h] = cssSize();
-  const vps = cam.vps();
+  // **표식과 같은 소실점을 쓴다**(17차) — 옛 판은 여기만 `cam.vps()`라, 돌린 화면에서
+  // 이 무한직선들이 **표식이 아닌 점**으로 모였다(사람 보고의 그 모양이다).
+  const vps = vpsOnScreen();
   ctx2.save();
   ctx2.lineWidth = 1;
   ctx2.setLineDash([]);
@@ -3053,9 +3097,10 @@ function drawBelowInk(ctx2: CanvasRenderingContext2D) {
     drawAsk(ctx2);
   }
   const [w, h] = cssSize();
-  // **소실점은 지금 시점의 값이다**(항목 6-c) — 핀이면 확정 카메라 값과 같다(#17)
+  // **소실점은 지금 시점의 값이다**(항목 6-c) — 핀이면 확정 카메라 값과 같다(#17).
+  // ⚠ 출처는 `vpsOnScreen` 하나다(17차) — 스냅이 읽는 것과 **같은 값**이어야 한다.
   const ovl = viewOverlayCtx();
-  const vpsNow = ovl?.vps ?? cam.vps();
+  const vpsNow = vpsOnScreen();
   // **무한원 축은 소실점이 없으므로 방향으로 표시한다**(15차 항목 8-e · D-L101).
   // 화면 가장자리에 그 축 색의 짧은 이중 화살촉을 둔다 — 유한 소실점의 가장자리 표시와
   // 같은 자리·같은 색이되 **점이 아니라 방향**이라는 것이 보이게.
@@ -3317,7 +3362,7 @@ const ink = new InkCanvas(canvas, {
       // 반대 방향(확정은 스냅되는데 미리보기가 안 보인다)이 생긴다.
       // 주석 채널은 여기서도 안 지난다(12차 4-c — 확정과 같은 조건).
       if (channel === "note") { live2d = null; refresh(); return; }
-      const r = resolve2d(pts.map(q => [q[0], q[1]] as Pt2));
+      const r = resolve2d(pts.map(q => [q[0], q[1]] as Pt2), undefined, fr);
       live2d = r.engaged
         ? { a: r.a, b: r.b, ortho: r.ortho, start2: r.start2, end2: r.end2,
             vpdir: r.vpdir, guides: r.guides }
@@ -3546,7 +3591,7 @@ function placeStroke(s: SStroke, fr: Frame): PlacePath {
         // (snapStart 있는 s78만 Δ0.00 — placeLive의 D-L71 되쓰기를 지나서다). 이제 카메라
         // 전과 **같은 함수**(`resolve2d`, #17)를 지나므로 겨냥이 조리개 안이면 방향이
         // 소실점을 정확히 지난다. D-L80 가드(방향 스냅이 depth 판정을 못 뒤집는다)도 그대로다.
-        const r2 = resolve2d(s.pts2d, s.id);
+        const r2 = resolve2d(s.pts2d, s.id, fr);
         if (r2.engaged) s.pts2d = r2.pts.map(q => [q[0], q[1]] as Pt2);
         // **확정 뒤의 2D 연결도 같은 필드에 적는다**(10차 항목 1 · 4-3) — 이 기록이
         // 연쇄(`refAnchorOf`)의 재료다. 기록 규칙은 `snap2Refs` 하나다(#17 · D-L81).
@@ -4240,7 +4285,14 @@ refresh();
   live2d: () => live2d,
   orthoSnap: (a: Pt2, b: Pt2) => screenOrthoSnap(a, b),
   /** **소실점 방향 스냅**(4차 지시 2) — 종단 확인이 앱 경로 그대로 부른다(#17). */
-  vpDir: (a: Pt2, b: Pt2) => vpDirSnap(a, b, cam.vps()),
+  vpDir: (a: Pt2, b: Pt2) => vpDirSnap(a, b, vpsForSnap()),
+  /** **지금 화면의 소실점**(17차) — 표시와 스냅이 함께 읽는 그 값이다(#17). */
+  vpsOnScreen: () => vpsOnScreen(),
+  /** **스냅이 읽는 소실점**(17차) — 평시에는 `vpsOnScreen`과 같다. 스위치가 가른다. */
+  vpsForSnap: () => vpsForSnap(),
+  /** 측정 스위치(#30) — `false`가 수리 전 거동(스냅이 확정 시점 값을 읽는다)이다. */
+  vpSource: () => VP_SOURCE.view,
+  setVpSource: (view: boolean) => { VP_SOURCE.view = view; refresh(); },
   /**
    * **지금 스냅 가능한 축**(A: "1·2·3점 각각에서 어느 축이 스냅 가능한지 표"). 화면과
    * 측정이 같은 함수를 읽는다(#17) — 표가 코드와 갈리면 표가 틀린다.
@@ -4351,6 +4403,14 @@ refresh();
     stage.spinYaw(deltaRad, orbitTarget(), ms, () => refresh());
   },
   cubeYaw: () => stage.yawOf(),
+  /**
+   * **뷰 큐브의 토글과 표시가 다른 양이다**(17차 지시 e) — 하단바의 「켬」은 `on`이고,
+   * 그려지는 조건은 `visible`(카메라가 서고 **3D가 하나라도 있을 때**)이다. 둘을 갈라 낸다.
+   */
+  viewCubeState: () => ({ on: viewCube.on,
+                          visible: cam.standing() && lifted(doc).length > 0,
+                          drawn: !(document.getElementById("cube")?.classList
+                                     .contains("hidden") ?? true) }),
   viewCube: () => ({ on: viewCube.on }),
   /** **궤도 중심**(6차 지시 1 — 종단 확인이 거리 유지·중심 조준을 잴 때 읽는다, #17). */
   orbitCenter: () => orbitTarget(),

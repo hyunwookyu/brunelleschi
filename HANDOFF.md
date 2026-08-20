@@ -72,7 +72,61 @@
 
 다음 세션은 이 문서를 읽고 이어서 진행한다. 사람의 개입은 그 한 줄뿐이다.
 
-## 현재 단계 — **2026-08-20 16차**: 원문 대조·PITFALLS·재수집·DEFERRED·dpr 2 — **다섯 전부 완료**
+## 현재 단계 — **2026-08-20 17차**: 소실점 출처가 둘이었다 — 하나로 모았다
+
+지시 원문: [`docs/instructions/17.md`](docs/instructions/17.md). **단일 항목**이었다.
+
+**무엇이 틀렸나**: 소실점을 **표시**는 «지금 시점의 투영»(`viewOverlayCtx().vps`)에서,
+**스냅**은 «확정 시점의 값»(`cam.vps()`)에서 읽었다. 갈리는 조건은 «비핀»이 아니라
+**«자세가 확정 카메라와 다름»**이다(핀을 풀되 자세를 보존하면 여전히 같다 — 음성 대조가
+원장 자세 ③이다). 크기는 `vp_source.json@f351839a`의
+`summary.legacy_source_aim_deg_rotated`(**도** — 스냅이 보는 단위. px는 소실점이 멀수록
+부풀어 임계와 단조가 아니다, #49)가 든다 — **수는 원장이 정본**(#47).
+같은 화면 안에서도 `drawDirLines`(방향 확정 획의 옅은 무한직선)만 확정 시점 값을 읽어
+**그 직선들이 표식이 아닌 점으로 모였다.**
+
+**관측이 그 상태였다는 근거**(1차 리뷰어 [1]에 답한 자리): 상태 표시 「뷰 1」은 뷰의
+**이름**이고, `viewForDrawing()`은 **카메라가 서 있고 핀이 아닐 때만** 그 이름을 만든다 —
+**회전이 필요 없다.** 앱 경로 재현이 원장의 `signature`·`observation_match`에 있다
+(보고된 다섯이 자세 ①에서 함께 난다). ⚠ 그 자세에 **어떤 조작으로** 왔는지는 특정하지
+못했다 — 후보는 `applyDoc2`의 복원 갈래와 `restoreSnap`(비핀 유지)이다.
+
+**수리**: `web/src/ui/vpSource.ts`의 `screenVps()` 하나가 규칙을 든다 —
+「핀·미확정이면 규칙 상태의 값, 돌린 시점이면 그 시점의 투영」. `mainL`의 `vpsOnScreen()`이
+그것을 부르고 **표시와 스냅이 함께** 지난다(D-L108 · PITFALLS #54).
+
+**함께 답한 것**(지시 b~e — 전부 **실측 필드**로 답한다):
+- 궤도가 안 열리는 것·뷰 큐브가 「켬」인데 안 보이는 것은 `lifted > 0` 하나가 가른다
+  (`view_cube`의 `on` ↔ `visible`·`drawn`이 갈리는 것이 그 실측이다) — **설명이지 측정이
+  아니다.** 반대 방향의 인과는 되살림 팔이 든다: **안 걸려 대기로 남는 것**
+  (`legacy_not_engaged_rotated`)과 **걸리되 다른 점 = 조용히 틀린 배치**
+  (`legacy_wrong_point_rotated`)를 **갈라** 센다. «3D가 왜 안 섰나»의 전체 인과는 안 쟀다.
+- 파란 삼각형 「5.4W」 = **축 2(수직축)의 화면 밖 소실점 가장자리 표식**이고 **위치**를
+  낸다(`marks`의 `axis: 2 · kind: "edge"`). **지평선 위가 아닌 것이 정상이다** — 지평선은
+  수평 소실점 둘을 잇는 선이고, 그 거리가 `axis_horizon_dist_px[2]`다(수평 둘은 0이고
+  그것은 보장이다). ⚠ 관측이 준 좌표 넷(x≈425·y≈657·y≈240·5.4W)과는 **대조하지 않았다** —
+  그 화면의 캔버스 크기를 모른다.
+- 지평선 표시는 이미 시점을 따른다. 갈린 것은 `cam.rules.horizon`이고 그것을 읽는 자리는
+  핀으로 막혀 있다 — **막힘이 풀리면 같은 자리가 다시 열린다**(D-L108의 «잠정인 것»).
+
+**팔**: 단위 `web/test/vp_source.test.ts` · 종단 `web/e2e/vp_source.spec.ts` →
+`vp_source.json`(dpr 1) · `vp_source_dpr2.json`(dpr 2 — #21·D-C3).
+되살림 스위치 `S2S.setVpSource(false)`가 수리 전 배선을 그 자리에서 되살린다(#30).
+판정 값은 원장의 `summary`가 든다 — `fixed_not_engaged`·`fixed_wrong_axis`(측정) ·
+`legacy_not_engaged_rotated`·`legacy_wrong_point_rotated`(되살림, **갈라 센다**) ·
+`legacy_source_aim_deg_rotated`(크기, 도). `fixed_wrong_point`는 **보장**이라 값으로 안 읽는다(#5).
+
+⚠ **전량 e2e가 다시 쓴 원장 30여 개는 되돌렸다** — 차이가 **환경**이다(기존 값은
+Windows·캔버스 **674**, 이 컨테이너는 **675**). 두드러진 하나(`dir_state`의 `on_line`)는
+변경 없이 돌려도 같은 값이라 이 수리의 결과가 아니다. 남긴 것은 `vp_source*.json`과
+`test_cost.json`·타이밍·`selfcheck.json`이다(사유는 progress 17차 [6]).
+
+⚠ **알려진 전량 e2e 실패 둘은 이 항목 이전부터 있다**(변경을 `git stash`하고 확인했다):
+`static_deploy`의 오프라인 캐시 팔 · `touch_route` dpr 2의 회전각 팔. 이 항목이 안 고쳤다.
+
+---
+
+## 이전 단계 — **2026-08-20 16차**: 원문 대조·PITFALLS·재수집·DEFERRED·dpr 2 — **다섯 전부 완료**
 
 **지시 원문이 이제 저장소에 있다**: [`docs/instructions/16.md`](docs/instructions/16.md)
 (15차 5·6·7의 부분 원문은 `15-partial.md` — ⚠ 섞임 유보 표기 있음). **이 회차부터

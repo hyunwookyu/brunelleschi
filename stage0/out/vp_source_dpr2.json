@@ -1,0 +1,1822 @@
+{
+ "what": "축 스냅이 겨냥하는 소실점과 화면에 표시된 소실점이 같은가.",
+ "how": {
+  "arm": "자세마다 축 셋 각각에 대해 **표시된 소실점을 정확히 겨냥한 현**을 만들어 앱의 2D 방향 스냅(`S2S.vpDir` → `vpDirSnap`)에 넣는다. 값 셋을 갈라 낸다: `engaged`(걸렸는가) · `picked_expected_axis`(겨냥한 축을 골랐는가) · `gap_px`(고른 소실점이 표시된 점에서 벗어난 px).",
+  "legacy": "같은 자세에서 `S2S.setVpSource(false)`로 **수리 전 배선**(스냅만 확정 시점의 `cam.vps()`를 읽는다)을 되살려 다시 잰다(#30). 스위치는 **스냅 쪽만** 움직인다 — 표시까지 옮기면 되살림이 자기 자신을 잰다(#52).",
+  "unit": "px가 아니라 **도**(`source_aim_deg`)가 스냅이 보는 단위다(1차 리뷰어 [2] · #49): `vpDirSnap`의 판정은 `AXIS_TOL.vp_dist_ratio`(수직거리 ÷ 길이)이고, 같은 각이라도 소실점이 멀면 px 격차가 부푼다. px는 인상으로만 읽는다.",
+  "poses": "⓪ 미확정 · ① **비핀 · 자유 자세**(관측의 서명) · ② 핀 · ③ 핀 해제·자세 보존(음성 대조) · ④ 요 · ⑤ 피치. 두 출처가 갈릴 수 있는 것은 **서 있고 핀이 아닌** 자세뿐이라 집계 분모를 그 넷으로 따로 낸다(#11 — 핀·미확정 행은 정의상 0이라 분모에 넣으면 판별력을 부풀린다). ⚠ 그 넷 중 ③은 **비핀인데도 0**이다 — 조건은 «비핀»이 아니라 «자세가 확정 카메라와 다름»이고, 그 사실 자체가 이 원장의 관찰 하나다.",
+  "signature": "관측 상태 표시 「뷰 1 · 2D 4」를 앱 경로로 만든다 — 비핀 상태에서 한 획을 그으면 `viewForDrawing`이 「뷰 N」을 새로 만들고 그 획이 2D로 남는가.",
+  "observation": "보고된 증상 다섯(표시≠스냅 · 3D 없음 · 뷰 안 돌아감 · 「뷰 1」 · 큐브 켬인데 안 보임)이 **한 자세에서 함께 나는가**를 `observation_match`가 든다.",
+  "c_d_e": "지시 c·d·e도 **실측으로** 답한다: `axis_horizon_dist_px`(각 축 소실점이 지평선에서 떨어진 px — 수평 둘은 0이 **보장**이고 수직축이 얼마나 떨어지는지가 답이다) · `marks`(표식의 종류와 자리 — 「5.4W」 삼각형이 어느 축의 무엇인지) · `view_cube`(토글과 표시가 다른 양임을)."
+ },
+ "what_this_does_not_say": [
+  "**어느 값이 옳은가를 참값으로 대조하지 않았다.** 이 원장이 재는 것은 «표시와 스냅이 같은 점을 가리키는가»뿐이다. «지금 시점의 투영이 옳다»는 기하의 논거(3D 축 스냅이 이미 그 시점의 축 방향을 쓴다)이고 **측정이 아니다**.",
+  "**칠해진 픽셀은 안 잰다.** 「표시」는 그리는 쪽과 **같은 함수**(`viewOverlayCtx`·`overlayAxisMarks`)를 읽어 확인한다 — canvas 호출까지의 배선을 재는 원장은 **이 저장소 어디에도 없다**(`view_axes.json`의 같은 문장이 위임의 끝이다, 1차 리뷰어 [6]). 판정은 그만큼 «두 소비자가 같은 함수를 부른다»에 얹혀 있다.",
+  "겨냥 오차 동작점은 **«정확히 0» 하나**다(#12) — 현이 표시 소실점을 정확히 겨냥한다. 손 오차가 있는 겨냥에서 어느 쪽이 먼저 임계를 벗어나는지는 안 쟀다.",
+  "픽스처 하나(3점 합성 상자)다. `setupScene`의 참 소실점 카메라이고 실획이 아니다.",
+  "`fixed.gap_px`가 0인 것(= `fixed_wrong_point`)은 **출처가 같다**는 데서 오는 **설계 보장**이다(#5) — 값을 안 읽는다. 같은 팔에서 **측정인 것은 `fixed_not_engaged`와 `fixed_wrong_axis`**다(축 경쟁의 결과라 출처의 귀결이 아니다). 검사(expect)는 그 둘에만 건다.",
+  "**3D가 왜 안 섰는가는 이 원장이 안 잰다.** 궤도·뷰 큐브가 안 열리는 것은 `lifted(doc).length > 0` 하나가 가르는 자리다(설명이지 측정이 아니다). 그 앞 단계 — «획이 왜 대기로 남았나» — 의 실측은 `signature`가 한 획으로만 든다.",
+  "dpr는 이 파일이 **1과 2 둘**을 돈다(#21·D-C3). 그러나 그 둘이 같은 결론을 내는 것은 **출처 규칙이 dpr과 무관하기 때문**이라 새 정보가 아니다 — 배선이 dpr에서 갈리지 않음을 확인하는 것까지다."
+ ],
+ "selfcheck_notes": {
+  "fixed_zero": "`fixed.gap_px`·`fixed.source_gap_px`·`source_aim_deg`가 0인 것은 **보장**이다(#5) — 표시와 스냅이 `vpsOnScreen` 하나를 지난다. 되살림 팔(`legacy`)이 **같은 자리에서 0이 아닌 값**을 내는 것이 그 배선이 실재함의 증거다(#30·#52).",
+  "pinned_zero": "핀·미확정 자세는 `legacy`도 0이다 — 자세가 항등이면 두 출처가 정의상 같은 자리다. 그래서 집계 분모(`*_rotated`)에서 뺀다.",
+  "horizon_dist_zero": "`axis_horizon_dist_px[0]`·`[1]`이 0(또는 1e-13대)인 것은 **보장**이다(#5) — 지평선을 그 두 소실점으로 만든다(`horizonThrough`). **값이 있는 자리는 [2]**(수직축이 지평선에서 떨어진 px)이고 그것이 지시 c·d의 답이다.",
+  "observation_lifted_zero": "`observation_match.lifted = 0`은 **재현하려는 증상 자체**다 (3D가 없다) — 집계가 안 돈 것이 아니다. 같은 자세의 `view_cube.drawn`이 거짓인 것과 짝이다.",
+  "pose3_near_zero": "자세 ③(핀 해제·자세 보존)의 `legacy` 값이 1e-13대인 것은 **음성 대조가 성립한 것**이다 — 비핀이지만 자세가 확정 카메라 그대로라 두 출처가 같은 점을 낸다(부동소수 잔차만 남는다).",
+  "entries_agree_all_true": "`entries_agree`가 전부 참인 것도 스위치가 켜진 동안의 **보장**이다(두 진입점이 같은 규칙을 부른다) — 스위치가 꺼진 `legacy` 쪽에서는 이 필드를 안 읽는다."
+ },
+ "tolerances": {
+  "vp_dist_ratio": 0.06
+ },
+ "answers": {
+  "c": "표시된 **수평** 소실점은 지평선 위에 있다 — `poses[*].axis_horizon_dist_px[0..1]`이 0이고 그것은 **보장**이다(#5: 지평선을 그 두 점으로 만든다). **수직축(축 2)은 지평선 위가 아니다** — 같은 배열의 [2]가 그 거리다. 갈린 것은 표시 지평선이 아니라 `cam.rules.horizon`(확정 시점 값)이고, 그것을 읽는 자리는 핀으로 막혀 있다.",
+  "d": "「5.4W」 파란 삼각형 = **축 2(수직축)의 화면 밖 소실점 가장자리 표식**이고 **위치**를 낸다(`marks`의 `axis: 2 · kind: \"edge\"`와 그 `at`). 색은 `AXIS_COLOR[2] = #2471a3`이고 「W」 라벨은 **주 소실점 가장자리 갈래에만** 있다 (보조 소실점 표식·탈레스 `E(밖)`는 다른 문자열이다 — 그 대조는 구현 독해다). **지평선 위가 아닌 것이 정상이다** — c의 `axis_horizon_dist_px[2]`가 그 값이다.",
+  "e": "「뷰 큐브 켬」은 토글(`view_cube.on`)이고 그려지는 조건은 `view_cube.visible = cam.standing() && lifted > 0`이다. `poses[0]`(미확정)에서 `on: true`인데 `visible`·`drawn`이 거짓인 것이 그 실측이다 — **결함이 아니라 두 양이 다른 것**이고, 3D가 없는 것과 같은 뿌리다.",
+  "b": "3D 부재와의 인과 — 궤도(`gestures.begin`)와 뷰 큐브는 `lifted > 0` 하나가 가른다(**설명이지 측정이 아니다**). **반대 방향의 인과**는 되살림 팔이 든다: 표시와 다른 점을 겨냥한 스냅은 `legacy_not_engaged_rotated`만큼 **아예 안 걸리고** 그 획은 대기로 남는다. ⚠ 나머지 `legacy_wrong_point_rotated`는 반대다 — **걸리되 다른 점**이고 그것이 조용히 틀린 배치다(A-3이 가장 경계하는 것). «3D가 왜 안 섰나»의 전체 인과는 이 원장이 안 잰다."
+ },
+ "observation_match": {
+  "pose": "① 확정됐으나 비핀 · 확정 카메라와 무관한 자유 자세",
+  "standing_not_pinned": true,
+  "lifted": 0,
+  "cube_on_but_hidden": true,
+  "axis2_mark": {
+   "axis": 2,
+   "kind": "edge",
+   "at": [
+    701,
+    614
+   ]
+  },
+  "axis2_off_horizon_px": 1692.727031204835,
+  "source_aim_deg": [
+   7.082901844855371,
+   79.00685265942049,
+   15.246731225856118
+  ],
+  "what_is_not_shown": "그 사용자가 **어떤 조작으로** 이 자세에 왔는지는 특정하지 못했다 — 픽스처가 만든 상태다. 후보는 `applyDoc2`의 복원 갈래와 `restoreSnap`(비핀 유지)이다."
+ },
+ "poses": [
+  {
+   "label": "⓪ 미확정(소실점 하나 · 차수 0)",
+   "note": "카메라가 안 서면 시점 문맥이 없다 — 두 출처가 같은 자리다(구성의 귀결).",
+   "pinned": false,
+   "view_state": "pre",
+   "standing": false,
+   "dpr": 2,
+   "disp_vps": null,
+   "cam_vps": [
+    [
+     -400,
+     337
+    ],
+    null,
+    null
+   ],
+   "lifted": 0,
+   "strokes": 0,
+   "horizon_line": null,
+   "horizon_scalar_y": null,
+   "axis_horizon_dist_px": null,
+   "marks": [],
+   "view_cube": {
+    "on": true,
+    "visible": false,
+    "drawn": false
+   },
+   "fixed": [
+    {
+     "axis": 0,
+     "disp": [
+      -400,
+      337
+     ],
+     "snap_src": [
+      -400,
+      337
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       416.0984261768492,
+       365.6386998940134
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 0,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      -400,
+      337
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 8.537736462515939e-7,
+     "entries_agree": true
+    },
+    {
+     "axis": 1,
+     "disp": null,
+     "skipped": "표시 소실점이 무한원·미정"
+    },
+    {
+     "axis": 2,
+     "disp": null,
+     "skipped": "표시 소실점이 무한원·미정"
+    }
+   ],
+   "legacy": [
+    {
+     "axis": 0,
+     "disp": [
+      -400,
+      337
+     ],
+     "snap_src": [
+      -400,
+      337
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       416.0984261768492,
+       365.6386998940134
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 0,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      -400,
+      337
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 8.537736462515939e-7,
+     "entries_agree": true
+    },
+    {
+     "axis": 1,
+     "disp": null,
+     "skipped": "표시 소실점이 무한원·미정"
+    },
+    {
+     "axis": 2,
+     "disp": null,
+     "skipped": "표시 소실점이 무한원·미정"
+    }
+   ]
+  },
+  {
+   "label": "① 확정됐으나 비핀 · 확정 카메라와 무관한 자유 자세",
+   "note": "「뷰 N」이 붙는 상태이고, 자세가 확정 카메라와 다르므로 두 출처가 갈린다. ⚠ 이 자세를 **앱 조작만으로 어떻게 도달하는지는 특정하지 못했다** — `applyDoc2`의 복원 갈래(`stage.setPose(v.pose)`)와 `restoreSnap`(비핀이면 그대로 둔다)이 후보다. 여기서는 픽스처가 만든다.",
+   "pinned": false,
+   "view_state": "draft_three",
+   "standing": true,
+   "dpr": 2,
+   "disp_vps": [
+    [
+     -3732.5885089521917,
+     671.3067418374268
+    ],
+    [
+     741.8458895055298,
+     -317.26242282929604
+    ],
+    [
+     871.991211427791,
+     1387.5322017451729
+    ]
+   ],
+   "cam_vps": [
+    [
+     2118.52761348025,
+     69.55080756887736
+    ],
+    [
+     -84.90818565209554,
+     69.5508075688773
+    ],
+    [
+     640,
+     4069.550807568878
+    ]
+   ],
+   "lifted": 0,
+   "strokes": 12,
+   "horizon_line": {
+    "a": [
+     -9384.58439900741,
+     1920.0430866271818
+    ],
+    "b": [
+     1919.407381103033,
+     -577.4296029523288
+    ]
+   },
+   "horizon_scalar_y": 671.3067418374268,
+   "axis_horizon_dist_px": [
+    4.826924015831804e-13,
+    0,
+    1692.727031204835
+   ],
+   "marks": [
+    {
+     "axis": 0,
+     "kind": "edge",
+     "at": [
+      357,
+      359
+     ]
+    },
+    {
+     "axis": 1,
+     "kind": "edge",
+     "at": [
+      684,
+      57
+     ]
+    },
+    {
+     "axis": 2,
+     "kind": "edge",
+     "at": [
+      701,
+      614
+     ]
+    }
+   ],
+   "view_cube": {
+    "on": true,
+    "visible": false,
+    "drawn": false
+   },
+   "fixed": [
+    {
+     "axis": 0,
+     "disp": [
+      -3732.5885089521917,
+      671.3067418374268
+     ],
+     "snap_src": [
+      -3732.5885089521917,
+      671.3067418374268
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       416.3865898972424,
+       382.3657237897016
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 0,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      -3732.5885089521917,
+      671.3067418374268
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    },
+    {
+     "axis": 1,
+     "disp": [
+      741.8458895055298,
+      -317.26242282929604
+     ],
+     "snap_src": [
+      741.8458895055298,
+      -317.26242282929604
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       613.4684521289213,
+       215.698995197515
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 1,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      741.8458895055298,
+      -317.26242282929604
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    },
+    {
+     "axis": 2,
+     "disp": [
+      871.991211427791,
+      1387.5322017451729
+     ],
+     "snap_src": [
+      871.991211427791,
+      1387.5322017451729
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       620.7408711675289,
+       524.8672335617674
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 2,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      871.991211427791,
+      1387.5322017451729
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    }
+   ],
+   "legacy": [
+    {
+     "axis": 0,
+     "disp": [
+      -3732.5885089521917,
+      671.3067418374268
+     ],
+     "snap_src": [
+      2118.52761348025,
+      69.55080756887736
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       416.3865898972424,
+       382.3657237897016
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 0,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      2118.52761348025,
+      69.55080756887736
+     ],
+     "gap_px": 5881.978415687724,
+     "source_gap_px": 5881.978415687724,
+     "source_aim_deg": 7.082901844855371,
+     "entries_agree": false
+    },
+    {
+     "axis": 1,
+     "disp": [
+      741.8458895055298,
+      -317.26242282929604
+     ],
+     "snap_src": [
+      -84.90818565209554,
+      69.5508075688773
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       613.4684521289213,
+       215.698995197515
+      ]
+     ],
+     "engaged": false,
+     "picked_axis": null,
+     "picked_expected_axis": null,
+     "picked_vp": null,
+     "gap_px": null,
+     "source_gap_px": 912.7687417965246,
+     "source_aim_deg": 79.00685265942049,
+     "entries_agree": false
+    },
+    {
+     "axis": 2,
+     "disp": [
+      871.991211427791,
+      1387.5322017451729
+     ],
+     "snap_src": [
+      640,
+      4069.550807568878
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       620.7408711675289,
+       524.8672335617674
+      ]
+     ],
+     "engaged": false,
+     "picked_axis": null,
+     "picked_expected_axis": null,
+     "picked_vp": null,
+     "gap_px": null,
+     "source_gap_px": 2692.033380952819,
+     "source_aim_deg": 15.246731225856118,
+     "entries_agree": false
+    }
+   ]
+  },
+  {
+   "label": "② 확정 직후(핀)",
+   "note": "자세가 항등이라 두 출처가 같다.",
+   "pinned": true,
+   "view_state": "draft_pinned",
+   "standing": true,
+   "dpr": 2,
+   "disp_vps": [
+    [
+     2118.52761348025,
+     69.55080756887736
+    ],
+    [
+     -84.90818565209554,
+     69.5508075688773
+    ],
+    [
+     640,
+     4069.550807568878
+    ]
+   ],
+   "cam_vps": [
+    [
+     2118.52761348025,
+     69.55080756887736
+    ],
+    [
+     -84.90818565209554,
+     69.5508075688773
+    ],
+    [
+     640,
+     4069.550807568878
+    ]
+   ],
+   "lifted": 12,
+   "strokes": 12,
+   "horizon_line": {
+    "a": [
+     7906.826154502473,
+     69.55080756887752
+    ],
+    "b": [
+     -3669.770927541974,
+     69.5508075688772
+    ]
+   },
+   "horizon_scalar_y": 69.55080756887736,
+   "axis_horizon_dist_px": [
+    0,
+    2.6628010986697162e-15,
+    4000.0000000000005
+   ],
+   "marks": [
+    {
+     "axis": 0,
+     "kind": "edge",
+     "at": [
+      919,
+      287
+     ]
+    },
+    {
+     "axis": 1,
+     "kind": "edge",
+     "at": [
+      374,
+      239
+     ]
+    },
+    {
+     "axis": 2,
+     "kind": "edge",
+     "at": [
+      640,
+      621
+     ]
+    }
+   ],
+   "view_cube": {
+    "on": true,
+    "visible": true,
+    "drawn": true
+   },
+   "fixed": [
+    {
+     "axis": 0,
+     "disp": [
+      2118.52761348025,
+      69.55080756887736
+     ],
+     "snap_src": [
+      2118.52761348025,
+      69.55080756887736
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       733.024736748338,
+       340.5379168874018
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 0,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      2118.52761348025,
+      69.55080756887736
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    },
+    {
+     "axis": 1,
+     "disp": [
+      -84.90818565209554,
+      69.5508075688773
+     ],
+     "snap_src": [
+      -84.90818565209554,
+      69.5508075688773
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       430.4482752400262,
+       304.80682563726486
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 1,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      -84.90818565209554,
+      69.5508075688773
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    },
+    {
+     "axis": 2,
+     "disp": [
+      640,
+      4069.550807568878
+     ],
+     "snap_src": [
+      640,
+      4069.550807568878
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       578.7684246314727,
+       531.2260476604541
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 2,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      640,
+      4069.550807568878
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    }
+   ],
+   "legacy": [
+    {
+     "axis": 0,
+     "disp": [
+      2118.52761348025,
+      69.55080756887736
+     ],
+     "snap_src": [
+      2118.52761348025,
+      69.55080756887736
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       733.024736748338,
+       340.5379168874018
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 0,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      2118.52761348025,
+      69.55080756887736
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    },
+    {
+     "axis": 1,
+     "disp": [
+      -84.90818565209554,
+      69.5508075688773
+     ],
+     "snap_src": [
+      -84.90818565209554,
+      69.5508075688773
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       430.4482752400262,
+       304.80682563726486
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 1,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      -84.90818565209554,
+      69.5508075688773
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    },
+    {
+     "axis": 2,
+     "disp": [
+      640,
+      4069.550807568878
+     ],
+     "snap_src": [
+      640,
+      4069.550807568878
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       578.7684246314727,
+       531.2260476604541
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 2,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      640,
+      4069.550807568878
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    }
+   ]
+  },
+  {
+   "label": "③ 핀 해제 · 자세 보존",
+   "note": "**음성 대조** — 비핀이지만 자세가 확정 카메라 그대로라 두 출처가 같다. 갈리는 조건은 «비핀»이 아니라 «자세가 확정 카메라와 다름»이다.",
+   "pinned": false,
+   "view_state": "draft_three",
+   "standing": true,
+   "dpr": 2,
+   "disp_vps": [
+    [
+     2118.52761348025,
+     69.5508075688773
+    ],
+    [
+     -84.90818565209543,
+     69.55080756887725
+    ],
+    [
+     640,
+     4069.550807568877
+    ]
+   ],
+   "cam_vps": [
+    [
+     2118.52761348025,
+     69.55080756887736
+    ],
+    [
+     -84.90818565209554,
+     69.5508075688773
+    ],
+    [
+     640,
+     4069.550807568878
+    ]
+   ],
+   "lifted": 12,
+   "strokes": 12,
+   "horizon_line": {
+    "a": [
+     7906.826154502473,
+     69.55080756887746
+    ],
+    "b": [
+     -3669.770927541974,
+     69.55080756887715
+    ]
+   },
+   "horizon_scalar_y": 69.5508075688773,
+   "axis_horizon_dist_px": [
+    0,
+    2.6628010986697162e-15,
+    4000
+   ],
+   "marks": [
+    {
+     "axis": 0,
+     "kind": "edge",
+     "at": [
+      919,
+      287
+     ]
+    },
+    {
+     "axis": 1,
+     "kind": "edge",
+     "at": [
+      374,
+      239
+     ]
+    },
+    {
+     "axis": 2,
+     "kind": "edge",
+     "at": [
+      640,
+      621
+     ]
+    }
+   ],
+   "view_cube": {
+    "on": true,
+    "visible": true,
+    "drawn": true
+   },
+   "fixed": [
+    {
+     "axis": 0,
+     "disp": [
+      2118.52761348025,
+      69.5508075688773
+     ],
+     "snap_src": [
+      2118.52761348025,
+      69.5508075688773
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       733.024736748338,
+       340.5379168874018
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 0,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      2118.52761348025,
+      69.5508075688773
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    },
+    {
+     "axis": 1,
+     "disp": [
+      -84.90818565209543,
+      69.55080756887725
+     ],
+     "snap_src": [
+      -84.90818565209543,
+      69.55080756887725
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       430.4482752400262,
+       304.80682563726486
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 1,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      -84.90818565209543,
+      69.55080756887725
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    },
+    {
+     "axis": 2,
+     "disp": [
+      640,
+      4069.550807568877
+     ],
+     "snap_src": [
+      640,
+      4069.550807568877
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       578.7684246314727,
+       531.226047660454
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 2,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      640,
+      4069.550807568877
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    }
+   ],
+   "legacy": [
+    {
+     "axis": 0,
+     "disp": [
+      2118.52761348025,
+      69.5508075688773
+     ],
+     "snap_src": [
+      2118.52761348025,
+      69.55080756887736
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       733.024736748338,
+       340.5379168874018
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 0,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      2118.52761348025,
+      69.55080756887736
+     ],
+     "gap_px": 5.684341886080802e-14,
+     "source_gap_px": 5.684341886080802e-14,
+     "source_aim_deg": 0,
+     "entries_agree": false
+    },
+    {
+     "axis": 1,
+     "disp": [
+      -84.90818565209543,
+      69.55080756887725
+     ],
+     "snap_src": [
+      -84.90818565209554,
+      69.5508075688773
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       430.4482752400262,
+       304.80682563726486
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 1,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      -84.90818565209554,
+      69.5508075688773
+     ],
+     "gap_px": 1.2710574864626038e-13,
+     "source_gap_px": 1.2710574864626038e-13,
+     "source_aim_deg": 0,
+     "entries_agree": false
+    },
+    {
+     "axis": 2,
+     "disp": [
+      640,
+      4069.550807568877
+     ],
+     "snap_src": [
+      640,
+      4069.550807568878
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       578.7684246314727,
+       531.226047660454
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 2,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      640,
+      4069.550807568878
+     ],
+     "gap_px": 9.094947017729282e-13,
+     "source_gap_px": 9.094947017729282e-13,
+     "source_aim_deg": 0,
+     "entries_agree": false
+    }
+   ]
+  },
+  {
+   "label": "④ 요 +0.35rad",
+   "note": "",
+   "pinned": false,
+   "view_state": "draft_three",
+   "standing": true,
+   "dpr": 2,
+   "disp_vps": [
+    [
+     4645.159613001462,
+     -282.1949832420042
+    ],
+    [
+     355.42287288800605,
+     111.94255630135353
+    ],
+    [
+     1005.0284948304244,
+     4310.418051085893
+    ]
+   ],
+   "cam_vps": [
+    [
+     2118.52761348025,
+     69.55080756887736
+    ],
+    [
+     -84.90818565209554,
+     69.5508075688773
+    ],
+    [
+     640,
+     4069.550807568878
+    ]
+   ],
+   "lifted": 12,
+   "strokes": 12,
+   "horizon_line": {
+    "a": [
+     10409.179971928326,
+     -811.7885083880647
+    ],
+    "b": [
+     -1118.8607459254008,
+     247.39854190405634
+    ]
+   },
+   "horizon_scalar_y": -282.1949832420042,
+   "axis_horizon_dist_px": [
+    0,
+    0,
+    4240.300493439696
+   ],
+   "marks": [
+    {
+     "axis": 0,
+     "kind": "edge",
+     "at": [
+      920,
+      294
+     ]
+    },
+    {
+     "axis": 1,
+     "kind": "point",
+     "at": [
+      355,
+      112
+     ]
+    },
+    {
+     "axis": 2,
+     "kind": "edge",
+     "at": [
+      666,
+      620
+     ]
+    }
+   ],
+   "view_cube": {
+    "on": true,
+    "visible": true,
+    "drawn": true
+   },
+   "fixed": [
+    {
+     "axis": 0,
+     "disp": [
+      4645.159613001462,
+      -282.1949832420042
+     ],
+     "snap_src": [
+      4645.159613001462,
+      -282.1949832420042
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       733.9760640961489,
+       345.8814530828141
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 0,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      4645.159613001462,
+      -282.1949832420042
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    },
+    {
+     "axis": 1,
+     "disp": [
+      355.42287288800605,
+      111.94255630135353
+     ],
+     "snap_src": [
+      355.42287288800605,
+      111.94255630135353
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       498.7980055108021,
+       280.49239470547377
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 1,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      355.42287288800605,
+      111.94255630135353
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    },
+    {
+     "axis": 2,
+     "disp": [
+      1005.0284948304244,
+      4310.418051085893
+     ],
+     "snap_src": [
+      1005.0284948304244,
+      4310.418051085893
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       593.3237112747474,
+       530.309388366953
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 2,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      1005.0284948304244,
+      4310.418051085893
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    }
+   ],
+   "legacy": [
+    {
+     "axis": 0,
+     "disp": [
+      4645.159613001462,
+      -282.1949832420042
+     ],
+     "snap_src": [
+      2118.52761348025,
+      69.55080756887736
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       733.9760640961489,
+       345.8814530828141
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 0,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      2118.52761348025,
+      69.55080756887736
+     ],
+     "gap_px": 2550.998699011376,
+     "source_gap_px": 2550.998699011376,
+     "source_aim_deg": 1.9436948007774026,
+     "entries_agree": false
+    },
+    {
+     "axis": 1,
+     "disp": [
+      355.42287288800605,
+      111.94255630135353
+     ],
+     "snap_src": [
+      -84.90818565209554,
+      69.5508075688773
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       498.7980055108021,
+       280.49239470547377
+      ]
+     ],
+     "engaged": false,
+     "picked_axis": null,
+     "picked_expected_axis": null,
+     "picked_vp": null,
+     "gap_px": null,
+     "source_gap_px": 442.3669308115648,
+     "source_aim_deg": 25.077891106138342,
+     "entries_agree": false
+    },
+    {
+     "axis": 2,
+     "disp": [
+      1005.0284948304244,
+      4310.418051085893
+     ],
+     "snap_src": [
+      640,
+      4069.550807568878
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       593.3237112747474,
+       530.309388366953
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 2,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      640,
+      4069.550807568878
+     ],
+     "gap_px": 437.33606189937075,
+     "source_gap_px": 437.33606189937075,
+     "source_aim_deg": 5.224363890910818,
+     "entries_agree": false
+    }
+   ]
+  },
+  {
+   "label": "⑤ 윗면(피치)",
+   "note": "",
+   "pinned": false,
+   "view_state": "draft_three",
+   "standing": true,
+   "dpr": 2,
+   "disp_vps": [
+    [
+     3694.8410360368293,
+     -1102.790791700699
+    ],
+    [
+     -291.2727067556674,
+     -943.4150006158518
+    ],
+    [
+     670.3324774617167,
+     1096.139090918923
+    ]
+   ],
+   "cam_vps": [
+    [
+     2118.52761348025,
+     69.55080756887736
+    ],
+    [
+     -84.90818565209554,
+     69.5508075688773
+    ],
+    [
+     640,
+     4069.550807568878
+    ]
+   ],
+   "lifted": 12,
+   "strokes": 12,
+   "horizon_line": {
+    "a": [
+     9478.518470992567,
+     -1334.0381233259855
+    ],
+    "b": [
+     -2088.836398918908,
+     -871.5434600754121
+    ]
+   },
+   "horizon_scalar_y": -1102.790791700699,
+   "axis_horizon_dist_px": [
+    2.011218339929918e-13,
+    0,
+    2076.3427325547295
+   ],
+   "marks": [
+    {
+     "axis": 0,
+     "kind": "edge",
+     "at": [
+      896,
+      217
+     ]
+    },
+    {
+     "axis": 1,
+     "kind": "edge",
+     "at": [
+      473,
+      108
+     ]
+    },
+    {
+     "axis": 2,
+     "kind": "edge",
+     "at": [
+      651,
+      621
+     ]
+    }
+   ],
+   "view_cube": {
+    "on": true,
+    "visible": true,
+    "drawn": true
+   },
+   "fixed": [
+    {
+     "axis": 0,
+     "disp": [
+      3694.8410360368293,
+      -1102.790791700699
+     ],
+     "snap_src": [
+      3694.8410360368293,
+      -1102.790791700699
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       720.6573044975744,
+       302.8814088524852
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 0,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      3694.8410360368293,
+      -1102.790791700699
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 8.537736462515939e-7,
+     "entries_agree": true
+    },
+    {
+     "axis": 1,
+     "disp": [
+      -291.2727067556674,
+      -943.4150006158518
+     ],
+     "snap_src": [
+      -291.2727067556674,
+      -943.4150006158518
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       487.89399286225137,
+       237.69352690250096
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 1,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      -291.2727067556674,
+      -943.4150006158518
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    },
+    {
+     "axis": 2,
+     "disp": [
+      670.3324774617167,
+      1096.139090918923
+     ],
+     "snap_src": [
+      670.3324774617167,
+      1096.139090918923
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       596.6472925112868,
+       529.9121861438742
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 2,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      670.3324774617167,
+      1096.139090918923
+     ],
+     "gap_px": 0,
+     "source_gap_px": 0,
+     "source_aim_deg": 0,
+     "entries_agree": true
+    }
+   ],
+   "legacy": [
+    {
+     "axis": 0,
+     "disp": [
+      3694.8410360368293,
+      -1102.790791700699
+     ],
+     "snap_src": [
+      2118.52761348025,
+      69.55080756887736
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       720.6573044975744,
+       302.8814088524852
+      ]
+     ],
+     "engaged": false,
+     "picked_axis": null,
+     "picked_expected_axis": null,
+     "picked_vp": null,
+     "gap_px": null,
+     "source_gap_px": 1964.4716418187322,
+     "source_aim_deg": 14.229930918041983,
+     "entries_agree": false
+    },
+    {
+     "axis": 1,
+     "disp": [
+      -291.2727067556674,
+      -943.4150006158518
+     ],
+     "snap_src": [
+      -84.90818565209554,
+      69.5508075688773
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       487.89399286225137,
+       237.69352690250096
+      ]
+     ],
+     "engaged": false,
+     "picked_axis": null,
+     "picked_expected_axis": null,
+     "picked_vp": null,
+     "gap_px": null,
+     "source_gap_px": 1033.7727236301255,
+     "source_aim_deg": 32.051211096008686,
+     "entries_agree": false
+    },
+    {
+     "axis": 2,
+     "disp": [
+      670.3324774617167,
+      1096.139090918923
+     ],
+     "snap_src": [
+      640,
+      4069.550807568878
+     ],
+     "chord": [
+      [
+       576,
+       371.25000000000006
+      ],
+      [
+       596.6472925112868,
+       529.9121861438742
+      ]
+     ],
+     "engaged": true,
+     "picked_axis": 2,
+     "picked_expected_axis": true,
+     "picked_vp": [
+      640,
+      4069.550807568878
+     ],
+     "gap_px": 2973.566427019951,
+     "source_gap_px": 2973.566427019951,
+     "source_aim_deg": 6.42302490471425,
+     "entries_agree": false
+    }
+   ]
+  }
+ ],
+ "signature": {
+  "views_before": 1,
+  "views_after": 2,
+  "current_view_name": "뷰 1",
+  "current_is_confirm": false,
+  "pending_in_current": 1,
+  "stroke_axis": "free",
+  "stroke_has_3d": false,
+  "lifted": 12,
+  "view_cube": {
+   "on": true,
+   "visible": true,
+   "drawn": true
+  }
+ },
+ "summary": {
+  "view_states": [
+   "pre",
+   "draft_three",
+   "draft_pinned",
+   "draft_three",
+   "draft_three",
+   "draft_three"
+  ],
+  "pinned": [
+   false,
+   false,
+   true,
+   false,
+   false,
+   false
+  ],
+  "standing": [
+   false,
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "fixed_not_engaged": "0/16",
+  "fixed_not_engaged_rotated": "0/12",
+  "fixed_wrong_axis": "0/16",
+  "fixed_wrong_axis_rotated": "0/12",
+  "fixed_wrong_point": "0/16",
+  "legacy_not_engaged_rotated": "5/12",
+  "legacy_wrong_point_rotated": "4/12",
+  "legacy_miss_rotated": "9/12",
+  "legacy_source_aim_deg_rotated": [
+   7.1,
+   79,
+   15.2,
+   0,
+   0,
+   0,
+   1.9,
+   25.1,
+   5.2,
+   14.2,
+   32.1,
+   6.4
+  ],
+  "legacy_source_aim_deg_max": 79,
+  "legacy_source_gap_px_rotated": [
+   5882,
+   912.8,
+   2692,
+   0,
+   0,
+   0,
+   2551,
+   442.4,
+   437.3,
+   1964.5,
+   1033.8,
+   2973.6
+  ],
+  "entries_disagree": 0
+ },
+ "gate": {
+  "registered": "표시와 스냅이 같은 소실점을 가리킨다 — 판정은 **개수**가 든다: `summary.fixed_not_engaged`·`fixed_wrong_axis`가 0/n이고 `summary.legacy_miss_rotated`가 **0이 아닌 것**이 함께 든다(#30).",
+  "reachability": "되살림 스위치(`S2S.setVpSource(false)`)로 수리 전 배선을 세우면 같은 자세·같은 분모에서 `legacy_miss_rotated`가 0이 아니다. 크기의 값은 `legacy_source_aim_deg_rotated`(도 — 스냅이 보는 단위)가 든다.",
+  "reachability_source": "summary/legacy_miss_rotated",
+  "reachability_value": "9/12",
+  "reachability_magnitude_source": "summary/legacy_source_aim_deg_rotated",
+  "reachability_magnitude_value": [
+   7.1,
+   79,
+   15.2,
+   0,
+   0,
+   0,
+   1.9,
+   25.1,
+   5.2,
+   14.2,
+   32.1,
+   6.4
+  ]
+ },
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}
