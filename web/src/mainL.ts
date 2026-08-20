@@ -226,6 +226,104 @@ let seedLines: SeedLine[] = [];
  */
 const SEED_LINES = { on: true };
 
+/**
+ * **국면 분리**(2026-08-20 20차 지시 2 · D-L118) — **확정 전 획이 카메라를 만들고,
+ * 확정 후 획이 카메라를 쓴다.** 카메라를 만드는 판정(`feedStroke` → `stepRule`)이
+ * 그리기 국면에서도 돌면, P1 상태의 **모든 사선**이 «둘째 깊이선»으로 읽혀 소실점을
+ * 세우고 작도선으로 소비된다 — 그것이 «확정 후 그은 획이 사라진다»의 기전이다
+ * (`post_confirm_trace.json`의 A3가 실측: 자유 방향 보통 획이 `vp_fixed_delete`).
+ *
+ * **작도 국면**은 19차가 seeds를 지우는 그 경계다(지시 2 — «사용자가 그리기로 넘어가는
+ * 첫 획»): 확정 후에도 **획마다 소실점을 만드는 동안**은 작도이고(둘째 깊이선의 1점→2점
+ * 승격이 여기서 산다 — vpRules.ts의 «빈 수평 슬롯» 가지), 소실점을 안 만드는 획이 오면
+ * 그리기 국면이다. 그 뒤로는 획을 **규칙에 넣지 않는다** — 카메라는 잠긴다(§1의
+ * «소실점은 확정 후 잠긴다»가 이제 구조로 선다).
+ *
+ * ⚠ `seedLines`(표시)와 따로 든다 — 표시 스위치(`SEED_LINES.on`)가 국면을 정하면
+ * 측정 스위치가 동작을 바꾼다(#54의 되살림 스위치 규칙). 전이는 둘뿐이다:
+ * vp_fixed → 작도 유지 · 그 외 획 → 그리기. 실행취소·복원은 각자의 자리에서 되잡는다.
+ *
+ * 측정 스위치(#30) — `S2S.setDraftGate(false)`가 **수리 전 거동**(그리기 국면에도
+ * 규칙이 돈다 — 획이 소비될 수 있다)이다. 회귀 팔이 그것으로 버그를 되살린다.
+ */
+const DRAFT_GATE = { on: true };
+let draftPhase = true;
+
+// ---------------------------------------------------------------- 획 경로 표식 (20차 지시 1)
+//
+// **같은 자리가 세 번 나오면 구조 문제다**(2026-08-20 20차 사람 지시 머리말).
+// D-L98·L99(연결 끊김) · D-L114(삭제가 이벤트마다 돔)가 각각 **증상 하나**를 막았고
+// **원인은 안 갈렸다.** 획 하나가 3D가 되기까지 지나는 판정이 열 곳이 넘는데, 그 중
+// **어느 하나가 거부하면 2D로 돌아가고 그것이 «사라진다»로 보인다.**
+//
+// 그래서 **패치 대신 표식을 먼저 심는다**(지시 1 · 진행 규칙 "1의 표식이 나오기 전에
+// 수리하지 않는다"). 획 하나가 지나는 **모든** 판정에 통과·거부·미도달을 남긴다.
+//
+// ⚠ **이것은 관찰이지 판정이 아니다** — 아무 동작도 안 바꾼다. 거부의 사유 문자열은
+// 그 자리의 조건 이름이고, 하네스가 그 조건을 **다시 계산하지 않는다**(#52).
+
+/** 판정 하나의 결과. `skip`은 **거부가 아니라 그 자리에 안 왔다**는 뜻이다(미도달). */
+type TraceVerdict = "pass" | "reject" | "skip";
+interface TraceStep {
+  /** 판정의 자리 이름 — 코드의 그 조건과 1:1이다. */
+  at: string;
+  verdict: TraceVerdict;
+  /** 거부·미도달의 사유(그 자리의 조건). */
+  why?: string;
+}
+/**
+ * 획 id → 그 획이 지난 자리들(**전 생애** — 그린 턴 + 이후 연쇄 회차까지 이어 적는다).
+ * 연쇄(`promoteChain`)는 **다른 획**의 판정을 이 획의 턴에 돌리므로, 버퍼 하나로는
+ * 표식이 섞인다 — id로 가른다.
+ */
+const traceMap = new Map<string, TraceStep[]>();
+/** 획 id가 생기기 전(지평선·탭 갈래)의 자리들 — 획이 생기면 그 획의 표식으로 옮긴다. */
+let preTrace: TraceStep[] = [];
+/** 마지막으로 **끝난** 제스처의 표식(하네스가 읽는다). `id: null`은 획이 안 생긴 제스처다. */
+let lastTrace: { id: string | null; steps: TraceStep[]; standing: boolean } =
+  { id: null, steps: [], standing: false };
+const T = (sid: string | null, at: string, verdict: TraceVerdict, why?: string): void => {
+  const step: TraceStep = why == null ? { at, verdict } : { at, verdict, why };
+  if (sid == null) { preTrace.push(step); return; }
+  const arr = traceMap.get(sid);
+  if (arr) arr.push(step); else traceMap.set(sid, [step]);
+};
+/**
+ * **거부가 가능한 자리의 전수 목록**(지시 1-b «거부 지점이 몇 곳인지»). 코드의 그 조건과
+ * 1:1이고, 원장이 이 목록으로 «몇 곳 중 어디서 걸렸나»를 센다. **`render:*` 둘은 문서가
+ * 아니라 화면의 거부다** — 획은 남아 있는데 안 그려지는 경우(지시 3-c)가 그 자리다.
+ */
+const TRACE_REJECT_SITES = [
+  "gesture_gate",        // 두 점 미만 탭 · 그리기 도구 아님 — 획이 아예 안 생긴다
+  "liftable",            // 주석 채널 — 배치·규칙에 안 들어간다(D-3)
+  "bend_gate",           // 양 끝 스냅인데 획이 꺾여 있다(AXIS_TOL.bend_max)
+  "resolve_live",        // 축·양끝·연장·보조 어느 갈래도 기하를 못 냈다(r.why)
+  "chain_dir_guard",     // 연쇄 되쓰기 회전이 나란함 임계를 넘었다(14차 항목 0)
+  "anchor_guard",        // 무앵커 1점 배치를 가드가 막았다(D-L83 ②)
+  "vp_fixed_delete",     // 소실점을 만든 작도선 — 문서에서 뺀다(18차 지시 4 · D-L114)
+  "solve_into",          // 일괄 풀이가 이 획을 못 풀었다
+  "chain_cross",         // 교차 앵커의 사유별 거부(굽음·축 미분류·교차 없음·방향·끝점)
+  "render:pending_skip", // drawPending이 통째로 건너뜀 — 뷰 불일치(§9.2)
+  "render:other_view",   // 대기 획이 다른 뷰 소유라 이 화면에 안 그려짐(§9.4)
+] as const;
+/**
+ * **화면에 실제로 그려졌는가** — `drawPending`이 **자기 자리에서** 적는다(#17: 하네스가
+ * 조건을 다시 쓰지 않는다). 매 프레임 덮어쓴다.
+ *
+ * `DEFERRED.md` 19차가 *"사람이 «보통 획도 사라졌다»를 다시 말하면 … 볼 자리는 2D 대기
+ * 획의 **그리기**(`drawPending`)이지 삭제가 아니다"*라고 적어 둔 그 자리다.
+ */
+let renderTrace: {
+  /** `drawPending`이 통째로 건너뛰었는가(그러면 대기 획이 **하나도** 안 그려진다). */
+  pending_skipped: string | null;
+  /** 그려진 대기 획: id → 실제 `globalAlpha`. */
+  drawn: Record<string, number>;
+  /** 대기인데 **다른 뷰 소유라 이 화면에 안 그려진** 획(§9.4 — 문서에는 있다). */
+  hidden_other_view: string[];
+  /** 3D 층이 든 획(그 층은 three가 그린다). */
+  lifted_ids: string[];
+} = { pending_skipped: null, drawn: {}, hidden_other_view: [], lifted_ids: [] };
+
 /** 알림 한 줄에 붙는 **캐드식 동작**(지시 f) — 밑줄 친 단어를 누른다. */
 interface NoteAct { label: string; act: string }
 let noteActs: NoteAct[] = [];
@@ -646,6 +744,10 @@ function restoreSnap(s: AppSnap) {
   // **작도선도 함께 되돌린다**(19차 지시 2 · D-L114) — 안 되돌리면 실행 취소로 지평선
   // 단계에 돌아갔는데 소실점을 만들던 옅은 선이 화면에 남는다(주인 없는 표시).
   seedLines = (s.seeds ?? []).map(l => ({ a: [l.a[0], l.a[1]] as Pt2, b: [l.b[0], l.b[1]] as Pt2 }));
+  // **국면도 스냅샷에서 되잡는다**(D-L118) — 자취(seeds)가 남아 있으면 그 시점은 작도
+  // 국면이었다. 표시 스위치가 꺼져 자취가 없던 실행에서는 보수 쪽(그리기)으로 돌아온다 —
+  // 카메라를 안 바꾸는 쪽이 «조용히 틀린 카메라»보다 낫다(A-3).
+  draftPhase = seedLines.length > 0 || !cam.standing();
   const c = cam.ctx();
   // **실행취소는 그림만 되돌린다**(5차 지시 7-2) — 시점(카메라 자세)은 이력이 아니다.
   // 돌려 보던 중이면(비핀) 그대로 둔다. 물려 있던 상태에서만 다시 물린다(f·주점이
@@ -1057,7 +1159,9 @@ function promoteChain(fr: Frame): number {
           const world = { kind: ref.kind, at: fr.fromV(ref.atV), ofId: ref.ofId };
           if (ref.end) st.snapEnd = world; else st.snapStart = world;
           n += 1; placeBy.ref_anchor += 1;
+          T(st.id, "chain_ref_anchor", "pass", `회차 ${pass + 1} · ${ref.kind}`);
         }
+        // 거부 사유는 placeLive 안의 표식(resolve_live·chain_dir_guard)이 이미 적었다
         continue;
       }
       const aim0: Pt2 = [st.pts2d[0][0], st.pts2d[0][1]];   // 스냅 전 원시 시작점(겨냥 거리용)
@@ -1078,7 +1182,10 @@ function promoteChain(fr: Frame): number {
           const rej0 = chainDirGuardStats.rejected;
           const path = placeLive(st, fr, cand.at, endCand, true);
           // **연장선도 연쇄의 연결 수단이다**(지시 3-c — 대기 중인 선을 확정하는 데 쓰인다)
-          if (path) { n += 1; placeBy[path === "axis" ? "start_anchor" : path] += 1; }
+          if (path) {
+            n += 1; placeBy[path === "axis" ? "start_anchor" : path] += 1;
+            T(st.id, "chain_start_osnap", "pass", `회차 ${pass + 1} · ${cand.kind} → ${path}`);
+          }
           else if (chainDirGuardStats.rejected > rej0) {
             st.pts2d = keep.pts;
             st.snapStart = keep.snapStart; st.snapEnd = keep.snapEnd;
@@ -1095,6 +1202,7 @@ function promoteChain(fr: Frame): number {
         if (placeAnchored(st, fr, ec.at, true, true)) {
           st.snapEnd = { kind: ec.kind, at: fr.fromV(ec.at), ofId: ec.ofId };
           n += 1; placeBy.end_anchor += 1;
+          T(st.id, "chain_end_osnap", "pass", `회차 ${pass + 1} · ${ec.kind}`);
         }
         if (st.seg3d) continue;
       }
@@ -1110,11 +1218,18 @@ function promoteChain(fr: Frame): number {
         const rep = representative(st.pts2d);
         const ax = st.userAxis ? st.axis : cam.axisOf(st.pts2d).axis;
         const dirs = axisDirs(fr.ctx);
-        if (!rep || rep.bend > AXIS_TOL.bend_max) crossStats.skipped_bend += 1;
-        else if (!(typeof ax === "number" && dirs[ax])) crossStats.skipped_axis += 1;
-        else {
+        if (!rep || rep.bend > AXIS_TOL.bend_max) {
+          crossStats.skipped_bend += 1;
+          T(st.id, "chain_cross", "reject", `회차 ${pass + 1} · 굽음(skipped_bend)`);
+        } else if (!(typeof ax === "number" && dirs[ax])) {
+          crossStats.skipped_axis += 1;
+          T(st.id, "chain_cross", "reject", `회차 ${pass + 1} · 축 미분류(skipped_axis)`);
+        } else {
           const hit = crossAnchorOf(rep.a, rep.b, segs, fr.ctx, OSNAP.radiusPx);
-          if (!hit) crossStats.no_crossing += 1;
+          if (!hit) {
+            crossStats.no_crossing += 1;
+            T(st.id, "chain_cross", "skip", `회차 ${pass + 1} · 교차 없음(no_crossing)`);
+          }
           else {
             const e1 = endFromCursor(hit.atV, dirs[ax], st.pts2d[0], fr.ctx);
             const e2 = endFromCursor(hit.atV, dirs[ax],
@@ -1130,14 +1245,20 @@ function promoteChain(fr: Frame): number {
                 ? chordTurnDeg(rep.a, rep.b, [p0[0], p0[1]], [p1[0], p1[1]]) : null;
               if (CHAIN_DIR_GUARD.on && turn != null && turn > LIFT_TOL.parallel_deg) {
                 crossStats.rejected_dir += 1;
+                T(st.id, "chain_cross", "reject",
+                  `회차 ${pass + 1} · 되쓰기 회전 ${turn.toFixed(1)}°(rejected_dir)`);
               } else {
                 st.axis = ax;
                 st.seg3d = [fr.fromV(e1), fr.fromV(e2)];
                 // **확정된 방향이 pts2d에 남는다**(D-L71 — 앵커 경로와 같은 규약, #17)
                 if (p0 && p1) st.pts2d = [[p0[0], p0[1]], [p1[0], p1[1]]];
                 n += 1; placeBy.cross_anchor += 1; crossStats.placed += 1;
+                T(st.id, "chain_cross", "pass", `회차 ${pass + 1}`);
               }
-            } else crossStats.rejected_ends += 1;
+            } else {
+              crossStats.rejected_ends += 1;
+              T(st.id, "chain_cross", "reject", `회차 ${pass + 1} · 끝점 불정(rejected_ends)`);
+            }
           }
         }
       }
@@ -1363,11 +1484,14 @@ function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = nul
   if (end) {
     const rep0 = representative(st.pts2d);
     if (!rep0 || rep0.bend > AXIS_TOL.bend_max) {
+      T(st.id, "bend_gate", "reject",
+        `굽음 ${rep0 ? rep0.bend.toFixed(3) : "?"} > ${AXIS_TOL.bend_max}`);
       lastSnapNote = `양 끝이 붙었지만 **획이 꺾여 있습니다**`
                    + ` <span class="dim">(굽음 ${rep0 ? rep0.bend.toFixed(3) : "?"} > `
                    + `${AXIS_TOL.bend_max}) — **2D로 대기**합니다</span>`;
       return false;
     }
+    T(st.id, "bend_gate", "pass");
   }
   // **연장선**(13차 항목 3) — 시작 앵커(snapStart)가 끝점·정점이고 현이 그 선의 연장
   // 방향이면 원 선의 3D 직선 위에 놓는다. 미리보기(onLive)와 같은 판정을 지난다(#17).
@@ -1382,9 +1506,12 @@ function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = nul
   // 양 끝 스냅·연장선과 **같은 모양**이다: 기하가 정해지고 라벨은 안 붙는다(위계)
   const rAux = (r as { aux?: string }).aux ?? null;
   if (!r.seg || (r.axis == null && !r.twoPoint && !rExt && !rAux)) {
+    T(st.id, "resolve_live", "reject", r.why || "기하는 나왔는데 축이 미분류다(seg 있음·라벨 없음)");
     lastSnapNote = `${r.why} — **2D로 대기**합니다`;
     return false;
   }
+  T(st.id, "resolve_live", "pass",
+    r.twoPoint ? "two_point" : rExt ? "extension" : rAux ? `aux:${rAux}` : `axis:${r.axis}`);
   // ⚠⚠ **확정된 방향이 `pts2d`에 남는다**(2026-08-18 7차 지시 1-c·1-e).
   //
   // 옛 판은 카메라가 선 뒤의 `pts2d`를 **원시 커서 궤적 그대로** 두었다(`onStrokeEnd`의
@@ -1407,6 +1534,8 @@ function placeLive(st: SStroke, fr: Frame, atV: Vec3, end: SnapCand | null = nul
       const turn = chordTurnDeg(q0, q1, [p0[0], p0[1]], [p1[0], p1[1]]);
       if (CHAIN_DIR_GUARD.on && turn > LIFT_TOL.parallel_deg) {
         chainDirGuardStats.rejected += 1;
+        T(st.id, "chain_dir_guard", "reject",
+          `되쓰기 회전 ${turn.toFixed(1)}° > ${LIFT_TOL.parallel_deg}°`);
         lastSnapNote = `축과 ${turn.toFixed(1)}° 어긋난 그대로 둡니다 — **2D로 대기**합니다`;
         return false;                  // 되쓰기 전이다 — 아무것도 안 움직였다
       }
@@ -1493,7 +1622,11 @@ function placeUnanchored(st: SStroke, fr: Frame): boolean {
  */
 function guardedPlaceUnanchored(st: SStroke, fr: Frame): boolean {
   anchorGuardStats.unanchored_attempts += 1;
-  if (ANCHOR_GUARD.on) { anchorGuardStats.unanchored_rejected += 1; return false; }
+  if (ANCHOR_GUARD.on) {
+    anchorGuardStats.unanchored_rejected += 1;
+    T(st.id, "anchor_guard", "reject", "ANCHOR_GUARD 켬 — 궤도 중심 깊이는 임의 좌표(D-L83 ②)");
+    return false;
+  }
   return placeUnanchored(st, fr);
 }
 
@@ -2004,6 +2137,10 @@ function solveInto(ctx: PlaceCtx, targets: SStroke[]): number {
     const seg = r.placed.get(s.id);
     s.seg3d = seg ? [seg.a, seg.b] : null;
     if (seg) { n += 1; reanchorLifted(s, ctx, id => doc.strokes.find(x => x.id === id)); }
+    if (liftable(s)) {
+      T(s.id, "solve_into", seg ? "pass" : "reject",
+        seg ? undefined : "일괄 풀이가 못 풀었다(접합 성분 밖이거나 축 미분류 — lift.ts)");
+    }
   }
   // ⚠ **여기에는 D-L71 되쓰기가 없다 — 필요 없어서다**(12차 항목 2에서 실측으로 확인).
   // `liftAll`의 끝점은 그 화면점의 **광선 위**에 있으므로(λ·ray — lift.ts) 재투영이
@@ -2026,7 +2163,8 @@ function solveInto(ctx: PlaceCtx, targets: SStroke[]): number {
       if (!liftable(s) || s.seg3d) continue;
       if (!groundEligible(s.axis)) continue;
       const seg = groundSegment(s.pts2d, ctx);
-      if (seg) { s.seg3d = seg; n += 1; placeBy.ground += 1; }
+      if (seg) { s.seg3d = seg; n += 1; placeBy.ground += 1;
+                 T(s.id, "ground_anchor", "pass"); }
     }
   }
   return n;
@@ -2996,7 +3134,18 @@ function drawExtensionHint(ctx2: CanvasRenderingContext2D) {
 }
 
 function drawPending(ctx2: CanvasRenderingContext2D) {
-  if (cam.standing() && !viewIsCurrent()) return;
+  // **그리기 표식**(20차 지시 1·3-c — 저장은 됐는데 안 그려지는 경우를 관측한다).
+  // 조건을 다시 계산하지 않는다(#52) — 실제 분기 그 자리에서 적는다.
+  renderTrace = { pending_skipped: null, drawn: {},
+                  hidden_other_view: doc.strokes
+                    .filter(s => s.seg3d === null && s.viewRef !== doc.currentView)
+                    .map(s => s.id),
+                  lifted_ids: lifted(doc).map(s => s.id) };
+  if (cam.standing() && !viewIsCurrent()) {
+    renderTrace.pending_skipped =
+      "뷰 불일치 — cam.standing()이고 viewIsCurrent()가 거짓(§9.2: 다른 자세의 pts2d는 못 그린다)";
+    return;
+  }
   ctx2.save();
   ctx2.lineWidth = 2; ctx2.lineCap = "round";
   // **채널이 색과 파선을 정한다**(D-1) — 그리고 **미승격 2D는 연하다**(E의 셋째 단계).
@@ -3010,6 +3159,7 @@ function drawPending(ctx2: CanvasRenderingContext2D) {
     ctx2.setLineDash(ui.dash);            // **점선을 쓰지 않는다**(지시 5-7) — 채널 정의 그대로
     ctx2.globalAlpha = s.channel === "note" ? ui.alpha
       : (cam.standing() ? 0.35 : 0.65) * ui.alpha;      // **§9.4 — 2D를 약하게 구분한다**(E)
+    renderTrace.drawn[s.id] = ctx2.globalAlpha;         // 실제 그려진 값 그대로(#52)
     // **직선으로 그린다**(§1.1) — 시작점과 끝점 둘뿐이다. `pts2d`는 그대로 보존된다
     drawStraight(ctx2, s.pts2d);
   }
@@ -3543,6 +3693,12 @@ const ink = new InkCanvas(canvas, {
     const raw = stroke.points.map(p => [p[0], p[1]] as Pt2);
     ink.clear();                         // 잉크 버퍼는 문서가 아니다 — 우리가 그린다
     live2d = null;
+    // ---- **표식 시작**(20차 지시 1) — 이 제스처의 자리들을 처음부터 적는다.
+    preTrace = [];
+    const traceDone = (id: string | null): void => {
+      lastTrace = { id, steps: id == null ? preTrace : (traceMap.get(id) ?? []),
+                    standing: cam.standing() };
+    };
     // ---- **첫 동작은 지평선 긋기다**(18차 지시 j·k·l · D-L109).
     //
     // 화면 수평으로 강제한다(롤 0) — **끝점의 y** 하나가 시선 높이다. 기본 위치가 없으므로
@@ -3555,6 +3711,8 @@ const ink = new InkCanvas(canvas, {
         drawHorizonAt(raw[raw.length - 1][1]);
       }
       hoverSnap = null; hover2d = null; live = null;
+      T(null, "horizon_draft", "pass", "획이 지평선이 됐다 — 문서에 획으로 안 남는다(D-L109)");
+      traceDone(null);
       refresh(); return;
     }
     // **지평선 토글을 그 자리에서 켠다**(16차 지시 5 — «켜고 끄기를 그 자리에서»).
@@ -3569,6 +3727,8 @@ const ink = new InkCanvas(canvas, {
         SHOW_HORIZON.on = true;
         note = "지평선 **켬** <span class=\"dim\">(선 위 어디서나 끌 수 있습니다 —"
              + " 같은 손잡이를 톡 치면 다시 끕니다)</span>";
+        T(null, "horizon_toggle_tap", "pass", "지평선 토글 탭 — 획이 아니다");
+        traceDone(null);
         refresh(); return;
       }
     }
@@ -3580,10 +3740,19 @@ const ink = new InkCanvas(canvas, {
       const tapLen = Math.hypot(raw[raw.length - 1][0] - raw[0][0],
                                 raw[raw.length - 1][1] - raw[0][1]);
       if (tapLen <= PICK_TOL.radius_ratio * Math.hypot(...cssSize())
-          && auxTapCreate(raw[0])) { refresh(); return; }
+          && auxTapCreate(raw[0])) {
+        T(null, "aux_tap", "pass", "보조 소실점 탭 — 획이 아니다");
+        traceDone(null);
+        refresh(); return;
+      }
     }
     // ⛔ **점 찍기 확정을 지웠다**(18차 지시 a) — 대기 풀이 없어 찍을 대상이 없다.
-    if (raw.length < 2 || tool !== "draw") { refresh(); return; }
+    if (raw.length < 2 || tool !== "draw") {
+      T(null, "gesture_gate", "reject",
+        raw.length < 2 ? "두 점 미만(탭) — 획이 안 생긴다" : `도구가 그리기가 아니다(${tool})`);
+      traceDone(null);
+      refresh(); return;
+    }
     // **2D 오스냅 + 화면 직교 스냅**(A-2·4차 지시 1). 여기(주 경로)는 카메라가 서기 전에만
     // 돈다 — 그 뒤로는 3D 오스냅·축 스냅이 정하고, **3D에 못 붙은 무앵커 획은
     // `placeStroke`의 대기 가지가 같은 2D 판을 다시 지난다**(12차 항목 2 — 그 가지의 주석).
@@ -3618,6 +3787,7 @@ const ink = new InkCanvas(canvas, {
     // **§9.3 — 그리는 자리에서만 뷰가 생긴다.** 돌릴 때마다 만들면 뷰가 넘친다
     doc.currentView = viewForDrawing();
     const s = newSStroke(pts, doc.currentView, channel);
+    traceMap.set(s.id, preTrace); preTrace = [];   // 지금까지의 자리들이 이 획의 것이 된다
     // **2D 단계에서 걸린 오스냅을 기록한다**(2026-08-18 9차 항목 1 · D-L81).
     //
     // ⚠⚠ **여기가 8차까지 비어 있던 자리다.** `resolve2d`가 좌표를 옮기고 표식까지 그렸는데
@@ -3643,7 +3813,11 @@ const ink = new InkCanvas(canvas, {
     // 규칙이 받는 것이 **사용자가 본 그 선**이 된다. 옛 순서는 규칙이 원시 커서 궤적을 받았다.
     // 카메라가 아직 안 섰으면 놓을 수가 없으므로(3D 대상이 없다) 종전대로 규칙이 먼저다 —
     // 그때 규칙이 카메라를 세우면 아래에서 곧바로 놓는다.
+    T(s.id, "liftable", liftable(s) ? "pass" : "reject",
+      liftable(s) ? undefined : "주석 채널 — 배치·규칙·3D에 안 들어간다(D-3)");
     const fr0 = liftable(s) ? frame() : null;
+    T(s.id, "camera_frame", fr0 ? "pass" : "skip",
+      fr0 ? undefined : liftable(s) ? "카메라 미확정 — 규칙이 먼저 돈다" : "주석 — 해당 없음");
     // **무엇이 이 획의 기하를 정했나** — 연결(양 끝 스냅·연장선)이면 규칙의 거절 알림을
     // 안 낸다(15차 항목 2 · D-L100 · `feedStroke`의 그 자리)
     const path0 = fr0 ? placeStroke(s, fr0) : null;
@@ -3653,9 +3827,18 @@ const ink = new InkCanvas(canvas, {
     const hint2d: "screen" | "depth" | undefined =
       r2d?.ortho ? "screen" : r2d?.vpdir ? "depth" : undefined;
     let ruleEvent: RuleEvent["type"] | null = null;
-    if (liftable(s)) {
+    // **그리기 국면에서는 규칙에 안 넣는다**(20차 지시 2 · D-L118 — DRAFT_GATE 머리말).
+    // 카메라를 만드는 판정과 카메라를 쓰는 계산은 다른 일이다 — 전자가 후자에서도 돌면
+    // 확정 후 획이 소실점을 세우고 작도선으로 소비된다(그것이 «사라진다»였다).
+    // ⚠ 확정 전(!standing)과 작도 국면(획마다 소실점을 만드는 동안)은 종전대로 넣는다 —
+    // 확정과 1점→2점 승격이 그 경로다.
+    const drafting = !DRAFT_GATE.on || !cam.standing() || draftPhase;
+    if (liftable(s) && drafting) {
       ruleEvent = feedStroke(s, undefined, hint2d,
                              path0 === "two_point" || path0 === "extension");
+      T(s.id, "feed_rule", "pass", `사건: ${ruleEvent ?? "none"}`);
+    } else if (liftable(s)) {
+      T(s.id, "feed_rule", "skip", "그리기 국면 — 획은 카메라를 쓰기만 한다(D-L118)");
     }
     // ---- **소실점을 만든 획은 작도선이 된다**(18차 지시 4·m → **19차 지시 2로 시점 이동**).
     //
@@ -3677,16 +3860,22 @@ const ink = new InkCanvas(canvas, {
     if (ruleEvent === "vp_fixed") {
       const k = doc.strokes.findIndex(x => x.id === s.id);
       if (k >= 0) doc.strokes.splice(k, 1);      // 이미 확정 직전에 빠졌으면 여기는 무해하다
+      T(s.id, "vp_fixed_delete", "reject",
+        "소실점을 만든 작도선 — 문서에서 뺀다(18차 지시 4 · 자취는 seedLines)");
       // 카메라가 **이미 서 있던** 갈래에서는 이 획이 놓인 뒤에 작도선이 됐다 — 되돌린다
       if (path0) placeBy[path0 === "axis" ? "start_anchor" : path0] -= 1;
       if (SEED_LINES.on) {
         seedLines.push({ a: [pts[0][0], pts[0][1]],
                          b: [pts[pts.length - 1][0], pts[pts.length - 1][1]] });
       }
+      draftPhase = true;                 // 소실점을 만들었다 — 작도 국면이다(D-L118)
     } else {
       // **사용자가 그리기로 넘어갔다** — 작도선의 역할이 끝난다(지시 2-a·2-b).
       // 남은 획(지지선·거절된 획·화면 축 선언)은 전부 «그리기»다: 소실점을 만들지 않는다.
       seedLines = [];
+      // **국면도 여기서 넘어간다**(D-L118) — 같은 경계, 같은 전이다. 이 뒤로 카메라는
+      // 잠기고(규칙에 안 넣는다), 확정 후 획은 스냅·축·연쇄(카메라를 쓰는 계산)만 지난다.
+      draftPhase = false;
     }
     // 확정 뒤에는 그 자리에서 푼다 — **승격 연쇄**의 첫 형태다(§9.1).
     // **돌린 시점에서도 돈다**(L-B.8) — `frame()`이 좌표 변환을 들고 있다
@@ -3707,6 +3896,10 @@ const ink = new InkCanvas(canvas, {
       // 가로선 짝이 지면으로 내려가 붙었다). 확정 뒤의 좌표는 **연결이 정한다**(연쇄 ③).
       if (!s.seg3d && fr.pinned && !lifted(doc).length) {
         solveInto(fr.ctx, pending(doc, confirmView().id));
+      } else if (!s.seg3d) {
+        T(s.id, "solve_into", "skip",
+          fr.pinned ? "3D가 이미 있다 — 일괄 풀이 안 돈다(D-L84 ③, 연쇄의 몫)"
+                    : "돌린 시점 — 일괄 풀이는 확정 뷰에서만 돈다");
       }
       // **③ 승격 연쇄**(§9.1, L-B.7). ⚠ **조건 없이 돈다**(10차 항목 1 · 4-3 — "나중에 생긴
       // 연결에도 반응한다"): 옛 조건(`if (s.seg3d)`)은 **일괄 풀이가 남을 올린 턴**과
@@ -3717,6 +3910,15 @@ const ink = new InkCanvas(canvas, {
     }
     hoverSnap = null; hover2d = null; live = null;
     strokeAnchor = null; stroke2dAnchor = null;   // 호버 잠금 해제(D-L103)
+    // ---- **표식 마감** — 이 획의 최종 상태. «사라짐»의 정의가 이 한 줄로 갈린다:
+    // 문서에 없으면 삭제(작도선뿐이어야 한다), 있는데 seg3d 없으면 대기(화면에 남아야 한다).
+    {
+      const inDoc = doc.strokes.some(x => x.id === s.id);
+      T(s.id, "final", inDoc ? "pass" : "reject",
+        !inDoc ? "문서에 없다 — 이 획은 화면에서 사라진다"
+               : s.seg3d ? "3D 등재" : "2D 대기(drawPending이 그린다)");
+      traceDone(s.id);
+    }
     refresh();
   },
 });
@@ -3741,6 +3943,8 @@ function placeStroke(s: SStroke, fr: Frame): PlacePath {
         ? strokeAnchor : null;
       const cand = pin ?? (sc ? anchorCandAt(pts[0], segs0, sc, snapStatic(segs0, fr.poseKey)) : null);
       lastSnapNote = "";
+      T(s.id, "start_osnap", cand ? "pass" : "skip",
+        cand ? `${cand.kind}${pin ? " (호버 잠금)" : ""}` : "시작점에 앵커 후보 없음");
       if (cand) {
         applySnapToStart(s, cand, fr.fromV(cand.at));
         // **겨냥 거리는 스냅 전 원시 시작점으로 잰다**(7차 항목 2 — aimDistPx 머리말).
@@ -3750,6 +3954,8 @@ function placeStroke(s: SStroke, fr: Frame): PlacePath {
         // 미리보기(`onLive`)와 **같은 함수**를 부른다(#17: 미리보기와 확정이 갈릴 여지 없음)
         const endCand = endSnapRecord(s, fr, cand.at, pts[pts.length - 1]);
         if (endCand) applySnapToEnd(s, endCand, fr.fromV(endCand.at));
+        T(s.id, "end_osnap", endCand ? "pass" : "skip",
+          endCand ? endCand.kind : "끝점에 후보 없음 — 축·연장 경로로 간다");
         {
           const p = placeLive(s, fr, cand.at, endCand);
           path = p || null;
@@ -3762,6 +3968,7 @@ function placeStroke(s: SStroke, fr: Frame): PlacePath {
         // 그리는 순간 3D에 있다 — **미승격이 없다**(지시 2). 시작점 스냅이 있으면 위
         // 분기가 그 점의 깊이를 쓰므로, 여기는 빈 곳에서 시작한 획만 온다.
         // ⚠ **가드가 켜져 있으면 이 분기는 막힌다**(D-L83 ② — 궤도 중심 깊이는 임의 좌표다).
+        T(s.id, "unanchored_1pt", "pass", "궤도 중심 깊이(1점 직접)");
       } else {
         // **미승격 2D 획도 계속 후보다**(4차 지시 1-b) — 3D 대상에 못 붙으면 **2D 판 전체**
         // (오스냅 > 방향 > 관계 — `resolve2dCore`)를 지난다. 3D가 이긴다(붙으면 그 획의
@@ -3775,6 +3982,8 @@ function placeStroke(s: SStroke, fr: Frame): PlacePath {
         // 전과 **같은 함수**(`resolve2d`, #17)를 지나므로 겨냥이 조리개 안이면 방향이
         // 소실점을 정확히 지난다. D-L80 가드(방향 스냅이 depth 판정을 못 뒤집는다)도 그대로다.
         const r2 = resolve2d(s.pts2d, s.id, fr);
+        T(s.id, "wait_2d", "pass",
+          `2D 대기 — 2D 판(오스냅>방향>관계) ${r2.engaged ? "걸림" : "안 걸림"}`);
         if (r2.engaged) s.pts2d = r2.pts.map(q => [q[0], q[1]] as Pt2);
         // **확정 뒤의 2D 연결도 같은 필드에 적는다**(10차 항목 1 · 4-3) — 이 기록이
         // 연쇄(`refAnchorOf`)의 재료다. 기록 규칙은 `snap2Refs` 하나다(#17 · D-L81).
@@ -3918,6 +4127,10 @@ function applyDoc2(d: Doc2) {
   // ⚠ 옛 저장본의 `locked`·`order`·`lensMm`은 읽지 않는다 — 전부 `rules`에서 계산된다(지시 1)
   // **작도선은 저장되지 않는다**(19차 지시 2 — 획이 아니라 표시다). 연 문서에는 없다.
   seedLines = [];
+  // **연 문서는 그리기 국면이다**(D-L118) — 작도 자취가 저장되지 않으므로 복원 후에는
+  // 획이 카메라를 못 바꾼다. ⚠ 대가: 1점으로 저장한 문서를 열어 둘째 깊이선으로 2점
+  // 승격하는 길이 막힌다(그 획은 2D 대기로 남는다 — 사라지지는 않는다). DEFERRED 20차.
+  draftPhase = !cam.standing();
   undoStack.length = 0;
   picked = null;
   // ⚠⚠ **무대 카메라를 재수립한다**(7차 항목 1 — 실획 표본이 잡은 자리). 옛 판은 규칙만
@@ -4271,6 +4484,7 @@ const onActClick = (e: Event) => {
     pushUndo();
     doc = newDoc(); cam.reset();
     seedLines = [];                  // 작도선도 비운다(19차 지시 2) — 규칙이 비면 자취도 없다
+    draftPhase = true;               // 빈 화면 — 처음부터 작도다(D-L118)
     syncScene(); clearNote();
     // **저장본도 지운다** — 안 지우면 새로고침에서 방금 버린 작업이 되살아난다
     void deleteDoc2().catch(() => { /* 저장소가 없어도 화면은 비워졌다 */ });
@@ -4519,6 +4733,28 @@ refresh();
   // ⛔ `promoteReport`·`orderMarks` 창을 지웠다(7차 지시 3-d).
   /** L-D.3 — **연쇄 회차별** (대기 수 · 놓인 수). 합계만으로는 "여러 회"가 안 보인다 */
   chainTrace: () => chainTrace.map(x => ({ ...x })),
+  // ---- **획 경로 표식**(20차 지시 1) — 통과·거부·미도달의 전수 기록. 하네스가 읽는다.
+  /** 마지막 제스처의 표식. `id: null`은 획이 안 생긴 제스처(지평선·탭)다. */
+  lastTrace: () => ({ ...lastTrace, steps: lastTrace.steps.map(x => ({ ...x })) }),
+  /** 획 하나의 전 생애 표식(그린 턴 + 연쇄 회차) + 최종 상태·그리기 여부. */
+  strokeTrace: (id: string) => ({
+    id, steps: (traceMap.get(id) ?? []).map(x => ({ ...x })),
+    in_doc: doc.strokes.some(x => x.id === id),
+    seg3d: doc.strokes.find(x => x.id === id)?.seg3d != null,
+    drawn_alpha: renderTrace.drawn[id] ?? null,
+    hidden_other_view: renderTrace.hidden_other_view.includes(id),
+  }),
+  traceIds: () => [...traceMap.keys()],
+  /** 그리기 표식 — `drawPending`이 자기 자리에서 적은 그대로(#52). */
+  renderTrace: () => ({ ...renderTrace, drawn: { ...renderTrace.drawn },
+                        hidden_other_view: [...renderTrace.hidden_other_view],
+                        lifted_ids: [...renderTrace.lifted_ids] }),
+  /** 거부가 가능한 자리의 전수 목록(지시 1-b) — 원장이 «몇 곳 중 어디»를 이것으로 센다. */
+  traceRejectSites: () => [...TRACE_REJECT_SITES],
+  /** **국면**(D-L118) — 작도(획이 카메라를 만든다)인가 그리기(쓰기만 한다)인가. */
+  draftPhase: () => ({ drafting: draftPhase, gate_on: DRAFT_GATE.on }),
+  /** 측정 스위치(#30) — `false`가 수리 전 거동(그리기 국면에도 규칙이 돈다)이다. */
+  setDraftGate: (on: boolean) => { DRAFT_GATE.on = on; },
   // L-D.1 — 고치기(§9.5). **앱 경로 그대로**를 종단 확인이 부른다(#17)
   pick: (p: Pt2) => { picked = pickStroke(p); refresh(); return picked; },
   picked: () => picked,

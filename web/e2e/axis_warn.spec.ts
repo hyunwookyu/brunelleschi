@@ -148,6 +148,11 @@ test("경고는 **어긋난 획에만** 뜬다 (D-L100)", async ({ page }) => {
     }, n);
     await page.evaluate(() => window.S2S.confirmNow());
     await page.waitForTimeout(60);
+    // ⚠⚠ **되살림 — D-L118(20차)이 그리기 국면의 규칙 투입 자체를 껐다.** 이 원장의
+    // 대상(D-L100 — 규칙 경고의 «선별»)은 규칙이 도는 상태에서만 판별력이 있다(#38) —
+    // 게이트를 끄지 않으면 전 팔이 «경고 없음»으로 같아져 이 원장이 아무것도 못 가른다.
+    // 수리 후 기본 거동(경고 없음·획 생존)은 아래 ⑨ 팔이 게이트를 켠 채 따로 잰다.
+    await page.evaluate(() => window.S2S.setDraftGate(false));
   };
 
   const draw = async (a: number[], b: number[], label: string, cases: any[]) => {
@@ -247,7 +252,23 @@ test("경고는 **어긋난 획에만** 뜬다 (D-L100)", async ({ page }) => {
     const r7 = await draw(aim.a, aim.exact, "⑧ [되살림] 그 뒤에 축 스냅으로", cases);
     await page.evaluate(() => window.S2S.setNoteClear(true));
 
-    return { order: n, cases, c3, c4, c5, r3, r6, r7,
+    // ---- ⑨ **수리 후 기본 거동**(D-L118 · 20차) — 그리기 국면에서는 규칙이 안 돌므로
+    // 같은 «어긋난 획»에 경고가 **없고** 획은 2D 대기로 **남는다**. 경고의 소멸이 이
+    // 원장의 판별력을 지웠으므로(#38) 이 팔만 게이트를 켠 채 돈다 — 위 팔들과의 대조가
+    // 곧 «무엇이 바뀌었나»다.
+    await page.evaluate(() => window.S2S.setDraftGate(true));
+    const c9 = await draw(offs.a, offs.deg30, "⑨ [D-L118] 그리기 국면 — 같은 어긋난 획", cases);
+    (c9 as any).in_doc = await page.evaluate(() => {
+      const S = window.S2S; const t = S.lastTrace();
+      return t.id != null && S.doc().strokes.some((x: any) => x.id === t.id);
+    });
+    await page.evaluate(() => window.S2S.setDraftGate(false));
+
+    return { order: n, cases, c3, c4, c5, r3, r6, r7, c9,
+             /** ④와 ⑨가 **같은 획**이다(1차 리뷰어 [6] ②) — 같은 좌표·같은 겨냥. */
+             off30_pair: { order: n, a: offs.a, b: offs.deg30,
+                           gate_off_arm4: { warned: c4.warned, misfit: c4.misfit_min },
+                           gate_on_arm9: { warned: c9.warned, misfit: c9.misfit_min } },
              diag_screen_angle_to_vp_deg: Math.round(diag.worst * 100) / 100,
              diag_from_screen_axis_deg: Math.round(diag.screen_deg * 100) / 100 };
   };
@@ -255,7 +276,8 @@ test("경고는 **어긋난 획에만** 뜬다 (D-L100)", async ({ page }) => {
   const o3 = await runOrder(3);
   const o2 = await runOrder(2);
 
-  // **슬롯 2가 유한인가 · 얼마나 먼가**(#35 · 2차 리뷰어 [5]) — (b)가 종단에서 왜 안 도는지
+  // **슬롯 2가 유한인가 · 얼마나 먼가**(#35 · 2차 리뷰어 [5]) — (b)가 종단에서 왜 안 도는지.
+  // ⚠ ⑩ 팔이 페이지를 새로 열어 `__SC`(픽스처)가 사라지므로 **그 전에** 읽는다.
   const slot2 = await page.evaluate(() => {
     const S = window.S2S, sc = window.__SC;
     const el = document.getElementById("ink") as HTMLCanvasElement;
@@ -268,11 +290,56 @@ test("경고는 **어긋난 획에만** 뜬다 (D-L100)", async ({ page }) => {
              principal: p };
   });
 
+  // ---- ⑩ **제품 경로의 작도 국면 경고**(1차 리뷰어 [6] ③ — 게이트 켬 · 되살림 아님).
+  // 그린 절차(지평선 → 깊이선 둘)로 2점을 만들면 **작도 국면이 유지되고**(둘 다 vp_fixed),
+  // 그 상태의 어긋난 사선은 규칙이 «셋째 방향»으로 거절하며 경고를 낸다 — 즉 이 경고는
+  // 되살림 스위치 없이도 **제품에서 도달 가능**하다. D-L118이 끈 것은 그리기 국면뿐이다.
+  const draftWarn = await (async () => {
+    await page.goto("/l.html");
+    await page.evaluate(() => new Promise<void>(res => {
+      const q = indexedDB.deleteDatabase("sketch2space");
+      q.onsuccess = q.onerror = q.onblocked = () => res();
+    }));
+    await page.reload();
+    await page.waitForFunction(() => !!window.S2S);
+    await page.evaluate(() =>
+      document.querySelector<HTMLButtonElement>('[data-act="clear"]')!.click());
+    const b = (await page.locator("#ink").boundingBox())!;
+    const W = b.width, H = b.height, HY = Math.round(H * 0.22);
+    const drag = async (a: number[], c: number[]) => {
+      await page.mouse.move(b.x + a[0], b.y + a[1]);
+      await page.mouse.down();
+      for (let i = 1; i <= 8; i++) {
+        await page.mouse.move(b.x + a[0] + (c[0]-a[0])*i/8, b.y + a[1] + (c[1]-a[1])*i/8);
+      }
+      await page.mouse.up();
+      await page.waitForTimeout(60);
+    };
+    await drag([W * 0.15, HY], [W * 0.85, HY]);
+    await drag([W * 0.5, H * 0.75], [W * 0.28, H * 0.63]);
+    await drag([W * 0.5, H * 0.75], [W * 0.76, H * 0.63]);
+    const before = await page.evaluate(() => ({
+      order: window.S2S.order(), drafting: window.S2S.draftPhase() }));
+    await drag([W * 0.2, H * 0.55], [W * 0.32, H * 0.75]);   // 아래로 — 지평선 반대쪽 사선
+    const r = await page.evaluate(() => {
+      const S = window.S2S; const t = S.lastTrace();
+      return { note: document.getElementById("status")?.textContent ?? null,
+               in_doc: t.id != null && S.doc().strokes.some((x: any) => x.id === t.id),
+               feed: S.lastTrace().steps.filter((s: any) => s.at === "feed_rule") };
+    });
+    return { ...before, warned: typeof r.note === "string" && r.note.includes(MISALIGNED),
+             in_doc: r.in_doc, feed: r.feed };
+  })();
+
   const led = {
     what: "«이 선이 어긋납니다»가 어느 획에 뜨는가 — 앱 종단(차수 둘) + 규칙 층((b) 갈래).",
+    scope_change: "⚠⚠ **D-L118(20차) 이후 이 경고들은 작도 국면(또는 되살림 스위치)의 "
+      + "것이다** — 그리기 국면에서는 규칙 자체가 안 돌아 경고가 없다(⑨ 팔이 그 기본 "
+      + "거동을 든다). ①~⑧ 팔은 전부 `setDraftGate(false)`(수리 전 거동) 아래서 돈다 — "
+      + "그래야 D-L100의 선별(어긋난 획에만)이 판별력을 유지한다(#38·#57).",
     how: {
       end_to_end: "참 소실점 픽스처(setupScene). **차수 둘**을 만든다: 3점은 수직 슬롯도 참 "
-        + "소실점, 2점은 화면 무한원. 실제 포인터로 아홉 획(수리 팔 여섯 + 되살림 셋).",
+        + "소실점, 2점은 화면 무한원. 실제 포인터로 열 획(수리 팔 여섯 + 되살림 셋 + D-L118 팔).",
       warned: "상태줄(.note)에 «어긋납니다»가 있는가.",
       why_not_warned: "`warned` 거짓의 출처는 셋이다(#43) — `misfit_min`이 임계 "
         + "(`vp_dist_ratio`) 아래거나, `path`가 `two_point`·`extension`이라 억제됐거나, "
@@ -296,6 +363,10 @@ test("경고는 **어긋난 획에만** 뜬다 (D-L100)", async ({ page }) => {
     setup, slot2,
     vp_dist_ratio: AXIS_TOL.vp_dist_ratio,
     vp_infinite_ratio: VP_INFINITE_RATIO,
+    /** ⑩ — **제품 경로**(게이트 켬 · 작도 국면)에서 경고가 실제로 뜬다(1차 리뷰어 [6] ③). */
+    draft_phase_warn: draftWarn,
+    /** ④↔⑨ 짝(같은 획) — 차수별. `gate_off.warned` true ↔ `gate_on.warned` false가 D-L118이다. */
+    off30_pairs: [o3.off30_pair, o2.off30_pair],
     by_order: [o3, o2].map(o => ({ order: o.order, cases: o.cases,
                                    diag_screen_angle_to_vp_deg: o.diag_screen_angle_to_vp_deg,
                                    diag_from_screen_axis_deg: o.diag_from_screen_axis_deg })),
@@ -316,21 +387,38 @@ test("경고는 **어긋난 획에만** 뜬다 (D-L100)", async ({ page }) => {
       /** 도달 가능성의 **크기**(#40·#46) — ④가 임계를 넘은 정도 */
       genuinely_off_misfit: [o3.c4.misfit_min, o2.c4.misfit_min],
       genuinely_off_warned: [o3.c4.warned, o2.c4.warned],
+      /** D-L118 — 그리기 국면(게이트 켬)에서는 같은 어긋난 획에 경고가 없고 획이 남는다 */
+      draft_gate_on_warned: [o3.c9.warned, o2.c9.warned],
+      draft_gate_on_in_doc: [(o3.c9 as any).in_doc, (o2.c9 as any).in_doc],
+      /** ⑩ — **제품 경로**(게이트 켬 · 작도 국면)의 경고 도달성(2차 [R7] — 게이트 결과에 든다).
+       *  ⚠ 차수 하나(P2)다: 그린 절차로 도달 가능한 작도 국면이 P2까지다(P3는 그린 절차로
+       *  못 만든다 — 기울어진 수직선 경로를 7차 3-b가 지웠다). */
+      product_path_warned: draftWarn.warned,
+      product_path_in_doc: draftWarn.in_doc,
+      product_path_order: draftWarn.order,
       /** (b) — 규칙 층 */
       rule_revive_event: ruleArms().rows[0].event,
       rule_fixed_event: ruleArms().rows[1].event,
       rule_fixed_axis: ruleArms().rows[1].axis,
     },
     gate: {
-      registered: "경고는 **어긋난 획에만** 뜬다. 팔별 판정은 `summary.warned_by_order`가 든다 "
-        + "— 산문에 결과를 안 박는다(#47).",
-      reachability: "④가 실제로 경고를 낸다. 값은 ④가 판정 임계를 넘은 **크기**"
-        + "(`genuinely_off_misfit`, 판정이 쓰는 `vpMisfit` 그대로)이고 임계는 "
-        + "`vp_dist_ratio`다. ⚠ 다른 팔의 `warned = false`가 전부 임계 아래인 것은 **아니다** "
-        + "— ③·⑤는 임계 위이고 경로 억제·알림 비움이 사유다. 그 갈림은 팔마다의 "
+      registered: "경고는 **어긋난 획에만** 뜬다 — 그리고 **작도 국면(또는 되살림 스위치)의 "
+        + "성질이다**(D-L118 이후): 그리기 국면에서는 규칙이 안 돌아 경고 자체가 없다(⑨). "
+        + "①~⑧의 선별은 `setDraftGate(false)` 아래의 값이고, 제품 경로의 경고 도달성은 "
+        + "⑩(`draft_phase_warn` — 게이트 켬·작도 국면)이 든다. 팔별 판정은 "
+        + "`summary.warned_by_order`가 든다 — 산문에 결과를 안 박는다(#47).",
+      reachability: "④가 실제로 경고를 낸다(되살림 아래). **제품 경로의 도달성은 ⑩이다** — "
+        + "게이트 켬·작도 국면에서 `draft_phase_warn.warned`가 참이다. 값은 ④가 판정 "
+        + "임계를 넘은 **크기**(`genuinely_off_misfit`, 판정이 쓰는 `vpMisfit` 그대로)이고 "
+        + "임계는 `vp_dist_ratio`다. ⚠ 다른 팔의 `warned = false`가 전부 임계 아래인 것은 "
+        + "**아니다** — ③·⑤는 임계 위이고 경로 억제·알림 비움이 사유다. 그 갈림은 팔마다의 "
         + "`misfit_min`·`path`가 든다(#43).",
       reachability_value: null as unknown,
       reachability_source: "summary/genuinely_off_misfit",
+      /** **못 고르면 둘 다 적는다**(#28 · 2차 [R7]) — 제품 경로(⑩)의 도달성은 이 둘이다.
+       *  ⑩이 뒤집히면 `result`의 `product_path_*`가 함께 뒤집힌다. */
+      reachability_value_product_path: null as unknown,
+      reachability_source_product_path: "summary/product_path_warned",
       result: {} as Record<string, unknown>,
     },
     pitfall_citations: [7, 12, 17, 21, 24, 25, 30, 32, 33, 35, 40, 43, 46, 47],
@@ -339,6 +427,7 @@ test("경고는 **어긋난 획에만** 뜬다 (D-L100)", async ({ page }) => {
     metric_defs: metricsSnapshot(),
   };
   led.gate.reachability_value = led.summary.genuinely_off_misfit;
+  led.gate.reachability_value_product_path = led.summary.product_path_warned;
   led.gate.result = { ...led.summary };
   mkdirSync(OUT, { recursive: true });
   writeFileSync(resolve(OUT, "axis_warn.json"), JSON.stringify(led, null, 1));
@@ -360,7 +449,17 @@ test("경고는 **어긋난 획에만** 뜬다 (D-L100)", async ({ page }) => {
     expect(o.c5.warned).toBe(false);
     expect(o.r6.warned).toBe(true);
     expect(o.r7.warned).toBe(true);
+    // **D-L118** — 그리기 국면(게이트 켬)에서는 같은 어긋난 획에 경고가 없고 **획이 남는다**
+    expect(o.c9.warned).toBe(false);
+    expect((o.c9 as any).in_doc).toBe(true);
   }
+  // **⑩ 제품 경로** — 작도 국면(게이트 켬)에서는 경고가 **뜬다**(도달 가능성 · [6] ③).
+  // 그 획은 거절이지 소비가 아니다 — 문서에 남는다.
+  expect(draftWarn.order).toBe(2);
+  expect((draftWarn.drafting as any).drafting).toBe(true);
+  expect((draftWarn.drafting as any).gate_on).toBe(true);
+  expect(draftWarn.warned).toBe(true);
+  expect(draftWarn.in_doc).toBe(true);
   // **(b)** 규칙 층 — 되살림은 거절, 수리는 축 2의 지지선
   const ra = ruleArms().rows;
   expect(ra[0].event).toBe("rejected");

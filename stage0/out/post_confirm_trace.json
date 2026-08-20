@@ -1,0 +1,890 @@
+{
+ "what": "확정 후 획이 3D가 되기까지 지나는 판정의 전수 표식(20차 지시 1). ⚠ **수리(D-L118) 후 재실행분이다** — 초판(수리 전) 실행은 커밋에 없고, 그때의 거동(그리기 국면 사선의 소비·조용한 승격)은 **C1 되살림 팔**이 같은 좌표로 재현해 든다. 앞으로 «사라졌다»가 나오면 이 표식으로 가른다.",
+ "how": "새 절차(지평선 → 깊이선)로 확정한 뒤, 축 방향 획·자유 방향 획·3D 끝점 시작 획·작도선(소실점을 만든 획)을 각각 긋고 `S2S.lastTrace()`(그 제스처의 표식 전부)와 `S2S.renderTrace()`(drawPending이 실제 그린 것)를 읽는다. 표식은 코드의 그 분기 자리에서 적히고 하네스는 조건을 다시 계산하지 않는다(#52).",
+ "reject_sites_total": [
+  "gesture_gate",
+  "liftable",
+  "bend_gate",
+  "resolve_live",
+  "chain_dir_guard",
+  "anchor_guard",
+  "vp_fixed_delete",
+  "solve_into",
+  "chain_cross",
+  "render:pending_skip",
+  "render:other_view"
+ ],
+ "verdicts_by_site": {
+  "horizon_draft": {
+   "pass": 1,
+   "reject": 0,
+   "skip": 0
+  },
+  "liftable": {
+   "pass": 8,
+   "reject": 0,
+   "skip": 0
+  },
+  "camera_frame": {
+   "pass": 7,
+   "reject": 0,
+   "skip": 1
+  },
+  "feed_rule": {
+   "pass": 4,
+   "reject": 0,
+   "skip": 4
+  },
+  "vp_fixed_delete": {
+   "pass": 0,
+   "reject": 2,
+   "skip": 0
+  },
+  "start_osnap": {
+   "pass": 1,
+   "reject": 0,
+   "skip": 7
+  },
+  "anchor_guard": {
+   "pass": 0,
+   "reject": 4,
+   "skip": 0
+  },
+  "wait_2d": {
+   "pass": 7,
+   "reject": 0,
+   "skip": 0
+  },
+  "solve_into": {
+   "pass": 0,
+   "reject": 3,
+   "skip": 2
+  },
+  "ground_anchor": {
+   "pass": 2,
+   "reject": 0,
+   "skip": 0
+  },
+  "chain_cross": {
+   "pass": 0,
+   "reject": 2,
+   "skip": 0
+  },
+  "end_osnap": {
+   "pass": 0,
+   "reject": 0,
+   "skip": 1
+  },
+  "resolve_live": {
+   "pass": 1,
+   "reject": 0,
+   "skip": 0
+  }
+ },
+ "verdicts_by_site_revived": {
+  "liftable": {
+   "pass": 1,
+   "reject": 0,
+   "skip": 0
+  },
+  "camera_frame": {
+   "pass": 1,
+   "reject": 0,
+   "skip": 0
+  },
+  "start_osnap": {
+   "pass": 0,
+   "reject": 0,
+   "skip": 1
+  },
+  "anchor_guard": {
+   "pass": 0,
+   "reject": 1,
+   "skip": 0
+  },
+  "wait_2d": {
+   "pass": 1,
+   "reject": 0,
+   "skip": 0
+  },
+  "feed_rule": {
+   "pass": 1,
+   "reject": 0,
+   "skip": 0
+  },
+  "vp_fixed_delete": {
+   "pass": 0,
+   "reject": 1,
+   "skip": 0
+  }
+ },
+ "final_removed_count": 2,
+ "final_removed_count_revived": 1,
+ "reading": {
+  "vp_fixed_delete": "문서에서 획이 빠지는 **유일한** 자리다 — 발화 목록은 아래 게이트가 든다(A1·B0 작도선 + C1 되살림 팔뿐이어야 한다).",
+  "waiting_visible": "2D 대기 획은 전부 `drawn_alpha` > 0이어야 한다 — 대기는 실패가 아니라 상태다(§9.1). null이면 저장은 됐는데 안 그려진 것이다(지시 3-c).",
+  "render_gates": "`render:pending_skip`(뷰 불일치)과 `render:other_view`는 문서가 아니라 **화면의** 거부다 — 이 팔의 장면(뷰 하나·궤도 없음)에서는 안 나와야 한다."
+ },
+ "what_this_does_not_say": [
+  "dpr 1 · 마우스 합성 · 한 구도다(#12·#21).",
+  "이 원장은 **관찰이다** — 어느 거부가 옳은지(확정 전 판정인지)는 여기 없고, 그 판정은 진단 절(progress 20차)이 이력 대조로 한다.",
+  "궤도를 돌린 상태(`render:pending_skip`·`render:other_view`가 발화하는 장면)는 **어느 팔도 안 덮는다**(DEFERRED 20차 4행 — 불변식 팔도 밖이라고 적었다). 그 자리의 판정자는 `strokeTrace`의 `hidden_other_view`다.",
+  "거부 0인 자리(bend_gate·chain_dir_guard 등)는 «그 장면에서 그 조건이 안 났다»다 — «안 난다»가 아니다(#38). 자리별 분모는 `verdicts_by_site`가 든다."
+ ],
+ "arms": [
+  {
+   "label": "A0 지평선(획이 아니다)",
+   "id": null,
+   "standing": false,
+   "steps": [
+    {
+     "at": "horizon_draft",
+     "verdict": "pass",
+     "why": "획이 지평선이 됐다 — 문서에 획으로 안 남는다(D-L109)"
+    }
+   ],
+   "in_doc": null,
+   "seg3d": null,
+   "drawn_alpha": null,
+   "hidden_other_view": null,
+   "render": {
+    "pending_skipped": null,
+    "drawn": {},
+    "hidden_other_view": [],
+    "lifted_ids": []
+   }
+  },
+  {
+   "label": "A1 깊이선1 → 1점 확정(작도선 — 문서에서 빠진다)",
+   "id": "s1",
+   "standing": true,
+   "steps": [
+    {
+     "at": "liftable",
+     "verdict": "pass"
+    },
+    {
+     "at": "camera_frame",
+     "verdict": "skip",
+     "why": "카메라 미확정 — 규칙이 먼저 돈다"
+    },
+    {
+     "at": "feed_rule",
+     "verdict": "pass",
+     "why": "사건: vp_fixed"
+    },
+    {
+     "at": "vp_fixed_delete",
+     "verdict": "reject",
+     "why": "소실점을 만든 작도선 — 문서에서 뺀다(18차 지시 4 · 자취는 seedLines)"
+    },
+    {
+     "at": "start_osnap",
+     "verdict": "skip",
+     "why": "시작점에 앵커 후보 없음"
+    },
+    {
+     "at": "anchor_guard",
+     "verdict": "reject",
+     "why": "ANCHOR_GUARD 켬 — 궤도 중심 깊이는 임의 좌표(D-L83 ②)"
+    },
+    {
+     "at": "wait_2d",
+     "verdict": "pass",
+     "why": "2D 대기 — 2D 판(오스냅>방향>관계) 걸림"
+    },
+    {
+     "at": "final",
+     "verdict": "reject",
+     "why": "문서에 없다 — 이 획은 화면에서 사라진다"
+    }
+   ],
+   "in_doc": false,
+   "seg3d": false,
+   "drawn_alpha": null,
+   "hidden_other_view": false,
+   "render": {
+    "pending_skipped": null,
+    "drawn": {},
+    "hidden_other_view": [],
+    "lifted_ids": []
+   }
+  },
+  {
+   "label": "A2 확정 후 · 축 방향(깊이) 보통 획",
+   "id": "s2",
+   "standing": true,
+   "steps": [
+    {
+     "at": "liftable",
+     "verdict": "pass"
+    },
+    {
+     "at": "camera_frame",
+     "verdict": "pass"
+    },
+    {
+     "at": "start_osnap",
+     "verdict": "skip",
+     "why": "시작점에 앵커 후보 없음"
+    },
+    {
+     "at": "anchor_guard",
+     "verdict": "reject",
+     "why": "ANCHOR_GUARD 켬 — 궤도 중심 깊이는 임의 좌표(D-L83 ②)"
+    },
+    {
+     "at": "wait_2d",
+     "verdict": "pass",
+     "why": "2D 대기 — 2D 판(오스냅>방향>관계) 걸림"
+    },
+    {
+     "at": "feed_rule",
+     "verdict": "pass",
+     "why": "사건: support"
+    },
+    {
+     "at": "solve_into",
+     "verdict": "reject",
+     "why": "일괄 풀이가 못 풀었다(접합 성분 밖이거나 축 미분류 — lift.ts)"
+    },
+    {
+     "at": "ground_anchor",
+     "verdict": "pass"
+    },
+    {
+     "at": "final",
+     "verdict": "pass",
+     "why": "3D 등재"
+    }
+   ],
+   "in_doc": true,
+   "seg3d": true,
+   "drawn_alpha": null,
+   "hidden_other_view": false,
+   "render": {
+    "pending_skipped": null,
+    "drawn": {},
+    "hidden_other_view": [],
+    "lifted_ids": [
+     "s2"
+    ]
+   }
+  },
+  {
+   "label": "A3 확정 후 · 자유 방향 보통 획",
+   "id": "s3",
+   "standing": true,
+   "steps": [
+    {
+     "at": "liftable",
+     "verdict": "pass"
+    },
+    {
+     "at": "camera_frame",
+     "verdict": "pass"
+    },
+    {
+     "at": "start_osnap",
+     "verdict": "skip",
+     "why": "시작점에 앵커 후보 없음"
+    },
+    {
+     "at": "anchor_guard",
+     "verdict": "reject",
+     "why": "ANCHOR_GUARD 켬 — 궤도 중심 깊이는 임의 좌표(D-L83 ②)"
+    },
+    {
+     "at": "wait_2d",
+     "verdict": "pass",
+     "why": "2D 대기 — 2D 판(오스냅>방향>관계) 안 걸림"
+    },
+    {
+     "at": "feed_rule",
+     "verdict": "skip",
+     "why": "그리기 국면 — 획은 카메라를 쓰기만 한다(D-L118)"
+    },
+    {
+     "at": "solve_into",
+     "verdict": "skip",
+     "why": "3D가 이미 있다 — 일괄 풀이 안 돈다(D-L84 ③, 연쇄의 몫)"
+    },
+    {
+     "at": "chain_cross",
+     "verdict": "reject",
+     "why": "회차 1 · 축 미분류(skipped_axis)"
+    },
+    {
+     "at": "final",
+     "verdict": "pass",
+     "why": "2D 대기(drawPending이 그린다)"
+    }
+   ],
+   "in_doc": true,
+   "seg3d": false,
+   "drawn_alpha": 0.315,
+   "hidden_other_view": false,
+   "render": {
+    "pending_skipped": null,
+    "drawn": {
+     "s3": 0.315
+    },
+    "hidden_other_view": [],
+    "lifted_ids": [
+     "s2"
+    ]
+   }
+  },
+  {
+   "label": "B0 깊이선2 → 2점 승격(작도선 — 문서에서 빠진다)",
+   "id": "s2",
+   "standing": true,
+   "steps": [
+    {
+     "at": "liftable",
+     "verdict": "pass"
+    },
+    {
+     "at": "camera_frame",
+     "verdict": "pass"
+    },
+    {
+     "at": "start_osnap",
+     "verdict": "skip",
+     "why": "시작점에 앵커 후보 없음"
+    },
+    {
+     "at": "anchor_guard",
+     "verdict": "reject",
+     "why": "ANCHOR_GUARD 켬 — 궤도 중심 깊이는 임의 좌표(D-L83 ②)"
+    },
+    {
+     "at": "wait_2d",
+     "verdict": "pass",
+     "why": "2D 대기 — 2D 판(오스냅>방향>관계) 안 걸림"
+    },
+    {
+     "at": "feed_rule",
+     "verdict": "pass",
+     "why": "사건: vp_fixed"
+    },
+    {
+     "at": "vp_fixed_delete",
+     "verdict": "reject",
+     "why": "소실점을 만든 작도선 — 문서에서 뺀다(18차 지시 4 · 자취는 seedLines)"
+    },
+    {
+     "at": "final",
+     "verdict": "reject",
+     "why": "문서에 없다 — 이 획은 화면에서 사라진다"
+    }
+   ],
+   "in_doc": false,
+   "seg3d": false,
+   "drawn_alpha": null,
+   "hidden_other_view": false,
+   "render": {
+    "pending_skipped": null,
+    "drawn": {},
+    "hidden_other_view": [],
+    "lifted_ids": []
+   }
+  },
+  {
+   "label": "B1 확정 후 · 수평 평면 축 획(지면 배치 후보)",
+   "id": "s3",
+   "standing": true,
+   "steps": [
+    {
+     "at": "liftable",
+     "verdict": "pass"
+    },
+    {
+     "at": "camera_frame",
+     "verdict": "pass"
+    },
+    {
+     "at": "start_osnap",
+     "verdict": "skip",
+     "why": "시작점에 앵커 후보 없음"
+    },
+    {
+     "at": "wait_2d",
+     "verdict": "pass",
+     "why": "2D 대기 — 2D 판(오스냅>방향>관계) 걸림"
+    },
+    {
+     "at": "feed_rule",
+     "verdict": "pass",
+     "why": "사건: rejected"
+    },
+    {
+     "at": "solve_into",
+     "verdict": "reject",
+     "why": "일괄 풀이가 못 풀었다(접합 성분 밖이거나 축 미분류 — lift.ts)"
+    },
+    {
+     "at": "final",
+     "verdict": "pass",
+     "why": "2D 대기(drawPending이 그린다)"
+    }
+   ],
+   "in_doc": true,
+   "seg3d": false,
+   "drawn_alpha": 0.315,
+   "hidden_other_view": false,
+   "render": {
+    "pending_skipped": null,
+    "drawn": {
+     "s3": 0.315
+    },
+    "hidden_other_view": [],
+    "lifted_ids": []
+   }
+  },
+  {
+   "label": "B2 확정 후 · 가로 획",
+   "id": "s4",
+   "standing": true,
+   "steps": [
+    {
+     "at": "liftable",
+     "verdict": "pass"
+    },
+    {
+     "at": "camera_frame",
+     "verdict": "pass"
+    },
+    {
+     "at": "start_osnap",
+     "verdict": "skip",
+     "why": "시작점에 앵커 후보 없음"
+    },
+    {
+     "at": "wait_2d",
+     "verdict": "pass",
+     "why": "2D 대기 — 2D 판(오스냅>방향>관계) 걸림"
+    },
+    {
+     "at": "feed_rule",
+     "verdict": "skip",
+     "why": "그리기 국면 — 획은 카메라를 쓰기만 한다(D-L118)"
+    },
+    {
+     "at": "solve_into",
+     "verdict": "reject",
+     "why": "일괄 풀이가 못 풀었다(접합 성분 밖이거나 축 미분류 — lift.ts)"
+    },
+    {
+     "at": "ground_anchor",
+     "verdict": "pass"
+    },
+    {
+     "at": "final",
+     "verdict": "pass",
+     "why": "3D 등재"
+    }
+   ],
+   "in_doc": true,
+   "seg3d": true,
+   "drawn_alpha": null,
+   "hidden_other_view": false,
+   "render": {
+    "pending_skipped": null,
+    "drawn": {
+     "s3": 0.315
+    },
+    "hidden_other_view": [],
+    "lifted_ids": [
+     "s4"
+    ]
+   }
+  },
+  {
+   "label": "B3 확정 후 · 3D 끝점에서 축 방향(시작 오스냅)",
+   "id": "s5",
+   "standing": true,
+   "steps": [
+    {
+     "at": "liftable",
+     "verdict": "pass"
+    },
+    {
+     "at": "camera_frame",
+     "verdict": "pass"
+    },
+    {
+     "at": "start_osnap",
+     "verdict": "pass",
+     "why": "endpoint (호버 잠금)"
+    },
+    {
+     "at": "end_osnap",
+     "verdict": "skip",
+     "why": "끝점에 후보 없음 — 축·연장 경로로 간다"
+    },
+    {
+     "at": "resolve_live",
+     "verdict": "pass",
+     "why": "axis:0"
+    },
+    {
+     "at": "feed_rule",
+     "verdict": "skip",
+     "why": "그리기 국면 — 획은 카메라를 쓰기만 한다(D-L118)"
+    },
+    {
+     "at": "final",
+     "verdict": "pass",
+     "why": "3D 등재"
+    }
+   ],
+   "in_doc": true,
+   "seg3d": true,
+   "drawn_alpha": null,
+   "hidden_other_view": false,
+   "render": {
+    "pending_skipped": null,
+    "drawn": {
+     "s3": 0.315
+    },
+    "hidden_other_view": [],
+    "lifted_ids": [
+     "s4",
+     "s5"
+    ]
+   }
+  },
+  {
+   "label": "B4 확정 후 · 자유 방향(무앵커)",
+   "id": "s6",
+   "standing": true,
+   "steps": [
+    {
+     "at": "liftable",
+     "verdict": "pass"
+    },
+    {
+     "at": "camera_frame",
+     "verdict": "pass"
+    },
+    {
+     "at": "start_osnap",
+     "verdict": "skip",
+     "why": "시작점에 앵커 후보 없음"
+    },
+    {
+     "at": "wait_2d",
+     "verdict": "pass",
+     "why": "2D 대기 — 2D 판(오스냅>방향>관계) 안 걸림"
+    },
+    {
+     "at": "feed_rule",
+     "verdict": "skip",
+     "why": "그리기 국면 — 획은 카메라를 쓰기만 한다(D-L118)"
+    },
+    {
+     "at": "solve_into",
+     "verdict": "skip",
+     "why": "3D가 이미 있다 — 일괄 풀이 안 돈다(D-L84 ③, 연쇄의 몫)"
+    },
+    {
+     "at": "chain_cross",
+     "verdict": "reject",
+     "why": "회차 1 · 축 미분류(skipped_axis)"
+    },
+    {
+     "at": "final",
+     "verdict": "pass",
+     "why": "2D 대기(drawPending이 그린다)"
+    }
+   ],
+   "in_doc": true,
+   "seg3d": false,
+   "drawn_alpha": 0.315,
+   "hidden_other_view": false,
+   "render": {
+    "pending_skipped": null,
+    "drawn": {
+     "s3": 0.315,
+     "s6": 0.315
+    },
+    "hidden_other_view": [],
+    "lifted_ids": [
+     "s4",
+     "s5"
+    ]
+   }
+  },
+  {
+   "label": "C1 [되살림 · 수리 전 거동] 그리기 국면의 사선",
+   "id": "s3",
+   "standing": true,
+   "steps": [
+    {
+     "at": "liftable",
+     "verdict": "pass"
+    },
+    {
+     "at": "camera_frame",
+     "verdict": "pass"
+    },
+    {
+     "at": "start_osnap",
+     "verdict": "skip",
+     "why": "시작점에 앵커 후보 없음"
+    },
+    {
+     "at": "anchor_guard",
+     "verdict": "reject",
+     "why": "ANCHOR_GUARD 켬 — 궤도 중심 깊이는 임의 좌표(D-L83 ②)"
+    },
+    {
+     "at": "wait_2d",
+     "verdict": "pass",
+     "why": "2D 대기 — 2D 판(오스냅>방향>관계) 안 걸림"
+    },
+    {
+     "at": "feed_rule",
+     "verdict": "pass",
+     "why": "사건: vp_fixed"
+    },
+    {
+     "at": "vp_fixed_delete",
+     "verdict": "reject",
+     "why": "소실점을 만든 작도선 — 문서에서 뺀다(18차 지시 4 · 자취는 seedLines)"
+    },
+    {
+     "at": "final",
+     "verdict": "reject",
+     "why": "문서에 없다 — 이 획은 화면에서 사라진다"
+    }
+   ],
+   "in_doc": false,
+   "seg3d": false,
+   "drawn_alpha": null,
+   "hidden_other_view": false,
+   "render": {
+    "pending_skipped": null,
+    "drawn": {
+     "s2": 0.315
+    },
+    "hidden_other_view": [],
+    "lifted_ids": []
+   }
+  }
+ ],
+ "state": {
+  "after_A": {
+   "order": 1,
+   "strokes": 2,
+   "lifted": 1,
+   "placeBy": {
+    "ref_anchor": 0,
+    "start_anchor": 0,
+    "two_point": 0,
+    "end_anchor": 0,
+    "cross_anchor": 0,
+    "batch": 0,
+    "ground": 1,
+    "extension": 0,
+    "unanchored": 0,
+    "aux": 0
+   }
+  },
+  "after_B": {
+   "order": 2,
+   "strokes": 4,
+   "lifted": 2,
+   "placeBy": {
+    "ref_anchor": 0,
+    "start_anchor": 1,
+    "two_point": 0,
+    "end_anchor": 0,
+    "cross_anchor": 0,
+    "batch": 0,
+    "ground": 1,
+    "extension": 0,
+    "unanchored": 0,
+    "aux": 0
+   }
+  },
+  "revived": {
+   "order_before": 1,
+   "order": 2,
+   "strokes": 1,
+   "removed": 1
+  }
+ },
+ "gate": {
+  "registered": "① 문서에서 획이 빠지는 자리는 `vp_fixed_delete` 하나이고 발화는 작도선(A1·B0)과 되살림 팔(C1)뿐이다 ② 작도선이 아닌 확정 후 획은 전부 문서에 남고, 대기면 `drawn_alpha`>0 · 3D면 three 층 등재다 ③ C1(수리 전 거동)에서는 같은 사선이 소비되고 차수가 1→2로 움직인다(`state.revived`의 order_before → order).",
+  "reachability": "되살림 팔 C1이 도달 가능성이다 — 수리 전 거동에서 같은 좌표의 사선이 실제로 사라지고(`state.revived.removed` = 소비 수) 차수가 움직인다(`state.revived.order_before` → `order`).",
+  "reachability_source": "state/revived/order",
+  "reachability_value": 2
+ },
+ "selfcheck_notes": {
+  "zero_verdicts": "`verdicts_by_site`의 0은 **그 장면에서 그 갈래가 안 났다**다 — horizon_draft는 통과만 있는 자리(지평선이 되면 획이 아니다)라 reject·skip이 정의상 0이고, chain_cross의 pass·skip 0은 이 장면의 대기 획이 교차 전에 굽음·축 미분류로 걸렸기 때문이다(reject 행이 그 사유를 든다). 분모(합)는 같은 표의 세 칸 합이다. **행이 없는 자리는 이 실행에서 한 번도 안 지났다**(bend_gate·chain_dir_guard·gesture_gate·render:* — 이 장면의 획이 그 조건에 안 닿았다는 뜻이지 그 자리가 없다는 뜻이 아니다)."
+ },
+ "pitfall_citations": [
+  12,
+  21,
+  38,
+  52
+ ],
+ "errors": [],
+ "constants": {
+  "hash": "f351839a",
+  "values": {
+   "AXIS_TOL": {
+    "vp_dist_ratio": 0.06,
+    "screen_parallel": 0.05,
+    "ambiguity_margin": 1.5,
+    "ambiguity_floor": 0.008,
+    "min_len_ratio": 0.02,
+    "bend_max": 0.18,
+    "turn_deg": 45,
+    "turn_window_ratio": 0.12,
+    "angle_relax": 1.2,
+    "angle_t60": 0.5773502692,
+    "rank_margin": 2.5,
+    "vp_dist_ceiling": 0.22,
+    "angle_max_deg": 0
+   },
+   "PICK_TOL": {
+    "radius_ratio": 0.0145
+   },
+   "VP_TOL": {
+    "support_deg": 2.5,
+    "min_reach": 1,
+    "min_spread_mult": 1.5,
+    "min_support": 3,
+    "min_len_ratio": 0.02,
+    "refit_passes": 2,
+    "max_vps": 3,
+    "seed_pairs_max": 6000
+   },
+   "LIFT_TOL": {
+    "touch_ratio": 0.015,
+    "parallel_deg": 5,
+    "reject_passes": 2,
+    "reject_mult": 4,
+    "gauge_height": 1
+   },
+   "HOMOG_TOL": {
+    "snap_deg": 3,
+    "degenerate_cross": 1e-9
+   },
+   "HORIZON_TOL": {
+    "min_slope_deg": 3.75,
+    "min_vp_sep_ratio": 0.15
+   },
+   "RULE_TOL": {
+    "screen_axis_deg": 4,
+    "depth_min_deg": 8,
+    "vertical_ask_deg": 45,
+    "min_vp_len_ratio": 0.04,
+    "concurrent_deg": 3
+   },
+   "FOV_GATE": {
+    "severe_f_ratio": 0.5,
+    "ok_f_ratio": 0.87,
+    "reject_fov_deg": 120
+   },
+   "SNAP_TOL_AXIS": {
+    "ambiguous_deg": 6
+   },
+   "DRAFT_TOL": {
+    "handle_ratio": 0.018,
+    "margin_ratio": 0.03,
+    "min_guide_ratio": 0.45,
+    "support_pick": "len_x_sep",
+    "fill_missing_axes": true
+   },
+   "SENS_TOL": {
+    "probe_px": 1,
+    "probe_dirs": 8,
+    "budget_deg": 0.5,
+    "unusable_px": 1
+   },
+   "SNAP_TOL": {
+    "radius_ratio": 0.05,
+    "meet_ratio": 0.01,
+    "extend_ratio": 0.02,
+    "merge_ratio": 0.002
+   },
+   "LIVE_TOL": {
+    "axis_deg": 12
+   },
+   "CONSENSUS_TOL": {
+    "radius_ratio": 0.45,
+    "min_support": 3,
+    "max_spread_ratio": 1,
+    "rescue_ceiling": 2.5
+   },
+   "PLACE_TOL": {
+    "join_ratio": 0.015,
+    "view_depth_guard": 0.05,
+    "far_end_check": 1,
+    "view_depth_envelope": 0.5,
+    "retry_as_face": 0,
+    "face_far_end": 1,
+    "span_far_end": 1,
+    "fix_candidate_radius_mult": 3,
+    "same_view_px": 2,
+    "eye_height": 1
+   },
+   "TUBE_TOL": {
+    "radial_segments": 6,
+    "speed_gamma": 0.5,
+    "width_min": 0.55,
+    "width_max": 1.6,
+    "smooth_window": 5,
+    "base_width_px": 3.2
+   },
+   "EYE_HEIGHT": 1,
+   "VP_INFINITE_RATIO": 50,
+   "INK_GRADES": {
+    "precise": {
+     "lf_bow": 0.0315,
+     "hf_sigma": 0.031,
+     "overshoot": 0.1229,
+     "spacing": 0.0134
+    },
+    "medium": {
+     "lf_bow": 0.0558,
+     "hf_sigma": 0.0336,
+     "overshoot": 0.1134,
+     "spacing": 0.0148
+    },
+    "coarse": {
+     "lf_bow": 0.0937,
+     "hf_sigma": 0.0314,
+     "overshoot": 0.1623,
+     "spacing": 0.0163
+    }
+   }
+  },
+  "note": "이 실행이 쓴 공유 상수. `selfcheck.py`가 현재 값(`stage0/out/constants.json`)과 대조해 다르면 **STALE**로 표시한다 — 그 산출물은 낡았고 그것을 인용한 문서도 낡았다는 뜻이다."
+ },
+ "metric_defs": {
+  "hash": "a45078a5",
+  "names": [
+   "pairEnds",
+   "fitGauge",
+   "segShapeError",
+   "perStrokeErrorMap",
+   "perStrokeError",
+   "axisDirErrors",
+   "silentWrong",
+   "rate",
+   "fraction"
+  ],
+  "cuts": [
+   0.1,
+   0.2,
+   0.5
+  ],
+  "source": "file",
+  "note": "이 실행이 쓴 **지표 정의**의 해시(`web/test/metrics.ts`의 소스, 주석·공백 제외). `selfcheck.py`가 현재 정의(`stage0/out/metrics.json`)와 대조해 다르면 **STALE(정의)**로 표시한다. 상수 스냅샷이 못 잡는 종류다 — L-B.7에서 상수는 같고 형태 오차 정의만 갈렸다. `source: \"fallback\"`이면 소스를 못 읽은 것이고 그 실행의 해시는 신뢰하지 않는다."
+ }
+}
