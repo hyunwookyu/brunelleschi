@@ -120,6 +120,10 @@
 `legacy_not_engaged_rotated`·`legacy_wrong_point_rotated`(되살림, **갈라 센다**) ·
 `legacy_source_aim_deg_rotated`(크기, 도). `fixed_wrong_point`는 **보장**이라 값으로 안 읽는다(#5).
 
+**병합·푸시 기록**: `main`을 `8f8adbc`로 빨리감기해 푸시했다(**main 푸시가 배포다**).
+⚠ 로컬 `main` 참조가 `d6450f1`(원격에서 이미 강제 갱신되어 사라진 커밋)에 굳어 있어
+`origin/main`(=16차 마감 `02d1bc1`)에 맞춘 뒤 빨리감기했다 — 새 커밋은 그 위에 얹혔다.
+
 ⚠ **전량 e2e가 다시 쓴 원장 30여 개는 되돌렸다** — 차이가 **환경**이다(기존 값은
 Windows·캔버스 **674**, 이 컨테이너는 **675**). 두드러진 하나(`dir_state`의 `on_line`)는
 변경 없이 돌려도 같은 값이라 이 수리의 결과가 아니다. 남긴 것은 `vp_source*.json`과
