@@ -172,8 +172,8 @@
   "state": "draft_one",
   "judge": {
    "kind": "one_point",
-   "pitchDeg": -4.016950313234508e-15,
-   "yawOffDeg": 1.2722218725854067e-14,
+   "pitchDeg": -4.016950313234509e-15,
+   "yawOffDeg": 0,
    "returnDir": [
     0,
     0,

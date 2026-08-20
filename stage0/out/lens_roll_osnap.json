@@ -29,7 +29,19 @@
    -90
   ],
   "view_state": "draft_one",
+  "degen_dist_px": [
+   null,
+   5.684341886080802e-14,
+   null
+  ],
+  "degen_px_threshold": 51.2,
+  "degen_note": "`degen_dist_px`는 **주점 → 축 소실점**(css px)이다. `null`은 무한원(화면 평행 — 방향이 뚜렷하다)이고, 임계보다 작으면 축이 시선과 나란해 **화면 방향이 뜻을 잃는다**. 그 축은 판정에서 뺀다.",
   "off_ortho_deg": [
+   0,
+   null,
+   0
+  ],
+  "off_ortho_deg_raw": [
    0,
    0,
    0
@@ -47,6 +59,11 @@
      0,
      90
     ],
+    "degen_dist_px": [
+     1000.0000000000005,
+     999.9999999999997,
+     null
+    ],
     "state": "draft_two",
     "polar_deg": 92.6,
     "gaze_moved_deg": 44.4
@@ -56,6 +73,11 @@
      -90,
      180,
      90
+    ],
+    "degen_dist_px": [
+     1000,
+     null,
+     1000.0000000000002
     ],
     "state": "draft_three",
     "polar_deg": 38,
@@ -67,32 +89,64 @@
      -98.7,
      90
     ],
+    "degen_dist_px": [
+     null,
+     5.160965556445802,
+     null
+    ],
     "state": "draft_one",
-    "polar_deg": 77.4,
+    "polar_deg": 77.5,
     "gaze_moved_deg": 253.9
    },
    "return_to_draft": {
     "deg": [
-     0,
-     -98.7,
+     -178.9,
+     -0.1,
      90
     ],
-    "state": "draft_one",
-    "polar_deg": 77.8,
+    "degen_dist_px": [
+     222.21451591026272,
+     4501.107038923194,
+     null
+    ],
+    "state": "draft_two",
+    "polar_deg": 84.1,
     "judge": {
-     "kind": "one_point",
-     "pitchDeg": -0.007163693066206199,
-     "yawOffDeg": 0.0011009832860224833,
+     "kind": "two_point",
+     "pitchDeg": -0.24939428334491404,
+     "yawOffDeg": 12.525944118841295,
      "returnDir": [
-      -1.2246467991473532e-16,
+      -0.9761979009492983,
       0,
-      1
+      -0.21688166861720742
      ]
     },
-    "gaze_moved_deg": null
+    "gaze_moved_deg": 44.3
    }
   },
   "more_off_ortho_deg": {
+   "edge": [
+    0,
+    0,
+    0
+   ],
+   "vertex": [
+    0,
+    0,
+    0
+   ],
+   "top": [
+    0,
+    null,
+    0
+   ],
+   "return_to_draft": [
+    1.0999999999999943,
+    0.1,
+    0
+   ]
+  },
+  "more_off_ortho_deg_raw": {
    "edge": [
     0,
     0,
@@ -109,12 +163,34 @@
     0
    ],
    "return_to_draft": [
-    0,
-    8.700000000000003,
+    1.0999999999999943,
+    0.1,
     0
    ]
   },
-  "top_polar_deg": 77.4,
+  "more_degen_dist_px": {
+   "edge": [
+    1000.0000000000005,
+    999.9999999999997,
+    null
+   ],
+   "vertex": [
+    1000,
+    null,
+    1000.0000000000002
+   ],
+   "top": [
+    null,
+    5.160965556445802,
+    null
+   ],
+   "return_to_draft": [
+    222.21451591026272,
+    4501.107038923194,
+    null
+   ]
+  },
+  "top_polar_deg": 77.5,
   "top_reached": false,
   "top_attempts": [
    "위 모서리 반복 탭 — 모서리 스냅은 절대 자세라 45°에 머문다(도달 못 함)",
@@ -130,37 +206,56 @@
   "more_polar_deg": {
    "edge": 92.6,
    "vertex": 38,
-   "top": 77.4,
-   "return_to_draft": 77.8
+   "top": 77.5,
+   "return_to_draft": 84.1
   },
   "more_state": {
    "edge": "draft_two",
    "vertex": "draft_three",
    "top": "draft_one",
-   "return_to_draft": "draft_one"
+   "return_to_draft": "draft_two"
   },
   "more_gaze_moved_deg": {
    "edge": 44.4,
    "vertex": 54.6,
    "top": 253.9,
-   "return_to_draft": null
+   "return_to_draft": 44.3
   },
   "return_judge": {
-   "kind": "one_point",
-   "pitchDeg": -0.007163693066206199,
-   "yawOffDeg": 0.0011009832860224833,
+   "kind": "two_point",
+   "pitchDeg": -0.24939428334491404,
+   "yawOffDeg": 12.525944118841295,
    "returnDir": [
-    -1.2246467991473532e-16,
+    -0.9761979009492983,
     0,
-    1
+    -0.21688166861720742
    ]
   },
+  "return_judge_at_700ms": {
+   "kind": "two_point",
+   "pitchDeg": -0.23236407556307256,
+   "yawOffDeg": 12.50049048796106,
+   "returnDir": [
+    -0.9762941542247374,
+    0,
+    -0.2164479716389246
+   ]
+  },
+  "return_residual": {
+   "what": "「작도 시점으로」가 **정확히 0으로 접지 않는다** — 그린 기준계 피치에 0.1~0.2° 남는다(실행마다 출발 자세가 달라 값이 흔들린다).",
+   "settled": "**애니메이션 지연이 아니다** — 700ms와 2200ms에서 같은 값이다(`return_judge_at_700ms` ↔ `return_judge`). 두 시점을 둔 이유가 그 갈래다(#32).",
+   "why": "**모른다**(#55). 후보는 `snapToDir`이 세운 자세를 `OrbitControls.update()`가 구면 좌표로 다시 유도하며 생기는 잔차인데, **확인 안 했다** — 확인 못 한 것을 원인으로 적지 않는다.",
+   "size": "이 잔차가 축 방향으로 옮겨진 크기가 `more_off_ortho_deg.return_to_draft`다. 큐브 면·모서리·꼭짓점 탭은 잔차가 없다(0) — **「작도 시점으로」 경로에만 있다**.",
+   "observed": "실행 넷에서 피치 **0.14~0.19°** · 축 방향 **0.6~1.0°**. **실행마다 흔들린다** — 이 팔은 궤도 끌기로 출발 자세를 만들고 그 착지가 결정적이지 않다. 그래서 임계를 실측 최대의 **2배**(2°)로 두고 그 사유를 여기 적는다. ⚠ 큐브 탭에는 같은 임계를 안 쓴다(0.05°) — 그 경로는 잔차가 없고, 느슨한 값을 쓰면 그 회귀를 놓친다."
+  },
   "judged_by": {
-   "face": "세 축 전부 화면 직교(`off_ortho_deg`)",
-   "edge": "세로축만(`more_vertical_off_ortho_deg`)",
-   "vertex": "세로축만(같은 이유)",
-   "top": "세로축이 축퇴한다 — 가로축 둘의 직교로 본다",
-   "return_to_draft": "세 축 전부(작도 시점은 1·2점이다)"
+   "rule": "**축퇴하지 않은 축만** 본다(`degen_dist_px` ≥ 임계이거나 `null`). 축퇴한 축의 화면 방향은 0/0의 각이라 뜻이 없다 — 그것을 롤 오차로 읽으면 틀린 것을 재는 것이다. `off_ortho_deg`가 그 걸러진 값이고 `off_ortho_deg_raw`가 안 거른 값이다(둘을 같이 낸다 — 무엇을 뺐는지 보이게).",
+   "face": "1점 시점 — 깊이축이 주점에 붙어 축퇴한다. 남는 둘(화면 가로·세로)로 본다.",
+   "edge": "2점 — 세 축 다 방향이 있다.",
+   "vertex": "3점 — 세 축 다 방향이 있다.",
+   "top": "위에서 내려다봄 — 세로축이 축퇴한다. 가로축 둘로 본다.",
+   "return_to_draft": "1점으로 돌아온다 — 깊이축이 다시 축퇴한다. 남는 둘로 본다.",
+   "why_vertical_kept": "`more_vertical_off_ortho_deg`(세로축만)는 **롤의 직접 정의**라 따로 낸다 — 세로축이 축퇴하는 윗면에서는 `null`이다."
   }
  },
  "s_unanchored_probe": {
@@ -171,25 +266,32 @@
  },
  "s_start": {
   "screen": [
-   442.1235622388507,
-   239.9594717533978
+   760.1682339824556,
+   432.8728253188791
   ],
-  "dist": 5.980716405734903
+  "dist": 7.902604558099419,
+  "dist_def": "`dist`는 **훑기 격자의 질의점 → 그 후보**까지의 거리(css px)다. 격자가 성기므로 «가장 가까운 격자점이 얼마나 빗나갔나»이지 정확도가 아니다. `s_start_check.dist_px`와 **기준점이 달라 같은 양이 아니다**."
  },
  "s_start_check": {
   "app_winner_kind": "endpoint",
   "cands_top_kind": "endpoint",
   "same_kind": true,
-  "dist_px_def": "질의점 → 후보(css px). 조리개는 OSNAP.radiusPx",
-  "dist_px": 1.33209277098132e-7
+  "dist_px_def": "**질의점 → 후보**(css px). 질의점이 `s_start.screen`(= 그 후보의 자리)이므로 이 값이 0에 붙는 것은 **구성의 항등이다**(#5) — 크기로 읽지 않는다. 여기서 재는 것은 «앱의 승자와 목록의 머리가 같은 종류인가»뿐이다.",
+  "dist_px": 1.1271366270408088e-10,
+  "flip": {
+   "winner_kind_off": "on_edge",
+   "cands_top_kind_off": "endpoint",
+   "changed": true,
+   "note": "끝점 종류를 끄면 승자가 다른 종류로 바뀐다 — 하네스가 앱 필터를 **다시 걸고 있지 않다**는 증거다(#52의 검산 규약)."
+  }
  },
  "s_stroke": {
-  "axis": 0,
+  "axis": 1,
   "has3d": true,
   "n_strokes": 14,
   "state": "coord",
-  "calc_axis": 0,
-  "note": "축1로 확정 (축과 0.1°)",
+  "calc_axis": 1,
+  "note": "**연장선**으로 확정(축 2) <span class=\"dim\">— 끝점에서 그 선의 방향 그대로</span>",
   "guard": {
    "on": true,
    "start_attempts": 0,
@@ -200,20 +302,20 @@
   },
   "place_by": {
    "ref_anchor": 0,
-   "start_anchor": 1,
+   "start_anchor": 0,
    "two_point": 0,
    "end_anchor": 0,
    "cross_anchor": 0,
    "batch": 12,
    "ground": 0,
-   "extension": 0,
+   "extension": 1,
    "unanchored": 0,
    "aux": 0
   },
   "place_sum": 13,
   "pending": 1,
   "sum_ok": true,
-  "off_axis_deg": 0.1
+  "off_axis_deg": null
  },
  "r_place": {
   "in_views_panel": true,
@@ -279,24 +381,31 @@
    "fov_value": "74"
   },
   "marked_end": {
+   "pick_rule": "**주점에서 가장 먼 끝점**을 고른다 — f 변경은 주점 기준 배율이라 주점 근처 점은 거의 안 움직인다(그 점을 고르면 이 팔이 아무 힘도 못 낸다). 고른 점의 주점 거리는 `picked_from_principal_px`다.",
+   "picked_from_principal_px": 141.8,
+   "principal": [
+    640.0000000000001,
+    337.49999999999994
+   ],
    "before": {
-    "d": 85.87144073145582,
+    "dist_from_near_px": 0.005994286556904707,
     "screen": [
-     598.331219916189,
-     412.58406688254786
+     535.4554749912429,
+     433.2960686176637
     ],
-    "ofId": "s8"
+    "ofId": "s4"
    },
    "after": {
-    "d": 12.594477949965425,
+    "dist_from_near_px": 20.79692191371436,
     "screen": [
-     604.4426410046291,
-     401.57173710579605
+     550.7886719925782,
+     419.24597855377533
     ],
-    "ofId": "s8"
+    "ofId": "s4"
    },
+   "def": "`before`는 화면 중앙에서 가장 가까운 끝점, `after`는 **그 끝점의 옛 자리**에서 가장 가까운 같은 획(`ofId`)의 끝점이다. `dist_from_near_px`는 각 질의 기준점까지의 거리이고 **둘이 다른 기준점**이라 서로 비교하지 않는다. ⚠ `after.dist_from_near_px`와 `moved_px`는 **같은 양이다**(둘 다 옛 자리 ↔ 새 자리) — 독립 확인 둘이 아니다. 판정에 쓰는 것은 `moved_px`와 `same_stroke` 둘이다.",
    "same_stroke": true,
-   "moved_px": 12.59
+   "moved_px": 20.8
   },
   "geom_same": true,
   "geom_n": 13
@@ -323,6 +432,13 @@
    "overflow_y_px": 0,
    "rows": 2
   },
+  "fold_t2": {
+   "menu_was_open": false,
+   "kinds_visible_with_menu_folded": 8,
+   "osnap_button_visible_with_menu_folded": true,
+   "aux_button_is_folded": true,
+   "note": "보조 소실점 쪽은 `BAR_MENU.open && AUX.open`을 요구한다(그래서 `aux_button_is_folded`가 참이다). 오스냅에 같은 조건이 남았는지가 t-2다."
+  },
   "visible_def": "버튼 상자가 `#bar` 상자 안에 **가로·세로 둘 다** 들어가는가",
   "reproduced_before_fix": {
    "kinds": 8,
@@ -333,11 +449,12 @@
  "summary": {
   "s_off_ortho_deg": [
    0,
-   0,
+   null,
    0
   ],
-  "s_stroke_axis": 0,
-  "s_stroke_off_axis_deg": 0.1,
+  "s_stroke_axis": 1,
+  "s_stroke_off_axis_deg": null,
+  "s_stroke_note": "**연장선**으로 확정(축 2) <span class=\"dim\">— 끝점에서 그 선의 방향 그대로</span>",
   "s_more_vertical_off_ortho_deg": {
    "edge": 0,
    "vertex": 0,
@@ -345,7 +462,7 @@
    "return_to_draft": 0
   },
   "s_top_reached": false,
-  "r_screen_moved_px": 12.59,
+  "r_screen_moved_px": 20.8,
   "s_unanchored_axis": "free",
   "r_changed": true,
   "r_mm_before": 28,
@@ -360,6 +477,20 @@
   "t_visible_360": "8/8"
  },
  "gate": {
+  "clause_kinds": {
+   "wiring": [
+    "`s_off_ortho_deg` 전부 0(축퇴 아닌 축)",
+    "`r_geom_same`"
+   ],
+   "measurement": [
+    "`more_gaze_moved_deg`(탭이 시점을 옮겼다)",
+    "`s_stroke.axis`(손으로 그은 획이 축에 붙는다)",
+    "`r_lens.marked_end.moved_px`(화면이 실제로 움직인다)",
+    "`t_visible`·`t_visible_360`(좁은 폭에서 여덟이 보인다)",
+    "`t_panel.fold_t2`(접힘 뒤에도 나온다)"
+   ],
+   "why_wiring_still_asserted": "**보장에는 임계를 안 건다**(CLAUDE.md §5.1)는 «크기를 재지 않는다»는 뜻이고, 배선이 빠졌는지 보는 회귀 검사까지 금지하는 것이 아니다. 그래서 두 조항은 **0인가만** 보고 «얼마나 작은가»로 읽지 않는다. `back_at_confirm`(복귀)을 게이트에서 뺀 것과 갈리는 이유가 이것이다 — 그것은 **되돌릴 배선 자체가 없고**(`pinTo`가 값을 안 들고 있다) 값 대조만 남는다."
+  },
   "registered": "면 탭 뒤 축이 화면 직교에 정확히 온다(`s_off_ortho_deg` 전부 0) · 모서리·꼭짓점·「작도 시점으로」에서 **세로축이 화면 수직**이다(`more_vertical_off_ortho_deg` 전부 0, 그 탭들이 시선을 44~144° 옮긴다) · 그 상태에서 **끝점에서 그은 화면 수평선이 축에 붙는다**(`s_stroke_axis`) · 렌즈를 바꾸면 **화면은 움직이고 3D는 안 움직인다**(`r_lens.marked_end.moved_px` > 0 · `r_geom_same`) · 좁은 뷰포트 둘(500·360px)에서 종류 여덟이 다 보인다(`t_visible`·`t_visible_360`).",
   "reachability": "s — 수리 전 실측이 원장 안에 있다(`reproduced_off_ortho_max_deg` 8.7°). t — 수리 전 실측 4/8(`t_panel.reproduced_before_fix.visible`). r — **옛 판에 경로 자체가 없었다**(조절 수단 없음)이므로 «수리 전 값»이 없다. 대신 **양성 채널**이 든다: 렌즈를 바꾸면 지목한 끝점이 화면에서 실제로 움직인다(`marked_end.moved_px`) — 0이면 렌더가 새 f를 안 읽은 것이고 그때 이 게이트는 깨진다.",
   "reachability_source": "s_roll/reproduced_off_ortho_max_deg",

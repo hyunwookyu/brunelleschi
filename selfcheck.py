@@ -484,6 +484,61 @@ def scan_stray_progress(root: Path) -> list[dict]:
     return flags
 
 
+def scan_dead_ledger(root: Path) -> list[dict]:
+    """**원장이 «깨지지 않고 죽는» 자리를 잡는다**(2026-08-20 18차 · #38).
+
+    실제로 걸린 것: 새 절차(D-L109)가 지평선을 풀이의 전제로 만들자
+    `order_lock.json`의 `camera_ok`가 **0/300**이 됐는데 **그 시험은 통과했다** —
+    그 자리에 하한 검사가 없었기 때문이다. `rule_camera`·`axis_snap_measure`는
+    같은 원인으로 **깨져서** 드러났고, `order_lock`만 조용히 죽어 있었다.
+    «깨지면 사람이 본다»는 그래서 못 믿는다.
+
+    판정: 원장 안에서 **성공률로 읽히는 이름**(`*_ok_rate`·`*placement_rate`·
+    `*placed_rate`)이 **정확히 0**이거나 `"0/N"`(N ≥ 1) 꼴이면 플래그한다.
+    ⚠ **의심이지 오류가 아니다**(§5.1) — 특정 팔·특정 구도의 0은 정상이다.
+    그래서 **원장별로 한 줄**만 내고 몇 자리인지 함께 적는다. 원장 전체가 0이면
+    그 수가 크게 나온다 — 그것이 「죽음」의 서명이다.
+
+    ⚠ 고칠 곳은 하네스다(#32) — 정상적인 0이면 그 원장의 `what_this_does_not_say`가
+    그 사실을 적어야 하고, 죽음이면 하네스를 고쳐야 한다. 이 검사는 **묻는 것**까지 한다.
+    """
+    flags, scanned = [], 0
+    names = ("_ok_rate", "placement_rate", "placed_rate", "camera_ok")
+
+    def walk(node, path=""):
+        if isinstance(node, dict):
+            for k, v in node.items():
+                yield from walk(v, f"{path}/{k}")
+        elif isinstance(node, list):
+            for i, v in enumerate(node):
+                yield from walk(v, f"{path}[{i}]")
+        else:
+            yield path, node
+
+    for f in sorted((root / "stage0" / "out").glob("*.json")):
+        if f.name.startswith("_"):
+            continue
+        try:
+            doc = json.loads(f.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        scanned += 1
+        hits = []
+        for path, val in walk(doc):
+            leaf = path.rsplit("/", 1)[-1].split("[")[0]
+            if not any(leaf.endswith(n) for n in names):
+                continue
+            if val == 0 or (isinstance(val, str) and re.fullmatch(r"0/[1-9]\d*", val)):
+                hits.append(path)
+        if hits:
+            flags.append({"path": f"{f.name}", "val": f"{len(hits)}자리 (예: {hits[0]})",
+                          "flag": "**성공률이 0인 자리가 있다**(#38) — 특정 팔·구도의 0이면 "
+                                  "정상이고 원장이 그렇게 적어야 한다. **원장 전체가 0이면 "
+                                  "그 하네스는 «깨지지 않고 죽은» 것이다**(18차에 `order_lock`이 "
+                                  "실제로 그랬다: `camera_ok 0/300`인데 시험은 통과)"})
+    return flags + _cover("scan_dead_ledger", "원장", scanned, len(flags))
+
+
 def scan_pitfalls_table_last(root: Path) -> list[dict]:
     """**「최근 다섯」 표가 `PITFALLS.md`의 마지막 절인가**(2026-08-20 17차 후속 · #55).
 
@@ -1025,6 +1080,7 @@ def main():
     flags += scan_roundtrip_metrics(ROOT)          # 자기참조 3: 복원↔역연산 왕복 지표
     flags += scan_sweep_coverage(ROOT)             # #33 자동화: 전수 훑기의 확장자 커버리지
     flags += scan_stray_progress(ROOT)             # 루트 밖 progress.md (세 번째 재발)
+    flags += scan_dead_ledger(ROOT)               # #38: 깨지지 않고 죽은 원장
     flags += scan_pitfalls_table_last(ROOT)        # #55: 「최근 다섯」 표가 파일 끝에 있는가
     flags += scan_citation_hashes(ROOT, reports)   # #33 값 대조: 인용 해시 ↔ 원장 현재 해시
     flags += scan_cited_values(ROOT, reports)  # #42 ⑥ 존재 대조: 인용한 수치가 원장에 있는가

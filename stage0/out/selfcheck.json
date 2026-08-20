@@ -1,5 +1,5 @@
 {
-  "n_flags": 5336,
+  "n_flags": 5337,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -2570,12 +2570,7 @@
     },
     {
       "path": "draft_return.json:one_point.judge.pitchDeg",
-      "val": -4.016950313234508e-15,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
-      "path": "draft_return.json:one_point.judge.yawOffDeg",
-      "val": 1.2722218725854067e-14,
+      "val": -4.016950313234509e-15,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -4534,22 +4529,12 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "lens_roll_osnap.json:s_roll.more_points.return_to_draft.deg[0]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "lens_roll_osnap.json:s_roll.more_points.return_to_draft.judge.returnDir[0]",
-      "val": -1.2246467991473532e-16,
+      "path": "lens_roll_osnap.json:s_roll.degen_dist_px[1]",
+      "val": 5.684341886080802e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "lens_roll_osnap.json:s_roll.more_points.return_to_draft.judge.returnDir[1]",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "lens_roll_osnap.json:s_roll.more_off_ortho_deg.return_to_draft[0]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -4559,17 +4544,22 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "lens_roll_osnap.json:s_roll.more_off_ortho_deg_raw.return_to_draft[2]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "lens_roll_osnap.json:s_roll.more_vertical_off_ortho_deg.return_to_draft",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "lens_roll_osnap.json:s_roll.return_judge.returnDir[0]",
-      "val": -1.2246467991473532e-16,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+      "path": "lens_roll_osnap.json:s_roll.return_judge.returnDir[1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "lens_roll_osnap.json:s_roll.return_judge.returnDir[1]",
+      "path": "lens_roll_osnap.json:s_roll.return_judge_at_700ms.returnDir[1]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -22619,7 +22609,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 3.148592497836944e-13,
+      "val": 2.304822999121825e-13,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -26601,6 +26591,21 @@
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
+      "path": "free_curve.json",
+      "val": "2자리 (예: /arms/straight_only/in_space/placed_rate)",
+      "flag": "**성공률이 0인 자리가 있다**(#38) — 특정 팔·구도의 0이면 정상이고 원장이 그렇게 적어야 한다. **원장 전체가 0이면 그 하네스는 «깨지지 않고 죽은» 것이다**(18차에 `order_lock`이 실제로 그랬다: `camera_ok 0/300`인데 시험은 통과)"
+    },
+    {
+      "path": "misassign_retry.json",
+      "val": "3자리 (예: /by_end_jitter/0.005/arms/base_nofaces/diag_unclassified/placed_rate)",
+      "flag": "**성공률이 0인 자리가 있다**(#38) — 특정 팔·구도의 0이면 정상이고 원장이 그렇게 적어야 한다. **원장 전체가 0이면 그 하네스는 «깨지지 않고 죽은» 것이다**(18차에 `order_lock`이 실제로 그랬다: `camera_ok 0/300`인데 시험은 통과)"
+    },
+    {
+      "path": "order_lock.json",
+      "val": "5자리 (예: /by_composition/1pt_yaw0_pitch0/true_vp_rule_axis/placement_rate)",
+      "flag": "**성공률이 0인 자리가 있다**(#38) — 특정 팔·구도의 0이면 정상이고 원장이 그렇게 적어야 한다. **원장 전체가 0이면 그 하네스는 «깨지지 않고 죽은» 것이다**(18차에 `order_lock`이 실제로 그랬다: `camera_ok 0/300`인데 시험은 통과)"
+    },
+    {
       "path": "scan_citation_hashes",
       "val": [
         "progress.md:11820 test_cost.json"
@@ -26846,6 +26851,13 @@
       "unit": "진행 기록 파일",
       "targets": 1,
       "hits": 0,
+      "note": null
+    },
+    {
+      "scan": "scan_dead_ledger",
+      "unit": "원장",
+      "targets": 98,
+      "hits": 3,
       "note": null
     },
     {
@@ -27222,7 +27234,9 @@
       30,
       32,
       46,
-      49
+      49,
+      52,
+      55
     ],
     "lift_gate.json": [
       9,
