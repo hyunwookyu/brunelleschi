@@ -62,7 +62,7 @@ export function createApp(W: number, H: number): App {
     activeErase: null,
     view: { s: 1, ox: 0, oy: 0 },
     savedViews: [],
-    cubeLayout: { cx: W - 180, cy: 80, size: 80 },
+    cubeLayout: { cx: W - 60, cy: 60, size: 80 }, // 우측 상단 — 큐브
     listeners: [],
   }
 }

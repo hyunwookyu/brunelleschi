@@ -194,6 +194,12 @@ document.getElementById('btn-gltf')!.addEventListener('click', () => {
   download('drawing.gltf', toGLTF(app.lift), 'model/gltf+json')
 })
 
+// 세로바 접기
+const sidebar = document.getElementById('sidebar')!
+document.getElementById('sidebar-toggle')!.addEventListener('click', () => {
+  sidebar.classList.toggle('folded')
+})
+
 // 시점 저장·복귀
 const viewsEl = document.getElementById('views')!
 function addViewButton(i: number) {
@@ -224,7 +230,7 @@ window.addEventListener('resize', () => {
   const nd = window.devicePixelRatio || 1
   ctx = resize2d(ink, nw, nh, nd)
   resize3d(r3d, nw, nh, nd)
-  app.cubeLayout = { cx: nw - 180, cy: 80, size: 80 }
+  app.cubeLayout = { cx: nw - 60, cy: 60, size: 80 }
   invalidate()
 })
 

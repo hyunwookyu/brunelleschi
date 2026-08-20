@@ -10,24 +10,47 @@
     canvas { position: absolute; inset: 0; display: block; }
     #ink { z-index: 2; }
     #gl { z-index: 1; }
-    /* 알림 — 최상단 한 줄. 박스 없음(원칙 g) */
+
+    /* 알림 — 최상단 한 줄. 박스 없음(원칙 g). 선택은 밑줄 단어. */
     #notice {
       position: fixed; top: 0; left: 0; right: 0; z-index: 10;
       font: 13px/1.8 system-ui, sans-serif; text-align: center;
       color: #444; pointer-events: none; height: 24px;
     }
     #notice u { pointer-events: auto; cursor: pointer; }
-    /* 임시 조작 버튼 — 7단계에서 세로바로 정리 */
-    #tmpbar {
-      position: fixed; top: 28px; right: 8px; z-index: 10;
-      display: flex; flex-direction: column; gap: 4px;
+
+    /* 우측 상단 — 큐브(캔버스에 그림) · 시점 */
+    #viewbar {
+      position: fixed; top: 116px; right: 8px; z-index: 10;
+      display: flex; flex-direction: column; gap: 3px; align-items: flex-end;
       font: 12px system-ui, sans-serif;
     }
-    #tmpbar button {
-      background: #fffdf8; border: 1px solid #ccc; border-radius: 3px;
-      padding: 4px 8px; cursor: pointer; color: #333;
+    #views { display: flex; flex-direction: column; gap: 2px; align-items: flex-end; }
+
+    /* 우측 세로바 하나 — 위: 실행취소, 가운데: 도구·재료·크기, 아래: 파일·설정(접힘) */
+    #sidebar {
+      position: fixed; top: 50%; right: 8px; transform: translateY(-40%);
+      z-index: 10; display: flex; flex-direction: column; gap: 3px; align-items: flex-end;
+      font: 12px system-ui, sans-serif;
     }
-    /* 빌드 식별자 — 배포 확인용. 없으면 저장소를 뒤져야 한다 */
+    #sidebar-body { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; }
+    #sidebar.folded #sidebar-body { display: none; }
+    .bar-gap { height: 10px; }
+
+    button, .chip {
+      background: #fffdf8; border: 1px solid #ccc; border-radius: 3px;
+      padding: 4px 8px; cursor: pointer; color: #333; font: 12px system-ui, sans-serif;
+    }
+    .chip { display: flex; align-items: center; gap: 6px; }
+    details.pane { text-align: right; }
+    details.pane > div {
+      display: flex; flex-direction: column; gap: 2px; align-items: stretch;
+      background: #fffdf8; border: 1px solid #ccc; border-radius: 3px; padding: 6px;
+      text-align: left; margin-top: 2px;
+    }
+    summary { cursor: pointer; background: #fffdf8; border: 1px solid #ccc; border-radius: 3px; padding: 4px 8px; display: inline-block; }
+
+    /* 빌드 식별자 — 배포 확인용 */
     #buildid {
       position: fixed; right: 6px; bottom: 4px; z-index: 10;
       font: 10px monospace; color: #999; pointer-events: none;
@@ -40,37 +63,54 @@
     <canvas id="ink"></canvas>
     <div id="notice"></div>
     <div id="buildid"></div>
-    <div id="tmpbar">
+
+    <!-- 우측 상단: 큐브(캔버스에 그려짐) 아래 시점 조작 -->
+    <div id="viewbar">
       <button id="btn-draw-view" title="작도 시점으로">작도 시점</button>
       <button id="btn-save-view" title="현재 시점 저장">시점 저장</button>
-      <div id="views" style="display:flex;flex-direction:column;gap:2px"></div>
-      <button id="btn-undo" title="실행취소 (Ctrl+Z)">↶</button>
-      <button id="btn-redo" title="다시실행 (Ctrl+Y)">↷</button>
-      <button id="btn-pen" title="펜">펜</button>
-      <!-- 현재 심 — 홀더펜 인디케이터. 경도 슬라이더: 2H·H·F·HB·B·2B·잉크 -->
-      <label style="background:#fffdf8;border:1px solid #ccc;border-radius:3px;padding:4px 8px;display:flex;align-items:center;gap:6px">
-        <span id="lead" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#5a5a5a"></span>
-        <span id="grade-label" style="min-width:20px">HB</span>
-        <input id="grade-slider" type="range" min="0" max="6" step="1" value="3" style="width:70px">
-      </label>
-      <button id="btn-eraser-pencil" title="연필 지우개 — 흑연만 지운다">연필 지우개</button>
-      <button id="btn-eraser-ink" title="펜 지우개 — 잉크만 지운다">펜 지우개</button>
-      <label style="background:#fffdf8;border:1px solid #ccc;border-radius:3px;padding:4px 8px">
-        크기 <input id="eraser-size" type="range" min="4" max="60" step="1" style="width:60px;vertical-align:middle">
-      </label>
-      <button id="btn-save" title=".brnl 저장">저장</button>
-      <button id="btn-open" title=".brnl 열기">열기</button>
-      <button id="btn-obj" title="OBJ 내보내기">OBJ</button>
-      <button id="btn-gltf" title="glTF 내보내기">glTF</button>
-      <input id="file-open" type="file" accept=".brnl,application/json" style="display:none">
-      <details id="osnap-panel">
-        <summary>오스냅</summary>
-        <div id="osnap-kinds" style="display:flex;flex-direction:column;gap:2px;background:#fffdf8;border:1px solid #ccc;border-radius:3px;padding:6px"></div>
-        <label style="display:block;background:#fffdf8;border:1px solid #ccc;border-radius:3px;padding:6px;margin-top:2px">
-          반경 <input id="osnap-radius" type="range" min="4" max="20" step="1" style="width:80px;vertical-align:middle">
-        </label>
-      </details>
+      <div id="views"></div>
     </div>
+
+    <!-- 우측 세로바 -->
+    <div id="sidebar">
+      <button id="sidebar-toggle" title="접기/펴기">≡</button>
+      <div id="sidebar-body">
+        <button id="btn-undo" title="실행취소 (Ctrl+Z)">↶</button>
+        <button id="btn-redo" title="다시실행 (Ctrl+Y)">↷</button>
+        <div class="bar-gap"></div>
+        <button id="btn-pen" title="펜">✏</button>
+        <button id="btn-eraser-pencil" title="연필 지우개 — 흑연만 지운다">▱</button>
+        <button id="btn-eraser-ink" title="펜 지우개 — 잉크만 지운다">▰</button>
+        <!-- 현재 심 — 홀더펜 인디케이터. 경도: 2H·H·F·HB·B·2B·잉크 -->
+        <label class="chip" title="재료 — 경도 슬라이더">
+          <span id="lead" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#5a5a5a"></span>
+          <span id="grade-label" style="min-width:20px">HB</span>
+          <input id="grade-slider" type="range" min="0" max="6" step="1" value="3" style="width:70px">
+        </label>
+        <label class="chip" title="지우개 크기">
+          ⌀ <input id="eraser-size" type="range" min="4" max="60" step="1" style="width:60px">
+        </label>
+        <div class="bar-gap"></div>
+        <details class="pane">
+          <summary title="파일">파일</summary>
+          <div>
+            <button id="btn-save" title=".brnl 저장">저장</button>
+            <button id="btn-open" title=".brnl 열기">열기</button>
+            <button id="btn-obj" title="OBJ 내보내기">OBJ</button>
+            <button id="btn-gltf" title="glTF 내보내기">glTF</button>
+          </div>
+        </details>
+        <details class="pane">
+          <summary title="설정">설정</summary>
+          <div>
+            <div style="font-weight:bold">오스냅</div>
+            <div id="osnap-kinds" style="display:flex;flex-direction:column;gap:2px"></div>
+            <label>반경 <input id="osnap-radius" type="range" min="4" max="20" step="1" style="width:80px;vertical-align:middle"></label>
+          </div>
+        </details>
+      </div>
+    </div>
+    <input id="file-open" type="file" accept=".brnl,application/json" style="display:none">
   </div>
   <script type="module" src="/src/app/main.ts"></script>
 </body>

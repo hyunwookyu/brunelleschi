@@ -221,9 +221,9 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   s = await summary(page)
   expect(s.view.s).toBe(1)
 
-  // 뷰 큐브 — 보이고, 면을 클릭하면 롤 0 시점으로 선다
-  expect(await inkPixels(page, 970, 30, 1070, 130)).toBeGreaterThan(10)
-  await page.mouse.move(1020, 80)
+  // 뷰 큐브 — 우측 상단에 보이고, 면을 클릭하면 롤 0 시점으로 선다
+  expect(await inkPixels(page, 1090, 10, 1190, 110)).toBeGreaterThan(10)
+  await page.mouse.move(1140, 60)
   await page.mouse.down()
   await page.mouse.up()
   await settle(page)
