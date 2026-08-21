@@ -2,6 +2,10 @@
 
 ## 🆕 web2-02 완료 (2026-08-21) — 네 항목
 
+**배포 확인됨** — 원격 main = `1dc89e804395556e26923be38a8066d2bb694edf`,
+**화면 빌드 식별자 `1dc89e8`**, `npm run deploy:check` exit 0.
+(⚠ 병합 직후 두 번은 화면이 `c4a4b4d`였다 — Pages가 도는 데 약 1분. `?reset`이 캐시와 가른다.)
+
 **둘째 깊이선 · 1점 잠금 · 격자 기본 꺼짐 · 그리기 도구 UI.**
 지시 원문: [`docs/instructions/web2-02.md`](../docs/instructions/web2-02.md).
 작업 기록은 [NOTES.md](NOTES.md)의 「**web2-02** · 지시 1」~「지시 4」 절 넷.
