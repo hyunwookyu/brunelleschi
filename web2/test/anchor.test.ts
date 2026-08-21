@@ -12,7 +12,7 @@ import { describe, it, expect } from 'vitest'
 import { session } from './session'
 import { liftAll } from '../src/core/lift'
 import { builder } from './fixtures'
-import { DRAW_POSE, analyze } from '../src/core/camera'
+import { DRAW_POSE, analyze, project } from '../src/core/camera'
 import { C } from '../src/core/constants'
 
 const HZ = [100, 400, 1100, 400] as const
@@ -177,5 +177,77 @@ describe('2 — 첫 선은 지면에 있다 (종류를 안 가린다)', () => {
     expect(Math.abs(zn - zf)).toBeGreaterThan(1)   // 깊이가 화면 높이에 반응한다
     expect(Math.abs(zn + f)).toBeGreaterThan(1)    // −f에 안 묶여 있다
     expect(Math.abs(zf)).toBeGreaterThan(Math.abs(zn)) // 지평선에 가까울수록 멀다
+  })
+})
+
+describe('1 — 소실점을 만드는 선은 지면이다 (둘째 깊이선도 첫째와 같다)', () => {
+  // 되살려 확인: `makesVp` 갈래를 지우면 이 describe의 첫 셋이 빨개진다(둘째 깊이선이
+  // waiting에 남는다). 나머지 팔(연결 우선·반례)은 그대로 통과하므로 이 셋이 판별자다.
+  const D1 = [500, 650, 680, 537.5] as const   // (500,650) → vp0=(900,400)
+  const D2far = [300, 700, 200, 662.5] as const // (300,700) → vp1=(-500,400) · 첫 선과 안 닿는다
+
+  it('둘째 깊이선이 첫 깊이선과 안 닿아도 3D가 된다 — 대기가 0', () => {
+    const s = session(1200, 800)
+    s.draw(...HZ)
+    const d1 = s.draw(...D1)!
+    const d2 = s.draw(...D2far)!
+    expect(s.app.lift.an.roles.get(d2.id)).toBe('vp')   // 실제로 소실점을 만든 선이다
+    expect(s.app.lift.waiting).toEqual([])
+    expect(s.app.lift.lifted.has(d1.id)).toBe(true)
+    expect(s.app.lift.lifted.has(d2.id)).toBe(true)
+  })
+
+  it('둘 다 Y=0에 눕는다 — 소실점을 만드는 선은 격자의 기준이므로 지면이다', () => {
+    const s = session(1200, 800)
+    s.draw(...HZ); const d1 = s.draw(...D1)!; const d2 = s.draw(...D2far)!
+    for (const id of [d1.id, d2.id]) {
+      const g = s.app.lift.lifted.get(id)!
+      expect(ground(g.a3.y)).toBe(true)
+      expect(ground(g.b3.y)).toBe(true)
+    }
+  })
+
+  it('축도 갈린다 — 하나는 vp0, 하나는 vp1', () => {
+    const s = session(1200, 800)
+    s.draw(...HZ); const d1 = s.draw(...D1)!; const d2 = s.draw(...D2far)!
+    expect(s.app.lift.lifted.get(d1.id)!.axis).toBe('vp0')
+    expect(s.app.lift.lifted.get(d2.id)!.axis).toBe('vp1')
+    expect(s.app.lift.an.fSource).toBe('two-vp')
+  })
+
+  it('화면이 안 튄다 — 승격 전후로 그은 그 자리 그대로다(불변식 k)', () => {
+    const s = session(1200, 800)
+    s.draw(...HZ); const d1 = s.draw(...D1)!; const d2 = s.draw(...D2far)!
+    for (const st of [d1, d2]) {
+      const g = s.app.lift.lifted.get(st.id)!
+      const a = project(s.app.lift.an, DRAW_POSE, g.a3)!
+      const b = project(s.app.lift.an, DRAW_POSE, g.b3)!
+      expect(Math.hypot(a.x - st.a.x, a.y - st.a.y)).toBeLessThan(1e-6)
+      expect(Math.hypot(b.x - st.b.x, b.y - st.b.y)).toBeLessThan(1e-6)
+    }
+  })
+
+  it('연결이 있으면 연결이 이긴다 — 지면으로 도로 끌어내리지 않는다', () => {
+    // 둘째 깊이선을 첫 선의 **위쪽** 끝(기둥 꼭대기)에서 긋는다.
+    // 지면 규칙이 무조건 이기면 Y=0으로 내려앉아 기둥과 끊긴다.
+    const s = session(1200, 800)
+    s.draw(...HZ)
+    s.draw(...D1)                                  // 첫 선(지면)
+    const col = s.draw(500, 650, 500, 500)!        // 그 모서리에서 세운 기둥
+    const top = s.app.lift.lifted.get(col.id)!.b3
+    const d2 = s.draw(500, 500, 380, 458.75)!      // 꼭대기에서 vp1 쪽
+    expect(s.app.lift.an.roles.get(d2.id)).toBe('vp')
+    const g = s.app.lift.lifted.get(d2.id)!
+    expect(g.a3.y).toBeCloseTo(top.y, 9)           // 기둥 꼭대기 높이 그대로
+    expect(ground(g.a3.y)).toBe(false)
+  })
+
+  it('반례: 소실점을 안 만드는 선은 여전히 대기다 — 규칙이 전부에 안 걸린다', () => {
+    const s = session(1200, 800)
+    s.draw(...HZ)
+    s.draw(...D1)
+    const v = s.draw(200, 700, 200, 600)!          // 수직 — 소실점을 안 만든다
+    expect(s.app.lift.an.roles.get(v.id)).toBe('content')
+    expect(s.app.lift.waiting).toContain(v.id)
   })
 })

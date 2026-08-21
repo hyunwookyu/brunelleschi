@@ -157,10 +157,21 @@ export function liftAll(doc: Doc): LiftResult {
           if (dir && ray) a3 = closestOnLineToRay(b3, dir, ray)
         }
       }
-      if (!a3 && !b3 && lifted.size === 0 && anchorId === null && axis !== null) {
-        // ── 첫 선은 지면에 있다 ──────────────────────────────────────────
+      // 소실점을 만드는 선은 지면이다 — 첫 선과 **똑같이** 취급한다(지시 1-a·1-b).
+      // 초판은 지면 규칙을 첫 획(`lifted.size === 0`)에만 걸었고, 그래서 두 번째
+      // 깊이선이 첫 깊이선과 안 닿는 자리에서 시작하면 앵커가 없어 영영 대기했다
+      // (2026-08-21 재현: 지평선→(500,650)에서 vp0 방향→(300,700)에서 vp1 방향에서
+      //  둘째 획이 waiting에 남았다. 역할은 'vp'이고 소실점은 실제로 만들어졌다).
+      // 소실점을 만드는 선은 **격자의 기준**이므로 둘 다 지면이라는 것이 그 규칙의 근거다.
+      const makesVp = an.roles.get(s.id) === 'vp'
+      const isFirstLine = lifted.size === 0 && anchorId === null
+      if (!a3 && !b3 && (isFirstLine || makesVp) && axis !== null) {
+        // ── 첫 선은 지면에 있다 · 소실점을 만드는 선도 지면이다 ──────────
         // 규칙 하나이고 **선의 종류를 안 가린다.** 사람이 그리기 시작할 때 첫 선은
         // 바닥에서 시작한다 — 바닥 모서리를 긋거나, 기둥을 세우거나, 벽 하단을 긋는다.
+        // ⚠ **연결이 있으면 연결이 이긴다** — 이 갈래는 `!a3 && !b3`일 때만 온다.
+        //    깊이선이 이미 확정된 점에 붙어 있으면 그 좌표가 정답이고(불변식 k),
+        //    지면으로 끌어내리면 사람이 붙인 점을 도로 버리는 셈이 된다.
         //
         //   수평선·깊이선  그 선 자체가 Y=0
         //   수직선         아래점이 Y=0 (위쪽 높이는 그 선의 길이가 정한다)
@@ -180,7 +191,7 @@ export function liftAll(doc: Doc): LiftResult {
           } else {
             a3 = g
           }
-          if (a3) anchorId = s.id
+          if (a3 && anchorId === null) anchorId = s.id
         }
       }
       if (!a3) continue
