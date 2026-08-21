@@ -11,7 +11,7 @@ import { DRAW_POSE } from '../core/camera'
 import { defaultOsnap, type OsnapSettings } from '../core/osnap'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
 import { C } from '../core/constants'
-import { type Pt, type V3, v3, add3 } from '../core/vec'
+import { type Pt, type V3, v3, add3, sub3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
 
 export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink'
 
@@ -271,6 +271,26 @@ export function gotoView(app: App, i: number) {
   if (!v) return
   app.view = { ...v.view }
   setPose(app, { p: { ...v.pose.p }, q: { ...v.pose.q } })
+}
+
+/** 궤도 한 픽셀이 도는 각(rad) — 데스크톱·터치가 같은 값을 쓴다 */
+export const ORBIT_RAD_PER_PX = 0.005
+
+function rotateAroundPivot(app: App, axis: V3, angle: number, pivot: V3) {
+  const R = quatAxisAngle(axis, angle)
+  const p = add3(pivot, quatRotate(R, sub3(app.pose.p, pivot)))
+  setPose(app, { p, q: quatMul(R, app.pose.q) })
+}
+
+/** **궤도** — 화면 이동량만큼 돈다. 세로는 세계 수직축, 가로는 카메라 오른쪽 축.
+ *  입력(마우스 중버튼·손가락 하나)과 시험이 **같은 함수**를 부른다 — 갈리면 시험이
+ *  앱을 안 재게 된다(`draft.ts`·`classifyNext`와 같은 이유). */
+export function orbitBy(app: App, dx: number, dy: number) {
+  if (app.lift.lifted.size === 0) return // 돌 것이 없다 — **소실점 개수가 아니라 기하의 유무다**
+  const pivot = orbitPivot(app)
+  rotateAroundPivot(app, v3(0, 1, 0), -dx * ORBIT_RAD_PER_PX, pivot)
+  const right = quatRotate(app.pose.q, v3(1, 0, 0))
+  rotateAroundPivot(app, right, -dy * ORBIT_RAD_PER_PX, pivot)
 }
 
 /** 궤도 중심 — 승격 기하의 무게중심, 없으면 게이지 깊이의 시선 위 점 */

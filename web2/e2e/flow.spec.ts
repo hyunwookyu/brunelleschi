@@ -144,12 +144,18 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(s.waiting.length).toBe(before + 1)
   expect(await inkPixels(page, 195, 715, 275, 770)).toBeGreaterThan(20)
 
-  // 돌리기 — 형태가 보인다
+  // 돌리기 — 형태가 보인다.
+  // ⚠ **좌우로만 돈다**(dy = 0). 위아래로 돌리면 그것은 «정렬되지 않은 구도»이고,
+  //   손을 떼면 잠깐 뒤 정렬로 접힌다(web2-04). 그러면 아래 「이어 그리기」가
+  //   접히는 도중에 걸려 시각에 따라 갈린다. **좌우 각도는 정렬된 구도 그대로**이므로
+  //   (1점이냐 2점이냐를 정하는 것이 그것이다) 여기서 재려던 것 — 궤도한 포즈에서
+  //   이어 그리기 — 은 그대로 선다. 접기 자체는 `e2e/level.spec.ts`가 잰다.
   await page.mouse.move(600, 400)
   await page.mouse.down({ button: 'middle' })
-  await page.mouse.move(680, 430, { steps: 8 })
+  await page.mouse.move(680, 400, { steps: 8 })
   await page.mouse.up({ button: 'middle' })
   await settle(page)
+  expect((await page.evaluate(() => (window as any).__b2.diag.level())).level).toBe(true)
   s = await summary(page)
   const poseMoved = Math.abs(s.pose.q.y) > 1e-4
   expect(poseMoved).toBe(true)

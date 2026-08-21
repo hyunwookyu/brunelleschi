@@ -2,6 +2,8 @@
 
 import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView, loadDoc, clearAll, isEraser, type Tool } from './state'
 import { initInput } from './input'
+import { createAutoLevel } from './autolevel'
+import { isLevel } from '../core/level'
 import { resize2d, draw2d, type Draft } from './render2d'
 import { initR3D, syncStrokes, render3d, resize3d } from './render3d'
 import { serializeBrnl, parseBrnl } from '../core/file'
@@ -114,8 +116,24 @@ function updateStatus() {
   // **빈 화면의 첫 안내**다. 이 앱은 첫 획이 특별하고(지평선), 그것을 모르면 시작을 못 한다.
   // 지평선을 그으면 영영 사라진다.
   if (app.lift.an.horizonY === null) status('지평선을 긋는다 — 수평이 강제된다')
+  else if (!isLevel(app.pose)) status(TILTED_MSG)
   else status('')
 }
+
+// **기울어 있을 때 무엇이 다른지** — 그리기가 안 된다. 그것이 보여야 한다(지시 「표시」).
+// 새 장식을 안 만들고 이미 있는 한 줄을 쓴다(원칙 g: 알림은 최상단 한 줄뿐이다).
+const TILTED_MSG = '기울어 있다 — 놓으면 정렬로 돌아온다. 그때 그릴 수 있다'
+
+// 포즈가 기울기 상태를 넘나들 때만 줄을 고친다 — 매 프레임 고치면 오류 알림을 덮어쓴다
+let wasTilted = false
+app.listeners.push(() => {
+  const t = !isLevel(app.pose)
+  if (t === wasTilted) return
+  wasTilted = t
+  updateStatus()
+})
+
+const autolevel = createAutoLevel(app)
 // 시작 동기화 — 자동 저장 복원분 포함
 syncStrokes(r3d, app)
 syncedVersion = app.docVersion
@@ -133,7 +151,7 @@ initInput(ink, app, {
     const reject = an.rejects.get(s.id)
     if (reject) notify(reject)
   },
-})
+}, autolevel)
 
 // ── 도구 넷 — 연필 · 펜 · 지우개 둘 (4-h) ────────────────────────────────
 // **선택은 색이 아니라 위치와 크기로 보인다**(4-d) — `.tool.on`이 앞으로 나온다.
@@ -349,7 +367,7 @@ function addViewButton(i: number) {
   btn.style.font = '11px system-ui, sans-serif'
   btn.title = `저장한 시점 ${i + 1}`
   btn.textContent = String(i + 1)
-  btn.addEventListener('click', () => gotoView(app, i))
+  btn.addEventListener('click', () => { gotoView(app, i); autolevel.touch() })
   viewsEl.append(btn)
 }
 /** 시점 버튼을 지금 상태에 맞춘다 — 열기·비우기가 목록을 갈아치운다 */
@@ -387,6 +405,7 @@ window.addEventListener('resize', () => {
 })
 
 function frame() {
+  autolevel.tick()   // 접힐 때가 됐으면 여기서 포즈가 움직인다(setPose가 다시 그리게 한다)
   if (dirty) {
     dirty = false
     render3d(r3d, app)
@@ -398,6 +417,7 @@ requestAnimationFrame(frame)
 
 // e2e 진단 통로 — 앱과 같은 함수·같은 상태를 본다(측정 경로와 앱 경로를 가르지 않는다)
 import { project, screenAxes, vpMarks, frameAxes } from '../core/camera'
+import { forwardOf, yawDir } from '../core/level'
 
 const diag = {
   /** 승격 획 전부의 현재 포즈 재사영 — 불변식 k 확인용 */
@@ -423,6 +443,14 @@ const diag = {
       dots: [d(fr[0]!.dir, fr[1]!.dir), d(fr[0]!.dir, fr[2]!.dir), d(fr[1]!.dir, fr[2]!.dir)],
     }
   },
+  /** 접기 진단 — e2e가 자세를 직접 읽는다 */
+  level: () => ({
+    level: isLevel(app.pose),
+    folding: autolevel.folding(),
+    fwd: forwardOf(app.pose),
+    yaw: yawDir(app.pose),
+    eye: app.pose.p.y,
+  }),
   summary: () => ({
     horizonY: app.lift.an.horizonY,
     vps: app.lift.an.vps.map(v => ({ x: v.x, y: v.y })),

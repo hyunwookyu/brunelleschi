@@ -74,3 +74,21 @@ export function quatRotate(q: Quat, p: V3): V3 {
   const t = mul3(cross3(u, p), 2)
   return add3(add3(p, mul3(t, q.w)), cross3(u, t))
 }
+
+/** 두 자세 사이 — 최단호 보간. 접기 애니메이션이 쓴다(갑자기 바뀌면 놀란다).
+ *  부호를 맞춰 긴 쪽으로 도는 것을 막고, 거의 같은 자세면 선형으로 떨어뜨린다. */
+export function quatSlerp(a: Quat, b: Quat, t: number): Quat {
+  let d = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w
+  let e = b
+  if (d < 0) { e = { x: -b.x, y: -b.y, z: -b.z, w: -b.w }; d = -d }
+  let k0 = 1 - t, k1 = t
+  if (d < 0.9995) {
+    const th = Math.acos(Math.min(1, d))
+    const s = Math.sin(th)
+    k0 = Math.sin(th * (1 - t)) / s
+    k1 = Math.sin(th * t) / s
+  }
+  const q = { x: a.x * k0 + e.x * k1, y: a.y * k0 + e.y * k1, z: a.z * k0 + e.z * k1, w: a.w * k0 + e.w * k1 }
+  const L = Math.hypot(q.x, q.y, q.z, q.w) || 1
+  return { x: q.x / L, y: q.y / L, z: q.z / L, w: q.w / L }
+}

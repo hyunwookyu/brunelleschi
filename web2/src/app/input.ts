@@ -4,17 +4,16 @@
 
 import type { App } from './state'
 import {
-  setPose, setView, orbitPivot, beginErase, eraseAt, endErase,
+  setPose, setView, orbitPivot, orbitBy, beginErase, eraseAt, endErase,
   screenToDoc, isDrawPose, isEraser,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
+import { isLevel } from '../core/level'
+import type { LevelHooks } from './autolevel'
 import { resolveStart, resolveEnd, resolveCommit } from '../core/draft'
 import { cubeGeom, cubeHit, poseForElem } from '../core/viewcube'
 import type { Draft } from './render2d'
-import {
-  type Pt, type V3, pt, v3, add3, sub3, mul3, dot3,
-  quatAxisAngle, quatMul, quatRotate,
-} from '../core/vec'
+import { type Pt, pt, v3, add3, sub3, mul3, dot3, quatRotate } from '../core/vec'
 
 export interface InputCallbacks {
   onDraftChange: (d: Draft | null) => void
@@ -25,7 +24,9 @@ export interface InputCallbacks {
   onEraserMove: (p: Pt | null) => void
 }
 
-export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallbacks) {
+export function initInput(
+  canvas: HTMLCanvasElement, app: App, cb: InputCallbacks, level: LevelHooks,
+) {
   let draft: Draft | null = null
   let penDown = false
   let drawingPointer: number | null = null
@@ -88,21 +89,8 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
     cb.onCommit(c.a, c.b, d.raw, press)
   }
 
-  // ── 카메라 조작 ──────────────────────────────────────────────────────
-  function rotateAroundPivot(axis: V3, angle: number, pivot: V3) {
-    const R = quatAxisAngle(axis, angle)
-    const p = add3(pivot, quatRotate(R, sub3(app.pose.p, pivot)))
-    const q = quatMul(R, app.pose.q)
-    setPose(app, { p, q })
-  }
-
-  function orbit(dx: number, dy: number) {
-    if (app.lift.lifted.size === 0) return // 돌 것이 없다 — **소실점 개수가 아니라 기하의 유무다**
-    const pivot = orbitPivot(app)
-    rotateAroundPivot(v3(0, 1, 0), -dx * 0.005, pivot)
-    const right = quatRotate(app.pose.q, v3(1, 0, 0))
-    rotateAroundPivot(right, -dy * 0.005, pivot)
-  }
+  // ── 카메라 조작 — 궤도는 state.ts의 orbitBy 하나다(시험이 같은 함수를 부른다) ──
+  const orbit = (dx: number, dy: number) => orbitBy(app, dx, dy)
 
   // 팬·줌 — 그리는 중(작도 포즈)에는 화면 조작(뷰 오프셋), 궤도 후에는 공간 조작.
   // dx·dy·중심은 화면 좌표다.
@@ -148,7 +136,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
     const dist = Math.max(1, Math.hypot(
       app.pose.p.x - pivot.x, app.pose.p.y - pivot.y, app.pose.p.z - pivot.z))
     const pose = poseForElem(app.lift.an, elem, pivot, dist)
-    if (pose) setPose(app, pose)
+    if (pose) { setPose(app, pose); level.touch() }
     return true
   }
 
@@ -160,16 +148,21 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
       touches.set(e.pointerId, toScreen(e))
       lastTouchMid = null
       lastTouchDist = 0
+      level.grab()
       return
     }
     if (e.pointerType === 'pen') penDown = true
     if (e.pointerType === 'mouse' && e.button !== 0) {
       orbitBtn = { last: toScreen(e), mode: e.button === 1 ? 'orbit' : 'pan' }
+      level.grab()
       canvas.setPointerCapture(e.pointerId)
       e.preventDefault()
       return
     }
     if (tryCube(toScreen(e))) return
+    // **기울어 있으면 획을 안 만든다**(그리기도 지우기도). 대신 그 누름이 접기를 당긴다 —
+    // 죽은 클릭을 만들지 않는다. 접히면 바로 그릴 수 있다.
+    if (!isLevel(app.pose)) { level.foldNow(); return }
     drawingPointer = e.pointerId
     canvas.setPointerCapture(e.pointerId)
     if (isEraser(app.tool)) {
@@ -187,6 +180,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
       if (penDown) return
       if (!touches.has(e.pointerId)) return
       touches.set(e.pointerId, toScreen(e))
+      level.grab()
       const pts = [...touches.values()]
       if (pts.length === 1) {
         const p = pts[0]!
@@ -209,6 +203,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
       if (orbitBtn.mode === 'orbit') orbit(p.x - orbitBtn.last.x, p.y - orbitBtn.last.y)
       else pan(p.x - orbitBtn.last.x, p.y - orbitBtn.last.y)
       orbitBtn.last = p
+      level.grab()
       return
     }
     if (drawingPointer === e.pointerId) {
@@ -240,10 +235,13 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
       touches.delete(e.pointerId)
       lastTouchMid = null
       lastTouchDist = 0
+      if (touches.size === 0) level.release(); else level.grab()
       return
     }
     if (e.pointerType === 'pen') penDown = false
-    if (orbitBtn && e.pointerType === 'mouse' && e.button !== 0) { orbitBtn = null; return }
+    if (orbitBtn && e.pointerType === 'mouse' && e.button !== 0) {
+      orbitBtn = null; level.release(); return
+    }
     if (drawingPointer === e.pointerId) {
       drawingPointer = null
       if (isEraser(app.tool)) { endErase(app); return }
@@ -256,6 +254,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault()
     dolly(Math.exp(-e.deltaY * 0.001), toScreen(e))
+    level.touch()
   }, { passive: false })
 
   canvas.addEventListener('contextmenu', (e) => e.preventDefault())
