@@ -18,6 +18,10 @@
 //   ② 대역을 **화각 셋**으로 훑는다 — 이 규칙은 f에 안 걸리므로(강체 회전) 대역이 값을
 //      안 바꿔야 한다. **안 바뀌는 것이 곧 관측**이다(앞판은 f에 정비례해 흔들렸다).
 //   ③ **누적되지 않는가** — 세 번 돌려 접어도 높이·거리가 그대로여야 한다.
+//   ④ **대상이 화면에 남는가 — 보장이 아니다.** 이 규칙이 «구성상» 보존하는 것은
+//      pivot 한 점의 화면 자리이고(요를 180° 돌려도 같다), **pivot에서 떨어진 기하는
+//      요와 함께 화면에서 옮겨간다.** 어디서 나가는지를 재서 대역별로 낸다 —
+//      「앵커가 괜찮았으니 접은 뒤도 괜찮다」는 **귀납이지 보장이 아니다**.
 
 import { it, expect } from 'vitest'
 import { session } from './session'
@@ -25,7 +29,8 @@ import { DRAW_POSE } from '../src/core/camera'
 import { setPose, orbitPivot, orbitBy } from '../src/app/state'
 import { levelPose, forwardOf, yawDir, isLevel } from '../src/core/level'
 import type { CamPose } from '../src/core/types'
-import { dot3 } from '../src/core/vec'
+import { dot3, v3 } from '../src/core/vec'
+import { project as proj } from '../src/core/camera'
 import { C } from '../src/core/constants'
 
 function build(W: number, H: number, u1: number, u2: number) {
@@ -109,6 +114,37 @@ it('접기가 궤도 전으로 되돌리는가 — 화각 셋 × 궤도 넷', ()
     expect(Math.hypot(app.pose.p.x - pivot.x, app.pose.p.z - pivot.z)).toBeCloseTo(r0, 9)
   }
   lines.push('세 번 접어도 누적되지 않는다: ' + acc.join(' | '))
+
+  // ④ **화면에 남는 대역** — pivot 둘레 반지름 ρ의 점 여덟을 놓고 요를 훑는다.
+  //    나가기 시작하는 ρ/R이 곧 이 규칙이 덮는 대역이다. 「보장된다」가 아니라 «여기까지»다.
+  lines.push('화면에 남는 대역 (pivot 둘레 8방위 · 요 0~180° 훑기):')
+  for (const band of BANDS) {
+    const a2 = build(1200, 800, band.u1, band.u2)
+    const an = a2.lift.an, pv = orbitPivot(a2)
+    const b2 = snap(a2.pose)
+    const R = Math.hypot(b2.p.x - pv.x, b2.p.z - pv.z)
+    let bound: number | null = null
+    for (let k = 1; k <= 200 && bound === null; k++) {
+      const rho = R * k * 0.01
+      for (let d = 0; d <= 628; d += 40) {
+        setPose(a2, { p: { ...b2.p }, q: { ...DRAW_POSE.q } })
+        orbitBy(a2, -d, -120)
+        const f = levelPose(b2, a2.pose, pv)
+        let leaves = false
+        for (let i = 0; i < 8; i++) {
+          const th = i * Math.PI / 4
+          const q = proj(an, f, v3(pv.x + rho * Math.cos(th), pv.y, pv.z + rho * Math.sin(th)))
+          if (!q || q.x < 0 || q.x > 1200 || q.y < 0 || q.y > 800) { leaves = true; break }
+        }
+        if (leaves) { bound = k * 0.01; break }
+      }
+    }
+    const fw = an.f! / 1200
+    lines.push(`  ${band.name} f/W=${fw.toFixed(2)}: 퍼짐/거리 **${bound === null ? '>2.00' : bound.toFixed(2)}** 부터 나간다` +
+      `   (닫힌 예측 1/(2·f/W) = ${(1 / (2 * fw)).toFixed(2)} — 화면 절반이 f·ρ/R을 넘는 자리)`)
+    expect(bound).not.toBeNull()          // 어딘가에서는 나간다 — 「보장」이 아니라는 증거
+    expect(bound!).toBeLessThan(1 / (2 * fw) * 1.05)   // 닫힌 예측 아래다(가로만 본 상한이므로)
+  }
 
   // eslint-disable-next-line no-console
   console.log(lines.join('\n'))

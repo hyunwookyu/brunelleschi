@@ -555,6 +555,24 @@ describe('접을 때의 위치 — **궤도 전으로 통째로 돌아간다**(w
     expect(yawGap(yawDir(f), yawDir(anchor))).toBeCloseTo(0, 9)
   })
 
+  it('**pivot의 화면 자리는 요 180°에서도 정확히 같다** — 그러나 그것이 보장의 전부다', () => {
+    // 「대상이 화면에 남는다」를 이 규칙이 **보장하지 않는다.** 구성상 고정되는 것은
+    // pivot 한 점이고, 거기서 떨어진 기하는 요와 함께 화면에서 옮겨간다.
+    // 어디서 나가는지는 `fold_measure.test.ts`가 대역별로 낸다(퍼짐/거리 0.15~0.68).
+    const app = drawn()
+    const pivot = orbitPivot(app)
+    const anchor = snap(app.pose)
+    const at0 = project(app.lift.an, anchor, pivot)!
+    for (const dx of [-80, -160, -314, -628]) {
+      setPose(app, snap({ p: { ...anchor.p }, q: { ...DRAW_POSE.q } }))
+      orbitBy(app, dx, -120)
+      const f = levelPose(anchor, app.pose, pivot)
+      const at1 = project(app.lift.an, f, pivot)!
+      expect(at1.x).toBeCloseTo(at0.x, 6)
+      expect(at1.y).toBeCloseTo(at0.y, 6)
+    }
+  })
+
   it('사용자가 정렬 상태에서 바꾼 높이·거리는 **유지된다**(지시 d)', () => {
     // 궤도로 바뀐 값만 안 남는다. 정렬 상태에서 사람이 옮긴 것은 의도이므로 앵커가 그것이다.
     const app = drawn()
