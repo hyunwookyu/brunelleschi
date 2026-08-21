@@ -2,7 +2,9 @@
 
 ## 🆕 web2-05 (2026-08-21) — 접을 때 궤도 전체를 되돌린다 + 소실점 스냅 표식
 
-**배포 확인 대기** — 병합 뒤 `npm run deploy:check` 출력으로 채운다. **그 전까지는 미완이다**(#58).
+**배포 확인됨** — 원격 main = `d08f245eb1a376ded0d3fb33b9b536359666e39c`,
+**화면 빌드 식별자 `d08f245`**, `npm run deploy:check` exit 0.
+(⚠ 병합 직후 세 번은 화면이 `96ab66d`였다 — Pages가 도는 데 약 1분.)
 지시 원문: [`docs/instructions/web2-05.md`](../docs/instructions/web2-05.md).
 기록은 [NOTES.md](NOTES.md)의 「**web2-05**」 절. 등재: **PITFALLS #60**.
 
