@@ -6,7 +6,7 @@
 
 import type { App } from './state'
 import { isDrawPose, isEraser, activeGrade } from './state'
-import { vpMarks, project, projectSeg, groundAxes } from '../core/camera'
+import { vpMarks, project, projectSeg, groundAxes, horizonScreenY } from '../core/camera'
 import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
 import { MAT, gradeOf, rng32, widthOf, widthOfMat } from '../core/material'
@@ -106,15 +106,25 @@ export function draw2d(
   // 작도선 — **지평선뿐이다.** 무한원이라 3D가 없고(이론서 2.2) 화면 전폭으로 긋는다.
   // 깊이선은 작도선이 아니다 — 소실점을 정의하면서 동시에 그은 3D 선이고,
   // 승격됐으면 three.js가, 아직이면 아래 「대기 획」이 그린다. 여기서 또 그리면 두 번 그려진다.
-  if (atDraw && an.horizonY !== null) {
+  //
+  // **정렬된 포즈면 전부 긋는다**(web2-06 지시 3) — 작도 포즈만이 아니다. 접힌 포즈도
+  // 피치 0이라 지평선이 그대로 화면 수평선인데 안 그려서, 접은 뒤 **눈높이를 화면에서
+  // 못 읽었다**(web2-05가 픽셀로 발견). 어디에 긋는가는 `camera.ts`가 답한다 —
+  // 여기서 `principal.y`를 직접 쓰면 판정과 표시가 두 자리로 갈린다(#54).
+  const hzY = horizonScreenY(an, app.pose)
+  if (hzY !== null) {
     ctx.strokeStyle = COL.construction
     ctx.lineWidth = C.LINE_W_GUIDE * is
     ctx.beginPath()
-    ctx.moveTo(x0, an.horizonY); ctx.lineTo(x1, an.horizonY)
+    ctx.moveTo(x0, hzY); ctx.lineTo(x1, hzY)
     ctx.stroke()
   }
 
   // 대기 획 — 사라지지 않는다(불변식 j). 자기 포즈가 아니면 흐리게. 색은 재료.
+  // ⚠ 여기의 `own`은 **계속 `atDraw`다**(지시 3에서 함께 봤다 · `DEFERRED.md`가 든 자리).
+  // 지평선과 **다른 물음**이라 다른 술어다: 지평선은 세계의 것이라 정렬이면 어느 포즈에서든
+  // 같은 자리이고, 대기 획은 **그 포즈에서만 뜻이 있는 2D 좌표**다 — 접힌 포즈는 작도 포즈가
+  // 아니므로 작도 포즈의 대기 획은 흐린 것이 맞다. 같은 술어로 묶었으면 그것이 #54다.
   for (const id of app.lift.waiting) {
     const s = app.lift.strokes.get(id)
     if (!s) continue

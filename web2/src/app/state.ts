@@ -12,7 +12,7 @@ import { defaultOsnap, type OsnapSettings } from '../core/osnap'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
 import { loopAt, faceAt, faceScreen, resolveFaces, type ResolvedFace } from '../core/face'
 import { C } from '../core/constants'
-import { type Pt, type V3, v3, add3, sub3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
+import { type Pt, type V3, v3, add3, sub3, mul3, dot3, len3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
 
 export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink' | 'face'
 
@@ -362,17 +362,93 @@ export function orbitBy(app: App, dx: number, dy: number) {
   rotateAroundPivot(app, right, -dy * ORBIT_RAD_PER_PX, pivot)
 }
 
-/** 궤도 중심 — 승격 기하의 무게중심, 없으면 게이지 깊이의 시선 위 점 */
+/** **궤도 반경** — 눈에서 pivot까지의 3D 거리. 궤도는 이 값을 **바꾸지 않는다**
+ *  (pivot 둘레의 회전이므로 구성상 보존된다) — 그래서 이 값이 달라졌다면 사람이
+ *  **줌으로 정한 것**이다. 접기가 그것을 지키는 근거가 여기 있다(`core/level.ts`). */
+export const orbitRadius = (app: App): number => len3(sub3(app.pose.p, orbitPivot(app)))
+
+/** **줌(돌리)** — 작도 포즈에서는 화면 배율(뷰 오프셋), 궤도 후에는 pivot을 향한 실제 이동.
+ *
+ *  입력(휠·두 손가락)과 시험이 **같은 함수**를 부른다(web2-06 지시 5). 초판은 이 계산이
+ *  `input.ts` 안에 있어 **시험이 앱의 줌을 못 불렀다** — 「돌려보다 줌한 거리가 접으면
+ *  사라진다」를 재려면 앱이 실제로 도는 경로가 필요했다(`orbitBy`를 옮긴 것과 같은 이유). */
+export function dollyBy(app: App, scale: number, center: Pt) {
+  if (isDrawPose(app.pose)) {
+    const v = app.view
+    const s = Math.min(8, Math.max(0.2, v.s * scale))
+    const k = s / v.s
+    setView(app, { s, ox: center.x - k * (center.x - v.ox), oy: center.y - k * (center.y - v.oy) })
+    return
+  }
+  if (app.lift.lifted.size === 0) return
+  const pivot = orbitPivot(app)
+  const p = add3(pivot, mul3(sub3(app.pose.p, pivot), 1 / scale))
+  setPose(app, { p, q: app.pose.q })
+}
+
+/** **팬** — 작도 포즈에서는 화면 이동, 궤도 후에는 카메라를 옆으로 옮긴다.
+ *  ⚠ 궤도 중의 팬은 **접으면 되돌아간다**(앵커가 그때 것이 아니다). 줌과 달리 안 지키는
+ *  이유는 잰 것이 없어서다 — `DEFERRED.md`에 조건과 함께 있다. */
+export function panBy(app: App, dx: number, dy: number) {
+  if (isDrawPose(app.pose)) {
+    const v = app.view
+    setView(app, { s: v.s, ox: v.ox + dx, oy: v.oy + dy })
+    return
+  }
+  if (app.lift.lifted.size === 0) return
+  const pivot = orbitPivot(app)
+  const view = quatRotate(app.pose.q, v3(0, 0, -1))
+  const depth = Math.max(1, dot3(sub3(pivot, app.pose.p), view))
+  const k = depth / (app.lift.an.f ?? 1000)
+  const right = quatRotate(app.pose.q, v3(1, 0, 0))
+  const up = quatRotate(app.pose.q, v3(0, 1, 0))
+  const p = add3(app.pose.p, add3(mul3(right, -dx * k), mul3(up, dy * k)))
+  setPose(app, { p, q: app.pose.q })
+}
+
+/** **궤도 중심 — 펜으로 딴 선의 경계 상자 중심**(web2-06 지시 4). 펜이 없으면 연필로 대신한다.
+ *
+ *  ⚠ 초판은 **승격 기하 전체의 무게중심**이었고, 그래서 «연필 구축선»이 중심을 끌어갔다.
+ *  구축선은 소실점 쪽으로 길게 뻗으므로 깊이가 크다 — 소실점 가까이서 끝나는 유도선 하나가
+ *  3D에서 83 단위 뒤에 서고, 그것 하나로 반경이 **17.335**가 됐다(실측 픽스처).
+ *  펜 획만 보면 **7.274**다. 결과물은 펜으로 딴 선이므로 **그것이 돌려볼 대상**이다.
+ *
+ *  **무게중심이 아니라 경계 상자 중심이다**(지시의 말 그대로): 무게중심은 획 밀도에 끌린다 —
+ *  한 귀퉁이를 촘촘히 따면 중심이 그리로 간다. 경계 상자는 «어디까지 그렸나»만 본다.
+ *
+ *  ⚠⚠ **펜이 없으면 «무게중심»으로 돌아간다 — 경계 상자가 아니다**(web2-06 1차 리뷰어 [9]).
+ *  초판은 펜이 없을 때도 경계 상자였고, 그러면 그 구축선 하나가 상자를 통째로 늘려
+ *  반경이 **52.087**이 됐다(무게중심 17.335의 3배). **그것은 사람이 보고한 증상과 같은
+ *  방향**이다 — 「반경이 너무 길어진다」를 고치는 항목이 펜 이전 구간에서 그것을 3배로
+ *  키운 셈이다. 지시의 「경계 상자」는 **무엇을 넣고 뺄지**의 말이고(「연필 구축선은 경계
+ *  상자에서 뺀다」), 「펜 선이 없으면 연필로 **대신한다**」는 **종전 규칙으로 돌아간다**로
+ *  읽는 것이 측정과 맞는다(D-4: 측정이 사람이 준 근거를 포함해 우선한다).
+ *  그래서 갈래가 둘이고, 둘 다 팔이 수를 낸다(`test/pivot.test.ts`).
+ *
+ *  저장하지 않는다 — 매번 계산이다(원칙 b). 펜 획을 지우면 그 즉시 연필로 돌아간다. */
 export function orbitPivot(app: App): V3 {
-  const segs = [...app.lift.lifted.values()]
+  const segs = [...app.lift.lifted]
   if (segs.length === 0) {
     const f = app.lift.an.f ?? 1000
     return add3(DRAW_POSE.p, v3(0, 0, -f)) // 눈 앞 f — 눈은 원점이 아니다
   }
-  let x = 0, y = 0, z = 0
-  for (const s of segs) {
-    x += s.a3.x + s.b3.x; y += s.a3.y + s.b3.y; z += s.a3.z + s.b3.z
+  const ink = segs.filter(([id]) => {
+    const s = app.lift.strokes.get(id)
+    return s ? isInk(s) : false
+  })
+  if (ink.length === 0) {
+    // 펜이 없다 — **종전 규칙(무게중심) 그대로**. 회귀를 안 만든다(위 ⚠⚠).
+    let x = 0, y = 0, z = 0
+    for (const [, g] of segs) { x += g.a3.x + g.b3.x; y += g.a3.y + g.b3.y; z += g.a3.z + g.b3.z }
+    const n = segs.length * 2
+    return v3(x / n, y / n, z / n)
   }
-  const n = segs.length * 2
-  return v3(x / n, y / n, z / n)
+  let lo = v3(Infinity, Infinity, Infinity), hi = v3(-Infinity, -Infinity, -Infinity)
+  for (const [, g] of ink) {
+    for (const p of [g.a3, g.b3]) {
+      lo = v3(Math.min(lo.x, p.x), Math.min(lo.y, p.y), Math.min(lo.z, p.z))
+      hi = v3(Math.max(hi.x, p.x), Math.max(hi.y, p.y), Math.max(hi.z, p.z))
+    }
+  }
+  return v3((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, (lo.z + hi.z) / 2)
 }

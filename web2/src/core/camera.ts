@@ -17,6 +17,7 @@
 
 import type { Doc, Stroke, CamPose } from './types'
 import { C } from './constants'
+import { isLevel } from './level'
 import {
   type Pt, type V3, pt, v3, norm3, mul3, sub3, add3,
   quatConj, quatRotate, QID,
@@ -136,13 +137,23 @@ export function classifyNext(
   // 화면 평행 대역 안이지만 처짐이 있는 획은 **아래로 흘려보낸다** — 소실점을 만들 수 있다.
   // 기존 소실점에 붙으면 그쪽이 이긴다(바로 아래). 축 스냅은 종전대로 가장 가까운 축이다.
   if (vpScore <= 1) return { role: 'content' }
+  // ── 그 소실점이 **작도 대역 안인가** — 밖이면 무한원으로 읽는다(web2-06 지시 2) ──
+  // 위의 `PARALLEL_PX`는 「이 획으로 무한원과 구별할 수 있는가」를 **포인터 잡음**으로 잰다.
+  // 그것만으로는 **손의 겨냥 오차**가 통째로 소실점이 됐다 — 실측: 지평선만 그은 상태에서
+  // (300,600)→(700,595)(처짐 5px)이 **x=16300(13.3W)** 소실점을 만들었고, 처짐 2px이면
+  // 33W였다. 그 획은 작도 획이라 실행취소도 안 된다.
+  // 그래서 물음의 나머지 절반을 여기서 잰다: **그 소실점이 사람이 그리는 구도 안인가.**
+  // 밖이면 H다(1점) — 6W 밖의 «2점»은 화상면과 **7.1°~9.9°** 안이라 화면에서 1점과 구별되지
+  // 않는다(그 각은 **기본 f**의 값이고, 이 갈래는 소실점이 0~1개일 때만 돌므로 f는 언제나
+  // 기본값이다. 폭이 있는 것은 임계가 시작점 기준이고 각은 주점 기준이라서다 — 리뷰어 [3]).
+  const vpx = a.x + (an.horizonY - a.y) * (dx / dy)   // dy ≠ 0 (drop ≤ PARALLEL_PX 갈래를 지났다)
+  if (Math.abs(vpx - a.x) > C.VP_FAR_W * an.W) return { role: 'content', screenAxis: 'H' }
   // 화면 세로에 가까운 획은 소실점을 못 만든다 — 지평선과 만나는 점이 화면 밖 무한대로 간다
   if (run / L <= C.SCREEN_PARALLEL_RATIO) return { role: 'content', screenAxis: 'V' }
   // 안 붙으면 새 소실점 — 단, 실수로 그은 작은 선은 카메라를 안 건드린다
   if (L < C.VP_MIN_LEN_RATIO * an.diag) {
     return { role: 'content', reason: '소실점을 정의하기엔 짧다' }
   }
-  const vpx = a.x + (an.horizonY - a.y) * (dx / dy)
   if (an.vps.length === 1) {
     const px = an.W / 2
     const u1 = an.vps[0]!.x - px
@@ -286,6 +297,41 @@ export function vpMarks(an: Analysis, pose: CamPose): { id: AxisId; vp: Pt }[] {
     if (ax.vp && (ax.id === 'vp0' || ax.id === 'vp1')) out.push({ id: ax.id, vp: ax.vp })
   }
   return out
+}
+
+/** **그 화면 점이 소실점인가** — 맞으면 그 축 id, 아니면 null (web2-06 지시 1).
+ *
+ *  오스냅이 붙인 좌표는 `vpMarks`가 낸 값 **그대로**이므로(원칙 d) 정확히 견준다.
+ *  여유(1e-6)는 부동소수 몫이고 «근처»의 여유가 아니다 — 「소실점 근처에서 눌렀다」는
+ *  **오스냅 반경**이 이미 답했고, 여기서 또 반경을 두면 판정이 두 자리로 갈린다(#54).
+ *
+ *  쓰는 자리: 소실점에서 뻗는 획에는 축 스냅을 안 건다(`core/draft.ts`).
+ *  그 획은 «있는 축 중 하나»를 고르는 것이 아니라 **그 소실점의 살을 고르는 중**이고,
+ *  소실점을 지나는 직선은 어느 방향이든 그 소실점의 살이다. */
+export function vpAt(an: Analysis, pose: CamPose, p: Pt): AxisId | null {
+  for (const m of vpMarks(an, pose)) {
+    if (Math.abs(m.vp.x - p.x) <= 1e-6 && Math.abs(m.vp.y - p.y) <= 1e-6) return m.id
+  }
+  return null
+}
+
+/** **지평선의 화면 y** — 그릴 수 있으면 그 값, 아니면 null (web2-06 지시 3).
+ *
+ *  정렬된 포즈(피치 0·롤 0)에서 지평선은 **정확히 `principal.y`의 화면 수평선**이다:
+ *  수평 방향 d는 `d.y = 0`이므로 사영이 `principal.y − f·0/−d.z = principal.y`다.
+ *  **작도 포즈만의 성질이 아니다** — 접힌 포즈도 정렬이므로 같다. `render2d`가 작도 포즈에서만
+ *  그어서 **접은 뒤 지평선이 사라졌다**(web2-05가 픽셀로 발견 · `DEFERRED.md`).
+ *  증상을 「지평선이 올라간다」로 말한 사람에게 접힌 뒤 그것이 없으면 눈높이를 못 읽는다.
+ *
+ *  ⚠ **기울면 null이다.** 그때 지평선은 화면 수평선이 아니고(무한원 직선의 사영이라 여전히
+ *  직선이지만 기울어 있다) 그것을 제대로 그으려면 수평 방향 둘의 소실점을 이어야 한다.
+ *  **소실점 ✕는 모든 포즈에서 그린다** — 규칙이 갈리는 것이 맞다: ✕는 «점 하나»라 어느
+ *  포즈에서든 사영이 한 점이고, 지평선은 «직선»이라 그 사영을 따로 세워야 한다.
+ *  그 일반형은 범위 밖이고 `DEFERRED.md`에 있다. */
+export function horizonScreenY(an: Analysis, pose: CamPose): number | null {
+  if (an.horizonY === null || !an.principal) return null
+  if (!isLevel(pose)) return null
+  return an.principal.y
 }
 
 /** 세계 점 → 화면 (뒤에 있으면 null) */
