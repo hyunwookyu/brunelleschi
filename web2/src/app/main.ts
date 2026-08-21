@@ -77,6 +77,7 @@ try {
 let draft: Draft | null = null
 let hover: OsnapHit | null = null
 let eraserPos: Pt | null = null
+let facePrev: { poly: Pt[]; mode: 'add' | 'remove' } | null = null
 let dirty = true
 const invalidate = () => { dirty = true }
 
@@ -141,6 +142,17 @@ function updateStatus() {
   else status('')
 }
 
+// **포즈가 바뀌면 면 미리보기를 버린다.** 그 다각형은 «그 포즈의 화면 좌표»이고
+// 문서 좌표로 그려지므로, 안 버리면 돌린 뒤에도 옛 자리에 남는다
+// (2026-08-21 화면 확인에서 그것이 보였다 — 궤도 뒤 파란 테두리가 제자리에 남았다).
+// 다음 호버가 지금 포즈로 다시 낸다. `setPose`는 늘 새 객체를 넣으므로 동일성으로 안다.
+let lastPoseRef: typeof app.pose | null = null
+app.listeners.push(() => {
+  if (app.pose === lastPoseRef) return
+  lastPoseRef = app.pose
+  if (facePrev) { facePrev = null; invalidate() }
+})
+
 // 포즈가 «상태 줄이 달라지는 자리»를 넘나들 때만 고친다 — 매 프레임 고치면 오류 알림을 덮어쓴다.
 // 그 자리가 둘이라(기울었나 · 작도 시점인가) 둘을 함께 본다.
 let lastPoseKey = ''
@@ -161,6 +173,11 @@ initInput(ink, app, {
   onDraftChange(d) { draft = d; invalidate() },
   onHover(p) { hover = p; invalidate() },
   onEraserMove(p) { eraserPos = p; invalidate() },
+  onFacePreview(f) { facePrev = f; invalidate() },
+  onFaceToggle(r) {
+    // 알림은 **오류가 있을 때만**이다(4-b) — 만들어졌으면 화면이 이미 말한다.
+    if (r === 'none') notify('닫힌 루프가 아니다 — 둘러싸인 자리를 탭한다')
+  },
   onCommit(a, b, raw, press) {
     const s = commitStroke(app, a, b, raw, press)
     const an = app.lift.an
@@ -173,12 +190,13 @@ initInput(ink, app, {
 
 // ── 도구 넷 — 연필 · 펜 · 지우개 둘 (4-h) ────────────────────────────────
 // **선택은 색이 아니라 위치와 크기로 보인다**(4-d) — `.tool.on`이 앞으로 나온다.
-const TOOLS: Tool[] = ['pencil', 'pen', 'eraser-pencil', 'eraser-ink']
+const TOOLS: Tool[] = ['pencil', 'pen', 'eraser-pencil', 'eraser-ink', 'face']
 const toolBtn: Record<Tool, HTMLElement> = {
   'pencil': document.getElementById('btn-pencil')!,
   'pen': document.getElementById('btn-pen')!,
   'eraser-pencil': document.getElementById('btn-eraser-pencil')!,
   'eraser-ink': document.getElementById('btn-eraser-ink')!,
+  'face': document.getElementById('btn-face')!,
 }
 const thick = document.getElementById('thick')!
 const thickLine = document.getElementById('thick-line')!
@@ -188,6 +206,7 @@ function setTool(t: Tool) {
   app.tool = t
   for (const k of TOOLS) toolBtn[k].classList.toggle('on', k === t)
   if (!isEraser(t)) eraserPos = null
+  if (t !== 'face') facePrev = null
   // 굵기 막대는 **펜과 지우개에만** 뜬다. 연필의 굵기는 심이 정하고,
   // 그 조절은 연필 몸통의 창이다(4-e) — 별도 컨트롤을 안 둔다.
   thick.style.display = t === 'pencil' ? 'none' : 'block'
@@ -339,16 +358,16 @@ fileOpen.addEventListener('change', async () => {
 })
 document.getElementById('btn-obj')!.addEventListener('click', () => {
   if (!hasGeometry()) return
-  download('drawing.obj', toOBJ(app.lift), 'text/plain')
+  download('drawing.obj', toOBJ(app.lift, app.faces), 'text/plain')
   download('drawing.mtl', toMTL(), 'text/plain') // 재료 → 레이어 색상
 })
 document.getElementById('btn-gltf')!.addEventListener('click', () => {
   if (!hasGeometry()) return
-  download('drawing.gltf', toGLTF(app.lift), 'model/gltf+json')
+  download('drawing.gltf', toGLTF(app.lift, app.faces), 'model/gltf+json')
 })
 /** 내보낼 3D가 있는가 — 없으면 **빈 파일을 조용히 내려주지 않는다** */
 function hasGeometry(): boolean {
-  if (app.lift.lifted.size > 0) return true
+  if (app.lift.lifted.size > 0 || app.faces.length > 0) return true
   notify('3D로 올라간 획이 없다 — 내보낼 것이 없다')
   return false
 }
@@ -365,7 +384,7 @@ document.getElementById('btn-clear')!.addEventListener('click', () => {
 function doClear() {
   clearAll(app, window.innerWidth, window.innerHeight)
   try { localStorage.removeItem(AUTOSAVE_KEY) } catch { /* 저장소가 없으면 지울 것도 없다 */ }
-  draft = null; hover = null; eraserPos = null // 지운 획을 가리키던 표식이 남지 않게
+  draft = null; hover = null; eraserPos = null; facePrev = null // 지운 획을 가리키던 표식이 남지 않게
   syncViewButtons()
   invalidate()
 }
@@ -427,7 +446,7 @@ function frame() {
   if (dirty) {
     dirty = false
     render3d(r3d, app)
-    draw2d(ctx, app, draft, hover, eraserPos)
+    draw2d(ctx, app, draft, hover, eraserPos, facePrev)
   }
   requestAnimationFrame(frame)
 }
@@ -436,6 +455,8 @@ requestAnimationFrame(frame)
 // e2e 진단 통로 — 앱과 같은 함수·같은 상태를 본다(측정 경로와 앱 경로를 가르지 않는다)
 import { project, screenAxes, vpMarks, frameAxes } from '../core/camera'
 import { forwardOf, yawDir } from '../core/level'
+import { loopAt, buildGraph, cyclesOf, planesOf, faceScreen } from '../core/face'
+import { geomSize3 } from '../core/osnap'
 
 const diag = {
   /** 승격 획 전부의 현재 포즈 재사영 — 불변식 k 확인용 */
@@ -461,6 +482,30 @@ const diag = {
       dots: [d(fr[0]!.dir, fr[1]!.dir), d(fr[0]!.dir, fr[2]!.dir), d(fr[1]!.dir, fr[2]!.dir)],
     }
   },
+  /** 지금 떠 있는 면 미리보기 — 궤도 뒤에 안 남는지 e2e가 이것으로 본다.
+   *  픽셀로는 못 가른다: 같은 2D 캔버스에 **흑연 입자**가 함께 그려져 그 창이 비지 않는다. */
+  facePreview: () => facePrev,
+  /** 면의 현재 포즈 화면 다각형 — 렌더와 같은 출처(`faceScreen`) */
+  facePolys: () => app.faces.map(f => ({ id: f.id, poly: faceScreen(app.lift, app.pose, f.outer) })),
+  /** 면 진단 — **앱과 같은 함수**를 부른다(측정 경로와 앱 경로를 안 가른다) */
+  loopAt: (x: number, y: number) => {
+    const r = loopAt(app.lift, app.pose, { x, y })
+    return r ? { loops: r.loops.map(l => l.edges.map(e => e.s)), poly: r.poly } : null
+  },
+  arrangement: () => {
+    const g = buildGraph(app.lift, app.pose)
+    const tol = 0.01 * Math.max(...[1e-9])
+    void tol
+    const planes = planesOf(g, C.PLANAR_RATIO * Math.max(geomSize3(app.lift), 1e-9))
+    return {
+      nodes: g.nodes.length,
+      edges: g.half.length / 2,
+      planes: planes.map(pl => ({
+        n: pl.n, d: pl.d, edges: pl.use.size,
+        cycles: cyclesOf(g, pl.use).map(c => ({ n: c.he.length, area: c.area, comp: c.comp })),
+      })),
+    }
+  },
   /** 접기 진단 — e2e가 자세를 직접 읽는다 */
   level: () => ({
     level: isLevel(app.pose),
@@ -476,6 +521,11 @@ const diag = {
     fSource: app.lift.an.fSource,
     lifted: app.lift.lifted.size,
     waiting: app.lift.waiting,
+    faces: app.faces.map(f => ({
+      id: f.id, n: f.outer.length, holes: f.holes.map(h => h.length),
+      tris: f.tris.length / 3, flat: f.flat,
+    })),
+    docFaces: app.doc.faces.length,
     strokes: app.doc.strokes.length,
     pose: app.pose,
     view: app.view,

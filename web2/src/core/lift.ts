@@ -204,13 +204,21 @@ export function liftAll(doc: Doc): LiftResult {
       if (!a3) continue
 
       if (!b3) {
-        if (axis) {
+        // **점이 방향을 이긴다** — `draft.ts`의 순서와 같다(Rhino 선례).
+        //
+        // ⚠ 초판은 축이 있으면 **축 풀이를 먼저** 했고, 그래서 사람이 끝점 오스냅으로
+        // 붙인 자리를 lift가 도로 옮겼다. 축 판정(`axisOfStroke`)은 **각도 허용**이 있어
+        // (`VP_DIR_RATIO` = 0.06 ≈ 3.4°) 끝점에 붙인 획도 «그 축»으로 읽히고, 그러면
+        // 끝점이 그 축 위로 미끄러진다. 실측(2026-08-21, 면 항목): 오목 육각형의
+        // **닫는 획**이 그 자리였다 — 확정 2D는 (500,520)인데 lift가 (503.4,510.5)에
+        // 놓아 **루프가 안 닫혔다**(마디 7개·순환 1개·면적 0 = 나무).
+        // 그래서 **닫힘 판정의 답이 여기 있다**: 끝점이 정확히 만날 필요는 없지만,
+        // 사람이 붙인 점은 lift가 지켜야 한다(원칙 d).
+        b3 = matchPoint(s.b, pose)
+        if (!b3 && axis) {
           const dir = axisDir(an, axis)
           const ray = rayThrough(an, pose, s.b)
           if (dir && ray) b3 = closestOnLineToRay(a3, dir, ray)
-        } else {
-          // 자유 방향 — 끝점도 기존 3D에 붙어야 확정된다. 아니면 대기.
-          b3 = matchPoint(s.b, pose)
         }
       }
       if (!b3) { if (anchorId === s.id) anchorId = null; continue }
