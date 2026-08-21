@@ -1,5 +1,5 @@
 // 오스냅 — Rhino Osnap 관행을 그대로 따른다(새로 설계하지 않는다).
-// 종류: 정점 > 끝점 > 중점 > 교차점 > 수선 발 > 연장선 > 근처점 (정확한 것이 앞선다).
+// 종류: 소실점 > 정점 > 끝점 > 중점 > 교차점 > 수선 발 > 연장선 > 근처점 (정확한 것이 앞선다).
 // 종류별 켜고 끄기, 반경 조절. 반경은 화면 px(포인터 정밀도의 문제라 선례가 절대 px).
 //
 // 교차점은 3D에서 실제로 만나는 것만 쓴다 — 화면에서 가로지르는 것은 대개 가림이다.
@@ -7,14 +7,16 @@
 
 import type { CamPose } from './types'
 import { C } from './constants'
-import { project, rayThrough } from './camera'
+import { project, rayThrough, screenAxes } from './camera'
 import type { LiftResult } from './lift'
 import {
   type Pt, type V3, pt, add3, sub3, mul3, dot3, dist2, dist3, len3,
 } from './vec'
 
-export type OsnapKind = 'vertex' | 'end' | 'mid' | 'int' | 'perp' | 'ext' | 'near'
-export const OSNAP_ORDER: OsnapKind[] = ['vertex', 'end', 'mid', 'int', 'perp', 'ext', 'near']
+export type OsnapKind = 'vp' | 'vertex' | 'end' | 'mid' | 'int' | 'perp' | 'ext' | 'near'
+// 소실점이 맨 앞이다 — 작도가 정한 **정확한 점**이고, 그 자리에 다른 후보가 겹치는 일은
+// 드물다(지평선 위). 나머지 순서는 Rhino 관행 그대로.
+export const OSNAP_ORDER: OsnapKind[] = ['vp', 'vertex', 'end', 'mid', 'int', 'perp', 'ext', 'near']
 
 export interface OsnapSettings {
   radius: number
@@ -23,7 +25,7 @@ export interface OsnapSettings {
 
 export const defaultOsnap = (): OsnapSettings => ({
   radius: C.OSNAP_RADIUS_PX,
-  kinds: { vertex: true, end: true, mid: true, int: true, perp: true, ext: true, near: true },
+  kinds: { vp: true, vertex: true, end: true, mid: true, int: true, perp: true, ext: true, near: true },
 })
 
 export interface OsnapHit {
@@ -125,6 +127,13 @@ export function osnap(
     if (!p) return
     const d = dist2(p, cursor)
     if (d <= R) cands.push({ kind, p, p3, d })
+  }
+
+  // 소실점 — 현재 포즈의 화면 위치(불변식 i: 표시=스냅이 같은 출처인 screenAxes).
+  // p3는 null이다: 소실점은 무한원에 있어 3D 점이 아니다. 방향으로만 쓴다.
+  // **화면 밖이어도 목록에서 안 뺀다** — 팬으로 들어오면 반경 검사가 알아서 받는다.
+  if (set.kinds.vp) {
+    for (const ax of screenAxes(an, pose)) if (ax.vp) push('vp', ax.vp, null)
   }
 
   const size3 = geomSize3(lift)

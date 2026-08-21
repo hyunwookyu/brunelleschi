@@ -178,7 +178,7 @@ syncGrade()
 // 오스냅 설정 패널(임시 UI — 7단계에서 세로바로) — 종류별 토글·반경
 const osnapPanel = document.getElementById('osnap-kinds')!
 const KIND_LABEL: Record<string, string> = {
-  vertex: '정점', end: '끝점', mid: '중점', int: '교차점',
+  vp: '소실점', vertex: '정점', end: '끝점', mid: '중점', int: '교차점',
   perp: '수선 발', ext: '연장선', near: '근처점',
 }
 for (const kind of OSNAP_ORDER) {

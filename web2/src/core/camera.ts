@@ -56,9 +56,27 @@ export function classifyNext(
   a: Pt, b: Pt,
 ): { role: Role; reason?: string; vp?: Pt } {
   if (an.horizonY === null) return { role: 'horizon' }
-  if (an.constructionDone) return { role: 'content' }
   const dx = b.x - a.x, dy = b.y - a.y
   const L = Math.hypot(dx, dy)
+  // ── 찍기 — 지평선 위의 점 하나가 소실점이다(지시 4-b) ────────────────────
+  // 선을 그어 교점을 만드는 것과 **다른 길이고 같은 결과**다: 어느 쪽이든 여기서
+  // 같은 `vps` 항목이 나오므로 카메라는 구별하지 못한다(4-c).
+  // 작도가 끝난 뒤에도 받는다 — 3점으로 갈 때 세 번째 소실점을 찍을 수 있어야 한다.
+  if (L <= C.TAP_MAX_PX && Math.abs(a.y - an.horizonY) <= C.OSNAP_RADIUS_PX) {
+    const mark = pt(a.x, an.horizonY)
+    if (an.vps.some(v => Math.abs(v.x - mark.x) <= C.OSNAP_RADIUS_PX)) {
+      return { role: 'content', reason: '이미 그 자리에 소실점이 있다' }
+    }
+    if (an.vps.length === 1) {
+      const u1 = an.vps[0]!.x - an.W / 2
+      const u2 = mark.x - an.W / 2
+      if (-u1 * u2 <= 0) {
+        return { role: 'content', reason: 'f² ≤ 0 — 두 소실점이 주점 기준 반대쪽이어야 한다' }
+      }
+    }
+    return { role: 'vp', vp: mark }
+  }
+  if (an.constructionDone) return { role: 'content' }
   if (L < C.MIN_DIR_LEN_RATIO * an.diag) return { role: 'content' }
   // 화면 평행이면 축 스냅이 붙는다 → 기존 축, 내용 획
   if (Math.abs(dy) / L <= C.SCREEN_PARALLEL_RATIO) return { role: 'content' }

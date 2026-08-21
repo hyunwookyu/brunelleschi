@@ -11,6 +11,7 @@ import { classifyNext } from './camera'
 import type { LiftResult } from './lift'
 import { osnap, type OsnapHit, type OsnapSettings } from './osnap'
 import { snapDir } from './snap'
+import { C } from './constants'
 import { type Pt, pt } from './vec'
 
 export interface EndResolve {
@@ -44,4 +45,22 @@ export function resolveEnd(
   if (ds.axis) return { end: ds.end, label: ds.axis, endSnap: null, axis: ds.axis }
   const cls = classifyNext(an, start, cursor)
   return { end: cursor, label: cls.role === 'vp' ? 'vp' : null, endSnap: null, axis: null }
+}
+
+/** 뗄 때 무엇을 확정하는가 — null이면 아무것도 안 남긴다(잡음).
+ *
+ *  **탭 = 찍기**(지시 4-d). 지평선 위를 찍으면 길이 0의 표식을 남기고 그것이 소실점이 된다
+ *  (`classifyNext`가 받는다). 별도 도구도 모드도 없다 — 탭은 지금까지 잡음으로 버려지던
+ *  자리이고, 클릭 = 점 찍기는 캐드 선례다(A-3). 지평선에서 먼 탭은 종전대로 잡음이다.
+ *
+ *  앱(`input.ts`)과 측정 하네스가 **같은 함수**를 부른다. 갈리면 하네스가 앱을 안 재게 된다. */
+export function resolveCommit(
+  an: Pick<Analysis, 'horizonY'>, start: Pt, end: Pt, osnapRadius: number,
+): { a: Pt; b: Pt } | null {
+  if (Math.hypot(end.x - start.x, end.y - start.y) > C.TAP_MAX_PX) return { a: start, b: end }
+  const hz = an.horizonY
+  if (hz === null) return null
+  if (Math.abs(start.y - hz) > osnapRadius) return null
+  const onHz = pt(start.x, hz) // 지평선 위로 붙인다 — 붙은 좌표가 그대로 확정(원칙 d)
+  return { a: onHz, b: onHz }
 }

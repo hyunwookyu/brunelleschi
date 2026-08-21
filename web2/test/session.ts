@@ -4,7 +4,7 @@
 // **앱이 실제로 만드는 기하를 안 재게 된다** — 그래서 이 경로로만 잰다.
 
 import { createApp, commitStroke, type App } from '../src/app/state'
-import { resolveStart, resolveEnd } from '../src/core/draft'
+import { resolveStart, resolveEnd, resolveCommit } from '../src/core/draft'
 import type { Stroke } from '../src/core/types'
 import type { Pt } from '../src/core/vec'
 
@@ -25,8 +25,9 @@ export function session(W: number, H: number): Session {
       const start = oh ? oh.p : p
       const startP3 = { p3: oh?.p3 ?? null }
       const r = resolveEnd(app.lift, app.pose, app.lift.an, start, startP3, { x: bx, y: by }, set())
-      if (Math.hypot(r.end.x - start.x, r.end.y - start.y) < 2) return null // 탭 잡음
-      return commitStroke(app, start, r.end, [p, { x: bx, y: by }])
+      const c = resolveCommit(app.lift.an, start, r.end, set().radius)
+      if (!c) return null // 잡음 — 지평선에서 먼 탭
+      return commitStroke(app, c.a, c.b, [p, { x: bx, y: by }])
     },
   }
 }

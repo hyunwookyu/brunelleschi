@@ -33,7 +33,7 @@ describe('같은 축 = 3D 평행 (보장)', () => {
   it('양성 채널 — 한쪽 끝을 축에서 떼면 팔이 즉시 0을 벗어난다', () => {
     const { A, B } = twoDepth()
     // 끝점을 깊이 방향으로 조금 당긴다 = 「소실점 쪽으로 수렴」을 손으로 만든다
-    const bent: Seg3 = { a3: B.a3, b3: { x: B.b3.x * 0.9, y: B.b3.y, z: B.b3.z * 0.9 }, axis: B.axis }
+    const bent: Seg3 = { a3: B.a3, b3: { x: B.b3.x * 0.9, y: B.b3.y, z: B.b3.z * 0.9 } }
     const ang = convergenceDeg(A, bent)
     expect(ang).toBeGreaterThan(0.5)          // 팔이 실제로 반응한다
     expect(Number.isFinite(ang)).toBe(true)

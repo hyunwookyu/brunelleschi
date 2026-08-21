@@ -83,7 +83,9 @@ export function liftAll(doc: Doc): LiftResult {
   // 안 그러면 깊이선 끝에 이어 그린 획이 붙을 데가 없어 영영 대기한다.
   // 작도 순서가 강제되던 자리가 여기다(2026-08-21 측정: 지평선→수직선→깊이선→수직선에서
   // 마지막 획이 waiting에 남았다).
-  const content = doc.strokes.filter(s => an.roles.get(s.id) !== 'horizon')
+  // 찍은 소실점 표식은 **점**이라 3D 선이 아니다 — 방향이 없고 무한원에 있다.
+  const isMark = (s: Stroke) => Math.hypot(s.b.x - s.a.x, s.b.y - s.a.y) <= C.TAP_MAX_PX
+  const content = doc.strokes.filter(s => an.roles.get(s.id) !== 'horizon' && !isMark(s))
   if (!an.principal || an.f === null) {
     return { an, lifted, waiting: content.map(s => s.id), anchorId, strokes }
   }

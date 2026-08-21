@@ -8,7 +8,7 @@ import {
   screenToDoc, isDrawPose,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
-import { resolveStart, resolveEnd } from '../core/draft'
+import { resolveStart, resolveEnd, resolveCommit } from '../core/draft'
 import { cubeGeom, cubeHit, poseForElem } from '../core/viewcube'
 import type { Draft } from './render2d'
 import {
@@ -83,8 +83,9 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
       ? pressSamples.reduce((a, b) => a + b, 0) / pressSamples.length
       : undefined
     pressSamples = []
-    if (Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) < 2) return // 탭 잡음
-    cb.onCommit(d.start, d.end, d.raw, press)
+    const c = resolveCommit(app.lift.an, d.start, d.end, app.osnap.radius / app.view.s)
+    if (!c) return // 잡음 — 지평선에서 먼 탭
+    cb.onCommit(c.a, c.b, d.raw, press)
   }
 
   // ── 카메라 조작 ──────────────────────────────────────────────────────
