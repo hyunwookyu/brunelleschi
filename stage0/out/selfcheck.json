@@ -1,5 +1,5 @@
 {
-  "n_flags": 5347,
+  "n_flags": 5349,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -4562,6 +4562,11 @@
       "path": "lens_roll_osnap.json:s_roll.return_judge_at_700ms.returnDir[1]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "lens_roll_osnap.json:s_start_check.dist_px",
+      "val": 5.827700854270632e-11,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "lens_roll_osnap.json:summary.s_more_vertical_off_ortho_deg.return_to_draft",
@@ -22659,7 +22664,7 @@
     },
     {
       "path": "touch_route.json:app_gestures.one_finger_already_free.dist_delta",
-      "val": 2.7533531010703882e-14,
+      "val": 1.6431300764452317e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -26641,6 +26646,11 @@
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
+      "path": "sweeps.json:pitfall_reference",
+      "val": ".html(1)",
+      "flag": "**선언 밖 확장자에서 같은 패턴이 나온다** → 그 훑기가 덜 덮었다(#33). `exts`에 넣거나 `exclude`로 이유를 밝힌다"
+    },
+    {
       "path": "free_curve.json",
       "val": "2자리 (예: /arms/straight_only/in_space/placed_rate)",
       "flag": "**성공률이 0인 자리가 있다**(#38) — 특정 팔·구도의 0이면 정상이고 원장이 그렇게 적어야 한다. **원장 전체가 0이면 그 하네스는 «깨지지 않고 죽은» 것이다**(18차에 `order_lock`이 실제로 그랬다: `camera_ok 0/300`인데 시험은 통과)"
@@ -26664,7 +26674,7 @@
         "progress.md:13857 test_cost.json",
         "progress.md:14037 test_cost.json"
       ],
-      "flag": "**없는 원장을 인용한다**(6건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
+      "flag": "**없는 원장을 인용한다**(8건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
     },
     {
       "path": "stage0/out/vp_source.json",
@@ -26845,7 +26855,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 257,
+      "files_scanned": 307,
       "exts_declared": [
         ".md",
         ".py",
@@ -26869,16 +26879,17 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 257,
+      "files_scanned": 307,
       "exts_declared": [
         ".md",
         ".py",
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 14,
+        ".md": 17,
         ".py": 4,
-        ".ts": 74
+        ".html": 1,
+        ".ts": 82
       }
     },
     {
@@ -26897,7 +26908,7 @@
       "scan": "scan_sweep_coverage",
       "unit": "훑기",
       "targets": 4,
-      "hits": 0,
+      "hits": 1,
       "note": "훑기별 파일 수는 `sweeps[]`에 있다"
     },
     {
@@ -26924,16 +26935,16 @@
     {
       "scan": "scan_citation_hashes",
       "unit": "인용",
-      "targets": 376,
+      "targets": 377,
       "hits": 1,
-      "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 6건"
+      "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 8건"
     },
     {
       "scan": "scan_cited_values",
       "unit": "인용 줄",
-      "targets": 197,
+      "targets": 198,
       "hits": 0,
-      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1910개이고 엄격 판정이면 429개(85줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
+      "note": "현재 해시로 적힌 인용 줄의 수치만 본다(낡은 해시는 scan_citation_hashes가 잡는다). 참조 번호·정수 0~3은 뺀다. ⚠ **단위는 줄이다** — 그 줄들이 든 수치 토큰은 1913개이고 엄격 판정이면 429개(85줄)가 걸린다. 두 수의 단위가 달라 1129 ↔ 96을 나란히 놓으면 안 된다(#11)"
     },
     {
       "scan": "scan_pitfall_citations",
@@ -27736,8 +27747,8 @@
     ]
   },
   "cited_value_population": {
-    "lines_checked": 197,
-    "tokens_checked": 1910,
+    "lines_checked": 198,
+    "tokens_checked": 1913,
     "flags_line_rule": 0,
     "strict_tokens_flagged": 429,
     "strict_lines_flagged": 85,
