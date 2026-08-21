@@ -12,6 +12,7 @@ import { constructedDoc } from './fixtures'
 import { analyze, DRAW_POSE, project } from '../src/core/camera'
 import { liftAll, type LiftResult, type LiftedSeg } from '../src/core/lift'
 import { buildGraph, cyclesOf, planesOf, loopAt, faceAt, resolveFace, resolveFaces, area2, triangulate3, newellNormal, faceScreen } from '../src/core/face'
+import { geomSize3 } from '../src/core/osnap'
 import { toggleFaceAt, undo, redo, beginErase, eraseAt, endErase, isEraser } from '../src/app/state'
 import { serializeBrnl, parseBrnl } from '../src/core/file'
 import { toOBJ, toGLTF } from '../src/core/export'
@@ -160,9 +161,13 @@ describe('면 — 만들기', () => {
     })()
     expect(triArea).toBeCloseTo(12 * 12 - 4 * 4, 6)
 
-    // **구멍 안은 면이 아니다** — 뚫린 자리를 탭하면 그 면이 안 잡힌다
+    // **지우기 쪽** — `toggleFaceAt`이 «없앤다»를 정할 때 부르는 판정이 `faceAt`이다.
+    // 개구부는 앱 경로로 못 만들어 토글을 통째로 못 태우므로(아래 「앱이 아직 못 하는 것」)
+    // 그 **판정 자체**를 잰다: 고리 사이는 그 면이고, **구멍 안은 면이 아니다.**
     expect(faceAt(lift, DRAW_POSE, [r], { x: 600, y: 455 })!.id).toBe(1)
     expect(faceAt(lift, DRAW_POSE, [r], { x: 600, y: 439 })).toBeNull()
+    // 그 면이 목록에서 빠지면 (= 없앤 뒤) 같은 자리가 비어 있다
+    expect(faceAt(lift, DRAW_POSE, [], { x: 600, y: 455 })).toBeNull()
   })
 
   it('개구부 — 안쪽 루프 자체도 면이 될 수 있다(구멍을 메운다)', () => {
@@ -230,13 +235,40 @@ describe('면 — 반증 조건 (D-3)', () => {
     const face: Face = {
       id: 1, loops: [{ edges: [101, 102, 103, 104].map(s => ({ kind: 'stroke' as const, s })) }],
     }
-    const under = resolveFace(lift(0.4), face, size3)
-    expect(under).not.toBeNull()
-    expect(under!.flat).toBeGreaterThan(0)
-    expect(under!.flat).toBeLessThan(C.PLANAR_RATIO)
-    expect(resolveFace(lift(2.0), face, size3)).toBeNull()   // 잰 이탈 ≈ 0.025 > 0.01
+    // **잰 값을 그대로 적는다**(리뷰어 [2]) — 「띄운 높이」가 아니라 이탈/기하 크기다
+    const under = resolveFace(lift(0.4), face, size3)!
+    expect(under.flat).toBeCloseTo(0.0024993, 6)             // 0.0025 < 0.01 → 통과
+    expect(under.flat).toBeLessThan(C.PLANAR_RATIO)
+    expect(resolveFace(lift(2.0), face, size3)).toBeNull()
+    // 거부 쪽의 이탈도 잰다 — 임계가 없다면 그 값이 0.0124다.
+    // ⚠ **두 점이 임계(0.01)를 사이에 두고 가깝다**: 0.0025 ↔ 0.0124. 띄운 높이는 5배인데
+    //   이탈은 5배가 아니다(0.4 → 0.0025 · 2.0 → 0.0124) — 법선이 함께 기울기 때문이고,
+    //   그래서 「띄운 높이」로 임계를 논하면 안 된다는 것이 이 팔의 두 번째 내용이다.
+    const overFlat = (() => {
+      const l = lift(2.0), o: number[] = []
+      // 같은 계산을 임계 없이: 법선·무게중심은 resolveFace와 같은 식이다
+      const poly = [101, 102, 103, 104].map(id => l.lifted.get(id)!.a3)
+      const n = newellNormal(poly)
+      const c = poly.reduce((a, p) => ({ x: a.x + p.x / 4, y: a.y + p.y / 4, z: a.z + p.z / 4 }), { x: 0, y: 0, z: 0 })
+      for (const p of poly) o.push(Math.abs((p.x - c.x) * n.x + (p.y - c.y) * n.y + (p.z - c.z) * n.z))
+      return Math.max(...o) / size3
+    })()
+    expect(overFlat).toBeCloseTo(0.0124141, 6)               // 0.0124 > 0.01 → 거부
     // 평면 그대로면 이탈이 0이다 — 띄운 만큼 늘어나는 것을 위에서 봤으므로 이것은 측정이다
     expect(resolveFace(lift(0), face, size3)!.flat).toBe(0)
+  })
+
+  it('평면성과 3D 교차는 **같은 분모**를 쓴다 — 그래서 「같은 값」이 「같은 엄격도」다', () => {
+    // `PLANAR_RATIO`의 근거는 「`INTERSECT_GAP_RATIO`와 같은 물음의 앞뒤」였다(리뷰어 [3]).
+    // 그 논증은 **분모가 같은 양일 때만** 선다 — 둘 다 `geomSize3`(3D bbox 대각)이다.
+    const s = quad()
+    const size3 = geomSize3(s.app.lift)
+    expect(size3).toBeGreaterThan(0)
+    // 교차 허용 간격 = INTERSECT_GAP_RATIO · geomSize3 — 그 간격 안에서 만난 것이 마디다
+    const gap = C.INTERSECT_GAP_RATIO * size3
+    // 면의 평면 허용 = PLANAR_RATIO · geomSize3 (resolveFaces가 geomSize3를 넘긴다)
+    const planar = C.PLANAR_RATIO * size3
+    expect(planar).toBe(gap)                                 // 같은 분모 · 같은 값
   })
 
   it('면을 못 만든 탭은 문서에 아무것도 안 남긴다 — id도 안 쓴다', () => {
@@ -433,6 +465,68 @@ describe('면 — 회귀', () => {
     const n = newellNormal(poly)
     expect(Math.abs(n.y)).toBeCloseTo(1, 12)
     expect(triangulate3(poly, [], n)).toHaveLength(6)
+  })
+})
+
+// ── 차수 승격 — 「좌표를 안 담으므로 면이 따라온다」의 실측 ────────────────
+// 이 프로젝트의 고유한 둘 중 하나가 승격이고(CLAUDE.md §1.2), 그때 **전부 다시 올라간다**.
+// 면이 좌표를 담았으면 그 순간 낡은 값이 된다 — 그래서 경계의 정체만 담았고, 그 결정이
+// 실제로 값을 하는지는 **승격을 한 번 태워** 봐야 안다(리뷰어 [12]).
+describe('면 — 차수 승격을 견딘다', () => {
+  /** 1점 상태의 벽 사각형 — vp0과 V만 쓴다.
+   *  ⚠ **자유 방향 획을 못 쓴다**: 작도가 안 끝난 상태에서 비스듬한 획은 «새 소실점»이 되고
+   *  (실측: (500,380)→(700,450)이 vp=(557,400)을 만들었다), 화면 수평 획은 1점으로 **잠근다**
+   *  (`p1Locked`). 그래서 승격을 남겨 두려면 축 둘로만 그려야 한다. */
+  function wall1pt() {
+    const s = session(1200, 800)
+    s.draw(100, 400, 1100, 400)
+    s.draw(500, 500, 700, 450)      // 깊이선 1 → vp0 (900,400) · 지면
+    s.draw(500, 500, 500, 380)      // 왼쪽 기둥 (V)
+    s.draw(700, 450, 700, 370)      // 오른쪽 기둥 (V)
+    s.draw(500, 380, 720, 391)      // 윗변 (vp0) — 오른쪽 기둥을 지나 조금 더
+    return s
+  }
+
+  it('1점에서 만든 면이 2점 승격 뒤에도 선다 — 좌표는 전부 다시 풀린다', () => {
+    const s = wall1pt()
+    const an1 = s.app.lift.an
+    expect(an1.vps).toHaveLength(1)
+    expect(an1.fSource).toBe('default')
+    expect(an1.f).toBe(1044)                       // 0.87 · 1200
+    expect(toggleFaceAt(s.app, { x: 600, y: 420 })).toBe('added')
+    const before = s.app.faces[0]!
+    expect(before.outer).toHaveLength(4)
+    expect(before.flat).toBe(0)
+    const o0 = { ...before.outer[0]! }
+
+    // 두 번째 깊이선 → **승격**. 카메라가 바뀌고 문서 전체가 다시 올라간다.
+    const st = s.draw(700, 520, 600, 495)
+    const an2 = s.app.lift.an
+    expect(an2.roles.get(st!.id)).toBe('vp')
+    expect(an2.vps).toHaveLength(2)
+    expect(an2.fSource).toBe('two-vp')
+    expect(an2.f).toBeCloseTo(337.638860, 5)       // f가 실제로 바뀌었다 (1044 → 337.6)
+    expect(s.app.lift.waiting).toEqual([])
+
+    const after = s.app.faces[0]!
+    expect(after.id).toBe(before.id)               // 같은 면이다
+    expect(after.outer).toHaveLength(4)
+    // **좌표는 전부 달라졌다** — 낡은 값을 들고 있었다면 여기서 안 움직였을 것이다
+    expect(o0.z).toBeCloseTo(-16.704, 3)
+    expect(after.outer[0]!.z).toBeCloseTo(-5.402221765, 6)
+    // 그런데도 **평면성은 그대로**다 — 승격이 면을 비평면으로 만들지 않았다
+    expect(after.flat).toBeLessThan(1e-12)
+  })
+
+  it('.brnl 복원도 같은 자리다 — 파일에는 획 id만 있다', () => {
+    const s = wall1pt()
+    toggleFaceAt(s.app, { x: 600, y: 420 })
+    const back = parseBrnl(serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: [] }))!
+    const lift = liftAll(back.doc)
+    const faces = resolveFaces(lift, back.doc.faces)
+    expect(faces).toHaveLength(1)
+    expect(faces[0]!.outer).toHaveLength(4)
+    expect(faces[0]!.outer[0]!.z).toBeCloseTo(s.app.faces[0]!.outer[0]!.z, 12)
   })
 })
 
