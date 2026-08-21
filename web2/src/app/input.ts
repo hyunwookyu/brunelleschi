@@ -5,12 +5,13 @@
 import type { App } from './state'
 import {
   orbitPivot, orbitBy, dollyBy, panBy, setPose, beginErase, eraseAt, endErase,
-  screenToDoc, isEraser,
+  screenToDoc, isEraser, toggleFaceAt, facePreview,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
 import { isLevel } from '../core/level'
 import type { LevelHooks } from './autolevel'
 import { resolveStart, resolveEnd, resolveCommit } from '../core/draft'
+import { C } from '../core/constants'
 import { cubeGeom, cubeHit, poseForElem } from '../core/viewcube'
 import type { Draft } from './render2d'
 import { type Pt, pt } from '../core/vec'
@@ -22,6 +23,10 @@ export interface InputCallbacks {
   onCommit: (a: Pt, b: Pt, raw: Pt[], press?: number) => void
   /** 지우개 커서 위치 (지우개 도구일 때) */
   onEraserMove: (p: Pt | null) => void
+  /** 면 도구의 미리보기 — 지금 탭하면 무엇이 될지(원칙 d) */
+  onFacePreview: (f: { poly: Pt[]; mode: 'add' | 'remove' } | null) => void
+  /** 면 지정·해제 결과 — 알림 한 줄이 이것을 읽는다 */
+  onFaceToggle: (r: 'added' | 'removed' | 'none') => void
 }
 
 export function initInput(
@@ -35,6 +40,7 @@ export function initInput(
   let lastTouchMid: Pt | null = null
   let lastTouchDist = 0
   let orbitBtn: { last: Pt; mode: 'orbit' | 'pan' } | null = null
+  let faceDown: Pt | null = null
 
   /** 화면 좌표 (뷰 오프셋 적용 전) */
   const toScreen = (e: PointerEvent | WheelEvent): Pt => {
@@ -137,6 +143,9 @@ export function initInput(
     if (!isLevel(app.pose)) { level.foldNow(); return }
     drawingPointer = e.pointerId
     canvas.setPointerCapture(e.pointerId)
+    // **면 도구는 탭이다** — 누르는 동안 아무것도 안 만들고, 뗄 때 판정한다.
+    // 누름에서 바로 만들면 «잘못 눌렀다»를 뗌으로 취소할 길이 없다.
+    if (app.tool === 'face') { faceDown = toPt(e); return }
     if (isEraser(app.tool)) {
       beginErase(app)
       eraseAt(app, toPt(e))
@@ -179,6 +188,7 @@ export function initInput(
       return
     }
     if (drawingPointer === e.pointerId) {
+      if (app.tool === 'face') { cb.onFacePreview(facePreview(app, toPt(e))); return }
       if (isEraser(app.tool)) {
         eraseAt(app, toPt(e))
         cb.onEraserMove(toPt(e))
@@ -197,6 +207,13 @@ export function initInput(
         return
       }
       cb.onEraserMove(null)
+      if (app.tool === 'face') {
+        // **기울어 있으면 미리보기도 없다** — 그때 누름은 접기이지 면이 아니다.
+        // 보여 놓고 안 되는 것이 「죽은 클릭」이고, 그것을 안 만든다는 것이 그 규칙이다.
+        cb.onFacePreview(isLevel(app.pose) ? facePreview(app, toPt(e)) : null)
+        cb.onHover(null)
+        return
+      }
       // 호버 — 와콤 EMR 펜·마우스. 스냅 후보 표식.
       cb.onHover(osnap(app.lift, app.pose, toPt(e), osnapSet()))
     }
@@ -216,6 +233,17 @@ export function initInput(
     }
     if (drawingPointer === e.pointerId) {
       drawingPointer = null
+      if (app.tool === 'face') {
+        const d = faceDown
+        faceDown = null
+        if (!d) return
+        const p = toPt(e)
+        // 끌었으면 취소다 — 탭 대역(`TAP_MAX_PX`)은 찍기와 같은 기준을 쓴다
+        if (Math.hypot(p.x - d.x, p.y - d.y) > C.TAP_MAX_PX / app.view.s) return
+        cb.onFaceToggle(toggleFaceAt(app, d))
+        cb.onFacePreview(facePreview(app, d))
+        return
+      }
       if (isEraser(app.tool)) { endErase(app); return }
       endDraft()
     }

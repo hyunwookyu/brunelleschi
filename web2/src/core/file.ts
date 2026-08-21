@@ -1,7 +1,7 @@
 // .brnl 저장·복원 — 문서(획·프레임)와 시점만 담는다.
 // 카메라·소실점·리프팅은 파생이므로 저장하지 않는다(원칙 b) — 복원 후 다시 계산된다.
 
-import type { Doc, Stroke, CamPose, ViewOffset, Grade } from './types'
+import type { Doc, Stroke, Face, CamPose, ViewOffset, Grade } from './types'
 import { GRADES } from './material'
 import { C } from './constants'
 
@@ -17,6 +17,9 @@ export function serializeBrnl(d: BrnlData): string {
     version: 1,
     frame: d.doc.frame,
     strokes: d.doc.strokes,
+    // 면은 **경계의 정체**만 담긴다(획 id 차례) — 좌표는 복원 후 다시 풀린다.
+    // 옛 파일에는 이 열쇠가 없고 그때는 면이 없는 문서로 읽힌다(version은 그대로 1).
+    faces: d.doc.faces,
     nextId: d.nextId,
     savedViews: d.savedViews,
   })
@@ -55,6 +58,31 @@ export function parseBrnl(text: string): BrnlData | null {
     }
     strokes.push(st)
   }
+  // ── 면 ──────────────────────────────────────────────────────────────
+  // 경계가 가리키는 획이 없으면 **거부하지 않고 그 면만 버린다** — 획은 지워질 수
+  // 있고 그때 면이 못 풀리는 것은 정상 상태다(불변식 j의 면판). 손상 판정은
+  // 「모양이 틀렸다」에만 건다.
+  const faces: Face[] = []
+  if (Array.isArray(raw.faces)) {
+    for (const f of raw.faces) {
+      if (!isNum(f?.id) || !Array.isArray(f.loops) || f.loops.length === 0) return null
+      const loops = []
+      let ok = true
+      for (const l of f.loops) {
+        if (!Array.isArray(l?.edges) || l.edges.length < 3) { ok = false; break }
+        const edges = []
+        for (const e of l.edges) {
+          if (e?.kind !== 'stroke' || !isNum(e.s)) { ok = false; break }
+          edges.push({ kind: 'stroke' as const, s: e.s })
+        }
+        if (!ok) break
+        loops.push({ edges })
+      }
+      if (!ok) return null
+      faces.push({ id: f.id, loops })
+    }
+  }
+
   const savedViews: BrnlData['savedViews'] = []
   if (Array.isArray(raw.savedViews)) {
     for (const v of raw.savedViews) {
@@ -63,10 +91,14 @@ export function parseBrnl(text: string): BrnlData | null {
       savedViews.push({ pose: { p: { ...v.pose.p }, q: { ...v.pose.q } }, view: { ...v.view } })
     }
   }
-  const maxId = strokes.reduce((m, s) => Math.max(m, s.id), 0)
+  // id는 획과 면이 **한 통**이다(면이 획을 가리키므로 겹치면 읽기 어렵다)
+  const maxId = Math.max(
+    strokes.reduce((m, s) => Math.max(m, s.id), 0),
+    faces.reduce((m, f) => Math.max(m, f.id), 0),
+  )
   const nextId = isNum(raw.nextId) && raw.nextId > maxId ? raw.nextId : maxId + 1
   return {
-    doc: { frame: { W: raw.frame.W, H: raw.frame.H }, strokes },
+    doc: { frame: { W: raw.frame.W, H: raw.frame.H }, strokes, faces },
     nextId,
     savedViews,
   }

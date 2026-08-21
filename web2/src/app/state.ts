@@ -3,17 +3,18 @@
 // 실행취소는 op 단위다: 획 추가 op, 지우개 한 번의 드래그 op.
 // 그림만 되돌린다 — 작도(카메라)는 op에 들어가지 않는다.
 
-import { emptyDoc, type Doc, type Stroke, type CamPose, type ViewOffset, type Grade } from '../core/types'
+import { emptyDoc, type Doc, type Stroke, type Face, type CamPose, type ViewOffset, type Grade } from '../core/types'
 import { isInk } from '../core/material'
 export type { ViewOffset }
 import { liftAll, type LiftResult } from '../core/lift'
 import { DRAW_POSE } from '../core/camera'
 import { defaultOsnap, type OsnapSettings } from '../core/osnap'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
+import { loopAt, faceAt, faceScreen, resolveFaces, type ResolvedFace } from '../core/face'
 import { C } from '../core/constants'
 import { type Pt, type V3, v3, add3, sub3, mul3, dot3, len3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
 
-export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink'
+export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink' | 'face'
 
 /** 지금 그으면 무슨 재료인가 — **한 자리에서만 정한다**(원칙 a의 재료판).
  *  펜은 언제나 잉크이고, 연필은 고른 경도다. */
@@ -27,6 +28,9 @@ export const isEraser = (t: Tool): boolean => t === 'eraser-pencil' || t === 'er
 export interface Op {
   removed: { stroke: Stroke; index: number }[]
   added: Stroke[]
+  /** 면 지정·해제도 실행취소 대상이다 — 사람이 한 것이므로(작도와 다르다) */
+  facesAdded?: Face[]
+  facesRemoved?: { face: Face; index: number }[]
 }
 
 export interface App {
@@ -37,6 +41,9 @@ export interface App {
   nextId: number
   /** 문서가 바뀔 때마다 다시 계산 — 유일한 캐시이고 doc에서만 나온다 */
   lift: LiftResult
+  /** 풀린 면 — 경계가 다 승격돼 있고 한 평면인 것만. 이것도 doc에서만 나온다.
+   *  못 푸는 면은 **여기서 빠질 뿐 문서에는 남는다**(불변식 j의 면판). */
+  faces: ResolvedFace[]
   /** 문서 변경 카운터 — 렌더가 기하 재구축 시점을 안다 (포즈 변경과 구분) */
   docVersion: number
   /** 오스냅 설정 — 종류별 켜고 끄기, 반경 (Rhino 관행) */
@@ -73,6 +80,7 @@ export function createApp(W: number, H: number): App {
     pose: DRAW_POSE,
     nextId: 1,
     lift: liftAll(doc),
+    faces: [],
     docVersion: 0,
     osnap: defaultOsnap(),
     tool: 'pencil',
@@ -103,8 +111,57 @@ export const isDrawPose = (pose: CamPose): boolean =>
 
 function recompute(app: App) {
   app.lift = liftAll(app.doc)
+  app.faces = resolveFaces(app.lift, app.doc.faces)
   app.docVersion++
   for (const l of app.listeners) l()
+}
+
+// ── 면 — 사용자가 지정한다. 자동으로 안 만든다 ─────────────────────────────
+//
+// **한 도구, 한 몸짓**: 면 도구로 탭하면 면이 없으면 만들고 있으면 없앤다(토글).
+// 만들기와 없애기를 도구 둘로 가르지 않은 이유는 선례다 — 캐드의 페인트통·채우기가
+// 그 자리를 한 도구로 쓴다. 그리고 이 앱에는 «선택»이 없어서(선택 후 삭제가 불가)
+// 없애는 몸짓을 따로 두면 도구가 하나 더 늘 뿐이다(A-3: 단순한 쪽).
+
+/** 면 지정·해제 — 문서 좌표 p. 무엇을 했는지 돌려준다(알림이 그것을 읽는다). */
+export function toggleFaceAt(app: App, p: Pt): 'added' | 'removed' | 'none' {
+  const hit = faceAt(app.lift, app.pose, app.faces, p)
+  if (hit) {
+    const i = app.doc.faces.findIndex(f => f.id === hit.id)
+    if (i < 0) return 'none'
+    const face = app.doc.faces.splice(i, 1)[0]!
+    app.undoStack.push({ removed: [], added: [], facesRemoved: [{ face, index: i }] })
+    app.redoStack = []
+    recompute(app)
+    return 'removed'
+  }
+  const found = loopAt(app.lift, app.pose, p)
+  if (!found) return 'none'
+  const face: Face = { id: app.nextId++, loops: found.loops }
+  app.doc.faces.push(face)
+  recompute(app)
+  // 못 풀리면(평면성 밖 등) **안 남긴다** — 조용히 틀린 입체를 만들지 않는다
+  if (!app.faces.some(f => f.id === face.id)) {
+    app.doc.faces.pop()
+    app.nextId--
+    recompute(app)
+    return 'none'
+  }
+  app.undoStack.push({ removed: [], added: [], facesAdded: [face] })
+  app.redoStack = []
+  return 'added'
+}
+
+/** 면 도구의 미리보기 — 지금 탭하면 **무엇이 될지**를 그대로 낸다(원칙 d의 면판).
+ *  `toggleFaceAt`과 **같은 판정 순서**를 쓴다: 있는 면이 먼저고 없으면 최소 루프다. */
+export function facePreview(app: App, p: Pt): { poly: Pt[]; mode: 'add' | 'remove' } | null {
+  const hit = faceAt(app.lift, app.pose, app.faces, p)
+  if (hit) {
+    const poly = faceScreen(app.lift, app.pose, hit.outer)
+    return poly ? { poly, mode: 'remove' } : null
+  }
+  const found = loopAt(app.lift, app.pose, p)
+  return found ? { poly: found.poly, mode: 'add' } : null
 }
 
 export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number) {
@@ -138,6 +195,13 @@ export function undo(app: App) {
   for (const r of [...op.removed].sort((a, b) => a.index - b.index)) {
     app.doc.strokes.splice(Math.min(r.index, app.doc.strokes.length), 0, r.stroke)
   }
+  for (const f of op.facesAdded ?? []) {
+    const i = app.doc.faces.findIndex(x => x.id === f.id)
+    if (i >= 0) app.doc.faces.splice(i, 1)
+  }
+  for (const r of [...(op.facesRemoved ?? [])].sort((a, b) => a.index - b.index)) {
+    app.doc.faces.splice(Math.min(r.index, app.doc.faces.length), 0, r.face)
+  }
   app.redoStack.push(op)
   recompute(app)
 }
@@ -147,6 +211,11 @@ export function redo(app: App) {
   if (!op) return
   for (const r of op.removed) removeById(app.doc, r.stroke.id)
   app.doc.strokes.push(...op.added)
+  for (const r of op.facesRemoved ?? []) {
+    const i = app.doc.faces.findIndex(x => x.id === r.face.id)
+    if (i >= 0) app.doc.faces.splice(i, 1)
+  }
+  for (const f of op.facesAdded ?? []) app.doc.faces.push(f)
   app.undoStack.push(op)
   recompute(app)
 }

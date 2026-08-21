@@ -40,6 +40,16 @@
       ],
       "port": 5311,
       "cwd": "web2"
+    },
+    {
+      "name": "web2-face",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:face"
+      ],
+      "port": 5321,
+      "cwd": "web2"
     }
   ]
 }

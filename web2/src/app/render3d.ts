@@ -15,6 +15,10 @@ export interface R3D {
   scene: THREE.Scene
   camera: THREE.PerspectiveCamera
   group: THREE.Group
+  /** 면 — 선보다 **먼저** 그린다(renderOrder −1). 깊이를 안 쓰므로 선을 가리지 않는다:
+   *  이 도구는 선 그림이고 면은 그 위에 얹은 옅은 채색이다(6-h 「선 우선순위」). */
+  faceGroup: THREE.Group
+  faceMat: THREE.MeshBasicMaterial
   /** 재질 — 화면 고정 굵기(worldUnits=false), 경도별 색·투명도.
    *  키가 `경도:굵기`인 이유는 제도펜 니브다(4-f) — 같은 잉크라도 굵기가 다르면 다른 재질이다.
    *  경도 기본 굵기는 처음부터 넣어 둔다(옛 문서·연필은 그 자리에서 맞는다). */
@@ -35,11 +39,21 @@ export function initR3D(canvas: HTMLCanvasElement, W: number, H: number, dpr: nu
   const camera = new THREE.PerspectiveCamera()
   camera.matrixAutoUpdate = false
   const group = new THREE.Group()
+  const faceGroup = new THREE.Group()
+  faceGroup.renderOrder = -1
+  // 무채색 — **상시 표시**라 색을 안 준다(4-c의 갈래: 상시는 무채색, 순간은 색).
+  // 종이(#f5f3ee)보다 어둡되 2H(가장 옅은 심, alpha .50)보다 옅게 둔다 —
+  // 면이 그 위의 선보다 눈에 띄면 안 된다.
+  const faceMat = new THREE.MeshBasicMaterial({
+    color: 0x8d8880, transparent: true, opacity: 0.22,
+    side: THREE.DoubleSide, depthTest: false, depthWrite: false,
+  })
+  scene.add(faceGroup)
   scene.add(group)
   const materials = new Map<string, LineMaterial>()
   // 재질은 **쓰이는 그 자리에서** 만든다(matFor). 경도별로 미리 만들어 두면 굵기 기본값을
   // 여기서도 정하게 되고, 그러면 굵기의 출처가 둘이 된다(PITFALLS #54).
-  return { renderer, scene, camera, group, materials, W, H }
+  return { renderer, scene, camera, group, faceGroup, faceMat, materials, W, H }
 }
 
 const matKey = (g: Grade, w: number) => `${g}:${w.toFixed(3)}`
@@ -75,6 +89,18 @@ export function syncStrokes(r: R3D, app: App) {
   for (const child of [...r.group.children]) {
     r.group.remove(child)
     ;(child as Line2).geometry?.dispose()
+  }
+  for (const child of [...r.faceGroup.children]) {
+    r.faceGroup.remove(child)
+    ;(child as THREE.Mesh).geometry?.dispose()
+  }
+  for (const f of app.faces) {
+    if (f.tris.length < 3) continue
+    const pos = new Float32Array(f.tris.length * 3)
+    f.tris.forEach((p, i) => { pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z })
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+    r.faceGroup.add(new THREE.Mesh(g, r.faceMat))
   }
   for (const [id, seg] of app.lift.lifted) {
     const stroke = app.lift.strokes.get(id)

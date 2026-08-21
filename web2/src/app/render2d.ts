@@ -61,6 +61,7 @@ const COL = {
 export function draw2d(
   ctx: CanvasRenderingContext2D, app: App,
   draft: Draft | null, hover: OsnapHit | null, eraser: Pt | null,
+  facePrev?: { poly: Pt[]; mode: 'add' | 'remove' } | null,
 ) {
   const an = app.lift.an
   const dpr = window.devicePixelRatio || 1
@@ -180,6 +181,21 @@ export function draw2d(
     if (draft.endSnap) mark(ctx, draft.endSnap, is)
   } else if (hover) {
     mark(ctx, hover, is)
+  }
+
+  // 면 미리보기 — 지금 탭하면 **무엇이 될지**. 그리는 중에만 뜨므로 색을 쓴다(4-c의 갈래).
+  // 만들면 초록(스냅과 같은 «붙었다»의 색), 없애면 안내색 — 되돌리는 몸짓이라 갈라야 한다.
+  if (facePrev && facePrev.poly.length >= 3) {
+    ctx.strokeStyle = facePrev.mode === 'add' ? COL.snap : COL.preview
+    ctx.fillStyle = facePrev.mode === 'add' ? COL.snap : COL.preview
+    ctx.lineWidth = 2 * is
+    ctx.globalAlpha = 0.12
+    ctx.beginPath()
+    facePrev.poly.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y) })
+    ctx.closePath()
+    ctx.fill()
+    ctx.globalAlpha = 1
+    ctx.stroke()
   }
 
   // 지우개 커서 — 반경은 화면 px

@@ -69,7 +69,7 @@ describe('지시 3 — 지평선은 정렬된 포즈면 그린다', () => {
   })
 
   it('**반증**: 지평선을 긋기 전에는 null이다', () => {
-    const empty = analyze({ frame: { W: 1200, H: 800 }, strokes: [] })
+    const empty = analyze({ frame: { W: 1200, H: 800 }, strokes: [], faces: [] })
     expect(horizonScreenY(empty, DRAW_POSE)).toBeNull()
   })
 })

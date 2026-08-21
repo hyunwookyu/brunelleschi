@@ -20,13 +20,16 @@ export interface Piece {
   a: Pt
   b: Pt
   lifted: boolean
+  /** 3D 끝점 — 승격 조각만. **면 찾기가 이것으로 마디를 합친다**(화면 교차는 가림이다).
+   *  대기 조각은 없다(깊이를 모른다). */
+  a3?: V3
+  b3?: V3
 }
 
-/** 승격 획의 3D 파라미터 t 지점의 화면 좌표 */
-function at(lift: LiftResult, pose: CamPose, id: number, t: number): Pt | null {
+/** 승격 획의 3D 파라미터 t 지점 */
+export function pieceAt3(lift: LiftResult, id: number, t: number): V3 {
   const seg = lift.lifted.get(id)!
-  const p3: V3 = add3(seg.a3, mul3(sub3(seg.b3, seg.a3), t))
-  return project(lift.an, pose, p3)
+  return add3(seg.a3, mul3(sub3(seg.b3, seg.a3), t))
 }
 
 /** 문서 전체의 조각 목록 */
@@ -56,10 +59,12 @@ export function pieces(lift: LiftResult, pose: CamPose): Piece[] {
     for (let i = 0; i + 1 < ts.length; i++) {
       const t0 = ts[i]!, t1 = ts[i + 1]!
       if (t1 - t0 < 1e-6) continue
-      const a = at(lift, pose, id, t0)
-      const b = at(lift, pose, id, t1)
+      const a3 = pieceAt3(lift, id, t0)
+      const b3 = pieceAt3(lift, id, t1)
+      const a = project(lift.an, pose, a3)
+      const b = project(lift.an, pose, b3)
       if (!a || !b) continue
-      out.push({ strokeId: id, t0, t1, a, b, lifted: true })
+      out.push({ strokeId: id, t0, t1, a, b, lifted: true, a3, b3 })
     }
   }
 
