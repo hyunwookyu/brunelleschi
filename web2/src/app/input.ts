@@ -4,8 +4,8 @@
 
 import type { App } from './state'
 import {
-  setPose, setView, orbitPivot, orbitBy, beginErase, eraseAt, endErase,
-  screenToDoc, isDrawPose, isEraser,
+  orbitPivot, orbitBy, dollyBy, panBy, setPose, beginErase, eraseAt, endErase,
+  screenToDoc, isEraser,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
 import { isLevel } from '../core/level'
@@ -13,7 +13,7 @@ import type { LevelHooks } from './autolevel'
 import { resolveStart, resolveEnd, resolveCommit } from '../core/draft'
 import { cubeGeom, cubeHit, poseForElem } from '../core/viewcube'
 import type { Draft } from './render2d'
-import { type Pt, pt, v3, add3, sub3, mul3, dot3, quatRotate } from '../core/vec'
+import { type Pt, pt } from '../core/vec'
 
 export interface InputCallbacks {
   onDraftChange: (d: Draft | null) => void
@@ -92,38 +92,10 @@ export function initInput(
   // ── 카메라 조작 — 궤도는 state.ts의 orbitBy 하나다(시험이 같은 함수를 부른다) ──
   const orbit = (dx: number, dy: number) => orbitBy(app, dx, dy)
 
-  // 팬·줌 — 그리는 중(작도 포즈)에는 화면 조작(뷰 오프셋), 궤도 후에는 공간 조작.
+  // 팬·줌 — **계산은 `state.ts`에 있다**(입력과 시험이 같은 함수를 부른다 · 지시 5).
   // dx·dy·중심은 화면 좌표다.
-  function dolly(scale: number, center: Pt) {
-    if (isDrawPose(app.pose)) {
-      const v = app.view
-      const s = Math.min(8, Math.max(0.2, v.s * scale))
-      const k = s / v.s
-      setView(app, { s, ox: center.x - k * (center.x - v.ox), oy: center.y - k * (center.y - v.oy) })
-      return
-    }
-    if (app.lift.lifted.size === 0) return
-    const pivot = orbitPivot(app)
-    const p = add3(pivot, mul3(sub3(app.pose.p, pivot), 1 / scale))
-    setPose(app, { p, q: app.pose.q })
-  }
-
-  function pan(dx: number, dy: number) {
-    if (isDrawPose(app.pose)) {
-      const v = app.view
-      setView(app, { s: v.s, ox: v.ox + dx, oy: v.oy + dy })
-      return
-    }
-    if (app.lift.lifted.size === 0) return
-    const pivot = orbitPivot(app)
-    const view = quatRotate(app.pose.q, v3(0, 0, -1))
-    const depth = Math.max(1, dot3(sub3(pivot, app.pose.p), view))
-    const k = depth / (app.lift.an.f ?? 1000)
-    const right = quatRotate(app.pose.q, v3(1, 0, 0))
-    const up = quatRotate(app.pose.q, v3(0, 1, 0))
-    const p = add3(app.pose.p, add3(mul3(right, -dx * k), mul3(up, dy * k)))
-    setPose(app, { p, q: app.pose.q })
-  }
+  const dolly = (scale: number, center: Pt) => dollyBy(app, scale, center)
+  const pan = (dx: number, dy: number) => panBy(app, dx, dy)
 
   // 뷰 큐브 — 화면 좌표로 판정. 잡히면 그 시점으로.
   function tryCube(sp: Pt): boolean {

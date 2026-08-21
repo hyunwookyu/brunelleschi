@@ -216,3 +216,32 @@ test('**접힌 뒤에도 지평선이 그려진다** — 픽셀로 잰다 (web2-
   expect(folded).toBeGreaterThan(600)
   expect(folded).toBeGreaterThan(tilted * 4)
 })
+
+test('**돌려보다 줌한 거리가 접어도 남는다** — 궤도 반경 (web2-06 지시 5)', async ({ page }) => {
+  // 재현: 접기가 앵커로 통째로 돌아가면서 **줌까지 지웠다**(단위 실측 7.565 → 줌 3.782 →
+  // 접은 뒤 7.565). 궤도는 pivot 둘레의 회전이라 반경을 구성상 보존하므로, 반경이
+  // 달라졌다면 그것은 사람이 정한 값이다 — 그래서 접기가 지킨다.
+  // 여기서는 **진짜 입력**으로 잰다(휠). 계산이 `input.ts`에 있던 동안은 시험이 못 부르던 길이다.
+  await page.goto('/')
+  await page.waitForFunction(() => (window as any).__b2)
+  await drawLine(page, 100, 400, 1100, 400)
+  await drawLine(page, 500, 500, 600, 475)
+  await drawLine(page, 500, 500, 400, 475)
+  await drawLine(page, 500, 500, 500, 300)
+
+  const r0 = (await lev(page)).radius
+  expect(r0).toBeGreaterThan(0)
+
+  await tiltDown(page)                                  // 중버튼을 잡은 채 기울인다
+  expect((await lev(page)).radius).toBeCloseTo(r0, 6)   // 궤도는 반경을 안 바꾼다
+
+  await page.mouse.wheel(0, -400)                       // 다가간다
+  await settle(page)
+  const rZoom = (await lev(page)).radius
+  expect(rZoom).toBeLessThan(r0 * 0.9)
+
+  await page.mouse.up({ button: 'middle' })
+  await waitFolded(page)
+  expect((await lev(page)).level).toBe(true)
+  expect((await lev(page)).radius).toBeCloseTo(rZoom, 6)   // ← 고치기 전에는 r0로 돌아갔다
+})

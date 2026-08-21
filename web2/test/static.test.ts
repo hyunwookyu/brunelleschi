@@ -56,6 +56,20 @@ describe('원칙 a — 단일 출처의 정적 검사', () => {
     expect(matched.sort()).toEqual([...ALLOWED].sort())
   })
 
+  // 카메라 **이동**의 단일 출처 — `app/state.ts`(궤도·줌·팬). 원칙 a의 입력판이고,
+  // 근거는 「입력과 시험이 같은 함수를 부른다」다(web2-06 지시 5). 줌 계산이 `input.ts`
+  // 안에 있던 동안 **시험이 앱의 줌을 못 불렀고**, 그래서 「돌려보다 줌한 거리가 접으면
+  // 사라진다」가 한 번도 안 재졌다. 옮긴 뒤 그것을 막는다 — 사람이 안 세도 걸린다.
+  it('입력(app/input.ts)이 카메라 산술을 직접 안 한다 — state.ts의 함수를 부른다', () => {
+    const src = readFileSync(join(SRC, 'app', 'input.ts'), 'utf8')
+    for (const re of [/\badd3\b/, /\bsub3\b/, /\bmul3\b/, /\bdot3\b/, /\bquatRotate\b/]) {
+      expect(re.test(src), `${re} in app/input.ts — 카메라 산술은 state.ts에 둔다`).toBe(false)
+    }
+    // **그 산술이 state.ts에는 실제로 있다** — 0건 통과를 막는다(검사가 살아 있다는 증거)
+    const st = readFileSync(join(SRC, 'app', 'state.ts'), 'utf8')
+    for (const re of [/\badd3\b/, /\bmul3\b/, /\bquatRotate\b/]) expect(re.test(st)).toBe(true)
+  })
+
   it('굵기는 widthOf() 밖에서 안 나온다 — MAT[...].width 직접 참조 금지', () => {
     const violations: string[] = []
     let seen = 0

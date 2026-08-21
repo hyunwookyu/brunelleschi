@@ -11,7 +11,7 @@ import { DRAW_POSE } from '../core/camera'
 import { defaultOsnap, type OsnapSettings } from '../core/osnap'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
 import { C } from '../core/constants'
-import { type Pt, type V3, v3, add3, sub3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
+import { type Pt, type V3, v3, add3, sub3, mul3, dot3, len3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
 
 export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink'
 
@@ -291,6 +291,50 @@ export function orbitBy(app: App, dx: number, dy: number) {
   rotateAroundPivot(app, v3(0, 1, 0), -dx * ORBIT_RAD_PER_PX, pivot)
   const right = quatRotate(app.pose.q, v3(1, 0, 0))
   rotateAroundPivot(app, right, -dy * ORBIT_RAD_PER_PX, pivot)
+}
+
+/** **궤도 반경** — 눈에서 pivot까지의 3D 거리. 궤도는 이 값을 **바꾸지 않는다**
+ *  (pivot 둘레의 회전이므로 구성상 보존된다) — 그래서 이 값이 달라졌다면 사람이
+ *  **줌으로 정한 것**이다. 접기가 그것을 지키는 근거가 여기 있다(`core/level.ts`). */
+export const orbitRadius = (app: App): number => len3(sub3(app.pose.p, orbitPivot(app)))
+
+/** **줌(돌리)** — 작도 포즈에서는 화면 배율(뷰 오프셋), 궤도 후에는 pivot을 향한 실제 이동.
+ *
+ *  입력(휠·두 손가락)과 시험이 **같은 함수**를 부른다(web2-06 지시 5). 초판은 이 계산이
+ *  `input.ts` 안에 있어 **시험이 앱의 줌을 못 불렀다** — 「돌려보다 줌한 거리가 접으면
+ *  사라진다」를 재려면 앱이 실제로 도는 경로가 필요했다(`orbitBy`를 옮긴 것과 같은 이유). */
+export function dollyBy(app: App, scale: number, center: Pt) {
+  if (isDrawPose(app.pose)) {
+    const v = app.view
+    const s = Math.min(8, Math.max(0.2, v.s * scale))
+    const k = s / v.s
+    setView(app, { s, ox: center.x - k * (center.x - v.ox), oy: center.y - k * (center.y - v.oy) })
+    return
+  }
+  if (app.lift.lifted.size === 0) return
+  const pivot = orbitPivot(app)
+  const p = add3(pivot, mul3(sub3(app.pose.p, pivot), 1 / scale))
+  setPose(app, { p, q: app.pose.q })
+}
+
+/** **팬** — 작도 포즈에서는 화면 이동, 궤도 후에는 카메라를 옆으로 옮긴다.
+ *  ⚠ 궤도 중의 팬은 **접으면 되돌아간다**(앵커가 그때 것이 아니다). 줌과 달리 안 지키는
+ *  이유는 잰 것이 없어서다 — `DEFERRED.md`에 조건과 함께 있다. */
+export function panBy(app: App, dx: number, dy: number) {
+  if (isDrawPose(app.pose)) {
+    const v = app.view
+    setView(app, { s: v.s, ox: v.ox + dx, oy: v.oy + dy })
+    return
+  }
+  if (app.lift.lifted.size === 0) return
+  const pivot = orbitPivot(app)
+  const view = quatRotate(app.pose.q, v3(0, 0, -1))
+  const depth = Math.max(1, dot3(sub3(pivot, app.pose.p), view))
+  const k = depth / (app.lift.an.f ?? 1000)
+  const right = quatRotate(app.pose.q, v3(1, 0, 0))
+  const up = quatRotate(app.pose.q, v3(0, 1, 0))
+  const p = add3(app.pose.p, add3(mul3(right, -dx * k), mul3(up, dy * k)))
+  setPose(app, { p, q: app.pose.q })
 }
 
 /** **궤도 중심 — 펜으로 딴 선의 경계 상자 중심**(web2-06 지시 4). 펜이 없으면 연필로 대신한다.

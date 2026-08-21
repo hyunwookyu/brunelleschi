@@ -1,6 +1,6 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, type Tool } from './state'
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel } from '../core/level'
@@ -468,6 +468,9 @@ const diag = {
     fwd: forwardOf(app.pose),
     yaw: yawDir(app.pose),
     eye: app.pose.p.y,
+    /** 궤도 반경 — 눈에서 pivot까지. 줌으로 정하고 접기가 지킨다(web2-06 지시 5) */
+    radius: orbitRadius(app),
+    pivot: orbitPivot(app),
   }),
   summary: () => ({
     horizonY: app.lift.an.horizonY,
