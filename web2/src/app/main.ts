@@ -120,7 +120,13 @@ const TILTED_MSG = '기울어 있다 — 놓으면 정렬로 돌아온다. 그�
 // 접은 뒤 둘째 깊이선을 그으면 **소실점이 안 생기고 그 획이 대기로 남는다**
 // (실측: role=content · vps 1→1 · waiting 1). 조용히 틀리지는 않지만(불변식 j) **왜 안
 // 되는지가 화면에 없었다.** 규칙을 바꾸지 않고(범위) 그 자리를 한 줄로 말한다.
+// ⚠ **그 길은 요를 잃는다** — 작도 시점은 `resetPose`이고 그것이 이 회차의 출발점에서
+// 「요를 잃는 길」로 판정된 바로 그 경로다(2차 리뷰어 [2]). 그래서 **보러 돌아오는 길**은
+// 났는데 **작도를 마치러 돌아오는 길**은 아직 요를 버려야 한다. 근본 결정(접힌 포즈에서도
+// 작도를 받을 것인가 = `analyze`의 `s.view` 조항)은 범위 밖이라 `DEFERRED.md`에 올렸다.
+// 여기서는 **한 번의 누름으로 가는 길**만 낸다 — 밑줄 단어는 이미 있는 기전이다(`ask`).
 const UNFINISHED_MSG = '작도가 아직 안 끝났다 — 소실점은 작도 시점에서만 만든다'
+const UNFINISHED_GO = '작도 시점으로(보던 방향을 잃는다)'
 
 function updateStatus() {
   // **상태를 안 띄운다**(4-b). 차수·대기 수·스냅 반경·뷰 이름은 전부 내부 상태이고
@@ -129,7 +135,9 @@ function updateStatus() {
   // 지평선을 그으면 영영 사라진다.
   if (app.lift.an.horizonY === null) status('지평선을 긋는다 — 수평이 강제된다')
   else if (!isLevel(app.pose)) status(TILTED_MSG)
-  else if (!isDrawPose(app.pose) && !app.lift.an.constructionDone) status(UNFINISHED_MSG)
+  else if (!isDrawPose(app.pose) && !app.lift.an.constructionDone) {
+    ask(UNFINISHED_MSG, [{ key: 'draw-view', label: UNFINISHED_GO, onPick: () => resetPose(app) }])
+  }
   else status('')
 }
 

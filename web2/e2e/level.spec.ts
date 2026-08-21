@@ -99,3 +99,28 @@ test('돌려본 뒤 정렬로 접힌다 — 놓으면 · 잡고 있으면 안 �
   expect(await strokeCount(page)).toBe(n0 + 1)
   expect(FOLD_ANIM_MS).toBeLessThan(FOLD_DELAY_MS)     // 상수 대조 — 값이 바뀌면 여기가 안다
 })
+
+test('작도가 안 끝난 채 접히면 그 길이 화면에 뜬다 — 한 번 누르면 작도 시점으로', async ({ page }) => {
+  // 이 회차가 만든 함정의 화면 층(2차 리뷰어 [2]). 접힌 포즈는 정렬이라 그릴 수 있어
+  // 보이는데 **소실점은 못 만든다.** 그 사실과 **가는 길**이 한 줄에 함께 있어야 한다.
+  await page.goto('/')
+  await page.waitForFunction(() => (window as any).__b2)
+  await drawLine(page, 100, 400, 1100, 400)        // 지평선
+  await drawLine(page, 500, 500, 600, 475)         // 깊이선 1 — 소실점 하나뿐이다
+  expect(await page.evaluate(() => (window as any).__b2.diag.summary().vps.length)).toBe(1)
+
+  await tiltDown(page)
+  await page.mouse.up({ button: 'middle' })
+  await waitFolded(page)
+  expect((await lev(page)).level).toBe(true)
+  const line = await page.textContent('#notice')
+  expect(line).toContain('작도가 아직 안 끝났다')
+  // **밑줄 단어가 실제로 있고 눌리면 작도 시점으로 간다**
+  await page.click('#notice u[data-pick="draw-view"]')
+  await settle(page)
+  const s = await page.evaluate(() => (window as any).__b2.diag.summary())
+  expect(Math.abs(s.pose.q.y)).toBeLessThan(1e-12)   // 작도 시점 — 요가 0이다(그 길의 대가)
+  // 그 자리에서는 소실점이 만들어진다
+  await drawLine(page, 500, 500, 400, 475)
+  expect(await page.evaluate(() => (window as any).__b2.diag.summary().vps.length)).toBe(2)
+})
