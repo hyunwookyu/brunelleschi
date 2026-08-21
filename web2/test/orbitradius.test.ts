@@ -162,7 +162,7 @@ describe('지시 5 — 궤도 반경', () => {
     const app = drawn()
     const pivot0 = orbitPivot(app)
     const anchor = { p: { ...app.pose.p }, q: { ...app.pose.q } }
-    const r0 = orbitRadius(app)
+    const r0 = orbitRadius(app), y0 = app.pose.p.y
     let rPan = 0, moved = 0
     foldNow(app, () => {
       orbitBy(app, 60, 40)
@@ -177,6 +177,11 @@ describe('지시 5 — 궤도 반경', () => {
     // ① 팬이 만든 **반경** 변화는 그대로 남는다 — 규칙이 그것을 «줌»과 구별하지 못한다
     expect(rFold).toBeCloseTo(rPan, 6)
     expect(Math.abs(rPan - r0)).toBeGreaterThan(0.05)      // 팬이 반경을 실제로 건드렸다
+    // ①′ **그 몫은 눈높이까지 움직인다**(2차 리뷰어 [N4]) — 배율이 y에도 걸리기 때문이다.
+    //     #60이 보던 그 양이 «팬»이라는 다른 경로로 새는 것이므로 수로 박는다.
+    //     실측(팬 방향 넷): (120,0) 1.600 → **1.562** · (0,120) 1.717 · (−200,0) **1.879** · (0,−200) 1.643
+    expect(app.pose.p.y).toBeCloseTo(1.562, 3)
+    expect(Math.abs(app.pose.p.y - y0)).toBeGreaterThan(0.03)   // 안 새지 않는다 — 샌다
     // ② 그러나 «옆으로 옮긴 것»은 지워진다 — 접은 뒤 카메라는 앵커의 베어링 위에 있다
     const b = { x: anchor.p.x - pivot0.x, z: anchor.p.z - pivot0.z }
     const c = { x: app.pose.p.x - pivot0.x, z: app.pose.p.z - pivot0.z }
