@@ -17,6 +17,7 @@
 
 import type { Doc, Stroke, CamPose } from './types'
 import { C } from './constants'
+import { isLevel } from './level'
 import {
   type Pt, type V3, pt, v3, norm3, mul3, sub3, add3,
   quatConj, quatRotate, QID,
@@ -310,6 +311,25 @@ export function vpAt(an: Analysis, pose: CamPose, p: Pt): AxisId | null {
     if (Math.abs(m.vp.x - p.x) <= 1e-6 && Math.abs(m.vp.y - p.y) <= 1e-6) return m.id
   }
   return null
+}
+
+/** **지평선의 화면 y** — 그릴 수 있으면 그 값, 아니면 null (web2-06 지시 3).
+ *
+ *  정렬된 포즈(피치 0·롤 0)에서 지평선은 **정확히 `principal.y`의 화면 수평선**이다:
+ *  수평 방향 d는 `d.y = 0`이므로 사영이 `principal.y − f·0/−d.z = principal.y`다.
+ *  **작도 포즈만의 성질이 아니다** — 접힌 포즈도 정렬이므로 같다. `render2d`가 작도 포즈에서만
+ *  그어서 **접은 뒤 지평선이 사라졌다**(web2-05가 픽셀로 발견 · `DEFERRED.md`).
+ *  증상을 「지평선이 올라간다」로 말한 사람에게 접힌 뒤 그것이 없으면 눈높이를 못 읽는다.
+ *
+ *  ⚠ **기울면 null이다.** 그때 지평선은 화면 수평선이 아니고(무한원 직선의 사영이라 여전히
+ *  직선이지만 기울어 있다) 그것을 제대로 그으려면 수평 방향 둘의 소실점을 이어야 한다.
+ *  **소실점 ✕는 모든 포즈에서 그린다** — 규칙이 갈리는 것이 맞다: ✕는 «점 하나»라 어느
+ *  포즈에서든 사영이 한 점이고, 지평선은 «직선»이라 그 사영을 따로 세워야 한다.
+ *  그 일반형은 범위 밖이고 `DEFERRED.md`에 있다. */
+export function horizonScreenY(an: Analysis, pose: CamPose): number | null {
+  if (an.horizonY === null || !an.principal) return null
+  if (!isLevel(pose)) return null
+  return an.principal.y
 }
 
 /** 세계 점 → 화면 (뒤에 있으면 null) */
