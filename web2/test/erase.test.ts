@@ -47,10 +47,14 @@ describe('지우개 — 닿은 조각이 사라진다', () => {
   it('삐져나온 조각을 잘라낸다 — 나머지와 연결은 남는다', () => {
     const app = appWithConstruction()
     commitStroke(app, pt(500, 500), pt(500, 300))            // A 앵커
-    const E = commitStroke(app, pt(500, 450), pt(700, 450))  // 수평
-    const V2 = commitStroke(app, pt(600, 450), pt(600, 520)) // E 위에서 아래로 → E가 (600,450)에서 갈림
+    // ⚠ **가로 획을 vp1 축으로 바꿨다**(web2-03 지시 1). 2점 프레임은 {vp0, vp1, V}이고
+    //    화면 수평은 어느 축도 아니다 — 앱에서도 도달할 수 없는 상태다(축 스냅이 늘 셋 중
+    //    하나로 보내고, 수평을 먼저 그으면 1점으로 잠겨 두 번째 소실점이 안 선다. 실측함).
+    //    (500,450)→(700,475)가 vp1 축이다: vp1=(100,400) 방향의 반대 향(향은 무시한다).
+    const E = commitStroke(app, pt(500, 450), pt(700, 475))    // vp1 축
+    const V2 = commitStroke(app, pt(600, 462.5), pt(600, 560))  // E 위에서 아래로 → E가 갈림
     expect(app.lift.lifted.size).toBe(5) // +2: 깊이선 둘도 3D 선이다(지시 1)
-    eraseOnce(app, pt(660, 450)) // E의 오른쪽 조각
+    eraseOnce(app, pt(660, 470)) // E의 오른쪽 조각
     expect(app.doc.strokes.some(s => s.id === E.id)).toBe(false)
     const kept = app.doc.strokes.find(s => s.a.x === 500 && s.a.y === 450)
     expect(kept).toBeDefined()
@@ -117,17 +121,17 @@ describe('지우개 — 닿은 조각이 사라진다', () => {
     // "지웠는데 3D에 남는" 버그를 흉내: 지우기 전 조각 수와 후 조각 수를 대조
     const app = appWithConstruction()
     commitStroke(app, pt(500, 500), pt(500, 300))
-    commitStroke(app, pt(500, 450), pt(700, 450))
-    commitStroke(app, pt(600, 450), pt(600, 520))
+    commitStroke(app, pt(500, 450), pt(700, 475))      // vp1 축 (위 주석)
+    commitStroke(app, pt(600, 462.5), pt(600, 560))
     const psBefore = pieces(app.lift, DRAW_POSE).filter(x => x.lifted)
-    eraseOnce(app, pt(660, 450))
+    eraseOnce(app, pt(660, 470))
     const psAfter = pieces(app.lift, DRAW_POSE).filter(x => x.lifted)
     expect(psAfter.length).toBe(psBefore.length - 1)
     // 지운 자리 (660,450) 근처를 지나는 조각이 없다
     for (const p of psAfter) {
       const near = Math.min(
-        Math.hypot(p.a.x - 660, p.a.y - 450),
-        Math.hypot(p.b.x - 660, p.b.y - 450),
+        Math.hypot(p.a.x - 660, p.a.y - 470),
+        Math.hypot(p.b.x - 660, p.b.y - 470),
       )
       void near
       expect(!(p.a.x < 660 && 660 < p.b.x && Math.abs(p.a.y - 450) < 1 && Math.abs(p.b.y - 450) < 1)).toBe(true)

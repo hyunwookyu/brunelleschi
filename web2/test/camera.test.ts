@@ -104,14 +104,21 @@ describe('screenAxes — 표시·스냅·그리드의 단일 출처 (불변식 i
   })
 
   it('화면 평행 축은 무한원 — 방향만 나온다', () => {
-    const an = analyze(constructedDoc().doc)
-    const axes = screenAxes(an, DRAW_POSE)
-    const h = axes.find(a => a.id === 'H')!
-    const v = axes.find(a => a.id === 'V')!
-    expect(h.vp).toBeNull()
-    expect(Math.abs(h.dir!.y)).toBeLessThan(1e-12)
+    // ⚠ H는 **1점 문서에서 본다.** 2점의 프레임은 {vp0, vp1, V}이고 H는 후보가 아니다
+    //    (web2-03 지시 1 — 사람이 만들지 않은 넷째 축이 스냅을 가져갔다).
+    const two = screenAxes(analyze(constructedDoc().doc), DRAW_POSE)
+    expect(two.map(a => a.id).sort()).toEqual(['V', 'vp0', 'vp1'])
+    const v = two.find(a => a.id === 'V')!
     expect(v.vp).toBeNull()
     expect(Math.abs(v.dir!.x)).toBeLessThan(1e-12)
+
+    const b = builder()
+    b.add(100, 400, 1100, 400)
+    b.add(500, 500, 600, 475)          // 소실점 하나 — 1점
+    const one = screenAxes(analyze(b.doc), DRAW_POSE)
+    const h = one.find(a => a.id === 'H')!
+    expect(h.vp).toBeNull()
+    expect(Math.abs(h.dir!.y)).toBeLessThan(1e-12)
   })
 
   it('돌린 포즈에서도 같은 출처에서 나온다 — 요 회전이면 소실점이 수평으로 움직인다', () => {

@@ -153,7 +153,19 @@ export function analyze(doc: Doc): Analysis {
     if (cls.screenAxis === 'H') screenHDeclared = true
   }
 
-  const principal = horizonY !== null ? pt(W / 2, horizonY) : null
+  // ── 주점 ────────────────────────────────────────────────────────────
+  // **1점에서는 깊이 소실점이 곧 주점이다.** 주점은 눈에서 화상면에 내린 수선의 발이고,
+  // 화상면에 수직인 방향(=1점의 깊이축)의 소실점이 바로 그 점이다(이론서 6.3·16.2).
+  //
+  // 초판은 늘 `W/2`였고, 그래서 사람이 만든 소실점이 화면 가운데가 아니면 **깊이축이
+  // 화면 가로축(H)과 직교하지 않았다** — 실측 `vp0·H = 73.9677°`(vp0=900·주점 600).
+  // 화면에서는 안 보이고 **탑뷰에서만** 보인다: 1점 상자의 바닥이 평행사변형이 된다.
+  //
+  // ⚠ **2점에서는 그대로 `W/2`다.** 그때는 주점이 자유롭지 않다 — f² = |PV₁||PV₂|가
+  // 주점을 알고 있어야 서고(이론서 6.2), 「주점 = 이미지 중심」이 그 가정이다(16.2 · AS-C5).
+  // 1점은 그 식을 안 쓰므로 주점이 자유롭고, 그 자유를 **직교에 쓴다**(이 도구의 전제).
+  const principal = horizonY === null ? null
+    : pt(vps.length === 1 ? vps[0]!.x : W / 2, horizonY)
   let f: number | null = null
   let fSource: Analysis['fSource'] = 'none'
   if (principal) {
@@ -168,6 +180,18 @@ export function analyze(doc: Doc): Analysis {
     }
   }
 
+  // ── 축 후보 = **정규직교 프레임 그 자체** (web2-03 지시 1) ──────────────
+  // 「스냅할 수 있는 방향」과 「상자의 모서리 방향」을 갈라 두면 그 틈으로 **사람이 만들지
+  // 않은 축**이 들어온다. 실측(2점 · 지평선+깊이선 둘):
+  //   · 사람이 만든 소실점 2 → 궤도 시점의 ✕ 표식 **3개**(여분은 `H`)
+  //   · `vp0·H = 52.2388°` · `vp1·H = 142.2388°` — 둘 다 직교가 아니다
+  //   · 축 스냅이 커서 360°/5°를 훑을 때 **72방향 중 10을 H가 가져갔다**
+  // 사람이 「보조 소실점처럼 보인다」고 한 것이 그 H다.
+  //
+  // 그래서 **2점부터는 H를 안 넣는다** — 화상면에 평행한 가로 방향은 실재하지만
+  // 그 상자의 모서리가 아니다. 프레임은 {vp0, vp1, V}이고 셋뿐이다.
+  // 1점의 프레임은 {vp0, H, V}이고, 위 주점 보정이 그 셋을 직교로 만든다.
+  // 소실점이 아직 없으면 화면 가로·세로만 있다 — 깊이가 안 정해졌으니 프레임이 아니다.
   const axes: AxisDir[] = []
   if (principal && f !== null) {
     vps.forEach((v, i) => {
@@ -176,7 +200,7 @@ export function analyze(doc: Doc): Analysis {
         dir: norm3(v3(v.x - principal.x, principal.y - v.y, -f!)),
       })
     })
-    axes.push({ id: 'H', dir: v3(1, 0, 0) })
+    if (vps.length < 2) axes.push({ id: 'H', dir: v3(1, 0, 0) })
     axes.push({ id: 'V', dir: v3(0, 1, 0) })
   }
 
@@ -215,6 +239,24 @@ export function screenAxes(an: Analysis, pose: CamPose): ScreenAxis[] {
         dir: null,
       })
     }
+  }
+  return out
+}
+
+/** **✕ 표식이 붙는 소실점** — 표시와 오스냅이 같은 목록을 쓴다(불변식 i).
+ *
+ *  사람이 **만든** 소실점(vp0·vp1)만이다. 화면 평행 축(H·V)도 궤도 시점에서는 유한한
+ *  수렴점을 갖지만 그것은 **사영의 산물**이지 작도가 정한 점이 아니다 —
+ *  거기에 ✕를 찍으면 「사용자가 만들지 않은 소실점이 하나 더 생긴다」로 보인다
+ *  (2026-08-21 실측: 1점 궤도에서 vp0(1444,400) 옆에 **H(−1869,400)**가 함께 그려졌다).
+ *
+ *  ⚠ **축 스냅(`snapDir`)은 이 목록이 아니라 `screenAxes` 전부를 쓴다** — H는 1점에서
+ *  진짜 축이고 그 방향으로 그을 수 있어야 한다. 「그릴 수 있는 방향」과 「찍힌 점」은
+ *  다른 물음이다. */
+export function vpMarks(an: Analysis, pose: CamPose): { id: AxisId; vp: Pt }[] {
+  const out: { id: AxisId; vp: Pt }[] = []
+  for (const ax of screenAxes(an, pose)) {
+    if (ax.vp && (ax.id === 'vp0' || ax.id === 'vp1')) out.push({ id: ax.id, vp: ax.vp })
   }
   return out
 }
@@ -275,6 +317,22 @@ export function projectSeg(an: Analysis, pose: CamPose, A: V3, B: V3): [Pt, Pt] 
   }
   const to = (c: V3) => pt(an.principal!.x + an.f! * c.x / -c.z, an.principal!.y - an.f! * c.y / -c.z)
   return [to(a), to(b)]
+}
+
+/** **그 차수의 정규직교 프레임** — 세 축이고 서로 직교한다(web2-03 지시 1-d).
+ *
+ *    1점  {깊이(vp0), H, V}   — 깊이 소실점이 곧 주점이므로 깊이 = (0,0,−1)
+ *    2점  {vp0, vp1, V}       — H는 프레임 밖이다(화상면에 평행한 가로 방향이고 상자
+ *                               모서리가 아니다). **후보 목록에서도 뺀다.**
+ *
+ *  ⚠ 이 함수와 `an.axes`는 **같은 것을 내야 한다** — 목록이 둘로 갈리면 그것이 #54다.
+ *  `test/axes.test.ts`가 두 목록을 대조한다. 축이 모자라면 null이고 0을 억지로 안 낸다. */
+export function frameAxes(an: Analysis): AxisDir[] | null {
+  const get = (id: AxisId) => an.axes.find(a => a.id === id)
+  const V = get('V'), H = get('H'), v0 = get('vp0'), v1 = get('vp1')
+  if (!V || !v0) return null
+  if (v1) return [v0, v1, V]
+  return H ? [v0, H, V] : null
 }
 
 /** 지면 격자의 두 방향 — 세계의 가로축 둘(방향의 y가 0인 축).
