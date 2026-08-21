@@ -26850,7 +26850,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 322,
+      "files_scanned": 323,
       "exts_declared": [
         ".md",
         ".py",
@@ -26874,7 +26874,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 322,
+      "files_scanned": 323,
       "exts_declared": [
         ".md",
         ".py",

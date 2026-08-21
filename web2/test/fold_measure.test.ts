@@ -18,7 +18,8 @@
 //   ② 대역을 **화각 셋**으로 훑는다 — 이 규칙은 f에 안 걸리므로(강체 회전) 대역이 값을
 //      안 바꿔야 한다. **안 바뀌는 것이 곧 관측**이다(앞판은 f에 정비례해 흔들렸다).
 //   ③ **누적되지 않는가** — 세 번 돌려 접어도 높이·거리가 그대로여야 한다.
-//   ③′ **줌한 반경은 접기가 지킨다**(web2-06 지시 5) — 궤도는 반경을 구성상 보존하므로
+//   ③′ **줌한 반경은 접기가 지킨다**(web2-06 지시 5) — 그리고 **눈높이는 같은 배율을 탄다**
+//      (보존되지 않는다 · 1차 리뷰어 [5]). 궤도는 반경을 구성상 보존하므로
 //      반경이 달라졌다면 사람이 줌으로 정한 것이다. 줌이 없으면 배율이 **정확히 1**이고
 //      ①의 표가 한 톨도 안 달라진다(그 항등이 이 규칙의 안전장치다).
 //   ④ **대상이 화면에 남는가 — 보장이 아니다.** 이 규칙이 «구성상» 보존하는 것은
@@ -134,9 +135,14 @@ it('접기가 궤도 전으로 되돌리는가 — 화각 셋 × 궤도 넷', ()
       const rNow = orbitRadius(a2)
       const f = levelPose(anchor, a2.pose, pv)
       const rF = Math.hypot(f.p.x - pv.x, f.p.y - pv.y, f.p.z - pv.z)
-      cells.push(`줌×${zoom}: 궤도 전 ${rAnchor.toFixed(3)} → 줌 후 ${rNow.toFixed(3)} → 접은 뒤 ${rF.toFixed(3)}`)
+      cells.push(`줌×${zoom}: 반경 ${rAnchor.toFixed(3)} → ${rNow.toFixed(3)} → 접은 뒤 ${rF.toFixed(3)}` +
+        ` · 눈높이 ${anchor.p.y.toFixed(3)} → 접은 뒤 ${f.p.y.toFixed(3)}`)
       expect(rNow).toBeCloseTo(rAnchor / zoom, 9)   // 궤도는 반경을 안 바꾼다 — 줌만 바꾼다
       expect(rF).toBeCloseTo(rNow, 9)               // 접기가 그것을 지킨다
+      // **눈높이는 보존되지 않는다 — 같은 배율이 걸린다**(1차 리뷰어 [5]).
+      // 줌은 pivot을 향해 다가가는 것이므로 pivot이 눈높이에 없으면 높이도 따라간다 —
+      // 정렬 포즈에서 줌해도 같은 일이 일어난다(그래서 «궤도의 부산물»이 아니다 · #62).
+      expect(f.p.y - pv.y).toBeCloseTo((anchor.p.y - pv.y) / zoom, 9)
       if (zoom === 1) expect(f.p.y).toBeCloseTo(anchor.p.y, 9)  // 줌이 없으면 항등이다
     }
     lines.push(`${band.name} 반경: ` + cells.join(' | '))
