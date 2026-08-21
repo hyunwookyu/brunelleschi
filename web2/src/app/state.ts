@@ -293,17 +293,38 @@ export function orbitBy(app: App, dx: number, dy: number) {
   rotateAroundPivot(app, right, -dy * ORBIT_RAD_PER_PX, pivot)
 }
 
-/** 궤도 중심 — 승격 기하의 무게중심, 없으면 게이지 깊이의 시선 위 점 */
+/** **궤도 중심 — 펜으로 딴 선의 경계 상자 중심**(web2-06 지시 4). 펜이 없으면 연필로 대신한다.
+ *
+ *  ⚠ 초판은 **승격 기하 전체의 무게중심**이었고, 그래서 «연필 구축선»이 중심을 끌어갔다.
+ *  구축선은 소실점 쪽으로 길게 뻗으므로 깊이가 크다 — 소실점 가까이서 끝나는 유도선 하나가
+ *  3D에서 83 단위 뒤에 서고, 그것 하나로 반경이 **17.335**가 됐다(실측 픽스처).
+ *  펜 획만 보면 **7.799**다. 결과물은 펜으로 딴 선이므로 **그것이 돌려볼 대상**이다.
+ *
+ *  **무게중심이 아니라 경계 상자 중심이다**(지시의 말 그대로): 무게중심은 획 밀도에 끌린다 —
+ *  한 귀퉁이를 촘촘히 따면 중심이 그리로 간다. 경계 상자는 «어디까지 그렸나»만 본다.
+ *
+ *  ⚠ **대가**(#59): 펜이 없을 때는 그 구축선이 경계 상자를 통째로 늘린다 — 같은 픽스처에서
+ *  **52.147**(무게중심이면 17.335)이다. 그 자리는 지시 5의 **궤도 반경 조절**이 답한다.
+ *  측정은 `test/pivot.test.ts`가 매 실행에 낸다.
+ *
+ *  저장하지 않는다 — 매번 계산이다(원칙 b). 펜 획을 지우면 그 즉시 연필로 돌아간다. */
 export function orbitPivot(app: App): V3 {
-  const segs = [...app.lift.lifted.values()]
+  const segs = [...app.lift.lifted]
   if (segs.length === 0) {
     const f = app.lift.an.f ?? 1000
     return add3(DRAW_POSE.p, v3(0, 0, -f)) // 눈 앞 f — 눈은 원점이 아니다
   }
-  let x = 0, y = 0, z = 0
-  for (const s of segs) {
-    x += s.a3.x + s.b3.x; y += s.a3.y + s.b3.y; z += s.a3.z + s.b3.z
+  const ink = segs.filter(([id]) => {
+    const s = app.lift.strokes.get(id)
+    return s ? isInk(s) : false
+  })
+  const use = ink.length > 0 ? ink : segs
+  let lo = v3(Infinity, Infinity, Infinity), hi = v3(-Infinity, -Infinity, -Infinity)
+  for (const [, g] of use) {
+    for (const p of [g.a3, g.b3]) {
+      lo = v3(Math.min(lo.x, p.x), Math.min(lo.y, p.y), Math.min(lo.z, p.z))
+      hi = v3(Math.max(hi.x, p.x), Math.max(hi.y, p.y), Math.max(hi.z, p.z))
+    }
   }
-  const n = segs.length * 2
-  return v3(x / n, y / n, z / n)
+  return v3((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, (lo.z + hi.z) / 2)
 }
