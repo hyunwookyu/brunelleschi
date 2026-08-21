@@ -234,6 +234,14 @@ function mark(ctx: CanvasRenderingContext2D, h: OsnapHit, is: number) {
   ctx.setLineDash([])
   ctx.beginPath()
   switch (h.kind) {
+    // **소실점** — 이 자리가 비어 있었다(web2-05). 스냅 판정은 돌았는데 `switch`에
+    // `'vp'`가 없어 **빈 경로에 stroke**가 되어 아무것도 안 그려졌고, 상시 떠 있는 ✕만
+    // 남아 「붙었다」와 「안 붙었다」가 화면에서 구별되지 않았다(실측: 커서를 올려도
+    // 소실점 둘레 픽셀이 **80 → 80**. 같은 조건에서 끝점은 10 → 72).
+    // 형태는 **✕에 겹치는 원**이다 — ✕가 이미 그 자리를 쓰므로 둘레를 두르는 것이
+    // 다른 표식과 안 겹치고(원은 근처점이지만 그쪽은 반경 4이고 이것은 7이다) 색이 가른다.
+    case 'vp':
+      ctx.arc(x, y, 7 * is, 0, Math.PI * 2); break
     case 'end':
       ctx.strokeRect(x - r, y - r, r * 2, r * 2); return
     case 'vertex':
@@ -250,6 +258,14 @@ function mark(ctx: CanvasRenderingContext2D, h: OsnapHit, is: number) {
       ctx.setLineDash([2 * is, 2 * is]); ctx.strokeRect(x - r, y - r, r * 2, r * 2); ctx.setLineDash([]); return
     case 'near':
       ctx.arc(x, y, r, 0, Math.PI * 2); break
+    default: {
+      // **종류를 더했는데 표식을 안 더하면 여기서 타입이 깨진다**(web2-05).
+      // 그것이 실제로 났다 — `OSNAP_ORDER`에 `'vp'`가 있는데 이 `switch`에 자리가 없어
+      // 빈 경로에 stroke가 되고 **아무것도 안 그려졌다.** 목록(`osnap.ts`)과 표시(여기)가
+      // 다른 파일이라 한쪽만 늘었고, 컴파일러가 안 걸었다. 이제 건다 — 사람이 안 세도 걸린다.
+      const never: never = h.kind
+      void never
+    }
   }
   ctx.stroke()
 }

@@ -293,14 +293,6 @@ export function orbitBy(app: App, dx: number, dy: number) {
   rotateAroundPivot(app, right, -dy * ORBIT_RAD_PER_PX, pivot)
 }
 
-/** **승격 기하의 끝점 전부** — 접기가 「대상이 화면에 남도록」 물러날 때 쓴다.
- *  pivot 한 점만 보면 기하가 샌다(실측 최대 131.8 px). 없으면 빈 배열이다. */
-export function liftedPoints(app: App): V3[] {
-  const out: V3[] = []
-  for (const s of app.lift.lifted.values()) out.push(s.a3, s.b3)
-  return out
-}
-
 /** 궤도 중심 — 승격 기하의 무게중심, 없으면 게이지 깊이의 시선 위 점 */
 export function orbitPivot(app: App): V3 {
   const segs = [...app.lift.lifted.values()]

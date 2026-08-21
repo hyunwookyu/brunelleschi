@@ -15,7 +15,7 @@ import { describe, it, expect } from 'vitest'
 import { session } from './session'
 import { W, H } from './fixtures'
 import { project, screenAxes, DRAW_POSE } from '../src/core/camera'
-import { setPose, orbitPivot, liftedPoints, orbitBy, resetPose, undo, saveView, gotoView, commitStroke, isDrawPose, type App } from '../src/app/state'
+import { setPose, orbitPivot, orbitBy, resetPose, undo, saveView, gotoView, commitStroke, isDrawPose, type App } from '../src/app/state'
 import { createAutoLevel } from '../src/app/autolevel'
 import { isLevel, levelPose, yawDir, forwardOf } from '../src/core/level'
 import { cubeGeom, cubeHit, poseForElem } from '../src/core/viewcube'
@@ -73,6 +73,10 @@ function tipDown(level: CamPose, deg: number, rollDeg = 0): CamPose {
   const rolled = quatMul(level.q, quatAxisAngle(v3(0, 0, 1), rollDeg * Math.PI / 180))
   return { p: { ...level.p }, q: quatMul(quatAxisAngle(right, -deg * Math.PI / 180), rolled) }
 }
+
+/** **앵커** — 정렬 상태를 떠나기 직전의 포즈. 앱에서는 `autolevel`이 들고 있고,
+ *  직접 `levelPose`를 부르는 팔은 궤도 직전의 포즈를 그대로 넘긴다(같은 뜻이다). */
+const snap = (pose: CamPose): CamPose => ({ p: { ...pose.p }, q: { ...pose.q } })
 
 /** 손을 떼고 지연을 넘긴 뒤 접기가 끝날 때까지 돌린다 */
 function foldAfterRelease(app: App, c: ReturnType<typeof clock>, al: ReturnType<typeof createAutoLevel>) {
@@ -136,34 +140,39 @@ describe('접기 — 상하로 회전한 뒤 놓으면 정렬로 돌아온다', 
     expect(app.savedViews.length).toBe(0)
   })
 
-  it('좌우 각도(요)와 눈높이가 유지된다', () => {
+  it('좌우 각도(요)는 새 값 · 눈높이는 **궤도 전** 값이다', () => {
+    // ⚠ **이 팔이 web2-05에서 뒤집혔다.** 앞판은 「눈높이가 **궤도 후** 값으로 유지된다」를
+    //   박고 있었고, 사람이 그것을 지시로 뒤집었다 — 궤도로 바뀐 높이는 사용자가 정한
+    //   눈높이가 아니라 부수 효과다. 팔이 뒤집힌 것 자체가 규칙이 바뀌었다는 증거다(#57).
     const app = drawn()
     const c = clock()
     const al = createAutoLevel(app, c.now)
+    const eyeBefore = app.pose.p.y
     al.grab(); orbitBy(app, -200, -140)
     const yaw0 = yawDir(app.pose)
-    const eye0 = app.pose.p.y
+    expect(app.pose.p.y).not.toBeCloseTo(eyeBefore, 1)   // 궤도가 눈높이를 바꿨다
 
     foldAfterRelease(app, c, al)
-    expect(yawGap(yawDir(app.pose), yaw0)).toBeCloseTo(0, 6)
-    expect(app.pose.p.y).toBeCloseTo(eye0, 9)
+    expect(yawGap(yawDir(app.pose), yaw0)).toBeCloseTo(0, 6)   // 요는 새 값
+    expect(app.pose.p.y).toBeCloseTo(eyeBefore, 6)             // 눈높이는 궤도 전 값
     // 접힌 뒤의 시선 자체가 그 요다(피치 0이므로)
     expect(yawGap(forwardOf(app.pose), yaw0)).toBeCloseTo(0, 6)
   })
 
-  it('내려다본 뒤에도 요·눈높이가 유지된다 (부감 — 눈이 위로 올라간다)', () => {
+  it('내려다본 뒤에도 요는 새 값 · 눈높이는 궤도 전 값 (부감 — 궤도가 눈을 올린다)', () => {
     const app = drawn()
     const c = clock()
     const al = createAutoLevel(app, c.now)
+    const eyeBefore = app.pose.p.y
     al.grab(); orbitBy(app, 120, 180)          // 아래로 끌면 내려다본다
     expect(pitchDeg(app.pose)).toBeLessThan(-5)
-    expect(app.pose.p.y).toBeGreaterThan(DRAW_POSE.p.y)
-    const yaw0 = yawDir(app.pose), eye0 = app.pose.p.y
+    expect(app.pose.p.y).toBeGreaterThan(DRAW_POSE.p.y)   // 눈이 올라갔다
+    const yaw0 = yawDir(app.pose)
 
     foldAfterRelease(app, c, al)
     expect(isLevel(app.pose)).toBe(true)
     expect(yawGap(yawDir(app.pose), yaw0)).toBeCloseTo(0, 6)
-    expect(app.pose.p.y).toBeCloseTo(eye0, 9)
+    expect(app.pose.p.y).toBeCloseTo(eyeBefore, 6)        // 올라간 높이가 **안 남는다**
   })
 
   it('탑뷰에서도 접힌다 — 요는 화면 위 방향이 답한다', () => {
@@ -216,7 +225,7 @@ describe('접기 — 상하로 회전한 뒤 놓으면 정렬로 돌아온다', 
 
   it('경계 ① 롤이 0이면 갭이 0이다 — 다만 그것은 **항등**이지 연속성이 아니다', () => {
     const app = drawn()
-    const level = levelPose(app.lift.an, app.pose, orbitPivot(app))
+    const level = levelPose(snap(app.pose), app.pose, orbitPivot(app))
     for (const d of [0.1, 0.01, 0.001]) {
       const near = tipDown(level, 90 - d)
       const exact = tipDown(level, 90)
@@ -229,7 +238,7 @@ describe('접기 — 상하로 회전한 뒤 놓으면 정렬로 돌아온다', 
 
   it('경계 ② 롤이 있으면 갭이 **정확히 롤 각**이다 — 짐벌 잠금이고 원리적 한계다', () => {
     const app = drawn()
-    const level = levelPose(app.lift.an, app.pose, orbitPivot(app))
+    const level = levelPose(snap(app.pose), app.pose, orbitPivot(app))
     for (const roll of [5, 14, 45]) {
       // 경계에 실제로 닿았는가 — 안 닿으면 아무것도 안 잰다
       expect(Math.hypot(forwardOf(tipDown(level, 90, roll)).x, forwardOf(tipDown(level, 90, roll)).z))
@@ -265,7 +274,7 @@ describe('접기 — 상하로 회전한 뒤 놓으면 정렬로 돌아온다', 
     }
     expect(seen).toBe(8)
     // 접기 자신도 롤을 안 만든다
-    expect(Math.abs(rollY(levelPose(app.lift.an, app.pose, pivot)))).toBeLessThan(1e-12)
+    expect(Math.abs(rollY(levelPose(snap(DRAW_POSE), app.pose, pivot)))).toBeLessThan(1e-12)
   })
 })
 
@@ -282,9 +291,10 @@ describe('접힌 뒤에 실제로 그릴 수 있는가 — 리뷰어 [7]·[8]이
     expect(s.app.lift.an.constructionDone).toBe(false)
 
     const pivot = orbitPivot(s.app)
+    const anchor = snap(s.app.pose)
     orbitBy(s.app, -60, -140)                          // 위로 올려다본다
     expect(s.app.pose.p.y).toBeLessThan(0)             // 눈이 지면 아래로 내려간다(실측 −11.331)
-    setPose(s.app, levelPose(s.app.lift.an, s.app.pose, pivot))
+    setPose(s.app, levelPose(anchor, s.app.pose, pivot))
     expect(isLevel(s.app.pose)).toBe(true)             // 정렬됐다 — 그릴 수 있어 «보인다»
     expect(isDrawPose(s.app.pose)).toBe(false)         // 그러나 작도 포즈는 아니다
 
@@ -299,8 +309,9 @@ describe('접힌 뒤에 실제로 그릴 수 있는가 — 리뷰어 [7]·[8]이
     const app = drawn()
     const pivot = orbitPivot(app)
     const before = app.lift.lifted.size
+    const anchor = snap(app.pose)
     orbitBy(app, -60, -40)
-    setPose(app, levelPose(app.lift.an, app.pose, pivot))
+    setPose(app, levelPose(anchor, app.pose, pivot))
     expect(isLevel(app.pose)).toBe(true)
     // 확정된 3D 끝점을 지금 포즈로 사영해 그 자리에서 잇는다(사람이 하는 것)
     const seg = [...app.lift.lifted.values()][0]!
@@ -477,84 +488,126 @@ describe('접기 시점 — 놓으면 잠깐 뒤', () => {
   })
 })
 
-describe('접을 때의 위치 — 물러나기만 한다', () => {
-  it('대상이 화면에 남는다 — **기하 전체**가 화면 안(pivot 한 점이 아니다)', () => {
-    const app = drawn()
-    const pivot = orbitPivot(app)
-    for (const [dx, dy] of [[-160, -120], [120, 180], [0, 260], [300, -300]] as const) {
-      setPose(app, DRAW_POSE)
-      orbitBy(app, dx, dy)
-      const folded = levelPose(app.lift.an, app.pose, pivot, liftedPoints(app))
-      const s = project(app.lift.an, folded, pivot)
-      expect(s).not.toBeNull()
-      expect(Math.abs(s!.y - app.lift.an.principal!.y)).toBeLessThanOrEqual(H / 2 + 1e-6)
-      // **승격 기하의 끝점 전부**가 화면 세로 안이다 — pivot 한 점은 대리량이고 샜다(리뷰어 [10])
-      let seen = 0
-      for (const seg of app.lift.lifted.values()) {
-        for (const P of [seg.a3, seg.b3]) {
-          const q = project(app.lift.an, folded, P)
-          if (!q) continue
-          seen++
-          expect(q.y).toBeGreaterThanOrEqual(-1e-6)
-          expect(q.y).toBeLessThanOrEqual(H + 1e-6)
-        }
-      }
-      expect(seen).toBeGreaterThan(0)          // 실제로 훑었는가
-    }
-  })
+describe('접을 때의 위치 — **궤도 전으로 통째로 돌아간다**(web2-05)', () => {
+  // ⛔ **여기 있던 팔 다섯이 폐기된 기전을 재던 것이다**(#57):
+  //    ‹대상이 화면에 남는다› ‹완만한 기울기에서 위치 불변› ‹가까이 안 당긴다›
+  //    ‹베어링 불변› ‹먼 소실점 대역(D-5)›.
+  //    그 다섯은 「눈높이를 유지하고 수평거리를 늘린다」를 판정했는데 **그 규칙이 죽었다** —
+  //    앵커가 이미 «보던 구도»라 늘릴 일이 없다. 판별력이 죽은 조항을 통과로 안 적고
+  //    **지우고 새 규칙의 팔로 갈았다.** 폐기 기록은 NOTES의 web2-05 절.
 
-  it('완만한 기울기에서는 위치를 안 건드린다 — 안 시킨 줌인이 없다', () => {
+  it('재현: 궤도로 바뀐 높이·거리가 접은 뒤에도 남았다 — 그것이 증상이다', () => {
     const app = drawn()
     const pivot = orbitPivot(app)
-    orbitBy(app, -40, -12)                  // 약 3.4° — 살짝 돌려봤다
-    expect(Math.abs(pitchDeg(app.pose))).toBeLessThan(6)
-    const before = { ...app.pose.p }
-    const folded = levelPose(app.lift.an, app.pose, pivot)
-    expect(folded.p.x).toBeCloseTo(before.x, 9)
+    const before = { y: app.pose.p.y, r: Math.hypot(app.pose.p.x - pivot.x, app.pose.p.z - pivot.z) }
+    const anchor = snap(app.pose)
+    orbitBy(app, -160, 180)                       // 좌우로 돌리고 내려다본다(부감)
+    expect(app.pose.p.y).toBeGreaterThan(before.y + 1)   // 실측 1.600 → 6.590
+    const folded = levelPose(anchor, app.pose, pivot)
+    // **지금 규칙**: 높이도 거리도 궤도 전 값이다
     expect(folded.p.y).toBeCloseTo(before.y, 9)
-    expect(folded.p.z).toBeCloseTo(before.z, 9)
+    expect(Math.hypot(folded.p.x - pivot.x, folded.p.z - pivot.z)).toBeCloseTo(before.r, 9)
   })
 
-  it('가까이 당기지 않는다 — 수평거리가 줄어드는 일이 없다', () => {
-    const app = drawn()
-    const pivot = orbitPivot(app)
-    for (const [dx, dy] of [[-160, -120], [120, 180], [60, 40], [-300, 300]] as const) {
-      setPose(app, DRAW_POSE)
-      orbitBy(app, dx, dy)
-      const r0 = Math.hypot(app.pose.p.x - pivot.x, app.pose.p.z - pivot.z)
-      const folded = levelPose(app.lift.an, app.pose, pivot)
-      const r1 = Math.hypot(folded.p.x - pivot.x, folded.p.z - pivot.z)
-      expect(r1).toBeGreaterThanOrEqual(r0 - 1e-9)
-    }
-  })
-
-  it('먼 소실점 구도(D-5) — 좁은 픽스처가 못 재는 것이 여기서 난다', () => {
-    // **같은 궤도**를 두 구도에 건다. 좁은 픽스처(f=387)는 **아예 안 물러나고**
-    // 먼 소실점 구도(f=3286)는 크게 물러난다 — 좁은 것만 재면 이 갈래가 한 번도 안 돈다.
-    const ratio = (app: ReturnType<typeof drawn>) => {
+  it('높이 · 거리 · 피치 · 롤이 궤도 전과 **같다** — 궤도 넷에서', () => {
+    for (const [dx, dy] of [[-160, -120], [120, 180], [0, 260], [300, -300]] as const) {
+      const app = drawn()
       const pivot = orbitPivot(app)
-      orbitBy(app, -160, -120)
-      const folded = levelPose(app.lift.an, app.pose, pivot)
-      const r0 = Math.hypot(app.pose.p.x - pivot.x, app.pose.p.z - pivot.z)
-      const r1 = Math.hypot(folded.p.x - pivot.x, folded.p.z - pivot.z)
-      const s = project(app.lift.an, folded, pivot)!
-      return { k: r1 / r0, dy: Math.abs(s.y - app.lift.an.principal!.y) }
+      const anchor = snap(app.pose)
+      const r0 = Math.hypot(anchor.p.x - pivot.x, anchor.p.z - pivot.z)
+      const d0 = Math.hypot(anchor.p.x - pivot.x, anchor.p.y - pivot.y, anchor.p.z - pivot.z)
+      orbitBy(app, dx, dy)
+      const f = levelPose(anchor, app.pose, pivot)
+      expect(f.p.y).toBeCloseTo(anchor.p.y, 9)                                   // 높이
+      expect(Math.hypot(f.p.x - pivot.x, f.p.z - pivot.z)).toBeCloseTo(r0, 9)    // 수평거리
+      expect(Math.hypot(f.p.x - pivot.x, f.p.y - pivot.y, f.p.z - pivot.z)).toBeCloseTo(d0, 9) // 거리
+      expect(pitchDeg(f)).toBeCloseTo(0, 9)                                       // 피치
+      expect(rollY(f)).toBeCloseTo(0, 9)                                          // 롤
     }
-    const narrow = ratio(drawn())
-    const wide = ratio(drawnWide())
-    expect(narrow.k).toBeCloseTo(1, 6)          // 좁은 구도 — 물러날 일이 없다
-    expect(wide.k).toBeGreaterThan(3)           // 먼 소실점 — 크게 물러난다
-    for (const r of [narrow, wide]) expect(r.dy).toBeLessThanOrEqual(H / 2 + 1e-6)
   })
 
-  it('베어링을 안 바꾼다 — pivot의 화면 가로 위치가 그대로다', () => {
+  it('**좌우 각도만 바뀌었다** — 앵커를 수직축 둘레로 돌린 강체 회전이다', () => {
     const app = drawn()
     const pivot = orbitPivot(app)
-    orbitBy(app, -160, -120)
-    const folded = levelPose(app.lift.an, app.pose, pivot)
-    // 요를 고정하고 수평 오프셋을 «늘리기»만 하므로 pivot의 방위각이 그대로다
-    const bearing = (p: { x: number; z: number }) =>
-      Math.atan2(pivot.x - p.x, -(pivot.z - p.z))
-    expect(bearing(folded.p)).toBeCloseTo(bearing(app.pose.p), 9)
+    const anchor = snap(app.pose)
+    orbitBy(app, -200, 140)
+    const f = levelPose(anchor, app.pose, pivot)
+    const dYaw = yawGap(yawDir(app.pose), yawDir(anchor))
+    expect(dYaw).toBeGreaterThan(5)                       // 실제로 좌우로 돌았다
+    // 접힌 뒤 요는 **궤도의 요**이고, 앵커에서 그만큼만 돌았다
+    expect(yawGap(yawDir(f), yawDir(app.pose))).toBeCloseTo(0, 6)
+    expect(yawGap(yawDir(f), yawDir(anchor))).toBeCloseTo(dYaw, 6)
+    // 강체 회전의 표식: pivot에서 앵커까지의 **수평 오프셋 각**도 정확히 그만큼 돌았다
+    const bear = (p: { x: number; z: number }) => Math.atan2(p.x - pivot.x, -(p.z - pivot.z))
+    let d = (bear(f.p) - bear(anchor.p)) * 180 / Math.PI
+    d = ((d % 360) + 540) % 360 - 180
+    expect(Math.abs(d)).toBeCloseTo(dYaw, 4)
+  })
+
+  it('요가 안 바뀌면 **항등**이다 — 이미 정렬이면 한 톨도 안 움직인다', () => {
+    const app = drawn()
+    const pivot = orbitPivot(app)
+    const anchor = snap(app.pose)
+    const f = levelPose(anchor, app.pose, pivot)
+    expect(f.p.x).toBeCloseTo(anchor.p.x, 12)
+    expect(f.p.y).toBeCloseTo(anchor.p.y, 12)
+    expect(f.p.z).toBeCloseTo(anchor.p.z, 12)
+    expect(yawGap(yawDir(f), yawDir(anchor))).toBeCloseTo(0, 9)
+  })
+
+  it('사용자가 정렬 상태에서 바꾼 높이·거리는 **유지된다**(지시 d)', () => {
+    // 궤도로 바뀐 값만 안 남는다. 정렬 상태에서 사람이 옮긴 것은 의도이므로 앵커가 그것이다.
+    const app = drawn()
+    const pivot = orbitPivot(app)
+    setPose(app, { p: v3(app.pose.p.x, 4.2, app.pose.p.z - 3), q: { ...app.pose.q } })
+    expect(isLevel(app.pose)).toBe(true)
+    const anchor = snap(app.pose)                 // 앱에서는 autolevel이 이 순간을 잡는다
+    orbitBy(app, -120, 200)
+    const f = levelPose(anchor, app.pose, pivot)
+    expect(f.p.y).toBeCloseTo(4.2, 9)             // 사람이 정한 눈높이가 산다
+  })
+})
+
+describe('앱 경로 — autolevel이 앵커를 언제 잡는가', () => {
+  it('접으면 궤도 전 높이·거리로 돌아온다 (앵커를 손으로 안 넘긴다)', () => {
+    const app = drawn()
+    const c = clock()
+    const al = createAutoLevel(app, c.now)
+    const pivot = orbitPivot(app)
+    const y0 = app.pose.p.y
+    const r0 = Math.hypot(app.pose.p.x - pivot.x, app.pose.p.z - pivot.z)
+    al.grab(); orbitBy(app, -160, 180)
+    expect(app.pose.p.y).toBeGreaterThan(y0 + 1)
+    foldAfterRelease(app, c, al)
+    expect(isLevel(app.pose)).toBe(true)
+    expect(app.pose.p.y).toBeCloseTo(y0, 6)
+    expect(Math.hypot(app.pose.p.x - pivot.x, app.pose.p.z - pivot.z)).toBeCloseTo(r0, 6)
+  })
+
+  it('두 번 돌려도 누적되지 않는다 — 접힌 포즈가 새 앵커다', () => {
+    const app = drawn()
+    const c = clock()
+    const al = createAutoLevel(app, c.now)
+    const pivot = orbitPivot(app)
+    const y0 = app.pose.p.y
+    const r0 = Math.hypot(app.pose.p.x - pivot.x, app.pose.p.z - pivot.z)
+    for (const [dx, dy] of [[-160, 180], [200, -140], [0, 240]] as const) {
+      al.grab(); orbitBy(app, dx, dy)
+      foldAfterRelease(app, c, al)
+      expect(app.pose.p.y).toBeCloseTo(y0, 6)     // 세 번을 돌아도 그대로다
+      expect(Math.hypot(app.pose.p.x - pivot.x, app.pose.p.z - pivot.z)).toBeCloseTo(r0, 6)
+    }
+  })
+
+  it('정렬 상태에서 사람이 옮기면 앵커가 따라간다 — 궤도로 바뀐 값만 안 남는다', () => {
+    const app = drawn()
+    const c = clock()
+    const al = createAutoLevel(app, c.now)
+    const pivot = orbitPivot(app)
+    setPose(app, { p: v3(app.pose.p.x, 3.5, app.pose.p.z), q: { ...app.pose.q } })  // 사람이 눈높이를 올린다
+    expect(isLevel(app.pose)).toBe(true)
+    al.grab(); orbitBy(app, -140, 160)
+    foldAfterRelease(app, c, al)
+    expect(app.pose.p.y).toBeCloseTo(3.5, 6)
   })
 })

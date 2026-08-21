@@ -11,7 +11,7 @@
 //
 // 시계를 주입받는다 — 시험이 가짜 시각으로 「계속 조작하는 동안 안 접힌다」를 잰다.
 
-import { type App, setPose, orbitPivot, liftedPoints } from './state'
+import { type App, setPose, orbitPivot } from './state'
 import { isLevel, levelPose, lerpPose } from '../core/level'
 import type { CamPose } from '../core/types'
 import { C } from '../core/constants'
@@ -45,6 +45,21 @@ export function createAutoLevel(
   let last = now()
   let anim: { from: CamPose; to: CamPose; t0: number } | null = null
 
+  /** **정렬 상태를 떠나기 직전의 포즈** — 접을 때 여기로 돌아간다(web2-05).
+   *
+   *  지시는 「궤도 시작 시 카메라 상태를 기억한다」인데, **정렬을 떠나는 순간**으로 잡으면
+   *  궤도·뷰 큐브·저장 시점이 **한 규칙**이 된다(예외를 안 두는 이 파일의 규칙과 같은 형태).
+   *  «정렬인 동안 계속 갱신»이므로 따로 «시작»을 판정할 필요가 없다 — 마지막 정렬 포즈가
+   *  곧 그 값이다. 접기 애니메이션 중에는 정렬이 아니라 안 덮이고, 끝나는 순간의
+   *  목표 포즈가 새 앵커가 된다(그것이 다음 궤도의 출발점이므로 맞다).
+   *
+   *  ⚠ 사용자가 정렬 상태에서 팬·줌으로 높이·거리를 바꾸면 그것이 **의도**이므로
+   *  앵커가 따라간다. 궤도로 바뀐 값만 안 남는다 — 그것이 이 회차의 내용이다. */
+  let anchor: CamPose = { p: { ...app.pose.p }, q: { ...app.pose.q } }
+  app.listeners.push(() => {
+    if (!anim && isLevel(app.pose)) anchor = { p: { ...app.pose.p }, q: { ...app.pose.q } }
+  })
+
   const grab = () => { held = true; last = now(); anim = null }
   const release = () => { held = false; last = now() }
   const touch = () => { held = false; last = now() }
@@ -54,7 +69,7 @@ export function createAutoLevel(
     if (isLevel(app.pose)) return false
     anim = {
       from: { p: { ...app.pose.p }, q: { ...app.pose.q } },
-      to: levelPose(app.lift.an, app.pose, orbitPivot(app), liftedPoints(app)),
+      to: levelPose(anchor, app.pose, orbitPivot(app)),
       t0: now(),
     }
     return true
