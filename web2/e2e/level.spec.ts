@@ -179,3 +179,69 @@ test('작도가 안 끝난 채 접히면 그 길이 화면에 뜬다 — 한 번
   await drawLine(page, 500, 500, 400, 475)
   expect(await page.evaluate(() => (window as any).__b2.diag.summary().vps.length)).toBe(2)
 })
+
+test('**접힌 뒤에도 지평선이 그려진다** — 픽셀로 잰다 (web2-06 지시 3)', async ({ page }) => {
+  // 재현: `render2d`가 지평선을 **작도 포즈에서만** 그었다. 접힌 포즈는 피치 0이라
+  // 지평선이 그대로 화면 수평선인데도 사라졌고, 그래서 web2-05의 증상(「지평선이 위로
+  // 올라간다」)을 **고친 뒤에 화면에서 확인할 수가 없었다.**
+  await page.goto('/')
+  await page.waitForFunction(() => (window as any).__b2)
+  await drawLine(page, 100, 400, 1100, 400)
+  await drawLine(page, 500, 500, 600, 475)
+  await drawLine(page, 500, 500, 400, 475)
+  await drawLine(page, 500, 500, 500, 300)
+
+  const dpr = await page.evaluate(() => window.devicePixelRatio || 1)
+  // 지평선 자리의 가로 띠 — CSS px로 환산한 픽셀 수(dpr 1·2에서 같은 눈금으로 읽는다)
+  const band = async () => (await inkPixels(page, 0, 397, 1200, 403)) / (dpr * dpr)
+
+  await page.mouse.move(200, 700)          // 커서를 띠 밖으로 (호버 표식이 안 섞이게)
+  await settle(page)
+  const atDraw = await band()
+  expect(atDraw).toBeGreaterThan(600)      // 작도 포즈 — 화면 전폭의 선이 있다
+
+  // 기울인다 — 그때는 **없는 것이 맞다**(화면 수평선이 아니다). 반증 조건이다.
+  await tiltDown(page)
+  await settle(page)
+  const tilted = await band()
+  expect(tilted).toBeLessThan(atDraw / 4)
+
+  // 놓아 접는다 — **다시 있어야 한다**. 고치기 전에는 여기가 `tilted` 수준이었다.
+  await page.mouse.up({ button: 'middle' })
+  await waitFolded(page)
+  await page.mouse.move(200, 700)
+  await settle(page)
+  const folded = await band()
+  expect((await lev(page)).level).toBe(true)
+  expect(folded).toBeGreaterThan(600)
+  expect(folded).toBeGreaterThan(tilted * 4)
+})
+
+test('**돌려보다 줌한 거리가 접어도 남는다** — 궤도 반경 (web2-06 지시 5)', async ({ page }) => {
+  // 재현: 접기가 앵커로 통째로 돌아가면서 **줌까지 지웠다**(단위 실측 7.565 → 줌 3.782 →
+  // 접은 뒤 7.565). 궤도는 pivot 둘레의 회전이라 반경을 구성상 보존하므로, 반경이
+  // 달라졌다면 그것은 사람이 정한 값이다 — 그래서 접기가 지킨다.
+  // 여기서는 **진짜 입력**으로 잰다(휠). 계산이 `input.ts`에 있던 동안은 시험이 못 부르던 길이다.
+  await page.goto('/')
+  await page.waitForFunction(() => (window as any).__b2)
+  await drawLine(page, 100, 400, 1100, 400)
+  await drawLine(page, 500, 500, 600, 475)
+  await drawLine(page, 500, 500, 400, 475)
+  await drawLine(page, 500, 500, 500, 300)
+
+  const r0 = (await lev(page)).radius
+  expect(r0).toBeGreaterThan(0)
+
+  await tiltDown(page)                                  // 중버튼을 잡은 채 기울인다
+  expect((await lev(page)).radius).toBeCloseTo(r0, 6)   // 궤도는 반경을 안 바꾼다
+
+  await page.mouse.wheel(0, -400)                       // 다가간다
+  await settle(page)
+  const rZoom = (await lev(page)).radius
+  expect(rZoom).toBeLessThan(r0 * 0.9)
+
+  await page.mouse.up({ button: 'middle' })
+  await waitFolded(page)
+  expect((await lev(page)).level).toBe(true)
+  expect((await lev(page)).radius).toBeCloseTo(rZoom, 6)   // ← 고치기 전에는 r0로 돌아갔다
+})
