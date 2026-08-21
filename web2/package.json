@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "e2e": "playwright test",
-    "deploy:check": "node tools/deploy-check.mjs"
+    "deploy:check": "node tools/deploy-check.mjs",
+    "dev:alt": "vite --port 5311 --strictPort"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

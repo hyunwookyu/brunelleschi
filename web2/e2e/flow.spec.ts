@@ -58,8 +58,22 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
 
-  // 빈 화면
+  // 빈 화면 — **아무것도 안 칠해져 있다.** 격자가 기본 꺼짐이라는 것이 여기서 픽셀로 선다(3-a)
   expect(await inkPixels(page, 0, 0, 1200, 800)).toBe(0)
+  expect(await page.evaluate(() => (window as any).__b2.app.grid)).toBe(false)
+  // 표시용(체크박스)과 판정용(app.grid)이 갈리지 않는가 — 기본값이 두 자리에 있다(PITFALLS #54)
+  expect(await page.isChecked('#chk-grid')).toBe(false)
+  await page.click('#pane-settings > summary')
+  await page.click('#chk-grid')
+  expect(await page.evaluate(() => (window as any).__b2.app.grid)).toBe(true)
+  await page.click('#chk-grid')                       // 되돌린다 — 뒤 팔이 격자 픽셀에 안 걸리게
+  expect(await page.evaluate(() => (window as any).__b2.app.grid)).toBe(false)
+  await page.click('#pane-settings > summary')
+  expect(await inkPixels(page, 0, 0, 1200, 800)).toBe(0)
+
+  // 기본 도구는 연필이고, 상태 줄에는 **첫 안내 하나뿐**이다(4-b)
+  expect(await page.evaluate(() => (window as any).__b2.app.tool)).toBe('pencil')
+  expect(await page.textContent('#notice')).toContain('지평선')
 
   // 지평선 — 수평 강제
   await drawLine(page, 100, 400, 1100, 403) // 손이 3px 튀어도 수평이 된다
@@ -203,7 +217,7 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await page.keyboard.press('Control+z')
   await settle(page)
   expect(await glPixels(page, 612, 444, 645, 457)).toBeGreaterThan(5)
-  await page.click('#btn-pen')
+  await page.click('#btn-pencil')   // 그리기로 복귀 — 기본 도구는 연필이다(지시 4-h)
 
   // ── 4단계: 화면 줌(뷰 오프셋) · 뷰 큐브 ─────────────────────────────
   // 그리는 중(작도 포즈)의 줌은 화면 조작 — 문서 좌표는 안 바뀐다
@@ -248,14 +262,15 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await page.click('#btn-draw-view')
 
   // ── 6단계: 재료 — 잉크 위 연필 지우개는 잉크를 안 건드린다 (선따기) ──
-  const setGrade = (v: string) => page.evaluate((val) => {
-    const el = document.getElementById('grade-slider') as HTMLInputElement
-    el.value = val
-    el.dispatchEvent(new Event('input'))
-  }, v)
-  await setGrade('6') // 잉크
-  expect(await page.evaluate(() => (window as any).__b2.app.grade)).toBe('INK')
+  // **연필과 펜은 다른 도구다**(지시 4-h) — 잉크는 경도 슬라이더가 아니라 펜을 골라서 나온다.
+  await page.click('#btn-pen')
+  await settle(page)
+  expect(await page.evaluate(() => (window as any).__b2.app.tool)).toBe('pen')
   await drawLine(page, 500, 500, 500, 300)      // 기존 흑연 수직획 위에 잉크로 덧긋기
+  expect(await page.evaluate(() => {
+    const st = (window as any).__b2.app.doc.strokes
+    return st[st.length - 1].mat.grade
+  })).toBe('INK')                                // 펜으로 그은 획은 잉크다
   s = await summary(page)
   expect(s.lifted).toBeGreaterThan(0)
   await page.click('#btn-eraser-pencil')
@@ -265,8 +280,17 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await settle(page)
   // 흑연 조각은 지워졌지만 잉크 선은 그 자리에 남아 있다
   expect(await glPixels(page, 495, 360, 505, 400)).toBeGreaterThan(5)
-  await page.click('#btn-pen')
-  await setGrade('3') // HB로 복귀
+
+  // 도구가 그림으로 보인다 — 고른 것이 **앞으로 나온다**(4-d: 박스 강조가 아니다)
+  expect(await page.getAttribute('#btn-eraser-pencil', 'class')).toContain('on')
+  expect(await page.getAttribute('#btn-pencil', 'class')).not.toContain('on')
+  // 굵기 막대는 연필에서 사라지고 펜·지우개에서 뜬다(4-f · 4-e)
+  expect(await page.evaluate(() => getComputedStyle(document.getElementById('thick')!).display)).toBe('block')
+  await page.click('#btn-pencil')
+  await settle(page)
+  expect(await page.evaluate(() => getComputedStyle(document.getElementById('thick')!).display)).toBe('none')
+  // 홀더펜 창 — 지금 심이 연필 몸통에 보인다(4-e)
+  expect(await page.textContent('#lead-text')).toBe('HB')
   await settle(page)
 
   // ── 5단계: 자동 저장 — 새로고침해도 그림과 카메라(재계산)가 남는다 ──
@@ -359,7 +383,10 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   s = await summary(page)
   expect(s.strokes).toBe(4)
   expect(s.vps).toHaveLength(2)
-  expect(s.lifted).toBe(1)
+  // **깊이선 둘 다 3D다**(지시 1) — 소실점을 만드는 선은 지면이므로 서로 안 닿아도 올라간다.
+  // 그전에는 첫 깊이선만 올라가 1이었다. 수직획(#4)은 아무것에도 안 닿아 대기로 남는다.
+  expect(s.lifted).toBe(2)
+  expect(s.waiting).toEqual([4])
 
   // 저장·내보내기 — 실제로 파일이 나간다
   const [saved] = await Promise.all([page.waitForEvent('download'), page.click('#btn-save')])

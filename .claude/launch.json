@@ -30,6 +30,16 @@
       ],
       "port": 5301,
       "cwd": "web2"
+    },
+    {
+      "name": "web2-alt",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:alt"
+      ],
+      "port": 5311,
+      "cwd": "web2"
     }
   ]
 }

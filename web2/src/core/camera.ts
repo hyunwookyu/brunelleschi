@@ -42,8 +42,19 @@ export interface Analysis {
   roles: Map<number, Role>
   /** 거부 사유 — 획은 남고 카메라만 안 건드린 경우 */
   rejects: Map<number, string>
+  /** 화면 수평축(H)이 **선언됐는가** — 사람이 화면 수평인 내용 획을 실제로 그었는가.
+   *  2점 투시에서는 어떤 가로 모서리도 화면 수평이 아니다(둘 다 소실점으로 수렴한다).
+   *  그러니 화면 수평 획이 있다는 것은 **그 축의 소실점이 무한원**이라는 선언이고,
+   *  그것이 1점 투시의 정의다(이론서 2.2). */
+  screenHDeclared: boolean
+  /** 1점으로 잠겼다 — 화면 수평축 선언 + 깊이 소실점 하나. 세 축(H·V·깊이)이 다 정해졌고
+   *  **두 번째 수평 소실점이 생길 자리가 없다**(지시 2-a·2-b). */
+  p1Locked: boolean
   constructionDone: boolean
 }
+
+/** 잠긴 뒤 소실점을 만들려 할 때의 사유 — 한 자리에서만 쓴다 */
+export const P1_LOCK_REASON = '화면 수평선을 그은 이상 1점 투시다 — 두 번째 소실점이 설 자리가 없다'
 
 /** 작도 카메라 — 지면(Y=0) 위 눈높이에 서서 수평으로 본다(피치 0·롤 0).
  *  **세계 원점은 눈이 아니라 지면이다.** 눈이 원점이면 지면이 눈을 지나 퇴화한다. */
@@ -52,9 +63,9 @@ export const DRAW_POSE: CamPose = { p: v3(0, C.EYE_HEIGHT, 0), q: QID }
 /** 획 후보가 작도 국면에서 무엇이 되는지 — analyze와 미리보기가 같은 함수를 쓴다
  *  (측정 경로와 앱 경로를 가르지 않는다) */
 export function classifyNext(
-  an: Pick<Analysis, 'horizonY' | 'vps' | 'diag' | 'W' | 'constructionDone'>,
+  an: Pick<Analysis, 'horizonY' | 'vps' | 'diag' | 'W' | 'constructionDone' | 'p1Locked'>,
   a: Pt, b: Pt,
-): { role: Role; reason?: string; vp?: Pt } {
+): { role: Role; reason?: string; vp?: Pt; screenAxis?: 'H' | 'V' } {
   if (an.horizonY === null) return { role: 'horizon' }
   const dx = b.x - a.x, dy = b.y - a.y
   const L = Math.hypot(dx, dy)
@@ -63,6 +74,9 @@ export function classifyNext(
   // 같은 `vps` 항목이 나오므로 카메라는 구별하지 못한다(4-c).
   // 작도가 끝난 뒤에도 받는다 — 3점으로 갈 때 세 번째 소실점을 찍을 수 있어야 한다.
   if (L <= C.TAP_MAX_PX && Math.abs(a.y - an.horizonY) <= C.OSNAP_RADIUS_PX) {
+    // 잠긴 뒤에는 **찍기도 안 받는다**(2-a: 「그 뒤 어떤 획도」). 찍기는 지평선 위의 점이라
+    // 만들 수 있는 것이 수평 소실점뿐이고, 그 자리가 없다는 것이 잠금의 내용이다.
+    if (an.p1Locked) return { role: 'content', reason: P1_LOCK_REASON }
     const mark = pt(a.x, an.horizonY)
     if (an.vps.some(v => Math.abs(v.x - mark.x) <= C.OSNAP_RADIUS_PX)) {
       return { role: 'content', reason: '이미 그 자리에 소실점이 있다' }
@@ -78,14 +92,25 @@ export function classifyNext(
   }
   if (an.constructionDone) return { role: 'content' }
   if (L < C.MIN_DIR_LEN_RATIO * an.diag) return { role: 'content' }
-  // 화면 평행이면 축 스냅이 붙는다 → 기존 축, 내용 획
-  if (Math.abs(dy) / L <= C.SCREEN_PARALLEL_RATIO) return { role: 'content' }
-  if (Math.abs(dx) / L <= C.SCREEN_PARALLEL_RATIO) return { role: 'content' }
-  // 기존 소실점에 붙는가 — 수직거리 ÷ 획 길이
+  // 기존 소실점에 붙는가 — 수직거리 ÷ 획 길이. 임계로 나눠 «몇 배 안쪽인가»로 견준다.
+  let vpScore = Infinity
   for (const v of an.vps) {
     const d = Math.abs((v.x - a.x) * dy - (v.y - a.y) * dx) / L
-    if (d / L <= C.VP_DIR_RATIO) return { role: 'content' }
+    vpScore = Math.min(vpScore, d / L / C.VP_DIR_RATIO)
   }
+  // 화면 평행이면 축 스냅이 붙는다 → 기존 축, 내용 획.
+  // **화면 수평은 그것으로 끝이 아니다** — H 축의 소실점이 무한원이라는 선언이므로
+  // (이론서 2.2) 여기서 1점이 확정된다. `screenAxis`가 그 신호이고 analyze가 접는다.
+  //
+  // ⚠ **기존 소실점에 더 잘 맞으면 선언이 아니다.** 소실점이 아주 멀면(|Δx| ≳ 5000px)
+  // 그 소실점을 향한 깊이선이 화면에서 2.87°(`SCREEN_PARALLEL_RATIO`) 안에 들어온다 —
+  // 그것을 「H축 선언」으로 읽으면 사람이 2점을 그리는 중에 문서가 1점으로 잠긴다
+  // (2026-08-21 2차 리뷰어 지적). 선언은 **H가 더 잘 맞을 때만**이다.
+  const hScore = Math.abs(dy) / L / C.SCREEN_PARALLEL_RATIO
+  const vScore = Math.abs(dx) / L / C.SCREEN_PARALLEL_RATIO
+  if (hScore <= 1) return vpScore < hScore ? { role: 'content' } : { role: 'content', screenAxis: 'H' }
+  if (vScore <= 1) return { role: 'content', screenAxis: 'V' }
+  if (vpScore <= 1) return { role: 'content' }
   // 안 붙으면 새 소실점 — 단, 실수로 그은 작은 선은 카메라를 안 건드린다
   if (L < C.VP_MIN_LEN_RATIO * an.diag) {
     return { role: 'content', reason: '소실점을 정의하기엔 짧다' }
@@ -110,16 +135,22 @@ export function analyze(doc: Doc): Analysis {
   const rejects = new Map<number, string>()
   const vps: Vp[] = []
   let horizonY: number | null = null
+  let screenHDeclared = false
 
   for (const s of doc.strokes) {
     // 작도는 작도 포즈에서만 — 궤도 후의 획은 전부 내용이다
     if (s.view) { roles.set(s.id, 'content'); continue }
-    const partial = { horizonY, vps, diag, W, constructionDone: vps.length >= 2 }
+    const p1Locked = screenHDeclared && vps.length >= 1
+    const partial = {
+      horizonY, vps, diag, W, p1Locked,
+      constructionDone: vps.length >= 2 || p1Locked,
+    }
     const cls = classifyNext(partial, s.a, s.b)
     roles.set(s.id, cls.role)
     if (cls.reason) rejects.set(s.id, cls.reason)
     if (cls.role === 'horizon') horizonY = (s.a.y + s.b.y) / 2
     else if (cls.role === 'vp' && cls.vp) vps.push({ x: cls.vp.x, y: cls.vp.y, strokeId: s.id })
+    if (cls.screenAxis === 'H') screenHDeclared = true
   }
 
   const principal = horizonY !== null ? pt(W / 2, horizonY) : null
@@ -149,9 +180,12 @@ export function analyze(doc: Doc): Analysis {
     axes.push({ id: 'V', dir: v3(0, 1, 0) })
   }
 
+  const p1Locked = screenHDeclared && vps.length >= 1
   return {
     W, H, diag, horizonY, vps, principal, f, fSource, axes, roles, rejects,
-    constructionDone: vps.length >= 2,
+    screenHDeclared, p1Locked,
+    // 작도가 끝났다 = **더 만들 것이 없다.** 소실점 둘이거나, 1점으로 잠겼거나.
+    constructionDone: vps.length >= 2 || p1Locked,
   }
 }
 

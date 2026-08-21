@@ -5,6 +5,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { session } from './session'
+import { createApp } from '../src/app/state'
 import { projectSeg, groundAxes, project, DRAW_POSE } from '../src/core/camera'
 import { C } from '../src/core/constants'
 
@@ -79,5 +80,19 @@ describe('6-h — 지면 격자', () => {
     const s = built()
     const seg = projectSeg(s.app.lift.an, DRAW_POSE, { x: -5, y: 0, z: 10 }, { x: 5, y: 0, z: 10 })
     expect(seg).toBeNull()
+  })
+})
+
+describe('3-a — 격자는 기본 꺼짐이다', () => {
+  it('새 문서에서 격자가 꺼져 있다 — 그림 도구이지 모델링 툴이 아니다', () => {
+    expect(createApp(1200, 800).grid).toBe(false)
+  })
+
+  it('토글은 남는다 — 계산은 그대로이고 표시만 끈 것이다', () => {
+    const s = built()
+    expect(s.app.grid).toBe(false)
+    expect(groundAxes(s.app.lift.an)).not.toBeNull()  // 격자 방향은 계속 계산된다
+    s.app.grid = true
+    expect(s.app.grid).toBe(true)
   })
 })

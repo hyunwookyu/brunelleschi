@@ -3,6 +3,7 @@
 
 import type { Doc, Stroke, CamPose, ViewOffset, Grade } from './types'
 import { GRADES } from './material'
+import { C } from './constants'
 
 export interface BrnlData {
   doc: Doc
@@ -45,6 +46,12 @@ export function parseBrnl(text: string): BrnlData | null {
       if (!GRADES.includes(s.mat.grade as Grade)) return null
       st.mat = { grade: s.mat.grade as Grade }
       if (isNum(s.mat.press)) st.mat.press = s.mat.press
+      // 니브 굵기 — 대역 밖이면 **거부한다**(모르는 경도와 같은 급). 굵기 0이나 음수가
+      // 들어오면 three.js가 조용히 안 그리므로 「사라졌다」가 된다.
+      if (s.mat.w !== undefined) {
+        if (!isNum(s.mat.w) || s.mat.w < C.NIB_MIN || s.mat.w > C.NIB_MAX) return null
+        st.mat.w = s.mat.w
+      }
     }
     strokes.push(st)
   }
