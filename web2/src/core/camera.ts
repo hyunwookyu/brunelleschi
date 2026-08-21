@@ -60,6 +60,25 @@ export const P1_LOCK_REASON = '화면 수평선을 그은 이상 1점 투시다 
  *  **세계 원점은 눈이 아니라 지면이다.** 눈이 원점이면 지면이 눈을 지나 퇴화한다. */
 export const DRAW_POSE: CamPose = { p: v3(0, C.EYE_HEIGHT, 0), q: QID }
 
+/** **획이 그 소실점을 향하는가** — sin(획 방향 ↔ 시작점→소실점 방향).
+ *
+ *  «붙었다»의 판정은 `≤ C.VP_DIR_RATIO`이고, 재는 자리가 둘이다:
+ *  `classifyNext`(새 소실점을 만드는가)와 `lift.ts`의 `axisOfStroke`(어느 축인가).
+ *  **그래서 여기 하나에서만 계산한다**(PITFALLS #54: «저장하지 않는다»로는 부족하고
+ *  «한 함수에서만 계산한다»까지 간다). 두 자리에 같은 식을 두고 「함께 고쳤다」로 닫으면
+ *  다음에 한쪽만 고치는 사람이 그대로 갈린다.
+ *
+ *  ⚠ 나누는 것은 **시작점에서 소실점까지의 거리**다. 획 길이로 나누던 것이 결함이었다 —
+ *  길수록 절대 허용이 커져, 길이 875 획이 12° 빗나가고 향까지 반대인데 붙었다(web2-03 지시 2).
+ *  겹친 자리(소실점이 시작점 위)면 방향이 없다 → `null`. */
+export function vpDeviation(vp: Pt, a: Pt, b: Pt): number | null {
+  const dx = b.x - a.x, dy = b.y - a.y
+  const L = Math.hypot(dx, dy)
+  const toVp = Math.hypot(vp.x - a.x, vp.y - a.y)
+  if (L < 1e-12 || toVp < 1e-9) return null
+  return Math.abs((vp.x - a.x) * dy - (vp.y - a.y) * dx) / (L * toVp)
+}
+
 /** 획 후보가 작도 국면에서 무엇이 되는지 — analyze와 미리보기가 같은 함수를 쓴다
  *  (측정 경로와 앱 경로를 가르지 않는다) */
 export function classifyNext(
@@ -101,10 +120,9 @@ export function classifyNext(
   //   (비로 재야 할 것과 절대로 재야 할 것을 바꿔 잡았다 — web2-03 지시 2-d).
   let vpScore = Infinity
   for (const v of an.vps) {
-    const d = Math.abs((v.x - a.x) * dy - (v.y - a.y) * dx) / L
-    const toVp = Math.hypot(v.x - a.x, v.y - a.y)
-    if (toVp < 1e-9) { vpScore = 0; break }
-    vpScore = Math.min(vpScore, d / toVp / C.VP_DIR_RATIO)
+    const dev = vpDeviation(v, a, b)
+    if (dev === null) { vpScore = 0; break }
+    vpScore = Math.min(vpScore, dev / C.VP_DIR_RATIO)
   }
   // ── 지평선과 평행한가 — **처짐을 px로 잰다**(web2-03 지시 2) ──────────────
   // 비(2.87°)로 재던 초판은 「그 비가 뜻하는 소실점 거리」가 시작점 높이에 비례해서

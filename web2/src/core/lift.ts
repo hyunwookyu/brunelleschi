@@ -7,7 +7,7 @@ import type { Doc, Stroke, CamPose } from './types'
 import { C } from './constants'
 import {
   analyze, type Analysis, type AxisId, DRAW_POSE,
-  screenAxes, project, rayThrough, pointOnGround, type Ray,
+  screenAxes, project, rayThrough, pointOnGround, vpDeviation, type Ray,
 } from './camera'
 import {
   type Pt, type V3, add3, sub3, mul3, dot3, dist2, norm3,
@@ -57,11 +57,11 @@ export function axisOfStroke(an: Analysis, pose: CamPose, a: Pt, b: Pt): AxisId 
   for (const ax of screenAxes(an, pose)) {
     let dev: number, tol: number
     if (ax.vp) {
-      // **시작점에서 소실점까지의 거리로 나눈다** = sin(각도). 획 길이로 나누던 것이
-      // 결함이었다(web2-03 지시 2-d) — 획이 길수록 절대 허용이 커져 엉뚱한 축에 붙는다.
-      const toVp = Math.hypot(ax.vp.x - a.x, ax.vp.y - a.y)
-      if (toVp < 1e-9) continue
-      dev = Math.abs((ax.vp.x - a.x) * dy - (ax.vp.y - a.y) * dx) / (L * toVp)
+      // **판정식은 `camera.ts`의 `vpDeviation` 하나다**(원칙 a · PITFALLS #54) —
+      // 여기에 같은 식을 다시 쓰면 두 자리가 언젠가 갈린다.
+      const d = vpDeviation(ax.vp, a, b)
+      if (d === null) continue
+      dev = d
       tol = C.VP_DIR_RATIO
     } else if (ax.dir) {
       // 화면 방향 축 — 획 방향과의 사인 편차
