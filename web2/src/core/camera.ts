@@ -224,3 +224,33 @@ export function pointOnGround(an: Analysis, pose: CamPose, s: Pt): V3 | null {
   if (!(u > 0)) return null            // 눈이 이미 지면이거나 뒤쪽 — 안 만난다
   return add3(pose.p, mul3(r.d, u))
 }
+
+/** 세계 선분 → 화면 선분. **카메라 앞으로 잘라낸다** — 한쪽이 뒤로 넘어가도
+ *  그 앞부분은 보여야 한다(격자처럼 발밑에서 지평선까지 뻗는 선). 전부 뒤면 null. */
+export function projectSeg(an: Analysis, pose: CamPose, A: V3, B: V3): [Pt, Pt] | null {
+  if (!an.principal || an.f === null) return null
+  const q = quatConj(pose.q)
+  let a = quatRotate(q, sub3(A, pose.p))
+  let b = quatRotate(q, sub3(B, pose.p))
+  const NEAR = -1e-3
+  if (a.z > NEAR && b.z > NEAR) return null
+  if (a.z > NEAR || b.z > NEAR) {
+    const t = (NEAR - a.z) / (b.z - a.z)
+    const m = v3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, NEAR)
+    if (a.z > NEAR) a = m; else b = m
+  }
+  const to = (c: V3) => pt(an.principal!.x + an.f! * c.x / -c.z, an.principal!.y - an.f! * c.y / -c.z)
+  return [to(a), to(b)]
+}
+
+/** 지면 격자의 두 방향 — 세계의 가로축 둘(방향의 y가 0인 축).
+ *  소실점 축이 우선이고, 모자라면 화면 평행 가로축(H)이 채운다.
+ *  **화면 각도 균등 분할이 아니다** — 공간의 정사각형을 투영한다(이론서 9.5). */
+export function groundAxes(an: Analysis): [V3, V3] | null {
+  const flat = an.axes.filter(a => Math.abs(a.dir.y) < 1e-9)
+  const vps = flat.filter(a => a.id === 'vp0' || a.id === 'vp1').map(a => a.dir)
+  const h = flat.find(a => a.id === 'H')?.dir
+  if (vps.length >= 2) return [vps[0]!, vps[1]!]
+  if (vps.length === 1 && h) return [vps[0]!, h]
+  return null
+}

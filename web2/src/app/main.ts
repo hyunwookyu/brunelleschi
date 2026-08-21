@@ -190,6 +190,10 @@ for (const kind of OSNAP_ORDER) {
   label.append(box, ` ${KIND_LABEL[kind]}`)
   osnapPanel.append(label)
 }
+const gridBox = document.getElementById('chk-grid') as HTMLInputElement
+gridBox.checked = app.grid
+gridBox.addEventListener('change', () => { app.grid = gridBox.checked; invalidate() })
+
 const radius = document.getElementById('osnap-radius') as HTMLInputElement
 radius.value = String(app.osnap.radius)
 radius.addEventListener('input', () => { app.osnap.radius = Number(radius.value) })

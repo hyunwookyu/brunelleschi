@@ -6,7 +6,7 @@
 
 import type { App } from './state'
 import { isDrawPose } from './state'
-import { screenAxes, project } from '../core/camera'
+import { screenAxes, project, projectSeg, groundAxes } from '../core/camera'
 import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
 import { MAT, gradeOf, rng32 } from '../core/material'
@@ -35,6 +35,7 @@ export function resize2d(canvas: HTMLCanvasElement, W: number, H: number, dpr: n
 }
 
 const COL = {
+  grid: 'rgba(120,116,110,0.18)',
   construction: '#8a7f6a',
   waiting: '#555',
   waitingDim: 'rgba(85,85,85,0.25)',
@@ -67,6 +68,30 @@ export function draw2d(
   const y0 = -v.oy * is, y1 = (ch - v.oy) * is
 
   const atDraw = isDrawPose(app.pose)
+
+  // 지면 격자 — **공간의 정사각형을 투영한 것**이다(이론서 9.5). 화면 각도 균등 분할이 아니다.
+  // 아주 연하게, 무채색 — 사용자가 그린 선이 가장 눈에 띄어야 한다(6-h 「선 우선순위」).
+  if (app.grid) {
+    const ga = groundAxes(an)
+    if (ga) {
+      const [u, v] = ga
+      const step = C.GRID_STEP, n = C.GRID_HALF, span = step * n
+      ctx.strokeStyle = COL.grid
+      ctx.lineWidth = 1 * is
+      ctx.beginPath()
+      for (let k = -n; k <= n; k++) {
+        for (const [d, e] of [[u, v], [v, u]] as const) {
+          const o = { x: e.x * k * step, y: 0, z: e.z * k * step }
+          const seg = projectSeg(an, app.pose,
+            { x: o.x - d.x * span, y: 0, z: o.z - d.z * span },
+            { x: o.x + d.x * span, y: 0, z: o.z + d.z * span })
+          if (!seg) continue
+          ctx.moveTo(seg[0].x, seg[0].y); ctx.lineTo(seg[1].x, seg[1].y)
+        }
+      }
+      ctx.stroke()
+    }
+  }
 
   // 작도선 — **지평선뿐이다.** 무한원이라 3D가 없고(이론서 2.2) 화면 전폭으로 긋는다.
   // 깊이선은 작도선이 아니다 — 소실점을 정의하면서 동시에 그은 3D 선이고,

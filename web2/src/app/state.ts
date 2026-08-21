@@ -41,6 +41,8 @@ export interface App {
   view: ViewOffset
   /** 저장된 시점 */
   savedViews: { pose: CamPose; view: ViewOffset }[]
+  /** 지면 격자 표시 — 기본 켬(6-h) */
+  grid: boolean
   cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
 }
@@ -62,6 +64,7 @@ export function createApp(W: number, H: number): App {
     activeErase: null,
     view: { s: 1, ox: 0, oy: 0 },
     savedViews: [],
+    grid: true,
     cubeLayout: { cx: W - 60, cy: 60, size: 80 }, // 우측 상단 — 큐브
     listeners: [],
   }
