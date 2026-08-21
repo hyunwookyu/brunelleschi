@@ -117,21 +117,35 @@ it('접기가 궤도 전으로 되돌리는가 — 화각 셋 × 궤도 넷', ()
   }
   lines.push('세 번 접어도 누적되지 않는다: ' + acc.join(' | '))
 
-  // ④ **화면에 남는 대역** — pivot 둘레 반지름 ρ의 점 여덟을 놓고 요를 훑는다.
-  //    나가기 시작하는 ρ/R이 곧 이 규칙이 덮는 대역이다. 「보장된다」가 아니라 «여기까지»다.
-  lines.push('화면에 남는 대역 (pivot 둘레 8방위 · 요 0~180° 훑기):')
+  // eslint-disable-next-line no-console
+  console.log(lines.join('\n'))
+})
+
+/** **화면에 남는 대역** — pivot 둘레 반지름 ρ의 점을 방위 여덟에 놓고 요를 훑는다.
+ *  나가기 시작하는 ρ/R이 이 규칙이 덮는 대역이다. **「보장된다」가 아니라 «여기까지»다.**
+ *
+ *  ⚠ **별도 `it`이다** — 앞의 앵커 복원 단언과 한 덩어리로 두면 그쪽이 먼저 깨져
+ *  이 검사의 판별력이 가려진다(2차 리뷰어 [4]). 갈라야 「이 팔을 무엇이 빨갛게 하는가」가 나온다.
+ *
+ *  **동작점**(#12): ρ 스텝 = R의 **1%** · 요 스텝 = **40 px**(≈11.5°) · 방위 **8**.
+ *  ⚠ 해상도를 확인했다 — ρ 스텝을 절반(0.5%)으로, 방위를 **32**로 올려도
+ *  **셋 중 둘이 그대로**이고 관행 대역만 0.380 → **0.375**(ρ 한 칸)다. 격자값이 아니라
+ *  경계값으로 읽어도 되는 자릿수는 **소수 둘째 자리**다. */
+it('접은 뒤 대상이 화면에 남는 대역 — 보장이 아니다', () => {
+  const lines: string[] = ['화면에 남는 대역 (pivot 둘레 8방위 · 요 0~180° 훑기):']
+  const bounds: number[] = []
   for (const band of BANDS) {
-    const a2 = build(1200, 800, band.u1, band.u2)
-    const an = a2.lift.an, pv = orbitPivot(a2)
-    const b2 = snap(a2.pose)
+    const app = build(1200, 800, band.u1, band.u2)
+    const an = app.lift.an, pv = orbitPivot(app)
+    const b2 = snap(app.pose)
     const R = Math.hypot(b2.p.x - pv.x, b2.p.z - pv.z)
     let bound: number | null = null
     for (let k = 1; k <= 200 && bound === null; k++) {
       const rho = R * k * 0.01
       for (let d = 0; d <= 628; d += 40) {
-        setPose(a2, { p: { ...b2.p }, q: { ...DRAW_POSE.q } })
-        orbitBy(a2, -d, -120)
-        const f = levelPose(b2, a2.pose, pv)
+        setPose(app, { p: { ...b2.p }, q: { ...DRAW_POSE.q } })
+        orbitBy(app, -d, -120)
+        const f = levelPose(b2, app.pose, pv)
         let leaves = false
         for (let i = 0; i < 8; i++) {
           const th = i * Math.PI / 4
@@ -143,11 +157,14 @@ it('접기가 궤도 전으로 되돌리는가 — 화각 셋 × 궤도 넷', ()
     }
     const fw = an.f! / 1200
     lines.push(`  ${band.name} f/W=${fw.toFixed(2)}: 퍼짐/거리 **${bound === null ? '>2.00' : bound.toFixed(2)}** 부터 나간다` +
-      `   (닫힌 예측 1/(2·f/W) = ${(1 / (2 * fw)).toFixed(2)} — 화면 절반이 f·ρ/R을 넘는 자리)`)
-    expect(bound).not.toBeNull()          // 어딘가에서는 나간다 — 「보장」이 아니라는 증거
-    expect(bound!).toBeLessThan(1 / (2 * fw) * 1.05)   // 닫힌 예측 아래다(가로만 본 상한이므로)
+      `   (닫힌 예측 1/(2·f/W) = ${(1 / (2 * fw)).toFixed(2)})`)
+    expect(bound).not.toBeNull()                       // 어딘가에서는 나간다 — 「보장」이 아니다
+    expect(bound!).toBeLessThan(1 / (2 * fw) * 1.05)   // 닫힌 예측 아래(가로만 본 상한이다)
+    bounds.push(Number(bound!.toFixed(2)))
   }
-
+  // ⚠ **실측값을 함께 박는다** — 상한 단언만 두면 「더 일찍 나가게」 회귀해도 통과한다
+  //    (2차 리뷰어 [12]). 판별력은 이 세 줄에서 나온다.
+  expect(bounds).toEqual([0.68, 0.38, 0.15])
   // eslint-disable-next-line no-console
   console.log(lines.join('\n'))
 })
