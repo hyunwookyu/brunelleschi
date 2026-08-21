@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { liftAll, closestOnLineToRay, axisOfStroke } from '../src/core/lift'
 import { analyze, project, DRAW_POSE } from '../src/core/camera'
-import { constructedDoc, approxPt } from './fixtures'
+import { builder, constructedDoc, approxPt } from './fixtures'
 import { v3, norm3 } from '../src/core/vec'
 
 describe('리프팅 — 확정 후 경로에 판정이 없다(원칙 c)', () => {
@@ -193,7 +193,15 @@ describe('축 배정 — 스냅과 같은 기준으로 재계산', () => {
     const an = analyze(constructedDoc().doc)
     expect(axisOfStroke(an, DRAW_POSE, { x: 500, y: 300 }, { x: 700, y: 350 })).toBe('vp0')
     expect(axisOfStroke(an, DRAW_POSE, { x: 500, y: 500 }, { x: 500, y: 300 })).toBe('V')
-    expect(axisOfStroke(an, DRAW_POSE, { x: 200, y: 600 }, { x: 700, y: 600 })).toBe('H')
+    // ⚠ H는 2점 프레임에 없다(web2-03 지시 1) — 화면 수평 획은 2점에서 어느 축도 아니다.
+    //    앱에서는 도달할 수 없는 상태이기도 하다: 축 스냅이 늘 셋 중 하나로 보내고,
+    //    수평을 먼저 그으면 1점으로 잠겨 두 번째 소실점이 안 선다(실측 · lock1pt).
+    expect(axisOfStroke(an, DRAW_POSE, { x: 200, y: 600 }, { x: 700, y: 600 })).toBeNull()
+    // 1점 문서에서는 H가 진짜 축이다
+    const b1 = builder()
+    b1.add(100, 400, 1100, 400); b1.add(500, 500, 600, 475)
+    const one = analyze(b1.doc)
+    expect(axisOfStroke(one, DRAW_POSE, { x: 200, y: 600 }, { x: 700, y: 600 })).toBe('H')
   })
 
   it('반례: 어디에도 안 붙으면 자유', () => {

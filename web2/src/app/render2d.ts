@@ -6,7 +6,7 @@
 
 import type { App } from './state'
 import { isDrawPose, isEraser, activeGrade } from './state'
-import { screenAxes, project, projectSeg, groundAxes } from '../core/camera'
+import { vpMarks, project, projectSeg, groundAxes } from '../core/camera'
 import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
 import { MAT, gradeOf, rng32, widthOf, widthOfMat } from '../core/material'
@@ -143,8 +143,7 @@ export function draw2d(
   }
 
   // 소실점 표식 — 현재 포즈 기준(불변식 i: 표시=스냅=그리드가 같은 출처)
-  for (const ax of screenAxes(an, app.pose)) {
-    if (!ax.vp) continue
+  for (const ax of vpMarks(an, app.pose)) {
     if (ax.vp.x < x0 - 50 || ax.vp.x > x1 + 50 || ax.vp.y < y0 - 50 || ax.vp.y > y1 + 50) continue
     ctx.strokeStyle = COL.vpMark
     ctx.lineWidth = 1 * is

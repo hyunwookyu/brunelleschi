@@ -7,7 +7,7 @@
 
 import type { CamPose } from './types'
 import { C } from './constants'
-import { project, rayThrough, screenAxes } from './camera'
+import { project, rayThrough, vpMarks } from './camera'
 import type { LiftResult } from './lift'
 import {
   type Pt, type V3, pt, add3, sub3, mul3, dot3, dist2, dist3, len3,
@@ -133,7 +133,7 @@ export function osnap(
   // p3는 null이다: 소실점은 무한원에 있어 3D 점이 아니다. 방향으로만 쓴다.
   // **화면 밖이어도 목록에서 안 뺀다** — 팬으로 들어오면 반경 검사가 알아서 받는다.
   if (set.kinds.vp) {
-    for (const ax of screenAxes(an, pose)) if (ax.vp) push('vp', ax.vp, null)
+    for (const ax of vpMarks(an, pose)) push('vp', ax.vp, null)
   }
 
   const size3 = geomSize3(lift)

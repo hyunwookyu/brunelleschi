@@ -60,6 +60,25 @@ export const P1_LOCK_REASON = '화면 수평선을 그은 이상 1점 투시다 
  *  **세계 원점은 눈이 아니라 지면이다.** 눈이 원점이면 지면이 눈을 지나 퇴화한다. */
 export const DRAW_POSE: CamPose = { p: v3(0, C.EYE_HEIGHT, 0), q: QID }
 
+/** **획이 그 소실점을 향하는가** — sin(획 방향 ↔ 시작점→소실점 방향).
+ *
+ *  «붙었다»의 판정은 `≤ C.VP_DIR_RATIO`이고, 재는 자리가 둘이다:
+ *  `classifyNext`(새 소실점을 만드는가)와 `lift.ts`의 `axisOfStroke`(어느 축인가).
+ *  **그래서 여기 하나에서만 계산한다**(PITFALLS #54: «저장하지 않는다»로는 부족하고
+ *  «한 함수에서만 계산한다»까지 간다). 두 자리에 같은 식을 두고 「함께 고쳤다」로 닫으면
+ *  다음에 한쪽만 고치는 사람이 그대로 갈린다.
+ *
+ *  ⚠ 나누는 것은 **시작점에서 소실점까지의 거리**다. 획 길이로 나누던 것이 결함이었다 —
+ *  길수록 절대 허용이 커져, 길이 875 획이 12° 빗나가고 향까지 반대인데 붙었다(web2-03 지시 2).
+ *  겹친 자리(소실점이 시작점 위)면 방향이 없다 → `null`. */
+export function vpDeviation(vp: Pt, a: Pt, b: Pt): number | null {
+  const dx = b.x - a.x, dy = b.y - a.y
+  const L = Math.hypot(dx, dy)
+  const toVp = Math.hypot(vp.x - a.x, vp.y - a.y)
+  if (L < 1e-12 || toVp < 1e-9) return null
+  return Math.abs((vp.x - a.x) * dy - (vp.y - a.y) * dx) / (L * toVp)
+}
+
 /** 획 후보가 작도 국면에서 무엇이 되는지 — analyze와 미리보기가 같은 함수를 쓴다
  *  (측정 경로와 앱 경로를 가르지 않는다) */
 export function classifyNext(
@@ -92,25 +111,33 @@ export function classifyNext(
   }
   if (an.constructionDone) return { role: 'content' }
   if (L < C.MIN_DIR_LEN_RATIO * an.diag) return { role: 'content' }
-  // 기존 소실점에 붙는가 — 수직거리 ÷ 획 길이. 임계로 나눠 «몇 배 안쪽인가»로 견준다.
+  // 기존 소실점에 붙는가 — **수직거리 ÷ 시작점에서 소실점까지의 거리**. 그것이 곧 sin(각도)다.
+  //
+  // ⚠ 초판은 **획 길이**로 나눴다(`d / L`). 그러면 획이 길수록 절대 허용이 커진다 —
+  //   실측: (500,440)→(−375,430) 획(길이 875)이 오른쪽 vp0과 **6.37°**, 게다가 향이
+  //   반대인데도 `d/L = 0.051 ≤ 0.06`으로 「vp0에 붙었다」가 됐다. 그래서 새 소실점을
+  //   못 만들고 2점이 안 섰다. 나눌 것을 틀린 것이고, `PARALLEL_PX`와 **같은 형태**다
+  //   (비로 재야 할 것과 절대로 재야 할 것을 바꿔 잡았다 — web2-03 지시 2-d).
   let vpScore = Infinity
   for (const v of an.vps) {
-    const d = Math.abs((v.x - a.x) * dy - (v.y - a.y) * dx) / L
-    vpScore = Math.min(vpScore, d / L / C.VP_DIR_RATIO)
+    const dev = vpDeviation(v, a, b)
+    if (dev === null) { vpScore = 0; break }
+    vpScore = Math.min(vpScore, dev / C.VP_DIR_RATIO)
   }
-  // 화면 평행이면 축 스냅이 붙는다 → 기존 축, 내용 획.
-  // **화면 수평은 그것으로 끝이 아니다** — H 축의 소실점이 무한원이라는 선언이므로
-  // (이론서 2.2) 여기서 1점이 확정된다. `screenAxis`가 그 신호이고 analyze가 접는다.
-  //
-  // ⚠ **기존 소실점에 더 잘 맞으면 선언이 아니다.** 소실점이 아주 멀면(|Δx| ≳ 5000px)
-  // 그 소실점을 향한 깊이선이 화면에서 2.87°(`SCREEN_PARALLEL_RATIO`) 안에 들어온다 —
-  // 그것을 「H축 선언」으로 읽으면 사람이 2점을 그리는 중에 문서가 1점으로 잠긴다
-  // (2026-08-21 2차 리뷰어 지적). 선언은 **H가 더 잘 맞을 때만**이다.
-  const hScore = Math.abs(dy) / L / C.SCREEN_PARALLEL_RATIO
-  const vScore = Math.abs(dx) / L / C.SCREEN_PARALLEL_RATIO
-  if (hScore <= 1) return vpScore < hScore ? { role: 'content' } : { role: 'content', screenAxis: 'H' }
-  if (vScore <= 1) return { role: 'content', screenAxis: 'V' }
+  // ── 지평선과 평행한가 — **처짐을 px로 잰다**(web2-03 지시 2) ──────────────
+  // 비(2.87°)로 재던 초판은 「그 비가 뜻하는 소실점 거리」가 시작점 높이에 비례해서
+  // 커졌다 — 지평선 가까이서 그은 획은 **1W 거리의 소실점조차** 수평으로 읽혔다.
+  // 여기서 재는 것은 획 자신의 끝점 처짐이고, 그것이 곧 「이 획으로 그 소실점을 무한원과
+  // 구별할 수 있는가」다(처짐 d = h·R/D). 축 스냅이 H로 붙인 획은 d가 정확히 0이다.
+  const drop = Math.abs(dy)
+  const run = Math.abs(dx)
+  if (drop <= C.PARALLEL_PX && run > drop) return { role: 'content', screenAxis: 'H' }
+  if (run <= C.PARALLEL_PX && drop > run) return { role: 'content', screenAxis: 'V' }
+  // 화면 평행 대역 안이지만 처짐이 있는 획은 **아래로 흘려보낸다** — 소실점을 만들 수 있다.
+  // 기존 소실점에 붙으면 그쪽이 이긴다(바로 아래). 축 스냅은 종전대로 가장 가까운 축이다.
   if (vpScore <= 1) return { role: 'content' }
+  // 화면 세로에 가까운 획은 소실점을 못 만든다 — 지평선과 만나는 점이 화면 밖 무한대로 간다
+  if (run / L <= C.SCREEN_PARALLEL_RATIO) return { role: 'content', screenAxis: 'V' }
   // 안 붙으면 새 소실점 — 단, 실수로 그은 작은 선은 카메라를 안 건드린다
   if (L < C.VP_MIN_LEN_RATIO * an.diag) {
     return { role: 'content', reason: '소실점을 정의하기엔 짧다' }
@@ -153,7 +180,19 @@ export function analyze(doc: Doc): Analysis {
     if (cls.screenAxis === 'H') screenHDeclared = true
   }
 
-  const principal = horizonY !== null ? pt(W / 2, horizonY) : null
+  // ── 주점 ────────────────────────────────────────────────────────────
+  // **1점에서는 깊이 소실점이 곧 주점이다.** 주점은 눈에서 화상면에 내린 수선의 발이고,
+  // 화상면에 수직인 방향(=1점의 깊이축)의 소실점이 바로 그 점이다(이론서 6.3·16.2).
+  //
+  // 초판은 늘 `W/2`였고, 그래서 사람이 만든 소실점이 화면 가운데가 아니면 **깊이축이
+  // 화면 가로축(H)과 직교하지 않았다** — 실측 `vp0·H = 73.9677°`(vp0=900·주점 600).
+  // 화면에서는 안 보이고 **탑뷰에서만** 보인다: 1점 상자의 바닥이 평행사변형이 된다.
+  //
+  // ⚠ **2점에서는 그대로 `W/2`다.** 그때는 주점이 자유롭지 않다 — f² = |PV₁||PV₂|가
+  // 주점을 알고 있어야 서고(이론서 6.2), 「주점 = 이미지 중심」이 그 가정이다(16.2 · AS-C5).
+  // 1점은 그 식을 안 쓰므로 주점이 자유롭고, 그 자유를 **직교에 쓴다**(이 도구의 전제).
+  const principal = horizonY === null ? null
+    : pt(vps.length === 1 ? vps[0]!.x : W / 2, horizonY)
   let f: number | null = null
   let fSource: Analysis['fSource'] = 'none'
   if (principal) {
@@ -168,6 +207,18 @@ export function analyze(doc: Doc): Analysis {
     }
   }
 
+  // ── 축 후보 = **정규직교 프레임 그 자체** (web2-03 지시 1) ──────────────
+  // 「스냅할 수 있는 방향」과 「상자의 모서리 방향」을 갈라 두면 그 틈으로 **사람이 만들지
+  // 않은 축**이 들어온다. 실측(2점 · 지평선+깊이선 둘):
+  //   · 사람이 만든 소실점 2 → 궤도 시점의 ✕ 표식 **3개**(여분은 `H`)
+  //   · `vp0·H = 52.2388°` · `vp1·H = 142.2388°` — 둘 다 직교가 아니다
+  //   · 축 스냅이 커서 360°/5°를 훑을 때 **72방향 중 10을 H가 가져갔다**
+  // 사람이 「보조 소실점처럼 보인다」고 한 것이 그 H다.
+  //
+  // 그래서 **2점부터는 H를 안 넣는다** — 화상면에 평행한 가로 방향은 실재하지만
+  // 그 상자의 모서리가 아니다. 프레임은 {vp0, vp1, V}이고 셋뿐이다.
+  // 1점의 프레임은 {vp0, H, V}이고, 위 주점 보정이 그 셋을 직교로 만든다.
+  // 소실점이 아직 없으면 화면 가로·세로만 있다 — 깊이가 안 정해졌으니 프레임이 아니다.
   const axes: AxisDir[] = []
   if (principal && f !== null) {
     vps.forEach((v, i) => {
@@ -176,7 +227,7 @@ export function analyze(doc: Doc): Analysis {
         dir: norm3(v3(v.x - principal.x, principal.y - v.y, -f!)),
       })
     })
-    axes.push({ id: 'H', dir: v3(1, 0, 0) })
+    if (vps.length < 2) axes.push({ id: 'H', dir: v3(1, 0, 0) })
     axes.push({ id: 'V', dir: v3(0, 1, 0) })
   }
 
@@ -215,6 +266,24 @@ export function screenAxes(an: Analysis, pose: CamPose): ScreenAxis[] {
         dir: null,
       })
     }
+  }
+  return out
+}
+
+/** **✕ 표식이 붙는 소실점** — 표시와 오스냅이 같은 목록을 쓴다(불변식 i).
+ *
+ *  사람이 **만든** 소실점(vp0·vp1)만이다. 화면 평행 축(H·V)도 궤도 시점에서는 유한한
+ *  수렴점을 갖지만 그것은 **사영의 산물**이지 작도가 정한 점이 아니다 —
+ *  거기에 ✕를 찍으면 「사용자가 만들지 않은 소실점이 하나 더 생긴다」로 보인다
+ *  (2026-08-21 실측: 1점 궤도에서 vp0(1444,400) 옆에 **H(−1869,400)**가 함께 그려졌다).
+ *
+ *  ⚠ **축 스냅(`snapDir`)은 이 목록이 아니라 `screenAxes` 전부를 쓴다** — H는 1점에서
+ *  진짜 축이고 그 방향으로 그을 수 있어야 한다. 「그릴 수 있는 방향」과 「찍힌 점」은
+ *  다른 물음이다. */
+export function vpMarks(an: Analysis, pose: CamPose): { id: AxisId; vp: Pt }[] {
+  const out: { id: AxisId; vp: Pt }[] = []
+  for (const ax of screenAxes(an, pose)) {
+    if (ax.vp && (ax.id === 'vp0' || ax.id === 'vp1')) out.push({ id: ax.id, vp: ax.vp })
   }
   return out
 }
@@ -275,6 +344,22 @@ export function projectSeg(an: Analysis, pose: CamPose, A: V3, B: V3): [Pt, Pt] 
   }
   const to = (c: V3) => pt(an.principal!.x + an.f! * c.x / -c.z, an.principal!.y - an.f! * c.y / -c.z)
   return [to(a), to(b)]
+}
+
+/** **그 차수의 정규직교 프레임** — 세 축이고 서로 직교한다(web2-03 지시 1-d).
+ *
+ *    1점  {깊이(vp0), H, V}   — 깊이 소실점이 곧 주점이므로 깊이 = (0,0,−1)
+ *    2점  {vp0, vp1, V}       — H는 프레임 밖이다(화상면에 평행한 가로 방향이고 상자
+ *                               모서리가 아니다). **후보 목록에서도 뺀다.**
+ *
+ *  ⚠ 이 함수와 `an.axes`는 **같은 것을 내야 한다** — 목록이 둘로 갈리면 그것이 #54다.
+ *  `test/axes.test.ts`가 두 목록을 대조한다. 축이 모자라면 null이고 0을 억지로 안 낸다. */
+export function frameAxes(an: Analysis): AxisDir[] | null {
+  const get = (id: AxisId) => an.axes.find(a => a.id === id)
+  const V = get('V'), H = get('H'), v0 = get('vp0'), v1 = get('vp1')
+  if (!V || !v0) return null
+  if (v1) return [v0, v1, V]
+  return H ? [v0, H, V] : null
 }
 
 /** 지면 격자의 두 방향 — 세계의 가로축 둘(방향의 y가 0인 축).

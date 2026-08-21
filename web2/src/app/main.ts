@@ -397,7 +397,7 @@ function frame() {
 requestAnimationFrame(frame)
 
 // e2e 진단 통로 — 앱과 같은 함수·같은 상태를 본다(측정 경로와 앱 경로를 가르지 않는다)
-import { project, screenAxes } from '../core/camera'
+import { project, screenAxes, vpMarks, frameAxes } from '../core/camera'
 
 const diag = {
   /** 승격 획 전부의 현재 포즈 재사영 — 불변식 k 확인용 */
@@ -411,6 +411,18 @@ const diag = {
     return out
   },
   screenAxes: () => screenAxes(app.lift.an, app.pose),
+  /** ✕ 표식이 실제로 그려지는 소실점 — render2d·osnap과 **같은 함수**다(web2-03 지시 1) */
+  vpMarks: () => vpMarks(app.lift.an, app.pose),
+  /** 그 차수의 정규직교 프레임 — 축은 셋이고 서로 직교한다 */
+  frame: () => {
+    const fr = frameAxes(app.lift.an)
+    if (!fr) return null
+    const d = (a: any, b: any) => a.x * b.x + a.y * b.y + a.z * b.z
+    return {
+      ids: fr.map(a => a.id),
+      dots: [d(fr[0]!.dir, fr[1]!.dir), d(fr[0]!.dir, fr[2]!.dir), d(fr[1]!.dir, fr[2]!.dir)],
+    }
+  },
   summary: () => ({
     horizonY: app.lift.an.horizonY,
     vps: app.lift.an.vps.map(v => ({ x: v.x, y: v.y })),

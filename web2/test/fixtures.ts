@@ -43,3 +43,21 @@ export function constructedDoc(): DocBuilder {
 
 export const approx = (a: number, b: number, eps = 1e-6) => Math.abs(a - b) <= eps
 export const approxPt = (a: Pt, b: Pt, eps = 1e-6) => approx(a.x, b.x, eps) && approx(a.y, b.y, eps)
+
+/** **실제 작도 대역의 픽스처** — 소실점이 화면 폭의 두세 배 밖에 있는 구도(web2-03 지시 2-d).
+ *
+ *  `constructedDoc()`의 소실점은 `u1=+300`(0.25W) · `u2=−500`(0.4W)로 **화면 안**이다.
+ *  건축 투시도의 소실점은 보통 화면 폭의 2~3배 밖이고, 그 대역이 픽스처에 없어서
+ *  「먼 소실점이면 1점으로 잠긴다」가 단위·종단 어디서도 안 걸렸다.
+ *  여기는 `u1=+3000`(2.5W) · `u2=−3600`(3W)다. f² = 3000·3600 → f ≈ 3286.
+ *
+ *  소실점은 **찍어서** 만든다 — 그 거리의 깊이선을 화면 안에서 그으면 처짐이 작아
+ *  픽스처가 임계를 시험하게 되고, 그러면 「구도를 재는 픽스처」가 아니라
+ *  「임계를 재는 픽스처」가 된다(그 시험은 `farvp.test.ts`가 따로 한다). */
+export function wideDoc(): DocBuilder {
+  const b = builder()
+  b.add(100, 400, 1100, 400)        // 지평선
+  b.add(3600, 400, 3600, 400)       // vp0 = +3000 = 2.5W  (찍기)
+  b.add(-3000, 400, -3000, 400)     // vp1 = −3600 = 3W    (찍기)
+  return b
+}

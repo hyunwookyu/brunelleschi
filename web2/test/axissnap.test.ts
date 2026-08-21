@@ -70,7 +70,8 @@ describe('5 — 임의 방향으로 그어도 축 셋 중 하나가 된다', () 
         defaultOsnap())
       if (e.axis) seen.add(e.axis)
     }
-    expect([...seen].sort()).toEqual(['H', 'V', 'vp0', 'vp1'])
+    // **셋이다**(web2-03 지시 1-d). 넷이던 시절의 H가 사람이 안 만든 축이었다.
+    expect([...seen].sort()).toEqual(['V', 'vp0', 'vp1'])
   })
 })
 

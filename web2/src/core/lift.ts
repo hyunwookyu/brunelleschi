@@ -7,7 +7,7 @@ import type { Doc, Stroke, CamPose } from './types'
 import { C } from './constants'
 import {
   analyze, type Analysis, type AxisId, DRAW_POSE,
-  screenAxes, project, rayThrough, pointOnGround, type Ray,
+  screenAxes, project, rayThrough, pointOnGround, vpDeviation, type Ray,
 } from './camera'
 import {
   type Pt, type V3, add3, sub3, mul3, dot3, dist2, norm3,
@@ -43,8 +43,11 @@ export function closestOnLineToRay(P0: V3, a: V3, r: Ray): V3 | null {
 }
 
 /** 획의 축 배정 — 확정 좌표가 이미 스냅돼 있으므로(원칙 d) 재계산은 안정적이다.
- *  기준은 스냅과 같다: 유한 축은 수직거리/길이 ≤ VP_DIR_RATIO,
- *  화면 평행 축은 벗어남/길이 ≤ SCREEN_PARALLEL_RATIO. 가장 가까운 것. */
+ *  기준은 스냅과 같다 — 둘 다 **각도**다: 유한 축은 sin(획↔소실점 각) ≤ VP_DIR_RATIO
+ *  (수직거리 ÷ **시작점에서 소실점까지의 거리**), 화면 평행 축은 sin(획↔축방향 각)
+ *  ≤ SCREEN_PARALLEL_RATIO. 가장 가까운 것.
+ *  ⚠ 이것은 **배정**의 물음이고, 「새 소실점을 만드는가」(`classifyNext`)와 다르다 —
+ *  그쪽은 처짐을 px로 잰다(`PARALLEL_PX`). 같은 임계로 두 물음을 재던 것이 결함이었다. */
 export function axisOfStroke(an: Analysis, pose: CamPose, a: Pt, b: Pt): AxisId | null {
   const dx = b.x - a.x, dy = b.y - a.y
   const L = Math.hypot(dx, dy)
@@ -54,7 +57,11 @@ export function axisOfStroke(an: Analysis, pose: CamPose, a: Pt, b: Pt): AxisId 
   for (const ax of screenAxes(an, pose)) {
     let dev: number, tol: number
     if (ax.vp) {
-      dev = Math.abs((ax.vp.x - a.x) * dy - (ax.vp.y - a.y) * dx) / (L * L)
+      // **판정식은 `camera.ts`의 `vpDeviation` 하나다**(원칙 a · PITFALLS #54) —
+      // 여기에 같은 식을 다시 쓰면 두 자리가 언젠가 갈린다.
+      const d = vpDeviation(ax.vp, a, b)
+      if (d === null) continue
+      dev = d
       tol = C.VP_DIR_RATIO
     } else if (ax.dir) {
       // 화면 방향 축 — 획 방향과의 사인 편차

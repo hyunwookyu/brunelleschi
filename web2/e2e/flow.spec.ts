@@ -97,6 +97,16 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(s.fSource).toBe('two-vp')
   expect(Math.abs(s.f - Math.sqrt(150000))).toBeLessThan(1e-6)
 
+  // ── 축은 셋이고 서로 직교한다 (web2-03 지시 1) ──────────────────────
+  // 사람이 만든 소실점은 둘인데 **✕ 표식이 셋**이었다 — 여분은 화면 평행 가로축 `H`이고,
+  // 작도 시점에서는 무한원이라 안 보이다가 **궤도하면 나타났다**(보조 소실점처럼 보인다).
+  // 그리고 축 스냅이 거기 걸려 다른 방향 선들이 그어졌다.
+  const frame = await page.evaluate(() => (window as any).__b2.diag.frame())
+  expect(frame.ids.sort()).toEqual(['V', 'vp0', 'vp1'])       // 넷이 아니라 셋
+  for (const d of frame.dots) expect(Math.abs(d)).toBeLessThan(1e-12)  // 서로 직교
+  const marksDraw = await page.evaluate(() => (window as any).__b2.diag.vpMarks().map((m: any) => m.id))
+  expect(marksDraw.sort()).toEqual(['vp0', 'vp1'])
+
   // 내용 획 1 — 모서리에서 세운 수직. 아래점은 지면이고 높이는 그 선의 길이가 정한다.
   await drawLine(page, 500, 500, 500, 300)
   s = await summary(page)
@@ -189,34 +199,45 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await settle(page)
   expect(await inkPixels(page, 492, 442, 512, 462)).toBeGreaterThan(baseInk + 5) // 표식 픽셀 증가
 
-  // 선분 위 시작 — 수직획 사영 위 (500,450)에서 수평으로 → 3D로 올라간다
+  // 선분 위 시작 — 수직획 사영 위 (500,450)에서 **vp1 축**으로 → 3D로 올라간다.
+  // ⚠ 원래 「수평으로」였다. 2점 프레임은 {vp0, vp1, V} 셋이고 화면 수평은 축이 아니다
+  //    (web2-03 지시 1) — 축 스냅이 늘 셋 중 하나로 보내므로 그 획은 vp1로 간다.
+  //    vp1=(100,400)이므로 (500,450)을 지나는 그 축선은 y = 450 + (x−500)·0.125다.
   const liftedBefore = (await summary(page)).lifted
-  await drawLine(page, 502, 450, 650, 452) // 오스냅이 (500,450)으로, 축 스냅이 수평으로
+  // ⚠ 끝점 자리를 **재서** 골랐다: (650,470)은 오스냅이 먼저 잡아(점이 방향을 이긴다)
+  //    자유 방향이 되고 대기로 남았다. (680,476)이 vp1 축으로 확정된다(실측).
+  await drawLine(page, 502, 450, 680, 476)
   s = await summary(page)
   expect(s.lifted).toBe(liftedBefore + 1)
+  expect(await page.evaluate(() => {
+    const b2 = (window as any).__b2
+    const st = b2.app.doc.strokes[b2.app.doc.strokes.length - 1]
+    return b2.app.lift.lifted.get(st.id)?.axis
+  })).toBe('vp1')
+
 
   // ── 3단계: 자동 분할 + 지우개 ────────────────────────────────────────
-  // 수평획을 관통하는 세로획 → T자에서 수평획이 갈린다
-  await drawLine(page, 600, 450, 600, 520)
+  // 그 획을 관통하는 세로획 → T자에서 갈린다. 축선 위 x=600 → y=462.5
+  await drawLine(page, 600, 462.5, 600, 530)
   s = await summary(page)
   const liftedT = s.lifted
-  expect(await glPixels(page, 612, 444, 645, 457)).toBeGreaterThan(5) // 오른쪽 조각이 있다
+  expect(await glPixels(page, 612, 458, 660, 478)).toBeGreaterThan(5) // 오른쪽 조각이 있다
 
   // 지우개 — 오른쪽 조각만 지운다 (기본 심 HB → 연필 지우개)
   await page.click('#btn-eraser-pencil')
-  await page.mouse.move(630, 450)
+  await page.mouse.move(630, 466.25)
   await page.mouse.down()
   await page.mouse.up()
   await settle(page)
   s = await summary(page)
   expect(s.lifted).toBe(liftedT) // 조각 교체 — 남은 왼쪽 + 세로획은 그대로
-  expect(await glPixels(page, 612, 444, 645, 457)).toBe(0) // 지운 자리가 비었다
-  expect(await glPixels(page, 500, 444, 596, 457)).toBeGreaterThan(5) // 왼쪽 조각은 남았다
+  expect(await glPixels(page, 612, 458, 660, 478)).toBe(0) // 지운 자리가 비었다
+  expect(await glPixels(page, 505, 444, 596, 466)).toBeGreaterThan(5) // 왼쪽 조각은 남았다
 
   // 실행취소 — 지우개 한 번이 통째로 돌아온다
   await page.keyboard.press('Control+z')
   await settle(page)
-  expect(await glPixels(page, 612, 444, 645, 457)).toBeGreaterThan(5)
+  expect(await glPixels(page, 612, 458, 660, 478)).toBeGreaterThan(5)
   await page.click('#btn-pencil')   // 그리기로 복귀 — 기본 도구는 연필이다(지시 4-h)
 
   // ── 4단계: 화면 줌(뷰 오프셋) · 뷰 큐브 ─────────────────────────────
@@ -258,6 +279,27 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   })
   expect(Math.abs(rightY)).toBeLessThan(1e-6)
   expect(await glPixels(page, 0, 0, 1200, 800)).toBeGreaterThan(20) // 형태가 보인다
+
+  // **궤도한 시점에서도** ✕ 표식은 사람이 만든 소실점 둘뿐이다(web2-03 지시 1).
+  // 여기가 여분의 소실점이 보이던 자리다 — 화면 평행 축이 유한한 수렴점을 갖는다.
+  const orbitAxes = await page.evaluate(() => (window as any).__b2.diag.screenAxes().map((a: any) => a.id))
+  expect(orbitAxes.sort()).toEqual(['V', 'vp0', 'vp1'])   // 축 후보 자체가 셋이다
+
+  /** 지금 포즈에서 ✕ 표식이 붙는 축 — 앱이 그리는 목록 그대로 */
+  const markIds = () => page.evaluate(() => (window as any).__b2.diag.vpMarks().map((m: any) => m.id))
+  // 큐브 면을 눌러 선 시점은 vp0 정면이라 vp1이 무한원으로 간다 → 표식 하나(실측).
+  // **요점은 개수가 아니라 «H가 없다»는 것**이다 — 고치기 전에는 여기에 H가 함께 찍혔다.
+  expect(await markIds()).toEqual(['vp0'])
+
+  // 일반 궤도(면 정렬이 아닌 자세)에서도 마찬가지다 — 가운데 버튼 끌기
+  await page.mouse.move(600, 400)
+  await page.mouse.down({ button: 'middle' })
+  await page.mouse.move(660, 430, { steps: 6 })
+  await page.mouse.up({ button: 'middle' })
+  await settle(page)
+  const gen = await markIds()
+  expect(gen.length).toBeGreaterThan(0)
+  for (const id of gen) expect(['vp0', 'vp1']).toContain(id)   // 사람이 만든 것만
 
   await page.click('#btn-draw-view')
 
