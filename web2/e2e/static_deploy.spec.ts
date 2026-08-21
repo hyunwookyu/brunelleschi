@@ -90,7 +90,11 @@ test.beforeAll(async () => {
 })
 
 test.afterAll(async () => {
-  await new Promise<void>(r => server?.close(() => r()))
+  // ⚠ 빌드본이 없어 beforeAll이 건너뛴 경우 server가 없다. 그때 `server?.close(() => r())`는
+  // **콜백이 아예 안 불려** 이 훅이 60초 멎고, 그 실패가 엉뚱한 시험 이름에 붙는다
+  // (빌드 없이 돌려 실제로 겪었다 — 건너뛰기가 실패로 새어 나왔다).
+  if (!server) return
+  await new Promise<void>(r => server.close(() => r()))
 })
 
 test.beforeEach(() => { oldDeploy = false; deployMark = '' })
