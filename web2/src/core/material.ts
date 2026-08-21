@@ -30,7 +30,14 @@ export const MAT: Record<Grade, MatParams> = {
   'INK': { color: '#101014', colorNum: 0x101014, width: 1.5, alpha: 1.0, grain: 0, rgb: [0.06, 0.06, 0.08] },
 }
 
+/** 연필 심 — 펜(잉크)을 뺀 경도만. 홀더펜 창에 도는 것이 이 목록이다(4-e). */
+export const PENCIL_GRADES: Grade[] = ['2H', 'H', 'F', 'HB', 'B', '2B']
+
 export const gradeOf = (s: Stroke): Grade => s.mat?.grade ?? 'HB'
+
+/** 그 획의 굵기 px — 제도펜은 니브가 정하고, 연필은 경도가 정한다.
+ *  **출처는 여기 하나다** — 2D 오버레이와 three.js가 같은 값을 써야 한다. */
+export const widthOf = (s: Stroke): number => s.mat?.w ?? MAT[gradeOf(s)].width
 export const isInk = (s: Stroke): boolean => gradeOf(s) === 'INK'
 
 /** 재현 가능한 입자용 — 시드 고정 LCG (Math.random 금지 규약) */

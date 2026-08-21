@@ -7,7 +7,7 @@ import { Line2 } from 'three/addons/lines/Line2.js'
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js'
 import type { App } from './state'
-import { MAT, GRADES, gradeOf } from '../core/material'
+import { MAT, GRADES, gradeOf, widthOf } from '../core/material'
 import type { Grade } from '../core/types'
 
 export interface R3D {
@@ -15,8 +15,10 @@ export interface R3D {
   scene: THREE.Scene
   camera: THREE.PerspectiveCamera
   group: THREE.Group
-  /** 재료별 재질 — 화면 고정 굵기(worldUnits=false), 경도별 색·굵기·투명도 */
-  materials: Record<Grade, LineMaterial>
+  /** 재질 — 화면 고정 굵기(worldUnits=false), 경도별 색·투명도.
+   *  키가 `경도:굵기`인 이유는 제도펜 니브다(4-f) — 같은 잉크라도 굵기가 다르면 다른 재질이다.
+   *  경도 기본 굵기는 처음부터 넣어 둔다(옛 문서·연필은 그 자리에서 맞는다). */
+  materials: Map<string, LineMaterial>
   /** 캔버스 CSS 크기 — NDC 매핑 기준 (문서 프레임과 다를 수 있다) */
   W: number
   H: number
@@ -34,26 +36,37 @@ export function initR3D(canvas: HTMLCanvasElement, W: number, H: number, dpr: nu
   camera.matrixAutoUpdate = false
   const group = new THREE.Group()
   scene.add(group)
-  const materials = {} as Record<Grade, LineMaterial>
-  for (const g of GRADES) {
-    const m = MAT[g]
-    materials[g] = new LineMaterial({
-      color: m.colorNum,
-      linewidth: m.width, // px — 거리에 따라 안 변한다(원칙 e)
-      worldUnits: false,
-      transparent: m.alpha < 1,
-      opacity: m.alpha,
-    })
-    materials[g].resolution.set(W, H)
-  }
-  return { renderer, scene, camera, group, materials, W, H }
+  const materials = new Map<string, LineMaterial>()
+  const r: R3D = { renderer, scene, camera, group, materials, W, H }
+  for (const g of GRADES) matFor(r, g, MAT[g].width)
+  return r
+}
+
+const matKey = (g: Grade, w: number) => `${g}:${w.toFixed(3)}`
+
+/** 경도·굵기 짝의 재질 — 없으면 만든다. 화면 크기는 만든 그 자리에서 맞춘다. */
+function matFor(r: R3D, g: Grade, w: number): LineMaterial {
+  const key = matKey(g, w)
+  const hit = r.materials.get(key)
+  if (hit) return hit
+  const m = MAT[g]
+  const lm = new LineMaterial({
+    color: m.colorNum,
+    linewidth: w, // px — 거리에 따라 안 변한다(원칙 e)
+    worldUnits: false,
+    transparent: m.alpha < 1,
+    opacity: m.alpha,
+  })
+  lm.resolution.set(r.W, r.H)
+  r.materials.set(key, lm)
+  return lm
 }
 
 export function resize3d(r: R3D, W: number, H: number, dpr: number) {
   r.W = W; r.H = H
   r.renderer.setPixelRatio(dpr)
   r.renderer.setSize(W, H)
-  for (const g of GRADES) r.materials[g].resolution.set(W, H)
+  for (const m of r.materials.values()) m.resolution.set(W, H)
 }
 
 /** 승격 기하 갱신 — 문서가 바뀔 때마다 전부 다시 만든다(부분 유지 없음).
@@ -66,9 +79,10 @@ export function syncStrokes(r: R3D, app: App) {
   for (const [id, seg] of app.lift.lifted) {
     const stroke = app.lift.strokes.get(id)
     const grade = stroke ? gradeOf(stroke) : 'HB'
+    const w = stroke ? widthOf(stroke) : MAT.HB.width
     const g = new LineGeometry()
     g.setPositions([seg.a3.x, seg.a3.y, seg.a3.z, seg.b3.x, seg.b3.y, seg.b3.z])
-    r.group.add(new Line2(g, r.materials[grade]))
+    r.group.add(new Line2(g, matFor(r, grade, w)))
   }
 }
 

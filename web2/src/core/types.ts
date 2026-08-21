@@ -22,8 +22,8 @@ export interface Stroke {
   raw?: Pt[]
   /** 작도 포즈가 아닌 시점에 그렸으면 그 포즈 */
   view?: CamPose
-  /** 재료 — 없으면 HB */
-  mat?: { grade: Grade; press?: number }
+  /** 재료 — 없으면 HB. `w`는 제도펜 니브 굵기 px(잉크 전용, 없으면 재료 기본값). */
+  mat?: { grade: Grade; press?: number; w?: number }
 }
 
 /** 문서 — 획 목록과 그린 캔버스 크기(CSS px, 첫 획 시점).

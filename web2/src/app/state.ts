@@ -13,6 +13,17 @@ import { pieces, distToPiece, type Piece } from '../core/pieces'
 import { C } from '../core/constants'
 import { type Pt, type V3, v3, add3 } from '../core/vec'
 
+export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink'
+
+/** 지금 그으면 무슨 재료인가 — **한 자리에서만 정한다**(원칙 a의 재료판).
+ *  펜은 언제나 잉크이고, 연필은 고른 경도다. */
+export const activeGrade = (app: Pick<App, 'tool' | 'grade'>): Grade =>
+  app.tool === 'pen' ? 'INK' : app.grade
+
+/** 지우개 도구인가 — 입력·커서·렌더가 전부 이것을 본다.
+ *  `tool !== 'pen'` 으로 재던 초판은 연필 도구가 생기면서 그대로 깨진다. */
+export const isEraser = (t: Tool): boolean => t === 'eraser-pencil' || t === 'eraser-ink'
+
 export interface Op {
   removed: { stroke: Stroke; index: number }[]
   added: Stroke[]
@@ -30,10 +41,14 @@ export interface App {
   docVersion: number
   /** 오스냅 설정 — 종류별 켜고 끄기, 반경 (Rhino 관행) */
   osnap: OsnapSettings
-  /** 지우개는 둘 — 연필 지우개는 흑연만, 펜 지우개는 잉크만 (선따기) */
-  tool: 'pen' | 'eraser-pencil' | 'eraser-ink'
-  /** 현재 심 — 경도 슬라이더 */
+  /** 도구 넷 — **연필과 펜은 재료가 다르므로 도구가 다르다**(지시 4-h).
+   *  연필은 경도(2H~2B)를 고르고 펜은 니브 굵기를 고른다.
+   *  지우개 둘이 그것과 짝이 맞는다 — 연필 지우개는 흑연만, 펜 지우개는 잉크만(선따기). */
+  tool: Tool
+  /** 연필 심 — 경도. **펜에는 안 쓴다**(펜은 언제나 INK다). */
   grade: Grade
+  /** 제도펜 니브 굵기 px */
+  nib: number
   eraserRadius: number
   /** 지우개 드래그 한 번의 누적 op (드래그가 끝나면 undoStack으로) */
   activeErase: Op | null
@@ -60,8 +75,9 @@ export function createApp(W: number, H: number): App {
     lift: liftAll(doc),
     docVersion: 0,
     osnap: defaultOsnap(),
-    tool: 'pen',
+    tool: 'pencil',
     grade: 'HB',
+    nib: C.NIB_PX,
     eraserRadius: C.ERASER_PX,
     activeErase: null,
     view: { s: 1, ox: 0, oy: 0 },
@@ -95,7 +111,9 @@ export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number)
   const s: Stroke = { id: app.nextId++, a, b }
   if (raw && raw.length > 2) s.raw = raw
   if (!isDrawPose(app.pose)) s.view = { p: { ...app.pose.p }, q: { ...app.pose.q } }
-  s.mat = { grade: app.grade }
+  s.mat = { grade: activeGrade(app) }
+  // 니브는 **잉크에만** 얹는다 — 연필 굵기는 경도가 정한다(재료가 다르다, 4-h)
+  if (app.tool === 'pen' && app.nib !== C.NIB_PX) s.mat.w = app.nib
   if (press !== undefined) s.mat.press = press
   app.doc.strokes.push(s)
   // 작도 획(지평선·깊이선)은 실행취소 대상이 아니다 — role은 추가 후 계산으로 안다

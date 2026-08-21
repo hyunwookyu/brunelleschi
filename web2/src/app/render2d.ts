@@ -5,11 +5,11 @@
 // 선 굵기·표식 크기는 화면 고정(배율로 나눈다).
 
 import type { App } from './state'
-import { isDrawPose } from './state'
+import { isDrawPose, isEraser, activeGrade } from './state'
 import { screenAxes, project, projectSeg, groundAxes } from '../core/camera'
 import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
-import { MAT, gradeOf, rng32 } from '../core/material'
+import { MAT, gradeOf, rng32, widthOf } from '../core/material'
 import type { OsnapHit } from '../core/osnap'
 import type { Pt, V3 } from '../core/vec'
 
@@ -39,14 +39,19 @@ const COL = {
   construction: '#8a7f6a',
   waiting: '#555',
   waitingDim: 'rgba(85,85,85,0.25)',
+  // 강조는 **하나**다(4-c) — 「앱이 말하는 중」인 것 전부가 이 색을 쓴다:
+  // 작도 미리보기와 오스냅 표식. 그 밖의 앱 표식(소실점 ✕)은 작도선과 같은 무채색이고,
+  // 사용자가 그린 선은 재료 색이다. 그림이 주인공이고 UI는 물러난다.
   preview: '#1a6ac2',
-  vpMark: '#b04a3a',
+  // ⚠ 붉은색이었다 — 화면에 **상시** 떠 있는 표식이라 그림보다 눈에 띄었다(지시 3-c 대조표).
+  // 소실점은 지평선과 같은 급의 작도 표식이므로 같은 색으로 물러난다.
+  vpMark: '#8a7f6a',
   // 축 색 — **그리는 중 미리보기에만** 쓴다(원칙: 확정된 선은 재료 색이다).
   // 붙은 축이 즉시 보이고, 커서를 돌리면 색이 넘어간다(지시 5-d).
   axis: { vp0: '#c2571a', vp1: '#1a7fc2', H: '#1a9c50', V: '#7a4fc2' } as Record<string, string>,
-  snap: '#1a9c50',
-  cubeFace: 'rgba(255,253,248,0.85)',
-  cubeEdge: '#8a8378',
+  snap: '#1a6ac2',
+  cubeFace: 'rgba(252,251,248,0.80)',
+  cubeEdge: '#b0a99c',
 }
 
 export function draw2d(
@@ -112,7 +117,7 @@ export function draw2d(
     const m = MAT[gradeOf(s)]
     ctx.strokeStyle = m.color
     ctx.globalAlpha = own ? m.alpha : m.alpha * 0.3
-    ctx.lineWidth = m.width * is
+    ctx.lineWidth = widthOf(s) * is
     ctx.setLineDash([5 * is, 4 * is])
     ctx.beginPath(); ctx.moveTo(s.a.x, s.a.y); ctx.lineTo(s.b.x, s.b.y); ctx.stroke()
     ctx.setLineDash([])
@@ -147,13 +152,15 @@ export function draw2d(
 
   // 미리보기 — 붙은 좌표가 그대로 확정된다(원칙 d). 작도 중엔 안내색, 이후엔 재료색.
   if (draft) {
-    const m = MAT[app.grade]
+    const g = activeGrade(app)
+    const m = MAT[g]
+    const drawW = g === 'INK' ? app.nib : m.width
     // 안내색은 «카메라를 건드리는 획»에만. `!constructionDone`을 함께 보던 초판은
     // 1점 상태에서 그린 **내용 획까지** 작도선처럼 파랗게 칠했다 — 아직 못 그린다는 신호로 읽힌다.
     const constructing = draft.label === 'horizon' || draft.label === 'vp'
     const axisCol = draft.label ? COL.axis[draft.label] : undefined
     ctx.strokeStyle = constructing ? COL.preview : (axisCol ?? m.color)
-    ctx.lineWidth = (constructing ? C.LINE_W_RESULT : m.width) * is
+    ctx.lineWidth = (constructing ? C.LINE_W_RESULT : drawW) * is
     ctx.beginPath(); ctx.moveTo(draft.start.x, draft.start.y); ctx.lineTo(draft.end.x, draft.end.y); ctx.stroke()
     if (draft.startSnap) mark(ctx, draft.startSnap, is)
     if (draft.endSnap) mark(ctx, draft.endSnap, is)
@@ -162,8 +169,8 @@ export function draw2d(
   }
 
   // 지우개 커서 — 반경은 화면 px
-  if (eraser && app.tool !== 'pen') {
-    ctx.strokeStyle = '#b04a3a'
+  if (eraser && isEraser(app.tool)) {
+    ctx.strokeStyle = COL.construction
     ctx.lineWidth = 1 * is
     ctx.beginPath()
     ctx.arc(eraser.x, eraser.y, app.eraserRadius * is, 0, Math.PI * 2)

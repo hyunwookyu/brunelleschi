@@ -5,7 +5,7 @@
 import type { App } from './state'
 import {
   setPose, setView, orbitPivot, beginErase, eraseAt, endErase,
-  screenToDoc, isDrawPose,
+  screenToDoc, isDrawPose, isEraser,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
 import { resolveStart, resolveEnd, resolveCommit } from '../core/draft'
@@ -172,7 +172,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
     if (tryCube(toScreen(e))) return
     drawingPointer = e.pointerId
     canvas.setPointerCapture(e.pointerId)
-    if (app.tool !== 'pen') {
+    if (isEraser(app.tool)) {
       beginErase(app)
       eraseAt(app, toPt(e))
       cb.onEraserMove(toPt(e))
@@ -212,7 +212,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
       return
     }
     if (drawingPointer === e.pointerId) {
-      if (app.tool !== 'pen') {
+      if (isEraser(app.tool)) {
         eraseAt(app, toPt(e))
         cb.onEraserMove(toPt(e))
         return
@@ -224,7 +224,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
       return
     }
     if (e.buttons === 0) {
-      if (app.tool !== 'pen') {
+      if (isEraser(app.tool)) {
         cb.onEraserMove(toPt(e))
         cb.onHover(null)
         return
@@ -246,7 +246,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
     if (orbitBtn && e.pointerType === 'mouse' && e.button !== 0) { orbitBtn = null; return }
     if (drawingPointer === e.pointerId) {
       drawingPointer = null
-      if (app.tool !== 'pen') { endErase(app); return }
+      if (isEraser(app.tool)) { endErase(app); return }
       endDraft()
     }
   }

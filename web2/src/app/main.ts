@@ -1,6 +1,6 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView, loadDoc, clearAll } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView, loadDoc, clearAll, isEraser, type Tool } from './state'
 import { initInput } from './input'
 import { resize2d, draw2d, type Draft } from './render2d'
 import { initR3D, syncStrokes, render3d, resize3d } from './render3d'
@@ -8,8 +8,9 @@ import { serializeBrnl, parseBrnl } from '../core/file'
 import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice } from './notice'
 import { OSNAP_ORDER, type OsnapHit } from '../core/osnap'
-import { GRADES, MAT } from '../core/material'
+import { PENCIL_GRADES, MAT } from '../core/material'
 import type { Pt } from '../core/vec'
+import { C } from '../core/constants'
 
 const W = window.innerWidth
 const H = window.innerHeight
@@ -108,13 +109,11 @@ app.listeners.push(() => {
 })
 
 function updateStatus() {
-  const an = app.lift.an
-  // **지평선 다음에는 아무것도 안 띄운다.** 「깊이선을 긋는다」·「(1/2)」는 다음에 무엇을
-  // 그으라는 **지시로 읽힌다** — 사람이 「깊이선부터 강제된다」고 읽은 자리가 여기다.
-  // 순서 강제는 없다: 수직·수평은 카메라와 무관하게 축이 정해져 있고, 그으면 그 자리에서
-  // 축 라벨을 받는다. 소실점 개수는 소실점이 생긴 그 순간에만 알린다(onCommit).
-  // 평소에 아무것도 안 띄우는 것이 원칙 g다.
-  if (an.horizonY === null) status('지평선을 긋는다 — 수평이 강제된다')
+  // **상태를 안 띄운다**(4-b). 차수·대기 수·스냅 반경·뷰 이름은 전부 내부 상태이고
+  // 그것을 화면에 쓰는 것이 CAD의 방식이다. 남는 것은 딱 하나 —
+  // **빈 화면의 첫 안내**다. 이 앱은 첫 획이 특별하고(지평선), 그것을 모르면 시작을 못 한다.
+  // 지평선을 그으면 영영 사라진다.
+  if (app.lift.an.horizonY === null) status('지평선을 긋는다 — 수평이 강제된다')
   else status('')
 }
 // 시작 동기화 — 자동 저장 복원분 포함
@@ -129,50 +128,120 @@ initInput(ink, app, {
   onCommit(a, b, raw, press) {
     const s = commitStroke(app, a, b, raw, press)
     const an = app.lift.an
+    // **알림은 오류가 있을 때만**이다(4-b). 「소실점 N」은 차수이고 「대기한다」는 상태다 —
+    // 둘 다 화면이 이미 말하고 있다(소실점 표식 · 대기 획의 점선). 거부 사유만 남긴다.
     const reject = an.rejects.get(s.id)
     if (reject) notify(reject)
-    else if (an.roles.get(s.id) === 'vp') {
-      // ⚠ 「1/2」은 **다음에 무엇을 그으라는 지시로 읽힌다.** 순서 강제는 없다 —
-      // 소실점 하나로도 3D는 선다(f는 깊이 배율 게이지). 개수만 알린다.
-      notify(`소실점 ${an.vps.length} — 하나 더 그으면 깊이 배율이 두 소실점에서 나온다`)
-    } else if (app.lift.waiting.includes(s.id)) {
-      notify('시작점이 3D에 없어 대기한다 — 확정된 점에 이어 그리면 올라간다')
-    }
   },
 })
 
-// 도구 전환 — 펜 / 연필 지우개(흑연만) / 펜 지우개(잉크만) (임시 UI)
-const toolButtons: Record<string, HTMLButtonElement> = {
-  'pen': document.getElementById('btn-pen') as HTMLButtonElement,
-  'eraser-pencil': document.getElementById('btn-eraser-pencil') as HTMLButtonElement,
-  'eraser-ink': document.getElementById('btn-eraser-ink') as HTMLButtonElement,
+// ── 도구 넷 — 연필 · 펜 · 지우개 둘 (4-h) ────────────────────────────────
+// **선택은 색이 아니라 위치와 크기로 보인다**(4-d) — `.tool.on`이 앞으로 나온다.
+const TOOLS: Tool[] = ['pencil', 'pen', 'eraser-pencil', 'eraser-ink']
+const toolBtn: Record<Tool, HTMLElement> = {
+  'pencil': document.getElementById('btn-pencil')!,
+  'pen': document.getElementById('btn-pen')!,
+  'eraser-pencil': document.getElementById('btn-eraser-pencil')!,
+  'eraser-ink': document.getElementById('btn-eraser-ink')!,
 }
-function setTool(t: 'pen' | 'eraser-pencil' | 'eraser-ink') {
-  app.tool = t
-  for (const [k, b] of Object.entries(toolButtons)) b.style.fontWeight = k === t ? 'bold' : 'normal'
-  if (t === 'pen') { eraserPos = null }
-  invalidate()
-}
-for (const k of Object.keys(toolButtons) as ('pen' | 'eraser-pencil' | 'eraser-ink')[]) {
-  toolButtons[k]!.addEventListener('click', () => setTool(k))
-}
-setTool('pen')
-const erSize = document.getElementById('eraser-size') as HTMLInputElement
-erSize.value = String(app.eraserRadius)
-erSize.addEventListener('input', () => { app.eraserRadius = Number(erSize.value) })
+const thick = document.getElementById('thick')!
+const thickLine = document.getElementById('thick-line')!
+const thickDot = document.getElementById('thick-dot')!
 
-// 현재 심 — 경도 슬라이더와 인디케이터
-const gradeSlider = document.getElementById('grade-slider') as HTMLInputElement
-const gradeLabel = document.getElementById('grade-label')!
-const lead = document.getElementById('lead') as HTMLElement
-function syncGrade() {
-  const g = GRADES[Number(gradeSlider.value)] ?? 'HB'
-  app.grade = g
-  gradeLabel.textContent = g === 'INK' ? '잉크' : g
-  lead.style.background = MAT[g].color
+function setTool(t: Tool) {
+  app.tool = t
+  for (const k of TOOLS) toolBtn[k].classList.toggle('on', k === t)
+  if (!isEraser(t)) eraserPos = null
+  // 굵기 막대는 **펜과 지우개에만** 뜬다. 연필의 굵기는 심이 정하고,
+  // 그 조절은 연필 몸통의 창이다(4-e) — 별도 컨트롤을 안 둔다.
+  thick.style.display = t === 'pencil' ? 'none' : 'block'
+  syncThick()
   invalidate()
 }
-gradeSlider.addEventListener('input', syncGrade)
+for (const k of TOOLS) toolBtn[k].addEventListener('click', () => setTool(k))
+
+// ── 굵기는 미리보기다 (4-f) — 숫자가 없다 ────────────────────────────────
+// 세로 막대를 위아래로 끌면 **그 자리에** 그 굵기의 선(펜)이나 그 크기의 원(지우개)이 그려진다.
+const THICK_H = 86, THICK_PAD = 8
+/** 값 → 막대 위 y (위가 가늘다) */
+const thickY = (v: number, lo: number, hi: number) =>
+  THICK_PAD + (1 - (v - lo) / (hi - lo)) * (THICK_H - 2 * THICK_PAD)
+/** 막대 위 y → 값 */
+const thickV = (y: number, lo: number, hi: number) => {
+  const t = 1 - (y - THICK_PAD) / (THICK_H - 2 * THICK_PAD)
+  return lo + Math.min(1, Math.max(0, t)) * (hi - lo)
+}
+const thickRange = (): [number, number] =>
+  app.tool === 'pen' ? [C.NIB_MIN, C.NIB_MAX] : [C.ERASER_MIN, C.ERASER_MAX]
+
+function syncThick() {
+  if (app.tool === 'pencil') return
+  const pen = app.tool === 'pen'
+  const [lo, hi] = thickRange()
+  const v = pen ? app.nib : app.eraserRadius
+  const y = thickY(v, lo, hi)
+  thickLine.style.display = pen ? '' : 'none'
+  thickDot.style.display = pen ? 'none' : ''
+  if (pen) {
+    thickLine.setAttribute('y1', String(y))
+    thickLine.setAttribute('y2', String(y))
+    thickLine.setAttribute('stroke-width', String(v))
+    nibEl.setAttribute('width', String(v))
+    nibEl.setAttribute('x', String(13 - v / 2))
+  } else {
+    // 지우개는 반경이 커서 막대 폭을 넘는다 — 원의 반지름을 막대 안으로 줄여 **비율만** 보인다
+    const r = 3 + (v - C.ERASER_MIN) / (C.ERASER_MAX - C.ERASER_MIN) * 8
+    thickDot.setAttribute('cy', String(y))
+    thickDot.setAttribute('r', String(r))
+  }
+}
+// ⚠ 끄는 동안의 이동은 **창에서 받는다.** `setPointerCapture`/`hasPointerCapture`로
+// 갈랐던 초판은 손가락이 막대 밖으로 나가면 값이 멈췄다 — 26px 폭이라 늘 나간다.
+let thickDrag = false
+thick.addEventListener('pointerdown', (e) => { thickDrag = true; dragThick(e) })
+window.addEventListener('pointermove', (e) => { if (thickDrag) dragThick(e) })
+window.addEventListener('pointerup', () => { thickDrag = false })
+window.addEventListener('pointercancel', () => { thickDrag = false })
+function dragThick(e: PointerEvent) {
+  const [lo, hi] = thickRange()
+  const y = e.clientY - thick.getBoundingClientRect().top
+  const v = thickV(y, lo, hi)
+  if (app.tool === 'pen') app.nib = Math.round(v * 10) / 10
+  else app.eraserRadius = Math.round(v)
+  syncThick()
+  invalidate()
+}
+
+// ── 홀더펜 인디케이터 (4-e) — 연필 몸통의 창이 곧 슬라이더다 ──────────────
+// 창에 지금 심이 보이고, 연필을 위아래로 밀면 바뀐다. 별도 컨트롤이 없다.
+const leadEl = document.getElementById('lead')!
+const leadText = document.getElementById('lead-text')!
+const nibEl = document.getElementById('nib')!
+const pencilBtn = toolBtn['pencil']
+let pencilDrag: { y: number; i: number } | null = null
+
+function syncGrade() {
+  leadText.textContent = app.grade
+  leadEl.setAttribute('fill', MAT[app.grade].color)
+  invalidate()
+}
+pencilBtn.addEventListener('pointerdown', (e) => {
+  pencilDrag = { y: e.clientY, i: PENCIL_GRADES.indexOf(app.grade) }
+})
+// 이동·뗌은 창에서 받는다 — 연필 폭이 26px이라 미는 손가락이 늘 밖으로 나간다
+window.addEventListener('pointermove', (e) => {
+  if (!pencilDrag) return
+  // 한 칸 = 10px. 아래로 밀면 무른 심(2B 쪽)이다 — 목록이 2H→2B로 무러지는 순서와 같다.
+  const step = Math.round((e.clientY - pencilDrag.y) / 10)
+  const i = Math.min(PENCIL_GRADES.length - 1, Math.max(0, pencilDrag.i + step))
+  const g = PENCIL_GRADES[i]!
+  if (g !== app.grade) { app.grade = g; syncGrade() }
+})
+const endPencilDrag = () => { pencilDrag = null }
+window.addEventListener('pointerup', endPencilDrag)
+window.addEventListener('pointercancel', endPencilDrag)
+
+setTool('pencil')
 syncGrade()
 
 // 오스냅 설정 패널(임시 UI — 7단계에서 세로바로) — 종류별 토글·반경
@@ -274,8 +343,12 @@ document.getElementById('sidebar-toggle')!.addEventListener('click', () => {
 // 시점 저장·복귀
 const viewsEl = document.getElementById('views')!
 function addViewButton(i: number) {
+  // **이름을 안 쓴다**(4-b의 「뷰 이름」) — 저장한 순서의 숫자 하나면 고를 수 있다
   const btn = document.createElement('button')
-  btn.textContent = `시점 ${i + 1}`
+  btn.className = 't'
+  btn.style.font = '11px system-ui, sans-serif'
+  btn.title = `저장한 시점 ${i + 1}`
+  btn.textContent = String(i + 1)
   btn.addEventListener('click', () => gotoView(app, i))
   viewsEl.append(btn)
 }
