@@ -1,6 +1,6 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView, loadDoc, clearAll, isEraser, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, type Tool } from './state'
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel } from '../core/level'
@@ -114,6 +114,14 @@ app.listeners.push(() => {
 // 새 장식을 안 만들고 이미 있는 한 줄을 쓴다(원칙 g: 알림은 최상단 한 줄뿐이다).
 const TILTED_MSG = '기울어 있다 — 놓으면 정렬로 돌아온다. 그때 그릴 수 있다'
 
+// **접혔는데 작도가 아직 안 끝난 자리** — 이 회차가 만든 함정이다(web2-04 리뷰어 [8]).
+// 접힌 포즈는 «정렬»이라 그릴 수 있는 상태로 보이는데, `analyze()`는 **작도 포즈가 아닌
+// 획을 전부 내용으로 돌린다**(궤도 후의 획은 작도가 아니다). 그래서 1점 상태에서 돌려보고
+// 접은 뒤 둘째 깊이선을 그으면 **소실점이 안 생기고 그 획이 대기로 남는다**
+// (실측: role=content · vps 1→1 · waiting 1). 조용히 틀리지는 않지만(불변식 j) **왜 안
+// 되는지가 화면에 없었다.** 규칙을 바꾸지 않고(범위) 그 자리를 한 줄로 말한다.
+const UNFINISHED_MSG = '작도가 아직 안 끝났다 — 소실점은 작도 시점에서만 만든다'
+
 function updateStatus() {
   // **상태를 안 띄운다**(4-b). 차수·대기 수·스냅 반경·뷰 이름은 전부 내부 상태이고
   // 그것을 화면에 쓰는 것이 CAD의 방식이다. 남는 것은 딱 하나 —
@@ -121,15 +129,17 @@ function updateStatus() {
   // 지평선을 그으면 영영 사라진다.
   if (app.lift.an.horizonY === null) status('지평선을 긋는다 — 수평이 강제된다')
   else if (!isLevel(app.pose)) status(TILTED_MSG)
+  else if (!isDrawPose(app.pose) && !app.lift.an.constructionDone) status(UNFINISHED_MSG)
   else status('')
 }
 
-// 포즈가 기울기 상태를 넘나들 때만 줄을 고친다 — 매 프레임 고치면 오류 알림을 덮어쓴다
-let wasTilted = false
+// 포즈가 «상태 줄이 달라지는 자리»를 넘나들 때만 고친다 — 매 프레임 고치면 오류 알림을 덮어쓴다.
+// 그 자리가 둘이라(기울었나 · 작도 시점인가) 둘을 함께 본다.
+let lastPoseKey = ''
 app.listeners.push(() => {
-  const t = !isLevel(app.pose)
-  if (t === wasTilted) return
-  wasTilted = t
+  const k = `${!isLevel(app.pose)}|${isDrawPose(app.pose)}`
+  if (k === lastPoseKey) return
+  lastPoseKey = k
   updateStatus()
 })
 

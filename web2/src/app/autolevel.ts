@@ -11,7 +11,7 @@
 //
 // 시계를 주입받는다 — 시험이 가짜 시각으로 「계속 조작하는 동안 안 접힌다」를 잰다.
 
-import { type App, setPose, orbitPivot } from './state'
+import { type App, setPose, orbitPivot, liftedPoints } from './state'
 import { isLevel, levelPose, lerpPose } from '../core/level'
 import type { CamPose } from '../core/types'
 import { C } from '../core/constants'
@@ -54,7 +54,7 @@ export function createAutoLevel(
     if (isLevel(app.pose)) return false
     anim = {
       from: { p: { ...app.pose.p }, q: { ...app.pose.q } },
-      to: levelPose(app.lift.an, app.pose, orbitPivot(app)),
+      to: levelPose(app.lift.an, app.pose, orbitPivot(app), liftedPoints(app)),
       t0: now(),
     }
     return true

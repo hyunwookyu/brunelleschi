@@ -14,8 +14,8 @@
 import { describe, it, expect } from 'vitest'
 import { session } from './session'
 import { W, H } from './fixtures'
-import { project, DRAW_POSE } from '../src/core/camera'
-import { setPose, orbitPivot, orbitBy, resetPose, undo, saveView, gotoView, type App } from '../src/app/state'
+import { project, screenAxes, DRAW_POSE } from '../src/core/camera'
+import { setPose, orbitPivot, liftedPoints, orbitBy, resetPose, undo, saveView, gotoView, commitStroke, isDrawPose, type App } from '../src/app/state'
 import { createAutoLevel } from '../src/app/autolevel'
 import { isLevel, levelPose, yawDir, forwardOf } from '../src/core/level'
 import { cubeGeom, cubeHit, poseForElem } from '../src/core/viewcube'
@@ -61,11 +61,17 @@ const rollY = (pose: CamPose) => quatRotate(pose.q, v3(1, 0, 0)).y
 /** 두 요 방향 사이 각(도) */
 const yawGap = (a: V3, b: V3) => Math.acos(Math.max(-1, Math.min(1, dot3(a, b)))) * 180 / Math.PI
 
-/** 카메라 자신의 오른쪽 축으로 돌린다(궤도의 세로 성분과 같은 축) */
-function pitchBy(pose: CamPose, deg: number): CamPose {
-  const right = quatRotate(pose.q, v3(1, 0, 0))
-  const R = quatAxisAngle(right, deg * Math.PI / 180)
-  return { p: { ...pose.p }, q: quatMul(R, pose.q) }
+/** **정렬 포즈에 롤을 얹고 아래로 deg 만큼 눕힌다.**
+ *
+ *  ⚠ **눕히는 축은 언제나 «정렬 포즈»의 오른쪽이다** — 정렬이므로 그것이 **수평**이고,
+ *  그래야 deg = 90에서 시선이 **정확히** 수직이 된다. 롤이 실린 포즈의 오른쪽 축은
+ *  수평이 아니라, 그 축으로 90° 돌리면 시선이 수직에 **안 닿는다**(초판이 그렇게 재서
+ *  롤 5°에 갭 1.147°가 나왔다 — 경계 자체에 도달을 못 한 값이다).
+ *  롤은 **뒤곱**이라 시선을 안 바꾸므로 순서가 「롤 먼저, 눕히기 나중」이다. */
+function tipDown(level: CamPose, deg: number, rollDeg = 0): CamPose {
+  const right = quatRotate(level.q, v3(1, 0, 0))          // 정렬 포즈의 수평 오른쪽
+  const rolled = quatMul(level.q, quatAxisAngle(v3(0, 0, 1), rollDeg * Math.PI / 180))
+  return { p: { ...level.p }, q: quatMul(quatAxisAngle(right, -deg * Math.PI / 180), rolled) }
 }
 
 /** 손을 떼고 지연을 넘긴 뒤 접기가 끝날 때까지 돌린다 */
@@ -202,16 +208,130 @@ describe('접기 — 상하로 회전한 뒤 놓으면 정렬로 돌아온다', 
     expect(isLevel(app.pose)).toBe(true)
   })
 
-  it('요의 답이 경계에서 안 튄다 — 89.9°와 90°가 같은 방향을 낸다', () => {
+  // ── 경계(시선이 수직) — 셋을 나눠 잰다. 하나로 뭉치면 항등을 연속성으로 읽는다(#57) ──
+  //
+  //  초판은 「89.9°와 90°의 차가 0.2° 미만」 **하나**였고 그것이 **아무것도 안 쟀다**:
+  //  픽스처가 순수 피치라 두 갈래의 답이 **항등으로 같았다**(갭 정확히 0.000000°).
+  //  그리고 적어 둔 0.2°는 **틀린 값**이었다 — 롤이 있으면 갭이 정확히 롤 각이다.
+
+  it('경계 ① 롤이 0이면 갭이 0이다 — 다만 그것은 **항등**이지 연속성이 아니다', () => {
     const app = drawn()
     const level = levelPose(app.lift.an, app.pose, orbitPivot(app))
-    const near = pitchBy(level, -89.9)     // 거의 탑뷰 — 시선 성분이 답한다
-    const exact = pitchBy(level, -90)      // 정확히 탑뷰 — 화면 위가 답한다
-    expect(Math.hypot(forwardOf(near).x, forwardOf(near).z)).toBeGreaterThan(1e-6)
-    expect(Math.hypot(forwardOf(exact).x, forwardOf(exact).z)).toBeLessThan(1e-9)
-    expect(yawGap(yawDir(near), yawDir(exact))).toBeLessThan(0.2)
-    // 올려다보는 쪽도 같다
-    expect(yawGap(yawDir(pitchBy(level, 89.9)), yawDir(pitchBy(level, 90)))).toBeLessThan(0.2)
+    for (const d of [0.1, 0.01, 0.001]) {
+      const near = tipDown(level, 90 - d)
+      const exact = tipDown(level, 90)
+      expect(Math.hypot(forwardOf(near).x, forwardOf(near).z)).toBeGreaterThan(1e-9)
+      expect(Math.hypot(forwardOf(exact).x, forwardOf(exact).z)).toBeLessThan(1e-12)
+      // δ를 줄여도 «줄어드는» 것이 아니라 **처음부터 0**이다 — 그것이 항등의 표식이다
+      expect(yawGap(yawDir(near), yawDir(exact))).toBeCloseTo(0, 9)
+    }
+  })
+
+  it('경계 ② 롤이 있으면 갭이 **정확히 롤 각**이다 — 짐벌 잠금이고 원리적 한계다', () => {
+    const app = drawn()
+    const level = levelPose(app.lift.an, app.pose, orbitPivot(app))
+    for (const roll of [5, 14, 45]) {
+      // 경계에 실제로 닿았는가 — 안 닿으면 아무것도 안 잰다
+      expect(Math.hypot(forwardOf(tipDown(level, 90, roll)).x, forwardOf(tipDown(level, 90, roll)).z))
+        .toBeLessThan(1e-12)
+      for (const d of [0.1, 0.01, 0.001]) {
+        // δ를 100배 줄여도 갭이 그대로다 — 줄어들면 그것이 연속이고, 여기서는 안 준다
+        expect(yawGap(yawDir(tipDown(level, 90 - d, roll)), yawDir(tipDown(level, 90, roll))))
+          .toBeCloseTo(roll, 6)
+      }
+    }
+  })
+
+  it('경계 ③ 그래서 앱에서는 안 튄다 — **앱이 롤을 만드는 길이 없다**', () => {
+    const app = drawn()
+    // 궤도: 세계 수직축과 카메라 오른쪽 축으로만 돈다
+    for (const [dx, dy] of [[-160, -120], [120, 180], [0, 260], [300, -300], [40, 40]] as const) {
+      setPose(app, DRAW_POSE)
+      orbitBy(app, dx, dy)
+      expect(Math.abs(rollY(app.pose))).toBeLessThan(1e-9)
+    }
+    // 뷰 큐브: 보이는 요소 전부(면·모서리·꼭짓점)
+    setPose(app, DRAW_POSE)
+    orbitBy(app, -160, -120)
+    const geom = cubeGeom(app.lift.an, app.pose, app.cubeLayout)!
+    const pivot = orbitPivot(app)
+    let seen = 0
+    for (const c of geom.corners) {
+      const pose = poseForElem(app.lift.an, { kind: 'corner', dirLocal: c.local }, pivot, 500)
+      if (!pose) continue
+      seen++
+      // 큐브 꼭짓점 시점도 롤 0이다(위 힌트가 큐브 Y다)
+      expect(Math.abs(rollY(pose))).toBeLessThan(1e-9)
+    }
+    expect(seen).toBe(8)
+    // 접기 자신도 롤을 안 만든다
+    expect(Math.abs(rollY(levelPose(app.lift.an, app.pose, pivot)))).toBeLessThan(1e-12)
+  })
+})
+
+describe('접힌 뒤에 실제로 그릴 수 있는가 — 리뷰어 [7]·[8]이 물은 것', () => {
+  it('**작도는 못 끝낸다** — 접힌 포즈에서 그은 획은 소실점을 안 만든다', () => {
+    // 이 회차가 만든 함정이다. 접힌 포즈는 «정렬»이라 그릴 수 있어 보이는데,
+    // `analyze()`는 작도 포즈가 아닌 획을 전부 내용으로 돌린다. 규칙은 안 바꿨고
+    // (범위) **화면이 그것을 말하게** 했다 — `main.ts`의 `UNFINISHED_MSG`.
+    // 이 팔은 그 사실을 박아 둔다: 규칙을 바꾸면 여기가 먼저 빨개진다.
+    const s = session(W, H)
+    s.draw(100, 400, 1100, 400)      // 지평선
+    s.draw(500, 500, 600, 475)       // 깊이선 1 → 소실점 하나
+    expect(s.app.lift.an.vps).toHaveLength(1)
+    expect(s.app.lift.an.constructionDone).toBe(false)
+
+    const pivot = orbitPivot(s.app)
+    orbitBy(s.app, -60, -140)                          // 위로 올려다본다
+    expect(s.app.pose.p.y).toBeLessThan(0)             // 눈이 지면 아래로 내려간다(실측 −11.331)
+    setPose(s.app, levelPose(s.app.lift.an, s.app.pose, pivot))
+    expect(isLevel(s.app.pose)).toBe(true)             // 정렬됐다 — 그릴 수 있어 «보인다»
+    expect(isDrawPose(s.app.pose)).toBe(false)         // 그러나 작도 포즈는 아니다
+
+    const st = s.draw(500, 500, 400, 475)              // 둘째 깊이선을 그어 본다
+    expect(st).not.toBeNull()
+    expect(s.app.lift.an.roles.get(st!.id)).toBe('content')   // 작도가 아니라 내용이다
+    expect(s.app.lift.an.vps).toHaveLength(1)                 // 소실점이 안 늘었다
+    expect(s.app.lift.waiting).toContain(st!.id)              // 사라지지 않는다(불변식 j)
+  })
+
+  it('**내용은 그려진다** — 접힌 포즈에서 이어 그으면 3D로 올라간다', () => {
+    const app = drawn()
+    const pivot = orbitPivot(app)
+    const before = app.lift.lifted.size
+    orbitBy(app, -60, -40)
+    setPose(app, levelPose(app.lift.an, app.pose, pivot))
+    expect(isLevel(app.pose)).toBe(true)
+    // 확정된 3D 끝점을 지금 포즈로 사영해 그 자리에서 잇는다(사람이 하는 것)
+    const seg = [...app.lift.lifted.values()][0]!
+    const a = project(app.lift.an, app.pose, seg.b3)!
+    const ax = screenAxes(app.lift.an, app.pose).find(x => x.id === 'vp0')!
+    const t = ax.vp ? { x: a.x + (ax.vp.x - a.x) * 0.15, y: a.y + (ax.vp.y - a.y) * 0.15 }
+      : { x: a.x + ax.dir!.x * 80, y: a.y + ax.dir!.y * 80 }
+    const st = commitStroke(app, a, t)
+    expect(app.lift.lifted.has(st.id)).toBe(true)      // 승격됐다
+    expect(app.lift.lifted.size).toBe(before + 1)
+  })
+
+  it('**피치가 실린 옛 획도 그대로 풀린다** — 옛 파일이 그 자리다 (리뷰어 [7])', () => {
+    // 이제 기울어 있는 동안에는 획을 못 만들지만, **이 회차 이전에 저장한 파일**에는
+    // 피치가 실린 `Stroke.view`가 있을 수 있다. `flow.spec.ts`의 궤도를 좌우로만 바꾸면서
+    // 그 경로를 재던 자리가 사라졌으므로 여기서 다시 잡는다 — 도달 가능하고, 안 죽었다.
+    const app = drawn()
+    const before = app.lift.lifted.size
+    orbitBy(app, -80, -60)
+    const pitch = Math.abs(Math.asin(forwardOf(app.pose).y) * 180 / Math.PI)
+    expect(pitch).toBeGreaterThan(5)                   // 실제로 피치가 실렸다
+    const seg = [...app.lift.lifted.values()][0]!
+    const a = project(app.lift.an, app.pose, seg.b3)!
+    const ax = screenAxes(app.lift.an, app.pose).find(x => x.id === 'vp0')!
+    const t = ax.vp ? { x: a.x + (ax.vp.x - a.x) * 0.15, y: a.y + (ax.vp.y - a.y) * 0.15 }
+      : { x: a.x + ax.dir!.x * 80, y: a.y + ax.dir!.y * 80 }
+    const st = commitStroke(app, a, t)                 // 옛 앱이 하던 그대로(입력 잠금을 안 거친다)
+    expect(st.view).toBeDefined()
+    expect(Math.abs(st.view!.q.x)).toBeGreaterThan(1e-6)   // 피치가 쿼터니언에 있다
+    expect(app.lift.lifted.has(st.id)).toBe(true)
+    expect(app.lift.lifted.size).toBe(before + 1)
   })
 })
 
@@ -358,18 +478,28 @@ describe('접기 시점 — 놓으면 잠깐 뒤', () => {
 })
 
 describe('접을 때의 위치 — 물러나기만 한다', () => {
-  it('대상이 화면에 남는다 — pivot이 화면 안', () => {
+  it('대상이 화면에 남는다 — **기하 전체**가 화면 안(pivot 한 점이 아니다)', () => {
     const app = drawn()
     const pivot = orbitPivot(app)
     for (const [dx, dy] of [[-160, -120], [120, 180], [0, 260], [300, -300]] as const) {
       setPose(app, DRAW_POSE)
       orbitBy(app, dx, dy)
-      const folded = levelPose(app.lift.an, app.pose, pivot)
+      const folded = levelPose(app.lift.an, app.pose, pivot, liftedPoints(app))
       const s = project(app.lift.an, folded, pivot)
       expect(s).not.toBeNull()
       expect(Math.abs(s!.y - app.lift.an.principal!.y)).toBeLessThanOrEqual(H / 2 + 1e-6)
-      expect(s!.y).toBeGreaterThanOrEqual(-1e-6)
-      expect(s!.y).toBeLessThanOrEqual(H + 1e-6)
+      // **승격 기하의 끝점 전부**가 화면 세로 안이다 — pivot 한 점은 대리량이고 샜다(리뷰어 [10])
+      let seen = 0
+      for (const seg of app.lift.lifted.values()) {
+        for (const P of [seg.a3, seg.b3]) {
+          const q = project(app.lift.an, folded, P)
+          if (!q) continue
+          seen++
+          expect(q.y).toBeGreaterThanOrEqual(-1e-6)
+          expect(q.y).toBeLessThanOrEqual(H + 1e-6)
+        }
+      }
+      expect(seen).toBeGreaterThan(0)          // 실제로 훑었는가
     }
   })
 
