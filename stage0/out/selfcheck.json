@@ -26674,7 +26674,7 @@
       "path": "scan_citation_hashes",
       "val": [
         "assumptions.md:163 test_cost.json",
-        "DEFERRED.md:885 test_cost.json",
+        "DEFERRED.md:895 test_cost.json",
         "progress.md:11820 test_cost.json",
         "progress.md:13857 test_cost.json",
         "progress.md:14037 test_cost.json"
@@ -26860,7 +26860,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 318,
+      "files_scanned": 321,
       "exts_declared": [
         ".md",
         ".py",
@@ -26884,7 +26884,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 318,
+      "files_scanned": 321,
       "exts_declared": [
         ".md",
         ".py",
