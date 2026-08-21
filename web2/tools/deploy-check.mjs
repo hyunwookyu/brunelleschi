@@ -51,11 +51,13 @@ else if (remote !== want) {
 if (!failed) {
   const url = new URL('sw.js', SITE).href + `?t=${want.slice(0, 8)}`
   try {
-    const res = await fetch(url, { cache: 'no-store' })
-    const text = await res.text()
+    // ⚠ 전역 `fetch`(undici)를 안 쓴다 — 윈도우에서 종료 시 libuv가
+    // `!(handle->flags & UV_HANDLE_CLOSING)`로 뻗고 **종료 코드가 127로 덮인다.**
+    // 판정자의 종료 코드가 못 믿을 값이 되면 검사를 둔 의미가 없다. curl로 읽는다.
+    const text = sh(`curl -sS --max-time 20 -H "Cache-Control: no-cache" "${url}"`)
     const m = text.match(/const CACHE = 'b2-([0-9a-f]+)_/)
     say(`$ curl ${url}`)
-    if (!m) fail(`sw.js에서 빌드 식별자를 못 찾았다 (HTTP ${res.status})`)
+    if (!m) fail('sw.js에서 빌드 식별자를 못 찾았다')
     else {
       say(`화면 빌드 식별자 ${m[1]}`)
       if (!want.startsWith(m[1])) {
