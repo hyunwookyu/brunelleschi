@@ -6,7 +6,7 @@
 
 import type { App } from './state'
 import { isDrawPose } from './state'
-import { screenAxes, project, type Role } from '../core/camera'
+import { screenAxes, project, projectSeg, groundAxes } from '../core/camera'
 import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
 import { MAT, gradeOf, rng32 } from '../core/material'
@@ -35,11 +35,15 @@ export function resize2d(canvas: HTMLCanvasElement, W: number, H: number, dpr: n
 }
 
 const COL = {
+  grid: 'rgba(120,116,110,0.18)',
   construction: '#8a7f6a',
   waiting: '#555',
   waitingDim: 'rgba(85,85,85,0.25)',
   preview: '#1a6ac2',
   vpMark: '#b04a3a',
+  // 축 색 — **그리는 중 미리보기에만** 쓴다(원칙: 확정된 선은 재료 색이다).
+  // 붙은 축이 즉시 보이고, 커서를 돌리면 색이 넘어간다(지시 5-d).
+  axis: { vp0: '#c2571a', vp1: '#1a7fc2', H: '#1a9c50', V: '#7a4fc2' } as Record<string, string>,
   snap: '#1a9c50',
   cubeFace: 'rgba(255,253,248,0.85)',
   cubeEdge: '#8a8378',
@@ -65,21 +69,39 @@ export function draw2d(
 
   const atDraw = isDrawPose(app.pose)
 
-  // 작도선 — 작도 포즈에서만 원본 세그먼트를 보인다.
-  if (atDraw) {
-    ctx.strokeStyle = COL.construction
-    ctx.lineWidth = C.LINE_W_GUIDE * is
-    for (const s of app.doc.strokes) {
-      const role = an.roles.get(s.id) as Role | undefined
-      if (role !== 'horizon' && role !== 'vp') continue
+  // 지면 격자 — **공간의 정사각형을 투영한 것**이다(이론서 9.5). 화면 각도 균등 분할이 아니다.
+  // 아주 연하게, 무채색 — 사용자가 그린 선이 가장 눈에 띄어야 한다(6-h 「선 우선순위」).
+  if (app.grid) {
+    const ga = groundAxes(an)
+    if (ga) {
+      const [u, v] = ga
+      const step = C.GRID_STEP, n = C.GRID_HALF, span = step * n
+      ctx.strokeStyle = COL.grid
+      ctx.lineWidth = 1 * is
       ctx.beginPath()
-      if (role === 'horizon' && an.horizonY !== null) {
-        ctx.moveTo(x0, an.horizonY); ctx.lineTo(x1, an.horizonY)
-      } else {
-        ctx.moveTo(s.a.x, s.a.y); ctx.lineTo(s.b.x, s.b.y)
+      for (let k = -n; k <= n; k++) {
+        for (const [d, e] of [[u, v], [v, u]] as const) {
+          const o = { x: e.x * k * step, y: 0, z: e.z * k * step }
+          const seg = projectSeg(an, app.pose,
+            { x: o.x - d.x * span, y: 0, z: o.z - d.z * span },
+            { x: o.x + d.x * span, y: 0, z: o.z + d.z * span })
+          if (!seg) continue
+          ctx.moveTo(seg[0].x, seg[0].y); ctx.lineTo(seg[1].x, seg[1].y)
+        }
       }
       ctx.stroke()
     }
+  }
+
+  // 작도선 — **지평선뿐이다.** 무한원이라 3D가 없고(이론서 2.2) 화면 전폭으로 긋는다.
+  // 깊이선은 작도선이 아니다 — 소실점을 정의하면서 동시에 그은 3D 선이고,
+  // 승격됐으면 three.js가, 아직이면 아래 「대기 획」이 그린다. 여기서 또 그리면 두 번 그려진다.
+  if (atDraw && an.horizonY !== null) {
+    ctx.strokeStyle = COL.construction
+    ctx.lineWidth = C.LINE_W_GUIDE * is
+    ctx.beginPath()
+    ctx.moveTo(x0, an.horizonY); ctx.lineTo(x1, an.horizonY)
+    ctx.stroke()
   }
 
   // 대기 획 — 사라지지 않는다(불변식 j). 자기 포즈가 아니면 흐리게. 색은 재료.
@@ -126,8 +148,11 @@ export function draw2d(
   // 미리보기 — 붙은 좌표가 그대로 확정된다(원칙 d). 작도 중엔 안내색, 이후엔 재료색.
   if (draft) {
     const m = MAT[app.grade]
-    const constructing = draft.label === 'horizon' || draft.label === 'vp' || !an.constructionDone
-    ctx.strokeStyle = constructing ? COL.preview : m.color
+    // 안내색은 «카메라를 건드리는 획»에만. `!constructionDone`을 함께 보던 초판은
+    // 1점 상태에서 그린 **내용 획까지** 작도선처럼 파랗게 칠했다 — 아직 못 그린다는 신호로 읽힌다.
+    const constructing = draft.label === 'horizon' || draft.label === 'vp'
+    const axisCol = draft.label ? COL.axis[draft.label] : undefined
+    ctx.strokeStyle = constructing ? COL.preview : (axisCol ?? m.color)
     ctx.lineWidth = (constructing ? C.LINE_W_RESULT : m.width) * is
     ctx.beginPath(); ctx.moveTo(draft.start.x, draft.start.y); ctx.lineTo(draft.end.x, draft.end.y); ctx.stroke()
     if (draft.startSnap) mark(ctx, draft.startSnap, is)

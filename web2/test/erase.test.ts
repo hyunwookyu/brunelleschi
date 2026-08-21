@@ -11,8 +11,8 @@ import { pt } from '../src/core/vec'
 function appWithConstruction(): App {
   const app = createApp(1200, 800)
   commitStroke(app, pt(100, 400), pt(1100, 400))
-  commitStroke(app, pt(300, 700), pt(600, 550)) // vp (900,400)
-  commitStroke(app, pt(700, 700), pt(400, 550)) // vp (100,400)
+  commitStroke(app, pt(500, 500), pt(600, 475)) // vp (900,400) — 첫 선, 지면
+  commitStroke(app, pt(500, 500), pt(400, 475)) // vp (100,400) — 같은 모서리에서
   return app
 }
 
@@ -49,7 +49,7 @@ describe('지우개 — 닿은 조각이 사라진다', () => {
     commitStroke(app, pt(500, 500), pt(500, 300))            // A 앵커
     const E = commitStroke(app, pt(500, 450), pt(700, 450))  // 수평
     const V2 = commitStroke(app, pt(600, 450), pt(600, 520)) // E 위에서 아래로 → E가 (600,450)에서 갈림
-    expect(app.lift.lifted.size).toBe(3)
+    expect(app.lift.lifted.size).toBe(5) // +2: 깊이선 둘도 3D 선이다(지시 1)
     eraseOnce(app, pt(660, 450)) // E의 오른쪽 조각
     expect(app.doc.strokes.some(s => s.id === E.id)).toBe(false)
     const kept = app.doc.strokes.find(s => s.a.x === 500 && s.a.y === 450)
@@ -57,14 +57,14 @@ describe('지우개 — 닿은 조각이 사라진다', () => {
     expect(kept!.b.x).toBeCloseTo(600, 4)
     // V2는 여전히 3D다 — 남은 조각의 끝점에 붙어 있다
     expect(app.lift.lifted.has(V2.id)).toBe(true)
-    expect(app.lift.lifted.size).toBe(3) // A, E 남은 조각, V2
+    expect(app.lift.lifted.size).toBe(5) // A, E 남은 조각, V2 + 깊이선 둘
   })
 
   it('매달린 것들의 처리 — 3D 결정을 잃은 획은 대기로 내려간다. 사라지지 않는다', () => {
     const app = appWithConstruction()
     const A = commitStroke(app, pt(500, 500), pt(500, 300))
     const B2 = commitStroke(app, pt(500, 300), pt(700, 350)) // A 꼭대기에서 vp0 축
-    expect(app.lift.lifted.size).toBe(2)
+    expect(app.lift.lifted.size).toBe(4) // +2: 깊이선 둘도 3D 선이다(지시 1)
     // A를 전부 지운다 (두 번 닿아서)
     eraseOnce(app, pt(500, 400))
     expect(app.doc.strokes.some(s => s.id === A.id)).toBe(false)

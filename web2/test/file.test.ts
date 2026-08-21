@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { serializeBrnl, parseBrnl } from '../src/core/file'
 import { toOBJ, toGLTF } from '../src/core/export'
 import { liftAll } from '../src/core/lift'
-import { constructedDoc } from './fixtures'
+import { builder, constructedDoc } from './fixtures'
 import { v3, QID } from '../src/core/vec'
 
 function sampleData() {
@@ -86,7 +86,9 @@ describe('내보내기', () => {
   })
 
   it('반례: 빈 문서도 유효한 출력', () => {
-    const empty = liftAll(constructedDoc().doc)
+    // ⚠ 작도만 있는 문서는 이제 «빈» 문서가 아니다 — 깊이선도 3D 선이다(지시 1).
+    // 여기서 재는 것은 «승격 기하가 0일 때의 출력»이므로 지평선만 있는 문서를 쓴다.
+    const empty = liftAll(builder().doc)
     expect(empty.lifted.size).toBe(0)
     expect(toOBJ(empty)).toContain('g strokes')
     const g = JSON.parse(toGLTF(empty))

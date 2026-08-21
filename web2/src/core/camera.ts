@@ -11,7 +11,9 @@
 //    직교 가로축이라는 것이 작도의 정의이므로 2점 상태 전용으로만 쓴다).
 //   거부는 f² ≤ 0 하나뿐(원칙 f) — 두 소실점이 주점 기준 같은 쪽이면 직교 불가.
 //
-// 세계 좌표 = 작도 카메라 프레임: 원점 = 눈, +x 화면 오른쪽, +y 위, 시선 −z.
+// 세계 좌표: **원점 = 지면**, +x 화면 오른쪽, +y 위, 작도 시선 −z.
+//   작도 카메라는 지면 위 `EYE_HEIGHT`에 서서 수평으로 본다(피치 0·롤 0).
+//   그래서 **Y=0이 지면**이고, 눈높이가 Y 스케일을 정한다 — f(깊이 압축률)와 다른 축이다.
 
 import type { Doc, Stroke, CamPose } from './types'
 import { C } from './constants'
@@ -43,7 +45,9 @@ export interface Analysis {
   constructionDone: boolean
 }
 
-export const DRAW_POSE: CamPose = { p: v3(0, 0, 0), q: QID }
+/** 작도 카메라 — 지면(Y=0) 위 눈높이에 서서 수평으로 본다(피치 0·롤 0).
+ *  **세계 원점은 눈이 아니라 지면이다.** 눈이 원점이면 지면이 눈을 지나 퇴화한다. */
+export const DRAW_POSE: CamPose = { p: v3(0, C.EYE_HEIGHT, 0), q: QID }
 
 /** 획 후보가 작도 국면에서 무엇이 되는지 — analyze와 미리보기가 같은 함수를 쓴다
  *  (측정 경로와 앱 경로를 가르지 않는다) */
@@ -52,9 +56,27 @@ export function classifyNext(
   a: Pt, b: Pt,
 ): { role: Role; reason?: string; vp?: Pt } {
   if (an.horizonY === null) return { role: 'horizon' }
-  if (an.constructionDone) return { role: 'content' }
   const dx = b.x - a.x, dy = b.y - a.y
   const L = Math.hypot(dx, dy)
+  // ── 찍기 — 지평선 위의 점 하나가 소실점이다(지시 4-b) ────────────────────
+  // 선을 그어 교점을 만드는 것과 **다른 길이고 같은 결과**다: 어느 쪽이든 여기서
+  // 같은 `vps` 항목이 나오므로 카메라는 구별하지 못한다(4-c).
+  // 작도가 끝난 뒤에도 받는다 — 3점으로 갈 때 세 번째 소실점을 찍을 수 있어야 한다.
+  if (L <= C.TAP_MAX_PX && Math.abs(a.y - an.horizonY) <= C.OSNAP_RADIUS_PX) {
+    const mark = pt(a.x, an.horizonY)
+    if (an.vps.some(v => Math.abs(v.x - mark.x) <= C.OSNAP_RADIUS_PX)) {
+      return { role: 'content', reason: '이미 그 자리에 소실점이 있다' }
+    }
+    if (an.vps.length === 1) {
+      const u1 = an.vps[0]!.x - an.W / 2
+      const u2 = mark.x - an.W / 2
+      if (-u1 * u2 <= 0) {
+        return { role: 'content', reason: 'f² ≤ 0 — 두 소실점이 주점 기준 반대쪽이어야 한다' }
+      }
+    }
+    return { role: 'vp', vp: mark }
+  }
+  if (an.constructionDone) return { role: 'content' }
   if (L < C.MIN_DIR_LEN_RATIO * an.diag) return { role: 'content' }
   // 화면 평행이면 축 스냅이 붙는다 → 기존 축, 내용 획
   if (Math.abs(dy) / L <= C.SCREEN_PARALLEL_RATIO) return { role: 'content' }
@@ -186,10 +208,49 @@ export function rayThrough(an: Analysis, pose: CamPose, s: Pt): Ray | null {
   return { o: pose.p, d: norm3(quatRotate(pose.q, dc)) }
 }
 
-/** 화면 점을 카메라 깊이 z=−f(게이지 평면)에 놓는다 — 첫 앵커 전용.
- *  그 평면에서 화면 1px = 세계 1단위(사영 배율 f/f = 1). */
-export function pointAtGaugeDepth(an: Analysis, pose: CamPose, s: Pt): V3 | null {
+/** 화면 점 → **지면(Y=0) 위의 점** — 첫 앵커의 자리.
+ *
+ *  게이지 평면(z=−f)을 대체한다. 게이지 평면은 «화면 1px = 세계 1단위»라는 **임의 단위**를
+ *  골라 스케일을 정했다. 지면은 그럴 필요가 없다 — **눈높이가 스케일을 정한다.**
+ *  눈이 지면 위 `EYE_HEIGHT`에 있으므로 지평선 아래 화면 점은 지면과 정확히 한 점에서
+ *  만나고, 그 점까지의 거리가 곧 실제 거리다. 자유 선택이 하나 줄었다.
+ *
+ *  지평선 위(또는 그 자리)의 점은 지면과 안 만난다 → null. 좌표를 임의로 정하지 않는다. */
+export function pointOnGround(an: Analysis, pose: CamPose, s: Pt): V3 | null {
+  const r = rayThrough(an, pose, s)
+  if (!r) return null
+  if (r.d.y >= -1e-9) return null      // 위로 가거나 지면과 평행 — 안 만난다
+  const u = -pose.p.y / r.d.y          // P.y = 0 이 되는 광선 파라미터
+  if (!(u > 0)) return null            // 눈이 이미 지면이거나 뒤쪽 — 안 만난다
+  return add3(pose.p, mul3(r.d, u))
+}
+
+/** 세계 선분 → 화면 선분. **카메라 앞으로 잘라낸다** — 한쪽이 뒤로 넘어가도
+ *  그 앞부분은 보여야 한다(격자처럼 발밑에서 지평선까지 뻗는 선). 전부 뒤면 null. */
+export function projectSeg(an: Analysis, pose: CamPose, A: V3, B: V3): [Pt, Pt] | null {
   if (!an.principal || an.f === null) return null
-  const dc = v3(s.x - an.principal.x, an.principal.y - s.y, -an.f)
-  return add3(pose.p, quatRotate(pose.q, dc))
+  const q = quatConj(pose.q)
+  let a = quatRotate(q, sub3(A, pose.p))
+  let b = quatRotate(q, sub3(B, pose.p))
+  const NEAR = -1e-3
+  if (a.z > NEAR && b.z > NEAR) return null
+  if (a.z > NEAR || b.z > NEAR) {
+    const t = (NEAR - a.z) / (b.z - a.z)
+    const m = v3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, NEAR)
+    if (a.z > NEAR) a = m; else b = m
+  }
+  const to = (c: V3) => pt(an.principal!.x + an.f! * c.x / -c.z, an.principal!.y - an.f! * c.y / -c.z)
+  return [to(a), to(b)]
+}
+
+/** 지면 격자의 두 방향 — 세계의 가로축 둘(방향의 y가 0인 축).
+ *  소실점 축이 우선이고, 모자라면 화면 평행 가로축(H)이 채운다.
+ *  **화면 각도 균등 분할이 아니다** — 공간의 정사각형을 투영한다(이론서 9.5). */
+export function groundAxes(an: Analysis): [V3, V3] | null {
+  const flat = an.axes.filter(a => Math.abs(a.dir.y) < 1e-9)
+  const vps = flat.filter(a => a.id === 'vp0' || a.id === 'vp1').map(a => a.dir)
+  const h = flat.find(a => a.id === 'H')?.dir
+  if (vps.length >= 2) return [vps[0]!, vps[1]!]
+  if (vps.length === 1 && h) return [vps[0]!, h]
+  return null
 }

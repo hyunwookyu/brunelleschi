@@ -6,13 +6,14 @@ import { liftAll } from '../src/core/lift'
 import {
   createApp, commitStroke, beginErase, eraseAt, endErase, type App,
 } from '../src/app/state'
+import { builder } from './fixtures'
 import { pt } from '../src/core/vec'
 
 function appWithConstruction(): App {
   const app = createApp(1200, 800)
   commitStroke(app, pt(100, 400), pt(1100, 400))
-  commitStroke(app, pt(300, 700), pt(600, 550))
-  commitStroke(app, pt(700, 700), pt(400, 550))
+  commitStroke(app, pt(500, 500), pt(600, 475))
+  commitStroke(app, pt(500, 500), pt(400, 475))
   return app
 }
 
@@ -120,13 +121,17 @@ describe('재료의 저장·내보내기', () => {
     const g = JSON.parse(toGLTF(app.lift))
     expect(g.meshes[0].primitives).toHaveLength(2)
     expect(g.materials.map((m: any) => m.name).sort()).toEqual(['HB', 'INK'])
+    // 개수를 손으로 박지 않는다 — 승격 기하에서 끌어온다(깊이선도 3D 선이라 함께 나간다)
+    const segs = app.lift.lifted.size
+    expect(segs).toBe(4) // 깊이선 둘 + HB 수직 + INK 깊이 획
     const total = g.accessors.reduce((n: number, a: any) => n + a.count, 0)
-    expect(total).toBe(4)
-    expect(g.buffers[0].byteLength).toBe(2 * 2 * 3 * 4)
+    expect(total).toBe(segs * 2)                       // 선분마다 정점 둘
+    expect(g.buffers[0].byteLength).toBe(segs * 2 * 3 * 4) // 정점마다 float3
   })
 
   it('반례: 빈 문서도 유효한 glTF', () => {
-    const empty = liftAll(appWithConstruction().doc)
+    // ⚠ 작도만 있는 문서는 이제 «빈» 문서가 아니다 — 깊이선도 3D 선이다(지시 1).
+    const empty = liftAll(builder().doc)
     expect(empty.lifted.size).toBe(0)
     const g = JSON.parse(toGLTF(empty))
     expect(g.buffers[0].byteLength).toBe(0)

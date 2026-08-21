@@ -11,7 +11,7 @@ import { DRAW_POSE } from '../core/camera'
 import { defaultOsnap, type OsnapSettings } from '../core/osnap'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
 import { C } from '../core/constants'
-import { type Pt, type V3, v3 } from '../core/vec'
+import { type Pt, type V3, v3, add3 } from '../core/vec'
 
 export interface Op {
   removed: { stroke: Stroke; index: number }[]
@@ -41,6 +41,8 @@ export interface App {
   view: ViewOffset
   /** 저장된 시점 */
   savedViews: { pose: CamPose; view: ViewOffset }[]
+  /** 지면 격자 표시 — 기본 켬(6-h) */
+  grid: boolean
   cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
 }
@@ -62,6 +64,7 @@ export function createApp(W: number, H: number): App {
     activeErase: null,
     view: { s: 1, ox: 0, oy: 0 },
     savedViews: [],
+    grid: true,
     cubeLayout: { cx: W - 60, cy: 60, size: 80 }, // 우측 상단 — 큐브
     listeners: [],
   }
@@ -73,8 +76,11 @@ export const screenToDoc = (app: App, p: Pt): Pt =>
 export const docToScreen = (app: App, p: Pt): Pt =>
   ({ x: p.x * app.view.s + app.view.ox, y: p.y * app.view.s + app.view.oy })
 
+/** 작도 포즈인가 — **원점이 아니라 `DRAW_POSE`와 견준다.**
+ *  세계 원점이 지면으로 옮겨가 눈은 더 이상 원점에 없다(camera.ts). */
 export const isDrawPose = (pose: CamPose): boolean =>
-  Math.abs(pose.p.x) + Math.abs(pose.p.y) + Math.abs(pose.p.z) < 1e-12 &&
+  Math.abs(pose.p.x - DRAW_POSE.p.x) + Math.abs(pose.p.y - DRAW_POSE.p.y) +
+  Math.abs(pose.p.z - DRAW_POSE.p.z) < 1e-12 &&
   Math.abs(pose.q.x) + Math.abs(pose.q.y) + Math.abs(pose.q.z) < 1e-12
 
 function recompute(app: App) {
@@ -252,7 +258,7 @@ export function orbitPivot(app: App): V3 {
   const segs = [...app.lift.lifted.values()]
   if (segs.length === 0) {
     const f = app.lift.an.f ?? 1000
-    return v3(0, 0, -f)
+    return add3(DRAW_POSE.p, v3(0, 0, -f)) // 눈 앞 f — 눈은 원점이 아니다
   }
   let x = 0, y = 0, z = 0
   for (const s of segs) {

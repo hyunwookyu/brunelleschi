@@ -30,8 +30,12 @@ describe('오스냅 — 종류·우선순위·반경', () => {
     expect(vtx.kind).toBe('vertex') // (500,300)은 A·B가 공유
     expect(vtx.p.x).toBeCloseTo(500, 6)
     expect(vtx.p.y).toBeCloseTo(300, 6)
-    const end = osnap(lift, DRAW_POSE, pt(503, 498), allOn())!
-    expect(end.kind).toBe('end') // (500,500)은 A 하나뿐
+    // ⚠ (500,500)은 이제 **작도 모서리**다 — 깊이선 둘과 수직 A가 공유하므로 정점이다.
+    // 「홀로 끝점」을 재려면 실제로 한 획만 닿는 자리를 골라야 한다: B의 먼 끝(700,350).
+    const end = osnap(lift, DRAW_POSE, pt(703, 352), allOn())!
+    expect(end.kind).toBe('end')
+    const corner = osnap(lift, DRAW_POSE, pt(503, 498), allOn())!
+    expect(corner.kind).toBe('vertex') // 깊이선 둘 + A가 만나는 모서리
   })
 
   it('중점은 3D 중점의 사영 — 화면 중점이 아니다', () => {
@@ -65,7 +69,7 @@ describe('오스냅 — 종류·우선순위·반경', () => {
     // B는 그 화면 자리(600,325)를 지나지만 3D 깊이가 다르다(−580 근처)
     b.add(500, 325, 700, 325)
     const lift = liftAll(b.doc)
-    expect(lift.lifted.size).toBe(3)
+    expect(lift.lifted.size).toBe(5) // +2: 깊이선 둘도 3D 선이다(지시 1)
     const ints = intersections3(lift)
     // 실제 3D 교차: E가 A 위에서 시작(T자) · B가 A 끝에서 시작(모서리) — 화면 교차(600,325)는 없다
     for (const x of ints) {
@@ -112,7 +116,7 @@ describe('오스냅 — 종류·우선순위·반경', () => {
     b.add(500, 350, 700, 350)
     b.add(620, 450, 620, 300)
     const lift = liftAll(b.doc)
-    expect(lift.lifted.size).toBe(5)
+    expect(lift.lifted.size).toBe(7) // +2: 깊이선 둘도 3D 선이다(지시 1)
     const hit = osnap(lift, DRAW_POSE, pt(622, 351), allOn())!
     expect(hit.kind).toBe('int') // near도 잡히지만 int가 앞선다 (끝점·중점은 20px 이상 밖)
     expect(hit.p.x).toBeCloseTo(620, 3)
@@ -136,9 +140,11 @@ describe('오스냅 — 종류·우선순위·반경', () => {
 
   it('대기 획의 끝점도 후보다 (2D) — 연쇄의 출발점', () => {
     const { b } = scene()
-    b.add(900, 600, 1000, 645) // 미연결 자유 획 → 대기
+    const w = b.add(900, 600, 1000, 645) // 미연결 자유 획 → 대기
     const lift = liftAll(b.doc)
-    expect(lift.waiting).toHaveLength(1)
+    // ⚠ 개수를 박지 않는다 — 깊이선도 이제 3D 대상이라(지시 1) 안 닿으면 함께 대기한다.
+    // 이 팔이 재는 것은 «대기 획의 끝점이 후보인가»이지 대기가 몇 개인가가 아니다.
+    expect(lift.waiting).toContain(w.id)
     const hit = osnap(lift, DRAW_POSE, pt(902, 602), only('end'))!
     expect(hit.kind).toBe('end')
     expect(hit.p).toEqual(pt(900, 600))
@@ -153,10 +159,13 @@ describe('선분 위 시작 — 확정된 선과 만나면 좌표가 정해진�
     const lift = liftAll(b.doc)
     const seg = lift.lifted.get(E.id)
     expect(seg).toBeDefined()
-    // 시작 3D가 A 선분 위: x=−100, z=−387.298, y=−50
-    expect(seg!.a3.x).toBeCloseTo(-100, 4)
-    expect(seg!.a3.y).toBeCloseTo(-50, 4)
-    void A
+    // 시작 3D가 A 선분 위 — A는 모서리(지면)에서 세운 수직이므로 x·z는 모서리의 것이고
+    // y만 화면 높이가 정한다. 좌표는 이제 미터다(눈높이 1.6이 스케일을 정한다, 지시 3).
+    const a = lift.lifted.get(A.id)!
+    expect(seg!.a3.x).toBeCloseTo(a.a3.x, 6)
+    expect(seg!.a3.z).toBeCloseTo(a.a3.z, 6)
+    expect(seg!.a3.y).toBeGreaterThan(a.a3.y)  // 지면보다 위
+    expect(seg!.a3.y).toBeLessThan(a.b3.y)     // A의 위 끝보다 아래
   })
 
   it('반례: 선분 사영에서 벗어난 시작은 대기', () => {

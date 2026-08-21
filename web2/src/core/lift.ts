@@ -7,7 +7,7 @@ import type { Doc, Stroke, CamPose } from './types'
 import { C } from './constants'
 import {
   analyze, type Analysis, type AxisId, DRAW_POSE,
-  screenAxes, project, rayThrough, pointAtGaugeDepth, type Ray,
+  screenAxes, project, rayThrough, pointOnGround, type Ray,
 } from './camera'
 import {
   type Pt, type V3, add3, sub3, mul3, dot3, dist2, norm3,
@@ -78,7 +78,14 @@ export function liftAll(doc: Doc): LiftResult {
   let anchorId: number | null = null
 
   const strokes = new Map(doc.strokes.map(s => [s.id, s]))
-  const content = doc.strokes.filter(s => an.roles.get(s.id) === 'content')
+  // **3D가 안 되는 것은 지평선뿐이다**(무한원 — 이론서 2.2). 깊이선은 소실점을 정의하고
+  // *동시에* 사람이 그은 선이다. 3D로 남겨야 그 끝점이 오스냅·연결 대상이 된다 —
+  // 안 그러면 깊이선 끝에 이어 그린 획이 붙을 데가 없어 영영 대기한다.
+  // 작도 순서가 강제되던 자리가 여기다(2026-08-21 측정: 지평선→수직선→깊이선→수직선에서
+  // 마지막 획이 waiting에 남았다).
+  // 찍은 소실점 표식은 **점**이라 3D 선이 아니다 — 방향이 없고 무한원에 있다.
+  const isMark = (s: Stroke) => Math.hypot(s.b.x - s.a.x, s.b.y - s.a.y) <= C.TAP_MAX_PX
+  const content = doc.strokes.filter(s => an.roles.get(s.id) !== 'horizon' && !isMark(s))
   if (!an.principal || an.f === null) {
     return { an, lifted, waiting: content.map(s => s.id), anchorId, strokes }
   }
@@ -102,7 +109,17 @@ export function liftAll(doc: Doc): LiftResult {
       if (d <= bestD) { best = p3; bestD = d }
     }
     if (best) return best
-    // 선분 위 — 광선과 선분 직선의 최근접점이 선분 안이고 사영이 일치할 때
+    // 선분 **직선** 위 — 광선과의 최근접점이고 그 사영이 화면 점과 일치할 때.
+    //
+    // ⚠ **선분 안(t∈[0,1])으로 제한하지 않는다.** 초판이 제한했고, 그래서 「연장선」
+    // 오스냅이 준 좌표를 리프팅이 도로 버렸다 — 사람이 붙인 점인데 획이 대기에 남았다
+    // (2026-08-21 실측: 임의 방향 30획 중 5획이 전부 이 자리였다. 전부 `osnap:ext`이고
+    // 전부 p3가 있었다). 연장선은 «원 선과 같은 3D 직선 위»라 좌표가 정해진다는 것이
+    // 그 오스냅의 정의다 — 리프팅이 그것을 부정하면 안 된다.
+    // ⚠ 다만 **바깥쪽은 훨씬 좁게** 받는다. 그냥 mergeTol로 열면 멀리 있는 선의 연장이
+    // 얕은 각으로 지나가며 2.3px 어긋난 채 «맞았다»고 나온다(실측) — 불변식 k가 그만큼
+    // 헐거워진다. 사람이 연장선 오스냅에 붙였다면 확정 2D가 **바로 그 점의 사영**이므로
+    // 왕복 오차가 fp 수준이다. 그래서 바깥쪽 판별자는 공간 여유가 아니라 **수치 동일성**이다.
     const ray = rayThrough(an, pose, s2)
     if (!ray) return null
     for (const seg of segs) {
@@ -111,10 +128,11 @@ export function liftAll(doc: Doc): LiftResult {
       if (!p3) continue
       const L = Math.hypot(dir.x, dir.y, dir.z)
       const t = L > 1e-12 ? dot3(sub3(p3, seg.a3), dir) / (L * L) : -1
-      if (t < 0 || t > 1) continue
+      const inside = t >= 0 && t <= 1
       const pr = project(an, pose, p3)
       if (!pr) continue
       const d = dist2(pr, s2)
+      if (!inside && d > C.LINE_MATCH_PX) continue
       if (d <= bestD) { best = p3; bestD = d }
     }
     return best
@@ -139,11 +157,31 @@ export function liftAll(doc: Doc): LiftResult {
           if (dir && ray) a3 = closestOnLineToRay(b3, dir, ray)
         }
       }
-      if (!a3 && lifted.size === 0 && anchorId === null && (axis === 'H' || axis === 'V')) {
-        // 첫 앵커 — 화면 평행 획이 게이지 평면(z=−f)에서 연쇄를 시작한다.
-        // 전역 스케일은 원리적으로 모호하므로 이것은 단위 선택이지 임의 좌표가 아니다.
-        a3 = pointAtGaugeDepth(an, pose, s.a)
-        if (a3) anchorId = s.id
+      if (!a3 && !b3 && lifted.size === 0 && anchorId === null && axis !== null) {
+        // ── 첫 선은 지면에 있다 ──────────────────────────────────────────
+        // 규칙 하나이고 **선의 종류를 안 가린다.** 사람이 그리기 시작할 때 첫 선은
+        // 바닥에서 시작한다 — 바닥 모서리를 긋거나, 기둥을 세우거나, 벽 하단을 긋는다.
+        //
+        //   수평선·깊이선  그 선 자체가 Y=0
+        //   수직선         아래점이 Y=0 (위쪽 높이는 그 선의 길이가 정한다)
+        //
+        // 수평·깊이 축은 방향의 y 성분이 0이므로(소실점이 지평선 위에 있다) 한 끝만
+        // 지면에 놓으면 **선 전체가 지면이다** — 그래서 두 경우가 한 계산으로 끝난다.
+        // 아래·위는 화면 y로 가른다: 롤 0·피치 0이라 화면 y가 곧 높이 순서다.
+        // (3점 = 피치 ≠ 0 에서는 다시 봐야 한다. 그때 판단한다.)
+        const dir = axisDir(an, axis)
+        const useB = axis === 'V' && s.b.y > s.a.y   // 아래로 그은 수직선
+        const g = pointOnGround(an, pose, useB ? s.b : s.a)
+        if (g && dir) {
+          if (useB) {
+            const rayA = rayThrough(an, pose, s.a)
+            const solved = rayA ? closestOnLineToRay(g, dir, rayA) : null
+            if (solved) { a3 = solved; b3 = g }
+          } else {
+            a3 = g
+          }
+          if (a3) anchorId = s.id
+        }
       }
       if (!a3) continue
 
