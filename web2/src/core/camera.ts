@@ -92,16 +92,25 @@ export function classifyNext(
   }
   if (an.constructionDone) return { role: 'content' }
   if (L < C.MIN_DIR_LEN_RATIO * an.diag) return { role: 'content' }
+  // 기존 소실점에 붙는가 — 수직거리 ÷ 획 길이. 임계로 나눠 «몇 배 안쪽인가»로 견준다.
+  let vpScore = Infinity
+  for (const v of an.vps) {
+    const d = Math.abs((v.x - a.x) * dy - (v.y - a.y) * dx) / L
+    vpScore = Math.min(vpScore, d / L / C.VP_DIR_RATIO)
+  }
   // 화면 평행이면 축 스냅이 붙는다 → 기존 축, 내용 획.
   // **화면 수평은 그것으로 끝이 아니다** — H 축의 소실점이 무한원이라는 선언이므로
   // (이론서 2.2) 여기서 1점이 확정된다. `screenAxis`가 그 신호이고 analyze가 접는다.
-  if (Math.abs(dy) / L <= C.SCREEN_PARALLEL_RATIO) return { role: 'content', screenAxis: 'H' }
-  if (Math.abs(dx) / L <= C.SCREEN_PARALLEL_RATIO) return { role: 'content', screenAxis: 'V' }
-  // 기존 소실점에 붙는가 — 수직거리 ÷ 획 길이
-  for (const v of an.vps) {
-    const d = Math.abs((v.x - a.x) * dy - (v.y - a.y) * dx) / L
-    if (d / L <= C.VP_DIR_RATIO) return { role: 'content' }
-  }
+  //
+  // ⚠ **기존 소실점에 더 잘 맞으면 선언이 아니다.** 소실점이 아주 멀면(|Δx| ≳ 5000px)
+  // 그 소실점을 향한 깊이선이 화면에서 2.87°(`SCREEN_PARALLEL_RATIO`) 안에 들어온다 —
+  // 그것을 「H축 선언」으로 읽으면 사람이 2점을 그리는 중에 문서가 1점으로 잠긴다
+  // (2026-08-21 2차 리뷰어 지적). 선언은 **H가 더 잘 맞을 때만**이다.
+  const hScore = Math.abs(dy) / L / C.SCREEN_PARALLEL_RATIO
+  const vScore = Math.abs(dx) / L / C.SCREEN_PARALLEL_RATIO
+  if (hScore <= 1) return vpScore < hScore ? { role: 'content' } : { role: 'content', screenAxis: 'H' }
+  if (vScore <= 1) return { role: 'content', screenAxis: 'V' }
+  if (vpScore <= 1) return { role: 'content' }
   // 안 붙으면 새 소실점 — 단, 실수로 그은 작은 선은 카메라를 안 건드린다
   if (L < C.VP_MIN_LEN_RATIO * an.diag) {
     return { role: 'content', reason: '소실점을 정의하기엔 짧다' }

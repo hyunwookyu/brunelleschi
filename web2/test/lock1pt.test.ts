@@ -10,6 +10,7 @@
 import { describe, it, expect } from 'vitest'
 import { session } from './session'
 import { analyze, P1_LOCK_REASON } from '../src/core/camera'
+import { C } from '../src/core/constants'
 import { axisOfStroke } from '../src/core/lift'
 import { DRAW_POSE } from '../src/core/camera'
 
@@ -106,5 +107,58 @@ describe('2 — 화면 수평축이 선언되면 1점으로 잠근다', () => {
     const again = analyze(JSON.parse(JSON.stringify(s.app.doc)))
     expect(again.p1Locked).toBe(true)
     expect(again.vps).toHaveLength(1)
+  })
+})
+
+describe('2 — 잠금이 «걸리는 조건»의 경계 (2차 리뷰어 지적)', () => {
+  it('선언의 임계는 SCREEN_PARALLEL_RATIO다 — 2.87° 안', () => {
+    expect(C.SCREEN_PARALLEL_RATIO).toBe(0.05)
+    const deg = Math.asin(C.SCREEN_PARALLEL_RATIO) * 180 / Math.PI
+    expect(deg).toBeGreaterThan(2.8)
+    expect(deg).toBeLessThan(2.9)
+  })
+
+  it('반례: 아주 먼 소실점을 향한 깊이선은 거의 수평이어도 H 선언이 아니다', () => {
+    // 소실점이 |Δx| ≳ 5000px 밖이면 그쪽을 향한 깊이선이 화면에서 2.87° 안에 들어온다.
+    // 그것을 「H축 선언」으로 읽으면 **2점을 그리는 중에 문서가 1점으로 잠긴다.**
+    const s = session(1200, 800)
+    s.draw(...HZ)
+    // 화면 밖 소실점을 찍어 만든다(화면을 줄여 찍는 것과 같은 결과 — 찍기가 그 길이다)
+    s.app.doc.strokes.push({ id: 900, a: { x: 6000, y: 400 }, b: { x: 6000, y: 400 } })
+    // 위 찍기는 TAP 경로를 안 타므로(하네스가 아니라 직접 넣었다) 대신 vps를 확인한다
+    const an0 = analyze(s.app.doc)
+    expect(an0.vps.length).toBeGreaterThanOrEqual(1)
+    const vp = an0.vps[0]!
+    expect(Math.abs(vp.x)).toBeGreaterThan(5000)
+    // 그 소실점을 향한 획 — 화면에서 2.87° 안이다
+    const a = { x: 500, y: 650 }
+    const t = 0.06
+    const b = { x: a.x + (vp.x - a.x) * t, y: a.y + (vp.y - a.y) * t }
+    const L = Math.hypot(b.x - a.x, b.y - a.y)
+    expect(Math.abs(b.y - a.y) / L).toBeLessThan(C.SCREEN_PARALLEL_RATIO)  // 정말 거의 수평이다
+    s.app.doc.strokes.push({ id: 901, a, b })
+    const an = analyze(s.app.doc)
+    expect(an.roles.get(901)).toBe('content')
+    expect(an.screenHDeclared).toBe(false)   // ← 선언이 아니다
+    expect(an.p1Locked).toBe(false)          // ← 잠기지 않는다
+  })
+
+  it('같은 자리에서 H가 더 잘 맞으면 선언이다 — 소실점 쪽이 아니라 진짜 수평이면', () => {
+    const s = session(1200, 800)
+    s.draw(...HZ)
+    s.app.doc.strokes.push({ id: 900, a: { x: 6000, y: 400 }, b: { x: 6000, y: 400 } })
+    s.app.doc.strokes.push({ id: 901, a: { x: 500, y: 650 }, b: { x: 800, y: 650 } }) // 정확히 수평
+    const an = analyze(s.app.doc)
+    expect(an.screenHDeclared).toBe(true)
+    expect(an.p1Locked).toBe(true)
+  })
+
+  it('잠금은 되돌릴 수 있다 — 선언한 획을 지우면 풀린다 (저장이 아니라 계산이므로)', () => {
+    const s = locked()
+    expect(s.app.lift.an.p1Locked).toBe(true)
+    const hr = s.app.doc.strokes.find(x => x.a.y === 650 && x.b.y === 650)!
+    s.app.doc.strokes = s.app.doc.strokes.filter(x => x.id !== hr.id)
+    expect(analyze(s.app.doc).p1Locked).toBe(false)
+    expect(analyze(s.app.doc).screenHDeclared).toBe(false)
   })
 })
