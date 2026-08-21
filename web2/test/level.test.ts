@@ -15,7 +15,7 @@ import { describe, it, expect } from 'vitest'
 import { session } from './session'
 import { W, H } from './fixtures'
 import { project, DRAW_POSE } from '../src/core/camera'
-import { setPose, orbitPivot, orbitBy, resetPose, undo, type App } from '../src/app/state'
+import { setPose, orbitPivot, orbitBy, resetPose, undo, saveView, gotoView, type App } from '../src/app/state'
 import { createAutoLevel } from '../src/app/autolevel'
 import { isLevel, levelPose, yawDir, forwardOf } from '../src/core/level'
 import { cubeGeom, cubeHit, poseForElem } from '../src/core/viewcube'
@@ -323,6 +323,25 @@ describe('접기 시점 — 놓으면 잠깐 뒤', () => {
     foldAfterRelease(app, c, al)
     expect(isLevel(app.pose)).toBe(true)
     for (const v of [app.pose.p.x, app.pose.p.y, app.pose.p.z]) expect(Number.isFinite(v)).toBe(true)
+  })
+
+  it('기울여 저장한 시점도 접힌다 — 예외를 안 둔 대가를 팔로 박는다', () => {
+    // 규칙에 예외를 안 뒀으므로 **기울어진 시점을 «보관»하는 길이 없다.** 그것을 여기
+    // 박아 두어 조용히 바뀌지 않게 한다 — 예외를 넣기로 하면 이 팔이 먼저 빨개진다.
+    const app = drawn()
+    const c = clock()
+    const al = createAutoLevel(app, c.now)
+    al.grab(); orbitBy(app, -160, -120)
+    saveView(app)
+    expect(app.savedViews).toHaveLength(1)
+    al.release()
+    setPose(app, DRAW_POSE)
+    gotoView(app, 0)
+    al.touch()                                  // main.ts가 부르는 자리
+    expect(isLevel(app.pose)).toBe(false)       // 불러온 직후는 기울어 있다
+    c.advance(C.FOLD_DELAY_MS + 1)
+    for (let i = 0; i < 200 && (!isLevel(app.pose) || al.folding()); i++) { al.tick(); c.advance(20) }
+    expect(isLevel(app.pose)).toBe(true)        // 그래도 접힌다
   })
 
   it('그리려고 누르면 지연을 안 기다린다 — foldNow', () => {
