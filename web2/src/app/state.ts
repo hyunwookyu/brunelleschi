@@ -347,9 +347,14 @@ export function panBy(app: App, dx: number, dy: number) {
  *  **무게중심이 아니라 경계 상자 중심이다**(지시의 말 그대로): 무게중심은 획 밀도에 끌린다 —
  *  한 귀퉁이를 촘촘히 따면 중심이 그리로 간다. 경계 상자는 «어디까지 그렸나»만 본다.
  *
- *  ⚠ **대가**(#59): 펜이 없을 때는 그 구축선이 경계 상자를 통째로 늘린다 — 같은 픽스처에서
- *  **52.087**(무게중심이면 17.335)이다. 그 자리는 지시 5의 **궤도 반경 조절**이 답한다.
- *  측정은 `test/pivot.test.ts`가 매 실행에 낸다.
+ *  ⚠⚠ **펜이 없으면 «무게중심»으로 돌아간다 — 경계 상자가 아니다**(web2-06 1차 리뷰어 [9]).
+ *  초판은 펜이 없을 때도 경계 상자였고, 그러면 그 구축선 하나가 상자를 통째로 늘려
+ *  반경이 **52.087**이 됐다(무게중심 17.335의 3배). **그것은 사람이 보고한 증상과 같은
+ *  방향**이다 — 「반경이 너무 길어진다」를 고치는 항목이 펜 이전 구간에서 그것을 3배로
+ *  키운 셈이다. 지시의 「경계 상자」는 **무엇을 넣고 뺄지**의 말이고(「연필 구축선은 경계
+ *  상자에서 뺀다」), 「펜 선이 없으면 연필로 **대신한다**」는 **종전 규칙으로 돌아간다**로
+ *  읽는 것이 측정과 맞는다(D-4: 측정이 사람이 준 근거를 포함해 우선한다).
+ *  그래서 갈래가 둘이고, 둘 다 팔이 수를 낸다(`test/pivot.test.ts`).
  *
  *  저장하지 않는다 — 매번 계산이다(원칙 b). 펜 획을 지우면 그 즉시 연필로 돌아간다. */
 export function orbitPivot(app: App): V3 {
@@ -362,9 +367,15 @@ export function orbitPivot(app: App): V3 {
     const s = app.lift.strokes.get(id)
     return s ? isInk(s) : false
   })
-  const use = ink.length > 0 ? ink : segs
+  if (ink.length === 0) {
+    // 펜이 없다 — **종전 규칙(무게중심) 그대로**. 회귀를 안 만든다(위 ⚠⚠).
+    let x = 0, y = 0, z = 0
+    for (const [, g] of segs) { x += g.a3.x + g.b3.x; y += g.a3.y + g.b3.y; z += g.a3.z + g.b3.z }
+    const n = segs.length * 2
+    return v3(x / n, y / n, z / n)
+  }
   let lo = v3(Infinity, Infinity, Infinity), hi = v3(-Infinity, -Infinity, -Infinity)
-  for (const [, g] of use) {
+  for (const [, g] of ink) {
     for (const p of [g.a3, g.b3]) {
       lo = v3(Math.min(lo.x, p.x), Math.min(lo.y, p.y), Math.min(lo.z, p.z))
       hi = v3(Math.max(hi.x, p.x), Math.max(hi.y, p.y), Math.max(hi.z, p.z))

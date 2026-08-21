@@ -33,6 +33,17 @@ function horiz(h: number, R: number, d: number) {
   return { st, an: analyze(s.app.doc), s }
 }
 
+
+/** 먼 소실점을 향한 깊이선 — 소실점이 실제로 서면 true (`farvp.test.ts`의 `drawFar`와 같은 기하) */
+function drawFarLocal(h: number, R: number, D: number): boolean {
+  const s = session(W, H)
+  s.draw(100, HY, 1100, HY)
+  s.app.doc.strokes.push({ id: 900, a: { x: 900, y: HY }, b: { x: 900, y: HY } })
+  const A = { x: 700, y: HY + h }
+  s.draw(A.x, A.y, A.x - R, A.y - h * R / D)
+  return analyze(s.app.doc).vps.length === 2
+}
+
 describe('지시 2 — 수평선이 스냅으로 그어진다', () => {
   it('**재현**: 처짐 5px의 수평 의도가 소실점을 안 만든다 (고치기 전 x=16300)', () => {
     const { st, an } = horiz(200, 400, 5)
@@ -109,5 +120,59 @@ describe('지시 2 — 수평선이 스냅으로 그어진다', () => {
     expect(horiz(40, 300, 1).an.vps.length).toBe(0)
     // 흡수 한계 = h·R/(6W) = 1.67px. 지평선에 붙어 그으면 이 회차의 이득이 거의 없다.
     expect(40 * 300 / (C.VP_FAR_W * W)).toBeCloseTo(1.67, 2)
+  })
+})
+
+/** **동작점 하나가 아니라 대비를 낸다**(#12·#13 · 1차 리뷰어 [12]).
+ *
+ *  `VP_FAR_W`를 4·6·8·10으로 갈아 끼우며 **같은 코드 경로**를 돌린다(상수를 잠깐 바꾼다 —
+ *  값을 대입해 표를 만들면 그것은 정의의 되풀이다 · #46). 두 축을 함께 낸다:
+ *    ① 수평 의도가 흡수하는 겨냥 오차(px) — 클수록 사람이 수평을 긋기 쉽다
+ *    ② «그어서» 만들 수 있는 소실점 거리(W) — 클수록 먼 구도가 살아난다
+ *  **둘은 같은 눈금의 양끝이다**(하나를 늘리면 하나가 준다). 그래서 «옳은 값»이 없고
+ *  **어느 쪽으로 틀리는 것이 싼가**가 고른다(#61: 비용이 비대칭이면 경계도 비대칭이다). */
+describe('지시 2 — `VP_FAR_W`의 대비 (4 · 6 · 8 · 10)', () => {
+  const set = (k: number) => { (C as unknown as { VP_FAR_W: number }).VP_FAR_W = k }
+
+  it('두 축의 대비표 — 고른 값(6)이 그 안에서 어디인가', () => {
+    const orig = C.VP_FAR_W
+    const rows: string[] = []
+    try {
+      for (const k of [4, 6, 8, 10]) {
+        set(k)
+        // ① 흡수 한계 — 1px씩 올리며 «소실점이 생기는» 첫 값 직전까지
+        const absorb = (h: number, R: number) => {
+          let d = 0
+          while (d < 60 && horiz(h, R, d + 0.5).an.vps.length === 0) d += 0.5
+          return d
+        }
+        // ② 서는 대역 — 1W씩 올리며 소실점이 서는 마지막 값
+        const band = (h: number, R: number) => {
+          let w = 1
+          while (w < 30 && drawFarLocal(h, R, (w + 1) * W)) w += 1
+          return w
+        }
+        rows.push(`VP_FAR_W=${String(k).padStart(2)} | 흡수 h200·R400 ${absorb(200, 400).toFixed(1)}px` +
+          ` · h100·R400 ${absorb(100, 400).toFixed(1)}px | 대역 h150·R600 ${band(150, 600)}W` +
+          ` · h40·R300 ${band(40, 300)}W`)
+      }
+    } finally { set(orig) }
+    // eslint-disable-next-line no-console
+    console.log('두 축은 같은 눈금의 양끝이다 — 하나를 늘리면 하나가 준다\n' + rows.join('\n'))
+    expect(C.VP_FAR_W).toBe(6)   // 되돌아왔는가(다른 팔을 오염시키지 않는다)
+  })
+
+  it('**단조**: 값을 키우면 대역이 늘고 흡수가 준다 (그 대비가 실재한다)', () => {
+    const orig = C.VP_FAR_W
+    try {
+      set(4); const a4 = horiz(200, 400, 14).an.vps.length; const b4 = drawFarLocal(150, 600, 3 * W)
+      set(10); const a10 = horiz(200, 400, 14).an.vps.length; const b10 = drawFarLocal(150, 600, 3 * W)
+      expect(a4).toBe(0)      // K=4는 14px까지 흡수하고(한계 16.5px)
+      expect(a10).toBe(1)     // K=10은 못 흡수한다(한계 6.5px)
+      expect(b4).toBe(true)   // 3W는 양쪽 다 선다 — **대조군**(값과 무관하게 서는 대역)
+      expect(b10).toBe(true)
+      set(4); expect(drawFarLocal(150, 600, 5 * W)).toBe(false)   // K=4는 5W를 못 만든다
+      set(10); expect(drawFarLocal(150, 600, 5 * W)).toBe(true)   // K=10은 만든다
+    } finally { set(orig) }
   })
 })

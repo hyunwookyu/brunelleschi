@@ -7,9 +7,10 @@
 //
 // 결과물은 펜으로 딴 선이므로 그것이 돌려볼 대상이다. 연필 구축선은 경계 상자에서 뺀다.
 //
-// ⚠ **대가**(#59): 펜이 없을 때는 그 구축선이 경계 상자를 통째로 늘린다 — 같은 픽스처에서
-//    **52.087**(무게중심이면 17.335)이다. 이 파일이 그 수를 매 실행에 낸다.
-//    그 자리는 지시 5의 궤도 반경 조절이 답한다.
+// ⚠⚠ **펜이 없으면 무게중심으로 돌아간다**(1차 리뷰어 [9]). 초판은 그때도 경계 상자였고
+//    구축선 하나가 상자를 늘려 **52.087**이 됐다 — 무게중심 17.335의 **3배**이고,
+//    그것은 사람이 보고한 증상(「반경이 너무 길어진다」)과 **같은 방향**이다.
+//    「펜 선이 없으면 연필로 대신한다」를 «종전 규칙으로 돌아간다»로 읽는다(D-4).
 
 import { describe, it, expect } from 'vitest'
 import { session, type Session } from './session'
@@ -61,16 +62,21 @@ describe('지시 4 — 궤도 중심', () => {
     expect(p.z).toBeCloseTo((Math.min(...zs) + Math.max(...zs)) / 2, 9)
   })
 
-  it('펜이 없으면 연필로 대신한다 — **그리고 그 대가가 이 수다**(#59)', () => {
+  it('**펜이 없으면 종전 규칙(무게중심)이다** — 이 회차가 그 구간을 안 건드린다', () => {
     const s = drawn()
     expect([...s.app.lift.lifted.keys()].length).toBeGreaterThan(0)
-    expect(radius(orbitPivot(s.app))).toBeCloseTo(52.087, 2)   // 경계 상자
-    expect(radius(centroid(s))).toBeCloseTo(17.335, 2)         // 무게중심이었으면
-    // 구축선이 없으면 그 차가 사라진다 — **대가는 «멀리 뻗은 연필 획»이 낸다**
-    const s2 = session(W, H)
-    s2.draw(100, HY, 1100, HY); s2.draw(500, 500, 600, 475)
-    s2.draw(500, 500, 400, 475); s2.draw(500, 500, 500, 300)
-    expect(radius(orbitPivot(s2.app))).toBeCloseTo(radius(centroid(s2)), 0)
+    expect(radius(orbitPivot(s.app))).toBeCloseTo(17.335, 2)   // = 무게중심 = 이 회차 전과 같다
+    expect(orbitPivot(s.app)).toEqual(centroid(s))
+    // **경계 상자였으면 52.087**이었다 — 1차 리뷰어 [9]가 잡은 자리다(3배 · 증상과 같은 방향)
+    const segs = [...s.app.lift.lifted.values()]
+    const ax = segs.flatMap(g => [g.a3.x, g.b3.x]), ay = segs.flatMap(g => [g.a3.y, g.b3.y])
+    const az = segs.flatMap(g => [g.a3.z, g.b3.z])
+    const boxAll = {
+      x: (Math.min(...ax) + Math.max(...ax)) / 2,
+      y: (Math.min(...ay) + Math.max(...ay)) / 2,
+      z: (Math.min(...az) + Math.max(...az)) / 2,
+    }
+    expect(radius(boxAll)).toBeCloseTo(52.087, 2)
   })
 
   it('저장하지 않는다 — 펜 획을 되돌리면 그 즉시 연필로 돌아간다', () => {
