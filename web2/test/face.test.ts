@@ -12,13 +12,21 @@ import { constructedDoc } from './fixtures'
 import { analyze, DRAW_POSE, project } from '../src/core/camera'
 import { liftAll, type LiftResult, type LiftedSeg } from '../src/core/lift'
 import { buildGraph, cyclesOf, planesOf, loopAt, faceAt, resolveFace, resolveFaces, area2, triangulate3, newellNormal, faceScreen } from '../src/core/face'
-import { geomSize3 } from '../src/core/osnap'
+import { geomSize3, intersections3 } from '../src/core/osnap'
 import { toggleFaceAt, undo, redo, beginErase, eraseAt, endErase, isEraser } from '../src/app/state'
 import { serializeBrnl, parseBrnl } from '../src/core/file'
 import { toOBJ, toGLTF } from '../src/core/export'
 import { C } from '../src/core/constants'
 import type { Face, Stroke } from '../src/core/types'
-import { v3, type V3, type Pt } from '../src/core/vec'
+import { v3, norm3, sub3, dot3, type V3, type Pt } from '../src/core/vec'
+
+/** 임계를 안 걸고 잰 평면 이탈 — `resolveFace`와 같은 식(무게중심 + Newell) */
+function measuredFlat(lift: LiftResult, size3: number): number {
+  const poly = [101, 102, 103, 104].map(id => lift.lifted.get(id)!.a3)
+  const n = newellNormal(poly)
+  const c = poly.reduce((a, p) => ({ x: a.x + p.x / 4, y: a.y + p.y / 4, z: a.z + p.z / 4 }), { x: 0, y: 0, z: 0 })
+  return Math.max(...poly.map(p => Math.abs((p.x - c.x) * n.x + (p.y - c.y) * n.y + (p.z - c.z) * n.z))) / size3
+}
 
 // ── 도형 셋 — 앱 경로로 그린다 ────────────────────────────────────────────
 // 셋 다 **지면(Y=0)**에 놓인다. 지면 축으로 그은 선은 지면을 안 벗어나므로
@@ -235,40 +243,64 @@ describe('면 — 반증 조건 (D-3)', () => {
     const face: Face = {
       id: 1, loops: [{ edges: [101, 102, 103, 104].map(s => ({ kind: 'stroke' as const, s })) }],
     }
-    // **잰 값을 그대로 적는다**(리뷰어 [2]) — 「띄운 높이」가 아니라 이탈/기하 크기다
-    const under = resolveFace(lift(0.4), face, size3)!
-    expect(under.flat).toBeCloseTo(0.0024993, 6)             // 0.0025 < 0.01 → 통과
-    expect(under.flat).toBeLessThan(C.PLANAR_RATIO)
-    expect(resolveFace(lift(2.0), face, size3)).toBeNull()
-    // 거부 쪽의 이탈도 잰다 — 임계가 없다면 그 값이 0.0124다.
-    // ⚠ **두 점이 임계(0.01)를 사이에 두고 가깝다**: 0.0025 ↔ 0.0124. 띄운 높이는 5배인데
-    //   이탈은 5배가 아니다(0.4 → 0.0025 · 2.0 → 0.0124) — 법선이 함께 기울기 때문이고,
-    //   그래서 「띄운 높이」로 임계를 논하면 안 된다는 것이 이 팔의 두 번째 내용이다.
-    const overFlat = (() => {
-      const l = lift(2.0), o: number[] = []
-      // 같은 계산을 임계 없이: 법선·무게중심은 resolveFace와 같은 식이다
-      const poly = [101, 102, 103, 104].map(id => l.lifted.get(id)!.a3)
-      const n = newellNormal(poly)
-      const c = poly.reduce((a, p) => ({ x: a.x + p.x / 4, y: a.y + p.y / 4, z: a.z + p.z / 4 }), { x: 0, y: 0, z: 0 })
-      for (const p of poly) o.push(Math.abs((p.x - c.x) * n.x + (p.y - c.y) * n.y + (p.z - c.z) * n.z))
-      return Math.max(...o) / size3
-    })()
-    expect(overFlat).toBeCloseTo(0.0124141, 6)               // 0.0124 > 0.01 → 거부
+    // **이탈은 띄운 높이에 (거의) 선형이다** — 잰 값을 그대로 적는다.
+    // 초판이 「법선이 함께 기울어서 5배가 아니다」로 적었는데 **그것이 틀렸다**(2차 [7]):
+    // 잔차는 정확히 h/4이고, 5배에 못 미치는 몫은 **분모(geomSize3)가 h만큼 커진 것**이다.
+    const flats = [0.4, 0.8, 1.2, 1.6, 2.0].map(h => resolveFace(lift(h), face, size3)?.flat
+      ?? measuredFlat(lift(h), size3))
+    expect(flats[0]!).toBeCloseTo(0.0024993, 6)
+    expect(flats[1]!).toBeCloseTo(0.0049945, 6)   // 2배에서 0.06% 모자란다(분모가 컸다)
+    expect(flats[2]!).toBeCloseTo(0.0074813, 6)
+    expect(flats[3]!).toBeCloseTo(0.0099558, 6)
+    expect(flats[4]!).toBeCloseTo(0.0124141, 6)
+    // **임계를 바짝 감싼다**(2차 [7]: 통과 점이 임계의 0.25배로 헐거웠다) — 1.6 통과 · 1.62 거부
+    expect(resolveFace(lift(1.6), face, size3)!.flat).toBeLessThan(C.PLANAR_RATIO)
+    expect(resolveFace(lift(1.62), face, size3)).toBeNull()
     // 평면 그대로면 이탈이 0이다 — 띄운 만큼 늘어나는 것을 위에서 봤으므로 이것은 측정이다
     expect(resolveFace(lift(0), face, size3)!.flat).toBe(0)
   })
 
-  it('평면성과 3D 교차는 **같은 분모**를 쓴다 — 그래서 「같은 값」이 「같은 엄격도」다', () => {
-    // `PLANAR_RATIO`의 근거는 「`INTERSECT_GAP_RATIO`와 같은 물음의 앞뒤」였다(리뷰어 [3]).
-    // 그 논증은 **분모가 같은 양일 때만** 선다 — 둘 다 `geomSize3`(3D bbox 대각)이다.
-    const s = quad()
-    const size3 = geomSize3(s.app.lift)
-    expect(size3).toBeGreaterThan(0)
-    // 교차 허용 간격 = INTERSECT_GAP_RATIO · geomSize3 — 그 간격 안에서 만난 것이 마디다
-    const gap = C.INTERSECT_GAP_RATIO * size3
-    // 면의 평면 허용 = PLANAR_RATIO · geomSize3 (resolveFaces가 geomSize3를 넘긴다)
-    const planar = C.PLANAR_RATIO * size3
-    expect(planar).toBe(gap)                                 // 같은 분모 · 같은 값
+  it('평면성과 3D 교차가 **같은 분모**를 쓴다 — 장면을 10배로 키워 잰다', () => {
+    // `PLANAR_RATIO`의 근거는 「`INTERSECT_GAP_RATIO`와 같은 물음의 앞뒤」이고, 그 논증은
+    // **분모가 같은 양일 때만** 선다. 초판은 `PLANAR_RATIO === INTERSECT_GAP_RATIO`를 봤는데
+    // 그것은 **상수 동치**라 분모를 판정하지 않는다(2차 [8]). 여기서는 **장면을 키워** 잰다:
+    // 두 경계가 **둘 다 정확히 10배**가 되면 둘이 같은 양에 비례한다는 뜻이다.
+    const face: Face = {
+      id: 1, loops: [{ edges: [101, 102, 103, 104].map(s => ({ kind: 'stroke' as const, s })) }],
+    }
+    const measure = (k: number) => {
+      const mk = (h: number) => synthLift(groundRect(101, -6 * k, 6 * k, -10 * k, -22 * k).map((s, i) => ({
+        id: s.id,
+        a3: i === 0 ? v3(s.a3.x, h, s.a3.z) : s.a3,
+        b3: i === 3 ? v3(s.b3.x, h, s.b3.z) : s.b3,
+      })))
+      const sz = geomSize3(mk(0))
+      let lo = 0, hi = 100 * k
+      for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; if (resolveFace(mk(m), face, sz)) lo = m; else hi = m }
+      let l2 = 0, h2 = 100 * k
+      for (let i = 0; i < 60; i++) {
+        const m = (l2 + h2) / 2
+        const l = synthLift([
+          { id: 1, a3: v3(-5 * k, 0, -12 * k), b3: v3(5 * k, 0, -12 * k) },
+          { id: 2, a3: v3(0, m, -17 * k), b3: v3(0, m, -7 * k) },
+          { id: 3, a3: v3(-5 * k, 0, -20 * k), b3: v3(5 * k, 0, -20 * k) },
+        ])
+        if (intersections3(l).length > 0) l2 = m; else h2 = m
+      }
+      return { size3: sz, planar: lo, gap: l2 }
+    }
+    const one = measure(1), ten = measure(10)
+    expect(one.size3).toBeCloseTo(16.9706, 3)
+    expect(ten.size3 / one.size3).toBeCloseTo(10, 6)
+    expect(one.planar).toBeCloseTo(0.6794, 4)
+    expect(one.gap).toBeCloseTo(0.1640, 4)
+    expect(ten.planar / one.planar).toBeCloseTo(10, 6)       // 평면 경계 — 10배
+    expect(ten.gap / one.gap).toBeCloseTo(10, 6)             // 교차 경계 — 10배
+    // 평면 경계의 잔차는 h/4다 — 0.6794/4 = 0.169842 ≈ 0.01 · 16.9706 = 0.169706.
+    // ⚠ 정확히 같지 않다(차 1.4e−4): 분모 `geomSize3`가 **띄운 높이만큼 함께 커지기** 때문이고,
+    //   그것이 바로 위 「선형에서 0.06% 모자란다」와 같은 몫이다.
+    expect(one.planar / 4).toBeCloseTo(C.PLANAR_RATIO * one.size3, 3)
+    expect(one.planar / 4 - C.PLANAR_RATIO * one.size3).toBeCloseTo(1.359e-4, 6)
   })
 
   it('면을 못 만든 탭은 문서에 아무것도 안 남긴다 — id도 안 쓴다', () => {
@@ -379,6 +411,22 @@ describe('면 — 회귀', () => {
     const cy = cyclesOf(g, new Set(g.half.map((_, i) => i >> 1)))
     expect(cy).toHaveLength(2)
     expect(cy.filter(c => c.area > 1e-9)).toHaveLength(1)
+  })
+
+  // #63 수리(점이 방향을 이긴다)의 **대가**를 잰다(2차 [9]) — 「팔 전부 통과」는 대가의 부재가 아니다.
+  it('끝점이 이긴 획은 선언 축에서 얼마나 어긋나는가 — 허용각 안이지만 0은 아니다', () => {
+    const s = concave()
+    const ids = [...s.app.lift.lifted.keys()]
+    const seg = s.app.lift.lifted.get(ids[ids.length - 1]!)!
+    expect(seg.axis).toBe('vp1')                             // 축은 vp1로 배정됐고
+    const dir = norm3(sub3(seg.b3, seg.a3))
+    const ax = s.app.lift.an.axes.find(a => a.id === 'vp1')!
+    const deg = Math.acos(Math.min(1, Math.abs(dot3(dir, norm3(ax.dir))))) * 180 / Math.PI
+    // **3D 방향은 그 축에서 1.1223° 어긋나 있다** — 끝점을 지켰기 때문이다.
+    expect(deg).toBeCloseTo(1.1223, 3)
+    // 상한은 축 판정의 허용각이다(VP_DIR_RATIO = 0.06 → asin ≈ 3.44°) — 그보다 크면
+    // 애초에 그 축으로 배정되지 않았을 것이므로 **구성상 그 안이다**.
+    expect(deg).toBeLessThan(Math.asin(C.VP_DIR_RATIO) * 180 / Math.PI)
   })
 
   it('평면 배치 — 안쪽 면은 반시계(양수), 바깥 경계는 시계(음수)', () => {
