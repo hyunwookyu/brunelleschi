@@ -33,11 +33,17 @@ export const MAT: Record<Grade, MatParams> = {
 /** 연필 심 — 펜(잉크)을 뺀 경도만. 홀더펜 창에 도는 것이 이 목록이다(4-e). */
 export const PENCIL_GRADES: Grade[] = ['2H', 'H', 'F', 'HB', 'B', '2B']
 
-export const gradeOf = (s: Stroke): Grade => s.mat?.grade ?? 'HB'
+export const gradeOf = (s?: Stroke): Grade => s?.mat?.grade ?? 'HB'
 
-/** 그 획의 굵기 px — 제도펜은 니브가 정하고, 연필은 경도가 정한다.
- *  **출처는 여기 하나다** — 2D 오버레이와 three.js가 같은 값을 써야 한다. */
-export const widthOf = (s: Stroke): number => s.mat?.w ?? MAT[gradeOf(s)].width
+/** 재료에서 굵기 px — 제도펜은 니브가 정하고, 연필은 경도가 정한다.
+ *  **출처는 여기 하나다**(PITFALLS #54): 2D 오버레이 · three.js · 미리보기가 전부 이것을 부른다.
+ *  아직 획이 아닌 것(그리는 중의 미리보기)도 재료만으로 물을 수 있어야 하므로 `mat`을 받는다.
+ *  `test/static.test.ts`가 `MAT[...].width` 직접 참조를 밖에서 막는다 —
+ *  ⚠ 다만 그 검사는 `MAT`을 변수로 받아 쓰는 우회는 못 잡는다(정규식의 한계, 문서로 남긴다). */
+export const widthOfMat = (mat?: { grade?: Grade; w?: number }): number =>
+  mat?.w ?? MAT[mat?.grade ?? 'HB'].width
+
+export const widthOf = (s?: Stroke): number => widthOfMat(s?.mat)
 export const isInk = (s: Stroke): boolean => gradeOf(s) === 'INK'
 
 /** 재현 가능한 입자용 — 시드 고정 LCG (Math.random 금지 규약) */

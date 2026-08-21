@@ -10,6 +10,12 @@ const SRC = join(__dirname, '..', 'src')
 // ⚠ 구분자를 박지 않는다 — 초판이 `\`로 박아 **리눅스 CI에서만** camera.ts 자신이
 // 위반으로 잡혔다(2026-08-21). 아래 「예외가 실제로 맞았는가」가 그 재발을 막는다.
 const ALLOWED = new Set(['core/camera.ts', 'core/vec.ts', 'core/constants.ts'])
+
+// 굵기의 단일 출처 — `material.ts`의 `widthOf()` 하나(지시 4-f · PITFALLS #54).
+// 2D 오버레이와 three.js가 각각 굵기를 정하면 니브를 바꿨을 때 두 계층이 갈린다.
+// **이 검사가 없으면 「한 함수에서만 계산한다」는 구성상 보장이 아니라 그냥 관행이다.**
+const WIDTH_ALLOWED = new Set(['core/material.ts', 'core/constants.ts'])
+const WIDTH_RE = /MAT\[[^\]]+\]\.width|MAT\.\w+\.width/
 const relOf = (file: string) => file.slice(SRC.length + 1).split(sep).join('/')
 
 const FORBIDDEN: { re: RegExp; why: string }[] = [
@@ -48,6 +54,24 @@ describe('원칙 a — 단일 출처의 정적 검사', () => {
     // 반대로 예외가 과하게 걸려도 여기서 드러난다 — 수가 정확히 맞아야 한다.
     const matched = files.map(relOf).filter(r => ALLOWED.has(r))
     expect(matched.sort()).toEqual([...ALLOWED].sort())
+  })
+
+  it('굵기는 widthOf() 밖에서 안 나온다 — MAT[...].width 직접 참조 금지', () => {
+    const violations: string[] = []
+    let seen = 0
+    for (const file of files) {
+      const rel = relOf(file)
+      if (WIDTH_ALLOWED.has(rel)) { seen++; continue }
+      if (WIDTH_RE.test(readFileSync(file, 'utf8'))) {
+        violations.push(`${rel}: MAT[...].width — widthOf(stroke)를 써라`)
+      }
+    }
+    expect(seen).toBe(WIDTH_ALLOWED.size)   // 예외가 실제로 걸렸는가
+    expect(violations).toEqual([])
+  })
+
+  it('금지 패턴이 material.ts 안에는 실제로 있다 — 정규식이 살아 있다는 증거', () => {
+    expect(WIDTH_RE.test(readFileSync(join(SRC, 'core', 'material.ts'), 'utf8'))).toBe(true)
   })
 
   it('camera.ts 밖에서 직접 계산이 없다', () => {

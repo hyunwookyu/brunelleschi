@@ -7,7 +7,7 @@ import { Line2 } from 'three/addons/lines/Line2.js'
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js'
 import type { App } from './state'
-import { MAT, GRADES, gradeOf, widthOf } from '../core/material'
+import { MAT, gradeOf, widthOf } from '../core/material'
 import type { Grade } from '../core/types'
 
 export interface R3D {
@@ -37,9 +37,9 @@ export function initR3D(canvas: HTMLCanvasElement, W: number, H: number, dpr: nu
   const group = new THREE.Group()
   scene.add(group)
   const materials = new Map<string, LineMaterial>()
-  const r: R3D = { renderer, scene, camera, group, materials, W, H }
-  for (const g of GRADES) matFor(r, g, MAT[g].width)
-  return r
+  // 재질은 **쓰이는 그 자리에서** 만든다(matFor). 경도별로 미리 만들어 두면 굵기 기본값을
+  // 여기서도 정하게 되고, 그러면 굵기의 출처가 둘이 된다(PITFALLS #54).
+  return { renderer, scene, camera, group, materials, W, H }
 }
 
 const matKey = (g: Grade, w: number) => `${g}:${w.toFixed(3)}`
@@ -79,7 +79,7 @@ export function syncStrokes(r: R3D, app: App) {
   for (const [id, seg] of app.lift.lifted) {
     const stroke = app.lift.strokes.get(id)
     const grade = stroke ? gradeOf(stroke) : 'HB'
-    const w = stroke ? widthOf(stroke) : MAT.HB.width
+    const w = widthOf(stroke)   // 획이 없으면 재료 기본값 — 분기도 출처도 하나다
     const g = new LineGeometry()
     g.setPositions([seg.a3.x, seg.a3.y, seg.a3.z, seg.b3.x, seg.b3.y, seg.b3.z])
     r.group.add(new Line2(g, matFor(r, grade, w)))

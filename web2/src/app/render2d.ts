@@ -9,7 +9,7 @@ import { isDrawPose, isEraser, activeGrade } from './state'
 import { screenAxes, project, projectSeg, groundAxes } from '../core/camera'
 import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
-import { MAT, gradeOf, rng32, widthOf } from '../core/material'
+import { MAT, gradeOf, rng32, widthOf, widthOfMat } from '../core/material'
 import type { OsnapHit } from '../core/osnap'
 import type { Pt, V3 } from '../core/vec'
 
@@ -39,9 +39,11 @@ const COL = {
   construction: '#8a7f6a',
   waiting: '#555',
   waitingDim: 'rgba(85,85,85,0.25)',
-  // 강조는 **하나**다(4-c) — 「앱이 말하는 중」인 것 전부가 이 색을 쓴다:
-  // 작도 미리보기와 오스냅 표식. 그 밖의 앱 표식(소실점 ✕)은 작도선과 같은 무채색이고,
-  // 사용자가 그린 선은 재료 색이다. 그림이 주인공이고 UI는 물러난다.
+  // 색을 줄인 규칙(4-c)은 **상시냐 순간이냐**로 가른다:
+  //   상시 표시 — 무채색. 작도선·소실점 ✕·지우개 커서.
+  //   그리는 중에만 — 색을 남긴다. 작도 미리보기·축 색 넷·오스냅 표식.
+  // 화면에 늘 떠 있는 것이 그림보다 눈에 띄던 것이 문제였고, 순간 피드백은 그 문제가 아니다.
+  // 색이 곧 정보인 자리(어느 축에 붙었나 · 무슨 오스냅인가)라 회색조로 만들면 정보가 죽는다.
   preview: '#1a6ac2',
   // ⚠ 붉은색이었다 — 화면에 **상시** 떠 있는 표식이라 그림보다 눈에 띄었다(지시 3-c 대조표).
   // 소실점은 지평선과 같은 급의 작도 표식이므로 같은 색으로 물러난다.
@@ -49,7 +51,9 @@ const COL = {
   // 축 색 — **그리는 중 미리보기에만** 쓴다(원칙: 확정된 선은 재료 색이다).
   // 붙은 축이 즉시 보이고, 커서를 돌리면 색이 넘어간다(지시 5-d).
   axis: { vp0: '#c2571a', vp1: '#1a7fc2', H: '#1a9c50', V: '#7a4fc2' } as Record<string, string>,
-  snap: '#1a6ac2',
+  // ⚠ 강조색(#1a6ac2)으로 합치려다 되돌렸다 — vp1 축 색(#1a7fc2)과 사실상 같은 파랑이라
+  // 「축에 붙었다」와 「점에 붙었다」가 화면에서 안 갈린다. 순간 피드백끼리는 갈려야 한다.
+  snap: '#1a9c50',
   cubeFace: 'rgba(252,251,248,0.80)',
   cubeEdge: '#b0a99c',
 }
@@ -154,7 +158,8 @@ export function draw2d(
   if (draft) {
     const g = activeGrade(app)
     const m = MAT[g]
-    const drawW = g === 'INK' ? app.nib : m.width
+    // 미리보기 굵기도 **확정과 같은 함수**에서 나온다(원칙 d: 붙은 것이 그대로 확정된다)
+    const drawW = widthOfMat({ grade: g, w: g === 'INK' ? app.nib : undefined })
     // 안내색은 «카메라를 건드리는 획»에만. `!constructionDone`을 함께 보던 초판은
     // 1점 상태에서 그린 **내용 획까지** 작도선처럼 파랗게 칠했다 — 아직 못 그린다는 신호로 읽힌다.
     const constructing = draft.label === 'horizon' || draft.label === 'vp'

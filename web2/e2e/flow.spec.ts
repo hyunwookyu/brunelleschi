@@ -58,8 +58,22 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
 
-  // 빈 화면
+  // 빈 화면 — **아무것도 안 칠해져 있다.** 격자가 기본 꺼짐이라는 것이 여기서 픽셀로 선다(3-a)
   expect(await inkPixels(page, 0, 0, 1200, 800)).toBe(0)
+  expect(await page.evaluate(() => (window as any).__b2.app.grid)).toBe(false)
+  // 표시용(체크박스)과 판정용(app.grid)이 갈리지 않는가 — 기본값이 두 자리에 있다(PITFALLS #54)
+  expect(await page.isChecked('#chk-grid')).toBe(false)
+  await page.click('#pane-settings > summary')
+  await page.click('#chk-grid')
+  expect(await page.evaluate(() => (window as any).__b2.app.grid)).toBe(true)
+  await page.click('#chk-grid')                       // 되돌린다 — 뒤 팔이 격자 픽셀에 안 걸리게
+  expect(await page.evaluate(() => (window as any).__b2.app.grid)).toBe(false)
+  await page.click('#pane-settings > summary')
+  expect(await inkPixels(page, 0, 0, 1200, 800)).toBe(0)
+
+  // 기본 도구는 연필이고, 상태 줄에는 **첫 안내 하나뿐**이다(4-b)
+  expect(await page.evaluate(() => (window as any).__b2.app.tool)).toBe('pencil')
+  expect(await page.textContent('#notice')).toContain('지평선')
 
   // 지평선 — 수평 강제
   await drawLine(page, 100, 400, 1100, 403) // 손이 3px 튀어도 수평이 된다

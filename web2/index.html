@@ -65,11 +65,16 @@
     .tool { touch-action: none; }
 
     /* 파일·설정 — 접힌 채로 있고, 펴면 아주 옅은 바탕만 깐다(4-a: 「배경이 필요하면 아주 옅게」) */
+    /* ⚠ **화면 밖으로 안 나가게 아래에 붙인다.** `position:absolute`로 요약 옆에 흘려 두었더니
+       세로바가 화면 가운데에 있어 설정 패널(열 줄)이 **아래로 삐져나갔다** — 「지면 격자」
+       체크박스가 뷰포트 밖(y=793 / 높이 720)에 있어 눌리지 않았다(2026-08-21 e2e가 잡았다).
+       파일·설정은 세로바의 «아래» 묶음이므로(4-i) 우하단 고정이 자리와도 맞는다. */
     details.pane > div {
-      position: absolute; right: 30px; z-index: 11;
+      position: fixed; right: 38px; bottom: 10px; z-index: 11;
       display: flex; flex-direction: column; gap: 6px; align-items: stretch;
       background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
-      padding: 10px 12px; margin-top: -14px; white-space: nowrap;
+      padding: 10px 12px; white-space: nowrap;
+      max-height: calc(100vh - 20px); overflow-y: auto;
       font: 12px system-ui, sans-serif; color: #4a463f;
     }
     details.pane summary { list-style: none; cursor: pointer; }
