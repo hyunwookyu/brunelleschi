@@ -92,25 +92,34 @@ export function classifyNext(
   }
   if (an.constructionDone) return { role: 'content' }
   if (L < C.MIN_DIR_LEN_RATIO * an.diag) return { role: 'content' }
-  // 기존 소실점에 붙는가 — 수직거리 ÷ 획 길이. 임계로 나눠 «몇 배 안쪽인가»로 견준다.
+  // 기존 소실점에 붙는가 — **수직거리 ÷ 시작점에서 소실점까지의 거리**. 그것이 곧 sin(각도)다.
+  //
+  // ⚠ 초판은 **획 길이**로 나눴다(`d / L`). 그러면 획이 길수록 절대 허용이 커진다 —
+  //   실측: (500,440)→(−375,430) 획(길이 875)이 오른쪽 vp0과 **6.37°**, 게다가 향이
+  //   반대인데도 `d/L = 0.051 ≤ 0.06`으로 「vp0에 붙었다」가 됐다. 그래서 새 소실점을
+  //   못 만들고 2점이 안 섰다. 나눌 것을 틀린 것이고, `PARALLEL_PX`와 **같은 형태**다
+  //   (비로 재야 할 것과 절대로 재야 할 것을 바꿔 잡았다 — web2-03 지시 2-d).
   let vpScore = Infinity
   for (const v of an.vps) {
     const d = Math.abs((v.x - a.x) * dy - (v.y - a.y) * dx) / L
-    vpScore = Math.min(vpScore, d / L / C.VP_DIR_RATIO)
+    const toVp = Math.hypot(v.x - a.x, v.y - a.y)
+    if (toVp < 1e-9) { vpScore = 0; break }
+    vpScore = Math.min(vpScore, d / toVp / C.VP_DIR_RATIO)
   }
-  // 화면 평행이면 축 스냅이 붙는다 → 기존 축, 내용 획.
-  // **화면 수평은 그것으로 끝이 아니다** — H 축의 소실점이 무한원이라는 선언이므로
-  // (이론서 2.2) 여기서 1점이 확정된다. `screenAxis`가 그 신호이고 analyze가 접는다.
-  //
-  // ⚠ **기존 소실점에 더 잘 맞으면 선언이 아니다.** 소실점이 아주 멀면(|Δx| ≳ 5000px)
-  // 그 소실점을 향한 깊이선이 화면에서 2.87°(`SCREEN_PARALLEL_RATIO`) 안에 들어온다 —
-  // 그것을 「H축 선언」으로 읽으면 사람이 2점을 그리는 중에 문서가 1점으로 잠긴다
-  // (2026-08-21 2차 리뷰어 지적). 선언은 **H가 더 잘 맞을 때만**이다.
-  const hScore = Math.abs(dy) / L / C.SCREEN_PARALLEL_RATIO
-  const vScore = Math.abs(dx) / L / C.SCREEN_PARALLEL_RATIO
-  if (hScore <= 1) return vpScore < hScore ? { role: 'content' } : { role: 'content', screenAxis: 'H' }
-  if (vScore <= 1) return { role: 'content', screenAxis: 'V' }
+  // ── 지평선과 평행한가 — **처짐을 px로 잰다**(web2-03 지시 2) ──────────────
+  // 비(2.87°)로 재던 초판은 「그 비가 뜻하는 소실점 거리」가 시작점 높이에 비례해서
+  // 커졌다 — 지평선 가까이서 그은 획은 **1W 거리의 소실점조차** 수평으로 읽혔다.
+  // 여기서 재는 것은 획 자신의 끝점 처짐이고, 그것이 곧 「이 획으로 그 소실점을 무한원과
+  // 구별할 수 있는가」다(처짐 d = h·R/D). 축 스냅이 H로 붙인 획은 d가 정확히 0이다.
+  const drop = Math.abs(dy)
+  const run = Math.abs(dx)
+  if (drop <= C.PARALLEL_PX && run > drop) return { role: 'content', screenAxis: 'H' }
+  if (run <= C.PARALLEL_PX && drop > run) return { role: 'content', screenAxis: 'V' }
+  // 화면 평행 대역 안이지만 처짐이 있는 획은 **아래로 흘려보낸다** — 소실점을 만들 수 있다.
+  // 기존 소실점에 붙으면 그쪽이 이긴다(바로 아래). 축 스냅은 종전대로 가장 가까운 축이다.
   if (vpScore <= 1) return { role: 'content' }
+  // 화면 세로에 가까운 획은 소실점을 못 만든다 — 지평선과 만나는 점이 화면 밖 무한대로 간다
+  if (run / L <= C.SCREEN_PARALLEL_RATIO) return { role: 'content', screenAxis: 'V' }
   // 안 붙으면 새 소실점 — 단, 실수로 그은 작은 선은 카메라를 안 건드린다
   if (L < C.VP_MIN_LEN_RATIO * an.diag) {
     return { role: 'content', reason: '소실점을 정의하기엔 짧다' }
