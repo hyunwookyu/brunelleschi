@@ -136,9 +136,11 @@ describe('오스냅 — 종류·우선순위·반경', () => {
 
   it('대기 획의 끝점도 후보다 (2D) — 연쇄의 출발점', () => {
     const { b } = scene()
-    b.add(900, 600, 1000, 645) // 미연결 자유 획 → 대기
+    const w = b.add(900, 600, 1000, 645) // 미연결 자유 획 → 대기
     const lift = liftAll(b.doc)
-    expect(lift.waiting).toHaveLength(1)
+    // ⚠ 개수를 박지 않는다 — 깊이선도 이제 3D 대상이라(지시 1) 안 닿으면 함께 대기한다.
+    // 이 팔이 재는 것은 «대기 획의 끝점이 후보인가»이지 대기가 몇 개인가가 아니다.
+    expect(lift.waiting).toContain(w.id)
     const hit = osnap(lift, DRAW_POSE, pt(902, 602), only('end'))!
     expect(hit.kind).toBe('end')
     expect(hit.p).toEqual(pt(900, 600))

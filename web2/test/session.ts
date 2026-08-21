@@ -1,0 +1,36 @@
+// 사람이 그리는 것을 흉내내는 하네스 — **앱과 같은 함수**를 부른다.
+// beginDraft/updateDraft/endDraft(input.ts)의 결정은 core/draft.ts에 있고 여기서도 그것을 쓴다.
+// 손으로 좌표를 계산해 doc.strokes에 밀어넣으면 스냅·오스냅을 안 거치므로
+// **앱이 실제로 만드는 기하를 안 재게 된다** — 그래서 이 경로로만 잰다.
+
+import { createApp, commitStroke, type App } from '../src/app/state'
+import { resolveStart, resolveEnd } from '../src/core/draft'
+import type { Stroke } from '../src/core/types'
+import type { Pt } from '../src/core/vec'
+
+export interface Session {
+  app: App
+  /** 한 획 — 화면에서 (ax,ay)를 눌러 (bx,by)에서 뗀다 */
+  draw: (ax: number, ay: number, bx: number, by: number) => Stroke | null
+}
+
+export function session(W: number, H: number): Session {
+  const app = createApp(W, H)
+  const set = () => ({ ...app.osnap, radius: app.osnap.radius / app.view.s })
+  return {
+    app,
+    draw(ax, ay, bx, by) {
+      const p: Pt = { x: ax, y: ay }
+      const oh = resolveStart(app.lift, app.pose, p, set())
+      const start = oh ? oh.p : p
+      const startP3 = { p3: oh?.p3 ?? null }
+      const r = resolveEnd(app.lift, app.pose, app.lift.an, start, startP3, { x: bx, y: by }, set())
+      if (Math.hypot(r.end.x - start.x, r.end.y - start.y) < 2) return null // 탭 잡음
+      return commitStroke(app, start, r.end, [p, { x: bx, y: by }])
+    },
+  }
+}
+
+/** 화면점 p에서 소실점 v를 향해 비율 t 만큼 간 점 — 사람이 «소실점을 향해» 긋는 것 */
+export const toward = (p: Pt, v: Pt, t: number): Pt =>
+  ({ x: p.x + (v.x - p.x) * t, y: p.y + (v.y - p.y) * t })

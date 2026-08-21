@@ -95,6 +95,13 @@ describe('리프팅 — 확정 후 경로에 판정이 없다(원칙 c)', () => 
   })
 })
 
+// ⚠ **이 검사에 이가 있었다**(2026-08-21에 찾음). 아래 `before`를 `r1.lifted`에서만
+// 만들기 때문에 **그때 대기 중이던 획은 아예 안 잰다** — 확정 전에 그은 획이 승격 순간
+// 사라지거나 튀어도 여기서는 초록이었다. 사람이 본 증상(「지평선 다음 수직선이 깊이선
+// 뒤에 사라진다」)이 그 구멍으로 빠져나갔다.
+// 문서의 **모든** 획을 매 단계 재는 팔은 `test/order.test.ts`의 `watch()`에 있다
+// (대기 획은 저장된 2D를 화면 위치로 본다 — 사람 눈에는 승격 여부의 구분이 없다).
+// 여기서는 같은 픽스처에 대기 획을 하나 넣어 그 구멍이 닫혔는지만 확인한다.
 describe('불변식 k — 차수 승격(f 변경) 전후로 화면 위치 불변', () => {
   function oneVpDocWithContent() {
     const b = constructedDoc()
@@ -118,9 +125,19 @@ describe('불변식 k — 차수 승격(f 변경) 전후로 화면 위치 불변
     }
     expect(before.size).toBe(2)
 
+    // 대기 획 — 확정 전에 그었고 아직 3D가 없다. **이것도 재야 한다.**
+    const w = b.add(200, 700, 200, 600)
+    const rw = liftAll(b.doc)
+    expect(rw.waiting).toContain(w.id)
+    const wBefore = { a: { ...w.a }, b: { ...w.b } }
+
     b.add(700, 700, 400, 550) // 깊이선 2 → f가 387.3으로
     const r2 = liftAll(b.doc)
     expect(r2.an.fSource).toBe('two-vp')
+    // 대기 획은 f가 바뀌어도 화면에서 안 움직이고 사라지지도 않는다
+    expect(r2.strokes.get(w.id)).toBeTruthy()
+    expect(r2.lifted.has(w.id) || r2.waiting.includes(w.id)).toBe(true)
+    expect(approxPt(w.a, wBefore.a, 1e-6) && approxPt(w.b, wBefore.b, 1e-6)).toBe(true)
     for (const [id, prev] of before) {
       const seg = r2.lifted.get(id)!
       const pa = project(r2.an, DRAW_POSE, seg.a3)!

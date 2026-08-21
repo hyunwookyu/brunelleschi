@@ -6,7 +6,7 @@
 
 import type { App } from './state'
 import { isDrawPose } from './state'
-import { screenAxes, project, type Role } from '../core/camera'
+import { screenAxes, project } from '../core/camera'
 import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
 import { MAT, gradeOf, rng32 } from '../core/material'
@@ -65,21 +65,15 @@ export function draw2d(
 
   const atDraw = isDrawPose(app.pose)
 
-  // 작도선 — 작도 포즈에서만 원본 세그먼트를 보인다.
-  if (atDraw) {
+  // 작도선 — **지평선뿐이다.** 무한원이라 3D가 없고(이론서 2.2) 화면 전폭으로 긋는다.
+  // 깊이선은 작도선이 아니다 — 소실점을 정의하면서 동시에 그은 3D 선이고,
+  // 승격됐으면 three.js가, 아직이면 아래 「대기 획」이 그린다. 여기서 또 그리면 두 번 그려진다.
+  if (atDraw && an.horizonY !== null) {
     ctx.strokeStyle = COL.construction
     ctx.lineWidth = C.LINE_W_GUIDE * is
-    for (const s of app.doc.strokes) {
-      const role = an.roles.get(s.id) as Role | undefined
-      if (role !== 'horizon' && role !== 'vp') continue
-      ctx.beginPath()
-      if (role === 'horizon' && an.horizonY !== null) {
-        ctx.moveTo(x0, an.horizonY); ctx.lineTo(x1, an.horizonY)
-      } else {
-        ctx.moveTo(s.a.x, s.a.y); ctx.lineTo(s.b.x, s.b.y)
-      }
-      ctx.stroke()
-    }
+    ctx.beginPath()
+    ctx.moveTo(x0, an.horizonY); ctx.lineTo(x1, an.horizonY)
+    ctx.stroke()
   }
 
   // 대기 획 — 사라지지 않는다(불변식 j). 자기 포즈가 아니면 흐리게. 색은 재료.
@@ -126,7 +120,9 @@ export function draw2d(
   // 미리보기 — 붙은 좌표가 그대로 확정된다(원칙 d). 작도 중엔 안내색, 이후엔 재료색.
   if (draft) {
     const m = MAT[app.grade]
-    const constructing = draft.label === 'horizon' || draft.label === 'vp' || !an.constructionDone
+    // 안내색은 «카메라를 건드리는 획»에만. `!constructionDone`을 함께 보던 초판은
+    // 1점 상태에서 그린 **내용 획까지** 작도선처럼 파랗게 칠했다 — 아직 못 그린다는 신호로 읽힌다.
+    const constructing = draft.label === 'horizon' || draft.label === 'vp'
     ctx.strokeStyle = constructing ? COL.preview : m.color
     ctx.lineWidth = (constructing ? C.LINE_W_RESULT : m.width) * is
     ctx.beginPath(); ctx.moveTo(draft.start.x, draft.start.y); ctx.lineTo(draft.end.x, draft.end.y); ctx.stroke()

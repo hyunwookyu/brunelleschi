@@ -109,10 +109,13 @@ app.listeners.push(() => {
 
 function updateStatus() {
   const an = app.lift.an
+  // **지평선 다음에는 아무것도 안 띄운다.** 「깊이선을 긋는다」·「(1/2)」는 다음에 무엇을
+  // 그으라는 **지시로 읽힌다** — 사람이 「깊이선부터 강제된다」고 읽은 자리가 여기다.
+  // 순서 강제는 없다: 수직·수평은 카메라와 무관하게 축이 정해져 있고, 그으면 그 자리에서
+  // 축 라벨을 받는다. 소실점 개수는 소실점이 생긴 그 순간에만 알린다(onCommit).
+  // 평소에 아무것도 안 띄우는 것이 원칙 g다.
   if (an.horizonY === null) status('지평선을 긋는다 — 수평이 강제된다')
-  else if (an.vps.length === 0) status('깊이선을 긋는다 — 지평선과의 교점이 소실점이다')
-  else if (an.vps.length === 1) status('다른 방향 깊이선을 그으면 두 번째 소실점 (1/2)')
-  else status('') // 작도 끝 — 평소에는 아무것도 안 띄운다(원칙 g)
+  else status('')
 }
 // 시작 동기화 — 자동 저장 복원분 포함
 syncStrokes(r3d, app)
@@ -129,7 +132,9 @@ initInput(ink, app, {
     const reject = an.rejects.get(s.id)
     if (reject) notify(reject)
     else if (an.roles.get(s.id) === 'vp') {
-      notify(an.constructionDone ? '소실점 2/2 — 작도 끝. 이제 그리면 3D다' : '소실점 1/2')
+      // ⚠ 「1/2」은 **다음에 무엇을 그으라는 지시로 읽힌다.** 순서 강제는 없다 —
+      // 소실점 하나로도 3D는 선다(f는 깊이 배율 게이지). 개수만 알린다.
+      notify(`소실점 ${an.vps.length} — 하나 더 그으면 깊이 배율이 두 소실점에서 나온다`)
     } else if (app.lift.waiting.includes(s.id)) {
       notify('시작점이 3D에 없어 대기한다 — 확정된 점에 이어 그리면 올라간다')
     }

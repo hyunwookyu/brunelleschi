@@ -78,7 +78,12 @@ export function liftAll(doc: Doc): LiftResult {
   let anchorId: number | null = null
 
   const strokes = new Map(doc.strokes.map(s => [s.id, s]))
-  const content = doc.strokes.filter(s => an.roles.get(s.id) === 'content')
+  // **3D가 안 되는 것은 지평선뿐이다**(무한원 — 이론서 2.2). 깊이선은 소실점을 정의하고
+  // *동시에* 사람이 그은 선이다. 3D로 남겨야 그 끝점이 오스냅·연결 대상이 된다 —
+  // 안 그러면 깊이선 끝에 이어 그린 획이 붙을 데가 없어 영영 대기한다.
+  // 작도 순서가 강제되던 자리가 여기다(2026-08-21 측정: 지평선→수직선→깊이선→수직선에서
+  // 마지막 획이 waiting에 남았다).
+  const content = doc.strokes.filter(s => an.roles.get(s.id) !== 'horizon')
   if (!an.principal || an.f === null) {
     return { an, lifted, waiting: content.map(s => s.id), anchorId, strokes }
   }
@@ -142,6 +147,12 @@ export function liftAll(doc: Doc): LiftResult {
       if (!a3 && lifted.size === 0 && anchorId === null && (axis === 'H' || axis === 'V')) {
         // 첫 앵커 — 화면 평행 획이 게이지 평면(z=−f)에서 연쇄를 시작한다.
         // 전역 스케일은 원리적으로 모호하므로 이것은 단위 선택이지 임의 좌표가 아니다.
+        //
+        // ⚠ **여기가 아직 획 종류를 가린다** — 「지평선 → 깊이선」으로만 시작하면 앵커가
+        // 안 생겨 아무것도 안 올라간다(측정 2026-08-21: lifted=0). 지시 2가 이 규칙을
+        // 통째로 바꾼다(첫 선은 종류를 안 가리고 Y=0). 그때 함께 고친다 —
+        // 여기서 미리 풀면 픽스처의 앵커가 깊이선으로 옮겨가 좌표 기대값 27건이
+        // 흔들리고, 지시 2·3(지면 Y=0 · 눈높이 1.6)이 그것을 또 한 번 흔든다.
         a3 = pointAtGaugeDepth(an, pose, s.a)
         if (a3) anchorId = s.id
       }

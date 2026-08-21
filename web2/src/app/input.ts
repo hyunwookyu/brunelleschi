@@ -7,9 +7,8 @@ import {
   setPose, setView, orbitPivot, beginErase, eraseAt, endErase,
   screenToDoc, isDrawPose,
 } from './state'
-import { snapDir } from '../core/snap'
 import { osnap, type OsnapHit } from '../core/osnap'
-import { classifyNext } from '../core/camera'
+import { resolveStart, resolveEnd } from '../core/draft'
 import { cubeGeom, cubeHit, poseForElem } from '../core/viewcube'
 import type { Draft } from './render2d'
 import {
@@ -50,36 +49,19 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
   // 끝점 결정: 오스냅(점)이 축 스냅(방향)을 이긴다 — Rhino 선례.
   function updateDraft(cur: Pt) {
     if (!draft) return
-    const an = app.lift.an
     draft.raw.push(cur)
-    draft.endSnap = null
-    if (an.horizonY === null) {
-      // 지평선 — 수평 강제
-      draft.end = pt(cur.x, draft.start.y)
-      draft.label = 'horizon'
-    } else {
-      const oh = osnap(app.lift, app.pose, cur, osnapSet(), { p3: draft.startP3 })
-      if (oh) {
-        draft.end = oh.p
-        draft.endSnap = oh
-        draft.label = null
-      } else {
-        const ds = snapDir(an, app.pose, draft.start, cur)
-        if (ds.axis) {
-          draft.end = ds.end
-          draft.label = ds.axis
-        } else {
-          draft.end = cur
-          const cls = classifyNext(an, draft.start, cur)
-          draft.label = cls.role === 'vp' ? 'vp' : null
-        }
-      }
-    }
+    const r = resolveEnd(
+      app.lift, app.pose, app.lift.an,
+      draft.start, { p3: draft.startP3 }, cur, osnapSet(),
+    )
+    draft.end = r.end
+    draft.label = r.label
+    draft.endSnap = r.endSnap
     cb.onDraftChange(draft)
   }
 
   function beginDraft(p: Pt) {
-    const oh = osnap(app.lift, app.pose, p, osnapSet())
+    const oh = resolveStart(app.lift, app.pose, p, osnapSet())
     draft = {
       start: oh ? oh.p : p,
       end: oh ? oh.p : p,
@@ -114,7 +96,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
   }
 
   function orbit(dx: number, dy: number) {
-    if (!app.lift.an.constructionDone) return // 3D가 서기 전에는 돌 것이 없다
+    if (app.lift.lifted.size === 0) return // 돌 것이 없다 — **소실점 개수가 아니라 기하의 유무다**
     const pivot = orbitPivot(app)
     rotateAroundPivot(v3(0, 1, 0), -dx * 0.005, pivot)
     const right = quatRotate(app.pose.q, v3(1, 0, 0))
@@ -131,7 +113,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
       setView(app, { s, ox: center.x - k * (center.x - v.ox), oy: center.y - k * (center.y - v.oy) })
       return
     }
-    if (!app.lift.an.constructionDone) return
+    if (app.lift.lifted.size === 0) return
     const pivot = orbitPivot(app)
     const p = add3(pivot, mul3(sub3(app.pose.p, pivot), 1 / scale))
     setPose(app, { p, q: app.pose.q })
@@ -143,7 +125,7 @@ export function initInput(canvas: HTMLCanvasElement, app: App, cb: InputCallback
       setView(app, { s: v.s, ox: v.ox + dx, oy: v.oy + dy })
       return
     }
-    if (!app.lift.an.constructionDone) return
+    if (app.lift.lifted.size === 0) return
     const pivot = orbitPivot(app)
     const view = quatRotate(app.pose.q, v3(0, 0, -1))
     const depth = Math.max(1, dot3(sub3(pivot, app.pose.p), view))

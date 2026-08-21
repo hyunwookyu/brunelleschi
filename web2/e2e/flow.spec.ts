@@ -108,9 +108,12 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   for (const p of proj) expect(p.err).toBeLessThan(1e-3)
 
   // 대기 획 — 시작점이 3D에 없다. 사라지지 않는다(불변식 j)
+  // ⚠ 개수를 박지 않는다 — 깊이선도 이제 3D 대상이라(지시 1) 안 닿으면 함께 대기한다.
+  // 재는 것은 «이 획이 대기로 남고 화면에 그려지는가»다.
+  const before = s.waiting.length
   await drawLine(page, 900, 600, 1000, 645) // 자유 방향, 미연결
   s = await summary(page)
-  expect(s.waiting).toHaveLength(1)
+  expect(s.waiting.length).toBe(before + 1)
   expect(await inkPixels(page, 895, 595, 1005, 650)).toBeGreaterThan(20)
 
   // 돌리기 — 형태가 보인다
