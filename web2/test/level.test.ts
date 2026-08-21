@@ -15,7 +15,7 @@ import { describe, it, expect } from 'vitest'
 import { session } from './session'
 import { W, H } from './fixtures'
 import { project, DRAW_POSE } from '../src/core/camera'
-import { setPose, orbitPivot, orbitBy, resetPose, type App } from '../src/app/state'
+import { setPose, orbitPivot, orbitBy, resetPose, undo, type App } from '../src/app/state'
 import { createAutoLevel } from '../src/app/autolevel'
 import { isLevel, levelPose, yawDir, forwardOf } from '../src/core/level'
 import { cubeGeom, cubeHit, poseForElem } from '../src/core/viewcube'
@@ -304,6 +304,25 @@ describe('접기 시점 — 놓으면 잠깐 뒤', () => {
     al.release(); c.advance(60000)
     expect(al.tick()).toBe(false)
     expect(app.pose.p).toEqual(DRAW_POSE.p)
+  })
+
+  it('궤도 도중에 전부 실행취소해도 접힌다 — 기하가 줄어든다', () => {
+    const app = drawn()
+    const c = clock()
+    const al = createAutoLevel(app, c.now)
+    al.grab(); orbitBy(app, -160, -120)
+    al.release()
+    while (app.undoStack.length > 0) undo(app)      // 내용 획이 사라진다 → pivot이 옮겨간다
+    // ⚠ **작도 획은 실행취소 대상이 아니다** — 깊이선 둘은 남아 3D로 서 있다.
+    //   그래서 `lifted`가 0이 되는 일도, `an.f`가 null이 되는 일도 **없다**(실측 lifted=2·f=387.3).
+    //   `levelPose`의 «f가 null» 갈래와 `orbitPivot`의 «기하 없음» 갈래는 **기울어 있는
+    //   동안에는 도달 불가한 방어 갈래**이고 이 팔은 그것을 안 잰다(#57: 안 재는 것을
+    //   통과로 안 적는다). 이 팔이 재는 것은 **pivot이 옮겨간 채로 접힌다**는 것 하나다.
+    expect(app.lift.lifted.size).toBe(2)
+    expect(app.lift.an.f).not.toBeNull()
+    foldAfterRelease(app, c, al)
+    expect(isLevel(app.pose)).toBe(true)
+    for (const v of [app.pose.p.x, app.pose.p.y, app.pose.p.z]) expect(Number.isFinite(v)).toBe(true)
   })
 
   it('그리려고 누르면 지연을 안 기다린다 — foldNow', () => {

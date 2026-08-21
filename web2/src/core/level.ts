@@ -93,7 +93,12 @@ export function levelPose(an: Analysis, pose: CamPose, pivot: V3): CamPose {
   const right = norm3(cross3(WORLD_UP, back))
   const q = quatFromBasis(right, WORLD_UP, back)
 
-  if (an.f === null) return { p: { ...pose.p }, q }   // 카메라가 아직 없다 — 자세만 편다
+  // 카메라가 아직 없다 — 자세만 편다.
+  // ⚠ **기울어 있는 동안에는 도달 불가한 방어 갈래다**: f가 null이려면 지평선이 없어야
+  //   하는데 지평선을 지우는 길(비우기·열기)은 포즈를 작도 시점으로 되돌린다.
+  //   실행취소로도 안 된다 — 작도 획은 실행취소 대상이 아니다(실측: 전부 되돌려도 f=387.3).
+  //   그래서 **시험이 이 줄을 안 잰다**(#57: 안 재는 것을 통과로 안 적는다).
+  if (an.f === null) return { p: { ...pose.p }, q }
 
   const dh = pose.p.y - pivot.y                        // 대상이 눈 아래면 양수
   // 필요한 **시선 방향** 거리. 사영의 분모는 반지름이 아니라 시선 성분이다 —

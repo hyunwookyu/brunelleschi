@@ -153,7 +153,7 @@
 ## 검증 명령
 
 ```
-npm test            단위 230건 (24파일)
+npm test            단위 231건 (24파일)
 npm run typecheck
 npm run build       sw.js·빌드 식별자
 npm run e2e         종단 14건 (dpr1/dpr2) — dist/ 가 있어야 정적 배포 팔이 돈다
