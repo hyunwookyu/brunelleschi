@@ -41,7 +41,9 @@ export interface App {
   view: ViewOffset
   /** 저장된 시점 */
   savedViews: { pose: CamPose; view: ViewOffset }[]
-  /** 지면 격자 표시 — 기본 켬(6-h) */
+  /** 지면 격자 표시 — **기본 꺼짐**(지시 3-a). 토글은 설정에 남는다.
+   *  이 도구는 모델링 툴이 아니라 그림 도구다 — 빈 종이에 격자가 깔려 있으면
+   *  CAD의 감각이 된다. 필요한 사람이 켠다. */
   grid: boolean
   cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
@@ -64,7 +66,7 @@ export function createApp(W: number, H: number): App {
     activeErase: null,
     view: { s: 1, ox: 0, oy: 0 },
     savedViews: [],
-    grid: true,
+    grid: false,
     cubeLayout: { cx: W - 60, cy: 60, size: 80 }, // 우측 상단 — 큐브
     listeners: [],
   }
