@@ -112,11 +112,13 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   // 대기 획 — 시작점이 3D에 없다. 사라지지 않는다(불변식 j)
   // ⚠ 개수를 박지 않는다 — 깊이선도 이제 3D 대상이라(지시 1) 안 닿으면 함께 대기한다.
   // 재는 것은 «이 획이 대기로 남고 화면에 그려지는가»다.
+  // ⚠ 자리를 골라야 한다 — (900,600)은 기존 깊이선의 **연장선 위**라 이제 오스냅이 잡고
+  // 3D가 된다(지시 5: 연장선이 좌표를 정한다). 정말로 아무것에도 안 닿는 자리를 쓴다.
   const before = s.waiting.length
-  await drawLine(page, 900, 600, 1000, 645) // 자유 방향, 미연결
+  await drawLine(page, 200, 720, 270, 765) // 미연결 — 연장선에도 안 걸린다
   s = await summary(page)
   expect(s.waiting.length).toBe(before + 1)
-  expect(await inkPixels(page, 895, 595, 1005, 650)).toBeGreaterThan(20)
+  expect(await inkPixels(page, 195, 715, 275, 770)).toBeGreaterThan(20)
 
   // 돌리기 — 형태가 보인다
   await page.mouse.move(600, 400)

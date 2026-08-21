@@ -40,6 +40,9 @@ const COL = {
   waitingDim: 'rgba(85,85,85,0.25)',
   preview: '#1a6ac2',
   vpMark: '#b04a3a',
+  // 축 색 — **그리는 중 미리보기에만** 쓴다(원칙: 확정된 선은 재료 색이다).
+  // 붙은 축이 즉시 보이고, 커서를 돌리면 색이 넘어간다(지시 5-d).
+  axis: { vp0: '#c2571a', vp1: '#1a7fc2', H: '#1a9c50', V: '#7a4fc2' } as Record<string, string>,
   snap: '#1a9c50',
   cubeFace: 'rgba(255,253,248,0.85)',
   cubeEdge: '#8a8378',
@@ -123,7 +126,8 @@ export function draw2d(
     // 안내색은 «카메라를 건드리는 획»에만. `!constructionDone`을 함께 보던 초판은
     // 1점 상태에서 그린 **내용 획까지** 작도선처럼 파랗게 칠했다 — 아직 못 그린다는 신호로 읽힌다.
     const constructing = draft.label === 'horizon' || draft.label === 'vp'
-    ctx.strokeStyle = constructing ? COL.preview : m.color
+    const axisCol = draft.label ? COL.axis[draft.label] : undefined
+    ctx.strokeStyle = constructing ? COL.preview : (axisCol ?? m.color)
     ctx.lineWidth = (constructing ? C.LINE_W_RESULT : m.width) * is
     ctx.beginPath(); ctx.moveTo(draft.start.x, draft.start.y); ctx.lineTo(draft.end.x, draft.end.y); ctx.stroke()
     if (draft.startSnap) mark(ctx, draft.startSnap, is)

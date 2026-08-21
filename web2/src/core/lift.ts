@@ -109,7 +109,17 @@ export function liftAll(doc: Doc): LiftResult {
       if (d <= bestD) { best = p3; bestD = d }
     }
     if (best) return best
-    // 선분 위 — 광선과 선분 직선의 최근접점이 선분 안이고 사영이 일치할 때
+    // 선분 **직선** 위 — 광선과의 최근접점이고 그 사영이 화면 점과 일치할 때.
+    //
+    // ⚠ **선분 안(t∈[0,1])으로 제한하지 않는다.** 초판이 제한했고, 그래서 「연장선」
+    // 오스냅이 준 좌표를 리프팅이 도로 버렸다 — 사람이 붙인 점인데 획이 대기에 남았다
+    // (2026-08-21 실측: 임의 방향 30획 중 5획이 전부 이 자리였다. 전부 `osnap:ext`이고
+    // 전부 p3가 있었다). 연장선은 «원 선과 같은 3D 직선 위»라 좌표가 정해진다는 것이
+    // 그 오스냅의 정의다 — 리프팅이 그것을 부정하면 안 된다.
+    // ⚠ 다만 **바깥쪽은 훨씬 좁게** 받는다. 그냥 mergeTol로 열면 멀리 있는 선의 연장이
+    // 얕은 각으로 지나가며 2.3px 어긋난 채 «맞았다»고 나온다(실측) — 불변식 k가 그만큼
+    // 헐거워진다. 사람이 연장선 오스냅에 붙였다면 확정 2D가 **바로 그 점의 사영**이므로
+    // 왕복 오차가 fp 수준이다. 그래서 바깥쪽 판별자는 공간 여유가 아니라 **수치 동일성**이다.
     const ray = rayThrough(an, pose, s2)
     if (!ray) return null
     for (const seg of segs) {
@@ -118,10 +128,11 @@ export function liftAll(doc: Doc): LiftResult {
       if (!p3) continue
       const L = Math.hypot(dir.x, dir.y, dir.z)
       const t = L > 1e-12 ? dot3(sub3(p3, seg.a3), dir) / (L * L) : -1
-      if (t < 0 || t > 1) continue
+      const inside = t >= 0 && t <= 1
       const pr = project(an, pose, p3)
       if (!pr) continue
       const d = dist2(pr, s2)
+      if (!inside && d > C.LINE_MATCH_PX) continue
       if (d <= bestD) { best = p3; bestD = d }
     }
     return best
