@@ -602,6 +602,33 @@ describe('앱 경로 — autolevel이 앵커를 언제 잡는가', () => {
     expect(Math.hypot(app.pose.p.x - pivot.x, app.pose.p.z - pivot.z)).toBeCloseTo(r0, 6)
   })
 
+  it('앵커가 «없는» 상태가 없다 — 시작·복원·비우기가 전부 정렬 포즈다 (2차 리뷰어 [15])', () => {
+    // 복원(자동 저장)·열기·비우기는 전부 `DRAW_POSE`로 들어오고 그것은 정렬이다.
+    // 그래서 `createAutoLevel` 시점에 이미 앵커가 서 있고 «앵커가 없는 자리»가 없다.
+    // ⚠ **기울어진 저장 시점으로 들어오는 길은 다르다** — 그때 앵커는 «그 직전의 정렬
+    //   포즈»이고, 접기는 거기로 돌아간다(저장한 기울기가 안 남는 것은 예외를 안 둔 대가다).
+    const app = drawn()
+    expect(isLevel(app.pose)).toBe(true)                 // 시작이 정렬이다
+    const c = clock()
+    const al = createAutoLevel(app, c.now)
+    const pivot = orbitPivot(app)
+    // 정렬 상태에서 사람이 옮긴다 → 그 자리가 앵커가 된다
+    setPose(app, { p: v3(app.pose.p.x, 2.4, app.pose.p.z), q: { ...app.pose.q } })
+    // 기울어진 시점을 저장했다가 불러온다 — 앵커는 위 «2.4»다
+    al.grab(); orbitBy(app, -120, 200)
+    saveView(app)
+    al.release()
+    foldAfterRelease(app, c, al)
+    expect(app.pose.p.y).toBeCloseTo(2.4, 6)
+    gotoView(app, 0); al.touch()                          // 기울어진 시점으로 들어온다
+    expect(isLevel(app.pose)).toBe(false)
+    c.advance(C.FOLD_DELAY_MS + 1)
+    for (let i = 0; i < 200 && (!isLevel(app.pose) || al.folding()); i++) { al.tick(); c.advance(20) }
+    expect(isLevel(app.pose)).toBe(true)
+    expect(app.pose.p.y).toBeCloseTo(2.4, 6)             // 사람이 정한 높이로 돌아온다
+    expect(Number.isFinite(app.pose.p.x)).toBe(true)
+  })
+
   it('두 번 돌려도 누적되지 않는다 — 접힌 포즈가 새 앵커다', () => {
     const app = drawn()
     const c = clock()
@@ -609,7 +636,7 @@ describe('앱 경로 — autolevel이 앵커를 언제 잡는가', () => {
     const pivot = orbitPivot(app)
     const y0 = app.pose.p.y
     const r0 = Math.hypot(app.pose.p.x - pivot.x, app.pose.p.z - pivot.z)
-    for (const [dx, dy] of [[-160, 180], [200, -140], [0, 240]] as const) {
+    for (const [dx, dy] of [[-160, 180], [200, -140], [-90, 240]] as const) {   // 셋 다 요를 바꾼다
       al.grab(); orbitBy(app, dx, dy)
       foldAfterRelease(app, c, al)
       expect(app.pose.p.y).toBeCloseTo(y0, 6)     // 세 번을 돌아도 그대로다

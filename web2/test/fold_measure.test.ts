@@ -105,7 +105,9 @@ it('접기가 궤도 전으로 되돌리는가 — 화각 셋 × 궤도 넷', ()
   const y0 = app.pose.p.y
   const r0 = Math.hypot(app.pose.p.x - pivot.x, app.pose.p.z - pivot.z)
   const acc: string[] = []
-  for (const [dx, dy] of [[-160, 180], [200, -140], [0, 240]] as const) {
+  // ⚠ 셋째를 `dx = 0`으로 뒀더니 **요가 안 바뀌어 그 회차가 항등**이었다(2차 리뷰어 [16]) —
+  //    「세 번」의 셋째가 「두 번」과 같은 시험이었다. 셋 다 요를 바꾸게 고쳤다.
+  for (const [dx, dy] of [[-160, 180], [200, -140], [-90, 240]] as const) {
     const anchor = snap(app.pose)
     orbitBy(app, dx, dy)
     setPose(app, levelPose(anchor, app.pose, pivot))
