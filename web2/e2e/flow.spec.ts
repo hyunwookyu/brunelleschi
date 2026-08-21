@@ -67,30 +67,32 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(s.horizonY).toBe(400)
   expect(await inkPixels(page, 0, 397, 1200, 404)).toBeGreaterThan(100)
 
-  // 깊이선 1 → 소실점 (900,400)
-  await drawLine(page, 300, 700, 600, 550)
+  // 깊이선 1 → 소실점 (900,400). **첫 선이므로 이것이 지면(Y=0)에 놓인다**(지시 2).
+  // 깊이선 둘을 같은 모서리 (500,500)에서 뻗는다 — 사람이 상자를 그리는 방식이고,
+  // 그래야 서로 연결돼 둘 다 3D가 되고 그 모서리에서 세운 기둥도 이어진다.
+  await drawLine(page, 500, 500, 600, 475)
   s = await summary(page)
   expect(s.vps).toHaveLength(1)
   expect(Math.abs(s.vps[0].x - 900)).toBeLessThan(1e-6)
   expect(Math.abs(s.vps[0].y - 400)).toBeLessThan(1e-6)
 
   // 깊이선 2 → 소실점 (100,400), f² = 300·500
-  await drawLine(page, 700, 700, 400, 550)
+  await drawLine(page, 500, 500, 400, 475)
   s = await summary(page)
   expect(s.vps).toHaveLength(2)
   expect(s.fSource).toBe('two-vp')
   expect(Math.abs(s.f - Math.sqrt(150000))).toBeLessThan(1e-6)
 
-  // 내용 획 1 — 수직(화면 평행) → 첫 앵커, 3D로
+  // 내용 획 1 — 모서리에서 세운 수직. 아래점은 지면이고 높이는 그 선의 길이가 정한다.
   await drawLine(page, 500, 500, 500, 300)
   s = await summary(page)
-  expect(s.lifted).toBe(1)
+  expect(s.lifted).toBe(3) // 깊이선 둘 + 이 수직
   expect(await glPixels(page, 495, 305, 505, 495)).toBeGreaterThan(20)
 
   // 내용 획 2 — vp0 축으로 이어 긋기 → 연쇄 승격
   await drawLine(page, 500, 300, 700, 350)
   s = await summary(page)
-  expect(s.lifted).toBe(2)
+  expect(s.lifted).toBe(4)
 
   // 불변식 k의 화면 층: 확정 좌표 = 재사영 (작도 포즈)
   const proj = await page.evaluate(() => {
@@ -104,7 +106,7 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
     }
     return out
   })
-  expect(proj.length).toBe(2)
+  expect(proj.length).toBe(4) // 승격된 것 전부 — 깊이선 둘도 3D 선이다(지시 1)
   for (const p of proj) expect(p.err).toBeLessThan(1e-3)
 
   // 대기 획 — 시작점이 3D에 없다. 사라지지 않는다(불변식 j)
@@ -142,18 +144,18 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   const t = Math.min(120, L * 0.4)
   await drawLine(page, aim.endpoint.x, aim.endpoint.y, aim.endpoint.x + dx / L * t, aim.endpoint.y + dy / L * t)
   s = await summary(page)
-  expect(s.lifted).toBe(3)
+  expect(s.lifted).toBe(5) // +2: 깊이선 둘도 3D 선이다(지시 1)
 
   // 실행취소 — 그림만 되돌린다. 카메라(작도)는 그대로
   await page.keyboard.press('Control+z')
   await settle(page)
   s = await summary(page)
-  expect(s.lifted).toBe(2)
+  expect(s.lifted).toBe(4) // +2: 깊이선 둘 — 실행취소는 그림만 되돌린다(작도는 그대로)
   expect(s.vps).toHaveLength(2)
   await page.keyboard.press('Control+y')
   await settle(page)
   s = await summary(page)
-  expect(s.lifted).toBe(3)
+  expect(s.lifted).toBe(5) // 다시실행 — +2: 깊이선 둘
 
   // 작도 시점으로 — 지평선·작도선이 다시 보인다
   await page.click('#btn-draw-view')

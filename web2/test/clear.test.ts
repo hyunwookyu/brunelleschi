@@ -12,8 +12,8 @@ import { pt, v3, QID } from '../src/core/vec'
 function fullApp(): App {
   const app = createApp(1200, 800)
   commitStroke(app, pt(100, 400), pt(1100, 400))
-  commitStroke(app, pt(300, 700), pt(600, 550)) // vp (900,400)
-  commitStroke(app, pt(700, 700), pt(400, 550)) // vp (100,400)
+  commitStroke(app, pt(500, 500), pt(600, 475)) // vp (900,400) — 첫 선, 지면
+  commitStroke(app, pt(500, 500), pt(400, 475)) // vp (100,400) — 같은 모서리에서
   commitStroke(app, pt(500, 500), pt(500, 300)) // 앵커 — 3D로
   commitStroke(app, pt(500, 300), pt(700, 350)) // 연쇄
   saveView(app)
@@ -25,7 +25,7 @@ describe('비우기', () => {
     const app = fullApp()
     expect(app.doc.strokes.length).toBe(5)
     expect(app.lift.an.vps).toHaveLength(2)
-    expect(app.lift.lifted.size).toBe(2)
+    expect(app.lift.lifted.size).toBe(4) // +2: 깊이선 둘도 3D 선이다(지시 1)
 
     clearAll(app, 1200, 800)
 
@@ -56,9 +56,9 @@ describe('비우기', () => {
 
     commitStroke(app, pt(100, 400), pt(1100, 400))
     expect(app.lift.an.horizonY).toBe(400)
-    commitStroke(app, pt(300, 700), pt(600, 550))
+    commitStroke(app, pt(500, 500), pt(600, 475))
     expect(app.lift.an.vps).toHaveLength(1)
-    const s = commitStroke(app, pt(700, 700), pt(400, 550))
+    const s = commitStroke(app, pt(500, 500), pt(400, 475))
     expect(app.lift.an.vps).toHaveLength(2)
     // id가 1부터 다시 나간다 — 옛 문서의 id와 안 섞인다
     expect(s.id).toBe(3)

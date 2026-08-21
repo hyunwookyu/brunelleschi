@@ -5,18 +5,23 @@ import { constructedDoc, approxPt } from './fixtures'
 import { v3, norm3 } from '../src/core/vec'
 
 describe('리프팅 — 확정 후 경로에 판정이 없다(원칙 c)', () => {
-  it('화면 평행 첫 획이 게이지 평면에서 연쇄를 시작한다', () => {
+  // ⚠ 게이지 평면(z=−f)은 폐기됐다(지시 2-e). 그것을 재던 팔이 여기 있었고,
+  // 지우기만 하면 그 자리가 조용해지므로(PITFALLS #57) **지면 규칙으로 교체한다.**
+  // 첫 선 규칙 전체를 재는 팔은 `test/anchor.test.ts`에 있다.
+  it('첫 선이 지면(Y=0)에서 연쇄를 시작한다 — 게이지 평면을 대체했다', () => {
     const b = constructedDoc()
-    const s = b.add(500, 500, 500, 300) // 수직 — 화면 평행
+    const s = b.add(500, 500, 500, 300) // 모서리에서 세운 수직
     const r = liftAll(b.doc)
-    expect(r.anchorId).toBe(s.id)
-    expect(r.lifted.size).toBe(1)
+    // 첫 선은 **깊이선 1**이다 — 문서에서 3D가 된 획이 하나도 없을 때 그것이 첫 선이다(2-c)
+    expect(r.anchorId).toBe(b.doc.strokes[1]!.id)
+    expect(r.lifted.size).toBe(3) // 깊이선 둘 + 수직 — 전부 연결됐다
     const seg = r.lifted.get(s.id)!
     expect(seg.axis).toBe('V')
-    // 게이지: z = −f, 그 평면에서 화면 1px = 세계 1단위
-    expect(seg.a3.z).toBeCloseTo(-r.an.f!, 6)
-    expect(seg.a3.x).toBeCloseTo(-100, 6)
-    expect(seg.a3.y).toBeCloseTo(-100, 6)
+    // 수직선의 아래점은 지면에 붙어 있다(모서리가 지면이므로 연결로 정해진다)
+    expect(seg.a3.y).toBeCloseTo(0, 9)
+    expect(seg.b3.y).toBeGreaterThan(0) // 위쪽은 그 선의 길이가 정한다
+    // 게이지 평면은 더 이상 안 쓴다 — z가 −f에 묶여 있지 않다
+    expect(Math.abs(seg.a3.z + r.an.f!)).toBeGreaterThan(1)
   })
 
   it('승격된 획의 재사영 = 확정 2D 좌표 (오차 fp 수준)', () => {
@@ -24,7 +29,7 @@ describe('리프팅 — 확정 후 경로에 판정이 없다(원칙 c)', () => 
     const s1 = b.add(500, 500, 500, 300)
     const s2 = b.add(500, 300, 700, 350) // vp0(900,400) 방향 — 직선 위 정확
     const r = liftAll(b.doc)
-    expect(r.lifted.size).toBe(2)
+    expect(r.lifted.size).toBe(4) // 깊이선 둘도 3D 선이다(지시 1)
     for (const [id, seg] of r.lifted) {
       const st = b.doc.strokes.find(x => x.id === id)!
       const pa = project(r.an, DRAW_POSE, seg.a3)!
@@ -40,21 +45,24 @@ describe('리프팅 — 확정 후 경로에 판정이 없다(원칙 c)', () => 
     const b = constructedDoc()
     const s = b.add(300, 200, 420, 180) // 아무 데도 안 붙는 자유 방향, 시작점 미확정
     const r = liftAll(b.doc)
-    expect(r.lifted.size).toBe(0)
+    expect(r.lifted.has(s.id)).toBe(false) // 개수가 아니라 «이 획»을 본다
     expect(r.waiting).toContain(s.id)
     expect(b.doc.strokes.some(x => x.id === s.id)).toBe(true)
   })
 
   it('연결은 방향이 없다 — 끝점 쪽이 확정돼 있으면 시작점을 그쪽에서 푼다', () => {
     const b = constructedDoc()
-    const E = b.add(500, 450, 700, 450)  // 앵커 (H)
-    const X = b.add(500, 500, 500, 450)  // 시작은 허공, 끝이 E의 시작점에 닿는다
+    // 끝이 먼저 확정돼 있고 시작은 허공 — X는 두 번째 패스에서 풀린다.
+    // 모서리 (500,500)이 지면이므로 거기서 세운 수직 E가 먼저 올라가고,
+    // 위에서 아래로 그은 X의 끝이 E의 위 끝점에 닿는다.
+    const E = b.add(500, 500, 500, 300)  // 모서리에서 세운 수직
+    const X = b.add(500, 200, 500, 300)  // 시작은 허공, 끝이 E의 끝점에 닿는다
     const r = liftAll(b.doc)
-    expect(r.anchorId).toBe(E.id)
+    expect(r.lifted.has(E.id)).toBe(true)
     expect(r.lifted.has(X.id)).toBe(true)
     const seg = r.lifted.get(X.id)!
     // 끝이 E의 시작 3D와 같고, 시작은 그 축 직선 위 광선 교점
-    const e3 = r.lifted.get(E.id)!.a3
+    const e3 = r.lifted.get(E.id)!.b3
     expect(seg.b3.x).toBeCloseTo(e3.x, 6)
     expect(seg.b3.y).toBeCloseTo(e3.y, 6)
     expect(seg.b3.z).toBeCloseTo(e3.z, 6)
@@ -64,10 +72,10 @@ describe('리프팅 — 확정 후 경로에 판정이 없다(원칙 c)', () => 
 
   it('승격은 연쇄한다 — 먼저 그린 대기 획이 나중 앵커로 올라간다', () => {
     const b = constructedDoc()
-    const sA = b.add(500, 500, 700, 450) // vp0 방향((900,400)에서 (500,500) 지나는 직선 위), 시작 미확정 → 대기
-    const sB = b.add(500, 500, 500, 300) // 수직 앵커 — sA의 시작점과 같은 자리
+    // sA의 시작점은 그릴 때 아직 3D가 없다(수직 sB의 위 끝). sB가 나중에 그것을 준다.
+    const sA = b.add(500, 300, 700, 350) // vp0 방향, 시작 미확정 → 대기
+    const sB = b.add(500, 500, 500, 300) // 모서리에서 세운 수직 — sA의 시작점을 준다
     const r = liftAll(b.doc)
-    expect(r.anchorId).toBe(sB.id)
     expect(r.lifted.has(sA.id)).toBe(true) // 두 번째 패스에서 연쇄 승격
     expect(r.lifted.has(sB.id)).toBe(true)
   })
@@ -123,7 +131,7 @@ describe('불변식 k — 차수 승격(f 변경) 전후로 화면 위치 불변
         b: project(r1.an, DRAW_POSE, seg.b3)!,
       })
     }
-    expect(before.size).toBe(2)
+    expect(before.size).toBe(3) // 1점 상태의 깊이선 1 + 내용 획 둘
 
     // 대기 획 — 확정 전에 그었고 아직 3D가 없다. **이것도 재야 한다.**
     const w = b.add(200, 700, 200, 600)
@@ -131,7 +139,7 @@ describe('불변식 k — 차수 승격(f 변경) 전후로 화면 위치 불변
     expect(rw.waiting).toContain(w.id)
     const wBefore = { a: { ...w.a }, b: { ...w.b } }
 
-    b.add(700, 700, 400, 550) // 깊이선 2 → f가 387.3으로
+    b.add(500, 500, 400, 475) // 깊이선 2 → f가 387.3으로
     const r2 = liftAll(b.doc)
     expect(r2.an.fSource).toBe('two-vp')
     // 대기 획은 f가 바뀌어도 화면에서 안 움직이고 사라지지도 않는다
@@ -151,7 +159,7 @@ describe('불변식 k — 차수 승격(f 변경) 전후로 화면 위치 불변
     const b = oneVpDocWithContent()
     const r1 = liftAll(b.doc)
     const oldSegs = [...r1.lifted.values()]
-    b.add(700, 700, 400, 550)
+    b.add(500, 500, 400, 475)
     const r2 = liftAll(b.doc)
     void r2
     // 옛 3D 좌표(부분 유지)를 새 카메라로 사영하면 확정 2D(500,500)와 어긋난다

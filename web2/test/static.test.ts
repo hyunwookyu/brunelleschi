@@ -16,6 +16,7 @@ const FORBIDDEN: { re: RegExp; why: string }[] = [
   { re: /\bW\s*\/\s*2\b/, why: '주점 직접 계산 — an.principal을 읽어라' },
   { re: /DEFAULT_F_RATIO/, why: 'f 직접 계산 — an.f를 읽어라' },
   { re: /quatConj/, why: '사영 직접 계산 — project()/screenAxes()를 써라' },
+  { re: /EYE_HEIGHT/, why: '눈높이 직접 참조 — DRAW_POSE.p / pointOnGround()를 써라' },
 ]
 
 function walk(dir: string): string[] {

@@ -7,7 +7,7 @@ import type { Doc, Stroke, CamPose } from './types'
 import { C } from './constants'
 import {
   analyze, type Analysis, type AxisId, DRAW_POSE,
-  screenAxes, project, rayThrough, pointAtGaugeDepth, type Ray,
+  screenAxes, project, rayThrough, pointOnGround, type Ray,
 } from './camera'
 import {
   type Pt, type V3, add3, sub3, mul3, dot3, dist2, norm3,
@@ -144,17 +144,31 @@ export function liftAll(doc: Doc): LiftResult {
           if (dir && ray) a3 = closestOnLineToRay(b3, dir, ray)
         }
       }
-      if (!a3 && lifted.size === 0 && anchorId === null && (axis === 'H' || axis === 'V')) {
-        // 첫 앵커 — 화면 평행 획이 게이지 평면(z=−f)에서 연쇄를 시작한다.
-        // 전역 스케일은 원리적으로 모호하므로 이것은 단위 선택이지 임의 좌표가 아니다.
+      if (!a3 && !b3 && lifted.size === 0 && anchorId === null && axis !== null) {
+        // ── 첫 선은 지면에 있다 ──────────────────────────────────────────
+        // 규칙 하나이고 **선의 종류를 안 가린다.** 사람이 그리기 시작할 때 첫 선은
+        // 바닥에서 시작한다 — 바닥 모서리를 긋거나, 기둥을 세우거나, 벽 하단을 긋는다.
         //
-        // ⚠ **여기가 아직 획 종류를 가린다** — 「지평선 → 깊이선」으로만 시작하면 앵커가
-        // 안 생겨 아무것도 안 올라간다(측정 2026-08-21: lifted=0). 지시 2가 이 규칙을
-        // 통째로 바꾼다(첫 선은 종류를 안 가리고 Y=0). 그때 함께 고친다 —
-        // 여기서 미리 풀면 픽스처의 앵커가 깊이선으로 옮겨가 좌표 기대값 27건이
-        // 흔들리고, 지시 2·3(지면 Y=0 · 눈높이 1.6)이 그것을 또 한 번 흔든다.
-        a3 = pointAtGaugeDepth(an, pose, s.a)
-        if (a3) anchorId = s.id
+        //   수평선·깊이선  그 선 자체가 Y=0
+        //   수직선         아래점이 Y=0 (위쪽 높이는 그 선의 길이가 정한다)
+        //
+        // 수평·깊이 축은 방향의 y 성분이 0이므로(소실점이 지평선 위에 있다) 한 끝만
+        // 지면에 놓으면 **선 전체가 지면이다** — 그래서 두 경우가 한 계산으로 끝난다.
+        // 아래·위는 화면 y로 가른다: 롤 0·피치 0이라 화면 y가 곧 높이 순서다.
+        // (3점 = 피치 ≠ 0 에서는 다시 봐야 한다. 그때 판단한다.)
+        const dir = axisDir(an, axis)
+        const useB = axis === 'V' && s.b.y > s.a.y   // 아래로 그은 수직선
+        const g = pointOnGround(an, pose, useB ? s.b : s.a)
+        if (g && dir) {
+          if (useB) {
+            const rayA = rayThrough(an, pose, s.a)
+            const solved = rayA ? closestOnLineToRay(g, dir, rayA) : null
+            if (solved) { a3 = solved; b3 = g }
+          } else {
+            a3 = g
+          }
+          if (a3) anchorId = s.id
+        }
       }
       if (!a3) continue
 

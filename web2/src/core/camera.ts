@@ -11,7 +11,9 @@
 //    직교 가로축이라는 것이 작도의 정의이므로 2점 상태 전용으로만 쓴다).
 //   거부는 f² ≤ 0 하나뿐(원칙 f) — 두 소실점이 주점 기준 같은 쪽이면 직교 불가.
 //
-// 세계 좌표 = 작도 카메라 프레임: 원점 = 눈, +x 화면 오른쪽, +y 위, 시선 −z.
+// 세계 좌표: **원점 = 지면**, +x 화면 오른쪽, +y 위, 작도 시선 −z.
+//   작도 카메라는 지면 위 `EYE_HEIGHT`에 서서 수평으로 본다(피치 0·롤 0).
+//   그래서 **Y=0이 지면**이고, 눈높이가 Y 스케일을 정한다 — f(깊이 압축률)와 다른 축이다.
 
 import type { Doc, Stroke, CamPose } from './types'
 import { C } from './constants'
@@ -43,7 +45,9 @@ export interface Analysis {
   constructionDone: boolean
 }
 
-export const DRAW_POSE: CamPose = { p: v3(0, 0, 0), q: QID }
+/** 작도 카메라 — 지면(Y=0) 위 눈높이에 서서 수평으로 본다(피치 0·롤 0).
+ *  **세계 원점은 눈이 아니라 지면이다.** 눈이 원점이면 지면이 눈을 지나 퇴화한다. */
+export const DRAW_POSE: CamPose = { p: v3(0, C.EYE_HEIGHT, 0), q: QID }
 
 /** 획 후보가 작도 국면에서 무엇이 되는지 — analyze와 미리보기가 같은 함수를 쓴다
  *  (측정 경로와 앱 경로를 가르지 않는다) */
@@ -186,10 +190,19 @@ export function rayThrough(an: Analysis, pose: CamPose, s: Pt): Ray | null {
   return { o: pose.p, d: norm3(quatRotate(pose.q, dc)) }
 }
 
-/** 화면 점을 카메라 깊이 z=−f(게이지 평면)에 놓는다 — 첫 앵커 전용.
- *  그 평면에서 화면 1px = 세계 1단위(사영 배율 f/f = 1). */
-export function pointAtGaugeDepth(an: Analysis, pose: CamPose, s: Pt): V3 | null {
-  if (!an.principal || an.f === null) return null
-  const dc = v3(s.x - an.principal.x, an.principal.y - s.y, -an.f)
-  return add3(pose.p, quatRotate(pose.q, dc))
+/** 화면 점 → **지면(Y=0) 위의 점** — 첫 앵커의 자리.
+ *
+ *  게이지 평면(z=−f)을 대체한다. 게이지 평면은 «화면 1px = 세계 1단위»라는 **임의 단위**를
+ *  골라 스케일을 정했다. 지면은 그럴 필요가 없다 — **눈높이가 스케일을 정한다.**
+ *  눈이 지면 위 `EYE_HEIGHT`에 있으므로 지평선 아래 화면 점은 지면과 정확히 한 점에서
+ *  만나고, 그 점까지의 거리가 곧 실제 거리다. 자유 선택이 하나 줄었다.
+ *
+ *  지평선 위(또는 그 자리)의 점은 지면과 안 만난다 → null. 좌표를 임의로 정하지 않는다. */
+export function pointOnGround(an: Analysis, pose: CamPose, s: Pt): V3 | null {
+  const r = rayThrough(an, pose, s)
+  if (!r) return null
+  if (r.d.y >= -1e-9) return null      // 위로 가거나 지면과 평행 — 안 만난다
+  const u = -pose.p.y / r.d.y          // P.y = 0 이 되는 광선 파라미터
+  if (!(u > 0)) return null            // 눈이 이미 지면이거나 뒤쪽 — 안 만난다
+  return add3(pose.p, mul3(r.d, u))
 }
