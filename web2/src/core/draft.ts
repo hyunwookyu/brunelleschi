@@ -7,7 +7,7 @@
 
 import type { CamPose } from './types'
 import type { Analysis, AxisId } from './camera'
-import { classifyNext } from './camera'
+import { classifyNext, vpAt } from './camera'
 import type { LiftResult } from './lift'
 import { osnap, type OsnapHit, type OsnapSettings } from './osnap'
 import { snapDir } from './snap'
@@ -43,13 +43,20 @@ export function resolveEnd(
   const oh = osnap(lift, pose, cursor, set, startP3)
   if (oh) return { end: oh.p, label: null, endSnap: oh, axis: null }
 
-  // ② **새 축을 정의하는 획이면 자유다.** 이 한 경우만 예외이고, 예외인 이유가 분명하다:
+  // ② **소실점에서 뻗는 획은 자유다**(web2-06 지시 1). 축 스냅이 이 획을 지평선 위로
+  //    납작하게 눌렀다(실측: vp0=(900,400)에서 (700,600)으로 그으면 끝점이 (700,400)).
+  //    이 획은 «있는 축 중 하나»를 고르는 것이 아니라 **그 소실점의 살을 고르는 중**이고,
+  //    소실점을 지나는 직선은 어느 방향이든 그 소실점의 살이다 — 「가장 가까운 축」이라는
+  //    물음 자체가 성립하지 않는다. 끝점 오스냅(①)은 그대로 이긴다(점이 방향을 이긴다).
+  if (vpAt(an, pose, start)) return { end: cursor, label: null, endSnap: null, axis: null }
+
+  // ③ **새 축을 정의하는 획이면 자유다.** 이 한 경우만 예외이고, 예외인 이유가 분명하다:
   //    그 획은 «있는 축 중 하나»가 아니라 **축을 만드는 중**이다. 여기서 기존 축에 붙이면
   //    두 번째 소실점을 영영 못 만든다(실측: 팔 열셋이 그것으로 깨졌다).
   const cls = classifyNext(an, start, cursor)
   if (cls.role === 'vp') return { end: cursor, label: 'vp', endSnap: null, axis: null }
 
-  // ③ 그 외에는 **항상 가장 가까운 축**이다. 임계가 없고 자유 방향도 없다(지시 5-a).
+  // ④ 그 외에는 **항상 가장 가까운 축**이다. 임계가 없고 자유 방향도 없다(지시 5-a).
   const ds = snapDir(an, pose, start, cursor)
   return { end: ds.end, label: ds.axis, endSnap: null, axis: ds.axis }
 }

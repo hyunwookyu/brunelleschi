@@ -288,6 +288,22 @@ export function vpMarks(an: Analysis, pose: CamPose): { id: AxisId; vp: Pt }[] {
   return out
 }
 
+/** **그 화면 점이 소실점인가** — 맞으면 그 축 id, 아니면 null (web2-06 지시 1).
+ *
+ *  오스냅이 붙인 좌표는 `vpMarks`가 낸 값 **그대로**이므로(원칙 d) 정확히 견준다.
+ *  여유(1e-6)는 부동소수 몫이고 «근처»의 여유가 아니다 — 「소실점 근처에서 눌렀다」는
+ *  **오스냅 반경**이 이미 답했고, 여기서 또 반경을 두면 판정이 두 자리로 갈린다(#54).
+ *
+ *  쓰는 자리: 소실점에서 뻗는 획에는 축 스냅을 안 건다(`core/draft.ts`).
+ *  그 획은 «있는 축 중 하나»를 고르는 것이 아니라 **그 소실점의 살을 고르는 중**이고,
+ *  소실점을 지나는 직선은 어느 방향이든 그 소실점의 살이다. */
+export function vpAt(an: Analysis, pose: CamPose, p: Pt): AxisId | null {
+  for (const m of vpMarks(an, pose)) {
+    if (Math.abs(m.vp.x - p.x) <= 1e-6 && Math.abs(m.vp.y - p.y) <= 1e-6) return m.id
+  }
+  return null
+}
+
 /** 세계 점 → 화면 (뒤에 있으면 null) */
 export function project(an: Analysis, pose: CamPose, P: V3): Pt | null {
   if (!an.principal || an.f === null) return null
