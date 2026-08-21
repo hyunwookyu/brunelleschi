@@ -55,6 +55,7 @@ test('돌려본 뒤 정렬로 접힌다 — 놓으면 · 잡고 있으면 안 �
   expect((await lev(page)).level).toBe(true)
 
   // ── 기울인다 ────────────────────────────────────────────────────────
+  const eyeBefore = (await lev(page)).eye          // **궤도 전** 눈높이 — 접으면 여기로 돌아온다
   await tiltDown(page)
   let s = await lev(page)
   expect(s.level).toBe(false)
@@ -71,7 +72,8 @@ test('돌려본 뒤 정렬로 접힌다 — 놓으면 · 잡고 있으면 안 �
   expect(s.fwd.y).toBeCloseTo(held.fwd.y, 12)          // 한 톨도 안 움직였다
 
   // ── 놓으면 접힌다 ──────────────────────────────────────────────────
-  const yaw0 = s.yaw, eye0 = s.eye
+  const yaw0 = s.yaw
+  expect(Math.abs(s.eye - eyeBefore)).toBeGreaterThan(0.5)   // 궤도가 눈높이를 바꿨다
   await page.mouse.up({ button: 'middle' })
   await settle(page)
   expect((await lev(page)).level).toBe(false)          // 놓자마자는 아직 그대로다
@@ -79,8 +81,8 @@ test('돌려본 뒤 정렬로 접힌다 — 놓으면 · 잡고 있으면 안 �
   s = await lev(page)
   expect(s.level).toBe(true)
   expect(Math.abs(s.fwd.y)).toBeLessThan(1e-9)         // 피치 0
-  expect(yawGap(s.yaw, yaw0)).toBeLessThan(1e-3)       // 좌우 각도 유지
-  expect(s.eye).toBeCloseTo(eye0, 9)                   // 눈높이 유지
+  expect(yawGap(s.yaw, yaw0)).toBeLessThan(1e-3)       // 좌우 각도는 **새 값**
+  expect(s.eye).toBeCloseTo(eyeBefore, 6)              // 눈높이는 **궤도 전** 값(web2-05)
   expect(await page.textContent('#notice')).not.toContain('기울어')
 
   // ── 기울어 있는 동안에는 획이 안 생긴다 ─────────────────────────────
@@ -98,6 +100,59 @@ test('돌려본 뒤 정렬로 접힌다 — 놓으면 · 잡고 있으면 안 �
   await drawLine(page, 300, 600, 420, 640)
   expect(await strokeCount(page)).toBe(n0 + 1)
   expect(FOLD_ANIM_MS).toBeLessThan(FOLD_DELAY_MS)     // 상수 대조 — 값이 바뀌면 여기가 안다
+})
+
+/** 영역의 실제 그려진 픽셀 수 — 2D 오버레이(ink) */
+function inkPixels(page: Page, x0: number, y0: number, x1: number, y1: number) {
+  return page.evaluate(([x0, y0, x1, y1]) => {
+    const c = document.getElementById('ink') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const d = c.getContext('2d')!.getImageData(
+      Math.round(x0! * dpr), Math.round(y0! * dpr),
+      Math.max(1, Math.round((x1! - x0!) * dpr)), Math.max(1, Math.round((y1! - y0!) * dpr)),
+    ).data
+    let n = 0
+    for (let i = 3; i < d.length; i += 4) if (d[i]! > 0) n++
+    return n
+  }, [x0, y0, x1, y1])
+}
+
+test('소실점에 커서를 올리면 **붙었다는 표식이 뜬다** — 픽셀로 잰다', async ({ page }) => {
+  // 재현: 스냅 판정은 돌았는데 `render2d`의 `mark()` switch에 `'vp'`가 없어
+  // **빈 경로에 stroke**가 되어 아무것도 안 그려졌다. 상시 떠 있는 ✕만 남아
+  // 「붙었다」와 「안 붙었다」가 화면에서 구별되지 않았다 —
+  // 실측(수리 전): 소실점 둘레 픽셀 **80 → 80(차 0)**, 같은 조건에서 끝점 **10 → 72(+62)**.
+  await page.goto('/')
+  await page.waitForFunction(() => (window as any).__b2)
+  await drawLine(page, 100, 400, 1100, 400)
+  await drawLine(page, 500, 500, 600, 475)
+  await drawLine(page, 500, 500, 400, 475)
+  await drawLine(page, 500, 500, 500, 300)
+  const vps = await page.evaluate(() => (window as any).__b2.diag.summary().vps)
+  expect(vps[0]).toEqual({ x: 900, y: 400 })
+
+  // 커서를 멀리 — ✕만 있는 상태
+  await page.mouse.move(200, 700)
+  await settle(page)
+  const away = await inkPixels(page, 885, 385, 915, 415)
+  expect(away).toBeGreaterThan(0)                 // ✕는 상시 표시다(대조군이 비면 안 잰다)
+
+  // 커서를 소실점 위로 — **표식이 더해져야 한다**
+  await page.mouse.move(900, 400)
+  await settle(page)
+  const on = await inkPixels(page, 885, 385, 915, 415)
+  // 실측(dpr 1): 수리 전 **80 → 80(차 0)** · 수리 후 **80 → 182(차 +102)**.
+  // 임계 20은 실측 102의 **5분의 1**이다 — dpr·안티에일리어싱 여유를 두되 «0과 가른다»는
+  // 목적에 필요한 만큼만. 대조군(끝점)은 배경 10에 +62였다.
+  expect(on).toBeGreaterThan(away + 20)           // 수리 전에는 차가 **0**이었다
+
+  // 그리고 실제로 그 점에서 시작한다 — 붙은 좌표가 그대로 확정된다(원칙 d)
+  await drawLine(page, 903, 402, 700, 550)        // 3 px 빗나가게 누른다
+  const st = await page.evaluate(() => {
+    const d = (window as any).__b2.app.doc.strokes
+    return d[d.length - 1]
+  })
+  expect(st.a).toEqual({ x: 900, y: 400 })        // 소실점에 붙었다
 })
 
 test('작도가 안 끝난 채 접히면 그 길이 화면에 뜬다 — 한 번 누르면 작도 시점으로', async ({ page }) => {

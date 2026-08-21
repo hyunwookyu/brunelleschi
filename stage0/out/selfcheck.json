@@ -26646,7 +26646,7 @@
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web2\\test\\level.test.ts:78:foldAfterRelease",
+      "path": "web2\\test\\level.test.ts:82:foldAfterRelease",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
@@ -26673,7 +26673,7 @@
     {
       "path": "scan_citation_hashes",
       "val": [
-        "assumptions.md:159 test_cost.json",
+        "assumptions.md:163 test_cost.json",
         "DEFERRED.md:885 test_cost.json",
         "progress.md:11820 test_cost.json",
         "progress.md:13857 test_cost.json",
@@ -26860,7 +26860,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 317,
+      "files_scanned": 318,
       "exts_declared": [
         ".md",
         ".py",
@@ -26884,7 +26884,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 317,
+      "files_scanned": 318,
       "exts_declared": [
         ".md",
         ".py",
