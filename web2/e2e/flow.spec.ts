@@ -276,4 +276,89 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   // 빌드 식별자가 보인다
   const buildId = await page.textContent('#buildid')
   expect(buildId && buildId.length).toBeGreaterThan(3)
+
+  // ── 비우기 — 확인 한 줄(밑줄 단어) 뒤에 전부 사라지고, 새로고침해도 안 돌아온다 ──
+  await page.click('#pane-file > summary')
+
+  // 취소가 실제로 막는다 — 실수 방지가 있는지 이것이 잰다(양성 채널)
+  await page.click('#btn-clear')
+  expect(await page.locator('#notice u').count()).toBe(2)
+  await page.click('#notice u[data-pick="no"]')
+  await settle(page)
+  s = await summary(page)
+  expect(s.strokes).toBe(beforeReload.strokes) // 하나도 안 지워졌다
+  expect(await page.locator('#notice u').count()).toBe(0)
+
+  // 비운다 — 그림도 작도도 사라지고 지평선 단계로 돌아간다
+  await page.click('#btn-clear')
+  await page.click('#notice u[data-pick="yes"]')
+  await settle(page)
+  s = await summary(page)
+  expect(s.strokes).toBe(0)
+  expect(s.lifted).toBe(0)
+  expect(s.horizonY).toBeNull()
+  expect(s.vps).toHaveLength(0)
+  expect(await inkPixels(page, 0, 0, 1200, 800)).toBe(0)
+  expect(await glPixels(page, 0, 0, 1200, 800)).toBe(0)
+  expect(await page.textContent('#notice')).toContain('지평선')
+
+  // 새로고침해도 안 돌아온다 (자동 저장도 지워졌다)
+  await page.waitForTimeout(600) // 자동 저장 디바운스가 한 번 더 돌 시간
+  await page.reload()
+  await page.waitForFunction(() => (window as any).__b2)
+  await settle(page)
+  s = await summary(page)
+  expect(s.strokes).toBe(0)
+  expect(s.horizonY).toBeNull()
+  expect(await inkPixels(page, 0, 0, 1200, 800)).toBe(0)
+  expect(await page.evaluate(() => localStorage.getItem('b2-autosave'))).toBeNull()
+
+  // 빈 화면에서 다시 그리기가 처음처럼 된다
+  await drawLine(page, 100, 400, 1100, 402)
+  s = await summary(page)
+  expect(s.horizonY).toBe(400)
+
+  // ── 파일 묶음 대조 — 저장·열기·내보내기가 실제로 도는가 (5단계 UI 점검) ──
+  await page.click('#pane-file > summary') // 새로고침으로 접혔다 — 다시 편다
+  // 3D가 하나도 없을 때 내보내기는 **빈 파일을 조용히 내려주지 않는다**
+  let downloaded = false
+  page.once('download', () => { downloaded = true })
+  await page.click('#btn-obj')
+  await page.waitForTimeout(300)
+  expect(downloaded).toBe(false)
+  expect(await page.textContent('#notice')).toContain('내보낼 것이 없다')
+
+  // 열기 — 지금 그림(지평선)을 덮으므로 확인을 받는다. 취소하면 그대로다.
+  const sample = JSON.stringify({
+    format: 'brnl', version: 1, frame: { W: 1200, H: 800 },
+    strokes: [
+      { id: 1, a: { x: 100, y: 400 }, b: { x: 1100, y: 400 } },
+      { id: 2, a: { x: 300, y: 700 }, b: { x: 600, y: 550 } },
+      { id: 3, a: { x: 700, y: 700 }, b: { x: 400, y: 550 } },
+      { id: 4, a: { x: 500, y: 500 }, b: { x: 500, y: 300 } },
+    ],
+    nextId: 5, savedViews: [],
+  })
+  const asFile = { name: 'sample.brnl', mimeType: 'application/json', buffer: Buffer.from(sample) }
+  await page.setInputFiles('#file-open', asFile)
+  expect(await page.locator('#notice u').count()).toBe(2)
+  await page.click('#notice u[data-pick="no"]')
+  s = await summary(page)
+  expect(s.strokes).toBe(1) // 지평선 하나 — 안 바뀌었다
+
+  await page.setInputFiles('#file-open', asFile)
+  await page.click('#notice u[data-pick="yes"]')
+  await settle(page)
+  s = await summary(page)
+  expect(s.strokes).toBe(4)
+  expect(s.vps).toHaveLength(2)
+  expect(s.lifted).toBe(1)
+
+  // 저장·내보내기 — 실제로 파일이 나간다
+  const [saved] = await Promise.all([page.waitForEvent('download'), page.click('#btn-save')])
+  expect(saved.suggestedFilename()).toBe('drawing.brnl')
+  const [obj] = await Promise.all([page.waitForEvent('download'), page.click('#btn-obj')])
+  expect(obj.suggestedFilename()).toBe('drawing.obj')
+  const [gltf] = await Promise.all([page.waitForEvent('download'), page.click('#btn-gltf')])
+  expect(gltf.suggestedFilename()).toBe('drawing.gltf')
 })

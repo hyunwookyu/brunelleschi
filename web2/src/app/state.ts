@@ -220,6 +220,26 @@ export function loadDoc(app: App, data: { doc: Doc; nextId: number; savedViews: 
   recompute(app)
 }
 
+/** 비우기 — 그림도 작도도 전부 버리고 빈 상태로. **지평선 단계부터 다시 시작한다.**
+ *
+ *  실행취소로는 못 돌아온다 — 작도 획(지평선·깊이선)이 op에 안 들어가므로(위 규칙)
+ *  op 하나로 되돌리려면 그 규칙부터 갈라야 한다. 그래서 실수 방지는 **확인 한 번**으로
+ *  한다(A-3: 단순한 쪽). 확인 UI는 최상단 한 줄의 밑줄 단어다.
+ *
+ *  프레임(좌표계)은 **지금 창 크기로 새로 잡는다** — 빈 문서이므로 옛 프레임을 붙들 이유가
+ *  없고, 다른 크기에서 그린 파일을 열었다 비운 경우 주점이 화면 가운데를 벗어난다. */
+export function clearAll(app: App, W: number, H: number) {
+  app.doc = emptyDoc(W, H)
+  app.nextId = 1
+  app.undoStack = []
+  app.redoStack = []
+  app.savedViews = []
+  app.activeErase = null
+  app.pose = DRAW_POSE
+  app.view = { s: 1, ox: 0, oy: 0 }
+  recompute(app)
+}
+
 export function gotoView(app: App, i: number) {
   const v = app.savedViews[i]
   if (!v) return
