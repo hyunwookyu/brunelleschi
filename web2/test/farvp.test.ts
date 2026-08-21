@@ -66,17 +66,27 @@ describe('2-e — 각 거리 대역에서 2점이 유지된다', () => {
     }
   })
 
-  it('획을 길게 그으면 훨씬 멀리까지 선다 — 긴 획이 더 많은 정보를 낸다', () => {
-    // h=150·R=600이면 경계가 50W다. 20W까지 확인한다.
-    for (const k of [1, 2, 3, 5, 10, 20]) {
-      expect(drawFar(150, 600, k * W).an.vps.length, `${k}W`).toBe(2)
+  // ⛔ **web2-06 지시 2가 이 조항을 뒤집었다.** 「긴 획은 20W까지」는 이제 **안 선다** —
+  //    `VP_FAR_W = 6`이 대역을 6W에서 끊는다. 통과/실패로 안 적고 **뒤집힌 것으로 적는다**
+  //    (#57: 규칙이 바뀌면 그 규칙을 재던 조항을 함께 처리한다).
+  //    잃은 것: 6W 밖을 **그어서** 만드는 길. 얻은 것: 수평 의도가 손 겨냥 오차를 흡수한다
+  //    (실측 대비표는 NOTES의 web2-06 지시 2 절). 6W 밖은 **지평선 위를 찍어** 만든다.
+  it('⛔(뒤집힘) 길이는 이제 대역을 안 늘린다 — 경계가 6W에서 끊긴다', () => {
+    for (const k of [1, 2, 3, 5]) {
+      expect(drawFar(150, 600, k * W).an.vps.length, `${k}W`).toBe(2)   // 사람이 든 대역은 그대로
     }
-    // 같은 h로 획만 짧게 하면(R=150) 경계가 1/4로 준다 — 12.5W. 20W는 못 넘는다.
+    for (const k of [8, 10, 20]) {
+      expect(drawFar(150, 600, k * W).an.vps.length, `${k}W`).toBe(1)   // ← 고치기 전에는 2였다
+    }
+    // 길이를 늘려도 같다 — 경계가 h·R에 안 끌려간다(그것이 이 회차가 바꾼 것이다)
+    expect(drawFar(150, 1200, 10 * W).an.vps.length).toBe(1)
+    // 짧은 획은 종전대로 `PARALLEL_PX`가 먼저 끊는다(경계 = min(6W, h·R/1.5) 중 뒤 항)
     expect(drawFar(150, 150, 20 * W).an.vps.length).toBe(1)
   })
 
   it('그 획이 실제로 새 축이 된다 — 만들어 놓고 안 쓰면 소용없다', () => {
-    const { s, st, an } = drawFar(150, 600, 10 * W)
+    // ⚠ 10W였다 — web2-06 지시 2로 그 거리가 대역 밖이 되어 **5W로 내렸다**(경계는 6W).
+    const { s, st, an } = drawFar(150, 600, 5 * W)
     expect(an.vps).toHaveLength(2)
     expect(axisOfStroke(an, DRAW_POSE, st.a, st.b)).toBe('vp1')
     expect(s.app.lift.lifted.has(st.id)).toBe(true)
@@ -96,21 +106,31 @@ describe('2-e — 각 거리 대역에서 2점이 유지된다', () => {
 })
 
 describe('2-b — 경계는 어디이고 무엇의 함수인가', () => {
-  it('경계는 **획 자신의 처짐 1.5px**이다 — h·W가 아니라', () => {
+  // ⛔ **web2-06 지시 2가 경계를 둘로 만들었다** — `min(6W, h·R/1.5)`.
+  //    앞 항(6W)이 「그 소실점이 작도 대역 안인가」(구도가 답한다), 뒤 항이 종전의
+  //    「이 획으로 무한원과 구별할 수 있는가」(포인터가 답한다)다. 둘은 OR이고,
+  //    **거의 언제나 6W가 먼저 걸린다** — h·R < 10800인 아주 짧고 낮은 획에서만 뒤 항이 이긴다.
+  it('경계는 `min(6W, h·R/1.5)`이다 — 두 물음의 최솟값', () => {
     expect(C.PARALLEL_PX).toBe(1.5)
-    // 처짐 d = h·R/D. 경계 바로 안쪽과 바깥쪽을 각각 확인한다.
-    for (const [h, R] of [[40, 300], [150, 600], [400, 400]] as const) {
-      const Dedge = h * R / C.PARALLEL_PX
-      expect(drawFar(h, R, Dedge * 0.9).an.vps.length, `h=${h} R=${R} 안쪽`).toBe(2)
-      expect(drawFar(h, R, Dedge * 1.3).an.vps.length, `h=${h} R=${R} 바깥`).toBe(1)
+    expect(C.VP_FAR_W).toBe(6)
+    const edge = (h: number, R: number) => Math.min(C.VP_FAR_W * W, h * R / C.PARALLEL_PX)
+    for (const [h, R] of [[40, 300], [150, 600], [400, 400], [10, 100]] as const) {
+      const E = edge(h, R)
+      expect(drawFar(h, R, E * 0.9).an.vps.length, `h=${h} R=${R} 안쪽`).toBe(2)
+      expect(drawFar(h, R, E * 1.3).an.vps.length, `h=${h} R=${R} 바깥`).toBe(1)
     }
+    // **어느 항이 이겼나** — 앞의 셋은 6W, 마지막(h=10·R=100)만 처짐이 이긴다
+    expect(edge(40, 300)).toBe(C.VP_FAR_W * W)
+    expect(edge(150, 600)).toBe(C.VP_FAR_W * W)
+    expect(edge(10, 100)).toBeCloseTo(667, 0)
   })
 
-  it('그 경계가 실제 작도 대역보다 훨씬 밖이다', () => {
-    // 사람이 든 최악(완만한 구도 · 지평선 가까이 · 짧은 획)에서도 6.7W다
-    expect(40 * 300 / C.PARALLEL_PX / W).toBeCloseTo(6.7, 1)
-    // 흔한 구도(h=150 · R=600)에서는 50W
-    expect(150 * 600 / C.PARALLEL_PX / W).toBeCloseTo(50, 1)
+  it('그 경계가 사람이 든 작도 대역 밖이다 — 1~5W는 안, 6W가 경계', () => {
+    // 사람이 든 대역: 「보통 2~3W, 완만하면 5000px(≈4.2W)」
+    expect(5000 / W).toBeLessThan(C.VP_FAR_W)
+    expect(C.VP_FAR_W).toBeGreaterThan(5)
+    // ⛔ 옛 조항(「최악 구도에서도 6.7W · 흔한 구도는 50W」)은 **뒤집혔다** —
+    //    그 수들은 뒤 항(h·R/1.5)의 값이고 이제 앞 항이 먼저 걸린다. 크기의 근거로만 읽는다.
   })
 
   it('반례: 경계 밖에서는 «수평»으로 읽는 것이 맞다 — 처짐이 포인터 잡음 아래다', () => {

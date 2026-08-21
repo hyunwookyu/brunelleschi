@@ -136,13 +136,21 @@ export function classifyNext(
   // 화면 평행 대역 안이지만 처짐이 있는 획은 **아래로 흘려보낸다** — 소실점을 만들 수 있다.
   // 기존 소실점에 붙으면 그쪽이 이긴다(바로 아래). 축 스냅은 종전대로 가장 가까운 축이다.
   if (vpScore <= 1) return { role: 'content' }
+  // ── 그 소실점이 **작도 대역 안인가** — 밖이면 무한원으로 읽는다(web2-06 지시 2) ──
+  // 위의 `PARALLEL_PX`는 「이 획으로 무한원과 구별할 수 있는가」를 **포인터 잡음**으로 잰다.
+  // 그것만으로는 **손의 겨냥 오차**가 통째로 소실점이 됐다 — 실측: 지평선만 그은 상태에서
+  // (300,600)→(700,595)(처짐 5px)이 **x=16300(13.3W)** 소실점을 만들었고, 처짐 2px이면
+  // 33W였다. 그 획은 작도 획이라 실행취소도 안 된다.
+  // 그래서 물음의 나머지 절반을 여기서 잰다: **그 소실점이 사람이 그리는 구도 안인가.**
+  // 밖이면 H다(1점) — 6W 밖의 «2점»은 기본 f에서 화상면과 8.2° 안이라 1점과 구별되지 않는다.
+  const vpx = a.x + (an.horizonY - a.y) * (dx / dy)   // dy ≠ 0 (drop ≤ PARALLEL_PX 갈래를 지났다)
+  if (Math.abs(vpx - a.x) > C.VP_FAR_W * an.W) return { role: 'content', screenAxis: 'H' }
   // 화면 세로에 가까운 획은 소실점을 못 만든다 — 지평선과 만나는 점이 화면 밖 무한대로 간다
   if (run / L <= C.SCREEN_PARALLEL_RATIO) return { role: 'content', screenAxis: 'V' }
   // 안 붙으면 새 소실점 — 단, 실수로 그은 작은 선은 카메라를 안 건드린다
   if (L < C.VP_MIN_LEN_RATIO * an.diag) {
     return { role: 'content', reason: '소실점을 정의하기엔 짧다' }
   }
-  const vpx = a.x + (an.horizonY - a.y) * (dx / dy)
   if (an.vps.length === 1) {
     const px = an.W / 2
     const u1 = an.vps[0]!.x - px
