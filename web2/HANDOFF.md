@@ -2,7 +2,9 @@
 
 ## 🆕 web2-04 (2026-08-21) — 돌려본 뒤 정렬 구도로 접힌다
 
-**배포 확인 대기** — 병합 뒤 `npm run deploy:check` 출력으로 채운다. **그 전까지는 미완이다**(#58).
+**배포 확인됨** — 원격 main = `fded6b68b3631ea8061dce30d7bf65f75024020d`,
+**화면 빌드 식별자 `fded6b6`**, `npm run deploy:check` exit 0.
+(⚠ 병합 직후 세 번은 화면이 `da8a6ab`였다 — Pages가 도는 데 약 1분. 판정자는 명령이다.)
 지시 원문: [`docs/instructions/web2-04.md`](../docs/instructions/web2-04.md)
 (⚠ **작업 중에** 넣었다 — 「먼저 둔다」는 이 회차도 안 지켜졌다).
 기록은 [NOTES.md](NOTES.md)의 「**web2-04** · 돌려본 뒤 정렬 구도로 접힌다」.
