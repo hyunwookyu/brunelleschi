@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@types/three": "^0.185.4",
+    "p5.brush": "2.2.2",
     "three": "^0.185.1",
     "vite": "^5.4.21"
   }

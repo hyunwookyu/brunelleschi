@@ -48,6 +48,10 @@ export function resize2d(canvas: HTMLCanvasElement, W: number, H: number, dpr: n
 // #555(불투명) = 축 안내. 두 대역을 합치지 않는다.
 // 색 빼기의 역사: 소실점 ✕(web2-02·상시라서) → 오스냅(web2-08·형태가 가르므로) →
 // **축 넷(web2-10 지시 7·사람이 실기기에서 뒤집었다 — PITFALLS #65)**.
+// ⚙️ **획의 재료색·알파(web2-11 2부)**: brush 렌더러가 켜져 있으면 획 «몸체»의 색은
+// 이 파일이 아니라 `brushmap.ts`의 `strokeColor()`(MAT 색·알파의 종이색 혼합)가 정한다 —
+// 갈라진 것이 아니라 **출처가 MAT 하나**인 것은 같고 표현 계층만 둘이다(classic: 여기의
+// globalAlpha / brush: 혼합색). 여기 COL 표의 규칙(작도·표식·안내 색)은 두 모드 공통이다.
 // ⚠ web2-08의 「축 색 넷은 남는다 — 그쪽은 형태가 없어 색이 유일한 정보다」는 **뒤집혔다.**
 //   대체 채널은 파선 안내다(axisGuide — 붙으면 양끝 너머로 파선이 뻗는다. SketchUp
 //   추론선의 무채색판). 축마다 파선 패턴이 다르다(AXIS_DASH) — 상대 구분은 패턴이 내고,
@@ -169,12 +173,15 @@ export function draw2d(
     ctx.beginPath(); ctx.moveTo(s.a.x, s.a.y); ctx.lineTo(s.b.x, s.b.y); ctx.stroke()
     ctx.setLineDash([])
     ctx.globalAlpha = 1
-    if (m.grain > 0 && own) grain(ctx, s.id, s.a, s.b, m.grain, m.alpha, s.mat?.press, is)
+    // grain은 classic 렌더러의 질감이다 — brush 렌더러가 켜져 있으면 질감은 #brushc 겹이
+    // 그린다(web2-11 2-e: **끄되 지우지 않는다** — 되돌리기(2-b)의 절반이 이 분기다).
+    if (app.renderer === 'classic' && m.grain > 0 && own) grain(ctx, s.id, s.a, s.b, m.grain, m.alpha, s.mat?.press, is)
   }
 
   // 질감 — 흑연 입자. 자로 그은(승격된) 선에도 재료가 보인다.
   // 획별 시드 고정(rng32) — 프레임마다 같은 입자, Math.random 없음.
-  for (const [id, seg] of app.lift.lifted) {
+  // (brush 렌더러가 켜져 있으면 이 루프는 안 돈다 — 질감은 #brushc가 그린다. 2-e)
+  for (const [id, seg] of app.renderer === 'classic' ? app.lift.lifted : new Map<number, { a3: V3; b3: V3 }>()) {
     const s = app.lift.strokes.get(id)
     if (!s) continue
     const m = MAT[gradeOf(s)]

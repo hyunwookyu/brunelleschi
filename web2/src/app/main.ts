@@ -29,6 +29,16 @@ const app = createApp(W, H)
 let ctx = resize2d(ink, W, H, dpr)
 const r3d = initR3D(gl, W, H, dpr)
 
+// brush 렌더러(web2-11 2부) — 획 겹. 켬/끔은 사람이 세로바에서 바로 바꾼다(2-b).
+// 저장은 localStorage — 문서의 값이 아니라 «보는 방식»이다(원칙 b의 표시판).
+import { initBrushLayer } from './brushlayer'
+const RENDERER_KEY = 'b2-renderer'
+try {
+  const r = localStorage.getItem(RENDERER_KEY)
+  if (r === 'classic' || r === 'brush') app.renderer = r
+} catch { /* 저장소가 없으면 기본값(brush) */ }
+const brushLayer = initBrushLayer(W, H, dpr)
+
 // 빌드 식별자 — 배포됐는지 화면에서 바로 안다.
 // ⚠ 이것 하나가 앱을 죽이면 안 된다 — 설정이 낡은 dev 서버에서 치환이 안 돼
 // 여기서 앱 전체가 서지 않은 적이 있다(2026-08-21).
@@ -50,6 +60,7 @@ const diagPanel = initDiagPanel(
   () => {
     const st = inputApi?.strokeStats()
     return [
+      ['렌더러', app.renderer === 'brush' ? 'brush (p5.brush 2.2.2 standalone)' : 'classic (2D 캔버스 + grain)'],
       ['최근 획', st && st.pointerType
         ? `${st.points}점 (${st.pointerType}) · 이벤트 ${st.events} · coalesced 추가 ${st.extra}`
         : '—'],
@@ -497,6 +508,17 @@ function doClear() {
   invalidate()
 }
 
+// 종이 질감 토글(web2-11 2-b) — 두 렌더러를 그 자리에서 오간다. 비교가 목적이다.
+const brushBtn = document.getElementById('btn-brush')!
+function setRenderer(r: 'classic' | 'brush') {
+  app.renderer = r
+  brushBtn.classList.toggle('on', r === 'brush')
+  try { localStorage.setItem(RENDERER_KEY, r) } catch { /* 세션 한정이 될 뿐 */ }
+  invalidate()
+}
+brushBtn.addEventListener('click', () => setRenderer(app.renderer === 'brush' ? 'classic' : 'brush'))
+brushBtn.classList.toggle('on', app.renderer === 'brush')
+
 // 세로바 접기
 const sidebar = document.getElementById('sidebar')!
 document.getElementById('sidebar-toggle')!.addEventListener('click', () => {
@@ -545,6 +567,7 @@ window.addEventListener('resize', () => {
   const nd = window.devicePixelRatio || 1
   ctx = resize2d(ink, nw, nh, nd)
   resize3d(r3d, nw, nh, nd)
+  brushLayer.resize(nw, nh, nd)
   app.cubeLayout = { cx: nw - 110, cy: 60, size: 80 } // state.ts의 초기값과 같은 규칙
   invalidate()
 })
@@ -554,6 +577,7 @@ function frame() {
   if (dirty) {
     dirty = false
     render3d(r3d, app)
+    brushLayer.sync(app)   // 캐시 키(문서·포즈·뷰·렌더러)가 갈렸을 때만 실제로 그린다
     draw2d(ctx, app, draft, hover, eraserPos, facePrev)
   }
   requestAnimationFrame(frame)
@@ -647,6 +671,23 @@ const diag = {
     lenOf: Object.fromEntries([...app.lift.lifted].map(([id, g]) =>
       [id, lenMm(g.a3, g.b3, app.lift.mmPerUnit)])),
   }),
+  /** 렌더러(web2-11 2부) — e2e가 두 경로를 다 돌린다(2-b) */
+  renderer: () => app.renderer,
+  setRenderer,
+  /** 강제 전량 재그리기 ms — 성능 원장(2-f)이 획 수를 늘려가며 부른다 */
+  brushRedrawMs: () => brushLayer.redrawTimed(app),
+  /** 재그리기 분자/분모(#43) — 「그리는 중 0회」를 수로 */
+  brushStats: () => brushLayer.stats(),
+  /** classic 쪽 비교치 — 같은 장면의 draw2d 1회 ms(질감 grain 포함) */
+  draw2dMs: () => {
+    const t0 = performance.now()
+    draw2d(ctx, app, draft, hover, eraserPos, facePrev)
+    return performance.now() - t0
+  },
+  /** 성능 픽스처용 획 주입 — 실입력 경로(commitStroke)와 같은 함수를 부른다(2-f).
+   *  ⚠ 측정 전용이다 — 앱 흐름은 여전히 onCommit 하나로 들어온다. */
+  commitStroke: (ax: number, ay: number, bx: number, by: number) =>
+    commitStroke(app, { x: ax, y: ay }, { x: bx, y: by }),
   /** 입력 캡처 진단(web2-11 1부) — 패널과 **같은 자료**를 읽는다(문자열 파싱 없이) */
   capture: () => ({
     stroke: inputApi?.strokeStats() ?? null,

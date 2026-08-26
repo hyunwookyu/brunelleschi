@@ -1,18 +1,18 @@
 {
  "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
- "measured_at": "web2-11 1부 검증 시점(2026-08-26 — 배포 전 측정. 배포 해시는 HANDOFF/보고가 정본)",
+ "measured_at": "web2-11 2부 검증 시점(2026-08-26 — 배포 ② 전 측정)",
  "unit": {
   "command": "npm test (vitest)",
-  "files": 35,
-  "tests": 358,
+  "files": 36,
+  "tests": 366,
   "wall_s": 3.04,
   "note": "vitest 자체 Duration. 프로세스 벽시계는 ~5s(부팅 포함)"
  },
  "e2e": {
   "command": "npm run e2e (playwright, dpr1+dpr2)",
-  "cases": 100,
-  "wall_s": 66,
-  "note": "케이스 = 50팔 × 2 dpr. web2-11 1부가 +12(입력 6팔) · 단위 +6(file 5·payload 1)"
+  "cases": 116,
+  "wall_s": 114,
+  "note": "케이스 = 58팔 × 2 dpr(1부 +12 · 2부 +16: brush 7·brushperf 1). 벽시계 증가분의 대부분은 brushperf(획 500 픽스처·반복 5회) 몫. 기존 팔이 brush 기본으로 느려진 몫은 관측 안 됨(그 팔들이 재는 ink 캔버스는 불변)"
  },
  "typecheck_build": {
   "command": "tsc --noEmit · vite build",
@@ -53,6 +53,16 @@
    "unit": 358,
    "e2e": 100,
    "e2e_wall_s": 66
+  },
+  {
+   "at": "web2-11 2부",
+   "unit": 366,
+   "e2e": 116,
+   "e2e_wall_s": 114
   }
- ]
+ ],
+ "environment": {
+  "disk_free_bytes": 9660022784,
+  "note": "#45 규약 — «느려졌다» 보고가 오면 이 값부터 본다"
+ }
 }
