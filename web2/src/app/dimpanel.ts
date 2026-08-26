@@ -15,6 +15,9 @@ export interface DimPanel {
   clearInk(): void
   /** 인식 문자열 표시(«3500» · «3?») — 판정은 사람이 본다 */
   readout(text: string): void
+  /** 확률적 입력(필기·음성)의 결과를 **적용하지 않고** 키패드 표시에 싣는다(web2-10
+   *  지시 8-a ② — 확정 전 사람이 읽고 고칠 수 있어야 한다). 적용은 사람이 «적용»으로. */
+  stage(text: string): void
 }
 
 export function initDimPanel(
@@ -70,7 +73,10 @@ export function initDimPanel(
     redraw()
     const text = recognizeDigits(strokes)
     read.textContent = text
-    if (text.length > 0 && !text.includes('?')) onWritten(text)
+    // ⚠ 자동 적용을 **안 한다**(web2-10 지시 8-a ② — web2-08의 「읽히면 즉시 적용」을
+    // 뒤집었다): 인식은 확률적이라 3이 8로 읽히면 scaleRef가 조용히 틀린다. 결과는
+    // 키패드 표시로 올라가고(고칠 수 있다) 사람이 «적용»을 눌러야 실린다.
+    if (text.length > 0 && !text.includes('?')) stage(text)
   }
   canvas.addEventListener('pointerup', up)
   canvas.addEventListener('pointercancel', up)
@@ -92,6 +98,8 @@ export function initDimPanel(
   let pad = ''
   const padRead = document.getElementById('pad-read')!
   const padSync = () => { padRead.textContent = pad === '' ? '—' : pad }
+  /** 확률적 입력의 스테이징 — 값을 갈아끼운다(다시 쓰면/다시 말하면 대체·«확정 전») */
+  const stage = (text: string) => { pad = text; padSync() }
   document.getElementById('pad-keys')!.addEventListener('click', (e) => {
     const k = (e.target as HTMLElement).dataset?.k
     if (k === undefined) return
@@ -107,5 +115,6 @@ export function initDimPanel(
     show(text) { live.textContent = text ?? '—' },
     clearInk,
     readout(t) { read.textContent = t },
+    stage,
   }
 }

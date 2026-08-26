@@ -49,10 +49,17 @@ test('필기로 첫 치수 → 스케일 · 실시간 길이 · 셋의 일치', 
   await page.click('#dim-toggle')
   expect(await page.$eval('#dimpanel', el => el.classList.contains('folded'))).toBe(false)
 
-  // 기둥이 지금 치수 창의 대상이다(마지막 획) — «11»을 써서 스케일을 정한다
+  // 기둥이 지금 치수 창의 대상이다(마지막 획) — «11»을 써서 스케일을 정한다.
+  // ⚠ web2-10 지시 8-a ②: 인식 결과는 **자동 적용되지 않는다** — 키패드 표시(#pad-read)에
+  // 올라가 사람이 읽고(고칠 수 있다) «적용»을 눌러야 실린다. web2-08의 「읽히면 즉시
+  // 적용」은 뒤집혔다(3이 8로 읽히면 scaleRef가 조용히 틀리는 자리라서).
   await writeOne(page, 60)
   await writeOne(page, 100)
   expect(await page.textContent('#dim-read')).toBe('11')
+  expect(await page.textContent('#pad-read')).toBe('11')            // 스테이징됐다
+  expect((await page.evaluate(() => (window as any).__b2.diag.dim())).dims).toEqual([])  // 아직 안 실렸다
+  await page.click('#pad-keys [data-k="apply"]')
+  await settle(page)
   const d1 = await page.evaluate(() => (window as any).__b2.diag.dim())
   expect(d1.mmPerUnit).not.toBeNull()              // 4-1: 첫 치수가 스케일을 정했다
   expect(d1.dims).toEqual([{ id: 4, dim: 11 }])
@@ -91,6 +98,7 @@ test('치수 스냅(4-7) — 실제 3D 길이가 눈금에 맞춰진다 · «다
   // 뜻이 있다(실사용에서도 그렇다).
   await writeOne(page, 60)
   await writeOne(page, 100)
+  await page.click('#pad-keys [data-k="apply"]')     // 스테이징 → 적용(web2-10 지시 8-a ②)
   await page.check('#chk-dimsnap')
   await page.selectOption('#dimsnap-step', '10')
 
@@ -104,6 +112,7 @@ test('치수 스냅(4-7) — 실제 3D 길이가 눈금에 맞춰진다 · «다
   const bBefore = await page.evaluate((id) => (window as any).__b2.diag.projectAll()[id]!.b, d.target)
   await writeOne(page, 60)
   await writeOne(page, 100)                         // «11»
+  await page.click('#pad-keys [data-k="apply"]')    // 다시 쓰면 대체 — 이제 적용을 거쳐서
   await settle(page)
   const d2 = await page.evaluate(() => (window as any).__b2.diag.dim())
   expect(d2.lenOf[d.target]).toBeCloseTo(11, 6)
@@ -126,6 +135,7 @@ test('음성 배선(4-4) — 인식 결과가 창 규칙을 타고 치수로 적
   await build(page)
   await page.click('#dim-toggle')
   await writeOne(page, 60); await writeOne(page, 100)      // «11» — 스케일(기둥 11mm)
+  await page.click('#pad-keys [data-k="apply"]')           // 스테이징 → 적용(8-a ②)
   await drawLine(page, 500, 380, 620, 352)                 // 다음 선 — 치수 창의 대상
   await page.click('#btn-voice')                           // 모드를 켠다 — 그때만 듣는다
   expect(await page.evaluate(() => !!(window as any).__rec)).toBe(true)
@@ -133,13 +143,21 @@ test('음성 배선(4-4) — 인식 결과가 창 규칙을 타고 치수로 적
     (window as any).__rec.onresult({ results: [[{ transcript: '삼천오백' }]], resultIndex: 0 })
   })
   await settle(page)
+  // 음성도 확률적 입력 — 자동 적용이 아니라 스테이징이다(web2-10 지시 8-a ②)
+  expect(await page.textContent('#pad-read')).toBe('삼천오백')
+  expect((await page.evaluate(() => (window as any).__b2.diag.dim())).dims.length).toBe(1)  // 아직 기둥 것뿐
+  await page.click('#pad-keys [data-k="apply"]')
+  await settle(page)
   const d = await page.evaluate(() => (window as any).__b2.diag.dim())
-  expect(d.lenOf[d.target]).toBeCloseTo(3500, 6)           // 지시 4-4의 예가 그대로 적용됐다
+  expect(d.lenOf[d.target]).toBeCloseTo(3500, 6)           // 지시 4-4의 예가 적용을 거쳐 실렸다
   expect(await page.textContent('#dim-live')).toBe('3500 mm')
-  // 다시 말하면 변경된다(«확정 전 변경» — 창이 열려 있는 동안)
+  // 다시 말하면 스테이징이 대체된다 — 적용하면 같은 값(3.5 m = 3500 mm)
   await page.evaluate(() => {
     (window as any).__rec.onresult({ results: [[{ transcript: '3.5미터' }]], resultIndex: 0 })
   })
+  await settle(page)
+  expect(await page.textContent('#pad-read')).toBe('3.5미터')
+  await page.click('#pad-keys [data-k="apply"]')
   await settle(page)
   expect(await page.textContent('#dim-live')).toBe('3500 mm')   // 3.5 m = 3500 mm — 같은 값
   // 모드를 끄면 안 듣는다
@@ -192,12 +210,28 @@ test('키패드(web2-10 지시 8-a) — 확정 경로: 적용 전에 보이고, 
   await page.click('#pad-keys [data-k="."]')
   await page.click('#pad-keys [data-k="5"]')
   expect(await page.textContent('#pad-read')).toBe('.5')
-  // 반증 — «.»만으로 적용하면 아무 일도 안 난다(빈 확정을 안 만든다)
+  // 반증 — «.»만·빈 값·«0»으로 적용하면 아무 일도 안 난다(빈/영 확정을 안 만든다 —
+  // 0은 setDimension의 `mm > 0` 가드가 거른다: scaleRef 0의 경로를 막는 자리, 2차 [8])
+  for (const seq of [['.'], [], ['0']]) {
+    await page.click('#pad-keys [data-k="clear"]')
+    for (const k of seq) await page.click(`#pad-keys [data-k="${k}"]`)
+    await page.click('#pad-keys [data-k="apply"]')
+    await settle(page)
+    expect((await page.evaluate(() => (window as any).__b2.diag.dim())).dims).toEqual([{ id: 4, dim: 2500 }])
+  }
+
+  // **창 규칙과의 만남**(2차 [3]) — 남은 값으로 다음 획에서 «적용»을 누르면 어디에 실리는가:
+  // 창 규칙(web2-08 지시 4-4) 그대로 **지금 창의 대상 = 마지막 내용 획**에 실린다.
+  // 그 대상의 실시간 길이가 #dim-live에 떠 있으므로(같은 자리) 조용히 틀리지는 않는다.
   await page.click('#pad-keys [data-k="clear"]')
-  await page.click('#pad-keys [data-k="."]')
+  await page.click('#pad-keys [data-k="7"]')
+  await page.click('#pad-keys [data-k="5"]')          // «75»가 남아 있다
+  await drawLine(page, 500, 380, 620, 352)            // 새 획 — 창이 새 획으로 넘어간다
   await page.click('#pad-keys [data-k="apply"]')
   await settle(page)
-  expect((await page.evaluate(() => (window as any).__b2.diag.dim())).dims).toEqual([{ id: 4, dim: 2500 }])
+  const d3 = await page.evaluate(() => (window as any).__b2.diag.dim())
+  expect(d3.dims).toEqual([{ id: 4, dim: 2500 }, { id: 5, dim: 75 }])  // 새 획(지금 창)에 실렸다
+  expect(await page.textContent('#dim-live')).toBe('75 mm')
 })
 
 test('키패드 키가 펜 크기 대역이다 — 실측(지시 5의 크기 규칙과 같은 대역)', async ({ page }) => {
@@ -207,11 +241,30 @@ test('키패드 키가 펜 크기 대역이다 — 실측(지시 5의 크기 규
   const boxes = await page.evaluate(() =>
     Array.from(document.querySelectorAll('#pad-keys button')).map(b => {
       const r = b.getBoundingClientRect()
-      return { w: r.width, h: r.height }
+      return { k: (b as HTMLElement).dataset.k, w: r.width, h: r.height }
     }))
+  // 4×4 격자에서 0이 두 칸·적용이 두 줄 = **버튼 14개**(칸 16). 임계 32는 설계값 34의
+  // 바로 아래다 — 되돌리면(옛 안이었을 27px급) 깨진다(2차 [5] — «옛/새 사이» 규칙).
   expect(boxes.length).toBe(14)
   for (const b of boxes) {
-    expect(b.h).toBeGreaterThanOrEqual(27)           // 지시 5 대역(닿는 높이 ≥ 27px)
-    expect(b.w).toBeGreaterThanOrEqual(27)
+    expect(b.h, `${b.k} 높이`).toBeGreaterThanOrEqual(32)
+    expect(b.w, `${b.k} 폭`).toBeGreaterThanOrEqual(32)
   }
+  // 적용 키는 두 줄 — 다른 키의 약 2배 높이(펜이 가장 자주 찾는 키)
+  const apply = boxes.find(b => b.k === 'apply')!
+  expect(apply.h).toBeGreaterThanOrEqual(2 * 34)
+  // 배치(2차 [7]) — 키패드가 커진 리본이 뷰포트 안이고, 리본이 자기 토글을 안 덮는다
+  const panel = await page.evaluate(() => {
+    const r = document.getElementById('dimpanel')!.getBoundingClientRect()
+    return { x: r.x, y: r.y, r: r.right, b: r.bottom, w: window.innerWidth, h: window.innerHeight }
+  })
+  expect(panel.y).toBeGreaterThanOrEqual(0)
+  expect(panel.b).toBeLessThanOrEqual(panel.h)
+  expect(panel.r).toBeLessThanOrEqual(panel.w)
+  expect(await page.evaluate(() => {
+    const t = document.getElementById('dim-toggle')!
+    const r = t.getBoundingClientRect()
+    const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)
+    return t === el || t.contains(el)
+  })).toBe(true)
 })

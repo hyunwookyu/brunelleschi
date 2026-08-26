@@ -204,7 +204,8 @@ function applyDimInput(text: string) {
 }
 
 const dimPanel = initDimPanel(applyDimInput)
-const voice = createVoice((t) => applyDimInput(t))
+// 음성도 확률적 입력이다(지시 8-a — 필기와 같은 규칙): 바로 적용하지 않고 스테이징한다.
+const voice = createVoice((t) => dimPanel.stage(t))
 
 initInput(ink, app, {
   onDraftChange(d) {

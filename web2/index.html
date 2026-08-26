@@ -138,9 +138,11 @@
        확률적 입력(필기·음성)만으로는 안 된다 — A-3 「조용히 틀린 배치를 만들지 않는다」.
        키 크기는 지시 5의 대역(닿는 높이 ≥ 27px)에 맞춘다 — 펜으로 누르는 판이다. */
     #pad-read { font: 17px/1.4 monospace; color: #3c3831; min-height: 24px; }
-    #pad-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+    /* 행 높이는 격자가 정한다 — 버튼 height를 34로 고정하면 «적용»의 두 줄 스팬이 안 는다
+       (실측 34로 걸렸다 — 팔이 잡았다). */
+    #pad-keys { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 34px; gap: 5px; }
     #pad-keys button {
-      background: none; border: 0; cursor: pointer; height: 34px;
+      background: none; border: 0; cursor: pointer; height: 100%; width: 100%;
       font: 16px system-ui, sans-serif; color: #3c3831; text-decoration: none;
       box-shadow: inset 0 0 0 1px #e5e0d6; padding: 0;
     }
