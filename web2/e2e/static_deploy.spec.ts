@@ -149,6 +149,18 @@ test('매니페스트가 파싱되고 선언된 아이콘이 전부 200이다 �
     expect(r.status(), `${ic.src} 이 배포본에 없다`).toBe(200)
     const want = ic.type === 'image/svg+xml' ? 'svg' : 'png'
     expect(r.headers()['content-type'] ?? '', ic.src).toContain(want)
+    // **내용까지 본다** — 200인데 비었거나 크기가 선언과 다르면 홈 화면이 빈 사각형이다
+    // (지시 0이 지목한 실패 양식. 200·형식만 보던 초판을 2차 리뷰어 [8]이 잡았다).
+    const buf = await r.body()
+    expect(buf.length, `${ic.src} 이 비어 있다`).toBeGreaterThan(0)
+    if (want === 'png') {
+      // PNG 시그니처 + IHDR의 폭·높이 == 매니페스트 sizes 선언
+      expect(buf.subarray(0, 4), `${ic.src} PNG 시그니처`).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47]))
+      const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20)
+      expect(`${w}x${h}`, `${ic.src} 실제 픽셀 크기 ≠ 선언 sizes`).toBe(ic.sizes)
+    } else {
+      expect(buf.toString('utf8', 0, 500), ic.src).toContain('<svg')
+    }
   }
   // 문서가 그 매니페스트를 실제로 링크한다 — 파일이 살아 있어도 링크가 없으면 안 읽힌다
   await page.goto(`${BASE}/`)

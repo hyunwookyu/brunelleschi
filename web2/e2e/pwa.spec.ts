@@ -116,6 +116,9 @@ test('이벤트 보험 — 두 손가락 touchmove만 preventDefault된다 · Ct
 test('앱의 줌이 산다 — 두 손가락 벌림이 view.s를 키운다 (#62: 실제 입력 경로)', async ({ page }) => {
   // 브라우저 줌을 막은 수리가 앱의 두 손가락 줌(input.ts → dollyBy)을 죽이면 안 된다.
   // CDP 터치를 컴포지터 경로로 흘려 **앱이 실제로 받는 그 이벤트**로 잰다.
+  // ⚠ 이 팔이 재는 것은 **입력 → dollyBy 배선**이고, 갈래는 작도 포즈(view.s)다.
+  // 지시가 지키라 한 궤도 반경 갈래는 dollyBy 안의 다른 가지이며
+  // orbitradius.test.ts·fold_measure.test.ts가 같은 함수를 직접 잰다(#62 — 한 함수).
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
   const before = await page.evaluate(() => (window as any).__b2.app.view.s)
@@ -129,8 +132,11 @@ test('앱의 줌이 산다 — 두 손가락 벌림이 view.s를 키운다 (#62:
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
   await cdp.detach()
   const after = await page.evaluate(() => (window as any).__b2.app.view.s)
+  console.log(`[측정] 두 손가락 벌림 view.s ${before} → ${after}`)
   expect(before).toBe(1)
-  expect(after).toBeGreaterThan(1.5) // 40px 간격 → 140px 벌림 = 3.5배에서 상한 안 값
+  // 통과선 1.5의 근거: 기하 기대값은 140/40 = 3.5이고(dollyBy는 비를 그대로 곱한다,
+  // 상한 8 안), 판정하려는 것은 «커졌다»이지 «얼마나»가 아니다 — 기대의 절반 아래로 여유.
+  expect(after).toBeGreaterThan(1.5)
 })
 
 test('펜 경로 무손상 — 펜 드래그가 획을 만든다 (지시 2의 펜/손가락 가름)', async ({ page }) => {
