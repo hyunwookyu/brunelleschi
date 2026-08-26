@@ -138,7 +138,7 @@ test('4-g 가시성(2차 [17]) — 대기선 몸통 위 호버에 오스냅 기�
     return n
   }, b)
   const before = await px(box)                       // 파선 몸체만
-  await page.mouse.move(241, 265); await settle(page)  // 몸통 근처 호버(잉크에서 ≈1px — 버튼 없음)
+  await page.mouse.move(241, 265); await settle(page)  // 몸통 근처 호버(잉크에서 ≈4.6px — 반경 안·#68대로 오차를 심은 값. 버튼 없음)
   const after = await px(box)
   console.log(`[측정] 대기선 몸통 호버 기호 — 상자 픽셀 ${before} → ${after}`)
   expect(after, '기호가 실제로 그려졌다(«붙었다»가 화면에서 읽힌다)').toBeGreaterThan(before + 8)

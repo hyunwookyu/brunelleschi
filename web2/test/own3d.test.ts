@@ -383,7 +383,7 @@ describe('4차 [45] — 원장: 국면별 최대 어긋남 (stage0/out/own3d_inv
     const ledger = {
       what: '잉크 심판(4-a)의 국면별 실측 최대 어긋남 px — 통과/실패 이진이 아니라 여유가 원장에 남는다(4차 리뷰어 [45])',
       tol_px: OWN3_TOL_PX,
-      tol_nature: '수치 동일성(스윕 대상 아님 — 근거는 own3d.ts 주석·AS-C47). 알려진 예외: dim 획의 b 끝(치수가 길이를 대체)',
+      tol_nature: '수치 동일성(스윕 대상 아님 — 근거는 own3d.ts 주석·AS-C47). 알려진 예외 둘: ① dim 획의 b 끝(치수가 길이를 대체) ② 축 허용각 안 어긋 잉크의 사슬 굳힘(AS-C47 둘째 예외 — 이 원장의 국면들은 앱 경로(정확값)만 덮는다). ⚠ 네 국면 최댓값 동일은 최악 획이 같은 기하라서다(web2-13 검증 절 원인 확인 — 국면 축의 판별력은 반증 팔(+0.1)이 진다)',
       phases: { fresh, roundtrip, deleted, promoted },
       margin: Object.fromEntries(Object.entries({ fresh, roundtrip, deleted, promoted })
         .map(([k, v]) => [k, v.max_px > 0 ? OWN3_TOL_PX / v.max_px : null])),
