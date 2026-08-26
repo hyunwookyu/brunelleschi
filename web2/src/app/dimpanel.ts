@@ -83,6 +83,26 @@ export function initDimPanel(
   }
   document.getElementById('dim-clear')!.addEventListener('click', clearInk)
 
+  // ── 숫자 키패드(web2-10 지시 8-a) — **확정 경로** ──────────────────────
+  // 인식을 안 거친다. 적용 전에 값이 보이고(#pad-read) ⌫·C로 고친다 — 「① 확정 대체 경로
+  // ② 확정 전 읽고 고칠 수 있는 표시」 둘 다(지시 문면). 적용은 필기와 **같은 통로**
+  // (onWritten → applyDimInput)라 창 규칙·대체 규칙이 갈리지 않는다.
+  // 새 획이 열려도 값은 남는다 — 적용이 명시적(버튼)이라 조용히 안 틀리고,
+  // 같은 치수를 잇달아 적용하는 손에 맞다.
+  let pad = ''
+  const padRead = document.getElementById('pad-read')!
+  const padSync = () => { padRead.textContent = pad === '' ? '—' : pad }
+  document.getElementById('pad-keys')!.addEventListener('click', (e) => {
+    const k = (e.target as HTMLElement).dataset?.k
+    if (k === undefined) return
+    if (k === 'del') pad = pad.slice(0, -1)
+    else if (k === 'clear') pad = ''
+    else if (k === 'apply') { if (pad !== '' && pad !== '.') onWritten(pad); return }
+    else if (k === '.') { if (!pad.includes('.')) pad += '.' }
+    else if (pad.length < 12) pad += k
+    padSync()
+  })
+
   return {
     show(text) { live.textContent = text ?? '—' },
     clearInk,

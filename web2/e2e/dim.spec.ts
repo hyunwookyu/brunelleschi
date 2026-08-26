@@ -160,3 +160,58 @@ test('무스케일이면 숫자를 지어내지 않는다 — 스케일 전에�
   await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.diag.dim().mmPerUnit)).toBeNull()
 })
+
+test('키패드(web2-10 지시 8-a) — 확정 경로: 적용 전에 보이고, 고칠 수 있고, 인식을 안 거친다', async ({ page }) => {
+  await build(page)
+  await page.click('#dim-toggle')
+
+  // 값을 두드리면 **적용 전에** 표시된다 — 읽고 고칠 수 있다(⌫)
+  await page.click('#pad-keys [data-k="2"]')
+  await page.click('#pad-keys [data-k="5"]')
+  await page.click('#pad-keys [data-k="9"]')
+  expect(await page.textContent('#pad-read')).toBe('259')
+  await page.click('#pad-keys [data-k="del"]')       // 잘못 눌렀다 — 고친다
+  await page.click('#pad-keys [data-k="0"]')
+  await page.click('#pad-keys [data-k="0"]')
+  expect(await page.textContent('#pad-read')).toBe('2500')
+
+  // 적용 전에는 치수가 없다 — 적용이 명시적이라 조용히 안 틀린다(대조군)
+  expect((await page.evaluate(() => (window as any).__b2.diag.dim())).dims).toEqual([])
+  await page.click('#pad-keys [data-k="apply"]')
+  await settle(page)
+  const d = await page.evaluate(() => (window as any).__b2.diag.dim())
+  expect(d.dims).toEqual([{ id: 4, dim: 2500 }])     // 필기와 같은 통로(applyDimInput)를 탔다
+  expect(d.mmPerUnit).not.toBeNull()                 // 첫 치수 — 스케일이 섰다
+  expect(await page.textContent('#dim-live')).toBe('2500 mm')
+
+  // 소수점은 한 번만 · C는 전부 지운다
+  await page.click('#pad-keys [data-k="3"]')         // 적용 뒤에도 값이 남아 이어 쓸 수 있다
+  await page.click('#pad-keys [data-k="clear"]')
+  expect(await page.textContent('#pad-read')).toBe('—')
+  await page.click('#pad-keys [data-k="."]')
+  await page.click('#pad-keys [data-k="."]')
+  await page.click('#pad-keys [data-k="5"]')
+  expect(await page.textContent('#pad-read')).toBe('.5')
+  // 반증 — «.»만으로 적용하면 아무 일도 안 난다(빈 확정을 안 만든다)
+  await page.click('#pad-keys [data-k="clear"]')
+  await page.click('#pad-keys [data-k="."]')
+  await page.click('#pad-keys [data-k="apply"]')
+  await settle(page)
+  expect((await page.evaluate(() => (window as any).__b2.diag.dim())).dims).toEqual([{ id: 4, dim: 2500 }])
+})
+
+test('키패드 키가 펜 크기 대역이다 — 실측(지시 5의 크기 규칙과 같은 대역)', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForFunction(() => (window as any).__b2)
+  await page.click('#dim-toggle')
+  const boxes = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('#pad-keys button')).map(b => {
+      const r = b.getBoundingClientRect()
+      return { w: r.width, h: r.height }
+    }))
+  expect(boxes.length).toBe(14)
+  for (const b of boxes) {
+    expect(b.h).toBeGreaterThanOrEqual(27)           // 지시 5 대역(닿는 높이 ≥ 27px)
+    expect(b.w).toBeGreaterThanOrEqual(27)
+  }
+})
