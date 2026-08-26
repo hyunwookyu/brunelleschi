@@ -88,9 +88,10 @@
       background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
       padding: 10px 12px; white-space: nowrap;
       max-height: calc(100vh - 20px); overflow-y: auto;
-      /* 이 패널만 스스로 스크롤한다 — pan-y는 그 손짓만 열고 핀치·이중 탭 확대는 계속 막는다.
-         (패널 자체가 스크롤 컨테이너라 뿌리의 none이 이 스크롤을 안 막는다) */
-      touch-action: pan-y;
+      /* ⚠ 터치 스크롤은 **막힌 채로 뒀다** — 유효 사슬이 수리 전에도 none이었고(전 요소가
+         #app 자손) 「패널을 스크롤 못 한다」는 관측이 없다. 관측 없이 pan-y로 푸는 것은
+         근거 없는 넓힘이다(A-3 · 2차 리뷰어 [15]가 초판의 pan-y를 잡았다 — AS-C26).
+         휠 스크롤은 touch-action과 무관해 데스크톱은 그대로 돈다. */
       font: 12px system-ui, sans-serif; color: #4a463f;
     }
     details.pane summary { list-style: none; cursor: pointer; }

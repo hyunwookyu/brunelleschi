@@ -140,7 +140,11 @@ test('매니페스트가 파싱되고 선언된 아이콘이 전부 200이다 �
   expect(res.status()).toBe(200)
   const m = JSON.parse(await res.text()) // 유효 JSON이 아니면 여기서 던진다
   expect(m.display).toBe('standalone')
+  // 하위 경로 배포에서 홈 화면 실행이 주소창을 다는 흔한 원인이 이 두 필드다(2차 리뷰어 [14])
   expect(m.start_url).toBe('./')
+  expect(m.scope).toBe('./')
+  expect((m.name ?? '').length).toBeGreaterThan(0)
+  expect((m.short_name ?? '').length).toBeGreaterThan(0)
   // 안드로이드 홈 화면이 쓰는 maskable이 두 크기 다 있다
   expect(m.icons.filter((i: any) => i.purpose === 'maskable').map((i: any) => i.sizes).sort())
     .toEqual(['192x192', '512x512'])

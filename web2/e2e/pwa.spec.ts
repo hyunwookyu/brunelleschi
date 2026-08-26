@@ -60,14 +60,11 @@ test('핀치·이중 탭이 화면 전 지점에서 막혀 있다 — 유효 tou
   // 뿌리 겹이 스스로 선다 — #app의 규칙이 지워져도 html이 막는다(방어층 둘)
   expect(await page.evaluate(() =>
     getComputedStyle(document.documentElement).touchAction)).toBe('none')
-  // 설정 패널을 열어도 안 샌다 — pan-y는 패널 스크롤만 열고 확대는 계속 막는다
+  // 설정 패널을 열어도 안 샌다 — 패널은 pan-y 없이 사슬의 none 그대로다(AS-C26:
+  // 「스크롤 못 한다」는 관측이 없어 안 열었다. 터치 스크롤이 막힌 것이 그 대가다)
   await page.click('#pane-settings summary')
-  const pane = await page.evaluate(() => {
-    const el = document.querySelector('#pane-settings > div')!
-    return { ta: getComputedStyle(el).touchAction, open: (el.closest('details') as HTMLDetailsElement).open }
-  })
-  expect(pane.open).toBe(true)
-  expect(pane.ta).toBe('pan-y')
+  expect(await page.evaluate(() =>
+    (document.querySelector('#pane-settings') as HTMLDetailsElement).open)).toBe(true)
   expect(await zoomLeaks(page)).toEqual([])
 })
 
