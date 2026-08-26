@@ -77,6 +77,9 @@ const patchBundle = (page: Page) => page.evaluate(() => {
 
 test('1-a — coalesced 묶음이 오면 점이 그만큼 늘고, **획 판정·픽셀은 안 바뀐다** · 반증(D-3): 끄면 이벤트당 1로 떨어진다', async ({ page }) => {
   await boot(page)
+  // 이 팔은 **classic 경로의 픽셀**(ink 캔버스의 grain)로 잰다 — brush 렌더러의 결정론은
+  // brush.spec이 따로 잰다(2-b: e2e가 두 경로 다 돈다). 기본이 brush라 여기서 classic으로.
+  await page.evaluate(() => (window as any).__b2.diag.setRenderer('classic'))
   await drawMouse(page, 100, 400, 1100, 400)          // 지평선
   // 판정·픽셀 불변 팔은 **연필 흑연 입자**(잉크 캔버스에 그려진다)로 잰다 — 화면평행 첫
   // 획은 앵커로 승격되어 선 본체가 WebGL(gl 캔버스)로 가므로 잉크 캔버스에 남는 것은

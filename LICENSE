@@ -33,3 +33,12 @@ Yann LeCun, Corinna Cortes, Christopher J.C. Burges, "THE MNIST DATABASE of
 handwritten digits"). This notice is carried into deployed bundles via the
 "license" field embedded in the weights JSON itself. The inference code
 (web2/src/core/digitnet.ts) is MIT as above.
+
+---
+
+Third-party: p5.brush v2.2.2 (standalone build, dist/brush.esm.js) is bundled
+into the deployed web2 app for the paper-texture stroke renderer (web2-11 §3
+규약 — 저작권 표기). MIT License, Copyright (c) 2023-2026 Alejandro Campos Uribe
+(https://github.com/acamposuribe/p5.brush). The full license text is the same
+MIT text as above and is included in node_modules/p5.brush/LICENSE.md; this
+notice preserves the required copyright and permission notice for distribution.
