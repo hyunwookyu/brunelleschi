@@ -37,6 +37,10 @@ try {
   document.getElementById('buildid')!.textContent = __BUILD_ID__
 } catch { /* 치환이 안 됐다 — 화면에만 안 뜬다 */ }
 
+// 진단 패널(web2-10 지시 4) — 빌드 식별자를 누르면 펴진다. 콘솔 없는 태블릿의 판독 통로.
+import { initDiagPanel } from './diagpanel'
+initDiagPanel(document.getElementById('buildid')!, document.getElementById('diagpanel')!)
+
 // **탈출구** — `?reset`으로 열면 워커 등록과 캐시를 전부 버리고 새로 받는다.
 // 배포 전환(web/ → web2)은 같은 주소에 다른 앱이 오는 것이라 캐시가 꼬일 수 있고,
 // 그때 사람이 개발자 도구 없이 스스로 빠져나올 길이 필요하다.

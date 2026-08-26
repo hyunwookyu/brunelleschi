@@ -159,11 +159,23 @@
     #boot .hor{stroke:#8b857a;stroke-width:2;opacity:.95}
     #boot .vp{stroke:#3c3831;stroke-width:2.4;opacity:.85;stroke-linecap:round}
 
-    /* 빌드 식별자 — 배포 판정자(PITFALLS #58). 물러나 있다. */
+    /* 빌드 식별자 — 배포 판정자(PITFALLS #58). 물러나 있되 **눌린다**(web2-10 지시 4):
+       누르면 위 진단 패널이 펴진다. 태블릿에는 콘솔이 없어 이 길이 유일한 판독 통로다. */
     #buildid {
-      position: fixed; right: 6px; bottom: 4px; z-index: 10;
-      font: 10px monospace; color: #c9c4bc; pointer-events: none;
+      position: fixed; right: 6px; bottom: 4px; z-index: 12;
+      font: 10px monospace; color: #c9c4bc; cursor: pointer;
+      /* 펜으로 누르기엔 글자가 얇다 — 보이는 크기는 그대로 두고 닿는 넓이만 키운다 */
+      padding: 8px 4px 4px 8px;
     }
+    /* 진단 패널(web2-10 지시 4) — 전부 한 화면에. 다른 패널과 같은 옅은 바탕(4-a). */
+    #diagpanel {
+      position: fixed; right: 6px; bottom: 26px; z-index: 12;
+      max-width: min(86vw, 560px);
+      background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
+      padding: 10px 12px; font: 11px/1.7 monospace; color: #4a463f;
+      overflow-wrap: anywhere;
+    }
+    #diagpanel .k { color: #a89f8e; display: inline-block; min-width: 118px; }
   </style>
 </head>
 <body>
@@ -235,7 +247,8 @@
     <canvas id="gl"></canvas>
     <canvas id="ink"></canvas>
     <div id="notice"></div>
-    <div id="buildid"></div>
+    <div id="buildid" title="진단 — 누르면 기기 값이 보인다"></div>
+    <div id="diagpanel" hidden></div>
 
     <!-- 우측 상단: 큐브(캔버스에 그려짐) 아래 시점 -->
     <div id="viewbar">
