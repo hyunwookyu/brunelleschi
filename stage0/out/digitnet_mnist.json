@@ -1,0 +1,105 @@
+{
+ "what": "digitnet(784-64-11 MLP+\uc7a1\uc74c \ud074\ub798\uc2a4, int8) \u2014 MNIST test 10k \u00b7 \uc22b\uc790\ubcc4 \ubd84\uc790/\ubd84\ubaa8",
+ "garbage_class": {
+  "float_reject": 0.934,
+  "int8_reject": 0.933,
+  "n": 1000
+ },
+ "seed": 20260826,
+ "epochs": 16,
+ "hidden": 64,
+ "float_overall": {
+  "correct": 9626,
+  "total": 10000,
+  "acc": 0.9626
+ },
+ "float_per_digit": {
+  "0": {
+   "correct": 962,
+   "total": 980
+  },
+  "1": {
+   "correct": 1119,
+   "total": 1135
+  },
+  "2": {
+   "correct": 989,
+   "total": 1032
+  },
+  "3": {
+   "correct": 969,
+   "total": 1010
+  },
+  "4": {
+   "correct": 946,
+   "total": 982
+  },
+  "5": {
+   "correct": 847,
+   "total": 892
+  },
+  "6": {
+   "correct": 933,
+   "total": 958
+  },
+  "7": {
+   "correct": 982,
+   "total": 1028
+  },
+  "8": {
+   "correct": 923,
+   "total": 974
+  },
+  "9": {
+   "correct": 956,
+   "total": 1009
+  }
+ },
+ "int8_overall": {
+  "correct": 9628,
+  "total": 10000,
+  "acc": 0.9628
+ },
+ "int8_per_digit": {
+  "0": {
+   "correct": 962,
+   "total": 980
+  },
+  "1": {
+   "correct": 1119,
+   "total": 1135
+  },
+  "2": {
+   "correct": 991,
+   "total": 1032
+  },
+  "3": {
+   "correct": 968,
+   "total": 1010
+  },
+  "4": {
+   "correct": 945,
+   "total": 982
+  },
+  "5": {
+   "correct": 845,
+   "total": 892
+  },
+  "6": {
+   "correct": 935,
+   "total": 958
+  },
+  "7": {
+   "correct": 980,
+   "total": 1028
+  },
+  "8": {
+   "correct": 924,
+   "total": 974
+  },
+  "9": {
+   "correct": 959,
+   "total": 1009
+  }
+ }
+}

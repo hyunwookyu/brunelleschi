@@ -1,0 +1,115 @@
+{
+ "what": "치수 필기 인식 비교(web2-10 지시 8-b) — 합성 표본(=$P 템플릿 흔들기 40) 숫자별 분자/분모",
+ "bias": "⚠ 이 표본은 $P의 자기 템플릿이라 $P에 구성상 유리하다(AS-C24 — 인식률이 아니다). 실필기 대역은 digitnet_mnist.json(int8 9678/10000)이 들고, $P는 획 자료가 없어 그 비교가 구조적으로 불가하다.",
+ "seed": 7,
+ "per_digit": {
+  "0": {
+   "p$": {
+    "correct": 4,
+    "total": 4
+   },
+   "net": {
+    "correct": 4,
+    "total": 4
+   }
+  },
+  "1": {
+   "p$": {
+    "correct": 4,
+    "total": 4
+   },
+   "net": {
+    "correct": 4,
+    "total": 4
+   }
+  },
+  "2": {
+   "p$": {
+    "correct": 4,
+    "total": 4
+   },
+   "net": {
+    "correct": 3,
+    "total": 4
+   }
+  },
+  "3": {
+   "p$": {
+    "correct": 4,
+    "total": 4
+   },
+   "net": {
+    "correct": 4,
+    "total": 4
+   }
+  },
+  "4": {
+   "p$": {
+    "correct": 4,
+    "total": 4
+   },
+   "net": {
+    "correct": 4,
+    "total": 4
+   }
+  },
+  "5": {
+   "p$": {
+    "correct": 4,
+    "total": 4
+   },
+   "net": {
+    "correct": 4,
+    "total": 4
+   }
+  },
+  "6": {
+   "p$": {
+    "correct": 4,
+    "total": 4
+   },
+   "net": {
+    "correct": 4,
+    "total": 4
+   }
+  },
+  "7": {
+   "p$": {
+    "correct": 4,
+    "total": 4
+   },
+   "net": {
+    "correct": 4,
+    "total": 4
+   }
+  },
+  "8": {
+   "p$": {
+    "correct": 4,
+    "total": 4
+   },
+   "net": {
+    "correct": 4,
+    "total": 4
+   }
+  },
+  "9": {
+   "p$": {
+    "correct": 4,
+    "total": 4
+   },
+   "net": {
+    "correct": 4,
+    "total": 4
+   }
+  }
+ },
+ "net_confidence": {
+  "correct_worst": 0.5432968370333643,
+  "noise_class_rejected": "6/8",
+  "noise_best_after_class": 0.49669273139337544,
+  "reject": 0.52,
+  "note": "거부 두 겹 — 잡음 클래스(11번째) + 확신 임계. 임계 여유 ±0.023(얇다 — 표본이 커지면 다시 놓는다)"
+ },
+ "mnist_ledger": "stage0/out/digitnet_mnist.json"
+}

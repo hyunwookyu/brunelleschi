@@ -268,3 +268,38 @@ test('키패드 키가 펜 크기 대역이다 — 실측(지시 5의 크기 규
     return t === el || t.contains(el)
   })).toBe(true)
 })
+
+test('인식기 감지(web2-10 지시 8-b) — 내장 API가 있으면 그것을 쓰고, 죽으면 번들 모형으로 떨어진다', async ({ page }) => {
+  // 헤드리스 크롬에는 createHandwritingRecognizer가 없다(ChromeOS 축) — 모의로 ①의 배선을
+  // 재고, 모의를 죽여 ②로 떨어지는 것까지 잰다(음성 모의와 같은 방식 — 앱이 쓰는 그 자리).
+  await page.addInitScript(() => {
+    (navigator as any).createHandwritingRecognizer = async () => ({
+      startDrawing: () => ({
+        addStroke() { /* 획을 받는다 */ },
+        async getPrediction() { return [{ text: 'a3b8mm' }] }, // 숫자 밖 문자가 섞인 결과
+      }),
+    })
+  })
+  await build(page)
+  await page.click('#dim-toggle')
+  // 진단 패널(지시 4)도 같은 감지를 보인다
+  await page.click('#buildid')
+  expect(await page.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll('#diagpanel div'))
+    return rows.find(d => d.textContent?.includes('필기 인식 API'))?.textContent
+  })).toContain('있음')
+  await writeOne(page, 60)                                  // 아무 획 — 모의가 «a3b8mm»을 낸다
+  await page.waitForFunction(() => document.getElementById('dim-read')!.textContent === '38')
+  expect(await page.textContent('#pad-read')).toBe('38')    // 숫자만 남긴다(«38») + 스테이징
+})
+
+test('인식기 감지 — 내장 API가 선언만 있고 죽으면 번들 모형이 답한다 (반증 짝)', async ({ page }) => {
+  await page.addInitScript(() => {
+    (navigator as any).createHandwritingRecognizer = async () => { throw new Error('안 된다') }
+  })
+  await build(page)
+  await page.click('#dim-toggle')
+  await writeOne(page, 60)                                  // 세로 막대 — digitnet이 «1»로 읽는다
+  await page.waitForFunction(() => document.getElementById('dim-read')!.textContent === '1')
+  expect(await page.textContent('#pad-read')).toBe('1')
+})
