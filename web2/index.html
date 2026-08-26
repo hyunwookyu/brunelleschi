@@ -97,7 +97,9 @@
     #dimpanel.folded { display: none; }
     #dimpanel .head { color: var(--ui-faint); letter-spacing: .04em; }
     #dim-live { font: 20px/1.2 system-ui, sans-serif; color: #3c3831; min-height: 24px; }
-    #dim-ink { width: 184px; height: 72px; background: #fff;
+    /* ⚠ 전역 canvas 규칙(absolute·inset 0)이 여기도 걸린다 — 흐름 안으로 되돌린다.
+       처음에 이것이 없어서 필기 칸이 패널 좌상단에 겹쳐 제목·숫자를 덮었다(스크린샷이 잡았다). */
+    #dim-ink { position: static; inset: auto; width: 184px; height: 72px; background: #fff;
       box-shadow: inset 0 0 0 1px #e5e0d6; touch-action: none; cursor: crosshair; }
     #dimpanel button {
       background: none; border: 0; padding: 2px 0; cursor: pointer;
