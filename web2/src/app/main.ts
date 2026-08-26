@@ -533,6 +533,19 @@ function frame() {
 }
 requestAnimationFrame(frame)
 
+// 로딩화면 제거(web2-10 지시 2) — 첫 프레임이 그려진 뒤에 지운다.
+// frame이 먼저 등록됐으므로 이 콜백은 **첫 draw2d/render3d 다음**에 돈다(rAF는 등록 순).
+// 겹 자체가 pointer-events:none이라 떠 있는 동안에도 입력을 안 막는다 — 여기서는 표시만 거둔다.
+// transitionend만 믿지 않는다: prefers-reduced-motion이면 transition이 없어 안 온다.
+requestAnimationFrame(() => {
+  const boot = document.getElementById('boot')
+  if (!boot) return
+  boot.classList.add('gone')
+  const rm = () => boot.remove()
+  boot.addEventListener('transitionend', rm, { once: true })
+  setTimeout(rm, 600)
+})
+
 // e2e 진단 통로 — 앱과 같은 함수·같은 상태를 본다(측정 경로와 앱 경로를 가르지 않는다)
 import { project, screenAxes, vpMarks, frameAxes } from '../core/camera'
 import { forwardOf, yawDir } from '../core/level'
