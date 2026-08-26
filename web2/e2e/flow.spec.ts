@@ -270,8 +270,9 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(s.view.s).toBe(1)
 
   // 뷰 큐브 — 우측 상단에 보이고, 면을 클릭하면 롤 0 시점으로 선다
-  expect(await inkPixels(page, 1090, 10, 1190, 110)).toBeGreaterThan(10)
-  await page.mouse.move(1140, 60)
+  // 큐브 중심 = cubeLayout(cx W−110, cy 60 — web2-10 지시 5가 세로바 겹침 때문에 왼쪽으로 옮겼다)
+  expect(await inkPixels(page, 1040, 10, 1140, 110)).toBeGreaterThan(10)
+  await page.mouse.move(1090, 60)
   await page.mouse.down()
   await page.mouse.up()
   await settle(page)

@@ -73,7 +73,7 @@ test('겹이 떠 있어도 펜 획이 커밋된다 — pointer-events:none의 �
 test('반증 — 앱 모듈이 안 서면 로딩화면이 남는다 (D-3: 제거를 재는 계측의 생존 확인)', async ({ page }) => {
   // 위 「사라진다」가 측정이려면 **안 사라지는 조건**이 있어야 한다. 모듈을 죽이면
   // 남아야 하고, 그때 입력을 막지 않는 선언(pointer-events:none)도 함께 잰다.
-  await page.route('**/src/app/main.ts', (route) => route.abort())
+  await page.route('**/src/app/main.ts*', (route) => route.abort())
   await page.goto('/', { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(700)                       // 제거 타이머(600ms)보다 길게
   const st = await page.evaluate(() => {
@@ -88,7 +88,7 @@ test('반증 — 앱 모듈이 안 서면 로딩화면이 남는다 (D-3: 제거
 })
 
 test('prefers-reduced-motion이면 전환이 없다 (지시 2)', async ({ page }) => {
-  await page.route('**/src/app/main.ts', (route) => route.abort())
+  await page.route('**/src/app/main.ts*', (route) => route.abort())
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/', { waitUntil: 'domcontentloaded' })
   expect(await page.evaluate(() =>
@@ -99,7 +99,7 @@ test('prefers-reduced-motion이면 전환이 없다 (지시 2)', async ({ page }
     getComputedStyle(document.getElementById('boot')!).transitionProperty)).toContain('opacity')
   // reduce에서도 **제거가 실제로 온다**(1차 리뷰어 [12]) — transitionend가 안 오는 갈래를
   // 600ms 타이머가 덮는지 실측한다. detached 대기 자체가 판정이다(시한 5s 안에 와야 통과).
-  await page.unroute('**/src/app/main.ts')
+  await page.unroute('**/src/app/main.ts*')
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
