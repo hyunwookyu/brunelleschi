@@ -10,6 +10,7 @@ import { vpMarks, project, projectSeg, groundAxes, horizonScreenY } from '../cor
 import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
 import { MAT, gradeOf, rng32, widthOf, widthOfMat } from '../core/material'
+import { overshootEnds } from '../core/overshoot'
 import type { OsnapHit } from '../core/osnap'
 import type { Pt, V3 } from '../core/vec'
 
@@ -66,6 +67,9 @@ export function resize2d(canvas: HTMLCanvasElement, W: number, H: number, dpr: n
 //   절대 식별이 실제로 되는지는 실기기 몫이다(DEFERRED).
 const COL = {
   grid: 'rgba(120,116,110,0.18)',
+  // 지평선(web2-12 7번) — 작도 대역으로 이관(재료가 아니다 — 위 지평선 블록 주석이 정본).
+  // 격자(0.18)보다는 서고(작도의 뼈대) 종전 2H(알파 0.5)보다 옅다. 토글이 하한을 푼다.
+  horizon: 'rgba(150,147,141,0.32)',
   construction: '#8a7f6a',
   waiting: '#555',
   waitingDim: 'rgba(85,85,85,0.25)',
@@ -89,6 +93,71 @@ const COL = {
   // ⚠ 획 «위»에서의 대비는 색이 아니라 형태(□◆△… — 획과 다른 기하)가 가른다(AS-C23).
   cubeFace: 'rgba(252,251,248,0.80)',
   cubeEdge: '#b0a99c',
+}
+
+// ── 잉크 번짐(web2-12 9번) — **획에 내재한 것만**: 머무름(체류) · 내림·뗌 · 가장자리 ──
+// D-1 확인(NOTES): rotring 브러시가 이미 내는 것은 **대기 잉크 몸체의 가장자리 질감**뿐이다
+// (승격 잉크는 Line2 균일선 — 아무 질감도 없다). 그래서:
+//   · 머무름·내림뗌 — 잉크 획 전부(rotring에 그 개념이 없다)
+//   · 가장자리 퍼짐 — **승격 잉크에만**(대기는 rotring 질감 위에 덧그리면 두 번 번진다)
+// 체류는 저장된 점렬(raw)의 밀집에서 읽는다 — 120Hz 스트림에서 같은 자리 점의 수가 곧
+// 시간이다(타임스탬프를 새 필드로 만들지 않는다 — Stroke 불변). 위치는 원래 a–b 위의
+// 비율(t)로 사상해 **어느 포즈의 사영에도** 같은 자리에 얹는다. 크기는 전부 화면 고정
+// (원칙 e — ×is) · 시드는 획 id(rng32 — 프레임마다 같은 자국).
+function inkFlow(
+  ctx: CanvasRenderingContext2D,
+  id: number, docA: Pt, docB: Pt, raw: Pt[] | undefined,
+  a: Pt, b: Pt, w: number, is: number, edge: boolean,
+) {
+  const ink = MAT.INK
+  ctx.fillStyle = ink.color
+  const along = (t: number): Pt => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t })
+  const dot = (p: Pt, r: number, alpha: number) => {
+    ctx.globalAlpha = alpha
+    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill()
+  }
+  // 내림·뗌 — 대는 자리·떼는 자리가 미세하게 진하고 굵다(니브의 0.75배 원)
+  dot(a, w * 0.75 * is, 0.95)
+  dot(b, w * 0.7 * is, 0.9)
+  // 머무름 — raw에서 «제자리 점 묶음»(이동 < 1.2 doc px)을 세어 고임을 얹는다
+  if (raw && raw.length > 3) {
+    const abx = docB.x - docA.x, aby = docB.y - docA.y
+    const L2 = abx * abx + aby * aby
+    if (L2 > 1e-9) {
+      let runStart = 0
+      for (let i = 1; i <= raw.length; i++) {
+        const moved = i === raw.length ||
+          Math.hypot(raw[i]!.x - raw[i - 1]!.x, raw[i]!.y - raw[i - 1]!.y) > 1.2
+        if (moved) {
+          const k = i - runStart
+          if (k >= 5) {                       // 묶음 다섯(≈40ms@120Hz)부터 고임으로 본다
+            const p = raw[runStart + Math.floor(k / 2)]!
+            const t = Math.max(0, Math.min(1,
+              ((p.x - docA.x) * abx + (p.y - docA.y) * aby) / L2))
+            dot(along(t), Math.min(w * (0.6 + 0.05 * k), w * 1.6) * is, 0.85)
+          }
+          runStart = i
+        }
+      }
+    }
+  }
+  // 가장자리 퍼짐 — 섬유를 타는 잔점(승격 잉크만 — 위 머리주석). 시드 = 획 id.
+  if (edge) {
+    const rng = rng32(id)
+    const Lscr = Math.hypot(b.x - a.x, b.y - a.y) / is   // 화면 px 길이
+    const n = Math.floor(Lscr / 9)
+    const nx = -(b.y - a.y), ny = b.x - a.x
+    const nl = Math.hypot(nx, ny) || 1
+    for (let i = 0; i < n; i++) {
+      const t = rng()
+      const side = rng() < 0.5 ? -1 : 1
+      const off = (w * 0.5 + 0.4 + rng() * 1.1) * is * side
+      const p = along(t)
+      dot({ x: p.x + (nx / nl) * off, y: p.y + (ny / nl) * off },
+        (0.3 + rng() * 0.4) * is, 0.45)
+    }
+  }
+  ctx.globalAlpha = 1
 }
 
 export function draw2d(
@@ -144,24 +213,20 @@ export function draw2d(
   // 피치 0이라 지평선이 그대로 화면 수평선인데 안 그려서, 접은 뒤 **눈높이를 화면에서
   // 못 읽었다**(web2-05가 픽셀로 발견). 어디에 긋는가는 `camera.ts`가 답한다 —
   // 여기서 `principal.y`를 직접 쓰면 판정과 표시가 두 자리로 갈린다(#54).
-  // **진하기는 2H 연필 급이다**(web2-08 지시 1: 「h 내지 2h 정도로 옅게」).
-  // 불투명 작도색으로 긋던 것이 결함이었다 — 지평선이 사용자 획(HB 알파 0.75)보다
-  // 진해서 화면에서 가장 진한 선이 그림이 아니라 작도선이었다(실측: 띠 평균 알파 255가
-  // 최상, HB 획은 191). 값을 새로 정하지 않고 **경도표의 2H를 그대로 읽는다** —
-  // 「h~2h」의 옅은 쪽이고(지시가 «너무 진하다»이므로 옅은 쪽이 안전하다), 경도표가
-  // 바뀌면 따라간다(#54: 진하기의 출처는 MAT 하나다). 굵기도 같은 곳(widthOfMat)에서.
-  // 입자는 안 얹는다 — 작도선이지 재료 획이 아니다. 되돌릴 조건: 안 보인다는 관측이
-  // 나오면 H(0.60)로 올린다. e2e(`level.spec.ts` 「지평선이 옅다」)가 위·아래를 잰다.
-  const hzY = horizonScreenY(an, app.pose)
+  //
+  // **진하기 — 작도선 대역이다(web2-12 7번 — «경도표의 2H를 읽는다»는 web2-09의 결정을
+  // 뒤집었다·#65 규약대로 여기 고쳐 적는다)**: 지평선은 재료가 아니라 작도 보조이므로
+  // 진하기의 출처도 경도표(MAT — 재료의 정본)가 아니라 COL(작도·표식 색의 정본)이 맞다.
+  // web2-09의 하한 논리(「너무 옅으면 안 보인다」)는 **토글이 풀었다** — 이제 안 보이는 게
+  // 싫으면 켜면 되므로(app.horizon — 기본 켜짐: 작도의 뼈대다) 더 내렸다(잉크량 실측은
+  // level.spec 「지평선이 옅다」의 대역 주석). 입자는 안 얹는다 — 작도선이지 재료가 아니다.
+  const hzY = app.horizon ? horizonScreenY(an, app.pose) : null
   if (hzY !== null) {
-    const hm = MAT['2H']
-    ctx.strokeStyle = hm.color
-    ctx.globalAlpha = hm.alpha
-    ctx.lineWidth = widthOfMat({ grade: '2H' }) * is
+    ctx.strokeStyle = COL.horizon
+    ctx.lineWidth = 1 * is
     ctx.beginPath()
     ctx.moveTo(x0, hzY); ctx.lineTo(x1, hzY)
     ctx.stroke()
-    ctx.globalAlpha = 1
   }
 
   // 대기 획 — 사라지지 않는다(불변식 j). 자기 포즈가 아니면 흐리게. 색은 재료.
@@ -184,6 +249,8 @@ export function draw2d(
     // grain은 classic 렌더러의 질감이다 — brush 렌더러가 켜져 있으면 질감은 #brushc 겹이
     // 그린다(web2-11 2-e: **끄되 지우지 않는다** — 되돌리기(2-b)의 절반이 이 분기다).
     if (app.renderer === 'classic' && m.grain > 0 && own) grain(ctx, s.id, s.a, s.b, m.grain, m.alpha, s.mat?.press, is)
+    // 잉크 번짐(web2-12 9번) — 대기 잉크는 머무름·내림뗌만(가장자리는 rotring 몫 — inkFlow 머리주석)
+    if (gradeOf(s) === 'INK' && own) inkFlow(ctx, s.id, s.a, s.b, s.raw, s.a, s.b, widthOf(s), is, false)
   }
 
   // 질감 — 흑연 입자. 자로 그은(승격된) 선에도 재료가 보인다.
@@ -198,6 +265,48 @@ export function draw2d(
     const b = project(an, app.pose, seg.b3)
     if (!a || !b) continue
     grain(ctx, s.id, a, b, m.grain, m.alpha, s.mat?.press, is)
+  }
+
+  // 모서리 넘김(web2-12 8번) — **표현만**: 승격 획의 «다른 획과 만나는 끝»에 화면 고정
+  // 길이(C.OVERSHOOT_PX)의 꼬리를 재료색·재료 굵기로 잇는다. a·b(기하)는 안 움직인다 —
+  // 판정은 core/overshoot.ts(3D 일치·캐시), 오스냅·조각·면·lift는 이 꼬리를 모른다
+  // (그리기만 읽는다 — e2e가 꼬리 끝에서 오스냅이 안 잡히는 것까지 잰다).
+  // 두 렌더러 공통(잉크 겹 벡터 꼬리) — 질감 없는 짧은 빠짐이 손 제도의 넘김 모양이다.
+  {
+    const meets = overshootEnds(app.lift)
+    for (const [id, seg] of app.lift.lifted) {
+      const m = meets.get(id)
+      if (!m || (!m.a && !m.b)) continue
+      const s = app.lift.strokes.get(id)
+      if (!s) continue
+      const a = project(an, app.pose, seg.a3)
+      const b = project(an, app.pose, seg.b3)
+      if (!a || !b) continue
+      const dx = b.x - a.x, dy = b.y - a.y
+      const L = Math.hypot(dx, dy)
+      if (L < 1e-9) continue
+      const mm = MAT[gradeOf(s)]
+      const os = C.OVERSHOOT_PX * is          // 화면 고정 — 문서 좌표로 환산
+      ctx.strokeStyle = mm.color
+      ctx.globalAlpha = mm.alpha
+      ctx.lineWidth = widthOf(s) * is
+      ctx.beginPath()
+      if (m.a) { ctx.moveTo(a.x, a.y); ctx.lineTo(a.x - (dx / L) * os, a.y - (dy / L) * os) }
+      if (m.b) { ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + (dx / L) * os, b.y + (dy / L) * os) }
+      ctx.stroke()
+      ctx.globalAlpha = 1
+    }
+  }
+
+  // 잉크 번짐(web2-12 9번) — 승격 잉크(Line2 균일선)에 머무름·내림뗌·가장자리를 얹는다.
+  // 위치는 원래 a–b의 비율로 사상하므로 어느 포즈에서도 같은 자리다(inkFlow 머리주석).
+  for (const [id, seg] of app.lift.lifted) {
+    const s = app.lift.strokes.get(id)
+    if (!s || gradeOf(s) !== 'INK') continue
+    const a = project(an, app.pose, seg.a3)
+    const b = project(an, app.pose, seg.b3)
+    if (!a || !b) continue
+    inkFlow(ctx, s.id, s.a, s.b, s.raw, a, b, widthOf(s), is, true)
   }
 
   // 소실점 표식 — 현재 포즈 기준(불변식 i: 표시=스냅=그리드가 같은 출처)
@@ -234,6 +343,12 @@ export function draw2d(
       ctx.lineWidth = (constructing ? C.LINE_W_RESULT : drawW) * is
       ctx.beginPath(); ctx.moveTo(draft.start.x, draft.start.y); ctx.lineTo(draft.end.x, draft.end.y); ctx.stroke()
       ctx.globalAlpha = 1
+      // 잉크 번짐(9번) — 그리는 중에도 같은 함수·같은 시드(잠정 id)·같은 점렬이라
+      // 떼는 순간 자국이 그대로 이어진다(뗌 게이트가 잰다). edge는 승격 결과와 맞춘다.
+      if (g === 'INK' && !constructing) {
+        inkFlow(ctx, draft.nid, draft.start, draft.end, draft.raw,
+          draft.start, draft.end, drawW, is, true)
+      }
     }
     if (draft.label && !constructing) axisGuide(ctx, draft, is)
     if (draft.startSnap) mark(ctx, draft.startSnap, is)

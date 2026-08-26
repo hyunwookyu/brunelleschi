@@ -30,7 +30,7 @@ import * as brush from 'p5.brush/standalone'
 import type { App } from './state'
 import { docToScreen, isDrawPose, activeGrade, draftBrushed } from './state'
 import { project } from '../core/camera'
-import { gradeOf } from '../core/material'
+import { gradeOf, rng32 } from '../core/material'
 import { C } from '../core/constants'
 import type { Stroke } from '../core/types'
 import type { Pt } from '../core/vec'
@@ -111,6 +111,46 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
   // 내장 브러시는 큰 캔버스 기준이라 그대로는 크다/작다 — 1을 기준으로 두고 실측으로 판단
   // (brush_perf_web2의 폭 실측 행이 배수·픽셀 폭을 남긴다. 눈 판정은 실기기 몫).
   brush.scaleBrushes(1)
+
+  // ── 종이 결 — 획마다가 아니라 **한 장**(web2-12 10번) ─────────────────────
+  // 확인 결과(D-1 — NOTES): p5.brush의 질감은 시드에서 나오는데 우리가 결정론 계약(2-d)
+  // 으로 **획마다 seed(id)를 리셋**하므로 획마다 독립이다 — 공유 종이가 없다.
+  // 그래서 타일 노이즈 한 장을 CSS 알파 마스크로 이 겹(과 스냅샷 겹)에 곱한다 —
+  // 모든 획이 같은 종이 이빨을 지난다. **위상은 문서 고정**(팬을 따라간다 — 종이가 그림과
+  // 같이 움직여야 종이답다) · **결 크기는 화면 고정**(원칙 e — 줌해도 이빨이 안 커진다).
+  // 비용: mask-position 갱신뿐(합성기 몫) — 재그리기·판독(getImageData)에는 안 걸린다
+  // (마스크는 합성 단계라 캔버스 버퍼·결정론 해시가 불변이다 — brush.spec의 해시가 그 증거).
+  const paper = (() => {
+    const t = document.createElement('canvas')
+    t.width = 128; t.height = 128
+    const g = t.getContext('2d')!
+    const img = g.createImageData(128, 128)
+    const rng = rng32(7)               // 고정 시드 — 실행마다 같은 종이(§5 재현성)
+    for (let i = 0; i < img.data.length; i += 4) {
+      img.data[i + 3] = 255 - Math.floor(rng() * 56)   // 알파 199..255 — 이빨 깊이 ~22%
+    }
+    g.putImageData(img, 0, 0)
+    return t.toDataURL('image/png')
+  })()
+  const applyPaper = (el: HTMLElement) => {
+    el.style.webkitMaskImage = `url(${paper})`
+    el.style.maskImage = `url(${paper})`
+    el.style.webkitMaskRepeat = 'repeat'
+    el.style.maskRepeat = 'repeat'
+  }
+  applyPaper(canvas)
+  applyPaper(snap)
+  const paperPhase = (app: App) => {
+    const pos = `${Math.round(app.view.ox) % 128}px ${Math.round(app.view.oy) % 128}px`
+    if (canvas.style.maskPosition !== pos) {
+      canvas.style.maskPosition = pos
+      canvas.style.webkitMaskPosition = pos
+    }
+    if (snap.style.maskPosition !== pos) {
+      snap.style.maskPosition = pos
+      snap.style.webkitMaskPosition = pos
+    }
+  }
 
   // 캐시 키 — 이 값들이 전부 같으면 다시 안 그린다. 그리는 중(draft·호버)에는 어느 것도
   // 안 바뀌므로 **획을 긋는 동안 이 겹의 비용은 0**이다(위 머리주석).
@@ -209,6 +249,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     canvas,
     sync(app, draft) {
       syncs++
+      paperPhase(app)   // 종이 위상 — 문서(팬)를 따라간다(10번)
       if (draftEligible(app, draft)) {
         // 시작(또는 그리는 중 뷰·문서가 움직인 드문 경우) — 확정 획을 굳혀 스냅샷으로
         if (!draftActive || dirty(app)) {
@@ -262,6 +303,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
       canvas.remove()
       canvas = withStraightAlpha(() =>
         brush.createCanvas(W2, H2, { parent: '#app', pixelDensity: dpr2, id: 'brushc' }))
+      applyPaper(canvas)
       cw = W2; ch = H2
       last = null
     },

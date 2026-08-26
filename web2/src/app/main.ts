@@ -9,7 +9,7 @@ import { initR3D, syncStrokes, render3d, resize3d, setDraftLine } from './render
 import { serializeBrnl, parseBrnl } from '../core/file'
 import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice, confirmNear } from './notice'
-import { OSNAP_ORDER, type OsnapHit } from '../core/osnap'
+import { OSNAP_ORDER, osnap, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT, widthOfMat } from '../core/material'
 import type { Grade } from '../core/types'
 import { parseDim, formatMm, lenMm, UNITS, type Unit } from '../core/dim'
@@ -500,6 +500,10 @@ for (const kind of OSNAP_ORDER) {
 const gridBox = document.getElementById('chk-grid') as HTMLInputElement
 gridBox.checked = app.grid
 gridBox.addEventListener('change', () => { app.grid = gridBox.checked; invalidate() })
+// 지평선 토글(web2-12 7번) — 격자 선례 그대로. 기본 켜짐(작도의 뼈대).
+const horizonBox = document.getElementById('chk-horizon') as HTMLInputElement
+horizonBox.checked = app.horizon
+horizonBox.addEventListener('change', () => { app.horizon = horizonBox.checked; invalidate() })
 
 const radius = document.getElementById('osnap-radius') as HTMLInputElement
 radius.value = String(app.osnap.radius)
@@ -824,6 +828,9 @@ const diag = {
   draftStatsReset: () => brushLayer.resetDraftStats(),
   /** 진행 중인 draft — 게이트 팔이 좌표·잠정 id를 확정 획과 대조한다(web2-12 2번) */
   draft: () => draft,
+  /** 오스냅 판정 그대로(web2-12 8번) — 넘김 꼬리가 스냅 대상이 아님을 팔이 잰다 */
+  osnapAt: (x: number, y: number) =>
+    osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / app.view.s }),
   /** classic 쪽 비교치 — 같은 장면의 draw2d 1회 ms(질감 grain 포함) */
   draw2dMs: () => {
     const t0 = performance.now()
