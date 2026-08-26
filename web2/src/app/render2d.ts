@@ -234,13 +234,19 @@ export function draw2d(
   // 지평선과 **다른 물음**이라 다른 술어다: 지평선은 세계의 것이라 정렬이면 어느 포즈에서든
   // 같은 자리이고, 대기 획은 **그 포즈에서만 뜻이 있는 2D 좌표**다 — 접힌 포즈는 작도 포즈가
   // 아니므로 작도 포즈의 대기 획은 흐린 것이 맞다. 같은 술어로 묶었으면 그것이 #54다.
+  // web2-13 3-a: 감쇠 켜짐(기본)이면 자기 시점에서 벗어난 각도로 흐려지다
+  // `WAIT_FADE_DEG` 밖에서 0 — «그 시점의 트레이싱지 위 잉크»(초안 §5).
+  // 끄면 아래 종전 식 **그대로**다(A-4 — 옛 동작으로 가는 길. NOTES 「구조 결정」의
+  // 「항상 그리되 포즈가 다르면 흐리게」 타협은 이 관측으로 되돌릴 조건이 발동했다).
   for (const id of app.lift.waiting) {
     const s = app.lift.strokes.get(id)
     if (!s) continue
-    const own = s.view ? !atDraw : atDraw
+    const own = app.waitFade ? atOwnPose(app.pose, s.view) : (s.view ? !atDraw : atDraw)
+    const factor = app.waitFade ? waitFadeFactor(app.pose, s.view) : (own ? 1 : 0.3)
+    if (factor <= 0) continue
     const m = MAT[gradeOf(s)]
     ctx.strokeStyle = m.color
-    ctx.globalAlpha = own ? m.alpha : m.alpha * 0.3
+    ctx.globalAlpha = m.alpha * factor
     ctx.lineWidth = widthOf(s) * is
     ctx.setLineDash([5 * is, 4 * is])
     ctx.beginPath(); ctx.moveTo(s.a.x, s.a.y); ctx.lineTo(s.b.x, s.b.y); ctx.stroke()
@@ -248,6 +254,7 @@ export function draw2d(
     ctx.globalAlpha = 1
     // grain은 classic 렌더러의 질감이다 — brush 렌더러가 켜져 있으면 질감은 #brushc 겹이
     // 그린다(web2-11 2-e: **끄되 지우지 않는다** — 되돌리기(2-b)의 절반이 이 분기다).
+    // 질감은 정확히 자기 시점에서만(중간 감쇠에 얹으면 몸체보다 질감이 진한 역전 — waitfade.ts).
     if (app.renderer === 'classic' && m.grain > 0 && own) grain(ctx, s.id, s.a, s.b, m.grain, m.alpha, s.mat?.press, is)
     // 잉크 번짐(web2-12 9번) — 대기 잉크는 머무름·내림뗌만(가장자리는 rotring 몫 — inkFlow 머리주석)
     if (gradeOf(s) === 'INK' && own) inkFlow(ctx, s.id, s.a, s.b, s.raw, s.a, s.b, widthOf(s), is, false)

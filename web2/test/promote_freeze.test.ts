@@ -79,6 +79,22 @@ const COMPS = [
     ],
     promote: [700, 600, 550, 566],   // → vp1 ≈ −182 (f ≈ 927 — 좁은 화각)
   },
+  {
+    // 2차 리뷰어 [15](D-5·#31): 주점 이동 0 근방 — 가장 흔한 «정면 1점»(깊이 소실점이
+    // 화면 중앙 근처)을 격자에 넣는다. 주점 이동 20px — 여기서도 어긋나면 어긋남의
+    // 원인이 주점만이 아니라 f 재확정에도 있다는 뜻이고, «맞는다» 방향의 격자점이
+    // 하나는 실재하게 된다(#31 — 스윕이 한쪽 방향만 만들 수 있으면 부재는 관측이 아니다).
+    name: 'D_주점근접',
+    W: 1200, H: 800,
+    setup: [
+      [100, 400, 1100, 400],
+      [500, 500, 560, 450],      // → vp0 = 620 (주점 이동 |620−600| = 20px)
+      [500, 500, 500, 320],      // 기둥(앵커)
+      [500, 320, 560, 360],      // 깊이 획(기둥 꼭대기 → vp0)
+      [560, 360, 560, 470],      // 둘째 기둥
+    ],
+    promote: [500, 500, 400, 487.5], // → vp1 = −300 (u1=20 · u2=−900 → f ≈ 134)
+  },
 ] as const
 
 // ⚠ B의 넷째 획은 시작점이 지평선 위(y=350)라 깊이 획이 아니라 수평 대역에 걸릴 수
@@ -187,7 +203,11 @@ describe('승격 동결 측정 — 원장 promote_freeze_web2.json', () => {
       }
       expect(preOracle).toBeLessThan(1e-6)                        // 기준선 0 (재확인)
       expect(f12Max).toBeGreaterThan(1)                           // 카메라 반증 ① f×1.2 → 0에서 크게 뜬다
-      expect(ppMax).toBeGreaterThan(1)                            // 카메라 반증 ② 주점 +30px → 〃
+      // ⚠ 주점 섭동은 **항등이다**(2차 리뷰어 [14] — 주점은 사영식의 덧셈 항이라 어떤
+      // 3D에도 정확히 +30이 나온다. 실측: 세 구도 전부 30.000…). 계기 검증이 아니라
+      // «덧셈이 된다»의 확인일 뿐이므로 원장에 identity로 표시하고, 살아 있는 카메라
+      // 반증은 f×1.2 하나로 친다(f는 구도마다 다른 값을 낸다 — 실제 판별력).
+      expect(ppMax).toBeGreaterThan(1)
       // 3D 반증 — +0.1 세계단위의 사영 이동이 0이 아니다(계기가 3D에 반응)
       let p3Alone = 0
       for (const f of frozen.values()) {
@@ -201,10 +221,23 @@ describe('승격 동결 측정 — 원장 promote_freeze_web2.json', () => {
         f_before: anOld.f, f_after: anNew.f, f_moved: fMoved,
         principal_before_x: anOld.principal?.x, principal_after_x: anNew.principal?.x,
         strokes_drawn: drawn.length, strokes_frozen: frozen.size, strokes_relifted: relifted,
-        draw: { median_px: median(drawDevs), max_px: drawMax, n: drawDevs.length },
-        orbit: { median_px: median(orbitDevs), max_px: orbitDevs.length ? Math.max(...orbitDevs) : null, n: orbitDevs.length },
-        oracle: { pre_max_px: preOracle, relift_max_px: reliftOracle },
-        refute: { baseline: 'pre-promotion(옛 카메라·오라클 ① 0) 위 섭동', f_x1_2_max_px: f12Max, principal_p30_max_px: ppMax, p3_shift0_1_alone_px: p3Alone },
+        draw: { what: '동결 3D × 새 카메라 × 작도 시점 대 pts2d', median_px: median(drawDevs), max_px: drawMax, n: drawDevs.length },
+        orbit: {
+          what: '동결 3D 대 재리프팅 3D — 둘 다 새 카메라 × 궤도 시점. ⚠ pts2d 대조가 아니다(궤도에는 pts2d가 없다 — 2차 리뷰어 [16])',
+          median_px: median(orbitDevs), max_px: orbitDevs.length ? Math.max(...orbitDevs) : null, n: orbitDevs.length,
+        },
+        oracle: {
+          pre_max_px: preOracle, relift_max_px: reliftOracle,
+          note: '둘 다 구성상 0(항등) — 하네스 배선의 건전성 검증이지 «맞는다» 도달 가능성의 증인이 아니다(2차 리뷰어 [15]·#40). 도달 가능성 방향의 격자점은 D_주점근접 구도가 진다',
+        },
+        refute: {
+          baseline: 'pre-promotion(옛 카메라·오라클 ① 0) 위 섭동',
+          f_x1_2_max_px: f12Max,
+          principal_p30_max_px: ppMax,
+          principal_identity: '⚠ 항등 — 주점은 사영식의 덧셈 항이라 어떤 3D에도 정확히 +30. 계기 검증은 f 행이 진다(2차 리뷰어 [14])',
+          p3_shift0_1_alone_px: p3Alone,
+        },
+        margin_over_threshold: drawMax / C.TAP_MAX_PX,   // 판정 여유 배수 — TAP_MAX_PX가 미측정 상수라(DEFERRED) 원장이 스스로 여유를 말한다([22])
       })
       allDraw.push(...drawDevs)
       allOrbit.push(...orbitDevs)

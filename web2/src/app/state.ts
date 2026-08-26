@@ -98,6 +98,14 @@ export interface App {
    *  이 도구는 모델링 툴이 아니라 그림 도구다 — 빈 종이에 격자가 깔려 있으면
    *  CAD의 감각이 된다. 필요한 사람이 켠다. */
   grid: boolean
+  /** 대기 획 시점 감쇠(web2-13 3-a) — **기본 켜짐**(새 동작: 자기 시점 밖 `WAIT_FADE_DEG`
+   *  에서 0 도달). 끄면 종전 동작(항상 그리되 흐림 0.3) **그대로**다(A-4 — 되돌릴 길.
+   *  실기기 판정은 DEFERRED web2-13 표). 설정 「대기 획은 그린 시점에서만」. */
+  waitFade: boolean
+  /** 「잘못 찍힌 점」 문이 버린 획 수(web2-13 3-b) — 세션 계수. 진단 패널에 보인다.
+   *  조용히 버리는 것은 이 저장소가 가장 경계하는 형태라 **수가 말하게 한다** —
+   *  크면 `C.STRAY_MIN_PX`가 틀린 것이다. */
+  strayCount: number
   cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
 }
@@ -128,6 +136,8 @@ export function createApp(W: number, H: number): App {
     renderer: 'brush',
     horizon: true,
     grid: false,
+    waitFade: true,
+    strayCount: 0,
     cubeLayout: { cx: W - 110, cy: 60, size: 80 }, // 우측 상단 — 1.5배 세로바(x W−45..)와 안 겹치게 왼쪽으로(web2-10 지시 5)
     listeners: [],
   }
