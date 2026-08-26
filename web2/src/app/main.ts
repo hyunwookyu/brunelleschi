@@ -37,9 +37,25 @@ try {
   document.getElementById('buildid')!.textContent = __BUILD_ID__
 } catch { /* 치환이 안 됐다 — 화면에만 안 뜬다 */ }
 
-// 진단 패널(web2-10 지시 4) — 빌드 식별자를 누르면 펴진다. 콘솔 없는 태블릿의 판독 통로.
+// 진단 패널(web2-10 지시 4 · web2-11 1-f 확장) — 빌드 식별자를 누르면 펴진다.
+// 콘솔 없는 태블릿의 판독 통로. 최근 획·저장 크기는 앱 상태에서 그 자리에서 읽는다.
 import { initDiagPanel } from './diagpanel'
-initDiagPanel(document.getElementById('buildid')!, document.getElementById('diagpanel')!)
+import type { StrokeCapStats } from './input'
+let inputApi: { strokeStats: () => StrokeCapStats } | null = null
+/** 지금 문서의 .brnl 크기 — 저장 버튼과 같은 직렬화라 «저장하면 이 크기»다(1-f) */
+const brnlBytes = () =>
+  new Blob([serializeBrnl({ doc: app.doc, nextId: app.nextId, savedViews: app.savedViews })]).size
+const diagPanel = initDiagPanel(
+  document.getElementById('buildid')!, document.getElementById('diagpanel')!,
+  () => {
+    const st = inputApi?.strokeStats()
+    return [
+      ['최근 획', st && st.pointerType
+        ? `${st.points}점 (${st.pointerType}) · 이벤트 ${st.events} · coalesced 추가 ${st.extra}`
+        : '—'],
+      ['.brnl', `${brnlBytes()} B · 획 ${app.doc.strokes.length}`],
+    ]
+  })
 
 // **탈출구** — `?reset`으로 열면 워커 등록과 캐시를 전부 버리고 새로 받는다.
 // 배포 전환(web/ → web2)은 같은 주소에 다른 앱이 오는 것이라 캐시가 꼬일 수 있고,
@@ -207,7 +223,7 @@ const dimPanel = initDimPanel(applyDimInput)
 // 음성도 확률적 입력이다(지시 8-a — 필기와 같은 규칙): 바로 적용하지 않고 스테이징한다.
 const voice = createVoice((t) => dimPanel.stage(t))
 
-initInput(ink, app, {
+inputApi = initInput(ink, app, {
   onDraftChange(d) {
     draft = d
     if (d) {
@@ -229,8 +245,8 @@ initInput(ink, app, {
     // 알림은 **오류가 있을 때만**이다(4-b) — 만들어졌으면 화면이 이미 말한다.
     if (r === 'none') notify('닫힌 루프가 아니다 — 둘러싸인 자리를 탭한다')
   },
-  onCommit(a, b, raw, press) {
-    const s = commitStroke(app, a, b, raw, press)
+  onCommit(a, b, raw, press, rawIn) {
+    const s = commitStroke(app, a, b, raw, press, rawIn)
     const an = app.lift.an
     // **알림은 오류가 있을 때만**이다(4-b). 「소실점 N」은 차수이고 「대기한다」는 상태다 —
     // 둘 다 화면이 이미 말하고 있다(소실점 표식 · 대기 획의 점선). 거부 사유만 남긴다.
@@ -630,6 +646,15 @@ const diag = {
     dims: app.doc.strokes.filter(x => x.dim !== undefined).map(x => ({ id: x.id, dim: x.dim })),
     lenOf: Object.fromEntries([...app.lift.lifted].map(([id, g]) =>
       [id, lenMm(g.a3, g.b3, app.lift.mmPerUnit)])),
+  }),
+  /** 입력 캡처 진단(web2-11 1부) — 패널과 **같은 자료**를 읽는다(문자열 파싱 없이) */
+  capture: () => ({
+    stroke: inputApi?.strokeStats() ?? null,
+    tally: diagPanel.tally(),
+    lastRaw: diagPanel.lastRaw(),
+    eraserBitSeen: diagPanel.eraserBitSeen(),
+    pressureLevels: diagPanel.pressureLevels(),
+    brnlBytes: brnlBytes(),
   }),
   summary: () => ({
     horizonY: app.lift.an.horizonY,

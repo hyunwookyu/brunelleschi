@@ -1,0 +1,116 @@
+{
+ "what": "web2-11 1-a·1-b — coalesced로 버려지던 점 수와 포인터 날값의 실측(헤드리스 크로뮴). extra = Σ(묶음−1) = 안 썼으면 버려졌을 점 수.",
+ "environment": "헤드리스 크로뮴 + 합성 입력(Playwright/CDP) — 묶음이 안 생기는 대역이다(native 켬 extra 0 — 환경이 정한 값이라 판별력이 없고, 가르는 수는 아래 bundle_patch다). 실기기(MovinkPad 120Hz + EMR 펜)의 계수는 진단 패널 coalesced 줄로 사람이 읽는다(DEFERRED 표).",
+ "per_type_note": "폴백은 원인별 두 칸(#43): empty = API는 있는데 빈 목록, noApi = getCoalescedEvents 없음. 검산 둘을 팔이 잰다 — bundled+empty+noApi == events, 그리고 empty == strokes_started(그 종류의 pointerdown 수 — 크로뮴은 pointerdown의 coalesced 목록이 비어 있다). 종류의 용도: mouse·pen 획(저장·렌더될 점) / touch 궤도(카메라 표본 — 저장 안 됨).",
+ "per_type": {
+  "mouse": {
+   "events": 36,
+   "extra": 0,
+   "bundled": 34,
+   "empty": 2,
+   "noApi": 0
+  },
+  "pen": {
+   "events": 25,
+   "extra": 0,
+   "bundled": 24,
+   "empty": 1,
+   "noApi": 0
+  },
+  "touch": {
+   "events": 25,
+   "extra": 0,
+   "bundled": 24,
+   "empty": 1,
+   "noApi": 0
+  }
+ },
+ "strokes_started": {
+  "mouse": 2,
+  "pen": 1,
+  "touch": 1
+ },
+ "last_pen_stroke": {
+  "pointerType": "pen",
+  "events": 25,
+  "points": 25,
+  "extra": 0
+ },
+ "raw_values": {
+  "mouse": {
+   "samples": 34,
+   "pressures_buttons_down": [
+    0.5
+   ],
+   "pressures_hover": [
+    0
+   ],
+   "tiltX": [
+    "0"
+   ],
+   "tiltY": [
+    "0"
+   ],
+   "twist": [
+    "0"
+   ]
+  },
+  "pen": {
+   "samples": 24,
+   "pressures_buttons_down": [
+    0.5
+   ],
+   "pressures_hover": [],
+   "tiltX": [
+    "0"
+   ],
+   "tiltY": [
+    "0"
+   ],
+   "twist": [
+    "0"
+   ]
+  },
+  "touch": {
+   "samples": 24,
+   "pressures_buttons_down": [
+    1
+   ],
+   "pressures_hover": [],
+   "tiltX": [
+    "0"
+   ],
+   "tiltY": [
+    "0"
+   ],
+   "twist": [
+    "0"
+   ]
+  }
+ },
+ "raw_values_note": "1-b의 관측 근거(수). samples는 pointermove만(수집기 리스너 — pointerdown의 날값은 tally·lastRaw 경로가 본다). pressures_buttons_down = 누른 채 이동의 값 / pressures_hover = 버튼 뗀 이동(호버)의 값 — 마우스의 0은 호버 몫이고 끌기 중은 0.5 하나다. ⚠ pen 행은 tilt·필압 «변화를 주지 않은» 합성 펜(CDP force 0.5 고정·tilt 미지정)의 기본값이다 — tilt를 준 펜이 그대로 실리는 것은 1-c 팔(rawIn tiltX 전부 40)이 따로 잰다. touch의 pressure 1도 합성 기본값. 2부 폴백은 이 값이 아니라 rawIn 유무로 가른다(AS-C33).",
+ "bundle_patch": {
+  "note": "4점 묶음 프로토타입 패치(수집 경로 판별) — 중간 점은 전달 이벤트를 잇는 직선 «밖»(y −6·−4·−2px)이다: 선 위에 두면 픽셀 팔이 아무것도 안 가른다(#46). on/off가 이 원장의 가르는 수다 — off는 app.coalesce=false를 실제로 끈 것(D-3).",
+  "patch_offsets_y": [
+   -6,
+   -4,
+   -2,
+   0
+  ],
+  "on": {
+   "pointerType": "mouse",
+   "events": 9,
+   "points": 33,
+   "extra": 24
+  },
+  "off": {
+   "pointerType": "mouse",
+   "events": 9,
+   "points": 9,
+   "extra": 0
+  }
+ },
+ "press_q": 8191,
+ "press_q_note": "C.PRESS_Q. 이 값을 바꾸면 이 원장과 stroke_payload_web2.json을 재실행하고 AS-C33·DEFERRED web2-11 표의 인용을 고친다.",
+ "falsification": "bundle_patch.on.extra ↔ off.extra — 같은 패치·같은 입력에서 손잡이만 다르다(값은 그 필드가 정본 — 산문에 수를 안 박는다 #47). 수집이 죽으면 on.extra가 0이 되어 팔(extra == (events−1)×(묶음−1))이 실패한다. 픽셀·판정 불변의 반증은 input.spec의 «다른 id(다른 입자 시드) → 해시 다름» 실행이 댄다."
+}

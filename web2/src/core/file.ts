@@ -1,7 +1,7 @@
 // .brnl 저장·복원 — 문서(획·프레임)와 시점만 담는다.
 // 카메라·소실점·리프팅은 파생이므로 저장하지 않는다(원칙 b) — 복원 후 다시 계산된다.
 
-import type { Doc, Stroke, Face, CamPose, ViewOffset, Grade } from './types'
+import type { Doc, Stroke, Face, CamPose, ViewOffset, Grade, RawInput } from './types'
 import { GRADES } from './material'
 import { UNITS, type Unit } from './dim'
 import { C } from './constants'
@@ -47,6 +47,27 @@ export function parseBrnl(text: string): BrnlData | null {
     if (!isNum(s?.id) || !isPt(s?.a) || !isPt(s?.b)) return null
     const st: Stroke = { id: s.id, a: { x: s.a.x, y: s.a.y }, b: { x: s.b.x, y: s.b.y } }
     if (Array.isArray(s.raw) && s.raw.every(isPt)) st.raw = s.raw.map((p: any) => ({ x: p.x, y: p.y }))
+    // 점별 입력(web2-11 1-c) — **전부 선택**이다: 없으면(옛 파일·손으로 지운 파일) 지금까지와
+    // 같다. 있는데 모양이 틀리면(raw와 길이 불일치·비수·대역 밖) **거부한다** — mat.w와
+    // 같은 규약(모르는 값으로 조용히 틀리게 그리지 않는다). 대역은 types.ts의 양자화 정의.
+    if (s.rawIn !== undefined && s.rawIn !== null) {
+      if (typeof s.rawIn !== 'object' || !st.raw) return null
+      const n = st.raw.length
+      const ri: RawInput = {}
+      const take = (key: keyof RawInput, lo: number, hi: number): boolean => {
+        const arr = (s.rawIn as any)[key]
+        if (arr === undefined) return true
+        if (!Array.isArray(arr) || arr.length !== n) return false
+        if (!arr.every((v: unknown) => isNum(v) && v >= lo && v <= hi)) return false
+        ri[key] = arr.map(Number)
+        return true
+      }
+      if (!take('press', 0, C.PRESS_Q)) return null
+      if (!take('tiltX', -90, 90)) return null
+      if (!take('tiltY', -90, 90)) return null
+      if (!take('twist', 0, 359)) return null
+      if (Object.keys(ri).length > 0) st.rawIn = ri
+    }
     if (s.view) {
       if (!isV3(s.view.p) || !isQuat(s.view.q)) return null
       st.view = { p: { ...s.view.p }, q: { ...s.view.q } }
