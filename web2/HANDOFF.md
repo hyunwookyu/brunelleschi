@@ -2,6 +2,9 @@
 
 ## 🆕 web2-10 (2026-08-26) — 표시 마감 · 진단 · 색 빼기 · 치수 입력 (진행 중)
 
+**배포 ①까지 나감** — 원격 main = **`19a37f43e5b657fb8a79e9f1a3698a29fc716d00`**,
+화면 빌드 식별자 **`19a37f4`**, `deploy:check` 「배포됨」. 지시 1·2·3(short_name·로딩화면·
+크레딧/LICENSE) + 리뷰어 12건 대응이 그 안에 있다. 검증: 단위 348 · e2e 68 · selfcheck 새 플래그 없음.
 **배포 지점이 셋인 회차다**(지시 머리 — 사람이 없는 동안 돌므로 뒤가 터져도 앞은 손에 있게).
 지시 원문: [`docs/instructions/web2-10.md`](../docs/instructions/web2-10.md).
 기록: [NOTES.md](NOTES.md)의 web2-10 절.

@@ -4240,3 +4240,15 @@ boot 4팔 × dpr 둘 — 리뷰어 대응으로 3→4팔, 벽시계 55.3s) · se
 이 회차가 안 건드린 원장·문서의 것 — stage0 구 원장·test_cost 인용). D-3 반증 실행 기록:
 short_name 되돌림(2 failed) · 크레딧 문구 깨기(2 failed) · 모듈 차단 잔존(상시 팔) ·
 pointer-events auto(상시 팔) · reduced-motion no-preference 짝(상시 팔).
+
+### 배포 ① 확인 (#58 · ⛳)
+
+원격 main(`git ls-remote origin main` 원문):
+
+```
+19a37f43e5b657fb8a79e9f1a3698a29fc716d00	refs/heads/main
+```
+
+`npm run deploy:check` → 「✓ 화면 빌드 식별자 == 배포 커밋 / 결과: 배포됨」,
+**화면 빌드 식별자 `19a37f4`**. 첫 판정은 「안 됨」(Pages 전파 관행 — 재시도 2회째 통과).
+⚠ 이 뒤의 기록 커밋은 **문서만**이라 화면 해시가 한 칸 밀려도 앱은 같다(web2-07 규약).
