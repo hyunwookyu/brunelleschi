@@ -132,6 +132,45 @@ test('하위 경로에서 열리고, 워커 scope가 그 경로이고, 오프라
   expect(errors).toEqual([])
 })
 
+test('매니페스트가 파싱되고 선언된 아이콘이 전부 200이다 — 홈 화면 채널(web2-09 지시 0·4)', async ({ page }) => {
+  // 아이콘은 깨져도 단위·타입·빌드 어느 것도 안 잡는다 — 매니페스트 오타 하나면 홈 화면
+  // 아이콘이 빈 사각형이 된다. 이 팔이 그 채널이다(배포본 상대로, 하위 경로에서).
+  // 반증(D-3): dist에서 icon-maskable-192.png를 잠시 빼면 404로 실제로 깨진다(되살려 확인).
+  const res = await page.request.get(`${BASE}/manifest.webmanifest`)
+  expect(res.status()).toBe(200)
+  const m = JSON.parse(await res.text()) // 유효 JSON이 아니면 여기서 던진다
+  expect(m.display).toBe('standalone')
+  // 하위 경로 배포에서 홈 화면 실행이 주소창을 다는 흔한 원인이 이 두 필드다(2차 리뷰어 [14])
+  expect(m.start_url).toBe('./')
+  expect(m.scope).toBe('./')
+  expect((m.name ?? '').length).toBeGreaterThan(0)
+  expect((m.short_name ?? '').length).toBeGreaterThan(0)
+  // 안드로이드 홈 화면이 쓰는 maskable이 두 크기 다 있다
+  expect(m.icons.filter((i: any) => i.purpose === 'maskable').map((i: any) => i.sizes).sort())
+    .toEqual(['192x192', '512x512'])
+  for (const ic of m.icons) {
+    const r = await page.request.get(`${BASE}/${ic.src.replace(/^\.\//, '')}`)
+    expect(r.status(), `${ic.src} 이 배포본에 없다`).toBe(200)
+    const want = ic.type === 'image/svg+xml' ? 'svg' : 'png'
+    expect(r.headers()['content-type'] ?? '', ic.src).toContain(want)
+    // **내용까지 본다** — 200인데 비었거나 크기가 선언과 다르면 홈 화면이 빈 사각형이다
+    // (지시 0이 지목한 실패 양식. 200·형식만 보던 초판을 2차 리뷰어 [8]이 잡았다).
+    const buf = await r.body()
+    expect(buf.length, `${ic.src} 이 비어 있다`).toBeGreaterThan(0)
+    if (want === 'png') {
+      // PNG 시그니처 + IHDR의 폭·높이 == 매니페스트 sizes 선언
+      expect(buf.subarray(0, 4), `${ic.src} PNG 시그니처`).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47]))
+      const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20)
+      expect(`${w}x${h}`, `${ic.src} 실제 픽셀 크기 ≠ 선언 sizes`).toBe(ic.sizes)
+    } else {
+      expect(buf.toString('utf8', 0, 500), ic.src).toContain('<svg')
+    }
+  }
+  // 문서가 그 매니페스트를 실제로 링크한다 — 파일이 살아 있어도 링크가 없으면 안 읽힌다
+  await page.goto(`${BASE}/`)
+  expect(await page.getAttribute('link[rel=manifest]', 'href')).toBe('./manifest.webmanifest')
+})
+
 test('옛 앱이 정말 캐시에 묶는다 — 전환 위험이 실재한다(양성 채널)', async ({ page }) => {
   // 이 팔이 없으면 아래 인계 시험이 무엇을 배제했는지 안 갈린다.
   oldDeploy = true
