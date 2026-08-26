@@ -282,3 +282,80 @@ test('**돌려보다 줌한 거리가 접어도 남는다** — 궤도 반경 (w
   expect((await lev(page)).level).toBe(true)
   expect((await lev(page)).radius).toBeCloseTo(rZoom, 6)   // ← 고치기 전에는 r0로 돌아갔다
 })
+
+test('**지평선이 옅다 — h~2h 급** · 픽셀 잉크량으로 잰다 (web2-08 지시 1)', async ({ page }) => {
+  // 재현: 작도선 색(#8a7f6a)을 **불투명**으로 그어 지평선이 사용자 획(HB 알파 0.75)보다
+  // 진했다 — 화면에서 가장 진한 선이 사용자 그림이 아니라 작도선이었다.
+  //
+  // 지표는 «띠의 열당 잉크량» Σ알파 ÷ dpr² ÷ 열수 — 굵기×진하기가 함께 실리는 «무게»다.
+  // 평균 알파로 재던 초판은 AA 커버리지 배분에 얹혀 여유가 6%뿐이었고, 지시 문면
+  // 「h 내지 2h」의 **h(알파 0.60) 쪽을 임계가 거부**했다(1차 리뷰어 [1][2]).
+  // 실측(변이 넷 × dpr 둘, 열당 잉크량 dpr1/dpr2):
+  //     수리 전(불투명 · 1.3px)  382 / 319
+  //     알파만 0.50(굵기 1.3)    192 / 160   ← 감소의 알파 몫
+  //     H (0.60 · 1.2px)         154 / 191
+  //     2H(0.50 · 1.1px)         128 / 128   ← 현재값
+  // 상한 250: h~2h 문면 전체가 통과하고(H와 여유 31%) 수리 전이 걸린다(여유 28%).
+  // 하한 60(반증 조건 D-3): 안 그려지면 0이라 걸린다 — 2H와 여유 2.1배.
+  // ⚠ 픽스처는 지평선 y=400 한 점이다 — 커버리지 위상은 dpr 둘로만 훑었다(AS-C22).
+  await page.goto('/')
+  await page.waitForFunction(() => (window as any).__b2)
+  await drawLine(page, 100, 400, 1100, 400)          // 지평선만 — 다른 잉크가 안 섞이게
+  await page.mouse.move(600, 700)                    // 커서 표식이 띠에 안 걸리게
+  await settle(page)
+
+  const perCol = await page.evaluate(() => {
+    const c = document.getElementById('ink') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const d = c.getContext('2d')!.getImageData(
+      Math.round(200 * dpr), Math.round(396 * dpr),
+      Math.round(800 * dpr), Math.round(8 * dpr)).data
+    let sum = 0
+    for (let i = 3; i < d.length; i += 4) sum += d[i]!
+    return sum / (dpr * dpr) / 800
+  })
+  expect(perCol).toBeLessThan(250)
+  expect(perCol).toBeGreaterThan(60)
+})
+test('**오스냅 기호가 무채색이다** — 픽셀 채도로 잰다 (web2-08 지시 2)', async ({ page }) => {
+  // 재현: 오스냅 표식이 초록(#1a9c50)이었다 — 채도가 있으니 모델링 툴의 표식으로 읽힌다.
+  // 종류 구분은 이미 **형태**가 한다(□◆△✕⊥▫○ — Rhino 관행). 색은 정보가 아니었다.
+  // 좌표·개수로는 안 보인다 — 채도는 픽셀에만 있다(#64 · 지시 「픽셀로 확인한다」).
+  await page.goto('/')
+  await page.waitForFunction(() => (window as any).__b2)
+  await drawLine(page, 100, 400, 1100, 400)
+  await drawLine(page, 500, 500, 600, 475)
+  await drawLine(page, 500, 500, 400, 475)
+  await drawLine(page, 500, 500, 500, 300)
+
+  // 끝점 (500,300) 둘레 — 소실점 ✕(작도색 #8a7f6a·유채색)가 안 걸리는 자리다
+  const box = async () => page.evaluate(() => {
+    const c = document.getElementById('ink') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const d = c.getContext('2d')!.getImageData(
+      Math.round(488 * dpr), Math.round(288 * dpr),
+      Math.round(24 * dpr), Math.round(24 * dpr)).data
+    let painted = 0, chroma = 0
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3]! === 0) continue
+      painted++
+      const r = d[i]!, g = d[i + 1]!, b = d[i + 2]!
+      chroma = Math.max(chroma, Math.abs(r - g), Math.abs(g - b), Math.abs(r - b))
+    }
+    return { painted, chroma }
+  })
+
+  await page.mouse.move(200, 700)
+  await settle(page)
+  const away = await box()
+  await page.mouse.move(500, 300)                 // 끝점 오스냅이 잡힌다
+  await settle(page)
+  const on = await box()
+  // ① 표식이 실제로 그려졌다 — 이것이 없으면 «채도 0»이 «아무것도 없음»과 안 갈린다(D-3)
+  expect(on.painted).toBeGreaterThan(away.painted + 20)
+  // ② 무채색이다 — 수리 전(초록 #1a9c50)은 채널 차가 **130** 급이라 여기서 걸린다.
+  //    12는 AA 혼합 잡음 여유다(획·지평선은 전부 무채색 회색이라 배경 몫이 0이다).
+  expect(on.chroma).toBeLessThanOrEqual(12)
+  // 대조군: 커서가 멀 때도 채도가 없다(배경이 이미 무채색임을 함께 박는다)
+  expect(away.chroma).toBeLessThanOrEqual(12)
+})
