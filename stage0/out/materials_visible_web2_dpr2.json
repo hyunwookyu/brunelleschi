@@ -3,44 +3,44 @@
  "def": "20×60 CSS px 상자 스크린샷을 긋기 전 기준과 비교, 채널 차 8 초과 픽셀 수(임계 출처는 e2e/thresholds.ts — D-C4). 문턱·하한의 동작점 성격은 AS-C37(스윕 없음 명기). ⚠ classic의 during 일곱 칸은 설계상 재료를 안 탄다(옛 미리보기 = 재료색 벡터선 — 변화 «수» 지표는 색·진하기에 둔감하다. 2차 [15]) — 그 다리의 판별력은 brush 절반에만 있다. classic 행의 ink_grain_*는 알파 몫 계기의 양성 대조군이다(2차 [9] — grain은 반투명이라 몫이 1보다 작아야 계기가 산 것).",
  "brush": {
   "2H": {
-   "during": 283,
-   "after": 283,
+   "during": 299,
+   "after": 299,
    "brushc_painted": 276,
    "brushc_opaque": 276
   },
   "H": {
-   "during": 438,
-   "after": 438,
+   "during": 473,
+   "after": 473,
    "brushc_painted": 426,
    "brushc_opaque": 426
   },
   "F": {
-   "during": 493,
-   "after": 493,
+   "during": 484,
+   "after": 484,
    "brushc_painted": 296,
    "brushc_opaque": 296
   },
   "HB": {
-   "during": 492,
-   "after": 492,
+   "during": 471,
+   "after": 471,
    "brushc_painted": 293,
    "brushc_opaque": 293
   },
   "B": {
-   "during": 528,
-   "after": 528,
+   "during": 509,
+   "after": 509,
    "brushc_painted": 346,
    "brushc_opaque": 346
   },
   "2B": {
-   "during": 520,
-   "after": 520,
+   "during": 501,
+   "after": 501,
    "brushc_painted": 363,
    "brushc_opaque": 363
   },
   "INK": {
-   "during": 480,
-   "after": 480,
+   "during": 511,
+   "after": 511,
    "brushc_painted": 0,
    "brushc_opaque": 0
   }
@@ -83,9 +83,9 @@
    "ink_grain_opaque": 0
   },
   "INK": {
-   "during": 480,
-   "after": 480,
-   "ink_grain_painted": 0,
+   "during": 511,
+   "after": 511,
+   "ink_grain_painted": 47,
    "ink_grain_opaque": 0
   }
  }

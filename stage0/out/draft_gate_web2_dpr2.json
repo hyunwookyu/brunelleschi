@@ -8,37 +8,37 @@
  },
  "release": {
   "2H": {
-   "stroke_px": 233,
+   "stroke_px": 251,
    "release_diff": 0,
    "nid_equals_id": true
   },
   "H": {
-   "stroke_px": 332,
+   "stroke_px": 372,
    "release_diff": 0,
    "nid_equals_id": true
   },
   "F": {
-   "stroke_px": 410,
+   "stroke_px": 400,
    "release_diff": 0,
    "nid_equals_id": true
   },
   "HB": {
-   "stroke_px": 442,
+   "stroke_px": 398,
    "release_diff": 0,
    "nid_equals_id": true
   },
   "B": {
-   "stroke_px": 438,
+   "stroke_px": 418,
    "release_diff": 0,
    "nid_equals_id": true
   },
   "2B": {
-   "stroke_px": 432,
+   "stroke_px": 418,
    "release_diff": 0,
    "nid_equals_id": true
   },
   "INK": {
-   "stroke_px": 400,
+   "stroke_px": 431,
    "release_diff": 0,
    "nid_equals_id": true
   },
@@ -51,15 +51,15 @@
  "pressure": {
   "n": 11,
   "distinct": 11,
-  "low_half_mass": 71,
-  "high_half_mass": 107,
+  "low_half_mass": 73,
+  "high_half_mass": 104,
   "committed_equals_draft": true,
   "note": "CDP force 0.2→0.9 램프. distinct>3 = 배선이 아니라 변하는 값이 실렸다. mass = 상자 어두움 합(개수는 관통선에서 포화된다 — 초판 반증) — 힘이 센 쪽이 굵고/진해 잉크량이 커야 픽셀 판별이 선 것. committed_equals_draft = 뗌에서 같은 배열로 이어진다(양자화가 한 곳 — quantIn과 같은 식)."
  },
  "flicker": {
   "still_frames_diff": 0,
   "forced_redraw_diff": 0,
-  "grown_front_diff": 296,
+  "grown_front_diff": 291,
   "box_px": 800,
   "note": "forced_redraw_diff가 시드 축의 판별자다(같은 기하·재그리기 강제 — 시드가 프레임에 실리면 상자가 뒤집힌다. 반증 실행 기록은 NOTES). still 0은 캐시 스킵의 확인이지 시드 측정이 아니다(2차 [3]). grown_front_diff는 시드와 무관한 브러시 성질(전장 파라미터화 — 실기기 판정 행은 DEFERRED). 두 상한의 분모는 찍힌 이미지의 실픽셀 수(box_px × dpr²)다."
  }

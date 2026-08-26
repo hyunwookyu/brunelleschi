@@ -108,11 +108,13 @@ test('9 잉크 번짐 — 내림·뗌 자국·머무름 고임이 있고, 그리
   const plainDuring = await inkBox(page, 400, 675, 12, 10)
   await page.mouse.up(); await settle(page)
   const dwellAfter = await inkBox(page, 474, 675, 12, 10)
-  console.log(`[측정] 머무름 — 고임 상자 중 ${dwellDuring} 후 ${dwellAfter} · 맨몸통 ${plainDuring}`)
-  expect(dwellDuring).toBeGreaterThan(plainDuring)       // 머무른 자리가 고인다(그리는 중에도)
-  expect(dwellAfter).toBeGreaterThan(plainDuring)        // 떼도 그대로다(같은 함수·같은 시드)
-  // 뗌 전후 연속 — 고임 상자의 변화가 작다(잠정 id → 확정 id·같은 점렬)
-  expect(Math.abs(dwellAfter - dwellDuring)).toBeLessThan(Math.max(8, dwellDuring * 0.25))
+  const plainAfter = await inkBox(page, 400, 675, 12, 10)
+  console.log(`[측정] 머무름 — 고임 상자 중${dwellDuring}/후${dwellAfter} · 맨몸통 중${plainDuring}/후${plainAfter}`)
+  // ⚠ 국면 «안»에서 비교한다 — 이 획은 대기로 남아 뗌에서 몸체 렌더러가 바뀐다(벡터 →
+  // rotring+파선: 설계된 상태 채널). 국면을 섞어 절대량을 견주면 그 몫이 섞인다(초판 실측
+  // 이 그랬다). 뗌 연속성 자체는 draftgate의 INK 게이트(승격 경로)가 잰다.
+  expect(dwellDuring).toBeGreaterThan(plainDuring)       // 머무른 자리가 고인다(그리는 중)
+  expect(dwellAfter).toBeGreaterThan(plainAfter)         // 떼도 고임이 남는다(같은 함수·시드)
 })
 
 test('10 종이 결 — 겹에 마스크 한 장이 걸려 있고, 위상이 문서(팬)를 따라간다', async ({ page }) => {

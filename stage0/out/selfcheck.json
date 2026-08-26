@@ -1,5 +1,5 @@
 {
-  "n_flags": 5395,
+  "n_flags": 5399,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -5845,11 +5845,6 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "materials_visible_web2.json:classic.INK.ink_grain_painted",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
       "path": "materials_visible_web2.json:classic.INK.ink_grain_opaque",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -5881,11 +5876,6 @@
     },
     {
       "path": "materials_visible_web2_dpr2.json:classic.2B.ink_grain_opaque",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "materials_visible_web2_dpr2.json:classic.INK.ink_grain_painted",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -21647,6 +21637,16 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "sidebar_layout_web2.json:overlap.pen_with_thick.overlaps",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "sidebar_layout_web2_dpr2.json:overlap.pen_with_thick.overlaps",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "snap.json:by_density.wrong_by_kind.k2.0.280",
       "val": {
         "vertex": 3925
@@ -26731,6 +26731,11 @@
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
     {
+      "path": "sidebar_layout_web2_dpr2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
       "path": "stroke_payload_web2.json",
       "val": null,
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
@@ -26747,6 +26752,11 @@
     },
     {
       "path": "views_thumb_web2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "views_thumb_web2_dpr2.json",
       "val": null,
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
@@ -26816,6 +26826,11 @@
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
     {
+      "path": "sidebar_layout_web2_dpr2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
       "path": "stroke_payload_web2.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
@@ -26837,6 +26852,11 @@
     },
     {
       "path": "views_thumb_web2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "views_thumb_web2_dpr2.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
@@ -26898,7 +26918,7 @@
     {
       "path": "scan_citation_hashes",
       "val": [
-        "assumptions.md:189 test_cost.json",
+        "assumptions.md:190 test_cost.json",
         "DEFERRED.md:905 test_cost.json",
         "progress.md:11820 test_cost.json",
         "progress.md:13857 test_cost.json",
@@ -27085,7 +27105,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 364,
+      "files_scanned": 367,
       "exts_declared": [
         ".md",
         ".py",
@@ -27109,7 +27129,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 364,
+      "files_scanned": 367,
       "exts_declared": [
         ".md",
         ".py",
@@ -27151,7 +27171,7 @@
     {
       "scan": "scan_dead_ledger",
       "unit": "원장",
-      "targets": 114,
+      "targets": 116,
       "hits": 3,
       "note": null
     },
@@ -27179,7 +27199,7 @@
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 95,
+      "targets": 97,
       "hits": 2,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
@@ -27188,7 +27208,7 @@
       "unit": "게이트 블록",
       "targets": 66,
       "hits": 7,
-      "note": "값 대조를 **지난 것 28** · **픽스처가 정한 값 10** · **면제 28**(`reachability_absent`) · 원장 115개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, lens_roll_osnap.json:gate, one_point_direct.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, restore_pose.json:gate, snap_cache.json:gate, snap_stage.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, osnap_kinds.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "note": "값 대조를 **지난 것 28** · **픽스처가 정한 값 10** · **면제 28**(`reachability_absent`) · 원장 117개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, lens_roll_osnap.json:gate, one_point_direct.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, restore_pose.json:gate, snap_cache.json:gate, snap_stage.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, osnap_kinds.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -27813,6 +27833,9 @@
     "sidebar_layout_web2.json": [
       47
     ],
+    "sidebar_layout_web2_dpr2.json": [
+      47
+    ],
     "snap.json": [
       2,
       3,
@@ -27968,7 +27991,12 @@
       41
     ],
     "views_thumb_web2.json": [
-      47
+      47,
+      49
+    ],
+    "views_thumb_web2_dpr2.json": [
+      47,
+      49
     ],
     "vp_detect.json": [
       24
@@ -28110,6 +28138,7 @@
     "rule_camera.json",
     "segment_gate.json",
     "sidebar_layout_web2.json",
+    "sidebar_layout_web2_dpr2.json",
     "snap.json",
     "snap2d_flow.json",
     "snap_cache.json",
@@ -28132,6 +28161,7 @@
     "view_plane.json",
     "viewpoint_undo.json",
     "views_thumb_web2.json",
+    "views_thumb_web2_dpr2.json",
     "vp_detect.json",
     "vp_dir_flow.json",
     "vp_homog.json",
