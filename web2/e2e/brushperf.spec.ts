@@ -72,9 +72,11 @@ async function liveDraw(page: Page, renderer: 'brush' | 'classic', y: number) {
   await page.mouse.move(200, y)
   await page.mouse.down()
   const s0 = await page.evaluate(() => (window as any).__b2.diag.brushStats())
+  const d0 = await page.evaluate(() => (window as any).__b2.diag.draftStats())
   for (let i = 1; i <= 40; i++) await page.mouse.move(200 + (700 * i) / 40, y + (40 * i) / 40)
   await settle(page)
   const s1 = await page.evaluate(() => (window as any).__b2.diag.brushStats())
+  const d1 = await page.evaluate(() => (window as any).__b2.diag.draftStats())
   await page.mouse.up()
   await settle(page)
   const s2 = await page.evaluate(() => (window as any).__b2.diag.brushStats())
@@ -84,6 +86,11 @@ async function liveDraw(page: Page, renderer: 'brush' | 'classic', y: number) {
     brush_redraws_while_down: s1.redraws - s0.redraws,
     brush_syncs_while_down: s1.syncs - s0.syncs,
     brush_redraws_on_commit: s2.redraws - s1.redraws,
+    // web2-12 2번 — draft(진행 중 획) 한 획 재그리기의 분자와 ms(누적 표본의 중앙·최악).
+    // 전량 재그리기(brush_redraws)와 갈라 센다 — 섞으면 «그리는 중 전량 0회»가 안 재진다.
+    draft_redraws_while_down: d1.redraws - d0.redraws,
+    draft_ms_median: Number(d1.msMedian.toFixed(2)),
+    draft_ms_max: Number(d1.msMax.toFixed(2)),
   }
 }
 
@@ -166,10 +173,14 @@ test('2-f 원장 — 지연·프레임(그리기/궤도)·재그리기 분산·�
 
   // 판별 하한(D-3) — 수집기 생존 + «그리는 중 재그리기 0회»는 카운터로 + 궤도의 양성 채널
   expect(liveBrush500.frames).toBeGreaterThan(5)
-  expect(liveBrush500.brush_redraws_while_down).toBe(0)  // 닿아 있는 동안 — 캐시 히트(분모 syncs)
+  expect(liveBrush500.brush_redraws_while_down).toBe(0)  // 닿아 있는 동안 — **전량** 재그리기 0회(웹2-12 뒤에도 계약)
   expect(liveBrush500.brush_syncs_while_down).toBeGreaterThan(0)
   expect(liveBrush500.brush_redraws_on_commit).toBe(1)   // 뗌 = 정당한 1회(커밋이 장면을 바꾼다)
   expect(orbitBrush500.brush_redraws).toBeGreaterThan(0) // 궤도 중 — 실제로 다시 그린다
+  // web2-12 2번 — 그리는 중 draft «한 획» 재그리기는 실제로 돈다(brush에서만).
+  // 획 500에서도 이 분자는 획 수와 무관하다 — 전량이 아니라 스냅샷 위 한 획이므로.
+  expect(liveBrush500.draft_redraws_while_down).toBeGreaterThan(0)
+  expect(liveClassic500.draft_redraws_while_down).toBe(0) // classic은 옛 경로(비교 기준)다
   const s500 = scale['500'] as any
   expect(s500.brush_ms.min).toBeGreaterThan(0)
 

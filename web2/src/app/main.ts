@@ -577,7 +577,9 @@ function frame() {
   if (dirty) {
     dirty = false
     render3d(r3d, app)
-    brushLayer.sync(app)   // 캐시 키(문서·포즈·뷰·렌더러)가 갈렸을 때만 실제로 그린다
+    // 캐시 키(문서·포즈·뷰·렌더러)가 갈렸을 때만 전량을 그린다. draft가 있으면(web2-12 2번)
+    // draft 전용 모드 — 확정 획은 스냅샷 겹이 들고 #brushc는 진행 중인 획 하나만 그린다.
+    brushLayer.sync(app, draft)
     draw2d(ctx, app, draft, hover, eraserPos, facePrev)
   }
   requestAnimationFrame(frame)
@@ -678,6 +680,10 @@ const diag = {
   brushRedrawMs: () => brushLayer.redrawTimed(app),
   /** 재그리기 분자/분모(#43) — 「그리는 중 0회」를 수로 */
   brushStats: () => brushLayer.stats(),
+  /** draft 재그리기 원장(web2-12 2번) — 이동당 비용(ms 중앙·최악)과 횟수 */
+  draftStats: () => brushLayer.draftStats(),
+  /** 진행 중인 draft — 게이트 팔이 좌표·잠정 id를 확정 획과 대조한다(web2-12 2번) */
+  draft: () => draft,
   /** classic 쪽 비교치 — 같은 장면의 draw2d 1회 ms(질감 grain 포함) */
   draw2dMs: () => {
     const t0 = performance.now()

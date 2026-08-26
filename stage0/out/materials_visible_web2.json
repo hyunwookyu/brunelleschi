@@ -1,0 +1,78 @@
+{
+ "what": "web2-12 1번 — 재료 전수 가시성(합성 화면·dpr1): GRADES 일곱 × 렌더러 둘, 긋는 중/뗀 직후의 «기준 대비 달라진 픽셀 수». e2e materials.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).",
+ "def": "20×60 CSS px 상자 스크린샷을 긋기 전 기준과 비교, 채널 차 8 초과 픽셀 수. 문턱·하한의 동작점 성격은 AS-C37(스윕 없음 명기)",
+ "brush": {
+  "2H": {
+   "during": 173,
+   "after": 173,
+   "brushc_painted": 183,
+   "brushc_opaque": 183
+  },
+  "H": {
+   "during": 109,
+   "after": 112,
+   "brushc_painted": 125,
+   "brushc_opaque": 125
+  },
+  "F": {
+   "during": 136,
+   "after": 138,
+   "brushc_painted": 138,
+   "brushc_opaque": 138
+  },
+  "HB": {
+   "during": 195,
+   "after": 195,
+   "brushc_painted": 196,
+   "brushc_opaque": 196
+  },
+  "B": {
+   "during": 171,
+   "after": 171,
+   "brushc_painted": 171,
+   "brushc_opaque": 171
+  },
+  "2B": {
+   "during": 183,
+   "after": 185,
+   "brushc_painted": 183,
+   "brushc_opaque": 183
+  },
+  "INK": {
+   "during": 120,
+   "after": 120,
+   "brushc_painted": 0,
+   "brushc_opaque": 0
+  }
+ },
+ "classic": {
+  "2H": {
+   "during": 120,
+   "after": 124
+  },
+  "H": {
+   "during": 120,
+   "after": 126
+  },
+  "F": {
+   "during": 120,
+   "after": 127
+  },
+  "HB": {
+   "during": 120,
+   "after": 130
+  },
+  "B": {
+   "during": 120,
+   "after": 128
+  },
+  "2B": {
+   "during": 120,
+   "after": 136
+  },
+  "INK": {
+   "during": 120,
+   "after": 120
+  }
+ }
+}

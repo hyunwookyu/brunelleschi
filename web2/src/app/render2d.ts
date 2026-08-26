@@ -5,7 +5,7 @@
 // 선 굵기·표식 크기는 화면 고정(배율로 나눈다).
 
 import type { App } from './state'
-import { isDrawPose, isEraser, activeGrade } from './state'
+import { isDrawPose, isEraser, activeGrade, draftBrushed } from './state'
 import { vpMarks, project, projectSeg, groundAxes, horizonScreenY } from '../core/camera'
 import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
@@ -24,6 +24,14 @@ export interface Draft {
   endSnap: OsnapHit | null
   /** 지금 그리는 선의 실척 길이 mm — 리본 패널이 읽는다(지시 4-5). 무스케일이면 null */
   lenMm: number | null
+  /** 잠정 id(web2-12 2번) — 획이 시작될 때 `app.nextId`를 읽어 고정한다. 확정 시
+   *  `commitStroke`가 같은 값을 실제 id로 쓰므로(그 사이 다른 확정이 없다 — 포인터가
+   *  잡혀 있다) 브러시 시드가 미리보기→확정에서 안 바뀐다. 프레임마다 새로 뽑으면
+   *  입자가 반짝인다(지시의 함정 — D-3 반증을 실제로 돌려 확인했다). */
+  nid: number
+  /** 점별 필압(양자화 0..C.PRESS_Q · raw와 나란) — 펜만. 미리보기 브러시가 읽는다.
+   *  양자화 식은 확정(quantIn)과 같다 — 달라지면 뗄 때 입자가 튄다(2번 게이트). */
+  press?: number[]
 }
 
 export function resize2d(canvas: HTMLCanvasElement, W: number, H: number, dpr: number) {
@@ -214,9 +222,19 @@ export function draw2d(
     const constructing = draft.label === 'horizon' || draft.label === 'vp'
     // 축에 붙어도 선은 **재료색**이다(web2-10 지시 7 — 축 색 넷을 뺐다. 확정될 모습
     // 그대로가 원칙 d와도 맞다). «붙었다»는 아래 파선 안내가 말한다.
-    ctx.strokeStyle = constructing ? COL.preview : m.color
-    ctx.lineWidth = (constructing ? C.LINE_W_RESULT : drawW) * is
-    ctx.beginPath(); ctx.moveTo(draft.start.x, draft.start.y); ctx.lineTo(draft.end.x, draft.end.y); ctx.stroke()
+    // 몸체(web2-12 2번) — brush 겹이 이 draft를 그리고 있으면 여기서 몸체를 **긋지 않는다**
+    // (`draftBrushed` — 겹 순서 역전을 막는다, state.ts 그 술어의 머리주석이 정본).
+    // 그 밖(classic·INK·작도선)은 종전 벡터 미리보기 그대로다.
+    if (!draftBrushed(app, draft.label)) {
+      ctx.strokeStyle = constructing ? COL.preview : m.color
+      // 몸체 알파도 확정과 같게 — 확정 몸체(Line2)는 MAT.alpha로 그려지는데 미리보기가
+      // 불투명이면 긋는 동안이 더 진하다(「검은 벡터선」 관측의 절반이 이것이다).
+      // 떼는 순간 무변화 게이트(draftgate.spec)가 이 정합을 잰다.
+      ctx.globalAlpha = constructing ? 1 : m.alpha
+      ctx.lineWidth = (constructing ? C.LINE_W_RESULT : drawW) * is
+      ctx.beginPath(); ctx.moveTo(draft.start.x, draft.start.y); ctx.lineTo(draft.end.x, draft.end.y); ctx.stroke()
+      ctx.globalAlpha = 1
+    }
     if (draft.label && !constructing) axisGuide(ctx, draft, is)
     if (draft.startSnap) mark(ctx, draft.startSnap, is)
     if (draft.endSnap) mark(ctx, draft.endSnap, is)

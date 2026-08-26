@@ -28,29 +28,77 @@
 
 import * as brush from 'p5.brush/standalone'
 import type { App } from './state'
-import { docToScreen, isDrawPose } from './state'
+import { docToScreen, isDrawPose, activeGrade, draftBrushed } from './state'
 import { project } from '../core/camera'
 import { gradeOf } from '../core/material'
+import { C } from '../core/constants'
 import type { Stroke } from '../core/types'
 import type { Pt } from '../core/vec'
+import type { Draft } from './render2d'
 // 매핑·색·필압 계수는 순수 모듈이다 — 단위가 WebGL 없이 잰다(test/brushmap.test.ts)
 import { BRUSH_OF, strokeColor, weightOf, pressureProfile } from './brushmap'
 
 export interface BrushLayer {
   canvas: HTMLCanvasElement
-  /** 캐시 키가 갈렸으면 전량 다시 그린다. 반환 = 이번에 실제로 그렸는가. */
-  sync(app: App): boolean
+  /** 캐시 키가 갈렸으면 전량 다시 그린다. 반환 = 이번에 실제로 그렸는가.
+   *  draft(web2-12 2번)가 있으면 **draft 전용 모드**로 돈다 — 아래 syncDraft 절. */
+  sync(app: App, draft?: Draft | null): boolean
   /** 강제 재그리기 + 소요 ms — 성능 원장(2-f)이 부른다 */
   redrawTimed(app: App): number
   /** 분자/분모 카운터(#43) — 「그리는 중 재그리기 0회」를 산문이 아니라 수로:
-   *  syncs = sync 호출 수(프레임 몫), redraws = 그중 실제로 다시 그린 수 */
+   *  syncs = sync 호출 수(프레임 몫), redraws = 그중 실제로 다시 그린 수.
+   *  ⚠ web2-12 2번 뒤에도 이 정의는 산다 — redraws는 **전량**(확정 획) 재그리기만 세고,
+   *  draft 한 획 재그리기는 draftStats가 따로 센다(섞으면 «그리는 중 0회»가 안 재진다). */
   stats(): { syncs: number; redraws: number }
+  /** draft 재그리기 원장(web2-12 2번) — 이동당 비용의 분자/분모와 ms 표본 */
+  draftStats(): { redraws: number; msMedian: number; msMax: number }
   resize(W: number, H: number, dpr: number): void
 }
 
+/** p5.brush 2.2.2의 캔버스 컨텍스트를 **straight alpha**로 잡는다(web2-12 1번).
+ *
+ *  라이브러리는 `getContext('webgl2', {premultipliedAlpha: true, ...})`를 하드코딩하는데,
+ *  정작 `clear()`가 버퍼를 **(1,1,1,0) — 흰색·알파 0**으로 채운다. premultiplied 규약에서
+ *  rgb ≤ α여야 하므로 이 값은 규약 위반이고, 합성기가 `dst = src.rgb + dst.rgb×(1−α)`로
+ *  **흰색을 가산**해 — 겹 아래(#gl)의 Line2·면 전체가 흰 장막에 덮였다. 잉크 확정선은
+ *  Line2만 그리므로 「펜 획이 떼면 사라진다」로 관측된 것이 이것이다(e2e materials.spec가
+ *  합성 화면으로 잰다 — 수리 전 실패·수리 후 통과를 확인했다).
+ *
+ *  버퍼의 실제 내용(흰 배경·straight AA 경계)은 straight alpha 해석과 맞으므로
+ *  `premultipliedAlpha: false`가 올바른 선언이다 — 획 픽셀(전부 불투명, AS-C35)의 색은
+ *  변하지 않고 빈 픽셀(α=0)만 투명해진다. 결정론 해시(buffer 내용)도 안 변한다.
+ *  라이브러리가 attrs를 하드코딩해 주입 통로가 없으므로, createCanvas가 도는 동안만
+ *  getContext를 감싼다(생성되는 캔버스는 #brushc 하나뿐이라 #gl에는 안 닿는다). */
+function withStraightAlpha<T>(fn: () => T): T {
+  const orig = HTMLCanvasElement.prototype.getContext
+  HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, attrs?: unknown) {
+    return orig.call(this, type, type === 'webgl2' ? { ...(attrs as object), premultipliedAlpha: false } : attrs)
+  } as typeof orig
+  try { return fn() } finally { HTMLCanvasElement.prototype.getContext = orig }
+}
+
 export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
-  let canvas = brush.createCanvas(W, H, { parent: '#app', pixelDensity: dpr, id: 'brushc' })
+  let canvas = withStraightAlpha(() =>
+    brush.createCanvas(W, H, { parent: '#app', pixelDensity: dpr, id: 'brushc' }))
   let cw = W, ch = H
+
+  // ── 스냅샷 겹(web2-12 2번) — 그리는 동안 확정 획을 이 2D 캔버스가 든다 ──────
+  // 전량 재그리기는 이동당 못 돈다(full_redraw_ms — 100획 대역에서 이미 프레임 예산 밖).
+  // 대신: 펜 다운 때 #brushc(확정 획들)를 여기로 한 번 뜨고(#brushc 바로 아래 겹),
+  // 그리는 동안 #brushc는 **draft 한 획만** 지웠다 그린다(이동당 비용 = 획 1).
+  // 뗄 때 정상 재그리기가 확정 획 전체(+새 획)를 #brushc에 되그리고 이 겹은 걷힌다.
+  // drawImage 판독은 straight alpha 컨텍스트(위 withStraightAlpha)라 합성과 같은 값이다.
+  const snap = document.createElement('canvas')
+  snap.id = 'brushsnap'
+  snap.style.zIndex = '1'            // #gl(1)과 #brushc(1) 사이 — DOM 순서가 가른다
+  snap.style.pointerEvents = 'none'
+  snap.style.display = 'none'
+  canvas.parentElement!.insertBefore(snap, canvas)
+  const fitSnap = () => {
+    if (snap.width !== canvas.width || snap.height !== canvas.height) {
+      snap.width = canvas.width; snap.height = canvas.height
+    }
+  }
   // 내장 브러시는 큰 캔버스 기준이라 그대로는 크다/작다 — 1을 기준으로 두고 실측으로 판단
   // (brush_perf_web2의 폭 실측 행이 배수·픽셀 폭을 남긴다. 눈 판정은 실기기 몫).
   brush.scaleBrushes(1)
@@ -114,11 +162,65 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     brush.render()
   }
 
+  // ── draft 그리기(web2-12 2번) — 진행 중인 획을 확정과 같은 브러시·재료·시드로 ──
+  // 잠정 id(draft.nid = 확정될 nextId)가 시드라 뗄 때 입자가 안 바뀐다(게이트).
+  // INK는 여기서 안 그린다 — 잉크 확정선의 몸체는 Line2의 균일선이고(질감 없음, redraw의
+  // 같은 분기) 미리보기 몸체(ink 겹의 균일 벡터선)가 이미 그 모습이다. 작도 획(지평선·
+  // 소실점 정의선)도 밖 — 확정돼도 재료 질감이 없다(안내색 미리보기 그대로).
+  const draftEligible = (app: App, d: Draft | null | undefined): d is Draft =>
+    !!d && draftBrushed(app, d.label)
+  /** draft를 확정과 같은 형태의 Stroke로 — 재료·니브·점별 필압 전부 commitStroke와 같은 규칙 */
+  const draftStroke = (app: App, d: Draft): Stroke => {
+    const s: Stroke = { id: d.nid, a: d.start, b: d.end, mat: { grade: activeGrade(app) } }
+    if (app.tool === 'pen' && app.nib !== C.NIB_PX) s.mat!.w = app.nib
+    // rawIn 채택 조건도 확정(commitStroke)과 같다 — raw>2·나란함. 갈리면 뗄 때 프로필이 튄다.
+    if (d.press && d.raw.length > 2 && d.press.length === d.raw.length) s.rawIn = { press: d.press }
+    return s
+  }
+  let draftActive = false
+  let draftKey = ''                 // (end·점 수)가 같으면 이동이 없던 프레임 — 안 그린다
+  let draftRedraws = 0
+  const draftMs: number[] = []
+  function drawDraftOnly(app: App, d: Draft) {
+    const t0 = performance.now()
+    brush.clear()
+    brush.push()
+    brush.translate(-cw / 2, -ch / 2)
+    drawStroke(app, draftStroke(app, d), docToScreen(app, d.start), docToScreen(app, d.end))
+    brush.pop()
+    brush.render()
+    draftRedraws++
+    if (draftMs.length < 400) draftMs.push(performance.now() - t0)
+  }
+
   let syncs = 0, redraws = 0, blank = false
   return {
     canvas,
-    sync(app) {
+    sync(app, draft) {
       syncs++
+      if (draftEligible(app, draft)) {
+        // 시작(또는 그리는 중 뷰·문서가 움직인 드문 경우) — 확정 획을 굳혀 스냅샷으로
+        if (!draftActive || dirty(app)) {
+          if (dirty(app)) { remember(app); redraw(app); redraws++ }
+          fitSnap()
+          const g2 = snap.getContext('2d')!
+          g2.clearRect(0, 0, snap.width, snap.height)
+          g2.drawImage(canvas, 0, 0)
+          snap.style.display = ''
+          draftActive = true
+          draftKey = ''
+        }
+        const key = `${draft.end.x},${draft.end.y},${draft.raw.length},${draft.start.x},${draft.start.y}`
+        if (key !== draftKey) { draftKey = key; drawDraftOnly(app, draft) }
+        return false
+      }
+      if (draftActive) {
+        // 끝 — 겹을 걷고 확정 상태를 되그린다(확정이 있었으면 docVersion으로도 dirty지만,
+        // 잡음 취소(커밋 없음)도 캔버스에 draft 잔상이 있으므로 무조건 되그린다)
+        draftActive = false
+        snap.style.display = 'none'
+        last = null
+      }
       if (!dirty(app)) return false
       // classic이고 이미 비어 있으면 지우기 재실행도 생략한다 — 계측(2차 재리뷰 [2]:
       // classic 카운터가 0이 아니면 «캐시 성공»과 «겹 미사용»이 안 갈린다)과 낭비 둘 다의 답.
@@ -131,6 +233,14 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
       return true
     },
     stats: () => ({ syncs, redraws }),
+    draftStats: () => {
+      const s = [...draftMs].sort((a, b) => a - b)
+      return {
+        redraws: draftRedraws,
+        msMedian: s.length ? s[Math.floor(s.length / 2)]! : 0,
+        msMax: s.length ? s[s.length - 1]! : 0,
+      }
+    },
     redrawTimed(app) {
       const t0 = performance.now()
       redraw(app)
@@ -138,7 +248,8 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     },
     resize(W2, H2, dpr2) {
       canvas.remove()
-      canvas = brush.createCanvas(W2, H2, { parent: '#app', pixelDensity: dpr2, id: 'brushc' })
+      canvas = withStraightAlpha(() =>
+        brush.createCanvas(W2, H2, { parent: '#app', pixelDensity: dpr2, id: 'brushc' }))
       cw = W2; ch = H2
       last = null
     },
