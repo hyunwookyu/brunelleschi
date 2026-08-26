@@ -108,6 +108,13 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     if (snap.width !== canvas.width || snap.height !== canvas.height) {
       snap.width = canvas.width; snap.height = canvas.height
     }
+    // ⚠ CSS 크기를 **명시**한다(web2-14 4번). canvas는 대체 요소라 `inset:0`이 못 늘린다 —
+    // style이 없으면 고유 크기(backing = W·dpr)로 표시돼, dpr>1에서 이 겹만 dpr배로 깔렸다.
+    // 그리는 동안 확정 획 질감이 좌상단 기준 dpr배 자리에 «같은 장면»으로 또 보인 실기기
+    // 증상이 그것이다(dpr1은 고유 크기 == 뷰포트라 무증상 — e2e snapghost.spec이 dpr2로 잰다).
+    const w = `${cw}px`, h = `${ch}px`
+    if (snap.style.width !== w) snap.style.width = w
+    if (snap.style.height !== h) snap.style.height = h
   }
   // 내장 브러시는 큰 캔버스 기준이라 그대로는 크다/작다 — 1을 기준으로 두고 실측으로 판단
   // (brush_perf_web2의 폭 실측 행이 배수·픽셀 폭을 남긴다. 눈 판정은 실기기 몫).
