@@ -4484,3 +4484,15 @@ sidebar 2팔·diag 2팔·draw 축 1팔 × dpr 둘). **단언 단위로**: 이 �
 어두움>0.22·자유 방향 0. selfcheck **새 플래그 없음**(아래 실행 — scan_pitfalls_table_last
 0건 포함). 반증 실행 여섯(전부 dpr 둘): 리스너 끊기 · undo 20 · 오스냅 옛 코드 ·
 axis 옛 render2d · (배포 ①의 둘은 그 절에).
+
+### 배포 ② 확인 (#58 · ⛳)
+
+원격 main(`git ls-remote origin main` 원문):
+
+```
+6c5b6f109d1a9030c39e9d72816561150576b08b	refs/heads/main
+```
+
+`npm run deploy:check` → 「✓ 화면 빌드 식별자 == 배포 커밋 / 결과: 배포됨」,
+**화면 빌드 식별자 `6c5b6f1`**. 첫 판정 「안 됨」 후 재시도 2회째 통과(Pages 전파 관행).
+⚠ 이 뒤의 기록 커밋은 문서만이다(web2-07 규약).
