@@ -10,12 +10,12 @@ import { dirname, resolve } from 'node:path'
 const HERE = dirname(fileURLToPath(import.meta.url))
 const ledger: Record<string, unknown> = {}
 test.afterAll(async ({ }, testInfo) => {
-  if (testInfo.project.name !== 'dpr1') return
-  const out = resolve(HERE, '../../stage0/out/views_thumb_web2.json')
+  const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
+  const out = resolve(HERE, `../../stage0/out/views_thumb_web2${suffix}.json`)
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
   writeFileSync(out, JSON.stringify({
-    what: 'web2-12 5번 — 뷰 썸네일의 실측: 한 장 바이트·저장 탭 소요 ms·뷰 1/5/20에서의 .brnl 크기. e2e views.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).',
-    def: '썸네일 = C.THUMB_W(px) 폭 JPEG(품질 0.72 — 동작점 AS-C39). save_ms = 저장 버튼 click 왕복(썸네일 합성 + 목록 갱신 포함 — 순수 캡처만이 아니다). brnl_bytes_*는 같은 문서(획 셋)에서 뷰 수만 는 값.',
+    what: `web2-12 5번(${testInfo.project.name}) — 뷰 썸네일의 실측: 한 장 바이트·저장 탭 소요 ms·뷰 1/5/20에서의 .brnl 크기. e2e views.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).`,
+    def: '썸네일 = C.THUMB_W(px) 폭 JPEG(품질 0.72 — 동작점 AS-C39). save_ms = «시점 저장» 버튼 click 왕복(굽기+목록 갱신 포함) · capture_ms = **굽기만**(diag.captureThumb — ㉮의 결정이 딛는 양. 2차 [8]·#49) · regen_view_ms = **㉯의 한 뷰 몫**(gotoView+전량 재그리기+굽기 — «열 때 다시 그린다»면 뷰마다 이만큼 든다). brnl_bytes_*는 같은 문서(획 셋)에서 뷰 수만 는 값.',
     ...ledger,
   }, null, 1))
 })
@@ -75,6 +75,9 @@ test('썸네일 저장·펼침·선택 복귀·삭제 — 그리고 뷰 수에 �
   // 삭제 — 지우는 길이 생겼다(✕). 실행취소 대상이 아니다(결정 — state.ts deleteView).
   await page.click('#btn-views'); await settle(page)
   await page.locator('#views-pop .vdel').nth(0).click(); await settle(page)
+  // 확인 한 번(2차 [7] — 실행취소 밖 파괴 조작의 4번 규칙). 확인 전에는 안 지워진다.
+  expect(await page.evaluate(() => (window as any).__b2.app.savedViews.length)).toBe(2)
+  await page.click('#confirm-pop u[data-pick="yes"]'); await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.app.savedViews.length)).toBe(1)
   expect(await page.locator('#views-pop .vrow').count()).toBe(1)
   // 반증(D-3): 남은 뷰가 옛 «둘째»다(첫째를 지웠으므로) — 인덱스가 안 밀렸으면 잡힌다
@@ -102,6 +105,35 @@ test('썸네일 저장·펼침·선택 복귀·삭제 — 그리고 뷰 수에 �
     if (await page.evaluate(() => (window as any).__b2.app.savedViews.length) === 5) ledger['brnl_bytes_5'] = await brnl()
   }
   const b20 = await brnl()
+  // ㉮/㉯ 대비의 실측(2차 [8] — ㉯를 산문으로 기각하지 않는다):
+  // capture_ms = 굽기만 · regen_view_ms = ㉯라면 «펼칠 때» 뷰마다 드는 몫(시점 이동 +
+  // 전량 재그리기 + 굽기 — 지금 저장된 20뷰로 실제로 돌려 잰다).
+  const capMs: number[] = []
+  for (let i = 0; i < 10; i++) {
+    capMs.push(await page.evaluate(() => {
+      const d = (window as any).__b2.diag
+      const t0 = performance.now()
+      d.captureThumb()
+      return performance.now() - t0
+    }))
+  }
+  const regenMs: number[] = []
+  for (let i = 0; i < 20; i++) {
+    regenMs.push(await page.evaluate((idx) => {
+      const b = (window as any).__b2
+      const t0 = performance.now()
+      b.app.view = { ...b.app.savedViews[idx].view }
+      b.app.pose = { p: { ...b.app.savedViews[idx].pose.p }, q: { ...b.app.savedViews[idx].pose.q } }
+      b.diag.brushRedrawMs()
+      b.diag.captureThumb()
+      return performance.now() - t0
+    }, i))
+  }
+  const med = (a: number[]) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)]!
+  ledger['capture_ms_median'] = Number(med(capMs).toFixed(2))
+  ledger['regen_view_ms_median'] = Number(med(regenMs).toFixed(2))
+  ledger['regen_view_ms_max'] = Number(Math.max(...regenMs).toFixed(2))
+  console.log(`[측정] ㉮/㉯ — 굽기만 중앙 ${ledger['capture_ms_median']}ms · ㉯ 한 뷰 몫 중앙 ${ledger['regen_view_ms_median']}ms 최악 ${ledger['regen_view_ms_max']}ms`)
   thumbBytes.sort((a, b) => a - b)
   saveTimes.sort((a, b) => a - b)
   ledger['thumb_bytes_median'] = thumbBytes[Math.floor(thumbBytes.length / 2)]

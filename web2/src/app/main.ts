@@ -645,7 +645,10 @@ function openViewsPop() {
     del.className = 'vdel'
     del.textContent = '✕'
     del.title = '이 시점을 지운다'
-    del.addEventListener('click', () => { deleteView(app, i); openViewsPop() })
+    // 확인 한 번(2차 리뷰어 [7]) — 삭제는 실행취소 밖이라 4번 규칙(«실행취소 밖 파괴
+    // 조작은 확인이 유일한 방어선»)이 여기에도 걸린다. 같은 confirmNear·같은 배치 규칙.
+    del.addEventListener('click', () =>
+      confirmNear(del, `시점 ${i + 1}을 지운다.`, { label: '지운다', onPick: () => { deleteView(app, i); openViewsPop() } }))
     row.append(pick, del)
     viewsPop!.append(row)
   })
@@ -822,6 +825,8 @@ const diag = {
   /** draft 재그리기 원장(web2-12 2번) — 이동당 비용(ms 중앙·최악)과 횟수. 국면별로 리셋 */
   draftStats: () => brushLayer.draftStats(),
   draftStatsReset: () => brushLayer.resetDraftStats(),
+  /** 썸네일 굽기만의 비용(web2-12 5번 — ㉮/㉯ 대비의 분리 측정. 2차 [8]) */
+  captureThumb: () => captureThumb(),
   /** 진행 중인 draft — 게이트 팔이 좌표·잠정 id를 확정 획과 대조한다(web2-12 2번) */
   draft: () => draft,
   /** classic 쪽 비교치 — 같은 장면의 draw2d 1회 ms(질감 grain 포함) */

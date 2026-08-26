@@ -13,6 +13,9 @@ const box = async (page: Page, sel: string) => {
 
 // web2-12 3번 — 크기·정렬·누름 범위가 **한 규칙**이다(:root --ui-scale·--hit-pad·--bar-gap).
 // 시점·치수 묶음(#viewbar)이 세로바 안으로 들어와 오른쪽 세로축이 하나로 선다.
+// 겹침 실측 — 첫 팔이 재고 자리 실측 팔이 원장에 싣는다(한 파일은 한 워커에서 차례로 돈다)
+let ovPencil = { overlaps: -1, n: 0 }
+let ovPen = { overlaps: -1, n: 0 }
 const ALL = ['sidebar-toggle', 'btn-draw-view', 'btn-save-view', 'dim-toggle',
   'btn-undo', 'btn-redo',
   'tray-2H', 'tray-H', 'tray-F', 'tray-HB', 'tray-B', 'tray-2B', 'btn-pen',
@@ -60,25 +63,42 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
     expect(p.dh, `#${p.id} 누름 여유(세로)`).toBeGreaterThanOrEqual(5)
   }
 
-  // 쌍별 겹침 0 — **누름 사각형**(boundingBox) 기준. 도구를 선택해 확대가 걸린 상태에서도
-  // 겹치지 않는다(확대는 svg에만 걸린다 — 버튼 상자는 제자리).
+  // 쌍별 겹침 0 — **누름 사각형**(boundingBox) 기준. **두 도구 상태**(연필·펜 — 2차
+  // 리뷰어 [3]: 굵기 막대는 흐름 밖이라 구성 보장이 안 걸린다. 막대가 뜬 펜 상태를
+  // 포함해 막대까지 전수에 넣는다). 확대는 svg에만 걸린다 — 버튼 상자는 제자리.
+  const overlapCount = async (ids: string[]) => {
+    const rects = await page.evaluate((list) => list
+      .filter(id => {
+        const el = document.getElementById(id)
+        return el && el.getBoundingClientRect().width > 0 && getComputedStyle(el).display !== 'none'
+      })
+      .map(id => {
+        const b = document.getElementById(id)!.getBoundingClientRect()
+        return { id, x: b.x, y: b.y, w: b.width, h: b.height }
+      }), ids)
+    let overlaps = 0
+    for (let i = 0; i < rects.length; i++) {
+      for (let j = i + 1; j < rects.length; j++) {
+        const a = rects[i]!, b = rects[j]!
+        const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)
+        const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y)
+        if (ox > 0 && oy > 0) { overlaps++; console.log(`[측정] 겹침 — ${a.id} × ${b.id} (${ox.toFixed(1)}×${oy.toFixed(1)})`) }
+      }
+    }
+    return { overlaps, n: rects.length }
+  }
   await page.click('#tray-HB')
   await page.waitForTimeout(200)
-  const rects = await page.evaluate((list) => list.map(id => {
-    const b = document.getElementById(id)!.getBoundingClientRect()
-    return { id, x: b.x, y: b.y, w: b.width, h: b.height }
-  }), ALL)
-  let overlaps = 0
-  for (let i = 0; i < rects.length; i++) {
-    for (let j = i + 1; j < rects.length; j++) {
-      const a = rects[i]!, b = rects[j]!
-      const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)
-      const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y)
-      if (ox > 0 && oy > 0) { overlaps++; console.log(`[측정] 겹침 — ${a.id} × ${b.id} (${ox.toFixed(1)}×${oy.toFixed(1)})`) }
-    }
-  }
-  console.log(`[측정] 누름 사각형 쌍별 겹침 ${overlaps} (쌍 ${rects.length * (rects.length - 1) / 2})`)
-  expect(overlaps).toBe(0)
+  ovPencil = await overlapCount(ALL)
+  await page.click('#btn-pen')
+  await page.waitForTimeout(200)
+  ovPen = await overlapCount([...ALL, 'thick'])
+  await page.click('#tray-HB')
+  await page.waitForTimeout(200)
+  console.log(`[측정] 쌍별 겹침 — 연필 ${ovPencil.overlaps}(요소 ${ovPencil.n}) · 펜+막대 ${ovPen.overlaps}(요소 ${ovPen.n})`)
+  expect(ovPencil.overlaps).toBe(0)
+  expect(ovPen.overlaps).toBe(0)
+  expect(ovPen.n).toBe(ovPencil.n + 1)   // 펜 상태에는 굵기 막대가 실제로 들었다(판별력)
 
   // 세로바 전체가 화면 높이 안이다(지시 문면 — #sidebar에는 max-height가 없다)
   const bar = await box(page, '#sidebar')
@@ -158,25 +178,43 @@ test('연필통 — 진하기 순 세로 배열·행 선택이 도구+경도·�
   const nib = await page.evaluate(() => (window as any).__b2.app.nib)
   expect(await page.locator('#nib-mm').textContent()).toBe(nib.toFixed(1))
 
-  // 자리 실측(지시 문면: 차지하는 폭·높이 — 그림을 얼마나 가리는가) → 원장
-  const bar = (await page.locator('#sidebar').boundingBox())!
-  const tray = (await page.locator('#tray').boundingBox())!
-  const vw = await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }))
-  // **펜 상태에서도** 화면 안이다 — 굵기 막대가 흐름 안에 있던 초판은 펜을 고른 순간
-  // 세로바가 923px(>800)로 넘쳤다(이 실측이 잡았다 — 막대는 이제 왼쪽 옆 고정).
-  expect(bar.y).toBeGreaterThanOrEqual(0)
-  expect(bar.y + bar.height, '펜 상태 세로바가 화면 안').toBeLessThanOrEqual(vw.h)
-  const thick = (await page.locator('#thick').boundingBox())!
-  expect(thick.x + thick.width, '굵기 막대가 세로바 왼쪽').toBeLessThanOrEqual(vw.w - bar.width - 2)
-  console.log(`[측정] 자리 — 세로바 ${Math.round(bar.width)}×${Math.round(bar.height)} · 연필통 ${Math.round(tray.width)}×${Math.round(tray.height)} / 화면 ${vw.w}×${vw.h}`)
-  if (testInfo.project.name === 'dpr1') {
-    mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
-    writeFileSync(resolve(HERE, '../../stage0/out/sidebar_layout_web2.json'), JSON.stringify({
-      what: 'web2-12 3·6번 — 세로바·연필통이 차지하는 자리 실측(CSS px·뷰포트 1200×800 헤드리스). e2e sidebar.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47). 실기기(가림이 거슬리는가)는 DEFERRED.',
-      viewport: vw,
-      sidebar: { w: Math.round(bar.width), h: Math.round(bar.height) },
-      tray: { w: Math.round(tray.width), h: Math.round(tray.height) },
-      note: '세로바 높이가 뷰포트에 닿는 정도는 위 팔(화면 안 수용)이 단언한다 — 800에서 여유가 작다. 실기기 CSS 높이는 dpr이 정한다(AS-C30의 그 자리).',
-    }, null, 1))
+  // 자리 실측(지시 문면: 차지하는 폭·높이 — 그림을 얼마나 가리는가) → 원장.
+  // **상태별로 잰다**(2차 [4] — 어느 상태의 값인지 파일이 말해야 한다) · dpr별 파일(2차 [5]).
+  const measure = async () => {
+    const bar = (await page.locator('#sidebar').boundingBox())!
+    return { w: Math.round(bar.width), h: Math.round(bar.height), bottom: Math.round(bar.y + bar.height) }
   }
+  const vw = await page.evaluate(() => ({ w: window.innerWidth, h: window.innerHeight }))
+  const barPencil = await measure()          // 지금 연필(HB) 상태다
+  await page.click('#btn-pen'); await page.waitForTimeout(150)
+  const barPen = await measure()
+  const thick = (await page.locator('#thick').boundingBox())!
+  // **펜 상태에서도** 화면 안이다 — 굵기 막대가 흐름 안에 있던 초판은 펜을 고른 순간
+  // 세로바가 화면(800) 밖으로 넘쳤다(이 실측이 잡았다 — 막대는 이제 왼쪽 옆 고정.
+  // 그 초판 값은 일회 진단 기록으로 NOTES에만 있다 — 현행 상태별 값이 이 원장 필드다).
+  expect(barPen.bottom, '펜 상태 세로바가 화면 안').toBeLessThanOrEqual(vw.h)
+  expect(barPencil.bottom, '연필 상태 세로바가 화면 안').toBeLessThanOrEqual(vw.h)
+  expect(thick.x + thick.width, '굵기 막대가 세로바 왼쪽').toBeLessThanOrEqual(vw.w - barPen.w - 2)
+  await page.click('#tray-HB'); await page.waitForTimeout(150)
+  const tray = (await page.locator('#tray').boundingBox())!
+  const rightEdge = await page.evaluate(() =>
+    (document.querySelector('#btn-undo svg') as SVGElement).getBoundingClientRect().right)
+  const hitPad = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue('--hit-pad').trim())
+  console.log(`[측정] 자리 — 세로바 연필 ${barPencil.w}×${barPencil.h} · 펜 ${barPen.w}×${barPen.h} · 연필통 ${Math.round(tray.width)}×${Math.round(tray.height)} / 화면 ${vw.w}×${vw.h}`)
+  const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
+  mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
+  writeFileSync(resolve(HERE, `../../stage0/out/sidebar_layout_web2${suffix}.json`), JSON.stringify({
+    what: `web2-12 3·6번 — 세로바·연필통 자리·겹침·정렬 실측(CSS px·뷰포트 1200×800 헤드리스·${testInfo.project.name}). e2e sidebar.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47). 실기기(가림·누르기)는 DEFERRED.`,
+    viewport: vw,
+    sidebar_pencil: barPencil,
+    sidebar_pen: barPen,               // 굵기 막대는 흐름 밖 — 두 상태 높이가 같은 것이 그 증거다
+    tray: { w: Math.round(tray.width), h: Math.round(tray.height) },
+    thick_right_x: Math.round(thick.x + thick.width),
+    overlap: { pencil: ovPencil, pen_with_thick: ovPen },
+    right_edge_x: Math.round(rightEdge),
+    hit_pad_css: hitPad,
+    clip_boundary_css_h: 12 + Math.max(barPencil.h, barPen.h),   // 상단 고정 12px + 최대 높이 — 이 아래면 잘린다(AS-C30 갱신의 근거 필드)
+    note: '판정(겹침 0·화면 안·오른쪽 축·크기 대역)은 팔의 단언이 정본이고 이 원장은 그 실측값의 기록이다.',
+  }, null, 1))
 })

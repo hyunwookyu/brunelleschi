@@ -28,14 +28,19 @@
       /* ── 세로바 크기의 단일 출처(web2-12 3번) ─────────────────────────────
          web2-10이 1.5배로 키울 때 값이 svg 속성마다 흩어져 시점·치수 버튼(20px)이
          빠졌다 — 배수는 여기 하나다. 아이콘 크기는 기준 높이 × 이 배수(아래 .ico-*).
-         누름 여유(--hit-pad)는 보이는 크기를 안 바꾸고 닿는 넓이만 키운다(관측 ②) —
-         이웃 간 시각 간격 = --bar-gap + 2×--hit-pad ≈ 종전 9px을 유지한다.
+         누름 여유(--hit-pad 3px)는 보이는 크기를 안 바꾸고 닿는 넓이만 키운다(관측 ②).
+         ⚠ 두 «간격»을 가른다(2차 리뷰어 [6]의 혼동 자리): --btn-gap(1px)은 **버튼 사이
+         flex gap**이고(종전 9px의 자리 — 시각 간격은 gap+2×pad=7px로 종전과 같은 대역),
+         .bar-gap(10px)은 **그룹 사이 여백**이다(종전 21px → 10px). 줄인 대가는 높이
+         예산이다: 요소가 늘어(시점 묶음 편입·연필통) 800px 화면에 들어가야 했다 —
+         «간격을 늘린다» 선택지(지시 3)는 겹침이 0이라 발화 조건이 없었다(겹침은 흐름
+         배치의 구성 보장 — 늘릴 이유는 겹침이지 여백이 아니다).
          겹침 0은 흐름 배치가 구성으로 보장한다(패딩은 흐름 안이다) — 선택 확대는
          svg에만 걸어(아래 .tool.on svg) 누름 상자를 안 건드린다. e2e sidebar.spec가
          크기 대역·오른쪽 정렬·쌍별 겹침 0을 잰다. */
       --ui-scale: 1.5;
       --hit-pad: 3px;
-      --bar-gap: 1px;
+      --btn-gap: 1px;
     }
     /* touch-action을 **뿌리에도** 건다(web2-09 지시 2). 모든 요소가 #app의 자손이라
        유효 사슬에는 이미 none이 들어 있지만, 그 한 겹이 규칙 하나에 걸려 있었다 —
@@ -63,8 +68,8 @@
        web2-10이 겹침을 피하려 둘째 열(right:54)로 뺐던 것이 「크기가 안 맞고 오른쪽에
        정렬되지 않는다」는 관측을 낳았다 — 같은 흐름(flex) 안에 두면 겹침은 구성으로
        사라지고 오른쪽 세로축이 하나로 선다. */
-    #viewbar { display: flex; flex-direction: column; gap: var(--bar-gap); align-items: flex-end; }
-    #views { display: flex; flex-direction: column; gap: var(--bar-gap); align-items: flex-end; }
+    #viewbar { display: flex; flex-direction: column; gap: var(--btn-gap); align-items: flex-end; }
+    #views { display: flex; flex-direction: column; gap: var(--btn-gap); align-items: flex-end; }
 
     /* 우측 세로바 하나 — 위: 시점·치수 · 실행취소 · 가운데: 도구·굵기 · 아래: 파일·설정(접힘).
        좌측과 하단은 비운다(4-i). */
@@ -77,9 +82,9 @@
        더 여유롭다. */
     #sidebar {
       position: fixed; top: 12px; right: 2px;
-      z-index: 10; display: flex; flex-direction: column; gap: var(--bar-gap); align-items: flex-end;
+      z-index: 10; display: flex; flex-direction: column; gap: var(--btn-gap); align-items: flex-end;
     }
-    #sidebar-body { display: flex; flex-direction: column; gap: var(--bar-gap); align-items: flex-end; }
+    #sidebar-body { display: flex; flex-direction: column; gap: var(--btn-gap); align-items: flex-end; }
     #sidebar.folded #sidebar-body { display: none; }
     .bar-gap { height: 10px; }
 
@@ -102,7 +107,7 @@
     .ico-h  svg { height: calc(32px * var(--ui-scale)); width: auto; }  /* 지우개·면 */
     .ico-t  svg { height: calc(62px * var(--ui-scale)); width: auto; }  /* (옛) 세로 연필·펜 */
     /* 연필통(web2-12 6번) — 가로로 누운 행. 진하기 순으로 쌓인다. */
-    #tray { display: flex; flex-direction: column; gap: var(--bar-gap); align-items: flex-end; }
+    #tray { display: flex; flex-direction: column; gap: var(--btn-gap); align-items: flex-end; }
     .trow svg { height: calc(15px * var(--ui-scale)); width: auto; }
     /* 굵기 막대 — **세로바 흐름 밖**(왼쪽 옆 고정. web2-12 3번): 흐름 안에 두면 펜을
        고른 순간 막대 높이(129px)가 세로바를 화면 밖으로 민다 — 자리 실측이 잡은 잠복
