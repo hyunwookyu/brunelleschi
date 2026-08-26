@@ -100,7 +100,7 @@ export function createApp(W: number, H: number): App {
     dimSnapStep: 50,
     dimExact: false,
     grid: false,
-    cubeLayout: { cx: W - 60, cy: 60, size: 80 }, // 우측 상단 — 큐브
+    cubeLayout: { cx: W - 110, cy: 60, size: 80 }, // 우측 상단 — 1.5배 세로바(x W−45..)와 안 겹치게 왼쪽으로(web2-10 지시 5)
     listeners: [],
   }
 }

@@ -26673,7 +26673,7 @@
     {
       "path": "scan_citation_hashes",
       "val": [
-        "assumptions.md:176 test_cost.json",
+        "assumptions.md:179 test_cost.json",
         "DEFERRED.md:905 test_cost.json",
         "progress.md:11820 test_cost.json",
         "progress.md:13857 test_cost.json",
@@ -26860,7 +26860,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 342,
+      "files_scanned": 345,
       "exts_declared": [
         ".md",
         ".py",
@@ -26884,7 +26884,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 342,
+      "files_scanned": 345,
       "exts_declared": [
         ".md",
         ".py",
@@ -26894,7 +26894,7 @@
         ".md": 21,
         ".py": 4,
         ".html": 1,
-        ".ts": 86
+        ".ts": 87
       }
     },
     {

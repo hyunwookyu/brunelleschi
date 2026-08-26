@@ -37,6 +37,10 @@ try {
   document.getElementById('buildid')!.textContent = __BUILD_ID__
 } catch { /* 치환이 안 됐다 — 화면에만 안 뜬다 */ }
 
+// 진단 패널(web2-10 지시 4) — 빌드 식별자를 누르면 펴진다. 콘솔 없는 태블릿의 판독 통로.
+import { initDiagPanel } from './diagpanel'
+initDiagPanel(document.getElementById('buildid')!, document.getElementById('diagpanel')!)
+
 // **탈출구** — `?reset`으로 열면 워커 등록과 캐시를 전부 버리고 새로 받는다.
 // 배포 전환(web/ → web2)은 같은 주소에 다른 앱이 오는 것이라 캐시가 꼬일 수 있고,
 // 그때 사람이 개발자 도구 없이 스스로 빠져나올 길이 필요하다.
@@ -296,7 +300,7 @@ for (const k of TOOLS) toolBtn[k].addEventListener('click', () => setTool(k))
 
 // ── 굵기는 미리보기다 (4-f) — 숫자가 없다 ────────────────────────────────
 // 세로 막대를 위아래로 끌면 **그 자리에** 그 굵기의 선(펜)이나 그 크기의 원(지우개)이 그려진다.
-const THICK_H = 86, THICK_PAD = 8
+const THICK_H = 129, THICK_PAD = 12 // 1.5배(web2-10 지시 5) — SVG viewBox도 39×129로 함께 커졌다
 /** 값 → 막대 위 y (위가 가늘다) */
 const thickY = (v: number, lo: number, hi: number) =>
   THICK_PAD + (1 - (v - lo) / (hi - lo)) * (THICK_H - 2 * THICK_PAD)
@@ -324,7 +328,7 @@ function syncThick() {
     nibEl.setAttribute('x', String(13 - v / 2))
   } else {
     // 지우개는 반경이 커서 막대 폭을 넘는다 — 원의 반지름을 막대 안으로 줄여 **비율만** 보인다
-    const r = 3 + (v - C.ERASER_MIN) / (C.ERASER_MAX - C.ERASER_MIN) * 8
+    const r = 4.5 + (v - C.ERASER_MIN) / (C.ERASER_MAX - C.ERASER_MIN) * 12 // 1.5배(지시 5)
     thickDot.setAttribute('cy', String(y))
     thickDot.setAttribute('r', String(r))
   }
@@ -413,6 +417,10 @@ document.getElementById('btn-save')!.addEventListener('click', () => {
   download('drawing.brnl', serializeBrnl({
     doc: app.doc, nextId: app.nextId, savedViews: app.savedViews,
   }), 'application/json')
+  // 성공 알림(web2-10 지시 5) — 4-b(「알림은 오류만」)의 예외다: 다운로드는 태블릿
+  // PWA에서 화면에 아무 흔적이 없어 «됐는지»를 알 길이 없고, 모르고 또 누르거나
+  // 저장 안 된 채 닫는 쪽이 오류다. 파일명이 정보다(HANDOFF 「남은 다듬기」의 그 행).
+  notify('저장했다 — drawing.brnl')
 })
 const fileOpen = document.getElementById('file-open') as HTMLInputElement
 document.getElementById('btn-open')!.addEventListener('click', () => fileOpen.click())
@@ -440,10 +448,12 @@ document.getElementById('btn-obj')!.addEventListener('click', () => {
   if (!hasGeometry()) return
   download('drawing.obj', toOBJ(app.lift, app.faces), 'text/plain')
   download('drawing.mtl', toMTL(), 'text/plain') // 재료 → 레이어 색상
+  notify('내보냈다 — drawing.obj·mtl (이 앱으로 못 되돌아온다)')
 })
 document.getElementById('btn-gltf')!.addEventListener('click', () => {
   if (!hasGeometry()) return
   download('drawing.gltf', toGLTF(app.lift, app.faces), 'model/gltf+json')
+  notify('내보냈다 — drawing.gltf (이 앱으로 못 되돌아온다)')
 })
 /** 내보낼 3D가 있는가 — 없으면 **빈 파일을 조용히 내려주지 않는다** */
 function hasGeometry(): boolean {
@@ -518,7 +528,7 @@ window.addEventListener('resize', () => {
   const nd = window.devicePixelRatio || 1
   ctx = resize2d(ink, nw, nh, nd)
   resize3d(r3d, nw, nh, nd)
-  app.cubeLayout = { cx: nw - 60, cy: 60, size: 80 }
+  app.cubeLayout = { cx: nw - 110, cy: 60, size: 80 } // state.ts의 초기값과 같은 규칙
   invalidate()
 })
 

@@ -335,14 +335,18 @@ test('**오스냅 기호가 무채색이다** — 픽셀 채도로 잰다 (web2-
     const d = c.getContext('2d')!.getImageData(
       Math.round(488 * dpr), Math.round(288 * dpr),
       Math.round(24 * dpr), Math.round(24 * dpr)).data
-    let painted = 0, chroma = 0
+    let painted = 0, chroma = 0, inkw = 0, dark = 0
     for (let i = 0; i < d.length; i += 4) {
       if (d[i + 3]! === 0) continue
       painted++
+      inkw += d[i + 3]! / 255                       // 잉크 무게 — 알파 합
       const r = d[i]!, g = d[i + 1]!, b = d[i + 2]!
+      // 어두움 무게 — (255−밝기)·알파. **색과 알파 둘 다에 반응한다** — 알파 합만으로는
+      // #555 → #9c9c9c(색이 옅어진 몫)가 안 잡힌다(2차 리뷰어 [1]).
+      dark += (255 - (r + g + b) / 3) / 255 * (d[i + 3]! / 255)
       chroma = Math.max(chroma, Math.abs(r - g), Math.abs(g - b), Math.abs(r - b))
     }
-    return { painted, chroma }
+    return { painted, chroma, inkw, dark }
   })
 
   await page.mouse.move(200, 700)
@@ -351,8 +355,24 @@ test('**오스냅 기호가 무채색이다** — 픽셀 채도로 잰다 (web2-
   await page.mouse.move(500, 300)                 // 끝점 오스냅이 잡힌다
   await settle(page)
   const on = await box()
+  const markPx = on.painted - away.painted
+  const markMeanA = (on.inkw - away.inkw) / markPx  // 표식 몫의 평균 알파(0~1)
+  const markMeanD = (on.dark - away.dark) / markPx  // 표식 몫의 평균 어두움(0~1 — 색·알파 모두)
+  console.log(`[측정] 오스냅 잉크 away ${away.painted} → on ${on.painted} (표식 몫 ${markPx}) · 표식 평균 알파 ${markMeanA.toFixed(3)} · 평균 어두움 ${markMeanD.toFixed(3)} · 채도 ${on.chroma}`)
   // ① 표식이 실제로 그려졌다 — 이것이 없으면 «채도 0»이 «아무것도 없음»과 안 갈린다(D-3)
   expect(on.painted).toBeGreaterThan(away.painted + 20)
+  // ①′ **2H 급이다**(web2-10 지시 6) — 진하기는 픽셀 «수»가 아니라 **알파**에 실린다
+  //    (수리 전후 painted는 62/253으로 같았다 — 면적은 안 변하고 무게가 변한다).
+  //    상한 0.6 — 실측 사이다: 2H는 0.388/0.381(dpr1/2), 불투명은 0.775(반증 실행 —
+  //    AA 가장자리가 1.0을 희석한다). 양쪽에서 0.19/0.17 여유. 하한 0.25는 «안 보임» 쪽 반증.
+  expect(markMeanA).toBeLessThan(0.6)
+  expect(markMeanA).toBeGreaterThan(0.25)
+  // ①″ **어두움**은 색까지 잰다(2차 [1] — 알파 지표는 #555→#9c9c9c 색 몫에 판별력 0이다).
+  //    실측: 옛 #555 불투명 0.518/0.507 · 2H 0.153/0.149(dpr1/2 — 옛 코드를 되살린 반증
+  //    실행에서 dpr 둘 다 실패를 확인했다). 상한 0.3은 그 사이(여유 0.15 안팎) ·
+  //    하한 0.05는 «안 보임» 쪽 반증.
+  expect(markMeanD).toBeLessThan(0.3)
+  expect(markMeanD).toBeGreaterThan(0.05)
   // ② 무채색이다 — 수리 전(초록 #1a9c50)은 채널 차가 **130** 급이라 여기서 걸린다.
   //    12는 AA 혼합 잡음 여유다(획·지평선은 전부 무채색 회색이라 배경 몫이 0이다).
   expect(on.chroma).toBeLessThanOrEqual(12)

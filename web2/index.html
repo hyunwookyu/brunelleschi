@@ -46,22 +46,28 @@
     }
     #notice u { pointer-events: auto; cursor: pointer; }
 
-    /* 우측 상단 — 큐브(캔버스에 그림) 아래 시점 */
+    /* 우측 상단 — 큐브(캔버스에 그림) 아래 시점.
+       ⚠ 세로바가 1.5배로 커지며(web2-10 지시 5) 화면 높이의 대부분을 차지한다 —
+       한 열(right:10)에 두면 세로바가 이 묶음을 덮어 눌리지 않는다(e2e가 잡았다:
+       #dim-toggle 클릭을 sidebar가 가로챘다). 둘째 열(right:54)로 옮기고
+       큐브도 같은 이유로 왼쪽(cx = W−110)으로 옮겼다(main.ts·state.ts). */
     #viewbar {
-      position: fixed; top: 112px; right: 10px; z-index: 10;
+      position: fixed; top: 112px; right: 54px; z-index: 10;
       display: flex; flex-direction: column; gap: 8px; align-items: center;
     }
     #views { display: flex; flex-direction: column; gap: 6px; align-items: center; }
 
     /* 우측 세로바 하나 — 위: 실행취소 · 가운데: 도구·굵기 · 아래: 파일·설정(접힘).
        좌측과 하단은 비운다(4-i). */
+    /* 크기 1.5배(web2-10 지시 5) — 아이콘과 함께 gap도 1.5배(6 → 9px).
+       커진 버튼이 붙으면 오히려 잘못 눌린다(지시 문면). */
     #sidebar {
       position: fixed; top: 50%; right: 6px; transform: translateY(-50%);
-      z-index: 10; display: flex; flex-direction: column; gap: 6px; align-items: center;
+      z-index: 10; display: flex; flex-direction: column; gap: 9px; align-items: center;
     }
-    #sidebar-body { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+    #sidebar-body { display: flex; flex-direction: column; gap: 9px; align-items: center; }
     #sidebar.folded #sidebar-body { display: none; }
-    .bar-gap { height: 14px; }
+    .bar-gap { height: 21px; }
 
     /* 눌리는 것 전부의 바탕 — 배경도 테두리도 라운드도 없다(4-a) */
     .t {
@@ -73,8 +79,10 @@
     }
     .t svg { display: block; }
     .t:hover { opacity: .85; }
-    /* **선택된 도구가 앞으로 나온다** — 강조 박스가 아니라 위치와 크기다(4-d) */
-    .tool.on { opacity: 1; transform: translateX(-7px) scale(1.14); }
+    /* **선택된 도구가 앞으로 나온다** — 강조 박스가 아니라 위치와 크기다(4-d).
+       이동량도 1.5배(-7 → -10px) — 배수는 같아도 절대 이동량이 커진 크기에 비례해야
+       같은 비율로 읽힌다(web2-10 지시 5). */
+    .tool.on { opacity: 1; transform: translateX(-10px) scale(1.14); }
     .tool { touch-action: none; }
 
     /* 파일·설정 — 접힌 채로 있고, 펴면 아주 옅은 바탕만 깐다(4-a: 「배경이 필요하면 아주 옅게」) */
@@ -83,7 +91,7 @@
        체크박스가 뷰포트 밖(y=793 / 높이 720)에 있어 눌리지 않았다(2026-08-21 e2e가 잡았다).
        파일·설정은 세로바의 «아래» 묶음이므로(4-i) 우하단 고정이 자리와도 맞는다. */
     details.pane > div {
-      position: fixed; right: 38px; bottom: 10px; z-index: 11;
+      position: fixed; right: 54px; bottom: 10px; z-index: 11; /* 세로바가 39px로 넓어짐(지시 5) */
       display: flex; flex-direction: column; gap: 6px; align-items: stretch;
       background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
       padding: 10px 12px; white-space: nowrap;
@@ -97,8 +105,8 @@
     details.pane summary { list-style: none; cursor: pointer; }
     details.pane summary::-webkit-details-marker { display: none; }
     .pane button {
-      background: none; border: 0; padding: 3px 0; text-align: left; cursor: pointer;
-      font: 12px system-ui, sans-serif; color: #4a463f;
+      background: none; border: 0; padding: 5px 0; text-align: left; cursor: pointer;
+      font: 13px system-ui, sans-serif; color: #4a463f; /* 펜으로 누르는 줄 — 닿는 높이 ≈ 27px(지시 5) */
     }
     .pane button:hover { color: #111; }
     .pane label { display: flex; align-items: center; gap: 6px; }
@@ -106,7 +114,7 @@
 
     /* 치수 리본(web2-08 지시 4-3) — 우측, 접힌다. 옅은 바탕(4-a 「배경이 필요하면 아주 옅게」) */
     #dimpanel {
-      position: fixed; right: 40px; top: 96px; z-index: 11;
+      position: fixed; right: 96px; top: 96px; z-index: 11; /* 시점바(right:54)의 왼쪽 — 열면 토글을 안 덮는다 */
       display: flex; flex-direction: column; gap: 7px; width: 208px;
       background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
       padding: 10px 12px; font: 12px system-ui, sans-serif; color: #4a463f;
@@ -159,11 +167,23 @@
     #boot .hor{stroke:#8b857a;stroke-width:2;opacity:.95}
     #boot .vp{stroke:#3c3831;stroke-width:2.4;opacity:.85;stroke-linecap:round}
 
-    /* 빌드 식별자 — 배포 판정자(PITFALLS #58). 물러나 있다. */
+    /* 빌드 식별자 — 배포 판정자(PITFALLS #58). 물러나 있되 **눌린다**(web2-10 지시 4):
+       누르면 위 진단 패널이 펴진다. 태블릿에는 콘솔이 없어 이 길이 유일한 판독 통로다. */
     #buildid {
-      position: fixed; right: 6px; bottom: 4px; z-index: 10;
-      font: 10px monospace; color: #c9c4bc; pointer-events: none;
+      position: fixed; right: 6px; bottom: 4px; z-index: 12;
+      font: 10px monospace; color: #c9c4bc; cursor: pointer;
+      /* 펜으로 누르기엔 글자가 얇다 — 보이는 크기는 그대로 두고 닿는 넓이만 키운다 */
+      padding: 8px 4px 4px 8px;
     }
+    /* 진단 패널(web2-10 지시 4) — 전부 한 화면에. 다른 패널과 같은 옅은 바탕(4-a). */
+    #diagpanel {
+      position: fixed; right: 6px; bottom: 26px; z-index: 12;
+      max-width: min(86vw, 560px);
+      background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
+      padding: 10px 12px; font: 11px/1.7 monospace; color: #4a463f;
+      overflow-wrap: anywhere;
+    }
+    #diagpanel .k { color: #a89f8e; display: inline-block; min-width: 118px; }
   </style>
 </head>
 <body>
@@ -235,7 +255,8 @@
     <canvas id="gl"></canvas>
     <canvas id="ink"></canvas>
     <div id="notice"></div>
-    <div id="buildid"></div>
+    <div id="buildid" title="진단 — 누르면 기기 값이 보인다"></div>
+    <div id="diagpanel" hidden></div>
 
     <!-- 우측 상단: 큐브(캔버스에 그려짐) 아래 시점 -->
     <div id="viewbar">
@@ -284,18 +305,18 @@
     <!-- 우측 세로바 -->
     <div id="sidebar">
       <button id="sidebar-toggle" class="t" title="접기/펴기" aria-label="접기/펴기">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3">
+        <svg width="27" height="27" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3">
           <path d="M3 5.5h12M3 9h12M3 12.5h12" />
         </svg>
       </button>
       <div id="sidebar-body">
         <button id="btn-undo" class="t" title="실행취소 (Ctrl+Z)" aria-label="실행취소">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
+          <svg width="30" height="30" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
             <path d="M6.4 5.2 3.2 8.4l3.2 3.2" /><path d="M3.2 8.4h7.6a4.4 4.4 0 0 1 0 8.8H7" />
           </svg>
         </button>
         <button id="btn-redo" class="t" title="다시실행 (Ctrl+Y)" aria-label="다시실행">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
+          <svg width="30" height="30" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
             <path d="M13.6 5.2 16.8 8.4l-3.2 3.2" /><path d="M16.8 8.4H9.2a4.4 4.4 0 0 0 0 8.8H13" />
           </svg>
         </button>
@@ -305,7 +326,7 @@
         <!-- 연필 — 몸통의 창에 지금 심(2H…2B)이 보인다. **그 창이 곧 슬라이더다**(4-e):
              위아래로 밀면 심이 바뀐다. 별도 컨트롤을 안 둔다. -->
         <button id="btn-pencil" class="t tool" title="연필 — 위아래로 밀면 심이 바뀐다" aria-label="연필">
-          <svg width="26" height="62" viewBox="0 0 26 62">
+          <svg width="39" height="93" viewBox="0 0 26 62">
             <path d="M8 3h10v40H8z" fill="#cfc7b6" />
             <path d="M8 3h3.4v40H8z" fill="#e0d9ca" />
             <path d="M14.6 3H18v40h-3.4z" fill="#bbb2a0" />
@@ -319,7 +340,7 @@
 
         <!-- 펜 — 제도펜. 니브가 보인다. 굵기는 아래 막대에서 고른다(4-f). -->
         <button id="btn-pen" class="t tool" title="펜 — 잉크" aria-label="펜">
-          <svg width="26" height="62" viewBox="0 0 26 62">
+          <svg width="39" height="93" viewBox="0 0 26 62">
             <path d="M8.6 3h8.8v32H8.6z" fill="#7f7a72" />
             <path d="M8.6 3h3v32h-3z" fill="#98938a" />
             <path d="M9.4 35h7.2v6H9.4z" fill="#5d5952" />
@@ -331,14 +352,14 @@
 
         <!-- 지우개 둘 — 연필 지우개는 흑연만, 펜 지우개는 잉크만(선따기·4-h) -->
         <button id="btn-eraser-pencil" class="t tool" title="연필 지우개 — 흑연만 지운다" aria-label="연필 지우개">
-          <svg width="26" height="32" viewBox="0 0 26 32">
+          <svg width="39" height="48" viewBox="0 0 26 32">
             <path d="M6 20 13 6h7l-7 14z" fill="#e4ddcd" stroke="#b3ab9a" stroke-width="1" />
             <path d="M6 20h7v6H6z" fill="#d5cdbb" stroke="#b3ab9a" stroke-width="1" />
             <path d="M13 20h7l-7 6z" fill="#c9c0ad" stroke="#b3ab9a" stroke-width="1" />
           </svg>
         </button>
         <button id="btn-eraser-ink" class="t tool" title="펜 지우개 — 잉크만 지운다" aria-label="펜 지우개">
-          <svg width="26" height="32" viewBox="0 0 26 32">
+          <svg width="39" height="48" viewBox="0 0 26 32">
             <path d="M6 20 13 6h7l-7 14z" fill="#e4ddcd" stroke="#8b857a" stroke-width="1" />
             <path d="M6 20h7v6H6z" fill="#3a3833" stroke="#8b857a" stroke-width="1" />
             <path d="M13 20h7l-7 6z" fill="#2b2925" stroke="#8b857a" stroke-width="1" />
@@ -348,7 +369,7 @@
         <!-- 면 — 둘러싸인 자리를 탭하면 면이 되고, 면을 탭하면 없어진다(토글).
              **자동으로 안 만든다** — 닫힌 루프가 생겼다고 면이 아니다. -->
         <button id="btn-face" class="t tool" title="면 — 둘러싸인 자리를 탭한다(다시 탭하면 없앤다)" aria-label="면">
-          <svg width="26" height="32" viewBox="0 0 26 32">
+          <svg width="39" height="48" viewBox="0 0 26 32">
             <path d="M4 21 10 8l12 3-5 13z" fill="#8d8880" fill-opacity=".26"
                   stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
           </svg>
@@ -357,9 +378,9 @@
         <!-- 굵기 — **숫자가 없다.** 막대를 위아래로 끌면 그 자리에 그 굵기의 선이 그려진다(4-f).
              연필일 때는 안 뜬다: 연필의 굵기는 심이 정하고 그 조절은 연필 몸통에 있다(4-e). -->
         <div id="thick" style="cursor:ns-resize;touch-action:none;display:none">
-          <svg width="26" height="86" viewBox="0 0 26 86">
-            <line id="thick-line" x1="3" y1="43" x2="23" y2="43" stroke="#3c3831" stroke-width="1.5" />
-            <circle id="thick-dot" cx="13" cy="43" r="6" fill="none" stroke="#3c3831" stroke-width="1" style="display:none" />
+          <svg width="39" height="129" viewBox="0 0 39 129">
+            <line id="thick-line" x1="4.5" y1="64.5" x2="34.5" y2="64.5" stroke="#3c3831" stroke-width="1.5" />
+            <circle id="thick-dot" cx="19.5" cy="64.5" r="9" fill="none" stroke="#3c3831" stroke-width="1" style="display:none" />
           </svg>
         </div>
 
@@ -367,21 +388,27 @@
 
         <details class="pane" id="pane-file">
           <summary class="t" title="파일">
-            <svg width="19" height="19" viewBox="0 0 19 19" fill="none" stroke="currentColor" stroke-width="1.3">
+            <svg width="28" height="28" viewBox="0 0 19 19" fill="none" stroke="currentColor" stroke-width="1.3">
               <path d="M2.6 4.6h4.6l1.4 1.8h7.8v8.4H2.6z" />
             </svg>
           </summary>
+          <!-- 「저장/열기」와 「내보내기」를 이름에서 가른다(web2-10 지시 5) —
+               .brnl은 되돌아오는 원본이고 OBJ/glTF는 나가기만 한다. 사람이 「내보내기가
+               있으니 불러오기도 필요하다」고 한 것은 그 둘을 같은 것으로 읽었다는 관측이다. -->
           <div>
-            <button id="btn-save" title=".brnl 저장">저장</button>
+            <div class="head">원본 .brnl — 다시 연다</div>
+            <button id="btn-save" title=".brnl 저장 — 이 앱에서 다시 열 수 있는 원본">저장</button>
             <button id="btn-open" title=".brnl 열기">열기</button>
-            <button id="btn-obj" title="OBJ 내보내기">OBJ 내보내기</button>
-            <button id="btn-gltf" title="glTF 내보내기">glTF 내보내기</button>
+            <div class="head" style="margin-top:6px">내보내기 — 나가기만 한다</div>
+            <button id="btn-obj" title="OBJ 내보내기 — 다른 앱용. 이 앱으로 못 되돌아온다">OBJ</button>
+            <button id="btn-gltf" title="glTF 내보내기 — 다른 앱용. 이 앱으로 못 되돌아온다">glTF</button>
+            <div style="height:6px"></div>
             <button id="btn-clear" title="전부 지우고 처음부터 — 확인을 받는다">비우기</button>
           </div>
         </details>
         <details class="pane" id="pane-settings">
           <summary class="t" title="설정">
-            <svg width="19" height="19" viewBox="0 0 19 19" fill="none" stroke="currentColor" stroke-width="1.3">
+            <svg width="28" height="28" viewBox="0 0 19 19" fill="none" stroke="currentColor" stroke-width="1.3">
               <circle cx="9.5" cy="9.5" r="2.6" />
               <path d="M9.5 2.4v2M9.5 14.6v2M2.4 9.5h2M14.6 9.5h2M4.5 4.5l1.4 1.4M13.1 13.1l1.4 1.4M14.5 4.5l-1.4 1.4M5.9 13.1l-1.4 1.4" />
             </svg>

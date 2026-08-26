@@ -36,34 +36,45 @@ export function resize2d(canvas: HTMLCanvasElement, W: number, H: number, dpr: n
   return ctx
 }
 
+// ── 색 규칙 정본 (web2-10 지시 7 — 색 빼기 세 번째에서 근거를 한 곳에 모았다) ──
+// **색을 갖는 것은 «그리는 중의 상태 예고» 둘뿐이다**:
+//   ① 작도 안내 파랑(preview) — 이 획이 카메라를 만든다는 예고(지평선·소실점 작도 중).
+//   ② 면 미리보기 — 탭하면 만든다(초록 snap) / 없앤다(파랑 preview)의 예고.
+// 나머지는 전부 무채색이다:
+//   상시 표시 — 지평선(2H)·소실점 ✕(웜 그레이)·격자·작도선·대기 획(재료색).
+//   순간 피드백 — 오스냅 기호(2H 급·알파 0.5) · **축 스냅 안내(#555 파선 — mark 참조)**.
+// **진하기 대역도 정보다** — 순간 피드백끼리 같은 대역이면 「축에 붙었다」와 「점에
+// 붙었다」가 안 갈린다(web2-08이 COL.snap에서 한 실수): 2H(알파 0.5) = 오스냅 ↔
+// #555(불투명) = 축 안내. 두 대역을 합치지 않는다.
+// 색 빼기의 역사: 소실점 ✕(web2-02·상시라서) → 오스냅(web2-08·형태가 가르므로) →
+// **축 넷(web2-10 지시 7·사람이 실기기에서 뒤집었다 — PITFALLS #65)**.
+// ⚠ web2-08의 「축 색 넷은 남는다 — 그쪽은 형태가 없어 색이 유일한 정보다」는 **뒤집혔다.**
+//   대체 채널은 파선 안내다(axisGuide — 붙으면 양끝 너머로 파선이 뻗는다. SketchUp
+//   추론선의 무채색판). 축마다 파선 패턴이 다르다(AXIS_DASH) — 상대 구분은 패턴이 내고,
+//   절대 식별이 실제로 되는지는 실기기 몫이다(DEFERRED).
 const COL = {
   grid: 'rgba(120,116,110,0.18)',
   construction: '#8a7f6a',
   waiting: '#555',
   waitingDim: 'rgba(85,85,85,0.25)',
-  // 색을 줄인 규칙(4-c)은 **상시냐 순간이냐**로 가른다:
-  //   상시 표시 — 무채색. 작도선·소실점 ✕·지우개 커서.
-  //   그리는 중에만 — 색을 남긴다. 작도 미리보기·축 색 넷.
-  // 화면에 늘 떠 있는 것이 그림보다 눈에 띄던 것이 문제였고, 순간 피드백은 그 문제가 아니다.
-  // ⚠ **오스냅 기호는 순간 피드백인데도 무채색이다**(web2-08 지시 2) — 「색이 곧
-  //   정보」라던 초판의 근거가 오스냅에는 **틀렸다**: 종류는 이미 형태(□◆△✕⊥▫○ —
-  //   Rhino 관행)가 가르고 있어 색은 정보가 아니었고, 채도가 있으니 모델링 툴로 읽혔다.
-  //   축 색 넷은 남는다 — 그쪽은 형태가 없어 색이 유일한 정보다.
   preview: '#1a6ac2',
   // ⚠ 붉은색이었다 — 화면에 **상시** 떠 있는 표식이라 그림보다 눈에 띄었다(지시 3-c 대조표).
   // 소실점은 지평선과 같은 급의 작도 표식이므로 같은 색으로 물러난다.
   vpMark: '#8a7f6a',
-  // 축 색 — **그리는 중 미리보기에만** 쓴다(원칙: 확정된 선은 재료 색이다).
-  // 붙은 축이 즉시 보이고, 커서를 돌리면 색이 넘어간다(지시 5-d).
-  axis: { vp0: '#c2571a', vp1: '#1a7fc2', H: '#1a9c50', V: '#7a4fc2' } as Record<string, string>,
-  // ⚠ 강조색(#1a6ac2)으로 합치려다 되돌렸다 — vp1 축 색(#1a7fc2)과 사실상 같은 파랑이라
+  // 축 스냅 안내 — 무채색 파선(web2-10 지시 7). 선 자체는 재료색이고 «축에 붙었다»는
+  // 이 파선이 말한다. 오스냅(2H·0.5)과 다른 대역(불투명 #555)이어야 한다 — 위 정본.
+  axisGuide: '#555',
+  // ⚠ 강조색(#1a6ac2)으로 합치려다 되돌렸다 — 옛 vp1 축 색(#1a7fc2)과 사실상 같은 파랑이라
   // 「축에 붙었다」와 「점에 붙었다」가 화면에서 안 갈린다. 순간 피드백끼리는 갈려야 한다.
-  // **면 미리보기(«만든다»의 초록)에만 남는다** — 오스냅 기호는 아래 osnap(무채색)이다.
+  // **면 미리보기(«만든다»의 초록)에만 남는다** — 오스냅 기호는 mark()의 2H(무채색)다.
   snap: '#1a9c50',
-  // 오스냅 기호 — 무채색(지시 2). 진하기는 HB(#5a5a5a)와 같은 대역이라 획을 누르지
-  // 않는다. ⚠ 획 «위»에서의 대비는 색이 아니라 형태(□◆△… — 획과 다른 기하)가 가른다 —
-  // 실측 없음(AS-C23). e2e가 채도(채널 차 ≤ 12)를 픽셀로 잰다.
-  osnap: '#555',
+  // 오스냅 기호 — 무채색이고 **2H 급**이다(web2-10 지시 6 — 「HB 대역이라 진하다」는
+  // 실기기 관측으로 내렸다). 값은 경도표를 그대로 읽는다(MAT['2H'] — 지평선과 같은 방식,
+  // 숫자를 새로 짓지 않는다). mark()가 색·알파를 MAT에서 직접 읽으므로 여기 항목이 없다.
+  // 하한 근거: 2H는 경도표의 가장 옅은 급이다 — 그 아래로는 「그린 선보다 옅은 값」이
+  // 경도표에 없다. 굵기 1.5px는 유지한다(7px급 기호가 1.1px·알파 0.5로는 사라질 위험 —
+  // AS-C23의 되돌릴 조건이 굵기를 가시성 손잡이로 지정한 그대로다).
+  // ⚠ 획 «위»에서의 대비는 색이 아니라 형태(□◆△… — 획과 다른 기하)가 가른다(AS-C23).
   cubeFace: 'rgba(252,251,248,0.80)',
   cubeEdge: '#b0a99c',
 }
@@ -194,10 +205,12 @@ export function draw2d(
     // 안내색은 «카메라를 건드리는 획»에만. `!constructionDone`을 함께 보던 초판은
     // 1점 상태에서 그린 **내용 획까지** 작도선처럼 파랗게 칠했다 — 아직 못 그린다는 신호로 읽힌다.
     const constructing = draft.label === 'horizon' || draft.label === 'vp'
-    const axisCol = draft.label ? COL.axis[draft.label] : undefined
-    ctx.strokeStyle = constructing ? COL.preview : (axisCol ?? m.color)
+    // 축에 붙어도 선은 **재료색**이다(web2-10 지시 7 — 축 색 넷을 뺐다. 확정될 모습
+    // 그대로가 원칙 d와도 맞다). «붙었다»는 아래 파선 안내가 말한다.
+    ctx.strokeStyle = constructing ? COL.preview : m.color
     ctx.lineWidth = (constructing ? C.LINE_W_RESULT : drawW) * is
     ctx.beginPath(); ctx.moveTo(draft.start.x, draft.start.y); ctx.lineTo(draft.end.x, draft.end.y); ctx.stroke()
+    if (draft.label && !constructing) axisGuide(ctx, draft, is)
     if (draft.startSnap) mark(ctx, draft.startSnap, is)
     if (draft.endSnap) mark(ctx, draft.endSnap, is)
   } else if (hover) {
@@ -272,14 +285,44 @@ function grain(
   ctx.globalAlpha = 1
 }
 
+/** 축별 파선 패턴 — 네 축의 상대 구분(web2-10 지시 7). 방향 자체도 채널이므로(수직 V·
+ *  수평 H는 방향이 먼저 가른다) 패턴은 보조다. 절대 식별은 실기기 미검증(DEFERRED). */
+const AXIS_DASH: Record<string, number[]> = {
+  vp0: [8, 4], vp1: [3, 3], H: [12, 3, 2, 3], V: [1, 3],
+}
+
+/** 축 스냅 안내 — 붙은 축 방향으로 **양끝 너머**에 무채색 파선이 뻗는다(SketchUp 추론선의
+ *  무채색판 — 색 대신 «획이 아닌 기하»가 붙음을 말한다). 미리보기 선 자체는 재료색. */
+function axisGuide(ctx: CanvasRenderingContext2D, draft: Draft, is: number) {
+  const dx = draft.end.x - draft.start.x, dy = draft.end.y - draft.start.y
+  const L = Math.hypot(dx, dy)
+  if (L < 1e-6) return
+  const ux = dx / L, uy = dy / L
+  const ext = 34 * is
+  ctx.strokeStyle = COL.axisGuide
+  ctx.lineWidth = 1 * is
+  ctx.setLineDash((AXIS_DASH[draft.label!] ?? [6, 4]).map(v => v * is))
+  ctx.beginPath()
+  ctx.moveTo(draft.end.x, draft.end.y); ctx.lineTo(draft.end.x + ux * ext, draft.end.y + uy * ext)
+  ctx.moveTo(draft.start.x, draft.start.y); ctx.lineTo(draft.start.x - ux * ext, draft.start.y - uy * ext)
+  ctx.stroke()
+  ctx.setLineDash([])
+}
+
 /** 오스냅 표식 — Rhino 관행의 형태 구분: 끝 □ · 정점 ◆ · 중 △ · 교차 ✕ · 수선 ⊥ · 연장 ▫ · 근처 ○.
- *  **무채색이다**(web2-08 지시 2) — 종류는 형태가 가르므로 색은 정보가 아니었다. */
+ *  **무채색이다**(web2-08 지시 2) — 종류는 형태가 가르므로 색은 정보가 아니었다.
+ *  진하기는 **2H 급**(web2-10 지시 6) — 색·알파를 경도표에서 그대로 읽는다. */
 function mark(ctx: CanvasRenderingContext2D, h: OsnapHit, is: number) {
   const { x, y } = h.p
   const r = 4 * is, r5 = 5 * is
-  ctx.strokeStyle = COL.osnap
+  // ⚠ 알파를 바꾸므로 switch의 이른 return이 있는 이 함수를 try/finally로 감싼다 —
+  // 안 되돌리면 0.5가 이후 그리기(대기 획·큐브)로 샌다.
+  const om = MAT['2H']
+  ctx.strokeStyle = om.color
+  ctx.globalAlpha = om.alpha
   ctx.lineWidth = 1.5 * is
   ctx.setLineDash([])
+  try {
   ctx.beginPath()
   switch (h.kind) {
     // **소실점** — 이 자리가 비어 있었다(web2-05). 스냅 판정은 돌았는데 `switch`에
@@ -316,4 +359,5 @@ function mark(ctx: CanvasRenderingContext2D, h: OsnapHit, is: number) {
     }
   }
   ctx.stroke()
+  } finally { ctx.globalAlpha = 1 }
 }
