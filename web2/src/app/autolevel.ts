@@ -1,18 +1,19 @@
-// **접기 시점** — 언제 정렬로 돌아가는가. 계산(무엇으로 접는가)은 `core/level.ts`다.
+// **접기 시점** — 언제 정렬로 돌아가는가. 계산(무엇으로·어디로 접는가)은 `core/level.ts`다.
 //
-// 규칙 하나: **정렬되지 않은 포즈는 마지막 조작에서 `FOLD_DELAY_MS` 지난 뒤 접힌다.**
+// 규칙 하나: **접힐 자세(임계 안)는 마지막 조작에서 `FOLD_DELAY_MS` 지난 뒤 접힌다.**
 // 붙잡고 있는 동안(`held`)은 안 접힌다 — 돌리는 동안은 자유롭고, 놓으면 잠깐 뒤 미끄러진다.
-// 예외를 안 둔다(뷰 큐브 윗면·저장한 시점도 같은 규칙이다) — 예외가 둘이면 「접히나 안 접히나」를
+// ⚠ web2-08 지시 3: **임계 밖 자세는 접히지 않는다 — 머무는 상태다**(`foldTarget`이 null).
+// 「무엇이 접히는가」의 판정은 전부 core에 있고 여기는 시계만 안다.
+// 예외를 안 둔다(뷰 큐브·저장한 시점도 같은 규칙이다) — 판정이 둘이면 「접히나 안 접히나」를
 // 사람이 매번 짐작해야 한다.
 //
-// ⚙ **끄는 스위치를 안 둔다**(A-3: 단순한 쪽). 돌려보는 것이 부가기능이면 그 상태가
-// 오래 유지될 이유가 없고, 붙잡고 있으면 무한히 안 접히므로 살펴보기 자체는 안 막힌다.
-// 되돌릴 조건: 기울인 채로 두고 다른 일을 하려는 사용이 관측되면 그때 연다.
+// ⚙ **끄는 스위치를 안 둔다**(A-3: 단순한 쪽). 임계 밖에 두면 안 접히므로 그것이 곧
+// 「기울인 채로 두기」다 — 스위치가 하던 일을 임계가 한다.
 //
 // 시계를 주입받는다 — 시험이 가짜 시각으로 「계속 조작하는 동안 안 접힌다」를 잰다.
 
 import { type App, setPose, orbitPivot } from './state'
-import { isLevel, levelPose, lerpPose } from '../core/level'
+import { isLevel, foldTarget, lerpPose } from '../core/level'
 import type { CamPose } from '../core/types'
 import { C } from '../core/constants'
 
@@ -24,8 +25,9 @@ export interface LevelHooks {
   release(): void
   /** 조작이 아닌 포즈 변경(뷰 큐브·휠·저장한 시점) — 붙잡지 않고 지연만 다시 센다 */
   touch(): void
-  /** 지금 접는다 — 기울어 있는데 그리려고 눌렀을 때. 죽은 클릭을 안 만든다. */
-  foldNow(): void
+  /** 접힐 자세면 지금 접는다 — 기울어 있는데 그리려고 눌렀을 때. 접기 시작했으면 true.
+   *  **임계 밖이면 false다** — 그 자세는 머무는 상태라 그 누름은 그리기다(입력이 가른다). */
+  foldNow(): boolean
 }
 
 export interface AutoLevel extends LevelHooks {
@@ -64,12 +66,15 @@ export function createAutoLevel(
   const release = () => { held = false; last = now() }
   const touch = () => { held = false; last = now() }
 
-  /** 지금 목표 포즈로 미끄러지기 시작한다. 이미 정렬이면 아무것도 안 한다. */
+  /** 지금 목표 포즈로 미끄러지기 시작한다. 목표가 없으면(임계 밖 · 이미 정렬) 아무것도 안 한다. */
   function start(): boolean {
-    if (isLevel(app.pose)) return false
+    const an = app.lift.an
+    const to = foldTarget(anchor, app.pose, orbitPivot(app),
+      { axes: an.axes.map(a => a.dir), f: an.f, W: an.W })
+    if (!to) return false
     anim = {
       from: { p: { ...app.pose.p }, q: { ...app.pose.q } },
-      to: levelPose(anchor, app.pose, orbitPivot(app)),
+      to,
       t0: now(),
     }
     return true
@@ -93,15 +98,20 @@ export function createAutoLevel(
     const t = now()
     if (anim) return step(t)
     if (held) return false
-    if (isLevel(app.pose)) return false
     if (t - last < C.FOLD_DELAY_MS) return false
-    if (!start()) return false
+    if (!start()) return false      // 임계 밖(머무는 자세)·이미 정렬 — 목표가 없다
     return step(t)                  // 첫 걸음을 바로 그린다(0에서 한 프레임 멈추지 않게)
   }
 
   return {
     grab, release, touch, tick,
-    foldNow() { held = false; last = now() - C.FOLD_DELAY_MS; if (start()) step(now()) },
+    foldNow() {
+      held = false
+      if (!start()) return false    // 임계 밖 — 그 누름은 접기가 아니다
+      last = now() - C.FOLD_DELAY_MS
+      step(now())
+      return true
+    },
     folding: () => anim !== null,
   }
 }

@@ -1,10 +1,13 @@
 // 정렬된 구도 — **시선이 수평이고 롤이 0인 상태**. 그러면 수직선이 화면 수직이고
 // 지평선이 화면 수평이다. 1점이냐 2점이냐는 좌우 각도(요)가 정한다.
 //
-// **돌려보는 것은 이 도구에서 부가기능이다.** 투시도를 그리는 목적 자체가 전지적 시점
-// 모델링에 대한 반감이고, 화면이 돌아가기 시작하면 모델링 툴과 다를 바가 없다.
-// 그래서 기울어진 상태는 **머무는 상태가 아니라 지나가는 상태**로 둔다 —
-// 손을 떼고 잠깐 있으면 정렬로 접힌다(`autolevel.ts`가 그 시점을 잰다).
+// ⚠⚠ **web2-08 지시 3이 「무조건 접기」를 뒤집었다.** 종전 규칙(web2-04)은 기울어진
+// 상태를 «지나가는 상태»로 두고 어떤 자세든 손을 떼면 정렬로 접었다 — 사람이 그것을
+// 「내려다보거나 올려다보기도 해야 하는데 무조건 2점 투시로 찾아간다」로 뒤집었다.
+// 지금 규칙: **정렬은 임계(`snapAngle` = min(atan(f/6W), 8.25°)) 안으로 의도적으로
+// 가져왔을 때만 걸린다**(`foldTarget`).
+// 임계 밖 자세는 머무는 상태다. 요도 같은 형태다 — 축과 임계 안이면 1점으로 붙는다.
+// 접는 «시점»은 여전히 `autolevel.ts`가 잰다.
 //
 // 접을 때 **궤도 전 카메라 상태로 통째로 돌아가고 요만 새 값을 쓴다**(web2-05).
 //
@@ -27,11 +30,24 @@
 // 그것을 재던 게이트(배수 표·pivot 화면 안·베어링 불변·D-5 대역 팔)도 함께 처리했다.
 
 import type { CamPose } from './types'
+import { C, POSE_SNAP_RAD } from './constants'
 import { type V3, v3, add3, sub3, mul3, len3, norm3, cross3, quatFromBasis, quatRotate, quatSlerp } from './vec'
 
 /** 정렬 판정의 여유. 궤도 한 픽셀이 0.005 rad(≈0.29°)이므로 그보다 훨씬 작다 —
  *  「한 픽셀 돌렸는데 정렬로 친다」가 없다. 부동소수 누적(쿼터니언 곱)은 이보다 작다. */
 export const LEVEL_EPS = 1e-9
+
+// 시점 스냅 임계의 상한 — 정의와 근거는 `constants.ts`의 `POSE_SNAP_RAD`에 있다(임계의 자리).
+export { POSE_SNAP_RAD }
+
+/** **시점 스냅 임계(rad)** — `min(atan(f/6W), 상한)`. 두 물음의 AND다:
+ *  ① 그 문서의 f로, 그 기울기의 소실점이 작도 대역(6W) 밖인가(화면에서 정렬과 구별 불가)
+ *  ② 자세가 상한(기본 f의 ①값 ≈ 8.25°) 안인가(내려다보는 자세가 아닌가).
+ *  근거 전문은 `constants.ts`. f를 모르면(작도 전 — 그때 포즈는 늘 작도 포즈다) 상한만 쓴다. */
+export function snapAngle(f: number | null, W: number): number {
+  if (f === null || !(W > 0)) return POSE_SNAP_RAD
+  return Math.min(Math.atan(f / (C.VP_FAR_W * W)), POSE_SNAP_RAD)
+}
 
 const FWD = v3(0, 0, -1)
 const UP = v3(0, 1, 0)
@@ -123,8 +139,8 @@ export function yawDir(pose: CamPose): V3 {
  *
  *  ⚠ 앵커가 이미 지금 요와 같으면 `cos=1 · sin=0`이라 **항등**이다 — 「이미 정렬이면
  *  아무것도 안 건드린다」가 그래서 성립한다. */
-export function levelPose(anchor: CamPose, pose: CamPose, pivot: V3): CamPose {
-  const bNew = yawDir(pose)                 // 새 요
+export function levelPose(anchor: CamPose, pose: CamPose, pivot: V3, yaw?: V3): CamPose {
+  const bNew = yaw ?? yawDir(pose)          // 새 요 (지시 3: 축에 스냅될 때만 밖에서 든다)
   const bOld = yawDir(anchor)               // 앵커의 요(정렬이므로 곧 그 시선)
   const cos = bOld.x * bNew.x + bOld.z * bNew.z
   const sin = bOld.z * bNew.x - bOld.x * bNew.z   // (bOld × bNew).y
@@ -142,6 +158,52 @@ export function levelPose(anchor: CamPose, pose: CamPose, pivot: V3): CamPose {
   const back = mul3(bNew, -1)
   const right = norm3(cross3(WORLD_UP, back))
   return { p, q: quatFromBasis(right, WORLD_UP, back) }
+}
+
+/** **피치가 임계 안인가** — 이 자세는 놓으면(또는 누르면) 정렬로 접힌다.
+ *  임계 밖이면 머무는 자세다: 그때의 누름은 접기가 아니라 그리기다(입력·면 미리보기가
+ *  같은 술어를 본다 — 판정이 두 자리로 갈리지 않게 #54). 임계는 문서의 f를 탄다(snapAngle). */
+export function pitchSnaps(pose: CamPose, f: number | null, W: number): boolean {
+  const fy = forwardOf(pose).y
+  return Math.abs(Math.asin(Math.max(-1, Math.min(1, fy)))) <= snapAngle(f, W)
+}
+
+/** **접기의 목표가 있는가** — 시점 스냅의 판정 하나가 여기다(web2-08 지시 3).
+ *
+ *  · |피치| > 임계(`snapAngle`) → **null. 기울인 채 둔다** — 머무는 상태다.
+ *  · |피치| ≤ 임계 → 정렬로 접는다(앵커·요·반경 규칙은 `levelPose` 그대로).
+ *    이때 요가 어느 가로축과 임계 안이면 **그 축으로 붙는다**(2점 → 1점). 후보는
+ *    **그 차수의 프레임에 실제로 있는 가로축**이다 — `Analysis.axes`가 차수별로
+ *    이미 가른다(1점 {vp0, H}, 2점 {vp0, vp1} — 2점에 H는 없다). ± 양방향 넷(1점 둘×2).
+ *  · 이미 정렬이고 붙일 축도 없으면 null — 항등에 애니메이션을 안 건다.
+ *
+ *  `axes`는 문서의 세계 축 방향(`Analysis.axes`) 그대로다 — 가로축(y=0)만 보고
+ *  세로축(V)은 요의 후보가 아니므로 걸러진다. 판정과 목표가 한 함수에서 나온다(#54). */
+export function foldTarget(
+  anchor: CamPose, pose: CamPose, pivot: V3,
+  opt: { axes: V3[]; f: number | null; W: number },
+): CamPose | null {
+  if (!pitchSnaps(pose, opt.f, opt.W)) return null
+  const b = yawDir(pose)
+  // 요 후보 — 가로축의 ±. 가장 가까운 것 하나이고 임계 밖이면 없다.
+  let bestAng = snapAngle(opt.f, opt.W)
+  let snap: V3 | null = null
+  for (const a of opt.axes) {
+    if (Math.abs(a.y) > 1e-9) continue
+    const h = Math.hypot(a.x, a.z)
+    if (h < 1e-9) continue
+    for (const s of [1, -1] as const) {
+      const d = v3(a.x * s / h, 0, a.z * s / h)
+      const ang = Math.acos(Math.max(-1, Math.min(1, b.x * d.x + b.z * d.z)))
+      if (ang <= bestAng) { bestAng = ang; snap = d }
+    }
+  }
+  // 이미 정렬이고 요도 (사실상) 축 위거나 축 근처가 아니면 — 할 일이 없다.
+  // 항등 여유 1e-6 rad: acos는 1 근처에서 정밀도를 잃어 정확히 같은 방향도 ~1e-8 rad로
+  // 나온다(√(2·ulp)). 궤도 1px(5e-3 rad)보다 세 자릿수 아래라 «한 픽셀을 항등으로
+  // 읽는» 일은 없다.
+  if (isLevel(pose) && (snap === null || bestAng <= 1e-6)) return null
+  return levelPose(anchor, pose, pivot, snap ?? undefined)
 }
 
 /** 접히는 중의 중간 포즈 — 자세는 최단호, 위치는 직선. t는 0…1. */

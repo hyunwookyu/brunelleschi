@@ -89,13 +89,18 @@ function foldAfterRelease(app: App, c: ReturnType<typeof clock>, al: ReturnType<
 }
 
 describe('접기 — 상하로 회전한 뒤 놓으면 정렬로 돌아온다', () => {
+  // ⚠ web2-08 지시 3: 접히는 것은 **임계(snapAngle = min(atan(f/6W), 8.25°)) 안** 기울기뿐이다.
+  //   임계는 문서의 f를 탄다 — drawn()은 f = 0.32W라 임계 3.08° = 10.7px이고,
+  //   이 파일의 접기 궤도는 전부 그 안(|dy| ≤ 8px ⇒ |피치| ≤ 2.3°)으로 조준한다.
+  //   임계 밖(머무는 자세)은 `posesnap.test.ts`가 잰다. 요도 축(+37.8°/−52.3°)에서
+  //   임계 밖으로 조준한다 — 우연한 1점 스냅이 단언을 흐리지 않게.
   it('재현: 피치와 롤이 0이 된다 (옛 길 셋은 이것을 못 냈다)', () => {
     const app = drawn()
     const c = clock()
     const al = createAutoLevel(app, c.now)
 
-    al.grab(); orbitBy(app, -160, -120)          // 좌우로 돌리고 위로 올려다본다
-    expect(Math.abs(pitchDeg(app.pose))).toBeGreaterThan(5)
+    al.grab(); orbitBy(app, -60, -8)             // 좌우로 돌리고 위로 올려다본다(임계 안)
+    expect(Math.abs(pitchDeg(app.pose))).toBeGreaterThan(1.5)
     expect(isLevel(app.pose)).toBe(false)
 
     foldAfterRelease(app, c, al)
@@ -148,7 +153,7 @@ describe('접기 — 상하로 회전한 뒤 놓으면 정렬로 돌아온다', 
     const c = clock()
     const al = createAutoLevel(app, c.now)
     const eyeBefore = app.pose.p.y
-    al.grab(); orbitBy(app, -200, -140)
+    al.grab(); orbitBy(app, -100, -8)            // 요 −28.7°(축에서 멀다) · 피치 +2.3°(임계 안)
     const yaw0 = yawDir(app.pose)
     expect(app.pose.p.y).not.toBeCloseTo(eyeBefore, 1)   // 궤도가 눈높이를 바꿨다
 
@@ -164,8 +169,8 @@ describe('접기 — 상하로 회전한 뒤 놓으면 정렬로 돌아온다', 
     const c = clock()
     const al = createAutoLevel(app, c.now)
     const eyeBefore = app.pose.p.y
-    al.grab(); orbitBy(app, 120, 180)          // 아래로 끌면 내려다본다
-    expect(pitchDeg(app.pose)).toBeLessThan(-5)
+    al.grab(); orbitBy(app, 60, 8)             // 아래로 끌면 내려다본다(임계 안 · 요 17.2°)
+    expect(pitchDeg(app.pose)).toBeLessThan(-1.5)
     expect(app.pose.p.y).toBeGreaterThan(DRAW_POSE.p.y)   // 눈이 올라갔다
     const yaw0 = yawDir(app.pose)
 
@@ -175,7 +180,7 @@ describe('접기 — 상하로 회전한 뒤 놓으면 정렬로 돌아온다', 
     expect(app.pose.p.y).toBeCloseTo(eyeBefore, 6)        // 올라간 높이가 **안 남는다**
   })
 
-  it('탑뷰에서도 접힌다 — 요는 화면 위 방향이 답한다', () => {
+  it('탑뷰의 요는 화면 위 방향이 답한다 — 그리고 탑뷰는 이제 머문다(web2-08 지시 3)', () => {
     const app = drawn()
     const geom = cubeGeom(app.lift.an, app.pose, app.cubeLayout)!
     const pivot = orbitPivot(app)
@@ -196,12 +201,13 @@ describe('접기 — 상하로 회전한 뒤 놓으면 정렬로 돌아온다', 
     setPose(app, top)
     const c = clock()
     const al = createAutoLevel(app, c.now)
-    foldAfterRelease(app, c, al)
-    expect(isLevel(app.pose)).toBe(true)
-    expect(yawGap(forwardOf(app.pose), y)).toBeCloseTo(0, 6)
+    al.release(); c.advance(C.FOLD_DELAY_MS + 1)
+    for (let i = 0; i < 20; i++) { al.tick(); c.advance(20) }
+    expect(isLevel(app.pose)).toBe(false)            // 임계 밖 — 머무는 자세다(posesnap.test)
+    expect(forwardOf(app.pose).y).toBeCloseTo(-1, 6)
   })
 
-  it('저면에서도 접힌다 — 올려다볼 때는 화면 위가 뒤쪽이다', () => {
+  it('저면의 요는 화면 위의 뒤쪽이 답한다 — 저면도 머문다', () => {
     const app = drawn()
     const pivot = orbitPivot(app)
     const bottom = poseForElem(app.lift.an, { kind: 'face', dirLocal: v3(0, -1, 0) }, pivot, 500)!
@@ -213,8 +219,10 @@ describe('접기 — 상하로 회전한 뒤 놓으면 정렬로 돌아온다', 
     setPose(app, bottom)
     const c = clock()
     const al = createAutoLevel(app, c.now)
-    foldAfterRelease(app, c, al)
-    expect(isLevel(app.pose)).toBe(true)
+    al.release(); c.advance(C.FOLD_DELAY_MS + 1)
+    for (let i = 0; i < 20; i++) { al.tick(); c.advance(20) }
+    expect(isLevel(app.pose)).toBe(false)            // 임계 밖 — 머무는 자세다
+    expect(forwardOf(app.pose).y).toBeCloseTo(1, 6)
   })
 
   // ── 경계(시선이 수직) — 셋을 나눠 잰다. 하나로 뭉치면 항등을 연속성으로 읽는다(#57) ──
@@ -351,7 +359,7 @@ describe('접기 시점 — 놓으면 잠깐 뒤', () => {
     const app = drawn()
     const c = clock()
     const al = createAutoLevel(app, c.now)
-    al.grab(); orbitBy(app, -160, -120)
+    al.grab(); orbitBy(app, -60, -8)
     const tilted = pitchDeg(app.pose)
 
     for (let i = 0; i < 50; i++) {         // 붙잡은 채로 100초
@@ -367,7 +375,7 @@ describe('접기 시점 — 놓으면 잠깐 뒤', () => {
     const app = drawn()
     const c = clock()
     const al = createAutoLevel(app, c.now)
-    al.grab(); orbitBy(app, -160, -120)
+    al.grab(); orbitBy(app, -60, -8)
     al.release()
 
     // ⚠ **상대 시간으로 재면 판별자가 아니다.** `advance(DELAY − 1)`로 적었더니
@@ -388,7 +396,7 @@ describe('접기 시점 — 놓으면 잠깐 뒤', () => {
     const app = drawn()
     const c = clock()
     const al = createAutoLevel(app, c.now)
-    al.grab(); orbitBy(app, -160, -120)
+    al.grab(); orbitBy(app, -60, -8)
     al.release(); c.advance(C.FOLD_DELAY_MS + 1)
     al.tick()
     expect(al.folding()).toBe(true)
@@ -405,7 +413,7 @@ describe('접기 시점 — 놓으면 잠깐 뒤', () => {
     const app = drawn()
     const c = clock()
     const al = createAutoLevel(app, c.now)
-    al.grab(); orbitBy(app, -160, -120)
+    al.grab(); orbitBy(app, -60, -8)
     const p0 = pitchDeg(app.pose)
     al.release(); c.advance(C.FOLD_DELAY_MS + 1)
 
@@ -441,7 +449,7 @@ describe('접기 시점 — 놓으면 잠깐 뒤', () => {
     const app = drawn()
     const c = clock()
     const al = createAutoLevel(app, c.now)
-    al.grab(); orbitBy(app, -160, -120)
+    al.grab(); orbitBy(app, -60, -8)
     al.release()
     while (app.undoStack.length > 0) undo(app)      // 내용 획이 사라진다 → pivot이 옮겨간다
     // ⚠ **작도 획은 실행취소 대상이 아니다** — 깊이선 둘은 남아 3D로 서 있다.
@@ -456,13 +464,13 @@ describe('접기 시점 — 놓으면 잠깐 뒤', () => {
     for (const v of [app.pose.p.x, app.pose.p.y, app.pose.p.z]) expect(Number.isFinite(v)).toBe(true)
   })
 
-  it('기울여 저장한 시점도 접힌다 — 예외를 안 둔 대가를 팔로 박는다', () => {
-    // 규칙에 예외를 안 뒀으므로 **기울어진 시점을 «보관»하는 길이 없다.** 그것을 여기
-    // 박아 두어 조용히 바뀌지 않게 한다 — 예외를 넣기로 하면 이 팔이 먼저 빨개진다.
+  it('임계 안 기울기로 저장한 시점은 접힌다 — 임계 밖으로 저장하면 산다(posesnap.test)', () => {
+    // web2-08 지시 3이 종전 「예외 없음(어떤 저장 시점도 접힌다)」을 뒤집었다 —
+    // 이제 임계가 가른다. 임계 안 저장 시점은 종전대로 접힌다는 것을 여기 박아 둔다.
     const app = drawn()
     const c = clock()
     const al = createAutoLevel(app, c.now)
-    al.grab(); orbitBy(app, -160, -120)
+    al.grab(); orbitBy(app, -60, -8)
     saveView(app)
     expect(app.savedViews).toHaveLength(1)
     al.release()
@@ -479,7 +487,7 @@ describe('접기 시점 — 놓으면 잠깐 뒤', () => {
     const app = drawn()
     const c = clock()
     const al = createAutoLevel(app, c.now)
-    al.grab(); orbitBy(app, -160, -120)
+    al.grab(); orbitBy(app, -60, -8)
     al.release()
     c.advance(10)                    // 지연에 한참 못 미친다
     expect(al.tick()).toBe(false)
@@ -594,8 +602,8 @@ describe('앱 경로 — autolevel이 앵커를 언제 잡는가', () => {
     const pivot = orbitPivot(app)
     const y0 = app.pose.p.y
     const r0 = Math.hypot(app.pose.p.x - pivot.x, app.pose.p.z - pivot.z)
-    al.grab(); orbitBy(app, -160, 180)
-    expect(app.pose.p.y).toBeGreaterThan(y0 + 1)
+    al.grab(); orbitBy(app, -60, 8)
+    expect(app.pose.p.y).toBeGreaterThan(y0 + 0.08)  // 임계 안 기울기(2.3°)라 이동 폭이 작다
     foldAfterRelease(app, c, al)
     expect(isLevel(app.pose)).toBe(true)
     expect(app.pose.p.y).toBeCloseTo(y0, 6)
@@ -615,7 +623,7 @@ describe('앱 경로 — autolevel이 앵커를 언제 잡는가', () => {
     // 정렬 상태에서 사람이 옮긴다 → 그 자리가 앵커가 된다
     setPose(app, { p: v3(app.pose.p.x, 2.4, app.pose.p.z), q: { ...app.pose.q } })
     // 기울어진 시점을 저장했다가 불러온다 — 앵커는 위 «2.4»다
-    al.grab(); orbitBy(app, -120, 200)
+    al.grab(); orbitBy(app, -120, 8)
     saveView(app)
     al.release()
     foldAfterRelease(app, c, al)
@@ -636,7 +644,7 @@ describe('앱 경로 — autolevel이 앵커를 언제 잡는가', () => {
     const pivot = orbitPivot(app)
     const y0 = app.pose.p.y
     const r0 = Math.hypot(app.pose.p.x - pivot.x, app.pose.p.z - pivot.z)
-    for (const [dx, dy] of [[-160, 180], [200, -140], [-90, 240]] as const) {   // 셋 다 요를 바꾼다
+    for (const [dx, dy] of [[-160, 8], [200, -7], [-90, 8]] as const) {   // 셋 다 요를 바꾼다(임계 안)
       al.grab(); orbitBy(app, dx, dy)
       foldAfterRelease(app, c, al)
       expect(app.pose.p.y).toBeCloseTo(y0, 6)     // 세 번을 돌아도 그대로다
@@ -651,7 +659,7 @@ describe('앱 경로 — autolevel이 앵커를 언제 잡는가', () => {
     const pivot = orbitPivot(app)
     setPose(app, { p: v3(app.pose.p.x, 3.5, app.pose.p.z), q: { ...app.pose.q } })  // 사람이 눈높이를 올린다
     expect(isLevel(app.pose)).toBe(true)
-    al.grab(); orbitBy(app, -140, 160)
+    al.grab(); orbitBy(app, -100, 7)
     foldAfterRelease(app, c, al)
     expect(app.pose.p.y).toBeCloseTo(3.5, 6)
   })

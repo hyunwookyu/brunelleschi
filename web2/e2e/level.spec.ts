@@ -1,6 +1,7 @@
-// 종단 — **돌려보다가 그리려면 정렬된 구도로 돌아와야 한다.**
-// 단위(`test/level.test.ts`)는 가짜 시계로 재고, 여기서는 **진짜 시계와 진짜 입력**으로 잰다:
-// 중버튼을 잡고 있는 동안 안 접히는가 · 놓으면 접히는가 · 기울어 있는 동안 획이 안 생기는가.
+// 종단 — **시점 스냅**(web2-08 지시 3): 정렬은 임계(≈8.25°) 안으로 가져왔을 때만 걸린다.
+// 단위(`test/level.test.ts`·`test/posesnap.test.ts`)는 가짜 시계로 재고, 여기서는
+// **진짜 시계와 진짜 입력**으로 잰다: 잡고 있는 동안 안 접히는가 · 임계 안에서 놓으면
+// 접히는가 · **임계 밖은 머물고 거기서 그려지는가**.
 
 import { test, expect, type Page } from '@playwright/test'
 
@@ -27,11 +28,14 @@ const strokeCount = (page: Page) => page.evaluate(() => (window as any).__b2.app
 const yawGap = (a: any, b: any) =>
   Math.acos(Math.max(-1, Math.min(1, a.x * b.x + a.y * b.y + a.z * b.z))) * 180 / Math.PI
 
-/** 중버튼으로 위아래로 끈다 — 놓지 않는다 */
-async function tiltDown(page: Page) {
+/** 중버튼으로 위아래로 끈다 — 놓지 않는다. 임계는 문서의 f를 탄다 —
+ *  이 스펙의 2점 픽스처는 f = 0.32W라 임계 3.08°(10.7px)다.
+ *  dy=+8 → 피치 −2.3°(임계 **안** — 놓으면 접힌다).
+ *  dy=+100 → 피치 −28.6°(임계 **밖** — 머무는 자세다). */
+async function tiltDown(page: Page, dy = 8) {
   await page.mouse.move(600, 400)
   await page.mouse.down({ button: 'middle' })
-  await page.mouse.move(640, 500, { steps: 8 })
+  await page.mouse.move(640, 400 + dy, { steps: 8 })
   await settle(page)
 }
 
@@ -42,7 +46,7 @@ async function waitFolded(page: Page) {
   await settle(page)
 }
 
-test('돌려본 뒤 정렬로 접힌다 — 놓으면 · 잡고 있으면 안 접힌다 · 기울어 있으면 안 그려진다', async ({ page }) => {
+test('임계 안은 접히고 임계 밖은 머문다 — 그리고 머무는 자세에서 그려진다', async ({ page }) => {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
 
@@ -59,7 +63,7 @@ test('돌려본 뒤 정렬로 접힌다 — 놓으면 · 잡고 있으면 안 �
   await tiltDown(page)
   let s = await lev(page)
   expect(s.level).toBe(false)
-  expect(Math.abs(s.fwd.y)).toBeGreaterThan(0.05)      // 실제로 위아래로 돌았다
+  expect(Math.abs(s.fwd.y)).toBeGreaterThan(0.02)      // 실제로 위아래로 돌았다
   // **기울어 있을 때 무엇이 다른지 보인다** — 한 줄이 그것을 말한다
   expect(await page.textContent('#notice')).toContain('기울어')
 
@@ -73,7 +77,7 @@ test('돌려본 뒤 정렬로 접힌다 — 놓으면 · 잡고 있으면 안 �
 
   // ── 놓으면 접힌다 ──────────────────────────────────────────────────
   const yaw0 = s.yaw
-  expect(Math.abs(s.eye - eyeBefore)).toBeGreaterThan(0.5)   // 궤도가 눈높이를 바꿨다
+  expect(Math.abs(s.eye - eyeBefore)).toBeGreaterThan(0.1)   // 궤도가 눈높이를 바꿨다(작은 기울기라 폭도 작다)
   await page.mouse.up({ button: 'middle' })
   await settle(page)
   expect((await lev(page)).level).toBe(false)          // 놓자마자는 아직 그대로다
@@ -85,7 +89,7 @@ test('돌려본 뒤 정렬로 접힌다 — 놓으면 · 잡고 있으면 안 �
   expect(s.eye).toBeCloseTo(eyeBefore, 6)              // 눈높이는 **궤도 전** 값(web2-05)
   expect(await page.textContent('#notice')).not.toContain('기울어')
 
-  // ── 기울어 있는 동안에는 획이 안 생긴다 ─────────────────────────────
+  // ── 임계 안(접힐 자세)에서는 획이 안 생긴다 — 그 누름이 접기를 당긴다 ──
   const n0 = await strokeCount(page)
   await tiltDown(page)
   await page.mouse.up({ button: 'middle' })
@@ -100,6 +104,39 @@ test('돌려본 뒤 정렬로 접힌다 — 놓으면 · 잡고 있으면 안 �
   await drawLine(page, 300, 600, 420, 640)
   expect(await strokeCount(page)).toBe(n0 + 1)
   expect(FOLD_ANIM_MS).toBeLessThan(FOLD_DELAY_MS)     // 상수 대조 — 값이 바뀌면 여기가 안다
+
+  // ── **임계 밖 — 머무는 자세다**(재현: 수리 전에는 여기서도 접혔다) ────
+  await tiltDown(page, 100)                            // 피치 ≈ −28.6°
+  await page.mouse.up({ button: 'middle' })
+  await settle(page)
+  const tilted = await lev(page)
+  expect(tilted.level).toBe(false)
+  expect(Math.abs(tilted.fwd.y)).toBeGreaterThan(0.3)
+  await page.waitForTimeout(FOLD_DELAY_MS * 2)         // 지연의 두 배를 기다려도
+  await settle(page)
+  const still = await lev(page)
+  expect(still.level).toBe(false)                      // 안 접힌다 — 머문다
+  expect(still.fwd.y).toBeCloseTo(tilted.fwd.y, 9)
+  // 머무는 자세라 «기울어 있다» 안내도 없다 — 그리는 자리다
+  expect(await page.textContent('#notice')).not.toContain('기울어')
+
+  // ── 머무는 자세에서 그려진다 — 그 포즈의 2D(대기 획)로 남는다 ────────
+  const n1 = await strokeCount(page)
+  await drawLine(page, 300, 600, 420, 640)
+  expect(await strokeCount(page)).toBe(n1 + 1)         // 수리 전에는 획이 안 생겼다
+  const last = await page.evaluate(() => {
+    const d = (window as any).__b2.app.doc.strokes
+    return d[d.length - 1]
+  })
+  expect(last.view).toBeDefined()                      // 그 포즈가 실려 있다
+
+  // ── 의도적으로 정렬 가까이 가져오면 그때 접힌다 ─────────────────────
+  await page.mouse.move(600, 400)
+  await page.mouse.down({ button: 'middle' })
+  await page.mouse.move(600, 400 - 93, { steps: 8 })   // 피치 −28.6° → −2.0° (임계 안)
+  await page.mouse.up({ button: 'middle' })
+  await waitFolded(page)
+  expect((await lev(page)).level).toBe(true)
 })
 
 /** 영역의 실제 그려진 픽셀 수 — 2D 오버레이(ink) */

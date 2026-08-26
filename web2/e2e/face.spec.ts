@@ -190,7 +190,11 @@ test('면 — 벽(수직면)과 바닥(수평면)이 각각 칠해진다 (픽셀
   const wallBefore = mid((await polys(page))[0].poly)
   await page.mouse.move(600, 430)
   await page.mouse.down({ button: 'middle' })
-  for (let i = 0; i < 12; i++) await page.mouse.move(600 - i * 8, 430 - i * 3)
+  // ⚠ 위아래 몫은 임계 안에 둔다(이 픽스처는 f = 0.32W라 3.08° = 10.7px) — web2-08
+  //   지시 3 뒤로 임계 밖 자세는 «머무는 자세»가 되어 면 미리보기가 뜨는 것이 맞는
+  //   자리가 된다. 여기서 재는 것은 «접힐 자세(임계 안)에서는 미리보기가 없다»이므로
+  //   그 대역 안에서 돌린다.
+  for (let i = 0; i < 12; i++) await page.mouse.move(600 - i * 8, 430 - Math.round(i * 0.7))
   await page.mouse.up({ button: 'middle' })
   await settle(page)
   const wallAfter = mid((await polys(page))[0].poly)
@@ -203,7 +207,7 @@ test('면 — 벽(수직면)과 바닥(수평면)이 각각 칠해진다 (픽셀
   //   (그렇게 재려다 실패했다). 미리보기 자체를 본다 — 그것이 그려지는 유일한 조건이다.
   //   미리보기 → 픽셀의 연결은 위 첫 팔의 ③이 이미 쟀다.
   expect(await page.evaluate(() => (window as any).__b2.diag.facePreview())).toBeNull()
-  // 기울어 있으면 커서를 올려도 안 뜬다 — 그때 누름은 접기이지 면이 아니다
+  // 접힐 자세(임계 안 기울기)면 커서를 올려도 안 뜬다 — 그때 누름은 접기이지 면이 아니다
   await page.mouse.move(620, 425)
   await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.diag.facePreview())).toBeNull()

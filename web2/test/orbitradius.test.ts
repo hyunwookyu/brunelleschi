@@ -56,7 +56,7 @@ describe('지시 5 — 궤도 반경', () => {
     const r0 = orbitRadius(app)
     expect(r0).toBeCloseTo(7.225, 3)
     foldNow(app, () => {
-      orbitBy(app, 90, 60)
+      orbitBy(app, 90, 8)    // 임계(이 픽스처는 3.08°) 안 기울기 — web2-08 뒤로 임계 밖은 안 접힌다
       expect(orbitRadius(app)).toBeCloseTo(r0, 9)      // 궤도는 반경을 안 바꾼다
       dollyBy(app, 2, { x: 600, y: 400 })
       expect(orbitRadius(app)).toBeCloseTo(r0 / 2, 9)
@@ -68,7 +68,7 @@ describe('지시 5 — 궤도 반경', () => {
   it('멀어지는 쪽도 같다 — 배율이 대칭이다', () => {
     const app = drawn()
     const r0 = orbitRadius(app)
-    foldNow(app, () => { orbitBy(app, -120, 80); dollyBy(app, 0.4, { x: 600, y: 400 }) })
+    foldNow(app, () => { orbitBy(app, -120, 8); dollyBy(app, 0.4, { x: 600, y: 400 }) })
     expect(orbitRadius(app)).toBeCloseTo(r0 / 0.4, 6)
   })
 
@@ -103,7 +103,7 @@ describe('지시 5 — 궤도 반경', () => {
     const pv = orbitPivot(app)
     const y0 = app.pose.p.y
     expect(pv.y).not.toBeCloseTo(y0, 2)          // 이 픽스처는 pivot이 눈높이에 없다(판별력)
-    foldNow(app, () => { orbitBy(app, 90, 60); dollyBy(app, 2, { x: 600, y: 400 }) })
+    foldNow(app, () => { orbitBy(app, 90, 8); dollyBy(app, 2, { x: 600, y: 400 }) })
     expect(app.pose.p.y - pv.y).toBeCloseTo((y0 - pv.y) / 2, 6)
     expect(app.pose.p.y).toBeLessThan(y0)        // 다가가면 눈높이가 pivot 쪽으로 내려간다
 
@@ -139,7 +139,7 @@ describe('지시 5 — 궤도 반경', () => {
     s.app.tool = 'pen'; s.draw(500, 500, 600, 475)      // 펜 획 — pivot이 여기 붙는다
     const app = s.app
     const y0 = app.pose.p.y
-    foldNow(app, () => { orbitBy(app, 90, 60); undo(app) })  // 기울어 있는 동안 펜 획을 되돌린다
+    foldNow(app, () => { orbitBy(app, 90, 8); undo(app) })  // 기울어 있는 동안 펜 획을 되돌린다
     // 실측: 반경 7.448 → (실행취소로 pivot이 튄다) 6.783 → 접은 뒤 6.783 · 눈높이 1.600 → 1.598
     expect(app.pose.p.y).toBeCloseTo(y0, 2)             // 어긋남이 **0.01 아래**다
     expect(app.pose.p.y).not.toBe(y0)                   // 그러나 0은 아니다 — 알고 적는다
@@ -165,7 +165,7 @@ describe('지시 5 — 궤도 반경', () => {
     const r0 = orbitRadius(app), y0 = app.pose.p.y
     let rPan = 0, moved = 0
     foldNow(app, () => {
-      orbitBy(app, 60, 40)
+      orbitBy(app, 60, 8)
       const before = { ...app.pose.p }
       panBy(app, 120, 0)
       moved = Math.hypot(app.pose.p.x - before.x, app.pose.p.y - before.y, app.pose.p.z - before.z)
@@ -189,7 +189,7 @@ describe('지시 5 — 궤도 반경', () => {
     expect(cross).toBeGreaterThan(1)          // 요가 달라졌으니 옆에 있는 것은 맞고
     // 그 옆 거리가 **팬이 만든 것이 아니라 요가 만든 것**임을 팬 없이 같은 궤도로 확인한다
     const app2 = drawn()
-    foldNow(app2, () => { orbitBy(app2, 60, 40) })
+    foldNow(app2, () => { orbitBy(app2, 60, 8) })
     const c2 = { x: app2.pose.p.x - pivot0.x, z: app2.pose.p.z - pivot0.z }
     const cross2 = Math.abs(b.x * c2.z - b.z * c2.x) / Math.hypot(b.x, b.z)
     // **반경으로 나눠서 견준다** — 접은 자리는 반경에 비례하고, 팬이 그 반경을 조금 바꿨다.

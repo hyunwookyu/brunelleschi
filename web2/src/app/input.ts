@@ -8,7 +8,7 @@ import {
   screenToDoc, isEraser, toggleFaceAt, facePreview,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
-import { isLevel } from '../core/level'
+import { isLevel, pitchSnaps } from '../core/level'
 import type { LevelHooks } from './autolevel'
 import { resolveStart, resolveEnd, resolveCommit } from '../core/draft'
 import { C } from '../core/constants'
@@ -138,9 +138,12 @@ export function initInput(
       return
     }
     if (tryCube(toScreen(e))) return
-    // **기울어 있으면 획을 안 만든다**(그리기도 지우기도). 대신 그 누름이 접기를 당긴다 —
-    // 죽은 클릭을 만들지 않는다. 접히면 바로 그릴 수 있다.
-    if (!isLevel(app.pose)) { level.foldNow(); return }
+    // **접힐 자세(임계 안)면 그 누름이 접기를 당긴다** — 곧 정렬될 화면에 긋게 두면
+    // 확정 좌표가 접히기 전 포즈의 것이 된다. 죽은 클릭도 안 만든다 — 접히면 바로 그린다.
+    // **임계 밖(머무는 자세)이면 foldNow가 false다 — 그 자세에서 그대로 그린다**(지시 3).
+    // 그때의 획은 `commitStroke`가 `view`를 실어 그 포즈의 2D로 남기고, 연결이 닿으면
+    // 3D로 올라간다(`lift.ts`가 `s.view` 포즈로 푼다 — 기존 기전이다).
+    if (!isLevel(app.pose) && level.foldNow()) return
     drawingPointer = e.pointerId
     canvas.setPointerCapture(e.pointerId)
     // **면 도구는 탭이다** — 누르는 동안 아무것도 안 만들고, 뗄 때 판정한다.
@@ -208,9 +211,10 @@ export function initInput(
       }
       cb.onEraserMove(null)
       if (app.tool === 'face') {
-        // **기울어 있으면 미리보기도 없다** — 그때 누름은 접기이지 면이 아니다.
-        // 보여 놓고 안 되는 것이 「죽은 클릭」이고, 그것을 안 만든다는 것이 그 규칙이다.
-        cb.onFacePreview(isLevel(app.pose) ? facePreview(app, toPt(e)) : null)
+        // **접힐 자세(임계 안 기울임)에서는 미리보기가 없다** — 그때 누름은 접기이지 면이
+        // 아니다. 머무는 자세(임계 밖)에서는 누름이 면 토글이므로 미리보기도 뜬다(지시 3).
+        const acts = isLevel(app.pose) || !pitchSnaps(app.pose, app.lift.an.f, app.lift.an.W)
+        cb.onFacePreview(acts ? facePreview(app, toPt(e)) : null)
         cb.onHover(null)
         return
       }

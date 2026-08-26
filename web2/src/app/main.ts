@@ -3,7 +3,7 @@
 import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, type Tool } from './state'
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
-import { isLevel } from '../core/level'
+import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, type Draft } from './render2d'
 import { initR3D, syncStrokes, render3d, resize3d } from './render3d'
 import { serializeBrnl, parseBrnl } from '../core/file'
@@ -111,8 +111,9 @@ app.listeners.push(() => {
   }, 400)
 })
 
-// **기울어 있을 때 무엇이 다른지** — 그리기가 안 된다. 그것이 보여야 한다(지시 「표시」).
-// 새 장식을 안 만들고 이미 있는 한 줄을 쓴다(원칙 g: 알림은 최상단 한 줄뿐이다).
+// **접힐 자세(임계 안 기울임)일 때 무엇이 다른지** — 잠깐 뒤 정렬로 돌아가므로 그리기가
+// 유예된다. 그것이 보여야 한다. **임계 밖(머무는 자세)에서는 이 줄이 안 뜬다** — 거기서는
+// 그대로 그린다(web2-08 지시 3). 새 장식을 안 만들고 이미 있는 한 줄을 쓴다(원칙 g).
 const TILTED_MSG = '기울어 있다 — 놓으면 정렬로 돌아온다. 그때 그릴 수 있다'
 
 // **접혔는데 작도가 아직 안 끝난 자리** — 이 회차가 만든 함정이다(web2-04 리뷰어 [8]).
@@ -135,7 +136,7 @@ function updateStatus() {
   // **빈 화면의 첫 안내**다. 이 앱은 첫 획이 특별하고(지평선), 그것을 모르면 시작을 못 한다.
   // 지평선을 그으면 영영 사라진다.
   if (app.lift.an.horizonY === null) status('지평선을 긋는다 — 수평이 강제된다')
-  else if (!isLevel(app.pose)) status(TILTED_MSG)
+  else if (!isLevel(app.pose) && pitchSnaps(app.pose, app.lift.an.f, app.lift.an.W)) status(TILTED_MSG)
   else if (!isDrawPose(app.pose) && !app.lift.an.constructionDone) {
     ask(UNFINISHED_MSG, [{ key: 'draw-view', label: UNFINISHED_GO, onPick: () => resetPose(app) }])
   }
@@ -157,7 +158,7 @@ app.listeners.push(() => {
 // 그 자리가 둘이라(기울었나 · 작도 시점인가) 둘을 함께 본다.
 let lastPoseKey = ''
 app.listeners.push(() => {
-  const k = `${!isLevel(app.pose)}|${isDrawPose(app.pose)}`
+  const k = `${!isLevel(app.pose)}|${isDrawPose(app.pose)}|${pitchSnaps(app.pose, app.lift.an.f, app.lift.an.W)}`
   if (k === lastPoseKey) return
   lastPoseKey = k
   updateStatus()
