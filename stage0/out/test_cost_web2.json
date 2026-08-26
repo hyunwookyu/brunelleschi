@@ -1,18 +1,18 @@
 {
  "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
- "measured_at": "web2-12 2부 검증 시점(2026-08-26 — 배포 ② 전 측정)",
+ "measured_at": "web2-12 3부 최종(2026-08-26 — 배포 ③ 직전 측정)",
  "unit": {
   "command": "npm test (vitest)",
-  "files": 36,
-  "tests": 370,
+  "files": 37,
+  "tests": 373,
   "wall_s": 3.04,
   "note": "vitest 자체 Duration. 프로세스 벽시계는 ~5s(부팅 포함)"
  },
  "e2e": {
   "command": "npm run e2e (playwright, dpr1+dpr2)",
-  "cases": 134,
-  "wall_s": 156,
-  "note": "케이스 = 67팔 × 2 dpr(web2-12 2부 +3: views 2·sidebar 연필통 1). 1부 신설분 포함 — 스크린샷 diff·썸네일 20뷰 팔의 몫이 벽시계 증가의 대부분."
+  "cases": 146,
+  "wall_s": 198,
+  "note": "케이스 = 73팔 × 2 dpr(web2-12 3부 +12: drafting 6·level 지평선 확장은 팔 수 불변. 팔=스펙 test 하나·케이스=팔×dpr)."
  },
  "typecheck_build": {
   "command": "tsc --noEmit · vite build",
@@ -71,10 +71,17 @@
    "unit": 370,
    "e2e": 134,
    "e2e_wall_s": 156
+  },
+  {
+   "at": "web2-12 3부",
+   "unit": 373,
+   "e2e": 146,
+   "e2e_wall_s": 198
   }
  ],
  "environment": {
-  "disk_free_bytes": 9425096704,
-  "note": "#45 규약 — «느려졌다» 보고가 오면 이 값부터 본다"
+  "disk_avail_bytes": 9425096704,
+  "note": "#45 규약 — «느려졌다» 보고가 오면 이 값(bavail·판정용)부터 본다. 값 출처는 df의 Available 열.",
+  "disk_free_bytes_note": "옛 필드명 disk_free_bytes는 #45 후속이 판정 금지로 못 박아 이름을 바로잡았다(값 자체가 Available 열이었다 — 이름만 틀렸던 것)."
  }
 }

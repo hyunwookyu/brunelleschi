@@ -13,22 +13,22 @@
    "nid_equals_id": true
   },
   "H": {
-   "stroke_px": 94,
+   "stroke_px": 98,
    "release_diff": 0,
    "nid_equals_id": true
   },
   "F": {
-   "stroke_px": 164,
+   "stroke_px": 163,
    "release_diff": 0,
    "nid_equals_id": true
   },
   "HB": {
-   "stroke_px": 110,
+   "stroke_px": 108,
    "release_diff": 0,
    "nid_equals_id": true
   },
   "B": {
-   "stroke_px": 144,
+   "stroke_px": 142,
    "release_diff": 0,
    "nid_equals_id": true
   },
@@ -38,7 +38,7 @@
    "nid_equals_id": true
   },
   "INK": {
-   "stroke_px": 100,
+   "stroke_px": 110,
    "release_diff": 0,
    "nid_equals_id": true
   },
@@ -52,7 +52,7 @@
   "n": 11,
   "distinct": 11,
   "low_half_mass": 23,
-  "high_half_mass": 32,
+  "high_half_mass": 31,
   "committed_equals_draft": true,
   "note": "CDP force 0.2→0.9 램프. distinct>3 = 배선이 아니라 변하는 값이 실렸다. mass = 상자 어두움 합(개수는 관통선에서 포화된다 — 초판 반증) — 힘이 센 쪽이 굵고/진해 잉크량이 커야 픽셀 판별이 선 것. committed_equals_draft = 뗌에서 같은 배열로 이어진다(양자화가 한 곳 — quantIn과 같은 식)."
  },

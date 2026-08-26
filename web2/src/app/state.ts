@@ -91,6 +91,9 @@ export interface App {
    *  'classic'은 종전 경로 그대로다(2-b: 되돌릴 수 있어야 한다 — 안 지운다).
    *  토글은 세로바 버튼·진단 패널이 보인다. 저장은 localStorage(문서의 값이 아니다). */
   renderer: 'classic' | 'brush'
+  /** 지평선 표시(web2-12 7번) — **기본 켜짐**(작도의 뼈대다). 격자 토글의 선례 그대로
+   *  설정에 산다. 끄면 지평선 «표시»만 사라진다 — 카메라·판정은 그대로다(표현 계층). */
+  horizon: boolean
   /** 지면 격자 표시 — **기본 꺼짐**(지시 3-a). 토글은 설정에 남는다.
    *  이 도구는 모델링 툴이 아니라 그림 도구다 — 빈 종이에 격자가 깔려 있으면
    *  CAD의 감각이 된다. 필요한 사람이 켠다. */
@@ -123,6 +126,7 @@ export function createApp(W: number, H: number): App {
     dimExact: false,
     coalesce: true,
     renderer: 'brush',
+    horizon: true,
     grid: false,
     cubeLayout: { cx: W - 110, cy: 60, size: 80 }, // 우측 상단 — 1.5배 세로바(x W−45..)와 안 겹치게 왼쪽으로(web2-10 지시 5)
     listeners: [],
