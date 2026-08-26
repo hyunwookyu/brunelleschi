@@ -1,16 +1,16 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, type Tool } from './state'
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, type Draft } from './render2d'
-import { initR3D, syncStrokes, render3d, resize3d } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine } from './render3d'
 import { serializeBrnl, parseBrnl } from '../core/file'
 import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice } from './notice'
 import { OSNAP_ORDER, type OsnapHit } from '../core/osnap'
-import { PENCIL_GRADES, MAT } from '../core/material'
+import { PENCIL_GRADES, MAT, widthOfMat } from '../core/material'
 import { parseDim, formatMm, lenMm, UNITS, type Unit } from '../core/dim'
 import { initDimPanel } from './dimpanel'
 import { createVoice } from './voice'
@@ -576,6 +576,13 @@ function frame() {
   autolevel.tick()   // 접힐 때가 됐으면 여기서 포즈가 움직인다(setPose가 다시 그리게 한다)
   if (dirty) {
     dirty = false
+    // draft 몸체(web2-12 2번) — 확정과 같은 Line2가 그린다(질감은 아래 brushLayer.sync).
+    // 눌리는 술어는 draftBrushed 하나다(#54 — state.ts 머리주석이 정본).
+    const g = activeGrade(app)
+    setDraftLine(r3d, app, draft && draftBrushed(app, draft.label)
+      ? { a: draft.start, b: draft.end, grade: g,
+          w: widthOfMat({ grade: g, w: app.tool === 'pen' && app.nib !== C.NIB_PX ? app.nib : undefined }) }
+      : null)
     render3d(r3d, app)
     // 캐시 키(문서·포즈·뷰·렌더러)가 갈렸을 때만 전량을 그린다. draft가 있으면(web2-12 2번)
     // draft 전용 모드 — 확정 획은 스냅샷 겹이 들고 #brushc는 진행 중인 획 하나만 그린다.
@@ -680,8 +687,9 @@ const diag = {
   brushRedrawMs: () => brushLayer.redrawTimed(app),
   /** 재그리기 분자/분모(#43) — 「그리는 중 0회」를 수로 */
   brushStats: () => brushLayer.stats(),
-  /** draft 재그리기 원장(web2-12 2번) — 이동당 비용(ms 중앙·최악)과 횟수 */
+  /** draft 재그리기 원장(web2-12 2번) — 이동당 비용(ms 중앙·최악)과 횟수. 국면별로 리셋 */
   draftStats: () => brushLayer.draftStats(),
+  draftStatsReset: () => brushLayer.resetDraftStats(),
   /** 진행 중인 draft — 게이트 팔이 좌표·잠정 id를 확정 획과 대조한다(web2-12 2번) */
   draft: () => draft,
   /** classic 쪽 비교치 — 같은 장면의 draw2d 1회 ms(질감 grain 포함) */

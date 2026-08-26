@@ -12,6 +12,7 @@
 // ink 겹의 파선이 따로 그려서 버그가 있어도 보인다. 승격을 단언해 픽스처의 판별력을 지킨다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { PIXEL_DIFF_CH, VISIBLE_FLOOR } from './thresholds'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
@@ -27,7 +28,7 @@ test.afterAll(async ({ }, testInfo) => {
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
   writeFileSync(out, JSON.stringify({
     what: `web2-12 1번 — 재료 전수 가시성(합성 화면·${testInfo.project.name}): GRADES 일곱 × 렌더러 둘, 긋는 중/뗀 직후의 «기준 대비 달라진 픽셀 수». e2e materials.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).`,
-    def: '20×60 CSS px 상자 스크린샷을 긋기 전 기준과 비교, 채널 차 8 초과 픽셀 수. 문턱·하한의 동작점 성격은 AS-C37(스윕 없음 명기)',
+    def: `20×60 CSS px 상자 스크린샷을 긋기 전 기준과 비교, 채널 차 ${PIXEL_DIFF_CH} 초과 픽셀 수(임계 출처는 e2e/thresholds.ts — D-C4). 문턱·하한의 동작점 성격은 AS-C37(스윕 없음 명기). ⚠ classic의 during 일곱 칸은 설계상 재료를 안 탄다(옛 미리보기 = 재료색 벡터선 — 변화 «수» 지표는 색·진하기에 둔감하다. 2차 [15]) — 그 다리의 판별력은 brush 절반에만 있다. classic 행의 ink_grain_*는 알파 몫 계기의 양성 대조군이다(2차 [9] — grain은 반투명이라 몫이 1보다 작아야 계기가 산 것).`,
     ...ledger,
   }, null, 1))
 })
@@ -63,8 +64,8 @@ async function shot(page: Page, x: number, y: number, w: number, h: number): Pro
 function diffCount(base: number[], now: number[]): number {
   let n = 0
   for (let i = 0; i < base.length; i += 4) {
-    if (Math.abs(now[i]! - base[i]!) > 8 || Math.abs(now[i + 1]! - base[i + 1]!) > 8 ||
-        Math.abs(now[i + 2]! - base[i + 2]!) > 8) n++
+    if (Math.abs(now[i]! - base[i]!) > PIXEL_DIFF_CH || Math.abs(now[i + 1]! - base[i + 1]!) > PIXEL_DIFF_CH ||
+        Math.abs(now[i + 2]! - base[i + 2]!) > PIXEL_DIFF_CH) n++
   }
   return n
 }
@@ -104,27 +105,30 @@ async function drawGrade(page: Page, g: string, x: number) {
     const id = a.doc.strokes[a.doc.strokes.length - 1].id
     return a.lift.lifted.has(id)
   })
-  // 알파 몫(AS-C35의 표본 폭 — 1차 리뷰어 [14]): #brushc 획 상자의 painted 중 완전 불투명
-  // 몫을 재료마다 남긴다. straight alpha 선언이 색을 바꿀 수 있는 것은 0<α<255 픽셀뿐이다.
-  const alpha = await page.evaluate(([bx, by]) => {
-    const src = document.getElementById('brushc') as HTMLCanvasElement
+  // 알파 몫(AS-C35의 표본 폭 — 1차 리뷰어 [14]): 획 상자의 painted 중 완전 불투명 몫.
+  // brush 렌더러는 #brushc(질감), classic은 #ink(grain — **양성 대조군**: 반투명이라
+  // 몫이 1보다 작아야 이 계기가 1이 아닌 값을 낼 수 있음이 선다. 2차 [9] · #30).
+  const share = (id: string) => page.evaluate(([idv, bx, by]) => {
+    const src = document.getElementById(idv as string) as HTMLCanvasElement
     if (!src) return null
     const dpr = window.devicePixelRatio || 1
     const t = document.createElement('canvas')
     t.width = Math.round(20 * dpr); t.height = Math.round(60 * dpr)
     const c = t.getContext('2d')!
-    c.drawImage(src, Math.round((bx! - 10) * dpr), Math.round(by! * dpr), t.width, t.height, 0, 0, t.width, t.height)
+    c.drawImage(src, Math.round((bx as number - 10) * dpr), Math.round((by as number) * dpr), t.width, t.height, 0, 0, t.width, t.height)
     const d = c.getImageData(0, 0, t.width, t.height).data
     let painted = 0, opaque = 0
     for (let i = 3; i < d.length; i += 4) { if (d[i]! > 0) painted++; if (d[i]! === 255) opaque++ }
     return { painted, opaque }
-  }, [x, 480])
-  return { during, after, lifted, alpha }
+  }, [id, x, 480])
+  const alpha = await share('brushc')
+  const inkAlpha = await share('ink')
+  return { during, after, lifted, alpha, inkAlpha }
 }
 
 // 확정 획의 하한 20: 세로 60px 상자에서 가장 옅은 2H도 실측 40대(dpr1)다.
 // 0이 아니라 20인 이유 — «몇 픽셀 얼룩»이 아니라 «선이 보인다»를 잰다.
-const FLOOR = 20
+const FLOOR = VISIBLE_FLOOR
 
 for (const renderer of ['brush', 'classic'] as const) {
   test(`재료 전수(${renderer}) — 일곱 재료 전부: 긋는 중에도, 떼서 승격된 뒤에도 화면에 보인다`, async ({ page }) => {
@@ -133,14 +137,15 @@ for (const renderer of ['brush', 'classic'] as const) {
     if (renderer === 'classic') { await page.click('#btn-brush'); await settle(page) }
     await fixture(page)
     const out: string[] = []
-    const rows: Record<string, { during: number; after: number; brushc_painted?: number; brushc_opaque?: number }> = {}
+    const rows: Record<string, Record<string, number>> = {}
     for (let i = 0; i < GRADES.length; i++) {
       const g = GRADES[i]!
       const x = 320 + i * 50
       const r = await drawGrade(page, g, x)
       out.push(`${g} 중${r.during} 후${r.after}${r.lifted ? '' : ' ⚠미승격'}`)
       rows[g] = { during: r.during, after: r.after,
-        ...(renderer === 'brush' && r.alpha ? { brushc_painted: r.alpha.painted, brushc_opaque: r.alpha.opaque } : {}) }
+        ...(renderer === 'brush' && r.alpha ? { brushc_painted: r.alpha.painted, brushc_opaque: r.alpha.opaque } : {}),
+        ...(renderer === 'classic' && r.inkAlpha ? { ink_grain_painted: r.inkAlpha.painted, ink_grain_opaque: r.inkAlpha.opaque } : {}) }
       expect(r.lifted, `${g} 획이 승격돼야 픽스처가 판별력을 가진다`).toBe(true)
       expect(r.during, `${g} 긋는 중 보임`).toBeGreaterThan(FLOOR)
       expect(r.after, `${g} 뗀 직후 보임 — 여기서 0이면 «떼면 사라진다»의 재현이다`).toBeGreaterThan(FLOOR)

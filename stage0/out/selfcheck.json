@@ -1,5 +1,5 @@
 {
-  "n_flags": 5375,
+  "n_flags": 5391,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -5813,6 +5813,86 @@
       "path": "lift_grade.json:by_arm.oracle_touch_0.09.coarse.placed_rate",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "materials_visible_web2.json:classic.2H.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2.json:classic.H.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2.json:classic.F.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2.json:classic.HB.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2.json:classic.B.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2.json:classic.2B.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2.json:classic.INK.ink_grain_painted",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2.json:classic.INK.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2_dpr2.json:classic.2H.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2_dpr2.json:classic.H.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2_dpr2.json:classic.F.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2_dpr2.json:classic.HB.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2_dpr2.json:classic.B.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2_dpr2.json:classic.2B.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2_dpr2.json:classic.INK.ink_grain_painted",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "materials_visible_web2_dpr2.json:classic.INK.ink_grain_opaque",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "misassign_retry.json:by_end_jitter.0.005.arms.base.diag_axis_assigned.placed_rate",
@@ -26985,7 +27065,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 362,
+      "files_scanned": 363,
       "exts_declared": [
         ".md",
         ".py",
@@ -27009,7 +27089,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 362,
+      "files_scanned": 363,
       "exts_declared": [
         ".md",
         ".py",

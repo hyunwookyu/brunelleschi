@@ -10,9 +10,9 @@
  },
  "e2e": {
   "command": "npm run e2e (playwright, dpr1+dpr2)",
-  "cases": 126,
-  "wall_s": 144,
-  "note": "케이스 = 63팔 × 2 dpr(web2-12 1부 +10: materials 3(재료 전수 둘·알파 규약 하나)·draftgate 2). 스크린샷 diff 팔(재료 28획·게이트)의 몫이 증가분의 대부분."
+  "cases": 128,
+  "wall_s": 150,
+  "note": "케이스 = 64팔 × 2 dpr(web2-12 1부 +12: materials 3·draftgate 3). 스크린샷 diff 팔(재료 전수·게이트 전수·필압)의 몫이 증가분의 대부분."
  },
  "typecheck_build": {
   "command": "tsc --noEmit · vite build",
@@ -63,8 +63,8 @@
   {
    "at": "web2-12 1부",
    "unit": 366,
-   "e2e": 126,
-   "e2e_wall_s": 144
+   "e2e": 128,
+   "e2e_wall_s": 150
   }
  ],
  "environment": {

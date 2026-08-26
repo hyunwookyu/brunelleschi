@@ -50,8 +50,11 @@ export interface BrushLayer {
    *  ⚠ web2-12 2번 뒤에도 이 정의는 산다 — redraws는 **전량**(확정 획) 재그리기만 세고,
    *  draft 한 획 재그리기는 draftStats가 따로 센다(섞으면 «그리는 중 0회»가 안 재진다). */
   stats(): { syncs: number; redraws: number }
-  /** draft 재그리기 원장(web2-12 2번) — 이동당 비용의 분자/분모와 ms 표본 */
+  /** draft 재그리기 원장(web2-12 2번) — 이동당 비용의 분자/분모와 ms 표본.
+   *  ⚠ 표본은 **국면별로 리셋해서 읽는다**(resetDraftStats) — 누산기를 국면·렌더러
+   *  칸에 그대로 실으면 실행 0인 칸에 남의 값이 실린다(2차 리뷰어 [5] · #32·#43). */
   draftStats(): { redraws: number; msMedian: number; msMax: number }
+  resetDraftStats(): void
   resize(W: number, H: number, dpr: number): void
 }
 
@@ -94,6 +97,12 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
   snap.style.pointerEvents = 'none'
   snap.style.display = 'none'
   canvas.parentElement!.insertBefore(snap, canvas)
+
+  // ⚠ draft «몸체»는 이 겹의 일이 아니다(2차 리뷰어 [1] 대응의 결론): 확정 몸체가
+  // Line2이므로 draft 몸체도 **Line2 그 자체**가 그린다(render3d.setDraftLine — #gl은
+  // 이 겹 아래라 순서도 맞다). 2D 캔버스 벡터로 흉내 낸 중간판은 반투명 합성의 파이프라인
+  // 차(채널 17~32 대역, dpr2 실측)가 뗌 순간에 보여서 걷었다 — 같은 셰이더·같은 재질이
+  // 같은 픽셀을 내는 것이 구성적 답이다.
   const fitSnap = () => {
     if (snap.width !== canvas.width || snap.height !== canvas.height) {
       snap.width = canvas.width; snap.height = canvas.height
@@ -180,13 +189,15 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
   let draftActive = false
   let draftKey = ''                 // (end·점 수)가 같으면 이동이 없던 프레임 — 안 그린다
   let draftRedraws = 0
-  const draftMs: number[] = []
+  let draftMs: number[] = []
   function drawDraftOnly(app: App, d: Draft) {
     const t0 = performance.now()
+    const s = draftStroke(app, d)
+    // 질감만 — 몸체는 Line2(render3d.setDraftLine)가 이 겹 아래(#gl)에서 그린다
     brush.clear()
     brush.push()
     brush.translate(-cw / 2, -ch / 2)
-    drawStroke(app, draftStroke(app, d), docToScreen(app, d.start), docToScreen(app, d.end))
+    drawStroke(app, s, docToScreen(app, d.start), docToScreen(app, d.end))
     brush.pop()
     brush.render()
     draftRedraws++
@@ -241,6 +252,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
         msMax: s.length ? s[s.length - 1]! : 0,
       }
     },
+    resetDraftStats: () => { draftMs = []; draftRedraws = 0 },
     redrawTimed(app) {
       const t0 = performance.now()
       redraw(app)

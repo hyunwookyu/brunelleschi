@@ -140,6 +140,39 @@ export function syncCamera(r: R3D, app: App) {
   r.camera.matrixWorldInverse.copy(r.camera.matrixWorld).invert()
 }
 
+// ── draft 몸체(web2-12 2번) — 진행 중인 획의 몸체를 **Line2 그 자체**로 그린다 ─────
+// 확정 몸체가 Line2이므로, draft 몸체를 2D 캔버스 벡터로 그리면 반투명 합성의
+// 파이프라인 차(채널 17~32 대역 — dpr2 실측)가 뗌 순간에 보인다. 같은 재질(matFor 캐시
+// 공유)·같은 셰이더가 같은 픽셀을 내는 것이 구성적 답이다. 화면 끝점을 카메라 역사영으로
+// 광선 위 점에 놓는다 — worldUnits=false(화면 고정 굵기)라 깊이는 픽셀에 안 실린다.
+let draftLine: Line2 | null = null
+export function setDraftLine(r: R3D, app: App,
+  d: { a: Pt2; b: Pt2; grade: Grade; w: number } | null) {
+  if (!d) {
+    if (draftLine) draftLine.visible = false
+    return
+  }
+  syncCamera(r, app)  // 역사영 전에 행렬을 현재 포즈로
+  const un = (p: Pt2) => {
+    const v = app.view
+    const sx = p.x * v.s + v.ox, sy = p.y * v.s + v.oy   // 문서 → 화면(CSS)
+    const nd = new THREE.Vector3((2 * sx) / r.W - 1, 1 - (2 * sy) / r.H, 0)
+    return nd.unproject(r.camera)
+  }
+  const a = un(d.a), b = un(d.b)
+  if (!draftLine) {
+    // ⚠ r.group이 아니라 scene에 직접 — syncStrokes가 group을 통째로 비우며 geometry를
+    // dispose하므로(문서가 바뀔 때마다) 거기 두면 draft 기하가 산 채로 버려진다.
+    draftLine = new Line2(new LineGeometry(), matFor(r, d.grade, d.w))
+    r.scene.add(draftLine)
+  }
+  draftLine.material = matFor(r, d.grade, d.w)
+  draftLine.geometry.setPositions([a.x, a.y, a.z, b.x, b.y, b.z])
+  draftLine.visible = true
+}
+
+interface Pt2 { x: number; y: number }
+
 export function render3d(r: R3D, app: App) {
   syncCamera(r, app)
   r.renderer.render(r.scene, r.camera)
