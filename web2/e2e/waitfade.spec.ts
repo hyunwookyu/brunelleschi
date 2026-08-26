@@ -202,3 +202,41 @@ test('3-c — 종이 질감 버튼이 세로바에 없고 설정 안에 있다 �
   await page.click('#btn-brush')
   expect(await page.evaluate(() => (window as any).__b2.app.renderer)).toBe(r0)
 })
+
+test('web2-14 3번 — 제스처 동안 판정 동결: 왕복 궤도에서 표시 변화 0회 · 놓으면 재판정', async ({ page }) => {
+  // 실기기 판정 「돌리면 서서히 사라지고 돌아오면 다시 생겨 성가시다」의 수리 배선 팔.
+  // 감쇠 자체는 그대로다(위 3-a 팔이 지킨다 — 뗀 뒤에는 창 밖 0). 여기는 **드래그 중**
+  // 표본이다: 동결이 배선됐으면 잉크 알파가 드래그 내내 상수다(수리 전에는 표본마다 준다).
+  await setup(page)
+  await drawLine(page, 240, 590, 240, 690)           // 대기 획(3-a와 같은 자리)
+  const atDraw = await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
+  expect(atDraw.count).toBeGreaterThan(0)
+
+  await page.mouse.move(600, 400)
+  await page.mouse.down({ button: 'middle' })
+  const samples: number[] = []
+  for (let i = 1; i <= 6; i++) {                     // 왕복 — 가고
+    await page.mouse.move(600 + i * 40, 400); await settle(page)
+    samples.push((await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)).alphaSum)
+  }
+  expect(await page.evaluate(() => (window as any).__b2.app.fadePose !== null),
+    '드래그 중 — 판정이 동결돼 있다').toBe(true)
+  for (let i = 5; i >= 0; i--) {                     // 오고
+    await page.mouse.move(600 + i * 40, 400); await settle(page)
+    samples.push((await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)).alphaSum)
+  }
+  await page.mouse.up({ button: 'middle' })
+  await settle(page)
+  let changes = 0
+  for (let i = 1; i < samples.length; i++) {
+    if (Math.abs(samples[i]! - samples[i - 1]!) > atDraw.alphaSum * 0.02) changes++
+  }
+  console.log(`[측정] 감쇠 동결 — 드래그 12표본 alphaSum 변화 ${changes}회 (기준 ${atDraw.alphaSum})`)
+  expect(changes, '돌리는 동안 아무 일도 안 일어난다(수리 전: 표본마다 줄었다)').toBe(0)
+  expect(samples[0]!).toBeGreaterThan(atDraw.alphaSum * 0.9)   // 동결값 = 잡는 순간(자기 시점 1)
+  // 놓았다 — 재판정 한 번: 제자리 왕복이므로 원래 진하기로 돌아와 있다(변화 0~1회의 «0»)
+  const after = await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
+  expect(after.alphaSum).toBeGreaterThan(atDraw.alphaSum * 0.9)
+  expect(await page.evaluate(() => (window as any).__b2.app.fadePose === null),
+    '뗀 뒤 — 동결이 풀렸다').toBe(true)
+})
