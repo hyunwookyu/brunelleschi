@@ -10,7 +10,7 @@ import {
   screenAxes, project, rayThrough, pointOnGround, vpDeviation, type Ray,
 } from './camera'
 import {
-  type Pt, type V3, add3, sub3, mul3, dot3, dist2, norm3,
+  type Pt, type V3, add3, sub3, mul3, dot3, dist2, norm3, len3,
 } from './vec'
 
 export interface LiftedSeg {
@@ -222,6 +222,18 @@ export function liftAll(doc: Doc): LiftResult {
         }
       }
       if (!b3) { if (anchorId === s.id) anchorId = null; continue }
+
+      // ── 치수(web2-08 지시 4-2) — **시작점과 방향만 취하고 길이는 입력값으로 바꾼다** ──
+      // 끝점 오스냅으로 붙인 좌표도 치수가 이긴다 — «점이 방향을 이긴다»(#63)와 다른
+      // 자리다: 그쪽은 재계산이 사람의 점을 덮는 결함이고, 여기는 **사람이 나중에 준
+      // 명시 입력**(치수)이 앞의 점을 대체하는 것이다(지시 문면 그대로).
+      // 첫 치수(스케일을 정한 획)도 같은 갈래를 타는데, mmPerUnit이 그 획의 길이에서
+      // 나왔으므로 dim/mmPerUnit == 원래 길이 — 구성상 무변형이다(팔이 잰다).
+      if (s.dim !== undefined && doc.mmPerUnit !== null && doc.mmPerUnit > 0) {
+        const d = sub3(b3, a3)
+        const L = len3(d)
+        if (L > 1e-12) b3 = add3(a3, mul3(d, s.dim / doc.mmPerUnit / L))
+      }
 
       lifted.set(s.id, { a3, b3, axis })
       endpoints.push(a3, b3)

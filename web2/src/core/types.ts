@@ -1,4 +1,5 @@
 import type { Pt, V3, Quat } from './vec'
+import type { Unit } from './dim'
 
 /** 뷰 포즈 — 획이 그려진 시점의 카메라. 파생이 아니라 입력 맥락이다.
  *  null/undefined = 작도 포즈(원점, 무회전). */
@@ -24,6 +25,9 @@ export interface Stroke {
   view?: CamPose
   /** 재료 — 없으면 HB. `w`는 제도펜 니브 굵기 px(잉크 전용, 없으면 재료 기본값). */
   mat?: { grade: Grade; press?: number; w?: number }
+  /** 사용자가 입력한 치수 mm(web2-08 지시 4-2) — 리프팅이 시작점·방향만 취하고
+   *  길이를 이 값으로 바꾼다. 첫 치수(스케일을 정한 획)도 같은 규칙인데 구성상 무변형이다. */
+  dim?: number
 }
 
 /** 문서 — 획 목록과 그린 캔버스 크기(CSS px, 첫 획 시점).
@@ -33,10 +37,15 @@ export interface Doc {
   strokes: Stroke[]
   /** 사용자가 지정한 면 — **이것만은 파생이 아니다**(아래 「면」 절) */
   faces: Face[]
+  /** **세계 1단위 = 몇 mm** — 첫 치수 입력이 정한다(지시 4-1). null = 아직 무스케일.
+   *  파생이 아니라 사용자의 결정이라 저장한다(면과 같은 급). 계산은 `core/dim.ts`. */
+  mmPerUnit: number | null
+  /** 표시 단위 — 기본 밀리미터(지시 4-6) */
+  unit: Unit
 }
 
 export const emptyDoc = (W: number, H: number): Doc =>
-  ({ frame: { W, H }, strokes: [], faces: [] })
+  ({ frame: { W, H }, strokes: [], faces: [], mmPerUnit: null, unit: 'mm' })
 
 // ── 면 ────────────────────────────────────────────────────────────────────
 // **자동으로 안 만든다.** 닫힌 루프가 생겼다고 면이 아니다 — 방 안의 벽 넷은 방이고

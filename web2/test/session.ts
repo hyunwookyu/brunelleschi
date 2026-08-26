@@ -17,6 +17,11 @@ export interface Session {
 export function session(W: number, H: number): Session {
   const app = createApp(W, H)
   const set = () => ({ ...app.osnap, radius: app.osnap.radius / app.view.s })
+  // 치수 옵션도 앱(input.ts)과 같은 자리에서 읽는다 — 하네스가 앱을 재게(web2-08 지시 4)
+  const dims = () => ({
+    mmPerUnit: app.doc.mmPerUnit,
+    snapStep: app.dimSnap ? app.dimSnapStep : null,
+  })
   return {
     app,
     draw(ax, ay, bx, by) {
@@ -24,7 +29,7 @@ export function session(W: number, H: number): Session {
       const oh = resolveStart(app.lift, app.pose, p, set())
       const start = oh ? oh.p : p
       const startP3 = { p3: oh?.p3 ?? null }
-      const r = resolveEnd(app.lift, app.pose, app.lift.an, start, startP3, { x: bx, y: by }, set())
+      const r = resolveEnd(app.lift, app.pose, app.lift.an, start, startP3, { x: bx, y: by }, set(), dims())
       const c = resolveCommit(app.lift.an, start, r.end, set().radius)
       if (!c) return null // 잡음 — 지평선에서 먼 탭
       return commitStroke(app, c.a, c.b, [p, { x: bx, y: by }])

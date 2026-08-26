@@ -51,6 +51,11 @@ export function initInput(
   const toPt = (e: PointerEvent): Pt => screenToDoc(app, toScreen(e))
   /** 오스냅 반경은 화면 px — 문서 좌표용으로 배율 보정 */
   const osnapSet = () => ({ ...app.osnap, radius: app.osnap.radius / app.view.s })
+  /** 치수 옵션 — 스냅은 켜져 있을 때만 step이 실린다(지시 4-7) */
+  const dimOpts = () => ({
+    mmPerUnit: app.doc.mmPerUnit,
+    snapStep: app.dimSnap ? app.dimSnapStep : null,
+  })
 
   // ── 획 미리보기 — 확정과 같은 함수로(스냅이 그대로 확정된다, 원칙 d) ──
   // 끝점 결정: 오스냅(점)이 축 스냅(방향)을 이긴다 — Rhino 선례.
@@ -59,11 +64,12 @@ export function initInput(
     draft.raw.push(cur)
     const r = resolveEnd(
       app.lift, app.pose, app.lift.an,
-      draft.start, { p3: draft.startP3 }, cur, osnapSet(),
+      draft.start, { p3: draft.startP3 }, cur, osnapSet(), dimOpts(),
     )
     draft.end = r.end
     draft.label = r.label
     draft.endSnap = r.endSnap
+    draft.lenMm = r.lenMm
     cb.onDraftChange(draft)
   }
 
@@ -77,6 +83,7 @@ export function initInput(
       startSnap: oh,
       startP3: oh?.p3 ?? null,
       endSnap: null,
+      lenMm: null,
     }
     cb.onDraftChange(draft)
   }

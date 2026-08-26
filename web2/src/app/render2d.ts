@@ -22,6 +22,8 @@ export interface Draft {
   startSnap: OsnapHit | null
   startP3: V3 | null
   endSnap: OsnapHit | null
+  /** 지금 그리는 선의 실척 길이 mm — 리본 패널이 읽는다(지시 4-5). 무스케일이면 null */
+  lenMm: number | null
 }
 
 export function resize2d(canvas: HTMLCanvasElement, W: number, H: number, dpr: number) {

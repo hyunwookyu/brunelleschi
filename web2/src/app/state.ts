@@ -63,6 +63,12 @@ export interface App {
   view: ViewOffset
   /** 저장된 시점 */
   savedViews: { pose: CamPose; view: ViewOffset }[]
+  /** 치수 스냅(web2-08 지시 4-7) — **기본 꺼짐**(옵션). 켜면 그리는 동안 실제 길이가
+   *  `dimSnapStep`(mm)의 배수로 맞춰진다 — 표시만이 아니다. */
+  dimSnap: boolean
+  dimSnapStep: number
+  /** 무한소수 표기(지시 4-8) — 꺼져 있으면 읽는 자리만 반올림해 보인다(값은 불변) */
+  dimExact: boolean
   /** 지면 격자 표시 — **기본 꺼짐**(지시 3-a). 토글은 설정에 남는다.
    *  이 도구는 모델링 툴이 아니라 그림 도구다 — 빈 종이에 격자가 깔려 있으면
    *  CAD의 감각이 된다. 필요한 사람이 켠다. */
@@ -90,10 +96,42 @@ export function createApp(W: number, H: number): App {
     activeErase: null,
     view: { s: 1, ox: 0, oy: 0 },
     savedViews: [],
+    dimSnap: false,
+    dimSnapStep: 50,
+    dimExact: false,
     grid: false,
     cubeLayout: { cx: W - 60, cy: 60, size: 80 }, // 우측 상단 — 큐브
     listeners: [],
   }
+}
+
+// ── 치수(web2-08 지시 4) — 입력이 어디서 오든(필기·음성) 여기 하나로 들어온다 ──
+//
+// 4-1: 첫 치수가 스케일을 정한다 — `doc.mmPerUnit`(세계 1단위 = 몇 mm). 기하 불변.
+// 4-2: 그 뒤는 획에 `dim`(mm)이 실리고 리프팅이 길이를 그 값으로 바꾼다(`lift.ts`).
+// ⚠ 실행취소 대상이 아니다 — 치수는 다시 말하거나 다시 써서 고친다(지시 4-4의 «확정 전
+//   변경»과 같은 몸짓이 확정 후에도 유효하다). op에 넣으려면 mmPerUnit까지 되돌려야
+//   하는데 그러면 뒤 획들의 실척이 통째로 흔들린다 — 대가가 커서 안 넣었다(DEFERRED).
+
+export type DimResult = 'scale' | 'applied' | 'no3d' | 'none'
+
+/** 획 id에 치수 mm를 적용한다. 첫 적용은 스케일을 정하고(기하 불변), 이후는 길이를 바꾼다. */
+export function setDimension(app: App, id: number, mm: number): DimResult {
+  const s = app.doc.strokes.find(x => x.id === id)
+  if (!s || !(mm > 0) || !isFinite(mm)) return 'none'
+  if (app.doc.mmPerUnit === null) {
+    const g = app.lift.lifted.get(id)
+    if (!g) return 'no3d'                      // 3D가 없으면 스케일을 정할 길이가 없다
+    const L = len3(sub3(g.b3, g.a3))
+    if (!(L > 1e-12)) return 'no3d'
+    app.doc.mmPerUnit = mm / L
+    s.dim = mm
+    recompute(app)
+    return 'scale'
+  }
+  s.dim = mm
+  recompute(app)
+  return 'applied'
 }
 
 /** 화면 좌표 ↔ 문서 좌표 — 뷰 오프셋의 단일 출처 */
