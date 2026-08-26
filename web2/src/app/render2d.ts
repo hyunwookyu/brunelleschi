@@ -60,10 +60,13 @@ const COL = {
   // 「축에 붙었다」와 「점에 붙었다」가 화면에서 안 갈린다. 순간 피드백끼리는 갈려야 한다.
   // **면 미리보기(«만든다»의 초록)에만 남는다** — 오스냅 기호는 아래 osnap(무채색)이다.
   snap: '#1a9c50',
-  // 오스냅 기호 — 무채색(지시 2). 진하기는 HB(#5a5a5a)와 같은 대역이라 획을 누르지
-  // 않는다. ⚠ 획 «위»에서의 대비는 색이 아니라 형태(□◆△… — 획과 다른 기하)가 가른다 —
-  // 실측 없음(AS-C23). e2e가 채도(채널 차 ≤ 12)를 픽셀로 잰다.
-  osnap: '#555',
+  // 오스냅 기호 — 무채색이고 **2H 급**이다(web2-10 지시 6 — 「HB 대역이라 진하다」는
+  // 실기기 관측으로 내렸다). 값은 경도표를 그대로 읽는다(MAT['2H'] — 지평선과 같은 방식,
+  // 숫자를 새로 짓지 않는다). mark()가 색·알파를 MAT에서 직접 읽으므로 여기 항목이 없다.
+  // 하한 근거: 2H는 경도표의 가장 옅은 급이다 — 그 아래로는 「그린 선보다 옅은 값」이
+  // 경도표에 없다. 굵기 1.5px는 유지한다(7px급 기호가 1.1px·알파 0.5로는 사라질 위험 —
+  // AS-C23의 되돌릴 조건이 굵기를 가시성 손잡이로 지정한 그대로다).
+  // ⚠ 획 «위»에서의 대비는 색이 아니라 형태(□◆△… — 획과 다른 기하)가 가른다(AS-C23).
   cubeFace: 'rgba(252,251,248,0.80)',
   cubeEdge: '#b0a99c',
 }
@@ -273,13 +276,19 @@ function grain(
 }
 
 /** 오스냅 표식 — Rhino 관행의 형태 구분: 끝 □ · 정점 ◆ · 중 △ · 교차 ✕ · 수선 ⊥ · 연장 ▫ · 근처 ○.
- *  **무채색이다**(web2-08 지시 2) — 종류는 형태가 가르므로 색은 정보가 아니었다. */
+ *  **무채색이다**(web2-08 지시 2) — 종류는 형태가 가르므로 색은 정보가 아니었다.
+ *  진하기는 **2H 급**(web2-10 지시 6) — 색·알파를 경도표에서 그대로 읽는다. */
 function mark(ctx: CanvasRenderingContext2D, h: OsnapHit, is: number) {
   const { x, y } = h.p
   const r = 4 * is, r5 = 5 * is
-  ctx.strokeStyle = COL.osnap
+  // ⚠ 알파를 바꾸므로 switch의 이른 return이 있는 이 함수를 try/finally로 감싼다 —
+  // 안 되돌리면 0.5가 이후 그리기(대기 획·큐브)로 샌다.
+  const om = MAT['2H']
+  ctx.strokeStyle = om.color
+  ctx.globalAlpha = om.alpha
   ctx.lineWidth = 1.5 * is
   ctx.setLineDash([])
+  try {
   ctx.beginPath()
   switch (h.kind) {
     // **소실점** — 이 자리가 비어 있었다(web2-05). 스냅 판정은 돌았는데 `switch`에
@@ -316,4 +325,5 @@ function mark(ctx: CanvasRenderingContext2D, h: OsnapHit, is: number) {
     }
   }
   ctx.stroke()
+  } finally { ctx.globalAlpha = 1 }
 }
