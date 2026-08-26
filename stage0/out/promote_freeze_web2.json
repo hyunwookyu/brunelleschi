@@ -1,0 +1,125 @@
+{
+  "what": "굳힌 3D를 새 카메라(승격 후)로 사영한 화면 위치와 pts2d의 어긋남(px)",
+  "promotion": "P1→P2 (fSource default→two-vp) — web2에 실재하는 유일한 승격. 지시 문면 «P2→P3»과의 갈림은 NOTES web2-13 2부 절",
+  "threshold": {
+    "rule": "맞는다 = draw.max_px ≤ TAP_MAX_PX (전 구도 최악 · 경계는 안 맞는 쪽 — 측정 전 등록, 초안 §9.1)",
+    "TAP_MAX_PX": 2
+  },
+  "orbit_pose": {
+    "p": {
+      "x": 3,
+      "y": 1.6,
+      "z": 3
+    },
+    "q": {
+      "x": 0,
+      "y": 0.19866933079506122,
+      "z": 0,
+      "w": 0.9800665778412416
+    }
+  },
+  "comps": [
+    {
+      "name": "A_중앙",
+      "f_before": 1044,
+      "f_after": 387.2983346207417,
+      "f_moved": 656.7016653792583,
+      "principal_before_x": 900,
+      "principal_after_x": 600,
+      "strokes_drawn": 5,
+      "strokes_frozen": 4,
+      "strokes_relifted": 4,
+      "draw": {
+        "median_px": 100.12043996986208,
+        "max_px": 153.73868047321017,
+        "n": 8
+      },
+      "orbit": {
+        "median_px": 40.59360085909307,
+        "max_px": 82.60960964969935,
+        "n": 8
+      },
+      "oracle": {
+        "pre_max_px": 1.4062285205060312e-12,
+        "relift_max_px": 1.6405999405903699e-12
+      },
+      "refute": {
+        "baseline": "pre-promotion(옛 카메라·오라클 ① 0) 위 섭동",
+        "f_x1_2_max_px": 82.46211251235322,
+        "principal_p30_max_px": 30.000000000001364,
+        "p3_shift0_1_alone_px": 6.249999999999943
+      }
+    },
+    {
+      "name": "B_먼VP",
+      "f_before": 1044,
+      "f_after": 632.4555320336757,
+      "f_moved": 411.5444679663243,
+      "principal_before_x": 1100,
+      "principal_after_x": 600,
+      "strokes_drawn": 5,
+      "strokes_frozen": 4,
+      "strokes_relifted": 4,
+      "draw": {
+        "median_px": 221.09952457637496,
+        "max_px": 262.7979113163103,
+        "n": 8
+      },
+      "orbit": {
+        "median_px": 89.7836402003245,
+        "max_px": 120.87246223941932,
+        "n": 8
+      },
+      "oracle": {
+        "pre_max_px": 4.687428401686771e-13,
+        "relift_max_px": 2.0495186137532014e-13
+      },
+      "refute": {
+        "baseline": "pre-promotion(옛 카메라·오라클 ① 0) 위 섭동",
+        "f_x1_2_max_px": 164.92422502470654,
+        "principal_p30_max_px": 30.000000000000455,
+        "p3_shift0_1_alone_px": 12.5
+      }
+    },
+    {
+      "name": "C_좁은화각",
+      "f_before": 1044,
+      "f_after": 927.6789505503057,
+      "f_moved": 116.32104944969433,
+      "principal_before_x": 1700,
+      "principal_after_x": 600,
+      "strokes_drawn": 5,
+      "strokes_frozen": 4,
+      "strokes_relifted": 4,
+      "draw": {
+        "median_px": 997.0689027419799,
+        "max_px": 1005.4725881045579,
+        "n": 8
+      },
+      "orbit": {
+        "median_px": 585.3587835320536,
+        "max_px": 630.7276089224928,
+        "n": 8
+      },
+      "oracle": {
+        "pre_max_px": 8.276526715781664e-13,
+        "relift_max_px": 4.547473508864641e-13
+      },
+      "refute": {
+        "baseline": "pre-promotion(옛 카메라·오라클 ① 0) 위 섭동",
+        "f_x1_2_max_px": 203.9607805437116,
+        "principal_p30_max_px": 30.000000000000796,
+        "p3_shift0_1_alone_px": 12.5
+      }
+    }
+  ],
+  "totals": {
+    "draw_median_px": 221.09952457637496,
+    "draw_max_px": 1005.4725881045579,
+    "orbit_median_px": 92.95109669796372,
+    "orbit_max_px": 630.7276089224928,
+    "n_draw": 24,
+    "n_orbit": 24
+  },
+  "verdict": "안 맞는다 — 자립은 «카메라 확정 후»로 미룬다"
+}
