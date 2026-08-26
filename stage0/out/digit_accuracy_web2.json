@@ -1,7 +1,40 @@
 {
  "what": "치수 필기 인식 비교(web2-10 지시 8-b) — 합성 표본(=$P 템플릿 흔들기 40) 숫자별 분자/분모",
- "bias": "⚠ 이 표본은 $P의 자기 템플릿이라 $P에 구성상 유리하다(AS-C24 — 인식률이 아니다). 실필기 대역은 digitnet_mnist.json(int8 9678/10000)이 들고, $P는 획 자료가 없어 그 비교가 구조적으로 불가하다.",
+ "weights_sha256_12": "6c08f3c38864",
+ "bias": "⚠ 이 표본은 $P의 자기 템플릿이라 $P에 구성상 유리하다(AS-C24 — 인식률이 아니다). 실필기 대역은 digitnet_mnist.json(int8 9628/10000 · 임계 적용 후 맞음 9483·기권 325·오독 192)이 들고, $P는 획 자료가 없어 그 비교가 구조적으로 불가하다.",
  "seed": 7,
+ "seed_sweep": {
+  "note": "netCorrect는 원시 분류(임계 미적용) — 런타임은 임계 아래 옳은 답을 «?»로 기권(lowConfAbstain). ⚠ «옳은 최악 > 잡음 최선» 분리 부호는 시드 101에서 뒤집혔다(0.452 < 0.497) — 임계는 잡음 차단이 아니라 불확신 기권 손잡이이고 잡음 차단은 잡음 클래스가 진다. 불변은 오독 0·잡음 수용 0.",
+  "seeds": [
+   {
+    "seed": 101,
+    "net_correct": 39,
+    "low_conf_abstain": 3,
+    "correct_worst": 0.45186667039467715,
+    "noise_best": 0.49669273139337544,
+    "wrong_digit": 0,
+    "noise_accepted": 0
+   },
+   {
+    "seed": 202,
+    "net_correct": 39,
+    "low_conf_abstain": 0,
+    "correct_worst": 0.5452206694851036,
+    "noise_best": 0.49669273139337544,
+    "wrong_digit": 0,
+    "noise_accepted": 0
+   },
+   {
+    "seed": 303,
+    "net_correct": 39,
+    "low_conf_abstain": 0,
+    "correct_worst": 0.5608071153155745,
+    "noise_best": 0.49669273139337544,
+    "wrong_digit": 0,
+    "noise_accepted": 0
+   }
+  ]
+ },
  "per_digit": {
   "0": {
    "p$": {
@@ -104,12 +137,21 @@
    }
   }
  },
+ "failures": [
+  {
+   "ch": "2",
+   "got": "?(확신 0.440)"
+  }
+ ],
  "net_confidence": {
   "correct_worst": 0.5432968370333643,
   "noise_class_rejected": "6/8",
   "noise_best_after_class": 0.49669273139337544,
   "reject": 0.52,
   "note": "거부 두 겹 — 잡음 클래스(11번째) + 확신 임계. 임계 여유 ±0.023(얇다 — 표본이 커지면 다시 놓는다)"
+ },
+ "rejected_alternatives": {
+  "note": "기각 기록(2차 [8]) — 폐기된 10클래스 가중치의 수라 재실행 불가. 그 실측: softmax 확신 단독은 옳은 최악 0.584 vs 잡음 최선 0.547(여유 0.019 — 8표본 밖 일반화 근거 없음), 로그마진(top1/top2)은 잡음 0.963 > 옳음 0.810로 역전."
  },
  "mnist_ledger": "stage0/out/digitnet_mnist.json"
 }

@@ -68,7 +68,11 @@ export async function recognizeStrokes(strokes: Pt[][]): Promise<{ text: string;
         }
         const pred = await drawing.getPrediction()
         const raw = pred[0]?.text ?? ''
-        const text = raw.replace(/[^0-9.]/g, '')  // 숫자만 필요하다(지시 문면 — 언어는 무방)
+        // 숫자·점 밖 문자는 지운다(«2,500»·«2500mm» 같은 병기 대비). ⚠ «l2»→«2»처럼
+        // 오인식 문자가 지워지며 값이 달라질 수 있다 — 그래도 «?»로 통째 거부하지 않은
+        // 근거: 결과는 어차피 **스테이징**이라 사람이 읽고 적용한다(8-a ② — 조용히
+        // 확정되는 길이 없다). 지운 몫이 커서 헷갈린다는 관측이 오면 거부로 바꾼다.
+        const text = raw.replace(/[^0-9.]/g, '')
         if (text.length > 0) return { text, via: 'builtin' }
         // 내장이 숫자를 못 냈다 — ②로 떨어진다(빈 결과를 확정으로 안 만든다)
       }

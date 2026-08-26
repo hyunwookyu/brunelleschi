@@ -26,6 +26,10 @@ Exception: web2/src/core/digitnet_weights.json (handwritten-digit model weights)
 is licensed under CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/),
 not MIT. The weights were trained by this repository (web2/tools/train_digitnet.py,
 numpy only — no third-party model code) on the MNIST dataset (derived from NIST
-Special Database 19; MNIST is commonly distributed under CC BY-SA 3.0 — attribution:
+Special Database 19). MNIST's own licensing is not stated by its original
+distribution; several redistributors label it CC BY-SA 3.0, and this repository
+conservatively assumes that label applies and complies with it (attribution:
 Yann LeCun, Corinna Cortes, Christopher J.C. Burges, "THE MNIST DATABASE of
-handwritten digits"). The inference code (web2/src/core/digitnet.ts) is MIT as above.
+handwritten digits"). This notice is carried into deployed bundles via the
+"license" field embedded in the weights JSON itself. The inference code
+(web2/src/core/digitnet.ts) is MIT as above.

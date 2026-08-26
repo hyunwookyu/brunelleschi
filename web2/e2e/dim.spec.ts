@@ -303,3 +303,31 @@ test('인식기 감지 — 내장 API가 선언만 있고 죽으면 번들 모�
   await page.waitForFunction(() => document.getElementById('dim-read')!.textContent === '1')
   expect(await page.textContent('#pad-read')).toBe('1')
 })
+
+test('비동기 인식 순서(recSeq) — 늦게 온 옛 결과가 새 결과를 덮지 않는다 (8-b 리뷰어 [11])', async ({ page }) => {
+  // 모의 내장 API가 첫 호출만 500ms 늦게 «9»를, 둘째는 즉시 «1»을 낸다.
+  // 획을 잇달아 두 번 끝내면: 옛 «9»가 늦게 도착해도 화면·스테이징은 «1»이어야 한다.
+  await page.addInitScript(() => {
+    let calls = 0
+    ;(navigator as any).createHandwritingRecognizer = async () => ({
+      startDrawing: () => {
+        const n = ++calls
+        return {
+          addStroke() { /* 획 */ },
+          async getPrediction() {
+            if (n === 1) { await new Promise(r => setTimeout(r, 500)); return [{ text: '9' }] }
+            return [{ text: '1' }]
+          },
+        }
+      },
+    })
+  })
+  await build(page)
+  await page.click('#dim-toggle')
+  await writeOne(page, 60)                          // 1차 — 늦은 «9»
+  await writeOne(page, 100)                         // 2차 — 즉시 «1»
+  await page.waitForFunction(() => document.getElementById('dim-read')!.textContent === '1')
+  await page.waitForTimeout(700)                    // 늦은 «9»가 도착할 시간을 준다
+  expect(await page.textContent('#dim-read')).toBe('1')   // 덮지 않았다
+  expect(await page.textContent('#pad-read')).toBe('1')
+})

@@ -1,9 +1,158 @@
 {
  "what": "digitnet(784-64-11 MLP+\uc7a1\uc74c \ud074\ub798\uc2a4, int8) \u2014 MNIST test 10k \u00b7 \uc22b\uc790\ubcc4 \ubd84\uc790/\ubd84\ubaa8",
+ "weights_sha256_12": "6c08f3c38864",
  "garbage_class": {
-  "float_reject": 0.934,
-  "int8_reject": 0.933,
-  "n": 1000
+  "what": "\ud3c9\uac00\uc6a9 \ud569\uc131 \ube44\uc22b\uc790 1000\uac1c \u2014 \ud559\uc2b5\uc5d0 \ub123\uc740 8000\uac1c\uc640 \uac19\uc740 \uc0dd\uc131\uae30(\ubb34\uc791\uc704 \ud3f4\ub9ac\ub77c\uc778 1~3\uac1c, 2~5\uc810, \uc218\uc9c1 \uc120\ubd84(\u00b125\u00b0)\uc740 \u00ab1\u00bb\uc774\ub77c \ub215\ud600 \uc81c\uc678)\u00b7\uac19\uc740 \uc2dc\ub4dc\uc5f4\uc758 \ub2e4\ub978 \ubf51\uae30",
+  "float_reject": {
+   "correct": 934,
+   "total": 1000
+  },
+  "int8_reject": {
+   "correct": 933,
+   "total": 1000
+  }
+ },
+ "int8_with_reject": {
+  "note": "\ubc30\ud3ec \uad6c\uc131\uc758 \uc218(\ub9ac\ubdf0\uc5b4 [2]) \u2014 \uc7a1\uc74c \ud074\ub798\uc2a4 \ub610\ub294 \ud655\uc2e0<NET_REJECT\uba74 \u00ab?\u00bb(\uae30\uad8c)",
+  "net_reject": 0.52,
+  "ok": 9483,
+  "abstain": 325,
+  "wrong": 192,
+  "total": 10000
+ },
+ "int8_confusion": {
+  "rows_true_0to9_cols_pred_0to10": [
+   [
+    962,
+    0,
+    0,
+    0,
+    2,
+    2,
+    4,
+    2,
+    2,
+    1,
+    5
+   ],
+   [
+    0,
+    1119,
+    5,
+    3,
+    0,
+    0,
+    1,
+    0,
+    5,
+    0,
+    2
+   ],
+   [
+    5,
+    0,
+    991,
+    5,
+    1,
+    0,
+    2,
+    10,
+    7,
+    0,
+    11
+   ],
+   [
+    0,
+    0,
+    10,
+    968,
+    1,
+    2,
+    0,
+    7,
+    8,
+    5,
+    9
+   ],
+   [
+    1,
+    0,
+    2,
+    0,
+    945,
+    2,
+    5,
+    0,
+    2,
+    12,
+    13
+   ],
+   [
+    6,
+    3,
+    2,
+    11,
+    1,
+    845,
+    7,
+    1,
+    8,
+    1,
+    7
+   ],
+   [
+    6,
+    3,
+    0,
+    0,
+    2,
+    2,
+    935,
+    0,
+    1,
+    0,
+    9
+   ],
+   [
+    1,
+    6,
+    13,
+    1,
+    1,
+    0,
+    0,
+    980,
+    2,
+    12,
+    12
+   ],
+   [
+    4,
+    3,
+    2,
+    3,
+    8,
+    6,
+    4,
+    4,
+    924,
+    2,
+    14
+   ],
+   [
+    2,
+    7,
+    1,
+    9,
+    10,
+    4,
+    1,
+    2,
+    6,
+    959,
+    8
+   ]
+  ]
  },
  "seed": 20260826,
  "epochs": 16,

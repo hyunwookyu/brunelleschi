@@ -144,9 +144,37 @@ json.dump({
 _, zg = fwd(Xg_te)
 hq = np.maximum(Xg_te @ W1q + b1, 0)
 zgq = hq @ W2q + b2
+
+# 가중치 정체성(리뷰어 [1]) — 두 원장이 같은 가중치의 수임을 해시로 잇는다
+import hashlib
+whash = hashlib.sha256(open(OUT, 'rb').read()).hexdigest()[:12]
+
+# 혼동 행렬(리뷰어 [3]) — 오독의 방향. int8 기준
+conf = [[int(((yte == a) & (predq == b)).sum()) for b in range(11)] for a in range(10)]
+
+# 임계 적용(리뷰어 [2]) — 배포 구성(NET_REJECT)과 같은 규칙으로 «맞음/기권/오독»을 낸다.
+# ⚠ 값은 TS의 NET_REJECT와 손으로 맞춘다(둘이 갈리면 이 표가 낡는다 — 아래 필드에 명기)
+NET_REJECT = 0.52
+zq_s = zq - zq.max(1, keepdims=True)
+pq = np.exp(zq_s); pq /= pq.sum(1, keepdims=True)
+top = pq.max(1)
+rejected = (predq == 10) | (top < NET_REJECT)
+ok = int(((predq == yte) & ~rejected).sum())
+abstain = int(rejected.sum())
+wrong = int(((predq != yte) & ~rejected).sum())
+
 json.dump({
     'what': 'digitnet(784-64-11 MLP+잡음 클래스, int8) — MNIST test 10k · 숫자별 분자/분모',
-    'garbage_class': {'float_reject': float((zg.argmax(1) == 10).mean()), 'int8_reject': float((zgq.argmax(1) == 10).mean()), 'n': 1000},
+    'weights_sha256_12': whash,
+    'garbage_class': {
+        'what': '평가용 합성 비숫자 1000개 — 학습에 넣은 8000개와 같은 생성기(무작위 폴리라인 1~3개, 2~5점, 수직 선분(±25°)은 «1»이라 눕혀 제외)·같은 시드열의 다른 뽑기',
+        'float_reject': {'correct': int((zg.argmax(1) == 10).sum()), 'total': 1000},
+        'int8_reject': {'correct': int((zgq.argmax(1) == 10).sum()), 'total': 1000}},
+    'int8_with_reject': {
+        'note': '배포 구성의 수(리뷰어 [2]) — 잡음 클래스 또는 확신<NET_REJECT면 «?»(기권)',
+        'net_reject': NET_REJECT,
+        'ok': ok, 'abstain': abstain, 'wrong': wrong, 'total': len(yte)},
+    'int8_confusion': {'rows_true_0to9_cols_pred_0to10': conf},
     'seed': 20260826, 'epochs': EPOCHS, 'hidden': H,
     'float_overall': overall | {'acc': float((pred == yte).mean())},
     'float_per_digit': per,
