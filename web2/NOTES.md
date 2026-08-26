@@ -4581,3 +4581,16 @@ axis 옛 render2d · (배포 ①의 둘은 그 절에).
 벽시계 59.4s) · selfcheck 새 플래그 없음(scan_pitfalls_table_last 0건). 반증 실행(전부 dpr 둘):
 키 배선 끊기 2 failed · 행 높이 24px 2 failed. 비용은 여전히 원장 밖(#25 — DEFERRED 24행을
 82·59.4s로 갱신).
+
+### 배포 ③ 확인 (#58 · ⛳)
+
+원격 main(`git ls-remote origin main` 원문):
+
+```
+05ea816d3d940b909a3666de4c61f221b87d3ccd	refs/heads/main
+```
+
+`npm run deploy:check` → 「✓ 화면 빌드 식별자 == 배포 커밋 / 결과: 배포됨」,
+**화면 빌드 식별자 `05ea816`**. 재시도 2회째 통과(Pages 전파 관행).
+**키패드가 서 있다 — 사람은 이제 치수를 확정 경로로 넣을 수 있다**(이 항목의 하한, 지시 문면).
+⚠ 이 뒤의 기록 커밋은 문서만이다.
