@@ -14,6 +14,15 @@ export interface ViewOffset { s: number; ox: number; oy: number }
 /** 재료 — 보조선·결과선 같은 분류가 없다. 재료만 있다. */
 export type Grade = '2H' | 'H' | 'F' | 'HB' | 'B' | '2B' | 'INK'
 
+/** `raw`와 **나란한** 점별 입력(web2-11 1-c) — `raw[i]`의 필압·기울기가 각 배열의 i다.
+ *  `Pt`를 안 늘린 이유: `vec.ts`의 `Pt`는 기하 전체가 쓴다(19파일 — NOTES 실측).
+ *  평행 배열이면 파급이 캡처(input)·저장(file)·표현(렌더)에서 끝난다.
+ *  전부 **양자화 정수**다(저장 크기 — 근거는 NOTES):
+ *  press 0..8191(필압×8191 반올림 — Pro Pen 3 선언 단계와 같아 하드웨어 이상의 손실 없음) ·
+ *  tiltX/tiltY 도(-90..90 — Pointer Events 명세가 long이라 정수 저장이 무손실) ·
+ *  twist 도(0..359). 각 배열은 있으면 raw와 길이가 같아야 한다(file.ts가 지킨다). */
+export interface RawInput { press?: number[]; tiltX?: number[]; tiltY?: number[]; twist?: number[] }
+
 /** 획 — 확정된 끝점 둘(스냅 반영, 원칙 d: 미리보기가 그대로 확정).
  *  raw는 손 획 원본(표현 계층에서 나중에 쓴다). */
 export interface Stroke {
@@ -21,6 +30,10 @@ export interface Stroke {
   a: Pt
   b: Pt
   raw?: Pt[]
+  /** 점별 필압·기울기(web2-11 1-c) — raw가 있을 때만, 펜 입력에서만 실린다.
+   *  마우스·손가락은 안 싣는다: 상수(마우스 0.5/0/0)를 점마다 쓰면 정보 없이 커진다.
+   *  옛 파일에는 없고 그때는 지금까지처럼 동작한다(전부 선택 — 1-e). */
+  rawIn?: RawInput
   /** 작도 포즈가 아닌 시점에 그렸으면 그 포즈 */
   view?: CamPose
   /** 재료 — 없으면 HB. `w`는 제도펜 니브 굵기 px(잉크 전용, 없으면 재료 기본값). */

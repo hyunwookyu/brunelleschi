@@ -1,0 +1,32 @@
+{
+ "what": "web2-11 1-c — 점별 입력(rawIn)의 저장 비용. 같은 그림(획 40×점 96, 시드 고정)을 rawIn 없이/실어서 직렬화한 바이트.",
+ "fixture": {
+  "strokes": 40,
+  "points_per_stroke": 96,
+  "seed": 20260826,
+  "note": "press+tiltX+tiltY 세 배열(twist 없음 — 관측된 축만 싣는 규칙과 같음)"
+ },
+ "bytes_before": 183280,
+ "bytes_after": 230551,
+ "rawin_bytes_per_point": 12.31,
+ "quantization": {
+  "press": "round(pressure×8191) — 오차 ≤ 6.10e-5 (Pro Pen 3 선언 8192단계와 같은 분해능)",
+  "tilt": "정수 도(-90..90) — Pointer Events 명세가 long이라 무손실",
+  "twist": "정수 도(0..359)"
+ },
+ "press_q": 8191,
+ "press_q_note": "C.PRESS_Q를 바꾸면 이 원장을 재실행하고 AS-C33·DEFERRED web2-11 표의 인용을 고친다(상수 스냅샷 등록부 밖이라 STALE이 자동으로 안 잡힌다 — web2 구조적).",
+ "core_raw_refs": 0,
+ "core_raw_refs_note": "src/core(file.ts·types.ts 제외)의 .raw/rawIn 참조 수 — 0이면 획 판정·리프팅이 coalesced 점을 안 읽는다(설계 보장의 수. 팔이 0을 강제한다).",
+ "legacy_snapshot_sha256_12": "4df1ac272c22",
+ "legacy_snapshot_note": "test/legacy_web2_10.ts parseBrnlLegacy 본문의 정규화 해시(주석 제거·공백 접기) — 스냅샷이 수정되면 재실행에서 이 값이 갈린다. b6980c9 원본과의 동일성은 2026-08-26 git show 정규화 비교 1회로 확인.",
+ "strokes_per_quota": {
+  "per_stroke_bytes": 5764,
+  "decimal_5e6_bytes": 867,
+  "decimal_5e6_utf16": 434,
+  "binary_5mib_bytes": 910,
+  "binary_5mib_utf16": 455
+ },
+ "strokes_per_quota_note": "localStorage 관용 «5MB»의 셈 축 둘(십진 5e6/이진 5MiB × 바이트/UTF-16 코드 단위)을 다 적었다(#28 — 어느 셈인지 실측 없음). ⚠ 전부 **이 밀도(획당 96점·press+tiltX+tiltY·twist 없음)의 값**이지 일반 상한이 아니다 — 획이 짧으면 획 수가 늘고, coalesced·twist가 raw·rawIn을 늘리면 준다(2차 [10]). .brnl은 ASCII라 문자 수 == 바이트 수.",
+ "falsification": "rawIn을 빼면 bytes_after == bytes_before가 되어 아래 단언이 실패한다(이 파일의 마지막 expect)"
+}

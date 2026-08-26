@@ -3,7 +3,7 @@
 // 실행취소는 op 단위다: 획 추가 op, 지우개 한 번의 드래그 op.
 // 그림만 되돌린다 — 작도(카메라)는 op에 들어가지 않는다.
 
-import { emptyDoc, type Doc, type Stroke, type Face, type CamPose, type ViewOffset, type Grade } from '../core/types'
+import { emptyDoc, type Doc, type Stroke, type Face, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
 import { isInk } from '../core/material'
 export type { ViewOffset }
 import { liftAll, type LiftResult } from '../core/lift'
@@ -69,6 +69,9 @@ export interface App {
   dimSnapStep: number
   /** 무한소수 표기(지시 4-8) — 꺼져 있으면 읽는 자리만 반올림해 보인다(값은 불변) */
   dimExact: boolean
+  /** coalesced 이벤트 수집(web2-11 1-a) — **기본 켜짐**. 끄는 손잡이는 D-3 반증용이다
+   *  (끄면 점 수가 전달 이벤트당 1로 떨어지는 것을 e2e가 실측한다). 화면에는 안 나온다. */
+  coalesce: boolean
   /** 지면 격자 표시 — **기본 꺼짐**(지시 3-a). 토글은 설정에 남는다.
    *  이 도구는 모델링 툴이 아니라 그림 도구다 — 빈 종이에 격자가 깔려 있으면
    *  CAD의 감각이 된다. 필요한 사람이 켠다. */
@@ -99,6 +102,7 @@ export function createApp(W: number, H: number): App {
     dimSnap: false,
     dimSnapStep: 50,
     dimExact: false,
+    coalesce: true,
     grid: false,
     cubeLayout: { cx: W - 110, cy: 60, size: 80 }, // 우측 상단 — 1.5배 세로바(x W−45..)와 안 겹치게 왼쪽으로(web2-10 지시 5)
     listeners: [],
@@ -204,9 +208,14 @@ export function facePreview(app: App, p: Pt): { poly: Pt[]; mode: 'add' | 'remov
   return found ? { poly: found.poly, mode: 'add' } : null
 }
 
-export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number) {
+export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number, rawIn?: RawInput) {
   const s: Stroke = { id: app.nextId++, a, b }
-  if (raw && raw.length > 2) s.raw = raw
+  if (raw && raw.length > 2) {
+    s.raw = raw
+    // 점별 입력(web2-11 1-c)은 raw와 나란해야만 뜻이 있다 — 어긋나면 조용히 버린다
+    // (캡처 쪽 결함이지 문서 손상이 아니다. file.ts의 «거부»와 다른 자리다).
+    if (rawIn && Object.values(rawIn).every(arr => !arr || arr.length === raw.length)) s.rawIn = rawIn
+  }
   if (!isDrawPose(app.pose)) s.view = { p: { ...app.pose.p }, q: { ...app.pose.q } }
   s.mat = { grade: activeGrade(app) }
   // 니브는 **잉크에만** 얹는다 — 연필 굵기는 경도가 정한다(재료가 다르다, 4-h)

@@ -14,13 +14,25 @@ import { resolveStart, resolveEnd, resolveCommit } from '../core/draft'
 import { C } from '../core/constants'
 import { cubeGeom, cubeHit, poseForElem } from '../core/viewcube'
 import type { Draft } from './render2d'
+import type { RawInput } from '../core/types'
 import { type Pt, pt } from '../core/vec'
+
+/** 최근 획의 캡처 통계(web2-11 1-a·1-f) — 진단 패널·e2e 원장이 읽는다 */
+export interface StrokeCapStats {
+  pointerType: string
+  /** 브라우저가 실제로 전달한 move 이벤트 수 */
+  events: number
+  /** 획에 실린 점 수(coalesced 포함, 시작점 포함) */
+  points: number
+  /** coalesced로 «더» 받은 점 수 = Σ(묶음 크기 − 1). 안 썼으면 버려졌을 수다. */
+  extra: number
+}
 
 export interface InputCallbacks {
   onDraftChange: (d: Draft | null) => void
   onHover: (h: OsnapHit | null) => void
-  /** press — 펜 필압 평균 (마우스는 undefined) */
-  onCommit: (a: Pt, b: Pt, raw: Pt[], press?: number) => void
+  /** press — 펜 필압 평균 (마우스는 undefined) · rawIn — 점별 필압·기울기(펜만, 1-c) */
+  onCommit: (a: Pt, b: Pt, raw: Pt[], press?: number, rawIn?: RawInput) => void
   /** 지우개 커서 위치 (지우개 도구일 때) */
   onEraserMove: (p: Pt | null) => void
   /** 면 도구의 미리보기 — 지금 탭하면 무엇이 될지(원칙 d) */
@@ -35,7 +47,30 @@ export function initInput(
   let draft: Draft | null = null
   let penDown = false
   let drawingPointer: number | null = null
+  let drawingType = ''
   let pressSamples: number[] = []
+  // 점별 표본(1-c) — draft.raw와 **나란히** 쌓인다(같은 이벤트에서 같이 push).
+  // 양자화는 확정 때 한 번(quantIn) — 그리는 중에는 날값을 든다.
+  let samples: { p: number; tx: number | null; ty: number | null; tw: number | null }[] = []
+  // 최근 획 통계(1-a·1-f). 값의 성격: 마지막으로 **끝난** 획이 아니라 «지금까지» —
+  // 그리는 중에도 갱신되어 패널이 실시간으로 읽는다.
+  let capStats: StrokeCapStats = { pointerType: '', events: 0, points: 0, extra: 0 }
+
+  /** coalesced 묶음(1-a) — 없는 브라우저·합성 이벤트(빈 목록)는 `[e]`로 떨어진다.
+   *  `app.coalesce = false`가 반증 손잡이다(D-3: 끄면 점 수가 이벤트당 1로 떨어진다). */
+  const bundleOf = (e: PointerEvent): PointerEvent[] => {
+    if (!app.coalesce) return [e]
+    const evs = e.getCoalescedEvents?.()
+    return evs && evs.length > 0 ? evs : [e]
+  }
+  /** 점별 표본 하나 — 기울기·twist는 **관측 그대로**(안 오면 null. 1-b: 폴백은 2부가
+   *  이 관측에서 정한다 — 여기서 0을 지어 넣으면 마우스가 «수직 펜»이 된다). */
+  const sampleOf = (e: PointerEvent) => ({
+    p: e.pressure,
+    tx: typeof e.tiltX === 'number' ? e.tiltX : null,
+    ty: typeof e.tiltY === 'number' ? e.tiltY : null,
+    tw: typeof (e as any).twist === 'number' ? (e as any).twist : null,
+  })
   const touches = new Map<number, Pt>()
   let lastTouchMid: Pt | null = null
   let lastTouchDist = 0
@@ -59,9 +94,20 @@ export function initInput(
 
   // ── 획 미리보기 — 확정과 같은 함수로(스냅이 그대로 확정된다, 원칙 d) ──
   // 끝점 결정: 오스냅(점)이 축 스냅(방향)을 이긴다 — Rhino 선례.
-  function updateDraft(cur: Pt) {
+  // ⚠ 미리보기 판정(resolveEnd)은 **전달 이벤트당 한 번**이다 — coalesced 점마다 돌리면
+  // 판정 비용이 묶음 크기배가 되는데 끝점은 어차피 마지막 점이다. 점 수집만 촘촘하다.
+  function updateDraft(e: PointerEvent) {
     if (!draft) return
-    draft.raw.push(cur)
+    const bundle = bundleOf(e)
+    capStats.events++
+    capStats.extra += bundle.length - 1
+    const r0 = canvas.getBoundingClientRect()
+    for (const c of bundle) {
+      draft.raw.push(screenToDoc(app, pt(c.clientX - r0.left, c.clientY - r0.top)))
+      samples.push(sampleOf(c))
+    }
+    capStats.points = draft.raw.length
+    const cur = toPt(e)
     const r = resolveEnd(
       app.lift, app.pose, app.lift.an,
       draft.start, { p3: draft.startP3 }, cur, osnapSet(), dimOpts(),
@@ -73,7 +119,9 @@ export function initInput(
     cb.onDraftChange(draft)
   }
 
-  function beginDraft(p: Pt) {
+  function beginDraft(p: Pt, e: PointerEvent) {
+    samples = [sampleOf(e)]
+    capStats = { pointerType: e.pointerType, events: 1, points: 1, extra: 0 }
     const oh = resolveStart(app.lift, app.pose, p, osnapSet())
     draft = {
       start: oh ? oh.p : p,
@@ -88,18 +136,34 @@ export function initInput(
     cb.onDraftChange(draft)
   }
 
+  /** 점별 표본 → 저장형(1-c) — 펜에만, raw와 길이가 맞을 때만.
+   *  양자화(정수)는 여기 한 번이다 — 값·근거는 `types.ts`의 `RawInput`과 `C.PRESS_Q`. */
+  function quantIn(sm: typeof samples, n: number): RawInput | undefined {
+    if (drawingType !== 'pen' || sm.length !== n || n === 0) return undefined
+    const ri: RawInput = { press: sm.map(s => Math.round(Math.min(1, Math.max(0, s.p)) * C.PRESS_Q)) }
+    // 기울기·twist는 **한 점이라도 관측된 축만** 싣는다(안 오는 기기에서 배열을 안 만든다)
+    if (sm.some(s => s.tx !== null)) ri.tiltX = sm.map(s => Math.round(s.tx ?? 0))
+    if (sm.some(s => s.ty !== null)) ri.tiltY = sm.map(s => Math.round(s.ty ?? 0))
+    if (sm.some(s => s.tw !== null && s.tw !== 0)) ri.twist = sm.map(s => Math.round(s.tw ?? 0))
+    return ri
+  }
+
   function endDraft() {
     if (!draft) return
     const d = draft
     draft = null
     cb.onDraftChange(null)
+    // mat.press(획 평균)는 **종전 그대로 전달 이벤트 표본의 평균**이다 — coalesced 표본을
+    // 섞으면 옛 파일·현재 렌더가 보는 값이 미세하게 달라진다(1부: 화면은 그대로).
     const press = pressSamples.length > 0
       ? pressSamples.reduce((a, b) => a + b, 0) / pressSamples.length
       : undefined
     pressSamples = []
+    const rawIn = quantIn(samples, d.raw.length)
+    samples = []
     const c = resolveCommit(app.lift.an, d.start, d.end, app.osnap.radius / app.view.s)
     if (!c) return // 잡음 — 지평선에서 먼 탭
-    cb.onCommit(c.a, c.b, d.raw, press)
+    cb.onCommit(c.a, c.b, d.raw, press, rawIn)
   }
 
   // ── 카메라 조작 — 궤도는 state.ts의 orbitBy 하나다(시험이 같은 함수를 부른다) ──
@@ -152,6 +216,7 @@ export function initInput(
     // 3D로 올라간다(`lift.ts`가 `s.view` 포즈로 푼다 — 기존 기전이다).
     if (!isLevel(app.pose) && level.foldNow()) return
     drawingPointer = e.pointerId
+    drawingType = e.pointerType
     canvas.setPointerCapture(e.pointerId)
     // **면 도구는 탭이다** — 누르는 동안 아무것도 안 만들고, 뗄 때 판정한다.
     // 누름에서 바로 만들면 «잘못 눌렀다»를 뗌으로 취소할 길이 없다.
@@ -163,7 +228,7 @@ export function initInput(
       return
     }
     pressSamples = e.pointerType === 'pen' && e.pressure > 0 ? [e.pressure] : []
-    beginDraft(toPt(e))
+    beginDraft(toPt(e), e)
   })
 
   canvas.addEventListener('pointermove', (e) => {
@@ -206,7 +271,7 @@ export function initInput(
       }
       if (draft) {
         if (e.pointerType === 'pen' && e.pressure > 0) pressSamples.push(e.pressure)
-        updateDraft(toPt(e))
+        updateDraft(e)
       }
       return
     }
@@ -269,4 +334,7 @@ export function initInput(
   }, { passive: false })
 
   canvas.addEventListener('contextmenu', (e) => e.preventDefault())
+
+  // 진단·원장 통로(1-a·1-f) — 패널과 e2e가 같은 값을 읽는다
+  return { strokeStats: () => ({ ...capStats }) }
 }
