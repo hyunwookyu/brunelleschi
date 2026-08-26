@@ -78,6 +78,15 @@ export function parseBrnl(text: string): BrnlData | null {
       if (!isNum(s.dim) || s.dim <= 0) return null
       st.dim = s.dim
     }
+    // 자립 3D(web2-13 4부 — 깃발 뒤) — **선택**: 없으면(옛 파일·옛 앱이 재저장한 파일)
+    // 종전 그대로다. 모양이 틀리면 **그 필드만 버린다** — rawIn·mat.w의 «거부»와 다른
+    // 규약인 이유: own3는 사슬로 언제든 다시 세울 수 있는 «굳힘»이라(§8 이행) 잃어도
+    // 조용히 틀리게 그려질 값이 아니라 다시 계산될 값이다. 문서를 거부하면 잃는 것이
+    // 더 크다. 깃발이 꺼져 있으면 읽혀도 아무 데도 안 쓰인다.
+    if (s.own3 && isV3(s.own3.a) && isV3(s.own3.b) &&
+        (s.own3.axis === null || typeof s.own3.axis === 'string')) {
+      st.own3 = { a: { ...s.own3.a }, b: { ...s.own3.b }, axis: s.own3.axis ?? null }
+    }
     if (s.mat) {
       if (!GRADES.includes(s.mat.grade as Grade)) return null
       st.mat = { grade: s.mat.grade as Grade }

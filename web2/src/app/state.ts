@@ -7,6 +7,7 @@ import { emptyDoc, type Doc, type Stroke, type Face, type CamPose, type ViewOffs
 import { isInk } from '../core/material'
 export type { ViewOffset }
 import { liftAll, type LiftResult } from '../core/lift'
+import { camSig, defineByTouch } from '../core/own3d'
 import { DRAW_POSE } from '../core/camera'
 import { defaultOsnap, type OsnapSettings } from '../core/osnap'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
@@ -106,6 +107,14 @@ export interface App {
    *  조용히 버리는 것은 이 저장소가 가장 경계하는 형태라 **수가 말하게 한다** —
    *  크면 `C.STRAY_MIN_PX`가 틀린 것이다. */
   strayCount: number
+  /** **자립 깃발**(web2-13 4부 · 개정 3 초안) — 기본 **꺼짐**. 켜면: 카메라가 닫힌 뒤
+   *  사슬이 놓은 3D를 획이 소유하고(Stroke.own3 — 사건·영구), 승격 사건이 나면 버리고
+   *  다시 올려 다시 굳힌다(2부 측정이 정한 갈래). 꺼져 있으면 **아무것도 안 한다** —
+   *  옛 사슬이 정본(4부 불변식). ⚠⚠ **기본값은 사람만 켠다**(4-f — 설정 「실험」 절·
+   *  localStorage). 세션·팔이 전부 통과해도 세션은 안 켠다. */
+  own3d: boolean
+  /** 승격 «사건»의 판정자(4-c) — 직전 recompute의 카메라 서명(own3d 켜짐에서만 유지) */
+  lastCamSig: string | null
   cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
 }
@@ -138,6 +147,8 @@ export function createApp(W: number, H: number): App {
     grid: false,
     waitFade: true,
     strayCount: 0,
+    own3d: false,
+    lastCamSig: null,
     cubeLayout: { cx: W - 110, cy: 60, size: 80 }, // 우측 상단 — 1.5배 세로바(x W−45..)와 안 겹치게 왼쪽으로(web2-10 지시 5)
     listeners: [],
   }
@@ -188,10 +199,37 @@ export const isDrawPose = (pose: CamPose): boolean =>
   Math.abs(pose.q.x) + Math.abs(pose.q.y) + Math.abs(pose.q.z) < 1e-12
 
 function recompute(app: App) {
-  app.lift = liftAll(app.doc)
+  app.lift = liftAll(app.doc, app.own3d)
+  // ── 자립(web2-13 4부) — 깃발 켜짐에서만. 꺼짐이면 위 한 줄이 종전과 동일하다 ──
+  if (app.own3d) {
+    const sig = camSig(app.lift.an)
+    // 승격 «사건»: 카메라 서명(f·주점·fSource)이 움직였다 → 굳힌 3D는 옛 좌표계의
+    // 것이라 전부 버리고 사슬로 다시 올린다(2부 측정 — 초안 §9.1. §6.1 조항 그대로).
+    if (app.lastCamSig !== null && sig !== app.lastCamSig && app.doc.strokes.some(s => s.own3)) {
+      for (const s of app.doc.strokes) delete s.own3
+      app.lift = liftAll(app.doc, true)
+    }
+    app.lastCamSig = sig
+    // 굳힘(사건): 카메라가 닫혔으면(§9.2 — constructionDone. 그 뒤로는 어떤 획도
+    // f·주점을 못 바꾼다) 사슬이 놓은 3D를 획이 소유한다. 한 번 얻으면 영구 —
+    // 이미 소유한 획은 안 덮는다(첫 사건이 이긴다).
+    if (app.lift.an.constructionDone) {
+      for (const [id, seg] of app.lift.lifted) {
+        const s = app.lift.strokes.get(id)
+        if (s && !s.own3) s.own3 = { a: { ...seg.a3 }, b: { ...seg.b3 }, axis: seg.axis }
+      }
+    }
+  } else app.lastCamSig = null
   app.faces = resolveFaces(app.lift, app.doc.faces)
   app.docVersion++
   for (const l of app.listeners) l()
+}
+
+/** 자립 깃발 토글(4-f) — 설정·복원 경로가 이것 하나를 부른다(#54). */
+export function setOwn3d(app: App, on: boolean) {
+  app.own3d = on
+  app.lastCamSig = null   // 새 관측 시작 — 켜는 순간의 카메라를 «사건»으로 안 읽는다
+  recompute(app)
 }
 
 // ── 면 — 사용자가 지정한다. 자동으로 안 만든다 ─────────────────────────────
@@ -258,6 +296,19 @@ export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number,
   app.doc.strokes.push(s)
   // 작도 획(지평선·깊이선)은 실행취소 대상이 아니다 — role은 추가 후 계산으로 안다
   recompute(app)
+  // ── 교점 정의(web2-13 4-g — 같은 깃발 뒤) — 사건은 커밋 순간 한 번이다 ────────
+  // 방금 확정된 획의 «뗀 끝»이 방향 있는 대기선 위에서 끝났으면 그 대기선이 정의된다
+  // (own3 — 이후 근거가 지워져도 유지). 그리는 중의 교차는 사건이 아니다.
+  if (app.own3d) {
+    const defs = defineByTouch(app.lift, s, app.osnap.radius / app.view.s)
+    if (defs.length > 0) {
+      for (const d of defs) {
+        const t = app.lift.strokes.get(d.id)
+        if (t) t.own3 = d.own3
+      }
+      recompute(app)
+    }
+  }
   if (app.lift.an.roles.get(s.id) === 'content') {
     app.undoStack.push({ removed: [], added: [s] })
     app.redoStack = []

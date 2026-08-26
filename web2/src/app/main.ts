@@ -1,6 +1,6 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, saveView, deleteView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, saveView, deleteView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, type Tool } from './state'
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
@@ -69,6 +69,8 @@ const diagPanel = initDiagPanel(
       // 「잘못 찍힌 점」 문이 버린 수(web2-13 3-b) — 조용히 버리지 않는다: 수가 말한다.
       // 크면 C.STRAY_MIN_PX가 틀린 것이다(원장 stray_gate_web2.json이 근거 대역).
       ['버린 짧은 획', `${app.strayCount} (문 ${C.STRAY_MIN_PX}px)`],
+      // 지금 어느 3D 경로인가(web2-13 4-f) — 깃발이 눈에 보이는 자리
+      ['3D 경로', app.own3d ? `자립(실험 — 굳힘 ${app.doc.strokes.filter(s => s.own3).length}획)` : '사슬(정본)'],
     ]
   })
 
@@ -511,6 +513,17 @@ horizonBox.addEventListener('change', () => { app.horizon = horizonBox.checked; 
 const waitFadeBox = document.getElementById('chk-waitfade') as HTMLInputElement
 waitFadeBox.checked = app.waitFade
 waitFadeBox.addEventListener('change', () => { app.waitFade = waitFadeBox.checked; invalidate() })
+// 자립 깃발(web2-13 4부) — **기본 꺼짐. 켜는 것은 사람이다(4-f — 세션은 안 켠다).**
+// localStorage로 남는다(renderer 선례) — 사람이 실기기에서 켜고 재방문해도 유지.
+const OWN3D_KEY = 'b2-own3d'
+const own3dBox = document.getElementById('chk-own3d') as HTMLInputElement
+try { if (localStorage.getItem(OWN3D_KEY) === 'on') setOwn3d(app, true) } catch { /* 세션 한정 */ }
+own3dBox.checked = app.own3d
+own3dBox.addEventListener('change', () => {
+  setOwn3d(app, own3dBox.checked)
+  try { localStorage.setItem(OWN3D_KEY, own3dBox.checked ? 'on' : 'off') } catch { /* 세션 한정 */ }
+  invalidate()
+})
 
 const radius = document.getElementById('osnap-radius') as HTMLInputElement
 radius.value = String(app.osnap.radius)

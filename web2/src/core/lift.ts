@@ -81,9 +81,11 @@ export function axisOfStroke(an: Analysis, pose: CamPose, a: Pt, b: Pt): AxisId 
 const axisDir = (an: Analysis, id: AxisId): V3 | null =>
   an.axes.find(x => x.id === id)?.dir ?? null
 
-/** 문서 전체를 처음부터 리프팅한다 — 카메라가 바뀌면(2점 승격) 전부 다시 푼다. */
-export function liftAll(doc: Doc): LiftResult {
-  return liftPass(doc, scaleOf(doc))
+/** 문서 전체를 처음부터 리프팅한다 — 카메라가 바뀌면(2점 승격) 전부 다시 푼다.
+ *  `useOwn`(web2-13 4부 — 깃발): 획이 소유한 3D(`Stroke.own3`)를 사슬의 씨앗으로
+ *  선등록한다. **기본 false — 그때 이 함수는 종전과 완전히 같다**(4부 불변식). */
+export function liftAll(doc: Doc, useOwn = false): LiftResult {
+  return liftPass(doc, scaleOf(doc), useOwn)
 }
 
 /** **스케일(mm/세계단위) — 파생**(원칙 b · 지시 4-1): 문서 순서상 첫 치수 획을
@@ -104,7 +106,7 @@ function scaleOf(doc: Doc): number | null {
   return L > 1e-12 ? s0.dim! / L : null
 }
 
-function liftPass(doc: Doc, mmPerUnit: number | null): LiftResult {
+function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResult {
   const an = analyze(doc)
   const lifted = new Map<number, LiftedSeg>()
   let anchorId: number | null = null
@@ -128,6 +130,21 @@ function liftPass(doc: Doc, mmPerUnit: number | null): LiftResult {
   // 승격된 끝점·선분 목록 — 시작점 매칭 대상
   const endpoints: V3[] = []
   const segs: { a3: V3; b3: V3 }[] = []
+
+  // ── 자립 씨앗(web2-13 4부 — 깃발 켜짐에서만) ──────────────────────────────
+  // 소유한 3D는 사슬보다 먼저 선다: 근거 획이 지워져도 이 획은 확정 기하이고,
+  // 다른 대기 획이 여기 붙어 올라온다(사슬의 씨앗). dim은 굳힘 시점 값에 이미 반영.
+  if (useOwn) {
+    for (const s of content) {
+      if (!s.own3) continue
+      const a3 = { ...s.own3.a }
+      const b3 = { ...s.own3.b }
+      lifted.set(s.id, { a3, b3, axis: (s.own3.axis as AxisId | null) })
+      endpoints.push(a3, b3)
+      segs.push({ a3, b3 })
+      pending.delete(s.id)
+    }
+  }
 
   // 시작점·끝점의 3D 결정 — 끝점이 붙었거나, 확정된 선(선분 위) 위에 있으면 그 좌표.
   // "3D가 확정된 선과 교차하거나 끝점이 붙으면 그때 좌표가 정해진다"
