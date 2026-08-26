@@ -21,10 +21,11 @@ export function serializeBrnl(d: BrnlData): string {
     // 면은 **경계의 정체**만 담긴다(획 id 차례) — 좌표는 복원 후 다시 풀린다.
     // 옛 파일에는 이 열쇠가 없고 그때는 면이 없는 문서로 읽힌다(version은 그대로 1).
     faces: d.doc.faces,
-    // 치수(web2-08 지시 4) — 표시 단위는 사용자의 결정이라 담는다. 스케일(mmPerUnit)은
-    // 파생이라 안 담는다(획의 dim에서 복원 후 다시 계산된다 — 원칙 b).
-    // 옛 파일에는 이 열쇠가 없고 그때는 mm 문서로 읽힌다(version 그대로 1).
+    // 치수(web2-08 지시 4) — 표시 단위·스케일 기준 획은 사용자의 결정이라 담는다.
+    // 스케일 값(mmPerUnit)은 파생이라 안 담는다(dim에서 복원 후 다시 계산 — 원칙 b).
+    // 옛 파일에는 이 열쇠들이 없고 그때는 mm 문서로 읽힌다(version 그대로 1).
     unit: d.doc.unit,
+    scaleRef: d.doc.scaleRef,
     nextId: d.nextId,
     savedViews: d.savedViews,
   })
@@ -113,9 +114,12 @@ export function parseBrnl(text: string): BrnlData | null {
     if (!UNITS.includes(raw.unit)) return null
     unit = raw.unit
   }
-  return {
-    doc: { frame: { W: raw.frame.W, H: raw.frame.H }, strokes, faces, unit },
-    nextId,
-    savedViews,
+  let scaleRef: number | undefined
+  if (raw.scaleRef !== undefined && raw.scaleRef !== null) {
+    if (!isNum(raw.scaleRef)) return null
+    scaleRef = raw.scaleRef
   }
+  const doc: Doc = { frame: { W: raw.frame.W, H: raw.frame.H }, strokes, faces, unit }
+  if (scaleRef !== undefined) doc.scaleRef = scaleRef
+  return { doc, nextId, savedViews }
 }

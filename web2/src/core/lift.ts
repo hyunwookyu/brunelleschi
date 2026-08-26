@@ -93,7 +93,9 @@ export function liftAll(doc: Doc): LiftResult {
  *  ⚠ 첫 치수 획을 지우면(조각은 dim을 안 물려받는다) 스케일이 다음 치수 획으로
  *  넘어가거나 없어진다 — 조용히 다른 값이 되는 대신 그 사실이 길이 표시(null)로 보인다. */
 function scaleOf(doc: Doc): number | null {
-  const s0 = doc.strokes.find(s => s.dim !== undefined)
+  // 기준은 «첫 입력»(scaleRef)이고, 그 획이 없어졌으면 문서 순서상 첫 치수 획으로 물러난다
+  const s0 = doc.strokes.find(s => s.id === doc.scaleRef && s.dim !== undefined)
+    ?? doc.strokes.find(s => s.dim !== undefined)
   if (!s0) return null
   const base = liftPass(doc, null)
   const g = base.lifted.get(s0.id)

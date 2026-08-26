@@ -124,10 +124,12 @@ export function setDimension(app: App, id: number, mm: number): DimResult {
   const wasScaled = app.lift.mmPerUnit !== null
   if (!wasScaled && !app.lift.lifted.has(id)) return 'no3d'  // 스케일을 정할 길이가 없다
   s.dim = mm
+  if (!wasScaled) app.doc.scaleRef = id      // 첫 «입력»이 기준이다(리뷰어 [5])
   recompute(app)
   if (!wasScaled && app.lift.mmPerUnit === null) {
     // 실려도 스케일이 안 섰다(퇴화 길이 등) — 조용히 두지 않고 물린다
     delete s.dim
+    delete app.doc.scaleRef
     recompute(app)
     return 'no3d'
   }

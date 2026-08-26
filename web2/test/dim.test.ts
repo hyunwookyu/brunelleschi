@@ -260,3 +260,73 @@ describe('저장·복원 — 스케일·단위·치수가 왕복한다', () => {
     expect(parseBrnl(JSON.stringify(raw))).toBeNull()   // 틀린 치수 모양은 거부
   })
 })
+
+describe('스케일 기준은 «첫 입력»이다 — 문서 순서가 아니다 (리뷰어 [5])', () => {
+  it('나중에 앞 획에 치수를 줘도 스케일이 조용히 안 옮겨 간다', () => {
+    const { s, post } = drawn()
+    const app = s.app
+    const beam = s.draw(500, 380, 620, 350)!          // post(id 4)보다 뒤의 획
+    expect(beam.id).toBeGreaterThan(post.id)
+    expect(setDimension(app, beam.id, 1000)).toBe('scale')   // **뒤 획에 먼저** 입력
+    const k0 = app.lift.mmPerUnit!
+    expect(app.doc.scaleRef).toBe(beam.id)
+    // 이제 문서 순서상 앞 획(post)에 치수를 준다 — 수리 전에는 scaleOf가 post를
+    // 「첫 치수 획」으로 잡아 스케일이 조용히 재정의됐다
+    expect(setDimension(app, post.id, 500)).toBe('applied')
+    expect(app.doc.scaleRef).toBe(beam.id)                   // 기준이 안 움직였다
+    expect(app.lift.mmPerUnit!).toBeCloseTo(k0, 12)
+    // 두 획 다 자기 입력값을 보인다
+    const gb = app.lift.lifted.get(beam.id)!
+    const gp = app.lift.lifted.get(post.id)!
+    expect(lenMm(gb.a3, gb.b3, app.lift.mmPerUnit)).toBeCloseTo(1000, 9)
+    expect(lenMm(gp.a3, gp.b3, app.lift.mmPerUnit)).toBeCloseTo(500, 9)
+  })
+
+  it('기준 획이 지워지면 문서 순서상 첫 치수 획으로 물러난다 — 그 사실은 값이 보인다', () => {
+    const { s, post } = drawn()
+    const app = s.app
+    const beam = s.draw(500, 380, 620, 350)!
+    setDimension(app, beam.id, 1000)
+    setDimension(app, post.id, 500)
+    const i = app.doc.strokes.findIndex(x => x.id === beam.id)
+    app.doc.strokes.splice(i, 1)                             // 기준 획을 지운다(하네스 직접)
+    const relift = liftAll(app.doc)
+    expect(relift.mmPerUnit).not.toBeNull()                  // post(dim 500)가 기준이 된다
+    const gp = relift.lifted.get(post.id)!
+    expect(lenMm(gp.a3, gp.b3, relift.mmPerUnit)).toBeCloseTo(500, 9)
+  })
+})
+
+describe('치수가 공유 끝점을 옮길 때 — 붙어 있던 획은 어떻게 되는가 (리뷰어 [16])', () => {
+  it('실측을 박는다: 뒤 획은 **그린 자리에 남는다**(빔 직선의 연장 매칭) — 따라가지 않는다', () => {
+    // ⚠ 기준(스케일) 획을 다시 치수하면 기하가 아니라 스케일이 바뀐다(4-1b) — 그래서
+    // 공유 끝점 이동은 **비기준 획**으로 잰다: 기둥(기준) → 빔(치수 대상) → 빔 끝의 드롭.
+    const { s, post } = drawn()
+    const app = s.app
+    setDimension(app, post.id, 2500)
+    const beam = s.draw(500, 380, 620, 352)!                 // 기둥 꼭대기 → vp0 축
+    expect(app.lift.lifted.has(beam.id)).toBe(true)
+    const bEnd = app.lift.lifted.get(beam.id)!.b3
+    const bEnd2 = { x: beam.b.x, y: beam.b.y }
+    const drop = s.draw(bEnd2.x, bEnd2.y, bEnd2.x + 2, bEnd2.y + 60)!   // 빔 끝에서 수직 드롭
+    expect(app.lift.lifted.has(drop.id)).toBe(true)
+    const dBefore = app.lift.lifted.get(drop.id)!
+
+    setDimension(app, beam.id, 400)                          // 빔을 짧게 — 끝점이 당겨진다
+    const gb = app.lift.lifted.get(beam.id)!
+    expect(lenMm(gb.a3, gb.b3, app.lift.mmPerUnit)).toBeCloseTo(400, 9)
+    const moved = Math.hypot(gb.b3.x - bEnd.x, gb.b3.y - bEnd.y, gb.b3.z - bEnd.z)
+    expect(moved * app.lift.mmPerUnit!).toBeGreaterThan(100) // 끝점이 실제로 옮겨졌다
+
+    // 실측: 드롭은 따라가지 않고 **그린 자리**에 남는다 — 시작 2D가 빔 «직선»(연장) 위라
+    // 연장선 매칭이 옛 자리를 되찾는다(사영 일치는 유지 — 조용히 «틀린» 배치가 아니라
+    // 공유가 끊긴 «상태»다). 끝점을 따라가는 치수 전파는 범위 밖 — DEFERRED.
+    const dAfter = app.lift.lifted.get(drop.id)
+    expect(dAfter).toBeDefined()
+    for (const k of ['x', 'y', 'z'] as const) {
+      expect(dAfter!.a3[k]).toBeCloseTo(dBefore.a3[k], 5)
+    }
+    const gap = Math.hypot(dAfter!.a3.x - gb.b3.x, dAfter!.a3.y - gb.b3.y, dAfter!.a3.z - gb.b3.z)
+    expect(gap * app.lift.mmPerUnit!).toBeGreaterThan(100)   // 새 빔 끝과는 떨어져 있다
+  })
+})

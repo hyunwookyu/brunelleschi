@@ -74,7 +74,13 @@ test('필기로 첫 치수 → 스케일 · 실시간 길이 · 셋의 일치', 
   const live = await page.textContent('#dim-live')
   const shown = Number(live!.replace(' mm', ''))
   const solved = d2.lenOf[d2.target] as number
-  expect(Math.abs(shown - solved)).toBeLessThanOrEqual(0.5)   // 표시는 정수 반올림
+  expect(Math.abs(shown - solved)).toBeLessThanOrEqual(0.5)   // 표시는 정수 반올림(±0.5는 표기 규약)
+  // **무한소수 표기(4-8)를 켜면 자리 그대로 일치한다** — ±0.5가 팔의 느슨함이 아니라
+  // 표기 반올림의 몫임을 가른다(리뷰어 [12]): 이 대조는 상대 1e-9다.
+  await page.check('#chk-exact')
+  await settle(page)
+  const exact = Number((await page.textContent('#dim-live'))!.replace(' mm', ''))
+  expect(Math.abs(exact - solved)).toBeLessThan(Math.max(1e-9 * solved, 1e-7))
 })
 
 test('치수 스냅(4-7) — 실제 3D 길이가 눈금에 맞춰진다 · «다시 쓰면 대체»(4-2)', async ({ page }) => {
@@ -93,13 +99,52 @@ test('치수 스냅(4-7) — 실제 3D 길이가 눈금에 맞춰진다 · «다
   const mm = d.lenOf[d.target] as number
   expect(Math.abs(mm - Math.round(mm / 10) * 10)).toBeLessThan(1e-6)   // 실제 길이가 맞춰졌다
 
-  // 그 선에 치수를 다시 쓴다 — 길이가 입력값으로 대체된다(4-2)
+  // 그 선에 치수를 다시 쓴다 — 길이가 입력값으로 대체된다(4-2). **화면의 선도 움직인다**
+  // (리뷰어 [15] — 3D 끝점이 옮겨지면 그 사영이 옮겨진다. 좌표로 잰다):
+  const bBefore = await page.evaluate((id) => (window as any).__b2.diag.projectAll()[id]!.b, d.target)
   await writeOne(page, 60)
   await writeOne(page, 100)                         // «11»
   await settle(page)
   const d2 = await page.evaluate(() => (window as any).__b2.diag.dim())
   expect(d2.lenOf[d.target]).toBeCloseTo(11, 6)
   expect(await page.textContent('#dim-live')).toBe('11 mm')
+  const bAfter = await page.evaluate((id) => (window as any).__b2.diag.projectAll()[id]!.b, d.target)
+  expect(Math.hypot(bAfter.x - bBefore.x, bAfter.y - bBefore.y)).toBeGreaterThan(3)
+})
+
+test('음성 배선(4-4) — 인식 결과가 창 규칙을 타고 치수로 적용된다 (모의 인식기)', async ({ page }) => {
+  // 진짜 마이크는 헤드리스에 없다(AS-C24) — **배선**(voice.ts → applyDimInput → setDimension)을
+  // 모의 인식기로 잰다: 앱이 쓰는 그 생성자 자리에 가짜를 꽂고 결과 이벤트를 흘린다.
+  await page.addInitScript(() => {
+    (window as any).SpeechRecognition = class {
+      lang = ''; continuous = false; interimResults = false
+      onresult: any = null; onend: any = null; onerror: any = null
+      start() { (window as any).__rec = this }
+      stop() { (window as any).__rec = null }
+    }
+  })
+  await build(page)
+  await page.click('#dim-toggle')
+  await writeOne(page, 60); await writeOne(page, 100)      // «11» — 스케일(기둥 11mm)
+  await drawLine(page, 500, 380, 620, 352)                 // 다음 선 — 치수 창의 대상
+  await page.click('#btn-voice')                           // 모드를 켠다 — 그때만 듣는다
+  expect(await page.evaluate(() => !!(window as any).__rec)).toBe(true)
+  await page.evaluate(() => {
+    (window as any).__rec.onresult({ results: [[{ transcript: '삼천오백' }]], resultIndex: 0 })
+  })
+  await settle(page)
+  const d = await page.evaluate(() => (window as any).__b2.diag.dim())
+  expect(d.lenOf[d.target]).toBeCloseTo(3500, 6)           // 지시 4-4의 예가 그대로 적용됐다
+  expect(await page.textContent('#dim-live')).toBe('3500 mm')
+  // 다시 말하면 변경된다(«확정 전 변경» — 창이 열려 있는 동안)
+  await page.evaluate(() => {
+    (window as any).__rec.onresult({ results: [[{ transcript: '3.5미터' }]], resultIndex: 0 })
+  })
+  await settle(page)
+  expect(await page.textContent('#dim-live')).toBe('3500 mm')   // 3.5 m = 3500 mm — 같은 값
+  // 모드를 끄면 안 듣는다
+  await page.click('#btn-voice')
+  expect(await page.evaluate(() => !!(window as any).__rec)).toBe(false)
 })
 
 test('무스케일이면 숫자를 지어내지 않는다 — 스케일 전에는 «—»', async ({ page }) => {

@@ -66,11 +66,20 @@ describe('글리프 하나 — 흔든 표본이 제 숫자로 읽힌다', () => 
     }
   })
 
-  it('반증(D-3): 숫자가 아닌 것은 null — 가로선·지그재그', () => {
-    const flat: Pt[][] = [[{ x: 0, y: 40 }, { x: 100, y: 40 }]]
-    expect(recognizeGlyph(flat)).toBeNull()
-    const zig: Pt[][] = [[{ x: 0, y: 0 }, { x: 20, y: 60 }, { x: 40, y: 0 }, { x: 60, y: 60 }, { x: 80, y: 0 }]]
-    expect(recognizeGlyph(zig)).toBeNull()
+  it('반증(D-3): 숫자가 아닌 것 8종이 전부 null — 최선 잡음 0.1252(X→8 후보)도 임계 밖', () => {
+    const garbage: Record<string, Pt[][]> = {
+      가로선: [[{ x: 0, y: 40 }, { x: 100, y: 40 }]],
+      W지그재그: [[{ x: 0, y: 0 }, { x: 20, y: 60 }, { x: 40, y: 0 }, { x: 60, y: 60 }, { x: 80, y: 0 }]],
+      N지그재그: [[{ x: 0, y: 60 }, { x: 0, y: 0 }, { x: 40, y: 60 }, { x: 40, y: 0 }]],
+      X표: [[{ x: 0, y: 0 }, { x: 50, y: 70 }], [{ x: 50, y: 0 }, { x: 0, y: 70 }]],
+      ㄷ자: [[{ x: 50, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 70 }, { x: 50, y: 70 }]],
+      체크표: [[{ x: 0, y: 40 }, { x: 20, y: 65 }, { x: 60, y: 0 }]],
+      대각선: [[{ x: 0, y: 0 }, { x: 60, y: 70 }]],
+      삼각형: [[{ x: 30, y: 0 }, { x: 60, y: 70 }, { x: 0, y: 70 }, { x: 30, y: 0 }]],
+    }
+    for (const [k, st] of Object.entries(garbage)) {
+      expect(recognizeGlyph(st), k).toBeNull()
+    }
   })
 })
 
