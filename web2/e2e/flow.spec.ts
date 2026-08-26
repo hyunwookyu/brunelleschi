@@ -244,7 +244,7 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await page.keyboard.press('Control+z')
   await settle(page)
   expect(await glPixels(page, 612, 458, 660, 478)).toBeGreaterThan(5)
-  await page.click('#btn-pencil')   // 그리기로 복귀 — 기본 도구는 연필이다(지시 4-h)
+  await page.click('#tray-HB')      // 그리기로 복귀 — 연필통의 HB 행(web2-12 6번)
 
   // ── 4단계: 화면 줌(뷰 오프셋) · 뷰 큐브 ─────────────────────────────
   // 그리는 중(작도 포즈)의 줌은 화면 조작 — 문서 좌표는 안 바뀐다
@@ -332,10 +332,10 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
 
   // 도구가 그림으로 보인다 — 고른 것이 **앞으로 나온다**(4-d: 박스 강조가 아니다)
   expect(await page.getAttribute('#btn-eraser-pencil', 'class')).toContain('on')
-  expect(await page.getAttribute('#btn-pencil', 'class')).not.toContain('on')
+  expect(await page.getAttribute('#tray-HB', 'class')).not.toContain('on')
   // 굵기 막대는 연필에서 사라지고 펜·지우개에서 뜬다(4-f · 4-e)
   expect(await page.evaluate(() => getComputedStyle(document.getElementById('thick')!).display)).toBe('block')
-  await page.click('#btn-pencil')
+  await page.click('#tray-HB')
   await settle(page)
   expect(await page.evaluate(() => getComputedStyle(document.getElementById('thick')!).display)).toBe('none')
   // 홀더펜 창 — 지금 심이 연필 몸통에 보인다(4-e)
@@ -360,18 +360,32 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   // ── 비우기 — 확인 한 줄(밑줄 단어) 뒤에 전부 사라지고, 새로고침해도 안 돌아온다 ──
   await page.click('#pane-file > summary')
 
-  // 취소가 실제로 막는다 — 실수 방지가 있는지 이것이 잰다(양성 채널)
+  // 취소가 실제로 막는다 — 실수 방지가 있는지 이것이 잰다(양성 채널).
+  // 확인은 버튼 곁 팝오버다(web2-12 4번 — 상부 알림줄에서 옮겨왔다).
   await page.click('#btn-clear')
-  expect(await page.locator('#notice u').count()).toBe(2)
-  await page.click('#notice u[data-pick="no"]')
+  expect(await page.locator('#confirm-pop u').count()).toBe(2)
+  // ⚠ 확인이 버튼과 **겹치지 않는다** — 같은 자리 연타로 지워지는 사고의 방어(D-3:
+  // 실제로 연타한다 — 버튼 자리를 다시 눌러도 «비운다»가 눌리지 않아야 한다)
+  const clearBox = (await page.locator('#btn-clear').boundingBox())!
+  const popBox = (await page.locator('#confirm-pop').boundingBox())!
+  expect(popBox.x + popBox.width).toBeLessThanOrEqual(clearBox.x + 1)  // 팝오버는 버튼 왼쪽
+  await page.mouse.click(clearBox.x + clearBox.width / 2, clearBox.y + clearBox.height / 2)
+  await page.mouse.click(clearBox.x + clearBox.width / 2, clearBox.y + clearBox.height / 2)
+  await settle(page)
+  s = await summary(page)
+  expect(s.strokes, '연타로 지워지지 않는다').toBe(beforeReload.strokes)
+  // 바깥(캔버스) 누름 = 취소
+  await page.click('#btn-clear')
+  await page.mouse.click(300, 300)
   await settle(page)
   s = await summary(page)
   expect(s.strokes).toBe(beforeReload.strokes) // 하나도 안 지워졌다
-  expect(await page.locator('#notice u').count()).toBe(0)
+  expect(await page.locator('#confirm-pop').count()).toBe(0)
 
-  // 비운다 — 그림도 작도도 사라지고 지평선 단계로 돌아간다
+  // 비운다 — 그림도 작도도 사라지고 지평선 단계로 돌아간다(패널은 열린 채다 —
+  // 바깥 누름은 팝오버만 걷고 details는 안 닫는다)
   await page.click('#btn-clear')
-  await page.click('#notice u[data-pick="yes"]')
+  await page.click('#confirm-pop u[data-pick="yes"]')
   await settle(page)
   s = await summary(page)
   expect(s.strokes).toBe(0)
@@ -421,13 +435,13 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   })
   const asFile = { name: 'sample.brnl', mimeType: 'application/json', buffer: Buffer.from(sample) }
   await page.setInputFiles('#file-open', asFile)
-  expect(await page.locator('#notice u').count()).toBe(2)
-  await page.click('#notice u[data-pick="no"]')
+  expect(await page.locator('#confirm-pop u').count()).toBe(2)  // 열기 버튼 곁(web2-12 4번)
+  await page.click('#confirm-pop u[data-pick="no"]')
   s = await summary(page)
   expect(s.strokes).toBe(1) // 지평선 하나 — 안 바뀌었다
 
   await page.setInputFiles('#file-open', asFile)
-  await page.click('#notice u[data-pick="yes"]')
+  await page.click('#confirm-pop u[data-pick="yes"]')
   await settle(page)
   s = await summary(page)
   expect(s.strokes).toBe(4)

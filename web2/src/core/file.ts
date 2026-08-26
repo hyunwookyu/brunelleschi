@@ -9,7 +9,8 @@ import { C } from './constants'
 export interface BrnlData {
   doc: Doc
   nextId: number
-  savedViews: { pose: CamPose; view: ViewOffset }[]
+  /** thumb(web2-12 5번) — **선택**이다: 없으면(옛 파일) 번호만으로 고른다. */
+  savedViews: { pose: CamPose; view: ViewOffset; thumb?: string }[]
 }
 
 export function serializeBrnl(d: BrnlData): string {
@@ -120,7 +121,14 @@ export function parseBrnl(text: string): BrnlData | null {
     for (const v of raw.savedViews) {
       if (!v || !isV3(v.pose?.p) || !isQuat(v.pose?.q)) continue
       if (!isNum(v.view?.s) || !isNum(v.view?.ox) || !isNum(v.view?.oy)) continue
-      savedViews.push({ pose: { p: { ...v.pose.p }, q: { ...v.pose.q } }, view: { ...v.view } })
+      const sv: BrnlData['savedViews'][number] =
+        { pose: { p: { ...v.pose.p }, q: { ...v.pose.q } }, view: { ...v.view } }
+      // 썸네일(web2-12 5번) — 선택 필드. 모양이 다르면(문자열 아님·data:image 아님·과대)
+      // **그 필드만 버린다**: 뷰 자체(포즈)는 정상이므로 rawIn류의 «거부»가 아니라 강등이다.
+      if (typeof v.thumb === 'string' && v.thumb.startsWith('data:image/') && v.thumb.length < 300000) {
+        sv.thumb = v.thumb
+      }
+      savedViews.push(sv)
     }
   }
   // id는 획과 면이 **한 통**이다(면이 획을 가리키므로 겹치면 읽기 어렵다)
