@@ -48,8 +48,12 @@ function fx() {
 }
 
 describe('재현(D-2) — 손의 몸짓: 축 스냅 세로선을 대기선 «근처»에서 뗀다', () => {
-  it('교차점에서 3px 어긋나게 떼도 B가 3D로 올라간다 (수리 전: 왕복 문이 거부했다)', () => {
+  it('(b) 단독 — near 끄고: 교차점에서 3px 어긋나게 떼도 B가 3D로 올라간다 (수리 전: 왕복 문이 거부)', () => {
     const { s, B } = fx()
+    // ⚠ near를 끈다(2차 [6][7][9]) — 켜져 있으면 (a)가 끝을 B 잉크 위로 붙여 δ=0이 되므로
+    // «손 오차가 남은 채로도 (b)가 푼다»를 못 잰다. 끈 상태가 곧 수리 전 재현 조건이고
+    // (near 끈 사용자·기호를 무시한 손 둘 다 실존 경로) (b)의 단독 검증이다.
+    s.app.osnap.kinds.near = false
     // 손: (720,445)에서 수직으로 올려 긋고, 교차(720,305.7) 근처 (722,309)에서 뗀다 —
     // 축 스냅이 x=720으로 붙이므로 확정 끝은 (720,309): 교차에서 3.3px, B 잉크에서 2.9px.
     const A = s.draw(720, 445, 722, 309)!
@@ -112,5 +116,45 @@ describe('재현(D-2) — 손의 몸짓: 축 스냅 세로선을 대기선 «근
     expect(s.app.doc.strokes.find(x => x.id === B2.id)!.own3).toBeUndefined()
     expect(s.app.lift.waiting).toContain(B2.id)
     expect(s.app.touchStats.axis).toBeGreaterThanOrEqual(1)   // 무산 사유가 계수로 남는다
+  })
+
+  it('(a)+(b) 통합 — near 켠 기본: 몸통을 겨냥해 떼면 끝이 잉크 위에 붙고 B가 정의된다', () => {
+    const { s, B } = fx()
+    const A = s.draw(720, 445, 722, 309)!            // 기본 설정 — near가 끝을 B 잉크 위로
+    expect(s.app.lift.lifted.has(A.id)).toBe(true)
+    const b = s.app.doc.strokes.find(x => x.id === B.id)!
+    expect(b.own3).toBeDefined()
+    expect(s.app.touchStats.ok).toBe(1)
+    // ⚠ 대가 기록(2차 [8]): 점이 방향을 이기므로(원칙 d — Rhino) A의 확정 끝은 축선에서
+    // near 발까지 이동한다 — 끝점 오스냅이 원래 하던 것과 같은 급의 이동이다.
+  })
+
+  it('반증 ③(2차 [1] — 왕복 문이 수리 후에도 실제로 잰다): 잉크가 축선에서 벗어난 B는 거부된다', () => {
+    const { s } = fx()
+    // 자유 주입 — vp0 방향에서 살짝(≈1.3°) 벗어난 잉크. axisOfStroke의 허용각(3.4°) 안이라
+    // 축은 배정되지만, 이상적 축선의 사영과 잉크가 0.5px 넘게 어긋난다 → 왕복 문의 몫.
+    // ⚠ 끝점이 어느 3D에도 안 닿는 자리로 골랐다 — 첫 판은 B와 시작점을 공유해 교점이
+    // 아니라 **사슬**로 올라갔다(그 실행이 잉크 심판의 둘째 예외를 드러냈다 — NOTES·AS-C47).
+    const B3 = commitStroke(s.app, { x: 300, y: 250 }, { x: 500, y: 295 })  // 정확값은 y=300
+    expect(s.app.lift.waiting).toContain(B3.id)
+    s.app.osnap.kinds.near = false                   // 몸통 스냅 없이 — 축 스냅 그대로 긋는다
+    const D = s.draw(500, 500, 430, 482)!            // vp1 방향 지면선 — 끝 (430,482.5)
+    expect(s.app.lift.lifted.has(D.id)).toBe(true)
+    s.draw(430, 482.5, 430, 281)                     // 수직 — B3와의 교차(≈y279.3) 근처에서 뗀다
+    const b3 = s.app.doc.strokes.find(x => x.id === B3.id)!
+    expect(b3.own3, '어긋난 잉크는 정의하지 않는다 — 잉크 심판(§7)이 못 서므로').toBeUndefined()
+    expect(s.app.lift.waiting).toContain(B3.id)
+    expect(s.app.touchStats.roundtrip, '왕복 문이 발화했다 — 검사가 살아 있다').toBeGreaterThanOrEqual(1)
+  })
+
+  it('반증 ④(2차 [9] — 그린 구간 밖): B의 연장 근처에서 떼면 안 붙고 안 정의된다', () => {
+    const { s, B } = fx()
+    // B는 (690,290)→(838.5,367.8). 연장선(무한)은 (870,383.5) 대역을 지난다 — 구간 밖.
+    const D = s.draw(500, 500, 860, 410)!            // 지면 깊이선 — 그 근처까지
+    expect(s.app.lift.lifted.has(D.id)).toBe(true)
+    s.draw(860, 410, 868, 385)                       // 연장 위 근처에서 뗀다(구간 끝점에서 >8px)
+    const b = s.app.doc.strokes.find(x => x.id === B.id)!
+    expect(b.own3, '무한 연장은 사건이 아니다(web2-13 1-d — 조용히 틀린 배치 금지)').toBeUndefined()
+    expect(s.app.lift.waiting).toContain(B.id)
   })
 })

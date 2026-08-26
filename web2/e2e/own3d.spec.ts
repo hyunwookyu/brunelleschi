@@ -78,6 +78,9 @@ test('기본은 켜짐(자립이 정본) — 진단이 말한다 · 끄면 사�
 
 test('이행 — own3 없는 옛 저장 파일을 기본 켜짐으로 열면 사슬로 올리고 그 자리에서 굳는다', async ({ page }) => {
   await boot(page)
+  // 켜짐 보증(2차 [13]) — 팔 간 저장소 격리를 전제하지 않고 직접 단언한다: 이 팔이
+  // 꺼짐에서 시작하면 아래 «옛 파일 만들기»부터 전제가 무너진다.
+  expect(await page.evaluate(() => (window as any).__b2.app.own3d)).toBe(true)
   // «옛 파일»을 실제 옛 경로로 만든다: 깃발을 끄고 그린 문서는 own3가 없다(4부 불변식)
   await page.click('#pane-settings summary')
   await page.click('#chk-own3d')
@@ -113,4 +116,33 @@ test('이행 — own3 없는 옛 저장 파일을 기본 켜짐으로 열면 사
   expect(mig.lifted, '사슬 리프팅이 정상으로 돈다').toBe(old.lifted)
   expect(mig.frozen, '열면서 굳는다(이행)').toBe(old.lifted)
   await page.evaluate(() => { localStorage.removeItem('b2-autosave'); localStorage.removeItem('b2-own3d') })
+})
+
+test('4-g 가시성(2차 [17]) — 대기선 몸통 위 호버에 오스냅 기호가 화면(픽셀)에 뜬다', async ({ page }) => {
+  await boot(page)
+  await fixture(page)
+  // 대기 소실점 선 — 허공(왼쪽 위)에 긋는다. 몸통 위를 호버하면 near 기호(○)가 떠야 한다.
+  await page.mouse.move(200, 250); await page.mouse.down()
+  for (let i = 1; i <= 8; i++) await page.mouse.move(200 + 20 * i, 250 + 5 * i)
+  await page.mouse.up(); await settle(page)
+  const wait = await page.evaluate(() => (window as any).__b2.app.lift.waiting.length)
+  expect(wait).toBeGreaterThan(0)
+  const box = [215, 243, 50, 40] as const            // 몸통 위(끝점 42px·중점 40px 밖)
+  const px = (b: readonly [number, number, number, number]) => page.evaluate(([x, y, w, h]) => {
+    const c = document.getElementById('ink') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const d = c.getContext('2d')!.getImageData(Math.round(x! * dpr), Math.round(y! * dpr),
+      Math.round(w! * dpr), Math.round(h! * dpr)).data
+    let n = 0
+    for (let i = 3; i < d.length; i += 4) if (d[i]! > 0) n++
+    return n
+  }, b)
+  const before = await px(box)                       // 파선 몸체만
+  await page.mouse.move(241, 265); await settle(page)  // 몸통 근처 호버(잉크에서 ≈1px — 버튼 없음)
+  const after = await px(box)
+  console.log(`[측정] 대기선 몸통 호버 기호 — 상자 픽셀 ${before} → ${after}`)
+  expect(after, '기호가 실제로 그려졌다(«붙었다»가 화면에서 읽힌다)').toBeGreaterThan(before + 8)
+  // 반증 — 멀리 옮기면 기호가 사라진다(호버 갱신 경로)
+  await page.mouse.move(600, 700); await settle(page)
+  expect(await px(box)).toBeLessThanOrEqual(before + 2)
 })

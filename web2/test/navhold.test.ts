@@ -67,3 +67,37 @@ describe('제스처 동안 감쇠 판정 동결 — 왕복 궤도의 표시 변�
     endNavHold(app)
   })
 })
+
+// ── 접기 애니메이션도 동결 구간이다(3번 2차 [4/6]) ────────────────────────────
+// 접기는 뷰 큐브(즉시 점프)와 달리 300ms 연속 회전이다(AS-C12) — 놓고 1.2s 뒤 도는
+// 그 구간을 동결 안 하면 감쇠가 다시 프레임마다 반응한다. 시계 주입으로 잰다.
+
+import { createAutoLevel } from '../src/app/autolevel'
+import { C } from '../src/core/constants'
+
+describe('접기 애니메이션 동안 동결 — 끝나면 해제·재판정', () => {
+  it('임계 안 자세에서 접힐 때: 애니 중 factor 상수 · 끝에 해제·정렬 factor', () => {
+    const { s } = fx()
+    const app = s.app
+    let t = 0
+    const level = createAutoLevel(app, () => t)
+    // 임계 안 소요(작은 궤도) — 제스처 형태 그대로: grab → 돌림 → release
+    level.grab(); beginNavHold(app)
+    orbitBy(app, 0, 8)                        // 피치 ≈2.3° — 접힘 임계 안(f≈387 → atan(f/6W)≈3.1°. 순수 요는 이미 정렬이라 안 접힌다)
+    level.release(); endNavHold(app)
+    const releasedFactor = waitFadeFactor(fadeRef(app), undefined)
+    expect(releasedFactor).toBeLessThan(1)    // 놓은 자리 — 창 안 감쇠값(재판정 한 번)
+    // 지연을 지나 접기 시작 — 애니 동안 동결
+    t = C.FOLD_DELAY_MS + 1
+    expect(level.tick()).toBe(true)           // 첫 걸음
+    expect(app.fadePose, '애니 시작 — 동결').not.toBeNull()
+    const fs: number[] = []
+    for (let k = 1; k <= 5; k++) { t = C.FOLD_DELAY_MS + 1 + (C.FOLD_ANIM_MS * k) / 6; level.tick(); fs.push(waitFadeFactor(fadeRef(app), undefined)) }
+    for (let i = 1; i < fs.length; i++) expect(Math.abs(fs[i]! - fs[i - 1]!)).toBeLessThan(1e-9)
+    // 끝 — 정확히 목표에 앉고 동결 해제·재판정
+    t = C.FOLD_DELAY_MS + C.FOLD_ANIM_MS + 10
+    level.tick()
+    expect(app.fadePose).toBeNull()
+    expect(waitFadeFactor(fadeRef(app), undefined), '접힌 자리(요 0 복귀) — 원 진하기').toBeGreaterThan(0.999)
+  })
+})

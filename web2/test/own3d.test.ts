@@ -14,7 +14,8 @@
 
 import { describe, it, expect } from 'vitest'
 import { session } from './session'
-import { setOwn3d, loadDoc } from '../src/app/state'
+import { setOwn3d, loadDoc, setDimension } from '../src/app/state'
+import { len3, sub3 } from '../src/core/vec'
 import { own3Deviation, OWN3_TOL_PX, camSig } from '../src/core/own3d'
 import { serializeBrnl, parseBrnl } from '../src/core/file'
 import type { Analysis } from '../src/core/camera'
@@ -391,5 +392,32 @@ describe('4차 [45] — 원장: 국면별 최대 어긋남 (stage0/out/own3d_inv
     const outDir = resolve(__dirname, '../../stage0/out')
     mkdirSync(outDir, { recursive: true })
     writeFileSync(resolve(outDir, 'own3d_invariant_web2.json'), JSON.stringify(ledger, null, 2))
+  })
+})
+
+describe('web2-14 1번 2차 [15] — 치수 대체와 «own3는 안 덮는다»의 공존', () => {
+  it('굳은 획에 나중 치수: own3 필드는 불변 · 길이는 매 리프팅 파생 · .brnl 왕복에도 유지', () => {
+    const s = session(1200, 800)
+    setOwn3d(s.app, true)
+    s.draw(100, 400, 1100, 400)
+    s.draw(500, 500, 600, 475)               // vp0
+    s.draw(500, 500, 400, 475)               // vp1 — 닫힘 → 굳음
+    const E = s.draw(500, 500, 660, 460)!    // 지면 깊이선 — 이 획에 치수를 단다
+    const st = s.app.doc.strokes.find(x => x.id === E.id)!
+    expect(st.own3).toBeDefined()
+    const own3Before = JSON.stringify(st.own3)
+    expect(setDimension(s.app, E.id, 2500)).toBe('scale')
+    // own3 필드는 그대로다(첫 사건이 이긴다) — 길이는 리프팅이 매번 dim으로 파생한다(원칙 b)
+    expect(JSON.stringify(s.app.doc.strokes.find(x => x.id === E.id)!.own3)).toBe(own3Before)
+    const g1 = s.app.lift.lifted.get(E.id)!
+    const mm1 = len3(sub3(g1.b3, g1.a3)) * s.app.lift.mmPerUnit!
+    expect(Math.abs(mm1 - 2500)).toBeLessThan(1e-6)
+    // .brnl 왕복 — own3(원값)와 dim이 각각 저장되고, 다시 열어도 길이가 dim이다
+    const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: s.app.savedViews })
+    loadDoc(s.app, parseBrnl(json)!)
+    const g2 = s.app.lift.lifted.get(E.id)!
+    const mm2 = len3(sub3(g2.b3, g2.a3)) * s.app.lift.mmPerUnit!
+    expect(Math.abs(mm2 - 2500)).toBeLessThan(1e-6)
+    expect(JSON.stringify(s.app.doc.strokes.find(x => x.id === E.id)!.own3)).toBe(own3Before)
   })
 })

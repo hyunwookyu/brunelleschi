@@ -7,6 +7,10 @@
 //        경계 아래(4px)는 획 0 + 카운터 +1.
 
 import { test, expect, type Page } from '@playwright/test'
+import { writeFileSync, mkdirSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+import { FREEZE } from './thresholds'
 
 const settle = (page: Page) => page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))
 
@@ -203,40 +207,73 @@ test('3-c — 종이 질감 버튼이 세로바에 없고 설정 안에 있다 �
   expect(await page.evaluate(() => (window as any).__b2.app.renderer)).toBe(r0)
 })
 
+const freezeLedger: Record<string, unknown> = {}
+test.afterAll(async ({ }, testInfo) => {
+  if (!('samples' in freezeLedger)) return
+  const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
+  const HERE = dirname(fileURLToPath(import.meta.url))
+  const out = resolve(HERE, `../../stage0/out/wait_freeze_web2${suffix}.json`)
+  mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
+  writeFileSync(out, JSON.stringify({
+    what: `web2-14 3번 — 감쇠 동결(${testInfo.project.name}): 실제 중버튼 드래그 왕복 중 대기 획 상자 alphaSum 표본과 변화 횟수. e2e waitfade.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용(#47).`,
+    def: '변화 = 이웃 표본 차 > 기준 alphaSum × FREEZE.DEADBAND. 왕복 복귀는 정확 재추적이 아니라 +6px 어긋난 경로(#68 — 이상적 손 금지). 분모 = 기준 alphaSum(자기 시점 진하기).',
+    thresholds: FREEZE,
+    falsification: 'beginNavHold 배선 제거 실행에서 이 팔이 실패했다(드래그 중 fadePose null + 표본 감쇠 — 수리 커밋 전 실행 기록은 NOTES 3번 절). 단위 navhold.test의 «동결 없이 >5회»는 판정 함수 재구성이고, 앱 경로 실측은 이 falsification 실행이다.',
+    ...freezeLedger,
+  }, null, 1))
+})
+
 test('web2-14 3번 — 제스처 동안 판정 동결: 왕복 궤도에서 표시 변화 0회 · 놓으면 재판정', async ({ page }) => {
   // 실기기 판정 「돌리면 서서히 사라지고 돌아오면 다시 생겨 성가시다」의 수리 배선 팔.
   // 감쇠 자체는 그대로다(위 3-a 팔이 지킨다 — 뗀 뒤에는 창 밖 0). 여기는 **드래그 중**
-  // 표본이다: 동결이 배선됐으면 잉크 알파가 드래그 내내 상수다(수리 전에는 표본마다 준다).
+  // 표본이다: 동결이 배선됐으면 드래그 내내 상수다(수리 전에는 표본마다 줄었다 —
+  // falsification 실행). ⚠ 두 겹을 다 잰다(#67 — 3번 2차 [6/3]): #ink(점선)와
+  // #brushc(질감 몸체 — 기본 렌더러의 사람이 보는 몸체) 둘 다 동결값으로 상수여야 한다.
   await setup(page)
   await drawLine(page, 240, 590, 240, 690)           // 대기 획(3-a와 같은 자리)
   const atDraw = await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
   expect(atDraw.count).toBeGreaterThan(0)
+  const atDrawBrush = await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
+  expect(atDrawBrush, 'brush 겹 판별력 — 질감 몸체가 실제로 있다').toBeGreaterThan(0)
 
   await page.mouse.move(600, 400)
   await page.mouse.down({ button: 'middle' })
   const samples: number[] = []
+  const brushSamples: number[] = []
   for (let i = 1; i <= 6; i++) {                     // 왕복 — 가고
     await page.mouse.move(600 + i * 40, 400); await settle(page)
     samples.push((await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)).alphaSum)
+    brushSamples.push(await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1))
   }
+  // 최원점의 회전량 — 감쇠 창(30°)을 실제로 넘는 왕복이다(3번 2차 [6]: 팔이 말해야 한다)
+  const farDeg = await poseDeg(page)
+  expect(farDeg, '왕복의 판별력 — 창 밖까지 갔다').toBeGreaterThan(30)
   expect(await page.evaluate(() => (window as any).__b2.app.fadePose !== null),
     '드래그 중 — 판정이 동결돼 있다').toBe(true)
-  for (let i = 5; i >= 0; i--) {                     // 오고
-    await page.mouse.move(600 + i * 40, 400); await settle(page)
+  for (let i = 5; i >= 0; i--) {                     // 오고 — **정확 재추적이 아니다**(#68):
+    await page.mouse.move(600 + i * 40, 406); await settle(page)   // y를 6px 어긋나게
     samples.push((await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)).alphaSum)
+    brushSamples.push(await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1))
   }
   await page.mouse.up({ button: 'middle' })
   await settle(page)
-  let changes = 0
-  for (let i = 1; i < samples.length; i++) {
-    if (Math.abs(samples[i]! - samples[i - 1]!) > atDraw.alphaSum * 0.02) changes++
+  const count = (arr: number[], base: number) => {
+    let n = 0
+    for (let i = 1; i < arr.length; i++) if (Math.abs(arr[i]! - arr[i - 1]!) > base * FREEZE.DEADBAND) n++
+    return n
   }
-  console.log(`[측정] 감쇠 동결 — 드래그 12표본 alphaSum 변화 ${changes}회 (기준 ${atDraw.alphaSum})`)
-  expect(changes, '돌리는 동안 아무 일도 안 일어난다(수리 전: 표본마다 줄었다)').toBe(0)
-  expect(samples[0]!).toBeGreaterThan(atDraw.alphaSum * 0.9)   // 동결값 = 잡는 순간(자기 시점 1)
-  // 놓았다 — 재판정 한 번: 제자리 왕복이므로 원래 진하기로 돌아와 있다(변화 0~1회의 «0»)
+  const changes = count(samples, atDraw.alphaSum)
+  const brushChanges = count(brushSamples, Math.max(1, atDrawBrush))
+  console.log(`[측정] 감쇠 동결 — 드래그 12표본 변화 ink ${changes}회 · brush ${brushChanges}회 · 최원점 ${farDeg.toFixed(1)}°`)
+  freezeLedger['samples'] = { ink_alpha: samples, brush_px: brushSamples,
+    base_ink_alpha: atDraw.alphaSum, base_brush_px: atDrawBrush,
+    changes_ink: changes, changes_brush: brushChanges, far_deg: farDeg }
+  expect(changes, '돌리는 동안 아무 일도 안 일어난다(ink)').toBe(0)
+  expect(brushChanges, '돌리는 동안 아무 일도 안 일어난다(brush 질감 — #67 두 겹)').toBe(0)
+  expect(samples[0]!).toBeGreaterThan(atDraw.alphaSum * FREEZE.HOLD_FLOOR)  // 동결값 = 잡는 순간
+  // 놓았다 — 재판정 한 번: 근사 복귀(6px 오차)여도 창 안이라 원 진하기 대역으로 돌아온다
   const after = await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
-  expect(after.alphaSum).toBeGreaterThan(atDraw.alphaSum * 0.9)
+  expect(after.alphaSum).toBeGreaterThan(atDraw.alphaSum * FREEZE.HOLD_FLOOR)
   expect(await page.evaluate(() => (window as any).__b2.app.fadePose === null),
     '뗀 뒤 — 동결이 풀렸다').toBe(true)
 })

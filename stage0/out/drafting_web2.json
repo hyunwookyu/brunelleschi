@@ -12,8 +12,8 @@
   "planes": 1
  },
  "paper_orbit": {
-  "frame_ms_median_mask_on": 19.8,
-  "frame_ms_median_mask_off": 16.9,
+  "frame_ms_median_mask_on": 26.5,
+  "frame_ms_median_mask_off": 17.7,
   "note": "국면당 1회 표본(brush_perf의 single_sample_note와 같은 규율 — 작은 차는 판별하지 않는다). 줌 미끄러짐(위상 문서·크기 화면의 교환)은 실기기 눈 몫(DEFERRED)."
  }
 }

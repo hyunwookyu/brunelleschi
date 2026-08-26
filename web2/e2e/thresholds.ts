@@ -19,3 +19,11 @@ export const GATE = {
    *  시드 판별이 아니다(그 판별은 release·강제 재그리기 팔 — AS-C38 관측 ②). */
   GROW_CANARY: 0.5,
 }
+
+/** 감쇠 동결 팔(waitfade.spec web2-14 3번)의 동작점 둘(AS-C38 선례 — 팔 임계도 단일 출처) */
+export const FREEZE = {
+  /** 표본 간 «변화» 데드밴드 — 기준 alphaSum 대비 비율(AA·스크롤 요동 흡수, 감쇠 계단은 걸림) */
+  DEADBAND: 0.02,
+  /** «자기 시점 진하기 그대로»의 하한 — 기준 alphaSum 대비 */
+  HOLD_FLOOR: 0.9,
+}
