@@ -4126,3 +4126,70 @@ d5942146e41812ad19cc9cd76bd24550c6979349	refs/heads/main
 매니페스트 링크·`html`의 계산된 touch-action(none)이 실배포에 실려 있음을 함께 확인했다.
 ⚠ **홈 화면 설치·핀치의 실측은 여전히 실기기 몫이다** — 이 확인은 «나갔다»이지 «증상이
 사라졌다»가 아니다(경계표·DEFERRED).
+
+## 2026-08-26 — **web2-10** · 지시 1·2·3: 표시 마감 (short_name · 로딩화면 · 크레딧) — 배포 ①
+
+지시 원문: [`docs/instructions/web2-10.md`](../docs/instructions/web2-10.md) — 작업 전 커밋 `cde32b1`(원문 먼저 규약, 2회째).
+
+**배포가 셋으로 갈린 회차다** — ①(지시 3 뒤)·②(지시 7 뒤)·③(지시 8-a 뒤). 「한 회차
+한 배포」 관행과 다르다. **사람이 자리에 없는 동안 돌기 때문**이다: 뒤 항목이 터져도
+앞 항목은 이미 사람 손에 있어야 한다(지시 머리 문면).
+
+**실기기 관측이 처음 돌아온 회차다** — web2-09의 PWA 판정(설치·전체화면·핀치·아이콘 넷)이
+MovinkPad Pro 14에서 전부 통과했다. `DEFERRED.md` web2-09 표의 그 세 행을 닫았다
+(전체화면 실표시 · 핀치 · maskable 아이콘. 나머지 행은 그대로 열려 있다).
+
+### 착수 시 PITFALLS 대조 (`tail -40 PITFALLS.md`)
+
+- **#64 · #63 · #62 · #61 · #60 — 본문 재독 후 해당 없음.** 이 세 지시는 표시 계층
+  (매니페스트·index.html·LICENSE)만 건드린다 — 면·lift·접기·카메라·임계 없음.
+- **#42 상시** — 이 묶음의 인용: `#58`(배포까지가 한 항목 — 이 회차는 배포 지점이 셋),
+  `#22`(픽셀 증거 — 로딩화면 스크린샷은 모듈 차단 상태로 헤드리스가 찍었다).
+  완료 대조는 사람이 본문과 했다(web2 원장 밖 — web2-09 절과 같은 사유).
+
+### §D 적용
+
+- **D-2(재현)**: 「홈 화면 라벨이 Brunel」— 증상이 곧 값이다. `manifest.webmanifest`의
+  `short_name: "Brunel"`을 읽어 재현 확인. 「로딩화면이 흐리다」 — 크롬 스플래시는
+  설치 PWA 표시 축이라 **헤드리스에서 재현 불가**. 지시가 짚은 원인(매니페스트 자동
+  스플래시의 PNG 확대)은 D-4대로 성립 조건만 확인했다: name·background_color·
+  theme_color·512 PNG 넷 다 있다 → 「안 뜬다」가 아니라 「뜨는데 흐리다」가 맞다.
+- **D-3(반증)**: 새 팔 셋 전부 실패 조건을 실제로 확인했다 — ① short_name 팔:
+  값을 «Brunel»로 되돌려 dpr 둘 다 실패 → 복원(실행 기록 있음). ② 로딩화면 제거 팔:
+  앱 모듈을 차단하면 #boot가 남는다(반증 팔로 상시 내장 — 제거 계측의 생존 확인).
+  ③ reduced-motion 팔: no-preference 반증 짝을 같은 팔에 내장(transition이 opacity/none으로 갈린다).
+
+### 지시 1 — short_name "Brunelleschi" (12자)
+
+`manifest.webmanifest` 한 줄. 회귀 팔은 `pwa.spec.ts`의 선언 팔에 얹었다
+(`short_name === 'Brunelleschi'` + 길이 ≤ 12 — 안드로이드 라벨 잘림선).
+⚠ **이미 설치된 앱의 라벨은 안 바뀐다**(안드로이드가 설치 시점 라벨을 굳힌다) —
+HANDOFF에 적었다. 실기기에서 새로 설치해야 새 라벨이 보인다.
+
+### 지시 2 — 자체 로딩화면 (index.html 인라인)
+
+- **`#boot`** — body 첫 요소. 인라인 SVG 로고(icon.svg의 작도를 그대로 인라인 —
+  파일 참조 없음) + 크레딧. 배경 `#f5f3ee`(매니페스트 background_color와 동일값 —
+  크롬 스플래시에서 넘어올 때 안 튄다).
+- **입력을 안 막는다** — `pointer-events: none`(겹이 떠 있는 동안에도). 시작을 안 늦춘다 —
+  제거는 첫 프레임 뒤 rAF 콜백이 한다(frame이 먼저 등록돼 등록 순으로 첫 draw 다음).
+- **prefers-reduced-motion** — reduce면 `transition: none`(즉시 사라짐). transitionend만
+  안 믿고 600ms 타이머를 병행한다(reduce에서는 transitionend가 안 온다).
+- ⚠ **SVG 클래스를 전부 `#boot` 아래로 스코프했다** — 인라인 SVG의 `<style>`은 문서
+  전역이라 icon.svg의 `<style>`을 그대로 가져오면 앱 쪽과 충돌 후보가 된다.
+- ⚠ e2e 초판이 dev에서 실패했다: 「#boot가 첫 `type="module"`보다 앞」으로 쟀는데
+  vite dev가 `<head>`에 `/@vite/client` 모듈을 주입한다 — 앱 번들 경로(`src/app/main.ts`)로 특정해 고쳤다.
+- **헤드리스가 잰 것**: 인라인·순서·크레딧 문구·배경값 일치·제거·pointer-events·
+  reduced-motion 갈래(boot.spec.ts 3팔 × dpr 둘). 스크린샷 눈 확인: 로고 선명·중앙 배치.
+  **「흐림이 나아졌는가」는 실기기 축이다** — 크롬 스플래시(PNG)가 여전히 먼저 잠깐 뜬다.
+  거슬리면 그때 512 아이콘 선 굵기를 본다(지시 문면 — 이 회차는 아이콘 파일을 안 건드렸다).
+
+### 지시 3 — 크레딧 · LICENSE 정합
+
+- 크레딧: 로고 아래 「Brunelleschi / © 2026 유현욱 · 한국예술종합학교」 — 무채색
+  (#8d8880·#6b665f — UI 회색조 그대로).
+- **LICENSE를 실명으로 고쳤다**(지시의 기본값 그대로): `Copyright (c) 2026 Hyunwook Yu
+  (유현욱), Korea National University of Arts`. **정본은 LICENSE다** — 근거: 법적 문서가
+  표시 문구보다 우선하는 것이 관행이고(A-3 선례), 화면 크레딧은 LICENSE의 요약 표기다.
+  영문 표기를 쓴 것은 MIT 본문이 영문이어서다(괄호에 한글 병기). 저장소에 LICENSE는
+  하나뿐임을 grep으로 확인했다(#42 ⑥의 방식).

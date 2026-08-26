@@ -50,7 +50,12 @@ test('선언 — 전체화면·표시줄 색·iOS 보험 메타가 문서에 있
   // 개발 서버가 주는 매니페스트도 파싱과 display를 본다(배포본은 static_deploy가 잰다)
   const res = await page.request.get('/manifest.webmanifest')
   expect(res.status()).toBe(200)
-  expect(JSON.parse(await res.text()).display).toBe('standalone')
+  const m = JSON.parse(await res.text())
+  expect(m.display).toBe('standalone')
+  // 홈 화면 라벨(web2-10 지시 1) — 옛 앱의 「Brunel」을 확인 없이 이어받았던 값.
+  // 12자는 안드로이드 라벨 잘림선 안. ⚠ 이미 설치된 앱의 라벨은 안 바뀐다(설치 시점에 굳는다).
+  expect(m.short_name).toBe('Brunelleschi')
+  expect(m.short_name.length).toBeLessThanOrEqual(12)
 })
 
 test('핀치·이중 탭이 화면 전 지점에서 막혀 있다 — 유효 touch-action 사슬 (지시 2)', async ({ page }) => {
