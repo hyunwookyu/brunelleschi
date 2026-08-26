@@ -4,6 +4,8 @@
 // 앱이 서면 사라짐 · 입력을 안 막는 선언 · reduced-motion 갈래.
 // **「흐린가/선명한가」는 실기기 축이다** — 여기 통과를 그것으로 읽지 않는다(DEFERRED).
 import { test, expect } from '@playwright/test'
+import fs from 'node:fs'
+import path from 'node:path'
 
 test('로딩화면이 인라인이고 크레딧·배경이 정본과 맞는다 (지시 2·3)', async ({ page }) => {
   // ① 원문 HTML — JS 없이도 #boot가 있어야 한다(번들을 기다리면 빈 화면이 먼저 번쩍인다).
@@ -24,10 +26,48 @@ test('로딩화면이 인라인이고 크레딧·배경이 정본과 맞는다 (
   // ② 배경 = 매니페스트 background_color — 크롬 스플래시에서 넘어올 때 안 튀는 조건
   const m = JSON.parse(await (await page.request.get('/manifest.webmanifest')).text())
   expect(html).toContain(`background: ${m.background_color}; pointer-events: none;`)
-  // ③ 앱이 서면 사라진다
+  // ③ 크레딧 ↔ LICENSE 정합(지시 3) — 정본은 LICENSE다. 저작권자 실명·연도가 양쪽에
+  //    있어야 한다(둘 중 하나만 고치면 여기서 갈린다 — 1차 리뷰어 [11]).
+  const lic = fs.readFileSync(path.resolve(process.cwd(), '..', 'LICENSE'), 'utf8')
+  expect(lic).toContain('유현욱')
+  expect(lic).toContain('2026')
+  expect(bootHtml).toContain('유현욱')
+  expect(bootHtml).toContain('2026')
+  // ④ 앱이 서면 사라진다
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
   await page.waitForSelector('#boot', { state: 'detached' })
+})
+
+test('겹이 떠 있어도 펜 획이 커밋된다 — pointer-events:none의 실입력 확인 (지시 2 · 1차 리뷰어 [7])', async ({ page }) => {
+  // 선언값(computed pointer-events)이 아니라 **실제 입력 경로**로 잰다: 진짜 #boot 마크업을
+  // 화면에 되살려 둔 채 CDP 펜 드래그 → 획 수가 는다. 반증 짝: 같은 겹에 pointer-events를
+  // auto로 바꾸면 획이 안 는다 — 이 팔이 겹의 유무가 아니라 그 속성을 재고 있다는 확인.
+  const html = await (await page.request.get('/')).text()
+  const bootHtml = html.slice(html.indexOf('<div id="boot"'), html.indexOf('<div id="app"'))
+  await page.goto('/')
+  await page.waitForFunction(() => (window as any).__b2)
+  await page.waitForSelector('#boot', { state: 'detached' })
+  await page.evaluate((frag) => document.body.insertAdjacentHTML('beforeend', frag), bootHtml)
+  expect(await page.evaluate(() =>
+    getComputedStyle(document.getElementById('boot')!).pointerEvents)).toBe('none')
+
+  const strokes = () => page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
+  const cdp = await page.context().newCDPSession(page)
+  const pen = { button: 'left' as const, clickCount: 1, pointerType: 'pen' as const }
+  const drag = async (y: number) => {
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: 80, y, ...pen })
+    for (let i = 1; i <= 8; i++)
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 80 + i * 30, y, ...pen })
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: 320, y, ...pen })
+  }
+  const n0 = await strokes()
+  await drag(500)
+  expect(await strokes()).toBe(n0 + 1)               // 겹이 있어도 획이 는다
+  await page.evaluate(() => { document.getElementById('boot')!.style.pointerEvents = 'auto' })
+  await drag(540)
+  expect(await strokes()).toBe(n0 + 1)               // 반증 — auto면 겹이 실제로 막는다
+  await cdp.detach()
 })
 
 test('반증 — 앱 모듈이 안 서면 로딩화면이 남는다 (D-3: 제거를 재는 계측의 생존 확인)', async ({ page }) => {
@@ -57,4 +97,11 @@ test('prefers-reduced-motion이면 전환이 없다 (지시 2)', async ({ page }
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   expect(await page.evaluate(() =>
     getComputedStyle(document.getElementById('boot')!).transitionProperty)).toContain('opacity')
+  // reduce에서도 **제거가 실제로 온다**(1차 리뷰어 [12]) — transitionend가 안 오는 갈래를
+  // 600ms 타이머가 덮는지 실측한다. detached 대기 자체가 판정이다(시한 5s 안에 와야 통과).
+  await page.unroute('**/src/app/main.ts')
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  await page.waitForFunction(() => (window as any).__b2)
+  await page.waitForSelector('#boot', { state: 'detached', timeout: 5000 })
 })

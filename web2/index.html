@@ -143,9 +143,11 @@
     #boot.gone { opacity: 0; }
     @media (prefers-reduced-motion: reduce) { #boot { transition: none; } }
     #boot svg { width: min(46vmin, 300px); height: auto; display: block; }
+    /* 크레딧 색 — 이 저장소의 무채색 판정(채널 차 ≤ 12) 안의 회색으로.
+       --ui(#8d8880)는 차 13이라 그 기준 밖이다(1차 리뷰어 [10] — 「무채색」을 한 뜻으로). */
     #boot .credit {
       margin-top: 22px; text-align: center;
-      font: 12px/2 system-ui, sans-serif; color: #8d8880; letter-spacing: .03em;
+      font: 12px/2 system-ui, sans-serif; color: #8c8881; letter-spacing: .03em;
     }
     #boot .credit b { display: block; font-weight: 400; font-size: 15px; color: #6b665f; letter-spacing: .12em; }
     /* icon.svg의 작도 클래스 — 원본 값 그대로, #boot 스코프로만 */
