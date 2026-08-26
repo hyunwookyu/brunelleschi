@@ -5,6 +5,20 @@
 
 import { test, expect, type Page } from '@playwright/test'
 import { PIXEL_DIFF_CH } from './thresholds'
+import { writeFileSync, mkdirSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+const HERE = dirname(fileURLToPath(import.meta.url))
+const ledger: Record<string, unknown> = {}
+test.afterAll(async ({ }, testInfo) => {
+  if (Object.keys(ledger).length === 0) return
+  const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
+  mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
+  writeFileSync(resolve(HERE, `../../stage0/out/drafting_web2${suffix}.json`), JSON.stringify({
+    what: `web2-12 3부(${testInfo.project.name}) — 제도 표현의 실측: 종이 마스크 켬/끔의 궤도 프레임(ms) · 연쇄 승격 순간의 화면 변화 픽셀. e2e drafting.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).`,
+    ...ledger,
+  }, null, 1))
+})
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -144,4 +158,92 @@ test('10 종이 결 — 겹에 마스크 한 장이 걸려 있고, 위상이 문
   console.log(`[측정] 종이 위상 — 팬 전 «${before}» 후 «${after}»`)
   expect(after).toBe('37px 11px')                 // ox·oy를 그대로 탄다(문서 고정)
   expect(after).not.toBe(before)                  // 반증(D-3): 화면 고정이면 안 움직인다
+})
+
+
+test('8·9 연쇄 승격 순간 — 표현이 «나타나는» 몫의 실측 + 획은 계속 보인다(불변식 j 화면판)', async ({ page }) => {
+  // 승격 전환은 원래 표현이 바뀌는 사건이다(파선 → 실선·rotring → Line2 — 상태 채널).
+  // 넘김 꼬리·가장자리 퍼짐이 그 사건에 얹는 몫을 «수로» 남긴다(3차 [6] — 게이트가 아니라
+  // 기록이다: 뗌 게이트의 «무변화» 요구는 미리보기→확정 전환의 것이고, 승격은 상태가
+  // 바뀌었음을 화면이 말해야 하는 전환이다. 재는 판은 «사라지지 않는다»뿐이다).
+  await boot(page)
+  await corner(page)                             // 승격망(모서리 500,500 포함)
+  await page.click('#btn-pen')
+  await drawLine(page, 700, 250, 700, 130, 10)   // 허공 수직 잉크 — 대기로 남는다
+  const waiting = await page.evaluate(() => {
+    const a = (window as any).__b2.app
+    const s = a.doc.strokes[a.doc.strokes.length - 1]
+    return { id: s.id, waiting: a.lift.waiting.includes(s.id) }
+  })
+  expect(waiting.waiting).toBe(true)
+  const before = await inkBox(page, 690, 160, 20, 40)
+  // 사슬 — 모서리에서 vp0 광선으로, 그 끝에서 수직으로 대기 획의 왼끝까지: 축을 타는
+  // 다리 둘이 승격되고 연쇄가 대기 잉크를 올린다(«승격은 연쇄한다» — CLAUDE.md)
+  await page.click('#tray-HB')
+  await drawLine(page, 500, 500, 700, 450, 12)   // vp0 광선 위 — 승격
+  await drawLine(page, 700, 450, 700, 250, 12)   // 수직 기둥 — 승격·꼭대기가 대기 획 아래끝
+  const after = await page.evaluate((id) => {
+    const a = (window as any).__b2.app
+    return a.lift.lifted.has(id)
+  }, waiting.id)
+  const box = await inkBox(page, 690, 160, 20, 40)
+  console.log(`[측정] 연쇄 승격 — 승격됨 ${after} · 잉크 겹 상자 전 ${before} 후 ${box}`)
+  ledger['promotion'] = { lifted: after, ink_box_before: before, ink_box_after: box,
+    note: '전/후는 잉크 겹의 painted — 파선 소멸·번짐 가장자리 등장 등 상태 전환의 총 몫이다(설계된 변화 — 무변화 게이트 대상이 아니다).' }
+  expect(after).toBe(true)
+  expect(box).toBeGreaterThan(0)                 // 획이 사라지지 않는다(불변식 j)
+})
+
+test('8 기하 불변의 직접 판 — 조각·면 배열 수가 고정값이다(표현이 기하에 새면 여기가 깨진다)', async ({ page }) => {
+  // 3차 [8] — «읽기 전용» 논증에 수를 더한다: 같은 픽스처의 배열(arrangement)을 고정한다.
+  // 넘김·번짐·마스크 어느 것이든 lift·조각·면에 새면 이 수가 움직인다.
+  await boot(page)
+  await corner(page)
+  await drawLine(page, 500, 300, 600, 275)       // 위끝에서 vp0로 — 갈래 있는 장면(#64)
+  const ar = await page.evaluate(() => {
+    const a = (window as any).__b2.diag.arrangement()
+    return { nodes: a.nodes, edges: a.edges, planes: a.planes.length }
+  })
+  const lifted = await page.evaluate(() => (window as any).__b2.app.lift.lifted.size)
+  console.log(`[측정] 배열 고정 — 마디 ${ar.nodes} 변 ${ar.edges} 평면 ${ar.planes} · 승격 ${lifted}`)
+  expect(lifted).toBe(4)
+  expect(ar.nodes).toBeGreaterThan(0)
+  // 고정값 — 이 픽스처의 기하가 주는 수(표현 계층 변경으로 움직이면 기하를 건드린 것)
+  ledger['arrangement_pin'] = ar
+  expect(ar).toEqual({ nodes: 5, edges: 4, planes: 1 })
+})
+
+test('10 종이 마스크의 궤도 비용 — 켬/끔의 프레임 간격을 나란히 잰다', async ({ page }) => {
+  // 3차 [10] — 「비용은 갱신뿐」을 서술이 아니라 수로. 같은 장면·같은 궤도를 마스크
+  // 켬/끔으로 돌고 rAF 간격 중앙을 원장에 남긴다(절대값은 헤드리스 — 판별은 두 값의 비).
+  await boot(page)
+  await drawLine(page, 100, 400, 1100, 400, 8)
+  for (let i = 0; i < 6; i++) await drawLine(page, 300 + i * 60, 550, 340 + i * 60, 480)
+  const orbitFrames = async (): Promise<number> => {
+    await page.evaluate(() => {
+      const S: any = ((window as any).__pf = { d: [] as number[], prev: 0 })
+      const tick = () => { const n = performance.now(); if (S.prev) S.d.push(n - S.prev); S.prev = n; if (S.d.length < 90) requestAnimationFrame(tick) }
+      requestAnimationFrame(tick)
+    })
+    await page.mouse.move(600, 400)
+    await page.mouse.down({ button: 'middle' })
+    for (let i = 1; i <= 30; i++) await page.mouse.move(600 + i * 4, 400 + (i % 5))
+    await page.mouse.up({ button: 'middle' })
+    return await page.evaluate(() => {
+      const d = [...(window as any).__pf.d].sort((a: number, b: number) => a - b)
+      return d.length ? Number(d[Math.floor(d.length / 2)].toFixed(2)) : -1
+    })
+  }
+  const withMask = await orbitFrames()
+  await page.evaluate(() => {
+    for (const id of ['brushc', 'brushsnap']) {
+      const el = document.getElementById(id) as HTMLElement
+      el.style.maskImage = 'none'; (el.style as any).webkitMaskImage = 'none'
+    }
+  })
+  const withoutMask = await orbitFrames()
+  console.log(`[측정] 종이 궤도 — 마스크 켬 프레임 중앙 ${withMask}ms · 끔 ${withoutMask}ms`)
+  ledger['paper_orbit'] = { frame_ms_median_mask_on: withMask, frame_ms_median_mask_off: withoutMask,
+    note: '국면당 1회 표본(brush_perf의 single_sample_note와 같은 규율 — 작은 차는 판별하지 않는다). 줌 미끄러짐(위상 문서·크기 화면의 교환)은 실기기 눈 몫(DEFERRED).' }
+  expect(withMask).toBeGreaterThan(0)
 })

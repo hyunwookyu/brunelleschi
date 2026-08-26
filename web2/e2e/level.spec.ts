@@ -4,6 +4,24 @@
 // 접히는가 · **임계 밖은 머물고 거기서 그려지는가**.
 
 import { test, expect, type Page } from '@playwright/test'
+import { writeFileSync, mkdirSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+const __HERE = dirname(fileURLToPath(import.meta.url))
+// 지평선 잉크량 원장(web2-12 7번 — 3차 리뷰어 [4]: «약 2/3» 산문이 아니라 수를 원장에)
+let horizonInk = -1
+let horizonOff = -1
+test.afterAll(async ({ }, testInfo) => {
+  if (horizonInk < 0) return
+  const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
+  mkdirSync(resolve(__HERE, '../../stage0/out'), { recursive: true })
+  writeFileSync(resolve(__HERE, `../../stage0/out/horizon_web2${suffix}.json`), JSON.stringify({
+    what: `web2-12 7번(${testInfo.project.name}) — 지평선 열당 잉크량(Σ알파÷dpr²÷열수)과 토글 끔의 painted. e2e level.spec 「지평선이 옅다」가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47). 판정 대역(상한 110·하한 30)의 근거는 그 팔 주석.`,
+    per_col_ink: Number(horizonInk.toFixed(2)),
+    off_band_painted: horizonOff,
+    history_note: '직전(web2-08 2H급)의 실측은 그 회차 기록 128/128(dpr1/dpr2) — 이 원장은 현행(COL.horizon)만 든다.',
+  }, null, 1))
+})
 
 const FOLD_DELAY_MS = 1200
 const FOLD_ANIM_MS = 300
@@ -315,6 +333,7 @@ test('**지평선이 옅다 — h~2h 급** · 픽셀 잉크량으로 잰다 (web
     return sum / (dpr * dpr) / 800
   })
   console.log(`[측정] 지평선 열당 잉크량 ${perCol.toFixed(1)}`)
+  horizonInk = perCol
   // web2-12 7번 — 작도 대역으로 더 내렸다(COL.horizon — 토글이 하한 논리를 풀었다).
   // 대역: 위 110(직전 값 2H급 128이 걸린다 — 되돌리면 실패) · 아래 30(안 그려지면 0).
   expect(perCol).toBeLessThan(110)
@@ -336,6 +355,7 @@ test('**지평선이 옅다 — h~2h 급** · 픽셀 잉크량으로 잰다 (web
     return n
   })
   console.log(`[측정] 지평선 토글 끔 — 띠 painted ${offBand}`)
+  horizonOff = offBand
   expect(offBand).toBe(0)
   await page.click('#chk-horizon')   // 되돌린다(기본 켜짐)
   await settle(page)
