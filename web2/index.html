@@ -133,6 +133,20 @@
     #dimpanel label { display: flex; align-items: center; gap: 6px; }
     #dimpanel .on { color: #1a6ac2; }
     #dim-read { min-width: 56px; font: 13px monospace; color: #3c3831; }
+    /* 숫자 키패드(web2-10 지시 8-a) — **확정 경로**. 항상 펴져 있고 인식을 안 거친다.
+       치수는 첫 입력이 scaleRef를 정하는 자리라(3이 8로 읽히면 전체 실척이 조용히 틀린다)
+       확률적 입력(필기·음성)만으로는 안 된다 — A-3 「조용히 틀린 배치를 만들지 않는다」.
+       키 크기는 지시 5의 대역(닿는 높이 ≥ 27px)에 맞춘다 — 펜으로 누르는 판이다. */
+    #pad-read { font: 17px/1.4 monospace; color: #3c3831; min-height: 24px; }
+    /* 행 높이는 격자가 정한다 — 버튼 height를 34로 고정하면 «적용»의 두 줄 스팬이 안 는다
+       (실측 34로 걸렸다 — 팔이 잡았다). */
+    #pad-keys { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 34px; gap: 5px; }
+    #pad-keys button {
+      background: none; border: 0; cursor: pointer; height: 100%; width: 100%;
+      font: 16px system-ui, sans-serif; color: #3c3831; text-decoration: none;
+      box-shadow: inset 0 0 0 1px #e5e0d6; padding: 0;
+    }
+    #pad-keys button:hover { box-shadow: inset 0 0 0 1px #b8b3ab; }
 
     /* ── 자체 로딩화면(web2-10 지시 2·3) ─────────────────────────────────
        크롬이 매니페스트로 만드는 스플래시는 PNG 아이콘을 확대해 흐리다 — 그 답이
@@ -283,6 +297,14 @@
     <div id="dimpanel" class="folded">
       <div class="head">치수</div>
       <div id="dim-live">—</div>
+      <!-- 키패드(지시 8-a) — 확정 경로. 적용 전에 값이 #pad-read에 보이고 ⌫로 고친다. -->
+      <div id="pad-read">—</div>
+      <div id="pad-keys">
+        <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="del" title="한 자리 지운다">⌫</button>
+        <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button data-k="clear" title="전부 지운다">C</button>
+        <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="apply" title="이 값을 지금 선의 치수로" style="grid-row: span 2">적용</button>
+        <button data-k="0" style="grid-column: span 2">0</button><button data-k=".">.</button>
+      </div>
       <canvas id="dim-ink" width="184" height="72"></canvas>
       <div style="display:flex;gap:10px;align-items:center">
         <span id="dim-read"></span>

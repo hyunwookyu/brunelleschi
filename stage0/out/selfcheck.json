@@ -26673,7 +26673,7 @@
     {
       "path": "scan_citation_hashes",
       "val": [
-        "assumptions.md:179 test_cost.json",
+        "assumptions.md:180 test_cost.json",
         "DEFERRED.md:905 test_cost.json",
         "progress.md:11820 test_cost.json",
         "progress.md:13857 test_cost.json",
