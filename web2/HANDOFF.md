@@ -1,5 +1,21 @@
 # web2 인계
 
+## 🆕 web2-11 (2026-08-26) — 1부: 입력 계층 **배포됨** · 2부: brush.js 진행 중
+
+**배포 ① 확인됨** — 원격 main = **`e2e5e91843acf998607315a105f3746e4a62d71d`**,
+화면 빌드 식별자 **`e2e5e91`**, `deploy:check` 「배포됨」. 지시 원문:
+[`docs/instructions/web2-11.md`](../docs/instructions/web2-11.md). 기록: [NOTES.md](NOTES.md)의 web2-11 절.
+
+**1부(입력 계층)가 나갔다** — 화면은 그대로(판별은 묶음 패치 팔), 데이터만 더 받는다:
+① coalesced 수집(`app.coalesce` 끔 손잡이 — D-3) ② tiltX/Y·twist 관측 수집
+③ **점별 필압 `Stroke.rawIn`**(raw와 나란한 평행 배열 · 펜만 · press 0..8191 양자화 —
+`C.PRESS_Q` · `mat.press`는 비트 불변) ④ 지우개 끝 신호(pen+button5/buttons&32) **표시만**
+⑤ .brnl 새 필드 전부 선택(옛 파일 그대로 열림 · 옛 파서 스냅샷 팔 — ⚠ 옛 앱이 새 파일을
+재저장하면 rawIn 소실) ⑥ 진단 패널 확장(날값·coalesced 계수·「단계 N·양자화 후 M」·최근
+획·.brnl 바이트) — **실기기 확인 목록은 DEFERRED의 web2-11 표 다섯 행이 정본**(전부 진단
+패널이 도구다). 원장: `input_capture_web2.json`·`stroke_payload_web2.json`(신설).
+검증: 단위 358 · e2e 100(50팔×2dpr) · 리뷰어 2회(12+14건 전부 대응 — NOTES).
+
 ## 🆕 web2-10 (2026-08-26) — 표시 마감 · 진단 · 색 빼기 · 치수 입력 (**완료**)
 
 **여덟 항목 전부 배포됨** — 최종 원격 main = **`b6980c95bbb5e0cb3d4d55e6cb3b4e2528d9f839`**,
