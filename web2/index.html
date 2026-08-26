@@ -466,15 +466,10 @@
 
         <!-- 면 — 둘러싸인 자리를 탭하면 면이 되고, 면을 탭하면 없어진다(토글).
              **자동으로 안 만든다** — 닫힌 루프가 생겼다고 면이 아니다. -->
-        <!-- 종이 질감 토글(web2-11 2-b) — 되돌릴 수 있어야 하므로 설정에 묻지 않고 여기 둔다.
-             사람이 태블릿에서 바로 전환해 비교하는 것이 목적이다. 켜짐 = 획을 brush.js가 그린다. -->
-        <button id="btn-brush" class="t ico-m" title="종이 질감 — 획을 brush 렌더러로 (다시 누르면 종전 렌더러)" aria-label="종이 질감">
-          <svg width="30" height="30" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
-            <path d="M3 14c2.5-1.2 3.4-6.8 6-8.6 1.6-1.1 3.4-.4 3.9 1 .6 1.6-.6 3.2-2.2 3.6" />
-            <path d="M3.4 16.4c.9.3 2.4.4 3.3-.4" stroke-dasharray="1.4 1.6" />
-            <path d="M9 16.2c.9.3 2.2.4 3.1-.3" stroke-dasharray="1 1.8" />
-          </svg>
-        </button>
+        <!-- ⛔ 종이 질감 토글(btn-brush)은 web2-13 3-c로 **설정 패널로 옮겨졌다** —
+             평가용 비교 스위치인데 도구들 사이에 서 있어 실수로 눌렸다(사람이 실제로
+             눌러 「잉크가 사라졌다」로 오인). 옛 자리 주석(web2-11 2-b «설정에 묻지
+             않고 여기 둔다»)은 그 관측으로 뒤집혔다(#65 — 근거를 현재 사실로). -->
         <button id="btn-face" class="t tool ico-h" title="면 — 둘러싸인 자리를 탭한다(다시 탭하면 없앤다)" aria-label="면">
           <svg width="39" height="48" viewBox="0 0 26 32">
             <path d="M4 21 10 8l12 3-5 13z" fill="#8d8880" fill-opacity=".26"
@@ -527,6 +522,11 @@
             <div class="head" style="margin-top:6px">표시</div>
             <label><input id="chk-horizon" type="checkbox" checked> 지평선</label>
             <label><input id="chk-grid" type="checkbox"> 지면 격자</label>
+            <!-- web2-13 3-a — 끄면 종전 동작(대기 획을 항상 그리되 흐리게). 실기기 판정용 되돌림(A-4). -->
+            <label><input id="chk-waitfade" type="checkbox" checked> 대기 획은 그린 시점에서만</label>
+            <div class="head" style="margin-top:6px">렌더러</div>
+            <!-- web2-13 3-c — 세로바에서 옮겨 온 평가용 비교 스위치(btn-brush id 유지 — 배선·팔이 그 이름을 본다) -->
+            <button id="btn-brush" title="종이 질감 — 획을 brush 렌더러로 (다시 누르면 종전 렌더러)">종이 질감</button>
           </div>
         </details>
       </div>

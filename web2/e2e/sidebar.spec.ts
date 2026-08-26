@@ -19,7 +19,7 @@ let ovPen = { overlaps: -1, n: 0 }
 const ALL = ['sidebar-toggle', 'btn-draw-view', 'btn-save-view', 'dim-toggle',
   'btn-undo', 'btn-redo',
   'tray-2H', 'tray-H', 'tray-F', 'tray-HB', 'tray-B', 'tray-2B', 'btn-pen',
-  'btn-eraser-pencil', 'btn-eraser-ink', 'btn-brush', 'btn-face']
+  'btn-eraser-pencil', 'btn-eraser-ink', 'btn-face'] // btn-brush는 web2-13 3-c로 설정 안 — 세로바 목록에서 뺀다
 
 test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형·쌍별 겹침 0 (web2-12 3번)', async ({ page }) => {
   await page.goto('/')
@@ -27,7 +27,7 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
   // 크기 — 전 요소가 같은 배수(--ui-scale) 대역이다. 임계는 옛 값(괄호)과 새 값 사이:
   // 되돌리면 깨진다. **시점·치수 묶음도 같은 대역**이다(관측 ① — 종전 20px가 30px 대역으로).
   expect((await box(page, '#sidebar-toggle svg')).height).toBeGreaterThanOrEqual(24) // (18→27)
-  for (const id of ['btn-undo', 'btn-redo', 'btn-draw-view', 'btn-save-view', 'dim-toggle', 'btn-brush']) {
+  for (const id of ['btn-undo', 'btn-redo', 'btn-draw-view', 'btn-save-view', 'dim-toggle']) { // btn-brush: 3-c로 설정 안(svg 아이콘도 아님)
     expect((await box(page, `#${id} svg`)).height, `#${id} 크기 대역`).toBeGreaterThanOrEqual(27) // (20→30)
   }
   // 연필통(web2-12 6번) — 가로 행 일곱(연필 여섯 + 펜). 높이 같은 대역(16→24).

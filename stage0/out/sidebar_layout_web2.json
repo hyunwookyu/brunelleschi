@@ -6,13 +6,13 @@
  },
  "sidebar_pencil": {
   "w": 96,
-  "h": 732,
-  "bottom": 744
+  "h": 695,
+  "bottom": 707
  },
  "sidebar_pen": {
   "w": 96,
-  "h": 732,
-  "bottom": 744
+  "h": 695,
+  "bottom": 707
  },
  "tray": {
   "w": 96,
@@ -22,15 +22,15 @@
  "overlap": {
   "pencil": {
    "overlaps": 0,
-   "n": 17
+   "n": 16
   },
   "pen_with_thick": {
    "overlaps": 0,
-   "n": 18
+   "n": 17
   }
  },
  "right_edge_x": 1195,
  "hit_pad_css": "3px",
- "clip_boundary_css_h": 744,
+ "clip_boundary_css_h": 707,
  "note": "판정(겹침 0·화면 안·오른쪽 축·크기 대역)은 팔의 단언이 정본이고 이 원장은 그 실측값의 기록이다."
 }

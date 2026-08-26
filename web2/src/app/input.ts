@@ -10,7 +10,7 @@ import {
 import { osnap, type OsnapHit } from '../core/osnap'
 import { isLevel, pitchSnaps } from '../core/level'
 import type { LevelHooks } from './autolevel'
-import { resolveStart, resolveEnd, resolveCommit } from '../core/draft'
+import { resolveStart, resolveEnd, resolveCommit, isStray } from '../core/draft'
 import { C } from '../core/constants'
 import { cubeGeom, cubeHit, poseForElem } from '../core/viewcube'
 import type { Draft } from './render2d'
@@ -171,6 +171,19 @@ export function initInput(
     pressSamples = []
     const rawIn = quantIn(samples, d.raw.length)
     samples = []
+    // 「잘못 찍힌 점」 문(web2-13 3-b) — 탭 대역 위·STRAY 문 아래의 raw bbox는 획을
+    // **애초에 안 만든다.** 탭(끝점 이동 ≤ TAP_MAX_PX)은 여기 안 걸리고 종전 경로
+    // (resolveCommit — 소실점 찍기/잡음 폐기)로 그대로 간다. 버린 수는 진단 패널.
+    {
+      const endDistPx = Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) * app.view.s
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity
+      for (const p of d.raw) {
+        if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x
+        if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y
+      }
+      const bboxDiagPx = d.raw.length >= 2 ? Math.hypot(x1 - x0, y1 - y0) * app.view.s : 0
+      if (isStray(endDistPx, bboxDiagPx)) { app.strayCount++; return }
+    }
     const c = resolveCommit(app.lift.an, d.start, d.end, app.osnap.radius / app.view.s)
     if (!c) return // 잡음 — 지평선에서 먼 탭
     cb.onCommit(c.a, c.b, d.raw, press, rawIn)

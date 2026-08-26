@@ -39,7 +39,8 @@ export function waitFadeFactor(cur: CamPose, own: CamPose | undefined): number {
     const dp = Math.abs(cur.p.x - o.p.x) + Math.abs(cur.p.y - o.p.y) + Math.abs(cur.p.z - o.p.z)
     return dp < 1e-9 ? 1 : 0.3
   }
-  return Math.max(0, 1 - deg / C.WAIT_FADE_DEG)
+  const f = 1 - deg / C.WAIT_FADE_DEG
+  return f < 1e-9 ? 0 : f   // 경계의 fp 부스러기(1e-16 대역)도 0 — «창 밖 0»이 문면이다
 }
 
 /** 질감(grain·번짐·brush)이 얹히는 «자기 시점» 판정 — 종전 own 불리언의 자리.

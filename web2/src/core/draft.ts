@@ -105,6 +105,18 @@ export function resolveEnd(
  *  자리이고, 클릭 = 점 찍기는 캐드 선례다(A-3). 지평선에서 먼 탭은 종전대로 잡음이다.
  *
  *  앱(`input.ts`)과 측정 하네스가 **같은 함수**를 부른다. 갈리면 하네스가 앱을 안 재게 된다. */
+/** 「잘못 찍힌 점」 문(web2-13 3-b · 개정 3 초안 §6) — **탭도 아니고 획도 아닌** 대역을
+ *  애초에 만들지 않는다. 만들고 숨기면 안 보이는데 교차·면·오스냅에 참여하는 지뢰가 된다.
+ *
+ *  둘 다 **화면 css px**로 받는다(호출부가 × view.s로 환산 — dpr는 캔버스 변환이 진다).
+ *  - endDistPx ≤ TAP_MAX_PX 는 **탭이다** — 여기 안 걸린다(소실점 찍기 경로 불변.
+ *    resolveCommit이 종전대로 판정한다 — 3부 불변식: 판정·기하 안 바뀜).
+ *  - bboxDiagPx 로 잰다 — 끝점 거리로 재면 닫힌 한 붓(끝이 시작으로 돌아온 획)이
+ *    오폐기된다(`stray_gate_web2.json` 첫 실측이 보였다). 탭이 살짝 끌린 것은 bbox도 작다.
+ *  - 값 근거·실획 대비 폐기율은 C.STRAY_MIN_PX 주석과 원장. 버린 수는 진단 패널이 센다. */
+export const isStray = (endDistPx: number, bboxDiagPx: number): boolean =>
+  endDistPx > C.TAP_MAX_PX && bboxDiagPx < C.STRAY_MIN_PX
+
 export function resolveCommit(
   an: Pick<Analysis, 'horizonY'>, start: Pt, end: Pt, osnapRadius: number,
 ): { a: Pt; b: Pt } | null {

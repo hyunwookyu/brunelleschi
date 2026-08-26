@@ -120,10 +120,10 @@ test('게이트 ① ② — 뗌 직전/직후(재료 전수) · 잠정 id 연속
   await page.click('#tray-HB'); await settle(page)
 
   // classic(옛 경로 — 비교 기준): 벡터 미리보기 → 뗌에 질감(grain)·Line2가 나타난다
-  await page.click('#btn-brush'); await settle(page)
+  await page.evaluate(() => (document.getElementById('btn-brush') as HTMLButtonElement).click()); await settle(page) // 3-c: 설정 안 — DOM click(배선 동일)
   const classic = await releaseDiff(page, 330 + 7 * 50)
   expect(classic.lifted).toBe(true)
-  await page.click('#btn-brush'); await settle(page)
+  await page.evaluate(() => (document.getElementById('btn-brush') as HTMLButtonElement).click()); await settle(page) // 3-c: 설정 안 — DOM click(배선 동일)
 
   console.log(`[측정] 뗌 게이트 — ${out.join(' · ')} · classic HB ${classic.diff}/${classic.strokePx}`)
   ledger['release'] = {

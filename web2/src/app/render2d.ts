@@ -11,6 +11,7 @@ import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
 import { MAT, gradeOf, rng32, widthOf, widthOfMat } from '../core/material'
 import { overshootEnds } from '../core/overshoot'
+import { waitFadeFactor, atOwnPose } from '../core/waitfade'
 import type { OsnapHit } from '../core/osnap'
 import type { Pt, V3 } from '../core/vec'
 

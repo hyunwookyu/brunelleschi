@@ -132,7 +132,8 @@ for (const renderer of ['brush', 'classic'] as const) {
   test(`재료 전수(${renderer}) — 일곱 재료 전부: 긋는 중에도, 떼서 승격된 뒤에도 화면에 보인다`, async ({ page }) => {
     await boot(page)
     bases = []
-    if (renderer === 'classic') { await page.click('#btn-brush'); await settle(page) }
+    // 3-c: btn-brush는 설정 안 — DOM click(배선 동일)
+    if (renderer === 'classic') { await page.evaluate(() => (document.getElementById('btn-brush') as HTMLButtonElement).click()); await settle(page) }
     await fixture(page)
     const out: string[] = []
     const rows: Record<string, Record<string, number>> = {}

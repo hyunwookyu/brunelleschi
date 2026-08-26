@@ -66,6 +66,9 @@ const diagPanel = initDiagPanel(
         ? `${st.points}점 (${st.pointerType}) · 이벤트 ${st.events} · coalesced 추가 ${st.extra}`
         : '—'],
       ['.brnl', `${brnlBytes()} B · 획 ${app.doc.strokes.length}`],
+      // 「잘못 찍힌 점」 문이 버린 수(web2-13 3-b) — 조용히 버리지 않는다: 수가 말한다.
+      // 크면 C.STRAY_MIN_PX가 틀린 것이다(원장 stray_gate_web2.json이 근거 대역).
+      ['버린 짧은 획', `${app.strayCount} (문 ${C.STRAY_MIN_PX}px)`],
     ]
   })
 
@@ -504,6 +507,10 @@ gridBox.addEventListener('change', () => { app.grid = gridBox.checked; invalidat
 const horizonBox = document.getElementById('chk-horizon') as HTMLInputElement
 horizonBox.checked = app.horizon
 horizonBox.addEventListener('change', () => { app.horizon = horizonBox.checked; invalidate() })
+// 대기 획 시점 감쇠(web2-13 3-a) — 기본 켜짐. 끄면 종전 동작 그대로(A-4 — 실기기 판정용).
+const waitFadeBox = document.getElementById('chk-waitfade') as HTMLInputElement
+waitFadeBox.checked = app.waitFade
+waitFadeBox.addEventListener('change', () => { app.waitFade = waitFadeBox.checked; invalidate() })
 
 const radius = document.getElementById('osnap-radius') as HTMLInputElement
 radius.value = String(app.osnap.radius)

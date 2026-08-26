@@ -110,7 +110,7 @@ test('2-b — 토글: classic으로 바꾸면 brush 겹이 비고 grain(ink)이 
   const on = await brushBox(page, 500, 550, 30)
   expect(on.painted).toBeGreaterThan(0)
 
-  await page.click('#btn-brush')                      // 사람이 누르는 그 버튼으로 끈다
+  await page.evaluate(() => (document.getElementById('btn-brush') as HTMLButtonElement).click()) // 3-c: 설정 안 — DOM click(배선 동일)                      // 사람이 누르는 그 버튼으로 끈다
   await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.diag.renderer())).toBe('classic')
   const off = await brushBox(page, 500, 550, 30)
@@ -127,7 +127,7 @@ test('2-b — 토글: classic으로 바꾸면 brush 겹이 비고 grain(ink)이 
   console.log(`[측정] classic 전환 후 ink 상자 painted ${grainPix}`)
   expect(grainPix).toBeGreaterThan(0)
 
-  await page.click('#btn-brush')                      // 되돌린다(2-b — 비교가 목적)
+  await page.evaluate(() => (document.getElementById('btn-brush') as HTMLButtonElement).click()) // 3-c: 설정 안 — DOM click(배선 동일)                      // 되돌린다(2-b — 비교가 목적)
   await settle(page)
   expect((await brushBox(page, 500, 550, 30)).painted).toBeGreaterThan(0)
 })

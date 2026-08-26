@@ -29,6 +29,7 @@
 import * as brush from 'p5.brush/standalone'
 import type { App } from './state'
 import { docToScreen, isDrawPose, activeGrade, draftBrushed } from './state'
+import { atOwnPose } from '../core/waitfade'
 import { project } from '../core/camera'
 import { gradeOf, rng32 } from '../core/material'
 import { C } from '../core/constants'
@@ -154,14 +155,14 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
 
   // 캐시 키 — 이 값들이 전부 같으면 다시 안 그린다. 그리는 중(draft·호버)에는 어느 것도
   // 안 바뀌므로 **획을 긋는 동안 이 겹의 비용은 0**이다(위 머리주석).
-  let last: { renderer: string; docVersion: number; pose: unknown; s: number; ox: number; oy: number; w: number } | null = null
+  let last: { renderer: string; docVersion: number; pose: unknown; s: number; ox: number; oy: number; w: number; waitFade: boolean } | null = null
   const dirty = (app: App): boolean =>
     !last || last.renderer !== app.renderer || last.docVersion !== app.docVersion ||
     last.pose !== app.pose || last.s !== app.view.s || last.ox !== app.view.ox ||
-    last.oy !== app.view.oy || last.w !== cw
+    last.oy !== app.view.oy || last.w !== cw || last.waitFade !== app.waitFade
   const remember = (app: App) => {
     last = { renderer: app.renderer, docVersion: app.docVersion, pose: app.pose,
-      s: app.view.s, ox: app.view.ox, oy: app.view.oy, w: cw }
+      s: app.view.s, ox: app.view.ox, oy: app.view.oy, w: cw, waitFade: app.waitFade }
   }
 
   function drawStroke(app: App, s: Stroke, a: Pt, b: Pt) {
@@ -193,7 +194,10 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
         const id = s.id
         if (waiting.has(id)) {
           // 대기 획 — 자기 포즈에서만(grain과 같은 규칙). 좌표는 문서 → 화면.
-          const own = s.view ? !atDraw : atDraw
+          // web2-13 3-a: 감쇠 켜짐이면 «자기 포즈»가 각도 0(atOwnPose)이다 —
+          // s.view 획이 다른 궤도 포즈에서도 own으로 읽히던 헐거움이 함께 닫힌다.
+          // 끄면 종전 식 그대로(A-4).
+          const own = app.waitFade ? atOwnPose(app.pose, s.view) : (s.view ? !atDraw : atDraw)
           if (!own) continue
           drawStroke(app, s, docToScreen(app, s.a), docToScreen(app, s.b))
         } else {
