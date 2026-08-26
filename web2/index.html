@@ -3,9 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <!-- 설치 표시줄 색 — 매니페스트 theme_color와 같은 값(#f5f3ee = --paper) -->
+  <meta name="theme-color" content="#f5f3ee" />
+  <!-- iOS 보험(web2-09 지시 1) — iOS 16.4 미만은 매니페스트 display를 안 읽는다.
+       ⚠ 실기기가 안드로이드(MovinkPad)라 iOS는 **확인 못 했다** — 선언만 실었다. -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>Brunelleschi</title>
-  <!-- 설치된 PWA가 안 깨지게 옛 앱(web/)과 같은 매니페스트·아이콘을 그대로 쓴다.
-       옛 start_url이 `./`라 전환 후 이 화면으로 들어온다. -->
+  <!-- 매니페스트·아이콘은 web2의 것이다(web2-08이 교체, web2-09 지시 0이 커밋).
+       start_url `./`와 주소는 옛 앱(web/) 때 그대로라 설치된 PWA가 이 화면으로 들어온다. -->
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./icon-192.png">
@@ -19,7 +26,13 @@
       --ui: #8d8880;        /* 안 고른 도구 — 물러나 있다 */
       --ui-faint: #b8b3ab;
     }
-    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--paper); }
+    /* touch-action을 **뿌리에도** 건다(web2-09 지시 2). 모든 요소가 #app의 자손이라
+       유효 사슬에는 이미 none이 들어 있지만, 그 한 겹이 규칙 하나에 걸려 있었다 —
+       뿌리 겹은 #app 쪽이 지워져도 브라우저 핀치·이중 탭 확대를 막는다.
+       ⚠ 실기기 증상(핀치가 브라우저 줌)은 헤드리스에서 재현이 안 됐다 — 선언 두 겹을
+       다 벗겨도 합성 핀치가 줌을 못 낸다(계측기 한계). 남는 후보는 선언을 설계상
+       이기는 축(안드로이드 접근성 「강제 확대」·비-크롬 브라우저)이고 실기기에서 가른다. */
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--paper); touch-action: none; }
     #app { position: fixed; inset: 0; touch-action: none; }
     canvas { position: absolute; inset: 0; display: block; }
     #ink { z-index: 2; }
@@ -75,6 +88,9 @@
       background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
       padding: 10px 12px; white-space: nowrap;
       max-height: calc(100vh - 20px); overflow-y: auto;
+      /* 이 패널만 스스로 스크롤한다 — pan-y는 그 손짓만 열고 핀치·이중 탭 확대는 계속 막는다.
+         (패널 자체가 스크롤 컨테이너라 뿌리의 none이 이 스크롤을 안 막는다) */
+      touch-action: pan-y;
       font: 12px system-ui, sans-serif; color: #4a463f;
     }
     details.pane summary { list-style: none; cursor: pointer; }
@@ -284,6 +300,22 @@
     </div>
     <input id="file-open" type="file" accept=".brnl,application/json" style="display:none">
   </div>
+  <script>
+    // 브라우저 줌 보험(web2-09 지시 2) — 뷰포트 메타와 touch-action이 **무시되는** 환경용.
+    // iOS 사파리는 user-scalable=no를 안 읽고, 안드로이드 접근성 「강제 확대」는 메타를 이긴다.
+    // 두 손가락 touchmove만 막는다 — 앱의 조작은 Pointer Events로 받으므로(input.ts)
+    // 파생 터치 이벤트의 preventDefault가 펜·한 손가락·앱의 두 손가락 팬줌을 안 건드린다.
+    // (한 손가락 touchstart는 막지 않는다 — 그것을 막으면 click이 죽어 단추가 안 눌린다)
+    document.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 1) e.preventDefault()
+    }, { passive: false })
+    // 사파리 전용 핀치 채널 — gesture*는 사파리에만 있다. 실기기(안드로이드)로는 확인 못 한다.
+    for (const t of ['gesturestart', 'gesturechange', 'gestureend'])
+      document.addEventListener(t, (e) => e.preventDefault())
+    // 데스크톱의 브라우저 줌(Ctrl+휠 = 트랙패드 핀치 포함). 캔버스 위에서는 어차피
+    // 앱 휠 핸들러가 전부 preventDefault한다(input.ts) — 이 줄은 그 바깥(패널·단추)을 덮는다.
+    window.addEventListener('wheel', (e) => { if (e.ctrlKey) e.preventDefault() }, { passive: false })
+  </script>
   <script type="module" src="/src/app/main.ts"></script>
 </body>
 </html>
