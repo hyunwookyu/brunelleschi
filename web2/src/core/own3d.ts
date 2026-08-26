@@ -39,7 +39,9 @@ export function own3Deviation(an: Analysis, s: Stroke): number | null {
  *  굳힘은 리프팅 결과의 사본이므로 같은 카메라 재사영은 fp 왕복 대역(1e-13 실측 —
  *  promote_freeze의 오라클 행)이고, .brnl 왕복은 JSON 전체 정밀도라 역시 fp 대역이다.
  *  0.01은 그 대역의 열 자릿수 위·«틀린 3D»(수십~수백 px — 2부 원장)의 서너 자릿수
- *  아래다 — 정상은 절대 안 걸리고 오류는 절대 통과 못 하는 넓은 골 가운데.
+ *  아래다 — 넓은 골 가운데. ⚠ 「정상이 안 걸린다」는 경험적 주장이다(4차 [44]) —
+ *  알려진 예외가 이미 하나 있고(dim — own3Deviation이 뺀다) 예외 후보 전수는
+ *  AS-C47이 유보로 든다. 실측 여유는 own3d_invariant_web2.json(국면 넷)이 정본.
  *  선례: LINE_MATCH_PX 0.5도 같은 성격(수치 동일성)인데 그쪽은 화면 판정이라 AA
  *  대역을 두었고, 여기는 순수 수치 대조라 더 좁다. */
 export const OWN3_TOL_PX = 0.01
@@ -70,42 +72,56 @@ const distToSeg = (p: Pt, a: Pt, b: Pt): number => {
  *  · **끝점만 센다**(㉯) — 그리는 중의 스침·지나감은 사건이 아니다. 제도에서 수선은
  *    만나는 데까지 긋고 멈춘다 — 끝난다는 것 자체가 의도의 표시다.
  *  · **B의 시점에서만** — 다른 시점에서 그은 A와의 화면 일치는 «시점 따라 생멸하는
- *    가짜 만남»이다(AS-C41). 오스냅과 같은 원칙: 보이는 것끼리만 만난다.
+ *    가짜 만남»이다(AS-C41). ⚠ 판정은 `atOwnPose`(같은 포즈)다 — 3-a의 가시 창(30°
+ *    감쇠 안에서는 흐리게 «보인다»)보다 **좁다**. 흐리게 보이는 각도에서 붙여도 사건이
+ *    아니다(4차 리뷰어 [43] — «보인다»를 두 뜻으로 쓰지 않는다).
  *  · **방향이 선 B만** — 축 배정이 없는 자유 대기 획은 P 하나로 직선이 안 선다
  *    (방향 미정 — 반증 조건이 이 갈래다).
- *  판정 반경은 오스냅 반경(화면 px) — 사람이 «붙였다»고 아는 그 문과 같은 문이다.
+ *
+ *  ⚠⚠ **실효 문은 오스냅 반경(8px)이 아니라 아래 퇴화 방어의 사영 왕복(0.5px)이다**
+ *  (4차 리뷰어 [41]): B의 own3는 P를 지나는 «이상적인 축 직선»이고, A의 끝이 B의
+ *  잉크 선에서 d px 벗어나면 왕복도 ≈d px 벗어나 거부된다. 그리고 B 자신의 잉크가
+ *  축선에서 0.5px 넘게 벗어나 있어도(손 조준 오차) 거부된다 — 그래야 정의된 3D가
+ *  잉크 심판(§7)을 통과한다. 실제 도달 집합: **A를 오스냅으로 B의 끝점·중점에 붙여
+ *  끝낸 경우**(대기 획의 오스냅 후보가 그 둘뿐이다 — NOTES 2단계)가 사실상 전부다.
+ *  좁음은 의도된 보수성이다(조용히 틀린 배치 < 안 되는 것) — 넓히는 것은 실기기
+ *  관측 후의 일(DEFERRED). 무산은 `missed`로 센다 — 조용히 버리지 않는다(3-b 규약).
  *  ⚠ 표현 구간(pts2d 확정 끝점 사이)만 본다 — 무한 연장은 안 본다(§4 — 범위 밖). */
+export interface TouchStats { ok: number; pose: number; axis: number; lift: number; roundtrip: number }
 export function defineByTouch(lift: LiftResult, a: Stroke, osnapRadiusPx: number):
-  { id: number; own3: NonNullable<Stroke['own3']> }[] {
+  { defs: { id: number; own3: NonNullable<Stroke['own3']> }[]; missed: TouchStats } {
+  const missed: TouchStats = { ok: 0, pose: 0, axis: 0, lift: 0, roundtrip: 0 }
   const an = lift.an
-  if (!an.constructionDone) return []                 // 카메라가 닫힌 뒤의 기전이다(§9.2)
-  const seg = lift.lifted.get(a.id)
-  if (!seg) return []                                 // A 자신이 3D여야 P를 줄 수 있다
-  const poseA: CamPose = a.view ?? DRAW_POSE
   const out: { id: number; own3: NonNullable<Stroke['own3']> }[] = []
+  if (!an.constructionDone) return { defs: out, missed }   // 카메라가 닫힌 뒤의 기전(§9.2)
+  const seg = lift.lifted.get(a.id)
+  if (!seg) return { defs: out, missed }              // A 자신이 3D여야 P를 줄 수 있다
+  const poseA: CamPose = a.view ?? DRAW_POSE
   for (const idB of lift.waiting) {
     const b = lift.strokes.get(idB)
     if (!b || b.own3) continue                        // 첫 사건이 이긴다(과결정 없음)
-    const poseB: CamPose = b.view ?? DRAW_POSE
-    if (!atOwnPose(poseA, poseB)) continue            // B의 시점에서만(§3.0)
+    // «끝이 B 위에서 끝났다»가 성립한 뒤의 무산만 센다 — 그 전은 후보도 아니었다
     if (distToSeg(a.b, b.a, b.b) > osnapRadiusPx) continue   // 뗀 끝이 B 위인가(㉯)
+    const poseB: CamPose = b.view ?? DRAW_POSE
+    if (!atOwnPose(poseA, poseB)) { missed.pose++; continue }     // B의 시점에서만(§3.0)
     const axis = axisOfStroke(an, poseB, b.a, b.b)
-    if (!axis) continue                               // 방향 미정 — 정의 불가(반증 조건)
+    if (!axis) { missed.axis++; continue }            // 방향 미정 — 정의 불가(반증 조건)
     const dir = an.axes.find(x => x.id === axis)?.dir
-    if (!dir) continue
+    if (!dir) { missed.axis++; continue }
     const P: V3 = seg.b3                              // A의 뗀 끝 = 사건의 자리
     const rayA = rayThrough(an, poseB, b.a)
     const rayB = rayThrough(an, poseB, b.b)
-    if (!rayA || !rayB) continue
+    if (!rayA || !rayB) { missed.lift++; continue }
     const a3 = closestOnLineToRay(P, dir, rayA)
     const b3 = closestOnLineToRay(P, dir, rayB)
-    if (!a3 || !b3) continue
-    // 퇴화 방어 — 직선이 광선과 거의 평행이면 리프팅이 멀리 튄다. 사영 왕복으로 잰다
-    // (수치 동일성 — LINE_MATCH_PX의 논리): B의 2D가 그 3D의 사영과 안 맞으면 버린다.
+    if (!a3 || !b3) { missed.lift++; continue }
+    // 퇴화 방어 = **실효 문**(위 ⚠⚠) — B의 2D가 그 3D의 사영과 수치 동일해야 한다.
+    // 이것이 없으면 정의된 3D가 잉크 심판(§7)에서 어긋난다(같은 임계 — LINE_MATCH_PX).
     const pa = project(an, poseB, a3)
     const pb = project(an, poseB, b3)
-    if (!pa || !pb || dist2(pa, b.a) > C.LINE_MATCH_PX || dist2(pb, b.b) > C.LINE_MATCH_PX) continue
+    if (!pa || !pb || dist2(pa, b.a) > C.LINE_MATCH_PX || dist2(pb, b.b) > C.LINE_MATCH_PX) { missed.roundtrip++; continue }
     out.push({ id: idB, own3: { a: a3, b: b3, axis } })
+    missed.ok++
   }
-  return out
+  return { defs: out, missed }
 }

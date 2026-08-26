@@ -69,8 +69,12 @@ const diagPanel = initDiagPanel(
       // 「잘못 찍힌 점」 문이 버린 수(web2-13 3-b) — 조용히 버리지 않는다: 수가 말한다.
       // 크면 C.STRAY_MIN_PX가 틀린 것이다(원장 stray_gate_web2.json이 근거 대역).
       ['버린 짧은 획', `${app.strayCount} (문 ${C.STRAY_MIN_PX}px)`],
-      // 지금 어느 3D 경로인가(web2-13 4-f) — 깃발이 눈에 보이는 자리
-      ['3D 경로', app.own3d ? `자립(실험 — 굳힘 ${app.doc.strokes.filter(s => s.own3).length}획)` : '사슬(정본)'],
+      // 지금 어느 3D 경로인가(web2-13 4-f) — 깃발이 눈에 보이는 자리.
+      // 교점 정의(4-g)의 성립·무산도 여기 센다([42] — 조용히 버리지 않는다. 무산은
+      // «끝이 대기선 위에서 끝났는데 안 선» 경우만: 시점 밖/방향 미정/리프팅/왕복 순).
+      ['3D 경로', app.own3d
+        ? `자립(실험 — 굳힘 ${app.doc.strokes.filter(s => s.own3).length}획 · 교점 성립 ${app.touchStats.ok} · 무산 ${app.touchStats.pose + app.touchStats.axis + app.touchStats.lift + app.touchStats.roundtrip}(시점 ${app.touchStats.pose}·방향 ${app.touchStats.axis}·리프팅 ${app.touchStats.lift}·왕복 ${app.touchStats.roundtrip})`
+        : '사슬(정본)'],
     ]
   })
 

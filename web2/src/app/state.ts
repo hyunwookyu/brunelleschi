@@ -6,9 +6,9 @@
 import { emptyDoc, type Doc, type Stroke, type Face, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
 import { isInk } from '../core/material'
 export type { ViewOffset }
-import { liftAll, type LiftResult } from '../core/lift'
-import { camSig, defineByTouch } from '../core/own3d'
-import { DRAW_POSE } from '../core/camera'
+import { liftAll, closestOnLineToRay, type LiftResult } from '../core/lift'
+import { camSig, defineByTouch, type TouchStats } from '../core/own3d'
+import { DRAW_POSE, rayThrough } from '../core/camera'
 import { defaultOsnap, type OsnapSettings } from '../core/osnap'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
 import { loopAt, faceAt, faceScreen, resolveFaces, type ResolvedFace } from '../core/face'
@@ -115,6 +115,9 @@ export interface App {
   own3d: boolean
   /** 승격 «사건»의 판정자(4-c) — 직전 recompute의 카메라 서명(own3d 켜짐에서만 유지) */
   lastCamSig: string | null
+  /** 교점 정의(4-g)의 성립·무산 계수 — «끝이 대기선 위에서 끝난» 후보만 센다.
+   *  조용히 버리지 않는다(3-b 규약의 4-g판 — 4차 리뷰어 [42]). 진단 패널이 보인다. */
+  touchStats: TouchStats
   cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
 }
@@ -149,6 +152,7 @@ export function createApp(W: number, H: number): App {
     strayCount: 0,
     own3d: false,
     lastCamSig: null,
+    touchStats: { ok: 0, pose: 0, axis: 0, lift: 0, roundtrip: 0 },
     cubeLayout: { cx: W - 110, cy: 60, size: 80 }, // 우측 상단 — 1.5배 세로바(x W−45..)와 안 겹치게 왼쪽으로(web2-10 지시 5)
     listeners: [],
   }
@@ -300,7 +304,13 @@ export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number,
   // 방금 확정된 획의 «뗀 끝»이 방향 있는 대기선 위에서 끝났으면 그 대기선이 정의된다
   // (own3 — 이후 근거가 지워져도 유지). 그리는 중의 교차는 사건이 아니다.
   if (app.own3d) {
-    const defs = defineByTouch(app.lift, s, app.osnap.radius / app.view.s)
+    const { defs, missed } = defineByTouch(app.lift, s, app.osnap.radius / app.view.s)
+    // 무산도 센다(3-b의 규약 — 조용히 버리지 않는다. 진단 패널 「3D 경로」 줄이 보인다)
+    app.touchStats.ok += missed.ok
+    app.touchStats.pose += missed.pose
+    app.touchStats.axis += missed.axis
+    app.touchStats.lift += missed.lift
+    app.touchStats.roundtrip += missed.roundtrip
     if (defs.length > 0) {
       for (const d of defs) {
         const t = app.lift.strokes.get(d.id)
@@ -392,6 +402,23 @@ export function eraseAt(app: App, p: Pt) {
       const s: Stroke = { id: app.nextId++, a: k.a, b: k.b }
       if (!isDrawPose(app.pose)) s.view = { p: { ...app.pose.p }, q: { ...app.pose.q } }
       if (target.mat) s.mat = { ...target.mat } // 조각도 같은 재료
+      // 자립(web2-13 4부 — 깃발 켜짐에서만): own3 획의 조각은 **어버이의 3D 직선을
+      // 승계한다**(4차 리뷰어 [46]) — 조각 끝점은 그 직선 위 점의 사영이므로 광선
+      // 리프팅이 정확한 좌표를 준다(잉크 심판 유지). 안 하면 사슬이 끊긴 굳힘을
+      // 지우개로 자르는 순간 조각이 대기로 추락한다([40]의 사촌).
+      if (app.own3d && target.own3) {
+        const d = sub3(target.own3.b, target.own3.a)
+        const L = len3(d)
+        if (L > 1e-12) {
+          const dir = mul3(d, 1 / L)
+          const pose = s.view ?? DRAW_POSE
+          const ra = rayThrough(app.lift.an, pose, k.a)
+          const rb = rayThrough(app.lift.an, pose, k.b)
+          const a3 = ra ? closestOnLineToRay(target.own3.a, dir, ra) : null
+          const b3 = rb ? closestOnLineToRay(target.own3.a, dir, rb) : null
+          if (a3 && b3) s.own3 = { a: a3, b: b3, axis: target.own3.axis }
+        }
+      }
       return s
     })
     app.doc.strokes.push(...newStrokes)
