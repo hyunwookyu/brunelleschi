@@ -1,0 +1,44 @@
+{
+ "what": "web2-14 3번 — 감쇠 동결(dpr1): 실제 중버튼 드래그 왕복 중 대기 획 상자 alphaSum 표본과 변화 횟수. e2e waitfade.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용(#47).",
+ "def": "변화 = 이웃 표본 차 > 기준 × FREEZE.DEADBAND. 왕복 복귀는 정확 재추적이 아니라 +6px 어긋난 경로(#68 — 이상적 손 금지). 분모 = 기준값(ink는 alphaSum·brush는 칠 픽셀 수 — ⚠ brush 겹은 설계상 이진이다: 질감은 정확히 자기 시점에서만 얹혀(atOwnPose — waitfade.ts) 중간 감쇠가 없으므로 픽셀 수가 소멸/존재를 다 잰다, 3차 [F]). 표본 12개 동일값은 이 팔의 통과 조건 그 자체다(동결 = 무변화 — 한 값 분포가 정보다, 3차 [D]). ⚠ 수리 전(beginNavHold 제거) 실행의 changes 수치는 원장에 못 실었다(그 판은 fadePose 단언에서 먼저 죽는다) — 그 실행의 실패 사실만 남는다(3차 [E] — DEFERRED).",
+ "thresholds": {
+  "DEADBAND": 0.02,
+  "HOLD_FLOOR": 0.9
+ },
+ "falsification": "beginNavHold 배선 제거 실행에서 이 팔이 실패했다(드래그 중 fadePose null + 표본 감쇠 — 수리 커밋 전 실행 기록은 NOTES 3번 절). 단위 navhold.test의 «동결 없이 >5회»는 판정 함수 재구성이고, 앱 경로 실측은 이 falsification 실행이다.",
+ "samples": {
+  "ink_alpha": [
+   15064,
+   15064,
+   15064,
+   15064,
+   15064,
+   15064,
+   15064,
+   15064,
+   15064,
+   15064,
+   15064,
+   15064
+  ],
+  "brush_px": [
+   326,
+   326,
+   326,
+   326,
+   326,
+   326,
+   326,
+   326,
+   326,
+   326,
+   326,
+   326
+  ],
+  "base_ink_alpha": 15064,
+  "base_brush_px": 326,
+  "changes_ink": 0,
+  "changes_brush": 0,
+  "far_deg": 68.75493541569871
+ }
+}

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  createApp, commitStroke, undo, redo,
+  createApp, commitStroke, undo, redo, setOwn3d,
   beginErase, eraseAt, endErase, type App,
 } from '../src/app/state'
 import { pieces } from '../src/core/pieces'
@@ -64,8 +64,11 @@ describe('지우개 — 닿은 조각이 사라진다', () => {
     expect(app.lift.lifted.size).toBe(5) // A, E 남은 조각, V2 + 깊이선 둘
   })
 
-  it('매달린 것들의 처리 — 3D 결정을 잃은 획은 대기로 내려간다. 사라지지 않는다', () => {
+  it('매달린 것들의 처리(사슬 — 대체 경로) — 3D 결정을 잃은 획은 대기로 내려간다. 사라지지 않는다', () => {
+    // ⚠ web2-14 1번: 기본이 자립(켜짐)이 됐다 — 이 팔은 **사슬 의미론**을 재므로 명시로
+    // 끈다. 켜짐(정본)의 반대 동작(매달려도 유지)은 아래 팔과 own3d.test 4-d가 잰다.
     const app = appWithConstruction()
+    setOwn3d(app, false)
     const A = commitStroke(app, pt(500, 500), pt(500, 300))
     const B2 = commitStroke(app, pt(500, 300), pt(700, 350)) // A 꼭대기에서 vp0 축
     expect(app.lift.lifted.size).toBe(4) // +2: 깊이선 둘도 3D 선이다(지시 1)
@@ -75,6 +78,16 @@ describe('지우개 — 닿은 조각이 사라진다', () => {
     expect(app.lift.lifted.has(B2.id)).toBe(false)
     expect(app.lift.waiting).toContain(B2.id)       // 대기 — 실패가 아니라 상태
     expect(app.doc.strokes.some(s => s.id === B2.id)).toBe(true) // 불변식 j
+  })
+
+  it('매달린 것들의 처리(자립 — 기본·정본) — 굳은 획은 근거를 지워도 3D를 유지한다', () => {
+    const app = appWithConstruction()          // 기본 = 자립 켜짐(web2-14 1번)
+    const A = commitStroke(app, pt(500, 500), pt(500, 300))
+    const B2 = commitStroke(app, pt(500, 300), pt(700, 350))
+    expect(app.doc.strokes.find(s => s.id === B2.id)!.own3).toBeDefined() // 닫힌 카메라 — 굳었다
+    eraseOnce(app, pt(500, 400))
+    expect(app.doc.strokes.some(s => s.id === A.id)).toBe(false)
+    expect(app.lift.lifted.has(B2.id)).toBe(true)   // 정의는 사건이다 — 근거는 수단이지 조건이 아니다
   })
 
   it('대기 획은 통째로 지워진다', () => {

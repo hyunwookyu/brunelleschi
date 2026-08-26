@@ -5,7 +5,7 @@
 import type { App } from './state'
 import {
   orbitPivot, orbitBy, dollyBy, panBy, setPose, beginErase, eraseAt, endErase,
-  screenToDoc, isEraser, toggleFaceAt, facePreview,
+  screenToDoc, isEraser, toggleFaceAt, facePreview, beginNavHold, endNavHold,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
 import { isLevel, pitchSnaps } from '../core/level'
@@ -221,12 +221,14 @@ export function initInput(
       lastTouchMid = null
       lastTouchDist = 0
       level.grab()
+      beginNavHold(app)   // 제스처 동안 감쇠 판정 동결(web2-14 3번)
       return
     }
     if (e.pointerType === 'pen') penDown = true
     if (e.pointerType === 'mouse' && e.button !== 0) {
       orbitBtn = { last: toScreen(e), mode: e.button === 1 ? 'orbit' : 'pan' }
       level.grab()
+      beginNavHold(app)   // 제스처 동안 감쇠 판정 동결(web2-14 3번)
       canvas.setPointerCapture(e.pointerId)
       e.preventDefault()
       return
@@ -323,12 +325,12 @@ export function initInput(
       touches.delete(e.pointerId)
       lastTouchMid = null
       lastTouchDist = 0
-      if (touches.size === 0) level.release(); else level.grab()
+      if (touches.size === 0) { level.release(); endNavHold(app) } else level.grab()
       return
     }
     if (e.pointerType === 'pen') penDown = false
     if (orbitBtn && e.pointerType === 'mouse' && e.button !== 0) {
-      orbitBtn = null; level.release(); return
+      orbitBtn = null; level.release(); endNavHold(app); return
     }
     if (drawingPointer === e.pointerId) {
       drawingPointer = null

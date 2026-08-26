@@ -904,7 +904,11 @@ def scan_pitfall_citations(root: Path, reports: dict[str, dict]) -> list[dict]:
     # #19(검사 약화)와 같은 방향이다." 실제 원인은 18차가 #56·#57을 `## #56 — …` 절로
     # 등재해 **번호 목록의 형식을 벗어난 것**이었고, 고친 자리는 `PITFALLS.md`다.
     # → **새 항목은 `N. **제목.**` 줄을 반드시 갖는다.** 그 줄이 이 검사의 등록부다.
-    known = {int(m) for m in re.findall(r"^(\d+)\. \*\*", pit, re.M)}
+    # ⚠ web2 라인부터 항목 형식이 `### #NN. **제목**`으로 바뀌었다(#63~#68) — 등록부가
+    # 옛 형식만 읽어 #68 인용(wait_freeze 원장)이 «없는 번호»로 오검됐다(2026-08-27
+    # web2-14 마감에서 발견). 두 형식을 다 읽는다 — 검사 강화이지 약화가 아니다(#19).
+    known = {int(m) for m in re.findall(r"^(\d+)\. \*\*", pit, re.M)} | \
+        {int(m) for m in re.findall(r"^### #(\d+)\.", pit, re.M)}
     pat = re.compile(r"#(\d+)")
     cited: dict[str, list[int]] = {}
     flags: list[dict] = []

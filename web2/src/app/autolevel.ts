@@ -12,7 +12,7 @@
 //
 // 시계를 주입받는다 — 시험이 가짜 시각으로 「계속 조작하는 동안 안 접힌다」를 잰다.
 
-import { type App, setPose, orbitPivot } from './state'
+import { type App, setPose, orbitPivot, beginNavHold, endNavHold } from './state'
 import { isLevel, foldTarget, lerpPose } from '../core/level'
 import type { CamPose } from '../core/types'
 import { C } from '../core/constants'
@@ -77,6 +77,10 @@ export function createAutoLevel(
       to,
       t0: now(),
     }
+    // 접기 애니(300ms)도 **연속 회전**이다 — 감쇠 판정을 동결한다(web2-14 3번 2차 [4/6]:
+    // 뷰 큐브는 즉시 점프지만 접기는 AS-C12대로 여러 프레임이라, 안 동결하면 놓고 1.2s 뒤
+    // 300ms 동안 감쇠가 다시 프레임마다 반응한다). 끝나는 곳(step의 u>=1)에서 푼다.
+    beginNavHold(app)
     return true
   }
 
@@ -88,6 +92,7 @@ export function createAutoLevel(
       const to = anim.to
       anim = null
       setPose(app, to)              // **정확히** 목표로 앉힌다 — 보간 끝값을 안 쓴다
+      endNavHold(app)               // 애니 끝 — 동결 해제·재판정 한 번(web2-14 3번)
     } else {
       setPose(app, lerpPose(anim.from, anim.to, ease(Math.max(0, u))))
     }

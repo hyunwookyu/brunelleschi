@@ -1,11 +1,12 @@
-// web2-13 4부 — 자립 구조(깃발 뒤·기본 꺼짐)의 팔.
+// web2-13 4부 — 자립 구조의 팔. ⚠ **web2-14 1번에서 기본이 켜짐으로 뒤집혔다** —
+// 이제 «켜짐»이 정본이고(이 파일 밖 전량이 그 상태로 돈다) «꺼짐»은 대체 경로다.
+// 꺼짐 팔들은 전부 **명시적으로 끈다**(setOwn3d(app, false)) — 기본에 기대지 않는다.
 //
 // 순서(지시 4부): 4-a 검증 불변식(잉크 심판)이 **먼저** 선다 — 판정할 자가 없으면
 // 만든 것이 맞는지 모른다. 그다음 4-b(소유·하위호환) · 4-c(승격 사건) · 4-d(원 증상).
 //
-// 4부 불변식: **깃발 꺼짐의 동작은 4부 전후로 동일하다** — 기존 단위·e2e 전량이
-// 깃발 꺼짐에서 그대로 돌고(이 파일 밖 전부가 그 증거다), 이 파일의 «꺼짐» 팔들이
-// 꺼진 경로가 아무것도 안 하는 것을 직접 잰다.
+// (web2-13의) 4부 불변식 「깃발 꺼짐의 동작은 4부 전후로 동일」은 이제 **대체 경로의
+// 생존 보증**으로 읽는다(A-4) — 꺼짐 팔들이 꺼진 경로가 아무것도 안 하는 것을 직접 잰다.
 //
 // 반증(D-3) — 이 파일이 실행하는 것:
 //   4-a: own3를 일부러 어긋내면(+0.1) 불변식이 실패한다.
@@ -13,7 +14,8 @@
 
 import { describe, it, expect } from 'vitest'
 import { session } from './session'
-import { setOwn3d, loadDoc } from '../src/app/state'
+import { setOwn3d, loadDoc, setDimension } from '../src/app/state'
+import { len3, sub3 } from '../src/core/vec'
 import { own3Deviation, OWN3_TOL_PX, camSig } from '../src/core/own3d'
 import { serializeBrnl, parseBrnl } from '../src/core/file'
 import type { Analysis } from '../src/core/camera'
@@ -23,7 +25,7 @@ import type { Analysis } from '../src/core/camera'
  *  창문 넷(가이드에서 출발하는 사슬 — 가이드가 없으면 어디에도 안 닿는다). */
 function wallAndWindow(own3d: boolean) {
   const s = session(1200, 800)
-  if (own3d) setOwn3d(s.app, true)
+  setOwn3d(s.app, own3d)                  // 기본이 켜짐이 됐으므로 꺼짐도 **명시**한다(web2-14)
   s.draw(100, 400, 1100, 400)             // 지평선
   s.draw(500, 500, 600, 475)              // 깊이선 → vp0 = 900
   s.draw(500, 500, 400, 475)              // 깊이선 → vp1 = 100 (two-vp — 카메라 닫힘)
@@ -233,8 +235,9 @@ describe('4-g — 교점으로 정의하기: 나중에 온 선이 먼저 있던 
     expect(s.app.lift.waiting).toContain(B4.id)
   })
 
-  it('깃발 꺼짐: 같은 몸짓이 아무것도 정의하지 않는다 — 옛 사슬 그대로 (4부 불변식)', () => {
+  it('깃발 꺼짐(대체 경로): 같은 몸짓이 아무것도 정의하지 않는다 — 옛 사슬 그대로', () => {
     const s = session(1200, 800)
+    setOwn3d(s.app, false)
     s.draw(100, 400, 1100, 400)
     s.draw(500, 500, 600, 475)
     s.draw(500, 500, 400, 475)
@@ -380,7 +383,7 @@ describe('4차 [45] — 원장: 국면별 최대 어긋남 (stage0/out/own3d_inv
     const ledger = {
       what: '잉크 심판(4-a)의 국면별 실측 최대 어긋남 px — 통과/실패 이진이 아니라 여유가 원장에 남는다(4차 리뷰어 [45])',
       tol_px: OWN3_TOL_PX,
-      tol_nature: '수치 동일성(스윕 대상 아님 — 근거는 own3d.ts 주석·AS-C47). 알려진 예외: dim 획의 b 끝(치수가 길이를 대체)',
+      tol_nature: '수치 동일성(스윕 대상 아님 — 근거는 own3d.ts 주석·AS-C47). 알려진 예외 둘: ① dim 획의 b 끝(치수가 길이를 대체) ② 축 허용각 안 어긋 잉크의 사슬 굳힘(AS-C47 둘째 예외 — 이 원장의 국면들은 앱 경로(정확값)만 덮는다). ⚠ 네 국면 최댓값 동일은 최악 획이 같은 기하라서다(web2-13 검증 절 원인 확인 — 국면 축의 판별력은 반증 팔(+0.1)이 진다)',
       phases: { fresh, roundtrip, deleted, promoted },
       margin: Object.fromEntries(Object.entries({ fresh, roundtrip, deleted, promoted })
         .map(([k, v]) => [k, v.max_px > 0 ? OWN3_TOL_PX / v.max_px : null])),
@@ -389,5 +392,32 @@ describe('4차 [45] — 원장: 국면별 최대 어긋남 (stage0/out/own3d_inv
     const outDir = resolve(__dirname, '../../stage0/out')
     mkdirSync(outDir, { recursive: true })
     writeFileSync(resolve(outDir, 'own3d_invariant_web2.json'), JSON.stringify(ledger, null, 2))
+  })
+})
+
+describe('web2-14 1번 2차 [15] — 치수 대체와 «own3는 안 덮는다»의 공존', () => {
+  it('굳은 획에 나중 치수: own3 필드는 불변 · 길이는 매 리프팅 파생 · .brnl 왕복에도 유지', () => {
+    const s = session(1200, 800)
+    setOwn3d(s.app, true)
+    s.draw(100, 400, 1100, 400)
+    s.draw(500, 500, 600, 475)               // vp0
+    s.draw(500, 500, 400, 475)               // vp1 — 닫힘 → 굳음
+    const E = s.draw(500, 500, 660, 460)!    // 지면 깊이선 — 이 획에 치수를 단다
+    const st = s.app.doc.strokes.find(x => x.id === E.id)!
+    expect(st.own3).toBeDefined()
+    const own3Before = JSON.stringify(st.own3)
+    expect(setDimension(s.app, E.id, 2500)).toBe('scale')
+    // own3 필드는 그대로다(첫 사건이 이긴다) — 길이는 리프팅이 매번 dim으로 파생한다(원칙 b)
+    expect(JSON.stringify(s.app.doc.strokes.find(x => x.id === E.id)!.own3)).toBe(own3Before)
+    const g1 = s.app.lift.lifted.get(E.id)!
+    const mm1 = len3(sub3(g1.b3, g1.a3)) * s.app.lift.mmPerUnit!
+    expect(Math.abs(mm1 - 2500)).toBeLessThan(1e-6)
+    // .brnl 왕복 — own3(원값)와 dim이 각각 저장되고, 다시 열어도 길이가 dim이다
+    const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: s.app.savedViews })
+    loadDoc(s.app, parseBrnl(json)!)
+    const g2 = s.app.lift.lifted.get(E.id)!
+    const mm2 = len3(sub3(g2.b3, g2.a3)) * s.app.lift.mmPerUnit!
+    expect(Math.abs(mm2 - 2500)).toBeLessThan(1e-6)
+    expect(JSON.stringify(s.app.doc.strokes.find(x => x.id === E.id)!.own3)).toBe(own3Before)
   })
 })

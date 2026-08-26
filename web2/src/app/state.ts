@@ -77,6 +77,13 @@ export interface App {
   activeErase: Op | null
   /** 화면 조작(뷰 오프셋) — 그리는 중의 팬·줌. 문서 좌표는 안 바뀐다. */
   view: ViewOffset
+  /** 조작 제스처(궤도·팬) 동안 대기 획 감쇠 판정을 **동결**하는 포즈(web2-14 3번) —
+   *  null이면 실시간(app.pose). 잡는 순간 굳고 놓으면 풀린다: 돌리는 동안 대기 획의
+   *  표시 상태가 아무것도 안 바뀐다(실기기 판정 「돌릴 때 깜빡여 성가시다」의 수리).
+   *  ⚠ 표시 계층(render2d·brushlayer의 감쇠·질감 판정)만 읽는다 — 교점 사건(4-g)의
+   *  atOwnPose는 획끼리의 포즈 비교라 이것과 무관하다. 감쇠 자체는 그대로다(1-e —
+   *  떨림만 없앤다). 읽기는 fadeRef() 하나다(#54). */
+  fadePose: CamPose | null
   /** 저장된 시점 */
   savedViews: { pose: CamPose; view: ViewOffset; thumb?: string }[]
   /** 치수 스냅(web2-08 지시 4-7) — **기본 꺼짐**(옵션). 켜면 그리는 동안 실제 길이가
@@ -107,17 +114,21 @@ export interface App {
    *  조용히 버리는 것은 이 저장소가 가장 경계하는 형태라 **수가 말하게 한다** —
    *  크면 `C.STRAY_MIN_PX`가 틀린 것이다. */
   strayCount: number
-  /** **자립 깃발**(web2-13 4부 · 개정 3 초안) — 기본 **꺼짐**. 켜면: 카메라가 닫힌 뒤
-   *  사슬이 놓은 3D를 획이 소유하고(Stroke.own3 — 사건·영구), 승격 사건이 나면 버리고
-   *  다시 올려 다시 굳힌다(2부 측정이 정한 갈래). 꺼져 있으면 **아무것도 안 한다** —
-   *  옛 사슬이 정본(4부 불변식). ⚠⚠ **기본값은 사람만 켠다**(4-f — 설정 「실험」 절·
-   *  localStorage). 세션·팔이 전부 통과해도 세션은 안 켠다. */
+  /** **자립 깃발**(web2-13 4부 · 개정 3 초안) — **기본 켜짐**(2026-08-27 web2-14 —
+   *  사람이 실기기 판정으로 켰다: 「창문은 남는다. 옵션이 아니라 기본값으로」).
+   *  켜짐: 카메라가 닫힌 뒤 사슬이 놓은 3D를 획이 소유하고(Stroke.own3 — 사건·영구),
+   *  승격 사건이 나면 버리고 다시 올려 다시 굳힌다(2부 측정이 정한 갈래).
+   *  끄면(설정 — A-4 옛 경로 유지) 옛 사슬만 도는 종전 동작 그대로다. 이제 **켜짐이
+   *  정본이고 꺼짐이 대체 경로**다 — e2e 팔 구성도 그렇게 갈려 있다(NOTES web2-14 1번 표). */
   own3d: boolean
   /** 승격 «사건»의 판정자(4-c) — 직전 recompute의 카메라 서명(own3d 켜짐에서만 유지) */
   lastCamSig: string | null
   /** 교점 정의(4-g)의 성립·무산 계수 — «끝이 대기선 위에서 끝난» 후보만 센다.
    *  조용히 버리지 않는다(3-b 규약의 4-g판 — 4차 리뷰어 [42]). 진단 패널이 보인다. */
   touchStats: TouchStats
+  /** 마지막 확정 획의 교점 단계 트레이스(web2-14 2번 — 지시의 ①~④를 화면에서 가른다):
+   *  ① A가 3D인가(lifted) ② 닿은 대기선 수(touched) ③④ 성립/무산. 진단 패널이 읽는다. */
+  touchLast: { lifted: boolean; touched: number; ok: number } | null
   cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
 }
@@ -140,6 +151,7 @@ export function createApp(W: number, H: number): App {
     eraserRadius: C.ERASER_PX,
     activeErase: null,
     view: { s: 1, ox: 0, oy: 0 },
+    fadePose: null,
     savedViews: [],
     dimSnap: false,
     dimSnapStep: 50,
@@ -150,9 +162,10 @@ export function createApp(W: number, H: number): App {
     grid: false,
     waitFade: true,
     strayCount: 0,
-    own3d: false,
+    own3d: true,   // 기본 켜짐(web2-14 1번 — 사람 판정). 끄는 길은 설정 + localStorage 'off'.
     lastCamSig: null,
     touchStats: { ok: 0, pose: 0, axis: 0, lift: 0, roundtrip: 0 },
+    touchLast: null,
     cubeLayout: { cx: W - 110, cy: 60, size: 80 }, // 우측 상단 — 1.5배 세로바(x W−45..)와 안 겹치게 왼쪽으로(web2-10 지시 5)
     listeners: [],
   }
@@ -311,6 +324,13 @@ export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number,
     app.touchStats.axis += missed.axis
     app.touchStats.lift += missed.lift
     app.touchStats.roundtrip += missed.roundtrip
+    // 마지막 획의 단계 트레이스(web2-14 2번) — 「왜 아무 일도 안 났나」를 결과가 아니라
+    // 단계로 읽게 한다: A 미승격(①)이면 닿음 판정 자체가 없었던 것이다.
+    app.touchLast = {
+      lifted: app.lift.lifted.has(s.id),
+      touched: missed.ok + missed.pose + missed.axis + missed.lift + missed.roundtrip,
+      ok: missed.ok,
+    }
     if (defs.length > 0) {
       for (const d of defs) {
         const t = app.lift.strokes.get(d.id)
@@ -515,6 +535,20 @@ export function gotoView(app: App, i: number) {
   app.view = { ...v.view }
   setPose(app, { p: { ...v.pose.p }, q: { ...v.pose.q } })
 }
+
+/** 조작 제스처 시작 — 감쇠 판정 동결(web2-14 3번: 돌리는 동안 아무 일도 안 일어난다).
+ *  이미 동결 중이면(연속 제스처) 처음 값을 지킨다 — 매 프레임 갱신하면 동결이 아니다. */
+export function beginNavHold(app: App) {
+  if (!app.fadePose) app.fadePose = app.pose
+}
+/** 조작 제스처 끝 — 동결 해제·재판정 한 번. 왕복 제스처면 표시 변화 0~1회가 된다. */
+export function endNavHold(app: App) {
+  if (!app.fadePose) return
+  app.fadePose = null
+  for (const l of app.listeners) l()
+}
+/** 감쇠·질감의 «자기 시점» 판정이 읽는 포즈 — 제스처 중에는 동결값(단일 출처 #54) */
+export const fadeRef = (app: Pick<App, 'fadePose' | 'pose'>): CamPose => app.fadePose ?? app.pose
 
 /** 궤도 한 픽셀이 도는 각(rad) — 데스크톱·터치가 같은 값을 쓴다 */
 export const ORBIT_RAD_PER_PX = 0.005

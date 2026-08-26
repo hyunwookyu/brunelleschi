@@ -28,7 +28,7 @@
 
 import * as brush from 'p5.brush/standalone'
 import type { App } from './state'
-import { docToScreen, isDrawPose, activeGrade, draftBrushed } from './state'
+import { docToScreen, isDrawPose, activeGrade, draftBrushed, fadeRef } from './state'
 import { atOwnPose } from '../core/waitfade'
 import { project } from '../core/camera'
 import { gradeOf, rng32 } from '../core/material'
@@ -108,6 +108,13 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     if (snap.width !== canvas.width || snap.height !== canvas.height) {
       snap.width = canvas.width; snap.height = canvas.height
     }
+    // ⚠ CSS 크기를 **명시**한다(web2-14 4번). canvas는 대체 요소라 `inset:0`이 못 늘린다 —
+    // style이 없으면 고유 크기(backing = W·dpr)로 표시돼, dpr>1에서 이 겹만 dpr배로 깔렸다.
+    // 그리는 동안 확정 획 질감이 좌상단 기준 dpr배 자리에 «같은 장면»으로 또 보인 실기기
+    // 증상이 그것이다(dpr1은 고유 크기 == 뷰포트라 무증상 — e2e snapghost.spec이 dpr2로 잰다).
+    const w = `${cw}px`, h = `${ch}px`
+    if (snap.style.width !== w) snap.style.width = w
+    if (snap.style.height !== h) snap.style.height = h
   }
   // 내장 브러시는 큰 캔버스 기준이라 그대로는 크다/작다 — 1을 기준으로 두고 실측으로 판단
   // (brush_perf_web2의 폭 실측 행이 배수·픽셀 폭을 남긴다. 눈 판정은 실기기 몫).
@@ -155,13 +162,13 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
 
   // 캐시 키 — 이 값들이 전부 같으면 다시 안 그린다. 그리는 중(draft·호버)에는 어느 것도
   // 안 바뀌므로 **획을 긋는 동안 이 겹의 비용은 0**이다(위 머리주석).
-  let last: { renderer: string; docVersion: number; pose: unknown; s: number; ox: number; oy: number; w: number; waitFade: boolean } | null = null
+  let last: { renderer: string; docVersion: number; pose: unknown; hold: unknown; s: number; ox: number; oy: number; w: number; waitFade: boolean } | null = null
   const dirty = (app: App): boolean =>
     !last || last.renderer !== app.renderer || last.docVersion !== app.docVersion ||
-    last.pose !== app.pose || last.s !== app.view.s || last.ox !== app.view.ox ||
-    last.oy !== app.view.oy || last.w !== cw || last.waitFade !== app.waitFade
+    last.pose !== app.pose || last.hold !== app.fadePose || last.s !== app.view.s ||
+    last.ox !== app.view.ox || last.oy !== app.view.oy || last.w !== cw || last.waitFade !== app.waitFade
   const remember = (app: App) => {
-    last = { renderer: app.renderer, docVersion: app.docVersion, pose: app.pose,
+    last = { renderer: app.renderer, docVersion: app.docVersion, pose: app.pose, hold: app.fadePose,
       s: app.view.s, ox: app.view.ox, oy: app.view.oy, w: cw, waitFade: app.waitFade }
   }
 
@@ -196,8 +203,8 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
           // 대기 획 — 자기 포즈에서만(grain과 같은 규칙). 좌표는 문서 → 화면.
           // web2-13 3-a: 감쇠 켜짐이면 «자기 포즈»가 각도 0(atOwnPose)이다 —
           // s.view 획이 다른 궤도 포즈에서도 own으로 읽히던 헐거움이 함께 닫힌다.
-          // 끄면 종전 식 그대로(A-4).
-          const own = app.waitFade ? atOwnPose(app.pose, s.view) : (s.view ? !atDraw : atDraw)
+          // 끄면 종전 식 그대로(A-4). 판정 포즈는 fadeRef(web2-14 3번 — 제스처 중 동결).
+          const own = app.waitFade ? atOwnPose(fadeRef(app), s.view) : (s.view ? !atDraw : atDraw)
           if (!own) continue
           drawStroke(app, s, docToScreen(app, s.a), docToScreen(app, s.b))
         } else {

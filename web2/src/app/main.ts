@@ -69,12 +69,21 @@ const diagPanel = initDiagPanel(
       // 「잘못 찍힌 점」 문이 버린 수(web2-13 3-b) — 조용히 버리지 않는다: 수가 말한다.
       // 크면 C.STRAY_MIN_PX가 틀린 것이다(원장 stray_gate_web2.json이 근거 대역).
       ['버린 짧은 획', `${app.strayCount} (문 ${C.STRAY_MIN_PX}px)`],
-      // 지금 어느 3D 경로인가(web2-13 4-f) — 깃발이 눈에 보이는 자리.
-      // 교점 정의(4-g)의 성립·무산도 여기 센다([42] — 조용히 버리지 않는다. 무산은
-      // «끝이 대기선 위에서 끝났는데 안 선» 경우만: 시점 밖/방향 미정/리프팅/왕복 순).
+      // 지금 어느 3D 경로인가(web2-13 4-f · web2-14 1번에서 정본이 뒤집혔다) —
+      // 깃발이 눈에 보이는 자리. 교점 정의(4-g)의 성립·무산도 여기 센다([42] —
+      // 조용히 버리지 않는다. 무산은 «끝이 대기선 위에서 끝났는데 안 선» 경우만:
+      // 시점 밖/방향 미정/리프팅/왕복 순).
       ['3D 경로', app.own3d
-        ? `자립(실험 — 굳힘 ${app.doc.strokes.filter(s => s.own3).length}획 · 교점 성립 ${app.touchStats.ok} · 무산 ${app.touchStats.pose + app.touchStats.axis + app.touchStats.lift + app.touchStats.roundtrip}(시점 ${app.touchStats.pose}·방향 ${app.touchStats.axis}·리프팅 ${app.touchStats.lift}·왕복 ${app.touchStats.roundtrip})`
-        : '사슬(정본)'],
+        ? `자립(정본 — 굳힘 ${app.doc.strokes.filter(s => s.own3).length}획 · 교점 성립 ${app.touchStats.ok} · 무산 ${app.touchStats.pose + app.touchStats.axis + app.touchStats.lift + app.touchStats.roundtrip}(시점 ${app.touchStats.pose}·방향 ${app.touchStats.axis}·리프팅 ${app.touchStats.lift}·왕복 ${app.touchStats.roundtrip})`
+        : '사슬(대체 — 설정에서 껐다)'],
+      // 마지막 획의 교점 단계(web2-14 2번 — 지시 ①~④): 실기기에서 «왜 안 붙었나»를
+      // 단계로 읽는 자리. ① 미승격이면 닿음 판정 자체가 안 돈 것이다.
+      ...(app.own3d && app.touchLast ? [[
+        '교점(마지막 획)',
+        app.touchLast.lifted
+          ? `① 3D ✓ · ② 닿음 ${app.touchLast.touched} · ③④ 성립 ${app.touchLast.ok}`
+          : '① 그 획이 대기다 — 시작점 오스냅·축 스냅부터 본다',
+      ] as [string, string]] : []),
     ]
   })
 
@@ -98,6 +107,13 @@ if (location.search.includes('reset')) {
   navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
     .catch(() => { /* 오프라인 강화일 뿐 — 실패해도 동작 */ })
 }
+
+// 자립 깃발(web2-13 4부 → **web2-14 1번: 기본 켜짐** — 사람이 실기기 판정으로 켰다).
+// ⚠ 복원(loadDoc)보다 **먼저** 읽는다: 꺼 둔 사람의 문서에 복원 경로의 recompute가
+// 굳힘(Stroke.own3)을 써 버리면 「꺼짐 = 아무것도 안 한다」가 깨진다. setOwn3d가 아니라
+// 직접 대입이다 — 아직 recompute가 돈 적 없는 빈 상태라 둘이 같고, 여기가 더 이르다.
+const OWN3D_KEY = 'b2-own3d'
+try { if (localStorage.getItem(OWN3D_KEY) === 'off') app.own3d = false } catch { /* 기본값(켜짐) */ }
 
 // 자동 저장 복원 — 문서 프레임이 창과 다르면 화면 배율로 맞춘다(문서 좌표 불변)
 const AUTOSAVE_KEY = 'b2-autosave'
@@ -517,11 +533,9 @@ horizonBox.addEventListener('change', () => { app.horizon = horizonBox.checked; 
 const waitFadeBox = document.getElementById('chk-waitfade') as HTMLInputElement
 waitFadeBox.checked = app.waitFade
 waitFadeBox.addEventListener('change', () => { app.waitFade = waitFadeBox.checked; invalidate() })
-// 자립 깃발(web2-13 4부) — **기본 꺼짐. 켜는 것은 사람이다(4-f — 세션은 안 켠다).**
-// localStorage로 남는다(renderer 선례) — 사람이 실기기에서 켜고 재방문해도 유지.
-const OWN3D_KEY = 'b2-own3d'
+// 자립 깃발 체크박스 — 값 읽기는 위(복원 전)에서 끝났다. 여기는 배선만.
+// 끄면 localStorage 'off'로 남는다(A-4 — 옛 사슬 경로 유지·재방문에도 유지).
 const own3dBox = document.getElementById('chk-own3d') as HTMLInputElement
-try { if (localStorage.getItem(OWN3D_KEY) === 'on') setOwn3d(app, true) } catch { /* 세션 한정 */ }
 own3dBox.checked = app.own3d
 own3dBox.addEventListener('change', () => {
   setOwn3d(app, own3dBox.checked)

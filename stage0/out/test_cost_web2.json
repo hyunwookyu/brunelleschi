@@ -1,18 +1,18 @@
 {
  "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
- "measured_at": "web2-12 3부 최종(2026-08-26 — 배포 ③ 직전 측정)",
+ "measured_at": "web2-14 마감(2026-08-27 — 배포 직전 측정)",
  "unit": {
   "command": "npm test (vitest)",
-  "files": 37,
-  "tests": 373,
-  "wall_s": 3.04,
-  "note": "vitest 자체 Duration. 프로세스 벽시계는 ~5s(부팅 포함)"
+  "files": 43,
+  "tests": 416,
+  "wall_s": 3.6,
+  "note": "vitest 자체 Duration. 프로세스 벽시계는 ~9s(부팅 포함)"
  },
  "e2e": {
   "command": "npm run e2e (playwright, dpr1+dpr2)",
-  "cases": 146,
-  "wall_s": 198,
-  "note": "케이스 = 73팔 × 2 dpr(web2-12 3부 +12: drafting 6·level 지평선 확장은 팔 수 불변. 팔=스펙 test 하나·케이스=팔×dpr)."
+  "cases": 164,
+  "wall_s": 258,
+  "note": "케이스 = 82팔 × 2 dpr(web2-14 +4팔: snapghost 2·waitfade 동결 1·own3d 가시성 1, own3d 이행 +1·구 팔 재구성 — 팔=스펙 test 하나·케이스=팔×dpr)."
  },
  "typecheck_build": {
   "command": "tsc --noEmit · vite build",
@@ -77,6 +77,17 @@
    "unit": 373,
    "e2e": 146,
    "e2e_wall_s": 198
+  },
+  {
+   "at": "web2-13 4부",
+   "unit": 403,
+   "e2e": 156
+  },
+  {
+   "at": "web2-14 마감",
+   "unit": 416,
+   "e2e": 164,
+   "e2e_wall_s": 258
   }
  ],
  "environment": {

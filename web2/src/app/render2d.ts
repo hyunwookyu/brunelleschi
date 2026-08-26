@@ -5,7 +5,7 @@
 // 선 굵기·표식 크기는 화면 고정(배율로 나눈다).
 
 import type { App } from './state'
-import { isDrawPose, isEraser, activeGrade, draftBrushed } from './state'
+import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef } from './state'
 import { vpMarks, project, projectSeg, groundAxes, horizonScreenY } from '../core/camera'
 import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
@@ -242,8 +242,10 @@ export function draw2d(
   for (const id of app.lift.waiting) {
     const s = app.lift.strokes.get(id)
     if (!s) continue
-    const own = app.waitFade ? atOwnPose(app.pose, s.view) : (s.view ? !atDraw : atDraw)
-    const factor = app.waitFade ? waitFadeFactor(app.pose, s.view) : (own ? 1 : 0.3)
+    // 감쇠 판정 포즈는 fadeRef다(web2-14 3번) — 제스처(궤도·팬) 중에는 동결값이라
+    // 돌리는 동안 표시가 안 변한다. 옛 동작(끔)은 종전 식 그대로(A-4 — app.pose·atDraw).
+    const own = app.waitFade ? atOwnPose(fadeRef(app), s.view) : (s.view ? !atDraw : atDraw)
+    const factor = app.waitFade ? waitFadeFactor(fadeRef(app), s.view) : (own ? 1 : 0.3)
     if (factor <= 0) continue
     const m = MAT[gradeOf(s)]
     ctx.strokeStyle = m.color
