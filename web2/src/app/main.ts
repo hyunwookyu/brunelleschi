@@ -1,6 +1,6 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, saveView, deleteView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, type Tool } from './state'
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
@@ -8,9 +8,10 @@ import { resize2d, draw2d, type Draft } from './render2d'
 import { initR3D, syncStrokes, render3d, resize3d, setDraftLine } from './render3d'
 import { serializeBrnl, parseBrnl } from '../core/file'
 import { toOBJ, toMTL, toGLTF } from '../core/export'
-import { initNotice, notify, status, ask, clearNotice } from './notice'
+import { initNotice, notify, status, ask, clearNotice, confirmNear } from './notice'
 import { OSNAP_ORDER, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT, widthOfMat } from '../core/material'
+import type { Grade } from '../core/types'
 import { parseDim, formatMm, lenMm, UNITS, type Unit } from '../core/dim'
 import { initDimPanel } from './dimpanel'
 import { createVoice } from './voice'
@@ -299,12 +300,69 @@ exactBox.addEventListener('change', () => {
   if (dimTarget !== null) dimPanel.show(liveLenOf(dimTarget))
 })
 
-// ── 도구 넷 — 연필 · 펜 · 지우개 둘 (4-h) ────────────────────────────────
-// **선택은 색이 아니라 위치와 크기로 보인다**(4-d) — `.tool.on`이 앞으로 나온다.
+// ── 도구 — 연필통(web2-12 6번) · 지우개 둘 · 면 (4-h) ─────────────────────
+// **선택은 색이 아니라 위치와 크기로 보인다**(4-d) — `.tool.on`의 svg가 앞으로 나온다.
+// 연필통: 연필 여섯 + 펜이 가로로 누워 진하기 순으로 쌓인다. 슬라이더(4-e)의 자리를
+// 잇는다 — 옛 경로는 #oldtools에 숨겨 남긴다(A-4 — 아래 TRAY 상수가 되돌리기 손잡이).
+const TRAY = true
 const TOOLS: Tool[] = ['pencil', 'pen', 'eraser-pencil', 'eraser-ink', 'face']
-const toolBtn: Record<Tool, HTMLElement> = {
-  'pencil': document.getElementById('btn-pencil')!,
-  'pen': document.getElementById('btn-pen')!,
+const trayEl = document.getElementById('tray')!
+
+/** 누운 연필 한 자루(지우개 왼쪽 · 심 오른쪽) — 화면을 안 가리게 지우개 쪽 토막만 남기고
+ *  잘랐다. 경도 각인은 실물처럼 지우개 쪽 몸통에, 단면에는 그 경도의 심이 보인다. */
+function pencilRowSvg(g: Grade): string {
+  const lead = MAT[g].color
+  return '<svg width="96" height="24" viewBox="0 0 64 16">'
+    + '<rect x="1" y="3.5" width="9" height="9" rx="2" fill="#d8cfc0" />'
+    + '<rect x="10" y="3.5" width="5" height="9" fill="#b8b3ab" />'
+    + '<rect x="15" y="3" width="41" height="10" fill="#cfc7b6" />'
+    + '<rect x="15" y="3" width="41" height="2.6" fill="#e0d9ca" />'
+    + `<text x="21" y="11.6" font-family="system-ui, sans-serif" font-size="7" fill="#3c3831">${g}</text>`
+    + '<rect x="56" y="3" width="2.2" height="10" fill="#e6dfd0" />'
+    + `<circle cx="57.1" cy="8" r="1.7" fill="${lead}" />`
+    + '</svg>'
+}
+/** 누운 제도펜 — 지우개가 없으니 **니브 굵기 표기**가 끝 표시다(제도펜 관행 그대로).
+ *  단면에는 잉크 심(니브 관). 값은 syncThick가 갱신한다. */
+function penRowSvg(): string {
+  return '<svg width="96" height="24" viewBox="0 0 64 16">'
+    + '<rect x="1" y="4" width="9" height="8" rx="1" fill="#5d5952" />'
+    + '<rect x="10" y="3.5" width="46" height="9" fill="#7f7a72" />'
+    + '<rect x="10" y="3.5" width="46" height="2.4" fill="#98938a" />'
+    + '<text id="nib-mm" x="16" y="11.2" font-family="system-ui, sans-serif" font-size="6.5" fill="#f0ede6">1.5</text>'
+    + '<rect x="56" y="3.5" width="2.2" height="9" fill="#5d5952" />'
+    + '<circle cx="57.1" cy="8" r="1.2" fill="#101014" />'
+    + '</svg>'
+}
+const trayRow = new Map<string, HTMLElement>()   // '2H'.. + 'pen'
+for (const g of PENCIL_GRADES) {
+  const b = document.createElement('button')
+  b.id = `tray-${g}`
+  b.className = 't tool trow'
+  b.title = `${g} 연필`
+  b.setAttribute('aria-label', `${g} 연필`)
+  b.innerHTML = pencilRowSvg(g)
+  b.addEventListener('click', () => { app.grade = g; setTool('pencil') })
+  trayEl.append(b)
+  trayRow.set(g, b)
+}
+{
+  const b = document.createElement('button')
+  b.id = 'btn-pen'
+  b.className = 't tool trow'
+  b.title = '펜 — 잉크 (니브 굵기는 아래 막대)'
+  b.setAttribute('aria-label', '펜')
+  b.innerHTML = penRowSvg()
+  b.addEventListener('click', () => setTool('pen'))
+  trayEl.append(b)
+  trayRow.set('pen', b)
+}
+if (!TRAY) {   // 되돌리기(A-4) — 옛 세로 버튼·슬라이더로
+  trayEl.hidden = true
+  document.getElementById('oldtools')!.hidden = false
+}
+
+const toolBtn: Record<Exclude<Tool, 'pencil' | 'pen'>, HTMLElement> = {
   'eraser-pencil': document.getElementById('btn-eraser-pencil')!,
   'eraser-ink': document.getElementById('btn-eraser-ink')!,
   'face': document.getElementById('btn-face')!,
@@ -313,18 +371,28 @@ const thick = document.getElementById('thick')!
 const thickLine = document.getElementById('thick-line')!
 const thickDot = document.getElementById('thick-dot')!
 
+/** 선택 표시 — 연필은 «지금 경도의 행»이 나와 있다(도구이면서 경도 표시다) */
+function syncTray() {
+  for (const g of PENCIL_GRADES) trayRow.get(g)!.classList.toggle('on', app.tool === 'pencil' && app.grade === g)
+  trayRow.get('pen')!.classList.toggle('on', app.tool === 'pen')
+}
+
 function setTool(t: Tool) {
   app.tool = t
-  for (const k of TOOLS) toolBtn[k].classList.toggle('on', k === t)
+  for (const k of Object.keys(toolBtn) as (keyof typeof toolBtn)[]) {
+    toolBtn[k].classList.toggle('on', k === t)
+  }
+  syncTray()
   if (!isEraser(t)) eraserPos = null
   if (t !== 'face') facePrev = null
-  // 굵기 막대는 **펜과 지우개에만** 뜬다. 연필의 굵기는 심이 정하고,
-  // 그 조절은 연필 몸통의 창이다(4-e) — 별도 컨트롤을 안 둔다.
+  // 굵기 막대는 **펜과 지우개에만** 뜬다. 연필의 굵기는 심이 정한다(4-e).
   thick.style.display = t === 'pencil' ? 'none' : 'block'
   syncThick()
   invalidate()
 }
-for (const k of TOOLS) toolBtn[k].addEventListener('click', () => setTool(k))
+for (const k of Object.keys(toolBtn) as (keyof typeof toolBtn)[]) {
+  toolBtn[k].addEventListener('click', () => setTool(k))
+}
 
 // ── 굵기는 미리보기다 (4-f) — 숫자가 없다 ────────────────────────────────
 // 세로 막대를 위아래로 끌면 **그 자리에** 그 굵기의 선(펜)이나 그 크기의 원(지우개)이 그려진다.
@@ -354,6 +422,9 @@ function syncThick() {
     thickLine.setAttribute('stroke-width', String(v))
     nibEl.setAttribute('width', String(v))
     nibEl.setAttribute('x', String(13 - v / 2))
+    // 연필통 펜 행(6번)의 니브 표기 — 「끝 표시」가 값이다(제도펜 관행)
+    const mm = document.getElementById('nib-mm')
+    if (mm) mm.textContent = v.toFixed(1)
   } else {
     // 지우개는 반경이 커서 막대 폭을 넘는다 — 원의 반지름을 막대 안으로 줄여 **비율만** 보인다
     const r = 4.5 + (v - C.ERASER_MIN) / (C.ERASER_MAX - C.ERASER_MIN) * 12 // 1.5배(지시 5)
@@ -383,12 +454,13 @@ function dragThick(e: PointerEvent) {
 const leadEl = document.getElementById('lead')!
 const leadText = document.getElementById('lead-text')!
 const nibEl = document.getElementById('nib')!
-const pencilBtn = toolBtn['pencil']
+const pencilBtn = document.getElementById('btn-pencil-old')!   // 옛 경로(A-4) — 숨겨져 있어 안 눌린다
 let pencilDrag: { y: number; i: number } | null = null
 
 function syncGrade() {
   leadText.textContent = app.grade
   leadEl.setAttribute('fill', MAT[app.grade].color)
+  syncTray()   // 연필통(6번)의 선택 표시도 경도를 따라간다
   invalidate()
 }
 pencilBtn.addEventListener('pointerdown', (e) => {
@@ -466,11 +538,11 @@ fileOpen.addEventListener('change', async () => {
   if (!data) { notify('.brnl 파일이 아니거나 손상됐다'); return }
   // 열기도 지금 그림을 통째로 버린다(실행취소 스택까지) — 비우기와 같은 급이므로
   // 같은 확인을 받는다. 빈 화면이면 버릴 것이 없으니 그냥 연다.
+  // 확인은 누른 버튼 곁이다(web2-12 4번 — 상부 알림줄 왕복을 없앤다).
   if (app.doc.strokes.length === 0) { applyOpen(data); return }
-  ask('지금 그림을 파일로 바꾼다 — 실행취소로 못 돌아온다.', [
-    { key: 'yes', label: '연다', onPick: () => applyOpen(data) },
-    { key: 'no', label: '취소' },
-  ])
+  confirmNear(document.getElementById('btn-open')!,
+    '지금 그림을 파일로 바꾼다 — 실행취소로 못 돌아온다.',
+    { label: '연다', onPick: () => applyOpen(data) })
 })
 document.getElementById('btn-obj')!.addEventListener('click', () => {
   if (!hasGeometry()) return
@@ -491,13 +563,13 @@ function hasGeometry(): boolean {
 }
 
 // 비우기 — 그림을 전부 지우고 지평선 단계부터 다시. 자동 저장도 함께 지운다.
-// 실수로 누르는 것은 **확인 한 번**으로 막는다(밑줄 단어. A-3: 실행취소 확장보다 단순하다).
+// 실수로 누르는 것은 **확인 한 번**으로 막는다(A-3: 실행취소 확장보다 단순하다).
+// 확인은 버튼 곁이다(web2-12 4번) — 왼쪽 옆에 떠서 버튼 자리와 안 겹치므로
+// 같은 자리를 연타해도 안 지워진다(그 연타를 e2e가 실제로 한다 — D-3).
 document.getElementById('btn-clear')!.addEventListener('click', () => {
   if (app.doc.strokes.length === 0) { notify('이미 비어 있다'); return }
-  ask('전부 비운다 — 실행취소로 못 돌아온다.', [
-    { key: 'yes', label: '비운다', onPick: doClear },
-    { key: 'no', label: '취소' },
-  ])
+  confirmNear(document.getElementById('btn-clear')!,
+    '전부 비운다 — 실행취소로 못 돌아온다.', { label: '비운다', onPick: doClear })
 })
 function doClear() {
   clearAll(app, window.innerWidth, window.innerHeight)
@@ -525,26 +597,86 @@ document.getElementById('sidebar-toggle')!.addEventListener('click', () => {
   sidebar.classList.toggle('folded')
 })
 
-// 시점 저장·복귀
+// 시점 저장·복귀(web2-12 5번) — 번호 나열 대신 **썸네일**: 뷰 버튼을 누르면 장면
+// 썸네일이 펼쳐지고 눈으로 보고 고른다. 삭제(✕)도 여기 있다(지금까지는 지우는 길이 없었다).
 const viewsEl = document.getElementById('views')!
-function addViewButton(i: number) {
-  // **이름을 안 쓴다**(4-b의 「뷰 이름」) — 저장한 순서의 숫자 하나면 고를 수 있다
-  const btn = document.createElement('button')
-  btn.className = 't'
-  btn.style.font = '11px system-ui, sans-serif'
-  btn.title = `저장한 시점 ${i + 1}`
-  btn.textContent = String(i + 1)
-  btn.addEventListener('click', () => { gotoView(app, i); autolevel.touch() })
-  viewsEl.append(btn)
+
+/** 지금 화면의 썸네일 — 겹 순서대로(gl → brushc → ink) 종이색 위에 합성해 줄인다.
+ *  저장 시점에 굽는다(㉮ — saveView 머리주석). JPEG: 사진형 합성이라 PNG보다 훨씬 작다. */
+function captureThumb(): string {
+  const t = document.createElement('canvas')
+  const ratio = H / W
+  t.width = C.THUMB_W
+  t.height = Math.max(1, Math.round(C.THUMB_W * ratio))
+  const g = t.getContext('2d')!
+  g.fillStyle = '#f5f3ee'
+  g.fillRect(0, 0, t.width, t.height)
+  for (const id of ['gl', 'brushc', 'ink']) {
+    const c = document.getElementById(id) as HTMLCanvasElement | null
+    if (c && c.width > 0) g.drawImage(c, 0, 0, t.width, t.height)
+  }
+  return t.toDataURL('image/jpeg', 0.72)
 }
-/** 시점 버튼을 지금 상태에 맞춘다 — 열기·비우기가 목록을 갈아치운다 */
+
+let viewsPop: HTMLElement | null = null
+function closeViewsPop() { viewsPop?.remove(); viewsPop = null }
+function openViewsPop() {
+  closeViewsPop()
+  const anchor = document.getElementById('btn-views')!
+  const r = anchor.getBoundingClientRect()
+  viewsPop = document.createElement('div')
+  viewsPop.id = 'views-pop'
+  app.savedViews.forEach((v, i) => {
+    const row = document.createElement('div')
+    row.className = 'vrow'
+    const pick = document.createElement('button')
+    pick.className = 'vpick'
+    pick.title = `저장한 시점 ${i + 1}`
+    if (v.thumb) {
+      const img = document.createElement('img')
+      img.src = v.thumb
+      img.alt = `시점 ${i + 1}`
+      pick.append(img)
+    } else {
+      pick.textContent = String(i + 1)   // 옛 파일 — 썸네일이 없다(하위호환)
+    }
+    pick.addEventListener('click', () => { gotoView(app, i); autolevel.touch(); closeViewsPop() })
+    const del = document.createElement('button')
+    del.className = 'vdel'
+    del.textContent = '✕'
+    del.title = '이 시점을 지운다'
+    del.addEventListener('click', () => { deleteView(app, i); openViewsPop() })
+    row.append(pick, del)
+    viewsPop!.append(row)
+  })
+  document.body.append(viewsPop)
+  viewsPop.style.right = `${Math.round(window.innerWidth - r.left + 10)}px`
+  viewsPop.style.top = `${Math.round(Math.min(Math.max(6, r.top - 8), window.innerHeight - viewsPop.offsetHeight - 6))}px`
+  const away = (e: PointerEvent) => {
+    if (viewsPop && !(e.target instanceof Node && (viewsPop.contains(e.target) || anchor.contains(e.target)))) {
+      closeViewsPop()
+      window.removeEventListener('pointerdown', away, true)
+    }
+  }
+  window.addEventListener('pointerdown', away, true)
+}
+
+/** 뷰 버튼 하나 — 목록은 팝오버에 있다(세로바가 뷰 수만큼 길어지지 않는다 — 3번의 높이 몫) */
 function syncViewButtons() {
   viewsEl.textContent = ''
-  app.savedViews.forEach((_, i) => addViewButton(i))
+  if (app.savedViews.length === 0) { closeViewsPop(); return }
+  const btn = document.createElement('button')
+  btn.id = 'btn-views'
+  btn.className = 't ico-m'
+  btn.title = `저장한 시점 ${app.savedViews.length}개 — 눌러서 고른다`
+  btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">'
+    + '<rect x="3" y="5.4" width="11" height="8" /><path d="M6 3.4h11v8" /></svg>'
+  btn.addEventListener('click', () => { viewsPop ? closeViewsPop() : openViewsPop() })
+  viewsEl.append(btn)
 }
 document.getElementById('btn-save-view')!.addEventListener('click', () => {
-  saveView(app)
-  addViewButton(app.savedViews.length - 1)
+  saveView(app, captureThumb())
+  syncViewButtons()
 })
 syncViewButtons() // 자동 저장에서 복원된 시점들
 

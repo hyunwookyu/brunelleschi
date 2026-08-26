@@ -1,0 +1,10 @@
+{
+ "what": "web2-12 5번 — 뷰 썸네일의 실측: 한 장 바이트·저장 탭 소요 ms·뷰 1/5/20에서의 .brnl 크기. e2e views.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).",
+ "def": "썸네일 = C.THUMB_W(px) 폭 JPEG(품질 0.72 — 동작점 AS-C39). save_ms = 저장 버튼 click 왕복(썸네일 합성 + 목록 갱신 포함 — 순수 캡처만이 아니다). brnl_bytes_*는 같은 문서(획 셋)에서 뷰 수만 는 값.",
+ "brnl_bytes_5": 9499,
+ "thumb_bytes_median": 1523,
+ "save_ms_median": 43,
+ "save_ms_max": 65,
+ "brnl_bytes_1": 2691,
+ "brnl_bytes_20": 35029
+}

@@ -77,7 +77,7 @@ export interface App {
   /** 화면 조작(뷰 오프셋) — 그리는 중의 팬·줌. 문서 좌표는 안 바뀐다. */
   view: ViewOffset
   /** 저장된 시점 */
-  savedViews: { pose: CamPose; view: ViewOffset }[]
+  savedViews: { pose: CamPose; view: ViewOffset; thumb?: string }[]
   /** 치수 스냅(web2-08 지시 4-7) — **기본 꺼짐**(옵션). 켜면 그리는 동안 실제 길이가
    *  `dimSnapStep`(mm)의 배수로 맞춰진다 — 표시만이 아니다. */
   dimSnap: boolean
@@ -364,11 +364,24 @@ export function resetPose(app: App) {
   setPose(app, DRAW_POSE)
 }
 
-export function saveView(app: App) {
+export function saveView(app: App, thumb?: string) {
   app.savedViews.push({
     pose: { p: { ...app.pose.p }, q: { ...app.pose.q } },
     view: { ...app.view },
+    // 썸네일(web2-12 5번) — 저장 시점에 굽는다(㉮): 열 때 다시 그리려면 뷰마다 장면을
+    // 재사영해야 해서 «펼치기»가 무거워진다. 파일이 커지는 몫은 실측 원장이 든다
+    // (views_thumb_web2.json — .brnl은 선택 필드라 하위호환 그대로).
+    ...(thumb ? { thumb } : {}),
   })
+  for (const l of app.listeners) l() // 자동 저장이 듣는다
+}
+
+/** 뷰 삭제(web2-12 5번) — **실행취소 대상이 아니다**: 실행취소 스택은 문서(획·면)
+ *  전용이고(경계 유지 — 비우기·치수와 같은 규칙), 뷰는 잃어도 다시 저장이 탭 하나라
+ *  잃는 비용이 낮다(지시 문면 「뷰 삭제는 가볍다」를 이렇게 읽었다 — 근거는 NOTES). */
+export function deleteView(app: App, i: number) {
+  if (i < 0 || i >= app.savedViews.length) return
+  app.savedViews.splice(i, 1)
   for (const l of app.listeners) l() // 자동 저장이 듣는다
 }
 

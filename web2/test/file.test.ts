@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { serializeBrnl, parseBrnl } from '../src/core/file'
+import { serializeBrnl, parseBrnl, type BrnlData } from '../src/core/file'
 import { parseBrnlLegacy } from './legacy_web2_10'
 import { toOBJ, toGLTF } from '../src/core/export'
 import { liftAll } from '../src/core/lift'
@@ -174,5 +174,53 @@ describe('내보내기', () => {
     expect(toOBJ(empty)).toContain('g strokes')
     const g = JSON.parse(toGLTF(empty))
     expect(g.buffers[0].byteLength).toBe(0)
+  })
+})
+
+// ── 뷰 썸네일(web2-12 5번) — 선택 필드·하위호환·강등 규약 ─────────────────────
+describe('savedViews.thumb (web2-12 5번)', () => {
+  const withThumb = () => {
+    const d = sampleData()
+    d.savedViews = ([{
+      pose: { p: { x: 0, y: 1.6, z: 0 }, q: { x: 0, y: 0, z: 0, w: 1 } },
+      view: { s: 1, ox: 0, oy: 0 },
+      thumb: 'data:image/jpeg;base64,QUJD',
+    }] as BrnlData['savedViews'])
+    return d
+  }
+
+  it('왕복 — thumb가 살아서 돌아온다(선택 필드)', () => {
+    const back = parseBrnl(serializeBrnl(withThumb()))!
+    expect(back.savedViews[0]!.thumb).toBe('data:image/jpeg;base64,QUJD')
+  })
+
+  it('옛 파일(thumb 없음)이 그대로 열린다 — 하위호환 팔', () => {
+    const d = sampleData()
+    d.savedViews = [{
+      pose: { p: { x: 0, y: 1.6, z: 0 }, q: { x: 0, y: 0, z: 0, w: 1 } },
+      view: { s: 1, ox: 0, oy: 0 },
+    }]
+    const back = parseBrnl(serializeBrnl(d))!
+    expect(back.savedViews).toHaveLength(1)
+    expect(back.savedViews[0]!.thumb).toBeUndefined()
+  })
+
+  it('새 파일이 옛 앱(b6980c9 파서 스냅샷)에서 열린다 — thumb만 버려진다', () => {
+    const back = parseBrnlLegacy(serializeBrnl(withThumb()))!
+    expect(back).not.toBeNull()
+    expect(back.savedViews).toHaveLength(1)
+    expect((back.savedViews[0] as any).thumb).toBeUndefined()  // 옛 파서는 아는 열쇠만 옮긴다
+    expect(back.savedViews[0]!.pose.p.y).toBe(1.6)
+  })
+
+  it('반례: 모양이 틀린 thumb는 **그 필드만 강등**된다 — 뷰(포즈)는 산다', () => {
+    for (const bad of [123, 'http://evil/img.png', 'data:image/png;base64,' + 'A'.repeat(300001)]) {
+      const r = JSON.parse(serializeBrnl(withThumb()))
+      r.savedViews[0].thumb = bad
+      const back = parseBrnl(JSON.stringify(r))!
+      expect(back).not.toBeNull()
+      expect(back.savedViews).toHaveLength(1)
+      expect(back.savedViews[0]!.thumb).toBeUndefined()
+    }
   })
 })

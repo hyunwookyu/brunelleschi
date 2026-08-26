@@ -25,6 +25,17 @@
       --paper: #f5f3ee;
       --ui: #8d8880;        /* 안 고른 도구 — 물러나 있다 */
       --ui-faint: #b8b3ab;
+      /* ── 세로바 크기의 단일 출처(web2-12 3번) ─────────────────────────────
+         web2-10이 1.5배로 키울 때 값이 svg 속성마다 흩어져 시점·치수 버튼(20px)이
+         빠졌다 — 배수는 여기 하나다. 아이콘 크기는 기준 높이 × 이 배수(아래 .ico-*).
+         누름 여유(--hit-pad)는 보이는 크기를 안 바꾸고 닿는 넓이만 키운다(관측 ②) —
+         이웃 간 시각 간격 = --bar-gap + 2×--hit-pad ≈ 종전 9px을 유지한다.
+         겹침 0은 흐름 배치가 구성으로 보장한다(패딩은 흐름 안이다) — 선택 확대는
+         svg에만 걸어(아래 .tool.on svg) 누름 상자를 안 건드린다. e2e sidebar.spec가
+         크기 대역·오른쪽 정렬·쌍별 겹침 0을 잰다. */
+      --ui-scale: 1.5;
+      --hit-pad: 3px;
+      --bar-gap: 1px;
     }
     /* touch-action을 **뿌리에도** 건다(web2-09 지시 2). 모든 요소가 #app의 자손이라
        유효 사슬에는 이미 none이 들어 있지만, 그 한 겹이 규칙 하나에 걸려 있었다 —
@@ -48,43 +59,62 @@
     }
     #notice u { pointer-events: auto; cursor: pointer; }
 
-    /* 우측 상단 — 큐브(캔버스에 그림) 아래 시점.
-       ⚠ 세로바가 1.5배로 커지며(web2-10 지시 5) 화면 높이의 대부분을 차지한다 —
-       한 열(right:10)에 두면 세로바가 이 묶음을 덮어 눌리지 않는다(e2e가 잡았다:
-       #dim-toggle 클릭을 sidebar가 가로챘다). 둘째 열(right:54)로 옮기고
-       큐브도 같은 이유로 왼쪽(cx = W−110)으로 옮겼다(main.ts·state.ts). */
-    #viewbar {
-      position: fixed; top: 112px; right: 54px; z-index: 10;
-      display: flex; flex-direction: column; gap: 8px; align-items: center;
-    }
-    #views { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+    /* 시점 묶음(홈·시점 저장·명명된 뷰·치수) — **세로바 안으로 들어왔다**(web2-12 3번).
+       web2-10이 겹침을 피하려 둘째 열(right:54)로 뺐던 것이 「크기가 안 맞고 오른쪽에
+       정렬되지 않는다」는 관측을 낳았다 — 같은 흐름(flex) 안에 두면 겹침은 구성으로
+       사라지고 오른쪽 세로축이 하나로 선다. */
+    #viewbar { display: flex; flex-direction: column; gap: var(--bar-gap); align-items: flex-end; }
+    #views { display: flex; flex-direction: column; gap: var(--bar-gap); align-items: flex-end; }
 
-    /* 우측 세로바 하나 — 위: 실행취소 · 가운데: 도구·굵기 · 아래: 파일·설정(접힘).
+    /* 우측 세로바 하나 — 위: 시점·치수 · 실행취소 · 가운데: 도구·굵기 · 아래: 파일·설정(접힘).
        좌측과 하단은 비운다(4-i). */
-    /* 크기 1.5배(web2-10 지시 5) — 아이콘과 함께 gap도 1.5배(6 → 9px).
-       커진 버튼이 붙으면 오히려 잘못 눌린다(지시 문면). */
+    /* 크기의 단일 출처는 :root의 --ui-scale·--hit-pad·--bar-gap이다(web2-12 3번).
+       ⚠ align-items는 **flex-end**다 — 폭이 다른 요소(도구 39px ↔ 아이콘 30px)가 섞이면
+       중앙 정렬은 오른쪽 정렬이 아니다(관측 ①의 절반이 이것이었다). */
+    /* 상단 고정(web2-12 3번) — 가운데 고정이던 초판은 요소가 늘며 **아래가 빌드 식별자
+       (우하단 z-12 — 배포 판정자)를 덮었다**(e2e가 잡았다: 설정 요약 클릭을 가로챔).
+       위에 붙이면 남는 여백이 전부 아래로 가 그 모서리가 비고, 화면이 커지면(실기기)
+       더 여유롭다. */
     #sidebar {
-      position: fixed; top: 50%; right: 6px; transform: translateY(-50%);
-      z-index: 10; display: flex; flex-direction: column; gap: 9px; align-items: center;
+      position: fixed; top: 12px; right: 2px;
+      z-index: 10; display: flex; flex-direction: column; gap: var(--bar-gap); align-items: flex-end;
     }
-    #sidebar-body { display: flex; flex-direction: column; gap: 9px; align-items: center; }
+    #sidebar-body { display: flex; flex-direction: column; gap: var(--bar-gap); align-items: flex-end; }
     #sidebar.folded #sidebar-body { display: none; }
-    .bar-gap { height: 21px; }
+    .bar-gap { height: 10px; }
 
-    /* 눌리는 것 전부의 바탕 — 배경도 테두리도 라운드도 없다(4-a) */
+    /* 눌리는 것 전부의 바탕 — 배경도 테두리도 라운드도 없다(4-a).
+       패딩 = 투명한 누름 여유(3번 관측 ②) — 보이는 크기는 svg가, 닿는 넓이는 이것이 정한다.
+       흐름(flex) 안이라 이웃과 절대 안 겹친다(겹침 0의 구성적 보장 — e2e가 쌍별로 잰다). */
     .t {
-      background: none; border: 0; border-radius: 0; padding: 0; margin: 0;
+      background: none; border: 0; border-radius: 0; padding: var(--hit-pad); margin: 0;
       display: block; cursor: pointer; color: var(--ui);
       -webkit-tap-highlight-color: transparent;
-      transition: transform .12s ease, opacity .12s ease;
+      transition: opacity .12s ease;
       opacity: .62;
     }
-    .t svg { display: block; }
+    .t svg { display: block; transition: transform .12s ease; }
     .t:hover { opacity: .85; }
+    /* 아이콘 크기 — 기준 높이 × --ui-scale(단일 출처). width는 viewBox 비례(auto). */
+    .ico-s  svg { height: calc(18px * var(--ui-scale)); width: auto; }  /* 접기 토글 */
+    .ico-m  svg { height: calc(20px * var(--ui-scale)); width: auto; }  /* 실행취소·시점·치수·질감 */
+    .ico-f  svg { height: calc(19px * var(--ui-scale)); width: auto; }  /* 파일·설정 */
+    .ico-h  svg { height: calc(32px * var(--ui-scale)); width: auto; }  /* 지우개·면 */
+    .ico-t  svg { height: calc(62px * var(--ui-scale)); width: auto; }  /* (옛) 세로 연필·펜 */
+    /* 연필통(web2-12 6번) — 가로로 누운 행. 진하기 순으로 쌓인다. */
+    #tray { display: flex; flex-direction: column; gap: var(--bar-gap); align-items: flex-end; }
+    .trow svg { height: calc(15px * var(--ui-scale)); width: auto; }
+    /* 굵기 막대 — **세로바 흐름 밖**(왼쪽 옆 고정. web2-12 3번): 흐름 안에 두면 펜을
+       고른 순간 막대 높이(129px)가 세로바를 화면 밖으로 민다 — 자리 실측이 잡은 잠복
+       결함(사람 관측 「화면 높이를 넘지 않는지」의 실제 사례). e2e가 펜 상태로도 잰다. */
+    #thick {
+      position: fixed; right: 112px; top: 50%; transform: translateY(-50%); z-index: 9;
+    }
     /* **선택된 도구가 앞으로 나온다** — 강조 박스가 아니라 위치와 크기다(4-d).
-       이동량도 1.5배(-7 → -10px) — 배수는 같아도 절대 이동량이 커진 크기에 비례해야
-       같은 비율로 읽힌다(web2-10 지시 5). */
-    .tool.on { opacity: 1; transform: translateX(-10px) scale(1.14); }
+       ⚠ 변형은 **svg에만** 건다(web2-12 3번) — 버튼 상자에 걸면 누름 사각형이 이웃을
+       파고들어 겹침 0이 깨진다. 시각은 나오고 누름 자리는 제자리다. */
+    .tool.on { opacity: 1; }
+    .tool.on svg { transform: translateX(-10px) scale(1.14); }
     .tool { touch-action: none; }
 
     /* 파일·설정 — 접힌 채로 있고, 펴면 아주 옅은 바탕만 깐다(4-a: 「배경이 필요하면 아주 옅게」) */
@@ -104,6 +134,34 @@
          휠 스크롤은 touch-action과 무관해 데스크톱은 그대로 돈다. */
       font: 12px system-ui, sans-serif; color: #4a463f;
     }
+    /* 뷰 썸네일 팝오버(web2-12 5번) — 뷰 버튼 왼쪽에 펼쳐진다. 눈으로 보고 고른다. */
+    #views-pop {
+      position: fixed; z-index: 30;
+      background: rgba(252,251,248,.97); box-shadow: 0 1px 10px rgba(0,0,0,.12);
+      padding: 8px; display: flex; flex-direction: column; gap: 6px;
+      max-height: calc(100vh - 24px); overflow-y: auto;
+    }
+    #views-pop .vrow { display: flex; align-items: flex-start; gap: 4px; }
+    #views-pop .vpick {
+      background: none; border: 0; padding: 0; cursor: pointer; display: block;
+      font: 13px system-ui, sans-serif; color: #4a463f;
+    }
+    #views-pop .vpick img { display: block; box-shadow: 0 0 0 1px #e5e0d6; }
+    #views-pop .vpick:hover img { box-shadow: 0 0 0 1px #8d8880; }
+    #views-pop .vdel {
+      background: none; border: 0; cursor: pointer; padding: 2px 4px;
+      font: 12px system-ui, sans-serif; color: #a89f8e;
+    }
+    #views-pop .vdel:hover { color: #4a463f; }
+
+    /* 버튼 곁 확인(web2-12 4번) — 누른 버튼의 왼쪽 옆. 다른 패널과 같은 옅은 바탕(4-a). */
+    .confirm-pop {
+      position: fixed; z-index: 30;
+      background: rgba(252,251,248,.97); box-shadow: 0 1px 10px rgba(0,0,0,.12);
+      padding: 9px 12px; font: 13px system-ui, sans-serif; color: #4a463f;
+      display: flex; gap: 12px; align-items: center; white-space: nowrap;
+    }
+    .confirm-pop u { cursor: pointer; }
     details.pane summary { list-style: none; cursor: pointer; }
     details.pane summary::-webkit-details-marker { display: none; }
     .pane button {
@@ -274,26 +332,7 @@
     <div id="buildid" title="진단 — 누르면 기기 값이 보인다"></div>
     <div id="diagpanel" hidden></div>
 
-    <!-- 우측 상단: 큐브(캔버스에 그려짐) 아래 시점 -->
-    <div id="viewbar">
-      <button id="btn-draw-view" class="t" title="작도 시점으로" aria-label="작도 시점">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
-          <path d="M3 9.4 10 3.6l7 5.8" /><path d="M5.2 8.6V16h9.6V8.6" />
-        </svg>
-      </button>
-      <button id="btn-save-view" class="t" title="현재 시점 저장" aria-label="시점 저장">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
-          <circle cx="10" cy="10" r="6.4" /><path d="M10 6.6v6.8M6.6 10h6.8" />
-        </svg>
-      </button>
-      <div id="views"></div>
-      <button id="dim-toggle" class="t" title="치수 — 리본 패널" aria-label="치수">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
-          <rect x="2.5" y="7" width="15" height="6" />
-          <path d="M5.5 7v2.4M8.5 7v3.4M11.5 7v2.4M14.5 7v3.4" />
-        </svg>
-      </button>
-    </div>
+    <!-- 시점 묶음 — 세로바 안(web2-12 3번). 마크업은 아래 #sidebar 안에 있다. -->
 
     <!-- 치수 리본(지시 4) — 화면에 쓰면 선인지 숫자인지 알 수 없으므로 쓰는 자리가 따로 있다 -->
     <div id="dimpanel" class="folded">
@@ -328,18 +367,41 @@
 
     <!-- 우측 세로바 -->
     <div id="sidebar">
-      <button id="sidebar-toggle" class="t" title="접기/펴기" aria-label="접기/펴기">
+      <button id="sidebar-toggle" class="t ico-s" title="접기/펴기" aria-label="접기/펴기">
         <svg width="27" height="27" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3">
           <path d="M3 5.5h12M3 9h12M3 12.5h12" />
         </svg>
       </button>
       <div id="sidebar-body">
-        <button id="btn-undo" class="t" title="실행취소 (Ctrl+Z)" aria-label="실행취소">
+        <!-- 시점·치수 묶음(web2-12 3번 — 종전 둘째 열 #viewbar에서 들어왔다) -->
+        <div id="viewbar">
+          <button id="btn-draw-view" class="t ico-m" title="작도 시점으로" aria-label="작도 시점">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
+              <path d="M3 9.4 10 3.6l7 5.8" /><path d="M5.2 8.6V16h9.6V8.6" />
+            </svg>
+          </button>
+          <button id="btn-save-view" class="t ico-m" title="현재 시점 저장" aria-label="시점 저장">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
+              <circle cx="10" cy="10" r="6.4" /><path d="M10 6.6v6.8M6.6 10h6.8" />
+            </svg>
+          </button>
+          <div id="views"></div>
+          <button id="dim-toggle" class="t ico-m" title="치수 — 리본 패널" aria-label="치수">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
+              <rect x="2.5" y="7" width="15" height="6" />
+              <path d="M5.5 7v2.4M8.5 7v3.4M11.5 7v2.4M14.5 7v3.4" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="bar-gap"></div>
+
+        <button id="btn-undo" class="t ico-m" title="실행취소 (Ctrl+Z)" aria-label="실행취소">
           <svg width="30" height="30" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
             <path d="M6.4 5.2 3.2 8.4l3.2 3.2" /><path d="M3.2 8.4h7.6a4.4 4.4 0 0 1 0 8.8H7" />
           </svg>
         </button>
-        <button id="btn-redo" class="t" title="다시실행 (Ctrl+Y)" aria-label="다시실행">
+        <button id="btn-redo" class="t ico-m" title="다시실행 (Ctrl+Y)" aria-label="다시실행">
           <svg width="30" height="30" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
             <path d="M13.6 5.2 16.8 8.4l-3.2 3.2" /><path d="M16.8 8.4H9.2a4.4 4.4 0 0 0 0 8.8H13" />
           </svg>
@@ -347,9 +409,17 @@
 
         <div class="bar-gap"></div>
 
-        <!-- 연필 — 몸통의 창에 지금 심(2H…2B)이 보인다. **그 창이 곧 슬라이더다**(4-e):
-             위아래로 밀면 심이 바뀐다. 별도 컨트롤을 안 둔다. -->
-        <button id="btn-pencil" class="t tool" title="연필 — 위아래로 밀면 심이 바뀐다" aria-label="연필">
+        <!-- 연필통(web2-12 6번) — 연필 여섯 + 펜이 **가로로 누워** 진하기 순(2H→2B)으로
+             쌓인다. 오른손잡이 기준 지우개가 왼쪽·심이 오른쪽인데, 화면을 가리지 않게
+             **지우개 쪽 토막만** 남기고 잘랐다(경도 각인은 실물처럼 지우개 쪽 몸통에 —
+             단면에는 그 경도의 심이 보인다). 행은 main.ts가 MAT에서 짓는다(#54 —
+             심 색·목록을 여기 복제하지 않는다). -->
+        <div id="tray"></div>
+
+        <!-- 옛 경로(4-e 홀더펜 슬라이더 · 세로 연필/펜 버튼) — **지우지 않고 숨긴다**(A-4:
+             사람이 새 연필통을 승인할 때까지. 되돌리기: main.ts TRAY=false + hidden 제거). -->
+        <div id="oldtools" hidden>
+        <button id="btn-pencil-old" class="t tool ico-t" title="연필 — 위아래로 밀면 심이 바뀐다" aria-label="연필(옛)">
           <svg width="39" height="93" viewBox="0 0 26 62">
             <path d="M8 3h10v40H8z" fill="#cfc7b6" />
             <path d="M8 3h3.4v40H8z" fill="#e0d9ca" />
@@ -361,9 +431,7 @@
             <path id="lead" d="M11.4 48.9 13 52l1.6-3.1z" fill="#5a5a5a" />
           </svg>
         </button>
-
-        <!-- 펜 — 제도펜. 니브가 보인다. 굵기는 아래 막대에서 고른다(4-f). -->
-        <button id="btn-pen" class="t tool" title="펜 — 잉크" aria-label="펜">
+        <button id="btn-pen-old" class="t tool ico-t" title="펜 — 잉크" aria-label="펜(옛)">
           <svg width="39" height="93" viewBox="0 0 26 62">
             <path d="M8.6 3h8.8v32H8.6z" fill="#7f7a72" />
             <path d="M8.6 3h3v32h-3z" fill="#98938a" />
@@ -373,16 +441,17 @@
             <rect id="nib" x="12.2" y="49" width="1.6" height="7" fill="#101014" />
           </svg>
         </button>
+        </div>
 
         <!-- 지우개 둘 — 연필 지우개는 흑연만, 펜 지우개는 잉크만(선따기·4-h) -->
-        <button id="btn-eraser-pencil" class="t tool" title="연필 지우개 — 흑연만 지운다" aria-label="연필 지우개">
+        <button id="btn-eraser-pencil" class="t tool ico-h" title="연필 지우개 — 흑연만 지운다" aria-label="연필 지우개">
           <svg width="39" height="48" viewBox="0 0 26 32">
             <path d="M6 20 13 6h7l-7 14z" fill="#e4ddcd" stroke="#b3ab9a" stroke-width="1" />
             <path d="M6 20h7v6H6z" fill="#d5cdbb" stroke="#b3ab9a" stroke-width="1" />
             <path d="M13 20h7l-7 6z" fill="#c9c0ad" stroke="#b3ab9a" stroke-width="1" />
           </svg>
         </button>
-        <button id="btn-eraser-ink" class="t tool" title="펜 지우개 — 잉크만 지운다" aria-label="펜 지우개">
+        <button id="btn-eraser-ink" class="t tool ico-h" title="펜 지우개 — 잉크만 지운다" aria-label="펜 지우개">
           <svg width="39" height="48" viewBox="0 0 26 32">
             <path d="M6 20 13 6h7l-7 14z" fill="#e4ddcd" stroke="#8b857a" stroke-width="1" />
             <path d="M6 20h7v6H6z" fill="#3a3833" stroke="#8b857a" stroke-width="1" />
@@ -394,14 +463,14 @@
              **자동으로 안 만든다** — 닫힌 루프가 생겼다고 면이 아니다. -->
         <!-- 종이 질감 토글(web2-11 2-b) — 되돌릴 수 있어야 하므로 설정에 묻지 않고 여기 둔다.
              사람이 태블릿에서 바로 전환해 비교하는 것이 목적이다. 켜짐 = 획을 brush.js가 그린다. -->
-        <button id="btn-brush" class="t" title="종이 질감 — 획을 brush 렌더러로 (다시 누르면 종전 렌더러)" aria-label="종이 질감">
+        <button id="btn-brush" class="t ico-m" title="종이 질감 — 획을 brush 렌더러로 (다시 누르면 종전 렌더러)" aria-label="종이 질감">
           <svg width="30" height="30" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
             <path d="M3 14c2.5-1.2 3.4-6.8 6-8.6 1.6-1.1 3.4-.4 3.9 1 .6 1.6-.6 3.2-2.2 3.6" />
             <path d="M3.4 16.4c.9.3 2.4.4 3.3-.4" stroke-dasharray="1.4 1.6" />
             <path d="M9 16.2c.9.3 2.2.4 3.1-.3" stroke-dasharray="1 1.8" />
           </svg>
         </button>
-        <button id="btn-face" class="t tool" title="면 — 둘러싸인 자리를 탭한다(다시 탭하면 없앤다)" aria-label="면">
+        <button id="btn-face" class="t tool ico-h" title="면 — 둘러싸인 자리를 탭한다(다시 탭하면 없앤다)" aria-label="면">
           <svg width="39" height="48" viewBox="0 0 26 32">
             <path d="M4 21 10 8l12 3-5 13z" fill="#8d8880" fill-opacity=".26"
                   stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
@@ -420,7 +489,7 @@
         <div class="bar-gap"></div>
 
         <details class="pane" id="pane-file">
-          <summary class="t" title="파일">
+          <summary class="t ico-f" title="파일">
             <svg width="28" height="28" viewBox="0 0 19 19" fill="none" stroke="currentColor" stroke-width="1.3">
               <path d="M2.6 4.6h4.6l1.4 1.8h7.8v8.4H2.6z" />
             </svg>
@@ -440,7 +509,7 @@
           </div>
         </details>
         <details class="pane" id="pane-settings">
-          <summary class="t" title="설정">
+          <summary class="t ico-f" title="설정">
             <svg width="28" height="28" viewBox="0 0 19 19" fill="none" stroke="currentColor" stroke-width="1.3">
               <circle cx="9.5" cy="9.5" r="2.6" />
               <path d="M9.5 2.4v2M9.5 14.6v2M2.4 9.5h2M14.6 9.5h2M4.5 4.5l1.4 1.4M13.1 13.1l1.4 1.4M14.5 4.5l-1.4 1.4M5.9 13.1l-1.4 1.4" />

@@ -36,7 +36,9 @@ export interface Choice {
 }
 
 /** 물음 — 같은 한 줄에 밑줄 단어로 선택지를 붙인다. 사라지지 않는다(누를 때까지).
- *  다른 알림·상태가 줄을 덮으면 그것이 곧 취소다 — 따로 상태를 두지 않는다. */
+ *  다른 알림·상태가 줄을 덮으면 그것이 곧 취소다 — 따로 상태를 두지 않는다.
+ *  ⚠ web2-12 4번부터 **버튼이 있는 물음은 여기로 오지 않는다**(confirmNear — 그 버튼
+ *  곁에 뜬다). 남는 쓰임은 앵커가 없는 상태 물음(작도 미완 안내)뿐이다. */
 export function ask(msg: string, choices: Choice[]) {
   if (!el) return
   clearTimeout(timer)
@@ -49,4 +51,48 @@ export function ask(msg: string, choices: Choice[]) {
     u.addEventListener('click', () => { clearNotice(); c.onPick?.() })
     el!.append(u)
   })
+}
+
+// ── 버튼 곁 확인(web2-12 4번) — 「확인이 상부 대화창에 떠서 손이 왕복한다」의 답 ──────
+// 누른 버튼의 **왼쪽 옆**에 뜬다: 손이 그 자리에 있고, 확인 단어가 버튼과 **다른
+// 자리**라 같은 곳을 연타해도 확인이 눌리지 않는다(연타 방어 — e2e가 실제로 연타한다).
+// 비우기는 실행취소 대상이 아니라 이 확인이 유일한 방어선이다(지시 문면).
+let pop: HTMLElement | null = null
+let awayRm: (() => void) | null = null
+export function dismissConfirm() {
+  pop?.remove()
+  pop = null
+  awayRm?.()
+  awayRm = null
+}
+export function confirmNear(anchor: HTMLElement, msg: string,
+  yes: { label: string; onPick: () => void }) {
+  dismissConfirm()
+  clearNotice()
+  const r = anchor.getBoundingClientRect()
+  pop = document.createElement('div')
+  pop.className = 'confirm-pop'
+  pop.id = 'confirm-pop'
+  const text = document.createElement('span')
+  text.textContent = msg
+  const u = document.createElement('u')
+  u.textContent = yes.label
+  u.dataset.pick = 'yes'
+  u.addEventListener('click', () => { dismissConfirm(); yes.onPick() })
+  const no = document.createElement('u')
+  no.textContent = '취소'
+  no.dataset.pick = 'no'
+  no.addEventListener('click', dismissConfirm)
+  pop.append(text, u, no)
+  document.body.append(pop)
+  // 버튼의 왼쪽, 세로는 버튼 가운데 정렬 — 화면 위로 안 나가게 아래로만 민다
+  pop.style.right = `${Math.round(window.innerWidth - r.left + 10)}px`
+  pop.style.top = `${Math.round(Math.max(6, r.top + r.height / 2 - pop.offsetHeight / 2))}px`
+  // 바깥 누름 = 취소. 여는 것은 'click'(pointerdown·up이 이미 끝난 뒤)이므로
+  // 지금 부착해도 이 열림의 pointerdown이 되돌아 닫는 일은 없다 — 즉시 단다.
+  const away = (e: PointerEvent) => {
+    if (pop && !(e.target instanceof Node && pop.contains(e.target))) dismissConfirm()
+  }
+  window.addEventListener('pointerdown', away, true)
+  awayRm = () => window.removeEventListener('pointerdown', away, true)
 }
