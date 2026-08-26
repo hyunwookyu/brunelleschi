@@ -48,6 +48,9 @@ for (const cat of CATS) {
   const q = (p) => lens[Math.min(lens.length - 1, Math.floor(p * lens.length))]
   perCat[cat] = {
     n_strokes: lens.length,
+    // 점 찍힘 성분 — bbox가 사실상 0(< 0.5px)인 «획». below[c]의 대부분이 이것이고,
+    // «후보가 자르는 짧은 획»은 below[c] − below_zero가 상한이다([27] — 분자를 가른다).
+    below_zero: lens.filter(L => L < 0.5).length,
     p001: q(0.001), p01: q(0.01), p05: q(0.05), p50: q(0.5),
     below: Object.fromEntries(CANDIDATES.map(c => [c, lens.filter(L => L < c).length])),
   }
@@ -56,12 +59,14 @@ for (const cat of CATS) {
 all.sort((a, b) => a - b)
 const q = (p) => all[Math.min(all.length - 1, Math.floor(p * all.length))]
 const ledger = {
-  what: '실획(원시 Quick,Draw — 장치 픽셀)의 끝점 간 길이 분포 대 STRAY 문 후보 — 후보가 자르는 의도 획 수(분자/분모)',
-  caveat: '장치 dpr·화면 크기 미기록 — 1:1 읽기는 보수적 하한(실 폐기율은 이하). 닫힌 도형의 «획»은 길어서 이 검사에 유리하다 — line 범주가 가장 보수적인 행이다. 실기기 판정이 최종(DEFERRED web2-13 표)',
+  what: '실획(원시 Quick,Draw)의 **raw bbox 대각** 분포 대 STRAY 문 후보 — below[c]는 «bbox < c px인 획 수»이고 거기에는 점 찍힘(below_zero)과 짧은 획이 섞여 있다(성분은 두 필드로 가른다 — 3차 리뷰어 [27])',
+  superseded_scale: '끝점 간 거리 판은 기각 — 닫힌 한 붓(끝이 시작으로 돌아온다)이 «짧은 획»으로 오폐기된다(square p50이 33px로 나온 첫 실행이 그 증거. 재현: bbox 블록을 끝점 거리로 되돌린다)',
+  caveat: '좌표의 단위(장치 px인가 css px인가)와 dpr·화면 크기가 기록에 없다 — 1:1 읽기의 방향을 모른다(장치 px·dpr>1이었다면 실기기 폐기율은 이 값보다 크다 — 3차 리뷰어 [32]). 범주 중 폐기율이 가장 높은 행은 skyscraper다(보수 행 — line이 아니다). 실기기 판정이 최종(DEFERRED web2-13 표)',
   candidates_css_px: CANDIDATES,
   per_category: perCat,
   totals: {
     n_strokes: all.length,
+    below_zero: all.filter(L => L < 0.5).length,
     p001: q(0.001), p01: q(0.01), p05: q(0.05), p50: q(0.5),
     below: Object.fromEntries(CANDIDATES.map(c => [c, all.filter(L => L < c).length])),
   },

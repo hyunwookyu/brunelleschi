@@ -35,6 +35,49 @@ function inkStat(page: Page, x0: number, y0: number, x1: number, y1: number) {
   }, [x0, y0, x1, y1])
 }
 
+/** #brushc(WebGL2 · preserveDrawingBuffer) 상자의 칠해진 픽셀 — brush.spec의 brushBox 판.
+ *  대기 획은 겹 **둘**에 그려진다(#ink 점선 + brush 렌더러의 #brushc 질감 몸체) —
+ *  #67: 한 겹 판독만으로는 «사람이 보는 화면에서 사라졌다»를 말할 수 없다(3차 리뷰어 [26]). */
+function brushPix(page: Page, x0: number, y0: number, x1: number, y1: number) {
+  return page.evaluate(([x0, y0, x1, y1]) => {
+    const src = document.getElementById('brushc') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const t = document.createElement('canvas')
+    t.width = Math.max(1, Math.round((x1! - x0!) * dpr))
+    t.height = Math.max(1, Math.round((y1! - y0!) * dpr))
+    const c = t.getContext('2d')!
+    c.drawImage(src, Math.round(x0! * dpr), Math.round(y0! * dpr), t.width, t.height, 0, 0, t.width, t.height)
+    const d = c.getImageData(0, 0, t.width, t.height).data
+    let n = 0
+    for (let i = 3; i < d.length; i += 4) if (d[i]! > 0) n++
+    return n
+  }, [x0, y0, x1, y1])
+}
+
+/** 합성 화면(스크린샷 — 사람이 보는 것) 상자 — materials.spec의 shot 판 */
+async function shot(page: Page, x: number, y: number, w: number, h: number): Promise<number[]> {
+  const buf = await page.screenshot({ clip: { x, y, width: w, height: h } })
+  return await page.evaluate(async (b64) => {
+    const img = new Image()
+    img.src = 'data:image/png;base64,' + b64
+    await img.decode()
+    const c = document.createElement('canvas')
+    c.width = img.width; c.height = img.height
+    const g = c.getContext('2d')!
+    g.drawImage(img, 0, 0)
+    return [...g.getImageData(0, 0, c.width, c.height).data]
+  }, buf.toString('base64'))
+}
+/** 채널 차 8 초과 픽셀 수 — materials.spec의 diffCount 판(AA는 걸리고 압축 요동은 안 걸린다) */
+function diffCount(base: number[], now: number[]): number {
+  let n = 0
+  for (let i = 0; i < base.length; i += 4) {
+    if (Math.abs(base[i]! - now[i]!) > 8 || Math.abs(base[i + 1]! - now[i + 1]!) > 8 ||
+        Math.abs(base[i + 2]! - now[i + 2]!) > 8) n++
+  }
+  return n
+}
+
 /** 지금 포즈가 작도 포즈에서 몇 도 돌아갔나 — 앱의 사원수로 그 자리에서 계산 */
 const poseDeg = (page: Page) => page.evaluate(() => {
   const q = (window as any).__b2.app.pose.q
@@ -80,6 +123,11 @@ test('3-a — 대기 획은 자기 시점에서만: 작도 포즈 잉크 > 0 →
 
   const afterOrbit = await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
   expect(afterOrbit.count).toBe(0)                   // «자기 시점에서만 보인다» — 0 도달
+  // 겹 ② — brush 질감 몸체도 비어 있다(#67 · [26]: 대기 획을 그리는 겹은 둘 다 재야 한다)
+  expect(await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)).toBe(0)
+  // 합성 기준 — 사람이 보는 화면(스크린샷)의 이 상자. 아래 되돌림과의 diff가
+  // «합성 채널이 이 획을 실제로 본다»의 증인이다(겹별 0 + 합성 감도 = 합성에서 사라짐).
+  const fadedShot = await shot(page, BOX.x0, BOX.y0, BOX.x1 - BOX.x0, BOX.y1 - BOX.y0)
 
   // ── 반증(D-3): 설정을 꺼서(옛 동작) 같은 자리에서 잉크가 «남는» 것을 본다 ──
   await page.evaluate(() => (document.getElementById('chk-waitfade') as HTMLInputElement).click())
@@ -87,6 +135,11 @@ test('3-a — 대기 획은 자기 시점에서만: 작도 포즈 잉크 > 0 →
   const oldBehavior = await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
   expect(oldBehavior.count).toBeGreaterThan(0)       // 옛 동작 — 흐림 0.3으로 눌어붙는다
   expect(oldBehavior.alphaSum).toBeLessThan(atDraw.alphaSum * 0.6) // 옅다 — 개수는 같고 알파가 준다(0.3 대역)
+  // 합성 감도 증인 — 되돌리자 합성 화면이 그 상자에서 실제로 달라진다(스크린샷 diff > 0).
+  const unfadedShot = await shot(page, BOX.x0, BOX.y0, BOX.x1 - BOX.x0, BOX.y1 - BOX.y0)
+  const d = diffCount(fadedShot, unfadedShot)
+  console.log(`[측정] waitfade 합성 diff(감쇠 ↔ 옛 동작) ${d}px`)
+  expect(d).toBeGreaterThan(0)
 })
 
 test('3-a — 승격된 획은 영향이 없다: 궤도를 돌려도 3D가 제자리를 댄다(#gl 몫 — 문서로 확인)', async ({ page }) => {
@@ -112,6 +165,13 @@ test('3-b — 잘못 찍힌 점: 문 아래(4px)는 안 만들고 세고, 문 �
   const c1 = await page.evaluate(() => (window as any).__b2.app.strayCount)
   expect(n1).toBe(n0)                                // 획이 «애초에» 안 생겼다
   expect(c1).toBe(1)                                 // 조용히 버리지 않는다 — 수가 말한다
+  // 그 수가 **사람 눈에 닿는 자리**(진단 패널)에 실제로 보인다([36] — 상태값만 재면
+  // 패널 배선이 끊겨도 팔이 초록이라 «조용히 버리는» 상태로 돌아간다)
+  await page.click('#buildid')
+  await expect(page.locator('#diagpanel')).toBeVisible()
+  await expect(page.locator('#diagpanel')).toContainText('버린 짧은 획')
+  await expect(page.locator('#diagpanel')).toContainText('1 (문 6px)')
+  await page.click('#buildid')
 
   await drawLine(page, 400, 650, 408, 650)           // 8px — 문 위(경계 6 포함 위쪽)
   const n2 = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
