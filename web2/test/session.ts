@@ -19,7 +19,7 @@ export function session(W: number, H: number): Session {
   const set = () => ({ ...app.osnap, radius: app.osnap.radius / app.view.s })
   // 치수 옵션도 앱(input.ts)과 같은 자리에서 읽는다 — 하네스가 앱을 재게(web2-08 지시 4)
   const dims = () => ({
-    mmPerUnit: app.doc.mmPerUnit,
+    mmPerUnit: app.lift.mmPerUnit,
     snapStep: app.dimSnap ? app.dimSnapStep : null,
   })
   return {

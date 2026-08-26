@@ -53,7 +53,7 @@ export function initInput(
   const osnapSet = () => ({ ...app.osnap, radius: app.osnap.radius / app.view.s })
   /** 치수 옵션 — 스냅은 켜져 있을 때만 step이 실린다(지시 4-7) */
   const dimOpts = () => ({
-    mmPerUnit: app.doc.mmPerUnit,
+    mmPerUnit: app.lift.mmPerUnit,
     snapStep: app.dimSnap ? app.dimSnapStep : null,
   })
 

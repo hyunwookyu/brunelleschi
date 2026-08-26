@@ -1,6 +1,6 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, saveView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, type Tool } from './state'
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
@@ -11,6 +11,9 @@ import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice } from './notice'
 import { OSNAP_ORDER, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT } from '../core/material'
+import { parseDim, formatMm, lenMm, UNITS, type Unit } from '../core/dim'
+import { initDimPanel } from './dimpanel'
+import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
 import { C } from '../core/constants'
 
@@ -170,8 +173,50 @@ syncStrokes(r3d, app)
 syncedVersion = app.docVersion
 updateStatus()
 
+// ── 치수(web2-08 지시 4) — 창 규칙과 적용의 단일 통로 ────────────────────
+// «치수 창»은 선을 그리기 시작할 때 열리고 **공간의 다음 터치(다음 획 시작)에 닫힌다**
+// (지시 4-4의 듣는 구간을 필기에도 같은 규칙으로 쓴다 — 창 판정이 두 자리로 갈리지 않게).
+// 그리는 동안 들어온 입력은 확정 때 적용되고, 확정 후에는 그 획(dimTarget)에 바로 적용
+// — «다시 말하거나 펜으로 고친다»가 그대로 대체가 된다(setDimension이 대체다).
+let dimTarget: number | null = null
+let pendingDimText: string | null = null
+let wasDrafting = false
+
+function liveLenOf(id: number): string | null {
+  const g = app.lift.lifted.get(id)
+  if (!g) return null
+  const mm = lenMm(g.a3, g.b3, app.lift.mmPerUnit)
+  return mm === null ? null : formatMm(mm, app.doc.unit, app.dimExact)
+}
+
+function applyDimInput(text: string) {
+  const mm = parseDim(text, app.doc.unit)
+  if (mm === null) return                        // «?»·잡음 — 패널 readout이 이미 보여준다
+  if (draft) { pendingDimText = text; return }   // 그리는 중 — 확정 때 적용
+  if (dimTarget === null) return                 // 창이 닫혔다 — 다음 선부터
+  const r = setDimension(app, dimTarget, mm)
+  if (r === 'no3d') notify('아직 3D로 올라가지 않은 선이다 — 치수를 못 단다')
+  else if (r !== 'none') dimPanel.show(liveLenOf(dimTarget))
+}
+
+const dimPanel = initDimPanel(applyDimInput)
+const voice = createVoice((t) => applyDimInput(t))
+
 initInput(ink, app, {
-  onDraftChange(d) { draft = d; invalidate() },
+  onDraftChange(d) {
+    draft = d
+    if (d) {
+      if (!wasDrafting) {                        // 새 획 — 이전 치수 창이 닫힌다
+        dimTarget = null
+        pendingDimText = null
+        dimPanel.clearInk()
+      }
+      // 실시간 표시(4-5) — resolveEnd가 계산한 값 그대로(한 곳 계산·셋이 읽기)
+      dimPanel.show(d.lenMm !== null ? formatMm(d.lenMm, app.doc.unit, app.dimExact) : null)
+    }
+    wasDrafting = !!d
+    invalidate()
+  },
   onHover(p) { hover = p; invalidate() },
   onEraserMove(p) { eraserPos = p; invalidate() },
   onFacePreview(f) { facePrev = f; invalidate() },
@@ -186,8 +231,41 @@ initInput(ink, app, {
     // 둘 다 화면이 이미 말하고 있다(소실점 표식 · 대기 획의 점선). 거부 사유만 남긴다.
     const reject = an.rejects.get(s.id)
     if (reject) notify(reject)
+    // 치수 창 — 내용 획이면 이 획이 지금 창의 대상이다. 그리는 동안 들어온 치수를 적용한다.
+    if (an.roles.get(s.id) === 'content') {
+      dimTarget = s.id
+      const t = pendingDimText
+      pendingDimText = null
+      if (t) applyDimInput(t)
+      else dimPanel.show(liveLenOf(s.id))
+    }
   },
 }, autolevel)
+
+// 치수 패널의 옵션 배선(4-4 음성 · 4-6 단위 · 4-7 스냅 · 4-8 표기)
+const voiceBtn = document.getElementById('btn-voice')!
+voiceBtn.addEventListener('click', () => {
+  if (!voice.supported) { notify('이 브라우저에는 음성 인식이 없다 — 펜으로 쓴다'); return }
+  voiceBtn.classList.toggle('on', voice.toggle())
+})
+const unitSel = document.getElementById('dim-unit') as HTMLSelectElement
+unitSel.value = app.doc.unit
+unitSel.addEventListener('change', () => {
+  if ((UNITS as string[]).includes(unitSel.value)) app.doc.unit = unitSel.value as Unit
+  if (dimTarget !== null) dimPanel.show(liveLenOf(dimTarget))
+})
+const dimSnapBox = document.getElementById('chk-dimsnap') as HTMLInputElement
+dimSnapBox.checked = app.dimSnap
+dimSnapBox.addEventListener('change', () => { app.dimSnap = dimSnapBox.checked })
+const dimStepSel = document.getElementById('dimsnap-step') as HTMLSelectElement
+dimStepSel.value = String(app.dimSnapStep)
+dimStepSel.addEventListener('change', () => { app.dimSnapStep = Number(dimStepSel.value) })
+const exactBox = document.getElementById('chk-exact') as HTMLInputElement
+exactBox.checked = app.dimExact
+exactBox.addEventListener('change', () => {
+  app.dimExact = exactBox.checked
+  if (dimTarget !== null) dimPanel.show(liveLenOf(dimTarget))
+})
 
 // ── 도구 넷 — 연필 · 펜 · 지우개 둘 (4-h) ────────────────────────────────
 // **선택은 색이 아니라 위치와 크기로 보인다**(4-d) — `.tool.on`이 앞으로 나온다.
@@ -342,6 +420,7 @@ function applyOpen(data: NonNullable<ReturnType<typeof parseBrnl>>) {
   loadDoc(app, data)
   fitViewToFrame()
   syncViewButtons()
+  unitSel.value = app.doc.unit                 // 문서의 단위가 패널에 보인다(4-6)
 }
 fileOpen.addEventListener('change', async () => {
   const f = fileOpen.files?.[0]
@@ -384,6 +463,7 @@ document.getElementById('btn-clear')!.addEventListener('click', () => {
 })
 function doClear() {
   clearAll(app, window.innerWidth, window.innerHeight)
+  unitSel.value = app.doc.unit
   try { localStorage.removeItem(AUTOSAVE_KEY) } catch { /* 저장소가 없으면 지울 것도 없다 */ }
   draft = null; hover = null; eraserPos = null; facePrev = null // 지운 획을 가리키던 표식이 남지 않게
   syncViewButtons()
@@ -517,6 +597,15 @@ const diag = {
     /** 궤도 반경 — 눈에서 pivot까지. 줌으로 정하고 접기가 지킨다(web2-06 지시 5) */
     radius: orbitRadius(app),
     pivot: orbitPivot(app),
+  }),
+  /** 치수 진단(web2-08 지시 4) — 앱과 같은 상태를 읽는다 */
+  dim: () => ({
+    mmPerUnit: app.lift.mmPerUnit,
+    unit: app.doc.unit,
+    target: dimTarget,
+    dims: app.doc.strokes.filter(x => x.dim !== undefined).map(x => ({ id: x.id, dim: x.dim })),
+    lenOf: Object.fromEntries([...app.lift.lifted].map(([id, g]) =>
+      [id, lenMm(g.a3, g.b3, app.lift.mmPerUnit)])),
   }),
   summary: () => ({
     horizonY: app.lift.an.horizonY,

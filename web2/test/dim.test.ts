@@ -15,6 +15,7 @@ import { setDimension, type App } from '../src/app/state'
 import { resolveStart, resolveEnd } from '../src/core/draft'
 import { parseDim, parseKoreanNumber, formatMm, snapMm, lenMm } from '../src/core/dim'
 import { serializeBrnl, parseBrnl } from '../src/core/file'
+import { liftAll } from '../src/core/lift'
 import { sub3, len3, norm3, dot3 } from '../src/core/vec'
 
 /** 작도 + 수직 기둥 하나 — 기둥이 스케일의 기준이 된다 */
@@ -86,21 +87,21 @@ describe('4-1 — 첫 치수가 스케일을 정한다', () => {
     const app = s.app
     const before = app.lift.lifted.get(post.id)!
     const others = [...app.lift.lifted.entries()].map(([id, g]) => [id, len3(sub3(g.b3, g.a3))] as const)
-    expect(app.doc.mmPerUnit).toBeNull()
-    expect(lenMm(before.a3, before.b3, app.doc.mmPerUnit)).toBeNull()   // 무스케일 = null
+    expect(app.lift.mmPerUnit).toBeNull()
+    expect(lenMm(before.a3, before.b3, app.lift.mmPerUnit)).toBeNull()   // 무스케일 = null
 
     expect(setDimension(app, post.id, 2500)).toBe('scale')              // 기둥 = 2.5 m
-    expect(app.doc.mmPerUnit).not.toBeNull()
+    expect(app.lift.mmPerUnit).not.toBeNull()
     const after = app.lift.lifted.get(post.id)!
     for (const k of ['x', 'y', 'z'] as const) {
       expect(after.a3[k]).toBeCloseTo(before.a3[k], 12)                 // 구성상 무변형
       expect(after.b3[k]).toBeCloseTo(before.b3[k], 12)
     }
-    expect(lenMm(after.a3, after.b3, app.doc.mmPerUnit)).toBeCloseTo(2500, 9)
+    expect(lenMm(after.a3, after.b3, app.lift.mmPerUnit)).toBeCloseTo(2500, 9)
     // 그때까지 그린 것 전부가 같은 스케일로 읽힌다(4-1 「그때까지 그렸던 것」)
     for (const [id, L] of others) {
       const g = app.lift.lifted.get(id)!
-      expect(lenMm(g.a3, g.b3, app.doc.mmPerUnit)).toBeCloseTo(L * app.doc.mmPerUnit!, 9)
+      expect(lenMm(g.a3, g.b3, app.lift.mmPerUnit)).toBeCloseTo(L * app.lift.mmPerUnit!, 9)
     }
   })
 
@@ -110,7 +111,24 @@ describe('4-1 — 첫 치수가 스케일을 정한다', () => {
     expect(s.app.lift.lifted.has(st.id)).toBe(false)   // 픽스처가 실제로 대기인가(판별력)
     expect(s.app.lift.waiting).toContain(st.id)
     expect(setDimension(s.app, st.id, 1000)).toBe('no3d')
-    expect(s.app.doc.mmPerUnit).toBeNull()
+    expect(s.app.lift.mmPerUnit).toBeNull()
+  })
+})
+
+describe('4-1b — 스케일 획에 다시 입력하면 스케일이 그 값으로 다시 선다', () => {
+  it('«2» → «25» → «2500»으로 지나가는 필기가 첫 «2»에 굳지 않는다 (재현: 저장판의 결함)', () => {
+    // 재현(D-2): mmPerUnit을 저장하던 초판은 획마다 자동 적용되는 필기의 첫 «2»가
+    // 스케일을 굳혔다 — e2e에서 기둥 11mm를 쓰는데 1mm 스케일이 남았다(실측 1.2248mm
+    // 잔차). 파생으로 바꾼 뒤에는 마지막 입력이 스케일이다.
+    const { s, post } = drawn()
+    const app = s.app
+    expect(setDimension(app, post.id, 2)).toBe('scale')
+    const k2 = app.lift.mmPerUnit!
+    setDimension(app, post.id, 25)
+    setDimension(app, post.id, 2500)
+    expect(app.lift.mmPerUnit!).toBeCloseTo(k2 * 1250, 9)   // 2 → 2500: 스케일이 따라온다
+    const g = app.lift.lifted.get(post.id)!
+    expect(lenMm(g.a3, g.b3, app.lift.mmPerUnit)).toBeCloseTo(2500, 9)
   })
 })
 
@@ -130,7 +148,7 @@ describe('4-2 — 그 뒤는 시작점·방향만 취하고 길이를 바꾼다'
     const after = app.lift.lifted.get(beam.id)!
     for (const k of ['x', 'y', 'z'] as const) expect(after.a3[k]).toBeCloseTo(before.a3[k], 9)
     expect(dot3(norm3(sub3(after.b3, after.a3)), dir0)).toBeCloseTo(1, 9)     // 방향 유지
-    expect(lenMm(after.a3, after.b3, app.doc.mmPerUnit)).toBeCloseTo(1000, 9) // 길이 대체
+    expect(lenMm(after.a3, after.b3, app.lift.mmPerUnit)).toBeCloseTo(1000, 9) // 길이 대체
   })
 
   it('다시 입력하면 대체된다 — 확정 전이든 후든 같은 몸짓(4-4의 «변경»)', () => {
@@ -141,7 +159,7 @@ describe('4-2 — 그 뒤는 시작점·방향만 취하고 길이를 바꾼다'
     setDimension(app, beam.id, 1000)
     setDimension(app, beam.id, 700)
     const g = app.lift.lifted.get(beam.id)!
-    expect(lenMm(g.a3, g.b3, app.doc.mmPerUnit)).toBeCloseTo(700, 9)
+    expect(lenMm(g.a3, g.b3, app.lift.mmPerUnit)).toBeCloseTo(700, 9)
   })
 })
 
@@ -157,11 +175,11 @@ describe('4-5 — 한 곳에서 계산해 셋이 읽는다: 미리보기 == 확�
     expect(oh.p3).not.toBeNull()
     const cursor = { x: 620, y: 352 }
     const r = resolveEnd(app.lift, app.pose, app.lift.an, oh.p, { p3: oh.p3 }, cursor, set,
-      { mmPerUnit: app.doc.mmPerUnit, snapStep: null })
+      { mmPerUnit: app.lift.mmPerUnit, snapStep: null })
     expect(r.lenMm).not.toBeNull()
     const st = s.draw(p.x, p.y, cursor.x, cursor.y)!
     const g = app.lift.lifted.get(st.id)!
-    expect(lenMm(g.a3, g.b3, app.doc.mmPerUnit)).toBeCloseTo(r.lenMm!, 6)
+    expect(lenMm(g.a3, g.b3, app.lift.mmPerUnit)).toBeCloseTo(r.lenMm!, 6)
   })
 
   it('무스케일이면 미리보기 길이도 null이다 — 숫자를 지어내지 않는다', () => {
@@ -170,7 +188,7 @@ describe('4-5 — 한 곳에서 계산해 셋이 읽는다: 미리보기 == 확�
     const set = { ...app.osnap, radius: app.osnap.radius }
     const oh = resolveStart(app.lift, app.pose, { x: 500, y: 380 }, set)!
     const r = resolveEnd(app.lift, app.pose, app.lift.an, oh.p, { p3: oh.p3 }, { x: 620, y: 352 }, set,
-      { mmPerUnit: app.doc.mmPerUnit, snapStep: null })
+      { mmPerUnit: app.lift.mmPerUnit, snapStep: null })
     expect(r.lenMm).toBeNull()
   })
 })
@@ -184,7 +202,7 @@ describe('4-7 — 치수 스냅: 실제 길이가 그 단위로 맞춰진다 (�
     app.dimSnapStep = 100
     const st = s.draw(500, 380, 620, 352)!            // 기둥 끝 → vp0 축
     const g = app.lift.lifted.get(st.id)!
-    const mm = lenMm(g.a3, g.b3, app.doc.mmPerUnit)!
+    const mm = lenMm(g.a3, g.b3, app.lift.mmPerUnit)!
     expect(Math.abs(mm - Math.round(mm / 100) * 100)).toBeLessThan(1e-6)
     expect(mm).toBeGreaterThan(0)
   })
@@ -196,7 +214,7 @@ describe('4-7 — 치수 스냅: 실제 길이가 그 단위로 맞춰진다 (�
     expect(app.dimSnap).toBe(false)                   // 기본 꺼짐(4-7 「옵션」)
     const st = s.draw(500, 380, 620, 352)!
     const g = app.lift.lifted.get(st.id)!
-    const mm = lenMm(g.a3, g.b3, app.doc.mmPerUnit)!
+    const mm = lenMm(g.a3, g.b3, app.lift.mmPerUnit)!
     // 이 커서 자리는 100의 배수에서 멀다 — 스냅이 몰래 켜지면 여기서 걸린다
     expect(Math.abs(mm - Math.round(mm / 100) * 100)).toBeGreaterThan(1)
   })
@@ -221,22 +239,24 @@ describe('저장·복원 — 스케일·단위·치수가 왕복한다', () => {
     app.doc.unit = 'm'
     const text = serializeBrnl({ doc: app.doc, nextId: app.nextId, savedViews: [] })
     const back = parseBrnl(text)!
-    expect(back.doc.mmPerUnit).toBeCloseTo(app.doc.mmPerUnit!, 12)
     expect(back.doc.unit).toBe('m')
     expect(back.doc.strokes.find(x => x.id === post.id)!.dim).toBe(2500)
+    // 스케일은 저장하지 않는다(파생 — 원칙 b) — 복원 후 리프팅이 같은 값을 다시 세운다
+    const relift = liftAll(back.doc)
+    expect(relift.mmPerUnit).toBeCloseTo(app.lift.mmPerUnit!, 12)
   })
 
   it('옛 파일(열쇠 없음)은 무스케일 mm로 읽힌다 · 틀린 모양은 거부한다', () => {
     const { s } = drawn()
     const raw = JSON.parse(serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: [] }))
-    delete raw.mmPerUnit; delete raw.unit
+    delete raw.unit
     const ok = parseBrnl(JSON.stringify(raw))!
-    expect(ok.doc.mmPerUnit).toBeNull()
     expect(ok.doc.unit).toBe('mm')
-    raw.mmPerUnit = -1
-    expect(parseBrnl(JSON.stringify(raw))).toBeNull()
-    delete raw.mmPerUnit
+    expect(liftAll(ok.doc).mmPerUnit).toBeNull()   // 치수가 없으면 무스케일
     raw.unit = 'ft'
     expect(parseBrnl(JSON.stringify(raw))).toBeNull()
+    raw.unit = 'mm'
+    raw.strokes = raw.strokes.map((x: any, i: number) => i === 0 ? { ...x, dim: -5 } : x)
+    expect(parseBrnl(JSON.stringify(raw))).toBeNull()   // 틀린 치수 모양은 거부
   })
 })

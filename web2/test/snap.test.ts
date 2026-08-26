@@ -66,7 +66,7 @@ describe('축 스냅 — 임계 없이 가장 가까운 축에 항상 붙는다'
   })
 
   it('반례: 축이 하나도 없으면(지평선 전) 자유다 — 그때는 축이란 것이 없다', () => {
-    const bare = analyze({ frame: { W: 1200, H: 800 }, strokes: [], faces: [], mmPerUnit: null, unit: 'mm' as const })
+    const bare = analyze({ frame: { W: 1200, H: 800 }, strokes: [], faces: [], unit: 'mm' as const })
     const s = snapDir(bare, DRAW_POSE, pt(100, 100), pt(300, 260))
     expect(s.axis).toBeNull()
     expect(s.end).toEqual(pt(300, 260))

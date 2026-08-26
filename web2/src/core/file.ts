@@ -21,9 +21,9 @@ export function serializeBrnl(d: BrnlData): string {
     // 면은 **경계의 정체**만 담긴다(획 id 차례) — 좌표는 복원 후 다시 풀린다.
     // 옛 파일에는 이 열쇠가 없고 그때는 면이 없는 문서로 읽힌다(version은 그대로 1).
     faces: d.doc.faces,
-    // 치수(web2-08 지시 4) — 스케일과 표시 단위는 사용자의 결정이라 담는다.
-    // 옛 파일에는 이 열쇠들이 없고 그때는 무스케일 mm 문서로 읽힌다(version 그대로 1).
-    mmPerUnit: d.doc.mmPerUnit,
+    // 치수(web2-08 지시 4) — 표시 단위는 사용자의 결정이라 담는다. 스케일(mmPerUnit)은
+    // 파생이라 안 담는다(획의 dim에서 복원 후 다시 계산된다 — 원칙 b).
+    // 옛 파일에는 이 열쇠가 없고 그때는 mm 문서로 읽힌다(version 그대로 1).
     unit: d.doc.unit,
     nextId: d.nextId,
     savedViews: d.savedViews,
@@ -107,19 +107,14 @@ export function parseBrnl(text: string): BrnlData | null {
     faces.reduce((m, f) => Math.max(m, f.id), 0),
   )
   const nextId = isNum(raw.nextId) && raw.nextId > maxId ? raw.nextId : maxId + 1
-  // 스케일·단위 — 없으면(옛 파일) 무스케일 mm. 모양이 틀리면 거부한다.
-  let mmPerUnit: number | null = null
-  if (raw.mmPerUnit !== undefined && raw.mmPerUnit !== null) {
-    if (!isNum(raw.mmPerUnit) || raw.mmPerUnit <= 0) return null
-    mmPerUnit = raw.mmPerUnit
-  }
+  // 단위 — 없으면(옛 파일) mm. 모양이 틀리면 거부한다.
   let unit: Unit = 'mm'
   if (raw.unit !== undefined) {
     if (!UNITS.includes(raw.unit)) return null
     unit = raw.unit
   }
   return {
-    doc: { frame: { W: raw.frame.W, H: raw.frame.H }, strokes, faces, mmPerUnit, unit },
+    doc: { frame: { W: raw.frame.W, H: raw.frame.H }, strokes, faces, unit },
     nextId,
     savedViews,
   }

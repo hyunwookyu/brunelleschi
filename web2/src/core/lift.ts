@@ -28,6 +28,9 @@ export interface LiftResult {
   anchorId: number | null
   /** id → 획 (문서에서 그대로 — 조회 편의) */
   strokes: Map<number, Stroke>
+  /** **세계 1단위 = 몇 mm** — 파생이다(web2-08 지시 4-1): 문서 순서상 첫 치수 획의
+   *  `dim ÷ (무치수 풀이 길이)`. 치수가 없으면 null(무스케일). 계산은 아래 `scaleOf`. */
+  mmPerUnit: number | null
 }
 
 /** 직선 P0+t·a 와 광선의 최근접점(직선 위의 점). 평행이면 null. */
@@ -80,6 +83,26 @@ const axisDir = (an: Analysis, id: AxisId): V3 | null =>
 
 /** 문서 전체를 처음부터 리프팅한다 — 카메라가 바뀌면(2점 승격) 전부 다시 푼다. */
 export function liftAll(doc: Doc): LiftResult {
+  return liftPass(doc, scaleOf(doc))
+}
+
+/** **스케일(mm/세계단위) — 파생**(원칙 b · 지시 4-1): 문서 순서상 첫 치수 획을
+ *  **치수 없이** 풀었을 때의 길이가 분모다. 그래서 그 획에 치수를 «다시» 입력해도
+ *  스케일이 그 값으로 다시 선다 — 저장하면 첫 입력이 굳어 정정과 갈린다(#54).
+ *  대가: 치수 없는 풀이를 한 번 더 돈다(문서당 2패스) — 전량 재계산이 이미 원칙이다.
+ *  ⚠ 첫 치수 획을 지우면(조각은 dim을 안 물려받는다) 스케일이 다음 치수 획으로
+ *  넘어가거나 없어진다 — 조용히 다른 값이 되는 대신 그 사실이 길이 표시(null)로 보인다. */
+function scaleOf(doc: Doc): number | null {
+  const s0 = doc.strokes.find(s => s.dim !== undefined)
+  if (!s0) return null
+  const base = liftPass(doc, null)
+  const g = base.lifted.get(s0.id)
+  if (!g) return null
+  const L = len3(sub3(g.b3, g.a3))
+  return L > 1e-12 ? s0.dim! / L : null
+}
+
+function liftPass(doc: Doc, mmPerUnit: number | null): LiftResult {
   const an = analyze(doc)
   const lifted = new Map<number, LiftedSeg>()
   let anchorId: number | null = null
@@ -94,7 +117,7 @@ export function liftAll(doc: Doc): LiftResult {
   const isMark = (s: Stroke) => Math.hypot(s.b.x - s.a.x, s.b.y - s.a.y) <= C.TAP_MAX_PX
   const content = doc.strokes.filter(s => an.roles.get(s.id) !== 'horizon' && !isMark(s))
   if (!an.principal || an.f === null) {
-    return { an, lifted, waiting: content.map(s => s.id), anchorId, strokes }
+    return { an, lifted, waiting: content.map(s => s.id), anchorId, strokes, mmPerUnit }
   }
 
   const mergeTol = C.MERGE_RATIO * an.diag
@@ -229,10 +252,10 @@ export function liftAll(doc: Doc): LiftResult {
       // 명시 입력**(치수)이 앞의 점을 대체하는 것이다(지시 문면 그대로).
       // 첫 치수(스케일을 정한 획)도 같은 갈래를 타는데, mmPerUnit이 그 획의 길이에서
       // 나왔으므로 dim/mmPerUnit == 원래 길이 — 구성상 무변형이다(팔이 잰다).
-      if (s.dim !== undefined && doc.mmPerUnit !== null && doc.mmPerUnit > 0) {
+      if (s.dim !== undefined && mmPerUnit !== null && mmPerUnit > 0) {
         const d = sub3(b3, a3)
         const L = len3(d)
-        if (L > 1e-12) b3 = add3(a3, mul3(d, s.dim / doc.mmPerUnit / L))
+        if (L > 1e-12) b3 = add3(a3, mul3(d, s.dim / mmPerUnit / L))
       }
 
       lifted.set(s.id, { a3, b3, axis })
@@ -243,5 +266,5 @@ export function liftAll(doc: Doc): LiftResult {
     }
   }
 
-  return { an, lifted, waiting: [...pending], anchorId, strokes }
+  return { an, lifted, waiting: [...pending], anchorId, strokes, mmPerUnit }
 }

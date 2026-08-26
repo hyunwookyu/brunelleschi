@@ -107,31 +107,31 @@ export function createApp(W: number, H: number): App {
 
 // ── 치수(web2-08 지시 4) — 입력이 어디서 오든(필기·음성) 여기 하나로 들어온다 ──
 //
-// 4-1: 첫 치수가 스케일을 정한다 — `doc.mmPerUnit`(세계 1단위 = 몇 mm). 기하 불변.
-// 4-2: 그 뒤는 획에 `dim`(mm)이 실리고 리프팅이 길이를 그 값으로 바꾼다(`lift.ts`).
+// 4-1: 첫 치수가 스케일을 정한다 — 스케일은 **파생**이다(`lift.ts`의 `scaleOf`: 문서
+//   순서상 첫 치수 획의 dim ÷ 무치수 풀이 길이). 여기서는 dim만 싣는다. 그래서 같은
+//   획에 «다시» 입력하면(획마다 자동 적용되는 필기가 «2»→«25»→«2500»으로 지나간다)
+//   스케일이 마지막 값으로 선다 — 저장하던 초판은 첫 «2»가 굳었다(#54 · e2e가 잡았다).
+// 4-2: 그 뒤는 획의 `dim`(mm)이 길이를 바꾼다(`lift.ts` — 시작점·방향만 취한다).
 // ⚠ 실행취소 대상이 아니다 — 치수는 다시 말하거나 다시 써서 고친다(지시 4-4의 «확정 전
-//   변경»과 같은 몸짓이 확정 후에도 유효하다). op에 넣으려면 mmPerUnit까지 되돌려야
-//   하는데 그러면 뒤 획들의 실척이 통째로 흔들린다 — 대가가 커서 안 넣었다(DEFERRED).
+//   변경»과 같은 몸짓이 확정 후에도 유효하다). DEFERRED에 기록.
 
 export type DimResult = 'scale' | 'applied' | 'no3d' | 'none'
 
-/** 획 id에 치수 mm를 적용한다. 첫 적용은 스케일을 정하고(기하 불변), 이후는 길이를 바꾼다. */
+/** 획 id에 치수 mm를 싣는다. 무스케일 상태의 첫 적용이 곧 스케일 확정이다(기하 불변). */
 export function setDimension(app: App, id: number, mm: number): DimResult {
   const s = app.doc.strokes.find(x => x.id === id)
   if (!s || !(mm > 0) || !isFinite(mm)) return 'none'
-  if (app.doc.mmPerUnit === null) {
-    const g = app.lift.lifted.get(id)
-    if (!g) return 'no3d'                      // 3D가 없으면 스케일을 정할 길이가 없다
-    const L = len3(sub3(g.b3, g.a3))
-    if (!(L > 1e-12)) return 'no3d'
-    app.doc.mmPerUnit = mm / L
-    s.dim = mm
-    recompute(app)
-    return 'scale'
-  }
+  const wasScaled = app.lift.mmPerUnit !== null
+  if (!wasScaled && !app.lift.lifted.has(id)) return 'no3d'  // 스케일을 정할 길이가 없다
   s.dim = mm
   recompute(app)
-  return 'applied'
+  if (!wasScaled && app.lift.mmPerUnit === null) {
+    // 실려도 스케일이 안 섰다(퇴화 길이 등) — 조용히 두지 않고 물린다
+    delete s.dim
+    recompute(app)
+    return 'no3d'
+  }
+  return wasScaled ? 'applied' : 'scale'
 }
 
 /** 화면 좌표 ↔ 문서 좌표 — 뷰 오프셋의 단일 출처 */

@@ -85,7 +85,7 @@ function synthLift(segs: { id: number; a3: V3; b3: V3 }[]): LiftResult {
     const a = project(an, DRAW_POSE, s.a3)!, b = project(an, DRAW_POSE, s.b3)!
     strokes.set(s.id, { id: s.id, a, b })
   }
-  return { an, lifted, waiting: [], anchorId: null, strokes }
+  return { an, lifted, waiting: [], anchorId: null, strokes, mmPerUnit: null }
 }
 
 /** 지면의 축 정렬 사각형 — id 넷을 쓴다 */

@@ -31,7 +31,7 @@ describe('뷰 큐브 — 기준 좌표계는 그린 공간의 축', () => {
   })
 
   it('작도 전에는 큐브가 없다', () => {
-    const partial = analyze({ frame: { W: 1200, H: 800 }, strokes: [], faces: [], mmPerUnit: null, unit: 'mm' as const })
+    const partial = analyze({ frame: { W: 1200, H: 800 }, strokes: [], faces: [], unit: 'mm' as const })
     expect(cubeBasis(partial)).toBeNull()
   })
 
