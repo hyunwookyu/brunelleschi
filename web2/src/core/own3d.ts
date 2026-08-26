@@ -1,16 +1,17 @@
-// 자립 구조(web2-13 4부 · 개정 3 초안 §2·§7·§9.1) — **깃발 뒤, 기본 꺼짐.**
+// 자립 구조(web2-13 4부 · 개정 3 초안 §2·§7·§9.1) — 깃발 뒤 · **기본 켜짐**
+// (web2-14 1번 — 사람이 실기기 판정으로 켰다. 이제 이 경로가 정본이다).
 //
 // 「정의는 사건이다」: 카메라가 닫힌 뒤(§9.2 — constructionDone) 사슬이 놓은 3D를
 // 획이 **소유**한다(Stroke.own3). 근거 획이 지워져도 유지된다 — 관계가 아니라 사건.
 // 승격 사건(카메라 서명 변화)이 나면 전부 버리고 사슬로 다시 올려 다시 굳힌다
 // (2부 측정 promote_freeze_web2.json이 정한 갈래 — 굳힌 3D는 승격을 못 살아남는다).
 //
-// ⚠ 깃발(App.own3d)이 꺼져 있으면 이 파일의 어떤 함수도 앱 경로에서 불리지 않는다 —
-// 옛 사슬이 정본이다(4부 불변식: 꺼짐 동작 전후 동일). 기본값은 **사람만** 켠다(4-f).
+// ⚠ 깃발(App.own3d)이 꺼져 있으면(설정 — A-4 대체 경로) 이 파일의 어떤 함수도 앱
+// 경로에서 불리지 않는다 — 그때는 옛 사슬 동작 그대로다(web2-13 4부 불변식이 그 대역).
 
 import type { Stroke, CamPose } from './types'
 import { type Analysis, DRAW_POSE, project, rayThrough } from './camera'
-import { dist2, type V3, type Pt } from './vec'
+import { dist2, add3, sub3, mul3, dot3, cross3, norm3, len3, type V3, type Pt } from './vec'
 import { closestOnLineToRay, axisOfStroke, type LiftResult } from './lift'
 import { atOwnPose } from './waitfade'
 import { C } from './constants'
@@ -78,14 +79,14 @@ const distToSeg = (p: Pt, a: Pt, b: Pt): number => {
  *  · **방향이 선 B만** — 축 배정이 없는 자유 대기 획은 P 하나로 직선이 안 선다
  *    (방향 미정 — 반증 조건이 이 갈래다).
  *
- *  ⚠⚠ **실효 문은 오스냅 반경(8px)이 아니라 아래 퇴화 방어의 사영 왕복(0.5px)이다**
- *  (4차 리뷰어 [41]): B의 own3는 P를 지나는 «이상적인 축 직선»이고, A의 끝이 B의
- *  잉크 선에서 d px 벗어나면 왕복도 ≈d px 벗어나 거부된다. 그리고 B 자신의 잉크가
- *  축선에서 0.5px 넘게 벗어나 있어도(손 조준 오차) 거부된다 — 그래야 정의된 3D가
- *  잉크 심판(§7)을 통과한다. 실제 도달 집합: **A를 오스냅으로 B의 끝점·중점에 붙여
- *  끝낸 경우**(대기 획의 오스냅 후보가 그 둘뿐이다 — NOTES 2단계)가 사실상 전부다.
- *  좁음은 의도된 보수성이다(조용히 틀린 배치 < 안 되는 것) — 넓히는 것은 실기기
- *  관측 후의 일(DEFERRED). 무산은 `missed`로 센다 — 조용히 버리지 않는다(3-b 규약).
+ *  ⚠ (web2-13 4차 [41]의 「실효 문 0.5px · 도달 집합 = 끝점·중점 오스냅뿐」은
+ *  **web2-14 2번으로 뒤집혔다** — 실기기가 «손으로는 안 된다»로 판정했다.) 지금 문은
+ *  선언대로 **오스냅 반경**이다: ① 대기 획의 그린 구간이 near 오스냅 대상이라(osnap.ts)
+ *  끝점이 B 잉크 위에 정확히 붙을 수 있고 ② P를 A직선∩B해석면으로 풀어(아래) 뗌
+ *  오차가 B의 위치에 안 실린다. 왕복 문(0.5px)은 이제 퇴화 방어 본연으로 돌아갔다 —
+ *  B 자신의 잉크가 축선에서 벗어난 획(자유롭게 긋고 나중에 축으로 읽힌 것)은 여전히
+ *  거부된다: 그래야 정의된 3D가 잉크 심판(§7)을 통과한다.
+ *  무산은 `missed`로 센다 — 조용히 버리지 않는다(3-b 규약).
  *  ⚠ 표현 구간(pts2d 확정 끝점 사이)만 본다 — 무한 연장은 안 본다(§4 — 범위 밖). */
 export interface TouchStats { ok: number; pose: number; axis: number; lift: number; roundtrip: number }
 export function defineByTouch(lift: LiftResult, a: Stroke, osnapRadiusPx: number):
@@ -108,10 +109,29 @@ export function defineByTouch(lift: LiftResult, a: Stroke, osnapRadiusPx: number
     if (!axis) { missed.axis++; continue }            // 방향 미정 — 정의 불가(반증 조건)
     const dir = an.axes.find(x => x.id === axis)?.dir
     if (!dir) { missed.axis++; continue }
-    const P: V3 = seg.b3                              // A의 뗀 끝 = 사건의 자리
     const rayA = rayThrough(an, poseB, b.a)
     const rayB = rayThrough(an, poseB, b.b)
     if (!rayA || !rayB) { missed.lift++; continue }
+    // ── 사건의 자리 P(web2-14 2번 수리 ㉑) — «A의 뗀 끝 그대로»가 아니라
+    // **A의 3D 직선 ∩ B의 해석면**(눈과 B의 잉크 선분이 만드는 평면)이다.
+    // 뗀 끝을 그대로 쓰면 손의 뗌 오차 δpx가 P의 사영을 B 잉크에서 δ만큼 벗어나게
+    // 하고, 아래 왕복 문(0.5px)이 그 δ를 그대로 거부했다 — 오스냅 반경(8px) 대역의
+    // 손이 0.5px 문을 열 수 없어 «코드에는 있는데 손으로는 안 된다»가 됐다(실기기
+    // 판정 → vptouch.test 재현: 수리 전 missed.roundtrip=1). 교점으로 풀면 proj(P)가
+    // 구성상 B 잉크 위라 왕복이 fp 대역이다 — 손 오차는 «어디서 뗐나»(A의 끝)에만
+    // 남고 «B가 어디 서나»에는 안 실린다. 끝점 사건 문(위 distToSeg)은 그대로다.
+    const u = sub3(seg.b3, seg.a3)
+    if (len3(u) < 1e-12) { missed.lift++; continue }
+    const un = norm3(u)
+    const n = cross3(rayA.d, rayB.d)                  // B 해석면의 법선(면은 눈을 지난다)
+    const denom = dot3(n, un)
+    if (Math.abs(denom) < 1e-12) { missed.lift++; continue }   // A가 해석면과 평행 — 교점 없음
+    const t = dot3(n, sub3(rayA.o, seg.b3)) / denom
+    const P: V3 = add3(seg.b3, mul3(un, t))
+    // 사건은 여전히 «뗀 끝»의 일이다 — P가 뗀 끝의 오스냅 대역을 벗어나면(얕은 각의
+    // 원거리 교점) 의도로 읽지 않는다. 위 distToSeg 문과 같은 반경을 쓴다.
+    const pp = project(an, poseB, P)
+    if (!pp || dist2(pp, a.b) > osnapRadiusPx) { missed.lift++; continue }
     const a3 = closestOnLineToRay(P, dir, rayA)
     const b3 = closestOnLineToRay(P, dir, rayB)
     if (!a3 || !b3) { missed.lift++; continue }

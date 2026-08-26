@@ -198,12 +198,25 @@ export function osnap(
     }
   }
 
-  // 대기 획 — 끝점·중점만, 2D에서 (자기 포즈에서만 유효하지만 좌표는 포즈 무관 화면값)
+  // 대기 획 — 끝점·중점·**그린 구간 위(근처점)**, 2D에서 (자기 포즈에서만 유효하지만
+  // 좌표는 포즈 무관 화면값). 몸통(near)은 web2-14 2번 ㉮가 열었다: 대기 소실점 선에
+  // 끝점을 «닿게» 하려면 그 선에 스냅이 걸려야 한다 — 실기기에서 4-g가 손으로 안 되던
+  // 절반이 이 부재였다(나머지 절반은 own3d.ts의 P 계산 — 같은 회차 주석).
+  // ⚠ 구간 클램프 — 무한 연장에 걸면 «조용히 틀린 배치»다(web2-13 1-d). 연장 없음.
+  // 우선순위는 OSNAP_ORDER 그대로라 끝점·중점이 몸통보다 앞선다(끝 근처에서는 종전 동작).
   for (const id of lift.waiting) {
     const s = lift.strokes.get(id)
     if (!s) continue
     if (set.kinds.end) { push('end', s.a, null); push('end', s.b, null) }
     if (set.kinds.mid) push('mid', pt((s.a.x + s.b.x) / 2, (s.a.y + s.b.y) / 2), null)
+    if (set.kinds.near) {
+      const dx = s.b.x - s.a.x, dy = s.b.y - s.a.y
+      const L2 = dx * dx + dy * dy
+      if (L2 > 1e-12) {
+        const t = Math.max(0, Math.min(1, ((cursor.x - s.a.x) * dx + (cursor.y - s.a.y) * dy) / L2))
+        push('near', pt(s.a.x + t * dx, s.a.y + t * dy), null)
+      }
+    }
   }
 
   // 정확한 것이 앞선다 — 종류 우선순위, 같은 종류면 가까운 것

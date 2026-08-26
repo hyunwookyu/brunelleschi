@@ -138,7 +138,16 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
     for (const s of content) {
       if (!s.own3) continue
       const a3 = { ...s.own3.a }
-      const b3 = { ...s.own3.b }
+      let b3 = { ...s.own3.b }
+      // 치수(4-2)는 굳힘 «뒤»에도 사람의 명시 입력이 이긴다(web2-14 1번 — 기본 켜짐
+      // 전환이 드러낸 회귀: 씨앗이 사슬 풀이를 건너뛰므로 아래 dim 대체가 여기도 필요하다).
+      // 멱등이다 — 이미 그 길이면 같은 값. b 끝의 잉크 어긋남은 잉크 심판의 알려진
+      // 예외(own3Deviation이 dim 획의 b를 뺀다). 시작점·방향은 씨앗 그대로다.
+      if (s.dim !== undefined && mmPerUnit !== null && mmPerUnit > 0) {
+        const d = sub3(b3, a3)
+        const L = len3(d)
+        if (L > 1e-12) b3 = add3(a3, mul3(d, s.dim / mmPerUnit / L))
+      }
       lifted.set(s.id, { a3, b3, axis: (s.own3.axis as AxisId | null) })
       endpoints.push(a3, b3)
       segs.push({ a3, b3 })
