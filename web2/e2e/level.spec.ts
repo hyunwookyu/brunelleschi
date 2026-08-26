@@ -314,8 +314,31 @@ test('**지평선이 옅다 — h~2h 급** · 픽셀 잉크량으로 잰다 (web
     for (let i = 3; i < d.length; i += 4) sum += d[i]!
     return sum / (dpr * dpr) / 800
   })
-  expect(perCol).toBeLessThan(250)
-  expect(perCol).toBeGreaterThan(60)
+  console.log(`[측정] 지평선 열당 잉크량 ${perCol.toFixed(1)}`)
+  // web2-12 7번 — 작도 대역으로 더 내렸다(COL.horizon — 토글이 하한 논리를 풀었다).
+  // 대역: 위 110(직전 값 2H급 128이 걸린다 — 되돌리면 실패) · 아래 30(안 그려지면 0).
+  expect(perCol).toBeLessThan(110)
+  expect(perCol).toBeGreaterThan(30)
+
+  // 토글(web2-12 7번) — 끄면 지평선 픽셀이 **0**이다(반증 D-3: 남으면 여기서 걸린다)
+  await page.click('#pane-settings > summary')
+  await page.click('#chk-horizon')
+  await page.mouse.move(600, 700)
+  await settle(page)
+  const offBand = await page.evaluate(() => {
+    const c = document.getElementById('ink') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const d = c.getContext('2d')!.getImageData(
+      Math.round(200 * dpr), Math.round(396 * dpr),
+      Math.round(800 * dpr), Math.round(8 * dpr)).data
+    let n = 0
+    for (let i = 3; i < d.length; i += 4) if (d[i]! > 0) n++
+    return n
+  })
+  console.log(`[측정] 지평선 토글 끔 — 띠 painted ${offBand}`)
+  expect(offBand).toBe(0)
+  await page.click('#chk-horizon')   // 되돌린다(기본 켜짐)
+  await settle(page)
 })
 test('**오스냅 기호가 무채색이다** — 픽셀 채도로 잰다 (web2-08 지시 2)', async ({ page }) => {
   // 재현: 오스냅 표식이 초록(#1a9c50)이었다 — 채도가 있으니 모델링 툴의 표식으로 읽힌다.
