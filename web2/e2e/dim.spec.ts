@@ -268,3 +268,66 @@ test('키패드 키가 펜 크기 대역이다 — 실측(지시 5의 크기 규
     return t === el || t.contains(el)
   })).toBe(true)
 })
+
+test('인식기 감지(web2-10 지시 8-b) — 내장 API가 있으면 그것을 쓰고, 죽으면 번들 모형으로 떨어진다', async ({ page }) => {
+  // 헤드리스 크롬에는 createHandwritingRecognizer가 없다(ChromeOS 축) — 모의로 ①의 배선을
+  // 재고, 모의를 죽여 ②로 떨어지는 것까지 잰다(음성 모의와 같은 방식 — 앱이 쓰는 그 자리).
+  await page.addInitScript(() => {
+    (navigator as any).createHandwritingRecognizer = async () => ({
+      startDrawing: () => ({
+        addStroke() { /* 획을 받는다 */ },
+        async getPrediction() { return [{ text: 'a3b8mm' }] }, // 숫자 밖 문자가 섞인 결과
+      }),
+    })
+  })
+  await build(page)
+  await page.click('#dim-toggle')
+  // 진단 패널(지시 4)도 같은 감지를 보인다
+  await page.click('#buildid')
+  expect(await page.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll('#diagpanel div'))
+    return rows.find(d => d.textContent?.includes('필기 인식 API'))?.textContent
+  })).toContain('있음')
+  await writeOne(page, 60)                                  // 아무 획 — 모의가 «a3b8mm»을 낸다
+  await page.waitForFunction(() => document.getElementById('dim-read')!.textContent === '38')
+  expect(await page.textContent('#pad-read')).toBe('38')    // 숫자만 남긴다(«38») + 스테이징
+})
+
+test('인식기 감지 — 내장 API가 선언만 있고 죽으면 번들 모형이 답한다 (반증 짝)', async ({ page }) => {
+  await page.addInitScript(() => {
+    (navigator as any).createHandwritingRecognizer = async () => { throw new Error('안 된다') }
+  })
+  await build(page)
+  await page.click('#dim-toggle')
+  await writeOne(page, 60)                                  // 세로 막대 — digitnet이 «1»로 읽는다
+  await page.waitForFunction(() => document.getElementById('dim-read')!.textContent === '1')
+  expect(await page.textContent('#pad-read')).toBe('1')
+})
+
+test('비동기 인식 순서(recSeq) — 늦게 온 옛 결과가 새 결과를 덮지 않는다 (8-b 리뷰어 [11])', async ({ page }) => {
+  // 모의 내장 API가 첫 호출만 500ms 늦게 «9»를, 둘째는 즉시 «1»을 낸다.
+  // 획을 잇달아 두 번 끝내면: 옛 «9»가 늦게 도착해도 화면·스테이징은 «1»이어야 한다.
+  await page.addInitScript(() => {
+    let calls = 0
+    ;(navigator as any).createHandwritingRecognizer = async () => ({
+      startDrawing: () => {
+        const n = ++calls
+        return {
+          addStroke() { /* 획 */ },
+          async getPrediction() {
+            if (n === 1) { await new Promise(r => setTimeout(r, 500)); return [{ text: '9' }] }
+            return [{ text: '1' }]
+          },
+        }
+      },
+    })
+  })
+  await build(page)
+  await page.click('#dim-toggle')
+  await writeOne(page, 60)                          // 1차 — 늦은 «9»
+  await writeOne(page, 100)                         // 2차 — 즉시 «1»
+  await page.waitForFunction(() => document.getElementById('dim-read')!.textContent === '1')
+  await page.waitForTimeout(700)                    // 늦은 «9»가 도착할 시간을 준다
+  expect(await page.textContent('#dim-read')).toBe('1')   // 덮지 않았다
+  expect(await page.textContent('#pad-read')).toBe('1')
+})

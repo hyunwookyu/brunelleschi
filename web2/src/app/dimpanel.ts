@@ -5,7 +5,7 @@
 // `applyDimInput`(필기·음성 공용) 하나다. 값 표시는 main이 부른다(`show`) —
 // 「한 곳에서 계산해 셋이 읽는다」(4-5)의 셋째 자리가 이 패널이다.
 
-import { recognizeDigits } from '../core/digits'
+import { recognizeStrokes } from '../core/handwriting'
 import type { Pt } from '../core/vec'
 
 export interface DimPanel {
@@ -66,17 +66,23 @@ export function initDimPanel(
     cur.push(at(e))
     redraw()
   })
+  let recSeq = 0
   const up = () => {
     if (!cur) return
     if (cur.length > 1) strokes.push(cur)
     cur = null
     redraw()
-    const text = recognizeDigits(strokes)
-    read.textContent = text
-    // ⚠ 자동 적용을 **안 한다**(web2-10 지시 8-a ② — web2-08의 「읽히면 즉시 적용」을
-    // 뒤집었다): 인식은 확률적이라 3이 8로 읽히면 scaleRef가 조용히 틀린다. 결과는
-    // 키패드 표시로 올라가고(고칠 수 있다) 사람이 «적용»을 눌러야 실린다.
-    if (text.length > 0 && !text.includes('?')) stage(text)
+    // 인식기는 감지로 갈린다(web2-10 지시 8-b — 내장 API 또는 번들 MLP. $P는 하네스로 남았다).
+    // 비동기이므로 순서표를 든다 — 늦게 온 옛 결과가 새 획의 결과를 덮지 않게.
+    const seq = ++recSeq
+    void recognizeStrokes(strokes.slice()).then(({ text }) => {
+      if (seq !== recSeq) return
+      read.textContent = text
+      // ⚠ 자동 적용을 **안 한다**(web2-10 지시 8-a ② — web2-08의 「읽히면 즉시 적용」을
+      // 뒤집었다): 인식은 확률적이라 3이 8로 읽히면 scaleRef가 조용히 틀린다. 결과는
+      // 키패드 표시로 올라가고(고칠 수 있다) 사람이 «적용»을 눌러야 실린다.
+      if (text.length > 0 && !text.includes('?')) stage(text)
+    })
   }
   canvas.addEventListener('pointerup', up)
   canvas.addEventListener('pointercancel', up)
@@ -84,6 +90,7 @@ export function initDimPanel(
   function clearInk() {
     strokes.length = 0
     cur = null
+    recSeq++                    // 날고 있는 옛 인식 결과가 비운 칸에 늦게 적히지 않게
     read.textContent = ''
     redraw()
   }

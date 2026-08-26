@@ -115,7 +115,7 @@ export function recognizeGlyph(strokes: Pt[][]): { ch: string; d: number } | nul
   return best
 }
 
-interface Glyph { strokes: Pt[][]; lo: number; hi: number; h: number }
+export interface Glyph { strokes: Pt[][]; lo: number; hi: number; h: number }
 
 const bboxOf = (st: Pt[]) => {
   let lox = Infinity, hix = -Infinity, loy = Infinity, hiy = -Infinity
@@ -123,15 +123,13 @@ const bboxOf = (st: Pt[]) => {
   return { lox, hix, loy, hiy }
 }
 
-/** 획 목록 → 글리프 묶음 → 문자열. 못 읽는 글리프는 '?'.
- *  가로로 겹치는 획은 같은 글리프다(«4»의 두 획). 아주 작은 글리프는 소수점이다. */
-export function recognizeDigits(strokes: Pt[][]): string {
-  if (strokes.length === 0) return ''
+/** 획 목록 → 글리프 묶음(왼쪽부터) — 인식기 공용 분절(web2-10 지시 8-b가 밖으로 냈다).
+ *  가로로 겹치는 획은 같은 글리프다(«4»의 두 획). 시간 순서와 무관. */
+export function splitGlyphs(strokes: Pt[][]): { glyphs: Glyph[]; tallest: number } {
   const glyphs: Glyph[] = []
   for (const st of strokes) {
     const b = bboxOf(st)
     const h = b.hiy - b.loy
-    // 가로 구간이 겹치는 기존 글리프에 붙인다 — 시간 순서와 무관(점 4를 나중에 찍어도 된다)
     const hit = glyphs.find(g => b.lox <= g.hi && b.hix >= g.lo)
     if (hit) {
       hit.strokes.push(st)
@@ -143,10 +141,21 @@ export function recognizeDigits(strokes: Pt[][]): string {
   }
   glyphs.sort((a, b) => (a.lo + a.hi) - (b.lo + b.hi))
   const tallest = Math.max(...glyphs.map(g => Math.max(g.h, g.hi - g.lo)))
+  return { glyphs, tallest }
+}
+
+/** 아주 작은 글리프는 소수점 «.»이다 — 크기 비 0.18(동작점 · AS-C24) */
+export const isDot = (g: Glyph, tallest: number) =>
+  Math.max(g.h, g.hi - g.lo) < tallest * 0.18
+
+/** 획 목록 → 글리프 묶음 → 문자열. 못 읽는 글리프는 '?'. ($P 경로 — web2-10 이후
+ *  런타임은 handwriting.ts가 고르고, 이 함수는 비교 하네스·후방 호환으로 남는다) */
+export function recognizeDigits(strokes: Pt[][]): string {
+  if (strokes.length === 0) return ''
+  const { glyphs, tallest } = splitGlyphs(strokes)
   let out = ''
   for (const g of glyphs) {
-    const size = Math.max(g.h, g.hi - g.lo)
-    if (size < tallest * 0.18) { out += '.'; continue }   // 소수점 — 크기로 가른다
+    if (isDot(g, tallest)) { out += '.'; continue }
     const r = recognizeGlyph(g.strokes)
     out += r ? r.ch : '?'
   }
