@@ -1,18 +1,18 @@
 {
  "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
- "measured_at": "web2-10 최종(2026-08-26)",
+ "measured_at": "web2-11 1부 검증 시점(2026-08-26 — 배포 전 측정. 배포 해시는 HANDOFF/보고가 정본)",
  "unit": {
   "command": "npm test (vitest)",
-  "files": 34,
-  "tests": 352,
-  "wall_s": 2.85,
+  "files": 35,
+  "tests": 358,
+  "wall_s": 3.04,
   "note": "vitest 자체 Duration. 프로세스 벽시계는 ~5s(부팅 포함)"
  },
  "e2e": {
   "command": "npm run e2e (playwright, dpr1+dpr2)",
-  "cases": 88,
-  "wall_s": 63,
-  "note": "케이스 = 44팔 × 2 dpr. 회차별 증가: web2-10 ① +8 · ② +10 · ③ +4 · 최종 +6"
+  "cases": 100,
+  "wall_s": 66,
+  "note": "케이스 = 50팔 × 2 dpr. web2-11 1부가 +12(입력 6팔) · 단위 +6(file 5·payload 1)"
  },
  "typecheck_build": {
   "command": "tsc --noEmit · vite build",
@@ -47,6 +47,12 @@
    "unit": 352,
    "e2e": 88,
    "e2e_wall_s": 63
+  },
+  {
+   "at": "web2-11 1부",
+   "unit": 358,
+   "e2e": 100,
+   "e2e_wall_s": 66
   }
  ]
 }
