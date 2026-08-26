@@ -72,9 +72,13 @@ async function liveDraw(page: Page, renderer: 'brush' | 'classic', y: number) {
   await page.mouse.move(200, y)
   await page.mouse.down()
   const s0 = await page.evaluate(() => (window as any).__b2.diag.brushStats())
+  // draft 통계는 **이 국면 것만** 읽는다(리셋 — 누산기를 국면 칸에 실으면 실행 0인 칸에
+  // 남의 값이 실린다: 2차 리뷰어 [5]가 classic 칸의 brush 값(글자 그대로 동일)을 잡았다)
+  await page.evaluate(() => (window as any).__b2.diag.draftStatsReset())
   for (let i = 1; i <= 40; i++) await page.mouse.move(200 + (700 * i) / 40, y + (40 * i) / 40)
   await settle(page)
   const s1 = await page.evaluate(() => (window as any).__b2.diag.brushStats())
+  const d1 = await page.evaluate(() => (window as any).__b2.diag.draftStats())
   await page.mouse.up()
   await settle(page)
   const s2 = await page.evaluate(() => (window as any).__b2.diag.brushStats())
@@ -84,6 +88,11 @@ async function liveDraw(page: Page, renderer: 'brush' | 'classic', y: number) {
     brush_redraws_while_down: s1.redraws - s0.redraws,
     brush_syncs_while_down: s1.syncs - s0.syncs,
     brush_redraws_on_commit: s2.redraws - s1.redraws,
+    // web2-12 2번 — draft(진행 중 획) 한 획 재그리기의 분자와 ms(이 국면 표본의 중앙·최악).
+    // 전량 재그리기(brush_redraws)와 갈라 센다 — 섞으면 «그리는 중 전량 0회»가 안 재진다.
+    draft_redraws_while_down: d1.redraws,
+    draft_ms_median: d1.redraws > 0 ? Number(d1.msMedian.toFixed(2)) : null,
+    draft_ms_max: d1.redraws > 0 ? Number(d1.msMax.toFixed(2)) : null,
   }
 }
 
@@ -166,10 +175,14 @@ test('2-f 원장 — 지연·프레임(그리기/궤도)·재그리기 분산·�
 
   // 판별 하한(D-3) — 수집기 생존 + «그리는 중 재그리기 0회»는 카운터로 + 궤도의 양성 채널
   expect(liveBrush500.frames).toBeGreaterThan(5)
-  expect(liveBrush500.brush_redraws_while_down).toBe(0)  // 닿아 있는 동안 — 캐시 히트(분모 syncs)
+  expect(liveBrush500.brush_redraws_while_down).toBe(0)  // 닿아 있는 동안 — **전량** 재그리기 0회(웹2-12 뒤에도 계약)
   expect(liveBrush500.brush_syncs_while_down).toBeGreaterThan(0)
   expect(liveBrush500.brush_redraws_on_commit).toBe(1)   // 뗌 = 정당한 1회(커밋이 장면을 바꾼다)
   expect(orbitBrush500.brush_redraws).toBeGreaterThan(0) // 궤도 중 — 실제로 다시 그린다
+  // web2-12 2번 — 그리는 중 draft «한 획» 재그리기는 실제로 돈다(brush에서만).
+  // 획 500에서도 이 분자는 획 수와 무관하다 — 전량이 아니라 스냅샷 위 한 획이므로.
+  expect(liveBrush500.draft_redraws_while_down).toBeGreaterThan(0)
+  expect(liveClassic500.draft_redraws_while_down).toBe(0) // classic은 옛 경로(비교 기준)다
   const s500 = scale['500'] as any
   expect(s500.brush_ms.min).toBeGreaterThan(0)
 
@@ -183,7 +196,7 @@ test('2-f 원장 — 지연·프레임(그리기/궤도)·재그리기 분산·�
     const out = resolve(HERE, '../../stage0/out/brush_perf_web2.json')
     mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
     writeFileSync(out, JSON.stringify({
-      what: 'web2-11 2-f — brush 렌더러의 «느낌» 원장: 다운→다음 그리기 기회, 그리기/궤도 중 프레임, 전량 재그리기(획 10·100·500 × 5회 min/median/max), JS 힙(원 바이트), 번들. 두 렌더러 나란히.',
+      what: 'web2-11 2-f + web2-12 2번 — brush 렌더러의 «느낌» 원장: 다운→다음 그리기 기회, 그리기/궤도 중 프레임, draft 한 획 재그리기(횟수·ms), 전량 재그리기(획 10·100·500 × 5회 min/median/max), JS 힙(원 바이트), 번들. 두 렌더러 나란히(classic = 옛 미리보기 경로).',
       environment: '헤드리스 크로뮴(소프트웨어 GL 가능) — 절대값이 아니라 두 렌더러의 비·국면(그리기 vs 궤도)·획 수에 따른 변화가 판별값이다. ⚠ 실행 «사이» 변동이 min/max(5회 — 같은 세션 안 연속 반복)보다 훨씬 크다(수십 % 대역 — 실측: 이 원장을 쓴 실행들이 서로 그만큼 갈렸고 그것이 문서 인용을 두 번 낡게 했다). 그래서 이 원장의 수는 문서에 옮겨 적지 않는다 — 필드를 그 자리에서 읽는다(#47). 실기기 절대값은 사람 손이 판정한다(DEFERRED 표).',
       metric_defs: {
         down_to_next_paint_ms: 'pointerdown 시각 → 다음 rAF 콜백의 performance.now(). vsync 위상 + 그 프레임 그리기이지 «렌더러 지연»이 아니다(2차 [2] — 초판의 rAF 인자 기준은 음수가 났다). 실기기 «첫 픽셀»의 대용 하한.',
@@ -192,6 +205,7 @@ test('2-f 원장 — 지연·프레임(그리기/궤도)·재그리기 분산·�
         single_sample_note: 'live 계열(down_to_next_paint·frame_ms·frames)은 국면당 «1회» 표본이다 — 실행 간 변동이 커서 작은 차(수 ms)는 판별하지 않고, 국면 간 큰 차(수 배)만 읽는다.',
         heap_bytes: 'performance.memory.usedJSHeapSize — ⚠ 크로뮴이 값을 양자화해 준다(십만 단위 관측 — «원 바이트»는 API가 주는 그대로라는 뜻이지 정밀 힙이 아니다). 렌더러 전환(brush→classic 측정 직후)의 값이라 한 시점 스냅샷이다.',
         frames_bundle: 'frames = 그 국면의 rAF 표본 수(수집기 생존 판별용) · bundle_bytes = dist/assets 합(실행 시점 빌드).',
+        draft: 'web2-12 2번 — draft_redraws_while_down = 그 국면(닿아 있는 동안)의 draft 한 획 재그리기 횟수(국면별 리셋 — 2차 [5]). draft_ms = 그 표본의 중앙·최악(몸체 겹 + 질감 한 획 + render 블릿). 재그리기 0인 칸은 null(그 경로 미실행 — 값이 없다). classic은 옛 미리보기 경로라 구성상 0/null — «옛 경로와 나란히»의 대조군 칸이다. ⚠ 이동(move) 수가 아니라 rAF 프레임에서 키가 갈린 횟수라 국면·부하에 따라 다르다.',
       },
       live: {
         drawing_few: { brush: liveBrushFew, classic: liveClassicFew },

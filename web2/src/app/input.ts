@@ -105,6 +105,9 @@ export function initInput(
     for (const c of bundle) {
       draft.raw.push(screenToDoc(app, pt(c.clientX - r0.left, c.clientY - r0.top)))
       samples.push(sampleOf(c))
+      // 점별 필압을 미리보기에도(web2-12 2번) — 양자화 식은 quantIn과 같다(한 곳이어야
+      // 미리보기·확정이 같은 프로필을 낸다). 펜만 — 마우스는 상수 0.5라 정보가 없다(AS-C33).
+      if (draft.press) draft.press.push(quantPress(c.pressure))
     }
     capStats.points = draft.raw.length
     const cur = toPt(e)
@@ -119,6 +122,9 @@ export function initInput(
     cb.onDraftChange(draft)
   }
 
+  /** 필압 양자화 — quantIn과 같은 식(0..C.PRESS_Q 정수). 둘이 갈리면 뗄 때 입자가 튄다. */
+  const quantPress = (p: number): number => Math.round(Math.min(1, Math.max(0, p)) * C.PRESS_Q)
+
   function beginDraft(p: Pt, e: PointerEvent) {
     samples = [sampleOf(e)]
     capStats = { pointerType: e.pointerType, events: 1, points: 1, extra: 0 }
@@ -132,6 +138,10 @@ export function initInput(
       startP3: oh?.p3 ?? null,
       endSnap: null,
       lenMm: null,
+      // 잠정 id(web2-12 2번) — 확정이 쓸 바로 그 값. 그리는 동안 다른 확정이 없으므로
+      // (포인터 캡처) 뗄 때 commitStroke의 nextId++가 정확히 이 값을 준다.
+      nid: app.nextId,
+      ...(e.pointerType === 'pen' ? { press: [quantPress(e.pressure)] } : {}),
     }
     cb.onDraftChange(draft)
   }

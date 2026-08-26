@@ -64,12 +64,17 @@ test('지시 7(web2-10) — 축 스냅 미리보기가 무채색이고, 붙으�
   await settle(page)
   expect((await summary(page)).vps).toEqual([{ x: 900, y: 400 }])
 
-  const boxAt = (cx: number, cy: number, w: number) => page.evaluate(([x, y, ww]) => {
-    const c = document.getElementById('ink') as HTMLCanvasElement
+  // ⚠ web2-12 2번 이후 미리보기 «몸체»는 brush 모드에서 #brushc(질감)가 그린다 — 채도
+  // 판정은 그 겹에서 읽는다. 파선 안내·표식은 종전대로 #ink다(캔버스 id를 받는 이유).
+  const boxAt = (id: string, cx: number, cy: number, w: number) => page.evaluate(([idv, x, y, ww]) => {
+    const c = document.getElementById(idv as string) as HTMLCanvasElement
     const dpr = window.devicePixelRatio || 1
-    const d = c.getContext('2d')!.getImageData(
-      Math.round((x! - ww! / 2) * dpr), Math.round((y! - ww! / 2) * dpr),
-      Math.round(ww! * dpr), Math.round(ww! * dpr)).data
+    const t = document.createElement('canvas')
+    t.width = Math.round((ww as number) * dpr); t.height = Math.round((ww as number) * dpr)
+    const g2 = t.getContext('2d')!
+    g2.drawImage(c, Math.round(((x as number) - (ww as number) / 2) * dpr),
+      Math.round(((y as number) - (ww as number) / 2) * dpr), t.width, t.height, 0, 0, t.width, t.height)
+    const d = g2.getImageData(0, 0, t.width, t.height).data
     let painted = 0, chroma = 0, dark = 0
     for (let i = 0; i < d.length; i += 4) {
       if (d[i + 3]! === 0) continue
@@ -79,16 +84,16 @@ test('지시 7(web2-10) — 축 스냅 미리보기가 무채색이고, 붙으�
       chroma = Math.max(chroma, Math.abs(r - g), Math.abs(g - b), Math.abs(r - b))
     }
     return { painted, chroma, dark }
-  }, [cx, cy, w])
+  }, [id, cx, cy, w])
 
   // (500,600)에서 소실점 방향으로 — 정확선에서 5px 벗어나(≈1.3°) 축 허용각 안이다
   await page.mouse.move(500, 600)
   await page.mouse.down()
   for (let i = 1; i <= 8; i++) await page.mouse.move(500 + i * 25, 600 - i * 11.9)
   await settle(page)
-  const mid = await boxAt(600, 550, 20)              // 미리보기 선의 중간쯤
+  const mid = await boxAt('brushc', 600, 550, 20)    // 미리보기 선의 중간쯤(몸체 = 질감 겹)
   // 끝(700,505 근처가 축 위로 스냅됨) 너머 — 파선 안내의 자리. 방향 (0.894,-0.447)·+20px
-  const guide = await boxAt(718, 496, 22)
+  const guide = await boxAt('ink', 718, 496, 22)
   const guideMeanD = guide.dark / guide.painted
   console.log(`[측정] 축 스냅 미리보기 — 선 채도 ${mid.chroma}(painted ${mid.painted}) · 너머 painted ${guide.painted}(채도 ${guide.chroma} · 평균 어두움 ${guideMeanD.toFixed(3)})`)
   expect(mid.painted).toBeGreaterThan(5)             // 상자에 선이 실제로 있다(D-3의 «없음»과 가름)
@@ -104,7 +109,7 @@ test('지시 7(web2-10) — 축 스냅 미리보기가 무채색이고, 붙으�
   // 반증 — 축 밖 방향으로 끌면 «끝 너머» 상자가 빈다(붙음/안 붙음이 실제로 갈린다)
   await page.mouse.move(560, 690)                    // 자유 방향(어느 축도 아님)
   await settle(page)
-  const freeGuide = await boxAt(573, 709, 22)        // 그 끝 너머(방향 (0.55,0.83)·+20px)
+  const freeGuide = await boxAt('ink', 573, 709, 22) // 그 끝 너머(방향 (0.55,0.83)·+20px)
   console.log(`[측정] 자유 방향 끝 너머 painted ${freeGuide.painted}`)
   expect(freeGuide.painted).toBe(0)
   await page.mouse.up()

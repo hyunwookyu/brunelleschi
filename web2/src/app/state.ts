@@ -21,6 +21,21 @@ export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink' | 'face'
 export const activeGrade = (app: Pick<App, 'tool' | 'grade'>): Grade =>
   app.tool === 'pen' ? 'INK' : app.grade
 
+/** 이 draft를 brush 경로(질감 #brushc + 몸체 Line2)가 그리는가(web2-12 2번) —
+ *  **한 곳**이어야 한다(#54): brushlayer(질감) · render3d의 setDraftLine 배선(몸체) ·
+ *  render2d(그럴 때 잉크 겹 몸체를 **긋지 않는다**)가 같이 본다.
+ *  잉크 겹에 몸체를 그으면 겹 순서가 확정과 반대가 된다 — 그리는 중엔 몸체(잉크 겹, 위)가
+ *  질감을 덮고, 떼면 몸체가 #gl(아래)로 내려가 질감이 덮는다. 뗌 게이트가 이것으로 깨졌다
+ *  (초판 실측 — 좌표·id·재료는 전부 동일했는데 diff가 획의 대부분이었다. 2D 캔버스 벡터로
+ *  아래 겹에 흉내 내는 중간판도 반투명 합성의 파이프라인 차가 남아 걷었다 — 몸체는 확정과
+ *  같은 Line2가 그린다. draft_gate_web2*.json이 정본).
+ *  INK 제외 — 잉크 확정 몸체는 Line2 균일선(질감 없음)이라 벡터 미리보기가 그 모습이다.
+ *  작도 획(horizon·vp) 제외 — 확정돼도 재료 질감이 없다.
+ *  카메라 미확정(f 없음) 제외 — Line2 역사영이 설 수 없다(그때는 종전 벡터 미리보기). */
+export const draftBrushed = (app: Pick<App, 'tool' | 'grade' | 'renderer' | 'lift'>, label: string | null): boolean =>
+  app.renderer === 'brush' && label !== 'horizon' && label !== 'vp' && activeGrade(app) !== 'INK' &&
+  app.lift.an.f !== null && app.lift.an.principal !== null
+
 /** 지우개 도구인가 — 입력·커서·렌더가 전부 이것을 본다.
  *  `tool !== 'pen'` 으로 재던 초판은 연필 도구가 생기면서 그대로 깨진다. */
 export const isEraser = (t: Tool): boolean => t === 'eraser-pencil' || t === 'eraser-ink'

@@ -1,0 +1,92 @@
+{
+ "what": "web2-12 1번 — 재료 전수 가시성(합성 화면·dpr2): GRADES 일곱 × 렌더러 둘, 긋는 중/뗀 직후의 «기준 대비 달라진 픽셀 수». e2e materials.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).",
+ "def": "20×60 CSS px 상자 스크린샷을 긋기 전 기준과 비교, 채널 차 8 초과 픽셀 수(임계 출처는 e2e/thresholds.ts — D-C4). 문턱·하한의 동작점 성격은 AS-C37(스윕 없음 명기). ⚠ classic의 during 일곱 칸은 설계상 재료를 안 탄다(옛 미리보기 = 재료색 벡터선 — 변화 «수» 지표는 색·진하기에 둔감하다. 2차 [15]) — 그 다리의 판별력은 brush 절반에만 있다. classic 행의 ink_grain_*는 알파 몫 계기의 양성 대조군이다(2차 [9] — grain은 반투명이라 몫이 1보다 작아야 계기가 산 것).",
+ "brush": {
+  "2H": {
+   "during": 283,
+   "after": 283,
+   "brushc_painted": 276,
+   "brushc_opaque": 276
+  },
+  "H": {
+   "during": 438,
+   "after": 438,
+   "brushc_painted": 426,
+   "brushc_opaque": 426
+  },
+  "F": {
+   "during": 493,
+   "after": 493,
+   "brushc_painted": 296,
+   "brushc_opaque": 296
+  },
+  "HB": {
+   "during": 492,
+   "after": 492,
+   "brushc_painted": 293,
+   "brushc_opaque": 293
+  },
+  "B": {
+   "during": 528,
+   "after": 528,
+   "brushc_painted": 346,
+   "brushc_opaque": 346
+  },
+  "2B": {
+   "during": 520,
+   "after": 520,
+   "brushc_painted": 363,
+   "brushc_opaque": 363
+  },
+  "INK": {
+   "during": 480,
+   "after": 480,
+   "brushc_painted": 0,
+   "brushc_opaque": 0
+  }
+ },
+ "classic": {
+  "2H": {
+   "during": 240,
+   "after": 389,
+   "ink_grain_painted": 126,
+   "ink_grain_opaque": 0
+  },
+  "H": {
+   "during": 480,
+   "after": 507,
+   "ink_grain_painted": 159,
+   "ink_grain_opaque": 0
+  },
+  "F": {
+   "during": 480,
+   "after": 502,
+   "ink_grain_painted": 152,
+   "ink_grain_opaque": 0
+  },
+  "HB": {
+   "during": 480,
+   "after": 511,
+   "ink_grain_painted": 144,
+   "ink_grain_opaque": 0
+  },
+  "B": {
+   "during": 480,
+   "after": 509,
+   "ink_grain_painted": 156,
+   "ink_grain_opaque": 0
+  },
+  "2B": {
+   "during": 480,
+   "after": 534,
+   "ink_grain_painted": 227,
+   "ink_grain_opaque": 0
+  },
+  "INK": {
+   "during": 480,
+   "after": 480,
+   "ink_grain_painted": 0,
+   "ink_grain_opaque": 0
+  }
+ }
+}
