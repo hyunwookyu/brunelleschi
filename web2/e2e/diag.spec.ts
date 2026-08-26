@@ -57,5 +57,17 @@ test('포인터 줄이 실입력으로 갱신된다 — pen 종류·필압이 �
   expect(row).toContain('pen')
   const max = Number(/필압 최대 ([\d.]+)/.exec(row ?? '')?.[1])
   expect(max).toBeGreaterThan(0)                                    // 필압이 실린다
-  expect(Number(/단계 (\d+)/.exec(row ?? '')?.[1])).toBeGreaterThanOrEqual(1)
+  // 단계 카운터가 **서로 다른 값을 실제로 센다** — «≥ 1»은 입력이 있으면 항등이라 안 잰다
+  // (2차 리뷰어 [7] — 배포 ① [3]과 같은 형태). CDP 합성 펜은 압력을 못 바꾸므로 여기서는
+  // 합성 PointerEvent로 서로 다른 압력 둘을 흘린다 — 카운터 로직의 판별이 목적이고,
+  // 실입력 경로는 위 CDP 팔이 이미 덮는다. 실기기 단계 수는 이 줄로 사람이 읽는다(DEFERRED).
+  const n0 = Number(/단계 (\d+)/.exec(row ?? '')?.[1])
+  expect(n0).toBeGreaterThanOrEqual(1)
+  await page.evaluate(() => {
+    for (const p of [0.31, 0.62]) document.body.dispatchEvent(new PointerEvent('pointermove', {
+      pointerType: 'pen', pressure: p, bubbles: true }))
+  })
+  const n1 = Number(/단계 (\d+)/.exec(await rowText(page, '마지막 포인터') ?? '')?.[1])
+  console.log(`[측정] 필압 단계 카운터 ${n0} → ${n1} (서로 다른 압력 둘 추가)`)
+  expect(n1).toBe(n0 + 2)                                           // 반증: 카운터가 죽으면 n0 그대로다
 })

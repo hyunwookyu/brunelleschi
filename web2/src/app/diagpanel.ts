@@ -42,8 +42,10 @@ export function initDiagPanel(buildEl: HTMLElement, panelEl: HTMLElement) {
       ['devicePixelRatio', String(dpr)],
       ['표시 모드', displayMode()],
       ['화면 CSS px', `${window.innerWidth}×${window.innerHeight}`],
-      ['물리 px(창×dpr)', `${Math.round(window.innerWidth * dpr)}×${Math.round(window.innerHeight * dpr)}`],
-      ['screen', `${screen.width}×${screen.height} (CSS)`],
+      ['창 물리 px', `${Math.round(window.innerWidth * dpr)}×${Math.round(window.innerHeight * dpr)}`],
+      // 화면 «장치» 해상도 — 지시의 「물리 해상도」는 이것이다(창×dpr은 표시줄 몫만큼 작다).
+      // MovinkPad면 여기 2880×1800이 보여야 한다(2차 리뷰어 [8]).
+      ['화면 물리 px', `${Math.round(screen.width * dpr)}×${Math.round(screen.height * dpr)} (screen ${screen.width}×${screen.height} CSS)`],
       ['마지막 포인터', lastPointer
         ? `${lastPointer.type} · 필압 최대 ${lastPointer.maxPressure.toFixed(4)} · 단계 ${lastPointer.levels.size >= PRESSURE_CAP ? `${PRESSURE_CAP}+` : lastPointer.levels.size}`
         : '—'],

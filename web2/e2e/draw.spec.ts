@@ -70,14 +70,15 @@ test('지시 7(web2-10) — 축 스냅 미리보기가 무채색이고, 붙으�
     const d = c.getContext('2d')!.getImageData(
       Math.round((x! - ww! / 2) * dpr), Math.round((y! - ww! / 2) * dpr),
       Math.round(ww! * dpr), Math.round(ww! * dpr)).data
-    let painted = 0, chroma = 0
+    let painted = 0, chroma = 0, dark = 0
     for (let i = 0; i < d.length; i += 4) {
       if (d[i + 3]! === 0) continue
       painted++
       const r = d[i]!, g = d[i + 1]!, b = d[i + 2]!
+      dark += (255 - (r + g + b) / 3) / 255 * (d[i + 3]! / 255)  // 어두움 — level.spec과 같은 지표
       chroma = Math.max(chroma, Math.abs(r - g), Math.abs(g - b), Math.abs(r - b))
     }
-    return { painted, chroma }
+    return { painted, chroma, dark }
   }, [cx, cy, w])
 
   // (500,600)에서 소실점 방향으로 — 정확선에서 5px 벗어나(≈1.3°) 축 허용각 안이다
@@ -88,11 +89,17 @@ test('지시 7(web2-10) — 축 스냅 미리보기가 무채색이고, 붙으�
   const mid = await boxAt(600, 550, 20)              // 미리보기 선의 중간쯤
   // 끝(700,505 근처가 축 위로 스냅됨) 너머 — 파선 안내의 자리. 방향 (0.894,-0.447)·+20px
   const guide = await boxAt(718, 496, 22)
-  console.log(`[측정] 축 스냅 미리보기 — 선 채도 ${mid.chroma}(painted ${mid.painted}) · 너머 painted ${guide.painted}(채도 ${guide.chroma})`)
+  const guideMeanD = guide.dark / guide.painted
+  console.log(`[측정] 축 스냅 미리보기 — 선 채도 ${mid.chroma}(painted ${mid.painted}) · 너머 painted ${guide.painted}(채도 ${guide.chroma} · 평균 어두움 ${guideMeanD.toFixed(3)})`)
   expect(mid.painted).toBeGreaterThan(5)             // 상자에 선이 실제로 있다(D-3의 «없음»과 가름)
   expect(mid.chroma).toBeLessThanOrEqual(12)         // 수리 전 vp0 주황은 168 급 — 여기서 걸린다
   expect(guide.painted).toBeGreaterThan(4)           // 붙음 — 획 너머에 안내가 있다
   expect(guide.chroma).toBeLessThanOrEqual(12)       // 안내도 무채색
+  // 대역 분리(지시 7 문면 — 오스냅과 같은 대역에 두지 않는다): 지표는 **어두움**(색×알파,
+  // level.spec과 동일)이다 — ⚠ 평균 «알파»로는 안 갈렸다(실측 0.444/0.574 vs 오스냅
+  // 0.388/0.381 — 1px 파선의 AA 희석이 불투명을 먹는다. 2차 [12]의 실측이 이것을 냈다).
+  // 어두움 실측: 안내 0.296/0.383 vs 오스냅 0.153/0.149 — 0.22는 그 사이다.
+  expect(guideMeanD).toBeGreaterThan(0.22)
 
   // 반증 — 축 밖 방향으로 끌면 «끝 너머» 상자가 빈다(붙음/안 붙음이 실제로 갈린다)
   await page.mouse.move(560, 690)                    // 자유 방향(어느 축도 아님)
