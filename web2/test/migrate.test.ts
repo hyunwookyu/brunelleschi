@@ -41,6 +41,7 @@ function shifted(g: any, dy: number): Doc {
   return {
     frame: { W: oracle.W, H: oracle.H },
     sheets: [],   // 이 문서는 3D 비교 전용이다 — 종이 로직을 안 지난다(web2-19)
+    layers: [],   // 겹도 마찬가지(web2-20)
     strokes: g.strokes.filter((s: any) => s.id !== 1).map((s: any) => ({
       id: s.id,
       a: { x: s.a.x, y: s.a.y + dy },
@@ -248,7 +249,7 @@ describe('2-c — 옛 .brnl(version 1) 변환', () => {
     console.log(`[측정] 2-c ① 왕복 — 3D 최악 ${worst.toExponential(3)} · 면 정점 최악 ${worstFace.toExponential(3)}`)
   })
 
-  it('② version 4 자기 왕복 — 저장 → 파싱 → 저장이 같은 문자열', () => {
+  it('② 자기 왕복(v5 — web2-20부터) — 저장 → 파싱 → 저장이 같은 문자열', () => {
     const first = parseBrnl(oracle.sample.brnl)!            // v1 → 변환된 문서
     const v2 = serializeBrnl({ doc: first.doc, nextId: first.nextId, drawView: { s: 1.5, ox: 12, oy: -7 } })
     const again = parseBrnl(v2)!
@@ -263,9 +264,9 @@ describe('2-c — 옛 .brnl(version 1) 변환', () => {
     expect(serializeBrnl({ doc: back.doc, nextId: back.nextId })).toBe(noDv)
   })
 
-  it('③ 거부 — version 5는 거부한다(전방 호환을 흉내내지 않는다 — 1~4만 받는다)', () => {
+  it('③ 거부 — version 6은 거부한다(전방 호환을 흉내내지 않는다 — 1~5만 받는다)', () => {
     const j = JSON.parse(oracle.sample.brnl)
-    j.version = 5
+    j.version = 6
     expect(parseBrnl(JSON.stringify(j))).toBeNull()
   })
 

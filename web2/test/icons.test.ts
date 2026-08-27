@@ -11,14 +11,17 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-const html = readFileSync(resolve(__dirname, '../index.html'), 'utf-8')
-const md = readFileSync(resolve(__dirname, '../../docs/instrument-icons.md'), 'utf-8')
-const paperbar = readFileSync(resolve(__dirname, '../src/app/paperbar.ts'), 'utf-8')
-const mainTs = readFileSync(resolve(__dirname, '../src/app/main.ts'), 'utf-8')
+// ⚠ 개행 정규화 — Windows에서 git checkout(autocrlf)이 작업 사본을 CRLF로 다시 쓸 수
+// 있고, 그러면 LF 고정 정규식이 조용히 죽는다(web2-20 착수 직후 실측 — 갈래 전환이 계기).
+const readLF = (p: string) => readFileSync(p, 'utf-8').replace(/\r\n/g, '\n')
+const html = readLF(resolve(__dirname, '../index.html'))
+const md = readLF(resolve(__dirname, '../../docs/instrument-icons.md'))
+const paperbar = readLF(resolve(__dirname, '../src/app/paperbar.ts'))
+const mainTs = readLF(resolve(__dirname, '../src/app/main.ts'))
 
 const phosphor = (name: string): string => {
-  const svg = readFileSync(resolve(__dirname,
-    `../node_modules/@phosphor-icons/core/assets/light/${name}-light.svg`), 'utf-8')
+  const svg = readLF(resolve(__dirname,
+    `../node_modules/@phosphor-icons/core/assets/light/${name}-light.svg`))
   return /<path d="([^"]+)"/.exec(svg)![1]!
 }
 

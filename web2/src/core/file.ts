@@ -1,7 +1,7 @@
 // .brnl 저장·복원 — 문서(획·프레임)와 시점만 담는다.
 // 카메라·소실점·리프팅은 파생이므로 저장하지 않는다(원칙 b) — 복원 후 다시 계산된다.
 
-import type { Doc, Stroke, Face, Sheet, ViewOffset, Grade, RawInput } from './types'
+import type { Doc, Stroke, Face, Sheet, Layer, Paper, ViewOffset, Grade, RawInput } from './types'
 import { drawSheet, DRAW_SHEET_ID } from './types'
 import { horizonDocY } from './camera'
 import { GRADES } from './material'
@@ -16,15 +16,14 @@ export interface BrnlData {
   drawView?: ViewOffset | null
 }
 
-/** version 4(web2-19 2-b): 종이(Doc.sheets)가 savedViews를 대신한다.
- *  역사: 1 = 첫 획이 지평선이던 형식(읽으며 변환 — web2-17 2-b) · 2 = 지평선 없는 형식 ·
- *  3 = 쓰인 적 없음(지시 2-b 문면 「1~3을 다 받는다」대로 2와 같은 모양으로 읽는다) ·
- *  4 = sheets. **5 이상은 거부** — 전방 호환을 흉내내지 않는다(2-c ③의 규약 그대로).
- *  옛 PWA는 version≠1·2를 거부하고 빈 화면으로 시작한다 — 조용히 틀리게 여는 것보다 낫다. */
+/** version 5(web2-20 1부): 겹(Doc.layers·Stroke.layer)이 실린다.
+ *  역사: 1 = 첫 획이 지평선(읽으며 변환) · 2 = 지평선 없음 · 3 = 쓰인 적 없음(v2 모양으로
+ *  읽는다) · 4 = sheets · 5 = layers. **6 이상은 거부** — 전방 호환을 흉내내지 않는다.
+ *  겹 열쇠가 없으면 겹이 없는 문서다(v4 이하 — 그대로 열린다). */
 export function serializeBrnl(d: BrnlData): string {
   return JSON.stringify({
     format: 'brnl',
-    version: 4,
+    version: 5,
     frame: d.doc.frame,
     strokes: d.doc.strokes,
     // 면은 **경계의 정체**만 담긴다(획 id 차례) — 좌표는 복원 후 다시 풀린다.
@@ -36,6 +35,8 @@ export function serializeBrnl(d: BrnlData): string {
     nextId: d.nextId,
     // 종이(web2-19 2-b) — 배열 0이 작도 종이(pose·view 없음 — 정본은 DRAW_POSE·drawView).
     sheets: d.doc.sheets,
+    // 겹(web2-20 1부) — 배열 순서 = 쌓인 순서(뒤가 위). 없으면 열쇠를 안 쓴다(왕복 동일성).
+    ...(d.doc.layers.length > 0 ? { layers: d.doc.layers } : {}),
     // 작도 시점(web2-17 3-c) — 없으면 열쇠 자체를 안 쓴다(왕복 동일성 — 2-c ② 팔)
     ...(d.drawView ? { drawView: d.drawView } : {}),
   })
@@ -51,7 +52,7 @@ export function parseBrnl(text: string): BrnlData | null {
   try { raw = JSON.parse(text) } catch { return null }
   // 1~4를 받는다(web2-19 2-b — 1~3은 savedViews 형식·4는 sheets).
   // 5 이상은 **거부** — 전방 호환을 흉내내지 않는다(2-c ③).
-  if (!raw || raw.format !== 'brnl' || ![1, 2, 3, 4].includes(raw.version)) return null
+  if (!raw || raw.format !== 'brnl' || ![1, 2, 3, 4, 5].includes(raw.version)) return null
   if (!raw.frame || !isNum(raw.frame.W) || !isNum(raw.frame.H)) return null
   if (!Array.isArray(raw.strokes)) return null
   const strokes: Stroke[] = []
@@ -88,6 +89,12 @@ export function parseBrnl(text: string): BrnlData | null {
     if (s.dim !== undefined) {
       if (!isNum(s.dim) || s.dim <= 0) return null
       st.dim = s.dim
+    }
+    // 겹 소속(web2-20 1부) — 선택. 모양이 틀리면 **그 필드만 버린다**(종이에 직접으로
+    // 강등 — 겹 참조는 잃어도 획이 살아야 한다). 없는 겹을 가리키는 강등은 아래
+    // layers 파싱 뒤에 한 번 더 돈다(참조 검증은 목록이 서야 가능하다).
+    if (s.layer !== undefined && s.layer !== null) {
+      if (isNum(s.layer)) st.layer = s.layer
     }
     // 자립 3D(web2-13 4부 — 깃발 뒤) — **선택**: 없으면(옛 파일·옛 앱이 재저장한 파일)
     // 종전 그대로다. 모양이 틀리면 **그 필드만 버린다** — rawIn·mat.w의 «거부»와 다른
@@ -143,7 +150,7 @@ export function parseBrnl(text: string): BrnlData | null {
 
   // 옛 형식(1~3)의 명명된 뷰 — 마이그레이션의 입력이다(아래 「종이」 절)
   const savedViews: { pose: NonNullable<Sheet['pose']>; view: ViewOffset; thumb?: string }[] = []
-  if (raw.version !== 4 && Array.isArray(raw.savedViews)) {
+  if (raw.version < 4 && Array.isArray(raw.savedViews)) {
     for (const v of raw.savedViews) {
       if (!v || !isV3(v.pose?.p) || !isQuat(v.pose?.q)) continue
       if (!isNum(v.view?.s) || !isNum(v.view?.ox) || !isNum(v.view?.oy)) continue
@@ -158,7 +165,7 @@ export function parseBrnl(text: string): BrnlData | null {
   // 유효한 모양은 둘뿐이다: pose·view가 **둘 다** 있는 종이, 또는 둘 다 없는 작도 종이.
   // 한쪽만 있으면 그 종이는 죽은 모양이다(포즈 없는 화면·화면 없는 포즈 — 앉을 수 없다).
   const rawSheets: Sheet[] = []
-  if (raw.version === 4 && Array.isArray(raw.sheets)) {
+  if (raw.version >= 4 && Array.isArray(raw.sheets)) {
     for (const s of raw.sheets) {
       if (!s || !isNum(s.id) || typeof s.name !== 'string' || s.name.length === 0 || s.name.length > 200) continue
       const hasPose = s.pose !== undefined || s.view !== undefined
@@ -174,11 +181,29 @@ export function parseBrnl(text: string): BrnlData | null {
       rawSheets.push(entry)
     }
   }
-  // id는 획·면·종이가 **한 통**이다(겹이 종이를 가리키게 되므로 — 지시 2-b)
+  // 겹(web2-20 1부) — v5의 layers. **모양이 틀리면 거부한다**(겹은 획의 소속이다 —
+  // mat.w·rawIn과 같은 규약: 모르는 값으로 조용히 틀리게 그리지 않는다).
+  // ⚠ 참조 강등(없는 종이/겹)은 거부가 아니다 — 아래에서 따로 돈다.
+  const layers: Layer[] = []
+  if (raw.layers !== undefined && raw.layers !== null) {
+    if (!Array.isArray(raw.layers)) return null
+    for (const l of raw.layers) {
+      if (!isNum(l?.id) || !isNum(l?.sheet)) return null
+      if (l.paper !== 'tracing' && l.paper !== 'yellow') return null
+      const r = l.rect
+      if (!r || !isNum(r.x) || !isNum(r.y) || !isNum(r.w) || !isNum(r.h) || r.w <= 0 || r.h <= 0) return null
+      if (typeof l.on !== 'boolean' || typeof l.locked !== 'boolean') return null
+      layers.push({ id: l.id, sheet: l.sheet, paper: l.paper as Paper,
+        rect: { x: r.x, y: r.y, w: r.w, h: r.h }, on: l.on, locked: l.locked })
+    }
+  }
+
+  // id는 획·면·종이·겹이 **한 통**이다(겹이 종이·획이 겹을 가리키므로 — 지시 1부)
   const maxId = Math.max(
     strokes.reduce((m, s) => Math.max(m, s.id), 0),
     faces.reduce((m, f) => Math.max(m, f.id), 0),
     rawSheets.reduce((m, s) => Math.max(m, s.id), 0),
+    layers.reduce((m, l) => Math.max(m, l.id), 0),
   )
   let nextId = isNum(raw.nextId) && raw.nextId > maxId ? raw.nextId : maxId + 1
   // 단위 — 없으면(옛 파일) mm. 모양이 틀리면 거부한다.
@@ -231,7 +256,7 @@ export function parseBrnl(text: string): BrnlData | null {
   //   종이면 그것이 작도이고, 아니면(없거나 뒤에 있거나 죽었거나) 앞에 만들어 준다.
   //   0이 아닌 자리의 pose 없는 종이는 죽은 모양이다(작도는 하나다) — 그 종이만 버린다.
   let sheets: Sheet[]
-  if (raw.version === 4) {
+  if (raw.version >= 4) {
     const first = rawSheets[0] && !rawSheets[0].pose ? [rawSheets.shift()!] : [drawSheet()]
     sheets = [...first, ...rawSheets.filter(s => s.pose)]
   } else {
@@ -244,7 +269,17 @@ export function parseBrnl(text: string): BrnlData | null {
   // 작도 종이 id가 다른 것과 겹치면(손 편집 파일) 예약값으로 되돌린다 — 참조가 갈린다
   if (sheets.slice(1).some(s => s.id === sheets[0]!.id)) sheets[0] = { ...sheets[0]!, id: DRAW_SHEET_ID }
 
-  const doc: Doc = { frame: { W: raw.frame.W, H: raw.frame.H }, strokes, faces, sheets, unit }
+  // ── 겹 참조 강등(web2-20 1부) — 문서를 거부하지 않는다 ─────────────────
+  // Layer.sheet가 없는 종이를 가리키면 **그 겹을 버린다**(그 위의 획은 아래에서 강등).
+  const sheetIds = new Set(sheets.map(s => s.id))
+  const keptLayers = layers.filter(l => sheetIds.has(l.sheet))
+  // Stroke.layer가 없는 겹을 가리키면 **그 필드만 버린다**(종이에 직접으로 강등)
+  const layerIds = new Set(keptLayers.map(l => l.id))
+  for (const s of strokes) {
+    if (s.layer !== undefined && !layerIds.has(s.layer)) delete s.layer
+  }
+
+  const doc: Doc = { frame: { W: raw.frame.W, H: raw.frame.H }, strokes, faces, sheets, layers: keptLayers, unit }
   if (scaleRef !== undefined) doc.scaleRef = scaleRef
   return { doc, nextId, drawView }
 }
