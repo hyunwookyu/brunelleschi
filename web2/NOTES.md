@@ -8706,3 +8706,9 @@ sidebar_layout 각 dpr 판)는 마감에서 `git checkout`으로 정본에 되�
   픽스처 지정값·측정 아님). paper_visual의 patch_equal=true도 원장 안에서 설계 보장으로
   해명(자기참조 유형 3 — 임계 없음). scan_citation_hashes의 test_cost.json 8건은 이전
   회차(구 L 라인 문서·progress.md)의 것으로 이 회차 변경분과 무관하다.
+
+**배포(⛳ — 회차 끝 한 번)**: main 병합 `21bb502..56389b9`(`git ls-remote origin main`
+원문 「`56389b915606b41a2f0291be2101d65a97a2af69	refs/heads/main`」) · `deploy:check`
+3회째 「✓ 원격 main == 내 커밋 / 화면 빌드 식별자 56389b9 / ✓ 화면 빌드 식별자 == 배포
+커밋 / 결과: **배포됨**」. 판정자는 화면의 빌드 식별자다 — **`56389b9`**.
+지시의 끝: 이 회차가 배포됐으므로 **여기서 멈춘다**(다음 = 내보내기 — 사람과 설계 후).
