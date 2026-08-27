@@ -244,17 +244,26 @@ export function draw2d(
     if (!s) continue
     // 감쇠 판정 포즈는 fadeRef다(web2-14 3번) — 제스처(궤도·팬) 중에는 동결값이라
     // 돌리는 동안 표시가 안 변한다. 옛 동작(끔)은 종전 식 그대로(A-4 — app.pose·atDraw).
+    // ⚠ waitFadeFactor는 web2-16 3-b부터 **이진**(창 안 1 · 밖 0)이다 — 페이드 폐지.
     const own = app.waitFade ? atOwnPose(fadeRef(app), s.view) : (s.view ? !atDraw : atDraw)
     const factor = app.waitFade ? waitFadeFactor(fadeRef(app), s.view) : (own ? 1 : 0.3)
     if (factor <= 0) continue
     const m = MAT[gradeOf(s)]
-    ctx.strokeStyle = m.color
-    ctx.globalAlpha = m.alpha * factor
-    ctx.lineWidth = widthOf(s) * is
-    ctx.setLineDash([5 * is, 4 * is])
-    ctx.beginPath(); ctx.moveTo(s.a.x, s.a.y); ctx.lineTo(s.b.x, s.b.y); ctx.stroke()
-    ctx.setLineDash([])
-    ctx.globalAlpha = 1
+    // 몸체(web2-16 3-a): 기본 경로(brush 렌더러 + 감쇠 판정)에서는 **흑연 파선**을
+    // #brushc가 긋는다(brushlayer.drawWaitingDashed — 질감이 확정 획과 같다). 그때
+    // 여기의 벡터 점선은 안 긋는다 — 두 몸체가 겹치면 진하기가 이중이 된다.
+    // classic 렌더러·감쇠 끔(A-4)에서는 종전 벡터 점선 그대로다(패턴 상수는 한 곳 —
+    // C.WAIT_DASH_* — brushlayer와 같은 값을 읽는다).
+    const brushBody = app.renderer === 'brush' && app.waitFade
+    if (!brushBody) {
+      ctx.strokeStyle = m.color
+      ctx.globalAlpha = m.alpha * factor
+      ctx.lineWidth = widthOf(s) * is
+      ctx.setLineDash([C.WAIT_DASH_ON_PX * is, C.WAIT_DASH_OFF_PX * is])
+      ctx.beginPath(); ctx.moveTo(s.a.x, s.a.y); ctx.lineTo(s.b.x, s.b.y); ctx.stroke()
+      ctx.setLineDash([])
+      ctx.globalAlpha = 1
+    }
     // grain은 classic 렌더러의 질감이다 — brush 렌더러가 켜져 있으면 질감은 #brushc 겹이
     // 그린다(web2-11 2-e: **끄되 지우지 않는다** — 되돌리기(2-b)의 절반이 이 분기다).
     // 질감은 정확히 자기 시점에서만(중간 감쇠에 얹으면 몸체보다 질감이 진한 역전 — waitfade.ts).

@@ -6,8 +6,10 @@
 // 이 갈림은 DECISIONS.md에 결정으로 있다.
 //
 // 겹 구조: #gl(three.js) 아래 → #brushc(이 파일) → #ink(2D 오버레이) 위.
-//   - **대기 획(자기 포즈)**: 몸체를 여기서 그린다. ink의 파선은 남는다 — 파선은 질감이
-//     아니라 «대기» 상태 채널이다(불변식 j의 표시. 정보를 지우지 않는다 — #65의 교훈).
+//   - **대기 획**: web2-16 3-a부터 몸체가 **흑연 파선**으로 여기서 그려진다(각도 창 안 —
+//     이진, 3-b). 파선이 곧 «대기» 상태 채널이다(불변식 j — 채널은 남고 재질만 흑연이 됐다.
+//     #65: 정보를 지우지 않는다). ink의 벡터 점선은 이 경로(brush+감쇠 판정)에서는 안
+//     그린다 — 감쇠 판정을 끄면(A-4) 종전대로 통짜 몸체 + ink 점선이다.
 //   - **승격 획**: 선 본체는 Line2가 그대로 그리고(⛔ 3D 불변), 여기서는 **재료 질감**을
 //     사영 위에 얹는다 — 종전 grain()의 자리를 잇는다(2-e: grain은 꺼지되 안 지워진다).
 //   - **다른 포즈의 대기 획**: 안 그린다 — 종전에도 grain이 own에만 얹혔다(같은 규칙).
@@ -29,7 +31,7 @@
 import * as brush from 'p5.brush/standalone'
 import type { App } from './state'
 import { docToScreen, isDrawPose, activeGrade, draftBrushed, fadeRef } from './state'
-import { atOwnPose } from '../core/waitfade'
+import { atOwnPose, waitFadeFactor } from '../core/waitfade'
 import { project } from '../core/camera'
 import { gradeOf, rng32 } from '../core/material'
 import { C } from '../core/constants'
@@ -189,6 +191,26 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     }
   }
 
+  /** 대기 획의 **흑연 파선**(web2-16 3-a) — 벡터 점선을 버리고 확정 획과 같은 브러시로
+   *  긋되 파선으로 남긴다: 제도에서 파선은 «아직/숨은»의 계열이다(A-3 — 숨은선).
+   *  패턴은 종전 벡터 점선의 규격 그대로(C.WAIT_DASH_* — 상태 채널의 연속성. #65:
+   *  정보를 지우지 않는다 — 채널의 «재질»만 바뀐다). 좌표는 화면 px(계약 1).
+   *  시드는 획당 한 번 — 조각마다 brush.line을 불러도 시퀀스가 결정론이다(계약 3). */
+  function drawWaitingDashed(s: Stroke, a: Pt, b: Pt) {
+    const g = gradeOf(s)
+    brush.seed(s.id)
+    brush.noiseSeed(s.id)
+    brush.set(BRUSH_OF[g], strokeColor(g), weightOf(s))
+    const L = Math.hypot(b.x - a.x, b.y - a.y)
+    if (L < 1e-6) return
+    const ux = (b.x - a.x) / L, uy = (b.y - a.y) / L
+    const on = C.WAIT_DASH_ON_PX, period = C.WAIT_DASH_ON_PX + C.WAIT_DASH_OFF_PX
+    for (let t = 0; t < L; t += period) {
+      const e = Math.min(t + on, L)
+      brush.line(a.x + ux * t, a.y + uy * t, a.x + ux * e, a.y + uy * e)
+    }
+  }
+
   function redraw(app: App) {
     brush.clear()
     if (app.renderer === 'brush') {
@@ -200,13 +222,19 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
       for (const s of app.doc.strokes) {
         const id = s.id
         if (waiting.has(id)) {
-          // 대기 획 — 자기 포즈에서만(grain과 같은 규칙). 좌표는 문서 → 화면.
-          // web2-13 3-a: 감쇠 켜짐이면 «자기 포즈»가 각도 0(atOwnPose)이다 —
-          // s.view 획이 다른 궤도 포즈에서도 own으로 읽히던 헐거움이 함께 닫힌다.
-          // 끄면 종전 식 그대로(A-4). 판정 포즈는 fadeRef(web2-14 3번 — 제스처 중 동결).
-          const own = app.waitFade ? atOwnPose(fadeRef(app), s.view) : (s.view ? !atDraw : atDraw)
-          if (!own) continue
-          drawStroke(app, s, docToScreen(app, s.a), docToScreen(app, s.b))
+          // 대기 획(web2-16 3-a·3-b) — 기본(감쇠 판정 켜짐): 각도 창 **안**이면 흑연
+          // 파선으로 그린다(waitFadeFactor 이진 — 창 밖은 즉시 0. 몸체가 이 겹으로
+          // 옮겨 왔고 ink의 벡터 점선은 이 경로에서 안 그린다 — render2d 같은 조건).
+          // 판정 포즈는 fadeRef(web2-14 3번 — 제스처 중 동결. 빼면 왕복 깜빡임이 돌아온다).
+          // 끄면 종전 식 그대로(A-4): own에서만 통짜 몸체 + ink 점선은 render2d 몫.
+          if (app.waitFade) {
+            if (waitFadeFactor(fadeRef(app), s.view) <= 0) continue
+            drawWaitingDashed(s, docToScreen(app, s.a), docToScreen(app, s.b))
+          } else {
+            const own = s.view ? !atDraw : atDraw
+            if (!own) continue
+            drawStroke(app, s, docToScreen(app, s.a), docToScreen(app, s.b))
+          }
         } else {
           const seg = app.lift.lifted.get(id)
           if (!seg) continue

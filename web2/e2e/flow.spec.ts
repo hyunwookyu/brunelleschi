@@ -142,7 +142,20 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await drawLine(page, 200, 720, 270, 765) // 미연결 — 연장선에도 안 걸린다
   s = await summary(page)
   expect(s.waiting.length).toBe(before + 1)
-  expect(await inkPixels(page, 195, 715, 275, 770)).toBeGreaterThan(20)
+  // web2-16 3-a: 대기 획 몸체는 흑연 파선으로 #brushc가 그린다 — 그 겹에서 잰다
+  // (잉크 겹의 벡터 점선은 이 경로에서 없어졌다 — waitfade.spec 3-a 팔이 그 0을 잰다)
+  expect(await page.evaluate(([x0, y0, x1, y1]) => {
+    const c = document.getElementById('brushc') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const t = document.createElement('canvas')
+    t.width = Math.round((x1! - x0!) * dpr); t.height = Math.round((y1! - y0!) * dpr)
+    const g = t.getContext('2d')!
+    g.drawImage(c, Math.round(x0! * dpr), Math.round(y0! * dpr), t.width, t.height, 0, 0, t.width, t.height)
+    const d = g.getImageData(0, 0, t.width, t.height).data
+    let n = 0
+    for (let i = 3; i < d.length; i += 4) if (d[i]! > 0) n++
+    return n
+  }, [195, 715, 275, 770])).toBeGreaterThan(20)
 
   // 돌리기 — 형태가 보인다.
   // ⚠ **좌우로만 돈다**(dy = 0). 위아래로 돌리면 그것은 «정렬되지 않은 구도»이고,

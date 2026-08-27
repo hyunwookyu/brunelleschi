@@ -183,6 +183,10 @@ test('2-c — 렌더된 어두움이 경도 단조다(2H < HB < 2B) · 인접 �
   // MAT 표 재인용이 아니라 **렌더 결과**의 단조(2차 [9]). 같은 길이·나란한 획 셋+하나.
   await boot(page)
   await drawMouse(page, 100, 400, 1100, 400)
+  // web2-16 3-a: 대기 획은 흑연 «파선»이다. 첫 화면평행 획은 첫 앵커 게이지로 승격돼
+  // 통짜가 되므로(z=−f), 여섯 급 중 첫 획만 통짜·나머지 파선이면 잉크량 비교가 어긋난다.
+  // 앵커 몫을 측정 밖 획 하나가 먼저 가져가게 한다 — 여섯 급 전부가 대기(파선)로 나란하다.
+  await drawMouse(page, 300, 430, 660, 430, 10)      // 앵커 소진용(측정 상자 밖 y=430)
   const dark = async (y: number) => {
     const b = await page.evaluate(([yy]) => {
       const src = document.getElementById('brushc') as HTMLCanvasElement
