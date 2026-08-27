@@ -1,5 +1,5 @@
 {
-  "n_flags": 5437,
+  "n_flags": 5438,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -26716,6 +26716,13 @@
         "xint": 275
       },
       "flag": "단일 범주 분포(n=275) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "xint_web2.json:inside.after.by_pair_folded.groups[0].dist",
+      "val": {
+        "xint": 25
+      },
+      "flag": "단일 범주 분포(n=25) → 변별력 없음/단위 불일치 의심"
     },
     {
       "path": "xint_web2.json:inside.after.missed.no_axis_on_A",

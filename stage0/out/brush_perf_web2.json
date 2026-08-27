@@ -13,24 +13,24 @@
  "live": {
   "drawing_few": {
    "brush": {
-    "down_to_next_paint_ms": 40.6,
-    "frame_ms_median": 20,
-    "frame_ms_p90": 27.5,
-    "frame_ms_worst": 148.3,
-    "frames": 60,
+    "down_to_next_paint_ms": 46.1,
+    "frame_ms_median": 19.4,
+    "frame_ms_p90": 30.5,
+    "frame_ms_worst": 184.1,
+    "frames": 63,
     "brush_redraws_while_down": 1,
-    "brush_syncs_while_down": 41,
+    "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 1,
-    "draft_redraws_while_down": 4,
-    "draft_ms_median": 1.8,
-    "draft_ms_max": 5.5
+    "draft_redraws_while_down": 3,
+    "draft_ms_median": 3.2,
+    "draft_ms_max": 7.5
    },
    "classic": {
     "down_to_next_paint_ms": 0.7,
     "frame_ms_median": 17.2,
-    "frame_ms_p90": 20.2,
-    "frame_ms_worst": 31,
-    "frames": 52,
+    "frame_ms_p90": 22.2,
+    "frame_ms_worst": 33,
+    "frames": 50,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 0,
@@ -41,24 +41,24 @@
   },
   "drawing_500": {
    "brush": {
-    "down_to_next_paint_ms": 19,
-    "frame_ms_median": 32.8,
-    "frame_ms_p90": 38.4,
-    "frame_ms_worst": 42.9,
-    "frames": 87,
+    "down_to_next_paint_ms": 15.8,
+    "frame_ms_median": 32.5,
+    "frame_ms_p90": 40.9,
+    "frame_ms_worst": 43.8,
+    "frames": 91,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 1,
     "draft_redraws_while_down": 40,
-    "draft_ms_median": 1.2,
-    "draft_ms_max": 3.4
+    "draft_ms_median": 1.3,
+    "draft_ms_max": 3
    },
    "classic": {
-    "down_to_next_paint_ms": 62.4,
-    "frame_ms_median": 17.1,
-    "frame_ms_p90": 86.7,
-    "frame_ms_worst": 101.2,
-    "frames": 86,
+    "down_to_next_paint_ms": 68.3,
+    "frame_ms_median": 20.5,
+    "frame_ms_p90": 88.1,
+    "frame_ms_worst": 96.8,
+    "frames": 87,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 0,
@@ -69,19 +69,19 @@
   },
   "orbit_500": {
    "brush": {
-    "down_to_next_paint_ms": 0.5,
-    "frame_ms_median": 823,
-    "frame_ms_p90": 918.6,
-    "frame_ms_worst": 989.3,
+    "down_to_next_paint_ms": 0.3,
+    "frame_ms_median": 827.4,
+    "frame_ms_p90": 944.6,
+    "frame_ms_worst": 995,
     "frames": 31,
     "brush_redraws": 31,
     "brush_syncs": 32
    },
    "classic": {
-    "down_to_next_paint_ms": 0.2,
-    "frame_ms_median": 68.7,
-    "frame_ms_p90": 78.2,
-    "frame_ms_worst": 83.3,
+    "down_to_next_paint_ms": 0.1,
+    "frame_ms_median": 69.2,
+    "frame_ms_p90": 77.5,
+    "frame_ms_worst": 85.4,
     "frames": 31,
     "brush_redraws": 0,
     "brush_syncs": 32
@@ -92,50 +92,50 @@
  "full_redraw_ms": {
   "10": {
    "brush_ms": {
-    "min": 17.700000047683716,
-    "median": 19.09999990463257,
-    "max": 22
+    "min": 14.599999904632568,
+    "median": 18.5,
+    "max": 22.799999952316284
    },
    "classic_ms": {
-    "min": 0.5999999046325684,
-    "median": 0.6000001430511475,
-    "max": 0.6999998092651367
+    "min": 0.5,
+    "median": 0.5,
+    "max": 0.9000000953674316
    },
-   "heap_bytes": 14300000
+   "heap_bytes": 11200000
   },
   "100": {
    "brush_ms": {
-    "min": 110.39999985694885,
-    "median": 130.70000004768372,
-    "max": 195.40000009536743
+    "min": 107.79999995231628,
+    "median": 133.90000009536743,
+    "max": 185.09999990463257
    },
    "classic_ms": {
-    "min": 4.299999952316284,
-    "median": 5.799999952316284,
-    "max": 7.300000190734863
+    "min": 3.9000000953674316,
+    "median": 5.200000047683716,
+    "max": 5.8999998569488525
    },
-   "heap_bytes": 14300000
+   "heap_bytes": 11200000
   },
   "500": {
    "brush_ms": {
-    "min": 803.0999999046326,
-    "median": 820.7999999523163,
-    "max": 863.0999999046326
+    "min": 749.7999999523163,
+    "median": 801.1999998092651,
+    "max": 836.6000001430511
    },
    "classic_ms": {
-    "min": 59.09999990463257,
-    "median": 62.09999990463257,
-    "max": 64.60000014305115
+    "min": 68.40000009536743,
+    "median": 73.29999995231628,
+    "max": 75
    },
-   "heap_bytes": 14300000
+   "heap_bytes": 11200000
   },
   "note": "brush_ms = #brushc 전량 재그리기(5회 min/median/max) — 커밋·궤도·줌·접기 때 돈다. classic_ms = draw2d 1회(grain 포함) — classic은 매 프레임 이 비용이고 brush는 장면이 바뀔 때만 + 사이 0. 획당 비용·선형성은 이 세 점의 필드에서 계산해 읽는다(산문에 안 박는다 — #47)."
  },
  "heap_note": "JS 힙 원 바이트(반올림 없음). ⚠ WebGL 컨텍스트(gl·brushc 둘)의 GPU/텍스처 메모리는 JS에서 못 잰다 — 미측정(2차 [6]). 실기기에서 «앱이 죽는다/느려진다»가 오면 chrome://gpu 계열이 그 자리다.",
  "bundle_bytes": {
-  "with_brush": 770497,
+  "with_brush": 771854,
   "before_brush_e2e5e91": 677355,
-  "delta": 93142,
+  "delta": 94499,
   "note": "before는 git worktree(e2e5e91)에서 같은 방법(vite build, dist/assets 합)으로 실측. delta가 p5.brush 2.2.2 표준 빌드 + 이 회차 코드 몫이다. 배포본의 값은 배포 직전 빌드에서 이 팔이 다시 잰다."
  },
  "offline_note": "sw.js는 정적 목록 없는 런타임 캐시(vite.config swSource)라 새 번들도 첫 로드에 캐시된다 — 구조 서술이다. 오프라인 «실측»은 이 회차 미실행: static_deploy의 오프라인 양성 채널은 DEFERRED 11차 항목 5에 컨테이너 시간 초과로 등재된 그대로다(2차 [12] — 미측정을 미측정으로 적는다).",
