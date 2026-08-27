@@ -7489,3 +7489,15 @@ offsetHeight로 top을 고정하는데 썸네일 <img>(data URL)는 비동기 �
 - selfcheck: 새 원장 셋(horizon_equiv·entry17·drawview)의 플래그는 전부 원장 안
   `flags_explained`가 해명(기하 0·구성 항등·fp 잔차). 상수/지표 스냅샷 없음 플래그는
   web2 원장 공통의 구조적 형태(web2-10부터 기록된 상태) 그대로다.
+
+### 배포 ① (1~3부 — ⛳)
+
+갈래 web2-17(895319f + 리뷰 대응 3d9c...) → main 병합 → 푸시.
+`git ls-remote origin main` 원문:
+```
+efe62027d8d616b4e8e4380c634b2d21d45156e9	refs/heads/main
+```
+`npm run deploy:check` 3회째(Pages 전파 관행 그대로 — 앞 둘은 옛 해시 622e9ac):
+**「✓ 화면 빌드 식별자 == 배포 커밋 / 결과: 배포됨」 — 화면 빌드 식별자 `efe6202`.**
+게이트(지시 ⛔⛔): 1-e ①~⑥ · 2-c ①~④ · 3-d ①~⑤ 전부 통과(원장 horizon_equiv_web2 ·
+entry17_web2 · drawview_web2 + 단위 467/0/467 · e2e 188/0/188) → **4부 진행 가능.**
