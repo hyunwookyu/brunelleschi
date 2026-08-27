@@ -18,8 +18,12 @@ test.afterAll(async ({ }, testInfo) => {
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
   writeFileSync(out, JSON.stringify({
     what: `web2-12 5번 → web2-19 2부(${testInfo.project.name}) — 종이 썸네일의 실측: 한 장 바이트·「+」 소요 ms·종이 1/5/20에서의 .brnl 크기. e2e paperbar.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).`,
-    def: '썸네일 = C.THUMB_W(px) 폭 JPEG(품질 0.72 — 동작점 AS-C39). add_ms = 「+」 click 왕복(굽기+띠 갱신 포함) · capture_ms = **굽기만**(diag.captureThumb) · regen_view_ms = ㉯라면 «펼칠 때» 종이마다 드는 몫(이동+전량 재그리기+굽기). brnl_bytes_*는 같은 문서(획 셋)에서 종이 수만 는 값(작도 종이 제외 수).',
+    def: '썸네일 = C.THUMB_W(px) 폭 JPEG(품질 0.72 — 동작점 AS-C39). add_ms = 「+」 click 왕복(굽기+띠 갱신 포함) · capture_ms = **굽기만**(diag.captureThumb) · regen_view_ms = **기각된 대안 ㉯**(열 때 다시 굽기 — web2-12 5번에서 기각)이 들었을 종이당 몫(이동+전량 재그리기+굽기) — 기각 근거를 매 실행 다시 재는 값이다(#57: 기각을 산 채로 재는 채널). brnl_bytes_*는 같은 문서(획 셋)에서 종이 수만 는 값(작도 종이 제외 수).',
     baseline_622e9ac_thumb_bytes_median: 1499,
+    conditions: {
+      workers: testInfo.config.workers, project: testInfo.project.name,
+      time_validity: '⚠ 시간 칸(add_ms·capture_ms·regen_view_ms)은 이 conditions.workers에서 나온 값이다 — 워커가 1이 아니면 dpr 겹침 몫이 섞여 **전/후 비교로는 무효**다(#71 ㉠ — test_cost·cost18과 같은 규약). 시간 비교의 정본은 --workers=1 단독 실행이고, 여기 값은 대역 감각용이다',
+    },
     ...ledger,
   }, null, 1))
 })
@@ -101,8 +105,11 @@ test('③④⑤⑥ — 「+」·탭 복귀·삭제(획 불변)·작도 종이 ·
   await page.click('#paper-pop u[data-pick="delete"]'); await settle(page)
   expect((await sheets(page)).length).toBe(2)               // 확인 전에는 안 지워진다
   await page.click('#paper-pop u[data-pick="yes"]'); await settle(page)
+  const nAfter = await strokeN(page)
   expect((await sheets(page)).length).toBe(1)
-  expect(await strokeN(page)).toBe(nBefore)
+  expect(nAfter).toBe(nBefore)
+  // 게이트 ⑤의 값을 원장에 남긴다(2차 리뷰 [4] — 게이트 판정이 원장 밖 산문에 살지 않게)
+  ledger['gate_5_delete'] = { strokes_before: nBefore, strokes_after: nAfter, sheets_before: 2, sheets_after: 1 }
   // 지운 종이를 보고 있었다 — 작도로 돌아온다
   const afterDel = await pose(page)
   expect(Math.abs(afterDel.q.y)).toBeLessThan(1e-12)

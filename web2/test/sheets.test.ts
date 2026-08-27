@@ -72,8 +72,14 @@ describe('① 마이그레이션 — v3 이하의 savedViews[i] → sheets[i+1] 
     expect(d.doc.sheets[1]!.view!.oy).toBeCloseTo(-205, 9)
   })
 
-  it('v3도 받는다(지시 2-b 문면 — v2와 같은 모양으로 읽는다) · v5는 거부한다', () => {
-    expect(parseBrnl(v2Text(3))).not.toBeNull()
+  it('v3도 받는다(지시 2-b 문면) — **게이트 ①의 등록문이 v3이므로 v3 판을 실제로 태운다**: 종이가 v2와 똑같이 선다 · v5는 거부', () => {
+    const d3 = parseBrnl(v2Text(3))!
+    expect(d3).not.toBeNull()
+    const d2 = parseBrnl(v2Text(2))!
+    // v3 → 종이 셋(작도 + 종이 2 + 종이 3) — v2 마이그레이션과 배열 전체가 같다(2차 리뷰 [1])
+    expect(d3.doc.sheets).toEqual(d2.doc.sheets)
+    expect(d3.doc.sheets.length).toBe(3)
+    expect(d3.doc.sheets[0]!.name).toBe('작도')
     const j = JSON.parse(v2Text(2))
     j.version = 5
     expect(parseBrnl(JSON.stringify(j))).toBeNull()

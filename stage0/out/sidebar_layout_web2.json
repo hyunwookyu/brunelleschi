@@ -22,11 +22,42 @@
  "overlap": {
   "pencil": {
    "overlaps": 0,
-   "n": 16
+   "n": 16,
+   "ids": [
+    "sidebar-toggle",
+    "dim-toggle",
+    "btn-undo",
+    "btn-redo",
+    "btn-snap",
+    "btn-pencil",
+    "tray-2H",
+    "tray-H",
+    "tray-F",
+    "tray-HB",
+    "tray-B",
+    "tray-2B",
+    "btn-pen",
+    "btn-eraser-pencil",
+    "btn-eraser-ink",
+    "btn-face"
+   ]
   },
   "pen_with_thick": {
    "overlaps": 0,
-   "n": 11
+   "n": 11,
+   "ids": [
+    "sidebar-toggle",
+    "dim-toggle",
+    "btn-undo",
+    "btn-redo",
+    "btn-snap",
+    "btn-pencil",
+    "btn-pen",
+    "btn-eraser-pencil",
+    "btn-eraser-ink",
+    "btn-face",
+    "thick"
+   ]
   }
  },
  "right_edge_x": 1195,

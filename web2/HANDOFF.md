@@ -1,5 +1,55 @@
 # web2 인계
 
+## 🆕🆕🆕🆕🆕🆕🆕 web2-19 (2026-08-28) — 제도판: 흑연·종이 탭·띠 넷·아이콘
+
+**어디까지 배포됐는가: (마감 절차 진행 중 — 병합·푸시·deploy:check 후 이 줄이 정본이 된다.)**
+
+**게이트(2부 ⛔⛔ — 2-d ①②⑤): 전부 통과 — 값으로**: ① v2·**v3** → sheets 3
+[「작도」·「종이 2」·「종이 3」]·포즈 전 성분 일치·v1 oy −5→−205(sheets.test — v3 판 실제
+태움·2차 리뷰 [1]로 강화) ② v4 왕복 toEqual + 직렬화 문자열 자기 왕복 ⑤ 획 수 단위 2→2 ·
+e2e 3→3(원장 views_thumb `gate_5_delete`). 서서 **배포하지 않고 3부로**(지시 문면).
+
+지시 원문: [`docs/instructions/web2-19.md`](../docs/instructions/web2-19.md)(작업 전 커밋
+d104b1d — 대응표 `docs/DRAFTING-MAP.md`·아이콘 정본 `docs/instrument-icons.md` 포함).
+기록: NOTES 「2026-08-28 — web2-19」 절 전부(착수 대조·D 적용·1~4부·마감).
+
+- **1부(획은 흑연이다)**: render2d constructing 갈래 삭제 — 몸체는 언제나 재료색(수리 전
+  재현: vp 정의선 미리보기에 파랑 픽셀 168 → 0). 예고는 **생길 자리의 파선 ✕**(draft.vp =
+  classifyNext 좌표 그대로 — 커밋 후 vps[0] 일치는 **구성 보장**·배선 회귀 채널이다 — 2차 [8]㉰). draftBrushed의 label
+  매개변수 삭제. D-3 상주 반증(diag.forceConstructing). 1-c 분포는 **측정만**:
+  `graphite_web2.json` — 손 대역(2~5px 처짐) 가로 66/144칸이 소실점 갈래(임계 불변 —
+  다음 회차 판단. DEFERRED).
+- **2부(종이 탭)**: `Doc.sheets`(배열 0 = 작도 종이 · id 0 예약 · 나머지 nextId 한 통) ·
+  `.brnl` **v4**(1~4 수용·5 거부 · savedViews[i]→sheets[i+1] 「종이 N」 · 깨진 종이만 강등) ·
+  띠(#paperbar — 탭·「+」·두 번 탭 이름·길게 눌러 썸네일·삭제 확인) · #topleft 세로 기둥
+  (**web2-20이 아래에 종속 탭 줄을 붙인다** — 높이 하드코딩 없음, ⑦ 팔이 줄을 실제로 붙여
+  잰다). App.savedViews·saveView·gotoView·deleteView는 없어졌다(addSheet·gotoSheet·
+  deleteSheet·renameSheet). views.spec → paperbar.spec.
+- **3부(띠 넷·전체 화면)**: 종이(위왼)·눈(위오른 — 작도 시점·전체 화면·표시 팝업)·손(우측 —
+  되돌리기/구분선·자(삼각자=스냅 입구·축 스냅 자리만 비움)·연필 접힘·펜·지우개·면·치수)·
+  서랍(파일+종이 질감). 설정 자루 해체 — own3d는 진단 곁 #diagctl(열쇠 b2-own3d 불변).
+  전체 화면 body.fs(뼈대 유지·#fs-exit·세션 한정). zones.spec 5팔.
+- **4부(아이콘·이름)**: 이름 넷만(다른 각도에서는 숨긴다 · 소수점 그대로 · brush/classic
+  화면 언어 0 · own3d→진단). Phosphor light 이식(ruler·arrows-out·eye·eye-slash·
+  compass-tool·grid-four·plus — path만·MIT LICENSE 줄). **굵기 light 확정 — 실측**
+  (icon_weight_web2: 잉크량 최근접 = light. ⚠ 첫 판 32px 문턱은 분해능 0 — #71 ㉢ 재발).
+
+**다음 사람이 알아야 할 것**:
+- **web2-20(겹)은 이 회차의 `Doc.sheets`·`#topleft`를 가리킨다** — 종속 탭 줄은 #topleft
+  안 둘째 줄로 붙인다(paperbar.spec ⑦이 그 자리를 잰다). **종이 삭제 규약이 바뀐다**
+  (겹이 획을 소유하면 종이 삭제 = 획 삭제 — DEFERRED 행이 그 예고다).
+- 옐로 롤 아이콘(색 예외 #e9d98a)·트레이싱지 롤은 `docs/instrument-icons.md` 정본에 있고
+  **아직 화면에 없다**(web2-20이 쓴다).
+- **PITFALLS #72 신설**(같은 선택자 CSS 두 자리 = 순서 의존 · 요소 수 팔은 목록으로) ·
+  #71 ㉢ 재발 부기(새 척도에는 분해능 단언을 팔에 박는다).
+- 가정 AS-C61~C66 신설 · 결정 D-W6 · 실기기 표(DEFERRED web2-19 — 파선 ✕·수평 의도·탭 셋·네 자리·연필통·전체 화면·자 팝업·아이콘 판독·(예비) 옐로 롤).
+- 1-c 분포표가 다음 임계 판단의 출발점이다(«수평 의도» 실기기 행과 함께).
+
+**검증(마감)**: 단위 **511 passed / 0 failed / 511**(56파일) · 타입 0오류 · 빌드 2.0s ·
+전량 e2e 「**234 passed (7.8m)**」 — 234/0/234(30파일 · `--list` 대조) · selfcheck 새
+플래그는 원장 안 해명. 원장 신설: graphite_web2 · icon_weight_web2{,_dpr2} ·
+views_thumb_web2(paperbar가 승계).
+
 ## 🆕🆕🆕🆕🆕🆕 web2-18 (2026-08-27) — 잉크가 위에 온다 · 연장선은 획득한다 · 돌려도 흑연이 남는다
 
 **어디까지 배포됐는가: 배포 ①(1·2부) = 원격 main `ed6d33f635432c7c706699ea0fdf97c4e0b1e921`,

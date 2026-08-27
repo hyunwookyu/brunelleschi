@@ -34,17 +34,17 @@
    "active": true,
    "tiles": 38,
    "frames": 8,
-   "bakeMs": 81.1,
+   "bakeMs": 81.7,
    "bakePasses": 1,
    "bakeClamped": 0,
-   "frameMsMedian": 0.2,
-   "frameMsMax": 1
+   "frameMsMedian": 0.3,
+   "frameMsMax": 1.2
   },
   "tiles_after_release": {
    "active": false,
    "tiles": 0,
-   "frames": 15,
-   "bakeMs": 158.6,
+   "frames": 17,
+   "bakeMs": 149.4,
    "bakePasses": 1,
    "bakeClamped": 1,
    "frameMsMedian": 0.2,

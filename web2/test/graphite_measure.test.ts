@@ -106,16 +106,54 @@ describe('web2-19 1-c — 손 처짐 분포 (측정만 — 임계 불변)', () =
     const handBand = (cells: Cell[]) => {
       const hand = cells.filter(c => c.err >= 2 && c.err <= 5)
       const vp = hand.filter(c => c.branch === 'vp').length
-      return { n: hand.length, vp, note: '#68의 손 대역(2~5px)에서 소실점 갈래로 떨어진 칸 — 비율이 아니라 분자/분모(§5)' }
+      const shortVp = hand.filter(c => c.branch === 'short-vp').length
+      return { n: hand.length, vp, short_vp: shortVp,
+        note: '#68의 손 대역(2~5px). vp = 소실점 갈래(카메라가 바뀐다) · short_vp = 방향은 소실점인데 VP_MIN_LEN 미만 — **확정 시 축 스냅이 가장 가까운 축(수평)에 앉힌다**(short_vp_commit이 값으로 확인). 수평으로 안 앉는 칸 = vp뿐이다. 비율이 아니라 분자/분모(§5)' }
     }
+
+    // short-vp의 확정 거동(1차 리뷰 [8]) — 분류는 «content(짧다)»지만 커밋은 축 스냅을
+    // 지나 **가장 가까운 축**에 앉는다(가로 획 → H·처짐 0 / 세로 획 → V·기움 0).
+    // ⚠ 0이 구성 필연과 안 갈리지 않게(#40② — 2차 리뷰 [5]) **대조군**을 같이 태운다:
+    // vp 갈래 셀은 커서 그대로 확정되므로 committedDrop이 심은 오차 그대로(0이 아님) —
+    // 같은 하네스가 0 아닌 값을 실제로 낼 수 있음을 매 실행 증명한다.
+    const shortVpCommit: { kind: string; L: number; h: number; err: number; sign: number; committedDrop: number }[] = []
+    for (const [L, h, err, sign] of [[40, 160, 3, 1], [40, 80, 5, -1], [40, 250, 4, 1]] as [number, number, number, number][]) {
+      const a2 = { x: 350, y: HZ + h }, b2 = { x: 350 + L, y: HZ + h + err * sign }
+      const s = session(W, H)
+      const st = s.draw(a2.x, a2.y, b2.x, b2.y)
+      shortVpCommit.push({ kind: 'horiz-shortvp', L, h, err, sign, committedDrop: st ? Math.abs(st.b.y - st.a.y) : NaN })
+    }
+    // 세로 short-vp — V축에 앉는다(기움 run이 0으로. 2차 리뷰 [5]㉰ — 세로는 세로로 잰다)
+    const shortVpCommitV: { kind: string; L: number; h: number; err: number; sign: number; committedRun: number }[] = []
+    for (const [L, h, err, sign] of [[40, 160, 3, 1], [40, 80, 5, -1]] as [number, number, number, number][]) {
+      const a2 = { x: 500, y: HZ + h }, b2 = { x: 500 + err * sign, y: HZ + h - L }
+      const s = session(W, H)
+      const st = s.draw(a2.x, a2.y, b2.x, b2.y)
+      shortVpCommitV.push({ kind: 'vert-shortvp', L, h, err, sign, committedRun: st ? Math.abs(st.b.x - st.a.x) : NaN })
+    }
+    // 대조군 — vp 갈래 셀(L140·h160·**err8**: 160×140/8 = 2800 < 7200이라 vp — err3은
+    // 7466 > 7200이라 H다: 첫 판이 그 셀을 골라 대조군 자신이 0을 냈고 이 산술이 잡았다):
+    // vp 확정은 커서 그대로라 처짐이 남는다.
+    const vpControl = (() => {
+      const a2 = { x: 350, y: HZ + 160 }, b2 = { x: 350 + 140, y: HZ + 160 + 8 }
+      const s = session(W, H)
+      const st = s.draw(a2.x, a2.y, b2.x, b2.y)
+      return { kind: 'vp-control', L: 140, h: 160, err: 8, committedDrop: st ? Math.abs(st.b.y - st.a.y) : NaN }
+    })()
 
     const ledger = {
       what: 'web2-19 1-c — 손 오차를 태운 화면 평행 의도 획의 갈래 분포. **측정만 한다** — '
         + '임계(PARALLEL_PX·SCREEN_PARALLEL_RATIO·VP_FAR_W)는 이 회차가 만지지 않는다(지시 ⚠⚠ — '
         + 'web2-17이 따라긋기 8px 대역에서 경계 플립을 실측한 자리다). 판단은 다음 회차 몫.',
       def: 'branch: H/V = 화면 평행 선언 · vp = 소실점 정의 · short-vp = 방향은 소실점인데 '
-        + 'VP_MIN_LEN 미만 · content = 그 외. minVpErr = 그 (길이,이격)에서 소실점이 서는 최소 '
-        + '끝점 오차 px(null = 이 격자 안 없음). vpDist = 시작점에서 소실점까지 화면 px.',
+        + 'VP_MIN_LEN 미만(확정은 축 스냅이 수평에 앉힌다 — short_vp_commit) · content = 그 외. '
+        + '**갈래 판정 순서**(camera.ts classifyNext): ① 처짐 ≤ PARALLEL_PX(1.5) → H '
+        + '② |vpx−ax| > VP_FAR_W·W(7200px) → H(무한원으로 읽음). |vpx−ax| = 이격h×가로R÷처짐이라 '
+        + '길이·이격 의존 — 손 대역에서 H로 살아남은 칸의 대부분은 ①이 아니라 ②의 몫이다'
+        + '(minVpErr가 길이·이격마다 다른 이유. 임계 판단의 지렛대도 PARALLEL_PX 하나가 아니다). '
+        + '③ run/L ≤ 0.05 → V ④ L < VP_MIN_LEN → short-vp ⑤ 나머지 vp. '
+        + 'minVpErr = 그 (길이,이격)에서 소실점이 서는 최소 끝점 오차 px(null = 이 격자 안 없음). '
+        + 'vpDist = 시작점에서 소실점까지 화면 px.',
       constants: {
         PARALLEL_PX: C.PARALLEL_PX, SCREEN_PARALLEL_RATIO: C.SCREEN_PARALLEL_RATIO,
         VP_FAR_W: C.VP_FAR_W, MIN_DIR_LEN_RATIO: C.MIN_DIR_LEN_RATIO,
@@ -124,10 +162,20 @@ describe('web2-19 1-c — 손 처짐 분포 (측정만 — 임계 불변)', () =
       },
       grid: { LENGTHS, HEIGHTS, ERRORS, SIGNS, n_per_table: LENGTHS.length * HEIGHTS.length * ERRORS.length * SIGNS.length },
       horizontal: { ...fold(horiz), hand_band: handBand(horiz) },
-      vertical: { ...fold(vert), hand_band: handBand(vert),
+      vertical: { ...fold(vert), hand_band: { ...handBand(vert), note: '#68의 손 대역(2~5px). vp = 소실점 갈래 · short_vp = 방향은 소실점인데 VP_MIN_LEN 미만 — 확정 시 축 스냅이 **V축**에 앉힌다(기움 0 — short_vp_commit_vertical이 값으로 확인). 분자/분모(§5)' },
         ratio_gate_px_per_L: Object.fromEntries(LENGTHS.map(L => [`L${L}`, +(C.SCREEN_PARALLEL_RATIO * L).toFixed(2)])) },
       path_check: pathCheck,
+      short_vp_commit: shortVpCommit,
+      short_vp_commit_vertical: shortVpCommitV,
+      short_vp_commit_control: vpControl,
       flags_explained: {
+        'grid.ERRORS[0] = 0 · path_check[0].err = 0 (오차류 0)':
+          '격자의 0점은 **의도된 대조군**이다(무오차 행 — 손 대역과의 경계를 이것이 세운다). '
+          + '측정 실패의 0이 아니라 입력 축의 눈금이다',
+        'short_vp_commit의 committedDrop 전부 0':
+          '축 스냅이 앉힌 결과의 구성값이다 — «경로 미실행»과 가르는 대조군이 같이 있다'
+          + '(short_vp_commit_control: vp 갈래 셀은 처짐 8이 그대로 남는다 · 0이 아닌 값을 '
+          + '같은 하네스가 실제로 낸다 — #40²의 답)',
         'byErr의 낮은 오차 행이 단일 범주(H 36 / V 36)':
           '그것이 경계의 구조다 — 처짐 ≤ PARALLEL_PX(1.5)는 전부 화면 평행으로 읽히는 것이 '
           + '규칙이고(camera.ts 154행), 변별력은 그 위 행(2~8px — H·vp·short-vp로 갈린다)이 '
@@ -158,6 +206,14 @@ describe('web2-19 1-c — 손 처짐 분포 (측정만 — 임계 불변)', () =
     expect(branches.has('vp'), '격자에 vp 갈래가 있다(경계 위를 물었다)').toBe(true)
     const vBranches = new Set(vert.map(c => c.branch))
     expect(vBranches.has('V'), '세로 격자에 V 갈래가 있다').toBe(true)
+    for (const c of shortVpCommit) {
+      expect(c.committedDrop, `short-vp 확정이 수평에 앉는다 — L${c.L} h${c.h} err${c.err}`).toBe(0)
+    }
+    for (const c of shortVpCommitV) {
+      expect(c.committedRun, `세로 short-vp 확정이 V축에 앉는다 — L${c.L} h${c.h} err${c.err}`).toBe(0)
+    }
+    // 대조군 — 같은 하네스가 0 아닌 값을 실제로 낸다(#40②: 위 0이 «경로 미실행»이 아니다)
+    expect(vpControl.committedDrop, 'vp 갈래는 처짐이 남는다(0이 아니다)').toBeGreaterThan(0)
     for (const p of pathCheck) {
       expect(p.agree, `경로 일치 — ${p.kind} L${p.L} h${p.h} err${p.err}: 예측 ${p.predicted}, vps ${p.vpsAfter}`).toBe(true)
     }

@@ -33,11 +33,15 @@ describe('web2-19 1부 ② — 파선 ✕ 좌표', () => {
     const ex = start.x + (HZ - start.y) * (b.x - start.x) / (b.y - start.y)
     expect(Math.abs(r.vp!.x - ex)).toBeLessThan(1e-9)
     expect(Math.abs(r.vp!.y - HZ)).toBeLessThan(1e-9)
-    // 원칙 d — 이 좌표가 확정 시 vps에 들어갈 값 그대로인가: 실제로 커밋해 대조한다
-    // (예고가 확정과 갈리면 파선 ✕가 옮겨 앉는다 — 조용한 거짓).
+    // 원칙 d — 이 좌표가 확정 시 vps에 들어갈 값 그대로인가는 아래 둘째 팔이 커밋해 대조.
   })
 
-  it('예고가 그대로 확정된다 — 커밋 후 vps[0] == draft.vp (원칙 d)', async () => {
+  // ⚠ **이 등식은 측정이 아니라 구성 보장이다**(§5.1 자기참조 유형 3 — 1차 리뷰 [16]):
+  // vp 갈래의 확정 끝점은 커서 그대로이고(resolveCommit이 안 바꾼다) analyze가 같은
+  // 입력을 다시 분류하므로, 지금 배선에서는 같을 수밖에 없다. 이 팔의 몫은 값 임계가
+  // 아니라 **배선 회귀 채널**이다 — 미리보기와 확정 경로가 앞으로 갈라지면(끝점 다듬기
+  // 등) 여기서 걸린다. 그래서 원장에 안 싣고 임계도 안 건다.
+  it('예고가 그대로 확정된다 — 커밋 후 vps[0] == draft.vp (구성 보장의 배선 채널 · 원칙 d)', async () => {
     const { session } = await import('./session')
     const s = session(W, H)
     const app = s.app

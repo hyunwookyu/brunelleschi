@@ -45,10 +45,12 @@ const collectText = (page: Page) => page.evaluate(() => {
 test('① 이름 훑기 — 넷이 0이고, 오스냅·축 스냅은 남아 있다 (+심어서 반증)', async ({ page }) => {
   await boot(page)
   const text = await collectText(page)
-  // 사라진 넷(대응표 §3) — own3d 문구는 진단 채널에만 산다(수집에서 제외된 자리)
-  for (const banned of ['획이 위치를 소유한다', '대기 획은 그린 시점에서만', '무한소수', 'brush', 'classic']) {
-    expect(text.includes(banned), `「${banned}」가 화면 언어에 없다`).toBe(false)
-  }
+  // 사라진 넷(대응표 §3) — own3d 문구는 진단 채널에만 산다(수집에서 제외된 자리).
+  // 실패 시 «어느 문자열이 어디에»가 보이게 목록으로 낸다(#72 규칙 ②).
+  const BANNED = ['획이 위치를 소유한다', '대기 획은 그린 시점에서만', '무한소수', 'brush', 'classic']
+  const found = BANNED.filter(b2 => text.includes(b2))
+    .map(b2 => `${b2} @ …${text.slice(Math.max(0, text.indexOf(b2) - 20), text.indexOf(b2) + 30)}…`)
+  expect(found, '금지어가 화면 언어에 없다').toEqual([])
   // 새 이름이 실제로 그 자리에 있다
   expect(text).toContain('다른 각도에서는 숨긴다')
   expect(text).toContain('소수점 그대로')
@@ -65,6 +67,16 @@ test('① 이름 훑기 — 넷이 0이고, 오스냅·축 스냅은 남아 있�
   })
   expect((await collectText(page)).includes('무한소수'), '심은 금지어가 걸린다').toBe(true)
   await page.evaluate(() => document.getElementById('sweep-canary')!.remove())
+  // 경계의 반대편(2차 리뷰 [11]) — 제외 구역(#diagctl) **안**에 심으면 안 걸린다:
+  // 「진단 채널은 그대로」(대응표 §3)의 경계가 실제로 그 자리에 있다.
+  await page.evaluate(() => {
+    const s = document.createElement('span')
+    s.id = 'sweep-canary2'
+    s.textContent = '무한소수 표기'
+    document.getElementById('diagctl')!.append(s)
+  })
+  expect((await collectText(page)).includes('무한소수'), '진단 채널 안은 훑기 밖이다').toBe(false)
+  await page.evaluate(() => document.getElementById('sweep-canary2')!.remove())
 })
 
 test('② 선 아이콘 무채색 — 직접 그리는 도구 밖의 svg에 채도가 없다', async ({ page }) => {
@@ -91,6 +103,30 @@ test('② 선 아이콘 무채색 — 직접 그리는 도구 밖의 svg에 채�
     return out
   })
   expect(bad, '채도를 가진 선 아이콘이 없다').toEqual([])
+  // 속성 판정의 구멍(currentColor 상속) 마감 — **계산색**도 회색조다. 지시 문면은
+  // «컬러 픽셀 0»인데 픽셀 판은 AA·배경과 섞여 분해능이 낮다(#71 ㉢의 축) — 속성+계산색이
+  // 구성적으로 더 강하다: 채널을 바꾼 근거를 여기 적는다.
+  const badColor = await page.evaluate(() => {
+    const out: string[] = []
+    for (const svg of document.querySelectorAll('svg')) {
+      if (svg.closest('#btn-pencil, #btn-pen, #tray, #oldtools, #btn-eraser-pencil, #btn-eraser-ink, #btn-face, #thick, #boot')) continue
+      const m = /rgba?\((\d+), (\d+), (\d+)/.exec(getComputedStyle(svg).color)
+      if (m && Math.max(+m[1]!, +m[2]!, +m[3]!) - Math.min(+m[1]!, +m[2]!, +m[3]!) > 40) out.push(`${(svg.parentElement as HTMLElement).id}:color=${getComputedStyle(svg).color}`)
+    }
+    return out
+  })
+  expect(badColor, 'currentColor가 받는 계산색도 무채색이다').toEqual([])
+  // 반증(D-3) — 색을 실제로 물리면 걸린다(실패 가능한 격자)
+  const caught = await page.evaluate(() => {
+    const el = document.getElementById('btn-snap')!
+    el.style.color = '#1a6ac2'
+    const svg = el.querySelector('svg')!
+    const m = /rgba?\((\d+), (\d+), (\d+)/.exec(getComputedStyle(svg).color)!
+    const bad = Math.max(+m[1]!, +m[2]!, +m[3]!) - Math.min(+m[1]!, +m[2]!, +m[3]!) > 40
+    el.style.color = ''
+    return bad
+  })
+  expect(caught, '물린 색이 계산색 검사에 걸린다').toBe(true)
 })
 
 test('④ 굵기 대조 — thin/light/regular 잉크량 vs 지금 앱 아이콘 → light가 가장 가깝다 (원장)', async ({ page }, testInfo) => {
@@ -144,7 +180,7 @@ test('④ 굵기 대조 — thin/light/regular 잉크량 vs 지금 앱 아이콘
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
   writeFileSync(resolve(HERE, `../../stage0/out/icon_weight_web2${suffix}.json`), JSON.stringify({
     what: `web2-19 4-b(${testInfo.project.name}) — 아이콘 굵기 대조: Phosphor arrows-out의 thin/light/regular를 지금 앱 아이콘(작도 시점 · 가는 선 1.3/20)과 두 척도로 잰 것. 사람이 화면을 못 보고 정했으므로(지시 문면) 이 표가 근거다. e2e icons.spec가 매 실행 다시 쓴다(#47).`,
-    def: 'ink_px = 32×32 래스터에서 알파>32인 칸 수(광학 무게 — 글리프 복잡도와 뒤섞이는 척도). stroke_frac = 선 굵기 ÷ viewBox(낱개 선의 무게). 두 척도가 반대편을 가리켜 chosen은 그 «사이»의 light다 — 근거는 what·주석.',
+    def: 'ink_px = **64×64 래스터의 알파 합 ÷ 255**(픽셀 등가 잉크량 — 이름의 px는 그 등가 단위다. ⚠ 첫 판의 32×32 문턱 계수는 분해능이 없어 철회 — chosen_why). 광학 무게 척도라 글리프 복잡도와 뒤섞인다. stroke_frac = 선 굵기 ÷ viewBox(낱개 선의 무게 — ×30px 렌더 환산은 ref 1.95px·light 1.41·regular 1.875). 합성 래스터의 path 기하를 재므로 **dpr 무관**(dpr1·dpr2 원장이 같은 값인 것은 설계다 — dpr2 판은 같은 측정의 재실행 확인일 뿐이다).',
     ink_px: inks, ink_frac: Object.fromEntries(['ref', ...weights].map(k => [k, +frac(k).toFixed(4)])),
     stroke_frac: { ref: +refStroke.toFixed(4), ...Object.fromEntries(weights.map(w => [w, +STROKE[w]!.toFixed(4)])) },
     ink_rank: inkRank, stroke_rank: strokeRank, chosen: 'light',

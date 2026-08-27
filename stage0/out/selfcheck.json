@@ -1,5 +1,5 @@
 {
-  "n_flags": 5518,
+  "n_flags": 5509,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -2405,11 +2405,6 @@
     },
     {
       "path": "cost18_web2_clip.json:grid.raw_50pct.400.sync_strokes_ms.median",
-      "val": 1,
-      "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
-    },
-    {
-      "path": "cost18_web2_dpr2.json:grid.raw_100pct.200.sync_strokes_ms.median",
       "val": 1,
       "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
     },
@@ -27513,48 +27508,8 @@
       "flag": "**없는 원장을 인용한다**(8건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
     },
     {
-      "path": "stage0/out/cost18_web2.json",
-      "val": "#71",
-      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
-    },
-    {
-      "path": "stage0/out/cost18_web2_clip.json",
-      "val": "#71",
-      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
-    },
-    {
-      "path": "stage0/out/cost18_web2_dpr2.json",
-      "val": "#71",
-      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
-    },
-    {
-      "path": "stage0/out/gesture_tiles_web2.json",
-      "val": "#71",
-      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
-    },
-    {
-      "path": "stage0/out/gesture_tiles_web2_dpr2.json",
-      "val": "#71",
-      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
-    },
-    {
-      "path": "stage0/out/icon_weight_web2.json",
-      "val": "#71",
-      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
-    },
-    {
-      "path": "stage0/out/icon_weight_web2_dpr2.json",
-      "val": "#71",
-      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
-    },
-    {
       "path": "stage0/out/inklayer_web2_before.json",
       "val": "#101014",
-      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
-    },
-    {
-      "path": "stage0/out/test_cost_web2.json",
-      "val": "#71",
       "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
     },
     {
@@ -27831,7 +27786,7 @@
       "scan": "scan_pitfall_citations",
       "unit": "원장",
       "targets": 124,
-      "hits": 11,
+      "hits": 3,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
     {
@@ -28150,6 +28105,7 @@
       71
     ],
     "graphite_web2.json": [
+      40,
       68
     ],
     "ground_anchor.json": [
@@ -28719,10 +28675,14 @@
       41
     ],
     "views_thumb_web2.json": [
-      47
+      47,
+      57,
+      71
     ],
     "views_thumb_web2_dpr2.json": [
-      47
+      47,
+      57,
+      71
     ],
     "vp_detect.json": [
       24

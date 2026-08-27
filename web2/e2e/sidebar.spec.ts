@@ -14,8 +14,8 @@ const box = async (page: Page, sel: string) => {
 // web2-12 3번 — 크기·정렬·누름 범위가 **한 규칙**이다(:root --ui-scale·--hit-pad·--bar-gap).
 // 시점·치수 묶음(#viewbar)이 세로바 안으로 들어와 오른쪽 세로축이 하나로 선다.
 // 겹침 실측 — 첫 팔이 재고 자리 실측 팔이 원장에 싣는다(한 파일은 한 워커에서 차례로 돈다)
-let ovPencil = { overlaps: -1, n: 0 }
-let ovPen = { overlaps: -1, n: 0 }
+let ovPencil = { overlaps: -1, n: 0, ids: [] as string[] }
+let ovPen = { overlaps: -1, n: 0, ids: [] as string[] }
 const ALL = ['sidebar-toggle', 'dim-toggle',   // btn-save-view: 종이 탭 「+」가, btn-draw-view: 눈(#eyebar)이 대신한다(web2-19)
   'btn-undo', 'btn-redo', 'btn-snap', 'btn-pencil',
   'tray-2H', 'tray-H', 'tray-F', 'tray-HB', 'tray-B', 'tray-2B', 'btn-pen',
@@ -93,7 +93,7 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
         if (ox > 0 && oy > 0) { overlaps++; console.log(`[측정] 겹침 — ${a.id} × ${b.id} (${ox.toFixed(1)}×${oy.toFixed(1)})`) }
       }
     }
-    return { overlaps, n: rects.length }
+    return { overlaps, n: rects.length, ids: rects.map(r => r.id) }
   }
   await page.click('#btn-pencil')                    // 연필통을 **연** 채가 가장 넓은 상태다
   await page.waitForTimeout(200)
@@ -107,8 +107,10 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
   console.log(`[측정] 쌍별 겹침 — 연필(통 열림) ${ovPencil.overlaps}(요소 ${ovPencil.n}) · 펜+막대 ${ovPen.overlaps}(요소 ${ovPen.n})`)
   expect(ovPencil.overlaps).toBe(0)
   expect(ovPen.overlaps).toBe(0)
-  // 펜 상태 = 연필통 여섯 줄이 접히고(−6) 굵기 막대가 든다(+1)
-  expect(ovPen.n).toBe(ovPencil.n - 5)
+  // 펜 상태 = 연필통 여섯 줄이 접히고 굵기 막대가 든다. ⚠ 수 관계식(n−5)이 아니라
+  // **id 목록의 차**로 단언한다(#72 규칙 ② — 수만 보면 17 vs 11의 수수께끼가 남는다):
+  const expectedPen = [...ovPencil.ids.filter(id => !id.startsWith('tray-')), 'thick']
+  expect([...ovPen.ids].sort()).toEqual(expectedPen.sort())
 
   // 세로바 전체가 화면 높이 안이다(지시 문면 — #sidebar에는 max-height가 없다)
   const bar = await box(page, '#sidebar')
