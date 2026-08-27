@@ -7,7 +7,7 @@ import { emptyDoc, type Doc, type Stroke, type Face, type CamPose, type ViewOffs
 import { isInk } from '../core/material'
 export type { ViewOffset }
 import { liftAll, closestOnLineToRay, type LiftResult } from '../core/lift'
-import { camSig, defineByTouch, type TouchStats } from '../core/own3d'
+import { camSig, defineByTouch, emptyTouchStats, type TouchStats } from '../core/own3d'
 import { DRAW_POSE, rayThrough } from '../core/camera'
 import { defaultOsnap, type OsnapSettings } from '../core/osnap'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
@@ -136,7 +136,7 @@ export interface App {
   touchStats: TouchStats
   /** 마지막 확정 획의 교점 단계 트레이스(web2-14 2번 — 지시의 ①~④를 화면에서 가른다):
    *  ① A가 3D인가(lifted) ② 닿은 대기선 수(touched) ③④ 성립/무산. 진단 패널이 읽는다. */
-  touchLast: { lifted: boolean; touched: number; ok: number } | null
+  touchLast: { lifted: boolean; touched: number; ok: number; missed: TouchStats } | null
   cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
 }
@@ -173,7 +173,7 @@ export function createApp(W: number, H: number): App {
     strayCount: 0,
     own3d: true,   // 기본 켜짐(web2-14 1번 — 사람 판정). 끄는 길은 설정 + localStorage 'off'.
     lastCamSig: null,
-    touchStats: { ok: 0, pose: 0, axis: 0, lift: 0, roundtrip: 0 },
+    touchStats: emptyTouchStats(),
     touchLast: null,
     cubeLayout: { cx: W - 110, cy: 60, size: 80 }, // 우측 상단 — 1.5배 세로바(x W−45..)와 안 겹치게 왼쪽으로(web2-10 지시 5)
     listeners: [],
@@ -328,17 +328,16 @@ export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number,
   if (app.own3d) {
     const { defs, missed } = defineByTouch(app.lift, s, app.osnap.radius / app.view.s)
     // 무산도 센다(3-b의 규약 — 조용히 버리지 않는다. 진단 패널 「3D 경로」 줄이 보인다)
-    app.touchStats.ok += missed.ok
-    app.touchStats.pose += missed.pose
-    app.touchStats.axis += missed.axis
-    app.touchStats.lift += missed.lift
-    app.touchStats.roundtrip += missed.roundtrip
+    for (const k of Object.keys(missed) as (keyof TouchStats)[]) app.touchStats[k] += missed[k]
     // 마지막 획의 단계 트레이스(web2-14 2번) — 「왜 아무 일도 안 났나」를 결과가 아니라
     // 단계로 읽게 한다: A 미승격(①)이면 닿음 판정 자체가 없었던 것이다.
+    // ⚠ touched의 합에 noCam·aNot3d가 **들어간다**(2-b) — 문 안에서 죽은 것은 전부
+    // 트레이스에 보인다. missed 원본도 들고 간다(진단 패널이 사유별로 보인다).
     app.touchLast = {
       lifted: app.lift.lifted.has(s.id),
-      touched: missed.ok + missed.pose + missed.axis + missed.lift + missed.roundtrip,
+      touched: (Object.keys(missed) as (keyof TouchStats)[]).reduce((n, k) => n + missed[k], 0),
       ok: missed.ok,
+      missed: { ...missed },
     }
     if (defs.length > 0) {
       for (const d of defs) {

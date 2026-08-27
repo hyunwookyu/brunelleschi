@@ -71,18 +71,24 @@ const diagPanel = initDiagPanel(
       ['버린 짧은 획', `${app.strayCount} (문 ${C.STRAY_MIN_PX}px)`],
       // 지금 어느 3D 경로인가(web2-13 4-f · web2-14 1번에서 정본이 뒤집혔다) —
       // 깃발이 눈에 보이는 자리. 교점 정의(4-g)의 성립·무산도 여기 센다([42] —
-      // 조용히 버리지 않는다. 무산은 «끝이 대기선 위에서 끝났는데 안 선» 경우만:
-      // 시점 밖/방향 미정/리프팅/왕복 순).
+      // 조용히 버리지 않는다. 무산은 «끝이 대기선 위에서 끝났는데 안 선» 경우 전부다
+      // (web2-16 2-b — 종전에는 A가 3D가 아니면 계수 없이 죽었다. 이제 A못줌·카메라
+      // 미확정도 센다: 그 계수가 있었으면 앱이 사람보다 먼저 말했을 자리다).
       ['3D 경로', app.own3d
-        ? `자립(정본 — 굳힘 ${app.doc.strokes.filter(s => s.own3).length}획 · 교점 성립 ${app.touchStats.ok} · 무산 ${app.touchStats.pose + app.touchStats.axis + app.touchStats.lift + app.touchStats.roundtrip}(시점 ${app.touchStats.pose}·방향 ${app.touchStats.axis}·리프팅 ${app.touchStats.lift}·왕복 ${app.touchStats.roundtrip})`
+        ? `자립(정본 — 굳힘 ${app.doc.strokes.filter(s => s.own3).length}획 · 교점 성립 ${app.touchStats.ok}`
+          + ` · 무산 ${app.touchStats.noCam + app.touchStats.aNot3d + app.touchStats.pose + app.touchStats.axis + app.touchStats.lift + app.touchStats.roundtrip}`
+          + `(A못줌 ${app.touchStats.aNot3d}·카메라 ${app.touchStats.noCam}·시점 ${app.touchStats.pose}·방향 ${app.touchStats.axis}·리프팅 ${app.touchStats.lift}·왕복 ${app.touchStats.roundtrip})`
         : '사슬(대체 — 설정에서 껐다)'],
       // 마지막 획의 교점 단계(web2-14 2번 — 지시 ①~④): 실기기에서 «왜 안 붙었나»를
-      // 단계로 읽는 자리. ① 미승격이면 닿음 판정 자체가 안 돈 것이다.
+      // 단계로 읽는 자리. ① 미승격인데 닿았으면 그 사유(A못줌)가 여기 보인다(2-b).
       ...(app.own3d && app.touchLast ? [[
         '교점(마지막 획)',
-        app.touchLast.lifted
+        (app.touchLast.lifted
           ? `① 3D ✓ · ② 닿음 ${app.touchLast.touched} · ③④ 성립 ${app.touchLast.ok}`
-          : '① 그 획이 대기다 — 시작점 오스냅·축 스냅부터 본다',
+          : `① 그 획이 대기다 — 시작점 오스냅·축 스냅부터 본다 · ② 닿음 ${app.touchLast.touched}`)
+        + (app.touchLast.touched > app.touchLast.ok
+          ? ` · 무산 사유: ${(Object.entries({ 'A못줌': app.touchLast.missed.aNot3d, '카메라': app.touchLast.missed.noCam, '시점': app.touchLast.missed.pose, '방향': app.touchLast.missed.axis, '리프팅': app.touchLast.missed.lift, '왕복': app.touchLast.missed.roundtrip }) as [string, number][]).filter(([, n]) => n > 0).map(([k, n]) => `${k} ${n}`).join('·') || '없음'}`
+          : ''),
       ] as [string, string]] : []),
     ]
   })

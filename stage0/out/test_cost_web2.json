@@ -1,27 +1,27 @@
 {
   "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "web2-16 1부(2026-08-27 — e2e 선행 실패 2 해소 직후 전량 측정)",
+  "measured_at": "web2-16 2부(2026-08-27 — 축 사영·무산 계수 마감 전량 측정)",
   "unit": {
     "command": "npm test (vitest)",
-    "files": 45,
-    "tests": 426,
-    "wall_s": 12.1,
-    "note": "web2-16 1부는 단위 팔 추가 없음(426 유지 — 이 회차 몫은 e2e 팔이다)"
+    "files": 46,
+    "tests": 437,
+    "wall_s": 4.2,
+    "note": "web2-16 2부 +11팔(axisproj.test — 사영 6·규칙 불변 짝 2·계수 3)"
   },
   "e2e": {
     "command": "npm run e2e (playwright, dpr1+dpr2)",
-    "cases": 176,
-    "arms": 88,
+    "cases": 178,
+    "arms": 89,
     "wall_s": 258,
-    "arms_source": "npx playwright test --list → 「Total: 176 tests in 21 files」(88팔). --list 출력이 정본(#69 ㉤)",
-    "passed": 176,
+    "arms_source": "npx playwright test --list → 「Total: 178 tests in 22 files」(89팔). --list 출력이 정본(#69 ㉤)",
+    "passed": 178,
     "failed": 0,
-    "note": "web2-16 1부 +1팔(diag.spec 「진단 패널이 열려도 치수 필기 칸의 포인터를 안 삼킨다」). 선행 실패였던 dim.spec 「인식기 감지」 2케이스는 진단 패널의 포인터 삼킴(가림)이 원인 — #diagpanel{pointer-events:none} 수리로 통과. 깨진 커밋은 e224d82(web2-14 1·2번 — 단계 줄 추가로 패널 375→412px). 근거 원장: diag_occlusion_web2.json. ⚠ 첫 전량 실행(176 in 22 files)은 회귀 팔 유실+임시 팔 포함의 우연 일치라 무효 — 메인 재실행이 정본: 「176 passed (4.3m)」 · 「Total: 176 tests in 21 files」"
+    "note": "web2-16 2부 +1팔(axisproj.spec — 수선 연결선 화면 판·분리 32px·반증 둘 실행). 1부의 176과 케이스 수가 갈린다(#70 ② — 버전 판별값)"
   },
   "typecheck_build": {
     "command": "tsc --noEmit · vite build",
-    "build_s": 6.08,
-    "note": "web2-16 1부 실측(tsc 통과 · vite 「built in 6.08s」)"
+    "build_s": 1.94,
+    "note": "web2-16 2부 최종 실측(「✓ built in 1.94s」). 1부의 6.08s와 3배 차 — 같은 기계의 연속 실행에서 나는 캐시·부하 대역으로 보이나 원인 미확인(빨라진 쪽이라 판정 없음 — #45는 느려졌을 때의 규약)"
   },
   "history": [
     {
@@ -107,6 +107,14 @@
       "unit": 426,
       "e2e": 176,
       "e2e_passed": 176,
+      "e2e_failed": 0,
+      "e2e_wall_s": 258
+    },
+    {
+      "at": "web2-16 2부",
+      "unit": 437,
+      "e2e": 178,
+      "e2e_passed": 178,
       "e2e_failed": 0,
       "e2e_wall_s": 258
     }

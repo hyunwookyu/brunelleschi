@@ -171,8 +171,12 @@ describe('반증 — 이 검사가 무엇에 실패하는가', () => {
         dead.push(`${dx},${dy}`)
         expect(ax, `(${dx},${dy}) 죽은 이유 — 축을 잃었다`).toBeNull()
         expect(s.app.lift.lifted.has(A.id), 'A 자신이 안 올라간다').toBe(false)
-        expect(s.app.touchStats, '무산 계수조차 안 오른다 — 조용한 실패')
-          .toEqual({ ok: 0, pose: 0, axis: 0, lift: 0, roundtrip: 0 })
+        // ⚠ web2-16 2-b가 이 단언을 뒤집었다 — 종전에는 이 죽음이 무산 계수에도 안
+        // 잡혔고(«조용한 실패» — 그 단언이 여기 있었다) 그것이 별개의 결함이었다.
+        // 이제 문(끝이 B 위) 안에서 A가 못 주면 «A못줌(aNot3d)»이 센다 — 계수가
+        // 있었으면 사람이 아니라 앱이 먼저 말했을 자리다(지시 2-b 문면).
+        expect(s.app.touchStats.aNot3d, '이제는 계수가 오른다(2-b)').toBeGreaterThan(0)
+        expect(s.app.touchStats.ok, '정의는 여전히 안 섰다').toBe(0)
       }
     }
     expect(dead, '수리 전 죽던 칸 — 그 밖은 살아 있었다(그래서 web2-14 팔 넷이 통과했다)')

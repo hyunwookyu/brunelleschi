@@ -34,6 +34,17 @@ export interface DimOpts {
   snapStep: number | null
 }
 
+/** 수선의 발 — 오스냅 점 p를 조준선(start→through의 무한 직선)에 사영한다(2-a).
+ *  직선은 양방향이다 — 축의 반대 방향으로 긋는 것도 그 축이다(snapDir과 같은 규약).
+ *  퇴화(조준선 길이 ~0)면 p를 그대로 돌려준다 — 그때는 사영할 방향이 없다. */
+function footOnAim(start: Pt, through: Pt, p: Pt): Pt {
+  const ux = through.x - start.x, uy = through.y - start.y
+  const L2 = ux * ux + uy * uy
+  if (L2 < 1e-12) return p
+  const t = ((p.x - start.x) * ux + (p.y - start.y) * uy) / L2
+  return pt(start.x + ux * t, start.y + uy * t)
+}
+
 /** 시작점 — 오스냅만 본다 */
 export function resolveStart(
   lift: LiftResult, pose: CamPose, p: Pt, set: OsnapSettings,
@@ -62,19 +73,31 @@ export function resolveEnd(
   const ds0 = (!freeVp && cls!.role !== 'vp') ? snapDir(an, pose, start, cursor) : null
   const aim = ds0?.axis ? { start, through: ds0.end } : undefined
 
-  // ① 오스냅이 잡히면 그 점으로 간다 — 점이 방향을 이긴다(Rhino 선례).
+  // ① 오스냅이 잡히면 그 점으로 간다.
   //    치수 스냅도 점을 안 이긴다 — 사람이 붙인 점은 그대로 확정된다(원칙 d · #63).
+  //
+  //    ── 축이 걸린 획에서는 «점이 방향을 이긴다»가 **안 선다**(web2-16 2-a) ──
+  //    제도에서 축을 걸고 그은 선은 휘지 않는다 — 무언가와 만나면 **축선이 그것을
+  //    지나는 자리**에서 만난다. 오스냅 점을 그대로 받으면 끝이 축선 밖으로 밀리고,
+  //    그 밀림÷길이가 축 허용각을 넘으면 axisOfStroke가 축을 못 줘 획이 3D로 안
+  //    올라간다 — 조용한 무산(web2-15 2차 [3]: edge_band 297칸 중 52칸 · 짧은 획일수록
+  //    심하다. L40에서 28). 그래서 축이 걸린 획에서 **2D(대기) 특징점**은 축이 방향을
+  //    주고 오스냅은 그 방향 위의 위치만 준다: 점을 축선에 사영한다(수선의 발). xint는
+  //    구성상 이미 축선 위라 그대로다. 선례(A-3): SketchUp 추론 잠금 · Rhino 직교+오스냅.
+  //    끝은 구성상 축선 위이므로 축이 산다 — 두 구속이 같이 선다.
+  //    ⚠ **3D 특징점(p3 있음)은 종전대로 점이 그대로 이긴다**(#63 — 뒤집지 않는다).
+  //    비대칭의 근거: 3D 점에 붙으면 양 끝이 3D라 획이 축 없이도 승격된다(끝점 매칭 —
+  //    #63의 면 회귀 팔이 그 동작을 지킨다: 루프가 닫혀야 면이 선다). 죽는 것은 **줄 것이
+  //    없는 2D 특징점**에 끌려갈 때뿐이고, 그때만 축이 이겨야 둘 다 산다.
+  //    ⚠ 축이 안 걸린 획(자유·소실점 살·축 정의)에서는 종전대로 점이 그대로 이긴다.
   const oh = osnap(lift, pose, cursor, set, startP3, aim)
   if (oh) {
-    // ⚠ 겉보기 교차만 **축을 유지한다** — 그 점은 구성상 조준선(축선) 위이므로
-    //    「점이 방향을 이긴다」의 대가가 없다. 두 구속이 같이 선다. 그래서 label·axis를
-    //    그대로 돌려주고(안내선·리본이 종전대로 뜬다) 길이도 축 경로와 같은 식으로 푼다.
-    //    나머지 종류는 종전대로 방향을 버린다(점이 이긴다).
-    if (oh.kind === 'xint' && ds0?.axis) {
+    if (ds0?.axis && oh.p3 === null) {
+      const end = oh.kind === 'xint' ? oh.p : footOnAim(start, ds0.end, oh.p)
       const dir = an.axes.find(x => x.id === ds0.axis)?.dir
-      const b3 = a3 && dir ? solveEnd3(an, pose, a3, dir, oh.p) : null
+      const b3 = a3 && dir ? solveEnd3(an, pose, a3, dir, end) : null
       return {
-        end: oh.p, label: ds0.axis, endSnap: oh, axis: ds0.axis,
+        end, label: ds0.axis, endSnap: oh, axis: ds0.axis,
         lenMm: a3 && b3 ? lenMm(a3, b3, scale) : null,
       }
     }

@@ -88,21 +88,44 @@ const distToSeg = (p: Pt, a: Pt, b: Pt): number => {
  *  거부된다: 그래야 정의된 3D가 잉크 심판(§7)을 통과한다.
  *  무산은 `missed`로 센다 — 조용히 버리지 않는다(3-b 규약).
  *  ⚠ 표현 구간(pts2d 확정 끝점 사이)만 본다 — 무한 연장은 안 본다(§4 — 범위 밖). */
-export interface TouchStats { ok: number; pose: number; axis: number; lift: number; roundtrip: number }
+/** 무산 계수 — «끝이 B 위에서 끝났다»(㉯)가 성립한 뒤의 무산을 **전부** 센다.
+ *  ⚠ web2-16 2-b: 종전에는 A가 3D가 아니면 **계수 없이** 첫 줄에서 빠져나갔다 —
+ *  「축을 잃어서」 죽는 경로가 진단에 안 보였다(#69 ㉡ · DEFERRED #43 「후보도 못 된 채
+ *  죽는 것」의 그 자리). 이제 문(끝이 B 위)을 먼저 세우고, 문 안에서 죽은 것은 사유
+ *  불문 전부 계수에 잡힌다: noCam(카메라 미확정) · aNot3d(A 자신이 3D가 아니다 —
+ *  축 손실이 여기로 온다) · pose · axis(B 방향 미정) · lift · roundtrip. */
+export interface TouchStats { ok: number; noCam: number; aNot3d: number; pose: number; axis: number; lift: number; roundtrip: number }
+export const emptyTouchStats = (): TouchStats =>
+  ({ ok: 0, noCam: 0, aNot3d: 0, pose: 0, axis: 0, lift: 0, roundtrip: 0 })
 export function defineByTouch(lift: LiftResult, a: Stroke, osnapRadiusPx: number):
   { defs: { id: number; own3: NonNullable<Stroke['own3']> }[]; missed: TouchStats } {
-  const missed: TouchStats = { ok: 0, pose: 0, axis: 0, lift: 0, roundtrip: 0 }
+  const missed: TouchStats = emptyTouchStats()
   const an = lift.an
   const out: { id: number; own3: NonNullable<Stroke['own3']> }[] = []
-  if (!an.constructionDone) return { defs: out, missed }   // 카메라가 닫힌 뒤의 기전(§9.2)
-  const seg = lift.lifted.get(a.id)
-  if (!seg) return { defs: out, missed }              // A 자신이 3D여야 P를 줄 수 있다
-  const poseA: CamPose = a.view ?? DRAW_POSE
+  // 문 먼저 — «끝이 B 위에서 끝났다»(㉯)가 성립하는 대기선 목록. 문 밖은 후보가
+  // 아니었으므로 안 센다(종전 규약 그대로). 문 안의 무산은 아래에서 전부 센다(2-b).
+  const touched: number[] = []
   for (const idB of lift.waiting) {
+    if (idB === a.id) continue                        // 자기 끝은 자기 위다(거리 0) — 문이 아니다
     const b = lift.strokes.get(idB)
     if (!b || b.own3) continue                        // 첫 사건이 이긴다(과결정 없음)
-    // «끝이 B 위에서 끝났다»가 성립한 뒤의 무산만 센다 — 그 전은 후보도 아니었다
     if (distToSeg(a.b, b.a, b.b) > osnapRadiusPx) continue   // 뗀 끝이 B 위인가(㉯)
+    touched.push(idB)
+  }
+  if (touched.length === 0) return { defs: out, missed }
+  if (!an.constructionDone) {                          // 카메라가 닫힌 뒤의 기전(§9.2)
+    missed.noCam += touched.length
+    return { defs: out, missed }
+  }
+  const seg = lift.lifted.get(a.id)
+  if (!seg) {                                          // A 자신이 3D여야 P를 줄 수 있다
+    missed.aNot3d += touched.length                    // ← 「축을 잃어서」가 죽는 자리(2-b)
+    return { defs: out, missed }
+  }
+  const poseA: CamPose = a.view ?? DRAW_POSE
+  for (const idB of touched) {
+    const b = lift.strokes.get(idB)
+    if (!b) continue
     const poseB: CamPose = b.view ?? DRAW_POSE
     if (!atOwnPose(poseA, poseB)) { missed.pose++; continue }     // B의 시점에서만(§3.0)
     const axis = axisOfStroke(an, poseB, b.a, b.b)

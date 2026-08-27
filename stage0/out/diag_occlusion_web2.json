@@ -2,7 +2,7 @@
   "what": "web2-16 1부 — dim.spec 「인식기 감지」 선행 실패의 법의학 측정: 진단 패널이 치수 필기 칸을 덮기 시작한 커밋을 찾는다. 판정값 = #diagpanel 높이(px, dpr1 · 뷰포트 1200×800 · bottom:26 고정이라 상단 y = 774 − 높이). 실패 조건: 상단 y ≤ 쓰기 시작점 y=363 ⇔ 높이 ≥ 411.0",
   "measured_at": "2026-08-27 (web2-16 1부)",
   "method": {
-    "probe": "임시 표식 팔(_trace16.spec): build → #dim-toggle → #buildid(패널 열기) → 쓰기 지점 elementFromPoint + #diagpanel getBoundingClientRect → writeOne → #dim-read 판독",
+    "probe": "임시 표식 팔(_trace16.spec): build → #dim-toggle → #buildid(패널 열기) → 쓰기 지점 elementFromPoint + #diagpanel getBoundingClientRect → writeOne → #dim-read 판독. ⚠ 획 조건(3차 [8]): 사슬 9행과 web2-16 두 행 전부 **작도 4획을 그은 뒤** 측정(진단 줄 수가 획 유무에 의존한다 — 획 0개 조건에서는 현행 393.75로 갈린다. build 단계가 그 4획이다)",
     "isolation": "잔존 dev 서버(5301 · 전날 시작)를 종료 후, git worktree에 각 커밋을 체크아웃하고 그 디렉토리에서 playwright가 자체 vite를 새로 띄움(끝나면 스스로 종료 — 실행 간 잔존 없음 확인). PITFALLS #70 규칙 ① 이행",
     "version_discriminant": "#70 규칙 ② — 패널 높이가 «버전이 갈라야 하는 값». 첫 판(오염)에서는 다섯 커밋 전부 412.4375로 동일했다(그것이 오염의 표식). 재측정에서는 커밋마다 갈린다. 337.6875 동일값 쌍(b70b655·32b2e99)은 오염이 아니라 실제 동일 — 그 구간에 diagpanel.ts diff 0줄, main.ts 진단 줄 추가 0(git diff 실측)"
   },
@@ -87,6 +87,24 @@
       "write_point_hit": "diagpanel",
       "dim_read": "",
       "verdict": "실패"
+    },
+    {
+      "commit": "web2-16 1부(작업 트리)",
+      "round": "web2-16 1부",
+      "panel_h_px": 412.4375,
+      "panel_top_y": 361.5625,
+      "write_point_hit": "dim-ink(pointer-events:none 수리 후 — 패널이 겹쳐도 안 삼킨다)",
+      "dim_read": "38",
+      "verdict": "통과(수리)"
+    },
+    {
+      "commit": "web2-16 2부(작업 트리)",
+      "round": "web2-16 2부",
+      "panel_h_px": 412.4375,
+      "panel_top_y": 361.5625,
+      "write_point_hit": "dim-ink",
+      "dim_read": "-",
+      "verdict": "높이 불변 — 2부가 진단 줄 «내용»을 늘렸지만(무산 사유·A못줌) 이 시나리오(작도 4획)에서 줄바꿈 경계 안이라 줄 수 불변. #70 ② 소명: diff는 있으나 높이 결정 변수(줄 수)가 안 변했다. 획 0개 시나리오에서는 393.75로 갈린다(측정함 — 조건 따라 갈리는 값임을 확인)"
     }
   ],
   "chain_note": "380c3f9(web2-15가 워크트리로 재현했다고 적은 커밋)는 직접 안 돌렸다 — git diff --stat c0faaaf 380c3f9 = web2/HANDOFF.md 한 파일(문서만)이라 앱 코드가 c0faaaf와 동일하고, c0faaaf 실측 실패가 그 판정을 대신한다",
@@ -99,7 +117,7 @@
       "h": 72
     },
     "write_start_y": 363,
-    "note": "web2-11 마감 시점에 «칸 하단(421)을 건드리기»까지 15.3px, «쓰기 시작점(363)을 덮어 깨지기»까지 73.3px 여유. web2-13이 37.4px을 쓰고(337.7→375.1) web2-14가 37.3px을 더 써서(→412.4) 1.4px 초과로 넘었다"
+    "note": "web2-11 마감 시점에 «칸 하단(421)을 건드리기»까지 15.3px, «쓰기 시작점(363)을 덮어 깨지기»까지 73.3px(정확값 73.3125) 여유. web2-13과 web2-14가 각 37.375px(=375.0625−337.6875 = 412.4375−375.0625 — 동일값. 초판의 37.4/37.3은 반쪽 반올림)을 써서 정확히 1.4375px 초과로 넘었다"
   },
   "misreports_found": {
     "a1b5bf8": {
@@ -129,5 +147,9 @@
     "e2e": "본문 갱신 — 메인 재실행 결과가 정본(NOTES 검증 단락·test_cost_web2.json)",
     "typecheck_build": "타입 통과 · 빌드 6.08s(web2-16 1부 실측)"
   },
-  "process_incident": "⚠ 회귀 팔·반증의 첫 판은 cwd가 워크트리(wt13 · a3f5ece)에 남은 채 실행돼 메인이 아니라 워크트리에 세워졌고, 워크트리 제거로 유실됐다(그때의 전량 «176 passed»는 회귀 팔 0 + 임시 표식 팔 2를 센 우연의 일치 — 2차 리뷰 [6]이 파일 수 산술 176/22로 잡았다). 메인에서 다시 세워 재실행한 것이 정본이다(176 in 21 files). 교훈은 #70 본문 끝에 부기 — 워크트리 세션은 실행마다 pwd를 남기고, 제거 전에 산출물 diff를 본다"
+  "process_incident": "⚠ 회귀 팔·반증의 첫 판은 cwd가 워크트리(wt13 · a3f5ece)에 남은 채 실행돼 메인이 아니라 워크트리에 세워졌고, 워크트리 제거로 유실됐다(그때의 전량 «176 passed»는 회귀 팔 0 + 임시 표식 팔 2를 센 우연의 일치 — 2차 리뷰 [6]이 파일 수 산술 176/22로 잡았다). 메인에서 다시 세워 재실행한 것이 정본이다(176 in 21 files). 교훈은 #70 본문 끝에 부기 — 워크트리 세션은 실행마다 pwd를 남기고, 제거 전에 산출물 diff를 본다",
+  "visual_occlusion": {
+    "covered_band_px": 59.4375,
+    "note": "패널 상단 361.5625 ~ 필기 칸 하단 421 — 시각 가림 대역의 실측. DEFERRED web2-16 행의 초판 «84px»는 산출 근거 없는 오기였다(2차 리뷰 [11] 대응에서 실측으로 교체)"
+  }
 }

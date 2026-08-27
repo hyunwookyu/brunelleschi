@@ -27321,7 +27321,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 386,
+      "files_scanned": 388,
       "exts_declared": [
         ".md",
         ".py",
@@ -27345,7 +27345,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 386,
+      "files_scanned": 388,
       "exts_declared": [
         ".md",
         ".py",
@@ -28295,7 +28295,8 @@
     ],
     "xint_web2.json": [
       46,
-      59
+      59,
+      69
     ]
   },
   "cited_value_population": {
