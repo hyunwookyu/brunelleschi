@@ -13,24 +13,24 @@
  "live": {
   "drawing_few": {
    "brush": {
-    "down_to_next_paint_ms": 46.1,
+    "down_to_next_paint_ms": 43.3,
     "frame_ms_median": 19.4,
-    "frame_ms_p90": 30.5,
-    "frame_ms_worst": 184.1,
-    "frames": 63,
+    "frame_ms_p90": 29.3,
+    "frame_ms_worst": 177.5,
+    "frames": 62,
     "brush_redraws_while_down": 1,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 1,
     "draft_redraws_while_down": 3,
-    "draft_ms_median": 3.2,
-    "draft_ms_max": 7.5
+    "draft_ms_median": 1.3,
+    "draft_ms_max": 7.2
    },
    "classic": {
     "down_to_next_paint_ms": 0.7,
-    "frame_ms_median": 17.2,
-    "frame_ms_p90": 22.2,
-    "frame_ms_worst": 33,
-    "frames": 50,
+    "frame_ms_median": 17.1,
+    "frame_ms_p90": 25.9,
+    "frame_ms_worst": 31.2,
+    "frames": 79,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 0,
@@ -41,24 +41,24 @@
   },
   "drawing_500": {
    "brush": {
-    "down_to_next_paint_ms": 15.8,
-    "frame_ms_median": 32.5,
-    "frame_ms_p90": 40.9,
-    "frame_ms_worst": 43.8,
-    "frames": 91,
+    "down_to_next_paint_ms": 16.2,
+    "frame_ms_median": 33.3,
+    "frame_ms_p90": 41.4,
+    "frame_ms_worst": 47.5,
+    "frames": 86,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 1,
     "draft_redraws_while_down": 40,
     "draft_ms_median": 1.3,
-    "draft_ms_max": 3
+    "draft_ms_max": 4.4
    },
    "classic": {
-    "down_to_next_paint_ms": 68.3,
-    "frame_ms_median": 20.5,
-    "frame_ms_p90": 88.1,
-    "frame_ms_worst": 96.8,
-    "frames": 87,
+    "down_to_next_paint_ms": 76,
+    "frame_ms_median": 16.4,
+    "frame_ms_p90": 90.4,
+    "frame_ms_worst": 101.6,
+    "frames": 89,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 0,
@@ -69,19 +69,19 @@
   },
   "orbit_500": {
    "brush": {
-    "down_to_next_paint_ms": 0.3,
-    "frame_ms_median": 827.4,
-    "frame_ms_p90": 944.6,
-    "frame_ms_worst": 995,
+    "down_to_next_paint_ms": 0.2,
+    "frame_ms_median": 945.1,
+    "frame_ms_p90": 1106.8,
+    "frame_ms_worst": 1282.9,
     "frames": 31,
     "brush_redraws": 31,
     "brush_syncs": 32
    },
    "classic": {
-    "down_to_next_paint_ms": 0.1,
-    "frame_ms_median": 69.2,
-    "frame_ms_p90": 77.5,
-    "frame_ms_worst": 85.4,
+    "down_to_next_paint_ms": 0.3,
+    "frame_ms_median": 76.1,
+    "frame_ms_p90": 90.8,
+    "frame_ms_worst": 140.3,
     "frames": 31,
     "brush_redraws": 0,
     "brush_syncs": 32
@@ -92,42 +92,42 @@
  "full_redraw_ms": {
   "10": {
    "brush_ms": {
-    "min": 14.599999904632568,
-    "median": 18.5,
-    "max": 22.799999952316284
+    "min": 12.400000095367432,
+    "median": 13.699999809265137,
+    "max": 19.100000143051147
    },
    "classic_ms": {
     "min": 0.5,
     "median": 0.5,
-    "max": 0.9000000953674316
+    "max": 0.7999999523162842
    },
-   "heap_bytes": 11200000
+   "heap_bytes": 14300000
   },
   "100": {
    "brush_ms": {
-    "min": 107.79999995231628,
-    "median": 133.90000009536743,
-    "max": 185.09999990463257
+    "min": 113.59999990463257,
+    "median": 166.30000019073486,
+    "max": 210.90000009536743
    },
    "classic_ms": {
-    "min": 3.9000000953674316,
-    "median": 5.200000047683716,
-    "max": 5.8999998569488525
+    "min": 3.700000047683716,
+    "median": 5.400000095367432,
+    "max": 5.900000095367432
    },
-   "heap_bytes": 11200000
+   "heap_bytes": 14300000
   },
   "500": {
    "brush_ms": {
-    "min": 749.7999999523163,
-    "median": 801.1999998092651,
-    "max": 836.6000001430511
+    "min": 692.4000000953674,
+    "median": 820.1999998092651,
+    "max": 857.9000000953674
    },
    "classic_ms": {
-    "min": 68.40000009536743,
-    "median": 73.29999995231628,
-    "max": 75
+    "min": 62.200000047683716,
+    "median": 68,
+    "max": 84.20000004768372
    },
-   "heap_bytes": 11200000
+   "heap_bytes": 14300000
   },
   "note": "brush_ms = #brushc 전량 재그리기(5회 min/median/max) — 커밋·궤도·줌·접기 때 돈다. classic_ms = draw2d 1회(grain 포함) — classic은 매 프레임 이 비용이고 brush는 장면이 바뀔 때만 + 사이 0. 획당 비용·선형성은 이 세 점의 필드에서 계산해 읽는다(산문에 안 박는다 — #47)."
  },

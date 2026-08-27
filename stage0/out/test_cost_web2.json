@@ -1,27 +1,27 @@
 {
   "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "web2-15 마감(2026-08-27 — 배포 직전 측정)",
+  "measured_at": "web2-16 1부(2026-08-27 — e2e 선행 실패 2 해소 직후 전량 측정)",
   "unit": {
     "command": "npm test (vitest)",
     "files": 45,
     "tests": 426,
-    "wall_s": 3.9,
-    "note": "vitest 자체 Duration. web2-15 +10팔(xint.test 9 · xint_measure 1). 프로세스 벽시계는 ~9s(부팅 포함)"
+    "wall_s": 12.1,
+    "note": "web2-16 1부는 단위 팔 추가 없음(426 유지 — 이 회차 몫은 e2e 팔이다)"
   },
   "e2e": {
     "command": "npm run e2e (playwright, dpr1+dpr2)",
-    "cases": 174,
-    "arms": 87,
-    "wall_s": 264,
-    "arms_source": "npx playwright test --list → 「Total: 174 tests in 21 files」(87팔). 380c3f9에서 같은 명령이 166(83팔) — 앞 회차의 82팔·164케이스는 **passed 수**였다. 이제 --list 출력이 정본이다",
-    "passed": 172,
-    "failed": 2,
-    "note": "web2-15 +4팔(tiperase). ⚠ **알려진 실패 1팔×2dpr**: dim.spec 「인식기 감지」. **web2-14 마감 커밋 380c3f9에서 `--list`가 «Total: 166 tests»**이고 그 회차가 보고한 164 = 166−2 = 바로 그 2케이스다 → **web2-14가 passed 수를 전량으로 적었다**(2차 리뷰 [1]로 닫힘). 저장소 밖 변화 가설은 필요 없다. 그 회차는 e2e 2케이스가 깨진 채 「전량 통과」로 보고·배포했다 — DEFERRED 행 참조"
+    "cases": 176,
+    "arms": 88,
+    "wall_s": 258,
+    "arms_source": "npx playwright test --list → 「Total: 176 tests in 21 files」(88팔). --list 출력이 정본(#69 ㉤)",
+    "passed": 176,
+    "failed": 0,
+    "note": "web2-16 1부 +1팔(diag.spec 「진단 패널이 열려도 치수 필기 칸의 포인터를 안 삼킨다」). 선행 실패였던 dim.spec 「인식기 감지」 2케이스는 진단 패널의 포인터 삼킴(가림)이 원인 — #diagpanel{pointer-events:none} 수리로 통과. 깨진 커밋은 e224d82(web2-14 1·2번 — 단계 줄 추가로 패널 375→412px). 근거 원장: diag_occlusion_web2.json. ⚠ 첫 전량 실행(176 in 22 files)은 회귀 팔 유실+임시 팔 포함의 우연 일치라 무효 — 메인 재실행이 정본: 「176 passed (4.3m)」 · 「Total: 176 tests in 21 files」"
   },
   "typecheck_build": {
     "command": "tsc --noEmit · vite build",
-    "build_s": 1.63,
-    "note": "web2-15에 재측정 안 함 — 앞 회차 값"
+    "build_s": 6.08,
+    "note": "web2-16 1부 실측(tsc 통과 · vite 「built in 6.08s」)"
   },
   "history": [
     {
@@ -100,7 +100,15 @@
       "e2e": 174,
       "e2e_passed": 172,
       "e2e_wall_s": 264,
-      "note": "e2e 통과 172 — dim.spec 인식기 감지 1팔×2dpr이 선행 결함으로 실패(380c3f9에서 재현)"
+      "note": "e2e 통과 172 — dim.spec 인식기 감지 1팔×2dpr이 선행 결함으로 실패. ⚠ 당시 「380c3f9에서 재현」의 워크트리 실행은 잔존 dev 서버 오염으로 증거 무효(PITFALLS #70) — 결론 자체는 web2-16이 깨끗한 서버로 재확인(380c3f9=c0faaaf+문서 커밋이고 c0faaaf 실패 실측)"
+    },
+    {
+      "at": "web2-16 1부",
+      "unit": 426,
+      "e2e": 176,
+      "e2e_passed": 176,
+      "e2e_failed": 0,
+      "e2e_wall_s": 258
     }
   ],
   "environment": {
