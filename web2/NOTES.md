@@ -7145,3 +7145,11 @@ selfcheck: xint_web2 재실행 플래그 — 전부 원장 안 `flags_explained`
 - e2e: 「`178 passed (4.3m)`」 · `--list` 「`Total: 178 tests in 22 files`」 →
   **178 passed / 0 failed / total 178**(+2 = axisproj.spec × dpr 둘 — 1부의 176과
   갈린다: 버전 판별값이 수 자체에 있다)
+
+**배포 ①(2부 마감 — ⛳)**: 갈래 커밋 `11ba961` → main 병합 → 푸시.
+`git ls-remote origin main` 원문:
+```
+e3cbb1bbff3b202d3a60ccd6fc04eb24346feddf	refs/heads/main
+```
+`npm run deploy:check` — 1·2회째 「배포 안 됨」(Pages 전파 관행), **3회째
+「✓ 화면 빌드 식별자 == 배포 커밋 · 결과: 배포됨」**. 화면 빌드 식별자 = `e3cbb1b`.
