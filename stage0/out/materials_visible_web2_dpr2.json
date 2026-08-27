@@ -85,8 +85,8 @@
   "INK": {
    "during": 511,
    "after": 511,
-   "ink_grain_painted": 47,
-   "ink_grain_opaque": 0
+   "ink_grain_painted": 517,
+   "ink_grain_opaque": 240
   }
  }
 }

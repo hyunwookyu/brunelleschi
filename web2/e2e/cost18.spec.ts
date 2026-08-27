@@ -229,13 +229,18 @@ test('0부 — 비용 원장(획 50·100·200·400 × rawIn 0·50·100%): 전량
     .toBeGreaterThan(at50.full_redraw_ms.median)
   expect(at400.osnap.calls, 'osnap 표식이 실제로 돌았다').toBeGreaterThan(0)
 
-  if (testInfo.project.name === 'dpr1') {
-    const out = resolve(HERE, '../../stage0/out/cost18_web2.json')
+  {
+    // dpr1·dpr2 **둘 다 남긴다**(D-C3 — dpr 1에서만 확인하지 않는다). dpr2는 픽셀이 네 배라
+    // 흑연 재그리기가 그만큼 비싸다 — 실기기(고해상도 태블릿)에 가까운 쪽이 그 판이다.
+    // 종전에는 dpr2 실행이 5분 넘게 돌고 **아무것도 안 남겼다**(그 시간이 통째로 낭비였다).
+    const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
+    const out = resolve(HERE, `../../stage0/out/cost18_web2${suffix}.json`)
     mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
     writeFileSync(out, JSON.stringify({
       what: 'web2-18 0부 — 고치기 전 비용 원장. 획 50·100·200·400 × rawIn 보유 0·50·100%에서 ①전량 흑연 재그리기 ②syncStrokes ③궤도 1프레임 합(3몫) ④포인터 이동 1회 osnap(3몫 분해). 3·4부의 «무엇을 고칠지»를 이 표가 정한다.',
       phase: 'before',
-      environment: '헤드리스 크로뮴(소프트웨어 GL 가능) · viewport 1200×800 · dpr1 기록. ⚠ 절대 ms는 이 컨테이너의 값이고 실행 간 변동이 크다(HANDOFF: 9차 121s→1h52m, 원인은 디스크). **판별값은 slope(50→400 배수)다** — O(n)이면 ≈8, O(n²)이면 ≈64. 실기기 값은 다르다: 진단 패널의 ①②③④ 줄이 그 자리다(DEFERRED 실기기 표).',
+      dpr: testInfo.project.name,
+      environment: `헤드리스 크로뮴(소프트웨어 GL 가능) · viewport 1200×800 · ${testInfo.project.name} 기록. ⚠ 절대 ms는 이 컨테이너의 값이고 실행 간 변동이 크다(HANDOFF: 9차 121s→1h52m, 원인은 디스크). **판별값은 slope(50→400 배수)다** — O(n)이면 ≈8, O(n²)이면 ≈64. 실기기 값은 다르다: 진단 패널의 ①②③④ 줄이 그 자리다(DEFERRED 실기기 표). dpr2 판은 픽셀이 네 배라 흑연 재그리기가 그만큼 비싸다 — 고해상도 실기기에 가까운 쪽이 그 판이다(D-C3).`,
       fixture_note: '카메라를 닫는 픽스처(지평선+깊이선+수평 앵커 — own3d.spec와 같은 규격) 위에 격자를 누적한다(50→100→200→400). 손 오차를 태웠다(#68 — 끝점마다 2~5px 지터, 시드 고정 LCG). 획은 두 종류를 번갈아 낸다: 이미 3D인 끝점에서 소실점 쪽으로(승격을 노림) · 화면 전역 자유 획(대기가 되기 쉬움). 실제 승격/대기 비율은 각 칸의 scene에 있다 — 의도가 아니라 실측이다.',
       metric_defs: {
         full_redraw_ms: '① brushLayer.redrawTimed — #brushc 전량 재그리기 1회(min/median/max, 5회). 포즈·뷰가 바뀌는 **매 프레임** 도는 비용이다. last_full_app_ms는 «앱이 실제로 그린» 마지막 값(강제 실행과 같은 대역인지의 자기 확인).',

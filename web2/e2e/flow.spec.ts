@@ -33,7 +33,9 @@ function inkPixels(page: Page, x0: number, y0: number, x1: number, y1: number) {
   }, [x0, y0, x1, y1])
 }
 
-/** 영역의 실제 그려진 픽셀 수 — 3D 캔버스(gl, preserveDrawingBuffer) */
+/** 영역의 실제 그려진 픽셀 수 — 3D 캔버스(gl, preserveDrawingBuffer).
+ *  ⚠ web2-18 1부부터 **잉크 확정선의 몸체는 여기 없다**(#ink로 옮겼다 — 연필 흑연이
+ *  #gl 위라 잉크가 덮이던 것이 사람이 보고한 결함이었다). 잉크를 재는 자리는 `inkPixels`다. */
 function glPixels(page: Page, x0: number, y0: number, x1: number, y1: number) {
   return page.evaluate(([x0, y0, x1, y1]) => {
     const gl = document.getElementById('gl') as HTMLCanvasElement
@@ -354,7 +356,11 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await page.mouse.up()
   await settle(page)
   // 흑연 조각은 지워졌지만 잉크 선은 그 자리에 남아 있다
-  expect(await glPixels(page, 495, 360, 505, 400)).toBeGreaterThan(5)
+  // ⚠ **읽는 겹이 `#gl`에서 `#ink`로 바뀌었다**(web2-18 1부): 잉크 확정선의 몸체가
+  //    Line2(#gl)에서 2D 오버레이(#ink)로 옮겨 갔다 — 연필 흑연(#brushc)이 #gl 위라
+  //    잉크가 덮이던 것이 사람이 보고한 결함이었다. 재는 것은 그대로(「잉크가 그 자리에
+  //    남아 있다」)이고 **임계도 그대로**다(5). 옛 판정을 임계로 되살리지 않는다.
+  expect(await inkPixels(page, 495, 360, 505, 400)).toBeGreaterThan(5)
 
   // 도구가 그림으로 보인다 — 고른 것이 **앞으로 나온다**(4-d: 박스 강조가 아니다)
   expect(await page.getAttribute('#btn-eraser-pencil', 'class')).toContain('on')

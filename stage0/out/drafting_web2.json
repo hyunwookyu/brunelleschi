@@ -3,7 +3,7 @@
  "promotion": {
   "lifted": true,
   "ink_box_before": 0,
-  "ink_box_after": 19,
+  "ink_box_after": 95,
   "note": "전/후는 잉크 겹의 painted — 파선 소멸·번짐 가장자리 등장 등 상태 전환의 총 몫이다(설계된 변화 — 무변화 게이트 대상이 아니다)."
  },
  "arrangement_pin": {
@@ -12,8 +12,8 @@
   "planes": 1
  },
  "paper_orbit": {
-  "frame_ms_median_mask_on": 45.9,
-  "frame_ms_median_mask_off": 25.3,
+  "frame_ms_median_mask_on": 50.3,
+  "frame_ms_median_mask_off": 21.1,
   "note": "국면당 1회 표본(brush_perf의 single_sample_note와 같은 규율 — 작은 차는 판별하지 않는다). 줌 미끄러짐(위상 문서·크기 화면의 교환)은 실기기 눈 몫(DEFERRED)."
  }
 }
