@@ -22,23 +22,30 @@
    0
   ],
   "brush_px": [
-   289,
-   289,
-   289,
-   289,
-   289,
-   289,
-   289,
-   289,
-   289,
-   289,
-   289,
-   289
+   417,
+   417,
+   417,
+   417,
+   417,
+   417,
+   417,
+   417,
+   417,
+   417,
+   417,
+   417
   ],
   "base_ink_alpha": 0,
   "base_brush_px": 289,
   "changes_ink": 0,
   "changes_brush": 0,
   "far_deg": 68.75493541569871
+ },
+ "tile_vs_redraw_px": {
+  "grab_redraw": 289,
+  "gesture_tile": 417,
+  "delta": 128,
+  "ratio": 1.443,
+  "note": "web2-18 3-c ㉢의 대가. 알파>0 칸 수는 **늘어난다**(아핀 재표본이 입자를 옅게 퍼뜨린다) — 어두운 칸 수는 반대로 준다(gesture_tiles_web2.json의 release_diff). 정본은 놓은 뒤 화면이다."
  }
 }

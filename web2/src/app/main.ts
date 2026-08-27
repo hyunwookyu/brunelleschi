@@ -83,6 +83,13 @@ const diagPanel = initDiagPanel(
         return `${f.ms.toFixed(2)} (그린 획 ${f.drawn}${f.clipped > 0 ? ` · 화면 밖 ${f.clipped}` : ''})`
       })()],
       ['② syncStrokes ms', `${syncCost.lastMs.toFixed(2)} (누적 ${syncCost.calls}회)`],
+      // ㉢ 제스처 타일(3-c) — 돌리는 중에 흑연이 어디서 오는지가 여기 보인다
+      ['제스처 타일', (() => {
+        const t = brushLayer.tileStats()
+        return t.frames === 0 && !t.active ? '— (아직 안 돌렸다)'
+          : `${t.active ? '켜짐' : '꺼짐'} · 타일 ${t.tiles}(굽기 ${t.bakeMs}ms · ${t.bakePasses}판`
+            + `${t.bakeClamped ? ` · 줄여구움 ${t.bakeClamped}` : ''}) · 붙이기 중앙 ${t.frameMsMedian}ms · 최악 ${t.frameMsMax}ms`
+      })()],
       ['③ 프레임 합 ms', (() => {
         const q = frameCostQ()
         return q ? `중앙 ${q.total.toFixed(2)} · 최악 ${q.totalMax.toFixed(2)}`
@@ -992,6 +999,9 @@ const diag = {
   // ── web2-18 0부 비용 원장 통로 — 진단 패널과 **같은 값**을 읽는다(원칙 a) ──
   /** ① 앱이 마지막으로 실제 그린 전량 재그리기(ms·그린 획·화면 밖으로 걸러낸 획) */
   brushLastFull: () => brushLayer.lastFull(),
+  /** ㉢ 제스처 타일(web2-18 3-c) — 굽기 비용·판 수·붙이기 프레임 ms */
+  tileStats: () => brushLayer.tileStats(),
+  tileStatsReset: () => brushLayer.resetTileStats(),
   /** ② syncStrokes 비용 — 문서가 바뀔 때마다 */
   syncCost: () => ({ ...syncCost }),
   /** ② 강제 실행 1회의 ms — 앱과 **같은 함수**를 부른다(측정용 사본 없음). 반복 표본용 */

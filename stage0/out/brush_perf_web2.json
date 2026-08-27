@@ -4,6 +4,7 @@
  "metric_defs": {
   "down_to_next_paint_ms": "pointerdown 시각 → 다음 rAF 콜백의 performance.now(). vsync 위상 + 그 프레임 그리기이지 «렌더러 지연»이 아니다(2차 [2] — 초판의 rAF 인자 기준은 음수가 났다). 실기기 «첫 픽셀»의 대용 하한.",
   "frame_ms": "그 국면의 rAF 간격(중앙·p90·최악). 60Hz 헤드리스에서 16.7ms는 vsync 상한이라 그 값 자체는 판별력이 없고, 상한을 «넘는» 국면(궤도)이 판별한다(#46).",
+  "tiles": "web2-18 3부 — 궤도(제스처) 동안 흑연을 드는 **구운 타일**의 값: tiles_active(경로가 돌았는가) · tile_frames(붙인 프레임 수) · tile_bake_ms(굽기 1회) · tile_frame_ms_median/max(붙이기 1프레임). 굽기는 제스처마다 한 번이고 붙이기는 프레임마다다 — 그 둘의 대비가 이 방법의 값어치다.",
   "brush_redraws": "그 국면 동안 #brushc의 «획» 재그리기 횟수 — 렌더러가 brush일 때만 센다(2차 재리뷰 [2]: classic의 비우기 패스를 섞으면 0이 «캐시 성공»과 «겹 미사용»을 못 가른다. classic 칸의 0은 겹 미사용의 0이다). 분모 brush_syncs = sync 검사 횟수(#43).",
   "single_sample_note": "live 계열(down_to_next_paint·frame_ms·frames)은 국면당 «1회» 표본이다 — 실행 간 변동이 커서 작은 차(수 ms)는 판별하지 않고, 국면 간 큰 차(수 배)만 읽는다.",
   "heap_bytes": "performance.memory.usedJSHeapSize — ⚠ 크로뮴이 값을 양자화해 준다(십만 단위 관측 — «원 바이트»는 API가 주는 그대로라는 뜻이지 정밀 힙이 아니다). 렌더러 전환(brush→classic 측정 직후)의 값이라 한 시점 스냅샷이다.",
@@ -13,24 +14,24 @@
  "live": {
   "drawing_few": {
    "brush": {
-    "down_to_next_paint_ms": 30.1,
-    "frame_ms_median": 21.1,
-    "frame_ms_p90": 26.9,
-    "frame_ms_worst": 37.5,
-    "frames": 61,
+    "down_to_next_paint_ms": 19.5,
+    "frame_ms_median": 16.6,
+    "frame_ms_p90": 18.1,
+    "frame_ms_worst": 24.3,
+    "frames": 46,
     "brush_redraws_while_down": 1,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 1,
     "draft_redraws_while_down": 3,
-    "draft_ms_median": 0.6,
-    "draft_ms_max": 0.8
+    "draft_ms_median": 0.4,
+    "draft_ms_max": 0.5
    },
    "classic": {
-    "down_to_next_paint_ms": 14,
-    "frame_ms_median": 16.6,
-    "frame_ms_p90": 27.6,
-    "frame_ms_worst": 30.9,
-    "frames": 68,
+    "down_to_next_paint_ms": 12.5,
+    "frame_ms_median": 17.9,
+    "frame_ms_p90": 19.2,
+    "frame_ms_worst": 21.1,
+    "frames": 48,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 0,
@@ -41,24 +42,24 @@
   },
   "drawing_500": {
    "brush": {
-    "down_to_next_paint_ms": 10.1,
-    "frame_ms_median": 21.3,
-    "frame_ms_p90": 37.6,
-    "frame_ms_worst": 74.1,
-    "frames": 125,
+    "down_to_next_paint_ms": 19,
+    "frame_ms_median": 17.2,
+    "frame_ms_p90": 19.1,
+    "frame_ms_worst": 33,
+    "frames": 81,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 1,
     "draft_redraws_while_down": 40,
-    "draft_ms_median": 1.3,
-    "draft_ms_max": 11
+    "draft_ms_median": 1,
+    "draft_ms_max": 2
    },
    "classic": {
-    "down_to_next_paint_ms": 95.3,
-    "frame_ms_median": 16.9,
-    "frame_ms_p90": 156.3,
-    "frame_ms_worst": 200.3,
-    "frames": 119,
+    "down_to_next_paint_ms": 49.3,
+    "frame_ms_median": 9.1,
+    "frame_ms_p90": 61.1,
+    "frame_ms_worst": 66.7,
+    "frames": 87,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 0,
@@ -69,22 +70,34 @@
   },
   "orbit_500": {
    "brush": {
-    "down_to_next_paint_ms": 884.7,
-    "frame_ms_median": 1020,
-    "frame_ms_p90": 1177.4,
-    "frame_ms_worst": 1227.1,
+    "down_to_next_paint_ms": 1202.5,
+    "frame_ms_median": 16.8,
+    "frame_ms_p90": 18.5,
+    "frame_ms_worst": 1209.2,
     "frames": 30,
-    "brush_redraws": 31,
-    "brush_syncs": 32
+    "brush_redraws": 0,
+    "brush_syncs": 31,
+    "tiles_active": true,
+    "tile_frames": 30,
+    "tile_bake_ms": 1183.5,
+    "tile_frame_ms_median": 1.3,
+    "tile_frame_ms_max": 7.2,
+    "tiles": 505
    },
    "classic": {
     "down_to_next_paint_ms": 0.1,
-    "frame_ms_median": 115,
-    "frame_ms_p90": 151.3,
-    "frame_ms_worst": 182.5,
-    "frames": 31,
+    "frame_ms_median": 55.3,
+    "frame_ms_p90": 57,
+    "frame_ms_worst": 65.1,
+    "frames": 32,
     "brush_redraws": 0,
-    "brush_syncs": 32
+    "brush_syncs": 31,
+    "tiles_active": false,
+    "tile_frames": 0,
+    "tile_bake_ms": 1183.5,
+    "tile_frame_ms_median": 0,
+    "tile_frame_ms_max": 0,
+    "tiles": 0
    }
   },
   "note": "그리는 중 brush_redraws 0(캐시 설계 — 카운터가 정본)이고, 궤도 중에는 프레임마다 재그리기가 돌아 프레임 간격이 상한을 넘는다 — 실기기에서 「돌릴 때 끊긴다」가 오면 이 행이 원인이다."
@@ -92,40 +105,40 @@
  "full_redraw_ms": {
   "10": {
    "brush_ms": {
-    "min": 12,
-    "median": 15.900000095367432,
-    "max": 28.09999990463257
+    "min": 9.5,
+    "median": 12,
+    "max": 16.5
    },
    "classic_ms": {
-    "min": 0.5,
+    "min": 0.40000009536743164,
     "median": 0.5,
-    "max": 0.6999998092651367
+    "max": 0.5999999046325684
    },
    "heap_bytes": 13400000
   },
   "100": {
    "brush_ms": {
-    "min": 113.39999961853027,
-    "median": 138.60000038146973,
-    "max": 277.80000019073486
+    "min": 60.90000009536743,
+    "median": 82.09999990463257,
+    "max": 212.5
    },
    "classic_ms": {
-    "min": 3.6999998092651367,
-    "median": 4.5,
-    "max": 5.099999904632568
+    "min": 3,
+    "median": 3.799999713897705,
+    "max": 3.8000001907348633
    },
    "heap_bytes": 13400000
   },
   "500": {
    "brush_ms": {
-    "min": 643,
-    "median": 1110.9000000953674,
-    "max": 1499.1999998092651
+    "min": 350.2999997138977,
+    "median": 749.2000002861023,
+    "max": 796.9000000953674
    },
    "classic_ms": {
-    "min": 75.7999997138977,
-    "median": 137.7000002861023,
-    "max": 169.09999990463257
+    "min": 47.59999990463257,
+    "median": 48,
+    "max": 48.80000019073486
    },
    "heap_bytes": 13400000
   },
@@ -133,11 +146,11 @@
  },
  "heap_note": "JS 힙 원 바이트(반올림 없음). ⚠ WebGL 컨텍스트(gl·brushc 둘)의 GPU/텍스처 메모리는 JS에서 못 잰다 — 미측정(2차 [6]). 실기기에서 «앱이 죽는다/느려진다»가 오면 chrome://gpu 계열이 그 자리다.",
  "bundle_bytes": {
-  "with_brush": 782156,
+  "with_brush": 785957,
   "before_brush_e2e5e91": 677355,
-  "delta": 104801,
+  "delta": 108602,
   "note": "before는 git worktree(e2e5e91)에서 같은 방법(vite build, dist/assets 합)으로 실측. delta가 p5.brush 2.2.2 표준 빌드 + 이 회차 코드 몫이다. 배포본의 값은 배포 직전 빌드에서 이 팔이 다시 잰다."
  },
  "offline_note": "sw.js는 정적 목록 없는 런타임 캐시(vite.config swSource)라 새 번들도 첫 로드에 캐시된다 — 구조 서술이다. 오프라인 «실측»은 이 회차 미실행: static_deploy의 오프라인 양성 채널은 DEFERRED 11차 항목 5에 컨테이너 시간 초과로 등재된 그대로다(2차 [12] — 미측정을 미측정으로 적는다).",
- "falsification": "**brush 렌더러 조건의** drawing_*.brush.brush_redraws_while_down이 0이 아니면 캐시 설계가 깨진 것(팔이 0을 강제 — classic 칸의 0은 겹 미사용이라 판정에 안 쓴다) · orbit_500.brush.brush_redraws가 0이면 양성 채널이 죽은 것(팔이 >0 강제) · full_redraw가 전부 0이면 재그리기 미작동(팔이 500행 min>0 강제)."
+ "falsification": "**brush 렌더러 조건의** drawing_*.brush.brush_redraws_while_down이 0이 아니면 캐시 설계가 깨진 것(팔이 0을 강제 — classic 칸의 0은 겹 미사용이라 판정에 안 쓴다) · full_redraw가 전부 0이면 재그리기 미작동(팔이 500행 min>0 강제). ⚠ **web2-18 3부에서 궤도의 양성 채널이 옮겨 갔다**: 종전에는 orbit_500.brush.brush_redraws>0가 신호였는데(그 재그리기가 곧 사람이 느끼던 끊김의 원인이었다), 이제 궤도 동안은 구운 타일이 흑연을 들므로 **그 값이 0인 것이 옳다**. 새 신호는 tiles_active=true · tile_frames>0이고 팔이 그 셋을 강제한다 — 임계를 만져 옛 판정을 되살리지 않았다."
 }

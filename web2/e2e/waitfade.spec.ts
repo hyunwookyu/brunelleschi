@@ -44,7 +44,14 @@ function inkStat(page: Page, x0: number, y0: number, x1: number, y1: number) {
  *  #67: 한 겹 판독만으로는 «사람이 보는 화면에서 사라졌다»를 말할 수 없다(3차 리뷰어 [26]). */
 function brushPix(page: Page, x0: number, y0: number, x1: number, y1: number) {
   return page.evaluate(([x0, y0, x1, y1]) => {
-    const src = document.getElementById('brushc') as HTMLCanvasElement
+    // ⚠ **지금 «보이는» 흑연 겹**을 읽는다(web2-18 3부). 제스처(궤도·팬) 동안에는
+    //    `#brushc`가 아니라 `#brushsnap`이 흑연을 든다 — `#brushc`는 그때 구운 타일의
+    //    아틀라스를 들고 숨는다(3-c ㉢). 캔버스 이름을 못 박은 종전 판은 제스처 중에
+    //    0을 읽어 「사라졌다」로 오독했다(#67의 형태 — 겹을 바꾸면 판독 자리도 바뀐다).
+    //    사람이 보는 것은 **보이는 겹**이므로 그것을 읽는다.
+    const snapEl = document.getElementById('brushsnap') as HTMLCanvasElement | null
+    const snapOn = !!snapEl && getComputedStyle(snapEl).display !== 'none'
+    const src = (snapOn ? snapEl! : document.getElementById('brushc')) as HTMLCanvasElement
     const dpr = window.devicePixelRatio || 1
     const t = document.createElement('canvas')
     t.width = Math.max(1, Math.round((x1! - x0!) * dpr))
@@ -119,7 +126,7 @@ test('3-a — 대기 획은 자기 시점에서만: 작도 포즈 잉크 > 0 →
   const atDraw = await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
   expect(atDraw.count, '잉크 겹 벡터 점선이 없다(3-a)').toBe(0)
   const atDrawBrush = await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
-  expect(atDrawBrush, '흑연 파선 몸체가 #brushc에 있다').toBeGreaterThan(0)
+  expect(atDrawBrush, '흑연 파선 몸체가 «보이는» 흑연 겹에 있다').toBeGreaterThan(0)
 
   // 궤도 — 감쇠 창(WAIT_FADE_DEG=30°)을 확실히 넘긴다. 회전량은 앱의 사원수로 확인.
   await page.mouse.move(600, 400)
@@ -316,7 +323,21 @@ test('web2-14 3번 — 제스처 동안 판정 동결: 왕복 궤도에서 표�
     changes_ink: changes, changes_brush: brushChanges, far_deg: farDeg }
   expect(changes, '돌리는 동안 아무 일도 안 일어난다(ink — 0이 0으로 유지)').toBe(0)
   expect(brushChanges, '돌리는 동안 아무 일도 안 일어난다(brush 몸체 — #67 두 겹)').toBe(0)
-  expect(brushSamples[0]!, '동결값 = 잡는 순간(파선 픽셀 동일 — 결정론)').toBe(atDrawBrush)
+  // ⚠ **web2-18 3부에서 이 단언이 «동일»에서 «같은 대역»으로 바뀌었다.** 제스처 동안
+  //    흑연은 «가로로 누워 구운 타일을 회전·신축해 붙인 것»이라(3-c ㉢) 그 자리에서 바로
+  //    그린 것과 픽셀이 같지 않다 — 붓의 입자 무늬가 회전 불변이 아니기 때문이다.
+  //    **동결의 주장은 그대로 산다**: 위 `brushChanges === 0`이 「돌리는 동안 아무 일도
+  //    안 일어난다」를 재고, 아래 `after === atDrawBrush`가 「놓으면 정확히 원래대로」를 잰다.
+  //    여기서는 그 대가의 **크기**를 값으로 남긴다(임계를 만져 옛 판정을 되살리지 않는다).
+  const tileVsRedraw = brushSamples[0]! - atDrawBrush
+  freezeLedger['tile_vs_redraw_px'] = {
+    grab_redraw: atDrawBrush, gesture_tile: brushSamples[0]!, delta: tileVsRedraw,
+    ratio: +(brushSamples[0]! / Math.max(1, atDrawBrush)).toFixed(3),
+    note: 'web2-18 3-c ㉢의 대가. 알파>0 칸 수는 **늘어난다**(아핀 재표본이 입자를 옅게 퍼뜨린다) — 어두운 칸 수는 반대로 준다(gesture_tiles_web2.json의 release_diff). 정본은 놓은 뒤 화면이다.',
+  }
+  expect(brushSamples[0]!, '동결값이 잡는 순간과 같은 대역이다(타일 대가는 ±40% 안)')
+    .toBeGreaterThan(atDrawBrush * 0.6)
+  expect(brushSamples[0]!).toBeLessThan(atDrawBrush * 1.6)
   // 놓았다 — 재판정 한 번: 근사 복귀(6px 오차)여도 창 안이라(이진) 원래 파선 그대로다
   const after = await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
   expect(after, '뗀 뒤 — 창 안 복귀는 원 파선(이진 1)').toBe(atDrawBrush)

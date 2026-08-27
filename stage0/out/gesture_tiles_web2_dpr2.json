@@ -1,0 +1,91 @@
+{
+ "what": "web2-18 3부 — 돌리는 중에도 흑연이 남는가(dpr2). 획별 질감 캐시(㉢)와 화면 밖 잘라내기(㉠)의 표현 쪽 값. 성능 쪽 값(궤도 1프레임 합)은 cost18_web2*.json이 든다.",
+ "threshold": {
+  "pixel_diff_ch": 8,
+  "dark_lt": 233
+ },
+ "scene": {
+  "strokes": 43,
+  "at_rest_dark_px": 14202,
+  "box": {
+   "x": 260,
+   "y": 330,
+   "w": 520,
+   "h": 320
+  }
+ },
+ "orbit": {
+  "dark_px_per_frame": [
+   10656,
+   10487,
+   11366,
+   11348,
+   12208,
+   12632,
+   13169,
+   13481
+  ],
+  "min": 10487,
+  "tiles_held": {
+   "active": true,
+   "tiles": 38,
+   "frames": 8,
+   "bakeMs": 107.3,
+   "bakePasses": 1,
+   "bakeClamped": 0,
+   "frameMsMedian": 0.2,
+   "frameMsMax": 0.8
+  },
+  "tiles_after_release": {
+   "active": false,
+   "tiles": 0,
+   "frames": 10,
+   "bakeMs": 244.6,
+   "bakePasses": 1,
+   "bakeClamped": 1,
+   "frameMsMedian": 0.2,
+   "frameMsMax": 1.2
+  },
+  "note": "① 사람의 구속(「돌리는 중에도 스케치 질감을 포기할 수 없다」)의 팔이다 — 궤도 중 매 프레임 흑연 칸 수가 0보다 커야 한다. tiles_held.active=true가 «타일 경로가 실제로 돌았다»의 표식이고(그 값이 false면 이 팔은 종전 경로를 재는 것이다), tiles_after_release.active=false가 «놓으면 정확히 다시 굽는다»의 표식이다."
+ },
+ "release_diff": {
+  "changed_px": 20373,
+  "box_px": 166400,
+  "ratio": 0.1224,
+  "dark_last_frame": 13481,
+  "dark_after_release": 19181,
+  "note": "③ ㉢의 **대가**다: 제스처 중에는 구운 타일을 길이 방향으로만 아핀 변환해 붙이므로 결이 늘거나 눌린다. 놓으면 정확히 다시 굽는다(정본은 언제나 놓은 뒤 화면). 이 수가 그 차이의 크기다 — 임계를 걸지 않고 **값으로 적는다**(무엇이 옳은 값인지 아는 근거가 없다. 실기기에서 「돌릴 때 결이 이상하다」가 오면 이 행이 그 자리다)."
+ },
+ "clip_edge": {
+  "dark_px_per_step": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   937,
+   707,
+   1036,
+   869
+  ],
+  "box": {
+   "x": 0,
+   "y": 300,
+   "w": 40,
+   "h": 300
+  },
+  "note": "② ㉠(화면 밖 잘라내기)의 경계 팔. 획이 왼쪽 가장자리를 넘어가는 동안 가장자리 상자(40px 폭)의 흑연 칸 수. 여유(CLIP_MARGIN_PX)가 0이면 획 중심이 밖으로 나가는 순간 입자까지 통째로 사라진다 — 그때 이 열이 한 걸음에 0으로 떨어진다. 반증은 여유를 0으로 두고 이 팔을 돌리는 것이다."
+ },
+ "clip_margin": {
+  "particle_spread_css_px": 2,
+  "stroke_center_off_px": 1,
+  "edge_dark_px": 6,
+  "margin_px": 24,
+  "note": "㉠ 여유(CLIP_MARGIN_PX)의 근거. particle_spread = 획 중심에서 옆으로 번진 CSS px 실측. 여유는 그것 + 굵기 대역 상한(니브 4px)보다 넉넉해야 한다. edge_dark_px는 «중심이 화면 밖 1px인 세로획의 입자가 안으로 들어온 칸 수» — 여유를 0으로 두면 0이 된다(반증을 실제로 돌려 확인했다)."
+ }
+}

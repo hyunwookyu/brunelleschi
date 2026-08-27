@@ -36,7 +36,7 @@ import { project } from '../core/camera'
 import { gradeOf, rng32 } from '../core/material'
 import { C } from '../core/constants'
 import type { Stroke } from '../core/types'
-import type { Pt } from '../core/vec'
+import { pt, type Pt } from '../core/vec'
 import type { Draft } from './render2d'
 // 매핑·색·필압 계수는 순수 모듈이다 — 단위가 WebGL 없이 잰다(test/brushmap.test.ts)
 import { BRUSH_OF, strokeColor, weightOf, pressureProfile } from './brushmap'
@@ -58,6 +58,9 @@ export interface BrushLayer {
    *  ⚠ web2-12 2번 뒤에도 이 정의는 산다 — redraws는 **전량**(확정 획) 재그리기만 세고,
    *  draft 한 획 재그리기는 draftStats가 따로 센다(섞으면 «그리는 중 0회»가 안 재진다). */
   stats(): { syncs: number; redraws: number }
+  /** ㉢ 제스처 타일 원장(web2-18 3-c) — 굽기 비용·판 수·붙이기 프레임 ms */
+  tileStats(): { active: boolean; tiles: number; frames: number; bakeMs: number; bakePasses: number; bakeClamped: number; frameMsMedian: number; frameMsMax: number }
+  resetTileStats(): void
   /** draft 재그리기 원장(web2-12 2번) — 이동당 비용의 분자/분모와 ms 표본.
    *  ⚠ 표본은 **국면별로 리셋해서 읽는다**(resetDraftStats) — 누산기를 국면·렌더러
    *  칸에 그대로 실으면 실행 0인 칸에 남의 값이 실린다(2차 리뷰어 [5] · #32·#43). */
@@ -219,9 +222,38 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
   // 0부 ① — 마지막 전량 재그리기의 실측(앱이 실제로 그린 그 프레임)
   let lastFullMs = 0, lastDrawn = 0, lastClipped = 0
 
+  /** **화면 밖 잘라내기**(web2-18 3-c ㉠) — 이 획이 화면에 조금이라도 걸치는가.
+   *  0부가 낸 표에서 궤도 1프레임의 **99% 넘는 몫**이 이 겹의 전량 재그리기였고, 그 안에서
+   *  화면 밖 획도 투영되고 붓질까지 됐다. 돌리면 상당수가 밖으로 나간다 — 그것부터 자른다.
+   *
+   *  ⚠ **여유를 입자 반경만큼 준다**(지시 3-c ㉠ ⚠). 획 «중심»이 화면 밖이어도 붓의 입자는
+   *  안으로 들어올 수 있다. p5.brush의 입자 퍼짐은 라이브러리 내부값이라 우리가 못 읽으므로
+   *  **굵기의 배수로 상한을 잡는다**: 화면 고정 굵기의 대역이 1.1~4 px(`MAT`·니브)이고
+   *  브러시 질감의 퍼짐이 그 몇 배를 넘지 않는다.
+ *
+ *  **24인 근거는 실측 + 여유다**(e2e gesture.spec ②-b가 매 실행 다시 잰다): 기본 재료의
+ *  입자가 획 중심에서 옆으로 번지는 거리가 **2 px**이었다. 굵기 대역의 상한(니브 4 px)과
+ *  더해도 6 px 대역이므로 24는 그 네 배다 — 자를 것이 확실한 것만 자른다. 동작점 하나이고
+ *  스윕이 없다(#12 · AS-C57). 되돌릴 조건: 실기기에서 「가장자리에서 획이 툭 사라진다」.
+ *  ⚠ **반증을 실제로 돌렸다**: 여유를 0으로 두면 ②-b가 빨개진다(중심이 −1 px인 세로획의
+ *  입자가 안 들어온다). ⚠ 첫 판의 ②(팬으로 훑기)는 **여유의 판별력이 없었다** — 그 팬에서는
+ *  획의 한 끝이 늘 화면 안이라 상자 검사가 안 걸린다(#69 ㉣의 형태. 그래서 ②-b를 세웠다).
+   *  ⚠ 대기 획의 **파선**도 같은 상자를 쓴다 — 파선은 획 안에서만 그려지므로 상자가 같다. */
+  const CLIP_MARGIN_PX = 24
+  let clipW = 0, clipH = 0        // 잘라내기 상자 — redraw 시작 때 한 번 읽는다
+  const offScreen = (a: Pt, b: Pt): boolean => {
+    const m = CLIP_MARGIN_PX
+    if (a.x < -m && b.x < -m) return true
+    if (a.y < -m && b.y < -m) return true
+    if (a.x > clipW + m && b.x > clipW + m) return true
+    if (a.y > clipH + m && b.y > clipH + m) return true
+    return false
+  }
+
   function redraw(app: App) {
     const tFull = performance.now()
     let drawn = 0, clipped = 0
+    clipW = cw; clipH = ch
     brush.clear()
     if (app.renderer === 'brush') {
       brush.push()
@@ -239,13 +271,17 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
           // 끄면 종전 식 그대로(A-4): own에서만 통짜 몸체 + ink 점선은 render2d 몫.
           if (app.waitFade) {
             if (waitFadeFactor(fadeRef(app), s.view) <= 0) continue
+            const wa = docToScreen(app, s.a), wb = docToScreen(app, s.b)
+            if (offScreen(wa, wb)) { clipped++; continue }
             drawn++
-            drawWaitingDashed(s, docToScreen(app, s.a), docToScreen(app, s.b))
+            drawWaitingDashed(s, wa, wb)
           } else {
             const own = s.view ? !atDraw : atDraw
             if (!own) continue
+            const oa = docToScreen(app, s.a), ob = docToScreen(app, s.b)
+            if (offScreen(oa, ob)) { clipped++; continue }
             drawn++
-            drawStroke(app, s, docToScreen(app, s.a), docToScreen(app, s.b))
+            drawStroke(app, s, oa, ob)
           }
         } else {
           const seg = app.lift.lifted.get(id)
@@ -254,8 +290,10 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
           const a = project(app.lift.an, app.pose, seg.a3)
           const b = project(app.lift.an, app.pose, seg.b3)
           if (!a || !b) continue
+          const sa = docToScreen(app, a), sb = docToScreen(app, b)
+          if (offScreen(sa, sb)) { clipped++; continue }
           drawn++
-          drawStroke(app, s, docToScreen(app, a), docToScreen(app, b))
+          drawStroke(app, s, sa, sb)
         }
       }
       brush.pop()
@@ -299,12 +337,204 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     if (draftMs.length < 400) draftMs.push(performance.now() - t0)
   }
 
+
+  // ── ㉢ **획별 질감 캐시**(web2-18 3-c ㉢) — 돌리는 중에도 흑연이 남는다 ────────────
+  //
+  // 사람이 정한 구속(3-b): **질감은 안 끈다.** 벡터선 대체·질감 토글·「돌리는 동안만
+  // classic」은 전부 금지다. 줄일 것은 **획당 비용**이지 질감이 아니다.
+  //
+  // 0부 표가 지목한 자리는 하나였다: 궤도 1프레임의 **99% 넘는 몫**이 이 겹의 전량
+  // 재그리기이고(render3d·draw2d는 400획에서도 1 ms 아래), ㉠(화면 밖 잘라내기)만으로는
+  // 그 표가 안 움직였다(픽스처의 획이 궤도 중에도 거의 화면 안이다 — 실측 147.7 ms).
+  //
+  // 방법: 한 획의 흑연을 **자기 좌표계**(가로로 누운 길이 L × 굵기 w)에 한 번 굽고,
+  // 제스처 중에는 그 타일을 새 두 끝점으로 **아핀 변환**해 붙인다. 확정 기하가 직선이라
+  // 사영도 직선이므로 성립한다(지시 3-c ㉢). 놓으면 정확히 다시 굽는다 —
+  // **정본은 언제나 놓은 뒤 화면**이다.
+  //
+  // 굽는 자리: `#brushc` 자신을 **아틀라스**로 쓴다. 획들을 가로로 누워 격자에 담아
+  // **한 번의 render()**로 그린 뒤 조각마다 2D 타일로 떠 온다(획마다 render를 부르면
+  // 그 자체가 전량 재그리기만큼 든다). 제스처 동안 `#brushc`는 숨고 `#brushsnap`(2D)이
+  // 타일을 붙인다 — 종이 마스크가 두 겹에 다 걸려 있어 결이 이어진다.
+  //
+  // ⚠ **대가**: 길이 방향으로만 배율이 실리므로 큰 회전에서 결이 늘거나 눌린다.
+  //   그 정도는 e2e가 픽셀로 재고 원장에 적는다(gesture_tiles_web2.json).
+  // ⚠ 화면보다 긴 획은 캔버스에 안 들어간다 — **줄여 굽고 늘려 붙인다**(안 그리지 않는다:
+  //   ①「궤도 중 모든 프레임에 흑연이 있다」가 사람의 구속이다). 그 수는 원장이 센다.
+  interface Tile {
+    img: HTMLCanvasElement
+    /** 구울 때의 화면 길이(CSS px) — 붙일 때 배율의 분모 */
+    bakedL: number
+    /** 타일 안에서 획이 시작하는 x(CSS px) — 입자가 끝 너머로 번지는 여유 */
+    pad: number
+    /** 타일 크기(CSS px)와 그 안의 획 중심선 y */
+    w: number; h: number; midY: number
+  }
+  const TILE_PAD_PX = 10          // 끝 너머 입자 여유 — CLIP_MARGIN_PX와 같은 물음의 작은 판
+  const TILE_H_MULT = 7           // 타일 높이 = 굵기 × 이것(입자가 옆으로 번지는 몫)
+  let tiles = new Map<number, Tile>()
+  let tileSig = ''                // 어떤 상태로 구웠나 — 문서·렌더러·배율이 바뀌면 다시 굽는다
+  let tiled = false               // 지금 제스처 타일 경로로 그리고 있는가
+  let bakeMs = 0, bakePasses = 0, bakeClamped = 0
+  let tileFrames = 0, tileFrameMs: number[] = []
+
+  /** 이 제스처에서 그릴 «획 + 그때의 화면 선분» 목록 — redraw와 **같은 판정**을 쓴다.
+   *  (승격/대기·감쇠·잉크 제외·화면 밖 잘라내기 전부 그대로 — 두 자리에 다른 규칙을 안 둔다) */
+  function gestureList(app: App): { s: Stroke; a: Pt; b: Pt; dashed: boolean }[] {
+    const out: { s: Stroke; a: Pt; b: Pt; dashed: boolean }[] = []
+    const atDraw = isDrawPose(app.pose)
+    const waiting = new Set(app.lift.waiting)
+    for (const s of app.doc.strokes) {
+      if (waiting.has(s.id)) {
+        if (app.waitFade) {
+          if (waitFadeFactor(fadeRef(app), s.view) <= 0) continue
+          out.push({ s, a: docToScreen(app, s.a), b: docToScreen(app, s.b), dashed: true })
+        } else {
+          const own = s.view ? !atDraw : atDraw
+          if (!own) continue
+          out.push({ s, a: docToScreen(app, s.a), b: docToScreen(app, s.b), dashed: false })
+        }
+      } else {
+        const seg = app.lift.lifted.get(s.id)
+        if (!seg) continue
+        if (gradeOf(s) === 'INK') continue     // 잉크 몸체는 #ink다(web2-18 1부)
+        const a = project(app.lift.an, app.pose, seg.a3)
+        const b = project(app.lift.an, app.pose, seg.b3)
+        if (!a || !b) continue
+        out.push({ s, a: docToScreen(app, a), b: docToScreen(app, b), dashed: false })
+      }
+    }
+    return out
+  }
+
+  /** 아틀라스 한 판을 굽고 타일로 떠 온다. 반환 = 이번 판에 담은 항목 수 */
+  function bakePass(app: App, items: { s: Stroke; L: number; h: number; w: number }[], from: number): number {
+    const dpr = snap.width / Math.max(1, cw)
+    brush.clear()
+    brush.push()
+    brush.translate(-cw / 2, -ch / 2)
+    const placed: { s: Stroke; x: number; y: number; w: number; h: number; L: number }[] = []
+    let x = 0, y = 0, rowH = 0
+    let i = from
+    for (; i < items.length; i++) {
+      const it = items[i]!
+      const tw = it.L + TILE_PAD_PX * 2
+      if (x + tw > cw) { x = 0; y += rowH; rowH = 0 }
+      if (y + it.h > ch) break                     // 이 판은 찼다 — 다음 판으로
+      const midY = y + it.h / 2
+      const a = pt(x + TILE_PAD_PX, midY)
+      const b = pt(x + TILE_PAD_PX + it.L, midY)
+      // **확정 그리기와 같은 함수**를 부른다 — 타일이 «다른 붓»으로 구워지면 안 된다
+      const dashed = app.lift.waiting.includes(it.s.id) && app.waitFade
+      if (dashed) drawWaitingDashed(it.s, a, b)
+      else drawStroke(app, it.s, a, b)
+      placed.push({ s: it.s, x, y, w: tw, h: it.h, L: it.L })
+      x += tw
+      rowH = Math.max(rowH, it.h)
+    }
+    brush.pop()
+    brush.render()
+    // 조각마다 2D 타일로 떠 온다 — 판독은 straight alpha 컨텍스트라 합성과 같은 값이다
+    for (const q of placed) {
+      const t = document.createElement('canvas')
+      t.width = Math.max(1, Math.round(q.w * dpr))
+      t.height = Math.max(1, Math.round(q.h * dpr))
+      const g = t.getContext('2d')!
+      g.drawImage(canvas,
+        Math.round(q.x * dpr), Math.round(q.y * dpr),
+        t.width, t.height, 0, 0, t.width, t.height)
+      tiles.set(q.s.id, { img: t, bakedL: q.L, pad: TILE_PAD_PX, w: q.w, h: q.h, midY: q.h / 2 })
+    }
+    return i - from
+  }
+
+  /** 제스처 시작 — 지금 화면의 획들을 타일로 굽는다 */
+  function bakeTiles(app: App) {
+    const t0 = performance.now()
+    tiles = new Map()
+    bakePasses = 0; bakeClamped = 0
+    const list = gestureList(app)
+    const items = list.map(({ s, a, b }) => {
+      const L0 = Math.hypot(b.x - a.x, b.y - a.y)
+      const maxL = Math.max(8, cw - TILE_PAD_PX * 2)
+      if (L0 > maxL) bakeClamped++
+      const w = weightOf(s)
+      return { s, L: Math.max(1, Math.min(L0, maxL)), h: Math.ceil(w * TILE_H_MULT) + 6, w }
+    })
+    let done = 0
+    while (done < items.length && bakePasses < 24) {
+      const n = bakePass(app, items, done)
+      bakePasses++
+      if (n === 0) break                            // 한 항목도 못 담았다 — 무한 루프 방지
+      done += n
+    }
+    bakeMs = performance.now() - t0
+  }
+
+  /** 제스처 프레임 — 타일을 지금 두 끝점으로 아핀 변환해 붙인다(O(획) drawImage) */
+  function drawTiled(app: App) {
+    const t0 = performance.now()
+    fitSnap()
+    const dpr = snap.width / Math.max(1, cw)
+    const g = snap.getContext('2d')!
+    g.setTransform(1, 0, 0, 1, 0, 0)
+    g.clearRect(0, 0, snap.width, snap.height)
+    for (const { s, a, b } of gestureList(app)) {
+      const t = tiles.get(s.id)
+      if (!t) continue
+      const L = Math.hypot(b.x - a.x, b.y - a.y)
+      if (L < 1e-6) continue
+      if (offScreen(a, b)) continue                 // ㉠ — 붙일 때도 같은 상자
+      const ux = (b.x - a.x) / L, uy = (b.y - a.y) / L
+      const k = L / t.bakedL                        // **길이 방향만** 배율(굵기는 화면 고정)
+      // 타일 국소 (pad, midY) → 화면 a. 굵기 축(세로)에는 배율을 안 싣는다.
+      const m11 = ux * k, m12 = uy * k, m21 = -uy, m22 = ux
+      const tx = a.x - (m11 * t.pad + m21 * t.midY)
+      const ty = a.y - (m12 * t.pad + m22 * t.midY)
+      g.setTransform(m11 * dpr, m12 * dpr, m21 * dpr, m22 * dpr, tx * dpr, ty * dpr)
+      g.drawImage(t.img, 0, 0, t.w, t.h)
+    }
+    g.setTransform(1, 0, 0, 1, 0, 0)
+    tileFrames++
+    if (tileFrameMs.length < 400) tileFrameMs.push(performance.now() - t0)
+  }
+
+  /** 제스처 경로를 켜고 끈다 — `#brushc`는 아틀라스를 들고 숨는다 */
+  function setTiled(on: boolean) {
+    if (tiled === on) return
+    tiled = on
+    canvas.style.visibility = on ? 'hidden' : ''
+    snap.style.display = on ? '' : 'none'
+    if (!on) { tiles = new Map(); tileSig = '' }
+  }
+
   let syncs = 0, redraws = 0, blank = false
   return {
     canvas,
     sync(app, draft) {
       syncs++
       paperPhase(app)   // 종이 위상 — 문서(팬)를 따라간다(10번)
+      // ── ㉢ 제스처(궤도·팬) — 타일 경로 ────────────────────────────────────
+      // 판정자는 `app.fadePose`다: 그것이 «지금 잡고 있다»의 단일 출처이고(web2-14 3번),
+      // 대기 획 감쇠 동결도 같은 값을 읽는다 — 두 자리에 다른 술어를 안 둔다(#54).
+      // draft(그리는 중)가 우선이다 — 그때는 스냅샷 겹이 이미 그 자리를 쓴다.
+      const gesture = app.renderer === 'brush' && app.fadePose !== null && !draftEligible(app, draft)
+      if (gesture) {
+        // 굽는 조건: 문서·렌더러·배율이 그대로면 다시 안 굽는다(제스처 내내 한 번).
+        // ⚠ 배율(줌)이 바뀌면 다시 굽는다 — 화면 고정 굵기가 배율에 안 실려야 한다.
+        const sig = `${app.docVersion}|${app.renderer}|${app.view.s}|${cw}x${ch}|${app.waitFade}`
+        if (!tiled || sig !== tileSig) {
+          bakeTiles(app)
+          tileSig = sig
+          setTiled(true)
+        }
+        drawTiled(app)
+        paperPhase(app)
+        last = null            // 놓으면 전량 재그리기가 정확히 다시 굽는다(정본은 놓은 뒤 화면)
+        return true
+      }
+      if (tiled) setTiled(false)
+
       if (draftEligible(app, draft)) {
         // 시작(또는 그리는 중 뷰·문서가 움직인 드문 경우) — 확정 획을 굳혀 스냅샷으로
         if (!draftActive || dirty(app)) {
@@ -341,6 +571,16 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     },
     stats: () => ({ syncs, redraws }),
     lastFull: () => ({ ms: lastFullMs, drawn: lastDrawn, clipped: lastClipped }),
+    tileStats: () => {
+      const v = [...tileFrameMs].sort((a, b) => a - b)
+      return {
+        active: tiled, tiles: tiles.size, frames: tileFrames,
+        bakeMs: +bakeMs.toFixed(2), bakePasses, bakeClamped,
+        frameMsMedian: v.length ? +v[Math.floor(v.length / 2)]!.toFixed(3) : 0,
+        frameMsMax: v.length ? +v[v.length - 1]!.toFixed(3) : 0,
+      }
+    },
+    resetTileStats: () => { tileFrames = 0; tileFrameMs = [] },
     draftStats: () => {
       const s = [...draftMs].sort((a, b) => a - b)
       return {

@@ -36,30 +36,30 @@
      }
     },
     "full_redraw_ms": {
-     "min": 16.9,
-     "median": 17.5,
-     "max": 23.8
+     "min": 17.1,
+     "median": 18.4,
+     "max": 56.9
     },
-    "last_full_app_ms": 16.7,
+    "last_full_app_ms": 20.6,
     "sync_strokes_ms": {
-     "min": 0,
+     "min": 0.1,
      "median": 0.1,
-     "max": 0.5
+     "max": 0.4
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.2999997138977051,
-     "bs": 18.199999809265137,
+     "r3": 0.3000001907348633,
+     "bs": 0.2999997138977051,
      "d2": 0.09999990463256836,
-     "total": 18.59999990463257,
-     "totalMax": 23.40000009536743
+     "total": 0.6999998092651367,
+     "totalMax": 57.700000286102295
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.1675,
-     "intersect_ms": 0.055,
-     "ends_merge_ms": 0.035,
-     "rest_ms": 0.0775
+     "per_call_ms": 0.14,
+     "intersect_ms": 0.0575,
+     "ends_merge_ms": 0.0325,
+     "rest_ms": 0.05
     }
    },
    "100": {
@@ -74,30 +74,30 @@
      }
     },
     "full_redraw_ms": {
-     "min": 34.3,
-     "median": 84.6,
-     "max": 92.6
+     "min": 36.7,
+     "median": 45.1,
+     "max": 76.4
     },
-    "last_full_app_ms": 31.6,
+    "last_full_app_ms": 38.4,
     "sync_strokes_ms": {
      "min": 0.2,
      "median": 0.3,
-     "max": 0.7
+     "max": 0.6
     },
     "orbit_frame_ms": {
      "n": 32,
      "r3": 0.3000001907348633,
-     "bs": 36.40000009536743,
+     "bs": 0.3000001907348633,
      "d2": 0.09999990463256836,
-     "total": 36.799999713897705,
-     "totalMax": 50.19999980926514
+     "total": 0.7000002861022949,
+     "totalMax": 88.69999980926514
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.315,
+     "per_call_ms": 0.3375,
      "intersect_ms": 0.165,
-     "ends_merge_ms": 0.035,
-     "rest_ms": 0.115
+     "ends_merge_ms": 0.0475,
+     "rest_ms": 0.125
     }
    },
    "200": {
@@ -112,30 +112,30 @@
      }
     },
     "full_redraw_ms": {
-     "min": 67.4,
-     "median": 78.8,
-     "max": 109.8
+     "min": 66.9,
+     "median": 86,
+     "max": 111
     },
-    "last_full_app_ms": 67.3,
+    "last_full_app_ms": 65,
     "sync_strokes_ms": {
      "min": 0.4,
      "median": 0.5,
-     "max": 1.1
+     "max": 1
     },
     "orbit_frame_ms": {
      "n": 32,
      "r3": 0.5,
-     "bs": 73.40000009536743,
-     "d2": 0.19999980926513672,
-     "total": 74,
-     "totalMax": 95.30000019073486
+     "bs": 0.5999999046325684,
+     "d2": 0.10000038146972656,
+     "total": 1.200000286102295,
+     "totalMax": 173.90000009536743
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.875,
+     "per_call_ms": 0.9225,
      "intersect_ms": 0.45,
-     "ends_merge_ms": 0.1125,
-     "rest_ms": 0.3125
+     "ends_merge_ms": 0.11,
+     "rest_ms": 0.3625
     }
    },
    "400": {
@@ -150,30 +150,30 @@
      }
     },
     "full_redraw_ms": {
-     "min": 131.7,
-     "median": 173.2,
-     "max": 216.6
+     "min": 131.4,
+     "median": 159.4,
+     "max": 197.3
     },
-    "last_full_app_ms": 137.3,
+    "last_full_app_ms": 159.9,
     "sync_strokes_ms": {
-     "min": 0.9,
-     "median": 0.9,
-     "max": 1.8
+     "min": 0.8,
+     "median": 0.8,
+     "max": 2.1
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.6999998092651367,
-     "bs": 147.5,
-     "d2": 0.3000001907348633,
-     "total": 148.30000019073486,
-     "totalMax": 204.59999990463257
+     "r3": 0.7999997138977051,
+     "bs": 1,
+     "d2": 0.20000028610229492,
+     "total": 2,
+     "totalMax": 317
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 3.1175,
-     "intersect_ms": 1.7825,
+     "per_call_ms": 3.1675,
+     "intersect_ms": 1.8175,
      "ends_merge_ms": 0.1925,
-     "rest_ms": 1.1425
+     "rest_ms": 1.1575
     }
    }
   },
@@ -190,30 +190,30 @@
      }
     },
     "full_redraw_ms": {
-     "min": 18.6,
-     "median": 28.3,
-     "max": 58.5
+     "min": 21.1,
+     "median": 26,
+     "max": 48.6
     },
-    "last_full_app_ms": 17.2,
+    "last_full_app_ms": 19.5,
     "sync_strokes_ms": {
      "min": 0.1,
-     "median": 0.1,
+     "median": 0.2,
      "max": 0.4
     },
     "orbit_frame_ms": {
      "n": 32,
      "r3": 0.20000028610229492,
-     "bs": 24.90000009536743,
+     "bs": 0.19999980926513672,
      "d2": 0.09999990463256836,
-     "total": 25.399999618530273,
-     "totalMax": 39.299999713897705
+     "total": 0.5,
+     "totalMax": 58.69999980926514
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.14,
-     "intersect_ms": 0.055,
+     "per_call_ms": 0.15,
+     "intersect_ms": 0.0425,
      "ends_merge_ms": 0.0175,
-     "rest_ms": 0.0675
+     "rest_ms": 0.09
     }
    },
    "100": {
@@ -228,11 +228,11 @@
      }
     },
     "full_redraw_ms": {
-     "min": 34,
-     "median": 39,
-     "max": 75.9
+     "min": 38.7,
+     "median": 43,
+     "max": 72.6
     },
-    "last_full_app_ms": 36.6,
+    "last_full_app_ms": 44.7,
     "sync_strokes_ms": {
      "min": 0.2,
      "median": 0.3,
@@ -240,18 +240,18 @@
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.3000001907348633,
-     "bs": 36.69999980926514,
+     "r3": 0.20000028610229492,
+     "bs": 0.39999961853027344,
      "d2": 0.09999990463256836,
-     "total": 37.09999990463257,
-     "totalMax": 44.89999961853027
+     "total": 0.6999998092651367,
+     "totalMax": 102.80000019073486
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.2725,
-     "intersect_ms": 0.1475,
-     "ends_merge_ms": 0.02,
-     "rest_ms": 0.105
+     "per_call_ms": 0.285,
+     "intersect_ms": 0.155,
+     "ends_merge_ms": 0.0225,
+     "rest_ms": 0.1075
     }
    },
    "200": {
@@ -266,11 +266,11 @@
      }
     },
     "full_redraw_ms": {
-     "min": 70,
-     "median": 77.7,
-     "max": 115.7
+     "min": 73.5,
+     "median": 93.8,
+     "max": 113.6
     },
-    "last_full_app_ms": 84.5,
+    "last_full_app_ms": 78.2,
     "sync_strokes_ms": {
      "min": 0.4,
      "median": 0.5,
@@ -279,17 +279,17 @@
     "orbit_frame_ms": {
      "n": 32,
      "r3": 0.40000009536743164,
-     "bs": 95.30000019073486,
-     "d2": 0.19999980926513672,
-     "total": 95.89999961853027,
-     "totalMax": 140.5
+     "bs": 0.5999999046325684,
+     "d2": 0.10000038146972656,
+     "total": 1.1999998092651367,
+     "totalMax": 176.59999990463257
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.88,
-     "intersect_ms": 0.4825,
-     "ends_merge_ms": 0.0625,
-     "rest_ms": 0.335
+     "per_call_ms": 0.9,
+     "intersect_ms": 0.465,
+     "ends_merge_ms": 0.07,
+     "rest_ms": 0.365
     }
    },
    "400": {
@@ -304,30 +304,30 @@
      }
     },
     "full_redraw_ms": {
-     "min": 139.3,
-     "median": 183.4,
-     "max": 238.4
+     "min": 136.4,
+     "median": 187.1,
+     "max": 229.3
     },
-    "last_full_app_ms": 168.7,
+    "last_full_app_ms": 167,
     "sync_strokes_ms": {
-     "min": 0.9,
-     "median": 1,
-     "max": 1.9
+     "min": 1,
+     "median": 1.1,
+     "max": 2.4
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.6000003814697266,
-     "bs": 178.40000009536743,
-     "d2": 0.2999997138977051,
-     "total": 179.59999990463257,
-     "totalMax": 252.2000002861023
+     "r3": 0.7000002861022949,
+     "bs": 1,
+     "d2": 0.20000028610229492,
+     "total": 2,
+     "totalMax": 349.40000009536743
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 3.31,
-     "intersect_ms": 1.815,
-     "ends_merge_ms": 0.1675,
-     "rest_ms": 1.3275
+     "per_call_ms": 3.945,
+     "intersect_ms": 2.2675,
+     "ends_merge_ms": 0.165,
+     "rest_ms": 1.5125
     }
    }
   },
@@ -344,30 +344,30 @@
      }
     },
     "full_redraw_ms": {
-     "min": 17.5,
-     "median": 19,
-     "max": 47.3
+     "min": 21.9,
+     "median": 27.8,
+     "max": 33
     },
-    "last_full_app_ms": 18.3,
+    "last_full_app_ms": 20.3,
     "sync_strokes_ms": {
      "min": 0.1,
-     "median": 0.2,
+     "median": 0.1,
      "max": 0.6
     },
     "orbit_frame_ms": {
      "n": 32,
      "r3": 0.20000028610229492,
-     "bs": 23.5,
-     "d2": 0.19999980926513672,
-     "total": 23.90000009536743,
-     "totalMax": 37
+     "bs": 0.20000028610229492,
+     "d2": 0.09999990463256836,
+     "total": 0.5999999046325684,
+     "totalMax": 59
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.1875,
-     "intersect_ms": 0.0575,
-     "ends_merge_ms": 0.0425,
-     "rest_ms": 0.0875
+     "per_call_ms": 0.1625,
+     "intersect_ms": 0.0525,
+     "ends_merge_ms": 0.0325,
+     "rest_ms": 0.0775
     }
    },
    "100": {
@@ -382,30 +382,30 @@
      }
     },
     "full_redraw_ms": {
-     "min": 30,
-     "median": 39.1,
-     "max": 65.3
+     "min": 39.7,
+     "median": 44.2,
+     "max": 100.3
     },
-    "last_full_app_ms": 41.2,
+    "last_full_app_ms": 43.1,
     "sync_strokes_ms": {
      "min": 0.1,
-     "median": 0.3,
+     "median": 0.2,
      "max": 0.5
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.2999997138977051,
-     "bs": 34.80000019073486,
+     "r3": 0.19999980926513672,
+     "bs": 0.3000001907348633,
      "d2": 0.09999990463256836,
-     "total": 35.19999980926514,
-     "totalMax": 38.60000038146973
+     "total": 0.5999999046325684,
+     "totalMax": 92.5
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.2975,
-     "intersect_ms": 0.125,
-     "ends_merge_ms": 0.07,
-     "rest_ms": 0.1025
+     "per_call_ms": 0.3125,
+     "intersect_ms": 0.14,
+     "ends_merge_ms": 0.0625,
+     "rest_ms": 0.11
     }
    },
    "200": {
@@ -420,30 +420,30 @@
      }
     },
     "full_redraw_ms": {
-     "min": 66,
-     "median": 78.3,
-     "max": 95.8
+     "min": 87.3,
+     "median": 88.8,
+     "max": 136.3
     },
-    "last_full_app_ms": 71.9,
+    "last_full_app_ms": 92.5,
     "sync_strokes_ms": {
-     "min": 0.4,
+     "min": 0.3,
      "median": 0.5,
      "max": 1
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.40000009536743164,
-     "bs": 94.69999980926514,
-     "d2": 0.09999990463256836,
-     "total": 95.09999990463257,
-     "totalMax": 142.69999980926514
+     "r3": 0.39999961853027344,
+     "bs": 0.5,
+     "d2": 0.10000038146972656,
+     "total": 1,
+     "totalMax": 177.2999997138977
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 0.8075,
-     "intersect_ms": 0.42,
-     "ends_merge_ms": 0.0675,
-     "rest_ms": 0.32
+     "per_call_ms": 0.8475,
+     "intersect_ms": 0.455,
+     "ends_merge_ms": 0.055,
+     "rest_ms": 0.3375
     }
    },
    "400": {
@@ -458,58 +458,58 @@
      }
     },
     "full_redraw_ms": {
-     "min": 121.5,
-     "median": 157.6,
-     "max": 201
+     "min": 165.8,
+     "median": 190.9,
+     "max": 251.6
     },
-    "last_full_app_ms": 141,
+    "last_full_app_ms": 166.1,
     "sync_strokes_ms": {
      "min": 0.8,
-     "median": 1,
-     "max": 2.1
+     "median": 0.9,
+     "max": 1.7
     },
     "orbit_frame_ms": {
      "n": 32,
-     "r3": 0.6000003814697266,
-     "bs": 158.7999997138977,
-     "d2": 0.20000028610229492,
-     "total": 159.80000019073486,
-     "totalMax": 185.59999990463257
+     "r3": 0.6999998092651367,
+     "bs": 0.8000001907348633,
+     "d2": 0.19999980926513672,
+     "total": 1.799999713897705,
+     "totalMax": 338
     },
     "osnap": {
      "calls": 40,
-     "per_call_ms": 3.1675,
-     "intersect_ms": 1.86,
-     "ends_merge_ms": 0.1425,
-     "rest_ms": 1.165
+     "per_call_ms": 3.295,
+     "intersect_ms": 1.9475,
+     "ends_merge_ms": 0.1025,
+     "rest_ms": 1.245
     }
    }
   }
  },
  "slope": {
   "raw_0pct": {
-   "full_redraw": 9.9,
-   "sync_strokes": 9,
-   "orbit_frame": 7.97,
-   "osnap_total": 18.61,
-   "osnap_intersect": 32.41,
-   "osnap_ends_merge": 5.5
+   "full_redraw": 8.66,
+   "sync_strokes": 8,
+   "orbit_frame": 2.86,
+   "osnap_total": 22.62,
+   "osnap_intersect": 31.61,
+   "osnap_ends_merge": 5.92
   },
   "raw_50pct": {
-   "full_redraw": 6.48,
-   "sync_strokes": 10,
-   "orbit_frame": 7.07,
-   "osnap_total": 23.64,
-   "osnap_intersect": 33,
-   "osnap_ends_merge": 9.57
+   "full_redraw": 7.2,
+   "sync_strokes": 5.5,
+   "orbit_frame": 4,
+   "osnap_total": 26.3,
+   "osnap_intersect": 53.35,
+   "osnap_ends_merge": 9.43
   },
   "raw_100pct": {
-   "full_redraw": 8.29,
-   "sync_strokes": 5,
-   "orbit_frame": 6.69,
-   "osnap_total": 16.89,
-   "osnap_intersect": 32.35,
-   "osnap_ends_merge": 3.35
+   "full_redraw": 6.87,
+   "sync_strokes": 9,
+   "orbit_frame": 3,
+   "osnap_total": 20.28,
+   "osnap_intersect": 37.1,
+   "osnap_ends_merge": 3.15
   }
  },
  "falsification": "격자가 안 갈리면 표가 아무것도 안 잰 것이다 — 팔이 강제한다: 400의 획 수 ≥400 · 승격>0 · 대기>0 · rawIn 100% 칸은 >0이고 0% 칸은 정확히 0 · 400의 전량 재그리기 median >0(#69 ㉣) 이고 50보다 크다 · osnap 호출 수 >0. 이 중 하나라도 무너지면 그 표는 못 읽는다."
