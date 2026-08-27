@@ -169,6 +169,20 @@ describe('겉보기 교차 — 손 오차 대역의 정의 성립률', () => {
         before: { defined: outside.before.defined, n: outside.before.n },
         after: { defined: outside.after.defined, n: outside.after.n, kinds: outside.after.kinds },
       },
+      // selfcheck가 이 원장에 다는 플래그 둘의 해명 — **원장 안에 적는다**(플래그를 보는
+      // 자리가 여기다. 「의심≠오류」이므로 원인을 확인해 남긴다 — CLAUDE.md §5.1)
+      flags_explained: {
+        'inside.after.kinds 단일 범주(xint 275)':
+          '그것이 결과다 — 수리 후에는 몸통의 답이 하나뿐이다. **변별력은 이 필드가 아니라 '
+          + 'inside.before.kinds(ext/near/없음 셋으로 갈린다)와 outside(문이 거부한다)가 진다.** '
+          + '이 필드만 보면 아무것도 안 갈리는 것이 맞다',
+        'inside.after.missed.no_axis_on_A == 0':
+          '0이 이 회차의 값이다 — 수리 전 같은 필드가 37이고 그것이 증상의 기전이었다. '
+          + '집계 로직이 도는 증거는 before 행의 37이다(같은 코드가 센다)',
+        'constants/metric_defs 스냅샷 없음':
+          'web2 라인의 원장은 상수 스냅샷 등록부 밖이다(공통 형태 — web2-13/14 원장과 같다). '
+          + '대신 위 constants 블록에 이 측정이 의존하는 값을 그대로 싣는다',
+      },
       // 수리 전에 죽은 칸의 목록 — 「어떤 손이 실패했나」가 이 회차의 증상이다
       dead_before: inside.before.cells.filter(c => !c.defined)
         .map(c => ({ comp: c.comp, L: c.L, dx: c.dx, dy: c.dy, axis_on_A: c.axis })),

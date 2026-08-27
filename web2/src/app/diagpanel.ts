@@ -13,9 +13,11 @@
 // - **날값 줄**(1-f) — pointerType·button·buttons·pressure·tiltX/Y·twist를 가공 없이.
 //   기울기가 «안 오는» 입력에서 무엇이 오는지(0인가 undefined인가)가 2부 폴백의 관측
 //   근거다(1-b) — 그래서 undefined를 «0»으로 뭉개지 않고 그대로 보인다.
-// - **지우개 끝 신호**(1-d) — `pen + (button 5 | buttons&32)` 관측만 띄운다. ⚠ 도구를
-//   자동으로 바꾸지 않는다 — 명세 역사는 확인 대상이지 결론이 아니다(D-4). 실기기
-//   (전용 지우개 펜 3E)가 이 줄로 답하면 그때 기능이 선다.
+// - **지우개 끝 신호**(1-d) — `pen + (button 5 | buttons&32)`. ⚠ web2-11에서는 «관측만»
+//   이었다(명세 역사는 확인 대상이지 결론이 아니다 — D-4). **web2-15에서 실기기가
+//   답했다**: Pro Pen 3E + 안드로이드 15 크롬은 지우는 내내 `buttons 32`를 보내고
+//   호버에는 아무것도 안 보낸다. 그래서 지금은 **판정에 쓴다**(`buttons&32` 하나 —
+//   `button===5`는 순간값이라 기록만). 도구는 여전히 안 바꾼다(그 획만 — 2-b).
 // - **coalesced 계수**(1-a) — 포인터 종류별 «이벤트 수 / coalesced로 더 받은 점 수».
 //   버려지던 점 수의 실측 통로다(마우스·펜·손가락 각각 — 원장은 e2e가 남긴다).
 // - **최근 획**(1-f) — 점 수·coalesced 추가분·.brnl 바이트(main.ts가 extra로 준다).
@@ -126,8 +128,13 @@ export function initDiagPanel(
       ['기울기 날값', lastRaw
         ? `tiltX ${show(lastRaw.tiltX)} tiltY ${show(lastRaw.tiltY)} twist ${show(lastRaw.twist)}`
         : '—'],
+      // web2-15 2번 — 「표시만」이 아니다: 이 비트가 그 획을 지우개 경로로 보낸다.
+      // ⚠ **판정에 쓰는 것은 `buttons&32` 하나**다(그리는 내내 유효한 신호 — 실기기
+      //   관측). `button===5`는 누름·뗌 순간에만 오므로 여기 «관측 기록»으로만 남는다.
       ['지우개 끝 신호', lastRaw
-        ? `${lastRaw.eraserBit ? '지금 관측' : '지금 없음'} · 세션 중 관측 ${eraserBitSeen ? '있었다' : '없었다'} (pen+button5/buttons&32 — 표시만, 도구 자동 전환 없음)`
+        ? `${(lastRaw.buttons & 32) !== 0 ? '지금 buttons&32 — 이 획은 지우개다' : '지금 없음 — 연필이다'}`
+          + ` · 세션 중 관측 ${eraserBitSeen ? '있었다' : '없었다'}`
+          + ` (판정=buttons&32 · button5는 기록만: ${lastRaw.button === 5 ? '봤다' : '아니다'})`
         : '—'],
       ...[...tally.entries()].map(([k, t]): [string, string] =>
         [`coalesced(${k})`, `이벤트 ${t.events} · 추가 점 ${t.extra} · 묶음 ${t.bundled} · 빈 목록 ${t.empty} · API 없음 ${t.noApi}`]),

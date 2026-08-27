@@ -71,6 +71,22 @@ export function initInput(
     ty: typeof e.tiltY === 'number' ? e.tiltY : null,
     tw: typeof (e as any).twist === 'number' ? (e as any).twist : null,
   })
+  // ── 펜의 지우개 끝(web2-15 2-b) ─────────────────────────────────────
+  // 실기기 관측(Wacom Pro Pen 3E · MovinkPad Pro 14 · 안드로이드 15 크롬):
+  // **지우개로 그리는 내내 `buttons`가 32**다. 일반 펜 접촉은 `buttons 1`이라 깨끗이
+  // 갈린다. `button === 5`는 누름·뗌 «순간»에만 오므로 판정에 못 쓴다 — 정본은 이 비트다.
+  // ⚠ 이 비트가 없으면 **절대 전환하지 않는다.** 다른 신호로 추측하지 않는다
+  // (「조용히 틀린 배치를 만들지 않는다」의 지우개판 — 잘못 감지하면 그리다가 지워진다).
+  // ⚠ 호버에는 신호가 없다(실기기 확인: 「호버링만 할 땐 뜨지 않는다」) — 그래서 판정도
+  // 커서도 **닿아야** 뜬다. 호버 미리보기는 불가능하다(HANDOFF에 적었다).
+  const TIP_ERASE_BIT = 32
+  const isTipErase = (e: PointerEvent) => e.pointerType === 'pen' && (e.buttons & TIP_ERASE_BIT) !== 0
+  /** 지금 획을 지우개로 보내는가 — 끝이 켰거나(획 하나) 사이드바 도구가 지우개거나 */
+  const erasingNow = () => app.tipErase || isEraser(app.tool)
+  /** 무엇을 지우는가 — 끝은 **연필 지우개**가 기본이다(DECISIONS 「제도 매체」: 가장 흔한
+   *  동작이고 선따기가 그것이다. 잉크 지우개는 드물고 파괴적이라 명시적 선택으로 남긴다). */
+  const eraseKind = () => (app.tipErase ? 'eraser-pencil' as const : undefined)
+
   const touches = new Map<number, Pt>()
   let lastTouchMid: Pt | null = null
   let lastTouchDist = 0
@@ -225,6 +241,9 @@ export function initInput(
       return
     }
     if (e.pointerType === 'pen') penDown = true
+    // **매 접촉에서 다시 정한다** — 신호가 없으면 false다. 뗌이 유실돼도 다음 접촉이
+    // 스스로 바로잡으므로 «되돌리기»가 없다(state.ts `tipErase` 주석이 정본).
+    app.tipErase = isTipErase(e)
     if (e.pointerType === 'mouse' && e.button !== 0) {
       orbitBtn = { last: toScreen(e), mode: e.button === 1 ? 'orbit' : 'pan' }
       level.grab()
@@ -245,10 +264,12 @@ export function initInput(
     canvas.setPointerCapture(e.pointerId)
     // **면 도구는 탭이다** — 누르는 동안 아무것도 안 만들고, 뗄 때 판정한다.
     // 누름에서 바로 만들면 «잘못 눌렀다»를 뗌으로 취소할 길이 없다.
-    if (app.tool === 'face') { faceDown = toPt(e); return }
-    if (isEraser(app.tool)) {
+    // 지우개 끝이 **먼저**다 — 손에 든 것이 지우개면 사이드바에 무엇이 눌려 있든
+    // 지운다(도구는 그대로 남는다 — 뗌과 동시에 아무것도 안 남는다).
+    if (app.tool === 'face' && !app.tipErase) { faceDown = toPt(e); return }
+    if (erasingNow()) {
       beginErase(app)
-      eraseAt(app, toPt(e))
+      eraseAt(app, toPt(e), eraseKind())
       cb.onEraserMove(toPt(e))
       return
     }
@@ -288,12 +309,12 @@ export function initInput(
       return
     }
     if (drawingPointer === e.pointerId) {
-      if (app.tool === 'face') { cb.onFacePreview(facePreview(app, toPt(e))); return }
-      if (isEraser(app.tool)) {
-        eraseAt(app, toPt(e))
+      if (erasingNow()) {
+        eraseAt(app, toPt(e), eraseKind())
         cb.onEraserMove(toPt(e))
         return
       }
+      if (app.tool === 'face') { cb.onFacePreview(facePreview(app, toPt(e))); return }
       if (draft) {
         if (e.pointerType === 'pen' && e.pressure > 0) pressSamples.push(e.pressure)
         updateDraft(e)
@@ -334,6 +355,14 @@ export function initInput(
     }
     if (drawingPointer === e.pointerId) {
       drawingPointer = null
+      if (erasingNow()) {
+        endErase(app)
+        if (app.tipErase) {
+          app.tipErase = false        // 그 획 하나로 끝난다 — 도구는 처음부터 안 바꿨다
+          cb.onEraserMove(null)       // 커서도 같이 사라진다(사이드바 지우개는 종전대로 남는다)
+        }
+        return
+      }
       if (app.tool === 'face') {
         const d = faceDown
         faceDown = null
@@ -345,7 +374,6 @@ export function initInput(
         cb.onFacePreview(facePreview(app, d))
         return
       }
-      if (isEraser(app.tool)) { endErase(app); return }
       endDraft()
     }
   }

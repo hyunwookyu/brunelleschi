@@ -73,6 +73,14 @@ export interface App {
   /** 제도펜 니브 굵기 px */
   nib: number
   eraserRadius: number
+  /** **지금 이 획이 펜의 지우개 끝으로 그어지는 중인가**(web2-15 2-b).
+   *  ⚠ 도구(`tool`)는 **안 바꾼다.** 안드로이드 크롬은 지우개 끝을 호버에 안 알리므로
+   *  전환이 접촉 순간에만 일어나고, 도구를 바꾸면 뗄 때 되돌려야 하는데 그 복원이
+   *  어긋나는 경우(앱 정지·이벤트 유실·포인터 겹침)가 생긴다. 이 깃발은 되돌릴 것이
+   *  없다: `input.ts`가 **매 `pointerdown`에서 다시 정한다**(신호가 없으면 false).
+   *  그래서 뗌이 유실돼도 다음 접촉이 스스로 바로잡고, 그리기는 접촉 없이 못 일어난다.
+   *  읽는 곳은 지우개 커서(`render2d`)와 진단 패널뿐이다. */
+  tipErase: boolean
   /** 지우개 드래그 한 번의 누적 op (드래그가 끝나면 undoStack으로) */
   activeErase: Op | null
   /** 화면 조작(뷰 오프셋) — 그리는 중의 팬·줌. 문서 좌표는 안 바뀐다. */
@@ -149,6 +157,7 @@ export function createApp(W: number, H: number): App {
     grade: 'HB',
     nib: C.NIB_PX,
     eraserRadius: C.ERASER_PX,
+    tipErase: false,
     activeErase: null,
     view: { s: 1, ox: 0, oy: 0 },
     fadePose: null,
@@ -393,8 +402,14 @@ export function beginErase(app: App) {
   app.activeErase = { removed: [], added: [] }
 }
 
-export function eraseAt(app: App, p: Pt) {
+/** 지우개 종류 — 무엇을 지우는가(재료 필터). 사이드바 도구와 **펜의 지우개 끝**이
+ *  같은 값을 쓴다(끝은 도구를 안 바꾸므로 인자로 온다 — web2-15 2-b). */
+export type EraserKind = 'eraser-pencil' | 'eraser-ink'
+
+export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
   if (!app.activeErase) return
+  // 인자가 없으면 사이드바 도구가 정한다(종전 동작 — 호출부를 안 고친다)
+  const ek: EraserKind = kind ?? (app.tool === 'eraser-ink' ? 'eraser-ink' : 'eraser-pencil')
   const ps = pieces(app.lift, app.pose)
   // 지우개 반경은 화면 px — 문서 좌표에서는 배율로 나눈다
   const hits = ps.filter(x => distToPiece(p, x) <= app.eraserRadius / app.view.s)
@@ -413,8 +428,8 @@ export function eraseAt(app: App, p: Pt) {
     // 재료 필터 — 연필 지우개는 흑연만, 펜 지우개는 잉크만. 겹쳐 있어도 서로 안 건드린다.
     const target = app.lift.strokes.get(id)
     if (!target) continue
-    if (app.tool === 'eraser-pencil' && isInk(target)) continue
-    if (app.tool === 'eraser-ink' && !isInk(target)) continue
+    if (ek === 'eraser-pencil' && isInk(target)) continue
+    if (ek === 'eraser-ink' && !isInk(target)) continue
     const kept = ps.filter(x => x.strokeId === id && !hit.includes(x))
     const rm = removeById(app.doc, id)
     if (!rm) continue

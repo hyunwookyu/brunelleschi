@@ -1,98 +1,106 @@
 {
- "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
- "measured_at": "web2-14 마감(2026-08-27 — 배포 직전 측정)",
- "unit": {
-  "command": "npm test (vitest)",
-  "files": 43,
-  "tests": 416,
-  "wall_s": 3.6,
-  "note": "vitest 자체 Duration. 프로세스 벽시계는 ~9s(부팅 포함)"
- },
- "e2e": {
-  "command": "npm run e2e (playwright, dpr1+dpr2)",
-  "cases": 164,
-  "wall_s": 258,
-  "note": "케이스 = 82팔 × 2 dpr(web2-14 +4팔: snapghost 2·waitfade 동결 1·own3d 가시성 1, own3d 이행 +1·구 팔 재구성 — 팔=스펙 test 하나·케이스=팔×dpr)."
- },
- "typecheck_build": {
-  "command": "tsc --noEmit · vite build",
-  "build_s": 1.63
- },
- "history": [
-  {
-   "at": "web2-09",
-   "unit": 348,
-   "e2e": 60,
-   "e2e_wall_s": 55.7
+  "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
+  "measured_at": "web2-15 마감(2026-08-27 — 배포 직전 측정)",
+  "unit": {
+    "command": "npm test (vitest)",
+    "files": 45,
+    "tests": 426,
+    "wall_s": 3.9,
+    "note": "vitest 자체 Duration. web2-15 +10팔(xint.test 9 · xint_measure 1). 프로세스 벽시계는 ~9s(부팅 포함)"
   },
-  {
-   "at": "web2-10 배포 ①",
-   "unit": 348,
-   "e2e": 68
+  "e2e": {
+    "command": "npm run e2e (playwright, dpr1+dpr2)",
+    "cases": 174,
+    "wall_s": 264,
+    "note": "케이스 = 87팔 × 2 dpr(web2-15 +5팔: tiperase 4 · 나머지는 기존 팔 갱신 — 팔=스펙 test 하나·케이스=팔×dpr). ⚠ **알려진 실패 1팔×2dpr**: dim.spec 「인식기 감지」 — **web2-15 이전부터 깨져 있다**(깨끗한 나무에서 재현 확인). 이 회차가 만든 것이 아니고 이 회차가 안 고친다(범위 밖). 그래서 통과 수는 170/174다"
   },
-  {
-   "at": "web2-10 배포 ②",
-   "unit": 348,
-   "e2e": 78,
-   "e2e_wall_s": 57.1
+  "typecheck_build": {
+    "command": "tsc --noEmit · vite build",
+    "build_s": 1.63,
+    "note": "web2-15에 재측정 안 함 — 앞 회차 값"
   },
-  {
-   "at": "web2-10 배포 ③",
-   "unit": 348,
-   "e2e": 82,
-   "e2e_wall_s": 59.4
-  },
-  {
-   "at": "web2-10 최종",
-   "unit": 352,
-   "e2e": 88,
-   "e2e_wall_s": 63
-  },
-  {
-   "at": "web2-11 1부",
-   "unit": 358,
-   "e2e": 100,
-   "e2e_wall_s": 66
-  },
-  {
-   "at": "web2-11 2부",
-   "unit": 366,
-   "e2e": 116,
-   "e2e_wall_s": 114
-  },
-  {
-   "at": "web2-12 1부",
-   "unit": 366,
-   "e2e": 128,
-   "e2e_wall_s": 150
-  },
-  {
-   "at": "web2-12 2부",
-   "unit": 370,
-   "e2e": 134,
-   "e2e_wall_s": 156
-  },
-  {
-   "at": "web2-12 3부",
-   "unit": 373,
-   "e2e": 146,
-   "e2e_wall_s": 198
-  },
-  {
-   "at": "web2-13 4부",
-   "unit": 403,
-   "e2e": 156
-  },
-  {
-   "at": "web2-14 마감",
-   "unit": 416,
-   "e2e": 164,
-   "e2e_wall_s": 258
+  "history": [
+    {
+      "at": "web2-09",
+      "unit": 348,
+      "e2e": 60,
+      "e2e_wall_s": 55.7
+    },
+    {
+      "at": "web2-10 배포 ①",
+      "unit": 348,
+      "e2e": 68
+    },
+    {
+      "at": "web2-10 배포 ②",
+      "unit": 348,
+      "e2e": 78,
+      "e2e_wall_s": 57.1
+    },
+    {
+      "at": "web2-10 배포 ③",
+      "unit": 348,
+      "e2e": 82,
+      "e2e_wall_s": 59.4
+    },
+    {
+      "at": "web2-10 최종",
+      "unit": 352,
+      "e2e": 88,
+      "e2e_wall_s": 63
+    },
+    {
+      "at": "web2-11 1부",
+      "unit": 358,
+      "e2e": 100,
+      "e2e_wall_s": 66
+    },
+    {
+      "at": "web2-11 2부",
+      "unit": 366,
+      "e2e": 116,
+      "e2e_wall_s": 114
+    },
+    {
+      "at": "web2-12 1부",
+      "unit": 366,
+      "e2e": 128,
+      "e2e_wall_s": 150
+    },
+    {
+      "at": "web2-12 2부",
+      "unit": 370,
+      "e2e": 134,
+      "e2e_wall_s": 156
+    },
+    {
+      "at": "web2-12 3부",
+      "unit": 373,
+      "e2e": 146,
+      "e2e_wall_s": 198
+    },
+    {
+      "at": "web2-13 4부",
+      "unit": 403,
+      "e2e": 156
+    },
+    {
+      "at": "web2-14 마감",
+      "unit": 416,
+      "e2e": 164,
+      "e2e_wall_s": 258
+    },
+    {
+      "at": "web2-15 마감",
+      "unit": 426,
+      "e2e": 174,
+      "e2e_wall_s": 264,
+      "note": "e2e 통과 170 — dim.spec 인식기 감지 1팔×2dpr이 선행 결함으로 실패"
+    }
+  ],
+  "environment": {
+    "disk_avail_bytes": 9425096704,
+    "note": "#45 규약 — «느려졌다» 보고가 오면 이 값(bavail·판정용)부터 본다. 값 출처는 df의 Available 열.",
+    "disk_free_bytes_note": "옛 필드명 disk_free_bytes는 #45 후속이 판정 금지로 못 박아 이름을 바로잡았다(값 자체가 Available 열이었다 — 이름만 틀렸던 것)."
   }
- ],
- "environment": {
-  "disk_avail_bytes": 9425096704,
-  "note": "#45 규약 — «느려졌다» 보고가 오면 이 값(bavail·판정용)부터 본다. 값 출처는 df의 Available 열.",
-  "disk_free_bytes_note": "옛 필드명 disk_free_bytes는 #45 후속이 판정 금지로 못 박아 이름을 바로잡았다(값 자체가 Available 열이었다 — 이름만 틀렸던 것)."
- }
 }

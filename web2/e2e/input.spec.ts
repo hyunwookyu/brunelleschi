@@ -171,7 +171,12 @@ test('1-b·1-c — 펜은 점별 필압·기울기가 raw와 나란히 실리고
   expect(typeof s.mat.press).toBe('number')           // 옛 필드(획 평균)는 그대로 남는다(A-4)
 })
 
-test('1-d — 지우개 끝 신호는 «표시만»이다: 관측은 뜨고 도구는 안 바뀐다', async ({ page }) => {
+// ⚠ **web2-15 2번이 이 팔의 문면 절반을 뒤집었다.** 「표시만」은 더 이상 사실이 아니다 —
+// 실기기가 답했고(`buttons 32` 상시 · 호버 없음 → AS-C48·AS-C49) 그 비트가 이제 **그 획
+// 하나**를 지우개 경로로 보낸다. **안 바뀐 절반은 도구다**(사이드바 선택은 그대로) —
+// 그것이 이 팔이 계속 지키는 것이고, 지우는 동작 자체는 `e2e/tiperase.spec.ts`가 잰다.
+// (#65의 형태: 뒤집힌 결정의 근거 문면을 「현재 사실」로 고친다.)
+test('1-d — 지우개 끝 신호: 관측이 뜨고 **도구는 안 바뀐다**(지우는 것은 그 획뿐 — tiperase.spec)', async ({ page }) => {
   await boot(page)
   const before = await page.evaluate(() => (window as any).__b2.app.tool)
   await page.evaluate(() => {
@@ -182,7 +187,7 @@ test('1-d — 지우개 끝 신호는 «표시만»이다: 관측은 뜨고 도�
   const c = await capture(page)
   expect(c.lastRaw.eraserBit).toBe(true)
   expect(c.eraserBitSeen).toBe(true)
-  expect(await page.evaluate(() => (window as any).__b2.app.tool)).toBe(before) // 자동 전환 없음
+  expect(await page.evaluate(() => (window as any).__b2.app.tool)).toBe(before) // 도구 불변(여전히)
   // 반증 — 신호 없는 펜 이동에서는 eraserBit이 서지 않는다
   await page.evaluate(() => {
     document.body.dispatchEvent(new PointerEvent('pointermove', {
@@ -203,7 +208,8 @@ test('1-f — 진단 패널에 날값·coalesced·최근 획·.brnl 줄이 나�
   }, key)
   expect(await rowText('포인터 날값')).toContain('mouse')
   expect(await rowText('기울기 날값')).toMatch(/tiltX (-?\d+|undefined)/)
-  expect(await rowText('지우개 끝 신호')).toContain('도구 자동 전환 없음')
+  // web2-15: 「도구 자동 전환 없음」에서 「판정=buttons&32」로 바뀌었다(위 1-d 주석)
+  expect(await rowText('지우개 끝 신호')).toContain('판정=buttons&32')
   expect(await rowText('coalesced(mouse)')).toMatch(/이벤트 \d+ · 추가 점 \d+ · 묶음 \d+ · 빈 목록 \d+ · API 없음 \d+/)
   expect(await rowText('최근 획')).toMatch(/\d+점 \(mouse\)/)
   expect(await rowText('.brnl')).toMatch(/\d+ B · 획 \d+/)

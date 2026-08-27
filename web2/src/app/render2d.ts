@@ -382,8 +382,10 @@ export function draw2d(
     ctx.stroke()
   }
 
-  // 지우개 커서 — 반경은 화면 px
-  if (eraser && isEraser(app.tool)) {
+  // 지우개 커서 — 반경은 화면 px.
+  // `tipErase`도 센다(web2-15 2-b) — 펜의 지우개 끝은 도구를 안 바꾸므로 도구만 보면
+  // 커서가 안 뜬다. ⚠ 끝은 **닿아야** 뜬다(호버에 신호가 없다 — 실기기 관측).
+  if (eraser && (isEraser(app.tool) || app.tipErase)) {
     ctx.strokeStyle = COL.construction
     ctx.lineWidth = 1 * is
     ctx.beginPath()
