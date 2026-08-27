@@ -2,11 +2,13 @@
 // 종류: 소실점 > 정점 > 끝점 > 중점 > 교차점 > 수선 발 > 연장선 > 근처점 (정확한 것이 앞선다).
 // 종류별 켜고 끄기, 반경 조절. 반경은 화면 px(포인터 정밀도의 문제라 선례가 절대 px).
 //
-// 교차점은 3D에서 실제로 만나는 것만 쓴다 — 화면에서 가로지르는 것은 대개 가림이다.
-// 대기 획(2D)은 끝점·중점·**그린 구간 위(근처점)**가 후보다(web2-14 2번 ㉮ — 종전의
-// «끝점·중점만»은 실기기 판정으로 뒤집혔다). 2D «교차»는 여전히 후보가 아니다 —
-// 두 획의 화면 교차는 가림과 구별할 수 없지만, near는 **그 획 자체를 겨냥한 조준**이라
-// 가림 혼동이 없다(내가 지금 겨눈 잉크에 붙는 것 — #64 재판정은 NOTES web2-14 2번 절).
+// 교차점(`int`)은 3D에서 실제로 만나는 것만 쓴다 — 화면에서 가로지르는 것은 대개 가림이다.
+// 대기 획(2D)은 끝점·중점·**몸통**이 후보다. 몸통의 답은 조준선 유무로 갈린다(web2-15 1번):
+//   · 조준선 있음(축 스냅이 붙은 획) → `xint` **겉보기 교차** — 조준 광선 ∩ B의 그린 구간.
+//   · 조준선 없음(자유 획) → `near` 근처점 — 종전대로 수직 발.
+// 3D 획끼리의 «화면 교차»는 여전히 후보가 아니다(가림과 구별 불가 — #64). 대기 획은
+// 다르다: 3D가 없으니 가릴 것도 없고, 조준선은 **내가 지금 그 잉크를 겨눈 것**이다.
+// 선례는 AutoCAD의 apparent intersection · Rhino의 같은 오스냅이다(A-3 — 새로 안 짠다).
 
 import type { CamPose } from './types'
 import { C } from './constants'
@@ -16,10 +18,19 @@ import {
   type Pt, type V3, pt, add3, sub3, mul3, dot3, dist2, dist3, len3,
 } from './vec'
 
-export type OsnapKind = 'vp' | 'vertex' | 'end' | 'mid' | 'int' | 'perp' | 'ext' | 'near'
+export type OsnapKind = 'vp' | 'vertex' | 'end' | 'mid' | 'int' | 'xint' | 'perp' | 'ext' | 'near'
 // 소실점이 맨 앞이다 — 작도가 정한 **정확한 점**이고, 그 자리에 다른 후보가 겹치는 일은
 // 드물다(지평선 위). 나머지 순서는 Rhino 관행 그대로.
-export const OSNAP_ORDER: OsnapKind[] = ['vp', 'vertex', 'end', 'mid', 'int', 'perp', 'ext', 'near']
+// `xint`(겉보기 교차)는 `int` 바로 뒤다 — **두 구속이 정한 정확한 점**이라 발·연장·근처보다
+// 앞서지만(그 셋이 가리던 것이 web2-15의 증상이다), 실제 3D 교차보다는 뒤다(한쪽이 2D다).
+// 끝점·중점은 여전히 앞선다 — B의 «특징점»을 겨냥한 것은 그쪽이 더 정확한 답이다.
+export const OSNAP_ORDER: OsnapKind[] = ['vp', 'vertex', 'end', 'mid', 'int', 'xint', 'perp', 'ext', 'near']
+
+/** 조준선(web2-15 1번) — **지금 그리는 획이 따라갈 화면 직선**이다.
+ *  축 스냅이 붙은 획만 준다: 시작점과 방향이 이미 정해졌으므로 «어디서 뗐나»가 아니라
+ *  «어디서 만나나»가 답이다(지시 1-a). 자유 획(소실점에서 뻗는 획·축을 만드는 획)은
+ *  방향이 안 정해져 조준선이 없다 — 그때는 겉보기 교차가 성립하지 않는다. */
+export interface OsnapAim { start: Pt; through: Pt }
 
 export interface OsnapSettings {
   radius: number
@@ -28,7 +39,7 @@ export interface OsnapSettings {
 
 export const defaultOsnap = (): OsnapSettings => ({
   radius: C.OSNAP_RADIUS_PX,
-  kinds: { vp: true, vertex: true, end: true, mid: true, int: true, perp: true, ext: true, near: true },
+  kinds: { vp: true, vertex: true, end: true, mid: true, int: true, xint: true, perp: true, ext: true, near: true },
 })
 
 export interface OsnapHit {
@@ -113,6 +124,26 @@ export function intersections3(lift: LiftResult): { p3: V3; ids: [number, number
   return out
 }
 
+/** 화면 조준 **광선**(start → through, 앞쪽만) ∩ 화면 **선분**(a→b) — 겉보기 교차.
+ *  둘 다 클램프한다: 광선은 뒤로 안 가고(뒤에 있는 교차는 «지금 긋는 획»이 아니다),
+ *  선분은 **그린 구간**만이다(무한 연장에 걸면 «조용히 틀린 배치» — web2-13 1-d).
+ *  평행(외적 ~0)이면 null — 답이 하나가 아니다. */
+function raySegCross(start: Pt, through: Pt, a: Pt, b: Pt): Pt | null {
+  const rx = through.x - start.x, ry = through.y - start.y
+  const sx = b.x - a.x, sy = b.y - a.y
+  const den = rx * sy - ry * sx
+  const rl = Math.hypot(rx, ry), sl = Math.hypot(sx, sy)
+  if (rl < 1e-9 || sl < 1e-9) return null
+  // 평행 판정은 **정규화한 사인**으로 — 길이가 길면 den이 커져 각도 감각과 어긋난다
+  if (Math.abs(den) / (rl * sl) < 1e-6) return null
+  const qx = a.x - start.x, qy = a.y - start.y
+  const t = (qx * sy - qy * sx) / den        // 광선 파라미터
+  const u = (qx * ry - qy * rx) / den        // 선분 파라미터
+  if (t < 0) return null                     // 뒤쪽
+  if (u < 0 || u > 1) return null            // 그린 구간 밖
+  return pt(start.x + t * rx, start.y + t * ry)
+}
+
 interface Candidate { kind: OsnapKind; p: Pt; p3: V3 | null; d: number }
 
 /** 오스냅 — 커서 근처의 최우선 후보. start는 수선 발 계산용(그리는 중일 때). */
@@ -122,13 +153,16 @@ export function osnap(
   cursor: Pt,
   set: OsnapSettings,
   start?: { p3: V3 | null },
+  aim?: OsnapAim,
 ): OsnapHit | null {
   const an = lift.an
   const R = set.radius
   const cands: Candidate[] = []
-  const push = (kind: OsnapKind, p: Pt | null, p3: V3 | null) => {
+  /** `from`을 주면 구멍(반경)을 **거기서** 잰다 — 기본은 커서다.
+   *  겉보기 교차만 다른 자를 쓴다(아래 ⚠ — 손의 «수직» 오차는 축 스냅이 이미 버렸다). */
+  const push = (kind: OsnapKind, p: Pt | null, p3: V3 | null, from?: Pt) => {
     if (!p) return
-    const d = dist2(p, cursor)
+    const d = dist2(p, from ?? cursor)
     if (d <= R) cands.push({ kind, p, p3, d })
   }
 
@@ -201,18 +235,39 @@ export function osnap(
     }
   }
 
-  // 대기 획 — 끝점·중점·**그린 구간 위(근처점)**, 2D에서 (자기 포즈에서만 유효하지만
-  // 좌표는 포즈 무관 화면값). 몸통(near)은 web2-14 2번 ㉮가 열었다: 대기 소실점 선에
-  // 끝점을 «닿게» 하려면 그 선에 스냅이 걸려야 한다 — 실기기에서 4-g가 손으로 안 되던
-  // 절반이 이 부재였다(나머지 절반은 own3d.ts의 P 계산 — 같은 회차 주석).
-  // ⚠ 구간 클램프 — 무한 연장에 걸면 «조용히 틀린 배치»다(web2-13 1-d). 연장 없음.
+  // 대기 획 — 끝점·중점·**몸통**, 2D에서 (자기 포즈에서만 유효하지만 좌표는 포즈 무관
+  // 화면값). ⚠ 구간 클램프 — 무한 연장에 걸면 «조용히 틀린 배치»다(web2-13 1-d).
+  //
+  // ── 몸통의 답이 web2-15에서 바뀌었다: `near` → `xint`(조준선이 있을 때) ──
+  // web2-14가 near를 열었는데 실기기에서 **여전히 안 됐다**. 표식이 낸 기전 둘
+  // (재현: `xint_web2.json` · 팔 `xint.test.ts`):
+  //   ① near는 커서를 B에 **수직으로 붙인다** — 축 스냅으로 정한 획의 끝이 축선에서
+  //      최대 반경(8px)만큼 밀린다. 그 밀림이 획 길이 대비 축 허용각을 넘으면
+  //      `axisOfStroke`가 축을 못 주고 A 자신이 안 올라가 **정의가 조용히 무산**된다
+  //      (무산 계수도 안 오른다 — defineByTouch가 «A가 3D가 아니다»에서 먼저 나간다).
+  //   ② 그 전에 `ext`·`perp`가 near를 **가린다**. 다른 3D 선에서 이어 그으면 그 선의
+  //      연장(ext)이 조준 경로 내내 잡혀 near는 한 번도 못 이긴다 — 사람이 본 것이
+  //      「스냅이 안 잡힌다」의 이 절반이다.
+  // 답은 **겉보기 교차**다(AutoCAD apparent intersection · Rhino — A-3 선례 그대로):
+  // 축스냅된 A는 시작점과 방향이 정해졌으므로 B와 만나는 자리가 **하나**다. 손이 어디서
+  // 멈추든 답이 같다 — 「붙인다」가 아니라 「만나는 데까지 늘린다」(지시 1-a).
+  // ⚠ 조준선이 있으면 near를 **안 낸다**: 두 답이 경쟁하면 ①이 되살아난다. 조준선이
+  // 없는 획(자유 — 소실점에서 뻗는 획·축을 만드는 획)에는 축이 없으므로 near가 그대로다.
   // 우선순위는 OSNAP_ORDER 그대로라 끝점·중점이 몸통보다 앞선다(끝 근처에서는 종전 동작).
   for (const id of lift.waiting) {
     const s = lift.strokes.get(id)
     if (!s) continue
     if (set.kinds.end) { push('end', s.a, null); push('end', s.b, null) }
     if (set.kinds.mid) push('mid', pt((s.a.x + s.b.x) / 2, (s.a.y + s.b.y) / 2), null)
-    if (set.kinds.near) {
+    // 겉보기 교차 — 조준선이 있을 때만. 있으면 «몸통»의 답은 이것 하나다(아래 ⚠).
+    if (aim && set.kinds.xint) {
+      const p = raySegCross(aim.start, aim.through, s.a, s.b)
+      // ⚠ 구멍을 **축스냅된 끝**(`aim.through`)에서 잰다 — 커서에서 재면 축에 수직인
+      // 손 오차가 문에 다시 실린다. 그 성분은 축 스냅이 이미 버린 값이고, 그것을 문에
+      // 태우는 것이 #68이 잡은 형태다(«오차가 안 실리는 값으로 바꾼다»). 남는 것은
+      // 「조준선을 따라 얼마나 못 미쳤나/지나쳤나」 하나 — 그것만이 의도의 표시다.
+      if (p) push('xint', p, null, aim.through)
+    } else if (!aim && set.kinds.near) {
       const dx = s.b.x - s.a.x, dy = s.b.y - s.a.y
       const L2 = dx * dx + dy * dy
       if (L2 > 1e-12) {

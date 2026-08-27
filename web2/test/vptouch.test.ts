@@ -54,6 +54,10 @@ describe('재현(D-2) — 손의 몸짓: 축 스냅 세로선을 대기선 «근
     // «손 오차가 남은 채로도 (b)가 푼다»를 못 잰다. 끈 상태가 곧 수리 전 재현 조건이고
     // (near 끈 사용자·기호를 무시한 손 둘 다 실존 경로) (b)의 단독 검증이다.
     s.app.osnap.kinds.near = false
+    // ⚠ web2-15 추가: `xint`도 끈다. 안 끄면 겉보기 교차가 끝을 B 잉크 위에 «정확히»
+    // 얹어 δ=0이 되므로 이 팔이 (b)를 안 재게 된다 — near만 끄던 문면이 web2-15에서
+    // 조용히 무효가 되는 자리였다(몸통의 답이 near → xint로 바뀌었다).
+    s.app.osnap.kinds.xint = false
     // 손: (720,445)에서 수직으로 올려 긋고, 교차(720,305.7) 근처 (722,309)에서 뗀다 —
     // 축 스냅이 x=720으로 붙이므로 확정 끝은 (720,309): 교차에서 3.3px, B 잉크에서 2.9px.
     const A = s.draw(720, 445, 722, 309)!
@@ -75,6 +79,9 @@ describe('재현(D-2) — 손의 몸짓: 축 스냅 세로선을 대기선 «근
   })
 
   it('수리 (a) — 대기선 몸통이 오스냅 대상이다: 끝이 B 잉크 위에 «정확히» 붙고 기호가 보인다', () => {
+    // ⚠ web2-15: 몸통의 답이 `near`(수직 발) → `xint`(겉보기 교차)로 바뀌었다.
+    // 이 팔이 재는 것(«붙는다» + «그린 구간 위» + 가시성 채널)은 그대로다 — 종류만
+    // 갈렸고, 바뀐 이유는 near가 축을 깨뜨렸기 때문이다(osnap.ts 대기 획 블록 · xint.test).
     const { s, B } = fx()
     // 커서를 B 몸통 근처(교차 아님 — 임의의 몸통 위 지점 근처)에 둔다
     const set = { ...s.app.osnap, radius: s.app.osnap.radius / s.app.view.s }
@@ -83,7 +90,7 @@ describe('재현(D-2) — 손의 몸짓: 축 스냅 세로선을 대기선 «근
       oh ? oh.p : { x: 720, y: 445 }, { p3: oh?.p3 ?? null },
       { x: 722, y: 309 }, set, { mmPerUnit: null, snapStep: null })
     expect(r.endSnap, '오스냅이 잡혔다 — 가시성 채널(기호가 이 hit를 그린다)').not.toBeNull()
-    expect(r.endSnap!.kind).toBe('near')
+    expect(r.endSnap!.kind).toBe('xint')
     // 붙은 점은 B의 «그린 구간» 위다(무한 연장 아님 — 조용히 틀린 배치 금지, web2-13 1-d)
     const bs = s.app.doc.strokes.find(x => x.id === B.id)!
     const d = (() => {  // 점-선분 거리
@@ -120,13 +127,14 @@ describe('재현(D-2) — 손의 몸짓: 축 스냅 세로선을 대기선 «근
 
   it('(a)+(b) 통합 — near 켠 기본: 몸통을 겨냥해 떼면 끝이 잉크 위에 붙고 B가 정의된다', () => {
     const { s, B } = fx()
-    const A = s.draw(720, 445, 722, 309)!            // 기본 설정 — near가 끝을 B 잉크 위로
+    const A = s.draw(720, 445, 722, 309)!            // 기본 설정 — 몸통 스냅이 끝을 B 잉크 위로
     expect(s.app.lift.lifted.has(A.id)).toBe(true)
     const b = s.app.doc.strokes.find(x => x.id === B.id)!
     expect(b.own3).toBeDefined()
     expect(s.app.touchStats.ok).toBe(1)
-    // ⚠ 대가 기록(2차 [8]): 점이 방향을 이기므로(원칙 d — Rhino) A의 확정 끝은 축선에서
-    // near 발까지 이동한다 — 끝점 오스냅이 원래 하던 것과 같은 급의 이동이다.
+    // ⚠ 종전 대가 기록(web2-14 2차 [8]): «점이 방향을 이기므로 A의 확정 끝이 축선에서
+    // near 발까지 이동한다». **web2-15에서 그 대가가 없어졌다** — 겉보기 교차는 구성상
+    // 축선 위이므로 두 구속이 같이 선다. 그 이동이 바로 실기기 실패의 원인이었다.
   })
 
   it('반증 ③(2차 [1] — 왕복 문이 수리 후에도 실제로 잰다): 잉크가 축선에서 벗어난 B는 거부된다', () => {
@@ -138,6 +146,7 @@ describe('재현(D-2) — 손의 몸짓: 축 스냅 세로선을 대기선 «근
     const B3 = commitStroke(s.app, { x: 300, y: 250 }, { x: 500, y: 295 })  // 정확값은 y=300
     expect(s.app.lift.waiting).toContain(B3.id)
     s.app.osnap.kinds.near = false                   // 몸통 스냅 없이 — 축 스냅 그대로 긋는다
+    s.app.osnap.kinds.xint = false                   // (web2-15 — 몸통의 새 답도 같이 끈다)
     const D = s.draw(500, 500, 430, 482)!            // vp1 방향 지면선 — 끝 (430,482.5)
     expect(s.app.lift.lifted.has(D.id)).toBe(true)
     s.draw(430, 482.5, 430, 281)                     // 수직 — B3와의 교차(≈y279.3) 근처에서 뗀다

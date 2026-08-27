@@ -459,7 +459,8 @@ function axisGuide(ctx: CanvasRenderingContext2D, draft: Draft, is: number) {
   ctx.setLineDash([])
 }
 
-/** 오스냅 표식 — Rhino 관행의 형태 구분: 끝 □ · 정점 ◆ · 중 △ · 교차 ✕ · 수선 ⊥ · 연장 ▫ · 근처 ○.
+/** 오스냅 표식 — Rhino 관행의 형태 구분: 끝 □ · 정점 ◆ · 중 △ · 교차 ✕ · 겉보기 교차 ⊠(파선) ·
+ *  수선 ⊥ · 연장 ▫ · 근처 ○.
  *  **무채색이다**(web2-08 지시 2) — 종류는 형태가 가르므로 색은 정보가 아니었다.
  *  진하기는 **2H 급**(web2-10 지시 6) — 색·알파를 경도표에서 그대로 읽는다. */
 function mark(ctx: CanvasRenderingContext2D, h: OsnapHit, is: number) {
@@ -492,6 +493,16 @@ function mark(ctx: CanvasRenderingContext2D, h: OsnapHit, is: number) {
     case 'int':
       ctx.moveTo(x - r, y - r); ctx.lineTo(x + r, y + r)
       ctx.moveTo(x - r, y + r); ctx.lineTo(x + r, y - r); break
+    // **겉보기 교차**(web2-15) — ✕에 **파선 네모**를 두른다. ✕는 교차의 형태이고
+    // 파선 테두리가 «실제로는 안 만난다»를 말한다(연장 ▫의 파선과 같은 어법 — 파선 =
+    // 「지금 거기 잉크가 있는 것은 아니다」). 무채색 유지(web2-08 — 형태가 가른다).
+    case 'xint':
+      ctx.moveTo(x - r, y - r); ctx.lineTo(x + r, y + r)
+      ctx.moveTo(x - r, y + r); ctx.lineTo(x + r, y - r)
+      ctx.stroke()
+      ctx.beginPath(); ctx.setLineDash([2 * is, 2 * is])
+      ctx.strokeRect(x - r5 - 1 * is, y - r5 - 1 * is, (r5 + 1 * is) * 2, (r5 + 1 * is) * 2)
+      ctx.setLineDash([]); return
     case 'perp':
       ctx.moveTo(x - r, y - r); ctx.lineTo(x - r, y + r); ctx.lineTo(x + r, y + r)
       ctx.moveTo(x - r, y); ctx.lineTo(x + 1 * is, y); break

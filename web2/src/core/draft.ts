@@ -52,10 +52,32 @@ export function resolveEnd(
   }
   const a3 = startP3.p3
   const scale = dim?.mmPerUnit ?? null
+
+  // ⓪ **조준선 먼저**(web2-15 1번) — 겉보기 교차는 «지금 그리는 획이 따라갈 직선»이
+  //    있어야 성립한다(지시 1-a). 그 직선은 아래 ④의 축 스냅이 정하므로 순서를 뒤집어
+  //    한 번 미리 푼다(같은 `snapDir` 호출 — 두 자리에 다른 식을 두지 않는다. 아래는
+  //    이 값을 재사용한다). 자유로 갈 획(②·③)은 방향이 안 정해지므로 조준선이 없다.
+  const freeVp = vpAt(an, pose, start)
+  const cls = freeVp ? null : classifyNext(an, start, cursor)
+  const ds0 = (!freeVp && cls!.role !== 'vp') ? snapDir(an, pose, start, cursor) : null
+  const aim = ds0?.axis ? { start, through: ds0.end } : undefined
+
   // ① 오스냅이 잡히면 그 점으로 간다 — 점이 방향을 이긴다(Rhino 선례).
   //    치수 스냅도 점을 안 이긴다 — 사람이 붙인 점은 그대로 확정된다(원칙 d · #63).
-  const oh = osnap(lift, pose, cursor, set, startP3)
+  const oh = osnap(lift, pose, cursor, set, startP3, aim)
   if (oh) {
+    // ⚠ 겉보기 교차만 **축을 유지한다** — 그 점은 구성상 조준선(축선) 위이므로
+    //    「점이 방향을 이긴다」의 대가가 없다. 두 구속이 같이 선다. 그래서 label·axis를
+    //    그대로 돌려주고(안내선·리본이 종전대로 뜬다) 길이도 축 경로와 같은 식으로 푼다.
+    //    나머지 종류는 종전대로 방향을 버린다(점이 이긴다).
+    if (oh.kind === 'xint' && ds0?.axis) {
+      const dir = an.axes.find(x => x.id === ds0.axis)?.dir
+      const b3 = a3 && dir ? solveEnd3(an, pose, a3, dir, oh.p) : null
+      return {
+        end: oh.p, label: ds0.axis, endSnap: oh, axis: ds0.axis,
+        lenMm: a3 && b3 ? lenMm(a3, b3, scale) : null,
+      }
+    }
     const mm = a3 && oh.p3 ? lenMm(a3, oh.p3, scale) : null
     return { end: oh.p, label: null, endSnap: oh, axis: null, lenMm: mm }
   }
@@ -65,16 +87,15 @@ export function resolveEnd(
   //    이 획은 «있는 축 중 하나»를 고르는 것이 아니라 **그 소실점의 살을 고르는 중**이고,
   //    소실점을 지나는 직선은 어느 방향이든 그 소실점의 살이다 — 「가장 가까운 축」이라는
   //    물음 자체가 성립하지 않는다. 끝점 오스냅(①)은 그대로 이긴다(점이 방향을 이긴다).
-  if (vpAt(an, pose, start)) return { end: cursor, label: null, endSnap: null, axis: null, lenMm: null }
+  if (freeVp) return { end: cursor, label: null, endSnap: null, axis: null, lenMm: null }
 
   // ③ **새 축을 정의하는 획이면 자유다.** 이 한 경우만 예외이고, 예외인 이유가 분명하다:
   //    그 획은 «있는 축 중 하나»가 아니라 **축을 만드는 중**이다. 여기서 기존 축에 붙이면
   //    두 번째 소실점을 영영 못 만든다(실측: 팔 열셋이 그것으로 깨졌다).
-  const cls = classifyNext(an, start, cursor)
-  if (cls.role === 'vp') return { end: cursor, label: 'vp', endSnap: null, axis: null, lenMm: null }
+  if (cls!.role === 'vp') return { end: cursor, label: 'vp', endSnap: null, axis: null, lenMm: null }
 
   // ④ 그 외에는 **항상 가장 가까운 축**이다. 임계가 없고 자유 방향도 없다(지시 5-a).
-  const ds = snapDir(an, pose, start, cursor)
+  const ds = ds0!            // ⓪에서 이미 풀었다 — 같은 인자·같은 함수(두 번 안 부른다)
   // ── 실시간 길이 + 치수 스냅(web2-08 지시 4-5·4-7) ─────────────────────
   // 시작점이 3D에 있고 축이 정해졌을 때만 길이가 정의된다 — 그때 미리보기 길이는
   // **리프팅이 확정할 값과 같은 계산**이다(`solveEnd3` — 같은 최근접점 풀이).

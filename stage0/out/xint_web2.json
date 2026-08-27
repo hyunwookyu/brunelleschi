@@ -1,0 +1,352 @@
+{
+  "what": "축스냅된 획 A를 대기선 B의 몸통에 대어 B를 정의한다 — 손 오차 격자 × 획 길이 × 구도",
+  "generated_by": "web2/test/xint_measure.test.ts",
+  "constants": {
+    "OSNAP_RADIUS_PX": 8,
+    "LINE_MATCH_PX": 0.5,
+    "TAP_MAX_PX": 2,
+    "SCREEN_PARALLEL_RATIO": 0.05,
+    "VP_DIR_RATIO": 0.06,
+    "OWN3_TOL_PX": 0.01
+  },
+  "grid": {
+    "offsets_inside": 25,
+    "offsets_outside": 5,
+    "lengths": [
+      40,
+      70,
+      110,
+      140
+    ],
+    "comps": [
+      "A_가까운VP",
+      "B_얕은각",
+      "C_먼VP"
+    ]
+  },
+  "inside": {
+    "what": "커서 오차가 오스냅 반경(8px) 안 — 사람이 «겨냥했다»고 볼 대역",
+    "before": {
+      "defined": 237,
+      "n": 275,
+      "kinds": {
+        "ext": 220,
+        "near": 44,
+        "(없음)": 11
+      },
+      "missed": {
+        "ok": 237,
+        "pose": 0,
+        "axis": 0,
+        "lift": 1,
+        "roundtrip": 0,
+        "no_axis_on_A": 37
+      }
+    },
+    "after": {
+      "defined": 275,
+      "n": 275,
+      "kinds": {
+        "xint": 275
+      },
+      "missed": {
+        "ok": 275,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0,
+        "no_axis_on_A": 0
+      }
+    },
+    "gained": 38
+  },
+  "outside": {
+    "what": "반증(D-3) — 반경 밖. 여기서도 다 서면 이 하네스는 문을 안 재는 것이다",
+    "before": {
+      "defined": 8,
+      "n": 55
+    },
+    "after": {
+      "defined": 22,
+      "n": 55,
+      "kinds": {
+        "xint": 22,
+        "ext": 22,
+        "(없음)": 11
+      }
+    }
+  },
+  "dead_before": [
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
+      "dx": 8,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
+      "dx": 8,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
+      "dx": 8,
+      "dy": -3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
+      "dx": 8,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 70,
+      "dx": 8,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 70,
+      "dx": 8,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 70,
+      "dx": 8,
+      "dy": -3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 70,
+      "dx": 8,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 110,
+      "dx": 8,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 110,
+      "dx": 8,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 110,
+      "dx": 8,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 40,
+      "dx": 8,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 40,
+      "dx": 8,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 40,
+      "dx": 8,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 70,
+      "dx": 8,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 70,
+      "dx": 8,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 70,
+      "dx": 8,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 110,
+      "dx": 8,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 140,
+      "dx": 8,
+      "dy": 6,
+      "axis_on_A": "V"
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 8,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 8,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 8,
+      "dy": -3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 8,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 8,
+      "dy": -6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 70,
+      "dx": 8,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 70,
+      "dx": 8,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 70,
+      "dx": 8,
+      "dy": -3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 70,
+      "dx": 8,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 70,
+      "dx": 8,
+      "dy": -6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 110,
+      "dx": 8,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 110,
+      "dx": 8,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 110,
+      "dx": 8,
+      "dy": -3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 110,
+      "dx": 8,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 110,
+      "dx": 8,
+      "dy": -6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 140,
+      "dx": 8,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 140,
+      "dx": 8,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 140,
+      "dx": 8,
+      "dy": -3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 140,
+      "dx": 8,
+      "dy": 6,
+      "axis_on_A": null
+    }
+  ],
+  "dead_after": [],
+  "headless_vs_device": {
+    "headless": "후보 선정·확정 좌표·축 유지·정의 성립·잉크 심판 — 아래 수 전부",
+    "device": "기호가 손에 읽히는가 · 반경 8px이 실제 손에 맞는가 — DEFERRED 「web2-15 실기기 확인 표」"
+  }
+}
