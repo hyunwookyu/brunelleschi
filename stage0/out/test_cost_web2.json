@@ -3,20 +3,20 @@
  "measured_at": "web2-16 3부(2026-08-27 — 대기선 흑연 파선·즉시 끊기 마감 전량 측정)",
  "unit": {
   "command": "npm test (vitest)",
-  "files": 49,
-  "tests": 467,
-  "wall_s": 5.2,
-  "note": "web2-17 1~3부 +30팔·+3파일(migrate 11 · entry17 10 · drawview 9) + erase.test +1(따라긋기 획은 지워진다). 437→467 회계: +26(1차) +4(리뷰 대응 — 비정수 격자·표본2·가드·경계). 파일 46+3=49(#70 부기 — 파일 수까지 맞춘다)."
+  "files": 51,
+  "tests": 480,
+  "wall_s": 4.5,
+  "note": "web2-17 4·5부 +13팔·+2파일(lift4 6 — 지면 확대·틱 확인 / horizonhide 7 — 자동 숨김·동결). 467→480. 파일 49+2=51(#70 부기)."
  },
  "e2e": {
   "command": "npm run e2e (playwright, dpr1+dpr2)",
-  "cases": 188,
-  "arms": 94,
+  "cases": 190,
+  "arms": 95,
   "wall_s": 330,
-  "arms_source": "npx playwright test --list → 「Total: 188 tests in 23 files」(94팔). --list 출력이 정본(#69 ㉤)",
-  "passed": 188,
+  "arms_source": "npx playwright test --list → 「Total: 190 tests in 23 files」(95팔). --list 출력이 정본(#69 ㉤)",
+  "passed": 190,
   "failed": 0,
-  "note": "web2-17 1~3부 +4팔(entry17.spec). 기존 8팔 이행(face 5·brush·flow·pwa) · views.spec 잠복 결함(팝업 top 클램프) 수리. 90→94팔."
+  "note": "web2-17 4·5부 +1팔(entry17.spec 5부 자동 숨김). 기존 조정: level 2·flow(자동 숨김 국면 — pref 경로로 측정)·snapghost(REMOTE 상자를 파선 행의 스냅샷 복사 반올림 밖으로)."
  },
  "typecheck_build": {
   "command": "tsc --noEmit · vite build",
