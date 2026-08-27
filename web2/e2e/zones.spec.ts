@@ -47,9 +47,10 @@ function inkPixels(page: Page, x0: number, y0: number, x1: number, y1: number) {
 
 test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값으로)', async ({ page }) => {
   await boot(page)
-  // 종이(위 왼쪽) — 탭 띠. 종속 탭 줄의 자리는 paperbar.spec ⑦.
+  // 종이(위 왼쪽) — 탭 띠 + **종속 탭 줄**(web2-20 2부 — 대응표 §6 「탭 + 그 아래 종속 탭」).
+  // 목록으로 낸다(#72 ② — 수가 아니라 어느 요소인지).
   expect(await page.evaluate(() =>
-    [...document.querySelectorAll('#topleft > *')].map(e => e.id))).toEqual(['paperbar'])
+    [...document.querySelectorAll('#topleft > *')].map(e => e.id))).toEqual(['paperbar', 'layerbar'])
   // 눈(위 오른쪽) — 작도 시점으로 · 전체 화면 · 표시
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#eyebar > button')].map(e => e.id)))

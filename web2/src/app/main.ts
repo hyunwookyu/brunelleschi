@@ -1,7 +1,8 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, setActiveLayer, type Tool } from './state'
 import { initPaperbar } from './paperbar'
+import { initLayerbar } from './layerbar'
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
@@ -40,6 +41,8 @@ try {
   if (r === 'classic' || r === 'brush') app.renderer = r
 } catch { /* 저장소가 없으면 기본값(brush) */ }
 const brushLayer = initBrushLayer(W, H, dpr)
+import { initFilmLayer, bakeFiberTile, setFilmAlphaForTest } from './filmlayer'
+const filmLayer = initFilmLayer(W, H, dpr)
 
 // 빌드 식별자 — 배포됐는지 화면에서 바로 안다.
 // ⚠ 이것 하나가 앱을 죽이면 안 된다 — 설정이 낡은 dev 서버에서 치환이 안 돼
@@ -206,6 +209,11 @@ app.listeners.push(() => {
     syncedVersion = app.docVersion
     syncStrokes(r3d, app)
     updateStatus()
+    // 종속 탭 줄(web2-20 2부) — 문서가 바뀌면 겹 목록·「+」의 활성 조건(카메라 닫힘)이
+    // 같이 바뀐다. 여기서 다시 그린다(paperbar와 달리 겹은 문서 변화에 민감하다).
+    // ⚠ 늦은 묶기 — 이 리스너는 초기화(자동 저장 복원)에서도 돌고 그때 layerbar는
+    // 아직 없다(TDZ). 참조가 서면 그때부터 민다(초기 렌더는 initLayerbar 자신이 한다).
+    layerbarRef?.sync()
   }
   invalidate()
 })
@@ -672,6 +680,7 @@ function applyOpen(data: NonNullable<ReturnType<typeof parseBrnl>>) {
   loadDoc(app, data)
   fitViewToFrame()
   paperbar.sync()
+  layerbar.sync()
   unitSel.value = app.doc.unit                 // 문서의 단위가 패널에 보인다(4-6)
 }
 fileOpen.addEventListener('change', async () => {
@@ -721,6 +730,7 @@ function doClear() {
   try { localStorage.removeItem(AUTOSAVE_KEY); localStorage.removeItem(AUTOSAVE_KEY_OLD) } catch { /* 저장소가 없으면 지울 것도 없다 */ }
   draft = null; hover = null; eraserPos = null; facePrev = null // 지운 획을 가리키던 표식이 남지 않게
   paperbar.sync()
+  layerbar.sync()
   invalidate()
 }
 
@@ -761,9 +771,17 @@ function captureThumb(): string {
   return t.toDataURL('image/jpeg', 0.72)
 }
 
+let layerbarRef: { sync: () => void } | null = null
+const layerbar = initLayerbar(app, document.getElementById('layerbar')!, {
+  viewport: () => ({ W, H }),
+  onChange: () => invalidate(),
+  notify,
+})
+layerbarRef = layerbar
 const paperbar = initPaperbar(app, document.getElementById('paperbar')!, {
   captureThumb,
-  onGoto: () => { autolevel.touch(); invalidate() },
+  // 종이를 바꾸면 종속 탭 줄도 바뀐다(web2-20 2부 — 겹은 종이에 속한다)
+  onGoto: () => { autolevel.touch(); layerbar.sync(); invalidate() },
 })
 
 // **되돌리기의 자리**(web2-17 1-d) — 규칙은 안 바꾼다(작도 획은 스택 밖·비우기가 답이다).
@@ -846,6 +864,7 @@ function frame() {
     // draft 전용 모드 — 확정 획은 스냅샷 겹이 들고 #brushc는 진행 중인 획 하나만 그린다.
     brushLayer.sync(app, draft)
     const fc2 = performance.now()
+    filmLayer.draw(app)   // 막·위 획(web2-20 3부) — 값싼 패턴 채우기 + 2D 사영선
     draw2d(ctx, app, draft, hover, eraserPos, facePrev)
     const fc3 = performance.now()
     if (frameCosts.length >= FRAME_COST_N) frameCosts.shift()
@@ -973,6 +992,14 @@ const diag = {
   /** ③ 프레임 3몫 합 — 국면별로 리셋해서 읽는다(누산은 국면이 섞인다) */
   frameCost: () => frameCostQ(),
   frameCostReset: () => { frameCosts = [] },
+  /** ⑩ 표식 — filmLayer.draw의 두 몫(막·위 획) ms. D-1: 어느 몫이 비싼지 경로에서 낸다 */
+  filmCost: () => filmLayer.cost(),
+  /** ⑩ 비용 원장(cost20) — 앱과 같은 addLayer·setActiveLayer를 부른다(측정용 사본 없음) */
+  layerAdd: (paper: 'tracing' | 'yellow') => {
+    const l = addLayer(app, paper, { W: window.innerWidth, H: window.innerHeight })
+    if (l) { setActiveLayer(app, l.id); layerbarRef?.sync() }
+    return l ? l.id : null
+  },
   /** ④ osnap 호출당 비용의 3몫 분해 — 4부의 문턱을 이 값이 정한다 */
   osnapCost: () => ({ ...osnapCost }),
   osnapCostReset: () => resetOsnapCost(),
@@ -990,6 +1017,18 @@ const diag = {
   forceConstructing: (v: boolean) => { setForceConstructing(v); invalidate() },
   /** 심 색의 정본(#54) — 접힌 연필 각인 팔(zones.spec ①')이 화면 값과 대조한다 */
   matColor: (g: Grade) => MAT[g].color,
+  /** 섬유 타일의 픽셀 해시(web2-20 3-c 팔) — 층별 결이 실제로 다른가·결정론인가.
+   *  wrap=false는 반증 전용(감싸 그리기를 뺀 타일 — 이음매 팔이 그것으로 실패를 본다). */
+  fiberTileHash: (id: number, paper: 'tracing' | 'yellow', wrap = true) => {
+    const c = bakeFiberTile(id, paper, dpr, wrap)
+    const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data
+    let h = 5381
+    for (let i = 0; i < d.length; i += 97) h = ((h * 33) ^ d[i]!) >>> 0
+    return h
+  },
+  fiberTile: (id: number, paper: 'tracing' | 'yellow', wrap = true) => bakeFiberTile(id, paper, dpr, wrap),
+  /** D-3 반증(3-e ④) — 곱→알파로 바꿔 합성 곡선 붕괴를 본다. e2e 전용. */
+  filmAlphaForTest: (v: boolean) => { setFilmAlphaForTest(v); invalidate() },
   /** 오스냅 판정 그대로(web2-12 8번) — 넘김 꼬리가 스냅 대상이 아님을 팔이 잰다 */
   osnapAt: (x: number, y: number) =>
     osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / app.view.s },

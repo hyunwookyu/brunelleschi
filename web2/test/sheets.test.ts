@@ -72,7 +72,7 @@ describe('① 마이그레이션 — v3 이하의 savedViews[i] → sheets[i+1] 
     expect(d.doc.sheets[1]!.view!.oy).toBeCloseTo(-205, 9)
   })
 
-  it('v3도 받는다(지시 2-b 문면) — **게이트 ①의 등록문이 v3이므로 v3 판을 실제로 태운다**: 종이가 v2와 똑같이 선다 · v5는 거부', () => {
+  it('v3도 받는다(지시 2-b 문면) — **게이트 ①의 등록문이 v3이므로 v3 판을 실제로 태운다**: 종이가 v2와 똑같이 선다 · v6은 거부', () => {
     const d3 = parseBrnl(v2Text(3))!
     expect(d3).not.toBeNull()
     const d2 = parseBrnl(v2Text(2))!
@@ -81,16 +81,16 @@ describe('① 마이그레이션 — v3 이하의 savedViews[i] → sheets[i+1] 
     expect(d3.doc.sheets.length).toBe(3)
     expect(d3.doc.sheets[0]!.name).toBe('작도')
     const j = JSON.parse(v2Text(2))
-    j.version = 5
+    j.version = 6   // web2-20이 v5를 쓰기 시작했다 — 전방 호환 금지의 문은 v6이 지킨다
     expect(parseBrnl(JSON.stringify(j))).toBeNull()
   })
 })
 
-describe('② 왕복 — 이름·순서·포즈가 v4 저장→파싱에서 같다', () => {
-  it('마이그레이션 결과의 v4 왕복', () => {
+describe('② 왕복 — 이름·순서·포즈가 저장→파싱에서 같다(v5 — web2-20부터)', () => {
+  it('마이그레이션 결과의 왕복', () => {
     const d = parseBrnl(v2Text(2))!
     const text = serializeBrnl({ doc: d.doc, nextId: d.nextId, drawView: { s: 1.5, ox: 12, oy: -7 } })
-    expect(JSON.parse(text).version).toBe(4)
+    expect(JSON.parse(text).version).toBe(5)   // web2-20 1부
     const back = parseBrnl(text)!
     expect(back).not.toBeNull()
     expect(back.doc.sheets).toEqual(d.doc.sheets)

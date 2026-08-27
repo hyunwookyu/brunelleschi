@@ -173,6 +173,7 @@ export function initPaperbar(app: App, host: HTMLElement, hooks: PaperbarHooks):
     add.title = '지금 보고 있는 시점을 새 종이로'
     add.addEventListener('click', () => {
       const s = addSheet(app, hooks.captureThumb())
+      hooks.onGoto()   // 활성 종이가 바뀌었다 — 종속 탭 줄(web2-20)도 따라온다
       render()
       // 기본 이름 「종이 N」 — 바로 편집 가능(지시 2-c). 방금 만든 탭을 찾아 연다.
       const tab = host.querySelector<HTMLElement>(`[data-sheet="${s.id}"]`)

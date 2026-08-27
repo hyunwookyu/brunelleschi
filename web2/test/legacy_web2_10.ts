@@ -14,7 +14,7 @@ import { C } from '../src/core/constants'
 export interface BrnlData {
   /** 옛 문서에는 sheets가 없다(web2-19가 더했다) — **타입만** 옛 모양으로 좁힌다.
    *  이 파일의 파싱 동작은 b6980c9 그대로다(수정 금지 — 이 줄은 컴파일 수용일 뿐). */
-  doc: Omit<Doc, 'sheets'>
+  doc: Omit<Doc, 'sheets' | 'layers'>
   nextId: number
   savedViews: { pose: CamPose; view: ViewOffset }[]
 }
@@ -98,7 +98,7 @@ export function parseBrnlLegacy(text: string): BrnlData | null {
     if (!isNum(raw.scaleRef)) return null
     scaleRef = raw.scaleRef
   }
-  const doc: Omit<Doc, 'sheets'> = { frame: { W: raw.frame.W, H: raw.frame.H }, strokes, faces, unit }
+  const doc: Omit<Doc, 'sheets' | 'layers'> = { frame: { W: raw.frame.W, H: raw.frame.H }, strokes, faces, unit }
   if (scaleRef !== undefined) doc.scaleRef = scaleRef
   return { doc, nextId, savedViews }
 }

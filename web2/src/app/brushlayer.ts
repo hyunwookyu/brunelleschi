@@ -31,6 +31,7 @@
 import * as brush from 'p5.brush/standalone'
 import type { App } from './state'
 import { docToScreen, isDrawPose, activeGrade, draftBrushed, fadeRef } from './state'
+import { filmSplit } from './filmlayer'
 import { atOwnPose, waitFadeFactor } from '../core/waitfade'
 import { project } from '../core/camera'
 import { gradeOf, rng32 } from '../core/material'
@@ -261,8 +262,10 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
       brush.translate(-cw / 2, -ch / 2)
       const atDraw = isDrawPose(app.pose)
       const waiting = new Set(app.lift.waiting)
+      const split = filmSplit(app)   // 위 획(활성 겹과 그 위)은 #layerc 몫(web2-20 3부)
       for (const s of app.doc.strokes) {
         const id = s.id
+        if (split && s.layer !== undefined && split.above.has(s.layer)) continue
         if (waiting.has(id)) {
           // 대기 획(web2-16 3-a·3-b) — 기본(감쇠 판정 켜짐): 각도 창 **안**이면 흑연
           // 파선으로 그린다(waitFadeFactor 이진 — 창 밖은 즉시 0. 몸체가 이 겹으로
@@ -393,7 +396,9 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     const out: { s: Stroke; a: Pt; b: Pt; dashed: boolean }[] = []
     const atDraw = isDrawPose(app.pose)
     const waiting = new Set(app.lift.waiting)
+    const split = filmSplit(app)   // redraw와 같은 제외(두 자리에 다른 규칙을 안 둔다)
     for (const s of app.doc.strokes) {
+      if (split && s.layer !== undefined && split.above.has(s.layer)) continue
       if (waiting.has(s.id)) {
         if (app.waitFade) {
           if (waitFadeFactor(fadeRef(app), s.view) <= 0) continue
