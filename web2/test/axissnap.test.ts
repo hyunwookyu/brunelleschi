@@ -9,11 +9,10 @@ import { resolveEnd } from '../src/core/draft'
 import { defaultOsnap } from '../src/core/osnap'
 import { DRAW_POSE } from '../src/core/camera'
 
-const HZ = [100, 400, 1100, 400] as const
-/** 지평선 + 소실점 둘 (찍어서 — 짧고 확실하다) */
+/** 소실점 둘 (찍어서 — 짧고 확실하다). 지평선은 상시(H/2=400 — web2-17)라 긋지 않는다. */
 function built() {
   const s = session(1200, 800)
-  s.draw(...HZ); s.draw(900, 400, 900, 400); s.draw(100, 400, 100, 400)
+  s.draw(900, 400, 900, 400); s.draw(100, 400, 100, 400)
   return s
 }
 
@@ -51,8 +50,7 @@ describe('5 — 임의 방향으로 그어도 축 셋 중 하나가 된다', () 
   })
 
   it('새 소실점을 정의하는 획만 자유다 — 그 한 경우가 예외인 이유', () => {
-    const s = session(1200, 800)
-    s.draw(...HZ)
+    const s = session(1200, 800)  // 빈 문서 — 지평선은 상시(web2-17)
     const e = resolveEnd(s.app.lift, DRAW_POSE, s.app.lift.an,
       { x: 500, y: 500 }, { p3: null }, { x: 700, y: 430 }, defaultOsnap())
     expect(e.label).toBe('vp')

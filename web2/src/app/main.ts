@@ -1,6 +1,6 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, saveView, deleteView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, saveView, deleteView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, type Tool } from './state'
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
@@ -55,7 +55,7 @@ import type { StrokeCapStats } from './input'
 let inputApi: { strokeStats: () => StrokeCapStats } | null = null
 /** 지금 문서의 .brnl 크기 — 저장 버튼과 같은 직렬화라 «저장하면 이 크기»다(1-f) */
 const brnlBytes = () =>
-  new Blob([serializeBrnl({ doc: app.doc, nextId: app.nextId, savedViews: app.savedViews })]).size
+  new Blob([serializeBrnl({ doc: app.doc, nextId: app.nextId, savedViews: app.savedViews, drawView: app.drawView })]).size
 const diagPanel = initDiagPanel(
   document.getElementById('buildid')!, document.getElementById('diagpanel')!,
   () => {
@@ -66,6 +66,9 @@ const diagPanel = initDiagPanel(
         ? `${st.points}점 (${st.pointerType}) · 이벤트 ${st.events} · coalesced 추가 ${st.extra}`
         : '—'],
       ['.brnl', `${brnlBytes()} B · 획 ${app.doc.strokes.length}`],
+      // 대기의 사유(web2-17 1-c) — 「아무 일도 안 일어난다」가 사유 없이 남지 않는다.
+      // 지금 사유는 하나다: 지평선 위 시작(지면과 못 만남 — 팬으로 지평선을 옮기는 자리).
+      ['대기 획', `${app.lift.waiting.length} (지평선 위 ${app.lift.waitWhy.size})`],
       // 「잘못 찍힌 점」 문이 버린 수(web2-13 3-b) — 조용히 버리지 않는다: 수가 말한다.
       // 크면 C.STRAY_MIN_PX가 틀린 것이다(원장 stray_gate_web2.json이 근거 대역).
       ['버린 짧은 획', `${app.strayCount} (문 ${C.STRAY_MIN_PX}px)`],
@@ -121,13 +124,16 @@ if (location.search.includes('reset')) {
 const OWN3D_KEY = 'b2-own3d'
 try { if (localStorage.getItem(OWN3D_KEY) === 'off') app.own3d = false } catch { /* 기본값(켜짐) */ }
 
-// 자동 저장 복원 — 문서 프레임이 창과 다르면 화면 배율로 맞춘다(문서 좌표 불변)
+// 자동 저장 복원 — 문서 프레임이 창과 다르면 화면 배율로 맞춘다(문서 좌표 불변).
+// **작도 시점(drawView)과는 합성이다**(web2-17 3-c — `composeView` 한 자리): 문서 →
+// drawView 화면 → 프레임 맞춤 창. 덮어쓰면 다른 창 크기에서 연 파일이 구도를 잃는다.
 const AUTOSAVE_KEY = 'b2-autosave'
 function fitViewToFrame() {
   const fw = app.doc.frame.W, fh = app.doc.frame.H
-  if (fw === W && fh === H) return
+  const draw = app.drawView ?? { s: 1, ox: 0, oy: 0 }
+  if (fw === W && fh === H) { app.view = { ...draw }; return }
   const s = Math.min(W / fw, H / fh)
-  app.view = { s, ox: (W - fw * s) / 2, oy: (H - fh * s) / 2 }
+  app.view = composeView({ s, ox: (W - fw * s) / 2, oy: (H - fh * s) / 2 }, draw)
 }
 try {
   const saved = localStorage.getItem(AUTOSAVE_KEY)
@@ -168,7 +174,7 @@ app.listeners.push(() => {
       // 열쇠가 남는다. 새로고침이 안 되살리는 것(복원 조건)과 별개로 자리를 안 남긴다.
       if (app.doc.strokes.length === 0) { localStorage.removeItem(AUTOSAVE_KEY); return }
       localStorage.setItem(AUTOSAVE_KEY, serializeBrnl({
-        doc: app.doc, nextId: app.nextId, savedViews: app.savedViews,
+        doc: app.doc, nextId: app.nextId, savedViews: app.savedViews, drawView: app.drawView,
       }))
     } catch {
       // 큰 문서로 quota가 넘칠 수 있다 — **조용히 넘어가지 않는다**(한 번만 알린다)
@@ -199,12 +205,12 @@ const UNFINISHED_GO = '작도 시점으로(보던 방향을 잃는다)'
 function updateStatus() {
   // **상태를 안 띄운다**(4-b). 차수·대기 수·스냅 반경·뷰 이름은 전부 내부 상태이고
   // 그것을 화면에 쓰는 것이 CAD의 방식이다. 남는 것은 딱 하나 —
-  // **빈 화면의 첫 안내**다. 이 앱은 첫 획이 특별하고(지평선), 그것을 모르면 시작을 못 한다.
-  // 지평선을 그으면 영영 사라진다.
-  if (app.lift.an.horizonY === null) status('지평선을 긋는다 — 수평이 강제된다')
+  // **빈 화면의 첫 안내**다(web2-17 1-b: 지평선은 이미 있고, 팬이 눈높이 선언이다).
+  // 줌이 막힌 구간(3-a)의 설명도 이 줄이 진다 — 첫 획이 놓이면 영영 사라진다(종전 규칙).
+  if (app.doc.strokes.length === 0) status('눈높이를 정한다 — 화면을 끌어 지평선을 옮긴다 (줌은 첫 획 뒤에 열린다)')
   else if (!isLevel(app.pose) && pitchSnaps(app.pose, app.lift.an.f, app.lift.an.W)) status(TILTED_MSG)
   else if (!isDrawPose(app.pose) && !app.lift.an.constructionDone) {
-    ask(UNFINISHED_MSG, [{ key: 'draw-view', label: UNFINISHED_GO, onPick: () => resetPose(app) }])
+    ask(UNFINISHED_MSG, [{ key: 'draw-view', label: UNFINISHED_GO, onPick: () => gotoDrawView() }])
   }
   else status('')
 }
@@ -563,7 +569,7 @@ function download(name: string, text: string, type: string) {
 }
 document.getElementById('btn-save')!.addEventListener('click', () => {
   download('drawing.brnl', serializeBrnl({
-    doc: app.doc, nextId: app.nextId, savedViews: app.savedViews,
+    doc: app.doc, nextId: app.nextId, savedViews: app.savedViews, drawView: app.drawView,
   }), 'application/json')
   // 성공 알림(web2-10 지시 5) — 4-b(「알림은 오류만」)의 예외다: 다운로드는 태블릿
   // PWA에서 화면에 아무 흔적이 없어 «됐는지»를 알 길이 없고, 모르고 또 누르거나
@@ -731,14 +737,33 @@ document.getElementById('btn-save-view')!.addEventListener('click', () => {
 })
 syncViewButtons() // 자동 저장에서 복원된 시점들
 
-document.getElementById('btn-undo')!.addEventListener('click', () => undo(app))
+// **되돌리기의 자리**(web2-17 1-d) — 규칙은 안 바꾼다(작도 획은 스택 밖·비우기가 답이다).
+// 새 진입로에서는 첫 획이 곧 소실점 획인 경우가 흔해 «되돌리기가 아무 일도 안 하는» 장면이
+// 자주 보인다 — 그때 한 줄로 말한다. 조건: 스택이 비었는데 마지막 획이 작도 획일 때만
+// (내용 획만 남은 상태 — 파일에서 연 문서 등 — 는 종전대로 조용한 무동작이다).
+function undoOrExplain() {
+  if (app.undoStack.length === 0 && app.doc.strokes.length > 0) {
+    const last = app.doc.strokes[app.doc.strokes.length - 1]!
+    if (app.lift.an.roles.get(last.id) !== 'content') {
+      notify('이 획은 공간을 정의했다 — 비우기로 다시 시작한다')
+      return
+    }
+  }
+  undo(app)
+}
+// 작도 시점으로 — 뷰는 drawView(3-b)이고, 프레임 ≠ 창이면 합성을 다시 얹는다(3-c)
+function gotoDrawView() {
+  resetPose(app)
+  fitViewToFrame()
+}
+document.getElementById('btn-undo')!.addEventListener('click', () => undoOrExplain())
 document.getElementById('btn-redo')!.addEventListener('click', () => redo(app))
-document.getElementById('btn-draw-view')!.addEventListener('click', () => resetPose(app))
+document.getElementById('btn-draw-view')!.addEventListener('click', () => gotoDrawView())
 window.addEventListener('keydown', (e) => {
   // Esc — 떠 있는 물음을 취소한다(줄이 비면 밑줄 단어가 사라져 못 누른다).
   // 물음이 없을 때는 줄을 비우는 것뿐이고, 다음 문서 변경이 안내를 다시 쓴다.
   if (e.key === 'Escape') { clearNotice(); return }
-  if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(app) }
+  if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undoOrExplain() }
   else if ((e.ctrlKey && e.key.toLowerCase() === 'y') || (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z')) {
     e.preventDefault(); redo(app)
   }
@@ -901,6 +926,10 @@ const diag = {
   }),
   summary: () => ({
     horizonY: app.lift.an.horizonY,
+    screenHDeclared: app.lift.an.screenHDeclared,
+    p1Locked: app.lift.an.p1Locked,
+    drawView: app.drawView,
+    waitWhy: [...app.lift.waitWhy.entries()],
     vps: app.lift.an.vps.map(v => ({ x: v.x, y: v.y })),
     f: app.lift.an.f,
     fSource: app.lift.an.fSource,

@@ -19,7 +19,7 @@ export interface Draft {
   start: Pt
   end: Pt
   raw: Pt[]
-  /** 미리보기 라벨 — 'horizon' | 'vp' | 축id | null(자유) */
+  /** 미리보기 라벨 — 'vp' | 축id | null(자유). 'horizon'은 web2-17에서 없어졌다. */
   label: string | null
   startSnap: OsnapHit | null
   startP3: V3 | null
@@ -206,7 +206,8 @@ export function draw2d(
     }
   }
 
-  // 작도선 — **지평선뿐이다.** 무한원이라 3D가 없고(이론서 2.2) 화면 전폭으로 긋는다.
+  // 작도선 — **지평선뿐이다.** 이제 획이 아니라 프레임의 상수(H/2 — web2-17)라
+  // **빈 문서에서도 그려진다**(카메라가 상시이므로 horizonScreenY가 늘 값을 낸다).
   // 깊이선은 작도선이 아니다 — 소실점을 정의하면서 동시에 그은 3D 선이고,
   // 승격됐으면 three.js가, 아직이면 아래 「대기 획」이 그린다. 여기서 또 그리면 두 번 그려진다.
   //
@@ -347,7 +348,7 @@ export function draw2d(
     const drawW = widthOfMat({ grade: g, w: g === 'INK' ? app.nib : undefined })
     // 안내색은 «카메라를 건드리는 획»에만. `!constructionDone`을 함께 보던 초판은
     // 1점 상태에서 그린 **내용 획까지** 작도선처럼 파랗게 칠했다 — 아직 못 그린다는 신호로 읽힌다.
-    const constructing = draft.label === 'horizon' || draft.label === 'vp'
+    const constructing = draft.label === 'vp'
     // 축에 붙어도 선은 **재료색**이다(web2-10 지시 7 — 축 색 넷을 뺐다. 확정될 모습
     // 그대로가 원칙 d와도 맞다). «붙었다»는 아래 파선 안내가 말한다.
     // 몸체(web2-12 2번) — brush 겹이 이 draft를 그리고 있으면 여기서 몸체를 **긋지 않는다**

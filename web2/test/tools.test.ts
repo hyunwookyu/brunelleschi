@@ -123,13 +123,15 @@ describe('4-j — 지우개 둘이 도구 전환으로 갈린다', () => {
     expect(app.doc.strokes.some(s => s.id === inkId)).toBe(false)
   })
 
-  it('반례: 지우개는 작도 획을 못 지운다 — 도구가 갈려도 그대로다', () => {
+  it('반례: 지우개는 작도 획(소실점 획)을 못 지운다 — 도구가 갈려도 그대로다', () => {
+    // web2-17: 지평선은 획이 아니게 됐다 — 보호되는 작도 획은 소실점을 만든 획이다.
     const { app } = overlapped()
-    const hzId = app.doc.strokes[0]!.id
+    const vpStroke = app.doc.strokes.find(s => app.lift.an.roles.get(s.id) === 'vp')!
+    const mid = pt((vpStroke.a.x + vpStroke.b.x) / 2, (vpStroke.a.y + vpStroke.b.y) / 2)
     for (const t of ['eraser-pencil', 'eraser-ink'] as const) {
       app.tool = t
-      beginErase(app); eraseAt(app, pt(600, 400)); endErase(app)
-      expect(app.doc.strokes.some(s => s.id === hzId)).toBe(true)
+      beginErase(app); eraseAt(app, mid); endErase(app)
+      expect(app.doc.strokes.some(s => s.id === vpStroke.id)).toBe(true)
     }
   })
 })

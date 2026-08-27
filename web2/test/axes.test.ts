@@ -61,13 +61,15 @@ describe('1-d — 축은 셋이다', () => {
     expect(an.axes.some(a => a.id === 'H')).toBe(false)
   })
 
-  it('공간이 정의되기 전에는 셋이 아니다 — 0을 억지로 채우지 않는다', () => {
+  it('소실점 전에는 셋이 아니다 — 0을 억지로 채우지 않는다(web2-17: 빈 문서부터 H·V)', () => {
     const s = session(1200, 800)
-    expect(analyze(s.app.doc).axes).toHaveLength(0)   // 지평선 전
-    s.draw(...HZ)
+    const bare = analyze(s.app.doc)                    // 빈 문서 — 지평선은 상시(H/2)
+    expect(bare.axes).toHaveLength(2)                  // 화면 가로·세로만. 깊이가 아직 없다
+    expect(bare.axes.map(a => a.id).sort()).toEqual(['H', 'V'])
+    expect(frameAxes(bare)).toBeNull()
+    s.draw(...HZ)                                      // 지평선 따라긋기(퇴화) — 변화 없다
     const an = analyze(s.app.doc)
-    expect(an.axes).toHaveLength(2)                    // 화면 가로·세로만. 깊이가 아직 없다
-    expect(an.axes.map(a => a.id).sort()).toEqual(['H', 'V'])
+    expect(an.axes).toHaveLength(2)
     expect(frameAxes(an)).toBeNull()
   })
 

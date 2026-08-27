@@ -24,6 +24,10 @@ export interface LiftResult {
   lifted: Map<number, LiftedSeg>
   /** 내용 획인데 아직 3D 미확정 — 실패가 아니라 대기 */
   waiting: number[]
+  /** 대기의 **사유**(web2-17 1-c) — 조용히 대기시키지 않는다. 지금 사유는 하나다:
+   *  'aboveHorizon' = 지면 규칙이 돌았는데 그 끝이 지평선 위(또는 지평선 그 자리)라
+   *  지면과 못 만났다(`pointOnGround` null). 진단 패널이 이 수를 보인다. */
+  waitWhy: Map<number, 'aboveHorizon'>
   /** 게이지 앵커가 된 획 (전역 스케일의 게이지 — 유일한 자유 선택) */
   anchorId: number | null
   /** id → 획 (문서에서 그대로 — 조회 편의) */
@@ -109,19 +113,18 @@ function scaleOf(doc: Doc): number | null {
 function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResult {
   const an = analyze(doc)
   const lifted = new Map<number, LiftedSeg>()
+  const waitWhy = new Map<number, 'aboveHorizon'>()
   let anchorId: number | null = null
 
   const strokes = new Map(doc.strokes.map(s => [s.id, s]))
-  // **3D가 안 되는 것은 지평선뿐이다**(무한원 — 이론서 2.2). 깊이선은 소실점을 정의하고
-  // *동시에* 사람이 그은 선이다. 3D로 남겨야 그 끝점이 오스냅·연결 대상이 된다 —
-  // 안 그러면 깊이선 끝에 이어 그린 획이 붙을 데가 없어 영영 대기한다.
-  // 작도 순서가 강제되던 자리가 여기다(2026-08-21 측정: 지평선→수직선→깊이선→수직선에서
-  // 마지막 획이 waiting에 남았다).
+  // **내용 = 표식이 아닌 전부다**(web2-17 1-b — 지평선은 이제 획이 아니라 프레임 상수라
+  // 거를 role이 없다). 깊이선은 소실점을 정의하고 *동시에* 사람이 그은 선이다.
+  // 3D로 남겨야 그 끝점이 오스냅·연결 대상이 된다.
   // 찍은 소실점 표식은 **점**이라 3D 선이 아니다 — 방향이 없고 무한원에 있다.
   const isMark = (s: Stroke) => Math.hypot(s.b.x - s.a.x, s.b.y - s.a.y) <= C.TAP_MAX_PX
-  const content = doc.strokes.filter(s => an.roles.get(s.id) !== 'horizon' && !isMark(s))
+  const content = doc.strokes.filter(s => !isMark(s))
   if (!an.principal || an.f === null) {
-    return { an, lifted, waiting: content.map(s => s.id), anchorId, strokes, mmPerUnit }
+    return { an, lifted, waiting: content.map(s => s.id), waitWhy, anchorId, strokes, mmPerUnit }
   }
 
   const mergeTol = C.MERGE_RATIO * an.diag
@@ -241,6 +244,10 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
         const dir = axisDir(an, axis)
         const useB = axis === 'V' && s.b.y > s.a.y   // 아래로 그은 수직선
         const g = pointOnGround(an, pose, useB ? s.b : s.a)
+        // 지면과 못 만났다 = 그 끝이 지평선 위다(정렬 포즈에서 위로 가는 광선 — web2-17 1-c).
+        // 조용히 대기시키지 않는다 — 사유를 남기고 진단 패널이 보인다. 올려다보는 구도의
+        // 해법 자체는 이 회차 밖이다(DEFERRED 「첫 획이 지면 위에 있을 수 없는 구도」).
+        if (!g) waitWhy.set(s.id, 'aboveHorizon')
         if (g && dir) {
           if (useB) {
             const rayA = rayThrough(an, pose, s.a)
@@ -290,9 +297,10 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
       endpoints.push(a3, b3)
       segs.push({ a3, b3 })
       pending.delete(s.id)
+      waitWhy.delete(s.id)   // 나중 패스의 연결로 올라왔다 — 사유는 대기 중에만 뜻이 있다
       progressed = true
     }
   }
 
-  return { an, lifted, waiting: [...pending], anchorId, strokes, mmPerUnit }
+  return { an, lifted, waiting: [...pending], waitWhy, anchorId, strokes, mmPerUnit }
 }

@@ -68,8 +68,8 @@ describe('지시 3 — 지평선은 정렬된 포즈면 그린다', () => {
     expect(Math.abs(far - an.principal!.y)).toBeGreaterThan(50)
   })
 
-  it('**반증**: 지평선을 긋기 전에는 null이다', () => {
+  it('빈 문서에서도 H/2를 낸다 — 지평선은 상시다(web2-17 1-b)', () => {
     const empty = analyze({ frame: { W: 1200, H: 800 }, strokes: [], faces: [], unit: 'mm' as const })
-    expect(horizonScreenY(empty, DRAW_POSE)).toBeNull()
+    expect(horizonScreenY(empty, DRAW_POSE)).toBe(400)
   })
 })

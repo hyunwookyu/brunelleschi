@@ -85,7 +85,7 @@ function synthLift(segs: { id: number; a3: V3; b3: V3 }[]): LiftResult {
     const a = project(an, DRAW_POSE, s.a3)!, b = project(an, DRAW_POSE, s.b3)!
     strokes.set(s.id, { id: s.id, a, b })
   }
-  return { an, lifted, waiting: [], anchorId: null, strokes, mmPerUnit: null }
+  return { an, lifted, waiting: [], waitWhy: new Map(), anchorId: null, strokes, mmPerUnit: null }
 }
 
 /** 지면의 축 정렬 사각형 — id 넷을 쓴다 */
@@ -99,7 +99,7 @@ function groundRect(id0: number, x0: number, x1: number, z0: number, z1: number,
 describe('면 — 만들기', () => {
   it('삼각형 — 탭하면 면이 되고 다시 탭하면 없어진다', () => {
     const s = triangle()
-    expect(s.app.lift.waiting).toEqual([])
+    expect(s.app.lift.waiting).toEqual([1])   // 지평선 따라긋기 획 — 퇴화 대기(web2-17)
     expect(s.app.doc.faces).toHaveLength(0)          // **자동으로 안 만든다**
     expect(toggleFaceAt(s.app, { x: 500, y: 470 })).toBe('added')
     expect(s.app.doc.faces).toHaveLength(1)
@@ -129,7 +129,7 @@ describe('면 — 만들기', () => {
 
   it('오목 다각형 — 오목 꼭짓점이 정확히 하나, 삼각형은 n−2개', () => {
     const s = concave()
-    expect(s.app.lift.waiting).toEqual([])
+    expect(s.app.lift.waiting).toEqual([1])   // 지평선 따라긋기 획 — 퇴화 대기(web2-17)
     expect(toggleFaceAt(s.app, { x: 450, y: 475 })).toBe('added')
     const f = s.app.faces[0]!
     expect(f.outer).toHaveLength(6)
@@ -445,15 +445,16 @@ describe('면 — 회귀', () => {
   // 가로지르자(3D에서는 안 만난다) 평면 그래프 전제가 깨져 **순환이 하나(면적 0)**로
   // 나왔고 벽도 바닥도 면이 안 됐다. 지금은 **평면마다** 훑는다.
   it('가림 — 기둥이 지면선을 화면에서만 가로질러도 벽과 바닥이 각각 면이 된다', () => {
+    // web2-17: 지평선은 상시 H/2=400 — 옛 장면(지평선 330)을 통째로 +70 평행이동했다
+    // (1-a: 평행이동은 카메라·3D를 안 바꾼다). 지평선 획 자체는 이제 없다 — id가 1씩 준다.
     const s = session(1200, 800)
-    s.draw(100, 330, 1100, 330)      // 지평선
-    s.draw(470, 560, 780, 500)       // 지면 vp0
-    s.draw(470, 560, 160, 500)       // 지면 vp1
-    s.draw(780, 500, 300, 470)       // 지면 — 삐져나온다
-    s.draw(160, 500, 640, 470)       // 지면 — 삐져나온다 (여기서 기둥과 화면 교차가 난다)
-    s.draw(470, 560, 470, 400)       // 기둥
-    s.draw(470, 400, 780, 355)       // 벽 윗변
-    s.draw(780, 500, 780, 355)       // 오른쪽 기둥
+    s.draw(470, 630, 780, 570)       // 지면 vp0
+    s.draw(470, 630, 160, 570)       // 지면 vp1
+    s.draw(780, 570, 300, 540)       // 지면 — 삐져나온다
+    s.draw(160, 570, 640, 540)       // 지면 — 삐져나온다 (여기서 기둥과 화면 교차가 난다)
+    s.draw(470, 630, 470, 470)       // 기둥
+    s.draw(470, 470, 780, 425)       // 벽 윗변
+    s.draw(780, 570, 780, 425)       // 오른쪽 기둥
     const g = buildGraph(s.app.lift, DRAW_POSE)
     expect(g.nodes).toHaveLength(10)
     expect(g.half.length / 2).toBe(11)
@@ -465,13 +466,13 @@ describe('면 — 회귀', () => {
     const planes = planesOf(g, C.PLANAR_RATIO * 50)
     const withFace = planes.filter(pl => cyclesOf(g, pl.use).some(c => c.area > 1e-9))
     expect(withFace.length).toBeGreaterThanOrEqual(2)
-    const wall = loopAt(s.app.lift, DRAW_POSE, { x: 600, y: 430 })!
-    const floor = loopAt(s.app.lift, DRAW_POSE, { x: 400, y: 510 })!  // 벽에 안 가린 자리
-    expect(wall.loops[0]!.edges.map(e => e.s)).toEqual([2, 8, 7, 6])
-    expect(floor.loops[0]!.edges.map(e => e.s)).toEqual([2, 4, 5, 3])
+    const wall = loopAt(s.app.lift, DRAW_POSE, { x: 600, y: 500 })!
+    const floor = loopAt(s.app.lift, DRAW_POSE, { x: 400, y: 580 })!  // 벽에 안 가린 자리
+    expect(wall.loops[0]!.edges.map(e => e.s)).toEqual([1, 7, 6, 5])
+    expect(floor.loops[0]!.edges.map(e => e.s)).toEqual([1, 3, 4, 2])
     // 둘 다 실제로 면이 된다 — 벽은 수직 평면이므로 «지면만 된다»가 아니다
-    expect(toggleFaceAt(s.app, { x: 600, y: 430 })).toBe('added')
-    expect(toggleFaceAt(s.app, { x: 400, y: 510 })).toBe('added')
+    expect(toggleFaceAt(s.app, { x: 600, y: 500 })).toBe('added')
+    expect(toggleFaceAt(s.app, { x: 400, y: 580 })).toBe('added')
     expect(s.app.faces).toHaveLength(2)
     expect(Math.abs(s.app.faces[0]!.normal.y)).toBeCloseTo(0, 9)   // 벽 — 수직면
     expect(Math.abs(s.app.faces[1]!.normal.y)).toBeCloseTo(1, 9)   // 바닥 — 수평면
@@ -554,7 +555,7 @@ describe('면 — 차수 승격을 견딘다', () => {
     expect(an2.vps).toHaveLength(2)
     expect(an2.fSource).toBe('two-vp')
     expect(an2.f).toBeCloseTo(337.638860, 5)       // f가 실제로 바뀌었다 (1044 → 337.6)
-    expect(s.app.lift.waiting).toEqual([])
+    expect(s.app.lift.waiting).toEqual([1])        // 지평선 따라긋기 획 — 퇴화 대기(web2-17)
 
     const after = s.app.faces[0]!
     expect(after.id).toBe(before.id)               // 같은 면이다

@@ -17,7 +17,7 @@ import { type Pt, type V3, pt } from './vec'
 
 export interface EndResolve {
   end: Pt
-  /** 'horizon' | 'vp' | 축id | null(자유) */
+  /** 'vp' | 축id | null(자유) — 'horizon'은 web2-17에서 없어졌다(지평선은 획이 아니다) */
   label: string | null
   endSnap: OsnapHit | null
   /** 축 스냅이 붙었으면 그 축 — 오스냅이 이겼으면 null */
@@ -52,15 +52,12 @@ export function resolveStart(
   return osnap(lift, pose, p, set)
 }
 
-/** 끝점 — 지평선 강제 → 오스냅 → 축 스냅(+치수 스냅) → 자유 */
+/** 끝점 — 오스냅 → 축 스냅(+치수 스냅) → 자유 (지평선 강제 갈래는 web2-17에서 삭제) */
 export function resolveEnd(
   lift: LiftResult, pose: CamPose, an: Analysis,
   start: Pt, startP3: { p3: V3 | null },
   cursor: Pt, set: OsnapSettings, dim?: DimOpts,
 ): EndResolve {
-  if (an.horizonY === null) {
-    return { end: pt(cursor.x, start.y), label: 'horizon', endSnap: null, axis: null, lenMm: null }
-  }
   const a3 = startP3.p3
   const scale = dim?.mmPerUnit ?? null
 
@@ -166,7 +163,6 @@ export function resolveCommit(
 ): { a: Pt; b: Pt } | null {
   if (Math.hypot(end.x - start.x, end.y - start.y) > C.TAP_MAX_PX) return { a: start, b: end }
   const hz = an.horizonY
-  if (hz === null) return null
   if (Math.abs(start.y - hz) > osnapRadius) return null
   const onHz = pt(start.x, hz) // 지평선 위로 붙인다 — 붙은 좌표가 그대로 확정(원칙 d)
   return { a: onHz, b: onHz }

@@ -2,6 +2,7 @@
 // 카메라·소실점·리프팅은 파생이므로 저장하지 않는다(원칙 b) — 복원 후 다시 계산된다.
 
 import type { Doc, Stroke, Face, CamPose, ViewOffset, Grade, RawInput } from './types'
+import { horizonDocY } from './camera'
 import { GRADES } from './material'
 import { UNITS, type Unit } from './dim'
 import { C } from './constants'
@@ -11,12 +12,19 @@ export interface BrnlData {
   nextId: number
   /** thumb(web2-12 5번) — **선택**이다: 없으면(옛 파일) 번호만으로 고른다. */
   savedViews: { pose: CamPose; view: ViewOffset; thumb?: string }[]
+  /** 작도 시점(web2-17 3-c) — **선택**: 없으면(옛 파일·변환된 v1) 원점으로 연다.
+   *  모양이 틀리면 이 필드만 버린다(썸네일의 선례 — 구도는 잃어도 다시 잡히는 값이다). */
+  drawView?: ViewOffset | null
 }
 
+/** version 2(web2-17 2-a): 지평선 획이 없는 문서 형식. 1은 «첫 획이 지평선»이던 옛 형식 —
+ *  parseBrnl이 읽으며 변환한다(2-b). 판별자는 **version 값**이다: 열쇠 유무로 가르면
+ *  획 0개인 새 파일과 구별이 안 되고, 캐시된 옛 PWA는 version≠1을 거부하고 빈 화면으로
+ *  시작한다 — 조용히 틀리게 여는 것보다 낫다(#54 계열의 판단). */
 export function serializeBrnl(d: BrnlData): string {
   return JSON.stringify({
     format: 'brnl',
-    version: 1,
+    version: 2,
     frame: d.doc.frame,
     strokes: d.doc.strokes,
     // 면은 **경계의 정체**만 담긴다(획 id 차례) — 좌표는 복원 후 다시 풀린다.
@@ -29,6 +37,8 @@ export function serializeBrnl(d: BrnlData): string {
     scaleRef: d.doc.scaleRef,
     nextId: d.nextId,
     savedViews: d.savedViews,
+    // 작도 시점(web2-17 3-c) — 없으면 열쇠 자체를 안 쓴다(왕복 동일성 — 2-c ② 팔)
+    ...(d.drawView ? { drawView: d.drawView } : {}),
   })
 }
 
@@ -40,7 +50,8 @@ const isQuat = (q: any): boolean => q && isNum(q.x) && isNum(q.y) && isNum(q.z) 
 export function parseBrnl(text: string): BrnlData | null {
   let raw: any
   try { raw = JSON.parse(text) } catch { return null }
-  if (!raw || raw.format !== 'brnl' || raw.version !== 1) return null
+  // 1과 2를 다 받는다(web2-17 2-a). 3 이상은 **거부** — 전방 호환을 흉내내지 않는다(2-c ③).
+  if (!raw || raw.format !== 'brnl' || (raw.version !== 1 && raw.version !== 2)) return null
   if (!raw.frame || !isNum(raw.frame.W) || !isNum(raw.frame.H)) return null
   if (!Array.isArray(raw.strokes)) return null
   const strokes: Stroke[] = []
@@ -157,7 +168,35 @@ export function parseBrnl(text: string): BrnlData | null {
     if (!isNum(raw.scaleRef)) return null
     scaleRef = raw.scaleRef
   }
+  // 작도 시점(web2-17 3-c) — 선택. 모양이 틀리면 **이 필드만** 버린다(썸네일의 선례).
+  let drawView: ViewOffset | null = null
+  if (raw.drawView && isNum(raw.drawView.s) && isNum(raw.drawView.ox) && isNum(raw.drawView.oy)) {
+    drawView = { s: raw.drawView.s, ox: raw.drawView.ox, oy: raw.drawView.oy }
+  }
+
+  // ── version 1 → 2 변환(web2-17 2-b) — 문서를 통째로 평행이동하고 지평선 획을 버린다 ──
+  // 옛 형식의 첫 획은 구성상 지평선이다(작도 포즈·수평 강제 — view가 없다). 그 y를 H/2로
+  // 옮기면 새 카메라(지평선 = H/2 상수)에서 **같은 3D**가 나온다(1-a — 사영이 상대 좌표라
+  // 평행이동이 소거된다. 팔 legacy_web2_16.json 오라클이 값으로 지킨다).
+  if (raw.version === 1 && strokes.length > 0) {
+    const first = strokes[0]!
+    const hzOld = (first.a.y + first.b.y) / 2
+    const dy = horizonDocY(raw.frame.H) - hzOld   // 출처는 camera.ts 하나다(1-b 원칙 a)
+    strokes.shift()               // 지평선 획 폐기 — 작도 획이었고 3D가 없었다(무한원)
+    for (const s of strokes) {
+      s.a.y += dy
+      s.b.y += dy
+      if (s.raw) for (const p of s.raw) p.y += dy
+      // own3(3D)·view(포즈)·dim·rawIn은 안 건드린다 — 3D 기하가 구성상 그대로다(1-a)
+    }
+    // 저장된 화면 오프셋은 문서 좌표를 향한다 — 같은 화면 그림이 유지되려면
+    // o' = o − dy·s (화면 y = s·(y+dy) + o' = s·y + o).
+    for (const v of savedViews) v.view.oy -= dy * v.view.s
+    // scaleRef가 버린 획을 가리키면 그 열쇠만 버린다(면의 선례 — 문서를 거부하지 않는다)
+    if (scaleRef === first.id) scaleRef = undefined
+  }
+
   const doc: Doc = { frame: { W: raw.frame.W, H: raw.frame.H }, strokes, faces, unit }
   if (scaleRef !== undefined) doc.scaleRef = scaleRef
-  return { doc, nextId, savedViews }
+  return { doc, nextId, savedViews, drawView }
 }

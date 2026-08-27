@@ -3,8 +3,10 @@
 // 소실점·주점·f·축 방향은 전부 이 파일의 analyze()에서만 나온다.
 // 다른 파일은 Analysis를 읽기만 한다 — 직접 계산은 정적 검사(test/static.test.ts)가 막는다.
 //
-// 모델:
-//   지평선(첫 획, 수평 강제) → 주점 = (W/2, 지평선 y), 피치 0, 롤 0.
+// 모델(web2-17 — 지평선은 이미 있다):
+//   지평선은 **긋는 것이 아니라 상시다** — 문서 y = H/2 상수(`horizonDocY`).
+//   사람이 팬으로 정하는 것은 지평선이 아니라 «획이 문서 어디에 앉는가»다(종이가 움직인다).
+//   주점 = (W/2, H/2) — 프레임의 중심(이미지 중심 가정 AS-C5와 한 몸). 피치 0, 롤 0.
 //   깊이선과 지평선의 교점이 소실점 — 판정도 대기도 없는 계산이다.
 //   소실점 1 → f는 깊이 배율 게이지(기본값 0.87·W). 소실점 2 → f² = |PV₁|·|PV₂|
 //   (이론서 6.2 — 두 방향이 "직교 가로 방향"일 때의 식이다. 여기서는 두 깊이선이
@@ -23,7 +25,13 @@ import {
   quatConj, quatRotate, QID,
 } from './vec'
 
-export type Role = 'horizon' | 'vp' | 'content'
+export type Role = 'vp' | 'content'
+
+/** **지평선의 문서 y — 출처는 여기 하나다**(원칙 a · web2-17 1-a). 프레임 세로의 절반.
+ *  저장하지 않는다 — 팬은 `view` 오프셋이라 문서 좌표를 안 건드리므로, 사람이 «지평선을
+ *  옮긴» 결과는 획이 문서 어디에 앉았는가로 이미 문서에 박혀 있다. 다른 파일이 `H/2`를
+ *  직접 쓰면 안 된다. */
+export const horizonDocY = (H: number): number => H / 2
 export type AxisId = 'vp0' | 'vp1' | 'H' | 'V'
 
 export interface Vp { x: number; y: number; strokeId: number }
@@ -33,7 +41,8 @@ export interface Analysis {
   W: number
   H: number
   diag: number
-  horizonY: number | null
+  /** 지평선의 문서 y — 상수 `horizonDocY(H)`다(web2-17 1-b: null 갈래가 없다) */
+  horizonY: number
   vps: Vp[]
   principal: Pt | null
   f: number | null
@@ -86,7 +95,6 @@ export function classifyNext(
   an: Pick<Analysis, 'horizonY' | 'vps' | 'diag' | 'W' | 'constructionDone' | 'p1Locked'>,
   a: Pt, b: Pt,
 ): { role: Role; reason?: string; vp?: Pt; screenAxis?: 'H' | 'V' } {
-  if (an.horizonY === null) return { role: 'horizon' }
   const dx = b.x - a.x, dy = b.y - a.y
   const L = Math.hypot(dx, dy)
   // ── 찍기 — 지평선 위의 점 하나가 소실점이다(지시 4-b) ────────────────────
@@ -109,6 +117,17 @@ export function classifyNext(
       }
     }
     return { role: 'vp', vp: mark }
+  }
+  // ── 지평선 위를 그대로 따라 그은 선은 **퇴화**다 — 아무것도 선언하지 않는다(web2-17) ──
+  // 지평선 위의 선은 어느 수평 소실점의 살도 될 수 있다(모든 수평 방향의 소실점이 그 선
+  // 위에 있다). 그래서 «화면 수평 획 = 1점 선언»(아래 screenAxis H)의 근거인 무애매함이
+  // 여기서는 성립하지 않는다 — 선언 없이 내용으로 남긴다(대기 — 지면과 못 만난다).
+  // 이것이 기존 진입(«지평선을 긋고» 시작하던 손버릇)을 그대로 살린다(1-e ⑥): 그 획은
+  // 카메라에 아무 일도 안 하고, 뒤의 대각선 둘이 종전대로 2점을 세운다.
+  // 대역은 «지평선 위인가»의 기존 임계 그대로다(OSNAP_RADIUS_PX — 위 찍기 갈래·
+  // resolveCommit과 같은 물음, 같은 값. 숫자를 새로 짓지 않는다).
+  if (Math.max(Math.abs(a.y - an.horizonY), Math.abs(b.y - an.horizonY)) <= C.OSNAP_RADIUS_PX) {
+    return { role: 'content' }
   }
   if (an.constructionDone) return { role: 'content' }
   if (L < C.MIN_DIR_LEN_RATIO * an.diag) return { role: 'content' }
@@ -172,7 +191,8 @@ export function analyze(doc: Doc): Analysis {
   const roles = new Map<number, Role>()
   const rejects = new Map<number, string>()
   const vps: Vp[] = []
-  let horizonY: number | null = null
+  // 지평선은 폴드 밖에서 정해진다(web2-17 1-b) — 획이 아니라 프레임의 상수다.
+  const horizonY = horizonDocY(H)
   let screenHDeclared = false
 
   for (const s of doc.strokes) {
@@ -186,8 +206,7 @@ export function analyze(doc: Doc): Analysis {
     const cls = classifyNext(partial, s.a, s.b)
     roles.set(s.id, cls.role)
     if (cls.reason) rejects.set(s.id, cls.reason)
-    if (cls.role === 'horizon') horizonY = (s.a.y + s.b.y) / 2
-    else if (cls.role === 'vp' && cls.vp) vps.push({ x: cls.vp.x, y: cls.vp.y, strokeId: s.id })
+    if (cls.role === 'vp' && cls.vp) vps.push({ x: cls.vp.x, y: cls.vp.y, strokeId: s.id })
     if (cls.screenAxis === 'H') screenHDeclared = true
   }
 
@@ -202,20 +221,19 @@ export function analyze(doc: Doc): Analysis {
   // ⚠ **2점에서는 그대로 `W/2`다.** 그때는 주점이 자유롭지 않다 — f² = |PV₁||PV₂|가
   // 주점을 알고 있어야 서고(이론서 6.2), 「주점 = 이미지 중심」이 그 가정이다(16.2 · AS-C5).
   // 1점은 그 식을 안 쓰므로 주점이 자유롭고, 그 자유를 **직교에 쓴다**(이 도구의 전제).
-  const principal = horizonY === null ? null
-    : pt(vps.length === 1 ? vps[0]!.x : W / 2, horizonY)
-  let f: number | null = null
-  let fSource: Analysis['fSource'] = 'none'
-  if (principal) {
-    if (vps.length >= 2) {
-      const u1 = vps[0]!.x - principal.x
-      const u2 = vps[1]!.x - principal.x
-      f = Math.sqrt(-u1 * u2) // 수용 시 f² > 0 보장(classifyNext)
-      fSource = 'two-vp'
-    } else {
-      f = C.DEFAULT_F_RATIO * W
-      fSource = 'default'
-    }
+  // 지평선이 상시이므로 주점·f도 상시다(web2-17) — 빈 문서부터 카메라가 있다.
+  // 주점 = 프레임의 중심 (W/2, H/2): x의 이미지 중심 가정(AS-C5)과 y가 이제 한 몸이다.
+  const principal = pt(vps.length === 1 ? vps[0]!.x : W / 2, horizonY)
+  let f: number
+  let fSource: Analysis['fSource']
+  if (vps.length >= 2) {
+    const u1 = vps[0]!.x - principal.x
+    const u2 = vps[1]!.x - principal.x
+    f = Math.sqrt(-u1 * u2) // 수용 시 f² > 0 보장(classifyNext)
+    fSource = 'two-vp'
+  } else {
+    f = C.DEFAULT_F_RATIO * W
+    fSource = 'default'
   }
 
   // ── 축 후보 = **정규직교 프레임 그 자체** (web2-03 지시 1) ──────────────
@@ -230,17 +248,17 @@ export function analyze(doc: Doc): Analysis {
   // 그 상자의 모서리가 아니다. 프레임은 {vp0, vp1, V}이고 셋뿐이다.
   // 1점의 프레임은 {vp0, H, V}이고, 위 주점 보정이 그 셋을 직교로 만든다.
   // 소실점이 아직 없으면 화면 가로·세로만 있다 — 깊이가 안 정해졌으니 프레임이 아니다.
+  // 소실점이 없어도 화면 가로·세로(H·V)는 선다(web2-17) — 지평선·주점·f가 상시이므로
+  // 방 실루엣(수평·수직)이 소실점 없이 3D로 올라간다(1-e ③). 깊이축은 소실점이 채운다.
   const axes: AxisDir[] = []
-  if (principal && f !== null) {
-    vps.forEach((v, i) => {
-      axes.push({
-        id: i === 0 ? 'vp0' : 'vp1',
-        dir: norm3(v3(v.x - principal.x, principal.y - v.y, -f!)),
-      })
+  vps.forEach((v, i) => {
+    axes.push({
+      id: i === 0 ? 'vp0' : 'vp1',
+      dir: norm3(v3(v.x - principal.x, principal.y - v.y, -f)),
     })
-    if (vps.length < 2) axes.push({ id: 'H', dir: v3(1, 0, 0) })
-    axes.push({ id: 'V', dir: v3(0, 1, 0) })
-  }
+  })
+  if (vps.length < 2) axes.push({ id: 'H', dir: v3(1, 0, 0) })
+  axes.push({ id: 'V', dir: v3(0, 1, 0) })
 
   const p1Locked = screenHDeclared && vps.length >= 1
   return {
@@ -329,7 +347,7 @@ export function vpAt(an: Analysis, pose: CamPose, p: Pt): AxisId | null {
  *  포즈에서든 사영이 한 점이고, 지평선은 «직선»이라 그 사영을 따로 세워야 한다.
  *  그 일반형은 범위 밖이고 `DEFERRED.md`에 있다. */
 export function horizonScreenY(an: Analysis, pose: CamPose): number | null {
-  if (an.horizonY === null || !an.principal) return null
+  if (!an.principal) return null
   if (!isLevel(pose)) return null
   return an.principal.y
 }
