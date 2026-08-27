@@ -174,7 +174,7 @@ UX에서 잘 구분되어 있는 상태인가?」 **아니었다** — 오른쪽
 - **자를 치운 상태**의 갈래(§4) — 그 획이 3D 로 안 올라가는데 어떻게 둘 것인가.
 - **T자와 삼각자를 가를 것인가.** 지금 축은 {vp0, vp1, V} 또는 {vp0, H, V} 셋이고
   한 「자」가 셋을 다 한다. 하나로 두는 것이 맞다고 보지만 적어 둔다.
-- **트레이싱지 롤을 어떻게 그릴 것인가** — 직접 그릴 다섯 중 가장 자주 보인다.
+- ~~트레이싱지 롤을 어떻게 그릴 것인가~~ — **web2-20이 닫았다**: `instrument-icons.md`의 정본 롤(§1·§5의 그것 — 옐로만 고리 `#e9d98a` 채움)이 종속 탭 랙에 들어갔다.
 
 Sources: Phosphor Icons (MIT) · Tabler Icons (MIT) · Material Design Icons (Apache 2.0) ·
 Procreate Handbook · Krita Manual (Pop-up Palette) · Concepts iOS Manual · Clip Studio Page Manager

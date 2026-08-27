@@ -1,23 +1,22 @@
 {
  "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
- "measured_at": "web2-18 (2026-08-27)",
+ "measured_at": "web2-20 (2026-08-28)",
  "unit": {
-  "command": "npm test (vitest)",
-  "files": 52,
-  "tests": 487,
-  "wall_s": 7.1,
-  "note": "web2-18 +7팔·+1파일(osnap 연장선 ③④⑤ 3팔 신설 · extacq_measure 2팔 신설파일 · axissnap·xint 기존 팔 2건은 획득 동작을 넣어 고침). 480→487. 파일 51+1=52."
+  "command": "npx vitest run (web2/)",
+  "files": 59,
+  "tests": 532,
+  "wall_s": 5.5,
+  "note": "web2-19 +39팔·+4파일(sheets 13·icons 등) · web2-20 +45팔·+3파일(layers 7·layerops 8·layer3d 6 + file v5·graphite 확장 등). 487→532는 두 회차 몫. wall은 vitest Duration(5.46s — 실행 원문)."
  },
  "e2e": {
-  "command": "npm run e2e (playwright, dpr1+dpr2) — ⚠ **--workers=1**",
-  "cases": 202,
-  "arms": 101,
-  "wall_s": 894,
-  "arms_source": "npx playwright test --list → 「Total: 202 tests in 27 files」(101팔). --list 출력이 정본(#69 ㉤)",
-  "passed": 202,
+  "command": "npx playwright test --workers=1 (dpr1+dpr2)",
+  "cases": 252,
+  "arms": 126,
+  "wall_s": 1152,
+  "arms_source": "npx playwright test --list → 「Total: 252 tests in 33 files」(126팔). --list 출력이 정본(#69 ㉤)",
+  "passed": 252,
   "failed": 0,
-  "note": "web2-18 +6팔·+4파일(cost18 1 — 0부 비용 원장 / inklayer 1 — 1부 회귀 팔 ①~⑤를 한 시험에 / extacq 2 — 2부 획득·진단 / gesture 2 — 3부 구속·경계·대가). 190→202. 파일 23+4=27. 기존 조정 넷(겹이 옮겨져 판독 자리를 고쳤다 — 임계는 안 만졌다): flow(#gl→#ink) · drafting 9(상자를 획 안쪽으로) · waitfade 동결(보이는 흑연 겹을 읽는다) · brushperf(궤도 양성 채널이 재그리기→타일로).",
-  "cost_note": "⚠⚠ **cost18.spec 한 파일이 벽시계의 큰 몫이다**(dpr1 ~45s · dpr2 ~3.4m — 격자 12칸 × 4측정). 항목마다 못 돌린다 — 0부를 다시 재야 할 때만 돌린다. ⚠ 그리고 **--workers=1이 아니면 그 원장의 시간 값이 무효다**(#71 ㉠)."
+  "note": "web2-19 +24케이스(zones 12·icons 8·paperbar 등) · web2-20 +26케이스(paper 8·layerbar 8·cost20 2 등). 202→252는 두 회차 몫(web2-19 마감이 이 원장을 안 갱신했다 — 2차 리뷰 [13]이 잡았다). ⚠ 워커 1 — 비용 원장들과 같은 규율."
  },
  "typecheck_build": {
   "command": "tsc --noEmit · vite build",
@@ -166,6 +165,18 @@
    "unit": 480,
    "e2e": 190,
    "e2e_wall_s": 330
+  },
+  {
+   "at": "web2-18",
+   "unit": {
+    "files": 52,
+    "tests": 487,
+    "wall_s": 7.1
+   },
+   "e2e": {
+    "cases": 202,
+    "wall_s": 894
+   }
   }
  ],
  "environment": {

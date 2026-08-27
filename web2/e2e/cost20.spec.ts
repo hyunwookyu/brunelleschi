@@ -146,14 +146,23 @@ test('⑩ 3-b(영역 재조립)의 400획 프레임 비용 — 겹 없음/겹+�
     b.diag.layerAdd('yellow'); b.diag.layerAdd('yellow')
     for (let i = 0; i < 80; i++) b.diag.commitStroke(100 + (i % 26) * 42, 200 + Math.floor(i / 26) * 90, 100 + (i % 26) * 42, 260 + Math.floor(i / 26) * 90)
   })
+  // **활성을 맨 아래 겹으로 내린다**(2차 리뷰 [5] — 활성이 맨 위면 above가 그 한 장이라
+  // #layerc 사영이 80획뿐이다. 맨 아래가 활성이면 above = 세 장 전부 = 소속 획 전부).
+  await page.locator('#layerbar .lpaper').first().click()
   await settle(page)
   const heavy = await page.evaluate(() => {
     const b = (window as any).__b2
+    const stack = b.app.doc.layers.filter((l: any) => l.sheet === b.app.activeSheet)
+    const ai = stack.findIndex((l: any) => l.id === b.app.activeLayer)
+    const above = new Set(stack.slice(ai).filter((l: any) => l.on).map((l: any) => l.id))
     return {
       layers: b.app.doc.layers.length,
       layer_strokes: b.app.doc.strokes.filter((s: any) => s.layer !== undefined).length,
+      above_strokes: b.app.doc.strokes.filter((s: any) => s.layer !== undefined && above.has(s.layer)).length,
+      active_position: ai === 0 ? 'bottom' : String(ai),
     }
   })
+  expect(heavy.above_strokes, '#layerc가 실제로 사영하는 수 — 총합과 같아야 무거운 칸이다').toBe(heavy.layer_strokes)
   const heavyDraw = await drawPoseFrames(page)
   const heavyOrbit = await orbitFrames(page)
 
@@ -195,10 +204,11 @@ test('⑩ 3-b(영역 재조립)의 400획 프레임 비용 — 겹 없음/겹+�
     cost18_ref: ref18 === null ? null : { ...(ref18 as object), how: '하네스가 cost18_web2*.json을 읽어 넣는다 — 손 인용이 아니다(1차 리뷰 [3]). 다른 실행의 값이므로 나란히 적을 뿐, 비교는 같은 실행의 base 칸이 한다.' },
     metric_defs: {
       frames: '앱이 그 자리에서 잰 프레임 3몫(r3=render3d·bs=brushLayer.sync·d2=filmLayer.draw+draw2d)의 중앙값 — cost18 ③과 같은 함수(frameCostQ). draw_pose는 호버 40이동, orbit은 중버튼 30이동. 국면별 리셋.',
-      comparison: '같은 실행 안의 분자/분모 쌍(#16). 배수를 안 적는 이유: base가 0.1ms 양자화 대역이라 분모의 ±0.2ms가 배수를 수십 % 움직인다(1차 리뷰 [2] 실측 — 같은 코드 두 실행에서 13.5×→17.25×).',
+      comparison: '같은 실행 안의 분자/분모 쌍(#14 「비율보다 분자/분모로 적는다」 — 초판이 #16으로 오인용: 2차 리뷰 [11]). 배수를 안 적는 이유: base가 0.1ms 양자화 대역이라 분모의 ±0.2ms가 배수를 수십 % 움직인다 — 실측: 수리 후 같은 코드의 두 실행(cost20 단독 판 13.5/1.0 = 13.5× ↔ 전량 실행이 낳은 판 13.8/0.8 = 17.25× — 뒤 판의 파일은 원장 정본 복원으로 없고 1차 리뷰 [1]의 판독 기록이 출처다: 2차 리뷰 [4]).',
     },
     flags_explained: {
       '상수·지표 스냅샷 없음': 'cost18 원장과 같은 유보 — e2e 하네스라 test/constants.ts의 공유 상수를 안 쓴다(재는 것은 프레임 ms뿐). 스냅샷 대조가 잡을 낡음이 정의상 없다.',
+      'scene_at_400.raw_ratio가 정확히 0': '설계다 — cost18 격자의 rawIn 0% 갈래를 그대로 쓴 칸이라 0이 측정이 아니라 픽스처 지정값이다(2차 리뷰 [12] — cost18의 「0% 칸은 정확히 0」과 같은 해명).',
       'base·orbit 칸 값이 서로 같아 보임': '분해능이다 — frameCostQ의 ms가 0.1 단위 대역이고 겹 없는 경로는 1~2ms라 칸이 붙는다. 판별은 comparison의 분자/분모 쌍이 낸다.',
     },
   }

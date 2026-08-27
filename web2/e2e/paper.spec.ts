@@ -10,6 +10,27 @@
 //   반증(D-3 — 셋 다 실제 실행): 알파 합성↔④ · 상수 시드↔⑤ · 막을 위로↔⑨
 
 import { test, expect, type Page } from '@playwright/test'
+import { writeFileSync, mkdirSync, readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const HERE = dirname(fileURLToPath(import.meta.url))
+/** [#25 — 2차 리뷰 [3]] 게이트·팔의 실측값을 원장으로 남긴다. 시험마다 그 자리에서
+ *  읽고-합쳐-쓴다(#71 ㉡ — afterAll은 실패 시 통째로 빈다. workers=1이라 경합 없음). */
+function record(project: string, key: string, val: unknown) {
+  const suffix = project === 'dpr1' ? '' : `_${project}`
+  const p = resolve(HERE, `../../stage0/out/paper_visual_web2${suffix}.json`)
+  mkdirSync(dirname(p), { recursive: true })
+  let cur: Record<string, unknown> = {}
+  try { cur = JSON.parse(readFileSync(p, 'utf-8')) } catch { /* 첫 시험 */ }
+  cur.what = 'web2-20 3부 — 종이 표현 팔의 실측값 원장(paper.spec이 시험마다 그 자리에서 쓴다). 판정은 spec의 expect가 정본이고 이 원장은 그 판정이 읽은 값이다(#25 — 산문에만 있던 수를 원장으로).'
+  cur.flags_explained = {
+    '상수·지표 스냅샷 없음': 'cost18·cost20 원장과 같은 유보 — e2e 하네스라 test/constants.ts의 공유 상수를 안 쓴다.',
+    'rect_growth.patch_equal이 정확히 true': '설계 보장이다(패턴 원점을 문서 좌표에 못 박음 — 3-c ⚠) — 임계를 걸지 않는다(자기참조 유형 3).',
+  }
+  cur[key] = val
+  writeFileSync(p, JSON.stringify(cur, null, 2))
+}
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -98,6 +119,7 @@ test('①②③ — 옐로가 아래를 물들인다 · 막은 그 종이의 시
   await page.click('#layerbar .lpaper.yellow'); await settle(page)   // 옐로를 활성으로 — 위 막 꺼짐
   const lowerActive = await avgRGB(page, 400, 200, 40, 40)
   for (let i = 0; i < 3; i++) expect(Math.abs(lowerActive[i]! - yellowOnly[i]!)).toBeLessThan(4)
+  record(test.info().project.name, 'tint_and_pose_gate', { before, inside, outside, away, back, yellowOnly, both, lowerActive })
 })
 
 test('④ 합성 곡선(게이트) — 명도 단조 감소 · 옐로 둘 채도 상승 · 섞으면 채도 하강 (+알파 반증)', async ({ page }) => {
@@ -127,6 +149,14 @@ test('④ 합성 곡선(게이트) — 명도 단조 감소 · 옐로 둘 채도
   await page.evaluate(() => (window as any).__b2.diag.filmAlphaForTest(false))
   await settle(page)
   expect(lightness(alpha2)).toBeGreaterThan(lightness(y2t) + 0.02)
+  record(test.info().project.name, 'curve', {
+    note: 'V(명도) 단조 감소가 곱의 성질이고 S(HSV 채도)의 방향은 이 색조 쌍에서의 실측이다(1차 리뷰 [12] — AS-C68).',
+    bare: { L: lightness(bare), S: saturation(bare) },
+    y1: { L: lightness(y1), S: saturation(y1) },
+    y2: { L: lightness(y2), S: saturation(y2) },
+    y2t: { L: lightness(y2t), S: saturation(y2t) },
+    alpha_counter: { L: lightness(alpha2), note: '알파 반증 — 곱(y2t)보다 밝다' },
+  })
 })
 
 test('⑤⑤\'⑥ — 층마다 결이 다르고(게이트) · 이음매가 없고 · 결정론(저장·복원 동일)', async ({ page }) => {
@@ -178,16 +208,24 @@ test('⑤⑤\'⑥ — 층마다 결이 다르고(게이트) · 이음매가 없�
       const interior = bandEnergy(60, 200)
       return { ratio: seamBand / interior }
     }
+    // 시드 축 스윕(2차 리뷰 [10] · #14) — 타일은 rng32(id) 결정론이라 **실행 반복은
+    // 변동 0**(⑤의 aAgain 팔이 그 결정론을 잰다). 변동의 축은 실행이 아니라 시드다 —
+    // id 셋에서 같은 판정이 서는지 본다.
+    const ids = [7, 12, 33]
     return {
-      wrapped: energy(d.fiberTile(7, 'yellow', true)),
-      raw: energy(d.fiberTile(7, 'yellow', false)),
+      sweep: ids.map(id => ({ id, wrapped: energy(d.fiberTile(id, 'yellow', true)).ratio, raw: energy(d.fiberTile(id, 'yellow', false)).ratio })),
     }
   })
   // 감싸 그리면 경계 띠의 섬유 에너지가 내부 대역이고, 빼면 결핍이 뚜렷하다(반증 실행).
   // 임계는 **상대**다(dpr2에서 섬유가 타일 px 기준 두 배라 절대 차가 준다 — 실측 보정).
-  console.log(`[⑤'] wrapped ${seam.wrapped.ratio.toFixed(3)} · raw ${seam.raw.ratio.toFixed(3)}`)
-  expect(seam.wrapped.ratio).toBeGreaterThan(0.8)
-  expect(seam.raw.ratio).toBeLessThan(seam.wrapped.ratio * 0.95)
+  // 절대 0.8은 wrapped의 바닥 위생값(dpr1에서는 raw가 실제로 그 아래로 내려가 반증되고,
+  // dpr2에서는 상대 단언이 판별한다 — 실측값은 원장·NOTES).
+  for (const s of seam.sweep) {
+    console.log(`[⑤'] id ${s.id} — wrapped ${s.wrapped.toFixed(3)} · raw ${s.raw.toFixed(3)}`)
+    expect(s.wrapped, `id ${s.id} wrapped`).toBeGreaterThan(0.8)
+    expect(s.raw, `id ${s.id} raw < wrapped×0.95`).toBeLessThan(s.wrapped * 0.95)
+  }
+  record(test.info().project.name, 'tile_and_seam', { hashes: h, seam_sweep: seam.sweep })
 })
 
 test('⑦⑧⑨ — rect 성장에 결 불변 · 세 장에도 아래 획 읽힘 · 위/아래 겹 순서(게이트 ⑨ + 반증)', async ({ page }) => {
@@ -274,5 +312,13 @@ test('⑦⑧⑨ — rect 성장에 결 불변 · 세 장에도 아래 획 읽힘
     const film = document.getElementById('film')!
     const layerc = document.getElementById('layerc')!
     film.parentElement!.insertBefore(layerc, film.nextSibling) // 원상 복구
+  })
+  record(test.info().project.name, 'rect_growth', { patch_equal: true, patch_bytes: before.length })
+  record(test.info().project.name, 'readability', {
+    contrast_before_films: contrast0, contrast_under_three: lightness(beside3) - lightness(on3),
+    retention_threshold: 0.35,
+  })
+  record(test.info().project.name, 'order_mech_and_visible', {
+    mech, above_contrast: aboveContrast, broken_contrast: lightness(brokenSide) - lightness(brokenRow),
   })
 })
