@@ -10,7 +10,7 @@ import { serializeBrnl, parseBrnl } from '../core/file'
 import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice, confirmNear } from './notice'
 import { OSNAP_ORDER, osnap, osnapCost, resetOsnapCost, type OsnapHit } from '../core/osnap'
-import { PENCIL_GRADES, MAT, widthOfMat } from '../core/material'
+import { PENCIL_GRADES, MAT, widthOfMat, gradeOf } from '../core/material'
 import type { Grade } from '../core/types'
 import { parseDim, formatMm, lenMm, UNITS, type Unit } from '../core/dim'
 import { initDimPanel } from './dimpanel'
@@ -962,6 +962,17 @@ const diag = {
     lenOf: Object.fromEntries([...app.lift.lifted].map(([id, g]) =>
       [id, lenMm(g.a3, g.b3, app.lift.mmPerUnit)])),
   }),
+  /** **겹 표식**(web2-18 1부) — `#gl`의 Line2가 몇 개이고 그중 잉크가 몇 개인가.
+   *  판정은 **합성 화면**이 한다(#67) — 이것은 «왜 그런가»를 말하는 기전의 표식이다:
+   *  1부 뒤 `ink`는 언제나 0이어야 한다(잉크 몸체가 #ink로 갔다). */
+  glLines: () => {
+    let ink = 0
+    for (const [id] of app.lift.lifted) {
+      const s = app.lift.strokes.get(id)
+      if (s && gradeOf(s) === 'INK') ink++
+    }
+    return { line2: r3d.group.children.length, liftedTotal: app.lift.lifted.size, inkLifted: ink, renderer: app.renderer }
+  },
   /** 렌더러(web2-11 2부) — e2e가 두 경로를 다 돌린다(2-b) */
   renderer: () => app.renderer,
   setRenderer,

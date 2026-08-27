@@ -314,6 +314,28 @@ export function draw2d(
     grain(ctx, s.id, a, b, m.grain, m.alpha, s.mat?.press, is)
   }
 
+  // ── 잉크 확정선의 **몸체**(web2-18 1부) — 여기가 그 자리다 ──────────────────
+  // 종전에는 Line2(#gl)가 그렸는데, #brushc(연필 흑연)가 #gl **위**라 연필 위에 그은
+  // 잉크가 흑연에 덮였다(사람 관측). 잉크는 균일선이므로 Canvas 2D가 정확히 같은 것을
+  // 그린다 — 색·알파는 `MAT.INK`, 굵기는 **`widthOf(stroke)` 하나**(#54: 니브 굵기의
+  // 출처는 그 함수다). 화면 고정 굵기라 `is = 1/view.s`를 곱한다(이 파일의 규약).
+  // ⚠ **렌더러 모드와 무관**하다(classic에서도 잉크는 위여야 한다 — render3d의 같은 분기).
+  // ⚠ 순서: 이 몸체가 먼저이고 **넘김 꼬리·번짐이 그 위**다(아래 두 절) — 종전 #gl 시절과
+  //   같은 위아래다(꼬리·번짐은 그때도 #ink였다). 옮긴 것은 몸체 하나뿐이다.
+  for (const [id, seg] of app.lift.lifted) {
+    const s = app.lift.strokes.get(id)
+    if (!s || gradeOf(s) !== 'INK') continue
+    const a = project(an, app.pose, seg.a3)
+    const b = project(an, app.pose, seg.b3)
+    if (!a || !b) continue
+    const m = MAT.INK
+    ctx.strokeStyle = m.color
+    ctx.globalAlpha = m.alpha
+    ctx.lineWidth = widthOf(s) * is
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke()
+    ctx.globalAlpha = 1
+  }
+
   // 모서리 넘김(web2-12 8번) — **표현만**: 승격 획의 «다른 획과 만나는 끝»에 화면 고정
   // 길이(C.OVERSHOOT_PX)의 꼬리를 재료색·재료 굵기로 잇는다. a·b(기하)는 안 움직인다 —
   // 판정은 core/overshoot.ts(3D 일치·캐시), 오스냅·조각·면·lift는 이 꼬리를 모른다

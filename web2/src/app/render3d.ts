@@ -112,6 +112,15 @@ export function syncStrokes(r: R3D, app: App) {
   for (const [id, seg] of app.lift.lifted) {
     const stroke = app.lift.strokes.get(id)
     const grade = stroke ? gradeOf(stroke) : 'HB'
+    // ── 잉크 확정선은 여기 안 산다(web2-18 1부) ────────────────────────────
+    // 겹 순서가 «#gl(1) < #brushc(1, DOM 나중) < #ink(2)»인데 #brushc가 **연필 흑연**을
+    // 그리므로, 잉크 몸체가 #gl에 있으면 연필이 잉크를 덮는다(사람 관측: 「펜이 연필선에
+    // 먹혀 거의 안 보인다」). 잉크는 균일선이라 Canvas 2D가 같은 것을 그린다 —
+    // **몸체를 #ink로 옮기면 아무것도 안 바뀌고 겹만 바뀐다**(render2d의 「잉크 확정선
+    // 몸체」 절이 정본. 기각한 두 길 ⓐ·ⓑ는 DECISIONS.md).
+    // ⚠ **렌더러 모드와 무관하다** — classic에서도 잉크는 위여야 한다(질감 겹이 없어도
+    // 2D 오버레이의 대기 획·입자가 여전히 #gl 위다).
+    if (grade === 'INK') continue
     const w = widthOf(stroke)   // 획이 없으면 재료 기본값 — 분기도 출처도 하나다
     const g = new LineGeometry()
     g.setPositions([seg.a3.x, seg.a3.y, seg.a3.z, seg.b3.x, seg.b3.y, seg.b3.z])
