@@ -3,7 +3,7 @@
 // 실행취소는 op 단위다: 획 추가 op, 지우개 한 번의 드래그 op.
 // 그림만 되돌린다 — 작도(카메라)는 op에 들어가지 않는다.
 
-import { emptyDoc, DRAW_SHEET_ID, type Doc, type Stroke, type Face, type Sheet, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
+import { emptyDoc, DRAW_SHEET_ID, type Doc, type Stroke, type Face, type Sheet, type Layer, type Paper, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
 import { isInk } from '../core/material'
 export type { ViewOffset }
 import { liftAll, closestOnLineToRay, type LiftResult } from '../core/lift'
@@ -50,6 +50,12 @@ export interface Op {
   /** 면 지정·해제도 실행취소 대상이다 — 사람이 한 것이므로(작도와 다르다) */
   facesAdded?: Face[]
   facesRemoved?: { face: Face; index: number }[]
+  /** 겹 삭제(web2-20 2-c) — 그 위의 획이 같이 가므로 **실행취소 대상**이다(지우개와
+   *  같은 급). 겹 자체도 op에 실려 되돌아온다. */
+  layersRemoved?: { layer: Layer; index: number }[]
+  /** 종이 삭제(web2-20 2-c — 규약 변경): 겹이 하나라도 있으면 획이 딸려 가므로
+   *  실행취소 대상이 된다. web2-19의 「종이 삭제는 실행취소 밖」은 겹이 없을 때만 남는다. */
+  sheetRemoved?: { sheet: Sheet; index: number }
 }
 
 export interface App {
@@ -108,6 +114,9 @@ export interface App {
   /** **활성 종이**(web2-19 2부) — Doc.sheets 중 하나의 id. 하나만 활성이다(지시 2-a).
    *  런타임 상태라 저장하지 않는다(파일을 열면 작도 종이에서 시작한다). */
   activeSheet: number
+  /** **활성 겹**(web2-20 2부) — 새 획이 그리로 간다. null = 종이에 직접. 활성 종이의
+   *  겹만 가리킬 수 있고 종이를 바꾸면 null로 돌아온다. 런타임 상태 — 저장 안 함. */
+  activeLayer: number | null
   /** 치수 스냅(web2-08 지시 4-7) — **기본 꺼짐**(옵션). 켜면 그리는 동안 실제 길이가
    *  `dimSnapStep`(mm)의 배수로 맞춰진다 — 표시만이 아니다. */
   dimSnap: boolean
@@ -192,6 +201,7 @@ export function createApp(W: number, H: number): App {
     fadePose: null,
     fadeView: null,
     activeSheet: DRAW_SHEET_ID,
+    activeLayer: null,
     dimSnap: false,
     dimSnapStep: 50,
     dimExact: false,
@@ -356,6 +366,22 @@ export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number,
     if (rawIn && Object.values(rawIn).every(arr => !arr || arr.length === raw.length)) s.rawIn = rawIn
   }
   if (!isDrawPose(app.pose)) s.view = { p: { ...app.pose.p }, q: { ...app.pose.q } }
+  // 겹 소속(web2-20 2부) — 활성 겹이 있으면 새 획이 그리로 간다. 잠긴·꺼진 겹으로는
+  // 안 간다(잠금 = 편집 막힘·끔 = 3D 밖 — setActiveLayer가 그 상태를 안 만들지만
+  // 문서를 연 직후 등 경계에서 한 번 더 지킨다).
+  if (app.activeLayer !== null) {
+    const lay = app.doc.layers.find(l => l.id === app.activeLayer)
+    if (lay && lay.on && !lay.locked && lay.sheet === app.activeSheet) {
+      s.layer = lay.id
+      // 종이 밖에 그으면 rect가 자란다(2-b) — **확정 시점에**(미리보기 중에 자라면
+      // 산만하다 — 지시 문면). 획의 문서 bbox(raw 포함)로 합집합.
+      const xs = [a.x, b.x, ...(raw ?? []).map(p2 => p2.x)]
+      const ys = [a.y, b.y, ...(raw ?? []).map(p2 => p2.y)]
+      const x0 = Math.min(lay.rect.x, ...xs), y0 = Math.min(lay.rect.y, ...ys)
+      const x1 = Math.max(lay.rect.x + lay.rect.w, ...xs), y1 = Math.max(lay.rect.y + lay.rect.h, ...ys)
+      lay.rect = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }
+    }
+  }
   s.mat = { grade: activeGrade(app) }
   // 니브는 **잉크에만** 얹는다 — 연필 굵기는 경도가 정한다(재료가 다르다, 4-h)
   if (app.tool === 'pen' && app.nib !== C.NIB_PX) s.mat.w = app.nib
@@ -421,6 +447,13 @@ export function undo(app: App) {
   for (const r of [...(op.facesRemoved ?? [])].sort((a, b) => a.index - b.index)) {
     app.doc.faces.splice(Math.min(r.index, app.doc.faces.length), 0, r.face)
   }
+  // 종이·겹 복원(web2-20 2-c) — 종이 먼저(겹이 종이를 가리킨다), 겹은 원래 자리로
+  if (op.sheetRemoved) {
+    app.doc.sheets.splice(Math.min(op.sheetRemoved.index, app.doc.sheets.length), 0, op.sheetRemoved.sheet)
+  }
+  for (const r of [...(op.layersRemoved ?? [])].sort((a, b) => a.index - b.index)) {
+    app.doc.layers.splice(Math.min(r.index, app.doc.layers.length), 0, r.layer)
+  }
   app.redoStack.push(op)
   recompute(app)
 }
@@ -435,6 +468,19 @@ export function redo(app: App) {
     if (i >= 0) app.doc.faces.splice(i, 1)
   }
   for (const f of op.facesAdded ?? []) app.doc.faces.push(f)
+  // 겹·종이 재삭제(web2-20 2-c) — 겹 먼저, 종이 나중(복원의 역순)
+  for (const r of [...(op.layersRemoved ?? [])].sort((a, b) => b.index - a.index)) {
+    const i = app.doc.layers.findIndex(x => x.id === r.layer.id)
+    if (i >= 0) app.doc.layers.splice(i, 1)
+    if (app.activeLayer === r.layer.id) app.activeLayer = null
+  }
+  if (op.sheetRemoved) {
+    const i = app.doc.sheets.findIndex(x => x.id === op.sheetRemoved!.sheet.id)
+    if (i > 0) {
+      app.doc.sheets.splice(i, 1)
+      if (app.activeSheet === op.sheetRemoved.sheet.id) gotoSheet(app, app.doc.sheets[0]!.id)
+    }
+  }
   app.undoStack.push(op)
   recompute(app)
 }
@@ -554,18 +600,114 @@ export function addSheet(app: App, thumb?: string): Sheet {
   }
   app.doc.sheets.push(s)
   app.activeSheet = s.id
+  app.activeLayer = null   // 겹은 종이에 속한다(web2-20) — 새 종이에는 아직 겹이 없다
   for (const l of app.listeners) l() // 자동 저장이 듣는다
   return s
 }
 
-/** 종이 삭제 — **작도 종이(배열 0)는 못 지운다**(늘 있다 — 지시 2-b). 획은 종이에
- *  속하지 않으므로 **아무 획도 안 지워진다**(회귀 ⑤). 실행취소 대상이 아니다
- *  (web2-12 deleteView 규약 그대로 — ⚠⚠ 다음 회차에 겹이 종이에 붙으면 이 규약이
- *  바뀐다: 종이를 지우는 것이 획을 지우는 일이 된다. DEFERRED에 올렸다).
+// ── 겹(web2-20 2부) — 종이 위에 얹은 것. 여럿 동시·가산적 ─────────────────────
+
+/** 「+」 = 새 겹을 **맨 위에** 얹고 활성으로(지시 2부). ⚠ **카메라가 닫히기 전에는 못
+ *  얹는다**(2-a — 사람이 정했다: 겹마다 소실점을 만들면 카메라가 섞인다. 얹는 시점을
+ *  닫힌 뒤로 미루면 그 자리가 아예 없어진다). 호출부가 그 조건을 UI로 보이고, 여기서도
+ *  지킨다(null 반환). rect 기본값 = 지금 보이는 화면(2-b — 대개 그것이 지금 작업하는
+ *  부분이다. 화지와 무관 — 넘쳐도 된다). */
+export function addLayer(app: App, paper: Paper, viewport: { W: number; H: number }): Layer | null {
+  if (!app.lift.an.constructionDone) return null
+  const v = app.view
+  const lay: Layer = {
+    id: app.nextId++,
+    sheet: app.activeSheet,
+    paper,
+    // +0 정규화 — -0/s는 -0이고 toEqual·JSON에서 +0과 갈린다(팔이 실측으로 잡았다)
+    rect: { x: -v.ox / v.s + 0, y: -v.oy / v.s + 0, w: viewport.W / v.s, h: viewport.H / v.s },
+    on: true,
+    locked: false,
+  }
+  app.doc.layers.push(lay)
+  app.activeLayer = lay.id
+  for (const l of app.listeners) l() // 자동 저장이 듣는다
+  return lay
+}
+
+/** 겹 삭제(2-c) — **그 위의 획도 같이 간다 → 실행취소 대상**(획을 지우는 일이므로
+ *  지우개와 같은 급). 「비우기」가 실행취소 밖인 것과 다른 근거: 비우기는 작도까지
+ *  버려 op로 못 되돌리고, 겹 삭제는 내용 획만 버린다. */
+export function removeLayer(app: App, id: number) {
+  const li = app.doc.layers.findIndex(l => l.id === id)
+  if (li < 0) return
+  const removed: Op['removed'] = []
+  for (let i = app.doc.strokes.length - 1; i >= 0; i--) {
+    if (app.doc.strokes[i]!.layer === id) removed.push({ stroke: app.doc.strokes[i]!, index: i })
+  }
+  for (const r of removed) app.doc.strokes.splice(r.index, 1)
+  const op: Op = { removed, added: [], layersRemoved: [{ layer: app.doc.layers[li]!, index: li }] }
+  app.doc.layers.splice(li, 1)
+  if (app.activeLayer === id) app.activeLayer = null
+  app.undoStack.push(op)
+  app.redoStack = []
+  recompute(app)
+}
+
+/** 탭 = 그 겹을 활성으로 — 새 획이 그리로 간다. **활성으로 만들면 자동으로 켜진다**
+ *  (지시 2부 문면). null = 종이에 직접. 잠긴 겹은 활성이 못 된다(편집이 막혀 있다). */
+export function setActiveLayer(app: App, id: number | null) {
+  if (id === null) { app.activeLayer = null; return }
+  const lay = app.doc.layers.find(l => l.id === id)
+  if (!lay || lay.sheet !== app.activeSheet || lay.locked) return
+  if (!lay.on) { lay.on = true; recompute(app) }   // 켜짐이 3D를 바꾼다(4부 — liftAll 필터)
+  app.activeLayer = id
+  for (const l of app.listeners) l()
+}
+
+/** 켬/끔 — 끔은 안 보이고 **3D에서도 빠진다**(4부). 활성 겹을 끄면 활성이 풀린다
+ *  (안 보이는 겹으로 새 획이 가면 조용히 사라진 획이 된다). */
+export function setLayerOn(app: App, id: number, on: boolean) {
+  const lay = app.doc.layers.find(l => l.id === id)
+  if (!lay || lay.on === on) return
+  lay.on = on
+  if (!on && app.activeLayer === id) app.activeLayer = null
+  recompute(app)
+}
+
+/** 잠금 — 보이고 3D에 있고 점이 물리지만 편집만 막힌다. 활성 겹을 잠그면 활성이 풀린다. */
+export function setLayerLocked(app: App, id: number, locked: boolean) {
+  const lay = app.doc.layers.find(l => l.id === id)
+  if (!lay || lay.locked === locked) return
+  lay.locked = locked
+  if (locked && app.activeLayer === id) app.activeLayer = null
+  for (const l of app.listeners) l()
+}
+
+/** 종이 삭제 — **작도 종이(배열 0)는 못 지운다**(늘 있다 — 지시 2-b).
+ *  ⚠⚠ **규약이 web2-20 2-c에서 바뀌었다**: 겹이 하나라도 있으면 그 겹과 그 위의 획이
+ *  딸려 가므로 **실행취소 대상이 된다**(web2-19 DEFERRED의 그 행이 여기서 닫힌다).
+ *  겹이 없으면 종전대로 실행취소 밖(잃는 것이 포즈뿐이라 다시 저장이 탭 하나다).
  *  보고 있던 종이를 지우면 작도 종이로 돌아온다(빈 자리를 안 남긴다). */
 export function deleteSheet(app: App, id: number) {
   const i = app.doc.sheets.findIndex(s => s.id === id)
   if (i <= 0) return
+  const layersOnSheet = app.doc.layers.filter(l => l.sheet === id)
+  if (layersOnSheet.length > 0) {
+    const removed: Op['removed'] = []
+    const layerIds = new Set(layersOnSheet.map(l => l.id))
+    for (let si = app.doc.strokes.length - 1; si >= 0; si--) {
+      const st = app.doc.strokes[si]!
+      if (st.layer !== undefined && layerIds.has(st.layer)) removed.push({ stroke: st, index: si })
+    }
+    for (const r of removed) app.doc.strokes.splice(r.index, 1)
+    const layersRemoved = layersOnSheet
+      .map(l => ({ layer: l, index: app.doc.layers.indexOf(l) }))
+      .sort((x, y) => y.index - x.index)
+    for (const r of layersRemoved) app.doc.layers.splice(r.index, 1)
+    const op: Op = { removed, added: [], layersRemoved, sheetRemoved: { sheet: app.doc.sheets[i]!, index: i } }
+    app.doc.sheets.splice(i, 1)
+    if (app.activeSheet === id) gotoSheet(app, app.doc.sheets[0]!.id)
+    app.undoStack.push(op)
+    app.redoStack = []
+    recompute(app)
+    return
+  }
   app.doc.sheets.splice(i, 1)
   if (app.activeSheet === id) gotoSheet(app, app.doc.sheets[0]!.id)
   for (const l of app.listeners) l() // 자동 저장이 듣는다
@@ -585,6 +727,7 @@ export function renameSheet(app: App, id: number, name: string) {
 export function gotoSheet(app: App, id: number) {
   const s = app.doc.sheets.find(x => x.id === id)
   if (!s) return
+  if (app.activeSheet !== id) app.activeLayer = null   // 겹은 종이에 속한다(web2-20)
   app.activeSheet = id
   if (s.pose && s.view) {
     app.view = { ...s.view }
@@ -601,6 +744,7 @@ export function loadDoc(app: App, data: { doc: Doc; nextId: number; drawView?: V
   app.doc = data.doc
   app.nextId = data.nextId
   app.activeSheet = data.doc.sheets[0]!.id   // 연 문서는 작도 종이에서 시작한다
+  app.activeLayer = null
   app.drawView = data.drawView ? { ...data.drawView } : null
   app.undoStack = []
   app.redoStack = []
@@ -623,6 +767,7 @@ export function clearAll(app: App, W: number, H: number) {
   app.undoStack = []
   app.redoStack = []
   app.activeSheet = app.doc.sheets[0]!.id   // 비우면 종이도 처음(작도 한 장)이다
+  app.activeLayer = null
   app.activeErase = null
   app.drawView = null   // 선언도 버린다(web2-17 3-b) — 다음 첫 획이 새로 굳힌다
   app.horizonPref = null   // 자동으로 돌아간다(web2-17 5-a — 비우기는 처음부터다)

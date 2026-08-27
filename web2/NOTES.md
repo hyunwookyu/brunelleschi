@@ -8444,3 +8444,32 @@ total 234(`--list` 「Total: 234 tests in 30 files」) · selfcheck — 이 회�
 
 **1부 검증(#69 ㉤)**: 단위 **518 passed / 0 failed / 518**(57파일 — layers 7 추가) ·
 타입 0오류. e2e는 부 경계마다 해당 스펙, 전량은 마감.
+
+### 2부 — 종속 탭 · 얹기 규칙
+
+- **상태 연산(state.ts)**: `addLayer`(2-a 문 — constructionDone 아니면 null · rect 기본 =
+  지금 화면 `{-ox/s, -oy/s, W/s, H/s}` **+0 정규화**(−0이 toEqual·JSON에서 갈린다 — 팔이
+  실측) · 맨 위 얹고 활성·자동 켬) · `removeLayer`(**실행취소 대상** — 획+겹이 op로) ·
+  `setActiveLayer`(활성 = 자동 켬 · 잠긴 겹 불가) · `setLayerOn`(끄면 활성 해제 —
+  recompute: 3D에서 빠지는 것은 4부 liftAll이) · `setLayerLocked`(잠그면 활성 해제) ·
+  **`deleteSheet` 규약 변경**(2-c — 겹이 있으면 겹·획이 딸려 가고 **실행취소 대상**.
+  겹 없으면 종전대로 밖. web2-19 DEFERRED 행이 닫혔다) · Op 확장(layersRemoved·
+  sheetRemoved — undo가 종이→겹→획 순으로 복원) · commitStroke가 활성 겹 소속 부여 +
+  **확정 시점 rect 성장**(raw bbox 합집합 — 미리보기 중엔 안 자란다).
+  ⚠ 물린 것: addSheet이 활성 종이를 바꾸면서 activeLayer를 안 풀어 gotoSheet의 «다른
+  종이» 조건이 건너뛰었다(팔이 잡음 — addSheet에서 직접 푼다).
+- **UI(layerbar.ts)**: #topleft 둘째 줄. 활성 종이의 겹만. 탭 = 옆에서 본 종이 더미
+  (겹침 −14px·활성 앞으로 — **가산적임이 형태로**: e2e가 부모 겹침 0 ↔ 자식 겹침 >0을
+  상자로 잰다). 탭 클릭 = 활성(자동 켬) · 눈/자물쇠 표식 = 토글(Phosphor light path 이식) ·
+  길게 눌러 삭제(확인 문구가 **획 수를 알린다** — 2-c) · 「+」 = 종이 종류 **둘**(정본 롤
+  아이콘 — 옐로만 #e9d98a 채움) · 닫히기 전 비활성 + 「소실점 작도가 끝나야 얹을 수 있다」
+  한 줄(2-a). 목적 제안 없음·「층/레이어」 화면에 없음(지시 0·⛔).
+  문서 변경 리스너가 layerbar.sync(늦은 묶기 — 자동 저장 복원 때 TDZ 방지).
+  같은 lpFired 가드(길게 누른 뒤 click이 팝업을 닫는 것 — paperbar에서 잡은 그 형태).
+- ⚠ **2-b의 가장자리 끌기(rect 크기·위치)는 3부로** — 막·가장자리 렌더가 서야 끌 대상이
+  보인다. 종이 밖 긋기 성장은 이 부에서 됐다(값 팔).
+- 회귀 팔: 단위 `layerops.test.ts` **8팔**(①③④⑤⑦ + 활성 규칙 + 반증 짝) · e2e
+  `layerbar.spec.ts` **4팔**(①②·③④·⑤·⑥+형태).
+
+**2부 검증(#69 ㉤)**: 단위 **526 passed / 0 failed / 526**(58파일) · 타입 0오류 ·
+layerbar.spec 「8 passed」(4팔×2dpr).

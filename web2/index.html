@@ -92,6 +92,38 @@
     }
     #paper-pop img { width: 160px; height: auto; display: block; }
     #paper-pop u, .paper-confirm u { cursor: pointer; }
+    /* ── 종속 탭(web2-20 2부) — 겹쳐 놓은 종이를 옆에서 본 모습 ──────────────────
+       부모 탭(배타적 — 겹침 0)과 자식 탭(가산적)의 행동 차이가 **형태**로 갈린다:
+       자식 탭은 서로 겹치고(음수 여백) 활성인 것이 앞으로 나온다(z·올림). e2e가 상자로
+       잰다(부모 겹침 0 ↔ 자식 겹침 >0). */
+    #layerbar { display: flex; flex-direction: row; align-items: flex-start; padding: 2px 0 0 8px; }
+    .ltab {
+      position: relative; display: flex; align-items: center; gap: 2px;
+      font: 11px/1 system-ui, sans-serif; color: var(--ui);
+      background: rgba(252,251,248,.82); border: 1px solid var(--ui-faint); border-top: 0;
+      padding: 4px 6px 5px; margin-left: -14px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; touch-action: none;
+    }
+    .ltab:first-child { margin-left: 0; }
+    .ltab.yellow { background: #efe3b8; }        /* 옐로 — 이름 자체가 색이다(정본) */
+    .ltab.tracing { background: rgba(240,239,236,.9); }
+    .ltab.active { transform: translateY(2px); box-shadow: 0 1px 6px rgba(0,0,0,.10); color: #55504a; }
+    .ltab:not(.on):not(.ladd) { opacity: .45; }   /* 꺼짐 — 젖혀 둔 종이 */
+    .ltab.ladd { background: none; border-color: transparent; margin-left: 2px; }
+    .ltab.ladd.disabled { opacity: .3; cursor: default; }
+    .lctl { background: none; border: 0; padding: 2px; margin: 0; cursor: pointer; color: inherit; opacity: .75; }
+    .lctl:hover { opacity: 1; }
+    #layer-pop {
+      position: fixed; z-index: 11;
+      display: flex; flex-direction: column; gap: 6px; align-items: stretch;
+      background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
+      padding: 8px 10px; font: 12px/1.5 system-ui, sans-serif; color: #6b665f;
+    }
+    #layer-pop u { cursor: pointer; }
+    .lpick { display: flex; align-items: center; gap: 6px; background: none; border: 0;
+      padding: 3px 4px; cursor: pointer; color: var(--ui); font: 12px system-ui, sans-serif; }
+    .lpick svg { width: 22px; height: 22px; }
+    .lpick:hover { color: #55504a; }
 
     /* ── 눈(web2-19 3-a) — 위 오른쪽. 뷰 큐브(cx W−110·y 20~100)와 안 겹치게 왼쪽에 ── */
     #eyebar {
@@ -119,7 +151,7 @@
     /* ── 전체 화면(3-d) — 크롬을 전부 숨긴다: 종이 띠·눈·손·서랍·굵기·치수 리본.
        지평선·소실점 ✕·바닥 눈금은 캔버스 몫이라 그대로 남는다(작도의 뼈대). ── */
     body.fs #topleft, body.fs #eyebar, body.fs #sidebar, body.fs #thick,
-    body.fs #dimpanel, body.fs #display-pop, body.fs #snap-pop { display: none; }
+    body.fs #dimpanel, body.fs #display-pop, body.fs #snap-pop, body.fs #layer-pop { display: none; }
     #fs-exit {
       display: none; position: fixed; right: 6px; bottom: 34px; z-index: 12;
       background: none; border: 0; padding: var(--hit-pad); cursor: pointer;
@@ -432,6 +464,9 @@
          자리를 상시 비워 두지 않는다(2-c ⚠의 결정 — DECISIONS D-W6). -->
     <div id="topleft">
       <div id="paperbar"></div>
+      <!-- 종속 탭(web2-20 2부) — 겹은 도구가 아니라 종이다: 종이 띠 바로 아래 줄.
+           지금 활성인 종이의 겹만 보인다. 앱은 겹의 목적을 제안하지 않는다(지시 0). -->
+      <div id="layerbar"></div>
     </div>
     <!-- 눈(web2-19 3-a) — 「이 종이를 어떻게 보는가」는 종이 옆이 제자리다.
          작도 시점으로 · 전체 화면 · 표시(지평선·지면 격자·대기 획 감쇠).

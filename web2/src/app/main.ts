@@ -2,6 +2,7 @@
 
 import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, type Tool } from './state'
 import { initPaperbar } from './paperbar'
+import { initLayerbar } from './layerbar'
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
@@ -206,6 +207,11 @@ app.listeners.push(() => {
     syncedVersion = app.docVersion
     syncStrokes(r3d, app)
     updateStatus()
+    // 종속 탭 줄(web2-20 2부) — 문서가 바뀌면 겹 목록·「+」의 활성 조건(카메라 닫힘)이
+    // 같이 바뀐다. 여기서 다시 그린다(paperbar와 달리 겹은 문서 변화에 민감하다).
+    // ⚠ 늦은 묶기 — 이 리스너는 초기화(자동 저장 복원)에서도 돌고 그때 layerbar는
+    // 아직 없다(TDZ). 참조가 서면 그때부터 민다(초기 렌더는 initLayerbar 자신이 한다).
+    layerbarRef?.sync()
   }
   invalidate()
 })
@@ -672,6 +678,7 @@ function applyOpen(data: NonNullable<ReturnType<typeof parseBrnl>>) {
   loadDoc(app, data)
   fitViewToFrame()
   paperbar.sync()
+  layerbar.sync()
   unitSel.value = app.doc.unit                 // 문서의 단위가 패널에 보인다(4-6)
 }
 fileOpen.addEventListener('change', async () => {
@@ -721,6 +728,7 @@ function doClear() {
   try { localStorage.removeItem(AUTOSAVE_KEY); localStorage.removeItem(AUTOSAVE_KEY_OLD) } catch { /* 저장소가 없으면 지울 것도 없다 */ }
   draft = null; hover = null; eraserPos = null; facePrev = null // 지운 획을 가리키던 표식이 남지 않게
   paperbar.sync()
+  layerbar.sync()
   invalidate()
 }
 
@@ -761,9 +769,17 @@ function captureThumb(): string {
   return t.toDataURL('image/jpeg', 0.72)
 }
 
+let layerbarRef: { sync: () => void } | null = null
+const layerbar = initLayerbar(app, document.getElementById('layerbar')!, {
+  viewport: () => ({ W, H }),
+  onChange: () => invalidate(),
+  notify,
+})
+layerbarRef = layerbar
 const paperbar = initPaperbar(app, document.getElementById('paperbar')!, {
   captureThumb,
-  onGoto: () => { autolevel.touch(); invalidate() },
+  // 종이를 바꾸면 종속 탭 줄도 바뀐다(web2-20 2부 — 겹은 종이에 속한다)
+  onGoto: () => { autolevel.touch(); layerbar.sync(); invalidate() },
 })
 
 // **되돌리기의 자리**(web2-17 1-d) — 규칙은 안 바꾼다(작도 획은 스택 밖·비우기가 답이다).
