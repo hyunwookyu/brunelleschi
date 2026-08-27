@@ -511,7 +511,12 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
   const hits = ps.filter(x => distToPiece(p, x) <= app.eraserRadius / app.view.s)
   if (hits.length === 0) return
   const byStroke = new Map<number, Piece[]>()
+  // 잠긴 겹의 획은 안 지운다(web2-20 4부 — 잠금 = 편집만 막힘. 꺼진 겹은 리프팅에서
+  // 빠져 조각 자체가 없다 — 여기 걸리는 것은 잠금뿐이다).
+  const lockedLayers = new Set(app.doc.layers.filter(l => l.locked).map(l => l.id))
   for (const h of hits) {
+    const st = app.doc.strokes.find(s2 => s2.id === h.strokeId)
+    if (st?.layer !== undefined && lockedLayers.has(st.layer)) continue
     const arr = byStroke.get(h.strokeId) ?? []
     arr.push(h)
     byStroke.set(h.strokeId, arr)

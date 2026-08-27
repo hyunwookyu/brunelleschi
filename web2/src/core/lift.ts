@@ -130,7 +130,14 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
   // 3D로 남겨야 그 끝점이 오스냅·연결 대상이 된다.
   // 찍은 소실점 표식은 **점**이라 3D 선이 아니다 — 방향이 없고 무한원에 있다.
   const isMark = (s: Stroke) => Math.hypot(s.b.x - s.a.x, s.b.y - s.a.y) <= C.TAP_MAX_PX
-  const content = doc.strokes.filter(s => !isMark(s))
+  // 꺼진 겹의 획은 리프팅에서 뺀다(web2-20 4부) — 그래서 오스냅·조각·면의 대상에서도
+  // **자동으로** 빠진다(별도 필터를 만들지 않는다 — 출처가 둘이 되면 어긋난다 #54).
+  // ⚠ 대기 목록에도 안 넣는다 — 꺼짐은 «안 보이고 3D에 없음»이지 대기가 아니다.
+  // own3 필드는 안 지운다(사건의 기록 — 다시 켜면 여기서 도로 올라온다: 왕복 팔).
+  // ⚠ analyze(위)는 **모든 획**을 본다 — 카메라는 겹과 무관하다(소실점 획이 든 겹을
+  // 꺼도 카메라 불변 — 4부 ① 팔이 못 박는다).
+  const offLayers = new Set(doc.layers.filter(l => !l.on).map(l => l.id))
+  const content = doc.strokes.filter(s => !isMark(s) && !(s.layer !== undefined && offLayers.has(s.layer)))
   if (!an.principal || an.f === null) {
     return { an, lifted, waiting: content.map(s => s.id), waitWhy, anchorId, strokes, mmPerUnit }
   }
