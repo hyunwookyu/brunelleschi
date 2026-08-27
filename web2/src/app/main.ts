@@ -1,6 +1,6 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, setActiveLayer, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar } from './layerbar'
 import { initInput } from './input'
@@ -992,6 +992,14 @@ const diag = {
   /** ③ 프레임 3몫 합 — 국면별로 리셋해서 읽는다(누산은 국면이 섞인다) */
   frameCost: () => frameCostQ(),
   frameCostReset: () => { frameCosts = [] },
+  /** ⑩ 표식 — filmLayer.draw의 두 몫(막·위 획) ms. D-1: 어느 몫이 비싼지 경로에서 낸다 */
+  filmCost: () => filmLayer.cost(),
+  /** ⑩ 비용 원장(cost20) — 앱과 같은 addLayer·setActiveLayer를 부른다(측정용 사본 없음) */
+  layerAdd: (paper: 'tracing' | 'yellow') => {
+    const l = addLayer(app, paper, { W: window.innerWidth, H: window.innerHeight })
+    if (l) { setActiveLayer(app, l.id); layerbarRef?.sync() }
+    return l ? l.id : null
+  },
   /** ④ osnap 호출당 비용의 3몫 분해 — 4부의 문턱을 이 값이 정한다 */
   osnapCost: () => ({ ...osnapCost }),
   osnapCostReset: () => resetOsnapCost(),

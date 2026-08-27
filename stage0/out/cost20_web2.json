@@ -1,0 +1,64 @@
+{
+  "what": "web2-20 3-e ⑩ — 3-b(영역 재조립: #film 사본+곱 · #layerc 몸체)의 400획 프레임 비용. 겹 없음 칸이 same-run 기준, cost18 값은 다른 실행의 참조.",
+  "run": {
+    "project": "dpr1",
+    "note": "`npx playwright test cost20 --workers=1` — cost18과 같은 규율. 절대 ms는 컨테이너 변동이 크다(판별은 같은 실행 안의 배수)."
+  },
+  "scene_at_400": {
+    "strokes": 400,
+    "lifted": 198,
+    "waiting": 202
+  },
+  "frames": {
+    "base_draw_pose": {
+      "n": 40,
+      "r3": 0.7000002861022949,
+      "bs": 0,
+      "d2": 0.2999997138977051,
+      "total": 0.9000000953674316,
+      "totalMax": 2.4000000953674316
+    },
+    "with_film_draw_pose": {
+      "n": 40,
+      "r3": 0.5999999046325684,
+      "bs": 0,
+      "d2": 13,
+      "total": 13.599999904632568,
+      "totalMax": 14.600000381469727
+    },
+    "base_orbit": {
+      "n": 32,
+      "r3": 0.9000000953674316,
+      "bs": 0.8000001907348633,
+      "d2": 0.2999997138977051,
+      "total": 2,
+      "totalMax": 316
+    },
+    "with_layer_orbit": {
+      "n": 32,
+      "r3": 0.7999997138977051,
+      "bs": 0.7000002861022949,
+      "d2": 0.39999961853027344,
+      "total": 2,
+      "totalMax": 330.2000002861023
+    }
+  },
+  "marginal": {
+    "draw_pose_total_x": 15.11,
+    "draw_pose_d2_delta_ms": 12.7,
+    "orbit_total_x": 1,
+    "orbit_d2_delta_ms": 0.1,
+    "note": "막의 몫은 d2 조각에 실린다(frame()에서 filmLayer.draw가 draw2d와 같은 구간). 궤도 칸의 막은 포즈 게이트로 꺼지므로 그 델타는 #layerc 사영선의 몫이다."
+  },
+  "cost18_ref": {
+    "file": "cost18_web2.json",
+    "orbit_frame_ms_400_raw0": {
+      "n": 32,
+      "r3": 1,
+      "bs": 0.9000000953674316,
+      "d2": 0.3000001907348633,
+      "total": 2.5999999046325684,
+      "totalMax": 491.59999990463257
+    }
+  }
+}

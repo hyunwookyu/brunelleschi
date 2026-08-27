@@ -29,7 +29,7 @@
 // 바탕 종이에는 결이 없다(사람이 정했다 — 겹 둘에만).
 
 import type { App } from './state'
-import { fadeRef, fadeRefView, isDrawPose } from './state'
+import { fadeRef, isDrawPose } from './state'
 import type { Layer, Paper, CamPose } from '../core/types'
 import { rng32, MAT, gradeOf, widthOf } from '../core/material'
 import { project } from '../core/camera'
@@ -128,11 +128,15 @@ export function filmSplit(app: App): { films: Layer[]; above: Set<number> } | nu
 }
 
 /** 지금 포즈가 활성 종이의 시점인가 — 작도 종이는 DRAW_POSE, 저장 종이는 그 pose.
- *  제스처 중에는 동결 포즈(fadeRef)로 판정한다(지평선 숨김과 같은 갈래 — 떨림 방지). */
+ *  ⚠ **살아 있는 포즈**로 판정한다(fadeRef 아님). 동결 포즈로 판정하면 궤도 제스처
+ *  내내 참으로 남아 ① 막이 도는 장면 위에 계속 곱해지고(3-d 위반 — 시점을 벗어나면
+ *  사라져야 한다) ② 그 drawFilms가 궤도 매 프레임 돈다 — cost20 표식이 잡은 31ms/프레임
+ *  (D-1: filmCost 몫 분해가 films 쪽을 가리켰다). 떨림 걱정은 없다 — 포즈는 제스처
+ *  중 연속으로 움직이므로 경계에서 왕복하지 않는다. */
 export function atSheetPose(app: App): boolean {
   const sheet = app.doc.sheets.find(s => s.id === app.activeSheet)
   if (!sheet) return false
-  const pose = fadeRef(app)
+  const pose = app.pose
   if (!sheet.pose) return isDrawPose(pose)
   return poseEq(pose, sheet.pose)
 }
@@ -147,9 +151,12 @@ export interface FilmLayer {
   draw: (app: App) => void
   /** dpr·창 크기 변경 */
   resize: (W: number, H: number, dpr: number) => void
+  /** ⑩ 비용 표식 — 마지막 draw의 두 몫(막·위 획) ms. 진단·cost20 전용 */
+  cost: () => { films: number; above: number }
 }
 
 export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
+  const lastCost = { films: 0, above: 0 }
   const film = document.createElement('canvas')
   film.id = 'film'
   // z-index 1 · #brushc **뒤에**(위로) — CSS mix-blend-mode: multiply는 index.html의
@@ -201,7 +208,9 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
     // 사본 판독의 근거: captureThumb(web2-12)가 같은 drawImage 경로로 이미 산다.
     // ⚠ 잉크 몸체(#ink — 막 위 겹)는 사본에 없어 **안 물든다** — 잉크는 거의 검정이라
     // 곱의 차가 지각 아래다(알려진 강등 — NOTES·assumptions).
-    const v = fadeRefView(app)
+    // 뷰는 **살아 있는 값**이다 — 아래 캔버스(#brushc)가 live app.view로 그린다
+    // (brushlayer.ts의 캐시 키가 app.view다). 동결 뷰로 자리 잡으면 팬 중에 rect가 처진다.
+    const v = app.view
     const gl = document.getElementById('gl') as HTMLCanvasElement | null
     const brushc = document.getElementById('brushc') as HTMLCanvasElement | null
     const brushsnap = document.getElementById('brushsnap') as HTMLCanvasElement | null
@@ -252,7 +261,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
     g.clearRect(0, 0, layerc.width, layerc.height)
     if (!split || split.above.size === 0) { layerc.style.display = 'none'; return }
     layerc.style.display = ''
-    const v = fadeRefView(app)
+    const v = app.view   // 살아 있는 뷰 — drawFilms와 같은 이유
     // 문서 좌표로 그린다 — 화면 고정 굵기는 ×is(render2d 규약 그대로)
     g.setTransform(cd * v.s, 0, 0, cd * v.s, cd * v.ox, cd * v.oy)
     const is = 1 / v.s
@@ -284,7 +293,15 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
   }
 
   return {
-    draw(app: App) { drawFilms(app); drawAbove(app) },
+    draw(app: App) {
+      const t0 = performance.now()
+      drawFilms(app)
+      const t1 = performance.now()
+      drawAbove(app)
+      lastCost.films = t1 - t0
+      lastCost.above = performance.now() - t1
+    },
     resize(W2, H2, d2) { cw = W2; ch = H2; cd = d2; fit(); tileCache.clear() },
+    cost: () => ({ ...lastCost }),
   }
 }
