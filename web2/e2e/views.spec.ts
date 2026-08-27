@@ -16,6 +16,9 @@ test.afterAll(async ({ }, testInfo) => {
   writeFileSync(out, JSON.stringify({
     what: `web2-12 5번(${testInfo.project.name}) — 뷰 썸네일의 실측: 한 장 바이트·저장 탭 소요 ms·뷰 1/5/20에서의 .brnl 크기. e2e views.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).`,
     def: '썸네일 = C.THUMB_W(px) 폭 JPEG(품질 0.72 — 동작점 AS-C39). save_ms = «시점 저장» 버튼 click 왕복(굽기+목록 갱신 포함) · capture_ms = **굽기만**(diag.captureThumb — ㉮의 결정이 딛는 양. 2차 [8]·#49) · regen_view_ms = **㉯의 한 뷰 몫**(gotoView+전량 재그리기+굽기 — «열 때 다시 그린다»면 뷰마다 이만큼 든다). brnl_bytes_*는 같은 문서(획 셋)에서 뷰 수만 는 값.',
+    // 기준값 보존(#47·web2-17 2차 [16]) — 잠복 결함 인과의 «전» 값. 622e9ac에서 실측한
+    // 상수라 재실행에 안 낡는다(그 커밋의 화면에는 상시 지평선·대기 파선이 없었다).
+    baseline_622e9ac_thumb_bytes_median: 1499,
     ...ledger,
   }, null, 1))
 })

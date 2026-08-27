@@ -24,10 +24,14 @@ export interface LiftResult {
   lifted: Map<number, LiftedSeg>
   /** 내용 획인데 아직 3D 미확정 — 실패가 아니라 대기 */
   waiting: number[]
-  /** 대기의 **사유**(web2-17 1-c) — 조용히 대기시키지 않는다. 지금 사유는 하나다:
-   *  'aboveHorizon' = 지면 규칙이 돌았는데 그 끝이 지평선 위(또는 지평선 그 자리)라
-   *  지면과 못 만났다(`pointOnGround` null). 진단 패널이 이 수를 보인다. */
-  waitWhy: Map<number, 'aboveHorizon'>
+  /** 대기의 **사유**(web2-17 1-c) — 조용히 대기시키지 않는다. 원인이 둘이라 이름도 둘이다
+   *  (2차 리뷰어 [9] — 한 계수에 합치면 진단이 원인을 오귀속한다 #43):
+   *  'aboveHorizon' = 그 끝이 지평선 **위쪽**이라 광선이 위로 가 지면과 영영 안 만난다
+   *  (올려다보는 구도 — 팬으로 지평선을 옮기는 것이 답이다. DEFERRED에 구도 자체의 해법).
+   *  'onHorizon' = 그 끝이 지평선 **그 자리**(대역 안)라 광선이 지면과 평행하다
+   *  (지평선 따라긋기 획 — 퇴화. 카메라에도 지면에도 아무 일이 없다).
+   *  진단 패널이 두 수를 가른다. */
+  waitWhy: Map<number, 'aboveHorizon' | 'onHorizon'>
   /** 게이지 앵커가 된 획 (전역 스케일의 게이지 — 유일한 자유 선택) */
   anchorId: number | null
   /** id → 획 (문서에서 그대로 — 조회 편의) */
@@ -113,7 +117,7 @@ function scaleOf(doc: Doc): number | null {
 function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResult {
   const an = analyze(doc)
   const lifted = new Map<number, LiftedSeg>()
-  const waitWhy = new Map<number, 'aboveHorizon'>()
+  const waitWhy = new Map<number, 'aboveHorizon' | 'onHorizon'>()
   let anchorId: number | null = null
 
   const strokes = new Map(doc.strokes.map(s => [s.id, s]))
@@ -244,10 +248,14 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
         const dir = axisDir(an, axis)
         const useB = axis === 'V' && s.b.y > s.a.y   // 아래로 그은 수직선
         const g = pointOnGround(an, pose, useB ? s.b : s.a)
-        // 지면과 못 만났다 = 그 끝이 지평선 위다(정렬 포즈에서 위로 가는 광선 — web2-17 1-c).
-        // 조용히 대기시키지 않는다 — 사유를 남기고 진단 패널이 보인다. 올려다보는 구도의
-        // 해법 자체는 이 회차 밖이다(DEFERRED 「첫 획이 지면 위에 있을 수 없는 구도」).
-        if (!g) waitWhy.set(s.id, 'aboveHorizon')
+        // 지면과 못 만났다(web2-17 1-c) — 사유를 가른다: 지평선 대역 안(따라긋기 — 광선이
+        // 지면과 평행) 대 지평선 위쪽(올려다보기 — 광선이 위로). 조용히 대기시키지 않는다.
+        // 올려다보는 구도의 해법 자체는 이 회차 밖이다(DEFERRED 「첫 획이 지면 위에 있을
+        // 수 없는 구도」). 대역 임계는 classifyNext의 퇴화 갈래와 같은 값(OSNAP_RADIUS_PX).
+        if (!g) {
+          const py = (useB ? s.b : s.a).y
+          waitWhy.set(s.id, Math.abs(py - an.horizonY) <= C.OSNAP_RADIUS_PX ? 'onHorizon' : 'aboveHorizon')
+        }
         if (g && dir) {
           if (useB) {
             const rayA = rayThrough(an, pose, s.a)

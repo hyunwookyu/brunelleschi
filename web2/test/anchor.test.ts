@@ -151,7 +151,7 @@ describe('2 — 첫 선은 지면에 있다 (종류를 안 가린다)', () => {
     expect(s.app.lift.waiting).toContain(hz.id)
     expect(s.app.lift.an.roles.get(hz.id)).toBe('content')
     expect(s.app.lift.an.screenHDeclared).toBe(false)
-    expect(s.app.lift.waitWhy.get(hz.id)).toBe('aboveHorizon')
+    expect(s.app.lift.waitWhy.get(hz.id)).toBe('onHorizon')   // 따라긋기 — 위쪽(aboveHorizon)과 가른다(#43)
   })
 
   it('반례: 지평선 위에서 시작하면 지면과 안 만난다 — 대기', () => {

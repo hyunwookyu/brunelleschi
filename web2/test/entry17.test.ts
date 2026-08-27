@@ -8,12 +8,29 @@
 //   · horizonDocY를 H/2+50으로 바꾸면 ②가 실패한다(빈 문서 지평선 위치)
 //   · classifyNext의 screenHDeclared 설정을 빼면 ④가 실패한다(p1 잠금이 안 선다)
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterAll } from 'vitest'
+import { writeFileSync, mkdirSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { session } from './session'
 import { analyze, horizonDocY, frameAxes, DRAW_POSE, horizonScreenY } from '../src/core/camera'
+import { C } from '../src/core/constants'
 import type { V3 } from '../src/core/vec'
 
 const dot3 = (a: V3, b: V3) => a.x * b.x + a.y * b.y + a.z * b.z
+
+// 원장 — 이 파일의 측정을 stage0/out에 남긴다(§5 · 2차 리뷰어 [10]). 매 실행 다시 써진다.
+const ledger: Record<string, unknown> = {
+  what: 'web2-17 1-e ②~⑥·경계 팔의 측정 — entry17.test.ts가 매 실행 다시 쓴다. 문서는 필드 이름만 인용(#47).',
+  flags_explained: {
+    'axis_dots=0': '1점 주점 보정의 구성적 결과(설계 보장) — 0 아닌 입력의 직교는 axes.test가 잰다',
+    'two_vp.f2': 'f² = |PV₁||PV₂|는 정의의 항등(설계 보장) — 임계를 안 건다(#37)',
+  },
+}
+afterAll(() => {
+  const out = resolve(__dirname, '../../stage0/out/entry17_web2.json')
+  mkdirSync(resolve(__dirname, '../../stage0/out'), { recursive: true })
+  writeFileSync(out, JSON.stringify(ledger, null, 1))
+})
 
 describe('1-e ② — 지평선은 상시다', () => {
   it('빈 문서 — 지평선 화면 y = H/2 정확히 (H를 흔든다 — ㉣ 0이 아닌 격자)', () => {
@@ -46,6 +63,12 @@ describe('1-e ③ — 방 실루엣 진입로 (수평 바닥 → 좌우 수직 �
     expect(gl.b3.y).toBeCloseTo(gr.b3.y, 9)          // 같은 높이
     expect(gt.a3.y).toBeCloseTo(gl.b3.y, 9)          // 상단이 꼭대기 높이에 있다
     expect(gt.b3.y).toBeCloseTo(gr.b3.y, 9)
+    ledger['room_silhouette'] = {
+      waiting: s.app.lift.waiting.length, screenHDeclared: s.app.lift.an.screenHDeclared,
+      vps: s.app.lift.an.vps.length, lifted: s.app.lift.lifted.size,
+      wall_height_3d: gl.b3.y, wall_z: gb.a3.z,
+    }
+    console.log(`[측정] 1-e ③ — 대기 0 · screenH 참 · vps 0 · 벽 높이 ${gl.b3.y.toFixed(6)} · z ${gb.a3.z.toFixed(6)}`)
     // 한 평면(화면 평행 벽) — z가 넷 다 같다
     for (const g of [gl, gr, gt]) {
       expect(g.a3.z).toBeCloseTo(gb.a3.z, 9)
@@ -76,6 +99,9 @@ describe('1-e ④ — 1점 잠금 (방 실루엣 + 후퇴 대각선)', () => {
       dot3(fr[1]!.dir, fr[2]!.dir),
     ]
     console.log(`[측정] 1-e ④ 내적 셋: ${dots.map(d => d.toExponential(3)).join(' · ')}`)
+    // ⚠ 이 0은 1점 주점 보정(principal.x = vp0.x)의 구성적 결과이기도 하다 — 0이 아닌
+    // 입력의 직교는 axes.test 「소실점을 화면 어디에 두든 직교다」(vpx 8자리)가 지킨다.
+    ledger['p1_lock'] = { vps: an.vps.length, p1Locked: an.p1Locked, axis_dots: dots }
     for (const dd of dots) expect(Math.abs(dd)).toBeLessThan(1e-12)
     // 잠긴 뒤 두 번째 소실점은 못 만든다(P1 불가역 — D-L53)
     const d2 = s.draw(300, 650, 180, 600)!
@@ -94,7 +120,12 @@ describe('1-e ⑤ — 2점: 빈 문서에서 서로 다른 대각선 둘', () =>
     expect(an.fSource).toBe('two-vp')
     const u1 = Math.abs(an.vps[0]!.x - an.principal!.x)
     const u2 = Math.abs(an.vps[1]!.x - an.principal!.x)
-    console.log(`[측정] 1-e ⑤ f² = ${(an.f! * an.f!).toFixed(6)} · |PV₁||PV₂| = ${(u1 * u2).toFixed(6)}`)
+    // ⚠ f² = |PV₁||PV₂|는 **정의의 항등**이다(f가 그 곱의 제곱근으로 계산된다 — #37·
+    //   §5.1 유형 3). 지시가 양변을 값으로 적으라 해 남기되, 판정력은 vps 좌표·fSource에
+    //   있다 — 원장에도 «설계 보장»으로 적는다.
+    console.log(`[측정] 1-e ⑤ f² = ${(an.f! * an.f!).toFixed(6)} · |PV₁||PV₂| = ${(u1 * u2).toFixed(6)} (항등 — 판정은 vps·fSource)`)
+    ledger['two_vp'] = { vps: an.vps.map(v => ({ x: v.x, y: v.y })), f: an.f, fSource: an.fSource,
+      f2_identity_note: 'f² = |PV₁||PV₂|는 구성상 항등(설계 보장) — 임계를 안 건다' }
     expect(an.f! * an.f!).toBeCloseTo(u1 * u2, 6)
     expect(s.app.lift.waiting).toEqual([])            // 두 대각선 다 지면에 올라간다(makesVp)
   })
@@ -131,7 +162,31 @@ describe('1-e ⑥ — 기존 방식 회귀: 화면 수평 획(지평선 따라�
     }
     // 따라긋기 획 자신은 대기(사유 있음 — 1-c 규약)로 남는다
     expect(a.app.lift.waiting).toEqual([hz.id])
-    expect(a.app.lift.waitWhy.get(hz.id)).toBe('aboveHorizon')
+    expect(a.app.lift.waitWhy.get(hz.id)).toBe('onHorizon')   // 따라긋기 — 위쪽과 가른다(#43)
+  })
+})
+
+describe('퇴화 대역의 경계 — |y − H/2| ≤ OSNAP_RADIUS_PX가 «퇴화 대 1점 선언»을 가른다', () => {
+  // 2차 리뷰어 [4] — 이 경계가 이제 «P1 불가역 잠금 대 대기»를 가르므로 양쪽을 값으로
+  // 잰다. 대역 자체는 동작점 하나다(#12 — «지평선 위인가»의 기존 임계 재사용. 실기기에서
+  // 손이 지평선을 따라 그을 때 8px 안에 드는가는 DEFERRED 실기기 표가 최종).
+  it('경계 안(≤8px) = 퇴화 · 경계 밖(≥9px) = 1점 선언 — 양쪽에서 플립한다', () => {
+    const results: { off: number; declared: boolean }[] = []
+    for (const off of [0, 3, 7, 8, 9, 12, 20]) {
+      const s = session(1200, 800)
+      s.draw(300, 400 + off, 800, 400 + off)          // 화면 수평 획(축 스냅이 정확 수평으로)
+      results.push({ off, declared: s.app.lift.an.screenHDeclared })
+    }
+    ledger['band_boundary'] = { radius_px: C.OSNAP_RADIUS_PX, results }
+    console.log(`[측정] 퇴화 경계 — ${results.map(r => `${r.off}px:${r.declared ? '선언' : '퇴화'}`).join(' · ')}`)
+    for (const r of results) {
+      expect(r.declared, `off=${r.off}`).toBe(r.off > C.OSNAP_RADIUS_PX)
+    }
+    // 경계 밖 선언은 그대로 P1 잠금으로 이어진다(불가역 — 위 ④의 규칙과 같다)
+    const s = session(1200, 800)
+    s.draw(300, 410, 800, 410)                        // 대역 밖 10px — 1점 선언
+    s.draw(300, 650, 420, 600)                        // 후퇴 대각선 → vps 1 → 잠금
+    expect(s.app.lift.an.p1Locked).toBe(true)
   })
 })
 

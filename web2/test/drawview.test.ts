@@ -3,7 +3,9 @@
 // 반증(D-3): 합성(composeView)을 덮어쓰기로 바꾸면 ④가 실패한다 — 아래 「반증」 팔이
 // 덮어쓰기의 결과를 직접 계산해 «합성과 다르고 구도를 잃는다»를 값으로 보인다.
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterAll } from 'vitest'
+import { writeFileSync, mkdirSync } from 'node:fs'
+import { resolve } from 'node:path'
 import {
   createApp, commitStroke, panBy, dollyBy, setPose, resetPose, clearAll, loadDoc,
   composeView, docToScreen,
@@ -11,6 +13,19 @@ import {
 import { parseBrnl, serializeBrnl } from '../src/core/file'
 import { DRAW_POSE } from '../src/core/camera'
 import { pt, v3, quatAxisAngle } from '../src/core/vec'
+
+// 원장 — 3-d ④의 화면 좌표를 stage0/out에 남긴다(§5 · 2차 리뷰어 [3][10])
+const ledger: Record<string, unknown> = {
+  what: 'web2-17 3-d 팔의 측정 — 합성(composeView) 화면 좌표. drawview.test.ts가 매 실행 다시 쓴다.',
+  flags_explained: {
+    'fit.ox/oy=0 · corners_plain.tl=0': '기하값이다 — 800×600을 1200×900에 맞추면 여백이 정확히 0이고 좌상 모서리가 (0,0)이다(카운터가 아니다)',
+  },
+}
+afterAll(() => {
+  const out = resolve(__dirname, '../../stage0/out/drawview_web2.json')
+  mkdirSync(resolve(__dirname, '../../stage0/out'), { recursive: true })
+  writeFileSync(out, JSON.stringify(ledger, null, 1))
+})
 
 describe('3-a — 첫 획 전에는 팬만, 줌은 막힌다', () => {
   it('② 첫 획 전 줌이 view를 안 바꾼다 · 첫 획 뒤 줌은 종전대로 바꾼다', () => {
@@ -102,6 +117,12 @@ describe('3-c — 저장·복원과 프레임 맞춤의 합성', () => {
     const br = docToScreen({ view: plain } as any, pt(800, 600))
     expect(tl).toEqual({ x: 0, y: 0 })
     expect(br).toEqual({ x: 1200, y: 900 })
+    ledger['compose_800x600_in_1200x900'] = {
+      fit, draw, composed,
+      corners_plain: { tl, br },
+      note: '구도 보존 검증: 문서점 화면좌표 = 작도 화면좌표 × s_fit + o_fit (팔이 4점에서 잰다)',
+    }
+    console.log(`[측정] 3-d ④ — fit ${JSON.stringify(fit)} · 합성 ${JSON.stringify(composed)} · 프레임 화면 (0,0)~(1200,900)`)
   })
 
   it('반증(D-3) — 합성을 덮어쓰기로 바꾸면 ④가 실패한다', () => {

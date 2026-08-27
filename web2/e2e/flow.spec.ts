@@ -425,6 +425,7 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(await inkPixels(page, 0, 0, 1200, 380)).toBe(0)
   expect(await inkPixels(page, 0, 397, 1200, 404)).toBeGreaterThan(100)
   expect(await page.evaluate(() => localStorage.getItem('b2-autosave'))).toBeNull()
+  expect(await page.evaluate(() => localStorage.getItem('b2-autosave2'))).toBeNull()
 
   // 빈 화면에서 다시 그리기가 처음처럼 된다
   await drawLine(page, 100, 400, 1100, 402)

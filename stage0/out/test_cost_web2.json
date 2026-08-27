@@ -3,10 +3,10 @@
  "measured_at": "web2-16 3부(2026-08-27 — 대기선 흑연 파선·즉시 끊기 마감 전량 측정)",
  "unit": {
   "command": "npm test (vitest)",
-  "files": 47,
-  "tests": 463,
-  "wall_s": 5.0,
-  "note": "web2-17 1~3부 +26팔·+3파일(migrate 7 — 오라클 대조·반증 dy=0 / entry17 9 — 1-e ②~⑥·탭·1-c / drawview 9 — 3-d) — 지시 회귀 팔. 기존 파일은 지평선 상시 전환으로 픽스처 이행(팔 수 불변·file.test 3팔은 의도 반전)."
+  "files": 49,
+  "tests": 467,
+  "wall_s": 5.2,
+  "note": "web2-17 1~3부 +30팔·+3파일(migrate 11 · entry17 10 · drawview 9) + erase.test +1(따라긋기 획은 지워진다). 437→467 회계: +26(1차) +4(리뷰 대응 — 비정수 격자·표본2·가드·경계). 파일 46+3=49(#70 부기 — 파일 수까지 맞춘다)."
  },
  "e2e": {
   "command": "npm run e2e (playwright, dpr1+dpr2)",
@@ -16,7 +16,7 @@
   "arms_source": "npx playwright test --list → 「Total: 188 tests in 23 files」(94팔). --list 출력이 정본(#69 ㉤)",
   "passed": 188,
   "failed": 0,
-  "note": "web2-17 1~3부 +4팔(entry17.spec — 방 실루엣·자동저장 v1 변환·선언 전 줌/드로뷰·되돌리기 안내). 기존 8팔 이행(face 5·brush·flow·pwa — 지평선 상시), views.spec은 잠복 결함(팝업 top 클램프가 이미지 디코드 전 높이로 고정) 수리로 통과."
+  "note": "web2-17 1~3부 +4팔(entry17.spec). 기존 8팔 이행(face 5·brush·flow·pwa) · views.spec 잠복 결함(팝업 top 클램프) 수리. 90→94팔."
  },
  "typecheck_build": {
   "command": "tsc --noEmit · vite build",

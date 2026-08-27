@@ -67,8 +67,8 @@ const diagPanel = initDiagPanel(
         : '—'],
       ['.brnl', `${brnlBytes()} B · 획 ${app.doc.strokes.length}`],
       // 대기의 사유(web2-17 1-c) — 「아무 일도 안 일어난다」가 사유 없이 남지 않는다.
-      // 지금 사유는 하나다: 지평선 위 시작(지면과 못 만남 — 팬으로 지평선을 옮기는 자리).
-      ['대기 획', `${app.lift.waiting.length} (지평선 위 ${app.lift.waitWhy.size})`],
+      // 원인 둘을 가른다(#43): 위쪽(올려다보기 — 팬이 답) · 그 자리(따라긋기 — 퇴화).
+      ['대기 획', `${app.lift.waiting.length} (지평선 위쪽 ${[...app.lift.waitWhy.values()].filter(v => v === 'aboveHorizon').length} · 지평선 자리 ${[...app.lift.waitWhy.values()].filter(v => v === 'onHorizon').length})`],
       // 「잘못 찍힌 점」 문이 버린 수(web2-13 3-b) — 조용히 버리지 않는다: 수가 말한다.
       // 크면 C.STRAY_MIN_PX가 틀린 것이다(원장 stray_gate_web2.json이 근거 대역).
       ['버린 짧은 획', `${app.strayCount} (문 ${C.STRAY_MIN_PX}px)`],
@@ -127,7 +127,13 @@ try { if (localStorage.getItem(OWN3D_KEY) === 'off') app.own3d = false } catch {
 // 자동 저장 복원 — 문서 프레임이 창과 다르면 화면 배율로 맞춘다(문서 좌표 불변).
 // **작도 시점(drawView)과는 합성이다**(web2-17 3-c — `composeView` 한 자리): 문서 →
 // drawView 화면 → 프레임 맞춤 창. 덮어쓰면 다른 창 크기에서 연 파일이 구도를 잃는다.
-const AUTOSAVE_KEY = 'b2-autosave'
+// ⚠ 열쇠를 **버전으로 가른다**(web2-17 2차 리뷰어 [13]): 옛 열쇠를 그대로 쓰면, 캐시된
+// 옛 PWA가 v2 자동 저장을 거부하고 빈 화면으로 시작한 뒤 **첫 조작에서 그 열쇠를 v1으로
+// 덮어써** 새 앱의 그림이 소실된다(옛 코드의 «빈 문서는 지운다» 경로 포함). 새 앱은 새
+// 열쇠에만 쓰고, 옛 열쇠는 읽기(이행)만 한다 — 옛 PWA는 새 열쇠를 모르므로 못 건드린다.
+// 대가: 두 판을 오가며 쓰면 서로의 자동 저장을 못 본다(새 열쇠가 이긴다) — 파일 저장이 답.
+const AUTOSAVE_KEY_OLD = 'b2-autosave'
+const AUTOSAVE_KEY = 'b2-autosave2'
 function fitViewToFrame() {
   const fw = app.doc.frame.W, fh = app.doc.frame.H
   const draw = app.drawView ?? { s: 1, ox: 0, oy: 0 }
@@ -136,7 +142,8 @@ function fitViewToFrame() {
   app.view = composeView({ s, ox: (W - fw * s) / 2, oy: (H - fh * s) / 2 }, draw)
 }
 try {
-  const saved = localStorage.getItem(AUTOSAVE_KEY)
+  // 새 열쇠 우선 — 없으면 옛 열쇠(v1)를 읽어 이행한다(변환은 parseBrnl 안이다).
+  const saved = localStorage.getItem(AUTOSAVE_KEY) ?? localStorage.getItem(AUTOSAVE_KEY_OLD)
   if (saved) {
     const data = parseBrnl(saved)
     if (data && data.doc.strokes.length > 0) {
@@ -172,7 +179,8 @@ app.listeners.push(() => {
     try {
       // 빈 문서는 **지운다** — 비우기 뒤에 늦게 도는 이 타이머가 빈 것을 도로 써 두면
       // 열쇠가 남는다. 새로고침이 안 되살리는 것(복원 조건)과 별개로 자리를 안 남긴다.
-      if (app.doc.strokes.length === 0) { localStorage.removeItem(AUTOSAVE_KEY); return }
+      // 옛 열쇠도 같이 지운다 — 안 지우면 다음 부팅의 «옛 열쇠 이행»이 비운 그림을 되살린다
+      if (app.doc.strokes.length === 0) { localStorage.removeItem(AUTOSAVE_KEY); localStorage.removeItem(AUTOSAVE_KEY_OLD); return }
       localStorage.setItem(AUTOSAVE_KEY, serializeBrnl({
         doc: app.doc, nextId: app.nextId, savedViews: app.savedViews, drawView: app.drawView,
       }))
@@ -628,7 +636,7 @@ document.getElementById('btn-clear')!.addEventListener('click', () => {
 function doClear() {
   clearAll(app, window.innerWidth, window.innerHeight)
   unitSel.value = app.doc.unit
-  try { localStorage.removeItem(AUTOSAVE_KEY) } catch { /* 저장소가 없으면 지울 것도 없다 */ }
+  try { localStorage.removeItem(AUTOSAVE_KEY); localStorage.removeItem(AUTOSAVE_KEY_OLD) } catch { /* 저장소가 없으면 지울 것도 없다 */ }
   draft = null; hover = null; eraserPos = null; facePrev = null // 지운 획을 가리키던 표식이 남지 않게
   syncViewButtons()
   invalidate()

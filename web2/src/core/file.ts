@@ -180,6 +180,10 @@ export function parseBrnl(text: string): BrnlData | null {
   // 평행이동이 소거된다. 팔 legacy_web2_16.json 오라클이 값으로 지킨다).
   if (raw.version === 1 && strokes.length > 0) {
     const first = strokes[0]!
+    // 가드(2차 리뷰어 [5]) — 옛 앱의 첫 획은 구성상 지평선(정확히 수평·작도 포즈)이다.
+    // 아니면(손 편집·손상) 이 변환의 전제가 깨진 것이고, 내용 획을 버리고 dy를 틀리게
+    // 잡아 **문서 전체를 조용히 어긋나게** 열 수 있다 — 거부가 낫다(2-a와 같은 판단).
+    if (first.a.y !== first.b.y || first.view) return null
     const hzOld = (first.a.y + first.b.y) / 2
     const dy = horizonDocY(raw.frame.H) - hzOld   // 출처는 camera.ts 하나다(1-b 원칙 a)
     strokes.shift()               // 지평선 획 폐기 — 작도 획이었고 3D가 없었다(무한원)

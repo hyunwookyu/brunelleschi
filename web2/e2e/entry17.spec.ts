@@ -41,6 +41,7 @@ test('1-e ③④ 종단 — 방 실루엣 → 후퇴 대각선 = 1점 잠금', a
 
 test('2-c ④ 배선 — 옛 자동 저장(v1·지평선 520)이 변환을 지나 열린다', async ({ page }) => {
   await page.addInitScript(() => {
+    // 옛 열쇠에 심는다 — 새 앱의 «옛 열쇠 읽기 이행»(D-W4)까지 이 팔이 잰다
     localStorage.setItem('b2-autosave', JSON.stringify({
       format: 'brnl', version: 1, frame: { W: 1200, H: 800 },
       strokes: [
