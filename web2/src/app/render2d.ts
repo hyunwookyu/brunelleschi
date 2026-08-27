@@ -15,12 +15,19 @@ import { waitFadeFactor, atOwnPose } from '../core/waitfade'
 import type { OsnapHit } from '../core/osnap'
 import { dist2, type Pt, type V3 } from '../core/vec'
 
+/** D-3 반증 손잡이(web2-19 1부) — e2e만 켠다(diag.forceConstructing). 본문 주석 참조. */
+let FORCE_CONSTRUCTING = false
+export const setForceConstructing = (v: boolean) => { FORCE_CONSTRUCTING = v }
+
 export interface Draft {
   start: Pt
   end: Pt
   raw: Pt[]
   /** 미리보기 라벨 — 'vp' | 축id | null(자유). 'horizon'은 web2-17에서 없어졌다. */
   label: string | null
+  /** 이 획이 만들 소실점 자리(label 'vp'일 때 — web2-19 1-b). 파선 ✕ 예고가 읽는다.
+   *  출처는 resolveEnd(= classifyNext)가 낸 값 하나다 — 여기서 다시 계산하지 않는다. */
+  vp?: Pt
   startSnap: OsnapHit | null
   startP3: V3 | null
   endSnap: OsnapHit | null
@@ -409,37 +416,57 @@ export function draw2d(
     ctx.stroke()
   }
 
-  // 미리보기 — 붙은 좌표가 그대로 확정된다(원칙 d). 작도 중엔 안내색, 이후엔 재료색.
+  // 미리보기 — 붙은 좌표가 그대로 확정된다(원칙 d). **몸체는 언제나 재료색이다**
+  // (web2-19 1부). «카메라를 건드리는 획»의 안내 파랑(constructing 갈래)은 없앴다 —
+  // web2-17이 그 규칙을 낡게 만들었다: 'horizon'은 없어졌고 남은 'vp'는 진짜 모서리다
+  // (방 실루엣의 후퇴선은 벽 모서리이면서 소실점을 만든다). 「소실점을 만든다」는
+  // 몸체의 색이 아니라 **생길 자리의 파선 ✕**가 말한다(아래 — 파선 = 아직/숨은).
   if (draft) {
     const g = activeGrade(app)
     const m = MAT[g]
     // 미리보기 굵기도 **확정과 같은 함수**에서 나온다(원칙 d: 붙은 것이 그대로 확정된다)
     const drawW = widthOfMat({ grade: g, w: g === 'INK' ? app.nib : undefined })
-    // 안내색은 «카메라를 건드리는 획»에만. `!constructionDone`을 함께 보던 초판은
-    // 1점 상태에서 그린 **내용 획까지** 작도선처럼 파랗게 칠했다 — 아직 못 그린다는 신호로 읽힌다.
-    const constructing = draft.label === 'vp'
+    // D-3 반증 손잡이(web2-19 1부) — 없앤 안내 파랑을 이 draft 하나에 되살린다.
+    // e2e graphite.spec ①-반증이 «파랑 계수 격자가 실패 가능함»을 매 실행 증명하는
+    // 전용 통로다(diag.forceConstructing — UI에서 못 켠다). 앱 경로에서는 언제나 false.
+    const forced = FORCE_CONSTRUCTING && draft.label === 'vp'
     // 축에 붙어도 선은 **재료색**이다(web2-10 지시 7 — 축 색 넷을 뺐다. 확정될 모습
     // 그대로가 원칙 d와도 맞다). «붙었다»는 아래 파선 안내가 말한다.
     // 몸체(web2-12 2번) — brush 겹이 이 draft를 그리고 있으면 여기서 몸체를 **긋지 않는다**
     // (`draftBrushed` — 겹 순서 역전을 막는다, state.ts 그 술어의 머리주석이 정본).
-    // 그 밖(classic·INK·작도선)은 종전 벡터 미리보기 그대로다.
-    if (!draftBrushed(app, draft.label)) {
-      ctx.strokeStyle = constructing ? COL.preview : m.color
+    // 그 밖(classic·INK)은 종전 벡터 미리보기 그대로다.
+    if (forced || !draftBrushed(app)) {
+      ctx.strokeStyle = forced ? COL.preview : m.color
       // 몸체 알파도 확정과 같게 — 확정 몸체(Line2)는 MAT.alpha로 그려지는데 미리보기가
       // 불투명이면 긋는 동안이 더 진하다(「검은 벡터선」 관측의 절반이 이것이다).
       // 떼는 순간 무변화 게이트(draftgate.spec)가 이 정합을 잰다.
-      ctx.globalAlpha = constructing ? 1 : m.alpha
-      ctx.lineWidth = (constructing ? C.LINE_W_RESULT : drawW) * is
+      ctx.globalAlpha = forced ? 1 : m.alpha
+      ctx.lineWidth = (forced ? C.LINE_W_RESULT : drawW) * is
       ctx.beginPath(); ctx.moveTo(draft.start.x, draft.start.y); ctx.lineTo(draft.end.x, draft.end.y); ctx.stroke()
       ctx.globalAlpha = 1
       // 잉크 번짐(9번) — 그리는 중에도 같은 함수·같은 시드(잠정 id)·같은 점렬이라
       // 떼는 순간 자국이 그대로 이어진다(뗌 게이트가 잰다). edge는 승격 결과와 맞춘다.
-      if (g === 'INK' && !constructing) {
+      if (g === 'INK') {
         inkFlow(ctx, draft.nid, draft.start, draft.end, draft.raw,
           draft.start, draft.end, drawW, is, true)
       }
     }
-    if (draft.label && !constructing) axisGuide(ctx, draft, is)
+    // 파선 ✕ — 「이 획이 소실점을 만든다」의 예고(web2-19 1-b). 형태·색은 확정 ✕와
+    // 같다(6px 팔 · COL.vpMark). 파선 = 아직/숨은(web2-16 3-a의 어법 그대로 — 값도
+    // 대기 획의 WAIT_DASH를 재사용한다: 숫자를 새로 짓지 않는다 #54).
+    // 컬링도 확정 ✕와 같은 함수·같은 여백이다(vpOnScreen 50 — 원칙 a).
+    if (draft.vp && vpOnScreen(v, draft.vp, cw, ch, 50)) {
+      ctx.strokeStyle = COL.vpMark
+      ctx.lineWidth = 1 * is
+      ctx.setLineDash([C.WAIT_DASH_ON_PX * is, C.WAIT_DASH_OFF_PX * is])
+      ctx.beginPath()
+      ctx.moveTo(draft.vp.x - 6 * is, draft.vp.y - 6 * is); ctx.lineTo(draft.vp.x + 6 * is, draft.vp.y + 6 * is)
+      ctx.moveTo(draft.vp.x - 6 * is, draft.vp.y + 6 * is); ctx.lineTo(draft.vp.x + 6 * is, draft.vp.y - 6 * is)
+      ctx.stroke()
+      ctx.setLineDash([])
+    }
+    // 축 파선 안내 — 축에 붙었을 때만. 'vp'는 축이 아니다(자유 방향 — 예고는 위 파선 ✕).
+    if (draft.label && draft.label !== 'vp') axisGuide(ctx, draft, is)
     if (draft.startSnap) mark(ctx, draft.startSnap, is)
     if (draft.endSnap) mark(ctx, draft.endSnap, is)
     // 축이 사영으로 이겼다(2-a) — 기호는 겨눈 특징점에, 끝은 축선 위에 있다. 둘이

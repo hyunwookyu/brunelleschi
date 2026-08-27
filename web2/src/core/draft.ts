@@ -23,6 +23,10 @@ export interface EndResolve {
   endSnap: OsnapHit | null
   /** 축 스냅이 붙었으면 그 축 — 오스냅이 이겼으면 null */
   axis: AxisId | null
+  /** **이 획이 만들 소실점 자리**(role 'vp'일 때 — web2-19 1-b). 몸체는 재료색이고
+   *  「소실점을 만든다」는 이 자리의 파선 ✕가 말한다. 값은 classifyNext가 낸 것
+   *  그대로다(확정 시 vps에 들어갈 바로 그 좌표 — 원칙 d: 예고가 그대로 확정된다). */
+  vp?: Pt
   /** **지금 그리고 있는 선의 실척 길이 mm** — 스케일·3D가 서야 값이 있다(web2-08 지시 4-5).
    *  치수 스냅이 걸렸으면 스냅된 값이다. 리본 패널·확정 3D와 같은 계산이다(`core/dim.ts`). */
   lenMm: number | null
@@ -116,7 +120,7 @@ export function resolveEnd(
   // ③ **새 축을 정의하는 획이면 자유다.** 이 한 경우만 예외이고, 예외인 이유가 분명하다:
   //    그 획은 «있는 축 중 하나»가 아니라 **축을 만드는 중**이다. 여기서 기존 축에 붙이면
   //    두 번째 소실점을 영영 못 만든다(실측: 팔 열셋이 그것으로 깨졌다).
-  if (cls!.role === 'vp') return { end: cursor, label: 'vp', endSnap: null, axis: null, lenMm: null }
+  if (cls!.role === 'vp') return { end: cursor, label: 'vp', endSnap: null, axis: null, lenMm: null, vp: cls!.vp }
 
   // ④ 그 외에는 **항상 가장 가까운 축**이다. 임계가 없고 자유 방향도 없다(지시 5-a).
   const ds = ds0!            // ⓪에서 이미 풀었다 — 같은 인자·같은 함수(두 번 안 부른다)

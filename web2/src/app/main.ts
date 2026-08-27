@@ -4,7 +4,7 @@ import { createApp, commitStroke, undo, redo, resetPose, saveView, deleteView, g
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
-import { resize2d, draw2d, horizonVisible, type Draft } from './render2d'
+import { resize2d, draw2d, horizonVisible, setForceConstructing, type Draft } from './render2d'
 import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost } from './render3d'
 import { serializeBrnl, parseBrnl } from '../core/file'
 import { toOBJ, toMTL, toGLTF } from '../core/export'
@@ -873,7 +873,7 @@ function frame() {
     // draft 몸체(web2-12 2번) — 확정과 같은 Line2가 그린다(질감은 아래 brushLayer.sync).
     // 눌리는 술어는 draftBrushed 하나다(#54 — state.ts 머리주석이 정본).
     const g = activeGrade(app)
-    setDraftLine(r3d, app, draft && draftBrushed(app, draft.label)
+    setDraftLine(r3d, app, draft && draftBrushed(app)
       ? { a: draft.start, b: draft.end, grade: g,
           w: widthOfMat({ grade: g, w: app.tool === 'pen' && app.nib !== C.NIB_PX ? app.nib : undefined }) }
       : null)
@@ -1022,6 +1022,9 @@ const diag = {
   captureThumb: () => captureThumb(),
   /** 진행 중인 draft — 게이트 팔이 좌표·잠정 id를 확정 획과 대조한다(web2-12 2번) */
   draft: () => draft,
+  /** D-3 반증 손잡이(web2-19 1부) — 없앤 안내 파랑을 되살려 «파랑 계수 격자가 실패
+   *  가능함»을 e2e가 매 실행 증명한다(graphite.spec ①-반증). UI 없음 — 여기서만 켠다. */
+  forceConstructing: (v: boolean) => { setForceConstructing(v); invalidate() },
   /** 오스냅 판정 그대로(web2-12 8번) — 넘김 꼬리가 스냅 대상이 아님을 팔이 잰다 */
   osnapAt: (x: number, y: number) =>
     osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / app.view.s },

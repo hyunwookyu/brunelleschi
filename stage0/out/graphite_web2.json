@@ -1,0 +1,315 @@
+{
+  "what": "web2-19 1-c — 손 오차를 태운 화면 평행 의도 획의 갈래 분포. **측정만 한다** — 임계(PARALLEL_PX·SCREEN_PARALLEL_RATIO·VP_FAR_W)는 이 회차가 만지지 않는다(지시 ⚠⚠ — web2-17이 따라긋기 8px 대역에서 경계 플립을 실측한 자리다). 판단은 다음 회차 몫.",
+  "def": "branch: H/V = 화면 평행 선언 · vp = 소실점 정의 · short-vp = 방향은 소실점인데 VP_MIN_LEN 미만 · content = 그 외. minVpErr = 그 (길이,이격)에서 소실점이 서는 최소 끝점 오차 px(null = 이 격자 안 없음). vpDist = 시작점에서 소실점까지 화면 px.",
+  "constants": {
+    "PARALLEL_PX": 1.5,
+    "SCREEN_PARALLEL_RATIO": 0.05,
+    "VP_FAR_W": 6,
+    "MIN_DIR_LEN_RATIO": 0.02,
+    "VP_MIN_LEN_RATIO": 0.04,
+    "OSNAP_RADIUS_PX": 8,
+    "frame": {
+      "W": 1200,
+      "H": 800,
+      "HZ": 400,
+      "DIAG": 1442.2205101855957
+    }
+  },
+  "grid": {
+    "LENGTHS": [
+      40,
+      70,
+      110,
+      140,
+      200,
+      300
+    ],
+    "HEIGHTS": [
+      80,
+      160,
+      250
+    ],
+    "ERRORS": [
+      0,
+      0.5,
+      1,
+      1.5,
+      2,
+      3,
+      4,
+      5,
+      6,
+      8
+    ],
+    "SIGNS": [
+      1,
+      -1
+    ],
+    "n_per_table": 360
+  },
+  "horizontal": {
+    "byErr": {
+      "0": {
+        "H": 36
+      },
+      "1": {
+        "H": 36
+      },
+      "2": {
+        "short-vp": 6,
+        "vp": 8,
+        "H": 22
+      },
+      "3": {
+        "short-vp": 6,
+        "vp": 14,
+        "H": 16
+      },
+      "4": {
+        "short-vp": 6,
+        "vp": 20,
+        "H": 10
+      },
+      "5": {
+        "short-vp": 6,
+        "vp": 24,
+        "H": 6
+      },
+      "6": {
+        "short-vp": 6,
+        "vp": 24,
+        "H": 6
+      },
+      "8": {
+        "short-vp": 6,
+        "vp": 28,
+        "H": 2
+      },
+      "0.5": {
+        "H": 36
+      },
+      "1.5": {
+        "H": 36
+      }
+    },
+    "minVpErr": {
+      "L40|h80": null,
+      "L40|h160": null,
+      "L40|h250": null,
+      "L70|h80": 2,
+      "L70|h160": 2,
+      "L70|h250": 3,
+      "L110|h80": 2,
+      "L110|h160": 3,
+      "L110|h250": 4,
+      "L140|h80": 2,
+      "L140|h160": 4,
+      "L140|h250": 5,
+      "L200|h80": 3,
+      "L200|h160": 5,
+      "L200|h250": 8,
+      "L300|h80": 4,
+      "L300|h160": 8,
+      "L300|h250": null
+    },
+    "hand_band": {
+      "n": 144,
+      "vp": 66,
+      "note": "#68의 손 대역(2~5px)에서 소실점 갈래로 떨어진 칸 — 비율이 아니라 분자/분모(§5)"
+    }
+  },
+  "vertical": {
+    "byErr": {
+      "0": {
+        "V": 36
+      },
+      "1": {
+        "V": 36
+      },
+      "2": {
+        "V": 36
+      },
+      "3": {
+        "short-vp": 6,
+        "V": 30
+      },
+      "4": {
+        "short-vp": 6,
+        "vp": 6,
+        "V": 24
+      },
+      "5": {
+        "short-vp": 6,
+        "vp": 6,
+        "V": 24
+      },
+      "6": {
+        "short-vp": 6,
+        "vp": 12,
+        "V": 18
+      },
+      "8": {
+        "short-vp": 6,
+        "vp": 18,
+        "V": 12
+      },
+      "0.5": {
+        "V": 36
+      },
+      "1.5": {
+        "V": 36
+      }
+    },
+    "minVpErr": {
+      "L40|h80": null,
+      "L40|h160": null,
+      "L40|h250": null,
+      "L70|h80": 4,
+      "L70|h160": 4,
+      "L70|h250": 4,
+      "L110|h80": 6,
+      "L110|h160": 6,
+      "L110|h250": 6,
+      "L140|h80": 8,
+      "L140|h160": 8,
+      "L140|h250": 8,
+      "L200|h80": null,
+      "L200|h160": null,
+      "L200|h250": null,
+      "L300|h80": null,
+      "L300|h160": null,
+      "L300|h250": null
+    },
+    "hand_band": {
+      "n": 144,
+      "vp": 12,
+      "note": "#68의 손 대역(2~5px)에서 소실점 갈래로 떨어진 칸 — 비율이 아니라 분자/분모(§5)"
+    },
+    "ratio_gate_px_per_L": {
+      "L40": 2,
+      "L70": 3.5,
+      "L110": 5.5,
+      "L140": 7,
+      "L200": 10,
+      "L300": 15
+    }
+  },
+  "path_check": [
+    {
+      "kind": "horiz",
+      "L": 140,
+      "h": 160,
+      "err": 0,
+      "predicted": "H",
+      "vpsAfter": 0,
+      "agree": true
+    },
+    {
+      "kind": "horiz",
+      "L": 140,
+      "h": 160,
+      "err": 1.5,
+      "predicted": "H",
+      "vpsAfter": 0,
+      "agree": true
+    },
+    {
+      "kind": "horiz",
+      "L": 140,
+      "h": 160,
+      "err": 3,
+      "predicted": "H",
+      "vpsAfter": 0,
+      "agree": true
+    },
+    {
+      "kind": "horiz",
+      "L": 140,
+      "h": 160,
+      "err": 8,
+      "predicted": "vp",
+      "vpsAfter": 1,
+      "agree": true
+    },
+    {
+      "kind": "horiz",
+      "L": 70,
+      "h": 80,
+      "err": 2,
+      "predicted": "vp",
+      "vpsAfter": 1,
+      "agree": true
+    },
+    {
+      "kind": "horiz",
+      "L": 300,
+      "h": 250,
+      "err": 3,
+      "predicted": "H",
+      "vpsAfter": 0,
+      "agree": true
+    },
+    {
+      "kind": "horiz",
+      "L": 300,
+      "h": 160,
+      "err": 8,
+      "predicted": "vp",
+      "vpsAfter": 1,
+      "agree": true
+    },
+    {
+      "kind": "horiz",
+      "L": 40,
+      "h": 160,
+      "err": 5,
+      "predicted": "short-vp",
+      "vpsAfter": 0,
+      "agree": true
+    },
+    {
+      "kind": "vert",
+      "L": 70,
+      "h": 160,
+      "err": 4,
+      "predicted": "vp",
+      "vpsAfter": 1,
+      "agree": true
+    },
+    {
+      "kind": "vert",
+      "L": 140,
+      "h": 160,
+      "err": 4,
+      "predicted": "V",
+      "vpsAfter": 0,
+      "agree": true
+    },
+    {
+      "kind": "vert",
+      "L": 70,
+      "h": 160,
+      "err": 2,
+      "predicted": "V",
+      "vpsAfter": 0,
+      "agree": true
+    },
+    {
+      "kind": "vert",
+      "L": 200,
+      "h": 160,
+      "err": 8,
+      "predicted": "V",
+      "vpsAfter": 0,
+      "agree": true
+    }
+  ],
+  "flags_explained": {
+    "constants/metric_defs 스냅샷 없음": "web2 라인의 원장은 상수 스냅샷 등록부 밖이다(공통 형태 — xint_web2와 같다). 대신 constants 블록에 이 측정이 의존하는 값을 그대로 싣는다",
+    "판정선이 분포에 없다": "지시 1-c가 «재기만 한다»다 — 분포의 좋고 나쁨을 이 팔이 판정하면 그것이 곧 임계 판단이 된다. 판정선은 격자의 변별력(H·vp 둘 다 존재)과 경로 일치뿐"
+  },
+  "headless_vs_device": {
+    "headless": "분류 갈래·문턱 오차·경로 일치 — 위 표 전부",
+    "device": "실제 손의 처짐 분포(이 격자는 오차를 «심은» 것이지 손을 «잰» 것이 아니다) — 다음 회차"
+  }
+}

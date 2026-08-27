@@ -307,10 +307,11 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
   // ── draft 그리기(web2-12 2번) — 진행 중인 획을 확정과 같은 브러시·재료·시드로 ──
   // 잠정 id(draft.nid = 확정될 nextId)가 시드라 뗄 때 입자가 안 바뀐다(게이트).
   // INK는 여기서 안 그린다 — 잉크 확정선의 몸체는 Line2의 균일선이고(질감 없음, redraw의
-  // 같은 분기) 미리보기 몸체(ink 겹의 균일 벡터선)가 이미 그 모습이다. 작도 획(지평선·
-  // 소실점 정의선)도 밖 — 확정돼도 재료 질감이 없다(안내색 미리보기 그대로).
+  // 같은 분기) 미리보기 몸체(ink 겹의 균일 벡터선)가 이미 그 모습이다.
+  // ⚠ 「작도 획(소실점 정의선)도 밖」은 web2-19 1부가 없앴다 — 그 획은 진짜 모서리라
+  // 확정되면 질감으로 그려지므로 미리보기도 같아야 한다(state.ts draftBrushed가 정본).
   const draftEligible = (app: App, d: Draft | null | undefined): d is Draft =>
-    !!d && draftBrushed(app, d.label)
+    !!d && draftBrushed(app)
   /** draft를 확정과 같은 형태의 Stroke로 — 재료·니브·점별 필압 전부 commitStroke와 같은 규칙 */
   const draftStroke = (app: App, d: Draft): Stroke => {
     const s: Stroke = { id: d.nid, a: d.start, b: d.end, mat: { grade: activeGrade(app) } }

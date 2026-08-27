@@ -143,6 +143,7 @@ export function initInput(
     draft.label = r.label
     draft.endSnap = r.endSnap
     draft.lenMm = r.lenMm
+    draft.vp = r.vp          // 소실점 예고 자리(web2-19 1-b) — 파선 ✕가 읽는다
     cb.onDraftChange(draft)
   }
 

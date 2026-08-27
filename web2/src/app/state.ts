@@ -32,10 +32,12 @@ export const activeGrade = (app: Pick<App, 'tool' | 'grade'>): Grade =>
  *  아래 겹에 흉내 내는 중간판도 반투명 합성의 파이프라인 차가 남아 걷었다 — 몸체는 확정과
  *  같은 Line2가 그린다. draft_gate_web2*.json이 정본).
  *  INK 제외 — 잉크 확정 몸체는 Line2 균일선(질감 없음)이라 벡터 미리보기가 그 모습이다.
- *  작도 획(horizon·vp) 제외 — 확정돼도 재료 질감이 없다.
+ *  ⚠ 작도 획 제외('horizon'·'vp')는 **web2-19 1부가 없앴다** — 'horizon'은 web2-17부터
+ *  죽은 가지였고, 'vp'는 이제 진짜 모서리다(방 실루엣의 후퇴선은 벽 모서리이면서 소실점을
+ *  만든다 — 확정되면 재료 질감으로 그려지므로 미리보기도 같아야 한다. 원칙 d).
  *  카메라 미확정(f 없음) 제외 — Line2 역사영이 설 수 없다(그때는 종전 벡터 미리보기). */
-export const draftBrushed = (app: Pick<App, 'tool' | 'grade' | 'renderer' | 'lift'>, label: string | null): boolean =>
-  app.renderer === 'brush' && label !== 'vp' && activeGrade(app) !== 'INK' &&
+export const draftBrushed = (app: Pick<App, 'tool' | 'grade' | 'renderer' | 'lift'>): boolean =>
+  app.renderer === 'brush' && activeGrade(app) !== 'INK' &&
   app.lift.an.f !== null && app.lift.an.principal !== null
 
 /** 지우개 도구인가 — 입력·커서·렌더가 전부 이것을 본다.
