@@ -1,5 +1,5 @@
 {
-  "n_flags": 5438,
+  "n_flags": 5439,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -26725,6 +26725,13 @@
       "flag": "단일 범주 분포(n=25) → 변별력 없음/단위 불일치 의심"
     },
     {
+      "path": "xint_web2.json:boundary_along_aim.before.kinds",
+      "val": {
+        "ext": 66
+      },
+      "flag": "단일 범주 분포(n=66) → 변별력 없음/단위 불일치 의심"
+    },
+    {
       "path": "xint_web2.json:inside.after.missed.no_axis_on_A",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -27398,7 +27405,7 @@
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 106,
+      "targets": 107,
       "hits": 2,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
@@ -28269,6 +28276,10 @@
     "wait_freeze_web2_dpr2.json": [
       47,
       68
+    ],
+    "xint_web2.json": [
+      46,
+      59
     ]
   },
   "cited_value_population": {

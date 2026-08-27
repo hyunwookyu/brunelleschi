@@ -64,6 +64,10 @@ const OFFSETS: [number, number][] = []
 for (const dx of [0, 2, 4, 6, 8]) for (const dy of [0, 3, -3, 6, -6]) OFFSETS.push([dx, dy])
 /** 반경 밖 — 계기가 살아 있는지(반증). 여기서도 다 통과하면 문을 안 재는 것이다. */
 const OUTSIDE: [number, number][] = [[12, 0], [0, 12], [12, 12], [16, 0], [0, -16]]
+/** **문의 경계**(2차 리뷰 [11]) — 조준선 «따라» 6~11px. 첫 판은 안 6까지·밖 12부터라
+ *  문값 8이 표본에 아예 없었다(「밖 33칸 거부」는 문값의 1.5~2배에서만 나온 진술이었다).
+ *  여기서 8을 가운데 두고 갈리는지 본다 — 안 갈리면 그 척도는 8이 아니다. */
+const BOUNDARY: [number, number][] = [[0, 6], [0, 7], [0, 8], [0, 9], [0, 10], [0, 11]]
 const LENGTHS = [40, 70, 110, 140]
 
 const setOf = (s: ReturnType<typeof session>) =>
@@ -178,45 +182,142 @@ function sweep(mode: 'before' | 'after', offs: [number, number][]) {
  *  끝에서 off px 떨어지게 둔다(off ∈ 0·4·8 = 끝점 오스냅 반경 안).
  *  반증: off를 20px로 두면(반경 밖) 몸통이 되어 xint가 이기고 전 칸이 서야 한다. */
 function edgeBandSweep() {
-  const rows: { off: number; dx: number; dy: number; kind: string | null; axis: string | null; defined: boolean }[] = []
-  for (const off of [0, 4, 8, 20]) for (const dx of [0, 4, 8]) for (const dy of [0, 4, -4]) {
+  // 2차 리뷰 [3][7][8] 대응 — 첫 판의 셋을 고쳤다:
+  //  [3] **획 길이를 흔든다.** L≈140 하나에서는 end 오스냅의 밀어냄(≤off=4px)이
+  //      4/140 = 2.9% 로 축 허용각(V축 SCREEN_PARALLEL_RATIO 0.05) **아래**라 축 손실이
+  //      산술적으로 불가능했다 — 「axis_lost 0」이 실행 결과가 아니라 상수의 귀결이었다.
+  //      L40에서는 4/40 = 10% 로 넘으므로 **넘길 수 있는 축을 흔든다**(반증 조건, D-3).
+  //  [7] **세 대역을 다 본다.** 첫 판은 B의 «시작 끝»만 훑고 중점·반대쪽 끝을 안 봤는데
+  //      인용은 「끝점·중점 대역을 잰다」로 읽혔다.
+  //  [8] **격자를 원장에 적는다.** 결론을 정하는 조건(길이)이 산문에만 있으면 감사 불가다.
+  const LS = [40, 70, 110]
+  const BANDS = ['시작끝', '중점', '반대끝'] as const
+  const OFFS = [0, 4, 8, 20]
+  const HAND: [number, number][] = [[0, 0], [4, 0], [8, 0], [0, 4], [0, -4], [4, 4], [8, 4], [4, -4], [8, -4]]
+  const rows: { band: string; off: number; L: number; dx: number; dy: number; kind: string | null; axis: string | null; defined: boolean }[] = []
+  const skips: { band: string; off: number; L: number; why: string }[] = []
+  for (const band of BANDS) for (const off of OFFS) for (const L of LS) for (const [dx, dy] of HAND) {
+    const skip = (why: string) => { skips.push({ band, off, L, why }); }
+    const s = session(1200, 800)
+    s.draw(100, 400, 1100, 400); s.draw(500, 500, 600, 475); s.draw(500, 500, 400, 475)
+    const g = s.draw(500, 500, 720, 445)
+    if (!g || !s.app.lift.lifted.has(g.id)) { skip('지면 깊이선이 3D가 안 됐다'); continue }
+    const aimX = g.b.x
+    // B는 vp0 방향(x +150 → y +75). 겨냥 자리(조준선 x=aimX)가 각 대역에서 off px 떨어지게 둔다.
+    const bx = band === '시작끝' ? aimX - off : band === '중점' ? aimX + off - 75 : aimX - 150 + off
+    const B = s.draw(bx, 240, bx + 150, 315)
+    if (!B || !s.app.lift.waiting.includes(B.id)) { skip('B가 대기 획이 안 됐다'); continue }
+    const bs = s.app.doc.strokes.find(x => x.id === B.id)!
+    const t = (aimX - bs.a.x) / (bs.b.x - bs.a.x)
+    if (!(t >= 0 && t <= 1)) { skip('조준선이 B의 그린 구간을 안 지난다'); continue }
+    const target = { x: aimX, y: bs.a.y + t * (bs.b.y - bs.a.y) }
+    const startY = target.y + L
+    if (startY > g.b.y - 5) { skip('획 길이 L을 조준선 위에 못 앉힌다'); continue }
+    const v = s.draw(aimX, g.b.y, aimX, startY)
+    if (!v || !s.app.lift.lifted.has(v.id)) { skip('씨앗 세로선이 3D가 안 됐다'); continue }
+    if (!s.app.lift.waiting.includes(B.id)) { skip('씨앗이 B를 먼저 정의했다'); continue }
+    // ⚠ **미리보기를 먼저 잰다**(첫 판의 결함 — 커밋 뒤에 재면 그 획 자신의 끝점이 이긴다)
+    const set = { ...s.app.osnap, radius: s.app.osnap.radius / s.app.view.s }
+    const oh = resolveStart(s.app.lift, s.app.pose, v.b, set)
+    const r = resolveEnd(s.app.lift, s.app.pose, s.app.lift.an, oh ? oh.p : v.b,
+      { p3: oh?.p3 ?? null }, { x: target.x + dx, y: target.y + dy }, set, { mmPerUnit: null, snapStep: null })
+    const A = s.draw(v.b.x, v.b.y, target.x + dx, target.y + dy)
+    if (!A) { skip('A가 안 그어졌다'); continue }
+    rows.push({
+      band, off, L, dx, dy, kind: r.endSnap?.kind ?? null,
+      axis: axisOfStroke(s.app.lift.an, s.app.pose, A.a, A.b),
+      defined: !!s.app.doc.strokes.find(x => x.id === B.id)!.own3,
+    })
+  }
+  const fold = (keyOf: (r: typeof rows[number]) => string) => {
+    const out: Record<string, { n: number; defined: number; axis_lost: number; kinds: Record<string, number> }> = {}
+    for (const r of rows) {
+      const k = keyOf(r)
+      out[k] = out[k] ?? { n: 0, defined: 0, axis_lost: 0, kinds: {} }
+      out[k]!.n++
+      if (r.defined) out[k]!.defined++
+      if (!r.axis) out[k]!.axis_lost++
+      const kn = r.kind ?? '(없음)'
+      out[k]!.kinds[kn] = (out[k]!.kinds[kn] ?? 0) + 1
+    }
+    return out
+  }
+  return {
+    grid: { bands: BANDS, offs: OFFS, lengths: LS, hand_offsets: HAND, comps: ['A_가까운VP 하나(B를 대역마다 옮긴다)'] },
+    denominator: {
+      grid_full: BANDS.length * OFFS.length * LS.length * HAND.length,
+      used: rows.length,
+      skipped: [...new Map(skips.map(k => [`${k.band}|${k.off}|${k.L}|${k.why}`, k])).values()],
+    },
+    by_band: fold(r => r.band),
+    by_off: fold(r => `off${r.off}`),
+    by_length: fold(r => `L${r.L}`),
+    by_band_off_len: fold(r => `${r.band}|off${r.off}|L${r.L}`),
+    axis_lost_rows: rows.filter(r => !r.axis).map(r => ({ band: r.band, off: r.off, L: r.L, dx: r.dx, dy: r.dy, kind: r.kind, defined: r.defined })),
+    dead_rows: rows.filter(r => !r.defined).map(r => ({ band: r.band, off: r.off, L: r.L, dx: r.dx, dy: r.dy, kind: r.kind, axis: r.axis })),
+  }
+}
+
+/** ── 2차 리뷰 [2] 답 — **«안 겨눈 선»에 붙는가**(#59가 실제로 묻는 것) ────────────
+ *  첫 판의 격자에는 대기선이 **하나뿐**이라 그 사건이 발생할 수 없었다(그래서 「대가 0」은
+ *  측정이 아니었다). 여기서는 조준선이 대기선 **둘**을 지나게 두고, 손이 B1 근처에서
+ *  멈췄을 때 B2가 이기는 일이 있는지 본다. gapPx = 두 교차점 사이의 조준선 방향 거리. */
+function distractorSweep() {
+  const rows: { gap: number; dy: number; picked: 'B1' | 'B2' | '없음' | '다른종류'; defB1: boolean; defB2: boolean }[] = []
+  for (const gap of [10, 20, 40, 80]) for (const dy of [0, 3, 6, -3, -6]) {
     const s = session(1200, 800)
     s.draw(100, 400, 1100, 400); s.draw(500, 500, 600, 475); s.draw(500, 500, 400, 475)
     const g = s.draw(500, 500, 720, 445)
     if (!g || !s.app.lift.lifted.has(g.id)) continue
     const aimX = g.b.x
-    // B — 조준선에서 off px 왼쪽에서 시작해 vp0 방향으로. 조준선과의 교차가 B 시작 근처다.
-    const B = s.draw(aimX - off, 300, aimX - off + 150, 375)
-    if (!B || !s.app.lift.waiting.includes(B.id)) continue
-    const bs = s.app.doc.strokes.find(x => x.id === B.id)!
-    const t = (aimX - bs.a.x) / (bs.b.x - bs.a.x)
-    const target = { x: aimX, y: bs.a.y + t * (bs.b.y - bs.a.y) }
-    // ⚠ **미리보기를 먼저 잰다.** 첫 판은 A를 커밋한 «뒤에» 쟀고, 그러면 A 자신의 끝점이
-    // 커서 자리에 있어 `end`가 무조건 이긴다 — kinds 열이 통째로 무의미해졌다(대조군
-    // off20이 xint로 안 넘어간 것이 그 증상이었다). 위 sweep()에는 이 결함이 없다.
+    // 조준선과 **정확히 (aimX, yAt)에서** 만나는 vp0 방향 대기선.
+    // ⚠ 첫 판은 기울기를 다른 픽스처에서 베껴 와(+150/+75) vp0 방향이 아니었다 —
+    //   축 스냅이 잉크를 옮겨 교차가 yAt에 안 왔고 **20칸 전부 아무것도 안 쟀다**
+    //   (picked 전부 «다른종류» · 정의 0). 소실점에서 기울기를 푼다.
+    const vp0 = { x: 900, y: 400 }
+    // ⚠ 길이를 **다르게** 준다(두 번째 판의 발견): 같은 길이로 두면 두 선의 먼 끝이
+    //   한 점(870,375)에 모여 **시작 오스냅이 둘을 붙여 버린다** — 그러면 B2가 «닿아서»가
+    //   아니라 **사슬로** 올라가 「둘 다 정의됐다」가 픽스처 인공물이 된다(실측: ts.ok=1).
+    const mk = (yAt: number, ext: number) => {
+      const k = (vp0.y - yAt) / (vp0.x - aimX)          // (aimX,yAt)를 지나는 vp0 선의 기울기
+      const a = { x: aimX - 60, y: yAt - 60 * k }
+      return s.draw(a.x, a.y, a.x + ext, a.y + ext * k)
+    }
+    const B1 = mk(250, 210), B2 = mk(250 + gap, 160)
+    if (!B1 || !B2) continue
+    if (!s.app.lift.waiting.includes(B1.id) || !s.app.lift.waiting.includes(B2.id)) continue
+    const v = s.draw(aimX, g.b.y, aimX, 380)
+    if (!v || !s.app.lift.lifted.has(v.id)) continue
     const set = { ...s.app.osnap, radius: s.app.osnap.radius / s.app.view.s }
-    const oh = resolveStart(s.app.lift, s.app.pose, { x: aimX, y: g.b.y }, set)
-    const r = resolveEnd(s.app.lift, s.app.pose, s.app.lift.an, oh ? oh.p : { x: aimX, y: g.b.y },
-      { p3: oh?.p3 ?? null }, { x: target.x + dx, y: target.y + dy }, set, { mmPerUnit: null, snapStep: null })
-    const A = s.draw(aimX, g.b.y, target.x + dx, target.y + dy)
-    if (!A) continue
-    rows.push({
-      off, dx, dy, kind: r.endSnap?.kind ?? null,
-      axis: axisOfStroke(s.app.lift.an, s.app.pose, A.a, A.b),
-      defined: !!s.app.doc.strokes.find(x => x.id === B.id)!.own3,
-    })
+    const oh = resolveStart(s.app.lift, s.app.pose, v.b, set)
+    const r = resolveEnd(s.app.lift, s.app.pose, s.app.lift.an, oh ? oh.p : v.b,
+      { p3: oh?.p3 ?? null }, { x: aimX, y: 250 + dy }, set, { mmPerUnit: null, snapStep: null })
+    s.draw(v.b.x, v.b.y, aimX, 250 + dy)
+    const b1 = s.app.doc.strokes.find(x => x.id === B1.id)!
+    const b2 = s.app.doc.strokes.find(x => x.id === B2.id)!
+    // 두 선이 끝을 공유하면 이 칸은 못 잰다(사슬이 섞인다) — 건너뛴다
+    const bs1 = s.app.doc.strokes.find(x => x.id === B1.id)!
+    const bs2 = s.app.doc.strokes.find(x => x.id === B2.id)!
+    if (Math.hypot(bs1.b.x - bs2.b.x, bs1.b.y - bs2.b.y) < 1 ||
+        Math.hypot(bs1.a.x - bs2.a.x, bs1.a.y - bs2.a.y) < 1) continue
+    const near = (p: { x: number; y: number } | undefined, y: number) => !!p && Math.abs(p.y - y) < 3
+    const picked = r.endSnap?.kind !== 'xint' ? (r.endSnap ? '다른종류' : '없음')
+      : near(r.endSnap?.p, 250) ? 'B1' : near(r.endSnap?.p, 250 + gap) ? 'B2' : '다른종류'
+    rows.push({ gap, dy, picked, defB1: !!b1.own3, defB2: !!b2.own3 })
   }
-  const byOff: Record<string, { n: number; defined: number; axis_lost: number; kinds: Record<string, number> }> = {}
-  for (const r of rows) {
-    const k = `off${r.off}`
-    byOff[k] = byOff[k] ?? { n: 0, defined: 0, axis_lost: 0, kinds: {} }
-    byOff[k]!.n++
-    if (r.defined) byOff[k]!.defined++
-    if (!r.axis) byOff[k]!.axis_lost++
-    const kn = r.kind ?? '(없음)'
-    byOff[k]!.kinds[kn] = (byOff[k]!.kinds[kn] ?? 0) + 1
+  return {
+    n: rows.length,
+    picked_B2: rows.filter(r => r.picked === 'B2').length,
+    defined_B2_only: rows.filter(r => r.defB2 && !r.defB1).length,
+    defined_both: rows.filter(r => r.defB1 && r.defB2).length,
+    by_gap: [...new Set(rows.map(r => r.gap))].map(gap => {
+      const g2 = rows.filter(r => r.gap === gap)
+      return { gap, n: g2.length, B1: g2.filter(r => r.picked === 'B1').length, B2: g2.filter(r => r.picked === 'B2').length,
+        other: g2.filter(r => r.picked !== 'B1' && r.picked !== 'B2').length,
+        defB1: g2.filter(r => r.defB1).length, defB2: g2.filter(r => r.defB2).length }
+    }),
+    rows,
   }
-  return { by_off: byOff, n: rows.length }
 }
 
 /** ── 리뷰 [8] 답 — 반경 **밖**에서 새로 서는 칸을 **오차 방향으로 가른다** ─────────
@@ -261,20 +362,71 @@ describe('겉보기 교차 — 손 오차 대역의 정의 성립률', () => {
         },
         gained: inside.after.defined - inside.before.defined,
         denominator: inside.after.denominator,
-        before_kinds_vs_defined: {
-          what: '리뷰 [7] — ②(ext가 near를 가린다)로 «정의»가 죽은 칸이 있는가',
-          ext_win: inside.before.kinds['ext'] ?? 0,
-          defined: inside.before.defined,
-          note: 'defined ≥ ext_win이면 ext가 이긴 칸은 전부 정의가 섰다는 뜻이다 — 그때 ②는 «정의 실패»의 기전이 아니라 **«붙었다»가 안 보이는 기전**이다(가시성). 정의는 defineByTouch의 distToSeg 문이 따로 열어 준다',
-          verdict: (inside.before.defined >= (inside.before.kinds['ext'] ?? 0))
-            ? '②는 가시성의 기전이다 — 이 격자에서 ②로 죽은 정의는 없다'
-            : '②로 죽은 정의가 있다',
-        },
+        before_kinds_vs_defined: (() => {
+          // ⚠ **2차 리뷰 [4] 정정**: 첫 판은 「defined 237 ≥ ext_win 220이므로 ext가 이긴 칸은
+          //   전부 정의가 섰다」로 적었는데 **그 추론은 성립하지 않는다**(ext 220 중 20이 죽고
+          //   나머지 55 중 37이 살아도 237이다). 부등식은 교차표를 대신 못 한다.
+          //   같은 원장이 반례를 든다 — outside에서는 ext가 22칸 이겼는데 그 정의는 0이다.
+          //   그래서 **2×2 교차표를 직접 낸다.**
+          const c = { ext_defined: 0, ext_undefined: 0, other_defined: 0, other_undefined: 0 }
+          for (const cell of inside.before.cells) {
+            const isExt = cell.kind === 'ext'
+            if (isExt && cell.defined) c.ext_defined++
+            else if (isExt) c.ext_undefined++
+            else if (cell.defined) c.other_defined++
+            else c.other_undefined++
+          }
+          return {
+            what: '리뷰 [7] — ②(ext가 near를 가린다)로 «정의»가 죽은 칸이 있는가. **2×2 교차표**(2차 [4])',
+            cross: c,
+            verdict: c.ext_undefined === 0
+              ? '②는 가시성의 기전이다 — ext가 이긴 칸에서 죽은 정의가 0이다(교차표가 직접 말한다)'
+              : `②로 죽은 정의가 ${c.ext_undefined}칸 있다`,
+          }
+        })(),
+        dead_before_shape: (() => {
+          // 2차 리뷰 [5] — 「220/275 = 80%」가 격자가 정한 상수인가. 죽은 칸이 특정 오프셋
+          // 열에 몰려 있으면 그 비율은 «재현율»이 아니라 «격자 선택»이다.
+          const dead = inside.before.cells.filter(c => !c.defined)
+          const dxs = [...new Set(dead.map(c => c.dx))]
+          const nonExt = inside.before.cells.filter(c => c.kind !== 'ext')
+          const nonExtDxs = [...new Set(nonExt.map(c => c.dx))]
+          return {
+            what: '2차 리뷰 [5] — 죽은 칸·비-ext 칸이 오프셋 격자의 어느 열인가',
+            dead_n: dead.length, dead_dx_values: dxs,
+            non_ext_n: nonExt.length, non_ext_dx_values: nonExtDxs,
+            note: 'dx 값이 하나로 몰리면 «비율»은 격자 선택(dx 후보 다섯 중 하나)이 정한 상수다 — 사람 증상의 재현율로 인용할 수 없다(#46)',
+          }
+        })(),
+        before_by_pair_folded: (() => {
+          // 2차 리뷰 [6] — 「쌍마다 다르다」는 절반만 맞았다. 접어서 **몇 가지인지**를 낸다.
+          const seen = new Map<string, string[]>()
+          for (const [k, v] of Object.entries(inside.before.by_pair)) {
+            const sig = JSON.stringify(v)
+            seen.set(sig, [...(seen.get(sig) ?? []), k])
+          }
+          return { distinct: seen.size, groups: [...seen.entries()].map(([sig, pairs]) => ({ dist: JSON.parse(sig), pairs })) }
+        })(),
       },
       outside: {
         what: '반증(D-3) — 반경 밖. 여기서도 다 서면 이 하네스는 문을 안 재는 것이다',
-        before: { defined: outside.before.defined, n: outside.before.n },
+        // 2차 리뷰 [14] — #69㉠이 세운 규칙(후보 분포와 성립률을 **나란히** 낸다)을 이 절이
+        // 어기고 있었다(before가 성립률만 냈다). 자기 원장부터 지킨다.
+        before: { defined: outside.before.defined, n: outside.before.n, kinds: outside.before.kinds },
         after: { defined: outside.after.defined, n: outside.after.n, kinds: outside.after.kinds },
+      },
+      boundary_along_aim: {
+        what: '2차 리뷰 [11] — 조준선 «따라» 6~11px. 문값 8이 표본 가운데 있다. 갈리는 자리가 8이 아니면 그 척도는 8이 아니다',
+        before: (() => { const r = sweep('before', BOUNDARY); return { n: r.n, defined: r.defined, kinds: r.kinds } })(),
+        after: (() => { const r = sweep('after', BOUNDARY); return { n: r.n, defined: r.defined, kinds: r.kinds } })(),
+        per_dy: BOUNDARY.map(([dx, dy]) => {
+          const a = sweep('after', [[dx, dy]])
+          return { dy, n: a.n, xint: a.kinds['xint'] ?? 0, defined: a.defined }
+        }),
+      },
+      distractor: {
+        what: '2차 리뷰 [2] — **«안 겨눈 선»에 붙는가**(#59가 실제로 묻는 것). 조준선이 대기선 둘을 지나고 손은 B1 근처에서 멈춘다. gap = 두 교차점의 조준선 방향 거리(px)',
+        ...distractorSweep(),
       },
       edge_band: {
         what: '리뷰 [6] — 조준선∩B가 B의 **끝점 오스냅 반경 안**에 드는 대역. 위 inside 격자가 구성상 비운 자리이고, 거기서는 끝점 오스냅이 xint보다 앞서 이긴다. off = 교차점과 B 시작 끝의 화면 거리(px). off20은 반증(몸통이 되어 xint가 이겨야 한다)',

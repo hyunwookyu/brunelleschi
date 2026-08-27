@@ -150,18 +150,80 @@
       "note": "전 격자 = 구도 × 길이 × 오프셋. 쓴 칸 n = (쓴 쌍 수) × 오프셋 수 — 「25×4×3」 산술이 아니다"
     },
     "before_kinds_vs_defined": {
-      "what": "리뷰 [7] — ②(ext가 near를 가린다)로 «정의»가 죽은 칸이 있는가",
-      "ext_win": 220,
-      "defined": 237,
-      "note": "defined ≥ ext_win이면 ext가 이긴 칸은 전부 정의가 섰다는 뜻이다 — 그때 ②는 «정의 실패»의 기전이 아니라 **«붙었다»가 안 보이는 기전**이다(가시성). 정의는 defineByTouch의 distToSeg 문이 따로 열어 준다",
-      "verdict": "②는 가시성의 기전이다 — 이 격자에서 ②로 죽은 정의는 없다"
+      "what": "리뷰 [7] — ②(ext가 near를 가린다)로 «정의»가 죽은 칸이 있는가. **2×2 교차표**(2차 [4])",
+      "cross": {
+        "ext_defined": 220,
+        "ext_undefined": 0,
+        "other_defined": 17,
+        "other_undefined": 38
+      },
+      "verdict": "②는 가시성의 기전이다 — ext가 이긴 칸에서 죽은 정의가 0이다(교차표가 직접 말한다)"
+    },
+    "dead_before_shape": {
+      "what": "2차 리뷰 [5] — 죽은 칸·비-ext 칸이 오프셋 격자의 어느 열인가",
+      "dead_n": 38,
+      "dead_dx_values": [
+        8
+      ],
+      "non_ext_n": 55,
+      "non_ext_dx_values": [
+        8
+      ],
+      "note": "dx 값이 하나로 몰리면 «비율»은 격자 선택(dx 후보 다섯 중 하나)이 정한 상수다 — 사람 증상의 재현율로 인용할 수 없다(#46)"
+    },
+    "before_by_pair_folded": {
+      "distinct": 3,
+      "groups": [
+        {
+          "dist": {
+            "ext": 20,
+            "near": 4,
+            "(없음)": 1
+          },
+          "pairs": [
+            "A_가까운VP|L40",
+            "A_가까운VP|L70",
+            "A_가까운VP|L110"
+          ]
+        },
+        {
+          "dist": {
+            "ext": 20,
+            "near": 3,
+            "(없음)": 2
+          },
+          "pairs": [
+            "B_얕은각|L40",
+            "B_얕은각|L70",
+            "B_얕은각|L110",
+            "B_얕은각|L140"
+          ]
+        },
+        {
+          "dist": {
+            "ext": 20,
+            "near": 5
+          },
+          "pairs": [
+            "C_먼VP|L40",
+            "C_먼VP|L70",
+            "C_먼VP|L110",
+            "C_먼VP|L140"
+          ]
+        }
+      ]
     }
   },
   "outside": {
     "what": "반증(D-3) — 반경 밖. 여기서도 다 서면 이 하네스는 문을 안 재는 것이다",
     "before": {
       "defined": 8,
-      "n": 55
+      "n": 55,
+      "kinds": {
+        "near": 21,
+        "ext": 22,
+        "(없음)": 12
+      }
     },
     "after": {
       "defined": 22,
@@ -173,28 +235,465 @@
       }
     }
   },
+  "boundary_along_aim": {
+    "what": "2차 리뷰 [11] — 조준선 «따라» 6~11px. 문값 8이 표본 가운데 있다. 갈리는 자리가 8이 아니면 그 척도는 8이 아니다",
+    "before": {
+      "n": 66,
+      "defined": 25,
+      "kinds": {
+        "ext": 66
+      }
+    },
+    "after": {
+      "n": 66,
+      "defined": 28,
+      "kinds": {
+        "xint": 28,
+        "ext": 38
+      }
+    },
+    "per_dy": [
+      {
+        "dy": 6,
+        "n": 11,
+        "xint": 11,
+        "defined": 11
+      },
+      {
+        "dy": 7,
+        "n": 11,
+        "xint": 11,
+        "defined": 11
+      },
+      {
+        "dy": 8,
+        "n": 11,
+        "xint": 6,
+        "defined": 6
+      },
+      {
+        "dy": 9,
+        "n": 11,
+        "xint": 0,
+        "defined": 0
+      },
+      {
+        "dy": 10,
+        "n": 11,
+        "xint": 0,
+        "defined": 0
+      },
+      {
+        "dy": 11,
+        "n": 11,
+        "xint": 0,
+        "defined": 0
+      }
+    ]
+  },
+  "distractor": {
+    "what": "2차 리뷰 [2] — **«안 겨눈 선»에 붙는가**(#59가 실제로 묻는 것). 조준선이 대기선 둘을 지나고 손은 B1 근처에서 멈춘다. gap = 두 교차점의 조준선 방향 거리(px)",
+    "n": 20,
+    "picked_B2": 1,
+    "defined_B2_only": 1,
+    "defined_both": 0,
+    "by_gap": [
+      {
+        "gap": 10,
+        "n": 5,
+        "B1": 4,
+        "B2": 1,
+        "other": 0,
+        "defB1": 4,
+        "defB2": 1
+      },
+      {
+        "gap": 20,
+        "n": 5,
+        "B1": 5,
+        "B2": 0,
+        "other": 0,
+        "defB1": 5,
+        "defB2": 0
+      },
+      {
+        "gap": 40,
+        "n": 5,
+        "B1": 5,
+        "B2": 0,
+        "other": 0,
+        "defB1": 5,
+        "defB2": 0
+      },
+      {
+        "gap": 80,
+        "n": 5,
+        "B1": 5,
+        "B2": 0,
+        "other": 0,
+        "defB1": 5,
+        "defB2": 0
+      }
+    ],
+    "rows": [
+      {
+        "gap": 10,
+        "dy": 0,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 10,
+        "dy": 3,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 10,
+        "dy": 6,
+        "picked": "B2",
+        "defB1": false,
+        "defB2": true
+      },
+      {
+        "gap": 10,
+        "dy": -3,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 10,
+        "dy": -6,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 20,
+        "dy": 0,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 20,
+        "dy": 3,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 20,
+        "dy": 6,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 20,
+        "dy": -3,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 20,
+        "dy": -6,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 40,
+        "dy": 0,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 40,
+        "dy": 3,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 40,
+        "dy": 6,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 40,
+        "dy": -3,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 40,
+        "dy": -6,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 80,
+        "dy": 0,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 80,
+        "dy": 3,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 80,
+        "dy": 6,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 80,
+        "dy": -3,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      },
+      {
+        "gap": 80,
+        "dy": -6,
+        "picked": "B1",
+        "defB1": true,
+        "defB2": false
+      }
+    ]
+  },
   "edge_band": {
     "what": "리뷰 [6] — 조준선∩B가 B의 **끝점 오스냅 반경 안**에 드는 대역. 위 inside 격자가 구성상 비운 자리이고, 거기서는 끝점 오스냅이 xint보다 앞서 이긴다. off = 교차점과 B 시작 끝의 화면 거리(px). off20은 반증(몸통이 되어 xint가 이겨야 한다)",
-    "by_off": {
-      "off0": {
-        "n": 9,
-        "defined": 9,
-        "axis_lost": 0,
+    "grid": {
+      "bands": [
+        "시작끝",
+        "중점",
+        "반대끝"
+      ],
+      "offs": [
+        0,
+        4,
+        8,
+        20
+      ],
+      "lengths": [
+        40,
+        70,
+        110
+      ],
+      "hand_offsets": [
+        [
+          0,
+          0
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          8,
+          0
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          0,
+          -4
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          4,
+          -4
+        ],
+        [
+          8,
+          -4
+        ]
+      ],
+      "comps": [
+        "A_가까운VP 하나(B를 대역마다 옮긴다)"
+      ]
+    },
+    "denominator": {
+      "grid_full": 324,
+      "used": 297,
+      "skipped": [
+        {
+          "band": "시작끝",
+          "off": 0,
+          "L": 40,
+          "why": "씨앗이 B를 먼저 정의했다"
+        },
+        {
+          "band": "시작끝",
+          "off": 0,
+          "L": 70,
+          "why": "씨앗이 B를 먼저 정의했다"
+        },
+        {
+          "band": "시작끝",
+          "off": 0,
+          "L": 110,
+          "why": "씨앗이 B를 먼저 정의했다"
+        }
+      ]
+    },
+    "by_band": {
+      "시작끝": {
+        "n": 81,
+        "defined": 77,
+        "axis_lost": 4,
         "kinds": {
-          "end": 7,
-          "xint": 2
+          "end": 6,
+          "xint": 75
         }
       },
-      "off4": {
-        "n": 9,
-        "defined": 9,
-        "axis_lost": 0,
+      "중점": {
+        "n": 108,
+        "defined": 90,
+        "axis_lost": 18,
         "kinds": {
-          "end": 3,
-          "xint": 6
+          "mid": 57,
+          "xint": 51
+        }
+      },
+      "반대끝": {
+        "n": 108,
+        "defined": 78,
+        "axis_lost": 30,
+        "kinds": {
+          "end": 63,
+          "xint": 45
+        }
+      }
+    },
+    "by_off": {
+      "off4": {
+        "n": 81,
+        "defined": 59,
+        "axis_lost": 22,
+        "kinds": {
+          "end": 33,
+          "xint": 30,
+          "mid": 18
         }
       },
       "off8": {
+        "n": 81,
+        "defined": 60,
+        "axis_lost": 21,
+        "kinds": {
+          "xint": 42,
+          "mid": 27,
+          "end": 12
+        }
+      },
+      "off20": {
+        "n": 81,
+        "defined": 78,
+        "axis_lost": 3,
+        "kinds": {
+          "xint": 78,
+          "mid": 3
+        }
+      },
+      "off0": {
+        "n": 54,
+        "defined": 48,
+        "axis_lost": 6,
+        "kinds": {
+          "mid": 9,
+          "xint": 21,
+          "end": 24
+        }
+      }
+    },
+    "by_length": {
+      "L40": {
+        "n": 99,
+        "defined": 71,
+        "axis_lost": 28,
+        "kinds": {
+          "end": 23,
+          "xint": 57,
+          "mid": 19
+        }
+      },
+      "L70": {
+        "n": 99,
+        "defined": 80,
+        "axis_lost": 19,
+        "kinds": {
+          "end": 23,
+          "xint": 57,
+          "mid": 19
+        }
+      },
+      "L110": {
+        "n": 99,
+        "defined": 94,
+        "axis_lost": 5,
+        "kinds": {
+          "end": 23,
+          "xint": 57,
+          "mid": 19
+        }
+      }
+    },
+    "by_band_off_len": {
+      "시작끝|off4|L40": {
+        "n": 9,
+        "defined": 7,
+        "axis_lost": 2,
+        "kinds": {
+          "end": 2,
+          "xint": 7
+        }
+      },
+      "시작끝|off4|L70": {
+        "n": 9,
+        "defined": 7,
+        "axis_lost": 2,
+        "kinds": {
+          "end": 2,
+          "xint": 7
+        }
+      },
+      "시작끝|off4|L110": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "end": 2,
+          "xint": 7
+        }
+      },
+      "시작끝|off8|L40": {
         "n": 9,
         "defined": 9,
         "axis_lost": 0,
@@ -202,7 +701,246 @@
           "xint": 9
         }
       },
-      "off20": {
+      "시작끝|off8|L70": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "xint": 9
+        }
+      },
+      "시작끝|off8|L110": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "xint": 9
+        }
+      },
+      "시작끝|off20|L40": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "xint": 9
+        }
+      },
+      "시작끝|off20|L70": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "xint": 9
+        }
+      },
+      "시작끝|off20|L110": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "xint": 9
+        }
+      },
+      "중점|off0|L40": {
+        "n": 9,
+        "defined": 6,
+        "axis_lost": 3,
+        "kinds": {
+          "mid": 3,
+          "xint": 6
+        }
+      },
+      "중점|off0|L70": {
+        "n": 9,
+        "defined": 6,
+        "axis_lost": 3,
+        "kinds": {
+          "mid": 3,
+          "xint": 6
+        }
+      },
+      "중점|off0|L110": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "mid": 3,
+          "xint": 6
+        }
+      },
+      "중점|off4|L40": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "mid": 6,
+          "xint": 3
+        }
+      },
+      "중점|off4|L70": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "mid": 6,
+          "xint": 3
+        }
+      },
+      "중점|off4|L110": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "mid": 6,
+          "xint": 3
+        }
+      },
+      "중점|off8|L40": {
+        "n": 9,
+        "defined": 0,
+        "axis_lost": 9,
+        "kinds": {
+          "mid": 9
+        }
+      },
+      "중점|off8|L70": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "mid": 9
+        }
+      },
+      "중점|off8|L110": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "mid": 9
+        }
+      },
+      "중점|off20|L40": {
+        "n": 9,
+        "defined": 8,
+        "axis_lost": 1,
+        "kinds": {
+          "xint": 8,
+          "mid": 1
+        }
+      },
+      "중점|off20|L70": {
+        "n": 9,
+        "defined": 8,
+        "axis_lost": 1,
+        "kinds": {
+          "xint": 8,
+          "mid": 1
+        }
+      },
+      "중점|off20|L110": {
+        "n": 9,
+        "defined": 8,
+        "axis_lost": 1,
+        "kinds": {
+          "xint": 8,
+          "mid": 1
+        }
+      },
+      "반대끝|off0|L40": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "end": 8,
+          "xint": 1
+        }
+      },
+      "반대끝|off0|L70": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "end": 8,
+          "xint": 1
+        }
+      },
+      "반대끝|off0|L110": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "end": 8,
+          "xint": 1
+        }
+      },
+      "반대끝|off4|L40": {
+        "n": 9,
+        "defined": 0,
+        "axis_lost": 9,
+        "kinds": {
+          "end": 9
+        }
+      },
+      "반대끝|off4|L70": {
+        "n": 9,
+        "defined": 0,
+        "axis_lost": 9,
+        "kinds": {
+          "end": 9
+        }
+      },
+      "반대끝|off4|L110": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "end": 9
+        }
+      },
+      "반대끝|off8|L40": {
+        "n": 9,
+        "defined": 5,
+        "axis_lost": 4,
+        "kinds": {
+          "xint": 5,
+          "end": 4
+        }
+      },
+      "반대끝|off8|L70": {
+        "n": 9,
+        "defined": 5,
+        "axis_lost": 4,
+        "kinds": {
+          "xint": 5,
+          "end": 4
+        }
+      },
+      "반대끝|off8|L110": {
+        "n": 9,
+        "defined": 5,
+        "axis_lost": 4,
+        "kinds": {
+          "xint": 5,
+          "end": 4
+        }
+      },
+      "반대끝|off20|L40": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "xint": 9
+        }
+      },
+      "반대끝|off20|L70": {
+        "n": 9,
+        "defined": 9,
+        "axis_lost": 0,
+        "kinds": {
+          "xint": 9
+        }
+      },
+      "반대끝|off20|L110": {
         "n": 9,
         "defined": 9,
         "axis_lost": 0,
@@ -211,7 +949,946 @@
         }
       }
     },
-    "n": 36
+    "axis_lost_rows": [
+      {
+        "band": "시작끝",
+        "off": 4,
+        "L": 40,
+        "dx": 0,
+        "dy": 0,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "시작끝",
+        "off": 4,
+        "L": 40,
+        "dx": 0,
+        "dy": -4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "시작끝",
+        "off": 4,
+        "L": 70,
+        "dx": 0,
+        "dy": 0,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "시작끝",
+        "off": 4,
+        "L": 70,
+        "dx": 0,
+        "dy": -4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 0,
+        "L": 40,
+        "dx": 0,
+        "dy": 0,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 0,
+        "L": 40,
+        "dx": 0,
+        "dy": 4,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 0,
+        "L": 40,
+        "dx": 0,
+        "dy": -4,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 0,
+        "L": 70,
+        "dx": 0,
+        "dy": 0,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 0,
+        "L": 70,
+        "dx": 0,
+        "dy": 4,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 0,
+        "L": 70,
+        "dx": 0,
+        "dy": -4,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 0,
+        "dy": 0,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 4,
+        "dy": 0,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 8,
+        "dy": 0,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 0,
+        "dy": 4,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 0,
+        "dy": -4,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 4,
+        "dy": 4,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 8,
+        "dy": 4,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 4,
+        "dy": -4,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 8,
+        "dy": -4,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 20,
+        "L": 40,
+        "dx": 8,
+        "dy": 4,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 20,
+        "L": 70,
+        "dx": 8,
+        "dy": 4,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "중점",
+        "off": 20,
+        "L": 110,
+        "dx": 8,
+        "dy": 4,
+        "kind": "mid",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 0,
+        "dy": 0,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 4,
+        "dy": 0,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 8,
+        "dy": 0,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 0,
+        "dy": 4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 0,
+        "dy": -4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 4,
+        "dy": 4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 8,
+        "dy": 4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 4,
+        "dy": -4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 8,
+        "dy": -4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 0,
+        "dy": 0,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 4,
+        "dy": 0,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 8,
+        "dy": 0,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 0,
+        "dy": 4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 0,
+        "dy": -4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 4,
+        "dy": 4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 8,
+        "dy": 4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 4,
+        "dy": -4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 8,
+        "dy": -4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 40,
+        "dx": 4,
+        "dy": 0,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 40,
+        "dx": 8,
+        "dy": 0,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 40,
+        "dx": 4,
+        "dy": 4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 40,
+        "dx": 8,
+        "dy": 4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 70,
+        "dx": 4,
+        "dy": 0,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 70,
+        "dx": 8,
+        "dy": 0,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 70,
+        "dx": 4,
+        "dy": 4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 70,
+        "dx": 8,
+        "dy": 4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 110,
+        "dx": 4,
+        "dy": 0,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 110,
+        "dx": 8,
+        "dy": 0,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 110,
+        "dx": 4,
+        "dy": 4,
+        "kind": "end",
+        "defined": false
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 110,
+        "dx": 8,
+        "dy": 4,
+        "kind": "end",
+        "defined": false
+      }
+    ],
+    "dead_rows": [
+      {
+        "band": "시작끝",
+        "off": 4,
+        "L": 40,
+        "dx": 0,
+        "dy": 0,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "시작끝",
+        "off": 4,
+        "L": 40,
+        "dx": 0,
+        "dy": -4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "시작끝",
+        "off": 4,
+        "L": 70,
+        "dx": 0,
+        "dy": 0,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "시작끝",
+        "off": 4,
+        "L": 70,
+        "dx": 0,
+        "dy": -4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 0,
+        "L": 40,
+        "dx": 0,
+        "dy": 0,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 0,
+        "L": 40,
+        "dx": 0,
+        "dy": 4,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 0,
+        "L": 40,
+        "dx": 0,
+        "dy": -4,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 0,
+        "L": 70,
+        "dx": 0,
+        "dy": 0,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 0,
+        "L": 70,
+        "dx": 0,
+        "dy": 4,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 0,
+        "L": 70,
+        "dx": 0,
+        "dy": -4,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 0,
+        "dy": 0,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 4,
+        "dy": 0,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 8,
+        "dy": 0,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 0,
+        "dy": 4,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 0,
+        "dy": -4,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 4,
+        "dy": 4,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 8,
+        "dy": 4,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 4,
+        "dy": -4,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 8,
+        "L": 40,
+        "dx": 8,
+        "dy": -4,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 20,
+        "L": 40,
+        "dx": 8,
+        "dy": 4,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 20,
+        "L": 70,
+        "dx": 8,
+        "dy": 4,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "중점",
+        "off": 20,
+        "L": 110,
+        "dx": 8,
+        "dy": 4,
+        "kind": "mid",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 0,
+        "dy": 0,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 4,
+        "dy": 0,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 8,
+        "dy": 0,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 0,
+        "dy": 4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 0,
+        "dy": -4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 4,
+        "dy": 4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 8,
+        "dy": 4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 4,
+        "dy": -4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 40,
+        "dx": 8,
+        "dy": -4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 0,
+        "dy": 0,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 4,
+        "dy": 0,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 8,
+        "dy": 0,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 0,
+        "dy": 4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 0,
+        "dy": -4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 4,
+        "dy": 4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 8,
+        "dy": 4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 4,
+        "dy": -4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 4,
+        "L": 70,
+        "dx": 8,
+        "dy": -4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 40,
+        "dx": 4,
+        "dy": 0,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 40,
+        "dx": 8,
+        "dy": 0,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 40,
+        "dx": 4,
+        "dy": 4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 40,
+        "dx": 8,
+        "dy": 4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 70,
+        "dx": 4,
+        "dy": 0,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 70,
+        "dx": 8,
+        "dy": 0,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 70,
+        "dx": 4,
+        "dy": 4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 70,
+        "dx": 8,
+        "dy": 4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 110,
+        "dx": 4,
+        "dy": 0,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 110,
+        "dx": 8,
+        "dy": 0,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 110,
+        "dx": 4,
+        "dy": 4,
+        "kind": "end",
+        "axis": null
+      },
+      {
+        "band": "반대끝",
+        "off": 8,
+        "L": 110,
+        "dx": 8,
+        "dy": 4,
+        "kind": "end",
+        "axis": null
+      }
+    ]
   },
   "outside_by_direction": {
     "what": "리뷰 [8] — 반경 밖에서 서는 칸을 오차 방향으로 가른다. perp = 축에 수직(축 스냅이 이미 버린 성분 — 문에서 빼는 것이 의도) · along = 조준선 방향(못 미침/지나침 — 여기서 서면 「안 겨눈 선에 붙는다」의 대가다)",
