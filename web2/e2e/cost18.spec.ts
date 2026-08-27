@@ -184,6 +184,9 @@ test('0부 — 비용 원장(획 50·100·200·400 × rawIn 0·50·100%): 전량
         scene: built,
         full_redraw_ms: stats(full),
         last_full_app_ms: +lastFull.ms.toFixed(3),
+        // 3-c ㉠ — **이 궤도에서 화면 밖으로 실제로 몇 획이 잘렸나**. 0이면 이 픽스처는
+        // ㉠을 «안 재는» 것이고, 그 사실이 값으로 있어야 「㉠이 표를 못 움직였다」가 선다(#69 ㉣).
+        last_full_drawn: lastFull.drawn, last_full_clipped: lastFull.clipped,
         sync_strokes_ms: stats(sync),
         orbit_frame_ms: orbit,
         osnap: osn,
@@ -240,8 +243,13 @@ test('0부 — 비용 원장(획 50·100·200·400 × rawIn 0·50·100%): 전량
     const out = resolve(HERE, `../../stage0/out/cost18_web2${suffix}.json`)
     mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
     writeFileSync(out, JSON.stringify({
-      what: 'web2-18 0부 — 고치기 전 비용 원장. 획 50·100·200·400 × rawIn 보유 0·50·100%에서 ①전량 흑연 재그리기 ②syncStrokes ③궤도 1프레임 합(3몫) ④포인터 이동 1회 osnap(3몫 분해). 3·4부의 «무엇을 고칠지»를 이 표가 정한다.',
+      what: 'web2-18 0부 — 비용 원장(이 판의 국면은 아래 phase가 정본이다). 획 50·100·200·400 × rawIn 보유 0·50·100%에서 ①전량 흑연 재그리기 ②syncStrokes ③궤도 1프레임 합(3몫) ④포인터 이동 1회 osnap(3몫 분해). 3·4부의 «무엇을 고칠지»를 이 표가 정한다.',
       phase: 'after',
+      run: {
+        project: testInfo.project.name,
+        workers: process.env.PW_WORKERS ?? '(명령 인자 — 아래 ⚠)',
+        note: '⚠⚠ **전/후는 같은 조건이어야 한다**(#71 ㉠). 이 원장을 낼 때 쓴 명령은 `npx playwright test cost18 --workers=1`이다. 워커 둘이면 dpr1·dpr2가 CPU를 다퉈 값이 배 가까이 부풀고 비교가 무효가 된다(실측 400획 전량 재그리기 워커1 186.5 ms ↔ 워커2 343.3 ms). ⚠ **dpr2에는 «전» 판이 없다** — before 판은 dpr1 전용이므로 dpr2 판은 «후»의 절대값과 기울기만 읽는다(전/후 비교가 아니다).',
+      },
       phase_note: '**1·2부 수리 후** 판. 쌍이 되는 «전» 판은 같은 폴더의 `cost18_web2_before.json`(커밋 923f331 시점)이다. ⚠⚠ **전/후는 같은 실행 조건이어야 한다** — `--workers=1`. 워커 둘로 돌리면 dpr1·dpr2가 CPU를 다퉈 값이 배 가까이 부풀고 비교가 무효가 된다(이 회차에서 실제로 그렇게 나와 그 판을 버렸다).',
       dpr: testInfo.project.name,
       environment: `헤드리스 크로뮴(소프트웨어 GL 가능) · viewport 1200×800 · ${testInfo.project.name} 기록. ⚠ 절대 ms는 이 컨테이너의 값이고 실행 간 변동이 크다(HANDOFF: 9차 121s→1h52m, 원인은 디스크). **판별값은 slope(50→400 배수)다** — O(n)이면 ≈8, O(n²)이면 ≈64. 실기기 값은 다르다: 진단 패널의 ①②③④ 줄이 그 자리다(DEFERRED 실기기 표). dpr2 판은 픽셀이 네 배라 흑연 재그리기가 그만큼 비싸다 — 고해상도 실기기에 가까운 쪽이 그 판이다(D-C3).`,
@@ -252,6 +260,10 @@ test('0부 — 비용 원장(획 50·100·200·400 × rawIn 0·50·100%): 전량
         orbit_frame_ms: '③ 궤도 제스처(중버튼 30이동) 동안 **앱이 그 자리에서 잰** 프레임 3몫: r3=render3d · bs=brushLayer.sync · d2=draw2d. total은 셋의 합의 중앙값, totalMax는 최악. n은 표본 프레임 수. 국면별로 리셋해 읽는다(누산은 국면이 섞인다).',
         osnap: '④ 호버 이동 40회 동안의 osnap() **호출당** 평균 ms와 3몫 분해: intersect=intersections3(모든 3D 선분 쌍) · ends_merge=끝점·정점 병합(ends.find) · rest=나머지 전부. ⚠ rest는 뺄셈이라 타이머 분해능에서 음수가 날 수 있다 — 그대로 적는다.',
         slope: '50→400(획 8배)에서의 median 배수. **이 원장의 값어치가 여기 있다**(절대 ms가 아니다): ≈8이면 O(n) · ≈64면 O(n²) · ≈1이면 획 수 무관.',
+      },
+      flags_explained: {
+        'sync_strokes_ms.median = 1': '양자화다 — 이 경로의 ms가 0.1 단위로 떨어지고 400획에서 1.0 근처라 중앙값이 정확히 1이 되는 칸이 있다. 항등이 아니라 분해능이다(같은 열의 50획 칸은 0.1~0.2다).',
+        'slope 값이 칸마다 흔들린다': '실행 간 변동이다(이 컨테이너의 시간은 크게 흔들린다 — environment 참조). **판정은 대역으로 읽는다**: full_redraw·orbit_frame은 6~11(≈8, O(n)) · osnap_intersect는 31~45(≈64 쪽, O(n²)). 한 칸의 소수점을 인용하지 않는다.',
       },
       scene_at_400: scene,
       grid: table,

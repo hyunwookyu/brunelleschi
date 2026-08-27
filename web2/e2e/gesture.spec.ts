@@ -165,7 +165,7 @@ test('3부 ①②③ — 궤도 중 흑연이 모든 프레임에 있다 · 경�
   }
   ledger.clip_edge = {
     dark_px_per_step: panSteps, box: edge,
-    note: '② ㉠(화면 밖 잘라내기)의 경계 팔. 획이 왼쪽 가장자리를 넘어가는 동안 가장자리 상자(40px 폭)의 흑연 칸 수. 여유(CLIP_MARGIN_PX)가 0이면 획 중심이 밖으로 나가는 순간 입자까지 통째로 사라진다 — 그때 이 열이 한 걸음에 0으로 떨어진다. 반증은 여유를 0으로 두고 이 팔을 돌리는 것이다.',
+    note: '② 획이 왼쪽 가장자리를 넘어가는 동안 가장자리 상자(40px 폭)의 흑연 칸 수. ⚠⚠ **이 열은 여유(CLIP_MARGIN_PX)를 안 가른다** — 여유를 0으로 두고 실제로 돌렸는데 **같은 수**가 나왔다(그 팬에서는 획의 한 끝이 늘 화면 안이라 상자 검사가 애초에 안 걸린다. PITFALLS #71 ㉣). **여유의 반증 자리는 아래 `clip_margin.edge_dark_px`다**(두 끝이 모두 화면 밖인 세로획 — 거기서는 여유 0에서 실제로 0이 된다). 이 열이 남는 이유는 «가장자리에서 통째로 사라지지 않는다»의 눈 확인뿐이다.',
   }
 
   const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
@@ -174,6 +174,10 @@ test('3부 ①②③ — 궤도 중 흑연이 모든 프레임에 있다 · 경�
   writeFileSync(out, JSON.stringify({
     what: `web2-18 3부 — 돌리는 중에도 흑연이 남는가(${testInfo.project.name}). 획별 질감 캐시(㉢)와 화면 밖 잘라내기(㉠)의 표현 쪽 값. 성능 쪽 값(궤도 1프레임 합)은 cost18_web2*.json이 든다.`,
     threshold: { pixel_diff_ch: PIXEL_DIFF_CH, dark_lt: 233 },
+    flags_explained: {
+      'clip_edge.dark_px_per_step 앞쪽이 전부 0': '획이 아직 가장자리 상자에 안 닿았다 — 팬이 진행돼야 들어온다. 0이 «사라졌다»가 아니라 «아직 없다»다. ⚠ 이 열은 **여유(CLIP_MARGIN_PX)의 판별력이 없다**(여유 0으로 돌려도 같은 수였다 — #71 ㉣). 여유를 재는 것은 ②-b(clip_margin 블록)다.',
+      'orbit.dark_px_per_frame이 정지값보다 작다': '**㉢의 대가다**(AS-C58): 구운 타일을 길이 방향으로 늘려 붙이므로 결이 옅어져 어두운 칸 문턱 아래로 내려간다. 놓으면 정확히 다시 굽고 값이 돌아온다(release_diff의 dark_last_frame → dark_after_release).',
+    },
     ...ledger,
   }, null, 1))
 

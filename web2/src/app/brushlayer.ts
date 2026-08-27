@@ -361,8 +361,14 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
   //   그 정도는 e2e가 픽셀로 재고 원장에 적는다(gesture_tiles_web2.json).
   // ⚠ 화면보다 긴 획은 캔버스에 안 들어간다 — **줄여 굽고 늘려 붙인다**(안 그리지 않는다:
   //   ①「궤도 중 모든 프레임에 흑연이 있다」가 사람의 구속이다). 그 수는 원장이 센다.
+  //
+  // ⚠ **아틀라스는 2D 캔버스 한 장이고 타일은 그 안의 사각형이다.** 획마다 캔버스를 만들어
+  //   `#brushc`에서 따로 떠 오던 초판은 **WebGL 판독을 획 수만큼** 일으켜 굽기가 400획에서
+  //   ~300 ms였다(1차 리뷰어 [4]가 «최악 프레임이 오히려 늘었다»로 잡았다 — 중앙값만 보고
+  //   게이트를 닫을 뻔했다). WebGL→2D 복사는 **판당 한 번**이면 되고 나머지는 2D→2D다.
   interface Tile {
-    img: HTMLCanvasElement
+    /** 아틀라스 안의 사각형(물리 px — 판독 좌표) */
+    sx: number; sy: number; sw: number; sh: number
     /** 구울 때의 화면 길이(CSS px) — 붙일 때 배율의 분모 */
     bakedL: number
     /** 타일 안에서 획이 시작하는 x(CSS px) — 입자가 끝 너머로 번지는 여유 */
@@ -370,6 +376,8 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     /** 타일 크기(CSS px)와 그 안의 획 중심선 y */
     w: number; h: number; midY: number
   }
+  /** 아틀라스 — 2D 캔버스 한 장(판이 여럿이면 세로로 쌓는다) */
+  const atlas = document.createElement('canvas')
   const TILE_PAD_PX = 10          // 끝 너머 입자 여유 — CLIP_MARGIN_PX와 같은 물음의 작은 판
   const TILE_H_MULT = 7           // 타일 높이 = 굵기 × 이것(입자가 옆으로 번지는 몫)
   let tiles = new Map<number, Tile>()
@@ -408,8 +416,9 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
   }
 
   /** 아틀라스 한 판을 굽고 타일로 떠 온다. 반환 = 이번 판에 담은 항목 수 */
-  function bakePass(app: App, items: { s: Stroke; L: number; h: number; w: number }[], from: number): number {
+  function bakePass(app: App, items: { s: Stroke; L: number; h: number; w: number }[], from: number, pass: number): number {
     const dpr = snap.width / Math.max(1, cw)
+    fitSnap()
     brush.clear()
     brush.push()
     brush.translate(-cw / 2, -ch / 2)
@@ -434,18 +443,32 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     }
     brush.pop()
     brush.render()
-    // 조각마다 2D 타일로 떠 온다 — 판독은 straight alpha 컨텍스트라 합성과 같은 값이다
+    // **판 한 장을 통째로** 아틀라스에 복사한다(WebGL 판독 1회) — 그 뒤 타일은 그 안의
+    // 사각형일 뿐이라 붙일 때 추가 복사가 없다. 판독은 straight alpha 컨텍스트라 합성과 같다.
+    const g = atlas.getContext('2d')!
+    const oy = pass * Math.round(ch * dpr)
+    g.clearRect(0, oy, atlas.width, Math.round(ch * dpr))
+    g.drawImage(canvas, 0, oy)
     for (const q of placed) {
-      const t = document.createElement('canvas')
-      t.width = Math.max(1, Math.round(q.w * dpr))
-      t.height = Math.max(1, Math.round(q.h * dpr))
-      const g = t.getContext('2d')!
-      g.drawImage(canvas,
-        Math.round(q.x * dpr), Math.round(q.y * dpr),
-        t.width, t.height, 0, 0, t.width, t.height)
-      tiles.set(q.s.id, { img: t, bakedL: q.L, pad: TILE_PAD_PX, w: q.w, h: q.h, midY: q.h / 2 })
+      tiles.set(q.s.id, {
+        sx: Math.round(q.x * dpr), sy: oy + Math.round(q.y * dpr),
+        sw: Math.max(1, Math.round(q.w * dpr)), sh: Math.max(1, Math.round(q.h * dpr)),
+        bakedL: q.L, pad: TILE_PAD_PX, w: q.w, h: q.h, midY: q.h / 2,
+      })
     }
     return i - from
+  }
+
+  /** 판 수 미리 세기 — `bakePass`의 배치 규칙과 **같은 셈**이다(두 자리에 다른 식을 안 둔다) */
+  function estimatePasses(items: { L: number; h: number }[]): number {
+    let x = 0, y = 0, rowH = 0, passes = 1
+    for (const it of items) {
+      const tw = it.L + TILE_PAD_PX * 2
+      if (x + tw > cw) { x = 0; y += rowH; rowH = 0 }
+      if (y + it.h > ch) { passes++; x = 0; y = 0; rowH = 0 }
+      x += tw; rowH = Math.max(rowH, it.h)
+    }
+    return passes
   }
 
   /** 제스처 시작 — 지금 화면의 획들을 타일로 굽는다 */
@@ -461,9 +484,15 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
       const w = weightOf(s)
       return { s, L: Math.max(1, Math.min(L0, maxL)), h: Math.ceil(w * TILE_H_MULT) + 6, w }
     })
+    // 아틀라스 크기 — 판 수를 모르므로 **먼저 필요한 판 수를 세고** 한 번에 잡는다.
+    // (캔버스 크기 변경은 내용을 지우므로 도중에 늘릴 수 없다.)
+    const dpr = snap.width / Math.max(1, cw)
+    const need = Math.max(1, Math.min(24, estimatePasses(items)))
+    const aw = Math.round(cw * dpr), ah = Math.round(ch * dpr) * need
+    if (atlas.width !== aw || atlas.height !== ah) { atlas.width = aw; atlas.height = ah }
     let done = 0
-    while (done < items.length && bakePasses < 24) {
-      const n = bakePass(app, items, done)
+    while (done < items.length && bakePasses < need) {
+      const n = bakePass(app, items, done, bakePasses)
       bakePasses++
       if (n === 0) break                            // 한 항목도 못 담았다 — 무한 루프 방지
       done += n
@@ -492,7 +521,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
       const tx = a.x - (m11 * t.pad + m21 * t.midY)
       const ty = a.y - (m12 * t.pad + m22 * t.midY)
       g.setTransform(m11 * dpr, m12 * dpr, m21 * dpr, m22 * dpr, tx * dpr, ty * dpr)
-      g.drawImage(t.img, 0, 0, t.w, t.h)
+      g.drawImage(atlas, t.sx, t.sy, t.sw, t.sh, 0, 0, t.w, t.h)
     }
     g.setTransform(1, 0, 0, 1, 0, 0)
     tileFrames++

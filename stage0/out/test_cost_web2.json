@@ -1,22 +1,23 @@
 {
  "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
- "measured_at": "web2-17 4·5부 (2026-08-27)",
+ "measured_at": "web2-18 (2026-08-27)",
  "unit": {
   "command": "npm test (vitest)",
-  "files": 51,
-  "tests": 480,
-  "wall_s": 4.5,
-  "note": "web2-17 4·5부 +13팔·+2파일(lift4 6 — 지면 확대·틱 확인 / horizonhide 7 — 자동 숨김·동결). 467→480. 파일 49+2=51(#70 부기)."
+  "files": 52,
+  "tests": 487,
+  "wall_s": 7.1,
+  "note": "web2-18 +7팔·+1파일(osnap 연장선 ③④⑤ 3팔 신설 · extacq_measure 2팔 신설파일 · axissnap·xint 기존 팔 2건은 획득 동작을 넣어 고침). 480→487. 파일 51+1=52."
  },
  "e2e": {
-  "command": "npm run e2e (playwright, dpr1+dpr2)",
-  "cases": 190,
-  "arms": 95,
-  "wall_s": 330,
-  "arms_source": "npx playwright test --list → 「Total: 190 tests in 23 files」(95팔). --list 출력이 정본(#69 ㉤)",
-  "passed": 190,
+  "command": "npm run e2e (playwright, dpr1+dpr2) — ⚠ **--workers=1**",
+  "cases": 202,
+  "arms": 101,
+  "wall_s": 894,
+  "arms_source": "npx playwright test --list → 「Total: 202 tests in 27 files」(101팔). --list 출력이 정본(#69 ㉤)",
+  "passed": 202,
   "failed": 0,
-  "note": "web2-17 4·5부 +1팔(entry17.spec 5부 자동 숨김). 기존 조정: level 2·flow(자동 숨김 국면 — pref 경로로 측정)·snapghost(REMOTE 상자를 파선 행의 스냅샷 복사 반올림 밖으로)."
+  "note": "web2-18 +6팔·+4파일(cost18 1 — 0부 비용 원장 / inklayer 1 — 1부 회귀 팔 ①~⑤를 한 시험에 / extacq 2 — 2부 획득·진단 / gesture 2 — 3부 구속·경계·대가). 190→202. 파일 23+4=27. 기존 조정 넷(겹이 옮겨져 판독 자리를 고쳤다 — 임계는 안 만졌다): flow(#gl→#ink) · drafting 9(상자를 획 안쪽으로) · waitfade 동결(보이는 흑연 겹을 읽는다) · brushperf(궤도 양성 채널이 재그리기→타일로).",
+  "cost_note": "⚠⚠ **cost18.spec 한 파일이 벽시계의 큰 몫이다**(dpr1 ~45s · dpr2 ~3.4m — 격자 12칸 × 4측정). 항목마다 못 돌린다 — 0부를 다시 재야 할 때만 돌린다. ⚠ 그리고 **--workers=1이 아니면 그 원장의 시간 값이 무효다**(#71 ㉠)."
  },
  "typecheck_build": {
   "command": "tsc --noEmit · vite build",
@@ -159,11 +160,18 @@
     "passed": 188,
     "failed": 0
    }
+  },
+  {
+   "at": "web2-17 4·5부",
+   "unit": 480,
+   "e2e": 190,
+   "e2e_wall_s": 330
   }
  ],
  "environment": {
   "disk_avail_bytes": 7079501824,
   "note": "#45 규약 — «느려졌다» 보고가 오면 이 값(bavail·판정용)부터 본다. 값 출처는 df의 Available 열.",
-  "disk_free_bytes_note": "옛 필드명 disk_free_bytes는 #45 후속이 판정 금지로 못 박아 이름을 바로잡았다(값 자체가 Available 열이었다 — 이름만 틀렸던 것)."
+  "disk_free_bytes_note": "옛 필드명 disk_free_bytes는 #45 후속이 판정 금지로 못 박아 이름을 바로잡았다(값 자체가 Available 열이었다 — 이름만 틀렸던 것).",
+  "web2_18": "시간 측정 원장(cost18)은 `--workers=1` 전용이다(#71 ㉠) — 워커 둘이면 dpr1·dpr2가 CPU를 다퉈 값이 배 가까이 부푼다."
  }
 }
