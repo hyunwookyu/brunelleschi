@@ -104,3 +104,46 @@ test('1-d — 첫 획이 소실점 획이면 되돌리기가 한 줄로 말한�
   expect(s.strokes).toBe(1)                          // 안 되돌아간다 — P1 계열은 비우기다
   expect(await page.textContent('#notice')).toContain('비우기로 다시 시작')
 })
+
+test('5부 — 지평선 자동 숨김: 소실점이 화면 안이면 숨고, 밖이면 다시 보인다 · 체크박스가 비춘다', async ({ page }) => {
+  await boot(page)
+  // 소실점 0 — 보인다(픽셀 + 체크박스)
+  const band = () => page.evaluate(() => {
+    const c = document.getElementById('ink') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const d = c.getContext('2d')!.getImageData(Math.round(150 * dpr), Math.round(397 * dpr),
+      Math.round(200 * dpr), Math.round(7 * dpr)).data
+    let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]! > 0) n++
+    return n
+  })
+  expect(await band()).toBeGreaterThan(50)
+  expect(await page.isChecked('#chk-horizon')).toBe(true)
+  // 대각선 → 소실점 (900,400) — 화면 안 → 자동 숨김
+  await drawLine(page, 500, 650, 680, 537.5)
+  expect((await summary(page)).vps).toHaveLength(1)
+  expect(await band()).toBe(0)
+  expect(await page.isChecked('#chk-horizon')).toBe(false)   // 체크박스가 실제 상태를 비춘다
+  // 팬(우버튼)으로 소실점을 화면 밖으로 — 다시 보인다
+  await page.mouse.move(1000, 400)
+  await page.mouse.down({ button: 'right' })
+  for (let i = 1; i <= 10; i++) await page.mouse.move(1000 - i * 105, 400)
+  await page.mouse.up({ button: 'right' })
+  await settle(page)
+  const s = await summary(page)
+  expect(s.view.ox).toBeLessThan(-1000 + 900)                // vp 화면 x = 900 + ox < 0
+  expect(await band()).toBeGreaterThan(50)
+  expect(await page.isChecked('#chk-horizon')).toBe(true)
+  // 사람이 체크박스를 만지면 굳는다 — 팬을 되돌려도(소실점이 화면 안) 계속 보인다
+  await page.click('#pane-settings > summary')
+  await page.click('#chk-horizon')                           // 사람이 끔 → pref=false
+  await settle(page)
+  expect(await band()).toBe(0)
+  await page.click('#chk-horizon')                           // 사람이 켬 → pref=true
+  await settle(page)
+  await page.mouse.move(200, 400)
+  await page.mouse.down({ button: 'right' })
+  for (let i = 1; i <= 10; i++) await page.mouse.move(200 + i * 105, 400)
+  await page.mouse.up({ button: 'right' })
+  await settle(page)
+  expect(await band()).toBeGreaterThan(50)                   // 소실점이 화면 안이어도 보인다(pref)
+})

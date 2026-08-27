@@ -212,15 +212,19 @@ describe('4-g — 교점으로 정의하기: 나중에 온 선이 먼저 있던 
   })
 
   it('반증 ①(D-3): 방향이 미정인 대기 획은 끝점이 닿아도 정의되지 않는다', () => {
+    // ⚠ web2-17 4부 정정: 옛 픽스처(700,600→790,560)는 축 스냅이 vp0으로 눕히므로
+    // «방향 미정»이 아니었고 — 4부 지면 규칙이 그것을 정당하게 지면에 올린다(lift4 ①).
+    // 진짜 방향 미정 획은 **소실점 살**(vp에서 뻗는 자유 획 — resolveEnd ②)이다.
     const { s } = vpLineFixture()
-    const B2 = s.draw(700, 600, 790, 560)!   // 어느 축도 아닌 자유 대기 획
+    const B2 = s.draw(900, 400, 700, 632)!   // vp0 살 — 자유(축 미정), 시작이 지평선 위
     expect(s.app.lift.waiting).toContain(B2.id)
     const D1b = s.draw(500, 500, 745, 438.75)!               // 정의된 깊이선
     expect(s.app.lift.lifted.has(D1b.id)).toBe(true)
-    s.draw(745, 438.75, 745, 580)                            // 수직 — B2 위에서 끝난다
+    s.draw(745, 438.75, 745, 580)                            // 수직 — B2 위에서 끝난다(0.2px)
     const b2 = s.app.doc.strokes.find(x => x.id === B2.id)!
     expect(b2.own3).toBeUndefined()                          // 방향 없음 — 정의 불가
     expect(s.app.lift.waiting).toContain(B2.id)
+    expect(s.app.touchStats.axis).toBeGreaterThan(0)         // 무산 사유가 계수에 잡혔다
   })
 
   it('반증 ②(㉯): 지나가기만 한 교차는 사건이 아니다 — 끝점이 닿아야 센다', () => {

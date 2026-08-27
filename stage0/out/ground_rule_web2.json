@@ -1,0 +1,16 @@
+{
+ "what": "web2-17 4부(지면 규칙 확대)의 측정 — 지면 국면 Y 잔차 대 실제 높이, 규칙 온·오프. lift4.test.ts가 매 실행 다시 쓴다.",
+ "flags_explained": {
+  "ground_residual_max_y": "지면 규칙이 놓은 Y의 fp 잔차 — 0이 아니어야 임계(1e-6)가 실제로 무언가를 가른다(#35). 정확히 0이면 그 사실을 note로 남긴다"
+ },
+ "ground_residual_max_y": 0,
+ "ground_residual_note": "정확히 0 — pointOnGround의 −p.y/d.y·d.y 왕복이 이 격자에서 무손실(구성). 판별은 ②의 실제 높이(임계 10⁵배)가 진다",
+ "ground_scene": {
+  "lifted": 3,
+  "waiting": 0
+ },
+ "height_scene": {
+  "column_top_y": 0.8319999999999999,
+  "waiting_reason": "hasHeight"
+ }
+}

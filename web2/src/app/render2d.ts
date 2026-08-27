@@ -4,8 +4,8 @@
 // 뷰 오프셋(화면 팬·줌)은 그리기 변환으로만 얹는다 — 문서 좌표는 안 바뀐다.
 // 선 굵기·표식 크기는 화면 고정(배율로 나눈다).
 
-import type { App } from './state'
-import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef } from './state'
+import type { App, ViewOffset } from './state'
+import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView } from './state'
 import { vpMarks, project, projectSeg, groundAxes, horizonScreenY } from '../core/camera'
 import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
@@ -34,6 +34,32 @@ export interface Draft {
   /** 점별 필압(양자화 0..C.PRESS_Q · raw와 나란) — 펜만. 미리보기 브러시가 읽는다.
    *  양자화 식은 확정(quantIn)과 같다 — 달라지면 뗄 때 입자가 튄다(2번 게이트). */
   press?: number[]
+}
+
+/** **«그 소실점이 화면 안인가»** — 지평선 자동 숨김(web2-17 5부)과 ✕ 표식 컬링이
+ *  같은 함수를 쓴다(원칙 a — 두 자리에 다른 식을 두지 않는다). 문서 좌표의 점을
+ *  뷰 오프셋으로 화면에 놓고 뷰포트 사각형과 견준다. 자동 숨김은 여백 0(지시 5-b),
+ *  ✕ 컬링은 기호 반경 몫의 여백(50)을 쓴다 — 여백만 다르고 식은 하나다. */
+export function vpOnScreen(view: ViewOffset, vp: Pt, w: number, h: number, marginPx = 0): boolean {
+  const sx = vp.x * view.s + view.ox
+  const sy = vp.y * view.s + view.oy
+  return sx >= -marginPx && sx <= w + marginPx && sy >= -marginPx && sy <= h + marginPx
+}
+
+/** **지평선이 보이는가**(web2-17 5부) — 표시(draw2d)와 체크박스(main)가 같은 함수를 읽는다.
+ *  사람이 정했으면(`horizonPref`) 그것, 아니면 자동: 소실점이 하나 이상 있고 **첫
+ *  소실점이 화면 안**이면 숨는다(사람 문면 — 「숨겨져 있더라도 대각선 그려서 교점으로
+ *  찾아내면 되니까」: 소실점이 보일 때는 그것이 눈높이를 말한다).
+ *  제스처(궤도·팬·줌) 중에는 포즈·뷰가 동결돼(fadeRef·fadeRefView) 깜빡이지 않는다.
+ *  ⚠ 기울면 horizonScreenY가 null이라 보임 판정이 참이어도 안 그려진다 — 표현의
+ *  한계이지 선언의 변화가 아니다(체크박스는 판정을 비춘다). */
+export function horizonVisible(app: App, w: number, h: number): boolean {
+  if (app.horizonPref !== null) return app.horizonPref
+  const an = app.lift.an
+  if (an.vps.length === 0) return true
+  const first = vpMarks(an, fadeRef(app)).find(m => m.id === 'vp0')
+  if (!first) return true                       // 그 포즈에서 소실점이 안 보인다 — 지평선이 말한다
+  return !vpOnScreen(fadeRefView(app), first.vp, w, h, 0)
 }
 
 export function resize2d(canvas: HTMLCanvasElement, W: number, H: number, dpr: number) {
@@ -220,9 +246,10 @@ export function draw2d(
   // 뒤집었다·#65 규약대로 여기 고쳐 적는다)**: 지평선은 재료가 아니라 작도 보조이므로
   // 진하기의 출처도 경도표(MAT — 재료의 정본)가 아니라 COL(작도·표식 색의 정본)이 맞다.
   // web2-09의 하한 논리(「너무 옅으면 안 보인다」)는 **토글이 풀었다** — 이제 안 보이는 게
-  // 싫으면 켜면 되므로(app.horizon — 기본 켜짐: 작도의 뼈대다) 더 내렸다(잉크량 실측은
-  // level.spec 「지평선이 옅다」의 대역 주석). 입자는 안 얹는다 — 작도선이지 재료가 아니다.
-  const hzY = app.horizon ? horizonScreenY(an, app.pose) : null
+  // 싫으면 켜면 되므로 더 내렸다(잉크량 실측은 level.spec 「지평선이 옅다」의 대역 주석).
+  // web2-17 5부: 표시 여부는 horizonVisible 하나가 정한다(자동 숨김 — 위 머리주석).
+  // 입자는 안 얹는다 — 작도선이지 재료가 아니다.
+  const hzY = horizonVisible(app, cw, ch) ? horizonScreenY(an, app.pose) : null
   if (hzY !== null) {
     ctx.strokeStyle = COL.horizon
     ctx.lineWidth = 1 * is
@@ -329,9 +356,10 @@ export function draw2d(
     inkFlow(ctx, s.id, s.a, s.b, s.raw, a, b, widthOf(s), is, true)
   }
 
-  // 소실점 표식 — 현재 포즈 기준(불변식 i: 표시=스냅=그리드가 같은 출처)
+  // 소실점 표식 — 현재 포즈 기준(불변식 i: 표시=스냅=그리드가 같은 출처).
+  // 컬링은 자동 숨김과 같은 함수(vpOnScreen — 여백 50만 다르다. 원칙 a).
   for (const ax of vpMarks(an, app.pose)) {
-    if (ax.vp.x < x0 - 50 || ax.vp.x > x1 + 50 || ax.vp.y < y0 - 50 || ax.vp.y > y1 + 50) continue
+    if (!vpOnScreen(v, ax.vp, cw, ch, 50)) continue
     ctx.strokeStyle = COL.vpMark
     ctx.lineWidth = 1 * is
     ctx.beginPath()

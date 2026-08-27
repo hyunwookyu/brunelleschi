@@ -5,9 +5,9 @@
  "view_identity": {
   "remote_box": [
    285,
-   380,
+   406,
    430,
-   135
+   109
   ],
   "near_box": [
    140,
@@ -15,7 +15,7 @@
    230,
    70
   ],
-  "remote_box_px": 232200,
+  "remote_box_px": 187480,
   "near_box_px": 64400,
   "remote_mid_diff": 0,
   "remote_after_diff": 0,
@@ -36,9 +36,9 @@
  "view_fit": {
   "remote_box": [
    285,
-   380,
+   406,
    430,
-   135
+   109
   ],
   "near_box": [
    140,
@@ -46,7 +46,7 @@
    230,
    70
   ],
-  "remote_box_px": 232200,
+  "remote_box_px": 187480,
   "near_box_px": 64400,
   "remote_mid_diff": 0,
   "remote_after_diff": 0,

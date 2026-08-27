@@ -4,7 +4,7 @@ import { createApp, commitStroke, undo, redo, resetPose, saveView, deleteView, g
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
-import { resize2d, draw2d, type Draft } from './render2d'
+import { resize2d, draw2d, horizonVisible, type Draft } from './render2d'
 import { initR3D, syncStrokes, render3d, resize3d, setDraftLine } from './render3d'
 import { serializeBrnl, parseBrnl } from '../core/file'
 import { toOBJ, toMTL, toGLTF } from '../core/export'
@@ -66,9 +66,10 @@ const diagPanel = initDiagPanel(
         ? `${st.points}점 (${st.pointerType}) · 이벤트 ${st.events} · coalesced 추가 ${st.extra}`
         : '—'],
       ['.brnl', `${brnlBytes()} B · 획 ${app.doc.strokes.length}`],
-      // 대기의 사유(web2-17 1-c) — 「아무 일도 안 일어난다」가 사유 없이 남지 않는다.
-      // 원인 둘을 가른다(#43): 위쪽(올려다보기 — 팬이 답) · 그 자리(따라긋기 — 퇴화).
-      ['대기 획', `${app.lift.waiting.length} (지평선 위쪽 ${[...app.lift.waitWhy.values()].filter(v => v === 'aboveHorizon').length} · 지평선 자리 ${[...app.lift.waitWhy.values()].filter(v => v === 'onHorizon').length})`],
+      // 대기의 사유(web2-17 1-c·4부) — 「아무 일도 안 일어난다」가 사유 없이 남지 않는다.
+      // 원인 셋을 가른다(#43): 위쪽(올려다보기 — 팬이 답) · 그 자리(따라긋기 — 퇴화) ·
+      // 높이 있음(4부 — 위치 미정: 교점·연결이 정의한다).
+      ['대기 획', `${app.lift.waiting.length} (지평선 위쪽 ${[...app.lift.waitWhy.values()].filter(v => v === 'aboveHorizon').length} · 지평선 자리 ${[...app.lift.waitWhy.values()].filter(v => v === 'onHorizon').length} · 높이 있음 ${[...app.lift.waitWhy.values()].filter(v => v === 'hasHeight').length})`],
       // 「잘못 찍힌 점」 문이 버린 수(web2-13 3-b) — 조용히 버리지 않는다: 수가 말한다.
       // 크면 C.STRAY_MIN_PX가 틀린 것이다(원장 stray_gate_web2.json이 근거 대역).
       ['버린 짧은 획', `${app.strayCount} (문 ${C.STRAY_MIN_PX}px)`],
@@ -545,10 +546,17 @@ for (const kind of OSNAP_ORDER) {
 const gridBox = document.getElementById('chk-grid') as HTMLInputElement
 gridBox.checked = app.grid
 gridBox.addEventListener('change', () => { app.grid = gridBox.checked; invalidate() })
-// 지평선 토글(web2-12 7번) — 격자 선례 그대로. 기본 켜짐(작도의 뼈대).
+// 지평선 토글(web2-12 7번 → web2-17 5부: **자동 숨김**) — 체크박스는 실제 표시 상태를
+// 비춘다(자동으로 꺼지면 체크가 풀린다 — 그래야 켜는 법이 보인다). 사람이 만지면
+// `horizonPref`가 굳고 자동이 더는 안 건드린다 — 판별자는 `change` 사건이다(프로그램
+// 대입은 change를 안 낸다). 비우기(clearAll)가 null(자동)로 되돌린다.
 const horizonBox = document.getElementById('chk-horizon') as HTMLInputElement
-horizonBox.checked = app.horizon
-horizonBox.addEventListener('change', () => { app.horizon = horizonBox.checked; invalidate() })
+horizonBox.checked = horizonVisible(app, window.innerWidth, window.innerHeight)
+horizonBox.addEventListener('change', () => { app.horizonPref = horizonBox.checked; invalidate() })
+function syncHorizonBox() {
+  const vis = horizonVisible(app, window.innerWidth, window.innerHeight)
+  if (horizonBox.checked !== vis) horizonBox.checked = vis   // 프로그램 대입 — change 안 뜬다
+}
 // 대기 획 시점 감쇠(web2-13 3-a) — 기본 켜짐. 끄면 종전 동작 그대로(A-4 — 실기기 판정용).
 const waitFadeBox = document.getElementById('chk-waitfade') as HTMLInputElement
 waitFadeBox.checked = app.waitFade
@@ -816,6 +824,7 @@ function frame() {
     // draft 전용 모드 — 확정 획은 스냅샷 겹이 들고 #brushc는 진행 중인 획 하나만 그린다.
     brushLayer.sync(app, draft)
     draw2d(ctx, app, draft, hover, eraserPos, facePrev)
+    syncHorizonBox()   // 체크박스가 실제 표시 상태를 비춘다(5-a — 그려진 프레임과 같은 판정)
   }
   requestAnimationFrame(frame)
 }
@@ -950,6 +959,8 @@ const diag = {
     p1Locked: app.lift.an.p1Locked,
     drawView: app.drawView,
     waitWhy: [...app.lift.waitWhy.entries()],
+    horizonPref: app.horizonPref,
+    horizonShown: horizonVisible(app, window.innerWidth, window.innerHeight),
     vps: app.lift.an.vps.map(v => ({ x: v.x, y: v.y })),
     f: app.lift.an.f,
     fSource: app.lift.an.fSource,

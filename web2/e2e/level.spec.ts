@@ -245,6 +245,12 @@ test('**접힌 뒤에도 지평선이 그려진다** — 픽셀로 잰다 (web2-
   await drawLine(page, 500, 500, 600, 475)
   await drawLine(page, 500, 500, 400, 475)
   await drawLine(page, 500, 500, 500, 300)
+  // web2-17 5부: 소실점(900,400)이 화면 안이라 자동 숨김이 발동한다 — 이 팔이 재는 것은
+  // «접힌 포즈의 지평선 렌더링»이므로 사람 경로(체크박스)로 표시를 굳히고 잰다.
+  await page.click('#pane-settings > summary')
+  await page.click('#chk-horizon')                    // 자동 꺼짐(체크 풀림) → 켬 = pref true
+  await page.click('#pane-settings > summary')
+  await settle(page)
 
   const dpr = await page.evaluate(() => window.devicePixelRatio || 1)
   // 지평선 자리의 가로 띠 — CSS px로 환산한 픽셀 수(dpr 1·2에서 같은 눈금으로 읽는다)

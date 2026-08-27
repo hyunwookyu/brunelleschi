@@ -98,6 +98,10 @@ export interface App {
    *  atOwnPose는 획끼리의 포즈 비교라 이것과 무관하다. 감쇠 자체는 그대로다(1-e —
    *  떨림만 없앤다). 읽기는 fadeRef() 하나다(#54). */
   fadePose: CamPose | null
+  /** 제스처 동안 지평선 자동 숨김 판정의 **뷰 동결**(web2-17 5-b ⚠) — 팬은 포즈가 아니라
+   *  `view`를 움직이므로 fadePose만으로는 판정이 제스처 중에 떨린다. 잡는 순간 굳고
+   *  놓으면 풀린다(fadePose와 한 쌍 — beginNavHold/endNavHold). 읽기는 fadeRefView 하나다. */
+  fadeView: ViewOffset | null
   /** 저장된 시점 */
   savedViews: { pose: CamPose; view: ViewOffset; thumb?: string }[]
   /** 치수 스냅(web2-08 지시 4-7) — **기본 꺼짐**(옵션). 켜면 그리는 동안 실제 길이가
@@ -113,9 +117,13 @@ export interface App {
    *  'classic'은 종전 경로 그대로다(2-b: 되돌릴 수 있어야 한다 — 안 지운다).
    *  토글은 세로바 버튼·진단 패널이 보인다. 저장은 localStorage(문서의 값이 아니다). */
   renderer: 'classic' | 'brush'
-  /** 지평선 표시(web2-12 7번) — **기본 켜짐**(작도의 뼈대다). 격자 토글의 선례 그대로
-   *  설정에 산다. 끄면 지평선 «표시»만 사라진다 — 카메라·판정은 그대로다(표현 계층). */
-  horizon: boolean
+  /** 지평선 표시(web2-12 7번 → **web2-17 5부: 자동 숨김**) — `null` = 자동(기본):
+   *  소실점이 하나 이상 있고 **그 첫 소실점이 화면 안**이면 숨는다(사람 문면 — 소실점이
+   *  보이면 눈높이를 그것으로 읽는다. 화면 밖으로 나가면 읽을 길이 없어 다시 보인다).
+   *  `true/false` = 사람이 체크박스로 정했다 — 그 뒤로 자동이 안 건드린다.
+   *  판정 함수는 `render2d.horizonVisible` 하나다(✕ 컬링과 같은 «화면 안» — 원칙 a).
+   *  카메라·판정은 어느 쪽이든 그대로다(표현 계층). */
+  horizonPref: boolean | null
   /** 지면 격자 표시 — **기본 꺼짐**(지시 3-a). 토글은 설정에 남는다.
    *  이 도구는 모델링 툴이 아니라 그림 도구다 — 빈 종이에 격자가 깔려 있으면
    *  CAD의 감각이 된다. 필요한 사람이 켠다. */
@@ -168,13 +176,14 @@ export function createApp(W: number, H: number): App {
     view: { s: 1, ox: 0, oy: 0 },
     drawView: null,
     fadePose: null,
+    fadeView: null,
     savedViews: [],
     dimSnap: false,
     dimSnapStep: 50,
     dimExact: false,
     coalesce: true,
     renderer: 'brush',
-    horizon: true,
+    horizonPref: null,
     grid: false,
     waitFade: true,
     strayCount: 0,
@@ -562,6 +571,7 @@ export function clearAll(app: App, W: number, H: number) {
   app.savedViews = []
   app.activeErase = null
   app.drawView = null   // 선언도 버린다(web2-17 3-b) — 다음 첫 획이 새로 굳힌다
+  app.horizonPref = null   // 자동으로 돌아간다(web2-17 5-a — 비우기는 처음부터다)
   app.pose = DRAW_POSE
   app.view = { s: 1, ox: 0, oy: 0 }
   recompute(app)
@@ -577,16 +587,19 @@ export function gotoView(app: App, i: number) {
 /** 조작 제스처 시작 — 감쇠 판정 동결(web2-14 3번: 돌리는 동안 아무 일도 안 일어난다).
  *  이미 동결 중이면(연속 제스처) 처음 값을 지킨다 — 매 프레임 갱신하면 동결이 아니다. */
 export function beginNavHold(app: App) {
-  if (!app.fadePose) app.fadePose = app.pose
+  if (!app.fadePose) { app.fadePose = app.pose; app.fadeView = { ...app.view } }
 }
 /** 조작 제스처 끝 — 동결 해제·재판정 한 번. 왕복 제스처면 표시 변화 0~1회가 된다. */
 export function endNavHold(app: App) {
   if (!app.fadePose) return
   app.fadePose = null
+  app.fadeView = null
   for (const l of app.listeners) l()
 }
 /** 감쇠·질감의 «자기 시점» 판정이 읽는 포즈 — 제스처 중에는 동결값(단일 출처 #54) */
 export const fadeRef = (app: Pick<App, 'fadePose' | 'pose'>): CamPose => app.fadePose ?? app.pose
+/** 지평선 자동 숨김 판정이 읽는 뷰 — 제스처 중에는 동결값(web2-17 5-b · fadeRef의 뷰판) */
+export const fadeRefView = (app: Pick<App, 'fadeView' | 'view'>): ViewOffset => app.fadeView ?? app.view
 
 /** 궤도 한 픽셀이 도는 각(rad) — 데스크톱·터치가 같은 값을 쓴다 */
 export const ORBIT_RAD_PER_PX = 0.005

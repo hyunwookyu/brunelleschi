@@ -86,7 +86,13 @@ async function fixture(page: Page) {
   await page.mouse.up(); await settle(page)
 }
 
-const REMOTE = [285, 380, 430, 135] as const   // 고스트 대역 — 좌상단 획의 dpr배 자리
+// ⚠ web2-17: 상자 상단을 지평선·따라긋기 파선 행(문서 y=400 — identity에서 화면 400,
+// fit에서 385) **아래(406)로** 내렸다. 따라긋기 획(대기 파선)이 brushc에 있고, draft 모드의
+// 스냅샷은 WebGL 캔버스의 픽셀 복사라 반투명 픽셀이 (un)premultiply 반올림으로 ±10ch쯤
+// 흔들린다 — 그 행의 3픽셀이 걸렸다(고스트가 아니라 복사 반올림 — 실측 좌표 (429,399)·
+// (483,399)·(334,400), NOTES 5부 절). 고스트 대역(대각 획의 dpr배 자리 y 400~496)은
+// 그대로 덮는다.
+const REMOTE = [285, 406, 430, 109] as const   // 고스트 대역 — 좌상단 획의 dpr배 자리
 const NEAR = [140, 190, 230, 70] as const      // 그 획 자체 — 스냅샷의 양성 증인
 
 for (const fit of [false, true]) {

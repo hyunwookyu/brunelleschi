@@ -580,13 +580,20 @@ describe('면 — 차수 승격을 견딘다', () => {
 })
 
 describe('면 — 앱이 아직 못 하는 것 (측정으로 남긴다)', () => {
-  it('아무 데도 안 붙은 루프는 3D로 안 올라간다 — 그래서 개구부의 앱 경로가 막혀 있다', () => {
+  it('개구부 한계가 좁아졌다(web2-17 4부) — 지면 국면의 소실점 축 선은 올라가고, 비축·수직 표류는 여전히 대기다', () => {
     const s = quad()
     const before = s.app.lift.lifted.size
-    // 사각형 안쪽에 아무 것에도 안 닿는 획 하나
+    // 사각형 안쪽에 아무 것에도 안 닿는 소실점 축 획 — **이제 지면선으로 올라간다**
+    // (4부 지면 규칙 확대: 모델에 높이가 없고 대기가 전부 소실점 축이면 지면이다.
+    //  종전에는 여기서 대기였다 — 그 한계가 이 자리에서 좁아졌다).
     const st = s.draw(480, 470, 560, 462)
     expect(st).not.toBeNull()
-    expect(s.app.lift.lifted.size).toBe(before)       // 안 올라갔다
-    expect(s.app.lift.waiting).toContain(st!.id)      // **대기다**(실패가 아니다)
+    expect(s.app.lift.lifted.size).toBe(before + 1)
+    // 남은 한계: **높이 위의 안쪽 고리**(개구부 — 벽에 붙은 창)는 여전히 못 올린다.
+    // 지평선 위쪽의 수직 표류가 그 대역의 최소 표본이다 — 대기(실패가 아니다).
+    const v = s.draw(200, 300, 200, 250)
+    expect(v).not.toBeNull()
+    expect(s.app.lift.waiting).toContain(v!.id)
+    expect(s.app.lift.lifted.has(v!.id)).toBe(false)
   })
 })

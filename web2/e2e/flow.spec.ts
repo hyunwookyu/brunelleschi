@@ -205,12 +205,22 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   s = await summary(page)
   expect(s.lifted).toBe(5) // 다시실행 — +2: 깊이선 둘
 
-  // 작도 시점으로 — 지평선·작도선이 다시 보인다
+  // 작도 시점으로 — 작도선이 다시 보인다. 지평선은 자동 숨김(web2-17 5부 — 소실점이
+  // 화면 안)이라 체크박스로 켜서 확인하고 되돌린다(자동 상태 복원 — 뒤 팔에 안 새게).
   await page.click('#btn-draw-view')
   await settle(page)
   s = await summary(page)
   expect(Math.abs(s.pose.q.y)).toBeLessThan(1e-12)
-  expect(await inkPixels(page, 0, 397, 1200, 404)).toBeGreaterThan(100)
+  // 측정 창은 소실점 ✕ 표식(100,400)·(900,400)의 십자를 피한다 — x 150~750
+  expect(await inkPixels(page, 150, 397, 750, 404)).toBe(0)  // 자동 숨김 — 소실점이 보인다
+  await page.click('#pane-settings > summary')
+  await page.click('#chk-horizon')
+  await settle(page)
+  expect(await inkPixels(page, 150, 397, 750, 404)).toBeGreaterThan(100)  // 켜면 그 자리에 있다
+  // pref(켬)는 이 뒤로 유지한다 — 아래 줌 구간(282행)이 지평선 위치를 픽셀로 재고,
+  // 비우기(clearAll)가 자동(null)으로 되돌리는 것까지가 5부 규칙이라 그 복원도 함께 재진다.
+  await page.click('#pane-settings > summary')
+  await settle(page)
 
   // ── 2단계: 오스냅 ────────────────────────────────────────────────────
   // 호버 — 수직획 중간 근처에서 근처점 표식이 뜬다

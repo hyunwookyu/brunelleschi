@@ -1,0 +1,15 @@
+{
+ "what": "web2-17 5부(지평선 자동 숨김)의 측정 — 표시 규칙 온·오프와 제스처 동결. horizonhide.test.ts가 매 실행 다시 쓴다.",
+ "pan_cycle": {
+  "in_view_hidden": true,
+  "out_of_view_shown": true
+ },
+ "gesture_cycle": {
+  "samples": 8,
+  "changes": 0
+ },
+ "gesture_cycle_control": {
+  "samples": 7,
+  "changes": 2
+ }
+}

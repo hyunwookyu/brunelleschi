@@ -24,14 +24,16 @@ export interface LiftResult {
   lifted: Map<number, LiftedSeg>
   /** 내용 획인데 아직 3D 미확정 — 실패가 아니라 대기 */
   waiting: number[]
-  /** 대기의 **사유**(web2-17 1-c) — 조용히 대기시키지 않는다. 원인이 둘이라 이름도 둘이다
-   *  (2차 리뷰어 [9] — 한 계수에 합치면 진단이 원인을 오귀속한다 #43):
+  /** 대기의 **사유**(web2-17 1-c·4부) — 조용히 대기시키지 않는다. 원인이 셋이라 이름도
+   *  셋이다(2차 리뷰어 [9] — 한 계수에 합치면 진단이 원인을 오귀속한다 #43):
    *  'aboveHorizon' = 그 끝이 지평선 **위쪽**이라 광선이 위로 가 지면과 영영 안 만난다
    *  (올려다보는 구도 — 팬으로 지평선을 옮기는 것이 답이다. DEFERRED에 구도 자체의 해법).
    *  'onHorizon' = 그 끝이 지평선 **그 자리**(대역 안)라 광선이 지면과 평행하다
    *  (지평선 따라긋기 획 — 퇴화. 카메라에도 지면에도 아무 일이 없다).
-   *  진단 패널이 두 수를 가른다. */
-  waitWhy: Map<number, 'aboveHorizon' | 'onHorizon'>
+   *  'hasHeight' = 소실점 축인데 **모델에 이미 높이가 있어** 지면 규칙이 안 걸렸다
+   *  (4부 — 위치 미정: 교점(xint)·연결이 정의한다. 죽음이 아니라 국면의 사실이다).
+   *  진단 패널이 세 수를 가른다. */
+  waitWhy: Map<number, 'aboveHorizon' | 'onHorizon' | 'hasHeight'>
   /** 게이지 앵커가 된 획 (전역 스케일의 게이지 — 유일한 자유 선택) */
   anchorId: number | null
   /** id → 획 (문서에서 그대로 — 조회 편의) */
@@ -117,7 +119,7 @@ function scaleOf(doc: Doc): number | null {
 function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResult {
   const an = analyze(doc)
   const lifted = new Map<number, LiftedSeg>()
-  const waitWhy = new Map<number, 'aboveHorizon' | 'onHorizon'>()
+  const waitWhy = new Map<number, 'aboveHorizon' | 'onHorizon' | 'hasHeight'>()
   let anchorId: number | null = null
 
   const strokes = new Map(doc.strokes.map(s => [s.id, s]))
@@ -307,6 +309,118 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
       pending.delete(s.id)
       waitWhy.delete(s.id)   // 나중 패스의 연결로 올라왔다 — 사유는 대기 중에만 뜻이 있다
       progressed = true
+    }
+  }
+
+  // ── 지면 규칙 확대(web2-17 4부 — 대체가 아니라 포함) ────────────────────────
+  // **모델에 높이가 아직 없을 때, 소실점 축의 선은 지면선이다.** 소실점이 이미 있는
+  // 자리에서 뻗은 선(role은 content — makesVp가 아니다)이 영영 대기하던 자리를 연다.
+  //
+  // ⚠ 판정은 **연결 패스가 소진된 뒤의 모델 전체**로 한다. 초판은 패스 «중간»에
+  // 판정했고, 그러면 문서 앞쪽의 소실점 축 획이 — 뒤에서 올라올 수직선을 보기 전에 —
+  // 지면에 앉았다(문서 순서가 답을 바꾼다). own3d.test 4-d·face.test 개구부 팔이 그
+  // 회귀를 첫 실행에서 잡았다(D-2 — 초판이 수리 전에 실패했다).
+  //
+  // ⚠ makesVp와의 겹침(지시 4부 확인 사항): 승격 획(P1→P2의 둘째 소실점 획)은 높이가
+  // 생긴 뒤에도 role 'vp'라 위 본 규칙으로 지면에 놓인다 — **makesVp가 이긴다**(종전
+  // 규칙 보존 — «소실점을 만드는 선은 격자의 기준»). 이 확장은 makesVp가 아닌 획만
+  // 만지므로 두 규칙의 출처는 갈래 둘이되 겹치는 국면이 없다.
+  //
+  // ⚠⚠ 판별자가 하나 더 있다(지시에 없던 조임 — own3d 4-d·face 개구부 팔이 강제했다):
+  // **대기 중인 획이 전부 소실점 축일 때만** 돈다. «높이 없음»만 보면, 사슬이 끊겨
+  // 대기로 내려온 — 원래 높이에 있던 — 획 무리(창문 등)까지 지면에 앉는다: 남은 lifted가
+  // 지면선뿐이라 문면의 조건이 참이 되기 때문이다. 그것은 조용히 틀린 배치다(A-3).
+  // 지면선 벌리기 국면의 실제 모습은 «대기가 전부 소실점 축»이고, 수직·가로 대기 획이
+  // 섞여 있다는 것은 구조를 짓던 중(또는 표류)이라는 뜻이다 — 애매하면 놓지 않는다.
+  //
+  // 하나 올릴 때마다 연결 패스를 다시 돌린다 — 지면에 앉은 선이 다른 대기 획의 연결
+  // 대상이 되고, 그 연결이 수직선(높이)을 세우면 다음 판정에서 규칙이 꺼진다.
+  const heightless = () => [...lifted.values()].every(g =>
+    Math.abs(g.a3.y) < C.HEIGHTLESS_Y && Math.abs(g.b3.y) < C.HEIGHTLESS_Y)
+  const pendingAllVp = () => content.every(s => {
+    if (!pending.has(s.id)) return true
+    const ax = axisOfStroke(an, s.view ?? DRAW_POSE, s.a, s.b)
+    return ax === 'vp0' || ax === 'vp1'
+  })
+  let extended = true
+  while (extended) {
+    extended = false
+    if (!heightless() || !pendingAllVp()) break
+    for (const s of content) {
+      if (!pending.has(s.id)) continue
+      const pose = s.view ?? DRAW_POSE
+      const axis = axisOfStroke(an, pose, s.a, s.b)
+      if (axis !== 'vp0' && axis !== 'vp1') continue
+      const dir = axisDir(an, axis)
+      const g = pointOnGround(an, pose, s.a)
+      if (!g) {
+        // 지면과 못 만났다 — 1-c와 같은 사유 규약(조용히 대기시키지 않는다)
+        waitWhy.set(s.id, Math.abs(s.a.y - an.horizonY) <= C.OSNAP_RADIUS_PX ? 'onHorizon' : 'aboveHorizon')
+        continue
+      }
+      if (!dir) continue
+      const ray = rayThrough(an, pose, s.b)
+      const b3 = ray ? closestOnLineToRay(g, dir, ray) : null
+      if (!b3) continue
+      lifted.set(s.id, { a3: g, b3, axis })
+      endpoints.push(g, b3)
+      segs.push({ a3: g, b3 })
+      pending.delete(s.id)
+      waitWhy.delete(s.id)
+      if (anchorId === null) anchorId = s.id
+      extended = true
+      break              // 하나 올리고 연결 패스부터 다시 — 높이가 생겼을 수 있다
+    }
+    if (!extended) break
+    // 연결 패스 재실행(위 본 루프와 같은 코드 경로를 다시 태운다)
+    let again = true
+    while (again) {
+      again = false
+      for (const s of content) {
+        if (!pending.has(s.id)) continue
+        const pose = s.view ?? DRAW_POSE
+        const axis = axisOfStroke(an, pose, s.a, s.b)
+        let a3 = matchPoint(s.a, pose)
+        let b3: V3 | null = null
+        if (!a3 && axis) {
+          b3 = matchPoint(s.b, pose)
+          if (b3) {
+            const dir = axisDir(an, axis)
+            const ray = rayThrough(an, pose, s.a)
+            if (dir && ray) a3 = closestOnLineToRay(b3, dir, ray)
+          }
+        }
+        if (!a3) continue
+        if (!b3) {
+          b3 = matchPoint(s.b, pose)
+          if (!b3 && axis) {
+            const dir = axisDir(an, axis)
+            const ray = rayThrough(an, pose, s.b)
+            if (dir && ray) b3 = closestOnLineToRay(a3, dir, ray)
+          }
+        }
+        if (!b3) continue
+        if (s.dim !== undefined && mmPerUnit !== null && mmPerUnit > 0) {
+          const d = sub3(b3, a3)
+          const L = len3(d)
+          if (L > 1e-12) b3 = add3(a3, mul3(d, s.dim / mmPerUnit / L))
+        }
+        lifted.set(s.id, { a3, b3, axis })
+        endpoints.push(a3, b3)
+        segs.push({ a3, b3 })
+        pending.delete(s.id)
+        waitWhy.delete(s.id)
+        again = true
+      }
+    }
+  }
+  // 남은 대기 중 소실점 축 획의 사유 — 높이가 있어 규칙이 안 걸렸다(4부 ⚠ 무산 계수)
+  if (!heightless()) {
+    for (const s of content) {
+      if (!pending.has(s.id) || waitWhy.has(s.id)) continue
+      const pose = s.view ?? DRAW_POSE
+      const axis = axisOfStroke(an, pose, s.a, s.b)
+      if (axis === 'vp0' || axis === 'vp1') waitWhy.set(s.id, 'hasHeight')
     }
   }
 
