@@ -25,8 +25,16 @@ export function convergenceDeg(p: Seg3, q: Seg3): number {
   const a = top(dirOf(p)), b = top(dirOf(q))
   const la = Math.hypot(a.x, a.z), lb = Math.hypot(b.x, b.z)
   if (la < 1e-12 || lb < 1e-12) return NaN
-  const cos = Math.abs((a.x * b.x + a.z * b.z) / (la * lb))
-  return (Math.acos(Math.min(1, cos)) * 180) / Math.PI
+  // ⚠ **`acos(|cos|)`로 재면 0 근처에서 분해능이 바닥난다**(web2-18 2부에서 실측으로 잡혔다):
+  // cos가 1의 한 ulp 아래(1−2.2e-16)로 반올림되기만 해도 acos가 √(2ε)=2.1e-8 rad =
+  // **1.2e-6°**를 낸다 — 실제 각(방향 성분 차 1.5e-15에서 1.6e-14°)의 여덟 자릿수 위다.
+  // parallel.test의 「구성상 보장」 팔이 임계 1e-9°였는데, 그 팔은 **cos가 정확히 1.0으로
+  // 반올림되는 동안만** 통과하고 있었다(재는 것이 기하가 아니라 마지막 ulp였다).
+  // atan2(|외적|, 내적)은 작은 각에서도 상대 정확도를 유지하고 큰 각에서는 같은 값이다 —
+  // 양성 채널 팔(>0.5°)의 답은 안 바뀐다.
+  const cross = Math.abs(a.x * b.z - a.z * b.x)
+  const dot = Math.abs(a.x * b.x + a.z * b.z)
+  return (Math.atan2(cross, dot) * 180) / Math.PI
 }
 
 /** 3D 방향이 이루는 각(도) — 탑뷰가 아닌 온전한 방향 비교 */

@@ -9,7 +9,8 @@ export type { ViewOffset }
 import { liftAll, closestOnLineToRay, type LiftResult } from '../core/lift'
 import { camSig, defineByTouch, emptyTouchStats, type TouchStats } from '../core/own3d'
 import { DRAW_POSE, rayThrough } from '../core/camera'
-import { defaultOsnap, type OsnapSettings } from '../core/osnap'
+import { defaultOsnap, type OsnapSettings, type OsnapKind } from '../core/osnap'
+import { newExtDwell, clearExtAcq, type ExtDwell } from '../core/extacq'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
 import { loopAt, faceAt, faceScreen, resolveFaces, type ResolvedFace } from '../core/face'
 import { C } from '../core/constants'
@@ -132,6 +133,16 @@ export interface App {
    *  에서 0 도달). 끄면 종전 동작(항상 그리되 흐림 0.3) **그대로**다(A-4 — 되돌릴 길.
    *  실기기 판정은 DEFERRED web2-13 표). 설정 「대기 획은 그린 시점에서만」. */
   waitFade: boolean
+  /** **연장선 획득 상태**(web2-18 2부) — 어떤 끝점 위에 머물러 그 선의 연장을 켰는가.
+   *  `ext` 오스냅은 이제 여기 있는 선분에서만 난다(`osnap`의 `extAcq` 인자).
+   *  획을 확정하면 비운다(`commitStroke`). 표시는 render2d의 획득 표식이다.
+   *  ⚠ 파생이 아니라 **입력 맥락**이다(원칙 b의 예외가 아니다 — 저장하지 않는다:
+   *  문서에도 .brnl에도 안 들어가고 세션 안에서만 산다. `fadePose`와 같은 급이다). */
+  extAcq: ExtDwell
+  /** **마지막 확정 획의 스냅 종류**(web2-18 2-c) — 사람이 「정확히 어떤 오스냅 때문인지
+   *  모르겠다」고 했다. 그것을 앱이 말한다. 값은 앱이 실제로 쓴 `OsnapHit.kind`를 그대로
+   *  둔 것이다 — 표시용으로 다시 계산하지 않는다(원칙 a). 읽는 곳은 진단 패널뿐이다. */
+  lastSnap: { start: OsnapKind | null; end: OsnapKind | null } | null
   /** 「잘못 찍힌 점」 문이 버린 획 수(web2-13 3-b) — 세션 계수. 진단 패널에 보인다.
    *  조용히 버리는 것은 이 저장소가 가장 경계하는 형태라 **수가 말하게 한다** —
    *  크면 `C.STRAY_MIN_PX`가 틀린 것이다. */
@@ -186,6 +197,8 @@ export function createApp(W: number, H: number): App {
     horizonPref: null,
     grid: false,
     waitFade: true,
+    extAcq: newExtDwell(),
+    lastSnap: null,
     strayCount: 0,
     own3d: true,   // 기본 켜짐(web2-14 1번 — 사람 판정). 끄는 길은 설정 + localStorage 'off'.
     lastCamSig: null,
@@ -345,6 +358,10 @@ export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number,
   if (app.tool === 'pen' && app.nib !== C.NIB_PX) s.mat.w = app.nib
   if (press !== undefined) s.mat.press = press
   app.doc.strokes.push(s)
+  // 획을 확정하면 **연장선 획득을 비운다**(web2-18 2-b) — 다음 획은 처음부터 다시
+  // 획득한다. 안 비우면 지난 획에서 켠 연장이 다음 획 내내 떠 있어 종전 증상이 반쯤
+  // 돌아온다(상시는 아니지만 «내가 지금 켠 것»도 아닌 상태).
+  clearExtAcq(app.extAcq)
   // **첫 획이 시점을 굳힌다**(web2-17 3-b) — 그 순간의 팬(눈높이 선언)이 «작도 시점»이다.
   if (firstStroke) app.drawView = { ...app.view }
   // 작도 획(깊이선·소실점 표식)은 실행취소 대상이 아니다 — role은 추가 후 계산으로 안다

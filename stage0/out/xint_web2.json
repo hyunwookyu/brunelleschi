@@ -28,72 +28,60 @@
     "what": "커서 오차가 오스냅 반경(8px) 안 — 사람이 «겨냥했다»고 볼 대역",
     "band": "**몸통 대역 한정**(리뷰 [6]) — 조준선∩B가 B의 끝점·중점 오스냅 반경 밖인 자리만이다. 끝점 대역은 아래 edge_band가 따로 잰다",
     "before": {
-      "defined": 237,
+      "defined": 177,
       "n": 275,
       "kinds": {
-        "ext": 220,
-        "near": 44,
-        "(없음)": 11
+        "near": 257,
+        "(없음)": 18
       },
       "missed": {
-        "ok": 237,
+        "ok": 177,
         "pose": 0,
         "axis": 0,
-        "lift": 1,
+        "lift": 2,
         "roundtrip": 0,
-        "no_axis_on_A": 37
+        "no_axis_on_A": 96
       },
       "by_pair": {
         "A_가까운VP|L40": {
-          "ext": 20,
-          "near": 4,
-          "(없음)": 1
+          "near": 23,
+          "(없음)": 2
         },
         "A_가까운VP|L70": {
-          "ext": 20,
-          "near": 4,
-          "(없음)": 1
+          "near": 23,
+          "(없음)": 2
         },
         "A_가까운VP|L110": {
-          "ext": 20,
-          "near": 4,
-          "(없음)": 1
+          "near": 23,
+          "(없음)": 2
         },
         "B_얕은각|L40": {
-          "ext": 20,
-          "near": 3,
-          "(없음)": 2
+          "near": 22,
+          "(없음)": 3
         },
         "B_얕은각|L70": {
-          "ext": 20,
-          "near": 3,
-          "(없음)": 2
+          "near": 22,
+          "(없음)": 3
         },
         "B_얕은각|L110": {
-          "ext": 20,
-          "near": 3,
-          "(없음)": 2
+          "near": 22,
+          "(없음)": 3
         },
         "B_얕은각|L140": {
-          "ext": 20,
-          "near": 3,
-          "(없음)": 2
+          "near": 22,
+          "(없음)": 3
         },
         "C_먼VP|L40": {
-          "ext": 20,
-          "near": 5
+          "near": 25
         },
         "C_먼VP|L70": {
-          "ext": 20,
-          "near": 5
+          "near": 25
         },
         "C_먼VP|L110": {
-          "ext": 20,
-          "near": 5
+          "near": 25
         },
         "C_먼VP|L140": {
-          "ext": 20,
-          "near": 5
+          "near": 25
         }
       }
     },
@@ -135,7 +123,7 @@
         ]
       }
     },
-    "gained": 38,
+    "gained": 98,
     "denominator": {
       "grid_full": 300,
       "pairs_full": 12,
@@ -152,21 +140,29 @@
     "before_kinds_vs_defined": {
       "what": "리뷰 [7] — ②(ext가 near를 가린다)로 «정의»가 죽은 칸이 있는가. **2×2 교차표**(2차 [4])",
       "cross": {
-        "ext_defined": 220,
+        "ext_defined": 0,
         "ext_undefined": 0,
-        "other_defined": 17,
-        "other_undefined": 38
+        "other_defined": 177,
+        "other_undefined": 98
       },
       "verdict": "②는 가시성의 기전이다 — ext가 이긴 칸에서 죽은 정의가 0이다(교차표가 직접 말한다)"
     },
     "dead_before_shape": {
       "what": "2차 리뷰 [5] — 죽은 칸·비-ext 칸이 오프셋 격자의 어느 열인가",
-      "dead_n": 38,
+      "dead_n": 98,
       "dead_dx_values": [
+        0,
+        2,
+        4,
+        6,
         8
       ],
-      "non_ext_n": 55,
+      "non_ext_n": 275,
       "non_ext_dx_values": [
+        0,
+        2,
+        4,
+        6,
         8
       ],
       "note": "dx 값이 하나로 몰리면 «비율»은 격자 선택(dx 후보 다섯 중 하나)이 정한 상수다 — 사람 증상의 재현율로 인용할 수 없다(#46)"
@@ -176,9 +172,8 @@
       "groups": [
         {
           "dist": {
-            "ext": 20,
-            "near": 4,
-            "(없음)": 1
+            "near": 23,
+            "(없음)": 2
           },
           "pairs": [
             "A_가까운VP|L40",
@@ -188,9 +183,8 @@
         },
         {
           "dist": {
-            "ext": 20,
-            "near": 3,
-            "(없음)": 2
+            "near": 22,
+            "(없음)": 3
           },
           "pairs": [
             "B_얕은각|L40",
@@ -201,8 +195,7 @@
         },
         {
           "dist": {
-            "ext": 20,
-            "near": 5
+            "near": 25
           },
           "pairs": [
             "C_먼VP|L40",
@@ -220,9 +213,8 @@
       "defined": 8,
       "n": 55,
       "kinds": {
-        "near": 21,
-        "ext": 22,
-        "(없음)": 12
+        "near": 25,
+        "(없음)": 30
       }
     },
     "after": {
@@ -230,8 +222,7 @@
       "n": 55,
       "kinds": {
         "xint": 22,
-        "ext": 22,
-        "(없음)": 11
+        "(없음)": 33
       }
     }
   },
@@ -239,17 +230,18 @@
     "what": "2차 리뷰 [11] — 조준선 «따라» 6~11px. 문값 8이 표본 가운데 있다. 갈리는 자리가 8이 아니면 그 척도는 8이 아니다",
     "before": {
       "n": 66,
-      "defined": 25,
+      "defined": 30,
       "kinds": {
-        "ext": 66
+        "near": 48,
+        "(없음)": 18
       }
     },
     "after": {
       "n": 66,
-      "defined": 28,
+      "defined": 29,
       "kinds": {
-        "xint": 28,
-        "ext": 38
+        "xint": 29,
+        "(없음)": 37
       }
     },
     "per_dy": [
@@ -268,8 +260,8 @@
       {
         "dy": 8,
         "n": 11,
-        "xint": 6,
-        "defined": 6
+        "xint": 7,
+        "defined": 7
       },
       {
         "dy": 9,
@@ -567,29 +559,27 @@
     "w14": {
       "what": "web2-14형 판정(beforeFix — 조준선 없는 osnap이 이긴다)의 이 격자 실측",
       "n": 297,
-      "defined": 199,
-      "axis_lost": 98,
+      "defined": 178,
+      "axis_lost": 119,
       "by_length": {
         "L40": {
           "n": 99,
-          "defined": 53,
-          "axis_lost": 46,
+          "defined": 38,
+          "axis_lost": 61,
           "kinds": {
             "end": 23,
-            "ext": 35,
-            "near": 18,
+            "near": 53,
             "(없음)": 4,
             "mid": 19
           }
         },
         "L70": {
           "n": 99,
-          "defined": 62,
-          "axis_lost": 37,
+          "defined": 56,
+          "axis_lost": 43,
           "kinds": {
             "end": 23,
-            "ext": 35,
-            "near": 18,
+            "near": 53,
             "(없음)": 4,
             "mid": 19
           }
@@ -600,15 +590,14 @@
           "axis_lost": 15,
           "kinds": {
             "end": 23,
-            "ext": 35,
-            "near": 18,
+            "near": 53,
             "(없음)": 4,
             "mid": 19
           }
         }
       },
-      "dead_rows_n": 98,
-      "dead_with_aNot3d": 98,
+      "dead_rows_n": 119,
+      "dead_with_aNot3d": 119,
       "dead_silent": 0
     },
     "w15": {
@@ -1801,6 +1790,83 @@
     {
       "comp": "A_가까운VP",
       "L": 40,
+      "dx": 0,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
+      "dx": 0,
+      "dy": -6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
+      "dx": 2,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
+      "dx": 2,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
+      "dx": 4,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
+      "dx": 4,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
+      "dx": 4,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
+      "dx": 6,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
+      "dx": 6,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
+      "dx": 6,
+      "dy": -3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
+      "dx": 6,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 40,
       "dx": 8,
       "dy": 0,
       "axis_on_A": null
@@ -1829,6 +1895,55 @@
     {
       "comp": "A_가까운VP",
       "L": 70,
+      "dx": 2,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 70,
+      "dx": 4,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 70,
+      "dx": 4,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 70,
+      "dx": 6,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 70,
+      "dx": 6,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 70,
+      "dx": 6,
+      "dy": -3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 70,
+      "dx": 6,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 70,
       "dx": 8,
       "dy": 0,
       "axis_on_A": null
@@ -1857,6 +1972,27 @@
     {
       "comp": "A_가까운VP",
       "L": 110,
+      "dx": 4,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 110,
+      "dx": 6,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 110,
+      "dx": 6,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "A_가까운VP",
+      "L": 110,
       "dx": 8,
       "dy": 0,
       "axis_on_A": null
@@ -1872,6 +2008,69 @@
       "comp": "A_가까운VP",
       "L": 110,
       "dx": 8,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 40,
+      "dx": 0,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 40,
+      "dx": 0,
+      "dy": -6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 40,
+      "dx": 2,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 40,
+      "dx": 2,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 40,
+      "dx": 4,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 40,
+      "dx": 4,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 40,
+      "dx": 6,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 40,
+      "dx": 6,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 40,
+      "dx": 6,
       "dy": 6,
       "axis_on_A": null
     },
@@ -1899,6 +2098,34 @@
     {
       "comp": "B_얕은각",
       "L": 70,
+      "dx": 2,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 70,
+      "dx": 4,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 70,
+      "dx": 6,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 70,
+      "dx": 6,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 70,
       "dx": 8,
       "dy": 0,
       "axis_on_A": null
@@ -1914,6 +2141,13 @@
       "comp": "B_얕은각",
       "L": 70,
       "dx": 8,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 110,
+      "dx": 6,
       "dy": 6,
       "axis_on_A": null
     },
@@ -1927,6 +2161,13 @@
     {
       "comp": "B_얕은각",
       "L": 140,
+      "dx": 6,
+      "dy": 6,
+      "axis_on_A": "V"
+    },
+    {
+      "comp": "B_얕은각",
+      "L": 140,
       "dx": 8,
       "dy": 6,
       "axis_on_A": "V"
@@ -1934,6 +2175,90 @@
     {
       "comp": "C_먼VP",
       "L": 40,
+      "dx": 2,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 2,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 4,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 4,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 4,
+      "dy": -3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 4,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 4,
+      "dy": -6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 6,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 6,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 6,
+      "dy": -3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 6,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
+      "dx": 6,
+      "dy": -6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 40,
       "dx": 8,
       "dy": 0,
       "axis_on_A": null
@@ -1963,6 +2288,62 @@
       "comp": "C_먼VP",
       "L": 40,
       "dx": 8,
+      "dy": -6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 70,
+      "dx": 4,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 70,
+      "dx": 4,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 70,
+      "dx": 4,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 70,
+      "dx": 6,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 70,
+      "dx": 6,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 70,
+      "dx": 6,
+      "dy": -3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 70,
+      "dx": 6,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 70,
+      "dx": 6,
       "dy": -6,
       "axis_on_A": null
     },
@@ -2004,6 +2385,27 @@
     {
       "comp": "C_먼VP",
       "L": 110,
+      "dx": 6,
+      "dy": 0,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 110,
+      "dx": 6,
+      "dy": 3,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 110,
+      "dx": 6,
+      "dy": 6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 110,
       "dx": 8,
       "dy": 0,
       "axis_on_A": null
@@ -2034,6 +2436,13 @@
       "L": 110,
       "dx": 8,
       "dy": -6,
+      "axis_on_A": null
+    },
+    {
+      "comp": "C_먼VP",
+      "L": 140,
+      "dx": 6,
+      "dy": 6,
       "axis_on_A": null
     },
     {

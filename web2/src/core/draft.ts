@@ -10,6 +10,7 @@ import type { Analysis, AxisId } from './camera'
 import { classifyNext, vpAt } from './camera'
 import type { LiftResult } from './lift'
 import { osnap, type OsnapHit, type OsnapSettings } from './osnap'
+import type { ExtAcq } from './extacq'
 import { snapDir } from './snap'
 import { lenMm, snapMm, solveEnd3, endAtMm } from './dim'
 import { C } from './constants'
@@ -45,11 +46,12 @@ function footOnAim(start: Pt, through: Pt, p: Pt): Pt {
   return pt(start.x + ux * t, start.y + uy * t)
 }
 
-/** 시작점 — 오스냅만 본다 */
+/** 시작점 — 오스냅만 본다. `extAcq`는 획득된 연장선(web2-18 2부 — 없으면 ext가 안 난다). */
 export function resolveStart(
   lift: LiftResult, pose: CamPose, p: Pt, set: OsnapSettings,
+  extAcq: readonly ExtAcq[] = [],
 ): OsnapHit | null {
-  return osnap(lift, pose, p, set)
+  return osnap(lift, pose, p, set, undefined, undefined, extAcq)
 }
 
 /** 끝점 — 오스냅 → 축 스냅(+치수 스냅) → 자유 (지평선 강제 갈래는 web2-17에서 삭제) */
@@ -57,6 +59,8 @@ export function resolveEnd(
   lift: LiftResult, pose: CamPose, an: Analysis,
   start: Pt, startP3: { p3: V3 | null },
   cursor: Pt, set: OsnapSettings, dim?: DimOpts,
+  /** 획득된 연장선(web2-18 2부) — 여기 없는 선분의 연장은 후보가 아니다 */
+  extAcq: readonly ExtAcq[] = [],
 ): EndResolve {
   const a3 = startP3.p3
   const scale = dim?.mmPerUnit ?? null
@@ -87,7 +91,7 @@ export function resolveEnd(
   //    #63의 면 회귀 팔이 그 동작을 지킨다: 루프가 닫혀야 면이 선다). 죽는 것은 **줄 것이
   //    없는 2D 특징점**에 끌려갈 때뿐이고, 그때만 축이 이겨야 둘 다 산다.
   //    ⚠ 축이 안 걸린 획(자유·소실점 살·축 정의)에서는 종전대로 점이 그대로 이긴다.
-  const oh = osnap(lift, pose, cursor, set, startP3, aim)
+  const oh = osnap(lift, pose, cursor, set, startP3, aim, extAcq)
   if (oh) {
     if (ds0?.axis && oh.p3 === null) {
       const end = oh.kind === 'xint' ? oh.p : footOnAim(start, ds0.end, oh.p)

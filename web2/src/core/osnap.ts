@@ -14,6 +14,7 @@ import type { CamPose } from './types'
 import { C } from './constants'
 import { project, rayThrough, vpMarks } from './camera'
 import type { LiftResult } from './lift'
+import { type ExtAcq, extAllowed } from './extacq'
 import {
   type Pt, type V3, pt, add3, sub3, mul3, dot3, dist2, dist3, len3,
 } from './vec'
@@ -165,6 +166,9 @@ export function osnap(
   set: OsnapSettings,
   start?: { p3: V3 | null },
   aim?: OsnapAim,
+  /** **획득된 연장선**(web2-18 2부) — 여기 없는 선분의 연장은 후보가 아니다.
+   *  안 주면 빈 목록으로 본다: `ext`는 **획득 없이는 한 번도 안 난다**(팔 ②가 지킨다). */
+  extAcq: readonly ExtAcq[] = [],
 ): OsnapHit | null {
   const t0 = performance.now()
   let tInt = 0, tEnds = 0
@@ -235,7 +239,7 @@ export function osnap(
   // 근처점·연장선 — 광선과 3D 직선의 최근접점. 파라미터가 선분 안이면 근처점, 밖이면 연장선
   const ray = rayThrough(an, pose, cursor)
   if (ray && (set.kinds.near || set.kinds.ext)) {
-    for (const seg of lift.lifted.values()) {
+    for (const [id, seg] of lift.lifted) {
       const dir = sub3(seg.b3, seg.a3)
       const t = lineRayT(seg.a3, dir, ray.o, ray.d)
       if (t === null) continue
@@ -246,7 +250,13 @@ export function osnap(
         const p3 = add3(seg.a3, mul3(dir, tc))
         push('near', project(an, pose, p3), p3)
       } else {
+        // ── 연장선은 **획득식**이다(web2-18 2-b) ─────────────────────────────
+        // 종전에는 여기서 모든 승격 선분의 연장이 무한 길이로 후보가 됐다 — 획이 늘수록
+        // 화면이 연장선으로 덮여 「허공에서 뭔가에 끌린다」가 됐고, 조준 경로 내내 잡혀
+        // `near`·`xint`를 가렸다(web2-15가 우회로 넘긴 그 자리). 이제 **획득한 끝에서
+        // 그 선분 길이의 EXT_MAX_RATIO배까지**만 산다 — 판정은 `extacq.extAllowed` 하나다.
         if (!set.kinds.ext) continue
+        if (!extAllowed(extAcq, id, t, over)) continue
         const p3 = add3(seg.a3, mul3(dir, t))
         push('ext', project(an, pose, p3), p3)
       }

@@ -26,10 +26,14 @@ export function session(W: number, H: number): Session {
     app,
     draw(ax, ay, bx, by) {
       const p: Pt = { x: ax, y: ay }
-      const oh = resolveStart(app.lift, app.pose, p, set())
+      // 연장선 획득(web2-18 2부)도 **앱과 같은 자리에서** 실어 준다 — `app.extAcq.acquired`가
+      // 비어 있으면 ext는 후보가 아니다(그것이 앱의 기본 상태다). 획득을 쓰는 팔은
+      // `updateExtDwell`로 그 목록을 채운 뒤 이 경로로 그린다.
+      const acq = app.extAcq.acquired
+      const oh = resolveStart(app.lift, app.pose, p, set(), acq)
       const start = oh ? oh.p : p
       const startP3 = { p3: oh?.p3 ?? null }
-      const r = resolveEnd(app.lift, app.pose, app.lift.an, start, startP3, { x: bx, y: by }, set(), dims())
+      const r = resolveEnd(app.lift, app.pose, app.lift.an, start, startP3, { x: bx, y: by }, set(), dims(), acq)
       const c = resolveCommit(app.lift.an, start, r.end, set().radius)
       if (!c) return null // 잡음 — 지평선에서 먼 탭
       return commitStroke(app, c.a, c.b, [p, { x: bx, y: by }])

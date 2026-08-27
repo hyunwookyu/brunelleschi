@@ -31,6 +31,8 @@ import { describe, it, expect } from 'vitest'
 import { session } from './session'
 import { resolveStart, resolveEnd } from '../src/core/draft'
 import { osnap } from '../src/core/osnap'
+import { C } from '../src/core/constants'
+import { newExtDwell, updateExtDwell } from '../src/core/extacq'
 import { axisOfStroke } from '../src/core/lift'
 import { own3Deviation, OWN3_TOL_PX } from '../src/core/own3d'
 import { loadDoc, commitStroke } from '../src/app/state'
@@ -102,16 +104,31 @@ describe('단계 ① 스냅 — 손 오차를 태워도 대기선 몸통에 겉�
     expect(answers.size, '구성상 하나 — 「손이 어디서 멈추든 답이 정해져 있다」의 형태 확인').toBe(1)
   })
 
-  it('②의 가림이 풀렸다 — 다른 3D 선에서 «이어» 그어도 ext가 못 가린다', () => {
+  it('②의 가림이 **원인에서** 풀렸다(web2-18 2부) — ext가 상시가 아니라 획득식이다', () => {
     const { s } = fx()
-    // D1 끝에서 수직으로 올린 3D 선 V — 그 연장(ext)이 조준 경로를 덮는다
+    // D1 끝에서 수직으로 올린 3D 선 V — web2-15 당시 그 연장(ext)이 조준 경로를 덮었다
     const V = s.draw(720, 445, 720, 345)!
     expect(s.app.lift.lifted.has(V.id)).toBe(true)
-    // 표식: 조준선 **없이** 부르면(=수리 전 osnap 호출) 잡히는 것은 ext다
     const set = { ...s.app.osnap, radius: s.app.osnap.radius / s.app.view.s }
+
+    // ── web2-15의 관측(주석 ②)과 web2-18의 관측을 **나란히** 적는다 ────────────
+    // 당시: 조준선 없이 부르면 잡히는 것이 `ext`였다(= 조준 경로 내내 ext가 이긴다).
+    // 지금: 획득이 없으므로 `ext`는 후보가 아니고, 그 자리의 답은 `near`다.
+    // web2-15는 이것을 `xint`로 **우회**했고 원인인 ext는 그대로 뒀다 — 이 회차가 원인을
+    // 쳤으므로 우회가 «우회였다»는 것이 여기 값으로 남는다(지시 2-b ⚠ — 다음 사람 몫).
     const bare = osnap(s.app.lift, s.app.pose, { x: 720, y: 308 }, set, { p3: null })
-    expect(bare!.kind, '수리 전 표식 — 대기선 몸통이 아니라 ext가 잡혔다').toBe('ext')
-    // 조준선을 주면(=앱 경로) 겉보기 교차가 이긴다
+    expect(bare!.kind, 'web2-18 뒤 — 획득이 없으니 ext가 아니라 near다').toBe('near')
+
+    // 반증(D-3): **획득 조건을 채우면** 그 자리에서 ext가 되살아나 near를 가린다.
+    //   그것이 web2-15가 본 상태다 — 조건을 참으로 만들면 옛 동작이 그대로 돌아온다.
+    const st = newExtDwell()
+    updateExtDwell(st, s.app.lift, s.app.pose, { x: 720, y: 345 }, set.radius, 0)
+    updateExtDwell(st, s.app.lift, s.app.pose, { x: 720, y: 345 }, set.radius, C.EXT_ACQUIRE_MS)
+    expect(st.acquired.length, 'V의 위 끝이 획득됐다').toBeGreaterThan(0)
+    const acq = osnap(s.app.lift, s.app.pose, { x: 720, y: 308 }, set, { p3: null }, undefined, st.acquired)
+    expect(acq!.kind, '획득하면 옛 동작(ext가 near를 가린다)이 그대로 돌아온다').toBe('ext')
+
+    // 조준선을 주면(=앱 경로) 겉보기 교차가 이긴다 — **획득이 있어도** 그대로다
     const r = preview(s, { x: 720, y: 345 }, { x: 720, y: 308 })
     expect(r.endSnap!.kind).toBe('xint')
   })

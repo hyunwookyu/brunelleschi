@@ -390,6 +390,25 @@ export function draw2d(
     ctx.stroke()
   }
 
+  // ── 획득된 연장선의 표식(web2-18 2-b) — **획득한 것이 손에 보여야 한다** ─────────
+  // 안 보이면 또 조용한 동작이다(이 회차가 고치는 것이 바로 그 형태다: 「정확히 어떤
+  // 오스냅 때문인지 모르겠지만 뭔가에 끌린다」). 무채색이다 — **상시 표시**의 규약(4-c:
+  // 상시는 무채색, 순간은 색)이고, 소실점 ✕와 같은 작도 표식 대역(COL.vpMark)을 쓴다.
+  // 모양은 **십자(+)** — ✕(소실점)와도 □(끝점 오스냅)와도 안 겹친다.
+  for (const acq of app.extAcq.acquired) {
+    const seg = app.lift.lifted.get(acq.id)
+    if (!seg) continue                       // 그 사이 지워졌다 — 표식도 없다
+    const p = project(an, app.pose, acq.end === 0 ? seg.a3 : seg.b3)
+    if (!p) continue
+    const r = 5 * is
+    ctx.strokeStyle = COL.vpMark
+    ctx.lineWidth = 1 * is
+    ctx.beginPath()
+    ctx.moveTo(p.x - r, p.y); ctx.lineTo(p.x + r, p.y)
+    ctx.moveTo(p.x, p.y - r); ctx.lineTo(p.x, p.y + r)
+    ctx.stroke()
+  }
+
   // 미리보기 — 붙은 좌표가 그대로 확정된다(원칙 d). 작도 중엔 안내색, 이후엔 재료색.
   if (draft) {
     const g = activeGrade(app)

@@ -1,0 +1,43 @@
+{
+ "what": "web2-18 2부 — 연장선이 허공을 얼마나 덮고 있었나(①)와 그것이 물러난 뒤 겉보기 교차가 얼마나 이기는가(⑥). 판정이 아니라 **분포**다(#69 ㉠: 규칙을 바꾸면 그 규칙이 이기는 실측 분포를 낸다).",
+ "phase": "after",
+ "phase_note": "수리 후(획득식). 쌍이 되는 수리 전 판은 같은 폴더의 `extacq_web2_before.json` — 같은 파일을 2부 수리를 `git stash`로 걷은 트리에서 돌려 냈다(같은 세션의 자기 트리 — #70).",
+ "thresholds": {
+  "EXT_ACQUIRE_MS": 400,
+  "EXT_MAX_RATIO": 2,
+  "EXT_MAX_ACQUIRED": 2,
+  "OSNAP_RADIUS_PX": 8
+ },
+ "scene": {
+  "lifted": 5,
+  "waiting": 1,
+  "void_cells": 855,
+  "cell_def": "화면 격자 24px · 승격 선분의 그린 구간에서 반경(8px)의 3배 밖만 «허공»으로 센다(끝점·몸통 근처는 end·near가 나는 것이 옳다)"
+ },
+ "void_sweep": {
+  "no_acquisition": {
+   "none": 816,
+   "near": 38,
+   "mid": 1,
+   "ext_ratio": 0,
+   "none_ratio": 0.9544
+  },
+  "all_endpoints_acquired": {
+   "none": 761,
+   "ext": 55,
+   "near": 38,
+   "mid": 1,
+   "ext_ratio": 0.0643
+  },
+  "note": "no_acquisition이 앱의 **기본 상태**다(획을 확정할 때마다 비워지므로 대부분의 시간이 여기다). all_endpoints_acquired는 «획득식이 상시와 어떻게 다른가»의 대조군 — 획득 문만 열고 상한(EXT_MAX_RATIO)은 그대로 둔 상태다. 수리 전(획득도 상한도 없음)은 before 판이 든다."
+ },
+ "xint_race": {
+  "cells": 25,
+  "winner": {
+   "xint": 25
+  },
+  "race_ready": true,
+  "note": "web2-15가 `xint`를 넣은 이유가 «ext가 조준 경로 내내 이겨 near가 한 번도 못 이긴다»였다(그 파일 주석 ②). 원인인 ext가 물러난 뒤 그 자리를 무엇이 받는지 센다 — 이 표가 다음 사람에게 «xint는 우회였다»를 말한다(지시 2-b ⚠)."
+ },
+ "falsification": "허공 칸이 0이면(scene이 화면을 다 덮으면) 이 표는 아무것도 안 잰다 — 팔이 >50을 강제한다. 승격 선분이 다섯 미만이어도 마찬가지다(팔이 ≥5를 강제). 획득 조건을 항상 참으로 두는 반증은 all_endpoints_acquired 행이 그 자리이고, 상한을 무한으로 두는 반증은 test/osnap.test.ts의 「연장선 ④」가 값으로 든다."
+}

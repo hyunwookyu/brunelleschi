@@ -8,6 +8,7 @@ import {
   screenToDoc, isEraser, toggleFaceAt, facePreview, beginNavHold, endNavHold,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
+import { updateExtDwell } from '../core/extacq'
 import { isLevel, pitchSnaps } from '../core/level'
 import type { LevelHooks } from './autolevel'
 import { resolveStart, resolveEnd, resolveCommit, isStray } from '../core/draft'
@@ -102,6 +103,12 @@ export function initInput(
   const toPt = (e: PointerEvent): Pt => screenToDoc(app, toScreen(e))
   /** 오스냅 반경은 화면 px — 문서 좌표용으로 배율 보정 */
   const osnapSet = () => ({ ...app.osnap, radius: app.osnap.radius / app.view.s })
+  /** **연장선 획득 머무름**(web2-18 2-b) — 포인터가 움직일 때마다 한 번. 호버든
+   *  그리는 중이든 같은 자리에서 돈다(AutoCAD·Rhino도 명령 중에 획득한다 — A-3).
+   *  반환 = 표시가 달라졌는가(획득 표식을 다시 그려야 하는가). */
+  const tickExt = (p: Pt): boolean =>
+    updateExtDwell(app.extAcq, app.lift, app.pose, p,
+      app.osnap.radius / app.view.s, performance.now())
   /** 치수 옵션 — 스냅은 켜져 있을 때만 step이 실린다(지시 4-7) */
   const dimOpts = () => ({
     mmPerUnit: app.lift.mmPerUnit,
@@ -127,9 +134,10 @@ export function initInput(
     }
     capStats.points = draft.raw.length
     const cur = toPt(e)
+    tickExt(cur)
     const r = resolveEnd(
       app.lift, app.pose, app.lift.an,
-      draft.start, { p3: draft.startP3 }, cur, osnapSet(), dimOpts(),
+      draft.start, { p3: draft.startP3 }, cur, osnapSet(), dimOpts(), app.extAcq.acquired,
     )
     draft.end = r.end
     draft.label = r.label
@@ -144,7 +152,7 @@ export function initInput(
   function beginDraft(p: Pt, e: PointerEvent) {
     samples = [sampleOf(e)]
     capStats = { pointerType: e.pointerType, events: 1, points: 1, extra: 0 }
-    const oh = resolveStart(app.lift, app.pose, p, osnapSet())
+    const oh = resolveStart(app.lift, app.pose, p, osnapSet(), app.extAcq.acquired)
     draft = {
       start: oh ? oh.p : p,
       end: oh ? oh.p : p,
@@ -202,6 +210,10 @@ export function initInput(
     }
     const c = resolveCommit(app.lift.an, d.start, d.end, app.osnap.radius / app.view.s)
     if (!c) return // 잡음 — 지평선에서 먼 탭
+    // **어떤 오스냅이 이 획을 정했는가**(web2-18 2-c) — 사람이 「정확히 어떤 오스냅
+    // 때문인지 모르겠다」고 했다. 앱이 실제로 쓴 값을 그대로 든다(다시 계산하지 않는다).
+    // ⚠ commitStroke가 획득을 비우므로 **그 전에** 적는다.
+    app.lastSnap = { start: d.startSnap?.kind ?? null, end: d.endSnap?.kind ?? null }
     cb.onCommit(c.a, c.b, d.raw, press, rawIn)
   }
 
@@ -337,7 +349,10 @@ export function initInput(
         return
       }
       // 호버 — 와콤 EMR 펜·마우스. 스냅 후보 표식.
-      cb.onHover(osnap(app.lift, app.pose, toPt(e), osnapSet()))
+      // 머무름이 먼저다(2-b) — 이 이동으로 획득이 서면 **그 자리에서** ext가 후보가 된다.
+      const hp = toPt(e)
+      if (tickExt(hp)) cb.onDraftChange(draft)   // 획득 표식이 달라졌다 — 다시 그린다
+      cb.onHover(osnap(app.lift, app.pose, hp, osnapSet(), undefined, undefined, app.extAcq.acquired))
     }
   })
 

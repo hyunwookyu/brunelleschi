@@ -30,6 +30,16 @@ function drawn(): Session {
   s.draw(500, 500, 870, 407)      // 연필 구축선 — 3D에서 83 단위 뒤에 선다
   return s
 }
+// ⚠⚠ **web2-18 2부에서 이 파일의 기준값 셋이 조금 움직였다 — 픽스처가 아니라 앱이
+//    바뀌었기 때문이다.** 마지막 획(멀리 뻗은 연필 구축선 `draw(500,500,870,407)`)은
+//    자유 획인데, 종전에는 **상시 켜져 있던 연장선 오스냅(ext)**이 그 끝을 잡아
+//    끝점이 (870.1644, 407.4589)로 확정됐다. 2부가 ext를 획득식으로 바꾼 뒤에는
+//    획득이 없으므로 축 스냅의 답 (870.1176, 407.4706)이 그대로 확정된다.
+//    2D로는 0.048 px이지만 그 획이 소실점 가까이서 끝나 깊이가 크므로 3D에서는
+//    무게중심 반경이 17.335 → **17.316**, 전체 경계 상자 반경이 52.087 → **52.006**이 된다.
+//    **이것이 사람이 보고한 증상의 작은 판이다**: 아무 데도 겨누지 않았는데 뭔가에 끌렸다.
+//    아래 기준값은 그래서 «고친 뒤»의 값이고, 옛 값은 이 주석이 든다(#47 — 산문이 아니라
+//    나란한 두 수). 반경이 2.4배 줄어든다는 **이 파일의 결론은 안 바뀐다**(7.274 불변).
 const radius = (p: V3) =>
   Math.hypot(p.x - DRAW_POSE.p.x, p.y - DRAW_POSE.p.y, p.z - DRAW_POSE.p.z)
 /** 무게중심 — 고치기 전의 규칙. **대조군으로만** 쓴다(앱은 이제 안 쓴다). */
@@ -44,7 +54,7 @@ function centroid(s: Session): V3 {
 describe('지시 4 — 궤도 중심', () => {
   it('**펜이 있으면 펜의 경계 상자다** — 멀리 뻗은 연필 구축선이 중심을 못 끌어간다', () => {
     const s = drawn()
-    expect(radius(centroid(s))).toBeCloseTo(17.335, 2)   // 고치기 전의 반경
+    expect(radius(centroid(s))).toBeCloseTo(17.316, 2)   // 고치기 전의 반경(web2-18 전 17.335)
     s.app.tool = 'pen'
     const i1 = s.draw(500, 500, 600, 475)!               // 깊이선 따기
     const i2 = s.draw(500, 500, 500, 300)!               // 기둥 따기
@@ -65,9 +75,10 @@ describe('지시 4 — 궤도 중심', () => {
   it('**펜이 없으면 종전 규칙(무게중심)이다** — 이 회차가 그 구간을 안 건드린다', () => {
     const s = drawn()
     expect([...s.app.lift.lifted.keys()].length).toBeGreaterThan(0)
-    expect(radius(orbitPivot(s.app))).toBeCloseTo(17.335, 2)   // = 무게중심 = 이 회차 전과 같다
+    expect(radius(orbitPivot(s.app))).toBeCloseTo(17.316, 2)   // = 무게중심 (web2-18 전 17.335)
     expect(orbitPivot(s.app)).toEqual(centroid(s))
-    // **경계 상자였으면 52.087**이었다 — 1차 리뷰어 [9]가 잡은 자리다(3배 · 증상과 같은 방향)
+    // **경계 상자였으면 52.006**이었다 — 1차 리뷰어 [9]가 잡은 자리다(3배 · 증상과 같은 방향.
+    // web2-18 전에는 52.087 — 위 ⚠⚠의 0.048px가 여기까지 온다)
     const segs = [...s.app.lift.lifted.values()]
     const ax = segs.flatMap(g => [g.a3.x, g.b3.x]), ay = segs.flatMap(g => [g.a3.y, g.b3.y])
     const az = segs.flatMap(g => [g.a3.z, g.b3.z])
@@ -76,7 +87,7 @@ describe('지시 4 — 궤도 중심', () => {
       y: (Math.min(...ay) + Math.max(...ay)) / 2,
       z: (Math.min(...az) + Math.max(...az)) / 2,
     }
-    expect(radius(boxAll)).toBeCloseTo(52.087, 2)
+    expect(radius(boxAll)).toBeCloseTo(52.006, 2)
   })
 
   it('저장하지 않는다 — 펜 획을 되돌리면 그 즉시 연필로 돌아간다', () => {

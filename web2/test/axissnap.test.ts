@@ -7,6 +7,8 @@ import { describe, it, expect } from 'vitest'
 import { session } from './session'
 import { resolveEnd } from '../src/core/draft'
 import { defaultOsnap } from '../src/core/osnap'
+import { newExtDwell, updateExtDwell } from '../src/core/extacq'
+import { C } from '../src/core/constants'
 import { DRAW_POSE } from '../src/core/camera'
 
 /** 소실점 둘 (찍어서 — 짧고 확실하다). 지평선은 상시(H/2=400 — web2-17)라 긋지 않는다. */
@@ -97,12 +99,25 @@ describe('5-c — 대기가 거의 사라진다', () => {
     const g = s.app.lift.lifted.get(d.id)!
     // 그 바닥선의 **연장** 위 한 점을 화면에서 집는다 (선분 밖)
     const ext = { x: d.b.x + (d.b.x - d.a.x) * 0.5, y: d.b.y + (d.b.y - d.a.y) * 0.5 }
+    // web2-18 2부 — `ext`는 이제 **획득식**이다: 그 바닥선의 먼 끝에 머물러야 연장이 산다
+    // (지시 2-d ⑦ — ext에 기대던 팔은 획득 동작을 넣어 고친다). 반증은 바로 아래 줄:
+    // 획득 없이 부르면 같은 자리에서 ext가 **안 난다**.
+    expect(resolveEnd(s.app.lift, DRAW_POSE, s.app.lift.an,
+      { x: 500, y: 350 }, { p3: null }, ext, defaultOsnap()).endSnap?.kind,
+      '획득 전에는 연장선이 없다').not.toBe('ext')
+    const st = newExtDwell()
+    const R = defaultOsnap().radius
+    updateExtDwell(st, s.app.lift, DRAW_POSE, d.b, R, 0)
+    updateExtDwell(st, s.app.lift, DRAW_POSE, d.b, R, C.EXT_ACQUIRE_MS)
+    expect(st.acquired.length, '그 바닥선의 끝이 획득됐다').toBeGreaterThan(0)
     const e = resolveEnd(s.app.lift, DRAW_POSE, s.app.lift.an,
-      { x: 500, y: 350 }, { p3: null }, ext, defaultOsnap())
+      { x: 500, y: 350 }, { p3: null }, ext, defaultOsnap(), undefined, st.acquired)
     expect(e.endSnap?.kind).toBe('ext')
-    const st = s.draw(500, 350, ext.x, ext.y)!
-    expect(s.app.lift.waiting).not.toContain(st.id)
-    expect(s.app.lift.lifted.has(st.id)).toBe(true)
+    // 확정도 같은 획득 상태에서 — 하네스에 획득을 실어 앱 경로 그대로 돌린다
+    s.app.extAcq.acquired.push(...st.acquired)
+    const stroke = s.draw(500, 350, ext.x, ext.y)!
+    expect(s.app.lift.waiting).not.toContain(stroke.id)
+    expect(s.app.lift.lifted.has(stroke.id)).toBe(true)
     void g
   })
 

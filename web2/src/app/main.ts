@@ -88,6 +88,17 @@ const diagPanel = initDiagPanel(
         return q ? `중앙 ${q.total.toFixed(2)} · 최악 ${q.totalMax.toFixed(2)}`
           + ` (3D ${q.r3.toFixed(2)} · 흑연 ${q.bs.toFixed(2)} · 2D ${q.d2.toFixed(2)}) · 표본 ${q.n}` : '—'
       })()],
+      // ── 어떤 오스냅이 이 획을 정했나(web2-18 2-c) — 사람이 「정확히 어떤 오스냅
+      // 때문인지는 모르겠지만」이라고 했다. 그것을 앱이 말한다. 값은 앱이 실제로 쓴
+      // `OsnapHit.kind` 그대로다(표시용으로 다시 계산하지 않는다 — 원칙 a).
+      ['마지막 획 스냅', app.lastSnap
+        ? `시작 ${app.lastSnap.start ?? '없음(자유)'} · 끝 ${app.lastSnap.end ?? '없음(자유)'}`
+        : '—'],
+      ['지금 호버 스냅', hover ? `${hover.kind}` : '—'],
+      // 연장선 획득(2-b) — 상시가 아니라 획득식이라는 것이 여기 수로 보인다
+      ['연장선 획득', `${app.extAcq.acquired.length}/${C.EXT_MAX_ACQUIRED}`
+        + (app.extAcq.acquired.length ? ` — ${app.extAcq.acquired.map(a => `획#${a.id}${a.end === 0 ? 'a' : 'b'}`).join(' · ')}` : '')
+        + ` (머무름 ${C.EXT_ACQUIRE_MS}ms · 상한 ${C.EXT_MAX_RATIO}배)`],
       ['④ osnap ms/회', osnapCost.calls === 0 ? '—'
         : `${(osnapCost.totalMs / osnapCost.calls).toFixed(3)}`
           + ` (교차 ${(osnapCost.intersectMs / osnapCost.calls).toFixed(3)}`
@@ -1003,7 +1014,12 @@ const diag = {
   draft: () => draft,
   /** 오스냅 판정 그대로(web2-12 8번) — 넘김 꼬리가 스냅 대상이 아님을 팔이 잰다 */
   osnapAt: (x: number, y: number) =>
-    osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / app.view.s }),
+    osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / app.view.s },
+      undefined, undefined, app.extAcq.acquired),
+  /** 연장선 획득 상태(web2-18 2부) — e2e가 «획득 없이는 ext가 안 난다»를 잰다 */
+  extAcq: () => ({ acquired: app.extAcq.acquired.map(a => ({ ...a })), hover: app.extAcq.hover }),
+  /** 마지막 확정 획의 스냅 종류(2-c) — 진단 패널과 **같은 값** */
+  lastSnap: () => app.lastSnap,
   /** classic 쪽 비교치 — 같은 장면의 draw2d 1회 ms(질감 grain 포함) */
   draw2dMs: () => {
     const t0 = performance.now()
