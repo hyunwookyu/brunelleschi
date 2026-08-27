@@ -1,6 +1,6 @@
 {
   "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "web2-16 2부(2026-08-27 — 축 사영·무산 계수 마감 전량 측정)",
+  "measured_at": "web2-16 3부(2026-08-27 — 대기선 흑연 파선·즉시 끊기 마감 전량 측정)",
   "unit": {
     "command": "npm test (vitest)",
     "files": 46,
@@ -10,18 +10,18 @@
   },
   "e2e": {
     "command": "npm run e2e (playwright, dpr1+dpr2)",
-    "cases": 178,
-    "arms": 89,
-    "wall_s": 258,
-    "arms_source": "npx playwright test --list → 「Total: 178 tests in 22 files」(89팔). --list 출력이 정본(#69 ㉤)",
-    "passed": 178,
+    "cases": 180,
+    "arms": 90,
+    "wall_s": 282,
+    "arms_source": "npx playwright test --list → 「Total: 180 tests in 22 files」(90팔). --list 출력이 정본(#69 ㉤)",
+    "passed": 180,
     "failed": 0,
-    "note": "web2-16 2부 +1팔(axisproj.spec — 수선 연결선 화면 판·분리 32px·반증 둘 실행). 1부의 176과 케이스 수가 갈린다(#70 ② — 버전 판별값)"
+    "note": "web2-16 3부 +1팔(waitfade.spec 3-b 즉시 끊김·복귀). ⚠ 이 회차에 «tail이 4 failed를 잘라 176을 전량으로 읽을 뻔»한 사건이 있었다 — --list 총수 대조가 잡았다(NOTES 3부 절)"
   },
   "typecheck_build": {
     "command": "tsc --noEmit · vite build",
-    "build_s": 1.94,
-    "note": "web2-16 2부 최종 실측(「✓ built in 1.94s」). 1부의 6.08s와 3배 차 — 같은 기계의 연속 실행에서 나는 캐시·부하 대역으로 보이나 원인 미확인(빨라진 쪽이라 판정 없음 — #45는 느려졌을 때의 규약)"
+    "build_s": 6.32,
+    "note": "web2-16 3부 실측(「✓ built in 6.32s」 — 1.94~6.32 대역은 연속 실행 캐시·부하 몫으로 보임·원인 미확정)"
   },
   "history": [
     {
@@ -117,6 +117,14 @@
       "e2e_passed": 178,
       "e2e_failed": 0,
       "e2e_wall_s": 258
+    },
+    {
+      "at": "web2-16 3부",
+      "unit": 437,
+      "e2e": 180,
+      "e2e_passed": 180,
+      "e2e_failed": 0,
+      "e2e_wall_s": 282
     }
   ],
   "environment": {

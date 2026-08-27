@@ -52,8 +52,11 @@ describe('제스처 동안 감쇠 판정 동결 — 왕복 궤도의 표시 변�
     for (let i = 0; i < 20; i++) { orbitBy(app, -15, 0); factors.push(waitFadeFactor(app.pose, undefined)) }
     let changes = 0
     for (let i = 1; i < factors.length; i++) if (Math.abs(factors[i]! - factors[i - 1]!) > 1e-9) changes++
-    expect(changes, '수리 전 동작 — 프레임마다 떨린다').toBeGreaterThan(5)
-    expect(Math.min(...factors)).toBeLessThan(1)   // 실제로 흐려졌다(0 아닌 감쇠 대역까지 갔다)
+    // ⚠ web2-16 3-b(이진)로 기대값이 바뀌었다: 그라디언트 시절엔 프레임마다 떨렸고(>5),
+    // 이진에서는 창 경계를 나갔다 돌아오는 **2회**다. 동결 팔(위 0회)의 판별력은 그대로다 —
+    // 동결 없이 변화가 «있다»는 것이 이 팔의 몫이다.
+    expect(changes, '동결 없으면 왕복에서 표시가 변한다(나감·돌아옴)').toBeGreaterThanOrEqual(2)
+    expect(Math.min(...factors)).toBe(0)   // 창 밖에서 실제로 사라졌다(이진 0)
   })
 
   it('중첩 제스처 — 두 번째 grab이 동결값을 안 덮는다(처음 값이 이긴다)', () => {
@@ -86,7 +89,9 @@ describe('접기 애니메이션 동안 동결 — 끝나면 해제·재판정',
     orbitBy(app, 0, 8)                        // 피치 ≈2.3° — 접힘 임계 안(f≈387 → atan(f/6W)≈3.1°. 순수 요는 이미 정렬이라 안 접힌다)
     level.release(); endNavHold(app)
     const releasedFactor = waitFadeFactor(fadeRef(app), undefined)
-    expect(releasedFactor).toBeLessThan(1)    // 놓은 자리 — 창 안 감쇠값(재판정 한 번)
+    // web2-16 3-b: 창 안은 1이다(이진 — 그라디언트 시절엔 <1이었다). 재판정 자체는
+    // fadePose가 풀린 것(아래 단언)이 증거다.
+    expect(releasedFactor).toBe(1)
     // 지연을 지나 접기 시작 — 애니 동안 동결
     t = C.FOLD_DELAY_MS + 1
     expect(level.tick()).toBe(true)           // 첫 걸음

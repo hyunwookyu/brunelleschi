@@ -2,7 +2,7 @@
  "what": "web2-12 3부(dpr2) — 제도 표현의 실측: 종이 마스크 켬/끔의 궤도 프레임(ms) · 연쇄 승격 순간의 화면 변화 픽셀. e2e drafting.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).",
  "promotion": {
   "lifted": true,
-  "ink_box_before": 160,
+  "ink_box_before": 0,
   "ink_box_after": 35,
   "note": "전/후는 잉크 겹의 painted — 파선 소멸·번짐 가장자리 등장 등 상태 전환의 총 몫이다(설계된 변화 — 무변화 게이트 대상이 아니다)."
  },
@@ -12,8 +12,8 @@
   "planes": 1
  },
  "paper_orbit": {
-  "frame_ms_median_mask_on": 142.7,
-  "frame_ms_median_mask_off": 107.7,
+  "frame_ms_median_mask_on": 150.3,
+  "frame_ms_median_mask_off": 121.3,
   "note": "국면당 1회 표본(brush_perf의 single_sample_note와 같은 규율 — 작은 차는 판별하지 않는다). 줌 미끄러짐(위상 문서·크기 화면의 교환)은 실기기 눈 몫(DEFERRED)."
  }
 }
