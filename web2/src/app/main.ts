@@ -5,11 +5,11 @@ import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, type Draft } from './render2d'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost } from './render3d'
 import { serializeBrnl, parseBrnl } from '../core/file'
 import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice, confirmNear } from './notice'
-import { OSNAP_ORDER, osnap, type OsnapHit } from '../core/osnap'
+import { OSNAP_ORDER, osnap, osnapCost, resetOsnapCost, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT, widthOfMat } from '../core/material'
 import type { Grade } from '../core/types'
 import { parseDim, formatMm, lenMm, UNITS, type Unit } from '../core/dim'
@@ -73,6 +73,26 @@ const diagPanel = initDiagPanel(
       // 「잘못 찍힌 점」 문이 버린 수(web2-13 3-b) — 조용히 버리지 않는다: 수가 말한다.
       // 크면 C.STRAY_MIN_PX가 틀린 것이다(원장 stray_gate_web2.json이 근거 대역).
       ['버린 짧은 획', `${app.strayCount} (문 ${C.STRAY_MIN_PX}px)`],
+      // ── 비용(web2-18 0부) — **실기기가 읽는 자리**다. 헤드리스 표와 값이 다를 것을
+      // 전제한 배치다(지시 0부 ⚠): 이 세 줄이 사람 기기의 표를 만든다.
+      // 전부 **그 자리에서 읽는 현재값**이다 — 패널이 측정을 «일으키지» 않는다(패널이
+      // 부하가 되면 재는 대상이 바뀐다). ①은 앱이 마지막으로 실제 그린 전량 재그리기,
+      // ③은 마지막 프레임들의 3몫 합(중앙·최악), ④는 osnap 호출당 평균의 3몫 분해다.
+      ['① 전량 흑연 ms', (() => {
+        const f = brushLayer.lastFull()
+        return `${f.ms.toFixed(2)} (그린 획 ${f.drawn}${f.clipped > 0 ? ` · 화면 밖 ${f.clipped}` : ''})`
+      })()],
+      ['② syncStrokes ms', `${syncCost.lastMs.toFixed(2)} (누적 ${syncCost.calls}회)`],
+      ['③ 프레임 합 ms', (() => {
+        const q = frameCostQ()
+        return q ? `중앙 ${q.total.toFixed(2)} · 최악 ${q.totalMax.toFixed(2)}`
+          + ` (3D ${q.r3.toFixed(2)} · 흑연 ${q.bs.toFixed(2)} · 2D ${q.d2.toFixed(2)}) · 표본 ${q.n}` : '—'
+      })()],
+      ['④ osnap ms/회', osnapCost.calls === 0 ? '—'
+        : `${(osnapCost.totalMs / osnapCost.calls).toFixed(3)}`
+          + ` (교차 ${(osnapCost.intersectMs / osnapCost.calls).toFixed(3)}`
+          + ` · 끝점병합 ${(osnapCost.endsMs / osnapCost.calls).toFixed(3)}`
+          + ` · 나머지 ${(osnapCost.restMs / osnapCost.calls).toFixed(3)}) · 호출 ${osnapCost.calls}`],
       // 지금 어느 3D 경로인가(web2-13 4-f · web2-14 1번에서 정본이 뒤집혔다) —
       // 깃발이 눈에 보이는 자리. 교점 정의(4-g)의 성립·무산도 여기 센다([42] —
       // 조용히 버리지 않는다. 무산은 «끝이 대기선 위에서 끝났는데 안 선» 경우 전부다
@@ -808,10 +828,30 @@ window.addEventListener('resize', () => {
   invalidate()
 })
 
+// ── **비용 표식**(web2-18 0부 ③) — 「돌리는 중 1프레임 합」의 자리 ───────────────
+// 세 몫을 **그리는 그 자리에서** 잰다(원칙 a — 측정용 프레임을 따로 안 돈다).
+// 표본은 마지막 FRAME_COST_N개만 든다(고리 버퍼) — 누산 평균은 국면이 섞인다(#32·#43).
+// 국면별로 리셋해서 읽는다(frameCostReset) — 궤도 칸에 그리기 국면의 값이 실리면
+// 그 칸은 남의 값이다(web2-12 2차 리뷰어 [5]의 같은 형태).
+const FRAME_COST_N = 240
+interface FrameCost { r3: number; bs: number; d2: number; total: number }
+let frameCosts: FrameCost[] = []
+/** 표본의 중앙·최악 — **진단 패널과 e2e 원장이 같은 함수를 읽는다**(원칙 a). */
+function frameCostQ() {
+  if (frameCosts.length === 0) return null
+  const q = (k: keyof FrameCost) => {
+    const v = frameCosts.map(c => c[k]).sort((a, b) => a - b)
+    return v[Math.floor(v.length / 2)]!
+  }
+  const totals = frameCosts.map(c => c.total)
+  return { n: frameCosts.length, r3: q('r3'), bs: q('bs'), d2: q('d2'), total: q('total'), totalMax: Math.max(...totals) }
+}
+
 function frame() {
   autolevel.tick()   // 접힐 때가 됐으면 여기서 포즈가 움직인다(setPose가 다시 그리게 한다)
   if (dirty) {
     dirty = false
+    const fc0 = performance.now()
     // draft 몸체(web2-12 2번) — 확정과 같은 Line2가 그린다(질감은 아래 brushLayer.sync).
     // 눌리는 술어는 draftBrushed 하나다(#54 — state.ts 머리주석이 정본).
     const g = activeGrade(app)
@@ -820,10 +860,15 @@ function frame() {
           w: widthOfMat({ grade: g, w: app.tool === 'pen' && app.nib !== C.NIB_PX ? app.nib : undefined }) }
       : null)
     render3d(r3d, app)
+    const fc1 = performance.now()
     // 캐시 키(문서·포즈·뷰·렌더러)가 갈렸을 때만 전량을 그린다. draft가 있으면(web2-12 2번)
     // draft 전용 모드 — 확정 획은 스냅샷 겹이 들고 #brushc는 진행 중인 획 하나만 그린다.
     brushLayer.sync(app, draft)
+    const fc2 = performance.now()
     draw2d(ctx, app, draft, hover, eraserPos, facePrev)
+    const fc3 = performance.now()
+    if (frameCosts.length >= FRAME_COST_N) frameCosts.shift()
+    frameCosts.push({ r3: fc1 - fc0, bs: fc2 - fc1, d2: fc3 - fc2, total: fc3 - fc0 })
     syncHorizonBox()   // 체크박스가 실제 표시 상태를 비춘다(5-a — 그려진 프레임과 같은 판정)
   }
   requestAnimationFrame(frame)
@@ -922,6 +967,20 @@ const diag = {
   setRenderer,
   /** 강제 전량 재그리기 ms — 성능 원장(2-f)이 획 수를 늘려가며 부른다 */
   brushRedrawMs: () => brushLayer.redrawTimed(app),
+  // ── web2-18 0부 비용 원장 통로 — 진단 패널과 **같은 값**을 읽는다(원칙 a) ──
+  /** ① 앱이 마지막으로 실제 그린 전량 재그리기(ms·그린 획·화면 밖으로 걸러낸 획) */
+  brushLastFull: () => brushLayer.lastFull(),
+  /** ② syncStrokes 비용 — 문서가 바뀔 때마다 */
+  syncCost: () => ({ ...syncCost }),
+  /** ② 강제 실행 1회의 ms — 앱과 **같은 함수**를 부른다(측정용 사본 없음). 반복 표본용 */
+  syncStrokesMs: () => { syncStrokes(r3d, app); return syncCost.lastMs },
+  syncCostReset: () => resetSyncCost(),
+  /** ③ 프레임 3몫 합 — 국면별로 리셋해서 읽는다(누산은 국면이 섞인다) */
+  frameCost: () => frameCostQ(),
+  frameCostReset: () => { frameCosts = [] },
+  /** ④ osnap 호출당 비용의 3몫 분해 — 4부의 문턱을 이 값이 정한다 */
+  osnapCost: () => ({ ...osnapCost }),
+  osnapCostReset: () => resetOsnapCost(),
   /** 재그리기 분자/분모(#43) — 「그리는 중 0회」를 수로 */
   brushStats: () => brushLayer.stats(),
   /** draft 재그리기 원장(web2-12 2번) — 이동당 비용(ms 중앙·최악)과 횟수. 국면별로 리셋 */
@@ -942,8 +1001,30 @@ const diag = {
   },
   /** 성능 픽스처용 획 주입 — 실입력 경로(commitStroke)와 같은 함수를 부른다(2-f).
    *  ⚠ 측정 전용이다 — 앱 흐름은 여전히 onCommit 하나로 들어온다. */
-  commitStroke: (ax: number, ay: number, bx: number, by: number) =>
-    commitStroke(app, { x: ax, y: ay }, { x: bx, y: by }),
+  commitStroke: (ax: number, ay: number, bx: number, by: number,
+    opts?: { press?: number[]; grade?: Grade }) => {
+    // 점별 필압(rawIn)을 실으려면 **raw가 나란해야** 한다(commitStroke의 채택 조건 그대로 —
+    // 측정용 우회로를 안 만든다). raw는 두 끝을 잇는 등간격 점열이다.
+    // 재료의 출처는 `activeGrade`(도구 + 경도) 하나다 — 여기서 다른 길을 안 만든다:
+    // 잉크는 «펜», 나머지는 «연필 + 그 경도»다(state.ts §22의 규칙 그대로).
+    const t0 = app.tool, g0 = app.grade
+    if (opts?.grade) {
+      if (opts.grade === 'INK') app.tool = 'pen'
+      else { app.tool = 'pencil'; app.grade = opts.grade }
+    }
+    let r: ReturnType<typeof commitStroke>
+    if (opts?.press && opts.press.length > 2) {
+      const n = opts.press.length
+      const raw = Array.from({ length: n }, (_, i) => ({
+        x: ax + ((bx - ax) * i) / (n - 1), y: ay + ((by - ay) * i) / (n - 1),
+      }))
+      r = commitStroke(app, { x: ax, y: ay }, { x: bx, y: by }, raw, undefined, { press: opts.press })
+    } else {
+      r = commitStroke(app, { x: ax, y: ay }, { x: bx, y: by })
+    }
+    if (opts?.grade) { app.tool = t0; app.grade = g0 }
+    return r
+  },
   /** 입력 캡처 진단(web2-11 1부) — 패널과 **같은 자료**를 읽는다(문자열 파싱 없이) */
   capture: () => ({
     stroke: inputApi?.strokeStats() ?? null,

@@ -48,6 +48,11 @@ export interface BrushLayer {
   sync(app: App, draft?: Draft | null): boolean
   /** 강제 재그리기 + 소요 ms — 성능 원장(2-f)이 부른다 */
   redrawTimed(app: App): number
+  /** **비용 표식**(web2-18 0부 ①) — 마지막 «전량» 재그리기의 ms와 그때의 획 수.
+   *  `redrawTimed`(강제 실행)와 다르다: 이것은 **앱이 실제로 그린 그 프레임**의 값이라
+   *  실기기 진단 패널이 읽을 수 있다(측정용 실행을 패널이 일으키면 패널이 부하가 된다).
+   *  `clipped`는 그 재그리기에서 화면 밖으로 걸러낸 획 수 — 3-c ㉠이 채운다(그 전에는 0). */
+  lastFull(): { ms: number; drawn: number; clipped: number }
   /** 분자/분모 카운터(#43) — 「그리는 중 재그리기 0회」를 산문이 아니라 수로:
    *  syncs = sync 호출 수(프레임 몫), redraws = 그중 실제로 다시 그린 수.
    *  ⚠ web2-12 2번 뒤에도 이 정의는 산다 — redraws는 **전량**(확정 획) 재그리기만 세고,
@@ -211,7 +216,12 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     }
   }
 
+  // 0부 ① — 마지막 전량 재그리기의 실측(앱이 실제로 그린 그 프레임)
+  let lastFullMs = 0, lastDrawn = 0, lastClipped = 0
+
   function redraw(app: App) {
+    const tFull = performance.now()
+    let drawn = 0, clipped = 0
     brush.clear()
     if (app.renderer === 'brush') {
       brush.push()
@@ -229,10 +239,12 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
           // 끄면 종전 식 그대로(A-4): own에서만 통짜 몸체 + ink 점선은 render2d 몫.
           if (app.waitFade) {
             if (waitFadeFactor(fadeRef(app), s.view) <= 0) continue
+            drawn++
             drawWaitingDashed(s, docToScreen(app, s.a), docToScreen(app, s.b))
           } else {
             const own = s.view ? !atDraw : atDraw
             if (!own) continue
+            drawn++
             drawStroke(app, s, docToScreen(app, s.a), docToScreen(app, s.b))
           }
         } else {
@@ -242,12 +254,16 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
           const a = project(app.lift.an, app.pose, seg.a3)
           const b = project(app.lift.an, app.pose, seg.b3)
           if (!a || !b) continue
+          drawn++
           drawStroke(app, s, docToScreen(app, a), docToScreen(app, b))
         }
       }
       brush.pop()
     }
     brush.render()
+    lastFullMs = performance.now() - tFull
+    lastDrawn = drawn
+    lastClipped = clipped
   }
 
   // ── draft 그리기(web2-12 2번) — 진행 중인 획을 확정과 같은 브러시·재료·시드로 ──
@@ -324,6 +340,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
       return true
     },
     stats: () => ({ syncs, redraws }),
+    lastFull: () => ({ ms: lastFullMs, drawn: lastDrawn, clipped: lastClipped }),
     draftStats: () => {
       const s = [...draftMs].sort((a, b) => a - b)
       return {

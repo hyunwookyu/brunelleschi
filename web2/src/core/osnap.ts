@@ -144,6 +144,17 @@ function raySegCross(start: Pt, through: Pt, a: Pt, b: Pt): Pt | null {
   return pt(start.x + t * rx, start.y + t * ry)
 }
 
+/** **비용 표식**(web2-18 0부 ④) — `osnap()` 한 번의 시간을 세 몫으로 가른다.
+ *  D-1 그대로다: 무엇을 고칠지(4부를 열지)는 후보가 아니라 이 표식이 정한다.
+ *  앱이 실제로 쓰는 경로에 심는다 — 측정용 사본을 안 만든다(원칙 a).
+ *  비용은 호출당 `performance.now()` 다섯(≈0.5µs)이고 osnap 자체가 그보다 세 자릿수 크다.
+ *  ⚠ `rest`는 뺄셈이라 **음수가 날 수 있다**(타이머 분해능) — 원장이 그대로 적는다. */
+export const osnapCost = { calls: 0, totalMs: 0, intersectMs: 0, endsMs: 0, restMs: 0 }
+export function resetOsnapCost(): void {
+  osnapCost.calls = 0; osnapCost.totalMs = 0
+  osnapCost.intersectMs = 0; osnapCost.endsMs = 0; osnapCost.restMs = 0
+}
+
 interface Candidate { kind: OsnapKind; p: Pt; p3: V3 | null; d: number }
 
 /** 오스냅 — 커서 근처의 최우선 후보. start는 수선 발 계산용(그리는 중일 때). */
@@ -155,6 +166,8 @@ export function osnap(
   start?: { p3: V3 | null },
   aim?: OsnapAim,
 ): OsnapHit | null {
+  const t0 = performance.now()
+  let tInt = 0, tEnds = 0
   const an = lift.an
   const R = set.radius
   const cands: Candidate[] = []
@@ -177,6 +190,7 @@ export function osnap(
   const mergeTol3 = C.MERGE_RATIO * Math.max(size3, 1e-9)
 
   // 끝점·정점 — 3D 병합(0.002·크기)으로 정점(≥2획 공유)을 가른다
+  const tEnds0 = performance.now()
   const ends: { p3: V3; count: number }[] = []
   for (const seg of lift.lifted.values()) {
     for (const p3 of [seg.a3, seg.b3]) {
@@ -189,6 +203,7 @@ export function osnap(
     const kind: OsnapKind = e.count >= 2 ? 'vertex' : 'end'
     if (set.kinds[kind]) push(kind, project(an, pose, e.p3), e.p3)
   }
+  tEnds = performance.now() - tEnds0
 
   // 중점 — 3D 중점의 사영 (투시에서 화면 중점과 다르다 — 3D가 정본)
   if (set.kinds.mid) {
@@ -200,7 +215,10 @@ export function osnap(
 
   // 교차점 — 3D 실제 교차만
   if (set.kinds.int) {
-    for (const x of intersections3(lift)) push('int', project(an, pose, x.p3), x.p3)
+    const tInt0 = performance.now()
+    const xs = intersections3(lift)
+    tInt = performance.now() - tInt0
+    for (const x of xs) push('int', project(an, pose, x.p3), x.p3)
   }
 
   // 수선 발 — 그리는 중이고 시작점이 3D일 때, 시작점에서 각 선분에 내린 발
@@ -277,13 +295,24 @@ export function osnap(
     }
   }
 
+  // 계측 마감(0부 ④) — 어느 갈래로 나가든 한 번 적는다
+  const done = <T>(v: T): T => {
+    const total = performance.now() - t0
+    osnapCost.calls++
+    osnapCost.totalMs += total
+    osnapCost.intersectMs += tInt
+    osnapCost.endsMs += tEnds
+    osnapCost.restMs += total - tInt - tEnds
+    return v
+  }
+
   // 정확한 것이 앞선다 — 종류 우선순위, 같은 종류면 가까운 것
   for (const kind of OSNAP_ORDER) {
     const inKind = cands.filter(c => c.kind === kind)
     if (inKind.length === 0) continue
     inKind.sort((x, y) => x.d - y.d)
     const c = inKind[0]!
-    return { kind: c.kind, p: c.p, p3: c.p3 }
+    return done({ kind: c.kind, p: c.p, p3: c.p3 })
   }
-  return null
+  return done(null)
 }

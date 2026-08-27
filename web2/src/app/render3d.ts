@@ -83,9 +83,16 @@ export function resize3d(r: R3D, W: number, H: number, dpr: number) {
   for (const m of r.materials.values()) m.resolution.set(W, H)
 }
 
+/** **비용 표식**(web2-18 0부 ②) — `syncStrokes` 한 번의 ms. 문서가 바뀔 때마다 돈다
+ *  (궤도 중에는 안 돈다 — 포즈는 docVersion을 안 올린다. 그 사실 자체가 0부의 답 하나다).
+ *  `lastMs`는 마지막 한 번 · `totalMs`/`calls`는 누산 — 진단 패널과 원장이 같이 읽는다. */
+export const syncCost = { calls: 0, lastMs: 0, totalMs: 0 }
+export function resetSyncCost(): void { syncCost.calls = 0; syncCost.lastMs = 0; syncCost.totalMs = 0 }
+
 /** 승격 기하 갱신 — 문서가 바뀔 때마다 전부 다시 만든다(부분 유지 없음).
  *  재료가 재질을 정한다 — 필압은 흑연 투명도에 얹는다. */
 export function syncStrokes(r: R3D, app: App) {
+  const t0 = performance.now()
   for (const child of [...r.group.children]) {
     r.group.remove(child)
     ;(child as Line2).geometry?.dispose()
@@ -110,6 +117,9 @@ export function syncStrokes(r: R3D, app: App) {
     g.setPositions([seg.a3.x, seg.a3.y, seg.a3.z, seg.b3.x, seg.b3.y, seg.b3.z])
     r.group.add(new Line2(g, matFor(r, grade, w)))
   }
+  syncCost.calls++
+  syncCost.lastMs = performance.now() - t0
+  syncCost.totalMs += syncCost.lastMs
 }
 
 /** 카메라 동기화 — core 모델(주점 px,py · f · 화면 y 아래)을 투영 행렬로 옮긴다.
