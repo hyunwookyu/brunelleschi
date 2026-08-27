@@ -14,6 +14,7 @@ import { overshootEnds } from '../core/overshoot'
 import { waitFadeFactor, atOwnPose } from '../core/waitfade'
 import type { OsnapHit } from '../core/osnap'
 import { dist2, type Pt, type V3 } from '../core/vec'
+import { filmSplit } from './filmlayer'
 
 /** D-3 반증 손잡이(web2-19 1부) — e2e만 켠다(diag.forceConstructing). 본문 주석 참조. */
 let FORCE_CONSTRUCTING = false
@@ -395,6 +396,23 @@ export function draw2d(
     ctx.moveTo(ax.vp.x - 6 * is, ax.vp.y - 6 * is); ctx.lineTo(ax.vp.x + 6 * is, ax.vp.y + 6 * is)
     ctx.moveTo(ax.vp.x - 6 * is, ax.vp.y + 6 * is); ctx.lineTo(ax.vp.x + 6 * is, ax.vp.y - 6 * is)
     ctx.stroke()
+  }
+
+  // ── 종이(겹)의 가장자리(web2-20 3-d) — 「여기까지가 이 종이다」 ────────────────
+  // 옅은 무채색 선으로 둘레. 활성 겹만 조금 진하게. 막이 그려질 때만(같은 filmSplit —
+  // 그 종이의 시점에서만). 위(젖혀 둔) 겹은 막도 가장자리도 없다.
+  {
+    const split = filmSplit(app)
+    if (split) {
+      for (const lay of split.films) {
+        const active = lay.id === app.activeLayer
+        ctx.strokeStyle = COL.vpMark
+        ctx.globalAlpha = active ? 0.8 : 0.4
+        ctx.lineWidth = (active ? 1.2 : 0.8) * is
+        ctx.strokeRect(lay.rect.x, lay.rect.y, lay.rect.w, lay.rect.h)
+        ctx.globalAlpha = 1
+      }
+    }
   }
 
   // ── 획득된 연장선의 표식(web2-18 2-b) — **획득한 것이 손에 보여야 한다** ─────────

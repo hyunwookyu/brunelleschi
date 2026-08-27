@@ -41,6 +41,8 @@ try {
   if (r === 'classic' || r === 'brush') app.renderer = r
 } catch { /* 저장소가 없으면 기본값(brush) */ }
 const brushLayer = initBrushLayer(W, H, dpr)
+import { initFilmLayer, bakeFiberTile, setFilmAlphaForTest } from './filmlayer'
+const filmLayer = initFilmLayer(W, H, dpr)
 
 // 빌드 식별자 — 배포됐는지 화면에서 바로 안다.
 // ⚠ 이것 하나가 앱을 죽이면 안 된다 — 설정이 낡은 dev 서버에서 치환이 안 돼
@@ -862,6 +864,7 @@ function frame() {
     // draft 전용 모드 — 확정 획은 스냅샷 겹이 들고 #brushc는 진행 중인 획 하나만 그린다.
     brushLayer.sync(app, draft)
     const fc2 = performance.now()
+    filmLayer.draw(app)   // 막·위 획(web2-20 3부) — 값싼 패턴 채우기 + 2D 사영선
     draw2d(ctx, app, draft, hover, eraserPos, facePrev)
     const fc3 = performance.now()
     if (frameCosts.length >= FRAME_COST_N) frameCosts.shift()
@@ -1006,6 +1009,18 @@ const diag = {
   forceConstructing: (v: boolean) => { setForceConstructing(v); invalidate() },
   /** 심 색의 정본(#54) — 접힌 연필 각인 팔(zones.spec ①')이 화면 값과 대조한다 */
   matColor: (g: Grade) => MAT[g].color,
+  /** 섬유 타일의 픽셀 해시(web2-20 3-c 팔) — 층별 결이 실제로 다른가·결정론인가.
+   *  wrap=false는 반증 전용(감싸 그리기를 뺀 타일 — 이음매 팔이 그것으로 실패를 본다). */
+  fiberTileHash: (id: number, paper: 'tracing' | 'yellow', wrap = true) => {
+    const c = bakeFiberTile(id, paper, dpr, wrap)
+    const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data
+    let h = 5381
+    for (let i = 0; i < d.length; i += 97) h = ((h * 33) ^ d[i]!) >>> 0
+    return h
+  },
+  fiberTile: (id: number, paper: 'tracing' | 'yellow', wrap = true) => bakeFiberTile(id, paper, dpr, wrap),
+  /** D-3 반증(3-e ④) — 곱→알파로 바꿔 합성 곡선 붕괴를 본다. e2e 전용. */
+  filmAlphaForTest: (v: boolean) => { setFilmAlphaForTest(v); invalidate() },
   /** 오스냅 판정 그대로(web2-12 8번) — 넘김 꼬리가 스냅 대상이 아님을 팔이 잰다 */
   osnapAt: (x: number, y: number) =>
     osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / app.view.s },

@@ -2,6 +2,7 @@
 // 사영은 core/camera.ts의 모델과 같아야 한다(불변식 k) — 주점·f를 그대로
 // 투영 행렬에 넣는다. 시야각·중심 가정을 따로 만들지 않는다.
 
+import { filmSplit } from './filmlayer'
 import * as THREE from 'three'
 import { Line2 } from 'three/addons/lines/Line2.js'
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
@@ -93,6 +94,7 @@ export function resetSyncCost(): void { syncCost.calls = 0; syncCost.lastMs = 0;
  *  재료가 재질을 정한다 — 필압은 흑연 투명도에 얹는다. */
 export function syncStrokes(r: R3D, app: App) {
   const t0 = performance.now()
+  const split = filmSplit(app)
   for (const child of [...r.group.children]) {
     r.group.remove(child)
     ;(child as Line2).geometry?.dispose()
@@ -121,6 +123,9 @@ export function syncStrokes(r: R3D, app: App) {
     // ⚠ **렌더러 모드와 무관하다** — classic에서도 잉크는 위여야 한다(질감 겹이 없어도
     // 2D 오버레이의 대기 획·입자가 여전히 #gl 위다).
     if (grade === 'INK') continue
+    // 활성 겹과 그 위 겹의 획(web2-20 3부) — 몸체가 #layerc(막 위)에 산다. 여기(#gl —
+    // 막 아래) 두면 막에 물든다(⑨). 판정은 filmSplit 하나(#54 — 포즈 무관 above).
+    if (split && stroke?.layer !== undefined && split.above.has(stroke.layer)) continue
     const w = widthOf(stroke)   // 획이 없으면 재료 기본값 — 분기도 출처도 하나다
     const g = new LineGeometry()
     g.setPositions([seg.a3.x, seg.a3.y, seg.a3.z, seg.b3.x, seg.b3.y, seg.b3.z])

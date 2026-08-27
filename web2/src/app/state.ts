@@ -36,8 +36,12 @@ export const activeGrade = (app: Pick<App, 'tool' | 'grade'>): Grade =>
  *  죽은 가지였고, 'vp'는 이제 진짜 모서리다(방 실루엣의 후퇴선은 벽 모서리이면서 소실점을
  *  만든다 — 확정되면 재료 질감으로 그려지므로 미리보기도 같아야 한다. 원칙 d).
  *  카메라 미확정(f 없음) 제외 — Line2 역사영이 설 수 없다(그때는 종전 벡터 미리보기). */
-export const draftBrushed = (app: Pick<App, 'tool' | 'grade' | 'renderer' | 'lift'>): boolean =>
+export const draftBrushed = (app: Pick<App, 'tool' | 'grade' | 'renderer' | 'lift' | 'activeLayer'>): boolean =>
   app.renderer === 'brush' && activeGrade(app) !== 'INK' &&
+  // 활성 겹 위의 draft(web2-20 3부)는 벡터 미리보기(#ink — 막 **위**)로 간다: brush 겹
+  // (#brushc)은 막 아래라 긋는 동안 막에 물들고 떼는 순간 위로 튄다. 질감은 뗄 때
+  // #layerc 경로로(지금은 몸체만 — 알려진 강등, filmlayer 머리주석).
+  app.activeLayer === null &&
   app.lift.an.f !== null && app.lift.an.principal !== null
 
 /** 지우개 도구인가 — 입력·커서·렌더가 전부 이것을 본다.
@@ -652,12 +656,17 @@ export function removeLayer(app: App, id: number) {
 /** 탭 = 그 겹을 활성으로 — 새 획이 그리로 간다. **활성으로 만들면 자동으로 켜진다**
  *  (지시 2부 문면). null = 종이에 직접. 잠긴 겹은 활성이 못 된다(편집이 막혀 있다). */
 export function setActiveLayer(app: App, id: number | null) {
-  if (id === null) { app.activeLayer = null; return }
+  if (id === null) {
+    if (app.activeLayer !== null) { app.activeLayer = null; recompute(app) }
+    return
+  }
   const lay = app.doc.layers.find(l => l.id === id)
   if (!lay || lay.sheet !== app.activeSheet || lay.locked) return
-  if (!lay.on) { lay.on = true; recompute(app) }   // 켜짐이 3D를 바꾼다(4부 — liftAll 필터)
+  if (!lay.on) lay.on = true                       // 활성으로 만들면 자동으로 켜진다
   app.activeLayer = id
-  for (const l of app.listeners) l()
+  // ⚠ 항상 recompute — 위/아래 갈림(filmSplit)이 syncStrokes(#gl 제외)에 실리려면
+  // docVersion이 움직여야 한다(리스너의 재동기 조건이 그것이다). 켬은 4부 liftAll 몫도 겸한다.
+  recompute(app)
 }
 
 /** 켬/끔 — 끔은 안 보이고 **3D에서도 빠진다**(4부). 활성 겹을 끄면 활성이 풀린다

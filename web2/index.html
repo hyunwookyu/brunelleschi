@@ -55,6 +55,12 @@
     #gl { z-index: 1; }
     /* brush 렌더러(web2-11 2부) — gl 위·ink 아래. 입력은 ink가 받으므로 이 겹은 눌리지 않는다. */
     #brushc { z-index: 1; pointer-events: none; }
+    /* 막(web2-20 3부) — 곱은 **캔버스 안에서** 한다(filmlayer.ts drawFilms 머리주석 —
+       CSS mix-blend-mode는 이 앱의 합성 트리(WebGL 형제 겹)에서 발화하지 않았다: 실측).
+       #film은 막 영역의 «물든 아래 화면» 사본이라 보통 합성으로 얹는다.
+       #layerc = 활성 겹과 그 위 획(막 위에 산다 — 3-b). */
+    #film { z-index: 1; pointer-events: none; }
+    #layerc { z-index: 1; pointer-events: none; }
 
     /* ── 종이 탭 띠(web2-19 2부) — 위 왼쪽. 탭이 **종이의 가장자리**다(대응표 §6) ──
        #topleft는 세로 기둥 — 높이를 하드코딩하지 않는다(web2-20이 아래에 종속 탭 줄을

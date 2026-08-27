@@ -12,6 +12,7 @@ import { updateExtDwell } from '../core/extacq'
 import { isLevel, pitchSnaps } from '../core/level'
 import type { LevelHooks } from './autolevel'
 import { resolveStart, resolveEnd, resolveCommit, isStray } from '../core/draft'
+import { filmSplit } from './filmlayer'
 import { C } from '../core/constants'
 import { cubeGeom, cubeHit, poseForElem } from '../core/viewcube'
 import type { Draft } from './render2d'
@@ -150,6 +151,45 @@ export function initInput(
   /** 필압 양자화 — quantIn과 같은 식(0..C.PRESS_Q 정수). 둘이 갈리면 뗄 때 입자가 튄다. */
   const quantPress = (p: number): number => Math.round(Math.min(1, Math.max(0, p)) * C.PRESS_Q)
 
+  // ── 활성 겹 rect 끌기(web2-20 2-b) ────────────────────────────────────────
+  let rectDrag: { id: number; edges: { l: boolean; r: boolean; t: boolean; b: boolean }; last: Pt } | null = null
+  function tryRectDrag(e: PointerEvent): boolean {
+    const split = filmSplit(app)
+    if (!split || app.activeLayer === null) return false
+    const lay = app.doc.layers.find(l => l.id === app.activeLayer)
+    if (!lay || lay.locked || split.films.every(f => f.id !== lay.id)) return false
+    const p = screenToDoc(app, toScreen(e))
+    const tol = C.OSNAP_RADIUS_PX / app.view.s
+    const nearV = (x: number) => Math.abs(p.x - x) <= tol && p.y >= lay.rect.y - tol && p.y <= lay.rect.y + lay.rect.h + tol
+    const nearH = (y: number) => Math.abs(p.y - y) <= tol && p.x >= lay.rect.x - tol && p.x <= lay.rect.x + lay.rect.w + tol
+    const edges = {
+      l: nearV(lay.rect.x), r: nearV(lay.rect.x + lay.rect.w),
+      t: nearH(lay.rect.y), b: nearH(lay.rect.y + lay.rect.h),
+    }
+    if (!edges.l && !edges.r && !edges.t && !edges.b) return false
+    rectDrag = { id: lay.id, edges, last: p }
+    canvas.setPointerCapture(e.pointerId)
+    e.preventDefault()
+    return true
+  }
+  function dragRect(e: PointerEvent) {
+    if (!rectDrag) return
+    const lay = app.doc.layers.find(l => l.id === rectDrag!.id)
+    if (!lay) { rectDrag = null; return }
+    const p = screenToDoc(app, toScreen(e))
+    const dx = p.x - rectDrag.last.x
+    const dy = p.y - rectDrag.last.y
+    rectDrag.last = p
+    const r = lay.rect
+    let { x, y, w, h } = r
+    if (rectDrag.edges.l) { x += dx; w -= dx }
+    if (rectDrag.edges.r) { w += dx }
+    if (rectDrag.edges.t) { y += dy; h -= dy }
+    if (rectDrag.edges.b) { h += dy }
+    if (w > 8 && h > 8) lay.rect = { x, y, w, h }   // 뒤집힘 방지 — 최소 8 doc px
+    cb.onDraftChange(null)                            // 다시 그리기(값 채널 재사용)
+  }
+
   function beginDraft(p: Pt, e: PointerEvent) {
     samples = [sampleOf(e)]
     capStats = { pointerType: e.pointerType, events: 1, points: 1, extra: 0 }
@@ -272,6 +312,9 @@ export function initInput(
     // 그때의 획은 `commitStroke`가 `view`를 실어 그 포즈의 2D로 남기고, 연결이 닿으면
     // 3D로 올라간다(`lift.ts`가 `s.view` 포즈로 푼다 — 기존 기전이다).
     if (!isLevel(app.pose) && level.foldNow()) return
+    // 활성 겹의 가장자리 끌기(web2-20 2-b) — 변·모서리를 잡으면 그리기가 아니라 크기다.
+    // 잡는 반경은 오스냅 반경 재사용(새 숫자를 안 짓는다). 막이 보일 때만(같은 filmSplit).
+    if (tryRectDrag(e)) return
     drawingPointer = e.pointerId
     drawingType = e.pointerType
     canvas.setPointerCapture(e.pointerId)
@@ -291,6 +334,7 @@ export function initInput(
   })
 
   canvas.addEventListener('pointermove', (e) => {
+    if (rectDrag) { dragRect(e); return }
     if (e.pointerType === 'touch') {
       if (penDown) return
       if (!touches.has(e.pointerId)) return
@@ -358,6 +402,11 @@ export function initInput(
   })
 
   const release = (e: PointerEvent) => {
+    if (rectDrag) {
+      rectDrag = null
+      for (const l of app.listeners) l()   // 자동 저장 — rect는 문서의 값이다
+      return
+    }
     if (e.pointerType === 'touch') {
       touches.delete(e.pointerId)
       lastTouchMid = null
