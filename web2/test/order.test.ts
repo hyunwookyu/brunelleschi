@@ -37,10 +37,6 @@ function watch(s: Session) {
       // 지평선만 예외다: 3D가 없고(무한원) 화면 전폭의 작도선으로 그려진다 — 자리가 따로 있다.
       for (const id of seen.keys()) {
         if (!s.app.lift.strokes.get(id)) { vanished.push(`${tag}: #${id} 문서에서 사라짐`); continue }
-        if (s.app.lift.an.roles.get(id) === 'horizon') {
-          if (s.app.lift.an.horizonY === null) vanished.push(`${tag}: #${id} 지평선이 없어짐`)
-          continue
-        }
         const has = s.app.lift.lifted.has(id) || s.app.lift.waiting.includes(id)
         if (!has) vanished.push(`${tag}: #${id} 승격도 대기도 아님 — 그려질 자리가 없다`)
       }
@@ -62,31 +58,28 @@ function watch(s: Session) {
   }
 }
 
-// 화면 좌표 — 지평선 y=400, vp0=(900,400), vp1=(100,400)
-const HZ = [100, 400, 1100, 400] as const
+// 화면 좌표 — 지평선은 상시 y=400(=H/2 · web2-17)이라 긋지 않는다. vp0=(900,400), vp1=(100,400)
 const D1 = [500, 650, 680, 537.5] as const  // (500,650)에서 vp0 쪽
 const D2 = [500, 650, 320, 537.5] as const  // (500,650)에서 vp1 쪽
 const VT = [500, 650, 500, 450] as const    // 수직
 const HR = [500, 650, 700, 650] as const    // 수평
 
 describe('1 — 작도 순서 강제가 없다', () => {
-  it('지평선 → 수직선 → 깊이선 → 수직선: 전부 남고 전부 3D가 된다', () => {
+  it('수직선 → 깊이선 → 수직선: 전부 남고 전부 3D가 된다', () => {
     const s = session(1200, 800)
     const w = watch(s)
-    s.draw(...HZ); w.step('지평선')
     s.draw(...VT); w.step('+수직')
     s.draw(...D1); w.step('+깊이')
     s.draw(680, 537.5, 680, 427.5); w.step('+수직2')
     expect(w.vanished).toEqual([])
     expect(w.moved).toEqual([])
     expect(w.waiting()).toEqual([])
-    expect(w.lifted()).toBe(3) // 지평선 빼고 셋
+    expect(w.lifted()).toBe(3)
   })
 
-  it('지평선 → 수평선 → 깊이선: 전부 남고 전부 3D가 된다', () => {
+  it('수평선 → 깊이선: 전부 남고 전부 3D가 된다', () => {
     const s = session(1200, 800)
     const w = watch(s)
-    s.draw(...HZ); w.step('지평선')
     s.draw(...HR); w.step('+수평')
     s.draw(...D1); w.step('+깊이')
     expect(w.vanished).toEqual([])
@@ -95,10 +88,9 @@ describe('1 — 작도 순서 강제가 없다', () => {
     expect(w.lifted()).toBe(2)
   })
 
-  it('지평선 → 수직선 → 수평선 → 깊이선: 둘 다 남는다', () => {
+  it('수직선 → 수평선 → 깊이선: 둘 다 남는다', () => {
     const s = session(1200, 800)
     const w = watch(s)
-    s.draw(...HZ); w.step('지평선')
     s.draw(...VT); w.step('+수직')
     s.draw(...HR); w.step('+수평')
     s.draw(...D1); w.step('+깊이')
@@ -117,7 +109,6 @@ describe('1 — 작도 순서 강제가 없다', () => {
   it('깊이선만으로도 3D가 선다 — H·V 획이 하나도 없는 경우 (앵커가 획 종류를 안 가린다)', () => {
     const s = session(1200, 800)
     const w = watch(s)
-    s.draw(...HZ); w.step('지평선')
     s.draw(...D1); w.step('+깊이1')            // (500,650) → vp0
     s.draw(...D2); w.step('+깊이2')            // (500,650) → vp1, 같은 시작점
     expect(w.vanished).toEqual([])
@@ -126,10 +117,9 @@ describe('1 — 작도 순서 강제가 없다', () => {
     expect(w.lifted()).toBe(2)
   })
 
-  it('지평선 → 깊이선 먼저여도 3D가 선다', () => {
+  it('깊이선 먼저여도 3D가 선다', () => {
     const s = session(1200, 800)
     const w = watch(s)
-    s.draw(...HZ); w.step('지평선')
     s.draw(...D1); w.step('+깊이')
     s.draw(...VT); w.step('+수직')
     expect(w.vanished).toEqual([])
@@ -143,16 +133,15 @@ describe('1 — 작도 순서 강제가 없다', () => {
       .map(g => [g.a3, g.b3].map(p => `${p.x.toFixed(6)},${p.y.toFixed(6)},${p.z.toFixed(6)}`).join('|'))
       .sort().join('  ')
     const a = session(1200, 800)
-    a.draw(...HZ); a.draw(...VT); a.draw(...D1)
+    a.draw(...VT); a.draw(...D1)
     const b = session(1200, 800)
-    b.draw(...HZ); b.draw(...D1); b.draw(...VT)
+    b.draw(...D1); b.draw(...VT)
     expect(key(b)).toBe(key(a))
   })
 
   it('두 번째 소실점이 f를 바꿔도 — 대기 획까지 포함해 — 화면이 안 튄다', () => {
     const s = session(1200, 800)
     const w = watch(s)
-    s.draw(...HZ); w.step('지평선')
     s.draw(...VT); w.step('+수직')
     s.draw(...D1); w.step('+깊이1')
     // 아직 아무것에도 안 닿는 획 — 대기 상태로 남는다
@@ -166,7 +155,6 @@ describe('1 — 작도 순서 강제가 없다', () => {
 
   it('반례: 대기 획은 «실패»가 아니라 상태다 — 닿을 것이 없으면 대기로 남는다', () => {
     const s = session(1200, 800)
-    s.draw(...HZ)
     s.draw(...D1)
     s.draw(200, 700, 200, 600) // 기존 기하와 안 닿는다
     expect(s.app.lift.waiting.length).toBe(1)

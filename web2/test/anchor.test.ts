@@ -15,6 +15,7 @@ import { builder } from './fixtures'
 import { DRAW_POSE, analyze, project } from '../src/core/camera'
 import { C } from '../src/core/constants'
 
+// 지평선은 상시 y=400(=H/2 · web2-17) — 긋지 않는다. 퇴화 팔 하나만 옛 손버릇을 그대로 잰다.
 const HZ = [100, 400, 1100, 400] as const
 const ground = (y: number) => Math.abs(y) < 1e-9
 
@@ -28,7 +29,7 @@ describe('3 — 눈높이가 Y 스케일을 정한다', () => {
 
   it('f와 눈높이는 다른 축이다 — f가 바뀌어도 눈높이는 안 바뀐다', () => {
     const s = session(1200, 800)
-    s.draw(...HZ); s.draw(500, 500, 600, 475)
+    s.draw(500, 500, 600, 475)
     const f1 = s.app.lift.an.f!
     s.draw(500, 500, 400, 475)          // 두 번째 소실점 → f가 바뀐다
     expect(s.app.lift.an.f).not.toBeCloseTo(f1, 3)
@@ -37,7 +38,6 @@ describe('3 — 눈높이가 Y 스케일을 정한다', () => {
 
   it('그린 것이 대략 실척이다 — 사람 키 남짓의 기둥', () => {
     const s = session(1200, 800)
-    s.draw(...HZ)
     s.draw(500, 500, 600, 475)          // 첫 선(깊이) — 지면
     const v = s.draw(500, 500, 500, 300)! // 그 모서리에서 세운 기둥
     const g = s.app.lift.lifted.get(v.id)!
@@ -51,7 +51,6 @@ describe('3 — 눈높이가 Y 스케일을 정한다', () => {
 describe('2 — 첫 선은 지면에 있다 (종류를 안 가린다)', () => {
   it('첫 선이 수평선이면 그 선 자체가 Y=0', () => {
     const s = session(1200, 800)
-    s.draw(...HZ)
     const h = s.draw(400, 550, 700, 550)!
     const g = s.app.lift.lifted.get(h.id)!
     expect(g.axis).toBe('H')
@@ -60,7 +59,6 @@ describe('2 — 첫 선은 지면에 있다 (종류를 안 가린다)', () => {
 
   it('첫 선이 깊이선이면 그 선 자체가 Y=0', () => {
     const s = session(1200, 800)
-    s.draw(...HZ)
     const d = s.draw(500, 500, 600, 475)!
     const g = s.app.lift.lifted.get(d.id)!
     expect(g.axis).toBe('vp0')
@@ -69,7 +67,6 @@ describe('2 — 첫 선은 지면에 있다 (종류를 안 가린다)', () => {
 
   it('첫 선이 수직선이면 아래점이 Y=0 — 위로 그어도', () => {
     const s = session(1200, 800)
-    s.draw(...HZ)
     const v = s.draw(500, 650, 500, 450)! // 아래 → 위
     const g = s.app.lift.lifted.get(v.id)!
     expect(g.axis).toBe('V')
@@ -79,7 +76,6 @@ describe('2 — 첫 선은 지면에 있다 (종류를 안 가린다)', () => {
 
   it('첫 선이 수직선이면 아래점이 Y=0 — 아래로 그어도 (그은 방향과 무관)', () => {
     const s = session(1200, 800)
-    s.draw(...HZ)
     const v = s.draw(500, 450, 500, 650)! // 위 → 아래
     const g = s.app.lift.lifted.get(v.id)!
     expect(g.axis).toBe('V')
@@ -88,8 +84,8 @@ describe('2 — 첫 선은 지면에 있다 (종류를 안 가린다)', () => {
   })
 
   it('위로 긋든 아래로 긋든 같은 3D를 낸다', () => {
-    const up = session(1200, 800); up.draw(...HZ); up.draw(500, 650, 500, 450)
-    const dn = session(1200, 800); dn.draw(...HZ); dn.draw(500, 450, 500, 650)
+    const up = session(1200, 800); up.draw(500, 650, 500, 450)
+    const dn = session(1200, 800); dn.draw(500, 450, 500, 650)
     const gu = [...up.app.lift.lifted.values()][0]!
     const gd = [...dn.app.lift.lifted.values()][0]!
     // 방향만 반대, 점 집합은 같다
@@ -100,7 +96,6 @@ describe('2 — 첫 선은 지면에 있다 (종류를 안 가린다)', () => {
 
   it('둘째 선부터는 연결이 정한다 — 지면에 안 놓는다', () => {
     const s = session(1200, 800)
-    s.draw(...HZ)
     s.draw(500, 500, 600, 475)            // 첫 선 — 지면
     const v = s.draw(500, 500, 500, 300)! // 모서리에 연결 — 아래점만 지면
     const g = s.app.lift.lifted.get(v.id)!
@@ -111,7 +106,6 @@ describe('2 — 첫 선은 지면에 있다 (종류를 안 가린다)', () => {
 
   it('반례: 둘째 선이 아무것에도 안 닿으면 대기다 — 지면에 임의로 안 놓는다', () => {
     const s = session(1200, 800)
-    s.draw(...HZ)
     s.draw(500, 500, 600, 475)            // 첫 선
     const v = s.draw(200, 700, 200, 600)! // 안 닿는 수직 — 지면에 놓을 «수는» 있지만 안 놓는다
     expect(s.app.lift.waiting).toContain(v.id)
@@ -120,7 +114,6 @@ describe('2 — 첫 선은 지면에 있다 (종류를 안 가린다)', () => {
 
   it('스냅이 걸렸으면 그 좌표가 이긴다 (2-d)', () => {
     const s = session(1200, 800)
-    s.draw(...HZ)
     const d = s.draw(500, 500, 600, 475)!  // 첫 선
     const g0 = s.app.lift.lifted.get(d.id)!
     // 첫 선의 먼 끝(600,475)에서 시작하는 수직 — 붙을 곳이 있으므로 지면 규칙이 아니라 연결이 정한다
@@ -132,7 +125,6 @@ describe('2 — 첫 선은 지면에 있다 (종류를 안 가린다)', () => {
 
   it('지우고 다시 그으면 그것이 첫 선이 된다 (2-c)', () => {
     const s = session(1200, 800)
-    s.draw(...HZ)
     const first = s.draw(500, 500, 600, 475)!
     expect(s.app.lift.anchorId).toBe(first.id)
     // 그 획을 문서에서 뺀다 → 3D가 된 획이 하나도 없다 → 다음 것이 첫 선이다
@@ -142,25 +134,28 @@ describe('2 — 첫 선은 지면에 있다 (종류를 안 가린다)', () => {
     const again = liftAll(b2.doc)
     expect(again.lifted.size).toBe(0)
     const s2 = session(1200, 800)
-    s2.draw(...HZ)
     const other = s2.draw(400, 550, 700, 550)! // 이번엔 수평선이 첫 선
     expect(s2.app.lift.anchorId).toBe(other.id)
     const g = s2.app.lift.lifted.get(other.id)!
     expect(ground(g.a3.y) && ground(g.b3.y)).toBe(true)
   })
 
-  it('지평선은 3D 선이 아니다 (2-f)', () => {
+  it('지평선 위를 따라 그은 획은 퇴화다(web2-17) — 아무것도 선언하지 않고 대기한다', () => {
+    // 옛 손버릇(«지평선을 긋고 시작») — 이제 지평선은 상시(H/2)라 그 획은 카메라에
+    // 아무 일도 안 한다: screenH 선언도(1점 잠금 방지), 소실점도 없다. 3D도 못 된다
+    // (지면과 못 만난다 — 대기 · 사유 aboveHorizon).
     const s = session(1200, 800)
     const hz = s.draw(...HZ)!
     s.draw(500, 500, 600, 475)
     expect(s.app.lift.lifted.has(hz.id)).toBe(false)
-    expect(s.app.lift.waiting).not.toContain(hz.id)
-    expect(s.app.lift.an.roles.get(hz.id)).toBe('horizon')
+    expect(s.app.lift.waiting).toContain(hz.id)
+    expect(s.app.lift.an.roles.get(hz.id)).toBe('content')
+    expect(s.app.lift.an.screenHDeclared).toBe(false)
+    expect(s.app.lift.waitWhy.get(hz.id)).toBe('onHorizon')   // 따라긋기 — 위쪽(aboveHorizon)과 가른다(#43)
   })
 
   it('반례: 지평선 위에서 시작하면 지면과 안 만난다 — 대기', () => {
     const s = session(1200, 800)
-    s.draw(...HZ)
     // 지평선(y=400)보다 위 — 광선이 위로 가서 지면과 영영 안 만난다
     const v = s.draw(500, 300, 500, 200)!
     expect(s.app.lift.waiting).toContain(v.id)
@@ -169,8 +164,8 @@ describe('2 — 첫 선은 지면에 있다 (종류를 안 가린다)', () => {
 
   it('반례: 게이지 평면은 없어졌다 — 첫 선의 깊이가 f에 안 묶인다', () => {
     // 옛 규칙은 첫 앵커를 z=−f에 놓았다. 화면 위치를 바꾸면 깊이도 따라 바뀌어야 한다.
-    const near = session(1200, 800); near.draw(...HZ); near.draw(400, 700, 700, 700)
-    const far = session(1200, 800); far.draw(...HZ); far.draw(400, 450, 700, 450)
+    const near = session(1200, 800); near.draw(400, 700, 700, 700)
+    const far = session(1200, 800); far.draw(400, 450, 700, 450)
     const zn = [...near.app.lift.lifted.values()][0]!.a3.z
     const zf = [...far.app.lift.lifted.values()][0]!.a3.z
     const f = analyze(near.app.doc).f!
@@ -188,7 +183,6 @@ describe('1 — 소실점을 만드는 선은 지면이다 (둘째 깊이선도 
 
   it('둘째 깊이선이 첫 깊이선과 안 닿아도 3D가 된다 — 대기가 0', () => {
     const s = session(1200, 800)
-    s.draw(...HZ)
     const d1 = s.draw(...D1)!
     const d2 = s.draw(...D2far)!
     expect(s.app.lift.an.roles.get(d2.id)).toBe('vp')   // 실제로 소실점을 만든 선이다
@@ -199,7 +193,7 @@ describe('1 — 소실점을 만드는 선은 지면이다 (둘째 깊이선도 
 
   it('둘 다 Y=0에 눕는다 — 소실점을 만드는 선은 격자의 기준이므로 지면이다', () => {
     const s = session(1200, 800)
-    s.draw(...HZ); const d1 = s.draw(...D1)!; const d2 = s.draw(...D2far)!
+    const d1 = s.draw(...D1)!; const d2 = s.draw(...D2far)!
     for (const id of [d1.id, d2.id]) {
       const g = s.app.lift.lifted.get(id)!
       expect(ground(g.a3.y)).toBe(true)
@@ -209,7 +203,7 @@ describe('1 — 소실점을 만드는 선은 지면이다 (둘째 깊이선도 
 
   it('축도 갈린다 — 하나는 vp0, 하나는 vp1', () => {
     const s = session(1200, 800)
-    s.draw(...HZ); const d1 = s.draw(...D1)!; const d2 = s.draw(...D2far)!
+    const d1 = s.draw(...D1)!; const d2 = s.draw(...D2far)!
     expect(s.app.lift.lifted.get(d1.id)!.axis).toBe('vp0')
     expect(s.app.lift.lifted.get(d2.id)!.axis).toBe('vp1')
     expect(s.app.lift.an.fSource).toBe('two-vp')
@@ -217,7 +211,7 @@ describe('1 — 소실점을 만드는 선은 지면이다 (둘째 깊이선도 
 
   it('화면이 안 튄다 — 승격 전후로 그은 그 자리 그대로다(불변식 k)', () => {
     const s = session(1200, 800)
-    s.draw(...HZ); const d1 = s.draw(...D1)!; const d2 = s.draw(...D2far)!
+    const d1 = s.draw(...D1)!; const d2 = s.draw(...D2far)!
     for (const st of [d1, d2]) {
       const g = s.app.lift.lifted.get(st.id)!
       const a = project(s.app.lift.an, DRAW_POSE, g.a3)!
@@ -231,7 +225,6 @@ describe('1 — 소실점을 만드는 선은 지면이다 (둘째 깊이선도 
     // 둘째 깊이선을 첫 선의 **위쪽** 끝(기둥 꼭대기)에서 긋는다.
     // 지면 규칙이 무조건 이기면 Y=0으로 내려앉아 기둥과 끊긴다.
     const s = session(1200, 800)
-    s.draw(...HZ)
     s.draw(...D1)                                  // 첫 선(지면)
     const col = s.draw(500, 650, 500, 500)!        // 그 모서리에서 세운 기둥
     const top = s.app.lift.lifted.get(col.id)!.b3
@@ -244,7 +237,6 @@ describe('1 — 소실점을 만드는 선은 지면이다 (둘째 깊이선도 
 
   it('반례: 소실점을 안 만드는 선은 여전히 대기다 — 규칙이 전부에 안 걸린다', () => {
     const s = session(1200, 800)
-    s.draw(...HZ)
     s.draw(...D1)
     const v = s.draw(200, 700, 200, 600)!          // 수직 — 소실점을 안 만든다
     expect(s.app.lift.an.roles.get(v.id)).toBe('content')

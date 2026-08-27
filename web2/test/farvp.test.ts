@@ -208,8 +208,7 @@ describe('2-d — 픽스처를 실제 작도 대역으로 넓혔다', () => {
   })
 
   it('먼 구도에서도 그린 획이 3D로 올라간다', () => {
-    const s = session(W, 800)
-    s.draw(100, HY, 1100, HY)
+    const s = session(W, 800)     // 지평선은 상시(HY=H/2 — web2-17). 긋지 않는다.
     s.app.doc.strokes.push({ id: 900, a: { x: 3600, y: HY }, b: { x: 3600, y: HY } })
     s.app.doc.strokes.push({ id: 901, a: { x: -3000, y: HY }, b: { x: -3000, y: HY } })
     const v = s.draw(500, 650, 500, 480)!      // 수직 — 첫 선이므로 아래점이 지면

@@ -34,7 +34,7 @@ export const activeGrade = (app: Pick<App, 'tool' | 'grade'>): Grade =>
  *  작도 획(horizon·vp) 제외 — 확정돼도 재료 질감이 없다.
  *  카메라 미확정(f 없음) 제외 — Line2 역사영이 설 수 없다(그때는 종전 벡터 미리보기). */
 export const draftBrushed = (app: Pick<App, 'tool' | 'grade' | 'renderer' | 'lift'>, label: string | null): boolean =>
-  app.renderer === 'brush' && label !== 'horizon' && label !== 'vp' && activeGrade(app) !== 'INK' &&
+  app.renderer === 'brush' && label !== 'vp' && activeGrade(app) !== 'INK' &&
   app.lift.an.f !== null && app.lift.an.principal !== null
 
 /** 지우개 도구인가 — 입력·커서·렌더가 전부 이것을 본다.
@@ -85,6 +85,12 @@ export interface App {
   activeErase: Op | null
   /** 화면 조작(뷰 오프셋) — 그리는 중의 팬·줌. 문서 좌표는 안 바뀐다. */
   view: ViewOffset
+  /** **작도 시점**(web2-17 3-b) — 첫 획을 긋던 순간의 `view`. 팬으로 선언한 눈높이가
+   *  화면 어디였는가다. null = 아직 선언 전(빈 문서)이거나 옛 파일(2부 변환을 지난 문서).
+   *  ⚠ `Doc`이 아니라 여기(App/BrnlData 층)다 — `savedViews`와 같은 급이고, `Doc`은
+   *  획·면·치수만 갖는다는 경계를 이 회차가 안 흔든다(반대 의견 「그림의 선언이니 Doc이
+   *  맞다」는 NOTES에 근거와 함께 기각 기록). */
+  drawView: ViewOffset | null
   /** 조작 제스처(궤도·팬) 동안 대기 획 감쇠 판정을 **동결**하는 포즈(web2-14 3번) —
    *  null이면 실시간(app.pose). 잡는 순간 굳고 놓으면 풀린다: 돌리는 동안 대기 획의
    *  표시 상태가 아무것도 안 바뀐다(실기기 판정 「돌릴 때 깜빡여 성가시다」의 수리).
@@ -160,6 +166,7 @@ export function createApp(W: number, H: number): App {
     tipErase: false,
     activeErase: null,
     view: { s: 1, ox: 0, oy: 0 },
+    drawView: null,
     fadePose: null,
     savedViews: [],
     dimSnap: false,
@@ -210,6 +217,13 @@ export function setDimension(app: App, id: number, mm: number): DimResult {
   }
   return wasScaled ? 'applied' : 'scale'
 }
+
+/** **닮음 합성**(web2-17 3-c) — 프레임 맞춤(fit)과 작도 시점(draw)은 둘 다 (s, o) 닮음이라
+ *  합성된다: 문서 → draw 화면 → fit 창. `s = s_fit·s_draw`, `o = s_fit·o_draw + o_fit`.
+ *  둘 중 하나를 덮어쓰면 다른 창 크기에서 연 파일이 구도를 잃거나 화면 밖으로 나간다 —
+ *  합성 함수는 여기 하나다(원칙 a). `fitViewToFrame`(main.ts)과 팔이 같이 부른다. */
+export const composeView = (fit: ViewOffset, draw: ViewOffset): ViewOffset =>
+  ({ s: fit.s * draw.s, ox: fit.s * draw.ox + fit.ox, oy: fit.s * draw.oy + fit.oy })
 
 /** 화면 좌표 ↔ 문서 좌표 — 뷰 오프셋의 단일 출처 */
 export const screenToDoc = (app: App, p: Pt): Pt =>
@@ -307,6 +321,8 @@ export function facePreview(app: App, p: Pt): { poly: Pt[]; mode: 'add' | 'remov
 }
 
 export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number, rawIn?: RawInput) {
+  // 첫 획인가 — **밀어 넣기 전의 길이로 판정한다**(web2-17 3-b ⚠ — 순서를 팔이 지킨다).
+  const firstStroke = app.doc.strokes.length === 0
   const s: Stroke = { id: app.nextId++, a, b }
   if (raw && raw.length > 2) {
     s.raw = raw
@@ -320,7 +336,9 @@ export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number,
   if (app.tool === 'pen' && app.nib !== C.NIB_PX) s.mat.w = app.nib
   if (press !== undefined) s.mat.press = press
   app.doc.strokes.push(s)
-  // 작도 획(지평선·깊이선)은 실행취소 대상이 아니다 — role은 추가 후 계산으로 안다
+  // **첫 획이 시점을 굳힌다**(web2-17 3-b) — 그 순간의 팬(눈높이 선언)이 «작도 시점»이다.
+  if (firstStroke) app.drawView = { ...app.view }
+  // 작도 획(깊이선·소실점 표식)은 실행취소 대상이 아니다 — role은 추가 후 계산으로 안다
   recompute(app)
   // ── 교점 정의(web2-13 4-g — 같은 깃발 뒤) — 사건은 커밋 순간 한 번이다 ────────
   // 방금 확정된 획의 «뗀 끝»이 방향 있는 대기선 위에서 끝났으면 그 대기선이 정의된다
@@ -484,9 +502,11 @@ export function setView(app: App, v: ViewOffset) {
   for (const l of app.listeners) l()
 }
 
-/** 작도 시점 — 포즈와 뷰 오프셋 둘 다 원래대로 */
+/** 작도 시점 — 포즈는 DRAW_POSE로, 뷰는 **첫 획을 긋던 그 화면**으로(web2-17 3-b).
+ *  «작도 시점»이라는 말이 이제 문자 그대로다. 선언 전(drawView 없음)이면 원점.
+ *  ⚠ 프레임 ≠ 창이면 호출부(main.ts)가 `fitViewToFrame`으로 합성을 다시 얹는다(3-c). */
 export function resetPose(app: App) {
-  app.view = { s: 1, ox: 0, oy: 0 }
+  app.view = app.drawView ? { ...app.drawView } : { s: 1, ox: 0, oy: 0 }
   setPose(app, DRAW_POSE)
 }
 
@@ -511,15 +531,18 @@ export function deleteView(app: App, i: number) {
   for (const l of app.listeners) l() // 자동 저장이 듣는다
 }
 
-/** .brnl 복원 — 문서·시점만 갈아끼우고 나머지는 전부 다시 계산 */
-export function loadDoc(app: App, data: { doc: Doc; nextId: number; savedViews: App['savedViews'] }) {
+/** .brnl 복원 — 문서·시점만 갈아끼우고 나머지는 전부 다시 계산.
+ *  `drawView`(web2-17 3-c)가 있으면 그 화면으로 연다 — 없으면(옛 파일) 원점.
+ *  프레임 ≠ 창의 합성은 호출부의 `fitViewToFrame`이 얹는다(`composeView`). */
+export function loadDoc(app: App, data: { doc: Doc; nextId: number; savedViews: App['savedViews']; drawView?: ViewOffset | null }) {
   app.doc = data.doc
   app.nextId = data.nextId
   app.savedViews = data.savedViews
+  app.drawView = data.drawView ? { ...data.drawView } : null
   app.undoStack = []
   app.redoStack = []
   app.pose = DRAW_POSE
-  app.view = { s: 1, ox: 0, oy: 0 }
+  app.view = app.drawView ? { ...app.drawView } : { s: 1, ox: 0, oy: 0 }
   recompute(app)
 }
 
@@ -538,6 +561,7 @@ export function clearAll(app: App, W: number, H: number) {
   app.redoStack = []
   app.savedViews = []
   app.activeErase = null
+  app.drawView = null   // 선언도 버린다(web2-17 3-b) — 다음 첫 획이 새로 굳힌다
   app.pose = DRAW_POSE
   app.view = { s: 1, ox: 0, oy: 0 }
   recompute(app)
@@ -596,6 +620,12 @@ export const orbitRadius = (app: App): number => len3(sub3(app.pose.p, orbitPivo
  *  사라진다」를 재려면 앱이 실제로 도는 경로가 필요했다(`orbitBy`를 옮긴 것과 같은 이유). */
 export function dollyBy(app: App, scale: number, center: Pt) {
   if (isDrawPose(app.pose)) {
+    // **선언 전에는 줌이 없다**(web2-17 3-a — 사람 문면 「무차원이니 줌 없이 팬만」).
+    // 더 강한 근거: 줌은 프레임이 종이를 얼마나 덮는가를 바꾼다. 지평선과 주점이 프레임의
+    // 중심에 붙어 있으므로, 줌한 뒤 같은 손짓으로 그으면 같은 그림이 **다른 화각**으로
+    // 앉는다(f = 0.87·W는 문서 단위다). 사람이 선언한다고 한 것은 눈높이 하나이므로
+    // 두 번째 선언(화각)을 조용히 끼워 넣지 않는다. 첫 획 뒤에는 종전대로 줌이 산다.
+    if (app.doc.strokes.length === 0) return
     const v = app.view
     const s = Math.min(8, Math.max(0.2, v.s * scale))
     const k = s / v.s

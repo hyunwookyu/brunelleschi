@@ -74,9 +74,10 @@ describe('.brnl 저장·복원', () => {
       .toEqual(penData().doc.strokes.map(s => ({ id: s.id, a: s.a, b: s.b })))
   })
 
-  it('web2-10 형식(rawIn 없음)이 그대로 열린다 — 옛 파일 팔', () => {
-    // 옛 앱이 쓰던 형식 = 이 회차 직전의 serializeBrnl 출력(스냅샷 파서와 같은 b6980c9 형식).
-    // rawIn·coalesced 이전에 저장된 파일에는 새 열쇠가 아예 없다.
+  it('web2-10 형식(version 1)이 변환을 지나 열린다 — 지평선 획이 버려진다(web2-17 2-b)', () => {
+    // 옛 형식의 첫 획은 지평선이다. 이제 지평선은 상시(H/2)라 그 획은 버려지고
+    // 나머지가 통째로 평행이동된다. 이 표본은 지평선이 이미 400(=H/2)이라 dy=0이다 —
+    // 이동 자체의 값 검증은 legacy_web2_16.json 오라클 팔(migrate.test.ts)이 한다.
     const old = JSON.stringify({
       format: 'brnl', version: 1, frame: { W: 1200, H: 800 },
       strokes: [
@@ -87,20 +88,19 @@ describe('.brnl 저장·복원', () => {
     })
     const back = parseBrnl(old)!
     expect(back).not.toBeNull()
-    expect(back.doc.strokes).toHaveLength(2)
-    expect(back.doc.strokes[1]!.mat).toEqual({ grade: 'HB', press: 0.42 })
-    expect(back.doc.strokes[1]!.rawIn).toBeUndefined()
+    expect(back.doc.strokes).toHaveLength(1)                     // 지평선 획이 버려졌다
+    expect(back.doc.strokes[0]!.id).toBe(2)
+    expect(back.doc.strokes[0]!.a).toEqual({ x: 500, y: 500 })   // dy=0 — 좌표 불변
+    expect(back.doc.strokes[0]!.mat).toEqual({ grade: 'HB', press: 0.42 })
+    expect(back.doc.strokes[0]!.rawIn).toBeUndefined()
   })
 
-  it('새 파일이 옛 앱(b6980c9 파서 스냅샷)에서 열린다 — rawIn만 버려진다', () => {
+  it('새 파일(version 2)은 옛 앱(b6980c9 파서 스냅샷)이 **거부한다** — web2-17 2-a의 의도다', () => {
+    // 종전 보장(「새 파일이 옛 앱에서 열린다」)을 이 회차가 **의도적으로** 버렸다:
+    // 옛 앱은 첫 획을 지평선으로 읽으므로 v2 문서를 열면 조용히 다른 그림이 된다.
+    // 거부하고 빈 화면으로 시작하는 쪽이 낫다(지시 2-a — #54 계열의 판단).
     const d = penData()
-    const back = parseBrnlLegacy(serializeBrnl(d))!
-    expect(back).not.toBeNull()
-    expect(back.doc.strokes).toHaveLength(d.doc.strokes.length)
-    // 옛 파서는 아는 열쇠만 옮기므로 rawIn은 조용히 사라지고 나머지는 그대로다
-    const last = back.doc.strokes.length - 1
-    expect((back.doc.strokes[last] as any).rawIn).toBeUndefined()
-    expect(back.doc.strokes[last]!.raw).toEqual(d.doc.strokes[last]!.raw)
+    expect(parseBrnlLegacy(serializeBrnl(d))).toBeNull()
   })
 
   it('반례: rawIn 모양이 틀리면 거부한다(길이 불일치·대역 밖·raw 없음)', () => {
@@ -205,12 +205,8 @@ describe('savedViews.thumb (web2-12 5번)', () => {
     expect(back.savedViews[0]!.thumb).toBeUndefined()
   })
 
-  it('새 파일이 옛 앱(b6980c9 파서 스냅샷)에서 열린다 — thumb만 버려진다', () => {
-    const back = parseBrnlLegacy(serializeBrnl(withThumb()))!
-    expect(back).not.toBeNull()
-    expect(back.savedViews).toHaveLength(1)
-    expect((back.savedViews[0] as any).thumb).toBeUndefined()  // 옛 파서는 아는 열쇠만 옮긴다
-    expect(back.savedViews[0]!.pose.p.y).toBe(1.6)
+  it('새 파일(version 2)은 옛 앱(b6980c9 파서 스냅샷)이 거부한다 — thumb 이전에 version에서 끊긴다', () => {
+    expect(parseBrnlLegacy(serializeBrnl(withThumb()))).toBeNull()
   })
 
   it('반례: 모양이 틀린 thumb는 **그 필드만 강등**된다 — 뷰(포즈)는 산다', () => {

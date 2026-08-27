@@ -73,7 +73,7 @@ test('기본은 켜짐(자립이 정본) — 진단이 말한다 · 끄면 사�
   await page.click('#pane-settings summary')
   await page.click('#chk-own3d')
   expect(await page.evaluate(() => (window as any).__b2.app.own3d)).toBe(true)
-  await page.evaluate(() => { localStorage.removeItem('b2-own3d'); localStorage.removeItem('b2-autosave') })
+  await page.evaluate(() => { localStorage.removeItem('b2-own3d'); localStorage.removeItem('b2-autosave'); localStorage.removeItem('b2-autosave2') })
 })
 
 test('이행 — own3 없는 옛 저장 파일을 기본 켜짐으로 열면 사슬로 올리고 그 자리에서 굳는다', async ({ page }) => {
@@ -95,11 +95,11 @@ test('이행 — own3 없는 옛 저장 파일을 기본 켜짐으로 열면 사
   // 자동 저장을 기다린다(400ms 디바운스) — **획 수가 최종본과 같아질 때까지**
   // (존재만 기다리면 중간 저장본을 잡아 리로드가 옛 상태를 연다 — 첫 실행이 그랬다)
   await page.waitForFunction((n) => {
-    const s = localStorage.getItem('b2-autosave')
+    const s = localStorage.getItem('b2-autosave2')   // web2-17: 새 앱은 새 열쇠에 쓴다(D-W4)
     if (!s) return false
     try { return JSON.parse(s).strokes.length === n } catch { return false }   // .brnl은 최상위 strokes다(file.ts)
   }, old.strokes)
-  const saved = await page.evaluate(() => localStorage.getItem('b2-autosave')!)
+  const saved = await page.evaluate(() => localStorage.getItem('b2-autosave2')!)
   expect(saved.includes('own3'), '저장 파일에 own3 필드가 없다').toBe(false)
   await page.evaluate(() => localStorage.removeItem('b2-own3d'))
 
@@ -115,7 +115,7 @@ test('이행 — own3 없는 옛 저장 파일을 기본 켜짐으로 열면 사
   expect(mig.strokes, '획이 그대로 열렸다').toBe(old.strokes)
   expect(mig.lifted, '사슬 리프팅이 정상으로 돈다').toBe(old.lifted)
   expect(mig.frozen, '열면서 굳는다(이행)').toBe(old.lifted)
-  await page.evaluate(() => { localStorage.removeItem('b2-autosave'); localStorage.removeItem('b2-own3d') })
+  await page.evaluate(() => { localStorage.removeItem('b2-autosave'); localStorage.removeItem('b2-autosave2'); localStorage.removeItem('b2-own3d') })
 })
 
 test('4-g 가시성(2차 [17]) — 대기선 몸통 위 호버에 오스냅 기호가 화면(픽셀)에 뜬다', async ({ page }) => {

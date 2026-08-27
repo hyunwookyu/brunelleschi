@@ -98,13 +98,25 @@ describe('지우개 — 닿은 조각이 사라진다', () => {
     expect(app.doc.strokes.some(s => s.id === W.id)).toBe(false)
   })
 
-  it('작도 획은 지우개가 못 지운다 — 카메라는 별개다', () => {
+  it('작도 획(소실점 획)은 지우개가 못 지운다 — 카메라는 별개다', () => {
     const app = appWithConstruction()
     const n = app.doc.strokes.length
-    eraseOnce(app, pt(200, 400))  // 지평선 위
-    eraseOnce(app, pt(450, 625))  // 깊이선 위
+    eraseOnce(app, pt(550, 487.5))  // 깊이선 1(소실점 획) 위
+    eraseOnce(app, pt(450, 487.5))  // 깊이선 2 위
     expect(app.doc.strokes.length).toBe(n)
     expect(app.lift.an.vps).toHaveLength(2)
+  })
+
+  it('지평선 따라긋기 획은 내용이라 지워진다(web2-17) — 카메라는 안 움직인다', () => {
+    // 종전에는 role horizon이라 못 지웠다. 이제 지평선은 상시(H/2)이고 그 위의 획은
+    // 그냥 대기 획이다 — 지워도 카메라(소실점·f)가 그대로인 것이 요점이다.
+    const app = appWithConstruction()
+    const n = app.doc.strokes.length
+    const f0 = app.lift.an.f
+    eraseOnce(app, pt(200, 400))  // 지평선 위의 따라긋기 획
+    expect(app.doc.strokes.length).toBe(n - 1)
+    expect(app.lift.an.vps).toHaveLength(2)
+    expect(app.lift.an.f).toBe(f0)
   })
 
   it('반경 밖이면 안 지워진다', () => {
@@ -112,7 +124,7 @@ describe('지우개 — 닿은 조각이 사라진다', () => {
     commitStroke(app, pt(500, 500), pt(500, 300))
     const n = app.doc.strokes.length
     app.eraserRadius = 4
-    eraseOnce(app, pt(520, 400)) // 20px 옆
+    eraseOnce(app, pt(520, 430)) // 수직선에서 20px 옆 (지평선 따라긋기 획에서도 30px — 그것도 획이다)
     expect(app.doc.strokes.length).toBe(n)
   })
 

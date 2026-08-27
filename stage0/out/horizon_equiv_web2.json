@@ -1,0 +1,51 @@
+{
+ "what": "web2-17 1-e ①·2-c 팔의 측정 — 옛 코드(622e9ac) 오라클 대비 평행이동 동치·v1 변환 왕복의 절대 오차. migrate.test.ts가 매 실행 다시 쓴다.",
+ "oracle": "test/legacy_web2_16.json@622e9ac (코드 변경 전 캡처)",
+ "flags_explained": {
+  "equiv_*_worst_abs=0": "정수·이진유한 dy에서 사영 입력이 비트 동일 — 구성상 정확 동치(자기참조 아님 · 판별력은 counter_dy0_* 반증이 진다)",
+  "own3_reproject_worst_px<1e-10": "평행이동 동치의 실측 fp 잔차 — 잉크 심판 문(0.01px) 대비 여유의 «측정»이고 0에 임계를 안 건다"
+ },
+ "equiv_int_grids": {
+  "n": 6,
+  "worst3d_abs": 0,
+  "note": "정수 격자 — 입력 비트 동일이라 0이 구성적"
+ },
+ "equiv_frac_grids": {
+  "n": 2,
+  "worst_abs": 0
+ },
+ "sample2": {
+  "lifted_worst_abs": 0,
+  "own3_reproject_worst_px": 1.0481408545834812e-12,
+  "dy": -120
+ },
+ "counter_dy0_hz300_L1": {
+  "min_diff_over": 0.5,
+  "diff": "structural"
+ },
+ "counter_dy0_hz300_L2": {
+  "min_diff_over": 0.5,
+  "diff": "structural"
+ },
+ "counter_dy0_hz520_L1": {
+  "min_diff_over": 0.5,
+  "diff": 480
+ },
+ "counter_dy0_hz520_L2": {
+  "min_diff_over": 0.5,
+  "diff": 402.8571428571429
+ },
+ "counter_dy0_hz640_L1": {
+  "min_diff_over": 0.5,
+  "diff": 960
+ },
+ "counter_dy0_hz640_L2": {
+  "min_diff_over": 0.5,
+  "diff": 805.7142857142858
+ },
+ "sample_roundtrip": {
+  "lifted_worst_abs": 0,
+  "face_vertex_worst_abs": 0,
+  "view_oy_check": "(620+dy)·1.25+oy′ == 620·1.25−48"
+ }
+}

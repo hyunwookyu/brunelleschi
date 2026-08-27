@@ -124,6 +124,11 @@ test('앱의 줌이 산다 — 두 손가락 벌림이 view.s를 키운다 (#62:
   // orbitradius.test.ts·fold_measure.test.ts가 같은 함수를 직접 잰다(#62 — 한 함수).
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
+  // web2-17 3-a: 선언(첫 획) 전에는 줌이 막힌다 — 획 하나를 먼저 긋고 잰다(뷰포트 412 안)
+  await page.mouse.move(100, 700); await page.mouse.down()
+  for (let i = 1; i <= 8; i++) await page.mouse.move(100 + 25 * i, 700)
+  await page.mouse.up()
+  expect(await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)).toBe(1)
   const before = await page.evaluate(() => (window as any).__b2.app.view.s)
   const cdp = await page.context().newCDPSession(page)
   const pts = (d: number) => [

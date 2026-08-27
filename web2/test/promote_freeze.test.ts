@@ -39,7 +39,7 @@ const ORBIT = { p: { x: 3, y: 1.6, z: 3 } as V3, q: quatAxisAngle({ x: 0, y: 1, 
 
 interface Frozen { a3: V3; b3: V3; a2: { x: number; y: number }; b2: { x: number; y: number } }
 
-/** 구도 — 지평선·깊이선(vp0)·기둥·깊이 획·기둥 둘째 + 승격 획.
+/** 구도 — 깊이선(vp0)·기둥·깊이 획·기둥 둘째 + 승격 획(지평선은 상시 H/2 — web2-17).
  *  ⚠ 화면 가로(H) 획은 넣을 수 없다 — 선언되는 순간 1점으로 잠겨 승격이 막힌다(web2-02).
  *  그래서 픽스처는 기둥(V)·깊이 획으로 짠다. */
 const COMPS = [
@@ -47,7 +47,6 @@ const COMPS = [
     name: 'A_중앙',
     W: 1200, H: 800,
     setup: [
-      [100, 400, 1100, 400],   // 지평선
       [500, 500, 600, 475],    // 깊이선 → vp0 = 900
       [500, 500, 500, 300],    // 기둥(앵커 — 화면 평행 V)
       [500, 300, 660, 340],    // 깊이 획(기둥 꼭대기 → vp0 방향)
@@ -58,20 +57,19 @@ const COMPS = [
   {
     name: 'B_먼VP',
     W: 1200, H: 800,
+    // web2-17: 옛 장면(지평선 350)을 +50 평행이동 — 지평선은 상시 H/2=400이고 획이 아니다
     setup: [
-      [100, 350, 1100, 350],
-      [300, 550, 420, 520],    // → vp0 = 1100
-      [300, 550, 300, 350],    // 기둥(앵커)
-      [300, 350, 480, 305],    // 깊이 획 (300,350)→vp0(1100,350)? — 지평선 위 시작이라 처짐 0…
-      [480, 505, 480, 430],    // 둘째 기둥(아래 깊이 획 끝에서)
+      [300, 600, 420, 570],    // → vp0 = 1100
+      [300, 600, 300, 400],    // 기둥(앵커)
+      [300, 400, 480, 355],    // 깊이 획 — 지평선 위 시작이라 처짐 0… (아래 B_FIX가 대체)
+      [480, 555, 480, 480],    // 둘째 기둥(아래 깊이 획 끝에서)
     ],
-    promote: [300, 550, 200, 510],   // → vp1 = −200
+    promote: [300, 600, 200, 560],   // → vp1 = −200
   },
   {
     name: 'C_좁은화각',
     W: 1200, H: 800,
     setup: [
-      [100, 400, 1100, 400],
       [700, 600, 850, 570],      // → vp0 = 1700
       [700, 600, 700, 450],      // 기둥(앵커)
       [700, 450, 850, 442.5],    // 깊이 획(기둥 꼭대기 → vp0)
@@ -87,7 +85,6 @@ const COMPS = [
     name: 'D_주점근접',
     W: 1200, H: 800,
     setup: [
-      [100, 400, 1100, 400],
       [500, 500, 560, 450],      // → vp0 = 620 (주점 이동 |620−600| = 20px)
       [500, 500, 500, 320],      // 기둥(앵커)
       [500, 320, 560, 360],      // 깊이 획(기둥 꼭대기 → vp0)
@@ -97,17 +94,17 @@ const COMPS = [
   },
 ] as const
 
-// ⚠ B의 넷째 획은 시작점이 지평선 위(y=350)라 깊이 획이 아니라 수평 대역에 걸릴 수
+// ⚠ B의 셋째 획은 시작점이 지평선 위(y=400)라 깊이 획이 아니라 수평 대역에 걸릴 수
 // 있다 — 그런 획은 아래 build가 «리프팅 안 된 획»으로 자연히 거르고, 원장의
 // strokes_frozen 수가 그 사실을 든다(조용히 안 거른다 — 수가 말한다).
-// B는 대신 (300,550)→(480,505) 아래 깊이 획을 쓴다.
-const B_FIX: [number, number, number, number] = [300, 550, 480, 505]
+// B는 대신 (300,600)→(480,555) 아래 깊이 획을 쓴다.
+const B_FIX: [number, number, number, number] = [300, 600, 480, 555]
 
 function build(comp: (typeof COMPS)[number]) {
   const s = session(comp.W, comp.H)
   const drawn: { id: number; a2: { x: number; y: number }; b2: { x: number; y: number } }[] = []
   const rows = comp.name === 'B_먼VP'
-    ? comp.setup.map((r, i) => (i === 3 ? B_FIX : (r as unknown as [number, number, number, number])))
+    ? comp.setup.map((r, i) => (i === 2 ? B_FIX : (r as unknown as [number, number, number, number])))
     : (comp.setup as unknown as [number, number, number, number][])
   for (const [ax, ay, bx, by] of rows) {
     const st = s.draw(ax, ay, bx, by)

@@ -65,11 +65,16 @@ describe('축 스냅 — 임계 없이 가장 가까운 축에 항상 붙는다'
     expect(back.axis).toBe('vp0')
   })
 
-  it('반례: 축이 하나도 없으면(지평선 전) 자유다 — 그때는 축이란 것이 없다', () => {
+  it('빈 문서에도 H·V 축이 있다(web2-17) — 지평선이 상시이므로 축 없는 상태가 없다', () => {
+    // 종전에는 지평선 전 = 축 0 = 자유였다. 이제 카메라가 상시라 첫 획부터 화면
+    // 가로·세로에 붙는다 — 방 실루엣 진입로(1-e ③)의 전제다.
     const bare = analyze({ frame: { W: 1200, H: 800 }, strokes: [], faces: [], unit: 'mm' as const })
-    const s = snapDir(bare, DRAW_POSE, pt(100, 100), pt(300, 260))
-    expect(s.axis).toBeNull()
-    expect(s.end).toEqual(pt(300, 260))
+    const s = snapDir(bare, DRAW_POSE, pt(100, 100), pt(300, 130))
+    expect(s.axis).toBe('H')
+    expect(s.end.y).toBe(100)
+    const v = snapDir(bare, DRAW_POSE, pt(100, 100), pt(120, 300))
+    expect(v.axis).toBe('V')
+    expect(v.end.x).toBe(100)
   })
 })
 

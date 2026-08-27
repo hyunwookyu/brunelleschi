@@ -1,0 +1,72 @@
+{
+ "what": "web2-17 1-e ②~⑥·경계 팔의 측정 — entry17.test.ts가 매 실행 다시 쓴다. 문서는 필드 이름만 인용(#47).",
+ "flags_explained": {
+  "axis_dots=0": "1점 주점 보정의 구성적 결과(설계 보장) — 0 아닌 입력의 직교는 axes.test가 잰다",
+  "two_vp.f2": "f² = |PV₁||PV₂|는 정의의 항등(설계 보장) — 임계를 안 건다(#37)"
+ },
+ "room_silhouette": {
+  "waiting": 0,
+  "screenHDeclared": true,
+  "vps": 0,
+  "lifted": 4,
+  "wall_height_3d": 1.2800000000000002,
+  "wall_z": -6.6816
+ },
+ "p1_lock": {
+  "vps": 1,
+  "p1Locked": true,
+  "axis_dots": [
+   0,
+   0,
+   0
+  ]
+ },
+ "two_vp": {
+  "vps": [
+   {
+    "x": 900,
+    "y": 400
+   },
+   {
+    "x": 99.99999999999994,
+    "y": 400
+   }
+  ],
+  "f": 387.29833462074174,
+  "fSource": "two-vp",
+  "f2_identity_note": "f² = |PV₁||PV₂|는 구성상 항등(설계 보장) — 임계를 안 건다"
+ },
+ "band_boundary": {
+  "radius_px": 8,
+  "results": [
+   {
+    "off": 0,
+    "declared": false
+   },
+   {
+    "off": 3,
+    "declared": false
+   },
+   {
+    "off": 7,
+    "declared": false
+   },
+   {
+    "off": 8,
+    "declared": false
+   },
+   {
+    "off": 9,
+    "declared": true
+   },
+   {
+    "off": 12,
+    "declared": true
+   },
+   {
+    "off": 20,
+    "declared": true
+   }
+  ]
+ }
+}
