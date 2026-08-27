@@ -185,6 +185,7 @@ test('⑤⑤\'⑥ — 층마다 결이 다르고(게이트) · 이음매가 없�
   })
   // 감싸 그리면 경계 띠의 섬유 에너지가 내부 대역이고, 빼면 결핍이 뚜렷하다(반증 실행).
   // 임계는 **상대**다(dpr2에서 섬유가 타일 px 기준 두 배라 절대 차가 준다 — 실측 보정).
+  console.log(`[⑤'] wrapped ${seam.wrapped.ratio.toFixed(3)} · raw ${seam.raw.ratio.toFixed(3)}`)
   expect(seam.wrapped.ratio).toBeGreaterThan(0.8)
   expect(seam.raw.ratio).toBeLessThan(seam.wrapped.ratio * 0.95)
 })

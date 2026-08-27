@@ -2,53 +2,85 @@
   "what": "web2-20 3-e ⑩ — 3-b(영역 재조립: #film 사본+곱 · #layerc 몸체)의 400획 프레임 비용. 겹 없음 칸이 same-run 기준, cost18 값은 다른 실행의 참조.",
   "run": {
     "project": "dpr1",
-    "note": "`npx playwright test cost20 --workers=1` — cost18과 같은 규율. 절대 ms는 컨테이너 변동이 크다(판별은 같은 실행 안의 배수)."
+    "note": "`npx playwright test cost20 --workers=1` — cost18과 같은 규율(전량 e2e도 workers=1로 돈다). 절대 ms는 컨테이너 변동이 크다 — 판별은 같은 실행 안의 대비이고, 배수가 아니라 분자/분모 그대로 읽는다(#16 — base 칸이 0.1ms 양자화 대역이라 배수의 분모가 흔들린다: 1차 리뷰 [2])."
   },
   "scene_at_400": {
     "strokes": 400,
     "lifted": 198,
-    "waiting": 202
+    "waiting": 202,
+    "raw_ratio": 0,
+    "note_fixture": "cost18 fillTo의 rawIn 0% 갈래와 같은 규격(승격/자유 획 교대·끝점 지터 #68). with 칸 = 트레이싱지 1장(rect=전체 화면 1200×800)·겹 소속 획 20. heavy 칸 = 겹 셋(트레이싱지1+옐로2, rect 전부 전체 화면)·겹 소속 획 100 — 아래 heavy_scene이 실측."
+  },
+  "heavy_scene": {
+    "layers": 3,
+    "layer_strokes": 100
   },
   "frames": {
     "base_draw_pose": {
       "n": 40,
       "r3": 0.6999998092651367,
       "bs": 0,
-      "d2": 0.3000001907348633,
+      "d2": 0.2999997138977051,
       "total": 1,
-      "totalMax": 2.4000000953674316
+      "totalMax": 3
     },
     "with_film_draw_pose": {
       "n": 40,
       "r3": 0.5999999046325684,
       "bs": 0,
-      "d2": 12.799999713897705,
+      "d2": 12.900000095367432,
       "total": 13.5,
-      "totalMax": 15.600000381469727
+      "totalMax": 15.400000095367432
+    },
+    "alpha_film_draw_pose": {
+      "n": 40,
+      "r3": 0.5999999046325684,
+      "bs": 0,
+      "d2": 12.599999904632568,
+      "total": 13.199999809265137,
+      "totalMax": 15.5
     },
     "base_orbit": {
       "n": 32,
-      "r3": 0.7999997138977051,
+      "r3": 0.8000001907348633,
       "bs": 0.7999997138977051,
       "d2": 0.3000001907348633,
-      "total": 1.8000001907348633,
-      "totalMax": 314.6000003814697
+      "total": 1.8999996185302734,
+      "totalMax": 319.40000009536743
     },
     "with_layer_orbit": {
       "n": 32,
-      "r3": 0.7000002861022949,
-      "bs": 0.6999998092651367,
-      "d2": 0.3000001907348633,
-      "total": 1.799999713897705,
-      "totalMax": 294.5
+      "r3": 0.7999997138977051,
+      "bs": 0.7000002861022949,
+      "d2": 0.40000009536743164,
+      "total": 1.8000001907348633,
+      "totalMax": 289.59999990463257
+    },
+    "heavy_draw_pose": {
+      "n": 40,
+      "r3": 0.5999999046325684,
+      "bs": 0,
+      "d2": 13,
+      "total": 13.699999809265137,
+      "totalMax": 16.200000286102295
+    },
+    "heavy_orbit": {
+      "n": 32,
+      "r3": 0.6999998092651367,
+      "bs": 0.7000002861022949,
+      "d2": 0.40000009536743164,
+      "total": 1.8000001907348633,
+      "totalMax": 323.30000019073486
     }
   },
-  "marginal": {
-    "draw_pose_total_x": 13.5,
-    "draw_pose_d2_delta_ms": 12.5,
-    "orbit_total_x": 1,
-    "orbit_d2_delta_ms": 0,
-    "note": "막의 몫은 d2 조각에 실린다(frame()에서 filmLayer.draw가 draw2d와 같은 구간). 궤도 칸의 막은 포즈 게이트로 꺼지므로 그 델타는 #layerc 사영선의 몫이다."
+  "comparison": {
+    "draw_pose_total": "13.5ms / 1.0ms (막 켬 / 겹 없음)",
+    "orbit_total": "1.8ms / 1.9ms (겹+막 / 겹 없음 — 궤도에서 막은 포즈 게이트로 꺼진다)",
+    "heavy_orbit_total": "1.8ms / 1.9ms (겹 셋·소속 획 100 / 겹 없음)",
+    "alpha_vs_multiply_draw": "13.2ms / 13.5ms (알파 / 곱 — 지시 3-a 「비용은 알파와 같다」의 실측)",
+    "d2_delta_draw_ms": 12.6,
+    "d2_delta_orbit_ms": 0.1,
+    "note": "막의 몫은 d2 조각에 실린다(frame()에서 filmLayer.draw가 draw2d와 같은 구간). 궤도 칸의 델타는 #layerc 사영선의 몫이다."
   },
   "cost18_ref": {
     "file": "cost18_web2.json",
@@ -59,14 +91,15 @@
       "d2": 0.3000001907348633,
       "total": 2.5999999046325684,
       "totalMax": 491.59999990463257
-    }
+    },
+    "how": "하네스가 cost18_web2*.json을 읽어 넣는다 — 손 인용이 아니다(1차 리뷰 [3]). 다른 실행의 값이므로 나란히 적을 뿐, 비교는 같은 실행의 base 칸이 한다."
   },
   "metric_defs": {
     "frames": "앱이 그 자리에서 잰 프레임 3몫(r3=render3d·bs=brushLayer.sync·d2=filmLayer.draw+draw2d)의 중앙값 — cost18 ③과 같은 함수(frameCostQ). draw_pose는 호버 40이동, orbit은 중버튼 30이동. 국면별 리셋.",
-    "marginal": "with−base의 total 배수와 d2 델타. 막의 몫은 d2 조각에 실린다."
+    "comparison": "같은 실행 안의 분자/분모 쌍(#16). 배수를 안 적는 이유: base가 0.1ms 양자화 대역이라 분모의 ±0.2ms가 배수를 수십 % 움직인다(1차 리뷰 [2] 실측 — 같은 코드 두 실행에서 13.5×→17.25×)."
   },
   "flags_explained": {
     "상수·지표 스냅샷 없음": "cost18 원장과 같은 유보 — e2e 하네스라 test/constants.ts의 공유 상수를 안 쓴다(재는 것은 프레임 ms뿐). 스냅샷 대조가 잡을 낡음이 정의상 없다.",
-    "base 칸 값이 서로 같아 보임": "분해능이다 — frameCostQ의 ms가 0.1 단위 대역이고 겹 없는 경로는 1~2ms라 칸이 붙는다. 판별은 with/base 배수(1.0× 대 15×)가 낸다."
+    "base·orbit 칸 값이 서로 같아 보임": "분해능이다 — frameCostQ의 ms가 0.1 단위 대역이고 겹 없는 경로는 1~2ms라 칸이 붙는다. 판별은 comparison의 분자/분모 쌍이 낸다."
   }
 }

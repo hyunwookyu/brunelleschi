@@ -1,5 +1,5 @@
 {
-  "n_flags": 5513,
+  "n_flags": 5515,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -2407,6 +2407,16 @@
       "path": "cost18_web2_clip.json:grid.raw_50pct.400.sync_strokes_ms.median",
       "val": 1,
       "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
+    },
+    {
+      "path": "cost20_web2.json:scene_at_400.raw_ratio",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "cost20_web2_dpr2.json:scene_at_400.raw_ratio",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "cube_frame.json:thresholds.console_errors_max",
@@ -27805,7 +27815,7 @@
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 124,
+      "targets": 126,
       "hits": 3,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
@@ -27994,6 +28004,14 @@
       68,
       69,
       71
+    ],
+    "cost20_web2.json": [
+      16,
+      68
+    ],
+    "cost20_web2_dpr2.json": [
+      16,
+      68
     ],
     "cube_frame.json": [
       5,
