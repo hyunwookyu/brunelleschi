@@ -14,23 +14,23 @@
  "live": {
   "drawing_few": {
    "brush": {
-    "down_to_next_paint_ms": 13.1,
-    "frame_ms_median": 25.3,
-    "frame_ms_p90": 33.3,
-    "frame_ms_worst": 38.4,
-    "frames": 87,
+    "down_to_next_paint_ms": 33.2,
+    "frame_ms_median": 25.4,
+    "frame_ms_p90": 30.8,
+    "frame_ms_worst": 40,
+    "frames": 82,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 1,
     "draft_redraws_while_down": 40,
-    "draft_ms_median": 1.4,
-    "draft_ms_max": 3.1
+    "draft_ms_median": 1.3,
+    "draft_ms_max": 2.5
    },
    "classic": {
-    "down_to_next_paint_ms": 21.4,
-    "frame_ms_median": 16.8,
+    "down_to_next_paint_ms": 1.4,
+    "frame_ms_median": 17.3,
     "frame_ms_p90": 26.8,
-    "frame_ms_worst": 34.5,
+    "frame_ms_worst": 29.7,
     "frames": 69,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
@@ -42,24 +42,24 @@
   },
   "drawing_500": {
    "brush": {
-    "down_to_next_paint_ms": 29.2,
-    "frame_ms_median": 23.2,
-    "frame_ms_p90": 36.1,
-    "frame_ms_worst": 71.2,
-    "frames": 124,
+    "down_to_next_paint_ms": 22.4,
+    "frame_ms_median": 30.8,
+    "frame_ms_p90": 38.3,
+    "frame_ms_worst": 73.9,
+    "frames": 91,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 1,
     "draft_redraws_while_down": 40,
-    "draft_ms_median": 1.3,
-    "draft_ms_max": 2.7
+    "draft_ms_median": 1.6,
+    "draft_ms_max": 5.6
    },
    "classic": {
-    "down_to_next_paint_ms": 104.2,
-    "frame_ms_median": 17.6,
-    "frame_ms_p90": 135.1,
-    "frame_ms_worst": 189.2,
-    "frames": 89,
+    "down_to_next_paint_ms": 68.7,
+    "frame_ms_median": 17.2,
+    "frame_ms_p90": 131.2,
+    "frame_ms_worst": 177,
+    "frames": 105,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 0,
@@ -70,31 +70,31 @@
   },
   "orbit_500": {
    "brush": {
-    "down_to_next_paint_ms": 1461.6,
-    "frame_ms_median": 26.5,
-    "frame_ms_p90": 35.9,
-    "frame_ms_worst": 1474.1,
-    "frames": 31,
+    "down_to_next_paint_ms": 1603.9,
+    "frame_ms_median": 28,
+    "frame_ms_p90": 51.6,
+    "frame_ms_worst": 1613.5,
+    "frames": 34,
     "brush_redraws": 0,
     "brush_syncs": 31,
     "tiles_active": true,
     "tile_frames": 30,
-    "tile_bake_ms": 1432.4,
+    "tile_bake_ms": 1578.1,
     "tile_frame_ms_median": 1.2,
-    "tile_frame_ms_max": 15,
+    "tile_frame_ms_max": 10.5,
     "tiles": 505
    },
    "classic": {
-    "down_to_next_paint_ms": 0.5,
-    "frame_ms_median": 85.6,
-    "frame_ms_p90": 123.4,
-    "frame_ms_worst": 174.3,
+    "down_to_next_paint_ms": 0.2,
+    "frame_ms_median": 94.7,
+    "frame_ms_p90": 129.6,
+    "frame_ms_worst": 154.2,
     "frames": 32,
     "brush_redraws": 0,
     "brush_syncs": 31,
     "tiles_active": false,
     "tile_frames": 0,
-    "tile_bake_ms": 1432.4,
+    "tile_bake_ms": 1578.1,
     "tile_frame_ms_median": 0,
     "tile_frame_ms_max": 0,
     "tiles": 0
@@ -105,42 +105,42 @@
  "full_redraw_ms": {
   "10": {
    "brush_ms": {
-    "min": 15,
-    "median": 31,
-    "max": 51.59999990463257
+    "min": 11.700000286102295,
+    "median": 28.5,
+    "max": 59.90000009536743
    },
    "classic_ms": {
     "min": 0.5,
-    "median": 0.7999997138977051,
-    "max": 1.3000001907348633
+    "median": 0.5999999046325684,
+    "max": 0.6999998092651367
    },
-   "heap_bytes": 16100000
+   "heap_bytes": 14300000
   },
   "100": {
    "brush_ms": {
-    "min": 141.90000009536743,
-    "median": 157.09999990463257,
-    "max": 226.7999997138977
+    "min": 161.30000019073486,
+    "median": 172.80000019073486,
+    "max": 205.2999997138977
    },
    "classic_ms": {
-    "min": 4.200000286102295,
-    "median": 5.199999809265137,
-    "max": 11.400000095367432
+    "min": 3.8000001907348633,
+    "median": 5.099999904632568,
+    "max": 15.300000190734863
    },
-   "heap_bytes": 16100000
+   "heap_bytes": 14300000
   },
   "500": {
    "brush_ms": {
-    "min": 624.3000001907349,
-    "median": 941.4000000953674,
-    "max": 1190.1999998092651
+    "min": 863.6000003814697,
+    "median": 912.4000000953674,
+    "max": 1345.0999999046326
    },
    "classic_ms": {
-    "min": 67.2000002861023,
-    "median": 74.09999990463257,
-    "max": 117.69999980926514
+    "min": 66.19999980926514,
+    "median": 87.7000002861023,
+    "max": 113.09999990463257
    },
-   "heap_bytes": 16100000
+   "heap_bytes": 14300000
   },
   "note": "brush_ms = #brushc 전량 재그리기(5회 min/median/max) — 커밋·궤도·줌·접기 때 돈다. classic_ms = draw2d 1회(grain 포함) — classic은 매 프레임 이 비용이고 brush는 장면이 바뀔 때만 + 사이 0. 획당 비용·선형성은 이 세 점의 필드에서 계산해 읽는다(산문에 안 박는다 — #47)."
  },

@@ -8188,3 +8188,8 @@ total 216(`--list` 「Total: 216 tests in 28 files」 — views.spec 2팔이 빠
 꺼짐·**반증**(손잡이를 제거하면 나갈 조작 요소가 0 — 크롬이 전부 숨었으므로)).
 기존 팔 갱신: sidebar.spec(자리 재배치·접힘 회계 — 펜 상태 n = 연필 상태 n−5) ·
 tray 클릭 경로 6파일(연필을 눌러 열고 고른다) · pane-settings 참조 6파일(눈 팝업·서랍·진단).
+
+**3부 마감 검증(#69 ㉤)**: 단위 **504 passed / 0 failed / 504** · 전량 e2e
+「**226 passed (7.6m)**」 — passed 226 / failed 0 / total 226(`--list` 「Total: 226 tests in
+29 files」 — zones.spec 5팔×2 추가: 216+10) · 타입 0오류. 중간에 잡은 셋(#tray CSS 순서 ·
+syncGrade 누락 · 종이 띠가 눈 띠를 덮음)은 위 절 참조 — 전부 팔이 잡았고 수리 후 재실행.

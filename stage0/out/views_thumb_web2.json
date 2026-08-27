@@ -3,12 +3,12 @@
  "def": "썸네일 = C.THUMB_W(px) 폭 JPEG(품질 0.72 — 동작점 AS-C39). add_ms = 「+」 click 왕복(굽기+띠 갱신 포함) · capture_ms = **굽기만**(diag.captureThumb) · regen_view_ms = ㉯라면 «펼칠 때» 종이마다 드는 몫(이동+전량 재그리기+굽기). brnl_bytes_*는 같은 문서(획 셋)에서 종이 수만 는 값(작도 종이 제외 수).",
  "baseline_622e9ac_thumb_bytes_median": 1499,
  "brnl_bytes_5": 10558,
- "capture_ms_median": 0.5,
- "regen_view_ms_median": 32,
- "regen_view_ms_max": 62.4,
+ "capture_ms_median": 0.8,
+ "regen_view_ms_median": 40.2,
+ "regen_view_ms_max": 47.3,
  "thumb_bytes_median": 1707,
- "add_ms_median": 71,
- "add_ms_max": 118,
+ "add_ms_median": 75,
+ "add_ms_max": 120,
  "brnl_bytes_1": 3200,
  "brnl_bytes_20": 38170
 }
