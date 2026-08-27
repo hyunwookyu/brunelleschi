@@ -83,10 +83,12 @@ const thicknessAt = (page: Page, cx: number, cy: number) =>
 test('2-b — 기본은 brush 렌더러이고, 획을 그으면 #brushc에 잉크가 생긴다 · 작도선(지평선)은 ink에 남는다(2-a 범위)', async ({ page }) => {
   await boot(page)
   expect(await page.evaluate(() => (window as any).__b2.diag.renderer())).toBe('brush')
-  await drawMouse(page, 100, 400, 1100, 400)          // 지평선 — 작도선(획이 아니다)
+  // web2-17: 지평선은 상시(H/2)이고 «긋기»는 없다 — 따라 그은 획은 **대기 획**이 되어
+  // 흑연 파선(#brushc — web2-16 3-a)으로 그려진다. 상시 지평선 자체는 ink 겹(작도선)이다.
+  await drawMouse(page, 100, 400, 1100, 400)          // 지평선 따라긋기 — 퇴화 대기 획
   const hz = await brushBox(page, 600, 400, 30)
-  expect(hz.painted).toBe(0)                          // 지평선은 brush 대상이 아니다(범위)
-  // 지평선은 종전대로 ink 캔버스에 있다(2H 급) — level.spec이 이미 재지만 범위 팔로 한 줄
+  expect(hz.painted).toBeGreaterThan(0)               // 대기 파선이 #brushc에 있다
+  // 상시 지평선은 ink 캔버스에 있다(작도 대역) — 범위 팔로 한 줄
   const inkHz = await page.evaluate(() => {
     const c = document.getElementById('ink') as HTMLCanvasElement
     const dpr = window.devicePixelRatio || 1

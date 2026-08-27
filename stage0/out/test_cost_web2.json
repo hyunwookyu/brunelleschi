@@ -1,14 +1,141 @@
 {
-  "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "web2-16 3부(2026-08-27 — 대기선 흑연 파선·즉시 끊기 마감 전량 측정)",
-  "unit": {
+ "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
+ "measured_at": "web2-16 3부(2026-08-27 — 대기선 흑연 파선·즉시 끊기 마감 전량 측정)",
+ "unit": {
+  "command": "npm test (vitest)",
+  "files": 47,
+  "tests": 463,
+  "wall_s": 5.0,
+  "note": "web2-17 1~3부 +26팔·+3파일(migrate 7 — 오라클 대조·반증 dy=0 / entry17 9 — 1-e ②~⑥·탭·1-c / drawview 9 — 3-d) — 지시 회귀 팔. 기존 파일은 지평선 상시 전환으로 픽스처 이행(팔 수 불변·file.test 3팔은 의도 반전)."
+ },
+ "e2e": {
+  "command": "npm run e2e (playwright, dpr1+dpr2)",
+  "cases": 188,
+  "arms": 94,
+  "wall_s": 330,
+  "arms_source": "npx playwright test --list → 「Total: 188 tests in 23 files」(94팔). --list 출력이 정본(#69 ㉤)",
+  "passed": 188,
+  "failed": 0,
+  "note": "web2-17 1~3부 +4팔(entry17.spec — 방 실루엣·자동저장 v1 변환·선언 전 줌/드로뷰·되돌리기 안내). 기존 8팔 이행(face 5·brush·flow·pwa — 지평선 상시), views.spec은 잠복 결함(팝업 top 클램프가 이미지 디코드 전 높이로 고정) 수리로 통과."
+ },
+ "typecheck_build": {
+  "command": "tsc --noEmit · vite build",
+  "build_s": 6.32,
+  "note": "web2-16 3부 실측(「✓ built in 6.32s」 — 1.94~6.32 대역은 연속 실행 캐시·부하 몫으로 보임·원인 미확정)"
+ },
+ "history": [
+  {
+   "at": "web2-09",
+   "unit": 348,
+   "e2e": 60,
+   "e2e_wall_s": 55.7
+  },
+  {
+   "at": "web2-10 배포 ①",
+   "unit": 348,
+   "e2e": 68
+  },
+  {
+   "at": "web2-10 배포 ②",
+   "unit": 348,
+   "e2e": 78,
+   "e2e_wall_s": 57.1
+  },
+  {
+   "at": "web2-10 배포 ③",
+   "unit": 348,
+   "e2e": 82,
+   "e2e_wall_s": 59.4
+  },
+  {
+   "at": "web2-10 최종",
+   "unit": 352,
+   "e2e": 88,
+   "e2e_wall_s": 63
+  },
+  {
+   "at": "web2-11 1부",
+   "unit": 358,
+   "e2e": 100,
+   "e2e_wall_s": 66
+  },
+  {
+   "at": "web2-11 2부",
+   "unit": 366,
+   "e2e": 116,
+   "e2e_wall_s": 114
+  },
+  {
+   "at": "web2-12 1부",
+   "unit": 366,
+   "e2e": 128,
+   "e2e_wall_s": 150
+  },
+  {
+   "at": "web2-12 2부",
+   "unit": 370,
+   "e2e": 134,
+   "e2e_wall_s": 156
+  },
+  {
+   "at": "web2-12 3부",
+   "unit": 373,
+   "e2e": 146,
+   "e2e_wall_s": 198
+  },
+  {
+   "at": "web2-13 4부",
+   "unit": 403,
+   "e2e": 156
+  },
+  {
+   "at": "web2-14 마감",
+   "unit": 416,
+   "e2e": 164,
+   "e2e_wall_s": 258
+  },
+  {
+   "at": "web2-15 마감",
+   "unit": 426,
+   "e2e": 174,
+   "e2e_passed": 172,
+   "e2e_wall_s": 264,
+   "note": "e2e 통과 172 — dim.spec 인식기 감지 1팔×2dpr이 선행 결함으로 실패. ⚠ 당시 「380c3f9에서 재현」의 워크트리 실행은 잔존 dev 서버 오염으로 증거 무효(PITFALLS #70) — 결론 자체는 web2-16이 깨끗한 서버로 재확인(380c3f9=c0faaaf+문서 커밋이고 c0faaaf 실패 실측)"
+  },
+  {
+   "at": "web2-16 1부",
+   "unit": 426,
+   "e2e": 176,
+   "e2e_passed": 176,
+   "e2e_failed": 0,
+   "e2e_wall_s": 258
+  },
+  {
+   "at": "web2-16 2부",
+   "unit": 437,
+   "e2e": 178,
+   "e2e_passed": 178,
+   "e2e_failed": 0,
+   "e2e_wall_s": 258
+  },
+  {
+   "at": "web2-16 3부",
+   "unit": 437,
+   "e2e": 180,
+   "e2e_passed": 180,
+   "e2e_failed": 0,
+   "e2e_wall_s": 282
+  },
+  {
+   "at": "web2-16 3부",
+   "unit": {
     "command": "npm test (vitest)",
     "files": 46,
     "tests": 437,
     "wall_s": 4.2,
     "note": "web2-16 2부 +11팔(axisproj.test — 사영 6·규칙 불변 짝 2·계수 3)"
-  },
-  "e2e": {
+   },
+   "e2e": {
     "command": "npm run e2e (playwright, dpr1+dpr2)",
     "cases": 180,
     "arms": 90,
@@ -17,119 +144,12 @@
     "passed": 180,
     "failed": 0,
     "note": "web2-16 3부 +1팔(waitfade.spec 3-b 즉시 끊김·복귀). ⚠ 이 회차에 «tail이 4 failed를 잘라 176을 전량으로 읽을 뻔»한 사건이 있었다 — --list 총수 대조가 잡았다(NOTES 3부 절)"
-  },
-  "typecheck_build": {
-    "command": "tsc --noEmit · vite build",
-    "build_s": 6.32,
-    "note": "web2-16 3부 실측(「✓ built in 6.32s」 — 1.94~6.32 대역은 연속 실행 캐시·부하 몫으로 보임·원인 미확정)"
-  },
-  "history": [
-    {
-      "at": "web2-09",
-      "unit": 348,
-      "e2e": 60,
-      "e2e_wall_s": 55.7
-    },
-    {
-      "at": "web2-10 배포 ①",
-      "unit": 348,
-      "e2e": 68
-    },
-    {
-      "at": "web2-10 배포 ②",
-      "unit": 348,
-      "e2e": 78,
-      "e2e_wall_s": 57.1
-    },
-    {
-      "at": "web2-10 배포 ③",
-      "unit": 348,
-      "e2e": 82,
-      "e2e_wall_s": 59.4
-    },
-    {
-      "at": "web2-10 최종",
-      "unit": 352,
-      "e2e": 88,
-      "e2e_wall_s": 63
-    },
-    {
-      "at": "web2-11 1부",
-      "unit": 358,
-      "e2e": 100,
-      "e2e_wall_s": 66
-    },
-    {
-      "at": "web2-11 2부",
-      "unit": 366,
-      "e2e": 116,
-      "e2e_wall_s": 114
-    },
-    {
-      "at": "web2-12 1부",
-      "unit": 366,
-      "e2e": 128,
-      "e2e_wall_s": 150
-    },
-    {
-      "at": "web2-12 2부",
-      "unit": 370,
-      "e2e": 134,
-      "e2e_wall_s": 156
-    },
-    {
-      "at": "web2-12 3부",
-      "unit": 373,
-      "e2e": 146,
-      "e2e_wall_s": 198
-    },
-    {
-      "at": "web2-13 4부",
-      "unit": 403,
-      "e2e": 156
-    },
-    {
-      "at": "web2-14 마감",
-      "unit": 416,
-      "e2e": 164,
-      "e2e_wall_s": 258
-    },
-    {
-      "at": "web2-15 마감",
-      "unit": 426,
-      "e2e": 174,
-      "e2e_passed": 172,
-      "e2e_wall_s": 264,
-      "note": "e2e 통과 172 — dim.spec 인식기 감지 1팔×2dpr이 선행 결함으로 실패. ⚠ 당시 「380c3f9에서 재현」의 워크트리 실행은 잔존 dev 서버 오염으로 증거 무효(PITFALLS #70) — 결론 자체는 web2-16이 깨끗한 서버로 재확인(380c3f9=c0faaaf+문서 커밋이고 c0faaaf 실패 실측)"
-    },
-    {
-      "at": "web2-16 1부",
-      "unit": 426,
-      "e2e": 176,
-      "e2e_passed": 176,
-      "e2e_failed": 0,
-      "e2e_wall_s": 258
-    },
-    {
-      "at": "web2-16 2부",
-      "unit": 437,
-      "e2e": 178,
-      "e2e_passed": 178,
-      "e2e_failed": 0,
-      "e2e_wall_s": 258
-    },
-    {
-      "at": "web2-16 3부",
-      "unit": 437,
-      "e2e": 180,
-      "e2e_passed": 180,
-      "e2e_failed": 0,
-      "e2e_wall_s": 282
-    }
-  ],
-  "environment": {
-    "disk_avail_bytes": 9425096704,
-    "note": "#45 규약 — «느려졌다» 보고가 오면 이 값(bavail·판정용)부터 본다. 값 출처는 df의 Available 열.",
-    "disk_free_bytes_note": "옛 필드명 disk_free_bytes는 #45 후속이 판정 금지로 못 박아 이름을 바로잡았다(값 자체가 Available 열이었다 — 이름만 틀렸던 것)."
+   }
   }
+ ],
+ "environment": {
+  "disk_avail_bytes": 7079501824,
+  "note": "#45 규약 — «느려졌다» 보고가 오면 이 값(bavail·판정용)부터 본다. 값 출처는 df의 Available 열.",
+  "disk_free_bytes_note": "옛 필드명 disk_free_bytes는 #45 후속이 판정 금지로 못 박아 이름을 바로잡았다(값 자체가 Available 열이었다 — 이름만 틀렸던 것)."
+ }
 }

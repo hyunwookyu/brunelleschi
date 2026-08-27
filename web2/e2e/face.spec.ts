@@ -49,11 +49,10 @@ function countPixels(page: Page, id: 'ink' | 'gl', x0: number, y0: number, x1: n
 
 const summary = (page: Page) => page.evaluate(() => (window as any).__b2.diag.summary())
 
-/** 지면 삼각형 — 지평선 + 깊이선 둘 + 잇는 획 */
+/** 지면 삼각형 — 깊이선 둘 + 잇는 획 (지평선은 상시 H/2=400 — web2-17: 긋지 않는다) */
 async function groundTriangle(page: Page) {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await drawLine(page, 100, 400, 1100, 400)
   await drawLine(page, 500, 560, 760, 495)
   await drawLine(page, 500, 560, 240, 495)
   await drawLine(page, 760, 495, 240, 495)
@@ -152,24 +151,24 @@ test('면 — 루프가 아닌 자리를 탭하면 알림 한 줄이 뜬다', as
 test('면 — 벽(수직면)과 바닥(수평면)이 각각 칠해진다 (픽셀)', async ({ page }) => {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await drawLine(page, 100, 330, 1100, 330)
-  await drawLine(page, 470, 560, 780, 500)
-  await drawLine(page, 470, 560, 160, 500)
-  await drawLine(page, 780, 500, 300, 470)
-  await drawLine(page, 160, 500, 640, 470)
-  await drawLine(page, 470, 560, 470, 400)
-  await drawLine(page, 470, 400, 780, 355)
-  await drawLine(page, 780, 500, 780, 355)
+  // web2-17: 지평선(330)은 상시 400으로 — 옛 장면을 +70 평행이동(1-a: 카메라·3D 불변)
+  await drawLine(page, 470, 630, 780, 570)
+  await drawLine(page, 470, 630, 160, 570)
+  await drawLine(page, 780, 570, 300, 540)
+  await drawLine(page, 160, 570, 640, 540)
+  await drawLine(page, 470, 630, 470, 470)
+  await drawLine(page, 470, 470, 780, 425)
+  await drawLine(page, 780, 570, 780, 425)
   expect(await summary(page).then(s => s.waiting)).toEqual([])
 
-  const wallWin = [600, 410, 660, 440] as const     // 벽 안, 선이 안 지나간다
-  const floorWin = [330, 495, 380, 515] as const    // 바닥 안, 벽에 안 가린다
+  const wallWin = [600, 480, 660, 510] as const     // 벽 안, 선이 안 지나간다
+  const floorWin = [330, 565, 380, 585] as const    // 바닥 안, 벽에 안 가린다
   expect(await countPixels(page, 'gl', ...wallWin)).toBe(0)
   expect(await countPixels(page, 'gl', ...floorWin)).toBe(0)
 
   await page.click('#btn-face')
-  await tap(page, 620, 425)
-  await tap(page, 350, 505)
+  await tap(page, 620, 495)
+  await tap(page, 350, 575)
   await page.mouse.move(60, 760)
   await settle(page)
 

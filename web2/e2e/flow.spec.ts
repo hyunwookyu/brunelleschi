@@ -58,8 +58,11 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
 
-  // 빈 화면 — **아무것도 안 칠해져 있다.** 격자가 기본 꺼짐이라는 것이 여기서 픽셀로 선다(3-a)
-  expect(await inkPixels(page, 0, 0, 1200, 800)).toBe(0)
+  // 빈 화면 — 격자가 기본 꺼짐이라는 것이 여기서 픽셀로 선다(3-a).
+  // web2-17: **지평선은 빈 문서에도 이미 있다**(H/2=400) — 띠 밖은 0, 띠 안은 잉크가 있다(1-e ②)
+  expect(await inkPixels(page, 0, 0, 1200, 380)).toBe(0)
+  expect(await inkPixels(page, 0, 420, 1200, 800)).toBe(0)
+  expect(await inkPixels(page, 0, 397, 1200, 404)).toBeGreaterThan(100)
   expect(await page.evaluate(() => (window as any).__b2.app.grid)).toBe(false)
   // 표시용(체크박스)과 판정용(app.grid)이 갈리지 않는가 — 기본값이 두 자리에 있다(PITFALLS #54)
   expect(await page.isChecked('#chk-grid')).toBe(false)
@@ -69,7 +72,7 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await page.click('#chk-grid')                       // 되돌린다 — 뒤 팔이 격자 픽셀에 안 걸리게
   expect(await page.evaluate(() => (window as any).__b2.app.grid)).toBe(false)
   await page.click('#pane-settings > summary')
-  expect(await inkPixels(page, 0, 0, 1200, 800)).toBe(0)
+  expect(await inkPixels(page, 0, 0, 1200, 380)).toBe(0)
 
   // 기본 도구는 연필이고, 상태 줄에는 **첫 안내 하나뿐**이다(4-b)
   expect(await page.evaluate(() => (window as any).__b2.app.tool)).toBe('pencil')
@@ -403,9 +406,10 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   s = await summary(page)
   expect(s.strokes).toBe(0)
   expect(s.lifted).toBe(0)
-  expect(s.horizonY).toBeNull()
+  expect(s.horizonY).toBe(400)   // web2-17: 지평선은 상시(H/2) — 비워도 그 자리다
   expect(s.vps).toHaveLength(0)
-  expect(await inkPixels(page, 0, 0, 1200, 800)).toBe(0)
+  expect(await inkPixels(page, 0, 0, 1200, 380)).toBe(0)   // 지평선 띠 밖 — 빈 종이
+  expect(await inkPixels(page, 0, 420, 1200, 800)).toBe(0)
   expect(await glPixels(page, 0, 0, 1200, 800)).toBe(0)
   expect(await page.textContent('#notice')).toContain('지평선')
 
@@ -416,8 +420,10 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await settle(page)
   s = await summary(page)
   expect(s.strokes).toBe(0)
-  expect(s.horizonY).toBeNull()
-  expect(await inkPixels(page, 0, 0, 1200, 800)).toBe(0)
+  expect(s.horizonY).toBe(400)   // web2-17: 상시
+  // 지평선 띠는 상시로 그려진다 — «빈 화면 0»은 지평선 띠 밖에서 잰다
+  expect(await inkPixels(page, 0, 0, 1200, 380)).toBe(0)
+  expect(await inkPixels(page, 0, 397, 1200, 404)).toBeGreaterThan(100)
   expect(await page.evaluate(() => localStorage.getItem('b2-autosave'))).toBeNull()
 
   // 빈 화면에서 다시 그리기가 처음처럼 된다
@@ -457,7 +463,7 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await page.click('#confirm-pop u[data-pick="yes"]')
   await settle(page)
   s = await summary(page)
-  expect(s.strokes).toBe(4)
+  expect(s.strokes).toBe(3)      // web2-17 2-b: v1의 지평선 획은 변환이 버린다
   expect(s.vps).toHaveLength(2)
   // **깊이선 둘 다 3D다**(지시 1) — 소실점을 만드는 선은 지면이므로 서로 안 닿아도 올라간다.
   // 그전에는 첫 깊이선만 올라가 1이었다. 수직획(#4)은 아무것에도 안 닿아 대기로 남는다.

@@ -708,7 +708,19 @@ function openViewsPop() {
   })
   document.body.append(viewsPop)
   viewsPop.style.right = `${Math.round(window.innerWidth - r.left + 10)}px`
-  viewsPop.style.top = `${Math.round(Math.min(Math.max(6, r.top - 8), window.innerHeight - viewsPop.offsetHeight - 6))}px`
+  // ⚠ top 클램프는 **이미지가 디코드될 때마다 다시** 잰다(web2-17에서 발견한 잠복 결함).
+  // 초판은 append 직후 offsetHeight 한 번으로 고정했는데, 썸네일 <img>는 data URL도
+  // 비동기 디코드라 그 순간 높이가 과소였다 — 뒤늦게 자라며 화면 밖으로 넘쳤다
+  // (20뷰에서 top 112 + 높이 792 = 904 > 800 실측). 썸네일이 커진 이 회차(상시 지평선이
+  // 실린다)가 그 경쟁을 드러냈을 뿐 결함은 종전부터 있었다.
+  const reclamp = () => {
+    if (!viewsPop) return
+    viewsPop.style.top = `${Math.round(Math.min(Math.max(6, r.top - 8), window.innerHeight - viewsPop.offsetHeight - 6))}px`
+  }
+  reclamp()
+  for (const img of viewsPop.querySelectorAll('img')) {
+    if (!(img as HTMLImageElement).complete) img.addEventListener('load', reclamp, { once: true })
+  }
   const away = (e: PointerEvent) => {
     if (viewsPop && !(e.target instanceof Node && (viewsPop.contains(e.target) || anchor.contains(e.target)))) {
       closeViewsPop()

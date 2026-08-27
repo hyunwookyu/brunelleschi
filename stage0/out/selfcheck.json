@@ -27321,7 +27321,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 388,
+      "files_scanned": 393,
       "exts_declared": [
         ".md",
         ".py",
@@ -27345,14 +27345,14 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 388,
+      "files_scanned": 393,
       "exts_declared": [
         ".md",
         ".py",
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 27,
+        ".md": 28,
         ".py": 4,
         ".html": 1,
         ".ts": 87
@@ -28287,11 +28287,13 @@
     ],
     "wait_freeze_web2.json": [
       47,
-      68
+      68,
+      70
     ],
     "wait_freeze_web2_dpr2.json": [
       47,
-      68
+      68,
+      70
     ],
     "xint_web2.json": [
       46,
