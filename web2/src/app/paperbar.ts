@@ -168,7 +168,8 @@ export function initPaperbar(app: App, host: HTMLElement, hooks: PaperbarHooks):
     const add = document.createElement('button')
     add.id = 'paper-add'
     add.className = 'ptab'
-    add.textContent = '+'
+    // Phosphor light plus (MIT · @phosphor-icons/core assets/light/plus-light.svg 그대로 — web2-19 4부)
+    add.innerHTML = '<svg viewBox="0 0 256 256" fill="currentColor" width="12" height="12" style="vertical-align:-1px"><path d="PLUSPATH"/></svg>'.replace('PLUSPATH', 'M222,128a6,6,0,0,1-6,6H134v82a6,6,0,0,1-12,0V134H40a6,6,0,0,1,0-12h82V40a6,6,0,0,1,12,0v82h82A6,6,0,0,1,222,128Z')
     add.title = '지금 보고 있는 시점을 새 종이로'
     add.addEventListener('click', () => {
       const s = addSheet(app, hooks.captureThumb())

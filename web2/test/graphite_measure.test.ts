@@ -128,6 +128,10 @@ describe('web2-19 1-c — 손 처짐 분포 (측정만 — 임계 불변)', () =
         ratio_gate_px_per_L: Object.fromEntries(LENGTHS.map(L => [`L${L}`, +(C.SCREEN_PARALLEL_RATIO * L).toFixed(2)])) },
       path_check: pathCheck,
       flags_explained: {
+        'byErr의 낮은 오차 행이 단일 범주(H 36 / V 36)':
+          '그것이 경계의 구조다 — 처짐 ≤ PARALLEL_PX(1.5)는 전부 화면 평행으로 읽히는 것이 '
+          + '규칙이고(camera.ts 154행), 변별력은 그 위 행(2~8px — H·vp·short-vp로 갈린다)이 '
+          + '진다. 전 행이 갈리면 오히려 임계가 안 걸리는 것이다',
         'constants/metric_defs 스냅샷 없음':
           'web2 라인의 원장은 상수 스냅샷 등록부 밖이다(공통 형태 — xint_web2와 같다). '
           + '대신 constants 블록에 이 측정이 의존하는 값을 그대로 싣는다',

@@ -4,11 +4,11 @@
  "baseline_622e9ac_thumb_bytes_median": 1499,
  "brnl_bytes_5": 10558,
  "capture_ms_median": 0.8,
- "regen_view_ms_median": 40.2,
- "regen_view_ms_max": 47.3,
+ "regen_view_ms_median": 38.5,
+ "regen_view_ms_max": 62.6,
  "thumb_bytes_median": 1707,
- "add_ms_median": 75,
- "add_ms_max": 120,
+ "add_ms_median": 87,
+ "add_ms_max": 175,
  "brnl_bytes_1": 3200,
  "brnl_bytes_20": 38170
 }

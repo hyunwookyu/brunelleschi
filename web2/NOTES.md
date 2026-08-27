@@ -8193,3 +8193,45 @@ tray 클릭 경로 6파일(연필을 눌러 열고 고른다) · pane-settings �
 「**226 passed (7.6m)**」 — passed 226 / failed 0 / total 226(`--list` 「Total: 226 tests in
 29 files」 — zones.spec 5팔×2 추가: 216+10) · 타입 0오류. 중간에 잡은 셋(#tray CSS 순서 ·
 syncGrade 누락 · 종이 띠가 눈 띠를 덮음)은 위 절 참조 — 전부 팔이 잡았고 수리 후 재실행.
+
+### 4부 — 아이콘 · 이름 넷
+
+**이름(4-a — 대응표 §3의 넷만, 더 안 찾았다)**:
+- 「획이 위치를 소유한다 (개정 3)」 — 설정에서 빠져 **진단 곁**(#diagctl)으로(3부에서
+  이사 완료 — 문구는 진단 채널이라 그대로. 없애지 않았다 A-4).
+- 「대기 획은 그린 시점에서만」 → **「다른 각도에서는 숨긴다」**(chk-waitfade — id·배선 불변).
+- 「무한소수 표기」 → **「소수점 그대로」**(chk-exact — id·배선 불변).
+- classic/brush — 화면 언어에서 0(btn-brush title 「종이 질감을 켜고 끈다」).
+  진단 패널의 렌더러 줄은 그대로(대응표: 진단은 그대로).
+- **그대로 둔 말**: 오스냅·축 스냅·끝점·중점·… — 훑기 팔이 「오스냅」·「축 스냅」의
+  **존재**를 단언한다(순화 금지의 상주 팔).
+
+**아이콘(4-b)**:
+- ㉠ 직접 그리는 도구 — **연필만** 바뀌었다(3-b′): 접힌 연필(뾰족)·연필통 원뿔 줄.
+  펜·지우개 둘·면 SVG는 diff 없음(git diff web2-18 대조 — 접힌 펜은 #btn-pen-old의
+  그림 그대로 옮겨 왔다. icons.test 스냅샷이 앞으로의 드리프트를 지킨다).
+- ㉡ Phosphor light(MIT · `npm i -D @phosphor-icons/core` → path만 이식·출처 주석):
+  치수 = ruler · 전체 화면 = arrows-out · 표시 = eye · 「다른 각도에서는 숨긴다」 라벨 =
+  eye-slash · 오스냅 머리 = compass-tool · 지면 격자 라벨 = grid-four · 종이 「+」 = plus.
+  lock-simple은 이식만 안 했다(지금 자리 없음 — 소스 목록에 있고 필요 시 그때).
+  mdi set-square 안 씀(폐기 — npm은 Phosphor 하나). 자작(삼각자)은 3부에서 정본 그대로.
+  LICENSE에 Phosphor 줄(받은 패키지의 LICENSE 파일을 읽고 적었다 — MIT).
+- **굵기(④)**: 첫 판(32px·문턱 계수)은 thin/light/regular가 전부 188로 같아 **아무것도
+  안 쟀다**(#71 ㉢ — 분해능 아래. «thin이 가깝다»는 첫 결론은 잡음이었다). 알파 합·64px로
+  바꾸니 갈린다: **잉크량 최근접 = light**(원장 `icon_weight_web2.json` — ink ref 568 ·
+  thin 357 · light 524 · regular 710). 선 굵기 환산으로는 regular가 근소하게 가깝지만
+  잉크량에서 ref보다 25% 무겁다(사람의 예상 「regular는 새 것만 굵어 보인다」와 같은 방향).
+  **light 확정** — 판정선: 잉크량 최근접 = light(뒤집히면 팔이 빨개진다) + 분해능 단언
+  (thin < light < regular).
+
+**회귀 팔(4-c)**: e2e `icons.spec.ts` 4팔×2dpr — ① 화면 언어 훑기(넷 0 · 새 이름 존재 ·
+오스냅/축 스냅 **존재** · **반증**: 금지어를 실제로 심어 걸리는 것 확인 #69 ㉣) ·
+② 무채색(직접 도구 밖 svg의 fill/stroke ∈ {none, currentColor, 회색조} — 구성적 판정) ·
+④ 굵기 원장+판정선 · ⑥ 동작 불변(dimExact 왕복·라벨·title). 단위 `icons.test.ts` 7팔 —
+③ path 문자열 대조(자작·연필·펜 = 정본 md · Phosphor = 받은 패키지 · 지우개/면 스냅샷) ·
+⑤ LICENSE 줄.
+
+**4부 마감 검증(#69 ㉤)**: 단위 **511 passed / 0 failed / 511**(56파일 — icons.test 7 추가) ·
+전량 e2e 「**234 passed (7.8m)**」 — passed 234 / failed 0 / total 234(`--list` 「Total: 234
+tests in 30 files」 — icons.spec 4팔×2 추가: 226+8) · 타입 0오류 · 빌드 통과 · selfcheck
+새 플래그는 원장 안 해명(graphite byErr 저오차 행 단일 범주 = 경계의 구조 — flags_explained).
