@@ -15,6 +15,9 @@ const vis = (s: ReturnType<typeof session>) => horizonVisible(s.app, W, H)
 
 const ledger: Record<string, unknown> = {
   what: 'web2-17 5부(지평선 자동 숨김)의 측정 — 표시 규칙 온·오프와 제스처 동결. horizonhide.test.ts가 매 실행 다시 쓴다.',
+  flags_explained: {
+    'gesture_cycle.changes=0': '동결 구간 안의 0은 설계 보장(동결의 정의)이다 — 측정 몫은 ① 마지막 표본이 endNavHold **뒤**의 재판정이라 «뗄 때 몇 번 바뀌나»(0~1)를 실제로 재고 ② 대조군(동결 없음)이 같은 궤적에서 >1을 내 판정이 살아 있음을 보인다',
+  },
 }
 afterAll(() => {
   const out = resolve(__dirname, '../../stage0/out/horizon_hide_web2.json')
@@ -82,7 +85,7 @@ describe('5-c — 자동 숨김 규칙', () => {
       seen.push(vis(s))
     }
     endNavHold(s.app)
-    seen.push(vis(s))
+    seen.push(vis(s))                           // 뗌 재판정 표본 — 이 값이 측정의 몫이다
     let changes = 0
     for (let i = 1; i < seen.length; i++) if (seen[i] !== seen[i - 1]) changes++
     ledger['gesture_cycle'] = { samples: seen.length, changes }
@@ -95,10 +98,22 @@ describe('5-c — 자동 숨김 규칙', () => {
       panBy(s2.app, dx, 0)
       seen2.push(vis(s2))
     }
+    seen2.push(vis(s2))                         // 종점 재표본 — 동결 팔과 표본 수를 맞춘다(#11)
     let changes2 = 0
     for (let i = 1; i < seen2.length; i++) if (seen2[i] !== seen2[i - 1]) changes2++
     ledger['gesture_cycle_control'] = { samples: seen2.length, changes: changes2 }
     expect(changes2).toBeGreaterThan(1)
+  })
+
+  it('숨은 상태에서 지평선 탭으로 둘째 소실점이 선다 — 진입로가 산다(2차 [12])', () => {
+    // 사람 문면: 「숨겨져 있더라도 대각선 그려서 교점으로 찾아내면 되니까」 — 탭도 같다:
+    // 지평선은 안 보여도 그 자리(H/2)는 상수라 근처 탭이 종전대로 소실점이 된다.
+    const s = withVp()
+    expect(vis(s)).toBe(false)                        // 숨은 상태
+    s.draw(300, 403, 300, 403)                        // 지평선 근처 탭(손 오차 3px)
+    expect(s.app.lift.an.vps).toHaveLength(2)         // 둘째 소실점 — f²>0(반대쪽)
+    expect(s.app.lift.an.fSource).toBe('two-vp')
+    ledger['tap_second_vp_while_hidden'] = { vps: 2, fSource: 'two-vp' }
   })
 
   it('궤도 포즈에서 소실점이 그 포즈 화면 안이면 숨는다 — 판정 포즈가 fadeRef다', () => {

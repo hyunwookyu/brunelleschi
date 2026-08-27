@@ -1,6 +1,6 @@
 {
  "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
- "measured_at": "web2-16 3부(2026-08-27 — 대기선 흑연 파선·즉시 끊기 마감 전량 측정)",
+ "measured_at": "web2-17 4·5부 (2026-08-27)",
  "unit": {
   "command": "npm test (vitest)",
   "files": 51,
@@ -20,8 +20,8 @@
  },
  "typecheck_build": {
   "command": "tsc --noEmit · vite build",
-  "build_s": 6.32,
-  "note": "web2-16 3부 실측(「✓ built in 6.32s」 — 1.94~6.32 대역은 연속 실행 캐시·부하 몫으로 보임·원인 미확정)"
+  "build_s": 1.97,
+  "note": "web2-17 4·5부 실측(「✓ built in 1.97s」). 옛 값 6.32는 web2-16 3부 — history 참조."
  },
  "history": [
   {
@@ -144,6 +144,20 @@
     "passed": 180,
     "failed": 0,
     "note": "web2-16 3부 +1팔(waitfade.spec 3-b 즉시 끊김·복귀). ⚠ 이 회차에 «tail이 4 failed를 잘라 176을 전량으로 읽을 뻔»한 사건이 있었다 — --list 총수 대조가 잡았다(NOTES 3부 절)"
+   }
+  },
+  {
+   "at": "web2-17 1~3부(배포 ① efe6202)",
+   "unit": {
+    "files": 49,
+    "tests": 467,
+    "wall_s": 4.5
+   },
+   "e2e": {
+    "cases": 188,
+    "arms": 94,
+    "passed": 188,
+    "failed": 0
    }
   }
  ],

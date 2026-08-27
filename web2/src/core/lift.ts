@@ -32,8 +32,10 @@ export interface LiftResult {
    *  (지평선 따라긋기 획 — 퇴화. 카메라에도 지면에도 아무 일이 없다).
    *  'hasHeight' = 소실점 축인데 **모델에 이미 높이가 있어** 지면 규칙이 안 걸렸다
    *  (4부 — 위치 미정: 교점(xint)·연결이 정의한다. 죽음이 아니라 국면의 사실이다).
-   *  진단 패널이 세 수를 가른다. */
-  waitWhy: Map<number, 'aboveHorizon' | 'onHorizon' | 'hasHeight'>
+   *  'mixedWait' = 소실점 축이고 높이도 없는데 **대기에 비축 획이 섞여 있어** 지면 규칙이
+   *  안 걸렸다(4부 판별자 ② — 2차 리뷰어 [5]: 이 차단도 사유가 있어야 한다).
+   *  진단 패널이 네 수를 가른다. */
+  waitWhy: Map<number, 'aboveHorizon' | 'onHorizon' | 'hasHeight' | 'mixedWait'>
   /** 게이지 앵커가 된 획 (전역 스케일의 게이지 — 유일한 자유 선택) */
   anchorId: number | null
   /** id → 획 (문서에서 그대로 — 조회 편의) */
@@ -119,7 +121,7 @@ function scaleOf(doc: Doc): number | null {
 function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResult {
   const an = analyze(doc)
   const lifted = new Map<number, LiftedSeg>()
-  const waitWhy = new Map<number, 'aboveHorizon' | 'onHorizon' | 'hasHeight'>()
+  const waitWhy = new Map<number, 'aboveHorizon' | 'onHorizon' | 'hasHeight' | 'mixedWait'>()
   let anchorId: number | null = null
 
   const strokes = new Map(doc.strokes.map(s => [s.id, s]))
@@ -414,13 +416,15 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
       }
     }
   }
-  // 남은 대기 중 소실점 축 획의 사유 — 높이가 있어 규칙이 안 걸렸다(4부 ⚠ 무산 계수)
-  if (!heightless()) {
+  // 남은 대기 중 소실점 축 획의 사유 — 어느 문이 막았는지 가른다(4부 ⚠ 무산 계수 ·
+  // 2차 [5]: 판별자 ②의 차단도 사유가 있어야 한다. #43 — 한 이름에 두 원인을 안 합친다)
+  {
+    const hh = !heightless()
     for (const s of content) {
       if (!pending.has(s.id) || waitWhy.has(s.id)) continue
       const pose = s.view ?? DRAW_POSE
       const axis = axisOfStroke(an, pose, s.a, s.b)
-      if (axis === 'vp0' || axis === 'vp1') waitWhy.set(s.id, 'hasHeight')
+      if (axis === 'vp0' || axis === 'vp1') waitWhy.set(s.id, hh ? 'hasHeight' : 'mixedWait')
     }
   }
 

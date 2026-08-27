@@ -1,16 +1,39 @@
 {
  "what": "web2-17 4부(지면 규칙 확대)의 측정 — 지면 국면 Y 잔차 대 실제 높이, 규칙 온·오프. lift4.test.ts가 매 실행 다시 쓴다.",
+ "constants": {
+  "HEIGHTLESS_Y": 0.000001,
+  "TAP_MAX_PX": 2,
+  "STRAY_MIN_PX": 6
+ },
  "flags_explained": {
-  "ground_residual_max_y": "지면 규칙이 놓은 Y의 fp 잔차 — 0이 아니어야 임계(1e-6)가 실제로 무언가를 가른다(#35). 정확히 0이면 그 사실을 note로 남긴다"
+  "ground_residual_max_y": "지면 규칙이 놓은 Y의 fp 잔차 — 임계와의 간격이 판정이다(#35). 값의 성격은 residual_sweep가 든다"
  },
  "ground_residual_max_y": 0,
- "ground_residual_note": "정확히 0 — pointOnGround의 −p.y/d.y·d.y 왕복이 이 격자에서 무손실(구성). 판별은 ②의 실제 높이(임계 10⁵배)가 진다",
  "ground_scene": {
   "lifted": 3,
-  "waiting": 0
+  "waiting": 0,
+  "waitWhy": []
+ },
+ "residual_sweep": {
+  "n": 40,
+  "non_zero": 9,
+  "max_abs_y": 2.220446049250313e-16,
+  "threshold": 0.000001,
+  "margin_orders": 9.653559774527022,
+  "note": "잔차가 0이 아닌 격자(㉣) — 임계 1e-6은 이 대역과 실제 높이(0.8대) 사이에 선다"
  },
  "height_scene": {
-  "column_top_y": 0.8319999999999999,
-  "waiting_reason": "hasHeight"
+  "column_top_y": 0.8305003971405875,
+  "over_threshold_ratio": 830500.3971405876,
+  "waiting": 1,
+  "waitWhy": [
+   "hasHeight"
+  ]
+ },
+ "mixed_scene": {
+  "waiting": 2,
+  "reasons": [
+   "mixedWait"
+  ]
  }
 }

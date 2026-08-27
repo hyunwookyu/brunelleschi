@@ -1,5 +1,8 @@
 {
  "what": "web2-17 5부(지평선 자동 숨김)의 측정 — 표시 규칙 온·오프와 제스처 동결. horizonhide.test.ts가 매 실행 다시 쓴다.",
+ "flags_explained": {
+  "gesture_cycle.changes=0": "동결 구간 안의 0은 설계 보장(동결의 정의)이다 — 측정 몫은 ① 마지막 표본이 endNavHold **뒤**의 재판정이라 «뗄 때 몇 번 바뀌나»(0~1)를 실제로 재고 ② 대조군(동결 없음)이 같은 궤적에서 >1을 내 판정이 살아 있음을 보인다"
+ },
  "pan_cycle": {
   "in_view_hidden": true,
   "out_of_view_shown": true
@@ -9,7 +12,11 @@
   "changes": 0
  },
  "gesture_cycle_control": {
-  "samples": 7,
+  "samples": 8,
   "changes": 2
+ },
+ "tap_second_vp_while_hidden": {
+  "vps": 2,
+  "fSource": "two-vp"
  }
 }

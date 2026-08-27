@@ -14,8 +14,11 @@ import { C } from '../src/core/constants'
 
 const ledger: Record<string, unknown> = {
   what: 'web2-17 4부(지면 규칙 확대)의 측정 — 지면 국면 Y 잔차 대 실제 높이, 규칙 온·오프. lift4.test.ts가 매 실행 다시 쓴다.',
+  // web2 원장 규약(xint의 선례): 이 측정이 의존하는 상수를 그대로 싣는다 — 값이 바뀌면
+  // 이 원장의 수치가 낡은 것이다(등록부 밖 STALE의 대체 — 2차 [4]).
+  constants: { HEIGHTLESS_Y: C.HEIGHTLESS_Y, TAP_MAX_PX: C.TAP_MAX_PX, STRAY_MIN_PX: C.STRAY_MIN_PX },
   flags_explained: {
-    'ground_residual_max_y': '지면 규칙이 놓은 Y의 fp 잔차 — 0이 아니어야 임계(1e-6)가 실제로 무언가를 가른다(#35). 정확히 0이면 그 사실을 note로 남긴다',
+    'ground_residual_max_y': '지면 규칙이 놓은 Y의 fp 잔차 — 임계와의 간격이 판정이다(#35). 값의 성격은 residual_sweep가 든다',
   },
 }
 afterAll(() => {
@@ -24,19 +27,22 @@ afterAll(() => {
   writeFileSync(out, JSON.stringify(ledger, null, 1))
 })
 
-/** 소실점을 찍고 시작하는 장면 — vp(900,400) 탭 + 그 축의 지면선 하나 */
+/** 소실점을 찍고 시작하는 장면 — vp 탭 + 그 축의 지면선 하나.
+ *  ⚠ 좌표에 손 오차를 심었다(#68 · 2차 [6]) — 탭은 3px 어긋나고(지평선 스냅이 y만
+ *  잡는다) 획의 시작점·겨냥은 비정수·수 px 오차다(축 스냅이 방향을 바로잡는 것까지가
+ *  실사용 경로다). 이상적 좌표로만 돌면 «도달 불가»가 통과로 남는다. */
 function tapped(): Session {
   const s = session(1200, 800)
-  s.draw(900, 400, 900, 400)                    // 탭 = 소실점
-  s.draw(500, 650, 660, 550)                    // vp0 축 지면선(첫 선 — 종전 규칙으로도 지면)
+  s.draw(899.4, 402.6, 899.4, 402.6)            // 탭 = 소실점(손 오차 — y는 지평선으로 스냅)
+  s.draw(501.3, 651.8, 662.7, 548.2)            // vp0 축 지면선(겨냥 오차 — 축 스냅이 눕힌다)
   return s
 }
 
 describe('4-b ① — 소실점을 찍고, 거기서 뻗은(안 닿는) 선이 지면선으로 3D가 된다', () => {
   it('둘째·셋째 소실점 축 선이 연결 없이 올라간다 — 전부 Y=0', () => {
     const s = tapped()
-    const d2 = s.draw(200, 700, 340, 640)!      // vp0 축 — 첫 선과 안 닿는다
-    const d3 = s.draw(760, 620, 820, 577)!      // vp0 축 — 역시 안 닿는다
+    const d2 = s.draw(201.6, 702.3, 341.9, 638.4)!  // vp0 축 — 첫 선과 안 닿는다(손 오차)
+    const d3 = s.draw(759.2, 621.7, 821.4, 576.3)!  // vp0 축 — 역시 안 닿는다
     expect(s.app.lift.an.vps).toHaveLength(1)
     expect(s.app.lift.lifted.has(d2.id)).toBe(true)
     expect(s.app.lift.lifted.has(d3.id)).toBe(true)
@@ -44,22 +50,45 @@ describe('4-b ① — 소실점을 찍고, 거기서 뻗은(안 닿는) 선이 �
     let maxY = 0
     for (const [, g] of s.app.lift.lifted) maxY = Math.max(maxY, Math.abs(g.a3.y), Math.abs(g.b3.y))
     ledger['ground_residual_max_y'] = maxY
-    if (maxY === 0) {
-      // 구성적 0의 해명(#35·§5.1): pointOnGround의 u = −p.y/d.y 곱셈이 이 격자에서
-      // 정확히 상쇄된다(1.6 + d.y·(−1.6/d.y) — fp 왕복이 우연히 무손실). 임계(1e-6)가
-      // 실제로 가르는 것은 «실제 높이»(② — 임계의 10⁵배)이고, 0 자체에 임계를 안 건다.
-      ledger['ground_residual_note'] = '정확히 0 — pointOnGround의 −p.y/d.y·d.y 왕복이 이 격자에서 무손실(구성). 판별은 ②의 실제 높이(임계 10⁵배)가 진다'
-    }
-    ledger['ground_scene'] = { lifted: s.app.lift.lifted.size, waiting: 0 }
+    ledger['ground_scene'] = { lifted: s.app.lift.lifted.size, waiting: s.app.lift.waiting.length, waitWhy: [...s.app.lift.waitWhy.values()] }
     console.log(`[측정] 4부 ① — 지면 국면 3획 전부 3D · Y 잔차 최대 ${maxY.toExponential(3)} (임계 ${C.HEIGHTLESS_Y})`)
     expect(maxY).toBeLessThan(C.HEIGHTLESS_Y)   // 잔차 대역 — 임계 아래
+  })
+
+  it('잔차 스윕(2차 [2] — ㉣): 비정수·손 오차 격자 40에서 잔차가 0이 아니고, 임계 아래다', () => {
+    // 정수 한 점의 «정확히 0»은 임계 1e-6의 자리를 못 잰다 — 시작 y·겨냥을 흔들어
+    // pointOnGround의 fp 왕복이 실제로 잔차를 내는 격자를 만든다(1차 [7]의 처방을
+    // 이 측정에도 적용). 잔차의 실측 대역과 임계 사이의 자릿수가 판정이다.
+    let maxY = 0, nonZero = 0, n = 0
+    for (let i = 0; i < 40; i++) {
+      const s = session(1200, 800)
+      const y0 = 520.37 + i * 6.913                 // 비정수 시작 높이(지평선 아래)
+      const x0 = 180.21 + i * 17.77
+      s.draw(x0, y0, x0 + 173.3, y0 - 61.7)         // 대각선 → 소실점(그어서) — 지면(makesVp)
+      const g = [...s.app.lift.lifted.values()][0]
+      if (!g) continue
+      n++
+      const r = Math.max(Math.abs(g.a3.y), Math.abs(g.b3.y))
+      maxY = Math.max(maxY, r)
+      if (r > 0) nonZero++
+    }
+    ledger['residual_sweep'] = {
+      n, non_zero: nonZero, max_abs_y: maxY,
+      threshold: C.HEIGHTLESS_Y,
+      margin_orders: maxY > 0 ? Math.log10(C.HEIGHTLESS_Y / maxY) : null,
+      note: '잔차가 0이 아닌 격자(㉣) — 임계 1e-6은 이 대역과 실제 높이(0.8대) 사이에 선다',
+    }
+    console.log(`[측정] 4부 잔차 스윕 — n ${n} · 0 아님 ${nonZero} · 최대 ${maxY.toExponential(3)} · 임계와 ${maxY > 0 ? Math.log10(C.HEIGHTLESS_Y / maxY).toFixed(1) : '∞'}자릿수`)
+    expect(n).toBeGreaterThan(30)
+    expect(nonZero).toBeGreaterThan(0)              // 격자가 0이 아닌 값을 낼 수 있다(㉣)
+    expect(maxY).toBeLessThan(C.HEIGHTLESS_Y)       // 그리고 전부 임계 아래 — 자리가 실측됐다
   })
 })
 
 describe('4-b ② — 수직선이 서면 규칙이 꺼진다', () => {
   it('높이가 생긴 뒤의 소실점 축 선은 대기 — 사유 hasHeight', () => {
     const s = tapped()
-    const col = s.draw(500, 650, 500, 520)!     // 첫 선 모서리에서 기둥 — 높이가 선다
+    const col = s.draw(501.3, 651.8, 502.4, 521.1)!  // 첫 선 모서리에서 기둥(손 오차 — 시작 오스냅·V 스냅)
     const top = s.app.lift.lifted.get(col.id)!
     const h = Math.max(Math.abs(top.a3.y), Math.abs(top.b3.y))
     expect(h).toBeGreaterThan(C.HEIGHTLESS_Y)   // #35 — 임계 위의 실제 높이(0이 아닌 격자)
@@ -67,13 +96,30 @@ describe('4-b ② — 수직선이 서면 규칙이 꺼진다', () => {
     expect(s.app.lift.lifted.has(d.id)).toBe(false)
     expect(s.app.lift.waiting).toContain(d.id)
     expect(s.app.lift.waitWhy.get(d.id)).toBe('hasHeight')
-    ledger['height_scene'] = { column_top_y: h, waiting_reason: 'hasHeight' }
+    ledger['height_scene'] = {
+      column_top_y: h, over_threshold_ratio: h / C.HEIGHTLESS_Y,
+      waiting: s.app.lift.waiting.length, waitWhy: [...s.app.lift.waitWhy.values()],
+    }
     console.log(`[측정] 4부 ② — 기둥 높이 ${h.toFixed(6)}(임계의 ${(h / C.HEIGHTLESS_Y).toExponential(2)}배) · 규칙 꺼짐 · 사유 hasHeight`)
+  })
+
+  it('판별자 ②(2차 [5]) — 비축 대기 획이 섞이면 규칙이 안 돌고, 사유 mixedWait가 남는다', () => {
+    const s = tapped()
+    const free = s.draw(900.2, 401.1, 700.4, 631.7)!  // 소실점 살 — 축 미정 대기
+    const d = s.draw(250, 720, 420, 637)!             // vp0 축 — 높이는 없지만 대기가 섞였다
+    expect(s.app.lift.lifted.has(d.id)).toBe(false)
+    expect(s.app.lift.waitWhy.get(d.id)).toBe('mixedWait')
+    expect(s.app.lift.waiting).toContain(free.id)
+    // 합 = 전체 검산(#43·2차 [5]) — 대기 전부에 사유가 있거나 축 미정(살)이다
+    ledger['mixed_scene'] = {
+      waiting: s.app.lift.waiting.length,
+      reasons: [...s.app.lift.waitWhy.values()],
+    }
   })
 
   it('③ ②의 대기선이 교점(xint)으로 정의되면 승격한다 — web2-15 경로 회귀', () => {
     const s = tapped()
-    s.draw(500, 650, 500, 520)                  // 기둥 — 규칙 꺼짐
+    s.draw(501.3, 651.8, 502.4, 521.1)          // 기둥 — 규칙 꺼짐
     const d = s.draw(250, 720, 420, 637)!       // 대기선(vp0 축 · 위치 미정)
     expect(s.app.lift.waiting).toContain(d.id)
     // 확정 기하(첫 선 모서리)에서 H 축으로 그어 **뗀 끝이 대기선 위** — 교점 정의(4-g)

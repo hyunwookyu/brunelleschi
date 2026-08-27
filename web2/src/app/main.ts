@@ -69,7 +69,7 @@ const diagPanel = initDiagPanel(
       // 대기의 사유(web2-17 1-c·4부) — 「아무 일도 안 일어난다」가 사유 없이 남지 않는다.
       // 원인 셋을 가른다(#43): 위쪽(올려다보기 — 팬이 답) · 그 자리(따라긋기 — 퇴화) ·
       // 높이 있음(4부 — 위치 미정: 교점·연결이 정의한다).
-      ['대기 획', `${app.lift.waiting.length} (지평선 위쪽 ${[...app.lift.waitWhy.values()].filter(v => v === 'aboveHorizon').length} · 지평선 자리 ${[...app.lift.waitWhy.values()].filter(v => v === 'onHorizon').length} · 높이 있음 ${[...app.lift.waitWhy.values()].filter(v => v === 'hasHeight').length})`],
+      ['대기 획', `${app.lift.waiting.length} (지평선 위쪽 ${[...app.lift.waitWhy.values()].filter(v => v === 'aboveHorizon').length} · 지평선 자리 ${[...app.lift.waitWhy.values()].filter(v => v === 'onHorizon').length} · 높이 있음 ${[...app.lift.waitWhy.values()].filter(v => v === 'hasHeight').length} · 비축 섞임 ${[...app.lift.waitWhy.values()].filter(v => v === 'mixedWait').length})`],
       // 「잘못 찍힌 점」 문이 버린 수(web2-13 3-b) — 조용히 버리지 않는다: 수가 말한다.
       // 크면 C.STRAY_MIN_PX가 틀린 것이다(원장 stray_gate_web2.json이 근거 대역).
       ['버린 짧은 획', `${app.strayCount} (문 ${C.STRAY_MIN_PX}px)`],
