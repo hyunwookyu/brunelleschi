@@ -97,6 +97,13 @@ async function releaseDiff(page: Page, x: number) {
 
 const GRADES = ['2H', 'H', 'F', 'HB', 'B', '2B', 'INK'] as const
 
+/** 연필통이 접혀 있다(web2-19 3-b') — 경도 행은 연필을 눌러 열고 고른다(고르면 접힌다) */
+async function pickGrade(page: Page, g: string) {
+  if (await page.locator('#tray.open').count() === 0) await page.click('#btn-pencil')
+  await page.click(`#tray-${g}`)
+}
+
+
 test('게이트 ① ② — 뗌 직전/직후(재료 전수) · 잠정 id 연속 · 옛 경로(classic)는 크게 변한다', async ({ page }) => {
   test.setTimeout(90_000)
   await boot(page)
@@ -107,8 +114,9 @@ test('게이트 ① ② — 뗌 직전/직후(재료 전수) · 잠정 id 연속
   const diffs: Record<string, { diff: number; strokePx: number }> = {}
   for (let i = 0; i < GRADES.length; i++) {
     const g = GRADES[i]!
-    // 연필통(web2-12 6번) — 행이 도구이자 경도다: 그 행을 누르는 것이 사람의 경로다
-    await page.click(g === 'INK' ? '#btn-pen' : `#tray-${g}`)
+    // 연필통(web2-12 6번 → 3-b' 접힘) — 행이 도구이자 경도다: 여는 것까지가 사람의 경로다
+    if (g === 'INK') await page.click('#btn-pen')
+    else await pickGrade(page, g)
     await settle(page)
     const r = await releaseDiff(page, 330 + i * 50)
     expect(r.lifted, `${g} 승격 — 픽스처 판별력`).toBe(true)
@@ -117,7 +125,7 @@ test('게이트 ① ② — 뗌 직전/직후(재료 전수) · 잠정 id 연속
     diffs[g] = { diff: r.diff, strokePx: r.strokePx }
     out.push(`${g} ${r.diff}/${r.strokePx}`)
   }
-  await page.click('#tray-HB'); await settle(page)
+  await pickGrade(page, 'HB'); await settle(page)
 
   // classic(옛 경로 — 비교 기준): 벡터 미리보기 → 뗌에 질감(grain)·Line2가 나타난다
   await page.evaluate(() => (document.getElementById('btn-brush') as HTMLButtonElement).click()); await settle(page) // 3-c: 설정 안 — DOM click(배선 동일)

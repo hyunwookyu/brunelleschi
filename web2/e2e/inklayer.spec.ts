@@ -106,6 +106,8 @@ async function drawDown(page: Page, x: number, y0: number, y1: number, jitter = 
 
 /** 연필통에서 경도를 고른다(재료의 출처는 UI 하나 — 측정용 우회로를 안 만든다) */
 async function pickPencil(page: Page, g: string) {
+  // 연필통은 접혀 있다(web2-19 3-b') — 연필을 눌러 열고 고른다(고르면 접힌다)
+  if (await page.locator('#tray.open').count() === 0) await page.click('#btn-pencil')
   await page.click(`#tray-${g}`)
 }
 async function pickPen(page: Page) {

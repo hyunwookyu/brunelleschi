@@ -68,9 +68,9 @@ test('핀치·이중 탭이 화면 전 지점에서 막혀 있다 — 유효 tou
     getComputedStyle(document.documentElement).touchAction)).toBe('none')
   // 설정 패널을 열어도 안 샌다 — 패널은 pan-y 없이 사슬의 none 그대로다(AS-C26:
   // 「스크롤 못 한다」는 관측이 없어 안 열었다. 터치 스크롤이 막힌 것이 그 대가다)
-  await page.click('#pane-settings summary')
+  await page.click('#pane-file summary')   // 설정 자루는 해체됐다(web2-19 3-a) — 서랍으로
   expect(await page.evaluate(() =>
-    (document.querySelector('#pane-settings') as HTMLDetailsElement).open)).toBe(true)
+    (document.querySelector('#pane-file') as HTMLDetailsElement).open)).toBe(true)
   expect(await zoomLeaks(page)).toEqual([])
 })
 

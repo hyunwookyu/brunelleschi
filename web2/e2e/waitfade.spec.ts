@@ -246,9 +246,9 @@ test('3-c — 종이 질감 버튼이 세로바에 없고 설정 안에 있다 �
   await page.waitForFunction(() => (window as any).__b2)
   // 설정이 닫혀 있으면 안 보인다 — 도구 사이에 서 있지 않다(실수로 못 누른다)
   await expect(page.locator('#btn-brush')).toBeHidden()
-  expect(await page.locator('#pane-settings #btn-brush').count()).toBe(1)
-  // 설정을 열고 누르면 종전 배선 그대로 renderer가 바뀐다(A-4 — 경로 생존)
-  await page.click('#pane-settings summary')
+  expect(await page.locator('#pane-file #btn-brush').count()).toBe(1)   // web2-19 3-a: 서랍
+  // 서랍을 열고 누르면 종전 배선 그대로 renderer가 바뀐다(A-4 — 경로 생존)
+  await page.click('#pane-file summary')
   await expect(page.locator('#btn-brush')).toBeVisible()
   const r0 = await page.evaluate(() => (window as any).__b2.app.renderer)
   await page.click('#btn-brush')

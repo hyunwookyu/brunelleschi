@@ -134,7 +134,7 @@ test('5부 — 지평선 자동 숨김: 소실점이 화면 안이면 숨고, �
   expect(await band()).toBeGreaterThan(50)
   expect(await page.isChecked('#chk-horizon')).toBe(true)
   // 사람이 체크박스를 만지면 굳는다 — 팬을 되돌려도(소실점이 화면 안) 계속 보인다
-  await page.click('#pane-settings > summary')
+  await page.click('#btn-display')                           // 표시는 눈 팝업(web2-19 3-a)
   await page.click('#chk-horizon')                           // 사람이 끔 → pref=false
   await settle(page)
   expect(await band()).toBe(0)

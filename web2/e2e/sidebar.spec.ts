@@ -16,10 +16,10 @@ const box = async (page: Page, sel: string) => {
 // 겹침 실측 — 첫 팔이 재고 자리 실측 팔이 원장에 싣는다(한 파일은 한 워커에서 차례로 돈다)
 let ovPencil = { overlaps: -1, n: 0 }
 let ovPen = { overlaps: -1, n: 0 }
-const ALL = ['sidebar-toggle', 'btn-draw-view', 'dim-toggle',   // btn-save-view: web2-19 2부 — 종이 탭 「+」가 대신한다
-  'btn-undo', 'btn-redo',
+const ALL = ['sidebar-toggle', 'dim-toggle',   // btn-save-view: 종이 탭 「+」가, btn-draw-view: 눈(#eyebar)이 대신한다(web2-19)
+  'btn-undo', 'btn-redo', 'btn-snap', 'btn-pencil',
   'tray-2H', 'tray-H', 'tray-F', 'tray-HB', 'tray-B', 'tray-2B', 'btn-pen',
-  'btn-eraser-pencil', 'btn-eraser-ink', 'btn-face'] // btn-brush는 web2-13 3-c로 설정 안 — 세로바 목록에서 뺀다
+  'btn-eraser-pencil', 'btn-eraser-ink', 'btn-face'] // btn-brush는 서랍 안(web2-19 3-a) — 세로바 목록에서 뺀다
 
 test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형·쌍별 겹침 0 (web2-12 3번)', async ({ page }) => {
   await page.goto('/')
@@ -30,24 +30,32 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
   for (const id of ['btn-undo', 'btn-redo', 'btn-draw-view', 'dim-toggle']) { // btn-brush: 3-c로 설정 안(svg 아이콘도 아님)
     expect((await box(page, `#${id} svg`)).height, `#${id} 크기 대역`).toBeGreaterThanOrEqual(27) // (20→30)
   }
-  // 연필통(web2-12 6번) — 가로 행 일곱(연필 여섯 + 펜). 높이 같은 대역(16→24).
-  for (const id of ['tray-2H', 'tray-HB', 'tray-2B', 'btn-pen']) {
+  // 연필통(web2-12 6번 → 3-b' 접힘) — 여섯 줄은 **연필을 눌러 연 동안만** 넓다.
+  // 평소 손 띠는 39px 정사각 대역만 남는다(①' — 폭 불일치가 접힘으로 풀렸다).
+  await page.click('#btn-pencil'); await page.waitForTimeout(120)   // 연다
+  for (const id of ['tray-2H', 'tray-HB', 'tray-2B']) {
     const b = await box(page, `#${id} svg`)
     expect(b.height, `#${id} 행 높이`).toBeGreaterThanOrEqual(21)
     expect(b.width, `#${id} 행 폭(누웠다)`).toBeGreaterThan(b.height * 3)
   }
+  await page.click('#tray-HB'); await page.waitForTimeout(120)      // 고르면 접힌다(3-b')
+  expect(await page.locator('#tray.open').count(), '고르면 접힌다').toBe(0)
+  // 접힌 연필·펜 — 세로 아이콘(옛 ico-t 대역)이고 경도 각인이 있다
+  expect((await box(page, '#btn-pencil svg')).height).toBeGreaterThanOrEqual(80)
+  expect((await box(page, '#btn-pen svg')).height).toBeGreaterThanOrEqual(80)
+  expect(await page.locator('#btn-pencil text').textContent()).toBe('HB')
   expect((await box(page, '#btn-eraser-pencil svg')).height).toBeGreaterThanOrEqual(42) // (32→48)
   expect((await box(page, '#btn-eraser-ink svg')).height).toBeGreaterThanOrEqual(42)
   expect((await box(page, '#btn-face svg')).height).toBeGreaterThanOrEqual(42)
   expect((await box(page, '#pane-file summary svg')).height).toBeGreaterThanOrEqual(25)  // (19→28)
-  expect((await box(page, '#pane-settings summary svg')).height).toBeGreaterThanOrEqual(25)
+  // #pane-settings는 web2-19 3-a가 해체했다(오스냅→자 팝업·표시→눈·own3d→진단·질감→서랍)
 
   // 오른쪽 정렬 — 전 요소 svg의 **오른쪽 가장자리 x가 한 값**이다(관측 ①: align-items가
   // center면 폭이 다른 요소가 섞여 중앙 정렬이 된다 — flex-end로 세운 축을 잰다)
   const rights = await page.evaluate((list) => list.map(id => {
     const el = document.querySelector(`#${id} svg`) as SVGElement
     return { id, right: el.getBoundingClientRect().right }
-  }), ALL.filter(id => !id.startsWith('tray-') && id !== 'btn-pen'))  // 선택된 도구 행은 앞으로 나온다(-10px)
+  }), ALL.filter(id => !id.startsWith('tray-') && id !== 'btn-pen' && id !== 'btn-pencil'))  // 선택된 도구는 앞으로 나온다(-10px)
   const r0 = rights[0]!.right
   for (const r of rights) expect(Math.abs(r.right - r0), `#${r.id} 오른쪽 가장자리`).toBeLessThanOrEqual(1)
 
@@ -57,7 +65,7 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
     const b = el.getBoundingClientRect()
     const s = el.querySelector('svg')!.getBoundingClientRect()
     return { id, dw: b.width - s.width, dh: b.height - s.height }
-  }), ['btn-undo', 'dim-toggle', 'btn-draw-view'])
+  }), ['btn-undo', 'dim-toggle', 'btn-snap'])
   for (const p of pads) {
     expect(p.dw, `#${p.id} 누름 여유(가로)`).toBeGreaterThanOrEqual(5)  // 2×3px − 반올림 여유
     expect(p.dh, `#${p.id} 누름 여유(세로)`).toBeGreaterThanOrEqual(5)
@@ -87,18 +95,20 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
     }
     return { overlaps, n: rects.length }
   }
-  await page.click('#tray-HB')
+  await page.click('#btn-pencil')                    // 연필통을 **연** 채가 가장 넓은 상태다
   await page.waitForTimeout(200)
   ovPencil = await overlapCount(ALL)
+  await page.click('#tray-HB')                       // 고르면 접힌다
   await page.click('#btn-pen')
   await page.waitForTimeout(200)
   ovPen = await overlapCount([...ALL, 'thick'])
-  await page.click('#tray-HB')
+  await page.click('#btn-pencil'); await page.click('#tray-HB')
   await page.waitForTimeout(200)
-  console.log(`[측정] 쌍별 겹침 — 연필 ${ovPencil.overlaps}(요소 ${ovPencil.n}) · 펜+막대 ${ovPen.overlaps}(요소 ${ovPen.n})`)
+  console.log(`[측정] 쌍별 겹침 — 연필(통 열림) ${ovPencil.overlaps}(요소 ${ovPencil.n}) · 펜+막대 ${ovPen.overlaps}(요소 ${ovPen.n})`)
   expect(ovPencil.overlaps).toBe(0)
   expect(ovPen.overlaps).toBe(0)
-  expect(ovPen.n).toBe(ovPencil.n + 1)   // 펜 상태에는 굵기 막대가 실제로 들었다(판별력)
+  // 펜 상태 = 연필통 여섯 줄이 접히고(−6) 굵기 막대가 든다(+1)
+  expect(ovPen.n).toBe(ovPencil.n - 5)
 
   // 세로바 전체가 화면 높이 안이다(지시 문면 — #sidebar에는 max-height가 없다)
   const bar = await box(page, '#sidebar')
@@ -109,7 +119,7 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
 
   // 겹침 회귀 — 세로바 요소가 서로를 덮지 않는다(한 흐름이 된 시점·치수 포함 — 각 버튼의
   // 가운데를 실제로 그 버튼이 받는다. web2-10의 «둘째 열» 사고의 재발 방지 그대로).
-  for (const id of ['dim-toggle', 'btn-draw-view']) {
+  for (const id of ['dim-toggle', 'btn-snap']) {
     const hit = await page.evaluate((i) => {
       const t = document.getElementById(i)!
       const r = t.getBoundingClientRect()
@@ -156,12 +166,15 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 test('연필통 — 진하기 순 세로 배열·행 선택이 도구+경도·펜 니브 표기·자리 실측', async ({ page }, testInfo) => {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  // 진하기 순(2H → 2B, 아래 펜) — 위에서 아래로 y가 는다
-  const order = ['tray-2H', 'tray-H', 'tray-F', 'tray-HB', 'tray-B', 'tray-2B', 'btn-pen']
+  // 연필통은 접혀 있다(3-b') — 연필을 눌러 연다. 진하기 순(2H → 2B)으로 아래로.
+  await page.click('#btn-pencil'); await page.waitForTimeout(120)
+  const order = ['tray-2H', 'tray-H', 'tray-F', 'tray-HB', 'tray-B', 'tray-2B']
   const ys = await page.evaluate((ids) => ids.map(id => document.getElementById(id)!.getBoundingClientRect().y), order)
   for (let i = 1; i < ys.length; i++) expect(ys[i]!, `${order[i]}가 ${order[i - 1]} 아래다`).toBeGreaterThan(ys[i - 1]!)
+  // 펜 줄은 연필통에 **없다**(3-b' — 펜은 접기 없는 세로 아이콘 하나다)
+  expect(await page.locator('#tray #btn-pen').count()).toBe(0)
 
-  // 행 선택 = 도구 + 경도 (한 몸짓)
+  // 행 선택 = 도구 + 경도 (한 몸짓) — 고르면 접힌다
   await page.click('#tray-2B')
   expect(await page.evaluate(() => {
     const a = (window as any).__b2.app
@@ -169,14 +182,17 @@ test('연필통 — 진하기 순 세로 배열·행 선택이 도구+경도·�
   })).toBe('pencil:2B')
   expect(await page.getAttribute('#tray-2B', 'class')).toContain('on')
   expect(await page.getAttribute('#tray-HB', 'class')).not.toContain('on')
-  // 경도 각인이 각 행에 있다(자르기 규칙 — 지우개 쪽 몸통)
+  // 경도 각인이 각 행에 있다(자르기 규칙 — 지우개 쪽 몸통) · 접힌 아이콘의 각인·심 색이
+  // 고른 경도를 따른다(3-b' ①' — 왕복은 zones.spec가 2H·2B로 잰다)
   expect(await page.locator('#tray-2B text').textContent()).toBe('2B')
+  expect(await page.locator('#btn-pencil text').textContent()).toBe('2B')
+  expect(await page.locator('#tray.open').count(), '고르면 접힌다').toBe(0)
 
-  // 펜 — 니브 표기가 끝 표시다. 값이 굵기 막대와 같은 출처(app.nib)를 따른다
+  // 펜 — 니브는 접힌 펜의 관 폭(fold-nib)이 값이다(굵기 막대와 같은 출처 app.nib)
   await page.click('#btn-pen')
   expect(await page.evaluate(() => (window as any).__b2.app.tool)).toBe('pen')
   const nib = await page.evaluate(() => (window as any).__b2.app.nib)
-  expect(await page.locator('#nib-mm').textContent()).toBe(nib.toFixed(1))
+  expect(await page.evaluate(() => Number(document.getElementById('fold-nib')!.getAttribute('width')))).toBeCloseTo(nib, 6)
 
   // 자리 실측(지시 문면: 차지하는 폭·높이 — 그림을 얼마나 가리는가) → 원장.
   // **상태별로 잰다**(2차 [4] — 어느 상태의 값인지 파일이 말해야 한다) · dpr별 파일(2차 [5]).
@@ -195,13 +211,14 @@ test('연필통 — 진하기 순 세로 배열·행 선택이 도구+경도·�
   expect(barPen.bottom, '펜 상태 세로바가 화면 안').toBeLessThanOrEqual(vw.h)
   expect(barPencil.bottom, '연필 상태 세로바가 화면 안').toBeLessThanOrEqual(vw.h)
   expect(thick.x + thick.width, '굵기 막대가 세로바 왼쪽').toBeLessThanOrEqual(vw.w - barPen.w - 2)
-  await page.click('#tray-HB'); await page.waitForTimeout(150)
+  await page.click('#btn-pencil'); await page.waitForTimeout(150)   // 연필통을 연 채로 잰다
   const tray = (await page.locator('#tray').boundingBox())!
   const rightEdge = await page.evaluate(() =>
     (document.querySelector('#btn-undo svg') as SVGElement).getBoundingClientRect().right)
   const hitPad = await page.evaluate(() =>
     getComputedStyle(document.documentElement).getPropertyValue('--hit-pad').trim())
-  console.log(`[측정] 자리 — 세로바 연필 ${barPencil.w}×${barPencil.h} · 펜 ${barPen.w}×${barPen.h} · 연필통 ${Math.round(tray.width)}×${Math.round(tray.height)} / 화면 ${vw.w}×${vw.h}`)
+  await page.click('#tray-HB'); await page.waitForTimeout(100)      // 고르면 접힌다 — 상태 복원
+  console.log(`[측정] 자리 — 세로바 연필 ${barPencil.w}×${barPencil.h} · 펜 ${barPen.w}×${barPen.h} · 연필통(연 상태) ${Math.round(tray.width)}×${Math.round(tray.height)} / 화면 ${vw.w}×${vw.h}`)
   const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
   writeFileSync(resolve(HERE, `../../stage0/out/sidebar_layout_web2${suffix}.json`), JSON.stringify({

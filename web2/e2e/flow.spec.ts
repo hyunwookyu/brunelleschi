@@ -68,12 +68,12 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(await page.evaluate(() => (window as any).__b2.app.grid)).toBe(false)
   // 표시용(체크박스)과 판정용(app.grid)이 갈리지 않는가 — 기본값이 두 자리에 있다(PITFALLS #54)
   expect(await page.isChecked('#chk-grid')).toBe(false)
-  await page.click('#pane-settings > summary')
+  await page.click('#btn-display')                    // 표시는 눈 팝업(web2-19 3-a)
   await page.click('#chk-grid')
   expect(await page.evaluate(() => (window as any).__b2.app.grid)).toBe(true)
   await page.click('#chk-grid')                       // 되돌린다 — 뒤 팔이 격자 픽셀에 안 걸리게
   expect(await page.evaluate(() => (window as any).__b2.app.grid)).toBe(false)
-  await page.click('#pane-settings > summary')
+  await page.click('#btn-display')                    // 닫는다
   expect(await inkPixels(page, 0, 0, 1200, 380)).toBe(0)
 
   // 기본 도구는 연필이고, 상태 줄에는 **첫 안내 하나뿐**이다(4-b)
@@ -215,13 +215,13 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(Math.abs(s.pose.q.y)).toBeLessThan(1e-12)
   // 측정 창은 소실점 ✕ 표식(100,400)·(900,400)의 십자를 피한다 — x 150~750
   expect(await inkPixels(page, 150, 397, 750, 404)).toBe(0)  // 자동 숨김 — 소실점이 보인다
-  await page.click('#pane-settings > summary')
+  await page.click('#btn-display')                    // 표시는 눈 팝업(web2-19 3-a)
   await page.click('#chk-horizon')
   await settle(page)
   expect(await inkPixels(page, 150, 397, 750, 404)).toBeGreaterThan(100)  // 켜면 그 자리에 있다
   // pref(켬)는 이 뒤로 유지한다 — 아래 줌 구간(282행)이 지평선 위치를 픽셀로 재고,
   // 비우기(clearAll)가 자동(null)으로 되돌리는 것까지가 5부 규칙이라 그 복원도 함께 재진다.
-  await page.click('#pane-settings > summary')
+  await page.click('#btn-display')                    // 닫는다
   await settle(page)
 
   // ── 2단계: 오스냅 ────────────────────────────────────────────────────
@@ -272,7 +272,7 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   await page.keyboard.press('Control+z')
   await settle(page)
   expect(await glPixels(page, 612, 458, 660, 478)).toBeGreaterThan(5)
-  await page.click('#tray-HB')      // 그리기로 복귀 — 연필통의 HB 행(web2-12 6번)
+  await page.click('#btn-pencil'); await page.click('#tray-HB')   // 그리기로 복귀 — 연필통을 열어 HB(3-b')
 
   // ── 4단계: 화면 줌(뷰 오프셋) · 뷰 큐브 ─────────────────────────────
   // 그리는 중(작도 포즈)의 줌은 화면 조작 — 문서 좌표는 안 바뀐다
@@ -367,7 +367,7 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(await page.getAttribute('#tray-HB', 'class')).not.toContain('on')
   // 굵기 막대는 연필에서 사라지고 펜·지우개에서 뜬다(4-f · 4-e)
   expect(await page.evaluate(() => getComputedStyle(document.getElementById('thick')!).display)).toBe('block')
-  await page.click('#tray-HB')
+  await page.click('#btn-pencil'); await page.click('#tray-HB')   // 연필통을 열어 고른다(3-b')
   await settle(page)
   expect(await page.evaluate(() => getComputedStyle(document.getElementById('thick')!).display)).toBe('none')
   // 홀더펜 창 — 지금 심이 연필 몸통에 보인다(4-e)

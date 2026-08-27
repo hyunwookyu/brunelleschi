@@ -172,10 +172,11 @@ test('③④⑤⑥ — 「+」·탭 복귀·삭제(획 불변)·작도 종이 ·
   ledger['brnl_bytes_20'] = b20
   console.log(`[측정] 종이 썸네일 — 장 중앙 ${ledger['thumb_bytes_median']}B · 「+」 중앙 ${ledger['add_ms_median']}ms 최악 ${ledger['add_ms_max']}ms · .brnl 종이1 ${b1}B 종이5 ${ledger['brnl_bytes_5']}B 종이20 ${b20}B · 굽기만 중앙 ${ledger['capture_ms_median']}ms · ㉯ 한 장 몫 중앙 ${ledger['regen_view_ms_median']}ms`)
 
-  // 탭이 20개여도 띠가 화면 안이다(#paperbar overflow-x — 뷰 큐브 자리를 안 침범)
+  // 탭이 20개여도 띠가 눈 띠(#eyebar) 앞에서 멈춘다(#paperbar overflow-x — web2-19 3부
+  // 전량에서 실제로 걸렸다: 띠가 눈을 덮어 「+」 클릭이 가로채였다)
   const barBox = (await page.locator('#paperbar').boundingBox())!
-  const vw = await page.evaluate(() => window.innerWidth)
-  expect(barBox.x + barBox.width).toBeLessThanOrEqual(vw - 140 + 1)
+  const eyeBox = (await page.locator('#eyebar').boundingBox())!
+  expect(barBox.x + barBox.width).toBeLessThanOrEqual(eyeBox.x - 1)
 })
 
 test('이름 — 두 번 탭이 편집을 연다 · 문서에 남는다(⑦의 e2e 몫)', async ({ page }) => {

@@ -88,7 +88,9 @@ let bases: { x: number; base: number[] }[] = []
 /** 재료 g의 세로 획 하나 — 긋는 중·뗀 직후의 합성 픽셀 수와 승격 여부를 낸다 */
 async function drawGrade(page: Page, g: string, x: number) {
   // 연필통(web2-12 6번) — 행이 도구이자 경도다
-  await page.click(g === 'INK' ? '#btn-pen' : `#tray-${g}`)
+  // 연필통은 접혀 있다(web2-19 3-b') — 여는 것까지가 사람의 경로다
+  if (g === 'INK') await page.click('#btn-pen')
+  else { if (await page.locator('#tray.open').count() === 0) await page.click('#btn-pencil'); await page.click(`#tray-${g}`) }
   await settle(page)
   const base = await shot(page, x - 10, 480, 20, 60)
   await page.mouse.move(x, 560); await page.mouse.down()

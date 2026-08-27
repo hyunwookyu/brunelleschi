@@ -63,7 +63,9 @@
     #topleft {
       position: fixed; top: 0; left: 0; z-index: 9;
       display: flex; flex-direction: column; align-items: flex-start;
-      max-width: calc(100vw - 140px); /* 오른쪽 뷰 큐브(W−110)와 안 겹치게 */
+      /* 오른쪽의 눈 띠(right:170 + 폭 ~112)보다 먼저 멈춘다 — 종이가 많으면 띠 안에서
+         가로 스크롤로 넘긴다(#paperbar overflow-x). 20장 팔이 이 경계를 실제로 민다. */
+      max-width: calc(100vw - 300px);
     }
     #paperbar { display: flex; flex-direction: row; align-items: flex-end; gap: 1px; overflow-x: auto; max-width: 100%; }
     .ptab {
@@ -90,6 +92,52 @@
     }
     #paper-pop img { width: 160px; height: auto; display: block; }
     #paper-pop u, .paper-confirm u { cursor: pointer; }
+
+    /* ── 눈(web2-19 3-a) — 위 오른쪽. 뷰 큐브(cx W−110·y 20~100)와 안 겹치게 왼쪽에 ── */
+    #eyebar {
+      position: fixed; top: 12px; right: 170px; z-index: 9;
+      display: flex; flex-direction: row; gap: var(--btn-gap); align-items: flex-start;
+    }
+    /* 표시·자 팝업 — 설정 자루의 옅은 바탕 규약 그대로(4-a: 「배경이 필요하면 아주 옅게」) */
+    #display-pop, #snap-pop {
+      position: fixed; z-index: 11;
+      display: flex; flex-direction: column; gap: 6px; align-items: stretch;
+      background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
+      padding: 10px 12px; white-space: nowrap;
+      font: 12px/1.5 system-ui, sans-serif; color: #6b665f;
+    }
+    #display-pop[hidden], #snap-pop[hidden] { display: none; }
+    #display-pop { top: 48px; right: 170px; }
+    #snap-pop { right: 54px; }
+    /* 축 스냅 자리(3-b) — 컨트롤이 없다: 끄는 토글은 이 회차에 없다(대응표 §4 — 자리만) */
+    #axis-snap-slot { color: var(--ui-faint); }
+    /* 되돌리기와 도구를 가르는 선(3-a) — 공백이 아니라 채널이다(3-c) */
+    .bar-divider { width: 30px; height: 1px; background: var(--ui-faint); margin: 5px 1px; opacity: .55; }
+    /* 자(삼각자) — 정사각 viewBox(32×32)라 지우개 급(ico-h 48px)이면 폭이 48이 된다.
+       손 띠 폭 규약(39px — ①')에 맞는 전용 급: 높이 = 26px × 배수 = 39. */
+    .ico-sq svg { height: calc(26px * var(--ui-scale)); width: auto; }
+    /* ── 전체 화면(3-d) — 크롬을 전부 숨긴다: 종이 띠·눈·손·서랍·굵기·치수 리본.
+       지평선·소실점 ✕·바닥 눈금은 캔버스 몫이라 그대로 남는다(작도의 뼈대). ── */
+    body.fs #topleft, body.fs #eyebar, body.fs #sidebar, body.fs #thick,
+    body.fs #dimpanel, body.fs #display-pop, body.fs #snap-pop { display: none; }
+    #fs-exit {
+      display: none; position: fixed; right: 6px; bottom: 34px; z-index: 12;
+      background: none; border: 0; padding: var(--hit-pad); cursor: pointer;
+      color: var(--ui); opacity: .5;
+    }
+    #fs-exit:hover { opacity: .9; }
+    body.fs #fs-exit { display: block; }
+    /* 자립 깃발(3-a) — 진단 패널이 펴져 있을 때만 곁에 보인다(diagpanel.ts의 render가
+       panel 안을 다시 쓰므로 **패널 밖 형제**가 유일하게 살아남는 자리다). 패널은 판독
+       전용(pointer-events:none)이고 이 줄만 조작이다 — 패널을 위로 밀고 그 아래 선다. */
+    #diagctl { display: none; }
+    #diagpanel:not([hidden]) + #diagctl {
+      display: block; position: fixed; z-index: 12;
+      font: 11px/1.6 monospace; color: #6b665f;
+      background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
+      padding: 4px 10px; right: 6px; bottom: 26px;
+    }
+    #diagpanel:not([hidden]) { bottom: 56px; }
 
     /* 알림 — 최상단 한 줄. 박스 없음. **오류가 있을 때만 뜬다**(4-b). 선택은 밑줄 단어. */
     #notice {
@@ -141,8 +189,13 @@
     .ico-f  svg { height: calc(19px * var(--ui-scale)); width: auto; }  /* 파일·설정 */
     .ico-h  svg { height: calc(32px * var(--ui-scale)); width: auto; }  /* 지우개·면 */
     .ico-t  svg { height: calc(62px * var(--ui-scale)); width: auto; }  /* (옛) 세로 연필·펜 */
-    /* 연필통(web2-12 6번) — 가로로 누운 행. 진하기 순으로 쌓인다. */
-    #tray { display: flex; flex-direction: column; gap: var(--btn-gap); align-items: flex-end; }
+    /* 연필통(web2-12 6번 → web2-19 3-b' **접힘**) — 가로로 누운 행 여섯. 연필을 누른
+       동안만 펼쳐진다(평소 손 띠는 39px 정사각 대역만 남는다 — 폭 불일치의 답).
+       ⚠ 기본 display를 none으로 두는 이 줄이 **정본**이다 — 같은 선택자의 규칙을 앞에
+       하나 더 두면 뒤 규칙이 이겨 접힘이 죽는다(이 회차 초판이 그랬다 — 세로바가 822px로
+       넘쳐 서랍이 빌드 식별자 아래 깔렸다). */
+    #tray { display: none; flex-direction: column; gap: var(--btn-gap); align-items: flex-end; }
+    #tray.open { display: flex; }
     .trow svg { height: calc(15px * var(--ui-scale)); width: auto; }
     /* 굵기 막대 — **세로바 흐름 밖**(왼쪽 옆 고정. web2-12 3번): 흐름 안에 두면 펜을
        고른 순간 막대 높이(129px)가 세로바를 화면 밖으로 민다 — 자리 실측이 잡은 잠복
@@ -380,9 +433,49 @@
     <div id="topleft">
       <div id="paperbar"></div>
     </div>
+    <!-- 눈(web2-19 3-a) — 「이 종이를 어떻게 보는가」는 종이 옆이 제자리다.
+         작도 시점으로 · 전체 화면 · 표시(지평선·지면 격자·대기 획 감쇠).
+         위 오른쪽인데 뷰 큐브(cx W−110)와 안 겹치게 그 왼쪽에 선다. -->
+    <div id="eyebar">
+      <button id="btn-draw-view" class="t ico-m" title="작도 시점으로" aria-label="작도 시점">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
+          <path d="M3 9.4 10 3.6l7 5.8" /><path d="M5.2 8.6V16h9.6V8.6" />
+        </svg>
+      </button>
+      <button id="btn-fullscreen" class="t ico-m" title="전체 화면 — 그림만 남긴다" aria-label="전체 화면">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
+          <path d="M12.5 3.5h4v4M7.5 16.5h-4v-4M16.5 12.5v4h-4M3.5 7.5v-4h4" />
+        </svg>
+      </button>
+      <button id="btn-display" class="t ico-m" title="표시 — 지평선·지면 격자·대기 획" aria-label="표시">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
+          <path d="M2.5 10s2.8-4.6 7.5-4.6S17.5 10 17.5 10s-2.8 4.6-7.5 4.6S2.5 10 2.5 10Z" />
+          <circle cx="10" cy="10" r="2.2" />
+        </svg>
+      </button>
+    </div>
+    <!-- 표시 팝업 — 설정 자루에서 나왔다(3-a: 보기는 눈의 몫). id·배선은 그대로다(동작 불변 ③). -->
+    <div id="display-pop" hidden>
+      <label><input id="chk-horizon" type="checkbox" checked> 지평선</label>
+      <label><input id="chk-grid" type="checkbox"> 지면 격자</label>
+      <!-- web2-13 3-a — 끄면 종전 동작(대기 획을 항상 그리되 흐리게). 실기기 판정용 되돌림(A-4). -->
+      <label><input id="chk-waitfade" type="checkbox" checked> 대기 획은 그린 시점에서만</label>
+    </div>
+    <!-- 전체 화면 나가는 손잡이(3-d) — 우하단. 안 보이면 고장으로 읽힌다(지시 문면). -->
+    <button id="fs-exit" title="전체 화면에서 나온다" aria-label="전체 화면 나가기">
+      <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
+        <path d="M16.5 7.5h-4v-4M3.5 12.5h4v4M7.5 3.5v4h-4M12.5 16.5v-4h4" />
+      </svg>
+    </button>
     <div id="notice"></div>
     <div id="buildid" title="진단 — 누르면 기기 값이 보인다"></div>
     <div id="diagpanel" hidden></div>
+    <!-- 자립 깃발(3-a·대응표 §3) — 설정에서 **진단**으로 왔다(없애지 않는다 — A-4로 옛
+         사슬 경로를 유지하는 깃발이다. localStorage 열쇠 b2-own3d 그대로). 패널이 펴져
+         있을 때만 보인다(CSS 형제 선택자 — diagpanel.ts의 render가 못 지우는 자리). -->
+    <div id="diagctl">
+      <label><input id="chk-own3d" type="checkbox" checked> 획이 위치를 소유한다 (개정 3)</label>
+    </div>
 
     <!-- 시점 묶음 — 세로바 안(web2-12 3번). 마크업은 아래 #sidebar 안에 있다. -->
 
@@ -425,24 +518,8 @@
         </svg>
       </button>
       <div id="sidebar-body">
-        <!-- 시점·치수 묶음(web2-12 3번 — 종전 둘째 열 #viewbar에서 들어왔다) -->
-        <div id="viewbar">
-          <button id="btn-draw-view" class="t ico-m" title="작도 시점으로" aria-label="작도 시점">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
-              <path d="M3 9.4 10 3.6l7 5.8" /><path d="M5.2 8.6V16h9.6V8.6" />
-            </svg>
-          </button>
-          <!-- 시점 저장·명명된 뷰 팝업(web2-12 5번)은 **종이 탭 띠**가 대신한다(web2-19 2부) -->
-          <button id="dim-toggle" class="t ico-m" title="치수 — 리본 패널" aria-label="치수">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
-              <rect x="2.5" y="7" width="15" height="6" />
-              <path d="M5.5 7v2.4M8.5 7v3.4M11.5 7v2.4M14.5 7v3.4" />
-            </svg>
-          </button>
-        </div>
-
-        <div class="bar-gap"></div>
-
+        <!-- 되돌리기·다시실행(3-a) — 은유가 없어 손 띠 **맨 위**에 두고 도구와
+             **구분선**으로 가른다(제도판에서는 지우개가 이 역할이었다 — 서랍은 너무 멀다). -->
         <button id="btn-undo" class="t ico-m" title="실행취소 (Ctrl+Z)" aria-label="실행취소">
           <svg width="30" height="30" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
             <path d="M6.4 5.2 3.2 8.4l3.2 3.2" /><path d="M3.2 8.4h7.6a4.4 4.4 0 0 1 0 8.8H7" />
@@ -454,14 +531,39 @@
           </svg>
         </button>
 
+        <div class="bar-divider"></div>
+
+        <!-- 자(삼각자) = **스냅 묶음의 입구**(3-b — 이 회차의 핵심): 오스냅 종류·반경이
+             여기서 열린다. 「기능적 도구」 층위가 처음으로 화면에 존재하게 됐다.
+             SVG는 docs/instrument-icons.md 「삼각자」 정본 그대로다(path 수정 금지). -->
+        <button id="btn-snap" class="t ico-sq" title="자 — 오스냅 종류·반경" aria-label="자(스냅)">
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 26 L26 26 L6 6 Z"/>
+            <path d="M9.6 22.6 L16.8 22.6 L9.6 15.4 Z"/>
+            <path d="M8.50 8.50 l-1.70 1.70 M11.00 11.00 l-1.06 1.06 M13.50 13.50 l-1.70 1.70 M16.00 16.00 l-1.06 1.06 M18.50 18.50 l-1.70 1.70 M21.00 21.00 l-1.06 1.06 M23.50 23.50 l-1.70 1.70" stroke-width="1.1"/>
+          </svg>
+        </button>
+
         <div class="bar-gap"></div>
 
-        <!-- 연필통(web2-12 6번) — 연필 여섯 + 펜이 **가로로 누워** 진하기 순(2H→2B)으로
-             쌓인다. 오른손잡이 기준 지우개가 왼쪽·심이 오른쪽인데, 화면을 가리지 않게
-             **지우개 쪽 토막만** 남기고 잘랐다(경도 각인은 실물처럼 지우개 쪽 몸통에 —
-             단면에는 그 경도의 심이 보인다). 행은 main.ts가 MAT에서 짓는다(#54 —
-             심 색·목록을 여기 복제하지 않는다). -->
+        <!-- 연필 — **접혀 있다**(3-b'): 평소에는 세로 연필 하나(경도 각인·앞이 뾰족 —
+             docs/instrument-icons.md 「접힌 연필」 정본). 누르면 아래 #tray(여섯 줄)가
+             펼쳐지고 하나를 고르면 접힌다. 경도 문자·심 색은 main.ts가 MAT에서 갱신(#54). -->
+        <button id="btn-pencil" class="t tool ico-t" title="연필 — 누르면 연필통이 열린다" aria-label="연필">
+          <svg width="39" height="93" viewBox="0 0 26 62">
+            <path d="M8 3h10v40H8z" fill="#cfc7b6"/><path d="M8 3h3.4v40H8z" fill="#e0d9ca"/><path d="M14.6 3H18v40h-3.4z" fill="#bbb2a0"/><rect x="8" y="11" width="10" height="13" fill="#faf8f3"/><text id="fold-lead-text" x="13" y="21" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#3c3831">HB</text><path d="M8 43 L13 57 L18 43 Z" fill="#e6dfd0"/><path id="fold-lead" d="M11.75 53.5 L13 57 L14.25 53.5 Z" fill="#5a5a5a"/>
+          </svg>
+        </button>
+        <!-- 연필통(web2-12 6번 → 3-b' 접힘) — 여섯 줄이 **연필을 누른 동안만** 펼쳐진다.
+             줄의 앞은 원뿔로 깎였고 단면이 노출된 심이다(정본 「펼친 연필통 줄」).
+             펜 줄은 빠졌다 — 펜은 하나뿐이라 접기가 없다. 행은 main.ts가 MAT에서 짓는다(#54). -->
         <div id="tray"></div>
+        <!-- 펜 — 접기 없음(하나뿐이다). 니브 굵기는 종전대로 #thick 막대(펜 활성일 때만). -->
+        <button id="btn-pen" class="t tool ico-t" title="펜 — 잉크 (니브 굵기는 막대)" aria-label="펜">
+          <svg width="39" height="93" viewBox="0 0 26 62">
+            <path d="M8.6 3h8.8v32H8.6z" fill="#7f7a72"/><path d="M8.6 3h3v32h-3z" fill="#98938a"/><path d="M9.4 35h7.2v6H9.4z" fill="#5d5952"/><path d="M10.2 36.4h5.6M10.2 38.2h5.6" stroke="#837f78" stroke-width=".7"/><path d="M9.4 41h7.2l-3.6 8z" fill="#6e6a63"/><rect id="fold-nib" x="12.2" y="49" width="1.6" height="7" fill="#101014"/>
+          </svg>
+        </button>
 
         <!-- 옛 경로(4-e 홀더펜 슬라이더 · 세로 연필/펜 버튼) — **지우지 않고 숨긴다**(A-4:
              사람이 새 연필통을 승인할 때까지. 되돌리기: main.ts TRAY=false + hidden 제거). -->
@@ -530,6 +632,16 @@
 
         <div class="bar-gap"></div>
 
+        <div class="bar-gap"></div>
+        <!-- 치수(3-a) — 시점 묶음에서 나와 **손 띠**로: 그린 선에 값을 주는 일이므로
+             도구다. 리본 패널(#dimpanel)은 그대로, 트리거만 옮겼다. -->
+        <button id="dim-toggle" class="t ico-m" title="치수 — 리본 패널" aria-label="치수">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
+            <rect x="2.5" y="7" width="15" height="6" />
+            <path d="M5.5 7v2.4M8.5 7v3.4M11.5 7v2.4M14.5 7v3.4" />
+          </svg>
+        </button>
+
         <details class="pane" id="pane-file">
           <summary class="t ico-f" title="파일">
             <svg width="28" height="28" viewBox="0 0 19 19" fill="none" stroke="currentColor" stroke-width="1.3">
@@ -548,33 +660,23 @@
             <button id="btn-gltf" title="glTF 내보내기 — 다른 앱용. 이 앱으로 못 되돌아온다">glTF</button>
             <div style="height:6px"></div>
             <button id="btn-clear" title="전부 지우고 처음부터 — 확인을 받는다">비우기</button>
-          </div>
-        </details>
-        <details class="pane" id="pane-settings">
-          <summary class="t ico-f" title="설정">
-            <svg width="28" height="28" viewBox="0 0 19 19" fill="none" stroke="currentColor" stroke-width="1.3">
-              <circle cx="9.5" cy="9.5" r="2.6" />
-              <path d="M9.5 2.4v2M9.5 14.6v2M2.4 9.5h2M14.6 9.5h2M4.5 4.5l1.4 1.4M13.1 13.1l1.4 1.4M14.5 4.5l-1.4 1.4M5.9 13.1l-1.4 1.4" />
-            </svg>
-          </summary>
-          <div>
-            <div class="head">오스냅</div>
-            <div id="osnap-kinds" style="display:flex;flex-direction:column;gap:2px"></div>
-            <label>반경 <input id="osnap-radius" type="range" min="4" max="20" step="1" style="width:80px"></label>
-            <div class="head" style="margin-top:6px">표시</div>
-            <label><input id="chk-horizon" type="checkbox" checked> 지평선</label>
-            <label><input id="chk-grid" type="checkbox"> 지면 격자</label>
-            <!-- web2-13 3-a — 끄면 종전 동작(대기 획을 항상 그리되 흐리게). 실기기 판정용 되돌림(A-4). -->
-            <label><input id="chk-waitfade" type="checkbox" checked> 대기 획은 그린 시점에서만</label>
-            <div class="head" style="margin-top:6px">렌더러</div>
-            <!-- web2-13 3-c — 세로바에서 옮겨 온 평가용 비교 스위치(btn-brush id 유지 — 배선·팔이 그 이름을 본다) -->
+            <div class="head" style="margin-top:6px">종이 질감</div>
+            <!-- 설정 자루 해체(3-a): 오스냅 → 자 팝업 · 표시 셋 → 눈 · own3d → 진단 ·
+                 렌더러는 여기(서랍) — btn-brush id 유지(배선·팔이 그 이름을 본다). -->
             <button id="btn-brush" title="종이 질감 — 획을 brush 렌더러로 (다시 누르면 종전 렌더러)">종이 질감</button>
-            <div class="head" style="margin-top:6px">3D 경로</div>
-            <!-- web2-13 4부 자립 깃발 → web2-14 1번에서 기본 켜짐(사람 판정). 끄면 옛 사슬 경로(A-4). 지금 경로는 진단 패널이 보인다. -->
-            <label><input id="chk-own3d" type="checkbox" checked> 획이 위치를 소유한다 (개정 3)</label>
           </div>
         </details>
       </div>
+    </div>
+    <!-- 자 팝업(3-b) — 설정 자루에서 나온 오스냅 종류·반경. id·배선은 그대로다(동작 불변 ④).
+         축 스냅 줄은 **자리만 비워 둔다** — 「자를 치운 상태」는 그 획이 3D로 안 올라가는
+         갈래를 열므로 혼자 한 회차짜리다(대응표 §4 · DEFERRED). -->
+    <div id="snap-pop" hidden>
+      <div class="head">오스냅</div>
+      <div id="osnap-kinds" style="display:flex;flex-direction:column;gap:2px"></div>
+      <label>반경 <input id="osnap-radius" type="range" min="4" max="20" step="1" style="width:80px"></label>
+      <div class="head" style="margin-top:6px">축 스냅</div>
+      <div id="axis-snap-slot">항상 켜져 있다</div>
     </div>
     <input id="file-open" type="file" accept=".brnl,application/json" style="display:none">
   </div>

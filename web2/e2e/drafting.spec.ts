@@ -189,7 +189,7 @@ test('8·9 연쇄 승격 순간 — 표현이 «나타나는» 몫의 실측 + �
   const before = await inkBox(page, 690, 160, 20, 40)
   // 사슬 — 모서리에서 vp0 광선으로, 그 끝에서 수직으로 대기 획의 왼끝까지: 축을 타는
   // 다리 둘이 승격되고 연쇄가 대기 잉크를 올린다(«승격은 연쇄한다» — CLAUDE.md)
-  await page.click('#tray-HB')
+  await page.click('#btn-pencil'); await page.click('#tray-HB')   // 연필통은 접혀 있다(3-b')
   await drawLine(page, 500, 500, 700, 450, 12)   // vp0 광선 위 — 승격
   await drawLine(page, 700, 450, 700, 250, 12)   // 수직 기둥 — 승격·꼭대기가 대기 획 아래끝
   const after = await page.evaluate((id) => {

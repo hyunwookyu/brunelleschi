@@ -393,33 +393,24 @@ const TRAY = true
 const TOOLS: Tool[] = ['pencil', 'pen', 'eraser-pencil', 'eraser-ink', 'face']
 const trayEl = document.getElementById('tray')!
 
-/** 누운 연필 한 자루(지우개 왼쪽 · 심 오른쪽) — 화면을 안 가리게 지우개 쪽 토막만 남기고
- *  잘랐다. 경도 각인은 실물처럼 지우개 쪽 몸통에, 단면에는 그 경도의 심이 보인다. */
+/** 누운 연필 한 자루(web2-19 3-b′) — **앞이 원뿔로 깎였고 단면이 노출된 심**이다.
+ *  SVG 기하는 `docs/instrument-icons.md` 「펼친 연필통 줄」 정본 그대로(path 수정 금지) —
+ *  심 색만 MAT에서 온다(#54: 정본 문면 「심 색의 출처는 MAT 하나다」. 정본의 예시색은
+ *  예시일 뿐이다). 종전 줄(가운데 절단·단면 심)은 아래 git 이력에 있다 — 채널(심 색·
+ *  경도 각인)은 같고 그림만 나아졌다. */
 function pencilRowSvg(g: Grade): string {
   const lead = MAT[g].color
   return '<svg width="96" height="24" viewBox="0 0 64 16">'
     + '<rect x="1" y="3.5" width="9" height="9" rx="2" fill="#d8cfc0" />'
     + '<rect x="10" y="3.5" width="5" height="9" fill="#b8b3ab" />'
-    + '<rect x="15" y="3" width="41" height="10" fill="#cfc7b6" />'
-    + '<rect x="15" y="3" width="41" height="2.6" fill="#e0d9ca" />'
+    + '<rect x="15" y="3" width="36" height="10" fill="#cfc7b6" />'
+    + '<rect x="15" y="3" width="36" height="2.6" fill="#e0d9ca" />'
     + `<text x="21" y="11.6" font-family="system-ui, sans-serif" font-size="7" fill="#3c3831">${g}</text>`
-    + '<rect x="56" y="3" width="2.2" height="10" fill="#e6dfd0" />'
-    + `<circle cx="57.1" cy="8" r="1.7" fill="${lead}" />`
+    + '<path d="M51 3 L59.4 7.35 L59.4 8.65 L51 13 Z" fill="#e6dfd0" />'
+    + `<path d="M59.4 7.35 L63 8 L59.4 8.65 Z" fill="${lead}" />`
     + '</svg>'
 }
-/** 누운 제도펜 — 지우개가 없으니 **니브 굵기 표기**가 끝 표시다(제도펜 관행 그대로).
- *  단면에는 잉크 심(니브 관). 값은 syncThick가 갱신한다. */
-function penRowSvg(): string {
-  return '<svg width="96" height="24" viewBox="0 0 64 16">'
-    + '<rect x="1" y="4" width="9" height="8" rx="1" fill="#5d5952" />'
-    + '<rect x="10" y="3.5" width="46" height="9" fill="#7f7a72" />'
-    + '<rect x="10" y="3.5" width="46" height="2.4" fill="#98938a" />'
-    + '<text id="nib-mm" x="16" y="11.2" font-family="system-ui, sans-serif" font-size="6.5" fill="#f0ede6">1.5</text>'
-    + '<rect x="56" y="3.5" width="2.2" height="9" fill="#5d5952" />'
-    + '<circle cx="57.1" cy="8" r="1.2" fill="#101014" />'
-    + '</svg>'
-}
-const trayRow = new Map<string, HTMLElement>()   // '2H'.. + 'pen'
+const trayRow = new Map<string, HTMLElement>()   // '2H'..'2B' — 펜 줄은 없다(3-b′)
 for (const g of PENCIL_GRADES) {
   const b = document.createElement('button')
   b.id = `tray-${g}`
@@ -427,21 +418,26 @@ for (const g of PENCIL_GRADES) {
   b.title = `${g} 연필`
   b.setAttribute('aria-label', `${g} 연필`)
   b.innerHTML = pencilRowSvg(g)
-  b.addEventListener('click', () => { app.grade = g; setTool('pencil') })
+  // 하나를 고르면 **접힌다**(3-b′ — 지시 문면 「다시 누르거나 하나를 고르면 접힌다」).
+  // syncGrade가 접힌 아이콘의 각인·심 색을 갱신한다 — 안 부르면 접힌 연필이 옛 경도로 남는다.
+  b.addEventListener('click', () => { app.grade = g; setTool('pencil'); syncGrade(); setTrayOpen(false) })
   trayEl.append(b)
   trayRow.set(g, b)
 }
-{
-  const b = document.createElement('button')
-  b.id = 'btn-pen'
-  b.className = 't tool trow'
-  b.title = '펜 — 잉크 (니브 굵기는 아래 막대)'
-  b.setAttribute('aria-label', '펜')
-  b.innerHTML = penRowSvg()
-  b.addEventListener('click', () => setTool('pen'))
-  trayEl.append(b)
-  trayRow.set('pen', b)
+// 접힌 연필(3-b′) — 평소에는 이것 하나만 보인다. 누르면 연필통이 펼쳐진다(토글).
+// 연필 도구 선택도 겸한다: 펜을 쓰다 눌러도 연필로 돌아온다(옛 연필 버튼의 몫 그대로).
+const pencilFoldBtn = document.getElementById('btn-pencil')!
+const penBtn = document.getElementById('btn-pen')!
+let trayOpen = false
+function setTrayOpen(v: boolean) {
+  trayOpen = v
+  trayEl.classList.toggle('open', v)
 }
+pencilFoldBtn.addEventListener('click', () => {
+  setTool('pencil')
+  setTrayOpen(!trayOpen)
+})
+penBtn.addEventListener('click', () => { setTool('pen'); setTrayOpen(false) })
 if (!TRAY) {   // 되돌리기(A-4) — 옛 세로 버튼·슬라이더로
   trayEl.hidden = true
   document.getElementById('oldtools')!.hidden = false
@@ -456,10 +452,12 @@ const thick = document.getElementById('thick')!
 const thickLine = document.getElementById('thick-line')!
 const thickDot = document.getElementById('thick-dot')!
 
-/** 선택 표시 — 연필은 «지금 경도의 행»이 나와 있다(도구이면서 경도 표시다) */
+/** 선택 표시 — 연필통이 펼쳐져 있으면 «지금 경도의 행»이 나와 있고(도구이면서 경도
+ *  표시), 접힌 연필·펜 버튼도 도구 상태를 따른다(3-b′). */
 function syncTray() {
   for (const g of PENCIL_GRADES) trayRow.get(g)!.classList.toggle('on', app.tool === 'pencil' && app.grade === g)
-  trayRow.get('pen')!.classList.toggle('on', app.tool === 'pen')
+  pencilFoldBtn.classList.toggle('on', app.tool === 'pencil')
+  penBtn.classList.toggle('on', app.tool === 'pen')
 }
 
 function setTool(t: Tool) {
@@ -507,9 +505,9 @@ function syncThick() {
     thickLine.setAttribute('stroke-width', String(v))
     nibEl.setAttribute('width', String(v))
     nibEl.setAttribute('x', String(13 - v / 2))
-    // 연필통 펜 행(6번)의 니브 표기 — 「끝 표시」가 값이다(제도펜 관행)
-    const mm = document.getElementById('nib-mm')
-    if (mm) mm.textContent = v.toFixed(1)
+    // 접힌 펜(3-b′)의 니브도 같은 값 — 옛 nib 배선의 복제가 아니라 같은 함수의 두 표적
+    foldNib.setAttribute('width', String(v))
+    foldNib.setAttribute('x', String(13 - v / 2))
   } else {
     // 지우개는 반경이 커서 막대 폭을 넘는다 — 원의 반지름을 막대 안으로 줄여 **비율만** 보인다
     const r = 4.5 + (v - C.ERASER_MIN) / (C.ERASER_MAX - C.ERASER_MIN) * 12 // 1.5배(지시 5)
@@ -539,12 +537,20 @@ function dragThick(e: PointerEvent) {
 const leadEl = document.getElementById('lead')!
 const leadText = document.getElementById('lead-text')!
 const nibEl = document.getElementById('nib')!
+// 접힌 연필·펜(web2-19 3-b′)의 각인 — 옛 요소(#oldtools 안 lead/lead-text/nib)와 **같은
+// 배선을 둘 다** 갱신한다(옛 경로는 A-4 되돌리기 손잡이라 살아 있어야 한다)
+const foldLead = document.getElementById('fold-lead')!
+const foldLeadText = document.getElementById('fold-lead-text')!
+const foldNib = document.getElementById('fold-nib')!
 const pencilBtn = document.getElementById('btn-pencil-old')!   // 옛 경로(A-4) — 숨겨져 있어 안 눌린다
 let pencilDrag: { y: number; i: number } | null = null
 
 function syncGrade() {
   leadText.textContent = app.grade
   leadEl.setAttribute('fill', MAT[app.grade].color)
+  // 접힌 연필(3-b′)의 경도 각인·심 색 — 옛 btn-pencil-old의 배선 그대로, 출처는 MAT(#54)
+  foldLeadText.textContent = app.grade
+  foldLead.setAttribute('fill', MAT[app.grade].color)
   syncTray()   // 연필통(6번)의 선택 표시도 경도를 따라간다
   invalidate()
 }
@@ -613,6 +619,35 @@ own3dBox.addEventListener('change', () => {
 const radius = document.getElementById('osnap-radius') as HTMLInputElement
 radius.value = String(app.osnap.radius)
 radius.addEventListener('input', () => { app.osnap.radius = Number(radius.value) })
+
+// ── 자(삼각자) = 스냅 묶음의 입구(web2-19 3-b) — 오스냅 종류·반경이 여기서 열린다 ──
+// 설정 자루에서 나왔다 — id·배선은 위 그대로다(동작 불변 ④). 여닫기만 이 버튼이 진다.
+const snapBtn = document.getElementById('btn-snap')!
+const snapPop = document.getElementById('snap-pop')!
+snapBtn.addEventListener('click', () => {
+  snapPop.hidden = !snapPop.hidden
+  if (!snapPop.hidden) {
+    const r = snapBtn.getBoundingClientRect()
+    snapPop.style.top = `${Math.round(Math.min(r.top, window.innerHeight - snapPop.offsetHeight - 6))}px`
+  }
+})
+
+// ── 눈(3-a) — 표시 팝업(지평선·지면 격자·대기 획 감쇠)·전체 화면 ─────────────
+const displayBtn = document.getElementById('btn-display')!
+const displayPop = document.getElementById('display-pop')!
+displayBtn.addEventListener('click', () => { displayPop.hidden = !displayPop.hidden })
+
+// 전체 화면(3-d) — 크롬만 숨긴다(CSS body.fs). 작도의 뼈대(지평선·✕·격자)는 캔버스
+// 몫이라 그대로다. **상태는 저장하지 않는다**(세션 한정 — 새로 고치면 꺼져 있다).
+// 나가는 길은 우하단 손잡이 하나(#fs-exit) — 제스처를 새로 만들지 않는다(지시 ⚠).
+document.getElementById('btn-fullscreen')!.addEventListener('click', () => {
+  document.body.classList.add('fs')
+  snapPop.hidden = true
+  displayPop.hidden = true
+})
+document.getElementById('fs-exit')!.addEventListener('click', () => {
+  document.body.classList.remove('fs')
+})
 
 // 파일 — 저장·열기·내보내기
 function download(name: string, text: string, type: string) {
@@ -953,6 +988,8 @@ const diag = {
   /** D-3 반증 손잡이(web2-19 1부) — 없앤 안내 파랑을 되살려 «파랑 계수 격자가 실패
    *  가능함»을 e2e가 매 실행 증명한다(graphite.spec ①-반증). UI 없음 — 여기서만 켠다. */
   forceConstructing: (v: boolean) => { setForceConstructing(v); invalidate() },
+  /** 심 색의 정본(#54) — 접힌 연필 각인 팔(zones.spec ①')이 화면 값과 대조한다 */
+  matColor: (g: Grade) => MAT[g].color,
   /** 오스냅 판정 그대로(web2-12 8번) — 넘김 꼬리가 스냅 대상이 아님을 팔이 잰다 */
   osnapAt: (x: number, y: number) =>
     osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / app.view.s },
