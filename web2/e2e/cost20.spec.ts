@@ -162,6 +162,14 @@ test('⑩ 3-b(영역 재조립)의 400획 프레임 비용 — 겹 없음/겹+�
       note: '막의 몫은 d2 조각에 실린다(frame()에서 filmLayer.draw가 draw2d와 같은 구간). 궤도 칸의 막은 포즈 게이트로 꺼지므로 그 델타는 #layerc 사영선의 몫이다.',
     },
     cost18_ref: ref18,
+    metric_defs: {
+      frames: '앱이 그 자리에서 잰 프레임 3몫(r3=render3d·bs=brushLayer.sync·d2=filmLayer.draw+draw2d)의 중앙값 — cost18 ③과 같은 함수(frameCostQ). draw_pose는 호버 40이동, orbit은 중버튼 30이동. 국면별 리셋.',
+      marginal: 'with−base의 total 배수와 d2 델타. 막의 몫은 d2 조각에 실린다.',
+    },
+    flags_explained: {
+      '상수·지표 스냅샷 없음': 'cost18 원장과 같은 유보 — e2e 하네스라 test/constants.ts의 공유 상수를 안 쓴다(재는 것은 프레임 ms뿐). 스냅샷 대조가 잡을 낡음이 정의상 없다.',
+      'base 칸 값이 서로 같아 보임': '분해능이다 — frameCostQ의 ms가 0.1 단위 대역이고 겹 없는 경로는 1~2ms라 칸이 붙는다. 판별은 with/base 배수(1.0× 대 15×)가 낸다.',
+    },
   }
   const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
