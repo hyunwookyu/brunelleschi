@@ -8089,3 +8089,7 @@ e56b4ed7bb8aba06997870eed27a6773d9869373	refs/heads/main
 
 검증(1부): 단위 **491 passed / 0 failed / 491**(54파일) · graphite.spec dpr1 «5 passed» ·
 dpr2 «5 passed» · 전량 e2e는 회차 마감 절에.
+**1부 마감 검증(#69 ㉤)**: 전량 e2e 「**212 passed (8.0m)**」 — passed 212 / failed 0 /
+total 212(`--list` 「Total: 212 tests in 28 files」 대조 — 27+graphite 1파일, 202+10팔).
+단위는 위(491/0/491). 문서 몫: D-W6(안내색 제거 근거) · AS-C61(파선 ✕ 규격 — 눈)
+· DEFERRED 「1-c 분포표」 행.
