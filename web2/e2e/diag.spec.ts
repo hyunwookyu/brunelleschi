@@ -71,3 +71,32 @@ test('포인터 줄이 실입력으로 갱신된다 — pen 종류·필압이 �
   console.log(`[측정] 필압 단계 카운터 ${n0} → ${n1} (서로 다른 압력 둘 추가)`)
   expect(n1).toBe(n0 + 2)                                           // 반증: 카운터가 죽으면 n0 그대로다
 })
+
+// web2-16 1부 — 진단 패널은 판독 전용이라 입력을 못 삼킨다(pointer-events: none).
+// web2-14 e224d82가 「교점(마지막 획)」 줄을 더해 패널 상단(y≈361)이 치수 필기 칸의
+// 쓰기 시작점(y≈363)을 1.4px 차로 덮었고, 그때부터 「인식기 감지」 팔이 조용히
+// 타임아웃했다(포인터가 패널에 삼켜져 획이 아예 안 실린다). 이 팔은 그 1.4px짜리
+// 우연 대신 **필기 칸 전면**을 표본한다. (⚠ 초판은 워크트리에 잘못 세워져 유실됐다 —
+// NOTES 「1부」의 cwd 혼선 기록. 이것이 메인의 정본이다.)
+test('진단 패널이 열려도 치수 필기 칸의 포인터를 안 삼킨다 (web2-16 1부)', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForFunction(() => (window as any).__b2)
+  await page.click('#dim-toggle')                      // 치수 리본을 편다
+  await page.click('#buildid')                         // 진단 패널을 연다
+  const r = await page.evaluate(() => {
+    const ink = document.getElementById('dim-ink')!.getBoundingClientRect()
+    const dg = document.getElementById('diagpanel')!.getBoundingClientRect()
+    // 전제 확인 — 두 사각형이 실제로 겹쳐야 이 팔이 무엇을 잰다(겹침이 사라지면
+    // 여기서 크게 실패시켜 표본 위치를 다시 잡게 한다 — 조용히 안 재는 팔 금지, D-3).
+    const overlap = !(dg.right < ink.left || dg.left > ink.right || dg.bottom < ink.top || dg.top > ink.bottom)
+    // 필기 칸 전면 3×3 격자 — elementFromPoint가 전부 dim-ink여야 한다
+    const misses: string[] = []
+    for (const fx of [0.08, 0.5, 0.92]) for (const fy of [0.08, 0.5, 0.92]) {
+      const el = document.elementFromPoint(ink.left + ink.width * fx, ink.top + ink.height * fy)
+      if (!el || el.id !== 'dim-ink') misses.push(`(${fx},${fy})→${el ? el.id || el.tagName : 'none'}`)
+    }
+    return { overlap, misses }
+  })
+  expect(r.overlap).toBe(true)   // 패널이 필기 칸과 겹치는 지금 배치에서 재고 있다
+  expect(r.misses).toEqual([])   // 반증: #diagpanel의 pointer-events: none을 빼면 실패한다
+})

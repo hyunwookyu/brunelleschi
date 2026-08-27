@@ -13,7 +13,7 @@ import { MAT, gradeOf, rng32, widthOf, widthOfMat } from '../core/material'
 import { overshootEnds } from '../core/overshoot'
 import { waitFadeFactor, atOwnPose } from '../core/waitfade'
 import type { OsnapHit } from '../core/osnap'
-import type { Pt, V3 } from '../core/vec'
+import { dist2, type Pt, type V3 } from '../core/vec'
 
 export interface Draft {
   start: Pt
@@ -363,6 +363,19 @@ export function draw2d(
     if (draft.label && !constructing) axisGuide(ctx, draft, is)
     if (draft.startSnap) mark(ctx, draft.startSnap, is)
     if (draft.endSnap) mark(ctx, draft.endSnap, is)
+    // 축이 사영으로 이겼다(2-a) — 기호는 겨눈 특징점에, 끝은 축선 위에 있다. 둘이
+    // 갈라지면 그 사이를 가는 실선으로 잇는다(수선의 발 표시 — 제도의 어법 그대로).
+    // 이것이 없으면 «축이 이겼는데 점이 이긴 줄 아는» 조용한 오해가 남는다(지시 2-a ⚠).
+    if (draft.endSnap && dist2(draft.endSnap.p, draft.end) > 0.5 * is) {
+      ctx.strokeStyle = COL.axisGuide   // «축에 붙었다»의 채널 그대로 — 축이 이긴 표시다
+      ctx.lineWidth = 0.8 * is
+      ctx.globalAlpha = 0.8
+      ctx.beginPath()
+      ctx.moveTo(draft.endSnap.p.x, draft.endSnap.p.y)
+      ctx.lineTo(draft.end.x, draft.end.y)
+      ctx.stroke()
+      ctx.globalAlpha = 1
+    }
   } else if (hover) {
     mark(ctx, hover, is)
   }

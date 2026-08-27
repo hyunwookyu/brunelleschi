@@ -254,13 +254,18 @@
       /* 펜으로 누르기엔 글자가 얇다 — 보이는 크기는 그대로 두고 닿는 넓이만 키운다 */
       padding: 8px 4px 4px 8px;
     }
-    /* 진단 패널(web2-10 지시 4) — 전부 한 화면에. 다른 패널과 같은 옅은 바탕(4-a). */
+    /* 진단 패널(web2-10 지시 4) — 전부 한 화면에. 다른 패널과 같은 옅은 바탕(4-a).
+       pointer-events: none — 이 패널은 판독 전용이다(안에 조작 요소가 없다. 여닫는
+       #buildid는 별개 요소). 줄이 늘어 치수 필기 칸(#dim-ink)까지 자라면 포인터를
+       삼켜 필기가 조용히 무시됐다(web2-14 e224d82부터 — web2-16 1부가 표식으로 확인).
+       패널이 앞으로 얼마나 자라도 입력을 못 삼키게 DOM에서도 관측만 하게 한다.
+       대가: 패널 글자를 마우스로 긁어 복사할 수 없다 — 태블릿(주 기기)에는 없던 길이다. */
     #diagpanel {
       position: fixed; right: 6px; bottom: 26px; z-index: 12;
       max-width: min(86vw, 560px);
       background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
       padding: 10px 12px; font: 11px/1.7 monospace; color: #4a463f;
-      overflow-wrap: anywhere;
+      overflow-wrap: anywhere; pointer-events: none;
     }
     #diagpanel .k { color: #a89f8e; display: inline-block; min-width: 118px; }
   </style>

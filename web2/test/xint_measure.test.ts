@@ -183,53 +183,95 @@ function sweep(mode: 'before' | 'after', offs: [number, number][]) {
  *  반증: off를 20px로 두면(반경 밖) 몸통이 되어 xint가 이기고 전 칸이 서야 한다. */
 function edgeBandSweep() {
   // 2차 리뷰 [3][7][8] 대응 — 첫 판의 셋을 고쳤다:
-  //  [3] **획 길이를 흔든다.** L≈140 하나에서는 end 오스냅의 밀어냄(≤off=4px)이
-  //      4/140 = 2.9% 로 축 허용각(V축 SCREEN_PARALLEL_RATIO 0.05) **아래**라 축 손실이
-  //      산술적으로 불가능했다 — 「axis_lost 0」이 실행 결과가 아니라 상수의 귀결이었다.
-  //      L40에서는 4/40 = 10% 로 넘으므로 **넘길 수 있는 축을 흔든다**(반증 조건, D-3).
+  //  [3] **획 길이를 흔든다.** ⚠ 판정 산술(web2-16 2차 [4]가 초판의 dx/L 서술을 잡았다):
+  //      오스냅이 이기는 순간 끝은 특징점으로 가므로 **밀림원은 손 오차(dx)가 아니라
+  //      격자 상수 off다**. off=4에서 4/40 = 10% > 허용 5% > 4/110 = 3.6% —
+  //      **길이 축이 가른다.** 손 오차 축이 가르는 것은 «어느 후보가 이기는가/문에
+  //      드는가»(후보 선정)이지 밀림량이 아니다.
   //  [7] **세 대역을 다 본다.** 첫 판은 B의 «시작 끝»만 훑고 중점·반대쪽 끝을 안 봤는데
   //      인용은 「끝점·중점 대역을 잰다」로 읽혔다.
   //  [8] **격자를 원장에 적는다.** 결론을 정하는 조건(길이)이 산문에만 있으면 감사 불가다.
+  //  (web2-16 2부) **before/after를 나란히 낸다** — 2차 [3]이 「52가 원장에 없다」를
+  //  잡았다. before = 수리 전 판정(beforeFix — 조준선 없는 osnap이 이긴다) · after =
+  //  앱 경로 그대로. 죽은 칸에는 **무산 계수의 증분**(touchStats delta)을 함께 싣는다
+  //  (2차 [6] — 「계수가 오른다」가 원장 밖 산문이면 안 선다).
   const LS = [40, 70, 110]
   const BANDS = ['시작끝', '중점', '반대끝'] as const
   const OFFS = [0, 4, 8, 20]
   const HAND: [number, number][] = [[0, 0], [4, 0], [8, 0], [0, 4], [0, -4], [4, 4], [8, 4], [4, -4], [8, -4]]
-  const rows: { band: string; off: number; L: number; dx: number; dy: number; kind: string | null; axis: string | null; defined: boolean }[] = []
-  const skips: { band: string; off: number; L: number; why: string }[] = []
-  for (const band of BANDS) for (const off of OFFS) for (const L of LS) for (const [dx, dy] of HAND) {
-    const skip = (why: string) => { skips.push({ band, off, L, why }); }
-    const s = session(1200, 800)
-    s.draw(100, 400, 1100, 400); s.draw(500, 500, 600, 475); s.draw(500, 500, 400, 475)
-    const g = s.draw(500, 500, 720, 445)
-    if (!g || !s.app.lift.lifted.has(g.id)) { skip('지면 깊이선이 3D가 안 됐다'); continue }
-    const aimX = g.b.x
-    // B는 vp0 방향(x +150 → y +75). 겨냥 자리(조준선 x=aimX)가 각 대역에서 off px 떨어지게 둔다.
-    const bx = band === '시작끝' ? aimX - off : band === '중점' ? aimX + off - 75 : aimX - 150 + off
-    const B = s.draw(bx, 240, bx + 150, 315)
-    if (!B || !s.app.lift.waiting.includes(B.id)) { skip('B가 대기 획이 안 됐다'); continue }
-    const bs = s.app.doc.strokes.find(x => x.id === B.id)!
-    const t = (aimX - bs.a.x) / (bs.b.x - bs.a.x)
-    if (!(t >= 0 && t <= 1)) { skip('조준선이 B의 그린 구간을 안 지난다'); continue }
-    const target = { x: aimX, y: bs.a.y + t * (bs.b.y - bs.a.y) }
-    const startY = target.y + L
-    if (startY > g.b.y - 5) { skip('획 길이 L을 조준선 위에 못 앉힌다'); continue }
-    const v = s.draw(aimX, g.b.y, aimX, startY)
-    if (!v || !s.app.lift.lifted.has(v.id)) { skip('씨앗 세로선이 3D가 안 됐다'); continue }
-    if (!s.app.lift.waiting.includes(B.id)) { skip('씨앗이 B를 먼저 정의했다'); continue }
-    // ⚠ **미리보기를 먼저 잰다**(첫 판의 결함 — 커밋 뒤에 재면 그 획 자신의 끝점이 이긴다)
-    const set = { ...s.app.osnap, radius: s.app.osnap.radius / s.app.view.s }
-    const oh = resolveStart(s.app.lift, s.app.pose, v.b, set)
-    const r = resolveEnd(s.app.lift, s.app.pose, s.app.lift.an, oh ? oh.p : v.b,
-      { p3: oh?.p3 ?? null }, { x: target.x + dx, y: target.y + dy }, set, { mmPerUnit: null, snapStep: null })
-    const A = s.draw(v.b.x, v.b.y, target.x + dx, target.y + dy)
-    if (!A) { skip('A가 안 그어졌다'); continue }
-    rows.push({
-      band, off, L, dx, dy, kind: r.endSnap?.kind ?? null,
-      axis: axisOfStroke(s.app.lift.an, s.app.pose, A.a, A.b),
-      defined: !!s.app.doc.strokes.find(x => x.id === B.id)!.own3,
-    })
+  interface EbRow { band: string; off: number; L: number; dx: number; dy: number; kind: string | null; axis: string | null; defined: boolean; touch?: Record<string, number> }
+  // 세 국면(2차 [3][5]) — w14형: 조준선 없는 osnap이 이긴다(web2-14 판정 복제) ·
+  // w15형: 조준선·xint는 있되 **사영만 없다**(web2-15 코드 복제 = 사영의 반증 국면) ·
+  // after: 현행 앱 경로. web2-15가 잰 «52»는 w15 열이고, 사영을 빼면 죽는 칸의
+  // 칸별 실측(반증 D-3)도 w15 열이다.
+  const runs: Record<'w14' | 'w15' | 'after', { rows: EbRow[]; skips: { band: string; off: number; L: number; why: string }[] }> = {
+    w14: { rows: [], skips: [] }, w15: { rows: [], skips: [] }, after: { rows: [], skips: [] },
   }
-  const fold = (keyOf: (r: typeof rows[number]) => string) => {
+  for (const mode of ['w14', 'w15', 'after'] as const) {
+    const { rows, skips } = runs[mode]
+    for (const band of BANDS) for (const off of OFFS) for (const L of LS) for (const [dx, dy] of HAND) {
+      const skip = (why: string) => { skips.push({ band, off, L, why }); }
+      const s = session(1200, 800)
+      s.draw(100, 400, 1100, 400); s.draw(500, 500, 600, 475); s.draw(500, 500, 400, 475)
+      const g = s.draw(500, 500, 720, 445)
+      if (!g || !s.app.lift.lifted.has(g.id)) { skip('지면 깊이선이 3D가 안 됐다'); continue }
+      const aimX = g.b.x
+      // ⚠ off의 뜻(2차 [7]): **작도 명목값** — B를 긋기 «전» 좌표에서, 그 대역의 특징점
+      // (시작끝·중점·반대끝)이 조준선 x=aimX에서 x로 off px 떨어지게 놓는 값이다.
+      // 커밋이 B를 축 스냅으로 옮기므로 **확정 잉크의 실거리와는 다르다** — 실거리가
+      // 필요한 판정(문 8px 등)은 각 칸의 실측(kind·touch)이 답한다.
+      const bx = band === '시작끝' ? aimX - off : band === '중점' ? aimX + off - 75 : aimX - 150 + off
+      const B = s.draw(bx, 240, bx + 150, 315)
+      if (!B || !s.app.lift.waiting.includes(B.id)) { skip('B가 대기 획이 안 됐다'); continue }
+      const bs = s.app.doc.strokes.find(x => x.id === B.id)!
+      const t = (aimX - bs.a.x) / (bs.b.x - bs.a.x)
+      if (!(t >= 0 && t <= 1)) { skip('조준선이 B의 그린 구간을 안 지난다'); continue }
+      const target = { x: aimX, y: bs.a.y + t * (bs.b.y - bs.a.y) }
+      const startY = target.y + L
+      if (startY > g.b.y - 5) { skip('획 길이 L을 조준선 위에 못 앉힌다'); continue }
+      const v = s.draw(aimX, g.b.y, aimX, startY)
+      if (!v || !s.app.lift.lifted.has(v.id)) { skip('씨앗 세로선이 3D가 안 됐다'); continue }
+      if (!s.app.lift.waiting.includes(B.id)) { skip('씨앗이 B를 먼저 정의했다'); continue }
+      // ⚠ **미리보기를 먼저 잰다**(첫 판의 결함 — 커밋 뒤에 재면 그 획 자신의 끝점이 이긴다)
+      const cur = { x: target.x + dx, y: target.y + dy }
+      let r: { end: Pt; kind: string | null }
+      if (mode === 'after') {
+        const set = setOf(s)
+        const oh = resolveStart(s.app.lift, s.app.pose, v.b, set)
+        const rr = resolveEnd(s.app.lift, s.app.pose, s.app.lift.an, oh ? oh.p : v.b,
+          { p3: oh?.p3 ?? null }, cur, set, { mmPerUnit: null, snapStep: null })
+        r = { end: rr.end, kind: rr.endSnap?.kind ?? null }
+      } else if (mode === 'w15') {
+        // web2-15 판정 복제: 조준선을 앱과 같이 세우고 osnap을 부르되 **사영은 없다** —
+        // xint·축 스냅 경로는 그대로, 점 오스냅이 이기면 그 점이 끝이다(당시 코드 문면).
+        const set = setOf(s)
+        const ds = snapDir(s.app.lift.an, s.app.pose, v.b, cur)
+        const aim = ds.axis ? { start: v.b, through: ds.end } : undefined
+        const oh = osnap(s.app.lift, s.app.pose, cur, set, { p3: null }, aim)
+        r = { end: oh ? oh.p : ds.end, kind: oh?.kind ?? null }
+      } else {
+        r = beforeFix(s, v.b, cur)
+      }
+      const statBefore = { ...s.app.touchStats } as Record<string, number>
+      const A = mode === 'after' ? s.draw(v.b.x, v.b.y, cur.x, cur.y) : commitStroke(s.app, v.b, r.end, [v.b, cur])
+      if (!A) { skip('A가 안 그어졌다'); continue }
+      const defined = !!s.app.doc.strokes.find(x => x.id === B.id)!.own3
+      const row: EbRow = {
+        band, off, L, dx, dy, kind: r.kind,
+        axis: axisOfStroke(s.app.lift.an, s.app.pose, A.a, A.b),
+        defined,
+      }
+      if (!defined) {
+        // 죽은 칸의 계수 증분 — «조용한가»를 원장이 직접 답한다(전부 0이면 조용한 죽음이다)
+        const delta: Record<string, number> = {}
+        for (const [k, val] of Object.entries(s.app.touchStats) as [string, number][])
+          if (val - statBefore[k]! !== 0) delta[k] = val - statBefore[k]!
+        row.touch = delta
+      }
+      rows.push(row)
+    }
+  }
+  const fold = (rows: EbRow[], keyOf: (r: EbRow) => string) => {
     const out: Record<string, { n: number; defined: number; axis_lost: number; kinds: Record<string, number> }> = {}
     for (const r of rows) {
       const k = keyOf(r)
@@ -242,19 +284,53 @@ function edgeBandSweep() {
     }
     return out
   }
+  const af = runs.after.rows, bf = runs.w14.rows, wf = runs.w15.rows
+  const keyOfCell = (r: EbRow) => `${r.band}|off${r.off}|L${r.L}|(${r.dx},${r.dy})`
+  const deadW15 = new Set(wf.filter(r => !r.defined).map(keyOfCell))
   return {
     grid: { bands: BANDS, offs: OFFS, lengths: LS, hand_offsets: HAND, comps: ['A_가까운VP 하나(B를 대역마다 옮긴다)'] },
     denominator: {
       grid_full: BANDS.length * OFFS.length * LS.length * HAND.length,
-      used: rows.length,
-      skipped: [...new Map(skips.map(k => [`${k.band}|${k.off}|${k.L}|${k.why}`, k])).values()],
+      used: af.length, used_before: bf.length,
+      skipped: [...new Map(runs.after.skips.map(k => [`${k.band}|${k.off}|${k.L}|${k.why}`, k])).values()],
     },
-    by_band: fold(r => r.band),
-    by_off: fold(r => `off${r.off}`),
-    by_length: fold(r => `L${r.L}`),
-    by_band_off_len: fold(r => `${r.band}|off${r.off}|L${r.L}`),
-    axis_lost_rows: rows.filter(r => !r.axis).map(r => ({ band: r.band, off: r.off, L: r.L, dx: r.dx, dy: r.dy, kind: r.kind, defined: r.defined })),
-    dead_rows: rows.filter(r => !r.defined).map(r => ({ band: r.band, off: r.off, L: r.L, dx: r.dx, dy: r.dy, kind: r.kind, axis: r.axis })),
+    w14: {
+      what: 'web2-14형 판정(beforeFix — 조준선 없는 osnap이 이긴다)의 이 격자 실측',
+      n: bf.length, defined: bf.filter(r => r.defined).length,
+      axis_lost: bf.filter(r => !r.axis).length,
+      by_length: fold(bf, r => `L${r.L}`),
+      // 98행 전수는 안 싣는다(원장 부피) — 대신 «조용한 죽음 0»을 검산 필드로 남긴다(3차 [3])
+      dead_rows_n: bf.filter(r => !r.defined).length,
+      dead_with_aNot3d: bf.filter(r => !r.defined && (r.touch?.['aNot3d'] ?? 0) > 0).length,
+      dead_silent: bf.filter(r => !r.defined && Object.keys(r.touch ?? {}).length === 0).length,
+    },
+    w15: {
+      what: 'web2-15형 판정(조준선·xint 있음 · **사영만 없음**) — web2-15가 «52»를 잰 국면이자 사영의 반증 국면(D-3): 이 열과 after의 차가 곧 사영의 몫이다',
+      n: wf.length, defined: wf.filter(r => r.defined).length,
+      axis_lost: wf.filter(r => !r.axis).length,
+      by_length: fold(wf, r => `L${r.L}`),
+      dead_rows: wf.filter(r => !r.defined).map(r => ({ band: r.band, off: r.off, L: r.L, dx: r.dx, dy: r.dy, kind: r.kind, axis: r.axis, touch: r.touch ?? {} })),
+    },
+    after: {
+      what: '현행(사영 있음) 총계 — 3차 [11]: 인용 가능한 필드로',
+      n: af.length, defined: af.filter(r => r.defined).length,
+      axis_lost: af.filter(r => !r.axis).length,
+      dead_with_counter: af.filter(r => !r.defined && Object.keys(r.touch ?? {}).length > 0).length,
+    },
+    off_note: 'off의 뜻(3차 [4]): **작도 명목값** — B를 긋기 «전» 좌표에서 그 대역의 특징점이 조준선 x=aimX에서 x로 off px 떨어지게 놓는 값. 커밋이 B를 축 스냅으로 옮기므로 확정 잉크의 실거리와 다르다 — off20에서 mid가 3칸 이긴 것(by_off.off20)이 그 사례다(커밋 후 mid가 커서 8px 안에 들었다). 문(8px)·사영 이동 같은 실거리 판정은 각 칸의 kind·touch 실측이 답한다',
+    by_band: fold(af, r => r.band),
+    by_off: fold(af, r => `off${r.off}`),
+    by_length: fold(af, r => `L${r.L}`),
+    by_band_off_len: fold(af, r => `${r.band}|off${r.off}|L${r.L}`),
+    axis_lost_rows: af.filter(r => !r.axis).map(r => ({ band: r.band, off: r.off, L: r.L, dx: r.dx, dy: r.dy, kind: r.kind, defined: r.defined })),
+    dead_rows: af.filter(r => !r.defined).map(r => ({ band: r.band, off: r.off, L: r.L, dx: r.dx, dy: r.dy, kind: r.kind, axis: r.axis, touch: r.touch ?? {} })),
+    dead_after_subset_of_w15: af.filter(r => !r.defined).every(r => deadW15.has(keyOfCell(r))),
+    axis_lost_zero_is_guarantee:
+      '(web2-16 2차 [15]) after의 axis_lost 0은 측정이 아니라 **구성 보장**이다 — 2D 특징점이 '
+      + '이기면 끝이 조준선 위로 사영되므로 축 이탈이 0이고 axisOfStroke가 항상 축을 준다. '
+      + '보장이므로 이 0에 임계를 걸지 않는다(§5.1). 이 절의 **측정**은 defined(B 성립)와 '
+      + 'kinds(어느 후보가 이기는가)·before 열(수리 전 실측)이다. by_length 세 행이 동일해진 것도 '
+      + '같은 귀결이다(수리 전에는 길이가 갈랐다 — before.by_length가 그 실측을 든다)',
   }
 }
 
@@ -463,6 +539,9 @@ describe('겉보기 교차 — 손 오차 대역의 정의 성립률', () => {
         'inside.after.missed.no_axis_on_A == 0':
           '0이 이 회차의 값이다 — 수리 전 같은 필드가 37이고 그것이 증상의 기전이었다. '
           + '집계 로직이 도는 증거는 before 행의 37이다(같은 코드가 센다)',
+        'boundary_along_aim.before.kinds 단일 범주(ext 66)':
+          '그것이 수리 전의 기전이다(#69 ㉠ — ext가 조준 경로 내내 이긴다). 변별력은 '
+          + 'after의 per_dy(6~11px에서 갈린다)가 진다 — before 열은 대조군이다',
         'inside.after.by_pair_folded.groups[0].dist 단일 범주(xint 25)':
           '접은 결과가 「서로 다른 분포 1개」라는 것이 곧 결론이다 — 수리 후에는 (구도,길이) '
           + '11쌍이 전부 같은 답을 낸다. **분포가 쌍마다 다른지**는 inside.before.by_pair가 '

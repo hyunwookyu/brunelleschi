@@ -1,0 +1,155 @@
+{
+  "what": "web2-16 1부 — dim.spec 「인식기 감지」 선행 실패의 법의학 측정: 진단 패널이 치수 필기 칸을 덮기 시작한 커밋을 찾는다. 판정값 = #diagpanel 높이(px, dpr1 · 뷰포트 1200×800 · bottom:26 고정이라 상단 y = 774 − 높이). 실패 조건: 상단 y ≤ 쓰기 시작점 y=363 ⇔ 높이 ≥ 411.0",
+  "measured_at": "2026-08-27 (web2-16 1부)",
+  "method": {
+    "probe": "임시 표식 팔(_trace16.spec): build → #dim-toggle → #buildid(패널 열기) → 쓰기 지점 elementFromPoint + #diagpanel getBoundingClientRect → writeOne → #dim-read 판독. ⚠ 획 조건(3차 [8]): 사슬 9행과 web2-16 두 행 전부 **작도 4획을 그은 뒤** 측정(진단 줄 수가 획 유무에 의존한다 — 획 0개 조건에서는 현행 393.75로 갈린다. build 단계가 그 4획이다)",
+    "isolation": "잔존 dev 서버(5301 · 전날 시작)를 종료 후, git worktree에 각 커밋을 체크아웃하고 그 디렉토리에서 playwright가 자체 vite를 새로 띄움(끝나면 스스로 종료 — 실행 간 잔존 없음 확인). PITFALLS #70 규칙 ① 이행",
+    "version_discriminant": "#70 규칙 ② — 패널 높이가 «버전이 갈라야 하는 값». 첫 판(오염)에서는 다섯 커밋 전부 412.4375로 동일했다(그것이 오염의 표식). 재측정에서는 커밋마다 갈린다. 337.6875 동일값 쌍(b70b655·32b2e99)은 오염이 아니라 실제 동일 — 그 구간에 diagpanel.ts diff 0줄, main.ts 진단 줄 추가 0(git diff 실측)"
+  },
+  "chain": [
+    {
+      "commit": "12ec827",
+      "round": "web2-10 8-b (팔 태생)",
+      "panel_h_px": 188.1875,
+      "panel_top_y": 585.8125,
+      "write_point_hit": "dim-ink",
+      "dim_read": "38",
+      "verdict": "통과"
+    },
+    {
+      "commit": "b70b655",
+      "round": "web2-11 마감",
+      "panel_h_px": 337.6875,
+      "panel_top_y": 436.3125,
+      "write_point_hit": "dim-ink",
+      "dim_read": "38",
+      "verdict": "통과"
+    },
+    {
+      "commit": "32b2e99",
+      "round": "web2-12 3부(마감 배포)",
+      "panel_h_px": 337.6875,
+      "panel_top_y": 436.3125,
+      "write_point_hit": "dim-ink",
+      "dim_read": "38",
+      "verdict": "통과"
+    },
+    {
+      "commit": "1da2c3a",
+      "round": "web2-13 3부",
+      "panel_h_px": 356.375,
+      "panel_top_y": 417.625,
+      "write_point_hit": "dim-ink",
+      "dim_read": "38",
+      "verdict": "통과(패널이 칸 하단 3.4px을 덮지만 쓰기 시작점 363은 위라 산다)"
+    },
+    {
+      "commit": "22b2bb4",
+      "round": "web2-13 4부",
+      "panel_h_px": 375.0625,
+      "panel_top_y": 398.9375,
+      "write_point_hit": "dim-ink",
+      "dim_read": "38",
+      "verdict": "통과(포인터 캡처 — pointerdown 지점만 판정을 가른다)"
+    },
+    {
+      "commit": "e224d82",
+      "round": "web2-14 1·2번",
+      "panel_h_px": 412.4375,
+      "panel_top_y": 361.5625,
+      "write_point_hit": "diagpanel",
+      "dim_read": "",
+      "verdict": "실패 — 깨진 커밋. 「교점(마지막 획)」 단계 줄 +2줄이 375.1→412.4"
+    },
+    {
+      "commit": "c0faaaf",
+      "round": "web2-14 마감(코드 정본)",
+      "panel_h_px": 412.4375,
+      "panel_top_y": 361.5625,
+      "write_point_hit": "diagpanel",
+      "dim_read": "",
+      "verdict": "실패"
+    },
+    {
+      "commit": "c0d3656",
+      "round": "web2-15 1번",
+      "panel_h_px": 412.4375,
+      "panel_top_y": 361.5625,
+      "write_point_hit": "diagpanel",
+      "dim_read": "",
+      "verdict": "실패"
+    },
+    {
+      "commit": "a3f5ece",
+      "round": "web2-15 2번(코드 마감)",
+      "panel_h_px": 412.4375,
+      "panel_top_y": 361.5625,
+      "write_point_hit": "diagpanel",
+      "dim_read": "",
+      "verdict": "실패"
+    },
+    {
+      "commit": "web2-16 1부(작업 트리)",
+      "round": "web2-16 1부",
+      "panel_h_px": 412.4375,
+      "panel_top_y": 361.5625,
+      "write_point_hit": "dim-ink(pointer-events:none 수리 후 — 패널이 겹쳐도 안 삼킨다)",
+      "dim_read": "38",
+      "verdict": "통과(수리)"
+    },
+    {
+      "commit": "web2-16 2부(작업 트리)",
+      "round": "web2-16 2부",
+      "panel_h_px": 412.4375,
+      "panel_top_y": 361.5625,
+      "write_point_hit": "dim-ink",
+      "dim_read": "-",
+      "verdict": "높이 불변 — 2부가 진단 줄 «내용»을 늘렸지만(무산 사유·A못줌) 이 시나리오(작도 4획)에서 줄바꿈 경계 안이라 줄 수 불변. #70 ② 소명: diff는 있으나 높이 결정 변수(줄 수)가 안 변했다. 획 0개 시나리오에서는 393.75로 갈린다(측정함 — 조건 따라 갈리는 값임을 확인)"
+    }
+  ],
+  "chain_note": "380c3f9(web2-15가 워크트리로 재현했다고 적은 커밋)는 직접 안 돌렸다 — git diff --stat c0faaaf 380c3f9 = web2/HANDOFF.md 한 파일(문서만)이라 앱 코드가 c0faaaf와 동일하고, c0faaaf 실측 실패가 그 판정을 대신한다",
+  "margins": {
+    "fail_threshold_h_px": 411.0,
+    "ink_rect": {
+      "x": 884,
+      "y": 349,
+      "w": 184,
+      "h": 72
+    },
+    "write_start_y": 363,
+    "note": "web2-11 마감 시점에 «칸 하단(421)을 건드리기»까지 15.3px, «쓰기 시작점(363)을 덮어 깨지기»까지 73.3px(정확값 73.3125) 여유. web2-13과 web2-14가 각 37.375px(=375.0625−337.6875 = 412.4375−375.0625 — 동일값. 초판의 37.4/37.3은 반쪽 반올림)을 써서 정확히 1.4375px 초과로 넘었다"
+  },
+  "misreports_found": {
+    "a1b5bf8": {
+      "list_total": 166,
+      "claimed": "e2e 164케이스(82팔 × dpr 둘) 전량",
+      "arith": "전량 통과 보고가 거짓인 것은 확정 — 이 코드에서 dim 2케이스가 실패한다(chain의 c0faaaf 행·앱 코드 동일 범위). 형태는 판별 불가: ㉮ passed-만-보고(164 = 166−2) ㉯ 팔 오산(82팔×2 = 164 — 실제 83팔·166. 보고문이 「82팔」을 명기해 이 가설의 물증이 있다). 어느 쪽도 164를 낸다(2차 리뷰 [2]가 초판의 「passed-만-보고 확정」을 하향시켰다)",
+      "note": "c0faaaf·380c3f9도 같은 파일 집합(166=83팔)·보고 164"
+    },
+    "e224d82": {
+      "list_total": 162,
+      "claimed": "e2e 162 통과",
+      "arith": "이 커밋에서 결함이 있음을 재측정으로 확인(⚠ dpr1 표식 팔 관측 하나 — dim.spec 자체를 그 커밋에서 돌린 것은 아니고, dpr 두 프로젝트는 레이아웃이 같아 2케이스 환산이다 #48) → «162 전량 통과»는 성립 불가(실패가 있으면 passed<162). passed-만-보고와도 산술이 안 맞아(166이 아니라 162가 총수) 형태 미상의 오보고 — 실행을 다 안 했거나 --list 수를 옮겨 적은 것으로 보이나 판별 불가",
+      "note": "--list 실측 162"
+    }
+  },
+  "contamination": {
+    "first_pass_invalid": "첫 이분 탐색은 무효 — 잔존 vite 서버(5301, 2026-08-26 12:03 시작, reuseExistingServer:true)가 메인 작업 트리(HEAD)를 서빙했다. 오염된 관측: dim 팔 실패 @ 22b2bb4·b70b655·d959148·b6980c9·12ec827(다섯 커밋) + 표식 팔 @ 12ec827(패널 412.4375). 오염의 표식 = 가장 오래된 커밋(12ec827·팔 태생)의 표식 실행이 HEAD와 «소수점까지 같은» 패널 크기·레이아웃(412.4375 · 위치 동일)을 낸 것 — 태생 커밋은 패널 줄이 훨씬 적어 불가능한 값이다. ⚠ 초판 원장·PITFALLS가 이것을 «다섯 커밋 전부의 높이 동일»로 적었는데 높이를 잰 오염 실행은 12ec827 하나다(2차 리뷰 [5]가 재구성 불가를 잡아 정정) — 다섯 커밋에서 잰 것은 dim 팔의 동일 실패다",
+    "web2_15_evidence": "web2-15의 「380c3f9 워크트리 재현」도 같은 서버 생존 기간의 실행 — 증거 무효(PITFALLS #70). 결론(그 코드에서 실패)은 이 원장의 c0faaaf 행 + chain_note로 다시 섰다"
+  },
+  "repair": {
+    "fix": "#diagpanel { pointer-events: none } (index.html)",
+    "regression_arm": "diag.spec 「진단 패널이 열려도 치수 필기 칸의 포인터를 안 삼킨다」 — 3×3 격자 elementFromPoint 전부 dim-ink + 겹침 전제 단언",
+    "falsification": "① pointer-events:none 제거 시 회귀 팔 실패(메인 트리에서 실행 — dpr 두 프로젝트 «2 failed», 레이아웃 동일이라 관측 n=1 #48) · 복원 후 통과 ② 겹침 전제 단언도 실패시켰다(display:none 변형 — overlap=false로 Expected true/Received false, 메인에서 실행 후 변형 삭제)"
+  },
+  "after": {
+    "unit": "426 passed / 45 files",
+    "e2e": "본문 갱신 — 메인 재실행 결과가 정본(NOTES 검증 단락·test_cost_web2.json)",
+    "typecheck_build": "타입 통과 · 빌드 6.08s(web2-16 1부 실측)"
+  },
+  "process_incident": "⚠ 회귀 팔·반증의 첫 판은 cwd가 워크트리(wt13 · a3f5ece)에 남은 채 실행돼 메인이 아니라 워크트리에 세워졌고, 워크트리 제거로 유실됐다(그때의 전량 «176 passed»는 회귀 팔 0 + 임시 표식 팔 2를 센 우연의 일치 — 2차 리뷰 [6]이 파일 수 산술 176/22로 잡았다). 메인에서 다시 세워 재실행한 것이 정본이다(176 in 21 files). 교훈은 #70 본문 끝에 부기 — 워크트리 세션은 실행마다 pwd를 남기고, 제거 전에 산출물 diff를 본다",
+  "visual_occlusion": {
+    "covered_band_px": 59.4375,
+    "note": "패널 상단 361.5625 ~ 필기 칸 하단 421 — 시각 가림 대역의 실측. DEFERRED web2-16 행의 초판 «84px»는 산출 근거 없는 오기였다(2차 리뷰 [11] 대응에서 실측으로 교체)"
+  }
+}
