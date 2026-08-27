@@ -16,7 +16,7 @@ const box = async (page: Page, sel: string) => {
 // 겹침 실측 — 첫 팔이 재고 자리 실측 팔이 원장에 싣는다(한 파일은 한 워커에서 차례로 돈다)
 let ovPencil = { overlaps: -1, n: 0 }
 let ovPen = { overlaps: -1, n: 0 }
-const ALL = ['sidebar-toggle', 'btn-draw-view', 'btn-save-view', 'dim-toggle',
+const ALL = ['sidebar-toggle', 'btn-draw-view', 'dim-toggle',   // btn-save-view: web2-19 2부 — 종이 탭 「+」가 대신한다
   'btn-undo', 'btn-redo',
   'tray-2H', 'tray-H', 'tray-F', 'tray-HB', 'tray-B', 'tray-2B', 'btn-pen',
   'btn-eraser-pencil', 'btn-eraser-ink', 'btn-face'] // btn-brush는 web2-13 3-c로 설정 안 — 세로바 목록에서 뺀다
@@ -27,7 +27,7 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
   // 크기 — 전 요소가 같은 배수(--ui-scale) 대역이다. 임계는 옛 값(괄호)과 새 값 사이:
   // 되돌리면 깨진다. **시점·치수 묶음도 같은 대역**이다(관측 ① — 종전 20px가 30px 대역으로).
   expect((await box(page, '#sidebar-toggle svg')).height).toBeGreaterThanOrEqual(24) // (18→27)
-  for (const id of ['btn-undo', 'btn-redo', 'btn-draw-view', 'btn-save-view', 'dim-toggle']) { // btn-brush: 3-c로 설정 안(svg 아이콘도 아님)
+  for (const id of ['btn-undo', 'btn-redo', 'btn-draw-view', 'dim-toggle']) { // btn-brush: 3-c로 설정 안(svg 아이콘도 아님)
     expect((await box(page, `#${id} svg`)).height, `#${id} 크기 대역`).toBeGreaterThanOrEqual(27) // (20→30)
   }
   // 연필통(web2-12 6번) — 가로 행 일곱(연필 여섯 + 펜). 높이 같은 대역(16→24).
@@ -109,7 +109,7 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
 
   // 겹침 회귀 — 세로바 요소가 서로를 덮지 않는다(한 흐름이 된 시점·치수 포함 — 각 버튼의
   // 가운데를 실제로 그 버튼이 받는다. web2-10의 «둘째 열» 사고의 재발 방지 그대로).
-  for (const id of ['dim-toggle', 'btn-draw-view', 'btn-save-view']) {
+  for (const id of ['dim-toggle', 'btn-draw-view']) {
     const hit = await page.evaluate((i) => {
       const t = document.getElementById(i)!
       const r = t.getBoundingClientRect()

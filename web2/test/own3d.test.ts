@@ -42,7 +42,7 @@ function wallAndWindow(own3d: boolean) {
 /** 「가이드라인을 전부 지운다」 — 저장 → 획 제거 → 다시 열기(4-b의 «손으로 지운
  *  파일» 조항 그대로. .brnl 왕복이 함께 검증된다 — own3 직렬화 포함). */
 function eraseByReload(s: ReturnType<typeof session>, ids: number[]) {
-  const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: s.app.savedViews })
+  const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId })
   const data = parseBrnl(json)
   expect(data).not.toBeNull()
   data!.doc.strokes = data!.doc.strokes.filter(st => !ids.includes(st.id))
@@ -86,12 +86,12 @@ describe('4-b — 소유·하위호환 (깃발 꺼짐 = 종전과 동일)', () =
   it('깃발 꺼짐: own3를 만들지도 읽지도 않는다 — .brnl이 종전과 같다', () => {
     const { s } = wallAndWindow(false)
     expect(s.app.doc.strokes.some(st => st.own3)).toBe(false)
-    const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: s.app.savedViews })
+    const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId })
     expect(json.includes('own3')).toBe(false)         // 저장 파일도 종전 그대로
   })
   it('.brnl 왕복 — own3가 보존되고 복원 후에도 불변식이 선다', () => {
     const { s } = wallAndWindow(true)
-    const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: s.app.savedViews })
+    const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId })
     const data = parseBrnl(json)!
     const frozen = data.doc.strokes.filter(st => st.own3)
     expect(frozen.length).toBeGreaterThanOrEqual(7)
@@ -103,7 +103,7 @@ describe('4-b — 소유·하위호환 (깃발 꺼짐 = 종전과 동일)', () =
   })
   it('모양이 틀린 own3는 그 필드만 버린다 — 문서는 산다(옛 파일·손상 방어)', () => {
     const { s } = wallAndWindow(true)
-    const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: s.app.savedViews })
+    const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId })
     const raw = JSON.parse(json)
     raw.strokes.find((st: any) => st.own3).own3 = { a: { x: 1 }, b: null, axis: 3 }  // 손상
     const data = parseBrnl(JSON.stringify(raw))
@@ -338,7 +338,7 @@ describe('4차 [46] — 지우개 조각의 own3 승계: 어버이의 3D 직선�
 describe('4차 [48] — own3가 없는 옛 파일을 깃발 켠 앱이 연다', () => {
   it('열리고, 닫힌 문서라 그 자리에서 굳는다(§8 이행 — 한 번 사슬로 올리고 굳히면 끝)', () => {
     const { s } = wallAndWindow(false)      // 옛 앱 형태(own3 없음)
-    const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: s.app.savedViews })
+    const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId })
     expect(json.includes('own3')).toBe(false)
     const s2 = session(1200, 800)
     setOwn3d(s2.app, true)
@@ -365,7 +365,7 @@ describe('4차 [45] — 원장: 국면별 최대 어긋남 (stage0/out/own3d_inv
     // ① 신선(굳힘 직후) ② 왕복(.brnl) ③ 가이드 삭제 후
     const { s, guide } = wallAndWindow(true)
     const fresh = devMax(s.app)
-    const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: s.app.savedViews })
+    const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId })
     loadDoc(s.app, parseBrnl(json)!)
     const roundtrip = devMax(s.app)
     eraseByReload(s, [guide.id])
@@ -417,7 +417,7 @@ describe('web2-14 1번 2차 [15] — 치수 대체와 «own3는 안 덮는다»�
     const mm1 = len3(sub3(g1.b3, g1.a3)) * s.app.lift.mmPerUnit!
     expect(Math.abs(mm1 - 2500)).toBeLessThan(1e-6)
     // .brnl 왕복 — own3(원값)와 dim이 각각 저장되고, 다시 열어도 길이가 dim이다
-    const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: s.app.savedViews })
+    const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId })
     loadDoc(s.app, parseBrnl(json)!)
     const g2 = s.app.lift.lifted.get(E.id)!
     const mm2 = len3(sub3(g2.b3, g2.a3)) * s.app.lift.mmPerUnit!

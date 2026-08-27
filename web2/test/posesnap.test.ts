@@ -14,7 +14,7 @@
 import { describe, it, expect } from 'vitest'
 import { session } from './session'
 import { W, H } from './fixtures'
-import { setPose, orbitPivot, orbitBy, saveView, gotoView, commitStroke, beginErase, eraseAt, endErase, type App } from '../src/app/state'
+import { setPose, orbitPivot, orbitBy, addSheet, gotoSheet, commitStroke, beginErase, eraseAt, endErase, type App } from '../src/app/state'
 import { createAutoLevel } from '../src/app/autolevel'
 import { isLevel, forwardOf, yawDir, snapAngle, POSE_SNAP_RAD } from '../src/core/level'
 import { poseForElem } from '../src/core/viewcube'
@@ -102,10 +102,10 @@ describe('임계 밖 — 기울인 채 둔다 (재현: 수리 전에는 무조�
     const c = clock()
     const al = createAutoLevel(app, c.now)
     al.grab(); orbitBy(app, -160, 120)
-    saveView(app)
+    const sh = addSheet(app)
     al.release()
     setPose(app, { p: { x: 0, y: C.EYE_HEIGHT, z: 0 }, q: { x: 0, y: 0, z: 0, w: 1 } })
-    gotoView(app, 0); al.touch()
+    gotoSheet(app, sh.id); al.touch()
     const tilt = pitchDeg(app.pose)
     expect(Math.abs(tilt)).toBeGreaterThan(8.5)
     settle(app, c, al)

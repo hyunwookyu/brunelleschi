@@ -48,7 +48,7 @@ test('2-c ④ 배선 — 옛 자동 저장(v1·지평선 520)이 변환을 지�
         { id: 1, a: { x: 100, y: 520 }, b: { x: 1100, y: 520 } },
         { id: 2, a: { x: 500, y: 620 }, b: { x: 600, y: 595 } },
       ],
-      faces: [], unit: 'mm', nextId: 3, savedViews: [],
+      faces: [], unit: 'mm', nextId: 3,
     }))
   })
   await boot(page)

@@ -11,7 +11,9 @@ function sampleData() {
   const b = constructedDoc()
   b.add(500, 500, 500, 300)
   b.add(500, 300, 700, 350, { p: v3(1, 2, 3), q: QID })
-  return { doc: b.doc, nextId: 99, savedViews: [{ pose: { p: v3(0, 0, 5), q: QID }, view: { s: 2, ox: 10, oy: -5 } }] }
+  // 종이 하나(web2-19 2부) — 옛 savedViews 표본의 자리를 잇는다
+  b.doc.sheets.push({ id: 98, name: '종이 2', pose: { p: v3(0, 0, 5), q: QID }, view: { s: 2, ox: 10, oy: -5 } })
+  return { doc: b.doc, nextId: 99 }
 }
 
 /** 점별 입력이 실린 표본(web2-11 1-c) — raw 4점과 나란한 배열들 */
@@ -37,7 +39,7 @@ describe('.brnl 저장·복원', () => {
     expect(back.doc.frame).toEqual(d.doc.frame)
     expect(back.doc.strokes).toEqual(d.doc.strokes)
     expect(back.nextId).toBe(99)
-    expect(back.savedViews).toEqual(d.savedViews)
+    expect(back.doc.sheets).toEqual(d.doc.sheets)
     // 파생(카메라)이 저장 안 됐는데도 복원 후 같은 계산이 나온다
     const l1 = liftAll(d.doc)
     const l2 = liftAll(back.doc)
@@ -84,7 +86,7 @@ describe('.brnl 저장·복원', () => {
         { id: 1, a: { x: 100, y: 400 }, b: { x: 1100, y: 400 } },
         { id: 2, a: { x: 500, y: 500 }, b: { x: 620, y: 470 }, raw: [{ x: 500, y: 500 }, { x: 560, y: 485 }, { x: 620, y: 470 }], mat: { grade: 'HB', press: 0.42 } },
       ],
-      faces: [], unit: 'mm', nextId: 3, savedViews: [],
+      faces: [], unit: 'mm', nextId: 3,
     })
     const back = parseBrnl(old)!
     expect(back).not.toBeNull()
@@ -177,46 +179,37 @@ describe('내보내기', () => {
   })
 })
 
-// ── 뷰 썸네일(web2-12 5번) — 선택 필드·하위호환·강등 규약 ─────────────────────
-describe('savedViews.thumb (web2-12 5번)', () => {
+// ── 종이 썸네일(web2-12 5번 → web2-19 2부: 종이로 이사) — 선택 필드·하위호환·강등 규약 ──
+describe('sheets[].thumb (web2-12 5번 → web2-19)', () => {
   const withThumb = () => {
     const d = sampleData()
-    d.savedViews = ([{
-      pose: { p: { x: 0, y: 1.6, z: 0 }, q: { x: 0, y: 0, z: 0, w: 1 } },
-      view: { s: 1, ox: 0, oy: 0 },
-      thumb: 'data:image/jpeg;base64,QUJD',
-    }] as BrnlData['savedViews'])
+    d.doc.sheets[1]!.thumb = 'data:image/jpeg;base64,QUJD'
     return d
   }
 
   it('왕복 — thumb가 살아서 돌아온다(선택 필드)', () => {
     const back = parseBrnl(serializeBrnl(withThumb()))!
-    expect(back.savedViews[0]!.thumb).toBe('data:image/jpeg;base64,QUJD')
+    expect(back.doc.sheets[1]!.thumb).toBe('data:image/jpeg;base64,QUJD')
   })
 
-  it('옛 파일(thumb 없음)이 그대로 열린다 — 하위호환 팔', () => {
-    const d = sampleData()
-    d.savedViews = [{
-      pose: { p: { x: 0, y: 1.6, z: 0 }, q: { x: 0, y: 0, z: 0, w: 1 } },
-      view: { s: 1, ox: 0, oy: 0 },
-    }]
-    const back = parseBrnl(serializeBrnl(d))!
-    expect(back.savedViews).toHaveLength(1)
-    expect(back.savedViews[0]!.thumb).toBeUndefined()
+  it('thumb 없는 종이가 그대로 열린다 — 하위호환 팔', () => {
+    const back = parseBrnl(serializeBrnl(sampleData()))!
+    expect(back.doc.sheets).toHaveLength(2)
+    expect(back.doc.sheets[1]!.thumb).toBeUndefined()
   })
 
-  it('새 파일(version 2)은 옛 앱(b6980c9 파서 스냅샷)이 거부한다 — thumb 이전에 version에서 끊긴다', () => {
+  it('새 파일(version 4)은 옛 앱(b6980c9 파서 스냅샷)이 거부한다 — thumb 이전에 version에서 끊긴다', () => {
     expect(parseBrnlLegacy(serializeBrnl(withThumb()))).toBeNull()
   })
 
-  it('반례: 모양이 틀린 thumb는 **그 필드만 강등**된다 — 뷰(포즈)는 산다', () => {
+  it('반례: 모양이 틀린 thumb는 **그 필드만 강등**된다 — 종이(포즈)는 산다', () => {
     for (const bad of [123, 'http://evil/img.png', 'data:image/png;base64,' + 'A'.repeat(300001)]) {
       const r = JSON.parse(serializeBrnl(withThumb()))
-      r.savedViews[0].thumb = bad
+      r.sheets[1].thumb = bad
       const back = parseBrnl(JSON.stringify(r))!
       expect(back).not.toBeNull()
-      expect(back.savedViews).toHaveLength(1)
-      expect(back.savedViews[0]!.thumb).toBeUndefined()
+      expect(back.doc.sheets).toHaveLength(2)
+      expect(back.doc.sheets[1]!.thumb).toBeUndefined()
     }
   })
 })

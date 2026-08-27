@@ -3,7 +3,7 @@
 
 import { describe, it, expect } from 'vitest'
 import {
-  createApp, commitStroke, undo, redo, clearAll, saveView, setPose, setView, type App,
+  createApp, commitStroke, undo, redo, clearAll, addSheet, setPose, setView, type App,
 } from '../src/app/state'
 import { DRAW_POSE } from '../src/core/camera'
 import { pt, v3, QID } from '../src/core/vec'
@@ -16,7 +16,7 @@ function fullApp(): App {
   commitStroke(app, pt(500, 500), pt(400, 475)) // vp (100,400) — 같은 모서리에서
   commitStroke(app, pt(500, 500), pt(500, 300)) // 앵커 — 3D로
   commitStroke(app, pt(500, 300), pt(700, 350)) // 연쇄
-  saveView(app)
+  addSheet(app)
   return app
 }
 
@@ -35,7 +35,7 @@ describe('비우기', () => {
     // 소실점이 사라진다 — 지평선(H/2)·기본 카메라는 상시다(web2-17)
     expect(app.lift.an.horizonY).toBe(400)
     expect(app.lift.an.vps).toHaveLength(0)
-    expect(app.savedViews).toHaveLength(0)
+    expect(app.doc.sheets).toHaveLength(1)   // 종이도 처음(작도 한 장 — web2-19 2부)
     expect(app.nextId).toBe(1)
   })
 

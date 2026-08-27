@@ -122,6 +122,13 @@ export function initPaperbar(app: App, host: HTMLElement, hooks: PaperbarHooks):
     return row
   }
 
+  /** 활성 표시만 제자리 갱신 — 탭 요소를 안 갈아치운다(dblclick·팝업 앵커가 산다) */
+  function updateActive() {
+    for (const el of host.querySelectorAll<HTMLElement>('.ptab[data-sheet]')) {
+      el.classList.toggle('on', Number(el.dataset.sheet) === app.activeSheet)
+    }
+  }
+
   function render() {
     closePop()
     host.textContent = ''
@@ -132,19 +139,23 @@ export function initPaperbar(app: App, host: HTMLElement, hooks: PaperbarHooks):
       tab.textContent = s.name
       tab.title = s.pose ? s.name : `${s.name} — 작도 시점`
       // 탭 = 그 종이로. 이미 활성이어도 다시 그 포즈로(구도를 손으로 돌렸다 돌아오는 몸짓).
+      // ⚠ 여기서 render()를 부르지 않는다 — 탭 요소가 갈리면 **두 번째 탭(dblclick)이
+      // 죽은 요소에 떨어져** 이름 편집이 영영 안 열린다. 활성 표시만 제자리에서 바꾼다.
       tab.addEventListener('click', () => {
+        if (lpFired) { lpFired = false; return }   // 길게 누른 손을 뗀 것 — 이동 아님
         gotoSheet(app, s.id)
         hooks.onGoto()
-        render()
+        updateActive()
       })
       tab.addEventListener('dblclick', () => beginRename(tab, s.id))
       // 길게 누르기 — 이동 허용은 오스냅 반경(8px)을 재사용한다(새 숫자를 안 짓는다 #54:
       // «누른 자리에서 벗어나지 않았다»는 같은 물음이다). 시간은 C.PAPER_LONGPRESS_MS.
       let lpTimer: number | undefined
       let lpStart: { x: number; y: number } | null = null
+      let lpFired = false
       tab.addEventListener('pointerdown', e => {
         lpStart = { x: e.clientX, y: e.clientY }
-        lpTimer = window.setTimeout(() => { lpTimer = undefined; openPop(tab, s.id) }, C.PAPER_LONGPRESS_MS)
+        lpTimer = window.setTimeout(() => { lpTimer = undefined; lpFired = true; openPop(tab, s.id) }, C.PAPER_LONGPRESS_MS)
       })
       const cancel = () => { clearTimeout(lpTimer); lpTimer = undefined; lpStart = null }
       tab.addEventListener('pointerup', cancel)

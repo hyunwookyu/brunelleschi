@@ -3,7 +3,7 @@
 // 실행취소는 op 단위다: 획 추가 op, 지우개 한 번의 드래그 op.
 // 그림만 되돌린다 — 작도(카메라)는 op에 들어가지 않는다.
 
-import { emptyDoc, type Doc, type Stroke, type Face, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
+import { emptyDoc, DRAW_SHEET_ID, type Doc, type Stroke, type Face, type Sheet, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
 import { isInk } from '../core/material'
 export type { ViewOffset }
 import { liftAll, closestOnLineToRay, type LiftResult } from '../core/lift'
@@ -105,8 +105,9 @@ export interface App {
    *  `view`를 움직이므로 fadePose만으로는 판정이 제스처 중에 떨린다. 잡는 순간 굳고
    *  놓으면 풀린다(fadePose와 한 쌍 — beginNavHold/endNavHold). 읽기는 fadeRefView 하나다. */
   fadeView: ViewOffset | null
-  /** 저장된 시점 */
-  savedViews: { pose: CamPose; view: ViewOffset; thumb?: string }[]
+  /** **활성 종이**(web2-19 2부) — Doc.sheets 중 하나의 id. 하나만 활성이다(지시 2-a).
+   *  런타임 상태라 저장하지 않는다(파일을 열면 작도 종이에서 시작한다). */
+  activeSheet: number
   /** 치수 스냅(web2-08 지시 4-7) — **기본 꺼짐**(옵션). 켜면 그리는 동안 실제 길이가
    *  `dimSnapStep`(mm)의 배수로 맞춰진다 — 표시만이 아니다. */
   dimSnap: boolean
@@ -190,7 +191,7 @@ export function createApp(W: number, H: number): App {
     drawView: null,
     fadePose: null,
     fadeView: null,
-    savedViews: [],
+    activeSheet: DRAW_SHEET_ID,
     dimSnap: false,
     dimSnapStep: 50,
     dimExact: false,
@@ -538,34 +539,68 @@ export function resetPose(app: App) {
   setPose(app, DRAW_POSE)
 }
 
-export function saveView(app: App, thumb?: string) {
-  app.savedViews.push({
+/** 「+」 = **지금 보고 있는 포즈·뷰를 새 종이로 저장**(web2-19 2-c — 빈 장을 먼저
+ *  만들지 않는다: 사람이 답한 셋의 3 「+는 각도를 찾은 뒤 저장하는 것」).
+ *  id는 획·면과 한 통(nextId — 지시 2-b). 이름은 「종이 N」, 띠에서 바로 편집한다.
+ *  썸네일은 저장 시점에 굽는다(㉮ — 옛 saveView의 근거 그대로: 열 때 다시 그리면
+ *  «펼치기»가 무거워진다. 바이트 몫은 views_thumb 원장). 만든 종이가 활성이 된다. */
+export function addSheet(app: App, thumb?: string): Sheet {
+  const s: Sheet = {
+    id: app.nextId++,
+    name: `종이 ${app.doc.sheets.length + 1}`,
     pose: { p: { ...app.pose.p }, q: { ...app.pose.q } },
     view: { ...app.view },
-    // 썸네일(web2-12 5번) — 저장 시점에 굽는다(㉮): 열 때 다시 그리려면 뷰마다 장면을
-    // 재사영해야 해서 «펼치기»가 무거워진다. 파일이 커지는 몫은 실측 원장이 든다
-    // (views_thumb_web2.json — .brnl은 선택 필드라 하위호환 그대로).
     ...(thumb ? { thumb } : {}),
-  })
+  }
+  app.doc.sheets.push(s)
+  app.activeSheet = s.id
+  for (const l of app.listeners) l() // 자동 저장이 듣는다
+  return s
+}
+
+/** 종이 삭제 — **작도 종이(배열 0)는 못 지운다**(늘 있다 — 지시 2-b). 획은 종이에
+ *  속하지 않으므로 **아무 획도 안 지워진다**(회귀 ⑤). 실행취소 대상이 아니다
+ *  (web2-12 deleteView 규약 그대로 — ⚠⚠ 다음 회차에 겹이 종이에 붙으면 이 규약이
+ *  바뀐다: 종이를 지우는 것이 획을 지우는 일이 된다. DEFERRED에 올렸다).
+ *  보고 있던 종이를 지우면 작도 종이로 돌아온다(빈 자리를 안 남긴다). */
+export function deleteSheet(app: App, id: number) {
+  const i = app.doc.sheets.findIndex(s => s.id === id)
+  if (i <= 0) return
+  app.doc.sheets.splice(i, 1)
+  if (app.activeSheet === id) gotoSheet(app, app.doc.sheets[0]!.id)
   for (const l of app.listeners) l() // 자동 저장이 듣는다
 }
 
-/** 뷰 삭제(web2-12 5번) — **실행취소 대상이 아니다**: 실행취소 스택은 문서(획·면)
- *  전용이고(경계 유지 — 비우기·치수와 같은 규칙), 뷰는 잃어도 다시 저장이 탭 하나라
- *  잃는 비용이 낮다(지시 문면 「뷰 삭제는 가볍다」를 이렇게 읽었다 — 근거는 NOTES). */
-export function deleteView(app: App, i: number) {
-  if (i < 0 || i >= app.savedViews.length) return
-  app.savedViews.splice(i, 1)
+/** 이름 바꾸기 — 작도 종이도 이름은 바꿀 수 있다(지시 2-b — 못 지울 뿐이다) */
+export function renameSheet(app: App, id: number, name: string) {
+  const s = app.doc.sheets.find(x => x.id === id)
+  const v = name.trim()
+  if (!s || !v || s.name === v) return
+  s.name = v
   for (const l of app.listeners) l() // 자동 저장이 듣는다
+}
+
+/** 탭 = 그 종이로. **작도 종이는 pose를 안 담으므로** 정본 둘(DRAW_POSE·drawView)로
+ *  간다(resetPose — #54: 여기 또 담으면 출처가 둘이 된다. 반증 팔이 실제로 담아 확인). */
+export function gotoSheet(app: App, id: number) {
+  const s = app.doc.sheets.find(x => x.id === id)
+  if (!s) return
+  app.activeSheet = id
+  if (s.pose && s.view) {
+    app.view = { ...s.view }
+    setPose(app, { p: { ...s.pose.p }, q: { ...s.pose.q } })
+  } else {
+    resetPose(app)
+  }
 }
 
 /** .brnl 복원 — 문서·시점만 갈아끼우고 나머지는 전부 다시 계산.
  *  `drawView`(web2-17 3-c)가 있으면 그 화면으로 연다 — 없으면(옛 파일) 원점.
  *  프레임 ≠ 창의 합성은 호출부의 `fitViewToFrame`이 얹는다(`composeView`). */
-export function loadDoc(app: App, data: { doc: Doc; nextId: number; savedViews: App['savedViews']; drawView?: ViewOffset | null }) {
+export function loadDoc(app: App, data: { doc: Doc; nextId: number; drawView?: ViewOffset | null }) {
   app.doc = data.doc
   app.nextId = data.nextId
-  app.savedViews = data.savedViews
+  app.activeSheet = data.doc.sheets[0]!.id   // 연 문서는 작도 종이에서 시작한다
   app.drawView = data.drawView ? { ...data.drawView } : null
   app.undoStack = []
   app.redoStack = []
@@ -587,7 +622,7 @@ export function clearAll(app: App, W: number, H: number) {
   app.nextId = 1
   app.undoStack = []
   app.redoStack = []
-  app.savedViews = []
+  app.activeSheet = app.doc.sheets[0]!.id   // 비우면 종이도 처음(작도 한 장)이다
   app.activeErase = null
   app.drawView = null   // 선언도 버린다(web2-17 3-b) — 다음 첫 획이 새로 굳힌다
   app.horizonPref = null   // 자동으로 돌아간다(web2-17 5-a — 비우기는 처음부터다)
@@ -596,12 +631,6 @@ export function clearAll(app: App, W: number, H: number) {
   recompute(app)
 }
 
-export function gotoView(app: App, i: number) {
-  const v = app.savedViews[i]
-  if (!v) return
-  app.view = { ...v.view }
-  setPose(app, { p: { ...v.pose.p }, q: { ...v.pose.q } })
-}
 
 /** 조작 제스처 시작 — 감쇠 판정 동결(web2-14 3번: 돌리는 동안 아무 일도 안 일어난다).
  *  이미 동결 중이면(연속 제스처) 처음 값을 지킨다 — 매 프레임 갱신하면 동결이 아니다. */

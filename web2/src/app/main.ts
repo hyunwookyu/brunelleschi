@@ -1,6 +1,7 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, saveView, deleteView, gotoView, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, type Tool } from './state'
+import { initPaperbar } from './paperbar'
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
@@ -55,7 +56,7 @@ import type { StrokeCapStats } from './input'
 let inputApi: { strokeStats: () => StrokeCapStats } | null = null
 /** 지금 문서의 .brnl 크기 — 저장 버튼과 같은 직렬화라 «저장하면 이 크기»다(1-f) */
 const brnlBytes = () =>
-  new Blob([serializeBrnl({ doc: app.doc, nextId: app.nextId, savedViews: app.savedViews, drawView: app.drawView })]).size
+  new Blob([serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView })]).size
 const diagPanel = initDiagPanel(
   document.getElementById('buildid')!, document.getElementById('diagpanel')!,
   () => {
@@ -221,7 +222,7 @@ app.listeners.push(() => {
       // 옛 열쇠도 같이 지운다 — 안 지우면 다음 부팅의 «옛 열쇠 이행»이 비운 그림을 되살린다
       if (app.doc.strokes.length === 0) { localStorage.removeItem(AUTOSAVE_KEY); localStorage.removeItem(AUTOSAVE_KEY_OLD); return }
       localStorage.setItem(AUTOSAVE_KEY, serializeBrnl({
-        doc: app.doc, nextId: app.nextId, savedViews: app.savedViews, drawView: app.drawView,
+        doc: app.doc, nextId: app.nextId, drawView: app.drawView,
       }))
     } catch {
       // 큰 문서로 quota가 넘칠 수 있다 — **조용히 넘어가지 않는다**(한 번만 알린다)
@@ -623,7 +624,7 @@ function download(name: string, text: string, type: string) {
 }
 document.getElementById('btn-save')!.addEventListener('click', () => {
   download('drawing.brnl', serializeBrnl({
-    doc: app.doc, nextId: app.nextId, savedViews: app.savedViews, drawView: app.drawView,
+    doc: app.doc, nextId: app.nextId, drawView: app.drawView,
   }), 'application/json')
   // 성공 알림(web2-10 지시 5) — 4-b(「알림은 오류만」)의 예외다: 다운로드는 태블릿
   // PWA에서 화면에 아무 흔적이 없어 «됐는지»를 알 길이 없고, 모르고 또 누르거나
@@ -635,7 +636,7 @@ document.getElementById('btn-open')!.addEventListener('click', () => fileOpen.cl
 function applyOpen(data: NonNullable<ReturnType<typeof parseBrnl>>) {
   loadDoc(app, data)
   fitViewToFrame()
-  syncViewButtons()
+  paperbar.sync()
   unitSel.value = app.doc.unit                 // 문서의 단위가 패널에 보인다(4-6)
 }
 fileOpen.addEventListener('change', async () => {
@@ -684,7 +685,7 @@ function doClear() {
   unitSel.value = app.doc.unit
   try { localStorage.removeItem(AUTOSAVE_KEY); localStorage.removeItem(AUTOSAVE_KEY_OLD) } catch { /* 저장소가 없으면 지울 것도 없다 */ }
   draft = null; hover = null; eraserPos = null; facePrev = null // 지운 획을 가리키던 표식이 남지 않게
-  syncViewButtons()
+  paperbar.sync()
   invalidate()
 }
 
@@ -705,12 +706,11 @@ document.getElementById('sidebar-toggle')!.addEventListener('click', () => {
   sidebar.classList.toggle('folded')
 })
 
-// 시점 저장·복귀(web2-12 5번) — 번호 나열 대신 **썸네일**: 뷰 버튼을 누르면 장면
-// 썸네일이 펼쳐지고 눈으로 보고 고른다. 삭제(✕)도 여기 있다(지금까지는 지우는 길이 없었다).
-const viewsEl = document.getElementById('views')!
+// 종이 탭(web2-19 2부) — 시점 저장·복귀·썸네일·삭제가 전부 **띠 하나**로 옮겨 왔다
+// (web2-12 5번의 뷰 팝업을 대신한다 — 「지금 어느 장인가」는 상태 표시라 늘 떠 있어야 한다).
 
 /** 지금 화면의 썸네일 — 겹 순서대로(gl → brushc → ink) 종이색 위에 합성해 줄인다.
- *  저장 시점에 굽는다(㉮ — saveView 머리주석). JPEG: 사진형 합성이라 PNG보다 훨씬 작다. */
+ *  저장 시점에 굽는다(㉮ — addSheet 머리주석). JPEG: 사진형 합성이라 PNG보다 훨씬 작다. */
 function captureThumb(): string {
   const t = document.createElement('canvas')
   const ratio = H / W
@@ -726,82 +726,10 @@ function captureThumb(): string {
   return t.toDataURL('image/jpeg', 0.72)
 }
 
-let viewsPop: HTMLElement | null = null
-function closeViewsPop() { viewsPop?.remove(); viewsPop = null }
-function openViewsPop() {
-  closeViewsPop()
-  const anchor = document.getElementById('btn-views')!
-  const r = anchor.getBoundingClientRect()
-  viewsPop = document.createElement('div')
-  viewsPop.id = 'views-pop'
-  app.savedViews.forEach((v, i) => {
-    const row = document.createElement('div')
-    row.className = 'vrow'
-    const pick = document.createElement('button')
-    pick.className = 'vpick'
-    pick.title = `저장한 시점 ${i + 1}`
-    if (v.thumb) {
-      const img = document.createElement('img')
-      img.src = v.thumb
-      img.alt = `시점 ${i + 1}`
-      pick.append(img)
-    } else {
-      pick.textContent = String(i + 1)   // 옛 파일 — 썸네일이 없다(하위호환)
-    }
-    pick.addEventListener('click', () => { gotoView(app, i); autolevel.touch(); closeViewsPop() })
-    const del = document.createElement('button')
-    del.className = 'vdel'
-    del.textContent = '✕'
-    del.title = '이 시점을 지운다'
-    // 확인 한 번(2차 리뷰어 [7]) — 삭제는 실행취소 밖이라 4번 규칙(«실행취소 밖 파괴
-    // 조작은 확인이 유일한 방어선»)이 여기에도 걸린다. 같은 confirmNear·같은 배치 규칙.
-    del.addEventListener('click', () =>
-      confirmNear(del, `시점 ${i + 1}을 지운다.`, { label: '지운다', onPick: () => { deleteView(app, i); openViewsPop() } }))
-    row.append(pick, del)
-    viewsPop!.append(row)
-  })
-  document.body.append(viewsPop)
-  viewsPop.style.right = `${Math.round(window.innerWidth - r.left + 10)}px`
-  // ⚠ top 클램프는 **이미지가 디코드될 때마다 다시** 잰다(web2-17에서 발견한 잠복 결함).
-  // 초판은 append 직후 offsetHeight 한 번으로 고정했는데, 썸네일 <img>는 data URL도
-  // 비동기 디코드라 그 순간 높이가 과소였다 — 뒤늦게 자라며 화면 밖으로 넘쳤다
-  // (20뷰에서 top 112 + 높이 792 = 904 > 800 실측). 썸네일이 커진 이 회차(상시 지평선이
-  // 실린다)가 그 경쟁을 드러냈을 뿐 결함은 종전부터 있었다.
-  const reclamp = () => {
-    if (!viewsPop) return
-    viewsPop.style.top = `${Math.round(Math.min(Math.max(6, r.top - 8), window.innerHeight - viewsPop.offsetHeight - 6))}px`
-  }
-  reclamp()
-  for (const img of viewsPop.querySelectorAll('img')) {
-    if (!(img as HTMLImageElement).complete) img.addEventListener('load', reclamp, { once: true })
-  }
-  const away = (e: PointerEvent) => {
-    if (viewsPop && !(e.target instanceof Node && (viewsPop.contains(e.target) || anchor.contains(e.target)))) {
-      closeViewsPop()
-      window.removeEventListener('pointerdown', away, true)
-    }
-  }
-  window.addEventListener('pointerdown', away, true)
-}
-
-/** 뷰 버튼 하나 — 목록은 팝오버에 있다(세로바가 뷰 수만큼 길어지지 않는다 — 3번의 높이 몫) */
-function syncViewButtons() {
-  viewsEl.textContent = ''
-  if (app.savedViews.length === 0) { closeViewsPop(); return }
-  const btn = document.createElement('button')
-  btn.id = 'btn-views'
-  btn.className = 't ico-m'
-  btn.title = `저장한 시점 ${app.savedViews.length}개 — 눌러서 고른다`
-  btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">'
-    + '<rect x="3" y="5.4" width="11" height="8" /><path d="M6 3.4h11v8" /></svg>'
-  btn.addEventListener('click', () => { viewsPop ? closeViewsPop() : openViewsPop() })
-  viewsEl.append(btn)
-}
-document.getElementById('btn-save-view')!.addEventListener('click', () => {
-  saveView(app, captureThumb())
-  syncViewButtons()
+const paperbar = initPaperbar(app, document.getElementById('paperbar')!, {
+  captureThumb,
+  onGoto: () => { autolevel.touch(); invalidate() },
 })
-syncViewButtons() // 자동 저장에서 복원된 시점들
 
 // **되돌리기의 자리**(web2-17 1-d) — 규칙은 안 바꾼다(작도 획은 스택 밖·비우기가 답이다).
 // 새 진입로에서는 첫 획이 곧 소실점 획인 경우가 흔해 «되돌리기가 아무 일도 안 하는» 장면이

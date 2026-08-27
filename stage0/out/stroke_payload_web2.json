@@ -6,8 +6,8 @@
   "seed": 20260826,
   "note": "press+tiltX+tiltY 세 배열(twist 없음 — 관측된 축만 싣는 규칙과 같음)"
  },
- "bytes_before": 183280,
- "bytes_after": 230551,
+ "bytes_before": 183300,
+ "bytes_after": 230571,
  "rawin_bytes_per_point": 12.31,
  "quantization": {
   "press": "round(pressure×8191) — 오차 ≤ 6.10e-5 (Pro Pen 3 선언 8192단계와 같은 분해능)",
@@ -18,7 +18,7 @@
  "press_q_note": "C.PRESS_Q를 바꾸면 이 원장을 재실행하고 AS-C33·DEFERRED web2-11 표의 인용을 고친다(상수 스냅샷 등록부 밖이라 STALE이 자동으로 안 잡힌다 — web2 구조적).",
  "core_raw_refs": 0,
  "core_raw_refs_note": "src/core(file.ts·types.ts 제외)의 .raw/rawIn 참조 수 — 0이면 획 판정·리프팅이 coalesced 점을 안 읽는다(설계 보장의 수. 팔이 0을 강제한다).",
- "legacy_snapshot_sha256_12": "4df1ac272c22",
+ "legacy_snapshot_sha256_12": "ea264543b4f8",
  "legacy_snapshot_note": "test/legacy_web2_10.ts parseBrnlLegacy 본문의 정규화 해시(주석 제거·공백 접기) — 스냅샷이 수정되면 재실행에서 이 값이 갈린다. b6980c9 원본과의 동일성은 2026-08-26 git show 정규화 비교 1회로 확인.",
  "strokes_per_quota": {
   "per_stroke_bytes": 5764,

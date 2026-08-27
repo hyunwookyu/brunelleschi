@@ -467,7 +467,7 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
       { id: 3, a: { x: 700, y: 700 }, b: { x: 400, y: 550 } },
       { id: 4, a: { x: 500, y: 500 }, b: { x: 500, y: 300 } },
     ],
-    nextId: 5, savedViews: [],
+    nextId: 5,
   })
   const asFile = { name: 'sample.brnl', mimeType: 'application/json', buffer: Buffer.from(sample) }
   await page.setInputFiles('#file-open', asFile)

@@ -72,7 +72,7 @@ const distSeg = (p: { x: number; y: number }, a: { x: number; y: number }, b: { 
 }
 
 function eraseByReload(s: ReturnType<typeof session>, ids: number[]) {
-  const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: s.app.savedViews })
+  const json = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId })
   const data = parseBrnl(json)
   expect(data).not.toBeNull()
   data!.doc.strokes = data!.doc.strokes.filter(st => !ids.includes(st.id))

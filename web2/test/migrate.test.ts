@@ -40,6 +40,7 @@ afterAll(() => {
 function shifted(g: any, dy: number): Doc {
   return {
     frame: { W: oracle.W, H: oracle.H },
+    sheets: [],   // 이 문서는 3D 비교 전용이다 — 종이 로직을 안 지난다(web2-19)
     strokes: g.strokes.filter((s: any) => s.id !== 1).map((s: any) => ({
       id: s.id,
       a: { x: s.a.x, y: s.a.y + dy },
@@ -237,8 +238,9 @@ describe('2-c — 옛 .brnl(version 1) 변환', () => {
       }
     }
     expect(worstFace).toBeLessThan(1e-9)
-    // 저장된 뷰 — 화면 그림이 같다: 문서점의 화면 좌표가 이동 전과 같다(oy 보정의 검증)
-    const v = back.savedViews[0]!.view
+    // 저장된 뷰(→ 종이 — web2-19 2부) — 화면 그림이 같다: 문서점의 화면 좌표가 이동 전과
+    // 같다(oy 보정의 검증). 마이그레이션 뒤 배열 0은 작도 종이라 첫 명명 종이는 [1]이다.
+    const v = back.doc.sheets[1]!.view!
     expect(v.s).toBe(1.25)
     // 옛: 문서점 y=620 → 화면 620·1.25 − 48 = 727 / 새: (620+dy)·1.25 + oy′ = 727이어야 한다
     expect((620 + dy) * v.s + v.oy).toBeCloseTo(620 * 1.25 + (-48), 9)
@@ -246,24 +248,24 @@ describe('2-c — 옛 .brnl(version 1) 변환', () => {
     console.log(`[측정] 2-c ① 왕복 — 3D 최악 ${worst.toExponential(3)} · 면 정점 최악 ${worstFace.toExponential(3)}`)
   })
 
-  it('② version 2 자기 왕복 — 저장 → 파싱 → 저장이 같은 문자열', () => {
+  it('② version 4 자기 왕복 — 저장 → 파싱 → 저장이 같은 문자열', () => {
     const first = parseBrnl(oracle.sample.brnl)!            // v1 → 변환된 문서
-    const v2 = serializeBrnl({ doc: first.doc, nextId: first.nextId, savedViews: first.savedViews, drawView: { s: 1.5, ox: 12, oy: -7 } })
+    const v2 = serializeBrnl({ doc: first.doc, nextId: first.nextId, drawView: { s: 1.5, ox: 12, oy: -7 } })
     const again = parseBrnl(v2)!
     expect(again).not.toBeNull()
     expect(again.drawView).toEqual({ s: 1.5, ox: 12, oy: -7 })
-    const v2b = serializeBrnl({ doc: again.doc, nextId: again.nextId, savedViews: again.savedViews, drawView: again.drawView })
+    const v2b = serializeBrnl({ doc: again.doc, nextId: again.nextId, drawView: again.drawView })
     expect(v2b).toBe(v2)
     // drawView 없는 왕복도 같다(열쇠 자체가 없다)
-    const noDv = serializeBrnl({ doc: first.doc, nextId: first.nextId, savedViews: first.savedViews })
+    const noDv = serializeBrnl({ doc: first.doc, nextId: first.nextId })
     const back = parseBrnl(noDv)!
     expect(back.drawView).toBeNull()
-    expect(serializeBrnl({ doc: back.doc, nextId: back.nextId, savedViews: back.savedViews })).toBe(noDv)
+    expect(serializeBrnl({ doc: back.doc, nextId: back.nextId })).toBe(noDv)
   })
 
-  it('③ 거부 — version 3은 거부한다(전방 호환을 흉내내지 않는다)', () => {
+  it('③ 거부 — version 5는 거부한다(전방 호환을 흉내내지 않는다 — 1~4만 받는다)', () => {
     const j = JSON.parse(oracle.sample.brnl)
-    j.version = 3
+    j.version = 5
     expect(parseBrnl(JSON.stringify(j))).toBeNull()
   })
 

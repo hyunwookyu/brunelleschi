@@ -49,6 +49,28 @@ export interface Stroke {
   own3?: { a: V3; b: V3; axis: string | null }
 }
 
+// ── 종이(web2-19 2부) — **명명된 뷰가 「종이」다**(도면집의 한 장) ─────────────
+// 층위 셋의 가운데(지시 2-a): 파일 = 대상 하나 / **종이 = 그 대상을 그린 한 장,
+// 하나만 활성** / 겹(종속 탭·web2-20) = 그 종이 위에 얹은 것.
+// ⚠⚠ BrnlData가 아니라 **Doc**에 산다 — 다음 회차의 겹이 종이를 가리키고 겹은 획을
+// 소유하므로, 종이가 문서 밖에 있으면 그 참조가 문서 경계를 넘는다(지시 2-b).
+// `drawView`는 지금 자리(App/BrnlData 층) 그대로다 — 구도이지 구조가 아니다.
+export interface Sheet {
+  id: number
+  name: string
+  /** 없으면 **작도 종이** — 포즈는 DRAW_POSE, 뷰는 drawView(web2-17). 여기 또 담으면
+   *  출처가 둘이 된다(#54) — 반증 팔이 실제로 담아 ④가 어긋나는 것을 확인한다. */
+  pose?: CamPose
+  view?: ViewOffset
+  thumb?: string
+}
+
+/** 작도 종이의 상수 id — **카운터 밖 예약값**이다. 늘 있고 못 지우는 유일한 종이라
+ *  할당이 아니라 정체다(nextId는 1부터 시작하므로 충돌하지 않는다 — sheets.test가 지킨다).
+ *  나머지 종이의 id는 획·면과 **한 통**(nextId 하나 — 지시 2-b)이다. */
+export const DRAW_SHEET_ID = 0
+export const drawSheet = (): Sheet => ({ id: DRAW_SHEET_ID, name: '작도' })
+
 /** 문서 — 획 목록과 그린 캔버스 크기(CSS px, 첫 획 시점).
  *  소실점·카메라·차수·축은 여기 없다 — 전부 계산이다(원칙 b). */
 export interface Doc {
@@ -56,6 +78,9 @@ export interface Doc {
   strokes: Stroke[]
   /** 사용자가 지정한 면 — **이것만은 파생이 아니다**(아래 「면」 절) */
   faces: Face[]
+  /** 종이(web2-19 2부) — **배열 0이 작도 종이**이고 pose·view가 없다. 늘 있고 못
+   *  지운다(이름은 바꿀 수 있다). 종이가 늘어도 3D는 하나다 — 획은 종이에 안 속한다. */
+  sheets: Sheet[]
   /** **스케일 기준 획** — 첫 치수 «입력»을 받은 획의 id(지시 4-1의 「첫 치수」는 입력
    *  순서다 — 문서 순서가 아니다: 나중에 앞 획에 치수를 주면 스케일이 조용히 그리로
    *  옮겨 가던 결함을 리뷰어 [5]가 잡았다). 사용자의 결정이라 저장한다(면과 같은 급).
@@ -69,7 +94,7 @@ export interface Doc {
 }
 
 export const emptyDoc = (W: number, H: number): Doc =>
-  ({ frame: { W, H }, strokes: [], faces: [], unit: 'mm' })
+  ({ frame: { W, H }, strokes: [], faces: [], sheets: [drawSheet()], unit: 'mm' })
 
 // ── 면 ────────────────────────────────────────────────────────────────────
 // **자동으로 안 만든다.** 닫힌 루프가 생겼다고 면이 아니다 — 방 안의 벽 넷은 방이고

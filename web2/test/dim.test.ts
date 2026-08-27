@@ -237,7 +237,7 @@ describe('저장·복원 — 스케일·단위·치수가 왕복한다', () => {
     const app = s.app
     setDimension(app, post.id, 2500)
     app.doc.unit = 'm'
-    const text = serializeBrnl({ doc: app.doc, nextId: app.nextId, savedViews: [] })
+    const text = serializeBrnl({ doc: app.doc, nextId: app.nextId })
     const back = parseBrnl(text)!
     expect(back.doc.unit).toBe('m')
     expect(back.doc.strokes.find(x => x.id === post.id)!.dim).toBe(2500)
@@ -248,7 +248,7 @@ describe('저장·복원 — 스케일·단위·치수가 왕복한다', () => {
 
   it('옛 파일(열쇠 없음)은 무스케일 mm로 읽힌다 · 틀린 모양은 거부한다', () => {
     const { s } = drawn()
-    const raw = JSON.parse(serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: [] }))
+    const raw = JSON.parse(serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId }))
     delete raw.unit
     const ok = parseBrnl(JSON.stringify(raw))!
     expect(ok.doc.unit).toBe('mm')

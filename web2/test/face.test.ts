@@ -350,7 +350,7 @@ describe('면 — 저장·내보내기', () => {
   it('.brnl 왕복 — 면은 **경계의 정체**만 담기고 좌표는 다시 풀린다', () => {
     const s = triangle()
     toggleFaceAt(s.app, { x: 500, y: 470 })
-    const text = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: [] })
+    const text = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId })
     expect(JSON.parse(text).faces[0].loops[0].edges[0]).toHaveProperty('kind', 'stroke')
     expect(JSON.stringify(JSON.parse(text).faces)).not.toMatch(/"z"/) // 좌표가 없다
     const back = parseBrnl(text)!
@@ -363,7 +363,7 @@ describe('면 — 저장·내보내기', () => {
 
   it('면이 없는 옛 파일도 열린다 — `faces` 열쇠가 없어도 거부 안 한다', () => {
     const raw = JSON.parse(serializeBrnl({
-      doc: triangle().app.doc, nextId: 9, savedViews: [],
+      doc: triangle().app.doc, nextId: 9,
     }))
     delete raw.faces
     const back = parseBrnl(JSON.stringify(raw))!
@@ -371,7 +371,7 @@ describe('면 — 저장·내보내기', () => {
   })
 
   it('모양이 틀린 면은 파일을 거부한다 — 경계 둘짜리 루프', () => {
-    const raw = JSON.parse(serializeBrnl({ doc: triangle().app.doc, nextId: 9, savedViews: [] }))
+    const raw = JSON.parse(serializeBrnl({ doc: triangle().app.doc, nextId: 9 }))
     raw.faces = [{ id: 1, loops: [{ edges: [{ kind: 'stroke', s: 2 }, { kind: 'stroke', s: 3 }] }] }]
     expect(parseBrnl(JSON.stringify(raw))).toBeNull()
   })
@@ -570,7 +570,7 @@ describe('면 — 차수 승격을 견딘다', () => {
   it('.brnl 복원도 같은 자리다 — 파일에는 획 id만 있다', () => {
     const s = wall1pt()
     toggleFaceAt(s.app, { x: 600, y: 420 })
-    const back = parseBrnl(serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, savedViews: [] }))!
+    const back = parseBrnl(serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId }))!
     const lift = liftAll(back.doc)
     const faces = resolveFaces(lift, back.doc.faces)
     expect(faces).toHaveLength(1)

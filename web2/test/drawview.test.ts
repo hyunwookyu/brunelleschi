@@ -81,7 +81,7 @@ describe('3-c — 저장·복원과 프레임 맞춤의 합성', () => {
     panBy(app, 33, -48)
     commitStroke(app, pt(500, 650), pt(700, 650))
     commitStroke(app, pt(500, 650), pt(680, 537.5))
-    return serializeBrnl({ doc: app.doc, nextId: app.nextId, savedViews: app.savedViews, drawView: app.drawView })
+    return serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView })
   }
 
   it('③ 저장 → 복원 → view가 drawView다 · 궤도 뒤 「작도 시점으로」가 그리로 돌아간다', () => {
@@ -148,7 +148,7 @@ describe('3-c — 저장·복원과 프레임 맞춤의 합성', () => {
         { id: 1, a: { x: 100, y: 520 }, b: { x: 1100, y: 520 } },
         { id: 2, a: { x: 500, y: 620 }, b: { x: 620, y: 590 } },
       ],
-      faces: [], unit: 'mm', nextId: 3, savedViews: [],
+      faces: [], unit: 'mm', nextId: 3,
     })
     const data = parseBrnl(v1)!
     expect(data.drawView).toBeNull()

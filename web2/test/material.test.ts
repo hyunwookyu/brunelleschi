@@ -83,7 +83,7 @@ describe('재료의 저장·내보내기', () => {
     const app = appWithConstruction()
     app.grade = '2H'
     commitStroke(app, pt(500, 500), pt(500, 300), undefined, 0.7)
-    const back = parseBrnl(serializeBrnl({ doc: app.doc, nextId: app.nextId, savedViews: [] }))!
+    const back = parseBrnl(serializeBrnl({ doc: app.doc, nextId: app.nextId }))!
     const s = back.doc.strokes.find(x => x.mat?.grade === '2H')!
     expect(s).toBeDefined()
     expect(s.mat!.press).toBeCloseTo(0.7, 9)
@@ -92,7 +92,7 @@ describe('재료의 저장·내보내기', () => {
   it('반례: 모르는 경도는 거부한다', () => {
     const app = appWithConstruction()
     commitStroke(app, pt(500, 500), pt(500, 300))
-    const raw = JSON.parse(serializeBrnl({ doc: app.doc, nextId: app.nextId, savedViews: [] }))
+    const raw = JSON.parse(serializeBrnl({ doc: app.doc, nextId: app.nextId }))
     raw.strokes[raw.strokes.length - 1].mat = { grade: '9B' }
     expect(parseBrnl(JSON.stringify(raw))).toBeNull()
   })

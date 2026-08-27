@@ -141,7 +141,7 @@ describe('니브의 저장·복원', () => {
     const app = built()
     app.tool = 'pen'; app.nib = 2.4
     commitStroke(app, pt(500, 500), pt(600, 475))
-    const back = parseBrnl(serializeBrnl({ doc: app.doc, nextId: app.nextId, savedViews: [] }))!
+    const back = parseBrnl(serializeBrnl({ doc: app.doc, nextId: app.nextId }))!
     const s = back.doc.strokes.find(x => x.mat?.grade === 'INK')!
     expect(s.mat!.w).toBeCloseTo(2.4, 9)
   })
@@ -150,7 +150,7 @@ describe('니브의 저장·복원', () => {
     const app = built()
     app.tool = 'pen'; app.nib = 2
     commitStroke(app, pt(500, 500), pt(600, 475))
-    const raw = JSON.parse(serializeBrnl({ doc: app.doc, nextId: app.nextId, savedViews: [] }))
+    const raw = JSON.parse(serializeBrnl({ doc: app.doc, nextId: app.nextId }))
     for (const bad of [0, -1, C.NIB_MAX + 1, 'x']) {
       raw.strokes[raw.strokes.length - 1].mat.w = bad
       expect(parseBrnl(JSON.stringify(raw))).toBeNull()
@@ -160,7 +160,7 @@ describe('니브의 저장·복원', () => {
   it('반례: 니브가 없는 옛 저장본은 그대로 열린다 — 재료 기본값이 받는다', () => {
     const app = built()
     commitStroke(app, pt(500, 500), pt(500, 300))
-    const raw = JSON.parse(serializeBrnl({ doc: app.doc, nextId: app.nextId, savedViews: [] }))
+    const raw = JSON.parse(serializeBrnl({ doc: app.doc, nextId: app.nextId }))
     for (const s of raw.strokes) if (s.mat) delete s.mat.w
     const back = parseBrnl(JSON.stringify(raw))!
     expect(back).not.toBeNull()

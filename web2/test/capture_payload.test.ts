@@ -41,7 +41,7 @@ function drawing(withIn: boolean) {
       s.rawIn = ri
     }
   }
-  return { doc: b.doc, nextId: 999, savedViews: [] }
+  return { doc: b.doc, nextId: 999 }
 }
 
 describe('점별 입력 저장 비용(1-c 원장)', () => {

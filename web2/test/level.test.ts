@@ -15,7 +15,7 @@ import { describe, it, expect } from 'vitest'
 import { session } from './session'
 import { W, H } from './fixtures'
 import { project, screenAxes, DRAW_POSE } from '../src/core/camera'
-import { setPose, orbitPivot, orbitBy, resetPose, undo, saveView, gotoView, commitStroke, isDrawPose, type App } from '../src/app/state'
+import { setPose, orbitPivot, orbitBy, resetPose, undo, addSheet, gotoSheet, commitStroke, isDrawPose, type App } from '../src/app/state'
 import { createAutoLevel } from '../src/app/autolevel'
 import { isLevel, levelPose, yawDir, forwardOf } from '../src/core/level'
 import { cubeGeom, cubeHit, poseForElem } from '../src/core/viewcube'
@@ -141,8 +141,8 @@ describe('접기 — 상하로 회전한 뒤 놓으면 정렬로 돌아온다', 
     expect(faces).toBeGreaterThan(0)          // 길을 실제로 훑었는가
     expect(anyKept).toBe(false)
 
-    // ③ 저장한 시점 — 저장한 것이 없으면 길이 아니다
-    expect(app.savedViews.length).toBe(0)
+    // ③ 저장한 종이 — 저장한 것이 없으면 길이 아니다(web2-19: 작도 종이만 있다)
+    expect(app.doc.sheets.length).toBe(1)
   })
 
   it('좌우 각도(요)는 새 값 · 눈높이는 **궤도 전** 값이다', () => {
@@ -471,11 +471,11 @@ describe('접기 시점 — 놓으면 잠깐 뒤', () => {
     const c = clock()
     const al = createAutoLevel(app, c.now)
     al.grab(); orbitBy(app, -60, -8)
-    saveView(app)
-    expect(app.savedViews).toHaveLength(1)
+    const sh = addSheet(app)
+    expect(app.doc.sheets).toHaveLength(2)
     al.release()
     setPose(app, DRAW_POSE)
-    gotoView(app, 0)
+    gotoSheet(app, sh.id)
     al.touch()                                  // main.ts가 부르는 자리
     expect(isLevel(app.pose)).toBe(false)       // 불러온 직후는 기울어 있다
     c.advance(C.FOLD_DELAY_MS + 1)
@@ -624,11 +624,11 @@ describe('앱 경로 — autolevel이 앵커를 언제 잡는가', () => {
     setPose(app, { p: v3(app.pose.p.x, 2.4, app.pose.p.z), q: { ...app.pose.q } })
     // 기울어진 시점을 저장했다가 불러온다 — 앵커는 위 «2.4»다
     al.grab(); orbitBy(app, -120, 8)
-    saveView(app)
+    const sh = addSheet(app)
     al.release()
     foldAfterRelease(app, c, al)
     expect(app.pose.p.y).toBeCloseTo(2.4, 6)
-    gotoView(app, 0); al.touch()                          // 기울어진 시점으로 들어온다
+    gotoSheet(app, sh.id); al.touch()                          // 기울어진 시점으로 들어온다
     expect(isLevel(app.pose)).toBe(false)
     c.advance(C.FOLD_DELAY_MS + 1)
     for (let i = 0; i < 200 && (!isLevel(app.pose) || al.folding()); i++) { al.tick(); c.advance(20) }

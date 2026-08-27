@@ -8093,3 +8093,47 @@ dpr2 «5 passed» · 전량 e2e는 회차 마감 절에.
 total 212(`--list` 「Total: 212 tests in 28 files」 대조 — 27+graphite 1파일, 202+10팔).
 단위는 위(491/0/491). 문서 몫: D-W6(안내색 제거 근거) · AS-C61(파선 ✕ 규격 — 눈)
 · DEFERRED 「1-c 분포표」 행.
+
+### 2부 — 종이 탭 (게이트)
+
+**자료 구조(2-b)**: `Sheet {id, name, pose?, view?, thumb?}` · **`Doc.sheets`가 `App.savedViews`를
+대신한다**(⚠⚠ Doc에 두는 근거 — 다음 회차의 겹이 종이를 가리키고 겹은 획을 소유하므로
+종이가 문서 밖이면 참조가 문서 경계를 넘는다). 배열 0 = 작도 종이(pose·view 없음 —
+정본은 DRAW_POSE·drawView 하나씩 #54). **작도 종이 id = 상수 0**(카운터 밖 예약값 —
+nextId는 1부터라 충돌 없음. «한 통»의 목적은 겹 참조의 유일성이고 예약 하나는 그것을
+안 깬다 — 둘째 카운터를 만든 것이 아니다). 나머지 종이 id는 nextId 하나에서 나온다.
+활성 종이(`App.activeSheet`)는 런타임 상태 — 저장 안 함(열면 작도에서 시작).
+
+**.brnl version 4**: sheets 직렬화. **1~4를 받고 5부터 거부**(v3은 쓰인 적 없지만 지시
+2-b 문면 「1~3을 다 받는다」대로 v2와 같은 모양으로 읽는다 — migrate.test ③이 v3 거부
+팔이었는데 v5 거부로 옮겼다). 마이그레이션: savedViews[i] → sheets[i+1](이름 「종이 2」…,
+id는 nextId에서 할당), 작도 종이는 파서가 만든다(이름 「작도」). v4의 깨진 종이는
+**그 종이만 버린다**(문서 거부 없음 — sheets.test가 실제 깨진 파일로 확인). 유효한 모양은
+둘뿐: pose·view **둘 다** 있거나(종이) 둘 다 없거나(작도 — 배열 0만). 작도 종이가 없는
+v4 파일은 앞에 만들어 준다.
+
+**화면(2-c)**: `#topleft`(세로 flex 기둥 — **높이 하드코딩 없음**, web2-20이 아래에 종속 탭
+줄을 붙인다. 회귀 ⑦이 실제로 줄을 붙여 잰다) 안의 `#paperbar` 띠. 늘 떠 있다. 탭 = 그
+종이로 · 「+」 = 지금 포즈·뷰 저장(빈 장 없음) + 바로 이름 편집 · 두 번 탭 = 이름 편집 ·
+**길게 눌러**(C.PAPER_LONGPRESS_MS 500 — 관행값, 이동 허용은 OSNAP_RADIUS 재사용)
+썸네일·이름·삭제. 삭제 확인은 팝업 안 밑줄 단어(confirmNear의 어법 — 그 함수 자체는
+오른쪽 세로바 전용 배치라 왼쪽 탭에서 화면 밖으로 나간다). `#notice`는 띠 **위에 겹쳐**
+뜬다(오류가 있을 때만 뜨므로 자리를 상시 비워 두지 않는다 — 지시 2-c ⚠의 결정).
+`#btn-save-view`·`#views` 팝업은 제거(띠가 대신한다 — views.spec → paperbar.spec).
+⚠ 구현 중 잡은 결함 하나: 탭 click에서 전체 재렌더를 하면 **두 번째 탭(dblclick)이 죽은
+요소에 떨어져** 이름 편집이 영영 안 열린다 — click은 활성 표시만 제자리 갱신(updateActive).
+
+**회귀 팔**: 단위 `sheets.test.ts` 13팔(게이트 ①②⑤ + ③④⑥⑦ + 반증 — 작도 종이에 pose를
+실제로 담아 ④가 어긋나는 것 확인 + v1 oy 보정 유지 + v4 깨진 종이 강등 + v5 거부) ·
+e2e `paperbar.spec.ts` 5팔(③④⑤⑥ 배선 + 이름 편집 + v1 열기 + ⑦ 줄 붙이기 + 비용 원장
+승계 — views_thumb_web2.json에 add_ms·capture_ms·regen_view_ms·brnl_bytes_1/5/20).
+기존 팔 갱신: file.test(sheets 왕복·thumb 강등) · migrate.test(v4 자기왕복·sheets[1] oy) ·
+clear/level/posesnap(addSheet·gotoSheet) · sidebar.spec(btn-save-view 제거) ·
+legacy_web2_10.ts는 **타입만** Omit<Doc,'sheets'>로 좁혔다(파싱 동작 불변 — 스냅샷 유지).
+
+**2부 마감 검증(#69 ㉤) — ⛔⛔ 게이트 판정**: 단위 **504 passed / 0 failed / 504**(55파일 —
+sheets.test 13팔 포함) · 전량 e2e 「**216 passed (7.6m)**」 — passed 216 / failed 0 /
+total 216(`--list` 「Total: 216 tests in 28 files」 — views.spec 2팔이 빠지고 paperbar.spec
+4팔이 들어왔다: 212−4+8=216 파일 수 28 유지) · 타입 0오류 · 빌드 통과.
+**게이트 ①(마이그레이션)·②(왕복)·⑤(삭제가 획을 안 지운다) 전부 섰다 — 서면 배포하지
+말고 그대로 3부로(지시 문면).**
