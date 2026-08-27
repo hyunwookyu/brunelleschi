@@ -142,6 +142,9 @@ async function hoverOsnap(page: Page, moves = 40) {
   }
 }
 
+// ⚠⚠ **`--workers=1`로 돌린다.** 두 프로젝트를 동시에 돌리면 서로 CPU를 다퉈 절대값이
+// 배 가까이 부풀고, 전/후 비교가 무효가 된다(이 회차 실측: 400획 전량 재그리기가 워커 1에서
+// 186ms인데 워커 2에서 343ms였다). 기울기도 같이 흔들린다 — 시간을 재는 팔의 규율이다.
 test('0부 — 비용 원장(획 50·100·200·400 × rawIn 0·50·100%): 전량흑연·syncStrokes·궤도프레임·osnap', async ({ page }, testInfo) => {
   test.setTimeout(900_000)
   const table: Record<string, Record<string, unknown>> = {}
@@ -238,7 +241,8 @@ test('0부 — 비용 원장(획 50·100·200·400 × rawIn 0·50·100%): 전량
     mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
     writeFileSync(out, JSON.stringify({
       what: 'web2-18 0부 — 고치기 전 비용 원장. 획 50·100·200·400 × rawIn 보유 0·50·100%에서 ①전량 흑연 재그리기 ②syncStrokes ③궤도 1프레임 합(3몫) ④포인터 이동 1회 osnap(3몫 분해). 3·4부의 «무엇을 고칠지»를 이 표가 정한다.',
-      phase: 'before',
+      phase: 'after',
+      phase_note: '**1·2부 수리 후** 판. 쌍이 되는 «전» 판은 같은 폴더의 `cost18_web2_before.json`(커밋 923f331 시점)이다. ⚠⚠ **전/후는 같은 실행 조건이어야 한다** — `--workers=1`. 워커 둘로 돌리면 dpr1·dpr2가 CPU를 다퉈 값이 배 가까이 부풀고 비교가 무효가 된다(이 회차에서 실제로 그렇게 나와 그 판을 버렸다).',
       dpr: testInfo.project.name,
       environment: `헤드리스 크로뮴(소프트웨어 GL 가능) · viewport 1200×800 · ${testInfo.project.name} 기록. ⚠ 절대 ms는 이 컨테이너의 값이고 실행 간 변동이 크다(HANDOFF: 9차 121s→1h52m, 원인은 디스크). **판별값은 slope(50→400 배수)다** — O(n)이면 ≈8, O(n²)이면 ≈64. 실기기 값은 다르다: 진단 패널의 ①②③④ 줄이 그 자리다(DEFERRED 실기기 표). dpr2 판은 픽셀이 네 배라 흑연 재그리기가 그만큼 비싸다 — 고해상도 실기기에 가까운 쪽이 그 판이다(D-C3).`,
       fixture_note: '카메라를 닫는 픽스처(지평선+깊이선+수평 앵커 — own3d.spec와 같은 규격) 위에 격자를 누적한다(50→100→200→400). 손 오차를 태웠다(#68 — 끝점마다 2~5px 지터, 시드 고정 LCG). 획은 두 종류를 번갈아 낸다: 이미 3D인 끝점에서 소실점 쪽으로(승격을 노림) · 화면 전역 자유 획(대기가 되기 쉬움). 실제 승격/대기 비율은 각 칸의 scene에 있다 — 의도가 아니라 실측이다.',
