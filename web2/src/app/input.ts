@@ -5,7 +5,7 @@
 import type { App } from './state'
 import {
   orbitPivot, orbitBy, dollyBy, panBy, setPose, beginErase, eraseAt, endErase,
-  screenToDoc, isEraser, toggleFaceAt, facePreview, beginNavHold, endNavHold,
+  screenToDoc, isEraser, toggleFaceAt, facePreview, excludeCandidateAt, beginNavHold, endNavHold,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
 import { updateExtDwell } from '../core/extacq'
@@ -41,6 +41,8 @@ export interface InputCallbacks {
   onFacePreview: (f: { poly: Pt[]; mode: 'add' | 'remove' } | null) => void
   /** 면 지정·해제 결과 — 알림 한 줄이 이것을 읽는다 */
   onFaceToggle: (r: 'added' | 'removed' | 'none') => void
+  /** 면 일괄 후보 모드(web2-21 4부)의 탭 — true = 후보 하나를 뺐다 */
+  onCandidateTap: (excluded: boolean) => void
 }
 
 export function initInput(
@@ -371,7 +373,7 @@ export function initInput(
         cb.onEraserMove(toPt(e))
         return
       }
-      if (app.tool === 'face') { cb.onFacePreview(facePreview(app, toPt(e))); return }
+      if (app.tool === 'face') { cb.onFacePreview(app.faceCandidates ? null : facePreview(app, toPt(e))); return }
       if (draft) {
         if (e.pointerType === 'pen' && e.pressure > 0) pressSamples.push(e.pressure)
         updateDraft(e)
@@ -389,7 +391,8 @@ export function initInput(
         // **접힐 자세(임계 안 기울임)에서는 미리보기가 없다** — 그때 누름은 접기이지 면이
         // 아니다. 머무는 자세(임계 밖)에서는 누름이 면 토글이므로 미리보기도 뜬다(지시 3).
         const acts = isLevel(app.pose) || !pitchSnaps(app.pose, app.lift.an.f, app.lift.an.W)
-        cb.onFacePreview(acts ? facePreview(app, toPt(e)) : null)
+        // 후보 모드에서는 낱개 미리보기가 없다 — 후보 테두리가 이미 «물어보는 중»이다(4-d)
+        cb.onFacePreview(acts && !app.faceCandidates ? facePreview(app, toPt(e)) : null)
         cb.onHover(null)
         return
       }
@@ -435,6 +438,12 @@ export function initInput(
         const p = toPt(e)
         // 끌었으면 취소다 — 탭 대역(`TAP_MAX_PX`)은 찍기와 같은 기준을 쓴다
         if (Math.hypot(p.x - d.x, p.y - d.y) > C.TAP_MAX_PX / app.view.s) return
+        // 면 일괄 후보 모드(web2-21 4부) — 탭은 **배제**다(아닌 것만 탭해서 뺀다).
+        // 후보 밖 탭은 아무 일도 안 한다(확정·취소는 팝오버 — 실수로 안 닫히게).
+        if (app.faceCandidates !== null) {
+          cb.onCandidateTap(excludeCandidateAt(app, d))
+          return
+        }
         cb.onFaceToggle(toggleFaceAt(app, d))
         cb.onFacePreview(facePreview(app, d))
         return

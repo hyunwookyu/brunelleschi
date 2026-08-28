@@ -331,3 +331,30 @@ test('비동기 인식 순서(recSeq) — 늦게 온 옛 결과가 새 결과를
   expect(await page.textContent('#dim-read')).toBe('1')   // 덮지 않았다
   expect(await page.textContent('#pad-read')).toBe('1')
 })
+
+test('겹 획의 첫 치수(web2-21 1-b) — scaleRef가 서지 않고 안내 한 줄 「축척은 바탕 종이의 치수가 정한다」', async ({ page }) => {
+  await build(page)
+  // 트레이싱지를 얹고(3-a 롤 버튼 — 카메라는 닫혀 있다) 그 위에 승격되는 획 하나
+  await page.click('#btn-roll-tracing'); await settle(page)
+  await drawLine(page, 500, 500, 300, 450)
+  const last = await page.evaluate(() => {
+    const a = (window as any).__b2.app
+    const s = a.doc.strokes[a.doc.strokes.length - 1]
+    return { layer: s.layer, lifted: a.lift.lifted.has(s.id) }
+  })
+  expect(last.layer).not.toBeUndefined()
+  expect(last.lifted).toBe(true)
+  // 첫 치수를 겹 획에 쓴다 — 스케일이 서지 않고 안내가 뜬다(값 정본은 dim.test — 여기는 배선)
+  await page.click('#dim-toggle')
+  await writeOne(page, 60)
+  await writeOne(page, 100)
+  await page.click('#pad-keys [data-k="apply"]'); await settle(page)
+  await expect(page.locator('#notice')).toContainText('축척은 바탕 종이의 치수가 정한다')
+  const d = await page.evaluate(() => {
+    const a = (window as any).__b2.app
+    return { scaleRef: a.doc.scaleRef ?? null, mm: a.lift.mmPerUnit, dim: a.doc.strokes[a.doc.strokes.length - 1].dim }
+  })
+  expect(d.scaleRef).toBeNull()
+  expect(d.mm).toBeNull()
+  expect(d.dim).toBe(11)                            // 치수는 남는다 — 바탕이 정하면 읽힌다
+})

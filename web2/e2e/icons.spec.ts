@@ -92,7 +92,11 @@ test('② 선 아이콘 무채색 — 직접 그리는 도구 밖의 svg에 채�
     const out: string[] = []
     for (const svg of document.querySelectorAll('svg')) {
       // 직접 그리는 도구·재료 표현은 밖(대응표 ㉠ — 재료색이 정체다)
-      if (svg.closest('#btn-pencil, #btn-pen, #tray, #oldtools, #btn-eraser-pencil, #btn-eraser-ink, #btn-face, #thick, #boot')) continue
+      // #btn-roll-yellow — **선 아이콘의 유일한 색 예외**(instrument-icons.md 정본:
+      // 옐로 트레이스는 이름 자체가 색이라 고리를 #e9d98a로 채운다 — web2-21 3-a가
+      // 손 띠에 상주시키며 이 팔의 검사 대상에 처음 들어왔다). 트레이싱지 롤은 무채색
+      // 그대로 검사받는다 — 예외는 하나뿐이다.
+      if (svg.closest('#btn-pencil, #btn-pen, #tray, #oldtools, #btn-eraser-pencil, #btn-eraser-ink, #btn-face, #thick, #boot, #btn-roll-yellow')) continue
       for (const el of [svg, ...svg.querySelectorAll('*')]) {
         for (const attr of ['fill', 'stroke']) {
           const v = el.getAttribute(attr)
@@ -109,7 +113,11 @@ test('② 선 아이콘 무채색 — 직접 그리는 도구 밖의 svg에 채�
   const badColor = await page.evaluate(() => {
     const out: string[] = []
     for (const svg of document.querySelectorAll('svg')) {
-      if (svg.closest('#btn-pencil, #btn-pen, #tray, #oldtools, #btn-eraser-pencil, #btn-eraser-ink, #btn-face, #thick, #boot')) continue
+      // #btn-roll-yellow — **선 아이콘의 유일한 색 예외**(instrument-icons.md 정본:
+      // 옐로 트레이스는 이름 자체가 색이라 고리를 #e9d98a로 채운다 — web2-21 3-a가
+      // 손 띠에 상주시키며 이 팔의 검사 대상에 처음 들어왔다). 트레이싱지 롤은 무채색
+      // 그대로 검사받는다 — 예외는 하나뿐이다.
+      if (svg.closest('#btn-pencil, #btn-pen, #tray, #oldtools, #btn-eraser-pencil, #btn-eraser-ink, #btn-face, #thick, #boot, #btn-roll-yellow')) continue
       const m = /rgba?\((\d+), (\d+), (\d+)/.exec(getComputedStyle(svg).color)
       if (m && Math.max(+m[1]!, +m[2]!, +m[3]!) - Math.min(+m[1]!, +m[2]!, +m[3]!) > 40) out.push(`${(svg.parentElement as HTMLElement).id}:color=${getComputedStyle(svg).color}`)
     }

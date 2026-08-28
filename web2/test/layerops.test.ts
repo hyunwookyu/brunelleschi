@@ -71,7 +71,10 @@ describe('③ rect 기본값(2-b) — 지금 보이는 화면(값으로)', () =>
     // 시드 = layer.id(섬유와 같은 출처) — 두 장이 정확히 겹치면 한 장으로 보인다
     expect(l1.rect.x === l2.rect.x && l1.rect.y === l2.rect.y).toBe(false)
     expect(l1.rect.w === l2.rect.w && l1.rect.h === l2.rect.h).toBe(false)
-    // ⑤ 오프셋은 rect 자체로 저장된다 — 왕복 뒤 값으로 같다(시드가 문서에 있다)
+    // ⑤ 오프셋은 rect 자체로 저장된다 — 왕복 뒤 값으로 같다. ⚠ 이 팔은 시드 재생성의
+    // 측정이 아니라 **직렬화 충실도의 보장 확인**이다(지시 괄호 「시드가 문서에 있다」와
+    // 구현이 다르다 — 시드는 생성 순간에만 쓰고 결과(rect)를 저장한다. 3·4부 리뷰 [9]).
+    // 실패 조건: file.ts가 rect를 반올림·재계산하면 여기서 갈린다 — 그것이 이 팔의 몫.
     const back = parseBrnl(serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId }))!
     expect(back.doc.layers.map(l => l.rect)).toEqual(s.app.doc.layers.map(l => l.rect))
   })

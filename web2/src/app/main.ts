@@ -1,8 +1,8 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, setActiveLayer, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, type Tool } from './state'
 import { initPaperbar } from './paperbar'
-import { initLayerbar } from './layerbar'
+import { initLayerbar, LAYER_GATE_MSG } from './layerbar'
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
@@ -351,6 +351,11 @@ inputApi = initInput(ink, app, {
     // 알림은 **오류가 있을 때만**이다(4-b) — 만들어졌으면 화면이 이미 말한다.
     if (r === 'none') notify('닫힌 루프가 아니다 — 둘러싸인 자리를 탭한다')
   },
+  onCandidateTap(excluded) {
+    // 후보 모드(web2-21 4부) — 뺐으면 화면(테두리 하나 사라짐)이 말한다. 빗나감만 말한다.
+    if (!excluded) notify('후보 밖이다 — 아닌 후보를 탭해서 뺀다')
+    invalidate()
+  },
   onCommit(a, b, raw, press, rawIn) {
     const s = commitStroke(app, a, b, raw, press, rawIn)
     const an = app.lift.an
@@ -476,15 +481,76 @@ function setTool(t: Tool) {
   }
   syncTray()
   if (!isEraser(t)) eraserPos = null
-  if (t !== 'face') facePrev = null
+  if (t !== 'face') {
+    facePrev = null
+    // 면 일괄 후보는 면 도구의 상태다(web2-21 4부) — 도구를 떠나면 취소(op 없음)
+    cancelCandidates(app)
+    document.getElementById('face-pop')!.hidden = true
+  }
   // 굵기 막대는 **펜과 지우개에만** 뜬다. 연필의 굵기는 심이 정한다(4-e).
   thick.style.display = t === 'pencil' ? 'none' : 'block'
   syncThick()
   invalidate()
 }
 for (const k of Object.keys(toolBtn) as (keyof typeof toolBtn)[]) {
-  toolBtn[k].addEventListener('click', () => setTool(k))
+  toolBtn[k].addEventListener('click', () => {
+    // 면 버튼을 **다시** 누르면 팝오버(web2-21 4부 — 「전부 찾기」). 손 띠에 버튼을 안
+    // 늘린다(지시 4-e ⚠). 다른 도구는 종전 그대로다.
+    if (k === 'face' && app.tool === 'face') { toggleFacePop(); return }
+    setTool(k)
+  })
 }
+
+// ── 면 일괄(web2-21 4부) — 팝오버·후보 흐름 ────────────────────────────────
+const facePop = document.getElementById('face-pop')!
+function renderFacePop() {
+  facePop.textContent = ''
+  const mk = (label: string, id: string, fn: () => void) => {
+    const b = document.createElement('button')
+    b.id = id
+    b.textContent = label
+    b.addEventListener('click', fn)
+    facePop.append(b)
+    return b
+  }
+  if (app.faceCandidates === null) {
+    // 전부 켜고 빼기(4-a) — 후보를 전부 내놓고 아닌 것만 탭해서 뺀다
+    mk('전부 찾기', 'btn-face-all', () => {
+      const n = findAllFaces(app)
+      if (n === 0) {
+        cancelCandidates(app)
+        notify('닫힌 영역이 없다')
+        facePop.hidden = true
+      } else {
+        notify(`후보 ${n} — 아닌 것을 탭해서 빼고, 확정을 누른다`)
+        renderFacePop()
+      }
+      invalidate()
+    })
+  } else {
+    mk(`확정 ${app.faceCandidates.length}`, 'btn-face-commit', () => {
+      const n = commitCandidates(app)
+      notify(n > 0 ? `면 ${n} — 실행취소 한 번에 전부 돌아온다` : '만들 면이 없다')
+      facePop.hidden = true
+      invalidate()
+    })
+    mk('취소', 'btn-face-cancel', () => {
+      cancelCandidates(app)
+      facePop.hidden = true
+      invalidate()
+    })
+  }
+}
+function toggleFacePop() {
+  facePop.hidden = !facePop.hidden
+  if (!facePop.hidden) {
+    renderFacePop()
+    const r = toolBtn.face.getBoundingClientRect()
+    facePop.style.top = `${Math.round(Math.min(r.top, window.innerHeight - facePop.offsetHeight - 6))}px`
+  }
+}
+// 후보 수가 변하면(탭 배제·문서 변화로 무효화) 열린 팝오버가 따라온다
+app.listeners.push(() => { if (!facePop.hidden) renderFacePop() })
 
 // ── 굵기는 미리보기다 (4-f) — 숫자가 없다 ────────────────────────────────
 // 세로 막대를 위아래로 끌면 **그 자리에** 그 굵기의 선(펜)이나 그 크기의 원(지우개)이 그려진다.
@@ -785,7 +851,7 @@ layerbarRef = layerbar
 for (const [bid, paper] of [['btn-roll-tracing', 'tracing'], ['btn-roll-yellow', 'yellow']] as const) {
   document.getElementById(bid)!.addEventListener('click', () => {
     if (!app.lift.an.constructionDone) {
-      notify('소실점 작도가 끝나야 종이를 얹을 수 있다')
+      notify(LAYER_GATE_MSG)   // 종속 탭 「+」와 같은 상수(#54 — 3·4부 리뷰 [12])
       return
     }
     addLayer(app, paper, { W, H })

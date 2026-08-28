@@ -13,7 +13,8 @@ import { defaultOsnap, type OsnapSettings, type OsnapKind } from '../core/osnap'
 import { newExtDwell, clearExtAcq, type ExtDwell } from '../core/extacq'
 import { rng32 } from '../core/material'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
-import { loopAt, faceAt, faceScreen, resolveFaces, type ResolvedFace } from '../core/face'
+import { loopAt, faceAt, faceScreen, resolveFaces, resolveFace, allLoops, inPoly, type ResolvedFace, type LoopCandidate } from '../core/face'
+import { geomSize3 } from '../core/osnap'
 import { C } from '../core/constants'
 import { type Pt, type V3, v3, add3, sub3, mul3, dot3, len3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
 
@@ -179,6 +180,11 @@ export interface App {
   /** 마지막 확정 획의 교점 단계 트레이스(web2-14 2번 — 지시의 ①~④를 화면에서 가른다):
    *  ① A가 3D인가(lifted) ② 닿은 대기선 수(touched) ③④ 성립/무산. 진단 패널이 읽는다. */
   touchLast: { lifted: boolean; touched: number; ok: number; missed: TouchStats } | null
+  /** **면 일괄 후보**(web2-21 4부) — 「전부 찾기」가 낸 «아직 물어보는 중»의 목록.
+   *  런타임 상태(저장 안 함). null = 후보 모드 아님. 표시는 **테두리만**(4-d — 확정된
+   *  면만 채운다), 탭은 배제(4-a — 지정의 방향이 「배제」다), 확정이 한 op로 담는다.
+   *  문서가 바뀌면(recompute) 자동으로 버려진다 — 낡은 후보를 안 남긴다. */
+  faceCandidates: LoopCandidate[] | null
   cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
 }
@@ -222,6 +228,7 @@ export function createApp(W: number, H: number): App {
     lastCamSig: null,
     touchStats: emptyTouchStats(),
     touchLast: null,
+    faceCandidates: null,
     cubeLayout: { cx: W - 110, cy: 60, size: 80 }, // 우측 상단 — 1.5배 세로바(x W−45..)와 안 겹치게 왼쪽으로(web2-10 지시 5)
     listeners: [],
   }
@@ -283,6 +290,9 @@ export const isDrawPose = (pose: CamPose): boolean =>
   Math.abs(pose.q.x) + Math.abs(pose.q.y) + Math.abs(pose.q.z) < 1e-12
 
 function recompute(app: App) {
+  // 문서가 바뀌면 면 일괄 후보는 낡는다(4부) — 조용히 낡은 폴리곤을 들고 있지 않는다.
+  // commitCandidates는 recompute 뒤에 볼일이 없으므로 이 무효화가 확정도 겸해 닫는다.
+  app.faceCandidates = null
   app.lift = liftAll(app.doc, app.own3d)
   // ── 자립(web2-13 4부) — 깃발 켜짐에서만. 꺼짐이면 위 한 줄이 종전과 동일하다 ──
   if (app.own3d) {
@@ -362,6 +372,76 @@ export function facePreview(app: App, p: Pt): { poly: Pt[]; mode: 'add' | 'remov
   }
   const found = loopAt(app.lift, app.pose, p)
   return found ? { poly: found.poly, mode: 'add' } : null
+}
+
+// ── 면 일괄(web2-21 4부) — 전부 켜고 빼기 ──────────────────────────────────
+
+/** 「전부 찾기」 — 모든 평면의 닫힌 영역을 후보로 세운다. 이미 면인 것(외곽 동일)과
+ *  풀리지 않을 것(비평면 등 — resolveFace가 거부할 것)은 후보에서 뺀다(조용히 틀린
+ *  입체를 만들지 않는다 — toggleFaceAt의 사후 검사를 사전으로). 반환 = 후보 수. */
+export function findAllFaces(app: App): number {
+  const sigOf = (loop: Face['loops'][number]): string =>
+    loop.edges.map(e => e.s).sort((a, b) => a - b).join(',')
+  const existing = new Set(app.doc.faces.map(f => sigOf(f.loops[0]!)))
+  const size3 = geomSize3(app.lift)
+  const cands = allLoops(app.lift, app.pose).filter(c =>
+    !existing.has(sigOf(c.loops[0]!)) &&
+    resolveFace(app.lift, { id: -1, loops: c.loops }, size3) !== null)
+  app.faceCandidates = cands
+  for (const l of app.listeners) l()
+  return cands.length
+}
+
+/** 후보 배제 — 탭한 자리를 둘러싼 후보 하나를 뺀다(4-a: 아닌 것만 탭해서 뺀다).
+ *  여럿이 겹치면 화면에서 가장 작은 것(loopAt의 «작은 것» 규칙과 같은 방향). */
+export function excludeCandidateAt(app: App, p: Pt): boolean {
+  if (!app.faceCandidates) return false
+  let best = -1, bestArea = Infinity
+  app.faceCandidates.forEach((c, i) => {
+    if (!inPoly(p, c.poly)) return
+    const a = Math.abs(c.poly.reduce((s2, q, k) => {
+      const r = c.poly[(k + 1) % c.poly.length]!
+      return s2 + q.x * r.y - r.x * q.y
+    }, 0) / 2)
+    if (a < bestArea) { best = i; bestArea = a }
+  })
+  if (best < 0) return false
+  app.faceCandidates.splice(best, 1)
+  for (const l of app.listeners) l()
+  return true
+}
+
+/** 후보 확정 — 남은 후보 전부가 **한 op**로 면이 된다(4-e: 실행취소 한 번에 전체).
+ *  반환 = 만든 면 수. */
+export function commitCandidates(app: App): number {
+  const cands = app.faceCandidates
+  if (!cands || cands.length === 0) { app.faceCandidates = null; return 0 }
+  const added: Face[] = []
+  for (const c of cands) {
+    const face: Face = { id: app.nextId++, loops: c.loops }
+    app.doc.faces.push(face)
+    added.push(face)
+  }
+  recompute(app)   // 후보도 여기서 비워진다
+  // 사후 안전망 — 안 풀린 것이 있으면 뺀다(찾기에서 걸렀으므로 정상 경로에서는 0)
+  for (let i = added.length - 1; i >= 0; i--) {
+    if (!app.faces.some(f => f.id === added[i]!.id)) {
+      const j = app.doc.faces.findIndex(f => f.id === added[i]!.id)
+      if (j >= 0) app.doc.faces.splice(j, 1)
+      added.splice(i, 1)
+    }
+  }
+  if (added.length === 0) { recompute(app); return 0 }
+  app.undoStack.push({ removed: [], added: [], facesAdded: added })
+  app.redoStack = []
+  return added.length
+}
+
+/** 후보 취소 — 아무 일도 안 한 것으로 */
+export function cancelCandidates(app: App) {
+  if (app.faceCandidates === null) return
+  app.faceCandidates = null
+  for (const l of app.listeners) l()
 }
 
 export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number, rawIn?: RawInput) {
@@ -824,6 +904,12 @@ export function clearAll(app: App, W: number, H: number) {
  *  이미 동결 중이면(연속 제스처) 처음 값을 지킨다 — 매 프레임 갱신하면 동결이 아니다. */
 export function beginNavHold(app: App) {
   if (!app.fadePose) { app.fadePose = app.pose; app.fadeView = { ...app.view } }
+  // 면 일괄 후보는 «찾은 그 시점»의 화면 폴리곤이다(web2-21 4부) — 궤도·팬이 시작되면
+  // 낡으므로 버린다(빼기 탭의 소실은 「전부 찾기」 한 번으로 복구된다 — D-W8 근거).
+  if (app.faceCandidates !== null) {
+    app.faceCandidates = null
+    for (const l of app.listeners) l()
+  }
 }
 /** 조작 제스처 끝 — 동결 해제·재판정 한 번. 왕복 제스처면 표시 변화 0~1회가 된다. */
 export function endNavHold(app: App) {

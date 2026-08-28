@@ -211,3 +211,65 @@ test('면 — 벽(수직면)과 바닥(수평면)이 각각 칠해진다 (픽셀
   await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.diag.facePreview())).toBeNull()
 })
+
+test('면 일괄(web2-21 4부) — 팝오버 「전부 찾기」 · 후보는 테두리만(채움 0) · 탭해 빼기 · 확정은 채움 · 실행취소 한 번 (픽셀)', async ({ page }) => {
+  // 지면 삼각형 + 가르는 선 = 두 칸 — 후보 둘이 뜨는 최소 장면
+  await groundTriangle(page)
+  await drawLine(page, 500, 560, 500, 495)
+  await page.click('#btn-face')                       // 면 도구
+  await page.click('#btn-face')                       // 다시 — 팝오버(4-e: 손 띠 버튼 안 늘림)
+  await expect(page.locator('#face-pop')).toBeVisible()
+  await page.click('#btn-face-all'); await settle(page)
+  const st1 = await page.evaluate(() => {
+    const a = (window as any).__b2.app
+    return { n: a.faceCandidates?.length ?? null, faces: a.doc.faces.length }
+  })
+  expect(st1.n).toBe(2)                               // 후보 둘
+  expect(st1.faces).toBe(0)                           // 아직 면이 아니다 — 물어보는 중
+  // ⑤ **테두리만** — 두 칸의 안쪽 견본 상자에 채움 픽셀이 없다(확정 면의 채움은 #ink에
+  // 그려지므로 같은 캔버스의 같은 자리를 확정 후와 나란히 잰다 — 대조가 곧 분해능 확인).
+  // 견본 상자는 경계·파선 테두리를 피해 칸 «안쪽»에 둔다 — 첫 판의 (385..405,520..532)는
+  // 빗변 테두리가 상자 귀퉁이를 지나 10px이 잡혔다(왼 칸 (445..465,510..522)로 이동).
+  // 두 캔버스 다 잰다(3·4부 리뷰 [6] — 후보가 그려지는 겹은 #ink이므로 «후보 채움 회귀»는
+  // #ink에서만 잡힌다. 견본 상자는 칸 안쪽이라 테두리 파선은 안 걸린다 — 반증(D-3):
+  // 후보 폴리곤에 fill을 강제하면 ink 상자가 0을 벗어나 이 팔이 실패한다, NOTES 실행 기록).
+  const leftBefore = await countPixels(page, 'gl', 445, 510, 465, 522)
+  const rightBefore = await countPixels(page, 'gl', 535, 510, 555, 522)
+  const leftBeforeInk = await countPixels(page, 'ink', 445, 510, 465, 522)
+  const rightBeforeInk = await countPixels(page, 'ink', 535, 510, 555, 522)
+  expect(leftBefore).toBe(0)                          // 채움(#gl) 없음
+  expect(rightBefore).toBe(0)
+  expect(leftBeforeInk).toBe(0)                       // 후보 겹(#ink)에도 채움 없음 — 테두리뿐
+  expect(rightBeforeInk).toBe(0)
+  // ③ 하나를 탭해 빼면 그것만 빠진다 — 왼 칸을 뺀다
+  await tap(page, 455, 515)
+  expect(await page.evaluate(() => (window as any).__b2.app.faceCandidates.length)).toBe(1)
+  // 확정 — 남은 오른 칸만 면이 된다(팝오버가 후보 수를 따라온다)
+  await page.click('#btn-face-commit'); await settle(page)
+  const st2 = await page.evaluate(() => {
+    const a = (window as any).__b2.app
+    return { cand: a.faceCandidates, faces: a.doc.faces.length, undo: a.undoStack.length }
+  })
+  expect(st2.cand).toBeNull()
+  expect(st2.faces).toBe(1)
+  // 채움은 #gl(three.js 면 메시)이고 후보 테두리는 #ink다 — 채움 판독은 gl에서
+  const rightAfter = await countPixels(page, 'gl', 535, 510, 555, 522)
+  const leftAfter = await countPixels(page, 'gl', 445, 510, 465, 522)
+  expect(rightAfter).toBeGreaterThan(0)               // 확정된 면만 채워진다(형태가 가른다)
+  expect(leftAfter).toBe(0)                           // 뺀 칸은 안 채워졌다
+  // ④ 실행취소 **한 번**에 전부 돌아온다
+  await page.keyboard.press('Control+z'); await settle(page)
+  expect(await page.evaluate(() => (window as any).__b2.app.doc.faces.length)).toBe(0)
+  expect(await countPixels(page, 'gl', 535, 510, 555, 522)).toBe(0)
+  // 착수 표 #69 ㉠ — 확정 면이 이미 있는 장면에서 후보 표시가 기존 표시를 **안 가린다**
+  // (나란히): 다시실행으로 오른 칸 면을 되살리고 「전부 찾기」 — 남는 후보(왼 칸)가 뜬
+  // 동안에도 확정 면의 채움이 그대로다.
+  await page.keyboard.press('Control+y'); await settle(page)
+  const fillBack = await countPixels(page, 'gl', 535, 510, 555, 522)
+  expect(fillBack).toBeGreaterThan(0)
+  await page.click('#btn-face')                       // 팝오버 다시(도구는 이미 면)
+  await page.click('#btn-face-all'); await settle(page)
+  expect(await page.evaluate(() => (window as any).__b2.app.faceCandidates.length)).toBe(1)  // 기존 면 제외
+  expect(await countPixels(page, 'gl', 535, 510, 555, 522)).toBe(fillBack)   // 안 가려졌다
+  await page.click('#btn-face-cancel'); await settle(page)
+})

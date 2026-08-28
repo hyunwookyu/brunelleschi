@@ -504,6 +504,64 @@ export function loopAt(
   return { loops, poly: best.poly }
 }
 
+// ── 면 일괄 후보(web2-21 4부) — 커브로 닫힌 모든 영역 ─────────────────────
+//
+// **원칙(types.ts 「자동으로 안 만든다」)은 그대로다 — 지정의 방향만 뒤집는다**: 후보를
+// 전부 내놓고 사용자가 «아닌 것만» 탭해 뺀다. 사용자가 지정한 것만 면인 것은 불변이다
+// (지정이 「포함」에서 「배제」로 바뀔 뿐 — D-W8). 범위는 **모든 평면**(사람 문면:
+// 「전체로 하자. '보이는 면'이라는 개념 자체가 애매하다」 — 면끼리 안 가리고 깊이도
+// 안 쓰니 이 앱에 «보이는 면»의 정의가 없다 AS-C19).
+//
+// 안쪽 고리의 기본값은 **구멍**이다(사람이 정했다 — 벽 안의 사각형은 거의 언제나
+// 개구부). `Face.loops` 구조(loops[0] 외곽·나머지 개구부) 그대로 — 새 자료구조 없음.
+// 구멍이 된 성분의 자기 순환(고리 안쪽)은 후보에서 빠진다 — 채우고 싶으면 확정 뒤
+// **기존 탭 하나**로 그 자리를 채운다(별도 동작 없음 — 지시 4-b).
+
+export interface LoopCandidate { loops: FaceLoop[]; poly: Pt[] }
+
+/** 모든 평면의 «닫힌 영역» 후보 — loopAt과 같은 재료(평면별 최소 순환·개구부 부착)를
+ *  탭 없이 전부 낸다. 같은 외곽(획 id 집합)이 여러 평면에서 나오면 하나만(중복 제거). */
+export function allLoops(lift: LiftResult, pose: CamPose): LoopCandidate[] {
+  const g = buildGraph(lift, pose)
+  const tol = C.PLANAR_RATIO * Math.max(geomSize3(lift), 1e-9)
+  const out: LoopCandidate[] = []
+  const seen = new Set<string>()
+  const sigOf = (loop: FaceLoop): string => loop.edges.map(e => e.s).sort((a, b) => a - b).join(',')
+  for (const pl of planesOf(g, tol)) {
+    const cys = cyclesOf(g, pl.use)
+    // 후보(면적 > 0 = 안쪽 면) + 구멍 부착. holeComps는 **평면 지역**이다 — comp 번호가
+    // cyclesOf의 부분 그래프에서 나오므로 다른 평면과 안 섞인다(포함 판정도 같은 평면
+    // 안에서만 — 지시 4-b ⚠).
+    const cands: { comp: number; poly: Pt[]; loops: FaceLoop[] }[] = []
+    const holeComps = new Set<number>()
+    for (const cy of cys) {
+      if (cy.area <= 1e-9) continue
+      const poly = cyclePoly(g, cy.he)
+      const outer = cycleToLoop(g, cy.he)
+      if (!outer) continue
+      const loops: FaceLoop[] = [outer]
+      for (const other of cys) {
+        if (other.comp === cy.comp) continue
+        if (other.area >= -1e-9) continue                 // 그 성분의 바깥 경계만 구멍 후보
+        const op = cyclePoly(g, other.he)
+        if (!op.every(q => inPoly(q, poly))) continue     // 완전히 안에 든 것만(포함 판정)
+        const hole = cycleToLoop(g, other.he)
+        if (hole) { loops.push(hole); holeComps.add(other.comp) }
+      }
+      cands.push({ comp: cy.comp, poly, loops })
+    }
+    for (const c of cands) {
+      // 구멍이 된 성분의 자기 순환은 후보가 아니다 — 기본값이 구멍이다(4-b)
+      if (holeComps.has(c.comp)) continue
+      const sig = sigOf(c.loops[0]!)
+      if (seen.has(sig)) continue                          // 같은 외곽이 여러 평면에서
+      seen.add(sig)
+      out.push({ loops: c.loops, poly: c.poly })
+    }
+  }
+  return out
+}
+
 // ── 면 맞히기 — 이미 있는 면 위를 탭했는가 ───────────────────────────────
 
 /** 면의 화면 다각형 — 하나라도 사영이 안 되면 null */

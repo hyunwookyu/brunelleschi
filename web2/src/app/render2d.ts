@@ -504,6 +504,23 @@ export function draw2d(
     mark(ctx, hover, is)
   }
 
+  // 면 일괄 후보(web2-21 4부) — **테두리만**(4-d: 후보 스물을 다 채우면 화면이 회색
+  // 판이 된다 AS-C20). 「아직 물어보는 중」과 「정해졌다(채움)」가 형태로 갈린다.
+  // 순간 피드백 채널이라 색을 쓴다(facePrev와 같은 갈래 — 상시 표시가 아니다).
+  if (app.faceCandidates) {
+    ctx.strokeStyle = COL.snap
+    ctx.lineWidth = 1.6 * is
+    ctx.setLineDash([6 * is, 4 * is])
+    for (const c of app.faceCandidates) {
+      if (c.poly.length < 3) continue
+      ctx.beginPath()
+      c.poly.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y) })
+      ctx.closePath()
+      ctx.stroke()
+    }
+    ctx.setLineDash([])
+  }
+
   // 면 미리보기 — 지금 탭하면 **무엇이 될지**. 그리는 중에만 뜨므로 색을 쓴다(4-c의 갈래).
   // 만들면 초록(스냅과 같은 «붙었다»의 색), 없애면 안내색 — 되돌리는 몸짓이라 갈라야 한다.
   if (facePrev && facePrev.poly.length >= 3) {

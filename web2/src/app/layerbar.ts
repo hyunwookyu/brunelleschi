@@ -26,6 +26,10 @@ export const ROLL_YELLOW = '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/20
 const glyph = (d: string, size = 12): string =>
   `<svg viewBox="0 0 256 256" fill="currentColor" width="${size}" height="${size}"><path d="${d}"/></svg>`
 
+/** 2-a 안내 문구 — 종속 탭 「+」와 손 띠 롤 버튼(web2-21 3-a)이 같은 문구를 **한 상수**로
+ *  쓴다(#54 — 문자열 복제는 자동이 못 잡는 두 자리다, 3·4부 리뷰 [12]). */
+export const LAYER_GATE_MSG = '소실점 작도가 끝나야 종이를 얹을 수 있다'
+
 export interface LayerbarHooks {
   /** 새 겹의 rect 기본값(2-b) = 지금 보이는 화면 — 뷰포트 크기는 호출부가 안다 */
   viewport: () => { W: number; H: number }
@@ -77,7 +81,7 @@ export function initLayerbar(app: App, host: HTMLElement, hooks: LayerbarHooks):
     add.title = done ? '종이를 얹는다 — 트레이싱지·옐로' : '소실점 작도가 끝나야 얹을 수 있다'
     add.addEventListener('click', () => {
       if (!app.lift.an.constructionDone) {
-        hooks.notify('소실점 작도가 끝나야 종이를 얹을 수 있다')
+        hooks.notify(LAYER_GATE_MSG)
         return
       }
       openPopAt(add, p => {

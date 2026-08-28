@@ -139,16 +139,17 @@
       display: flex; flex-direction: row; gap: var(--btn-gap); align-items: flex-start;
     }
     /* 표시·자 팝업 — 설정 자루의 옅은 바탕 규약 그대로(4-a: 「배경이 필요하면 아주 옅게」) */
-    #display-pop, #snap-pop {
+    #display-pop, #snap-pop, #face-pop {
       position: fixed; z-index: 11;
       display: flex; flex-direction: column; gap: 6px; align-items: stretch;
       background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
       padding: 10px 12px; white-space: nowrap;
       font: 12px/1.5 system-ui, sans-serif; color: #6b665f;
     }
-    #display-pop[hidden], #snap-pop[hidden] { display: none; }
+    #display-pop[hidden], #snap-pop[hidden], #face-pop[hidden] { display: none; }
     #display-pop { top: 48px; right: 170px; }
     #snap-pop { right: 54px; }
+    #face-pop { right: 54px; }
     /* 축 스냅 자리(3-b) — 컨트롤이 없다: 끄는 토글은 이 회차에 없다(대응표 §4 — 자리만) */
     #axis-snap-slot { color: var(--ui-faint); }
     /* 되돌리기와 도구를 가르는 선(3-a) — 공백이 아니라 채널이다(3-c) */
@@ -159,7 +160,7 @@
     /* ── 전체 화면(3-d) — 크롬을 전부 숨긴다: 종이 띠·눈·손·서랍·굵기·치수 리본.
        지평선·소실점 ✕·바닥 눈금은 캔버스 몫이라 그대로 남는다(작도의 뼈대). ── */
     body.fs #topleft, body.fs #eyebar, body.fs #sidebar, body.fs #thick,
-    body.fs #dimpanel, body.fs #display-pop, body.fs #snap-pop, body.fs #layer-pop { display: none; }
+    body.fs #dimpanel, body.fs #display-pop, body.fs #snap-pop, body.fs #layer-pop, body.fs #face-pop { display: none; }
     #fs-exit {
       display: none; position: fixed; right: 6px; bottom: 34px; z-index: 12;
       background: none; border: 0; padding: var(--hit-pad); cursor: pointer;
@@ -725,6 +726,10 @@
     <!-- 자 팝업(3-b) — 설정 자루에서 나온 오스냅 종류·반경. id·배선은 그대로다(동작 불변 ④).
          축 스냅 줄은 **자리만 비워 둔다** — 「자를 치운 상태」는 그 획이 3D로 안 올라가는
          갈래를 열므로 혼자 한 회차짜리다(대응표 §4 · DEFERRED). -->
+    <!-- 면 팝오버(web2-21 4부) — 「전부 찾기」(전부 켜고 빼기). 손 띠에 버튼을 안 늘린다
+         (지시 4-e ⚠) — 면 버튼을 **다시** 누르면 열린다. 내용은 main.ts가 상태에 맞춰
+         짓는다(찾기 전: 전부 찾기 · 후보 중: 확정 N · 취소). -->
+    <div id="face-pop" hidden></div>
     <div id="snap-pop" hidden>
       <div class="head"><svg viewBox="0 0 256 256" fill="currentColor" width="13" height="13" style="vertical-align:-2px"><path d="M213.34,122.73a6,6,0,1,0-10.68-5.46,81.79,81.79,0,0,1-35.81,35.36l-18.14-40.8A38,38,0,0,0,134,42.48V24a6,6,0,0,0-12,0V42.48a38,38,0,0,0-14.71,69.35L58.52,221.56a6,6,0,1,0,11,4.88l25.9-58.26A93.37,93.37,0,0,0,128,174a97,97,0,0,0,32.68-5.69l25.84,58.13a6,6,0,1,0,11-4.88l-25.77-58A93.92,93.92,0,0,0,213.34,122.73ZM128,54a26,26,0,1,1-26,26A26,26,0,0,1,128,54Zm0,108a81.51,81.51,0,0,1-27.73-4.83l18-40.45a37.85,37.85,0,0,0,19.52,0l18,40.6A85.34,85.34,0,0,1,128,162Z"/></svg> 오스냅</div>
       <div id="osnap-kinds" style="display:flex;flex-direction:column;gap:2px"></div>

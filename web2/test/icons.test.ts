@@ -80,3 +80,31 @@ describe('web2-19 4부 ⑤ — LICENSE', () => {
     expect(lic).toContain('@phosphor-icons/core')
   })
 })
+
+describe('web2-21 3-a — 손 띠 롤 아이콘의 두 자리(#54 · 3·4부 리뷰 [12])', () => {
+  it('index.html 인라인 롤 svg 내용이 layerbar 정본 상수와 같다 — 갈리면 여기서 실패한다', () => {
+    // 출처는 layerbar.ts 상수 하나이고 index.html 인라인은 초기 표시용 복제다 — 복제는
+    // 자동이 못 잡으므로 이 팔이 두 자리를 못 박는다(내용 비교 — 공백 정규화).
+    const layerbarTs = readLF(resolve(__dirname, '../src/app/layerbar.ts'))
+    const constOf = (name: string): string => {
+      const m = new RegExp(`export const ${name} = '([^']+)'`).exec(layerbarTs)
+      expect(m, `${name} 상수`).not.toBeNull()
+      return m![1]!
+    }
+    const inner = (svg: string): string[] =>
+      [...svg.matchAll(/<(?:circle|path)[^>]*>/g)].map(x => x[0]!.replace(/\s+/g, ' '))
+    for (const [name, btn] of [['ROLL_TRACING', 'btn-roll-tracing'], ['ROLL_YELLOW', 'btn-roll-yellow']] as const) {
+      const canon = inner(constOf(name))
+      const btnBlock = new RegExp(`id="${btn}"[^]*?</button>`).exec(html)![0]!
+      expect(canon.length).toBeGreaterThan(0)
+      for (const el of canon) expect(btnBlock.replace(/\s+/g, ' ').includes(el), `${btn}: ${el.slice(0, 40)}…`).toBe(true)
+    }
+    // 정본의 정본 — layerbar 상수 자체가 instrument-icons.md의 롤 블록과 같은가(경로 수정 금지)
+    for (const [name, head] of [['ROLL_TRACING', '### 트레이싱지 롤'], ['ROLL_YELLOW', '### 옐로 트레이스 롤']] as const) {
+      const block = new RegExp(`${head}[^]*?\`\`\`svg\n([^]*?)\`\`\``).exec(md)![1]!
+      for (const el of inner(block)) {
+        expect(constOf(name).replace(/\s+/g, ' ').includes(el), `${name} ↔ md: ${el.slice(0, 40)}…`).toBe(true)
+      }
+    }
+  })
+})
