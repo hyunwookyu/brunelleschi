@@ -10000,6 +10000,15 @@ layerbar에 `afterAdd` 훅을 냈다).
 
 ⚠ **passed/failed/total 셋을 다 적는다**(#69 ㉤). e2e 실행 전 **포트 점유를 확인하고 남은
 dev 서버를 죽였다**(#70 — 앞 실행이 남긴 5301의 vite를 `taskkill`).
+
+**배포**(⛳ #58 — 배포까지가 한 항목이다): 갈래 `web2-23` → main 병합·푸시 →
+`git ls-remote origin main` 원문 「`14d2ee4ad44048e4c823d17454da764d8779747e	refs/heads/main`」
+→ `npm run deploy:check` 「✓ 원격 main == 내 커밋 / **화면 빌드 식별자 14d2ee4** /
+✓ 화면 빌드 식별자 == 배포 커밋 / **결과: 배포됨**」. ⚠ 첫 실행은 옛 해시(aa3b5db)를 냈다 —
+Pages 전파 관행이고 두 번째에 갈렸다. 이 뒤 이 기록 커밋(문서만)이 붙으면 화면 해시가
+한 칸 민다(정본은 위 해시 — web2-07 규약).
+원장 인용 규약(#42 ⑥ · 2차 리뷰 [4]): 이 절이 인용한 `cost23_web2.json`은
+**`@2aca246`**(그 커밋이 담은 판)이다.
 원장 신설 `cost23_web2.json` · **재생성 둘** `yellowraw_web2.json`·`stroke_payload_web2.json`
 (이 회차의 코드 변경이 값을 바꿨다 — 사유는 아래).
 
