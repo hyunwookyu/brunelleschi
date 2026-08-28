@@ -39,49 +39,81 @@ import { C } from '../core/constants'
 // ── 막의 색·섬유 매개변수 — 값의 근거는 assumptions(AS-C68·C69) ────────────────
 // 곱 합성에서는 «밝기»가 곧 비침이다(흰색 = 투명·어두울수록 짙다) — 별도 불투명도가
 // 없다(3-d: 농도 손잡이를 만들지 않는다). 세 장 겹침 하한은 ⑧ 팔이 지킨다.
+// ⚠⚠ **섬유의 길이·굵기는 CSS px다**(web2-26 2번). 종전에는 «타일 px»이었고 타일이
+// device px에 묶여 있어서 **결의 물리 크기가 dpr을 따라 갈렸다**: dpr1에서 굵기가
+// 0.175 CSS px(= 한 기기 픽셀의 6분의 1)이라 안티에일리어싱이 결을 통째로 삼켰고,
+// dpr3에서는 세 배 굵어졌다. 실측(D-1 표식 · `paper_grain26_web2.json`)이
+// **막 sd 0.134 ↔ 1.361 — 열 배**를 냈다. 지금 값은 전부 CSS px이고 `bakeFiberTile`이
+// dpr을 곱해 굽는다 — 「주기는 CSS 픽셀(≈물리 길이) 기준, 진폭은 실제 DPR에서」.
 export const PAPER_STYLE: Record<Paper, {
   tint: [number, number, number]
+  /** 전부 **CSS px**(alpha 제외) — count는 타일 한 장(TILE_CSS×TILE_CSS CSS px)당 개수 */
   fiber: { count: number; lenMin: number; lenMax: number; wMin: number; wMax: number; aMin: number; aMax: number }
 }> = {
   yellow: {
     tint: [242, 227, 179],   // 옐로 트레이스 — 이름 자체가 색이다
-    fiber: { count: 420, lenMin: 16, lenMax: 44, wMin: 0.7, wMax: 1.6, aMin: 0.025, aMax: 0.07 },
+    // 길이는 종전 dpr2의 물리 크기 그대로(타일 px 16~44 = CSS 8~22). **굵기와 알파만 올렸다**:
+    // 굵기는 dpr1에서 «한 기기 픽셀보다 가늘다»를 벗어나야 dpr 사이에서 같은 결이 되고
+    // (아래 dpr 비 게이트), 알파는 진폭이 지각 문턱 아래였다(㉢ — 실측 sd 0.77/255).
+    fiber: { count: 420, lenMin: 8, lenMax: 22, wMin: 1.5, wMax: 2.8, aMin: 0.075, aMax: 0.18 },
   },
   tracing: {
     tint: [230, 233, 237],   // 벨럼 — 거의 무색·살짝 한색(중성이 아니면 옐로와 섞일 때
     // 채도가 내리지 않는다 — ④ 곡선의 실측이 이 값을 정했다: 난색이면 곱이 채도를 올린다)
-    fiber: { count: 170, lenMin: 7, lenMax: 20, wMin: 0.35, wMax: 0.9, aMin: 0.02, aMax: 0.05 },
+    fiber: { count: 170, lenMin: 3.5, lenMax: 10, wMin: 1.0, wMax: 2.0, aMin: 0.06, aMax: 0.145 },
   },
 }
 
-export const TILE_PX = 256   // device px — dpr이 바뀌면 다시 굽는다(dpr 재굽기 팔)
+/** 타일 한 장이 덮는 **CSS px**(= 결의 반복 주기). 화면에서의 크기는 dpr과 무관하다.
+ *  종전 값(타일 256 device px × 패턴 배율 0.5)과 같은 128을 그대로 쓴다 — 주기는
+ *  사람이 확인한 자리가 아니므로 안 바꾼다(A-3: 안 건드리는 쪽). */
+export const TILE_CSS = 128
+/** 그 타일의 device px 크기 — dpr을 따라간다(타일 1px = 기기 1px, 재표본 없음) */
+export const tilePxFor = (dpr: number): number =>
+  FIBER_LEGACY ? 256 : Math.max(1, Math.round(TILE_CSS * dpr))
 
 /** D-3 반증 손잡이(3-e ④) — 곱을 알파(source-over)로 바꿔 합성 곡선이 무너지는 것을
  *  e2e가 매 실행 본다. UI 없음 — diag.filmAlphaForTest만 켠다. */
 let FILM_ALPHA = false
 export const setFilmAlphaForTest = (v: boolean) => { FILM_ALPHA = v }
 
+/** D-3 반증 손잡이(web2-26 2번) — **결을 dpr에 도로 묶는다**(타일 256 device px 고정 +
+ *  섬유 배율 dpr/2 + 패턴 배율 0.5·s·dpr). 이걸 켜면 「dpr 1과 3의 결 표준편차 비가
+ *  1.0 ± 0.15」 게이트가 **실제로 실패해야 한다** — 안 실패하면 그 게이트는 아무것도
+ *  안 잰다(#69 ㉣ · D-3). `FILM_ALPHA`와 같은 급의 e2e 전용 손잡이다(UI 없음). */
+let FIBER_LEGACY = false
+export const setFiberLegacyForTest = (v: boolean) => { FIBER_LEGACY = v }
+/** 종전(web2-20) 섬유 매개변수 — **타일 px** 단위. 반증 손잡이에서만 읽는다. */
+const LEGACY_FIBER: Record<Paper, { count: number; lenMin: number; lenMax: number; wMin: number; wMax: number; aMin: number; aMax: number }> = {
+  yellow: { count: 420, lenMin: 16, lenMax: 44, wMin: 0.7, wMax: 1.6, aMin: 0.025, aMax: 0.07 },
+  tracing: { count: 170, lenMin: 7, lenMax: 20, wMin: 0.35, wMax: 0.9, aMin: 0.02, aMax: 0.05 },
+}
+
 /** 섬유 타일 — 결정론(rng32(layer.id))·감싸 그리기·90° 회전. 순수 함수에 가깝게:
  *  같은 (id, paper, dpr)이면 같은 픽셀이다(⑥ 저장·복원 뒤 결이 같다의 근거). */
 export function bakeFiberTile(id: number, paper: Paper, dpr: number, wrap = true): HTMLCanvasElement {
   // wrap=false는 **반증 전용**(3-e ⑤' — 감싸 그리기를 빼면 이음매 팔이 실패해야 한다)
-  const st = PAPER_STYLE[paper]
+  const st = { ...PAPER_STYLE[paper], fiber: FIBER_LEGACY ? LEGACY_FIBER[paper] : PAPER_STYLE[paper].fiber }
+  const TP = tilePxFor(dpr)
   const c = document.createElement('canvas')
-  c.width = TILE_PX
-  c.height = TILE_PX
+  c.width = TP
+  c.height = TP
   const g = c.getContext('2d')!
   const rnd = rng32(id)
   // 바탕 색조 — 곱의 몸체. 결은 그 위에 조금 더 어두운 섬유로.
   g.fillStyle = `rgb(${st.tint[0]},${st.tint[1]},${st.tint[2]})`
-  g.fillRect(0, 0, TILE_PX, TILE_PX)
+  g.fillRect(0, 0, TP, TP)
   // 층마다 회전 — 90°의 배수만(이음매를 안 깨는 회전). 방향 우세각도 층마다 다르다.
   const rot = Math.floor(rnd() * 4) * (Math.PI / 2)
   const dominant = rnd() * Math.PI + rot
-  const scale = dpr / 2   // 타일은 device px — 섬유 길이는 CSS 감각의 값이라 절반 dpr 보정
+  // **CSS px → 타일 px**. 타일 1px = 기기 1px이므로 배율이 곧 dpr이다(web2-26 2번).
+  // 종전 `dpr/2`는 타일이 늘 256 device px이던 시절의 보정이었고, 그 시절 패턴 배율
+  // (0.5·s·dpr)과 곱해지면 dpr이 두 번 실려 결의 물리 크기가 dpr에 비례했다.
+  const scale = FIBER_LEGACY ? dpr / 2 : dpr
   g.lineCap = 'round'
   for (let i = 0; i < st.fiber.count; i++) {
-    const x = rnd() * TILE_PX
-    const y = rnd() * TILE_PX
+    const x = rnd() * TP
+    const y = rnd() * TP
     const len = (st.fiber.lenMin + rnd() * (st.fiber.lenMax - st.fiber.lenMin)) * scale
     // 펠트 분포 — 우세 방향 ± 큰 산포(가우스 흉내: 셋 평균)
     const ang = dominant + ((rnd() + rnd() + rnd()) / 3 - 0.5) * Math.PI * 1.15
@@ -97,8 +129,8 @@ export function bakeFiberTile(id: number, paper: Paper, dpr: number, wrap = true
     const xs = [0]
     const ys = [0]
     if (wrap) {
-      if (x - len < 0) xs.push(TILE_PX); else if (x + len > TILE_PX) xs.push(-TILE_PX)
-      if (y - len < 0) ys.push(TILE_PX); else if (y + len > TILE_PX) ys.push(-TILE_PX)
+      if (x - len < 0) xs.push(TP); else if (x + len > TP) xs.push(-TP)
+      if (y - len < 0) ys.push(TP); else if (y + len > TP) ys.push(-TP)
     }
     for (const ox of xs) for (const oy of ys) {
       g.beginPath()
@@ -181,7 +213,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
   // 타일 캐시 — (layer.id|paper|dpr) → 캔버스. 파생이라 저장 안 함(문서에는 Layer만).
   const tileCache = new Map<string, HTMLCanvasElement>()
   const tileOf = (l: Layer): HTMLCanvasElement => {
-    const key = `${l.id}|${l.paper}|${cd}`
+    const key = `${l.id}|${l.paper}|${cd}|${FIBER_LEGACY ? 'L' : 'N'}`
     let t = tileCache.get(key)
     if (!t) { t = bakeFiberTile(l.id, l.paper, cd); tileCache.set(key, t) }
     return t
@@ -299,9 +331,13 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
       // dpr2에서 원해상도·dpr1에서 절반의 고운 결). 줌은 그대로(종이의 성질 — 큰 배율의
       // 뭉개짐 상한은 재서 정한다: assumptions).
       const rnd = rng32(lay.id + 7)                 // 위상 — 결 내용과 다른 흐름
-      const phx = rnd() * TILE_PX
-      const phy = rnd() * TILE_PX
-      const k = 0.5 * v.s * cd
+      const TP = tilePxFor(cd)
+      const phx = rnd() * TP
+      const phy = rnd() * TP
+      // **타일 1px = 기기 1px**(web2-26 2번) — 배율에 dpr이 안 들어간다. 뷰 배율 `v.s`는
+      // 그대로 남는다: 결은 종이의 성질이라 문서와 함께 움직인다(사람이 확인한 자리 —
+      // 「3D 줌으로 커지지 않는다」는 궤도 반경 쪽이고 여기가 아니다. ⛔ 바꾸지 않는다).
+      const k = FIBER_LEGACY ? 0.5 * v.s * cd : v.s
       pat.setTransform(new DOMMatrix().translate(v.ox * cd, v.oy * cd).scale(k).translate(phx, phy))
       g.globalCompositeOperation = FILM_ALPHA ? 'source-over' : 'multiply'
       g.fillStyle = pat

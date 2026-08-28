@@ -72,7 +72,13 @@ function rowProfile(page: Page, y: number, x0: number, x1: number) {
       }
       cols.push(best)
     }
-    return { cols, min: Math.min(...cols) }
+    // ⚠ **바닥은 «가장 어두운 칸»이 아니라 «가운뎃값»이다**(web2-26 2번 · #74 ㉡).
+    // 종전에는 빈 줄의 `min`을 종이 바닥으로 삼았는데, 그것은 **그 줄의 가장 어두운
+    // 섬유**다 — 결의 진폭을 지각 대역으로 올리자(26-2) 바닥이 10계조쯤 내려가
+    // 「은선이 이어진다」의 덮개가 90% 아래로 떨어졌다(실측 270/360). 결에 안 흔들리는
+    // 통계로 바꾼다: 칸들의 **중앙값**이 종이다(섬유는 소수의 어두운 칸일 뿐이다).
+    const sorted = [...cols].sort((a, b) => a - b)
+    return { cols, min: Math.min(...cols), med: sorted[Math.floor(sorted.length / 2)]! }
   }, [y, x0, x1] as const)
 }
 
@@ -115,7 +121,7 @@ test('① F·H가 픽셀 대역에서 갈린다 · ③ 은선이 파선이 아�
   const blank = (await rowProfile(page, Y_BLANK, X0, X1))!
   const vis = (await rowProfile(page, Y_VIS, X0, X1))!
   const hid = (await rowProfile(page, Y_HID, X0, X1))!
-  const floor = blank.min                        // 그 실행의 종이+결 바닥
+  const floor = blank.med                        // 그 실행의 종이 바닥(결에 안 흔들리는 중앙값)
 
   // 둘 다 바닥보다 확실히 어둡다 = 그려졌다
   expect(vis.min).toBeLessThan(floor - 12)
@@ -151,15 +157,22 @@ test('① F·H가 픽셀 대역에서 갈린다 · ③ 은선이 파선이 아�
 test('② 「가린 선 빼기」 옵션이 돈다 — 끄면 H 자리의 잉크가 사라지고 F는 남는다', async ({ page }) => {
   await boot(page)
   await yellowWithUnderlay(page)
-  const floor = (await rowProfile(page, Y_BLANK, X0, X1))!.min
+  // **있음**은 종이 바닥(중앙값)에서, **없음**은 빈 줄의 «가장 어두운 섬유»에서 읽는다
+  // (web2-26 2번 · #74 ㉡): 결이 지각 대역으로 올라간 뒤로 「잉크가 사라졌다」를 중앙값
+  // 기준으로 물으면 **결의 어두운 칸이 잉크로 세어져** 3~4계조 차로 빨개진다(실측
+  // 184 ↔ 187.3). 두 물음의 기준이 다른 것이 옳다 — 하나는 «종이보다 어두운가», 다른
+  // 하나는 «결보다 어두운가»다.
+  const blankRow = (await rowProfile(page, Y_BLANK, X0, X1))!
+  const floor = blankRow.med
+  const bare = blankRow.min
   expect((await rowProfile(page, Y_HID, X0, X1))!.min).toBeLessThan(floor - 12)
 
   // 표시 팝오버의 체크 상자 — **화면의 길**로 끈다(진단 손잡이가 아니라)
   await page.click('#btn-display')
   await page.uncheck('#chk-hidden')
   await settle(page)
-  // 은선이 사라졌다 — 그 줄이 빈 줄의 바닥 대역으로 돌아온다
-  expect((await rowProfile(page, Y_HID, X0, X1))!.min).toBeGreaterThan(floor - 12)
+  // 은선이 사라졌다 — 그 줄이 **빈 줄의 결 대역**으로 돌아온다
+  expect((await rowProfile(page, Y_HID, X0, X1))!.min).toBeGreaterThan(bare - 6)
   // 보이는 선은 그대로다
   expect((await rowProfile(page, Y_VIS, X0, X1))!.min).toBeLessThan(floor - 12)
 
@@ -198,14 +211,16 @@ test("②′ 치환이 실제로 선다 — **실제 3D 획의 자리**가 빼�
   expect(pick).not.toBeNull()
   await settle(page)
   const { y, x0, x1 } = pick!
-  const floor = (await rowProfile(page, y - 40, x0, x1))!.min      // 그 위 빈 줄의 바닥
+  const blankRow = (await rowProfile(page, y - 40, x0, x1))!
+  const floor = blankRow.med       // 「있는가」의 기준 — 종이(중앙값·결 무관)
+  const bare = blankRow.min        // 「없는가」의 기준 — 그 줄의 가장 어두운 섬유
   // 켬: 그 자리에 은선(H)이 있다
   expect((await rowProfile(page, y, x0, x1))!.min).toBeLessThan(floor - 12)
   // 끔: **원래 3D 획까지** 사라져 종이 바닥으로 돌아온다 — 이것이 «치환»의 화면 증거다
   await page.click('#btn-display')
   await page.uncheck('#chk-hidden')
   await settle(page)
-  expect((await rowProfile(page, y, x0, x1))!.min).toBeGreaterThan(floor - 12)
+  expect((await rowProfile(page, y, x0, x1))!.min).toBeGreaterThan(bare - 6)
   // ⚠ 종이 **밖**에서는 그 획이 그대로 있다(도려내기는 그 겹의 rect 안에서만 — AS-C88)
   const outside = await page.evaluate(() => {
     const b2 = (window as any).__b2

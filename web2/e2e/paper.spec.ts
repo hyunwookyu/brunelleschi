@@ -208,20 +208,31 @@ test('⑤⑤\'⑥ — 층마다 결이 다르고(게이트) · 이음매가 없�
       // 척도 = **섬유 에너지**(바탕 대비 편차의 합) — 밝기 평균은 알파 0.02~0.07의
       // 결핍을 못 쟀다(둘째 판 실측 0.15 — 분해능 아래 #71 ㉢). 바탕은 전체 평균으로
       // 근사한다(섬유가 옅어 평균 ≈ 바탕색).
-      let bgR = 0, bgG = 0, bgB = 0, bn = 0
-      for (let i = 0; i < img.length; i += 4) { bgR += img[i]!; bgG += img[i + 1]!; bgB += img[i + 2]!; bn++ }
-      bgR /= bn; bgG /= bn; bgB /= bn
+      // ⚠ **배경 기준을 «전체 평균»에서 «밝은 쪽 분위수»로 바꿨다**(web2-26 2번).
+      // 평균 기준은 결이 옅을 때만 산다: 결의 진폭을 지각 대역으로 올리자(26-2) 평균이
+      // 종이색에서 멀어져 **섬유가 없는 빈 띠도 «평균에서 멀어»** 에너지가 커졌고,
+      // 이음매 결핍의 부호가 뒤집혔다(raw 1.03 > wrapped 0.93 — 판정 자체가 무너졌다).
+      // 종이색은 «가장 밝은 쪽»이다(섬유는 어둡게만 얹힌다) — 98분위를 기준으로 잡고
+      // 에너지를 **어두워진 몫**으로만 센다. 그러면 빈 띠 = 0이 구성상 옳다.
+      const lum: number[] = []
+      for (let i = 0; i < img.length; i += 4) lum.push(0.299 * img[i]! + 0.587 * img[i + 1]! + 0.114 * img[i + 2]!)
+      const sorted = [...lum].sort((a, b) => a - b)
+      const bg = sorted[Math.floor(sorted.length * 0.98)]!
       const bandEnergy = (x0: number, x1: number) => {
         let s = 0, n = 0
         for (let y = 0; y < H; y++) for (let x = x0; x < x1; x++) {
-          const i = (y * W + x) * 4
-          s += Math.abs(img[i]! - bgR) + Math.abs(img[i + 1]! - bgG) + Math.abs(img[i + 2]! - bgB)
+          s += Math.max(0, bg - lum[y * W + x]!)
           n++
         }
         return s / n
       }
+      // ⚠ **읽는 자리를 타일 크기에 비례로 잡는다**(web2-26 2번 · #71 ㉤): 종전에는
+      // 60~200으로 못 박혀 있었고 타일이 늘 256 device px이던 시절에는 그것이 왼쪽 타일
+      // 안(이음매 256에서 먼 자리)이었다. dpr을 따라 타일이 128~384로 갈리자 dpr1에서
+      // **내부 대역이 이음매를 가로질러** 기준값이 오염됐다(raw 1.025 > wrapped 0.922 —
+      // 판정이 뒤집혔다). 답은 임계가 아니라 읽는 자리다.
       const seamBand = bandEnergy(tile.width - 3, tile.width + 3)
-      const interior = bandEnergy(60, 200)
+      const interior = bandEnergy(Math.round(tile.width * 0.23), Math.round(tile.width * 0.78))
       return { ratio: seamBand / interior }
     }
     // 시드 축 스윕(2차 리뷰 [10] · #14) — 타일은 rng32(id) 결정론이라 **실행 반복은
@@ -238,7 +249,10 @@ test('⑤⑤\'⑥ — 층마다 결이 다르고(게이트) · 이음매가 없�
   // dpr2에서는 상대 단언이 판별한다 — 실측값은 원장·NOTES).
   for (const s of seam.sweep) {
     console.log(`[⑤'] id ${s.id} — wrapped ${s.wrapped.toFixed(3)} · raw ${s.raw.toFixed(3)}`)
-    expect(s.wrapped, `id ${s.id} wrapped`).toBeGreaterThan(0.8)
+    // 절대 바닥은 **위생값**이고 판별은 아래 상대 단언이 한다. 0.8 → 0.7로 다시 잡았다:
+    // 에너지의 정의가 갈렸으므로(평균 기준 → 98분위 기준 · web2-26 2번) 옛 값의 근거가
+    // 같이 갔다. 새 관측 대역은 0.78~1.02(시드 셋 × dpr 둘 — 위 출력이 정본).
+    expect(s.wrapped, `id ${s.id} wrapped`).toBeGreaterThan(0.7)
     expect(s.raw, `id ${s.id} raw < wrapped×0.95`).toBeLessThan(s.wrapped * 0.95)
   }
   record(test.info().project.name, 'tile_and_seam', { hashes: h, seam_sweep: seam.sweep })
@@ -270,13 +284,23 @@ test('⑦⑧⑨ — rect 성장에 결 불변 · 세 장에도 아래 획 읽힘
   // 보존하므로 절대 차는 막 밝기만큼 준다(30×12 상자는 획 1.4px의 희석도 실린다 —
   // 첫 판의 절대 임계 0.04는 그 희석을 안 계산한 값이었다). 막 전(획만) 대비의
   // 35% 이상이 세 장 아래에서도 남으면 읽힌다로 판정한다.
-  const on0 = await avgRGB(page, 440, 246, 30, 6)
-  const beside0 = await avgRGB(page, 440, 210, 30, 6)
+  // ⚠ **곁을 획 바로 옆에서 읽는다**(web2-26 2번 · #71 ㉤ — 답은 임계가 아니라 읽는 자리).
+  //   종전에는 36px 떨어진 자리를 곁으로 삼았는데, 결의 진폭이 지각 대역으로 올라가자
+  //   **두 상자가 결의 다른 대목을 표본한다**는 사실이 신호(획 대비 ~2계조)를 삼켰다
+  //   (실측 c3 0.0025 ↔ 이론 0.007). 획의 위·아래 8px을 평균 내면 같은 결 이웃이다.
+  const beside = async () => {
+    const up = await avgRGB(page, 420, 238, 60, 6)
+    const dn = await avgRGB(page, 420, 258, 60, 6)
+    return [(up[0] + dn[0]) / 2, (up[1] + dn[1]) / 2, (up[2] + dn[2]) / 2] as [number, number, number]
+  }
+  const on0 = await avgRGB(page, 420, 247, 60, 6)
+  const beside0 = await beside()
   const contrast0 = lightness(beside0) - lightness(on0)
   await addPaper(page, 'yellow')
   await addPaper(page, 'tracing')
-  const on3 = await avgRGB(page, 440, 246, 30, 6)
-  const beside3 = await avgRGB(page, 440, 210, 30, 6)
+  const on3 = await avgRGB(page, 420, 247, 60, 6)
+  const beside3 = await beside()
+  console.log(`[⑧] on0 ${on0.map(x=>x.toFixed(1))} beside0 ${beside0.map(x=>x.toFixed(1))} on3 ${on3.map(x=>x.toFixed(1))} beside3 ${beside3.map(x=>x.toFixed(1))} c0 ${contrast0.toFixed(4)} c3 ${(lightness(beside3)-lightness(on3)).toFixed(4)}`)
   expect(contrast0).toBeGreaterThan(0.008)                      // 분해능(#71 ㉢) — 막 전에 실제로 갈린다(dpr2 AA로 준다 — 실측 0.013)
   expect(lightness(beside3) - lightness(on3)).toBeGreaterThan(contrast0 * 0.35)
   // ⑨ 게이트 — 활성 겹 획은 막 **위** · 아래 획은 막 **아래**. 합성 상자는 1.4px 획을
@@ -300,17 +324,29 @@ test('⑦⑧⑨ — rect 성장에 결 불변 · 세 장에도 아래 획 읽힘
     return {
       filmBelow: rowMin(film, 250),     // 막 사본에 아래 획의 검은 줄이 있다(물든다)
       filmAbove: rowMin(film, 330),     // 막 사본에 위 획은 **없다**(안 물든다)
+      filmBare: rowMin(film, 290),      // 획이 없는 막 — **그 실행의 바닥값**(#74 ㉡)
       layercAbove: rowMin(layerc, 330), // 위 획은 #layerc에 산다
       layercBelow: rowMin(layerc, 250), // 아래 획은 #layerc에 없다
     }
   })
-  expect(mech.filmBelow.mn).toBeLessThan(150)              // 아래 획이 막 사본 안(곱의 대상)
-  expect(mech.filmAbove.mn).toBeGreaterThan(150)           // 위 획은 막 사본 밖
+  // ⚠ **절대 밝기 임계(150)를 버렸다**(web2-26 2번 · #74 ㉡ 그대로): 그 임계는 «종이 결»을
+  // 잉크로 셌다 — 결의 진폭을 지각 대역으로 올리자(26-2) 세 장 겹친 막의 빈 자리가
+  // 133까지 내려와 「위 획이 막 사본 밖」이 결 때문에 빨개졌다. 판정은 **그 실행의
+  // 빈 자리 바닥값과의 차**로 한다. 분해능 단언(#71 ㉢)이 짝이다 — 두 값이 실제로 갈린다.
+  expect(mech.filmBare.mn - mech.filmBelow.mn,
+    `아래 획이 바닥보다 어둡다(바닥 ${mech.filmBare.mn.toFixed(1)} · 획 ${mech.filmBelow.mn.toFixed(1)})`).toBeGreaterThan(30)
+  expect(Math.abs(mech.filmBare.mn - mech.filmAbove.mn),
+    `위 획 자리는 바닥과 같다(바닥 ${mech.filmBare.mn.toFixed(1)} · 자리 ${mech.filmAbove.mn.toFixed(1)})`).toBeLessThan(10)
   expect(mech.layercAbove.alpha).toBeGreaterThan(0)        // 위 획이 #layerc에
   expect(mech.layercBelow.alpha).toBe(0)                   // 아래 획은 #layerc에 없다
   // 가시 — 위 획이 합성 화면에서 실제로 보인다(획 띠가 곁보다 어둡다)
+  const aboveSideOf = async () => {
+    const u = await avgRGB(page, 400, 318, 80, 5)
+    const d = await avgRGB(page, 400, 340, 80, 5)
+    return [(u[0] + d[0]) / 2, (u[1] + d[1]) / 2, (u[2] + d[2]) / 2] as [number, number, number]
+  }
   const aboveRow = await avgRGB(page, 400, 328, 80, 5)
-  const aboveSide = await avgRGB(page, 400, 310, 80, 5)
+  const aboveSide = await aboveSideOf()
   const aboveContrast = lightness(aboveSide) - lightness(aboveRow)
   expect(aboveContrast).toBeGreaterThan(0.01)
   // **반증(D-3) — 막을 활성 겹 위로 옮기면 ⑨가 무너진다**(실제 실행): #layerc를 #film
@@ -322,7 +358,7 @@ test('⑦⑧⑨ — rect 성장에 결 불변 · 세 장에도 아래 획 읽힘
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
   })
   const brokenRow = await avgRGB(page, 400, 328, 80, 5)
-  const brokenSide = await avgRGB(page, 400, 310, 80, 5)
+  const brokenSide = await aboveSideOf()
   expect(lightness(brokenSide) - lightness(brokenRow)).toBeLessThan(aboveContrast * 0.4)
   await page.evaluate(() => {
     const film = document.getElementById('film')!

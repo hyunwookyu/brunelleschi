@@ -41,7 +41,7 @@ try {
   if (r === 'classic' || r === 'brush') app.renderer = r
 } catch { /* 저장소가 없으면 기본값(brush) */ }
 const brushLayer = initBrushLayer(W, H, dpr)
-import { initFilmLayer, bakeFiberTile, setFilmAlphaForTest } from './filmlayer'
+import { initFilmLayer, bakeFiberTile, setFilmAlphaForTest, setFiberLegacyForTest } from './filmlayer'
 const filmLayer = initFilmLayer(W, H, dpr)
 
 // 빌드 식별자 — 배포됐는지 화면에서 바로 안다.
@@ -1223,6 +1223,8 @@ const diag = {
   fiberTile: (id: number, paper: 'tracing' | 'yellow', wrap = true) => bakeFiberTile(id, paper, dpr, wrap),
   /** D-3 반증(3-e ④) — 곱→알파로 바꿔 합성 곡선 붕괴를 본다. e2e 전용. */
   filmAlphaForTest: (v: boolean) => { setFilmAlphaForTest(v); invalidate() },
+  /** D-3 반증(web2-26 2번) — 결을 dpr에 도로 묶어 「dpr 비 1.0 ± 0.15」를 깨뜨린다. e2e 전용. */
+  fiberLegacyForTest: (v: boolean) => { setFiberLegacyForTest(v); invalidate() },
   // web2-22 3부 — e2e가 임계를 실제로 넘겨 보는 손잡이(작은 상한 주입) + 마지막 실측
   autosaveLimitForTest: (n: number | null) => { autosaveLimitOverride = n },
   autosaveLast: () => lastAutosave,
