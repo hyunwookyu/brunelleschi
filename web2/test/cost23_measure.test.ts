@@ -163,9 +163,12 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
       resolution: {
         note: '#71 ㉢ — 두 축이 실제로 값을 가르는가. 하네스가 둘 다 단언한다: '
           + '① 획 축(면 40 고정): 400획 med > 50획 max ② 면 축(획 400 고정): 40면 med > 5면 max. '
-          + '⚠ 두 축의 무게가 다르다 — **동인은 면 수**다(면을 8배 하면 조각이 6배·시간이 5.6배 '
-          + '늘고, 획을 8배 해도 2배 아래다). 까닭: 한 선분이 자를 자리는 면의 변 수에 비례하고 '
-          + '조각마다 다시 면 전부를 훑는다(O(N·M²) 대역). 획은 선형이다.',
+          + '⚠ 두 축의 무게가 다르다 — **동인은 면 수**다(배수는 아래 두 열이 값으로 낸다). '
+          + '까닭: 한 선분이 자를 자리는 면의 변 수에 비례하고 조각마다 다시 면 전부를 훑는다 '
+          + '(O(N·M²) 대역). 획은 선형이다.',
+        face_axis_ratio: Number((at(400, 40).med_ms / at(400, 5).med_ms).toFixed(2)),
+        stroke_axis_ratio: Number((at(400, 40).med_ms / at(50, 40).med_ms).toFixed(2)),
+        pieces_face_axis_ratio: Number((at(400, 40).pieces / at(400, 5).pieces).toFixed(2)),
         stroke_axis: { low_med: at(50, 40).med_ms, high_med: at(400, 40).med_ms },
         face_axis: { low_med: at(400, 5).med_ms, high_med: at(400, 40).med_ms },
         max_overlap: at(50, 40).max_ms > at(400, 40).med_ms,

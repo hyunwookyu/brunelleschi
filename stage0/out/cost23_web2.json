@@ -33,8 +33,8 @@
       "pieces": 139,
       "segs": 80,
       "hidden": 55,
-      "med_ms": 0.14,
-      "max_ms": 0.17
+      "med_ms": 0.15,
+      "max_ms": 0.18
     },
     {
       "strokes": 50,
@@ -43,8 +43,8 @@
       "pieces": 292,
       "segs": 105,
       "hidden": 77,
-      "med_ms": 0.3,
-      "max_ms": 0.68
+      "med_ms": 0.31,
+      "max_ms": 0.53
     },
     {
       "strokes": 50,
@@ -53,8 +53,8 @@
       "pieces": 737,
       "segs": 146,
       "hidden": 117,
-      "med_ms": 0.64,
-      "max_ms": 1.08
+      "med_ms": 0.69,
+      "max_ms": 1.03
     },
     {
       "strokes": 50,
@@ -63,8 +63,8 @@
       "pieces": 2022,
       "segs": 227,
       "hidden": 197,
-      "med_ms": 1.84,
-      "max_ms": 2.17
+      "med_ms": 1.93,
+      "max_ms": 2.19
     },
     {
       "strokes": 100,
@@ -73,8 +73,8 @@
       "pieces": 240,
       "segs": 134,
       "hidden": 103,
-      "med_ms": 0.28,
-      "max_ms": 0.69
+      "med_ms": 0.26,
+      "max_ms": 0.44
     },
     {
       "strokes": 100,
@@ -83,8 +83,8 @@
       "pieces": 449,
       "segs": 160,
       "hidden": 125,
-      "med_ms": 0.41,
-      "max_ms": 0.84
+      "med_ms": 0.42,
+      "max_ms": 0.45
     },
     {
       "strokes": 100,
@@ -93,8 +93,8 @@
       "pieces": 1025,
       "segs": 203,
       "hidden": 166,
-      "med_ms": 0.9,
-      "max_ms": 1.61
+      "med_ms": 0.94,
+      "max_ms": 1.26
     },
     {
       "strokes": 100,
@@ -103,8 +103,8 @@
       "pieces": 2526,
       "segs": 281,
       "hidden": 243,
-      "med_ms": 2.33,
-      "max_ms": 2.62
+      "med_ms": 2.34,
+      "max_ms": 2.82
     },
     {
       "strokes": 200,
@@ -113,8 +113,8 @@
       "pieces": 450,
       "segs": 243,
       "hidden": 191,
-      "med_ms": 0.42,
-      "max_ms": 0.77
+      "med_ms": 0.39,
+      "max_ms": 0.85
     },
     {
       "strokes": 200,
@@ -123,8 +123,8 @@
       "pieces": 776,
       "segs": 270,
       "hidden": 213,
-      "med_ms": 0.71,
-      "max_ms": 1.01
+      "med_ms": 0.72,
+      "max_ms": 1.23
     },
     {
       "strokes": 200,
@@ -133,8 +133,8 @@
       "pieces": 1611,
       "segs": 313,
       "hidden": 254,
-      "med_ms": 1.44,
-      "max_ms": 1.76
+      "med_ms": 1.51,
+      "max_ms": 1.86
     },
     {
       "strokes": 200,
@@ -143,8 +143,8 @@
       "pieces": 3462,
       "segs": 391,
       "hidden": 330,
-      "med_ms": 3.26,
-      "max_ms": 3.57
+      "med_ms": 3.31,
+      "max_ms": 3.87
     },
     {
       "strokes": 400,
@@ -154,7 +154,7 @@
       "segs": 454,
       "hidden": 366,
       "med_ms": 0.81,
-      "max_ms": 1.07
+      "max_ms": 1.35
     },
     {
       "strokes": 400,
@@ -163,8 +163,8 @@
       "pieces": 1372,
       "segs": 486,
       "hidden": 390,
-      "med_ms": 1.35,
-      "max_ms": 1.92
+      "med_ms": 1.23,
+      "max_ms": 1.68
     },
     {
       "strokes": 400,
@@ -173,8 +173,8 @@
       "pieces": 2609,
       "segs": 529,
       "hidden": 431,
-      "med_ms": 2.37,
-      "max_ms": 2.76
+      "med_ms": 2.55,
+      "max_ms": 3.25
     },
     {
       "strokes": 400,
@@ -183,26 +183,29 @@
       "pieces": 5024,
       "segs": 609,
       "hidden": 507,
-      "med_ms": 4.78,
-      "max_ms": 5.27
+      "med_ms": 5.1,
+      "max_ms": 6.02
     }
   ],
   "worst": {
     "strokes": 400,
     "faces": 40,
-    "med_ms": 4.78,
-    "max_ms": 5.27
+    "med_ms": 5.1,
+    "max_ms": 6.02
   },
   "over_500ms": [],
   "resolution": {
-    "note": "#71 ㉢ — 두 축이 실제로 값을 가르는가. 하네스가 둘 다 단언한다: ① 획 축(면 40 고정): 400획 med > 50획 max ② 면 축(획 400 고정): 40면 med > 5면 max. ⚠ 두 축의 무게가 다르다 — **동인은 면 수**다(면을 8배 하면 조각이 6배·시간이 5.6배 늘고, 획을 8배 해도 2배 아래다). 까닭: 한 선분이 자를 자리는 면의 변 수에 비례하고 조각마다 다시 면 전부를 훑는다(O(N·M²) 대역). 획은 선형이다.",
+    "note": "#71 ㉢ — 두 축이 실제로 값을 가르는가. 하네스가 둘 다 단언한다: ① 획 축(면 40 고정): 400획 med > 50획 max ② 면 축(획 400 고정): 40면 med > 5면 max. ⚠ 두 축의 무게가 다르다 — **동인은 면 수**다(배수는 아래 두 열이 값으로 낸다). 까닭: 한 선분이 자를 자리는 면의 변 수에 비례하고 조각마다 다시 면 전부를 훑는다 (O(N·M²) 대역). 획은 선형이다.",
+    "face_axis_ratio": 6.3,
+    "stroke_axis_ratio": 2.64,
+    "pieces_face_axis_ratio": 6.1,
     "stroke_axis": {
-      "low_med": 1.84,
-      "high_med": 4.78
+      "low_med": 1.93,
+      "high_med": 5.1
     },
     "face_axis": {
       "low_med": 0.81,
-      "high_med": 4.78
+      "high_med": 5.1
     },
     "max_overlap": false,
     "max_overlap_note": "참이면 그 두 행의 **최대값 대역이 겹친다** — 한 번의 굽기로는 획 축을 못 가른다는 뜻이고, 그래서 판정은 중앙값으로 한다(잡음의 실측 기록)"
