@@ -114,12 +114,17 @@ describe('web2-25 5부 — 파일 크기 원장(filesize25)', () => {
       mut(d)
       return u8(ser(d, false))
     }
+    // ⚠⚠ **겹치지 않게 나눈다**(리뷰 [3]). 초판은 `stroke_endpoints_and_meta`를
+    //   「획만 뺀 문서 − 획·면·밑그림을 다 뺀 문서」로 잡아 **밑그림을 두 번 셌다**
+    //   (그래서 잔차가 정확히 −underlays였고, 원장은 그것을 「JSON 구분자 겹침」이라
+    //   틀리게 설명했다). 지금은 기준선을 층층이 두어 **각 몫이 한 번만** 세어진다.
     const parts = {
       raw_points: fullBytes - without(d => { for (const s of d.strokes) delete s.raw }),
       raw_input: fullBytes - without(d => { for (const s of d.strokes) delete s.rawIn }),
       own3: fullBytes - without(d => { for (const s of d.strokes) delete s.own3 }),
-      underlays: fullBytes - without(d => { d.underlays = [] }),
-      stroke_endpoints_and_meta: 0,   // 아래에서 채운다
+      underlays: 0,                   // 아래에서 채운다(기준선 차)
+      faces: 0,
+      stroke_endpoints_and_meta: 0,
       rest: 0,
     }
     // rawIn 안의 갈림 — press 만 남기면 얼마가 주는가(5-b의 둘째 후보를 표가 지목한다)
@@ -129,17 +134,19 @@ describe('web2-25 5부 — 파일 크기 원장(filesize25)', () => {
       }
     })
     const rawInPressOnly = parts.raw_input - rawInTiltTwist
-    // 획에서 raw·rawIn·own3을 다 빼고 남은 몫(끝점 둘 + id + mat + layer …)
-    const strokesBare = without(d => {
+    // 층층이 벗긴다 — 각 층의 차가 **그 층만의 몫**이다(겹침 없음)
+    const strokesBare = without(d => {           // 획에서 raw·rawIn·own3만 뺀 문서
       for (const s of d.strokes) { delete s.raw; delete s.rawIn; delete s.own3 }
     })
-    const noStrokes = without(d => {
-      d.strokes = []; d.faces = []; d.underlays = []
-    })
+    const noStrokes = without(d => { d.strokes = [] })                    // 면·밑그림은 남는다
+    const noStrokesNoUnderlay = without(d => { d.strokes = []; d.underlays = [] })
+    const bare = without(d => { d.strokes = []; d.underlays = []; d.faces = [] })
     parts.stroke_endpoints_and_meta = strokesBare - noStrokes
-    parts.rest = noStrokes
+    parts.underlays = noStrokes - noStrokesNoUnderlay
+    parts.faces = noStrokesNoUnderlay - bare
+    parts.rest = bare
     const sum = parts.raw_points + parts.raw_input + parts.own3 + parts.underlays
-      + parts.stroke_endpoints_and_meta + parts.rest
+      + parts.faces + parts.stroke_endpoints_and_meta + parts.rest
     const residual = fullBytes - sum
 
     // ── 5-b: 고친 뒤 — ㉠ 옐로 rawIn press 만 ㉡ 좌표 반올림(저장할 때만) ─────────
@@ -166,17 +173,33 @@ describe('web2-25 5부 — 파일 크기 원장(filesize25)', () => {
     const perStrokeAfter = (roundedBytes - baseAfter) / 100
     const limit = C.AUTOSAVE_LIMIT_BYTES
     const capacity = (base: number, per: number, frac: number) => Math.floor((limit * frac - base) / per)
+    // ⚠ **두 셈 관례를 다 낸다**(#28 · 리뷰 [2]). utf8은 앱의 자동 저장 게이지(Blob)와 같은
+    //   셈이고 utf16은 localStorage 관례 상한의 셈이다 — **경고 대역이 관례로 두 배 갈린다**.
+    //   web2-24의 「~700획/~375획」과 지시의 「약 380획」은 **utf16 쪽 수**다.
+    const u16Before = full.length * 2, u16After = rounded.length * 2
+    const u16BaseBefore = ser(noYellowTilt, false).length * 2
+    const u16BaseAfter = ser(noYellow, true).length * 2
+    const perStrokeBefore16 = (u16Before - u16BaseBefore) / 100
+    const perStrokeAfter16 = (u16After - u16BaseAfter) / 100
     const arith = {
       per_yellow_stroke_utf8_before: Math.round(perStrokeBefore * 10) / 10,
       per_yellow_stroke_utf8_after: Math.round(perStrokeAfter * 10) / 10,
+      per_yellow_stroke_utf16_before: Math.round(perStrokeBefore16 * 10) / 10,
+      per_yellow_stroke_utf16_after: Math.round(perStrokeAfter16 * 10) / 10,
       base_bytes_before: baseBefore,
       base_bytes_after: baseAfter,
       warn_at_strokes_before: capacity(baseBefore, perStrokeBefore, 0.7),
       warn_at_strokes_after: capacity(baseAfter, perStrokeAfter, 0.7),
       fail_at_strokes_before: capacity(baseBefore, perStrokeBefore, 1.0),
       fail_at_strokes_after: capacity(baseAfter, perStrokeAfter, 1.0),
-      note: '⑤ — 5MB 가정(AS-C80) · 경고 70%. **utf8 셈**이다(앱의 자동 저장 게이지가 Blob '
-        + '바이트라 그 셈이 정본이고, utf16 관례는 아래 pct에 병기한다 #28). 「획」은 이 '
+      warn_at_strokes_before_utf16: capacity(u16BaseBefore, perStrokeBefore16, 0.7),
+      warn_at_strokes_after_utf16: capacity(u16BaseAfter, perStrokeAfter16, 0.7),
+      fail_at_strokes_before_utf16: capacity(u16BaseBefore, perStrokeBefore16, 1.0),
+      fail_at_strokes_after_utf16: capacity(u16BaseAfter, perStrokeAfter16, 1.0),
+      note: '⑤ — 5MB 가정(AS-C80) · 경고 70%. **두 셈을 다 낸다**(#28): utf8은 앱의 자동 저장 '
+        + '게이지(Blob 바이트)와 같은 셈이고, utf16은 localStorage 관례 상한의 셈이라 **경고 '
+        + '대역이 두 배 갈린다**. ⚠ web2-24의 「~700획/~375획」과 지시 5부의 「약 380획에서 '
+        + '경고」는 **utf16 쪽 수**다 — utf8 수와 나란히 놓고 비교하면 안 된다. 「획」은 이 '
         + '픽스처의 옐로 손 획(240점 → 솎은 뒤 ~100점 · 펜 입력 실림)이다 — 짧은 획이면 '
         + '더 많이 들어간다(외삽이지 상한이 아니다).',
     }
@@ -251,13 +274,28 @@ describe('web2-25 5부 — 파일 크기 원장(filesize25)', () => {
         pct_of_autosave_original_utf8: Math.round((fullBytes / limit) * 1000) / 10,
         original_utf16: full.length * 2,
         note: '5-b — **저장할 때만** 소수 1자리로 반올림한다(메모리의 값은 안 깎는다). '
-          + '0.1px는 눈에 안 보이고 솎기 임계(0.5px · AS-C82)보다도 촘촘하다. ⚠ 문서 px '
-          + '좌표에만 건다(획 a·b·raw · 밑그림 마디) — 3D(own3)·포즈·view.s·치수(mm)는 단위가 '
-          + '달라 0.1이 «안 보이는 대역»이 아니다. 그림이 안 바뀐다는 것은 e2e가 픽셀로 잰다.',
+          + '⚠⚠ **깎는 것은 획의 `raw`(표현용 점렬) 하나다** — 확정 끝점 `a`·`b`도, 밑그림 '
+          + '마디도 안 깎는다. 회차 중에 두 번 좁혔고 두 번 다 팔이 잡았다: `a`·`b`는 own3의 '
+          + '잉크 심판(OWN3_TOL_PX 0.01px)이 걸려 있어 왕복에서 불변식이 깨지고(own3d.test 넷), '
+          + '밑그림 마디는 web2-23의 왕복 동일성을 깬다(underlay.test ④). **이 블록의 수는 '
+          + '그 최종 판(raw 하나)을 직렬화해 잰 값이다.** ⚠ 3D(own3)·포즈·view.s·치수(mm)는 '
+          + '단위가 달라 0.1이 «안 보이는 대역»이 아니라 애초에 대상이 아니다. ⚠ 0.1px가 '
+          + '「눈에 안 보인다」와 「솎기 임계(0.5 **화면** px · AS-C82)보다 촘촘하다」는 '
+          + '**view.s=1 프레임의 진술**이다 — 이 원장의 조건이 그것이고, 확대해 그린 문서의 '
+          + '대역은 안 쟀다(리뷰 [10] · DEFERRED). 그림이 안 바뀐다는 것은 e2e가 픽셀로 잰다.',
       },
       arithmetic_5c: arith,
       flags_explained: {
         'constants/metric_defs 스냅샷 없음': 'web2 라인 원장은 상수 스냅샷 등록부 밖(공통 형태)',
+        'components_utf8.residual_bytes = 0': '**설계 보장에 가깝지만 측정이다**(자기참조 유형 3의 '
+          + '경계): 기준선을 층층이 두어(전체 → 획의 raw·rawIn·own3 뺀 판 → 획 뺀 판 → 밑그림 뺀 '
+          + '판 → 면 뺀 판) 각 층의 차를 그 몫으로 읽으므로 망원경처럼 합이 전체가 된다. '
+          + '**다만 첫 층은 세 열쇠를 각각 따로 뺀 세 델타의 합**이라 그것이 더해지는지는 '
+          + '측정이다(JSON 구분자가 겹치면 0이 안 된다). 그래서 임계를 «0»이 아니라 «전체의 '
+          + '0.1% 아래»로 걸었다. ⚠ 초판은 밑그림을 두 번 세어 잔차가 −710이었고, 원장은 '
+          + '그것을 「구분자 겹침」이라 틀리게 설명했다(리뷰 [3]) — 지금 0은 그 겹침이 사라졌다는 값이다',
+        'pct.rest = 0': '반올림해서 0이다(314B = 전체의 0.05%). 0 고정 카운터가 아니라 '
+          + '**정말 작은 몫**이고, 같은 표의 rest 바이트가 그 원본이다',
       },
     }
     mkdirSync(outDir, { recursive: true })
@@ -266,7 +304,8 @@ describe('web2-25 5부 — 파일 크기 원장(filesize25)', () => {
       + ` · rawIn ${parts.raw_input}B(${ledger.components_utf8.pct.raw_input}%)`
       + ` · own3 ${parts.own3}B · 밑그림 ${parts.underlays}B`
       + ` → 고친 뒤 ${roundedBytes}B(솎기 −${ledger.fixes_5b.saved_by_slim_pct}% · 반올림 −${ledger.fixes_5b.saved_by_round_pct}%)`
-      + ` · 경고 ${arith.warn_at_strokes_before}획 → ${arith.warn_at_strokes_after}획`)
+      + ` · 경고 utf8 ${arith.warn_at_strokes_before}→${arith.warn_at_strokes_after}획`
+      + ` · utf16 ${arith.warn_at_strokes_before_utf16}→${arith.warn_at_strokes_after_utf16}획`)
 
     // ── 판정선 — 하네스가 실제로 무언가를 쟀는가(0건 통과 방지) ──────────────
     expect(app.doc.strokes.length).toBe(108)
@@ -281,7 +320,9 @@ describe('web2-25 5부 — 파일 크기 원장(filesize25)', () => {
     expect(ledger.doc.own3_strokes).toBeGreaterThan(0)
     expect(ledger.doc.raw_points_total).toBeGreaterThan(1000)
     // 분해가 전체를 거의 덮는가(잔차가 전체의 1% 아래) — 아니면 표가 못 지목한 몫이 크다
-    expect(Math.abs(residual)).toBeLessThan(fullBytes * 0.01)
+    expect(Math.abs(residual)).toBeLessThan(fullBytes * 0.001)   // 겹침 없는 분할이므로 잔차는 구분자뿐
+    // **두 셈이 실제로 갈린다**(#28의 분해능 — 안 갈리면 병기가 아무것도 안 말한다)
+    expect(arith.warn_at_strokes_after_utf16).toBeLessThan(arith.warn_at_strokes_after)
     // 반올림이 **실제로** 줄인다(#69 ㉣ — 0을 적기 전에 확인한다)
     expect(roundGain).toBeGreaterThan(0)
     expect(arith.warn_at_strokes_after).toBeGreaterThan(arith.warn_at_strokes_before)

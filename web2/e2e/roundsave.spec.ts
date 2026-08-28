@@ -9,6 +9,11 @@
 // ⚠⚠ 절대 밝기 임계를 안 쓴다(#74 ㉡) — **두 화면의 차**로만 판정한다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { writeFileSync, mkdirSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const HERE = dirname(fileURLToPath(import.meta.url))
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -176,4 +181,44 @@ test('③ 그림이 안 바뀐다 — 반올림 있는 문서와 없는 문서�
     .toBeLessThanOrEqual(redraw.frac)
   // 그리고 **평균 채널 차가 1/255 아래**다 — 한 눈금도 안 된다
   expect(eff.mean, '평균 채널 차').toBeLessThan(1)
+
+  // ── 원장(CLAUDE.md §5 — **측정은 반드시 stage0/out에 JSON으로 남긴다**) ──────────
+  // ⚠ `LEDGER=1`에서만 쓴다(#71 ㉠ — 전량 실행의 병렬 판이 못 덮는다).
+  //   정본 명령: LEDGER=1 npx playwright test e2e/roundsave.spec.ts --workers=1
+  if (process.env.LEDGER === '1') {
+    const dpr = test.info().project.name
+    const suffix = dpr === 'dpr1' ? '' : `_${dpr}`
+    const dir = resolve(HERE, '../../stage0/out')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(resolve(dir, `roundsave25_web2${suffix}.json`), JSON.stringify({
+      what: 'web2-25 5-c ③ — 저장 좌표 반올림이 그림을 바꾸는가(픽셀). '
+        + '정본 명령: LEDGER=1 npx playwright test e2e/roundsave.spec.ts --workers=1',
+      run: {
+        date: '2026-08-28',
+        project: dpr,
+        conditions: '같은 그림(작도 2획 + 옐로 4획 프리핸드)을 **저장 형식만 갈라** 두 번 '
+          + '복원하고 픽셀을 견준다. ㉠ diag.saveRound(false)로 배정밀도 저장 → 복원 '
+          + '㉡ 기본(반올림) 저장 → 복원. **양쪽 다 «문서에서 다시 그린 화면»**이라 '
+          + '«생 draft ↔ 재그리기»의 차가 안 섞인다(초판이 그것을 섞어 0.2%를 반올림 몫으로 '
+          + '오독했다 — D-1). 캔버스 셋(brushc·ink·layerc)을 이어 붙여 4px 격자로 훑는다.',
+        method: '판정은 **절대 비율이 아니라 두 차의 비교**다(#74 ㉡의 확장): 반올림 몫이 '
+          + '**재그리기 몫**(좌표를 하나도 안 바꾸고 생 draft ↔ 복원으로만 갈린 차 — 사람이 '
+          + '매 복원마다 이미 보고 있는 차)보다 작으면 「그림이 안 바뀐다」가 값으로 선다.',
+      },
+      rounding_share: eff,     // 반올림 몫(좌표만 갈렸다)
+      redraw_share: redraw,    // 재그리기 몫(좌표는 그대로)
+      noise_floor: noise,      // 같은 형식 두 복원 — 0이어야 한다
+      channels_sampled: A.length,
+      verdict: eff.frac <= redraw.frac,
+      note: 'frac = 값이 다른 채널의 비율 · mean = 채널당 평균 차(0~255) · max = 최대 차. '
+        + '⚠ max가 255여도 이상하지 않다 — 가장자리 안티에일리어싱 한 픽셀이 0↔255로 갈릴 수 '
+        + '있다. 그래서 판정은 max가 아니라 frac·mean과 **기준선과의 비교**로 한다.',
+      flags_explained: {
+        'noise_floor.frac = 0': '0 고정이 아니라 **판정의 근거**다 — 같은 문서를 두 번 복원하면 '
+          + '픽셀이 같다는 것이 이 팔의 전제이고, 그것이 깨지면 위의 비교가 뜻을 잃는다. '
+          + '같은 실행의 redraw_share(0이 아니다)가 양성 대조다(#69 ㉣)',
+        'constants/metric_defs 스냅샷 없음': 'web2 라인 원장은 상수 스냅샷 등록부 밖(공통 형태)',
+      },
+    }, null, 2))
+  }
 })

@@ -59,6 +59,14 @@ async function addPaper(page: Page, paper: 'tracing' | 'yellow') {
   await settle(page)
 }
 
+/** 겹 목록을 편다 — **토글**이라 열려 있는데 또 누르면 닫힌다(web2-25 4-a) */
+async function openList(page: Page) {
+  if (await page.locator('#layer-list').count() === 0) {
+    await page.click('#layer-summary')
+    await settle(page)
+  }
+}
+
 /** 합성 화면 픽셀(#67 — 사람이 보는 것) — 평균 RGB */
 async function avgRGB(page: Page, x: number, y: number, w: number, h: number): Promise<[number, number, number]> {
   const buf = await page.screenshot({ clip: { x, y, width: w, height: h } })
@@ -113,7 +121,7 @@ test('①②③ — 옐로가 아래를 물들인다 · 막은 그 종이의 시
   await page.click('#paperbar .ptab[data-sheet="0"]'); await settle(page)
   // 돌아오면 활성 겹이 풀려 있다(종이 전환 규칙) — **목록의 줄**로 다시 활성
   // (web2-25 4부: 겹 탭 더미 → 접으면 요약·펼치면 목록. 닿는 자리만 옮겼다)
-  await page.click('#layer-summary'); await settle(page)
+  await openList(page)
   await page.click('#layer-list .lrow'); await settle(page)
   const back = await avgRGB(page, 400, 200, 40, 40)
   expect(back[2]).toBeLessThan(before[2] - 12)
@@ -123,7 +131,7 @@ test('①②③ — 옐로가 아래를 물들인다 · 막은 그 종이의 시
   await addPaper(page, 'tracing')                          // 맨 위·활성 — 막 둘 다 그려진다
   const both = await avgRGB(page, 400, 200, 40, 40)
   expect(both[0] + both[1] + both[2]).toBeLessThan(yellowOnly[0] + yellowOnly[1] + yellowOnly[2] - 3)
-  await page.click('#layer-summary'); await settle(page)             // 목록을 편다(4부)
+  await openList(page)                                              // 목록을 편다(4부)
   await page.click('#layer-list .lrow.yellow'); await settle(page)  // 옐로를 활성으로 — 위 막 꺼짐
   const lowerActive = await avgRGB(page, 400, 200, 40, 40)
   for (let i = 0; i < 3; i++) expect(Math.abs(lowerActive[i]! - yellowOnly[i]!)).toBeLessThan(4)

@@ -86,27 +86,44 @@ test('① 셔터로 종이가 생기고 썸네일이 그 장면이다 · ② 스
   expect(Math.abs(h1 - h0)).toBeLessThanOrEqual(2)
 })
 
-test('⑤ 셔터의 번쩍임이 짧고 무채색이다', async ({ page }) => {
+test('⑤ 셔터의 번쩍임이 짧고 무채색이다 — 화면에 실제로 머문 시간을 잰다', async ({ page }) => {
   await boot(page)
-  const ms = await page.evaluate(() => (window as any).__b2.diag.shutterMs())
-  expect(ms).toBeGreaterThanOrEqual(80)
-  expect(ms).toBeLessThanOrEqual(200)
-  // 누르는 순간 요소가 뜬다 — 그리고 스스로 사라진다
-  await page.locator('#paper-add').click()
-  const seen = await page.evaluate(() => {
+  // ⚠ **상수를 상수 대역과 견주지 않는다**(리뷰 [14] — 그것은 설계 보장에 임계를 건 것이다).
+  //   재는 것은 **화면에 실제로 머문 시간**이다: 덮개가 뜬 순간부터 DOM에서 사라질 때까지를
+  //   페이지 안에서 `performance.now()`로 잰다. 실패 조건이 분명하다 — 상수를 0이나 3000으로
+  //   바꾸면 이 팔이 그 자리에서 깨진다.
+  const seen = await page.evaluate(async () => {
+    const t0 = performance.now()
+    const el0 = document.getElementById('shutter-flash')
+    if (el0) el0.remove()
+    ;(document.getElementById('paper-add') as HTMLElement).click()
     const el = document.getElementById('shutter-flash')
     if (!el) return null
     const cs = getComputedStyle(el)
-    return { bg: cs.backgroundColor, op: Number(cs.opacity) }
+    const bg = cs.backgroundColor
+    const appeared = performance.now()
+    await new Promise<void>(res => {
+      const tick = () => {
+        if (!document.getElementById('shutter-flash')) res()
+        else requestAnimationFrame(tick)
+      }
+      requestAnimationFrame(tick)
+    })
+    return { bg, aliveMs: performance.now() - appeared, sincePress: appeared - t0 }
   })
-  expect(seen).not.toBeNull()
+  expect(seen, '누르는 순간 덮개가 있다').not.toBeNull()
+  // **순간 피드백 대역**이다 — 프레임 하나(≈16ms)보다는 길고, «가려졌다»로 읽힐 만큼 길지 않다
+  expect(seen!.aliveMs, `화면에 머문 시간 ${seen!.aliveMs}ms`).toBeGreaterThan(16)
+  expect(seen!.aliveMs, `화면에 머문 시간 ${seen!.aliveMs}ms`).toBeLessThan(400)
   // **무채색**이다 — r == g == b(색을 안 들였다 — 지시 3-a ⚠)
   const rgb = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(seen!.bg)!
   expect(rgb[1]).toBe(rgb[2])
   expect(rgb[2]).toBe(rgb[3])
-  await page.keyboard.press('Escape')
-  await page.waitForTimeout(ms + 250)
+  // 그리고 **스스로 사라졌다**(위 대기가 그것을 기다린 것이다)
   expect(await page.locator('#shutter-flash').count()).toBe(0)
+  await page.keyboard.press('Escape')
+  console.log(`[측정] shutter — 화면에 머문 시간 ${seen!.aliveMs.toFixed(1)}ms `
+    + `(상수 ${await page.evaluate(() => (window as any).__b2.diag.shutterMs())}ms)`)
 })
 
 test('③ 길게 눌러 갱신하면 포즈·썸네일이 바뀐다', async ({ page }) => {

@@ -76,9 +76,20 @@ test('①② 접으면 요약(수) · 펼치면 목록 — 줄의 눈·자물쇠
     return { rowH: row.height, rowW: row.width, eye: [eye.width, eye.height], lock: [lock.width, lock.height] }
   })
   expect(geo.rowH).toBeGreaterThanOrEqual(34)   // 옛 탭은 28px 높이였다
-  expect(geo.rowW).toBeGreaterThanOrEqual(140)  // 옛 탭은 34px 폭이었다
+  expect(geo.rowW).toBeGreaterThanOrEqual(190)  // 옛 탭은 34px 폭이었다
   expect(Math.min(...geo.eye)).toBeGreaterThanOrEqual(16)
   expect(Math.min(...geo.lock)).toBeGreaterThanOrEqual(16)
+  // ⚠⚠ **줄의 «가운데»가 몸통이어야 한다** — 초판(min-width 148)은 눈이 가운데로 밀려
+  //   «줄을 눌렀는데 켬/끔이 토글되는» 상태였고 전량 e2e가 그것을 잡았다(paper.spec ②·
+  //   cost20.spec ⑩ — 활성이 안 바뀌었다). 「줄이 넓으니 손가락이 정확히 안 가도 된다」가
+  //   이 팔이 지키는 요구다(지시 4-a).
+  const mid = await page.evaluate(() => {
+    const r = document.querySelector('#layer-list .lrow')!.getBoundingClientRect()
+    const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) as HTMLElement
+    return { inCtl: !!el.closest('.lctl'), inRow: !!el.closest('.lrow') }
+  })
+  expect(mid.inRow).toBe(true)
+  expect(mid.inCtl, '줄 가운데가 눈·자물쇠가 아니다').toBe(false)
   // 다시 누르면 접힌다(연필통과 같은 어법)
   await page.click('#layer-summary'); await settle(page)
   await expect(page.locator('#layer-list')).toHaveCount(0)

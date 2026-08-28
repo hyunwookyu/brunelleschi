@@ -150,8 +150,10 @@ test('⑩ 3-b(영역 재조립)의 400획 프레임 비용 — 겹 없음/겹+�
   // #layerc 사영이 80획뿐이다. 맨 아래가 활성이면 above = 세 장 전부 = 소속 획 전부).
   // (web2-25 4부: 겹 목록이 «접으면 요약·펼치면 목록»이 됐다. 목록은 **나중 것이 위**라
   //  맨 아래 겹은 마지막 줄이다 — 닿는 자리만 옮겼고 뜻은 그대로다.)
-  await page.click('#layer-summary')
-  await settle(page)
+  if (await page.locator('#layer-list').count() === 0) {   // 토글이라 열려 있으면 안 누른다
+    await page.click('#layer-summary')
+    await settle(page)
+  }
   await page.locator('#layer-list .lrow').last().click()
   await settle(page)
   const heavy = await page.evaluate(() => {
