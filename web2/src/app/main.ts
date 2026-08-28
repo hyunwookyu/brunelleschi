@@ -1,6 +1,6 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG } from './layerbar'
 import { initInput } from './input'
@@ -1233,6 +1233,22 @@ const diag = {
     pressureLevels: diagPanel.pressureLevels(),
     brnlBytes: brnlBytes(),
   }),
+  // ── 밑그림(web2-23) ────────────────────────────────────────────────────
+  /** 구운 밑그림을 읽는다 — 겹 id를 주면 그것, 안 주면 전부의 요약(조각·가림 수) */
+  underlay: (layer?: number) => layer === undefined
+    ? app.doc.underlays.map(u => ({ layer: u.layer, segs: u.segs.length, hidden: u.segs.filter(g => g.hidden).length }))
+    : underlayOf(app.doc, layer),
+  /** **표현 팔 전용**(2부 ①③) — 밑그림을 심는다. 굽기의 «정확성»은 단위 팔이 값으로
+   *  재고(make2d.test), 화면 팔이 재는 것은 «그 자료가 이렇게 그려지는가»다: 자리와
+   *  깃발을 못 박아야 F·H 대역을 픽셀에서 가를 수 있다. 앱 경로는 안 바뀐다. */
+  underlaySetForTest: (layer: number, segs: { a: { x: number; y: number }; b: { x: number; y: number }; hidden: boolean }[]) => {
+    const u = underlayOf(app.doc, layer)
+    if (!u) return false
+    u.segs = segs.map(g => ({ a: { ...g.a }, b: { ...g.b }, hidden: g.hidden }))
+    invalidate()
+    return true
+  },
+  showHidden: (v?: boolean) => { if (v !== undefined) { app.showHidden = v; invalidate() } return app.showHidden },
   summary: () => ({
     horizonY: app.lift.an.horizonY,
     screenHDeclared: app.lift.an.screenHDeclared,
