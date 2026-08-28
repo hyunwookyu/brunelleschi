@@ -29,7 +29,8 @@
     "verdict": "통과 — 갈래 ㉠(관통선 경로에서 재는 것 넷 전부 전 칸 성립 — ④는 벽 면 holes=1로 판정)",
     "replaces": "⚠ opening21_web2.json의 등록 기준(winLifted>0 — 떠 있는 창)은 **여전히 미충족**이다(이 실행의 controls floating-* 전 칸 0/4가 그 재확인). 이 게이트는 기준을 낮춘 것이 아니라 **픽스처를 실제 작도의 경로(관통선+선따기)로 바꾼 것**이다 — 근거는 지시 0절·DECISIONS web2-24 절. 떠 있는 고리는 알려진 한계로 DEFERRED에 남는다(1차 [16])",
     "registered": {
-      "pass_needs": "갈래 ㉠ = 재는 것 넷 전부: preErase 4변 · postErase 4변 · 벽 면 개구부(holes=1) — 전 칸"
+      "pass_needs": "갈래 ㉠ = 재는 것 넷 전부: preErase 4변 · postErase 4변 · 벽 면 개구부(holes=1) — 전 칸",
+      "conditions_note": "⚠ 이 통과는 run.conditions의 **확대 지우기(view.s=2 · 문서 실효 반경 6px)** 전제 위에 있다(2차 [5]) — s=1(문서 반경 12px)로 지우면 aggregate.cells_clearance_below_12 칸(14칸 중 4)에서 표적 아닌 획이 반경 안에 들어 부수 삭제 대역이다. 여유 최솟값은 aggregate.eraseClearanceMinPx(6.7px — 실효 반경 6 대비 0.7px)이고 시드 7종의 동작점이다 — 실기기 표(확대 없이 딸 때의 부수 삭제 — DEFERRED)가 그 판을 잇는다"
     },
     "reachability_value": 4,
     "reachability_source": "/controls의 touching-* winLifted=4(승격 도달) · 실패 가능성 셋: floating-* 0/4(«안 선다») · /refute_no_own3d(③ 유지·④ 면이 실패하는 실행 — own3 끔+수직 지움에서 조각이 대기로 떨어진다) — 등록 기준의 세 항 각각에 반대 결과가 이 실행 안에 있다(1차 [5][6] · #69 ㉣)"
@@ -40,7 +41,7 @@
     "pre_verticals": 14,
     "post_all4": 14,
     "wallface_with_hole": 14,
-    "spanRatios": [
+    "spanRatios_sorted_unique": [
       0.19,
       0.199,
       0.202,
@@ -55,7 +56,7 @@
       0.26,
       0.261
     ],
-    "expectedSpans": [
+    "expectedSpans_sorted_unique": [
       0.19,
       0.199,
       0.202,
@@ -70,8 +71,10 @@
       0.26,
       0.261
     ],
+    "span_pairs_equal_cells": 14,
     "endGap3dMax": 2.7747580858440755e-14,
-    "eraseClearanceMinPx": 6.7
+    "eraseClearanceMinPx": 6.7,
+    "cells_clearance_below_12": 4
   },
   "cells": [
     {
@@ -79,7 +82,7 @@
       "jitter": "none",
       "pos": "mid",
       "wallLifted": 4,
-      "carriedJitter": {
+      "startShift": {
         "sill": {
           "dx": 0,
           "dy": 0
@@ -152,7 +155,7 @@
       "jitter": "rng32",
       "pos": "mid",
       "wallLifted": 4,
-      "carriedJitter": {
+      "startShift": {
         "sill": {
           "dx": -1.57,
           "dy": -0.38
@@ -225,7 +228,7 @@
       "jitter": "rng32",
       "pos": "mid",
       "wallLifted": 4,
-      "carriedJitter": {
+      "startShift": {
         "sill": {
           "dx": -1.56,
           "dy": 0.03
@@ -298,7 +301,7 @@
       "jitter": "rng32",
       "pos": "mid",
       "wallLifted": 4,
-      "carriedJitter": {
+      "startShift": {
         "sill": {
           "dx": -1.51,
           "dy": 1.98
@@ -371,7 +374,7 @@
       "jitter": "rng32",
       "pos": "mid",
       "wallLifted": 4,
-      "carriedJitter": {
+      "startShift": {
         "sill": {
           "dx": -1.47,
           "dy": -2.42
@@ -444,7 +447,7 @@
       "jitter": "rng32",
       "pos": "mid",
       "wallLifted": 4,
-      "carriedJitter": {
+      "startShift": {
         "sill": {
           "dx": -1.4,
           "dy": -0.06
@@ -517,7 +520,7 @@
       "jitter": "rng32",
       "pos": "mid",
       "wallLifted": 4,
-      "carriedJitter": {
+      "startShift": {
         "sill": {
           "dx": -1.34,
           "dy": 2.44
@@ -590,7 +593,7 @@
       "jitter": "none",
       "pos": "low",
       "wallLifted": 4,
-      "carriedJitter": {
+      "startShift": {
         "sill": {
           "dx": 0,
           "dy": 0
@@ -663,7 +666,7 @@
       "jitter": "rng32",
       "pos": "low",
       "wallLifted": 4,
-      "carriedJitter": {
+      "startShift": {
         "sill": {
           "dx": -1.57,
           "dy": -0.37
@@ -736,7 +739,7 @@
       "jitter": "rng32",
       "pos": "low",
       "wallLifted": 4,
-      "carriedJitter": {
+      "startShift": {
         "sill": {
           "dx": -1.56,
           "dy": 0.04
@@ -809,7 +812,7 @@
       "jitter": "rng32",
       "pos": "low",
       "wallLifted": 4,
-      "carriedJitter": {
+      "startShift": {
         "sill": {
           "dx": -1.51,
           "dy": 1.99
@@ -882,7 +885,7 @@
       "jitter": "rng32",
       "pos": "low",
       "wallLifted": 4,
-      "carriedJitter": {
+      "startShift": {
         "sill": {
           "dx": -1.47,
           "dy": -2.42
@@ -955,7 +958,7 @@
       "jitter": "rng32",
       "pos": "low",
       "wallLifted": 4,
-      "carriedJitter": {
+      "startShift": {
         "sill": {
           "dx": -1.4,
           "dy": -0.05
@@ -1028,7 +1031,7 @@
       "jitter": "rng32",
       "pos": "low",
       "wallLifted": 4,
-      "carriedJitter": {
+      "startShift": {
         "sill": {
           "dx": -1.34,
           "dy": 2.45
@@ -1102,57 +1105,49 @@
       "name": "floating-mid",
       "seed": 0,
       "jitter": "none",
-      "winLifted": 0,
-      "face": "added"
+      "winLifted": 0
     },
     {
       "name": "touching-mid",
       "seed": 0,
       "jitter": "none",
-      "winLifted": 4,
-      "face": "none"
+      "winLifted": 4
     },
     {
       "name": "floating-mid",
       "seed": 7,
       "jitter": "rng32",
-      "winLifted": 0,
-      "face": "added"
+      "winLifted": 0
     },
     {
       "name": "touching-mid",
       "seed": 7,
       "jitter": "rng32",
-      "winLifted": 4,
-      "face": "none"
+      "winLifted": 4
     },
     {
       "name": "floating-low",
       "seed": 0,
       "jitter": "none",
-      "winLifted": 0,
-      "face": "added"
+      "winLifted": 0
     },
     {
       "name": "touching-low",
       "seed": 0,
       "jitter": "none",
-      "winLifted": 4,
-      "face": "none"
+      "winLifted": 4
     },
     {
       "name": "floating-low",
       "seed": 7,
       "jitter": "rng32",
-      "winLifted": 0,
-      "face": "added"
+      "winLifted": 0
     },
     {
       "name": "touching-low",
       "seed": 7,
       "jitter": "rng32",
-      "winLifted": 4,
-      "face": "added"
+      "winLifted": 4
     }
   ],
   "refute_no_own3d": {
@@ -1160,7 +1155,7 @@
     "jitter": "none",
     "pos": "mid",
     "wallLifted": 4,
-    "carriedJitter": {
+    "startShift": {
       "sill": {
         "dx": 0,
         "dy": 0
@@ -1226,6 +1221,80 @@
       "holeEdges": []
     }
   },
+  "refute_wholesale_copy": {
+    "note": "반증 ㉱(2차 [4]) — 조각 own3에 부모 관통선의 own3를 **통째 복사**한 판(지시 ㉡이 경고한 조용한 오배치의 시뮬레이션). endGap3d·spanRatio가 «크게» 나오는 실행이 이것이다 — 본 스윕의 ~1e-14·기대 일치가 설계 보장이 아니라 측정임을 가른다",
+    "cell": {
+      "seed": 0,
+      "jitter": "none",
+      "pos": "mid",
+      "wallLifted": 4,
+      "startShift": {
+        "sill": {
+          "dx": 0,
+          "dy": 0
+        },
+        "lintel": {
+          "dx": 0,
+          "dy": 0
+        }
+      },
+      "preErase": {
+        "lintel": true,
+        "sill": true,
+        "v1": true,
+        "v2": true
+      },
+      "eraseClearancePx": 16.4,
+      "strokeCount": {
+        "before": 9,
+        "after": 9
+      },
+      "postErase": [
+        {
+          "role": "lintel",
+          "lifted": true,
+          "why": "lifted",
+          "own3": true,
+          "ownSpanRatio": 1,
+          "expectedSpan": 0.25,
+          "endGap3d": 15.676734353812247
+        },
+        {
+          "role": "sill",
+          "lifted": true,
+          "why": "lifted",
+          "own3": true,
+          "ownSpanRatio": 1,
+          "expectedSpan": 0.25,
+          "endGap3d": 15.676734353812268
+        },
+        {
+          "role": "v1",
+          "lifted": true,
+          "why": "lifted",
+          "own3": true,
+          "ownSpanRatio": null,
+          "expectedSpan": null,
+          "endGap3d": null
+        },
+        {
+          "role": "v2",
+          "lifted": true,
+          "why": "lifted",
+          "own3": true,
+          "ownSpanRatio": null,
+          "expectedSpan": null,
+          "endGap3d": null
+        }
+      ],
+      "wallFace": {
+        "result": "added",
+        "outer": 4,
+        "holes": 0,
+        "holeEdges": []
+      }
+    }
+  },
   "fixture_probe": {
     "with_horizon_stroke": {
       "f": 387.2983346207417,
@@ -1254,6 +1323,20 @@
         "strokeId": 2
       },
       "wallLifted": 4
+    },
+    "with_separate_vp0": {
+      "f": 387.2983346207417,
+      "vp0": {
+        "x": 900,
+        "y": 400,
+        "strokeId": 1
+      },
+      "vp1": {
+        "x": 100,
+        "y": 400,
+        "strokeId": 2
+      },
+      "wallLifted": 4
     }
   },
   "flags_explained": {
@@ -1261,9 +1344,10 @@
     "constants/metric_defs 스냅샷 없음": "web2 라인 원장은 상수 스냅샷 등록부 밖(공통 형태 — opening21과 같다)",
     "selfcheck 「게이트에 reachability가 없다」": "산문 키 대신 reachability_value/source 짝으로 실었다 — opening21_web2.json의 게이트와 같은 형식·같은 플래그(공통 형태·해명 규약)다",
     "ownSpanRatio ≈ 0.19~0.27": "**기대값과 일치한다** — expectedSpan(수직 두 교점 사이의 부모 3D 파라미터 구간, 지우기 전 실측)이 나란히 있고 두 값이 칸마다 같다. 화면 x 비율(120/300=0.4)이 아니라 **3D 구간**이 기준이다: vp0로 수렴하는 선에서 화면 등간격은 3D에서 원근 압축돼 mid ≈0.25·low ≈0.19~0.21이 옳은 값이다. 초판의 «0.3~0.5 대역» 산문은 이 산술을 안 거친 틀린 기대였다(1차 [3]) — 구간의 **위치**는 endGap3d(조각 끝 ↔ 수직 끝 3D 거리, 전 칸 ~0)가 가른다(1차 [4])",
-    "lintel과 sill의 spanRatio가 칸 안에서 같은 것": "구성상 귀결이다 — 같은 vp로 수렴하는 두 선을 같은 x의 수직 둘이 자르면 파라미터 구간이 사영 기하적으로 같다(수직이 정확히 수직일 때). 실린 손 오차는 carriedJitter(관통선 시작 y)와 expectedSpan의 칸별 흔들림이 보인다",
-    "endGap3d가 1e-12 대역(또는 0)": "설계 보장이 아니라 **두 독립 계산의 잔차**다 — 한쪽은 지우기 전 3D 교차 분할점(intersections3), 다른쪽은 조각 own3 승계(화면 끝점 광선을 부모 직선에 재사영 — closestOnLineToRay)로 얻은 승격 끝점. 같은 값이 나오는 것이 «구간 위치가 옳다»의 내용이고 부동소수 왕복이라 1e-12 대역이 정상이다. 임계를 안 건다(자기참조 유형 3의 규약 — 값으로만 남긴다)",
-    "refute_no_own3d의 0들(seed·carriedJitter·holes)": "반증 칸은 무오차 판(seed 0 — jitter none)이라 carriedJitter가 구성상 0이고, holes 0이 곧 반증의 결론(개구부가 안 선다)이다",
-    "touching 대조의 face=none": "이 대조는 승격 도달성(#69 ㉣) 판정용이다. 면이 안 서는 이유는 표식으로 확인했다(loopAt=null — NOTES 1부): 창 왼 변이 벽 세로와 **같은 선 위**(공선 겹침)라 3D 교차 마디가 없어 루프 그래프가 안 닫힌다. 관통선 경로는 수직이 벽 안쪽이라 이 국면을 안 만든다(본 스윕 wallface_with_hole이 그 증거) — 공선 겹침의 면은 알려진 한계로 DEFERRED"
+    "lintel과 sill의 spanRatio가 칸 안에서 같은 것": "구성상 귀결이다 — 같은 vp로 수렴하는 두 선을 같은 x의 수직 둘이 자르면 파라미터 구간이 사영 기하적으로 같다(수직이 정확히 수직일 때). 실린 손 오차는 startShift의 y 성분과 expectedSpan의 칸별 흔들림이 보인다",
+    "startShift.dx가 시드에서 좁게(−1.3~−1.6) 몰리는 것": "dx는 손 지터가 아니라 **벽 세로의 그 높이 실제 x**다(2차 [3] — «양 끝이 닿는» 정의가 시작을 벽 위로 붙인다: 손 x 지터는 오스냅이 소거). 벽 세로의 기울기는 그 끝점 둘의 지터에서 오므로 시드별 변동이 좁다. 실린 손 오차의 실효 채널은 y(dy — ±3 대역)와 수직 획의 겨눔·확정이다. seed 0(무오차)의 low dy=8은 지터가 아니라 **오스냅(벽 세로 중점 500,420 — 중점이 온라인을 이긴다)**의 이동이다(표식 실측)",
+    "endGap3d가 1e-14 대역(또는 0)": "설계 보장이 아니라 **두 독립 계산의 잔차**다 — 한쪽은 지우기 전 3D 교차 분할점(intersections3), 다른쪽은 조각 own3 승계(화면 끝점 광선을 부모 직선에 재사영 — closestOnLineToRay)로 얻은 승격 끝점. 같은 값이 나오는 것이 «구간 위치가 옳다»의 내용이고 부동소수 왕복이라 1e-14 대역이 정상이다(실측 최대 aggregate.endGap3dMax) · 큰 값이 나오는 실행은 refute_wholesale_copy가 실증한다. 임계를 안 건다(자기참조 유형 3의 규약 — 값으로만 남긴다)",
+    "refute_*의 0들(seed·startShift·holes)": "반증 칸은 무오차 판(seed 0 — jitter none)이라 startShift가 구성상 0이고, holes 0이 곧 ㉰의 결론(개구부가 안 선다)이다",
+    "공선 겹침 위 획의 면(알려진 한계)": "초판 대조가 재던 «닿는 창(왼 변이 벽 세로와 같은 선 위)»의 면은 표식으로 원인 확인했다(loopAt=null — 공선 겹침은 3D 교차 마디를 안 만들어 루프가 안 닫힌다. NOTES 1부). 관통선 경로는 수직이 벽 안쪽이라 이 국면을 안 만든다(본 스윕 wallface_with_hole이 그 증거) — DEFERRED에 알려진 한계로. ⚠ controls의 면 측정은 2차 [1]로 걷었다(떠 있는 창 중심 아래 벽 면과 이 국면이 섞여 값에 뜻이 없었다) — 대조는 승격 도달성 전용"
   }
 }

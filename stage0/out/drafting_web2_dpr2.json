@@ -1,4 +1,10 @@
 {
+ "conditions": {
+  "workers": 1,
+  "project": "dpr2",
+  "canonical": "LEDGER=1 npx playwright test drafting --workers=1",
+  "time_validity": "⚠ 프레임 ms 칸은 이 conditions.workers의 값이다(#71 ㉠) — 시간 비교의 정본은 --workers=1 단독 실행"
+ },
  "what": "web2-12 3부(dpr2) — 제도 표현의 실측: 종이 마스크 켬/끔의 궤도 프레임(ms) · 연쇄 승격 순간의 화면 변화 픽셀. e2e drafting.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).",
  "promotion": {
   "lifted": true,
@@ -12,8 +18,8 @@
   "planes": 1
  },
  "paper_orbit": {
-  "frame_ms_median_mask_on": 28.9,
-  "frame_ms_median_mask_off": 27.4,
+  "frame_ms_median_mask_on": 29.1,
+  "frame_ms_median_mask_off": 27.7,
   "note": "국면당 1회 표본(brush_perf의 single_sample_note와 같은 규율 — 작은 차는 판별하지 않는다). 줌 미끄러짐(위상 문서·크기 화면의 교환)은 실기기 눈 몫(DEFERRED)."
  }
 }

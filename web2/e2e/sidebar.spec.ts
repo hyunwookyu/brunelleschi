@@ -226,6 +226,11 @@ test('연필통 — 진하기 순 세로 배열·행 선택이 도구+경도·�
   // 원장은 LEDGER=1 단독 실행에서만 쓴다(web2-22 규율·#71 ㉠의 문 — web2-24 3부 전면화).
   // 팔은 그대로 돈다 — 원장만 안 덮는다. 정본 명령: LEDGER=1 npx playwright test sidebar --workers=1
   if (process.env.LEDGER === '1') writeFileSync(resolve(HERE, `../../stage0/out/sidebar_layout_web2${suffix}.json`), JSON.stringify({
+    conditions: {
+      workers: testInfo.config.workers, project: testInfo.project.name,
+      canonical: 'LEDGER=1 npx playwright test sidebar --workers=1',
+      time_validity: '값이 전부 결정론(CSS px 자리·겹침)이라 워커 수가 값을 못 바꾼다 — 조건은 기록용(#71 ㉠ 규약의 일관)',
+    },
     what: `web2-12 3·6번 — 세로바·연필통 자리·겹침·정렬 실측(CSS px·뷰포트 1200×800 헤드리스·${testInfo.project.name}). e2e sidebar.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47). 실기기(가림·누르기)는 DEFERRED.`,
     viewport: vw,
     sidebar_pencil: barPencil,

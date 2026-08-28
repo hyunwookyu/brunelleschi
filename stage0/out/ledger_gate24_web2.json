@@ -1,0 +1,60 @@
+{
+ "run": {
+  "note": "web2-24 3부 — 원장의 문(여섯 하네스 LEDGER=1) 전면화의 게이트 원장. 정본 명령: 각 원장의 conditions.canonical(LEDGER=1 npx playwright test <spec> --workers=1). 이 파일 자체는 재생성 직후 스크립트가 쓴다(해시 계산 — 시간 필드 없음).",
+  "date": "2026-08-28"
+ },
+ "gate": {
+  "for": "3부 회귀 팔 ① — 전량 실행(LEDGER 없음)이 여섯 원장(11파일)을 못 덮는다",
+  "registered": {
+   "pass_needs": "마감 전량 e2e 실행 뒤 아래 baseline_sha1 전부 불변(diff 0)"
+  },
+  "reachability_value": 11,
+  "reachability_source": "baseline_sha1의 파일 수 — 반대 결과의 실증: 같은 여섯 하네스가 LEDGER=1에서는 실제로 다시 썼다(② — 이 해시들 자체가 재생성 판의 것·web2-19 판(8006c17)과 다르다). 문이 없던 판(8006c17까지)에서는 전량 실행이 네 번 기준선을 오염시켰다(#71 ㉠ 부기)",
+  "verdict_after_full_run": "PENDING — 마감 절이 채운다"
+ },
+ "baseline_sha1": {
+  "brush_perf_web2.json": "f9800db72f8740d7c95993a390f270677fe4aa27",
+  "drafting_web2.json": "3c939f9c9668d0af38fdd090cb9cd9e2833f2d1d",
+  "drafting_web2_dpr2.json": "030957fa0ebb8123f208683c2ed5a8a4a9a85ecf",
+  "gesture_tiles_web2.json": "7a63acb5ad49cde6c6958e26088bd08873172f7d",
+  "gesture_tiles_web2_dpr2.json": "aeafeba6d83d4b1e796518116861850d9c0ca3ce",
+  "icon_weight_web2.json": "5eb4968f93d06f689954788755446a3ee684b3f2",
+  "icon_weight_web2_dpr2.json": "9cce2fab72ff8daab2ebb5b262a1113f2286ed4c",
+  "views_thumb_web2.json": "eaa46aa84f991673932eac6823db12d8ce45c056",
+  "views_thumb_web2_dpr2.json": "3b02e390edb78aa0cb5b2affc217778f9564da44",
+  "sidebar_layout_web2.json": "f3f323a2018ce50ebdf015f8100e502c8e19e072",
+  "sidebar_layout_web2_dpr2.json": "425fa79295dd3ef05401ddc15bf4f81345e88a13"
+ },
+ "contamination_evidence": {
+  "note": "③ 재생성(--workers=1 단독) ↔ 직전 정본(8006c17 — 전량 병렬 판)의 대조. 결정론 칸은 전부 동일(icon ink_px·chosen light / sidebar 자리·겹침 / views_thumb brnl_bytes / gesture 흑연 칸·번짐 2px) — 시간 칸만 부풀어 있었다(cost18의 1.5~2배 부풀림과 같은 서명).",
+  "brush_perf_full_redraw_ms_median": {
+   "strokes100": {
+    "old_8006c17": 216.7,
+    "new": 76.2
+   },
+   "strokes500": {
+    "old_8006c17": 931,
+    "new": 737.6
+   }
+  },
+  "brush_perf_live500_frame_ms": {
+   "median": {
+    "old_8006c17": 26.2,
+    "new": 17.7
+   },
+   "worst": {
+    "old_8006c17": 84.2,
+    "new": 22.9
+   }
+  },
+  "views_thumb_conditions_workers": {
+   "old_8006c17": 4,
+   "new": 1
+  },
+  "before_preservation": "수리 전 판(*_before)은 파일로 안 남겼다 — 오염 판이 **커밋돼 있어**(8006c17) git이 보존한다(cost22의 _before 파일은 커밋 전 판이라 필요했던 것 — 여기서는 중복). 이 블록이 «오염 값과 새 값을 나란히»(지시 3부)의 자리다."
+ },
+ "flags_explained": {
+  "constants/metric_defs 스냅샷 없음": "web2 라인 원장은 상수 스냅샷 등록부 밖(공통 형태)",
+  "reachability_value가 파일 수": "이 게이트의 단위가 파일이다 — 값 대조는 baseline_sha1 자체가 진다"
+ }
+}

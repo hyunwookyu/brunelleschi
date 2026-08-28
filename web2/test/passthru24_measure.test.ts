@@ -103,9 +103,12 @@ describe('web2-24 1부 — 관통선 + 선따기 (재기만 한다)', () => {
     type Cell = {
       seed: number; jitter: 'none' | 'rng32'; pos: string
       wallLifted: number
-      /** 관통선 시작점의 실린 지터(#68 — 명목 (500,y) 대비. x는 벽 세로 오스냅이 되돌리므로
-       *  y 몫이 실효다 — 1차 [12]) */
-      carriedJitter: { sill: { dx: number; dy: number }; lintel: { dx: number; dy: number } }
+      /** 관통선 시작점의 **명목 → 확정 이동**(지터 + 오스냅의 합 — 2차 [2]로 재정의:
+       *  «실린 지터»가 아니다). x = 벽 세로의 그 높이 실제 위치에 붙는 몫(벽 자체의
+       *  지터·기울기 — 손 x 지터는 «양 끝이 닿는» 정의가 소거), y = 손 지터 ±3에 오스냅
+       *  이동이 겹칠 수 있다(seed 0·low의 dy 8 = 벽 세로 **중점**(500,420) 스냅 —
+       *  중점이 온라인을 이긴다. 표식 실측 — NOTES 2차 대응) */
+      startShift: { sill: { dx: number; dy: number }; lintel: { dx: number; dy: number } }
       preErase: { lintel: boolean; sill: boolean; v1: boolean; v2: boolean }
       /** 지우기 네 점 각각에서 **표적 아닌** 획까지의 최소 화면 거리(px) — 부수 삭제 여유
        *  (1차 [11]). 실효 지우개 반경(12/ERASE_ZOOM_S)보다 커야 깨끗한 지우기다. */
@@ -117,7 +120,7 @@ describe('web2-24 1부 — 관통선 + 선따기 (재기만 한다)', () => {
     }
 
     const cells: Cell[] = []
-    const runCell = (seed: number, pos: (typeof positions)[number], own3dOn: boolean) => {
+    const runCell = (seed: number, pos: (typeof positions)[number], own3dOn: boolean, wholesale = false) => {
       const rng = mkRng(seed)
       const j = (v: number) => v + rng()
       const { s, wall } = wallScene(rng)
@@ -162,6 +165,9 @@ describe('web2-24 1부 — 관통선 + 선따기 (재기만 한다)', () => {
         lintel: seg3(lintel!.id) ? len3(sub3(seg3(lintel!.id)!.b3, seg3(lintel!.id)!.a3)) : null,
       }
 
+      // 부모 관통선의 own3(반증 ㉱의 재료 — 지우기 전에 떠 둔다)
+      const sillO3 = (sill as { own3?: { a: V3; b: V3; axis: unknown } }).own3
+      const lintelO3 = (lintel as { own3?: { a: V3; b: V3; axis: unknown } }).own3
       // ④ 바깥 토막 넷 — 확대해서 딴다(ERASE_ZOOM_S — 파일 머리 상수·원장 run.conditions)
       const idsBefore = new Set(s.app.doc.strokes.map(x => x.id))
       const nBefore = s.app.doc.strokes.length
@@ -202,6 +208,15 @@ describe('web2-24 1부 — 관통선 + 선따기 (재기만 한다)', () => {
           return cx > pos.xL - 20 && cx < pos.xR + 20 && Math.abs(cy - vpY(cx, 500, parentAxisY)) < 20
         })
       const sillMid = midOf(pos.yBot), lintelMid = midOf(pos.yTop)
+      // 반증 ㉱(2차 [4] — «endGap3d가 큰 값을 내는 실행»): 지시 ㉡이 경고한 **통째 복사**
+      // 오배치를 실제로 만든다 — 조각의 own3에 부모 관통선의 own3 전체를 덮어쓰고
+      // 재계산하면 조각이 부모 길이의 3D를 갖는다. spanRatio ≈1·endGap3d가 커야 한다.
+      if (wholesale) {
+        const parentO3 = { sill: sillO3, lintel: lintelO3 }
+        if (sillMid && parentO3.sill) (sillMid as { own3?: unknown }).own3 = { a: { ...parentO3.sill.a }, b: { ...parentO3.sill.b }, axis: parentO3.sill.axis }
+        if (lintelMid && parentO3.lintel) (lintelMid as { own3?: unknown }).own3 = { a: { ...parentO3.lintel.a }, b: { ...parentO3.lintel.b }, axis: parentO3.lintel.axis }
+        setOwn3d(s.app, true)   // recompute 유발(값 불변 — 이미 켜짐) · own3 씨앗으로 다시 올린다
+      }
       const sideM = (role: SideM['role'], st: { id: number; own3?: unknown } | undefined,
         parent: number | null, exp: number | null, ends: (V3 | undefined)[]): SideM => {
         if (!st) return { role, lifted: false, why: 'gone', own3: false, ownSpanRatio: null, expectedSpan: exp, endGap3d: null }
@@ -238,7 +253,7 @@ describe('web2-24 1부 — 관통선 + 선따기 (재기만 한다)', () => {
       return {
         seed, jitter: seed === 0 ? 'none' as const : 'rng32' as const, pos: pos.name,
         wallLifted,
-        carriedJitter: {
+        startShift: {
           sill: { dx: Math.round((sill!.a.x - 500) * 100) / 100, dy: Math.round((sill!.a.y - pos.yBot) * 100) / 100 },
           lintel: { dx: Math.round((lintel!.a.x - 500) * 100) / 100, dy: Math.round((lintel!.a.y - pos.yTop) * 100) / 100 },
         },
@@ -258,7 +273,10 @@ describe('web2-24 1부 — 관통선 + 선따기 (재기만 한다)', () => {
 
     // ── 대조(#69 ㉣ — 반대 결과의 실증. 21의 두 극단을 **두 위치 × 시드 [0,7]**로 재실행
     // (1차 [10] — low 포함·시드 기록) + ㉰ 반증 칸(1차 [5]) ──
-    type Ctl = { name: string; seed: number; jitter: string; winLifted: number; face: string }
+    // ⚠ 대조는 **승격 도달성 전용**이다(2차 [1] — 초판이 창 중심에 면까지 지정해 봤는데
+    // 그 값은 «떠 있는 창 중심 아래의 벽 면»과 «공선 겹침» 국면이 섞여 뜻이 없었다.
+    // 면의 도달성·실패 가능성은 본 스윕(wallFace)과 반증 ㉰·㉱이 진다).
+    type Ctl = { name: string; seed: number; jitter: string; winLifted: number }
     const controls: Ctl[] = []
     for (const pos of positions) {
       for (const seed of [0, 7]) {
@@ -274,20 +292,23 @@ describe('web2-24 1부 — 관통선 + 선따기 (재기만 한다)', () => {
             s.draw(j(xL), j(pos.yTop), j(pos.xR), j(vpY(pos.xR, xL, pos.yTop))),
           ]
           const winLifted = win.filter(w => w && s.app.lift.lifted.has(w.id)).length
-          const cx = (xL + pos.xR) / 2
-          const cy = (vpY(cx, xL, pos.yBot) + vpY(cx, xL, pos.yTop)) / 2
           controls.push({
             name: `${touch ? 'touching' : 'floating'}-${pos.name}`, seed,
             jitter: seed === 0 ? 'none' : 'rng32',
-            winLifted, face: toggleFaceAt(s.app, { x: cx, y: cy }),
+            winLifted,
           })
         }
       }
     }
     // ㉰ 반증 칸 — own3 끔 + 수직까지 지움: ③(유지)·④(면)가 실패할 수 있는 격자임을 실행으로
     const refute = runCell(0, positions[0]!, false)
+    // ㉱ 반증 칸(2차 [4]) — 통째 복사 오배치: endGap3d·spanRatio가 «크게» 나오는 실행
+    const refuteWholesale = runCell(0, positions[0]!, true, true)
 
-    // ── fixture_probe(1차 [8] — #25): 지평선 따라긋기 획 유/무의 카메라·벽 대조 ──
+    // ── fixture_probe(1차 [8] — #25): 발판 변형들의 카메라·벽 대조. **두 판(with/without)은
+    // 최종 9획 픽스처 ± 지평선 따라긋기 획이다**(2차 [15] — without의 strokeId 1 = 지면
+    // 모서리(vp0 선언 겸)·2 = vp1 선언이다). 셋째 판(with_separate_vp0)은 21형 발판
+    // (vp0 선언 획을 따로 긋고 지면 모서리를 겹침 — 공선 T-마디의 그 판)의 카메라 대조다. ──
     const probeOf = (withH: boolean) => {
       const { s, wall } = wallScene(() => 0, withH)
       const an = s.app.lift.an
@@ -296,7 +317,26 @@ describe('web2-24 1부 — 관통선 + 선따기 (재기만 한다)', () => {
         wallLifted: wall.filter(w => w && s.app.lift.lifted.has(w.id)).length,
       }
     }
-    const fixtureProbe = { with_horizon_stroke: probeOf(true), without: probeOf(false) }
+    const probeSeparateVp0 = (() => {
+      const s = session(W, H)
+      s.draw(500, 500, 600, 475)          // 21형 — vp0 선언 획을 따로
+      s.draw(500, 500, 400, 475)
+      const wall = [
+        s.draw(500, 500, 800, vpY(800, 500, 500)),
+        s.draw(500, 500, 500, 340),
+        s.draw(800, vpY(800, 500, 500), 800, vpY(800, 500, 340)),
+        s.draw(500, 340, 800, vpY(800, 500, 340)),
+      ]
+      const an = s.app.lift.an
+      return {
+        f: an.f, vp0: an.vps[0] ?? null, vp1: an.vps[1] ?? null,
+        wallLifted: wall.filter(w => w && s.app.lift.lifted.has(w.id)).length,
+      }
+    })()
+    const fixtureProbe = {
+      with_horizon_stroke: probeOf(true), without: probeOf(false),
+      with_separate_vp0: probeSeparateVp0,
+    }
 
     // ── 집계 ──
     const agg = {
@@ -305,10 +345,16 @@ describe('web2-24 1부 — 관통선 + 선따기 (재기만 한다)', () => {
       pre_verticals: cells.filter(c => c.preErase.v1 && c.preErase.v2).length,
       post_all4: cells.filter(c => c.postErase.every(p => p.lifted)).length,
       wallface_with_hole: cells.filter(c => c.wallFace.result === 'added' && c.wallFace.holes === 1).length,
-      spanRatios: [...new Set(cells.flatMap(c => c.postErase.filter(p => p.ownSpanRatio !== null).map(p => p.ownSpanRatio)))].sort(),
-      expectedSpans: [...new Set(cells.flatMap(c => c.postErase.filter(p => p.expectedSpan !== null).map(p => p.expectedSpan)))].sort(),
+      // ⚠ 두 배열은 **정렬·중복 제거** 판이다(2차 [13] — 14칸이 원소 13개인 이유: 한 값
+      // 중복). 칸별 일치의 정본은 cells[*].postErase의 (ownSpanRatio, expectedSpan) 짝이다.
+      spanRatios_sorted_unique: [...new Set(cells.flatMap(c => c.postErase.filter(p => p.ownSpanRatio !== null).map(p => p.ownSpanRatio)))].sort(),
+      expectedSpans_sorted_unique: [...new Set(cells.flatMap(c => c.postErase.filter(p => p.expectedSpan !== null).map(p => p.expectedSpan)))].sort(),
+      span_pairs_equal_cells: cells.filter(c => c.postErase.every(p =>
+        p.ownSpanRatio === null || p.expectedSpan === null || Math.abs(p.ownSpanRatio - p.expectedSpan) < 5e-4)).length,
       endGap3dMax: Math.max(...cells.flatMap(c => c.postErase.filter(p => p.endGap3d !== null).map(p => p.endGap3d!))),
       eraseClearanceMinPx: Math.min(...cells.map(c => c.eraseClearancePx)),
+      // 2차 [5] — 확대 없이(s=1 · 문서 반경 12px) 지웠다면 부수 삭제 대역이었을 칸 수
+      cells_clearance_below_12: cells.filter(c => c.eraseClearancePx < C.ERASER_PX).length,
     }
 
     const ledger = {
@@ -347,6 +393,11 @@ describe('web2-24 1부 — 관통선 + 선따기 (재기만 한다)', () => {
           + '떠 있는 고리는 알려진 한계로 DEFERRED에 남는다(1차 [16])',
         registered: {
           pass_needs: '갈래 ㉠ = 재는 것 넷 전부: preErase 4변 · postErase 4변 · 벽 면 개구부(holes=1) — 전 칸',
+          conditions_note: '⚠ 이 통과는 run.conditions의 **확대 지우기(view.s=2 · 문서 실효 반경 6px)** '
+            + '전제 위에 있다(2차 [5]) — s=1(문서 반경 12px)로 지우면 aggregate.cells_clearance_below_12 '
+            + '칸(14칸 중 4)에서 표적 아닌 획이 반경 안에 들어 부수 삭제 대역이다. 여유 최솟값은 '
+            + 'aggregate.eraseClearanceMinPx(6.7px — 실효 반경 6 대비 0.7px)이고 시드 7종의 동작점이다 — '
+            + '실기기 표(확대 없이 딸 때의 부수 삭제 — DEFERRED)가 그 판을 잇는다',
         },
         reachability_value: 4,
         reachability_source: '/controls의 touching-* winLifted=4(승격 도달) · 실패 가능성 셋: floating-* 0/4'
@@ -357,6 +408,12 @@ describe('web2-24 1부 — 관통선 + 선따기 (재기만 한다)', () => {
       cells,
       controls,
       refute_no_own3d: refute,
+      refute_wholesale_copy: {
+        note: '반증 ㉱(2차 [4]) — 조각 own3에 부모 관통선의 own3를 **통째 복사**한 판(지시 ㉡이 '
+          + '경고한 조용한 오배치의 시뮬레이션). endGap3d·spanRatio가 «크게» 나오는 실행이 이것이다 — '
+          + '본 스윕의 ~1e-14·기대 일치가 설계 보장이 아니라 측정임을 가른다',
+        cell: refuteWholesale,
+      },
       fixture_probe: fixtureProbe,
       flags_explained: {
         '값이 전 칸 동일이면': '동일이 곧 결론이다(경로의 결정 거동) — 변별력은 controls·refute가 진다',
@@ -370,17 +427,23 @@ describe('web2-24 1부 — 관통선 + 선따기 (재기만 한다)', () => {
           + '구간의 **위치**는 endGap3d(조각 끝 ↔ 수직 끝 3D 거리, 전 칸 ~0)가 가른다(1차 [4])',
         'lintel과 sill의 spanRatio가 칸 안에서 같은 것': '구성상 귀결이다 — 같은 vp로 수렴하는 두 선을 같은 '
           + 'x의 수직 둘이 자르면 파라미터 구간이 사영 기하적으로 같다(수직이 정확히 수직일 때). '
-          + '실린 손 오차는 carriedJitter(관통선 시작 y)와 expectedSpan의 칸별 흔들림이 보인다',
-        'endGap3d가 1e-12 대역(또는 0)': '설계 보장이 아니라 **두 독립 계산의 잔차**다 — 한쪽은 지우기 전 '
+          + '실린 손 오차는 startShift의 y 성분과 expectedSpan의 칸별 흔들림이 보인다',
+        'startShift.dx가 시드에서 좁게(−1.3~−1.6) 몰리는 것': 'dx는 손 지터가 아니라 **벽 세로의 그 높이 '
+          + '실제 x**다(2차 [3] — «양 끝이 닿는» 정의가 시작을 벽 위로 붙인다: 손 x 지터는 오스냅이 소거). '
+          + '벽 세로의 기울기는 그 끝점 둘의 지터에서 오므로 시드별 변동이 좁다. 실린 손 오차의 실효 채널은 '
+          + 'y(dy — ±3 대역)와 수직 획의 겨눔·확정이다. seed 0(무오차)의 low dy=8은 지터가 아니라 '
+          + '**오스냅(벽 세로 중점 500,420 — 중점이 온라인을 이긴다)**의 이동이다(표식 실측)',
+        'endGap3d가 1e-14 대역(또는 0)': '설계 보장이 아니라 **두 독립 계산의 잔차**다 — 한쪽은 지우기 전 '
           + '3D 교차 분할점(intersections3), 다른쪽은 조각 own3 승계(화면 끝점 광선을 부모 직선에 재사영 — '
           + 'closestOnLineToRay)로 얻은 승격 끝점. 같은 값이 나오는 것이 «구간 위치가 옳다»의 내용이고 '
-          + '부동소수 왕복이라 1e-12 대역이 정상이다. 임계를 안 건다(자기참조 유형 3의 규약 — 값으로만 남긴다)',
-        'refute_no_own3d의 0들(seed·carriedJitter·holes)': '반증 칸은 무오차 판(seed 0 — jitter none)이라 '
-          + 'carriedJitter가 구성상 0이고, holes 0이 곧 반증의 결론(개구부가 안 선다)이다',
-        'touching 대조의 face=none': '이 대조는 승격 도달성(#69 ㉣) 판정용이다. 면이 안 서는 이유는 '
-          + '표식으로 확인했다(loopAt=null — NOTES 1부): 창 왼 변이 벽 세로와 **같은 선 위**(공선 겹침)라 '
-          + '3D 교차 마디가 없어 루프 그래프가 안 닫힌다. 관통선 경로는 수직이 벽 안쪽이라 이 국면을 '
-          + '안 만든다(본 스윕 wallface_with_hole이 그 증거) — 공선 겹침의 면은 알려진 한계로 DEFERRED',
+          + '부동소수 왕복이라 1e-14 대역이 정상이다(실측 최대 aggregate.endGap3dMax) · 큰 값이 나오는 실행은 refute_wholesale_copy가 실증한다. 임계를 안 건다(자기참조 유형 3의 규약 — 값으로만 남긴다)',
+        'refute_*의 0들(seed·startShift·holes)': '반증 칸은 무오차 판(seed 0 — jitter none)이라 '
+          + 'startShift가 구성상 0이고, holes 0이 곧 ㉰의 결론(개구부가 안 선다)이다',
+        '공선 겹침 위 획의 면(알려진 한계)': '초판 대조가 재던 «닿는 창(왼 변이 벽 세로와 같은 선 위)»의 '
+          + '면은 표식으로 원인 확인했다(loopAt=null — 공선 겹침은 3D 교차 마디를 안 만들어 루프가 안 '
+          + '닫힌다. NOTES 1부). 관통선 경로는 수직이 벽 안쪽이라 이 국면을 안 만든다(본 스윕 '
+          + 'wallface_with_hole이 그 증거) — DEFERRED에 알려진 한계로. ⚠ controls의 면 측정은 2차 [1]로 '
+          + '걷었다(떠 있는 창 중심 아래 벽 면과 이 국면이 섞여 값에 뜻이 없었다) — 대조는 승격 도달성 전용',
       },
     }
     let verdictOk = agg.pre_lintel_sill === agg.cells && agg.pre_verticals === agg.cells
@@ -393,7 +456,7 @@ describe('web2-24 1부 — 관통선 + 선따기 (재기만 한다)', () => {
     writeFileSync(resolve(outDir, 'passthru24_web2.json'), JSON.stringify(ledger, null, 2))
     console.log(`[측정] passthru24 — pre관통 ${agg.pre_lintel_sill}/${agg.cells} · pre수직 ${agg.pre_verticals}/${agg.cells}`
       + ` · post4변 ${agg.post_all4}/${agg.cells} · 벽면구멍 ${agg.wallface_with_hole}/${agg.cells}`
-      + ` · span(실측/기대) ${agg.spanRatios.join(',')} / ${agg.expectedSpans.join(',')}`
+      + ` · span 칸별일치 ${agg.span_pairs_equal_cells}/${agg.cells}`
       + ` · endGap3dMax ${agg.endGap3dMax} · 지우기여유min ${agg.eraseClearanceMinPx}px`
       + ` · 대조 ${controls.map(c => `${c.name}#${c.seed}:${c.winLifted}`).join(' ')}`
       + ` · 반증㉰ post ${refute.postErase.filter(p => p.lifted).length}/4·면 ${refute.wallFace.result}`)
@@ -410,6 +473,10 @@ describe('web2-24 1부 — 관통선 + 선따기 (재기만 한다)', () => {
     expect(refute.postErase.filter(p => p.lifted).length, '반증 ㉰ — own3 없이 근거를 지우면 조각이 떨어진다(③이 실패할 수 있는 격자)').toBeLessThan(4)
     // 벽 면 자체는 경계가 멀쩡하니 선다 — 실패하는 것은 **구멍**(개구부)이다: holes ≠ 1
     expect(refute.wallFace.holes ?? 0, '반증 ㉰ — 그때 벽 면에 개구부가 없다(④의 실패 가능성)').not.toBe(1)
+    // 반증 ㉱ — 통째 복사면 endGap3d·spanRatio가 크게 난다(지표의 분해능 실증 — 2차 [4])
+    const wsill = refuteWholesale.postErase.find(p => p.role === 'sill')!
+    expect(wsill.ownSpanRatio ?? 0, '반증 ㉱ — 통째 복사의 spanRatio는 1 근처(기대 0.25와 갈린다)').toBeGreaterThan(0.9)
+    expect(wsill.endGap3d ?? 0, '반증 ㉱ — 통째 복사의 endGap3d는 큰 값(본 스윕 1e-14와 자릿수로 갈린다)').toBeGreaterThan(1)
     // 지우기 회계 — 관통선 하나당 «원본 제거 + 가운데 조각 추가»라 획 수 불변.
     // 수가 늘거나 줄면 부수 삭제다 — 초판이 이것으로 지평선 획 동반 삭제를 잡았다(NOTES).
     for (const c of cells) {

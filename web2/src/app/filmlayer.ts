@@ -283,7 +283,21 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
       const m = MAT[gradeOf(s)]
       let a2 = s.a, b2 = s.b
       if (yset.has(s.layer)) {
-        // 옐로 획 — 2D: 문서 좌표 그대로(통짜 몸체 — 대기 파선 아님)
+        // 옐로 획 — 2D: 문서 좌표 그대로. **정본 기하는 raw 점렬이다**(web2-24 4-b —
+        // 프리핸드): 점렬이 있으면 폴리라인으로 긋는다(머무름 갈음·직선 손 획은 두 점).
+        if (s.raw && s.raw.length > 2) {
+          g.strokeStyle = m.color
+          g.globalAlpha = m.alpha
+          g.lineWidth = widthOf(s) * is
+          g.lineCap = 'round'
+          g.lineJoin = 'round'
+          g.beginPath()
+          g.moveTo(s.raw[0]!.x, s.raw[0]!.y)
+          for (let i = 1; i < s.raw.length; i++) g.lineTo(s.raw[i]!.x, s.raw[i]!.y)
+          g.stroke()
+          g.globalAlpha = 1
+          continue
+        }
       } else if (!waiting.has(s.id)) {
         const seg = app.lift.lifted.get(s.id)
         if (!seg) continue

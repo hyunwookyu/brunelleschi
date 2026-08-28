@@ -18,6 +18,11 @@ test.afterAll(async ({ }, testInfo) => {
   const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
   writeFileSync(resolve(HERE, `../../stage0/out/drafting_web2${suffix}.json`), JSON.stringify({
+    conditions: {
+      workers: testInfo.config.workers, project: testInfo.project.name,
+      canonical: 'LEDGER=1 npx playwright test drafting --workers=1',
+      time_validity: '⚠ 프레임 ms 칸은 이 conditions.workers의 값이다(#71 ㉠) — 시간 비교의 정본은 --workers=1 단독 실행',
+    },
     what: `web2-12 3부(${testInfo.project.name}) — 제도 표현의 실측: 종이 마스크 켬/끔의 궤도 프레임(ms) · 연쇄 승격 순간의 화면 변화 픽셀. e2e drafting.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).`,
     ...ledger,
   }, null, 1))

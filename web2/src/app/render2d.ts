@@ -5,7 +5,7 @@
 // 선 굵기·표식 크기는 화면 고정(배율로 나눈다).
 
 import type { App, ViewOffset } from './state'
-import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView } from './state'
+import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive } from './state'
 import { vpMarks, project, projectSeg, groundAxes, horizonScreenY } from '../core/camera'
 import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
@@ -401,18 +401,30 @@ export function draw2d(
     ctx.stroke()
   }
 
-  // ── 종이(겹)의 가장자리(web2-20 3-d) — 「여기까지가 이 종이다」 ────────────────
-  // 옅은 무채색 선으로 둘레. 활성 겹만 조금 진하게. 막이 그려질 때만(같은 filmSplit —
-  // 그 종이의 시점에서만). 위(젖혀 둔) 겹은 막도 가장자리도 없다.
+  // ── 종이(겹)의 가장자리(web2-24 4-d) — **테두리 선은 없다.** ─────────────────
+  // web2-20 3-d(옅은 둘레 선·활성만 진하게)를 사람이 뒤집었다: 「현실감이 확 떨어진다」.
+  // 실제 트레이싱지에는 1px 윤곽선이 없고 **색조가 끝나는 자리**(막의 tint 경계 —
+  // filmlayer)가 곧 가장자리다. 인셋(짧은 변 5%)·층별 흔들림이 겹 수를 이미 읽게 한다.
+  // 활성 표시는 종속 탭(layerbar)이 한다 — 테두리로 하던 일을 탭이 이미 하고 있었다.
+  // 남는 것은 **rect 끌기의 손잡이 하나**다: 포인터가 가장자리 가까이 갔을 때만
+  // (input.rectEdgesAt — 끌기와 같은 판정) 그 변을 옅게 띄운다. 순간 피드백이라 색
+  // 규칙의 순간 대역(COL.snap)을 쓴다 — 상시 무채색(vpMark)이 아니다.
   {
     const split = filmSplit(app)
-    if (split) {
-      for (const lay of split.films) {
-        const active = lay.id === app.activeLayer
-        ctx.strokeStyle = COL.vpMark
-        ctx.globalAlpha = active ? 0.8 : 0.4
-        ctx.lineWidth = (active ? 1.2 : 0.8) * is
-        ctx.strokeRect(lay.rect.x, lay.rect.y, lay.rect.w, lay.rect.h)
+    if (split && app.rectHover) {
+      const lay = split.films.find(f => f.id === app.rectHover!.id)
+      if (lay) {
+        const { l, r, t, b } = app.rectHover.edges
+        const R = lay.rect
+        ctx.strokeStyle = COL.snap
+        ctx.globalAlpha = 0.5
+        ctx.lineWidth = 1.2 * is
+        ctx.beginPath()
+        if (l) { ctx.moveTo(R.x, R.y); ctx.lineTo(R.x, R.y + R.h) }
+        if (r) { ctx.moveTo(R.x + R.w, R.y); ctx.lineTo(R.x + R.w, R.y + R.h) }
+        if (t) { ctx.moveTo(R.x, R.y); ctx.lineTo(R.x + R.w, R.y) }
+        if (b) { ctx.moveTo(R.x, R.y + R.h); ctx.lineTo(R.x + R.w, R.y + R.h) }
+        ctx.stroke()
         ctx.globalAlpha = 1
       }
     }
@@ -463,7 +475,18 @@ export function draw2d(
       // 떼는 순간 무변화 게이트(draftgate.spec)가 이 정합을 잰다.
       ctx.globalAlpha = forced ? 1 : m.alpha
       ctx.lineWidth = (forced ? C.LINE_W_RESULT : drawW) * is
-      ctx.beginPath(); ctx.moveTo(draft.start.x, draft.start.y); ctx.lineTo(draft.end.x, draft.end.y); ctx.stroke()
+      ctx.beginPath()
+      // 옐로 프리핸드(web2-24 4-b) — 미리보기도 **손이 지나간 점렬**을 따른다(확정이
+      // raw 정본이므로 원칙 d: 보이는 그대로 확정된다). 머무름(held)이 서면 반듯
+      // 미리보기(start→end 직선)로 갈아탄다 — 22 2부의 어법 그대로.
+      if (yellowActive(app) && !draft.held && draft.raw.length > 1) {
+        ctx.moveTo(draft.raw[0]!.x, draft.raw[0]!.y)
+        for (let i = 1; i < draft.raw.length; i++) ctx.lineTo(draft.raw[i]!.x, draft.raw[i]!.y)
+        ctx.lineTo(draft.end.x, draft.end.y)
+      } else {
+        ctx.moveTo(draft.start.x, draft.start.y); ctx.lineTo(draft.end.x, draft.end.y)
+      }
+      ctx.stroke()
       ctx.globalAlpha = 1
       // 잉크 번짐(9번) — 그리는 중에도 같은 함수·같은 시드(잠정 id)·같은 점렬이라
       // 떼는 순간 자국이 그대로 이어진다(뗌 게이트가 잰다). edge는 승격 결과와 맞춘다.

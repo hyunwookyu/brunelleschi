@@ -174,6 +174,11 @@ test('3부 ①②③ — 궤도 중 흑연이 모든 프레임에 있다 · 경�
   // 원장은 LEDGER=1 단독 실행에서만 쓴다(web2-22 규율·#71 ㉠의 문 — web2-24 3부 전면화).
   // 팔은 그대로 돈다 — 원장만 안 덮는다. 정본 명령: LEDGER=1 npx playwright test gesture --workers=1
   if (process.env.LEDGER === '1') writeFileSync(out, JSON.stringify({
+    conditions: {
+      workers: testInfo.config.workers, project: testInfo.project.name,
+      canonical: 'LEDGER=1 npx playwright test gesture --workers=1',
+      time_validity: '⚠ tile_bake_ms 등 시간 칸은 이 conditions.workers의 값이다(#71 ㉠)',
+    },
     what: `web2-18 3부 — 돌리는 중에도 흑연이 남는가(${testInfo.project.name}). 획별 질감 캐시(㉢)와 화면 밖 잘라내기(㉠)의 표현 쪽 값. 성능 쪽 값(궤도 1프레임 합)은 cost18_web2*.json이 든다.`,
     threshold: { pixel_diff_ch: PIXEL_DIFF_CH, dark_lt: 233 },
     flags_explained: {

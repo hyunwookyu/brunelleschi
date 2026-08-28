@@ -1,0 +1,138 @@
+{
+  "run": {
+    "note": "web2-24 4부 — 옐로 raw 정본화의 솎기·바이트 원장. 정본 명령: npx vitest run test/yellowraw_measure.test.ts",
+    "date": "2026-08-28",
+    "fixture": "손 획 = 원호(sag 12~65px) + 떨림 ±0.6px · 240점/획(coalesced 대역) · rng32 고정 시드 — 결정론(전량 실행이 다시 써도 같은 바이트)",
+    "constants": {
+      "RAW_SIMPLIFY_PX": 0.5,
+      "AUTOSAVE_LIMIT_BYTES": 5242880
+    }
+  },
+  "simplify": {
+    "rows": [
+      {
+        "seed": 3,
+        "n_in": 241,
+        "n_kept_05": 97,
+        "dev_05": 0.495,
+        "n_kept_5": 4,
+        "dev_5": 3.864
+      },
+      {
+        "seed": 20,
+        "n_in": 241,
+        "n_kept_05": 93,
+        "dev_05": 0.5,
+        "n_kept_5": 5,
+        "dev_5": 2.122
+      },
+      {
+        "seed": 37,
+        "n_in": 241,
+        "n_kept_05": 87,
+        "dev_05": 0.499,
+        "n_kept_5": 5,
+        "dev_5": 2.717
+      },
+      {
+        "seed": 54,
+        "n_in": 241,
+        "n_kept_05": 92,
+        "dev_05": 0.499,
+        "n_kept_5": 5,
+        "dev_5": 3.717
+      },
+      {
+        "seed": 71,
+        "n_in": 241,
+        "n_kept_05": 106,
+        "dev_05": 0.496,
+        "n_kept_5": 3,
+        "dev_5": 4.33
+      },
+      {
+        "seed": 88,
+        "n_in": 241,
+        "n_kept_05": 104,
+        "dev_05": 0.5,
+        "n_kept_5": 5,
+        "dev_5": 1.97
+      },
+      {
+        "seed": 105,
+        "n_in": 241,
+        "n_kept_05": 98,
+        "dev_05": 0.5,
+        "n_kept_5": 5,
+        "dev_5": 3.284
+      },
+      {
+        "seed": 122,
+        "n_in": 241,
+        "n_kept_05": 88,
+        "dev_05": 0.495,
+        "n_kept_5": 5,
+        "dev_5": 4.247
+      },
+      {
+        "seed": 139,
+        "n_in": 241,
+        "n_kept_05": 96,
+        "dev_05": 0.48,
+        "n_kept_5": 4,
+        "dev_5": 3.805
+      },
+      {
+        "seed": 156,
+        "n_in": 241,
+        "n_kept_05": 106,
+        "dev_05": 0.478,
+        "n_kept_5": 5,
+        "dev_5": 2.428
+      },
+      {
+        "seed": 173,
+        "n_in": 241,
+        "n_kept_05": 93,
+        "dev_05": 0.482,
+        "n_kept_5": 5,
+        "dev_5": 2.626
+      },
+      {
+        "seed": 190,
+        "n_in": 241,
+        "n_kept_05": 94,
+        "dev_05": 0.496,
+        "n_kept_5": 5,
+        "dev_5": 3.717
+      }
+    ],
+    "aggregate": {
+      "n_in": 241,
+      "kept_05": {
+        "min": 87,
+        "max": 106
+      },
+      "dev_05_max": 0.5,
+      "kept_5": {
+        "min": 3,
+        "max": 5
+      },
+      "dev_5_max": 4.33,
+      "dev_5_min": 1.97
+    },
+    "refute_5px": "반증 ㉯(지시 4-e — 실제 실행): 임계 5px에서 남는 점이 3~5개로 줄고 원본 대비 최대 이탈이 1.97~4.33px — 1px(눈 대역)를 훌쩍 넘어 그림이 바뀐다. 0.5px 임계의 이탈은 전부 0.5px 아래(솎기 임계의 정의 그대로 — RDP 보장이지만 «임계가 실제로 이탈을 가른다»는 두 변이의 차가 보인다)"
+  },
+  "doc100": {
+    "strokes": 100,
+    "raw_pts_total_after_simplify": 10154,
+    "brnl_bytes": 487578,
+    "pct_of_autosave_assumption": 9.3,
+    "straight_control_bytes": 9191,
+    "note": "⑨ — 옐로 100획(프리핸드) 문서의 .brnl 크기와 AS-C80(5MB) 대비 %. straight_control은 같은 수의 직선 획(raw 두 점) 문서 — 점렬 몫의 크기를 가른다. web2-22 3부의 70% 경고 발동 대역인지가 물음이다(수백 획 실사용은 실기기 표)"
+  },
+  "flags_explained": {
+    "constants/metric_defs 스냅샷 없음": "web2 라인 원장은 상수 스냅샷 등록부 밖(공통 형태)",
+    "dev_05가 임계(0.5) 근처로 몰림": "RDP의 정의다 — 임계 바로 아래까지 솎는 것이 최적 동작. 보장이지 측정이 아니므로 임계를 안 건다(자기참조 유형 3) — 값의 쓸모는 5px 변이와의 대비다"
+  }
+}

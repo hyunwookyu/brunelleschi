@@ -186,12 +186,14 @@ export function initInput(
 
   // ── 활성 겹 rect 끌기(web2-20 2-b) ────────────────────────────────────────
   let rectDrag: { id: number; edges: { l: boolean; r: boolean; t: boolean; b: boolean }; last: Pt } | null = null
-  function tryRectDrag(e: PointerEvent): boolean {
+  /** 이 자리(문서 좌표)가 활성 겹 가장자리 어느 변에 걸리는가 — 끌기(tryRectDrag)와
+   *  손잡이 표시(web2-24 4-d — 테두리 상시 선이 없어져 hover가 이것으로 옅게 띄운다)가
+   *  **같은 판정**을 쓴다(#54). 잡는 반경은 오스냅 반경 재사용(새 숫자 없음). */
+  function rectEdgesAt(p: Pt): { id: number; edges: { l: boolean; r: boolean; t: boolean; b: boolean } } | null {
     const split = filmSplit(app)
-    if (!split || app.activeLayer === null) return false
+    if (!split || app.activeLayer === null) return null
     const lay = app.doc.layers.find(l => l.id === app.activeLayer)
-    if (!lay || lay.locked || split.films.every(f => f.id !== lay.id)) return false
-    const p = screenToDoc(app, toScreen(e))
+    if (!lay || lay.locked || split.films.every(f => f.id !== lay.id)) return null
     const tol = C.OSNAP_RADIUS_PX / app.view.s
     const nearV = (x: number) => Math.abs(p.x - x) <= tol && p.y >= lay.rect.y - tol && p.y <= lay.rect.y + lay.rect.h + tol
     const nearH = (y: number) => Math.abs(p.y - y) <= tol && p.x >= lay.rect.x - tol && p.x <= lay.rect.x + lay.rect.w + tol
@@ -199,8 +201,23 @@ export function initInput(
       l: nearV(lay.rect.x), r: nearV(lay.rect.x + lay.rect.w),
       t: nearH(lay.rect.y), b: nearH(lay.rect.y + lay.rect.h),
     }
-    if (!edges.l && !edges.r && !edges.t && !edges.b) return false
-    rectDrag = { id: lay.id, edges, last: p }
+    if (!edges.l && !edges.r && !edges.t && !edges.b) return null
+    return { id: lay.id, edges }
+  }
+  /** 손잡이 상태 갱신 — 달라졌을 때만 다시 그린다(값 채널은 onDraftChange 재사용) */
+  function setRectHover(h: { id: number; edges: { l: boolean; r: boolean; t: boolean; b: boolean } } | null) {
+    const a = app.rectHover, b = h
+    const same = (a === null && b === null) || (!!a && !!b && a.id === b.id &&
+      a.edges.l === b.edges.l && a.edges.r === b.edges.r && a.edges.t === b.edges.t && a.edges.b === b.edges.b)
+    if (same) return
+    app.rectHover = h
+    cb.onDraftChange(draft)
+  }
+  function tryRectDrag(e: PointerEvent): boolean {
+    const p = screenToDoc(app, toScreen(e))
+    const hit = rectEdgesAt(p)
+    if (!hit) return false
+    rectDrag = { id: hit.id, edges: hit.edges, last: p }
     canvas.setPointerCapture(e.pointerId)
     e.preventDefault()
     return true
@@ -441,8 +458,15 @@ export function initInput(
         return
       }
       // 호버 — 와콤 EMR 펜·마우스. 스냅 후보 표식.
-      // 머무름이 먼저다(2-b) — 이 이동으로 획득이 서면 **그 자리에서** ext가 후보가 된다.
       const hp = toPt(e)
+      // 겹 가장자리 손잡이(web2-24 4-d) — 가까이 갔을 때만 옅게 뜬다(순간 피드백)
+      setRectHover(rectEdgesAt(hp))
+      // 옐로(web2-24 4-c) — **오스냅이 아예 안 돈다**: 후보에서 빠지는 것(22 1-c)을
+      // 넘어, 옐로에서 그릴 때 아무것에도 안 붙는다(사람 문면). 밑그림의 3D 점에도
+      // 안 붙고 표식도 안 뜬다 — 「자를 치운 종이」의 정의. 연장선 획득(ext)도 같은
+      // 자(치운 그 자)의 일부라 같이 쉰다.
+      if (yellowActive(app)) { cb.onHover(null); return }
+      // 머무름이 먼저다(2-b) — 이 이동으로 획득이 서면 **그 자리에서** ext가 후보가 된다.
       if (tickExt(hp)) cb.onDraftChange(draft)   // 획득 표식이 달라졌다 — 다시 그린다
       cb.onHover(osnap(app.lift, app.pose, hp, osnapSet(), undefined, undefined, app.extAcq.acquired))
     }

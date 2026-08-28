@@ -15,11 +15,11 @@
  },
  "brnl_bytes_5": 9738,
  "capture_ms_median": 0.8,
- "regen_view_ms_median": 98.6,
- "regen_view_ms_max": 103.5,
+ "regen_view_ms_median": 112.9,
+ "regen_view_ms_max": 125.3,
  "thumb_bytes_median": 1543,
- "add_ms_median": 107,
- "add_ms_max": 126,
+ "add_ms_median": 108,
+ "add_ms_max": 149,
  "brnl_bytes_1": 3036,
  "brnl_bytes_20": 34890
 }

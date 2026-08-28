@@ -13,6 +13,7 @@ import { defaultOsnap, type OsnapSettings, type OsnapKind } from '../core/osnap'
 import { newExtDwell, clearExtAcq, type ExtDwell } from '../core/extacq'
 import { rng32 } from '../core/material'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
+import { rdpIndices, distToPolyline } from '../core/freehand'
 import { loopAt, faceAt, faceScreen, resolveFaces, resolveFace, allLoops, inPoly, type ResolvedFace, type LoopCandidate } from '../core/face'
 import { geomSize3 } from '../core/osnap'
 import { C } from '../core/constants'
@@ -193,6 +194,12 @@ export interface App {
    *  면만 채운다), 탭은 배제(4-a — 지정의 방향이 「배제」다), 확정이 한 op로 담는다.
    *  문서가 바뀌면(recompute) 자동으로 버려진다 — 낡은 후보를 안 남긴다. */
   faceCandidates: LoopCandidate[] | null
+  /** **겹 가장자리 손잡이**(web2-24 4-d) — 테두리 상시 선이 없어지면서(색조 경계가
+   *  가장자리다 — 사람이 web2-21 3-b를 뒤집었다) rect 끌기의 손잡이가 사라졌다.
+   *  포인터가 활성 겹 가장자리 **가까이 갔을 때만**(입력이 tryRectDrag와 같은 판정으로
+   *  채운다) 그 변을 옅게 그린다 — 순간 피드백이라 상시 표시와 대역이 다르다(색 규칙
+   *  그대로). 런타임 상태 — 저장 안 함. */
+  rectHover: { id: number; edges: { l: boolean; r: boolean; t: boolean; b: boolean } } | null
   cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
 }
@@ -237,6 +244,7 @@ export function createApp(W: number, H: number): App {
     touchStats: emptyTouchStats(),
     touchLast: null,
     faceCandidates: null,
+    rectHover: null,
     cubeLayout: { cx: W - 110, cy: 60, size: 80 }, // 우측 상단 — 1.5배 세로바(x W−45..)와 안 겹치게 왼쪽으로(web2-10 지시 5)
     listeners: [],
   }
@@ -456,7 +464,27 @@ export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number,
   // 첫 획인가 — **밀어 넣기 전의 길이로 판정한다**(web2-17 3-b ⚠ — 순서를 팔이 지킨다).
   const firstStroke = app.doc.strokes.length === 0
   const s: Stroke = { id: app.nextId++, a, b }
-  if (raw && raw.length > 2) {
+  if (yellowActive(app) && raw && raw.length > 2) {
+    // 옐로(web2-24 4-b) — **raw가 정본 기하다**(프리핸드): 확정 시점에 눈에 안 보이는
+    // 임계(C.RAW_SIMPLIFY_PX 화면 px)로 RDP 솎아 싣는다(합쳐진 포인터 사건은 한 획에
+    // 수백 점 — 파일 몫은 yellowraw_web2 원장). 머무름 갈음(입력이 [a,b]를 보낸다 —
+    // 22 2부·D-W10 «raw 소멸»)과 솎은 뒤 2점이 되는 직선 손 획은 raw를 **안** 싣는다 —
+    // 2점 raw는 {a,b}와 동치라 정보가 없다(정본 기하가 현이면 현이 정본이다).
+    // rawIn은 **같은 인덱스**로 나란히 골라낸다(file.ts의 «길이 같음» 불변식).
+    const keep = rdpIndices(raw, C.RAW_SIMPLIFY_PX / app.view.s)
+    if (keep.length > 2) {
+      s.raw = keep.map(i => ({ ...raw[i]! }))
+      if (rawIn && Object.values(rawIn).every(arr => !arr || arr.length === raw.length)) {
+        const ri: RawInput = { press: keep.map(i => rawIn.press?.[i] ?? 0) }
+        if (rawIn.tiltX) ri.tiltX = keep.map(i => rawIn.tiltX![i]!)
+        if (rawIn.tiltY) ri.tiltY = keep.map(i => rawIn.tiltY![i]!)
+        if (rawIn.twist) ri.twist = keep.map(i => rawIn.twist![i]!)
+        s.rawIn = ri
+      }
+    }
+  } else if (raw && raw.length > 2) {
+    // 트레이싱지·바탕 — 종전 그대로(§1: 확정 기하는 {a,b}, raw는 질감·필압용 · 솎지
+    // 않는다 — 4-b ⚠ «프리핸드는 옐로만이다»).
     s.raw = raw
     // 점별 입력(web2-11 1-c)은 raw와 나란해야만 뜻이 있다 — 어긋나면 조용히 버린다
     // (캡처 쪽 결함이지 문서 손상이 아니다. file.ts의 «거부»와 다른 자리다).
@@ -599,6 +627,29 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
   if (!app.activeErase) return
   // 인자가 없으면 사이드바 도구가 정한다(종전 동작 — 호출부를 안 고친다)
   const ek: EraserKind = kind ?? (app.tool === 'eraser-ink' ? 'eraser-ink' : 'eraser-pencil')
+  // 옐로(web2-24 4-b) — 옐로 획은 lift 밖(2D)이라 조각 목록에 없다: 정본 기하(raw
+  // 점렬)를 **따라** 직접 잰다(현으로 재면 곡선 안쪽이 안 지워지고 현이 지워진다 —
+  // yellowraw.test ⑥). 층 규칙(활성 층의 획만 — web2-21 2부)은 그대로다. 부분 지우기는
+  // 안 한다 — 대기 획과 같은 «통째» 규약(깊이/조각 기전이 없는 2D 획의 선례 그대로).
+  if (yellowActive(app)) {
+    const rad = app.eraserRadius / app.view.s
+    const op = app.activeErase
+    let removedAny = false
+    for (const st of [...app.doc.strokes]) {
+      if (st.layer !== app.activeLayer) continue
+      if (ek === 'eraser-pencil' && isInk(st)) continue
+      if (ek === 'eraser-ink' && !isInk(st)) continue
+      if (distToPolyline(p, st.raw ?? [st.a, st.b]) > rad) continue
+      const rm = removeById(app.doc, st.id)
+      if (!rm) continue
+      removedAny = true
+      const idxInAdded = op.added.findIndex(x => x.id === st.id)
+      if (idxInAdded >= 0) op.added.splice(idxInAdded, 1)
+      else op.removed.push(rm)
+    }
+    if (removedAny) recompute(app)
+    return
+  }
   const ps = pieces(app.lift, app.pose)
   // 지우개 반경은 화면 px — 문서 좌표에서는 배율로 나눈다
   const hits = ps.filter(x => distToPiece(p, x) <= app.eraserRadius / app.view.s)

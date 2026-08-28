@@ -211,6 +211,11 @@ test('2-f 원장 — 지연·프레임(그리기/궤도)·재그리기 분산·�
     // 전량·병렬 판이 시간 칸을 부풀려 기준선을 오염시킨다). 팔은 그대로 돈다 — 원장만 안 덮는다.
     // 정본 명령: LEDGER=1 npx playwright test brushperf --workers=1
     if (process.env.LEDGER === '1') writeFileSync(out, JSON.stringify({
+      conditions: {
+        workers: testInfo.config.workers, project: testInfo.project.name,
+        canonical: 'LEDGER=1 npx playwright test brushperf --workers=1',
+        time_validity: '⚠ 시간 칸 전부가 이 conditions.workers에서 나온 값이다(#71 ㉠) — 전/후 비교의 정본은 --workers=1 단독 실행뿐이다',
+      },
       what: 'web2-11 2-f + web2-12 2번 — brush 렌더러의 «느낌» 원장: 다운→다음 그리기 기회, 그리기/궤도 중 프레임, draft 한 획 재그리기(횟수·ms), 전량 재그리기(획 10·100·500 × 5회 min/median/max), JS 힙(원 바이트), 번들. 두 렌더러 나란히(classic = 옛 미리보기 경로).',
       environment: '헤드리스 크로뮴(소프트웨어 GL 가능) — 절대값이 아니라 두 렌더러의 비·국면(그리기 vs 궤도)·획 수에 따른 변화가 판별값이다. ⚠ 실행 «사이» 변동이 min/max(5회 — 같은 세션 안 연속 반복)보다 훨씬 크다(수십 % 대역 — 실측: 이 원장을 쓴 실행들이 서로 그만큼 갈렸고 그것이 문서 인용을 두 번 낡게 했다). 그래서 이 원장의 수는 문서에 옮겨 적지 않는다 — 필드를 그 자리에서 읽는다(#47). 실기기 절대값은 사람 손이 판정한다(DEFERRED 표).',
       metric_defs: {

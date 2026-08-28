@@ -48,7 +48,7 @@ export function cornerOf(A: { o: V3; d: V3 }, B: { o: V3; d: V3 }): V3 | null {
 }
 
 /** 루프 하나 → 3D 정점 차례. 정점 i = 경계 i−1 과 경계 i 의 교점. */
-function loopPoints(lift: LiftResult, loop: FaceLoop): V3[] | null {
+export function loopPoints(lift: LiftResult, loop: FaceLoop): V3[] | null {
   const n = loop.edges.length
   if (n < 3) return null
   const lines: { o: V3; d: V3 }[] = []

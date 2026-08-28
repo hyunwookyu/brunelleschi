@@ -1,4 +1,10 @@
 {
+ "conditions": {
+  "workers": 1,
+  "project": "dpr1",
+  "canonical": "LEDGER=1 npx playwright test brushperf --workers=1",
+  "time_validity": "⚠ 시간 칸 전부가 이 conditions.workers에서 나온 값이다(#71 ㉠) — 전/후 비교의 정본은 --workers=1 단독 실행뿐이다"
+ },
  "what": "web2-11 2-f + web2-12 2번 — brush 렌더러의 «느낌» 원장: 다운→다음 그리기 기회, 그리기/궤도 중 프레임, draft 한 획 재그리기(횟수·ms), 전량 재그리기(획 10·100·500 × 5회 min/median/max), JS 힙(원 바이트), 번들. 두 렌더러 나란히(classic = 옛 미리보기 경로).",
  "environment": "헤드리스 크로뮴(소프트웨어 GL 가능) — 절대값이 아니라 두 렌더러의 비·국면(그리기 vs 궤도)·획 수에 따른 변화가 판별값이다. ⚠ 실행 «사이» 변동이 min/max(5회 — 같은 세션 안 연속 반복)보다 훨씬 크다(수십 % 대역 — 실측: 이 원장을 쓴 실행들이 서로 그만큼 갈렸고 그것이 문서 인용을 두 번 낡게 했다). 그래서 이 원장의 수는 문서에 옮겨 적지 않는다 — 필드를 그 자리에서 읽는다(#47). 실기기 절대값은 사람 손이 판정한다(DEFERRED 표).",
  "metric_defs": {
@@ -14,24 +20,24 @@
  "live": {
   "drawing_few": {
    "brush": {
-    "down_to_next_paint_ms": 19.7,
-    "frame_ms_median": 17.2,
-    "frame_ms_p90": 19.5,
-    "frame_ms_worst": 32.2,
-    "frames": 80,
+    "down_to_next_paint_ms": 19.6,
+    "frame_ms_median": 16.7,
+    "frame_ms_p90": 19.2,
+    "frame_ms_worst": 32.9,
+    "frames": 79,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 1,
     "draft_redraws_while_down": 40,
-    "draft_ms_median": 1.1,
-    "draft_ms_max": 2.1
+    "draft_ms_median": 1,
+    "draft_ms_max": 2.2
    },
    "classic": {
-    "down_to_next_paint_ms": 12.6,
-    "frame_ms_median": 18.5,
-    "frame_ms_p90": 20.1,
-    "frame_ms_worst": 20.8,
-    "frames": 49,
+    "down_to_next_paint_ms": 12.3,
+    "frame_ms_median": 18.6,
+    "frame_ms_p90": 20.4,
+    "frame_ms_worst": 21.6,
+    "frames": 50,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 0,
@@ -42,24 +48,24 @@
   },
   "drawing_500": {
    "brush": {
-    "down_to_next_paint_ms": 10.7,
-    "frame_ms_median": 17.5,
-    "frame_ms_p90": 18.8,
-    "frame_ms_worst": 30.4,
+    "down_to_next_paint_ms": 9.6,
+    "frame_ms_median": 17.7,
+    "frame_ms_p90": 19.3,
+    "frame_ms_worst": 22.9,
     "frames": 84,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 1,
     "draft_redraws_while_down": 40,
-    "draft_ms_median": 1.1,
-    "draft_ms_max": 1.8
+    "draft_ms_median": 1,
+    "draft_ms_max": 1.6
    },
    "classic": {
-    "down_to_next_paint_ms": 50.9,
-    "frame_ms_median": 10.7,
-    "frame_ms_p90": 62.8,
-    "frame_ms_worst": 66.5,
-    "frames": 85,
+    "down_to_next_paint_ms": 51.7,
+    "frame_ms_median": 11.7,
+    "frame_ms_p90": 65.4,
+    "frame_ms_worst": 67.6,
+    "frames": 86,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 0,
@@ -70,31 +76,31 @@
   },
   "orbit_500": {
    "brush": {
-    "down_to_next_paint_ms": 1114.3,
-    "frame_ms_median": 16.4,
-    "frame_ms_p90": 17.3,
-    "frame_ms_worst": 1121.4,
+    "down_to_next_paint_ms": 1127.7,
+    "frame_ms_median": 16.8,
+    "frame_ms_p90": 17.9,
+    "frame_ms_worst": 1134.3,
     "frames": 31,
     "brush_redraws": 0,
     "brush_syncs": 31,
     "tiles_active": true,
     "tile_frames": 30,
-    "tile_bake_ms": 1099,
+    "tile_bake_ms": 1111.4,
     "tile_frame_ms_median": 1,
-    "tile_frame_ms_max": 3.6,
+    "tile_frame_ms_max": 3.8,
     "tiles": 505
    },
    "classic": {
-    "down_to_next_paint_ms": 0.1,
-    "frame_ms_median": 56.4,
-    "frame_ms_p90": 57.4,
-    "frame_ms_worst": 59.4,
+    "down_to_next_paint_ms": 0.2,
+    "frame_ms_median": 55.9,
+    "frame_ms_p90": 58,
+    "frame_ms_worst": 59.8,
     "frames": 32,
     "brush_redraws": 0,
     "brush_syncs": 31,
     "tiles_active": false,
     "tile_frames": 0,
-    "tile_bake_ms": 1099,
+    "tile_bake_ms": 1111.4,
     "tile_frame_ms_median": 0,
     "tile_frame_ms_max": 0,
     "tiles": 0
@@ -105,12 +111,12 @@
  "full_redraw_ms": {
   "10": {
    "brush_ms": {
-    "min": 9.900000095367432,
-    "median": 10.899999618530273,
-    "max": 21.90000009536743
+    "min": 9.099999904632568,
+    "median": 11.099999904632568,
+    "max": 15.100000381469727
    },
    "classic_ms": {
-    "min": 0.40000009536743164,
+    "min": 0.5,
     "median": 0.5,
     "max": 0.5
    },
@@ -118,27 +124,27 @@
   },
   "100": {
    "brush_ms": {
-    "min": 64.19999980926514,
-    "median": 82.69999980926514,
-    "max": 180.40000009536743
+    "min": 70.5,
+    "median": 76.19999980926514,
+    "max": 172.89999961853027
    },
    "classic_ms": {
-    "min": 2.799999713897705,
+    "min": 3.0999999046325684,
     "median": 3.5999999046325684,
-    "max": 4
+    "max": 3.6999998092651367
    },
    "heap_bytes": 14300000
   },
   "500": {
    "brush_ms": {
-    "min": 317.2000002861023,
-    "median": 720,
-    "max": 754.5999999046326
+    "min": 409.90000009536743,
+    "median": 737.5999999046326,
+    "max": 851.0999999046326
    },
    "classic_ms": {
-    "min": 46.69999980926514,
-    "median": 48.200000286102295,
-    "max": 49.80000019073486
+    "min": 46.5,
+    "median": 47.30000019073486,
+    "max": 47.5
    },
    "heap_bytes": 14300000
   },

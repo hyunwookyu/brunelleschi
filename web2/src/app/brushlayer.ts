@@ -200,6 +200,24 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     }
   }
 
+  /** **점렬 몸체**(web2-24 4-b — 옐로 전용): raw가 정본 기하라 화면 점렬을 그대로 긋는다.
+   *  시드·재료·필압 규약은 drawStroke와 같다 — 다른 것은 «두 점 보간»이 «점렬»이 된 것뿐.
+   *  필압은 pressureProfile을 점렬 진행률 t로 다시 표본한다(재표본 규약 그대로). */
+  function drawStrokeRaw(app: App, s: Stroke, pts: Pt[]) {
+    const g = gradeOf(s)
+    brush.seed(s.id)
+    brush.noiseSeed(s.id)
+    brush.set(BRUSH_OF[g], strokeColor(g), weightOf(s))
+    const prof = pressureProfile(s)
+    const n = pts.length
+    const sp: [number, number, number][] = pts.map((p, i) => {
+      const t = n > 1 ? i / (n - 1) : 0
+      const pr = prof ? prof[Math.min(prof.length - 1, Math.round(t * (prof.length - 1)))]! : 0.5
+      return [p.x, p.y, pr]
+    })
+    brush.spline(sp, 0)   // curvature 0 — 점 사이는 직선 세그먼트(점렬 자체가 곡선을 든다)
+  }
+
   /** 대기 획의 **흑연 파선**(web2-16 3-a) — 벡터 점선을 버리고 확정 획과 같은 브러시로
    *  긋되 파선으로 남긴다: 제도에서 파선은 «아직/숨은»의 계열이다(A-3 — 숨은선).
    *  패턴은 종전 벡터 점선의 규격 그대로(C.WAIT_DASH_* — 상태 채널의 연속성. #65:
@@ -267,9 +285,23 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
       for (const s of app.doc.strokes) {
         const id = s.id
         if (split && s.layer !== undefined && split.above.has(s.layer)) continue
-        // 옐로 획 — 2D다(승격도 대기도 아님): 문서 좌표 그대로, 제 재료의 통짜 몸체.
-        // 안 보이는 옐로(다른 종이·꺼짐·다른 시점)는 lift에 없어 아래 갈래들이 걸러낸다.
+        // 옐로 획 — 2D다(승격도 대기도 아님): 문서 좌표 그대로, 제 재료의 몸체.
+        // **정본 기하는 raw 점렬이다**(web2-24 4-b — 프리핸드). 머무름 갈음·짧은 획은
+        // 두 점이라 종전 경로 그대로다. 잘라내기는 점렬 bbox의 두 모서리로 판정
+        // (offScreen은 두 점이 같은 변 밖일 때만 참이라 bbox 모서리 대입이 보수적으로 옳다).
         if (s.layer !== undefined && yset.has(s.layer)) {
+          if (s.raw && s.raw.length > 2) {
+            const spts = s.raw.map(p => docToScreen(app, p))
+            let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
+            for (const p of spts) {
+              if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x
+              if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y
+            }
+            if (offScreen({ x: x0, y: y0 }, { x: x1, y: y1 })) { clipped++; continue }
+            drawn++
+            drawStrokeRaw(app, s, spts)
+            continue
+          }
           const ya = docToScreen(app, s.a), yb = docToScreen(app, s.b)
           if (offScreen(ya, yb)) { clipped++; continue }
           drawn++

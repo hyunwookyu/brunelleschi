@@ -1,5 +1,5 @@
 {
-  "n_flags": 5544,
+  "n_flags": 5590,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -2430,6 +2430,11 @@
     },
     {
       "path": "cost22_web2_before.json:grid.800.sync_strokes_ms.median",
+      "val": 1,
+      "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
+    },
+    {
+      "path": "cost22_web2_dpr2.json:grid.800.sync_strokes_ms.median",
       "val": 1,
       "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
     },
@@ -19779,6 +19784,196 @@
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
+      "path": "passthru24_web2.json:aggregate.endGap3dMax",
+      "val": 2.7747580858440755e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[0].postErase[0].endGap3d",
+      "val": 2.220446049250313e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[0].postErase[1].endGap3d",
+      "val": 1.637720085286689e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[1].postErase[0].endGap3d",
+      "val": 2.2748467065386707e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[1].postErase[1].endGap3d",
+      "val": 1.0841599276764049e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[2].postErase[0].endGap3d",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "passthru24_web2.json:cells[2].postErase[1].endGap3d",
+      "val": 4.311326371230795e-15,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[3].postErase[0].endGap3d",
+      "val": 1.4458497151625688e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[3].postErase[1].endGap3d",
+      "val": 6.2842938400131246e-15,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[4].postErase[0].endGap3d",
+      "val": 1.7246734910553296e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[4].postErase[1].endGap3d",
+      "val": 1.1374233532693354e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[5].postErase[0].endGap3d",
+      "val": 1.6383220776192004e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[5].postErase[1].endGap3d",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "passthru24_web2.json:cells[6].postErase[0].endGap3d",
+      "val": 1.7763568394002505e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[6].postErase[1].endGap3d",
+      "val": 1.724530548492318e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[7].postErase[0].endGap3d",
+      "val": 2.0253584144909416e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[7].postErase[1].endGap3d",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "passthru24_web2.json:cells[8].postErase[0].endGap3d",
+      "val": 1.3322676295501878e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[8].postErase[1].endGap3d",
+      "val": 2.7747580858440755e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[9].postErase[0].endGap3d",
+      "val": 2.4694914123001488e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[9].postErase[1].endGap3d",
+      "val": 2.416106516409301e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[10].postErase[0].endGap3d",
+      "val": 2.2205570687773568e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[10].postErase[1].endGap3d",
+      "val": 4.440892098500626e-16,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[11].postErase[0].endGap3d",
+      "val": 8.884559321017418e-15,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[11].postErase[1].endGap3d",
+      "val": 9.445544954514262e-15,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[12].postErase[0].endGap3d",
+      "val": 1.1374233532693354e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[12].postErase[1].endGap3d",
+      "val": 1.5285739133357584e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[13].postErase[0].endGap3d",
+      "val": 8.881784197001252e-15,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:cells[13].postErase[1].endGap3d",
+      "val": 1.3597852794203161e-14,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "passthru24_web2.json:refute_no_own3d.seed",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "passthru24_web2.json:refute_no_own3d.startShift.sill.dx",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "passthru24_web2.json:refute_no_own3d.startShift.sill.dy",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "passthru24_web2.json:refute_no_own3d.startShift.lintel.dx",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "passthru24_web2.json:refute_no_own3d.startShift.lintel.dy",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "passthru24_web2.json:refute_no_own3d.wallFace.holes",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "passthru24_web2.json:refute_wholesale_copy.cell.postErase[0].ownSpanRatio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "passthru24_web2.json:refute_wholesale_copy.cell.postErase[1].ownSpanRatio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "passthru24_web2.json:fixture_probe.with_separate_vp0.vp0.strokeId",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "persist.json:by_condition.jitter_0.01_erase_0.auto_drift",
       "val": 0,
       "flag": "분포 전체가 0(n=51) → 항등/측정 미작동 확인"
@@ -26972,6 +27167,11 @@
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
     {
+      "path": "autosave_web2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
       "path": "brush_perf_web2.json",
       "val": null,
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
@@ -27212,6 +27412,11 @@
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
     {
+      "path": "passthru24_web2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
       "path": "promote_freeze_web2.json",
       "val": null,
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
@@ -27292,12 +27497,22 @@
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
     {
+      "path": "yellowraw_web2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
       "path": "_e2e_timing.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
     {
       "path": "_vitest_timing.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "autosave_web2.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
@@ -27527,6 +27742,11 @@
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
     {
+      "path": "passthru24_web2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
       "path": "promote_freeze_web2.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
@@ -27608,6 +27828,11 @@
     },
     {
       "path": "xint_web2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "yellowraw_web2.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
@@ -27760,6 +27985,18 @@
       "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
     },
     {
+      "path": "passthru24_web2.json:gate",
+      "val": [
+        "for",
+        "reachability_source",
+        "reachability_value",
+        "registered",
+        "replaces",
+        "verdict"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
       "path": "web\\test\\axis_live.test.ts",
       "val": "18건 (줄 [111, 119, 137, 142, 145])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
@@ -27873,7 +28110,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 435,
+      "files_scanned": 441,
       "exts_declared": [
         ".md",
         ".py",
@@ -27897,14 +28134,14 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 435,
+      "files_scanned": 441,
       "exts_declared": [
         ".md",
         ".py",
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 34,
+        ".md": 35,
         ".py": 4,
         ".html": 1,
         ".ts": 88
@@ -27939,7 +28176,7 @@
     {
       "scan": "scan_dead_ledger",
       "unit": "원장",
-      "targets": 160,
+      "targets": 163,
       "hits": 3,
       "note": null
     },
@@ -27967,16 +28204,16 @@
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 135,
+      "targets": 136,
       "hits": 3,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 67,
-      "hits": 8,
-      "note": "값 대조를 **지난 것 29** · **픽스처가 정한 값 10** · **면제 28**(`reachability_absent`) · 원장 161개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, lens_roll_osnap.json:gate, one_point_direct.json:gate, opening21_web2.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, restore_pose.json:gate, snap_cache.json:gate, snap_stage.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, osnap_kinds.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "targets": 68,
+      "hits": 9,
+      "note": "값 대조를 **지난 것 30** · **픽스처가 정한 값 10** · **면제 28**(`reachability_absent`) · 원장 164개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, lens_roll_osnap.json:gate, one_point_direct.json:gate, opening21_web2.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, passthru24_web2.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, restore_pose.json:gate, snap_cache.json:gate, snap_stage.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, osnap_kinds.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -28160,15 +28397,18 @@
     "cost20_web2.json": [
       14,
       16,
+      40,
       68
     ],
     "cost20_web2_dpr2.json": [
       14,
       16,
+      40,
       68
     ],
     "cost22_web2.json": [
       12,
+      47,
       68,
       71
     ],
@@ -28178,6 +28418,7 @@
     ],
     "cost22_web2_dpr2.json": [
       12,
+      47,
       68,
       71
     ],
@@ -28616,6 +28857,10 @@
     "paper_visual_web2_dpr2.json": [
       25
     ],
+    "passthru24_web2.json": [
+      69,
+      71
+    ],
     "pick_vp.json": [
       5,
       11,
@@ -28983,6 +29228,7 @@
   "scanned": [
     "_e2e_timing.json",
     "_vitest_timing.json",
+    "autosave_web2.json",
     "aux_tap.json",
     "aux_vp.json",
     "axis_judgement.json",
@@ -29088,6 +29334,7 @@
     "p1_invariance.json",
     "paper_visual_web2.json",
     "paper_visual_web2_dpr2.json",
+    "passthru24_web2.json",
     "persist.json",
     "pick_vp.json",
     "post_confirm_invariant.json",
@@ -29141,7 +29388,8 @@
     "wait_freeze_web2_dpr2.json",
     "wiring.json",
     "wobble_plane.json",
-    "xint_web2.json"
+    "xint_web2.json",
+    "yellowraw_web2.json"
   ],
   "note": "의심≠오류. 각 항목 원인 확인 후 progress.md 보고(§13 자기검증 1)."
 }

@@ -1,4 +1,10 @@
 {
+ "conditions": {
+  "workers": 1,
+  "project": "dpr1",
+  "canonical": "LEDGER=1 npx playwright test gesture --workers=1",
+  "time_validity": "⚠ tile_bake_ms 등 시간 칸은 이 conditions.workers의 값이다(#71 ㉠)"
+ },
  "what": "web2-18 3부 — 돌리는 중에도 흑연이 남는가(dpr1). 획별 질감 캐시(㉢)와 화면 밖 잘라내기(㉠)의 표현 쪽 값. 성능 쪽 값(궤도 1프레임 합)은 cost18_web2*.json이 든다.",
  "threshold": {
   "pixel_diff_ch": 8,
@@ -34,7 +40,7 @@
    "active": true,
    "tiles": 38,
    "frames": 8,
-   "bakeMs": 48.5,
+   "bakeMs": 48.6,
    "bakePasses": 1,
    "bakeClamped": 0,
    "frameMsMedian": 0.2,
@@ -44,11 +50,11 @@
    "active": false,
    "tiles": 0,
    "frames": 21,
-   "bakeMs": 104.9,
+   "bakeMs": 100.2,
    "bakePasses": 1,
    "bakeClamped": 1,
-   "frameMsMedian": 0.2,
-   "frameMsMax": 0.8
+   "frameMsMedian": 0.1,
+   "frameMsMax": 0.7
   },
   "note": "① 사람의 구속(「돌리는 중에도 스케치 질감을 포기할 수 없다」)의 팔이다 — 궤도 중 매 프레임 흑연 칸 수가 0보다 커야 한다. tiles_held.active=true가 «타일 경로가 실제로 돌았다»의 표식이고(그 값이 false면 이 팔은 종전 경로를 재는 것이다), tiles_after_release.active=false가 «놓으면 정확히 다시 굽는다»의 표식이다."
  },

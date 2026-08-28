@@ -9480,7 +9480,7 @@ total × 2회 — 두 실행 diff 0). 번호는 리뷰어 표기.
   `expectedSpan`)으로 칸마다 내니 **실측 spanRatio와 전 칸 일치**(0.19~0.261 — vp로
   수렴하는 선의 원근 압축이 화면 0.4를 3D 0.19~0.26으로 만든다). flags_explained 정정.
 - **[4](높음) 구간 위치**: `endGap3d`(조각 끝 3D ↔ 수직 끝 3D 거리) 신설 — 전 칸
-  1e-12 대역(두 독립 계산의 부동소수 잔차 — flags_explained에 «설계 보장 아님» 해명).
+  ≤2.8e-14(두 독립 계산의 부동소수 잔차 — flags_explained에 «설계 보장 아님» 해명).
   길이만 맞고 자리가 민 오배치는 이 값이 크게 나온다.
 - **[5](높음) ③의 반증 실행**: `refute_no_own3d` 칸 신설 — own3 끔(setOwn3d false) +
   수직까지 지움 → **조각 0/4로 추락 · 벽 면 holes 0**. ③·④가 이 격자에서 실패할 수
@@ -9526,7 +9526,7 @@ total × 2회 — 두 실행 diff 0). 번호는 리뷰어 표기.
 DEFERRED 「web2-24」 표의 그 행이 이미 덮는다(닿는 대조의 face=none과 같은 뿌리).
 
 **재작업 후 결과(정본)**: pre관통 **14/14** · pre수직 **14/14** · post4변 **14/14**
-(spanRatio=expectedSpan 전 칸 일치 · endGap3d ≤1e-12) · **벽면 구멍 14/14** · 대조 8칸
+(spanRatio=expectedSpan 전 칸 일치 · endGap3d ≤2.8e-14) · **벽면 구멍 14/14** · 대조 8칸
 (floating 0 ×4 · touching 4 ×4) · 반증 ㉰ 0/4·holes 0 · 지우기 여유 min 6.7px ·
 fixture_probe 동일. **갈래 ㉠ 유지 — 23 게이트 통과.**
 
@@ -9550,3 +9550,112 @@ fixture_probe 동일. **갈래 ㉠ 유지 — 23 게이트 통과.**
 - **① 전량 실행 뒤 불변**: 재생성 직후 11파일 sha1을 박아 뒀다(스크래치
   six_baseline_hashes.txt — 마감 전량 e2e 뒤 같은 명령으로 재해시해 diff 0을 마감 절에
   적는다).
+
+### 4부 — 옐로가 실제로 프리핸드가 된다 · 테두리를 없앤다
+
+**D-1(코드 표식)**: 지시 문면 그대로 확인 — `brushlayer.drawStroke`의 「curvature 0 —
+확정 기하는 직선이다」 · 옐로 그리기 경로(state/session/input)가 raw를 «질감·필압에만»
+싣고 기하는 {a,b}. 추가 발견 둘: ① **옐로 획은 지우개에 아예 안 집혔다** — 옐로는 lift
+밖(2D)이라 pieces 목록에 없고 eraseAt은 pieces만 본다(코드 표식 — 22의 알려진 구멍이
+아니라 미기록 결함이었다) ② 활성 겹 위 획의 몸체는 #layerc(filmlayer.drawAbove)가
+그린다 — 렌더 수리는 brushlayer(비활성 옐로)와 filmlayer(활성) **두 자리**다.
+
+**D-2(수리 전 재현 — 원문)**: `npx vitest run test/yellowraw.test.ts` →
+「Test Files 1 failed (1) / Tests **2 failed | 6 passed** (8)」 — 실패 팔: 「RDP 솎기 —
+… 점 수는 준다」(솎기 없음)·「몸통(호 위)에서 지우면 지워진다」(옐로 지우개 무반응).
+수리 후 같은 명령 「8 passed / 0 failed / 8」.
+
+**구현**(새 필드 없음 — 지시 4-b):
+- `core/freehand.ts` 신설: `rdpIndices`(RDP — **남길 인덱스** 반환: rawIn을 같은
+  인덱스로 동행) · `distToPolyline`. `C.RAW_SIMPLIFY_PX` 0.5(AS-C82).
+- `commitStroke`(state.ts): 옐로 + raw>2점 → RDP 솎아 raw 저장(rawIn 동행). 솎은 뒤
+  2점(직선 손 획)·머무름 갈음([a,b])은 **raw 안 싣는다** — D-W10(raw 소멸) 유지·2점
+  raw는 {a,b}와 동치(e2e yellow.spec 2부 raw=0 팔 유지 근거).
+- `eraseAt`(state.ts): 옐로 활성 갈래 신설 — 활성 층 획을 raw 폴리라인 거리로 히트,
+  **통째** 삭제(대기 획 규약 재사용 — DECISIONS 4부). 재료 필터·undo op 종전 규약.
+- 렌더: brushlayer `drawStrokeRaw`(brush.spline 점렬 — 시드·재료·필압 재표본 규약
+  그대로·bbox 잘라내기) · filmlayer drawAbove 폴리라인 · render2d 옐로 draft 미리보기
+  점렬(held면 반듯 미리보기 — 원칙 d).
+- 오스냅 완전 차단(4-c): input 호버 갈래에 옐로 문 — osnap 호출·ext 획득·표식 전부
+  쉰다(그리기 쪽은 22부터 이미 우회).
+- 테두리 제거(4-d): render2d의 상시 strokeRect 블록 삭제 → `App.rectHover`(입력
+  `rectEdgesAt` — rect 끌기와 같은 판정·#54) 순간 손잡이(그 변만·COL.snap·AS-C84).
+  #72 대조: 같은 자리 두 규칙 없음 — 상시 테두리 그리기는 render2d 한 곳이었고 그
+  블록을 통째로 바꿨다(grep 확인 — strokeRect의 겹 자리는 한 곳).
+- ⚠ `capture_payload.test`의 「core는 raw를 안 읽는다」 불변식: freehand.ts **주석**의
+  'rawIn' 문자열에 걸렸다(코드 참조는 0) — 주석 문구를 바꿔 통과. 구조 불변식 자체는
+  유지된다: 옐로 raw를 읽는 자리는 전부 app 층(state·render)이고 core 판정(lift·osnap·
+  pieces)은 여전히 raw를 안 본다.
+
+**팔·원장**:
+- 단위: `yellowraw.test.ts` 8팔(①②④⑥ + 층 규칙 회귀 — 수리 전 2 빨강 원문 위) ·
+  전량 「Test Files 68 passed / Tests **578 passed / 0 failed / 578**」.
+- 원장: `yellowraw_web2.json` — ⑧ 240점 → **87~106점**(이탈 ≤0.5px — RDP 정의 보장,
+  flags 해명) · 반증 ㉯(5px 변이 — **실제 실행**): 3~5점·이탈 **1.97~4.33px**(눈 대역
+  1px 초과 — 임계가 그림을 가른다. AS-C82) · ⑨ 옐로 100획 문서 **487,578B = 가정
+  (AS-C80 5MB)의 9.3%**(직선 대조 12,791B — 점렬 몫 ×38. 획당 ~4.9KB. 70% 경고는
+  ~700획 대역부터 — 실기기 표).
+- e2e: `yellowfree.spec.ts` 6팔(①곡선 확정: rawLen>2·현 대비 이탈>40(sag 60)·픽셀로
+  호 배 잉크·현 자리 0 / ④트레이싱지 반대 픽셀(회귀) / ⑤오스냅 «지금 호버 스냅»이
+  옐로에서 «—»·반증 내장(옐로 밖 같은 자리는 스냅 종류가 뜬다 — 실제 확정 끝점을
+  겨눈다) / ⑦테두리 픽셀 0·근처에서만 손잡이·떠나면 0 — 옐로·트레이싱지 둘 다).
+
+### 1·3부 — 리뷰어 2차 16건 대응
+
+- **[1](중간) controls의 face 걷음**: 초판 대조의 면 측정은 «떠 있는 창 중심 아래 벽
+  면»과 공선 겹침 국면이 섞여 값에 뜻이 없었다(floating이 added로 나온 것이 그 증거 —
+  벽 면이었다). 대조를 **승격 도달성 전용**으로 줄이고(원장 주석), 면의 도달성·실패
+  가능성은 본 스윕(wallFace)·반증 ㉰·㉱이 진다. DEFERRED 공선 행은 표식(loopAt=null)
+  근거로 문면 유지(대조 통계 인용은 걷음).
+- **[2](중간) carriedJitter → startShift 재정의**: 표식으로 원인 실측 — seed 0(무오차)·
+  low의 dy=8은 **벽 세로 중점(500,420) 오스냅**(중점이 온라인을 이긴다)이다. 지표를
+  «명목→확정 이동(지터+오스냅 합)»으로 재정의하고 성분 해설을 원장에.
+- **[3](중간) dx의 시드 단조**: dx는 손 지터가 아니라 **벽 세로의 그 높이 실제 x**다
+  («양 끝이 닿는» 정의가 시작을 벽 위로 붙인다 — 손 x 지터는 오스냅이 소거). 실효 손
+  오차 채널은 y·수직 겨눔 — flags_explained에 해명. «21과 같은 격자»는 시드·위치 격자
+  의 동일성이고 x 지터의 실림 여부는 경로 정의가 다르다(21은 안 닿는 창 — 소거 없음).
+- **[4](중간) 반증 ㉱ 신설(실행)**: 통째 복사 오배치 시뮬레이션(`refute_wholesale_copy`)
+  — spanRatio ≈1(기대 0.25와 갈림)·endGap3d 큰 값. 단언 둘이 지킨다 — endGap3d·
+  expectedSpan에 «크게 나오는 실행»이 생겼다(지표 분해능 실증).
+- **[5](중간) 확대 전제 병기**: gate.registered.conditions_note + aggregate.
+  cells_clearance_below_12(**4/14** — s=1이면 부수 삭제 대역) + DECISIONS·AS-C83.
+- **[6](중간) assumptions**: AS-C82(솎기 0.5px)·**AS-C83**(1부 동작점 — 확대 2·실효
+  6px·여유 min 6.7px·시드 7)·AS-C84(손잡이 거리 = 오스냅 반경 재사용) 신설.
+- **[7](중간) 다섯 원장에 conditions**: brushperf·drafting·gesture·icons·sidebar 원장에
+  `conditions{workers·project·canonical·time_validity}` 블록을 싣고 **여섯 전부
+  LEDGER=1 --workers=1로 재재생성**(#71 ㉠의 같은 세션 재발 — 대응으로 닫음).
+- **[8](중간) 오염 값과 새 값 나란히**: `ledger_gate24_web2.json`의
+  `contamination_evidence` — brush_perf 전량 재그리기 중앙 100획 **216.7→76.2ms**
+  (~2.8배 부풀림)·500획 931→737.6 · 그리기 중 프레임 중앙 26.2→17.7·최악 84.2→22.9 ·
+  views_thumb workers 4→1. `*_before` 파일은 안 만든다 — **오염 판이 커밋돼 있어
+  (8006c17) git이 보존한다**(cost22의 _before는 커밋 전 판이라 필요했던 경우).
+- **[9](중간) 해시를 원장으로**: `stage0/out/ledger_gate24_web2.json` 신설 — 11파일
+  sha1(재생성 직후)·게이트 블록(① 판정은 마감 절이 채움 — PENDING 명기).
+- **[10](중간) PITFALLS 닫기**: 마감 절에서 ①(전량 뒤 diff 0) 실증과 함께 #71 부기를
+  닫는다(원장 gate.verdict_after_full_run과 같은 사건 — 여기 계획 명기).
+- **[11](중간) selfcheck 재실행**: 재작업 원장 플래그 **41**(endGap3d 1e-14 대역 ~31 ·
+  refute 0들 · 공통 형태 3) — 전부 원장 flags_explained가 해명(«1e-14 대역» 자체가
+  [4] 지표의 결론이고 큰 값 실행은 ㉱이 실증).
+- **[12](낮음)** ≤1e-12 → **≤2.8e-14**(aggregate.endGap3dMax)로 네 곳 정정.
+- **[13](낮음)** 배열 이름을 `*_sorted_unique`로 바꾸고 칸별 일치는
+  `span_pairs_equal_cells` **14/14** 필드로 냈다.
+- **[14](낮음)** 지시 파일 115행(초판 잔재 «3부까지 배포»)에 세션 주석 — 정본은
+  「4부 → 배포(회차 끝 한 번)」.
+- **[15](낮음)** fixture_probe에 판 정의 주석 + **with_separate_vp0**(21형 발판) 추가 —
+  세 발판 전부 카메라 동일(f·vp0 좌표).
+- **[16](낮음)** HANDOFF 진행 줄 정정(3부 실행 완료 — ① 마감 대기).
+- **#42 ⑥(재생성 후 인용 문서)**: grep — 여섯 원장의 문서 인용은 전부 «필드명만»(#47)
+  또는 결정론 값(icon light·views_thumb 3→3 — 재생성 판과 동일 확인). 낡은 인용 없음.
+
+재실행: `npx vitest run test/passthru24_measure.test.ts` 「1 passed / 0 failed / 1」×2 ·
+두 실행 diff 0(결정론 유지). 여섯 하네스 재재생성 전부 초록(출력 로그 —
+brushperf/drafting/gesture/icons/paperbar/sidebar).
+
+**4부 ⑤ 팔의 부수 발견(표식 둘 — e2e 판독 함정)**: ⑤ 초판이 반증 방향에서 계속 «—»를
+읽었다. 원인 둘을 표식으로 갈랐다 — ㉮ CDP 마우스 이동은 브라우저 프로세스를 거쳐
+`evaluate` 판독과 경주가 난다(이동 직후 행이 직전 이동의 값) ㉯ 그 밑에 하나 더:
+**진단 패널은 window capture 단계에서 렌더한다**(diagpanel.ts 「앱 핸들러보다 먼저
+보되」) — 같은 사건 안에서는 패널이 앱 처리 «전» 값을 그리므로 「지금 호버 스냅」이
+구조적으로 **한 이벤트 낡다**(합성 동기 디스패치로도 재현). 진단 표시의 선행 특성이지
+앱 결함이 아니다(다음 이벤트에서 따라온다) — 팔은 합성 pointermove를 **같은 점에 두 번**
+쏘는 것으로 결정론이 됐다. e2e에서 패널 행을 읽는 다음 회차를 위해 DEFERRED에 행으로.
