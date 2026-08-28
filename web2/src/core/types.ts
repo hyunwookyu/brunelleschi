@@ -107,6 +107,23 @@ export const onPaper = (s: Stroke): boolean => s.layer === undefined
 export const yellowIds = (doc: Pick<Doc, 'layers'>): Set<number> =>
   new Set(doc.layers.filter(l => l.paper === 'yellow').map(l => l.id))
 
+// ── 밑그림(web2-23 2-b) — **사건의 기록**이지 파생이 아니다 ────────────────────
+// 옐로 겹을 얹는 **그 순간 한 번** 구운 make2d(`core/make2d.ts`). `own3`와 같은 급:
+// 근거가 바뀌어도 다시 굽지 않는다 — 그것이 사람이 폐기한 「다시 뜨기」이기 때문이다
+// (web2-22 1-e). 아래를 고쳤으면 **새 옐로를 한 장 더 얹는다**. 그러면 쌓인 순서가
+// 곧 작업 이력이다(D-W12).
+// ⚠ 파생이 아니므로 **저장한다**(면·겹·scaleRef와 같은 급 — 원칙 b에 안 걸린다).
+//   안 저장하고 열 때 다시 계산하면 그것이 곧 자동으로 다시 뜨는 것이다.
+
+/** 구운 조각 하나 — 문서 좌표의 선분 + 깃발. `hidden`이 경도를 가른다(H vs F — 2-a). */
+export interface UnderlaySegment { a: Pt; b: Pt; hidden: boolean }
+
+export interface Underlay {
+  /** 어느 겹의 것인가 — `Doc.layers[].id` */
+  layer: number
+  segs: UnderlaySegment[]
+}
+
 /** 문서 — 획 목록과 그린 캔버스 크기(CSS px, 첫 획 시점).
  *  소실점·카메라·차수·축은 여기 없다 — 전부 계산이다(원칙 b). */
 export interface Doc {
@@ -128,6 +145,9 @@ export interface Doc {
    *  옮겨 가던 결함을 리뷰어 [5]가 잡았다). 사용자의 결정이라 저장한다(면과 같은 급).
    *  그 획이 지워지면 lift가 문서 순서상 첫 치수 획으로 물러난다(대가 — DEFERRED). */
   scaleRef?: number
+  /** 밑그림(web2-23 2-b) — 겹마다 최대 하나(옐로 겹만 갖는다). 굽는 계기는 «얹는
+   *  순간» 하나뿐이다(2-c). 겹이 지워지면 같이 가고 실행취소로 같이 돌아온다. */
+  underlays: Underlay[]
   /** 표시 단위 — 기본 밀리미터(지시 4-6). 사용자의 결정이라 저장한다.
    *  ⚠ 스케일(mmPerUnit)은 여기 **없다** — 파생이다(원칙 b): 문서 순서상 첫 치수 획의
    *  `dim ÷ (무치수 풀이 길이)`로 `lift.ts`가 매번 계산한다. 저장하던 초판은 «2500»을
@@ -136,7 +156,7 @@ export interface Doc {
 }
 
 export const emptyDoc = (W: number, H: number): Doc =>
-  ({ frame: { W, H }, strokes: [], faces: [], sheets: [drawSheet()], layers: [], unit: 'mm' })
+  ({ frame: { W, H }, strokes: [], faces: [], sheets: [drawSheet()], layers: [], underlays: [], unit: 'mm' })
 
 // ── 면 ────────────────────────────────────────────────────────────────────
 // **자동으로 안 만든다.** 닫힌 루프가 생겼다고 면이 아니다 — 방 안의 벽 넷은 방이고

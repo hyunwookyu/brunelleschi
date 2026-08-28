@@ -29,9 +29,9 @@
 // 바탕 종이에는 결이 없다(사람이 정했다 — 겹 둘에만).
 
 import type { App } from './state'
-import { fadeRef, isDrawPose } from './state'
-import type { Layer, Paper, CamPose } from '../core/types'
-import { rng32, MAT, gradeOf, widthOf } from '../core/material'
+import { fadeRef, isDrawPose, underlayOf } from './state'
+import type { Layer, Paper, CamPose, Underlay } from '../core/types'
+import { rng32, MAT, gradeOf, widthOf, widthOfMat } from '../core/material'
 import { project } from '../core/camera'
 import { waitFadeFactor } from '../core/waitfade'
 
@@ -201,6 +201,39 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
     return t
   }
 
+  /** 밑그림 한 장 — 그 겹의 rect 안에서만. **경도만이 가름이다**(web2-23 2-a):
+   *  보이는 선 F · 가린 선 H. ⛔ 파선을 안 쓴다 — 이 앱에서 파선은 이미 「대기」의
+   *  채널이고(web2-16 3-a) 채널이 겹치면 둘 다 안 읽힌다. ⛔ 새 색·새 굵기를 만들지
+   *  않는다(#54 — `MAT`·`widthOfMat` 그대로). */
+  function drawUnderlay(g: CanvasRenderingContext2D, app: App, lay: Layer, u: Underlay) {
+    const v = app.view
+    g.save()
+    g.beginPath()
+    g.rect((lay.rect.x * v.s + v.ox) * cd, (lay.rect.y * v.s + v.oy) * cd,
+      lay.rect.w * v.s * cd, lay.rect.h * v.s * cd)
+    g.clip()
+    g.fillStyle = '#f5f3ee'      // 아래 3D를 덮는다 — 종이 바탕색(막의 곱이 뒤에 물들인다)
+    g.fill()
+    g.setTransform(cd * v.s, 0, 0, cd * v.s, cd * v.ox, cd * v.oy)   // 문서 좌표
+    const is = 1 / v.s           // 화면 고정 굵기(render2d 규약 그대로)
+    g.lineCap = 'round'
+    g.setLineDash([])            // 파선 아님 — 명시한다(위 ⛔)
+    for (const seg of u.segs) {
+      if (seg.hidden && !app.showHidden) continue     // 「가린 선 빼기」 옵션(2-a)
+      const grade = seg.hidden ? 'H' : 'F'
+      const m = MAT[grade]
+      g.strokeStyle = m.color
+      g.globalAlpha = m.alpha
+      g.lineWidth = widthOfMat({ grade }) * is
+      g.beginPath()
+      g.moveTo(seg.a.x, seg.a.y)
+      g.lineTo(seg.b.x, seg.b.y)
+      g.stroke()
+    }
+    g.globalAlpha = 1
+    g.restore()
+  }
+
   function drawFilms(app: App) {
     const split = filmSplit(app)
     const g = film.getContext('2d')!
@@ -240,6 +273,15 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
       if (!c || c.width === 0) continue
       if (c.style.visibility === 'hidden' || c.style.display === 'none') continue
       g.drawImage(c, 0, 0, film.width, film.height)
+    }
+    // ①′ **밑그림**(web2-23 2부) — 밑그림이 있는 겹의 종이 안에서는 **아래 3D를 덮고**
+    // 구운 선이 대신 선다. 그것이 「눌러놓은 선」의 뜻이다: 비쳐 보이는 와이어프레임이
+    // 아니라 **그 순간의 그림**이고, 그래서 가린 선을 H로 바꾸거나 빼는 것이 화면에
+    // 실제로 나타난다(안 덮으면 아래 획이 그대로 비쳐 2-a의 옵션이 아무 일도 안 한다).
+    // 곱(②)은 이 위에 얹힌다 — 밑그림도 종이의 결에 물든다.
+    for (const lay of split.films) {
+      const u = underlayOf(app.doc, lay.id)
+      if (u) drawUnderlay(g, app, lay, u)
     }
     // ② 막들을 순서대로 곱한다 — 겹치는 자리는 누적 곱(더 어두워진다 — 3-a)
     for (const lay of split.films) {

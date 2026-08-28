@@ -44,7 +44,7 @@ describe('① v5 왕복 · v4 하위호환', () => {
     expect(d.doc.strokes[1]!.layer).toBe(4)
     expect(d.doc.strokes[0]!.layer).toBeUndefined()
     const text = serializeBrnl({ doc: d.doc, nextId: d.nextId })
-    expect(JSON.parse(text).version).toBe(5)
+    expect(JSON.parse(text).version).toBe(6)   // 쓰는 판은 최신 하나(web2-23 2-b)
     const back = parseBrnl(text)!
     expect(back.doc.layers).toEqual(d.doc.layers)
     expect(back.doc.strokes).toEqual(d.doc.strokes)

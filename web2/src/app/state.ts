@@ -3,7 +3,7 @@
 // 실행취소는 op 단위다: 획 추가 op, 지우개 한 번의 드래그 op.
 // 그림만 되돌린다 — 작도(카메라)는 op에 들어가지 않는다.
 
-import { emptyDoc, DRAW_SHEET_ID, onPaper, type Doc, type Stroke, type Face, type Sheet, type Layer, type Paper, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
+import { emptyDoc, DRAW_SHEET_ID, onPaper, type Doc, type Stroke, type Face, type Sheet, type Layer, type Underlay, type Paper, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
 import { isInk } from '../core/material'
 export type { ViewOffset }
 import { liftAll, closestOnLineToRay, type LiftResult } from '../core/lift'
@@ -15,6 +15,7 @@ import { rng32 } from '../core/material'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
 import { rdpIndices, distToPolyline } from '../core/freehand'
 import { loopAt, faceAt, faceScreen, resolveFaces, resolveFace, allLoops, inPoly, type ResolvedFace, type LoopCandidate } from '../core/face'
+import { bakeUnderlay } from '../core/make2d'
 import { geomSize3 } from '../core/osnap'
 import { C } from '../core/constants'
 import { type Pt, type V3, v3, add3, sub3, mul3, dot3, len3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
@@ -68,6 +69,9 @@ export interface Op {
   /** 겹 삭제(web2-20 2-c) — 그 위의 획이 같이 가므로 **실행취소 대상**이다(지우개와
    *  같은 급). 겹 자체도 op에 실려 되돌아온다. */
   layersRemoved?: { layer: Layer; index: number }[]
+  /** 겹과 함께 간 밑그림(web2-23 2-c ⚠) — 겹을 지우면 그 밑그림도 가고 **실행취소로
+   *  같이 돌아온다**. 겹과 짝이므로 언제나 layersRemoved와 함께 실린다. */
+  underlaysRemoved?: { underlay: Underlay; index: number }[]
   /** 종이 삭제(web2-20 2-c — 규약 변경): 겹이 하나라도 있으면 획이 딸려 가므로
    *  실행취소 대상이 된다. web2-19의 「종이 삭제는 실행취소 밖」은 겹이 없을 때만 남는다. */
   sheetRemoved?: { sheet: Sheet; index: number }
@@ -160,6 +164,14 @@ export interface App {
    *  에서 0 도달). 끄면 종전 동작(항상 그리되 흐림 0.3) **그대로**다(A-4 — 되돌릴 길.
    *  실기기 판정은 DEFERRED web2-13 표). 설정 「대기 획은 그린 시점에서만」. */
   waitFade: boolean
+  /** **밑그림의 가린 선을 보이는가**(web2-23 2-a) — 기본 **켜짐**: 은선이 보이는 편이
+   *  제도에 가깝고(가린 선 = H), 빼는 것은 정리된 그림을 원할 때다(사람의 문면
+   *  「옵션에 따라」). 표시 팝오버의 「가린 선(은선)」. ⚠ **표시 손잡이일 뿐이다** —
+   *  굽기 결과(`Doc.underlays`)는 안 바뀐다(끄고 켜도 다시 안 굽는다: 2-c). */
+  showHidden: boolean
+  /** 3부 안내를 **이미 띄웠는가** — 「면이 없어 뒤엣선이 다 보인다」는 **한 번만** 뜬다
+   *  (매번 뜨면 잔소리가 된다 — 지시 3부 ⚠). 런타임 상태라 저장하지 않는다. */
+  underlayNoticed: boolean
   /** **연장선 획득 상태**(web2-18 2부) — 어떤 끝점 위에 머물러 그 선의 연장을 켰는가.
    *  `ext` 오스냅은 이제 여기 있는 선분에서만 난다(`osnap`의 `extAcq` 인자).
    *  획을 확정하면 비운다(`commitStroke`). 표시는 render2d의 획득 표식이다.
@@ -236,6 +248,8 @@ export function createApp(W: number, H: number): App {
     horizonPref: null,
     grid: false,
     waitFade: true,
+    showHidden: true,       // 기본은 H로 표시(2-a — 은선이 보이는 편이 제도에 가깝다)
+    underlayNoticed: false,
     extAcq: newExtDwell(),
     lastSnap: null,
     strayCount: 0,
@@ -579,6 +593,9 @@ export function undo(app: App) {
   for (const r of [...(op.layersRemoved ?? [])].sort((a, b) => a.index - b.index)) {
     app.doc.layers.splice(Math.min(r.index, app.doc.layers.length), 0, r.layer)
   }
+  for (const r of [...(op.underlaysRemoved ?? [])].sort((a, b) => a.index - b.index)) {
+    app.doc.underlays.splice(Math.min(r.index, app.doc.underlays.length), 0, r.underlay)
+  }
   app.redoStack.push(op)
   recompute(app)
 }
@@ -594,6 +611,10 @@ export function redo(app: App) {
   }
   for (const f of op.facesAdded ?? []) app.doc.faces.push(f)
   // 겹·종이 재삭제(web2-20 2-c) — 겹 먼저, 종이 나중(복원의 역순)
+  for (const r of op.underlaysRemoved ?? []) {
+    const i = app.doc.underlays.findIndex(x => x.layer === r.underlay.layer)
+    if (i >= 0) app.doc.underlays.splice(i, 1)
+  }
   for (const r of [...(op.layersRemoved ?? [])].sort((a, b) => b.index - a.index)) {
     const i = app.doc.layers.findIndex(x => x.id === r.layer.id)
     if (i >= 0) app.doc.layers.splice(i, 1)
@@ -803,8 +824,31 @@ export function addLayer(app: App, paper: Paper, viewport: { W: number; H: numbe
   }
   app.doc.layers.push(lay)
   app.activeLayer = lay.id
+  // ── 굽기(web2-23 1부·2-c) — **옐로를 얹는 그 순간 한 번**. 다른 계기는 없다 ──────
+  // 트레이싱지는 안 굽는다(3D가 살아 있어 그냥 보인다 — 2-c ⚠). 굽기는 **지금 이
+  // 포즈**에서 돈다: 겹은 그 종이의 시점에서만 뜻이 있으므로(web2-20 3-d) 그 시점의
+  // 사영이 곧 밑그림이다. ⛔ 「다시 뜨기」를 만들지 않는다(사람이 정했다 — 2-c).
+  if (paper === 'yellow') {
+    const baked = bakeUnderlay(app.lift, app.faces, app.pose)
+    app.doc.underlays.push({ layer: lay.id, segs: baked.segs })
+  }
   for (const l of app.listeners) l() // 자동 저장이 듣는다
   return lay
+}
+
+/** 그 겹의 밑그림 — 없으면 null. 읽는 자리(표시·저장·팔)의 **출처 하나**다(#54). */
+export const underlayOf = (doc: Pick<Doc, 'underlays'>, layer: number): Underlay | null =>
+  doc.underlays.find(u => u.layer === layer) ?? null
+
+/** 겹이 갈 때 그 밑그림도 뗀다(web2-23 2-c ⚠) — **문서에서 빼고 op에 싣는다**.
+ *  실행취소가 같은 자리에 도로 꽂는다. 겹 삭제와 종이 삭제가 같은 함수를 부른다(#54). */
+function takeUnderlays(app: App, layerIds: Set<number>): Op['underlaysRemoved'] {
+  const out: { underlay: Underlay; index: number }[] = []
+  for (let i = app.doc.underlays.length - 1; i >= 0; i--) {
+    if (layerIds.has(app.doc.underlays[i]!.layer)) out.push({ underlay: app.doc.underlays[i]!, index: i })
+  }
+  for (const r of out) app.doc.underlays.splice(r.index, 1)
+  return out.length > 0 ? out : undefined
 }
 
 /** 겹 삭제(2-c) — **그 위의 획도 같이 간다 → 실행취소 대상**(획을 지우는 일이므로
@@ -818,7 +862,8 @@ export function removeLayer(app: App, id: number) {
     if (app.doc.strokes[i]!.layer === id) removed.push({ stroke: app.doc.strokes[i]!, index: i })
   }
   for (const r of removed) app.doc.strokes.splice(r.index, 1)
-  const op: Op = { removed, added: [], layersRemoved: [{ layer: app.doc.layers[li]!, index: li }] }
+  const op: Op = { removed, added: [], layersRemoved: [{ layer: app.doc.layers[li]!, index: li }],
+    underlaysRemoved: takeUnderlays(app, new Set([id])) }
   app.doc.layers.splice(li, 1)
   if (app.activeLayer === id) app.activeLayer = null
   app.undoStack.push(op)
@@ -878,11 +923,12 @@ export function deleteSheet(app: App, id: number) {
       if (st.layer !== undefined && layerIds.has(st.layer)) removed.push({ stroke: st, index: si })
     }
     for (const r of removed) app.doc.strokes.splice(r.index, 1)
+    const underlaysRemoved = takeUnderlays(app, layerIds)
     const layersRemoved = layersOnSheet
       .map(l => ({ layer: l, index: app.doc.layers.indexOf(l) }))
       .sort((x, y) => y.index - x.index)
     for (const r of layersRemoved) app.doc.layers.splice(r.index, 1)
-    const op: Op = { removed, added: [], layersRemoved, sheetRemoved: { sheet: app.doc.sheets[i]!, index: i } }
+    const op: Op = { removed, added: [], layersRemoved, underlaysRemoved, sheetRemoved: { sheet: app.doc.sheets[i]!, index: i } }
     app.doc.sheets.splice(i, 1)
     if (app.activeSheet === id) gotoSheet(app, app.doc.sheets[0]!.id)
     app.undoStack.push(op)

@@ -42,6 +42,7 @@ function shifted(g: any, dy: number): Doc {
     frame: { W: oracle.W, H: oracle.H },
     sheets: [],   // 이 문서는 3D 비교 전용이다 — 종이 로직을 안 지난다(web2-19)
     layers: [],   // 겹도 마찬가지(web2-20)
+    underlays: [],  // 밑그림도 마찬가지(web2-23)
     strokes: g.strokes.filter((s: any) => s.id !== 1).map((s: any) => ({
       id: s.id,
       a: { x: s.a.x, y: s.a.y + dy },
@@ -264,10 +265,20 @@ describe('2-c — 옛 .brnl(version 1) 변환', () => {
     expect(serializeBrnl({ doc: back.doc, nextId: back.nextId })).toBe(noDv)
   })
 
-  it('③ 거부 — version 6은 거부한다(전방 호환을 흉내내지 않는다 — 1~5만 받는다)', () => {
+  it('③ 거부 — version 7은 거부한다(전방 호환을 흉내내지 않는다 — 1~6만 받는다)', () => {
+    // ⚠ 이 수는 **쓰는 판이 오를 때마다 함께 오른다**(web2-23이 6을 쓴다) — 그때
+    // 6은 «받는 판»이 되고 문은 한 칸 위로 간다. 아래 ⑤가 그 짝(6은 실제로 받는다).
+    const j = JSON.parse(oracle.sample.brnl)
+    j.version = 7
+    expect(parseBrnl(JSON.stringify(j))).toBeNull()
+  })
+
+  it('⑤ 받는다 — version 6(밑그림 판)은 열린다 · 밑그림 없는 v6도 그대로', () => {
     const j = JSON.parse(oracle.sample.brnl)
     j.version = 6
-    expect(parseBrnl(JSON.stringify(j))).toBeNull()
+    const d = parseBrnl(JSON.stringify(j))
+    expect(d).not.toBeNull()
+    expect(d!.doc.underlays).toEqual([])
   })
 
   it('④ 자동 저장 — localStorage의 옛 값(v1 문자열)이 같은 길을 지난다', () => {

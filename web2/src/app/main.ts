@@ -13,7 +13,7 @@ import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice, confirmNear } from './notice'
 import { OSNAP_ORDER, osnap, osnapCost, resetOsnapCost, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT, widthOfMat, gradeOf } from '../core/material'
-import type { Grade } from '../core/types'
+import type { Grade, Layer } from '../core/types'
 import { parseDim, formatMm, lenMm, UNITS, type Unit } from '../core/dim'
 import { initDimPanel } from './dimpanel'
 import { createVoice } from './voice'
@@ -532,18 +532,7 @@ function renderFacePop() {
   }
   if (app.faceCandidates === null) {
     // 전부 켜고 빼기(4-a) — 후보를 전부 내놓고 아닌 것만 탭해서 뺀다
-    mk('전부 찾기', 'btn-face-all', () => {
-      const n = findAllFaces(app)
-      if (n === 0) {
-        cancelCandidates(app)
-        notify('닫힌 영역이 없다')
-        facePop.hidden = true
-      } else {
-        notify(`후보 ${n} — 아닌 것을 탭해서 빼고, 확정을 누른다`)
-        renderFacePop()
-      }
-      invalidate()
-    })
+    mk('전부 찾기', 'btn-face-all', runFindAll)
   } else {
     mk(`확정 ${app.faceCandidates.length}`, 'btn-face-commit', () => {
       const n = commitCandidates(app)
@@ -557,6 +546,19 @@ function renderFacePop() {
       invalidate()
     })
   }
+}
+/** 「전부 찾기」 — 버튼과 **밑그림 안내의 길**(web2-23 3부)이 같은 함수를 부른다(#54) */
+function runFindAll() {
+  const n = findAllFaces(app)
+  if (n === 0) {
+    cancelCandidates(app)
+    notify('닫힌 영역이 없다')
+    facePop.hidden = true
+  } else {
+    notify(`후보 ${n} — 아닌 것을 탭해서 빼고, 확정을 누른다`)
+    renderFacePop()
+  }
+  invalidate()
 }
 function toggleFacePop() {
   facePop.hidden = !facePop.hidden
@@ -700,6 +702,12 @@ waitFadeBox.checked = app.waitFade
 waitFadeBox.addEventListener('change', () => { app.waitFade = waitFadeBox.checked; invalidate() })
 // 자립 깃발 체크박스 — 값 읽기는 위(복원 전)에서 끝났다. 여기는 배선만.
 // 끄면 localStorage 'off'로 남는다(A-4 — 옛 사슬 경로 유지·재방문에도 유지).
+// 「가린 선(은선)」(web2-23 2-a) — **표시 손잡이일 뿐이다**: 끄면 밑그림의 H 계열이
+// 안 그려지고, 굽기 결과는 안 바뀐다(다시 안 굽는다 — 2-c). 기본은 켜짐(제도 관행).
+const hiddenBox = document.getElementById('chk-hidden') as HTMLInputElement
+hiddenBox.checked = app.showHidden
+hiddenBox.addEventListener('change', () => { app.showHidden = hiddenBox.checked; invalidate() })
+
 const own3dBox = document.getElementById('chk-own3d') as HTMLInputElement
 own3dBox.checked = app.own3d
 own3dBox.addEventListener('change', () => {
@@ -855,11 +863,30 @@ function captureThumb(): string {
   return t.toDataURL('image/jpeg', 0.72)
 }
 
+// ── 밑그림 안내(web2-23 3부) — **면이 없을 때만·한 번만** ──────────────────────
+// 면이 하나도 없이 옐로를 얹으면 와이어프레임이 다 보이는 그 문제가 그대로 난다.
+// **막지 않는다**(그것도 하나의 선택이다 — 밑그림 없이 자유 스케치만 할 수도 있다).
+// 한 줄 안내 + **면 일괄로 가는 길**을 그 자리에서 연다(지시 3부). 매번 뜨면 잔소리가
+// 되므로 세션에 한 번이다(`app.underlayNoticed`).
+// 겹을 얹는 자리가 둘(종속 탭 「+」·손 띠 롤)이라 **뒤처리는 여기 하나다**(#54).
+function afterAddLayer(lay: Layer) {
+  if (lay.paper !== 'yellow') return
+  if (app.faces.length > 0) return          // ② 면이 있으면 안 뜬다
+  if (app.underlayNoticed) return           // ④ 두 번째 옐로에서는 안 뜬다
+  app.underlayNoticed = true
+  ask('면이 없어 뒤엣선이 다 보인다', [{
+    key: 'faces',
+    label: '면 만들기',
+    onPick: () => { setTool('face'); facePop.hidden = false; runFindAll() },
+  }])
+}
+
 let layerbarRef: { sync: () => void } | null = null
 const layerbar = initLayerbar(app, document.getElementById('layerbar')!, {
   viewport: () => ({ W, H }),
   onChange: () => invalidate(),
   notify,
+  afterAdd: afterAddLayer,
 })
 layerbarRef = layerbar
 // ── 롤 둘(web2-21 3-a) — 손 띠에서 종이를 한 장 뜯는다. 종속 탭의 「+」와 같은 일
@@ -871,9 +898,10 @@ for (const [bid, paper] of [['btn-roll-tracing', 'tracing'], ['btn-roll-yellow',
       notify(LAYER_GATE_MSG)   // 종속 탭 「+」와 같은 상수(#54 — 3·4부 리뷰 [12])
       return
     }
-    addLayer(app, paper, { W, H })
+    const lay = addLayer(app, paper, { W, H })
     layerbar.sync()
     invalidate()
+    if (lay) afterAddLayer(lay)
   })
 }
 const syncRolls = () => {
