@@ -10617,7 +10617,7 @@ E 3D·면·은선(11) · F 파일·저장(4). 각 행은 「무엇을 보면 되
 |---|---|
 | 타입 | `tsc --noEmit` — **출력 없음(0)** |
 | 단위 | `npx vitest run` → 「Test Files **77 passed (77)**」 · 「Tests **626 passed (626)**」 = **626 / 0 / 626** |
-| e2e | `npx playwright test --workers=1` → 「**310 passed (24.3m)**」 = **310 / 0 / 310** · `--list` 대조 「Total: **310 tests in 42 files**」 |
+| e2e | `npx playwright test --workers=1` → 「**310 passed (24.3m)**」 = **310 / 0 / 310** · `--list` 대조 「Total: **310 tests in 42 files**」. ⚙️ **리뷰어 2차 대응 뒤 최종 트리에서 다시 돌렸다** — 「**310 passed (23.8m)**」 = **310 / 0 / 310**(팔 수 불변 · 앱 코드는 안 바뀌었고 갈린 것은 셔터 팔의 문과 원장 쓰기다) |
 | 빌드 | `vite build` → 「✓ built in **2.91s**」 |
 | selfcheck | `scan_pitfalls_table_last` **0건** · 죽은 참조 **3건 전부 이 회차 밖**(hash 꼴 수 — `inklayer_web2_before` `#101014`·`vp_source{,_dpr2}` `#2471`). ⚙️ **#74에 등록부 줄(`### #74.`)을 붙여** roundsave25의 `#74` 인용 오검 둘을 없앴다(고칠 곳은 검사가 아니라 기록 — #38) |
 | 리뷰어 | **1차 15건**(높음 2) — 전건 대응(위 표) |
