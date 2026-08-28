@@ -64,29 +64,29 @@
     "withRawIn": 91
    },
    "full_redraw_ms": {
-    "min": 92.4,
-    "median": 112,
-    "max": 278.1
+    "min": 89,
+    "median": 101.1,
+    "max": 132.3
    },
    "sync_strokes_ms": {
     "min": 0.2,
-    "median": 0.3,
-    "max": 0.7
+    "median": 0.4,
+    "max": 0.6
    },
    "orbit_frame_ms": {
     "n": 32,
-    "r3": 0.39999961853027344,
+    "r3": 0.3000001907348633,
     "bs": 0.3000001907348633,
     "d2": 0.19999980926513672,
-    "total": 0.9000000953674316,
-    "totalMax": 222.90000009536743
+    "total": 0.8999996185302734,
+    "totalMax": 214.2000002861023
    },
    "osnap": {
     "calls": 40,
-    "per_call_ms": 0.48,
-    "intersect_ms": 0.22,
-    "ends_merge_ms": 0.0425,
-    "rest_ms": 0.2175
+    "per_call_ms": 0.44,
+    "intersect_ms": 0.2075,
+    "ends_merge_ms": 0.0375,
+    "rest_ms": 0.195
    }
   },
   "400": {
@@ -99,29 +99,29 @@
     "withRawIn": 203
    },
    "full_redraw_ms": {
-    "min": 202.1,
-    "median": 235.3,
-    "max": 449.3
+    "min": 182,
+    "median": 209.6,
+    "max": 429.2
    },
    "sync_strokes_ms": {
     "min": 0.4,
     "median": 0.5,
-    "max": 1.6
+    "max": 1.3
    },
    "orbit_frame_ms": {
     "n": 32,
     "r3": 0.5,
     "bs": 0.40000009536743164,
     "d2": 0.19999980926513672,
-    "total": 1,
-    "totalMax": 355.8999996185303
+    "total": 1.0999999046325684,
+    "totalMax": 378.69999980926514
    },
    "osnap": {
     "calls": 40,
-    "per_call_ms": 1.0525,
-    "intersect_ms": 0.545,
-    "ends_merge_ms": 0.0875,
-    "rest_ms": 0.42
+    "per_call_ms": 1.035,
+    "intersect_ms": 0.5575,
+    "ends_merge_ms": 0.0675,
+    "rest_ms": 0.41
    }
   },
   "800": {
@@ -134,43 +134,43 @@
     "withRawIn": 408
    },
    "full_redraw_ms": {
-    "min": 389.8,
-    "median": 456,
-    "max": 753.1
+    "min": 380.5,
+    "median": 525.7,
+    "max": 721.1
    },
    "sync_strokes_ms": {
-    "min": 0.9,
-    "median": 0.9,
+    "min": 0.8,
+    "median": 1,
     "max": 1.8
    },
    "orbit_frame_ms": {
     "n": 32,
-    "r3": 0.7000002861022949,
-    "bs": 0.7000002861022949,
+    "r3": 0.7999997138977051,
+    "bs": 0.8000001907348633,
     "d2": 0.2999997138977051,
-    "total": 1.799999713897705,
-    "totalMax": 688
+    "total": 1.9000000953674316,
+    "totalMax": 699.0999999046326
    },
    "osnap": {
     "calls": 40,
-    "per_call_ms": 3.63,
-    "intersect_ms": 2.0625,
-    "ends_merge_ms": 0.06,
-    "rest_ms": 1.5075
+    "per_call_ms": 3.825,
+    "intersect_ms": 2.1475,
+    "ends_merge_ms": 0.0875,
+    "rest_ms": 1.59
    }
   }
  },
  "slope": {
-  "full_redraw": 4.07,
-  "sync_strokes": 3,
-  "orbit_frame": 2,
-  "osnap_total": 7.56,
-  "osnap_intersect": 9.38,
-  "osnap_ends_merge": 1.41,
-  "osnap_rest": 6.93
+  "full_redraw": 5.2,
+  "sync_strokes": 2.5,
+  "orbit_frame": 2.11,
+  "osnap_total": 8.69,
+  "osnap_intersect": 10.35,
+  "osnap_ends_merge": 2.33,
+  "osnap_rest": 8.15
  },
  "resolution": {
-  "note": "#71 ㉢ — 이 표의 축(획 수)이 값을 실제로 가르는가를 하네스가 단언한다(800 full > 200 full). slope의 한 칸 소수점은 실행 변동 안이다 — 대역으로만 읽는다(«후 판 slope가 전 판보다 큰» 것도 그 변동이다: intersect 절대값은 2.34→2.11로 줄었다).",
+  "note": "#71 ㉢ — 이 표의 축(획 수)이 값을 실제로 가르는가를 하네스가 단언한다(800 full > 200 full). slope의 한 칸 소수점은 실행 변동 안이다 — 대역으로만 읽는다. 전/후 대조의 정본 채널은 **구조 값**(scene의 waiting·yellow_lifted — 결정론)이고 절대 ms·slope는 참고다(#47 — 값을 이 산문에 박지 않는다: 값은 grid가 정본).",
   "spans_800_gt_200": true
  },
  "falsification": "격자가 안 갈리면 표가 아무것도 안 잰 것이다 — 팔이 강제한다: 800 도달 · 옐로 ≥380 · osnap 호출 >0 · 800 full > 200 full. 국면(phase)은 옐로 승격 수의 자동 판별이다.",

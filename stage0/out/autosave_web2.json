@@ -1,0 +1,15 @@
+{
+ "what": "web2-22 3부 — 자동 저장 직렬화 바이트(작은 문서·획 6 증분·획당 근사)와 70% 도달 추정.",
+ "run": {
+  "note": "정본 명령: LEDGER=1 npx playwright test autosave --workers=1(dpr1 판만 쓴다 — 바이트는 dpr 무관)",
+  "date": "2026-08-28"
+ },
+ "small_doc_bytes": 917,
+ "after_6_strokes_bytes": 2751,
+ "approx_bytes_per_stroke": 306,
+ "strokes_to_warn_at_70pct": 12004,
+ "note": "획당 바이트는 raw 점렬 길이에 비례(이 팔의 획은 8이동 손 획 — 실사용 손 획은 점이 더 많아 더 크다). 상한 5MB는 가정(AS-C80).",
+ "flags_explained": {
+  "constants/metric_defs 스냅샷 없음": "web2 라인 공통 형태"
+ }
+}

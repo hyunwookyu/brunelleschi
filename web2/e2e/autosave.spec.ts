@@ -6,6 +6,11 @@
 //   ③ 실제 실패 시 종전 알림 그대로(회귀)  ④ 작은 문서에서는 아무것도 안 뜬다
 
 import { test, expect, type Page } from '@playwright/test'
+import { writeFileSync, mkdirSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const HERE = dirname(fileURLToPath(import.meta.url))
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -31,7 +36,7 @@ async function boot(page: Page) {
   await drawLine(page, 500, 560, 800, 480)
 }
 
-test('①④ — %가 오른다(값) · 작은 문서는 조용하다', async ({ page }) => {
+test('①④ — %가 오른다(값) · 작은 문서는 조용하다', async ({ page }, testInfo) => {
   await boot(page)
   const s1 = await savedBytes(page)
   expect(s1.bytes).toBeGreaterThan(0)
@@ -50,6 +55,23 @@ test('①④ — %가 오른다(값) · 작은 문서는 조용하다', async ({
   await page.click('#buildid')
   await expect(page.locator('#diagpanel')).toContainText('자동 저장')
   await expect(page.locator('#diagpanel')).toContainText('%')
+  // 원장(#25 — 재검 [10]): «획 몇에서 70%에 닿는가»를 계산할 절대 바이트를 남긴다.
+  // LEDGER=1 단독 실행에서만 쓴다(시간 원장 규율과 같은 문 — 바이트는 결정론에 가깝지만
+  // 획 좌표가 실행 경로에 실려 미세하게 다를 수 있다).
+  if (process.env.LEDGER === '1' && testInfo.project.name === 'dpr1') {
+    const perStroke = (s2.bytes - s1.bytes) / 6
+    mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
+    writeFileSync(resolve(HERE, '../../stage0/out/autosave_web2.json'), JSON.stringify({
+      what: 'web2-22 3부 — 자동 저장 직렬화 바이트(작은 문서·획 6 증분·획당 근사)와 70% 도달 추정.',
+      run: { note: '정본 명령: LEDGER=1 npx playwright test autosave --workers=1(dpr1 판만 쓴다 — 바이트는 dpr 무관)', date: '2026-08-28' },
+      small_doc_bytes: s1.bytes,
+      after_6_strokes_bytes: s2.bytes,
+      approx_bytes_per_stroke: Math.round(perStroke),
+      strokes_to_warn_at_70pct: Math.round((5 * 1024 * 1024 * 0.7 - s1.bytes) / perStroke),
+      note: '획당 바이트는 raw 점렬 길이에 비례(이 팔의 획은 8이동 손 획 — 실사용 손 획은 점이 더 많아 더 크다). 상한 5MB는 가정(AS-C80).',
+      flags_explained: { 'constants/metric_defs 스냅샷 없음': 'web2 라인 공통 형태' },
+    }, null, 1))
+  }
 })
 
 test('② — 임계(70%)를 넘으면 실패 전에 알린다 (작은 상한 주입 — 같은 판정 경로)', async ({ page }) => {
