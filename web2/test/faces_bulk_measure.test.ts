@@ -104,7 +104,8 @@ describe('면 일괄 비용 — 획 수 대 일괄 ms (4-e)', () => {
     const ledger = {
       run: {
         note: 'web2-21 4-e — findAllFaces(allLoops + resolveFace 검증) 벽시계. '
-          + '⚠ 정본 명령: npx vitest run test/faces_bulk_measure.test.ts — **단독 실행**. '
+          + '⚠ 정본 명령: LEDGER=1 npx vitest run test/faces_bulk_measure.test.ts — **단독 실행**. '
+          + '(LEDGER=1이 없으면 원장을 안 쓴다 — 전량 실행의 병렬 판이 못 덮는다.) '
           + '전량 vitest는 워커 병렬로 이 파일을 함께 돌려 벽시계를 부풀린다(#71 ㉠ — 2차 '
           + '리뷰 [1][2]가 잡았다: 전량 판 5.2/8.8/26/96.1 vs 단독 판. 전량이 덮어쓴 판은 '
           + '정본이 아니고 마감에서 이 명령으로 재생성한다 — web2-20 원장 규율)',
@@ -129,9 +130,15 @@ describe('면 일괄 비용 — 획 수 대 일괄 ms (4-e)', () => {
         'candidates == cells 정확 일치': '격자 장면의 구성 사실이다(전부 찾기의 완전성 확인이지 측정 아님) — 임계 없음',
       },
     }
-    const outDir = resolve(__dirname, '../../stage0/out')
-    mkdirSync(outDir, { recursive: true })
-    writeFileSync(resolve(outDir, 'faces_bulk_web2.json'), JSON.stringify(ledger, null, 2))
+    // ⚠ **원장은 단독 실행에서만 쓴다**(LEDGER=1 — web2-22에서 세운 규율): 전량 vitest가
+    // 병렬 워커로 이 파일을 돌려 부푼 판(예: 64.4→85.7ms)을 덮어썼고 그 판이 커밋까지
+    // 갔다(#71 ㉠ 세 번째 재발 — 사람 손 규율(마감 재생성)로는 못 막았다. 유인을 이기려
+    // 하지 말고 쓰기 자체를 갈랐다 A-3). 전량 실행은 팔(단언)만 돌고 원장을 안 건드린다.
+    if (process.env.LEDGER === '1') {
+      const outDir = resolve(__dirname, '../../stage0/out')
+      mkdirSync(outDir, { recursive: true })
+      writeFileSync(resolve(outDir, 'faces_bulk_web2.json'), JSON.stringify(ledger, null, 2))
+    }
     console.log('[측정] faces_bulk — ' + rows.map(r => `${r.strokes}획/${r.cells}칸 ${r.med_ms}ms`).join(' · '))
   })
 })

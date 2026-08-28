@@ -1,6 +1,6 @@
 {
   "run": {
-    "note": "web2-21 4-e — findAllFaces(allLoops + resolveFace 검증) 벽시계. ⚠ 정본 명령: npx vitest run test/faces_bulk_measure.test.ts — **단독 실행**. 전량 vitest는 워커 병렬로 이 파일을 함께 돌려 벽시계를 부풀린다(#71 ㉠ — 2차 리뷰 [1][2]가 잡았다: 전량 판 5.2/8.8/26/96.1 vs 단독 판. 전량이 덮어쓴 판은 정본이 아니고 마감에서 이 명령으로 재생성한다 — web2-20 원장 규율)",
+    "note": "web2-21 4-e — findAllFaces(allLoops + resolveFace 검증) 벽시계. ⚠ 정본 명령: LEDGER=1 npx vitest run test/faces_bulk_measure.test.ts — **단독 실행**. (LEDGER=1이 없으면 원장을 안 쓴다 — 전량 실행의 병렬 판이 못 덮는다.) 전량 vitest는 워커 병렬로 이 파일을 함께 돌려 벽시계를 부풀린다(#71 ㉠ — 2차 리뷰 [1][2]가 잡았다: 전량 판 5.2/8.8/26/96.1 vs 단독 판. 전량이 덮어쓴 판은 정본이 아니고 마감에서 이 명령으로 재생성한다 — web2-20 원장 규율)",
     "date": "2026-08-28",
     "conditions": "node(vitest **단일 파일 단독 실행** — 동시 워커 없음·브라우저 없음: 알고리즘 몫만) · 합성 lift(승격 비용 제외) · 지면 복도형 격자(세로줄만 — 셀 = N−3) · 5회 실행의 중앙값/최대",
     "threshold": "임계 없음 — 버튼 한 번의 비용. «감당할 만한가»는 실기기 표(DEFERRED)가 판단"
@@ -10,37 +10,37 @@
       "strokes": 50,
       "cells": 47,
       "candidates": 47,
-      "med_ms": 9.2,
-      "max_ms": 10.1
+      "med_ms": 3.3,
+      "max_ms": 7.5
     },
     {
       "strokes": 100,
       "cells": 97,
       "candidates": 97,
-      "med_ms": 8.1,
-      "max_ms": 12.2
+      "med_ms": 5,
+      "max_ms": 6.2
     },
     {
       "strokes": 200,
       "cells": 197,
       "candidates": 197,
-      "med_ms": 25.5,
-      "max_ms": 40.1
+      "med_ms": 17.3,
+      "max_ms": 19.8
     },
     {
       "strokes": 400,
       "cells": 397,
       "candidates": 397,
-      "med_ms": 85.7,
-      "max_ms": 89.8
+      "med_ms": 63.4,
+      "max_ms": 68.8
     }
   ],
   "two_axis_control": {
     "strokes": 40,
     "cells": 361,
     "candidates": 361,
-    "med_ms": 26.9,
-    "max_ms": 30.6
+    "med_ms": 20.8,
+    "max_ms": 21.8
   },
   "resolution": {
     "note": "#71 ㉢ — 축이 값을 가르는가: 400획 med > 100획 max를 하네스가 단언. 저역(50↔100)의 겹침 여부는 단언 없이 값으로 남긴다(겹치면 그 두 행은 분해 못 한 것)",
