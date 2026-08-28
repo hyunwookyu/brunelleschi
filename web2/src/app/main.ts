@@ -122,8 +122,8 @@ const diagPanel = initDiagPanel(
       // 미확정도 센다: 그 계수가 있었으면 앱이 사람보다 먼저 말했을 자리다).
       ['3D 경로', app.own3d
         ? `자립(정본 — 굳힘 ${app.doc.strokes.filter(s => s.own3).length}획 · 교점 성립 ${app.touchStats.ok}`
-          + ` · 무산 ${app.touchStats.noCam + app.touchStats.aNot3d + app.touchStats.pose + app.touchStats.axis + app.touchStats.lift + app.touchStats.roundtrip}`
-          + `(A못줌 ${app.touchStats.aNot3d}·카메라 ${app.touchStats.noCam}·시점 ${app.touchStats.pose}·방향 ${app.touchStats.axis}·리프팅 ${app.touchStats.lift}·왕복 ${app.touchStats.roundtrip})`
+          + ` · 무산 ${app.touchStats.noCam + app.touchStats.aNot3d + app.touchStats.pose + app.touchStats.axis + app.touchStats.lift + app.touchStats.roundtrip + app.touchStats.layer}`
+          + `(A못줌 ${app.touchStats.aNot3d}·카메라 ${app.touchStats.noCam}·시점 ${app.touchStats.pose}·방향 ${app.touchStats.axis}·리프팅 ${app.touchStats.lift}·왕복 ${app.touchStats.roundtrip}·층 ${app.touchStats.layer})`
         : '사슬(대체 — 설정에서 껐다)'],
       // 마지막 획의 교점 단계(web2-14 2번 — 지시 ①~④): 실기기에서 «왜 안 붙었나»를
       // 단계로 읽는 자리. ① 미승격인데 닿았으면 그 사유(A못줌)가 여기 보인다(2-b).
@@ -133,7 +133,7 @@ const diagPanel = initDiagPanel(
           ? `① 3D ✓ · ② 닿음 ${app.touchLast.touched} · ③④ 성립 ${app.touchLast.ok}`
           : `① 그 획이 대기다 — 시작점 오스냅·축 스냅부터 본다 · ② 닿음 ${app.touchLast.touched}`)
         + (app.touchLast.touched > app.touchLast.ok
-          ? ` · 무산 사유: ${(Object.entries({ 'A못줌': app.touchLast.missed.aNot3d, '카메라': app.touchLast.missed.noCam, '시점': app.touchLast.missed.pose, '방향': app.touchLast.missed.axis, '리프팅': app.touchLast.missed.lift, '왕복': app.touchLast.missed.roundtrip }) as [string, number][]).filter(([, n]) => n > 0).map(([k, n]) => `${k} ${n}`).join('·') || '없음'}`
+          ? ` · 무산 사유: ${(Object.entries({ 'A못줌': app.touchLast.missed.aNot3d, '카메라': app.touchLast.missed.noCam, '시점': app.touchLast.missed.pose, '방향': app.touchLast.missed.axis, '리프팅': app.touchLast.missed.lift, '왕복': app.touchLast.missed.roundtrip, '층': app.touchLast.missed.layer }) as [string, number][]).filter(([, n]) => n > 0).map(([k, n]) => `${k} ${n}`).join('·') || '없음'}`
           : ''),
       ] as [string, string]] : []),
     ]

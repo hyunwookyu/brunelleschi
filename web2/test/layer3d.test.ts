@@ -111,7 +111,10 @@ describe('⑤⑥ 잠금과 면', () => {
     endErase(s.app)
     expect(s.app.doc.strokes.length).toBe(n0)                // 안 지워졌다
     // 반증 짝 — 잠금을 풀면 같은 지우개가 지운다(가드가 실제로 갈랐다)
+    // ⚠ web2-21 2부부터 지우개는 **활성 층의 획만** 지운다(layerrule.test) — 잠그면
+    // 활성이 풀리므로, 이 반증이 잠금 가드만 재려면 그 겹을 도로 활성으로 잡아야 한다.
     setLayerLocked(s.app, lay.id, false)
+    setActiveLayer(s.app, lay.id)
     beginErase(s.app)
     eraseAt(s.app, { x: 400, y: 600 })
     endErase(s.app)

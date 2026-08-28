@@ -93,10 +93,11 @@ const distToSeg = (p: Pt, a: Pt, b: Pt): number => {
  *  「축을 잃어서」 죽는 경로가 진단에 안 보였다(#69 ㉡ · DEFERRED #43 「후보도 못 된 채
  *  죽는 것」의 그 자리). 이제 문(끝이 B 위)을 먼저 세우고, 문 안에서 죽은 것은 사유
  *  불문 전부 계수에 잡힌다: noCam(카메라 미확정) · aNot3d(A 자신이 3D가 아니다 —
- *  축 손실이 여기로 온다) · pose · axis(B 방향 미정) · lift · roundtrip. */
-export interface TouchStats { ok: number; noCam: number; aNot3d: number; pose: number; axis: number; lift: number; roundtrip: number }
+ *  축 손실이 여기로 온다) · pose · axis(B 방향 미정) · lift · roundtrip ·
+ *  layer(층이 다르다 — web2-21 2부 «겹은 아래를 안 바꾼다»). */
+export interface TouchStats { ok: number; noCam: number; aNot3d: number; pose: number; axis: number; lift: number; roundtrip: number; layer: number }
 export const emptyTouchStats = (): TouchStats =>
-  ({ ok: 0, noCam: 0, aNot3d: 0, pose: 0, axis: 0, lift: 0, roundtrip: 0 })
+  ({ ok: 0, noCam: 0, aNot3d: 0, pose: 0, axis: 0, lift: 0, roundtrip: 0, layer: 0 })
 export function defineByTouch(lift: LiftResult, a: Stroke, osnapRadiusPx: number):
   { defs: { id: number; own3: NonNullable<Stroke['own3']> }[]; missed: TouchStats } {
   const missed: TouchStats = emptyTouchStats()
@@ -126,6 +127,14 @@ export function defineByTouch(lift: LiftResult, a: Stroke, osnapRadiusPx: number
   for (const idB of touched) {
     const b = lift.strokes.get(idB)
     if (!b) continue
+    // ── 겹은 아래를 읽고, 아래를 안 바꾼다(web2-21 2부) — **같은 층 안에서만** 정의한다.
+    // 바탕 획은 바탕 안에서, 겹 획은 그 겹 안에서. 층이 다르면 정의가 안 흐른다 —
+    // 트레이싱지에 그은 수선이 밑그림의 대기선을 굳히면, 대안을 지워도 바탕 3D가 이미
+    // 바뀌어 있다(2-a 재현 — layerrule.test). own3는 사건의 기록이라 겹을 꺼도 안 풀린다.
+    // ⚠ 읽기(matchPoint — 겹 획이 바탕 3D에 붙어 자기가 승격)는 lift 쪽 경로라 불변.
+    // ⚠ 소급은 안 된다(own3에 «누가 정의했는지»가 없다) — 규칙은 앞으로만(D-W8).
+    // 무산은 센다(조용히 버리지 않는다 — 진단 「3D 경로」 줄의 «층» 계수).
+    if ((a.layer ?? null) !== (b.layer ?? null)) { missed.layer++; continue }
     const poseB: CamPose = b.view ?? DRAW_POSE
     if (!atOwnPose(poseA, poseB)) { missed.pose++; continue }     // B의 시점에서만(§3.0)
     const axis = axisOfStroke(an, poseB, b.a, b.b)

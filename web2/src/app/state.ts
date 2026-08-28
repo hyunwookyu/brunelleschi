@@ -521,6 +521,12 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
   for (const h of hits) {
     const st = app.doc.strokes.find(s2 => s2.id === h.strokeId)
     if (st?.layer !== undefined && lockedLayers.has(st.layer)) continue
+    // 지우개는 **활성 층의 획만** 지운다(web2-21 2부 — 겹은 아래를 안 바꾼다):
+    // 트레이싱지를 통해 밑그림을 지울 수 없다. 아래를 고치려면 그 층으로 내려간다 —
+    // 실물이 그렇다. 활성 겹이 없으면(null) 종이가 활성이라 종이 획만 지운다.
+    // ⚠ 잠금 가드(위)와 **별개의 규칙**이다(지시 문면) — 활성 겹은 잠길 수 없어 겹치는
+    // 국면이 없지만, 규칙의 출처가 다르므로 둘 다 남긴다.
+    if ((st?.layer ?? null) !== app.activeLayer) continue
     const arr = byStroke.get(h.strokeId) ?? []
     arr.push(h)
     byStroke.set(h.strokeId, arr)
