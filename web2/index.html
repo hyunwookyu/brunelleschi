@@ -73,18 +73,41 @@
          가로 스크롤로 넘긴다(#paperbar overflow-x). 20장 팔이 이 경계를 실제로 민다. */
       max-width: calc(100vw - 300px);
     }
+    /* ── 썸네일 스트립(web2-25 3-b) — **늘 표시**(사람이 정했다). 시점은 이름이 아니라
+       **그림으로 알아본다**(선례: Procreate 레이어 목록이 썸네일을 맨 앞에 둔다).
+       띠 높이가 28 → **49px**로 는다(AS-C89 — 썸네일 26+테두리 2 · 이름 11 · 패딩 4/3 ·
+       사이 2 · 아래 테두리 1. 지시의 45~50px 대역 안이다). */
     #paperbar { display: flex; flex-direction: row; align-items: flex-end; gap: 1px; overflow-x: auto; max-width: 100%; }
     .ptab {
       background: rgba(252,251,248,.55); border: 0; border-radius: 0 0 0 0;
-      font: 12px/1 system-ui, sans-serif; color: var(--ui);
-      padding: 8px 12px 7px; margin: 0; cursor: pointer; white-space: nowrap;
+      font: 11px/1 system-ui, sans-serif; color: var(--ui);
+      padding: 4px 6px 3px; margin: 0; cursor: pointer; white-space: nowrap;
       -webkit-tap-highlight-color: transparent; touch-action: none;
       border-bottom: 1px solid var(--ui-faint);
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
     }
-    /* 활성 = 맨 위 종이 — 색이 아니라 **바탕과 이어짐**이 가른다(규칙 둘: 형태가 가른다).
-       아래 테두리가 사라져 종이와 한 장으로 붙는다. */
+    /* 썸네일 칸 — 높이 고정·너비는 화면 비가 정한다. 그림이 없으면 같은 크기의 빈 종이. */
+    .ptab .pthumb {
+      height: 26px; width: 39px; display: block; object-fit: cover;
+      background: var(--paper); border: 1px solid var(--ui-faint);
+    }
+    .ptab .pname { display: block; max-width: 72px; overflow: hidden; text-overflow: ellipsis; }
+    /* 활성 = 맨 위 종이 — 색이 아니라 **형태**가 가른다(규칙 둘). 아래 테두리가 사라져
+       종이와 한 장으로 붙고, 썸네일 테두리가 진해져 **앞으로 나온다**. */
     .ptab.on { background: var(--paper); color: #55504a; border-bottom-color: transparent; }
-    #paper-add { border-bottom-color: transparent; background: none; font-size: 14px; }
+    .ptab.on .pthumb { border-color: var(--ui); box-shadow: 0 1px 6px rgba(0,0,0,.10); }
+    #paper-add {
+      border-bottom-color: transparent; background: none;
+      flex-direction: row; align-self: stretch; padding: 0 10px;
+    }
+    /* ── 셔터의 번쩍임(web2-25 3-a) — **짧고 무채색**이다(순간 피드백 대역 · 색 ⛔).
+       화면 전체를 덮고 스스로 사라진다. 시간은 AS-C90(C.SHUTTER_FLASH_MS와 한 값). */
+    #shutter-flash {
+      position: fixed; inset: 0; z-index: 40; pointer-events: none;
+      background: #fff; opacity: .55;
+      animation: shutterfade var(--shutter-ms, 120ms) linear forwards;
+    }
+    @keyframes shutterfade { from { opacity: .55 } to { opacity: 0 } }
     .ptab-edit {
       font: 12px/1 system-ui, sans-serif; color: #55504a; background: none;
       border: 0; border-bottom: 1px solid var(--ui); outline: none; width: 72px; padding: 0;
@@ -98,6 +121,7 @@
     }
     #paper-pop img { width: 160px; height: auto; display: block; }
     #paper-pop u, .paper-confirm u { cursor: pointer; }
+    #paper-pop u.blocked { cursor: default; text-decoration: none; opacity: .5; }
     /* ── 종속 탭(web2-20 2부) — 겹쳐 놓은 종이를 옆에서 본 모습 ──────────────────
        부모 탭(배타적 — 겹침 0)과 자식 탭(가산적)의 행동 차이가 **형태**로 갈린다:
        자식 탭은 서로 겹치고(음수 여백) 활성인 것이 앞으로 나온다(z·올림). e2e가 상자로

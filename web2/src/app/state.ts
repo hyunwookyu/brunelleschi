@@ -989,6 +989,45 @@ export function deleteSheet(app: App, id: number) {
   for (const l of app.listeners) l() // 자동 저장이 듣는다
 }
 
+/** **시점 갱신이 막히는 이유** — 없으면 null(web2-25 3-c).
+ *
+ *  SketchUp Scenes 의 *Update Scene* 이 이 도구에는 없었다: 종이 위에서 조금 돌려 더 나은
+ *  각도를 찾아도 되돌릴 수도 갱신할 수도 없었다. 그 길을 낸다 — 다만 두 자리에서 막는다.
+ *
+ *  ㉠ `'layers'` — **겹이 있는 종이는 갱신을 막는다.** 밑그림(옐로)은 «얹은 그 시점»의
+ *     사영이라 시점을 갈아 끼우면 어긋난다. 「다시 뜨기 없음」(web2-23 2-c)과 같은 결이다:
+ *     답은 갱신이 아니라 **새 종이를 만드는 것**이다.
+ *  ㉡ `'draw-pose'` — **작도 종이의 시점은 «작도 시점»이라는 정의**다(pose를 안 담는다 —
+ *     정본은 DRAW_POSE·drawView). 그러므로 지금이 작도 시점일 때만 갱신할 것이 있고
+ *     (팬·줌과 썸네일), 돌려본 각도로는 갈아 끼울 수 없다. */
+export type SheetUpdateBlock = 'layers' | 'draw-pose' | null
+export function sheetUpdateBlock(app: App, id: number): SheetUpdateBlock {
+  const s = app.doc.sheets.find(x => x.id === id)
+  if (!s) return 'layers'
+  if (app.doc.layers.some(l => l.sheet === id)) return 'layers'
+  if (!s.pose && !isDrawPose(app.pose)) return 'draw-pose'
+  return null
+}
+
+/** **이 시점으로 갱신**(web2-25 3-c) — 포즈·뷰·썸네일을 지금 것으로 다시 굽는다.
+ *  막히면 아무 일도 안 하고 `false`.
+ *
+ *  ⚠ **실행취소 대상이 아니다**(3-c ⑤에서 정했다). 근거: 종이의 시점을 다루는 몸짓이
+ *  이미 전부 스택 밖이다 — 저장(「+」)·삭제(web2-12 deleteView 규약)·이름 바꾸기.
+ *  스택에 드는 것은 «그린 것»(획·면·겹)이고 시점은 «보기»다. 갱신만 스택에 넣으면
+ *  실행취소가 두 종류를 섞어 되돌리게 된다. 대신 **막는 조항**(㉠)이 잃을 것을 막는다 —
+ *  겹이 붙은 종이는 갱신 자체가 안 되므로 되돌릴 필요가 있는 상태가 안 생긴다. */
+export function updateSheet(app: App, id: number, thumb?: string): boolean {
+  if (sheetUpdateBlock(app, id) !== null) return false
+  const s = app.doc.sheets.find(x => x.id === id)!
+  if (s.pose) s.pose = { p: { ...app.pose.p }, q: { ...app.pose.q } }
+  s.view = { ...app.view }
+  if (thumb) s.thumb = thumb
+  gotoSheet(app, id)   // 지금 보고 있는 것이 이 종이다 — 포즈·뷰가 이미 같으므로 무변화다
+  for (const l of app.listeners) l() // 자동 저장이 듣는다
+  return true
+}
+
 /** 이름 바꾸기 — 작도 종이도 이름은 바꿀 수 있다(지시 2-b — 못 지울 뿐이다) */
 export function renameSheet(app: App, id: number, name: string) {
   const s = app.doc.sheets.find(x => x.id === id)

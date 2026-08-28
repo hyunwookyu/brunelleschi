@@ -886,6 +886,20 @@ function afterAddLayer(lay: Layer) {
 // 작도 종이)에 붙고 **지금 화면에서는 안 보였다**. 얹기 전에 그 시점을 새 종이로 굳힌다 —
 // 셔터(「+」)와 **같은 경로**(`captureSheet`)다(#54: 출처 하나 · 2-b ⚠).
 let paperbarRef: { sync: () => void } | null = null
+/** **셔터의 번쩍임**(web2-25 3-a) — 찍는 순간 화면이 한 번 짧게 번쩍한다.
+ *  「+」가 «찍는 동작»이 됐으므로 무엇이 저장됐는지가 **그 자리에서** 보여야 한다.
+ *  ⚠ **짧고 무채색**이다(지시 ⚠ — 순간 피드백 대역. 색을 안 들인다). 길이는
+ *  `C.SHUTTER_FLASH_MS` 하나이고 CSS 변수로 내려 애니메이션과 제거 시각이 **같은 값**을
+ *  읽는다(#54 — 두 자리에 적으면 갈린다). 겹쳐 눌러도 하나만 산다. */
+function shutterFlash() {
+  document.getElementById('shutter-flash')?.remove()
+  const el = document.createElement('div')
+  el.id = 'shutter-flash'
+  el.style.setProperty('--shutter-ms', `${C.SHUTTER_FLASH_MS}ms`)
+  document.body.append(el)
+  window.setTimeout(() => el.remove(), C.SHUTTER_FLASH_MS)
+}
+
 /** 지금 포즈·뷰를 새 종이로 — **셔터와 롤과 시점 갱신이 다 이 함수 하나를 부른다** */
 function captureSheet(): Sheet {
   const s = addSheet(app, captureThumb())
@@ -943,6 +957,9 @@ syncRolls()
 let lastSheetForYellow = app.activeSheet
 const paperbar = initPaperbar(app, document.getElementById('paperbar')!, {
   capture: captureSheet,
+  thumb: captureThumb,
+  flash: shutterFlash,
+  notify,
   // 종이를 바꾸면 종속 탭 줄도 바뀐다(web2-20 2부 — 겹은 종이에 속한다)
   onGoto: () => {
     // 옐로 안내(web2-22 1-d) — 옐로 획은 2D라 그 종이에서만 보인다. 실물 그대로이고
@@ -1275,6 +1292,8 @@ const diag = {
   },
   /** 굽기 호출 수 — 「다시 안 굽는다」를 **실패할 수 있게** 재는 값(2차 리뷰 [8]) */
   underlayBakes: () => underlayBakeCount(),
+  /** 셔터 번쩍임의 길이(3-a) — 팔이 상수를 직접 안 읽고 **앱이 쓰는 값**을 읽는다(D-C4) */
+  shutterMs: () => C.SHUTTER_FLASH_MS,
   showHidden: (v?: boolean) => { if (v !== undefined) { app.showHidden = v; invalidate() } return app.showHidden },
   summary: () => ({
     horizonY: app.lift.an.horizonY,
