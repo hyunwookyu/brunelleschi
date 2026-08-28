@@ -2,3 +2,4 @@ test-results/
 playwright-report/
 dist/
 .vite/
+e2e_full.log
