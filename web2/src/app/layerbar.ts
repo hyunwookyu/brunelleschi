@@ -36,6 +36,10 @@ export interface LayerbarHooks {
   onChange: () => void
   /** 눌리지 않는 이유가 보여야 한다(2-a) — 한 줄 안내 채널 */
   notify: (msg: string) => void
+  /** 겹을 얹기 **직전** 한 번(web2-25 2부) — 돌려본 시점이면 그것을 새 종이로 굳힌다.
+   *  ⚠ 겹을 얹는 자리가 둘(이 「+」와 손 띠의 롤)이라 **앞처리도 한 함수**여야 한다(#54) —
+   *  한쪽만 굳히면 「어떤 길로는 보이고 어떤 길로는 안 보인다」가 난다. */
+  beforeAdd?: () => void
   /** 겹을 얹은 **뒤** 한 번(web2-23 3부) — 옐로의 밑그림 안내가 여기 걸린다.
    *  겹을 얹는 자리가 둘(이 「+」와 손 띠의 롤)이라 **뒤처리는 한 함수**여야 한다(#54). */
   afterAdd?: (layer: Layer) => void
@@ -97,6 +101,7 @@ export function initLayerbar(app: App, host: HTMLElement, hooks: LayerbarHooks):
           b.dataset.paper = paper
           b.innerHTML = `${svg}<span>${label}</span>`
           b.addEventListener('click', () => {
+            hooks.beforeAdd?.()          // 시점을 먼저 굳힌다(2-b) — 롤과 같은 함수
             const lay = addLayer(app, paper, hooks.viewport())
             closePop()
             render()

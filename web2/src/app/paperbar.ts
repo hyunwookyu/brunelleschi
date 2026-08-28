@@ -14,13 +14,14 @@
 // flex 기둥이고 이 모듈은 첫 줄(#paperbar)만 소유한다. 높이를 하드코딩하지 않는다.
 
 import type { App } from './state'
-import { addSheet, deleteSheet, renameSheet, gotoSheet } from './state'
-import { DRAW_SHEET_ID } from '../core/types'
+import { deleteSheet, renameSheet, gotoSheet } from './state'
+import { DRAW_SHEET_ID, type Sheet } from '../core/types'
 import { C } from '../core/constants'
 
 export interface PaperbarHooks {
-  /** 「+」가 굽는 썸네일 — 저장 시점에 굽는다(saveView의 선례 ㉮) */
-  captureThumb: () => string
+  /** **지금 시점을 새 종이로 굳힌다** — 셔터(「+」)·롤(web2-25 2부)·시점 갱신이 **같은
+   *  함수 하나**를 부른다(#54). 썸네일 굽기도 그 안이다(저장 시점에 굽는다 — saveView ㉮). */
+  capture: () => Sheet
   /** 시점이 바뀌었다 — 다시 그리기·접기 타이머 */
   onGoto: () => void
 }
@@ -172,7 +173,7 @@ export function initPaperbar(app: App, host: HTMLElement, hooks: PaperbarHooks):
     add.innerHTML = '<svg viewBox="0 0 256 256" fill="currentColor" width="12" height="12" style="vertical-align:-1px"><path d="PLUSPATH"/></svg>'.replace('PLUSPATH', 'M222,128a6,6,0,0,1-6,6H134v82a6,6,0,0,1-12,0V134H40a6,6,0,0,1,0-12h82V40a6,6,0,0,1,12,0v82h82A6,6,0,0,1,222,128Z')
     add.title = '지금 보고 있는 시점을 새 종이로'
     add.addEventListener('click', () => {
-      const s = addSheet(app, hooks.captureThumb())
+      const s = hooks.capture()
       hooks.onGoto()   // 활성 종이가 바뀌었다 — 종속 탭 줄(web2-20)도 따라온다
       render()
       // 기본 이름 「종이 N」 — 바로 편집 가능(지시 2-c). 방금 만든 탭을 찾아 연다.

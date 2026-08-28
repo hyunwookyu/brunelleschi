@@ -765,6 +765,46 @@ export function resetPose(app: App) {
   setPose(app, DRAW_POSE)
 }
 
+/** 지금 포즈가 활성 종이의 시점인가 — 작도 종이는 `DRAW_POSE`, 저장 종이는 그 `pose`.
+ *
+ *  ⚠ **살아 있는 포즈**로 판정한다(fadeRef 아님 — #73 ㉡). 동결 포즈로 판정하면 궤도
+ *  제스처 내내 참으로 남아 ① 막이 도는 장면 위에 계속 곱해지고(web2-20 3-d 위반 —
+ *  시점을 벗어나면 사라져야 한다) ② 그 drawFilms가 궤도 매 프레임 돈다(cost20 표식이
+ *  잡은 31ms/프레임). 떨림 걱정은 없다 — 포즈는 제스처 중 연속으로 움직이므로 경계에서
+ *  왕복하지 않는다.
+ *
+ *  ⚙️ **web2-25 2부가 이 술어를 `filmlayer.ts`에서 여기로 옮겼다.** 「막이 보이는가」의
+ *  게이트이자 **「롤이 시점을 굳혀야 하는가」의 판정**이 같은 물음이기 때문이다 — 두 자리가
+ *  같은 함수를 읽어야 «얹었는데 안 보인다»가 구조적으로 불가능해진다(#54). */
+export function atSheetPose(app: App): boolean {
+  const sheet = app.doc.sheets.find(s => s.id === app.activeSheet)
+  if (!sheet) return false
+  if (!sheet.pose) return isDrawPose(app.pose)
+  const a = app.pose, b = sheet.pose
+  return Math.abs(a.p.x - b.p.x) < 1e-9 && Math.abs(a.p.y - b.p.y) < 1e-9 && Math.abs(a.p.z - b.p.z) < 1e-9
+    && Math.abs(a.q.x - b.q.x) < 1e-9 && Math.abs(a.q.y - b.q.y) < 1e-9
+    && Math.abs(a.q.z - b.q.z) < 1e-9 && Math.abs(a.q.w - b.q.w) < 1e-9
+}
+
+/** **겹을 얹기 전에 — 지금 시점이 어느 종이의 시점도 아니면 그 시점을 새 종이로 굳힌다**
+ *  (web2-25 2부).
+ *
+ *  결함이 이랬다: 궤도로 돌려본 시점은 아직 어느 종이의 시점도 아니므로, 그 자리에서 롤을
+ *  누르면 겹이 **활성 종이**(대개 작도 종이)에 얹히고 **지금 화면에서는 안 보인다**
+ *  (막은 `atSheetPose`에서만 뜬다 — web2-20 3-d). 「추가는 되는데 안 보인다」다.
+ *
+ *  **답은 앞서 정한 규칙과 같은 것이다** — 「+ 는 각도를 찾은 뒤 저장한다」(web2-19 2-c ·
+ *  사람이 답한 셋의 3). 롤을 누르는 것도 「**이 각도에서 시작한다**」는 선언이므로,
+ *  각도를 먼저 굳히고 그 위에 얹는다. 셔터(「+」)와 **같은 경로**(`addSheet`)를 부른다.
+ *
+ *  판정은 `atSheetPose` 하나다(#54) — 그것이 곧 「막이 보이는가」의 게이트이므로
+ *  **얹었는데 안 보이는 상태가 구조적으로 불가능**해진다.
+ *  ⚠ 이미 그 종이의 시점이면 **아무 일도 안 한다**(종이가 안 는다 — 팔 ②). */
+export function freezePoseForLayer(app: App, thumb?: string): Sheet | null {
+  if (atSheetPose(app)) return null
+  return addSheet(app, thumb)
+}
+
 /** 「+」 = **지금 보고 있는 포즈·뷰를 새 종이로 저장**(web2-19 2-c — 빈 장을 먼저
  *  만들지 않는다: 사람이 답한 셋의 3 「+는 각도를 찾은 뒤 저장하는 것」).
  *  id는 획·면과 한 통(nextId — 지시 2-b). 이름은 「종이 N」, 띠에서 바로 편집한다.
