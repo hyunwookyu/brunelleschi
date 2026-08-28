@@ -831,10 +831,18 @@ export function addLayer(app: App, paper: Paper, viewport: { W: number; H: numbe
   if (paper === 'yellow') {
     const baked = bakeUnderlay(app.lift, app.faces, app.pose)
     app.doc.underlays.push({ layer: lay.id, segs: baked.segs })
+    bakeCount++
   }
   for (const l of app.listeners) l() // 자동 저장이 듣는다
   return lay
 }
+
+/** **굽기가 실제로 몇 번 돌았는가** — 「다시 안 굽는다」(2-c ⛔)를 재는 유일한 값이다.
+ *  ⚠ 조각 수로는 그것을 못 잰다: 굽기는 결정론이라 **다시 구워도 같은 수**가 나온다
+ *  (2차 리뷰 [8] — 실패 불가능한 격자 #69 ㉣). 이 계수는 그 팔이 실패할 수 있게 한다.
+ *  런타임 값이고 저장하지 않는다(진단·e2e 전용). */
+let bakeCount = 0
+export const underlayBakeCount = (): number => bakeCount
 
 /** 그 겹의 밑그림 — 없으면 null. 읽는 자리(표시·저장·팔)의 **출처 하나**다(#54). */
 export const underlayOf = (doc: Pick<Doc, 'underlays'>, layer: number): Underlay | null =>

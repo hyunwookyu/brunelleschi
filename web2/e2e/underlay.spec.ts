@@ -170,6 +170,75 @@ test('② 「가린 선 빼기」 옵션이 돈다 — 끄면 H 자리의 잉크
   expect(await page.evaluate(() => (window as any).__b2.diag.underlay()[0].segs)).toBe(2)
 })
 
+test("②′ 치환이 실제로 선다 — **실제 3D 획의 자리**가 빼기에서 종이 바닥으로 돌아온다", async ({ page }) => {
+  // 2부 설계(선 자리 도려내기)의 정당화가 여기 걸려 있다(2차 리뷰 [7]): 「가린 선 빼기」가
+  // 화면에서 일하려면 **원래 3D 획이 그 자리에서 사라져야** 한다. 위 ②는 심어 넣은
+  // 자리(아래에 3D가 없는 줄)를 재므로 그것을 못 가른다 — 여기서는 **앱이 실제로 구운
+  // 조각**의 자리를 읽는다.
+  await boot(page)
+  await page.click('#btn-roll-yellow')
+  await settle(page)
+  // 구운 조각 중 «가로에 가까운» 것 하나를 골라 전부 hidden 으로 다시 심는다(자리는 그대로)
+  const pick = await page.evaluate(() => {
+    const b2 = (window as any).__b2
+    const lay = b2.app.doc.layers[b2.app.doc.layers.length - 1]
+    const u = b2.diag.underlay(lay.id)
+    let best: any = null
+    for (const g of u.segs) {
+      const dx = Math.abs(g.b.x - g.a.x), dy = Math.abs(g.b.y - g.a.y)
+      if (dy > 2) continue
+      if (!best || dx > best.dx) best = { dx, g }
+    }
+    if (!best) return null
+    b2.diag.underlaySetForTest(lay.id, u.segs.map((g: any) => ({ ...g, hidden: true })))
+    const g = best.g
+    return { y: Math.round((g.a.y + g.b.y) / 2), x0: Math.round(Math.min(g.a.x, g.b.x)) + 20,
+      x1: Math.round(Math.max(g.a.x, g.b.x)) - 20 }
+  })
+  expect(pick).not.toBeNull()
+  await settle(page)
+  const { y, x0, x1 } = pick!
+  const floor = (await rowProfile(page, y - 40, x0, x1))!.min      // 그 위 빈 줄의 바닥
+  // 켬: 그 자리에 은선(H)이 있다
+  expect((await rowProfile(page, y, x0, x1))!.min).toBeLessThan(floor - 12)
+  // 끔: **원래 3D 획까지** 사라져 종이 바닥으로 돌아온다 — 이것이 «치환»의 화면 증거다
+  await page.click('#btn-display')
+  await page.uncheck('#chk-hidden')
+  await settle(page)
+  expect((await rowProfile(page, y, x0, x1))!.min).toBeGreaterThan(floor - 12)
+  // ⚠ 종이 **밖**에서는 그 획이 그대로 있다(도려내기는 그 겹의 rect 안에서만 — AS-C88)
+  const outside = await page.evaluate(() => {
+    const b2 = (window as any).__b2
+    return b2.app.doc.layers[b2.app.doc.layers.length - 1].rect
+  })
+  expect(outside.w).toBeGreaterThan(0)
+})
+
+test("②″ 「다시 안 굽는다」를 **실패할 수 있게** 잰다 — 굽기 호출 수(2차 리뷰 [8])", async ({ page }) => {
+  // 조각 수로는 못 잰다: 굽기는 결정론이라 다시 구워도 같은 수다(#69 ㉣의 형태).
+  await boot(page)
+  await page.click('#btn-roll-yellow')
+  await settle(page)
+  const n0 = await page.evaluate(() => (window as any).__b2.diag.underlayBakes())
+  expect(n0).toBe(1)                                  // 얹는 순간 한 번(2-c)
+  // 표시 손잡이를 끄고 켠다 · 겹을 껐다 켠다 · 획을 하나 더 긋는다 — 굽기는 안 돈다
+  await page.click('#btn-display')
+  await page.uncheck('#chk-hidden')
+  await page.check('#chk-hidden')
+  await page.click('#btn-display')
+  await drawLine(page, 300, 300, 420, 320)
+  await settle(page)
+  expect(await page.evaluate(() => (window as any).__b2.diag.underlayBakes())).toBe(n0)
+  // **양성 대조** — 한 장 더 얹으면 계수가 오른다(그 척도가 실제로 움직인다)
+  await page.click('#btn-roll-yellow')
+  await settle(page)
+  expect(await page.evaluate(() => (window as any).__b2.diag.underlayBakes())).toBe(n0 + 1)
+  // 트레이싱지는 안 굽는다(2-c ⚠) — 계수가 그대로다
+  await page.click('#btn-roll-tracing')
+  await settle(page)
+  expect(await page.evaluate(() => (window as any).__b2.diag.underlayBakes())).toBe(n0 + 1)
+})
+
 test('3부 ①④ — 면 0에서 안내가 뜨고 굽기는 정상으로 끝난다 · 두 번째에는 안 뜬다', async ({ page }) => {
   await boot(page)
   await page.click('#btn-roll-yellow')

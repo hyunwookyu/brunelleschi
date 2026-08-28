@@ -186,6 +186,10 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
     })) }]
     const serWorst = serMs(2)
     const worstBytes = Buffer.byteLength(serializeBrnl({ doc: app.doc, nextId: app.nextId }), 'utf8')
+    // 마디당 바이트를 **큰 표본에서도** 낸다 — 셋짜리 델타에는 밑그림 열쇠·배열 괄호의
+    // 고정 비용이 통째로 실려 있다(2차 리뷰 [5]). 두 값의 차가 곧 그 고정 비용 + 좌표
+    // 문자열 길이의 몫이다.
+    const perSegLarge = (worstBytes - bytes.before_utf8) / worstSegs
     app.doc.underlays = kept
 
     const ledger = {
@@ -204,8 +208,10 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
             + '11인 근거: 값이 한 자릿수 ms라 GC 잡음이 축의 신호와 같은 대역이다(5회 판에서 '
             + '50획 행의 max가 400획 행의 med를 넘었다 — 축이 아니라 잡음을 재고 있었다)',
         },
+        budget_ms: C.BAKE_BUDGET_MS,
         threshold: `초안 상한 ${C.BAKE_BUDGET_MS}ms(상수 C.BAKE_BUDGET_MS — 지시 1-b). `
-          + '넘으면 진행 표시를 띄운다. 프레임 예산과 안 견준다.',
+          + '넘으면 진행 표시를 띄운다. 프레임 예산과 안 견준다. ⚠ 산문이 아니라 위 '
+          + 'budget_ms가 정본이다 — 상수를 바꾸면 이 수도 따라간다(2차 리뷰 [13]).',
         estimate_vs_measured: 'D-4 — 지시 1-b의 「수십 ms로 예상된다」는 **짐작**이었다. 실측은 '
           + '격자의 최악 칸(획 400×면 40 = 대상 선분 560·조각 5024)에서 한 자릿수 ms다 — '
           + '상한의 1% 대역. 진행 표시는 **안 만들었다**(발화 조건이 없다 — 범위를 넓히지 않는다). '
@@ -259,13 +265,19 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
           with_worst_size_underlay: serWorst,
           worst_doc_bytes_utf8: worstBytes,
           worst_doc_pct_of_autosave: pctOf(worstBytes),
+          bytes_per_seg_utf8_large_sample: Number(perSegLarge.toFixed(1)),
+          bytes_per_seg_note: '2차 리뷰 [5] — 위 bytes_per_seg_utf8(148)은 **마디 셋**의 델타라 '
+            + '밑그림 열쇠·배열 괄호의 고정 비용이 그 셋에 나뉘어 실려 있다. 이 값은 마디 '
+            + String(worstSegs) + '개 표본의 마디당 바이트다(합성 좌표라 문자열이 짧다). '
+            + '실사용은 두 값 사이이고, projected_worst는 **큰 쪽**(148)으로 잡은 보수적 외삽이다.',
           note: '리뷰 [4] — 굽기가 「한 번 도는 비용」인 것과 별개로 **자동 저장은 획마다 돈다**. '
             + '밑그림이 Doc에 들어간 뒤로 그 직렬화가 매번 밑그림 전체를 다시 쓴다. 최악 칸 '
             + '크기의 밑그림(segs ' + String(worstSegs) + ')을 실제로 얹고 serializeBrnl 11회 '
             + '중앙값을 잰 값이다(외삽 아님). 프레임 예산(16ms)과 견주는 것이 여기서는 옳다 — '
             + '이것은 그리는 동안 도는 비용이다. ⚠ 합성 밑그림의 좌표 문자열이 짧아 '
             + 'worst_doc_bytes_utf8은 projected_worst.bytes_utf8보다 작다(직렬화 시간은 '
-            + '문자 수에 비례하므로 실사용은 이 값보다 조금 크다).',
+            + '문자 수에 비례하므로 실사용은 이 값보다 크다 — 두 마디당 바이트의 비만큼, 곧 두 배 '
+            + '대역까지).',
         },
       },
       flags_explained: {
