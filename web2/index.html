@@ -73,18 +73,41 @@
          가로 스크롤로 넘긴다(#paperbar overflow-x). 20장 팔이 이 경계를 실제로 민다. */
       max-width: calc(100vw - 300px);
     }
+    /* ── 썸네일 스트립(web2-25 3-b) — **늘 표시**(사람이 정했다). 시점은 이름이 아니라
+       **그림으로 알아본다**(선례: Procreate 레이어 목록이 썸네일을 맨 앞에 둔다).
+       띠 높이가 28 → **49px**로 는다(AS-C89 — 썸네일 26+테두리 2 · 이름 11 · 패딩 4/3 ·
+       사이 2 · 아래 테두리 1. 지시의 45~50px 대역 안이다). */
     #paperbar { display: flex; flex-direction: row; align-items: flex-end; gap: 1px; overflow-x: auto; max-width: 100%; }
     .ptab {
       background: rgba(252,251,248,.55); border: 0; border-radius: 0 0 0 0;
-      font: 12px/1 system-ui, sans-serif; color: var(--ui);
-      padding: 8px 12px 7px; margin: 0; cursor: pointer; white-space: nowrap;
+      font: 11px/1 system-ui, sans-serif; color: var(--ui);
+      padding: 4px 6px 3px; margin: 0; cursor: pointer; white-space: nowrap;
       -webkit-tap-highlight-color: transparent; touch-action: none;
       border-bottom: 1px solid var(--ui-faint);
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
     }
-    /* 활성 = 맨 위 종이 — 색이 아니라 **바탕과 이어짐**이 가른다(규칙 둘: 형태가 가른다).
-       아래 테두리가 사라져 종이와 한 장으로 붙는다. */
+    /* 썸네일 칸 — 높이 고정·너비는 화면 비가 정한다. 그림이 없으면 같은 크기의 빈 종이. */
+    .ptab .pthumb {
+      height: 26px; width: 39px; display: block; object-fit: cover;
+      background: var(--paper); border: 1px solid var(--ui-faint);
+    }
+    .ptab .pname { display: block; max-width: 72px; overflow: hidden; text-overflow: ellipsis; }
+    /* 활성 = 맨 위 종이 — 색이 아니라 **형태**가 가른다(규칙 둘). 아래 테두리가 사라져
+       종이와 한 장으로 붙고, 썸네일 테두리가 진해져 **앞으로 나온다**. */
     .ptab.on { background: var(--paper); color: #55504a; border-bottom-color: transparent; }
-    #paper-add { border-bottom-color: transparent; background: none; font-size: 14px; }
+    .ptab.on .pthumb { border-color: var(--ui); box-shadow: 0 1px 6px rgba(0,0,0,.10); }
+    #paper-add {
+      border-bottom-color: transparent; background: none;
+      flex-direction: row; align-self: stretch; padding: 0 10px;
+    }
+    /* ── 셔터의 번쩍임(web2-25 3-a) — **짧고 무채색**이다(순간 피드백 대역 · 색 ⛔).
+       화면 전체를 덮고 스스로 사라진다. 시간은 AS-C90(C.SHUTTER_FLASH_MS와 한 값). */
+    #shutter-flash {
+      position: fixed; inset: 0; z-index: 40; pointer-events: none;
+      background: #fff; opacity: .55;
+      animation: shutterfade var(--shutter-ms, 120ms) linear forwards;
+    }
+    @keyframes shutterfade { from { opacity: .55 } to { opacity: 0 } }
     .ptab-edit {
       font: 12px/1 system-ui, sans-serif; color: #55504a; background: none;
       border: 0; border-bottom: 1px solid var(--ui); outline: none; width: 72px; padding: 0;
@@ -98,25 +121,51 @@
     }
     #paper-pop img { width: 160px; height: auto; display: block; }
     #paper-pop u, .paper-confirm u { cursor: pointer; }
-    /* ── 종속 탭(web2-20 2부) — 겹쳐 놓은 종이를 옆에서 본 모습 ──────────────────
-       부모 탭(배타적 — 겹침 0)과 자식 탭(가산적)의 행동 차이가 **형태**로 갈린다:
-       자식 탭은 서로 겹치고(음수 여백) 활성인 것이 앞으로 나온다(z·올림). e2e가 상자로
-       잰다(부모 겹침 0 ↔ 자식 겹침 >0). */
-    #layerbar { display: flex; flex-direction: row; align-items: flex-start; padding: 2px 0 0 8px; }
-    .ltab {
-      position: relative; display: flex; align-items: center; gap: 2px;
+    #paper-pop u.blocked { cursor: default; text-decoration: none; opacity: .5; }
+    /* ── 겹 — **접으면 요약, 펼치면 목록**(web2-25 4-a · 연필통과 같은 어법) ──────────
+       옛 형태(겹쳐 놓은 탭 더미)는 34×28 안에 눈·자물쇠를 우겨넣어 «쓰기 불편»했다
+       (사람의 문면). 가산적임은 이제 **요약의 수**가 말한다 — 종이는 탭이 여럿(배타적),
+       겹은 하나에 수가 붙는다. 목록의 줄은 **넓다**(Procreate 레이어 행의 이유). */
+    #layerbar { position: relative; display: flex; flex-direction: row; align-items: center; gap: 4px; padding: 2px 0 0 8px; }
+    .lsum {
+      display: flex; align-items: center; gap: 3px;
       font: 11px/1 system-ui, sans-serif; color: var(--ui);
-      background: rgba(252,251,248,.82); border: 1px solid var(--ui-faint); border-top: 0;
-      padding: 4px 6px 5px; margin-left: -14px; cursor: pointer;
+      background: rgba(252,251,248,.82); border: 1px solid var(--ui-faint);
+      padding: 3px 7px 3px 4px; cursor: pointer;
       -webkit-tap-highlight-color: transparent; touch-action: none;
     }
-    .ltab:first-child { margin-left: 0; }
-    .ltab.yellow { background: #efe3b8; }        /* 옐로 — 이름 자체가 색이다(정본) */
-    .ltab.tracing { background: rgba(240,239,236,.9); }
-    .ltab.active { transform: translateY(2px); box-shadow: 0 1px 6px rgba(0,0,0,.10); color: #55504a; }
-    .ltab:not(.on):not(.ladd) { opacity: .45; }   /* 꺼짐 — 젖혀 둔 종이 */
-    .ltab.ladd { background: none; border-color: transparent; margin-left: 2px; }
+    .lsum svg { width: 20px; height: 20px; }
+    .lsum-n { font-variant-numeric: tabular-nums; }
+    .lsum.open { color: #55504a; box-shadow: 0 1px 6px rgba(0,0,0,.10); }
+    /* 솔로인 동안은 **요약이 그것을 말한다** — 목록을 접어도 「지금 하나만 보고 있다」가 남는다 */
+    .lsum.solo { border-style: dashed; }
+    #layer-list {
+      position: absolute; top: 100%; left: 8px; z-index: 11; margin-top: 3px;
+      display: flex; flex-direction: column;
+      background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
+      /* ⚠ **몸통이 줄의 가운데를 차지해야 한다**(web2-25 4-a): 좁으면 눈·자물쇠가 가운데로
+         밀려 «줄을 눌렀는데 눈이 눌린다»가 난다. 초판 148px에서 실제로 그랬고 전량 e2e가
+         잡았다(paper.spec·cost20.spec — 클릭이 활성 대신 켬/끔을 토글했다). */
+      min-width: 200px;
+    }
+    .lrow {
+      display: flex; align-items: center; gap: 8px;
+      min-height: 34px; padding: 2px 8px;          /* 넓은 줄 — 손가락이 정확히 안 가도 된다 */
+      font: 11px/1 system-ui, sans-serif; color: var(--ui);
+      cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: none;
+    }
+    .lrow + .lrow { border-top: 1px solid var(--ui-faint); }
+    .lrow .lrow-icon svg { width: 20px; height: 20px; display: block; }
+    .lrow-n { flex: 1; font-variant-numeric: tabular-nums; }
+    .lrow.active { background: rgba(0,0,0,.045); color: #55504a; }
+    .lrow:not(.on) { opacity: .45; }              /* 꺼짐 — 젖혀 둔 종이 */
+    .lrow.solo { box-shadow: inset 2px 0 0 var(--ui); }
+    .ltab.ladd {
+      display: flex; align-items: center; background: none; border: 0; color: var(--ui);
+      padding: 4px 5px; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: none;
+    }
     .ltab.ladd.disabled { opacity: .3; cursor: default; }
+    .ldel { font: 13px/1 system-ui, sans-serif; }
     /* 롤 버튼(web2-21 3-a) — 카메라 닫히기 전 비활성. 클릭은 살아 있다(이유를 말해야 한다 — 2-a) */
     #btn-roll-tracing.disabled, #btn-roll-yellow.disabled { opacity: .3; }
     .lctl { background: none; border: 0; padding: 2px; margin: 0; cursor: pointer; color: inherit; opacity: .75; }

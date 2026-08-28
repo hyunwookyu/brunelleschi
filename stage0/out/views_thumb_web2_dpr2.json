@@ -14,12 +14,12 @@
   "sheets_after": 1
  },
  "brnl_bytes_5": 9738,
- "capture_ms_median": 0.7,
- "regen_view_ms_median": 98.6,
- "regen_view_ms_max": 101.2,
+ "capture_ms_median": 0.8,
+ "regen_view_ms_median": 103.4,
+ "regen_view_ms_max": 109.7,
  "thumb_bytes_median": 1543,
- "add_ms_median": 94,
- "add_ms_max": 136,
+ "add_ms_median": 110,
+ "add_ms_max": 130,
  "brnl_bytes_1": 3036,
  "brnl_bytes_20": 34890
 }

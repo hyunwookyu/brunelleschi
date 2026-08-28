@@ -13,6 +13,12 @@
 //
 // 원장: stage0/out/cost23_web2.json
 //   정본 명령: LEDGER=1 npx vitest run test/cost23_measure.test.ts
+//
+// ⚙️ **web2-25 1부가 여기에 `indoor` 한 블록을 더했다** — 근평면 잘라내기가 붙어서
+//    실내 시점(좌우 벽·바닥의 꼭짓점이 카메라 뒤)에서 **면이 처음으로 계산에 들어온다**.
+//    그만큼 일감이 늘므로 그 몫을 잰다: 같은 장면을 `nearClip` on/off 로 나란히 돌려
+//    ㉠ 빠지는 면 수(off 에서 전부 빠진다) ㉡ 그때의 벽시계를 함께 남긴다.
+//    바깥 시점 격자(위)는 **손대지 않았다** — 전/후 비교의 기준선이라 조건을 안 바꾼다(#71 ㉠).
 
 import { describe, it, expect } from 'vitest'
 import { writeFileSync, mkdirSync } from 'node:fs'
@@ -65,6 +71,47 @@ function scene(nStrokes: number, nFaces: number, seed = 20260828) {
     segs.push({ id: id++, a3: v3(x, y, z), b3: v3(x + (r() * 4 - 2), y + (r() * 1.4 - 0.7), z - r() * 3) })
   }
   const lift = synthLift(segs)
+  return { lift, resolved: resolveFaces(lift, faces) }
+}
+
+/** 실내용 합성 lift — 꼭짓점이 카메라 뒤일 수 있으므로 **화면 좌표는 되는 것만** 넣는다.
+ *  ⚠ 위 `synthLift`(바깥 시점 격자용)는 사영이 안 되는 선분을 `lifted`에서도 빼는데,
+ *  실내에서는 그것이 곧 «면이 안 풀린다»가 된다. 바깥 격자는 전부 카메라 앞이라 두 함수가
+ *  같은 결과를 내므로 **기준선의 조건은 안 바뀐다**(#71 ㉠). */
+function indoorLift(segs: { id: number; a3: V3; b3: V3 }[]): LiftResult {
+  const an = analyze(constructedDoc().doc)
+  const lifted = new Map<number, LiftedSeg>()
+  const strokes = new Map<number, Stroke>()
+  for (const s of segs) {
+    lifted.set(s.id, { a3: s.a3, b3: s.b3, axis: null })
+    const a = project(an, DRAW_POSE, s.a3), b = project(an, DRAW_POSE, s.b3)
+    if (a && b) strokes.set(s.id, { id: s.id, a, b })
+  }
+  return { an, lifted, waiting: [], waitWhy: new Map(), anchorId: null, strokes, mmPerUnit: null }
+}
+
+/** **실내** 장면(web2-25 1부) — 카메라가 방 안이라 면의 꼭짓점이 카메라 뒤로 넘어간다.
+ *  면 M개는 서로 다른 x 의 «옆 벽»이고 z 는 +2(등 뒤) ~ −8 이다. 그래서 잘라내기가
+ *  없으면 **전부** 빠지고(web2-23의 동작) 붙으면 전부 든다. */
+function indoorScene(nStrokes: number, nFaces: number, seed = 20260828) {
+  const segs: { id: number; a3: V3; b3: V3 }[] = []
+  const faces: Face[] = []
+  let id = 1
+  for (let i = 0; i < nFaces; i++) {
+    const x = -3 + (i % 8) * 0.8 + Math.floor(i / 8) * 0.09
+    const ids = [id, id + 1, id + 2, id + 3]
+    const P = [v3(x, 0.2, 2), v3(x, 0.2, -8), v3(x, 2.8, -8), v3(x, 2.8, 2)]
+    for (let k = 0; k < 4; k++) segs.push({ id: id++, a3: P[k]!, b3: P[(k + 1) % 4]! })
+    faces.push({ id: 2000 + i, loops: [{ edges: ids.map(s => ({ kind: 'stroke' as const, s })) }] })
+  }
+  const r = rng32(seed)
+  for (let i = 0; i < nStrokes; i++) {
+    const z = -(1 + r() * 10)
+    const y = 0.1 + r() * 3
+    const x = -4 + r() * 8
+    segs.push({ id: id++, a3: v3(x, y, z), b3: v3(x + (r() * 4 - 2), y + (r() * 1.4 - 0.7), z - r() * 3) })
+  }
+  const lift = indoorLift(segs)
   return { lift, resolved: resolveFaces(lift, faces) }
 }
 
@@ -192,6 +239,40 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
     const perSegLarge = (worstBytes - bytes.before_utf8) / worstSegs
     app.doc.underlays = kept
 
+    // ── web2-25 1부 — **실내 시점의 몫**(근평면 잘라내기가 붙어서 든 일감) ──────
+    // 같은 장면을 nearClip on/off 로 나란히 돌린다. off 가 web2-23의 동작이다.
+    interface IndoorRow {
+      strokes: number; faces: number
+      faces_used: number; dropped: number; pieces: number; med_ms: number
+      faces_used_noclip: number; dropped_noclip: number; pieces_noclip: number; med_ms_noclip: number
+    }
+    const measureIndoor = (n: number, m: number): IndoorRow => {
+      const { lift, resolved } = indoorScene(n, m)
+      const run = (nearClip: boolean) => {
+        const ts: number[] = []
+        let last = bakeUnderlay(lift, resolved, DRAW_POSE, { nearClip })
+        for (let k = 0; k < REPEATS; k++) {
+          const t0 = performance.now()
+          last = bakeUnderlay(lift, resolved, DRAW_POSE, { nearClip })
+          ts.push(performance.now() - t0)
+        }
+        return { last, med: Number(median(ts).toFixed(2)) }
+      }
+      const on = run(true), off = run(false)
+      return {
+        strokes: n, faces: m,
+        faces_used: on.last.faces, dropped: on.last.dropped, pieces: on.last.pieces, med_ms: on.med,
+        faces_used_noclip: off.last.faces, dropped_noclip: off.last.dropped,
+        pieces_noclip: off.last.pieces, med_ms_noclip: off.med,
+      }
+    }
+    for (let k = 0; k < 2; k++) measureIndoor(400, 40)        // 예열
+    const indoorRows: IndoorRow[] = [
+      measureIndoor(50, 5), measureIndoor(50, 40),
+      measureIndoor(400, 5), measureIndoor(400, 40),
+    ]
+    const indoorWorst = indoorRows.reduce((a, b) => (b.med_ms > a.med_ms ? b : a))
+
     const ledger = {
       run: {
         note: 'web2-23 1-b — bakeUnderlay 한 번의 벽시계(중앙값 5회·최대) + 2-b ⑦ 굽기 전후 바이트. '
@@ -280,8 +361,34 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
             + '대역까지).',
         },
       },
+      indoor_near_clip: {
+        note: 'web2-25 1부 — **근평면 잘라내기**가 붙은 뒤의 실내 시점 몫. 장면은 카메라를 '
+          + '방 안에 둔 «옆 벽» M개(z = +2(등 뒤) ~ −8)라 꼭짓점이 카메라 뒤로 넘어간다. '
+          + 'nearClip:false 가 web2-23의 동작이고 그때 면이 **전부 빠진다**(dropped_noclip = M · '
+          + 'faces_used_noclip = 0) — 그것이 이 회차가 고친 결함이다. on 에서는 dropped 0. '
+          + '⚠ 값을 나란히 두는 까닭: 잘라내기는 «면을 되살리는» 수리라 **비용이 는다**. '
+          + '늘어난 몫이 상한(budget_ms) 대비 어디인지가 이 블록이 답하는 물음이다.',
+        conditions: '위 grid 와 같은 조건(단독 실행·합성 lift·rng32 20260828·예열 뒤 11회 중앙값). '
+          + '실내 예열은 (400,40) 두 번. ⚠⚠ **grid(rows)와 이 블록은 같은 실행의 값이다**'
+          + '(#71 ㉠ — 한 하네스가 한 번 돌며 둘 다 쓴다: rows 를 「web2-23 때의 값」으로 읽으면 '
+          + '안 된다. 재실행마다 함께 다시 난다). 그러므로 두 최악 칸(바깥·실내)의 ms 는 '
+          + '**나란히 견줄 수 있다**.',
+        rows: indoorRows,
+        worst: {
+          strokes: indoorWorst.strokes, faces: indoorWorst.faces,
+          med_ms: indoorWorst.med_ms, med_ms_noclip: indoorWorst.med_ms_noclip,
+          pieces: indoorWorst.pieces, pieces_noclip: indoorWorst.pieces_noclip,
+        },
+        over_budget: indoorRows.filter(r => r.med_ms > C.BAKE_BUDGET_MS)
+          .map(r => `${r.strokes}획×${r.faces}면 ${r.med_ms}ms`),
+      },
       flags_explained: {
         'constants/metric_defs 스냅샷 없음': 'web2 라인의 원장은 상수 스냅샷 등록부 밖(공통 형태)',
+        'indoor_near_clip.rows[*].dropped = 0': '0 고정 카운터(#5)가 아니라 **이 회차의 판정자**다 — '
+          + '잘라내기가 붙으면 빠지는 면이 없다. 그 0이 «집계가 안 돈다»가 아님은 같은 행의 '
+          + 'dropped_noclip(= faces)이 보인다(양성 대조 — 한 실행에서 둘 다 낸다)',
+        'indoor_near_clip.rows[*].faces_used_noclip = 0': '같은 짝의 반대쪽 — 잘라내기 없이는 '
+          + '실내 시점의 면이 **하나도** 안 든다(web2-23의 동작). 그 0이 곧 결함의 크기다',
         'hidden 0인 행이 있을 수 있다': '무작위 배치라 그 시드에서 가린 조각이 없을 수 있다 — '
           + '가림의 «정확성»은 make2d.test가 값으로 재고 이 원장은 **비용**만 잰다',
       },
@@ -318,5 +425,16 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
     expect(seedB_ratios.face).toBeGreaterThan(seedB_ratios.stroke)
     // 상한은 상수에서 읽는다(D-C4 — 원장 밖 임계는 낡음이 안 잡힌다)
     expect(C.BAKE_BUDGET_MS).toBe(500)
+    // ── web2-25 1부 — 실내 블록이 실제로 그 국면을 덮는가(#69 ㉣ · #71 ㉢) ────────
+    for (const r of indoorRows) {
+      expect(r.dropped_noclip).toBe(r.faces)      // 잘라내기 없이는 **전부** 빠진다
+      expect(r.faces_used_noclip).toBe(0)
+      expect(r.dropped).toBe(0)                   // 붙으면 하나도 안 빠진다
+      expect(r.faces_used).toBe(r.faces)
+      expect(r.pieces).toBeGreaterThan(r.pieces_noclip)   // 일감이 실제로 늘었다
+      expect(r.med_ms).toBeGreaterThan(0)
+    }
+    // 실내 최악 칸도 상한 안이다 — 이 회차가 비용을 상한 밖으로 밀지 않았다
+    expect(indoorWorst.med_ms).toBeLessThan(C.BAKE_BUDGET_MS)
   })
 })

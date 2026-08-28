@@ -29,7 +29,7 @@
 // 바탕 종이에는 결이 없다(사람이 정했다 — 겹 둘에만).
 
 import type { App } from './state'
-import { fadeRef, isDrawPose, underlayOf } from './state'
+import { atSheetPose, fadeRef, underlayOf } from './state'
 import type { Layer, Paper, CamPose, Underlay } from '../core/types'
 import { rng32, MAT, gradeOf, widthOf, widthOfMat } from '../core/material'
 import { project } from '../core/camera'
@@ -128,19 +128,9 @@ export function filmSplit(app: App): { films: Layer[]; above: Set<number> } | nu
   return { films, above }
 }
 
-/** 지금 포즈가 활성 종이의 시점인가 — 작도 종이는 DRAW_POSE, 저장 종이는 그 pose.
- *  ⚠ **살아 있는 포즈**로 판정한다(fadeRef 아님). 동결 포즈로 판정하면 궤도 제스처
- *  내내 참으로 남아 ① 막이 도는 장면 위에 계속 곱해지고(3-d 위반 — 시점을 벗어나면
- *  사라져야 한다) ② 그 drawFilms가 궤도 매 프레임 돈다 — cost20 표식이 잡은 31ms/프레임
- *  (D-1: filmCost 몫 분해가 films 쪽을 가리켰다). 떨림 걱정은 없다 — 포즈는 제스처
- *  중 연속으로 움직이므로 경계에서 왕복하지 않는다. */
-export function atSheetPose(app: App): boolean {
-  const sheet = app.doc.sheets.find(s => s.id === app.activeSheet)
-  if (!sheet) return false
-  const pose = app.pose
-  if (!sheet.pose) return isDrawPose(pose)
-  return poseEq(pose, sheet.pose)
-}
+// ⚙️ `atSheetPose`는 **`state.ts`로 옮겼다**(web2-25 2부) — 「지금 포즈가 활성 종이의
+//    시점인가」가 표시 게이트이자 **롤이 시점을 굳히는 판정**이 됐으므로 화면 계층 밖에서도
+//    읽혀야 한다. 출처는 하나다(#54) — 여기서는 그것을 가져다 쓴다.
 
 /** **지금 보이는 옐로 겹**(web2-22 1부) — 이 겹들의 획은 2D로 그려진다(그 종이·그 시점·
  *  켬). 옐로 획은 3D가 없으므로 «위 획은 포즈 무관» 규칙을 못 탄다 — 포즈를 벗어나면
@@ -152,11 +142,6 @@ export function yellowVisible(app: App): Set<number> {
     .filter(l => l.paper === 'yellow' && l.on && l.sheet === app.activeSheet)
     .map(l => l.id))
 }
-
-const poseEq = (a: CamPose, b: CamPose): boolean =>
-  Math.abs(a.p.x - b.p.x) < 1e-9 && Math.abs(a.p.y - b.p.y) < 1e-9 && Math.abs(a.p.z - b.p.z) < 1e-9 &&
-  Math.abs(a.q.x - b.q.x) < 1e-9 && Math.abs(a.q.y - b.q.y) < 1e-9 &&
-  Math.abs(a.q.z - b.q.z) < 1e-9 && Math.abs(a.q.w - b.q.w) < 1e-9
 
 export interface FilmLayer {
   /** 매 프레임(dirty) — 막과 위 획(#layerc)을 그린다. 갈림이 없으면 둘 다 숨긴다 */

@@ -1,6 +1,6 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG } from './layerbar'
 import { initInput } from './input'
@@ -8,12 +8,12 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, type Draft } from './render2d'
 import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost } from './render3d'
-import { serializeBrnl, parseBrnl } from '../core/file'
+import { serializeBrnl, setSaveRoundForTest, parseBrnl } from '../core/file'
 import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice, confirmNear } from './notice'
 import { OSNAP_ORDER, osnap, osnapCost, resetOsnapCost, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT, widthOfMat, gradeOf } from '../core/material'
-import type { Grade, Layer } from '../core/types'
+import type { Grade, Layer, Sheet } from '../core/types'
 import { parseDim, formatMm, lenMm, UNITS, type Unit } from '../core/dim'
 import { initDimPanel } from './dimpanel'
 import { createVoice } from './voice'
@@ -881,11 +881,48 @@ function afterAddLayer(lay: Layer) {
   }])
 }
 
+// ── 롤이 시점을 굳힌다(web2-25 2부) — 겹을 얹는 **두 자리가 같은 함수를 부른다** ────
+// 돌려본 시점은 아직 어느 종이의 시점도 아니라, 그 자리에서 겹을 얹으면 활성 종이(대개
+// 작도 종이)에 붙고 **지금 화면에서는 안 보였다**. 얹기 전에 그 시점을 새 종이로 굳힌다 —
+// 셔터(「+」)와 **같은 경로**(`captureSheet`)다(#54: 출처 하나 · 2-b ⚠).
+let paperbarRef: { sync: () => void } | null = null
+/** **셔터의 번쩍임**(web2-25 3-a) — 찍는 순간 화면이 한 번 짧게 번쩍한다.
+ *  「+」가 «찍는 동작»이 됐으므로 무엇이 저장됐는지가 **그 자리에서** 보여야 한다.
+ *  ⚠ **짧고 무채색**이다(지시 ⚠ — 순간 피드백 대역. 색을 안 들인다). 길이는
+ *  `C.SHUTTER_FLASH_MS` 하나이고 CSS 변수로 내려 애니메이션과 제거 시각이 **같은 값**을
+ *  읽는다(#54 — 두 자리에 적으면 갈린다). 겹쳐 눌러도 하나만 산다. */
+function shutterFlash() {
+  document.getElementById('shutter-flash')?.remove()
+  const el = document.createElement('div')
+  el.id = 'shutter-flash'
+  el.style.setProperty('--shutter-ms', `${C.SHUTTER_FLASH_MS}ms`)
+  document.body.append(el)
+  window.setTimeout(() => el.remove(), C.SHUTTER_FLASH_MS)
+}
+
+/** 지금 포즈·뷰를 새 종이로 — **셔터와 롤과 시점 갱신이 다 이 함수 하나를 부른다** */
+function captureSheet(): Sheet {
+  const s = addSheet(app, captureThumb())
+  paperbarRef?.sync()
+  layerbarRef?.sync()
+  return s
+}
+/** 겹을 얹기 직전 — 시점이 어느 종이의 것도 아니면 굳힌다(안내 한 줄) */
+function beforeAddLayer() {
+  if (!freezePoseForLayer(app)) return
+  // 굳힌 종이의 썸네일은 **얹기 전 화면**이다(밑그림·겹이 올라가기 전) — 셔터와 같은 순간.
+  const s = app.doc.sheets[app.doc.sheets.length - 1]!
+  s.thumb = captureThumb()
+  paperbarRef?.sync()
+  notify(`이 시점을 「${s.name}」로 굳혔다`)
+}
+
 let layerbarRef: { sync: () => void } | null = null
 const layerbar = initLayerbar(app, document.getElementById('layerbar')!, {
   viewport: () => ({ W, H }),
   onChange: () => invalidate(),
   notify,
+  beforeAdd: beforeAddLayer,
   afterAdd: afterAddLayer,
 })
 layerbarRef = layerbar
@@ -898,6 +935,7 @@ for (const [bid, paper] of [['btn-roll-tracing', 'tracing'], ['btn-roll-yellow',
       notify(LAYER_GATE_MSG)   // 종속 탭 「+」와 같은 상수(#54 — 3·4부 리뷰 [12])
       return
     }
+    beforeAddLayer()                 // 시점을 먼저 굳힌다(2-b) — 셔터와 같은 경로
     const lay = addLayer(app, paper, { W, H })
     layerbar.sync()
     invalidate()
@@ -918,7 +956,10 @@ app.listeners.push(syncRolls)
 syncRolls()
 let lastSheetForYellow = app.activeSheet
 const paperbar = initPaperbar(app, document.getElementById('paperbar')!, {
-  captureThumb,
+  capture: captureSheet,
+  thumb: captureThumb,
+  flash: shutterFlash,
+  notify,
   // 종이를 바꾸면 종속 탭 줄도 바뀐다(web2-20 2부 — 겹은 종이에 속한다)
   onGoto: () => {
     // 옐로 안내(web2-22 1-d) — 옐로 획은 2D라 그 종이에서만 보인다. 실물 그대로이고
@@ -935,6 +976,7 @@ const paperbar = initPaperbar(app, document.getElementById('paperbar')!, {
     autolevel.touch(); layerbar.sync(); invalidate()
   },
 })
+paperbarRef = paperbar
 
 // **되돌리기의 자리**(web2-17 1-d) — 규칙은 안 바꾼다(작도 획은 스택 밖·비우기가 답이다).
 // 새 진입로에서는 첫 획이 곧 소실점 획인 경우가 흔해 «되돌리기가 아무 일도 안 하는» 장면이
@@ -1250,6 +1292,11 @@ const diag = {
   },
   /** 굽기 호출 수 — 「다시 안 굽는다」를 **실패할 수 있게** 재는 값(2차 리뷰 [8]) */
   underlayBakes: () => underlayBakeCount(),
+  /** D-3 반증 손잡이(web2-25 5-b) — 저장 좌표 반올림을 끈다. 팔이 «반올림 있는 문서»와
+   *  «없는 문서»를 **같은 재그리기 경로로** 나란히 놓고 픽셀을 견준다(roundsave.spec). */
+  saveRound: (v: boolean) => setSaveRoundForTest(v),
+  /** 셔터 번쩍임의 길이(3-a) — 팔이 상수를 직접 안 읽고 **앱이 쓰는 값**을 읽는다(D-C4) */
+  shutterMs: () => C.SHUTTER_FLASH_MS,
   showHidden: (v?: boolean) => { if (v !== undefined) { app.showHidden = v; invalidate() } return app.showHidden },
   summary: () => ({
     horizonY: app.lift.an.horizonY,

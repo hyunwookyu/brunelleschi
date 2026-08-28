@@ -103,3 +103,46 @@ describe('원칙 a — 단일 출처의 정적 검사', () => {
     expect(violations).toEqual([])
   })
 })
+
+// ── web2-25 2부 ④ — **셔터와 롤이 같은 함수를 부른다**(정적 검사) ────────────────
+//
+// 지시 2-b: 「새 종이의 이름은 「종이 N」. 3부의 셔터가 만드는 것과 **같은 경로**를
+// 부른다(출처 하나).」 팔로 재기 어려운 종류의 요구다(둘 다 같은 결과를 내면 팔은
+// 통과한다 — 경로가 갈라져도) — 그래서 **문면이 아니라 구조**를 검사한다.
+describe('web2-25 2부 — 종이를 만드는 경로가 하나다', () => {
+  const files = walk(SRC)
+  const app = (f: string) => readFileSync(join(SRC, 'app', f), 'utf8')
+
+  it('`addSheet(` 호출은 app/ 안에서 **한 자리**뿐이다 — main.ts의 captureSheet', () => {
+    const hits: string[] = []
+    for (const file of files) {
+      const rel = relOf(file)
+      if (rel === 'app/state.ts') continue          // 정의가 있는 자리
+      const n = (readFileSync(file, 'utf8').match(/addSheet\(/g) ?? []).length
+      if (n > 0) hits.push(`${rel}×${n}`)
+    }
+    expect(hits).toEqual(['app/main.ts×1'])
+    // 그 한 자리가 captureSheet 안이다(셔터·롤·시점 갱신이 다 그것을 부른다)
+    expect(/function captureSheet\(\)[\s\S]{0,200}?addSheet\(app, captureThumb\(\)\)/.test(app('main.ts'))).toBe(true)
+  })
+
+  it('셔터(종이 띠 「+」)는 자기 손으로 안 만든다 — 훅 하나를 부른다', () => {
+    const pb = app('paperbar.ts')
+    expect(/hooks\.capture\(\)/.test(pb)).toBe(true)
+    expect(/addSheet/.test(pb)).toBe(false)         // 옛 경로가 남아 있지 않다
+  })
+
+  it('겹을 얹는 두 자리가 **같은 앞처리**를 부른다 — 롤과 종속 탭 「+」', () => {
+    const m = app('main.ts')
+    // 롤(손 띠)의 처리 안에 beforeAddLayer가 있다
+    expect(/btn-roll-tracing[\s\S]{0,900}?beforeAddLayer\(\)/.test(m)).toBe(true)
+    // 종속 탭 「+」는 layerbar의 훅으로 같은 함수를 받는다
+    expect(/beforeAdd: beforeAddLayer/.test(m)).toBe(true)
+    expect(/hooks\.beforeAdd\?\.\(\)/.test(app('layerbar.ts'))).toBe(true)
+    // 그리고 **굳히는 판정은 하나**다 — freezePoseForLayer 호출도 한 자리
+    const calls = files
+      .filter(f => relOf(f) !== 'app/state.ts')
+      .reduce((n, f) => n + (readFileSync(f, 'utf8').match(/freezePoseForLayer\(/g) ?? []).length, 0)
+    expect(calls).toBe(1)
+  })
+})

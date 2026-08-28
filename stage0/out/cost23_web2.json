@@ -34,8 +34,8 @@
       "pieces": 139,
       "segs": 80,
       "hidden": 55,
-      "med_ms": 0.16,
-      "max_ms": 0.26
+      "med_ms": 0.17,
+      "max_ms": 0.21
     },
     {
       "strokes": 50,
@@ -44,8 +44,8 @@
       "pieces": 292,
       "segs": 105,
       "hidden": 77,
-      "med_ms": 0.3,
-      "max_ms": 0.71
+      "med_ms": 0.33,
+      "max_ms": 0.7
     },
     {
       "strokes": 50,
@@ -54,8 +54,8 @@
       "pieces": 737,
       "segs": 146,
       "hidden": 117,
-      "med_ms": 0.7,
-      "max_ms": 1.09
+      "med_ms": 0.76,
+      "max_ms": 1.02
     },
     {
       "strokes": 50,
@@ -64,8 +64,8 @@
       "pieces": 2022,
       "segs": 227,
       "hidden": 197,
-      "med_ms": 1.9,
-      "max_ms": 2.21
+      "med_ms": 1.96,
+      "max_ms": 2.24
     },
     {
       "strokes": 100,
@@ -74,8 +74,8 @@
       "pieces": 240,
       "segs": 134,
       "hidden": 103,
-      "med_ms": 0.24,
-      "max_ms": 0.25
+      "med_ms": 0.26,
+      "max_ms": 0.3
     },
     {
       "strokes": 100,
@@ -84,8 +84,8 @@
       "pieces": 449,
       "segs": 160,
       "hidden": 125,
-      "med_ms": 0.42,
-      "max_ms": 0.48
+      "med_ms": 0.45,
+      "max_ms": 0.72
     },
     {
       "strokes": 100,
@@ -94,8 +94,8 @@
       "pieces": 1025,
       "segs": 203,
       "hidden": 166,
-      "med_ms": 0.95,
-      "max_ms": 1.45
+      "med_ms": 0.99,
+      "max_ms": 1.5
     },
     {
       "strokes": 100,
@@ -104,8 +104,8 @@
       "pieces": 2526,
       "segs": 281,
       "hidden": 243,
-      "med_ms": 2.51,
-      "max_ms": 2.9
+      "med_ms": 2.79,
+      "max_ms": 3.19
     },
     {
       "strokes": 200,
@@ -114,8 +114,8 @@
       "pieces": 450,
       "segs": 243,
       "hidden": 191,
-      "med_ms": 0.44,
-      "max_ms": 0.68
+      "med_ms": 0.51,
+      "max_ms": 0.91
     },
     {
       "strokes": 200,
@@ -124,8 +124,8 @@
       "pieces": 776,
       "segs": 270,
       "hidden": 213,
-      "med_ms": 0.78,
-      "max_ms": 1.3
+      "med_ms": 0.85,
+      "max_ms": 1.22
     },
     {
       "strokes": 200,
@@ -134,8 +134,8 @@
       "pieces": 1611,
       "segs": 313,
       "hidden": 254,
-      "med_ms": 1.62,
-      "max_ms": 2.78
+      "med_ms": 1.79,
+      "max_ms": 2.22
     },
     {
       "strokes": 200,
@@ -144,8 +144,8 @@
       "pieces": 3462,
       "segs": 391,
       "hidden": 330,
-      "med_ms": 3.62,
-      "max_ms": 4.04
+      "med_ms": 3.72,
+      "max_ms": 4.38
     },
     {
       "strokes": 400,
@@ -155,7 +155,7 @@
       "segs": 454,
       "hidden": 366,
       "med_ms": 0.85,
-      "max_ms": 1.14
+      "max_ms": 1.18
     },
     {
       "strokes": 400,
@@ -164,8 +164,8 @@
       "pieces": 1372,
       "segs": 486,
       "hidden": 390,
-      "med_ms": 1.32,
-      "max_ms": 1.79
+      "med_ms": 1.38,
+      "max_ms": 1.84
     },
     {
       "strokes": 400,
@@ -174,8 +174,8 @@
       "pieces": 2609,
       "segs": 529,
       "hidden": 431,
-      "med_ms": 2.63,
-      "max_ms": 3.14
+      "med_ms": 2.57,
+      "max_ms": 2.9
     },
     {
       "strokes": 400,
@@ -184,40 +184,40 @@
       "pieces": 5024,
       "segs": 609,
       "hidden": 507,
-      "med_ms": 5.43,
-      "max_ms": 6
+      "med_ms": 4.87,
+      "max_ms": 5.2
     }
   ],
   "worst": {
     "strokes": 400,
     "faces": 40,
-    "med_ms": 5.43,
-    "max_ms": 6
+    "med_ms": 4.87,
+    "max_ms": 5.2
   },
   "over_budget": [],
   "resolution": {
     "note": "#71 ㉢ — 두 축이 실제로 값을 가르는가. 하네스가 둘 다 단언한다: ① 획 축(면 40 고정): 400획 med > 50획 med ② 면 축(획 400 고정): 40면 med > 5면 med×2. ⚠ 두 축의 무게가 다르다 — **동인은 면 수**다(배수는 아래 열들이 값으로 낸다). ⚠⚠ **차수 예측이 실측에 진다**(D-4의 형태 — 리뷰 [2-b]): 「조각마다 면 전부를 훑으니 O(N·M²)」이면 M 8배에 64배를 예상해야 하는데 실측은 face_axis_ratio 대역이고 **pieces와 거의 같은 배수**다(pieces_face_axis_ratio와 나란히 읽는다). 조기 반환(첫 가림에서 true)과 포함 판정의 빠른 기각이 M 항을 접는다 — **비용은 조각 수에 거의 선형**으로 읽는 것이 이 원장이 실제로 지지하는 문장이다. 그래서 500ms 도달 대역의 외삽도 pieces로 한다(면 수 자체가 아니라).",
-    "face_axis_ratio": 6.39,
-    "stroke_axis_ratio": 2.86,
+    "face_axis_ratio": 5.73,
+    "stroke_axis_ratio": 2.48,
     "pieces_face_axis_ratio": 6.1,
     "stroke_axis": {
-      "low_med": 1.9,
-      "high_med": 5.43
+      "low_med": 1.96,
+      "high_med": 4.87
     },
     "face_axis": {
       "low_med": 0.85,
-      "high_med": 5.43
+      "high_med": 4.87
     },
     "max_overlap": false,
     "max_overlap_note": "참이면 그 두 행의 **최대값 대역이 겹친다** — 한 번의 굽기로는 획 축을 못 가른다는 뜻이고, 그래서 판정은 중앙값으로 한다(잡음의 실측 기록)",
     "seed_check": {
       "seedA": {
-        "face": 6.39,
-        "stroke": 2.86
+        "face": 5.73,
+        "stroke": 2.48
       },
       "seedB": {
-        "face": 5.98,
-        "stroke": 2.56
+        "face": 5.01,
+        "stroke": 3.04
       },
       "note": "#14 — 배치 시드 둘째(771103)로 세 모서리 칸을 다시 잰다. 「동인은 면 수」가 배치 하나의 일화가 아님을 보인다(하네스가 두 시드 모두에서 face > stroke를 단언). ⚠ 유효 자릿수는 두 자리로 읽는다(시드·GC 변동폭 — CLAUDE.md §5).",
       "rows_seedB": [
@@ -228,8 +228,8 @@
           "pieces": 5222,
           "segs": 600,
           "hidden": 521,
-          "med_ms": 5.32,
-          "max_ms": 5.95
+          "med_ms": 4.96,
+          "max_ms": 5.82
         },
         {
           "strokes": 400,
@@ -238,8 +238,8 @@
           "pieces": 839,
           "segs": 450,
           "hidden": 378,
-          "med_ms": 0.89,
-          "max_ms": 1.25
+          "med_ms": 0.99,
+          "max_ms": 1.63
         },
         {
           "strokes": 50,
@@ -248,8 +248,8 @@
           "pieces": 2036,
           "segs": 224,
           "hidden": 199,
-          "med_ms": 2.08,
-          "max_ms": 2.5
+          "med_ms": 1.63,
+          "max_ms": 2.81
         }
       ]
     }
@@ -271,9 +271,9 @@
       "note": "최악 칸의 **segs**(pieces 아님 — 저장은 이어 붙인 뒤의 마디 수다)로 외삽한 밑그림 하나의 크기. ⚠ pieces로 외삽하면 8배 넘게 부푼다(첫 판이 그 오류였고 리뷰 [3]이 잡았다). ⚠ 바이트/마디는 **좌표 문자열의 길이**에 달렸다 — 아래 autosave_serialize_ms의 worst_doc_bytes_utf8은 짧은 좌표로 만든 합성 밑그림이라 이 외삽보다 작다. 두 값을 다 남긴다(실사용은 그 사이)."
     },
     "autosave_serialize_ms": {
-      "with_underlay_min_scene": 0.014,
-      "without_underlay": 0.007,
-      "with_worst_size_underlay": 0.348,
+      "with_underlay_min_scene": 0.012,
+      "without_underlay": 0.006,
+      "with_worst_size_underlay": 0.303,
       "worst_doc_bytes_utf8": 45649,
       "worst_doc_pct_of_autosave": 0.871,
       "bytes_per_seg_utf8_large_sample": 73.6,
@@ -281,8 +281,73 @@
       "note": "리뷰 [4] — 굽기가 「한 번 도는 비용」인 것과 별개로 **자동 저장은 획마다 돈다**. 밑그림이 Doc에 들어간 뒤로 그 직렬화가 매번 밑그림 전체를 다시 쓴다. 최악 칸 크기의 밑그림(segs 609)을 실제로 얹고 serializeBrnl 11회 중앙값을 잰 값이다(외삽 아님). 프레임 예산(16ms)과 견주는 것이 여기서는 옳다 — 이것은 그리는 동안 도는 비용이다. ⚠ 합성 밑그림의 좌표 문자열이 짧아 worst_doc_bytes_utf8은 projected_worst.bytes_utf8보다 작다(직렬화 시간은 문자 수에 비례하므로 실사용은 이 값보다 크다 — 두 마디당 바이트의 비만큼, 곧 두 배 대역까지)."
     }
   },
+  "indoor_near_clip": {
+    "note": "web2-25 1부 — **근평면 잘라내기**가 붙은 뒤의 실내 시점 몫. 장면은 카메라를 방 안에 둔 «옆 벽» M개(z = +2(등 뒤) ~ −8)라 꼭짓점이 카메라 뒤로 넘어간다. nearClip:false 가 web2-23의 동작이고 그때 면이 **전부 빠진다**(dropped_noclip = M · faces_used_noclip = 0) — 그것이 이 회차가 고친 결함이다. on 에서는 dropped 0. ⚠ 값을 나란히 두는 까닭: 잘라내기는 «면을 되살리는» 수리라 **비용이 는다**. 늘어난 몫이 상한(budget_ms) 대비 어디인지가 이 블록이 답하는 물음이다.",
+    "conditions": "위 grid 와 같은 조건(단독 실행·합성 lift·rng32 20260828·예열 뒤 11회 중앙값). 실내 예열은 (400,40) 두 번. ⚠⚠ **grid(rows)와 이 블록은 같은 실행의 값이다**(#71 ㉠ — 한 하네스가 한 번 돌며 둘 다 쓴다: rows 를 「web2-23 때의 값」으로 읽으면 안 된다. 재실행마다 함께 다시 난다). 그러므로 두 최악 칸(바깥·실내)의 ms 는 **나란히 견줄 수 있다**.",
+    "rows": [
+      {
+        "strokes": 50,
+        "faces": 5,
+        "faces_used": 5,
+        "dropped": 0,
+        "pieces": 101,
+        "med_ms": 0.11,
+        "faces_used_noclip": 0,
+        "dropped_noclip": 5,
+        "pieces_noclip": 65,
+        "med_ms_noclip": 0.05
+      },
+      {
+        "strokes": 50,
+        "faces": 40,
+        "faces_used": 40,
+        "dropped": 0,
+        "pieces": 1142,
+        "med_ms": 1.53,
+        "faces_used_noclip": 0,
+        "dropped_noclip": 40,
+        "pieces_noclip": 170,
+        "med_ms_noclip": 0.15
+      },
+      {
+        "strokes": 400,
+        "faces": 5,
+        "faces_used": 5,
+        "dropped": 0,
+        "pieces": 662,
+        "med_ms": 0.69,
+        "faces_used_noclip": 0,
+        "dropped_noclip": 5,
+        "pieces_noclip": 415,
+        "med_ms_noclip": 0.3
+      },
+      {
+        "strokes": 400,
+        "faces": 40,
+        "faces_used": 40,
+        "dropped": 0,
+        "pieces": 3253,
+        "med_ms": 4.28,
+        "faces_used_noclip": 0,
+        "dropped_noclip": 40,
+        "pieces_noclip": 520,
+        "med_ms_noclip": 0.4
+      }
+    ],
+    "worst": {
+      "strokes": 400,
+      "faces": 40,
+      "med_ms": 4.28,
+      "med_ms_noclip": 0.4,
+      "pieces": 3253,
+      "pieces_noclip": 520
+    },
+    "over_budget": []
+  },
   "flags_explained": {
     "constants/metric_defs 스냅샷 없음": "web2 라인의 원장은 상수 스냅샷 등록부 밖(공통 형태)",
+    "indoor_near_clip.rows[*].dropped = 0": "0 고정 카운터(#5)가 아니라 **이 회차의 판정자**다 — 잘라내기가 붙으면 빠지는 면이 없다. 그 0이 «집계가 안 돈다»가 아님은 같은 행의 dropped_noclip(= faces)이 보인다(양성 대조 — 한 실행에서 둘 다 낸다)",
+    "indoor_near_clip.rows[*].faces_used_noclip = 0": "같은 짝의 반대쪽 — 잘라내기 없이는 실내 시점의 면이 **하나도** 안 든다(web2-23의 동작). 그 0이 곧 결함의 크기다",
     "hidden 0인 행이 있을 수 있다": "무작위 배치라 그 시드에서 가린 조각이 없을 수 있다 — 가림의 «정확성»은 make2d.test가 값으로 재고 이 원장은 **비용**만 잰다"
   }
 }

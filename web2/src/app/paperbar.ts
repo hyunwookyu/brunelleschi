@@ -14,16 +14,26 @@
 // flex 기둥이고 이 모듈은 첫 줄(#paperbar)만 소유한다. 높이를 하드코딩하지 않는다.
 
 import type { App } from './state'
-import { addSheet, deleteSheet, renameSheet, gotoSheet } from './state'
-import { DRAW_SHEET_ID } from '../core/types'
+import { deleteSheet, renameSheet, gotoSheet, sheetUpdateBlock, updateSheet } from './state'
+import { DRAW_SHEET_ID, type Sheet } from '../core/types'
 import { C } from '../core/constants'
 
 export interface PaperbarHooks {
-  /** 「+」가 굽는 썸네일 — 저장 시점에 굽는다(saveView의 선례 ㉮) */
-  captureThumb: () => string
+  /** **지금 시점을 새 종이로 굳힌다** — 셔터(「+」)·롤(web2-25 2부)·시점 갱신이 **같은
+   *  함수 하나**를 부른다(#54). 썸네일 굽기도 그 안이다(저장 시점에 굽는다 — saveView ㉮). */
+  capture: () => Sheet
+  /** 지금 화면의 썸네일 — 시점 갱신(3-c)이 다시 굽는 자리 */
+  thumb: () => string
+  /** **셔터의 번쩍임**(3-a) — 찍는 순간 화면이 한 번 짧게 번쩍한다(짧고 무채색) */
+  flash: () => void
+  /** 막힌 이유를 한 줄로(3-c ⛔ — 「다시 뜨기 없음」과 같은 결) */
+  notify: (msg: string) => void
   /** 시점이 바뀌었다 — 다시 그리기·접기 타이머 */
   onGoto: () => void
 }
+
+/** Phosphor light camera (MIT · `@phosphor-icons/core` assets/light/camera-light.svg — path 그대로) */
+const CAMERA_PATH = 'M208,58H179.21L165,36.67A6,6,0,0,0,160,34H96a6,6,0,0,0-5,2.67L76.78,58H48A22,22,0,0,0,26,80V192a22,22,0,0,0,22,22H208a22,22,0,0,0,22-22V80A22,22,0,0,0,208,58Zm10,134a10,10,0,0,1-10,10H48a10,10,0,0,1-10-10V80A10,10,0,0,1,48,70H80a6,6,0,0,0,5-2.67L99.21,46h57.57L171,67.33A6,6,0,0,0,176,70h32a10,10,0,0,1,10,10ZM128,90a42,42,0,1,0,42,42A42,42,0,0,0,128,90Zm0,72a30,30,0,1,1,30-30A30,30,0,0,1,128,162Z'
 
 export interface Paperbar {
   /** 문서·활성이 바뀐 뒤 다시 그린다(loadDoc·비우기·삭제) */
@@ -79,6 +89,33 @@ export function initPaperbar(app: App, host: HTMLElement, hooks: PaperbarHooks):
       img.alt = sheet.name
       pop.append(img)
     }
+    // ── 시점 갱신(web2-25 3-c) — SketchUp Scenes 의 Update Scene. **막히면 이유를 준다** ──
+    const block = sheetUpdateBlock(app, sheetId)
+    const upd = document.createElement('u')
+    upd.dataset.pick = 'update'
+    upd.textContent = '이 시점으로 갱신'
+    if (block) {
+      upd.classList.add('blocked')
+      upd.title = block === 'layers'
+        ? '이 종이에는 겹이 얹혀 있다 — 밑그림이 옛 시점의 것이라 어긋난다. 새 종이를 만든다'
+        : '작도 종이의 시점은 작도 시점이다 — 작도 시점에서만 갱신한다'
+      upd.addEventListener('click', () => {
+        closePop()
+        hooks.notify(block === 'layers'
+          ? '겹이 얹힌 종이는 시점을 갱신하지 않는다 — 새 종이를 만든다'
+          : '작도 종이의 시점은 작도 시점이다')
+      })
+    } else {
+      upd.addEventListener('click', () => {
+        closePop()
+        if (updateSheet(app, sheetId, hooks.thumb())) {
+          hooks.flash()          // 다시 찍은 것이다 — 셔터와 같은 피드백
+          render()
+          hooks.onGoto()
+        }
+      })
+    }
+    pop.append(upd)
     const name = document.createElement('u')
     name.dataset.pick = 'rename'
     name.textContent = '이름'
@@ -136,7 +173,24 @@ export function initPaperbar(app: App, host: HTMLElement, hooks: PaperbarHooks):
       const tab = document.createElement('button')
       tab.className = 'ptab' + (s.id === app.activeSheet ? ' on' : '')
       tab.dataset.sheet = String(s.id)
-      tab.textContent = s.name
+      // **썸네일 + 이름**(3-b) — 시점은 이름이 아니라 그림으로 알아본다. 그림이 없는 종이
+      // (아직 한 번도 안 찍은 작도 종이)는 **같은 크기의 빈 종이**가 자리를 지킨다 —
+      // 띠의 높이가 종이마다 들쭉날쭉하면 스트립이 아니라 목록이 된다.
+      if (s.thumb) {
+        const img = document.createElement('img')
+        img.className = 'pthumb'
+        img.src = s.thumb
+        img.alt = ''
+        tab.append(img)
+      } else {
+        const ph = document.createElement('span')
+        ph.className = 'pthumb'
+        tab.append(ph)
+      }
+      const label = document.createElement('span')
+      label.className = 'pname'
+      label.textContent = s.name
+      tab.append(label)
       tab.title = s.pose ? s.name : `${s.name} — 작도 시점`
       // 탭 = 그 종이로. 이미 활성이어도 다시 그 포즈로(구도를 손으로 돌렸다 돌아오는 몸짓).
       // ⚠ 여기서 render()를 부르지 않는다 — 탭 요소가 갈리면 **두 번째 탭(dblclick)이
@@ -168,11 +222,14 @@ export function initPaperbar(app: App, host: HTMLElement, hooks: PaperbarHooks):
     const add = document.createElement('button')
     add.id = 'paper-add'
     add.className = 'ptab'
-    // Phosphor light plus (MIT · @phosphor-icons/core assets/light/plus-light.svg 그대로 — web2-19 4부)
-    add.innerHTML = '<svg viewBox="0 0 256 256" fill="currentColor" width="12" height="12" style="vertical-align:-1px"><path d="PLUSPATH"/></svg>'.replace('PLUSPATH', 'M222,128a6,6,0,0,1-6,6H134v82a6,6,0,0,1-12,0V134H40a6,6,0,0,1,0-12h82V40a6,6,0,0,1,12,0v82h82A6,6,0,0,1,222,128Z')
-    add.title = '지금 보고 있는 시점을 새 종이로'
+    // **셔터**(web2-25 3-a) — 「+」를 «찍는 동작»으로 바꿨다. 크롬의 「+」는 «빈 것을 하나
+    // 더 만든다»는 뜻인데 여기서 하는 일은 «지금 보이는 것을 한 장으로 남긴다»라 뜻이 다르다.
+    // Phosphor light camera (MIT · @phosphor-icons/core assets/light/camera-light.svg 그대로)
+    add.innerHTML = '<svg viewBox="0 0 256 256" fill="currentColor" width="16" height="16" style="vertical-align:-3px"><path d="CAMPATH"/></svg>'.replace('CAMPATH', CAMERA_PATH)
+    add.title = '지금 보고 있는 시점을 한 장으로 남긴다'
     add.addEventListener('click', () => {
-      const s = addSheet(app, hooks.captureThumb())
+      hooks.flash()    // 찍는 순간 화면이 한 번 번쩍한다 — 무엇이 저장됐는지가 그 자리에서 보인다
+      const s = hooks.capture()
       hooks.onGoto()   // 활성 종이가 바뀌었다 — 종속 탭 줄(web2-20)도 따라온다
       render()
       // 기본 이름 「종이 N」 — 바로 편집 가능(지시 2-c). 방금 만든 탭을 찾아 연다.

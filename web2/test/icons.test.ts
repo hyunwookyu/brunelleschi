@@ -55,11 +55,18 @@ describe('web2-19 4부 ③ — path 문자열 대조', () => {
     for (const p of paths) expect(html.includes(p), `접힌 펜 path: ${p.slice(0, 30)}…`).toBe(true)
   })
 
-  it('Phosphor light path가 그대로 이식됐다(ruler·arrows-out·eye·eye-slash·compass-tool·grid-four·plus)', () => {
+  it('Phosphor light path가 그대로 이식됐다(ruler·arrows-out·eye·eye-slash·compass-tool·grid-four·camera)', () => {
     for (const n of ['ruler', 'arrows-out', 'eye', 'eye-slash', 'compass-tool', 'grid-four']) {
       expect(html.includes(phosphor(n)), n).toBe(true)
     }
-    expect(paperbar.includes(phosphor('plus')), 'plus(종이 「+」)').toBe(true)
+    // ⚠ **web2-25 3-a에서 갈렸다**: 종이 띠의 단추가 「+」에서 **셔터(camera)**가 됐다.
+    //   크롬의 「+」는 «빈 것을 하나 더 만든다»는 뜻인데 여기서 하는 일은 «지금 보이는
+    //   것을 한 장으로 남긴다»라 뜻이 달랐다(지시 3-a). 팔이 지키던 요구(「소스 path를
+    //   그대로 쓴다」)는 **그대로 유효**하고 대상만 바뀌었다(#74 ㉢의 판별 물음).
+    expect(paperbar.includes(phosphor('camera')), 'camera(종이 셔터)').toBe(true)
+    // 그리고 **겹의 「+」는 여전히 plus**다 — 그쪽은 뜻이 맞는다(겹을 하나 더 얹는다)
+    const lb = readLF(resolve(__dirname, '../src/app/layerbar.ts'))
+    expect(lb.includes(phosphor('plus')), 'plus(겹 「+」)').toBe(true)
   })
 
   it('펜·지우개 둘·면은 손대지 않았다 — 스냅샷(앞으로의 드리프트 방지)', () => {

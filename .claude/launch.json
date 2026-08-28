@@ -2,54 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "web",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev:5222"
-      ],
-      "port": 5222,
-      "cwd": "web"
-    },
-    {
-      "name": "web-5224",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev:5224"
-      ],
-      "port": 5224,
-      "cwd": "web"
-    },
-    {
       "name": "web2",
       "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev"
-      ],
-      "port": 5301,
-      "cwd": "web2"
-    },
-    {
-      "name": "web2-alt",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev:alt"
-      ],
-      "port": 5311,
-      "cwd": "web2"
-    },
-    {
-      "name": "web2-face",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev:face"
-      ],
-      "port": 5321,
-      "cwd": "web2"
+      "runtimeArgs": ["run", "dev", "--prefix", "web2"],
+      "port": 5301
     }
   ]
 }

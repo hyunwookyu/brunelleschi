@@ -22,12 +22,50 @@ export interface BrnlData {
  *  흉내내지 않는다. 열쇠가 없으면 그 항이 없는 문서다(옛 판 — 그대로 열린다).
  *  ⚠ 판을 올려도 **쓰는 판은 언제나 최신 하나**다(옛 판으로 되쓰지 않는다) — 밑그림이
  *  없는 문서도 v6으로 나가고, 그때 `underlays` 열쇠 자체를 안 쓴다(왕복 동일성). */
-export function serializeBrnl(d: BrnlData): string {
+export interface SerializeOptions {
+  /** **저장 좌표 반올림**(web2-25 5-b) — 끄면 배정밀도 그대로다. 기본 켬.
+   *  ⚠ 반증·측정 손잡이다(`make2d.ts`의 `BakeOptions`와 같은 어법) — 앱에는 UI가 없다. */
+  round?: boolean
+}
+
+/** **저장할 때만 좌표를 소수 첫째 자리로 반올림한다**(web2-25 5-b).
+ *
+ *  왜: 점렬이 배정밀도 그대로 JSON에 실린다(`123.45678901234567` — 한 수에 18자).
+ *  0.1px 는 눈에 안 보인다 — **솎기 임계(0.5px · AS-C82)보다도 촘촘하다**. 즉 이 반올림이
+ *  버리는 것은 이미 «없는 것으로 친» 대역 안이다.
+ *
+ *  ⚠⚠ **메모리의 값을 깎지 않는다**(지시 5-b ⚠). 여기서 새 객체를 만들어 내보낼 뿐이고
+ *  `Doc`의 점은 그대로다 — 그리는 동안의 기하가 저장 형식에 끌려가면 안 된다.
+ *  ⚠ **문서 px 좌표에만 건다.** 3D(`own3`)·포즈·`view.s`·치수(mm)는 단위가 달라 0.1이
+ *  «안 보이는 대역»이 아니다 — 안 건드린다(그 사실을 팔이 단언한다).
+ *
+ *  ⚠⚠⚠ **깎는 것은 표현용 점렬(`raw`) 하나다.** 확정 끝점 `a`·`b`도, 밑그림 마디도 안 깎는다.
+ *  까닭은 **잉크 심판**이다(own3d.ts §7): 자립 3D(`own3`)는 「그 3D를 지금 카메라로 다시
+ *  사영하면 획의 끝점에 떨어진다」를 `OWN3_TOL_PX`(**0.01px**)로 지킨다. `a`·`b`를 0.1
+ *  단위로 옮기면 그 어긋남이 최대 0.05px라 **불변식이 왕복에서 깨진다**(own3d.test 넷이
+ *  실제로 빨개져 잡았다 — 팔이 옳았고 초판이 틀렸다: #74 ㉢의 판별 물음 그대로 「그 팔이
+ *  지키던 요구가 지금도 유효한가」 → 유효하다). 그리고 잃는 것도 없다: 표가 말하듯
+ *  끝점은 획당 두 점이고 바이트의 큰 몫은 `raw`다(`filesize25_web2.json`). */
+const r1 = (v: number): number => Math.round(v * 10) / 10
+const roundPt = (p: { x: number; y: number }) => ({ ...p, x: r1(p.x), y: r1(p.y) })
+const roundStroke = (s: Stroke): Stroke =>
+  s.raw ? { ...s, raw: s.raw.map(roundPt) } : s
+
+/** 반증 손잡이(e2e 전용 — `diag.saveRound`) — 저장 반올림의 **기본값**을 끈다.
+ *  앱에는 UI가 없다. 팔이 「반올림 있는 문서」와 「없는 문서」를 **같은 재그리기 경로로**
+ *  나란히 놓고 픽셀을 견주는 데 쓴다(5-c ③ — 그러지 않으면 «생으로 그린 화면 ↔ 문서에서
+ *  다시 그린 화면»의 차가 섞여 반올림 몫을 못 가른다). */
+let roundDefault = true
+export const setSaveRoundForTest = (v: boolean): void => { roundDefault = v }
+
+export function serializeBrnl(d: BrnlData, opt: SerializeOptions = {}): string {
+  const round = opt.round ?? roundDefault
+  const strokes = round ? d.doc.strokes.map(roundStroke) : d.doc.strokes
   return JSON.stringify({
     format: 'brnl',
     version: 6,
     frame: d.doc.frame,
-    strokes: d.doc.strokes,
+    strokes,
     // 면은 **경계의 정체**만 담긴다(획 id 차례) — 좌표는 복원 후 다시 풀린다.
     faces: d.doc.faces,
     // 치수(web2-08 지시 4) — 표시 단위·스케일 기준 획은 사용자의 결정이라 담는다.
@@ -41,6 +79,9 @@ export function serializeBrnl(d: BrnlData): string {
     ...(d.doc.layers.length > 0 ? { layers: d.doc.layers } : {}),
     // 밑그림(web2-23 2-b) — 사건의 기록이라 담는다(면·겹과 같은 급). 없으면 열쇠 없음.
     // ⚠ 파일이 커지는 자리가 여기다(조각마다 점 둘) — 크기는 원장이 잰다(2-b ⚠).
+    // ⚠ **밑그림은 안 깎는다** — 표가 그것을 안 지목했다(`filesize25_web2.json`
+    // components_utf8: 밑그림은 문서의 0.1% 대역이다). 그리고 web2-23이 세운
+    // **왕복 동일성**(`underlay.test` ④)이 그 자리에 있다 — 얻는 것 없이 규약만 깬다.
     ...(d.doc.underlays.length > 0 ? { underlays: d.doc.underlays } : {}),
     // 작도 시점(web2-17 3-c) — 없으면 열쇠 자체를 안 쓴다(왕복 동일성 — 2-c ② 팔)
     ...(d.drawView ? { drawView: d.drawView } : {}),
