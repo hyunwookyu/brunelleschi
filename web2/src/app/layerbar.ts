@@ -1,14 +1,21 @@
 // 종속 탭 줄(web2-20 2부) — **겹은 도구가 아니라 종이다**: 종이 띠 바로 아래 줄
-// (web2-19 2-c가 비워 둔 자리). **지금 활성인 종이의 겹만** 보이고, 종이를 바꾸면 줄도
-// 바뀐다. 부모 탭(배타적)과의 형태 차이: 겹 탭은 **겹쳐 놓은 종이를 옆에서 본 모습** —
-// 서로 겹치고(가산적임이 형태로 보인다), 활성인 것이 앞으로 나온다. 이 겹침을 e2e가
-// 상자로 잰다(부모 탭은 겹침 0·자식 탭은 겹침 >0 — 오독 위험의 팔).
+// (web2-19 2-c가 비워 둔 자리). **지금 활성인 종이의 겹만** 보이고, 종이를 바꾸면 줄도 바뀐다.
+//
+// ⚙️⚙️ **web2-25 4부가 형태를 갈았다 — 사람의 문면: 「토글 표시 역시 아직은 쓰기 불편하다」.**
+//   왜 불편했는가: 겹이 34×28 짜리 작은 탭인데 그 안에 눈·자물쇠를 우겨넣었다. Procreate 의
+//   레이어 행이 넉넉한 이유는 **가로로 길기 때문**이다 — 한 행에 [썸네일|이름|표시]가 다 든다.
+//   그래서 **연필통과 같은 어법**으로 통일했다:
+//     · 평소에는 **요약 하나** — 롤 아이콘에 쌓인 수(「3」)
+//     · 누르면 **세로 목록** — 한 줄에 [롤 아이콘 | 번호 | 눈 | 자물쇠 | ×]. 줄이 넓다
+//     · **길게 누르면 솔로**(그것만 보기) — Procreate 가 표시 체크박스를 길게 눌러 하는 것
+//   ⚠ 옛 형태(겹쳐 놓은 종이를 옆에서 본 탭 더미)는 «가산적임»을 형태로 말했다. 그 뜻은
+//   요약의 **수**가 이어받는다 — 종이는 탭이 여럿이고(배타적) 겹은 하나에 수가 붙는다.
 //
 // ⚠ 앱은 겹의 목적을 제안하지 않는다(지시 0 ⚠⚠) — 화면에 뜨는 것은 종이 종류 둘
 // (트레이싱지·옐로)과 켬/끔·잠금뿐이다. 「층」·「레이어」라는 말을 화면에 안 쓴다.
 
 import type { App } from './state'
-import { addLayer, removeLayer, setActiveLayer, setLayerOn, setLayerLocked } from './state'
+import { addLayer, isSolo, removeLayer, setActiveLayer, setLayerOn, setLayerLocked, setSolo } from './state'
 import type { Layer, Paper } from '../core/types'
 import { C } from '../core/constants'
 
@@ -72,12 +79,32 @@ export function initLayerbar(app: App, host: HTMLElement, hooks: LayerbarHooks):
     popAway = () => window.removeEventListener('pointerdown', away, true)
   }
 
+  /** 목록이 펼쳐졌는가 — **접으면 요약, 펼치면 목록**(web2-25 4-a). 연필통과 같은 어법이다.
+   *  런타임 상태이고 기본은 **접힘**이다(요약 하나). */
+  let open = false
+
   function render() {
     closePop()
     host.textContent = ''
     const layers = app.doc.layers.filter(l => l.sheet === app.activeSheet)
-    // 쌓인 순서(뒤가 위)를 왼→오로 — 오른쪽 탭이 위에 겹치게 z도 같이 준다
-    layers.forEach((lay, i) => host.append(layerTab(lay, i)))
+
+    // ── 접힌 요약 하나(4-a) — 롤 아이콘 + 쌓인 수. 겹이 없으면 요약도 없다 ──────────
+    // ⚠ 종이 탭(배타적)과의 차이가 여기서도 형태로 남는다: 종이는 **탭이 여럿**이고
+    //   겹은 **하나에 수가 붙는다**(가산적임을 그 수가 말한다).
+    if (layers.length > 0) {
+      const top = layers[layers.length - 1]!
+      const sum = document.createElement('button')
+      sum.id = 'layer-summary'
+      sum.className = 'lsum' + (open ? ' open' : '') + (app.solo ? ' solo' : '')
+      sum.innerHTML = (top.paper === 'yellow' ? ROLL_YELLOW : ROLL_TRACING)
+        + `<span class="lsum-n">${layers.length}</span>`
+      sum.title = open ? '겹 목록을 접는다' : `얹은 종이 ${layers.length}장 — 눌러서 목록`
+      sum.addEventListener('click', () => { open = !open; render() })
+      host.append(sum)
+    } else {
+      open = false
+    }
+
     // 「+」 — 카메라가 닫히기 전에는 비활성(2-a). 눌리지 않는 이유가 보여야 한다.
     const add = document.createElement('button')
     add.id = 'layer-add'
@@ -113,69 +140,100 @@ export function initLayerbar(app: App, host: HTMLElement, hooks: LayerbarHooks):
       })
     })
     host.append(add)
+
+    // ── 펼친 목록(4-a) — 한 줄에 [롤 아이콘 | 번호 | 눈 | 자물쇠 | ×]. **줄이 넓다** ──
+    if (open && layers.length > 0) {
+      const list = document.createElement('div')
+      list.id = 'layer-list'
+      // 나중에 얹은 것이 위로 — 쌓인 순서를 세로가 그대로 말한다(번호는 아래부터 1)
+      layers.forEach((lay, i) => list.prepend(layerRow(lay, i + 1)))
+      host.append(list)
+    }
   }
 
-  function layerTab(lay: Layer, i: number): HTMLElement {
-    const tab = document.createElement('div')
-    tab.className = 'ltab lpaper ' + lay.paper
+  /** 목록의 한 줄 — [롤 아이콘 | 번호 | 눈 | 자물쇠 | ×]. 몸통 = 활성으로 · **길게 = 솔로**. */
+  function layerRow(lay: Layer, n: number): HTMLElement {
+    const row = document.createElement('div')
+    row.className = 'lrow ' + lay.paper
       + (lay.on ? ' on' : '')
       + (app.activeLayer === lay.id ? ' active' : '')
       + (lay.locked ? ' locked' : '')
-    tab.dataset.layer = String(lay.id)
-    tab.style.zIndex = String(i + 1)   // 뒤(위 겹)가 앞 탭 위로 — 옆에서 본 더미
+      + (isSolo(app, lay.id) ? ' solo' : '')
+    row.dataset.layer = String(lay.id)
+    const icon = document.createElement('span')
+    icon.className = 'lrow-icon'
+    icon.innerHTML = lay.paper === 'yellow' ? ROLL_YELLOW : ROLL_TRACING
+    const num = document.createElement('span')
+    num.className = 'lrow-n'
+    num.textContent = String(n)
+    row.append(icon, num)
+
     // 몸통 = 활성으로(켜짐 겸). 잠긴 겹은 활성이 못 된다(state가 지킨다).
-    tab.addEventListener('click', e => {
+    row.addEventListener('click', e => {
       if ((e.target as HTMLElement).closest('.lctl')) return   // 표식 몫
-      if (lpFired) { lpFired = false; return }   // 길게 누른 손을 뗀 것 — 활성 아님
+      if (lpFired) { lpFired = false; return }                 // 길게 누른 손을 뗀 것
       setActiveLayer(app, lay.id)
       render()
       hooks.onChange()
     })
-    // 길게 누르면 — 삭제(확인 한 번: 획 수를 알린다 — 2-c). 시간·이동 허용은 종이 탭과
-    // 같은 값(C.PAPER_LONGPRESS_MS · OSNAP_RADIUS_PX — 같은 몸짓에 다른 숫자를 안 짓는다).
+    // **길게 누르면 솔로**(4-a) — Procreate 가 표시 체크박스를 길게 눌러 하는 것.
+    // 다시 길게 누르면 돌아온다. 시간·이동 허용은 종이 탭과 같은 값(새 숫자 ⛔ #54).
     let lpTimer: number | undefined
     let lpStart: { x: number; y: number } | null = null
-    let lpFired = false   // 길게 누른 뒤의 click이 render→closePop으로 팝업을 닫는 것을 막는다
-    tab.addEventListener('pointerdown', e => {
+    let lpFired = false
+    row.addEventListener('pointerdown', e => {
       lpStart = { x: e.clientX, y: e.clientY }
       lpTimer = window.setTimeout(() => {
         lpTimer = undefined
         lpFired = true
-        const n = app.doc.strokes.filter(s => s.layer === lay.id).length
-        openPopAt(tab, p => {
-          const span = document.createElement('span')
-          span.textContent = `이 종이를 지운다 — 그 위의 획 ${n}개가 같이 간다(실행취소로 돌아온다). `
-          const yes = document.createElement('u')
-          yes.dataset.pick = 'yes'
-          yes.textContent = '지운다'
-          yes.addEventListener('click', () => { removeLayer(app, lay.id); closePop(); render(); hooks.onChange() })
-          const no = document.createElement('u')
-          no.dataset.pick = 'no'
-          no.textContent = '취소'
-          no.addEventListener('click', closePop)
-          p.append(span, yes, ' ', no)
-        })
+        const was = isSolo(app, lay.id)
+        setSolo(app, was ? null : lay.id)
+        render()
+        hooks.onChange()
+        hooks.notify(was ? '전부 다시 보인다' : `${n}번만 보인다 — 길게 눌러 되돌린다`)
       }, C.PAPER_LONGPRESS_MS)
     })
     const cancel = () => { clearTimeout(lpTimer); lpTimer = undefined; lpStart = null }
-    tab.addEventListener('pointerup', cancel)
-    tab.addEventListener('pointercancel', cancel)
-    tab.addEventListener('pointermove', e => {
+    row.addEventListener('pointerup', cancel)
+    row.addEventListener('pointercancel', cancel)
+    row.addEventListener('pointermove', e => {
       if (lpStart && Math.hypot(e.clientX - lpStart.x, e.clientY - lpStart.y) > C.OSNAP_RADIUS_PX) cancel()
     })
-    // 켬/끔 표식(= 토글) · 잠금 표식(= 토글)
+
+    // 켬/끔 표식(= 토글) · 잠금 표식(= 토글) — **줄이 넓어 손가락이 정확히 안 가도 된다**
     const eye = document.createElement('button')
     eye.className = 'lctl leye'
-    eye.innerHTML = glyph(lay.on ? EYE : EYE_SLASH)
+    eye.innerHTML = glyph(lay.on ? EYE : EYE_SLASH, 14)
     eye.title = lay.on ? '끈다 — 안 보이고 3D에서 빠진다' : '켠다'
     eye.addEventListener('click', () => { setLayerOn(app, lay.id, !lay.on); render(); hooks.onChange() })
     const lock = document.createElement('button')
     lock.className = 'lctl llock'
-    lock.innerHTML = glyph(LOCK)
+    lock.innerHTML = glyph(LOCK, 14)
     lock.title = lay.locked ? '잠금을 푼다' : '잠근다 — 보이지만 편집이 막힌다'
     lock.addEventListener('click', () => { setLayerLocked(app, lay.id, !lay.locked); render(); hooks.onChange() })
-    tab.append(eye, lock)
-    return tab
+    // 지우기 — 확인 한 번(획 수를 알린다. web2-20 2-c 규약 그대로, 자리만 줄 안으로 왔다)
+    const del = document.createElement('button')
+    del.className = 'lctl ldel'
+    del.textContent = '×'
+    del.title = '이 종이를 지운다'
+    del.addEventListener('click', () => {
+      const cnt = app.doc.strokes.filter(x => x.layer === lay.id).length
+      openPopAt(del, p => {
+        const span = document.createElement('span')
+        span.textContent = `이 종이를 지운다 — 그 위의 획 ${cnt}개가 같이 간다(실행취소로 돌아온다). `
+        const yes = document.createElement('u')
+        yes.dataset.pick = 'yes'
+        yes.textContent = '지운다'
+        yes.addEventListener('click', () => { removeLayer(app, lay.id); closePop(); render(); hooks.onChange() })
+        const no = document.createElement('u')
+        no.dataset.pick = 'no'
+        no.textContent = '취소'
+        no.addEventListener('click', closePop)
+        p.append(span, yes, ' ', no)
+      })
+    })
+    row.append(eye, lock, del)
+    return row
   }
 
   render()

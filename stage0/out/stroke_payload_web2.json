@@ -6,9 +6,9 @@
   "seed": 20260826,
   "note": "press+tiltX+tiltY 세 배열(twist 없음 — 관측된 축만 싣는 규칙과 같음)"
  },
- "bytes_before": 183300,
- "bytes_after": 230571,
- "rawin_bytes_per_point": 12.31,
+ "bytes_before": 87961,
+ "bytes_after": 135024,
+ "rawin_bytes_per_point": 12.26,
  "quantization": {
   "press": "round(pressure×8191) — 오차 ≤ 6.10e-5 (Pro Pen 3 선언 8192단계와 같은 분해능)",
   "tilt": "정수 도(-90..90) — Pointer Events 명세가 long이라 무손실",
@@ -21,11 +21,11 @@
  "legacy_snapshot_sha256_12": "609f0f201ff7",
  "legacy_snapshot_note": "test/legacy_web2_10.ts parseBrnlLegacy 본문의 정규화 해시(주석 제거·공백 접기) — 스냅샷이 수정되면 재실행에서 이 값이 갈린다. b6980c9 원본과의 동일성은 2026-08-26 git show 정규화 비교 1회로 확인.",
  "strokes_per_quota": {
-  "per_stroke_bytes": 5764,
-  "decimal_5e6_bytes": 867,
-  "decimal_5e6_utf16": 434,
-  "binary_5mib_bytes": 910,
-  "binary_5mib_utf16": 455
+  "per_stroke_bytes": 3376,
+  "decimal_5e6_bytes": 1481,
+  "decimal_5e6_utf16": 741,
+  "binary_5mib_bytes": 1553,
+  "binary_5mib_utf16": 777
  },
  "strokes_per_quota_note": "localStorage 관용 «5MB»의 셈 축 둘(십진 5e6/이진 5MiB × 바이트/UTF-16 코드 단위)을 다 적었다(#28 — 어느 셈인지 실측 없음). ⚠ 전부 **이 밀도(획당 96점·press+tiltX+tiltY·twist 없음)의 값**이지 일반 상한이 아니다 — 획이 짧으면 획 수가 늘고, coalesced·twist가 raw·rawIn을 늘리면 준다(2차 [10]). .brnl은 ASCII라 문자 수 == 바이트 수.",
  "falsification": "rawIn을 빼면 bytes_after == bytes_before가 되어 아래 단언이 실패한다(이 파일의 마지막 expect)"

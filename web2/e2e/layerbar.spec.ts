@@ -1,10 +1,17 @@
 // web2-20 2부 — 종속 탭(겹)의 배선판.
 //   ① 카메라 닫히기 전 「+」 비활성 + 안내 ② 닫힌 뒤 얹힌다 ③ rect 기본값이 화면과
 //   같다(값으로) ④ 새 획이 활성 겹으로 ⑤ 겹 삭제 → 실행취소 → 획이 돌아온다
-//   ⑥ 종이를 바꾸면 종속 탭 줄이 바뀐다 ⑦ (state 몫은 layerops.test — 여기서는 배선)
-//   + **형태가 가른다**: 부모 탭(배타적)은 겹침 0 · 자식 탭(가산적)은 서로 겹친다(상자
-//     실측 — 이 UI의 유일한 오독 위험을 팔이 형태로 잰다. 지시 2부 ⚠).
+//   ⑥ 종이를 바꾸면 겹 목록이 바뀐다 ⑦ (state 몫은 layerops.test — 여기서는 배선)
+//   + **형태가 가른다**: 종이 탭(배타적)은 **탭이 여럿·겹침 0** · 겹(가산적)은 **요약
+//     하나에 수가 붙는다**(상자·수 실측 — 이 UI의 오독 위험을 팔이 형태로 잰다).
 // 값 정본은 layerops.test — 여기는 사람 경로(클릭·팝업)가 그 값에 닿는지다.
+//
+// 6' **web2-25 4부가 겹의 형태를 갈았다**(사람의 문면 「토글 표시가 쓰기 불편하다」):
+//   겹쳐 놓은 탭 더미 -> **접으면 요약 · 펼치면 세로 목록**(연필통과 같은 어법).
+//   이 파일의 팔이 지키던 요구(「+ 문 · rect 기본값 · 눈·자물쇠가 실제 상태를 민다 ·
+//   삭제와 실행취소 · 종이를 바꾸면 줄이 바뀐다」)는 **전부 그대로 유효**하고 **닿는
+//   자리만** 옮겼다(#74 3의 판별 물음). 갈린 것은 「자식 탭이 서로 겹친다」 하나이고,
+//   그것이 말하던 «가산적»은 이제 **요약의 수**가 말한다.
 
 import { test, expect, type Page } from '@playwright/test'
 
@@ -14,6 +21,14 @@ const settle = (page: Page) =>
 async function boot(page: Page) {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
+}
+
+/** 겹 목록을 편다 — 기본은 **접힘**(요약 하나)이다(web2-25 4-a) */
+async function openList(page: Page) {
+  if (await page.locator('#layer-list').count() === 0) {
+    await page.click('#layer-summary')
+    await settle(page)
+  }
 }
 
 async function drawLine(page: Page, ax: number, ay: number, bx: number, by: number) {
@@ -51,7 +66,9 @@ test('①② 얹기 문 — 닫히기 전 비활성+안내 · 닫힌 뒤 트레�
   expect(st.n).toBe(1)
   expect(st.active).not.toBeNull()
   expect(st.on).toBe(true)
-  await expect(page.locator('#layerbar .lpaper')).toHaveCount(1)
+  await expect(page.locator('#layer-summary .lsum-n')).toHaveText('1')
+  await openList(page)
+  await expect(page.locator('#layer-list .lrow')).toHaveCount(1)
 })
 
 test('③④ rect 기본값(값으로) · 새 획이 활성 겹으로 · 켬/끔·잠금 표식', async ({ page }) => {
@@ -75,16 +92,17 @@ test('③④ rect 기본값(값으로) · 새 획이 활성 겹으로 · 켬/끔
     return { layer: s.layer, active: a.activeLayer }
   })
   expect(last.layer).toBe(last.active)
-  // 켬/끔 — 눈 표식이 실제 상태를 민다(배선)
-  await page.click('#layerbar .lpaper .leye'); await settle(page)
+  // 켬/끔 — 눈 표식이 실제 상태를 민다(배선). 자리가 **목록의 줄 안**으로 옮겨 왔다.
+  await openList(page)
+  await page.click('#layer-list .lrow .leye'); await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.app.doc.layers[0].on)).toBe(false)
   expect(await page.evaluate(() => (window as any).__b2.app.activeLayer)).toBeNull()
-  await page.click('#layerbar .lpaper .leye'); await settle(page)
+  await page.click('#layer-list .lrow .leye'); await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.app.doc.layers[0].on)).toBe(true)
   // 잠금 — 배선(값은 layerops.test)
-  await page.click('#layerbar .lpaper .llock'); await settle(page)
+  await page.click('#layer-list .lrow .llock'); await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.app.doc.layers[0].locked)).toBe(true)
-  await page.click('#layerbar .lpaper .llock'); await settle(page)
+  await page.click('#layer-list .lrow .llock'); await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.app.doc.layers[0].locked)).toBe(false)
 })
 
@@ -114,23 +132,20 @@ test('롤 둘(web2-21 3-a) — 닫히기 전 비활성+안내 · 누르면 그 �
   })
   expect(st.n).toBe(2)
   expect(st.paper).toBe('yellow')
-  // 종속 탭 줄도 함께 민다(layerbar.sync 배선)
-  await expect(page.locator('#layerbar .lpaper')).toHaveCount(2)
+  // 겹 요약도 함께 민다(layerbar.sync 배선)
+  await expect(page.locator('#layer-summary .lsum-n')).toHaveText('2')
 })
 
-test('⑤ 겹 삭제(길게 눌러 확인 — 획 수 알림) → 실행취소로 돌아온다', async ({ page }) => {
+test('⑤ 겹 삭제(줄의 × → 확인 — 획 수 알림) → 실행취소로 돌아온다', async ({ page }) => {
   await boot(page)
   await closeCamera(page)
   await page.click('#layer-add')
   await page.click('#layer-pop .lpick[data-paper="tracing"]'); await settle(page)
   await drawLine(page, 300, 620, 500, 640)
   const before = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
-  const tab = page.locator('#layerbar .lpaper')
-  const bb = (await tab.boundingBox())!
-  await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2)
-  await page.mouse.down()
-  await page.waitForTimeout(700)
-  await page.mouse.up(); await settle(page)
+  // 지우기의 자리가 **목록의 줄 안**으로 옮겨 왔다(확인 한 번의 규약은 그대로 — 획 수를 알린다)
+  await openList(page)
+  await page.click('#layer-list .lrow .ldel'); await settle(page)
   await expect(page.locator('#layer-pop')).toContainText('획 1개')   // 확인 문구가 수를 알린다
   await page.click('#layer-pop u[data-pick="yes"]'); await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)).toBe(before - 1)
@@ -140,7 +155,7 @@ test('⑤ 겹 삭제(길게 눌러 확인 — 획 수 알림) → 실행취소�
   expect(await page.evaluate(() => (window as any).__b2.app.doc.layers.length)).toBe(1)
 })
 
-test('⑥ 종이를 바꾸면 종속 탭 줄이 바뀐다 · 형태 — 부모 겹침 0 ↔ 자식 겹침 >0', async ({ page }) => {
+test('⑥ 종이를 바꾸면 겹 목록이 바뀐다 · 형태 — 종이는 탭이 여럿 ↔ 겹은 요약 하나+수', async ({ page }) => {
   await boot(page)
   await closeCamera(page)
   // 겹 둘(트레이싱지·옐로) — 자식 탭의 겹침을 잰다
@@ -148,23 +163,24 @@ test('⑥ 종이를 바꾸면 종속 탭 줄이 바뀐다 · 형태 — 부모 �
   await page.click('#layer-pop .lpick[data-paper="tracing"]'); await settle(page)
   await page.click('#layer-add')
   await page.click('#layer-pop .lpick[data-paper="yellow"]'); await settle(page)
-  await expect(page.locator('#layerbar .lpaper')).toHaveCount(2)
-  // 형태(지시 2부 ⚠) — 자식 탭 상자는 서로 겹친다(가산적 더미) · 부모 탭은 겹침 0(배타적 줄)
-  const boxes = await page.evaluate(() => {
-    const of = (sel: string) => [...document.querySelectorAll(sel)].map(el => {
-      const r = el.getBoundingClientRect()
-      return { x: r.x, w: r.width }
-    })
-    return { child: of('#layerbar .lpaper'), parent: of('#paperbar .ptab[data-sheet]') }
-  })
-  expect(boxes.child[0]!.x + boxes.child[0]!.w).toBeGreaterThan(boxes.child[1]!.x)   // 겹친다
-  if (boxes.parent.length >= 2) {
-    expect(boxes.parent[0]!.x + boxes.parent[0]!.w).toBeLessThanOrEqual(boxes.parent[1]!.x + 0.5)
+  // **형태가 가른다**(web2-25 4-a로 갈렸다): 겹은 «가산적»이라 **요약 하나에 수**가 붙고,
+  // 종이는 «배타적»이라 **탭이 여럿이고 서로 안 겹친다**. 옛 판의 「자식 탭이 겹친다」가
+  // 말하던 것을 이 수가 이어받는다.
+  await expect(page.locator('#layer-summary')).toHaveCount(1)
+  await expect(page.locator('#layer-summary .lsum-n')).toHaveText('2')
+  await openList(page)
+  await expect(page.locator('#layer-list .lrow')).toHaveCount(2)
+  const parent = await page.evaluate(() =>
+    [...document.querySelectorAll('#paperbar .ptab[data-sheet]')].map(el => {
+      const r = el.getBoundingClientRect(); return { x: r.x, w: r.width }
+    }))
+  if (parent.length >= 2) {
+    expect(parent[0]!.x + parent[0]!.w).toBeLessThanOrEqual(parent[1]!.x + 0.5)
   }
-  // ⑥ 새 종이로 가면 줄이 비고(그 종이의 겹이 없다), 돌아오면 다시 둘이다
   await page.click('#paper-add')
   await page.keyboard.press('Escape'); await settle(page)
-  await expect(page.locator('#layerbar .lpaper')).toHaveCount(0)
+  await expect(page.locator('#layer-summary')).toHaveCount(0)
+  await expect(page.locator('#layer-list')).toHaveCount(0)
   await page.click('#paperbar .ptab[data-sheet="0"]'); await settle(page)
-  await expect(page.locator('#layerbar .lpaper')).toHaveCount(2)
+  await expect(page.locator('#layer-summary .lsum-n')).toHaveText('2')
 })

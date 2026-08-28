@@ -1,0 +1,81 @@
+{
+  "run": {
+    "note": "web2-25 5부 — 파일 크기의 구성 요소별 분해와 저장 좌표 반올림의 효과. 정본 명령: npx vitest run test/filesize25_measure.test.ts",
+    "date": "2026-08-28",
+    "fixture": "**실제 그림 하나**(앱 경로): 작도 8획(지면 사각+세로 넷) + 면 일괄 + 옐로 겹 1 + 옐로 손 획 100(원호+떨림 240점 · rng32 고정 시드 · **펜 입력**(press·tiltX·tiltY·twist) 실림) + 밑그림(옐로를 얹는 순간 구운 것). own3 깃발 켬.",
+    "conditions": {
+      "view_s": 1,
+      "method": "**열쇠 하나씩 빼고 직렬화해 그 차이를 그 몫으로 읽는다.** 합이 전체와 정확히 같지 않다(JSON 구분자·열쇠 이름의 겹침) — 잔차를 residual_bytes로 낸다.",
+      "round_handle": "serializeBrnl(d, {round:false})가 **web2-24까지의 저장 형식**이다 (배정밀도 그대로). 기본값 true가 지금 앱이 쓰는 형식이다."
+    },
+    "constants": {
+      "AUTOSAVE_LIMIT_BYTES": 5242880,
+      "RAW_SIMPLIFY_PX": 0.5
+    }
+  },
+  "doc": {
+    "strokes_total": 108,
+    "yellow_strokes": 100,
+    "faces": 3,
+    "underlay_segs": 8,
+    "raw_points_total": 10154,
+    "own3_strokes": 8
+  },
+  "components_utf8": {
+    "raw_points": 472665,
+    "raw_input": 152505,
+    "own3": 1079,
+    "underlays": 710,
+    "stroke_endpoints_and_meta": 15981,
+    "rest": 314,
+    "total_bytes": 642544,
+    "residual_bytes": -710,
+    "raw_input_tilt_twist": 90678,
+    "raw_input_press_only": 61827,
+    "pct": {
+      "raw_points": 73.6,
+      "raw_input": 23.7,
+      "own3": 0.2,
+      "underlays": 0.1,
+      "stroke_endpoints_and_meta": 2.5,
+      "rest": 0
+    },
+    "note": "5-a — **어디가 큰지 모르고 줄이면 헛수고다**(지시). raw_points = 솎은 점렬의 좌표 · raw_input = 그 점렬에 나란한 press/tiltX/tiltY/twist · own3 = 자립 3D · underlays = web2-23의 밑그림 · stroke_endpoints_and_meta = 끝점 둘+id+mat+layer · rest = 프레임·종이·겹·면·nextId 등 나머지."
+  },
+  "fixes_5b": {
+    "before_utf8": 642544,
+    "after_slim_only_utf8": 551866,
+    "after_slim_and_round_utf8": 300732,
+    "saved_by_slim_utf8": 90678,
+    "saved_by_round_utf8": 251134,
+    "saved_by_slim_pct": 14.1,
+    "saved_by_round_pct": 39.1,
+    "note": "5-b — **표가 지목한 둘만** 고쳤다. ㉠ **옐로 rawIn 은 press 만**(tilt·twist 를 안 싣는다 — 읽는 자리가 렌더에 없다: brushmap 의 rawIn.press 하나뿐이고 grep 으로 확인했다. ⚠ 지시의 「트레이싱지·바탕에서는 기울기가 표현에 쓰인다」는 **지금은 참이 아니다**(D-4) — 그래도 그쪽은 안 건드렸다: 지시의 ⛔이고, 솎지 않는 원본을 남겨 두는 것이 그 회차의 결정이었다). ㉡ **좌표 반올림**(아래 rounding)."
+  },
+  "rounding_5b": {
+    "before_utf8": 551866,
+    "after_utf8": 300732,
+    "saved_utf8": 251134,
+    "saved_pct": 45.5,
+    "before_utf16": 1285080,
+    "after_utf16": 601456,
+    "pct_of_autosave_before_utf8": 12.3,
+    "pct_of_autosave_after_utf8": 5.7,
+    "pct_of_autosave_after_utf16": 11.5,
+    "note": "5-b — **저장할 때만** 소수 1자리로 반올림한다(메모리의 값은 안 깎는다). 0.1px는 눈에 안 보이고 솎기 임계(0.5px · AS-C82)보다도 촘촘하다. ⚠ 문서 px 좌표에만 건다(획 a·b·raw · 밑그림 마디) — 3D(own3)·포즈·view.s·치수(mm)는 단위가 달라 0.1이 «안 보이는 대역»이 아니다. 그림이 안 바뀐다는 것은 e2e가 픽셀로 잰다."
+  },
+  "arithmetic_5c": {
+    "per_yellow_stroke_utf8_before": 6394.9,
+    "per_yellow_stroke_utf8_after": 2976.8,
+    "base_bytes_before": 3052,
+    "base_bytes_after": 3052,
+    "warn_at_strokes_before": 573,
+    "warn_at_strokes_after": 1231,
+    "fail_at_strokes_before": 819,
+    "fail_at_strokes_after": 1760,
+    "note": "⑤ — 5MB 가정(AS-C80) · 경고 70%. **utf8 셈**이다(앱의 자동 저장 게이지가 Blob 바이트라 그 셈이 정본이고, utf16 관례는 아래 pct에 병기한다 #28). 「획」은 이 픽스처의 옐로 손 획(240점 → 솎은 뒤 ~100점 · 펜 입력 실림)이다 — 짧은 획이면 더 많이 들어간다(외삽이지 상한이 아니다)."
+  },
+  "flags_explained": {
+    "constants/metric_defs 스냅샷 없음": "web2 라인 원장은 상수 스냅샷 등록부 밖(공통 형태)"
+  }
+}

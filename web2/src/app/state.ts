@@ -136,6 +136,13 @@ export interface App {
   /** **활성 겹**(web2-20 2부) — 새 획이 그리로 간다. null = 종이에 직접. 활성 종이의
    *  겹만 가리킬 수 있고 종이를 바꾸면 null로 돌아온다. 런타임 상태 — 저장 안 함. */
   activeLayer: number | null
+  /** **솔로**(web2-25 4-a) — 「그것만 보기」. Procreate 가 표시 체크박스를 길게 눌러 하는
+   *  것이고, 대안 하나만 놓고 보고 싶을 때 정확히 필요한 동작이다.
+   *  ⚠ **새 게이트를 안 만들었다**(#54): 솔로 = «나머지를 끈 것»이므로 `setLayerOn`을
+   *  그대로 부르고, 되돌릴 켬/끔을 `prev`에 기억한다. 그래서 「꺼진 겹이 3D에서 빠진다」
+   *  (web2-20 4-b)에 **자동으로 같이 걸린다** — 판단 근거는 `DECISIONS.md` D-W12 [6].
+   *  런타임 상태 — 저장 안 함(문서에 남는 것은 그 결과인 `on`뿐이다). */
+  solo: { layer: number; prevOn: [number, boolean][]; prevActive: number | null } | null
   /** 치수 스냅(web2-08 지시 4-7) — **기본 꺼짐**(옵션). 켜면 그리는 동안 실제 길이가
    *  `dimSnapStep`(mm)의 배수로 맞춰진다 — 표시만이 아니다. */
   dimSnap: boolean
@@ -239,6 +246,7 @@ export function createApp(W: number, H: number): App {
     fadePose: null,
     fadeView: null,
     activeSheet: DRAW_SHEET_ID,
+    solo: null,
     activeLayer: null,
     dimSnap: false,
     dimSnapStep: 50,
@@ -489,11 +497,13 @@ export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number,
     if (keep.length > 2) {
       s.raw = keep.map(i => ({ ...raw[i]! }))
       if (rawIn && Object.values(rawIn).every(arr => !arr || arr.length === raw.length)) {
-        const ri: RawInput = { press: keep.map(i => rawIn.press?.[i] ?? 0) }
-        if (rawIn.tiltX) ri.tiltX = keep.map(i => rawIn.tiltX![i]!)
-        if (rawIn.tiltY) ri.tiltY = keep.map(i => rawIn.tiltY![i]!)
-        if (rawIn.twist) ri.twist = keep.map(i => rawIn.twist![i]!)
-        s.rawIn = ri
+        // **옐로는 press만 싣는다**(web2-25 5-b) — 파일 크기의 표가 지목한 자리다.
+        // 근거(`filesize25_web2.json` components_utf8): 점렬 좌표 다음으로 큰 몫이 rawIn이고
+        // 그 안에서 tilt·twist가 press의 세 배다(축이 셋이므로). 그리고 **읽는 자리가
+        // 없다** — 렌더는 `brushmap.ts`의 `rawIn.press` 하나만 본다(grep으로 확인 · D-4).
+        // ⚠ **트레이싱지·바탕은 안 건드린다**(지시 5-b ⛔ — 아래 갈래 그대로): 그쪽 raw는
+        //   솎지도 않는 «질감·필압용 원본»이고, 사람이 그 자리를 나중에 쓰겠다고 정했다.
+        s.rawIn = { press: keep.map(i => rawIn.press?.[i] ?? 0) }
       }
     }
   } else if (raw && raw.length > 2) {
@@ -942,8 +952,45 @@ export function setLayerOn(app: App, id: number, on: boolean) {
   if (!lay || lay.on === on) return
   lay.on = on
   if (!on && app.activeLayer === id) app.activeLayer = null
+  // 손으로 눈을 건드리면 **솔로의 기억이 낡는다** — 되돌릴 자리가 더는 그 자리가 아니다.
+  // 되돌리지 않고 **기억만 버린다**(지금 화면이 사람이 만든 상태다).
+  app.solo = null
   recompute(app)
 }
+
+/** **솔로 — 그것만 보기**(web2-25 4-a). 같은 겹을 다시 부르면 돌아온다.
+ *
+ *  Procreate 가 표시 체크박스를 **길게 눌러** 하는 것이다. 「대안 하나만 놓고 보고 싶다」가
+ *  이 도구에서 늘 나는 국면이고(트레이싱지 여러 장 = 대안 여러 개) 그때 눈을 하나씩 끄는
+ *  것은 손이 많이 간다.
+ *
+ *  ⚠⚠ **새 게이트를 안 만들었다**(#54). 솔로는 «나머지를 끈 것»이므로 `setLayerOn`을
+ *  그대로 부르고 되돌릴 켬/끔을 기억한다 — 그래서 「꺼진 겹은 3D에서도 빠진다」
+ *  (web2-20 4-b)에 **자동으로 같이 걸린다**. 표시용 새 필드를 두면 그 규약과 갈릴 자리가
+ *  생기고, 갈리면 「솔로인데 3D에는 남아 있다」가 난다(D-W12 [6]).
+ *  ⚠ `id`가 null이면 **되돌리기만** 한다. 종이를 바꿀 때 `gotoSheet`가 그것을 부른다. */
+export function setSolo(app: App, id: number | null) {
+  const cur = app.solo
+  if (cur) {
+    for (const [lid, on] of cur.prevOn) setLayerOn(app, lid, on)   // (setLayerOn이 solo를 지운다)
+    app.activeLayer = cur.prevActive
+    app.solo = null
+    if (id === null || id === cur.layer) { recompute(app); return }   // 같은 것을 다시 = 끄기
+  }
+  if (id === null) return
+  const lay = app.doc.layers.find(l => l.id === id)
+  if (!lay) return
+  const stack = app.doc.layers.filter(l => l.sheet === lay.sheet)
+  const prevOn = stack.map(l => [l.id, l.on] as [number, boolean])
+  const prevActive = app.activeLayer
+  for (const l of stack) setLayerOn(app, l.id, l.id === id)
+  app.activeLayer = id
+  app.solo = { layer: id, prevOn, prevActive }
+  recompute(app)
+}
+
+/** 그 겹이 지금 솔로인가 — 화면과 팔의 **출처 하나** */
+export const isSolo = (app: App, id: number): boolean => app.solo?.layer === id
 
 /** 잠금 — 보이고 3D에 있고 점이 물리지만 편집만 막힌다. 활성 겹을 잠그면 활성이 풀린다. */
 export function setLayerLocked(app: App, id: number, locked: boolean) {
@@ -1042,6 +1089,8 @@ export function renameSheet(app: App, id: number, name: string) {
 export function gotoSheet(app: App, id: number) {
   const s = app.doc.sheets.find(x => x.id === id)
   if (!s) return
+  // 솔로는 **그 종이 안의 상태**다 — 떠나면 되돌린다(안 그러면 꺼 둔 겹이 남는다 · 4-a ⑤)
+  if (app.activeSheet !== id && app.solo) setSolo(app, null)
   if (app.activeSheet !== id) app.activeLayer = null   // 겹은 종이에 속한다(web2-20)
   app.activeSheet = id
   if (s.pose && s.view) {

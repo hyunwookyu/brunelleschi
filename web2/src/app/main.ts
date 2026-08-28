@@ -8,7 +8,7 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, type Draft } from './render2d'
 import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost } from './render3d'
-import { serializeBrnl, parseBrnl } from '../core/file'
+import { serializeBrnl, setSaveRoundForTest, parseBrnl } from '../core/file'
 import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice, confirmNear } from './notice'
 import { OSNAP_ORDER, osnap, osnapCost, resetOsnapCost, type OsnapHit } from '../core/osnap'
@@ -1292,6 +1292,9 @@ const diag = {
   },
   /** 굽기 호출 수 — 「다시 안 굽는다」를 **실패할 수 있게** 재는 값(2차 리뷰 [8]) */
   underlayBakes: () => underlayBakeCount(),
+  /** D-3 반증 손잡이(web2-25 5-b) — 저장 좌표 반올림을 끈다. 팔이 «반올림 있는 문서»와
+   *  «없는 문서»를 **같은 재그리기 경로로** 나란히 놓고 픽셀을 견준다(roundsave.spec). */
+  saveRound: (v: boolean) => setSaveRoundForTest(v),
   /** 셔터 번쩍임의 길이(3-a) — 팔이 상수를 직접 안 읽고 **앱이 쓰는 값**을 읽는다(D-C4) */
   shutterMs: () => C.SHUTTER_FLASH_MS,
   showHidden: (v?: boolean) => { if (v !== undefined) { app.showHidden = v; invalidate() } return app.showHidden },
