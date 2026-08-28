@@ -275,3 +275,84 @@ test('②-b ㉠ 여유 — 획 중심이 화면 밖이어도 입자는 안으로
   expect(edgePx, `획 중심이 화면 밖 ${1}px여도 입자가 안으로 들어온다(여유 0이면 0이 된다)`)
     .toBeGreaterThan(0)
 })
+
+// ── web2-26 5번 — **한 손가락으로 화면을 옮긴다** (배선 팔) ────────────────────
+// 단위 팔(`test/finger26.test.ts`)이 재는 것은 **뜻을 정하는 술어**(`fingerPans`)다.
+// 여기서는 그 술어가 실제 손짓 배선에 걸려 있는지를 본다 — 손가락 포인터를 직접 쏜다.
+//
+// D-2 재현: 눈높이 선언 단계(기하 없음)에서 한 손가락은 **아무 일도 안 했다**
+//   (`orbitBy`가 `lifted.size === 0`에서 첫 줄 반환). 그 상태를 ①이 그대로 잰다.
+// D-3 반증: ②에서 `penUsed`를 **내리면** 같은 손짓이 화면을 안 옮긴다(궤도로 돌아간다).
+
+async function fingerDrag(page: import('@playwright/test').Page, x0: number, y0: number, x1: number, y1: number) {
+  await page.evaluate(([x0, y0, x1, y1]) => {
+    const c = document.getElementById('ink')!   // input.ts가 배선하는 캔버스
+    const ev = (type: string, x: number, y: number, buttons: number) =>
+      c.dispatchEvent(new PointerEvent(type, {
+        pointerType: 'touch', pointerId: 91, isPrimary: true, buttons, pressure: buttons ? 0.5 : 0,
+        clientX: x, clientY: y, bubbles: true, cancelable: true,
+      }))
+    ev('pointerdown', x0 as number, y0 as number, 1)
+    for (let i = 1; i <= 6; i++) {
+      ev('pointermove', (x0 as number) + ((x1 as number) - (x0 as number)) * i / 6,
+        (y0 as number) + ((y1 as number) - (y0 as number)) * i / 6, 1)
+    }
+    ev('pointerup', x1 as number, y1 as number, 0)
+  }, [x0, y0, x1, y1] as const)
+  await settle(page)
+}
+
+const viewOf = (page: import('@playwright/test').Page) =>
+  page.evaluate(() => ({ ...(window as any).__b2.app.view }))
+const strokeCount = (page: import('@playwright/test').Page) =>
+  page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
+
+test('26-5 ① 눈높이 선언 단계 — 한 손가락 드래그가 화면을 옮긴다', async ({ page }) => {
+  await boot(page)
+  expect(await page.evaluate(() => (window as any).__b2.app.lift.lifted.size)).toBe(0)
+  const v0 = await viewOf(page)
+  await fingerDrag(page, 500, 400, 620, 470)
+  const v1 = await viewOf(page)
+  console.log(`[26-5 ①] 선언 단계 한 손가락 — ox ${v0.ox} → ${v1.ox} · oy ${v0.oy} → ${v1.oy}`)
+  expect(Math.abs(v1.ox - v0.ox)).toBeGreaterThan(50)
+  expect(Math.abs(v1.oy - v0.oy)).toBeGreaterThan(30)
+  expect(await strokeCount(page)).toBe(0)              // 손가락은 안 그린다
+})
+
+test('26-5 ② 펜을 쓴 세션 — 한 손가락이 이동이다 (+반증: penUsed를 내리면 궤도로 돌아간다)', async ({ page }) => {
+  await boot(page)
+  // 펜으로 카메라를 닫는다 — CDP 실입력(펜 신호가 실제로 온다)
+  const cdp = await page.context().newCDPSession(page)
+  const pen = { button: 'left' as const, clickCount: 1, pointerType: 'pen' as const }
+  for (const [ax, ay, bx, by] of [[280, 560, 700, 560], [500, 560, 800, 480]] as const) {
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: ax, y: ay, ...pen, force: 0.4 })
+    for (let i = 1; i <= 6; i++)
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: ax + (bx - ax) * i / 6, y: ay + (by - ay) * i / 6, ...pen, force: 0.4 })
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: bx, y: by, ...pen, force: 0 })
+  }
+  await cdp.detach()
+  await settle(page)
+  const st = await page.evaluate(() => ({
+    penUsed: (window as any).__b2.app.penUsed,
+    lifted: (window as any).__b2.app.lift.lifted.size,
+  }))
+  console.log(`[26-5 ②] penUsed ${st.penUsed} · lifted ${st.lifted}`)
+  expect(st.penUsed).toBe(true)
+  expect(st.lifted).toBeGreaterThan(0)                // 분해능 — 돌 것이 실제로 있다
+
+  const v0 = await viewOf(page)
+  const n0 = await strokeCount(page)
+  await fingerDrag(page, 400, 300, 520, 360)
+  const v1 = await viewOf(page)
+  console.log(`[26-5 ②] 펜 세션 한 손가락 — ox ${v0.ox} → ${v1.ox} · oy ${v0.oy} → ${v1.oy}`)
+  expect(Math.abs(v1.ox - v0.ox)).toBeGreaterThan(50)
+  expect(await strokeCount(page)).toBe(n0)            // 획을 안 만든다(게이트 첫 줄)
+
+  // 반증(D-3) — penUsed를 내리면 같은 손짓이 **화면을 안 옮긴다**(궤도로 간다)
+  await page.evaluate(() => { (window as any).__b2.app.penUsed = false })
+  const v2 = await viewOf(page)
+  await fingerDrag(page, 400, 300, 520, 360)
+  const v3 = await viewOf(page)
+  console.log(`[26-5 ②-반증] penUsed=false — ox ${v2.ox} → ${v3.ox}`)
+  expect(Math.abs(v3.ox - v2.ox)).toBeLessThan(1)
+})

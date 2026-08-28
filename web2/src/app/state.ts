@@ -200,6 +200,12 @@ export interface App {
    *  끄면(설정 — A-4 옛 경로 유지) 옛 사슬만 도는 종전 동작 그대로다. 이제 **켜짐이
    *  정본이고 꺼짐이 대체 경로**다 — e2e 팔 구성도 그렇게 갈려 있다(NOTES web2-14 1번 표). */
   own3d: boolean
+  /** **이 세션에서 펜이 한 번이라도 쓰였는가**(web2-26 5번) — 손가락의 뜻을 가른다.
+   *  펜을 든 사람에게 손가락은 **그리는 손이 아니라 종이를 미는 손**이다. 실기기가
+   *  「눈높이 선언 단계에서 화면 이동에 두 손가락을 요구한다」로 냈다(DEVICE-CHECK G9).
+   *  ⚠ **세션 한정 런타임 값이다** — 저장하지 않는다(문서의 성질이 아니다). 한 번 참이면
+   *  세션 안에서 안 내린다: 펜을 잠깐 내려놓았다고 손가락의 뜻이 바뀌면 그것이 더 헷갈린다. */
+  penUsed: boolean
   /** **옐로 머무름 직선화의 임계 시간 ms**(web2-26 4번 — 실기기 「조금 길다」 · D6).
    *  기본 `C.HOLD_MS`이고 사람이 `C.HOLD_MS_MIN`~`C.HOLD_MS_MAX`에서 고친다.
    *  ⚠ **문서가 아니라 기기 설정이다**(localStorage) — 손의 성질이지 그림의 성질이 아니다
@@ -268,6 +274,7 @@ export function createApp(W: number, H: number): App {
     strayCount: 0,
     own3d: true,   // 기본 켜짐(web2-14 1번 — 사람 판정). 끄는 길은 설정 + localStorage 'off'.
     holdMs: C.HOLD_MS,
+    penUsed: false,
     lastCamSig: null,
     touchStats: emptyTouchStats(),
     touchLast: null,
@@ -1192,6 +1199,21 @@ function rotateAroundPivot(app: App, axis: V3, angle: number, pivot: V3) {
 /** **궤도** — 화면 이동량만큼 돈다. 세로는 세계 수직축, 가로는 카메라 오른쪽 축.
  *  입력(마우스 중버튼·손가락 하나)과 시험이 **같은 함수**를 부른다 — 갈리면 시험이
  *  앱을 안 재게 된다(`draft.ts`·`classifyNext`와 같은 이유). */
+/** **한 손가락이 화면을 미는가**(web2-26 5번) — 갈래 둘의 **출처 하나**다(#54).
+ *
+ *  ① 이 세션에서 **펜이 쓰였으면** 손가락은 이동이다(지시의 넓은 규칙).
+ *  ② 펜을 안 썼어도 **돌 것이 없으면**(`lifted` 비어 있음) 이동이다 — 눈높이 선언
+ *     단계가 그 자리다: `orbitBy`가 첫 줄에서 반환하므로 한 손가락이 **아무것도 안 한다**.
+ *     궤도를 뺏는 것이 아니라 **비어 있던 자리를 채우는 것**이라 잃는 동작이 없다.
+ *
+ *  ⚠ **D-4 — 지시의 「현행(한 손가락 그리기, 두 손가락 이동)」은 이 코드가 아니다.**
+ *  손가락은 여기서 **한 번도 그린 적이 없다**(`pointerdown`의 touch 갈래가 draft 앞에서
+ *  반환한다) — 현행은 「한 손가락 궤도 · 두 손가락 팬+줌」이다. 지시의 명령문은
+ *  「펜을 안 썼으면 **현행 유지**」이므로 그대로 따랐다: 손가락 그리기를 새로 만들면
+ *  터치만 쓰는 사람에게서 **궤도를 통째로 뺏는다**(두 손가락은 팬+줌이다). */
+export const fingerPans = (app: Pick<App, 'penUsed' | 'lift'>): boolean =>
+  app.penUsed || app.lift.lifted.size === 0
+
 export function orbitBy(app: App, dx: number, dy: number) {
   if (app.lift.lifted.size === 0) return // 돌 것이 없다 — **소실점 개수가 아니라 기하의 유무다**
   const pivot = orbitPivot(app)

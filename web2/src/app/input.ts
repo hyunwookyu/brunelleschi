@@ -1,10 +1,12 @@
-// 입력 배정 — 펜: 그리기 · 손가락 1개: 궤도 · 손가락 2개: 팬+줌 · 마우스: 데스크톱 확인용.
+// 입력 배정 — 펜: 그리기 · 손가락 1개: **궤도 또는 이동** · 손가락 2개: 팬+줌 · 마우스: 데스크톱 확인용.
+// ⚠ 손가락 1개의 뜻은 `state.fingerPans`가 정한다(web2-26 5번): 이 세션에서 펜이 한 번이라도
+//    쓰였거나 아직 돌 것이 없으면 **이동**, 아니면 종전대로 궤도. 손가락은 안 그린다(종전 그대로).
 // 팜 리젝션: 펜이 닿아 있는 동안 터치를 무시한다(잉크·카메라 양쪽).
 // 데스크톱 선례(SketchUp): 중버튼 궤도, 우버튼 팬, 휠 줌.
 
 import type { App } from './state'
 import {
-  orbitPivot, orbitBy, dollyBy, panBy, setPose, beginErase, eraseAt, endErase,
+  orbitPivot, orbitBy, dollyBy, panBy, setPose, beginErase, eraseAt, endErase, fingerPans,
   screenToDoc, isEraser, yellowActive, toggleFaceAt, facePreview, excludeCandidateAt, beginNavHold, endNavHold,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
@@ -357,7 +359,7 @@ export function initInput(
       beginNavHold(app)   // 제스처 동안 감쇠 판정 동결(web2-14 3번)
       return
     }
-    if (e.pointerType === 'pen') penDown = true
+    if (e.pointerType === 'pen') { penDown = true; app.penUsed = true }
     // **매 접촉에서 다시 정한다** — 신호가 없으면 false다. 뗌이 유실돼도 다음 접촉이
     // 스스로 바로잡으므로 «되돌리기»가 없다(state.ts `tipErase` 주석이 정본).
     app.tipErase = isTipErase(e)
@@ -398,6 +400,9 @@ export function initInput(
   })
 
   canvas.addEventListener('pointermove', (e) => {
+    // 펜이 **닿지 않고 지나가는** 것도 「펜을 든 세션」의 신호다(web2-26 5번) — 호버가
+    // 펜의 첫 신호인 기기가 있다. 손가락의 뜻이 첫 획을 기다리지 않게 한다.
+    if (e.pointerType === 'pen') app.penUsed = true
     if (rectDrag) { dragRect(e); return }
     if (e.pointerType === 'touch') {
       if (penDown) return
@@ -407,7 +412,13 @@ export function initInput(
       const pts = [...touches.values()]
       if (pts.length === 1) {
         const p = pts[0]!
-        if (lastTouchMid) orbit(p.x - lastTouchMid.x, p.y - lastTouchMid.y)
+        // **한 손가락의 뜻**(web2-26 5번) — 판정의 출처는 `fingerPans` 하나다(#54).
+        // 펜을 든 세션이거나 돌 것이 없으면 **이동**, 아니면 종전대로 궤도.
+        if (lastTouchMid) {
+          const dx = p.x - lastTouchMid.x, dy = p.y - lastTouchMid.y
+          if (fingerPans(app)) pan(dx, dy)
+          else orbit(dx, dy)
+        }
         lastTouchMid = p
       } else if (pts.length >= 2) {
         const mid = pt((pts[0]!.x + pts[1]!.x) / 2, (pts[0]!.y + pts[1]!.y) / 2)
