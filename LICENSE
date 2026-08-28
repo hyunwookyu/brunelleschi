@@ -22,6 +22,13 @@ SOFTWARE.
 
 ---
 
+Deployment note (2026-08-28, web2-25 6-d): the app below is publicly deployed, so
+the exceptions in this file are live obligations, not hypotheticals. In particular
+the CC BY-SA 3.0 weights are shipped inside the deployed bundle. Nothing in the
+app was changed for this round -- this note records the fact.
+
+---
+
 Exception: web2/src/core/digitnet_weights.json (handwritten-digit model weights)
 is licensed under CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/),
 not MIT. The weights were trained by this repository (web2/tools/train_digitnet.py,
@@ -43,8 +50,15 @@ into the deployed web2 app for the paper-texture stroke renderer (web2-11 §3
 MIT text as above and is included in node_modules/p5.brush/LICENSE.md; this
 notice preserves the required copyright and permission notice for distribution.
 
-Third-party: icon path data in web2/index.html and web2/src/app/paperbar.ts
-copied from Phosphor Icons (@phosphor-icons/core, light weight) is MIT licensed,
-Copyright (c) 2023 Phosphor Icons (https://github.com/phosphor-icons/core);
-the package's LICENSE file was read at import (web2-19) and its full text is
-the same MIT text as above.
+Third-party: icon path data in web2/index.html, web2/src/app/paperbar.ts and
+web2/src/app/layerbar.ts copied from Phosphor Icons (@phosphor-icons/core, light
+weight) is MIT licensed, Copyright (c) 2023 Phosphor Icons
+(https://github.com/phosphor-icons/core); the package's LICENSE file was read at
+import (web2-19) and its full text is the same MIT text as above. No Material
+Design Icons (mdi) path is bundled -- the set-square icon considered in
+docs/DRAFTING-MAP.md was dropped (docs/instrument-icons.md), so the only icon
+source in the bundle is Phosphor plus this repository's own drawings.
+
+Third-party: three.js (MIT, Copyright (c) 2010-2026 three.js authors), Vite (MIT),
+TypeScript (Apache-2.0), vitest (MIT) and Playwright (Apache-2.0) are used; only
+three.js ships in the deployed bundle.
