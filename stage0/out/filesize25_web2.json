@@ -53,15 +53,18 @@
     "note": "5-b — **표가 지목한 둘만** 고쳤다. ㉠ **옐로 rawIn 은 press 만**(tilt·twist 를 안 싣는다 — 읽는 자리가 렌더에 없다: brushmap 의 rawIn.press 하나뿐이고 grep 으로 확인했다. ⚠ 지시의 「트레이싱지·바탕에서는 기울기가 표현에 쓰인다」는 **지금은 참이 아니다**(D-4) — 그래도 그쪽은 안 건드렸다: 지시의 ⛔이고, 솎지 않는 원본을 남겨 두는 것이 그 회차의 결정이었다). ㉡ **좌표 반올림**(아래 rounding)."
   },
   "rounding_5b": {
+    "denominator_note": "before_utf8 = 옐로 rawIn 솎기까지 한 판(㉠ 적용·반올림 전). fixes_5b.saved_by_round_pct 는 «전(수리 전)» 대비이고 이 saved_pct 는 그 판 대비다.",
     "before_utf8": 551866,
     "after_utf8": 300732,
     "saved_utf8": 251134,
     "saved_pct": 45.5,
-    "before_utf16": 1285080,
+    "before_utf16": 1103724,
     "after_utf16": 601456,
-    "pct_of_autosave_before_utf8": 12.3,
+    "pct_of_autosave_before_utf8": 10.5,
     "pct_of_autosave_after_utf8": 5.7,
     "pct_of_autosave_after_utf16": 11.5,
+    "pct_of_autosave_original_utf8": 12.3,
+    "original_utf16": 1285080,
     "note": "5-b — **저장할 때만** 소수 1자리로 반올림한다(메모리의 값은 안 깎는다). 0.1px는 눈에 안 보이고 솎기 임계(0.5px · AS-C82)보다도 촘촘하다. ⚠ 문서 px 좌표에만 건다(획 a·b·raw · 밑그림 마디) — 3D(own3)·포즈·view.s·치수(mm)는 단위가 달라 0.1이 «안 보이는 대역»이 아니다. 그림이 안 바뀐다는 것은 e2e가 픽셀로 잰다."
   },
   "arithmetic_5c": {

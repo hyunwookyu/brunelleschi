@@ -143,7 +143,9 @@ describe('web2-25 5부 — 파일 크기 원장(filesize25)', () => {
     const residual = fullBytes - sum
 
     // ── 5-b: 고친 뒤 — ㉠ 옐로 rawIn press 만 ㉡ 좌표 반올림(저장할 때만) ─────────
-    const slimOnly = u8(ser(app.doc, false))      // tilt·twist 뺀 판(반올림 전)
+    const slimSer = ser(app.doc, false)           // tilt·twist 뺀 판(반올림 전)
+    const slimOnly = u8(slimSer)
+    const u16Slim = slimSer.length * 2
     const rounded = ser(app.doc, true)            // **지금 앱이 쓰는 형식**(둘 다 적용)
     const roundedBytes = u8(rounded)
     const gainSlim = fullBytes - slimOnly
@@ -232,15 +234,22 @@ describe('web2-25 5부 — 파일 크기 원장(filesize25)', () => {
           + '남겨 두는 것이 그 회차의 결정이었다). ㉡ **좌표 반올림**(아래 rounding).',
       },
       rounding_5b: {
+        // ⚠ **분모가 위 fixes_5b 와 다르다**: 여기 before 는 «㉠(rawIn 솎기)까지 한 판»이고
+        //   fixes_5b 의 saved_by_round_pct 는 «전(642,544B)» 대비다. 두 수가 다른 것은
+        //   같은 값의 두 셈이다 — 어느 쪽인지 헷갈리지 않게 분모를 필드로 낸다.
+        denominator_note: 'before_utf8 = 옐로 rawIn 솎기까지 한 판(㉠ 적용·반올림 전). '
+          + 'fixes_5b.saved_by_round_pct 는 «전(수리 전)» 대비이고 이 saved_pct 는 그 판 대비다.',
         before_utf8: slimOnly,
         after_utf8: roundedBytes,
         saved_utf8: gainRound,
         saved_pct: Math.round((gainRound / slimOnly) * 1000) / 10,
-        before_utf16: full.length * 2,
+        before_utf16: u16Slim,
         after_utf16: rounded.length * 2,
-        pct_of_autosave_before_utf8: Math.round((fullBytes / limit) * 1000) / 10,
+        pct_of_autosave_before_utf8: Math.round((slimOnly / limit) * 1000) / 10,
         pct_of_autosave_after_utf8: Math.round((roundedBytes / limit) * 1000) / 10,
         pct_of_autosave_after_utf16: Math.round((rounded.length * 2 / limit) * 1000) / 10,
+        pct_of_autosave_original_utf8: Math.round((fullBytes / limit) * 1000) / 10,
+        original_utf16: full.length * 2,
         note: '5-b — **저장할 때만** 소수 1자리로 반올림한다(메모리의 값은 안 깎는다). '
           + '0.1px는 눈에 안 보이고 솎기 임계(0.5px · AS-C82)보다도 촘촘하다. ⚠ 문서 px '
           + '좌표에만 건다(획 a·b·raw · 밑그림 마디) — 3D(own3)·포즈·view.s·치수(mm)는 단위가 '
@@ -278,5 +287,11 @@ describe('web2-25 5부 — 파일 크기 원장(filesize25)', () => {
     expect(arith.warn_at_strokes_after).toBeGreaterThan(arith.warn_at_strokes_before)
     // 상한은 상수에서 읽는다(D-C4)
     expect(C.AUTOSAVE_LIMIT_BYTES).toBe(5 * 1024 * 1024)
+    // 두 셈이 **같은 값의 두 표현**임을 하네스가 단언한다(분모만 다르다)
+    expect(ledger.fixes_5b.saved_by_round_utf8).toBe(ledger.rounding_5b.saved_utf8)
+    expect(ledger.rounding_5b.before_utf8 - ledger.rounding_5b.after_utf8)
+      .toBe(ledger.rounding_5b.saved_utf8)
+    expect(ledger.fixes_5b.before_utf8 - ledger.fixes_5b.after_slim_only_utf8)
+      .toBe(ledger.fixes_5b.saved_by_slim_utf8)
   })
 })
