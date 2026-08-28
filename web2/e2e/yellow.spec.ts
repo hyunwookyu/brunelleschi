@@ -84,3 +84,38 @@ test('⑤ 옐로 2D — 그 종이·그 시점에서만 보인다 · 떠나면 �
   await page.click('#btn-draw-view'); await settle(page)
   expect(await countPixels(page, 'layerc', ...box) + await countPixels(page, 'brushc', ...box)).toBeGreaterThan(0)
 })
+
+test('2부 — 후행 확정: 머무르면 반듯(수평 붙음·표식·raw 소멸) · 안 머무르면 자유 그대로', async ({ page }) => {
+  await page.goto('/')
+  await page.waitForFunction(() => (window as any).__b2)
+  await drawLine(page, 280, 560, 700, 560)
+  await drawLine(page, 500, 560, 800, 480)
+  await page.click('#btn-roll-yellow'); await settle(page)
+  // ── 머무름: (300,300) → (520,310) = 2.6°(대역 안) — 끝에서 800ms 머무르고 뗀다 ──
+  await page.mouse.move(300, 300)
+  await page.mouse.down()
+  for (let i = 1; i <= 8; i++) await page.mouse.move(300 + i * 27.5, 300 + i * 1.25)
+  await page.waitForTimeout(800)                       // C.HOLD_MS(600) + 타이머 여유
+  // 표식 — 반듯해진 순간 끝점의 무채색 고리(#ink · 순간 피드백)
+  const ring = await countPixels(page, 'ink', 508, 288, 532, 312)
+  expect(ring).toBeGreaterThan(0)
+  await page.mouse.up(); await settle(page)
+  const held = await page.evaluate(() => {
+    const a = (window as any).__b2.app
+    const s = a.doc.strokes[a.doc.strokes.length - 1]
+    return { a: s.a, b: s.b, raw: s.raw?.length ?? 0 }
+  })
+  expect(held.b.y).toBe(held.a.y)                      // 정확한 수평 — 반듯해졌다
+  expect(held.raw).toBe(0)                             // 직선화 — 손떨림(raw)이 안 남는다
+  // ── 대조: 같은 몸짓을 머무름 없이 — 자유 각도 그대로 ──
+  await page.mouse.move(300, 400)
+  await page.mouse.down()
+  for (let i = 1; i <= 8; i++) await page.mouse.move(300 + i * 27.5, 400 + i * 1.25)
+  await page.mouse.up(); await settle(page)
+  const free = await page.evaluate(() => {
+    const a = (window as any).__b2.app
+    const s = a.doc.strokes[a.doc.strokes.length - 1]
+    return { a: s.a, b: s.b }
+  })
+  expect(free.b.y).toBeGreaterThan(free.a.y + 5)       // 처짐이 그대로다(≈10px)
+})

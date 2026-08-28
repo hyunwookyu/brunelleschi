@@ -42,6 +42,9 @@ export interface Draft {
   /** 점별 필압(양자화 0..C.PRESS_Q · raw와 나란) — 펜만. 미리보기 브러시가 읽는다.
    *  양자화 식은 확정(quantIn)과 같다 — 달라지면 뗄 때 입자가 튄다(2번 게이트). */
   press?: number[]
+  /** **머무름이 성립했다**(web2-22 2부 — 옐로 전용): 미리보기가 반듯해진 상태.
+   *  표식(무채색·순간 피드백)이 이것을 읽고, 확정은 이 상태의 end를 그대로 받는다. */
+  held?: boolean
 }
 
 /** **«그 소실점이 화면 안인가»** — 지평선 자동 숨김(web2-17 5부)과 ✕ 표식 컬링이
@@ -484,6 +487,16 @@ export function draw2d(
       ctx.setLineDash([])
     }
     // 축 파선 안내 — 축에 붙었을 때만. 'vp'는 축이 아니다(자유 방향 — 예고는 위 파선 ✕).
+    // 후행 확정 표식(web2-22 2부) — 머무름이 성립해 반듯해진 순간, 끝점에 무채색 고리
+    // 하나(순간 피드백 대역 — 색을 안 쓴다. 오스냅 기호와 다른 형태: 이건 «곧 이렇게
+    // 확정된다»의 예고다). 손에 보여야 한다(지시 2-a 문면).
+    if (draft.held) {
+      ctx.strokeStyle = COL.construction
+      ctx.lineWidth = 1.2 * is
+      ctx.beginPath()
+      ctx.arc(draft.end.x, draft.end.y, 7 * is, 0, Math.PI * 2)
+      ctx.stroke()
+    }
     if (draft.label && draft.label !== 'vp') axisGuide(ctx, draft, is)
     if (draft.startSnap) mark(ctx, draft.startSnap, is)
     if (draft.endSnap) mark(ctx, draft.endSnap, is)

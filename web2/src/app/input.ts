@@ -12,6 +12,7 @@ import { updateExtDwell } from '../core/extacq'
 import { isLevel, pitchSnaps } from '../core/level'
 import type { LevelHooks } from './autolevel'
 import { resolveStart, resolveEnd, resolveCommit, isStray } from '../core/draft'
+import { newHoldGate, tickHold, yellowEnd } from '../core/hold'
 import { filmSplit } from './filmlayer'
 import { C } from '../core/constants'
 import { cubeGeom, cubeHit, poseForElem } from '../core/viewcube'
@@ -138,14 +139,17 @@ export function initInput(
     capStats.points = draft.raw.length
     const cur = toPt(e)
     // 옐로(web2-22 1부) — 오스냅·축 스냅·소실점 예고 전부 우회: 자유 방향 그대로.
-    // (2부의 후행 확정(머무름 → 직선화)이 이 갈래에 붙는다.)
+    // 2부(후행 확정): 끝에서 머무르면(tickHold — 살아 있는 시각) 미리보기가 반듯해진다
+    // (yellowEnd — 직선화 + 화면 수평·수직 붙임). 그 상태로 떼면 그대로 확정(원칙 d).
     if (yellowActive(app)) {
-      draft.end = cur
-      draft.label = null
-      draft.endSnap = null
-      draft.lenMm = null
-      draft.vp = undefined
-      cb.onDraftChange(draft)
+      applyYellowDraft(cur, performance.now())
+      // 포인터가 멈추면 이벤트도 멈춘다 — 타이머가 HOLD_MS 뒤에 같은 판정을 한 번 더
+      // 돌린다(QuickShape의 «누르고 있으면»은 이벤트 없이 온다).
+      if (holdTimer !== undefined) clearTimeout(holdTimer)
+      holdTimer = window.setTimeout(() => {
+        holdTimer = undefined
+        if (draft && yellowActive(app)) applyYellowDraft(cur, performance.now())
+      }, C.HOLD_MS + 16)
       return
     }
     tickExt(cur)
@@ -163,6 +167,22 @@ export function initInput(
 
   /** 필압 양자화 — quantIn과 같은 식(0..C.PRESS_Q 정수). 둘이 갈리면 뗄 때 입자가 튄다. */
   const quantPress = (p: number): number => Math.round(Math.min(1, Math.max(0, p)) * C.PRESS_Q)
+
+  // ── 후행 확정(web2-22 2부 — 옐로 전용): 머무름 게이트 + 반듯 미리보기 ──────────
+  let holdGate = newHoldGate()
+  let holdTimer: number | undefined
+  function applyYellowDraft(cur: Pt, now: number) {
+    if (!draft) return
+    const held = tickHold(holdGate, cur, now)
+    const y = yellowEnd(draft.start, cur, held)
+    draft.end = y.end
+    draft.held = held
+    draft.label = null
+    draft.endSnap = null
+    draft.lenMm = null
+    draft.vp = undefined
+    cb.onDraftChange(draft)
+  }
 
   // ── 활성 겹 rect 끌기(web2-20 2-b) ────────────────────────────────────────
   let rectDrag: { id: number; edges: { l: boolean; r: boolean; t: boolean; b: boolean }; last: Pt } | null = null
@@ -206,6 +226,7 @@ export function initInput(
   function beginDraft(p: Pt, e: PointerEvent) {
     samples = [sampleOf(e)]
     capStats = { pointerType: e.pointerType, events: 1, points: 1, extra: 0 }
+    holdGate = newHoldGate()   // 획마다 새로 — 지난 획의 머무름이 안 샌다(2부)
     // 옐로(web2-22 1부) — 자가 치워졌다: 시작점 오스냅 없음(자유의 정의 — 지시 1-c)
     const oh = yellowActive(app) ? null : resolveStart(app.lift, app.pose, p, osnapSet(), app.extAcq.acquired)
     draft = {
@@ -263,11 +284,15 @@ export function initInput(
       const bboxDiagPx = d.raw.length >= 2 ? Math.hypot(x1 - x0, y1 - y0) * app.view.s : 0
       if (isStray(endDistPx, bboxDiagPx)) { app.strayCount++; return }
     }
-    // 옐로(web2-22 1부) — 소실점 찍기가 없다(1-a 표): 탭은 잡음이고 획은 그대로 확정
+    // 옐로(web2-22 1부) — 소실점 찍기가 없다(1-a 표): 탭은 잡음이고 획은 그대로 확정.
+    // 2부: 머무름이 성립한 채 뗐으면 **직선화** — raw를 [a,b]로 줄인다(§1 「손떨림은
+    // 버린다」의 명시판: 반듯해진 획의 raw 곡선이 남으면 표현·23 밑그림이 그 곡선을
+    // 되살린다). 반듯 미리보기의 end가 그대로 확정된다(원칙 d — 2-b 순서).
+    if (holdTimer !== undefined) { clearTimeout(holdTimer); holdTimer = undefined }
     if (yellowActive(app)) {
       if (Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) * app.view.s <= C.TAP_MAX_PX) return
       app.lastSnap = { start: null, end: null }
-      cb.onCommit(d.start, d.end, d.raw, press, rawIn)
+      cb.onCommit(d.start, d.end, d.held ? [d.start, d.end] : d.raw, press, d.held ? undefined : rawIn)
       return
     }
     const c = resolveCommit(app.lift.an, d.start, d.end, app.osnap.radius / app.view.s)
