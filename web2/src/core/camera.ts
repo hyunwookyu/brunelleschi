@@ -401,6 +401,13 @@ export function pointOnGround(an: Analysis, pose: CamPose, s: Pt): V3 | null {
   return add3(pose.p, mul3(r.d, u))
 }
 
+/** **근평면 — 카메라 앞 잘라내기의 단 하나의 값**(#54).
+ *
+ *  카메라 좌표계에서 `z <= NEAR_Z` 인 쪽이 「앞」이다. 선분(`projectSeg`)과 다각형
+ *  (`projectPolyNear`)이 **같은 값을 읽는다** — 출처가 둘이 되면 잘라낸 자리가 어긋나
+ *  선은 살고 면은 죽는(또는 그 반대) 국면이 난다. */
+export const NEAR_Z = -1e-3
+
 /** 세계 선분 → 화면 선분. **카메라 앞으로 잘라낸다** — 한쪽이 뒤로 넘어가도
  *  그 앞부분은 보여야 한다(격자처럼 발밑에서 지평선까지 뻗는 선). 전부 뒤면 null. */
 export function projectSeg(an: Analysis, pose: CamPose, A: V3, B: V3): [Pt, Pt] | null {
@@ -408,7 +415,7 @@ export function projectSeg(an: Analysis, pose: CamPose, A: V3, B: V3): [Pt, Pt] 
   const q = quatConj(pose.q)
   let a = quatRotate(q, sub3(A, pose.p))
   let b = quatRotate(q, sub3(B, pose.p))
-  const NEAR = -1e-3
+  const NEAR = NEAR_Z
   if (a.z > NEAR && b.z > NEAR) return null
   if (a.z > NEAR || b.z > NEAR) {
     const t = (NEAR - a.z) / (b.z - a.z)
@@ -417,6 +424,42 @@ export function projectSeg(an: Analysis, pose: CamPose, A: V3, B: V3): [Pt, Pt] 
   }
   const to = (c: V3) => pt(an.principal!.x + an.f! * c.x / -c.z, an.principal!.y - an.f! * c.y / -c.z)
   return [to(a), to(b)]
+}
+
+/** 세계 **다각형** → 화면 다각형. **근평면에서 잘라낸 뒤 사영한다**(web2-25 1부).
+ *
+ *  `projectSeg`가 선분에 하는 일의 다각형판이다 — 새 개념이 아니라 **이미 있는 규약의
+ *  확장**이다(`NEAR_Z` 하나를 같이 읽는다). 한 평면에 대한 **Sutherland–Hodgman** 한 번:
+ *  볼록 반공간과의 교집합이므로 잘린 결과도 **같은 평면 위의 다각형**이고 사영이 정확하다.
+ *
+ *  이것이 없으면 꼭짓점 하나가 카메라 뒤로 넘어간 면이 **통째로 빠진다** — 실내 시점에서는
+ *  좌우 벽과 바닥이 거의 언제나 그 국면이라 「어떤 벽은 가려지고 어떤 벽은 안 가려진다」가
+ *  난다(web2-23이 남긴 알려진 한계).
+ *
+ *  ⚠ **오목 다각형이면 결과에 겹친 변(clip 경계를 따라 오가는 «다리»)이 생긴다.**
+ *  같은 자리를 반대 방향으로 두 번 지나므로 **짝홀(even–odd) 포함 판정의 교차 수가 짝으로
+ *  늘고 판정이 안 바뀐다** — `inPoly`가 짝홀이므로 가림 판정에 영향이 없다.
+ *  (`test/make2d.test.ts` ⑥이 오목 방을 세워 그 사실을 값으로 낸다.)
+ *
+ *  **전부 뒤면(또는 남은 꼭짓점이 셋 미만이면) null** — 그 고리는 화면에 없다. */
+export function projectPolyNear(an: Analysis, pose: CamPose, poly3: V3[]): Pt[] | null {
+  if (!an.principal || an.f === null) return null
+  if (poly3.length < 3) return null
+  const q = quatConj(pose.q)
+  const cam = poly3.map(P => quatRotate(q, sub3(P, pose.p)))
+  const out: V3[] = []
+  for (let i = 0; i < cam.length; i++) {
+    const a = cam[i]!, b = cam[(i + 1) % cam.length]!
+    const ain = a.z <= NEAR_Z, bin = b.z <= NEAR_Z
+    if (ain) out.push(a)
+    if (ain !== bin) {
+      const t = (NEAR_Z - a.z) / (b.z - a.z)
+      out.push(v3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, NEAR_Z))
+    }
+  }
+  if (out.length < 3) return null
+  const to = (c: V3) => pt(an.principal!.x + an.f! * c.x / -c.z, an.principal!.y - an.f! * c.y / -c.z)
+  return out.map(to)
 }
 
 /** **그 차수의 정규직교 프레임** — 세 축이고 서로 직교한다(web2-03 지시 1-d).

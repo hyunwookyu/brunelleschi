@@ -1,5 +1,5 @@
 {
-  "n_flags": 5595,
+  "n_flags": 5603,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -2442,6 +2442,46 @@
       "path": "cost22_web2_dpr2_before.json:grid.800.sync_strokes_ms.median",
       "val": 1,
       "flag": "통계 대표값이 정확히 1 → 항등/자기참조 확인"
+    },
+    {
+      "path": "cost23_web2.json:indoor_near_clip.rows[0].dropped",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "cost23_web2.json:indoor_near_clip.rows[0].faces_used_noclip",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "cost23_web2.json:indoor_near_clip.rows[1].dropped",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "cost23_web2.json:indoor_near_clip.rows[1].faces_used_noclip",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "cost23_web2.json:indoor_near_clip.rows[2].dropped",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "cost23_web2.json:indoor_near_clip.rows[2].faces_used_noclip",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "cost23_web2.json:indoor_near_clip.rows[3].dropped",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "cost23_web2.json:indoor_near_clip.rows[3].faces_used_noclip",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "cube_frame.json:thresholds.console_errors_max",
@@ -28141,7 +28181,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 446,
+      "files_scanned": 448,
       "exts_declared": [
         ".md",
         ".py",
@@ -28165,14 +28205,14 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 446,
+      "files_scanned": 448,
       "exts_declared": [
         ".md",
         ".py",
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 35,
+        ".md": 36,
         ".py": 4,
         ".html": 1,
         ".ts": 88

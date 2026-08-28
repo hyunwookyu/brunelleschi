@@ -23,7 +23,7 @@
 // 그 규약 그대로) · `rayThrough` · `face.ts`의 `planeDepth`(면과 광선의 만남).
 
 import { C } from './constants'
-import { projectSeg, rayThrough } from './camera'
+import { projectSeg, projectPolyNear, rayThrough } from './camera'
 import type { CamPose } from './types'
 import { closestOnLineToRay, type LiftResult } from './lift'
 import { faceScreen, inPoly, planeDepth, type ResolvedFace } from './face'
@@ -40,6 +40,9 @@ export interface BakeOptions {
   coplanar?: boolean
   /** 깊이 비교를 뒤집는다 — 뒤집으면 가린 선과 보이는 선이 맞바뀌어야 한다 */
   flipDepth?: boolean
+  /** 근평면 잘라내기(web2-25 1-a) — **끄면 web2-23의 동작**(꼭짓점 하나라도 뒤면 면을
+   *  통째로 버린다)이다. 실내 시점에서 좌우 벽·바닥이 `dropped`로 새어 나가야 한다. */
+  nearClip?: boolean
 }
 
 export interface BakeResult {
@@ -50,6 +53,9 @@ export interface BakeResult {
   lines: number
   /** 자른 조각 수(병합 전) — 비용 원장이 읽는 일감의 크기 */
   pieces: number
+  /** 굽기에서 **빠진** 면 수 — 근평면 잘라내기 뒤에도 남는 것은 «전부 카메라 뒤»뿐이다.
+   *  web2-25 1부의 판정자다(실내 시점에서 이 값이 0이어야 한다 — 수리 전에는 2 이상). */
+  dropped: number
 }
 
 /** 면 하나의 화면 그림자 — 다각형(외곽·개구부)과 그 **평면**(n·x = d). */
@@ -76,6 +82,7 @@ export function bakeUnderlay(
 ): BakeResult {
   const coplanarOn = opt.coplanar !== false
   const flip = opt.flipDepth === true
+  const nearClipOn = opt.nearClip !== false
   const an = lift.an
   // 같은 평면 조항과 깊이의 «만난다» 여유는 **같은 임계 하나**다(1-c). 면의 평면성
   // 허용과 같은 물음이라 값도 같다(`PLANAR_RATIO` — 새 숫자를 짓지 않는다 #54):
@@ -84,17 +91,26 @@ export function bakeUnderlay(
   const tol = C.PLANAR_RATIO * Math.max(geomSize3(lift), 1e-9)
 
   const sfs: ScreenFace[] = []
+  let dropped = 0
   for (const f of faces) {
-    const outer = faceScreen(lift, pose, f.outer)
-    if (!outer) continue                       // 한 점이라도 카메라 뒤 — 그 면은 안 쓴다
+    // **근평면에서 잘라낸 뒤 사영한다**(web2-25 1-a) — `projectSeg`가 선분에 하는 일의
+    // 다각형판이고 `NEAR_Z` 하나를 같이 읽는다(#54). 꼭짓점 하나가 카메라 뒤라고 면을
+    // 통째로 버리면 실내 시점에서 좌우 벽·바닥이 전부 빠진다(web2-23의 알려진 한계).
+    const poly = (p3: V3[]) => nearClipOn
+      ? projectPolyNear(lift.an, pose, p3)
+      : faceScreen(lift, pose, p3)             // 반증 손잡이 — web2-23의 동작(자르지 않는다)
+    const outer = poly(f.outer)
+    if (!outer) { dropped++; continue }        // **전부** 카메라 뒤 — 그 면은 화면에 없다
     const holes: Pt[][] = []
     let ok = true
     for (const h of f.holes) {
-      const hp = faceScreen(lift, pose, h)
-      if (!hp) { ok = false; break }
-      holes.push(hp)
+      const hp = poly(h)
+      // 개구부가 통째로 뒤면 그 자리는 바깥 고리에서도 이미 잘려 나갔다 — 면은 산다.
+      // (자르지 않는 옛 갈래에서는 사영이 안 되는 개구부가 면을 통째로 버렸다 — 그대로.)
+      if (hp) holes.push(hp)
+      else if (!nearClipOn) { ok = false; break }
     }
-    if (!ok) continue
+    if (!ok) { dropped++; continue }
     sfs.push({ n: f.normal, d: dot3(f.normal, f.outer[0]!), outer, holes })
   }
 
@@ -169,5 +185,5 @@ export function bakeUnderlay(
     }
     push()
   }
-  return { segs, faces: sfs.length, lines, pieces }
+  return { segs, faces: sfs.length, lines, pieces, dropped }
 }
