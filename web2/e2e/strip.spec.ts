@@ -13,6 +13,11 @@
 // 겹쳐 재지 않는다 — 여기서 재는 것은 **화면에서 그렇게 되는가**다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { writeFileSync, mkdirSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const HERE = dirname(fileURLToPath(import.meta.url))
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -112,8 +117,13 @@ test('⑤ 셔터의 번쩍임이 짧고 무채색이다 — 화면에 실제로 
     return { bg, aliveMs: performance.now() - appeared, sincePress: appeared - t0 }
   })
   expect(seen, '누르는 순간 덮개가 있다').not.toBeNull()
-  // **순간 피드백 대역**이다 — 프레임 하나(≈16ms)보다는 길고, «가려졌다»로 읽힐 만큼 길지 않다
-  expect(seen!.aliveMs, `화면에 머문 시간 ${seen!.aliveMs}ms`).toBeGreaterThan(16)
+  // **순간 피드백 대역**이다 — 눈이 «번쩍였다»로 읽을 만큼은 길고, «가려졌다»로 읽힐 만큼
+  // 길지는 않다.
+  // ⚠⚠ **아래 문(48ms)은 «세 프레임»이고 그 수를 반증이 정했다**(#71 ㉢ — 임계가 지표의
+  //   분해능 아래면 아무것도 안 잰다): 초판은 16ms(한 프레임)였는데 **상수를 0으로 바꿔도
+  //   관측이 18.4ms**라 통과했다 — rAF 폴링의 해상도가 한 프레임이라 0과 16을 못 가른다.
+  //   세 프레임으로 올리니 0에서 실제로 깨진다(NOTES 3-a 반증 절이 두 실행을 다 적는다).
+  expect(seen!.aliveMs, `화면에 머문 시간 ${seen!.aliveMs}ms`).toBeGreaterThan(48)
   expect(seen!.aliveMs, `화면에 머문 시간 ${seen!.aliveMs}ms`).toBeLessThan(400)
   // **무채색**이다 — r == g == b(색을 안 들였다 — 지시 3-a ⚠)
   const rgb = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(seen!.bg)!
@@ -122,8 +132,52 @@ test('⑤ 셔터의 번쩍임이 짧고 무채색이다 — 화면에 실제로 
   // 그리고 **스스로 사라졌다**(위 대기가 그것을 기다린 것이다)
   expect(await page.locator('#shutter-flash').count()).toBe(0)
   await page.keyboard.press('Escape')
-  console.log(`[측정] shutter — 화면에 머문 시간 ${seen!.aliveMs.toFixed(1)}ms `
-    + `(상수 ${await page.evaluate(() => (window as any).__b2.diag.shutterMs())}ms)`)
+  const constMs = await page.evaluate(() => (window as any).__b2.diag.shutterMs())
+  console.log(`[측정] shutter — 화면에 머문 시간 ${seen!.aliveMs.toFixed(1)}ms (상수 ${constMs}ms)`)
+
+  // ── 원장(CLAUDE.md §5 — 측정은 반드시 stage0/out에 JSON으로) · LEDGER=1 문 ──────
+  //   정본 명령: LEDGER=1 npx playwright test e2e/strip.spec.ts --workers=1
+  if (process.env.LEDGER === '1') {
+    const dpr = test.info().project.name
+    const suffix = dpr === 'dpr1' ? '' : `_${dpr}`
+    const dir = resolve(HERE, '../../stage0/out')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(resolve(dir, `shutter25_web2${suffix}.json`), JSON.stringify({
+      what: 'web2-25 3-a — 셔터의 번쩍임이 **화면에 실제로 머문 시간**. '
+        + '정본 명령: LEDGER=1 npx playwright test e2e/strip.spec.ts --workers=1',
+      run: {
+        date: '2026-08-28', project: dpr,
+        method: '페이지 안에서 `#paper-add`를 누른 **직후**부터 `#shutter-flash`가 DOM에서 '
+          + '사라질 때까지를 `performance.now()`로 잰다(rAF 폴링). ⚠ **상수를 상수 대역과 '
+          + '견주지 않는다**(리뷰 1차 [14]) — 그것은 설계 보장에 임계를 건 것이다.',
+      },
+      constant_ms: constMs,
+      alive_ms: Number(seen!.aliveMs.toFixed(1)),
+      since_press_ms: Number(seen!.sincePress.toFixed(1)),
+      background: seen!.bg,
+      gate: {
+        min_ms: 48, max_ms: 400,
+        registered: '화면 잔존이 48~400ms 안이다. ⚠ **CLAUDE.md §2의 중단 조건이 아니다**(#41) — '
+          + '이 항목이 등록한 팔의 문일 뿐이다.',
+        reachability: '**둘 다 실제로 넘겼다**(D-3): 상수를 0으로 두면 관측 18.4→24.6ms로 '
+          + '아래 문이 깨지고, 3000으로 두면 2994.2ms로 위 문이 깨진다. ⚠ 초판의 아래 문 16ms'
+          + '(한 프레임)는 **지표의 분해능 아래**라 상수 0에서도 통과했다(18.4ms) — 그래서 '
+          + '세 프레임(48ms)으로 올렸다(#71 ㉢).',
+        for: '세 프레임(48ms)보다 길고 «가려졌다»로 읽힐 만큼 길지 않다. ⚠ 아래 문이 «한 프레임»이면 지표의 분해능 아래라 상수 0에서도 통과한다(실측 18.4ms) — #71 ㉢',
+        reachability_source: '반증(D-3) — 상수를 0/3000으로 바꿔 **실제로 실패시켰다**. '
+          + '기록은 web2/NOTES.md 3-a 반증 절',
+        reachability_value: [0, 3000] },
+      note: '⚠⚠ **화면 잔존은 상수보다 짧다**(관측 대역 80~115ms ↔ 상수 120ms). rAF 폴링의 '
+        + '해상도(≈16ms)와 `setTimeout` 지연이 그 차의 몫이고, **dpr2에서 더 짧다**(프레임이 '
+        + '무거워 폴링 간격이 벌어진다). 그러므로 AS-C90의 근거 대역(관행 100~150ms)은 '
+        + '**상수의 대역**이지 화면 잔존의 대역이 아니다 — 사람이 보는 것은 이 alive_ms이고 '
+        + 'dpr2에서 그것이 100 아래로 내려간다(리뷰 2차 [5]). 실기기 판정(DEVICE-CHECK D10)이 '
+        + '「찍힌 줄 몰랐다」를 내면 상수를 올리는 근거가 이 값이다.',
+      flags_explained: {
+        'constants/metric_defs 스냅샷 없음': 'web2 라인 원장은 상수 스냅샷 등록부 밖(공통 형태)',
+      },
+    }, null, 2))
+  }
 })
 
 test('③ 길게 눌러 갱신하면 포즈·썸네일이 바뀐다', async ({ page }) => {

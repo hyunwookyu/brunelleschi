@@ -214,8 +214,12 @@ describe('web2-25 5부 — 파일 크기 원장(filesize25)', () => {
           + 'twist) 실림) + 밑그림(옐로를 얹는 순간 구운 것). own3 깃발 켬.',
         conditions: {
           view_s: 1,
-          method: '**열쇠 하나씩 빼고 직렬화해 그 차이를 그 몫으로 읽는다.** 합이 전체와 정확히 '
-            + '같지 않다(JSON 구분자·열쇠 이름의 겹침) — 잔차를 residual_bytes로 낸다.',
+          method: '**기준선을 층층이 두고 각 층의 차를 그 몫으로 읽는다** — 전체 → 획의 '
+            + 'raw·rawIn·own3을 뺀 판 → 획을 뺀 판 → 밑그림을 뺀 판 → 면을 뺀 판. 그래서 '
+            + '각 몫이 **한 번만** 세어지고 합이 전체가 된다(residual_bytes 0이 그 값이다). '
+            + '⚠ 초판은 `stroke_endpoints_and_meta`의 기준선을 밑그림까지 뺀 문서로 잡아 '
+            + '**밑그림을 두 번 셌고**(잔차 −710 = −underlays) 그것을 「JSON 구분자 겹침」이라 '
+            + '틀리게 설명했다(리뷰 1차 [3]).',
           round_handle: 'serializeBrnl(d, {round:false})가 **web2-24까지의 저장 형식**이다 '
             + '(배정밀도 그대로). 기본값 true가 지금 앱이 쓰는 형식이다.',
         },

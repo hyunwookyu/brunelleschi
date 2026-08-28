@@ -6,7 +6,9 @@
   "files": 77,
   "tests": 626,
   "wall_s": 9.6,
-  "note": "web2-25 +31팔·+5파일(nearclip 8·rollpose 5·sheetupdate 4·solo 6·roundsave 4 + static 3 + filesize25 원장 1 — 595→626). ⚠ 시간 원장 하네스는 LEDGER=1에서만 원장을 쓴다(#71 부기)."
+  "note": "web2-25 +31팔·**+6파일**(nearclip 8·rollpose 5·sheetupdate 4·solo 6·roundsave 4 + static 3 + filesize25 원장 1 — 595→626 · 71→77파일). ⚠ 시간 원장 하네스는 LEDGER=1에서만 원장을 쓴다(#71 부기). ⚠ 초판이 「+5파일」이라 적었다 — 71+5=76 ≠ 77(리뷰 2차 [8]).",
+  "passed": 626,
+  "failed": 0
  },
  "e2e": {
   "command": "npx playwright test --workers=1 (dpr1+dpr2)",
@@ -179,6 +181,13 @@
    }
   },
   {
+   "at": "web2-19",
+   "unit": 511,
+   "e2e": 234,
+   "note": "⚠ 그 회차가 이 원장을 안 갱신했다 — web2-25가 채웠다(수는 HANDOFF web2-19 절의 마감 보고: 단위 511/0/511·56파일 · e2e 234/0/234·30파일·7.8m)",
+   "e2e_wall_s": 468
+  },
+  {
    "at": "web2-20",
    "unit": 532,
    "unit_files": 59,
@@ -191,6 +200,18 @@
    "unit_files": 63,
    "e2e": 258,
    "e2e_wall_s": 1134
+  },
+  {
+   "at": "web2-22",
+   "unit": 568,
+   "e2e": 270,
+   "e2e_wall_s": 1224
+  },
+  {
+   "at": "web2-24",
+   "unit": 578,
+   "e2e": 276,
+   "e2e_wall_s": 1236
   },
   {
    "at": "web2-23",
@@ -211,5 +232,6 @@
   "note": "#45 규약 — «느려졌다» 보고가 오면 이 값(bavail·판정용)부터 본다. 값 출처는 df의 Available 열.",
   "disk_free_bytes_note": "옛 필드명 disk_free_bytes는 #45 후속이 판정 금지로 못 박아 이름을 바로잡았다(값 자체가 Available 열이었다 — 이름만 틀렸던 것).",
   "web2_18": "시간 측정 원장(cost18)은 `--workers=1` 전용이다(#71 ㉠) — 워커 둘이면 dpr1·dpr2가 CPU를 다퉈 값이 배 가까이 부푼다."
- }
+ },
+ "history_note": "⚠ **실제로 돈 차례**다 — `web2-23`은 `web2-24` **다음에** 돌았다(HANDOFF web2-23 절 머리 · 그래서 단위 수가 578 → 595로 올라간다). ⚠ web2-19·22·24 행은 그 회차들이 이 원장을 안 갱신해 **web2-25가 채웠다** — 수는 HANDOFF 각 절의 마감 보고이고 벽시계는 없는 것도 있다(A-4의 «비용을 원장에 남긴다»가 그 회차들에서 안 지켜졌다)."
 }
