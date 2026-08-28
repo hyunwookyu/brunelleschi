@@ -9311,3 +9311,8 @@ autosave 열쇠에서만 던지게 스텁). 명령 출력 원문: 「**6 passed*
 회복을 이어 적었다**. 그 외(#69 ㉣ 설계 보장 표기·#12 동작점·알림 채널 단일성(autosave
 ② 픽스처)·«한 번+2.5s» 알림 창(③ 픽스처))는 기존 항목의 사례로 NOTES에 기록.
 
+⚠ **마감 커밋의 정정(그 자리에서)**: 1d9c4b5에 LEDGER 문이 **없는** 나머지 시간 원장
+6종(brush_perf·drafting·gesture_tiles·icon_weight·sidebar_layout·views_thumb 각 dpr 판)
+의 전량 실행 판이 섞였다 — 종전 규율(checkout 복원)대로 직전 정본으로 되돌려 다음
+커밋에 실었다. **이 여섯 하네스의 LEDGER 문 전면화는 다음 회차 착수 표 몫**으로
+남긴다(#42 ⑩ — 이번 회차는 cost 계열 넷만 문을 달았다).

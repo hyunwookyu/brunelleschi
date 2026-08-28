@@ -34,21 +34,21 @@
    "active": true,
    "tiles": 38,
    "frames": 8,
-   "bakeMs": 46.2,
+   "bakeMs": 81.7,
    "bakePasses": 1,
    "bakeClamped": 0,
-   "frameMsMedian": 0.2,
-   "frameMsMax": 0.8
+   "frameMsMedian": 0.3,
+   "frameMsMax": 1.2
   },
   "tiles_after_release": {
    "active": false,
    "tiles": 0,
-   "frames": 21,
-   "bakeMs": 100.1,
+   "frames": 17,
+   "bakeMs": 149.4,
    "bakePasses": 1,
    "bakeClamped": 1,
    "frameMsMedian": 0.2,
-   "frameMsMax": 0.8
+   "frameMsMax": 1.2
   },
   "note": "① 사람의 구속(「돌리는 중에도 스케치 질감을 포기할 수 없다」)의 팔이다 — 궤도 중 매 프레임 흑연 칸 수가 0보다 커야 한다. tiles_held.active=true가 «타일 경로가 실제로 돌았다»의 표식이고(그 값이 false면 이 팔은 종전 경로를 재는 것이다), tiles_after_release.active=false가 «놓으면 정확히 다시 굽는다»의 표식이다."
  },
