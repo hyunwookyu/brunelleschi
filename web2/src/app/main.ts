@@ -321,6 +321,7 @@ function applyDimInput(text: string) {
   if (dimTarget === null) return                 // 창이 닫혔다 — 다음 선부터
   const r = setDimension(app, dimTarget, mm)
   if (r === 'no3d') notify('아직 3D로 올라가지 않은 선이다 — 치수를 못 단다')
+  else if (r === 'baseScale') notify('축척은 바탕 종이의 치수가 정한다')  // web2-21 1-b
   else if (r !== 'none') dimPanel.show(liveLenOf(dimTarget))
 }
 

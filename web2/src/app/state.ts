@@ -3,7 +3,7 @@
 // 실행취소는 op 단위다: 획 추가 op, 지우개 한 번의 드래그 op.
 // 그림만 되돌린다 — 작도(카메라)는 op에 들어가지 않는다.
 
-import { emptyDoc, DRAW_SHEET_ID, type Doc, type Stroke, type Face, type Sheet, type Layer, type Paper, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
+import { emptyDoc, DRAW_SHEET_ID, onPaper, type Doc, type Stroke, type Face, type Sheet, type Layer, type Paper, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
 import { isInk } from '../core/material'
 export type { ViewOffset }
 import { liftAll, closestOnLineToRay, type LiftResult } from '../core/lift'
@@ -236,7 +236,7 @@ export function createApp(W: number, H: number): App {
 // ⚠ 실행취소 대상이 아니다 — 치수는 다시 말하거나 다시 써서 고친다(지시 4-4의 «확정 전
 //   변경»과 같은 몸짓이 확정 후에도 유효하다). DEFERRED에 기록.
 
-export type DimResult = 'scale' | 'applied' | 'no3d' | 'none'
+export type DimResult = 'scale' | 'applied' | 'no3d' | 'none' | 'baseScale'
 
 /** 획 id에 치수 mm를 싣는다. 무스케일 상태의 첫 적용이 곧 스케일 확정이다(기하 불변). */
 export function setDimension(app: App, id: number, mm: number): DimResult {
@@ -245,6 +245,10 @@ export function setDimension(app: App, id: number, mm: number): DimResult {
   const wasScaled = app.lift.mmPerUnit !== null
   if (!wasScaled && !app.lift.lifted.has(id)) return 'no3d'  // 스케일을 정할 길이가 없다
   s.dim = mm
+  // 스케일은 바탕 종이가 정한다(web2-21 1-b) — 겹 획은 scaleRef가 못 된다. 치수는
+  // 남는다(바탕이 스케일을 정하면 그 스케일로 «읽히는» 값이다 — lift의 dim 적용 그대로).
+  // 호출부가 'baseScale'로 한 줄 안내를 띄운다: 「축척은 바탕 종이의 치수가 정한다」.
+  if (!wasScaled && !onPaper(s)) { recompute(app); return 'baseScale' }
   if (!wasScaled) app.doc.scaleRef = id      // 첫 «입력»이 기준이다(리뷰어 [5])
   recompute(app)
   if (!wasScaled && app.lift.mmPerUnit === null) {

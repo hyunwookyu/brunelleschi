@@ -11,7 +11,7 @@
 import { describe, it, expect } from 'vitest'
 import { session } from './session'
 import { W, H } from './fixtures'
-import { setDimension, type App } from '../src/app/state'
+import { setDimension, addLayer, setLayerOn, type App } from '../src/app/state'
 import { resolveStart, resolveEnd } from '../src/core/draft'
 import { parseDim, parseKoreanNumber, formatMm, snapMm, lenMm } from '../src/core/dim'
 import { serializeBrnl, parseBrnl } from '../src/core/file'
@@ -328,5 +328,78 @@ describe('치수가 공유 끝점을 옮길 때 — 붙어 있던 획은 어떻�
     }
     const gap = Math.hypot(dAfter!.a3.x - gb.b3.x, dAfter!.a3.y - gb.b3.y, dAfter!.a3.z - gb.b3.z)
     expect(gap * app.lift.mmPerUnit!).toBeGreaterThan(100)   // 새 빔 끝과는 떨어져 있다
+  })
+})
+
+// ── web2-21 1-b — 스케일은 바탕 종이가 정한다 ─────────────────────────────
+// 재현(D-2): 겹 획이 scaleRef면 그 겹을 끄는 순간 mmPerUnit이 null이 된다(물러가지도
+// 않는다 — scaleOf가 scaleRef 획을 doc에서 찾고 lifted에서 못 찾아 그대로 null.
+// 원장 scale_layer_web2_before.json의 A·B 행). 수리: 후보 집합을 «layer 없는 획»으로
+// 좁힌다 — 원칙 b(파생) 불변, scaleOf 한 자리 + setDimension의 scaleRef 부여만(#54).
+describe('web2-21 1-b — 스케일은 바탕 종이가 정한다 · 겹은 그 위에서 잰다', () => {
+  function layerScene() {
+    const s = session(1200, 800)
+    s.draw(100, 400, 1100, 400)
+    s.draw(500, 500, 600, 475)
+    s.draw(500, 500, 400, 475)
+    const base = s.draw(500, 500, 800, 325)!            // 바탕 획(vp0 방향·치수 없음)
+    const lay = addLayer(s.app, 'tracing', { W: 1200, H: 800 })!
+    const onLayer = s.draw(500, 500, 300, 450)!         // 겹 획 — 모서리 연결로 승격
+    expect(onLayer.layer).toBe(lay.id)
+    return { s, base, lay, onLayer }
+  }
+
+  it('겹 획의 첫 치수는 scaleRef가 되지 않는다 — baseScale 안내·dim은 남는다', () => {
+    const { s, base, onLayer } = layerScene()
+    const r = setDimension(s.app, onLayer.id, 1000)
+    expect(r).toBe('baseScale')                    // 새 결과 — 호출부가 안내 한 줄을 띄운다
+    expect(s.app.doc.scaleRef).toBeUndefined()     // 기준이 서지 않았다
+    expect(s.app.lift.mmPerUnit).toBeNull()        // 무치수 문서 그대로
+    expect(onLayer.dim).toBe(1000)                 // 치수는 남는다 — 바탕 스케일이 서면 읽힌다
+    // 바탕이 스케일을 정하면 겹 치수가 그 스케일로 «읽힌다»
+    const r2 = setDimension(s.app, base.id, 2000)
+    expect(r2).toBe('scale')
+    expect(s.app.doc.scaleRef).toBe(base.id)
+    const g = s.app.lift.lifted.get(onLayer.id)!
+    const L = len3(sub3(g.b3, g.a3))
+    expect(L * s.app.lift.mmPerUnit!).toBeCloseTo(1000, 6)   // 겹 획 길이 = 준 치수
+  })
+
+  it('겹을 껐다 켜도 문서의 스케일이 흔들리지 않는다 (목표 불변의 상시 감시)', () => {
+    // ⚠ 이 팔은 수리 전에도 참이다(바탕 기준 흐름은 원래 안전) — 증상의 재현·수리는
+    // 위 팔(scaleRef가 겹 획이 되는 입구를 막는다)과 원장 before A·B행이 진다(D-2).
+    const { s, base, lay, onLayer } = layerScene()
+    setDimension(s.app, base.id, 2000)             // 스케일은 바탕이 정한다
+    setDimension(s.app, onLayer.id, 1000)          // 겹 획 치수는 읽히는 값
+    const before = s.app.lift.mmPerUnit!
+    setLayerOn(s.app, lay.id, false)
+    expect(s.app.lift.mmPerUnit).toBe(before)
+    setLayerOn(s.app, lay.id, true)
+    expect(s.app.lift.mmPerUnit).toBe(before)
+    // 반증(D-3 — 이 단언이 실패할 수 있는가): 스케일이 실제로 깨지는 섭동(바탕 치수 제거)
+    // 에서 같은 지표가 움직인다 — 안 움직이면 위 불변 단언은 아무것도 안 잰 것이다.
+    delete base.dim
+    delete s.app.doc.scaleRef
+    expect(liftAll(s.app.doc).mmPerUnit).toBeNull()
+  })
+
+  it('옛 파일 방어 — scaleRef가 겹 획을 가리켜도 바탕 첫 치수 획으로 물러난다', () => {
+    const { s, base, onLayer } = layerScene()
+    setDimension(s.app, base.id, 2000)
+    onLayer.dim = 1000
+    s.app.doc.scaleRef = onLayer.id                // 수리 전 코드가 만들 수 있던 상태
+    const lift = liftAll(s.app.doc)
+    // 진실값 = scaleRef가 바탕 획인 같은 문서의 mmPerUnit. ⚠ «치수 적용 후 길이로
+    // 되계산»(2000/len(base))은 구성상 늘 mmPerUnit과 같아 실패 불가다(자기참조 유형 3) —
+    // 별도 liftAll로 얻는 진실값과, 겹 획 기준의 틀린 값이 실제로 갈리는 것까지 세운다(D-3).
+    const truth = liftAll({ ...s.app.doc, scaleRef: base.id }).mmPerUnit
+    // 겹 기준이 냈을 값 = dim ÷ 무치수 풀이 길이(scaleOf의 정의 그대로 산술로) —
+    // 진실값과 실제로 갈리는 것을 세운다(같으면 이 팔은 아무것도 못 가른다)
+    const dimless = liftAll({ ...s.app.doc, strokes: s.app.doc.strokes.map(x => ({ ...x, dim: undefined })), scaleRef: undefined })
+    const gw = dimless.lifted.get(onLayer.id)!
+    const wrongVal = 1000 / len3(sub3(gw.b3, gw.a3))
+    expect(truth).not.toBeNull()
+    expect(Math.abs(wrongVal - truth!) / truth!).toBeGreaterThan(0.01)   // 두 기준은 값이 갈린다
+    expect(lift.mmPerUnit).toBe(truth)             // 수리: 겹 scaleRef는 무시되고 바탕으로
   })
 })

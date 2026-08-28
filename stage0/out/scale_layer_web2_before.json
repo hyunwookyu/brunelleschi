@@ -1,0 +1,31 @@
+{
+  "run": {
+    "note": "web2-21 1-b — 겹 획이 스케일 기준(scaleRef)일 때 겹 켬/끔에 따른 mmPerUnit. 정본 명령: npx vitest run test/probe21_measure.test.ts",
+    "date": "2026-08-28",
+    "fixture": "작도(2vp) + 바탕 획 + 겹 1 + 겹 위 승격 획. 변이 A=바탕 무치수 · B=바탕에도 치수 · 대조=첫 치수가 바탕 획"
+  },
+  "A_no_base_dim": {
+    "setDim": "scale",
+    "scaleRef": 6,
+    "on": 98.82117688026109,
+    "off": null,
+    "back": 98.82117688026109
+  },
+  "B_base_dim_too": {
+    "setDim1": "scale",
+    "setDim2": "applied",
+    "scaleRef": 6,
+    "on": 98.82117688026109,
+    "off": null,
+    "back": 98.82117688026109
+  },
+  "control_base_ref": {
+    "scaleRef": 4,
+    "on": 85.05172717997166,
+    "off": 85.05172717997166
+  },
+  "flags_explained": {
+    "constants/metric_defs 스냅샷 없음": "web2 라인의 원장은 상수 스냅샷 등록부 밖(공통 형태). ⚠ 이 필드는 수리 전 판을 보존한 뒤 해명용으로만 추가됐다 — 측정값 불변",
+    "수리 전 판": "#71 ㉠ 규율 — scale_layer_web2.json의 수리 전 실행을 이 이름으로 옮겼다. A·B의 off=null이 재현된 결함이다"
+  }
+}

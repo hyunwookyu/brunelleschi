@@ -1,0 +1,39 @@
+{
+  "run": {
+    "note": "web2-21 1-b — 겹 획이 스케일 기준(scaleRef)일 때 겹 켬/끔에 따른 mmPerUnit. 정본 명령: npx vitest run test/probe21_measure.test.ts",
+    "date": "2026-08-28",
+    "fixture": "작도(2vp) + 바탕 획 + 겹 1 + 겹 위 승격 획. 변이 A=바탕 무치수 · B=바탕에도 치수 · 대조=첫 치수가 바탕 획"
+  },
+  "setDim_enum": "scale=이 입력이 스케일을 정했다(scaleRef 부여) · applied=기존 스케일로 길이 적용 · baseScale=겹 획이라 기준이 못 된다(web2-21 수리 후 신설 — 치수는 남고 바탕 스케일로 읽힌다) · no3d=3D 미승격이라 못 단다",
+  "A_no_base_dim": {
+    "setDim": "baseScale",
+    "scaleRef": null,
+    "on": null,
+    "off": null,
+    "back": null
+  },
+  "B_base_dim_too": {
+    "setDim1": "baseScale",
+    "setDim2": "scale",
+    "scaleRef": 4,
+    "on": 85.05172717997166,
+    "off": 85.05172717997166,
+    "back": 85.05172717997166
+  },
+  "control_base_ref": {
+    "scaleRef": 4,
+    "on": 85.05172717997166,
+    "off": 85.05172717997166
+  },
+  "legacy_defense": {
+    "scaleRef_points_at_layer_stroke": 85.05172717997166,
+    "truth_base_ref": 85.05172717997166,
+    "wrong_layer_ref_would_be": 98.82117688026109,
+    "rel_diff": 0.16189500386221334
+  },
+  "flags_explained": {
+    "constants/metric_defs 스냅샷 없음": "web2 라인의 원장은 상수 스냅샷 등록부 밖이다(공통 형태 — xint_web2와 같다)",
+    "B·control에 같은 값 반복": "불변이 곧 결론이다 — 겹 켬/끔·기준 부여 순서와 무관하게 바탕 기준 스케일이 한 값으로 서는 것이 수리의 내용. 흔들릴 수 있는 격자임은 before 판(A·B off=null)이 진다",
+    "A 행 전부 null": "측정이 아니라 설계 결과다 — 바탕 무치수 문서는 무척도이고(지시 문면) 겹 치수는 기준이 못 된다. ⚠ 귀결: 겹에만 치수가 있는 옛 문서는 열면 표시 치수가 사라진다(D-W8에 기재)"
+  }
+}

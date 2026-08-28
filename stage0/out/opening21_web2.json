@@ -1,0 +1,802 @@
+{
+  "run": {
+    "note": "web2-21 1-a — 개구부(안 닿는 창)가 lift.lifted에 드는가. 재기만 한다(수리는 갈래 판정). 정본 명령: npx vitest run test/probe21_measure.test.ts",
+    "date": "2026-08-28",
+    "fixture": "벽=지면 모서리+세로 둘+윗변(vp0·V 평면, 앱 경로·축 스냅) · 창=벽 안 사각 · 지터 ±3px(시드 rng32 — 벽·창 양쪽 입력에 실린다) × 위치 2 · 대조=왼 변을 벽 세로에 붙임(#69 ㉣ — 두 위치 각각)",
+    "determinism": "이 원장은 결정론이다(고정 시드·시간 필드 없음) — 전량 실행이 다시 써도 같은 바이트다(#71 ㉠의 유보가 이 원장에는 안 걸린다. 확인: 두 실행 diff 0 — NOTES 1부)",
+    "constants": {
+      "OSNAP_RADIUS_PX": 8,
+      "MERGE_RATIO": 0.002,
+      "LINE_MATCH_PX": 0.5
+    }
+  },
+  "gate": {
+    "for": "web2-23 은선 — 0부 게이트",
+    "verdict": "미통과 — 갈래 ③(원인이 크다 · 안 고쳤다)",
+    "measured": "안 닿는 창 14칸 전 칸 0/4 · 닿는 대조(두 위치) 전부 >0",
+    "note": "판정 근거의 측정/코드 구분: 측정으로 발화한 문은 hasHeight(소실점 축 두 변)뿐이고 수직 두 변의 사유는 whyProbe(noSeed — 승격 기하까지 실측 거리)가 진다. 확대 규칙(pendingAllVp)은 수직 대기가 섞여 아예 안 도는 코드 경로 사실이라 계수가 없다"
+  },
+  "margin_arith": {
+    "nominal_min_gap": {
+      "mid": 15.6,
+      "low": 13.7
+    },
+    "jitter_model": "x·y 독립 ±3px(대각 4.24) · 벽·창 양쪽 → 상대 변위 최대 8.49px — 명목 간격만으로는 최악(13.7−8.49=5.2 < 8)을 못 막는다. 그래서 «안 닿음» 판정은 칸마다 실측 minGapPx > OSNAP_RADIUS_PX가 진다(하네스 단언)",
+    "measured_min_gap_over_cells": 11.7
+  },
+  "cells": [
+    {
+      "seed": 0,
+      "pos": "mid",
+      "wallLifted": 4,
+      "winLifted": 0,
+      "minGapPx": 15.2,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=15.2)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=24.3)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=15.2)"
+        },
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=20.4)"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 1,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    },
+    {
+      "seed": 7,
+      "pos": "mid",
+      "wallLifted": 4,
+      "winLifted": 0,
+      "minGapPx": 15.3,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=15.3)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=24.3)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=15.3)"
+        },
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=22.1)"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 1,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    },
+    {
+      "seed": 12,
+      "pos": "mid",
+      "wallLifted": 4,
+      "winLifted": 0,
+      "minGapPx": 14.9,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=14.9)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=24.2)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=14.9)"
+        },
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=16.3)"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 1,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    },
+    {
+      "seed": 33,
+      "pos": "mid",
+      "wallLifted": 4,
+      "winLifted": 0,
+      "minGapPx": 14,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=14.0)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=22.0)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=14.0)"
+        },
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=20.5)"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 1,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    },
+    {
+      "seed": 51,
+      "pos": "mid",
+      "wallLifted": 4,
+      "winLifted": 0,
+      "minGapPx": 16.6,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=16.6)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=26.6)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=16.6)"
+        },
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=21.6)"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 3,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    },
+    {
+      "seed": 77,
+      "pos": "mid",
+      "wallLifted": 4,
+      "winLifted": 0,
+      "minGapPx": 15.3,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=15.3)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=24.4)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=15.3)"
+        },
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=22.3)"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 1,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    },
+    {
+      "seed": 104,
+      "pos": "mid",
+      "wallLifted": 4,
+      "winLifted": 0,
+      "minGapPx": 13.7,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=13.7)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=21.8)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=13.7)"
+        },
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=18.3)"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 1,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    },
+    {
+      "seed": 0,
+      "pos": "low",
+      "wallLifted": 4,
+      "winLifted": 0,
+      "minGapPx": 13.3,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=13.3)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=19.9)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=13.3)"
+        },
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=40.5)"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 3,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    },
+    {
+      "seed": 7,
+      "pos": "low",
+      "wallLifted": 4,
+      "winLifted": 0,
+      "minGapPx": 13.4,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=13.4)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=20.0)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=13.4)"
+        },
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=42.6)"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 1,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    },
+    {
+      "seed": 12,
+      "pos": "low",
+      "wallLifted": 4,
+      "winLifted": 0,
+      "minGapPx": 13.1,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=13.1)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=19.9)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=13.1)"
+        },
+        {
+          "axis": "vp1",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=41.1)"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 1,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    },
+    {
+      "seed": 33,
+      "pos": "low",
+      "wallLifted": 4,
+      "winLifted": 0,
+      "minGapPx": 11.9,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=11.9)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=17.7)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=11.9)"
+        },
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=41.0)"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 1,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    },
+    {
+      "seed": 51,
+      "pos": "low",
+      "wallLifted": 4,
+      "winLifted": 0,
+      "minGapPx": 14.9,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=14.9)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=22.3)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=14.9)"
+        },
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=42.0)"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 1,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    },
+    {
+      "seed": 77,
+      "pos": "low",
+      "wallLifted": 4,
+      "winLifted": 0,
+      "minGapPx": 13.4,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=13.4)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=20.0)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=13.4)"
+        },
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=42.7)"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 1,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    },
+    {
+      "seed": 104,
+      "pos": "low",
+      "wallLifted": 4,
+      "winLifted": 0,
+      "minGapPx": 11.7,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=11.7)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=17.4)"
+        },
+        {
+          "axis": "V",
+          "lifted": false,
+          "why": "none",
+          "whyProbe": "noSeed(d=11.7)"
+        },
+        {
+          "axis": "vp0",
+          "lifted": false,
+          "why": "hasHeight",
+          "whyProbe": "hasHeight(d=38.5)"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 2,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    }
+  ],
+  "control": [
+    {
+      "seed": 0,
+      "pos": "touching-mid",
+      "wallLifted": 4,
+      "winLifted": 4,
+      "minGapPx": 0,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        },
+        {
+          "axis": "V",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        },
+        {
+          "axis": "V",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        },
+        {
+          "axis": "vp0",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 0,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 2
+      }
+    },
+    {
+      "seed": 7,
+      "pos": "touching-mid",
+      "wallLifted": 4,
+      "winLifted": 4,
+      "minGapPx": 0,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        },
+        {
+          "axis": "V",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        },
+        {
+          "axis": "V",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        },
+        {
+          "axis": "vp0",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 0,
+        "pose": 0,
+        "axis": 0,
+        "lift": 1,
+        "roundtrip": 1
+      }
+    },
+    {
+      "seed": 0,
+      "pos": "touching-low",
+      "wallLifted": 4,
+      "winLifted": 4,
+      "minGapPx": 0,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        },
+        {
+          "axis": "V",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        },
+        {
+          "axis": "V",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        },
+        {
+          "axis": null,
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 0,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 2
+      }
+    },
+    {
+      "seed": 7,
+      "pos": "touching-low",
+      "wallLifted": 4,
+      "winLifted": 4,
+      "minGapPx": 0,
+      "perStroke": [
+        {
+          "axis": "vp0",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        },
+        {
+          "axis": "V",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        },
+        {
+          "axis": "V",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        },
+        {
+          "axis": "vp0",
+          "lifted": true,
+          "why": "lifted",
+          "whyProbe": "lifted"
+        }
+      ],
+      "touchStats": {
+        "ok": 0,
+        "noCam": 0,
+        "aNot3d": 0,
+        "pose": 0,
+        "axis": 0,
+        "lift": 0,
+        "roundtrip": 0
+      }
+    }
+  ],
+  "why_counts": {
+    "hasHeight": 28,
+    "none": 28
+  },
+  "aNot3d_distribution": {
+    "1": 11,
+    "2": 1,
+    "3": 2
+  },
+  "flags_explained": {
+    "winLifted 전부 같은 값이면": "분포가 한 값인 것이 곧 결론이다(안 닿는 창의 전 칸 동일 거동) — 변별력은 대조 칸(touching-*)이 진다: 같은 하네스가 닿는 창에서 다른 수를 낸다",
+    "constants/metric_defs 스냅샷 없음": "web2 라인의 원장은 상수 스냅샷 등록부 밖이다(공통 형태 — xint_web2와 같다). 대신 run.constants에 이 측정이 의존하는 값을 그대로 싣는다",
+    "aNot3d가 1을 넘는 칸": "지터로 뗀 끝이 이미 그은 창의 대기선 «여럿» 위 반경 안에서 끝난 칸이다. defineByTouch의 후보 B는 lift.waiting(대기선)뿐이고 벽은 승격돼 있어 후보가 아니다 — 즉 이 계수는 구성상 창끼리의 접촉이고 [1]의 벽 접촉 전제와 무관하다(그 전제는 minGapPx가 판정)",
+    "control[*].minGapPx 정확히 0": "설계 보장이다(자기참조 유형 3) — 닿는 대조 칸은 창 왼 변을 벽 세로 위에 그어 오스냅이 그 위에 붙이므로 거리가 구성상 0이다. 임계를 안 건다(«안 닿음» 단언은 cells에만 걸린다) — 0이 아니면 오히려 대조가 안 붙은 것이다"
+  }
+}

@@ -3,7 +3,7 @@
 // 시작점이 3D에 없으면 그 획은 2D로 대기한다 — 거부가 아니라 상태다.
 // 대기 획은 조건이 갖춰지면 승격하고, 승격은 연쇄한다.
 
-import type { Doc, Stroke, CamPose } from './types'
+import { onPaper, type Doc, type Stroke, type CamPose } from './types'
 import { C } from './constants'
 import {
   analyze, type Analysis, type AxisId, DRAW_POSE,
@@ -107,9 +107,15 @@ export function liftAll(doc: Doc, useOwn = false): LiftResult {
  *  ⚠ 첫 치수 획을 지우면(조각은 dim을 안 물려받는다) 스케일이 다음 치수 획으로
  *  넘어가거나 없어진다 — 조용히 다른 값이 되는 대신 그 사실이 길이 표시(null)로 보인다. */
 function scaleOf(doc: Doc): number | null {
-  // 기준은 «첫 입력»(scaleRef)이고, 그 획이 없어졌으면 문서 순서상 첫 치수 획으로 물러난다
-  const s0 = doc.strokes.find(s => s.id === doc.scaleRef && s.dim !== undefined)
-    ?? doc.strokes.find(s => s.dim !== undefined)
+  // 기준은 «첫 입력»(scaleRef)이고, 그 획이 없어졌으면 문서 순서상 첫 치수 획으로 물러난다.
+  // ⚠ 후보는 **layer 없는 획**(종이에 직접 그린 것)뿐이다(web2-21 1-b) — 스케일은 바탕
+  // 종이가 정한다. 겹 획이 기준이면 그 겹을 끄는 순간 lifted에서 빠져 문서 전체의 실척이
+  // null로 무너졌다(원장 scale_layer_web2_before.json A·B행 — «물러난다»조차 못 했다:
+  // scaleRef 획은 doc에서 찾히므로 첫 find가 잡고 lifted 부재로 그대로 null). 실물이
+  // 그렇다 — 트레이싱지에 자를 대도 축척은 밑그림의 것이다. 원칙 b(파생)는 불변 —
+  // 후보 집합만 좁힌다(#54: 이 한 자리. 옛 파일의 겹 scaleRef도 여기서 걸러진다).
+  const s0 = doc.strokes.find(s => s.id === doc.scaleRef && s.dim !== undefined && onPaper(s))
+    ?? doc.strokes.find(s => s.dim !== undefined && onPaper(s))
   if (!s0) return null
   const base = liftPass(doc, null)
   const g = base.lifted.get(s0.id)

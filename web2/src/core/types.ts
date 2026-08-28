@@ -94,6 +94,11 @@ export interface Layer {
 export const DRAW_SHEET_ID = 0
 export const drawSheet = (): Sheet => ({ id: DRAW_SHEET_ID, name: '작도' })
 
+/** «종이에 직접 그린 획인가»(겹이 아니라) — 스케일 기준 자격(web2-21 1-b)이 이 술어다.
+ *  판정이 두 자리(scaleOf·setDimension)에 흩어지면 겹의 정의가 바뀔 때 갈린다(#54) —
+ *  술어는 여기 하나다. */
+export const onPaper = (s: Stroke): boolean => s.layer === undefined
+
 /** 문서 — 획 목록과 그린 캔버스 크기(CSS px, 첫 획 시점).
  *  소실점·카메라·차수·축은 여기 없다 — 전부 계산이다(원칙 b). */
 export interface Doc {
