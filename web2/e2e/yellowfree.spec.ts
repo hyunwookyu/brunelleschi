@@ -86,7 +86,12 @@ test('① 옐로 호 = 곡선 확정(이탈 값·픽셀) · ④ 트레이싱지�
   expect(await countPixels(page, 'layerc', 480, 232, 520, 248), '현 자리는 비어 있다').toBe(0)
 
   // ④ 회귀 — 트레이싱지에서 같은 몸짓: 확정은 현(직선)이다. 반대 픽셀 분포.
+  // ⚠ 이 전환이 동시에 [7]의 판을 만든다 — 트레이싱지가 활성이 되면 옐로는 **비활성**
+  // (같은 종이·같은 시점이라 여전히 보인다)이고, 그 몸체는 #layerc가 아니라 **#brushc**
+  // (brushlayer.drawStrokeRaw — 렌더 두 자리의 둘째)가 그린다. 두 자리 다 픽셀로 잰다.
   await page.click('#btn-roll-tracing'); await settle(page)
+  expect(await countPixels(page, 'brushc', 480, 285, 520, 305), '비활성 옐로 호의 배(#brushc — drawStrokeRaw)').toBeGreaterThan(0)
+  expect(await countPixels(page, 'brushc', 480, 232, 520, 248), '비활성 옐로도 현 자리는 비어 있다').toBe(0)
   await drawArc(page, 350, 400, 650, 400, 60)
   const tr = await page.evaluate(() => {
     const a = (window as any).__b2.app

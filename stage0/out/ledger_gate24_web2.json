@@ -10,7 +10,7 @@
   },
   "reachability_value": 11,
   "reachability_source": "baseline_sha1의 파일 수 — 반대 결과의 실증: 같은 여섯 하네스가 LEDGER=1에서는 실제로 다시 썼다(② — 이 해시들 자체가 재생성 판의 것·web2-19 판(8006c17)과 다르다). 문이 없던 판(8006c17까지)에서는 전량 실행이 네 번 기준선을 오염시켰다(#71 ㉠ 부기)",
-  "verdict_after_full_run": "PENDING — 마감 절이 채운다"
+  "verdict_after_full_run": "통과 — 전량 e2e 276팔(--workers=1·LEDGER 없음·20.9m) 뒤 baseline_sha1 11파일 전부 diff 0(재해시 일치). 그 뒤 여섯을 4부 코드 위에서 최종 재생성(--workers=1 단독)해 baseline_sha1_final_post4로 갱신 — 결정론 칸 동일 재확인(3차 [4]). 문이 쓰기를 막는다는 증명(①)은 이전 해시 판으로 이미 성립했고, 최종 판이 다음 회차의 기준선이다. ⚠ brushlayer 캐시 키 수리(겹 전환 스테일 — 3차 [7]의 새 팔이 잡음) 뒤 전량 e2e를 재실행(276 passed·20.6m — LEDGER 없음)했고 baseline_sha1_final_post4도 diff 0(재확인). 이 수리는 겹 없는 여섯 픽스처에서 lsig가 상수라 기준선 값 무영향."
  },
  "baseline_sha1": {
   "brush_perf_web2.json": "f9800db72f8740d7c95993a390f270677fe4aa27",
@@ -26,7 +26,7 @@
   "sidebar_layout_web2_dpr2.json": "425fa79295dd3ef05401ddc15bf4f81345e88a13"
  },
  "contamination_evidence": {
-  "note": "③ 재생성(--workers=1 단독) ↔ 직전 정본(8006c17 — 전량 병렬 판)의 대조. 결정론 칸은 전부 동일(icon ink_px·chosen light / sidebar 자리·겹침 / views_thumb brnl_bytes / gesture 흑연 칸·번짐 2px) — 시간 칸만 부풀어 있었다(cost18의 1.5~2배 부풀림과 같은 서명).",
+  "note": "③ 재생성(--workers=1 단독) ↔ 직전 정본(8006c17 — 전량 병렬 판)의 대조. 결정론 칸은 전부 동일 — 시간 칸만 부풀어 있었고, 같은 코드 병렬 칸(same_code_parallel_cell)이 그 부풀림을 조건 몫으로 재현한다(×1.6 대역 — cost18의 1.5~2배와 일치). 두 축(코드·조건)이 함께 갈린 대조라 배수 전부의 귀속은 열어 둔다(3차 [5]).",
   "brush_perf_full_redraw_ms_median": {
    "strokes100": {
     "old_8006c17": 216.7,
@@ -51,10 +51,40 @@
    "old_8006c17": 4,
    "new": 1
   },
-  "before_preservation": "수리 전 판(*_before)은 파일로 안 남겼다 — 오염 판이 **커밋돼 있어**(8006c17) git이 보존한다(cost22의 _before 파일은 커밋 전 판이라 필요했던 것 — 여기서는 중복). 이 블록이 «오염 값과 새 값을 나란히»(지시 3부)의 자리다."
+  "before_preservation": "수리 전 판(*_before)은 파일로 안 남겼다 — 오염 판이 **커밋돼 있어**(8006c17) git이 보존한다(cost22의 _before 파일은 커밋 전 판이라 필요했던 것 — 여기서는 중복). 이 블록이 «오염 값과 새 값을 나란히»(지시 3부)의 자리다.",
+  "same_code_parallel_cell": {
+   "note": "3차 [5] — 같은 코드(4부 판)로 병렬(LEDGER=1·workers 4) 한 칸을 실제로 냈다: 부풀림이 실행 조건 몫으로 재현된다. 8006c17 판과의 나머지 차는 코드·부하 변산 몫일 수 있어 배수 전부를 조건에 귀속하지 않는다(두 축이 함께 갈렸다 — note 완화).",
+   "full_redraw_ms_median": {
+    "strokes100": {
+     "solo_w1": 76.2,
+     "parallel_w4": 124.5
+    },
+    "strokes500": {
+     "solo_w1": 737.6,
+     "parallel_w4": 1184.2
+    }
+   },
+   "live500_frame_ms_worst": {
+    "solo_w1": 22.9,
+    "parallel_w4": 170
+   }
+  }
  },
  "flags_explained": {
   "constants/metric_defs 스냅샷 없음": "web2 라인 원장은 상수 스냅샷 등록부 밖(공통 형태)",
   "reachability_value가 파일 수": "이 게이트의 단위가 파일이다 — 값 대조는 baseline_sha1 자체가 진다"
+ },
+ "baseline_sha1_final_post4": {
+  "brush_perf_web2.json": "356f81a96d402311d65f7baeed57b730f58ae3ef",
+  "drafting_web2.json": "0b8fbc7eafca84196912bdfdc4e4ee9ab48131bd",
+  "drafting_web2_dpr2.json": "a04e811a8532037ed87460f8096516294ba7f962",
+  "gesture_tiles_web2.json": "6501deb7830d890231109705f1d720e01be9bbe2",
+  "gesture_tiles_web2_dpr2.json": "5ceec848d96aea0bd30ab2ce5b5290cf05ba8b73",
+  "icon_weight_web2.json": "5eb4968f93d06f689954788755446a3ee684b3f2",
+  "icon_weight_web2_dpr2.json": "9cce2fab72ff8daab2ebb5b262a1113f2286ed4c",
+  "views_thumb_web2.json": "db45202918546d59b930d3ab3c177948efe74173",
+  "views_thumb_web2_dpr2.json": "afa3eacea469d570f65734ceba74da8c6da99138",
+  "sidebar_layout_web2.json": "f3f323a2018ce50ebdf015f8100e502c8e19e072",
+  "sidebar_layout_web2_dpr2.json": "425fa79295dd3ef05401ddc15bf4f81345e88a13"
  }
 }

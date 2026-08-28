@@ -173,14 +173,21 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
 
   // 캐시 키 — 이 값들이 전부 같으면 다시 안 그린다. 그리는 중(draft·호버)에는 어느 것도
   // 안 바뀌므로 **획을 긋는 동안 이 겹의 비용은 0**이다(위 머리주석).
-  let last: { renderer: string; docVersion: number; pose: unknown; hold: unknown; s: number; ox: number; oy: number; w: number; waitFade: boolean } | null = null
+  // ⚠ lsig(web2-24 4부): **겹 구성·활성이 키에 든다** — 활성 겹이 바뀌면 이 겹이 그릴
+  // 획의 집합(split.above 밖·yellowVisible)이 바뀌는데 docVersion은 그대로라, 키에 없으면
+  // 겹을 갈아탄 순간 옐로 획이 화면에서 사라진다(다음 편집까지 스테일 — 3차 [7]의 새 팔
+  // (#brushc 픽셀)이 실측으로 잡은 잠복 결함. web2-22의 통짜 몸체 시절부터 있었다).
+  const layersSig = (app: App): string =>
+    `${app.activeLayer}|${app.doc.layers.map(l => `${l.id}:${l.on ? 1 : 0}:${l.paper}`).join(',')}`
+  let last: { renderer: string; docVersion: number; pose: unknown; hold: unknown; s: number; ox: number; oy: number; w: number; waitFade: boolean; lsig: string } | null = null
   const dirty = (app: App): boolean =>
     !last || last.renderer !== app.renderer || last.docVersion !== app.docVersion ||
     last.pose !== app.pose || last.hold !== app.fadePose || last.s !== app.view.s ||
-    last.ox !== app.view.ox || last.oy !== app.view.oy || last.w !== cw || last.waitFade !== app.waitFade
+    last.ox !== app.view.ox || last.oy !== app.view.oy || last.w !== cw || last.waitFade !== app.waitFade ||
+    last.lsig !== layersSig(app)
   const remember = (app: App) => {
     last = { renderer: app.renderer, docVersion: app.docVersion, pose: app.pose, hold: app.fadePose,
-      s: app.view.s, ox: app.view.ox, oy: app.view.oy, w: cw, waitFade: app.waitFade }
+      s: app.view.s, ox: app.view.ox, oy: app.view.oy, w: cw, waitFade: app.waitFade, lsig: layersSig(app) }
   }
 
   function drawStroke(app: App, s: Stroke, a: Pt, b: Pt) {

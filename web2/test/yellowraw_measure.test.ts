@@ -90,8 +90,14 @@ describe('web2-24 4부 — 솎기·바이트 원장', () => {
       keptSum += s.raw!.length
     }
     const brnl = serializeBrnl({ doc: app.doc, nextId: app.nextId })
-    const bytes = brnl.length
-    const pct = Math.round((bytes / C.AUTOSAVE_LIMIT_BYTES) * 1000) / 10
+    // 두 셈 관례를 **둘 다** 적는다(#28 — 3차 [6]: NOTES 4820의 선례 그대로. 앱의 자동 저장
+    // 게이지(main.ts brnlBytes)는 Blob(UTF-8 바이트)이고, localStorage의 실제 상한은 대개
+    // UTF-16 코드 유닛이다 — JSON이 ASCII 지배라 여기서는 거의 같지만 관례를 명기한다).
+    const bytesUtf8 = Buffer.byteLength(brnl, 'utf8')
+    const bytesUtf16 = brnl.length * 2
+    const bytes = bytesUtf8
+    const pct = Math.round((bytesUtf8 / C.AUTOSAVE_LIMIT_BYTES) * 1000) / 10
+    const pctUtf16 = Math.round((bytesUtf16 / C.AUTOSAVE_LIMIT_BYTES) * 1000) / 10
     // 대조: 같은 100획이 직선(트레이싱지 규약 — raw 없이 {a,b})이었다면의 바이트
     const appLine = yellowApp()
     for (let k = 0; k < 100; k++) {
@@ -107,6 +113,17 @@ describe('web2-24 4부 — 솎기·바이트 원장', () => {
         date: '2026-08-28',
         fixture: '손 획 = 원호(sag 12~65px) + 떨림 ±0.6px · 240점/획(coalesced 대역) · '
           + 'rng32 고정 시드 — 결정론(전량 실행이 다시 써도 같은 바이트)',
+        conditions: {
+          view_s: 1,
+          px_frame: '이 원장의 px는 전부 문서 px이고 view.s=1이라 화면 px와 같다(#71 ㉠ — 3차 [3]). '
+            + '앱의 솎기 임계는 **화면 px**에 걸린다(commitStroke가 RAW_SIMPLIFY_PX/view.s로 문서 '
+            + '임계를 만든다) — 확대해 그리면 문서 임계가 그만큼 준다(«눈에 안 보이는»은 화면의 '
+            + '성질이라 그것이 설계다). dpr 무관(기하 계산 — 픽셀 판독 아님).',
+          doc100_fixture: '작도 2획(바탕) + 옐로 겹 1 + 옐로 손 획 100(길이 ~82px·sag 12~44px·240점). '
+            + '직렬화는 serializeBrnl(앱 저장과 같은 함수). ⚠ 획당 솎기 후 점 수(~101)가 simplify '
+            + '표(~96)보다 높은 것은 픽스처 차다 — doc100의 획이 짧아(82px vs 400px) 곡률 밀도가 '
+            + '높고 RDP가 더 많이 남긴다.',
+        },
         constants: { RAW_SIMPLIFY_PX: C.RAW_SIMPLIFY_PX, AUTOSAVE_LIMIT_BYTES: C.AUTOSAVE_LIMIT_BYTES },
       },
       simplify: {
@@ -121,12 +138,15 @@ describe('web2-24 4부 — 솎기·바이트 원장', () => {
       doc100: {
         strokes: 100,
         raw_pts_total_after_simplify: keptSum,
-        brnl_bytes: bytes,
-        pct_of_autosave_assumption: pct,
+        brnl_bytes_utf8: bytes,
+        brnl_code_units_x2_utf16: bytesUtf16,
+        pct_of_autosave_assumption_utf8: pct,
+        pct_of_autosave_assumption_utf16: pctUtf16,
         straight_control_bytes: bytesLine,
-        note: '⑨ — 옐로 100획(프리핸드) 문서의 .brnl 크기와 AS-C80(5MB) 대비 %. '
-          + 'straight_control은 같은 수의 직선 획(raw 두 점) 문서 — 점렬 몫의 크기를 가른다. '
-          + 'web2-22 3부의 70% 경고 발동 대역인지가 물음이다(수백 획 실사용은 실기기 표)',
+        note: '⑨ — 옐로 100획(프리핸드) 문서의 .brnl 크기와 AS-C80(5MB) 대비 %(두 관례 — utf8은 '
+          + '앱 게이지(Blob)와 같은 셈·utf16은 localStorage 관례 상한: 경고 대역이 관례로 2배 갈린다 '
+          + '#28). straight_control은 같은 수의 직선 획 문서(솎은 뒤 2점 → raw 안 실림) — 점렬 몫의 '
+          + '크기를 가른다. 70% 경고 발동 대역인지가 물음이다(수백 획 실사용은 실기기 표)',
       },
       flags_explained: {
         'constants/metric_defs 스냅샷 없음': 'web2 라인 원장은 상수 스냅샷 등록부 밖(공통 형태)',
@@ -138,7 +158,7 @@ describe('web2-24 4부 — 솎기·바이트 원장', () => {
     writeFileSync(resolve(outDir, 'yellowraw_web2.json'), JSON.stringify(ledger, null, 2))
     console.log(`[측정] yellowraw — 240점 → 0.5px ${agg.kept_05.min}~${agg.kept_05.max}점(이탈≤${agg.dev_05_max})`
       + ` · 5px ${agg.kept_5.min}~${agg.kept_5.max}점(이탈 ${agg.dev_5_min}~${agg.dev_5_max})`
-      + ` · 100획 ${bytes}B = 가정의 ${pct}% (직선 대조 ${bytesLine}B)`)
+      + ` · 100획 utf8 ${bytes}B=${pct}% · utf16 ${bytesUtf16}=${pctUtf16}% (직선 대조 ${bytesLine}B)`)
 
     // 판정선(#26 — 등록: 하네스 유효성·반증)
     // 0.5px 솎기의 표현 오차는 임계 아래(정의 확인 — 깨지면 rdp가 틀린 것)

@@ -20,24 +20,24 @@
  "live": {
   "drawing_few": {
    "brush": {
-    "down_to_next_paint_ms": 19.6,
-    "frame_ms_median": 16.7,
-    "frame_ms_p90": 19.2,
-    "frame_ms_worst": 32.9,
-    "frames": 79,
+    "down_to_next_paint_ms": 18.7,
+    "frame_ms_median": 16.8,
+    "frame_ms_p90": 19.1,
+    "frame_ms_worst": 32.8,
+    "frames": 78,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 1,
     "draft_redraws_while_down": 40,
-    "draft_ms_median": 1,
-    "draft_ms_max": 2.2
+    "draft_ms_median": 1.1,
+    "draft_ms_max": 2.3
    },
    "classic": {
-    "down_to_next_paint_ms": 12.3,
-    "frame_ms_median": 18.6,
-    "frame_ms_p90": 20.4,
-    "frame_ms_worst": 21.6,
-    "frames": 50,
+    "down_to_next_paint_ms": 12.1,
+    "frame_ms_median": 18.3,
+    "frame_ms_p90": 21,
+    "frame_ms_worst": 22,
+    "frames": 51,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 0,
@@ -48,24 +48,24 @@
   },
   "drawing_500": {
    "brush": {
-    "down_to_next_paint_ms": 9.6,
-    "frame_ms_median": 17.7,
-    "frame_ms_p90": 19.3,
-    "frame_ms_worst": 22.9,
-    "frames": 84,
+    "down_to_next_paint_ms": 22,
+    "frame_ms_median": 18,
+    "frame_ms_p90": 19.6,
+    "frame_ms_worst": 31.7,
+    "frames": 82,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 1,
     "draft_redraws_while_down": 40,
-    "draft_ms_median": 1,
+    "draft_ms_median": 0.9,
     "draft_ms_max": 1.6
    },
    "classic": {
-    "down_to_next_paint_ms": 51.7,
-    "frame_ms_median": 11.7,
-    "frame_ms_p90": 65.4,
-    "frame_ms_worst": 67.6,
-    "frames": 86,
+    "down_to_next_paint_ms": 57.8,
+    "frame_ms_median": 11.8,
+    "frame_ms_p90": 64.7,
+    "frame_ms_worst": 68.7,
+    "frames": 84,
     "brush_redraws_while_down": 0,
     "brush_syncs_while_down": 40,
     "brush_redraws_on_commit": 0,
@@ -76,31 +76,31 @@
   },
   "orbit_500": {
    "brush": {
-    "down_to_next_paint_ms": 1127.7,
-    "frame_ms_median": 16.8,
-    "frame_ms_p90": 17.9,
-    "frame_ms_worst": 1134.3,
+    "down_to_next_paint_ms": 1150.9,
+    "frame_ms_median": 16.1,
+    "frame_ms_p90": 17.6,
+    "frame_ms_worst": 1157.7,
     "frames": 31,
     "brush_redraws": 0,
     "brush_syncs": 31,
     "tiles_active": true,
     "tile_frames": 30,
-    "tile_bake_ms": 1111.4,
+    "tile_bake_ms": 1135.3,
     "tile_frame_ms_median": 1,
-    "tile_frame_ms_max": 3.8,
+    "tile_frame_ms_max": 4,
     "tiles": 505
    },
    "classic": {
-    "down_to_next_paint_ms": 0.2,
-    "frame_ms_median": 55.9,
+    "down_to_next_paint_ms": 0.1,
+    "frame_ms_median": 56.3,
     "frame_ms_p90": 58,
-    "frame_ms_worst": 59.8,
+    "frame_ms_worst": 59.4,
     "frames": 32,
     "brush_redraws": 0,
     "brush_syncs": 31,
     "tiles_active": false,
     "tile_frames": 0,
-    "tile_bake_ms": 1111.4,
+    "tile_bake_ms": 1135.3,
     "tile_frame_ms_median": 0,
     "tile_frame_ms_max": 0,
     "tiles": 0
@@ -111,40 +111,40 @@
  "full_redraw_ms": {
   "10": {
    "brush_ms": {
-    "min": 9.099999904632568,
+    "min": 8.400000095367432,
     "median": 11.099999904632568,
-    "max": 15.100000381469727
+    "max": 21.5
    },
    "classic_ms": {
     "min": 0.5,
     "median": 0.5,
-    "max": 0.5
+    "max": 0.6000003814697266
    },
    "heap_bytes": 14300000
   },
   "100": {
    "brush_ms": {
-    "min": 70.5,
-    "median": 76.19999980926514,
-    "max": 172.89999961853027
+    "min": 84.59999990463257,
+    "median": 90,
+    "max": 163.40000009536743
    },
    "classic_ms": {
-    "min": 3.0999999046325684,
-    "median": 3.5999999046325684,
-    "max": 3.6999998092651367
+    "min": 3.6999998092651367,
+    "median": 4.599999904632568,
+    "max": 4.700000286102295
    },
    "heap_bytes": 14300000
   },
   "500": {
    "brush_ms": {
-    "min": 409.90000009536743,
-    "median": 737.5999999046326,
-    "max": 851.0999999046326
+    "min": 447,
+    "median": 744.5,
+    "max": 817.9000000953674
    },
    "classic_ms": {
-    "min": 46.5,
-    "median": 47.30000019073486,
-    "max": 47.5
+    "min": 47.5,
+    "median": 50.80000019073486,
+    "max": 51.700000286102295
    },
    "heap_bytes": 14300000
   },

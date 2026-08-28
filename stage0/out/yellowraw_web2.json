@@ -3,6 +3,11 @@
     "note": "web2-24 4부 — 옐로 raw 정본화의 솎기·바이트 원장. 정본 명령: npx vitest run test/yellowraw_measure.test.ts",
     "date": "2026-08-28",
     "fixture": "손 획 = 원호(sag 12~65px) + 떨림 ±0.6px · 240점/획(coalesced 대역) · rng32 고정 시드 — 결정론(전량 실행이 다시 써도 같은 바이트)",
+    "conditions": {
+      "view_s": 1,
+      "px_frame": "이 원장의 px는 전부 문서 px이고 view.s=1이라 화면 px와 같다(#71 ㉠ — 3차 [3]). 앱의 솎기 임계는 **화면 px**에 걸린다(commitStroke가 RAW_SIMPLIFY_PX/view.s로 문서 임계를 만든다) — 확대해 그리면 문서 임계가 그만큼 준다(«눈에 안 보이는»은 화면의 성질이라 그것이 설계다). dpr 무관(기하 계산 — 픽셀 판독 아님).",
+      "doc100_fixture": "작도 2획(바탕) + 옐로 겹 1 + 옐로 손 획 100(길이 ~82px·sag 12~44px·240점). 직렬화는 serializeBrnl(앱 저장과 같은 함수). ⚠ 획당 솎기 후 점 수(~101)가 simplify 표(~96)보다 높은 것은 픽스처 차다 — doc100의 획이 짧아(82px vs 400px) 곡률 밀도가 높고 RDP가 더 많이 남긴다."
+    },
     "constants": {
       "RAW_SIMPLIFY_PX": 0.5,
       "AUTOSAVE_LIMIT_BYTES": 5242880
@@ -126,10 +131,12 @@
   "doc100": {
     "strokes": 100,
     "raw_pts_total_after_simplify": 10154,
-    "brnl_bytes": 487578,
-    "pct_of_autosave_assumption": 9.3,
+    "brnl_bytes_utf8": 487582,
+    "brnl_code_units_x2_utf16": 975156,
+    "pct_of_autosave_assumption_utf8": 9.3,
+    "pct_of_autosave_assumption_utf16": 18.6,
     "straight_control_bytes": 9191,
-    "note": "⑨ — 옐로 100획(프리핸드) 문서의 .brnl 크기와 AS-C80(5MB) 대비 %. straight_control은 같은 수의 직선 획(raw 두 점) 문서 — 점렬 몫의 크기를 가른다. web2-22 3부의 70% 경고 발동 대역인지가 물음이다(수백 획 실사용은 실기기 표)"
+    "note": "⑨ — 옐로 100획(프리핸드) 문서의 .brnl 크기와 AS-C80(5MB) 대비 %(두 관례 — utf8은 앱 게이지(Blob)와 같은 셈·utf16은 localStorage 관례 상한: 경고 대역이 관례로 2배 갈린다 #28). straight_control은 같은 수의 직선 획 문서(솎은 뒤 2점 → raw 안 실림) — 점렬 몫의 크기를 가른다. 70% 경고 발동 대역인지가 물음이다(수백 획 실사용은 실기기 표)"
   },
   "flags_explained": {
     "constants/metric_defs 스냅샷 없음": "web2 라인 원장은 상수 스냅샷 등록부 밖(공통 형태)",
