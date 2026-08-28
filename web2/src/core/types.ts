@@ -99,6 +99,14 @@ export const drawSheet = (): Sheet => ({ id: DRAW_SHEET_ID, name: '작도' })
  *  술어는 여기 하나다. */
 export const onPaper = (s: Stroke): boolean => s.layer === undefined
 
+/** **옐로 겹의 id 집합**(web2-22 1부 — «옐로는 작도가 멈춘 종이»). 옐로 겹의 획은 2D다:
+ *  축 스냅·3D 승격·오스냅·소실점에 참여하지 않는다(지시 1-a 표). 판정의 출처는
+ *  `Stroke.layer` → `Layer.paper` 하나다(새 필드 ⛔ — 지시 1-c). 켬/끔 무관 — 옐로의
+ *  성질은 매체이지 상태가 아니다. 이 집합을 읽는 자리: lift(content 제외) ·
+ *  analyze(소실점 제외) · brushlayer/filmlayer(2D 표시) · input/session(스냅 우회). */
+export const yellowIds = (doc: Pick<Doc, 'layers'>): Set<number> =>
+  new Set(doc.layers.filter(l => l.paper === 'yellow').map(l => l.id))
+
 /** 문서 — 획 목록과 그린 캔버스 크기(CSS px, 첫 획 시점).
  *  소실점·카메라·차수·축은 여기 없다 — 전부 계산이다(원칙 b). */
 export interface Doc {

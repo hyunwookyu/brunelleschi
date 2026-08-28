@@ -3,7 +3,7 @@
 // 시작점이 3D에 없으면 그 획은 2D로 대기한다 — 거부가 아니라 상태다.
 // 대기 획은 조건이 갖춰지면 승격하고, 승격은 연쇄한다.
 
-import { onPaper, type Doc, type Stroke, type CamPose } from './types'
+import { onPaper, yellowIds, type Doc, type Stroke, type CamPose } from './types'
 import { C } from './constants'
 import {
   analyze, type Analysis, type AxisId, DRAW_POSE,
@@ -143,7 +143,12 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
   // ⚠ analyze(위)는 **모든 획**을 본다 — 카메라는 겹과 무관하다(소실점 획이 든 겹을
   // 꺼도 카메라 불변 — 4부 ① 팔이 못 박는다).
   const offLayers = new Set(doc.layers.filter(l => !l.on).map(l => l.id))
-  const content = doc.strokes.filter(s => !isMark(s) && !(s.layer !== undefined && offLayers.has(s.layer)))
+  // 옐로 겹의 획은 **2D다**(web2-22 1부) — 켜져 있어도 3D에 없다. 대기도 아니다(대기는
+  // «조건이 갖춰지면 승격»인데 옐로는 매체가 2D라 조건이 없다). 여기서 빠지면 오스냅·
+  // 조각·면·waiting 계수 전부 자동으로 빠진다(#54 — 별도 필터 없음, web2-20 4부와 같은 길).
+  const yellow = yellowIds(doc)
+  const content = doc.strokes.filter(s => !isMark(s)
+    && !(s.layer !== undefined && (offLayers.has(s.layer) || yellow.has(s.layer))))
   if (!an.principal || an.f === null) {
     return { an, lifted, waiting: content.map(s => s.id), waitWhy, anchorId, strokes, mmPerUnit }
   }

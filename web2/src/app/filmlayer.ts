@@ -141,6 +141,17 @@ export function atSheetPose(app: App): boolean {
   return poseEq(pose, sheet.pose)
 }
 
+/** **지금 보이는 옐로 겹**(web2-22 1부) — 이 겹들의 획은 2D로 그려진다(그 종이·그 시점·
+ *  켬). 옐로 획은 3D가 없으므로 «위 획은 포즈 무관» 규칙을 못 탄다 — 포즈를 벗어나면
+ *  붙일 자리가 없어 막과 같은 게이트로 사라진다(살아 있는 포즈 — #73 ㉡).
+ *  이것이 1-d의 「그 종이에서만 보인다」의 구현이다(다른 종이 = sheet 다름 → 빈 집합). */
+export function yellowVisible(app: App): Set<number> {
+  if (!atSheetPose(app)) return new Set()
+  return new Set(app.doc.layers
+    .filter(l => l.paper === 'yellow' && l.on && l.sheet === app.activeSheet)
+    .map(l => l.id))
+}
+
 const poseEq = (a: CamPose, b: CamPose): boolean =>
   Math.abs(a.p.x - b.p.x) < 1e-9 && Math.abs(a.p.y - b.p.y) < 1e-9 && Math.abs(a.p.z - b.p.z) < 1e-9 &&
   Math.abs(a.q.x - b.q.x) < 1e-9 && Math.abs(a.q.y - b.q.y) < 1e-9 &&
@@ -266,11 +277,14 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
     g.setTransform(cd * v.s, 0, 0, cd * v.s, cd * v.ox, cd * v.oy)
     const is = 1 / v.s
     const waiting = new Set(app.lift.waiting)
+    const yset = yellowVisible(app)  // 옐로 2D 획(web2-22 1부 — 그 종이·그 시점만)
     for (const s of app.doc.strokes) {
       if (s.layer === undefined || !split.above.has(s.layer)) continue
       const m = MAT[gradeOf(s)]
       let a2 = s.a, b2 = s.b
-      if (!waiting.has(s.id)) {
+      if (yset.has(s.layer)) {
+        // 옐로 획 — 2D: 문서 좌표 그대로(통짜 몸체 — 대기 파선 아님)
+      } else if (!waiting.has(s.id)) {
         const seg = app.lift.lifted.get(s.id)
         if (!seg) continue
         const pa = project(app.lift.an, app.pose, seg.a3)

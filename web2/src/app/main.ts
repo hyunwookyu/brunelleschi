@@ -871,10 +871,24 @@ const syncRolls = () => {
 }
 app.listeners.push(syncRolls)
 syncRolls()
+let lastSheetForYellow = app.activeSheet
 const paperbar = initPaperbar(app, document.getElementById('paperbar')!, {
   captureThumb,
   // 종이를 바꾸면 종속 탭 줄도 바뀐다(web2-20 2부 — 겹은 종이에 속한다)
-  onGoto: () => { autolevel.touch(); layerbar.sync(); invalidate() },
+  onGoto: () => {
+    // 옐로 안내(web2-22 1-d) — 옐로 획은 2D라 그 종이에서만 보인다. 실물 그대로이고
+    // 옳지만 처음 겪으면 「사라졌다」로 읽히므로, **옐로 획이 있는 종이를 떠날 때** 한 줄.
+    // (종속 탭 표시 대신 이 길을 골랐다 — 사라지는 «순간»에 말하는 쪽이 읽힌다. D-W9)
+    if (app.activeSheet !== lastSheetForYellow) {
+      const left = lastSheetForYellow
+      const yl = new Set(app.doc.layers.filter(l => l.paper === 'yellow' && l.sheet === left).map(l => l.id))
+      if (yl.size > 0 && app.doc.strokes.some(s => s.layer !== undefined && yl.has(s.layer))) {
+        notify('옐로 스케치는 그 종이 위의 2D다 — 이 종이에서는 안 보인다')
+      }
+      lastSheetForYellow = app.activeSheet
+    }
+    autolevel.touch(); layerbar.sync(); invalidate()
+  },
 })
 
 // **되돌리기의 자리**(web2-17 1-d) — 규칙은 안 바꾼다(작도 획은 스택 밖·비우기가 답이다).

@@ -3,7 +3,7 @@
 // 손으로 좌표를 계산해 doc.strokes에 밀어넣으면 스냅·오스냅을 안 거치므로
 // **앱이 실제로 만드는 기하를 안 재게 된다** — 그래서 이 경로로만 잰다.
 
-import { createApp, commitStroke, type App } from '../src/app/state'
+import { createApp, commitStroke, yellowActive, type App } from '../src/app/state'
 import { resolveStart, resolveEnd, resolveCommit } from '../src/core/draft'
 import type { Stroke } from '../src/core/types'
 import type { Pt } from '../src/core/vec'
@@ -26,6 +26,11 @@ export function session(W: number, H: number): Session {
     app,
     draw(ax, ay, bx, by) {
       const p: Pt = { x: ax, y: ay }
+      // 옐로(web2-22 1부) — 입력(input.ts)과 같은 우회: 오스냅·축·소실점 없이 그대로 확정
+      if (yellowActive(app)) {
+        if (Math.hypot(bx - ax, by - ay) <= 4) return null   // 탭 = 잡음(입력과 같은 문)
+        return commitStroke(app, p, { x: bx, y: by }, [p, { x: bx, y: by }])
+      }
       // 연장선 획득(web2-18 2부)도 **앱과 같은 자리에서** 실어 준다 — `app.extAcq.acquired`가
       // 비어 있으면 ext는 후보가 아니다(그것이 앱의 기본 상태다). 획득을 쓰는 팔은
       // `updateExtDwell`로 그 목록을 채운 뒤 이 경로로 그린다.

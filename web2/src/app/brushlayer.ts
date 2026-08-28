@@ -31,7 +31,7 @@
 import * as brush from 'p5.brush/standalone'
 import type { App } from './state'
 import { docToScreen, isDrawPose, activeGrade, draftBrushed, fadeRef } from './state'
-import { filmSplit } from './filmlayer'
+import { filmSplit, yellowVisible } from './filmlayer'
 import { atOwnPose, waitFadeFactor } from '../core/waitfade'
 import { project } from '../core/camera'
 import { gradeOf, rng32 } from '../core/material'
@@ -263,9 +263,19 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
       const atDraw = isDrawPose(app.pose)
       const waiting = new Set(app.lift.waiting)
       const split = filmSplit(app)   // 위 획(활성 겹과 그 위)은 #layerc 몫(web2-20 3부)
+      const yset = yellowVisible(app)  // 옐로 겹의 2D 획(web2-22 1부 — 그 종이·그 시점만)
       for (const s of app.doc.strokes) {
         const id = s.id
         if (split && s.layer !== undefined && split.above.has(s.layer)) continue
+        // 옐로 획 — 2D다(승격도 대기도 아님): 문서 좌표 그대로, 제 재료의 통짜 몸체.
+        // 안 보이는 옐로(다른 종이·꺼짐·다른 시점)는 lift에 없어 아래 갈래들이 걸러낸다.
+        if (s.layer !== undefined && yset.has(s.layer)) {
+          const ya = docToScreen(app, s.a), yb = docToScreen(app, s.b)
+          if (offScreen(ya, yb)) { clipped++; continue }
+          drawn++
+          drawStroke(app, s, ya, yb)
+          continue
+        }
         if (waiting.has(id)) {
           // 대기 획(web2-16 3-a·3-b) — 기본(감쇠 판정 켜짐): 각도 창 **안**이면 흑연
           // 파선으로 그린다(waitFadeFactor 이진 — 창 밖은 즉시 0. 몸체가 이 겹으로
@@ -397,8 +407,13 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     const atDraw = isDrawPose(app.pose)
     const waiting = new Set(app.lift.waiting)
     const split = filmSplit(app)   // redraw와 같은 제외(두 자리에 다른 규칙을 안 둔다)
+    const yset = yellowVisible(app)  // redraw와 같은 옐로 2D 갈래(web2-22 1부)
     for (const s of app.doc.strokes) {
       if (split && s.layer !== undefined && split.above.has(s.layer)) continue
+      if (s.layer !== undefined && yset.has(s.layer)) {
+        out.push({ s, a: docToScreen(app, s.a), b: docToScreen(app, s.b), dashed: false })
+        continue
+      }
       if (waiting.has(s.id)) {
         if (app.waitFade) {
           if (waitFadeFactor(fadeRef(app), s.view) <= 0) continue

@@ -5,7 +5,7 @@
 import type { App } from './state'
 import {
   orbitPivot, orbitBy, dollyBy, panBy, setPose, beginErase, eraseAt, endErase,
-  screenToDoc, isEraser, toggleFaceAt, facePreview, excludeCandidateAt, beginNavHold, endNavHold,
+  screenToDoc, isEraser, yellowActive, toggleFaceAt, facePreview, excludeCandidateAt, beginNavHold, endNavHold,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
 import { updateExtDwell } from '../core/extacq'
@@ -137,6 +137,17 @@ export function initInput(
     }
     capStats.points = draft.raw.length
     const cur = toPt(e)
+    // 옐로(web2-22 1부) — 오스냅·축 스냅·소실점 예고 전부 우회: 자유 방향 그대로.
+    // (2부의 후행 확정(머무름 → 직선화)이 이 갈래에 붙는다.)
+    if (yellowActive(app)) {
+      draft.end = cur
+      draft.label = null
+      draft.endSnap = null
+      draft.lenMm = null
+      draft.vp = undefined
+      cb.onDraftChange(draft)
+      return
+    }
     tickExt(cur)
     const r = resolveEnd(
       app.lift, app.pose, app.lift.an,
@@ -195,7 +206,8 @@ export function initInput(
   function beginDraft(p: Pt, e: PointerEvent) {
     samples = [sampleOf(e)]
     capStats = { pointerType: e.pointerType, events: 1, points: 1, extra: 0 }
-    const oh = resolveStart(app.lift, app.pose, p, osnapSet(), app.extAcq.acquired)
+    // 옐로(web2-22 1부) — 자가 치워졌다: 시작점 오스냅 없음(자유의 정의 — 지시 1-c)
+    const oh = yellowActive(app) ? null : resolveStart(app.lift, app.pose, p, osnapSet(), app.extAcq.acquired)
     draft = {
       start: oh ? oh.p : p,
       end: oh ? oh.p : p,
@@ -250,6 +262,13 @@ export function initInput(
       }
       const bboxDiagPx = d.raw.length >= 2 ? Math.hypot(x1 - x0, y1 - y0) * app.view.s : 0
       if (isStray(endDistPx, bboxDiagPx)) { app.strayCount++; return }
+    }
+    // 옐로(web2-22 1부) — 소실점 찍기가 없다(1-a 표): 탭은 잡음이고 획은 그대로 확정
+    if (yellowActive(app)) {
+      if (Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) * app.view.s <= C.TAP_MAX_PX) return
+      app.lastSnap = { start: null, end: null }
+      cb.onCommit(d.start, d.end, d.raw, press, rawIn)
+      return
     }
     const c = resolveCommit(app.lift.an, d.start, d.end, app.osnap.radius / app.view.s)
     if (!c) return // 잡음 — 지평선에서 먼 탭

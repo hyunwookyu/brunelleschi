@@ -80,7 +80,10 @@ describe('②④ 리프팅 제외와 왕복', () => {
 
   it('④ 껐다 켜면 3D가 같다(좌표 값) · own3 필드가 산다', () => {
     const s = closedSession()
-    const lay = addLayer(s.app, 'yellow', { W, H })!
+    // ⚠ web2-22 1부부터 옐로는 2D(승격 없음)라 이 팔의 대상이 아니다 — 3D 왕복은
+    // 트레이싱지의 성질이다(초판이 yellow였던 것은 그때 종이 종류가 무관해서다).
+    // 옐로의 새 성질은 yellow2d.test가 잰다.
+    const lay = addLayer(s.app, 'tracing', { W, H })!
     setActiveLayer(s.app, lay.id)
     const st = s.draw(400, 560, 400, 640)!
     const seg0 = s.app.lift.lifted.get(st.id)!

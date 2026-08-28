@@ -17,7 +17,7 @@
 //   작도 카메라는 지면 위 `EYE_HEIGHT`에 서서 수평으로 본다(피치 0·롤 0).
 //   그래서 **Y=0이 지면**이고, 눈높이가 Y 스케일을 정한다 — f(깊이 압축률)와 다른 축이다.
 
-import type { Doc, Stroke, CamPose } from './types'
+import { yellowIds, type Doc, type Stroke, type CamPose } from './types'
 import { C } from './constants'
 import { isLevel } from './level'
 import {
@@ -195,7 +195,14 @@ export function analyze(doc: Doc): Analysis {
   const horizonY = horizonDocY(H)
   let screenHDeclared = false
 
+  // 옐로 겹의 획은 **소실점을 안 쓴다**(web2-22 1-a 표) — 자유 방향 스케치가 우연히
+  // 소실점·수평 선언으로 읽히면 카메라가 오염된다(닫힌 뒤에도 P1→P2 승격 입구가 있다).
+  // ⚠ web2-20의 「analyze는 모든 획을 본다」는 **트레이싱지**의 규칙이다(겹을 꺼도 카메라
+  // 불변) — 옐로는 매체가 2D라 애초에 작도 획이 될 수 없다(1부 팔 ④가 트레이싱지
+  // 불변을, 카메라 불변 팔이 이 제외를 잰다).
+  const yellow = yellowIds(doc)
   for (const s of doc.strokes) {
+    if (s.layer !== undefined && yellow.has(s.layer)) { roles.set(s.id, 'content'); continue }
     // 작도는 작도 포즈에서만 — 궤도 후의 획은 전부 내용이다
     if (s.view) { roles.set(s.id, 'content'); continue }
     const p1Locked = screenHDeclared && vps.length >= 1

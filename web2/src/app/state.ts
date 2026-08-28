@@ -50,6 +50,14 @@ export const draftBrushed = (app: Pick<App, 'tool' | 'grade' | 'renderer' | 'lif
  *  `tool !== 'pen'` 으로 재던 초판은 연필 도구가 생기면서 그대로 깨진다. */
 export const isEraser = (t: Tool): boolean => t === 'eraser-pencil' || t === 'eraser-ink'
 
+/** **활성 겹이 옐로인가**(web2-22 1부) — 옐로를 얹으면 «자가 치워진» 것이다(대응표 §4의
+ *  답): 입력이 오스냅·축 스냅·소실점 경로를 통째로 우회하고, 2부의 후행 확정(머무름)이
+ *  이 갈래에서만 돈다. 판정 출처는 Layer.paper 하나(#54 — 새 필드 ⛔). */
+export const yellowActive = (app: Pick<App, 'doc' | 'activeLayer'>): boolean => {
+  const l = app.doc.layers.find(x => x.id === app.activeLayer)
+  return !!l && l.paper === 'yellow'
+}
+
 export interface Op {
   removed: { stroke: Stroke; index: number }[]
   added: Stroke[]

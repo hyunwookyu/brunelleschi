@@ -1,0 +1,175 @@
+{
+ "what": "web2-22 0부 — 자유 스케치 대역(200·400·800 · 절반 옐로)의 비용 재측정. 1-c(옐로를 오스냅·리프팅에서 뺀다)의 전/후를 이 표가 보인다.",
+ "phase": "before(1-c 전 — 옐로 획이 승격·오스냅에 든다)",
+ "run": {
+  "note": "정본 명령: npx playwright test cost22 --workers=1 — **단독 실행**(전량·워커2 판은 정본 아님 #71 ㉠). 전 판은 cost22_web2*_before.json으로 보존.",
+  "project": "dpr2",
+  "raw_ratio": 0.5
+ },
+ "environment": "헤드리스 크로뮴 · viewport 1200×800 · 절대 ms는 컨테이너 값 — **판별값은 slope(200→800 배수: O(n)≈4 · O(n²)≈16)**. 실기기는 진단 패널 ①②③④.",
+ "fixture_note": "카메라 닫는 픽스처 + 옐로 한 장(롤 버튼). 짝수 획 = 옐로 자유(전역 각도 — 축 대역 포함 #68 · 활성 겹) · 홀수 획 = 바탕 혼합(승격 노림/자유 — cost18 규격). 손 오차 2~5px · 시드 LCG.",
+ "metric_defs": {
+  "full_redraw_ms": "① #brushc 전량 재그리기(5회 min/median/max)",
+  "sync_strokes_ms": "② render3d.syncStrokes(5회)",
+  "orbit_frame_ms": "③ 궤도 프레임 3몫(r3·bs·d2 — 앱이 그 자리에서)",
+  "osnap": "④ 호버 이동 40회 호출당 평균 — intersect(intersections3)·ends_merge·rest 분해. rest는 뺄셈이라 음수 가능",
+  "slope": "200→800 배수 — 이 원장의 값어치. 1-c의 효과는 before/after 판의 osnap_* 기울기·절대 대역 차로 읽는다"
+ },
+ "cost18_ref": {
+  "phase": "after",
+  "slope": {
+   "raw_0pct": {
+    "full_redraw": 10.95,
+    "sync_strokes": 15,
+    "orbit_frame": 2.44,
+    "osnap_total": 22.08,
+    "osnap_intersect": 33.07,
+    "osnap_ends_merge": 3.86
+   },
+   "raw_50pct": {
+    "full_redraw": 6.91,
+    "sync_strokes": 7.5,
+    "orbit_frame": 4.37,
+    "osnap_total": 30.53,
+    "osnap_intersect": 58.8,
+    "osnap_ends_merge": 10.38
+   },
+   "raw_100pct": {
+    "full_redraw": 8.18,
+    "sync_strokes": 5.5,
+    "orbit_frame": 2,
+    "osnap_total": 15.77,
+    "osnap_intersect": 44.04,
+    "osnap_ends_merge": 3.24
+   }
+  }
+ },
+ "scene_at_800": {
+  "strokes": 800,
+  "lifted": 212,
+  "waiting": 588,
+  "yellow": 399,
+  "yellow_lifted": 14,
+  "withRawIn": 408
+ },
+ "grid": {
+  "200": {
+   "scene": {
+    "strokes": 200,
+    "lifted": 55,
+    "waiting": 145,
+    "yellow": 99,
+    "yellow_lifted": 3,
+    "withRawIn": 91
+   },
+   "full_redraw_ms": {
+    "min": 64.7,
+    "median": 74.4,
+    "max": 203.4
+   },
+   "sync_strokes_ms": {
+    "min": 0.2,
+    "median": 0.4,
+    "max": 0.9
+   },
+   "orbit_frame_ms": {
+    "n": 32,
+    "r3": 0.39999961853027344,
+    "bs": 0.5,
+    "d2": 0.19999980926513672,
+    "total": 1,
+    "totalMax": 377.19999980926514
+   },
+   "osnap": {
+    "calls": 40,
+    "per_call_ms": 0.5725,
+    "intersect_ms": 0.27,
+    "ends_merge_ms": 0.025,
+    "rest_ms": 0.2775
+   }
+  },
+  "400": {
+   "scene": {
+    "strokes": 400,
+    "lifted": 107,
+    "waiting": 293,
+    "yellow": 199,
+    "yellow_lifted": 6,
+    "withRawIn": 203
+   },
+   "full_redraw_ms": {
+    "min": 165.2,
+    "median": 261.1,
+    "max": 288.7
+   },
+   "sync_strokes_ms": {
+    "min": 0.5,
+    "median": 0.6,
+    "max": 1.5
+   },
+   "orbit_frame_ms": {
+    "n": 32,
+    "r3": 0.5,
+    "bs": 0.7000002861022949,
+    "d2": 0.20000028610229492,
+    "total": 1.5999999046325684,
+    "totalMax": 743.5
+   },
+   "osnap": {
+    "calls": 40,
+    "per_call_ms": 1.195,
+    "intersect_ms": 0.6025,
+    "ends_merge_ms": 0.0675,
+    "rest_ms": 0.525
+   }
+  },
+  "800": {
+   "scene": {
+    "strokes": 800,
+    "lifted": 212,
+    "waiting": 588,
+    "yellow": 399,
+    "yellow_lifted": 14,
+    "withRawIn": 408
+   },
+   "full_redraw_ms": {
+    "min": 322.8,
+    "median": 428.9,
+    "max": 753.1
+   },
+   "sync_strokes_ms": {
+    "min": 0.9,
+    "median": 1,
+    "max": 1.9
+   },
+   "orbit_frame_ms": {
+    "n": 32,
+    "r3": 0.6999998092651367,
+    "bs": 122.09999990463257,
+    "d2": 0.40000009536743164,
+    "total": 123.19999980926514,
+    "totalMax": 1544.5
+   },
+   "osnap": {
+    "calls": 40,
+    "per_call_ms": 4.1375,
+    "intersect_ms": 2.345,
+    "ends_merge_ms": 0.08,
+    "rest_ms": 1.7125
+   }
+  }
+ },
+ "slope": {
+  "full_redraw": 5.76,
+  "sync_strokes": 2.5,
+  "orbit_frame": 123.2,
+  "osnap_total": 7.23,
+  "osnap_intersect": 8.69,
+  "osnap_ends_merge": 3.2,
+  "osnap_rest": 6.17
+ },
+ "flags_explained": {
+  "constants/metric_defs 스냅샷 없음": "web2 라인 공통 형태(xint_web2와 같다)",
+  "rest_ms 음수 가능": "뺄셈 분해의 타이머 분해능 — 그대로 적는다(cost18과 같은 유보)"
+ }
+}
