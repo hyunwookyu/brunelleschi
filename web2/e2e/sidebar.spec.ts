@@ -223,7 +223,9 @@ test('연필통 — 진하기 순 세로 배열·행 선택이 도구+경도·�
   console.log(`[측정] 자리 — 세로바 연필 ${barPencil.w}×${barPencil.h} · 펜 ${barPen.w}×${barPen.h} · 연필통(연 상태) ${Math.round(tray.width)}×${Math.round(tray.height)} / 화면 ${vw.w}×${vw.h}`)
   const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
-  writeFileSync(resolve(HERE, `../../stage0/out/sidebar_layout_web2${suffix}.json`), JSON.stringify({
+  // 원장은 LEDGER=1 단독 실행에서만 쓴다(web2-22 규율·#71 ㉠의 문 — web2-24 3부 전면화).
+  // 팔은 그대로 돈다 — 원장만 안 덮는다. 정본 명령: LEDGER=1 npx playwright test sidebar --workers=1
+  if (process.env.LEDGER === '1') writeFileSync(resolve(HERE, `../../stage0/out/sidebar_layout_web2${suffix}.json`), JSON.stringify({
     what: `web2-12 3·6번 — 세로바·연필통 자리·겹침·정렬 실측(CSS px·뷰포트 1200×800 헤드리스·${testInfo.project.name}). e2e sidebar.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47). 실기기(가림·누르기)는 DEFERRED.`,
     viewport: vw,
     sidebar_pencil: barPencil,

@@ -171,7 +171,9 @@ test('3부 ①②③ — 궤도 중 흑연이 모든 프레임에 있다 · 경�
   const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
   const out = resolve(HERE, `../../stage0/out/gesture_tiles_web2${suffix}.json`)
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
-  writeFileSync(out, JSON.stringify({
+  // 원장은 LEDGER=1 단독 실행에서만 쓴다(web2-22 규율·#71 ㉠의 문 — web2-24 3부 전면화).
+  // 팔은 그대로 돈다 — 원장만 안 덮는다. 정본 명령: LEDGER=1 npx playwright test gesture --workers=1
+  if (process.env.LEDGER === '1') writeFileSync(out, JSON.stringify({
     what: `web2-18 3부 — 돌리는 중에도 흑연이 남는가(${testInfo.project.name}). 획별 질감 캐시(㉢)와 화면 밖 잘라내기(㉠)의 표현 쪽 값. 성능 쪽 값(궤도 1프레임 합)은 cost18_web2*.json이 든다.`,
     threshold: { pixel_diff_ch: PIXEL_DIFF_CH, dark_lt: 233 },
     flags_explained: {
@@ -250,7 +252,9 @@ test('②-b ㉠ 여유 — 획 중심이 화면 밖이어도 입자는 안으로
   // 이 값은 `CLIP_MARGIN_PX`의 **근거**다 — 원장에 남긴다(#47: 산문에 안 박고 필드로 읽는다)
   const suffix2 = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
   const out = resolve(HERE, `../../stage0/out/gesture_tiles_web2${suffix2}.json`)
-  try {
+  // 원장은 LEDGER=1 단독 실행에서만 쓴다(위 첫 쓰기와 같은 문 — web2-24 3부 전면화).
+  // 이 블록은 «읽고 다시 쓰기»라 문이 없으면 전량 실행이 기준선을 부분 덮어쓴다.
+  if (process.env.LEDGER === '1') try {
     const cur = JSON.parse(readFileSync(out, 'utf8'))
     cur.clip_margin = {
       particle_spread_css_px: spread, stroke_center_off_px: off, edge_dark_px: edgePx,

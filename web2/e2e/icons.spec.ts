@@ -186,7 +186,9 @@ test('④ 굵기 대조 — thin/light/regular 잉크량 vs 지금 앱 아이콘
   const strokeRank = [...weights].sort((a, b) => strokeDist(a) - strokeDist(b))
   const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
-  writeFileSync(resolve(HERE, `../../stage0/out/icon_weight_web2${suffix}.json`), JSON.stringify({
+  // 원장은 LEDGER=1 단독 실행에서만 쓴다(web2-22 규율·#71 ㉠의 문 — web2-24 3부 전면화).
+  // 팔은 그대로 돈다 — 원장만 안 덮는다. 정본 명령: LEDGER=1 npx playwright test icons --workers=1
+  if (process.env.LEDGER === '1') writeFileSync(resolve(HERE, `../../stage0/out/icon_weight_web2${suffix}.json`), JSON.stringify({
     what: `web2-19 4-b(${testInfo.project.name}) — 아이콘 굵기 대조: Phosphor arrows-out의 thin/light/regular를 지금 앱 아이콘(작도 시점 · 가는 선 1.3/20)과 두 척도로 잰 것. 사람이 화면을 못 보고 정했으므로(지시 문면) 이 표가 근거다. e2e icons.spec가 매 실행 다시 쓴다(#47).`,
     def: 'ink_px = **64×64 래스터의 알파 합 ÷ 255**(픽셀 등가 잉크량 — 이름의 px는 그 등가 단위다. ⚠ 첫 판의 32×32 문턱 계수는 분해능이 없어 철회 — chosen_why). 광학 무게 척도라 글리프 복잡도와 뒤섞인다. stroke_frac = 선 굵기 ÷ viewBox(낱개 선의 무게 — ×30px 렌더 환산은 ref 1.95px·light 1.41·regular 1.875). 합성 래스터의 path 기하를 재므로 **dpr 무관**(dpr1·dpr2 원장이 같은 값인 것은 설계다 — dpr2 판은 같은 측정의 재실행 확인일 뿐이다).',
     ink_px: inks, ink_frac: Object.fromEntries(['ref', ...weights].map(k => [k, +frac(k).toFixed(4)])),

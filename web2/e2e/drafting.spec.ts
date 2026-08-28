@@ -12,6 +12,9 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const ledger: Record<string, unknown> = {}
 test.afterAll(async ({ }, testInfo) => {
   if (Object.keys(ledger).length === 0) return
+  // 원장은 LEDGER=1 단독 실행에서만 쓴다(web2-22 규율·#71 ㉠의 문 — web2-24 3부 전면화).
+  // 팔은 그대로 돈다 — 원장만 안 덮는다. 정본 명령: LEDGER=1 npx playwright test drafting --workers=1
+  if (process.env.LEDGER !== '1') return
   const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
   writeFileSync(resolve(HERE, `../../stage0/out/drafting_web2${suffix}.json`), JSON.stringify({
