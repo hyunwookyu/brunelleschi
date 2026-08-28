@@ -1,27 +1,27 @@
 {
  "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
- "measured_at": "web2-21 (2026-08-28)",
+ "measured_at": "web2-22 (2026-08-28)",
  "unit": {
   "command": "npx vitest run (web2/)",
-  "files": 63,
-  "tests": 555,
-  "wall_s": 5.6,
-  "note": "web2-21 +23팔·+4파일(probe21 2·layerrule 8·faces_bulk 7+1·dim 3·layerops +1·icons +1 — 532→555). wall은 vitest Duration(마감 실행 원문). ⚠ 측정 하네스(probe21·faces_bulk_measure)가 전량에 실려 병렬로 돈다 — 벽시계 원장의 정본은 각 하네스 단독 실행이다(#71 ㉠ · faces_bulk run.note)."
+  "files": 65,
+  "tests": 568,
+  "wall_s": 5.7,
+  "note": "web2-22 +13팔·+2파일(yellow2d 6·hold 7 — 555→568). ⚠ 시간 원장 하네스는 LEDGER=1에서만 원장을 쓴다(#71 부기)."
  },
  "e2e": {
   "command": "npx playwright test --workers=1 (dpr1+dpr2)",
-  "cases": 258,
-  "arms": 129,
-  "wall_s": 1134,
-  "arms_source": "npx playwright test --list → 「Total: 258 tests in 33 files」(129팔). --list 출력이 정본(#69 ㉤)",
-  "passed": 258,
+  "cases": 270,
+  "arms": 135,
+  "wall_s": 1224,
+  "arms_source": "npx playwright test --list → 「Total: 270 tests in 36 files」(135팔). --list 출력이 정본(#69 ㉤)",
+  "passed": 270,
   "failed": 0,
-  "note": "web2-21 +6케이스(layerbar 롤 2·face 일괄 2·dim baseScale 2). 252→258. ⚠ 워커 1 — 비용 원장들과 같은 규율. 18.9m 실측."
+  "note": "web2-22 +12케이스(yellow 4·autosave 6·cost22 2 — 258→270 · 파일 +3). 워커 1 · 20.4m. cost18/20/22는 전량에서 팔만 돌고 원장은 안 쓴다(LEDGER 문)."
  },
  "typecheck_build": {
   "command": "tsc --noEmit · vite build",
-  "build_s": 2.02,
-  "note": "web2-21 마감 실측(「✓ built in 2.02s」)."
+  "build_s": 2.08,
+  "note": "web2-22 마감 실측."
  },
  "history": [
   {
@@ -184,6 +184,13 @@
    "unit_files": 59,
    "e2e": 252,
    "e2e_wall_s": 1152
+  },
+  {
+   "at": "web2-21",
+   "unit": 555,
+   "unit_files": 63,
+   "e2e": 258,
+   "e2e_wall_s": 1134
   }
  ],
  "environment": {

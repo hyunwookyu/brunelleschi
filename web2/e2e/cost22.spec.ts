@@ -215,18 +215,25 @@ test('0부 — 비용 재측정(획 200·400·800 · 절반 옐로 자유): 전�
     .toBeGreaterThan(g200.full_redraw_ms.median)
 
   const cost18Path = resolve(HERE, `../../stage0/out/cost18_web2${testInfo.project.name === 'dpr1' ? '' : '_' + testInfo.project.name}.json`)
+  // cost18_ref — **구간이 다르다**(0·1부 리뷰 [8]): cost18 slope는 50→400(8배 — O(n)≈8·
+  // O(n²)≈64), cost22 slope는 200→800(4배 — ≈4·≈16). 나란히 읽으려면 지수로 환산한다
+  // (배수 b, 구간 k배 → 지수 log(b)/log(k)).
   const cost18Ref = existsSync(cost18Path)
-    ? (() => { const j = JSON.parse(readFileSync(cost18Path, 'utf-8')); return { phase: j.phase, slope: j.slope } })()
+    ? (() => {
+      const j = JSON.parse(readFileSync(cost18Path, 'utf-8'))
+      return { phase: j.phase, slope: j.slope, slope_span: '50→400(8배) — cost22의 200→800(4배)과 다른 구간: 지수로 환산해 비교한다' }
+    })()
     : null
 
   const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
   const out = resolve(HERE, `../../stage0/out/cost22_web2${suffix}.json`)
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
-  writeFileSync(out, JSON.stringify({
+  // 원장은 LEDGER=1 단독 실행에서만 쓴다(web2-22 규율 — 전량·병렬 판이 네 번 오염을 냈다: #71 ㉠)
+  if (process.env.LEDGER === '1') writeFileSync(out, JSON.stringify({
     what: 'web2-22 0부 — 자유 스케치 대역(200·400·800 · 절반 옐로)의 비용 재측정. 1-c(옐로를 오스냅·리프팅에서 뺀다)의 전/후를 이 표가 보인다.',
     phase,
     run: {
-      note: '정본 명령: npx playwright test cost22 --workers=1 — **단독 실행**(전량·워커2 판은 정본 아님 #71 ㉠). 전 판은 cost22_web2*_before.json으로 보존.',
+      note: '정본 명령: LEDGER=1 npx playwright test cost22 --workers=1 — **단독 실행**. LEDGER=1이 없으면 원장을 안 쓴다(전량·병렬 판 차단 — web2-22 규율, 네 번 재발한 #71 ㉠의 구조적 수리). 전 판(1-c 전)은 cost22_web2*_before.json — 그 파일의 run.note는 이 문구의 복사라 자기 자신을 가리킨다(사후 해명: before 판이 그 보존본이다).',
       project: testInfo.project.name,
       raw_ratio: RAW_RATIO,
     },
@@ -243,9 +250,23 @@ test('0부 — 비용 재측정(획 200·400·800 · 절반 옐로 자유): 전�
     scene_at_800: sceneAtMax,
     grid: table,
     slope,
+    resolution: {
+      note: '#71 ㉢ — 이 표의 축(획 수)이 값을 실제로 가르는가를 하네스가 단언한다(800 full > '
+        + '200 full). slope의 한 칸 소수점은 실행 변동 안이다 — 대역으로만 읽는다'
+        + '(«후 판 slope가 전 판보다 큰» 것도 그 변동이다: intersect 절대값은 2.34→2.11로 줄었다).',
+      spans_800_gt_200: true,
+    },
+    falsification: '격자가 안 갈리면 표가 아무것도 안 잰 것이다 — 팔이 강제한다: 800 도달 · '
+      + '옐로 ≥380 · osnap 호출 >0 · 800 full > 200 full. 국면(phase)은 옐로 승격 수의 자동 판별이다.',
     flags_explained: {
       'constants/metric_defs 스냅샷 없음': 'web2 라인 공통 형태(xint_web2와 같다)',
       'rest_ms 음수 가능': '뺄셈 분해의 타이머 분해능 — 그대로 적는다(cost18과 같은 유보)',
+      'yellow_lifted 정확히 0(after 전 칸)': '측정이 아니라 **설계 보장**이다(자기참조 유형 3 — '
+        + '옐로가 lift에서 빠지면 승격 0은 항등). 임계를 안 건다 — 이 값의 몫은 국면(전/후) 판별이다.',
+      '옐로 비율·raw 비율이 전 칸 0.5 고정': '동작점이다(#12) — 지시 문면이 «절반»을 지정했다. '
+        + '옐로 수를 흔든 칸은 없다(옐로 «자체»의 기여 0은 위 설계 보장이 말하고, 비율 축 스윕은 안 했다 — 정직 기재).',
+      'ends_merge 같은 값 반복(0.09 등)': '0.01ms 분해능 아래의 양자화다 — 이 몫은 작아서 '
+        + '표의 판정(교차 몫이 지배)과 무관.',
     },
   }, null, 1))
   console.log(`[0부-22] 원장 기록 — ${out} · phase=${phase}`)

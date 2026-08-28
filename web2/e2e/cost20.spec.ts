@@ -214,6 +214,7 @@ test('⑩ 3-b(영역 재조립)의 400획 프레임 비용 — 겹 없음/겹+�
   }
   const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
   mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
-  writeFileSync(resolve(HERE, `../../stage0/out/cost20_web2${suffix}.json`), JSON.stringify(out, null, 2))
+  // 원장은 LEDGER=1 단독 실행에서만 쓴다(web2-22 규율 — 전량·병렬 판이 네 번 오염을 냈다: #71 ㉠)
+  if (process.env.LEDGER === '1') writeFileSync(resolve(HERE, `../../stage0/out/cost20_web2${suffix}.json`), JSON.stringify(out, null, 2))
   console.log(`[⑩] draw ${out.comparison.draw_pose_total} · orbit ${out.comparison.orbit_total} · heavy orbit ${out.comparison.heavy_orbit_total} · alpha ${out.comparison.alpha_vs_multiply_draw}`)
 })

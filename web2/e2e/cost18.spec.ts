@@ -242,7 +242,8 @@ test('0부 — 비용 원장(획 50·100·200·400 × rawIn 0·50·100%): 전량
     const suffix = testInfo.project.name === 'dpr1' ? '' : `_${testInfo.project.name}`
     const out = resolve(HERE, `../../stage0/out/cost18_web2${suffix}.json`)
     mkdirSync(resolve(HERE, '../../stage0/out'), { recursive: true })
-    writeFileSync(out, JSON.stringify({
+    // 원장은 LEDGER=1 단독 실행에서만 쓴다(web2-22 규율 — 전량·병렬 판이 네 번 오염을 냈다: #71 ㉠)
+    if (process.env.LEDGER === '1') writeFileSync(out, JSON.stringify({
       what: 'web2-18 0부 — 비용 원장(이 판의 국면은 아래 phase가 정본이다). 획 50·100·200·400 × rawIn 보유 0·50·100%에서 ①전량 흑연 재그리기 ②syncStrokes ③궤도 1프레임 합(3몫) ④포인터 이동 1회 osnap(3몫 분해). 3·4부의 «무엇을 고칠지»를 이 표가 정한다.',
       phase: 'after',
       run: {

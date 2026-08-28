@@ -2,7 +2,7 @@
  "what": "web2-22 0부 — 자유 스케치 대역(200·400·800 · 절반 옐로)의 비용 재측정. 1-c(옐로를 오스냅·리프팅에서 뺀다)의 전/후를 이 표가 보인다.",
  "phase": "after(1-c 후 — 옐로 획이 2D다)",
  "run": {
-  "note": "정본 명령: npx playwright test cost22 --workers=1 — **단독 실행**(전량·워커2 판은 정본 아님 #71 ㉠). 전 판은 cost22_web2*_before.json으로 보존.",
+  "note": "정본 명령: LEDGER=1 npx playwright test cost22 --workers=1 — **단독 실행**. LEDGER=1이 없으면 원장을 안 쓴다(전량·병렬 판 차단 — web2-22 규율, 네 번 재발한 #71 ㉠의 구조적 수리). 전 판(1-c 전)은 cost22_web2*_before.json — 그 파일의 run.note는 이 문구의 복사라 자기 자신을 가리킨다(사후 해명: before 판이 그 보존본이다).",
   "project": "dpr2",
   "raw_ratio": 0.5
  },
@@ -19,30 +19,31 @@
   "phase": "after",
   "slope": {
    "raw_0pct": {
-    "full_redraw": 10.95,
-    "sync_strokes": 15,
-    "orbit_frame": 2.44,
-    "osnap_total": 22.08,
-    "osnap_intersect": 33.07,
-    "osnap_ends_merge": 3.86
+    "full_redraw": 6.93,
+    "sync_strokes": 4.5,
+    "orbit_frame": 2.57,
+    "osnap_total": 22.79,
+    "osnap_intersect": 31.11,
+    "osnap_ends_merge": 5.54
    },
    "raw_50pct": {
-    "full_redraw": 6.91,
-    "sync_strokes": 7.5,
-    "orbit_frame": 4.37,
-    "osnap_total": 30.53,
-    "osnap_intersect": 58.8,
-    "osnap_ends_merge": 10.38
+    "full_redraw": 9.41,
+    "sync_strokes": 4.5,
+    "orbit_frame": 3.4,
+    "osnap_total": 24.34,
+    "osnap_intersect": 49.82,
+    "osnap_ends_merge": 6.22
    },
    "raw_100pct": {
-    "full_redraw": 8.18,
-    "sync_strokes": 5.5,
-    "orbit_frame": 2,
-    "osnap_total": 15.77,
-    "osnap_intersect": 44.04,
-    "osnap_ends_merge": 3.24
+    "full_redraw": 9.45,
+    "sync_strokes": 6,
+    "orbit_frame": 2.5,
+    "osnap_total": 20.24,
+    "osnap_intersect": 44.61,
+    "osnap_ends_merge": 3.07
    }
-  }
+  },
+  "slope_span": "50→400(8배) — cost22의 200→800(4배)과 다른 구간: 지수로 환산해 비교한다"
  },
  "scene_at_800": {
   "strokes": 800,
@@ -63,29 +64,29 @@
     "withRawIn": 91
    },
    "full_redraw_ms": {
-    "min": 84.4,
-    "median": 122,
-    "max": 193.7
+    "min": 92.4,
+    "median": 112,
+    "max": 278.1
    },
    "sync_strokes_ms": {
     "min": 0.2,
-    "median": 0.4,
+    "median": 0.3,
     "max": 0.7
    },
    "orbit_frame_ms": {
     "n": 32,
-    "r3": 0.40000009536743164,
+    "r3": 0.39999961853027344,
     "bs": 0.3000001907348633,
     "d2": 0.19999980926513672,
     "total": 0.9000000953674316,
-    "totalMax": 231.7000002861023
+    "totalMax": 222.90000009536743
    },
    "osnap": {
     "calls": 40,
-    "per_call_ms": 0.455,
-    "intersect_ms": 0.23,
+    "per_call_ms": 0.48,
+    "intersect_ms": 0.22,
     "ends_merge_ms": 0.0425,
-    "rest_ms": 0.1825
+    "rest_ms": 0.2175
    }
   },
   "400": {
@@ -98,29 +99,29 @@
     "withRawIn": 203
    },
    "full_redraw_ms": {
-    "min": 192.5,
-    "median": 216.1,
-    "max": 245.4
+    "min": 202.1,
+    "median": 235.3,
+    "max": 449.3
    },
    "sync_strokes_ms": {
     "min": 0.4,
-    "median": 0.6,
-    "max": 1
+    "median": 0.5,
+    "max": 1.6
    },
    "orbit_frame_ms": {
     "n": 32,
     "r3": 0.5,
     "bs": 0.40000009536743164,
-    "d2": 0.10000038146972656,
-    "total": 1.0999999046325684,
-    "totalMax": 373.59999990463257
+    "d2": 0.19999980926513672,
+    "total": 1,
+    "totalMax": 355.8999996185303
    },
    "osnap": {
     "calls": 40,
-    "per_call_ms": 1.0275,
-    "intersect_ms": 0.5575,
-    "ends_merge_ms": 0.075,
-    "rest_ms": 0.395
+    "per_call_ms": 1.0525,
+    "intersect_ms": 0.545,
+    "ends_merge_ms": 0.0875,
+    "rest_ms": 0.42
    }
   },
   "800": {
@@ -133,43 +134,51 @@
     "withRawIn": 408
    },
    "full_redraw_ms": {
-    "min": 360,
-    "median": 412.3,
-    "max": 585.5
+    "min": 389.8,
+    "median": 456,
+    "max": 753.1
    },
    "sync_strokes_ms": {
     "min": 0.9,
-    "median": 1.1,
+    "median": 0.9,
     "max": 1.8
    },
    "orbit_frame_ms": {
     "n": 32,
-    "r3": 0.7999997138977051,
+    "r3": 0.7000002861022949,
     "bs": 0.7000002861022949,
     "d2": 0.2999997138977051,
-    "total": 1.8000001907348633,
-    "totalMax": 743.1999998092651
+    "total": 1.799999713897705,
+    "totalMax": 688
    },
    "osnap": {
     "calls": 40,
-    "per_call_ms": 3.66,
-    "intersect_ms": 2.085,
-    "ends_merge_ms": 0.0775,
-    "rest_ms": 1.4975
+    "per_call_ms": 3.63,
+    "intersect_ms": 2.0625,
+    "ends_merge_ms": 0.06,
+    "rest_ms": 1.5075
    }
   }
  },
  "slope": {
-  "full_redraw": 3.38,
-  "sync_strokes": 2.75,
+  "full_redraw": 4.07,
+  "sync_strokes": 3,
   "orbit_frame": 2,
-  "osnap_total": 8.04,
-  "osnap_intersect": 9.07,
-  "osnap_ends_merge": 1.82,
-  "osnap_rest": 8.21
+  "osnap_total": 7.56,
+  "osnap_intersect": 9.38,
+  "osnap_ends_merge": 1.41,
+  "osnap_rest": 6.93
  },
+ "resolution": {
+  "note": "#71 ㉢ — 이 표의 축(획 수)이 값을 실제로 가르는가를 하네스가 단언한다(800 full > 200 full). slope의 한 칸 소수점은 실행 변동 안이다 — 대역으로만 읽는다(«후 판 slope가 전 판보다 큰» 것도 그 변동이다: intersect 절대값은 2.34→2.11로 줄었다).",
+  "spans_800_gt_200": true
+ },
+ "falsification": "격자가 안 갈리면 표가 아무것도 안 잰 것이다 — 팔이 강제한다: 800 도달 · 옐로 ≥380 · osnap 호출 >0 · 800 full > 200 full. 국면(phase)은 옐로 승격 수의 자동 판별이다.",
  "flags_explained": {
   "constants/metric_defs 스냅샷 없음": "web2 라인 공통 형태(xint_web2와 같다)",
-  "rest_ms 음수 가능": "뺄셈 분해의 타이머 분해능 — 그대로 적는다(cost18과 같은 유보)"
+  "rest_ms 음수 가능": "뺄셈 분해의 타이머 분해능 — 그대로 적는다(cost18과 같은 유보)",
+  "yellow_lifted 정확히 0(after 전 칸)": "측정이 아니라 **설계 보장**이다(자기참조 유형 3 — 옐로가 lift에서 빠지면 승격 0은 항등). 임계를 안 건다 — 이 값의 몫은 국면(전/후) 판별이다.",
+  "옐로 비율·raw 비율이 전 칸 0.5 고정": "동작점이다(#12) — 지시 문면이 «절반»을 지정했다. 옐로 수를 흔든 칸은 없다(옐로 «자체»의 기여 0은 위 설계 보장이 말하고, 비율 축 스윕은 안 했다 — 정직 기재).",
+  "ends_merge 같은 값 반복(0.09 등)": "0.01ms 분해능 아래의 양자화다 — 이 몫은 작아서 표의 판정(교차 몫이 지배)과 무관."
  }
 }

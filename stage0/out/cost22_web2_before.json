@@ -170,6 +170,8 @@
  },
  "flags_explained": {
   "constants/metric_defs 스냅샷 없음": "web2 라인 공통 형태(xint_web2와 같다)",
-  "rest_ms 음수 가능": "뺄셈 분해의 타이머 분해능 — 그대로 적는다(cost18과 같은 유보)"
+  "rest_ms 음수 가능": "뺄셈 분해의 타이머 분해능 — 그대로 적는다(cost18과 같은 유보)",
+  "sync_strokes_ms.median = 1": "양자화다(cost18과 같은 해명 — 0.1 단위 ms가 1.0 근처라 중앙값이 정확히 1). 항등 아님.",
+  "수리 전 판": "#71 ㉠ 규율 — 1-c 전 실행의 보존본. 해명 필드만 사후 추가(측정값 불변 · scale_layer_before 선례)"
  }
 }
