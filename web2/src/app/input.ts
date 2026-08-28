@@ -149,7 +149,7 @@ export function initInput(
       holdTimer = window.setTimeout(() => {
         holdTimer = undefined
         if (draft && yellowActive(app)) applyYellowDraft(cur, performance.now())
-      }, C.HOLD_MS + 16)
+      }, app.holdMs + 16)
       return
     }
     tickExt(cur)
@@ -174,7 +174,7 @@ export function initInput(
   let holdTimer: number | undefined
   function applyYellowDraft(cur: Pt, now: number) {
     if (!draft) return
-    const held = tickHold(holdGate, cur, now)
+    const held = tickHold(holdGate, cur, now, app.holdMs)
     const y = yellowEnd(draft.start, cur, held)
     draft.end = y.end
     draft.held = held

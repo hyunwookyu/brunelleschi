@@ -200,6 +200,11 @@ export interface App {
    *  끄면(설정 — A-4 옛 경로 유지) 옛 사슬만 도는 종전 동작 그대로다. 이제 **켜짐이
    *  정본이고 꺼짐이 대체 경로**다 — e2e 팔 구성도 그렇게 갈려 있다(NOTES web2-14 1번 표). */
   own3d: boolean
+  /** **옐로 머무름 직선화의 임계 시간 ms**(web2-26 4번 — 실기기 「조금 길다」 · D6).
+   *  기본 `C.HOLD_MS`이고 사람이 `C.HOLD_MS_MIN`~`C.HOLD_MS_MAX`에서 고친다.
+   *  ⚠ **문서가 아니라 기기 설정이다**(localStorage) — 손의 성질이지 그림의 성질이 아니다
+   *  (26-6의 필압 보정과 반대 갈래다: 그쪽은 저장된 압력의 «해석»이라 문서에 붙는다). */
+  holdMs: number
   /** 승격 «사건»의 판정자(4-c) — 직전 recompute의 카메라 서명(own3d 켜짐에서만 유지) */
   lastCamSig: string | null
   /** 교점 정의(4-g)의 성립·무산 계수 — «끝이 대기선 위에서 끝난» 후보만 센다.
@@ -262,6 +267,7 @@ export function createApp(W: number, H: number): App {
     lastSnap: null,
     strayCount: 0,
     own3d: true,   // 기본 켜짐(web2-14 1번 — 사람 판정). 끄는 길은 설정 + localStorage 'off'.
+    holdMs: C.HOLD_MS,
     lastCamSig: null,
     touchStats: emptyTouchStats(),
     touchLast: null,

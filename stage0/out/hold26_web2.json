@@ -1,0 +1,104 @@
+{
+  "what": "web2-26 4번 — 옐로 머무름 직선화의 시간·속도 문. hold26.test.ts가 쓴다. 판정은 그 파일의 expect가 정본.",
+  "conditions": {
+    "sampling": "표본 간격 8ms(120Hz 펜 대역) · 가짜 시계 주입(tickHold는 순수 상태 기계)",
+    "tremor": "멈춤 픽스처는 손 떨림 ±0.6px을 결정론(sin/cos)으로 태운다 — Math.random ⛔(#14)",
+    "command": "npx vitest run test/hold26.test.ts"
+  },
+  "constants": {
+    "HOLD_MS": 350,
+    "HOLD_MS_MIN": 100,
+    "HOLD_MS_MAX": 1500,
+    "HOLD_JITTER_PX": 4,
+    "HOLD_SPEED_PX_S": 25,
+    "HOLD_SPEED_WINDOW_MS": 120,
+    "HOLD_DRIFT_REF_MS": 600,
+    "HOLD_JITTER_MIN_PX": 2
+  },
+  "threshold_by_hold_ms": [
+    {
+      "holdMs": 100,
+      "delay": 208
+    },
+    {
+      "holdMs": 200,
+      "delay": 304
+    },
+    {
+      "holdMs": 350,
+      "delay": 456
+    },
+    {
+      "holdMs": 600,
+      "delay": 704
+    },
+    {
+      "holdMs": 1000,
+      "delay": 1104
+    },
+    {
+      "holdMs": 1500,
+      "delay": 1608
+    }
+  ],
+  "speed_sweep_near_straight": [
+    {
+      "v": 2,
+      "held": 352
+    },
+    {
+      "v": 5,
+      "held": 352
+    },
+    {
+      "v": 10,
+      "held": null
+    },
+    {
+      "v": 20,
+      "held": null
+    },
+    {
+      "v": 30,
+      "held": null
+    },
+    {
+      "v": 40,
+      "held": null
+    },
+    {
+      "v": 50,
+      "held": null
+    },
+    {
+      "v": 60,
+      "held": null
+    },
+    {
+      "v": 70,
+      "held": null
+    },
+    {
+      "v": 80,
+      "held": null
+    },
+    {
+      "v": 100,
+      "held": null
+    },
+    {
+      "v": 140,
+      "held": null
+    },
+    {
+      "v": 200,
+      "held": null
+    }
+  ],
+  "drift_threshold_px_s": {
+    "fixed_box_at_600ms": 6.666666666666667,
+    "fixed_box_at_current": 11.428571428571429,
+    "proportional_box_any_time": 6.666666666666667,
+    "note": "고정 상자로 재던 시절의 실효 표류 문턱은 시간을 내리면 «넓어졌다»(6.7 → 11.4 px/s). 상자를 시간에 비례시켜 그 문턱을 임계 시간과 무관하게 고정했다."
+  }
+}

@@ -716,6 +716,27 @@ own3dBox.addEventListener('change', () => {
   invalidate()
 })
 
+// ── 머무름 직선화 시간(web2-26 4번) — **기기 설정**이라 localStorage다(문서 아님).
+// 손의 성질이지 그림의 성질이 아니다: 남의 그림을 열어도 내 손에 맞는 값이 유지된다.
+const HOLD_KEY = 'b2-holdms'
+const holdRng = document.getElementById('rng-hold') as HTMLInputElement
+const holdRead = document.getElementById('hold-read')!
+const clampHold = (v: number) => Math.min(C.HOLD_MS_MAX, Math.max(C.HOLD_MS_MIN, Math.round(v / 50) * 50))
+const showHold = () => { holdRead.textContent = `${(app.holdMs / 1000).toFixed(2)}s` }
+holdRng.min = String(C.HOLD_MS_MIN)
+holdRng.max = String(C.HOLD_MS_MAX)
+try {
+  const saved = Number(localStorage.getItem(HOLD_KEY))
+  if (Number.isFinite(saved) && saved > 0) app.holdMs = clampHold(saved)
+} catch { /* 기본값 */ }
+holdRng.value = String(app.holdMs)
+showHold()
+holdRng.addEventListener('input', () => {
+  app.holdMs = clampHold(Number(holdRng.value))
+  showHold()
+  try { localStorage.setItem(HOLD_KEY, String(app.holdMs)) } catch { /* 세션 한정 */ }
+})
+
 const radius = document.getElementById('osnap-radius') as HTMLInputElement
 radius.value = String(app.osnap.radius)
 radius.addEventListener('input', () => { app.osnap.radius = Number(radius.value) })
