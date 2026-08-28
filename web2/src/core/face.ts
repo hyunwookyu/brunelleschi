@@ -416,8 +416,9 @@ export function planesOf(g: Graph, tol: number): { n: V3; d: number; use: Set<nu
   return out
 }
 
-/** 탭 광선이 그 평면을 만나는 거리 — 뒤이거나 나란하면 Infinity(안 고른다) */
-function planeDepth(pl: { n: V3; d: number }, ray: { o: V3; d: V3 }): number {
+/** 탭 광선이 그 평면을 만나는 거리 — 뒤이거나 나란하면 Infinity(안 고른다).
+ *  **면과 광선의 만남은 여기 하나다**(#54) — 굽기(`make2d.ts`)도 이것을 부른다. */
+export function planeDepth(pl: { n: V3; d: number }, ray: { o: V3; d: V3 }): number {
   const den = dot3(pl.n, ray.d)
   if (Math.abs(den) < 1e-9) return Infinity
   const t = (pl.d - dot3(pl.n, ray.o)) / den

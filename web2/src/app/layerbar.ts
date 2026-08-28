@@ -36,6 +36,9 @@ export interface LayerbarHooks {
   onChange: () => void
   /** 눌리지 않는 이유가 보여야 한다(2-a) — 한 줄 안내 채널 */
   notify: (msg: string) => void
+  /** 겹을 얹은 **뒤** 한 번(web2-23 3부) — 옐로의 밑그림 안내가 여기 걸린다.
+   *  겹을 얹는 자리가 둘(이 「+」와 손 띠의 롤)이라 **뒤처리는 한 함수**여야 한다(#54). */
+  afterAdd?: (layer: Layer) => void
 }
 
 export interface Layerbar {
@@ -94,10 +97,11 @@ export function initLayerbar(app: App, host: HTMLElement, hooks: LayerbarHooks):
           b.dataset.paper = paper
           b.innerHTML = `${svg}<span>${label}</span>`
           b.addEventListener('click', () => {
-            addLayer(app, paper, hooks.viewport())
+            const lay = addLayer(app, paper, hooks.viewport())
             closePop()
             render()
             hooks.onChange()
+            if (lay) hooks.afterAdd?.(lay)
           })
           p.append(b)
         }

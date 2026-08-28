@@ -131,11 +131,11 @@
   "doc100": {
     "strokes": 100,
     "raw_pts_total_after_simplify": 10154,
-    "brnl_bytes_utf8": 487582,
-    "brnl_code_units_x2_utf16": 975156,
+    "brnl_bytes_utf8": 487768,
+    "brnl_code_units_x2_utf16": 975528,
     "pct_of_autosave_assumption_utf8": 9.3,
     "pct_of_autosave_assumption_utf16": 18.6,
-    "straight_control_bytes": 9191,
+    "straight_control_bytes": 9377,
     "note": "⑨ — 옐로 100획(프리핸드) 문서의 .brnl 크기와 AS-C80(5MB) 대비 %(두 관례 — utf8은 앱 게이지(Blob)와 같은 셈·utf16은 localStorage 관례 상한: 경고 대역이 관례로 2배 갈린다 #28). straight_control은 같은 수의 직선 획 문서(솎은 뒤 2점 → raw 안 실림) — 점렬 몫의 크기를 가른다. 70% 경고 발동 대역인지가 물음이다(수백 획 실사용은 실기기 표)"
   },
   "flags_explained": {

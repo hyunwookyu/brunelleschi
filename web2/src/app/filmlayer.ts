@@ -29,11 +29,12 @@
 // 바탕 종이에는 결이 없다(사람이 정했다 — 겹 둘에만).
 
 import type { App } from './state'
-import { fadeRef, isDrawPose } from './state'
-import type { Layer, Paper, CamPose } from '../core/types'
-import { rng32, MAT, gradeOf, widthOf } from '../core/material'
+import { fadeRef, isDrawPose, underlayOf } from './state'
+import type { Layer, Paper, CamPose, Underlay } from '../core/types'
+import { rng32, MAT, gradeOf, widthOf, widthOfMat } from '../core/material'
 import { project } from '../core/camera'
 import { waitFadeFactor } from '../core/waitfade'
+import { C } from '../core/constants'
 
 // ── 막의 색·섬유 매개변수 — 값의 근거는 assumptions(AS-C68·C69) ────────────────
 // 곱 합성에서는 «밝기»가 곧 비침이다(흰색 = 투명·어두울수록 짙다) — 별도 불투명도가
@@ -201,6 +202,59 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
     return t
   }
 
+  /** 밑그림 한 장 — 그 겹의 rect 안에서만. **경도만이 가름이다**(web2-23 2-a):
+   *  보이는 선 F · 가린 선 H. ⛔ 파선을 안 쓴다 — 이 앱에서 파선은 이미 「대기」의
+   *  채널이고(web2-16 3-a) 채널이 겹치면 둘 다 안 읽힌다. ⛔ 새 색·새 굵기를 만들지
+   *  않는다(#54 — `MAT`·`widthOfMat` 그대로).
+   *
+   *  ⚠⚠ **덮는 것은 «자기가 대체하는 선 자리»뿐이다**(web2-23 2부 — 리뷰 뒤 정정).
+   *  초판은 겹의 rect **전체**를 종이색으로 덮었는데, 그러면 「치환」은 서지만 그 종이
+   *  안의 **다른 모든 것**(대기 획·아래 겹의 획)이 함께 사라진다 — web2-20 3부의 게이트
+   *  ⑧(「세 장을 겹쳐도 아래 획이 읽힌다」)이 그것을 **전량 e2e에서 빨갛게** 잡았다
+   *  (paper.spec ⑦⑧⑨ — 대비 0.0002. #71 ㉤의 형태 그대로다: 겹에 한 단계를 끼우면
+   *  그 겹을 읽던 팔이 «사라졌다»로 읽는다).
+   *  그래서 **선 자리 도려내기**로 바꿨다: 조각마다 그 선을 종이색으로 한 번 지우고
+   *  (그 자리의 3D 획이 곧 밑그림이 대체하는 대상이다) 그 위에 F·H를 긋는다.
+   *  「가린 선 빼기」에서도 **지우기는 한다** — 안 그러면 원래 획이 그대로 남아 옵션이
+   *  아무 일도 안 한다. 지우는 굵기는 «그 자리에 있을 수 있는 가장 굵은 선»
+   *  (`C.NIB_MAX`)이다 — 새 숫자를 안 짓는다(#54). */
+  function drawUnderlay(g: CanvasRenderingContext2D, app: App, lay: Layer, u: Underlay) {
+    const v = app.view
+    g.save()
+    g.beginPath()
+    g.rect((lay.rect.x * v.s + v.ox) * cd, (lay.rect.y * v.s + v.oy) * cd,
+      lay.rect.w * v.s * cd, lay.rect.h * v.s * cd)
+    g.clip()
+    g.setTransform(cd * v.s, 0, 0, cd * v.s, cd * v.ox, cd * v.oy)   // 문서 좌표
+    const is = 1 / v.s           // 화면 고정 굵기(render2d 규약 그대로)
+    g.lineCap = 'round'
+    g.setLineDash([])            // 파선 아님 — 명시한다(위 ⛔)
+    const path = () => {
+      g.beginPath()
+      for (const seg of u.segs) { g.moveTo(seg.a.x, seg.a.y); g.lineTo(seg.b.x, seg.b.y) }
+    }
+    // ① 선 자리 도려내기 — 밑그림이 대체하는 3D 획을 그 자리에서만 지운다
+    g.strokeStyle = '#f5f3ee'
+    g.lineWidth = C.NIB_MAX * is
+    path()
+    g.stroke()
+    // ② 경도로 다시 긋는다 — 보이는 선 F · 가린 선 H
+    for (const seg of u.segs) {
+      if (seg.hidden && !app.showHidden) continue     // 「가린 선 빼기」 옵션(2-a)
+      const grade = seg.hidden ? 'H' : 'F'
+      const m = MAT[grade]
+      g.strokeStyle = m.color
+      g.globalAlpha = m.alpha
+      g.lineWidth = widthOfMat({ grade }) * is
+      g.beginPath()
+      g.moveTo(seg.a.x, seg.a.y)
+      g.lineTo(seg.b.x, seg.b.y)
+      g.stroke()
+    }
+    g.globalAlpha = 1
+    g.restore()
+  }
+
   function drawFilms(app: App) {
     const split = filmSplit(app)
     const g = film.getContext('2d')!
@@ -240,6 +294,16 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
       if (!c || c.width === 0) continue
       if (c.style.visibility === 'hidden' || c.style.display === 'none') continue
       g.drawImage(c, 0, 0, film.width, film.height)
+    }
+    // ①′ **밑그림**(web2-23 2부) — 밑그림이 있는 겹의 종이 안에서 **자기가 대체하는 선
+    // 자리를 도려내고** 구운 선이 대신 선다. 그것이 「눌러놓은 선」의 뜻이다: 비쳐 보이는
+    // 와이어프레임이 아니라 **그 순간의 그림**이고, 그래서 가린 선을 H로 바꾸거나 빼는
+    // 것이 화면에 실제로 나타난다(안 도려내면 원래 획이 그대로 비쳐 2-a의 옵션이 아무
+    // 일도 안 한다). **그 선 자리 밖은 종전대로 비친다** — 대기 획도 아래 겹의 획도
+    // 남는다(web2-20 3부 게이트 ⑧). 곱(②)은 이 위에 얹힌다 — 밑그림도 결에 물든다.
+    for (const lay of split.films) {
+      const u = underlayOf(app.doc, lay.id)
+      if (u) drawUnderlay(g, app, lay, u)
     }
     // ② 막들을 순서대로 곱한다 — 겹치는 자리는 누적 곱(더 어두워진다 — 3-a)
     for (const lay of split.films) {

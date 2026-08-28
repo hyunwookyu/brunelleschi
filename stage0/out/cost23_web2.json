@@ -1,0 +1,288 @@
+{
+  "run": {
+    "note": "web2-23 1-b — bakeUnderlay 한 번의 벽시계(중앙값 5회·최대) + 2-b ⑦ 굽기 전후 바이트. ⚠ 정본 명령: LEDGER=1 npx vitest run test/cost23_measure.test.ts — **단독 실행**. (LEDGER=1이 없으면 원장을 안 쓴다 — 전량 실행의 병렬 판이 못 덮는다 #71 ㉠.)",
+    "date": "2026-08-28",
+    "conditions": {
+      "runner": "node(vitest **단일 파일 단독 실행** — 동시 워커 없음·브라우저 없음: 알고리즘 몫만)",
+      "scene": "합성 lift(승격·오스냅 비용 제외) · 면 M개는 서로 다른 깊이의 벽(각 4획) · 획 N개는 rng32(20260828) 고정 시드로 그 사이에 놓아 **화면에서 실제로 겹치게** 한다 (안 겹치면 클리핑이 안 돌아 표가 아무것도 안 잰다 — #69 ㉣)",
+      "counted": "«대상 선분»(lines)은 N + 4M이다 — 면의 경계 획도 3D 선분이라 굽기의 대상이다",
+      "repeats": "전역 예열(400×40 세 번) 뒤 칸마다 예열 1회 + 11회 — 중앙값·최대. 11인 근거: 값이 한 자릿수 ms라 GC 잡음이 축의 신호와 같은 대역이다(5회 판에서 50획 행의 max가 400획 행의 med를 넘었다 — 축이 아니라 잡음을 재고 있었다)"
+    },
+    "budget_ms": 500,
+    "threshold": "초안 상한 500ms(상수 C.BAKE_BUDGET_MS — 지시 1-b). 넘으면 진행 표시를 띄운다. 프레임 예산과 안 견준다. ⚠ 산문이 아니라 위 budget_ms가 정본이다 — 상수를 바꾸면 이 수도 따라간다(2차 리뷰 [13]).",
+    "estimate_vs_measured": "D-4 — 지시 1-b의 「수십 ms로 예상된다」는 **짐작**이었다. 실측은 격자의 최악 칸(획 400×면 40 = 대상 선분 560·조각 5024)에서 한 자릿수 ms다 — 상한의 1% 대역. 진행 표시는 **안 만들었다**(발화 조건이 없다 — 범위를 넓히지 않는다). 되돌릴 조건: 실기기에서 굽는 동안 멈춤이 관측되거나 이 원장의 최악 칸이 500ms에 가까워지면 그때 만든다(DEFERRED web2-23)."
+  },
+  "grid": {
+    "strokes": [
+      50,
+      100,
+      200,
+      400
+    ],
+    "faces": [
+      5,
+      10,
+      20,
+      40
+    ]
+  },
+  "rows": [
+    {
+      "strokes": 50,
+      "faces": 5,
+      "lines": 70,
+      "pieces": 139,
+      "segs": 80,
+      "hidden": 55,
+      "med_ms": 0.16,
+      "max_ms": 0.26
+    },
+    {
+      "strokes": 50,
+      "faces": 10,
+      "lines": 90,
+      "pieces": 292,
+      "segs": 105,
+      "hidden": 77,
+      "med_ms": 0.3,
+      "max_ms": 0.71
+    },
+    {
+      "strokes": 50,
+      "faces": 20,
+      "lines": 130,
+      "pieces": 737,
+      "segs": 146,
+      "hidden": 117,
+      "med_ms": 0.7,
+      "max_ms": 1.09
+    },
+    {
+      "strokes": 50,
+      "faces": 40,
+      "lines": 210,
+      "pieces": 2022,
+      "segs": 227,
+      "hidden": 197,
+      "med_ms": 1.9,
+      "max_ms": 2.21
+    },
+    {
+      "strokes": 100,
+      "faces": 5,
+      "lines": 120,
+      "pieces": 240,
+      "segs": 134,
+      "hidden": 103,
+      "med_ms": 0.24,
+      "max_ms": 0.25
+    },
+    {
+      "strokes": 100,
+      "faces": 10,
+      "lines": 140,
+      "pieces": 449,
+      "segs": 160,
+      "hidden": 125,
+      "med_ms": 0.42,
+      "max_ms": 0.48
+    },
+    {
+      "strokes": 100,
+      "faces": 20,
+      "lines": 180,
+      "pieces": 1025,
+      "segs": 203,
+      "hidden": 166,
+      "med_ms": 0.95,
+      "max_ms": 1.45
+    },
+    {
+      "strokes": 100,
+      "faces": 40,
+      "lines": 260,
+      "pieces": 2526,
+      "segs": 281,
+      "hidden": 243,
+      "med_ms": 2.51,
+      "max_ms": 2.9
+    },
+    {
+      "strokes": 200,
+      "faces": 5,
+      "lines": 220,
+      "pieces": 450,
+      "segs": 243,
+      "hidden": 191,
+      "med_ms": 0.44,
+      "max_ms": 0.68
+    },
+    {
+      "strokes": 200,
+      "faces": 10,
+      "lines": 240,
+      "pieces": 776,
+      "segs": 270,
+      "hidden": 213,
+      "med_ms": 0.78,
+      "max_ms": 1.3
+    },
+    {
+      "strokes": 200,
+      "faces": 20,
+      "lines": 280,
+      "pieces": 1611,
+      "segs": 313,
+      "hidden": 254,
+      "med_ms": 1.62,
+      "max_ms": 2.78
+    },
+    {
+      "strokes": 200,
+      "faces": 40,
+      "lines": 360,
+      "pieces": 3462,
+      "segs": 391,
+      "hidden": 330,
+      "med_ms": 3.62,
+      "max_ms": 4.04
+    },
+    {
+      "strokes": 400,
+      "faces": 5,
+      "lines": 420,
+      "pieces": 824,
+      "segs": 454,
+      "hidden": 366,
+      "med_ms": 0.85,
+      "max_ms": 1.14
+    },
+    {
+      "strokes": 400,
+      "faces": 10,
+      "lines": 440,
+      "pieces": 1372,
+      "segs": 486,
+      "hidden": 390,
+      "med_ms": 1.32,
+      "max_ms": 1.79
+    },
+    {
+      "strokes": 400,
+      "faces": 20,
+      "lines": 480,
+      "pieces": 2609,
+      "segs": 529,
+      "hidden": 431,
+      "med_ms": 2.63,
+      "max_ms": 3.14
+    },
+    {
+      "strokes": 400,
+      "faces": 40,
+      "lines": 560,
+      "pieces": 5024,
+      "segs": 609,
+      "hidden": 507,
+      "med_ms": 5.43,
+      "max_ms": 6
+    }
+  ],
+  "worst": {
+    "strokes": 400,
+    "faces": 40,
+    "med_ms": 5.43,
+    "max_ms": 6
+  },
+  "over_budget": [],
+  "resolution": {
+    "note": "#71 ㉢ — 두 축이 실제로 값을 가르는가. 하네스가 둘 다 단언한다: ① 획 축(면 40 고정): 400획 med > 50획 med ② 면 축(획 400 고정): 40면 med > 5면 med×2. ⚠ 두 축의 무게가 다르다 — **동인은 면 수**다(배수는 아래 열들이 값으로 낸다). ⚠⚠ **차수 예측이 실측에 진다**(D-4의 형태 — 리뷰 [2-b]): 「조각마다 면 전부를 훑으니 O(N·M²)」이면 M 8배에 64배를 예상해야 하는데 실측은 face_axis_ratio 대역이고 **pieces와 거의 같은 배수**다(pieces_face_axis_ratio와 나란히 읽는다). 조기 반환(첫 가림에서 true)과 포함 판정의 빠른 기각이 M 항을 접는다 — **비용은 조각 수에 거의 선형**으로 읽는 것이 이 원장이 실제로 지지하는 문장이다. 그래서 500ms 도달 대역의 외삽도 pieces로 한다(면 수 자체가 아니라).",
+    "face_axis_ratio": 6.39,
+    "stroke_axis_ratio": 2.86,
+    "pieces_face_axis_ratio": 6.1,
+    "stroke_axis": {
+      "low_med": 1.9,
+      "high_med": 5.43
+    },
+    "face_axis": {
+      "low_med": 0.85,
+      "high_med": 5.43
+    },
+    "max_overlap": false,
+    "max_overlap_note": "참이면 그 두 행의 **최대값 대역이 겹친다** — 한 번의 굽기로는 획 축을 못 가른다는 뜻이고, 그래서 판정은 중앙값으로 한다(잡음의 실측 기록)",
+    "seed_check": {
+      "seedA": {
+        "face": 6.39,
+        "stroke": 2.86
+      },
+      "seedB": {
+        "face": 5.98,
+        "stroke": 2.56
+      },
+      "note": "#14 — 배치 시드 둘째(771103)로 세 모서리 칸을 다시 잰다. 「동인은 면 수」가 배치 하나의 일화가 아님을 보인다(하네스가 두 시드 모두에서 face > stroke를 단언). ⚠ 유효 자릿수는 두 자리로 읽는다(시드·GC 변동폭 — CLAUDE.md §5).",
+      "rows_seedB": [
+        {
+          "strokes": 400,
+          "faces": 40,
+          "lines": 560,
+          "pieces": 5222,
+          "segs": 600,
+          "hidden": 521,
+          "med_ms": 5.32,
+          "max_ms": 5.95
+        },
+        {
+          "strokes": 400,
+          "faces": 5,
+          "lines": 420,
+          "pieces": 839,
+          "segs": 450,
+          "hidden": 378,
+          "med_ms": 0.89,
+          "max_ms": 1.25
+        },
+        {
+          "strokes": 50,
+          "faces": 40,
+          "lines": 210,
+          "pieces": 2036,
+          "segs": 224,
+          "hidden": 199,
+          "med_ms": 2.08,
+          "max_ms": 2.5
+        }
+      ]
+    }
+  },
+  "bytes_2b": {
+    "before_utf8": 820,
+    "after_utf8": 1264,
+    "before_utf16": 1632,
+    "after_utf16": 2520,
+    "underlay_segs": 3,
+    "bytes_per_seg_utf8": 148,
+    "pct_of_autosave_utf8": 0.024,
+    "pct_of_autosave_utf16": 0.048,
+    "note": "⑦ — 옐로 한 장을 얹기 전/후의 .brnl. 늘어난 몫이 곧 밑그림이다(마디마다 점 둘 + 깃발). utf8은 앱의 자동 저장 게이지(Blob)와 같은 셈이고 utf16은 localStorage 관례 상한의 셈이다(#28). ⚠⚠ **저장 단위는 `segs`이지 `pieces`가 아니다** — 같은 깃발끼리 이어 붙인 뒤의 마디 수다. 실사용 외삽은 아래 projected_worst가 그 수로 한다(pieces로 외삽하면 8배 넘게 부푼다 — 첫 판이 그 오류였고 리뷰 [3]이 잡았다).",
+    "projected_worst": {
+      "segs": 609,
+      "bytes_utf8": 90132,
+      "pct_of_autosave_utf8": 1.719,
+      "note": "최악 칸의 **segs**(pieces 아님 — 저장은 이어 붙인 뒤의 마디 수다)로 외삽한 밑그림 하나의 크기. ⚠ pieces로 외삽하면 8배 넘게 부푼다(첫 판이 그 오류였고 리뷰 [3]이 잡았다). ⚠ 바이트/마디는 **좌표 문자열의 길이**에 달렸다 — 아래 autosave_serialize_ms의 worst_doc_bytes_utf8은 짧은 좌표로 만든 합성 밑그림이라 이 외삽보다 작다. 두 값을 다 남긴다(실사용은 그 사이)."
+    },
+    "autosave_serialize_ms": {
+      "with_underlay_min_scene": 0.014,
+      "without_underlay": 0.007,
+      "with_worst_size_underlay": 0.348,
+      "worst_doc_bytes_utf8": 45649,
+      "worst_doc_pct_of_autosave": 0.871,
+      "bytes_per_seg_utf8_large_sample": 73.6,
+      "bytes_per_seg_note": "2차 리뷰 [5] — 위 bytes_per_seg_utf8(148)은 **마디 셋**의 델타라 밑그림 열쇠·배열 괄호의 고정 비용이 그 셋에 나뉘어 실려 있다. 이 값은 마디 609개 표본의 마디당 바이트다(합성 좌표라 문자열이 짧다). 실사용은 두 값 사이이고, projected_worst는 **큰 쪽**(148)으로 잡은 보수적 외삽이다.",
+      "note": "리뷰 [4] — 굽기가 「한 번 도는 비용」인 것과 별개로 **자동 저장은 획마다 돈다**. 밑그림이 Doc에 들어간 뒤로 그 직렬화가 매번 밑그림 전체를 다시 쓴다. 최악 칸 크기의 밑그림(segs 609)을 실제로 얹고 serializeBrnl 11회 중앙값을 잰 값이다(외삽 아님). 프레임 예산(16ms)과 견주는 것이 여기서는 옳다 — 이것은 그리는 동안 도는 비용이다. ⚠ 합성 밑그림의 좌표 문자열이 짧아 worst_doc_bytes_utf8은 projected_worst.bytes_utf8보다 작다(직렬화 시간은 문자 수에 비례하므로 실사용은 이 값보다 크다 — 두 마디당 바이트의 비만큼, 곧 두 배 대역까지)."
+    }
+  },
+  "flags_explained": {
+    "constants/metric_defs 스냅샷 없음": "web2 라인의 원장은 상수 스냅샷 등록부 밖(공통 형태)",
+    "hidden 0인 행이 있을 수 있다": "무작위 배치라 그 시드에서 가린 조각이 없을 수 있다 — 가림의 «정확성»은 make2d.test가 값으로 재고 이 원장은 **비용**만 잰다"
+  }
+}

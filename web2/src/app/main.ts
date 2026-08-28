@@ -1,6 +1,6 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG } from './layerbar'
 import { initInput } from './input'
@@ -13,7 +13,7 @@ import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice, confirmNear } from './notice'
 import { OSNAP_ORDER, osnap, osnapCost, resetOsnapCost, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT, widthOfMat, gradeOf } from '../core/material'
-import type { Grade } from '../core/types'
+import type { Grade, Layer } from '../core/types'
 import { parseDim, formatMm, lenMm, UNITS, type Unit } from '../core/dim'
 import { initDimPanel } from './dimpanel'
 import { createVoice } from './voice'
@@ -532,18 +532,7 @@ function renderFacePop() {
   }
   if (app.faceCandidates === null) {
     // 전부 켜고 빼기(4-a) — 후보를 전부 내놓고 아닌 것만 탭해서 뺀다
-    mk('전부 찾기', 'btn-face-all', () => {
-      const n = findAllFaces(app)
-      if (n === 0) {
-        cancelCandidates(app)
-        notify('닫힌 영역이 없다')
-        facePop.hidden = true
-      } else {
-        notify(`후보 ${n} — 아닌 것을 탭해서 빼고, 확정을 누른다`)
-        renderFacePop()
-      }
-      invalidate()
-    })
+    mk('전부 찾기', 'btn-face-all', runFindAll)
   } else {
     mk(`확정 ${app.faceCandidates.length}`, 'btn-face-commit', () => {
       const n = commitCandidates(app)
@@ -557,6 +546,19 @@ function renderFacePop() {
       invalidate()
     })
   }
+}
+/** 「전부 찾기」 — 버튼과 **밑그림 안내의 길**(web2-23 3부)이 같은 함수를 부른다(#54) */
+function runFindAll() {
+  const n = findAllFaces(app)
+  if (n === 0) {
+    cancelCandidates(app)
+    notify('닫힌 영역이 없다')
+    facePop.hidden = true
+  } else {
+    notify(`후보 ${n} — 아닌 것을 탭해서 빼고, 확정을 누른다`)
+    renderFacePop()
+  }
+  invalidate()
 }
 function toggleFacePop() {
   facePop.hidden = !facePop.hidden
@@ -700,6 +702,12 @@ waitFadeBox.checked = app.waitFade
 waitFadeBox.addEventListener('change', () => { app.waitFade = waitFadeBox.checked; invalidate() })
 // 자립 깃발 체크박스 — 값 읽기는 위(복원 전)에서 끝났다. 여기는 배선만.
 // 끄면 localStorage 'off'로 남는다(A-4 — 옛 사슬 경로 유지·재방문에도 유지).
+// 「가린 선(은선)」(web2-23 2-a) — **표시 손잡이일 뿐이다**: 끄면 밑그림의 H 계열이
+// 안 그려지고, 굽기 결과는 안 바뀐다(다시 안 굽는다 — 2-c). 기본은 켜짐(제도 관행).
+const hiddenBox = document.getElementById('chk-hidden') as HTMLInputElement
+hiddenBox.checked = app.showHidden
+hiddenBox.addEventListener('change', () => { app.showHidden = hiddenBox.checked; invalidate() })
+
 const own3dBox = document.getElementById('chk-own3d') as HTMLInputElement
 own3dBox.checked = app.own3d
 own3dBox.addEventListener('change', () => {
@@ -855,11 +863,30 @@ function captureThumb(): string {
   return t.toDataURL('image/jpeg', 0.72)
 }
 
+// ── 밑그림 안내(web2-23 3부) — **면이 없을 때만·한 번만** ──────────────────────
+// 면이 하나도 없이 옐로를 얹으면 와이어프레임이 다 보이는 그 문제가 그대로 난다.
+// **막지 않는다**(그것도 하나의 선택이다 — 밑그림 없이 자유 스케치만 할 수도 있다).
+// 한 줄 안내 + **면 일괄로 가는 길**을 그 자리에서 연다(지시 3부). 매번 뜨면 잔소리가
+// 되므로 세션에 한 번이다(`app.underlayNoticed`).
+// 겹을 얹는 자리가 둘(종속 탭 「+」·손 띠 롤)이라 **뒤처리는 여기 하나다**(#54).
+function afterAddLayer(lay: Layer) {
+  if (lay.paper !== 'yellow') return
+  if (app.faces.length > 0) return          // ② 면이 있으면 안 뜬다
+  if (app.underlayNoticed) return           // ④ 두 번째 옐로에서는 안 뜬다
+  app.underlayNoticed = true
+  ask('면이 없어 뒤엣선이 다 보인다', [{
+    key: 'faces',
+    label: '면 만들기',
+    onPick: () => { setTool('face'); facePop.hidden = false; runFindAll() },
+  }])
+}
+
 let layerbarRef: { sync: () => void } | null = null
 const layerbar = initLayerbar(app, document.getElementById('layerbar')!, {
   viewport: () => ({ W, H }),
   onChange: () => invalidate(),
   notify,
+  afterAdd: afterAddLayer,
 })
 layerbarRef = layerbar
 // ── 롤 둘(web2-21 3-a) — 손 띠에서 종이를 한 장 뜯는다. 종속 탭의 「+」와 같은 일
@@ -871,9 +898,10 @@ for (const [bid, paper] of [['btn-roll-tracing', 'tracing'], ['btn-roll-yellow',
       notify(LAYER_GATE_MSG)   // 종속 탭 「+」와 같은 상수(#54 — 3·4부 리뷰 [12])
       return
     }
-    addLayer(app, paper, { W, H })
+    const lay = addLayer(app, paper, { W, H })
     layerbar.sync()
     invalidate()
+    if (lay) afterAddLayer(lay)
   })
 }
 const syncRolls = () => {
@@ -1205,6 +1233,24 @@ const diag = {
     pressureLevels: diagPanel.pressureLevels(),
     brnlBytes: brnlBytes(),
   }),
+  // ── 밑그림(web2-23) ────────────────────────────────────────────────────
+  /** 구운 밑그림을 읽는다 — 겹 id를 주면 그것, 안 주면 전부의 요약(조각·가림 수) */
+  underlay: (layer?: number) => layer === undefined
+    ? app.doc.underlays.map(u => ({ layer: u.layer, segs: u.segs.length, hidden: u.segs.filter(g => g.hidden).length }))
+    : underlayOf(app.doc, layer),
+  /** **표현 팔 전용**(2부 ①③) — 밑그림을 심는다. 굽기의 «정확성»은 단위 팔이 값으로
+   *  재고(make2d.test), 화면 팔이 재는 것은 «그 자료가 이렇게 그려지는가»다: 자리와
+   *  깃발을 못 박아야 F·H 대역을 픽셀에서 가를 수 있다. 앱 경로는 안 바뀐다. */
+  underlaySetForTest: (layer: number, segs: { a: { x: number; y: number }; b: { x: number; y: number }; hidden: boolean }[]) => {
+    const u = underlayOf(app.doc, layer)
+    if (!u) return false
+    u.segs = segs.map(g => ({ a: { ...g.a }, b: { ...g.b }, hidden: g.hidden }))
+    invalidate()
+    return true
+  },
+  /** 굽기 호출 수 — 「다시 안 굽는다」를 **실패할 수 있게** 재는 값(2차 리뷰 [8]) */
+  underlayBakes: () => underlayBakeCount(),
+  showHidden: (v?: boolean) => { if (v !== undefined) { app.showHidden = v; invalidate() } return app.showHidden },
   summary: () => ({
     horizonY: app.lift.an.horizonY,
     screenHDeclared: app.lift.an.screenHDeclared,

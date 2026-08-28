@@ -1,7 +1,7 @@
 // .brnl 저장·복원 — 문서(획·프레임)와 시점만 담는다.
 // 카메라·소실점·리프팅은 파생이므로 저장하지 않는다(원칙 b) — 복원 후 다시 계산된다.
 
-import type { Doc, Stroke, Face, Sheet, Layer, Paper, ViewOffset, Grade, RawInput } from './types'
+import type { Doc, Stroke, Face, Sheet, Layer, Paper, ViewOffset, Grade, RawInput, Underlay, UnderlaySegment } from './types'
 import { drawSheet, DRAW_SHEET_ID } from './types'
 import { horizonDocY } from './camera'
 import { GRADES } from './material'
@@ -16,14 +16,16 @@ export interface BrnlData {
   drawView?: ViewOffset | null
 }
 
-/** version 5(web2-20 1부): 겹(Doc.layers·Stroke.layer)이 실린다.
+/** version 6(web2-23 2-b): 밑그림(Doc.underlays)이 실린다.
  *  역사: 1 = 첫 획이 지평선(읽으며 변환) · 2 = 지평선 없음 · 3 = 쓰인 적 없음(v2 모양으로
- *  읽는다) · 4 = sheets · 5 = layers. **6 이상은 거부** — 전방 호환을 흉내내지 않는다.
- *  겹 열쇠가 없으면 겹이 없는 문서다(v4 이하 — 그대로 열린다). */
+ *  읽는다) · 4 = sheets · 5 = layers · 6 = underlays. **7 이상은 거부** — 전방 호환을
+ *  흉내내지 않는다. 열쇠가 없으면 그 항이 없는 문서다(옛 판 — 그대로 열린다).
+ *  ⚠ 판을 올려도 **쓰는 판은 언제나 최신 하나**다(옛 판으로 되쓰지 않는다) — 밑그림이
+ *  없는 문서도 v6으로 나가고, 그때 `underlays` 열쇠 자체를 안 쓴다(왕복 동일성). */
 export function serializeBrnl(d: BrnlData): string {
   return JSON.stringify({
     format: 'brnl',
-    version: 5,
+    version: 6,
     frame: d.doc.frame,
     strokes: d.doc.strokes,
     // 면은 **경계의 정체**만 담긴다(획 id 차례) — 좌표는 복원 후 다시 풀린다.
@@ -37,6 +39,9 @@ export function serializeBrnl(d: BrnlData): string {
     sheets: d.doc.sheets,
     // 겹(web2-20 1부) — 배열 순서 = 쌓인 순서(뒤가 위). 없으면 열쇠를 안 쓴다(왕복 동일성).
     ...(d.doc.layers.length > 0 ? { layers: d.doc.layers } : {}),
+    // 밑그림(web2-23 2-b) — 사건의 기록이라 담는다(면·겹과 같은 급). 없으면 열쇠 없음.
+    // ⚠ 파일이 커지는 자리가 여기다(조각마다 점 둘) — 크기는 원장이 잰다(2-b ⚠).
+    ...(d.doc.underlays.length > 0 ? { underlays: d.doc.underlays } : {}),
     // 작도 시점(web2-17 3-c) — 없으면 열쇠 자체를 안 쓴다(왕복 동일성 — 2-c ② 팔)
     ...(d.drawView ? { drawView: d.drawView } : {}),
   })
@@ -50,9 +55,9 @@ const isQuat = (q: any): boolean => q && isNum(q.x) && isNum(q.y) && isNum(q.z) 
 export function parseBrnl(text: string): BrnlData | null {
   let raw: any
   try { raw = JSON.parse(text) } catch { return null }
-  // 1~4를 받는다(web2-19 2-b — 1~3은 savedViews 형식·4는 sheets).
-  // 5 이상은 **거부** — 전방 호환을 흉내내지 않는다(2-c ③).
-  if (!raw || raw.format !== 'brnl' || ![1, 2, 3, 4, 5].includes(raw.version)) return null
+  // 1~6을 받는다(1~3은 savedViews 형식·4는 sheets·5는 layers·6은 underlays).
+  // 7 이상은 **거부** — 전방 호환을 흉내내지 않는다(web2-19 2-c ③).
+  if (!raw || raw.format !== 'brnl' || ![1, 2, 3, 4, 5, 6].includes(raw.version)) return null
   if (!raw.frame || !isNum(raw.frame.W) || !isNum(raw.frame.H)) return null
   if (!Array.isArray(raw.strokes)) return null
   const strokes: Stroke[] = []
@@ -198,6 +203,26 @@ export function parseBrnl(text: string): BrnlData | null {
     }
   }
 
+  // ── 밑그림(web2-23 2-b) — **모양이 틀리면 그 밑그림만 버린다**(겹은 남는다) ────
+  // 규약의 근거는 썸네일의 선례다: 밑그림은 «다시 그릴 수 있는 그림»이 아니라 잃으면
+  // 끝인 사건이지만, 그것을 잃었다고 **획까지 못 열게 하는 것이 더 큰 손실**이다.
+  // (거부 규약인 것들 — mat.w·rawIn·layers — 은 «있는데 모르는 값이면 조용히 틀리게
+  //  그린다»가 성립하는 자리다. 밑그림은 없으면 그냥 안 그린다.)
+  const underlays: Underlay[] = []
+  if (Array.isArray(raw.underlays)) {
+    for (const u of raw.underlays) {
+      if (!u || !isNum(u.layer) || !Array.isArray(u.segs)) continue
+      const segs: UnderlaySegment[] = []
+      let ok = true
+      for (const g of u.segs) {
+        if (!isPt(g?.a) || !isPt(g?.b) || typeof g.hidden !== 'boolean') { ok = false; break }
+        segs.push({ a: { x: g.a.x, y: g.a.y }, b: { x: g.b.x, y: g.b.y }, hidden: g.hidden })
+      }
+      if (!ok) continue
+      underlays.push({ layer: u.layer, segs })
+    }
+  }
+
   // id는 획·면·종이·겹이 **한 통**이다(겹이 종이·획이 겹을 가리키므로 — 지시 1부)
   const maxId = Math.max(
     strokes.reduce((m, s) => Math.max(m, s.id), 0),
@@ -278,8 +303,16 @@ export function parseBrnl(text: string): BrnlData | null {
   for (const s of strokes) {
     if (s.layer !== undefined && !layerIds.has(s.layer)) delete s.layer
   }
+  // 밑그림이 없는 겹을 가리키면 **그 밑그림을 버린다** — 겹 없는 밑그림은 그릴 자리가
+  // 없다(겹의 rect·포즈가 그리는 조건이다). 겹당 하나만 남긴다(먼저 것이 이긴다).
+  const seenUnderlay = new Set<number>()
+  const keptUnderlays = underlays.filter(u => {
+    if (!layerIds.has(u.layer) || seenUnderlay.has(u.layer)) return false
+    seenUnderlay.add(u.layer)
+    return true
+  })
 
-  const doc: Doc = { frame: { W: raw.frame.W, H: raw.frame.H }, strokes, faces, sheets, layers: keptLayers, unit }
+  const doc: Doc = { frame: { W: raw.frame.W, H: raw.frame.H }, strokes, faces, sheets, layers: keptLayers, underlays: keptUnderlays, unit }
   if (scaleRef !== undefined) doc.scaleRef = scaleRef
   return { doc, nextId, drawView }
 }
