@@ -25,6 +25,7 @@ import { constructedDoc } from './fixtures'
 import { addLayer, commitStroke, createApp, underlayOf, type App } from '../src/app/state'
 import { serializeBrnl } from '../src/core/file'
 import { rng32 } from '../src/core/material'
+import { C } from '../src/core/constants'
 import type { Face, Stroke } from '../src/core/types'
 import { v3, type V3 } from '../src/core/vec'
 
@@ -44,7 +45,7 @@ function synthLift(segs: { id: number; a3: V3; b3: V3 }[]): LiftResult {
 /** 장면 — 면 M개(카메라 앞 여러 깊이의 벽) + 그 사이를 지나는 획 N개.
  *  획은 **화면에서 면과 실제로 겹치게** 놓는다(안 겹치면 클리핑이 안 돌아 비용이 0에
  *  수렴한다 — 실패 불가능한 격자가 된다 #69 ㉣). 시드 고정(rng32 — Math.random ⛔). */
-function scene(nStrokes: number, nFaces: number) {
+function scene(nStrokes: number, nFaces: number, seed = 20260828) {
   const segs: { id: number; a3: V3; b3: V3 }[] = []
   const faces: Face[] = []
   let id = 1
@@ -56,7 +57,7 @@ function scene(nStrokes: number, nFaces: number) {
     for (let k = 0; k < 4; k++) segs.push({ id: id++, a3: P[k]!, b3: P[(k + 1) % 4]! })
     faces.push({ id: 1000 + i, loops: [{ edges: ids.map(s => ({ kind: 'stroke' as const, s })) }] })
   }
-  const r = rng32(20260828)
+  const r = rng32(seed)
   for (let i = 0; i < nStrokes; i++) {
     const z = -(3 + r() * 12)
     const y = 0.1 + r() * 3
@@ -78,8 +79,8 @@ interface Row {
   med_ms: number; max_ms: number
 }
 
-function measure(nStrokes: number, nFaces: number): Row {
-  const { lift, resolved } = scene(nStrokes, nFaces)
+function measure(nStrokes: number, nFaces: number, seed = 20260828): Row {
+  const { lift, resolved } = scene(nStrokes, nFaces, seed)
   const ts: number[] = []
   let last = bakeUnderlay(lift, resolved, DRAW_POSE)     // 예열 한 번(JIT — 첫 판이 이상치)
   for (let k = 0; k < REPEATS; k++) {
@@ -113,6 +114,20 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
     const at = (n: number, m: number) => rows.find(r => r.strokes === n && r.faces === m)!
     const worst = rows.reduce((a, b) => (b.med_ms > a.med_ms ? b : a))
 
+    // ── 배치 시드 둘째(#14 — 시드 변동폭) ─────────────────────────────────
+    // 반복 11회는 **같은 배치**의 시간 잡음만 가른다. 「동인은 면 수」가 배치 하나의
+    // 관측이면 그것은 결론이 아니라 일화다 — 세 모서리 칸을 다른 시드로 다시 잰다.
+    const seedB = [
+      measure(400, 40, 771103), measure(400, 5, 771103), measure(50, 40, 771103),
+    ]
+    const ratioOf = (rs: Row[]) => ({
+      face: Number((rs[0]!.med_ms / rs[1]!.med_ms).toFixed(2)),
+      stroke: Number((rs[0]!.med_ms / rs[2]!.med_ms).toFixed(2)),
+    })
+    const seedA_ratios = { face: Number((at(400, 40).med_ms / at(400, 5).med_ms).toFixed(2)),
+      stroke: Number((at(400, 40).med_ms / at(50, 40).med_ms).toFixed(2)) }
+    const seedB_ratios = ratioOf(seedB)
+
     // ── ⑦(2-b) 굽기 전후 바이트 — **앱 경로**로 잰다(addLayer가 굽는다) ──────────
     const app: App = createApp(1200, 800)
     commitStroke(app, { x: 100, y: 400 }, { x: 1100, y: 400 })   // 지평선
@@ -132,6 +147,46 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
       underlay_segs: u.segs.length,
     }
     const perSeg = (bytes.after_utf8 - bytes.before_utf8) / Math.max(1, u.segs.length)
+    // 22 3부의 % — 자동 저장 가정(AS-C80) 대비. 지시 2-b ⑦의 「22 3부의 %와 함께」
+    const pctOf = (n: number) => Number(((n / C.AUTOSAVE_LIMIT_BYTES) * 100).toFixed(3))
+    // **저장 단위는 `segs`(이어 붙인 폴리라인 마디)이지 `pieces`(자른 조각)가 아니다** —
+    // 같은 깃발끼리 이어지므로 저장에 들어가는 수가 훨씬 적다. 실사용 외삽은 이 수로 한다.
+    const worstSegs = at(400, 40).segs
+    const projected = {
+      segs: worstSegs,
+      bytes_utf8: Math.round(worstSegs * perSeg),
+      pct_of_autosave_utf8: pctOf(worstSegs * perSeg),
+      note: '최악 칸의 **segs**(pieces 아님 — 저장은 이어 붙인 뒤의 마디 수다)로 외삽한 '
+        + '밑그림 하나의 크기. ⚠ pieces로 외삽하면 8배 넘게 부푼다(첫 판이 그 오류였고 '
+        + '리뷰 [3]이 잡았다). ⚠ 바이트/마디는 **좌표 문자열의 길이**에 달렸다 — 아래 '
+        + 'autosave_serialize_ms의 worst_doc_bytes_utf8은 짧은 좌표로 만든 합성 밑그림이라 '
+        + '이 외삽보다 작다. 두 값을 다 남긴다(실사용은 그 사이).',
+    }
+    // ── ⚠ 「한 번 도는 비용」이 덮지 못하는 자리: **자동 저장은 획마다 돈다** ─────
+    // 밑그림이 Doc에 들어간 뒤로 자동 저장의 직렬화가 매번 밑그림 전체를 다시 쓴다.
+    // 굽기가 싸다는 것과 별개의 물음이라 따로 잰다(리뷰 [4]).
+    const serMs = (n: number): number => {
+      const ts: number[] = []
+      for (let k = 0; k < 11; k++) {
+        const t0 = performance.now()
+        serializeBrnl({ doc: app.doc, nextId: app.nextId })
+        ts.push(performance.now() - t0)
+      }
+      void n
+      return Number(median(ts).toFixed(3))
+    }
+    const serWithUnderlay = serMs(1)
+    const kept = app.doc.underlays
+    app.doc.underlays = []
+    const serWithout = serMs(0)
+    app.doc.underlays = kept
+    // 최악 칸 크기의 밑그림을 실제로 얹어 본다(외삽이 아니라 측정)
+    app.doc.underlays = [{ layer: lay.id, segs: Array.from({ length: worstSegs }, (_, i) => ({
+      a: { x: i * 0.37, y: i * 0.11 }, b: { x: i * 0.37 + 12.5, y: i * 0.11 + 7.25 }, hidden: i % 3 === 0,
+    })) }]
+    const serWorst = serMs(2)
+    const worstBytes = Buffer.byteLength(serializeBrnl({ doc: app.doc, nextId: app.nextId }), 'utf8')
+    app.doc.underlays = kept
 
     const ledger = {
       run: {
@@ -149,7 +204,8 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
             + '11인 근거: 값이 한 자릿수 ms라 GC 잡음이 축의 신호와 같은 대역이다(5회 판에서 '
             + '50획 행의 max가 400획 행의 med를 넘었다 — 축이 아니라 잡음을 재고 있었다)',
         },
-        threshold: '초안 상한 500ms(지시 1-b) — 넘으면 진행 표시를 띄운다. 프레임 예산과 안 견준다.',
+        threshold: `초안 상한 ${C.BAKE_BUDGET_MS}ms(상수 C.BAKE_BUDGET_MS — 지시 1-b). `
+          + '넘으면 진행 표시를 띄운다. 프레임 예산과 안 견준다.',
         estimate_vs_measured: 'D-4 — 지시 1-b의 「수십 ms로 예상된다」는 **짐작**이었다. 실측은 '
           + '격자의 최악 칸(획 400×면 40 = 대상 선분 560·조각 5024)에서 한 자릿수 ms다 — '
           + '상한의 1% 대역. 진행 표시는 **안 만들었다**(발화 조건이 없다 — 범위를 넓히지 않는다). '
@@ -159,13 +215,17 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
       grid: { strokes: NS, faces: MS },
       rows,
       worst: { strokes: worst.strokes, faces: worst.faces, med_ms: worst.med_ms, max_ms: worst.max_ms },
-      over_500ms: rows.filter(r => r.med_ms > 500).map(r => `${r.strokes}획×${r.faces}면 ${r.med_ms}ms`),
+      over_budget: rows.filter(r => r.med_ms > C.BAKE_BUDGET_MS).map(r => `${r.strokes}획×${r.faces}면 ${r.med_ms}ms`),
       resolution: {
         note: '#71 ㉢ — 두 축이 실제로 값을 가르는가. 하네스가 둘 다 단언한다: '
-          + '① 획 축(면 40 고정): 400획 med > 50획 max ② 면 축(획 400 고정): 40면 med > 5면 max. '
-          + '⚠ 두 축의 무게가 다르다 — **동인은 면 수**다(배수는 아래 두 열이 값으로 낸다). '
-          + '까닭: 한 선분이 자를 자리는 면의 변 수에 비례하고 조각마다 다시 면 전부를 훑는다 '
-          + '(O(N·M²) 대역). 획은 선형이다.',
+          + '① 획 축(면 40 고정): 400획 med > 50획 med ② 면 축(획 400 고정): 40면 med > 5면 med×2. '
+          + '⚠ 두 축의 무게가 다르다 — **동인은 면 수**다(배수는 아래 열들이 값으로 낸다). '
+          + '⚠⚠ **차수 예측이 실측에 진다**(D-4의 형태 — 리뷰 [2-b]): 「조각마다 면 전부를 '
+          + '훑으니 O(N·M²)」이면 M 8배에 64배를 예상해야 하는데 실측은 face_axis_ratio 대역이고 '
+          + '**pieces와 거의 같은 배수**다(pieces_face_axis_ratio와 나란히 읽는다). 조기 반환'
+          + '(첫 가림에서 true)과 포함 판정의 빠른 기각이 M 항을 접는다 — **비용은 조각 수에 '
+          + '거의 선형**으로 읽는 것이 이 원장이 실제로 지지하는 문장이다. 그래서 500ms 도달 '
+          + '대역의 외삽도 pieces로 한다(면 수 자체가 아니라).',
         face_axis_ratio: Number((at(400, 40).med_ms / at(400, 5).med_ms).toFixed(2)),
         stroke_axis_ratio: Number((at(400, 40).med_ms / at(50, 40).med_ms).toFixed(2)),
         pieces_face_axis_ratio: Number((at(400, 40).pieces / at(400, 5).pieces).toFixed(2)),
@@ -174,14 +234,39 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
         max_overlap: at(50, 40).max_ms > at(400, 40).med_ms,
         max_overlap_note: '참이면 그 두 행의 **최대값 대역이 겹친다** — 한 번의 굽기로는 '
           + '획 축을 못 가른다는 뜻이고, 그래서 판정은 중앙값으로 한다(잡음의 실측 기록)',
+        seed_check: {
+          seedA: seedA_ratios, seedB: seedB_ratios,
+          note: '#14 — 배치 시드 둘째(771103)로 세 모서리 칸을 다시 잰다. 「동인은 면 수」가 '
+            + '배치 하나의 일화가 아님을 보인다(하네스가 두 시드 모두에서 face > stroke를 단언). '
+            + '⚠ 유효 자릿수는 두 자리로 읽는다(시드·GC 변동폭 — CLAUDE.md §5).',
+          rows_seedB: seedB,
+        },
       },
       bytes_2b: {
         ...bytes,
         bytes_per_seg_utf8: Number(perSeg.toFixed(1)),
-        note: '⑦ — 옐로 한 장을 얹기 전/후의 .brnl. 늘어난 몫이 곧 밑그림이다(조각마다 점 둘 + 깃발). '
+        pct_of_autosave_utf8: pctOf(bytes.after_utf8),
+        pct_of_autosave_utf16: pctOf(bytes.after_utf16),
+        note: '⑦ — 옐로 한 장을 얹기 전/후의 .brnl. 늘어난 몫이 곧 밑그림이다(마디마다 점 둘 + 깃발). '
           + 'utf8은 앱의 자동 저장 게이지(Blob)와 같은 셈이고 utf16은 localStorage 관례 상한의 셈이다(#28). '
-          + '⚠ 이 문서는 획 넷짜리 최소 장면이다 — 실사용 대역의 크기는 rows의 pieces가 가늠자다'
-          + '(조각당 약 ' + perSeg.toFixed(0) + 'B).',
+          + '⚠⚠ **저장 단위는 `segs`이지 `pieces`가 아니다** — 같은 깃발끼리 이어 붙인 뒤의 마디 '
+          + '수다. 실사용 외삽은 아래 projected_worst가 그 수로 한다(pieces로 외삽하면 8배 넘게 '
+          + '부푼다 — 첫 판이 그 오류였고 리뷰 [3]이 잡았다).',
+        projected_worst: projected,
+        autosave_serialize_ms: {
+          with_underlay_min_scene: serWithUnderlay,
+          without_underlay: serWithout,
+          with_worst_size_underlay: serWorst,
+          worst_doc_bytes_utf8: worstBytes,
+          worst_doc_pct_of_autosave: pctOf(worstBytes),
+          note: '리뷰 [4] — 굽기가 「한 번 도는 비용」인 것과 별개로 **자동 저장은 획마다 돈다**. '
+            + '밑그림이 Doc에 들어간 뒤로 그 직렬화가 매번 밑그림 전체를 다시 쓴다. 최악 칸 '
+            + '크기의 밑그림(segs ' + String(worstSegs) + ')을 실제로 얹고 serializeBrnl 11회 '
+            + '중앙값을 잰 값이다(외삽 아님). 프레임 예산(16ms)과 견주는 것이 여기서는 옳다 — '
+            + '이것은 그리는 동안 도는 비용이다. ⚠ 합성 밑그림의 좌표 문자열이 짧아 '
+            + 'worst_doc_bytes_utf8은 projected_worst.bytes_utf8보다 작다(직렬화 시간은 '
+            + '문자 수에 비례하므로 실사용은 이 값보다 조금 크다).',
+        },
       },
       flags_explained: {
         'constants/metric_defs 스냅샷 없음': 'web2 라인의 원장은 상수 스냅샷 등록부 밖(공통 형태)',
@@ -213,5 +298,13 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
     expect(at(400, 40).med_ms).toBeGreaterThan(0.05)                // 시계 분해능 위
     // ⑦ — 밑그림이 실제로 파일을 늘렸다
     expect(bytes.after_utf8).toBeGreaterThan(bytes.before_utf8)
+    // 저장 단위가 segs임을 값으로 못 박는다(리뷰 [3] — pieces와 갈린다)
+    expect(bytes.underlay_segs).toBe(u.segs.length)
+    expect(at(400, 40).segs).toBeLessThan(at(400, 40).pieces)
+    // 시드 둘 다에서 «면 축이 획 축보다 무겁다»(#14 — 배치 하나의 일화가 아니다)
+    expect(seedA_ratios.face).toBeGreaterThan(seedA_ratios.stroke)
+    expect(seedB_ratios.face).toBeGreaterThan(seedB_ratios.stroke)
+    // 상한은 상수에서 읽는다(D-C4 — 원장 밖 임계는 낡음이 안 잡힌다)
+    expect(C.BAKE_BUDGET_MS).toBe(500)
   })
 })

@@ -130,6 +130,22 @@ test('① F·H가 픽셀 대역에서 갈린다 · ③ 은선이 파선이 아�
   expect(rHid.gaps).toBe(0)
   // 대조 — 보이는 선도 마찬가지로 이어진다(둘 다 실선이다)
   expect(inkRun(vis.cols, floor).gaps).toBe(0)
+
+  // ③′ **양성 대조**(#74 ㉠의 짝 — 「0」은 그 척도가 0이 아닐 수 있어야 뜻이 있다):
+  // 같은 실행에서 **일부러 끊은** 은선을 심으면 `gaps`가 실제로 오른다. 이 줄이 없으면
+  // 「파선 픽셀 0」은 «척도가 아무것도 안 재는 경우»와 화면에서 구별되지 않는다.
+  await page.evaluate(([y, x0, x1]) => {
+    const b2 = (window as any).__b2
+    const lay = b2.app.doc.layers[b2.app.doc.layers.length - 1]
+    const mid = ((x0 as number) + (x1 as number)) / 2
+    b2.diag.underlaySetForTest(lay.id, [
+      { a: { x: x0 as number, y: y as number }, b: { x: mid - 40, y: y as number }, hidden: true },
+      { a: { x: mid + 40, y: y as number }, b: { x: x1 as number, y: y as number }, hidden: true },
+    ])
+  }, [Y_HID, X0 - 20, X1 + 20] as const)
+  await settle(page)
+  const broken = (await rowProfile(page, Y_HID, X0, X1))!
+  expect(inkRun(broken.cols, floor).gaps).toBeGreaterThan(0)
 })
 
 test('② 「가린 선 빼기」 옵션이 돈다 — 끄면 H 자리의 잉크가 사라지고 F는 남는다', async ({ page }) => {
@@ -183,6 +199,15 @@ test('3부 ② — 면이 있으면 안내가 안 뜬다', async ({ page }) => {
   await page.click('#btn-roll-yellow')
   await settle(page)
   await expect(page.locator('#notice')).not.toContainText('면이 없어')
+
+  // **양성 대조**(#74 ㉠의 짝): 「안 뜬다」가 «안내가 아예 죽었다»와 구별되려면 같은
+  // 실행에서 뜨는 자리가 있어야 한다. 면을 실행취소로 없애고 한 장 더 얹으면 뜬다.
+  await page.click('#btn-undo')
+  await settle(page)
+  expect(await page.evaluate(() => (window as any).__b2.app.doc.faces.length)).toBe(0)
+  await page.click('#btn-roll-yellow')
+  await settle(page)
+  await expect(page.locator('#notice')).toContainText('면이 없어')
 })
 
 test('3부 ③ — 안내의 「면 만들기」가 면 일괄을 실제로 연다', async ({ page }) => {

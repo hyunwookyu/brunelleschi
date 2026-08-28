@@ -58,7 +58,7 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
   // 표시 팝업의 셋 — 지평선·격자·대기 감쇠(id 불변 = 배선 불변)
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#display-pop input')].map(e => e.id)))
-    .toEqual(['chk-horizon', 'chk-grid', 'chk-waitfade'])
+    .toEqual(['chk-horizon', 'chk-grid', 'chk-waitfade', 'chk-hidden'])   // web2-23 2-a: 「가린 선(은선)」
   // 손(오른쪽 세로) — 되돌리기 둘(맨 위·구분선으로 가름) → 자 → 연필(접힘) → 펜 →
   // 지우개 둘 → 면 → **롤 둘(web2-21 3-a — 트레이싱지·옐로)** → 치수 → 서랍.
   // #oldtools(hidden)·#tray(접힘)는 A-4/3-b' 구조물.
