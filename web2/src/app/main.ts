@@ -779,6 +779,32 @@ const layerbar = initLayerbar(app, document.getElementById('layerbar')!, {
   notify,
 })
 layerbarRef = layerbar
+// ── 롤 둘(web2-21 3-a) — 손 띠에서 종이를 한 장 뜯는다. 종속 탭의 「+」와 같은 일
+// (addLayer 하나 — 같은 일을 두 자리에서 하는 것은 흠이 아니다: 연필을 랙에서도 접힌
+// 아이콘에서도 고르는 것과 같다). 카메라가 닫히기 전에는 비활성 + 이유(2-a).
+for (const [bid, paper] of [['btn-roll-tracing', 'tracing'], ['btn-roll-yellow', 'yellow']] as const) {
+  document.getElementById(bid)!.addEventListener('click', () => {
+    if (!app.lift.an.constructionDone) {
+      notify('소실점 작도가 끝나야 종이를 얹을 수 있다')
+      return
+    }
+    addLayer(app, paper, { W, H })
+    layerbar.sync()
+    invalidate()
+  })
+}
+const syncRolls = () => {
+  const done = app.lift.an.constructionDone
+  for (const bid of ['btn-roll-tracing', 'btn-roll-yellow']) {
+    const b = document.getElementById(bid)!
+    b.classList.toggle('disabled', !done)
+    b.title = done
+      ? (bid === 'btn-roll-yellow' ? '옐로를 한 장 얹는다' : '트레이싱지를 한 장 얹는다')
+      : '소실점 작도가 끝나야 얹을 수 있다'
+  }
+}
+app.listeners.push(syncRolls)
+syncRolls()
 const paperbar = initPaperbar(app, document.getElementById('paperbar')!, {
   captureThumb,
   // 종이를 바꾸면 종속 탭 줄도 바뀐다(web2-20 2부 — 겹은 종이에 속한다)

@@ -11,6 +11,7 @@ import { camSig, defineByTouch, emptyTouchStats, type TouchStats } from '../core
 import { DRAW_POSE, rayThrough } from '../core/camera'
 import { defaultOsnap, type OsnapSettings, type OsnapKind } from '../core/osnap'
 import { newExtDwell, clearExtAcq, type ExtDwell } from '../core/extacq'
+import { rng32 } from '../core/material'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
 import { loopAt, faceAt, faceScreen, resolveFaces, type ResolvedFace } from '../core/face'
 import { C } from '../core/constants'
@@ -626,20 +627,38 @@ export function addSheet(app: App, thumb?: string): Sheet {
 
 // ── 겹(web2-20 2부) — 종이 위에 얹은 것. 여럿 동시·가산적 ─────────────────────
 
-/** 「+」 = 새 겹을 **맨 위에** 얹고 활성으로(지시 2부). ⚠ **카메라가 닫히기 전에는 못
- *  얹는다**(2-a — 사람이 정했다: 겹마다 소실점을 만들면 카메라가 섞인다. 얹는 시점을
- *  닫힌 뒤로 미루면 그 자리가 아예 없어진다). 호출부가 그 조건을 UI로 보이고, 여기서도
- *  지킨다(null 반환). rect 기본값 = 지금 보이는 화면(2-b — 대개 그것이 지금 작업하는
- *  부분이다. 화지와 무관 — 넘쳐도 된다). */
+/** 「+」·롤 버튼 = 새 겹을 **맨 위에** 얹고 활성으로(지시 2부). ⚠ **카메라가 닫히기
+ *  전에는 못 얹는다**(2-a — 사람이 정했다: 겹마다 소실점을 만들면 카메라가 섞인다.
+ *  얹는 시점을 닫힌 뒤로 미루면 그 자리가 아예 없어진다). 호출부가 그 조건을 UI로
+ *  보이고, 여기서도 지킨다(null 반환). rect 기본값 = 지금 화면에서 **짧은 변 5%를 들인
+ *  인셋**(web2-21 3-b — 종전 «화면 전체»는 필터로 보였다) + 층별 흔들림(아래). */
 export function addLayer(app: App, paper: Paper, viewport: { W: number; H: number }): Layer | null {
   if (!app.lift.an.constructionDone) return null
   const v = app.view
+  const id = app.nextId++
+  // ── 인셋(web2-21 3-b) — 화면 전체를 덮으면 가장자리가 화면 밖이라 종이가 아니라
+  // 필터로 보인다. 「흰 종이 위에 새 종이가 올라갔다」의 정체는 **가장자리가 보이는 것** —
+  // 짧은 변의 5%(초안 — 화면 대조는 NOTES 3부)를 들인다. 문서 좌표로 저장되니 줌해도
+  // 종이는 종이 크기로 남는다.
+  const inset = 0.05 * Math.min(viewport.W, viewport.H)
+  // ── 층별 흔들림 — 시드는 섬유와 같은 rng32(layer.id)(#54: 시드 출처 하나 · 저장은
+  // rect 자체가 되므로 복원 뒤에도 같다). 세 장이 정확히 겹치면 한 장으로 보이는데,
+  // 몇 px씩 어긋나면 가장자리가 여러 겹으로 드러나 몇 장 쌓였는지가 즉시 읽힌다.
+  // ⚠ 평행이동·크기까지만 — 회전은 안 넣는다(rect {x,y,w,h}에 자리가 없다 — 지시 ⛔).
+  const r = rng32(id)
+  const jx = (r() * 2 - 1) * 6, jy = (r() * 2 - 1) * 6    // 평행이동 ±6 화면 px
+  const jw = (r() * 2 - 1) * 4, jh = (r() * 2 - 1) * 4    // 크기 ±4 화면 px
   const lay: Layer = {
-    id: app.nextId++,
+    id,
     sheet: app.activeSheet,
     paper,
     // +0 정규화 — -0/s는 -0이고 toEqual·JSON에서 +0과 갈린다(팔이 실측으로 잡았다)
-    rect: { x: -v.ox / v.s + 0, y: -v.oy / v.s + 0, w: viewport.W / v.s, h: viewport.H / v.s },
+    rect: {
+      x: (inset + jx - v.ox) / v.s + 0,
+      y: (inset + jy - v.oy) / v.s + 0,
+      w: (viewport.W - 2 * inset + jw) / v.s,
+      h: (viewport.H - 2 * inset + jh) / v.s,
+    },
     on: true,
     locked: false,
   }

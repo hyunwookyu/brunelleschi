@@ -13,7 +13,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { session, type Session } from './session'
-import { addLayer, setActiveLayer, setLayerOn, beginErase, eraseAt, endErase } from '../src/app/state'
+import { addLayer, setActiveLayer, setLayerOn, setLayerLocked, beginErase, eraseAt, endErase } from '../src/app/state'
 
 const W = 1200, H = 800
 
@@ -80,6 +80,42 @@ describe('겹은 아래를 안 바꾼다 — defineByTouch 층 문 (①·②·�
     const A = s.draw(720, 445, 722, 309)!             // 겹 없이 — 종이 위
     expect(A.layer).toBeUndefined()
     expect(s.app.doc.strokes.find(x => x.id === B.id)!.own3).toBeDefined()
+  })
+
+  it('⑥(2차 리뷰 [1] — 역방향의 사실 기록) 바탕 획이 겹 3D를 읽어 승격되는 것은 산다 — 굳힘이 보존한다', () => {
+    // 연결(matchPoint)은 무방향이다 — 바탕 획이 켜진 겹 획의 3D 끝점에 붙어 올라가는
+    // 것은 막지 않는다(사람이 붙인 점 — 실물의 «전사»다. 지시의 쓰기 문은 defineByTouch
+    // 하나·지시에 없는 것을 새로 짓지 않는다). 귀결: own3d 기본 켜짐에서는 승격 즉시
+    // 굳으므로(카메라는 이미 닫혀 있다 — 겹의 전제) **겹을 꺼도 바탕 3D가 남는다**.
+    // 굳기 전(own3d 꺼짐)이라면 대기로 내려간다 — 사라지지 않는다(불변식 j).
+    const { s } = fx()
+    const lay = addLayer(s.app, 'tracing', { W, H })!
+    const L1 = s.draw(720, 445, 722, 309)!            // 겹 획 — 바탕에 붙어 승격(팔 ②)
+    expect(s.app.lift.lifted.has(L1.id)).toBe(true)
+    setActiveLayer(s.app, null)                       // 종이로 내려간다
+    const Bs = s.draw(720, 309, 900, 309)!            // 바탕 획 — 겹 획의 위 끝점에서 시작
+    expect(Bs.layer).toBeUndefined()
+    expect(s.app.lift.lifted.has(Bs.id), '바탕이 겹을 읽어 올라간다(역방향 읽기)').toBe(true)
+    expect(s.app.doc.strokes.find(x => x.id === Bs.id)!.own3, '굳었다(카메라 닫힘 + own3d)').toBeDefined()
+    setLayerOn(s.app, lay.id, false)                  // 겹을 꺼도 —
+    expect(s.app.lift.lifted.has(Bs.id), '굳은 바탕 3D는 남는다').toBe(true)
+  })
+
+  it('⑦(2차 리뷰 [2]) 잠금 가드의 단독 발화 — 층 문이 통과하는 경계 상태에서도 잠금이 막는다', () => {
+    // 정상 경로에서는 잠긴 겹이 활성이 못 되므로 층 문이 늘 먼저 막는다(포섭). 잠금
+    // 가드가 **혼자** 발화하는 것은 경계 상태(문서 연 직후 등 — commitStroke의 재확인과
+    // 같은 자리)에서다 — 활성을 강제로 잠긴 겹에 두고 잠금 가드만 남긴다.
+    const { s } = fx()
+    const lay = addLayer(s.app, 'tracing', { W, H })!
+    const S1 = s.draw(720, 445, 722, 309)!
+    setLayerLocked(s.app, lay.id, true)
+    s.app.activeLayer = lay.id                        // 경계 상태 강제(setActiveLayer 우회)
+    beginErase(s.app); eraseAt(s.app, { x: 720, y: 380 }); endErase(s.app)
+    expect(s.app.doc.strokes.some(x => x.id === S1.id), '층 문 통과·잠금이 단독으로 막았다').toBe(true)
+    // 반증 짝 — 같은 상태에서 잠금만 풀면 지워진다(발화의 주체가 잠금이었다)
+    s.app.doc.layers.find(l => l.id === lay.id)!.locked = false
+    beginErase(s.app); eraseAt(s.app, { x: 720, y: 380 }); endErase(s.app)
+    expect(s.app.doc.strokes.some(x => x.id === S1.id)).toBe(false)
   })
 })
 

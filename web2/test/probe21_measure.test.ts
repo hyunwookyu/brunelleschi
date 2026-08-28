@@ -51,15 +51,23 @@ function wallScene(jit: () => number) {
 
 /** 창 사각 — 벽 안쪽, 모든 가장자리에서 오스냅 반경(8px)+지터보다 멀리.
  *  yBot·yTop은 x=xL에서의 y(둘 다 vp0 방향 변). touch=true면 왼쪽을 벽 왼 세로에 붙인다
- *  (대조 칸 — #69 ㉣: 닿으면 올라간다는 것을 같은 하네스가 증명한다). */
+ *  (대조 칸 — #69 ㉣: 닿으면 올라간다는 것을 같은 하네스가 증명한다).
+ *  획마다 commit 직후의 touchLast를 찍는다(2차 [11] — aNot3d가 «어느 획의 커밋»에서
+ *  났는지 수가 아니라 목록으로). */
 function drawWindow(s: Session, jit: () => number, xL: number, xR: number, yBot: number, yTop: number) {
   const j = (v: number) => v + jit()
   const win: (ReturnType<Session['draw']>)[] = []
-  win.push(s.draw(j(xL), j(yBot), j(xR), j(vpY(xR, xL, yBot))))      // 아랫변 → vp0
-  win.push(s.draw(j(xL), j(yBot), j(xL), j(yTop)))                   // 왼 세로
-  win.push(s.draw(j(xR), j(vpY(xR, xL, yBot)), j(xR), j(vpY(xR, xL, yTop)))) // 오른 세로
-  win.push(s.draw(j(xL), j(yTop), j(xR), j(vpY(xR, xL, yTop))))      // 윗변 → vp0
-  return win
+  const touches: ({ touched: number; aNot3d: number } | null)[] = []
+  const push = (w: ReturnType<Session['draw']>) => {
+    win.push(w)
+    const t = s.app.touchLast
+    touches.push(t ? { touched: t.touched, aNot3d: t.missed.aNot3d } : null)
+  }
+  push(s.draw(j(xL), j(yBot), j(xR), j(vpY(xR, xL, yBot))))      // 아랫변 → vp0
+  push(s.draw(j(xL), j(yBot), j(xL), j(yTop)))                   // 왼 세로
+  push(s.draw(j(xR), j(vpY(xR, xL, yBot)), j(xR), j(vpY(xR, xL, yTop)))) // 오른 세로
+  push(s.draw(j(xL), j(yTop), j(xR), j(vpY(xR, xL, yTop))))      // 윗변 → vp0
+  return { win, touches, nominalStart: { x: xL, y: yBot } }
 }
 
 describe('1-a — 개구부가 3D로 올라가는가 (재기만 한다)', () => {
@@ -76,7 +84,12 @@ describe('1-a — 개구부가 3D로 올라가는가 (재기만 한다)', () => 
       { name: 'low', xL: 570, xR: 680, yBot: 462, yTop: 412 },   // 최소 간격 13.7
     ]
     type Cell = {
-      seed: number; pos: string
+      seed: number; jitter: 'none' | 'rng32'; pos: string
+      /** 창 아랫변 확정 시작점 − 명목 (xL,yBot) — 지터가 잉크에 실제로 실렸는가(2차 [7]).
+       *  시작점은 오스냅 대상이 없어 지터가 그대로 남는 자리다(축 스냅은 끝만 옮긴다). */
+      carriedJitter: { dx: number; dy: number }
+      /** 획별 커밋의 touchLast(touched·aNot3d) — 사건이 어느 획에서 났는지(2차 [11]) */
+      touchByStroke: ({ touched: number; aNot3d: number } | null)[]
       wallLifted: number; winLifted: number
       /** 확정된 창 끝점 ↔ **승격된**(lifted) 다른 획의 확정 2D 선분 사이 최소 거리(px).
        *  «안 닿는다»의 전제를 명목 산술이 아니라 **칸마다 실측**으로 세운다(1차 리뷰 [1] —
@@ -93,8 +106,9 @@ describe('1-a — 개구부가 3D로 올라가는가 (재기만 한다)', () => 
       const t = L2 < 1e-12 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L2))
       return Math.hypot(px - (ax + t * dx), py - (ay + t * dy))
     }
-    const measureCell = (s: Session, win: (ReturnType<Session['draw']>)[], seed: number, posName: string,
+    const measureCell = (s: Session, dw: ReturnType<typeof drawWindow>, seed: number, posName: string,
       wall: (ReturnType<Session['draw']>)[]): Cell => {
+      const win = dw.win
       const winIds = new Set(win.filter(Boolean).map(w => w!.id))
       // 창 끝점 ↔ 창 밖 승격 획(벽·깊이선)의 확정 2D — near 오스냅이 닿을 수 있던 거리
       let minGap = Infinity
@@ -131,7 +145,12 @@ describe('1-a — 개구부가 3D로 올라가는가 (재기만 한다)', () => 
         }
       })
       return {
-        seed, pos: posName,
+        seed, jitter: seed === 0 ? 'none' : 'rng32', pos: posName,
+        carriedJitter: {
+          dx: Math.round((win[0]!.a.x - dw.nominalStart.x) * 100) / 100,
+          dy: Math.round((win[0]!.a.y - dw.nominalStart.y) * 100) / 100,
+        },
+        touchByStroke: dw.touches,
         wallLifted: wall.filter(w => w && s.app.lift.lifted.has(w.id)).length,
         winLifted: perStroke.filter(p => p.lifted).length,
         minGapPx: Math.round(minGap * 10) / 10,
@@ -147,9 +166,9 @@ describe('1-a — 개구부가 3D로 올라가는가 (재기만 한다)', () => 
         const rng = mkRng(seed)
         const { s, wall } = wallScene(rng)
         expect(wall.every(w => w !== null), `벽 획 확정(seed ${seed})`).toBe(true)
-        const win = drawWindow(s, rng, pos.xL, pos.xR, pos.yBot, pos.yTop)
-        expect(win.every(w => w !== null), `창 획 확정(seed ${seed})`).toBe(true)
-        cells.push(measureCell(s, win, seed, pos.name, wall))
+        const dw = drawWindow(s, rng, pos.xL, pos.xR, pos.yBot, pos.yTop)
+        expect(dw.win.every(w => w !== null), `창 획 확정(seed ${seed})`).toBe(true)
+        cells.push(measureCell(s, dw, seed, pos.name, wall))
       }
     }
     // 대조 칸(#69 ㉣) — 같은 창인데 왼쪽 변을 벽 왼 세로(x=500)에 붙인다. 닿으면 연결
@@ -160,8 +179,8 @@ describe('1-a — 개구부가 3D로 올라가는가 (재기만 한다)', () => 
       for (const seed of [0, 7]) {
         const rng = mkRng(seed)
         const { s, wall } = wallScene(rng)
-        const win = drawWindow(s, rng, 500, pos.xR, pos.yBot, pos.yTop)   // xL=500 — 벽 왼 세로 위
-        control.push(measureCell(s, win, seed, `touching-${pos.name}`, wall))
+        const dw = drawWindow(s, rng, 500, pos.xR, pos.yBot, pos.yTop)   // xL=500 — 벽 왼 세로 위
+        control.push(measureCell(s, dw, seed, `touching-${pos.name}`, wall))
       }
     }
 
@@ -182,20 +201,33 @@ describe('1-a — 개구부가 3D로 올라가는가 (재기만 한다)', () => 
           + '바이트다(#71 ㉠의 유보가 이 원장에는 안 걸린다. 확인: 두 실행 diff 0 — NOTES 1부)',
         constants: { OSNAP_RADIUS_PX: C.OSNAP_RADIUS_PX, MERGE_RATIO: C.MERGE_RATIO, LINE_MATCH_PX: C.LINE_MATCH_PX },
       },
-      // web2-23(은선)의 게이트가 이 원장이다(지시 1-a ⚠⚠ — 이름 있는 게이트 블록 #35)
+      // web2-23(은선)의 게이트가 이 원장이다(지시 1-a ⚠⚠ — 이름 있는 게이트 블록 #35 ·
+      // registered/reachability는 #40 — 2차 리뷰 [3]으로 채웠다)
       gate: {
         for: 'web2-23 은선 — 0부 게이트',
         verdict: '미통과 — 갈래 ③(원인이 크다 · 안 고쳤다)',
-        measured: '안 닿는 창 14칸 전 칸 0/4 · 닿는 대조(두 위치) 전부 >0',
-        note: '판정 근거의 측정/코드 구분: 측정으로 발화한 문은 hasHeight(소실점 축 두 변)뿐이고 '
-          + '수직 두 변의 사유는 whyProbe(noSeed — 승격 기하까지 실측 거리)가 진다. '
+        measured: '안 닿는 창 14칸 전 칸 0/4 · 닿는 대조(두 위치 × 두 시드 = 4칸) 전부 4/4',
+        registered: { pass_needs: 'winLifted > 0 (안 닿는 창이 올라간다)', osnap_radius_px: C.OSNAP_RADIUS_PX },
+        reachability_value: 4,
+        reachability_source: '/control/0/winLifted — 닿는 창은 같은 하네스에서 4/4가 나온다(#69 ㉣)',
+        scope: '⚠ 국면 한정 — 벽에 «높이가 있는» 장면 하나다(hasHeight 문이 발화하는 국면). '
+          + '지면 국면(높이 0)의 소실점 축 획은 web2-17 4부부터 올라간다(DEFERRED 그 행) — '
+          + '이 게이트가 재는 것은 «높이 위의 안쪽 고리»다',
+        note: '판정 근거의 측정/코드 구분(2차 [2]로 정밀화): 계수로 발화한 문은 hasHeight'
+          + '(소실점 축 두 변)뿐이다. 수직 두 변의 whyProbe=noSeed는 «안 닿는 창» 전제'
+          + '(minGapPx>8 단언)의 **구성상 귀결**이고 d 값이 그 실측이다 — cells 격자 안에서 '
+          + '다른 값이 나올 수 없다(대역 8<d≤반경의 칸은 전제 위반이라 하네스가 거부한다). '
           + '확대 규칙(pendingAllVp)은 수직 대기가 섞여 아예 안 도는 코드 경로 사실이라 계수가 없다',
       },
       margin_arith: {
         nominal_min_gap: { mid: 15.6, low: 13.7 },
-        jitter_model: 'x·y 독립 ±3px(대각 4.24) · 벽·창 양쪽 → 상대 변위 최대 8.49px — '
-          + '명목 간격만으로는 최악(13.7−8.49=5.2 < 8)을 못 막는다. 그래서 «안 닿음» 판정은 '
-          + '칸마다 실측 minGapPx > OSNAP_RADIUS_PX가 진다(하네스 단언)',
+        nominal_is_vertical: '명목은 수직(y) 간격이고 실측 minGapPx는 **수선 거리**다 — 기울기 '
+          + '0.25의 벽 아랫변에서 cos(atan 0.25)=0.970배(무오차 mid 실측 15.2 = 15.6×0.970 — '
+          + '2차 [13]의 0.4px 차는 이것이다)',
+        jitter_model: 'x·y 독립 ±3px(대각 4.24). ⚠ 벽 «선»은 축 스냅·오스냅이 명목 광선 위에 '
+          + '고정하므로(시작 모서리 스냅 + vp0 방향 스냅) 벽 지터는 선의 위치에 안 실린다 — '
+          + '실효 몫은 창 끝점의 ±3(대각 4.24)이다(carriedJitter가 그 실측). 그래도 «안 닿음» '
+          + '판정은 명목 산술이 아니라 칸마다 실측 minGapPx > OSNAP_RADIUS_PX가 진다(하네스 단언)',
         measured_min_gap_over_cells: 0,   // 아래에서 채운다
       },
       cells,
@@ -213,6 +245,9 @@ describe('1-a — 개구부가 3D로 올라가는가 (재기만 한다)', () => 
         'control[*].minGapPx 정확히 0': '설계 보장이다(자기참조 유형 3) — 닿는 대조 칸은 창 왼 변을 벽 세로 '
           + '위에 그어 오스냅이 그 위에 붙이므로 거리가 구성상 0이다. 임계를 안 건다(«안 닿음» 단언은 '
           + 'cells에만 걸린다) — 0이 아니면 오히려 대조가 안 붙은 것이다',
+        'control의 axis=null인데 lifted=true': '연결 리프팅의 정상 거동이다(2차 [12]) — 양 끝이 '
+          + 'matchPoint(끝점·선분 위)로 정해지면 축 없이 올라간다(«점이 방향을 이긴다» #63). '
+          + '지터가 방향을 축 대역 밖으로 밀어도 연결이 좌표를 준다',
       },
     }
     let gapMin = Infinity
@@ -230,6 +265,18 @@ describe('1-a — 개구부가 3D로 올라가는가 (재기만 한다)', () => 
     for (const c of cells) expect(c.wallLifted, `벽 4획(seed ${c.seed}·${c.pos})`).toBe(4)
     // «안 닿는다»의 전제 — 칸마다 실측(1차 리뷰 [1] — 명목 산술 아님·주석 아님·판정이다)
     for (const c of cells) expect(c.minGapPx, `안 닿음 전제(seed ${c.seed}·${c.pos})`).toBeGreaterThan(C.OSNAP_RADIUS_PX)
+    // 지터가 잉크에 실제로 실렸는가(2차 [7] — #68: 오차를 심어도 경로를 안 태우면 안 걸린다):
+    // 창 시작점은 오스냅 대상이 없어 지터가 그대로 남아야 한다 — 무오차 칸은 0, 지터 칸은
+    // 0이 아니고 ±3 안. (벽 지터는 축 스냅이 선을 명목 광선에 고정해 선 위치에 안 실린다.)
+    for (const c of cells) {
+      if (c.jitter === 'none') {
+        expect(Math.abs(c.carriedJitter.dx) + Math.abs(c.carriedJitter.dy), `무오차 칸(${c.pos})`).toBe(0)
+      } else {
+        expect(Math.abs(c.carriedJitter.dx), `지터 실림 dx(seed ${c.seed}·${c.pos})`).toBeLessThanOrEqual(3)
+        expect(Math.abs(c.carriedJitter.dy), `지터 실림 dy(seed ${c.seed}·${c.pos})`).toBeLessThanOrEqual(3)
+        expect(Math.abs(c.carriedJitter.dx) + Math.abs(c.carriedJitter.dy), `지터가 0이 아니다(seed ${c.seed}·${c.pos})`).toBeGreaterThan(0)
+      }
+    }
   })
 })
 

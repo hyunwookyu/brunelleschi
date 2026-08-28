@@ -59,9 +59,14 @@ test('③④ rect 기본값(값으로) · 새 획이 활성 겹으로 · 켬/끔
   await closeCamera(page)
   await page.click('#layer-add')
   await page.click('#layer-pop .lpick[data-paper="yellow"]'); await settle(page)
-  // ③ rect = 지금 보이는 화면(뷰 항등 — s1·o0에서 {0,0,1200,800})
+  // ③ rect = 지금 화면에서 **짧은 변 5% 인셋 + 층별 흔들림**(web2-21 3-b — 종전 «화면
+  // 전체»는 필터로 보였다). 값 정본은 layerops.test — 여기서는 배선이 그 규약에 닿는지
+  // (뷰 항등 s1·o0: 인셋 40 · 이동 ±6 · 크기 ±4).
   const rect = await page.evaluate(() => (window as any).__b2.app.doc.layers[0].rect)
-  expect(rect).toEqual({ x: 0, y: 0, w: 1200, h: 800 })
+  expect(rect.x).toBeGreaterThanOrEqual(34); expect(rect.x).toBeLessThanOrEqual(46)
+  expect(rect.y).toBeGreaterThanOrEqual(34); expect(rect.y).toBeLessThanOrEqual(46)
+  expect(1200 - rect.w).toBeGreaterThanOrEqual(70); expect(1200 - rect.w).toBeLessThanOrEqual(90)
+  expect(800 - rect.h).toBeGreaterThanOrEqual(70); expect(800 - rect.h).toBeLessThanOrEqual(90)
   // ④ 새 획이 활성 겹으로
   await drawLine(page, 300, 620, 500, 640)
   const last = await page.evaluate(() => {
@@ -81,6 +86,36 @@ test('③④ rect 기본값(값으로) · 새 획이 활성 겹으로 · 켬/끔
   expect(await page.evaluate(() => (window as any).__b2.app.doc.layers[0].locked)).toBe(true)
   await page.click('#layerbar .lpaper .llock'); await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.app.doc.layers[0].locked)).toBe(false)
+})
+
+test('롤 둘(web2-21 3-a) — 닫히기 전 비활성+안내 · 누르면 그 종이가 얹히고 활성', async ({ page }) => {
+  await boot(page)
+  // ② 카메라 닫히기 전 — 비활성(흐림)이고 누르면 이유가 보인다
+  await expect(page.locator('#btn-roll-tracing')).toHaveClass(/disabled/)
+  await expect(page.locator('#btn-roll-yellow')).toHaveClass(/disabled/)
+  await page.click('#btn-roll-tracing'); await settle(page)
+  await expect(page.locator('#notice')).toContainText('소실점 작도가 끝나야')
+  expect(await page.evaluate(() => (window as any).__b2.app.doc.layers.length)).toBe(0)
+  // ① 닫힌 뒤 — 트레이싱지 롤 → 한 장 얹히고 활성 · 옐로 롤 → 옐로가 얹힌다
+  await closeCamera(page)
+  await expect(page.locator('#btn-roll-tracing')).not.toHaveClass(/disabled/)
+  await page.click('#btn-roll-tracing'); await settle(page)
+  let st = await page.evaluate(() => {
+    const a = (window as any).__b2.app
+    return { n: a.doc.layers.length, active: a.activeLayer, paper: a.doc.layers[0]?.paper }
+  })
+  expect(st.n).toBe(1)
+  expect(st.paper).toBe('tracing')
+  expect(st.active).not.toBeNull()
+  await page.click('#btn-roll-yellow'); await settle(page)
+  st = await page.evaluate(() => {
+    const a = (window as any).__b2.app
+    return { n: a.doc.layers.length, active: a.activeLayer, paper: a.doc.layers[1]?.paper }
+  })
+  expect(st.n).toBe(2)
+  expect(st.paper).toBe('yellow')
+  // 종속 탭 줄도 함께 민다(layerbar.sync 배선)
+  await expect(page.locator('#layerbar .lpaper')).toHaveCount(2)
 })
 
 test('⑤ 겹 삭제(길게 눌러 확인 — 획 수 알림) → 실행취소로 돌아온다', async ({ page }) => {

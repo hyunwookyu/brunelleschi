@@ -11,6 +11,7 @@ import { describe, it, expect } from 'vitest'
 import { session } from './session'
 import { addLayer, removeLayer, setActiveLayer, setLayerOn, setLayerLocked, deleteSheet, addSheet, gotoSheet, undo, redo } from '../src/app/state'
 import { DRAW_SHEET_ID } from '../src/core/types'
+import { serializeBrnl, parseBrnl } from '../src/core/file'
 
 const W = 1200, H = 800
 
@@ -41,10 +42,38 @@ describe('① 얹기 문(2-a) — 카메라가 닫히기 전에는 못 얹는다
 
 describe('③ rect 기본값(2-b) — 지금 보이는 화면(값으로)', () => {
   it('팬·줌 상태의 화면 사각 { -ox/s, -oy/s, W/s, H/s }', () => {
+    // web2-21 3-b — 기본값이 «화면 전체»에서 **짧은 변 5% 인셋 + 층별 흔들림**으로 바뀌었다.
+    // 정확값 대신 규약을 값 범위로 잰다(흔들림이 rng32(id)라 정확값은 구현 재계산이 된다):
+    // 화면 px 기준 인셋 40(=0.05·800), 흔들림 평행이동 ±6 · 크기 ±4.
     const s = closedSession()
     s.app.view = { s: 2, ox: -100, oy: 40 }
     const lay = addLayer(s.app, 'yellow', { W, H })!
-    expect(lay.rect).toEqual({ x: 50, y: -20, w: 600, h: 400 })
+    const v = s.app.view
+    const leftScreen = lay.rect.x * v.s + v.ox                 // 문서 → 화면
+    const topScreen = lay.rect.y * v.s + v.oy
+    expect(leftScreen).toBeGreaterThanOrEqual(40 - 6)
+    expect(leftScreen).toBeLessThanOrEqual(40 + 6)
+    expect(topScreen).toBeGreaterThanOrEqual(40 - 6)
+    expect(topScreen).toBeLessThanOrEqual(40 + 6)
+    expect(W - lay.rect.w * v.s).toBeGreaterThanOrEqual(80 - 4 - 6)  // 짧은 변 5%×2 − 흔들림
+    expect(W - lay.rect.w * v.s).toBeLessThanOrEqual(80 + 4 + 6)
+    expect(H - lay.rect.h * v.s).toBeGreaterThanOrEqual(80 - 4 - 6)
+    expect(H - lay.rect.h * v.s).toBeLessThanOrEqual(80 + 4 + 6)
+    // ③ 새 겹의 rect가 화면보다 작다(값으로 — 3부 회귀 팔 ③)
+    expect(lay.rect.w * v.s).toBeLessThan(W)
+    expect(lay.rect.h * v.s).toBeLessThan(H)
+  })
+
+  it('④(3부) 같은 종류 두 장의 오프셋이 다르다 · ⑤ 저장·복원 뒤 오프셋이 같다', () => {
+    const s = closedSession()
+    const l1 = addLayer(s.app, 'tracing', { W, H })!
+    const l2 = addLayer(s.app, 'tracing', { W, H })!
+    // 시드 = layer.id(섬유와 같은 출처) — 두 장이 정확히 겹치면 한 장으로 보인다
+    expect(l1.rect.x === l2.rect.x && l1.rect.y === l2.rect.y).toBe(false)
+    expect(l1.rect.w === l2.rect.w && l1.rect.h === l2.rect.h).toBe(false)
+    // ⑤ 오프셋은 rect 자체로 저장된다 — 왕복 뒤 값으로 같다(시드가 문서에 있다)
+    const back = parseBrnl(serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId }))!
+    expect(back.doc.layers.map(l => l.rect)).toEqual(s.app.doc.layers.map(l => l.rect))
   })
 })
 
@@ -53,15 +82,16 @@ describe('④ 새 획이 활성 겹으로 · rect 성장(확정 시점)', () => 
     const s = closedSession()
     s.app.view = { s: 1, ox: 0, oy: 0 }
     const lay = addLayer(s.app, 'tracing', { W, H })!
+    const r0 = { ...lay.rect }                       // 긋기 전에 찍는다 — 뒤에 찍으면 못 잰다
     const st = s.draw(300, 600, 500, 620)!
     expect(st.layer).toBe(lay.id)
-    // rect(0,0,1200,800) 안 — 안 자란다
-    expect(lay.rect).toEqual({ x: 0, y: 0, w: 1200, h: 800 })
+    // 인셋 rect 안(web2-21 3-b — 기본값이 화면 전체가 아니라 인셋) — 안 자란다
+    expect(lay.rect).toEqual(r0)
     // 오른쪽 밖으로 긋는다 — 확정 시점에 자란다(x1이 끝점을 덮는다)
     const out = s.draw(1100, 600, 1400, 630)!
     expect(out.layer).toBe(lay.id)
     expect(lay.rect.x + lay.rect.w).toBeGreaterThanOrEqual(1400)
-    expect(lay.rect.x).toBe(0)                       // 반대쪽은 안 움직인다
+    expect(lay.rect.x).toBe(r0.x)                    // 반대쪽은 안 움직인다
   })
 
   it('활성 해제(null)면 종이에 직접 — layer 필드가 없다', () => {
