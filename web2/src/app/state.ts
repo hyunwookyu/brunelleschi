@@ -18,6 +18,7 @@ import { loopAt, faceAt, faceScreen, resolveFaces, resolveFace, allLoops, inPoly
 import { bakeUnderlay } from '../core/make2d'
 import { geomSize3 } from '../core/osnap'
 import { C } from '../core/constants'
+import { calFromMedians, median } from '../core/press'
 import { type Pt, type V3, v3, add3, sub3, mul3, dot3, len3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
 
 export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink' | 'face'
@@ -206,6 +207,10 @@ export interface App {
    *  ⚠ **세션 한정 런타임 값이다** — 저장하지 않는다(문서의 성질이 아니다). 한 번 참이면
    *  세션 안에서 안 내린다: 펜을 잠깐 내려놓았다고 손가락의 뜻이 바뀌면 그것이 더 헷갈린다. */
   penUsed: boolean
+  /** **필압 보정 절차**(web2-26 6번) — 옵션을 켜는 순간 두 획을 받는다.
+   *  `null` = 절차 중이 아님. `normal`은 첫 획(평소 세기)의 압력 중앙값.
+   *  런타임 상태다(저장 ⛔ — 결과인 `doc.press`만 문서에 남는다). */
+  pressCalib: { normal: number | null } | null
   /** **옐로 머무름 직선화의 임계 시간 ms**(web2-26 4번 — 실기기 「조금 길다」 · D6).
    *  기본 `C.HOLD_MS`이고 사람이 `C.HOLD_MS_MIN`~`C.HOLD_MS_MAX`에서 고친다.
    *  ⚠ **문서가 아니라 기기 설정이다**(localStorage) — 손의 성질이지 그림의 성질이 아니다
@@ -275,6 +280,7 @@ export function createApp(W: number, H: number): App {
     own3d: true,   // 기본 켜짐(web2-14 1번 — 사람 판정). 끄는 길은 설정 + localStorage 'off'.
     holdMs: C.HOLD_MS,
     penUsed: false,
+    pressCalib: null,
     lastCamSig: null,
     touchStats: emptyTouchStats(),
     touchLast: null,
@@ -368,6 +374,55 @@ function recompute(app: App) {
   app.faces = resolveFaces(app.lift, app.doc.faces)
   app.docVersion++
   for (const l of app.listeners) l()
+}
+
+// ── 필압 보정(web2-26 6번 · 옵션 · 기본 꺼짐) ────────────────────────────────
+// 결과는 **문서에 붙는다**(`doc.press`) — 압력은 원값으로 저장하고 그릴 때 매핑하므로
+// 이 값이 기기 설정이면 옵션을 켜는 순간 예전 그림들의 농도까지 바뀐다(지시 5).
+
+/** **문서가 바뀌었다고 알린다** — 문서를 손으로 고친 뒤(진단·복원 경로) 화면이 다시 그리게
+ *  한다. `recompute`의 얇은 겉면이고 출처가 하나다(#54). */
+export const bumpDoc = (app: App): void => { recompute(app) }
+
+/** 지금 보정이 켜져 있는가 — 화면·렌더·팔의 **출처 하나**(#54) */
+export const pressOn = (app: Pick<App, 'doc'>): boolean => app.doc.press?.on === true
+
+/** 옵션을 켠다 = **보정 절차를 시작한다**(지시 2 — 곡선 편집기 ⛔, 두 획을 받는다).
+ *  끄면 `doc.press`를 지운다 — 꺼짐은 «없음»이지 «on: false»가 아니다(파일도 같아진다). */
+export function beginPressCalib(app: App) {
+  app.pressCalib = { normal: null }
+  for (const l of app.listeners) l()
+}
+export function cancelPressCalib(app: App) {
+  app.pressCalib = null
+  for (const l of app.listeners) l()
+}
+export function setPressOff(app: App) {
+  app.pressCalib = null
+  if (app.doc.press) { delete app.doc.press; recompute(app) }
+  else for (const l of app.listeners) l()
+}
+
+/** 절차에 획 하나를 먹인다 — 무엇이 일어났는지 돌려준다(화면이 그것을 읽는다).
+ *  · `null`    절차 중이 아니다
+ *  · `'nopen'` 그 획에 점별 압력이 없다(마우스·손가락) — 다시 받는다
+ *  · `'first'` 평소 세기를 받았다 — 이제 가장 세게
+ *  · `'done'`  보정 완료(`doc.press`가 섰다)
+ *  · `'again'` 두 세기가 너무 가깝다 — 처음부터 다시 */
+export function feedPressCalib(app: App, s: Stroke): null | 'nopen' | 'first' | 'done' | 'again' {
+  const st = app.pressCalib
+  if (!st) return null
+  const pr = s.rawIn?.press
+  if (!pr || pr.length < 2) return 'nopen'
+  const m = median(pr.map(v => v / C.PRESS_Q))
+  if (m === null) return 'nopen'
+  if (st.normal === null) { st.normal = m; return 'first' }
+  const cal = calFromMedians(st.normal, m)
+  if (!cal) { st.normal = null; return 'again' }
+  app.pressCalib = null
+  app.doc.press = cal
+  recompute(app)
+  return 'done'
 }
 
 /** 자립 깃발 토글(4-f) — 설정·복원 경로가 이것 하나를 부른다(#54). */

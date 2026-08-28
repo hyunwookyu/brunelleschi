@@ -1,5 +1,5 @@
 {
-  "n_flags": 5618,
+  "n_flags": 5635,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -2746,6 +2746,46 @@
         "xint": 25
       },
       "flag": "단일 범주 분포(n=25) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "extband26_web2.json:acquisition.before_ratio_1.per_offset[0].d",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "extband26_web2.json:acquisition.before_ratio_1.per_offset[4].hit",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "extband26_web2.json:acquisition.before_ratio_1.per_offset[5].hit",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "extband26_web2.json:acquisition.before_ratio_1.per_offset[6].hit",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "extband26_web2.json:acquisition.before_ratio_1.per_offset[7].hit",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "extband26_web2.json:acquisition.before_ratio_1.per_offset[8].hit",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "extband26_web2.json:acquisition.before_ratio_1.per_offset[9].hit",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "extband26_web2.json:acquisition.before_ratio_1.per_offset[10].hit",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "extension_snap.json:diagonal_arm.collinear_dev",
@@ -19829,6 +19869,16 @@
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
+      "path": "paper_grain26_web2.json:gate.current[1].bare_sd",
+      "val": 4.0472514228895307e-11,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "paper_grain26_web2.json:gate.current[2].bare_sd",
+      "val": 5.5223381423274986e-11,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
       "path": "passthru24_web2.json:aggregate.endGap3dMax",
       "val": 2.7747580858440755e-14,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
@@ -27347,6 +27397,11 @@
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
     {
+      "path": "extband26_web2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
       "path": "faces_bulk_web2.json",
       "val": null,
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
@@ -27380,6 +27435,11 @@
       "path": "guide_budget.json@509615a1",
       "val": "FOV_GATE.ok_f_ratio: None → 0.87; FOV_GATE.reject_fov_deg: None → 120; FOV_GATE.severe_f_ratio: None → 0.5; RULE_TOL.concurrent_deg: None → 3",
       "flag": "**STALE** — 현재 상수(f351839a)와 다른 상수로 측정됐다. 다시 돌리고 이 산출물을 인용한 문서를 전부 고친다"
+    },
+    {
+      "path": "hold26_web2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
     {
       "path": "horizon.json@509615a1",
@@ -27458,6 +27518,11 @@
     },
     {
       "path": "own3d_invariant_web2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
+      "path": "paper_grain26_web2.json",
       "val": null,
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
@@ -27722,6 +27787,11 @@
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
     {
+      "path": "extband26_web2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
       "path": "faces_bulk_web2.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
@@ -27748,6 +27818,11 @@
     },
     {
       "path": "ground_rule_web2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "hold26_web2.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
@@ -27823,6 +27898,11 @@
     },
     {
       "path": "own3d_invariant_web2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
+      "path": "paper_grain26_web2.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
@@ -28111,6 +28191,18 @@
       "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
     },
     {
+      "path": "paper_grain26_web2.json:gate",
+      "val": [
+        "current",
+        "hashes",
+        "legacy",
+        "legacy_ratio_dpr3_over_dpr1",
+        "note",
+        "ratio_dpr3_over_dpr1"
+      ],
+      "flag": "**게이트에 `reachability`가 없다**(#35) — 무엇이 이 기준을 넘을 수 있는지 함께 적는다. ⚠ 없다고 기준을 낮추지 않는다"
+    },
+    {
       "path": "passthru24_web2.json:gate",
       "val": [
         "for",
@@ -28262,7 +28354,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 458,
+      "files_scanned": 470,
       "exts_declared": [
         ".md",
         ".py",
@@ -28286,14 +28378,14 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 458,
+      "files_scanned": 470,
       "exts_declared": [
         ".md",
         ".py",
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 36,
+        ".md": 37,
         ".py": 4,
         ".html": 1,
         ".ts": 88
@@ -28328,7 +28420,7 @@
     {
       "scan": "scan_dead_ledger",
       "unit": "원장",
-      "targets": 170,
+      "targets": 173,
       "hits": 3,
       "note": null
     },
@@ -28356,16 +28448,16 @@
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 144,
+      "targets": 147,
       "hits": 3,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 71,
-      "hits": 14,
-      "note": "값 대조를 **지난 것 33** · **픽스처가 정한 값 10** · **면제 28**(`reachability_absent`) · 원장 171개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, ledger_gate24_web2.json:gate, lens_roll_osnap.json:gate, one_point_direct.json:gate, opening21_web2.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, passthru24_web2.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, restore_pose.json:gate, shutter25_web2.json:gate, shutter25_web2_dpr2.json:gate, snap_cache.json:gate, snap_stage.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, osnap_kinds.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "targets": 72,
+      "hits": 15,
+      "note": "값 대조를 **지난 것 33** · **픽스처가 정한 값 10** · **면제 28**(`reachability_absent`) · 원장 174개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, ledger_gate24_web2.json:gate, lens_roll_osnap.json:gate, one_point_direct.json:gate, opening21_web2.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, passthru24_web2.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, restore_pose.json:gate, shutter25_web2.json:gate, shutter25_web2_dpr2.json:gate, snap_cache.json:gate, snap_stage.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, osnap_kinds.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -28691,6 +28783,9 @@
       69,
       70
     ],
+    "extband26_web2.json": [
+      68
+    ],
     "extension_snap.json": [
       5,
       12,
@@ -28749,6 +28844,9 @@
       27,
       29,
       35
+    ],
+    "hold26_web2.json": [
+      14
     ],
     "horizon.json": [
       5,
@@ -29018,6 +29116,10 @@
       25,
       40,
       41
+    ],
+    "paper_grain26_web2.json": [
+      71,
+      74
     ],
     "paper_visual_web2.json": [
       25
@@ -29470,6 +29572,7 @@
     "eraser_size.json",
     "extacq_web2.json",
     "extacq_web2_before.json",
+    "extband26_web2.json",
     "extension_snap.json",
     "face_diagonal.json",
     "faces_bulk_web2.json",
@@ -29483,6 +29586,7 @@
     "ground_anchor.json",
     "ground_rule_web2.json",
     "guide_budget.json",
+    "hold26_web2.json",
     "horizon.json",
     "horizon_chip.json",
     "horizon_drag.json",
@@ -29525,6 +29629,7 @@
     "osnap_two_sided.json",
     "own3d_invariant_web2.json",
     "p1_invariance.json",
+    "paper_grain26_web2.json",
     "paper_visual_web2.json",
     "paper_visual_web2_dpr2.json",
     "passthru24_web2.json",

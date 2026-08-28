@@ -3,6 +3,7 @@
 // 렌더 호출은 brushlayer.ts가 한다.
 
 import { MAT, gradeOf, widthOf } from '../core/material'
+import { pressAlpha, pressWidthFactor } from '../core/press'
 import type { Grade, Stroke } from '../core/types'
 import { C } from '../core/constants'
 
@@ -43,6 +44,35 @@ export const weightOf = (s: Stroke): number => widthOf(s)
 /** 이 획을 그릴 색 — MAT 색 + MAT 알파의 종이 혼합. 색 규칙 정본(render2d COL 머리주석)이
  *  이 함수를 «brush 모드의 획 색 자리»로 가리킨다(#65 — 정본에서 안 갈라지게 한 줄로). */
 export const strokeColor = (g: Grade): string => alphaColor(MAT[g].color, MAT[g].alpha)
+
+/** **보정 켠 획의 색**(web2-26 6번) — 같은 색상, **알파만** 압력이 정한다.
+ *  ⛔ 새 색을 안 짓는다(#54): 천장은 `MAT[g].alpha` 그대로이고 아래로만 내려간다.
+ *  `pMapped`는 이미 재매핑된 표현 압력(0..1)이다 — 재매핑은 `core/press.ts`의 몫. */
+export const strokeColorAt = (g: Grade, pMapped: number): string =>
+  alphaColor(MAT[g].color, pressAlpha(g, pMapped))
+
+/** 보정 켠 획의 굵기 — 기본 굵기 × 압력 배수(농도보다 완만하다 · 지시 3) */
+export const weightAt = (s: Stroke, pMapped: number): number => widthOf(s) * pressWidthFactor(pMapped)
+
+/** **센서 압력 표본**(0..1) — `pressureProfile`이 내는 brush 계수(0.5..1.5)와 다르다.
+ *  보정은 **재료표 앞단**이라 «센서가 준 값 그대로»에서 시작해야 한다(지시 1).
+ *  없으면 null(마우스·옛 파일) — 그때는 보정이 걸리지 않고 종전 경로다. */
+export function rawPressProfile(s: Stroke): number[] | null {
+  if (gradeOf(s) === 'INK') return null
+  const pr = s.rawIn?.press
+  if (!pr || pr.length < 2) {
+    const p = s.mat?.press
+    return p === undefined ? null : [p, p]
+  }
+  const n = Math.min(PRESS_N, pr.length)
+  const out: number[] = []
+  for (let i = 0; i < n; i++) {
+    const t = (i * (pr.length - 1)) / (n - 1)
+    const j = Math.floor(t), f = t - j
+    out.push((pr[j]! * (1 - f) + pr[Math.min(j + 1, pr.length - 1)]! * f) / C.PRESS_Q)
+  }
+  return out
+}
 
 /** 필압 → brush pressure 계수 — grain()의 (0.5 + p)와 같은 대역(0.5..1.5).
  *  rawIn(점별)이 있으면 점별로, 없으면 mat.press(획 평균 — 옛 파일·마우스)로 균일하게.

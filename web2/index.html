@@ -555,6 +555,9 @@
       <!-- web2-26 4번 — 옐로에서 «끝에 머무르면 반듯해지는» 시간. 실기기가 「조금 길다」로
            냈고(DEVICE-CHECK D6) 기본을 0.35s로 내렸다. 대역은 프로크리에이트 QuickShape가
            사용자에게 여는 범위와 같다(A-3). 상태 손잡이라 눌러도 패널이 안 접힌다(28-1). -->
+      <!-- web2-26 6번 — 필압 보정(옵션 · **기본 꺼짐**). 켜면 두 획을 받는다.
+           화면 문구는 지시가 준 그대로 「필압 보정」이다. -->
+      <label><input id="chk-press" type="checkbox"> 필압 보정</label>
       <label class="rowv"><span>머무름 직선화 <b id="hold-read">0.35s</b></span>
         <input id="rng-hold" type="range" min="100" max="1500" step="50" value="350"
                title="옐로에서 끝에 머무르면 획이 반듯해진다 — 그 대기 시간"></label>

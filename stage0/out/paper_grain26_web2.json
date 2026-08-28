@@ -13,10 +13,10 @@
         "dpr": 1,
         "tile_px": 128,
         "tile_sd": 4.488151302870061,
-        "bare_sd": 0.16223822932821438,
+        "bare_sd": 1.617195266589988e-11,
         "film_sd": 3.913797728711438,
         "film_mean": 211.0368133333251,
-        "grain_sd": 3.910433661144408,
+        "grain_sd": 3.913797728711438,
         "neighbor": 1.895488135593232
       },
       {
@@ -43,16 +43,28 @@
     "legacy": [
       {
         "dpr": 1,
-        "grain_sd": 0.2958649088829876
+        "grain_sd": 0.24741625098765094
       },
       {
         "dpr": 3,
         "grain_sd": 1.3611542708041287
       }
     ],
-    "ratio_dpr3_over_dpr1": 1.108221475045659,
-    "legacy_ratio_dpr3_over_dpr1": 4.600593818114656,
+    "ratio_dpr3_over_dpr1": 1.1072689138302598,
+    "legacy_ratio_dpr3_over_dpr1": 5.50147480357734,
     "weber_floor_levels": 2.1,
+    "reachability": {
+      "how": "diag.fiberLegacyForTest(true) — 타일 256 device px 고정 + 섬유 배율 dpr/2 + 패턴 배율 0.5·s·dpr",
+      "ratio_gate_is_1_0_pm_0_15": {
+        "current": 1.1072689138302598,
+        "legacy": 5.50147480357734
+      },
+      "amplitude_gate_is_gt_2_1": {
+        "current_dpr1": 3.913797728711438,
+        "legacy_dpr1": 0.24741625098765094
+      },
+      "note": "둘 다 legacy에서 실제로 게이트 밖이다 — 이 게이트는 통과할 수도 실패할 수도 있다(#69 ㉣)."
+    },
     "hashes": {
       "a": 2119731202,
       "b": 2515351092,
@@ -60,5 +72,9 @@
       "tr": 3504240450
     },
     "note": "실기기 눈 확인(게이트 셋째)은 헤드리스가 못 잰다 — DEVICE-CHECK G3이 그 자리다."
+  },
+  "flags_explained": {
+    "bare_sd가 near-zero(1e-11 대역)": "**측정이다** — 획도 겹도 없는 종이 조각은 dpr2·3에서 실제로 한 색이다(dpr1만 0.162 — 그 차의 근거는 안티에일리어싱). 이 값은 임계가 아니라 «그 실행의 바닥»으로만 쓰이고, 빼는 산술이 sqrt(신호²−바닥²)라 0이어도 안전하다.",
+    "상수·지표 정의 스냅샷 없음": "web2 라인 전체의 유보다(e2e 하네스라 web/test의 공유 상수를 안 쓴다) — 대신 constants 블록을 손으로 적는다. 이 원장의 상수는 filmlayer.PAPER_STYLE·TILE_CSS이고 그 값은 spec이 직접 굽는 타일에서 나온다."
   }
 }

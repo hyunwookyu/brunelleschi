@@ -6,6 +6,7 @@ import { drawSheet, DRAW_SHEET_ID } from './types'
 import { horizonDocY } from './camera'
 import { GRADES } from './material'
 import { UNITS, type Unit } from './dim'
+import { validPressCal } from './press'
 import { C } from './constants'
 
 export interface BrnlData {
@@ -72,6 +73,9 @@ export function serializeBrnl(d: BrnlData, opt: SerializeOptions = {}): string {
     // 스케일 값(mmPerUnit)은 파생이라 안 담는다(dim에서 복원 후 다시 계산 — 원칙 b).
     unit: d.doc.unit,
     scaleRef: d.doc.scaleRef,
+    // 필압 보정(web2-26 6번) — **꺼져 있으면 아예 안 쓴다**: 옛 문서와 바이트가 같아야
+    // 「꺼짐에서 지금과 픽셀 단위로 동일」의 짝(파일도 안 바뀐다)이 선다.
+    press: d.doc.press && d.doc.press.on ? { ...d.doc.press } : undefined,
     nextId: d.nextId,
     // 종이(web2-19 2-b) — 배열 0이 작도 종이(pose·view 없음 — 정본은 DRAW_POSE·drawView).
     sheets: d.doc.sheets,
@@ -355,5 +359,15 @@ export function parseBrnl(text: string): BrnlData | null {
 
   const doc: Doc = { frame: { W: raw.frame.W, H: raw.frame.H }, strokes, faces, sheets, layers: keptLayers, underlays: keptUnderlays, unit }
   if (scaleRef !== undefined) doc.scaleRef = scaleRef
+  // 필압 보정(web2-26 6번) — **성립하는 값만 받는다**(`validPressCal`이 저장·복원·보정
+  // 절차의 술어 하나다 #54). 깨진 값은 조용히 버린다: 그림은 그대로 열리고 옵션만 꺼진다
+  // (문서를 거부하지 않는다 — scaleRef·면의 선례 그대로).
+  if (raw.press && typeof raw.press === 'object') {
+    const r = raw.press as Record<string, unknown>
+    if (r.on === true && isNum(r.p0) && isNum(r.p1) && isNum(r.gamma)) {
+      const cal = { on: true, p0: r.p0, p1: r.p1, gamma: r.gamma }
+      if (validPressCal(cal)) doc.press = cal
+    }
+  }
   return { doc, nextId, drawView }
 }

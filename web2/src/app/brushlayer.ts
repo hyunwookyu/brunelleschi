@@ -40,7 +40,8 @@ import type { Stroke } from '../core/types'
 import { pt, type Pt } from '../core/vec'
 import type { Draft } from './render2d'
 // 매핑·색·필압 계수는 순수 모듈이다 — 단위가 WebGL 없이 잰다(test/brushmap.test.ts)
-import { BRUSH_OF, strokeColor, weightOf, pressureProfile } from './brushmap'
+import { BRUSH_OF, strokeColor, weightOf, pressureProfile, strokeColorAt, weightAt, rawPressProfile } from './brushmap'
+import { remapPress } from '../core/press'
 
 export interface BrushLayer {
   canvas: HTMLCanvasElement
@@ -192,6 +193,10 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
 
   function drawStroke(app: App, s: Stroke, a: Pt, b: Pt) {
     const g = gradeOf(s)
+    // ── 필압 보정(web2-26 6번 · 옵션) — **꺼짐이면 이 갈래에 한 번도 안 들어온다** ──
+    // p5.brush는 **획당 한 색**이라 농도를 점별로 못 싣는다. 그래서 켠 획만 마디로 나눠
+    // 마디마다 색·굵기를 다시 준다(마디 수 `C.PRESS_SEGMENTS` — 새 숫자 ⛔, PRESS_N 급).
+    if (drawStrokeCalibrated(app, s, a, b)) return
     brush.seed(s.id)          // 결정론 — 획마다 같은 시드(계약 3)
     brush.noiseSeed(s.id)
     brush.set(BRUSH_OF[g], strokeColor(g), weightOf(s))
@@ -207,6 +212,31 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     }
   }
 
+  /** 보정 켠 획 — 마디마다 색·굵기가 갈린다. 켜져 있지 않거나 이 획에 압력이 없으면
+   *  **아무것도 안 하고 false**를 돌려준다(종전 경로가 그대로 돈다 — 픽셀 무회귀의 근거).
+   *  시드는 **획당 한 번**이다(계약 3) — 마디마다 `brush.line`을 불러도 시퀀스가 결정론이다
+   *  (`drawWaitingDashed`가 이미 같은 규약으로 조각을 긋는다 — 선례를 따른다). */
+  function drawStrokeCalibrated(app: App, s: Stroke, a: Pt, b: Pt): boolean {
+    const cal = app.doc.press
+    if (!cal || !cal.on) return false
+    const raw = rawPressProfile(s)
+    if (!raw) return false
+    const g = gradeOf(s)
+    brush.seed(s.id)
+    brush.noiseSeed(s.id)
+    const n = C.PRESS_SEGMENTS
+    for (let i = 0; i < n; i++) {
+      const t0 = i / n, t1 = (i + 1) / n
+      const tm = (t0 + t1) / 2
+      const pr = raw[Math.min(raw.length - 1, Math.round(tm * (raw.length - 1)))]!
+      const pm = remapPress(pr, cal)
+      brush.set(BRUSH_OF[g], strokeColorAt(g, pm), weightAt(s, pm))
+      brush.line(a.x + (b.x - a.x) * t0, a.y + (b.y - a.y) * t0,
+        a.x + (b.x - a.x) * t1, a.y + (b.y - a.y) * t1)
+    }
+    return true
+  }
+
   /** **점렬 몸체**(web2-24 4-b — 옐로 전용): raw가 정본 기하라 화면 점렬을 그대로 긋는다.
    *  시드·재료·필압 규약은 drawStroke와 같다 — 다른 것은 «두 점 보간»이 «점렬»이 된 것뿐.
    *  필압은 pressureProfile을 점렬 진행률 t로 다시 표본한다(재표본 규약 그대로). */
@@ -215,6 +245,19 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     brush.seed(s.id)
     brush.noiseSeed(s.id)
     brush.set(BRUSH_OF[g], strokeColor(g), weightOf(s))
+    const cal = app.doc.press
+    const raw = cal && cal.on ? rawPressProfile(s) : null
+    if (raw) {
+      // 보정 켠 점렬 — 마디마다 색·굵기를 다시 준다(위 `drawStrokeCalibrated`와 같은 규약)
+      for (let i = 0; i + 1 < pts.length; i++) {
+        const t = pts.length > 2 ? i / (pts.length - 2) : 0
+        const pr = raw[Math.min(raw.length - 1, Math.round(t * (raw.length - 1)))]!
+        const pm = remapPress(pr, cal!)
+        brush.set(BRUSH_OF[g], strokeColorAt(g, pm), weightAt(s, pm))
+        brush.line(pts[i]!.x, pts[i]!.y, pts[i + 1]!.x, pts[i + 1]!.y)
+      }
+      return
+    }
     const prof = pressureProfile(s)
     const n = pts.length
     const sp: [number, number, number][] = pts.map((p, i) => {

@@ -137,6 +137,16 @@ describe('26-3 ① 획득률 — 선의 자를 넓히면 연장선이 실제로 
         EXT_ACQUIRE_MS: C.EXT_ACQUIRE_MS,
         EXT_MAX_RATIO: C.EXT_MAX_RATIO,
       },
+      flags_explained: {
+        'per_offset[*].hit = 0 (before_ratio_1)': '**측정이다** — 띠 배율 1.0(종전)에서는 수직 오프셋 8px 이상이 반경 밖이라 ext가 한 번도 안 난다. 그 0이 곧 이 회차가 고친 것이고, 같은 실행의 after가 10/10을 낸다(#69 ㉣의 짝: 실패 가능한 격자다).',
+        'per_offset[0].d = 0': '오프셋 축의 첫 칸(연장선 위 정확히)이다 — 비율이 아니라 좌표다.',
+        '상수·지표 정의 스냅샷 없음': 'web2 라인 전체의 유보 — 대신 constants 블록을 손으로 적는다(C.OSNAP_* 다섯).',
+      },
+      reachability: {
+        how: 'OsnapSettings.lineRatio를 1로 주면 web2-26 이전 동작이 그대로 재현된다(같은 실행에서 돈다)',
+        acquisition_gate_is_after_gt_before: { before: before.hit, after: after.hit, of: before.total },
+        note: 'perp 갈래의 도달 가능성은 perpLine 손잡이가 낸다 — 켜면 확정 좌표가 15px 밀린다(⑤).',
+      },
       acquisition: {
         before_ratio_1: { hit: before.hit, total: before.total, rate: before.rate, per_offset: before.perOffset },
         after: { hit: after.hit, total: after.total, rate: after.rate, per_offset: after.perOffset },

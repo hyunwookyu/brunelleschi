@@ -1,6 +1,6 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG } from './layerbar'
 import { initInput } from './input'
@@ -13,7 +13,7 @@ import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice, confirmNear } from './notice'
 import { OSNAP_ORDER, osnap, osnapCost, resetOsnapCost, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT, widthOfMat, gradeOf } from '../core/material'
-import type { Grade, Layer, Sheet } from '../core/types'
+import type { Grade, Layer, Sheet, Stroke } from '../core/types'
 import { parseDim, formatMm, lenMm, UNITS, type Unit } from '../core/dim'
 import { initDimPanel } from './dimpanel'
 import { createVoice } from './voice'
@@ -375,6 +375,8 @@ inputApi = initInput(ink, app, {
   },
   onCommit(a, b, raw, press, rawIn) {
     const s = commitStroke(app, a, b, raw, press, rawIn)
+    // 필압 보정 절차(web2-26 6번) — 절차 중이면 이 획이 표본이다. 절차 밖이면 무해하다.
+    pressCalibStep(s)
     const an = app.lift.an
     // **알림은 오류가 있을 때만**이다(4-b). 「소실점 N」은 차수이고 「대기한다」는 상태다 —
     // 둘 다 화면이 이미 말하고 있다(소실점 표식 · 대기 획의 점선). 거부 사유만 남긴다.
@@ -715,6 +717,42 @@ own3dBox.addEventListener('change', () => {
   try { localStorage.setItem(OWN3D_KEY, own3dBox.checked ? 'on' : 'off') } catch { /* 세션 한정 */ }
   invalidate()
 })
+
+// ── 필압 보정(web2-26 6번 · 옵션 · 기본 꺼짐) — 켜면 **두 획을 받는다**(지시 2) ──
+// 결과는 문서에 붙는다(`doc.press`) — 기기 설정이면 옵션을 켜는 순간 예전 그림들의
+// 농도까지 바뀐다. 화면 문구는 지시가 준 「필압 보정」 그대로다.
+const pressBox = document.getElementById('chk-press') as HTMLInputElement
+const syncPressBox = () => { pressBox.checked = pressOn(app) || app.pressCalib !== null }
+pressBox.addEventListener('change', () => {
+  if (pressBox.checked) {
+    beginPressCalib(app)
+    status('필압 보정 — 평소 세기로 한 획을 그으세요')
+  } else {
+    setPressOff(app)
+    clearNotice()
+  }
+  invalidate()
+})
+// 문서를 열면 그 문서의 보정 상태가 화면에 그대로 뜬다(문서에 붙는 설정이므로)
+app.listeners.push(syncPressBox)
+syncPressBox()
+
+/** 확정된 획을 절차에 먹인다 — `onCommit` 뒤에 부른다(획이 문서에 든 다음). */
+function pressCalibStep(s: Stroke | null) {
+  if (!s || app.pressCalib === null) return
+  switch (feedPressCalib(app, s)) {
+    case 'nopen': status('필압 보정 — 펜으로 그어야 압력이 실립니다'); break
+    case 'first': status('필압 보정 — 이제 가장 세게 한 획'); break
+    case 'again': status('필압 보정 — 두 세기가 너무 가깝습니다. 평소 세기부터 다시'); break
+    case 'done': {
+      const c = app.doc.press!
+      notify(`필압 보정 완료 — 평소 ${c.p0.toFixed(2)} · 최대 ${c.p1.toFixed(2)}`)
+      syncPressBox()
+      break
+    }
+  }
+  invalidate()
+}
 
 // ── 머무름 직선화 시간(web2-26 4번) — **기기 설정**이라 localStorage다(문서 아님).
 // 손의 성질이지 그림의 성질이 아니다: 남의 그림을 열어도 내 손에 맞는 값이 유지된다.
@@ -1246,6 +1284,13 @@ const diag = {
   filmAlphaForTest: (v: boolean) => { setFilmAlphaForTest(v); invalidate() },
   /** D-3 반증(web2-26 2번) — 결을 dpr에 도로 묶어 「dpr 비 1.0 ± 0.15」를 깨뜨린다. e2e 전용. */
   fiberLegacyForTest: (v: boolean) => { setFiberLegacyForTest(v); invalidate() },
+  /** 필압 보정을 값으로 세운다(web2-26 6번) — 두 획을 받는 절차는 단위 팔이 재고,
+   *  화면 팔은 **값만** 필요하다. null이면 끈다(= `doc.press`를 지운다). e2e 전용. */
+  pressCalForTest: (p0: number | null, p1?: number) => {
+    if (p0 === null) setPressOff(app)
+    else { app.doc.press = { on: true, p0, p1: p1 ?? 0.35, gamma: 1 }; bumpDoc(app) }
+    invalidate()
+  },
   // web2-22 3부 — e2e가 임계를 실제로 넘겨 보는 손잡이(작은 상한 주입) + 마지막 실측
   autosaveLimitForTest: (n: number | null) => { autosaveLimitOverride = n },
   autosaveLast: () => lastAutosave,

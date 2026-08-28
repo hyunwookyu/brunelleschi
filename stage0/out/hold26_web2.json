@@ -15,6 +15,15 @@
     "HOLD_DRIFT_REF_MS": 600,
     "HOLD_JITTER_MIN_PX": 2
   },
+  "flags_explained": {
+    "speed_sweep_near_straight[*].held = null": "**측정이다** — 그 속도에서 머무름이 안 선다는 뜻이고, 같은 스윕의 2·5 px/s가 서므로 경계가 실제로 존재한다(#69 ㉣).",
+    "상수·지표 정의 스냅샷 없음": "web2 라인 전체의 유보 — 대신 constants 블록을 손으로 적는다(C.HOLD_* 여섯)."
+  },
+  "reachability": {
+    "how": "tickHold의 driftPx override로 옛 게이트(고정 4px 상자 · 속도 문 없음)를 그대로 재현한다",
+    "curve_gate_is_never_held": "옛 게이트를 350ms에 태우면 8·10 px/s 곡선이 352ms에 직선화된다(600ms에서는 안 된다)",
+    "note": "즉 이 게이트는 통과할 수도 실패할 수도 있다 — 「시간만 내렸다면 새로 직선화됐을 속도」 목록이 그 증거다."
+  },
   "threshold_by_hold_ms": [
     {
       "holdMs": 100,

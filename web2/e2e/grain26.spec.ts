@@ -31,6 +31,10 @@ function record(key: string, val: unknown) {
     patch: '(300,200) 60x60 CSS px — 획이 없는 빈 자리',
     metric: '휘도 L=0.299R+0.587G+0.114B의 픽셀 표준편차(기기 픽셀 격자). 결의 몫 = sqrt(막sd^2 − 바닥sd^2) — 독립 성분이라 분산이 더해진다(#74 ㉡: 절대 임계 대신 그 실행의 바닥값. 다만 빼는 방법은 제곱)',
   }
+  cur.flags_explained = {
+    'bare_sd가 near-zero(1e-11 대역)': '**측정이다** — 획도 겹도 없는 종이 조각은 dpr2·3에서 실제로 한 색이다(dpr1만 0.162 — 그 차의 근거는 안티에일리어싱). 이 값은 임계가 아니라 «그 실행의 바닥»으로만 쓰이고, 빼는 산술이 sqrt(신호²−바닥²)라 0이어도 안전하다.',
+    '상수·지표 정의 스냅샷 없음': 'web2 라인 전체의 유보다(e2e 하네스라 web/test의 공유 상수를 안 쓴다) — 대신 constants 블록을 손으로 적는다. 이 원장의 상수는 filmlayer.PAPER_STYLE·TILE_CSS이고 그 값은 spec이 직접 굽는 타일에서 나온다.',
+  }
   cur[key] = val
   writeFileSync(p, JSON.stringify(cur, null, 2))
 }
@@ -176,6 +180,14 @@ test('①②③ — 결이 지각 대역에 있고 dpr에 안 묶인다 (+반증
     ratio_dpr3_over_dpr1: ratio,
     legacy_ratio_dpr3_over_dpr1: legacyRatio,
     weber_floor_levels: 2.1,
+    // #35 — **무엇이 이 기준을 넘을 수 있는가**. 답은 반증 손잡이가 매 실행 낸다:
+    // 옛 규칙(결을 dpr에 도로 묶기)이 dpr 비를 게이트 밖으로, 진폭을 문턱 아래로 보낸다.
+    reachability: {
+      how: 'diag.fiberLegacyForTest(true) — 타일 256 device px 고정 + 섬유 배율 dpr/2 + 패턴 배율 0.5·s·dpr',
+      ratio_gate_is_1_0_pm_0_15: { current: ratio, legacy: legacyRatio },
+      amplitude_gate_is_gt_2_1: { current_dpr1: g1.grain, legacy_dpr1: l1.grain },
+      note: '둘 다 legacy에서 실제로 게이트 밖이다 — 이 게이트는 통과할 수도 실패할 수도 있다(#69 ㉣).',
+    },
     hashes: h,
     note: '실기기 눈 확인(게이트 셋째)은 헤드리스가 못 잰다 — DEVICE-CHECK G3이 그 자리다.',
   })

@@ -55,10 +55,14 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#eyebar > button')].map(e => e.id)))
     .toEqual(['btn-draw-view', 'btn-fullscreen', 'btn-display'])
-  // 표시 팝업의 셋 — 지평선·격자·대기 감쇠(id 불변 = 배선 불변)
+  // 표시 팝업의 항목들 — id 불변 = 배선 불변. **목록이 곧 표다**(수가 아니라 어느 요소인지 — #72 ②).
+  // ⚠ web2-26이 둘을 더했다: `chk-press`(6번 — 필압 보정) · `rng-hold`(4번 — 머무름 직선화
+  //   시간). 이 팔이 지키는 사람의 요구(「자리마다 무엇이 있는지가 값으로 못 박혀 있다」)는
+  //   그대로 유효하고 **표가 늘어난 것**이다(#75 ㉣: UI의 형태를 갈면 그 형태를 읽던 팔이
+  //   깨진다 — 물음은 「그 요구가 지금도 유효한가」이고 답이 예이면 표를 고친다).
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#display-pop input')].map(e => e.id)))
-    .toEqual(['chk-horizon', 'chk-grid', 'chk-waitfade', 'chk-hidden'])   // web2-23 2-a: 「가린 선(은선)」
+    .toEqual(['chk-horizon', 'chk-grid', 'chk-waitfade', 'chk-hidden', 'chk-press', 'rng-hold'])
   // 손(오른쪽 세로) — 되돌리기 둘(맨 위·구분선으로 가름) → 자 → 연필(접힘) → 펜 →
   // 지우개 둘 → 면 → **롤 둘(web2-21 3-a — 트레이싱지·옐로)** → 치수 → 서랍.
   // #oldtools(hidden)·#tray(접힘)는 A-4/3-b' 구조물.
