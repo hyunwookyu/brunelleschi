@@ -520,8 +520,12 @@ export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number,
   // 문서를 연 직후 등 경계에서 한 번 더 지킨다).
   if (app.activeLayer !== null) {
     const lay = app.doc.layers.find(l => l.id === app.activeLayer)
+    // **소유는 예외가 없다**(web2-26 1번) — 활성 겹이 이 종이에 있으면 새 획은 그 겹의
+    // 것이다. 종전에는 켬·잠금까지 함께 물어 셋 중 하나가 어긋나면 획이 **소리 없이
+    // 종이로 떨어졌다**(오염의 두 번째 입구 — 첫째는 지우개 조각). 켬·잠금은 «편집이
+    // 되는가»의 축이고 소유와 다른 축이다(web2-20 4부의 문면 그대로).
+    if (lay && lay.sheet === app.activeSheet) s.layer = lay.id
     if (lay && lay.on && !lay.locked && lay.sheet === app.activeSheet) {
-      s.layer = lay.id
       // 종이 밖에 그으면 rect가 자란다(2-b) — **확정 시점에**(미리보기 중에 자라면
       // 산만하다 — 지시 문면). 획의 문서 bbox(raw 포함)로 합집합.
       const xs = [a.x, b.x, ...(raw ?? []).map(p2 => p2.x)]
@@ -718,6 +722,12 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
     const newStrokes: Stroke[] = kept.map(k => {
       const s: Stroke = { id: app.nextId++, a: k.a, b: k.b }
       if (!isDrawPose(app.pose)) s.view = { p: { ...app.pose.p }, q: { ...app.pose.q } }
+      // **조각은 어버이의 층을 승계한다**(web2-26 1번 — 소유권은 획에 붙는다).
+      // 빠져 있어서 겹 획을 잘라낸 조각이 `layer === undefined`가 됐고, 그것이 곧
+      // «종이에 직접 그린 획»(onPaper)이라 **아래 종이가 오염됐다**: 겹을 꺼도 남고
+      // 겹을 걷어도(removeLayer는 layer === id만 걷는다) 종이에 눌러앉았다.
+      // 실기기 확인이 「선따기 뒤 종이가 달라진다」로 잡은 자리다(DEVICE-CHECK E2).
+      if (target.layer !== undefined) s.layer = target.layer
       if (target.mat) s.mat = { ...target.mat } // 조각도 같은 재료
       // 자립(web2-13 4부 — 깃발 켜짐에서만): own3 획의 조각은 **어버이의 3D 직선을
       // 승계한다**(4차 리뷰어 [46]) — 조각 끝점은 그 직선 위 점의 사영이므로 광선
