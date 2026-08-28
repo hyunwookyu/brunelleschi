@@ -21,7 +21,7 @@ export const newHoldGate = (): HoldGate => ({ ref: null, since: 0, held: false }
 
 /** 커서 표본 하나 — 반환: 지금 머무름이 성립해 있는가.
  *  holdMs를 주입받는 이유는 팔 ⑦(양끝: 0이면 늘, 크면 거의 안)이다 — 앱은 C.HOLD_MS. */
-export function tickHold(g: HoldGate, p: Pt, now: number, holdMs = C.HOLD_MS): boolean {
+export function tickHold(g: HoldGate, p: Pt, now: number, holdMs: number = C.HOLD_MS): boolean {
   if (!g.ref || Math.hypot(p.x - g.ref.x, p.y - g.ref.y) > C.HOLD_JITTER_PX) {
     g.ref = { x: p.x, y: p.y }
     g.since = now
