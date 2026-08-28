@@ -7,7 +7,7 @@ import { onPaper, yellowIds, type Doc, type Stroke, type CamPose } from './types
 import { C } from './constants'
 import {
   analyze, type Analysis, type AxisId, DRAW_POSE,
-  screenAxes, project, rayThrough, pointOnGround, vpDeviation, type Ray,
+  screenAxes, project, rayThrough, pointOnGround, pointOnCeiling, vpDeviation, type Ray,
 } from './camera'
 import {
   type Pt, type V3, add3, sub3, mul3, dot3, dist2, norm3, len3,
@@ -29,13 +29,15 @@ export interface LiftResult {
    *  'aboveHorizon' = 그 끝이 지평선 **위쪽**이라 광선이 위로 가 지면과 영영 안 만난다
    *  (올려다보는 구도 — 팬으로 지평선을 옮기는 것이 답이다. DEFERRED에 구도 자체의 해법).
    *  'onHorizon' = 그 끝이 지평선 **그 자리**(대역 안)라 광선이 지면과 평행하다
+   *  'straddle' = 한 끝은 지평선 위·한 끝은 아래(web2-27 1번) — **정의상 불가능**하다:
+   *    그 선은 무한대로 간다. 실패가 아니라 「그렇게 못 놓는다」이고 조용히 안 버린다.
    *  (지평선 따라긋기 획 — 퇴화. 카메라에도 지면에도 아무 일이 없다).
    *  'hasHeight' = 소실점 축인데 **모델에 이미 높이가 있어** 지면 규칙이 안 걸렸다
    *  (4부 — 위치 미정: 교점(xint)·연결이 정의한다. 죽음이 아니라 국면의 사실이다).
    *  'mixedWait' = 소실점 축이고 높이도 없는데 **대기에 비축 획이 섞여 있어** 지면 규칙이
    *  안 걸렸다(4부 판별자 ② — 2차 리뷰어 [5]: 이 차단도 사유가 있어야 한다).
    *  진단 패널이 네 수를 가른다. */
-  waitWhy: Map<number, 'aboveHorizon' | 'onHorizon' | 'hasHeight' | 'mixedWait'>
+  waitWhy: Map<number, 'aboveHorizon' | 'onHorizon' | 'hasHeight' | 'mixedWait' | 'straddle'>
   /** 게이지 앵커가 된 획 (전역 스케일의 게이지 — 유일한 자유 선택) */
   anchorId: number | null
   /** id → 획 (문서에서 그대로 — 조회 편의) */
@@ -127,7 +129,7 @@ function scaleOf(doc: Doc): number | null {
 function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResult {
   const an = analyze(doc)
   const lifted = new Map<number, LiftedSeg>()
-  const waitWhy = new Map<number, 'aboveHorizon' | 'onHorizon' | 'hasHeight' | 'mixedWait'>()
+  const waitWhy = new Map<number, 'aboveHorizon' | 'onHorizon' | 'hasHeight' | 'mixedWait' | 'straddle'>()
   let anchorId: number | null = null
 
   const strokes = new Map(doc.strokes.map(s => [s.id, s]))
@@ -268,15 +270,33 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
         // 아래·위는 화면 y로 가른다: 롤 0·피치 0이라 화면 y가 곧 높이 순서다.
         // (3점 = 피치 ≠ 0 에서는 다시 봐야 한다. 그때 판단한다.)
         const dir = axisDir(an, axis)
-        const useB = axis === 'V' && s.b.y > s.a.y   // 아래로 그은 수직선
-        const g = pointOnGround(an, pose, useB ? s.b : s.a)
-        // 지면과 못 만났다(web2-17 1-c) — 사유를 가른다: 지평선 대역 안(따라긋기 — 광선이
-        // 지면과 평행) 대 지평선 위쪽(올려다보기 — 광선이 위로). 조용히 대기시키지 않는다.
-        // 올려다보는 구도의 해법 자체는 이 회차 밖이다(DEFERRED 「첫 획이 지면 위에 있을
-        // 수 없는 구도」). 대역 임계는 classifyNext의 퇴화 갈래와 같은 값(OSNAP_RADIUS_PX).
+        // ── 바닥이냐 천장이냐(web2-27 1번) ─────────────────────────────────────
+        // 두 끝이 **모두** 지평선 위면 천장 갈래다(천장 평면의 정의와 근거는
+        // `camera.pointOnCeiling` — 눈높이를 바닥에 대해 되접은 면이다. 이 파일은 그 값을
+        // 직접 안 짓는다 — 원칙 a). 두 끝이 지평선을 **가로지르면** 그 선은 무한대로 가므로
+        // 접지시키지 않는다 — 실패가 아니라 정의상 불가능이고 사유를 남긴다(지시 3).
+        const band = C.OSNAP_RADIUS_PX
+        const isUp = (p: Pt) => p.y < an.horizonY - band
+        const isDown = (p: Pt) => p.y > an.horizonY + band
+        // ⚠⚠ **걸침의 거부는 세로선에 안 걸린다**(팔이 그것을 강제했다 — 아래 반례).
+        //    수평·깊이 축은 방향의 y가 0이라 **선 전체가 한 수평면**에 있다: 그런 선이
+        //    지평선을 가로지르면 그 평면이 눈높이라는 뜻이고 곧 무한대다 — 거부한다.
+        //    세로선은 다르다. 눈앞의 기둥은 **바닥에서 시작해 눈높이를 지나 올라간다** —
+        //    가장 흔한 획이다. 그때 답은 «아래 끝이 바닥에 있다»이고 종전 규칙 그대로다.
+        //    (초판이 이 갈래를 안 갈라 `fold_measure`의 기둥이 통째로 대기로 떨어졌다.)
+        const straddles = axis !== 'V' &&
+          ((isUp(s.a) && isDown(s.b)) || (isDown(s.a) && isUp(s.b)))
+        const ceiling = !straddles && isUp(s.a) && isUp(s.b)
+        // 수직선은 **평면 쪽 끝**을 앵커로 잡는다: 바닥은 아래 끝, 천장은 위 끝(거울상).
+        const useB = axis === 'V' && (ceiling ? s.b.y < s.a.y : s.b.y > s.a.y)
+        const anchorPt = useB ? s.b : s.a
+        // 못 만났다(web2-17 1-c) — 사유를 가른다: 걸침(정의상 불가) · 지평선 대역 안
+        // (따라긋기 — 광선이 평면과 평행) · 위쪽인데 천장으로도 안 풀림. 조용히 안 버린다.
+        const g = straddles ? null
+          : (ceiling ? pointOnCeiling(an, pose, anchorPt) : pointOnGround(an, pose, anchorPt))
         if (!g) {
-          const py = (useB ? s.b : s.a).y
-          waitWhy.set(s.id, Math.abs(py - an.horizonY) <= C.OSNAP_RADIUS_PX ? 'onHorizon' : 'aboveHorizon')
+          waitWhy.set(s.id, straddles ? 'straddle'
+            : Math.abs(anchorPt.y - an.horizonY) <= band ? 'onHorizon' : 'aboveHorizon')
         }
         if (g && dir) {
           if (useB) {
@@ -372,10 +392,29 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
       const axis = axisOfStroke(an, pose, s.a, s.b)
       if (axis !== 'vp0' && axis !== 'vp1') continue
       const dir = axisDir(an, axis)
+      // ── 이 패스도 «걸침»과 «천장»을 가른다(web2-27 1번) ────────────────────────
+      // 이 갈래는 vp0·vp1 축만 온다 — 방향의 y가 0이므로 **선 전체가 한 수평면**이다.
+      // ⚠⚠ 초판은 여기에 갈래를 안 넣어 **첫 갈래의 거부가 이 패스에서 되살아났다**:
+      //    소실점을 관통하는 획(role 'vp')이 `s.a`만 보고 지면에 앉아 **눈 뒤까지 뻗는
+      //    선분**이 됐다(실측 z −16.704 → +16.704 — 눈이 원점이다). 그것이 지시가 말한
+      //    「무한대로 간다」의 실제 모습이고 **조용히 틀린 배치**다.
+      const band2 = C.OSNAP_RADIUS_PX
+      const up2 = (p: Pt) => p.y < an.horizonY - band2
+      const down2 = (p: Pt) => p.y > an.horizonY + band2
+      if ((up2(s.a) && down2(s.b)) || (down2(s.a) && up2(s.b))) {
+        waitWhy.set(s.id, 'straddle')
+        continue
+      }
+      // ⚠ **천장 갈래는 여기 없다** — 지시 2가 「`lift.ts`의 **첫 선 처리**에서」로 자리를
+      //    못 박았고, 이 패스는 첫 선이 아니라 «높이가 아직 없는 장면의 대기 vp축 획»을
+      //    끌어올리는 되살림 패스다. 여기에 천장을 넣었더니 **지평선 위에 그린 평범한
+      //    깊이선들이 통째로 3.2m로 올라가** 기존 팔 열둘이 깨졌다(xint·own3d 4-g 등):
+      //    사람이 눈높이보다 위에 긋는 것은 흔하고, 그 획들은 **연결로 풀리기를 기다리는
+      //    중**이지 「천장에 그린 것」이 아니다. 범위를 안 넓힌다(A-3).
       const g = pointOnGround(an, pose, s.a)
       if (!g) {
-        // 지면과 못 만났다 — 1-c와 같은 사유 규약(조용히 대기시키지 않는다)
-        waitWhy.set(s.id, Math.abs(s.a.y - an.horizonY) <= C.OSNAP_RADIUS_PX ? 'onHorizon' : 'aboveHorizon')
+        // 못 만났다 — 1-c와 같은 사유 규약(조용히 대기시키지 않는다)
+        waitWhy.set(s.id, Math.abs(s.a.y - an.horizonY) <= band2 ? 'onHorizon' : 'aboveHorizon')
         continue
       }
       if (!dir) continue

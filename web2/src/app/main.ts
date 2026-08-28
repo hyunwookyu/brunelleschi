@@ -382,6 +382,14 @@ inputApi = initInput(ink, app, {
     // 둘 다 화면이 이미 말하고 있다(소실점 표식 · 대기 획의 점선). 거부 사유만 남긴다.
     const reject = an.rejects.get(s.id)
     if (reject) notify(reject)
+    // **못 풀렸으면 이유를 말한다**(web2-27 1-5) — 종전에는 조용히 안 풀렸다.
+    // 문구는 짧게(이름이거나 짧은 문장 하나 — web2-28의 규칙과 같은 결).
+    else if (app.lift.waiting.includes(s.id)) {
+      const why = app.lift.waitWhy.get(s.id)
+      if (why === 'straddle') notify('지평선을 가로지르는 선은 놓을 자리가 없다')
+      else if (why === 'onHorizon') notify('지평선을 따라 그은 선은 놓을 자리가 없다')
+      else if (why === 'aboveHorizon') notify('이 선만으로는 방향이 안 정해진다')
+    }
     // 치수 창 — 내용 획이면 이 획이 지금 창의 대상이다. 그리는 동안 들어온 치수를 적용한다.
     if (an.roles.get(s.id) === 'content') {
       dimTarget = s.id

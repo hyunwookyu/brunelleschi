@@ -154,12 +154,20 @@ describe('2 — 첫 선은 지면에 있다 (종류를 안 가린다)', () => {
     expect(s.app.lift.waitWhy.get(hz.id)).toBe('onHorizon')   // 따라긋기 — 위쪽(aboveHorizon)과 가른다(#43)
   })
 
-  it('반례: 지평선 위에서 시작하면 지면과 안 만난다 — 대기', () => {
+  it('반례: 지평선을 **가로지르는** 수평·깊이 선은 접지되지 않는다 — 대기', () => {
+    // ⚠ **web2-27 1번이 이 반례의 예시를 바꿨다.** 종전 예시(지평선 위 세로선)는 이제
+    //   천장에 놓인다 — 사람이 낸 규칙(지평선 기준 mirror)의 정체가 `pointOnCeiling`이다.
+    //   「접지가 늘 되는 것은 아니다」라는 이 팔의 요구는 그대로이고, **정의상 불가능한
+    //   자리**로 예시를 옮겼다: 방향의 y가 0인 축(수평·깊이)의 선이 지평선을 가로지르면
+    //   그 평면이 곧 눈높이라 무한대다.
     const s = session(1200, 800)
-    // 지평선(y=400)보다 위 — 광선이 위로 가서 지면과 영영 안 만난다
-    const v = s.draw(500, 300, 500, 200)!
-    expect(s.app.lift.waiting).toContain(v.id)
-    expect(s.app.lift.lifted.has(v.id)).toBe(false)
+    const st = s.draw(400, 500, 800, 300)!
+    expect(s.app.lift.lifted.has(st.id)).toBe(false)
+    expect(s.app.lift.waitWhy.get(st.id)).toBe('straddle')
+    // 그리고 **지평선 위 세로선은 이제 올라간다**(같은 실행에서 대조 — 분해능)
+    const t = session(1200, 800)
+    const v = t.draw(500, 300, 500, 200)!
+    expect(t.app.lift.lifted.has(v.id)).toBe(true)
   })
 
   it('반례: 게이지 평면은 없어졌다 — 첫 선의 깊이가 f에 안 묶인다', () => {

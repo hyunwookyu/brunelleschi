@@ -121,10 +121,12 @@ describe('5-c — 대기가 거의 사라진다', () => {
     void g
   })
 
-  it('반례: 그래도 대기가 남는 경우 — 지평선 위에서 시작하면 지면과 안 만난다', () => {
+  it('반례: 그래도 대기가 남는 경우 — **지평선을 가로지르는 깊이선**(정의상 불가능)', () => {
     // 축은 붙는다(방향은 정해진다). 못 정하는 것은 **시작점의 좌표**다.
-    const s = built()
-    const v = s.draw(400, 200, 400, 300)!   // 지평선(400)보다 위 — 첫 선인데 지면과 안 만난다
-    expect(s.app.lift.waiting).toContain(v.id)
+    // ⚠ web2-27 1번: 종전 예시(지평선 위 세로선)는 이제 천장에 놓인다 — 예시를 옮겼다.
+    const s = session(1200, 800)
+    const st = s.draw(400, 500, 800, 300)!   // 지평선(400)을 가로지르는 깊이선 — 무한대다
+    expect(s.app.lift.waiting).toContain(st.id)
+    expect(s.app.lift.waitWhy.get(st.id)).toBe('straddle')
   })
 })

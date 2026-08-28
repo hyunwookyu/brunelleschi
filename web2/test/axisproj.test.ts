@@ -154,11 +154,19 @@ describe('2-b — 무산 계수: 문 안에서 죽으면 사유가 남는다', (
   it('카메라가 안 닫혔으면 noCam이 오른다', () => {
     const s = session(1200, 800)
     s.draw(100, 400, 1100, 400)                          // 지평선만 — 카메라 미확정
-    const B = s.draw(690, 290, 840, 365)!                // 대기 획
+    // ⚠⚠ **web2-27 1번이 이 픽스처를 다시 짜게 했다.** 종전 B는 지평선 **위**의 획이라
+    //    「지면과 안 만난다」로 대기했는데, 이제 그런 획은 **천장에 놓인다**. 이 팔이
+    //    지키는 요구(「카메라가 안 닫혔으면 문 안의 무산이 `noCam`으로 센다」)는 그대로이고
+    //    필요한 것은 **대기하는 B** 하나다. 지금 대기하는 자리는 «걸치는 선»이다.
+    //    그리고 A의 끝은 B의 **몸통**에 둔다 — 끝점에 두면 연결로 B가 올라가 문이 닫힌다.
+    const B = s.draw(600, 300, 900, 700)!                // 지평선을 가로지른다 → straddle
     expect(s.app.lift.waiting).toContain(B.id)
+    expect(s.app.lift.waitWhy.get(B.id)).toBe('straddle')
+    expect(s.app.lift.an.constructionDone).toBe(false)   // 분해능 — 카메라가 실제로 안 닫혔다
     const bs = s.app.doc.strokes.find(x => x.id === B.id)!
-    // 세로로 정렬해 긋는다 — 축 스냅(V)이 끝을 안 옮기고 B.a 위에서 끝난다
-    s.draw(bs.a.x, bs.a.y + 90, bs.a.x, bs.a.y)
+    const mid = { x: (bs.a.x + bs.b.x) / 2, y: (bs.a.y + bs.b.y) / 2 }
+    // 세로로 정렬해 긋는다 — 축 스냅(V)이 끝을 안 옮기고 B의 몸통 위에서 끝난다
+    s.draw(mid.x, mid.y + 90, mid.x, mid.y)
     expect(s.app.touchStats.noCam).toBeGreaterThan(0)
   })
 

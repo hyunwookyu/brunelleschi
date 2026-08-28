@@ -401,6 +401,29 @@ export function pointOnGround(an: Analysis, pose: CamPose, s: Pt): V3 | null {
   return add3(pose.p, mul3(r.d, u))
 }
 
+/** 화면 점 → **천장(Y = 2·EYE_HEIGHT) 위의 점**(web2-27 1번).
+ *
+ *  **`pointOnGround`를 안 고친다** — 바닥 접지는 다른 데서도 쓰이고 거기서 `null`이
+ *  사라지면 안 된다(지시 1). 위 갈래를 따로 둔다.
+ *
+ *  왜 `2·EYE_HEIGHT`인가: 사용자가 낸 규칙은 「지평선 위에 그은 선의 시작점을 지평선
+ *  기준으로 **mirror**해서 그 반대점을 원점으로 삼는다」였다. 눈높이를 지나는 수평면에
+ *  대해 광선을 뒤집으면 뒤집힌 광선은 아래로 가 바닥과 한 점 `G`에서 만나고, 그 `G`를
+ *  다시 눈높이 면에 대해 되뒤집으면 `P = (G.x, 2·EYE_HEIGHT, G.z)`다 —
+ *  **원래 광선이 `y = 2·EYE_HEIGHT` 평면과 만나는 점**이고 근사가 아니라 정확히 그 점이다.
+ *  의미도 맞는다: 눈높이보다 위에 긋는다는 것은 천장에 긋는다는 뜻이고, `EYE_HEIGHT`가
+ *  1.6이므로 그 평면은 3.2m — 임의의 값이 아니라 **눈높이를 바닥에 대해 되접은 결과**다.
+ *
+ *  지평선 아래(또는 그 자리)의 점은 천장과 안 만난다 → null. (바닥의 거울상이다.) */
+export function pointOnCeiling(an: Analysis, pose: CamPose, s: Pt): V3 | null {
+  const r = rayThrough(an, pose, s)
+  if (!r) return null
+  if (r.d.y <= 1e-9) return null                       // 아래로 가거나 평행 — 안 만난다
+  const u = (2 * C.EYE_HEIGHT - pose.p.y) / r.d.y      // P.y = 2·EYE_HEIGHT 가 되는 파라미터
+  if (!(u > 0)) return null                            // 눈이 이미 그 평면이거나 뒤쪽
+  return add3(pose.p, mul3(r.d, u))
+}
+
 /** **근평면 — 카메라 앞 잘라내기의 단 하나의 값**(#54).
  *
  *  카메라 좌표계에서 `z <= NEAR_Z` 인 쪽이 「앞」이다. 선분(`projectSeg`)과 다각형

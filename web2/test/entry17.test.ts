@@ -208,11 +208,31 @@ describe('진입로 — 지평선 탭 = 소실점 (빈 문서에서 바로)', ()
 })
 
 describe('1-c — 첫 획이 지평선 위에서 시작하면 조용히 죽지 않는다', () => {
-  it('올려다보는 첫 획 — 대기 + 사유 aboveHorizon이 남는다', () => {
+  // ⚠⚠ **web2-27 1번이 이 자리의 답을 바꿨다.** 사람의 요구(「조용히 죽지 않는다」)는
+  //    그대로 유효하고, 답이 「대기 + 사유」에서 「**천장에 놓인다**」로 갈렸다.
+  //    사용자가 낸 규칙(지평선 기준 mirror)의 기하학적 정체가 `pointOnCeiling`이다.
+  //    사유가 남는 자리는 이제 **걸치는 선**뿐이다(정의상 불가능) — 아래 둘째 팔.
+  it('올려다보는 첫 획 — **천장에 놓인다**(종전: 대기 + aboveHorizon)', () => {
     const s = session(1200, 800)
-    const v = s.draw(500, 300, 500, 200)!             // 지평선(400) 위쪽 — 지면과 못 만난다
-    expect(s.app.lift.waiting).toContain(v.id)
-    expect(s.app.lift.waitWhy.get(v.id)).toBe('aboveHorizon')
+    const v = s.draw(500, 300, 500, 200)!             // 지평선(400) 위쪽 세로선
+    expect(s.app.lift.lifted.has(v.id)).toBe(true)
+    expect(s.app.lift.waitWhy.has(v.id)).toBe(false)
+    const seg = s.app.lift.lifted.get(v.id)!
+    // 위 끝이 천장 평면에 앉는다 — 값의 근거는 `ceiling27.test.ts`가 정본이다
+    expect(Math.max(seg.a3.y, seg.b3.y)).toBeCloseTo(2 * C.EYE_HEIGHT, 6)
+  })
+
+  it('걸치는 선(깊이 축)은 접지되지 않고 **사유가 남는다** — 정의상 불가능이다', () => {
+    // 빈 문서에 지평선을 가로지르는 대각선 — 소실점을 만들고(role 'vp') 그 축은 vp0다.
+    // 방향의 y가 0이므로 선 전체가 한 수평면인데 그 평면이 곧 눈높이다 → 무한대.
+    // ⚠ 이것이 **조용히 틀린 배치**의 실제 모습이었다: 수리 전에는 `s.a`만 보고 지면에
+    //   앉아 **눈 뒤까지 뻗는 선분**이 됐다(실측 z −16.704 → +16.704 — 눈이 원점이다).
+    const s = session(1200, 800)
+    const st = s.draw(400, 500, 800, 300)!
+    expect(s.app.lift.an.roles.get(st.id)).toBe('vp')      // 소실점은 그대로 선다
+    expect(s.app.lift.an.vps).toHaveLength(1)
+    expect(s.app.lift.lifted.has(st.id)).toBe(false)       // 접지되지 않는다
+    expect(s.app.lift.waitWhy.get(st.id)).toBe('straddle') // 이유가 남는다(조용하지 않다)
   })
 
   it('반례: 지평선 아래 첫 획은 사유 없이 그냥 올라간다', () => {
