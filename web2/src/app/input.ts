@@ -156,6 +156,7 @@ export function initInput(
     const r = resolveEnd(
       app.lift, app.pose, app.lift.an,
       draft.start, { p3: draft.startP3 }, cur, osnapSet(), dimOpts(), app.extAcq.acquired,
+      draft.endSnap,   // 이력(web2-26 3번) — 직전에 이긴 선 후보는 유지 띠까지 산다
     )
     draft.end = r.end
     draft.label = r.label

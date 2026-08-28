@@ -39,6 +39,8 @@ export function session(W: number, H: number): Session {
       const start = oh ? oh.p : p
       const startP3 = { p3: oh?.p3 ?? null }
       const r = resolveEnd(app.lift, app.pose, app.lift.an, start, startP3, { x: bx, y: by }, set(), dims(), acq)
+      // (하네스는 한 점에서 판정한다 — 이력은 «드래그 중»의 것이라 여기선 빈 상태다.
+      //  이력을 재는 팔은 `extband26.test.ts`가 스스로 연속 이동을 만든다.)
       const c = resolveCommit(app.lift.an, start, r.end, set().radius)
       if (!c) return null // 잡음 — 지평선에서 먼 탭
       return commitStroke(app, c.a, c.b, [p, { x: bx, y: by }])

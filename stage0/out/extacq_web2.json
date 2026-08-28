@@ -23,11 +23,11 @@
    "none_ratio": 0.9544
   },
   "all_endpoints_acquired": {
-   "none": 761,
-   "ext": 55,
+   "none": 698,
+   "ext": 118,
    "near": 38,
    "mid": 1,
-   "ext_ratio": 0.0643
+   "ext_ratio": 0.138
   },
   "note": "no_acquisition이 앱의 **기본 상태**다(획을 확정할 때마다 비워지므로 대부분의 시간이 여기다). all_endpoints_acquired는 «획득식이 상시와 어떻게 다른가»의 대조군 — 획득 문만 열고 상한(EXT_MAX_RATIO)은 그대로 둔 상태다. 수리 전(획득도 상한도 없음)은 before 판이 든다."
  },

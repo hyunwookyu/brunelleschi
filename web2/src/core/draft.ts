@@ -65,6 +65,8 @@ export function resolveEnd(
   cursor: Pt, set: OsnapSettings, dim?: DimOpts,
   /** 획득된 연장선(web2-18 2부) — 여기 없는 선분의 연장은 후보가 아니다 */
   extAcq: readonly ExtAcq[] = [],
+  /** 직전 판정(web2-26 3번 — 선 후보의 이력). 호출자가 `draft.endSnap`을 그대로 준다. */
+  prevSnap?: OsnapHit | null,
 ): EndResolve {
   const a3 = startP3.p3
   const scale = dim?.mmPerUnit ?? null
@@ -95,7 +97,7 @@ export function resolveEnd(
   //    #63의 면 회귀 팔이 그 동작을 지킨다: 루프가 닫혀야 면이 선다). 죽는 것은 **줄 것이
   //    없는 2D 특징점**에 끌려갈 때뿐이고, 그때만 축이 이겨야 둘 다 산다.
   //    ⚠ 축이 안 걸린 획(자유·소실점 살·축 정의)에서는 종전대로 점이 그대로 이긴다.
-  const oh = osnap(lift, pose, cursor, set, startP3, aim, extAcq)
+  const oh = osnap(lift, pose, cursor, set, startP3, aim, extAcq, prevSnap)
   if (oh) {
     if (ds0?.axis && oh.p3 === null) {
       const end = oh.kind === 'xint' ? oh.p : footOnAim(start, ds0.end, oh.p)

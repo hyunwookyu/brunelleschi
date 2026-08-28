@@ -36,6 +36,19 @@ export interface OsnapAim { start: Pt; through: Pt }
 export interface OsnapSettings {
   radius: number
   kinds: Record<OsnapKind, boolean>
+  /** 선 후보(`ext`·`perp`)의 띠 배율 — 안 주면 `C.OSNAP_LINE_RATIO`.
+   *  **1로 주면 web2-26 이전 동작**(점과 선이 같은 자)이라 반증 손잡이를 겸한다(D-3). */
+  lineRatio?: number
+  /** 이력의 유지 띠 배율 — 안 주면 `C.OSNAP_LINE_HOLD_RATIO` */
+  lineHoldRatio?: number
+  /** **`perp`도 선 후보로 볼 것인가**(기본 거짓 — web2-26 3번의 D-4 반증 손잡이).
+   *  지시는 `perp`를 `ext`와 한 묶음으로 넣으라고 했는데 **측정이 반대로 가리켰다**:
+   *  수선의 발은 «선분 **안**으로 클램프된 점»이라 점 후보와 같이 2차원으로 국소화돼
+   *  있고, 띠를 넓히면 축 스냅을 이겨 확정 좌표를 조용히 민다(실측 15px — 아래 팔).
+   *  `ext`와 가르는 두 번째 근거: `ext`는 **획득식**이라(web2-18 2부) 사람이 그 선을
+   *  집은 뒤에만 살고, `perp`는 승격 선분 **전부**에 늘 켜져 있다. 이 손잡이는 그
+   *  차이를 팔이 매 실행 실증하라고 남긴다(켜면 밀림이 되살아난다). */
+  perpLine?: boolean
 }
 
 export const defaultOsnap = (): OsnapSettings => ({
@@ -43,11 +56,20 @@ export const defaultOsnap = (): OsnapSettings => ({
   kinds: { vp: true, vertex: true, end: true, mid: true, int: true, xint: true, perp: true, ext: true, near: true },
 })
 
+/** **선 후보인가** — 수직거리 한 축만 뜻이 있는 후보(web2-26 3번). 점 후보와 자가 다르다.
+ *  ⚠ `perp`는 기본이 **점 후보**다(위 `perpLine` 참조 — 지시와 갈린 자리이고 근거는 측정). */
+export const isLineKind = (k: OsnapKind, set?: OsnapSettings): boolean =>
+  k === 'ext' || (k === 'perp' && set?.perpLine === true)
+
 export interface OsnapHit {
   kind: OsnapKind
   p: Pt
   /** 3D가 있는 후보면 그 좌표 — 대기 획 후보는 null */
   p3: V3 | null
+  /** **어느 선에서 온 후보인가**(선 후보만) — 이력(hysteresis)의 «같은 것인가» 판정자.
+   *  점 후보는 undefined다: 점은 자기 자리가 정체라 이력이 필요 없다(경계에서 깜빡여도
+   *  후보 자체가 안 바뀐다). */
+  srcId?: number
 }
 
 /** 3D 선분 위 최근접점 (páram 클램프) */
@@ -156,7 +178,7 @@ export function resetOsnapCost(): void {
   osnapCost.intersectMs = 0; osnapCost.endsMs = 0; osnapCost.restMs = 0
 }
 
-interface Candidate { kind: OsnapKind; p: Pt; p3: V3 | null; d: number }
+interface Candidate { kind: OsnapKind; p: Pt; p3: V3 | null; d: number; srcId?: number }
 
 /** 오스냅 — 커서 근처의 최우선 후보. start는 수선 발 계산용(그리는 중일 때). */
 export function osnap(
@@ -169,18 +191,34 @@ export function osnap(
   /** **획득된 연장선**(web2-18 2부) — 여기 없는 선분의 연장은 후보가 아니다.
    *  안 주면 빈 목록으로 본다: `ext`는 **획득 없이는 한 번도 안 난다**(팔 ②가 지킨다). */
   extAcq: readonly ExtAcq[] = [],
+  /** **직전 판정**(web2-26 3번 — 이력). 선 후보였으면 그 선은 «유지 띠»를 벗어날 때까지
+   *  살아 있다. 안 주면 이력 없음(종전 동작) — 순수 함수를 지키려고 상태를 밖에 둔다. */
+  prev?: OsnapHit | null,
 ): OsnapHit | null {
   const t0 = performance.now()
   let tInt = 0, tEnds = 0
   const an = lift.an
   const R = set.radius
+  // ── 점의 자와 선의 자를 가른다(web2-26 3번) ─────────────────────────────────
+  // 점 후보(`vertex` `end` `mid` `int` `xint` `vp`)는 종전 반경 그대로. 선 후보
+  // (`ext` `perp`)는 **수직거리 기준의 넓은 띠**다 — `push`가 재는 거리가 이미 그
+  // 수직거리다(후보점이 커서에서 그 직선에 내린 발이므로).
+  const lineR = R * (set.lineRatio ?? C.OSNAP_LINE_RATIO)
+  const holdR = R * (set.lineHoldRatio ?? C.OSNAP_LINE_HOLD_RATIO)
   const cands: Candidate[] = []
   /** `from`을 주면 구멍(반경)을 **거기서** 잰다 — 기본은 커서다.
-   *  겉보기 교차만 다른 자를 쓴다(아래 ⚠ — 손의 «수직» 오차는 축 스냅이 이미 버렸다). */
-  const push = (kind: OsnapKind, p: Pt | null, p3: V3 | null, from?: Pt) => {
+   *  겉보기 교차만 다른 자를 쓴다(아래 ⚠ — 손의 «수직» 오차는 축 스냅이 이미 버렸다).
+   *  `srcId`는 선 후보의 출처 선분 — 이력이 「같은 것인가」를 그것으로 본다. */
+  const push = (kind: OsnapKind, p: Pt | null, p3: V3 | null, from?: Pt, srcId?: number) => {
     if (!p) return
     const d = dist2(p, from ?? cursor)
-    if (d <= R) cands.push({ kind, p, p3, d })
+    let lim = R
+    if (isLineKind(kind, set)) {
+      // 이력 — 직전에 이긴 바로 그 선이면 **유지 띠**, 아니면 획득 띠
+      const held = prev != null && prev.kind === kind && srcId !== undefined && prev.srcId === srcId
+      lim = held ? holdR : lineR
+    }
+    if (d <= lim) cands.push({ kind, p, p3, d, srcId })
   }
 
   // 소실점 — 현재 포즈의 화면 위치(불변식 i: 표시=스냅이 같은 출처인 screenAxes).
@@ -227,11 +265,11 @@ export function osnap(
 
   // 수선 발 — 그리는 중이고 시작점이 3D일 때, 시작점에서 각 선분에 내린 발
   if (set.kinds.perp && start?.p3) {
-    for (const seg of lift.lifted.values()) {
+    for (const [id, seg] of lift.lifted) {
       const foot = closestOnSeg3(start.p3, seg.a3, seg.b3)
       // 발이 선분 안일 때만 (클램프가 끝점에 닿았으면 끝점 스냅의 몫)
       if (dist3(foot, seg.a3) > mergeTol3 && dist3(foot, seg.b3) > mergeTol3) {
-        push('perp', project(an, pose, foot), foot)
+        push('perp', project(an, pose, foot), foot, undefined, id)
       }
     }
   }
@@ -258,7 +296,7 @@ export function osnap(
         if (!set.kinds.ext) continue
         if (!extAllowed(extAcq, id, t, over)) continue
         const p3 = add3(seg.a3, mul3(dir, t))
-        push('ext', project(an, pose, p3), p3)
+        push('ext', project(an, pose, p3), p3, undefined, id)
       }
     }
   }
@@ -322,7 +360,7 @@ export function osnap(
     if (inKind.length === 0) continue
     inKind.sort((x, y) => x.d - y.d)
     const c = inKind[0]!
-    return done({ kind: c.kind, p: c.p, p3: c.p3 })
+    return done({ kind: c.kind, p: c.p, p3: c.p3, ...(c.srcId !== undefined ? { srcId: c.srcId } : {}) })
   }
   return done(null)
 }
