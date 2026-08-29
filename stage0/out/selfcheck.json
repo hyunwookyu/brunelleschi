@@ -1,5 +1,5 @@
 {
-  "n_flags": 5737,
+  "n_flags": 5738,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -3613,6 +3613,13 @@
       "path": "glyph32_web2.json:per_form_box.after[27].got",
       "val": {
         "1": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph32_web2.json:per_form_box.after[29].got",
+      "val": {
+        "?": 20
       },
       "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
     },
@@ -20440,7 +20447,7 @@
     },
     {
       "path": "paper_grain26_web2.json:gate.current[1].bare_sd",
-      "val": 4.0472514228895307e-11,
+      "val": 4.013145371573046e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20450,7 +20457,7 @@
     },
     {
       "path": "paper_grain30_web2.json:gate.current[0].bare",
-      "val": 6.707523425575346e-12,
+      "val": 1.617195266589988e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20465,17 +20472,17 @@
     },
     {
       "path": "paper_grain30_web2.json:gate.current[3].bare",
-      "val": 4.0472514228895307e-11,
+      "val": 7.02016222930979e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "paper_grain30_web2.json:gate.current[4].bare",
-      "val": 4.0472514228895307e-11,
+      "val": 4.013145371573046e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "paper_grain30_web2.json:gate.current[5].bare",
-      "val": 4.0472514228895307e-11,
+      "val": 7.02016222930979e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -29114,7 +29121,7 @@
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 149,
+      "targets": 150,
       "hits": 3,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
@@ -29349,6 +29356,9 @@
     "diag_occlusion_web2.json": [
       48,
       70
+    ],
+    "dimtarget32_web2.json": [
+      14
     ],
     "dimwrite29_web2.json": [
       14,
