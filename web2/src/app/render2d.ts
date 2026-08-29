@@ -15,6 +15,7 @@ import { waitFadeFactor, atOwnPose } from '../core/waitfade'
 import type { OsnapHit } from '../core/osnap'
 import { dist2, type Pt, type V3 } from '../core/vec'
 import { filmSplit } from './filmlayer'
+import { formatMm } from '../core/dim'
 
 /** D-3 반증 손잡이(web2-19 1부) — e2e만 켠다(diag.forceConstructing). 본문 주석 참조. */
 let FORCE_CONSTRUCTING = false
@@ -202,6 +203,8 @@ export function draw2d(
   ctx: CanvasRenderingContext2D, app: App,
   draft: Draft | null, hover: OsnapHit | null, eraser: Pt | null,
   facePrev?: { poly: Pt[]; mode: 'add' | 'remove' } | null,
+  /** 쓰는 중의 손글씨 한 획(web2-29 1단계) — 아직 `app.dimInk`에 안 들어간 것 */
+  dimInk?: Pt[] | null,
 ) {
   const an = app.lift.an
   const dpr = window.devicePixelRatio || 1
@@ -572,6 +575,44 @@ export function draw2d(
     ctx.stroke()
   }
 
+  // ── 손글씨 치수(web2-29 1단계) ────────────────────────────────────────────
+  // ⚠⚠ **치수는 지금까지 화면에 한 번도 안 그려졌다** — `Stroke.dim`은 리프팅의 입력이고
+  //    보이는 자리가 없었다. 이 절이 그 «보이는 자리»다. 만드는 자리(`setDimension`)와
+  //    같은 술어(`s.dim !== undefined` + 그 획이 지금 3D로 보인다)를 읽는다(#75 ㉠).
+  //    소유는 **26-1 그대로**다: 치수는 그 획의 것이므로 획이 안 보이면 치수도 안 보인다
+  //    (겹의 치수가 아래 종이에 안 나타나는 것이 그 귀결이다 — 새 규칙 ⛔).
+  drawDimensions(ctx, app, is)
+
+  // 쓰고 있는 손글씨 — 확정 전이라 문서에 없다. 대상 표시(고른 선)도 여기서.
+  if (app.dimPick !== null) {
+    const seg = app.lift.lifted.get(app.dimPick)
+    if (seg) {
+      const a = project(an, app.pose, seg.a3), b = project(an, app.pose, seg.b3)
+      if (a && b) {
+        ctx.strokeStyle = COL.snap
+        ctx.lineWidth = 2 * is
+        ctx.globalAlpha = 0.45
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke()
+        ctx.globalAlpha = 1
+      }
+    }
+  }
+  const inkAll = dimInk ? [...app.dimInk, dimInk] : app.dimInk
+  if (inkAll.length > 0) {
+    ctx.strokeStyle = MAT.HB.color
+    ctx.globalAlpha = MAT.HB.alpha
+    ctx.lineWidth = widthOfMat({ grade: 'HB' }) * is
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    for (const st of inkAll) {
+      if (st.length < 2) continue
+      ctx.beginPath()
+      st.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y) })
+      ctx.stroke()
+    }
+    ctx.globalAlpha = 1
+  }
+
   // 지우개 커서 — 반경은 화면 px.
   // `tipErase`도 센다(web2-15 2-b) — 펜의 지우개 끝은 도구를 안 바꾸므로 도구만 보면
   // 커서가 안 뜬다. ⚠ 끝은 **닿아야** 뜬다(호버에 신호가 없다 — 실기기 관측).
@@ -713,4 +754,46 @@ function mark(ctx: CanvasRenderingContext2D, h: OsnapHit, is: number) {
   }
   ctx.stroke()
   } finally { ctx.globalAlpha = 1 }
+}
+
+// ── 치수선(web2-29 1단계) ─────────────────────────────────────────────────────
+// 제도의 치수선 어법 그대로: 선에 나란한 **오프셋 선** + 양 끝의 **짧은 끝표시** + 값.
+// ⛔ 새 색을 안 짓는다 — 작도 대역(`COL.construction`)이다: 치수는 그림이 아니라 작도의 말이다.
+// 값은 `formatMm`이 낸다(단위·표기의 출처 하나 — #54).
+function drawDimensions(ctx: CanvasRenderingContext2D, app: App, is: number) {
+  const an = app.lift.an
+  const off = C.DIM_OFFSET_PX * is
+  const tick = C.DIM_TICK_PX * is
+  for (const s of app.doc.strokes) {
+    if (s.dim === undefined) continue
+    const seg = app.lift.lifted.get(s.id)          // 안 보이는 겹의 획은 lifted에 없다(26-1)
+    if (!seg) continue
+    const a = project(an, app.pose, seg.a3)
+    const b = project(an, app.pose, seg.b3)
+    if (!a || !b) continue
+    const dx = b.x - a.x, dy = b.y - a.y
+    const L = Math.hypot(dx, dy)
+    if (L < 1e-6) continue
+    const nx = -dy / L, ny = dx / L                // 화면 수직(오프셋 방향)
+    const a2 = { x: a.x + nx * off, y: a.y + ny * off }
+    const b2 = { x: b.x + nx * off, y: b.y + ny * off }
+    ctx.strokeStyle = COL.construction
+    ctx.lineWidth = 1 * is
+    ctx.beginPath()
+    ctx.moveTo(a2.x, a2.y); ctx.lineTo(b2.x, b2.y)                     // 치수선
+    ctx.moveTo(a.x, a.y); ctx.lineTo(a2.x + nx * tick, a2.y + ny * tick) // 치수 보조선
+    ctx.moveTo(b.x, b.y); ctx.lineTo(b2.x + nx * tick, b2.y + ny * tick)
+    ctx.stroke()
+    // 값 — 치수선 가운데 위. 화면 고정 크기(줌에 안 커진다 — 원칙 e의 계열)
+    const mid = { x: (a2.x + b2.x) / 2, y: (a2.y + b2.y) / 2 }
+    ctx.save()
+    ctx.translate(mid.x, mid.y)
+    ctx.scale(is, is)
+    ctx.fillStyle = COL.construction
+    ctx.font = `${C.DIM_TEXT_PX}px system-ui, sans-serif`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'bottom'
+    ctx.fillText(formatMm(s.dim, app.doc.unit, app.dimExact), 0, -2)
+    ctx.restore()
+  }
 }

@@ -606,6 +606,10 @@
         <button data-k="0" style="grid-column: span 2">0</button><button data-k=".">.</button>
       </div>
       <canvas id="dim-ink" width="184" height="72"></canvas>
+      <!-- web2-29 1단계 — **모드로 들어가는 자리**. ⚠ 리본의 치수 단추(#dim-toggle)는
+           종전대로 **패널만** 연다: 그것이 도구까지 바꾸면 web2-10의 키패드·음성 경로가
+           통째로 죽는다(전량 e2e `dim.spec` 둘이 그것을 잡았다). 모드는 여기서 켠다. -->
+      <button id="btn-dim-write" data-act="state" title="종이 위에 손으로 숫자를 써서 치수를 넣는다">종이에 쓰기</button>
       <div style="display:flex;gap:10px;align-items:center">
         <span id="dim-read"></span>
         <button id="dim-clear" title="쓴 것을 지운다">지운다</button>

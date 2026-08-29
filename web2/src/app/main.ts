@@ -1,6 +1,7 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc, type Tool } from './state'
+import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc,
+  pickDimTarget, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG } from './layerbar'
 import { initInput } from './input'
@@ -11,6 +12,7 @@ import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, reset
 import { serializeBrnl, setSaveRoundForTest, parseBrnl } from '../core/file'
 import { toOBJ, toMTL, toGLTF } from '../core/export'
 import { initNotice, notify, status, ask, clearNotice, confirmNear } from './notice'
+import { recognizeStrokes } from '../core/handwriting'
 import { OSNAP_ORDER, osnap, osnapCost, resetOsnapCost, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT, widthOfMat, gradeOf } from '../core/material'
 import type { Grade, Layer, Sheet, Stroke } from '../core/types'
@@ -320,6 +322,10 @@ updateStatus()
 // (지시 4-4의 듣는 구간을 필기에도 같은 규칙으로 쓴다 — 창 판정이 두 자리로 갈리지 않게).
 // 그리는 동안 들어온 입력은 확정 때 적용되고, 확정 후에는 그 획(dimTarget)에 바로 적용
 // — «다시 말하거나 펜으로 고친다»가 그대로 대체가 된다(setDimension이 대체다).
+/** 쓰는 중의 손글씨 한 획(web2-29 1단계) — 아직 `app.dimInk`에 안 들어간 것.
+ *  ⚠ 선언이 **콜백보다 앞**이어야 한다: `initInput`의 콜백 객체가 모듈 평가 중에
+ *  만들어지고 그 안에서 이 이름을 닫는다(TDZ — 「Cannot access before initialization」). */
+let dimInkLive: Pt[] | null = null
 let dimTarget: number | null = null
 let pendingDimText: string | null = null
 let wasDrafting = false
@@ -368,6 +374,21 @@ inputApi = initInput(ink, app, {
     // 알림은 **오류가 있을 때만**이다(4-b) — 만들어졌으면 화면이 이미 말한다.
     if (r === 'none') notify('닫힌 루프가 아니다 — 둘러싸인 자리를 탭한다')
   },
+  // ── 손글씨 치수(web2-29 1단계) ──────────────────────────────────────────
+  // 인식·파싱·적용은 **이미 있는 것을 그대로 부른다**(#54): `recognizeStrokes` →
+  // `parseDim` → `setDimension`. 여기는 배선과 «확정 전에 보여주기»뿐이다.
+  onDimInk(pts) { dimInkLive = pts; invalidate() },
+  onDimPick(p) {
+    const id = pickDimTarget(app, p)
+    if (id === null) { notify('치수를 매길 선을 탭한다'); return }
+    status('치수 — 종이 위에 숫자를 쓴다')
+    invalidate()
+  },
+  onDimStroke(pts) {
+    addDimInk(app, pts)
+    invalidate()
+    void recognizeDimInk()
+  },
   onCandidateTap(excluded) {
     // 후보 모드(web2-21 4부) — 뺐으면 화면(테두리 하나 사라짐)이 말한다. 빗나감만 말한다.
     if (!excluded) notify('후보 밖이다 — 아닌 후보를 탭해서 뺀다')
@@ -400,6 +421,19 @@ inputApi = initInput(ink, app, {
     }
   },
 }, autolevel)
+
+// 치수 도구(web2-29 1단계) — **모드가 있다**: 이 도구를 고른 동안만 종이 위의 획이
+// 손글씨로 읽힌다. ⚠⚠ 들어가는 자리는 **치수 패널 안**이다 — 리본의 치수 단추는
+// 종전대로 패널만 연다(그것이 도구까지 바꾸면 web2-10의 키패드·음성 경로가 통째로
+// 죽는다: 전량 e2e `dim.spec` 둘이 그것을 잡았다). 모드를 벗어나면 대상·손글씨를 놓는다.
+const dimWriteBtn = document.getElementById('btn-dim-write')!
+dimWriteBtn.addEventListener('click', () => {
+  setTool(app.tool === 'dim' ? 'pencil' : 'dim')
+  dimWriteBtn.classList.toggle('on', app.tool === 'dim')
+  if (app.tool === 'dim') status('치수 — 치수를 매길 선을 탭한다')
+  else { endDimPick(app); clearNotice() }
+  invalidate()
+})
 
 // 치수 패널의 옵션 배선(4-4 음성 · 4-6 단위 · 4-7 스냅 · 4-8 표기)
 const voiceBtn = document.getElementById('btn-voice')!
@@ -488,6 +522,10 @@ const toolBtn: Record<Exclude<Tool, 'pencil' | 'pen'>, HTMLElement> = {
   'eraser-pencil': document.getElementById('btn-eraser-pencil')!,
   'eraser-ink': document.getElementById('btn-eraser-ink')!,
   'face': document.getElementById('btn-face')!,
+  // 치수(web2-29 1단계) — 선택 표시는 **패널 안의 그 단추**가 진다(리본의 치수 단추는
+  // 패널 여닫이라 도구 표시를 안 얹는다 — 그러면 «패널이 열렸다»와 «모드가 켜졌다»가
+  // 화면에서 갈린다).
+  'dim': document.getElementById('btn-dim-write')!,
 }
 const thick = document.getElementById('thick')!
 const thickLine = document.getElementById('thick-line')!
@@ -508,6 +546,8 @@ function setTool(t: Tool) {
   }
   syncTray()
   if (!isEraser(t)) eraserPos = null
+  // 치수 모드를 벗어나면 고른 대상·손글씨를 놓는다(모드가 남아 있지 않게 — web2-29)
+  if (t !== 'dim') { endDimPick(app); dimInkLive = null }
   if (t !== 'face') {
     facePrev = null
     // 면 일괄 후보는 면 도구의 상태다(web2-21 4부) — 도구를 떠나면 취소(op 없음)
@@ -732,6 +772,38 @@ own3dBox.addEventListener('change', () => {
 })
 
 
+
+
+// ── 손글씨 치수(web2-29 1단계) — 인식과 «확정 전 보여주기» ────────────────────
+// ⚠ **못 읽으면 손글씨를 안 지운다**(지시 문면 · #61 ⚠⚠ — 조용히 틀린 치수보다 다시
+//    쓰기가 싸다). 읽었으면 값을 **물어보고**, 받으면 그때 손글씨가 사라지고 치수선이 선다.
+let dimSeq = 0
+async function recognizeDimInk() {
+  if (app.dimPick === null || app.dimInk.length === 0) return
+  const my = ++dimSeq
+  const { text } = await recognizeStrokes(app.dimInk)
+  if (my !== dimSeq || app.dimPick === null) return    // 그 사이에 더 썼다/그만뒀다
+  const mm = parseDim(text, app.doc.unit)
+  stageDim(app, text, mm)
+  invalidate()
+  if (mm === null) {
+    // 못 읽었다 — 손글씨는 그대로 두고 다시 쓰게 한다(지우지 않는다)
+    status(`치수 — 「${text || '?'}」로 읽었다. 다시 쓴다`)
+    return
+  }
+  ask(`치수 ${formatMm(mm, app.doc.unit, app.dimExact)} —`, [
+    { key: 'yes', label: '받는다', onPick: () => {
+      const r = acceptDim(app)
+      if (r === 'no3d') notify('아직 3D로 올라가지 않은 선이다 — 치수를 못 단다')
+      else if (r === 'baseScale') notify('축척은 바탕 종이의 치수가 정한다')
+      // ⚠ 「적힌 값이 잰 값과 어긋난다」 안내는 **안 만들었다** — 이 모형에서는 적힌 값이
+      //   곧 길이라 어긋남이 구성상 0이다(state.ts의 D-4 주석이 정본). 발화 조건이 없다.
+      else endDimPick(app)
+      invalidate()
+    } },
+    { key: 'no', label: '다시', onPick: () => { clearDimInk(app); status('치수 — 종이 위에 숫자를 쓴다'); invalidate() } },
+  ])
+}
 
 // ── web2-28 2번 — **툴팁**(펜에서만) ─────────────────────────────────────────
 // 펜을 단추 위에 `C.TIP_DWELL_MS` 머무르면 그게 무엇인지 뜬다. 규칙 넷(지시 문면):
@@ -1222,7 +1294,7 @@ function frame() {
     brushLayer.sync(app, draft)
     const fc2 = performance.now()
     filmLayer.draw(app)   // 막·위 획(web2-20 3부) — 값싼 패턴 채우기 + 2D 사영선
-    draw2d(ctx, app, draft, hover, eraserPos, facePrev)
+    draw2d(ctx, app, draft, hover, eraserPos, facePrev, dimInkLive)
     const fc3 = performance.now()
     if (frameCosts.length >= FRAME_COST_N) frameCosts.shift()
     frameCosts.push({ r3: fc1 - fc0, bs: fc2 - fc1, d2: fc3 - fc2, total: fc3 - fc0 })
@@ -1386,6 +1458,11 @@ const diag = {
   fiberTile: (id: number, paper: 'tracing' | 'yellow', wrap = true) => bakeFiberTile(id, paper, dpr, wrap),
   /** D-3 반증(3-e ④) — 곱→알파로 바꿔 합성 곡선 붕괴를 본다. e2e 전용. */
   filmAlphaForTest: (v: boolean) => { setFilmAlphaForTest(v); invalidate() },
+  /** 손글씨 치수(web2-29 1단계) — **화면 팔의 손잡이**: 인식은 확률적이라 e2e가 값을
+   *  손으로 못 만든다. 「값을 넣는 길」과 「보이는 자리」를 갈라 재려면 이 둘이 필요하다.
+   *  앱 흐름은 그대로 `setDimension`·`stageDim` 하나를 지난다(#54 — 새 경로 ⛔). */
+  setDimForTest: (id: number, mm: number) => { setDimension(app, id, mm); invalidate() },
+  stageDimForTest: (text: string, mm: number | null) => { stageDim(app, text, mm); invalidate() },
   /** D-3 반증(web2-26 2번) — 결을 dpr에 도로 묶어 「dpr 비 1.0 ± 0.15」를 깨뜨린다. e2e 전용. */
   fiberLegacyForTest: (v: boolean) => { setFiberLegacyForTest(v); invalidate() },
   /** 필압 보정을 값으로 세운다(web2-26 6번) — 두 획을 받는 절차는 단위 팔이 재고,
@@ -1409,7 +1486,7 @@ const diag = {
   /** classic 쪽 비교치 — 같은 장면의 draw2d 1회 ms(질감 grain 포함) */
   draw2dMs: () => {
     const t0 = performance.now()
-    draw2d(ctx, app, draft, hover, eraserPos, facePrev)
+    draw2d(ctx, app, draft, hover, eraserPos, facePrev, dimInkLive)
     return performance.now() - t0
   },
   /** 성능 픽스처용 획 주입 — 실입력 경로(commitStroke)와 같은 함수를 부른다(2-f).

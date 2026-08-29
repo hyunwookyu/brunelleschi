@@ -104,9 +104,23 @@ test('③ 그림이 안 바뀐다 — 반올림 있는 문서와 없는 문서�
       try { return (JSON.parse(t).strokes ?? []).length >= 6 } catch { return false }
     }, undefined, { timeout: 8000 })
   }
-  const reloadShot = async () => {
+  /** ⚠⚠ **복원 뒤에 저장 형식을 다시 못 박는다.** `saveRound(false)`는 그 페이지의
+   *  런타임 손잡이라 `reload()`에 리셋된다 — 그대로 두면 복원 직후의 자동 저장이
+   *  **반올림 판**을 덮어써서 다음 복원이 다른 문서를 연다. 그러면 「잡음 바닥」이
+   *  잡음이 아니라 **반올림 몫**을 재게 된다(실측: 둘 다 0.067%로 정확히 같았다 —
+   *  값이 같다는 것 자체가 그 오염의 증거다). 재실행 사이의 짧은 시간 차이로
+   *  0이 되기도 했으므로 **경주였고**, 형식을 다시 박아 경주 자체를 없앤다. */
+  const reloadShot = async (round?: boolean, payload?: string) => {
+    // ⚠⚠ **같은 바이트를 다시 넣고** 연다 — 그래야 「잡음 바닥」이 잡음만 잰다.
+    //   복원 직후의 자동 저장이 저장소를 덮어쓰므로(그 판은 반올림된 것이다) 손잡이를
+    //   다시 박는 것만으로는 **경주가 남는다**(dpr2에서 실제로 0.035%가 났다).
+    if (payload) {
+      await page.evaluate(([k, v]) => { try { localStorage.setItem(k, v) } catch { /* 없음 */ } },
+        ['b2-autosave2', payload] as const)
+    }
     await page.reload()
     await page.waitForFunction(() => (window as any).__b2)
+    if (round !== undefined) await page.evaluate((r) => (window as any).__b2.diag.saveRound(r), round)
     await page.waitForFunction(() => (window as any).__b2.app.doc.strokes.length >= 6, undefined, { timeout: 5000 })
     await settle(page); await settle(page)
     return shot(page)
@@ -129,8 +143,8 @@ test('③ 그림이 안 바뀐다 — 반올림 있는 문서와 없는 문서�
     localStorage.getItem('b2-autosave2') ?? localStorage.getItem('b2-autosave') ?? '')
   expect(strokeCoordsRounded(savedRaw), '반올림 **없이** 저장됐다').toBe(false)
   const shotLive = await shot(page)        // **생으로 그린** 화면 — 아래 «재그리기 몫»의 기준
-  const shotNoRound = await reloadShot()   // ⚠ 복원 뒤 자동 저장이 다시 돌면 **반올림 판**이 된다
-  const shotNoRound2 = await reloadShot()  // 잡음 바닥 — 같은 문서를 두 번 복원한 차
+  const shotNoRound = await reloadShot(false, savedRaw)   // **같은 바이트**로 연다
+  const shotNoRound2 = await reloadShot(false, savedRaw)  // 잡음 바닥 — 같은 바이트를 두 번
 
   // ── 갈래 ㉡: **반올림하고** 저장한다(지금 앱의 형식) ─────────────────────────────
   await page.goto('/')

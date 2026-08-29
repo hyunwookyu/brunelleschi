@@ -8,7 +8,7 @@ import { isInk, widthOfMat } from '../core/material'
 export type { ViewOffset }
 import { liftAll, closestOnLineToRay, type LiftResult } from '../core/lift'
 import { camSig, defineByTouch, emptyTouchStats, type TouchStats } from '../core/own3d'
-import { DRAW_POSE, rayThrough } from '../core/camera'
+import { DRAW_POSE, rayThrough, project } from '../core/camera'
 import { defaultOsnap, type OsnapSettings, type OsnapKind } from '../core/osnap'
 import { newExtDwell, clearExtAcq, type ExtDwell } from '../core/extacq'
 import { rng32 } from '../core/material'
@@ -21,7 +21,7 @@ import { C } from '../core/constants'
 import { calFromMedians, median } from '../core/press'
 import { type Pt, type V3, v3, add3, sub3, mul3, dot3, len3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
 
-export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink' | 'face'
+export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink' | 'face' | 'dim'
 
 /** 지금 그으면 무슨 재료인가 — **한 자리에서만 정한다**(원칙 a의 재료판).
  *  펜은 언제나 잉크이고, 연필은 고른 경도다. */
@@ -211,6 +211,18 @@ export interface App {
    *  `null` = 절차 중이 아님. `normal`은 첫 획(평소 세기)의 압력 중앙값.
    *  런타임 상태다(저장 ⛔ — 결과인 `doc.press`만 문서에 남는다). */
   pressCalib: { normal: number | null } | null
+  // ── 손글씨 치수(web2-29 1단계) — **모드가 있는 단계**다 ─────────────────────
+  // ⚠ 「치수」는 이 앱에서 **주석이 아니라 그 획의 길이**다(web2-08 4-2 — 리프팅이
+  //    시작점·방향만 취하고 길이를 그 값으로 바꾼다). 그래서 대상은 **선 하나**이고
+  //    값의 자리는 이미 있는 `Stroke.dim`이다 — 새 저장 항목을 안 만든다(#54).
+  //    그러면 **소유도 저절로 26-1의 규칙**이다: 치수는 그 획의 것이고 획의 층을 따른다.
+  /** 치수를 매길 대상 획 id — null = 아직 안 골랐다(탭으로 고른다) */
+  dimPick: number | null
+  /** 종이 위에 쓰고 있는 손글씨(문서 좌표 점렬) — 런타임이다(저장 ⛔) */
+  dimInk: Pt[][]
+  /** 인식 결과 — **확정 전에 보여준다**(#61 ⚠⚠ 조용히 틀린 치수보다 다시 쓰기가 싸다).
+   *  `mm`이 null이면 못 읽은 것이고 그때 **손글씨를 안 지운다**(다시 쓰게 한다). */
+  dimStaged: { text: string; mm: number | null } | null
   /** **옐로 머무름 직선화의 임계 시간 ms**(web2-26 4번 — 실기기 「조금 길다」 · D6).
    *  기본 `C.HOLD_MS`이고 사람이 `C.HOLD_MS_MIN`~`C.HOLD_MS_MAX`에서 고친다.
    *  ⚠ **문서가 아니라 기기 설정이다**(localStorage) — 손의 성질이지 그림의 성질이 아니다
@@ -281,6 +293,9 @@ export function createApp(W: number, H: number): App {
     holdMs: C.HOLD_MS,
     penUsed: false,
     pressCalib: null,
+    dimPick: null,
+    dimInk: [],
+    dimStaged: null,
     lastCamSig: null,
     touchStats: emptyTouchStats(),
     touchLast: null,
@@ -425,6 +440,91 @@ export function feedPressCalib(app: App, s: Stroke): null | 'nopen' | 'first' | 
   return 'done'
 }
 
+// ── 손글씨 치수(web2-29 1단계) ────────────────────────────────────────────────
+// 인식·파싱·적용은 **이미 있는 것을 그대로 부른다**(#54 — 새 경로 ⛔):
+//   `core/handwriting.recognizeStrokes` → `core/dim.parseDim` → `setDimension`.
+// 이 절이 더하는 것은 **쓰는 자리**(종이 위)와 **고른 대상**뿐이다.
+
+/** 치수 대상을 고른다 — 3D로 올라간 획만(길이가 정의돼야 값이 뜻이 있다). */
+export function pickDimTarget(app: App, p: Pt): number | null {
+  let best: number | null = null
+  let bestD = app.osnap.radius / app.view.s * 2      // 탭 대역 — 새 숫자 ⛔(오스냅 반경의 두 배)
+  for (const [id, seg] of app.lift.lifted) {
+    const s = app.lift.strokes.get(id)
+    if (!s) continue
+    if (app.lift.an.roles.get(id) !== 'content') continue   // 작도 획에는 치수를 안 단다
+    const a = project(app.lift.an, app.pose, seg.a3)
+    const b = project(app.lift.an, app.pose, seg.b3)
+    if (!a || !b) continue
+    const d = distToSeg2(p, a, b)
+    if (d < bestD) { bestD = d; best = id }
+  }
+  if (best !== null) {
+    app.dimPick = best
+    app.dimInk = []
+    app.dimStaged = null
+    for (const l of app.listeners) l()
+  }
+  return best
+}
+
+/** 손글씨 획 하나를 더한다(문서 좌표). 대상이 없으면 아무 일도 안 한다. */
+export function addDimInk(app: App, pts: Pt[]) {
+  if (app.dimPick === null || pts.length < 2) return
+  app.dimInk.push(pts.map(q => ({ ...q })))
+  for (const l of app.listeners) l()
+}
+
+/** 인식 결과를 올린다 — **적용하지 않는다**(사람이 받는다). */
+export function stageDim(app: App, text: string, mm: number | null) {
+  app.dimStaged = { text, mm }
+  for (const l of app.listeners) l()
+}
+
+/** 받는다 — 값이 그 획의 치수가 되고 **손글씨가 사라진다**.
+ *  못 읽은 값(`mm === null`)은 안 받는다: 손글씨가 그대로 남아 다시 쓰게 된다. */
+export function acceptDim(app: App): DimResult | 'unread' {
+  if (app.dimPick === null || !app.dimStaged || app.dimStaged.mm === null) return 'unread'
+  const r = setDimension(app, app.dimPick, app.dimStaged.mm)
+  if (r === 'applied' || r === 'scale') {
+    app.dimInk = []
+    app.dimStaged = null
+  }
+  for (const l of app.listeners) l()
+  return r
+}
+
+/** 손글씨만 지운다(다시 쓴다) — 대상은 그대로다 */
+export function clearDimInk(app: App) {
+  app.dimInk = []
+  app.dimStaged = null
+  for (const l of app.listeners) l()
+}
+
+/** 치수 모드를 벗어난다 — 대상·손글씨를 놓는다 */
+export function endDimPick(app: App) {
+  app.dimPick = null
+  app.dimInk = []
+  app.dimStaged = null
+  for (const l of app.listeners) l()
+}
+
+/** 점-선분 거리(화면) — `pickDimTarget` 전용(osnap의 것과 같은 식·다른 자리라 작게 둔다) */
+function distToSeg2(p: Pt, a: Pt, b: Pt): number {
+  const dx = b.x - a.x, dy = b.y - a.y
+  const L2 = dx * dx + dy * dy
+  if (L2 < 1e-12) return Math.hypot(p.x - a.x, p.y - a.y)
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / L2))
+  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy))
+}
+
+// ⚠⚠ **D-4 — 지시의 「두 점과 적힌 값이 크게 어긋나면 그 사실을 표시할 수는 있다」는
+//    이 모형에서 발화하지 않는다.** 여기서 `Stroke.dim`은 주석이 아니라 **그 획의 길이**이고
+//    리프팅이 그 값으로 길이를 **다시 세운다**(web2-08 4-2). 그러므로 「잰 값」은 언제나
+//    「적힌 값」이다 — 어긋남이 **구성상 0**이다(자기참조 유형 3 · CLAUDE.md §5.1).
+//    실측이 그것을 냈다: 9000이라 적으면 잰 값도 9000.0, 비 1.00.
+//    → **표시를 안 만든다**(발화 조건이 없는 안내는 군더더기다). 두 점을 «따로» 지정하는
+//    길(지시의 첫 갈래)이 생기면 그때 이 조항이 처음으로 뜻을 갖는다 — DEFERRED.
 /** 자립 깃발 토글(4-f) — 설정·복원 경로가 이것 하나를 부른다(#54). */
 export function setOwn3d(app: App, on: boolean) {
   app.own3d = on

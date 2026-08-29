@@ -44,6 +44,12 @@ export interface InputCallbacks {
   onFacePreview: (f: { poly: Pt[]; mode: 'add' | 'remove' } | null) => void
   /** 면 지정·해제 결과 — 알림 한 줄이 이것을 읽는다 */
   onFaceToggle: (r: 'added' | 'removed' | 'none') => void
+  /** 손글씨 치수(web2-29) — 쓰는 중의 획(문서 좌표. 미리보기용) */
+  onDimInk: (pts: Pt[] | null) => void
+  /** 손글씨 한 획이 끝났다 — 인식은 main이 부른다(비동기·출처 하나) */
+  onDimStroke: (pts: Pt[]) => void
+  /** 치수 대상 탭 — 문서 좌표. 고른 결과의 알림은 main이 낸다 */
+  onDimPick: (p: Pt) => void
   /** 면 일괄 후보 모드(web2-21 4부)의 탭 — true = 후보 하나를 뺐다 */
   onCandidateTap: (excluded: boolean) => void
 }
@@ -99,6 +105,10 @@ export function initInput(
   let lastTouchDist = 0
   let orbitBtn: { last: Pt; mode: 'orbit' | 'pan' } | null = null
   let faceDown: Pt | null = null
+  /** 치수 대상 고르기 탭(web2-29) — 누른 자리. 뗄 때 «안 움직였으면» 고른다. */
+  let dimTap: Pt | null = null
+  /** 쓰고 있는 손글씨 한 획 — 뗄 때 `cb.onDimStroke`로 넘긴다 */
+  let dimInk: Pt[] | null = null
 
   /** 화면 좌표 (뷰 오프셋 적용 전) */
   const toScreen = (e: PointerEvent | WheelEvent): Pt => {
@@ -388,6 +398,16 @@ export function initInput(
     // 누름에서 바로 만들면 «잘못 눌렀다»를 뗌으로 취소할 길이 없다.
     // 지우개 끝이 **먼저**다 — 손에 든 것이 지우개면 사이드바에 무엇이 눌려 있든
     // 지운다(도구는 그대로 남는다 — 뗌과 동시에 아무것도 안 남는다).
+    // ── 손글씨 치수(web2-29 1단계) — **모드가 있다** ──────────────────────────
+    // 대상을 안 골랐으면 탭이 대상을 고르고, 고른 뒤에는 종이 위의 획이 **손글씨**다
+    // (문서에 안 들어간다 — 확정되면 사라지고 치수선으로 대체된다).
+    if (app.tool === 'dim' && !app.tipErase) {
+      if (app.dimPick === null) { dimTap = toPt(e); return }
+      dimInk = [toPt(e)]
+      drawingPointer = e.pointerId
+      canvas.setPointerCapture(e.pointerId)
+      return
+    }
     if (app.tool === 'face' && !app.tipErase) { faceDown = toPt(e); return }
     if (erasingNow()) {
       beginErase(app)
@@ -446,6 +466,7 @@ export function initInput(
         cb.onEraserMove(toPt(e))
         return
       }
+      if (app.tool === 'dim' && dimInk) { dimInk.push(toPt(e)); cb.onDimInk(dimInk); return }
       if (app.tool === 'face') { cb.onFacePreview(app.faceCandidates ? null : facePreview(app, toPt(e))); return }
       if (draft) {
         if (e.pointerType === 'pen' && e.pressure > 0) pressSamples.push(e.pressure)
@@ -501,6 +522,14 @@ export function initInput(
     if (orbitBtn && e.pointerType === 'mouse' && e.button !== 0) {
       orbitBtn = null; level.release(); endNavHold(app); return
     }
+    if (dimTap) {
+      const d = dimTap
+      dimTap = null
+      const p = toPt(e)
+      // 끌었으면 취소다 — 면 도구와 같은 탭 대역(새 숫자 ⛔)
+      if (Math.hypot(p.x - d.x, p.y - d.y) <= C.TAP_MAX_PX / app.view.s) cb.onDimPick(d)
+      return
+    }
     if (drawingPointer === e.pointerId) {
       drawingPointer = null
       if (erasingNow()) {
@@ -509,6 +538,13 @@ export function initInput(
           app.tipErase = false        // 그 획 하나로 끝난다 — 도구는 처음부터 안 바꿨다
           cb.onEraserMove(null)       // 커서도 같이 사라진다(사이드바 지우개는 종전대로 남는다)
         }
+        return
+      }
+      if (app.tool === 'dim') {
+        const pts = dimInk
+        dimInk = null
+        cb.onDimInk(null)
+        if (pts && pts.length >= 2) cb.onDimStroke(pts)
         return
       }
       if (app.tool === 'face') {

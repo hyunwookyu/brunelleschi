@@ -13,10 +13,10 @@
         "dpr": 1,
         "tile_px": 128,
         "tile_sd": 4.488151302870061,
-        "bare_sd": 1.617195266589988e-11,
+        "bare_sd": 0.16223822932821438,
         "film_sd": 3.913797728711438,
         "film_mean": 211.0368133333251,
-        "grain_sd": 3.913797728711438,
+        "grain_sd": 3.910433661144408,
         "neighbor": 1.895488135593232
       },
       {
@@ -33,7 +33,7 @@
         "dpr": 3,
         "tile_px": 384,
         "tile_sd": 4.698109883808533,
-        "bare_sd": 1.2434497875801753e-10,
+        "bare_sd": 5.5223381423274986e-11,
         "film_sd": 4.333626560021652,
         "film_mean": 211.26262401236002,
         "grain_sd": 4.333626560021652,
@@ -43,25 +43,25 @@
     "legacy": [
       {
         "dpr": 1,
-        "grain_sd": 0.24741625098765094
+        "grain_sd": 0.2958649088829876
       },
       {
         "dpr": 3,
         "grain_sd": 1.3611542708041287
       }
     ],
-    "ratio_dpr3_over_dpr1": 1.1072689138302598,
-    "legacy_ratio_dpr3_over_dpr1": 5.50147480357734,
+    "ratio_dpr3_over_dpr1": 1.108221475045659,
+    "legacy_ratio_dpr3_over_dpr1": 4.600593818114656,
     "weber_floor_levels": 2.1,
     "reachability": {
       "how": "diag.fiberLegacyForTest(true) — 타일 256 device px 고정 + 섬유 배율 dpr/2 + 패턴 배율 0.5·s·dpr",
       "ratio_gate_is_1_0_pm_0_15": {
-        "current": 1.1072689138302598,
-        "legacy": 5.50147480357734
+        "current": 1.108221475045659,
+        "legacy": 4.600593818114656
       },
       "amplitude_gate_is_gt_2_1": {
-        "current_dpr1": 3.913797728711438,
-        "legacy_dpr1": 0.24741625098765094
+        "current_dpr1": 3.910433661144408,
+        "legacy_dpr1": 0.2958649088829876
       },
       "note": "둘 다 legacy에서 실제로 게이트 밖이다 — 이 게이트는 통과할 수도 실패할 수도 있다(#69 ㉣)."
     },
