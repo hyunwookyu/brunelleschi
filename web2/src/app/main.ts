@@ -2,7 +2,7 @@
 
 import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc,
   pickDimTarget, pickTargetAt, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick,
-  handwritingGroup, applyWrittenDim, dimTargetTie, pickDimLabel, moveDim, endDimEdit, type Tool } from './state'
+  handwritingGroup, applyWrittenDim, dimTargetTie, pickDimLabel, moveDim, endDimEdit, dimLabelPos, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG } from './layerbar'
 import { initInput } from './input'
@@ -1648,6 +1648,9 @@ const diag = {
    *  앱 흐름은 그대로 `setDimension`·`stageDim` 하나를 지난다(#54 — 새 경로 ⛔). */
   setDimForTest: (id: number, mm: number) => { setDimension(app, id, mm); invalidate() },
   stageDimForTest: (text: string, mm: number | null) => { stageDim(app, text, mm); invalidate() },
+  /** 사후 수정(web2-32 2번)의 **화면 팔 손잡이** — 치수 숫자가 «어디에» 그려졌는지.
+   *  그리는 자리와 누르는 자리가 같은 함수라(#54) 팔은 그 자리를 눌러 본다. */
+  dimLabelPosForTest: (id: number) => dimLabelPos(app, id),
   /** D-3 반증(web2-26 2번) — 결을 dpr에 도로 묶어 「dpr 비 1.0 ± 0.15」를 깨뜨린다. e2e 전용. */
   fiberLegacyForTest: (v: boolean) => { setFiberLegacyForTest(v); invalidate() },
   /** 필압 보정을 값으로 세운다(web2-26 6번) — 두 획을 받는 절차는 단위 팔이 재고,
