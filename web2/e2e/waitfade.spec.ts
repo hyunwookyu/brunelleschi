@@ -12,6 +12,15 @@ import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { FREEZE } from './thresholds'
 
+/** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
+ *  `pointer-events: none`인 표시가 됐고, 여는 자리는 **설정 패널의 「진단」**이다. */
+async function openDiag(page: import('@playwright/test').Page) {
+  if (!(await page.evaluate(() => (document.getElementById('pane-settings') as HTMLDetailsElement).open))) {
+    await page.click('#pane-settings > summary')
+  }
+  await page.click('#btn-diag')
+}
+
 const settle = (page: Page) => page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))
 
 async function drawLine(page: Page, ax: number, ay: number, bx: number, by: number) {
@@ -222,11 +231,11 @@ test('3-b — 잘못 찍힌 점: 문 아래(4px)는 안 만들고 세고, 문 �
   expect(c1).toBe(1)                                 // 조용히 버리지 않는다 — 수가 말한다
   // 그 수가 **사람 눈에 닿는 자리**(진단 패널)에 실제로 보인다([36] — 상태값만 재면
   // 패널 배선이 끊겨도 팔이 초록이라 «조용히 버리는» 상태로 돌아간다)
-  await page.click('#buildid')
+  await openDiag(page)
   await expect(page.locator('#diagpanel')).toBeVisible()
   await expect(page.locator('#diagpanel')).toContainText('버린 짧은 획')
   await expect(page.locator('#diagpanel')).toContainText('1 (문 6px)')
-  await page.click('#buildid')
+  await openDiag(page)
 
   await drawLine(page, 400, 650, 408, 650)           // 8px — 문 위(경계 6 포함 위쪽)
   const n2 = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)

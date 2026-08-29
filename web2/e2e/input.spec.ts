@@ -12,6 +12,15 @@ import { writeFileSync, mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
+/** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
+ *  `pointer-events: none`인 표시가 됐고, 여는 자리는 **설정 패널의 「진단」**이다. */
+async function openDiag(page: import('@playwright/test').Page) {
+  if (!(await page.evaluate(() => (document.getElementById('pane-settings') as HTMLDetailsElement).open))) {
+    await page.click('#pane-settings > summary')
+  }
+  await page.click('#btn-diag')
+}
+
 const HERE = dirname(fileURLToPath(import.meta.url))
 
 const settle = (page: Page) =>
@@ -200,7 +209,7 @@ test('1-d — 지우개 끝 신호: 관측이 뜨고 **도구는 안 바뀐다**
 test('1-f — 진단 패널에 날값·coalesced·최근 획·.brnl 줄이 나온다', async ({ page }) => {
   await boot(page)
   await drawMouse(page, 100, 400, 1100, 400)
-  await page.click('#buildid')
+  await openDiag(page)
   const rowText = (key: string) => page.evaluate((k) => {
     const rows = Array.from(document.querySelectorAll('#diagpanel div'))
     const r = rows.find(d => (d.querySelector('.k')?.textContent ?? '') === k)

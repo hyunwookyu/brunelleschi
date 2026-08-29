@@ -13,6 +13,15 @@
 
 import { test, expect, type Page } from '@playwright/test'
 
+/** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
+ *  `pointer-events: none`인 표시가 됐고, 여는 자리는 **설정 패널의 「진단」**이다. */
+async function openDiag(page: import('@playwright/test').Page) {
+  if (!(await page.evaluate(() => (document.getElementById('pane-settings') as HTMLDetailsElement).open))) {
+    await page.click('#pane-settings > summary')
+  }
+  await page.click('#btn-diag')
+}
+
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
 
@@ -165,7 +174,7 @@ test('②④⑤ — 치수 트리거(손) · 자 팝업(오스냅) · own3d(진�
   // ⑤ own3d — 설정에 없고 **진단 곁**에 있으며 동작 그대로(왕복 + localStorage 열쇠 불변)
   expect(await page.locator('#pane-settings').count()).toBe(0)
   await expect(page.locator('#diagctl')).toBeHidden()
-  await page.click('#buildid')
+  await openDiag(page)
   await expect(page.locator('#diagctl')).toBeVisible()
   await page.click('#chk-own3d')
   expect(await page.evaluate(() => (window as any).__b2.app.own3d)).toBe(false)
@@ -173,7 +182,7 @@ test('②④⑤ — 치수 트리거(손) · 자 팝업(오스냅) · own3d(진�
   await page.click('#chk-own3d')
   expect(await page.evaluate(() => (window as any).__b2.app.own3d)).toBe(true)
   expect(await page.evaluate(() => localStorage.getItem('b2-own3d'))).toBe('on')
-  await page.click('#buildid')
+  await openDiag(page)
   await expect(page.locator('#diagctl')).toBeHidden()
 })
 

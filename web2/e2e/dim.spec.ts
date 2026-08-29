@@ -4,6 +4,15 @@
 
 import { test, expect, type Page } from '@playwright/test'
 
+/** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
+ *  `pointer-events: none`인 표시가 됐고, 여는 자리는 **설정 패널의 「진단」**이다. */
+async function openDiag(page: import('@playwright/test').Page) {
+  if (!(await page.evaluate(() => (document.getElementById('pane-settings') as HTMLDetailsElement).open))) {
+    await page.click('#pane-settings > summary')
+  }
+  await page.click('#btn-diag')
+}
+
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
 
@@ -283,7 +292,7 @@ test('인식기 감지(web2-10 지시 8-b) — 내장 API가 있으면 그것을
   await build(page)
   await page.click('#dim-toggle')
   // 진단 패널(지시 4)도 같은 감지를 보인다
-  await page.click('#buildid')
+  await openDiag(page)
   expect(await page.evaluate(() => {
     const rows = Array.from(document.querySelectorAll('#diagpanel div'))
     return rows.find(d => d.textContent?.includes('필기 인식 API'))?.textContent

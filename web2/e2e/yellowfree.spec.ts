@@ -11,6 +11,15 @@
 
 import { test, expect, type Page } from '@playwright/test'
 
+/** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
+ *  `pointer-events: none`인 표시가 됐고, 여는 자리는 **설정 패널의 「진단」**이다. */
+async function openDiag(page: import('@playwright/test').Page) {
+  if (!(await page.evaluate(() => (document.getElementById('pane-settings') as HTMLDetailsElement).open))) {
+    await page.click('#pane-settings > summary')
+  }
+  await page.click('#btn-diag')
+}
+
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
 
@@ -106,7 +115,7 @@ test('① 옐로 호 = 곡선 확정(이탈 값·픽셀) · ④ 트레이싱지�
 
 test('⑤ 옐로에서 오스냅이 한 번도 안 뜬다 — 진단 「지금 호버 스냅」 (반증 내장)', async ({ page }) => {
   await boot(page)
-  await page.click('#buildid')                 // 진단 패널
+  await openDiag(page)                 // 진단 패널
   const rowText = (key: string) => page.evaluate((k) => {
     const rows = Array.from(document.querySelectorAll('#diagpanel div'))
     const r = rows.find(d => (d.querySelector('.k')?.textContent ?? '') === k)

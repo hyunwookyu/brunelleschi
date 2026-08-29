@@ -1,5 +1,6 @@
 // 기기에서 눈으로 읽는 진단(web2-10 지시 4 · web2-11 1-f 확장) — 태블릿에는 콘솔이 없어
-// window.__b2를 아무도 못 읽는다. 우하단 빌드 식별자를 누르면 이 패널이 펴진다.
+// window.__b2를 아무도 못 읽는다. **설정 패널의 「진단」**을 누르면 이 패널이 펴진다
+// (web2-30 3번 별건 전까지는 우하단 빌드 식별자가 그 자리였다).
 //
 // 값의 성격: 전부 **그 자리에서 읽는 현재값**이다(저장 없음). 포인터 줄만 상태를 든다 —
 // 「마지막 입력의 종류·필압」은 지나간 이벤트라 들어 둬야 보인다.
@@ -55,7 +56,8 @@ export interface LastRaw {
 }
 
 export function initDiagPanel(
-  buildEl: HTMLElement, panelEl: HTMLElement,
+  /** 여닫이 — web2-30 3번부터 **설정 패널의 「진단」**이다(빌드 식별자는 표시로 물러났다) */
+  toggleEl: HTMLElement, panelEl: HTMLElement,
   extra?: () => [string, string][],
 ) {
   let lastPointer: { type: string; maxPressure: number; levels: Set<number>; qlevels: Set<number> } | null = null
@@ -156,7 +158,7 @@ export function initDiagPanel(
     }
   }
 
-  buildEl.addEventListener('click', () => {
+  toggleEl.addEventListener('click', () => {
     panelEl.hidden = !panelEl.hidden
     if (!panelEl.hidden) render()
   })

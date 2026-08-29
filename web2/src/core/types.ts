@@ -74,6 +74,11 @@ export interface Sheet {
 // ⚠ 앱은 겹의 목적을 제안하지 않는다(사람이 정했다) — 종이 종류 둘과 켜고 끄기뿐이다.
 export type Paper = 'tracing' | 'yellow'
 
+/** 겹의 **화면 이름** — 출처 하나다(#54). 겹을 얹는 팝업·지우기 확인·툴팁이 같이 읽는다.
+ *  ⚠ 「종이」가 아니다: 종이는 `Sheet`이고 겹은 그 위에 **얹은 것**이다(web2-30 4번이
+ *  지우기 확인의 「이 종이를 지운다」를 그래서 고쳤다). */
+export const paperName = (p: Paper): string => (p === 'yellow' ? '옐로' : '트레이싱지')
+
 export interface Layer {
   id: number
   /** 어느 종이 위에 얹혔는가 — `Doc.sheets[].id` */

@@ -10,6 +10,15 @@ import { writeFileSync, mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
+/** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
+ *  `pointer-events: none`인 표시가 됐고, 여는 자리는 **설정 패널의 「진단」**이다. */
+async function openDiag(page: import('@playwright/test').Page) {
+  if (!(await page.evaluate(() => (document.getElementById('pane-settings') as HTMLDetailsElement).open))) {
+    await page.click('#pane-settings > summary')
+  }
+  await page.click('#btn-diag')
+}
+
 const HERE = dirname(fileURLToPath(import.meta.url))
 
 const settle = (page: Page) =>
@@ -52,7 +61,7 @@ test('①④ — %가 오른다(값) · 작은 문서는 조용하다', async ({
   expect(s2.bytes).toBeGreaterThan(s1.bytes)
   expect(s2.pct).toBeGreaterThan(s1.pct)
   // 진단 패널의 자리(상시 %) — 패널을 열어 실제로 읽힌다
-  await page.click('#buildid')
+  await openDiag(page)
   await expect(page.locator('#diagpanel')).toContainText('자동 저장')
   await expect(page.locator('#diagpanel')).toContainText('%')
   // 원장(#25 — 재검 [10]): «획 몇에서 70%에 닿는가»를 계산할 절대 바이트를 남긴다.
