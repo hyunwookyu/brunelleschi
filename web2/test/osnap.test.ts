@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { osnap, defaultOsnap, intersections3, type OsnapSettings } from '../src/core/osnap'
-import { newExtDwell, updateExtDwell, clearExtAcq, endUnderCursor } from '../src/core/extacq'
+import { newExtDwell, declareAtForTest, clearExtAcq, endUnderCursor } from '../src/core/extacq'
 import { C } from '../src/core/constants'
 import { liftAll } from '../src/core/lift'
 import { project, DRAW_POSE } from '../src/core/camera'
@@ -102,63 +102,22 @@ describe('오스냅 — 종류·우선순위·반경', () => {
     expect(osnap(lift, DRAW_POSE, pt(502, 449), only('perp'))).toBeNull()
   })
 
-  it('연장선 — **획득해야** 난다(web2-18 2부) · 획득하면 선분 밖 직선 위 점', () => {
+  it('연장선 — **오스냅 후보가 아니다**(web2-30 11번) · 선언해도 `osnap`은 안 낸다', () => {
     const { lift, B } = scene()
-    // ② 획득 없이는 한 번도 안 난다 — 종전에는 상시였다(사람 관측의 원인)
+    // ② 종전에는 «획득하면 후보가 됐다». 지금은 **선언해도 후보가 아니다** — 연장선은
+    //    가까움으로 이기는 목록이 아니라 **구속**이고, 적용은 `draft.applyExtLock`이 한다.
     expect(osnap(lift, DRAW_POSE, pt(738, 361), only('ext')),
-      '획득 전에는 ext가 없다').toBeNull()
-
-    // ③ B의 먼 끝(700,350)에 EXT_ACQUIRE_MS 머물면 획득된다 — 앱과 같은 함수를 부른다
+      '선언 전에는 ext가 없다').toBeNull()
     const st = newExtDwell()
-    updateExtDwell(st, lift, DRAW_POSE, pt(700, 350), C.OSNAP_RADIUS_PX, 0)
-    expect(st.acquired.length, '머무름이 아직 안 찼다').toBe(0)
-    updateExtDwell(st, lift, DRAW_POSE, pt(700, 350), C.OSNAP_RADIUS_PX, C.EXT_ACQUIRE_MS)
-    expect(st.acquired, '그 선분의 b쪽 끝이 획득됐다').toEqual([{ id: B.id, end: 1 }])
-
-    const hit = osnap(lift, DRAW_POSE, pt(738, 361), only('ext'), undefined, undefined, st.acquired)!
-    expect(hit.kind).toBe('ext')
-    // 붙은 점은 B의 사영 직선 위이고 선분 밖(끝점 (700,350) 너머)이다
-    const cross = (hit.p.x - 500) * 50 - (hit.p.y - 300) * 200
-    expect(Math.abs(cross) / Math.hypot(200, 50)).toBeLessThan(0.01)
-    expect(hit.p.x).toBeGreaterThan(700 + 5)
-  })
-
-  it('연장선 ④ — **상한 밖은 아무것도 아니다**(획득한 끝에서 EXT_MAX_RATIO 선분 길이)', () => {
-    const { lift, B } = scene()
-    const st = newExtDwell()
-    updateExtDwell(st, lift, DRAW_POSE, pt(700, 350), C.OSNAP_RADIUS_PX, 0)
-    updateExtDwell(st, lift, DRAW_POSE, pt(700, 350), C.OSNAP_RADIUS_PX, C.EXT_ACQUIRE_MS)
-    // B는 3D에서 (−100,100,−387.3)→(200,100,−774.6). 상한은 그 길이의 2배 더 간 t=3.
-    // 화면에서 t를 재려면 사영을 쓴다 — **앱과 같은 project**로 상한 안/밖 한 점씩.
-    const seg = lift.lifted.get(B.id)!
-    const dir = { x: seg.b3.x - seg.a3.x, y: seg.b3.y - seg.a3.y, z: seg.b3.z - seg.a3.z }
-    const at = (t: number) => project(lift.an, DRAW_POSE,
-      add3(seg.a3, mul3(dir, t)))!
-    const inside = at(1 + C.EXT_MAX_RATIO * 0.6)     // 상한 안
-    const outside = at(1 + C.EXT_MAX_RATIO * 1.4)    // 상한 밖
-    expect(osnap(lift, DRAW_POSE, inside, only('ext'), undefined, undefined, st.acquired)?.kind,
-      `상한 안(t=${1 + C.EXT_MAX_RATIO * 0.6})은 후보다`).toBe('ext')
-    expect(osnap(lift, DRAW_POSE, outside, only('ext'), undefined, undefined, st.acquired),
-      `상한 밖(t=${1 + C.EXT_MAX_RATIO * 1.4})은 아무것도 아니다`).toBeNull()
-  })
-
-  it('연장선 ⑤ — 획득은 최대 둘·LRU이고, `clearExtAcq`(확정)가 비운다', () => {
-    const { lift } = scene()
-    const st = newExtDwell()
-    const ends = [pt(500, 500), pt(500, 300), pt(700, 350)]
-    let t = 0
-    const dwell = (p: ReturnType<typeof pt>) => {
-      updateExtDwell(st, lift, DRAW_POSE, p, C.OSNAP_RADIUS_PX, t)
-      updateExtDwell(st, lift, DRAW_POSE, p, C.OSNAP_RADIUS_PX, t + C.EXT_ACQUIRE_MS)
-      t += C.EXT_ACQUIRE_MS * 2
-    }
-    for (const e of ends) dwell(e)
-    expect(st.acquired.length, `상한 ${C.EXT_MAX_ACQUIRED}개를 안 넘는다`).toBe(C.EXT_MAX_ACQUIRED)
-    // LRU — 앞이 최신이므로 마지막에 머문 (700,350)이 맨 앞이다
-    const last = endUnderCursor(lift, DRAW_POSE, pt(700, 350), C.OSNAP_RADIUS_PX)!
-    expect(st.acquired[0]).toEqual(last)
+    declareAtForTest(st, lift, DRAW_POSE, pt(700, 350), C.OSNAP_RADIUS_PX)
+    expect(st.acquired, '그 선분의 두 끝이 선언됐다').toEqual([{ id: B.id, end: 0 }, { id: B.id, end: 1 }])
+    expect(osnap(lift, DRAW_POSE, pt(738, 361), only('ext'), undefined, undefined, st.acquired),
+      '선언한 뒤에도 `osnap`은 ext를 안 낸다 — 층위가 다르다').toBeNull()
+    // ⑤ 확정이 선언을 비운다는 규약은 그대로다
     clearExtAcq(st)
     expect(st.acquired, '획을 확정하면 비운다').toEqual([])
+    // `endUnderCursor`는 팔·진단의 통로로 남는다
+    expect(endUnderCursor(lift, DRAW_POSE, pt(700, 350), C.OSNAP_RADIUS_PX)).toEqual({ id: B.id, end: 1 })
   })
 
   it('우선순위 — 정확한 것이 앞선다: X자 교차 자리에서 근처점보다 교차점', () => {

@@ -7,14 +7,14 @@
 
 import type { CamPose } from './types'
 import type { Analysis, AxisId } from './camera'
-import { classifyNext, vpAt } from './camera'
+import { classifyNext, vpAt, rayThrough, project } from './camera'
 import type { LiftResult } from './lift'
-import { osnap, type OsnapHit, type OsnapSettings } from './osnap'
-import type { ExtAcq } from './extacq'
+import { osnap, lineRayT, type OsnapHit, type OsnapSettings } from './osnap'
+import { extAllowed, type ExtAcq } from './extacq'
 import { snapDir } from './snap'
 import { lenMm, snapMm, solveEnd3, endAtMm } from './dim'
 import { C } from './constants'
-import { type Pt, type V3, pt } from './vec'
+import { type Pt, type V3, pt, add3, sub3, mul3 } from './vec'
 
 export interface EndResolve {
   end: Pt
@@ -58,6 +58,42 @@ export function resolveStart(
   return osnap(lift, pose, p, set, undefined, undefined, extAcq)
 }
 
+/** **선언된 연장선으로 끝점을 투영한다**(web2-30 11번). 선언이 없으면 null.
+ *
+ *  선언된 선분의 **무한 직선**과 커서 광선의 최근접점을 잡는다(= 종전 `ext` 후보가 내던
+ *  바로 그 점 — 계산은 옮겼을 뿐 안 바꿨다). 사는 구간은 `extAllowed`가 정한다:
+ *  선분 안이면 그대로 살고(그 선을 따라 긋는 몸짓), 밖이면 획득한 끝에서
+ *  `C.EXT_MAX_RATIO` 선분 길이까지다. 그 밖이면 **구속을 안 걸고** 종전 흐름으로 넘긴다 —
+ *  구속이 화면 끝까지 따라다니면 그것이 web2-18 이전의 「허공에서 끌린다」다.
+ *
+ *  ⚠ 반환하는 `endSnap.kind`는 여전히 `'ext'`다 — 진단·표시가 그 이름을 읽는다(#54). */
+function applyExtLock(
+  lift: LiftResult, pose: CamPose, an: Analysis, start: Pt, a3: V3 | null,
+  cursor: Pt, extAcq: readonly ExtAcq[], scale: number | null,
+): EndResolve | null {
+  if (extAcq.length === 0) return null
+  const ray = rayThrough(an, pose, cursor)
+  if (!ray) return null
+  const id = extAcq[0]!.id
+  const seg = lift.lifted.get(id)
+  if (!seg) return null
+  const dir = sub3(seg.b3, seg.a3)
+  const t = lineRayT(seg.a3, dir, ray.o, ray.d)
+  if (t === null) return null
+  const over = C.SEG_OVERSHOOT_RATIO
+  const inSeg = t >= -over && t <= 1 + over
+  if (!inSeg && !extAllowed(extAcq, id, t, over)) return null
+  const p3 = add3(seg.a3, mul3(dir, t))
+  const p = project(an, pose, p3)
+  if (!p) return null
+  void start
+  return {
+    end: p, label: null, axis: null,
+    endSnap: { kind: 'ext', p, p3, srcId: id },
+    lenMm: a3 ? lenMm(a3, p3, scale) : null,
+  }
+}
+
 /** 끝점 — 오스냅 → 축 스냅(+치수 스냅) → 자유 (지평선 강제 갈래는 web2-17에서 삭제) */
 export function resolveEnd(
   lift: LiftResult, pose: CamPose, an: Analysis,
@@ -70,6 +106,13 @@ export function resolveEnd(
 ): EndResolve {
   const a3 = startP3.p3
   const scale = dim?.mmPerUnit ?? null
+
+  // ⚠⚠ **선언된 연장선은 «후보»가 아니라 «구속»이다**(web2-30 11번) — 축 잠금과 같은
+  //    부류이므로 오스냅 경쟁 **앞**에 서고, 하는 일은 «이기기»가 아니라 **투영**이다.
+  //    종전에는 `osnap`이 `ext` 후보를 내고 `OSNAP_ORDER`에서 점 뒤에 줄을 섰는데,
+  //    실제 도면(획 수십 개)에서는 곁에 늘 점 후보가 있어 **한 번도 수면에 못 올라왔다**.
+  const lock = applyExtLock(lift, pose, an, start, a3, cursor, extAcq, scale)
+  if (lock) return lock
 
   // ⓪ **조준선 먼저**(web2-15 1번) — 겉보기 교차는 «지금 그리는 획이 따라갈 직선»이
   //    있어야 성립한다(지시 1-a). 그 직선은 아래 ④의 축 스냅이 정하므로 순서를 뒤집어

@@ -24,7 +24,7 @@ import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { session, toward } from './session'
 import { osnap, type OsnapKind } from '../src/core/osnap'
-import { newExtDwell, updateExtDwell } from '../src/core/extacq'
+import { newExtDwell, declareAtForTest } from '../src/core/extacq'
 import { resolveEnd } from '../src/core/draft'
 import { project } from '../src/core/camera'
 import { C } from '../src/core/constants'
@@ -170,30 +170,35 @@ describe('web2-18 2부 측정 — 허공 끌림 비율과 xint 승률', () => {
     expect(extHits, '획득 없이는 허공에서 ext가 한 번도 안 난다').toBe(0)
   })
 
-  it('반증 — 획득 조건을 채우면 같은 칸에서 ext가 실제로 돌아온다(D-3)', () => {
+  it('반증 — 선언을 채워도 **오스냅에는 안 난다**(web2-30 11번) · 대신 구속으로 선다', () => {
     const s = scene5()
     const R = s.app.osnap.radius / s.app.view.s
     const cells = voidCells(s, R)
-    // 모든 끝점에 차례로 머문다(앱과 같은 함수) — LRU 상한 때문에 둘만 살아남는다
-    // **앱과 같은 함수로** 획득한다(손으로 목록을 짓지 않는다): 각 끝점에 머무름을 채운다.
-    // LRU 상한(EXT_MAX_ACQUIRED)이 있으므로 한 번에 둘만 산다 — 끝점 쌍마다 다시 획득하며 훑는다.
+    // ⚠⚠ **web2-30 11번이 이 반증의 문면을 뒤집었다.** 종전에는 「획득을 채우면 허공에서
+    //   ext가 실제로 난다」였다(문이 살아 있다는 증거). 지금은 연장선이 **후보 목록에서
+    //   통째로 빠졌으므로** 선언을 채워도 `osnap`은 한 번도 ext를 안 낸다 —
+    //   그것이 이 회차의 요구다(층위: 후보가 아니라 구속).
+    //   **문이 죽지 않았다는 증거는 다른 자리에서 든다**: `resolveEnd`가 선언된 선으로
+    //   끝점을 투영한다(`test/ext30.test.ts` ②). 여기서는 «후보로는 안 난다»만 잰다.
     let hits = 0
+    let declared = 0
     for (const [id, seg] of s.app.lift.lifted) {
       const st = newExtDwell()
       for (const end of [0, 1] as const) {
         const p = projectSafe(s, end === 0 ? seg.a3 : seg.b3)
         if (!p) continue
-        updateExtDwell(st, s.app.lift, s.app.pose, p, R, 0)
-        updateExtDwell(st, s.app.lift, s.app.pose, p, R, C.EXT_ACQUIRE_MS)
+        declareAtForTest(st, s.app.lift, s.app.pose, p, R)
       }
       if (st.acquired.length === 0) continue
+      declared++
       for (const p of cells) {
         const h = osnap(s.app.lift, s.app.pose, p, { ...s.app.osnap, radius: R }, undefined, undefined, st.acquired)
         if (h?.kind === 'ext') hits++
       }
       void id
     }
-    expect(hits, '획득을 전부 열면 허공에서 ext가 실제로 난다 — 안 나면 문 자체가 죽은 것이다')
-      .toBeGreaterThan(0)
+    // 분해능(#71 ㉢) — 선언이 실제로 섰다는 것부터 확인한다(안 서면 0은 아무 뜻이 없다)
+    expect(declared, '선언이 실제로 선 선분이 있다').toBeGreaterThan(0)
+    expect(hits, '선언해도 오스냅 후보로는 한 번도 안 난다').toBe(0)
   })
 })

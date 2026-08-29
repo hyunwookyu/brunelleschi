@@ -1659,8 +1659,12 @@ const diag = {
   osnapAt: (x: number, y: number) =>
     osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / app.view.s },
       undefined, undefined, app.extAcq.acquired),
-  /** 연장선 획득 상태(web2-18 2부) — e2e가 «획득 없이는 ext가 안 난다»를 잰다 */
-  extAcq: () => ({ acquired: app.extAcq.acquired.map(a => ({ ...a })), hover: app.extAcq.hover }),
+  /** 연장선 **선언** 상태(web2-30 11번) — e2e가 «왕복 없이는 절대 안 선다»를 잰다.
+   *  ⚠ `hover`는 없어졌다(머무름 획득이 왕복 선언으로 바뀌었다) — 대신 왕복의 진행을 준다. */
+  extAcq: () => ({
+    acquired: app.extAcq.acquired.map(a => ({ ...a })),
+    farD: app.extAcq.farD, declaredAt: app.extAcq.declaredAt,
+  }),
   /** 마지막 확정 획의 스냅 종류(2-c) — 진단 패널과 **같은 값** */
   lastSnap: () => app.lastSnap,
   /** classic 쪽 비교치 — 같은 장면의 draw2d 1회 ms(질감 grain 포함) */
