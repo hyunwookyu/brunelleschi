@@ -52,5 +52,22 @@
       "lifted": 0,
       "waiting": 1
     }
-  ]
+  ],
+  "reclassify_path": {
+    "attempted": 2,
+    "lifted_once": 0,
+    "flipped": 2,
+    "flipped_from_3d": 0,
+    "line_is_basis": false
+  },
+  "basis_guard": {
+    "basis_true": 2,
+    "of": 4,
+    "cluster": 2,
+    "flipped": 2,
+    "connected_flipped": 0
+  },
+  "flags_explained_2": {
+    "per_text의 lifted가 전부 0": "**확정 시 분류의 결과**다(재판정이 «안 돌았다»가 아니다). 재판정 경로의 분자/분모는 `reclassify_path`가 따로 낸다 — 선 곁에 붙여 써서 첫 획이 3D에 오른 장면이다."
+  }
 }

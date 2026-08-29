@@ -2,31 +2,45 @@
   "what": "web2-32 4번 — 인식기의 **가로세로비 정규화**. 30-8과 **같은 표본·같은 하네스**로 전/후를 낸다.",
   "bias": "⚠⚠ **합성 표본이다**(30-8의 그 표본). 자형 하나를 흔들어 스무 번 낸 것이고 사람이 실제로 쓴 획이 아니다 — 어느 축이 약한지를 가리키는 데까지만 쓴다. 진짜 값은 실기기 DEVICE-CHECK H12·B8이다.",
   "order": "지시가 못 박은 순서 — ① 정규화만 넣고 잰다(이 원장) ② 그 다음에 궤적. 이 회차는 ①까지다.",
-  "trajectory_not_added": "궤적(획순·방향·붓 뗀 자리)은 **이 모형에 못 들어간다**: digitnet은 MNIST로 학습된 오프라인 래스터 MLP이고 MNIST에는 궤적 표본이 자체가 없다(스캔 이미지다). 넣으려면 온라인 필기 표본으로 다시 학습해야 하는데 이 환경에 numpy도 MNIST도 없다(A-2 우회 — DEFERRED에 올렸다). ⚠ 그리고 이 회차의 실측이 그 우선순위를 낮춘다: 「4」 네 자형의 합이 62/320 → 105/320으로 **정규화만으로** 올랐다.",
+  "cost_asymmetry": "⚠⚠ **판정자는 «맞음»이 아니라 «오답»이다**(#61). web2-32의 2번이 승인 층을 걷었으므로 오답은 **조용히 실린다**. 그리고 첫 치수는 **축척**을 정한다 — 「1」을 「7」로 읽으면 문서 전체가 7배로 선다. 1차 리뷰어가 초판(문턱 0.7·확신만)의 오답 2 → 8을 잡았고, 그 여덟이 **전부 세리프 「1」의 1→7**이었다. 그래서 규칙을 «동의 후 구제»로 바꿨다: **편 시야는 «못 읽은 것»만 구제한다.**",
+  "trajectory_not_added": "궤적(획순·방향·붓 뗀 자리)은 **이 모형에 못 들어간다**: digitnet은 MNIST로 학습된 오프라인 래스터 MLP이고 MNIST에는 궤적 표본이 자체가 없다(스캔 이미지다). 넣으려면 온라인 필기 표본으로 다시 학습해야 하는데 이 환경에 numpy도 MNIST도 없다(A-2 우회 — DEFERRED). ⚠ 그리고 이 회차의 실측이 그 우선순위를 낮춘다: 「4」가 정규화만으로 올랐다(아래 four).",
   "recognizer": {
     "before": "classifyGlyph(비 보존) + NET_REJECT",
-    "after": "classifyGlyphNorm — 비 보존 시야가 거부하면 편 시야(alpha)로 한 번 더, 구제 문턱 NET_RESCUE"
+    "after": "classifyGlyphNorm — 비 보존 시야가 거부하면 편 시야(alpha)로 한 번 더. **구제 조건 둘**: 확신 ≥ NET_RESCUE **그리고** 비 보존 시야가 다른 숫자를 내놓지 않았을 것"
   },
   "constants": {
     "DIGIT_NORM_ALPHA": 0.5,
     "DIGIT_ASPECT_FLOOR": 0.35,
     "NET_REJECT": 0.52,
-    "NET_RESCUE": 0.7
+    "NET_RESCUE": 0.8
   },
   "totals": {
     "before": {
       "ok": 491,
       "wrong": 2,
       "reject": 387,
-      "n": 880
+      "n": 880,
+      "wrong_of_accepted": [
+        2,
+        493
+      ]
     },
     "after": {
-      "ok": 534,
-      "wrong": 8,
-      "reject": 338,
+      "ok": 506,
+      "wrong": 2,
+      "reject": 372,
+      "n": 880,
+      "wrong_of_accepted": [
+        2,
+        508
+      ]
+    },
+    "placebo_two_stage_alpha1": {
+      "ok": 491,
+      "wrong": 22,
       "n": 880
     },
-    "aspect_discarded_alpha1": {
+    "single_view_alpha1": {
       "ok": 367,
       "wrong": 154,
       "n": 880
@@ -49,76 +63,221 @@
     },
     "after": {
       "0.65": {
-        "hit": 273,
+        "hit": 249,
         "n": 440
       },
       "0.82": {
-        "hit": 119,
+        "hit": 116,
         "n": 220
       },
       "1.00": {
-        "hit": 142,
+        "hit": 141,
         "n": 220
       }
+    },
+    "max_gap_before": 0.1272727272727272,
+    "max_gap_after": 0.11363636363636365
+  },
+  "by_form": {
+    "serif_1": {
+      "before": {
+        "ok": 29,
+        "wrong": 2
+      },
+      "after": {
+        "ok": 29,
+        "wrong": 2
+      }
+    },
+    "four_all_forms": {
+      "before": 62,
+      "after": 77,
+      "n": 320
     }
   },
+  "sweep_rule_threshold": [
+    {
+      "agree": false,
+      "th": 0.55,
+      "ok": 595,
+      "wrong": 33,
+      "four": 166,
+      "serif_wrong": 33,
+      "noise_accepted": 1
+    },
+    {
+      "agree": false,
+      "th": 0.6,
+      "ok": 584,
+      "wrong": 20,
+      "four": 155,
+      "serif_wrong": 20,
+      "noise_accepted": 1
+    },
+    {
+      "agree": false,
+      "th": 0.65,
+      "ok": 564,
+      "wrong": 11,
+      "four": 135,
+      "serif_wrong": 11,
+      "noise_accepted": 1
+    },
+    {
+      "agree": false,
+      "th": 0.7,
+      "ok": 534,
+      "wrong": 8,
+      "four": 105,
+      "serif_wrong": 8,
+      "noise_accepted": 0
+    },
+    {
+      "agree": false,
+      "th": 0.75,
+      "ok": 515,
+      "wrong": 4,
+      "four": 86,
+      "serif_wrong": 4,
+      "noise_accepted": 0
+    },
+    {
+      "agree": false,
+      "th": 0.8,
+      "ok": 506,
+      "wrong": 2,
+      "four": 77,
+      "serif_wrong": 2,
+      "noise_accepted": 0
+    },
+    {
+      "agree": true,
+      "th": 0.55,
+      "ok": 595,
+      "wrong": 20,
+      "four": 166,
+      "serif_wrong": 20,
+      "noise_accepted": 1
+    },
+    {
+      "agree": true,
+      "th": 0.6,
+      "ok": 584,
+      "wrong": 15,
+      "four": 155,
+      "serif_wrong": 15,
+      "noise_accepted": 1
+    },
+    {
+      "agree": true,
+      "th": 0.65,
+      "ok": 564,
+      "wrong": 9,
+      "four": 135,
+      "serif_wrong": 9,
+      "noise_accepted": 1
+    },
+    {
+      "agree": true,
+      "th": 0.7,
+      "ok": 534,
+      "wrong": 8,
+      "four": 105,
+      "serif_wrong": 8,
+      "noise_accepted": 0
+    },
+    {
+      "agree": true,
+      "th": 0.75,
+      "ok": 515,
+      "wrong": 4,
+      "four": 86,
+      "serif_wrong": 4,
+      "noise_accepted": 0
+    },
+    {
+      "agree": true,
+      "th": 0.8,
+      "ok": 506,
+      "wrong": 2,
+      "four": 77,
+      "serif_wrong": 2,
+      "noise_accepted": 0
+    }
+  ],
+  "aspect_floor_binding_cells": [
+    8,
+    44
+  ],
   "noise_8": {
     "accepted": 0,
     "rows": [
       {
         "name": "가로선",
-        "before": "?",
-        "after": "?",
-        "p": null
+        "preserved": "잡음 클래스가 이겼다",
+        "normalized": "잡음 클래스가 이겼다",
+        "accepted_after": false
       },
       {
         "name": "W",
-        "before": "?",
-        "after": "?",
-        "p": null
+        "preserved": "잡음 클래스가 이겼다",
+        "normalized": "잡음 클래스가 이겼다",
+        "accepted_after": false
       },
       {
         "name": "N",
-        "before": "?",
-        "after": "?",
-        "p": null
+        "preserved": "잡음 클래스가 이겼다",
+        "normalized": "잡음 클래스가 이겼다",
+        "accepted_after": false
       },
       {
         "name": "X",
-        "before": "?",
-        "after": "?",
-        "p": null
+        "preserved": "잡음 클래스가 이겼다",
+        "normalized": "잡음 클래스가 이겼다",
+        "accepted_after": false
       },
       {
         "name": "ㄷ자",
-        "before": "?",
-        "after": "?",
-        "p": 0.6582450193530058
+        "preserved": {
+          "ch": "5",
+          "p": 0.49669273139337544
+        },
+        "normalized": {
+          "ch": "5",
+          "p": 0.6582450193530058
+        },
+        "accepted_after": false
       },
       {
         "name": "체크",
-        "before": "?",
-        "after": "?",
-        "p": null
+        "preserved": "잡음 클래스가 이겼다",
+        "normalized": "잡음 클래스가 이겼다",
+        "accepted_after": false
       },
       {
         "name": "대각선",
-        "before": "?",
-        "after": "?",
-        "p": null
+        "preserved": "잡음 클래스가 이겼다",
+        "normalized": "잡음 클래스가 이겼다",
+        "accepted_after": false
       },
       {
         "name": "삼각형",
-        "before": "?",
-        "after": "?",
-        "p": 0.48381376406502974
+        "preserved": {
+          "ch": "0",
+          "p": 0.38811711249473163
+        },
+        "normalized": {
+          "ch": "0",
+          "p": 0.48381376406502974
+        },
+        "accepted_after": false
       }
     ]
   },
   "flags_explained": {
-    "틀림이 2 → 8로 는다": "**숨기지 않는다**(#61의 비용 비대칭). 편 시야가 거부를 답으로 바꾸므로 맞음과 틀림이 함께 는다 — 구제 문턱 0.7이 그 거래를 정한 자리이고, 0.6이면 맞음 584·틀림 20, 0.75면 515·4다(훑기는 NOTES).",
-    "단일 범주 분포(got에 항목이 하나)": "**측정이다**(§5의 «의심≠오류» · 30-8의 같은 해설). 20/20이면 스무 번 다 같은 답이 나온 것이고, 그 «갈리지 않음»이 표의 결론 절반이다 — 7·9·수직선 1은 어느 시야에서도 안 흔들린다. 갈리는 쪽(4·세리프 1)이 같은 표 안에 있으므로 분해능은 서 있다.",
-    "세리프 1이 안 오른다": "**측정이 지시의 가설을 반증했다**(D-4). 세션 지시는 「세리프 1도 같은 뿌리(폭이 크게 변한다)」로 봤는데, 정규화는 세리프 1을 **안 고친다**(전과 같다: 5/0/0/2 · 9/1/0/12). 편 시야에서는 오히려 0/0/0/0이라 구제가 안 걸린다 — 뿌리가 다르다. assumptions.md AS-C114."
+    "단일 범주 분포(got에 항목이 하나)": "**측정이다**(§5의 «의심≠오류» · 30-8의 같은 해설). 20/20이면 스무 번 다 같은 답이 나온 것이고 그 «갈리지 않음»이 표의 결론 절반이다. 갈리는 쪽(4·세리프 1)이 같은 표 안에 있으므로 분해능은 서 있다.",
+    "비가 단조가 아니다(0.65 > 0.82 < 1.00)": "**그대로 적는다**(1차 리뷰어 지적). 비 하나로 다 설명되지 않는다 — 0.82 버킷(28x34)은 전·후 모두 가운데가 아니라 가장 낮다. 그래서 이 원장은 «격차가 좁혀졌다»를 **최대 쌍 격차**로 판정하고, 한 쌍만 골라 인용하지 않는다.",
+    "잡음 행의 «클래스 거부»": "`classifyGlyph`가 null을 낸 것 — **잡음 클래스(11번째)가 이겼다**는 뜻이고 확신 값이 없다(기록 누락이 아니다). p가 있는 둘(ㄷ자·삼각형)이 이 표에서 문턱에 가장 가까운 행이다."
   },
   "per_form_box": {
     "before": [
@@ -582,22 +741,22 @@
         "ch": "4",
         "name": "4·열린·2획 (현행 템플릿)",
         "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
-        "correct": 9,
+        "correct": 6,
         "total": 20,
         "got": {
-          "4": 9,
-          "?": 11
+          "4": 6,
+          "?": 14
         }
       },
       {
         "ch": "4",
         "name": "4·열린·2획 (현행 템플릿)",
         "box": "28x34 보통 (비 0.82)",
-        "correct": 11,
+        "correct": 10,
         "total": 20,
         "got": {
-          "4": 11,
-          "?": 9
+          "4": 10,
+          "?": 10
         }
       },
       {
@@ -615,11 +774,11 @@
         "ch": "4",
         "name": "4·열린·2획 (현행 템플릿)",
         "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
-        "correct": 7,
+        "correct": 2,
         "total": 20,
         "got": {
-          "4": 7,
-          "?": 13
+          "4": 2,
+          "?": 18
         }
       },
       {
@@ -646,11 +805,11 @@
         "ch": "4",
         "name": "4·닫힌·2획 (세로가 꼭짓점에서)",
         "box": "34x34 넓음 (비 1.00)",
-        "correct": 4,
+        "correct": 3,
         "total": 20,
         "got": {
-          "4": 4,
-          "?": 16
+          "4": 3,
+          "?": 17
         }
       },
       {
@@ -707,22 +866,22 @@
         "ch": "4",
         "name": "4·열린·1획 (세로 먼저 · 사선 나중)",
         "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
-        "correct": 14,
+        "correct": 8,
         "total": 20,
         "got": {
-          "4": 14,
-          "?": 6
+          "4": 8,
+          "?": 12
         }
       },
       {
         "ch": "4",
         "name": "4·열린·1획 (세로 먼저 · 사선 나중)",
         "box": "28x34 보통 (비 0.82)",
-        "correct": 7,
+        "correct": 5,
         "total": 20,
         "got": {
-          "4": 7,
-          "?": 13
+          "4": 5,
+          "?": 15
         }
       },
       {
@@ -739,11 +898,11 @@
         "ch": "4",
         "name": "4·열린·1획 (세로 먼저 · 사선 나중)",
         "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
-        "correct": 15,
+        "correct": 5,
         "total": 20,
         "got": {
-          "4": 15,
-          "?": 5
+          "4": 5,
+          "?": 15
         }
       },
       {
@@ -874,8 +1033,7 @@
         "total": 20,
         "got": {
           "1": 5,
-          "7": 1,
-          "?": 14
+          "?": 15
         }
       },
       {
@@ -885,8 +1043,7 @@
         "correct": 0,
         "total": 20,
         "got": {
-          "7": 2,
-          "?": 18
+          "?": 20
         }
       },
       {
@@ -896,8 +1053,8 @@
         "correct": 0,
         "total": 20,
         "got": {
-          "7": 3,
-          "?": 17
+          "7": 1,
+          "?": 19
         }
       },
       {
@@ -940,8 +1097,8 @@
         "correct": 0,
         "total": 20,
         "got": {
-          "2": 2,
-          "?": 18
+          "2": 1,
+          "?": 19
         }
       },
       {

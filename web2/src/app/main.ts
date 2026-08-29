@@ -231,6 +231,14 @@ app.listeners.push(() => {
 // 자동 저장 — 문서·시점이 바뀌면 잠시 뒤 localStorage로
 let autosaveTimer: number | undefined
 let autosaveWarned = false
+// ⚠⚠ **복원한 판은 이미 저장소의 것이다**(web2-32 · 전량 e2e가 잡은 **선재 결함**):
+// 초기화가 리스너를 울리므로 부팅 직후 400ms 뒤에 **방금 읽은 것을 도로 쓰는** 저장이
+// 예약된다. 그 창 안에 저장소를 비우면(사람이 지우거나 팔이 `localStorage.clear()`) 비운
+// 뒤에 옛 문서가 **되살아난다** — 실측: 비운 지 50ms 만에 2849B가 돌아왔고, 그래서
+// `roundsave.spec ③`이 무작위로 빨개졌다. ⚠ **web2-30 트리에서도 같은 자국으로 실패한다**
+// (같은 팔·같은 추적을 두 트리에서 돌려 확인했다 — 이 회차가 만든 결함이 아니다).
+// 자동 저장은 **바뀐 것**을 남기는 일이므로 판본이 그대로면 아무 일도 안 한다.
+let savedVersion = app.docVersion
 // ── 자동 저장 잔량(web2-22 3부) — **쓰기 전에 재고, 임계를 넘으면 실패 전에 말한다** ──
 // 상한은 가정(5MB — AS-C80·알아낼 표준 없음)이고 진단 패널이 상한 대비 %를 상시 보인다.
 let lastAutosave: { bytes: number; pct: number } | null = null
@@ -240,11 +248,12 @@ const autosaveLimit = () => autosaveLimitOverride ?? C.AUTOSAVE_LIMIT_BYTES
 app.listeners.push(() => {
   clearTimeout(autosaveTimer)
   autosaveTimer = window.setTimeout(() => {
+    if (app.docVersion === savedVersion) return   // 안 바뀐 판은 안 쓴다(위 ⚠⚠)
     try {
       // 빈 문서는 **지운다** — 비우기 뒤에 늦게 도는 이 타이머가 빈 것을 도로 써 두면
       // 열쇠가 남는다. 새로고침이 안 되살리는 것(복원 조건)과 별개로 자리를 안 남긴다.
       // 옛 열쇠도 같이 지운다 — 안 지우면 다음 부팅의 «옛 열쇠 이행»이 비운 그림을 되살린다
-      if (app.doc.strokes.length === 0) { localStorage.removeItem(AUTOSAVE_KEY); localStorage.removeItem(AUTOSAVE_KEY_OLD); lastAutosave = null; return }
+      if (app.doc.strokes.length === 0) { localStorage.removeItem(AUTOSAVE_KEY); localStorage.removeItem(AUTOSAVE_KEY_OLD); lastAutosave = null; savedVersion = app.docVersion; return }
       const payload = serializeBrnl({
         doc: app.doc, nextId: app.nextId, drawView: app.drawView,
       })
@@ -255,6 +264,7 @@ app.listeners.push(() => {
         notify(`자동 저장이 상한 가정(${(autosaveLimit() / 1024 / 1024).toFixed(1)}MB)의 ${Math.round(lastAutosave.pct * 100)}%다 — 파일로 저장해 두라`)
       }
       localStorage.setItem(AUTOSAVE_KEY, payload)
+      savedVersion = app.docVersion
     } catch {
       // 큰 문서로 quota가 넘칠 수 있다 — **조용히 넘어가지 않는다**(한 번만 알린다)
       if (!autosaveWarned) { autosaveWarned = true; notify('자동 저장이 안 된다 — 파일로 저장한다') }
@@ -320,6 +330,9 @@ const autolevel = createAutoLevel(app)
 syncStrokes(r3d, app)
 syncedVersion = app.docVersion
 updateStatus()
+// 부팅 직후의 예약 저장은 아래 `savedVersion` 게이트가 막는다(취소만으로는 안 됐다 —
+// 초기화가 리스너를 여러 번 울려 그 뒤에 다시 예약된다. 실측: 비운 지 **50ms** 만에
+// 되살아났다).
 
 // ── 치수(web2-08 지시 4) — 창 규칙과 적용의 단일 통로 ────────────────────
 // «치수 창»은 선을 그리기 시작할 때 열리고 **공간의 다음 터치(다음 획 시작)에 닫힌다**

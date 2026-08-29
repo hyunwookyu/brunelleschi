@@ -675,7 +675,7 @@ export interface DimScore {
 
 /** 글씨 뭉치의 **중심·크기·기준선 방향**. 방향은 «여러 자를 이어 쓴 방향»이고,
  *  한 자뿐이면 null이다(그때 정렬 항은 중립값을 쓴다 — 없는 근거를 지어내지 않는다). */
-function writingFrame(app: App, ids: number[]): { c: Pt; size: number; dir: Pt | null } | null {
+function writingFrame(app: App, ids: number[]): { c: Pt; size: number; unit: number; dir: Pt | null } | null {
   const centers: Pt[] = []
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
   for (const id of ids) {
@@ -689,6 +689,11 @@ function writingFrame(app: App, ids: number[]): { c: Pt; size: number; dir: Pt |
   if (centers.length === 0) return null
   const c = { x: (x0 + x1) / 2, y: (y0 + y1) / 2 }
   const size = Math.hypot(x1 - x0, y1 - y0)
+  // **자는 «글자 높이»다**(도면 관행: 숫자는 선에서 글자 높이쯤 떨어져 놓인다).
+  // ⚠ 상자의 대각을 자로 쓰면 **자릿수가 늘수록 대역이 넓어진다** — 「2500」을 쓰면 대역이
+  //   네 배가 되어 대역 문이 사실상 안 문다(1차 리뷰어가 잡았다: 48칸에서 한 번도 안 물었고
+  //   후보 수가 늘 다섯이었다). 짧은 변은 자릿수에 안 늘어난다.
+  const unit = Math.max(Math.min(x1 - x0, y1 - y0), 1e-6)
   // 기준선 — 글자 중심들의 주축(PCA). 퍼짐이 글자 하나 폭도 안 되면 «한 자»로 본다.
   let sxx = 0, sxy = 0, syy = 0
   for (const p of centers) {
@@ -697,11 +702,11 @@ function writingFrame(app: App, ids: number[]): { c: Pt; size: number; dir: Pt |
   }
   const spread = Math.sqrt((sxx + syy) / centers.length)
   let dir: Pt | null = null
-  if (centers.length >= 2 && spread > size * C.DIM_TARGET_SPREAD_MIN) {
+  if (centers.length >= 2 && spread > unit * C.DIM_TARGET_SPREAD_MIN) {
     const th = 0.5 * Math.atan2(2 * sxy, sxx - syy)
     dir = { x: Math.cos(th), y: Math.sin(th) }
   }
-  return { c, size, dir }
+  return { c, size, unit, dir }
 }
 
 /** 후보 점수표 — **내림차순**. 대역(`DIM_TARGET_REACH` × 글자 크기) 밖은 아예 안 든다.
@@ -710,7 +715,7 @@ export function dimTargetScores(app: App, ids: number[]): DimScore[] {
   const fr = writingFrame(app, ids)
   if (!fr) return []
   const an = app.lift.an
-  const reach = Math.max(fr.size, 1e-6) * C.DIM_TARGET_REACH
+  const reach = fr.unit * C.DIM_TARGET_REACH
   const out: DimScore[] = []
   for (const [id, seg] of app.lift.lifted) {
     if (an.roles.get(id) !== 'content') continue        // 작도 획에는 치수를 안 단다
@@ -723,7 +728,7 @@ export function dimTargetScores(app: App, ids: number[]): DimScore[] {
     const d = distToSeg2(fr.c, a, b)
     if (d > reach) continue
     // ① 근접 — 글자 크기가 자다(도면에서 숫자는 선에서 «글자 높이쯤» 떨어져 놓인다)
-    const near = 1 / (1 + d / Math.max(fr.size, 1e-6))
+    const near = 1 / (1 + d / fr.unit)
     // ② 방향 정렬 — 기준선과 선의 방향이 나란한가(부호 무관). 한 자면 중립.
     const align = fr.dir === null
       ? C.DIM_TARGET_ALIGN_NEUTRAL
@@ -767,7 +772,9 @@ export function applyWrittenDim(app: App, ids: number[], mm: number): DimResult 
   const prev = t?.dim
   const prevScaleRef = app.doc.scaleRef
   const r = setDimension(app, target, mm)
-  if (r !== 'applied' && r !== 'scale') return r
+  // ⚠ `'baseScale'`도 **값은 실렸다**(겹 획이라 축척 기준이 못 됐을 뿐이다 — web2-21 1-b).
+  //   그때 손글씨를 안 걷으면 치수와 글씨가 겹쳐 남는다. 안내는 부르는 쪽이 한 줄 띄운다.
+  if (r !== 'applied' && r !== 'scale' && r !== 'baseScale') return r
   const removed: Op['removed'] = []
   for (let i = app.doc.strokes.length - 1; i >= 0; i--) {
     if (ids.includes(app.doc.strokes[i]!.id)) removed.push({ stroke: app.doc.strokes[i]!, index: i })
