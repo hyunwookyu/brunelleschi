@@ -148,10 +148,17 @@ test('파일 묶음 — 「원본」과 「내보내기」가 이름에서 갈�
   await page.waitForFunction(() => (window as any).__b2)
   await page.click('#pane-file summary')
   // 이름 가름(지시 5) — .brnl은 되돌아오는 원본, OBJ/glTF는 나가기만 한다
+  // ⚠ **web2-28 3번이 설명을 툴팁으로 옮겼다**(화면의 말은 이름이거나 짧은 동사구다).
+  //   이 팔이 지키는 요구는 「그 둘이 **이름에서** 갈린다」이고 그것은 그대로 선다 —
+  //   갈린 것은 설명의 **자리**이므로, 화면에서는 이름을, `title`에서는 설명을 확인한다.
   const paneText = await page.locator('#pane-file > div').textContent()
   expect(paneText).toContain('원본')
-  expect(paneText).toContain('다시 연다')
-  expect(paneText).toContain('나가기만 한다')
+  expect(paneText).toContain('내보내기')
+  expect(paneText).not.toContain('나가기만 한다')          // 설명은 화면에서 빠졌다
+  const heads = await page.locator('#pane-file .head').all()
+  const titles = await Promise.all(heads.map(h => h.getAttribute('title')))
+  expect(titles.join(' ')).toContain('다시 열 수 있는 원본')
+  expect(titles.join(' ')).toContain('못 되돌아온다')       // 정보는 안 지웠다 — 자리만 옮겼다
   await expect(page.locator('#btn-open')).toBeVisible()
   expect((await box(page, '#btn-open')).height).toBeGreaterThanOrEqual(20) // 펜 탭 높이(옛 12px 글+3px 패딩 ≈ 18은 실패)
   // 저장 성공 알림(HANDOFF 「남은 다듬기」의 그 행) — 다운로드는 화면에 흔적이 없다

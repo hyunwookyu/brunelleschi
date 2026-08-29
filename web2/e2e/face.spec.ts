@@ -61,6 +61,14 @@ async function groundTriangle(page: Page) {
   expect(s.waiting).toEqual([])
 }
 
+/** 면 팝오버를 다시 연다(web2-28 1번 — 명령은 실행하면 접힌다) */
+async function reopenFacePop(page: Page) {
+  if (await page.locator('#face-pop').evaluate(e => (e as HTMLElement).hidden)) {
+    await page.click('#btn-face')
+    await settle(page)
+  }
+}
+
 test('면 — 탭하면 칠해지고 다시 탭하면 사라진다 (픽셀)', async ({ page }) => {
   await groundTriangle(page)
 
@@ -220,6 +228,10 @@ test('면 일괄(web2-21 4부) — 팝오버 「전부 찾기」 · 후보는 �
   await page.click('#btn-face')                       // 다시 — 팝오버(4-e: 손 띠 버튼 안 늘림)
   await expect(page.locator('#face-pop')).toBeVisible()
   await page.click('#btn-face-all'); await settle(page)
+  // ⚠ **web2-28 1번이 「전부 찾기」를 명령으로 표시했다** — 누르면 팝오버가 접힌다
+  //   (지시의 표가 「면 찾기」를 명령 쪽에 든다). 후보를 빼는 몸짓은 **캔버스 탭**이므로
+  //   그때 팝오버가 덮고 있지 않은 편이 옳다. 이어서 「확정」을 누르려면 다시 연다.
+  await reopenFacePop(page)
   const st1 = await page.evaluate(() => {
     const a = (window as any).__b2.app
     return { n: a.faceCandidates?.length ?? null, faces: a.doc.faces.length }
@@ -269,6 +281,10 @@ test('면 일괄(web2-21 4부) — 팝오버 「전부 찾기」 · 후보는 �
   expect(fillBack).toBeGreaterThan(0)
   await page.click('#btn-face')                       // 팝오버 다시(도구는 이미 면)
   await page.click('#btn-face-all'); await settle(page)
+  // ⚠ **web2-28 1번이 「전부 찾기」를 명령으로 표시했다** — 누르면 팝오버가 접힌다
+  //   (지시의 표가 「면 찾기」를 명령 쪽에 든다). 후보를 빼는 몸짓은 **캔버스 탭**이므로
+  //   그때 팝오버가 덮고 있지 않은 편이 옳다. 이어서 「확정」을 누르려면 다시 연다.
+  await reopenFacePop(page)
   expect(await page.evaluate(() => (window as any).__b2.app.faceCandidates.length)).toBe(1)  // 기존 면 제외
   expect(await countPixels(page, 'gl', 535, 510, 555, 522)).toBe(fillBack)   // 안 가려졌다
   await page.click('#btn-face-cancel'); await settle(page)

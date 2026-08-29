@@ -532,9 +532,12 @@ for (const k of Object.keys(toolBtn) as (keyof typeof toolBtn)[]) {
 const facePop = document.getElementById('face-pop')!
 function renderFacePop() {
   facePop.textContent = ''
+  // 셋 다 **명령**이다(web2-28 1번) — 누르면 볼일이 끝나므로 패널이 접힌다.
+  // 표시는 여기 한 자리에서 붙인다(추측하는 코드 ⛔ — 지시 문면).
   const mk = (label: string, id: string, fn: () => void) => {
     const b = document.createElement('button')
     b.id = id
+    b.dataset.act = 'cmd'
     b.textContent = label
     b.addEventListener('click', fn)
     facePop.append(b)
@@ -687,6 +690,8 @@ for (const kind of OSNAP_ORDER) {
   const label = document.createElement('label')
   const box = document.createElement('input')
   box.type = 'checkbox'
+  // **오스냅은 전부 상태다**(web2-28 1번 — 한 번에 여러 개를 켜고 끄는 자리라 절대 안 접는다)
+  box.dataset.act = 'state'
   box.checked = app.osnap.kinds[kind]
   box.addEventListener('change', () => { app.osnap.kinds[kind] = box.checked })
   label.append(box, ` ${KIND_LABEL[kind]}`)
@@ -725,6 +730,90 @@ own3dBox.addEventListener('change', () => {
   try { localStorage.setItem(OWN3D_KEY, own3dBox.checked ? 'on' : 'off') } catch { /* 세션 한정 */ }
   invalidate()
 })
+
+
+
+// ── web2-28 2번 — **툴팁**(펜에서만) ─────────────────────────────────────────
+// 펜을 단추 위에 `C.TIP_DWELL_MS` 머무르면 그게 무엇인지 뜬다. 규칙 넷(지시 문면):
+//   · 문구는 **이미 있는 `title` / `aria-label`을 읽는다** — 새 문자열 테이블 ⛔
+//     (두 벌이 되면 갈라진다. 그래서 이 파일에는 툴팁 문자열이 **하나도 없다**).
+//   · **펜에서만** — 손가락에는 호버가 없고, 접촉으로 띄우면 누를 때마다 방해가 된다.
+//   · 그리는 중에는 안 뜬다 — 획이 시작되면 즉시 사라진다.
+//   · 화면 밖으로 넘치면 **안쪽으로 뒤집는다**.
+// ⚠ 브라우저 기본 툴팁과 겹치지 않게 `title`을 지우지는 **않는다** — 데스크톱 마우스
+//   사용자에게는 그쪽이 여전히 길이고, 이 팁은 펜 경로에만 산다.
+const tipEl = document.getElementById('tip')!
+let tipTimer: number | undefined
+let tipTarget: HTMLElement | null = null
+
+function tipTextOf(el: HTMLElement): string | null {
+  const t = el.getAttribute('title')
+  if (t && t.trim()) return t.trim()
+  const a = el.getAttribute('aria-label')
+  return a && a.trim() ? a.trim() : null
+}
+export function hideTip() {
+  if (tipTimer !== undefined) { clearTimeout(tipTimer); tipTimer = undefined }
+  tipTarget = null
+  tipEl.hidden = true
+}
+function showTipAt(el: HTMLElement, text: string) {
+  tipEl.textContent = text
+  tipEl.hidden = false
+  const r = el.getBoundingClientRect()
+  const b = tipEl.getBoundingClientRect()
+  // 기본은 왼쪽(세로바가 오른쪽이다) — 넘치면 **안쪽으로 뒤집는다**
+  let x = r.left - b.width - 8
+  if (x < 4) x = Math.min(r.right + 8, window.innerWidth - b.width - 4)
+  let y = r.top + (r.height - b.height) / 2
+  y = Math.max(4, Math.min(y, window.innerHeight - b.height - 4))
+  tipEl.style.left = `${Math.round(x)}px`
+  tipEl.style.top = `${Math.round(y)}px`
+}
+document.addEventListener('pointermove', (e) => {
+  if (e.pointerType !== 'pen') { hideTip(); return }        // 펜에서만(손가락 ⛔)
+  const el = (e.target as HTMLElement | null)?.closest('button, summary, [role="button"]') as HTMLElement | null
+  if (!el || !tipTextOf(el)) { hideTip(); return }
+  if (el === tipTarget) return                              // 같은 자리 — 시계를 다시 안 돌린다
+  hideTip()
+  tipTarget = el
+  tipTimer = window.setTimeout(() => {
+    tipTimer = undefined
+    const t = tipTextOf(el)
+    if (t) showTipAt(el, t)
+  }, C.TIP_DWELL_MS)
+}, true)
+// 그리는 중에는 안 뜬다 — 획이 시작되면 즉시 사라진다. 뗌·나감·스크롤도 같이 닫는다.
+for (const ev of ['pointerdown', 'pointerup', 'pointercancel', 'pointerleave', 'wheel']) {
+  document.addEventListener(ev, () => hideTip(), true)
+}
+
+// ── web2-28 1번 — **명령을 실행하면 패널이 접힌다** ────────────────────────────
+// 가르는 기준은 «무엇을 눌렀느냐»가 아니라 **그것이 상태인가 명령인가**다.
+//   명령 버튼(비우기·내보내기·불러오기·면 찾기 …) → 접힌다
+//   상태 토글(체크박스·스위치)·연속값(슬라이더)   → 안 접힌다
+// ⛔ **버튼 종류를 그때그때 추측하는 코드를 만들지 않는다**(지시 문면 — 항목이 늘 때마다
+//    틀린다). 항목마다 `data-act="cmd" | "state"`를 **명시**하고 접힘은 **그 표시만** 본다.
+// ⚠ 오스냅은 한 번에 여러 개를 켜고 끄는 자리라 **절대 안 접는다**(전부 state).
+//   연필통은 「하나를 고르면 끝나는 선택」이라 접힌다 — 그쪽은 종전 배선이 이미 접는다.
+const FOLD_PANELS: { root: string; close: () => void }[] = [
+  { root: '#pane-file', close: () => { (document.getElementById('pane-file') as HTMLDetailsElement).open = false } },
+  { root: '#display-pop', close: () => { (document.getElementById('display-pop') as HTMLElement).hidden = true } },
+  { root: '#snap-pop', close: () => { (document.getElementById('snap-pop') as HTMLElement).hidden = true } },
+  { root: '#face-pop', close: () => { (document.getElementById('face-pop') as HTMLElement).hidden = true } },
+]
+function initPanelFold() {
+  for (const p of FOLD_PANELS) {
+    const root = document.querySelector(p.root)
+    if (!root) continue
+    // 캡처가 아니라 **버블**이다 — 그 항목의 제 동작이 먼저 돌고 나서 접는다(접힘은 뒤끝).
+    root.addEventListener('click', (e) => {
+      const el = (e.target as HTMLElement | null)?.closest('[data-act]') as HTMLElement | null
+      if (el && el.dataset.act === 'cmd') p.close()
+    })
+  }
+}
+initPanelFold()
 
 // ── 필압 보정(web2-26 6번 · 옵션 · 기본 꺼짐) — 켜면 **두 획을 받는다**(지시 2) ──
 // 결과는 문서에 붙는다(`doc.press`) — 기기 설정이면 옵션을 켜는 순간 예전 그림들의

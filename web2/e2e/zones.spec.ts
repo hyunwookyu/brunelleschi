@@ -64,13 +64,16 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
     [...document.querySelectorAll('#display-pop input')].map(e => e.id)))
     .toEqual(['chk-horizon', 'chk-grid', 'chk-waitfade', 'chk-hidden', 'chk-press', 'rng-hold'])
   // 손(오른쪽 세로) — 되돌리기 둘(맨 위·구분선으로 가름) → 자 → 연필(접힘) → 펜 →
-  // 지우개 둘 → 면 → **롤 둘(web2-21 3-a — 트레이싱지·옐로)** → 치수 → 서랍.
-  // #oldtools(hidden)·#tray(접힘)는 A-4/3-b' 구조물.
+  // 지우개 둘 → **치수 → 롤 둘 → 면** → 서랍. #oldtools(hidden)·#tray(접힘)는 A-4/3-b' 구조물.
+  // ⚠ **web2-28 4번이 한 띠 «안»의 순서를 바꿨다**: 면(면 찾기)이 롤·치수보다 **아래**로
+  //   내려갔다 — 쓰는 빈도가 낮고 무엇보다 **작도 도구가 아니다**. 이 팔이 지키는 요구
+  //   (「자리별로 무엇이 어느 순서로 있는지가 값으로 못 박혀 있다」)는 그대로이고 **표가
+  //   갈렸다**(#75 ㉣ — 예시를 옮기는 것이 아니라 표를 고친다).
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#sidebar-body > button, #sidebar-body > details')].map(e => e.id)))
     .toEqual(['btn-undo', 'btn-redo', 'btn-snap', 'btn-pencil', 'btn-pen',
-      'btn-eraser-pencil', 'btn-eraser-ink', 'btn-face',
-      'btn-roll-tracing', 'btn-roll-yellow', 'dim-toggle', 'pane-file'])
+      'btn-eraser-pencil', 'btn-eraser-ink', 'dim-toggle',
+      'btn-roll-tracing', 'btn-roll-yellow', 'btn-face', 'pane-file'])
   // 되돌리기와 도구 사이에 **구분선**이 실제로 있다(공백이 아니라 채널 — 3-c)
   expect(await page.evaluate(() => {
     const d = document.querySelector('#sidebar-body .bar-divider')
