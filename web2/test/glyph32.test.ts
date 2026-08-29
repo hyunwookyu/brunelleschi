@@ -138,19 +138,60 @@ describe('32-4 정규화 — 전/후를 같은 표본에서 나란히 낸다', (
     expect(P.ok, '두 겹을 유지해도 비를 버리면 지금보다 못하다').toBeLessThan(A.ok)
     expect(F.ok, '구조까지 버리면 종전보다도 못하다').toBeLessThan(B.ok)
 
+    // ── **구제의 분모**(#16 · 2차 리뷰어 지적) — 「오답을 안 늘렸다」는 몇 번 발화한 값인가 ──
+    // 그리고 **어느 자형이 올랐는가** — 전체 수는 그 분해를 가린다(30-8의 교훈 그대로).
+    const fired = { n: 0, ok: 0 }
+    const delta: { name: string; box: string; before: number; after: number }[] = []
+    for (const f of FORMS) for (const b of BOXES) {
+      for (const jit of JIT) for (let k = 0; k < 5; k++) {
+        const g = glyphAt(f.strokes, 100, 100, b.w, b.h, 31 + k * 613, jit)
+        const a0 = classifyGlyph(g, 0)
+        if (a0 && a0.p >= NET_REJECT) continue          // 비 보존 시야가 답했다 — 구제가 안 돈다
+        const r = after(g)
+        if (r) { fired.n++; if (r.ch === f.ch) fired.ok++ }
+      }
+    }
+    for (let i = 0; i < A.rows.length; i++) {
+      if (A.rows[i]!.correct !== B.rows[i]!.correct) {
+        delta.push({ name: A.rows[i]!.name, box: A.rows[i]!.box, before: B.rows[i]!.correct, after: A.rows[i]!.correct })
+      }
+    }
+    console.log(`[32-4 구제] 발화 ${fired.n} · 적중 ${fired.ok} · 오른 칸 ${delta.length}개(${[...new Set(delta.map(d => d.name))].length}자형)`)
+    for (const d of delta) console.log(`[32-4 오른 칸] ${d.name} @ ${d.box} — ${d.before} → ${d.after}`)
+    expect(fired.n, '구제가 실제로 돈다(0이면 «안 걸렸다»와 구별이 안 된다)').toBeGreaterThan(0)
+
     // ── ㉤ 규칙 × 문턱 훑기 — 값 하나로 결론을 만들지 않는다(#12·#13) ──────────
-    const sweep: { agree: boolean; th: number; ok: number; wrong: number; four: number; serif_wrong: number; noise_accepted: number }[] = []
-    for (const agree of [false, true]) for (const th of [0.55, 0.6, 0.65, 0.7, 0.75, 0.8]) {
+    const sweep: { agree: boolean; th: number; ok: number; wrong: number; four: number; serif_wrong: number; noise_accepted: number; fired: number; fired_ok: number; forms_gained: number; wrong_partners: Record<string, number> }[] = []
+    for (const agree of [false, true]) for (const th of [0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.9]) {
       const j = rule(C.DIGIT_NORM_ALPHA, th, agree)
       const t = table(j)
+      // **오답 상대**까지 센다(2차 리뷰어 지적 — 「전부 1→7」이 사실이 아니었다)
+      const partners: Record<string, number> = {}
+      let fn = 0, fok = 0
+      for (let i = 0; i < t.rows.length; i++) {
+        const ch = t.rows[i]!.ch
+        for (const [k, v] of Object.entries(t.rows[i]!.got)) {
+          if (k !== '?' && k !== ch) partners[`${ch}→${k}`] = (partners[`${ch}→${k}`] ?? 0) + v
+        }
+      }
+      for (const f of FORMS) for (const b of BOXES) for (const jit of JIT) for (let k = 0; k < 5; k++) {
+        const g = glyphAt(f.strokes, 100, 100, b.w, b.h, 31 + k * 613, jit)
+        const a0 = classifyGlyph(g, 0)
+        if (a0 && a0.p >= NET_REJECT) continue
+        const r = j(g)
+        if (r && r.p >= NET_REJECT) { fn++; if (r.ch === f.ch) fok++ }
+      }
       sweep.push({
         agree, th, ok: t.ok, wrong: t.wrong,
         four: t.rows.filter(r => r.ch === '4').reduce((n, r) => n + r.correct, 0),
         serif_wrong: wrongOf(t.rows, serif, '1'),
         noise_accepted: Object.values(NOISE).filter(st => j(st) !== null).length,
+        fired: fn, fired_ok: fok,
+        forms_gained: new Set(t.rows.filter((r, i) => r.correct > B.rows[i]!.correct).map(r => r.name)).size,
+        wrong_partners: partners,
       })
     }
-    for (const s of sweep) console.log(`[32-4 훑기] ${s.agree ? '동의+' : '확신만'} th=${s.th} — 맞음 ${s.ok} · 틀림 ${s.wrong} · 4 ${s.four} · 세리프1 오답 ${s.serif_wrong} · 잡음 수용 ${s.noise_accepted}`)
+    for (const s of sweep) console.log(`[32-4 훑기] ${s.agree ? '동의+' : '확신만'} th=${s.th} — 맞음 ${s.ok} · 틀림 ${s.wrong}(${JSON.stringify(s.wrong_partners)}) · 4 ${s.four} · 발화 ${s.fired}/적중 ${s.fired_ok} · 오른 자형 ${s.forms_gained} · 잡음 수용 ${s.noise_accepted}`)
     // 훑기가 실제로 갈린다(항등이 아니다) — 규칙 축과 문턱 축 둘 다에서
     expect(new Set(sweep.map(s => s.ok)).size, '훑기가 값을 가른다').toBeGreaterThan(3)
 
@@ -190,11 +231,11 @@ describe('32-4 정규화 — 전/후를 같은 표본에서 나란히 낸다', (
       what: 'web2-32 4번 — 인식기의 **가로세로비 정규화**. 30-8과 **같은 표본·같은 하네스**로 전/후를 낸다.',
       bias: '⚠⚠ **합성 표본이다**(30-8의 그 표본). 자형 하나를 흔들어 스무 번 낸 것이고 사람이 실제로 쓴 획이 아니다 — 어느 축이 약한지를 가리키는 데까지만 쓴다. 진짜 값은 실기기 DEVICE-CHECK H12·B8이다.',
       order: '지시가 못 박은 순서 — ① 정규화만 넣고 잰다(이 원장) ② 그 다음에 궤적. 이 회차는 ①까지다.',
-      cost_asymmetry: '⚠⚠ **판정자는 «맞음»이 아니라 «오답»이다**(#61). web2-32의 2번이 승인 층을 걷었으므로 오답은 **조용히 실린다**. 그리고 첫 치수는 **축척**을 정한다 — 「1」을 「7」로 읽으면 문서 전체가 7배로 선다. 1차 리뷰어가 초판(문턱 0.7·확신만)의 오답 2 → 8을 잡았고, 그 여덟이 **전부 세리프 「1」의 1→7**이었다. 그래서 규칙을 «동의 후 구제»로 바꿨다: **편 시야는 «못 읽은 것»만 구제한다.**',
+      cost_asymmetry: '⚠⚠ **판정자는 «맞음»이 아니라 «오답»이다**(#61). web2-32의 2번이 승인 층을 걷었으므로 오답은 **조용히 실린다**. 그리고 첫 치수는 **축척**을 정한다 — 「1」을 「7」로 읽으면 문서 전체가 7배로 선다. 1차 리뷰어가 초판(문턱 0.7)의 오답 2 → 8을 잡았다. 그 여덟의 **상대**는 sweep의 `wrong_partners`가 낸다: 늘어난 여섯은 **1→7 다섯 · 1→2 하나**이고 전부 세리프 「1」이다(2차 리뷰어가 「전부 1→7」이라는 초판 문장을 정정했다). 그래서 **오답을 안 늘리는 가장 낮은 문턱** 0.8을 골랐다 — 그 값에서 구제는 **15번 발화해 15번 맞고**(fired/fired_ok) 오답을 하나도 안 만든다.',
       trajectory_not_added: '궤적(획순·방향·붓 뗀 자리)은 **이 모형에 못 들어간다**: digitnet은 MNIST로 학습된 오프라인 래스터 MLP이고 MNIST에는 궤적 표본이 자체가 없다(스캔 이미지다). 넣으려면 온라인 필기 표본으로 다시 학습해야 하는데 이 환경에 numpy도 MNIST도 없다(A-2 우회 — DEFERRED). ⚠ 그리고 이 회차의 실측이 그 우선순위를 낮춘다: 「4」가 정규화만으로 올랐다(아래 four).',
       recognizer: {
         before: 'classifyGlyph(비 보존) + NET_REJECT',
-        after: 'classifyGlyphNorm — 비 보존 시야가 거부하면 편 시야(alpha)로 한 번 더. **구제 조건 둘**: 확신 ≥ NET_RESCUE **그리고** 비 보존 시야가 다른 숫자를 내놓지 않았을 것',
+        after: 'classifyGlyphNorm — 비 보존 시야가 거부하면 편 시야(alpha)로 한 번 더. **구제 조건은 하나다**: 확신 ≥ NET_RESCUE. ⚠ 「비 보존 시야가 다른 숫자를 냈으면 안 뒤집는다」는 조항은 **안 넣었다** — 채택 문턱 0.8에서 아무것도 안 바꾸기 때문이다(sweep의 agree=true 행이 그 근거이고, 0.55~0.65에서만 오답을 줄인다).',
       },
       constants: { DIGIT_NORM_ALPHA: C.DIGIT_NORM_ALPHA, DIGIT_ASPECT_FLOOR: C.DIGIT_ASPECT_FLOOR, NET_REJECT, NET_RESCUE },
       totals: {
@@ -205,12 +246,16 @@ describe('32-4 정규화 — 전/후를 같은 표본에서 나란히 낸다', (
       },
       by_ratio: { before: rB, after: rA, max_gap_before: maxGap(rB), max_gap_after: maxGap(rA) },
       by_form: { serif_1: { before: serifB, after: serifA }, four_all_forms: { before: fourB, after: fourA, n: 320 } },
+      rescue: { fired: fired.n, fired_correct: fired.ok, gained_cells: delta.length, gained_forms: [...new Set(delta.map(d => d.name))] },
+      delta_cells: delta,
       sweep_rule_threshold: sweep,
       aspect_floor_binding_cells: [floorBinds, FORMS.length * BOXES.length],
       noise_8: { accepted: accepted, rows: noise },
       flags_explained: {
         '단일 범주 분포(got에 항목이 하나)': '**측정이다**(§5의 «의심≠오류» · 30-8의 같은 해설). 20/20이면 스무 번 다 같은 답이 나온 것이고 그 «갈리지 않음»이 표의 결론 절반이다. 갈리는 쪽(4·세리프 1)이 같은 표 안에 있으므로 분해능은 서 있다.',
+        '⚠⚠ 이득이 «자형 하나»에서 나온다': '**2차 리뷰어가 잡은 자리이고 그대로 적는다.** 문턱 0.8에서 오른 칸은 셋뿐이고 **전부 «4·열린·1획(세로 먼저·사선 나중)»**이다(delta_cells). 그러므로 totals·by_ratio·by_form의 개선은 **서로 독립한 증거가 아니라 같은 15칸의 네 가지 표기**다. 「비가 약한 특징이다」는 이 표본에서 **그 자형에 대해** 선 것이고, 인식기 일반의 결론으로 넓히지 않는다. 문턱을 0.75/0.7로 내리면 이득이 「4」의 두·세 자형으로 넓어지지만 **세리프 1의 오답이 는다**(sweep) — 그 거래를 안 하기로 한 것이 이 회차의 선택이다.',
         '비가 단조가 아니다(0.65 > 0.82 < 1.00)': '**그대로 적는다**(1차 리뷰어 지적). 비 하나로 다 설명되지 않는다 — 0.82 버킷(28x34)은 전·후 모두 가운데가 아니라 가장 낮다. 그래서 이 원장은 «격차가 좁혀졌다»를 **최대 쌍 격차**로 판정하고, 한 쌍만 골라 인용하지 않는다.',
+        '위약 팔의 맞음이 before와 정확히 같다(491)': '**구성상 그렇다**(#77 ㉥의 물음에 대한 답): 구제 시야를 alpha=1로 두면 그 시야가 **한 번도 안 맞는다** — 발화분이 전부 오답이거나 거부라 맞음이 안 는다. 그래서 491은 «안 변했다»가 아니라 «구제가 0건 적중했다»는 측정이다(틀림은 2 → 22로 는다).',
         '잡음 행의 «클래스 거부»': '`classifyGlyph`가 null을 낸 것 — **잡음 클래스(11번째)가 이겼다**는 뜻이고 확신 값이 없다(기록 누락이 아니다). p가 있는 둘(ㄷ자·삼각형)이 이 표에서 문턱에 가장 가까운 행이다.',
       },
       per_form_box: { before: B.rows, after: A.rows },

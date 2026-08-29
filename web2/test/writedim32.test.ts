@@ -332,6 +332,7 @@ describe('32-3 대상은 숫자의 위치가 정한다', () => {
         old_rule: 'state.pickTargetAt(중심, Infinity) — 29-2의 nearestDimTarget이 쓰던 그 함수(흉내가 아니라 실제 코드). **대역이 Infinity**였다',
         command: 'npx vitest run test/writedim32.test.ts',
       },
+      constants_note: '`DIM_TARGET_REACH`의 자는 **글자 높이**(글씨 상자의 짧은 변)다 — 상자 대각이 아니다(2차 리뷰어: 원장만 보면 어느 자인지 판정 불가였다). `DIM_TARGET_TIE`는 1·2등 **점수 차**, `DIM_LABEL_HIT_PX`는 화면 px.',
       constants: {
         DIM_TARGET_REACH: C.DIM_TARGET_REACH, DIM_TARGET_W_NEAR: C.DIM_TARGET_W_NEAR,
         DIM_TARGET_W_ALIGN: C.DIM_TARGET_W_ALIGN, DIM_TARGET_W_ALONG: C.DIM_TARGET_W_ALONG,
@@ -342,13 +343,21 @@ describe('32-3 대상은 숫자의 위치가 정한다', () => {
       three_term: { hit: ok3, n: rows.length },
       nearest_only: { hit: okN, n: rows.length },
       by_seed: bySeed,
-      differed: { n: diff.length, three_won: diff.filter(d => d.ok3).length, three_lost: diff.filter(d => !d.ok3).length, rows: diff },
+      differed: {
+        n: diff.length, three_won: diff.filter(d => d.ok3).length, three_lost: diff.filter(d => !d.ok3).length,
+        // ⚠ **칸이 아니라 «배치»로도 센다**(2차 리뷰어): 시드는 흔들기만 바꾸므로 같은 배치의
+        //   되풀이다. 배치로 세면 표본이 셋이 아니라 하나다 — 그리고 그 편이 정직하다.
+        placements_won: [...new Set(diff.filter(d => d.ok3).map(d => `${d.line}|${d.t}|${d.off}|${d.side}`))],
+        placements_lost: [...new Set(diff.filter(d => !d.ok3).map(d => `${d.line}|${d.t}|${d.off}|${d.side}`))],
+        rows: diff,
+      },
       candidates: { histogram: candHist, single: [oneOnly, rows.length], tie: [tied, rows.length] },
       out_of_reach: far,
       tie_probe: tieProbe,
       flags_explained: {
         '세 항이 진 칸이 있다': '**그대로 적는다** — 진 칸은 «물러나는 선(rec)»에 몰린다(원근이 걸린 자리). 3승 1패류의 여유는 얇으므로 시드 셋을 훑어 그 여유가 시드마다 유지되는지를 함께 본다(#14).',
-        '후보 수가 1인 칸이 대부분이다': '그것이 이 항목의 목적이다 — 「하나로 정해지면 후보를 내지 마라」(지시 문면). 대역(`DIM_TARGET_REACH`)이 그 일을 하고, 대역 밖 배치(out_of_reach)가 그 문이 실제로 문다는 증거다.',
+        '후보 수가 1인 칸이 **하나도 없다**(candidates.single = [0, 144])': '**픽스처의 성질이다**(D-5) — 이 장면은 선 넷을 200px 안에 몰아 뒀다. 「하나로 정해지면 후보를 내지 마라」(지시 문면)는 **후보를 안 내미는 것**으로 서 있고(겹친 칸에서만 한 줄 뜬다 — candidates.tie), 대역이 실제로 문다는 증거는 `out_of_reach`(후보 0 · 대상 없음 ↔ 옛 규칙은 하나를 고른다)다. 실사용 밀도(선 40개 — #78 ㉡)에서 다시 재는 것은 DEFERRED.',
+        '자를 바꾼 대가': '대역의 자를 «상자 대각» → «글자 높이»로 고치면서 적중이 **138/144 → 137/144**로 하나 내려갔다(시드 31의 45/48). 그대로 적는다 — 문이 실제로 물게 한 값이고, 내려간 칸은 아래 differed의 진 배치와 같은 자리(rec·t 0.65·off 30)다. ⚠ 옛 자의 값은 **같은 픽스처의 직전 실행**에서 온 것이고 이 실행이 다시 낸 수가 아니다.',
       },
       rows,
     }, null, 2))

@@ -300,8 +300,13 @@ describe('32-1 특징·확정 규칙 — 순수 함수 단위(core/scribble)', (
     const shaky: Pt[] = []
     for (let i = 0; i <= 40; i++) shaky.push({ x: 400 + i * 2, y: 400 + (i % 2 ? 0.6 : -0.6) })
     const fs = featOf(shaky, C.TEXT_TURN_SEG_PX)
-    console.log(`[32-1 특징] 떨리는 직선 turn=${fs.turn.toFixed(2)}rad`)
-    feats = { ...feats!, shaky_line_turn_rad: fs.turn }
+    // ⚠ **그 0이 «둔감»인지 «분절의 귀결»인지 가른다**(2차 리뷰어 · §5.1 자기참조 유형 3):
+    //   마디 문턱을 0으로 두면 같은 점렬의 회전각이 얼마인지 함께 낸다. 크면 문턱이 실제로
+    //   일한 것이고, 그것도 0이면 이 팔은 아무것도 안 잰 것이다.
+    const fs0 = featOf(shaky, 0)
+    console.log(`[32-1 특징] 떨리는 직선 turn=${fs.turn.toFixed(2)}rad (마디 문턱 0이면 ${fs0.turn.toFixed(2)}rad)`)
+    expect(fs0.turn, '문턱이 없으면 손떨림이 각으로 잡힌다 — 그러므로 위의 0은 문턱의 몫이다').toBeGreaterThan(C.TEXT_TURN_RAD)
+    feats = { ...feats!, shaky_line_turn_rad: fs.turn, shaky_line_turn_rad_no_floor: fs0.turn }
     writeLedger()
     expect(fs.turn, '손떨림은 회전각이 아니다').toBeLessThan(C.TEXT_TURN_RAD)
   })

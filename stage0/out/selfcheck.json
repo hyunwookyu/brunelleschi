@@ -1,5 +1,5 @@
 {
-  "n_flags": 5738,
+  "n_flags": 5743,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -20447,7 +20447,7 @@
     },
     {
       "path": "paper_grain26_web2.json:gate.current[1].bare_sd",
-      "val": 4.013145371573046e-11,
+      "val": 7.02016222930979e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20462,7 +20462,7 @@
     },
     {
       "path": "paper_grain30_web2.json:gate.current[1].bare",
-      "val": 1.617195266589988e-11,
+      "val": 6.707523425575346e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20472,7 +20472,7 @@
     },
     {
       "path": "paper_grain30_web2.json:gate.current[3].bare",
-      "val": 7.02016222930979e-12,
+      "val": 4.0472514228895307e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20482,7 +20482,7 @@
     },
     {
       "path": "paper_grain30_web2.json:gate.current[5].bare",
-      "val": 7.02016222930979e-12,
+      "val": 4.0472514228895307e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -22722,6 +22722,16 @@
     },
     {
       "path": "rule_camera.json:all_jitters.detect.screen_axes_total",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "scribble32_web2.json:features.line_turn_rad",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "scribble32_web2.json:features.shaky_line_turn_rad",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -28770,8 +28780,23 @@
       "flag": "**없는 원장을 인용한다**(8건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
     },
     {
+      "path": "stage0/out/dimtarget32_web2.json",
+      "val": "#78",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
+      "path": "stage0/out/glyph32_web2.json",
+      "val": "#77",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
       "path": "stage0/out/inklayer_web2_before.json",
       "val": "#101014",
+      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
+    },
+    {
+      "path": "stage0/out/test_cost_web2.json",
+      "val": "#80",
       "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
     },
     {
@@ -29122,7 +29147,7 @@
       "scan": "scan_pitfall_citations",
       "unit": "원장",
       "targets": 150,
-      "hits": 3,
+      "hits": 6,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
     {
@@ -29358,7 +29383,8 @@
       70
     ],
     "dimtarget32_web2.json": [
-      14
+      14,
+      78
     ],
     "dimwrite29_web2.json": [
       14,
@@ -29488,7 +29514,8 @@
       71
     ],
     "glyph32_web2.json": [
-      61
+      61,
+      77
     ],
     "graphite_web2.json": [
       40,
@@ -30037,7 +30064,8 @@
       45,
       69,
       70,
-      71
+      71,
+      80
     ],
     "touch_route.json": [
       6,
