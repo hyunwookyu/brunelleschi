@@ -1,0 +1,28 @@
+{
+  "what": "web2-27 3번 — 파일 크기. filesize27_measure.test.ts가 쓴다. 판정은 그 파일의 expect가 정본.",
+  "conditions": {
+    "fixture": "옐로 100획(프리핸드 241점 · rng32 결정론 · Math.random ⛔ #14) · 1200x800",
+    "command": "npx vitest run test/filesize27_measure.test.ts",
+    "baseline": "지시가 든 「488KB」 = 487768 B — web2-25 재생성 **전**의 yellowraw_web2 값이다"
+  },
+  "constants": {
+    "RAW_SIMPLIFY_PX": 0.5,
+    "RAW_SIMPLIFY_WIDTH_RATIO": 0.25,
+    "OWN3_TOL_PX": 0.01
+  },
+  "flags_explained": {
+    "세대 바이트가 완전 불변": "**설계 보장이다**(솎기는 커밋 시점 한 번 — 원칙 a). 임계를 안 건다: 「0」이 아니라 「같다」이고, 그것이 값을 재는지는 같은 팔의 **양성 대조**(한 번 더 솎으면 준다)가 낸다(#69 ㉣ · §5.1 유형 3).",
+    "3D 좌표를 안 깎았다": "지시 1의 「3D 좌표: 소수 3자리」는 **불변식이 막았다** — 잉크 심판(OWN3_TOL_PX 0.01px). ③이 그 사실을 값으로 낸다(#75 ㉡: 깎기 전에 그 좌표에 걸린 불변식을 센다)."
+  },
+  "size": {
+    "bytes_utf8": 238456,
+    "baseline_bytes": 487768,
+    "pct_of_baseline": 48.88717587049581
+  },
+  "not_simplified": {
+    "paper": 241,
+    "tracing": 241,
+    "yellow": 110,
+    "source": 241
+  }
+}

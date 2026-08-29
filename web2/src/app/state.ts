@@ -4,7 +4,7 @@
 // 그림만 되돌린다 — 작도(카메라)는 op에 들어가지 않는다.
 
 import { emptyDoc, DRAW_SHEET_ID, onPaper, type Doc, type Stroke, type Face, type Sheet, type Layer, type Underlay, type Paper, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
-import { isInk } from '../core/material'
+import { isInk, widthOfMat } from '../core/material'
 export type { ViewOffset }
 import { liftAll, closestOnLineToRay, type LiftResult } from '../core/lift'
 import { camSig, defineByTouch, emptyTouchStats, type TouchStats } from '../core/own3d'
@@ -561,7 +561,10 @@ export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number,
     // 22 2부·D-W10 «raw 소멸»)과 솎은 뒤 2점이 되는 직선 손 획은 raw를 **안** 싣는다 —
     // 2점 raw는 {a,b}와 동치라 정보가 없다(정본 기하가 현이면 현이 정본이다).
     // rawIn은 **같은 인덱스**로 나란히 골라낸다(file.ts의 «길이 같음» 불변식).
-    const keep = rdpIndices(raw, C.RAW_SIMPLIFY_PX / app.view.s)
+    // 임계는 **그 획의 화면 선폭에 묶인다**(web2-27 3번 · 지시 「선폭의 0.25배 아래」).
+    // 초안값 `RAW_SIMPLIFY_PX`는 상한으로 남는다 — 굵은 심에서 무한정 넓어지지 않게.
+    const tolPx = Math.min(C.RAW_SIMPLIFY_PX, C.RAW_SIMPLIFY_WIDTH_RATIO * widthOfMat({ grade: activeGrade(app) }))
+    const keep = rdpIndices(raw, tolPx / app.view.s)
     if (keep.length > 2) {
       s.raw = keep.map(i => ({ ...raw[i]! }))
       if (rawIn && Object.values(rawIn).every(arr => !arr || arr.length === raw.length)) {
