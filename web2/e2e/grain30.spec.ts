@@ -24,6 +24,10 @@ function record(key: string, val: unknown) {
   let cur: Record<string, unknown> = {}
   try { cur = JSON.parse(readFileSync(p, 'utf-8')) } catch { /* 첫 시험 */ }
   cur.what = 'web2-30 9번 — 종이·트레이싱지·옐로 셋의 결 진폭. 판정은 spec의 expect가 정본.'
+  cur.flags_explained = {
+    'bare가 near-zero(1e-11 대역)': '**측정이다** — 결을 끈 종이 조각은 dpr1에서도 한 색이다(web2-30 9번 전까지 바탕 종이가 그랬다). 이 값은 임계가 아니라 «그 실행의 바닥»으로만 쓰이고, 빼는 산술이 sqrt(신호²−바닥²)라 0이어도 안전하다(web2-26 2번의 같은 플래그와 같은 자리).',
+    '상수·지표 정의 스냅샷 없음': 'web2 라인 전체의 유보다(e2e 하네스라 web/test의 공유 상수를 안 쓴다). 이 원장의 상수는 filmlayer.PAPER_STYLE·TILE_CSS이고 그 값은 spec이 화면에서 읽는다.',
+  }
   cur.conditions = {
     viewport: '1200x800',
     dpr: '이 파일이 chromium.newContext로 1·2를 직접 만든다(프로젝트 dpr 무관)',
