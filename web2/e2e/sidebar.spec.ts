@@ -19,6 +19,8 @@ let ovPen = { overlaps: -1, n: 0, ids: [] as string[] }
 const ALL = ['sidebar-toggle', 'dim-toggle',   // btn-save-view: 종이 탭 「+」가, btn-draw-view: 눈(#eyebar)이 대신한다(web2-19)
   'btn-undo', 'btn-redo', 'btn-snap', 'btn-pencil',
   'tray-2H', 'tray-H', 'tray-F', 'tray-HB', 'tray-B', 'tray-2B', 'btn-pen',
+  // 펜 촉통 다섯(web2-30 2번) — 펜 상태에서만 뜬다. `overlapCount`가 display:none을 거른다.
+  'nib-0_18', 'nib-0_25', 'nib-0_35', 'nib-0_5', 'nib-0_7',
   'btn-eraser-pencil', 'btn-eraser-ink', 'btn-face'] // btn-brush는 서랍 안(web2-19 3-a) — 세로바 목록에서 뺀다
 
 test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형·쌍별 겹침 0 (web2-12 3번)', async ({ page }) => {
@@ -55,7 +57,9 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
   const rights = await page.evaluate((list) => list.map(id => {
     const el = document.querySelector(`#${id} svg`) as SVGElement
     return { id, right: el.getBoundingClientRect().right }
-  }), ALL.filter(id => !id.startsWith('tray-') && id !== 'btn-pen' && id !== 'btn-pencil'))  // 선택된 도구는 앞으로 나온다(-10px)
+  // ⚠ `nib-`도 뺀다(web2-30 2번) — 촉통은 **흐름 밖 겹침(overlay)**이라 리본의 오른쪽
+  // 정렬 규칙을 안 탄다(30-3: 펼침은 왼쪽으로 겹쳐 뜬다). 연필통 줄이 빠지는 것과 같은 이유다.
+  }), ALL.filter(id => !id.startsWith('tray-') && !id.startsWith('nib-') && id !== 'btn-pen' && id !== 'btn-pencil'))
   const r0 = rights[0]!.right
   for (const r of rights) expect(Math.abs(r.right - r0), `#${r.id} 오른쪽 가장자리`).toBeLessThanOrEqual(1)
 
@@ -101,15 +105,19 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
   await page.click('#tray-HB')                       // 고르면 접힌다
   await page.click('#btn-pen')
   await page.waitForTimeout(200)
-  ovPen = await overlapCount([...ALL, 'thick'])
+  // ⚠⚠ **web2-30 2번으로 펜 상태가 갈렸다**: 굵기 막대(#thick)는 이제 **지우개에만** 뜨고,
+  //    펜에는 **촉통(#pentray) 다섯 줄**이 펼쳐진다(펜 단추를 누르면 열린다).
+  ovPen = await overlapCount(ALL)
   await page.click('#btn-pencil'); await page.click('#tray-HB')
   await page.waitForTimeout(200)
-  console.log(`[측정] 쌍별 겹침 — 연필(통 열림) ${ovPencil.overlaps}(요소 ${ovPencil.n}) · 펜+막대 ${ovPen.overlaps}(요소 ${ovPen.n})`)
+  console.log(`[측정] 쌍별 겹침 — 연필(통 열림) ${ovPencil.overlaps}(요소 ${ovPencil.n}) · 펜(촉통 열림) ${ovPen.overlaps}(요소 ${ovPen.n})`)
   expect(ovPencil.overlaps).toBe(0)
   expect(ovPen.overlaps).toBe(0)
-  // 펜 상태 = 연필통 여섯 줄이 접히고 굵기 막대가 든다. ⚠ 수 관계식(n−5)이 아니라
-  // **id 목록의 차**로 단언한다(#72 규칙 ② — 수만 보면 17 vs 11의 수수께끼가 남는다):
-  const expectedPen = [...ovPencil.ids.filter(id => !id.startsWith('tray-')), 'thick']
+  // 펜 상태 = 연필통 여섯 줄이 접히고 **촉통 다섯 줄**이 든다. ⚠ 수 관계식이 아니라
+  // **id 목록의 차**로 단언한다(#72 규칙 ② — 수만 보면 수수께끼가 남는다):
+  const nibIds = [...ovPen.ids].filter(id => id.startsWith('nib-'))
+  expect(nibIds.length, '촉통 다섯 줄이 실제로 펼쳐져 있다').toBe(5)
+  const expectedPen = [...ovPencil.ids.filter(id => !id.startsWith('tray-')), ...nibIds]
   expect([...ovPen.ids].sort()).toEqual(expectedPen.sort())
 
   // 세로바 전체가 화면 높이 안이다(지시 문면 — #sidebar에는 max-height가 없다)
@@ -213,13 +221,22 @@ test('연필통 — 진하기 순 세로 배열·행 선택이 도구+경도·�
   const barPencil = await measure()          // 지금 연필(HB) 상태다
   await page.click('#btn-pen'); await page.waitForTimeout(150)
   const barPen = await measure()
+  // ⚠ **굵기 막대는 이제 지우개 상태에서만 있다**(web2-30 2번 — 펜의 굵기는 촉이 정한다).
+  //    막대의 «세로바 왼쪽» 규칙은 그대로 유효하므로 **그 상태에서** 잰다.
+  await page.click('#btn-eraser-pencil'); await page.waitForTimeout(150)
   const thick = (await page.locator('#thick').boundingBox())!
+  const barEraser = await measure()
+  await page.click('#btn-pen'); await page.waitForTimeout(150)
   // **펜 상태에서도** 화면 안이다 — 굵기 막대가 흐름 안에 있던 초판은 펜을 고른 순간
   // 세로바가 화면(800) 밖으로 넘쳤다(이 실측이 잡았다 — 막대는 이제 왼쪽 옆 고정.
   // 그 초판 값은 일회 진단 기록으로 NOTES에만 있다 — 현행 상태별 값이 이 원장 필드다).
   expect(barPen.bottom, '펜 상태 세로바가 화면 안').toBeLessThanOrEqual(vw.h)
   expect(barPencil.bottom, '연필 상태 세로바가 화면 안').toBeLessThanOrEqual(vw.h)
-  expect(thick.x + thick.width, '굵기 막대가 세로바 왼쪽').toBeLessThanOrEqual(vw.w - barPen.w - 2)
+  expect(barEraser.bottom, '지우개 상태 세로바가 화면 안').toBeLessThanOrEqual(vw.h)
+  expect(thick.x + thick.width, '굵기 막대가 세로바 왼쪽').toBeLessThanOrEqual(vw.w - barEraser.w - 2)
+  // 펜 상태에서는 촉통이 **왼쪽으로 겹쳐** 뜬다(30-3) — 세로바를 안 민다
+  const pentray = (await page.locator('#pentray').boundingBox())!
+  expect(pentray.x + pentray.width, '촉통이 세로바 왼쪽').toBeLessThanOrEqual(vw.w - barPen.w - 2)
   await page.click('#btn-pencil'); await page.waitForTimeout(150)   // 연필통을 연 채로 잰다
   const tray = (await page.locator('#tray').boundingBox())!
   const rightEdge = await page.evaluate(() =>

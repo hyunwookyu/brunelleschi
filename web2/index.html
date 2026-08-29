@@ -225,8 +225,15 @@
        panel 안을 다시 쓰므로 **패널 밖 형제**가 유일하게 살아남는 자리다). 패널은 판독
        전용(pointer-events:none)이고 이 줄만 조작이다 — 패널을 위로 밀고 그 아래 선다. */
     #diagctl { display: none; }
+    /* ⚠⚠ **z-index 9**(web2-30 3번 별건) — 세로바(z 10)보다 **아래**다.
+       30-10이 진단의 여닫이를 설정 패널(#pane-settings — 세로바 안)로 옮기면서 셋이 전부
+       우하단에 모였고, 이 줄이 12이던 초판에서는 **열린 자립 깃발이 「진단」 단추를 삼켰다**
+       (전량 e2e가 잡았다 — `#diagctl` intercepts pointer events).
+       ⚠ 세로바는 **자기 쌓임 맥락**이라(fixed + z-index) 그 «안»의 z를 올려도 밖과 못
+       겨룬다 — 서랍 패널을 13으로 올려도 소용없었다. 그래서 **판독 표시 쪽을 내린다**:
+       세로바를 올리면 «알림이 리본 위»(web2-20 2-c)까지 뒤집히므로 그쪽은 안 건드린다. */
     #diagpanel:not([hidden]) + #diagctl {
-      display: block; position: fixed; z-index: 12;
+      display: block; position: fixed; z-index: 9;
       font: 11px/1.6 monospace; color: #6b665f;
       background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
       padding: 4px 10px; right: 6px; bottom: 26px;
@@ -342,7 +349,12 @@
        체크박스가 뷰포트 밖(y=793 / 높이 720)에 있어 눌리지 않았다(2026-08-21 e2e가 잡았다).
        파일·설정은 세로바의 «아래» 묶음이므로(4-i) 우하단 고정이 자리와도 맞는다. */
     details.pane > div {
-      position: fixed; right: 54px; bottom: 10px; z-index: 11; /* 세로바가 39px로 넓어짐(지시 5) */
+      /* ⚠⚠ **z-index 13**(web2-30 3번 별건) — 진단 패널·자립 깃발(#diagpanel·#diagctl, 둘 다
+         z 12)보다 **위**여야 한다. 30-10이 진단의 여닫이를 설정 패널로 옮기면서 셋이 전부
+         우하단에 모였고, 초판(z 11)에서는 **열린 진단 패널이 「진단」 단추를 가려** 다시
+         못 눌렀다(전량 e2e가 잡았다 — `#diagctl` intercepts pointer events).
+         지금 만지고 있는 패널이 위로 온다. */
+      position: fixed; right: 54px; bottom: 10px; z-index: 13; /* 세로바가 39px로 넓어짐(지시 5) */
       display: flex; flex-direction: column; gap: 6px; align-items: stretch;
       background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
       padding: 10px 12px; white-space: nowrap;
@@ -874,7 +886,12 @@
             <!-- web2-30 3번 별건 — 빌드 식별자가 **입력을 안 받게** 되면서(배포를 판정하는
                  표시지 단추가 아니다) 진단 패널의 여닫이가 여기로 왔다. 콘솔 없는 태블릿의
                  유일한 판독 통로이므로 **없앨 수 없다**(web2-10 지시 4) — 자리를 옮긴다. -->
-            <button id="btn-diag" data-act="state" title="진단 — 기기 값·최근 획·파일 크기">진단</button>
+            <!-- ⚠ `data-act="cmd"` — **명령이다**(28-1): 볼일(패널 열기)이 누르는 순간 끝나고
+                 결과는 **서랍 밖**(우하단 진단 패널)에 뜬다. 그래서 서랍이 접힌다 —
+                 접어야 하는 실질적 이유도 있다: 서랍과 진단 패널·자립 깃발이 **같은 우하단
+                 모서리**를 쓰므로, 서랍이 열린 채면 진단 곁줄(#diagctl)을 못 누른다
+                 (전량 e2e가 잡았다 — sidebar subtree intercepts pointer events). -->
+            <button id="btn-diag" data-act="cmd" title="진단 — 기기 값·최근 획·파일 크기">진단</button>
           </div>
         </details>
       </div>

@@ -1014,6 +1014,9 @@ for (const ev of ['pointerdown', 'pointerup', 'pointercancel', 'pointerleave', '
 //   연필통은 「하나를 고르면 끝나는 선택」이라 접힌다 — 그쪽은 종전 배선이 이미 접는다.
 const FOLD_PANELS: { root: string; close: () => void }[] = [
   { root: '#pane-file', close: () => { (document.getElementById('pane-file') as HTMLDetailsElement).open = false } },
+  // 설정(web2-30 10번) — **상태 토글(필압 보정)은 안 접고 명령(진단)만 접는다**(28-1 그대로).
+  // 진단을 접는 실질적 이유: 서랍과 진단 패널·자립 깃발이 **같은 우하단 모서리**를 쓴다.
+  { root: '#pane-settings', close: () => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = false } },
   { root: '#display-pop', close: () => { (document.getElementById('display-pop') as HTMLElement).hidden = true } },
   { root: '#snap-pop', close: () => { (document.getElementById('snap-pop') as HTMLElement).hidden = true } },
   { root: '#face-pop', close: () => { (document.getElementById('face-pop') as HTMLElement).hidden = true } },

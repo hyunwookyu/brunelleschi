@@ -69,9 +69,20 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
   //   시간). 이 팔이 지키는 사람의 요구(「자리마다 무엇이 있는지가 값으로 못 박혀 있다」)는
   //   그대로 유효하고 **표가 늘어난 것**이다(#75 ㉣: UI의 형태를 갈면 그 형태를 읽던 팔이
   //   깨진다 — 물음은 「그 요구가 지금도 유효한가」이고 답이 예이면 표를 고친다).
+  // ⚠⚠ **web2-30 10번이 `chk-press`를 여기서 뺐다** — 눈은 「이 종이를 어떻게 보는가」이고
+  //   필압 보정은 **손의 설정**이다. 사람이 여기서 못 찾았고, 찾은 뒤에도 자리가 틀렸다고
+  //   판정했다. 지금 자리는 **시스템 띠의 설정 패널**이고 아래 줄이 그것을 값으로 든다.
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#display-pop input')].map(e => e.id)))
-    .toEqual(['chk-horizon', 'chk-grid', 'chk-waitfade', 'chk-hidden', 'chk-press', 'rng-hold'])
+    .toEqual(['chk-horizon', 'chk-grid', 'chk-waitfade', 'chk-hidden', 'rng-hold'])
+  // 시스템(세로바 아래 묶음) — 파일 서랍 + **설정**(web2-30 10번 · 톱니바퀴).
+  // web2-19 3-a가 「설정 자루」를 해체하면서 둘 곳이 없어졌던 자리를 되세운 것이다.
+  expect(await page.evaluate(() =>
+    [...document.querySelectorAll('#sidebar-body > details.pane')].map(e => e.id)))
+    .toEqual(['pane-file', 'pane-settings'])
+  expect(await page.evaluate(() =>
+    [...document.querySelectorAll('#pane-settings input, #pane-settings button')].map(e => e.id)))
+    .toEqual(['chk-press', 'btn-press-cancel', 'btn-diag'])
   // 손(오른쪽 세로) — 되돌리기 둘(맨 위·구분선으로 가름) → 자 → 연필(접힘) → 펜 →
   // 지우개 둘 → **치수 → 롤 둘 → 면** → 서랍. #oldtools(hidden)·#tray(접힘)는 A-4/3-b' 구조물.
   // ⚠ **web2-28 4번이 한 띠 «안»의 순서를 바꿨다**: 면(면 찾기)이 롤·치수보다 **아래**로
@@ -82,7 +93,7 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
     [...document.querySelectorAll('#sidebar-body > button, #sidebar-body > details')].map(e => e.id)))
     .toEqual(['btn-undo', 'btn-redo', 'btn-snap', 'btn-pencil', 'btn-pen',
       'btn-eraser-pencil', 'btn-eraser-ink', 'dim-toggle',
-      'btn-roll-tracing', 'btn-roll-yellow', 'btn-face', 'pane-file'])
+      'btn-roll-tracing', 'btn-roll-yellow', 'btn-face', 'pane-file', 'pane-settings'])
   // 되돌리기와 도구 사이에 **구분선**이 실제로 있다(공백이 아니라 채널 — 3-c)
   expect(await page.evaluate(() => {
     const d = document.querySelector('#sidebar-body .bar-divider')
@@ -96,7 +107,14 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#pane-file button')].map(e => e.id)))
     .toEqual(['btn-save', 'btn-open', 'btn-obj', 'btn-gltf', 'btn-clear', 'btn-brush'])
-  expect(await page.locator('#pane-settings').count()).toBe(0)
+  // ⚠ **web2-30 10번이 설정 패널을 되세웠다** — web2-19 3-a가 「설정 자루」를 해체하면서
+  //   상태 옵션이 갈 곳이 없어져 눈 팝업에 얹혔던 그 결함을 고친 것이다. 이 팔이 지키던
+  //   요구(「설정 자루에 있던 것들이 각자 제자리로 갔다」)는 **그대로 유효하다** — 오스냅은
+  //   자 팝업에, 표시 셋은 눈에, own3d는 진단 곁에 있고 **설정에는 그 셋이 없다**.
+  expect(await page.locator('#pane-settings').count(), '설정 패널은 이제 있다').toBe(1)
+  for (const id of ['#chk-own3d', '#chk-horizon', '#chk-grid', '#osnap-radius']) {
+    expect(await page.locator(`#pane-settings ${id}`).count(), `설정에 ${id}는 없다`).toBe(0)
+  }
 })
 
 test("①' 연필 접힘 — 39px 폭 · 펼침/고름 · 각인 왕복(2H·2B) · 펜은 접기 없음", async ({ page }) => {
@@ -171,8 +189,14 @@ test('②④⑤ — 치수 트리거(손) · 자 팝업(오스냅) · own3d(진�
   await page.click('#btn-snap')
   await expect(page.locator('#snap-pop')).toBeHidden()
 
-  // ⑤ own3d — 설정에 없고 **진단 곁**에 있으며 동작 그대로(왕복 + localStorage 열쇠 불변)
-  expect(await page.locator('#pane-settings').count()).toBe(0)
+  // ⑤ own3d — **진단 곁**에 있고 동작 그대로(왕복 + localStorage 열쇠 불변)
+  // ⚠⚠ **web2-30 10번이 설정 패널을 되세웠다**(web2-19 3-a가 해체한 뒤 상태 옵션이 갈 곳이
+  //   없어 눈에 얹혔던 그 자리다). 그러나 **own3d는 여기로 안 옮겼다** — own3d는 사용자
+  //   설정이 아니라 **A-4의 되돌리기 깃발**(옛 사슬 경로)이라 진단 곁이 제자리다.
+  //   그래서 이 팔의 요구(「own3d는 설정이 아니라 진단 곁이다」)는 **그대로 유효**하고,
+  //   재는 방식만 「설정이 없다」에서 「설정에 own3d가 없다」로 좁아진다(#74 ㉢의 물음).
+  expect(await page.locator('#pane-settings').count(), '설정 패널은 이제 있다').toBe(1)
+  expect(await page.locator('#pane-settings #chk-own3d').count(), 'own3d는 설정에 없다').toBe(0)
   await expect(page.locator('#diagctl')).toBeHidden()
   await openDiag(page)
   await expect(page.locator('#diagctl')).toBeVisible()
