@@ -32,6 +32,17 @@ import { glyph, write } from './glyphs'
 import type { Pt } from '../src/core/vec'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
+
+// 원장은 **세 팔의 수가 다 모인 뒤에** 한 번 쓴다(#25 — 콘솔에만 있는 수를 안 남긴다)
+let ledger: Record<string, unknown> | null = null
+let misclass: Record<string, number> | null = null
+let feats: Record<string, number> | null = null
+function writeLedger() {
+  if (!ledger) return
+  const out = resolve(HERE, '../../stage0/out/scribble32_web2.json')
+  mkdirSync(dirname(out), { recursive: true })
+  writeFileSync(out, JSON.stringify({ ...ledger, misclassification: misclass, features: feats }, null, 2))
+}
 const W = 1200, H = 800
 
 /** 카메라가 닫힌 장면 — 지평선 + 소실점 둘(획으로). dimwrite29의 `closed()`와 같은 구도. */
@@ -144,9 +155,7 @@ describe('32-1 ① 숫자를 쓰면 그 획들이 전부 글씨가 된다', () =
     expect(guard.basis_true, '가드가 실제로 발화한다(0이면 «안 돌았다»와 구별이 안 된다)').toBeGreaterThan(0)
     expect(guard.connected_flipped, '이어진 획은 안 뒤집힌다').toBe(0)
 
-    const out = resolve(HERE, '../../stage0/out/scribble32_web2.json')
-    mkdirSync(dirname(out), { recursive: true })
-    writeFileSync(out, JSON.stringify({
+    ledger = {
       what: 'web2-32 1번 — 종이의 글씨/작도선 가르기. 판정은 이 파일의 expect가 정본이고 표는 «어디서 갈리는가»를 남긴다.',
       conditions: {
         fixture: '글자 픽스처는 test/glyphs.ts(29-1의 것 그대로) · 흔들기 0.6px · 카메라가 닫힌 2점 장면 · 곁에 3D 선 하나',
@@ -165,8 +174,10 @@ describe('32-1 ① 숫자를 쓰면 그 획들이 전부 글씨가 된다', () =
       basis_guard: guard,
       flags_explained_2: {
         'per_text의 lifted가 전부 0': '**확정 시 분류의 결과**다(재판정이 «안 돌았다»가 아니다). 재판정 경로의 분자/분모는 `reclassify_path`가 따로 낸다 — 선 곁에 붙여 써서 첫 획이 3D에 오른 장면이다.',
+        '@해시 인용이 없다': '**web2 라인 전체의 유보**다 — 이 라인은 `constantsSnapshot()`을 안 쓰고 `constants` 블록을 손으로 적는다(`hold26.test`가 그 유보를 처음 적었다). 그래서 문서는 원장을 **이름으로** 가리킨다.',
       },
-    }, null, 2))
+    }
+    writeLedger()
   })
 })
 
@@ -189,6 +200,7 @@ describe('32-1 ② 자를 대듯 그은 긴 획은 여전히 작도선이다 —
     }
     console.log(`[32-1 ②] 긴 획 ${rows.length}칸 중 글씨로 잘못 넘어간 칸 ${wrong}`)
     expect(wrong, '오분류 0').toBe(0)
+    misclass = { cells: rows.length, wrong }
 
     // **D-3 반증** — 같은 하네스에서 «짧게» 하면 실제로 넘어간다(이 검사가 무언가를 잰다)
     const s2 = closed()
@@ -197,6 +209,7 @@ describe('32-1 ② 자를 대듯 그은 긴 획은 여전히 작도선이다 —
     const flipped = two.filter(x => x !== null && isText(s2.app.doc.strokes.find(z => z.id === x!.id)!)).length
     console.log(`[32-1 ② 반증] 같은 자리에 «짧은» 획 둘 — 글씨 ${flipped}/2`)
     expect(flipped, '짧고 뭉치면 넘어간다 — 그러므로 위의 0은 항등이 아니다').toBe(2)
+    misclass = { ...misclass!, counter_flipped: flipped, counter_of: 2 }
   })
 })
 
@@ -279,6 +292,7 @@ describe('32-1 특징·확정 규칙 — 순수 함수 단위(core/scribble)', (
     const fc = featOf(circle, C.TEXT_TURN_SEG_PX)
     const fl = featOf(line, C.TEXT_TURN_SEG_PX)
     console.log(`[32-1 특징] 원 turn=${fc.turn.toFixed(2)}rad turns=${fc.turns} · 직선 turn=${fl.turn.toFixed(2)}rad`)
+    feats = { circle_turn_rad: fc.turn, circle_turns: fc.turns, line_turn_rad: fl.turn }
     expect(confirmWriting([fc], C.TEXT_MIN_STROKES, C.TEXT_TURN_RAD), '감긴 획 하나 = 글씨').toBe(true)
     expect(confirmWriting([fl], C.TEXT_MIN_STROKES, C.TEXT_TURN_RAD), '곧은 획 하나 = 아직 아니다').toBe(false)
     expect(confirmWriting([fl, fl], C.TEXT_MIN_STROKES, C.TEXT_TURN_RAD), '둘이면 확정').toBe(true)
@@ -287,6 +301,8 @@ describe('32-1 특징·확정 규칙 — 순수 함수 단위(core/scribble)', (
     for (let i = 0; i <= 40; i++) shaky.push({ x: 400 + i * 2, y: 400 + (i % 2 ? 0.6 : -0.6) })
     const fs = featOf(shaky, C.TEXT_TURN_SEG_PX)
     console.log(`[32-1 특징] 떨리는 직선 turn=${fs.turn.toFixed(2)}rad`)
+    feats = { ...feats!, shaky_line_turn_rad: fs.turn }
+    writeLedger()
     expect(fs.turn, '손떨림은 회전각이 아니다').toBeLessThan(C.TEXT_TURN_RAD)
   })
 
