@@ -12,6 +12,9 @@ export interface Session {
   app: App
   /** 한 획 — 화면에서 (ax,ay)를 눌러 (bx,by)에서 뗀다 */
   draw: (ax: number, ay: number, bx: number, by: number) => Stroke | null
+  /** **점렬 한 획**(web2-32 — 글씨·프리핸드). 끝점 판정은 `draw`와 **같은 경로**이고
+   *  다른 것은 `raw`가 점렬 그대로라는 것뿐이다(입력이 앱에 싣는 것이 그것이다). */
+  stroke: (pts: Pt[]) => Stroke | null
 }
 
 export function session(W: number, H: number): Session {
@@ -44,6 +47,24 @@ export function session(W: number, H: number): Session {
       const c = resolveCommit(app.lift.an, start, r.end, set().radius)
       if (!c) return null // 잡음 — 지평선에서 먼 탭
       return commitStroke(app, c.a, c.b, [p, { x: bx, y: by }])
+    },
+    stroke(pts) {
+      if (pts.length < 2) return null
+      const p = pts[0]!, q = pts[pts.length - 1]!
+      if (yellowActive(app)) return commitStroke(app, p, q, pts.map(z => ({ ...z })))
+      const acq = app.extAcq.acquired
+      const oh = resolveStart(app.lift, app.pose, p, set(), acq)
+      const start = oh ? oh.p : p
+      const r = resolveEnd(app.lift, app.pose, app.lift.an, start, { p3: oh?.p3 ?? null }, q, set(), dims(), acq)
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity
+      for (const z of pts) {
+        if (z.x < x0) x0 = z.x; if (z.x > x1) x1 = z.x
+        if (z.y < y0) y0 = z.y; if (z.y > y1) y1 = z.y
+      }
+      // 입력과 **같은 인자**다(web2-32 1번 — 닫힌 한 붓이 탭으로 안 읽히게 bbox를 넘긴다)
+      const c = resolveCommit(app.lift.an, start, r.end, set().radius, Math.hypot(x1 - x0, y1 - y0) * app.view.s)
+      if (!c) return null
+      return commitStroke(app, c.a, c.b, pts.map(z => ({ ...z })))
     },
   }
 }

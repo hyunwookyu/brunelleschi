@@ -51,7 +51,9 @@ export interface InputCallbacks {
   /** 치수 대상 탭 — 문서 좌표. 고른 결과의 알림은 main이 낸다 */
   onDimPick: (p: Pt) => void
   /** 제안이 떠 있을 때의 탭(web2-29 2단계) — 대상을 그 선으로 옮긴다 */
-  onDimRetarget: (p: Pt) => void
+  /** 사후 수정(web2-32 2번) — 탭이 치수 숫자를 짚었는가. 참이면 입력은 거기서 끝난다
+   *  (그 탭이 점 찍기로 흘러가지 않는다). */
+  onDimTap: (p: Pt) => boolean
   /** 면 일괄 후보 모드(web2-21 4부)의 탭 — true = 후보 하나를 뺐다 */
   onCandidateTap: (excluded: boolean) => void
 }
@@ -332,7 +334,14 @@ export function initInput(
       cb.onCommit(d.start, d.end, d.held ? [d.start, d.end] : d.raw, press, d.held ? undefined : rawIn)
       return
     }
-    const c = resolveCommit(app.lift.an, d.start, d.end, app.osnap.radius / app.view.s)
+    // bbox 대각을 함께 넘긴다(web2-32 1번) — 닫힌 한 붓이 탭으로 읽히지 않게.
+    let bx0 = Infinity, bx1 = -Infinity, by0 = Infinity, by1 = -Infinity
+    for (const p of d.raw) {
+      if (p.x < bx0) bx0 = p.x; if (p.x > bx1) bx1 = p.x
+      if (p.y < by0) by0 = p.y; if (p.y > by1) by1 = p.y
+    }
+    const bboxDiagPx = d.raw.length >= 2 ? Math.hypot(bx1 - bx0, by1 - by0) * app.view.s : 0
+    const c = resolveCommit(app.lift.an, d.start, d.end, app.osnap.radius / app.view.s, bboxDiagPx)
     if (!c) return // 잡음 — 지평선에서 먼 탭
     // **어떤 오스냅이 이 획을 정했는가**(web2-18 2-c) — 사람이 「정확히 어떤 오스냅
     // 때문인지 모르겠다」고 했다. 앱이 실제로 쓴 값을 그대로 든다(다시 계산하지 않는다).
@@ -405,9 +414,9 @@ export function initInput(
     // 누름에서 바로 만들면 «잘못 눌렀다»를 뗌으로 취소할 길이 없다.
     // 지우개 끝이 **먼저**다 — 손에 든 것이 지우개면 사이드바에 무엇이 눌려 있든
     // 지운다(도구는 그대로 남는다 — 뗌과 동시에 아무것도 안 남는다).
-    // 제안이 떠 있는 동안의 **탭**은 「대상 바꾸기」다(web2-29 2단계) — 끌면 종전대로
+    // **탭**은 치수 숫자를 짚을 수 있다(web2-32 2번 — 사후 수정). 끌면 종전대로
     // 그린다(그림이 기본이다). 판정은 뗄 때 «안 움직였는가»로 한다.
-    if (app.dimSuggest && app.tool !== 'dim' && !app.tipErase && !isEraser(app.tool)) {
+    if (app.tool !== 'dim' && !app.tipErase && !isEraser(app.tool)) {
       suggestTap = toPt(e)
     }
     // ── 손글씨 치수(web2-29 1단계) — **모드가 있다** ──────────────────────────
@@ -538,8 +547,12 @@ export function initInput(
       const d = suggestTap
       suggestTap = null
       const p = toPt(e)
-      // 끌었으면 그림이다 — 아래로 흘려보낸다(탭일 때만 대상을 옮긴다)
-      if (Math.hypot(p.x - d.x, p.y - d.y) <= C.TAP_MAX_PX / app.view.s) cb.onDimRetarget(d)
+      // 끌었으면 그림이다 — 아래로 흘려보낸다(탭일 때만 치수를 짚는다).
+      // 짚었으면 **거기서 끝난다**: 그 탭이 소실점 표식(점 찍기)으로 흘러가지 않는다.
+      if (Math.hypot(p.x - d.x, p.y - d.y) <= C.TAP_MAX_PX / app.view.s && cb.onDimTap(d)) {
+        if (drawingPointer === e.pointerId) { drawingPointer = null; draft = null; cb.onDraftChange(null) }
+        return
+      }
     }
     if (dimTap) {
       const d = dimTap

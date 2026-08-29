@@ -1,8 +1,8 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
 import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc,
-  pickDimTarget, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick,
-  handwritingGroup, proposeDim, acceptSuggest, dismissSuggest, retargetSuggest, type Tool } from './state'
+  pickDimTarget, pickTargetAt, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick,
+  handwritingGroup, applyWrittenDim, dimTargetTie, pickDimLabel, moveDim, endDimEdit, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG } from './layerbar'
 import { initInput } from './input'
@@ -374,10 +374,32 @@ inputApi = initInput(ink, app, {
   onHover(p) { hover = p; invalidate() },
   onEraserMove(p) { eraserPos = p; invalidate() },
   onFacePreview(f) { facePrev = f; invalidate() },
-  onDimRetarget(p) {
-    // 제안이 떠 있을 때 다른 선을 탭하면 **대상이 그리로 옮겨간다**(지시 문면 —
-    // 「틀렸으면 사용자가 지정할 수 있어야 한다」). 못 잡으면 아무 일도 안 한다.
-    if (retargetSuggest(app, p)) { renderSuggest(); invalidate() }
+  onDimTap(p) {
+    // 사후 수정(web2-32 2번) — **치수 숫자를 누르면** 그 치수를 고른 것이다: 값은
+    // 리본의 키패드·필기로 고치고(dimTarget이 그리로 간다), 대상은 다른 선을 눌러 옮긴다
+    // (32-3 「틀렸으면 사후 수정에서 대상도 바꿀 수 있어야 한다」).
+    const hit = pickDimLabel(app, p)
+    if (hit !== null) {
+      dimTarget = hit
+      const s = app.doc.strokes.find(x => x.id === hit)
+      if (s?.dim !== undefined) dimPanel.stage(String(s.dim))
+      status('치수 — 값을 고치거나 다른 선을 눌러 대상을 옮긴다')
+      invalidate()
+      return true
+    }
+    if (app.dimEdit !== null) {
+      const to = pickTargetAt(app, p, app.osnap.radius / app.view.s * 2)
+      if (to !== null && to !== app.dimEdit) {
+        const r = moveDim(app, app.dimEdit, to)
+        if (r === 'no3d') notify('아직 3D로 올라가지 않은 선이다 — 치수를 못 단다')
+        else dimTarget = to
+        invalidate()
+        return true
+      }
+      endDimEdit(app)
+      invalidate()
+    }
+    return false
   },
   onFaceToggle(r) {
     // 알림은 **오류가 있을 때만**이다(4-b) — 만들어졌으면 화면이 이미 말한다.
@@ -407,8 +429,8 @@ inputApi = initInput(ink, app, {
     const s = commitStroke(app, a, b, raw, press, rawIn)
     // 필압 보정 절차(web2-26 6번) — 절차 중이면 이 획이 표본이다. 절차 밖이면 무해하다.
     pressCalibStep(s)
-    // 늦은 인식(web2-29 2단계) — **문서를 안 바꾸고** 읽어 본다. 읽히면 제안만 뜬다.
-    void maybeSuggestDim(s)
+    // 즉시 변환(web2-32 2번) — 글씨 뭉치가 숫자로 읽히면 그 자리에서 치수가 된다.
+    void maybeWriteDim(s)
     const an = app.lift.an
     // **알림은 오류가 있을 때만**이다(4-b). 「소실점 N」은 차수이고 「대기한다」는 상태다 —
     // 둘 다 화면이 이미 말하고 있다(소실점 표식 · 대기 획의 점선). 거부 사유만 남긴다.
@@ -868,53 +890,33 @@ own3dBox.addEventListener('change', () => {
 
 
 
-// ── 늦은 인식(web2-29 2단계) — **모드가 없다** ────────────────────────────────
-// 그냥 종이에 숫자를 쓴다. 획이 숫자로 보이면 **즉시 바꾸지 않고** 오른쪽 위에 제안이
-// 뜬다. 받으면 치수가 되고 **무시하면 그냥 그린 선으로 남는다**.
-// ⚠ 이 순서가 규칙이다(지시 문면) — 먼저 바꾸고 되돌리게 하면 숫자처럼 생긴 스케치를
-//   그릴 때마다 방해가 된다. **기본은 그림이고 치수는 제안이다.**
-const suggestEl = document.getElementById('dimsuggest')!
-let suggestSeq = 0
-function renderSuggest() {
-  const sug = app.dimSuggest
-  if (!sug) { suggestEl.hidden = true; suggestEl.textContent = ''; return }
-  suggestEl.hidden = false
-  suggestEl.textContent = `치수 ${formatMm(sug.mm, app.doc.unit, app.dimExact)}? `
-  const mk = (label: string, key: string, fn: () => void) => {
-    const u = document.createElement('u')
-    u.textContent = label
-    u.dataset.pick = key
-    u.addEventListener('click', fn)
-    suggestEl.append(u)
-  }
-  mk('받는다', 'yes', () => {
-    const r = acceptSuggest(app)
-    if (r === 'no3d') notify('아직 3D로 올라가지 않은 선이다 — 치수를 못 단다')
-    else if (r === 'baseScale') notify('축척은 바탕 종이의 치수가 정한다')
-    renderSuggest()
-    invalidate()
-  })
-  mk('무시', 'no', () => { dismissSuggest(app); renderSuggest(); invalidate() })
-}
-app.listeners.push(renderSuggest)
+// ── 즉시 변환(web2-32 2번) — **승인 단계가 없다** ─────────────────────────────
+// 종이에 숫자를 쓰면 그 뭉치가 글씨로 판정되고(32-1 · commitStroke), 숫자로 읽히면
+// **즉시** 치수선이 된다. 되돌리기는 실행취소 한 번이고 값·대상은 사후에 고친다.
+// 29-2의 제안 줄(#dimsuggest)·후보 목록·오른쪽 위 알림은 **전부 사라졌다**.
+let writeSeq = 0
 
-/** 획을 확정한 뒤 — **문서를 안 바꾸고** 숫자로 읽어 본다. 읽히면 제안만 띄운다. */
-async function maybeSuggestDim(s: Stroke | null) {
-  if (!s || app.tool === 'dim') return             // 1단계 경로는 그쪽이 진다
-  if (app.dimSuggest) return                       // 이미 떠 있으면 안 겹친다
+/** 획을 확정한 뒤 — 글씨 뭉치를 숫자로 읽어 보고, 읽히면 그 자리에서 치수로 바꾼다. */
+async function maybeWriteDim(s: Stroke | null) {
+  if (!s || app.tool === 'dim') return             // 1단계(치수 도구) 경로는 그쪽이 진다
   const ids = handwritingGroup(app)
   if (ids.length === 0) return
-  const my = ++suggestSeq
+  const my = ++writeSeq
   const strokes = ids.map(id => {
     const st = app.doc.strokes.find(x => x.id === id)!
     return st.raw && st.raw.length > 1 ? st.raw.map(p => ({ ...p })) : [{ ...st.a }, { ...st.b }]
   })
   const { text } = await recognizeStrokes(strokes)
-  if (my !== suggestSeq) return
+  if (my !== writeSeq) return
   const mm = parseDim(text, app.doc.unit)
-  if (mm === null) return                          // 안 읽히면 **아무 일도 안 난다**(그림이다)
-  proposeDim(app, ids, text, mm)
-  renderSuggest()
+  if (mm === null) return                          // 안 읽히면 **글씨로 남는다**(2D 잉크)
+  const tie = dimTargetTie(app, ids)
+  const r = applyWrittenDim(app, ids, mm)
+  if (r === 'no3d') notify('아직 3D로 올라가지 않은 선이다 — 치수를 못 단다')
+  else if (r === 'baseScale') notify('축척은 바탕 종이의 치수가 정한다')
+  // **하나로 정해지면 아무 말도 안 한다**(4-b — 화면이 이미 말한다). 정말로 겹칠 때만
+  // 한 줄: 기본은 이미 잡혀 있고 사람은 숫자를 눌러 바꾼다(32-3 문면).
+  else if (tie) notify('선 둘이 겹친다 — 치수 숫자를 눌러 다른 선을 고른다')
   invalidate()
 }
 

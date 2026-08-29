@@ -39,7 +39,7 @@
 
 import type { App } from './state'
 import { atSheetPose, fadeRef, underlayOf } from './state'
-import type { Layer, Paper, Surface, CamPose, Underlay } from '../core/types'
+import { isFlat2d, type Layer, type Paper, type Surface, type CamPose, type Underlay } from '../core/types'
 import { rng32, MAT, gradeOf, widthOf, widthOfMat } from '../core/material'
 import { project } from '../core/camera'
 import { waitFadeFactor } from '../core/waitfade'
@@ -441,7 +441,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
       if (s.layer === undefined || !split.above.has(s.layer)) continue
       const m = MAT[gradeOf(s)]
       let a2 = s.a, b2 = s.b
-      if (yset.has(s.layer)) {
+      if (isFlat2d(s, yset)) {
         // 옐로 획 — 2D: 문서 좌표 그대로. **정본 기하는 raw 점렬이다**(web2-24 4-b —
         // 프리핸드): 점렬이 있으면 폴리라인으로 긋는다(머무름 갈음·직선 손 획은 두 점).
         if (s.raw && s.raw.length > 2) {

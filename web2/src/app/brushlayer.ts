@@ -36,7 +36,7 @@ import { atOwnPose, waitFadeFactor } from '../core/waitfade'
 import { project } from '../core/camera'
 import { gradeOf, rng32 } from '../core/material'
 import { C } from '../core/constants'
-import type { Stroke } from '../core/types'
+import { isFlat2d, type Stroke } from '../core/types'
 import { pt, type Pt } from '../core/vec'
 import type { Draft } from './render2d'
 // 매핑·색·필압 계수는 순수 모듈이다 — 단위가 WebGL 없이 잰다(test/brushmap.test.ts)
@@ -339,7 +339,8 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
         // **정본 기하는 raw 점렬이다**(web2-24 4-b — 프리핸드). 머무름 갈음·짧은 획은
         // 두 점이라 종전 경로 그대로다. 잘라내기는 점렬 bbox의 두 모서리로 판정
         // (offScreen은 두 점이 같은 변 밖일 때만 참이라 bbox 모서리 대입이 보수적으로 옳다).
-        if (s.layer !== undefined && yset.has(s.layer)) {
+        // 글씨 획(web2-32 1번)도 이 갈래다 — **같은 규격**이므로 술어가 하나다(isFlat2d)
+        if (isFlat2d(s, yset)) {
           if (s.raw && s.raw.length > 2) {
             const spts = s.raw.map(p => docToScreen(app, p))
             let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
@@ -492,7 +493,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     const yset = yellowVisible(app)  // redraw와 같은 옐로 2D 갈래(web2-22 1부)
     for (const s of app.doc.strokes) {
       if (split && s.layer !== undefined && split.above.has(s.layer)) continue
-      if (s.layer !== undefined && yset.has(s.layer)) {
+      if (isFlat2d(s, yset)) {
         out.push({ s, a: docToScreen(app, s.a), b: docToScreen(app, s.b), dashed: false })
         continue
       }

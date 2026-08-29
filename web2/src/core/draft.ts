@@ -211,10 +211,16 @@ export function resolveEnd(
 export const isStray = (endDistPx: number, bboxDiagPx: number): boolean =>
   endDistPx > C.TAP_MAX_PX && bboxDiagPx < C.STRAY_MIN_PX
 
+/** ⚠⚠ **닫힌 한 붓은 «찍은 점»이 아니다**(web2-32 1번 — 사용자의 「곡선인 숫자는 안 된다」).
+ *  끝점 거리만 보면 «0»·«8»처럼 시작으로 돌아온 획이 탭으로 읽혀 **통째로 버려지고**
+ *  (지평선 가까이서 쓰면 소실점 표식이 된다 — 「숫자가 공간에 흩어진다」의 한 입구다),
+ *  그 자리는 조용하다. 가르는 자는 `isStray`가 이미 쓰는 것과 **같다**: **bbox 대각**.
+ *  `bboxDiagPx`(화면 px)를 안 주면 종전 동작 그대로다 — 옛 호출부가 안 깨진다. */
 export function resolveCommit(
-  an: Pick<Analysis, 'horizonY'>, start: Pt, end: Pt, osnapRadius: number,
+  an: Pick<Analysis, 'horizonY'>, start: Pt, end: Pt, osnapRadius: number, bboxDiagPx = 0,
 ): { a: Pt; b: Pt } | null {
   if (Math.hypot(end.x - start.x, end.y - start.y) > C.TAP_MAX_PX) return { a: start, b: end }
+  if (bboxDiagPx >= C.STRAY_MIN_PX) return { a: start, b: end }   // 닫힌 한 붓 — 획이다
   const hz = an.horizonY
   if (Math.abs(start.y - hz) > osnapRadius) return null
   const onHz = pt(start.x, hz) // 지평선 위로 붙인다 — 붙은 좌표가 그대로 확정(원칙 d)

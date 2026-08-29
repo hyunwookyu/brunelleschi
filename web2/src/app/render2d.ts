@@ -5,7 +5,7 @@
 // 선 굵기·표식 크기는 화면 고정(배율로 나눈다).
 
 import type { App, ViewOffset } from './state'
-import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive } from './state'
+import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive, dimLabelPos } from './state'
 import { vpMarks, project, projectSeg, groundAxes, horizonScreenY } from '../core/camera'
 import { cubeGeom } from '../core/viewcube'
 import { C } from '../core/constants'
@@ -777,19 +777,24 @@ function drawDimensions(ctx: CanvasRenderingContext2D, app: App, is: number) {
     const nx = -dy / L, ny = dx / L                // 화면 수직(오프셋 방향)
     const a2 = { x: a.x + nx * off, y: a.y + ny * off }
     const b2 = { x: b.x + nx * off, y: b.y + ny * off }
-    ctx.strokeStyle = COL.construction
+    // 사후 수정(web2-32 2번)으로 고른 치수는 **강조된다** — 무엇을 고치는 중인지 화면이
+    // 말한다(새 색 ⛔ — 스냅 색을 쓴다: 「지금 짚은 것」이라는 같은 뜻이다).
+    const editing = app.dimEdit === s.id
+    ctx.strokeStyle = editing ? COL.snap : COL.construction
     ctx.lineWidth = 1 * is
     ctx.beginPath()
     ctx.moveTo(a2.x, a2.y); ctx.lineTo(b2.x, b2.y)                     // 치수선
     ctx.moveTo(a.x, a.y); ctx.lineTo(a2.x + nx * tick, a2.y + ny * tick) // 치수 보조선
     ctx.moveTo(b.x, b.y); ctx.lineTo(b2.x + nx * tick, b2.y + ny * tick)
     ctx.stroke()
-    // 값 — 치수선 가운데 위. 화면 고정 크기(줌에 안 커진다 — 원칙 e의 계열)
-    const mid = { x: (a2.x + b2.x) / 2, y: (a2.y + b2.y) / 2 }
+    // 값 — 치수선 가운데 위. 화면 고정 크기(줌에 안 커진다 — 원칙 e의 계열).
+    // ⚠ 자리는 **`state.dimLabelPos`가 정한다**(#54) — 누르는 자리(pickDimLabel)와 같은
+    //   함수여야 「보이는 데 안 눌린다」가 구성상 불가능하다.
+    const mid = dimLabelPos(app, s.id) ?? { x: (a2.x + b2.x) / 2, y: (a2.y + b2.y) / 2 }
     ctx.save()
     ctx.translate(mid.x, mid.y)
     ctx.scale(is, is)
-    ctx.fillStyle = COL.construction
+    ctx.fillStyle = editing ? COL.snap : COL.construction
     ctx.font = `${C.DIM_TEXT_PX}px system-ui, sans-serif`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'bottom'

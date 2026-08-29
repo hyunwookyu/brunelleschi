@@ -50,6 +50,14 @@ export interface Stroke {
    *  그 예외조차 지금은 실험 경로다. axis는 굳힘 시점의 축 배정 기록(AxisId 문자열 —
    *  camera.ts를 여기서 못 들여온다: 순환). 검증은 own3d.ts의 잉크 심판(§7). */
   own3?: { a: V3; b: V3; axis: string | null }
+  /** **글씨 획**(web2-32 1번) — 종이에 쓴 손글씨로 판정된 획. 값은 1 하나뿐이다
+   *  (참/거짓이므로 열쇠의 «있음»이 곧 참 — 없으면 작도선이다: 옛 파일이 그대로 산다).
+   *  ⚠ **옐로 획과 같은 규격이다**(새 기제 ⛔ — web2-22 1부의 그 규격을 그대로 쓴다):
+   *  `raw`가 정본 기하 · 3D 없음(lift가 거른다) · 대기도 아님 · 오스냅·소실점에
+   *  참여하지 않음(lift·analyze에서 빠지면 그 넷이 **자동으로** 빠진다 — #54).
+   *  판정은 획 하나가 아니라 **뭉치**가 하고(`core/scribble.ts`), 이미 다른 획의 근거가
+   *  된 획은 재판정하지 않는다(그 규칙이 `own3`의 «한 번 자립하면 안 풀린다»를 지킨다). */
+  text?: 1
 }
 
 // ── 종이(web2-19 2부) — **명명된 뷰가 「종이」다**(도면집의 한 장) ─────────────
@@ -118,6 +126,15 @@ export const onPaper = (s: Stroke): boolean => s.layer === undefined
  *  analyze(소실점 제외) · brushlayer/filmlayer(2D 표시) · input/session(스냅 우회). */
 export const yellowIds = (doc: Pick<Doc, 'layers'>): Set<number> =>
   new Set(doc.layers.filter(l => l.paper === 'yellow').map(l => l.id))
+
+/** «글씨로 판정된 획인가»(web2-32 1번) — 출처는 `Stroke.text` 하나다(#54). */
+export const isText = (s: Stroke): boolean => s.text === 1
+
+/** «2D 획인가» — 옐로 겹의 획이거나 글씨 획. 읽는 자리: lift(3D 제외) ·
+ *  analyze(소실점 제외) · brushlayer/filmlayer(2D 표시). 둘을 한 술어로 묶은 이유는
+ *  **규격이 같기 때문**이다(web2-32 1번 — 새 규격을 안 짓는다). */
+export const isFlat2d = (s: Stroke, yellow: Set<number>): boolean =>
+  isText(s) || (s.layer !== undefined && yellow.has(s.layer))
 
 // ── 밑그림(web2-23 2-b) — **사건의 기록**이지 파생이 아니다 ────────────────────
 // 옐로 겹을 얹는 **그 순간 한 번** 구운 make2d(`core/make2d.ts`). `own3`와 같은 급:

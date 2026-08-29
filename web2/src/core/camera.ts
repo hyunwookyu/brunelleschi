@@ -17,7 +17,7 @@
 //   작도 카메라는 지면 위 `EYE_HEIGHT`에 서서 수평으로 본다(피치 0·롤 0).
 //   그래서 **Y=0이 지면**이고, 눈높이가 Y 스케일을 정한다 — f(깊이 압축률)와 다른 축이다.
 
-import { yellowIds, type Doc, type Stroke, type CamPose } from './types'
+import { yellowIds, isFlat2d, type Doc, type Stroke, type CamPose } from './types'
 import { C } from './constants'
 import { isLevel } from './level'
 import {
@@ -202,7 +202,9 @@ export function analyze(doc: Doc): Analysis {
   // 불변을, 카메라 불변 팔이 이 제외를 잰다).
   const yellow = yellowIds(doc)
   for (const s of doc.strokes) {
-    if (s.layer !== undefined && yellow.has(s.layer)) { roles.set(s.id, 'content'); continue }
+    // 글씨 획(web2-32 1번)도 여기서 빠진다 — 종이에 쓴 숫자가 «수평 선언»이나 소실점
+    // 획으로 읽히면 카메라가 오염된다(1이 축에 붙던 그 증상의 카메라 쪽 반쪽이다).
+    if (isFlat2d(s, yellow)) { roles.set(s.id, 'content'); continue }
     // 작도는 작도 포즈에서만 — 궤도 후의 획은 전부 내용이다
     if (s.view) { roles.set(s.id, 'content'); continue }
     const p1Locked = screenHDeclared && vps.length >= 1

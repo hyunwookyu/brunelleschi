@@ -3,7 +3,7 @@
 // 시작점이 3D에 없으면 그 획은 2D로 대기한다 — 거부가 아니라 상태다.
 // 대기 획은 조건이 갖춰지면 승격하고, 승격은 연쇄한다.
 
-import { onPaper, yellowIds, type Doc, type Stroke, type CamPose } from './types'
+import { onPaper, yellowIds, isFlat2d, type Doc, type Stroke, type CamPose } from './types'
 import { C } from './constants'
 import {
   analyze, type Analysis, type AxisId, DRAW_POSE,
@@ -148,9 +148,11 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
   // 옐로 겹의 획은 **2D다**(web2-22 1부) — 켜져 있어도 3D에 없다. 대기도 아니다(대기는
   // «조건이 갖춰지면 승격»인데 옐로는 매체가 2D라 조건이 없다). 여기서 빠지면 오스냅·
   // 조각·면·waiting 계수 전부 자동으로 빠진다(#54 — 별도 필터 없음, web2-20 4부와 같은 길).
+  // 글씨 획도 같은 자리에서 빠진다(web2-32 1번) — **옐로와 같은 규격**이라 술어가 하나다
+  // (`isFlat2d`). 여기서 빠지면 오스냅·조각·면·waiting 계수가 전부 자동으로 빠진다.
   const yellow = yellowIds(doc)
-  const content = doc.strokes.filter(s => !isMark(s)
-    && !(s.layer !== undefined && (offLayers.has(s.layer) || yellow.has(s.layer))))
+  const content = doc.strokes.filter(s => !isMark(s) && !isFlat2d(s, yellow)
+    && !(s.layer !== undefined && offLayers.has(s.layer)))
   if (!an.principal || an.f === null) {
     return { an, lifted, waiting: content.map(s => s.id), waitWhy, anchorId, strokes, mmPerUnit }
   }

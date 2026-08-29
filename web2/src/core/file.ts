@@ -151,6 +151,9 @@ export function parseBrnl(text: string): BrnlData | null {
     // 규약인 이유: own3는 사슬로 언제든 다시 세울 수 있는 «굳힘»이라(§8 이행) 잃어도
     // 조용히 틀리게 그려질 값이 아니라 다시 계산될 값이다. 문서를 거부하면 잃는 것이
     // 더 크다. 깃발이 꺼져 있으면 읽혀도 아무 데도 안 쓰인다.
+    // 글씨 획(web2-32 1번) — **선택**이고 값은 1 하나다. 없으면(옛 파일) 작도선이다.
+    // 모양이 틀리면 **그 필드만 버린다**(own3와 같은 규약 — 판정은 다시 설 수 있다).
+    if (s.text === 1) st.text = 1
     if (s.own3 && isV3(s.own3.a) && isV3(s.own3.b) &&
         (s.own3.axis === null || typeof s.own3.axis === 'string')) {
       st.own3 = { a: { ...s.own3.a }, b: { ...s.own3.b }, axis: s.own3.axis ?? null }
