@@ -148,8 +148,18 @@ export function bakeFiberTile(id: number, paper: Paper, dpr: number, wrap = true
  *  ⚠ 막은 **그 종이의 시점에서만**(3-d) — 다른 포즈로 가면 갈림째 사라진다(막도 위 획
  *  분리도). 겹 자체는 3D에서 산다(4부) — 사라지는 것은 막뿐이다. */
 export function filmSplit(app: App): { films: Layer[]; above: Set<number> } | null {
-  if (app.activeLayer === null) return null
   const stack = app.doc.layers.filter(l => l.sheet === app.activeSheet)
+  // **겹이 없으면 갈림도 없다** — 겹을 안 쓰는 문서의 비용이 web2-18과 같다(3-b 회계의 전제).
+  // ⚠⚠ 종전에는 이 문이 «활성 겹이 없으면»이었다. 그러면 **켜져 있는 겹이 안 보인다**:
+  //    눈으로 겹을 껐다 켜면 `on`은 참으로 돌아오는데 활성은 `null`이라(끄면서 내려간다)
+  //    막이 통째로 접힌 채 남았다 — 「다시 켜면 그대로 돌아온다」가 깨진 자리다(web2-27 2번).
+  //    표시의 술어를 **`on` 하나로** 합친다(#75 ㉠: 만드는 자리와 보이는 자리가 같은 술어).
+  if (stack.length === 0) return null
+  if (app.activeLayer === null) {
+    // 종이가 활성 — **모든 켜진 겹이 막이다**(위/아래 갈림이 없다: 나눌 기준이 없다).
+    // 그 겹들의 획은 막 «아래»로 간다(#layerc 몫이 아니다) — 종이에서 올려다보는 그림이다.
+    return { films: atSheetPose(app) ? stack.filter(l => l.on) : [], above: new Set() }
+  }
   const ai = stack.findIndex(l => l.id === app.activeLayer)
   if (ai < 0) return null
   // ⚠ **above는 포즈 무관**이다 — 궤도로 시점을 벗어나도 위 획은 #layerc가 계속

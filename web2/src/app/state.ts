@@ -1029,7 +1029,20 @@ export function setLayerOn(app: App, id: number, on: boolean) {
   const lay = app.doc.layers.find(l => l.id === id)
   if (!lay || lay.on === on) return
   lay.on = on
-  if (!on && app.activeLayer === id) app.activeLayer = null
+  // ── 끄는 겹이 활성이면 **한 단계 아래로 내린다**(web2-27 2번) ──────────────────
+  // 종전에는 `null`(= 종이)로 떨어뜨렸는데, `filmSplit`이 「활성 겹이 없으면 갈림도
+  // 없다」로 **막을 통째로 접는다**. 그래서 겹 하나를 끄면 **남아 있는 다른 겹의
+  // 종이면까지 같이 사라졌다**(실측: 옐로+트레이싱에서 활성(트레이싱)을 끄자 화면이
+  // 204,192,151 → 244.7,242.7,237.8 = 맨 종이. 옐로는 `on: true` 그대로였다).
+  // 「안 보이는 층에 그리는 상태」를 안 만드는 것이 원래 목적이고, 그 목적은 **보이는
+  // 아래 겹**으로 내려가면 그대로 지켜진다 — 아래가 없을 때만 종이로 간다.
+  // ⚠ 다시 켤 때는 **자동으로 안 올린다**(지시 문면 — 사용자가 고른다).
+  if (!on && app.activeLayer === id) {
+    const stack = app.doc.layers.filter(l => l.sheet === lay.sheet)
+    const i = stack.findIndex(l => l.id === id)
+    const below = [...stack.slice(0, i)].reverse().find(l => l.on && !l.locked)
+    app.activeLayer = below ? below.id : null
+  }
   // 손으로 눈을 건드리면 **솔로의 기억이 낡는다** — 되돌릴 자리가 더는 그 자리가 아니다.
   // 되돌리지 않고 **기억만 버린다**(지금 화면이 사람이 만든 상태다).
   app.solo = null
