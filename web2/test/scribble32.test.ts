@@ -93,6 +93,57 @@ describe('32-1 ① 숫자를 쓰면 그 획들이 전부 글씨가 된다', () =
     expect(marked.length, '뭉치가 확정되면 앞 획도 함께 뒤집힌다').toBe(all.length)
     expect(all.some(id => s.app.lift.lifted.has(id)), '3D가 남지 않는다').toBe(false)
 
+    // ── **재판정 경로의 분자/분모**(#43 · 1차 리뷰어 지적) ──────────────────────
+    // 위 표의 `lifted: 0`은 «확정 시 분류»의 결과이고, 「3D였던 획이 되돌려졌는가」는
+    // 그것과 다른 물음이다. 0이 «안 걸렸다»인지 «경로가 안 돌았다»인지 갈라야 한다(#32).
+    // 그래서 **선 바로 곁에** 써서 첫 획이 스냅으로 3D에 오르게 하고, 획마다 그 순간의
+    // 상태를 적어 둔 뒤 뭉치가 확정된 뒤와 견준다.
+    const recl = (() => {
+      const s2 = closed()
+      const line = s2.draw(380, 560, 380, 740)!          // 3D로 서는 세로선
+      let attempted = 0, liftedOnce = 0, flipped = 0, flippedFrom3d = 0
+      const seen: { id: number; lifted: boolean }[] = []
+      for (const st of write('25', 392, 600, 7, 0.5)) {  // 선에 바로 붙여 쓴다
+        const r = s2.stroke(st)
+        if (!r) continue
+        attempted++
+        const wasLifted = s2.app.lift.lifted.has(r.id)
+        if (wasLifted) liftedOnce++
+        seen.push({ id: r.id, lifted: wasLifted })
+      }
+      for (const x of seen) {
+        const now = s2.app.doc.strokes.find(z => z.id === x.id)
+        if (now && isText(now)) { flipped++; if (x.lifted) flippedFrom3d++ }
+      }
+      // 그 선이 근거인가 — 가드가 실제로 물을 수 있는 자리인지(분모의 반대쪽)
+      const lineIsBasis = isBasis(s2.app.lift.lifted, line.id, C.TEXT_BASIS_TOL)
+      return { attempted, lifted_once: liftedOnce, flipped, flipped_from_3d: flippedFrom3d, line_is_basis: lineIsBasis }
+    })()
+    console.log(`[32-1 재판정] 시도 ${recl.attempted} · 확정 시 3D였던 획 ${recl.lifted_once} · 글씨로 뒤집힌 획 ${recl.flipped}(그중 3D였던 것 ${recl.flipped_from_3d})`)
+    expect(recl.attempted, '경로가 실제로 돌았다').toBeGreaterThan(0)
+    expect(recl.flipped, '선 곁에 써도 글씨가 된다').toBe(recl.attempted)
+
+    // ── 근거 가드의 **발화 수**(④의 장면을 수로 남긴다) ─────────────────────────
+    const guard = (() => {
+      const s3 = closed()
+      const a = s3.draw(500, 560, 540, 545)!
+      const b = s3.draw(540, 545, 580, 530)!
+      const d = s3.draw(600, 480, 610, 498)!
+      const e = s3.draw(620, 484, 628, 502)!
+      const cl = writingCluster(s3.app)
+      const isT = (id: number) => isText(s3.app.doc.strokes.find(x => x.id === id)!)
+      return {
+        basis_true: [a, b, d, e].filter(x => isBasis(s3.app.lift.lifted, x.id, C.TEXT_BASIS_TOL)).length,
+        of: 4,
+        cluster: cl.ids.length,
+        flipped: [a, b, d, e].filter(x => isT(x.id)).length,
+        connected_flipped: [a, b].filter(x => isT(x.id)).length,
+      }
+    })()
+    console.log(`[32-1 가드] 근거로 읽힌 획 ${guard.basis_true}/${guard.of} · 뭉치 ${guard.cluster} · 뒤집힌 획 ${guard.flipped}(이어진 것 중 ${guard.connected_flipped})`)
+    expect(guard.basis_true, '가드가 실제로 발화한다(0이면 «안 돌았다»와 구별이 안 된다)').toBeGreaterThan(0)
+    expect(guard.connected_flipped, '이어진 획은 안 뒤집힌다').toBe(0)
+
     const out = resolve(HERE, '../../stage0/out/scribble32_web2.json')
     mkdirSync(dirname(out), { recursive: true })
     writeFileSync(out, JSON.stringify({
@@ -110,6 +161,11 @@ describe('32-1 ① 숫자를 쓰면 그 획들이 전부 글씨가 된다', () =
         '「1」이 0/1': '**규칙이다**(결함이 아니다) — 곧은 짧은 획 하나는 «1»일 수도 짧은 작도선일 수도 있어 놓지 않는다. 옆에 한 자가 붙는 순간 앞 획까지 뒤집힌다(①\'가 그것을 잰다).',
       },
       per_text: rows,
+      reclassify_path: recl,
+      basis_guard: guard,
+      flags_explained_2: {
+        'per_text의 lifted가 전부 0': '**확정 시 분류의 결과**다(재판정이 «안 돌았다»가 아니다). 재판정 경로의 분자/분모는 `reclassify_path`가 따로 낸다 — 선 곁에 붙여 써서 첫 획이 3D에 오른 장면이다.',
+      },
     }, null, 2))
   })
 })

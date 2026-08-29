@@ -216,62 +216,120 @@ describe('32-3 대상은 숫자의 위치가 정한다', () => {
     expect([up.id, dn.id]).toContain(dimTargetFor(s2.app, mid))   // 그때도 1등이 기본이다
   })
 
-  it('③ 의도한 대상과 일치하는 비율 — 옛 규칙(근접만)과 나란히 잰다', () => {
-    // 장면: 나란한 가로 둘 + 비스듬한 하나 + 세로 하나. 실제 작도에 가깝게 **여럿**이다
-    // (#78 ㉡ — 후보 경쟁은 실사용 밀도에서 재야 뜻이 있다).
+  it('③ 의도와 일치하는 비율 · **후보 수** · 대역 밖 — 옛 규칙(근접만)과 나란히, 시드를 훑어서', () => {
+    // 장면: 3D로 서는 선 넷(세로 둘 · 아래 가로 · 물러나는 선) — 실사용 밀도의 최소판.
+    // ⚠ **후보 수를 함께 센다**(1차 리뷰어 지적): 사용자의 말은 「후보만 잔뜩 생성된다」이고
+    //   그것은 **적중**이 아니라 **개수**의 양이다. 적중만 재면 그 통증을 안 잰 것이다.
     const build = () => {
       const s = closed()
       const lines = {
-        v1: s.draw(380, 560, 380, 740)!,               // 세로(왼쪽 모서리)
-        v2: s.draw(820, 560, 820, 700)!,               // 세로(오른쪽 모서리)
-        bot: s.draw(380, 740, 820, 700)!,              // 아래 가로
-        rec: s.draw(380, 740, 600, 650)!,              // 안으로 물러나는 선
+        v1: s.draw(380, 560, 380, 740)!,
+        v2: s.draw(820, 560, 820, 700)!,
+        bot: s.draw(380, 740, 820, 700)!,
+        rec: s.draw(380, 740, 600, 650)!,
       }
       return { s, lines }
     }
-    const rows: { line: string; t: number; off: number; side: number; want: number; three: number | null; near: number | null; ok3: boolean; okNear: boolean }[] = []
-    for (const key of ['v1', 'v2', 'bot', 'rec'] as const) {
-      for (const t of [0.35, 0.5, 0.65]) {
-        for (const off of [20, 30]) {
-          for (const side of [1, -1]) {
-            const { s, lines } = build()
-            const want = lines[key].id
-            if (!s.app.lift.lifted.has(want)) continue
-            const ids = writeAlong(s, '2500', want, { t, off, side })
-            const group = handwritingGroup(s.app)
-            const use = group.length > 0 ? group : ids
-            if (use.length === 0) continue
-            const three = dimTargetFor(s.app, use)
-            // **옛 규칙** — 뭉치 중심에서 가장 가까운 3D 획(29-2의 nearestDimTarget 그대로).
-            let cx = 0, cy = 0, n = 0
-            for (const id of use) {
-              const st = s.app.doc.strokes.find(x => x.id === id)!
-              cx += (st.a.x + st.b.x) / 2; cy += (st.a.y + st.b.y) / 2; n++
+    type Row = { seed: number; line: string; t: number; off: number; side: number; want: number; three: number | null; near: number | null; ok3: boolean; okNear: boolean; cands: number; tie: boolean }
+    const rows: Row[] = []
+    // **시드를 훑는다**(#14 — 여유가 몇 칸인데 변동폭이 없으면 결론이 표본을 넘는다).
+    // 흔들기(jit)는 글자마다 걸려 있고, 시드가 그 흔들림의 갈래다.
+    for (const seed of [31, 977, 20260829]) {
+      for (const key of ['v1', 'v2', 'bot', 'rec'] as const) {
+        for (const t of [0.35, 0.5, 0.65]) {
+          for (const off of [20, 30]) {
+            for (const side of [1, -1]) {
+              const { s, lines } = build()
+              const want = lines[key].id
+              const ids = writeAlong(s, '2500', want, { t, off, side, seed })
+              const group = handwritingGroup(s.app)
+              const use = group.length > 0 ? group : ids
+              if (use.length === 0) continue
+              const sc = dimTargetScores(s.app, use)
+              const three = dimTargetFor(s.app, use)
+              let cx = 0, cy = 0, n = 0
+              for (const id of use) {
+                const st = s.app.doc.strokes.find(x => x.id === id)!
+                cx += (st.a.x + st.b.x) / 2; cy += (st.a.y + st.b.y) / 2; n++
+              }
+              // **옛 규칙** — 뭉치 중심에서 가장 가까운 3D 획(29-2의 nearestDimTarget 그대로 ·
+              // 대역이 Infinity였다: 그것이 「후보만 잔뜩」의 한쪽 뿌리다)
+              const near = n > 0 ? pickTargetAt(s.app, { x: cx / n, y: cy / n }, Infinity) : null
+              rows.push({ seed, line: key, t, off, side, want, three, near, ok3: three === want, okNear: near === want, cands: sc.length, tie: dimTargetTie(s.app, use) })
             }
-            const near = n > 0 ? pickTargetAt(s.app, { x: cx / n, y: cy / n }, Infinity) : null
-            rows.push({ line: key, t, off, side, want, three, near, ok3: three === want, okNear: near === want })
           }
         }
       }
     }
-    const ok3 = rows.filter(r => r.ok3).length
-    const okN = rows.filter(r => r.okNear).length
+    const bySeed = [...new Set(rows.map(r => r.seed))].map(seed => {
+      const rs = rows.filter(r => r.seed === seed)
+      return { seed, n: rs.length, ok3: rs.filter(r => r.ok3).length, okNear: rs.filter(r => r.okNear).length }
+    })
+    const ok3 = rows.filter(r => r.ok3).length, okN = rows.filter(r => r.okNear).length
     const diff = rows.filter(r => r.ok3 !== r.okNear)
-    console.log(`[32-3 ③] 세 항 ${ok3}/${rows.length} · 옛 규칙(근접만) ${okN}/${rows.length} · 갈린 칸 ${diff.length}`)
-    for (const d of diff) console.log(`[32-3 ③ 갈림] ${d.line} t=${d.t} off=${d.off} side=${d.side} — 세 항 ${d.ok3 ? '○' : '×'} · 근접만 ${d.okNear ? '○' : '×'}`)
-    expect(rows.length, '픽스처가 실제로 돈다').toBeGreaterThan(20)
-    expect(ok3, '세 항이 옛 규칙보다 낫거나 같다').toBeGreaterThanOrEqual(okN)
+    for (const b of bySeed) console.log(`[32-3 ③ 시드 ${b.seed}] 세 항 ${b.ok3}/${b.n} · 근접만 ${b.okNear}/${b.n}`)
+    console.log(`[32-3 ③ 합] 세 항 ${ok3}/${rows.length} · 근접만 ${okN}/${rows.length} · 갈린 칸 ${diff.length}(세 항 승 ${diff.filter(d => d.ok3).length} · 패 ${diff.filter(d => !d.ok3).length})`)
+    // **후보 수** — 사용자의 통증을 그대로 센다
+    const candHist: Record<number, number> = {}
+    for (const r of rows) candHist[r.cands] = (candHist[r.cands] ?? 0) + 1
+    const oneOnly = rows.filter(r => r.cands === 1).length
+    const tied = rows.filter(r => r.tie).length
+    console.log(`[32-3 ③ 후보 수] 분포 ${JSON.stringify(candHist)} · 후보 하나 ${oneOnly}/${rows.length} · «겹친다»로 판정 ${tied}/${rows.length}`)
+
+    expect(rows.length, '픽스처가 실제로 돈다').toBeGreaterThan(60)
+    expect(ok3, '세 항이 옛 규칙보다 낫거나 같다 — **시드 전부에서**').toBeGreaterThanOrEqual(okN)
+    for (const b of bySeed) expect(b.ok3, `시드 ${b.seed}에서도 안 진다`).toBeGreaterThanOrEqual(b.okNear)
     expect(ok3 / rows.length, '기본 대상이 대체로 의도와 맞는다').toBeGreaterThan(0.8)
+    // 「후보만 잔뜩」의 반대편 — **대부분 고르라고 하지 않는다**
+    expect(tied / rows.length, '겹쳤다고 말하는 칸이 드물다').toBeLessThan(0.25)
+
+    // ── **대역 밖**(`DIM_TARGET_REACH`)이 실제로 무는가 — 옛 규칙과 갈리는 그 자리다 ──
+    // 옛 규칙은 대역이 Infinity라 **아무리 멀어도 하나를 고른다**. 새 규칙은 안 고른다.
+    const far = (() => {
+      const { s, lines } = build()
+      const ids = writeAlong(s, '2500', lines.v1.id, { off: 420, rot: false })   // 한참 떨어진 자리
+      const use = handwritingGroup(s.app).length > 0 ? handwritingGroup(s.app) : ids
+      let cx = 0, cy = 0, n = 0
+      for (const id of use) { const st = s.app.doc.strokes.find(x => x.id === id)!; cx += (st.a.x + st.b.x) / 2; cy += (st.a.y + st.b.y) / 2; n++ }
+      return {
+        cands: dimTargetScores(s.app, use).length,
+        three: dimTargetFor(s.app, use),
+        near: n > 0 ? pickTargetAt(s.app, { x: cx / n, y: cy / n }, Infinity) : null,
+        strokes: use.length,
+      }
+    })()
+    console.log(`[32-3 ③ 대역 밖] 획 ${far.strokes} · 후보 ${far.cands} · 세 항 ${far.three} · 옛 규칙 ${far.near}`)
+    expect(far.strokes, '글씨는 그대로 써졌다(분해능 — 「아무 일도 안 났다」와 가른다)').toBeGreaterThan(0)
+    expect(far.cands, '대역 밖이면 후보가 없다').toBe(0)
+    expect(far.three, '그래서 치수가 안 붙는다 — 없는 대상을 지어내지 않는다').toBeNull()
+    expect(far.near, '옛 규칙은 그래도 하나를 고른다(대역이 Infinity였다)').not.toBeNull()
+
+    // ── 동점 판정이 **항등이 아니다** — 가운데에서 벗어나면 거짓이 된다 ──────────
+    // (#77 ㉥: 두 수가 정확히 같으면 같은 것을 재는지 의심한다. 대칭 배치의 0.895 ↔ 0.895는
+    //  구성상 같으므로 그것만으로는 «판정이 산다»가 아니다.)
+    const tieProbe = [0, 4, 10, 20].map(shift => {
+      const s2 = closed()
+      const up = s2.draw(380, 560, 380, 740)!
+      s2.draw(440, 560, 440, 740)!
+      const mid = writeAlong(s2, '2500', up.id, { off: 30 + shift, side: -1 })
+      const sc = dimTargetScores(s2.app, mid)
+      return { shift, tie: dimTargetTie(s2.app, mid), top: sc.slice(0, 2).map(x => Number(x.score.toFixed(4))) }
+    })
+    for (const p of tieProbe) console.log(`[32-3 ② 동점] 가운데에서 ${p.shift}px — 겹침 ${p.tie} · 점수 ${JSON.stringify(p.top)}`)
+    expect(tieProbe[0]!.tie, '정확히 가운데면 겹친다').toBe(true)
+    expect(tieProbe[tieProbe.length - 1]!.tie, '벗어나면 안 겹친다 — 판정이 항등이 아니다').toBe(false)
 
     const out = resolve(HERE, '../../stage0/out/dimtarget32_web2.json')
     mkdirSync(dirname(out), { recursive: true })
     writeFileSync(out, JSON.stringify({
-      what: 'web2-32 3번 — 치수의 «대상»이 의도와 맞는 비율. 세 항(근접·정렬·선상 위치) ↔ 옛 규칙(근접만)을 같은 픽스처에서 나란히 잰다.',
+      what: 'web2-32 3번 — 치수의 «대상»이 의도와 맞는 비율 **과 후보 수**. 세 항(근접·정렬·선상 위치) ↔ 옛 규칙(근접만)을 같은 픽스처에서 나란히 잰다.',
       bias: '⚠ 합성 배치다 — 「도면 관행대로 선과 나란히·가운데쯤·조금 떨어져 쓴다」를 좌표로 흉내낸 것이고 사람이 실제로 쓴 자리가 아니다. 표는 «어떤 배치에서 갈리는가»를 가리키는 데까지 쓴다.',
+      user_pain: '사용자의 말은 「후보만 잔뜩 생성된다」였다 — **개수**의 양이다. 그래서 적중(hit)만이 아니라 **후보 수 분포**와 «겹친다»로 판정한 칸 수를 함께 낸다(1차 리뷰어 지적).',
       conditions: {
-        scene: '카메라가 닫힌 2점 장면 + **3D로 선** 내용 선 넷(세로 둘 · 아래 가로 · 물러나는 선)',
-        placement: '선을 따라 t=0.35/0.5/0.65 · 수직 거리 20/30px · 양쪽 — 글씨는 그 선 방향으로 눕혀 쓴다',
-        old_rule: 'state.pickTargetAt(중심, Infinity) — 29-2의 nearestDimTarget이 쓰던 그 함수(흉내가 아니라 실제 코드)',
+        scene: '카메라가 닫힌 2점 장면 + **3D로 서는** 내용 선 넷(세로 둘 · 아래 가로 · 물러나는 선)',
+        placement: '선을 따라 t=0.35/0.5/0.65 · 수직 거리 20/30px · 양쪽 · 글씨는 그 선 방향으로 눕혀 쓴다. **흔들기 jit=0.6px**가 글자마다 걸린다(rng32 — Math.random ⛔ #14)',
+        seeds: '시드 31 · 977 · 20260829 — 같은 48칸을 세 번 돈다(변동폭 · #14)',
+        old_rule: 'state.pickTargetAt(중심, Infinity) — 29-2의 nearestDimTarget이 쓰던 그 함수(흉내가 아니라 실제 코드). **대역이 Infinity**였다',
         command: 'npx vitest run test/writedim32.test.ts',
       },
       constants: {
@@ -283,7 +341,15 @@ describe('32-3 대상은 숫자의 위치가 정한다', () => {
       },
       three_term: { hit: ok3, n: rows.length },
       nearest_only: { hit: okN, n: rows.length },
-      differed: diff.length,
+      by_seed: bySeed,
+      differed: { n: diff.length, three_won: diff.filter(d => d.ok3).length, three_lost: diff.filter(d => !d.ok3).length, rows: diff },
+      candidates: { histogram: candHist, single: [oneOnly, rows.length], tie: [tied, rows.length] },
+      out_of_reach: far,
+      tie_probe: tieProbe,
+      flags_explained: {
+        '세 항이 진 칸이 있다': '**그대로 적는다** — 진 칸은 «물러나는 선(rec)»에 몰린다(원근이 걸린 자리). 3승 1패류의 여유는 얇으므로 시드 셋을 훑어 그 여유가 시드마다 유지되는지를 함께 본다(#14).',
+        '후보 수가 1인 칸이 대부분이다': '그것이 이 항목의 목적이다 — 「하나로 정해지면 후보를 내지 마라」(지시 문면). 대역(`DIM_TARGET_REACH`)이 그 일을 하고, 대역 밖 배치(out_of_reach)가 그 문이 실제로 문다는 증거다.',
+      },
       rows,
     }, null, 2))
   })
