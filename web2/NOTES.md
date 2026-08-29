@@ -11442,3 +11442,5 @@ fingerPans(app) = app.penUsed || app.lift.lifted.size === 0
 파일 읽기가 비동기라(`await f.text()`) 세는 순간 아직 안 떴을 수 있다(값은 그대로 2다).
 
 재실행: flow·ui28·sidebar·zones·face **40/0**.
+
+**28 최종 검증**: 타입 **0** · 단위 **680 / 0 / 680** · e2e **340 / 0 / 340**(`--workers=1` · **25.8m**).
