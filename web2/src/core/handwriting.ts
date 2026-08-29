@@ -16,8 +16,20 @@
 import type { Pt } from './vec'
 import { splitGlyphs, isDot } from './digits'
 import { classifyGlyph } from './digitnet'
+import { C } from './constants'
 
 export const NET_REJECT = 0.52
+
+/** **정규화 시야의 구제 문턱**(web2-32 4번) — 비를 편 래스터가 내는 답은 이 아래면 안 받는다.
+ *  0.52(NET_REJECT)보다 높은 이유는 **비용 비대칭**이다(#61 ⚠⚠ — 조용히 틀린 치수보다
+ *  다시 쓰기가 싸다). 값의 근거는 `glyph32_web2.json`의 훑기다(같은 표본에서 나란히):
+ *    0.60 → 맞음 584/880 · 틀림 20   0.65 → 564 · 11   **0.70 → 534 · 8**   0.75 → 515 · 4
+ *  **0.70을 고른 것은 정확도가 아니라 불변식이다**: 잡음 8종의 «ㄷ자»가 편 시야에서
+ *  **0.658로 «5»**를 낸다(비 보존 시야에서는 0.497이라 걸러졌다). 0.65면 그것이 통과해
+ *  web2-10부터의 불변 「**잡음 수용 0**」이 깨진다 — 그 불변이 정확도보다 앞선다.
+ *  ⚠ 여유가 0.042로 **얇다**(NET_REJECT의 ±0.023과 같은 급) — 표본이 커지면 다시 놓는다.
+ *  되돌릴 조건: 실기기에서 「자꾸 «?»가 난다」가 관측되면 잡음 표본을 늘려 다시 잰다. */
+export const NET_RESCUE = 0.7
 
 /** 내장 API 최소 타입 — 규격(WICG Handwriting Recognition)의 쓰는 부분만 */
 interface HwPoint { x: number; y: number; t?: number }
@@ -30,6 +42,24 @@ type HwNavigator = Navigator & {
 export const hasBuiltin = (): boolean =>
   typeof navigator !== 'undefined' && 'createHandwritingRecognizer' in navigator
 
+/** 글리프 하나 → 답. **두 시야**를 이 순서로 본다(web2-32 4번 · 30-8이 정정한 후보):
+ *
+ *  ① **비 보존**(종전 전처리 — MNIST의 구성 그대로). 이것이 확신을 내면 그대로 받는다.
+ *  ② 거부하면 **비를 편 시야**(`DIGIT_NORM_ALPHA`)로 한 번 더 본다 — 구제에는 더 높은
+ *     문턱(`NET_RESCUE`)이 걸린다.
+ *
+ *  ⚠ 이 순서가 곧 「가로세로비를 **약한 특징으로 강등**하되 버리지는 않는다」이다(지시 문면):
+ *  비는 여전히 첫 시야를 정하지만 **지배하지 않는다**. 30-8이 「자형」이 아니라 «비»를
+ *  가리켰고(비 0.65 6/20 ↔ 비 1.00 18/20), 훑기가 그것을 확인했다 — `glyph32_web2.json`.
+ *  ⚠⚠ 비를 **통째로 버리면**(alpha=1) 전체가 491 → **367**로 무너진다(9의 꼬리와 1이
+ *  납작해진다). 지시가 「완전히 버리지는 마라」로 못 박은 자리가 실측으로 그대로 나온다. */
+export function classifyGlyphNorm(strokes: Pt[][]): { ch: string; p: number } | null {
+  const a = classifyGlyph(strokes, 0)
+  if (a && a.p >= NET_REJECT) return a
+  const b = classifyGlyph(strokes, C.DIGIT_NORM_ALPHA)
+  return b && b.p >= NET_RESCUE ? b : null
+}
+
 /** 번들 모형 경로 — 동기·순수(시험이 앱과 같은 함수를 부른다) */
 export function recognizeDigitsNet(strokes: Pt[][]): string {
   if (strokes.length === 0) return ''
@@ -37,7 +67,7 @@ export function recognizeDigitsNet(strokes: Pt[][]): string {
   let out = ''
   for (const g of glyphs) {
     if (isDot(g, tallest)) { out += '.'; continue }
-    const r = classifyGlyph(g.strokes)
+    const r = classifyGlyphNorm(g.strokes)
     out += r && r.p >= NET_REJECT ? r.ch : '?'
   }
   return out
