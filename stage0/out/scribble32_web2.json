@@ -68,6 +68,19 @@
     "connected_flipped": 0
   },
   "flags_explained_2": {
-    "per_text의 lifted가 전부 0": "**확정 시 분류의 결과**다(재판정이 «안 돌았다»가 아니다). 재판정 경로의 분자/분모는 `reclassify_path`가 따로 낸다 — 선 곁에 붙여 써서 첫 획이 3D에 오른 장면이다."
+    "per_text의 lifted가 전부 0": "**확정 시 분류의 결과**다(재판정이 «안 돌았다»가 아니다). 재판정 경로의 분자/분모는 `reclassify_path`가 따로 낸다 — 선 곁에 붙여 써서 첫 획이 3D에 오른 장면이다.",
+    "@해시 인용이 없다": "**web2 라인 전체의 유보**다 — 이 라인은 `constantsSnapshot()`을 안 쓰고 `constants` 블록을 손으로 적는다(`hold26.test`가 그 유보를 처음 적었다). 그래서 문서는 원장을 **이름으로** 가리킨다."
+  },
+  "misclassification": {
+    "cells": 20,
+    "wrong": 0,
+    "counter_flipped": 2,
+    "counter_of": 2
+  },
+  "features": {
+    "circle_turn_rad": 6.021385919380451,
+    "circle_turns": 0,
+    "line_turn_rad": 0,
+    "shaky_line_turn_rad": 0
   }
 }
