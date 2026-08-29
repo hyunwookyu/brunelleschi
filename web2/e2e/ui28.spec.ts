@@ -32,6 +32,11 @@ const openOf = (page: Page, root: string) => page.evaluate((sel) => {
 test('28-1 ① 명령은 접고 상태는 안 접는다 — **전수**', async ({ page }) => {
   await boot(page)
   page.on('filechooser', fc => { void fc.setFiles([]) })
+  // 획을 하나 그린다 — 비우기는 **빈 문서에서는 확인을 안 띄운다**(「이미 비어 있다」).
+  // 그 상태로 재면 `data-fold="late"` 갈래가 **아무것도 안 재게 된다**(#69 ㉣).
+  await page.mouse.move(280, 560); await page.mouse.down()
+  for (let i = 1; i <= 8; i++) await page.mouse.move(280 + 420 * i / 8, 560)
+  await page.mouse.up(); await settle(page)
 
   // 먼저 **표시가 빠진 항목이 없다**를 확인한다 — 그게 이 규칙의 전제다.
   // (버튼 종류를 추측하는 코드를 안 만들기로 했으므로, 표시가 없으면 조용히 «상태»가 된다.)
@@ -55,13 +60,29 @@ test('28-1 ① 명령은 접고 상태는 안 접는다 — **전수**', async (
     [...document.querySelectorAll('#pane-file [data-act="cmd"]')].map(e => e.id))
   console.log(`[28-1] 파일 서랍의 명령: ${cmds.join(', ')}`)
   expect(cmds.length, '명령이 실제로 여럿 있다(#69 ㉣ — 공집합이면 통과가 무의미하다)').toBeGreaterThan(3)
+  // ⚠ **접힘의 시점은 «볼일이 끝난 때»다.** 누르는 순간 그 버튼 «곁»에 확인이 뜨는
+  //   명령(비우기 — web2-12 4번)은 바로 접으면 **앵커가 사라져 확인이 미아가 된다**
+  //   (전량 e2e `flow.spec`이 잡았다). 그런 항목은 `data-fold="late"`로 표시하고
+  //   **확인을 누른 뒤** 접힌다 — 표시를 읽는다는 규칙은 그대로다.
   for (const id of cmds) {
     await page.evaluate(() => { (document.getElementById('pane-file') as HTMLDetailsElement).open = true })
     expect(await openOf(page, '#pane-file'), `${id} 누르기 전`).toBe(true)
+    const late = await page.getAttribute(`#${id}`, 'data-fold') === 'late'
     await page.click(`#${id}`)
     await settle(page)
-    // 비우기는 확인 팝오버를 띄운다 — 그때도 **서랍은 접힌다**(볼일이 서랍 밖으로 갔다)
-    expect(await openOf(page, '#pane-file'), `${id} 실행 후 접힌다`).toBe(false)
+    if (late) {
+      // 아직 안 접힌다 — 확인이 그 버튼 곁에 떠 있어야 하기 때문이다(앵커가 살아 있다)
+      expect(await openOf(page, '#pane-file'), `${id}는 확인 전에는 안 접힌다`).toBe(true)
+      expect(await page.locator('#confirm-pop').count(), `${id} 확인이 떠 있다`).toBe(1)
+      const btn = (await page.locator(`#${id}`).boundingBox())!
+      const pop = (await page.locator('#confirm-pop').boundingBox())!
+      expect(pop.x + pop.width, '확인이 그 버튼 곁이다').toBeLessThanOrEqual(btn.x + 1)
+      await page.click('#confirm-pop u[data-pick="yes"]')
+      await settle(page)
+      expect(await openOf(page, '#pane-file'), `${id}는 확인 뒤에 접힌다`).toBe(false)
+    } else {
+      expect(await openOf(page, '#pane-file'), `${id} 실행 후 접힌다`).toBe(false)
+    }
     await page.keyboard.press('Escape')
     await settle(page)
   }

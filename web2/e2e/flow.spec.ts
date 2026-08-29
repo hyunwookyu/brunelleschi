@@ -449,11 +449,19 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(s.horizonY).toBe(400)
 
   // ── 파일 묶음 대조 — 저장·열기·내보내기가 실제로 도는가 (5단계 UI 점검) ──
-  await page.click('#pane-file > summary') // 새로고침으로 접혔다 — 다시 편다
+  // ⚠ **web2-28 1번부터 명령을 실행하면 서랍이 접힌다** — 그러므로 서랍의 명령을 누르기
+  //   전마다 편다. 이 팔이 지키는 요구(「저장·열기·내보내기가 실제로 돈다」)는 그대로이고
+  //   몸짓이 한 번씩 는다(#75 ㉣ — 형태가 갈리면 그 형태를 읽던 팔의 몸짓도 갈린다).
+  const openPane = async () => {
+    if (!(await page.evaluate(() => (document.getElementById('pane-file') as HTMLDetailsElement).open))) {
+      await page.click('#pane-file > summary')
+    }
+  }
+  await openPane() // 새로고침으로 접혔다 — 다시 편다
   // 3D가 하나도 없을 때 내보내기는 **빈 파일을 조용히 내려주지 않는다**
   let downloaded = false
   page.once('download', () => { downloaded = true })
-  await page.click('#btn-obj')
+  await (await openPane(), page.click('#btn-obj'))
   await page.waitForTimeout(300)
   expect(downloaded).toBe(false)
   expect(await page.textContent('#notice')).toContain('내보낼 것이 없다')
@@ -470,12 +478,16 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
     nextId: 5,
   })
   const asFile = { name: 'sample.brnl', mimeType: 'application/json', buffer: Buffer.from(sample) }
+  await openPane()
   await page.setInputFiles('#file-open', asFile)
-  expect(await page.locator('#confirm-pop u').count()).toBe(2)  // 열기 버튼 곁(web2-12 4번)
+  // ⚠ 파일 읽기가 비동기다(`await f.text()`) — 세는 순간 아직 안 떴을 수 있다.
+  //   **기다리는 단언**으로 바꾼다(값은 그대로 2 — 약해지지 않는다).
+  await expect(page.locator('#confirm-pop u')).toHaveCount(2)  // 열기 버튼 곁(web2-12 4번)
   await page.click('#confirm-pop u[data-pick="no"]')
   s = await summary(page)
   expect(s.strokes).toBe(1) // 지평선 하나 — 안 바뀌었다
 
+  await openPane()
   await page.setInputFiles('#file-open', asFile)
   await page.click('#confirm-pop u[data-pick="yes"]')
   await settle(page)
@@ -488,10 +500,10 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(s.waiting).toEqual([4])
 
   // 저장·내보내기 — 실제로 파일이 나간다
-  const [saved] = await Promise.all([page.waitForEvent('download'), page.click('#btn-save')])
+  const [saved] = await Promise.all([page.waitForEvent('download'), (await openPane(), page.click('#btn-save'))])
   expect(saved.suggestedFilename()).toBe('drawing.brnl')
-  const [obj] = await Promise.all([page.waitForEvent('download'), page.click('#btn-obj')])
+  const [obj] = await Promise.all([page.waitForEvent('download'), (await openPane(), page.click('#btn-obj'))])
   expect(obj.suggestedFilename()).toBe('drawing.obj')
-  const [gltf] = await Promise.all([page.waitForEvent('download'), page.click('#btn-gltf')])
+  const [gltf] = await Promise.all([page.waitForEvent('download'), (await openPane(), page.click('#btn-gltf'))])
   expect(gltf.suggestedFilename()).toBe('drawing.gltf')
 })

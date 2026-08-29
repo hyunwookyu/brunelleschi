@@ -789,7 +789,11 @@
             <button id="btn-obj" data-act="cmd" title="OBJ 내보내기 — 다른 앱용. 이 앱으로 못 되돌아온다">OBJ</button>
             <button id="btn-gltf" data-act="cmd" title="glTF 내보내기 — 다른 앱용. 이 앱으로 못 되돌아온다">glTF</button>
             <div style="height:6px"></div>
-            <button id="btn-clear" data-act="cmd" title="전부 지우고 처음부터 — 확인을 받는다">비우기</button>
+            <!-- ⚠ `data-fold="late"` — **명령이지만 접힘은 명령이 끝난 뒤**다(web2-28 1번 후속).
+                 비우기는 누르는 순간 **그 버튼 곁에** 확인 팝오버를 띄우므로(web2-12 4번),
+                 바로 접으면 **앵커가 사라져 확인이 미아가 된다**(전량 e2e `flow.spec`이 잡았다).
+                 볼일이 끝나는 시점은 «확인을 누른 뒤»이고 접힘도 그때다. -->
+            <button id="btn-clear" data-act="cmd" data-fold="late" title="전부 지우고 처음부터 — 확인을 받는다">비우기</button>
             <div class="head" style="margin-top:6px">종이</div>
             <!-- 설정 자루 해체(3-a): 오스냅 → 자 팝업 · 표시 셋 → 눈 · own3d → 진단 ·
                  렌더러는 여기(서랍) — btn-brush id 유지(배선·팔이 그 이름을 본다). -->

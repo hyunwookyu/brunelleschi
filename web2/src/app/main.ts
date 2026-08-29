@@ -809,7 +809,12 @@ function initPanelFold() {
     // 캡처가 아니라 **버블**이다 — 그 항목의 제 동작이 먼저 돌고 나서 접는다(접힘은 뒤끝).
     root.addEventListener('click', (e) => {
       const el = (e.target as HTMLElement | null)?.closest('[data-act]') as HTMLElement | null
-      if (el && el.dataset.act === 'cmd') p.close()
+      if (!el || el.dataset.act !== 'cmd') return
+      // ⚠ `data-fold="late"` — **누르는 순간 볼일이 안 끝나는 명령**이다: 그 버튼 «곁»에
+      //    확인이 뜨는 자리(비우기 — web2-12 4번). 바로 접으면 **앵커가 사라져 확인이
+      //    미아가 된다**(전량 e2e `flow.spec`이 잡았다). 접힘은 그 명령이 스스로 부른다.
+      if (el.dataset.fold === 'late') return
+      p.close()
     })
   }
 }
@@ -973,6 +978,8 @@ document.getElementById('btn-clear')!.addEventListener('click', () => {
     '전부 비운다 — 실행취소로 못 돌아온다.', { label: '비운다', onPick: doClear })
 })
 function doClear() {
+  // 볼일이 여기서 끝난다 — **그때 접는다**(web2-28 1번의 `data-fold="late"` 짝).
+  ;(document.getElementById('pane-file') as HTMLDetailsElement).open = false
   clearAll(app, window.innerWidth, window.innerHeight)
   unitSel.value = app.doc.unit
   try { localStorage.removeItem(AUTOSAVE_KEY); localStorage.removeItem(AUTOSAVE_KEY_OLD) } catch { /* 저장소가 없으면 지울 것도 없다 */ }
