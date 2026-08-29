@@ -50,6 +50,8 @@ export interface InputCallbacks {
   onDimStroke: (pts: Pt[]) => void
   /** 치수 대상 탭 — 문서 좌표. 고른 결과의 알림은 main이 낸다 */
   onDimPick: (p: Pt) => void
+  /** 제안이 떠 있을 때의 탭(web2-29 2단계) — 대상을 그 선으로 옮긴다 */
+  onDimRetarget: (p: Pt) => void
   /** 면 일괄 후보 모드(web2-21 4부)의 탭 — true = 후보 하나를 뺐다 */
   onCandidateTap: (excluded: boolean) => void
 }
@@ -107,6 +109,8 @@ export function initInput(
   let faceDown: Pt | null = null
   /** 치수 대상 고르기 탭(web2-29) — 누른 자리. 뗄 때 «안 움직였으면» 고른다. */
   let dimTap: Pt | null = null
+  /** 제안이 떠 있는 동안의 누름 자리(web2-29 2단계) — 안 움직이고 떼면 대상 바꾸기 */
+  let suggestTap: Pt | null = null
   /** 쓰고 있는 손글씨 한 획 — 뗄 때 `cb.onDimStroke`로 넘긴다 */
   let dimInk: Pt[] | null = null
 
@@ -398,6 +402,11 @@ export function initInput(
     // 누름에서 바로 만들면 «잘못 눌렀다»를 뗌으로 취소할 길이 없다.
     // 지우개 끝이 **먼저**다 — 손에 든 것이 지우개면 사이드바에 무엇이 눌려 있든
     // 지운다(도구는 그대로 남는다 — 뗌과 동시에 아무것도 안 남는다).
+    // 제안이 떠 있는 동안의 **탭**은 「대상 바꾸기」다(web2-29 2단계) — 끌면 종전대로
+    // 그린다(그림이 기본이다). 판정은 뗄 때 «안 움직였는가»로 한다.
+    if (app.dimSuggest && app.tool !== 'dim' && !app.tipErase && !isEraser(app.tool)) {
+      suggestTap = toPt(e)
+    }
     // ── 손글씨 치수(web2-29 1단계) — **모드가 있다** ──────────────────────────
     // 대상을 안 골랐으면 탭이 대상을 고르고, 고른 뒤에는 종이 위의 획이 **손글씨**다
     // (문서에 안 들어간다 — 확정되면 사라지고 치수선으로 대체된다).
@@ -521,6 +530,13 @@ export function initInput(
     if (e.pointerType === 'pen') penDown = false
     if (orbitBtn && e.pointerType === 'mouse' && e.button !== 0) {
       orbitBtn = null; level.release(); endNavHold(app); return
+    }
+    if (suggestTap) {
+      const d = suggestTap
+      suggestTap = null
+      const p = toPt(e)
+      // 끌었으면 그림이다 — 아래로 흘려보낸다(탭일 때만 대상을 옮긴다)
+      if (Math.hypot(p.x - d.x, p.y - d.y) <= C.TAP_MAX_PX / app.view.s) cb.onDimRetarget(d)
     }
     if (dimTap) {
       const d = dimTap

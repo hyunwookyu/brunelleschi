@@ -3,7 +3,7 @@
 // 실행취소는 op 단위다: 획 추가 op, 지우개 한 번의 드래그 op.
 // 그림만 되돌린다 — 작도(카메라)는 op에 들어가지 않는다.
 
-import { emptyDoc, DRAW_SHEET_ID, onPaper, type Doc, type Stroke, type Face, type Sheet, type Layer, type Underlay, type Paper, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
+import { emptyDoc, DRAW_SHEET_ID, onPaper, yellowIds, type Doc, type Stroke, type Face, type Sheet, type Layer, type Underlay, type Paper, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
 import { isInk, widthOfMat } from '../core/material'
 export type { ViewOffset }
 import { liftAll, closestOnLineToRay, type LiftResult } from '../core/lift'
@@ -223,6 +223,19 @@ export interface App {
   /** 인식 결과 — **확정 전에 보여준다**(#61 ⚠⚠ 조용히 틀린 치수보다 다시 쓰기가 싸다).
    *  `mm`이 null이면 못 읽은 것이고 그때 **손글씨를 안 지운다**(다시 쓰게 한다). */
   dimStaged: { text: string; mm: number | null } | null
+  // ── 늦은 인식(web2-29 2단계) — **모드가 없다** ──────────────────────────────
+  // 그냥 종이에 숫자를 쓴다. 획이 숫자로 보이면 **즉시 바꾸지 않고 제안**을 띄운다.
+  // 사용자가 받으면 치수가 되고, 무시하면 **그냥 그린 선으로 남는다**.
+  // ⚠ 이 순서가 규칙이다(지시 문면): 먼저 바꾸고 되돌리게 하면 숫자처럼 생긴 스케치를
+  //   그릴 때마다 방해가 된다. **기본은 그림이고 치수는 제안이다.**
+  /** 지금 떠 있는 제안 — null = 없음. `strokes`는 손글씨로 읽힌 **문서 안의 획들**이다
+   *  (아직 문서에 있다 — 받을 때 비로소 걷힌다). `target`은 치수를 매길 획. */
+  dimSuggest: { strokes: number[]; target: number; text: string; mm: number } | null
+  /** **한 번 무시한 획**(런타임 · 저장 ⛔) — 다시 제안에 안 끌려온다.
+   *  ⚠ 없으면 「무시하면 그림으로 남는다」가 **그 순간만** 참이다: 곁에 숫자를 하나 더
+   *  쓰면 무시했던 획이 새 묶음에 휩쓸려 **받는 순간 같이 걷힌다**(실측: 획 5 → 3).
+   *  사람이 «그림이다»라고 한 번 말했으면 그 말이 남아야 한다. */
+  dimIgnored: Set<number>
   /** **옐로 머무름 직선화의 임계 시간 ms**(web2-26 4번 — 실기기 「조금 길다」 · D6).
    *  기본 `C.HOLD_MS`이고 사람이 `C.HOLD_MS_MIN`~`C.HOLD_MS_MAX`에서 고친다.
    *  ⚠ **문서가 아니라 기기 설정이다**(localStorage) — 손의 성질이지 그림의 성질이 아니다
@@ -296,6 +309,8 @@ export function createApp(W: number, H: number): App {
     dimPick: null,
     dimInk: [],
     dimStaged: null,
+    dimSuggest: null,
+    dimIgnored: new Set(),
     lastCamSig: null,
     touchStats: emptyTouchStats(),
     touchLast: null,
@@ -447,8 +462,21 @@ export function feedPressCalib(app: App, s: Stroke): null | 'nopen' | 'first' | 
 
 /** 치수 대상을 고른다 — 3D로 올라간 획만(길이가 정의돼야 값이 뜻이 있다). */
 export function pickDimTarget(app: App, p: Pt): number | null {
+  const best = pickTargetAt(app, p, app.osnap.radius / app.view.s * 2)
+  if (best !== null) {
+    app.dimPick = best
+    app.dimInk = []
+    app.dimStaged = null
+    for (const l of app.listeners) l()
+  }
+  return best
+}
+
+/** 그 자리에서 가장 가까운 **내용 3D 획** — 대역 안에 없으면 null.
+ *  1단계(탭으로 고르기)와 2단계(제안의 대상 추정)가 **같은 함수**를 쓴다(#54). */
+export function pickTargetAt(app: App, p: Pt, maxD: number): number | null {
   let best: number | null = null
-  let bestD = app.osnap.radius / app.view.s * 2      // 탭 대역 — 새 숫자 ⛔(오스냅 반경의 두 배)
+  let bestD = maxD
   for (const [id, seg] of app.lift.lifted) {
     const s = app.lift.strokes.get(id)
     if (!s) continue
@@ -458,12 +486,6 @@ export function pickDimTarget(app: App, p: Pt): number | null {
     if (!a || !b) continue
     const d = distToSeg2(p, a, b)
     if (d < bestD) { bestD = d; best = id }
-  }
-  if (best !== null) {
-    app.dimPick = best
-    app.dimInk = []
-    app.dimStaged = null
-    for (const l of app.listeners) l()
   }
   return best
 }
@@ -516,6 +538,106 @@ function distToSeg2(p: Pt, a: Pt, b: Pt): number {
   if (L2 < 1e-12) return Math.hypot(p.x - a.x, p.y - a.y)
   const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / L2))
   return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy))
+}
+
+// ── 늦은 인식(web2-29 2단계) ─────────────────────────────────────────────────
+
+/** **최근에 그은 작은 획 묶음** — 숫자로 읽어 볼 후보. 규칙 셋:
+ *  · **옐로에서는 제안하지 않는다**(지시 문면 — 자유 스케치이고 스냅도 안 걸린다:
+ *    거기서 숫자를 쓰는 것은 치수가 아니라 **메모**다).
+ *  · **작아야 한다** — 글자 크기 대역(`DIM_GLYPH_MAX_PX`)을 넘는 획은 그림이다.
+ *  · **모여 있어야 한다** — 마지막 획에서 그 대역 안에 있는 것만 한 묶음이다.
+ *  ⚠ 3D로 올라간 획은 제외한다: 그것은 이미 «공간의 선»이고 글자가 아니다. */
+export function handwritingGroup(app: App): number[] {
+  const doc = app.doc
+  const yset = yellowIds(doc)
+  const last = doc.strokes[doc.strokes.length - 1]
+  if (!last) return []
+  if (last.layer !== undefined && yset.has(last.layer)) return []     // 옐로 ⛔
+  if (app.lift.lifted.has(last.id)) return []                        // 3D는 글자가 아니다
+  const maxPx = C.DIM_GLYPH_MAX_PX / app.view.s
+  const box = (s: Stroke) => {
+    const pts = s.raw && s.raw.length > 1 ? s.raw : [s.a, s.b]
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
+    for (const p of pts) { x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y) }
+    return { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0 }
+  }
+  const lb = box(last)
+  if (Math.max(lb.w, lb.h) > maxPx) return []
+  const out: number[] = []
+  for (let i = doc.strokes.length - 1; i >= 0; i--) {
+    const s = doc.strokes[i]!
+    if ((s.layer ?? null) !== (last.layer ?? null)) break             // 층이 갈리면 묶음이 끝난다
+    if (app.lift.lifted.has(s.id)) break
+    if (app.dimIgnored.has(s.id)) break        // 한 번 «그림이다»라고 한 획은 다시 안 묶는다
+    const b = box(s)
+    if (Math.max(b.w, b.h) > maxPx) break
+    // 마지막 획에서 «글자 몇 개» 안에 있는가 — 가로로 이어 쓴 것을 묶는다
+    const gap = Math.max(0, b.x0 - lb.x1, lb.x0 - b.x1, b.y0 - lb.y1, lb.y0 - b.y1)
+    if (gap > maxPx * C.DIM_GROUP_SPAN) break
+    out.unshift(s.id)
+    if (out.length >= C.DIM_GROUP_MAX) break
+  }
+  return out
+}
+
+/** 그 묶음에 **가장 가까운 3D 획** — 제안이 「어디에 매길지」다(틀렸으면 사용자가 지정한다). */
+export function nearestDimTarget(app: App, ids: number[]): number | null {
+  if (ids.length === 0) return null
+  let cx = 0, cy = 0, n = 0
+  for (const id of ids) {
+    const s = app.doc.strokes.find(x => x.id === id)
+    if (!s) continue
+    cx += (s.a.x + s.b.x) / 2; cy += (s.a.y + s.b.y) / 2; n++
+  }
+  if (n === 0) return null
+  return pickTargetAt(app, { x: cx / n, y: cy / n }, Infinity)
+}
+
+/** 제안을 세운다 — **아무것도 안 바꾼다**(문서는 그대로다). 못 세우면 null을 남긴다. */
+export function proposeDim(app: App, ids: number[], text: string, mm: number): boolean {
+  const target = nearestDimTarget(app, ids)
+  if (target === null || ids.length === 0) return false
+  app.dimSuggest = { strokes: [...ids], target, text, mm }
+  for (const l of app.listeners) l()
+  return true
+}
+
+/** 제안을 받는다 — 그때 **비로소** 손글씨 획이 문서에서 걷히고 치수가 선다.
+ *  실행취소 한 번으로 통째로 돌아온다(획을 지우는 일이므로 지우개와 같은 급). */
+export function acceptSuggest(app: App): DimResult | 'none' {
+  const sug = app.dimSuggest
+  if (!sug) return 'none'
+  const r = setDimension(app, sug.target, sug.mm)
+  if (r !== 'applied' && r !== 'scale') { app.dimSuggest = null; for (const l of app.listeners) l(); return r }
+  const removed: Op['removed'] = []
+  for (let i = app.doc.strokes.length - 1; i >= 0; i--) {
+    if (sug.strokes.includes(app.doc.strokes[i]!.id)) removed.push({ stroke: app.doc.strokes[i]!, index: i })
+  }
+  for (const rm of removed) app.doc.strokes.splice(rm.index, 1)
+  if (removed.length > 0) { app.undoStack.push({ removed, added: [] }); app.redoStack = [] }
+  app.dimSuggest = null
+  recompute(app)
+  return r
+}
+
+/** 제안을 무시한다 — **획은 그대로 남는다**(그것이 기본이다) */
+export function dismissSuggest(app: App) {
+  if (app.dimSuggest === null) return
+  // **그 말이 남는다** — 무시한 획은 다음 묶음에 안 끌려온다(위 `dimIgnored` 주석)
+  for (const id of app.dimSuggest.strokes) app.dimIgnored.add(id)
+  app.dimSuggest = null
+  for (const l of app.listeners) l()
+}
+
+/** 제안의 대상을 사용자가 바꾼다(「틀렸으면 지정할 수 있어야 한다」 — 지시 문면) */
+export function retargetSuggest(app: App, p: Pt): boolean {
+  if (!app.dimSuggest) return false
+  const id = pickTargetAt(app, p, app.osnap.radius / app.view.s * 2)
+  if (id === null) return false
+  app.dimSuggest = { ...app.dimSuggest, target: id }
+  for (const l of app.listeners) l()
+  return true
 }
 
 // ⚠⚠ **D-4 — 지시의 「두 점과 적힌 값이 크게 어긋나면 그 사실을 표시할 수는 있다」는
