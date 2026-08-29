@@ -23,7 +23,7 @@
         "dpr": 2,
         "tile_px": 256,
         "tile_sd": 4.646710293399763,
-        "bare_sd": 7.02016222930979e-12,
+        "bare_sd": 4.013145371573046e-11,
         "film_sd": 4.179396293912187,
         "film_mean": 211.19578812497852,
         "grain_sd": 4.179396293912187,
@@ -43,7 +43,7 @@
     "legacy": [
       {
         "dpr": 1,
-        "grain_sd": 0.22360337188748045
+        "grain_sd": 0.2958649088829876
       },
       {
         "dpr": 3,
@@ -51,17 +51,17 @@
       }
     ],
     "ratio_dpr3_over_dpr1": 1.1072689138302598,
-    "legacy_ratio_dpr3_over_dpr1": 6.087360218740689,
+    "legacy_ratio_dpr3_over_dpr1": 4.600593818114656,
     "weber_floor_levels": 2.1,
     "reachability": {
       "how": "diag.fiberLegacyForTest(true) — 타일 256 device px 고정 + 섬유 배율 dpr/2 + 패턴 배율 0.5·s·dpr",
       "ratio_gate_is_1_0_pm_0_15": {
         "current": 1.1072689138302598,
-        "legacy": 6.087360218740689
+        "legacy": 4.600593818114656
       },
       "amplitude_gate_is_gt_2_1": {
         "current_dpr1": 3.913797728711438,
-        "legacy_dpr1": 0.22360337188748045
+        "legacy_dpr1": 0.2958649088829876
       },
       "note": "둘 다 legacy에서 실제로 게이트 밖이다 — 이 게이트는 통과할 수도 실패할 수도 있다(#69 ㉣)."
     },
