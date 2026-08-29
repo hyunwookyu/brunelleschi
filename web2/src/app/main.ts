@@ -44,7 +44,7 @@ try {
   if (r === 'classic' || r === 'brush') app.renderer = r
 } catch { /* 저장소가 없으면 기본값(brush) */ }
 const brushLayer = initBrushLayer(W, H, dpr)
-import { initFilmLayer, bakeFiberTile, setFilmAlphaForTest, setFiberLegacyForTest } from './filmlayer'
+import { initFilmLayer, bakeFiberTile, setFilmAlphaForTest, setFiberLegacyForTest, setPaperFiberForTest } from './filmlayer'
 const filmLayer = initFilmLayer(W, H, dpr)
 
 // 빌드 식별자 — 배포됐는지 화면에서 바로 안다.
@@ -1040,32 +1040,65 @@ initPanelFold()
 // 결과는 문서에 붙는다(`doc.press`) — 기기 설정이면 옵션을 켜는 순간 예전 그림들의
 // 농도까지 바뀐다. 화면 문구는 지시가 준 「필압 보정」 그대로다.
 const pressBox = document.getElementById('chk-press') as HTMLInputElement
-const syncPressBox = () => { pressBox.checked = pressOn(app) || app.pressCalib !== null }
+const pressCalibRow = document.getElementById('press-calib')!
+const pressCalibStepEl = document.getElementById('press-calib-step')!
+
+/** 절차의 문면 — **한 자리**다(#54). 알림 줄과 설정 패널의 줄이 같은 문자열을 읽는다.
+ *  ⚠ web2-26 6번에는 알림 줄뿐이었고, 알림은 스쳐 지나가므로 **절차가 화면에 있는지**를
+ *  아무도 확인할 수 없었다(30-7의 물음이 그것이다). */
+const PRESS_STEP = {
+  normal: '필압 보정 — 평소 세기로 한 획을 그으세요',
+  hardest: '필압 보정 — 이제 가장 세게 한 획',
+  nopen: '필압 보정 — 펜으로 그어야 압력이 실립니다',
+  again: '필압 보정 — 두 세기가 너무 가깝습니다. 평소 세기부터 다시',
+} as const
+
+/** 화면을 상태에 맞춘다.
+ *  ⚠⚠ **체크상자는 `pressOn`만 읽는다** — 절차 중에는 **꺼진 채**다(30-7 게이트 ④:
+ *  「절반만 켜진 상태를 만들지 마라」). 옵션이 켜지는 시점은 `doc.press`가 서는 순간
+ *  하나이고, 그 전까지는 «절차 중»이라는 별도 표시가 그 사실을 든다(#77 ㉠ — 한 손잡이에
+ *  뜻을 둘 얹으면 옛 뜻이 조용히 죽는다). */
+function syncPressBox(step?: string) {
+  pressBox.checked = pressOn(app)
+  const busy = app.pressCalib !== null
+  pressCalibRow.hidden = !busy
+  if (busy && step) pressCalibStepEl.textContent = step
+  if (!busy) pressCalibStepEl.textContent = ''
+}
+function beginPressCalibUI() {
+  beginPressCalib(app)
+  syncPressBox(PRESS_STEP.normal)
+  status(PRESS_STEP.normal)
+}
 pressBox.addEventListener('change', () => {
-  if (pressBox.checked) {
-    beginPressCalib(app)
-    status('필압 보정 — 평소 세기로 한 획을 그으세요')
-  } else {
-    setPressOff(app)
-    clearNotice()
-  }
+  // 체크상자는 이제 «켜짐»만 든다 — 누르면 **절차를 시작**하고 상자는 도로 꺼진다.
+  if (pressBox.checked) beginPressCalibUI()
+  else { setPressOff(app); syncPressBox(); clearNotice() }
+  invalidate()
+})
+document.getElementById('btn-press-cancel')!.addEventListener('click', () => {
+  // 그만두면 **꺼진 채로 남는다**(30-7 게이트) — 절반 상태가 남지 않는다
+  setPressOff(app)
+  syncPressBox()
+  clearNotice()
   invalidate()
 })
 // 문서를 열면 그 문서의 보정 상태가 화면에 그대로 뜬다(문서에 붙는 설정이므로)
-app.listeners.push(syncPressBox)
+app.listeners.push(() => syncPressBox())
 syncPressBox()
 
 /** 확정된 획을 절차에 먹인다 — `onCommit` 뒤에 부른다(획이 문서에 든 다음). */
 function pressCalibStep(s: Stroke | null) {
   if (!s || app.pressCalib === null) return
+  const say = (m: string) => { status(m); syncPressBox(m) }
   switch (feedPressCalib(app, s)) {
-    case 'nopen': status('필압 보정 — 펜으로 그어야 압력이 실립니다'); break
-    case 'first': status('필압 보정 — 이제 가장 세게 한 획'); break
-    case 'again': status('필압 보정 — 두 세기가 너무 가깝습니다. 평소 세기부터 다시'); break
+    case 'nopen': say(PRESS_STEP.nopen); break
+    case 'first': say(PRESS_STEP.hardest); break
+    case 'again': say(PRESS_STEP.again); break
     case 'done': {
       const c = app.doc.press!
       notify(`필압 보정 완료 — 평소 ${c.p0.toFixed(2)} · 최대 ${c.p1.toFixed(2)}`)
-      syncPressBox()
+      syncPressBox()          // 여기서 비로소 체크상자가 켜진다(그 전까지는 꺼진 채)
       break
     }
   }
@@ -1599,7 +1632,10 @@ const diag = {
     for (let i = 0; i < d.length; i += 97) h = ((h * 33) ^ d[i]!) >>> 0
     return h
   },
-  fiberTile: (id: number, paper: 'tracing' | 'yellow', wrap = true) => bakeFiberTile(id, paper, dpr, wrap),
+  fiberTile: (id: number, paper: 'tracing' | 'yellow' | 'paper', wrap = true) => bakeFiberTile(id, paper, dpr, wrap),
+  /** D-3 반증(web2-30 9번) — **바탕 종이의 결을 끈다**(web2-20 3부의 옛 상태로).
+   *  끄면 「셋의 진폭이 서로 20% 이내」가 같은 실행에서 실패한다. e2e 전용. */
+  paperFiberForTest: (v: boolean) => { setPaperFiberForTest(v); invalidate() },
   /** D-3 반증(3-e ④) — 곱→알파로 바꿔 합성 곡선 붕괴를 본다. e2e 전용. */
   filmAlphaForTest: (v: boolean) => { setFilmAlphaForTest(v); invalidate() },
   /** 손글씨 치수(web2-29 1단계) — **화면 팔의 손잡이**: 인식은 확률적이라 e2e가 값을

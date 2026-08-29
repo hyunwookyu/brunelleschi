@@ -217,13 +217,13 @@ test('30-10 설정 자리 — 눈에 필압 보정이 없고, 설정에서 켜�
   await settle(page)
   expect(await page.locator('#pane-settings #chk-press').count(), '설정에 있다').toBe(1)
 
-  await page.check('#chk-press')
+  await page.click('#chk-press')   // ⚠ `check()`는 못 쓴다 — 상자가 도로 꺼지는 것이 설계다(30-7 ④)
   await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.app.pressCalib !== null)).toBe(true)
   // 상태 토글이므로 **패널이 안 접힌다**(28-1)
   expect(await page.evaluate(() => (document.getElementById('pane-settings') as HTMLDetailsElement).open)).toBe(true)
 
-  await page.uncheck('#chk-press')
+  await page.click('#btn-press-cancel')
   await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.app.pressCalib)).toBe(null)
 })

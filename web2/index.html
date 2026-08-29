@@ -53,6 +53,10 @@
     canvas { position: absolute; inset: 0; display: block; }
     #ink { z-index: 2; }
     #gl { z-index: 1; }
+    /* 바탕 종이의 결(web2-30 9번) — **맨 아래**. 이 판이 곧 종이라 아무것도 안 가리고,
+       그래서 곱과 보통 그리기가 같은 결과다(#film의 재조립이 필요 없는 이유).
+       종전에는 종이가 `body { background: var(--paper) }` 한 줄이라 결이 아예 없었다. */
+    #paperfilm { z-index: 0; pointer-events: none; }
     /* brush 렌더러(web2-11 2부) — gl 위·ink 아래. 입력은 ink가 받으므로 이 겹은 눌리지 않는다. */
     #brushc { z-index: 1; pointer-events: none; }
     /* 막(web2-20 3부) — 곱은 **캔버스 안에서** 한다(filmlayer.ts drawFilms 머리주석 —
@@ -857,6 +861,15 @@
             <!-- web2-26 6번 — 필압 보정(옵션 · **기본 꺼짐**). 켜면 **두 획을 받는다**.
                  화면 문구는 지시가 준 그대로 「필압 보정」이다. id·배선은 안 바뀐다. -->
             <label><input id="chk-press" data-act="state" type="checkbox"> 필압 보정</label>
+            <!-- ⚠⚠ **절차가 화면에 있다**(web2-30 7번). web2-26 6번은 토글만 있고 단계는
+                 알림 한 줄로만 스쳐 지나가서 **절차가 실제로 있는지 자체가 확인되지 않았다**
+                 (게이트가 합성 압력으로 통과했다). 지금은 이 줄이 설정 패널에 **머무르고**,
+                 그 사이 위 체크상자는 **꺼진 채로 있다** — 「절반만 켜진 상태」를 안 만든다:
+                 옵션이 켜지는 시점은 `doc.press`가 서는 순간 하나다. -->
+            <div id="press-calib" hidden>
+              <span id="press-calib-step"></span>
+              <button id="btn-press-cancel" data-act="state" title="보정을 그만둔다 — 옵션은 꺼진 채로 남는다">그만둔다</button>
+            </div>
             <div class="head" style="margin-top:6px">기기</div>
             <!-- web2-30 3번 별건 — 빌드 식별자가 **입력을 안 받게** 되면서(배포를 판정하는
                  표시지 단추가 아니다) 진단 패널의 여닫이가 여기로 왔다. 콘솔 없는 태블릿의

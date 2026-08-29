@@ -26,11 +26,20 @@
 // 층마다 타일의 위상(패턴 원점 이동)과 **회전(90°의 배수 — 이음매를 안 깨는 회전)**도
 // 어긋낸다. 종이 둘의 차이는 색만이 아니라 섬유 매개변수다(옐로 = 길고 굵고 많게 /
 // 트레이싱지 = 짧고 가늘고 적게). ⛔ 외부 텍스처 이미지 금지(지시 3-c — 기각 사유 셋).
-// 바탕 종이에는 결이 없다(사람이 정했다 — 겹 둘에만).
+// ⚠⚠ **web2-30 9번이 그 조항을 뒤집었다.** 종전에는 「바탕 종이에는 결이 없다(겹 둘에만)」
+// 였는데, 실기기에서 **그 차등 자체가 결함으로 읽혔다** — 「옐로·트레이싱지는 결이 보이고
+// 종이만 안 보인다」. 지금은 셋 다 결이 있고 **같은 함수 하나**(`bakeFiberTile`)가 굽는다.
+//
+// ⚠ **바탕 종이는 #film에 «안» 태운다** — 지시가 준 후보(「#film에 종이를 안 태운 것으로
+// 보인다」)는 **원인 진단으로는 맞고 처방으로는 틀리다**(D-4). #film의 일은 «아래에 있는
+// 것에 곱하기»이고 그러려면 아래 겹을 사본으로 재조립해야 하는데(#73 ㉠), **바탕 종이
+// 아래에는 아무것도 없다**. 그리고 #film은 `atSheetPose`와 «겹이 있는가»에 걸려 있는데
+// 바탕 종이는 **언제나 있다**. 그래서 맨 아래에 자기 판(#paperfilm)을 두고 거기서 곱한다 —
+// 아무것도 안 가리므로 곱과 보통 그리기가 같은 결과이고, 재조립 비용이 0이다.
 
 import type { App } from './state'
 import { atSheetPose, fadeRef, underlayOf } from './state'
-import type { Layer, Paper, CamPose, Underlay } from '../core/types'
+import type { Layer, Paper, Surface, CamPose, Underlay } from '../core/types'
 import { rng32, MAT, gradeOf, widthOf, widthOfMat } from '../core/material'
 import { project } from '../core/camera'
 import { waitFadeFactor } from '../core/waitfade'
@@ -45,7 +54,7 @@ import { C } from '../core/constants'
 // dpr3에서는 세 배 굵어졌다. 실측(D-1 표식 · `paper_grain26_web2.json`)이
 // **막 sd 0.134 ↔ 1.361 — 열 배**를 냈다. 지금 값은 전부 CSS px이고 `bakeFiberTile`이
 // dpr을 곱해 굽는다 — 「주기는 CSS 픽셀(≈물리 길이) 기준, 진폭은 실제 DPR에서」.
-export const PAPER_STYLE: Record<Paper, {
+export const PAPER_STYLE: Record<Surface, {
   tint: [number, number, number]
   /** 전부 **CSS px**(alpha 제외) — count는 타일 한 장(TILE_CSS×TILE_CSS CSS px)당 개수 */
   fiber: { count: number; lenMin: number; lenMax: number; wMin: number; wMax: number; aMin: number; aMax: number }
@@ -60,7 +69,18 @@ export const PAPER_STYLE: Record<Paper, {
   tracing: {
     tint: [230, 233, 237],   // 벨럼 — 거의 무색·살짝 한색(중성이 아니면 옐로와 섞일 때
     // 채도가 내리지 않는다 — ④ 곡선의 실측이 이 값을 정했다: 난색이면 곱이 채도를 올린다)
-    fiber: { count: 170, lenMin: 3.5, lenMax: 10, wMin: 1.0, wMax: 2.0, aMin: 0.06, aMax: 0.145 },
+    // ⚠ **web2-30 9번이 개수·알파를 옐로 대역으로 올렸다**(count 170 → 300 · a 0.06~0.145
+    // → 0.072~0.172). 30-9의 게이트가 「셋의 진폭이 서로 20% 이내」라 옛 값으로는 못 선다
+    // (실측이 그 차를 냈다 — NOTES의 표). **길이·굵기는 안 건드렸다** — 그쪽이 벨럼과
+    // 옐로를 «다른 종이»로 만드는 채널이고, 사람이 바꾸라 한 것은 «보이느냐»다.
+    fiber: { count: 560, lenMin: 3.5, lenMax: 10, wMin: 1.0, wMax: 2.0, aMin: 0.115, aMax: 0.277 },
+  },
+  /** **바탕 종이**(web2-30 9번) — 제도지. tint는 화면의 종이색(`--paper` #f5f3ee)과 같은
+   *  값이어야 한다: 이 판이 **곧 종이**이므로 색이 갈리면 결이 아니라 «판»이 보인다.
+   *  섬유는 옐로보다 짧고 촘촘하다(제도지의 결은 트레이싱지보다 곱고 옐로보다 잘다). */
+  paper: {
+    tint: [245, 243, 238],
+    fiber: { count: 470, lenMin: 6, lenMax: 17, wMin: 1.5, wMax: 2.8, aMin: 0.078, aMax: 0.186 },
   },
 }
 
@@ -77,6 +97,12 @@ export const tilePxFor = (dpr: number): number =>
 let FILM_ALPHA = false
 export const setFilmAlphaForTest = (v: boolean) => { FILM_ALPHA = v }
 
+/** D-3 반증 손잡이(web2-30 9번) — **바탕 종이의 결을 끈다**. 끄면 그 판이 종이색 단색이
+ *  되어 30-9의 게이트가 같은 실행에서 실패한다(그리고 web2-20 3부의 옛 상태로 돌아간다).
+ *  UI 없음 — `diag.paperFiberForTest`만. */
+let PAPER_FIBER = true
+export const setPaperFiberForTest = (v: boolean) => { PAPER_FIBER = v }
+
 /** D-3 반증 손잡이(web2-26 2번) — **결을 dpr에 도로 묶는다**(타일 256 device px 고정 +
  *  섬유 배율 dpr/2 + 패턴 배율 0.5·s·dpr). 이걸 켜면 「dpr 1과 3의 결 표준편차 비가
  *  1.0 ± 0.15」 게이트가 **실제로 실패해야 한다** — 안 실패하면 그 게이트는 아무것도
@@ -84,14 +110,17 @@ export const setFilmAlphaForTest = (v: boolean) => { FILM_ALPHA = v }
 let FIBER_LEGACY = false
 export const setFiberLegacyForTest = (v: boolean) => { FIBER_LEGACY = v }
 /** 종전(web2-20) 섬유 매개변수 — **타일 px** 단위. 반증 손잡이에서만 읽는다. */
-const LEGACY_FIBER: Record<Paper, { count: number; lenMin: number; lenMax: number; wMin: number; wMax: number; aMin: number; aMax: number }> = {
+const LEGACY_FIBER: Record<Surface, { count: number; lenMin: number; lenMax: number; wMin: number; wMax: number; aMin: number; aMax: number }> = {
   yellow: { count: 420, lenMin: 16, lenMax: 44, wMin: 0.7, wMax: 1.6, aMin: 0.025, aMax: 0.07 },
   tracing: { count: 170, lenMin: 7, lenMax: 20, wMin: 0.35, wMax: 0.9, aMin: 0.02, aMax: 0.05 },
+  // 바탕 종이는 옛 규칙에 **없던** 면이다(그때는 결이 아예 없었다) — 반증 손잡이가
+  // 「dpr에 묶인 옛 규칙」을 재현할 때 쓸 값이 필요해 트레이싱지 계열로 둔다.
+  paper: { count: 380, lenMin: 8, lenMax: 24, wMin: 0.4, wMax: 1.0, aMin: 0.02, aMax: 0.055 },
 }
 
 /** 섬유 타일 — 결정론(rng32(layer.id))·감싸 그리기·90° 회전. 순수 함수에 가깝게:
  *  같은 (id, paper, dpr)이면 같은 픽셀이다(⑥ 저장·복원 뒤 결이 같다의 근거). */
-export function bakeFiberTile(id: number, paper: Paper, dpr: number, wrap = true): HTMLCanvasElement {
+export function bakeFiberTile(id: number, paper: Surface, dpr: number, wrap = true): HTMLCanvasElement {
   // wrap=false는 **반증 전용**(3-e ⑤' — 감싸 그리기를 빼면 이음매 팔이 실패해야 한다)
   const st = { ...PAPER_STYLE[paper], fiber: FIBER_LEGACY ? LEGACY_FIBER[paper] : PAPER_STYLE[paper].fiber }
   const TP = tilePxFor(dpr)
@@ -186,7 +215,7 @@ export function yellowVisible(app: App): Set<number> {
 }
 
 export interface FilmLayer {
-  /** 매 프레임(dirty) — 막과 위 획(#layerc)을 그린다. 갈림이 없으면 둘 다 숨긴다 */
+  /** 매 프레임(dirty) — 바탕 종이의 결 · 막 · 위 획(#layerc). 갈림이 없으면 뒤 둘은 숨긴다 */
   draw: (app: App) => void
   /** dpr·창 크기 변경 */
   resize: (W: number, H: number, dpr: number) => void
@@ -209,9 +238,15 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
   const layerc = document.createElement('canvas')
   layerc.id = 'layerc'
   film.parentElement!.insertBefore(layerc, film.nextSibling)
+  // #paperfilm — **바탕 종이의 결**(web2-30 9번). 맨 아래(#gl 앞)에 둔다: 이 판이 곧
+  // 종이이므로 아무것도 안 가리고, 그래서 «곱»과 «보통 그리기»가 같은 결과다(재조립 비용 0).
+  const paperfilm = document.createElement('canvas')
+  paperfilm.id = 'paperfilm'
+  const glEl = document.getElementById('gl')!
+  glEl.parentElement!.insertBefore(paperfilm, glEl)
   let cw = W, ch = H, cd = dpr
   const fit = () => {
-    for (const c of [film, layerc]) {
+    for (const c of [film, layerc, paperfilm]) {
       c.width = Math.round(cw * cd)
       c.height = Math.round(ch * cd)
       c.style.width = `${cw}px`
@@ -222,11 +257,48 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
 
   // 타일 캐시 — (layer.id|paper|dpr) → 캔버스. 파생이라 저장 안 함(문서에는 Layer만).
   const tileCache = new Map<string, HTMLCanvasElement>()
-  const tileOf = (l: Layer): HTMLCanvasElement => {
-    const key = `${l.id}|${l.paper}|${cd}|${FIBER_LEGACY ? 'L' : 'N'}`
+  const tileFor = (id: number, surface: Surface): HTMLCanvasElement => {
+    const key = `${id}|${surface}|${cd}|${FIBER_LEGACY ? 'L' : 'N'}`
     let t = tileCache.get(key)
-    if (!t) { t = bakeFiberTile(l.id, l.paper, cd); tileCache.set(key, t) }
+    if (!t) { t = bakeFiberTile(id, surface, cd); tileCache.set(key, t) }
     return t
+  }
+  const tileOf = (l: Layer): HTMLCanvasElement => tileFor(l.id, l.paper)
+
+  /** **패턴의 원점을 문서 좌표에 못 박는다** — 막·바탕이 같은 규칙을 쓴다(#54).
+   *  배율은 뷰 줌 `v.s`뿐이다(타일 1px = 기기 1px — web2-26 2번). 위상은 씨앗별로 다르다. */
+  function fiberPattern(g: CanvasRenderingContext2D, tile: HTMLCanvasElement, seed: number, v: { s: number; ox: number; oy: number }) {
+    const pat = g.createPattern(tile, 'repeat')!
+    const rnd = rng32(seed + 7)                   // 위상 — 결 내용과 다른 흐름
+    const TP = tilePxFor(cd)
+    const phx = rnd() * TP
+    const phy = rnd() * TP
+    const k = FIBER_LEGACY ? 0.5 * v.s * cd : v.s
+    pat.setTransform(new DOMMatrix().translate(v.ox * cd, v.oy * cd).scale(k).translate(phx, phy))
+    return pat
+  }
+
+  /** **바탕 종이의 결**(web2-30 9번) — 화면 전체. 겹의 막과 **같은 함수가 구운 타일**을
+   *  같은 원점 규칙으로 깐다. 씨앗은 **그 종이의 id**다: 종이를 바꾸면 결도 바뀐다
+   *  (겹이 `layer.id`로 갈리는 것과 같은 규약). 다시 그리는 조건은 (뷰·종이·dpr) 뿐이라
+   *  프레임마다 도는 비용이 아니다 — 궤도 중에도 값이 안 바뀌면 캐시가 그대로 산다. */
+  let paperKey = ''
+  function drawPaperFilm(app: App) {
+    const v = app.view
+    const key = `${app.activeSheet}|${v.s}|${v.ox}|${v.oy}|${cd}|${cw}x${ch}|${FIBER_LEGACY ? 'L' : 'N'}|${PAPER_FIBER ? 'F' : '-'}`
+    if (key === paperKey) return
+    paperKey = key
+    const g = paperfilm.getContext('2d')!
+    g.setTransform(1, 0, 0, 1, 0, 0)
+    const st = PAPER_STYLE.paper
+    g.fillStyle = `rgb(${st.tint[0]},${st.tint[1]},${st.tint[2]})`
+    g.fillRect(0, 0, paperfilm.width, paperfilm.height)
+    if (!PAPER_FIBER) return                       // 반증 손잡이 — 결 없는 옛 상태
+    g.fillStyle = fiberPattern(g, tileFor(app.activeSheet + 1, 'paper'), app.activeSheet + 1, v)
+    // ⚠ 여기서는 `multiply`를 **안 쓴다** — 바로 앞 줄이 종이색을 깔았고 그 위에 곱하면
+    //   타일의 tint(같은 색)가 한 번 더 곱해져 판이 어두워진다. 타일 자체가 이미
+    //   «종이색 + 조금 더 어두운 섬유»라 그대로 덮는 것이 곧 그 종이다.
+    g.fillRect(0, 0, paperfilm.width, paperfilm.height)
   }
 
   /** 밑그림 한 장 — 그 겹의 rect 안에서만. **경도만이 가름이다**(web2-23 2-a):
@@ -317,7 +389,9 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
     // ① 막 영역(합집합)에 아래 화면을 재조립 — 종이색 + #gl + 흑연(제스처면 스냅샷)
     g.fillStyle = '#f5f3ee'
     g.fillRect(0, 0, film.width, film.height)
-    for (const c of [gl, brushsnap, brushc]) {
+    // ⚠ **바탕 결(#paperfilm)이 목록의 맨 앞이다**(web2-30 9번) — 막 영역 안에서도
+    //    종이의 결이 살아 있어야 한다. 안 넣으면 겹 아래에서만 종이가 밋밋해진다.
+    for (const c of [paperfilm, gl, brushsnap, brushc]) {
       if (!c || c.width === 0) continue
       if (c.style.visibility === 'hidden' || c.style.display === 'none') continue
       g.drawImage(c, 0, 0, film.width, film.height)
@@ -334,21 +408,11 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
     }
     // ② 막들을 순서대로 곱한다 — 겹치는 자리는 누적 곱(더 어두워진다 — 3-a)
     for (const lay of split.films) {
-      const t = tileOf(lay)
-      const pat = g.createPattern(t, 'repeat')!
+      const pat = fiberPattern(g, tileOf(lay), lay.id, v)
       // **원점을 문서 좌표에 못 박는다**(3-c ⚠ — rect가 자라도 결이 안 미끄러진다):
       // 패턴 변환 = 뷰 변환 × 층별 위상. 배율은 «타일 1px = 0.5 doc 단위»(k = 0.5·s·dpr —
       // dpr2에서 원해상도·dpr1에서 절반의 고운 결). 줌은 그대로(종이의 성질 — 큰 배율의
       // 뭉개짐 상한은 재서 정한다: assumptions).
-      const rnd = rng32(lay.id + 7)                 // 위상 — 결 내용과 다른 흐름
-      const TP = tilePxFor(cd)
-      const phx = rnd() * TP
-      const phy = rnd() * TP
-      // **타일 1px = 기기 1px**(web2-26 2번) — 배율에 dpr이 안 들어간다. 뷰 배율 `v.s`는
-      // 그대로 남는다: 결은 종이의 성질이라 문서와 함께 움직인다(사람이 확인한 자리 —
-      // 「3D 줌으로 커지지 않는다」는 궤도 반경 쪽이고 여기가 아니다. ⛔ 바꾸지 않는다).
-      const k = FIBER_LEGACY ? 0.5 * v.s * cd : v.s
-      pat.setTransform(new DOMMatrix().translate(v.ox * cd, v.oy * cd).scale(k).translate(phx, phy))
       g.globalCompositeOperation = FILM_ALPHA ? 'source-over' : 'multiply'
       g.fillStyle = pat
       const x = (lay.rect.x * v.s + v.ox) * cd
@@ -418,13 +482,14 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
   return {
     draw(app: App) {
       const t0 = performance.now()
+      drawPaperFilm(app)
       drawFilms(app)
       const t1 = performance.now()
       drawAbove(app)
       lastCost.films = t1 - t0
       lastCost.above = performance.now() - t1
     },
-    resize(W2, H2, d2) { cw = W2; ch = H2; cd = d2; fit(); tileCache.clear() },
+    resize(W2, H2, d2) { cw = W2; ch = H2; cd = d2; fit(); tileCache.clear(); paperKey = '' },
     cost: () => ({ ...lastCost }),
   }
 }

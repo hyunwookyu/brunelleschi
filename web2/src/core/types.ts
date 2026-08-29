@@ -79,6 +79,12 @@ export type Paper = 'tracing' | 'yellow'
  *  지우기 확인의 「이 종이를 지운다」를 그래서 고쳤다). */
 export const paperName = (p: Paper): string => (p === 'yellow' ? '옐로' : '트레이싱지')
 
+/** **결이 있는 면 셋**(web2-30 9번) — 겹 둘 + **바탕 종이**. `Paper`는 «얹는 겹의 종류»라
+ *  저장 형식에 들어가고, 이쪽은 **그리는 면**이라 저장에 안 들어간다(파생).
+ *  ⚠ web2-20 3부는 「바탕 종이에는 결이 없다」로 정했는데, 실기기에서 **그 차등 자체가
+ *  결함으로 읽혔다**(「옐로·트레이싱지는 결이 보이는데 종이만 안 보인다」) — 30-9가 뒤집는다. */
+export type Surface = Paper | 'paper'
+
 export interface Layer {
   id: number
   /** 어느 종이 위에 얹혔는가 — `Doc.sheets[].id` */

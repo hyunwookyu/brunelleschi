@@ -84,6 +84,12 @@ async function measure(browser: Browser, dpr: number, legacy: boolean) {
   const page = await ctx.newPage()
   await page.goto('http://localhost:5301/')
   await page.waitForFunction(() => (window as any).__b2)
+  // ⚠⚠ **web2-30 9번이 바탕 종이에도 결을 줬다** — 이 팔이 재는 것은 «겹의 결»이므로
+  //    바탕 결을 **끄고** 잰다(평평한 종이 위). 안 끄면 바닥(`bare`)에도 결이 실려
+  //    `sqrt(막²−바닥²)`이 겹의 몫이 아니라 «두 결의 곱의 나머지»가 되고, 26-2가 세운
+  //    수치의 뜻이 갈린다(#76 ㉣ — 질감의 세기를 바꾸면 «신호 대 배경»을 쓰는 팔의
+  //    기준이 전부 같이 바뀐다). 30-9의 팔이 바탕 결을 따로 잰다.
+  await page.evaluate(() => (window as any).__b2.diag.paperFiberForTest(false))
   if (legacy) await page.evaluate(() => (window as any).__b2.diag.fiberLegacyForTest(true))
   const tile = await page.evaluate(() => {
     const t = (window as any).__b2.diag.fiberTile(101, 'yellow', true) as HTMLCanvasElement

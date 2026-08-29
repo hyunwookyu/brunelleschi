@@ -1,0 +1,70 @@
+{
+  "what": "web2-30 9번 — 종이·트레이싱지·옐로 셋의 결 진폭. 판정은 spec의 expect가 정본.",
+  "conditions": {
+    "viewport": "1200x800",
+    "dpr": "이 파일이 chromium.newContext로 1·2를 직접 만든다(프로젝트 dpr 무관)",
+    "command": "npx playwright test e2e/grain30.spec.ts --project=dpr1 --workers=1",
+    "patch": "(300,200) 60x60 CSS px — 획이 없는 빈 자리",
+    "metric": "휘도 sd. 결의 몫 = sqrt(면sd^2 − 무결바닥sd^2) — 독립 성분이라 분산이 더해진다(web2-26 2번의 산술 그대로)"
+  },
+  "gate": {
+    "current": [
+      {
+        "dpr": 1,
+        "surface": "paper",
+        "fibers": true,
+        "bare": 1.617195266589988e-11,
+        "mean": 237.4665813888956,
+        "grain": 4.287658269127818
+      },
+      {
+        "dpr": 1,
+        "surface": "tracing",
+        "fibers": true,
+        "bare": 1.617195266589988e-11,
+        "mean": 218.2226569444575,
+        "grain": 3.9204399882512475
+      },
+      {
+        "dpr": 1,
+        "surface": "yellow",
+        "fibers": true,
+        "bare": 1.617195266589988e-11,
+        "mean": 211.0368133333251,
+        "grain": 3.913797728711438
+      },
+      {
+        "dpr": 2,
+        "surface": "paper",
+        "fibers": true,
+        "bare": 8.421352504228707e-11,
+        "mean": 237.69065284720887,
+        "grain": 4.837477709951599
+      },
+      {
+        "dpr": 2,
+        "surface": "tracing",
+        "fibers": true,
+        "bare": 8.421352504228707e-11,
+        "mean": 218.30020916666132,
+        "grain": 4.416151367062188
+      },
+      {
+        "dpr": 2,
+        "surface": "yellow",
+        "fibers": true,
+        "bare": 8.421352504228707e-11,
+        "mean": 211.19578812497852,
+        "grain": 4.179396293912187
+      }
+    ],
+    "falsify_paper_fiber_off": {
+      "dpr": 1,
+      "surface": "paper",
+      "fibers": false,
+      "bare": 1.617195266589988e-11,
+      "mean": 243.02800000001616,
+      "grain": 0
+    }
+  }
+}
