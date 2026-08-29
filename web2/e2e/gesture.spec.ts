@@ -282,7 +282,8 @@ test('②-b ㉠ 여유 — 획 중심이 화면 밖이어도 입자는 안으로
 //
 // D-2 재현: 눈높이 선언 단계(기하 없음)에서 한 손가락은 **아무 일도 안 했다**
 //   (`orbitBy`가 `lifted.size === 0`에서 첫 줄 반환). 그 상태를 ①이 그대로 잰다.
-// D-3 반증: ②에서 `penUsed`를 **내리면** 같은 손짓이 화면을 안 옮긴다(궤도로 돌아간다).
+// ⚠ web2-30 1번이 ②를 뒤집었다 — 판정에서 `penUsed`가 빠졌다(3D가 서면 궤도).
+// D-3 반증: ②에서 **기하를 비우면**(3D를 지우면) 같은 손짓이 도로 화면을 옮긴다.
 
 async function fingerDrag(page: import('@playwright/test').Page, x0: number, y0: number, x1: number, y1: number) {
   await page.evaluate(([x0, y0, x1, y1]) => {
@@ -306,6 +307,14 @@ const viewOf = (page: import('@playwright/test').Page) =>
   page.evaluate(() => ({ ...(window as any).__b2.app.view }))
 const strokeCount = (page: import('@playwright/test').Page) =>
   page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
+/** 카메라 자세의 사원수 — 궤도가 «돌았는가»를 눈이 아니라 수치로 본다 */
+const poseQ = (page: import('@playwright/test').Page) =>
+  page.evaluate(() => ({ ...(window as any).__b2.app.pose.q })) as Promise<{ x: number; y: number; z: number; w: number }>
+/** 두 사원수의 거리(부호 무시) — 0이면 자세가 안 바뀐 것 */
+const quatDelta = (a: { x: number; y: number; z: number; w: number }, b: { x: number; y: number; z: number; w: number }) =>
+  Math.min(
+    Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w),
+    Math.hypot(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w))
 
 test('26-5 ① 눈높이 선언 단계 — 한 손가락 드래그가 화면을 옮긴다', async ({ page }) => {
   await boot(page)
@@ -319,8 +328,18 @@ test('26-5 ① 눈높이 선언 단계 — 한 손가락 드래그가 화면을 
   expect(await strokeCount(page)).toBe(0)              // 손가락은 안 그린다
 })
 
-test('26-5 ② 펜을 쓴 세션 — 한 손가락이 이동이다 (+반증: penUsed를 내리면 궤도로 돌아간다)', async ({ page }) => {
+test('30-1 ② 펜을 쓴 세션 + 3D — 한 손가락이 **궤도**다 (H4 회귀 · +반증: 3D 서기 전엔 이동)', async ({ page }) => {
   await boot(page)
+  // **반증을 먼저 잰다**(D-3) — 3D가 서기 전의 같은 손짓은 화면을 옮긴다(궤도가 아니다).
+  // ⚠ 순서가 이 방향이어야 한다: 궤도를 돈 뒤에 `lifted`를 비우면 `panBy`도 첫 줄에서
+  //    반환하므로(작도 포즈를 이미 벗어났다) **아무 일도 안 나** 대비가 안 선다.
+  const qA = await poseQ(page), vA = await viewOf(page)
+  await fingerDrag(page, 400, 300, 520, 360)
+  const qB = await poseQ(page), vB = await viewOf(page)
+  console.log(`[30-1 ②-반증] 3D 서기 전 — |Δq| ${quatDelta(qA, qB).toExponential(2)} · Δox ${(vB.ox - vA.ox).toFixed(3)}`)
+  expect(quatDelta(qA, qB)).toBeLessThan(1e-9)          // 안 돈다
+  expect(Math.abs(vB.ox - vA.ox)).toBeGreaterThan(50)   // 화면을 옮긴다
+
   // 펜으로 카메라를 닫는다 — CDP 실입력(펜 신호가 실제로 온다)
   const cdp = await page.context().newCDPSession(page)
   const pen = { button: 'left' as const, clickCount: 1, pointerType: 'pen' as const }
@@ -336,23 +355,55 @@ test('26-5 ② 펜을 쓴 세션 — 한 손가락이 이동이다 (+반증: pen
     penUsed: (window as any).__b2.app.penUsed,
     lifted: (window as any).__b2.app.lift.lifted.size,
   }))
-  console.log(`[26-5 ②] penUsed ${st.penUsed} · lifted ${st.lifted}`)
+  console.log(`[30-1 ②] penUsed ${st.penUsed} · lifted ${st.lifted}`)
   expect(st.penUsed).toBe(true)
   expect(st.lifted).toBeGreaterThan(0)                // 분해능 — 돌 것이 실제로 있다
 
+  const q0 = await poseQ(page)
   const v0 = await viewOf(page)
   const n0 = await strokeCount(page)
   await fingerDrag(page, 400, 300, 520, 360)
+  const q1 = await poseQ(page)
   const v1 = await viewOf(page)
-  console.log(`[26-5 ②] 펜 세션 한 손가락 — ox ${v0.ox} → ${v1.ox} · oy ${v0.oy} → ${v1.oy}`)
-  expect(Math.abs(v1.ox - v0.ox)).toBeGreaterThan(50)
-  expect(await strokeCount(page)).toBe(n0)            // 획을 안 만든다(게이트 첫 줄)
+  console.log(`[30-1 ②] 펜 세션 + 3D 한 손가락 — |Δq| ${quatDelta(q0, q1).toFixed(6)} · Δox ${(v1.ox - v0.ox).toFixed(3)}`)
+  expect(quatDelta(q0, q1)).toBeGreaterThan(1e-3)     // **궤도를 돈다**(H4가 고쳐졌다)
+  expect(Math.abs(v1.ox - v0.ox)).toBeLessThan(1)     // 화면은 안 옮긴다
+  expect(await strokeCount(page)).toBe(n0)            // 획을 안 만든다
+})
 
-  // 반증(D-3) — penUsed를 내리면 같은 손짓이 **화면을 안 옮긴다**(궤도로 간다)
-  await page.evaluate(() => { (window as any).__b2.app.penUsed = false })
-  const v2 = await viewOf(page)
+// **펜 획이 진행 중이면 손가락 제스처를 전부 무시한다**(30-1 게이트 · 팜 리젝션 회귀).
+// 실기기에서 통과한 분이고, 30-1이 한 손가락의 뜻을 «궤도»로 되돌렸으므로 **여기서 새는
+// 것이 더 아프다** — 손바닥이 닿으면 그리는 도중에 시점이 돈다.
+test('30-1 펜 획 진행 중 손가락 접촉이 시점을 안 바꾼다 (+반증: 펜을 떼면 같은 손짓이 돈다)', async ({ page }) => {
+  await boot(page)
+  const cdp = await page.context().newCDPSession(page)
+  const pen = { button: 'left' as const, clickCount: 1, pointerType: 'pen' as const }
+  for (const [ax, ay, bx, by] of [[280, 560, 700, 560], [500, 560, 800, 480]] as const) {
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: ax, y: ay, ...pen, force: 0.4 })
+    for (let i = 1; i <= 6; i++)
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: ax + (bx - ax) * i / 6, y: ay + (by - ay) * i / 6, ...pen, force: 0.4 })
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: bx, y: by, ...pen, force: 0 })
+  }
+  expect(await page.evaluate(() => (window as any).__b2.app.lift.lifted.size)).toBeGreaterThan(0)
+
+  // 펜을 **누른 채로** 손가락을 끈다
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: 500, y: 560, ...pen, force: 0.4 })
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 540, y: 600, ...pen, force: 0.4 })
+  await settle(page)
+  const q0 = await poseQ(page), v0 = await viewOf(page)
   await fingerDrag(page, 400, 300, 520, 360)
-  const v3 = await viewOf(page)
-  console.log(`[26-5 ②-반증] penUsed=false — ox ${v2.ox} → ${v3.ox}`)
-  expect(Math.abs(v3.ox - v2.ox)).toBeLessThan(1)
+  const q1 = await poseQ(page), v1 = await viewOf(page)
+  console.log(`[30-1 팜] 펜 접촉 중 — |Δq| ${quatDelta(q0, q1).toExponential(2)} · Δox ${(v1.ox - v0.ox).toFixed(3)}`)
+  expect(quatDelta(q0, q1)).toBeLessThan(1e-9)
+  expect(Math.abs(v1.ox - v0.ox)).toBeLessThan(1e-9)
+
+  // 펜을 뗀다 — **반증**: 같은 손짓이 이제 시점을 돌린다(위 팔이 「늘 참」이 아니다)
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: 540, y: 600, ...pen, force: 0 })
+  await cdp.detach()
+  await settle(page)
+  const q2 = await poseQ(page)
+  await fingerDrag(page, 400, 300, 520, 360)
+  const q3 = await poseQ(page)
+  console.log(`[30-1 팜-반증] 펜 뗀 뒤 — |Δq| ${quatDelta(q2, q3).toFixed(6)}`)
+  expect(quatDelta(q2, q3)).toBeGreaterThan(1e-3)
 })

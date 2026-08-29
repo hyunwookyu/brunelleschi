@@ -10,6 +10,15 @@
 
 import { test, expect, type Page } from '@playwright/test'
 
+/** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
+ *  `pointer-events: none`인 표시가 됐고, 여는 자리는 **설정 패널의 「진단」**이다. */
+async function openDiag(page: import('@playwright/test').Page) {
+  if (!(await page.evaluate(() => (document.getElementById('pane-settings') as HTMLDetailsElement).open))) {
+    await page.click('#pane-settings > summary')
+  }
+  await page.click('#btn-diag')
+}
+
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
 
@@ -38,10 +47,10 @@ test('기본은 켜짐(자립이 정본) — 진단이 말한다 · 끄면 사�
   // 기본 켜짐(무설정) — web2-14 1번의 사람 판정이 기본값이 됐다
   expect(await page.evaluate(() => (window as any).__b2.app.own3d)).toBe(true)
   await expect(page.locator('#chk-own3d')).toBeChecked()
-  await page.click('#buildid')
+  await openDiag(page)
   await expect(page.locator('#diagpanel')).toContainText('3D 경로')
   await expect(page.locator('#diagpanel')).toContainText('자립(정본')
-  await page.click('#buildid')
+  await openDiag(page)
 
   // 그린 것이 실제로 굳는다(정본 경로가 산다) — 카메라 닫힘 후 lifted 전부 own3
   await fixture(page)
@@ -55,10 +64,10 @@ test('기본은 켜짐(자립이 정본) — 진단이 말한다 · 끄면 사�
   expect(st.frozen, '켜짐 정본 — 승격 획이 굳는다').toBe(st.lifted)
 
   // 사람이 **진단 곁**에서 끈다(web2-19 3-a — 설정 자루에서 나왔다. A-4 경로 생존)
-  await page.click('#buildid')                 // 패널이 펴지면 #diagctl이 보인다
+  await openDiag(page)                 // 패널이 펴지면 #diagctl이 보인다
   await page.click('#chk-own3d')
   expect(await page.evaluate(() => (window as any).__b2.app.own3d)).toBe(false)
-  await page.click('#buildid'); await page.click('#buildid')   // 접었다 펴서 진단 줄을 다시 읽는다
+  await openDiag(page); await openDiag(page)   // 접었다 펴서 진단 줄을 다시 읽는다
   await expect(page.locator('#diagpanel')).toContainText('사슬(대체')
   // 꺼짐에서도 기하는 산다 — 사슬이 같은 획을 그대로 올린다(옛 경로 생존의 실측)
   expect(await page.evaluate(() => (window as any).__b2.app.lift.lifted.size)).toBe(st.lifted)
@@ -70,7 +79,7 @@ test('기본은 켜짐(자립이 정본) — 진단이 말한다 · 끄면 사�
   await expect(page.locator('#chk-own3d')).not.toBeChecked()
 
   // 켜서 되돌리기 + 다음 팔들을 위한 청소 — 새로 고침으로 패널이 접혔으니 다시 편다
-  await page.click('#buildid')
+  await openDiag(page)
   await page.click('#chk-own3d')
   expect(await page.evaluate(() => (window as any).__b2.app.own3d)).toBe(true)
   await page.evaluate(() => { localStorage.removeItem('b2-own3d'); localStorage.removeItem('b2-autosave'); localStorage.removeItem('b2-autosave2') })
@@ -82,7 +91,7 @@ test('이행 — own3 없는 옛 저장 파일을 기본 켜짐으로 열면 사
   // 꺼짐에서 시작하면 아래 «옛 파일 만들기»부터 전제가 무너진다.
   expect(await page.evaluate(() => (window as any).__b2.app.own3d)).toBe(true)
   // «옛 파일»을 실제 옛 경로로 만든다: 깃발을 끄고 그린 문서는 own3가 없다(4부 불변식)
-  await page.click('#buildid')                 // 진단 곁(web2-19 3-a)
+  await openDiag(page)                 // 진단 곁(web2-19 3-a)
   await page.click('#chk-own3d')
   await fixture(page)
   const old = await page.evaluate(() => {

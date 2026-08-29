@@ -48,38 +48,29 @@ describe('26-5 ① 눈높이 선언 단계 — 한 손가락이 화면을 옮긴
   })
 })
 
-describe('26-5 ② 펜을 한 번이라도 쓴 세션 — 손가락은 이동이다', () => {
-  it('기하가 있어도 penUsed면 이동으로 갈린다 (+반증: penUsed를 내리면 궤도로 돌아간다)', () => {
+// ⚠⚠ **web2-30 1번이 ②를 뒤집었다.** 아래는 그 뒤의 자리다 — 판정에서 `penUsed`가
+// 빠졌으므로 「펜을 썼는가」는 손가락의 뜻을 **더 이상 안 바꾼다**. 새 규칙의 게이트는
+// `test/finger30.test.ts`가 든다. 여기서는 **뒤집힘 자체**만 못 박는다(회귀 방지).
+describe('26-5 ② → web2-30 1번이 뒤집었다 — penUsed는 손가락의 뜻을 안 바꾼다', () => {
+  it('기하가 있으면 penUsed와 무관하게 궤도다 (26-5의 「펜 세션 = 이동」은 폐기)', () => {
     const s = closed()
-    // 펜을 안 쓴 상태 — 종전 그대로 궤도다
     expect(s.app.penUsed).toBe(false)
     expect(fingerPans(s.app)).toBe(false)
     const pose0 = poseOf(s.app)
     orbitBy(s.app, 30, 0)
     expect(poseOf(s.app)).not.toEqual(pose0)      // 분해능: 이 장면에서 궤도가 실제로 돈다
 
-    // 펜을 한 번 쓴 뒤 — 이동이다. **새 세션에서 잰다**(위에서 돌린 시점이 안 섞이게).
+    // 펜을 쓴 뒤에도 **같다** — 이 줄이 26-5에서는 `true`였다
     const t = closed()
     t.app.penUsed = true
-    expect(fingerPans(t.app)).toBe(true)
-    const q1 = { ...t.app.pose.q }, v1 = viewOf(t.app)
-    panBy(t.app, 25, -10)
-    // 작도 포즈의 팬은 **뷰 오프셋**이다(3D를 안 건드린다 — state.ts panBy)
-    expect(t.app.pose.q).toEqual(q1)              // 시점이 «돌지» 않는다
-    expect(t.app.view.ox).toBe(v1.ox + 25)        // 화면이 옮겨진다
-    expect(t.app.view.oy).toBe(v1.oy - 10)
-
-    // 반증(D-3) — 내리면 판정이 도로 궤도다. 이 줄이 없으면 ②는 「늘 참」을 재는 격자다.
-    t.app.penUsed = false
     expect(fingerPans(t.app)).toBe(false)
   })
 
-  it('한 번 참이면 세션 안에서 안 내려간다 — 펜을 내려놓아도 손가락의 뜻이 안 바뀐다', () => {
-    const s = closed()
-    s.app.penUsed = true
-    s.draw(600, 560, 600, 640)                    // 그 뒤로 무엇을 하든
-    expect(s.app.penUsed).toBe(true)
-    expect(fingerPans(s.app)).toBe(true)
+  it('돌 것이 없으면 penUsed와 무관하게 이동이다', () => {
+    const a = createApp(W, H)
+    expect(fingerPans(a)).toBe(true)
+    a.penUsed = true
+    expect(fingerPans(a)).toBe(true)
   })
 })
 

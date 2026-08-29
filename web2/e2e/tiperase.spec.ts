@@ -16,6 +16,15 @@
 
 import { test, expect, type Page } from '@playwright/test'
 
+/** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
+ *  `pointer-events: none`인 표시가 됐고, 여는 자리는 **설정 패널의 「진단」**이다. */
+async function openDiag(page: import('@playwright/test').Page) {
+  if (!(await page.evaluate(() => (document.getElementById('pane-settings') as HTMLDetailsElement).open))) {
+    await page.click('#pane-settings > summary')
+  }
+  await page.click('#btn-diag')
+}
+
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
 
@@ -130,7 +139,7 @@ test('반증(D-3) — 32 비트를 실제로 빼면 지우개 경로로 안 간�
     }))
   })
   // 진단 패널이 «지금 어느 쪽으로 인식 중인가»를 보인다(지시 2-b 마지막 줄)
-  await page.click('#buildid')
+  await openDiag(page)
   const row = await page.evaluate(() => {
     const rows = Array.from(document.querySelectorAll('#diagpanel div'))
     const r = rows.find(d => d.textContent?.includes('지우개 끝 신호'))

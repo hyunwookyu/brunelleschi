@@ -15,7 +15,7 @@
 
 import type { App } from './state'
 import { deleteSheet, renameSheet, gotoSheet, sheetUpdateBlock, updateSheet } from './state'
-import { DRAW_SHEET_ID, type Sheet } from '../core/types'
+import { DRAW_SHEET_ID, paperName, type Sheet } from '../core/types'
 import { C } from '../core/constants'
 
 export interface PaperbarHooks {
@@ -128,7 +128,7 @@ export function initPaperbar(app: App, host: HTMLElement, hooks: PaperbarHooks):
       del.addEventListener('click', () => {
         // 확인 한 번 — 실행취소 대상이 아니다(web2-12 deleteView 규약 그대로).
         // ⚠ 다음 회차에 이 규약이 바뀐다(겹이 종이에 붙으면 종이 삭제 = 획 삭제 — DEFERRED).
-        del.replaceWith(confirmRow(sheet.name, () => { deleteSheet(app, sheetId); closePop(); render(); hooks.onGoto() }))
+        del.replaceWith(confirmRow(sheet.name, () => { deleteSheet(app, sheetId); closePop(); render(); hooks.onGoto() }, sheetId))
       })
       pop.append(del)
     }
@@ -143,10 +143,31 @@ export function initPaperbar(app: App, host: HTMLElement, hooks: PaperbarHooks):
     popAway = () => window.removeEventListener('pointerdown', away, true)
   }
 
-  function confirmRow(name: string, onYes: () => void): HTMLElement {
+  /** **되돌릴 수 없는 것을 묻는 자리의 예외**(web2-30 4번) — 화면의 말은 이름이거나 짧은
+   *  동사구라는 규칙(28-3)에 조항 하나를 더했다: **되돌릴 수 없는 것을 묻는 자리에서는
+   *  판단 근거가 화면에 남는다.** 그 순간 손은 단추 위에 있지 호버 상태가 아니라 툴팁이
+   *  닿지 않는다. ⚠ 그리고 근거는 **대상을 밝혀야** 근거다 — 「같이 간다」만으로는 무엇이
+   *  같이 가는지를 말하지 않는다. 여기서 함께 지워지는 것은 **그 종이에 얹은 겹과 그 위의
+   *  획**이다(`state.deleteSheet`가 정본). 얹은 것이 없으면 그 말을 **안 붙인다** —
+   *  없는 경고는 근거가 아니라 잡음이다. */
+  function alsoGoes(sheetId: number): string {
+    const layers = app.doc.layers.filter(l => l.sheet === sheetId)
+    if (layers.length === 0) return ''
+    const ids = new Set(layers.map(l => l.id))
+    const cnt = app.doc.strokes.filter(x => x.layer !== undefined && ids.has(x.layer)).length
+    const kinds: string[] = []
+    for (const paper of ['yellow', 'tracing'] as const) {
+      const n = layers.filter(l => l.paper === paper).length
+      if (n > 0) kinds.push(`${paperName(paper)} ${n}장`)
+    }
+    // 「…장」으로 끝나므로 조사는 언제나 「과」다(받침 ㅇ) — 붙임 규칙을 안 만든다
+    return `이 종이에 얹은 ${kinds.join(' · ')}과 그 위의 획 ${cnt}개도 함께 지워진다. `
+  }
+
+  function confirmRow(name: string, onYes: () => void, sheetId: number): HTMLElement {
     const row = document.createElement('span')
     row.className = 'paper-confirm'
-    row.append(`「${name}」를 지운다. `)
+    row.append(`「${name}」를 지운다. ${alsoGoes(sheetId)}`)
     const yes = document.createElement('u')
     yes.dataset.pick = 'yes'
     yes.textContent = '지운다'

@@ -17,6 +17,7 @@
 import type { App } from './state'
 import { addLayer, isSolo, removeLayer, setActiveLayer, setLayerOn, setLayerLocked, setSolo } from './state'
 import type { Layer, Paper } from '../core/types'
+import { paperName } from '../core/types'
 import { C } from '../core/constants'
 
 // Phosphor light(MIT · @phosphor-icons/core assets/light — path 그대로. web2-19 4부와 같은 이식)
@@ -119,10 +120,11 @@ export function initLayerbar(app: App, host: HTMLElement, hooks: LayerbarHooks):
         return
       }
       openPopAt(add, p => {
-        for (const [paper, label, svg] of [
-          ['tracing', '트레이싱지', ROLL_TRACING],
-          ['yellow', '옐로', ROLL_YELLOW],
-        ] as [Paper, string, string][]) {
+        for (const [paper, svg] of [
+          ['tracing', ROLL_TRACING],
+          ['yellow', ROLL_YELLOW],
+        ] as [Paper, string][]) {
+          const label = paperName(paper)
           const b = document.createElement('button')
           b.className = 'lpick'
           b.dataset.paper = paper
@@ -215,12 +217,14 @@ export function initLayerbar(app: App, host: HTMLElement, hooks: LayerbarHooks):
     const del = document.createElement('button')
     del.className = 'lctl ldel'
     del.textContent = '×'
-    del.title = '이 종이를 지운다'
+    del.title = paperName(lay.paper) + '를 지운다'
     del.addEventListener('click', () => {
       const cnt = app.doc.strokes.filter(x => x.layer === lay.id).length
       openPopAt(del, p => {
         const span = document.createElement('span')
-        span.textContent = `이 종이를 지운다 — 그 위의 획 ${cnt}개가 같이 간다(실행취소로 돌아온다). `
+        // 30-4 — **대상을 밝힌다.** 「이 종이」는 틀린 말이었다(지우는 것은 종이가 아니라
+        // 그 위에 **얹은 겹**이다) — 종이 삭제는 `paperbar`의 다른 확인이다.
+        span.textContent = `이 ${paperName(lay.paper)}를 지운다 — 그 위의 획 ${cnt}개도 함께 지워진다(실행취소로 돌아온다). `
         const yes = document.createElement('u')
         yes.dataset.pick = 'yes'
         yes.textContent = '지운다'

@@ -7,6 +7,15 @@
 // 실기기 값(MovinkPad의 dpr·UA·필압 단계)은 이 패널로 사람이 읽는다 — DEFERRED의 자리.
 import { test, expect, type Page } from '@playwright/test'
 
+/** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
+ *  `pointer-events: none`인 표시가 됐고, 여는 자리는 **설정 패널의 「진단」**이다. */
+async function openDiag(page: import('@playwright/test').Page) {
+  if (!(await page.evaluate(() => (document.getElementById('pane-settings') as HTMLDetailsElement).open))) {
+    await page.click('#pane-settings > summary')
+  }
+  await page.click('#btn-diag')
+}
+
 const rowText = (page: Page, key: string) => page.evaluate((k) => {
   const rows = Array.from(document.querySelectorAll('#diagpanel div'))
   const r = rows.find(d => (d.querySelector('.k')?.textContent ?? '') === k)
@@ -17,7 +26,7 @@ test('빌드 식별자를 누르면 진단이 펴지고 값이 브라우저 현�
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
   await expect(page.locator('#diagpanel')).toBeHidden()   // 기본은 닫힘 — 그림을 안 가린다
-  await page.click('#buildid')
+  await openDiag(page)
   await expect(page.locator('#diagpanel')).toBeVisible()
 
   const actual = await page.evaluate(() => ({
@@ -36,14 +45,14 @@ test('빌드 식별자를 누르면 진단이 펴지고 값이 브라우저 현�
   expect(await rowText(page, '마지막 포인터')).toContain('mouse')
 
   // 다시 누르면 닫힌다
-  await page.click('#buildid')
+  await openDiag(page)
   await expect(page.locator('#diagpanel')).toBeHidden()
 })
 
 test('포인터 줄이 실입력으로 갱신된다 — pen 종류·필압이 나온다', async ({ page }) => {
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
-  await page.click('#buildid')
+  await openDiag(page)
   expect(await rowText(page, '마지막 포인터')).toContain('mouse')   // 연 클릭이 남긴 대조군
   const cdp = await page.context().newCDPSession(page)
   const pen = { button: 'left' as const, clickCount: 1, pointerType: 'pen' as const, force: 0.7 }
@@ -82,7 +91,7 @@ test('진단 패널이 열려도 치수 필기 칸의 포인터를 안 삼킨다
   await page.goto('/')
   await page.waitForFunction(() => (window as any).__b2)
   await page.click('#dim-toggle')                      // 치수 리본을 편다
-  await page.click('#buildid')                         // 진단 패널을 연다
+  await openDiag(page)                         // 진단 패널을 연다
   const r = await page.evaluate(() => {
     const ink = document.getElementById('dim-ink')!.getBoundingClientRect()
     const dg = document.getElementById('diagpanel')!.getBoundingClientRect()

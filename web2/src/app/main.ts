@@ -44,7 +44,7 @@ try {
   if (r === 'classic' || r === 'brush') app.renderer = r
 } catch { /* 저장소가 없으면 기본값(brush) */ }
 const brushLayer = initBrushLayer(W, H, dpr)
-import { initFilmLayer, bakeFiberTile, setFilmAlphaForTest, setFiberLegacyForTest } from './filmlayer'
+import { initFilmLayer, bakeFiberTile, setFilmAlphaForTest, setFiberLegacyForTest, setPaperFiberForTest } from './filmlayer'
 const filmLayer = initFilmLayer(W, H, dpr)
 
 // 빌드 식별자 — 배포됐는지 화면에서 바로 안다.
@@ -55,8 +55,11 @@ try {
   document.getElementById('buildid')!.textContent = __BUILD_ID__
 } catch { /* 치환이 안 됐다 — 화면에만 안 뜬다 */ }
 
-// 진단 패널(web2-10 지시 4 · web2-11 1-f 확장) — 빌드 식별자를 누르면 펴진다.
-// 콘솔 없는 태블릿의 판독 통로. 최근 획·저장 크기는 앱 상태에서 그 자리에서 읽는다.
+// 진단 패널(web2-10 지시 4 · web2-11 1-f 확장) — 콘솔 없는 태블릿의 판독 통로.
+// ⚠ **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 종전에는 우하단 빌드 식별자를 눌렀는데,
+//    그 자리를 겨눈 손이 다른 버튼 대신 그것을 눌렀다(사람 관측). 빌드 식별자는 이제
+//    `pointer-events: none`인 **표시**이고, 여닫이는 **설정 패널의 「진단」**이다.
+//    없애지 않은 이유: 태블릿에는 콘솔이 없어 이 길이 유일한 판독 통로다.
 import { initDiagPanel } from './diagpanel'
 import type { StrokeCapStats } from './input'
 let inputApi: { strokeStats: () => StrokeCapStats } | null = null
@@ -64,7 +67,7 @@ let inputApi: { strokeStats: () => StrokeCapStats } | null = null
 const brnlBytes = () =>
   new Blob([serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView })]).size
 const diagPanel = initDiagPanel(
-  document.getElementById('buildid')!, document.getElementById('diagpanel')!,
+  document.getElementById('btn-diag')!, document.getElementById('diagpanel')!,
   () => {
     const st = inputApi?.strokeStats()
     return [
@@ -507,22 +510,99 @@ for (const g of PENCIL_GRADES) {
   trayEl.append(b)
   trayRow.set(g, b)
 }
+// ── 펜 촉통(web2-30 2번) — 슬라이더를 없애고 **촉을 고른다** ────────────────
+// **뒤집은 결정**: web2-19의 「펜은 하나뿐이니 아이콘 하나」를 여기서 뒤집는다.
+// 제도 펜의 굵기는 연속값이 아니다 — 실물에 없는 조작(슬라이더)을 만들었으므로 기준이
+// 있을 수 없었다(사람 관측: 「어떤 기준도 없이 허공에 있다」). `DRAFTING-MAP` 규칙 하나 —
+// **아이콘이 실물이면 동작도 실물이어야 한다.** 연필은 등급으로, 펜은 촉으로 고른다.
+const pentrayEl = document.getElementById('pentray')!
+/** 촉 mm → 화면 px. **출처는 `C` 하나다**(#54) — 통의 견본과 그은 선이 같은 값을 읽는다. */
+const nibPx = (mm: number): number => Math.round(mm * C.NIB_PX_PER_MM * 100) / 100
+/** 누운 촉 한 자루 — 연필통 줄과 **같은 문법·같은 칸**(64×16 viewBox)이고 앞쪽 도형만
+ *  펜의 것이다(원뿔 대신 촉). 뒤쪽 여백에 **그 굵기의 실제 선 견본**을 1:1로 긋는다:
+ *  선폭이 화면 고정이므로(원칙 e) 견본의 px가 곧 그어질 선의 px다. */
+function nibRowSvg(mm: number): string {
+  const w = nibPx(mm)
+  return '<svg width="96" height="24" viewBox="0 0 64 16">'
+    + '<rect x="1" y="3.5" width="9" height="9" rx="2" fill="#8b857a" />'
+    + '<rect x="10" y="3.5" width="5" height="9" fill="#6e6a63" />'
+    + '<rect x="15" y="3" width="20" height="10" fill="#7f7a72" />'
+    + '<rect x="15" y="3" width="20" height="2.6" fill="#98938a" />'
+    + `<text x="17.5" y="11.4" font-family="system-ui, sans-serif" font-size="6.4" fill="#f2efe9">${mm.toFixed(2)}</text>`
+    + '<path d="M35 3.6 L41.6 7.4 L41.6 8.6 L35 12.4 Z" fill="#5d5952" />'
+    + `<rect class="nsample" x="41.6" y="${(8 - w / 2).toFixed(3)}" width="21.4" height="${w}" fill="#101014" />`
+    + '</svg>'
+}
+const nibRow = new Map<number, HTMLElement>()
+for (const mm of C.NIB_MM) {
+  const b = document.createElement('button')
+  b.id = `nib-${String(mm).replace('.', '_')}`
+  b.className = 't tool nrow'
+  b.dataset.nibMm = String(mm)
+  b.dataset.nibPx = String(nibPx(mm))
+  b.title = `${mm.toFixed(2)} mm 촉`
+  b.setAttribute('aria-label', `${mm.toFixed(2)} mm 촉`)
+  b.innerHTML = nibRowSvg(mm)
+  // 하나를 고르면 **통이 접힌다**(28-1 — 하나를 고르면 끝나는 선택)
+  b.addEventListener('click', () => {
+    app.nib = nibPx(mm)
+    setTool('pen')
+    syncThick()
+    syncTray()
+    setPentrayOpen(false)
+  })
+  pentrayEl.append(b)
+  nibRow.set(mm, b)
+}
+
 // 접힌 연필(3-b′) — 평소에는 이것 하나만 보인다. 누르면 연필통이 펼쳐진다(토글).
 // 연필 도구 선택도 겸한다: 펜을 쓰다 눌러도 연필로 돌아온다(옛 연필 버튼의 몫 그대로).
 const pencilFoldBtn = document.getElementById('btn-pencil')!
 const penBtn = document.getElementById('btn-pen')!
+
+/** ⚠⚠ **web2-30 3번 — 리본 안의 무엇도 리본의 길이를 바꾸지 않는다.**
+ *  펼침은 **왼쪽으로 겹쳐 뜬다**. 세로 위치는 누른 버튼의 줄에 맞추되, 화면 위아래로
+ *  넘치면 **안쪽으로 민다**(리본은 안 건드린다). 연필통·펜 촉통 둘 다 이 한 함수를 쓰고
+ *  앞으로 생기는 펼침도 같다(#54). */
+function placeFlyout(el: HTMLElement, anchor: HTMLElement) {
+  const a = anchor.getBoundingClientRect()
+  el.style.right = `${Math.round(window.innerWidth - a.left + C.FLYOUT_GAP_PX)}px`
+  el.style.top = '0px'                       // 크기를 재기 전에 자리를 비운다
+  const h = el.offsetHeight
+  const top = Math.min(
+    Math.max(C.FLYOUT_EDGE_PX, a.top),
+    Math.max(C.FLYOUT_EDGE_PX, window.innerHeight - h - C.FLYOUT_EDGE_PX))
+  el.style.top = `${Math.round(top)}px`
+}
+
 let trayOpen = false
+let pentrayOpen = false
 function setTrayOpen(v: boolean) {
   trayOpen = v
   trayEl.classList.toggle('open', v)
+  if (v) { setPentrayOpen(false); placeFlyout(trayEl, pencilFoldBtn) }
+}
+function setPentrayOpen(v: boolean) {
+  pentrayOpen = v
+  pentrayEl.classList.toggle('open', v)
+  if (v) { setTrayOpen(false); placeFlyout(pentrayEl, penBtn) }
 }
 pencilFoldBtn.addEventListener('click', () => {
   setTool('pencil')
   setTrayOpen(!trayOpen)
 })
-penBtn.addEventListener('click', () => { setTool('pen'); setTrayOpen(false) })
+penBtn.addEventListener('click', () => {
+  setTool('pen')
+  setPentrayOpen(!pentrayOpen)
+})
+// 창이 바뀌면 열린 통의 자리를 다시 잡는다(리본이 옮겨 가므로)
+window.addEventListener('resize', () => {
+  if (trayOpen) placeFlyout(trayEl, pencilFoldBtn)
+  if (pentrayOpen) placeFlyout(pentrayEl, penBtn)
+})
 if (!TRAY) {   // 되돌리기(A-4) — 옛 세로 버튼·슬라이더로
   trayEl.hidden = true
+  pentrayEl.hidden = true
   document.getElementById('oldtools')!.hidden = false
 }
 
@@ -543,6 +623,10 @@ const thickDot = document.getElementById('thick-dot')!
  *  표시), 접힌 연필·펜 버튼도 도구 상태를 따른다(3-b′). */
 function syncTray() {
   for (const g of PENCIL_GRADES) trayRow.get(g)!.classList.toggle('on', app.tool === 'pencil' && app.grade === g)
+  // 촉 줄도 같은 규약 — 지금 고른 촉이 앞으로 나온다(web2-30 2번)
+  for (const mm of C.NIB_MM) {
+    nibRow.get(mm)!.classList.toggle('on', app.tool === 'pen' && Math.abs(app.nib - nibPx(mm)) < 1e-6)
+  }
   pencilFoldBtn.classList.toggle('on', app.tool === 'pencil')
   penBtn.classList.toggle('on', app.tool === 'pen')
 }
@@ -562,8 +646,9 @@ function setTool(t: Tool) {
     cancelCandidates(app)
     document.getElementById('face-pop')!.hidden = true
   }
-  // 굵기 막대는 **펜과 지우개에만** 뜬다. 연필의 굵기는 심이 정한다(4-e).
-  thick.style.display = t === 'pencil' ? 'none' : 'block'
+  // 굵기 막대는 **지우개에만** 뜬다(web2-30 2번). 연필의 굵기는 심이, 펜의 굵기는
+  // **촉**이 정한다 — 제도 펜의 굵기는 연속값이 아니므로 슬라이더가 틀린 물건이었다.
+  thick.style.display = isEraser(t) ? 'block' : 'none'
   syncThick()
   invalidate()
 }
@@ -929,6 +1014,9 @@ for (const ev of ['pointerdown', 'pointerup', 'pointercancel', 'pointerleave', '
 //   연필통은 「하나를 고르면 끝나는 선택」이라 접힌다 — 그쪽은 종전 배선이 이미 접는다.
 const FOLD_PANELS: { root: string; close: () => void }[] = [
   { root: '#pane-file', close: () => { (document.getElementById('pane-file') as HTMLDetailsElement).open = false } },
+  // 설정(web2-30 10번) — **상태 토글(필압 보정)은 안 접고 명령(진단)만 접는다**(28-1 그대로).
+  // 진단을 접는 실질적 이유: 서랍과 진단 패널·자립 깃발이 **같은 우하단 모서리**를 쓴다.
+  { root: '#pane-settings', close: () => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = false } },
   { root: '#display-pop', close: () => { (document.getElementById('display-pop') as HTMLElement).hidden = true } },
   { root: '#snap-pop', close: () => { (document.getElementById('snap-pop') as HTMLElement).hidden = true } },
   { root: '#face-pop', close: () => { (document.getElementById('face-pop') as HTMLElement).hidden = true } },
@@ -955,32 +1043,65 @@ initPanelFold()
 // 결과는 문서에 붙는다(`doc.press`) — 기기 설정이면 옵션을 켜는 순간 예전 그림들의
 // 농도까지 바뀐다. 화면 문구는 지시가 준 「필압 보정」 그대로다.
 const pressBox = document.getElementById('chk-press') as HTMLInputElement
-const syncPressBox = () => { pressBox.checked = pressOn(app) || app.pressCalib !== null }
+const pressCalibRow = document.getElementById('press-calib')!
+const pressCalibStepEl = document.getElementById('press-calib-step')!
+
+/** 절차의 문면 — **한 자리**다(#54). 알림 줄과 설정 패널의 줄이 같은 문자열을 읽는다.
+ *  ⚠ web2-26 6번에는 알림 줄뿐이었고, 알림은 스쳐 지나가므로 **절차가 화면에 있는지**를
+ *  아무도 확인할 수 없었다(30-7의 물음이 그것이다). */
+const PRESS_STEP = {
+  normal: '필압 보정 — 평소 세기로 한 획을 그으세요',
+  hardest: '필압 보정 — 이제 가장 세게 한 획',
+  nopen: '필압 보정 — 펜으로 그어야 압력이 실립니다',
+  again: '필압 보정 — 두 세기가 너무 가깝습니다. 평소 세기부터 다시',
+} as const
+
+/** 화면을 상태에 맞춘다.
+ *  ⚠⚠ **체크상자는 `pressOn`만 읽는다** — 절차 중에는 **꺼진 채**다(30-7 게이트 ④:
+ *  「절반만 켜진 상태를 만들지 마라」). 옵션이 켜지는 시점은 `doc.press`가 서는 순간
+ *  하나이고, 그 전까지는 «절차 중»이라는 별도 표시가 그 사실을 든다(#77 ㉠ — 한 손잡이에
+ *  뜻을 둘 얹으면 옛 뜻이 조용히 죽는다). */
+function syncPressBox(step?: string) {
+  pressBox.checked = pressOn(app)
+  const busy = app.pressCalib !== null
+  pressCalibRow.hidden = !busy
+  if (busy && step) pressCalibStepEl.textContent = step
+  if (!busy) pressCalibStepEl.textContent = ''
+}
+function beginPressCalibUI() {
+  beginPressCalib(app)
+  syncPressBox(PRESS_STEP.normal)
+  status(PRESS_STEP.normal)
+}
 pressBox.addEventListener('change', () => {
-  if (pressBox.checked) {
-    beginPressCalib(app)
-    status('필압 보정 — 평소 세기로 한 획을 그으세요')
-  } else {
-    setPressOff(app)
-    clearNotice()
-  }
+  // 체크상자는 이제 «켜짐»만 든다 — 누르면 **절차를 시작**하고 상자는 도로 꺼진다.
+  if (pressBox.checked) beginPressCalibUI()
+  else { setPressOff(app); syncPressBox(); clearNotice() }
+  invalidate()
+})
+document.getElementById('btn-press-cancel')!.addEventListener('click', () => {
+  // 그만두면 **꺼진 채로 남는다**(30-7 게이트) — 절반 상태가 남지 않는다
+  setPressOff(app)
+  syncPressBox()
+  clearNotice()
   invalidate()
 })
 // 문서를 열면 그 문서의 보정 상태가 화면에 그대로 뜬다(문서에 붙는 설정이므로)
-app.listeners.push(syncPressBox)
+app.listeners.push(() => syncPressBox())
 syncPressBox()
 
 /** 확정된 획을 절차에 먹인다 — `onCommit` 뒤에 부른다(획이 문서에 든 다음). */
 function pressCalibStep(s: Stroke | null) {
   if (!s || app.pressCalib === null) return
+  const say = (m: string) => { status(m); syncPressBox(m) }
   switch (feedPressCalib(app, s)) {
-    case 'nopen': status('필압 보정 — 펜으로 그어야 압력이 실립니다'); break
-    case 'first': status('필압 보정 — 이제 가장 세게 한 획'); break
-    case 'again': status('필압 보정 — 두 세기가 너무 가깝습니다. 평소 세기부터 다시'); break
+    case 'nopen': say(PRESS_STEP.nopen); break
+    case 'first': say(PRESS_STEP.hardest); break
+    case 'again': say(PRESS_STEP.again); break
     case 'done': {
       const c = app.doc.press!
       notify(`필압 보정 완료 — 평소 ${c.p0.toFixed(2)} · 최대 ${c.p1.toFixed(2)}`)
-      syncPressBox()
+      syncPressBox()          // 여기서 비로소 체크상자가 켜진다(그 전까지는 꺼진 채)
       break
     }
   }
@@ -1514,7 +1635,10 @@ const diag = {
     for (let i = 0; i < d.length; i += 97) h = ((h * 33) ^ d[i]!) >>> 0
     return h
   },
-  fiberTile: (id: number, paper: 'tracing' | 'yellow', wrap = true) => bakeFiberTile(id, paper, dpr, wrap),
+  fiberTile: (id: number, paper: 'tracing' | 'yellow' | 'paper', wrap = true) => bakeFiberTile(id, paper, dpr, wrap),
+  /** D-3 반증(web2-30 9번) — **바탕 종이의 결을 끈다**(web2-20 3부의 옛 상태로).
+   *  끄면 「셋의 진폭이 서로 20% 이내」가 같은 실행에서 실패한다. e2e 전용. */
+  paperFiberForTest: (v: boolean) => { setPaperFiberForTest(v); invalidate() },
   /** D-3 반증(3-e ④) — 곱→알파로 바꿔 합성 곡선 붕괴를 본다. e2e 전용. */
   filmAlphaForTest: (v: boolean) => { setFilmAlphaForTest(v); invalidate() },
   /** 손글씨 치수(web2-29 1단계) — **화면 팔의 손잡이**: 인식은 확률적이라 e2e가 값을
@@ -1538,8 +1662,12 @@ const diag = {
   osnapAt: (x: number, y: number) =>
     osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / app.view.s },
       undefined, undefined, app.extAcq.acquired),
-  /** 연장선 획득 상태(web2-18 2부) — e2e가 «획득 없이는 ext가 안 난다»를 잰다 */
-  extAcq: () => ({ acquired: app.extAcq.acquired.map(a => ({ ...a })), hover: app.extAcq.hover }),
+  /** 연장선 **선언** 상태(web2-30 11번) — e2e가 «왕복 없이는 절대 안 선다»를 잰다.
+   *  ⚠ `hover`는 없어졌다(머무름 획득이 왕복 선언으로 바뀌었다) — 대신 왕복의 진행을 준다. */
+  extAcq: () => ({
+    acquired: app.extAcq.acquired.map(a => ({ ...a })),
+    farD: app.extAcq.farD, declaredAt: app.extAcq.declaredAt,
+  }),
   /** 마지막 확정 획의 스냅 종류(2-c) — 진단 패널과 **같은 값** */
   lastSnap: () => app.lastSnap,
   /** classic 쪽 비교치 — 같은 장면의 draw2d 1회 ms(질감 grain 포함) */
@@ -1630,5 +1758,7 @@ const diag = {
   }),
 }
 
-declare global { interface Window { __b2?: { app: typeof app; diag: typeof diag } } }
-window.__b2 = { app, diag }
+declare global { interface Window { __b2?: { app: typeof app; diag: typeof diag; widthOfMat: typeof widthOfMat } } }
+// `widthOfMat`을 함께 내보낸다(web2-30 2번) — 획의 굵기는 **`mat.w`가 아니라 이 함수**가
+// 정한다(기본 촉이면 `mat.w`가 아예 없다). 팔이 그 사실을 우회해 상수를 베끼면 #54가 깨진다.
+window.__b2 = { app, diag, widthOfMat }

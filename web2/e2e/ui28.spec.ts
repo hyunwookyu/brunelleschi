@@ -137,7 +137,7 @@ test('28-1 ①\' 면 찾기는 명령이다 — 실행하면 접힌다', async (
   expect(await openOf(page, '#face-pop'), '「전부 찾기」 뒤에는 접힌다').toBe(false)
 })
 
-test('28-2 ② 툴팁 — 펜에서만 · 600ms · 그리는 중 안 뜸 · 화면 안쪽', async ({ page }) => {
+test('28-2 ② 툴팁 — 펜에서만 · **300ms**(web2-30 12번) · 그리는 중 안 뜸 · 화면 안쪽', async ({ page }) => {
   await boot(page)
   const tipVisible = () => page.evaluate(() => !(document.getElementById('tip') as HTMLElement).hidden)
   const hoverPen = (sel: string) => page.evaluate((s) => {
@@ -156,9 +156,15 @@ test('28-2 ② 툴팁 — 펜에서만 · 600ms · 그리는 중 안 뜸 · 화�
   }, sel)
 
   // 펜 — 머무르면 뜬다(문구는 그 단추의 title이다: 새 문자열 테이블이 없다는 증거)
+  // ⚠ **머무름 시간을 실제로 잰다**(web2-30 12번). 재지 않으면 상수를 아무 값으로 바꿔도
+  //    이 팔이 통과한다 — 600에서 300으로 내린 것을 확인할 자리가 여기뿐이다.
+  const t0 = Date.now()
   await hoverPen('#btn-snap')
   expect(await tipVisible(), '뜨기 전').toBe(false)
   await page.waitForFunction(() => !(document.getElementById('tip') as HTMLElement).hidden, undefined, { timeout: 3000 })
+  const dwellMs = Date.now() - t0
+  console.log(`[30-12] 툴팁 머무름 실측 ${dwellMs}ms (상수 300)`)
+  expect(dwellMs, '300ms 대역 안이다 — 600이면 이 줄이 깨진다').toBeLessThan(520)
   const tip = await page.evaluate(() => {
     const t = document.getElementById('tip') as HTMLElement
     const r = t.getBoundingClientRect()

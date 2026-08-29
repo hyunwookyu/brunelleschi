@@ -14,7 +14,7 @@ import type { CamPose } from './types'
 import { C } from './constants'
 import { project, rayThrough, vpMarks } from './camera'
 import type { LiftResult } from './lift'
-import { type ExtAcq, extAllowed } from './extacq'
+import { type ExtAcq } from './extacq'
 import {
   type Pt, type V3, pt, add3, sub3, mul3, dot3, dist2, dist3, len3,
 } from './vec'
@@ -25,7 +25,16 @@ export type OsnapKind = 'vp' | 'vertex' | 'end' | 'mid' | 'int' | 'xint' | 'perp
 // `xint`(겉보기 교차)는 `int` 바로 뒤다 — **두 구속이 정한 정확한 점**이라 발·연장·근처보다
 // 앞서지만(그 셋이 가리던 것이 web2-15의 증상이다), 실제 3D 교차보다는 뒤다(한쪽이 2D다).
 // 끝점·중점은 여전히 앞선다 — B의 «특징점»을 겨냥한 것은 그쪽이 더 정확한 답이다.
-export const OSNAP_ORDER: OsnapKind[] = ['vp', 'vertex', 'end', 'mid', 'int', 'xint', 'perp', 'ext', 'near']
+// ⚠⚠ **`ext`가 이 목록에 없다**(web2-30 11번). 연장선은 **후보가 아니라 선언된 구속**이다 —
+// 축 잠금과 같은 부류지 «가까움으로 이기는» 목록에 넣을 것이 아니었다.
+//
+// 왜 바뀌었나: 26-3이 획득 띠를 넓혀 헤드리스 획득률을 40 → 100/110으로 올렸는데
+// **실제 도면에서는 거의 안 걸렸다**(사람 관측). 픽스처는 획이 몇 개뿐인 깨끗한 장면이고
+// 실제 작도는 획이 수십 개라 **포인터 근처에 끝점·중점·교점 후보가 늘 하나쯤 있다** —
+// 점이 `ext`보다 앞이므로 연장선은 **수면에 올라오지 못한다**. 띠 넓이의 문제가 아니라
+// **층위의 문제**였다(PITFALLS #78 · 함정 #71의 형태).
+// 선언된 구속은 `core/draft.ts`의 `applyExtLock`이 적용한다(그 자리 하나 — #54).
+export const OSNAP_ORDER: OsnapKind[] = ['vp', 'vertex', 'end', 'mid', 'int', 'xint', 'perp', 'near']
 
 /** 조준선(web2-15 1번) — **지금 그리는 획이 따라갈 화면 직선**이다.
  *  축 스냅이 붙은 획만 준다: 시작점과 방향이 이미 정해졌으므로 «어디서 뗐나»가 아니라
@@ -99,7 +108,7 @@ function segSegClosest3(a1: V3, b1: V3, a2: V3, b2: V3): { p1: V3; p2: V3; d: nu
 }
 
 /** 직선(무한) P0+t·d 위, 광선과의 최근접 파라미터 t (평행이면 null) */
-function lineRayT(P0: V3, dir: V3, ro: V3, rd: V3): number | null {
+export function lineRayT(P0: V3, dir: V3, ro: V3, rd: V3): number | null {
   const dl = len3(dir)
   if (dl < 1e-12) return null
   const a = mul3(dir, 1 / dl)
@@ -274,30 +283,22 @@ export function osnap(
     }
   }
 
-  // 근처점·연장선 — 광선과 3D 직선의 최근접점. 파라미터가 선분 안이면 근처점, 밖이면 연장선
+  // 근처점 — 광선과 3D 선분의 최근접점(파라미터가 선분 안일 때만).
+  // ⚠⚠ **연장선(`ext`)은 여기서 안 난다**(web2-30 11번) — 후보가 아니라 **선언된 구속**이라
+  //    `core/draft.ts`의 `applyExtLock`이 따로 적용한다. 종전에는 이 자리에서 «획득한 끝의
+  //    연장»이 후보로 났는데, 실제 도면(획 수십 개)에서는 점 후보가 늘 곁에 있어
+  //    **한 번도 수면에 못 올라왔다**. `extAllowed`는 그대로 살아 있고 부르는 자리만 옮겼다.
   const ray = rayThrough(an, pose, cursor)
-  if (ray && (set.kinds.near || set.kinds.ext)) {
-    for (const [id, seg] of lift.lifted) {
+  if (ray && set.kinds.near) {
+    for (const [, seg] of lift.lifted) {
       const dir = sub3(seg.b3, seg.a3)
       const t = lineRayT(seg.a3, dir, ray.o, ray.d)
       if (t === null) continue
       const over = C.SEG_OVERSHOOT_RATIO
-      if (t >= -over && t <= 1 + over) {
-        if (!set.kinds.near) continue
-        const tc = Math.max(0, Math.min(1, t))
-        const p3 = add3(seg.a3, mul3(dir, tc))
-        push('near', project(an, pose, p3), p3)
-      } else {
-        // ── 연장선은 **획득식**이다(web2-18 2-b) ─────────────────────────────
-        // 종전에는 여기서 모든 승격 선분의 연장이 무한 길이로 후보가 됐다 — 획이 늘수록
-        // 화면이 연장선으로 덮여 「허공에서 뭔가에 끌린다」가 됐고, 조준 경로 내내 잡혀
-        // `near`·`xint`를 가렸다(web2-15가 우회로 넘긴 그 자리). 이제 **획득한 끝에서
-        // 그 선분 길이의 EXT_MAX_RATIO배까지**만 산다 — 판정은 `extacq.extAllowed` 하나다.
-        if (!set.kinds.ext) continue
-        if (!extAllowed(extAcq, id, t, over)) continue
-        const p3 = add3(seg.a3, mul3(dir, t))
-        push('ext', project(an, pose, p3), p3, undefined, id)
-      }
+      if (t < -over || t > 1 + over) continue
+      const tc = Math.max(0, Math.min(1, t))
+      const p3 = add3(seg.a3, mul3(dir, tc))
+      push('near', project(an, pose, p3), p3)
     }
   }
 

@@ -95,7 +95,14 @@ test('① 겹을 끄면 종이면·획·결이 모두 사라진다 — 맨 종�
   console.log(`[27-2 ①] 겹 끔   ${off.rgb.map(v => v.toFixed(1))} sd ${off.sd.toFixed(3)}`)
   // 분해능(#69 ㉣) — 켠 상태가 실제로 갈렸어야 「사라졌다」가 뜻이 있다
   expect(rgbDiff(on.rgb, bare.rgb), '겹이 켜지면 색조가 실제로 바뀐다').toBeGreaterThan(20)
-  expect(on.sd - bare.sd, '겹이 켜지면 결이 실제로 선다').toBeGreaterThan(2)
+  // ⚠⚠ **web2-30 9번이 이 자를 갈았다**: 이제 **맨 종이에도 결이 있다**(`bare.sd` ≈ 3.8).
+  //   그러면 «뺄셈»으로 잰 겹의 몫이 실제보다 작아 보인다(5.4 − 3.8 = 1.6) — 두 결은
+  //   독립이라 **분산이 더해지기** 때문이다. 30-9가 세운 산술 그대로 제곱으로 뺀다
+  //   (#74 ㉡: 그 실행의 바닥값을 쓰되, 빼는 방법은 sqrt(신호²−바닥²)).
+  //   요구는 그대로다 — 「겹이 켜지면 **그 겹의** 결이 실제로 선다」.
+  const layerGrain = Math.sqrt(Math.max(0, on.sd * on.sd - bare.sd * bare.sd))
+  console.log(`[27-2 ①] 겹의 결 몫 sqrt(${on.sd.toFixed(3)}² − ${bare.sd.toFixed(3)}²) = ${layerGrain.toFixed(3)}`)
+  expect(layerGrain, '겹이 켜지면 결이 실제로 선다').toBeGreaterThan(2)
   // 게이트 — 색조도 결도 **맨 종이 값으로** 돌아온다
   expect(rgbDiff(off.rgb, bare.rgb), '색조가 남지 않는다').toBeLessThan(1)
   expect(Math.abs(off.sd - bare.sd), '결이 남지 않는다').toBeLessThan(0.3)

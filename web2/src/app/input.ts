@@ -10,7 +10,7 @@ import {
   screenToDoc, isEraser, yellowActive, toggleFaceAt, facePreview, excludeCandidateAt, beginNavHold, endNavHold,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
-import { updateExtDwell } from '../core/extacq'
+import { updateExtTrip, beginExtTrip } from '../core/extacq'
 import { isLevel, pitchSnaps } from '../core/level'
 import type { LevelHooks } from './autolevel'
 import { resolveStart, resolveEnd, resolveCommit, isStray } from '../core/draft'
@@ -123,12 +123,12 @@ export function initInput(
   const toPt = (e: PointerEvent): Pt => screenToDoc(app, toScreen(e))
   /** 오스냅 반경은 화면 px — 문서 좌표용으로 배율 보정 */
   const osnapSet = () => ({ ...app.osnap, radius: app.osnap.radius / app.view.s })
-  /** **연장선 획득 머무름**(web2-18 2-b) — 포인터가 움직일 때마다 한 번. 호버든
-   *  그리는 중이든 같은 자리에서 돈다(AutoCAD·Rhino도 명령 중에 획득한다 — A-3).
-   *  반환 = 표시가 달라졌는가(획득 표식을 다시 그려야 하는가). */
+  /** **연장선 왕복 선언**(web2-30 11번) — 그리는 중에 포인터가 움직일 때마다 한 번.
+   *  ⚠ 호버에서는 안 돈다: 왕복은 **획의 시작점**에서 재는 몸짓이라 획이 없으면 뜻이 없다
+   *  (종전 머무름 획득은 호버에서도 돌았다). 반환 = 이번에 선언이 새로 섰는가. */
   const tickExt = (p: Pt): boolean =>
-    updateExtDwell(app.extAcq, app.lift, app.pose, p,
-      app.osnap.radius / app.view.s, performance.now())
+    updateExtTrip(app.extAcq, app.lift, app.pose, p,
+      C.EXT_TRIP_LINE_TOL_PX / app.view.s, C.EXT_TRIP_MIN_PX / app.view.s, performance.now())
   /** 치수 옵션 — 스냅은 켜져 있을 때만 step이 실린다(지시 4-7) */
   const dimOpts = () => ({
     mmPerUnit: app.lift.mmPerUnit,
@@ -277,6 +277,9 @@ export function initInput(
       nid: app.nextId,
       ...(e.pointerType === 'pen' ? { press: [quantPress(e.pressure)] } : {}),
     }
+    // **왕복 판정을 연다**(web2-30 11번) — 기준점은 «오스냅이 붙은 뒤의» 시작점이다.
+    // 선언은 이 획 안에서만 산다(획이 끝나면 `clearExtAcq`가 비운다).
+    beginExtTrip(app.extAcq, draft.start)
     cb.onDraftChange(draft)
   }
 
@@ -508,8 +511,8 @@ export function initInput(
       // 안 붙고 표식도 안 뜬다 — 「자를 치운 종이」의 정의. 연장선 획득(ext)도 같은
       // 자(치운 그 자)의 일부라 같이 쉰다.
       if (yellowActive(app)) { cb.onHover(null); return }
-      // 머무름이 먼저다(2-b) — 이 이동으로 획득이 서면 **그 자리에서** ext가 후보가 된다.
-      if (tickExt(hp)) cb.onDraftChange(draft)   // 획득 표식이 달라졌다 — 다시 그린다
+      // ⚠ **호버에서는 왕복이 안 돈다**(web2-30 11번) — 선언은 «획의 시작점에서 나갔다
+      //    돌아왔다»는 몸짓이라 획이 없으면 잴 것이 없다(종전 머무름 획득은 여기서도 돌았다).
       cb.onHover(osnap(app.lift, app.pose, hp, osnapSet(), undefined, undefined, app.extAcq.acquired))
     }
   })

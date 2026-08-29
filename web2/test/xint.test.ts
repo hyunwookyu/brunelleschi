@@ -32,7 +32,7 @@ import { session } from './session'
 import { resolveStart, resolveEnd } from '../src/core/draft'
 import { osnap } from '../src/core/osnap'
 import { C } from '../src/core/constants'
-import { newExtDwell, updateExtDwell } from '../src/core/extacq'
+import { newExtDwell, declareAtForTest } from '../src/core/extacq'
 import { axisOfStroke } from '../src/core/lift'
 import { own3Deviation, OWN3_TOL_PX } from '../src/core/own3d'
 import { loadDoc, commitStroke } from '../src/app/state'
@@ -119,16 +119,17 @@ describe('단계 ① 스냅 — 손 오차를 태워도 대기선 몸통에 겉�
     const bare = osnap(s.app.lift, s.app.pose, { x: 720, y: 308 }, set, { p3: null })
     expect(bare!.kind, 'web2-18 뒤 — 획득이 없으니 ext가 아니라 near다').toBe('near')
 
-    // 반증(D-3): **획득 조건을 채우면** 그 자리에서 ext가 되살아나 near를 가린다.
-    //   그것이 web2-15가 본 상태다 — 조건을 참으로 만들면 옛 동작이 그대로 돌아온다.
+    // ⚠⚠ **web2-30 11번이 이 자리를 다시 바꿨다.** 종전 반증은 「획득하면 ext가 near를
+    //   가린다」(= 옛 동작이 되살아난다)였는데, 지금은 **선언해도 `osnap`이 ext를 안 낸다** —
+    //   연장선이 후보 목록에서 통째로 빠졌기 때문이다(층위가 다르다). 그래서 반증의
+    //   문면이 뒤집힌다: **선언해도 그 자리는 여전히 near다.**
     const st = newExtDwell()
-    updateExtDwell(st, s.app.lift, s.app.pose, { x: 720, y: 345 }, set.radius, 0)
-    updateExtDwell(st, s.app.lift, s.app.pose, { x: 720, y: 345 }, set.radius, C.EXT_ACQUIRE_MS)
-    expect(st.acquired.length, 'V의 위 끝이 획득됐다').toBeGreaterThan(0)
+    declareAtForTest(st, s.app.lift, s.app.pose, { x: 720, y: 345 }, set.radius)
+    expect(st.acquired.length, 'V의 위 끝이 속한 선분이 선언됐다').toBeGreaterThan(0)
     const acq = osnap(s.app.lift, s.app.pose, { x: 720, y: 308 }, set, { p3: null }, undefined, st.acquired)
-    expect(acq!.kind, '획득하면 옛 동작(ext가 near를 가린다)이 그대로 돌아온다').toBe('ext')
+    expect(acq!.kind, '선언해도 오스냅 목록에는 ext가 없다(web2-30 11번)').toBe('near')
 
-    // 조준선을 주면(=앱 경로) 겉보기 교차가 이긴다 — **획득이 있어도** 그대로다
+    // 조준선을 주면(=앱 경로) 겉보기 교차가 이긴다 — **선언이 없을 때**
     const r = preview(s, { x: 720, y: 345 }, { x: 720, y: 308 })
     expect(r.endSnap!.kind).toBe('xint')
   })

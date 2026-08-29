@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest'
 import { session } from './session'
 import { resolveEnd } from '../src/core/draft'
 import { defaultOsnap } from '../src/core/osnap'
-import { newExtDwell, updateExtDwell } from '../src/core/extacq'
+import { newExtDwell, declareAtForTest } from '../src/core/extacq'
 import { C } from '../src/core/constants'
 import { DRAW_POSE } from '../src/core/camera'
 
@@ -107,8 +107,7 @@ describe('5-c — 대기가 거의 사라진다', () => {
       '획득 전에는 연장선이 없다').not.toBe('ext')
     const st = newExtDwell()
     const R = defaultOsnap().radius
-    updateExtDwell(st, s.app.lift, DRAW_POSE, d.b, R, 0)
-    updateExtDwell(st, s.app.lift, DRAW_POSE, d.b, R, C.EXT_ACQUIRE_MS)
+    declareAtForTest(st, s.app.lift, DRAW_POSE, d.b, R)
     expect(st.acquired.length, '그 바닥선의 끝이 획득됐다').toBeGreaterThan(0)
     const e = resolveEnd(s.app.lift, DRAW_POSE, s.app.lift.an,
       { x: 500, y: 350 }, { p3: null }, ext, defaultOsnap(), undefined, st.acquired)
