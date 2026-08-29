@@ -416,7 +416,9 @@ export function initInput(
     // 지운다(도구는 그대로 남는다 — 뗌과 동시에 아무것도 안 남는다).
     // **탭**은 치수 숫자를 짚을 수 있다(web2-32 2번 — 사후 수정). 끌면 종전대로
     // 그린다(그림이 기본이다). 판정은 뗄 때 «안 움직였는가»로 한다.
-    if (app.tool !== 'dim' && !app.tipErase && !isEraser(app.tool)) {
+    // ⚠ **면 도구는 뺀다** — 그 탭은 이미 뜻이 있다(면 지정). 한 몸짓에 뜻을 둘 얹으면
+    //   옛 뜻이 조용히 죽는다(#77 ㉠).
+    if (app.tool !== 'dim' && app.tool !== 'face' && !app.tipErase && !isEraser(app.tool)) {
       suggestTap = toPt(e)
     }
     // ── 손글씨 치수(web2-29 1단계) — **모드가 있다** ──────────────────────────
