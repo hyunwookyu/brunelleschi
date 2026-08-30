@@ -12322,6 +12322,17 @@ D-3 새 검사에 반증 조건(32-4는 **정규화만** 넣고 한 번, 궤적�
 | e2e 전량 | **378 / 0 / 378**(`--workers=1` · dpr1+dpr2 · **45.3m**) |
 | 빌드 | `vite build` 통과(2.10s) |
 | 비용 원장 | `stage0/out/test_cost_web2.json` 갱신(9차 지시 c — 팔을 더하면 비용을 남긴다) |
+| **배포** | main **`79a4fd3`** · `node tools/deploy-check.mjs` → `Pages 실행 completed / success` · **화면 빌드 식별자 `79a4fd3` == 배포 커밋** → **배포됨** |
+
+```
+$ actions/runs?head_sha=79a4fd3
+Pages 실행 completed / success (attempt 1)
+$ curl https://hyunwookyu.github.io/brunelleschi/sw.js?t=79a4fd3f
+화면 빌드 식별자 79a4fd3
+✓ 화면 빌드 식별자 == 배포 커밋      → 결과: 배포됨
+```
+
+⚠ 이 절 아래의 문서 커밋들은 앱 코드를 안 바꾼다 — **나간 앱은 `79a4fd3`**이다.
 
 ⚠ **첫 전량 실행은 무효였다**(두 번 배웠다 · #80): ① `tsc`·`vitest`를 같이 돌려 픽셀·타이밍
 팔 셋이 흔들렸고 ② 실행 **중에 소스를 고쳤다**(dev 서버가 디스크를 읽으므로 그 실행은 트리가
