@@ -1,5 +1,5 @@
 {
-  "n_flags": 5756,
+  "n_flags": 5755,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -20442,12 +20442,7 @@
     },
     {
       "path": "paper_grain26_web2.json:gate.current[1].bare_sd",
-      "val": 8.421352504228707e-11,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
-      "path": "paper_grain26_web2.json:gate.current[2].bare_sd",
-      "val": 7.247535904753022e-12,
+      "val": 4.0472514228895307e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20467,7 +20462,7 @@
     },
     {
       "path": "paper_grain30_web2.json:gate.current[3].bare",
-      "val": 8.421352504228707e-11,
+      "val": 4.0472514228895307e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20477,7 +20472,7 @@
     },
     {
       "path": "paper_grain30_web2.json:gate.current[5].bare",
-      "val": 7.347011887759436e-11,
+      "val": 8.421352504228707e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
