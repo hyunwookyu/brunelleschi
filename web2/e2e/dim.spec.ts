@@ -344,7 +344,7 @@ test('비동기 인식 순서(recSeq) — 늦게 온 옛 결과가 새 결과를
 test('겹 획의 첫 치수(web2-21 1-b) — scaleRef가 서지 않고 안내 한 줄 「축척은 바탕 종이의 치수가 정한다」', async ({ page }) => {
   await build(page)
   // 트레이싱지를 얹고(3-a 롤 버튼 — 카메라는 닫혀 있다) 그 위에 승격되는 획 하나
-  await page.click('#btn-roll-tracing'); await settle(page)
+  await page.click('#btn-roll'); await page.click('#btn-roll-tracing'); await settle(page)
   await drawLine(page, 500, 500, 300, 450)
   const last = await page.evaluate(() => {
     const a = (window as any).__b2.app

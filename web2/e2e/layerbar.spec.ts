@@ -111,13 +111,13 @@ test('롤 둘(web2-21 3-a) — 닫히기 전 비활성+안내 · 누르면 그 �
   // ② 카메라 닫히기 전 — 비활성(흐림)이고 누르면 이유가 보인다
   await expect(page.locator('#btn-roll-tracing')).toHaveClass(/disabled/)
   await expect(page.locator('#btn-roll-yellow')).toHaveClass(/disabled/)
-  await page.click('#btn-roll-tracing'); await settle(page)
+  await page.click('#btn-roll'); await page.click('#btn-roll-tracing'); await settle(page)
   await expect(page.locator('#notice')).toContainText('소실점 작도가 끝나야')
   expect(await page.evaluate(() => (window as any).__b2.app.doc.layers.length)).toBe(0)
   // ① 닫힌 뒤 — 트레이싱지 롤 → 한 장 얹히고 활성 · 옐로 롤 → 옐로가 얹힌다
   await closeCamera(page)
   await expect(page.locator('#btn-roll-tracing')).not.toHaveClass(/disabled/)
-  await page.click('#btn-roll-tracing'); await settle(page)
+  await page.click('#btn-roll'); await page.click('#btn-roll-tracing'); await settle(page)
   let st = await page.evaluate(() => {
     const a = (window as any).__b2.app
     return { n: a.doc.layers.length, active: a.activeLayer, paper: a.doc.layers[0]?.paper }
@@ -125,7 +125,7 @@ test('롤 둘(web2-21 3-a) — 닫히기 전 비활성+안내 · 누르면 그 �
   expect(st.n).toBe(1)
   expect(st.paper).toBe('tracing')
   expect(st.active).not.toBeNull()
-  await page.click('#btn-roll-yellow'); await settle(page)
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow'); await settle(page)
   st = await page.evaluate(() => {
     const a = (window as any).__b2.app
     return { n: a.doc.layers.length, active: a.activeLayer, paper: a.doc.layers[1]?.paper }

@@ -5,7 +5,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   handwritingGroup, applyWrittenDim, dimTargetTie, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
   measureTap, clearMeasure, type Tool } from './state'
 import { initPaperbar } from './paperbar'
-import { initLayerbar, LAYER_GATE_MSG } from './layerbar'
+import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
@@ -703,6 +703,8 @@ window.addEventListener('resize', () => {
   if (trayOpen) placeFlyout(trayEl, pencilFoldBtn)
   if (pentrayOpen) placeFlyout(pentrayEl, penBtn)
   if (etrayOpen && etrayAnchor) placeFlyout(etrayEl, etrayAnchor)   // 크기통도 같다(34-3)
+  if (rolltrayOpen) placeFlyout(rolltrayEl, rollBtn)                // 롤통도 같다(34-6)
+
 })
 if (!TRAY) {   // 되돌리기(A-4) — 옛 세로 버튼·슬라이더로
   trayEl.hidden = true
@@ -1288,7 +1290,13 @@ function initPanelFold() {
     })
     // 서랍은 summary를 눌러도 열리고 코드로도 열린다 — 배타는 **열린 사실**에 건다
     if (root instanceof HTMLDetailsElement) {
-      root.addEventListener('toggle', () => { if (root.open) closeOtherBoxes(p.root) })
+      root.addEventListener('toggle', () => {
+        if (!root.open) return
+        closeOtherBoxes(p.root)
+        // ⚠ 자리는 **CSS의 «위 띠의 길»**(`--top-lane`)이 정한다 — JS가 안 잡는다.
+        //   기둥(치수 리본)이 세로로 길어(573px) 그 왼쪽 한 줄이 유일한 빈 길이고,
+        //   그것은 요약의 위치와 무관한 **고정된 길**이다(R5 · #79: 자리를 나눈다).
+      })
     }
     // 캡처가 아니라 **버블**이다 — 그 항목의 제 동작이 먼저 돌고 나서 접는다(접힘은 뒤끝).
     root.addEventListener('click', (e) => {
@@ -1616,27 +1624,59 @@ layerbarRef = layerbar
 // ── 롤 둘(web2-21 3-a) — 손 띠에서 종이를 한 장 뜯는다. 종속 탭의 「+」와 같은 일
 // (addLayer 하나 — 같은 일을 두 자리에서 하는 것은 흠이 아니다: 연필을 랙에서도 접힌
 // 아이콘에서도 고르는 것과 같다). 카메라가 닫히기 전에는 비활성 + 이유(2-a).
-for (const [bid, paper] of [['btn-roll-tracing', 'tracing'], ['btn-roll-yellow', 'yellow']] as const) {
-  document.getElementById(bid)!.addEventListener('click', () => {
-    if (!app.lift.an.constructionDone) {
-      notify(LAYER_GATE_MSG)   // 종속 탭 「+」와 같은 상수(#54 — 3·4부 리뷰 [12])
-      return
-    }
-    beforeAddLayer()                 // 시점을 먼저 굳힌다(2-b) — 셔터와 같은 경로
-    const lay = addLayer(app, paper, { W, H })
-    layerbar.sync()
-    invalidate()
-    if (lay) afterAddLayer(lay)
-  })
+/** 한 장 얹는다 — 종속 탭 「+」와 **같은 일**이고 함수도 하나다(#54). */
+function addRoll(paper: 'tracing' | 'yellow') {
+  if (!app.lift.an.constructionDone) {
+    notify(LAYER_GATE_MSG)   // 종속 탭 「+」와 같은 상수(#54 — 3·4부 리뷰 [12])
+    return
+  }
+  beforeAddLayer()                 // 시점을 먼저 굳힌다(2-b) — 셔터와 같은 경로
+  const lay = addLayer(app, paper, { W, H })
+  layerbar.sync()
+  invalidate()
+  if (lay) afterAddLayer(lay)
 }
+// ── 롤통(web2-34 6번) — 종전 단추 둘이 **한 통**이 됐다. 자리를 만드는 것이 목적이고
+//    문법은 연필통·촉통·크기통 그대로다(#54 — 새 기제 ⛔).
+//    ⚠ **R6 비대상**: 이 통에는 «고른 것»이 없다. 두 줄이 **명령**이라(한 장 얹는다)
+//    누르면 볼일이 끝나 접힌다(R3) — 면 팝오버와 같은 범주다.
+const rollBtn = document.getElementById('btn-roll')!
+const rolltrayEl = document.getElementById('rolltray')!
+const ROLLS = [
+  { paper: 'tracing' as const, name: '트레이싱지', svg: ROLL_TRACING },
+  { paper: 'yellow' as const, name: '옐로', svg: ROLL_YELLOW },
+]
+const rollRow = new Map<string, HTMLElement>()
+for (const r of ROLLS) {
+  const b = document.createElement('button')
+  b.id = `btn-roll-${r.paper}`   // 이름을 지킨다(#54) — 팔·문서가 이 이름으로 롤을 부른다
+  b.className = 'rrow'
+  b.dataset.act = 'cmd'
+  b.dataset.paper = r.paper
+  b.innerHTML = `${r.svg}<span>${r.name}</span>`
+  b.addEventListener('click', () => { setRolltrayOpen(false); addRoll(r.paper) })
+  rolltrayEl.append(b)
+  rollRow.set(r.paper, b)
+}
+let rolltrayOpen = false
+function setRolltrayOpen(v: boolean) {
+  rolltrayOpen = v
+  rolltrayEl.classList.toggle('open', v)
+  if (v) { closeOtherBoxes('#rolltray'); placeFlyout(rolltrayEl, rollBtn) }
+}
+rollBtn.addEventListener('click', () => setRolltrayOpen(!rolltrayOpen))
+registerBox({
+  id: '#rolltray', isOpen: () => rolltrayOpen, close: () => setRolltrayOpen(false),
+  zone: () => [rolltrayEl, rollBtn],
+})
 const syncRolls = () => {
   const done = app.lift.an.constructionDone
-  for (const bid of ['btn-roll-tracing', 'btn-roll-yellow']) {
-    const b = document.getElementById(bid)!
+  rollBtn.classList.toggle('disabled', !done)
+  rollBtn.title = done ? '종이를 한 장 얹는다 — 트레이싱지 · 옐로' : '소실점 작도가 끝나야 얹을 수 있다'
+  for (const r of ROLLS) {
+    const b = rollRow.get(r.paper)!
     b.classList.toggle('disabled', !done)
-    b.title = done
-      ? (bid === 'btn-roll-yellow' ? '옐로를 한 장 얹는다' : '트레이싱지를 한 장 얹는다')
-      : '소실점 작도가 끝나야 얹을 수 있다'
+    b.title = done ? `${r.name}를 한 장 얹는다` : '소실점 작도가 끝나야 얹을 수 있다'
   }
 }
 app.listeners.push(syncRolls)

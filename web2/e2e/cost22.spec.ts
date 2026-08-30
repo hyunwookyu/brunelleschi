@@ -37,7 +37,7 @@ async function fixture(page: Page) {
   for (let i = 1; i <= 12; i++) await page.mouse.move(280 + (420 / 12) * i, 560)
   await page.mouse.up(); await settle(page)
   // 옐로 한 장(3-a 롤) — 절반의 자유 획이 이 겹으로 간다
-  await page.click('#btn-roll-yellow'); await settle(page)
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow'); await settle(page)
 }
 
 const stats = (a: number[]) => {

@@ -72,7 +72,7 @@ async function boot(page: Page) {
 
 test('① 옐로 호 = 곡선 확정(이탈 값·픽셀) · ④ 트레이싱지는 직선(회귀)', async ({ page }) => {
   await boot(page)
-  await page.click('#btn-roll-yellow'); await settle(page)
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow'); await settle(page)
   await drawArc(page, 350, 240, 650, 240, 60)
   const st = await page.evaluate(() => {
     const a = (window as any).__b2.app
@@ -98,7 +98,7 @@ test('① 옐로 호 = 곡선 확정(이탈 값·픽셀) · ④ 트레이싱지�
   // ⚠ 이 전환이 동시에 [7]의 판을 만든다 — 트레이싱지가 활성이 되면 옐로는 **비활성**
   // (같은 종이·같은 시점이라 여전히 보인다)이고, 그 몸체는 #layerc가 아니라 **#brushc**
   // (brushlayer.drawStrokeRaw — 렌더 두 자리의 둘째)가 그린다. 두 자리 다 픽셀로 잰다.
-  await page.click('#btn-roll-tracing'); await settle(page)
+  await page.click('#btn-roll'); await page.click('#btn-roll-tracing'); await settle(page)
   expect(await countPixels(page, 'brushc', 480, 285, 520, 305), '비활성 옐로 호의 배(#brushc — drawStrokeRaw)').toBeGreaterThan(0)
   expect(await countPixels(page, 'brushc', 480, 232, 520, 248), '비활성 옐로도 현 자리는 비어 있다').toBe(0)
   await drawArc(page, 350, 400, 650, 400, 60)
@@ -143,7 +143,7 @@ test('⑤ 옐로에서 오스냅이 한 번도 안 뜬다 — 진단 「지금 �
   const before = await rowText('지금 호버 스냅')
   expect(before, '옐로 밖에서는 끝점 스냅이 뜬다(격자가 실패 가능함 — #69 ㉣)').not.toBe('—')
   // 옐로 활성 — 같은 자리 호버에 아무것도 안 뜬다
-  await page.click('#btn-roll-yellow'); await settle(page)
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow'); await settle(page)
   await hoverAt(400, 300); await settle(page)
   await hoverAt(end.x, end.y); await hoverAt(end.x, end.y); await settle(page)
   expect(await rowText('지금 호버 스냅'), '옐로에서는 밑그림 3D 끝점에도 안 붙는다').toBe('—')
@@ -152,6 +152,7 @@ test('⑤ 옐로에서 오스냅이 한 번도 안 뜬다 — 진단 「지금 �
 test('⑦ 테두리 픽셀 0 · 가장자리 근처에서만 손잡이 — 옐로·트레이싱지 둘 다', async ({ page }) => {
   await boot(page)
   for (const btn of ['btn-roll-yellow', 'btn-roll-tracing'] as const) {
+    await page.click('#btn-roll')   // 롤통을 연다(web2-34 6번)
     await page.click(`#${btn}`); await settle(page)
     const rect = await page.evaluate(() => {
       const a = (window as any).__b2.app

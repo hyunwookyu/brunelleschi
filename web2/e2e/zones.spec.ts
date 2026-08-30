@@ -65,7 +65,7 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
   // 눈(위 오른쪽) — 작도 시점으로 · 전체 화면 · 표시
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#eyebar > button')].map(e => e.id)))
-    .toEqual(['btn-draw-view', 'btn-fullscreen', 'btn-display'])
+    .toEqual(['btn-fullscreen', 'btn-display'])
   // 표시 팝업의 항목들 — id 불변 = 배선 불변. **목록이 곧 표다**(수가 아니라 어느 요소인지 — #72 ②).
   // ⚠ web2-26이 둘을 더했다: `chk-press`(6번 — 필압 보정) · `rng-hold`(4번 — 머무름 직선화
   //   시간). 이 팔이 지키는 사람의 요구(「자리마다 무엇이 있는지가 값으로 못 박혀 있다」)는
@@ -79,8 +79,17 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
     .toEqual(['chk-horizon', 'chk-grid', 'chk-waitfade', 'chk-hidden', 'rng-hold'])
   // 시스템(세로바 아래 묶음) — 파일 서랍 + **설정**(web2-30 10번 · 톱니바퀴).
   // web2-19 3-a가 「설정 자루」를 해체하면서 둘 곳이 없어졌던 자리를 되세운 것이다.
+  // ⚠⚠ **web2-34 6번이 표를 갈랐다** — 시스템 묶음(파일·설정 서랍)이 **위 띠로 올라왔다.**
+  // 가르는 축이 「제도용구인가」가 아니라 **「그리는 중에 쓰는가」**이고(34-6), 그 축에서
+  // 파일·설정은 «안 쓰는 것»이다. 그 이동이 우하단의 자리 다툼(R5 · #79)도 같이 끝냈다 —
+  // 서랍이 빌드 식별자·진단 패널·자립 깃발과 같은 모서리를 쓰며 **두 번을 z로** 풀고 있었다.
+  // 이 팔이 지키는 요구(「자리마다 무엇이 있는지가 값으로 못 박혀 있다」)는 그대로이고
+  // **표가 갈렸다**(#75 ㉣ — 예시를 옮기는 것이 아니라 표를 고친다).
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#sidebar-body > details.pane')].map(e => e.id)))
+    .toEqual([])
+  expect(await page.evaluate(() =>
+    [...document.querySelectorAll('#eyebar > details.pane')].map(e => e.id)))
     .toEqual(['pane-file', 'pane-settings'])
   // ⚠ **web2-34 1번이 `chk-grain`(종이 결)을 더했다** — 자리를 옮긴 것이 아니라 **표가
   //   늘어난 것**이다(#75 ㉣ / #76 ㉣의 어법 그대로: 이 팔이 지키던 요구 「자리마다
@@ -99,9 +108,8 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
   //   갈렸다**(#75 ㉣ — 예시를 옮기는 것이 아니라 표를 고친다).
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#sidebar-body > button, #sidebar-body > details')].map(e => e.id)))
-    .toEqual(['btn-undo', 'btn-redo', 'btn-snap', 'btn-pencil', 'btn-pen',
-      'btn-eraser-pencil', 'btn-eraser-ink', 'dim-toggle',
-      'btn-roll-tracing', 'btn-roll-yellow', 'btn-face', 'pane-file', 'pane-settings'])
+    .toEqual(['btn-draw-view', 'btn-undo', 'btn-redo', 'btn-snap', 'btn-pencil', 'btn-pen',
+      'btn-eraser-pencil', 'btn-eraser-ink', 'dim-toggle', 'btn-roll', 'btn-face'])
   // 되돌리기와 도구 사이에 **구분선**이 실제로 있다(공백이 아니라 채널 — 3-c)
   expect(await page.evaluate(() => {
     const d = document.querySelector('#sidebar-body .bar-divider')

@@ -135,7 +135,11 @@ describe('web2-25 2부 — 종이를 만드는 경로가 하나다', () => {
   it('겹을 얹는 두 자리가 **같은 앞처리**를 부른다 — 롤과 종속 탭 「+」', () => {
     const m = app('main.ts')
     // 롤(손 띠)의 처리 안에 beforeAddLayer가 있다
-    expect(/btn-roll-tracing[\s\S]{0,900}?beforeAddLayer\(\)/.test(m)).toBe(true)
+    // ⚠ **web2-34 6번이 자리를 갈랐다**(#75 ㉣): 롤 둘이 **롤통 하나**가 되면서 두 줄의
+    // 누름이 `addRoll` **한 함수**를 부른다 — 물음(「롤의 처리 안에 앞처리가 있는가」)은
+    // 그대로이고 자리가 하나로 모였다(#54의 방향이다).
+    expect(/function addRoll\([\s\S]{0,900}?beforeAddLayer\(\)/.test(m)).toBe(true)
+    expect(/addRoll\(r\.paper\)/.test(m)).toBe(true)
     // 종속 탭 「+」는 layerbar의 훅으로 같은 함수를 받는다
     expect(/beforeAdd: beforeAddLayer/.test(m)).toBe(true)
     expect(/hooks\.beforeAdd\?\.\(\)/.test(app('layerbar.ts'))).toBe(true)

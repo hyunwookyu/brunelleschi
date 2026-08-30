@@ -256,7 +256,7 @@ test('30-4 되돌릴 수 없는 물음은 **대상을 밝힌다** (+반증: 얹�
   // 겹을 하나 얹고 그 위에 획을 그린다
   await page.click(`#paperbar .ptab[data-sheet="${target}"]`)
   await settle(page)
-  await page.click('#btn-roll-yellow')
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow')
   await settle(page)
   await page.mouse.move(400, 300)
   await page.mouse.down()

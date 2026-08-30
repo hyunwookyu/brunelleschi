@@ -92,7 +92,7 @@ test('③ 그림이 안 바뀐다 — 반올림 있는 문서와 없는 문서�
     await drawLine(page, 280, 560, 700, 560)
     await drawLine(page, 500, 560, 800, 480)
     expect(await page.evaluate(() => (window as any).__b2.app.lift.an.constructionDone)).toBe(true)
-    await page.click('#btn-roll-yellow'); await settle(page)
+    await page.click('#btn-roll'); await page.click('#btn-roll-yellow'); await settle(page)
     for (let k = 0; k < 4; k++) {
       await handStroke(page, 200 + k * 40, 300 + k * 30, 620 + k * 40, 330 + k * 30, 26 + k * 6)
     }

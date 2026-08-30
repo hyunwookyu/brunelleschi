@@ -206,7 +206,7 @@ test('③ 길게 눌러 갱신하면 포즈·썸네일이 바뀐다', async ({ p
 test('④ 겹이 있으면 갱신이 막히고 안내가 뜬다', async ({ page }) => {
   await boot(page)
   await orbit(page)
-  await page.click('#btn-roll-yellow')     // 시점이 굳고 그 종이에 옐로가 얹힌다(2부)
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow')     // 시점이 굳고 그 종이에 옐로가 얹힌다(2부)
   await settle(page)
   const sh = await sheets(page)
   expect(sh.length).toBe(2)

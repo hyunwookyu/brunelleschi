@@ -34,7 +34,7 @@ async function threeLayers(page: Page) {
   await drawLine(page, 500, 560, 800, 480)
   expect(await page.evaluate(() => (window as any).__b2.app.lift.an.constructionDone)).toBe(true)
   for (let i = 0; i < 3; i++) {
-    await page.click('#btn-roll-tracing')
+    await page.click('#btn-roll'); await page.click('#btn-roll-tracing')
     await settle(page)
     await drawLine(page, 500, 560, 780 - i * 14, 486 + i * 6)
   }

@@ -87,7 +87,7 @@ test('① 돌린 시점에서 롤 → 종이가 하나 늘고 그 시점에서 �
   await orbit(page)
   const before = await state(page)
   expect(await filmPainted(page)).toBe(0)                      // 얹기 전에는 막이 없다
-  await page.click('#btn-roll-yellow')
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow')
   await settle(page)
   const after = await state(page)
   expect(after.sheets).toBe(before.sheets + 1)                 // 시점이 종이로 굳었다
@@ -103,7 +103,7 @@ test('① 돌린 시점에서 롤 → 종이가 하나 늘고 그 시점에서 �
 test('② 활성 종이의 시점 그대로면 종이가 안 는다 — 작도 시점에서 롤', async ({ page }) => {
   await boot(page)
   const before = await state(page)
-  await page.click('#btn-roll-tracing')
+  await page.click('#btn-roll'); await page.click('#btn-roll-tracing')
   await settle(page)
   const after = await state(page)
   expect(after.sheets).toBe(before.sheets)                     // 안 는다

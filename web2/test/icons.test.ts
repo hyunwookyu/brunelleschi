@@ -100,12 +100,22 @@ describe('web2-21 3-a — 손 띠 롤 아이콘의 두 자리(#54 · 3·4부 리
     }
     const inner = (svg: string): string[] =>
       [...svg.matchAll(/<(?:circle|path)[^>]*>/g)].map(x => x[0]!.replace(/\s+/g, ' '))
-    for (const [name, btn] of [['ROLL_TRACING', 'btn-roll-tracing'], ['ROLL_YELLOW', 'btn-roll-yellow']] as const) {
-      const canon = inner(constOf(name))
-      const btnBlock = new RegExp(`id="${btn}"[^]*?</button>`).exec(html)![0]!
-      expect(canon.length).toBeGreaterThan(0)
-      for (const el of canon) expect(btnBlock.replace(/\s+/g, ' ').includes(el), `${btn}: ${el.slice(0, 40)}…`).toBe(true)
+    // ⚠⚠ **web2-34 6번이 표를 갈랐다**(#75 ㉣). 롤 단추 **둘**이 **롤통 하나 + 줄 둘**이
+    // 됐다: 접힌 단추(`#btn-roll`)는 `index.html`에 있고 **트레이싱지 롤 정본**을 쓰며,
+    // 통 «안»의 줄 둘은 `main.ts`가 **`layerbar.ts`의 상수에서 바로** 짓는다.
+    // 물음(「화면의 롤 그림이 정본과 같은가」)은 그대로이고 **재는 자리가 갈렸다** —
+    // 줄 쪽은 상수를 그대로 쓰므로 **구성상** 같고(그것을 아래에서 값으로 못 박는다),
+    // 접힌 단추만 마크업 대조가 남는다.
+    const foldBlock = /id="btn-roll"[^]*?<\/button>/.exec(html)![0]!
+    for (const el of inner(constOf('ROLL_TRACING'))) {
+      expect(foldBlock.replace(/\s+/g, ' ').includes(el), `btn-roll: ${el.slice(0, 40)}…`).toBe(true)
     }
+    const mainTs = readLF(resolve(__dirname, '../src/app/main.ts'))
+    expect(/svg: ROLL_TRACING/.test(mainTs), '통의 트레이싱지 줄이 정본 상수를 그대로 쓴다').toBe(true)
+    expect(/svg: ROLL_YELLOW/.test(mainTs), '통의 옐로 줄이 정본 상수를 그대로 쓴다').toBe(true)
+    // 옛 자리가 남아 있지 않다 — 두 단추는 사라졌다(#75 ㉣: 표를 고치고 옛 예시를 지운다)
+    expect(/id="btn-roll-tracing"/.test(html), '옛 롤 단추가 index.html에 없다').toBe(false)
+    expect(/id="btn-roll-yellow"/.test(html), '옛 롤 단추가 index.html에 없다').toBe(false)
     // 정본의 정본 — layerbar 상수 자체가 instrument-icons.md의 롤 블록과 같은가(경로 수정 금지)
     for (const [name, head] of [['ROLL_TRACING', '### 트레이싱지 롤'], ['ROLL_YELLOW', '### 옐로 트레이스 롤']] as const) {
       const block = new RegExp(`${head}[^]*?\`\`\`svg\n([^]*?)\`\`\``).exec(md)![1]!

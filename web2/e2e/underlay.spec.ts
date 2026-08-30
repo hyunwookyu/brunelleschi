@@ -96,7 +96,7 @@ const Y_VIS = 300, Y_HID = 360, Y_BLANK = 330
 
 /** 옐로 한 장을 얹고 밑그림을 **알려진 자리**로 심는다 — 보이는 선 / 가린 선 한 줄씩 */
 async function yellowWithUnderlay(page: Page) {
-  await page.click('#btn-roll-yellow')
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow')
   await settle(page)
   const info = await page.evaluate(([yv, yh, x0, x1]) => {
     const b2 = (window as any).__b2
@@ -189,7 +189,7 @@ test("②′ 치환이 실제로 선다 — **실제 3D 획의 자리**가 빼�
   // 자리(아래에 3D가 없는 줄)를 재므로 그것을 못 가른다 — 여기서는 **앱이 실제로 구운
   // 조각**의 자리를 읽는다.
   await boot(page)
-  await page.click('#btn-roll-yellow')
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow')
   await settle(page)
   // 구운 조각 중 «가로에 가까운» 것 하나를 골라 전부 hidden 으로 다시 심는다(자리는 그대로)
   const pick = await page.evaluate(() => {
@@ -232,7 +232,7 @@ test("②′ 치환이 실제로 선다 — **실제 3D 획의 자리**가 빼�
 test("②″ 「다시 안 굽는다」를 **실패할 수 있게** 잰다 — 굽기 호출 수(2차 리뷰 [8])", async ({ page }) => {
   // 조각 수로는 못 잰다: 굽기는 결정론이라 다시 구워도 같은 수다(#69 ㉣의 형태).
   await boot(page)
-  await page.click('#btn-roll-yellow')
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow')
   await settle(page)
   const n0 = await page.evaluate(() => (window as any).__b2.diag.underlayBakes())
   expect(n0).toBe(1)                                  // 얹는 순간 한 번(2-c)
@@ -245,18 +245,18 @@ test("②″ 「다시 안 굽는다」를 **실패할 수 있게** 잰다 — �
   await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.diag.underlayBakes())).toBe(n0)
   // **양성 대조** — 한 장 더 얹으면 계수가 오른다(그 척도가 실제로 움직인다)
-  await page.click('#btn-roll-yellow')
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow')
   await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.diag.underlayBakes())).toBe(n0 + 1)
   // 트레이싱지는 안 굽는다(2-c ⚠) — 계수가 그대로다
-  await page.click('#btn-roll-tracing')
+  await page.click('#btn-roll'); await page.click('#btn-roll-tracing')
   await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.diag.underlayBakes())).toBe(n0 + 1)
 })
 
 test('3부 ①④ — 면 0에서 안내가 뜨고 굽기는 정상으로 끝난다 · 두 번째에는 안 뜬다', async ({ page }) => {
   await boot(page)
-  await page.click('#btn-roll-yellow')
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow')
   await settle(page)
   await expect(page.locator('#notice')).toContainText('면이 없어')
   await expect(page.locator('#notice u[data-pick="faces"]')).toBeVisible()
@@ -266,7 +266,7 @@ test('3부 ①④ — 면 0에서 안내가 뜨고 굽기는 정상으로 끝난
 
   // ④ 두 번째 옐로에서는 안 뜬다(잔소리가 되지 않는다)
   await page.evaluate(() => { document.getElementById('notice')!.textContent = '' })
-  await page.click('#btn-roll-yellow')
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow')
   await settle(page)
   await expect(page.locator('#notice')).toHaveText('')
   expect(await page.evaluate(() => (window as any).__b2.diag.underlay().length)).toBe(2)
@@ -280,7 +280,7 @@ test('3부 ② — 면이 있으면 안내가 안 뜬다', async ({ page }) => {
   expect(await page.evaluate(() => (window as any).__b2.app.doc.faces.length)).toBe(1)
 
   await page.evaluate(() => { document.getElementById('notice')!.textContent = '' })
-  await page.click('#btn-roll-yellow')
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow')
   await settle(page)
   await expect(page.locator('#notice')).not.toContainText('면이 없어')
 
@@ -289,7 +289,7 @@ test('3부 ② — 면이 있으면 안내가 안 뜬다', async ({ page }) => {
   await page.click('#btn-undo')
   await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.app.doc.faces.length)).toBe(0)
-  await page.click('#btn-roll-yellow')
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow')
   await settle(page)
   await expect(page.locator('#notice')).toContainText('면이 없어')
 })
@@ -297,7 +297,7 @@ test('3부 ② — 면이 있으면 안내가 안 뜬다', async ({ page }) => {
 test('3부 ③ — 안내의 「면 만들기」가 면 일괄을 실제로 연다', async ({ page }) => {
   await boot(page)
   // 닫힌 영역은 있지만 **면으로 확정하지는 않은** 상태 — 안내가 뜨고 그 길이 일괄로 간다
-  await page.click('#btn-roll-yellow')
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow')
   await settle(page)
   await expect(page.locator('#notice u[data-pick="faces"]')).toBeVisible()
   await page.click('#notice u[data-pick="faces"]')

@@ -41,6 +41,19 @@
       --ui-scale: 1.5;
       --hit-pad: 3px;
       --btn-gap: 1px;
+      /* ── 치수 리본의 «기둥»과 위 띠의 «길»(web2-34 6번 · 화면 규칙 R5) ────────────
+         `#dimpanel`은 우측에 **세로로 긴 기둥**이다(실측 x 872..1104 · y 96..669 —
+         높이 573px라 아래로 못 비킨다). 위 띠에서 내려오는 것(표시 팝업 · 파일·설정
+         서랍)이 그 기둥을 가로지르면 **동시에 열릴 수 있는 둘이 같은 자리를 쓴다**(#79).
+         ⚠⚠ **이 다툼은 34-6이 만든 것이 아니라 이미 있었다**: `#display-pop`(x 753..1030 ·
+         y 48..199)이 기둥과 x 872..1030 · y 96..199에서 겹쳤고, 둘 다 z 11이라 **DOM에서
+         뒤인 치수 리본이 위로 그려졌다** — 치수 리본을 편 채 「표시」를 누르면 팝업이
+         **리본 뒤로 깔린다.** 34-6이 서랍을 위로 올리면서 그 자리가 드러났다.
+         답은 z가 아니라 **자리를 나누는 것**이다(#79의 문면) — 위 띠에서 내려오는 것은
+         기둥의 **왼쪽 길**에 선다. 값은 기둥에서 계산한다(단일 출처 — #54). */
+      --dim-right: 96px;             /* 치수 리본의 오른쪽 여백 */
+      --dim-w: 232px;                /* 그 폭(내용 208 + 좌우 패딩 12) */
+      --top-lane: calc(var(--dim-right) + var(--dim-w) + 6px);   /* = 334px */
     }
     /* touch-action을 **뿌리에도** 건다(web2-09 지시 2). 모든 요소가 #app의 자손이라
        유효 사슬에는 이미 none이 들어 있지만, 그 한 겹이 규칙 하나에 걸려 있었다 —
@@ -171,7 +184,7 @@
     .ltab.ladd.disabled { opacity: .3; cursor: default; }
     .ldel { font: 13px/1 system-ui, sans-serif; }
     /* 롤 버튼(web2-21 3-a) — 카메라 닫히기 전 비활성. 클릭은 살아 있다(이유를 말해야 한다 — 2-a) */
-    #btn-roll-tracing.disabled, #btn-roll-yellow.disabled { opacity: .3; }
+    #btn-roll.disabled { opacity: .3; }   /* 롤통 — 카메라가 닫히기 전(2-a · web2-34 6번) */
     .lctl { background: none; border: 0; padding: 2px; margin: 0; cursor: pointer; color: inherit; opacity: .75; }
     .lctl:hover { opacity: 1; }
     #layer-pop {
@@ -186,11 +199,21 @@
     .lpick svg { width: 22px; height: 22px; }
     .lpick:hover { color: #55504a; }
 
-    /* ── 눈(web2-19 3-a) — 위 오른쪽. 뷰 큐브(cx W−110·y 20~100)와 안 겹치게 왼쪽에 ── */
+    /* ── 위 띠(web2-34 6번) — 위 오른쪽. 뷰 큐브(cx W−110·y 20~100)와 안 겹치게 왼쪽에.
+       ⚠⚠ **id는 `#eyebar` 그대로다**(배선·팔 여럿이 그 이름을 읽는다 — #54) — 바뀐 것은
+       **무엇이 사는가**이고 이름이 아니다. web2-19 3-a는 이 자리를 「눈」(이 종이를 어떻게
+       보는가)으로 세웠는데, 34-6이 가르는 축은 그것이 아니라 **「그리는 중에 쓰는가」**다:
+         그리는 중에 쓴다   → 손 띠(세로바). **시점 조작도 여기다** — 그리면서 계속 쓴다
+         그리는 중에 안 쓴다 → 이 띠. 파일 · 설정 · 내보내기
+       그래서 ㉠ 「작도 시점으로」가 **손 띠로 내려갔고** ㉡ 파일·설정 서랍이 **여기로 올라왔다.**
+       ㉡가 우하단의 자리 다툼(R5 · #79)도 같이 끝낸다 — 서랍이 빌드 식별자·진단 패널·
+       자립 깃발과 같은 모서리를 쓰다가 **두 번을 z로 풀고 있었다**(서랍 11→13 · 깃발 12→9). */
     #eyebar {
       position: fixed; top: 12px; right: 170px; z-index: 9;
       display: flex; flex-direction: row; gap: var(--btn-gap); align-items: flex-start;
     }
+    /* 두 묶음을 가르는 채널 — 세로바의 `.bar-divider`와 같은 뜻이고 방향만 세로다(3-c) */
+    .top-divider { width: 1px; height: 30px; background: var(--ui-faint); margin: 3px 5px; opacity: .55; align-self: center; }
     /* 표시·자 팝업 — 설정 자루의 옅은 바탕 규약 그대로(4-a: 「배경이 필요하면 아주 옅게」) */
     #display-pop, #snap-pop, #face-pop {
       position: fixed; z-index: 11;
@@ -200,7 +223,7 @@
       font: 12px/1.5 system-ui, sans-serif; color: #6b665f;
     }
     #display-pop[hidden], #snap-pop[hidden], #face-pop[hidden] { display: none; }
-    #display-pop { top: 48px; right: 170px; }
+    #display-pop { top: 48px; right: var(--top-lane); }   /* 위 띠의 길(R5) — 치수 기둥의 왼쪽 */
     #snap-pop { right: 54px; }
     #face-pop { right: 54px; }
     /* 축 스냅 자리(3-b) — 컨트롤이 없다: 끄는 토글은 이 회차에 없다(대응표 §4 — 자리만) */
@@ -213,7 +236,9 @@
     /* ── 전체 화면(3-d) — 크롬을 전부 숨긴다: 종이 띠·눈·손·서랍·치수 리본.
        지평선·소실점 ✕·바닥 눈금은 캔버스 몫이라 그대로 남는다(작도의 뼈대).
        ⚠ web2-34 3번에 **굵기 막대(#thick)가 사라졌다** — 지우개 크기는 이제 통이고,
-       통 셋(#tray·#pentray·#etray)은 세로바 «안»에 있어 이 줄 하나로 같이 숨는다. */
+       통 넷(#tray·#pentray·#etray·#rolltray)은 세로바 «안»에 있어 이 줄 하나로 같이 숨는다.
+       ⚠ web2-34 6번으로 **파일·설정 서랍이 위 띠(#eyebar) 안으로 올라왔다** — 그 줄도
+       #eyebar 하나가 덮는다(옛 자리는 세로바 안이었다). */
     body.fs #topleft, body.fs #eyebar, body.fs #sidebar,
     body.fs #dimpanel, body.fs #display-pop, body.fs #snap-pop, body.fs #layer-pop, body.fs #face-pop { display: none; }
     #fs-exit {
@@ -314,11 +339,19 @@
        (사람 관측). 펼침은 전부 **왼쪽으로 겹쳐 뜬다**(overlay) — 자리는 main.ts가
        누른 버튼의 줄에 맞춘다. 선례(A-3): 프로크리에이트 브러시·크기 팝오버, 크리타
        팝업 팔레트, 스케치업 플라이아웃 — 전부 겹쳐 뜨지 밀어내지 않는다. */
-    #tray, #pentray, #etray {
+    #tray, #pentray, #etray, #rolltray {
       display: none; position: fixed; z-index: 12;
       flex-direction: column; gap: var(--btn-gap); align-items: flex-end;
     }
-    #tray.open, #pentray.open, #etray.open { display: flex; }
+    #tray.open, #pentray.open, #etray.open, #rolltray.open { display: flex; }
+    /* 롤통 줄(web2-34 6번) — 연필통·촉통 줄과 같은 크기·같은 어법. 앞의 롤 그림 +
+       이름. 옐로의 색 예외는 **통 안**에만 산다(`instrument-icons.md` 정본). */
+    .rrow { display: flex; flex-direction: row; align-items: center; gap: 7px;
+            font: 12px/1 system-ui, sans-serif; color: #4a463f; white-space: nowrap;
+            background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
+            padding: 5px 9px; touch-action: none; border: 0; cursor: pointer; }
+    .rrow svg { height: calc(15px * var(--ui-scale)); width: auto; }
+    .rrow.disabled { opacity: .38; }
     .trow svg { height: calc(15px * var(--ui-scale)); width: auto; }
     /* 펜 촉 줄(web2-30 2번) — **그 굵기의 실제 선 견본**이 1:1로 그려진다(원칙 e:
        선폭이 화면 고정이므로 견본과 그은 선이 같은 px다). 아이콘 문법은 연필통 줄과
@@ -353,11 +386,17 @@
          우하단에 모였고, 초판(z 11)에서는 **열린 진단 패널이 「진단」 단추를 가려** 다시
          못 눌렀다(전량 e2e가 잡았다 — `#diagctl` intercepts pointer events).
          지금 만지고 있는 패널이 위로 온다. */
-      position: fixed; right: 54px; bottom: 10px; z-index: 13; /* 세로바가 39px로 넓어짐(지시 5) */
+      /* ⚠⚠ **web2-34 6번이 자리를 옮겼다 — 우하단 → 위 띠 아래**(R5 · #79).
+         옛 자리(right 54 · bottom 10)는 빌드 식별자·진단 패널·자립 깃발과 **같은 모서리**였고
+         그 다툼을 **두 번 z로 풀고 있었다**(이 규칙 11→13 · `#diagctl` 12→9). #79의 문면이
+         「겹치면 자리를 나누고 z로 풀려 하지 마라」다 — 자리를 나눴다.
+         `top`은 `#display-pop`과 같은 줄(48px)이고 `right`는 main.ts의 `placeUnder`가
+         **제 요약 아래**에 맞춘다(팝오버가 제 단추 아래 서는 것과 같은 규약 — #54). */
+      position: fixed; right: var(--top-lane); top: 48px; z-index: 13;
       display: flex; flex-direction: column; gap: 6px; align-items: stretch;
       background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
       padding: 10px 12px; white-space: nowrap;
-      max-height: calc(100vh - 20px); overflow-y: auto;
+      max-height: calc(100vh - 58px); overflow-y: auto;
       /* ⚠ 터치 스크롤은 **막힌 채로 뒀다** — 유효 사슬이 수리 전에도 none이었고(전 요소가
          #app 자손) 「패널을 스크롤 못 한다」는 관측이 없다. 관측 없이 pan-y로 푸는 것은
          근거 없는 넓힘이다(A-3 · 2차 리뷰어 [15]가 초판의 pan-y를 잡았다 — AS-C26).
@@ -404,7 +443,7 @@
 
     /* 치수 리본(web2-08 지시 4-3) — 우측, 접힌다. 옅은 바탕(4-a 「배경이 필요하면 아주 옅게」) */
     #dimpanel {
-      position: fixed; right: 96px; top: 96px; z-index: 11; /* 시점바(right:54)의 왼쪽 — 열면 토글을 안 덮는다 */
+      position: fixed; right: var(--dim-right); top: 96px; z-index: 11; /* 시점바(right:54)의 왼쪽 — 열면 토글을 안 덮는다 */
       display: flex; flex-direction: column; gap: 7px; width: 208px;
       background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
       padding: 10px 12px; font: 12px system-ui, sans-serif; color: #4a463f;
@@ -586,11 +625,6 @@
          작도 시점으로 · 전체 화면 · 표시(지평선·지면 격자·대기 획 감쇠).
          위 오른쪽인데 뷰 큐브(cx W−110)와 안 겹치게 그 왼쪽에 선다. -->
     <div id="eyebar">
-      <button id="btn-draw-view" class="t ico-m" title="작도 시점으로" aria-label="작도 시점">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
-          <path d="M3 9.4 10 3.6l7 5.8" /><path d="M5.2 8.6V16h9.6V8.6" />
-        </svg>
-      </button>
       <button id="btn-fullscreen" class="t ico-m" title="전체 화면 — 그림만 남긴다" aria-label="전체 화면">
         <!-- Phosphor light arrows-out (MIT · assets/light/arrows-out-light.svg 그대로) -->
         <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M214,48V96a6,6,0,0,1-12,0V62.48l-45.76,45.76a6,6,0,0,1-8.48-8.48L193.52,54H160a6,6,0,0,1,0-12h48A6,6,0,0,1,214,48ZM99.76,147.76,54,193.52V160a6,6,0,0,0-12,0v48a6,6,0,0,0,6,6H96a6,6,0,0,0,0-12H62.48l45.76-45.76a6,6,0,0,0-8.48-8.48ZM208,154a6,6,0,0,0-6,6v33.52l-45.76-45.76a6,6,0,0,0-8.48,8.48L193.52,202H160a6,6,0,0,0,0,12h48a6,6,0,0,0,6-6V160A6,6,0,0,0,208,154ZM62.48,54H96a6,6,0,0,0,0-12H48a6,6,0,0,0-6,6V96a6,6,0,0,0,12,0V62.48l45.76,45.76a6,6,0,0,0,8.48-8.48Z"/></svg>
@@ -599,6 +633,87 @@
         <!-- Phosphor light eye (MIT · assets/light/eye-light.svg 그대로) -->
         <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M245.48,125.57c-.34-.78-8.66-19.23-27.24-37.81C201,70.54,171.38,50,128,50S55,70.54,37.76,87.76c-18.58,18.58-26.9,37-27.24,37.81a6,6,0,0,0,0,4.88c.34.77,8.66,19.22,27.24,37.8C55,185.47,84.62,206,128,206s73-20.53,90.24-37.75c18.58-18.58,26.9-37,27.24-37.8A6,6,0,0,0,245.48,125.57ZM128,194c-31.38,0-58.78-11.42-81.45-33.93A134.77,134.77,0,0,1,22.69,128,134.56,134.56,0,0,1,46.55,95.94C69.22,73.42,96.62,62,128,62s58.78,11.42,81.45,33.94A134.56,134.56,0,0,1,233.31,128C226.94,140.21,195,194,128,194Zm0-112a46,46,0,1,0,46,46A46.06,46.06,0,0,0,128,82Zm0,80a34,34,0,1,1,34-34A34,34,0,0,1,128,162Z"/></svg>
       </button>
+      <!-- 시스템 묶음(web2-34 6번) — **그리는 중에 안 쓰는 것**이 이 띠다.
+           세로바 아래 묶음에서 올라왔다: 그 자리는 우하단 판독 셋(빌드 식별자·진단
+           패널·자립 깃발)과 **같은 모서리**였고 다툼을 두 번 z로 풀고 있었다(R5 · #79). -->
+      <div class="top-divider"></div>
+      <details class="pane" id="pane-file">
+        <summary class="t ico-f" title="파일">
+          <svg width="28" height="28" viewBox="0 0 19 19" fill="none" stroke="currentColor" stroke-width="1.3">
+            <path d="M2.6 4.6h4.6l1.4 1.8h7.8v8.4H2.6z" />
+          </svg>
+        </summary>
+        <!-- 「저장/열기」와 「내보내기」를 이름에서 가른다(web2-10 지시 5) —
+             .brnl은 되돌아오는 원본이고 OBJ/glTF는 나가기만 한다. 사람이 「내보내기가
+             있으니 불러오기도 필요하다」고 한 것은 그 둘을 같은 것으로 읽었다는 관측이다. -->
+        <div>
+          <div class="head" title="이 앱에서 다시 열 수 있는 원본 형식이다">원본 .brnl</div>
+          <button id="btn-save" data-act="cmd" title=".brnl 저장 — 이 앱에서 다시 열 수 있는 원본">저장</button>
+          <button id="btn-open" data-act="cmd" title=".brnl 열기">열기</button>
+          <div class="head" style="margin-top:6px" title="다른 앱용 — 이 앱으로 못 되돌아온다">내보내기</div>
+          <button id="btn-obj" data-act="cmd" title="OBJ 내보내기 — 다른 앱용. 이 앱으로 못 되돌아온다">OBJ</button>
+          <button id="btn-gltf" data-act="cmd" title="glTF 내보내기 — 다른 앱용. 이 앱으로 못 되돌아온다">glTF</button>
+          <div style="height:6px"></div>
+          <!-- ⚠ `data-fold="late"` — **명령이지만 접힘은 명령이 끝난 뒤**다(web2-28 1번 후속).
+               비우기는 누르는 순간 **그 버튼 곁에** 확인 팝오버를 띄우므로(web2-12 4번),
+               바로 접으면 **앵커가 사라져 확인이 미아가 된다**(전량 e2e `flow.spec`이 잡았다).
+               볼일이 끝나는 시점은 «확인을 누른 뒤»이고 접힘도 그때다. -->
+          <button id="btn-clear" data-act="cmd" data-fold="late" title="전부 지우고 처음부터 — 확인을 받는다">비우기</button>
+          <div class="head" style="margin-top:6px">종이</div>
+          <!-- 설정 자루 해체(3-a): 오스냅 → 자 팝업 · 표시 셋 → 눈 · own3d → 진단 ·
+               렌더러는 여기(서랍) — btn-brush id 유지(배선·팔이 그 이름을 본다). -->
+          <!-- 내부 이름(렌더러)은 화면에 안 새어 나온다(4-a) — 사람이 보는 것은 「종이 질감」 하나 -->
+          <button id="btn-brush" data-act="state" title="종이 질감을 켜고 끈다">질감</button>
+        </div>
+      </details>
+      <details class="pane" id="pane-settings">
+        <summary class="t ico-f" title="설정">
+          <!-- 톱니 — **선 문법**(docs/instrument-icons.md 「톱니 — 설정」 정본 그대로 · path 수정 금지).
+               ⚠ 종전 것은 Phosphor light gear를 `fill="currentColor"`로 **채운** 그림이라
+               이 파일의 다른 선 아이콘(삼각자·롤)과 문법이 갈렸다(web2-34 5번 · 사람 지시
+               「라인드로잉으로 바꾸고 중앙에 원 추가해서 통상적인 톱니로」). 실루엣은 바깥
+               톱니 여덟 + 중앙 원 둘뿐이다. 크기 급(.ico-f)은 그대로이고 width/height 속성은
+               두지 않는다 — 높이는 CSS가 준다(뷰박스가 256 → 32로 바뀌었다). -->
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.12 4.15 L17.88 4.15 L18.13 7.46 A8.8 8.8 0 0 1 20.53 8.46 L23.05 6.29 L25.71 8.95 L23.54 11.47 A8.8 8.8 0 0 1 24.54 13.87 L27.85 14.12 L27.85 17.88 L24.54 18.13 A8.8 8.8 0 0 1 23.54 20.53 L25.71 23.05 L23.05 25.71 L20.53 23.54 A8.8 8.8 0 0 1 18.13 24.54 L17.88 27.85 L14.12 27.85 L13.87 24.54 A8.8 8.8 0 0 1 11.47 23.54 L8.95 25.71 L6.29 23.05 L8.46 20.53 A8.8 8.8 0 0 1 7.46 18.13 L4.15 17.88 L4.15 14.12 L7.46 13.87 A8.8 8.8 0 0 1 8.46 11.47 L6.29 8.95 L8.95 6.29 L11.47 8.46 A8.8 8.8 0 0 1 13.87 7.46 Z"/><circle cx="16" cy="16" r="4.2"/></svg>
+        </summary>
+        <div>
+          <div class="head">손</div>
+          <!-- web2-26 6번 — 필압 보정(옵션 · **기본 꺼짐**). 켜면 **두 획을 받는다**.
+               화면 문구는 지시가 준 그대로 「필압 보정」이다. id·배선은 안 바뀐다. -->
+          <label><input id="chk-press" data-act="state" type="checkbox"> 필압 보정</label>
+          <!-- ⚠⚠ **절차가 화면에 있다**(web2-30 7번). web2-26 6번은 토글만 있고 단계는
+               알림 한 줄로만 스쳐 지나가서 **절차가 실제로 있는지 자체가 확인되지 않았다**
+               (게이트가 합성 압력으로 통과했다). 지금은 이 줄이 설정 패널에 **머무르고**,
+               그 사이 위 체크상자는 **꺼진 채로 있다** — 「절반만 켜진 상태」를 안 만든다:
+               옵션이 켜지는 시점은 `doc.press`가 서는 순간 하나다. -->
+          <div id="press-calib" hidden>
+            <span id="press-calib-step"></span>
+            <button id="btn-press-cancel" data-act="state" title="보정을 그만둔다 — 옵션은 꺼진 채로 남는다">그만둔다</button>
+          </div>
+          <div class="head" style="margin-top:6px">종이</div>
+          <!-- web2-34 1번 — **종이 결**(기본 켜짐). 사람의 말은 「종이 질감이 너무
+               과하다. 사실 없는 게 나을 수도」였고, 답은 ① 진폭을 겹보다 낮추고
+               ② 아예 끌 수 있게 하는 것이다(화면 규칙 R8). 「없는 게 나을 수도」는
+               **처방이지 진단이 아니다**(D-4) — 30-9가 「종이만 결이 없는 것이
+               결함이다」로 판정한 관측은 그대로 유효하므로 기본은 켜짐이다.
+               ⚠ `data-act="state"` — 상태 토글이라 **패널이 안 접힌다**(R3 · 28-1).
+               ⚠ 저장 자리는 **localStorage**다(문서가 아니다 — 원칙 b의 표시판):
+               결은 «보는 방식»이고 획을 안 건드린다. 필압 보정(`doc.press`)이 문서로
+               간 것은 켜는 순간 **예전 그림의 농도**가 바뀌기 때문인데, 종이 결에는
+               그 사정이 없다 — 끄고 켜도 획은 한 픽셀도 안 바뀐다. -->
+          <label><input id="chk-grain" data-act="state" type="checkbox" checked> 종이 결</label>
+          <div class="head" style="margin-top:6px">기기</div>
+          <!-- web2-30 3번 별건 — 빌드 식별자가 **입력을 안 받게** 되면서(배포를 판정하는
+               표시지 단추가 아니다) 진단 패널의 여닫이가 여기로 왔다. 콘솔 없는 태블릿의
+               유일한 판독 통로이므로 **없앨 수 없다**(web2-10 지시 4) — 자리를 옮긴다. -->
+          <!-- ⚠ `data-act="cmd"` — **명령이다**(28-1): 볼일(패널 열기)이 누르는 순간 끝나고
+               결과는 **서랍 밖**(우하단 진단 패널)에 뜬다. 그래서 서랍이 접힌다 —
+               접어야 하는 실질적 이유도 있다: 서랍과 진단 패널·자립 깃발이 **같은 우하단
+               모서리**를 쓰므로, 서랍이 열린 채면 진단 곁줄(#diagctl)을 못 누른다
+               (전량 e2e가 잡았다 — sidebar subtree intercepts pointer events). -->
+          <button id="btn-diag" data-act="cmd" title="진단 — 기기 값·최근 획·파일 크기">진단</button>
+        </div>
+      </details>
     </div>
     <!-- 표시 팝업 — 설정 자루에서 나왔다(3-a: 보기는 눈의 몫). id·배선은 그대로다(동작 불변 ③). -->
     <div id="display-pop" hidden>
@@ -713,8 +828,24 @@
         </svg>
       </button>
       <div id="sidebar-body">
+        <!-- 시점 묶음(web2-34 6번) — **맨 위**. 가르는 축은 「제도용구인가」가 아니라
+             **「그리는 중에 쓰는가」**이고, 시점 조작은 그리면서 계속 쓴다(사용자: 「오히려
+             원래 시점 버튼이 제도 쪽으로 가야 할 수도」). 그래서 위 띠(눈)에서 내려왔다.
+             ⚠ **뷰 큐브는 여기 없다** — 이미 **캔버스 그림쇠**다(`app.cubeLayout` cx W−110 ·
+             cy 60 · size 80 · `viewcube.ts` + `render2d`가 그리고 `input`이 짚는다).
+             web2-31이 그것에 90° 화살표와 축 기준 틀을 얹는다 — 단추 자리를 안 먹는다.
+             그래도 34-6의 문면대로 **자리 둘을 비워 계산에 넣었고** 시험 삽입으로 쟀다
+             (`e2e/ui34place.spec.ts` — 31의 돋보기·예비 하나). -->
+        <button id="btn-draw-view" class="t ico-m" title="작도 시점으로" aria-label="작도 시점">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
+            <path d="M3 9.4 10 3.6l7 5.8" /><path d="M5.2 8.6V16h9.6V8.6" />
+          </svg>
+        </button>
         <!-- 되돌리기·다시실행(3-a) — 은유가 없어 손 띠 **맨 위**에 두고 도구와
-             **구분선**으로 가른다(제도판에서는 지우개가 이 역할이었다 — 서랍은 너무 멀다). -->
+             **구분선**으로 가른다(제도판에서는 지우개가 이 역할이었다 — 서랍은 너무 멀다).
+             ⚠ web2-34 6번이 「작도 시점으로」를 **이 묶음 안**에 넣었다: 구분선을 하나 더
+             긋는 것이 아니라 **같은 무리**다 — 셋 다 «제도용구가 아닌 것»이고 구분선 아래가
+             제도용구다. (초판은 구분선을 하나 더 그었는데 그 11px가 31의 여유를 먹었다.) -->
         <button id="btn-undo" class="t ico-m" title="실행취소 (Ctrl+Z)" aria-label="실행취소">
           <svg width="30" height="30" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3">
             <path d="M6.4 5.2 3.2 8.4l3.2 3.2" /><path d="M3.2 8.4h7.6a4.4 4.4 0 0 1 0 8.8H7" />
@@ -768,6 +899,9 @@
         <!-- 펜 촉통(web2-30 2번) — 다섯 줄(0.18·0.25·0.35·0.5·0.7 mm). 행은 main.ts가
              C.NIB_MM에서 짓는다(#54). 하나를 고르면 접힌다(28-1). -->
         <div id="pentray"></div>
+        <!-- 롤통 줄 둘(web2-34 6번) — 행은 main.ts가 짓는다(#54: 롤 그림의 출처는
+             `layerbar.ts`의 정본 상수 하나다). -->
+        <div id="rolltray"></div>
 
         <!-- 옛 경로(4-e 홀더펜 슬라이더 · 세로 연필/펜 버튼) — **지우지 않고 숨긴다**(A-4:
              사람이 새 연필통을 승인할 때까지. 되돌리기: main.ts TRAY=false + hidden 제거). -->
@@ -847,11 +981,16 @@
              SVG는 docs/instrument-icons.md 롤 정본과 같은 그림(정본 상수는 layerbar.ts —
              여기 인라인은 초기 표시용이고 main.ts가 배선한다). 카메라가 닫히기 전에는
              비활성이고 누르면 이유가 보인다(2-a — main.ts). -->
-        <button id="btn-roll-tracing" class="t ico-sq" title="트레이싱지를 한 장 얹는다" aria-label="트레이싱지 롤">
+        <!-- 롤통(web2-34 6번) — 종전에는 **단추 둘**이었다(트레이싱지·옐로). 34-6이 자리를
+             만들면서 **연필통·펜통·지우개통과 같은 문법**으로 묶었다(지시 문면: 「자리가
+             모자라면 통(펼침)으로 묶어라. 이미 쓰는 방식이다」). 접힌 단추의 그림은
+             `docs/instrument-icons.md`의 **트레이싱지 롤 정본 그대로**이고(새로 안 그렸다)
+             색 예외(옐로)는 통 «안»의 줄에만 산다.
+             ⚠ **R6 비대상이다** — 이 통에는 «고른 것»이 없다. 두 줄이 **명령**이고(한 장
+             얹는다) 누르면 볼일이 끝나 접힌다(R3). 면 팝오버와 같은 범주다.
+             카메라가 닫히기 전에는 비활성이고 누르면 이유가 보인다(2-a — main.ts). -->
+        <button id="btn-roll" class="t ico-sq" title="종이를 한 장 얹는다 — 트레이싱지 · 옐로" aria-label="롤">
           <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="15" r="8.2"/><circle cx="13.5" cy="15" r="2.8"/><path d="M13.5 23.2 H27.5"/></svg>
-        </button>
-        <button id="btn-roll-yellow" class="t ico-sq" title="옐로를 한 장 얹는다" aria-label="옐로 롤">
-          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path fill="#e9d98a" stroke="none" fill-rule="evenodd" d="M13.5 6.8 a8.2 8.2 0 1 1 0 16.4 a8.2 8.2 0 1 1 0 -16.4 Z M13.5 12.2 a2.8 2.8 0 1 0 0 5.6 a2.8 2.8 0 1 0 0 -5.6 Z"/><circle cx="13.5" cy="15" r="8.2"/><circle cx="13.5" cy="15" r="2.8"/><path d="M13.5 23.2 H27.5"/></svg>
         </button>
 
         <!-- 면 — 둘러싸인 자리를 탭하면 면이 되고, 면을 탭하면 없어진다(토글).
@@ -867,89 +1006,12 @@
           </svg>
         </button>
 
-        <details class="pane" id="pane-file">
-          <summary class="t ico-f" title="파일">
-            <svg width="28" height="28" viewBox="0 0 19 19" fill="none" stroke="currentColor" stroke-width="1.3">
-              <path d="M2.6 4.6h4.6l1.4 1.8h7.8v8.4H2.6z" />
-            </svg>
-          </summary>
-          <!-- 「저장/열기」와 「내보내기」를 이름에서 가른다(web2-10 지시 5) —
-               .brnl은 되돌아오는 원본이고 OBJ/glTF는 나가기만 한다. 사람이 「내보내기가
-               있으니 불러오기도 필요하다」고 한 것은 그 둘을 같은 것으로 읽었다는 관측이다. -->
-          <div>
-            <div class="head" title="이 앱에서 다시 열 수 있는 원본 형식이다">원본 .brnl</div>
-            <button id="btn-save" data-act="cmd" title=".brnl 저장 — 이 앱에서 다시 열 수 있는 원본">저장</button>
-            <button id="btn-open" data-act="cmd" title=".brnl 열기">열기</button>
-            <div class="head" style="margin-top:6px" title="다른 앱용 — 이 앱으로 못 되돌아온다">내보내기</div>
-            <button id="btn-obj" data-act="cmd" title="OBJ 내보내기 — 다른 앱용. 이 앱으로 못 되돌아온다">OBJ</button>
-            <button id="btn-gltf" data-act="cmd" title="glTF 내보내기 — 다른 앱용. 이 앱으로 못 되돌아온다">glTF</button>
-            <div style="height:6px"></div>
-            <!-- ⚠ `data-fold="late"` — **명령이지만 접힘은 명령이 끝난 뒤**다(web2-28 1번 후속).
-                 비우기는 누르는 순간 **그 버튼 곁에** 확인 팝오버를 띄우므로(web2-12 4번),
-                 바로 접으면 **앵커가 사라져 확인이 미아가 된다**(전량 e2e `flow.spec`이 잡았다).
-                 볼일이 끝나는 시점은 «확인을 누른 뒤»이고 접힘도 그때다. -->
-            <button id="btn-clear" data-act="cmd" data-fold="late" title="전부 지우고 처음부터 — 확인을 받는다">비우기</button>
-            <div class="head" style="margin-top:6px">종이</div>
-            <!-- 설정 자루 해체(3-a): 오스냅 → 자 팝업 · 표시 셋 → 눈 · own3d → 진단 ·
-                 렌더러는 여기(서랍) — btn-brush id 유지(배선·팔이 그 이름을 본다). -->
-            <!-- 내부 이름(렌더러)은 화면에 안 새어 나온다(4-a) — 사람이 보는 것은 「종이 질감」 하나 -->
-            <button id="btn-brush" data-act="state" title="종이 질감을 켜고 끈다">질감</button>
-          </div>
-        </details>
 
         <!-- 설정(web2-30 10번) — **시스템 도구**다: 제도용구가 아니므로 실물 문법을
              적용하지 않는다(`DRAFTING-MAP` §0의 「제도·CAD의 말」 무리). 톱니바퀴로 간다.
              web2-19 3-a가 「설정 자루」를 해체하면서 **둘 곳이 없어졌고**, 그래서 상태
              옵션(필압 보정)이 가장 가까운 패널(눈)에 얹혔다 — 그 자리를 여기 되세운다.
              ⚠ 상태 토글이므로 이 패널은 **자동으로 안 접힌다**(28-1 — data-act="state"). -->
-        <details class="pane" id="pane-settings">
-          <summary class="t ico-f" title="설정">
-            <!-- 톱니 — **선 문법**(docs/instrument-icons.md 「톱니 — 설정」 정본 그대로 · path 수정 금지).
-                 ⚠ 종전 것은 Phosphor light gear를 `fill="currentColor"`로 **채운** 그림이라
-                 이 파일의 다른 선 아이콘(삼각자·롤)과 문법이 갈렸다(web2-34 5번 · 사람 지시
-                 「라인드로잉으로 바꾸고 중앙에 원 추가해서 통상적인 톱니로」). 실루엣은 바깥
-                 톱니 여덟 + 중앙 원 둘뿐이다. 크기 급(.ico-f)은 그대로이고 width/height 속성은
-                 두지 않는다 — 높이는 CSS가 준다(뷰박스가 256 → 32로 바뀌었다). -->
-            <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.12 4.15 L17.88 4.15 L18.13 7.46 A8.8 8.8 0 0 1 20.53 8.46 L23.05 6.29 L25.71 8.95 L23.54 11.47 A8.8 8.8 0 0 1 24.54 13.87 L27.85 14.12 L27.85 17.88 L24.54 18.13 A8.8 8.8 0 0 1 23.54 20.53 L25.71 23.05 L23.05 25.71 L20.53 23.54 A8.8 8.8 0 0 1 18.13 24.54 L17.88 27.85 L14.12 27.85 L13.87 24.54 A8.8 8.8 0 0 1 11.47 23.54 L8.95 25.71 L6.29 23.05 L8.46 20.53 A8.8 8.8 0 0 1 7.46 18.13 L4.15 17.88 L4.15 14.12 L7.46 13.87 A8.8 8.8 0 0 1 8.46 11.47 L6.29 8.95 L8.95 6.29 L11.47 8.46 A8.8 8.8 0 0 1 13.87 7.46 Z"/><circle cx="16" cy="16" r="4.2"/></svg>
-          </summary>
-          <div>
-            <div class="head">손</div>
-            <!-- web2-26 6번 — 필압 보정(옵션 · **기본 꺼짐**). 켜면 **두 획을 받는다**.
-                 화면 문구는 지시가 준 그대로 「필압 보정」이다. id·배선은 안 바뀐다. -->
-            <label><input id="chk-press" data-act="state" type="checkbox"> 필압 보정</label>
-            <!-- ⚠⚠ **절차가 화면에 있다**(web2-30 7번). web2-26 6번은 토글만 있고 단계는
-                 알림 한 줄로만 스쳐 지나가서 **절차가 실제로 있는지 자체가 확인되지 않았다**
-                 (게이트가 합성 압력으로 통과했다). 지금은 이 줄이 설정 패널에 **머무르고**,
-                 그 사이 위 체크상자는 **꺼진 채로 있다** — 「절반만 켜진 상태」를 안 만든다:
-                 옵션이 켜지는 시점은 `doc.press`가 서는 순간 하나다. -->
-            <div id="press-calib" hidden>
-              <span id="press-calib-step"></span>
-              <button id="btn-press-cancel" data-act="state" title="보정을 그만둔다 — 옵션은 꺼진 채로 남는다">그만둔다</button>
-            </div>
-            <div class="head" style="margin-top:6px">종이</div>
-            <!-- web2-34 1번 — **종이 결**(기본 켜짐). 사람의 말은 「종이 질감이 너무
-                 과하다. 사실 없는 게 나을 수도」였고, 답은 ① 진폭을 겹보다 낮추고
-                 ② 아예 끌 수 있게 하는 것이다(화면 규칙 R8). 「없는 게 나을 수도」는
-                 **처방이지 진단이 아니다**(D-4) — 30-9가 「종이만 결이 없는 것이
-                 결함이다」로 판정한 관측은 그대로 유효하므로 기본은 켜짐이다.
-                 ⚠ `data-act="state"` — 상태 토글이라 **패널이 안 접힌다**(R3 · 28-1).
-                 ⚠ 저장 자리는 **localStorage**다(문서가 아니다 — 원칙 b의 표시판):
-                 결은 «보는 방식»이고 획을 안 건드린다. 필압 보정(`doc.press`)이 문서로
-                 간 것은 켜는 순간 **예전 그림의 농도**가 바뀌기 때문인데, 종이 결에는
-                 그 사정이 없다 — 끄고 켜도 획은 한 픽셀도 안 바뀐다. -->
-            <label><input id="chk-grain" data-act="state" type="checkbox" checked> 종이 결</label>
-            <div class="head" style="margin-top:6px">기기</div>
-            <!-- web2-30 3번 별건 — 빌드 식별자가 **입력을 안 받게** 되면서(배포를 판정하는
-                 표시지 단추가 아니다) 진단 패널의 여닫이가 여기로 왔다. 콘솔 없는 태블릿의
-                 유일한 판독 통로이므로 **없앨 수 없다**(web2-10 지시 4) — 자리를 옮긴다. -->
-            <!-- ⚠ `data-act="cmd"` — **명령이다**(28-1): 볼일(패널 열기)이 누르는 순간 끝나고
-                 결과는 **서랍 밖**(우하단 진단 패널)에 뜬다. 그래서 서랍이 접힌다 —
-                 접어야 하는 실질적 이유도 있다: 서랍과 진단 패널·자립 깃발이 **같은 우하단
-                 모서리**를 쓰므로, 서랍이 열린 채면 진단 곁줄(#diagctl)을 못 누른다
-                 (전량 e2e가 잡았다 — sidebar subtree intercepts pointer events). -->
-            <button id="btn-diag" data-act="cmd" title="진단 — 기기 값·최근 획·파일 크기">진단</button>
-          </div>
-        </details>
       </div>
     </div>
     <!-- 자 팝업(3-b) — 설정 자루에서 나온 오스냅 종류·반경. id·배선은 그대로다(동작 불변 ④).

@@ -43,7 +43,7 @@ test('⑤ 옐로 2D — 그 종이·그 시점에서만 보인다 · 떠나면 �
   // 카메라 닫기(수평 앵커 + 소실점 획) + 옐로 한 장
   await drawLine(page, 280, 560, 700, 560)
   await drawLine(page, 500, 560, 800, 480)
-  await page.click('#btn-roll-yellow'); await settle(page)
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow'); await settle(page)
   // 옐로 자유 획 — 화면 가운데 대각(축이 없다)
   await drawLine(page, 420, 250, 640, 330)
   const st = await page.evaluate(() => {
@@ -90,7 +90,7 @@ test('2부 — 후행 확정: 머무르면 반듯(수평 붙음·표식·raw 소
   await page.waitForFunction(() => (window as any).__b2)
   await drawLine(page, 280, 560, 700, 560)
   await drawLine(page, 500, 560, 800, 480)
-  await page.click('#btn-roll-yellow'); await settle(page)
+  await page.click('#btn-roll'); await page.click('#btn-roll-yellow'); await settle(page)
   // ── 머무름: (300,300) → (520,310) = 2.6°(대역 안) — 끝에서 800ms 머무르고 뗀다 ──
   await page.mouse.move(300, 300)
   await page.mouse.down()
