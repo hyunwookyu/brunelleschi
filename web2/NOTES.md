@@ -14008,8 +14008,9 @@ npm run typecheck                    통과
 npm run build                        통과 (2.2s)
 npx vitest run                       94파일 728건 통과
 playwright ui34r7                    **14 통과**(팔 일곱 × dpr 둘)
-playwright 지시의 13 spec             132케이스 중 128 통과 · **4 실패 → 고치고 12/12 통과**
-   (실패 넷은 face.spec 하나 × dpr 둘 + flow.spec 하나 × dpr 둘 — §⑥의 두 갈래)
+playwright 지시의 13 spec             132케이스 중 128 통과 · **4 실패**
+   (실패 넷은 face.spec 하나 × dpr 둘 + flow.spec 하나 × dpr 둘 — §⑦의 두 갈래)
+playwright 그 13 + ui34r7 (마감판)    **146 통과 · 0 실패** (12.8m · dpr 둘)
 playwright press30·press26·underlay·entry17·level·materials   58 통과
    (⚠ 예외를 안 걸었으면 `press30 ④`가 여기서 빨갰다 — 그것이 D-4의 값이다)
 ```
