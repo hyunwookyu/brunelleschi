@@ -31,7 +31,7 @@ function synthLift(segs: { id: number; a3: V3; b3: V3 }[]): LiftResult {
     lifted.set(s.id, { a3: s.a3, b3: s.b3, axis: null })
     strokes.set(s.id, { id: s.id, a, b })
   }
-  return { an, lifted, waiting: [], waitWhy: new Map(), anchorId: null, strokes, mmPerUnit: null }
+  return { an, lifted, waiting: [], waitWhy: new Map(), anchorId: null, strokes, mmPerUnit: null, scaleId: null, dimGeom: new Map() }
 }
 
 /** 지면 격자 — 세로 v개(x 등분)·가로 h개(z 등분) + 테두리 4 = v+h+4 획.

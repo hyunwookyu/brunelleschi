@@ -45,7 +45,7 @@ function synthLift(segs: { id: number; a3: V3; b3: V3 }[]): LiftResult {
     lifted.set(s.id, { a3: s.a3, b3: s.b3, axis: null })
     strokes.set(s.id, { id: s.id, a, b })
   }
-  return { an, lifted, waiting: [], waitWhy: new Map(), anchorId: null, strokes, mmPerUnit: null }
+  return { an, lifted, waiting: [], waitWhy: new Map(), anchorId: null, strokes, mmPerUnit: null, scaleId: null, dimGeom: new Map() }
 }
 
 /** 장면 — 면 M개(카메라 앞 여러 깊이의 벽) + 그 사이를 지나는 획 N개.
@@ -87,7 +87,7 @@ function indoorLift(segs: { id: number; a3: V3; b3: V3 }[]): LiftResult {
     const a = project(an, DRAW_POSE, s.a3), b = project(an, DRAW_POSE, s.b3)
     if (a && b) strokes.set(s.id, { id: s.id, a, b })
   }
-  return { an, lifted, waiting: [], waitWhy: new Map(), anchorId: null, strokes, mmPerUnit: null }
+  return { an, lifted, waiting: [], waitWhy: new Map(), anchorId: null, strokes, mmPerUnit: null, scaleId: null, dimGeom: new Map() }
 }
 
 /** **실내** 장면(web2-25 1부) — 카메라가 방 안이라 면의 꼭짓점이 카메라 뒤로 넘어간다.

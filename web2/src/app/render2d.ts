@@ -15,7 +15,8 @@ import { waitFadeFactor, atOwnPose } from '../core/waitfade'
 import type { OsnapHit } from '../core/osnap'
 import { dist2, type Pt, type V3 } from '../core/vec'
 import { filmSplit } from './filmlayer'
-import { formatMm } from '../core/dim'
+import { formatMm, formatRatio, dimSkew, skewOff } from '../core/dim'
+import { measurePoint3, measureMm, measureUnits } from '../core/measure'
 
 /** D-3 반증 손잡이(web2-19 1부) — e2e만 켠다(diag.forceConstructing). 본문 주석 참조. */
 let FORCE_CONSTRUCTING = false
@@ -583,6 +584,12 @@ export function draw2d(
   //    (겹의 치수가 아래 종이에 안 나타나는 것이 그 귀결이다 — 새 규칙 ⛔).
   drawDimensions(ctx, app, is)
 
+  // ── 재기(web2-32 6번) ─────────────────────────────────────────────────────
+  // **기본값(패널에 표시만)은 여기서 아무것도 그리지 않는다** — 도면에 남는 것은
+  // «잰 것을 도면에 남긴다»를 켜고 잰 것뿐이다(`doc.measures`). 짚는 중의 표시는
+  // 도면이 아니라 손의 상태라 여기 있어도 문서가 안 는다.
+  drawMeasures(ctx, app, is)
+
   // 쓰고 있는 손글씨 — 확정 전이라 문서에 없다. 대상 표시(고른 선)도 여기서.
   if (app.dimPick !== null) {
     const seg = app.lift.lifted.get(app.dimPick)
@@ -798,7 +805,61 @@ function drawDimensions(ctx: CanvasRenderingContext2D, app: App, is: number) {
     ctx.font = `${C.DIM_TEXT_PX}px system-ui, sans-serif`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'bottom'
-    ctx.fillText(formatMm(s.dim, app.doc.unit, app.dimExact), 0, -2)
+    // **어긋남**(web2-32 7번) — 적은 값 옆에 «≠» 하나. 값을 **안 고친다**: 사람이 적은
+    // 것은 틀린 것이 아니라 «다른 것»이다(#61). 무엇이 다른지는 패널 줄이 말한다.
+    const skewed = skewOff(dimSkew(app.lift, s.id))
+    ctx.fillText(formatMm(s.dim, app.doc.unit, app.dimExact) + (skewed ? ' ≠' : ''), 0, -2)
     ctx.restore()
+  }
+}
+
+// ── 재기(web2-32 6번) — 도면에 남긴 것 + 짚는 중의 표시 ──────────────────────
+// ⛔ 새 색을 안 짓는다: 남긴 재기는 치수선과 같은 작도 대역(`COL.construction`),
+//    짚는 중은 «지금 짚은 것»이라 스냅 색(`COL.snap`) — 둘 다 이미 있는 뜻이다.
+function drawMeasures(ctx: CanvasRenderingContext2D, app: App, is: number) {
+  const an = app.lift.an
+  const dot = C.DIM_TICK_PX * is
+  const label = (p: Pt, text: string, col: string) => {
+    ctx.save()
+    ctx.translate(p.x, p.y)
+    ctx.scale(is, is)
+    ctx.fillStyle = col
+    ctx.font = `${C.DIM_TEXT_PX}px system-ui, sans-serif`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'bottom'
+    ctx.fillText(text, 0, -4)
+    ctx.restore()
+  }
+  // 도면에 남긴 것 — 값은 **매번 계산**이다(저장된 숫자가 아니다 · 원칙 b)
+  for (const m of app.doc.measures ?? []) {
+    const p3 = measurePoint3(app.lift, m.a), q3 = measurePoint3(app.lift, m.b)
+    if (!p3 || !q3) continue                 // 안 풀린 것은 대기다 — 안 그리고 안 버린다
+    const a = project(an, app.pose, p3), b = project(an, app.pose, q3)
+    if (!a || !b) continue
+    ctx.strokeStyle = COL.construction
+    ctx.lineWidth = 1 * is
+    ctx.beginPath()
+    ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y)
+    ctx.moveTo(a.x - dot, a.y - dot); ctx.lineTo(a.x + dot, a.y + dot)
+    ctx.moveTo(b.x - dot, b.y - dot); ctx.lineTo(b.x + dot, b.y + dot)
+    ctx.stroke()
+    const mm = measureMm(app.lift, m)
+    const u = measureUnits(app.lift, m)
+    const text = mm !== null ? formatMm(mm, app.doc.unit, app.dimExact)
+      : u !== null ? formatRatio(u) : ''
+    if (text) label({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, text, COL.construction)
+  }
+  // 짚는 중 — 첫 점 하나. 문서에 아무것도 안 들어간다.
+  if (app.measureFrom) {
+    const p3 = measurePoint3(app.lift, app.measureFrom)
+    const a = p3 && project(an, app.pose, p3)
+    if (a) {
+      ctx.strokeStyle = COL.snap
+      ctx.lineWidth = 1.4 * is
+      ctx.beginPath()
+      ctx.moveTo(a.x - dot, a.y - dot); ctx.lineTo(a.x + dot, a.y + dot)
+      ctx.moveTo(a.x - dot, a.y + dot); ctx.lineTo(a.x + dot, a.y - dot)
+      ctx.stroke()
+    }
   }
 }

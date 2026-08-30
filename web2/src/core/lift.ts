@@ -45,6 +45,17 @@ export interface LiftResult {
   /** **세계 1단위 = 몇 mm** — 파생이다(web2-08 지시 4-1): 문서 순서상 첫 치수 획의
    *  `dim ÷ (무치수 풀이 길이)`. 치수가 없으면 null(무스케일). 계산은 아래 `scaleOf`. */
   mmPerUnit: number | null
+  /** **축척을 정한 획**(web2-32 5번) — `scaleOf`가 실제로 고른 그 획이다. null = 축척 미정.
+   *  화면이 「어느 치수가 정했는가」를 이것으로 읽는다. 같은 판정을 밖에서 다시 하면
+   *  출처가 둘이 되고 겹·문서 순서 규칙이 갈리는 날 조용히 어긋난다(#54) — 고른 자리가
+   *  자기가 고른 것을 그대로 보고한다. `mmPerUnit !== null` ↔ `scaleId !== null`이 짝이다. */
+  scaleId: number | null
+  /** **치수를 적용하기 «전»의 기하 길이**(세계 단위) — 치수가 실린 획만(web2-32 7번).
+   *  「잰 값」의 출처다. ⚠⚠ 적용 «뒤» 길이를 재면 `dim/mmPerUnit`이 그대로 나와
+   *  **구성상 항등**이다(#77 ㉡ — AS-C107이 그 함정이었고 29-2가 그래서 1.000000을 얻었다).
+   *  여기 남는 값은 «모델이 가진 값»이고 사람이 «적은 값»과 갈릴 수 있다 — 그 갈림이
+   *  32-7의 어긋남이다. 축척을 정한 획에서는 구성상 어긋남이 0이다(그 획이 분모였다). */
+  dimGeom: Map<number, number>
 }
 
 /** 직선 P0+t·a 와 광선의 최근접점(직선 위의 점). 평행이면 null. */
@@ -99,7 +110,8 @@ const axisDir = (an: Analysis, id: AxisId): V3 | null =>
  *  `useOwn`(web2-13 4부 — 깃발): 획이 소유한 3D(`Stroke.own3`)를 사슬의 씨앗으로
  *  선등록한다. **기본 false — 그때 이 함수는 종전과 완전히 같다**(4부 불변식). */
 export function liftAll(doc: Doc, useOwn = false): LiftResult {
-  return liftPass(doc, scaleOf(doc), useOwn)
+  const { mm, id } = scaleOf(doc)
+  return liftPass(doc, mm, useOwn, id)
 }
 
 /** **스케일(mm/세계단위) — 파생**(원칙 b · 지시 4-1): 문서 순서상 첫 치수 획을
@@ -108,7 +120,7 @@ export function liftAll(doc: Doc, useOwn = false): LiftResult {
  *  대가: 치수 없는 풀이를 한 번 더 돈다(문서당 2패스) — 전량 재계산이 이미 원칙이다.
  *  ⚠ 첫 치수 획을 지우면(조각은 dim을 안 물려받는다) 스케일이 다음 치수 획으로
  *  넘어가거나 없어진다 — 조용히 다른 값이 되는 대신 그 사실이 길이 표시(null)로 보인다. */
-function scaleOf(doc: Doc): number | null {
+function scaleOf(doc: Doc): { mm: number | null; id: number | null } {
   // 기준은 «첫 입력»(scaleRef)이고, 그 획이 없어졌으면 문서 순서상 첫 치수 획으로 물러난다.
   // ⚠ 후보는 **layer 없는 획**(종이에 직접 그린 것)뿐이다(web2-21 1-b) — 스케일은 바탕
   // 종이가 정한다. 겹 획이 기준이면 그 겹을 끄는 순간 lifted에서 빠져 문서 전체의 실척이
@@ -118,19 +130,44 @@ function scaleOf(doc: Doc): number | null {
   // 후보 집합만 좁힌다(#54: 이 한 자리. 옛 파일의 겹 scaleRef도 여기서 걸러진다).
   const s0 = doc.strokes.find(s => s.id === doc.scaleRef && s.dim !== undefined && onPaper(s))
     ?? doc.strokes.find(s => s.dim !== undefined && onPaper(s))
-  if (!s0) return null
+  if (!s0) return { mm: null, id: null }
   const base = liftPass(doc, null)
   const g = base.lifted.get(s0.id)
-  if (!g) return null
+  if (!g) return { mm: null, id: null }
   const L = len3(sub3(g.b3, g.a3))
-  return L > 1e-12 ? s0.dim! / L : null
+  // ⚠ **고른 획을 같이 낸다**(web2-32 5번) — 화면의 「어느 치수가 정했는가」가 이 값을
+  // 읽는다. 밖에서 같은 find를 다시 쓰면 그 자리가 겹 규칙·물러남 규칙과 갈린다(#54).
+  // 퇴화 길이로 스케일이 못 서면 기준도 없다 — 둘은 언제나 같이 산다.
+  return L > 1e-12 ? { mm: s0.dim! / L, id: s0.id } : { mm: null, id: null }
 }
 
-function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResult {
+function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: number | null = null): LiftResult {
   const an = analyze(doc)
   const lifted = new Map<number, LiftedSeg>()
   const waitWhy = new Map<number, 'aboveHorizon' | 'onHorizon' | 'hasHeight' | 'mixedWait' | 'straddle'>()
+  const dimGeom = new Map<number, number>()
   let anchorId: number | null = null
+
+  /** ── 치수(web2-08 지시 4-2) — **시작점과 방향만 취하고 길이는 입력값으로 바꾼다** ──
+   *  ⚠ 끝점 오스냅으로 붙인 좌표도 치수가 이긴다 — «점이 방향을 이긴다»(#63)와 다른
+   *  자리다: 그쪽은 재계산이 사람의 점을 덮는 결함이고, 여기는 **사람이 나중에 준 명시
+   *  입력**(치수)이 앞의 점을 대체하는 것이다(지시 문면 그대로).
+   *  첫 치수(스케일을 정한 획)도 같은 갈래를 타는데, mmPerUnit이 그 획의 길이에서
+   *  나왔으므로 dim/mmPerUnit == 원래 길이 — 구성상 무변형이다(팔이 잰다).
+   *
+   *  ⚠⚠ **이 자리 하나다**(#54 — web2-32 7번이 합쳤다). 종전에는 같은 다섯 줄이 세
+   *  갈래(씨앗·본 패스·되살림 패스)에 복사돼 있었고, 32-7이 필요로 하는 **적용 전 길이**를
+   *  세 곳에 따로 심으면 그 셋이 언젠가 갈린다. 그 길이를 여기서 `dimGeom`에 남긴다 —
+   *  적용 뒤 길이를 재면 구성상 항등이라 아무것도 안 잰다(#77 ㉡). */
+  const applyDim = (s: Stroke, a3: V3, b3: V3): V3 => {
+    if (s.dim === undefined) return b3
+    const d = sub3(b3, a3)
+    const L = len3(d)
+    if (L <= 1e-12) return b3
+    dimGeom.set(s.id, L)                       // «잰 값»(세계 단위) — 적용 전이다
+    if (mmPerUnit === null || mmPerUnit <= 0) return b3
+    return add3(a3, mul3(d, s.dim / mmPerUnit / L))
+  }
 
   const strokes = new Map(doc.strokes.map(s => [s.id, s]))
   // **내용 = 표식이 아닌 전부다**(web2-17 1-b — 지평선은 이제 획이 아니라 프레임 상수라
@@ -154,7 +191,7 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
   const content = doc.strokes.filter(s => !isMark(s) && !isFlat2d(s, yellow)
     && !(s.layer !== undefined && offLayers.has(s.layer)))
   if (!an.principal || an.f === null) {
-    return { an, lifted, waiting: content.map(s => s.id), waitWhy, anchorId, strokes, mmPerUnit }
+    return { an, lifted, waiting: content.map(s => s.id), waitWhy, anchorId, strokes, mmPerUnit, scaleId, dimGeom }
   }
 
   const mergeTol = C.MERGE_RATIO * an.diag
@@ -173,14 +210,10 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
       const a3 = { ...s.own3.a }
       let b3 = { ...s.own3.b }
       // 치수(4-2)는 굳힘 «뒤»에도 사람의 명시 입력이 이긴다(web2-14 1번 — 기본 켜짐
-      // 전환이 드러낸 회귀: 씨앗이 사슬 풀이를 건너뛰므로 아래 dim 대체가 여기도 필요하다).
+      // 전환이 드러낸 회귀: 씨앗이 사슬 풀이를 건너뛰므로 dim 대체가 여기도 필요하다).
       // 멱등이다 — 이미 그 길이면 같은 값. b 끝의 잉크 어긋남은 잉크 심판의 알려진
       // 예외(own3Deviation이 dim 획의 b를 뺀다). 시작점·방향은 씨앗 그대로다.
-      if (s.dim !== undefined && mmPerUnit !== null && mmPerUnit > 0) {
-        const d = sub3(b3, a3)
-        const L = len3(d)
-        if (L > 1e-12) b3 = add3(a3, mul3(d, s.dim / mmPerUnit / L))
-      }
+      b3 = applyDim(s, a3, b3)
       lifted.set(s.id, { a3, b3, axis: (s.own3.axis as AxisId | null) })
       endpoints.push(a3, b3)
       segs.push({ a3, b3 })
@@ -333,17 +366,7 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
       }
       if (!b3) { if (anchorId === s.id) anchorId = null; continue }
 
-      // ── 치수(web2-08 지시 4-2) — **시작점과 방향만 취하고 길이는 입력값으로 바꾼다** ──
-      // 끝점 오스냅으로 붙인 좌표도 치수가 이긴다 — «점이 방향을 이긴다»(#63)와 다른
-      // 자리다: 그쪽은 재계산이 사람의 점을 덮는 결함이고, 여기는 **사람이 나중에 준
-      // 명시 입력**(치수)이 앞의 점을 대체하는 것이다(지시 문면 그대로).
-      // 첫 치수(스케일을 정한 획)도 같은 갈래를 타는데, mmPerUnit이 그 획의 길이에서
-      // 나왔으므로 dim/mmPerUnit == 원래 길이 — 구성상 무변형이다(팔이 잰다).
-      if (s.dim !== undefined && mmPerUnit !== null && mmPerUnit > 0) {
-        const d = sub3(b3, a3)
-        const L = len3(d)
-        if (L > 1e-12) b3 = add3(a3, mul3(d, s.dim / mmPerUnit / L))
-      }
+      b3 = applyDim(s, a3, b3)          // 치수 — 규약과 근거는 `applyDim` 머리주석 하나다
 
       lifted.set(s.id, { a3, b3, axis })
       endpoints.push(a3, b3)
@@ -461,11 +484,7 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
           }
         }
         if (!b3) continue
-        if (s.dim !== undefined && mmPerUnit !== null && mmPerUnit > 0) {
-          const d = sub3(b3, a3)
-          const L = len3(d)
-          if (L > 1e-12) b3 = add3(a3, mul3(d, s.dim / mmPerUnit / L))
-        }
+        b3 = applyDim(s, a3, b3)
         lifted.set(s.id, { a3, b3, axis })
         endpoints.push(a3, b3)
         segs.push({ a3, b3 })
@@ -487,5 +506,5 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false): LiftResul
     }
   }
 
-  return { an, lifted, waiting: [...pending], waitWhy, anchorId, strokes, mmPerUnit }
+  return { an, lifted, waiting: [...pending], waitWhy, anchorId, strokes, mmPerUnit, scaleId, dimGeom }
 }
