@@ -1,0 +1,233 @@
+{
+  "what": "web2-31 4번 — 종이 띠 단추의 카메라 도형을 떼고 «종이 + 갱신 화살표»로 바꿨다. 「화면에 카메라 도형이 없다」를 DOM 전수 훑기(출처·형태·말) 셋으로 재고, 「시점 저장·복귀 무회귀」를 좌표로 잰다.",
+  "canonical_command": "LEDGER=1 npx playwright test e2e/papericon31.spec.ts --project=dpr2",
+  "viewport": {
+    "w": 1200,
+    "h": 800
+  },
+  "dpr": "dpr2",
+  "def": {
+    "source": "(가) DOM svg의 `d`/`points` 문자열이 Phosphor camera 계열 넷(camera·plus·rotate·slash) × 여섯 굵기의 path와 **같은가**. 적중 0이 통과.",
+    "shape": "(나) DOM svg 하나를 96×96으로 굽고 **잉크 상자로 정규화**(가로세로비 보존 — 긴 변 기준) 한 뒤 16×16 참/거짓 격자로 만들어 카메라 계열 견본과 **IoU**. 최대값이 문 아래여야 한다. 문자열보다 넓다 — 색·크기·굵기를 바꿔 옮겨 심어도 걸린다.",
+    "words": "(다) 화면 언어(직접 텍스트 + title + aria-label · 진단 채널 제외)에 사진 계열 낱말 여덟이 없다.",
+    "roundtrip": "②는 «저장 → 떠남 → 복귀»의 좌표 차다. 저장·복귀 차는 1e-12 아래, 떠난 거리는 1e-6 위."
+  },
+  "not_covered": "⚠ (나)는 **카메라 계열 견본과의 닮음**을 재므로, 이 계열에 없는 «손으로 다시 그린 카메라»는 못 잡는다(#26 — 못 잡는 것을 잡는다고 안 적는다). 그 자리는 (다)의 말 훑기와 `docs/instrument-icons.md`의 등재 규약이 든다.",
+  "thresholds": {
+    "CAMERA_IOU": 0.7
+  },
+  "reach_points": [
+    0.5787,
+    0.8238,
+    5.33554
+  ],
+  "reach_points_def": "① 성한 화면의 IoU 최대(문 아래여야 한다) ② **문자열을 바꿔 심은 카메라**의 IoU(문 위여야 한다 — 형태 채널이 혼자 잡는 칸) ③ 배선을 끊은 판의 복귀 거리(0이 아니어야 한다). ⚠ 옛 아이콘 그대로를 되돌린 판의 IoU 1.0은 **항등**이라 이 셋에 안 넣는다(#40 ② · #5).",
+  "sweep_dpr2": {
+    "swept": {
+      "svgs": 43,
+      "shapes": 142,
+      "refs": 24,
+      "family_paths": 23
+    },
+    "source_hits": 0,
+    "iou_top5": [
+      {
+        "where": "display-pop",
+        "shapes": 1,
+        "iou": 0.5787,
+        "iou_ref": "light/camera-plus",
+        "iou_all": 0.5787,
+        "iou_all_ref": "light/camera-plus"
+      },
+      {
+        "where": "pane-settings",
+        "shapes": 2,
+        "iou": 0.5463,
+        "iou_ref": "bold/camera",
+        "iou_all": 0.6638,
+        "iou_all_ref": "duotone/camera"
+      },
+      {
+        "where": "btn-snap",
+        "shapes": 3,
+        "iou": 0.5319,
+        "iou_ref": "light/camera-slash",
+        "iou_all": 0.5678,
+        "iou_all_ref": "duotone/camera-plus"
+      },
+      {
+        "where": "btn-measure",
+        "shapes": 1,
+        "iou": 0.4976,
+        "iou_ref": "bold/camera-rotate",
+        "iou_all": 0.6,
+        "iou_all_ref": "duotone/camera-plus"
+      },
+      {
+        "where": "btn-eraser-pencil",
+        "shapes": 4,
+        "iou": 0.4933,
+        "iou_ref": "bold/camera-rotate",
+        "iou_all": 0.6234,
+        "iou_all_ref": "duotone/camera-plus"
+      }
+    ],
+    "iou_max": 0.5787,
+    "iou_all_top5": [
+      {
+        "where": "tray-2H",
+        "shapes": 6,
+        "iou": 0.4649,
+        "iou_ref": "bold/camera-rotate",
+        "iou_all": 0.693,
+        "iou_all_ref": "duotone/camera-plus"
+      },
+      {
+        "where": "tray-H",
+        "shapes": 6,
+        "iou": 0.4649,
+        "iou_ref": "bold/camera-rotate",
+        "iou_all": 0.693,
+        "iou_all_ref": "duotone/camera-plus"
+      },
+      {
+        "where": "tray-F",
+        "shapes": 6,
+        "iou": 0.4649,
+        "iou_ref": "bold/camera-rotate",
+        "iou_all": 0.693,
+        "iou_all_ref": "duotone/camera-plus"
+      },
+      {
+        "where": "tray-HB",
+        "shapes": 6,
+        "iou": 0.4649,
+        "iou_ref": "bold/camera-rotate",
+        "iou_all": 0.693,
+        "iou_all_ref": "duotone/camera-plus"
+      },
+      {
+        "where": "tray-B",
+        "shapes": 6,
+        "iou": 0.4649,
+        "iou_ref": "bold/camera-rotate",
+        "iou_all": 0.693,
+        "iou_all_ref": "duotone/camera-plus"
+      }
+    ],
+    "paper_add_row": {
+      "where": "paper-add",
+      "shapes": 4,
+      "iou": 0.3976,
+      "iou_ref": "light/camera-plus",
+      "iou_all": 0.4025,
+      "iou_all_ref": "duotone/camera-slash"
+    },
+    "words_found": [],
+    "icon": {
+      "viewBox": "0 0 32 32",
+      "shapes": 4,
+      "box": {
+        "w": 16,
+        "h": 16
+      },
+      "arc": true,
+      "title": "지금 보고 있는 시점을 한 장으로 남긴다 — 시점 갱신은 탭을 길게 누른다",
+      "aria": "시점 남기기",
+      "hit": "paper-add"
+    },
+    "falsify_a_old_camera": {
+      "source_hits": 1,
+      "paper_add_iou": 1,
+      "paper_add_ref": "light/camera",
+      "gate": 0.7,
+      "restyled": {
+        "source_hits": 0,
+        "paper_add_iou": 0.8238,
+        "paper_add_ref": "bold/camera"
+      }
+    }
+  },
+  "roundtrip_dpr2": {
+    "pose_A": {
+      "p": {
+        "x": -5.45177628308685,
+        "y": 1.5999999999999974,
+        "z": -0.7855580390295867
+      },
+      "q": {
+        "x": -8.673617379884035e-19,
+        "y": -0.29552020666133944,
+        "z": -3.469446951953614e-18,
+        "w": 0.9553364891256053
+      }
+    },
+    "saved_pose": {
+      "p": {
+        "x": -5.45177628308685,
+        "y": 1.5999999999999974,
+        "z": -0.7855580390295867
+      },
+      "q": {
+        "x": -8.673617379884035e-19,
+        "y": -0.29552020666133944,
+        "z": -3.469446951953614e-18,
+        "w": 0.9553364891256053
+      }
+    },
+    "save_diff": {
+      "p": 0,
+      "q": 0
+    },
+    "away_dist": 5.508082,
+    "back_diff": {
+      "p": 0,
+      "q": 0
+    },
+    "update_diff": 0,
+    "update_moved_from_A": 2.228722,
+    "sheets": 2
+  },
+  "falsify_b_wiring_dpr2": {
+    "save_cut": {
+      "sheets_after_click": 1,
+      "sheets_when_intact": 2,
+      "pose_A": {
+        "x": -5.45177628308685,
+        "y": 1.5999999999999974,
+        "z": -0.7855580390295867
+      }
+    },
+    "goto_cut": {
+      "back_dist_to_saved": 5.33554,
+      "stayed_where_left": 0,
+      "intact_back_dist": 0
+    }
+  },
+  "gate": {
+    "for": "web2-31 4번 — ① 화면에 카메라 도형이 없다(출처 0 · 형태 IoU < 문 · 말 0) ② 시점 저장·복귀가 좌표로 무회귀",
+    "registered": [
+      "DOM svg 전수에서 카메라 계열 path 적중 0",
+      "DOM svg 전수의 카메라 견본 IoU 최대 < 0.7",
+      "화면 언어에 사진 계열 낱말 0",
+      "새 아이콘: viewBox 0 0 32 32 · path 넷 · 호 · 상자 16×16 · elementFromPoint가 제 것을 낸다",
+      "저장한 좌표 = 그때 시점(1e-12) · 복귀한 좌표 = 저장한 좌표(1e-12) · 떠난 거리 > 1e-6",
+      "탭 길게 눌러 갱신(Update Scene)이 그대로 돈다"
+    ],
+    "reachability": "**둘 다 실제로 실패시켰다**(D-3). ㉠ 옛 카메라(Phosphor light camera · 채운 그림)를 같은 자리에 되돌리면 (가) 출처 적중이 0 → 1건이 되고 (나) 그 자리의 IoU가 0.5787 → 1로 문을 넘는다(그 1.0은 같은 글리프라 **항등**이므로, 값 대조에는 «굵기·색·좌표 문자열을 바꿔 심은 판»의 0.8238을 쓴다 — 그 판은 출처 채널을 빠져나간다). ㉡ 단추·탭을 복제로 갈아 끼워 **배선만** 끊으면(그림은 그대로) 저장이 1장에서 안 늘고 복귀가 저장 좌표에서 5.33554 떨어진 자리에 남는다. 기록은 web2/NOTES.md 31-4 반증 절.",
+    "reachability_value": [
+      0.5787,
+      0.8238,
+      5.33554
+    ],
+    "reachability_source": "reach_points"
+  },
+  "selfcheck_flags_known": {
+    "zero_diffs": "⚠ `roundtrip_*.save_diff`·`back_diff`가 0에 붙는 것은 **설계 보장**이다 — `addSheet`/`gotoSheet`가 같은 좌표를 복사한다(CLAUDE.md §5.1 유형 3). 그러므로 그 0 자체는 아무것도 안 재고, **판별력은 반증 ㉡의 두 값**이 준다 (끊은 판에서 저장이 안 늘고 복귀가 안 온다).",
+    "intact_back_dist": "⚠ `falsify_b_wiring_*.goto_cut.intact_back_dist = 0`은 위 ②가 잰 값의 재기술이다(상수).",
+    "old_camera_iou_1": "⚠ `falsify_a_old_camera.paper_add_iou = 1`이 「정확히 1」로 잡힌다 — **그것이 그 판의 정의다**: 같은 글리프를 같은 자리에 되돌렸으므로 래스터가 같고 IoU는 **항등**이다. 그래서 게이트의 값 대조에는 이 1.0을 **안 쓰고**(#40 ②) 문자열을 바꿔 심은 판의 0.8238을 쓴다(`reach_points`).",
+    "shapes_1": "⚠ `iou_top5[*].shapes = 1`은 비율이 아니라 **그 svg 안의 그리는 요소 «개수»**다(치수·표시 아이콘이 path 하나).",
+    "pose_q_near_zero": "⚠ `pose_A.q.x`·`q.z`가 1e-18 대인 것은 **궤도가 세계 수직축 하나로만 돌기 때문**이다(state.ts `orbitBy` — 가로 회전만 실린 자세라 x·z 성분이 부동소수 잔차로 남는다). 재는 값은 그 잔차가 아니라 `save_diff`/`back_diff`이고, 그쪽의 판별력은 반증 ㉡이 준다.",
+    "constants_snapshot": "⚠ `constants/metric_defs` 스냅샷이 없다 — **web2 라인 원장의 공통 형태**다(상수 스냅샷 등록부 밖). 이 원장이 인용하는 임계는 `thresholds.CAMERA_IOU` 하나이고 그 출처는 `e2e/thresholds.ts`다."
+  }
+}
