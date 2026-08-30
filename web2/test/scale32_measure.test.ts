@@ -78,7 +78,11 @@ describe('원장 — web2-32 5·6·7', () => {
     setDimension(B.app, B.post.id, 2400)
     const g0 = B.app.lift.lifted.get(B.post2.id)!
     const trueMm = lenMm(g0.a3, g0.b3, B.app.lift.mmPerUnit)!
-    const factors = [1, 1 + C.DIM_SKEW_RATIO / 2, 1 + C.DIM_SKEW_RATIO * 2, 1.5, 0.5]
+    // ⚠ **자와 문턱이 바뀌었다**(web2-34 7번 · #75 ㉣) — 옛 표는 「문턱의 절반 · 문턱의 두 배」를
+    // 물었고 그 문턱은 **비 편차 0.02**였다. 지금 자는 `fold = max(비, 1/비)`이고 문턱은
+    // **배수**(`DIM_SKEW_FOLD`)이므로 **묻는 것을 다시 적는다**: 자연 대역 ↔ 배수 오독 ↔ 경계.
+    // 자연 대역의 근거는 `skew34_web2.json`(자연 fold 중앙 1.0344 · p95 1.6772).
+    const factors = [1, 1.2, 1.5, C.DIM_SKEW_FOLD, 1 / C.DIM_SKEW_FOLD, 3, 1 / 3, 10, 0.1]
     const skewRows = factors.map(f => {
       setDimension(B.app, B.post2.id, trueMm * f)
       const k = dimSkew(B.app.lift, B.post2.id)!
@@ -91,8 +95,9 @@ describe('원장 — web2-32 5·6·7', () => {
         measured_mm_before_dim: r6(k.measured),
         ratio_before_dim: r6(k.ratio),
         ratio_after_dim: r6(afterMm / k.written),   // 항등의 자리
-        // 문턱 대비 배수(#14 — 착수 표가 약속하고 초판이 안 적었다: 1차 리뷰어 [7])
-        over_threshold: r6(Math.abs(k.ratio - 1) / C.DIM_SKEW_RATIO),
+        // 대칭 자와 문턱 대비 여유(#14 — 착수 표가 약속하고 초판이 안 적었다: 1차 리뷰어 [7])
+        fold: r6(k.fold),
+        over_threshold: r6(k.fold / C.DIM_SKEW_FOLD),
         fires: skewOff(k),
       }
     })
@@ -105,7 +110,11 @@ describe('원장 — web2-32 5·6·7', () => {
     console.log(`[32-7 발화] ${JSON.stringify(firstRow)}`)
     expect(firstRow.ratio_before_dim).toBe(1)
     expect(skewRows.every(r => r.ratio_after_dim === 1), '적용 뒤 비는 언제나 1 — 그 자가 아무것도 안 잰다').toBe(true)
-    expect(skewRows.filter(r => r.fires).length).toBe(3)   // 문턱 두 배 · 1.5배 · 0.5배
+    // 뜨는 것은 **배수 오독 넷**뿐이다(3배 위·아래 · 10배 위·아래). 자연 대역 셋(1 · 1.2 · 1.5)과
+    // **경계에 정확히 걸린 둘**(2배 · 반)은 조용하다 — 자가 `>`이지 `≥`가 아니다.
+    expect(skewRows.filter(r => r.fires).map(r => r.factor)).toEqual([3, r6(1 / 3), 10, 0.1])
+    // 대칭의 자국 — 위·아래 짝의 fold가 같은 값이다(자가 방향에 무관하다)
+    expect(skewRows.find(r => r.factor === 3)!.fold).toBe(skewRows.find(r => r.factor === r6(1 / 3))!.fold)
 
     // ── ③ 재기의 왕복 (오스냅 네 갈래) ──────────────────────────────────
     const C2 = two()
@@ -269,19 +278,18 @@ describe('원장 — web2-32 5·6·7', () => {
     ;(cost as Record<string, unknown>).format_ignores_number = ignores
 
     const out = resolve(HERE, '../../stage0/out/scale32_web2.json')
-    mkdirSync(dirname(out), { recursive: true })
-    writeFileSync(out, JSON.stringify({
+    const payload = JSON.stringify({
       what: 'web2-32 5·6·7 — 축척의 왕복 · 어긋남의 발화 표 · 재기의 정체 왕복 · 파생을 안 담는 저장 대가.',
       why: '32-5는 «만드는 일이 아니라 드러내는 일»이므로(사람의 정정) 유일한 관측은 «있던 규칙이 실제로 왕복하는가»다. 32-7은 30-6이 뒤집은 AS-C107의 자리이고, 그 뒤집힘의 증거가 아래 두 열(적용 전 ↔ 적용 후)이다.',
       trap: '⚠⚠ **치수를 적용한 «뒤» 길이로 재면 비가 정확히 1이다**(ratio_after_dim 열) — 리프팅이 그 획의 길이를 dim으로 다시 세우기 때문이다(자기참조 유형 3 · PITFALLS #77 ㉡). 29-2가 그 자로 재고 「구성상 0」이라 기능을 걷었다(AS-C107). 「잰 값」은 **적용 전** 길이여야 한다(LiftResult.dimGeom).',
       conditions: {
         scene: '카메라가 닫힌 2점 장면 + **길이가 다른** 수직 기둥 둘(지시 32-7의 픽스처 「서로 다른 길이의 두 선」)',
         first_dim: '기둥 A에 2400 mm — 이것이 축척을 정한다',
-        second_dim: '기둥 B에 «맞는 값 × factor» — factor가 1이면 안 갈리고 문턱 밖이면 갈린다',
-        command: 'npx vitest run test/scale32_measure.test.ts',
+        second_dim: '기둥 B에 «맞는 값 × factor» — factor가 1이면 안 갈리고 **배수 오독**(3·10배와 그 역)이면 갈린다',
+        command: 'LEDGER=1 npx vitest run test/scale32_measure.test.ts',
       },
-      constants_note: '`DIM_SKEW_RATIO`는 **비**다(|적은 값 ÷ 잰 값 − 1|). `MERGE_RATIO`는 재는 점의 «정체»를 찾을 때의 3D 허용(기하 크기 대비) — 새 숫자를 안 지었다(#54).',
-      constants: { DIM_SKEW_RATIO: C.DIM_SKEW_RATIO, MERGE_RATIO: C.MERGE_RATIO },
+      constants_note: '`DIM_SKEW_FOLD`는 **배수**다(`max(적은 값 ÷ 잰 값, 그 역) > 이 값`). 옛 `DIM_SKEW_RATIO`(비 편차 0.02)는 web2-34 7번이 없앴다 — 근거는 `skew34_web2.json`. `MERGE_RATIO`는 재는 점의 «정체»를 찾을 때의 3D 허용(기하 크기 대비) — 새 숫자를 안 지었다(#54).',
+      constants: { DIM_SKEW_FOLD: C.DIM_SKEW_FOLD, MERGE_RATIO: C.MERGE_RATIO },
       scale_roundtrip: roundtrip,
       skew_table: skewRows,
       skew_first_dim: firstRow,
@@ -310,9 +318,13 @@ describe('원장 — web2-32 5·6·7', () => {
           + '「어느 선분에도 안 붙는 점은 null」이다(scale32.test).'
         ),
         '32-7': (
-          '첫 치수 비 = 1(**구성상** — 그 획이 분모다) · 문턱 절반 안 발화 · 문턱 두 배 발화 · '
+          '첫 치수 비 = 1(**구성상** — 그 획이 분모다) · 자연 대역(1.2·1.5배) 안 발화 · '
+          + '경계(정확히 2배 · 정확히 반) 안 발화 · **배수 오독(3배·10배)은 양방향 다 발화** · '
           + 'ratio_after_dim은 모든 칸에서 1(그 자는 아무것도 안 잰다). '
-          + '⚠ 배수는 `over_threshold` 열에 있다(#14 — 착수 표가 약속한 것).'
+          + '⚠ 문턱 대비 여유는 `over_threshold` 열에 있다(#14 — 착수 표가 약속한 것). '
+          + '⚠⚠ **자와 문턱은 web2-34 7번이 바꿨다**: 자는 `fold = max(비, 1/비)`이고 문턱은 '
+          + '**배수 2**다. 그러므로 이 표가 묻는 것도 「소음보다 큰가」가 아니라 '
+          + '**「배수로 틀렸는가」**다 — 자연 대역(1.2·1.5)은 조용하고 3배·10배가 뜬다.'
         ),
         reachability: (
           '**무엇이 이 기준을 넘을 수 있는가**(#35). '
@@ -321,23 +333,24 @@ describe('원장 — web2-32 5·6·7', () => {
           + '32-6: 넘는 것은 «정체가 좌표로 바뀌는 것»이다 — 좌표를 저장하면 축척 두 배에서 '
           + '비가 2가 아니라 1이 되고 그 칸이 빨개진다(실제로 그렇게 실패시킬 수 있다). '
           + '32-7: 넘는 것은 «잰 값을 적용 뒤 길이로 재는 것»이다 — 그러면 ratio_before_dim '
-          + '열이 통째로 1이 되어 «문턱 두 배 발화» 칸 셋이 동시에 죽는다. '
+          + '열이 통째로 1이 되어 «배수 오독 발화» 칸 넷이 동시에 죽는다. '
           + '⚠ 세 갈래 다 **같은 실행 안에서** 반대 값을 보인다(D-3) — 반증이 가능하다.'
         ),
         // **수치 + 출처**(#40) — 산문만 두면 항등을 적고도 통과한다. 여기 고른 값은
-        // 32-7의 **가장 좁은 발화 칸**(문턱 0.02의 두 배 = factor 1.04)의 비다.
-        // 0도 1도 아니고, 이 원장의 다른 자리(`skew_table[2]`)에서 그대로 읽힌다.
-        // ⚠ 이 값이 1로 내려오면 그 순간 「잰 값」이 적용 뒤 길이로 바뀐 것이다(#77 ㉡).
-        reachability_value: r6(skewRows[2]!.ratio_before_dim),
-        reachability_source: 'skew_table[2].ratio_before_dim',
+        // 32-7의 **가장 좁은 발화 칸**(배수 오독 3배)의 fold이고, 0도 1도 아니며
+        // 이 원장의 다른 자리(`skew_table`의 factor 3 행)에서 그대로 읽힌다.
+        reachability_value: r6(skewRows[factors.indexOf(3)]!.fold),
+        // ⚠ 구분자는 **`/`**다(selfcheck의 `_resolve` — 점을 쓰면 키 이름의 점과 안 갈린다)
+        reachability_source: `skew_table[${factors.indexOf(3)}]/fold`,
         reachability_note: (
-          '발화하는 가장 좁은 칸이다 — 문턱 0.02 대비 여유 **2배**(어긋남 0.04). '
-          + '나머지 발화 칸 둘은 25배(0.5)라 경계에서 멀고, 안 발화하는 칸은 0.5배(0.01)와 '
-          + '0(구성상)이다. 경계에 걸친 칸이 없다(#14 — 변동폭이 결론의 여유보다 크면 결론이 없다). '
-          + '⚠⚠ **그러나 이것은 «여유가 확보됐다»가 아니다**(2차 리뷰어 [8]): 이 픽스처는 '
-          + '결정론이고(시드 없음 · Math.random ⛔) **잰 값의 잡음 폭이 0**이다 — 같은 기하에 '
-          + '«적은 값»만 곱해 넣었다. 실사용의 손획·카메라 풀이 오차가 2% 아래라는 증거는 '
-          + '**아직 없다**(`DEFERRED.md`의 「문턱 0.02의 여유를 못 쟀다」 행이 그 자리다).'
+          '**뜨는 가장 좁은 칸**이다(3배 오독) — 문턱 2 대비 여유 1.5배. 그 바로 아래 칸은 '
+          + '`factor` 2와 0.5이고 fold가 **정확히 2**라 «닫힌 경계»에 앉아 있다(안 뜬다). '
+          + '⚠ 이 값이 1로 내려오면 그 순간 「잰 값」이 치수 적용 «뒤» 길이로 바뀐 것이다(#77 ㉡). '
+          + '⚠ 이 픽스처는 여전히 **잡음 폭 0**이다(같은 기하에 «적은 값»만 곱해 넣었다) — '
+          + '그것이 web2-32의 결함이었고, **여유는 이 표가 아니라 `skew34_web2.json`이 잰다**: '
+          + '끝점 지터·소실점 각 오차를 태운 1229칸의 자연 분포(fold 중앙 1.0344 · p95 1.6772 · '
+          + '최대 4.4218)와 문턱의 두 경계(아래 = 오탐 · 위 = 3배를 놓침)가 거기 있다. '
+          + '`DEFERRED.md`의 「어긋남 문턱 0.02의 «여유»를 못 쟀다」 행은 그 원장으로 닫혔다.'
         ),
       },
       selfcheck_notes: {
@@ -350,6 +363,11 @@ describe('원장 — web2-32 5·6·7', () => {
         'skew_table[0].ratio_before_dim = 1 · skew_first_dim.ratio_before_dim = 1': (
           '정상이다. 앞엣것은 «맞는 값을 적었다»(factor 1)이고, 뒤엣것은 **축척을 정한 획**이라 '
           + '구성상 1이다(그 획이 분모였다 — 30-6이 본 그 0). 발화 조건은 **둘째 치수**가 세운다.'
+        ),
+        'skew_table[factor=2·0.5].fold = 2.000000 인데 fires = false': (
+          '**닫힌 경계다** — 자가 `fold > 문턱`이지 `≥`가 아니다. 이 두 칸은 «임계가 실제로 '
+          + '자를 하고 있는가»의 분해능 짝이고, 바로 옆 칸(3배)이 뜬다. ⚠ 이 픽스처의 잡음 폭은 '
+          + '**0**이므로 이 표는 «여유»를 못 잰다 — 여유는 `skew34_web2.json`이 잰다.'
         ),
         'measure_identity[*].rel_err = 0': (
           '**설계 보장이다** — 정체(획 id + t)를 좌표로 되돌리는 것은 같은 선형보간의 역이므로 '
@@ -380,9 +398,17 @@ describe('원장 — web2-32 5·6·7', () => {
           + '**이름으로** 가리킨다(@해시 인용 ⛔).'
         ),
       },
-      pitfalls: ['#77', '#61', '#54', '#42', '#35', '#14'],
-      pitfalls_note: '#77은 **㉡**(값이 스스로를 정의하면 그 검증은 항등이다)이 걸리는 자리다. #14는 문턱 대비 여유를 적는 조항 — 발화하는 칸의 어긋남은 문턱의 **2배(0.04) · 25배(0.5) · 25배(0.5)**이고 안 발화하는 칸은 **0.5배(0.01) · 0배**다. 경계에 걸친 칸이 없다.',
-    }, null, 2))
-    console.log(`[원장] ${out}`)
+      pitfalls: ['#77', '#61', '#54', '#42', '#35', '#14', '#75'],
+      pitfalls_note: '#77은 **㉡**(값이 스스로를 정의하면 그 검증은 항등이다)이 걸리는 자리다. #14는 문턱 대비 여유를 적는 조항 — 발화하는 칸의 fold는 문턱(2) 대비 **1.5배(3배 오독 둘) · 5배(10배 오독 둘)**이고, 안 발화하는 칸은 **1배(경계에 정확히 앉은 둘) · 0.6배 이하(자연 대역 셋)**다. #75 ㉣ — 자를 바꿨으므로 이 표가 묻는 것을 다시 적었다(web2-34 7번).',
+    }, null, 2)
+    // ⚠ **원장은 단독 실행에서만 쓴다**(LEDGER=1 — web2-22에서 세운 규율).
+    //   정본 명령: LEDGER=1 npx vitest run test/scale32_measure.test.ts
+    if (process.env.LEDGER === '1') {
+      mkdirSync(dirname(out), { recursive: true })
+      writeFileSync(out, payload)
+      console.log(`[원장] ${out}`)
+    } else {
+      console.log('[32] 원장은 LEDGER=1에서만 쓴다 — 팔은 그대로 돌았다')
+    }
   })
 })

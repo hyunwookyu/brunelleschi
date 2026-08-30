@@ -90,7 +90,7 @@ test('32-5 ③ 첫 치수를 지우면 미정으로 돌아가고 다음 치수�
   expect((await dimState(page)).scaleId).toBe(post2)
 })
 
-test('32-7 어긋남 — 둘째 치수에서 뜨고, 맞는 값에서는 안 뜬다(D-3 반증)', async ({ page }) => {
+test('32-7 어긋남 — **배수 오독**에서 뜨고 자연 대역에서는 안 뜬다(D-3 반증 · web2-34 7번)', async ({ page }) => {
   const { post, post2 } = await build(page)
   await page.click('#dim-toggle')
   await page.evaluate((id) => (window as any).__b2.diag.setDimForTest(id, 2400), post)
@@ -107,14 +107,31 @@ test('32-7 어긋남 — 둘째 치수에서 뜨고, 맞는 값에서는 안 뜬
   expect(await page.locator('#dim-skew').isHidden()).toBe(true)
   expect((await dimState(page)).skew.find((k: any) => k.id === post2).off).toBe(false)
 
-  // 이제 **어긋나는 값**을 준다 — 비가 1.5다
+  // ⚠ **묻는 것이 바뀌었다**(web2-34 7번 · #75 ㉣): 1.5배는 **자연 대역 안**이라 이제 조용하다.
+  //   손으로 그린 투시도의 비례는 원래 10~20% 어긋난다(자연 fold p95 1.6772 — `skew34_web2.json`).
   await page.evaluate(([id, mm]) => (window as any).__b2.diag.setDimForTest(id, mm), [post2, trueMm * 1.5] as const)
   await settle(page)
+  expect(await page.locator('#dim-skew').isHidden()).toBe(true)
+  expect((await dimState(page)).skew.find((x: any) => x.id === post2).off).toBe(false)
+
+  // 이제 **배수 오독**을 준다(9000을 3000으로 읽은 꼴) — fold가 3이다
+  await page.evaluate(([id, mm]) => (window as any).__b2.diag.setDimForTest(id, mm), [post2, trueMm * 3] as const)
+  await settle(page)
   const k = (await dimState(page)).skew.find((x: any) => x.id === post2)
-  expect(k.ratio).toBeCloseTo(1.5, 3)
+  expect(k.ratio).toBeCloseTo(3, 3)
+  expect(k.fold).toBeCloseTo(3, 3)
   expect(k.off).toBe(true)
+  // **양방향이다** — 3배 «작게» 적은 것도 같은 fold로 뜬다(비 하나짜리 자였다면 샜다)
+  await page.evaluate(([id, mm]) => (window as any).__b2.diag.setDimForTest(id, mm), [post2, trueMm / 3] as const)
+  await settle(page)
+  const kd = (await dimState(page)).skew.find((x: any) => x.id === post2)
+  expect(kd.ratio).toBeCloseTo(1 / 3, 3)
+  expect(kd.fold).toBeCloseTo(3, 3)
+  expect(kd.off).toBe(true)
+  await page.evaluate(([id, mm]) => (window as any).__b2.diag.setDimForTest(id, mm), [post2, trueMm * 3] as const)
+  await settle(page)
   // **고치지 않는다** — 적은 값이 그대로 남는다
-  expect((await dimState(page)).dims.find((d: any) => d.id === post2).dim).toBeCloseTo(trueMm * 1.5, 3)
+  expect((await dimState(page)).dims.find((d: any) => d.id === post2).dim).toBeCloseTo(trueMm * 3, 3)
   // 화면 줄이 뜬다(치수 숫자를 짚어 «지금 고른 치수»로 만든 뒤)
   const pos = await page.evaluate((id) => (window as any).__b2.diag.dimLabelPosForTest(id), post2)
   await tap(page, pos.x, pos.y)

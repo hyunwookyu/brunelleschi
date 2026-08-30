@@ -98,42 +98,79 @@ describe('32-7 어긋남 — 표시하되 고치지 않는다', () => {
     expect(skewOff(k)).toBe(false)
   })
 
-  it('둘째 치수에 축척과 어긋나는 값을 적으면 **검출된다** (비가 1이 아니다)', () => {
+  // ⚠ **묻는 것이 바뀌었다**(web2-34 7번 · #75 ㉣): 옛 팔은 「1.5배면 검출된다」였는데
+  //   1.5배는 **자연 분포 안**이다(fold p95 1.6772 — `skew34_web2.json`). 문턱은 이제
+  //   «소음»이 아니라 «배수 오독»을 자르므로 팔도 3배(9000↔3000)를 묻는다.
+  it('둘째 치수에 **배수 오독**(3배)을 적으면 검출된다 (비가 1이 아니다)', () => {
     const { app, post, post2 } = two()
     setDimension(app, post.id, 2400)                       // 첫째 — 축척을 정한다
     const g0 = app.lift.lifted.get(post2.id)!
     const trueMm = lenMm(g0.a3, g0.b3, app.lift.mmPerUnit)!
-    expect(setDimension(app, post2.id, trueMm * 1.5)).toBe('applied')  // 어긋나는 값
+    expect(setDimension(app, post2.id, trueMm * 3)).toBe('applied')  // 9000을 3000으로 읽은 꼴
     const k = dimSkew(app.lift, post2.id)!
-    expect(k.ratio).toBeCloseTo(1.5, 6)
-    expect(Math.abs(k.ratio - 1)).toBeGreaterThan(C.DIM_SKEW_RATIO * 10)  // 문턱의 열 배 밖
+    expect(k.ratio).toBeCloseTo(3, 6)
+    expect(k.fold).toBeCloseTo(3, 6)
+    expect(k.fold).toBeGreaterThan(C.DIM_SKEW_FOLD)
     expect(skewOff(k)).toBe(true)
     expect(k.measured).toBeCloseTo(trueMm, 6)
     // ⚠⚠ **반증(D-3) — 이 검사가 무엇을 안 재는지**: 치수를 «적용한 뒤» 길이로 재면
     // 리프팅이 그 획을 dim으로 늘려 놓았으므로 비가 **정확히 1**이다(구성상 항등 —
     // #77 ㉡ · 29-2가 그 자리에서 1.000000을 얻고 기능을 걷었다). 같은 픽스처에서
-    // 두 자가 갈리는 것을 여기서 보인다: 항등 쪽 1.000000 ↔ 적용 전 쪽 1.5.
+    // 두 자가 갈리는 것을 여기서 보인다: 항등 쪽 1.000000 ↔ 적용 전 쪽 3.
     const g1 = app.lift.lifted.get(post2.id)!
     const afterMm = lenMm(g1.a3, g1.b3, app.lift.mmPerUnit)!
     expect(afterMm / app.doc.strokes.find(x => x.id === post2.id)!.dim!).toBeCloseTo(1, 9)
     expect(k.ratio).not.toBeCloseTo(1, 2)
     // **고치지 않는다** — 적은 값이 그대로 남는다(#61)
-    expect(app.doc.strokes.find(x => x.id === post2.id)!.dim).toBeCloseTo(trueMm * 1.5, 6)
+    expect(app.doc.strokes.find(x => x.id === post2.id)!.dim).toBeCloseTo(trueMm * 3, 6)
   })
 
-  it('반증(D-3): 어긋나지 않는 픽스처에서는 안 뜬다 — 문턱 안쪽도 안 뜬다', () => {
+  // ⚠ 옛 팔은 「문턱의 절반·두 배」를 물었다 — 그 문턱이 **비 편차 0.02**였을 때의 물음이다.
+  //   자가 `fold`로 바뀌었으므로 **묻는 것을 다시 적는다**(#75 ㉣): 자연 대역은 조용하고
+  //   배수 대역은 뜬다. 대역의 근거는 `skew34_web2.json`(자연 fold 중앙 1.0344 · p95 1.6772).
+  it('반증(D-3): **자연 대역**은 안 뜬다 — 딱 맞는 값도, 1.5배도', () => {
     const { app, post, post2 } = two()
     setDimension(app, post.id, 2400)
     const g = app.lift.lifted.get(post2.id)!
     const trueMm = lenMm(g.a3, g.b3, app.lift.mmPerUnit)!
     setDimension(app, post2.id, trueMm)                    // 딱 맞는 값
     expect(skewOff(dimSkew(app.lift, post2.id))).toBe(false)
-    // 문턱의 절반만 어긋나게 하면 여전히 조용하다(문턱이 실제로 자를 하고 있다)
-    setDimension(app, post2.id, trueMm * (1 + C.DIM_SKEW_RATIO / 2))
+    // 손으로 그린 투시도의 비례는 원래 10~20% 어긋난다 — 그 대역은 조용해야 한다
+    for (const f of [1.1, 1.2, 1 / 1.2, 1.5, 1 / 1.5]) {
+      setDimension(app, post2.id, trueMm * f)
+      expect(skewOff(dimSkew(app.lift, post2.id)), `f=${f}`).toBe(false)
+    }
+    // **경계는 닫혀 있다**(> 이지 ≥ 가 아니다): 정확히 2배·정확히 반은 아직 조용하다
+    setDimension(app, post2.id, trueMm * C.DIM_SKEW_FOLD)
+    expect(dimSkew(app.lift, post2.id)!.fold).toBeCloseTo(C.DIM_SKEW_FOLD, 9)
     expect(skewOff(dimSkew(app.lift, post2.id))).toBe(false)
-    // 두 배로 넘기면 뜬다 — 같은 픽스처에서 갈린다
-    setDimension(app, post2.id, trueMm * (1 + C.DIM_SKEW_RATIO * 2))
+    setDimension(app, post2.id, trueMm / C.DIM_SKEW_FOLD)
+    expect(dimSkew(app.lift, post2.id)!.fold).toBeCloseTo(C.DIM_SKEW_FOLD, 9)
+    expect(skewOff(dimSkew(app.lift, post2.id))).toBe(false)
+    // 그 밖은 뜬다 — 같은 픽스처에서 갈린다
+    setDimension(app, post2.id, trueMm * C.DIM_SKEW_FOLD * 1.01)
     expect(skewOff(dimSkew(app.lift, post2.id))).toBe(true)
+    setDimension(app, post2.id, trueMm / (C.DIM_SKEW_FOLD * 1.01))
+    expect(skewOff(dimSkew(app.lift, post2.id))).toBe(true)
+  })
+
+  // ⚠⚠ **가장 조용히 틀리기 쉬운 자리**(web2-34 7번): 자가 비 하나면 «작게 적은 쪽»이
+  //   먼저 샌다. 같은 「100%」를 옛 자에 주면 3배 작게 적은 것(|0.333−1| = 0.667)도
+  //   자릿수를 통째로 빠뜨린 것(|0.1−1| = 0.9)도 **한 칸도 안 뜬다**. 실측 0/1229·0/1229.
+  it('반증(D-3): **양방향**으로 잡는다 — 비 하나짜리 자였다면 아래쪽이 통째로 샌다', () => {
+    const { app, post, post2 } = two()
+    setDimension(app, post.id, 2400)
+    const g = app.lift.lifted.get(post2.id)!
+    const trueMm = lenMm(g.a3, g.b3, app.lift.mmPerUnit)!
+    for (const f of [3, 1 / 3, 10, 1 / 10]) {
+      setDimension(app, post2.id, trueMm * f)
+      const k = dimSkew(app.lift, post2.id)!
+      expect(k.fold, `f=${f}`).toBeCloseTo(Math.max(f, 1 / f), 6)
+      expect(skewOff(k), `f=${f}`).toBe(true)                    // 새 자 — 넷 다 뜬다
+      // 옛 자(|비−1|)에 같은 100%를 준 판 — 아래쪽 둘은 **못 넘는다**
+      const oldRuler = Math.abs(k.ratio - 1) > 1
+      expect(oldRuler, `옛 자 f=${f}`).toBe(f > 1)
+    }
   })
 
   it('축척이 미정이면 어긋남도 없다 — 잴 자가 없다', () => {
