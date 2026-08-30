@@ -12387,6 +12387,13 @@ $ curl https://hyunwookyu.github.io/brunelleschi/sw.js?t=79a4fd3f
 | **#81** | 마감 — `deploy-check.mjs`가 **실행 상태를 먼저** 읽는다. 대기에는 상한이 있다 |
 | **#42** | 상시 — 완료 시 `selfcheck.json`의 `pitfall_citations`와 대조한다 |
 
+**⚠ 지시의 「새 임계는 전부 `web/test/constants.ts`」를 그대로 안 따랐다** — 이 회차의 새
+임계(`DIM_SKEW_RATIO`)는 **`web2/src/core/constants.ts`**에 넣었다. 근거는 선례다(A-3):
+web2 라인의 임계가 전부 거기 있고(`TEXT_MIN_STROKES`·`DIM_TARGET_REACH`·`DIM_TARGET_TIE` …
+바로 앞 회차인 32-1·32-3이 그렇게 했다), **`web2/test/`에는 constants 파일이 자체가 없다.**
+D-C4의 뜻은 「한 자리에 모아 STALE이 잡히게 한다」이고 web2 라인에서 그 자리가 거기다 —
+문면의 경로를 따르면 오히려 흩어진다. `web/test/constants.ts`는 **`web/` 라인의 자리**다.
+
 **D 다섯의 적용**: D-1 표식 먼저(32-7은 「어긋남이 0이다」의 경로에 **dim 적용 전 길이**
 표식을 심고 어디서 항등이 되는지부터 낸다) · D-2 재현 먼저(30-6의 「하나면 0」을 픽스처로
 **먼저 재현**하고 그 다음에 둘째 치수를 준다) · D-3 반증 조건(32-7은 **어긋나지 않는
