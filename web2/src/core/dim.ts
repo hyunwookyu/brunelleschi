@@ -117,8 +117,13 @@ export const formatUnits = (units: number): string => `${num4(units)} 단위`
 // 기능을 걷었고(AS-C107), 30-6이 그 판정을 뒤집었다(0이었던 것은 표본이 하나여서였다).
 
 /** 한 치수의 어긋남. `written` = 사람이 적은 값(mm) · `measured` = 모델이 가진 값(mm) ·
- *  `ratio` = 적은 값 ÷ 잰 값(1이면 같다). 축척이 미정이거나 그 획이 안 풀렸으면 null. */
-export interface DimSkew { written: number; measured: number; ratio: number }
+ *  `ratio` = 적은 값 ÷ 잰 값(1이면 같다) · `fold` = **대칭 자** `max(비, 1/비)`(≥ 1).
+ *  축척이 미정이거나 그 획이 안 풀렸으면 null.
+ *
+ *  ⚠⚠ **`fold`가 판정의 자다**(web2-34 7번). 「배수로 틀렸다」는 방향에 무관한 진술이므로
+ *  자도 방향에 무관해야 한다 — `|비 − 1|`은 위로 무한이고 **아래로 1에서 막혀** 작게 적은
+ *  오독(3배 0.667 · 10배 0.9)이 통째로 샌다. 실측은 `stage0/out/skew34_web2.json`. */
+export interface DimSkew { written: number; measured: number; ratio: number; fold: number }
 
 export function dimSkew(lift: LiftResult, id: number): DimSkew | null {
   const s = lift.strokes.get(id)
@@ -127,12 +132,15 @@ export function dimSkew(lift: LiftResult, id: number): DimSkew | null {
   if (lift.mmPerUnit === null || !(lift.mmPerUnit > 0)) return null
   const measured = g * lift.mmPerUnit
   if (!(measured > 0)) return null
-  return { written: s.dim, measured, ratio: s.dim / measured }
+  const ratio = s.dim / measured
+  return { written: s.dim, measured, ratio, fold: Math.max(ratio, 1 / ratio) }
 }
 
-/** 그 어긋남을 **화면이 말할 만한가** — 문턱은 `C.DIM_SKEW_RATIO` 하나다(D-C4). */
+/** 그 어긋남을 **화면이 말할 만한가** — 문턱은 `C.DIM_SKEW_FOLD` 하나다(D-C4).
+ *  자연 분포(손획 지터 + 소실점 각 오차)의 꼬리 «위»에 놓인 값이다 — 이 표시가 말하려는 것은
+ *  소음이 아니라 **오독**이다(web2-34 7번 · 근거는 `constants.ts`의 그 자리). */
 export const skewOff = (k: DimSkew | null): boolean =>
-  k !== null && Math.abs(k.ratio - 1) > C.DIM_SKEW_RATIO
+  k !== null && k.fold > C.DIM_SKEW_FOLD
 
 // ── 입력 파싱 (4-3 필기 · 4-4 음성) ──────────────────────────────────────
 //

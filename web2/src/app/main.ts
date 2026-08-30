@@ -1892,7 +1892,8 @@ const diag = {
     // 어긋남(web2-32 7번) — 치수마다 「적은 값 ÷ 잰 값」. **잰 값은 적용 전 길이**다.
     skew: app.doc.strokes.filter(x => x.dim !== undefined).map(x => {
       const k = dimSkew(app.lift, x.id)
-      return { id: x.id, ratio: k?.ratio ?? null, measured: k?.measured ?? null, off: skewOff(k) }
+      // `fold`(대칭 자 — web2-34 7번)가 판정의 값이다. `ratio`는 방향을 보려고 같이 낸다.
+      return { id: x.id, ratio: k?.ratio ?? null, fold: k?.fold ?? null, measured: k?.measured ?? null, off: skewOff(k) }
     }),
     // 재기(web2-32 6번) — **도면에 남긴 것만** 문서에 있다(기본값은 아무것도 안 남긴다)
     measures: (app.doc.measures ?? []).map(m => ({
