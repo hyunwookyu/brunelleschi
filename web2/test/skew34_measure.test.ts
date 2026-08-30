@@ -213,7 +213,14 @@ describe('원장 — web2-34 7번 어긋남 문턱', () => {
     expect(old_threshold.fires_noisy_only.rate).toBeGreaterThan(0.5) // 흔들림을 태우면 절반 넘게 뜬다
     expect(natural_overall.median).toBeLessThan(1.2)                 // 자연 어긋남의 «보통»
     expect(row(2).catch_10x_up.rate).toBe(1)
-    expect(row(2).catch_10x_down.rate).toBe(1)
+    // ⚠ **모집단이 늘었다**(web2-37 1번 · 재기준): 가상 교차가 서는 획을 늘려 자연 분포
+    //    표본이 **1229 → 1311**(jit 0.01 대역의 자립이 175·174 → 215·215)로 커졌고,
+    //    그 82칸 중 **둘**이 10배 축소를 문턱 2에서 안 문다(1309/1311).
+    //    ⛔ 제품 문턱(`SKEW_FOLD` = 2)은 **안 건드렸다** — 바뀐 것은 자의 값이 아니라
+    //    재는 모집단이다. 비율로 적으면 모집단이 더 늘 때 조용히 헐거워지므로
+    //    **새는 «개수»로** 적는다(rate 0.9985는 «둘»을 감춘다 — #26의 형태).
+    expect(row(2).catch_10x_down.n - row(2).catch_10x_down.k).toBeLessThanOrEqual(2)
+    expect(row(2).catch_10x_down.n).toBeGreaterThan(1229)   // 모집단이 줄면 이 재기준이 무효다
     expect(row(2).catch_3x_up.rate).toBeGreaterThan(0.95)
     expect(row(2).catch_3x_down.rate).toBeGreaterThan(0.9)
     expect(row(2).false_positive_natural.rate).toBeLessThan(0.06)

@@ -20,7 +20,8 @@ import { rdpIndices, distToPolyline } from '../core/freehand'
 import { loopAt, faceAt, faceScreen, resolveFaces, resolveFace, allLoops, inPoly, type ResolvedFace, type LoopCandidate } from '../core/face'
 import { bakeUnderlay } from '../core/make2d'
 import { geomSize3 } from '../core/osnap'
-import { C } from '../core/constants'
+import { C, SETTLE_ANIM_MS } from '../core/constants'
+import { settleFade, waitInkMode } from '../core/waitfade'
 import { cubeLayoutFor } from '../core/viewcube'
 import { fitPose, fitView, type Screen as FitScreen } from '../core/zoomfit'
 import { lensAllowed, lensAn, lensF, lensK, lensView, clampViewF, lensFromStops } from '../core/lens'
@@ -197,6 +198,11 @@ export interface App {
    *  에서 0 도달). 끄면 종전 동작(항상 그리되 흐림 0.3) **그대로**다(A-4 — 되돌릴 길.
    *  실기기 판정은 DEFERRED web2-13 표). 설정 「대기 획은 그린 시점에서만」. */
   waitFade: boolean
+  /** **정착 시각**(web2-37 2번) — 획 id → 대기가 확정이 된 `performance.now()`.
+   *  청색이 흑연으로 바뀌는 짧은 전이(`SETTLE_ANIM_MS`)의 시작점이고, **표현만** 든다:
+   *  저장하지 않고(런타임), 판정·좌표·실행취소 어느 것도 이 표를 안 읽는다.
+   *  갱신은 `recompute` 한 자리다 — 「직전 대기 집합에 있었고 지금 확정인 획」. */
+  settledAt: Map<number, number>
   /** **밑그림의 가린 선을 보이는가**(web2-23 2-a) — 기본 **켜짐**: 은선이 보이는 편이
    *  제도에 가깝고(가린 선 = H), 빼는 것은 정리된 그림을 원할 때다(사람의 문면
    *  「옵션에 따라」). 표시 팝오버의 「가린 선(은선)」. ⚠ **표시 손잡이일 뿐이다** —
@@ -329,6 +335,7 @@ export function createApp(W: number, H: number): App {
     horizonPref: null,
     grid: false,
     waitFade: true,
+    settledAt: new Map(),
     showHidden: true,       // 기본은 H로 표시(2-a — 은선이 보이는 편이 제도에 가깝다)
     underlayNoticed: false,
     extAcq: newExtDwell(),
@@ -454,6 +461,9 @@ function recompute(app: App) {
   // 문서가 바뀌면 면 일괄 후보는 낡는다(4부) — 조용히 낡은 폴리곤을 들고 있지 않는다.
   // commitCandidates는 recompute 뒤에 볼일이 없으므로 이 무효화가 확정도 겸해 닫는다.
   app.faceCandidates = null
+  // 정착 사건(web2-37 2번)의 «직전» 쪽 — 다시 올리기 **전에** 읽는다. 아래에서 새 결과와
+  // 견줘 「대기였다가 확정이 된 획」을 낸다(그 획 하나가 색을 바꾼다 — 두 선이 안 남는다).
+  const wasWaiting = new Set(app.lift.waiting)
   app.lift = liftAll(app.doc, app.own3d)
   // ── 보기 렌즈(web2-31 2번) — **승격이 일어나면 버린다** ──────────────────────
   // 카메라 서명(f·주점·fSource)이 움직인 것이 승격이고(web2에 실재하는 것은 P1→P2 하나 —
@@ -490,8 +500,44 @@ function recompute(app: App) {
     }
   } else app.lastCamSig = null
   app.faces = resolveFaces(app.lift, app.doc.faces)
+  markSettled(app, wasWaiting)
   app.docVersion++
   for (const l of app.listeners) l()
+}
+
+// ── 정착 전이(web2-37 2번) — **표현만**. 기하·판정·저장 어느 것도 안 읽는다 ──────────
+//
+// ⚠ `app.lift`가 이 함수 위에서 **두 번** 세워질 수 있다(자립 굳힘의 재리프팅) —
+// 그래서 판정을 마지막 결과 하나로만 한다. 「직전에 대기였고 지금 확정」이 정착이다.
+// 되돌리기로 확정이 **풀리면** 그 획의 전이도 지운다(청색으로 돌아간 획에 전이가
+// 남아 있으면 다음 정착에서 창이 이미 지나 있다).
+function markSettled(app: App, wasWaiting: Set<number>) {
+  const now = performance.now()
+  for (const id of app.lift.lifted.keys()) if (wasWaiting.has(id)) app.settledAt.set(id, now)
+  for (const id of app.lift.waiting) app.settledAt.delete(id)
+  // 창을 지난 것은 버린다 — 표가 문서 크기로 자라지 않는다(전이는 순간의 것이다)
+  for (const [id, t] of app.settledAt) if (now - t >= SETTLE_ANIM_MS) app.settledAt.delete(id)
+}
+
+/** **획 몸체의 대기 혼합비**(web2-37 2번) — 1 = 대기(논포토 블루) · 0 = 확정(흑연).
+ *  `waiting`은 부르는 쪽이 이미 만든 판정을 받는다(`Set.has` — 겹마다 `waiting` 집합을
+ *  한 번 세우므로 여기서 배열을 다시 훑으면 O(n²)가 된다).
+ *  반증 손잡이(`off`/`all`)는 `bodyHex`가 아니라 **여기서도** 답한다 — 브러시 겹은
+ *  색을 `alphaColor`로 다시 섞으므로 혼합비 자체가 갈려야 위약 판이 성립한다. */
+export function inkMix(app: Pick<App, 'settledAt'>, waiting: boolean, id: number, now: number): number {
+  const mode = waitInkMode()
+  if (mode === 'off') return 0
+  if (mode === 'all') return 1
+  if (waiting) return 1
+  const t0 = app.settledAt.get(id)
+  return t0 === undefined ? 0 : settleFade(now - t0)
+}
+
+/** 지금 전이 중인 획이 있는가 — 프레임 고리가 이것을 보고 계속 다시 그린다.
+ *  없으면 평소처럼 «바뀔 때만» 그린다(평소에는 조용하다 — 지시 문면). */
+export function settleActive(app: Pick<App, 'settledAt'>, now: number): boolean {
+  for (const t of app.settledAt.values()) if (now - t < SETTLE_ANIM_MS) return true
+  return false
 }
 
 // ── 필압 보정(web2-26 6번 · 옵션 · 기본 꺼짐) ────────────────────────────────

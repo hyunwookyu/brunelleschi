@@ -539,6 +539,51 @@ def scan_dead_ledger(root: Path) -> list[dict]:
     return flags + _cover("scan_dead_ledger", "원장", scanned, len(flags))
 
 
+def scan_ledger_guard(root: Path) -> list[dict]:
+    """**원장 쓰기 관문이 배선돼 있는가**(2026-08-31 · RUN.md §1 · #89).
+
+    web2-31 회차에서 전량 e2e가 원장 아홉을 `LEDGER=1` 없이 덮어썼고, 같은 날 측정에서
+    `npm test`가 원장 **24개**를 덮어쓰는 것이 확인됐다. 원인은 규칙이 아니라 **자리**다 —
+    관문이 하네스 파일마다 `if (process.env.LEDGER === '1')`으로 흩어져 있어서 **새 하네스가
+    그것을 안 옮겨 적는 것이 기본값**이었다. 관문을 한 자리로 모았고(`web2/tools/ledgercore.ts`)
+    이 검사가 그 배선을 지킨다.
+
+    ⚠ **해시 대조로는 이 결함이 안 잡힌다**: 덮어쓴 24개의 sha256이 전수 같았다
+    (하네스가 결정론적이라 같은 내용이 다시 쓰였을 뿐이다). 판정자는 mtime과 막은 횟수다.
+
+    보는 것 셋:
+      ① `web2/vite.config.ts`가 `node:fs`를 `fsledger`로 돌리는가 (vitest 쪽)
+      ② `web2/playwright.config.ts`가 `ledgerguard`를 들이는가 (playwright 쪽)
+      ③ 관문 판정부가 `LEDGER`를 실제로 읽는가
+    셋 중 하나라도 빠지면 관문이 통째로 열린 것이다 — 그때 이 검사가 빨개진다(반증 조건).
+    """
+    flags = []
+    w2 = root / "web2"
+    checks = [
+        (w2 / "vite.config.ts", "fsledger.ts",
+         "vitest 배선이 없다 — `test.alias`의 `node:fs` → `tools/fsledger.ts`가 빠졌다"),
+        (w2 / "vite.config.ts", "fsledgerp.ts",
+         "vitest 배선의 `node:fs/promises` 쪽이 없다 — `tools/fsledgerp.ts`가 빠졌다"),
+        (w2 / "playwright.config.ts", "ledgerguard",
+         "playwright 배선이 없다 — 최상단 `import './tools/ledgerguard'`가 빠졌다"),
+        (w2 / "tools" / "ledgercore.ts", "process.env.LEDGER",
+         "관문 판정부가 `LEDGER`를 안 읽는다 — 관문이 항상 열려 있다"),
+    ]
+    n = 0
+    for path, needle, why in checks:
+        n += 1
+        try:
+            txt = path.read_text(encoding="utf-8")
+        except Exception:
+            flags.append({"path": str(path.relative_to(root)), "val": "없음",
+                          "flag": f"**원장 쓰기 관문**(#89) — {why}"})
+            continue
+        if needle not in txt:
+            flags.append({"path": str(path.relative_to(root)), "val": f"'{needle}' 없음",
+                          "flag": f"**원장 쓰기 관문**(#89) — {why}"})
+    return flags + _cover("scan_ledger_guard", "배선 자리", n, len(flags))
+
+
 def scan_pitfalls_table_last(root: Path) -> list[dict]:
     """**「최근 다섯」 표가 `PITFALLS.md`의 마지막 절인가**(2026-08-20 17차 후속 · #55).
 
@@ -1092,6 +1137,7 @@ def main():
     flags += scan_stray_progress(ROOT)             # 루트 밖 progress.md (세 번째 재발)
     flags += scan_dead_ledger(ROOT)               # #38: 깨지지 않고 죽은 원장
     flags += scan_pitfalls_table_last(ROOT)        # #55: 「최근 다섯」 표가 파일 끝에 있는가
+    flags += scan_ledger_guard(ROOT)              # #89: 원장 쓰기 관문(LEDGER=1)이 배선돼 있는가
     flags += scan_citation_hashes(ROOT, reports)   # #33 값 대조: 인용 해시 ↔ 원장 현재 해시
     flags += scan_cited_values(ROOT, reports)  # #42 ⑥ 존재 대조: 인용한 수치가 원장에 있는가
     PITFALL_CITATIONS.clear()

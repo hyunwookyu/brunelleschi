@@ -6,6 +6,7 @@
 // 빌드마다 바뀐다 — 새 빌드가 한 번에 나간다.
 import { defineConfig } from 'vitest/config'
 import { execSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 
 function buildId(): string {
   let hash = 'nogit'
@@ -79,5 +80,12 @@ export default defineConfig({
   }],
   test: {
     include: ['test/**/*.test.ts'], // e2e는 playwright가 돈다
+    // **원장 쓰기 관문**(RUN.md §1) — `LEDGER=1`이 없으면 `stage0/out`에 한 바이트도 안 쓴다.
+    // 근거와 규약은 `tools/ledgercore.ts` 머리 하나다(파일마다 `if (LEDGER)`를 적던 방식이 샜다).
+    // ⚠ vitest에서는 **별칭**이 답이다 — 원숭이 패치는 이미 만들어진 ESM 파사드를 못 바꾼다(실측).
+    alias: {
+      'node:fs': fileURLToPath(new URL('./tools/fsledger.ts', import.meta.url)),
+      'node:fs/promises': fileURLToPath(new URL('./tools/fsledgerp.ts', import.meta.url)),
+    },
   },
 })

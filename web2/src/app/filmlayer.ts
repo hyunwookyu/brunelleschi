@@ -38,11 +38,11 @@
 // 아무것도 안 가리므로 곱과 보통 그리기가 같은 결과이고, 재조립 비용이 0이다.
 
 import type { App } from './state'
-import { atSheetPose, fadeRef, underlayOf, viewXf } from './state'
+import { atSheetPose, fadeRef, underlayOf, viewXf, inkMix } from './state'
 import { isFlat2d, type Layer, type Paper, type Surface, type CamPose, type Underlay } from '../core/types'
 import { rng32, MAT, gradeOf, widthOf, widthOfMat } from '../core/material'
 import { project } from '../core/camera'
-import { waitFadeFactor } from '../core/waitfade'
+import { waitFadeFactor, bodyHex } from '../core/waitfade'
 import { C } from '../core/constants'
 
 // ── 막의 색·섬유 매개변수 — 값의 근거는 assumptions(AS-C68·C69) ────────────────
@@ -463,6 +463,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
     g.setTransform(cd * v.s, 0, 0, cd * v.s, cd * v.ox, cd * v.oy)
     const is = 1 / v.s
     const waiting = new Set(app.lift.waiting)
+    const nowMs = performance.now()  // 정착 전이(web2-37 2번) — 한 프레임 안에서 한 시각
     const yset = yellowVisible(app)  // 옐로 2D 획(web2-22 1부 — 그 종이·그 시점만)
     for (const s of app.doc.strokes) {
       if (s.layer === undefined || !split.above.has(s.layer)) continue
@@ -492,7 +493,9 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
         if (!pa || !pb) continue
         a2 = pa; b2 = pb
       } else if (app.waitFade && waitFadeFactor(fadeRef(app), s.view) <= 0) continue
-      g.strokeStyle = m.color
+      // 색상 = 상태(web2-37 2번 · 논포토 블루) · 알파·굵기 = 재료. 세 겹이 같은 함수를
+      // 읽는다(#54) — 위 겹의 대기선만 흑연으로 남으면 그 결함은 조용하다.
+      g.strokeStyle = bodyHex(gradeOf(s), inkMix(app, waiting.has(s.id), s.id, nowMs))
       g.globalAlpha = m.alpha
       g.lineWidth = widthOf(s) * is
       g.lineCap = 'round'

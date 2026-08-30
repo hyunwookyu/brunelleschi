@@ -13,6 +13,14 @@ import {
   type Pt, type V3, add3, sub3, mul3, dot3, dist2, norm3, len3,
 } from './vec'
 
+/** 대기의 **사유** — 이름이 원인마다 하나다(#43: 한 계수에 합치면 진단이 원인을 오귀속한다).
+ *  뒤의 셋은 web2-37 1번이 더했다 — 가상 교차까지 보고도 못 세운 자리들이다:
+ *  `noPoint` = 명시 점도 교차도 없다(그은 자리에 아무 3D도 안 지났다) ·
+ *  `onePoint` = 점이 하나뿐이라 방향이 안 선다(명시 1 + 교차 0 · 또는 명시 0 + 교차 1) ·
+ *  `nearCross` = 교차는 둘인데 **화면에서 너무 가까워** 방향을 믿을 수 없다(퇴화). */
+export type WaitWhy = 'aboveHorizon' | 'onHorizon' | 'hasHeight' | 'mixedWait' | 'straddle'
+  | 'noPoint' | 'onePoint' | 'nearCross'
+
 export interface LiftedSeg {
   a3: V3
   b3: V3
@@ -37,7 +45,7 @@ export interface LiftResult {
    *  'mixedWait' = 소실점 축이고 높이도 없는데 **대기에 비축 획이 섞여 있어** 지면 규칙이
    *  안 걸렸다(4부 판별자 ② — 2차 리뷰어 [5]: 이 차단도 사유가 있어야 한다).
    *  진단 패널이 네 수를 가른다. */
-  waitWhy: Map<number, 'aboveHorizon' | 'onHorizon' | 'hasHeight' | 'mixedWait' | 'straddle'>
+  waitWhy: Map<number, WaitWhy>
   /** 게이지 앵커가 된 획 (전역 스케일의 게이지 — 유일한 자유 선택) */
   anchorId: number | null
   /** id → 획 (문서에서 그대로 — 조회 편의) */
@@ -68,6 +76,23 @@ export function closestOnLineToRay(P0: V3, a: V3, r: Ray): V3 | null {
   const E = dot3(r.d, w0)
   const t = (B * E - D) / denom
   return add3(P0, mul3(a, t))
+}
+
+/** **화면에서** 두 선분이 만나는가 — 만나면 그 점과 각 선분 위의 매개변수.
+ *  가상 교차(web2-37 1번)의 기하 몫이다. 3D는 여기 없다 — 화면만 본다.
+ *  ⚠ 두 선분 «안»으로 제한한다(t·u ∈ [0,1]): 「획이 무엇을 **지나갔는가**」가 물음이고,
+ *  연장까지 받으면 그것은 지나간 것이 아니라 «그 쪽을 향했다»가 된다(연장선 오스냅의 자리).
+ *  삐져나오기는 표현이라 여기 없다(`overshoot.ts` — 저장 좌표를 안 늘린다). */
+export function screenCross(a: Pt, b: Pt, c: Pt, d: Pt): { t: number; u: number; q: Pt } | null {
+  const r = { x: b.x - a.x, y: b.y - a.y }
+  const sdir = { x: d.x - c.x, y: d.y - c.y }
+  const den = r.x * sdir.y - r.y * sdir.x
+  if (Math.abs(den) < 1e-12) return null            // 화면에서 평행 — 교차가 없다
+  const qp = { x: c.x - a.x, y: c.y - a.y }
+  const t = (qp.x * sdir.y - qp.y * sdir.x) / den
+  const u = (qp.x * r.y - qp.y * r.x) / den
+  if (t < 0 || t > 1 || u < 0 || u > 1) return null
+  return { t, u, q: { x: a.x + r.x * t, y: a.y + r.y * t } }
 }
 
 /** 획의 축 배정 — 확정 좌표가 이미 스냅돼 있으므로(원칙 d) 재계산은 안정적이다.
@@ -144,7 +169,11 @@ function scaleOf(doc: Doc): { mm: number | null; id: number | null } {
 function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: number | null = null): LiftResult {
   const an = analyze(doc)
   const lifted = new Map<number, LiftedSeg>()
-  const waitWhy = new Map<number, 'aboveHorizon' | 'onHorizon' | 'hasHeight' | 'mixedWait' | 'straddle'>()
+  const waitWhy = new Map<number, WaitWhy>()
+  /** 가상 교차 패스가 본 «왜 못 세웠나» — **`waitWhy`에 바로 안 적는다**(우선순위 때문이다):
+   *  소실점 축 획의 사유(`hasHeight`·`mixedWait`)가 더 구체적이라 그쪽이 먼저 간다.
+   *  맨 끝에서 **아직 사유가 없는 획에만** 옮겨 적는다(#43 — 한 이름에 두 원인 ⛔). */
+  const crossWhy = new Map<number, 'noPoint' | 'onePoint' | 'nearCross'>()
   const dimGeom = new Map<number, number>()
   let anchorId: number | null = null
 
@@ -262,8 +291,15 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: n
     return best
   }
 
-  let progressed = true
-  while (progressed) {
+  /** ── 사슬 패스 — **표의 위 두 줄**(web2-37 1번) ────────────────────────────
+   *  「명시 점 2」와 「명시 점 1 + 축」이 여기서 답을 낸다. 지면 규칙(첫 선·makesVp)도
+   *  여기 있다 — 그것은 추론이 아니라 «그 선이 무엇인가»의 선언이라 교차보다 앞선다.
+   *  **이 패스를 소진한 뒤에야 가상 교차가 돈다**(`crossPass`) — 그것이 곧 우선순위다:
+   *  나중 패스에서 명시 점이 생길 획을 교차로 먼저 세우면 «명시된 것이 암묵의 것을
+   *  이긴다»가 깨진다. 특수 분기가 아니라 **표의 순서를 시간으로 편 것**이다. */
+  const chainPass = (): void => {
+   let progressed = true
+   while (progressed) {
     progressed = false
     for (const s of content) {
       if (!pending.has(s.id)) continue
@@ -375,7 +411,9 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: n
       waitWhy.delete(s.id)   // 나중 패스의 연결로 올라왔다 — 사유는 대기 중에만 뜻이 있다
       progressed = true
     }
+   }
   }
+  chainPass()
 
   // ── 지면 규칙 확대(web2-17 4부 — 대체가 아니라 포함) ────────────────────────
   // **모델에 높이가 아직 없을 때, 소실점 축의 선은 지면선이다.** 소실점이 이미 있는
@@ -407,10 +445,11 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: n
     const ax = axisOfStroke(an, s.view ?? DRAW_POSE, s.a, s.b)
     return ax === 'vp0' || ax === 'vp1'
   })
-  let extended = true
-  while (extended) {
-    extended = false
-    if (!heightless() || !pendingAllVp()) break
+  /** 확대 패스 — **한 번에 하나만** 올린다(올린 뒤 사슬을 다시 태운다: 높이가 생겼을 수 있다).
+   *  ⚠ 종전에는 이 루프 안에 사슬 패스가 **복사돼** 있었다(#54 — 두 벌이 언젠가 갈린다).
+   *  web2-37 1번이 사슬을 `chainPass`로 빼면서 그 복사본을 지웠다 — 코드 경로가 하나다. */
+  const extendOnce = (): boolean => {
+    if (!heightless() || !pendingAllVp()) return false
     for (const s of content) {
       if (!pending.has(s.id)) continue
       const pose = s.view ?? DRAW_POSE
@@ -452,48 +491,208 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: n
       pending.delete(s.id)
       waitWhy.delete(s.id)
       if (anchorId === null) anchorId = s.id
-      extended = true
-      break              // 하나 올리고 연결 패스부터 다시 — 높이가 생겼을 수 있다
+      return true        // 하나 올리고 연결 패스부터 다시 — 높이가 생겼을 수 있다
     }
-    if (!extended) break
-    // 연결 패스 재실행(위 본 루프와 같은 코드 경로를 다시 태운다)
-    let again = true
-    while (again) {
-      again = false
-      for (const s of content) {
-        if (!pending.has(s.id)) continue
-        const pose = s.view ?? DRAW_POSE
-        const axis = axisOfStroke(an, pose, s.a, s.b)
-        let a3 = matchPoint(s.a, pose)
-        let b3: V3 | null = null
-        if (!a3 && axis) {
-          b3 = matchPoint(s.b, pose)
-          if (b3) {
-            const dir = axisDir(an, axis)
-            const ray = rayThrough(an, pose, s.a)
-            if (dir && ray) a3 = closestOnLineToRay(b3, dir, ray)
-          }
-        }
-        if (!a3) continue
-        if (!b3) {
-          b3 = matchPoint(s.b, pose)
-          if (!b3 && axis) {
-            const dir = axisDir(an, axis)
-            const ray = rayThrough(an, pose, s.b)
-            if (dir && ray) b3 = closestOnLineToRay(a3, dir, ray)
-          }
-        }
-        if (!b3) continue
-        b3 = applyDim(s, a3, b3)
-        lifted.set(s.id, { a3, b3, axis })
-        endpoints.push(a3, b3)
-        segs.push({ a3, b3 })
-        pending.delete(s.id)
-        waitWhy.delete(s.id)
-        again = true
-      }
-    }
+    return false
   }
+
+  /** ── 가상 교차(web2-37 1번) — **표의 아래 세 줄** ─────────────────────────────
+   *  「명시 점 1, 축 없음」 · 「명시 점 0 + 축」 · 「명시 점 0, 축 없음」이 여기서 답을 낸다.
+   *
+   *  새 획이 이미 3D를 가진 선과 **화면에서** 교차하면 그 교차점의 3D는 이미 정해져 있다 —
+   *  옛 선은 3D 선이고 그 화면점에 대응하는 3D 점은 하나뿐이다. 3D에서 두 선은 실제로
+   *  안 만나지만 **화면평면이 진실이라는 것이 이 앱의 전제**이므로 정당한 구속이다
+   *  (오토캐드의 apparent intersection과 같은 자리).
+   *
+   *  ⚠⚠ **오스냅이 아니다.** 오스냅은 「커서가 무엇에 물리는가」이고 이건 「획이 무엇을
+   *  지나갔는가」다 — 커서가 시작할 때는 아직 아무것도 안 지났고 교차는 획 중간에 일어난다.
+   *  그래서 `osnap.ts`가 아니라 여기다(30-11이 연장선을 후보 목록에서 빼내 선언된 구속으로
+   *  옮긴 것과 같은 이동).
+   *
+   *  ⚠ **축이 있는데 교차를 둘 쓰지 않는다**(지시문이 못 박았다): 두 옛 선은 서로 다른
+   *  깊이에 있고 손으로 그은 획이 지나간 자리도 대충이므로, 두 3D 점을 잇는 방향은
+   *  어느 축도 아니게 된다. 건축가가 의도한 것은 **방향**이고 교차는 결과다.
+   *  같은 이유로 **「명시 점 1 + 교차 1」이 축을 밀어내지 않는다** — 그 조합은 사슬 패스가
+   *  이미 답을 냈고 여기 오지 않는다(아래 `named === 1 && axis` 방어선이 그것을 적는다). */
+  const crossOnce = (): boolean => {
+    for (const s of content) {
+      if (!pending.has(s.id)) continue
+      const pose = s.view ?? DRAW_POSE
+      const solved = solveByCrossing(s, pose)
+      if (!solved) continue
+      const b3 = applyDim(s, solved.a3, solved.b3)
+      lifted.set(s.id, { a3: solved.a3, b3, axis: solved.axis })
+      endpoints.push(solved.a3, b3)
+      segs.push({ a3: solved.a3, b3 })
+      pending.delete(s.id)
+      waitWhy.delete(s.id)
+      if (anchorId === null) anchorId = s.id
+      return true          // 하나 올리고 사슬부터 다시 — 승격은 연쇄한다
+    }
+    return false
+  }
+
+  /** 문서 순서 — 「이 획을 그을 때 그 선이 **이미 거기 있었는가**」의 판정자. */
+  const order = new Map(doc.strokes.map((x, i) => [x.id, i]))
+
+  /** 이 획이 지나간 «가상 교차» 목록 — 획을 따라간 순서(t 오름차순)다.
+   *
+   *  ⚠⚠ **옛 선만 후보다**(문서 순서가 앞선 획). 지시문의 문면이 「**새 획**이 **이미**
+   *  3D를 가진 선과 화면에서 교차하면」이고 소장의 관찰도 「출발한 선이 어느 정도 그어진
+   *  후에 다른 선을 교차하여 긋는다」이므로, 교차는 **긋는 그 획**에 대한 증거다.
+   *  나중 획이 먼저 있던 대기선을 **되짚어** 굳히는 것은 다른 물음이고, 이 앱은 그것을
+   *  이미 다르게 답해 뒀다 — 「지나가기만 한 교차는 사건이 아니다 · 끝점이 닿아야 센다」
+   *  (`own3d` 4-g)와 「겹은 아래를 안 바꾼다」(web2-21 층 소유)가 그것이다. 순서 조건이
+   *  없으면 그 둘이 조용히 뒤집힌다(실측: 이 조건을 빼면 두 팔이 함께 빨개진다 — D-3의
+   *  반증이 그 자리다). 앞으로 잇는 연쇄는 그대로 산다 — 옛 선이 서면 그 뒤 획들이 붙는다. */
+  function crossingsOf(s: Stroke, pose: CamPose): { t: number; p3: V3; q: Pt }[] {
+    const out: { t: number; p3: V3; q: Pt }[] = []
+    // **퇴화 제외**: 옛 선이 카메라를 향해 화면에서 점으로 투영되면 후보에서 뺀다.
+    // 자는 새로 안 짓는다(#54) — 「방향을 믿는 최소 길이」가 이미 그 물음의 답이다.
+    const minLen = C.MIN_DIR_LEN_RATIO * an.diag
+    const mine = order.get(s.id) ?? Infinity
+    for (const [oid, o] of lifted) {
+      if ((order.get(oid) ?? Infinity) > mine) continue      // 나중 획 — 그때 거기 없었다
+      const pa = project(an, pose, o.a3)
+      const pb = project(an, pose, o.b3)
+      if (!pa || !pb) continue
+      if (Math.hypot(pb.x - pa.x, pb.y - pa.y) < minLen) continue
+      const hit = screenCross(s.a, s.b, pa, pb)
+      if (!hit) continue
+      const ray = rayThrough(an, pose, hit.q)
+      if (!ray) continue
+      const p3 = closestOnLineToRay(o.a3, norm3(sub3(o.b3, o.a3)), ray)
+      if (!p3) continue
+      out.push({ t: hit.t, p3, q: hit.q })
+    }
+    out.sort((x, y) => x.t - y.t)
+    return out
+  }
+
+  /** 후보 3D 선(P0 + dir)이 **그은 획의 raw 점열**과 얼마나 어긋나는가 — 제곱 편차 합(px²).
+   *  ⚠ **여러 점을 한꺼번에 맞추지 않는다**(지시문): 손으로 그은 선은 어차피 한 3D 선 위에
+   *  안 놓인다. 이 값은 «맞추는 목표»가 아니라 후보 **하나를 고르는 자**다.
+   *
+   *  ⚠⚠ **이 자가 «안 가르는» 국면이 둘 있다**(2026-08-31 실측 — `xint37_web2.json`):
+   *   ㉠ 획을 **정확히 축으로** 그으면 후보 X가 무엇이든 「X를 지나는 축 방향 선」이
+   *      **그은 선 그 자체**가 되어 편차가 전부 같다. 손으로 그은 선은 축에서 조금
+   *      어긋나 있고 그때만 갈린다(같은 획에서 1.09e5 / 4.13e4 / 6.48e4).
+   *   ㉡ 「명시 점 1 + 교차」 갈래는 **언제나** 동점이다 — 명시 점과 임의의 교차를 이은
+   *      선은 둘 다 그은 선 위의 점이라 사영이 늘 그은 선이다(원칙 d의 딸린 결과).
+   *  동점이면 **`xs`가 t 오름차순이므로 «첫 교차»가 뽑힌다**(`dev < bestDev`가 엄격 부등호다).
+   *  그 규칙을 여기 적어 둔다 — 「어쩌다 그렇게 되는 것」과 「그렇게 하기로 한 것」은 다르다.
+   *  ⚠ 붐비는 장면에서 이 고르기가 **의도한 교차와 갈리는 비율은 0.875**(24칸 · 후보 2~6개 ·
+   *  깊이 갈림 폭 3.14 세계 단위)다. 그림에 «어느 교차를 뜻했는지»가 안 적혀 있기 때문이고,
+   *  지시문이 그 자리에 놓은 답이 **37-5(끝의 필압)**다. */
+  const rawDev = (a3: V3, b3: V3, s: Stroke, pose: CamPose): number => {
+    const pa = project(an, pose, a3), pb = project(an, pose, b3)
+    if (!pa || !pb) return Infinity
+    const dx = pb.x - pa.x, dy = pb.y - pa.y
+    const L = Math.hypot(dx, dy)
+    if (L < 1e-9) return Infinity
+    const pts = s.raw && s.raw.length >= 2 ? s.raw : [s.a, s.b]
+    let sum = 0
+    for (const q of pts) {
+      const d = ((q.x - pa.x) * dy - (q.y - pa.y) * dx) / L
+      sum += d * d
+    }
+    return sum
+  }
+
+  /** 3D 선(P0+dir)에 획의 양 끝을 내려 **구간**을 만든다 — 「구간은 자동이다」(지시문).
+   *  삐져나온 부분도 그대로 산다: 자르지 않는다. */
+  const spanOn = (P0: V3, dir: V3, s: Stroke, pose: CamPose): { a3: V3; b3: V3 } | null => {
+    const rA = rayThrough(an, pose, s.a), rB = rayThrough(an, pose, s.b)
+    if (!rA || !rB) return null
+    const a3 = closestOnLineToRay(P0, dir, rA)
+    const b3 = closestOnLineToRay(P0, dir, rB)
+    return a3 && b3 ? { a3, b3 } : null
+  }
+
+  /** 표의 아래 세 줄을 **한 자리**에서 푼다(특수 분기 ⛔ — 지시문). */
+  function solveByCrossing(s: Stroke, pose: CamPose):
+    { a3: V3; b3: V3; axis: AxisId | null } | null {
+    const axis = axisOfStroke(an, pose, s.a, s.b)
+    const pA = matchPoint(s.a, pose)
+    const pB = matchPoint(s.b, pose)
+    const named = (pA ? 1 : 0) + (pB ? 1 : 0)
+    // 위 두 줄(명시 점 2 · 명시 점 1 + 축)은 사슬이 이미 답을 냈다 — 여기 오면 안 된다.
+    // ⚠ 이 두 줄이 「교차가 축을 밀어내지 않는다」와 「축이 명시 점 둘을 못 이긴다」의 코드다.
+    if (named === 2) return null
+    if (named === 1 && axis) return null
+    const xs = crossingsOf(s, pose)
+    if (xs.length === 0) { crossWhy.set(s.id, named === 0 ? 'noPoint' : 'onePoint'); return null }
+
+    if (named === 1) {
+      // ── 명시 점 1, 축 없음 → 교차 하나를 더해 둘로 만든다 ──────────────────────
+      const P = (pA ?? pB)!
+      const Pq = pA ? s.a : s.b          // 그 명시 점의 **화면** 자리(원칙 d: 확정 2D다)
+      let best: { a3: V3; b3: V3 } | null = null, bestDev = Infinity
+      let tooNear = false
+      for (const x of xs) {
+        // ⚠⚠ **두 점이 화면에서 너무 가까우면 방향을 못 믿는다** — 아래 「교차 둘」 갈래와
+        //    **같은 자**를 쓴다(#54: 같은 물음이면 자도 하나다). 이 문이 없으면 교차가
+        //    명시 점 바로 옆에 있을 때 3D 방향이 폭발한다: `skew34` 자연 분포에서 어긋남
+        //    최대가 4.42 → **128.86**으로 튀었고(문 넣기 전 실측), 그것이 곧 조용히 틀린
+        //    배치다(A-3 — 애매하면 놓지 않는다: 대기는 실패가 아니라 상태다).
+        if (Math.hypot(x.q.x - Pq.x, x.q.y - Pq.y) < C.MIN_DIR_LEN_RATIO * an.diag) {
+          tooNear = true; continue
+        }
+        const d = sub3(x.p3, P)
+        if (len3(d) < 1e-9) continue
+        const dir = norm3(d)
+        // **명시 점은 그 자리에 그대로 둔다**(원칙 d) — 반대쪽 끝만 광선으로 내린다.
+        const other = closestOnLineToRay(P, dir, rayThrough(an, pose, pA ? s.b : s.a)!)
+        if (!other) continue
+        const cand = pA ? { a3: P, b3: other } : { a3: other, b3: P }
+        const dev = rawDev(cand.a3, cand.b3, s, pose)
+        if (dev < bestDev) { best = cand; bestDev = dev }
+      }
+      if (!best) { crossWhy.set(s.id, tooNear ? 'nearCross' : 'onePoint'); return null }
+      return { ...best, axis }
+    }
+
+    if (axis) {
+      // ── 명시 점 0 + 축 → 교차 하나 + 축 ────────────────────────────────────────
+      const dir = axisDir(an, axis)
+      if (!dir) { crossWhy.set(s.id, 'noPoint'); return null }
+      let best: { a3: V3; b3: V3 } | null = null, bestDev = Infinity
+      for (const x of xs) {
+        const cand = spanOn(x.p3, dir, s, pose)
+        if (!cand) continue
+        const dev = rawDev(cand.a3, cand.b3, s, pose)
+        if (dev < bestDev) { best = cand; bestDev = dev }
+      }
+      if (!best) { crossWhy.set(s.id, 'noPoint'); return null }
+      return { ...best, axis }
+    }
+
+    // ── 명시 점 0, 축 없음 → 첫 교차 + 끝 교차 ──────────────────────────────────
+    // 둘이 가장 멀어 방향이 가장 안정적이다. **화면 최소 간격**으로 퇴화를 막는다 —
+    // 자는 여기서도 「방향을 믿는 최소 길이」다(새 숫자 ⛔ #54).
+    const first = xs[0]!, last = xs[xs.length - 1]!
+    if (xs.length < 2 || Math.hypot(last.q.x - first.q.x, last.q.y - first.q.y)
+      < C.MIN_DIR_LEN_RATIO * an.diag) {
+      crossWhy.set(s.id, xs.length < 2 ? 'onePoint' : 'nearCross'); return null
+    }
+    const d = sub3(last.p3, first.p3)
+    if (len3(d) < 1e-9) { crossWhy.set(s.id, 'nearCross'); return null }
+    const span = spanOn(first.p3, norm3(d), s, pose)
+    if (!span) { crossWhy.set(s.id, 'noPoint'); return null }
+    return { ...span, axis }
+  }
+
+  // ── 구동 ────────────────────────────────────────────────────────────────────
+  // 사슬 → 확대 → **그 둘을 다 소진한 뒤에** 가상 교차. 명시된 것이 암묵의 것을 이긴다.
+  // 하나 올릴 때마다 사슬을 다시 태운다(승격은 연쇄한다 — 개정 2 §9.1).
+  //
+  // ⚠⚠ **두 고리를 한 고리로 합치면 안 된다**(실측이 잡았다 — D-2로 재현했다):
+  // 확대 패스의 문은 `heightless()`(모델에 아직 높이가 없다)인데, 교차로 선 획이
+  // **높이를 만들면 그 문이 닫힌다**. 한 고리로 번갈아 돌리면 교차 하나가 확대 패스를
+  // 죽여 **종전에 서던 획이 대기로 떨어졌다**. 교차를 맨 뒤로 미루면 37 이전의 고정점을
+  // **먼저 그대로** 만든 뒤에만 더한다 — 그것이 「무회귀」의 코드다.
+  for (;;) { if (!extendOnce()) break; chainPass() }
+  for (;;) { if (!crossOnce()) break; chainPass() }
   // 남은 대기 중 소실점 축 획의 사유 — 어느 문이 막았는지 가른다(4부 ⚠ 무산 계수 ·
   // 2차 [5]: 판별자 ②의 차단도 사유가 있어야 한다. #43 — 한 이름에 두 원인을 안 합친다)
   {
@@ -503,6 +702,10 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: n
       const pose = s.view ?? DRAW_POSE
       const axis = axisOfStroke(an, pose, s.a, s.b)
       if (axis === 'vp0' || axis === 'vp1') waitWhy.set(s.id, hh ? 'hasHeight' : 'mixedWait')
+    }
+    // 가상 교차가 본 사유는 **여기서** 들어간다 — 위의 더 구체적인 사유를 안 덮는다.
+    for (const [id, why] of crossWhy) {
+      if (pending.has(id) && !waitWhy.has(id)) waitWhy.set(id, why)
     }
   }
 

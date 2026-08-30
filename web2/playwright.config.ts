@@ -1,4 +1,7 @@
 import { defineConfig } from '@playwright/test'
+// **원장 쓰기 관문**(RUN.md §1) — `LEDGER=1`이 없으면 `stage0/out`에 한 바이트도 안 쓴다.
+// ⚠ 설정 파일은 **워커 프로세스에서도 로드된다** — 그래서 이 한 줄이 스펙 전부에 걸린다.
+import './tools/ledgerguard'
 
 // dpr 1과 2 둘 다에서 확인한다 — dpr 1에서만 보면 안 걸린다
 //
