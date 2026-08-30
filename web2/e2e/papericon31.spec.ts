@@ -1,0 +1,519 @@
+// web2-31 4번 — **종이 아이콘에서 카메라를 뗀다**.
+//
+// 지시 문면: 「종이 아이콘에 갱신 화살표(원형 화살표)를 붙이고 카메라 도형을 뺀다. …
+// **게이트.** 화면에 카메라 도형이 남아 있지 않다. 기능(시점 저장·복귀)은 무회귀.」
+//
+// ⚠⚠ **「화면에」가 자를 정한다**(#71 · 지시의 급소 2) — 「그 파일에 없다」로 재지 않는다.
+// 여기서 훑는 것은 **DOM에 실제로 사는 svg 전부**이고, 소스 쪽 훑기(파일 전수)는
+// `test/icons.test.ts`가 따로 든다. 두 자가 갈려 있다.
+//
+//   ① 카메라 도형 없음 — **세 채널**로 잰다:
+//      (가) **출처** — Phosphor camera 계열 넷 × 여섯 굵기의 path가 DOM svg에 없다
+//      (나) **형태** — 그 계열을 래스터로 구운 견본과의 **IoU**가 문 아래다(색·크기·굵기를
+//           바꿔 옮겨 심어도 걸린다 — 문자열보다 넓은 자)
+//      (다) **말** — 화면 언어에 사진 계열 낱말이 없다
+//
+// ⚠⚠ **(나)의 견본은 «윤곽» 굵기 넷**(thin·light·regular·bold)이고 **채운 판(fill·duotone)은
+// 견본에서 뺐다** — 뺀 이유가 측정이다: 채운 카메라는 «가로로 긴 덩어리»라 이 앱의 **실물
+// 도구 그림**(연필통 줄·지우개·면)과 안 갈린다(실측 IoU 0.693 · 0.6234 · 0.6316 —
+// 원장 `iou_all_top5`). **훑는 «대상»은 한 개도 안 뺐다**(화면의 svg 전부) — 뺀 것은 «견본»
+// 쪽이고, 채운 판의 이식은 (가) 출처 채널이 든다. 그 두 값을 반증 절이 나란히 낸다.
+//   ② 시점 저장·복귀 무회귀 — **좌표로**(이름만 바꾸고 배선이 끊기는 것이 이 형태의 전형)
+//   ③ 반증(D-3) — ㉠ 옛 카메라를 되돌린 판에서 ①이 빨개진다 ㉡ 배선을 끊은 판에서 ②가
+//      빨개진다. **둘 다 실제로 실패시킨다.**
+//
+// 선 문법(fill:none · currentColor · 1.6/32 · round)은 **`e2e/icons.spec.ts`가 재는 자리**다
+// (34-5가 세운 `__lintLine` 하나 — 여기서 새로 안 짓는다 · #54).
+
+import { test, expect, type Page } from '@playwright/test'
+import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+import { CAMERA_IOU } from './thresholds'
+
+const HERE = dirname(fileURLToPath(import.meta.url))
+const OUT = resolve(HERE, '../../stage0/out')
+
+const settle = (page: Page) =>
+  page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
+
+/** 옛 아이콘 **그대로** — 이 회차 직전 커밋의 `paperbar.ts` `CAMERA_PATH`(Phosphor light
+ *  camera · `fill="currentColor"` · 뷰박스 256). 반증 ㉠이 이것을 같은 자리에 되돌린다. */
+const OLD_CAMERA = readFileSync(
+  resolve(HERE, '../node_modules/@phosphor-icons/core/assets/light/camera-light.svg'), 'utf-8')
+  .replace(/[\s\S]*?<path d="/, '').replace(/"[\s\S]*/, '')
+const OLD_CAMERA_SVG =
+  `<svg viewBox="0 0 256 256" fill="currentColor" width="16" height="16" style="vertical-align:-3px"><path d="${OLD_CAMERA}"/></svg>`
+
+/** 카메라 «계열» 견본 — 넷(camera · plus · rotate · slash) × 여섯 굵기. 문자열 훑기의
+ *  건초더미이자 래스터 견본의 원본이다(하나만 쓰면 굵기를 바꾼 이식을 못 잡는다).
+ *  `solid`는 채운 판(fill·duotone) 표식이다 — (나)의 문은 **윤곽 판만** 견본으로 쓴다. */
+type Ref = { name: string; svg: string; solid: boolean; paths: string[] }
+function cameraCorpus(): Ref[] {
+  const out: Ref[] = []
+  const root = resolve(HERE, '../node_modules/@phosphor-icons/core/assets')
+  for (const w of readdirSync(root)) {
+    for (const n of ['camera', 'camera-plus', 'camera-rotate', 'camera-slash']) {
+      const file = resolve(root, w, `${n}${w === 'regular' ? '' : `-${w}`}.svg`)
+      const svg = readFileSync(file, 'utf-8')
+      out.push({
+        name: `${w}/${n}`, svg, solid: w === 'fill' || w === 'duotone',
+        paths: [...svg.matchAll(/<path[^>]*\sd="([^"]+)"/g)].map(m => m[1]!),
+      })
+    }
+  }
+  return out
+}
+
+/** 페이지 안에 **잉크 격자** 계기를 심는다 — svg 하나를 구워 잉크 상자로 정규화한 뒤
+ *  N×N 참/거짓 격자로 만든다. 가로세로비를 **보존**한다(정사각으로 늘이면 가로로 긴 몸통과
+ *  세로로 긴 종이가 같아진다 — 이 항목이 가르려는 바로 그 축이다). */
+async function installInk(page: Page) {
+  await page.evaluate(() => {
+    const N = 16, R = 96
+    ;(window as any).__inkGrid = async (svgText: string): Promise<boolean[] | null> => {
+      const img = new Image()
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText)
+      try { await img.decode() } catch { return null }
+      const c = document.createElement('canvas')
+      c.width = R; c.height = R
+      const g = c.getContext('2d')!
+      g.clearRect(0, 0, R, R)
+      g.drawImage(img, 0, 0, R, R)
+      const d = g.getImageData(0, 0, R, R).data
+      let x0 = R, y0 = R, x1 = -1, y1 = -1
+      for (let y = 0; y < R; y++) {
+        for (let x = 0; x < R; x++) {
+          if (d[(y * R + x) * 4 + 3]! > 16) {
+            if (x < x0) x0 = x
+            if (x > x1) x1 = x
+            if (y < y0) y0 = y
+            if (y > y1) y1 = y
+          }
+        }
+      }
+      if (x1 < 0) return null                       // 잉크가 없다(빈 svg)
+      const bw = x1 - x0 + 1, bh = y1 - y0 + 1
+      const side = Math.max(bw, bh)                 // **비 보존** — 긴 변으로 정규화한다
+      const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2
+      const grid: boolean[] = []
+      for (let j = 0; j < N; j++) {
+        for (let i = 0; i < N; i++) {
+          const sx = Math.round(cx - side / 2 + side * i / N), ex = Math.round(cx - side / 2 + side * (i + 1) / N)
+          const sy = Math.round(cy - side / 2 + side * j / N), ey = Math.round(cy - side / 2 + side * (j + 1) / N)
+          let ink = false
+          for (let y = Math.max(0, sy); y < Math.min(R, Math.max(ey, sy + 1)) && !ink; y++) {
+            for (let x = Math.max(0, sx); x < Math.min(R, Math.max(ex, sx + 1)); x++) {
+              if (d[(y * R + x) * 4 + 3]! > 16) { ink = true; break }
+            }
+          }
+          grid.push(ink)
+        }
+      }
+      return grid
+    }
+    ;(window as any).__iou = (a: boolean[], b: boolean[]): number => {
+      let inter = 0, uni = 0
+      for (let i = 0; i < a.length; i++) {
+        if (a[i] && b[i]) inter++
+        if (a[i] || b[i]) uni++
+      }
+      return uni === 0 ? 0 : inter / uni
+    }
+    /** DOM svg 하나를 «그림 그대로» 문자열로 — 색은 검정으로 고정한다(잉크만 잰다) */
+    ;(window as any).__svgText = (svg: SVGSVGElement): string => {
+      const clone = svg.cloneNode(true) as SVGSVGElement
+      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+      clone.setAttribute('style', 'color:#000')
+      return new XMLSerializer().serializeToString(clone)
+    }
+  })
+}
+
+/** 화면의 svg 전부를 훑어 «출처(문자열)»와 «형태(IoU)» 둘로 잰다 */
+async function sweep(page: Page, corpus: Ref[]) {
+  return page.evaluate(async (refs: Ref[]) => {
+    const W = window as any
+    const grids = new Map<string, { grid: boolean[]; solid: boolean }>()
+    for (const r of refs) {
+      const g = await W.__inkGrid(r.svg)
+      if (g) grids.set(r.name, { grid: g, solid: r.solid })
+    }
+    const needles = new Set<string>()
+    for (const r of refs) for (const p of r.paths) needles.add(p)
+    const hits: string[] = []
+    const rows: { where: string; shapes: number; iou: number; iou_ref: string; iou_all: number; iou_all_ref: string }[] = []
+    const svgs = [...document.querySelectorAll('svg')]
+    let shapesTotal = 0
+    for (const svg of svgs) {
+      const where = (svg.closest('[id]') as HTMLElement | null)?.id || svg.parentElement?.tagName || '?'
+      const shapes = [...svg.querySelectorAll('path,circle,rect,ellipse,line,polygon,polyline')]
+      shapesTotal += shapes.length
+      // (가) 출처 — 그리는 요소의 좌표 문자열이 카메라 계열의 것과 같은가
+      for (const el of shapes) {
+        for (const attr of ['d', 'points']) {
+          const v = el.getAttribute(attr)
+          if (v && needles.has(v)) hits.push(`${where}: ${v.slice(0, 24)}…`)
+        }
+      }
+      // (나) 형태 — 구운 잉크 격자의 IoU 최대
+      const grid = await W.__inkGrid(W.__svgText(svg))
+      let all = 0, allRef = '', out = 0, outRef = ''
+      if (grid) {
+        for (const [name, g] of grids) {
+          const v = W.__iou(grid, g.grid)
+          if (v > all) { all = v; allRef = name }
+          if (!g.solid && v > out) { out = v; outRef = name }
+        }
+      }
+      rows.push({ where, shapes: shapes.length, iou: +out.toFixed(4), iou_ref: outRef, iou_all: +all.toFixed(4), iou_all_ref: allRef })
+    }
+    // (다) 말 — 화면 언어(직접 텍스트 + title + aria-label)에 사진 계열 낱말이 없는가
+    const words = ['카메라', '사진', '셔터', '찍는', '찍기', 'camera', 'photo', 'shutter']
+    const said: string[] = []
+    for (const el of document.querySelectorAll('body *')) {
+      if (['SCRIPT', 'STYLE'].includes(el.tagName)) continue
+      if (el.closest('#diagpanel, #diagctl, #buildid')) continue
+      const bits = [el.getAttribute('title') ?? '', el.getAttribute('aria-label') ?? '']
+      for (const n of el.childNodes) if (n.nodeType === Node.TEXT_NODE) bits.push(n.textContent ?? '')
+      for (const b of bits) for (const w of words) if (b.includes(w)) said.push(`${(el as HTMLElement).id || el.tagName}: ${w}`)
+    }
+    rows.sort((a, b) => b.iou - a.iou)
+    return { svgs: svgs.length, shapes: shapesTotal, refs: grids.size, needles: needles.size, hits, rows, said }
+  }, corpus)
+}
+
+async function boot(page: Page) {
+  await page.goto('/')
+  await page.waitForFunction(() => (window as any).__b2)
+  await installInk(page)
+}
+
+async function drawLine(page: Page, ax: number, ay: number, bx: number, by: number) {
+  await page.mouse.move(ax, ay)
+  await page.mouse.down()
+  for (let i = 1; i <= 8; i++) await page.mouse.move(ax + (bx - ax) * i / 8, ay + (by - ay) * i / 8)
+  await page.mouse.up()
+  await settle(page)
+}
+
+/** 카메라가 닫힌 상태로 만든다 — 상자 하나(지평선 + 세 모서리) */
+async function construct(page: Page) {
+  await boot(page)
+  await drawLine(page, 500, 560, 760, 495)
+  await drawLine(page, 500, 560, 240, 495)
+  await drawLine(page, 760, 495, 240, 495)
+  expect(await page.evaluate(() => (window as any).__b2.app.lift.an.constructionDone), '카메라가 닫혔다').toBe(true)
+}
+
+async function orbit(page: Page, n = 30) {
+  await page.mouse.move(600, 400)
+  await page.mouse.down({ button: 'middle' })
+  for (let i = 1; i <= n; i++) await page.mouse.move(600 + i * 4, 400 + (i % 5))
+  await page.mouse.up({ button: 'middle' })
+  await settle(page)
+}
+
+const poseNow = (page: Page) => page.evaluate(() => {
+  const a = (window as any).__b2.app
+  return { p: { ...a.pose.p }, q: { ...a.pose.q }, view: { ...a.view }, active: a.activeSheet }
+})
+const sheetsNow = (page: Page) => page.evaluate(() => (window as any).__b2.app.doc.sheets.map((s: any) =>
+  ({ id: s.id, name: s.name, pose: s.pose ? { p: { ...s.pose.p }, q: { ...s.pose.q } } : null, view: s.view ?? null })))
+
+type P3 = { x: number; y: number; z: number }
+type P4 = P3 & { w: number }
+const dist = (a: P3, b: P3) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z)
+const qdist = (a: P4, b: P4) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w)
+
+const ledger: Record<string, unknown> = {}
+
+// ── ① 카메라 도형 없음 ────────────────────────────────────────────────────────
+test('31-4 ① 화면에 카메라 도형이 없다 — DOM 전수 훑기 (+옛 아이콘을 되돌려 반증)', async ({ page }, testInfo) => {
+  const corpus = cameraCorpus()
+  await construct(page)
+  // **숨은 것도 화면 언어다** — 통·서랍·팝업을 열어 svg가 DOM에 전부 서게 한다.
+  // (열지 않아도 대부분 DOM에 살지만, 종이 팝업은 눌러야 생긴다.)
+  await page.click('#btn-pencil'); await page.click('#btn-pen')
+  await page.click('#btn-eraser-pencil')
+  await page.evaluate(() => {
+    for (const d of document.querySelectorAll('details')) (d as HTMLDetailsElement).open = true
+  })
+  await settle(page)
+  const before = await sweep(page, corpus)
+  const allTop = [...before.rows].sort((a, b) => b.iou_all - a.iou_all)
+  const paperRow = before.rows.find(r => r.where === 'paper-add')!
+  console.log(`[31-4 ①] svg ${before.svgs}개 · 그리는 요소 ${before.shapes}개 · 견본 ${before.refs}개(계열 path ${before.needles}) `
+    + `· 출처 적중 ${before.hits.length} · 형태 IoU 최대 ${before.rows[0]!.iou} (${before.rows[0]!.where} ↔ ${before.rows[0]!.iou_ref}) · 말 ${before.said.length}`)
+  console.log(`[31-4 ①] 윤곽 견본 IoU 상위 다섯: ${before.rows.slice(0, 5).map(r => `${r.where} ${r.iou}(${r.iou_ref})`).join(' · ')}`)
+  console.log(`[31-4 ①] 채운 견본까지 넣으면(문 밖 — 참고): ${allTop.slice(0, 5).map(r => `${r.where} ${r.iou_all}(${r.iou_all_ref})`).join(' · ')}`)
+  console.log(`[31-4 ①] 새 아이콘 자신 — 윤곽 ${paperRow.iou}(${paperRow.iou_ref}) · 채운 견본까지 ${paperRow.iou_all}(${paperRow.iou_all_ref})`)
+  expect(before.svgs, '훑은 svg가 실제로 여럿이다').toBeGreaterThan(10)
+  expect(before.refs, '카메라 견본이 스물넷 이상 구워졌다').toBeGreaterThanOrEqual(24)
+  expect(before.hits, '(가) 카메라 계열 path가 DOM에 없다').toEqual([])
+  expect(before.rows[0]!.iou, `(나) 카메라와 가장 닮은 아이콘도 IoU ${CAMERA_IOU} 아래다`).toBeLessThan(CAMERA_IOU)
+  expect(before.said, '(다) 화면 언어에 사진 계열 낱말이 없다').toEqual([])
+
+  // 새 아이콘이 «그 자리에» 있다 — 뺀 것만 재고 넣은 것을 안 재면 절반이다
+  const icon = await page.evaluate(() => {
+    const svg = document.querySelector('#paper-add svg') as SVGSVGElement
+    const b = svg.getBoundingClientRect()
+    const btn = document.getElementById('paper-add')!.getBoundingClientRect()
+    const el = document.elementFromPoint(btn.x + btn.width / 2, btn.y + btn.height / 2)
+    return {
+      viewBox: svg.getAttribute('viewBox'),
+      shapes: svg.querySelectorAll('path').length,
+      box: { w: +b.width.toFixed(2), h: +b.height.toFixed(2) },
+      arc: /A5\.6 5\.6/.test(svg.innerHTML),                       // 갱신 화살표의 호
+      title: document.getElementById('paper-add')!.title,
+      aria: document.getElementById('paper-add')!.getAttribute('aria-label'),
+      hit: el ? (el.closest('#paper-add') ? 'paper-add' : (el as HTMLElement).id || el.tagName) : null,
+    }
+  })
+  console.log(`[31-4 ①] 새 아이콘 — viewBox ${icon.viewBox} · path ${icon.shapes} · 상자 ${icon.box.w}×${icon.box.h} · 호 ${icon.arc} · 누르면 ${icon.hit}`)
+  expect(icon.viewBox).toBe('0 0 32 32')
+  expect(icon.shapes, '종이 · 접힌 모서리 · 호 · 촉').toBe(4)
+  expect(icon.arc, '갱신 화살표(원형 화살표)가 있다').toBe(true)
+  expect(icon.box, '상자가 옛 카메라와 같은 16×16이다(#88 — 띠의 자리가 안 변한다)').toEqual({ w: 16, h: 16 })
+  expect(icon.hit, '단추가 실제로 눌린다(#87 — 그려졌는가 ≠ 눌리는가)').toBe('paper-add')
+  expect(icon.title, '툴팁이 시점 계열이고 갱신이 사는 자리를 가리킨다').toContain('시점 갱신')
+  expect(icon.aria).toBe('시점 남기기')
+
+  // ── 반증 ㉠(D-3) — **옛 카메라를 그 자리에 되돌리면** 같은 훑기가 빨개진다 ──────
+  // 판 둘을 돌린다: ㉠1 **옛 아이콘 그대로**(light · 채운 그림) · ㉠2 **다른 굵기**(bold 윤곽).
+  // ㉠2가 있어야 「문자열만 바뀐 이식」도 (나)가 잡는다는 것이 값으로 선다.
+  await page.evaluate(old => { document.getElementById('paper-add')!.innerHTML = old as string }, OLD_CAMERA_SVG)
+  const after = await sweep(page, corpus)
+  const camRow = after.rows.find(r => r.where === 'paper-add')!
+  console.log(`[31-4 반증㉠1] 옛 아이콘 그대로 — 출처 적중 ${after.hits.length}건 · #paper-add IoU ${camRow.iou} (↔ ${camRow.iou_ref}) · 문 ${CAMERA_IOU}`)
+  expect(after.hits.length, '(가)가 실제로 걸린다').toBeGreaterThan(0)
+  expect(camRow.iou, '(나)가 실제로 걸린다').toBeGreaterThanOrEqual(CAMERA_IOU)
+
+  // ㉠2 — **좌표를 바꾼 카메라**(bold 굵기 · 다른 문자열). 출처 채널은 계열 전부를 들고
+  // 있으므로 여전히 걸리지만, **좌표를 손으로 흔들면** 문자열은 빠져나간다: 그래서 같은
+  // 판에서 **한 점을 옮긴 판**도 돌려 (나) 혼자 걸리는 칸을 낸다.
+  const bold = cameraCorpus().find(r => r.name === 'bold/camera')!
+  await page.evaluate(d => { document.getElementById('paper-add')!.innerHTML =
+    `<svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="10" width="16" height="16"><path d="${d}"/></svg>` },
+    bold.paths[0]!.replace(/^M/, 'M '))     // 앞에 빈칸 하나 — 문자열 대조를 빠져나간다
+  const after2 = await sweep(page, corpus)
+  const camRow2 = after2.rows.find(r => r.where === 'paper-add')!
+  console.log(`[31-4 반증㉠2] 굵기·색·좌표 문자열을 바꾼 판 — 출처 적중 ${after2.hits.length}건(0이면 문자열은 빠져나갔다) · IoU ${camRow2.iou} (↔ ${camRow2.iou_ref})`)
+  expect(after2.hits.length, '문자열 대조는 빠져나간다 — (나)만 남는다').toBe(0)
+  expect(camRow2.iou, '(나)가 혼자서도 걸린다').toBeGreaterThanOrEqual(CAMERA_IOU)
+  // 원상복구 — 뒤 팔이 옛 아이콘을 보지 않는다
+  await page.reload()
+  await page.waitForFunction(() => (window as any).__b2)
+
+  ledger[`sweep_${testInfo.project.name}`] = {
+    swept: { svgs: before.svgs, shapes: before.shapes, refs: before.refs, family_paths: before.needles },
+    source_hits: before.hits.length,
+    iou_top5: before.rows.slice(0, 5),
+    iou_max: before.rows[0]!.iou,
+    iou_all_top5: allTop.slice(0, 5),
+    paper_add_row: paperRow,
+    words_found: before.said,
+    icon: { ...icon },
+    falsify_a_old_camera: {
+      source_hits: after.hits.length,
+      paper_add_iou: camRow.iou, paper_add_ref: camRow.iou_ref,
+      gate: CAMERA_IOU,
+      restyled: { source_hits: after2.hits.length, paper_add_iou: camRow2.iou, paper_add_ref: camRow2.iou_ref },
+    },
+  }
+})
+
+// ── ② 시점 저장·복귀 무회귀 ───────────────────────────────────────────────────
+test('31-4 ② 시점 저장·복귀 무회귀 — 좌표로 (+배선을 끊어 반증)', async ({ page }, testInfo) => {
+  await construct(page)
+  await orbit(page)
+  const poseA = await poseNow(page)
+  expect(dist(poseA.p, { x: 0, y: 0, z: 0 }), '궤도로 작도 시점을 떠났다').toBeGreaterThan(0)
+
+  // 저장 — 셔터 자리의 그 단추다(그림만 바뀌었다)
+  await page.click('#paper-add')
+  await settle(page)
+  await page.keyboard.press('Escape')          // 새 탭의 이름 편집을 닫는다
+  await settle(page)
+  const saved = await sheetsNow(page)
+  expect(saved.length, '한 장이 늘었다').toBe(2)
+  const sheet = saved[1]!
+  const dSave = dist(sheet.pose!.p, poseA.p), dqSave = qdist(sheet.pose!.q, poseA.q)
+  console.log(`[31-4 ②] 저장 — 종이 ${saved.length}장 · 담긴 좌표 차 |p| ${dSave.toExponential(3)} · |q| ${dqSave.toExponential(3)}`)
+  expect(dSave, '담긴 위치가 지금 위치와 같다').toBeLessThan(1e-12)
+  expect(dqSave, '담긴 자세가 지금 자세와 같다').toBeLessThan(1e-12)
+
+  // 떠난다 — 작도 종이로
+  await page.click(`#paperbar .ptab[data-sheet="${saved[0]!.id}"]`)
+  await settle(page)
+  const away = await poseNow(page)
+  const dAway = dist(away.p, poseA.p)
+  expect(dAway, '작도 종이로 가면 시점이 실제로 달라진다').toBeGreaterThan(1e-6)
+
+  // 복귀 — 탭을 누르면 저장한 좌표로 **정확히** 돌아온다
+  await page.click(`#paperbar .ptab[data-sheet="${sheet.id}"]`)
+  await settle(page)
+  const back = await poseNow(page)
+  const dBack = dist(back.p, poseA.p), dqBack = qdist(back.q, poseA.q)
+  console.log(`[31-4 ②] 복귀 — 떠난 거리 ${dAway.toFixed(6)} → 돌아온 차 |p| ${dBack.toExponential(3)} · |q| ${dqBack.toExponential(3)} · 활성 ${back.active === sheet.id}`)
+  expect(dBack, '복귀한 위치가 저장한 위치와 같다').toBeLessThan(1e-12)
+  expect(dqBack, '복귀한 자세가 저장한 자세와 같다').toBeLessThan(1e-12)
+  expect(back.active).toBe(sheet.id)
+
+  // 갱신(Update Scene)도 그대로 돈다 — 이 단추가 아니라 **탭 길게 누르기**가 그 자리다
+  await orbit(page, 12)
+  const poseB = await poseNow(page)
+  const b = (await page.locator(`#paperbar .ptab[data-sheet="${sheet.id}"]`).boundingBox())!
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2)
+  await page.mouse.down()
+  await page.waitForTimeout(700)
+  await page.mouse.up()
+  await page.click('#paper-pop u[data-pick="update"]')
+  await settle(page)
+  const upd = (await sheetsNow(page))[1]!
+  const dUpd = dist(upd.pose!.p, poseB.p)
+  console.log(`[31-4 ②] 갱신 — 갱신 뒤 담긴 좌표 차 ${dUpd.toExponential(3)} · 옛 좌표와의 거리 ${dist(upd.pose!.p, poseA.p).toFixed(6)}`)
+  expect(dUpd, '갱신하면 지금 좌표가 담긴다').toBeLessThan(1e-12)
+  expect(dist(upd.pose!.p, poseA.p), '갱신 전 좌표와는 달라졌다').toBeGreaterThan(1e-6)
+
+  ledger[`roundtrip_${testInfo.project.name}`] = {
+    pose_A: { p: poseA.p, q: poseA.q },
+    saved_pose: sheet.pose,
+    save_diff: { p: +dSave.toExponential(3), q: +dqSave.toExponential(3) },
+    away_dist: +dAway.toFixed(6),
+    back_diff: { p: +dBack.toExponential(3), q: +dqBack.toExponential(3) },
+    update_diff: +dUpd.toExponential(3),
+    update_moved_from_A: +dist(upd.pose!.p, poseA.p).toFixed(6),
+    sheets: saved.length,
+  }
+})
+
+test('31-4 ③ 반증 ㉡ — 배선을 끊으면 ②가 빨개진다 (저장 · 복귀 각각)', async ({ page }, testInfo) => {
+  // 판 ⓐ **저장 끊김** — 단추를 복제로 갈아 끼우면 누름 배선이 사라진다(그림은 그대로다)
+  await construct(page)
+  await orbit(page)
+  const poseA = await poseNow(page)
+  await page.evaluate(() => {
+    const el = document.getElementById('paper-add')!
+    el.replaceWith(el.cloneNode(true))          // cloneNode는 리스너를 안 옮긴다
+  })
+  await page.click('#paper-add')
+  await settle(page)
+  const cut = await sheetsNow(page)
+  console.log(`[31-4 반증㉡ⓐ] 배선을 끊고 눌렀다 — 종이 ${cut.length}장(성한 판은 2장)`)
+  expect(cut.length, '끊긴 판에서는 저장이 안 된다 — ②의 첫 문이 빨개진다').toBe(1)
+
+  // 판 ⓑ **복귀 끊김** — 성한 판에서 저장한 뒤 **탭**의 배선만 끊는다
+  await page.reload()
+  await page.waitForFunction(() => (window as any).__b2)
+  await drawLine(page, 500, 560, 760, 495)
+  await drawLine(page, 500, 560, 240, 495)
+  await drawLine(page, 760, 495, 240, 495)
+  await orbit(page)
+  const poseC = await poseNow(page)
+  await page.click('#paper-add')
+  await settle(page)
+  await page.keyboard.press('Escape')
+  await settle(page)
+  const sheets = await sheetsNow(page)
+  expect(sheets.length, '성한 판에서는 저장된다').toBe(2)
+  await page.click(`#paperbar .ptab[data-sheet="${sheets[0]!.id}"]`)   // 작도 종이로 떠난다
+  await settle(page)
+  const away = await poseNow(page)
+  await page.evaluate(id => {
+    const el = document.querySelector(`#paperbar .ptab[data-sheet="${id}"]`)!
+    el.replaceWith(el.cloneNode(true))
+  }, sheets[1]!.id)
+  await page.click(`#paperbar .ptab[data-sheet="${sheets[1]!.id}"]`)
+  await settle(page)
+  const back = await poseNow(page)
+  const dBackCut = dist(back.p, poseC.p)
+  console.log(`[31-4 반증㉡ⓑ] 탭 배선을 끊고 눌렀다 — 저장 좌표와의 거리 ${dBackCut.toFixed(6)} (성한 판은 0) · 떠난 자리 그대로 ${dist(back.p, away.p).toExponential(3)}`)
+  expect(dBackCut, '끊긴 판에서는 복귀가 안 된다 — ②의 둘째 문이 빨개진다').toBeGreaterThan(1e-6)
+
+  ledger[`falsify_b_wiring_${testInfo.project.name}`] = {
+    save_cut: { sheets_after_click: cut.length, sheets_when_intact: 2, pose_A: poseA.p },
+    goto_cut: {
+      back_dist_to_saved: +dBackCut.toFixed(6),
+      stayed_where_left: +dist(back.p, away.p).toExponential(3),
+      intact_back_dist: 0,
+    },
+  }
+
+  // 이 파일의 마지막 팔이 원장을 쓴다(LEDGER=1 단독 실행에서만 — web2-22 규율)
+  if (process.env.LEDGER === '1') {
+    const dpr = testInfo.project.name
+    const sw = ledger[`sweep_${dpr}`] as any
+    const fb = ledger[`falsify_b_wiring_${dpr}`] as any
+    /** 게이트의 값 대조가 가리키는 **한 자리**(#40 ③) — 화면 최대 · 심은 판 · 끊은 판 */
+    const reachPoints = [sw.iou_max, sw.falsify_a_old_camera.restyled.paper_add_iou, fb.goto_cut.back_dist_to_saved]
+    mkdirSync(OUT, { recursive: true })
+    writeFileSync(resolve(OUT, `papericon31_web2_${dpr}.json`), JSON.stringify({
+      what: 'web2-31 4번 — 종이 띠 단추의 카메라 도형을 떼고 «종이 + 갱신 화살표»로 바꿨다. '
+        + '「화면에 카메라 도형이 없다」를 DOM 전수 훑기(출처·형태·말) 셋으로 재고, '
+        + '「시점 저장·복귀 무회귀」를 좌표로 잰다.',
+      canonical_command: `LEDGER=1 npx playwright test e2e/papericon31.spec.ts --project=${dpr}`,
+      viewport: { w: 1200, h: 800 }, dpr,
+      def: {
+        source: '(가) DOM svg의 `d`/`points` 문자열이 Phosphor camera 계열 넷(camera·plus·rotate·slash) '
+          + '× 여섯 굵기의 path와 **같은가**. 적중 0이 통과.',
+        shape: '(나) DOM svg 하나를 96×96으로 굽고 **잉크 상자로 정규화**(가로세로비 보존 — 긴 변 기준) '
+          + '한 뒤 16×16 참/거짓 격자로 만들어 카메라 계열 견본과 **IoU**. 최대값이 문 아래여야 한다. '
+          + '문자열보다 넓다 — 색·크기·굵기를 바꿔 옮겨 심어도 걸린다.',
+        words: '(다) 화면 언어(직접 텍스트 + title + aria-label · 진단 채널 제외)에 사진 계열 낱말 여덟이 없다.',
+        roundtrip: '②는 «저장 → 떠남 → 복귀»의 좌표 차다. 저장·복귀 차는 1e-12 아래, 떠난 거리는 1e-6 위.',
+      },
+      not_covered: '⚠ (나)는 **카메라 계열 견본과의 닮음**을 재므로, 이 계열에 없는 «손으로 다시 그린 '
+        + '카메라»는 못 잡는다(#26 — 못 잡는 것을 잡는다고 안 적는다). 그 자리는 (다)의 말 훑기와 '
+        + '`docs/instrument-icons.md`의 등재 규약이 든다.',
+      thresholds: { CAMERA_IOU },
+      reach_points: reachPoints,
+      reach_points_def: '① 성한 화면의 IoU 최대(문 아래여야 한다) ② **문자열을 바꿔 심은 카메라**의 '
+        + 'IoU(문 위여야 한다 — 형태 채널이 혼자 잡는 칸) ③ 배선을 끊은 판의 복귀 거리(0이 아니어야 한다). '
+        + '⚠ 옛 아이콘 그대로를 되돌린 판의 IoU 1.0은 **항등**이라 이 셋에 안 넣는다(#40 ② · #5).',
+      ...ledger,
+      gate: {
+        for: 'web2-31 4번 — ① 화면에 카메라 도형이 없다(출처 0 · 형태 IoU < 문 · 말 0) '
+          + '② 시점 저장·복귀가 좌표로 무회귀',
+        registered: [
+          'DOM svg 전수에서 카메라 계열 path 적중 0',
+          `DOM svg 전수의 카메라 견본 IoU 최대 < ${CAMERA_IOU}`,
+          '화면 언어에 사진 계열 낱말 0',
+          '새 아이콘: viewBox 0 0 32 32 · path 넷 · 호 · 상자 16×16 · elementFromPoint가 제 것을 낸다',
+          '저장한 좌표 = 그때 시점(1e-12) · 복귀한 좌표 = 저장한 좌표(1e-12) · 떠난 거리 > 1e-6',
+          '탭 길게 눌러 갱신(Update Scene)이 그대로 돈다',
+        ],
+        reachability: '**둘 다 실제로 실패시켰다**(D-3). ㉠ 옛 카메라(Phosphor light camera · 채운 그림)를 '
+          + `같은 자리에 되돌리면 (가) 출처 적중이 0 → ${(ledger[`sweep_${dpr}`] as any).falsify_a_old_camera.source_hits}건이 되고 `
+          + `(나) 그 자리의 IoU가 ${sw.iou_max} → ${sw.falsify_a_old_camera.paper_add_iou}로 문을 넘는다`
+          + `(그 1.0은 같은 글리프라 **항등**이므로, 값 대조에는 «굵기·색·좌표 문자열을 바꿔 심은 판»의 `
+          + `${sw.falsify_a_old_camera.restyled.paper_add_iou}을 쓴다 — 그 판은 출처 채널을 빠져나간다). `
+          + '㉡ 단추·탭을 복제로 갈아 끼워 **배선만** 끊으면(그림은 그대로) 저장이 1장에서 안 늘고 '
+          + `복귀가 저장 좌표에서 ${fb.goto_cut.back_dist_to_saved} 떨어진 자리에 남는다. `
+          + '기록은 web2/NOTES.md 31-4 반증 절.',
+        // ⚠ **값 셋을 한 자리에 모아 둔다**(`reach_points`) — selfcheck의 값 대조는
+        // **한 경로**만 푼다. 그리고 **㉠1의 IoU 1.0은 여기 안 적는다**: 같은 글리프를
+        // 되돌린 판이라 1.0은 «측정»이 아니라 **항등**이다(#40 ②·#5). 그 자리에는
+        // **문자열을 바꿔 심은 판**(㉠2 · 0.8238)을 적는다 — 그것이 잴 것이 있는 값이다.
+        reachability_value: reachPoints,
+        reachability_source: 'reach_points',
+      },
+      selfcheck_flags_known: {
+        zero_diffs: '⚠ `roundtrip_*.save_diff`·`back_diff`가 0에 붙는 것은 **설계 보장**이다 — '
+          + '`addSheet`/`gotoSheet`가 같은 좌표를 복사한다(CLAUDE.md §5.1 유형 3). '
+          + '그러므로 그 0 자체는 아무것도 안 재고, **판별력은 반증 ㉡의 두 값**이 준다 '
+          + '(끊은 판에서 저장이 안 늘고 복귀가 안 온다).',
+        intact_back_dist: '⚠ `falsify_b_wiring_*.goto_cut.intact_back_dist = 0`은 위 ②가 잰 값의 재기술이다(상수).',
+        old_camera_iou_1: '⚠ `falsify_a_old_camera.paper_add_iou = 1`이 「정확히 1」로 잡힌다 — **그것이 그 판의 정의다**: '
+          + '같은 글리프를 같은 자리에 되돌렸으므로 래스터가 같고 IoU는 **항등**이다. 그래서 게이트의 값 대조에는 '
+          + '이 1.0을 **안 쓰고**(#40 ②) 문자열을 바꿔 심은 판의 0.8238을 쓴다(`reach_points`).',
+        shapes_1: '⚠ `iou_top5[*].shapes = 1`은 비율이 아니라 **그 svg 안의 그리는 요소 «개수»**다(치수·표시 아이콘이 path 하나).',
+        pose_q_near_zero: '⚠ `pose_A.q.x`·`q.z`가 1e-18 대인 것은 **궤도가 세계 수직축 하나로만 돌기 때문**이다'
+          + '(state.ts `orbitBy` — 가로 회전만 실린 자세라 x·z 성분이 부동소수 잔차로 남는다). 재는 값은 그 잔차가 아니라 '
+          + '`save_diff`/`back_diff`이고, 그쪽의 판별력은 반증 ㉡이 준다.',
+        constants_snapshot: '⚠ `constants/metric_defs` 스냅샷이 없다 — **web2 라인 원장의 공통 형태**다(상수 스냅샷 등록부 밖). '
+          + '이 원장이 인용하는 임계는 `thresholds.CAMERA_IOU` 하나이고 그 출처는 `e2e/thresholds.ts`다.',
+      },
+    }, null, 2))
+  }
+})

@@ -8,7 +8,7 @@
 // ⑤ LICENSE에 Phosphor 세트 줄이 있다.
 
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 // ⚠ 개행 정규화 — Windows에서 git checkout(autocrlf)이 작업 사본을 CRLF로 다시 쓸 수
@@ -59,11 +59,11 @@ describe('web2-19 4부 ③ — path 문자열 대조', () => {
     for (const n of ['ruler', 'arrows-out', 'eye', 'eye-slash', 'compass-tool', 'grid-four']) {
       expect(html.includes(phosphor(n)), n).toBe(true)
     }
-    // ⚠ **web2-25 3-a에서 갈렸다**: 종이 띠의 단추가 「+」에서 **셔터(camera)**가 됐다.
-    //   크롬의 「+」는 «빈 것을 하나 더 만든다»는 뜻인데 여기서 하는 일은 «지금 보이는
-    //   것을 한 장으로 남긴다»라 뜻이 달랐다(지시 3-a). 팔이 지키던 요구(「소스 path를
-    //   그대로 쓴다」)는 **그대로 유효**하고 대상만 바뀌었다(#74 ㉢의 판별 물음).
-    expect(paperbar.includes(phosphor('camera')), 'camera(종이 셔터)').toBe(true)
+    // ⚠ **web2-25 3-a에서 갈렸고 web2-31 4번이 되돌렸다**: 종이 띠의 단추가 「+」→
+    //   **셔터(camera)** → **종이 + 갱신 화살표**(자작)가 됐다. 31-3의 돋보기가 들어오면서
+    //   카메라와 뜻이 겹쳤기 때문이다(지시 31-4). 그러므로 **Phosphor camera 계열은 더
+    //   이상 이식 대상이 아니다** — 아래 「카메라 도형 없음」 절이 그 자리를 잰다.
+    expect(paperbar.includes(phosphor('camera')), 'camera는 이제 안 쓴다(31-4)').toBe(false)
     // 그리고 **겹의 「+」는 여전히 plus**다 — 그쪽은 뜻이 맞는다(겹을 하나 더 얹는다)
     const lb = readLF(resolve(__dirname, '../src/app/layerbar.ts'))
     expect(lb.includes(phosphor('plus')), 'plus(겹 「+」)').toBe(true)
@@ -125,3 +125,70 @@ describe('web2-21 3-a — 손 띠 롤 아이콘의 두 자리(#54 · 3·4부 리
     }
   })
 })
+
+// ── web2-31 4번 — 종이 아이콘에서 카메라를 뗀다 ────────────────────────────────
+// 여기서 재는 것은 **소스 쪽 절반**이다(정본 대조 + 카메라 계열이 소스에 남았는가).
+// 게이트 문면은 「**화면에** 카메라 도형이 남아 있지 않다」이므로 **자는 DOM**이고
+// 그쪽은 `e2e/papericon31.spec.ts`가 잰다 — 이 팔은 「그 파일에 없다」로 게이트를
+// 대신하지 않는다(#71 ㉠ · 지시의 급소 2). 두 자가 갈려 있다는 것을 여기 적는다.
+describe('web2-31 4번 — 종이 + 갱신 화살표(자작)로 갈렸다', () => {
+  const CANON = /### 종이와 갱신 화살표[\s\S]*?```svg\n([\s\S]*?)```/.exec(md)![1]!
+
+  it('정본의 path 넷이 paperbar.ts의 SHEET_ICON에 그대로 있다', () => {
+    const paths = [...CANON.matchAll(/<path d="([^"]+)"/g)].map(m => m[1]!)
+    expect(paths.length, '종이 · 접힌 모서리 · 호 · 촉').toBe(4)
+    for (const p of paths) expect(paperbar.includes(p), `path: ${p.slice(0, 24)}…`).toBe(true)
+    // 급(width/height)은 정본이 아니라 **쓰는 자리**가 얹는다 — 정본 블록에는 없다
+    expect(/\s(?:width|height)="/.test(CANON), '정본 블록에 크기 급이 없다').toBe(false)
+    expect(/width="16" height="16"/.test(paperbar), '탭 줄에서만 16px을 박는다').toBe(true)
+  })
+
+  it('선 문법 — 정본 블록이 fill:none · currentColor · 1.6 · round다', () => {
+    expect(CANON).toContain('fill="none"')
+    expect(CANON).toContain('stroke="currentColor"')
+    expect(CANON).toContain('stroke-width="1.6"')
+    expect(CANON).toContain('stroke-linecap="round"')
+    expect(CANON).toContain('stroke-linejoin="round"')
+    expect(CANON).toContain('viewBox="0 0 32 32"')
+  })
+
+  it('카메라 계열 훑기 — Phosphor camera 넷 × 여섯 굵기가 소스 어디에도 없다 (+심어서 반증)', () => {
+    const weights = ['thin', 'light', 'regular', 'bold', 'fill', 'duotone']
+    const names = ['camera', 'camera-plus', 'camera-rotate', 'camera-slash']
+    const needles: string[] = []
+    for (const w of weights) {
+      for (const n of names) {
+        const file = resolve(__dirname, `../node_modules/@phosphor-icons/core/assets/${w}/${n}${w === 'regular' ? '' : `-${w}`}.svg`)
+        for (const m of readLF(file).matchAll(/<path[^>]*\sd="([^"]+)"/g)) needles.push(m[1]!)
+      }
+    }
+    // 훑는 자리 — 화면을 짓는 소스 전부(정본 문서 포함). 세어서 값으로 남긴다.
+    const files = [
+      resolve(__dirname, '../index.html'),
+      resolve(__dirname, '../../docs/instrument-icons.md'),
+      ...listTs(resolve(__dirname, '../src')),
+    ]
+    const hits: string[] = []
+    for (const f of files) {
+      const text = readLF(f)
+      for (const nd of needles) if (text.includes(nd)) hits.push(`${f}: ${nd.slice(0, 24)}…`)
+    }
+    expect(needles.length, '카메라 계열 path 수(넷 × 여섯 굵기 · duotone은 둘)').toBeGreaterThanOrEqual(24)
+    expect(files.length, '훑은 파일 수').toBeGreaterThan(20)
+    expect(hits, '카메라 계열 path가 소스에 없다').toEqual([])
+    // 반증(D-3) — 같은 훑기가 **실제로 걸린다**: 옛 아이콘 그대로의 문자열을 건초더미에 심는다
+    const planted = `const OLD = '${needles[0]}'`
+    expect(needles.some(nd => planted.includes(nd)), '심은 옛 path는 같은 훑기에 걸린다').toBe(true)
+  })
+})
+
+/** `.ts` 전수 — 훑기가 「내가 아는 파일」이 아니라 **디렉터리 전부**를 보게 한다 */
+function listTs(dir: string): string[] {
+  const out: string[] = []
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = resolve(dir, e.name)
+    if (e.isDirectory()) out.push(...listTs(p))
+    else if (e.name.endsWith('.ts')) out.push(p)
+  }
+  return out
+}

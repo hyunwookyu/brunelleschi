@@ -342,3 +342,46 @@ test('34-5 설정 톱니 — 선 문법이고 채우지 않았다 · 바깥 톱�
   }, [SEL, before])
   expect(await LINT(page, SEL), '복구 뒤 다시 선 문법이다').toEqual([])
 })
+
+// ── web2-31 4번 — 종이 띠의 단추(시점 남기기) ─────────────────────────────────
+// 지시: 「아이콘 문법은 기존 그대로.」 34-5가 세운 `__lintLine` **그 검사**에 새 아이콘을
+// 건다(새 검사를 안 짓는다 · #54). 반증도 34-5와 같은 수다 — **옛 아이콘 그 자체**를
+// 같은 자리에 넣어 실제로 떨어뜨린다. 옛것은 Phosphor light `camera`를 `fill="currentColor"`로
+// 채운 그림이었다(web2-25 3-a). 여기서는 파일에서 읽어 온다(문자열을 손으로 안 옮긴다).
+const OLD_CAMERA_SVG = (() => {
+  const d = /<path d="([^"]+)"/.exec(readFileSync(
+    resolve(HERE, '../node_modules/@phosphor-icons/core/assets/light/camera-light.svg'), 'utf-8'))![1]!
+  return `<svg viewBox="0 0 256 256" fill="currentColor" width="16" height="16"><path d="${d}"/></svg>`
+})()
+
+test('31-4 종이 단추 — 선 문법이고 채우지 않았다 (+옛 채운 카메라로 반증)', async ({ page }) => {
+  await boot(page)
+  await installLint(page)
+  const SEL = '#paper-add svg'
+
+  const bad = await LINT(page, SEL)
+  expect(bad, '새 아이콘이 선 문법을 지킨다(fill:none · currentColor · round · 1.6 · 32뷰박스)').toEqual([])
+
+  // 상자가 안 변했다 — 옛 카메라와 같은 16×16이다(띠의 자리가 한 픽셀도 안 변한다 · #88)
+  const box = await page.evaluate((sel: string) => {
+    const r = document.querySelector(sel)!.getBoundingClientRect()
+    return { w: +r.width.toFixed(2), h: +r.height.toFixed(2) }
+  }, SEL)
+  console.log(`[측정] 종이 단추 아이콘 상자 ${box.w}×${box.h}px`)
+  expect(box).toEqual({ w: 16, h: 16 })
+
+  // 반증(D-3) — 옛 채운 카메라를 같은 자리에 넣으면 같은 검사가 떨어진다
+  const before = await page.evaluate(sel => document.querySelector(sel)!.parentElement!.innerHTML, SEL)
+  await page.evaluate(([sel, old]) => {
+    document.querySelector(sel as string)!.parentElement!.innerHTML = old as string
+  }, [SEL, OLD_CAMERA_SVG])
+  const oldBad = await LINT(page, SEL)
+  console.log(`[반증] 옛 카메라의 위반 ${oldBad.length}건 — ${JSON.stringify(oldBad)}`)
+  expect(oldBad.length, '옛 카메라는 이 검사에 걸린다').toBeGreaterThan(0)
+  expect(oldBad.join(' '), '떨어지는 이유에 «채웠다»가 있다').toContain('fill=')
+  expect(oldBad.join(' '), '뷰박스도 걸린다(256 → 32)').toContain('viewBox=')
+  await page.evaluate(([sel, html]) => {
+    document.querySelector(sel as string)!.parentElement!.innerHTML = html as string
+  }, [SEL, before])
+  expect(await LINT(page, SEL), '복구 뒤 다시 선 문법이다').toEqual([])
+})
