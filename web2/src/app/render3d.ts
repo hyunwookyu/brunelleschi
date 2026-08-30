@@ -9,6 +9,7 @@ import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js'
 import type { App } from './state'
 import { MAT, gradeOf, widthOf } from '../core/material'
+import { C } from '../core/constants'
 import type { Grade } from '../core/types'
 
 export interface R3D {
@@ -147,7 +148,7 @@ export function syncCamera(r: R3D, app: App) {
   const px = an.principal.x * v.s + v.ox
   const py = an.principal.y * v.s + v.oy
   const f = an.f * v.s
-  const near = 1, far = 1e6
+  const near = C.RENDER_NEAR_UNITS, far = 1e6   // 근평면의 출처는 `C` 하나다 — 돋보기가 같은 값을 읽는다(#54)
   r.camera.projectionMatrix.set(
     2 * f / W, 0, 1 - 2 * px / W, 0,
     0, 2 * f / H, 2 * py / H - 1, 0,
