@@ -8,6 +8,7 @@ import type { App } from './state'
 import {
   orbitPivot, orbitBy, dollyBy, panBy, setPose, beginErase, eraseAt, endErase, fingerPans,
   screenToDoc, isEraser, yellowActive, toggleFaceAt, facePreview, excludeCandidateAt, beginNavHold, endNavHold,
+  viewScale,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
 import { updateExtTrip, beginExtTrip } from '../core/extacq'
@@ -17,7 +18,9 @@ import { resolveStart, resolveEnd, resolveCommit, isStray } from '../core/draft'
 import { newHoldGate, tickHold, yellowEnd } from '../core/hold'
 import { filmSplit } from './filmlayer'
 import { C } from '../core/constants'
-import { cubeGeom, cubeHit, poseForElem } from '../core/viewcube'
+import {
+  cubeGeom, cubeHit, poseForElem, cubeBasis, arrowHit, orientIn, turnOrient, poseForOrient,
+} from '../core/viewcube'
 import type { Draft } from './render2d'
 import type { RawInput } from '../core/types'
 import { type Pt, pt } from '../core/vec'
@@ -128,13 +131,13 @@ export function initInput(
   /** 문서 좌표 — 그리기·스냅·지우개는 이것 */
   const toPt = (e: PointerEvent): Pt => screenToDoc(app, toScreen(e))
   /** 오스냅 반경은 화면 px — 문서 좌표용으로 배율 보정 */
-  const osnapSet = () => ({ ...app.osnap, radius: app.osnap.radius / app.view.s })
+  const osnapSet = () => ({ ...app.osnap, radius: app.osnap.radius / viewScale(app) })
   /** **연장선 왕복 선언**(web2-30 11번) — 그리는 중에 포인터가 움직일 때마다 한 번.
    *  ⚠ 호버에서는 안 돈다: 왕복은 **획의 시작점**에서 재는 몸짓이라 획이 없으면 뜻이 없다
    *  (종전 머무름 획득은 호버에서도 돌았다). 반환 = 이번에 선언이 새로 섰는가. */
   const tickExt = (p: Pt): boolean =>
     updateExtTrip(app.extAcq, app.lift, app.pose, p,
-      C.EXT_TRIP_LINE_TOL_PX / app.view.s, C.EXT_TRIP_MIN_PX / app.view.s, performance.now())
+      C.EXT_TRIP_LINE_TOL_PX / viewScale(app), C.EXT_TRIP_MIN_PX / viewScale(app), performance.now())
   /** 치수 옵션 — 스냅은 켜져 있을 때만 step이 실린다(지시 4-7) */
   const dimOpts = () => ({
     mmPerUnit: app.lift.mmPerUnit,
@@ -217,7 +220,7 @@ export function initInput(
     if (!split || app.activeLayer === null) return null
     const lay = app.doc.layers.find(l => l.id === app.activeLayer)
     if (!lay || lay.locked || split.films.every(f => f.id !== lay.id)) return null
-    const tol = C.OSNAP_RADIUS_PX / app.view.s
+    const tol = C.OSNAP_RADIUS_PX / viewScale(app)
     const nearV = (x: number) => Math.abs(p.x - x) <= tol && p.y >= lay.rect.y - tol && p.y <= lay.rect.y + lay.rect.h + tol
     const nearH = (y: number) => Math.abs(p.y - y) <= tol && p.x >= lay.rect.x - tol && p.x <= lay.rect.x + lay.rect.w + tol
     const edges = {
@@ -318,13 +321,13 @@ export function initInput(
     // **애초에 안 만든다.** 탭(끝점 이동 ≤ TAP_MAX_PX)은 여기 안 걸리고 종전 경로
     // (resolveCommit — 소실점 찍기/잡음 폐기)로 그대로 간다. 버린 수는 진단 패널.
     {
-      const endDistPx = Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) * app.view.s
+      const endDistPx = Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) * viewScale(app)
       let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity
       for (const p of d.raw) {
         if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x
         if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y
       }
-      const bboxDiagPx = d.raw.length >= 2 ? Math.hypot(x1 - x0, y1 - y0) * app.view.s : 0
+      const bboxDiagPx = d.raw.length >= 2 ? Math.hypot(x1 - x0, y1 - y0) * viewScale(app) : 0
       if (isStray(endDistPx, bboxDiagPx)) { app.strayCount++; return }
     }
     // 옐로(web2-22 1부) — 소실점 찍기가 없다(1-a 표): 탭은 잡음이고 획은 그대로 확정.
@@ -333,7 +336,7 @@ export function initInput(
     // 되살린다). 반듯 미리보기의 end가 그대로 확정된다(원칙 d — 2-b 순서).
     if (holdTimer !== undefined) { clearTimeout(holdTimer); holdTimer = undefined }
     if (yellowActive(app)) {
-      if (Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) * app.view.s <= C.TAP_MAX_PX) return
+      if (Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) * viewScale(app) <= C.TAP_MAX_PX) return
       app.lastSnap = { start: null, end: null }
       cb.onCommit(d.start, d.end, d.held ? [d.start, d.end] : d.raw, press, d.held ? undefined : rawIn)
       return
@@ -344,8 +347,8 @@ export function initInput(
       if (p.x < bx0) bx0 = p.x; if (p.x > bx1) bx1 = p.x
       if (p.y < by0) by0 = p.y; if (p.y > by1) by1 = p.y
     }
-    const bboxDiagPx = d.raw.length >= 2 ? Math.hypot(bx1 - bx0, by1 - by0) * app.view.s : 0
-    const c = resolveCommit(app.lift.an, d.start, d.end, app.osnap.radius / app.view.s, bboxDiagPx)
+    const bboxDiagPx = d.raw.length >= 2 ? Math.hypot(bx1 - bx0, by1 - by0) * viewScale(app) : 0
+    const c = resolveCommit(app.lift.an, d.start, d.end, app.osnap.radius / viewScale(app), bboxDiagPx)
     if (!c) return // 잡음 — 지평선에서 먼 탭
     // **어떤 오스냅이 이 획을 정했는가**(web2-18 2-c) — 사람이 「정확히 어떤 오스냅
     // 때문인지 모르겠다」고 했다. 앱이 실제로 쓴 값을 그대로 든다(다시 계산하지 않는다).
@@ -367,11 +370,21 @@ export function initInput(
     const geom = cubeGeom(app.lift.an, app.pose, app.cubeLayout)
     if (!geom) return false
     if (Math.hypot(sp.x - app.cubeLayout.cx, sp.y - app.cubeLayout.cy) > app.cubeLayout.size) return false
-    const elem = cubeHit(geom, sp)
-    if (!elem) return false
     const pivot = orbitPivot(app)
     const dist = Math.max(1, Math.hypot(
       app.pose.p.x - pivot.x, app.pose.p.y - pivot.y, app.pose.p.z - pivot.z))
+    // 90° 화살표가 먼저다(web2-31 1번) — 큐브 폴리곤 밖에 있으므로 서로 안 먹지만,
+    // 순서를 정해 두면 대역이 겹치게 바뀌어도 판정이 안 흔들린다.
+    // **틀은 화면이 아니라 축이다**: 지금 자세를 축 틀의 면으로 읽고 그 안에서 90° 돈다.
+    const turn = arrowHit(app.cubeLayout, sp)
+    const basis = cubeBasis(app.lift.an)
+    if (turn && basis) {
+      const to = poseForOrient(basis, turnOrient(orientIn(basis, app.pose), turn), pivot, dist)
+      level.glide(to)   // 보간한다 — 즉시 튀면 어디로 갔는지 잃는다
+      return true
+    }
+    const elem = cubeHit(geom, sp)
+    if (!elem) return false
     const pose = poseForElem(app.lift.an, elem, pivot, dist)
     if (pose) { setPose(app, pose); level.touch() }
     return true
@@ -561,7 +574,7 @@ export function initInput(
       const p = toPt(e)
       // 끌었으면 그림이다 — 아래로 흘려보낸다(탭일 때만 치수를 짚는다).
       // 짚었으면 **거기서 끝난다**: 그 탭이 소실점 표식(점 찍기)으로 흘러가지 않는다.
-      if (Math.hypot(p.x - d.x, p.y - d.y) <= C.TAP_MAX_PX / app.view.s && cb.onDimTap(d)) {
+      if (Math.hypot(p.x - d.x, p.y - d.y) <= C.TAP_MAX_PX / viewScale(app) && cb.onDimTap(d)) {
         if (drawingPointer === e.pointerId) { drawingPointer = null; draft = null; cb.onDraftChange(null) }
         return
       }
@@ -571,7 +584,7 @@ export function initInput(
       measureDown = null
       const p = toPt(e)
       // 끌었으면 취소다 — 면·치수와 같은 탭 대역(새 숫자 ⛔)
-      if (Math.hypot(p.x - d.x, p.y - d.y) <= C.TAP_MAX_PX / app.view.s) cb.onMeasureTap(d)
+      if (Math.hypot(p.x - d.x, p.y - d.y) <= C.TAP_MAX_PX / viewScale(app)) cb.onMeasureTap(d)
       return
     }
     if (dimTap) {
@@ -579,7 +592,7 @@ export function initInput(
       dimTap = null
       const p = toPt(e)
       // 끌었으면 취소다 — 면 도구와 같은 탭 대역(새 숫자 ⛔)
-      if (Math.hypot(p.x - d.x, p.y - d.y) <= C.TAP_MAX_PX / app.view.s) cb.onDimPick(d)
+      if (Math.hypot(p.x - d.x, p.y - d.y) <= C.TAP_MAX_PX / viewScale(app)) cb.onDimPick(d)
       return
     }
     if (drawingPointer === e.pointerId) {
@@ -605,7 +618,7 @@ export function initInput(
         if (!d) return
         const p = toPt(e)
         // 끌었으면 취소다 — 탭 대역(`TAP_MAX_PX`)은 찍기와 같은 기준을 쓴다
-        if (Math.hypot(p.x - d.x, p.y - d.y) > C.TAP_MAX_PX / app.view.s) return
+        if (Math.hypot(p.x - d.x, p.y - d.y) > C.TAP_MAX_PX / viewScale(app)) return
         // 면 일괄 후보 모드(web2-21 4부) — 탭은 **배제**다(아닌 것만 탭해서 뺀다).
         // 후보 밖 탭은 아무 일도 안 한다(확정·취소는 팝오버 — 실수로 안 닫히게).
         if (app.faceCandidates !== null) {

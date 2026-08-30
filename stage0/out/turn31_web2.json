@@ -1,0 +1,314 @@
+{
+  "what": "web2-31 1번 — 뷰 큐브 90° 화살표의 **기준 틀이 화면이 아니라 축**임을 두 판을 나란히 돌려 잰다.",
+  "canonical_command": "LEDGER=1 npx vitest run test/turn31.test.ts",
+  "why": "2점 투시의 초기 화면은 **이미 축에 대해 돌아가 있다**(이 픽스처에서 vp0과 37.76°). 그 화면을 큐브의 정면으로 잡으면 90°씩 돌려도 영원히 진짜 입면에 못 닿는다 — 사용자가 극초기부터 보고한 문제다. 틀을 정하는 것은 축(vp0·vp1·세로)이고 초기 카메라는 그 틀 «안의 한 위치»일 뿐이다.",
+  "design": {
+    "frame": "cubeBasis(an) = norm(vp0 축) · (0,1,0) · 그 외적. **이미 있던 함수다** — 31-1은 그 틀 위에 90° 화살표만 얹는다.",
+    "quantize": "지금 자세의 back·up을 틀의 **정수 축 벡터**로 읽는다(orientIn). 90° 회전은 그 정수 벡터의 외적이라 오차가 안 쌓인다.",
+    "turns": "좌/우 = 틀의 세로축 둘레 · 상/하 = 화면 오른쪽(up × back) 둘레. 면만 쓴다 — **모서리·꼭짓점은 안 넣었다**(지시: 범위를 안 넓힌다).",
+    "interpolation": "autolevel의 anim 슬롯으로 300 ms 보간. 접기와 한 슬롯이라 둘이 못 겹친다."
+  },
+  "fixtures": {
+    "two_point": {
+      "doc": "test/fixtures.ts constructedDoc()",
+      "W": 1200,
+      "H": 800,
+      "vps": [
+        900,
+        100
+      ],
+      "f": 387.298335,
+      "fSource": "two-vp"
+    },
+    "one_point": {
+      "doc": "지평선 + 소실점 찍기(800,400) + 화면 수평 획",
+      "W": 1200,
+      "H": 800,
+      "vps": [
+        800
+      ],
+      "p1Locked": true,
+      "f": 1044,
+      "fSource": "default"
+    },
+    "why_two": "D-3 — 「축 기준」은 **돌아가 있는 구도로만** 반증된다. 정면 구도는 두 판이 같은 답을 내므로 거저 통과한다(gate3가 그 수를 낸다)."
+  },
+  "constants": {
+    "CUBE_ARROW_R0": 0.68,
+    "CUBE_ARROW_R1": 0.9,
+    "CUBE_ARROW_HALF": 0.13,
+    "CUBE_ALIGN_MAX_DEG": 0.01,
+    "TURN_ANIM_MS": 300,
+    "FOLD_ANIM_MS": 300
+  },
+  "constants_note": "새 임계는 `CUBE_ALIGN_MAX_DEG`(지시 문면 0.01°) 하나이고 나머지는 «크기의 배수»다 — px로 안 적는다(#88: 큐브를 키우는 사람이 여기를 볼 이유가 없다). TURN_ANIM_MS는 **숫자를 새로 안 짓고** FOLD_ANIM_MS(300)를 가리킨다(#54).",
+  "gate1_cycle": {
+    "what": "좌/우 90° × 4 = 항등인가 — 회전행렬(세 축)의 최대 어긋남 각(도) · 쿼터니언 성분 차 · 위치 차",
+    "orient_exact": true,
+    "cycle_quat_max_abs_delta": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "cycle_gap_deg": [
+      0,
+      0.000001,
+      0.000002,
+      0.000001
+    ],
+    "cycle_pos_delta": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "step_deg": [
+      90,
+      90,
+      90
+    ],
+    "first_step_from_initial_screen_deg": 52.238756,
+    "first_step_note": "**첫 누름은 초기 화면에서 90°가 아니다 — 52.24°다.** 초기 화면이 틀의 면 위가 아니므로 「가장 가까운 면으로 읽고 거기서 90°」이기 때문이다. 화면 기준이면 이 값이 정확히 90°가 되는데, 그러면 **영원히 진짜 입면에 못 닿는다**(gate3). 이 52.24°가 틀이 축이라는 표식이다.",
+    "gap_to_initial_screen_deg": [
+      52.238756,
+      142.238756,
+      127.761244,
+      37.761244
+    ],
+    "note": "네 자세 중 가장 가까운 것도 초기 화면과 37.76° 떨어져 있다 — **틀이 화면이 아니다**."
+  },
+  "gate2_axis_align": {
+    "what": "네 자세의 시선이 vp0·vp1 축과 이루는 각(도) — 축은 ± 양방향이 같은 축이다",
+    "align_vp0_deg": [
+      90,
+      0.000001,
+      90,
+      0.000001
+    ],
+    "align_vp1_deg": [
+      0.000001,
+      90,
+      0,
+      90
+    ],
+    "align_best_deg": [
+      0.000001,
+      0.000001,
+      0,
+      0.000001
+    ],
+    "threshold_deg": 0.01
+  },
+  "gate3_falsification": {
+    "what": "**「화면 기준」 판을 실제로 돌린다.** 같은 90° 기제에 틀만 갈아 끼운다 — 축 판 = cubeBasis(vp0·세로·외적) · 화면 판 = 초기 카메라의 right·up·back.",
+    "initial_screen_offset_deg": {
+      "two_point_vs_vp0": 37.761244,
+      "two_point_vs_vp1": 52.238756,
+      "one_point_vs_vp0": 0,
+      "note": "2점의 초기 화면은 축에서 **돌아가 있다**. 1점은 0이다 — 그것이 함정의 구조다."
+    },
+    "two_point_rotated_fixture": {
+      "axis_board_align_deg": [
+        0.000001,
+        0.000001,
+        0,
+        0.000001
+      ],
+      "screen_board_align_deg": [
+        37.761244,
+        37.761244,
+        37.761244,
+        37.761244
+      ],
+      "board_gap_deg": [
+        37.761244,
+        37.761244,
+        37.761244,
+        37.761244
+      ],
+      "verdict": "축 판 통과 · 화면 판 **실패**(문 0.01°)"
+    },
+    "one_point_frontal_fixture": {
+      "axis_board_align_deg": [
+        90,
+        0,
+        90,
+        0
+      ],
+      "screen_board_align_deg": [
+        90,
+        0,
+        90,
+        0
+      ],
+      "board_gap_deg": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "verdict": "두 판이 **같다** — 정면 구도로 시험하면 아무것도 못 잰다(D-3의 함정)"
+    }
+  },
+  "gate4_plan_bottom": {
+    "what": "상/하 화살표가 정확한 평면(시선 −Y)·저면(시선 +Y)에 닿는가 — 각 오차(도)",
+    "rows": [
+      {
+        "fixture": "2점",
+        "plan_deg": 0,
+        "bottom_deg": 0,
+        "plan_then_down_pitch_deg": 0,
+        "plan_screen_up_to_nearest_h_axis_deg": 0.000001
+      },
+      {
+        "fixture": "1점",
+        "plan_deg": 0,
+        "bottom_deg": 0,
+        "plan_then_down_pitch_deg": 0,
+        "plan_screen_up_to_nearest_h_axis_deg": 0
+      }
+    ]
+  },
+  "gate5_reachability": {
+    "what": "초기 화면에서 화살표만으로 여섯 면(+VP1·−VP1·+VP2·−VP2·위·아래)에 닿는가 — 면별 최단 누름 수",
+    "rows": [
+      {
+        "fixture": "2점",
+        "faces": 6,
+        "depth_by_face": {
+          "-1,0,0": 0,
+          "0,0,-1": 1,
+          "0,0,1": 1,
+          "0,1,0": 1,
+          "0,-1,0": 1,
+          "1,0,0": 2
+        }
+      },
+      {
+        "fixture": "1점",
+        "faces": 6,
+        "depth_by_face": {
+          "-1,0,0": 0,
+          "0,0,-1": 1,
+          "0,0,1": 1,
+          "0,1,0": 1,
+          "0,-1,0": 1,
+          "1,0,0": 2
+        }
+      }
+    ],
+    "corners_and_edges": "**넣지 않았다**(지시: 범위를 안 넓힌다). 화살표 경로는 면만 쓴다."
+  },
+  "arrows": {
+    "what": "화살표 넷의 대역 — 반경 배수는 `cubeLayout.size`에서 유도한다(#88: px 상수로 안 적는다)",
+    "ratios": {
+      "r0": 0.68,
+      "r1": 0.9,
+      "half": 0.13
+    },
+    "at_size_80_px": {
+      "r0": 54.400000000000006,
+      "r1": 72,
+      "half": 10.4
+    },
+    "hits": {
+      "left": "left",
+      "right": "right",
+      "up": "up",
+      "down": "down"
+    },
+    "center_is_not_arrow": true
+  },
+  "layout": {
+    "what": "그림쇠 자리 — `cubeLayoutFor(W)` 한 자리에서만 계산한다(state.ts·main.ts가 각자 적던 것 · #54)",
+    "at_W": 1200,
+    "cx": 1072,
+    "cy": 78,
+    "size": 80,
+    "arrow_reach_px": 72,
+    "body_radius_px": 54,
+    "outer_right_px": 1144,
+    "outer_top_px": 6,
+    "previous": {
+      "cx": 1090,
+      "cy": 60,
+      "outer_right_px": 1144,
+      "outer_top_px": 6
+    },
+    "why_moved": "⚠⚠ **초판은 여기서 걸렸다(D-1: 표식이 잡았다).** 화살표를 종전 자리(cx W−110 · cy 60)에 반경 0.70~0.92로 두자 `elementFromPoint`가 오른쪽에서 `sidebar-body`·`btn-draw-view`를, 위에서 `null`(창 밖)을 냈다 — **그려지는데 안 눌리는** 상태다(PITFALLS #87: 겹친다 ≠ 가린다). 고친 방향은 z도 자리 나눔도 아니라 **자리를 뻗침에서 유도**하는 것이다: 바깥에 닿는 것이 큐브 꼭짓점에서 화살표 끝으로 바뀌었으니 큐브가 그만큼 물러난다(자리를 안 늘렸다 · #88).",
+    "e2e_check": "e2e/turn31.spec.ts ① — 네 화살표 끝에서 `elementFromPoint`가 전부 `ink`(dpr 1·2)."
+  },
+  "interpolation": {
+    "what": "90° 전환의 프레임별 진행(출발점에서의 각, 도) — 30 ms 간격",
+    "anim_ms": 300,
+    "fold_anim_ms": 300,
+    "frames_deg": [
+      1.462685,
+      5.432831,
+      11.283571,
+      18.388042,
+      26.119378,
+      33.850714,
+      40.955185,
+      46.805925,
+      50.776071,
+      52.238756
+    ],
+    "lands_exactly_deg": 0,
+    "note": "접기와 **같은 `anim` 슬롯**이라 둘이 못 겹친다(#54). 끌기(`grab`)가 취소한다."
+  },
+  "plan_drawing": {
+    "what": "정확히 평면(지평선 없음)에서도 획이 들어간다 — 축이 안 풀리면 미배치로 남을 뿐이다",
+    "forward_y": -1,
+    "stroke_accepted": true,
+    "lifted": false,
+    "unplaced_is_waiting": "미배치 = 실패가 아니라 대기(A-3 · 개정 2 §9.1). 새 기제를 안 만들었다."
+  },
+  "gate": {
+    "for": "web2-31 1번 — 좌/우 4회 항등 · 축 정렬 · **반증(화면 판)** · 평면/저면 · 여섯 면 도달",
+    "registered": [
+      "좌/우 90° × 4 = 항등 (회전행렬 최대 어긋남 0.000000°, 위치 차 0)",
+      "네 자세가 vp0·vp1 축과 정렬 (전부 0.000000° < 0.01°) · vp0에 둘 · vp1에 둘",
+      "**반증**: 같은 기제에 「화면 기준」 틀을 끼우면 같은 게이트가 37.761244°로 빨개진다",
+      "**함정의 증거**: 정면(1점) 구도에서는 두 판의 포즈 차가 0.000000° — 거기서 시험하면 안 잰다",
+      "상/하 90°가 정확한 평면(0.000000°)·저면(0.000000°)에 닿고, 평면에서 내리면 피치 0으로 돌아온다",
+      "1점·2점 모두 여섯 면이 도달 가능하다",
+      "평면에서도 획이 들어간다(새 기제 없음)"
+    ],
+    "reachability": "**틀을 화면으로 바꾸면 빨개진다.** `screenBoard(DRAW_POSE)`를 제품의 `cubeBasis` 자리에 끼우면 게이트 ②의 정렬 각이 0 → **37.761244°**(vp0 기준 최소)로 뛴다. gate3 블록이 그 판을 **실제로 돌린 값**이다(못 실패시키는 검사는 안 잰 것이다 — D-3). ⚠ 그 반증은 **2점(돌아간) 픽스처에서만** 성립한다 — 1점에서는 두 판의 차가 0.000000°다.",
+    "falsification_executed": {
+      "what": "**말이 아니라 실행이다**(D-3). 제품의 `cubeBasis`를 「초기 화면을 정면으로 잡는 판」(X,Y,Z = 세계 축 = DRAW_POSE의 right·up·back)으로 **실제로 갈아 끼우고** 이 파일을 돌렸다.",
+      "patch": "src/core/viewcube.ts cubeBasis → return { X:(1,0,0), Y:(0,1,0), Z:(0,0,1) }",
+      "result": "9칸 중 **4칸 실패**(게이트 ①·②·③ + 원장). ②는 `expected 37.76124390703503 to be less than 0.01`.",
+      "red_gates": [
+        "gate1_cycle",
+        "gate2_axis_align",
+        "gate3_falsification"
+      ],
+      "green_gates_note": "⚠ **게이트 ④(평면·저면)와 ⑤(여섯 면 도달)는 그 판에서도 초록이었다** — 두 판이 같은 정수 기제를 쓰므로 «닫히는가·닿는가»는 틀과 무관하다. **그 둘은 이 항목의 주장을 안 잰다**(#86의 형태: 축이 갈리지 않는 곳에서 돌린 팔은 아무것도 안 잰다). 판을 가르는 것은 ①②③뿐이고, 그래서 반증 조건도 거기에 붙였다.",
+      "reverted": true
+    },
+    "reachability_source": "gate3_falsification/two_point_rotated_fixture/screen_board_align_deg",
+    "reachability_value": [
+      37.761244,
+      37.761244,
+      37.761244,
+      37.761244
+    ]
+  },
+  "selfcheck_flags_known": {
+    "exact_zero_angles": "⚠ 「오차류 지표가 **정확히 0**」·「카운터 0」이 여러 줄 잡힌다(gate1~gate4). **설계 보장이 맞다**(CLAUDE.md §5.1 자기참조 유형 3): 90° 회전이 «틀 안의 정수 축 벡터»의 외적 하나라 정렬 오차가 구성상 0이고, f나 구도가 무엇이든 0이다. **그래서 이 0 자체는 아무것도 재지 않는다** — 그 사실을 여기 적는다. ⚠⚠ 다만 `CUBE_ALIGN_MAX_DEG` 문을 **거는 것은 맞다**: 이 문이 가르는 상대는 「같은 기제에 틀만 갈아 끼운 판」이고 그 판은 37.761244°로 **실제로 넘었다**(gate.falsification_executed — 제품을 고쳐 4칸을 빨갛게 만들어 봤다). 문의 판별력은 0이 아니라 그 37.76°가 준다.",
+    "one_point_zeros": "1점 픽스처의 `board_gap_deg` 0 넷도 보장이다 — **그것이 이 항목의 논지**다(정면 구도에서는 두 판이 같은 답을 내므로 거기서 시험하면 아무것도 못 잰다). 0이 결함이 아니라 **주장**인 자리다.",
+    "constants_snapshot_absent": "⚠ `constantsSnapshot()` / `metric_defs`가 없다 — **web2 라인 전체의 구멍**이고 이 원장만의 것이 아니다(90건 중 85건이 web2다). 그 기계는 `web/test/constants.ts`에만 있다. 이 회차는 상수를 `constants` 블록에 그대로 적는 것까지만 한다 — 기계를 세우는 것은 web2 전역 작업이라 범위 밖이다."
+  },
+  "pitfalls": [
+    "#88",
+    "#87",
+    "#86",
+    "#54",
+    "#42",
+    "#40"
+  ],
+  "pitfalls_note": "#88 — 화살표 크기를 px 상수로 안 적고 `cubeLayout.size`의 배수로 유도한다(큐브를 키우는 쪽과 결합이 코드에 보인다). #87 — 새 DOM을 안 만들었다(캔버스 그림쇠라 쌓임 맥락이 없다). 겹침은 «큐브 면 대역 vs 화살표 대역»으로 재고 그 값이 `arrows` 블록이다. #86 — 값 축(정렬 각)만이 아니라 **판 축**(어느 틀에서 돌았나)을 따로 잰다. 두 판의 포즈 차가 그 축이다. #54 — 새 숫자를 안 짓는다(TURN_ANIM_MS = FOLD_ANIM_MS) · 포즈를 움직이는 슬롯이 하나다. #42 — 착수 표의 번호를 완료 시 다시 대조했다(web2/NOTES.md 31-1 절)."
+}

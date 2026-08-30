@@ -5,9 +5,9 @@
 // 선 굵기·표식 크기는 화면 고정(배율로 나눈다).
 
 import type { App, ViewOffset } from './state'
-import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive, dimLabelPos } from './state'
+import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive, dimLabelPos, viewXf } from './state'
 import { vpMarks, project, projectSeg, groundAxes, horizonScreenY } from '../core/camera'
-import { cubeGeom } from '../core/viewcube'
+import { cubeGeom, cubeArrows } from '../core/viewcube'
 import { C } from '../core/constants'
 import { MAT, gradeOf, rng32, widthOf, widthOfMat } from '../core/material'
 import { overshootEnds } from '../core/overshoot'
@@ -209,7 +209,7 @@ export function draw2d(
 ) {
   const an = app.lift.an
   const dpr = window.devicePixelRatio || 1
-  const v = app.view
+  const v = viewXf(app)   // **보기 렌즈가 합성된 변환**(web2-31 2번) — 손대지 않았으면 app.view 그대로
   const is = 1 / v.s // 화면 고정 크기 보정
   const cw = ctx.canvas.width / dpr, ch = ctx.canvas.height / dpr
 
@@ -645,6 +645,18 @@ export function draw2d(
         const p = geom.corners[i]!.p
         if (k === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y)
       })
+      ctx.closePath()
+      ctx.fill()
+      ctx.stroke()
+    }
+    // 90° 화살표 넷(web2-31 1번) — 판정(`arrowHit`)과 같은 출처(`cubeArrows`).
+    // 큐브가 있을 때만 있다: 축 틀이 없으면 돌 곳도 없다(`cubeGeom`이 이미 그 문이다).
+    for (const a of cubeArrows(app.cubeLayout)) {
+      ctx.fillStyle = COL.cubeFace
+      ctx.strokeStyle = COL.cubeEdge
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      a.poly.forEach((p, k) => { if (k === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y) })
       ctx.closePath()
       ctx.fill()
       ctx.stroke()

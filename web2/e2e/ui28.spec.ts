@@ -246,7 +246,7 @@ test('28-3 ③ 화면 문구 — 「바꿈」으로 판정한 자리', async ({ 
 test('28-4 ④ 손 리본 순서 — 시점 → 자 → 연필 → 펜 → 지우개 둘 → 치수 → 롤통 → 면', async ({ page }) => {
   await boot(page)
   const order = await page.evaluate(() => {
-    const want = ['btn-draw-view', 'btn-snap', 'btn-pencil', 'btn-pen', 'btn-eraser-pencil',
+    const want = ['btn-draw-view', 'btn-zoom-fit', 'btn-lens', 'btn-snap', 'btn-pencil', 'btn-pen', 'btn-eraser-pencil',
       'btn-eraser-ink', 'dim-toggle', 'btn-roll', 'btn-face']
     const all = [...document.querySelectorAll('#sidebar-body button')]
       .filter(b => !(b as HTMLElement).closest('[hidden]'))
@@ -257,7 +257,7 @@ test('28-4 ④ 손 리본 순서 — 시점 → 자 → 연필 → 펜 → 지�
   expect(order.seen).toEqual(order.want)
   // 손가락 표적 크기 무회귀 — 실기기에서 통과한 항목이다(DEVICE-CHECK A5)
   const sizes = await page.evaluate(() =>
-    ['btn-snap', 'btn-pencil', 'btn-pen', 'btn-eraser-pencil', 'dim-toggle', 'btn-roll', 'btn-face', 'btn-draw-view']
+    ['btn-snap', 'btn-pencil', 'btn-pen', 'btn-eraser-pencil', 'dim-toggle', 'btn-roll', 'btn-face', 'btn-draw-view', 'btn-zoom-fit', 'btn-lens']
       .map(id => { const r = document.getElementById(id)!.getBoundingClientRect(); return { id, w: r.width, h: r.height } }))
   console.log(`[28-4] 표적: ${sizes.map(s => `${s.id} ${s.w.toFixed(0)}×${s.h.toFixed(0)}`).join(' · ')}`)
   for (const s of sizes) {

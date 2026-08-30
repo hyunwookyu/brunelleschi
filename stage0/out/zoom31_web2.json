@@ -1,0 +1,1524 @@
+{
+  "what": "web2-31 3번 — 돋보기(대상에 맞춰 화면을 채운다). **이동만 하고 렌즈를 안 건드린다**를 값 축·정체 축 둘로 잰다.",
+  "canonical_command": "LEDGER=1 npx vitest run test/zoom31.test.ts",
+  "why": "렌즈를 조절할 수 있게 되면 화각을 좁힌 뒤 다시 잡을 방법이 필요하다(라이노 Zoom Selected/Extents). ⚠ 그 «다시 잡기»가 화각을 몰래 바꾸면 31-2와 뒤섞이므로 **이동만** 한다.",
+  "design": {
+    "closed_form": "자세 q를 고정하면 「화면 안에 든다」가 카메라 위치에 대해 **선형 부등식**이 된다: docX ≥ x₀ ⟺ f·(aᵢ−a) ≥ (x₀−px)·(gᵢ+d). 거리 d·가로 a·세로 b로 쓰면 세 축이 갈라지고 각 축의 허용 구간 폭이 d의 **1차식**(기울기 (x₁−x₀)/f > 0)이라 폭이 0이 되는 d가 하나다. 답은 d* = max(d_a, d_b) — **반복 탐색도 수렴 판정도 없다.**",
+    "tight_axis": "그 d*에서 한 축은 여백이 정확히 지정값이고 다른 축은 남은 구간의 가운데다(그 축의 여백은 반드시 그 이상 — 대상의 종횡비가 화면과 다른 만큼).",
+    "near_plane": "**근평면이 유일한 제약이다**(`C.RENDER_NEAR_UNITS` — `render3d`가 실제로 자르는 그 값 · #54). d*가 그 여유보다 가까우면 «채우려면 대상 안으로 들어가야 하는» 구도이고, 그때는 근평면까지만 다가간다(`framable: false`). 여백이 커지는 대신 **아무것도 안 잘린다**.",
+    "two_branches": "작도 시점(`isDrawPose`)에서는 카메라가 아니라 **뷰 오프셋**을 옮긴다 — 거기서 카메라를 옮기면 2D 획과 3D의 1:1이 깨진다(`why_two_branches`가 그 어긋남을 px로 잰다). 판정 술어는 `dollyBy`·`panBy`와 **같은 것 하나**다(#54).",
+    "target": "「고른 것」 = `dimEdit ?? dimPick`(3D일 때만) · 없으면 전체. **획 다중 선택은 이 앱에 없다**(D-4로 확인) · 솔로·꺼진 겹은 이미 lifted에서 빠진다."
+  },
+  "fixtures": {
+    "W": 1200,
+    "H": 800,
+    "lenses": [
+      {
+        "key": "tele",
+        "label": "f/W 2.74 · 수평 화각 20.7°",
+        "f": 3286.335345,
+        "f_over_W": 2.738613,
+        "hfov_deg": 20.693541,
+        "fSource": "two-vp",
+        "vps": [
+          3600,
+          -3000
+        ],
+        "principal": {
+          "x": 600,
+          "y": 400
+        },
+        "lifted": 4,
+        "points": 8
+      },
+      {
+        "key": "mid",
+        "label": "f/W 1.00 · 수평 화각 53.1°",
+        "f": 1200,
+        "f_over_W": 1,
+        "hfov_deg": 53.130102,
+        "fSource": "two-vp",
+        "vps": [
+          1800,
+          -600
+        ],
+        "principal": {
+          "x": 600,
+          "y": 400
+        },
+        "lifted": 4,
+        "points": 8
+      },
+      {
+        "key": "wide",
+        "label": "f/W 0.32 · 수평 화각 114.3°",
+        "f": 387.298335,
+        "f_over_W": 0.322749,
+        "hfov_deg": 114.315739,
+        "fSource": "two-vp",
+        "vps": [
+          900,
+          100
+        ],
+        "principal": {
+          "x": 600,
+          "y": 400
+        },
+        "lifted": 4,
+        "points": 8
+      }
+    ],
+    "cells": [
+      {
+        "name": "고른 것이 하나 (획 한 개)",
+        "points": 2,
+        "view": {
+          "s": 1,
+          "ox": 0,
+          "oy": 0
+        }
+      },
+      {
+        "name": "고른 것이 여럿 (전체)",
+        "points": 8,
+        "view": {
+          "s": 1,
+          "ox": 0,
+          "oy": 0
+        }
+      },
+      {
+        "name": "화면평행으로 납작한 대상",
+        "points": 4,
+        "view": {
+          "s": 1,
+          "ox": 0,
+          "oy": 0
+        }
+      },
+      {
+        "name": "대상이 카메라 뒤",
+        "points": 8,
+        "view": {
+          "s": 1,
+          "ox": 0,
+          "oy": 0
+        }
+      },
+      {
+        "name": "팬·줌이 얹힌 화면",
+        "points": 8,
+        "view": {
+          "s": 1.4,
+          "ox": -160,
+          "oy": 90
+        }
+      }
+    ],
+    "framable_scope_note": "⚠⚠ **「면제는 초광각의 성질이다」로 넓히지 않는다**(리뷰어 [6]). `framable`은 `d*`와 `d_near`(= 근평면 1 − minG)의 비교이므로 **화각 · 대상의 깊이 대 가로 비 · 대상 크기 대 근평면 · 자세**가 함께 정한다. 이 회차가 잰 것은 «이 대상 · 이 자세 · 세 화각»이고, 그 안에서 f/W 2.74·1.00은 5/5 framable, f/W 0.32는 3칸 면제였다. **자세가 같이 정한다는 반례가 같은 회차 안에 있다**: e2e ②는 같은 f/W 0.32 구도인데 궤도 80px에서 framable이다. ⚠ 이론서 18.4가 이름 붙인 경계(60° = 0.87W · 90° = 0.5W)는 **한 점도 안 돌았다** — 면제가 어디서 시작하는지는 f/W 1.00과 0.32 사이가 비어 있고 `DEFERRED.md`에 있다.",
+    "lens_band_note": "**렌즈가 픽스처의 한 축이다**(#84 ㉡ · 리뷰어 [1][2]): 「채운다」가 가능한지 자체를 화각이 정한다. 이론서 18.4의 자(60° → d ≥ 0.87W · 90° → d ≥ 0.5W · 실무 관행 d ≥ W)로 읽으면 세 픽스처는 **망원 쪽 끝(20.7°) · 실무 관행선(53.1°) · 초광각 쪽 끝(114.3°)**이다. ⚠ 이름을 «실사용»처럼 짓지 않고 **값(f/W · 화각)으로** 적는다 — 어느 것이 실사용인지는 이 회차가 잰 것이 아니다.",
+    "d5_note": "지시가 이름 붙인 다섯 칸을 전부 만들었다(D-5): 하나 · 여럿 · 없음(게이트 ③) · **화면평행 납작** · **카메라 뒤**. 그리고 «팬·줌이 얹힌 화면»을 여섯째로 더했다 — 뷰 오프셋을 셈에서 빠뜨리면 거기서만 틀리기 때문이다(반증이 붙어 있다). ⚠ **렌즈가 여섯째 축이다**(#84 ㉡): 「채운다」가 가능한지 자체를 화각이 정하므로 대역의 양 끝(f/W 2.74 ↔ 0.32)에서 같은 팔을 돌린다."
+  },
+  "before_fix": {
+    "what": "**D-2 — 고치기 전.** 돋보기가 없던 자리(그 포즈 그대로)에서 잰 여백이다. `gate1_margin`의 각 행 `before`가 그 값이고, `after`가 누른 뒤다.",
+    "where": "gate1_margin/<lens>/rows[]/before"
+  },
+  "constants": {
+    "ZOOM_FIT_MARGIN": 0.1,
+    "ZOOM_FIT_MARGIN_TOL": 0.03,
+    "VIEW_S_MIN": 0.2,
+    "VIEW_S_MAX": 8,
+    "RENDER_NEAR_UNITS": 1
+  },
+  "constants_note": "새 임계는 여백 비 하나와 게이트 허용 하나뿐이고 **둘 다 비(比)다 — px가 아니다**(#88: px로 적으면 「그때 쓰던 화면 크기」와 말없이 묶인다). `VIEW_S_MIN/MAX`와 `RENDER_NEAR_UNITS`는 새 값이 아니라 `dollyBy`·`render3d.syncCamera`가 인라인으로 들고 있던 0.2·8·1을 꺼낸 것이다 (#54 — 돋보기가 같은 값을 읽어야 「채웠는데 앞이 잘린다」가 안 난다).",
+  "gate1_margin": {
+    "what": "카메라를 옮겨 채운 뒤의 실측 여백 — 좁은 축이 정확히 지정값이고 넓은 축은 그 이상이다.",
+    "margin_target": 0.1,
+    "tolerance": 0.03,
+    "render_near_units": 1,
+    "span_fold_rule": "`screen_span_fold`는 **문이 아니라 사실이다**(리뷰어 [6][12]). 1보다 크면 대상이 화면에서 커진 것이고, **1보다 작을 수 있다** — 누르기 전이 «화면 밖»이었던 칸이 그렇다(tele[4] 0.809568: 전 −45.32%). 그 칸에서 줄어드는 것이 옳다. 그래서 판정 문면은 「fold > 1」이 아니라 **「여백의 최솟값만으로 «작아졌다»를 말하지 않는다」**이고, 문은 여백 쪽이 진다.",
+    "framable_note": "`framable: false`는 **그 렌즈로는 그 여백이 물리적으로 안 나온다**는 뜻이다 — 채우려면 가장 가까운 점이 눈에 닿아야 한다. 그때는 근평면까지만 다가가므로 여백이 커지고 **아무것도 안 잘린다**. 초광각 칸이 그 자리다.",
+    "tele": {
+      "lens": "f/W 2.74 · 수평 화각 20.7°",
+      "f": 3286.335345,
+      "f_over_W": 2.738613,
+      "rows": [
+        {
+          "cell": "고른 것이 하나 (획 한 개)",
+          "points": 2,
+          "framable": true,
+          "before": {
+            "inside": true,
+            "margin_min": 0.177121
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.1,
+            "margin_x": 0.5,
+            "margin_y": 0.1
+          },
+          "tight_axis": "y",
+          "screen_span_fold": 1.291276,
+          "d_exact": 9.044445,
+          "d_near": 1.382094,
+          "d_used": 9.044445,
+          "nearest_depth": 8.66235,
+          "moved": 2.620716
+        },
+        {
+          "cell": "고른 것이 여럿 (전체)",
+          "points": 8,
+          "framable": true,
+          "before": {
+            "inside": false,
+            "margin_min": -0.133251
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.1,
+            "margin_x": 0.1,
+            "margin_y": 0.171195
+          },
+          "tight_axis": "x",
+          "screen_span_fold": 1.124248,
+          "d_exact": 11.493397,
+          "d_near": 3.906316,
+          "d_used": 11.493397,
+          "nearest_depth": 8.587082,
+          "moved": 1.114446
+        },
+        {
+          "cell": "화면평행으로 납작한 대상",
+          "points": 4,
+          "framable": true,
+          "before": {
+            "inside": true,
+            "margin_min": 0.2561
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.1,
+            "margin_x": 0.1,
+            "margin_y": 0.300207
+          },
+          "tight_axis": "x",
+          "screen_span_fold": 2.564054,
+          "d_exact": 20.12257,
+          "d_near": 1,
+          "d_used": 20.12257,
+          "nearest_depth": 20.12257,
+          "moved": 31.520638
+        },
+        {
+          "cell": "대상이 카메라 뒤",
+          "points": 8,
+          "framable": true,
+          "before": {
+            "inside": false,
+            "margin_min": null
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.1,
+            "margin_x": 0.1,
+            "margin_y": 0.220908
+          },
+          "tight_axis": "x",
+          "screen_span_fold": null,
+          "d_exact": 15.462094,
+          "d_near": 2.93373,
+          "d_used": 15.462094,
+          "nearest_depth": 13.528364,
+          "moved": 71.1949
+        },
+        {
+          "cell": "팬·줌이 얹힌 화면",
+          "points": 8,
+          "framable": true,
+          "before": {
+            "inside": false,
+            "margin_min": -0.453218
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.1,
+            "margin_x": 0.1,
+            "margin_y": 0.160585
+          },
+          "tight_axis": "x",
+          "screen_span_fold": 0.809568,
+          "d_exact": 15.79347,
+          "d_near": 3.906316,
+          "d_used": 15.79347,
+          "nearest_depth": 12.887155,
+          "moved": 4.307831
+        }
+      ]
+    },
+    "mid": {
+      "lens": "f/W 1.00 · 수평 화각 53.1°",
+      "f": 1200,
+      "f_over_W": 1,
+      "rows": [
+        {
+          "cell": "고른 것이 하나 (획 한 개)",
+          "points": 2,
+          "framable": true,
+          "before": {
+            "inside": true,
+            "margin_min": 0.383516
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.1,
+            "margin_x": 0.5,
+            "margin_y": 0.1
+          },
+          "tight_axis": "y",
+          "screen_span_fold": 3.807869,
+          "d_exact": 3.302564,
+          "d_near": 1.382094,
+          "d_used": 3.302564,
+          "nearest_depth": 2.92047,
+          "moved": 9.231737
+        },
+        {
+          "cell": "고른 것이 여럿 (전체)",
+          "points": 8,
+          "framable": true,
+          "before": {
+            "inside": true,
+            "margin_min": 0.285853
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.1,
+            "margin_x": 0.1,
+            "margin_y": 0.216628
+          },
+          "tight_axis": "x",
+          "screen_span_fold": 3.126262,
+          "d_exact": 5.328468,
+          "d_near": 4.112922,
+          "d_used": 5.328468,
+          "nearest_depth": 2.215546,
+          "moved": 7.514854
+        },
+        {
+          "cell": "화면평행으로 납작한 대상",
+          "points": 4,
+          "framable": true,
+          "before": {
+            "inside": true,
+            "margin_min": 0.225316
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.1,
+            "margin_x": 0.1,
+            "margin_y": 0.29941
+          },
+          "tight_axis": "x",
+          "screen_span_fold": 2.278792,
+          "d_exact": 7.970329,
+          "d_near": 1,
+          "d_used": 7.970329,
+          "nearest_depth": 7.970329,
+          "moved": 10.359365
+        },
+        {
+          "cell": "대상이 카메라 뒤",
+          "points": 8,
+          "framable": true,
+          "before": {
+            "inside": false,
+            "margin_min": null
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.1,
+            "margin_x": 0.1,
+            "margin_y": 0.247806
+          },
+          "tight_axis": "x",
+          "screen_span_fold": null,
+          "d_exact": 7.350687,
+          "d_near": 3.13109,
+          "d_used": 7.350687,
+          "nearest_depth": 5.219597,
+          "moved": 30.050967
+        },
+        {
+          "cell": "팬·줌이 얹힌 화면",
+          "points": 8,
+          "framable": true,
+          "before": {
+            "inside": true,
+            "margin_min": 0.007891
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.1,
+            "margin_x": 0.1,
+            "margin_y": 0.192983
+          },
+          "tight_axis": "x",
+          "screen_span_fold": 2.267344,
+          "d_exact": 7.069581,
+          "d_near": 4.112922,
+          "d_used": 7.069581,
+          "nearest_depth": 3.956659,
+          "moved": 5.947913
+        }
+      ]
+    },
+    "wide": {
+      "lens": "f/W 0.32 · 수평 화각 114.3°",
+      "f": 387.298335,
+      "f_over_W": 0.322749,
+      "rows": [
+        {
+          "cell": "고른 것이 하나 (획 한 개)",
+          "points": 2,
+          "framable": false,
+          "before": {
+            "inside": true,
+            "margin_min": 0.450879
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.171692,
+            "margin_x": 0.5,
+            "margin_y": 0.171692
+          },
+          "tight_axis": "y",
+          "screen_span_fold": 7.780104,
+          "d_exact": 1.065898,
+          "d_near": 1.382094,
+          "d_used": 1.382094,
+          "nearest_depth": 1,
+          "moved": 9.538387
+        },
+        {
+          "cell": "고른 것이 여럿 (전체)",
+          "points": 8,
+          "framable": false,
+          "before": {
+            "inside": true,
+            "margin_min": 0.425319
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.283901,
+            "margin_x": 0.283901,
+            "margin_y": 0.363297
+          },
+          "tight_axis": "x",
+          "screen_span_fold": 3.096432,
+          "d_exact": 2.859383,
+          "d_near": 3.859383,
+          "d_used": 3.859383,
+          "nearest_depth": 1,
+          "moved": 7.677853
+        },
+        {
+          "cell": "화면평행으로 납작한 대상",
+          "points": 4,
+          "framable": true,
+          "before": {
+            "inside": true,
+            "margin_min": 0.204492
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.1,
+            "margin_x": 0.1,
+            "margin_y": 0.300456
+          },
+          "tight_axis": "x",
+          "screen_span_fold": 2.358129,
+          "d_exact": 2.31499,
+          "d_near": 1,
+          "d_used": 2.31499,
+          "nearest_depth": 2.31499,
+          "moved": 3.836201
+        },
+        {
+          "cell": "대상이 카메라 뒤",
+          "points": 8,
+          "framable": true,
+          "before": {
+            "inside": false,
+            "margin_min": null
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.1,
+            "margin_x": 0.1,
+            "margin_y": 0.268182
+          },
+          "tight_axis": "x",
+          "screen_span_fold": null,
+          "d_exact": 3.377009,
+          "d_near": 2.655683,
+          "d_used": 3.377009,
+          "nearest_depth": 1.721326,
+          "moved": 13.113932
+        },
+        {
+          "cell": "팬·줌이 얹힌 화면",
+          "points": 8,
+          "framable": false,
+          "before": {
+            "inside": true,
+            "margin_min": 0.118731
+          },
+          "after": {
+            "inside": true,
+            "margin_min": 0.152957,
+            "margin_x": 0.177671,
+            "margin_y": 0.152957
+          },
+          "tight_axis": "y",
+          "screen_span_fold": 4.35281,
+          "d_exact": 3.379039,
+          "d_near": 3.859383,
+          "d_used": 3.859383,
+          "nearest_depth": 1,
+          "moved": 7.751915
+        }
+      ]
+    }
+  },
+  "gate2_lens_fixed": {
+    "what": "**이동만 한다** — 카메라 갈래는 `pose.p` 하나만 움직인다. f·fSource·주점·화면 배율이 그대로다.",
+    "tele": {
+      "before": {
+        "f": 3286.335345030997,
+        "fSource": "two-vp",
+        "px": 600,
+        "py": 400
+      },
+      "after": {
+        "f": 3286.335345030997,
+        "fSource": "two-vp",
+        "px": 600,
+        "py": 400
+      },
+      "rows": [
+        {
+          "cell": "고른 것이 하나 (획 한 개)",
+          "f": 3286.335345030997,
+          "fSource": "two-vp",
+          "view_s_before": 1,
+          "view_s_after": 1,
+          "pose_moved": 2.620716
+        },
+        {
+          "cell": "고른 것이 여럿 (전체)",
+          "f": 3286.335345030997,
+          "fSource": "two-vp",
+          "view_s_before": 1,
+          "view_s_after": 1,
+          "pose_moved": 1.114446
+        },
+        {
+          "cell": "화면평행으로 납작한 대상",
+          "f": 3286.335345030997,
+          "fSource": "two-vp",
+          "view_s_before": 1,
+          "view_s_after": 1,
+          "pose_moved": 31.520638
+        },
+        {
+          "cell": "대상이 카메라 뒤",
+          "f": 3286.335345030997,
+          "fSource": "two-vp",
+          "view_s_before": 1,
+          "view_s_after": 1,
+          "pose_moved": 71.1949
+        },
+        {
+          "cell": "팬·줌이 얹힌 화면",
+          "f": 3286.335345030997,
+          "fSource": "two-vp",
+          "view_s_before": 1.4,
+          "view_s_after": 1.4,
+          "pose_moved": 4.307831
+        }
+      ]
+    },
+    "mid": {
+      "before": {
+        "f": 1200,
+        "fSource": "two-vp",
+        "px": 600,
+        "py": 400
+      },
+      "after": {
+        "f": 1200,
+        "fSource": "two-vp",
+        "px": 600,
+        "py": 400
+      },
+      "rows": [
+        {
+          "cell": "고른 것이 하나 (획 한 개)",
+          "f": 1200,
+          "fSource": "two-vp",
+          "view_s_before": 1,
+          "view_s_after": 1,
+          "pose_moved": 9.231737
+        },
+        {
+          "cell": "고른 것이 여럿 (전체)",
+          "f": 1200,
+          "fSource": "two-vp",
+          "view_s_before": 1,
+          "view_s_after": 1,
+          "pose_moved": 7.514854
+        },
+        {
+          "cell": "화면평행으로 납작한 대상",
+          "f": 1200,
+          "fSource": "two-vp",
+          "view_s_before": 1,
+          "view_s_after": 1,
+          "pose_moved": 10.359365
+        },
+        {
+          "cell": "대상이 카메라 뒤",
+          "f": 1200,
+          "fSource": "two-vp",
+          "view_s_before": 1,
+          "view_s_after": 1,
+          "pose_moved": 30.050967
+        },
+        {
+          "cell": "팬·줌이 얹힌 화면",
+          "f": 1200,
+          "fSource": "two-vp",
+          "view_s_before": 1.4,
+          "view_s_after": 1.4,
+          "pose_moved": 5.947913
+        }
+      ]
+    },
+    "wide": {
+      "before": {
+        "f": 387.2983346207417,
+        "fSource": "two-vp",
+        "px": 600,
+        "py": 400
+      },
+      "after": {
+        "f": 387.2983346207417,
+        "fSource": "two-vp",
+        "px": 600,
+        "py": 400
+      },
+      "rows": [
+        {
+          "cell": "고른 것이 하나 (획 한 개)",
+          "f": 387.2983346207417,
+          "fSource": "two-vp",
+          "view_s_before": 1,
+          "view_s_after": 1,
+          "pose_moved": 9.538387
+        },
+        {
+          "cell": "고른 것이 여럿 (전체)",
+          "f": 387.2983346207417,
+          "fSource": "two-vp",
+          "view_s_before": 1,
+          "view_s_after": 1,
+          "pose_moved": 7.677853
+        },
+        {
+          "cell": "화면평행으로 납작한 대상",
+          "f": 387.2983346207417,
+          "fSource": "two-vp",
+          "view_s_before": 1,
+          "view_s_after": 1,
+          "pose_moved": 3.836201
+        },
+        {
+          "cell": "대상이 카메라 뒤",
+          "f": 387.2983346207417,
+          "fSource": "two-vp",
+          "view_s_before": 1,
+          "view_s_after": 1,
+          "pose_moved": 13.113932
+        },
+        {
+          "cell": "팬·줌이 얹힌 화면",
+          "f": 387.2983346207417,
+          "fSource": "two-vp",
+          "view_s_before": 1.4,
+          "view_s_after": 1.4,
+          "pose_moved": 7.751915
+        }
+      ]
+    }
+  },
+  "gate3_empty": {
+    "what": "아무것도 없으면 아무 일도 안 한다 — 예외를 던지지 않고 포즈·뷰가 한 톨도 안 움직인다",
+    "empty_doc": {
+      "mode": "none",
+      "pose_unchanged": true,
+      "view_unchanged": true
+    },
+    "construction_only": {
+      "lifted": 0,
+      "mode": "none"
+    },
+    "pure_functions_null": [
+      "fitPose",
+      "fitView",
+      "marginOf"
+    ],
+    "degenerate_single_point": {
+      "dist_before": 13.038405,
+      "dist_after": 13.038405
+    }
+  },
+  "gate4_target": {
+    "what": "「고른 것」의 정본 — `dimEdit ?? dimPick`이고 그것이 3D일 때만. 솔로·꺼진 겹은 이미 lifted에서 빠지므로 「전체」가 자동으로 그 범위다.",
+    "all_count": 4,
+    "picked_count": 1,
+    "picked_stroke_id": 6,
+    "picked_scope": "picked",
+    "not_lifted_falls_back": "all",
+    "pose_gap_picked_vs_all": 2.385829,
+    "screen_span_fold": 1.225494,
+    "picked_margin_x": 0.5
+  },
+  "margin_operating_points": {
+    "what": "**#12 — 동작점 하나로 말하지 않는다.** 여백을 넷 × 렌즈 셋 × 칸 다섯으로 훑는다.",
+    "what_it_measures": "⚠⚠ **framable 칸의 「시킨 값 = 실측」은 아무것도 안 잰다** — 닫힌 식의 구성 보장이고 `selfcheck_flags_known.exact_margin`이 적은 그 0.100000과 같은 것이다(리뷰어 [5]). **이 훑기가 실제로 재는 것은 못 채우는 칸이다**: 거기서는 값이 시킨 대로 안 나오고 (f/W 0.32의 세 칸) 그 흩어짐이 곧 「어느 대역에서 문이 성립하는가」의 지도다. 그리고 **단조**(더 넓게 시키면 여백이 안 준다)는 framable·비framable 칸 **전부**에서 잰다 — 그쪽은 보장이 아니라 클램프가 낀 경로라서 확인할 값이 있다.",
+    "tele": [
+      {
+        "asked": 0.05,
+        "framable": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "got": [
+          0.05,
+          0.05,
+          0.05,
+          0.05,
+          0.05
+        ]
+      },
+      {
+        "asked": 0.1,
+        "framable": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "got": [
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1
+        ]
+      },
+      {
+        "asked": 0.15,
+        "framable": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "got": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ]
+      },
+      {
+        "asked": 0.2,
+        "framable": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "got": [
+          0.2,
+          0.2,
+          0.2,
+          0.2,
+          0.2
+        ]
+      }
+    ],
+    "mid": [
+      {
+        "asked": 0.05,
+        "framable": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "got": [
+          0.05,
+          0.05,
+          0.05,
+          0.05,
+          0.05
+        ]
+      },
+      {
+        "asked": 0.1,
+        "framable": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "got": [
+          0.1,
+          0.1,
+          0.1,
+          0.1,
+          0.1
+        ]
+      },
+      {
+        "asked": 0.15,
+        "framable": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "got": [
+          0.15,
+          0.15,
+          0.15,
+          0.15,
+          0.15
+        ]
+      },
+      {
+        "asked": 0.2,
+        "framable": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "got": [
+          0.2,
+          0.2,
+          0.2,
+          0.2,
+          0.2
+        ]
+      }
+    ],
+    "wide": [
+      {
+        "asked": 0.05,
+        "framable": [
+          false,
+          false,
+          true,
+          true,
+          false
+        ],
+        "got": [
+          0.160863,
+          0.283901,
+          0.05,
+          0.05,
+          0.134848
+        ]
+      },
+      {
+        "asked": 0.1,
+        "framable": [
+          false,
+          false,
+          true,
+          true,
+          false
+        ],
+        "got": [
+          0.171692,
+          0.283901,
+          0.1,
+          0.1,
+          0.152957
+        ]
+      },
+      {
+        "asked": 0.15,
+        "framable": [
+          false,
+          false,
+          true,
+          true,
+          false
+        ],
+        "got": [
+          0.182521,
+          0.283901,
+          0.15,
+          0.15,
+          0.171067
+        ]
+      },
+      {
+        "asked": 0.2,
+        "framable": [
+          true,
+          false,
+          true,
+          true,
+          true
+        ],
+        "got": [
+          0.2,
+          0.283901,
+          0.2,
+          0.2,
+          0.2
+        ]
+      }
+    ]
+  },
+  "draw_branch_lock": {
+    "what": "**작도 갈래에서 지켜야 하는 것은 «화면 배율이 안 변한다»가 아니라 «종이와 3D의 1:1»이다**(리뷰어 [3]). 뷰 오프셋은 2D 획과 3D 사영을 **같은 닮음**으로 옮기므로 그 1:1이 구성상 산다 — 그래서 화각을 «몰래» 바꾼 것이 아니다. **같은 배수를 렌즈(f)로 넣은 판**은 그 자리에서 깨진다.",
+    "view_s_after": 3.989557,
+    "screen_f_fold": 3.989557,
+    "ink_drift_px": {
+      "before": 0,
+      "after_view_fit": 0,
+      "lens_board": 719.094238
+    },
+    "zero_is_guarantee": "⚠⚠ **0.000000 px는 «측정»이 아니라 구성 보장이다** — 이 저장소가 자기참조의 대표 사례로 이미 못 박은 그 값이다(CLAUDE.md §2 D-3: 「작도 시점 0.000000 px는 f가 무엇이든 그렇다」 · §5.1 유형 3 · 리뷰어 [1]). **그래서 이 0 자체는 아무것도 안 잰다** — 문의 판별력은 **719.094 px**가 준다. ⚠ 그 「f가 무엇이든 0이다」와 이 반증이 어긋나지 않는 이유: 그 문장은 **재리프팅**을 지난 뒤의 이야기다(f가 바뀌면 사슬이 2D에서 3D를 다시 올리므로 사영이 다시 획 위에 앉는다). 여기 반증 판은 **이미 올라간 3D를 그대로 두고 f만** 바꾼 것이라 그 되돌림이 없다 — 그것이 곧 「보기 렌즈」가 하는 일이고(31-2), 그래서 이 판이 그 자리의 대역이다.",
+    "note": "⚠⚠ **31-2가 이 예고를 밟았고 답은 「안 쓴다」였다**(2026-08-31 · web2-31 2번 2차 리뷰어 [9] · #42 ⑥). 초판의 문장은 「31-2가 보기 렌즈(viewF)를 들이면 그 값이 이 문을 넘는 쪽이다」였는데, **보기 렌즈로는 이 문을 넘는 판을 만들 수 없다**: 31-2는 렌즈를 «문서 → 화면» 닮음에 합성했으므로(`state.viewXf`) 종이의 2D 잉크와 3D 사영이 **같은 배율로 함께** 움직여 1:1이 구성상 유지된다(실측: 렌즈를 바꾼 상태의 화면 왕복·잉크 심판 **0** — `lens31_web2.json` `gate4_principle_d`). 여기 남는 719.094는 **해의 f를 바꾼 판**의 값이고 그것이 곧 폐기된 「렌즈 슬라이더」다. 그래서 이 팔은 `viewF`를 문으로 **안 쓴다** — 가정 원장의 정정은 AS-C132·AS-C134."
+  },
+  "view_scale_clamp": {
+    "what": "작도 갈래도 `C.VIEW_S_MIN/MAX` 대역을 쓴다 — 상한에 걸리면 **채우다 만다**. 그때도 화면 안이고 가운데에 온다(못 채운 것은 여백이 커지는 쪽으로만 틀린다).",
+    "view_s": 8,
+    "clamp": {
+      "min": 0.2,
+      "max": 8
+    },
+    "margin_min": 0.49917,
+    "inside": true
+  },
+  "gate5_two_branches": {
+    "what": "판정은 `isDrawPose` 하나이고 `dollyBy`·`panBy`와 **같은 술어**다(#54). 어느 갈래든 f·fSource는 안 바뀐다.",
+    "draw_pose": {
+      "mode": "view",
+      "view_after": {
+        "s": 3.989557,
+        "ox": -1394.827774,
+        "oy": -1354.036528
+      },
+      "pose_unchanged": true,
+      "margin_min": 0.1
+    },
+    "orbited": {
+      "mode": "pose",
+      "view_unchanged": true,
+      "margin_min": 0.1
+    }
+  },
+  "why_two_branches": {
+    "what": "작도 시점의 「이동」이 왜 뷰 오프셋인가 — 카메라를 옮기면 2D 획(문서 좌표)과 3D 사영이 갈린다. 그 어긋남을 px로 잰다.",
+    "drift_px_at_draw_pose": 0,
+    "drift_px_after_camera_move": 368.088115,
+    "note": "뷰 오프셋은 2D·3D를 **같이** 옮기므로(둘 다 `view`를 탄다) 이 어긋남이 구성상 0이다."
+  },
+  "falsify_a_no_margin": {
+    "what": "**여백을 안 두는 판** — `margin`을 0으로 두고 같은 식을 돌린다. 「채운다」는 만족하지만 게이트 ①의 값 축이 넘는다.",
+    "red_gate": "gate1_margin",
+    "board_framable_note": "⚠⚠ `board_framable: false`인 칸에서는 **두 판이 «둘 다 근평면에 걸려» 거의 같은 자리에 선다** — 여백을 0으로 시키든 0.10으로 시키든 갈 수 있는 데까지 갔기 때문이다. **그래서 그 칸에서 돌린 반증은 아무것도 안 잰다**(#86 ㉠). ⚠ 「같은 자리」는 **정확히 같지 않다**(리뷰어 [2]): 여백이 가로놓임(a·b)을 바꾸므로 wide[0] 0.150034 ↔ 제품 0.171692 · wide[4] 0.116738 ↔ 제품 0.152957로 조금 다르고, **wide[4]는 그 차 때문에 우연히 문 안(11.67%)에 든다** — 반증이 «통과»한 것이 아니라 그 칸이 반증을 못 재는 칸이라는 증거다. 문은 그래서 그 칸에 안 걸고, 대신 **판이 실제로 움직이는 칸이 세 렌즈 모두에 있다**(f/W 2.74·1.00은 다섯 칸 전부)는 것을 값으로 낸다.",
+    "tele": [
+      {
+        "cell": "고른 것이 하나 (획 한 개)",
+        "board_framable": true,
+        "margin_min": 0,
+        "gap_from_target": 0.1,
+        "passes": false
+      },
+      {
+        "cell": "고른 것이 여럿 (전체)",
+        "board_framable": true,
+        "margin_min": 0,
+        "gap_from_target": 0.1,
+        "passes": false
+      },
+      {
+        "cell": "화면평행으로 납작한 대상",
+        "board_framable": true,
+        "margin_min": 0,
+        "gap_from_target": 0.1,
+        "passes": false
+      },
+      {
+        "cell": "대상이 카메라 뒤",
+        "board_framable": true,
+        "margin_min": 0,
+        "gap_from_target": 0.1,
+        "passes": false
+      },
+      {
+        "cell": "팬·줌이 얹힌 화면",
+        "board_framable": true,
+        "margin_min": 0,
+        "gap_from_target": 0.1,
+        "passes": false
+      }
+    ],
+    "tele_margin_min": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "mid": [
+      {
+        "cell": "고른 것이 하나 (획 한 개)",
+        "board_framable": true,
+        "margin_min": 0,
+        "gap_from_target": 0.1,
+        "passes": false
+      },
+      {
+        "cell": "고른 것이 여럿 (전체)",
+        "board_framable": true,
+        "margin_min": 0,
+        "gap_from_target": 0.1,
+        "passes": false
+      },
+      {
+        "cell": "화면평행으로 납작한 대상",
+        "board_framable": true,
+        "margin_min": 0,
+        "gap_from_target": 0.1,
+        "passes": false
+      },
+      {
+        "cell": "대상이 카메라 뒤",
+        "board_framable": true,
+        "margin_min": 0,
+        "gap_from_target": 0.1,
+        "passes": false
+      },
+      {
+        "cell": "팬·줌이 얹힌 화면",
+        "board_framable": true,
+        "margin_min": 0,
+        "gap_from_target": 0.1,
+        "passes": false
+      }
+    ],
+    "mid_margin_min": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "wide": [
+      {
+        "cell": "고른 것이 하나 (획 한 개)",
+        "board_framable": false,
+        "margin_min": 0.150034,
+        "gap_from_target": 0.050034,
+        "passes": false
+      },
+      {
+        "cell": "고른 것이 여럿 (전체)",
+        "board_framable": false,
+        "margin_min": 0.283901,
+        "gap_from_target": 0.183901,
+        "passes": false
+      },
+      {
+        "cell": "화면평행으로 납작한 대상",
+        "board_framable": true,
+        "margin_min": 0,
+        "gap_from_target": 0.1,
+        "passes": false
+      },
+      {
+        "cell": "대상이 카메라 뒤",
+        "board_framable": true,
+        "margin_min": 0,
+        "gap_from_target": 0.1,
+        "passes": false
+      },
+      {
+        "cell": "팬·줌이 얹힌 화면",
+        "board_framable": false,
+        "margin_min": 0.116738,
+        "gap_from_target": 0.016738,
+        "passes": true
+      }
+    ],
+    "wide_margin_min": [
+      0.150034,
+      0.283901,
+      0,
+      0,
+      0.116738
+    ]
+  },
+  "falsify_b_lens": {
+    "what": "**렌즈를 같이 건드리는 판** — 카메라를 안 옮기고 화면 배율로 채운다. 화면에 들어가는 초점거리는 `an.f · view.s`이므로(render3d.syncCamera) 이것이 곧 화각 변경이다. ⚠⚠ **여백만 재는 팔은 이 판을 통과시킨다**(값 축 전부 초록) — 가르는 것은 정체 축뿐이다.",
+    "red_gate": "gate2_lens_fixed",
+    "note_behind": "「대상이 카메라 뒤」 칸은 이 판에 답이 아예 없다(사영이 없으므로 배율로는 못 채운다) — 반증 ⓒ가 그 값이다.",
+    "note_clamped": "`board_clamped: true`는 화면 배율이 `C.VIEW_S_MIN/MAX` 끝에 걸려 판이 끝까지 못 간 칸이다(초광각에서 시선과 나란한 획이 그렇다) — 거기서는 값 축도 안 채워지므로 문을 안 건다.",
+    "tele": [
+      {
+        "cell": "고른 것이 하나 (획 한 개)",
+        "board_clamped": false,
+        "value_axis": {
+          "margin_min": 0.1,
+          "passes": true
+        },
+        "identity_axis": {
+          "camera_moved": 0,
+          "screen_f_before": 3286.335345,
+          "screen_f_after": 4243.59884,
+          "screen_f_fold": 1.291286
+        }
+      },
+      {
+        "cell": "고른 것이 여럿 (전체)",
+        "board_clamped": false,
+        "value_axis": {
+          "margin_min": 0.1,
+          "passes": true
+        },
+        "identity_axis": {
+          "camera_moved": 0,
+          "screen_f_before": 3286.335345,
+          "screen_f_after": 3803.821532,
+          "screen_f_fold": 1.157466
+        }
+      },
+      {
+        "cell": "화면평행으로 납작한 대상",
+        "board_clamped": false,
+        "value_axis": {
+          "margin_min": 0.1,
+          "passes": true
+        },
+        "identity_axis": {
+          "camera_moved": 0,
+          "screen_f_before": 3286.335345,
+          "screen_f_after": 8426.342166,
+          "screen_f_fold": 2.564054
+        }
+      },
+      {
+        "cell": "팬·줌이 얹힌 화면",
+        "board_clamped": false,
+        "value_axis": {
+          "margin_min": 0.1,
+          "passes": true
+        },
+        "identity_axis": {
+          "camera_moved": 0,
+          "screen_f_before": 4600.869483,
+          "screen_f_after": 3803.821532,
+          "screen_f_fold": 0.826761
+        }
+      }
+    ],
+    "tele_screen_f_fold": [
+      1.291286,
+      1.157466,
+      2.564054,
+      0.826761
+    ],
+    "mid": [
+      {
+        "cell": "고른 것이 하나 (획 한 개)",
+        "board_clamped": false,
+        "value_axis": {
+          "margin_min": 0.1,
+          "passes": true
+        },
+        "identity_axis": {
+          "camera_moved": 0,
+          "screen_f_before": 1200,
+          "screen_f_after": 4569.44984,
+          "screen_f_fold": 3.807875
+        }
+      },
+      {
+        "cell": "고른 것이 여럿 (전체)",
+        "board_clamped": false,
+        "value_axis": {
+          "margin_min": 0.1,
+          "passes": true
+        },
+        "identity_axis": {
+          "camera_moved": 0,
+          "screen_f_before": 1200,
+          "screen_f_after": 3992.395062,
+          "screen_f_fold": 3.326996
+        }
+      },
+      {
+        "cell": "화면평행으로 납작한 대상",
+        "board_clamped": false,
+        "value_axis": {
+          "margin_min": 0.1,
+          "passes": true
+        },
+        "identity_axis": {
+          "camera_moved": 0,
+          "screen_f_before": 1200,
+          "screen_f_after": 2734.549881,
+          "screen_f_fold": 2.278792
+        }
+      },
+      {
+        "cell": "팬·줌이 얹힌 화면",
+        "board_clamped": false,
+        "value_axis": {
+          "margin_min": 0.1,
+          "passes": true
+        },
+        "identity_axis": {
+          "camera_moved": 0,
+          "screen_f_before": 1680,
+          "screen_f_after": 3992.395062,
+          "screen_f_fold": 2.376426
+        }
+      }
+    ],
+    "mid_screen_f_fold": [
+      3.807875,
+      3.326996,
+      2.278792,
+      2.376426
+    ],
+    "wide": [
+      {
+        "cell": "고른 것이 하나 (획 한 개)",
+        "board_clamped": true,
+        "value_axis": {
+          "margin_min": 0.190581,
+          "passes": false
+        },
+        "identity_axis": {
+          "camera_moved": 0,
+          "screen_f_before": 387.298335,
+          "screen_f_after": 3098.386677,
+          "screen_f_fold": 8
+        }
+      },
+      {
+        "cell": "고른 것이 여럿 (전체)",
+        "board_clamped": true,
+        "value_axis": {
+          "margin_min": 0.18926,
+          "passes": false
+        },
+        "identity_axis": {
+          "camera_moved": 0,
+          "screen_f_before": 387.298335,
+          "screen_f_after": 3098.386677,
+          "screen_f_fold": 8
+        }
+      },
+      {
+        "cell": "화면평행으로 납작한 대상",
+        "board_clamped": false,
+        "value_axis": {
+          "margin_min": 0.1,
+          "passes": true
+        },
+        "identity_axis": {
+          "camera_moved": 0,
+          "screen_f_before": 387.298335,
+          "screen_f_after": 913.299377,
+          "screen_f_fold": 2.358129
+        }
+      },
+      {
+        "cell": "팬·줌이 얹힌 화면",
+        "board_clamped": true,
+        "value_axis": {
+          "margin_min": 0.18926,
+          "passes": false
+        },
+        "identity_axis": {
+          "camera_moved": 0,
+          "screen_f_before": 542.217668,
+          "screen_f_after": 3098.386677,
+          "screen_f_fold": 5.714286
+        }
+      }
+    ],
+    "wide_screen_f_fold": [
+      8,
+      8,
+      2.358129,
+      5.714286
+    ]
+  },
+  "falsify_c_behind": {
+    "what": "카메라 뒤의 대상은 **화면 배율로는 못 잡는다**(사영이 없다) — 카메라를 옮기는 갈래만 답을 낸다. 두 갈래가 같은 것이 아니라는 증거다.",
+    "tele": {
+      "fitView_null": true,
+      "fitPose_margin": 0.1,
+      "framable": true
+    },
+    "mid": {
+      "fitView_null": true,
+      "fitPose_margin": 0.1,
+      "framable": true
+    },
+    "wide": {
+      "fitView_null": true,
+      "fitPose_margin": 0.1,
+      "framable": true
+    }
+  },
+  "falsify_d_sphere": {
+    "what": "**「그럴듯한 틀린 구현」** — 대상의 경계 구를 시야뿔에 넣는 흔한 방법을 나란히 돌린다. 반증 ⓐ·ⓑ가 «같은 식에 다른 인자»인 것과 달리 이쪽은 **다른 식**이므로, 게이트 ①이 「닫힌 식의 자기 확인」이 아니라는 증거가 된다(리뷰어 [5]). ⚠ 재는 자(`marginOf`)는 어느 판에서도 같다 — 그것은 `camera.ts`의 `project` 하나를 쓰고 맞춤의 대수(`fitPlan`)를 한 줄도 안 읽는다.",
+    "what_it_does_not_cover": "⚠⚠ **덮는 방향이 하나다**(리뷰어 [7]) — 구 경계 판은 **구성상 더 물러나는** 판이라 15칸 전부 `inside: true`이고 여백이 전부 목표 **이상**이다. 즉 이 판이 잡는 오식은 **«과여백» 방향**뿐이고, «덜 채워 잘리는» 방향의 오식은 여전히 ⓐ(같은 식에 인자 0)만 잡는다. 그 방향의 «다른 식» 반증은 이 회차에 없다 — `DEFERRED.md`.",
+    "not_caught": "**못 잡는 칸 3/15**(#26 · 리뷰어 [11]): 「고른 것이 하나」가 **세 렌즈 모두**에서 우연히 문 안이다 (tele 0.120123 · mid 0.104922 · wide 0.121044). 그 획이 짧아 구와 상자가 거의 같기 때문이다.",
+    "red_gate": "gate1_margin",
+    "tele": [
+      {
+        "cell": "고른 것이 하나 (획 한 개)",
+        "sphere_r": 0.96,
+        "d": 9.905635,
+        "margin_min": 0.120123,
+        "inside": true,
+        "passes": true
+      },
+      {
+        "cell": "고른 것이 여럿 (전체)",
+        "sphere_r": 2.93909,
+        "d": 30.326612,
+        "margin_min": 0.25142,
+        "inside": true,
+        "passes": false
+      },
+      {
+        "cell": "화면평행으로 납작한 대상",
+        "sphere_r": 3.097751,
+        "d": 31.963745,
+        "margin_min": 0.248183,
+        "inside": true,
+        "passes": false
+      },
+      {
+        "cell": "대상이 카메라 뒤",
+        "sphere_r": 2.93909,
+        "d": 30.326612,
+        "margin_min": 0.307639,
+        "inside": true,
+        "passes": false
+      },
+      {
+        "cell": "팬·줌이 얹힌 화면",
+        "sphere_r": 2.93909,
+        "d": 193.199032,
+        "margin_min": 0.158276,
+        "inside": true,
+        "passes": false
+      }
+    ],
+    "tele_margin_min": [
+      0.120123,
+      0.25142,
+      0.248183,
+      0.307639,
+      0.158276
+    ],
+    "mid": [
+      {
+        "cell": "고른 것이 하나 (획 한 개)",
+        "sphere_r": 0.96,
+        "d": 3.725802,
+        "margin_min": 0.104922,
+        "inside": true,
+        "passes": true
+      },
+      {
+        "cell": "고른 것이 여럿 (전체)",
+        "sphere_r": 3.188132,
+        "d": 12.373278,
+        "margin_min": 0.278129,
+        "inside": true,
+        "passes": false
+      },
+      {
+        "cell": "화면평행으로 납작한 대상",
+        "sphere_r": 3.361579,
+        "d": 13.046433,
+        "margin_min": 0.255632,
+        "inside": true,
+        "passes": false
+      },
+      {
+        "cell": "대상이 카메라 뒤",
+        "sphere_r": 3.188132,
+        "d": 12.373278,
+        "margin_min": 0.288308,
+        "inside": true,
+        "passes": false
+      },
+      {
+        "cell": "팬·줌이 얹힌 화면",
+        "sphere_r": 3.188132,
+        "d": 76.581548,
+        "margin_min": 0.157629,
+        "inside": true,
+        "passes": false
+      }
+    ],
+    "mid_margin_min": [
+      0.104922,
+      0.278129,
+      0.255632,
+      0.288308,
+      0.157629
+    ],
+    "wide": [
+      {
+        "cell": "고른 것이 하나 (획 한 개)",
+        "sphere_r": 0.96,
+        "d": 1.507183,
+        "margin_min": 0.121044,
+        "inside": true,
+        "passes": true
+      },
+      {
+        "cell": "고른 것이 여럿 (전체)",
+        "sphere_r": 2.869093,
+        "d": 4.504425,
+        "margin_min": 0.305795,
+        "inside": true,
+        "passes": false
+      },
+      {
+        "cell": "화면평행으로 납작한 대상",
+        "sphere_r": 3.023601,
+        "d": 4.746999,
+        "margin_min": 0.30493,
+        "inside": true,
+        "passes": false
+      },
+      {
+        "cell": "대상이 카메라 뒤",
+        "sphere_r": 2.869093,
+        "d": 4.504425,
+        "margin_min": 0.257834,
+        "inside": true,
+        "passes": false
+      },
+      {
+        "cell": "팬·줌이 얹힌 화면",
+        "sphere_r": 2.869093,
+        "d": 22.408335,
+        "margin_min": 0.152452,
+        "inside": true,
+        "passes": false
+      }
+    ],
+    "wide_margin_min": [
+      0.121044,
+      0.305795,
+      0.30493,
+      0.257834,
+      0.152452
+    ]
+  },
+  "view_offset": {
+    "what": "팬·줌이 얹힌 화면에서도 같은 여백이 나온다 — 화면 사각형을 문서 좌표로 되돌리는 자리가 `fitRectDoc` 하나다(#54).",
+    "view": {
+      "s": 1.4,
+      "ox": -160,
+      "oy": 90
+    },
+    "margin_with_view": 0.1,
+    "falsification": {
+      "ignoring_view_inside": false,
+      "ignoring_view_margin_min": -0.272827
+    }
+  },
+  "gate": {
+    "for": "web2-31 3번 — 여백 10%±3% · 렌즈 불변 · 빈 상태 무동작",
+    "registered": [
+      "고른 대상이 화면 안에 전부 들어오고, 좁은 축의 여백이 10% ± 3% — **f/W 2.74와 1.00에서 다섯 칸 전부**",
+      "어느 렌즈에서든 근평면을 안 침범한다 — 못 채우는 구도에서는 여백이 커질 뿐 잘리지 않는다",
+      "렌즈 값이 안 변한다 — f·fSource·주점이 전후 동일하고 카메라 갈래는 화면 배율도 안 건드린다",
+      "아무것도 없을 때 눌러도 안 깨진다 (빈 문서 · 작도 획만 · 빈 목록 · 한 점으로 뭉친 대상)",
+      "「고른 것」이 있으면 그것, 없으면 전체 — 둘이 실제로 다른 자리로 가고 고른 것이 더 크게 보인다",
+      "갈래 둘이 각자의 것만 움직인다(작도 시점 = 화면 · 궤도 뒤 = 카메라)",
+      "**작도 갈래는 종이와 3D의 1:1을 유지한다** — 그 갈래에서 「렌즈를 안 바꿨다」의 뜻이 그것이다(`draw_branch_lock`)",
+      "못 채우는 구도에서도 근평면을 안 침범하고 화면 안이다 — 여백이 **커지는 쪽으로만** 틀린다"
+    ],
+    "reachability": "**두 축이 각각 다른 판에서 빨개진다**(#86). ⓐ 「여백을 안 두는 판」(margin 0)은 **값 축**을 넘는다(문 10±3% 밖). ⓑ 「렌즈를 같이 건드리는 판」(화면 배율로 채우기)은 **값 축이 초록**이고(여백 정확히 10.000000%) **정체 축**에서 갈린다 — 카메라 이동 0, 화면 f(= an.f·view.s)가 배수만큼 바뀐다. ⚠ 그래서 「여백만 재는 팔」은 이 항목의 주장을 **안 잰다**.",
+    "reachability_value": [
+      1.291286,
+      1.157466,
+      2.564054,
+      0.826761
+    ],
+    "reachability_source": "falsify_b_lens/tele_screen_f_fold",
+    "reachability_value_secondary": [
+      0.120123,
+      0.25142,
+      0.248183,
+      0.307639,
+      0.158276
+    ],
+    "reachability_source_secondary": "falsify_d_sphere/tele_margin_min"
+  },
+  "selfcheck_flags_known": {
+    "exact_margin": "⚠ f/W 2.74·1.00의 `margin_min`이 다섯 칸 모두 **정확히 0.100000**으로 나온다 — 「분포 전체가 한 값」이 잡힌다. **설계 보장이 맞다**(CLAUDE.md §5.1 자기참조 유형 3): 닫힌 식이라 좁은 축의 허용 구간 폭이 구성상 0이고, 그러면 여백이 지정값과 부동소수 오차 안에서 같다. **그래서 이 값 자체는 아무것도 안 잰다** — 문의 판별력은 반증 판 ⓐ가 준다(실제로 돌렸다). ⚠⚠ 그리고 값 축만으로는 반증 판 ⓑ를 못 가른다 — 정체 축이 그래서 따로 있다. ⚠⚠⚠ 반증 ⓐ·ⓑ는 «같은 닫힌 식에 다른 인자»라 **식 자체가 틀렸을 때**를 안 잰다 — 그 자리는 반증 ⓓ(구 경계로 맞추는 다른 식)와 e2e의 재유도(diag.projectAll)가 진다(리뷰어 [5]).",
+    "counters_zero": "⚠ `falsify_a_no_margin`의 `margin_min` 0들과 `gate3_empty.construction_only.lifted = 0`이 「카운터 0」으로 잡힌다. **둘 다 그 칸의 주장 자체다**: 앞은 «여백을 안 뒀으니 0이다»(그것이 반증의 내용이고, 문 10±3%를 넘는 근거다)이고 뒤는 «작도 획만 있으면 승격이 0이다»(그래서 돋보기가 무동작인 것이 맞다). 값이 0이 **아니면** 그 칸이 틀린 것이다.",
+    "zero_errors": "⚠ e2e 원장의 `empty_*.errors = 0`은 「오차류 지표가 정확히 0」으로 잡힌다 — 콘솔·페이지 오류 **개수**이고 0이 곧 통과 조건이다(임계를 따로 안 건다). 0이 아니면 그 칸이 빨개진다.",
+    "zero_camera_move": "반증 ⓑ의 `camera_moved`가 정확히 0인 것도 보장이다 — 그 판이 카메라를 안 건드리는 판이라 그렇다. 0이 결함이 아니라 **그 판의 정의**인 자리다.",
+    "constants_snapshot_absent": "⚠ `constantsSnapshot()` / `metric_defs`가 없다 — **web2 라인 전체의 구멍**이고 이 원장만의 것이 아니다(그 기계는 `web/test/constants.ts`에만 있다). 이 회차는 상수를 `constants` 블록에 그대로 적는 것까지만 한다 — 기계를 세우는 것은 web2 전역 작업이라 범위 밖이다."
+  },
+  "pitfalls": [
+    "#88",
+    "#87",
+    "#86",
+    "#84",
+    "#54",
+    "#71",
+    "#42",
+    "#40",
+    "#12",
+    "#26"
+  ],
+  "pitfalls_note": "#88 — 여백을 px가 아니라 **비**로 두고, 단추 자리의 여유도 상수로 안 적는다(e2e가 실측에서 유도한다). #87 — 새 단추가 실제로 «눌리는가»를 `elementFromPoint`로 잰다(e2e ②, dpr 1·2). #86 — **값 축(여백)과 정체 축(무엇이 움직였나)을 따로 잰다** — 반증 ⓑ가 값 축에서 초록이다. #84 ㉡ — 반증을 **렌즈 대역의 양 끝**에서 돌렸다(한 칸으로 반증하면 잘못 판정한다). #54 — `isDrawPose` 하나로 갈래를 가르고(dollyBy·panBy와 같은 술어) 화면 배율 대역·근평면을 `C`로 꺼냈다. #71 — 재는 조건(뷰포트·렌즈·포즈·뷰 오프셋)을 원장에 싣는다. #12 — 여백을 **동작점 하나로 말하지 않는다**: 0.05·0.10·0.15·0.20 네 점을 훑고 단조까지 낸다(`margin_operating_points`). 렌즈도 세 점이다. #26 — 반증 ⓓ가 **못 잡는 칸**을 값으로 적는다(아주 짧은 획 하나는 구와 상자가 거의 같아 우연히 문 안이다). #42 — 착수 표의 번호를 완료 시 다시 대조했다(web2/NOTES.md 31-3 절)."
+}

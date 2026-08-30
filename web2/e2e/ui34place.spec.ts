@@ -43,7 +43,7 @@ test('34-6 ① 자리 표 — 「그리는 중에 쓰는가」로 갈렸다 (값
   // 위 띠 = 그리는 중에 **안** 쓰는 것. 「작도 시점으로」는 여기서 빠졌다.
   expect(zones.top).toEqual(['btn-fullscreen', 'btn-display', 'pane-file', 'pane-settings'])
   // 손 띠 = 그리는 중에 쓰는 것. **시점이 맨 위**이고 롤 둘이 롤통 하나가 됐다.
-  expect(zones.hand).toEqual(['btn-draw-view', 'btn-undo', 'btn-redo', 'btn-snap',
+  expect(zones.hand).toEqual(['btn-draw-view', 'btn-zoom-fit', 'btn-lens', 'btn-undo', 'btn-redo', 'btn-snap',
     'btn-pencil', 'btn-pen', 'btn-eraser-pencil', 'btn-eraser-ink',
     'dim-toggle', 'btn-roll', 'btn-face'])
   // 뷰 큐브는 **단추가 아니다** — 이미 캔버스 그림쇠다(자리를 안 먹는다).
@@ -66,14 +66,40 @@ test('34-6 ②③ 높이 예산 — 여유가 버튼 두 개분 이상이고, 31
     parseFloat(getComputedStyle(document.getElementById('sidebar-body')!).rowGap) || 0)
   const two = unit * 2 + gap * 2
   console.log(`[34-6 ②] 버튼 하나 ${unit}px · 사이 ${gap}px → 두 개분 ${two}px`)
-  expect(before.slack, '남는 여유가 버튼 두 개분 이상').toBeGreaterThanOrEqual(two)
+
+  // ⚠⚠ **31이 그 여유를 쓰기 시작했다 — 그러니 「남는 여유」로 물으면 안 된다**(#88).
+  //   34-6이 등록한 요구는 「**31의 둘이 들어갈 자리가 있는가**」이고, 그 둘 중 하나가 실물로
+  //   서면(web2-31 3번 `btn-zoom-fit`) 그만큼 여유가 준다 — 문면을 그대로 두면 **자리를 제대로
+  //   내주고도 빨개진다.** 그래서 재는 것을 **대상에서 유도한다**: 「31이 이미 먹은 자리」를
+  //   실측해 되돌린 것이 34-6이 물었던 그 여유다(임계 92px은 **한 톨도 안 무른다**).
+  //   ⚠ 목록에 **이름**을 적지 px를 적지 않는다 — 급이 바뀌면 실측이 따라온다.
+  // ⚠⚠ **31의 둘이 이제 다 실물이다**(web2-31 2번이 렌즈를 넣었다) — 그래서 아래 ③의
+  //   시험 삽입은 **0개**가 되고, 그것이 이 팔의 «둘을 넣어 본다»가 끝났다는 뜻이다.
+  //   문면(임계 92px)은 한 톨도 안 무른다: 되돌린 여유 `slack0`가 여전히 버튼 두 개분 이상인가.
+  const PLACED_BY_31 = ['btn-zoom-fit', 'btn-lens']
+  const taken31 = await page.evaluate((ids) => ids.reduce((sum, id) => {
+    const e = document.getElementById(id)
+    if (!e) return sum
+    const body = document.getElementById('sidebar-body')!
+    const g = parseFloat(getComputedStyle(body).rowGap) || 0
+    return sum + e.getBoundingClientRect().height + g
+  }, 0), PLACED_BY_31)
+  const slack0 = +(before.slack + taken31).toFixed(1)
+  console.log(`[34-6 ②] 31이 이미 먹은 자리 ${taken31.toFixed(1)}px (${PLACED_BY_31.join('·')}) → 되돌린 여유 ${slack0}px`)
+  expect(before.slack, '지금도 화면 안이다(여유 0 이상)').toBeGreaterThanOrEqual(0)
+  expect(slack0, '31의 둘이 들어갈 자리가 있었다 — 버튼 두 개분 이상').toBeGreaterThanOrEqual(two)
 
   // ── ③ **시험 삽입** — 31이 더할 둘을 실제로 넣어 본다 ─────────────────────
   // 뷰 큐브는 캔버스 그림쇠라 자리를 안 먹지만, 34-6의 문면대로 **둘 다** 넣어 잰다.
-  const after = await page.evaluate(() => {
+  // ⚠ **web2-31 3번이 들어온 뒤로 이 삽입은 «더 보수적»이다**: 돋보기가 이미 실물로 서 있고
+  //   (`btn-zoom-fit` · `.ico-m`) 뷰 큐브는 끝내 단추가 안 됐으므로, 여기 넣는 `.ico-sq` 둘은
+  //   실제로 남은 것보다 큰 부담이다. 그래도 **문면을 안 고친다** — 34-6이 등록한 예산 팔이고,
+  //   지금 실측되는 여유는 `zoom31_web2_dpr*.json`의 `place_*`가 따로 낸다.
+  const after = await page.evaluate((placed) => {
     const body = document.getElementById('sidebar-body')!
     const first = body.firstElementChild
-    for (const id of ['zz-probe-cube', 'zz-probe-zoom']) {
+    // 이미 실물로 선 것만큼은 덜 넣는다 — 「둘을 넣는다」의 뜻이 «둘이 서 있다»이기 때문이다
+    for (const id of ['zz-probe-cube', 'zz-probe-zoom'].slice(placed)) {
       const b = document.createElement('button')
       b.id = id
       b.className = 't ico-sq'
@@ -83,11 +109,15 @@ test('34-6 ②③ 높이 예산 — 여유가 버튼 두 개분 이상이고, 31
     const r = document.getElementById('sidebar')!.getBoundingClientRect()
     const out = { h: +r.height.toFixed(1), bottom: +r.bottom.toFixed(1),
                   slack: +(window.innerHeight - r.bottom).toFixed(1),
-                  probe: +document.getElementById('zz-probe-cube')!.getBoundingClientRect().height.toFixed(1) }
-    for (const id of ['zz-probe-cube', 'zz-probe-zoom']) document.getElementById(id)!.remove()
+                  // 실물이 둘 다 서면 시험 삽입이 **0개**다 — 그때 이 칸은 null이고
+                  // 그것이 「둘을 넣어 본다」가 끝났다는 사실이다(#88: 실측에서 유도한다).
+                  probe: ((e) => e ? +e.getBoundingClientRect().height.toFixed(1) : null)(
+                    document.getElementById('zz-probe-cube') ?? document.getElementById('zz-probe-zoom')) }
+    for (const id of ['zz-probe-cube', 'zz-probe-zoom']) document.getElementById(id)?.remove()
     return out
-  })
-  console.log(`[34-6 ③] 31의 둘(각 ${after.probe}px)을 넣으면 — 띠 ${after.h} · 남는 여유 ${after.slack}px`)
+  }, PLACED_BY_31.length)
+  console.log(`[34-6 ③] 시험 삽입 ${2 - PLACED_BY_31.length}개(각 ${after.probe ?? '—'}px) → 띠 ${after.h} · 남는 여유 ${after.slack}px`
+    + `${after.probe === null ? ' · **31의 둘이 실물로 다 섰다**(zoom-fit · lens)' : ''}`)
   expect(after.slack, '31의 두 버튼을 넣어도 화면 안이다').toBeGreaterThanOrEqual(0)
   // 되돌아왔는가(계측이 화면을 안 남긴다)
   const back = await budget(page)
@@ -95,7 +125,7 @@ test('34-6 ②③ 높이 예산 — 여유가 버튼 두 개분 이상이고, 31
 
   // ── ④ 표적 크기 무회귀 ────────────────────────────────────────────────────
   const targets = await page.evaluate(() =>
-    ['btn-draw-view', 'btn-undo', 'btn-snap', 'btn-pencil', 'btn-pen',
+    ['btn-draw-view', 'btn-zoom-fit', 'btn-undo', 'btn-snap', 'btn-pencil', 'btn-pen',
      'btn-eraser-pencil', 'btn-eraser-ink', 'dim-toggle', 'btn-roll', 'btn-face']
       .map(id => { const r = document.getElementById(id)!.getBoundingClientRect(); return { id, w: +r.width.toFixed(1), h: +r.height.toFixed(1) } }))
   console.log(`[34-6 ④] 표적: ${targets.map(t => `${t.id} ${t.w}×${t.h}`).join(' · ')}`)
@@ -113,6 +143,9 @@ test('34-6 ②③ 높이 예산 — 여유가 버튼 두 개분 이상이고, 31
       viewport: { w: 1200, h: before.vh }, dpr,
       before_this_round: { slack_px: 25, note: '재편 전 실측(같은 하네스·같은 뷰포트). DEFERRED가 적은 「37px」은 web2-32 시점의 값이고 34-3까지 오면서 25px로 줄어 있었다.' },
       after: before, unit_button_px: unit, two_buttons_px: two,
+      /** web2-31 3번이 이 여유를 쓰기 시작했다 — 위 `after.slack`은 «지금 남은 것»이고
+       *  34-6이 물었던 값은 그것을 되돌린 `slack_without_31`이다(#88: 대상에서 유도한다). */
+      placed_by_31: PLACED_BY_31, taken_by_31_px: +taken31.toFixed(1), slack_without_31: slack0,
       /** 값 대조의 자리(#33) — `gate.reachability_source`가 이 경로를 가리킨다. */
       slack_before_after: [25, before.slack],
       probe_insert: after,

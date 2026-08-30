@@ -21,6 +21,9 @@ import { loopAt, faceAt, faceScreen, resolveFaces, resolveFace, allLoops, inPoly
 import { bakeUnderlay } from '../core/make2d'
 import { geomSize3 } from '../core/osnap'
 import { C } from '../core/constants'
+import { cubeLayoutFor } from '../core/viewcube'
+import { fitPose, fitView, type Screen as FitScreen } from '../core/zoomfit'
+import { lensAllowed, lensAn, lensF, lensK, lensView, clampViewF, lensFromStops } from '../core/lens'
 import { calFromMedians, median } from '../core/press'
 import { type Pt, type V3, v3, add3, sub3, mul3, dot3, len3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
 
@@ -125,6 +128,17 @@ export interface App {
   activeErase: Op | null
   /** 화면 조작(뷰 오프셋) — 그리는 중의 팬·줌. 문서 좌표는 안 바뀐다. */
   view: ViewOffset
+  /** **보기 렌즈**(web2-31 2번) — 렌더가 쓰는 초점거리. `null` = 손대지 않았다(그때
+   *  렌더가 종전과 **한 픽셀도** 안 다르다 — 구성상 항등이다).
+   *  ⚠⚠ `Camera.f`·`fSource`가 **아니다**: 이 값은 리프팅에 안 들어가고(3D 좌표를 안
+   *  건드린다) 저장도 안 된다. 확정 전에는 잠기고(`lensAllowed`) **차수 승격에 버려진다**
+   *  (승격은 전부 다시 올리는 경로이므로 거기 얹힌 보기값은 남기지 않는다 — CLAUDE.md §1).
+   *  화면 변환에 합성하는 자리는 `viewXf` 하나다(#54). */
+  viewF: number | null
+  /** 직전 recompute의 카메라 서명 — **보기 렌즈를 버리는 사건**의 판정자(31-2).
+   *  `lastCamSig`(own3d 굳힘)와 **따로 둔다**: 그쪽은 깃발이 켜져 있을 때만 유지되므로
+   *  같이 쓰면 깃발을 끈 사용자에게서 승격이 안 잡힌다. */
+  lensSig: string | null
   /** **작도 시점**(web2-17 3-b) — 첫 획을 긋던 순간의 `view`. 팬으로 선언한 눈높이가
    *  화면 어디였는가다. null = 아직 선언 전(빈 문서)이거나 옛 파일(2부 변환을 지난 문서).
    *  ⚠ `Doc`이 아니라 여기(App/BrnlData 층)다 — `savedViews`와 같은 급이고, `Doc`은
@@ -299,6 +313,8 @@ export function createApp(W: number, H: number): App {
     tipErase: false,
     activeErase: null,
     view: { s: 1, ox: 0, oy: 0 },
+    viewF: null,
+    lensSig: null,
     drawView: null,
     fadePose: null,
     fadeView: null,
@@ -334,7 +350,7 @@ export function createApp(W: number, H: number): App {
     touchLast: null,
     faceCandidates: null,
     rectHover: null,
-    cubeLayout: { cx: W - 110, cy: 60, size: 80 }, // 우측 상단 — 1.5배 세로바(x W−45..)와 안 겹치게 왼쪽으로(web2-10 지시 5)
+    cubeLayout: cubeLayoutFor(W), // 우측 상단 — 자리 계산은 viewcube.ts 하나다(#54 · web2-31 1번)
     listeners: [],
   }
 }
@@ -381,11 +397,51 @@ export function setDimension(app: App, id: number, mm: number): DimResult {
 export const composeView = (fit: ViewOffset, draw: ViewOffset): ViewOffset =>
   ({ s: fit.s * draw.s, ox: fit.s * draw.ox + fit.ox, oy: fit.s * draw.oy + fit.oy })
 
+/** **문서 → 화면 변환의 정본**(web2-31 2번) — 뷰 오프셋에 **보기 렌즈를 합성한 것**이다.
+ *  손대지 않았으면(`viewF === null`) `app.view`를 **그대로 돌려준다** — 그때 이 함수가
+ *  있기 전과 같은 객체이고 렌더가 한 픽셀도 안 다르다(구성상 항등 · #77 ㉡).
+ *
+ *  합성은 «주점을 고정점으로 하는 배율 k»라 닮음 하나로 접힌다:
+ *    s' = s·k · o' = o + s·(1−k)·주점
+ *  그래서 `render3d.syncCamera`가 이 변환을 그대로 받으면 **화면 f가 정확히 `viewF·s`**가
+ *  되고 주점은 제자리다(그 파일의 항등식 그대로) — 렌즈를 위한 갈래가 그쪽에 안 생긴다.
+ *  ⚠ **문서 좌표를 화면에 펴는 자리는 전부 이것을 읽는다**(#54): 한 자리라도 `app.view`를
+ *  직접 읽으면 그 겹만 렌즈를 안 타고 종이와 3D의 1:1이 거기서 깨진다. */
+export const viewXf = (app: Pick<App, 'view' | 'viewF' | 'lift'>): ViewOffset =>
+  // 손대지 않은 쪽을 **먼저** 낸다 — 그 갈래는 분석을 아예 안 읽는다(프레임마다 도는 자리다)
+  app.viewF == null ? app.view : lensView(app.lift.an, app.viewF, app.view)
+
+/** **화면 px ↔ 문서 px 배율** — 뷰 오프셋과 렌즈의 곱. px 임계를 문서 단위로 바꾸는
+ *  자리(오스냅 반경·탭 문)가 전부 이것을 읽는다(#54). 손대지 않았으면 `view.s`다. */
+export const viewScale = (app: Pick<App, 'view' | 'viewF' | 'lift'>): number =>
+  app.viewF == null ? app.view.s : app.view.s * lensK(app.lift.an, app.viewF)
+
 /** 화면 좌표 ↔ 문서 좌표 — 뷰 오프셋의 단일 출처 */
-export const screenToDoc = (app: App, p: Pt): Pt =>
-  ({ x: (p.x - app.view.ox) / app.view.s, y: (p.y - app.view.oy) / app.view.s })
-export const docToScreen = (app: App, p: Pt): Pt =>
-  ({ x: p.x * app.view.s + app.view.ox, y: p.y * app.view.s + app.view.oy })
+export const screenToDoc = (app: App, p: Pt): Pt => {
+  const v = viewXf(app)
+  return { x: (p.x - v.ox) / v.s, y: (p.y - v.oy) / v.s }
+}
+export const docToScreen = (app: App, p: Pt): Pt => {
+  const v = viewXf(app)
+  return { x: p.x * v.s + v.ox, y: p.y * v.s + v.oy }
+}
+
+// ── 보기 렌즈의 손잡이(web2-31 2번) ────────────────────────────────────────────
+/** 렌즈를 정한다 — **확정 전에는 아무 일도 안 한다**(지시 「확정 전에는 잠근다」).
+ *  반환값은 「먹혔는가」다. `null`을 주면 기본값(확정된 f)으로 돌아간다. */
+export function setViewF(app: App, f: number | null): boolean {
+  if (!lensAllowed(app.lift.an)) { app.viewF = null; return false }
+  const next = f === null ? null : clampViewF(app.lift.an, f)
+  if (next === app.viewF) return f === null || next !== null
+  app.viewF = next
+  for (const l of app.listeners) l()
+  return true
+}
+/** 손잡이의 눈금(스톱)으로 정한다 — 0이 기본이다. */
+export const setViewLensStops = (app: App, stops: number): boolean =>
+  setViewF(app, lensFromStops(app.lift.an, stops))
+/** 기본으로 되돌린다(승격이 부르는 것도 이 자리다 — 출처를 둘로 안 만든다) */
+export const resetViewLens = (app: App): void => { app.viewF = null }
 
 /** 작도 포즈인가 — **원점이 아니라 `DRAW_POSE`와 견준다.**
  *  세계 원점이 지면으로 옮겨가 눈은 더 이상 원점에 없다(camera.ts). */
@@ -399,6 +455,20 @@ function recompute(app: App) {
   // commitCandidates는 recompute 뒤에 볼일이 없으므로 이 무효화가 확정도 겸해 닫는다.
   app.faceCandidates = null
   app.lift = liftAll(app.doc, app.own3d)
+  // ── 보기 렌즈(web2-31 2번) — **승격이 일어나면 버린다** ──────────────────────
+  // 카메라 서명(f·주점·fSource)이 움직인 것이 승격이고(web2에 실재하는 것은 P1→P2 하나 —
+  // #86 ㉢), 승격은 **전부 다시 올리는** 경로다. 거기 얹힌 보기값을 남기면 새 좌표계 위에
+  // 옛 화각이 앉는다 — 부분 유지가 만드는 그 상태다(CLAUDE.md §1 · §6.1).
+  // 확정이 «풀린» 경우(되돌리기 등)도 같이 버린다 — 렌즈가 없는 국면이다.
+  {
+    // ⚠⚠ **서명에 소실점 «개수»를 넣는다**(2026-08-31 · 2차 리뷰어 [1]). `camSig`는 f·주점·fSource라
+    // 셋째 소실점(축만 더하고 카메라를 안 바꾼다)에서 안 움직이는데, **차수는 소실점 개수다**
+    // (이론서 2.3 · CLAUDE.md §1). 지시 문면이 「**차수 승격**이 일어나면 초기화한다」이므로
+    // 굳힌 3D의 판정자(`camSig` — 그쪽은 좌표가 깨지는가를 묻는다)와 **다른 자**를 쓴다.
+    const lsig = `${camSig(app.lift.an)}|${app.lift.an.vps.length}`
+    if (!lensAllowed(app.lift.an) || (app.lensSig !== null && lsig !== app.lensSig)) resetViewLens(app)
+    app.lensSig = lsig
+  }
   // ── 자립(web2-13 4부) — 깃발 켜짐에서만. 꺼짐이면 위 한 줄이 종전과 동일하다 ──
   if (app.own3d) {
     const sig = camSig(app.lift.an)
@@ -1798,7 +1868,8 @@ export function endNavHold(app: App) {
 /** 감쇠·질감의 «자기 시점» 판정이 읽는 포즈 — 제스처 중에는 동결값(단일 출처 #54) */
 export const fadeRef = (app: Pick<App, 'fadePose' | 'pose'>): CamPose => app.fadePose ?? app.pose
 /** 지평선 자동 숨김 판정이 읽는 뷰 — 제스처 중에는 동결값(web2-17 5-b · fadeRef의 뷰판) */
-export const fadeRefView = (app: Pick<App, 'fadeView' | 'view'>): ViewOffset => app.fadeView ?? app.view
+export const fadeRefView = (app: Pick<App, 'fadeView' | 'view' | 'viewF' | 'lift'>): ViewOffset =>
+  app.viewF == null ? (app.fadeView ?? app.view) : lensView(app.lift.an, app.viewF, app.fadeView ?? app.view)
 
 /** 궤도 한 픽셀이 도는 각(rad) — 데스크톱·터치가 같은 값을 쓴다 */
 export const ORBIT_RAD_PER_PX = 0.005
@@ -1864,7 +1935,8 @@ export function dollyBy(app: App, scale: number, center: Pt) {
     // 두 번째 선언(화각)을 조용히 끼워 넣지 않는다. 첫 획 뒤에는 종전대로 줌이 산다.
     if (app.doc.strokes.length === 0) return
     const v = app.view
-    const s = Math.min(8, Math.max(0.2, v.s * scale))
+    // 대역은 `C.VIEW_S_MIN/MAX` 하나다 — 돋보기(작도 시점 갈래)도 같은 것을 읽는다(#54)
+    const s = Math.min(C.VIEW_S_MAX, Math.max(C.VIEW_S_MIN, v.s * scale))
     const k = s / v.s
     setView(app, { s, ox: center.x - k * (center.x - v.ox), oy: center.y - k * (center.y - v.oy) })
     return
@@ -1888,7 +1960,7 @@ export function panBy(app: App, dx: number, dy: number) {
   const pivot = orbitPivot(app)
   const view = quatRotate(app.pose.q, v3(0, 0, -1))
   const depth = Math.max(1, dot3(sub3(pivot, app.pose.p), view))
-  const k = depth / (app.lift.an.f ?? 1000)
+  const k = depth / (lensF(app.lift.an, app.viewF) ?? 1000)
   const right = quatRotate(app.pose.q, v3(1, 0, 0))
   const up = quatRotate(app.pose.q, v3(0, 1, 0))
   const p = add3(app.pose.p, add3(mul3(right, -dx * k), mul3(up, dy * k)))
@@ -1940,4 +2012,71 @@ export function orbitPivot(app: App): V3 {
     }
   }
   return v3((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, (lo.z + hi.z) / 2)
+}
+
+// ── 돋보기(web2-31 3번) — 대상에 맞춰 화면을 채운다 ─────────────────────────────
+// 라이노의 Zoom Selected / Zoom Extents. **이동만 한다** — `Camera.f`·`fSource`를 안
+// 건드린다(계산은 `core/zoomfit.ts`이고 여기는 «무엇을 대상으로 하는가»와 «어느 것을
+// 움직이는가»만 정한다).
+
+/** **고른 것** — 돋보기의 대상.
+ *
+ *  ⚠⚠ **이 앱에는 «획 여러 개를 고르는» 선택이 없다**(D-4 — 지시문의 「고른 것」을 저장소에서
+ *  확인한 결과다. #86 ㉢: 지시가 적은 것이 저장소에 없으면 **있는 것을 잰다**). 실재하는
+ *  「고른 것」은 치수 사후 수정으로 고른 획(`dimEdit`)과 치수 대상(`dimPick`) 둘이고,
+ *  **솔로·꺼진 겹은 이미 `lift.lifted`에서 빠지므로**(web2-20 4-b) 「전체」가 자동으로
+ *  그 범위다 — 갈래를 따로 안 만든다(A-3: 단순한 쪽).
+ *
+ *  면(`app.faces`)을 따로 안 담는다: 면의 꼭짓점은 그 경계 획의 끝점이라 **이미 이 목록
+ *  안**이다(같은 점을 두 번 담으면 계산만 늘고 결과가 같다). */
+export function zoomTarget(app: App): { ids: number[]; scope: 'picked' | 'all' } {
+  const pick = app.dimEdit ?? app.dimPick
+  if (pick !== null && app.lift.lifted.has(pick)) return { ids: [pick], scope: 'picked' }
+  return { ids: [...app.lift.lifted.keys()], scope: 'all' }
+}
+
+/** 대상의 세계 점들 — 승격된 선분의 두 끝점. 3D가 없으면 빈 배열이다. */
+export function zoomTargetPoints(app: App, ids: number[]): V3[] {
+  const out: V3[] = []
+  for (const id of ids) {
+    const g = app.lift.lifted.get(id)
+    if (g) out.push(g.a3, g.b3)
+  }
+  return out
+}
+
+export interface ZoomFitResult {
+  /** `pose` = 카메라를 옮겼다 · `view` = 화면(뷰 오프셋)을 옮겼다 · `none` = 할 일이 없었다 */
+  mode: 'pose' | 'view' | 'none'
+  scope: 'picked' | 'all'
+  ids: number[]
+  points: number
+}
+
+/** **대상에 맞춰 화면을 채운다** — 지시 문면의 넷을 그대로 한다.
+ *
+ *  · 고른 것이 있으면 그것이, 없으면 전체가 차도록 한다(`zoomTarget`)
+ *  · 여백은 `C.ZOOM_FIT_MARGIN`(사방 10%)
+ *  · **이동만 한다** — `an.f`·`an.fSource`는 이 경로에서 읽기만 한다
+ *  · 아무것도 없으면 **아무 일도 안 한다**(`mode: 'none'` — 예외를 던지지 않는다)
+ *
+ *  ⚠ 갈래가 둘인 이유는 `dollyBy`·`panBy`와 **같다**: 작도 시점에서는 카메라를 옮기면
+ *  종이(2D 획)와 3D의 1:1이 깨진다 — 그 국면의 「이동」은 뷰 오프셋이다. 판정은
+ *  `isDrawPose` 하나이고 그 둘과 **같은 술어**다(#54). 어느 갈래든 렌즈는 안 바뀐다. */
+export function zoomFit(app: App, sc: FitScreen): ZoomFitResult {
+  const { ids, scope } = zoomTarget(app)
+  const pts = zoomTargetPoints(app, ids)
+  const base: ZoomFitResult = { mode: 'none', scope, ids, points: pts.length }
+  if (pts.length === 0) return base
+  if (isDrawPose(app.pose)) {
+    const v = fitView(lensAn(app.lift.an, app.viewF), app.pose, pts, sc, C.ZOOM_FIT_MARGIN,
+      { min: C.VIEW_S_MIN, max: C.VIEW_S_MAX })
+    if (!v) return base
+    setView(app, v)
+    return { ...base, mode: 'view' }
+  }
+  const p = fitPose(lensAn(app.lift.an, app.viewF), app.pose, app.view, pts, sc, C.ZOOM_FIT_MARGIN)
+  if (!p) return base
+  setPose(app, p)
+  return { ...base, mode: 'pose' }
 }

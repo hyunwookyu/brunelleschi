@@ -222,17 +222,21 @@
     /* 두 묶음을 가르는 채널 — 세로바의 `.bar-divider`와 같은 뜻이고 방향만 세로다(3-c) */
     .top-divider { width: 1px; height: 30px; background: var(--ui-faint); margin: 3px 5px; opacity: .55; align-self: center; }
     /* 표시·자 팝업 — 설정 자루의 옅은 바탕 규약 그대로(4-a: 「배경이 필요하면 아주 옅게」) */
-    #display-pop, #snap-pop, #face-pop {
+    #display-pop, #snap-pop, #face-pop, #lens-pop {
       position: fixed; z-index: 11;
       display: flex; flex-direction: column; gap: 6px; align-items: stretch;
       background: rgba(252,251,248,.94); box-shadow: 0 1px 10px rgba(0,0,0,.07);
       padding: 10px 12px; white-space: nowrap;
       font: 12px/1.5 system-ui, sans-serif; color: #6b665f;
     }
-    #display-pop[hidden], #snap-pop[hidden], #face-pop[hidden] { display: none; }
+    #display-pop[hidden], #snap-pop[hidden], #face-pop[hidden], #lens-pop[hidden] { display: none; }
     #display-pop { top: 48px; right: var(--top-lane); }   /* 위 띠의 길(R5) — 치수 기둥의 왼쪽 */
     #snap-pop { right: 54px; }
     #face-pop { right: 54px; }
+    #lens-pop { right: 54px; }
+    .lens-reset { background: none; border: 0; padding: 2px 0; cursor: pointer; color: var(--ui); font: 12px system-ui, sans-serif; text-align: left; text-decoration: underline; opacity: .75; }
+    .lens-reset:hover { opacity: 1; }
+    #btn-lens[disabled] { opacity: .3; cursor: default; }
     /* 축 스냅 자리(3-b) — 컨트롤이 없다: 끄는 토글은 이 회차에 없다(대응표 §4 — 자리만) */
     #axis-snap-slot { color: var(--ui-faint); }
     /* 되돌리기와 도구를 가르는 선(3-a) — 공백이 아니라 채널이다(3-c) */
@@ -249,7 +253,8 @@
        #eyebar 하나가 덮는다(옛 자리는 세로바 안이었다). */
     body.fs #topleft, body.fs #eyebar, body.fs #sidebar,
     body.fs #tray, body.fs #pentray, body.fs #etray, body.fs #rolltray,
-    body.fs #dimpanel, body.fs #display-pop, body.fs #snap-pop, body.fs #layer-pop, body.fs #face-pop { display: none; }
+    body.fs #dimpanel, body.fs #display-pop, body.fs #snap-pop, body.fs #layer-pop, body.fs #face-pop,
+    body.fs #lens-pop { display: none; }
     #fs-exit {
       display: none; position: fixed; right: 6px; bottom: 34px; z-index: 12;
       background: none; border: 0; padding: var(--hit-pad); cursor: pointer;
@@ -850,6 +855,27 @@
             <path d="M3 9.4 10 3.6l7 5.8" /><path d="M5.2 8.6V16h9.6V8.6" />
           </svg>
         </button>
+        <!-- 돋보기(web2-31 3번) — **대상에 맞춰 화면을 채운다**(라이노 Zoom Selected/Extents).
+             고른 것이 있으면 그것, 없으면 전체. 여백은 사방 `C.ZOOM_FIT_MARGIN`(10%)이고
+             ⚠ **이동만 한다** — `Camera.f`·`fSource`를 안 건드린다(화각을 몰래 바꾸면 31-2와
+             뒤섞인다). 자리는 34-6이 남긴 여유이고 급은 이웃(작도 시점·되돌리기 둘)과 같은
+             `.ico-m`이다 — 여유 px를 여기 다시 적지 않는다(#88: 팔이 실측에서 유도한다).
+             SVG는 docs/instrument-icons.md 「돋보기」 정본 그대로다(path 수정 금지). -->
+        <button id="btn-zoom-fit" class="t ico-m" title="돋보기 — 대상에 맞춰 화면을 채운다" aria-label="돋보기">
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="14" r="9"/><path d="M20.36 20.36 L27 27"/></svg>
+        </button>
+        <!-- 렌즈(web2-31 2번) — **확정된 뒤에 «보는 방식»을 바꾼다**(화각).
+             ⚠⚠ `Camera.f`·`fSource`가 **아니다**: 이 손잡이는 `app.viewF`(렌더 초점거리)만
+             움직이고 3D 좌표·해의 출처를 안 건드린다(CLAUDE.md §1 · `core/lens.ts` 머리말).
+             확정 전에는 **꺼져 있다**(`disabled`) — 카메라가 없으면 렌즈도 없다.
+             ⚠ **기존 손잡이에 안 얹는다**(#77 ㉠): 휠은 종전대로 궤도에서 눈을 옮기고
+             (`dollyBy`) 렌즈는 이 자리에서만 들어간다. 자리는 34-6이 남긴 여유이고 급은
+             이웃과 같은 `.ico-m`이다 — 여유 px를 여기 다시 적지 않는다(#88).
+             아이콘: 렌즈 단면(양볼록) + 축 — `docs/instrument-icons.md`의 선 문법 그대로
+             (fill:none · stroke:currentColor · 1.6/32 · round cap/join · 닫힌 실루엣). -->
+        <button id="btn-lens" class="t ico-m" title="렌즈 — 화각을 바꾼다 (보기 전용)" aria-label="렌즈">
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 6 C17 10.5 17 21.5 11 26 C5 21.5 5 10.5 11 6 Z"/><path d="M19 11 L27 11 M19 16 L27 16 M19 21 L27 21" stroke-width="1.2"/></svg>
+        </button>
         <!-- 되돌리기·다시실행(3-a) — 은유가 없어 손 띠 **맨 위**에 두고 도구와
              **구분선**으로 가른다(제도판에서는 지우개가 이 역할이었다 — 서랍은 너무 멀다).
              ⚠ web2-34 6번이 「작도 시점으로」를 **이 묶음 안**에 넣었다: 구분선을 하나 더
@@ -886,7 +912,7 @@
              펼쳐지고 하나를 고르면 접힌다. 경도 문자·심 색은 main.ts가 MAT에서 갱신(#54). -->
         <button id="btn-pencil" class="t tool ico-t" title="연필 — 누르면 연필통이 열린다" aria-label="연필">
           <svg width="39" height="93" viewBox="0 0 26 62">
-            <path d="M8 3h10v40H8z" fill="#cfc7b6"/><path d="M8 3h3.4v40H8z" fill="#e0d9ca"/><path d="M14.6 3H18v40h-3.4z" fill="#bbb2a0"/><rect x="8" y="11" width="10" height="13" fill="#faf8f3"/><text id="fold-lead-text" x="13" y="21" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#3c3831">HB</text><path d="M8 43 L13 57 L18 43 Z" fill="#e6dfd0"/><path id="fold-lead" d="M11.75 53.5 L13 57 L14.25 53.5 Z" fill="#5a5a5a"/>
+            <path d="M8 3h10v40H8z" fill="#cfc7b6"/><path d="M8 3h3.4v40H8z" fill="#e0d9ca"/><path d="M14.6 3H18v40h-3.4z" fill="#bbb2a0"/><rect id="fold-lead-win" x="8" y="11" width="10" height="13" fill="#faf8f3"/><text id="fold-lead-text" x="13" y="21" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#3c3831">HB</text><path d="M8 43 L13 57 L18 43 Z" fill="#e6dfd0"/><path id="fold-lead" d="M11.75 53.5 L13 57 L14.25 53.5 Z" fill="#5a5a5a"/>
           </svg>
         </button>
         <!-- 펜 — **web2-30 2번부터 펼치는 통이 있다**(web2-19의 「펜은 하나뿐이니 아이콘
@@ -898,7 +924,7 @@
              「접힌 펜 — 촉 각인이 붙는다」. 몸통·물림쇠·원뿔·촉 path는 안 바뀌었다. -->
         <button id="btn-pen" class="t tool ico-t" title="펜 — 누르면 촉통이 열린다" aria-label="펜">
           <svg width="39" height="93" viewBox="0 0 26 62">
-            <path d="M8.6 3h8.8v32H8.6z" fill="#7f7a72"/><path d="M8.6 3h3v32h-3z" fill="#98938a"/><rect x="8.6" y="11" width="8.8" height="13" fill="#faf8f3"/><text id="fold-nib-text" x="13" y="21" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" textLength="8.8" lengthAdjust="spacingAndGlyphs" fill="#3c3831">.35</text><path d="M9.4 35h7.2v6H9.4z" fill="#5d5952"/><path d="M10.2 36.4h5.6M10.2 38.2h5.6" stroke="#837f78" stroke-width=".7"/><path d="M9.4 41h7.2l-3.6 8z" fill="#6e6a63"/><rect id="fold-nib" x="12.2" y="49" width="1.6" height="7" fill="#101014"/>
+            <path d="M8.6 3h8.8v32H8.6z" fill="#7f7a72"/><path d="M8.6 3h3v32h-3z" fill="#98938a"/><rect id="fold-nib-win" x="8.6" y="11" width="8.8" height="13" fill="#faf8f3"/><text id="fold-nib-text" x="13" y="21" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#3c3831">.35</text><path d="M9.4 35h7.2v6H9.4z" fill="#5d5952"/><path d="M10.2 36.4h5.6M10.2 38.2h5.6" stroke="#837f78" stroke-width=".7"/><path d="M9.4 41h7.2l-3.6 8z" fill="#6e6a63"/><rect id="fold-nib" x="12.2" y="49" width="1.6" height="7" fill="#101014"/>
           </svg>
         </button>
         <!-- 펜 촉통(web2-30 2번) — 다섯 줄(0.18·0.25·0.35·0.5·0.7 mm). 행은 main.ts가
@@ -943,7 +969,7 @@
             <path d="M6 20 13 6h7l-7 14z" fill="#e4ddcd" stroke="#b3ab9a" stroke-width="1" />
             <path d="M6 20h7v6H6z" fill="#d5cdbb" stroke="#b3ab9a" stroke-width="1" />
             <path d="M13 20h7l-7 6z" fill="#c9c0ad" stroke="#b3ab9a" stroke-width="1" />
-            <g transform="skewX(-26.565)"><rect x="16.2" y="8.5" width="6.6" height="11" fill="#faf8f3" /><text id="fold-erase-pencil-text" x="19.5" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#3c3831">6</text></g>
+            <g transform="skewX(-26.565)"><rect id="fold-erase-pencil-win" x="16.2" y="8.5" width="6.6" height="11" fill="#faf8f3" /><text id="fold-erase-pencil-text" x="19.5" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#3c3831">6</text></g>
           </svg>
         </button>
         <button id="btn-eraser-ink" class="t tool ico-h" title="펜 지우개 — 잉크만 지운다. 누르면 크기통이 열린다" aria-label="펜 지우개">
@@ -951,7 +977,7 @@
             <path d="M6 20 13 6h7l-7 14z" fill="#e4ddcd" stroke="#8b857a" stroke-width="1" />
             <path d="M6 20h7v6H6z" fill="#3a3833" stroke="#8b857a" stroke-width="1" />
             <path d="M13 20h7l-7 6z" fill="#2b2925" stroke="#8b857a" stroke-width="1" />
-            <g transform="skewX(-26.565)"><rect x="16.2" y="8.5" width="6.6" height="11" fill="#faf8f3" /><text id="fold-erase-ink-text" x="19.5" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#3c3831">6</text></g>
+            <g transform="skewX(-26.565)"><rect id="fold-erase-ink-win" x="16.2" y="8.5" width="6.6" height="11" fill="#faf8f3" /><text id="fold-erase-ink-text" x="19.5" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#3c3831">6</text></g>
           </svg>
         </button>
 
@@ -1046,6 +1072,16 @@
          원인은 그 동그라미가 실제 지우개의 27.5~112.5%를 그리고 있던 것이고, 답은
          **줄마다 그 크기의 자국을 1:1로 그리는 것**이다(R1). -->
     <div id="etray"></div>
+    <!-- 렌즈 팝오버(web2-31 2번) — `#snap-pop`과 **같은 자리 규약**이다(`#app`의 직계 ·
+         position:fixed · 오른쪽 54px). 안의 손잡이는 `data-act="state"`라 만지는 동안
+         안 접히고(28-1의 표 그대로), 바깥을 누르면 접힌다(R7 · #85).
+         ⚠ 화면에 내는 값은 **화각(도)**뿐이다 — `fSource`를 안 낸다(D-L55). -->
+    <div id="lens-pop" hidden>
+      <div class="head">렌즈</div>
+      <input id="lens-range" data-act="state" type="range" aria-label="화각" style="width:110px">
+      <div id="lens-read">—</div>
+      <button id="btn-lens-reset" class="lens-reset" data-act="cmd">기본으로</button>
+    </div>
     <div id="snap-pop" hidden>
       <div class="head"><svg viewBox="0 0 256 256" fill="currentColor" width="13" height="13" style="vertical-align:-2px"><path d="M213.34,122.73a6,6,0,1,0-10.68-5.46,81.79,81.79,0,0,1-35.81,35.36l-18.14-40.8A38,38,0,0,0,134,42.48V24a6,6,0,0,0-12,0V42.48a38,38,0,0,0-14.71,69.35L58.52,221.56a6,6,0,1,0,11,4.88l25.9-58.26A93.37,93.37,0,0,0,128,174a97,97,0,0,0,32.68-5.69l25.84,58.13a6,6,0,1,0,11-4.88l-25.77-58A93.92,93.92,0,0,0,213.34,122.73ZM128,54a26,26,0,1,1-26,26A26,26,0,0,1,128,54Zm0,108a81.51,81.51,0,0,1-27.73-4.83l18-40.45a37.85,37.85,0,0,0,19.52,0l18,40.6A85.34,85.34,0,0,1,128,162Z"/></svg> 오스냅</div>
       <div id="osnap-kinds" style="display:flex;flex-direction:column;gap:2px"></div>

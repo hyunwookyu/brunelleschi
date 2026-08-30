@@ -15,7 +15,7 @@
 import { type App, setPose, orbitPivot, beginNavHold, endNavHold } from './state'
 import { isLevel, foldTarget, lerpPose } from '../core/level'
 import type { CamPose } from '../core/types'
-import { C } from '../core/constants'
+import { C, TURN_ANIM_MS } from '../core/constants'
 
 /** 입력이 부르는 갈고리 — 조작의 국면만 알린다(무엇으로 접는지는 안 본다) */
 export interface LevelHooks {
@@ -28,6 +28,13 @@ export interface LevelHooks {
   /** 접힐 자세면 지금 접는다 — 기울어 있는데 그리려고 눌렀을 때. 접기 시작했으면 true.
    *  **임계 밖이면 false다** — 그 자세는 머무는 상태라 그 누름은 그리기다(입력이 가른다). */
   foldNow(): boolean
+  /** **지정한 포즈로 미끄러진다**(web2-31 1번 — 뷰 큐브 90° 전환). 즉시 튀면 어디로
+   *  갔는지 잃는다(지시 문면 · A-3: 스케치업이 그렇게 한다).
+   *
+   *  ⚠ **접기와 같은 `anim` 슬롯을 쓴다.** 포즈를 움직이는 자가 둘이면 둘이 겹칠 때
+   *  프레임마다 서로를 덮는다 — 한 슬롯이면 겹침이 구성상 없고, `grab()`이 이미
+   *  「끌기가 애니를 취소한다」를 하고 있으므로 그 규칙도 그대로 물려받는다(#54). */
+  glide(to: CamPose): void
 }
 
 export interface AutoLevel extends LevelHooks {
@@ -45,7 +52,7 @@ export function createAutoLevel(
 ): AutoLevel {
   let held = false
   let last = now()
-  let anim: { from: CamPose; to: CamPose; t0: number } | null = null
+  let anim: { from: CamPose; to: CamPose; t0: number; ms: number } | null = null
 
   /** **정렬 상태를 떠나기 직전의 포즈** — 접을 때 여기로 돌아간다(web2-05).
    *
@@ -76,6 +83,7 @@ export function createAutoLevel(
       from: { p: { ...app.pose.p }, q: { ...app.pose.q } },
       to,
       t0: now(),
+      ms: C.FOLD_ANIM_MS,
     }
     // 접기 애니(300ms)도 **연속 회전**이다 — 감쇠 판정을 동결한다(web2-14 3번 2차 [4/6]:
     // 뷰 큐브는 즉시 점프지만 접기는 AS-C12대로 여러 프레임이라, 안 동결하면 놓고 1.2s 뒤
@@ -87,7 +95,7 @@ export function createAutoLevel(
   /** 접히는 중이면 한 걸음 나아간다 */
   function step(t: number): boolean {
     if (!anim) return false
-    const u = (t - anim.t0) / C.FOLD_ANIM_MS
+    const u = (t - anim.t0) / anim.ms
     if (u >= 1) {
       const to = anim.to
       anim = null
@@ -110,6 +118,19 @@ export function createAutoLevel(
 
   return {
     grab, release, touch, tick,
+    glide(to: CamPose) {
+      // 조작이 아닌 포즈 변경이다 — `touch()`와 같은 자리(붙잡지 않고 지연만 다시 센다).
+      held = false
+      last = now()
+      anim = {
+        from: { p: { ...app.pose.p }, q: { ...app.pose.q } },
+        to: { p: { ...to.p }, q: { ...to.q } },
+        t0: now(),
+        ms: TURN_ANIM_MS,
+      }
+      beginNavHold(app)   // 여러 프레임에 걸친 연속 회전 — 감쇠 판정 동결(web2-14 3번)
+      step(now())         // 첫 걸음을 바로 그린다(0에서 한 프레임 멈추지 않게)
+    },
     foldNow() {
       held = false
       if (!start()) return false    // 임계 밖 — 그 누름은 접기가 아니다

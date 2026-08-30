@@ -298,9 +298,15 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   expect(s.view.s).toBe(1)
 
   // 뷰 큐브 — 우측 상단에 보이고, 면을 클릭하면 롤 0 시점으로 선다
-  // 큐브 중심 = cubeLayout(cx W−110, cy 60 — web2-10 지시 5가 세로바 겹침 때문에 왼쪽으로 옮겼다)
-  expect(await inkPixels(page, 1040, 10, 1140, 110)).toBeGreaterThan(10)
-  await page.mouse.move(1090, 60)
+  // ⚠⚠ **자리를 여기 상수로 적지 않는다**(#88 · web2-31 3번이 고쳤다): 종전에는 `(1090,60)`을
+  //   박아 뒀고, web2-31 1번이 화살표를 넣으며 큐브를 `cx W−128 · cy 78`로 물리자 그 좌표가
+  //   **면이 아니라 다른 자리**가 돼 이 칸이 조용히 빨개졌다(그 회차는 「종전 클릭 자리는
+  //   여전히 면이다」로 적었는데 실측이 아니었다). 판별: ① 이 수가 다른 요소의 현재 자리인가
+  //   ② 그 요소를 옮기는 사람이 여기를 볼 이유가 있는가 → 예/아니오이므로 **상수 ⛔**.
+  //   자리는 `app.cubeLayout`에서 읽는다 — 큐브를 옮기면 팔이 따라온다.
+  const cube = await page.evaluate(() => (window as any).__b2.app.cubeLayout)
+  expect(await inkPixels(page, cube.cx - 50, cube.cy - 50, cube.cx + 50, cube.cy + 50)).toBeGreaterThan(10)
+  await page.mouse.move(cube.cx, cube.cy)
   await page.mouse.down()
   await page.mouse.up()
   await settle(page)

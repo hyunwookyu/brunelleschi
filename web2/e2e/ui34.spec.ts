@@ -240,16 +240,76 @@ test('34-3 ④ 접힌 지우개가 지금 크기를 말한다 — 부팅·네 �
       const r = e.getBoundingClientRect(), b = e.getBBox()
       return { h: r.height, w: r.width, bw: b.width, on: (e.closest('button') as HTMLElement).classList.contains('on') }
     }
-    return { pencil: m('fold-lead-text'), erase: m('fold-erase-pencil-text'), ink: m('fold-erase-ink-text') }
+    // ⚠⚠ **창 폭은 창에서 읽는다**(#88 — web2-31 마감 [2]). 옛 판은 `6.6`을 팔이 들고
+    //   있었고(index.html의 rect에서 손으로 베낀 수), 창을 좁히는 사람이 이 팔에
+    //   안 걸렸다. 이제 그 rect의 `getBBox().width`가 문의 값이다.
+    const win = (id: string) => (document.getElementById(id) as unknown as SVGGraphicsElement).getBBox().width
+    return {
+      pencil: m('fold-lead-text'), erase: m('fold-erase-pencil-text'), ink: m('fold-erase-ink-text'),
+      eraseWin: win('fold-erase-pencil-win'), inkWin: win('fold-erase-ink-win'),
+      leadWin: win('fold-lead-win'),
+    }
   })
   expect(h.pencil.on || h.erase.on || h.ink.on, '셋 다 «안 고른» 상태에서 잰다').toBe(false)
   console.log(`[34-3 ④] 각인 렌더(둘 다 비활성) — 연필 ${h.pencil.w.toFixed(2)}×${h.pencil.h.toFixed(2)} px · `
     + `지우개 ${h.erase.w.toFixed(2)}×${h.erase.h.toFixed(2)} px · 높이비 ${(h.erase.h / h.pencil.h).toFixed(3)} · `
-    + `글자 상자 ${h.erase.bw.toFixed(2)} 사용자단위(창 6.6)`)
+    + `글자 상자 ${h.erase.bw.toFixed(6)} 사용자단위(창 ${h.eraseWin.toFixed(6)} — 창에서 읽는다)`)
   expect(h.erase.h / h.pencil.h, '지우개 각인이 연필 각인과 같은 대역')
     .toBeGreaterThanOrEqual(C.FOLD_MARK_MIN_RATIO)
   expect(h.ink.h / h.pencil.h).toBeGreaterThanOrEqual(C.FOLD_MARK_MIN_RATIO)
-  expect(h.erase.bw, '각인이 창 폭(6.6) 안에 든다').toBeLessThanOrEqual(6.6 + 1e-3)
+  // ⚠ 문의 값은 **창 rect의 실제 폭**이다(#88). 재는 것은 **잉크 상자**이지 전진폭이
+  //   아니다 — `textLength`는 전진폭만 묶으므로 글리프가 삐져나오는 글꼴에서
+  //   전진폭 6.600000에 잉크 6.839225가 나온다(web2-31 마감이 D-1로 잡았다).
+  expect(h.erase.bw, '연필 지우개 각인이 창 폭 안에 든다').toBeLessThanOrEqual(h.eraseWin + 1e-3)
+  expect(h.ink.bw, '펜 지우개 각인이 창 폭 안에 든다').toBeLessThanOrEqual(h.inkWin + 1e-3)
+  expect(h.pencil.bw, '연필 각인도 자기 창 안에 든다(#54 — 셋이 같은 규약이다)')
+    .toBeLessThanOrEqual(h.leadWin + 1e-3)
+})
+
+test("34-3 ④′ 반증 — 「각인이 창에 든다」의 두 축이 실제로 빨개진다 (D-3 · #88 · web2-31 마감)", async ({ page }) => {
+  await boot(page)
+  // 이 팔이 세우는 것은 두 가지이고 **둘 다 위약이 따로 있다**:
+  //   ㈟ 제품 축 — `fitMark`를 떼면 각인의 잉크가 창을 넘는다
+  //   ㈠ 팔 축(#88) — 문의 값이 **창 rect에서 유도**되므로, 창을 좁히면 문도 따라 좁아진다
+  //        (옛 판은 `6.6`을 팔이 들고 있어 창을 좁혀도 문이 안 움직였다)
+  await pickStep(page, Math.max(...C.ERASER_R_PX))   // 두 글자 각인("28")에서 잰다
+  await page.click('#btn-pen'); await page.waitForTimeout(250); await settle(page)
+
+  const out = await page.evaluate(() => {
+    const t = document.getElementById('fold-erase-pencil-text') as unknown as SVGTextElement
+    const w = document.getElementById('fold-erase-pencil-win') as unknown as SVGGraphicsElement
+    const ink = () => t.getBBox().width
+    const win = () => w.getBBox().width
+    const now = { ink: ink(), win: win(), tl: t.getAttribute('textLength') }
+    // ㈟ **`textLength`를 뗀 판** — 34-3이 걸어 둔 가로 압축이 없는 상태다
+    t.removeAttribute('textLength'); t.removeAttribute('lengthAdjust')
+    const a = { ink: ink(), win: win() }
+    // ㈟′ **옛 판**(전진폭만 창 폭에 묶는다) — 이 회차 전의 구현 그대로 되돌린다.
+    //     전진폭은 정확히 창 폭인데 **잉크는 여전히 넘는다** — 그것이 마감이 잡은 자리다.
+    t.setAttribute('textLength', String(now.win)); t.setAttribute('lengthAdjust', 'spacingAndGlyphs')
+    const a2 = { ink: ink(), adv: t.getComputedTextLength(), win: win() }
+    // ㈠ **창을 좁힌 판** — 각인은 옛 폭에 맞춰 둔 채 창만 줄인다(제품이 안 따라온 판).
+    //     문의 값이 창에서 나오므로 문이 같이 좁아지고 그래서 빨개진다.
+    const narrow = 5
+    w.setAttribute('width', String(narrow))
+    const b = { ink: ink(), win: win() }
+    w.setAttribute('width', String(now.win))
+    return { now, a, a2, b, narrow }
+  })
+  console.log(`[34-3 ④′ 반증 ㈟] textLength를 뗀 판 — 잉크 ${out.a.ink.toFixed(6)} > 창 ${out.a.win.toFixed(6)}`)
+  console.log(`[34-3 ④′ 반증 ㈟′] 옛 판(전진폭만 묶는다) — 전진폭 ${out.a2.adv.toFixed(6)} = 창 ${out.a2.win.toFixed(6)} 인데 `
+    + `잉크 ${out.a2.ink.toFixed(6)} → **넘는다**`)
+  console.log(`[34-3 ④′ 반증 ㈠] 창을 ${out.now.win.toFixed(2)} → ${out.b.win.toFixed(2)}으로 좁힌 판 — `
+    + `문의 값이 따라 내려간다(잉크 ${out.b.ink.toFixed(6)} > 창 ${out.b.win.toFixed(6)})`)
+  console.log(`[34-3 ④′ 대조군] 지금 판 — 잉크 ${out.now.ink.toFixed(6)} ≤ 창 ${out.now.win.toFixed(6)} (textLength ${out.now.tl})`)
+
+  expect(out.now.ink, '지금 판은 문 안이다').toBeLessThanOrEqual(out.now.win + 1e-3)
+  expect(out.a.ink, '㈟ textLength를 떼면 잉크가 창을 넘는다').toBeGreaterThan(out.a.win + 1e-3)
+  expect(out.a2.adv, '㈟′ 옛 판의 전진폭은 정확히 창 폭이다').toBeCloseTo(out.a2.win, 3)
+  expect(out.a2.ink, '㈟′ 그런데도 잉크는 창을 넘는다 — 전진폭을 재면 못 잡는다')
+    .toBeGreaterThan(out.a2.win + 1e-3)
+  expect(out.b.win, '㈠ 창을 좁히면 문의 값이 따라 내려간다').toBeCloseTo(out.narrow, 3)
+  expect(out.b.ink, '㈠ 그 판에서 지금 각인은 창을 넘는다').toBeGreaterThan(out.b.win + 1e-3)
 })
 
 test('34-3 ⑤ 반증 — 옛 «비율만» 견본 · 끊긴 배선이 전부 빨개진다 (D-3)', async ({ page }) => {

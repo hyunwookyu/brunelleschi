@@ -1,0 +1,786 @@
+{
+  "what": "보기 렌즈(`App.viewF`) — 확정된 뒤의 화각만 바꾸고 `Camera.f`·`fSource`·3D 좌표는 안 건드린다. 게이트 다섯과 **위약 판 셋**(렌즈를 실제로 넣은 판 · viewF가 lift로 새는 판 · 커밋이 렌즈를 무시하는 판).",
+  "why": "「렌즈 슬라이더」는 폐기된 넷 중 하나다(CLAUDE.md D-4). 그때 폐기된 것은 **f로 카메라 해를 정하는 것**이고 (f는 소실점에서 나온다 — 이론서 6.2 `f² = |PV₁||PV₂|`), 이 회차의 것은 **확정 뒤의 보기값**이다. 착수 전 판정은 `web2/NOTES.md`의 「31-0 착수 전 판정」이 정본이고 착수 조건 둘(f·fSource는 읽기만 · fSource를 화면에 안 냄)을 이 원장이 값으로 든다.",
+  "where": "core/lens.ts(닮음 하나) · state.viewXf/viewScale(문서→화면의 정본) · state.setViewF/resetViewLens · recompute의 lensSig",
+  "guarantee_vs_measurement_rule": "⚠⚠ **가르는 물음은 하나다**(web2-31 마감 [4][5]가 세 문서의 갈림을 여기로 모았다): **「위약이 그 칸을 빨갛게 만들 수 있는가」** — 만들 수 있으면 **측정**, 구성상 못 만들면 **보장**이다. ⚠ 게이트와 **그 안의 열**은 등급이 다를 수 있다: 게이트 ④·⑥은 **측정**인데 그 안의 0 열(`roundtrip_max_px`·`ink_judge_max_px`·여백 0.100000)은 **항등**이라 임계를 안 건다. 게이트의 등급은 **그 게이트를 빨갛게 만드는 위약이 있는가**로 정하고, 열의 등급은 그 열로 정한다.",
+  "identity_by_construction": [
+    "게이트 ① 「손대지 않은 렌더가 지금과 픽셀 동일」 — `viewF === null`이면 `viewXf`가 `app.view`를 **그대로** 낸다. f가 무엇이든 0이다.",
+    "게이트 ③ 「렌즈를 바꿔도 3D 좌표가 안 변한다」 — `liftAll`에 `viewF`를 읽는 자리가 없다.",
+    "**둘 다 임계를 안 건다**(CLAUDE.md §5.1 자기참조 유형 3). 판별력은 위약 판이 낸다.",
+    "⚠ **열 단위의 항등 셋**(게이트는 측정인데 이 열만 항등이다): ④의 `roundtrip_max_px`·`ink_judge_max_px`(변환이 서로의 역이고 렌즈가 양쪽에서 상쇄된다) · ⑥의 여백 0.100000(닫힌 식이 넣은 수를 같은 변환으로 다시 잰다 — 31-3). **셋 다 임계로 안 쓴다** — 무회귀 문일 뿐이다."
+  ],
+  "measured_not_guaranteed": [
+    "게이트 ② 확정 전 잠금 — 국면 넷에서 조작이 안 먹고, 확정된 셋에서는 먹는다(반증 짝).",
+    "게이트 ④ 원칙 d — **측정이다**: 판별력은 판 ⓒ(커밋이 렌즈를 무시하는 판)가 내고 화면 대각선의 15.5~75.6%로 벌어진다. ⚠ 그 안의 왕복·잉크 심판 0 두 열은 **항등**이라 임계가 아니다(위 `identity_by_construction`의 열 항목).",
+    "게이트 ⑤ 재확정에서의 초기화 — 그리고 서명이 안 움직이는 변경에서는 **안** 버린다.",
+    "게이트 ⑥ 돋보기 × 렌즈 — **측정이다**: 판별력은 판 ⓓ(`zoomFit`이 `lensAn`을 빠뜨린 판)가 내고 **k ≠ 1인 여섯 칸 전부**가 문(|여백 − 0.1| ≤ 0.03)을 넘는다. ⚠ 여백 0.100000 «값» 자체는 항등이므로 그 열이 게이트의 근거가 아니다(web2-31 마감 [5])."
+  ],
+  "fsource_not_on_screen": {
+    "verdict": "**화면에 안 낸다**(2026-08-17 지시 3 · D-L55). 렌즈 팝오버가 내는 값은 **화각(도)** 하나다.",
+    "where": "index.html `#lens-read` · main.ts `syncLens()` — `hfovDeg(lensF(...), an.W)`만 쓴다.",
+    "arm": "e2e/lens31.spec.ts ⑥이 그 문면을 DOM에서 잰다(「fSource」·「two-vp」·「default」가 화면 문자열에 없다)."
+  },
+  "constants": {
+    "LENS_K_MIN": 0.5,
+    "LENS_K_MAX": 2,
+    "LENS_STEP_LOG2": 0.05,
+    "LENS_STOP_MIN": -1,
+    "LENS_STOP_MAX": 1
+  },
+  "constants_note": "**배율(비)이지 mm가 아니다**(#88 — mm로 적으면 「그때 쓰던 센서 크기」와 말없이 묶인다). 0.5·2는 렌즈 한 스톱이고 손잡이는 log2 위에서 등간격이다.",
+  "scenes": [
+    {
+      "key": "p2_tele",
+      "label": "P2 · 좁은 화각"
+    },
+    {
+      "key": "p2_wide",
+      "label": "P2 · 넓은 화각"
+    },
+    {
+      "key": "p1_locked",
+      "label": "P1 잠금(화면수평 선언)"
+    }
+  ],
+  "theory_18_4_band": "⚠ **대역의 양 끝이 이론서 18.4의 어느 칸에 앉는지 적는다**(1차 리뷰어 [12] — 「화각 상한」은 폐기된 넷 중 하나이므로 **상한을 두라는 말이 아니고**, 어디에 앉는지 말하지 않는 것이 지적이다). 18.4의 자: 60° = f 0.87W · 90° = f 0.5W. 이 회차의 장면 셋은 f/W **2.738613**(20.69°) · **0.768838**(66.07°) · **0.87**(59.77°)이고 대역의 양 끝은 2.738613 ↔ **0.768838**이다 (2차 리뷰어 [3]이 초판의 「0.87」·「19.9°」를 잡았다. ⚠ 폭은 셋 다 W = 1200 px이고 위 수는 그 폭으로 나눈 «행 값»이다 — web2-31 마감 [9]가 산문의 2.740279를 행 값으로 맞췄다). k = 0.5에서 아래 끝이 f/W 0.384419 → **≈104.9°**로 **90°를 넘는다**(초판의 97.9°는 0.87 장면의 값이었다). 화면 팔의 장면은 더 극단이다(기본 114.3° → k 0.5에서 144.2°). 그것을 **막지 않는다**: 보기 렌즈는 해를 안 건드리므로 「지각과 어긋나는 그림」이 아니라 「지각과 어긋나게 «보는 것»」이고 되돌리는 손잡이가 그 자리에 있다(「기본으로」).",
+  "lens_band_note": "#86 ㉠ — `viewF`를 f와 **같은 값**으로 두고 재면 위약 판도 초록이다. 그래서 대역의 **양 끝**(k = 0.5 · 2)에서 돈다. 장면도 화각의 양 끝을 덮는다(f/W 2.738613 ↔ 0.768838 · 셋째가 0.87 — 게이트 ①의 행에서 읽는다).",
+  "gate1_pixel_identity": {
+    "what": "**구성상 항등이다 — 임계를 안 건다**(#77 ㉡). `viewF`가 null이면 `viewXf`가 `app.view`를 그대로 내므로 f가 무엇이든 0이 나온다. 판별력은 `falsify_a_lens`(렌즈를 실제로 넣은 판)가 준다.",
+    "rows": [
+      {
+        "scene": "p2_tele",
+        "label": "P2 · 좁은 화각",
+        "points": 26,
+        "f": 3286.335345,
+        "f_over_W": 2.738613,
+        "fSource": "two-vp",
+        "hfov_deg": 20.693541,
+        "untouched_max_px": 0,
+        "falsify_a_lens": {
+          "k0.5": {
+            "max": 1800,
+            "median": 70.710678,
+            "f_screen_fold": 0.5
+          },
+          "k2": {
+            "max": 3600,
+            "median": 141.421356,
+            "f_screen_fold": 2
+          }
+        }
+      },
+      {
+        "scene": "p2_wide",
+        "label": "P2 · 넓은 화각",
+        "points": 28,
+        "f": 922.605008,
+        "f_over_W": 0.768838,
+        "fSource": "two-vp",
+        "hfov_deg": 66.074514,
+        "untouched_max_px": 0,
+        "falsify_a_lens": {
+          "k0.5": {
+            "max": 560,
+            "median": 94.973498,
+            "f_screen_fold": 0.5
+          },
+          "k2": {
+            "max": 1120,
+            "median": 189.946996,
+            "f_screen_fold": 2
+          }
+        }
+      },
+      {
+        "scene": "p1_locked",
+        "label": "P1 잠금(화면수평 선언)",
+        "points": 22,
+        "f": 1044,
+        "f_over_W": 0.87,
+        "fSource": "default",
+        "hfov_deg": 59.773054,
+        "untouched_max_px": 0,
+        "falsify_a_lens": {
+          "k0.5": {
+            "max": 492.44289,
+            "median": 221.002405,
+            "f_screen_fold": 0.5
+          },
+          "k2": {
+            "max": 984.88578,
+            "median": 442.00481,
+            "f_screen_fold": 2
+          }
+        }
+      }
+    ]
+  },
+  "gate2_locked_before_standing": {
+    "what": "「확정」의 술어는 `constructionDone`이다 — web2에 `fSource: 'none'`은 안 선다(D-4 · `core/lens.ts` 머리말).",
+    "rows": [
+      {
+        "state": "empty",
+        "vps": 0,
+        "fSource": "default",
+        "screenHDeclared": false,
+        "constructionDone": false,
+        "lens_allowed": false,
+        "set_accepted": false,
+        "viewF": null,
+        "k": 1
+      },
+      {
+        "state": "horizon_only",
+        "vps": 0,
+        "fSource": "default",
+        "screenHDeclared": false,
+        "constructionDone": false,
+        "lens_allowed": false,
+        "set_accepted": false,
+        "viewF": null,
+        "k": 1
+      },
+      {
+        "state": "one_vp",
+        "vps": 1,
+        "fSource": "default",
+        "screenHDeclared": false,
+        "constructionDone": false,
+        "lens_allowed": false,
+        "set_accepted": false,
+        "viewF": null,
+        "k": 1
+      },
+      {
+        "state": "content_only",
+        "vps": 1,
+        "fSource": "default",
+        "screenHDeclared": false,
+        "constructionDone": false,
+        "lens_allowed": false,
+        "set_accepted": false,
+        "viewF": null,
+        "k": 1
+      },
+      {
+        "state": "p2_tele",
+        "vps": 2,
+        "fSource": "two-vp",
+        "screenHDeclared": false,
+        "constructionDone": true,
+        "lens_allowed": true,
+        "set_accepted": true,
+        "viewF": 6572.67069,
+        "k": 2
+      },
+      {
+        "state": "p2_wide",
+        "vps": 2,
+        "fSource": "two-vp",
+        "screenHDeclared": false,
+        "constructionDone": true,
+        "lens_allowed": true,
+        "set_accepted": true,
+        "viewF": 1845.210015,
+        "k": 2
+      },
+      {
+        "state": "p1_locked",
+        "vps": 1,
+        "fSource": "default",
+        "screenHDeclared": true,
+        "constructionDone": true,
+        "lens_allowed": true,
+        "set_accepted": true,
+        "viewF": 2088,
+        "k": 2
+      }
+    ],
+    "band": {
+      "k_min": 0.5,
+      "k_max": 2,
+      "stop_min": -1,
+      "stop_max": 1,
+      "step_log2": 0.05
+    }
+  },
+  "gate3_coords_frozen": {
+    "what": "**구성상 보장이다 — 임계를 안 건다**: `liftAll`은 `viewF`를 읽는 자리가 없다. 판별력은 `placebo`(analyze가 내는 f를 viewF로 바꾼 판)가 준다.",
+    "placebo_what_it_establishes": "⚠ **이 위약이 세우는 것은 「보기 렌즈 기제가 이득이다」가 아니라 「이 구현이 그 누수를 실제로 막고 있다」이다**(1차 리뷰어 [9] · #83 ㉠ 후단). 「f가 깊이 배율이다」는 이 저장소가 이미 못 박은 사실이고(CLAUDE.md §1 · D-L53 — 특히 `p1_locked`의 f는 임의 게이지라 그 칸의 fold 1.5·2는 «게이지를 바꾼 값»이다). 그래서 이 판이 재는 축은 **「viewF가 lift에 닿는가」 하나**이고, 물음은 크기가 아니라 **갈리는가**다.",
+    "placebo_how": "vi.mock으로 `core/camera`의 `analyze`를 감싸 `f → f·k`로 낸다 — 「보기값이 lift 경로까지 새는 판」이 하는 일 그대로다. 기본 k=1이라 다른 팔은 진짜 analyze를 지난다.",
+    "two_axes_note": "#86 — 값 축과 정체 축을 따로 잰다. **실측은 둘 다 갈렸다**(여섯 칸 전부 `identity_changed: true`) — 사전 예상(「f 배율은 주점 기준 균등 배율이라 소실점의 화면 자리가 안 움직이므로 축 배정도 그대로일 것」)이 틀렸고 측정을 따른다(D-4). ⚠⚠ **그래도 값 축에는 거의 안 갈리는 칸이 있다**: `p2_tele`의 길이 fold가 1.03 대다 — 길이 «비»만 재는 팔이라면 그 칸에서 위약을 통과시킬 뻔했다. 그래서 값 축도 **비가 아니라 좌표 절대 드리프트**(세계 단위)를 같이 적는다.",
+    "rows": [
+      {
+        "scene": "p2_tele",
+        "label": "P2 · 좁은 화각",
+        "lifted": 4,
+        "guard_max_units": {
+          "k0.5": 0,
+          "k2": 0
+        },
+        "placebo": {
+          "k0.5": {
+            "cells": 8,
+            "split_cells": 8,
+            "drift_units_min": 26.16507,
+            "drift_units_median": 26.290683,
+            "drift_units_max": 26.290683,
+            "length_fold_median": 1.005166,
+            "length_fold_max": 1.067308,
+            "lifted_before": 4,
+            "lifted_after": 4,
+            "identity_changed": true,
+            "identity_note": "정체가 갈렸다 — 풀린 획·축 배정·대기 목록·앵커 중 하나가 바뀌었다."
+          },
+          "k2": {
+            "cells": 8,
+            "split_cells": 8,
+            "drift_units_min": 52.522712,
+            "drift_units_median": 52.581366,
+            "drift_units_max": 52.581366,
+            "length_fold_median": 1.002969,
+            "length_fold_max": 1.032374,
+            "lifted_before": 4,
+            "lifted_after": 4,
+            "identity_changed": true,
+            "identity_note": "정체가 갈렸다 — 풀린 획·축 배정·대기 목록·앵커 중 하나가 바뀌었다."
+          }
+        }
+      },
+      {
+        "scene": "p2_wide",
+        "label": "P2 · 넓은 화각",
+        "lifted": 5,
+        "guard_max_units": {
+          "k0.5": 0,
+          "k2": 0
+        },
+        "placebo": {
+          "k0.5": {
+            "cells": 6,
+            "split_cells": 6,
+            "drift_units_min": 5.503478,
+            "drift_units_median": 6.1507,
+            "drift_units_max": 74.255671,
+            "length_fold_median": 1.009091,
+            "length_fold_max": 4.271729,
+            "lifted_before": 5,
+            "lifted_after": 3,
+            "identity_changed": true,
+            "identity_note": "정체가 갈렸다 — 풀린 획·축 배정·대기 목록·앵커 중 하나가 바뀌었다."
+          },
+          "k2": {
+            "cells": 8,
+            "split_cells": 8,
+            "drift_units_min": 9.803545,
+            "drift_units_median": 12.300046,
+            "drift_units_max": 12.3014,
+            "length_fold_median": 1.003362,
+            "length_fold_max": 1.237391,
+            "lifted_before": 5,
+            "lifted_after": 4,
+            "identity_changed": true,
+            "identity_note": "정체가 갈렸다 — 풀린 획·축 배정·대기 목록·앵커 중 하나가 바뀌었다."
+          }
+        }
+      },
+      {
+        "scene": "p1_locked",
+        "label": "P1 잠금(화면수평 선언)",
+        "lifted": 4,
+        "guard_max_units": {
+          "k0.5": 0,
+          "k2": 0
+        },
+        "placebo": {
+          "k0.5": {
+            "cells": 8,
+            "split_cells": 8,
+            "drift_units_min": 3.3408,
+            "drift_units_median": 3.3408,
+            "drift_units_max": 6.074182,
+            "length_fold_median": 1.5,
+            "length_fold_max": 2,
+            "lifted_before": 4,
+            "lifted_after": 4,
+            "identity_changed": true,
+            "identity_note": "정체가 갈렸다 — 풀린 획·축 배정·대기 목록·앵커 중 하나가 바뀌었다."
+          },
+          "k2": {
+            "cells": 8,
+            "split_cells": 8,
+            "drift_units_min": 6.6816,
+            "drift_units_median": 6.6816,
+            "drift_units_max": 12.148364,
+            "length_fold_median": 1.5,
+            "length_fold_max": 2,
+            "lifted_before": 4,
+            "lifted_after": 4,
+            "identity_changed": true,
+            "identity_note": "정체가 갈렸다 — 풀린 획·축 배정·대기 목록·앵커 중 하나가 바뀌었다."
+          }
+        }
+      }
+    ]
+  },
+  "gate4_principle_d": {
+    "what": "렌즈를 바꾼 상태에서 화면 → 문서 → 화면이 제자리인가, 그리고 그때 승격된 3D를 다시 사영하면 그 획의 잉크에 앉는가.",
+    "falsify_note": "판 ⓒ는 「커밋이 렌즈를 빠뜨린 판」이다 — 렌더만 렌즈를 타면 그은 자리와 놓인 자리가 갈린다. k=1 칸은 정의상 0이고(같은 판) 그것이 이 반증의 대조군이다.",
+    "what_is_measured_vs_guaranteed": "⚠ 정직하게 가른다. `roundtrip_max_px`(0)는 `screenToDoc`·`docToScreen`이 서로의 역이라는 **구성상 항등**이고, `ink_judge_max_px`(0)도 **렌즈가 양쪽에서 상쇄되는 항등**이다(왼쪽은 3D 사영을, 오른쪽은 잉크를 같은 변환으로 편다). 둘 다 임계를 안 건다 — 무회귀 문일 뿐이다. **이 게이트의 판별력은 판 ⓒ 하나에서 온다**: 커밋이 렌즈를 빠뜨리면 그은 자리와 놓인 자리가 화면 대각선의 15~76%만큼 갈린다. `snap_move_max_px`는 스냅이 끝점을 옮긴 거리이고 **게이트가 아니다**(앱이 제 일을 한 것이다 — 관측으로만 적는다).",
+    "rows": [
+      {
+        "scene": "p2_tele",
+        "k": 1,
+        "strokes": 4,
+        "lifted": 2,
+        "roundtrip_max_px": 0,
+        "ink_judge_max_px": 0,
+        "snap_move_max_px": 64.114865,
+        "falsify_c_ignore_lens": {
+          "max_px": 0,
+          "median_px": 0,
+          "rel_of_diagonal": 0
+        }
+      },
+      {
+        "scene": "p2_tele",
+        "k": 0.5,
+        "strokes": 4,
+        "lifted": 2,
+        "roundtrip_max_px": 0,
+        "ink_judge_max_px": 0,
+        "snap_move_max_px": 59.26497,
+        "falsify_c_ignore_lens": {
+          "max_px": 223.606798,
+          "median_px": 85.980852,
+          "rel_of_diagonal": 0.155043
+        }
+      },
+      {
+        "scene": "p2_tele",
+        "k": 2,
+        "strokes": 4,
+        "lifted": 2,
+        "roundtrip_max_px": 0,
+        "ink_judge_max_px": 0,
+        "snap_move_max_px": 66.910468,
+        "falsify_c_ignore_lens": {
+          "max_px": 447.213595,
+          "median_px": 232.053285,
+          "rel_of_diagonal": 0.310087
+        }
+      },
+      {
+        "scene": "p2_wide",
+        "k": 1,
+        "strokes": 4,
+        "lifted": 2,
+        "roundtrip_max_px": 0,
+        "ink_judge_max_px": 0,
+        "snap_move_max_px": 56.441611,
+        "falsify_c_ignore_lens": {
+          "max_px": 0,
+          "median_px": 0,
+          "rel_of_diagonal": 0
+        }
+      },
+      {
+        "scene": "p2_wide",
+        "k": 0.5,
+        "strokes": 4,
+        "lifted": 2,
+        "roundtrip_max_px": 0,
+        "ink_judge_max_px": 0,
+        "snap_move_max_px": 47.92472,
+        "falsify_c_ignore_lens": {
+          "max_px": 223.606798,
+          "median_px": 151.426651,
+          "rel_of_diagonal": 0.155043
+        }
+      },
+      {
+        "scene": "p2_wide",
+        "k": 2,
+        "strokes": 4,
+        "lifted": 2,
+        "roundtrip_max_px": 0,
+        "ink_judge_max_px": 0,
+        "snap_move_max_px": 62.366537,
+        "falsify_c_ignore_lens": {
+          "max_px": 1090,
+          "median_px": 723.606798,
+          "rel_of_diagonal": 0.755779
+        }
+      },
+      {
+        "scene": "p1_locked",
+        "k": 1,
+        "strokes": 4,
+        "lifted": 2,
+        "roundtrip_max_px": 0,
+        "ink_judge_max_px": 0,
+        "snap_move_max_px": 40,
+        "falsify_c_ignore_lens": {
+          "max_px": 0,
+          "median_px": 0,
+          "rel_of_diagonal": 0
+        }
+      },
+      {
+        "scene": "p1_locked",
+        "k": 0.5,
+        "strokes": 4,
+        "lifted": 2,
+        "roundtrip_max_px": 0,
+        "ink_judge_max_px": 0,
+        "snap_move_max_px": 40,
+        "falsify_c_ignore_lens": {
+          "max_px": 333.541602,
+          "median_px": 88.33101,
+          "rel_of_diagonal": 0.231269
+        }
+      },
+      {
+        "scene": "p1_locked",
+        "k": 2,
+        "strokes": 4,
+        "lifted": 2,
+        "roundtrip_max_px": 0,
+        "ink_judge_max_px": 0,
+        "snap_move_max_px": 40,
+        "falsify_c_ignore_lens": {
+          "max_px": 667.083203,
+          "median_px": 498.089567,
+          "rel_of_diagonal": 0.462539
+        }
+      }
+    ]
+  },
+  "gate5_promotion_resets": {
+    "literal": {
+      "what": "지시 문면의 「차수 승격 후 보기 렌즈가 초기값으로 돌아간다」 — **web2에서는 공허한 참이다**.",
+      "why": "**문면이 이름 붙인 P1→P2**의 «전» 국면은 소실점 1 · 화면수평 미선언이라 `constructionDone === false`다 — 거기서는 렌즈 자체가 없다(게이트 ②). 그래서 그 승격을 건너는 동안 `viewF`는 내내 null이다. ⚠⚠ **「web2에 실재하는 승격은 P1→P2 하나다」(#86 ㉢)는 이 원장이 반증했다**(web2-31 마감 [6] — #42 ⑥의 형태로 PITFALLS 본문에 정정을 붙였다): `reachability.routes.third_vp`가 **소실점 2 → 3**을 **그리기로** 낸다(f 3286.335345 불변 · `camSig` 불변인데 차수는 오른다). 틀린 셈은 `fSource` 집합(`none|default|two-vp`)을 승격의 술어로 쓴 것이고, 차수는 **소실점 개수**다(이론서 2.3 · CLAUDE.md 지시 1(D-L53)이 처음부터 「남는 승격은 P2 → P3 하나다」라고 적었다). 그러므로 이 칸의 «공허함»은 **P1→P2 하나에만** 걸리고 게이트 ⑤ 전체에는 안 걸린다.",
+      "before": {
+        "vps": 1,
+        "fSource": "default",
+        "f": 1044,
+        "constructionDone": false,
+        "lens_allowed": false,
+        "set_accepted": false,
+        "viewF": null
+      },
+      "after": {
+        "vps": 2,
+        "fSource": "two-vp",
+        "f": 3286.335345,
+        "constructionDone": true,
+        "viewF": null,
+        "k": 1
+      }
+    },
+    "reachability": {
+      "what": "**「렌즈를 켠 채 차수·카메라가 움직이는 자리」를 여섯 길로 확인했다**(#35). ⚠⚠ **2차 리뷰어 [1]이 초판의 판정을 뒤집었다**: 셋째 소실점(차수 2 → 3)은 `camSig`를 안 움직이지만 **차수는 소실점 개수**이고(이론서 2.3) 지시 문면은 「차수 승격」이다 — 그래서 렌즈의 판정자에 **개수를 더했고**(`lensSig`) 그 길이 **그리기로 닿는 유일한 승격**이 됐다. 되돌리기·지우개는 작도 획에 안 닿고(CLAUDE.md §1 「소실점은 확정 후 잠긴다」), P1 잠금에서는 둘째 소실점이 안 선다. 문서를 바꾸는 둘(열기·비우기)도 닿는다.",
+      "lens_on": {
+        "viewF": 6572.67069,
+        "k": 2,
+        "hfov": 10.431817
+      },
+      "routes": {
+        "ordinary_stroke": {
+          "fSource": "two-vp",
+          "f": 3286.335345,
+          "viewF_kept": true,
+          "note": "**반증 짝** — 서명이 안 움직이는 변경에서는 렌즈를 안 버린다."
+        },
+        "undo": {
+          "strokes": "8 → 2",
+          "undo_stack_left": 0,
+          "fSource": "two-vp",
+          "f": 3286.335345,
+          "viewF_kept": true,
+          "note": "**닿지 않는다** — 소실점을 세운 작도 획이 op에 안 들어간다(state.ts: 「작도 획(깊이선·소실점 표식)은 실행취소 대상이 아니다」 · `clearAll` 주석이 같은 사실을 적는다). 스택을 비워도 fSource가 two-vp 그대로다."
+        },
+        "erase": {
+          "strokes": "2 → 2",
+          "fSource": "two-vp",
+          "f": 3286.335345,
+          "viewF_kept": true,
+          "note": "**닿지 않는다** — 소실점을 세운 획이 조각 목록에 없다."
+        },
+        "third_vp": {
+          "vps": "2 → 3",
+          "f": 3286.335345,
+          "f_unchanged": true,
+          "cam_sig": "two-vp|3286.335345 → two-vp|3286.335345",
+          "viewF": null,
+          "k": 1,
+          "note": "**닿는다 — 그리기로 도달하는 유일한 승격이다.** 소실점이 2 → 3이 되면 차수가 오르고, 그때 보기 렌즈를 버린다. ⚠ `camSig`(f·주점·fSource)는 **안 움직인다** — 굳힌 3D는 그대로 유효하다(own3d는 안 깬다). 두 판정자가 다른 물음을 재는 것이 맞고, 렌즈는 «차수»를 본다."
+        },
+        "second_vp_while_p1_locked": {
+          "vps": 1,
+          "fSource": "default",
+          "f": 1044,
+          "p1Locked": true,
+          "stroke_committed": true,
+          "lens_allowed": true,
+          "viewF": 2088,
+          "k": 2,
+          "reject_reason": null,
+          "viewF_kept": true,
+          "note": "**서지 않는다** — 화면 수평이 선언된 순간 1점으로 잠기므로(`p1Locked` · 이론서 2.2) 그 뒤의 대각선은 둘째 소실점을 못 만든다. 즉 **렌즈가 켜진 확정 국면(소실점 하나)에서 P1→P2로 가는 길이 없다** — 게이트 ⑤의 「문면이 공허하다」가 이 칸으로 닫힌다."
+        },
+        "load_doc": {
+          "f": "3286.335345 → 922.605008",
+          "fSource": "two-vp",
+          "viewF": null,
+          "k": 1,
+          "hfov": 66.074514,
+          "note": "**도달한다** — 렌즈를 버리고 초기값(그 문서의 f)으로 돌아간다."
+        },
+        "clear_all": {
+          "constructionDone": false,
+          "lens_allowed": false,
+          "viewF": null,
+          "note": "**도달한다** — 확정이 풀리므로 렌즈가 없다(게이트 ②의 국면으로 돌아간다)."
+        }
+      },
+      "verdict": "초기화 경로는 **살아 있고 그리기로 도달한다** — 셋째 소실점(차수 2 → 3)이 그 자리다. ⚠ 문면이 이름 붙인 **P1 → P2**는 여전히 공허하다(그 «전» 국면에 렌즈가 없고, P1 잠금에서는 둘째 소실점이 안 선다). 즉 「승격이 렌즈를 버린다」는 **차수 3으로 오를 때** 실물이 된다."
+    }
+  },
+  "gate6_zoomfit_under_lens": {
+    "what": "이 회차가 `zoomFit`에 `lensAn`을 물렸으므로 **그 경로를 잰다**(2차 리뷰어 [10]). 렌즈를 낀 채 채워도 여백이 문 안이고, 그러고도 `viewF`·`f`·`fSource`가 안 변한다.",
+    "what_is_measured_vs_guaranteed": "⚠⚠ **여백 0.100000 자체는 아무것도 안 잰다**(31-3이 못 박았다 · #77 ㉡ · CLAUDE.md §5.1 자기참조 유형 3): 닫힌 식이 넣은 수를 **같은 변환으로** 다시 재면 항등이다. **이 게이트가 실제로 가르는 것은 «채우는 쪽과 그리는 쪽이 같은 변환을 쓰는가»**이고, 그 판별력은 **위약 판 ⓓ**가 낸다 — `zoomFit`이 `lensAn`을 빠뜨리면 렌즈 배수만큼 어긋나 **k ≠ 1인 여섯 칸 전부**가 문을 넘는다(k = 1인 셋은 «렌즈가 없으면 같은 판»이라 대조군이다 — #86 ㉠). `viewF`·`f`·`fSource` 불변 셋도 같은 칸에서 값으로 든다(31-3의 「이동만 한다」를 렌즈 국면으로 확장한 것). **임계를 그대로 두는 근거가 이 위약이다** — 위약이 없었다면 문을 빼고 보장으로 내렸어야 한다(web2-31 마감 [5]).",
+    "threshold": {
+      "ZOOM_FIT_MARGIN": 0.1,
+      "ZOOM_FIT_MARGIN_TOL": 0.03
+    },
+    "falsify_d_summary": {
+      "margins": [
+        0.1,
+        0.133789,
+        -0.632422,
+        0.1,
+        0.3,
+        -0.3,
+        0.1,
+        -0.111322,
+        -1.046228
+      ],
+      "red_cells": "6/9",
+      "control_cells": "3 (k = 1 — 정의상 초록)"
+    },
+    "rows": [
+      {
+        "scene": "p2_tele",
+        "k": 1,
+        "mode": "view",
+        "points": 8,
+        "margin_min": 0.1,
+        "view_s": "1 → 3.989557",
+        "f_unchanged": true,
+        "fSource": "two-vp",
+        "viewF_unchanged": true,
+        "falsify_d_fit_ignores_lens": {
+          "what": "`zoomFit`이 `lensAn` 대신 **렌즈를 안 문 `an`**으로 채운 판 — 그리는 쪽은 렌즈를 탄다.",
+          "margin_min": 0.1,
+          "over_gate": false,
+          "gate": "|여백 − 0.1| ≤ 0.03",
+          "note": "⚠ **k = 1은 대조군이다** — 렌즈가 없으면 «렌즈를 빠뜨린 판»이 **같은 판**이라 정확히 초록이다(#86 ㉠의 안 갈리는 축)."
+        },
+        "note": "돋보기는 **이동만 한다** — 렌즈(`viewF`)도 해(`f`·`fSource`)도 안 건드린다. 렌즈가 걸린 상태에서도 여백이 지정값 대역에 든다(닫힌 식에 `lensAn`을 넣은 결과다)."
+      },
+      {
+        "scene": "p2_tele",
+        "k": 0.5,
+        "mode": "view",
+        "points": 8,
+        "margin_min": 0.1,
+        "view_s": "1 → 7.979115",
+        "f_unchanged": true,
+        "fSource": "two-vp",
+        "viewF_unchanged": true,
+        "falsify_d_fit_ignores_lens": {
+          "what": "`zoomFit`이 `lensAn` 대신 **렌즈를 안 문 `an`**으로 채운 판 — 그리는 쪽은 렌즈를 탄다.",
+          "margin_min": 0.133789,
+          "over_gate": true,
+          "gate": "|여백 − 0.1| ≤ 0.03",
+          "note": "**빨갛다** — 그래서 이 게이트는 여백이 아니라 «채우는 쪽과 그리는 쪽이 같은 변환을 쓰는가»를 잰다."
+        },
+        "note": "돋보기는 **이동만 한다** — 렌즈(`viewF`)도 해(`f`·`fSource`)도 안 건드린다. 렌즈가 걸린 상태에서도 여백이 지정값 대역에 든다(닫힌 식에 `lensAn`을 넣은 결과다)."
+      },
+      {
+        "scene": "p2_tele",
+        "k": 2,
+        "mode": "view",
+        "points": 8,
+        "margin_min": 0.1,
+        "view_s": "1 → 1.994779",
+        "f_unchanged": true,
+        "fSource": "two-vp",
+        "viewF_unchanged": true,
+        "falsify_d_fit_ignores_lens": {
+          "what": "`zoomFit`이 `lensAn` 대신 **렌즈를 안 문 `an`**으로 채운 판 — 그리는 쪽은 렌즈를 탄다.",
+          "margin_min": -0.632422,
+          "over_gate": true,
+          "gate": "|여백 − 0.1| ≤ 0.03",
+          "note": "**빨갛다** — 그래서 이 게이트는 여백이 아니라 «채우는 쪽과 그리는 쪽이 같은 변환을 쓰는가»를 잰다."
+        },
+        "note": "돋보기는 **이동만 한다** — 렌즈(`viewF`)도 해(`f`·`fSource`)도 안 건드린다. 렌즈가 걸린 상태에서도 여백이 지정값 대역에 든다(닫힌 식에 `lensAn`을 넣은 결과다)."
+      },
+      {
+        "scene": "p2_wide",
+        "k": 1,
+        "mode": "view",
+        "points": 10,
+        "margin_min": 0.1,
+        "view_s": "1 → 0.96",
+        "f_unchanged": true,
+        "fSource": "two-vp",
+        "viewF_unchanged": true,
+        "falsify_d_fit_ignores_lens": {
+          "what": "`zoomFit`이 `lensAn` 대신 **렌즈를 안 문 `an`**으로 채운 판 — 그리는 쪽은 렌즈를 탄다.",
+          "margin_min": 0.1,
+          "over_gate": false,
+          "gate": "|여백 − 0.1| ≤ 0.03",
+          "note": "⚠ **k = 1은 대조군이다** — 렌즈가 없으면 «렌즈를 빠뜨린 판»이 **같은 판**이라 정확히 초록이다(#86 ㉠의 안 갈리는 축)."
+        },
+        "note": "돋보기는 **이동만 한다** — 렌즈(`viewF`)도 해(`f`·`fSource`)도 안 건드린다. 렌즈가 걸린 상태에서도 여백이 지정값 대역에 든다(닫힌 식에 `lensAn`을 넣은 결과다)."
+      },
+      {
+        "scene": "p2_wide",
+        "k": 0.5,
+        "mode": "view",
+        "points": 10,
+        "margin_min": 0.1,
+        "view_s": "1 → 1.92",
+        "f_unchanged": true,
+        "fSource": "two-vp",
+        "viewF_unchanged": true,
+        "falsify_d_fit_ignores_lens": {
+          "what": "`zoomFit`이 `lensAn` 대신 **렌즈를 안 문 `an`**으로 채운 판 — 그리는 쪽은 렌즈를 탄다.",
+          "margin_min": 0.3,
+          "over_gate": true,
+          "gate": "|여백 − 0.1| ≤ 0.03",
+          "note": "**빨갛다** — 그래서 이 게이트는 여백이 아니라 «채우는 쪽과 그리는 쪽이 같은 변환을 쓰는가»를 잰다."
+        },
+        "note": "돋보기는 **이동만 한다** — 렌즈(`viewF`)도 해(`f`·`fSource`)도 안 건드린다. 렌즈가 걸린 상태에서도 여백이 지정값 대역에 든다(닫힌 식에 `lensAn`을 넣은 결과다)."
+      },
+      {
+        "scene": "p2_wide",
+        "k": 2,
+        "mode": "view",
+        "points": 10,
+        "margin_min": 0.1,
+        "view_s": "1 → 0.48",
+        "f_unchanged": true,
+        "fSource": "two-vp",
+        "viewF_unchanged": true,
+        "falsify_d_fit_ignores_lens": {
+          "what": "`zoomFit`이 `lensAn` 대신 **렌즈를 안 문 `an`**으로 채운 판 — 그리는 쪽은 렌즈를 탄다.",
+          "margin_min": -0.3,
+          "over_gate": true,
+          "gate": "|여백 − 0.1| ≤ 0.03",
+          "note": "**빨갛다** — 그래서 이 게이트는 여백이 아니라 «채우는 쪽과 그리는 쪽이 같은 변환을 쓰는가»를 잰다."
+        },
+        "note": "돋보기는 **이동만 한다** — 렌즈(`viewF`)도 해(`f`·`fSource`)도 안 건드린다. 렌즈가 걸린 상태에서도 여백이 지정값 대역에 든다(닫힌 식에 `lensAn`을 넣은 결과다)."
+      },
+      {
+        "scene": "p1_locked",
+        "k": 1,
+        "mode": "view",
+        "points": 8,
+        "margin_min": 0.1,
+        "view_s": "1 → 3.667931",
+        "f_unchanged": true,
+        "fSource": "default",
+        "viewF_unchanged": true,
+        "falsify_d_fit_ignores_lens": {
+          "what": "`zoomFit`이 `lensAn` 대신 **렌즈를 안 문 `an`**으로 채운 판 — 그리는 쪽은 렌즈를 탄다.",
+          "margin_min": 0.1,
+          "over_gate": false,
+          "gate": "|여백 − 0.1| ≤ 0.03",
+          "note": "⚠ **k = 1은 대조군이다** — 렌즈가 없으면 «렌즈를 빠뜨린 판»이 **같은 판**이라 정확히 초록이다(#86 ㉠의 안 갈리는 축)."
+        },
+        "note": "돋보기는 **이동만 한다** — 렌즈(`viewF`)도 해(`f`·`fSource`)도 안 건드린다. 렌즈가 걸린 상태에서도 여백이 지정값 대역에 든다(닫힌 식에 `lensAn`을 넣은 결과다)."
+      },
+      {
+        "scene": "p1_locked",
+        "k": 0.5,
+        "mode": "view",
+        "points": 8,
+        "margin_min": 0.1,
+        "view_s": "1 → 7.335862",
+        "f_unchanged": true,
+        "fSource": "default",
+        "viewF_unchanged": true,
+        "falsify_d_fit_ignores_lens": {
+          "what": "`zoomFit`이 `lensAn` 대신 **렌즈를 안 문 `an`**으로 채운 판 — 그리는 쪽은 렌즈를 탄다.",
+          "margin_min": -0.111322,
+          "over_gate": true,
+          "gate": "|여백 − 0.1| ≤ 0.03",
+          "note": "**빨갛다** — 그래서 이 게이트는 여백이 아니라 «채우는 쪽과 그리는 쪽이 같은 변환을 쓰는가»를 잰다."
+        },
+        "note": "돋보기는 **이동만 한다** — 렌즈(`viewF`)도 해(`f`·`fSource`)도 안 건드린다. 렌즈가 걸린 상태에서도 여백이 지정값 대역에 든다(닫힌 식에 `lensAn`을 넣은 결과다)."
+      },
+      {
+        "scene": "p1_locked",
+        "k": 2,
+        "mode": "view",
+        "points": 8,
+        "margin_min": 0.1,
+        "view_s": "1 → 1.833965",
+        "f_unchanged": true,
+        "fSource": "default",
+        "viewF_unchanged": true,
+        "falsify_d_fit_ignores_lens": {
+          "what": "`zoomFit`이 `lensAn` 대신 **렌즈를 안 문 `an`**으로 채운 판 — 그리는 쪽은 렌즈를 탄다.",
+          "margin_min": -1.046228,
+          "over_gate": true,
+          "gate": "|여백 − 0.1| ≤ 0.03",
+          "note": "**빨갛다** — 그래서 이 게이트는 여백이 아니라 «채우는 쪽과 그리는 쪽이 같은 변환을 쓰는가»를 잰다."
+        },
+        "note": "돋보기는 **이동만 한다** — 렌즈(`viewF`)도 해(`f`·`fSource`)도 안 건드린다. 렌즈가 걸린 상태에서도 여백이 지정값 대역에 든다(닫힌 식에 `lensAn`을 넣은 결과다)."
+      }
+    ]
+  },
+  "gate": {
+    "for": "web2-31 2번 — 보기 렌즈(화각). 지시가 등록한 다섯.",
+    "registered": [
+      "렌즈를 손대지 않은 상태의 렌더가 지금과 **픽셀 단위로 동일** — 세 장면 전부 0.000000 px (**구성상 항등**)",
+      "확정 전에는 조작이 없다 — 국면 넷 전부 `lensAllowed false` · `setViewF` 거절 (반증 짝: 확정된 셋은 먹는다)",
+      "렌즈를 바꿔도 이미 올라간 3D 좌표가 변하지 않는다 — 좌표 전수 비교 0 (**구성상 보장**)",
+      "렌즈를 바꾼 상태에서 그은 획이 화면에서 본 자리에 놓인다 — 왕복 0 · 잉크 심판 0 (⚠ **둘 다 구성상 항등이라 임계가 아니다** — 판별력은 판 ⓒ가 낸다. 1차 리뷰어 [4])",
+      "차수 승격 후 보기 렌즈가 초기값으로 돌아간다 — **셋째 소실점(차수 2 → 3)에서 그리기로 도달한다**. 문면이 이름 붙인 P1 → P2는 그 «전» 국면에 렌즈가 없어 공허하고, 문서를 바꾸는 둘(열기·비우기)도 닿는다"
+    ],
+    "reachability": "**세 축이 각각 다른 판에서 빨개진다**. ⓐ 렌즈를 실제로 넣은 판 → ①의 픽셀 동일이 깨진다. ⓑ `viewF`가 lift로 새는 판 → ③의 좌표 전수 비교가 깨진다(값 축). ⓒ 커밋이 렌즈를 무시하는 판 → ④ 원칙 d가 깨진다. ⓓ `zoomFit`이 렌즈를 빠뜨린 판 → ⑥의 여백이 k ≠ 1인 여섯 칸에서 문을 넘는다(0.133789 ~ −1.046228). ⚠ **반대 방향도 이 원장 안에 있다**: 같은 위약들이 `k = 1`에서는 전부 초록이다(④의 k=1 행 · ⑥의 k=1 행) — 그것이 #86 ㉠이 말한 「안 갈리는 축」이고, 그래서 대역의 양 끝에서 돈다.",
+    "reachability_value": 74.255671,
+    "reachability_value_fixture_determined": true,
+    "reachability_source": "gate3_coords_frozen/rows/1/placebo/k0.5/drift_units_max",
+    "reachability_note": "**위약 판 ⓑ가 3D 좌표를 최대 74.255671 세계 단위 옮긴다** — 게이트 ③의 등록 지표와 같은 자(좌표)다. 같은 판의 길이 fold는 최대 4.271729배인데 거기에는 fold 1.003 대의 칸도 있으므로 (값 축의 맹점) 도달 가능성 값으로는 좌표를 든다. 다른 두 축: 판 ⓐ 3600 px(픽셀 동일) · 판 ⓒ 1090 px(원칙 d). ⚠ **이 좌표 드리프트에서 강체·닮음 성분을 안 뺐다**(1차 리뷰어 [10]) — 「형태가 얼마나 갈렸나」는 같은 칸의 length_fold_*가 들고, 이 수는 「같은 문서를 다른 f로 풀면 3D가 어디에 앉는가」의 크기다.",
+    "reachability_value_secondary": 4.271729,
+    "reachability_source_secondary": "gate3_coords_frozen/rows/1/placebo/k0.5/length_fold_max",
+    "reachability_value_tertiary": 1090,
+    "reachability_source_tertiary": "gate4_principle_d/rows/5/falsify_c_ignore_lens/max_px"
+  },
+  "selfcheck_flags_known": {
+    "zeros_are_the_claim": "⚠ `untouched_max_px` · `guard_max_units` · `roundtrip_max_px` · `ink_judge_max_px`가 **0**으로 깔린다 — 「1e-10 미만 오차」·「분포 전체가 한 값」·「0 고정 카운터」의 대상처럼 보인다 (⚠ **실제로는 selfcheck가 이 넷을 안 잡는다** — 2차 리뷰어 [4]. 그 자리는 사람이 본다). **셋 다 그 칸의 주장 자체다**: 앞의 둘은 구성상 항등·보장이고(그래서 임계를 안 건다) 세 번째는 `screenToDoc`와 `docToScreen`이 서로의 역이라는 사실이다. 값이 0이 **아니면** 그 칸이 틀린 것이다. 판별력은 같은 행 옆의 `falsify_*`가 진다.",
+    "exact_k_folds": "⚠ `k0.5`·`k2` 칸의 `f_screen_fold`·`lensK`가 정확히 0.5·2로 나온다 — **설계 보장이다**(손잡이가 그 값을 넣었다). 재는 것은 그 배수가 **어디까지 흘러가는가**이지 배수 자체가 아니다.",
+    "identity_axis_all_true": "⚠ 게이트 ③의 `identity_changed`가 여섯 칸 **모두 true**다 — 「분포 전체가 한 값」이 잡힌다. **관측이고 사전 예상의 반증이다**(D-4 — `two_axes_note`): 위약은 3D를 다른 f로 푸는 것이라 무엇이 풀리는지(대기/승격·앵커)까지 갈린다. 임계를 안 건다 — 옆의 값 축이 크기를 든다.",
+    "k1_control_rows_zero": "⚠ `gate4_principle_d`의 k=1 행 셋에서 `falsify_c_ignore_lens.median_px = 0`이 「카운터 0」으로 잡힌다 — **대조군의 주장 자체다**: 렌즈가 없으면 「렌즈를 무시하는 판」이 **같은 판**이므로 정확히 0이다(#86 ㉠의 「안 갈리는 축」이 이 행이다). 0이 **아니면** 그 칸이 틀린 것이다.",
+    "undo_stack_emptied": "⚠ `gate5.../routes/undo/undo_stack_left = 0`이 「카운터 0」으로 잡힌다 — **일부러 비운 것**이고(여섯 번 물렸다) 그런데도 `fSource`가 two-vp 그대로라는 것이 그 칸의 관측이다.",
+    "no_constants_snapshot": "**web2 라인 전체의 유보다** — 이 라인은 `constantsSnapshot()`을 안 쓰고 `constants` 블록을 손으로 적는다(`hold26.test`가 그 유보를 처음 적었다). 문서는 원장을 **이름으로** 가리킨다."
+  },
+  "pitfalls": [
+    "#86",
+    "#83",
+    "#77",
+    "#54",
+    "#42",
+    "#40",
+    "#35",
+    "#88",
+    "#87"
+  ],
+  "pitfalls_note": "#77 ㉡(항등인 검증을 남기지 않는다 — 남기면 그 자리에 「쟀다」가 서 버린다)이 이 항목의 뼈대다: 게이트 다섯 중 둘이 구성상 참이라 **그 사실을 적고 임계를 뺐다**. #86은 값 축·정체 축을 따로 잰 자리다 — ⚠ **실측은 둘 다 갈렸고**(여섯 칸 전부 `identity_changed: true`) 사전 예상이 반증됐다(`two_axes_note`). 그래도 값 축에는 fold 1.003 대의 칸이 있어 도달 가능성 값은 **좌표**로 든다. #77 ㉠은 손잡이 자리(기존 확대·궤도에 안 얹었다), #87·#88은 그 손잡이의 DOM 자리(`#app` 직계 · 예약 px 상수 ⛔)다.",
+  "command": "LEDGER=1 npx vitest run test/lens31.test.ts"
+}

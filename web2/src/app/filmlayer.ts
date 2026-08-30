@@ -38,7 +38,7 @@
 // 아무것도 안 가리므로 곱과 보통 그리기가 같은 결과이고, 재조립 비용이 0이다.
 
 import type { App } from './state'
-import { atSheetPose, fadeRef, underlayOf } from './state'
+import { atSheetPose, fadeRef, underlayOf, viewXf } from './state'
 import { isFlat2d, type Layer, type Paper, type Surface, type CamPose, type Underlay } from '../core/types'
 import { rng32, MAT, gradeOf, widthOf, widthOfMat } from '../core/material'
 import { project } from '../core/camera'
@@ -311,7 +311,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
    *  프레임마다 도는 비용이 아니다 — 궤도 중에도 값이 안 바뀌면 캐시가 그대로 산다. */
   let paperKey = ''
   function drawPaperFilm(app: App) {
-    const v = app.view
+    const v = viewXf(app)
     const key = `${app.activeSheet}|${v.s}|${v.ox}|${v.oy}|${cd}|${cw}x${ch}|${FIBER_LEGACY ? 'L' : 'N'}|${PAPER_FIBER ? 'F' : '-'}|${PAPER_309 ? '9' : '-'}`
     if (key === paperKey) return
     paperKey = key
@@ -345,7 +345,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
    *  아무 일도 안 한다. 지우는 굵기는 «그 자리에 있을 수 있는 가장 굵은 선»
    *  (`C.NIB_MAX`)이다 — 새 숫자를 안 짓는다(#54). */
   function drawUnderlay(g: CanvasRenderingContext2D, app: App, lay: Layer, u: Underlay) {
-    const v = app.view
+    const v = viewXf(app)
     g.save()
     g.beginPath()
     g.rect((lay.rect.x * v.s + v.ox) * cd, (lay.rect.y * v.s + v.oy) * cd,
@@ -401,7 +401,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
     // 곱의 차가 지각 아래다(알려진 강등 — NOTES·assumptions).
     // 뷰는 **살아 있는 값**이다 — 아래 캔버스(#brushc)가 live app.view로 그린다
     // (brushlayer.ts의 캐시 키가 app.view다). 동결 뷰로 자리 잡으면 팬 중에 rect가 처진다.
-    const v = app.view
+    const v = viewXf(app)
     const gl = document.getElementById('gl') as HTMLCanvasElement | null
     const brushc = document.getElementById('brushc') as HTMLCanvasElement | null
     const brushsnap = document.getElementById('brushsnap') as HTMLCanvasElement | null
@@ -458,7 +458,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
     g.clearRect(0, 0, layerc.width, layerc.height)
     if (!split || split.above.size === 0) { layerc.style.display = 'none'; return }
     layerc.style.display = ''
-    const v = app.view   // 살아 있는 뷰 — drawFilms와 같은 이유
+    const v = viewXf(app)   // 살아 있는 뷰 — drawFilms와 같은 이유(렌즈 합성은 viewXf가 진다)
     // 문서 좌표로 그린다 — 화면 고정 굵기는 ×is(render2d 규약 그대로)
     g.setTransform(cd * v.s, 0, 0, cd * v.s, cd * v.ox, cd * v.oy)
     const is = 1 / v.s

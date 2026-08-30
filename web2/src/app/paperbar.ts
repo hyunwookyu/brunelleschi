@@ -33,8 +33,17 @@ export interface PaperbarHooks {
   onGoto: () => void
 }
 
-/** Phosphor light camera (MIT · `@phosphor-icons/core` assets/light/camera-light.svg — path 그대로) */
-const CAMERA_PATH = 'M208,58H179.21L165,36.67A6,6,0,0,0,160,34H96a6,6,0,0,0-5,2.67L76.78,58H48A22,22,0,0,0,26,80V192a22,22,0,0,0,22,22H208a22,22,0,0,0,22-22V80A22,22,0,0,0,208,58Zm10,134a10,10,0,0,1-10,10H48a10,10,0,0,1-10-10V80A10,10,0,0,1,48,70H80a6,6,0,0,0,5-2.67L99.21,46h57.57L171,67.33A6,6,0,0,0,176,70h32a10,10,0,0,1,10,10ZM128,90a42,42,0,1,0,42,42A42,42,0,0,0,128,90Zm0,72a30,30,0,1,1,30-30A30,30,0,0,1,128,162Z'
+/** **시점 갱신**(web2-31 4번) — 종이 + 갱신 화살표. 정본은 `docs/instrument-icons.md`의
+ *  「종이와 갱신 화살표」 절이고 이 문자열은 그 블록에 `width/height`만 얹은 것이다
+ *  (탭 줄에는 크기를 주는 CSS 급이 없어 16px을 여기서 박는다 — 옛 카메라와 **같은 상자**).
+ *
+ *  ⚠ **옛것은 Phosphor light `camera`였다**(web2-25 3-a). 31-3의 돋보기가 들어오면서 뜻이
+ *  겹쳤다 — 둘 다 «광학 기구»이고 하나는 화면을 채우는 일, 하나는 시점을 남기는 일이라
+ *  아이콘 문법이 두 일을 안 갈랐다. 바꾼 쪽은 이쪽이고(지시 31-4), 카메라 도형은 **화면에서
+ *  사라졌다**(e2e `papericon31.spec.ts`가 DOM에서 그것을 잰다).
+ *  ⚠⚠ 선 문법이 됐다 — 옛 판은 `fill="currentColor"`의 **채운** 그림이라
+ *  `docs/instrument-icons.md`의 「그 외 전부」와 문법이 달랐다(34-5의 톱니와 같은 자리). */
+const SHEET_ICON = '<svg viewBox="0 0 32 32" width="16" height="16" style="vertical-align:-3px" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.6 3.6 H12.4 L17 8.2 V19.6 H4.6 Z"/><path d="M12.4 3.6 V8.2 H17"/><path d="M26.000 18.350 A5.6 5.6 0 1 1 22.712 17.621"/><path d="M20.075 19.609 L22.712 17.621 L19.770 16.122"/></svg>'
 
 export interface Paperbar {
   /** 문서·활성이 바뀐 뒤 다시 그린다(loadDoc·비우기·삭제) */
@@ -249,11 +258,21 @@ export function initPaperbar(app: App, host: HTMLElement, hooks: PaperbarHooks):
     const add = document.createElement('button')
     add.id = 'paper-add'
     add.className = 'ptab'
-    // **셔터**(web2-25 3-a) — 「+」를 «찍는 동작»으로 바꿨다. 크롬의 「+」는 «빈 것을 하나
-    // 더 만든다»는 뜻인데 여기서 하는 일은 «지금 보이는 것을 한 장으로 남긴다»라 뜻이 다르다.
-    // Phosphor light camera (MIT · @phosphor-icons/core assets/light/camera-light.svg 그대로)
-    add.innerHTML = '<svg viewBox="0 0 256 256" fill="currentColor" width="16" height="16" style="vertical-align:-3px"><path d="CAMPATH"/></svg>'.replace('CAMPATH', CAMERA_PATH)
-    add.title = '지금 보고 있는 시점을 한 장으로 남긴다'
+    // **시점 갱신**(web2-31 4번) — 종전 셔터(카메라)를 «종이 + 갱신 화살표»로 바꿨다.
+    // web2-25 3-a가 「+」를 셔터로 바꾼 근거(«빈 것을 하나 더»가 아니라 «지금 보이는 것을
+    // 한 장으로»)는 **그대로 선다** — 바뀐 것은 그 뜻을 어느 그림으로 말하는가이고,
+    // 사진 찍기가 아니라 **시점을 갱신해 남기는 일**이 그 뜻이다(SketchUp Scenes의 어법).
+    //
+    // ⚠⚠ **이 단추는 «있는 종이를 갱신»하지 않는다**(D-4 — 측정이 지시의 문면과 갈렸다):
+    // 부르는 것은 `hooks.capture()` 하나이고 그 끝에서 **새 장이 는다**(main.ts
+    // `captureSheet` — 이 파일은 만드는 함수를 직접 안 부른다). SketchUp으로
+    // 치면 여기가 *Add Scene*, 위 팝업의 「이 시점으로 갱신」이 *Update Scene*이다.
+    // 그래서 이름·툴팁은 「시점」 계열로 맞추되 **어느 장인지**를 지운 채 「갱신」이라
+    // 부르지 않는다 — 한 손잡이에 뜻을 하나 더 얹으면 옛 뜻이 조용히 죽는다(#77 ㉠).
+    // 대신 툴팁이 **갱신이 사는 자리**(탭 길게 누르기)를 가리킨다. `assumptions.md` AS-C133.
+    add.innerHTML = SHEET_ICON
+    add.setAttribute('aria-label', '시점 남기기')
+    add.title = '지금 보고 있는 시점을 한 장으로 남긴다 — 시점 갱신은 탭을 길게 누른다'
     add.addEventListener('click', () => {
       hooks.flash()    // 찍는 순간 화면이 한 번 번쩍한다 — 무엇이 저장됐는지가 그 자리에서 보인다
       const s = hooks.capture()

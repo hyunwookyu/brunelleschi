@@ -8,7 +8,9 @@ import { Line2 } from 'three/addons/lines/Line2.js'
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js'
 import type { App } from './state'
+import { viewXf } from './state'
 import { MAT, gradeOf, widthOf } from '../core/material'
+import { C } from '../core/constants'
 import type { Grade } from '../core/types'
 
 export interface R3D {
@@ -143,11 +145,13 @@ export function syncCamera(r: R3D, app: App) {
   const an = app.lift.an
   const { W, H } = r // NDC는 캔버스 크기 기준 — 주점·f는 문서 좌표에서 뷰 변환으로
   if (!an.principal || an.f === null) return
-  const v = app.view
+  // **보기 렌즈는 여기서 갈래를 안 만든다**(web2-31 2번): `viewXf`가 「주점 고정 배율 k」를
+  // 합성해 오므로 아래 식이 그대로 `px` 제자리 · `f = viewF·s`를 낸다(주점이 고정점이다).
+  const v = viewXf(app)
   const px = an.principal.x * v.s + v.ox
   const py = an.principal.y * v.s + v.oy
   const f = an.f * v.s
-  const near = 1, far = 1e6
+  const near = C.RENDER_NEAR_UNITS, far = 1e6   // 근평면의 출처는 `C` 하나다 — 돋보기가 같은 값을 읽는다(#54)
   r.camera.projectionMatrix.set(
     2 * f / W, 0, 1 - 2 * px / W, 0,
     0, 2 * f / H, 2 * py / H - 1, 0,
@@ -178,8 +182,8 @@ export function setDraftLine(r: R3D, app: App,
   }
   syncCamera(r, app)  // 역사영 전에 행렬을 현재 포즈로
   const un = (p: Pt2) => {
-    const v = app.view
-    const sx = p.x * v.s + v.ox, sy = p.y * v.s + v.oy   // 문서 → 화면(CSS)
+    const v = viewXf(app)
+    const sx = p.x * v.s + v.ox, sy = p.y * v.s + v.oy   // 문서 → 화면(CSS · 렌즈 합성)
     const nd = new THREE.Vector3((2 * sx) / r.W - 1, 1 - (2 * sy) / r.H, 0)
     return nd.unproject(r.camera)
   }

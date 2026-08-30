@@ -1,0 +1,215 @@
+{
+ "what": "web2-31 3번 — 돋보기가 브라우저에서 실제로 눌리고 채우는가. 기하는 단위 팔(stage0/out/zoom31_web2.json)이 잰다.",
+ "canonical_command": "LEDGER=1 npx playwright test e2e/zoom31.spec.ts --project=dpr1",
+ "viewport": {
+  "w": 1200,
+  "h": 800
+ },
+ "dpr": "dpr1",
+ "note_rederive": "여백은 제품의 맞춤 코드가 아니라 `diag.projectAll()` + `app.view`로 **다시 유도**한 값이다 — 재는 자와 맞추는 자가 갈려 있다.",
+ "note_dpr": "⚠ CSS px 값(자리·여백·elementFromPoint)이 dpr 1·2에서 **글자 그대로 같다** — 그것이 맞는 결과다(CSS 좌표계는 dpr과 무관하다). 다만 그 사실이 「dpr 축을 잰다」가 되려면 **배율이 실제로 달랐다**는 값이 있어야 하므로 `dpr_*`에 `devicePixelRatio`와 캔버스 뒷면 배수를 함께 남긴다(리뷰어 [9] · #21). 이 회차에서 dpr에 실제로 반응하는 것은 캔버스 뒷면 픽셀이다.",
+ "note_88": "여유·예약 px를 이 파일에 상수로 안 적는다 — `#sidebar`의 실측 상자에서 그 자리에 뺀다(#88).",
+ "button_dpr1": {
+  "drawn": {
+   "svg_w": 30,
+   "svg_h": 30,
+   "btn_w": 36,
+   "btn_h": 36,
+   "shapes": [
+    "circle",
+    "path"
+   ],
+   "viewBox": "0 0 32 32",
+   "stroke": "currentColor",
+   "fill": "none",
+   "title": "돋보기 — 대상에 맞춰 화면을 채운다",
+   "aria": "돋보기",
+   "cls": "t ico-m"
+  },
+  "element_from_point": [
+   {
+    "at": "가운데",
+    "x": 1180,
+    "y": 101,
+    "got": "svg",
+    "mine": true
+   },
+   {
+    "at": "좌상",
+    "x": 1171,
+    "y": 92,
+    "got": "svg",
+    "mine": true
+   },
+   {
+    "at": "우상",
+    "x": 1189,
+    "y": 92,
+    "got": "svg",
+    "mine": true
+   },
+   {
+    "at": "좌하",
+    "x": 1171,
+    "y": 110,
+    "got": "svg",
+    "mine": true
+   },
+   {
+    "at": "우하",
+    "x": 1189,
+    "y": 110,
+    "got": "path",
+    "mine": true
+   }
+  ]
+ },
+ "orbited_dpr1": {
+  "margin_before_after": [
+   0.284556,
+   0.1
+  ],
+  "margin_before": {
+   "min": 0.284556,
+   "inside": true
+  },
+  "margin_after": {
+   "min": 0.1,
+   "mx": 0.1,
+   "my": 0.206297,
+   "inside": true,
+   "box": {
+    "x0": 120,
+    "x1": 1080,
+    "y0": 196.3,
+    "y1": 635
+   }
+  },
+  "lens": {
+   "f_before": 387.2983346207417,
+   "f_after": 387.2983346207417,
+   "fSource_before": "two-vp",
+   "fSource_after": "two-vp"
+  },
+  "view_before": {
+   "s": 1,
+   "ox": 0,
+   "oy": 0
+  },
+  "view_after": {
+   "s": 1,
+   "ox": 0,
+   "oy": 0
+  },
+  "camera_moved": 4.4594,
+  "q_unchanged": true
+ },
+ "draw_pose_dpr1": {
+  "view_before": {
+   "s": 1,
+   "ox": 0,
+   "oy": 0
+  },
+  "view_after": {
+   "s": 4.784489,
+   "ox": -1793.796,
+   "oy": -1693.136
+  },
+  "pose_unchanged": true,
+  "lens": {
+   "f_before": 387.2983346207417,
+   "f_after": 387.2983346207417
+  },
+  "margin": {
+   "min": 0.1,
+   "mx": 0.1,
+   "my": 0.126115,
+   "inside": true
+  }
+ },
+ "empty_dpr1": {
+  "clicks_on_empty": 2,
+  "clicks_on_construction_only": 1,
+  "errors": 0,
+  "pose_unchanged": true,
+  "view_unchanged": true,
+  "lifted_before": 0,
+  "lifted_after": 3
+ },
+ "dpr_dpr1": {
+  "device_pixel_ratio": 1,
+  "ink_backing_px": {
+   "w": 1200,
+   "h": 800
+  },
+  "ink_css_px": {
+   "w": 1200,
+   "h": 800
+  },
+  "backing_over_css": 1
+ },
+ "place_dpr1": {
+  "vh": 800,
+  "bar": {
+   "top": 12,
+   "h": 720,
+   "bottom": 732
+  },
+  "slack": 68,
+  "zoom": {
+   "w": 36,
+   "h": 36,
+   "y": 83
+  },
+  "draw_view": {
+   "w": 36,
+   "h": 36,
+   "y": 46
+  },
+  "row_gap": 1,
+  "taken": 37,
+  "order": [
+   "btn-draw-view",
+   "btn-zoom-fit",
+   "btn-undo",
+   "btn-redo",
+   "btn-snap",
+   "btn-pencil",
+   "btn-pen",
+   "btn-eraser-pencil",
+   "btn-eraser-ink",
+   "dim-toggle",
+   "btn-roll",
+   "btn-face"
+  ]
+ },
+ "gate": {
+  "for": "web2-31 3번 — 단추가 눌린다 · 여백 10%±3% · 렌즈 불변 · 빈 상태 무동작 · 자리가 여유 안",
+  "registered": [
+   "돋보기 단추의 다섯 점이 전부 `elementFromPoint`에서 제 것을 낸다(#87)",
+   "궤도 뒤에 누르면 대상이 전부 화면 안이고 좁은 축의 여백이 10% ± 3%",
+   "렌즈(f·fSource·주점)와 화면 배율이 안 변한다 — 카메라 위치만 움직인다",
+   "작도 시점에서는 반대다 — 화면(뷰 오프셋)만 움직이고 카메라가 그대로다",
+   "빈 문서·작도 획만 있는 문서에서 눌러도 오류 0 · 상태 무변 · 이후 승격 정상",
+   "세로바가 화면 안이고 남는 여유가 0 이상 · 자리는 「작도 시점으로」 바로 아래"
+  ],
+  "reachability": "**「그려졌는가」와 「눌리는가」가 갈린다**(#87 — 31-1의 초판이 그 사이에서 죽었다). 이 팔의 ①은 픽셀이 아니라 `elementFromPoint`를 문으로 쓰므로, 단추가 남의 요소 뒤로 깔리면 그림이 멀쩡해도 빨개진다. 그리고 ②의 여백은 **맞춤 코드와 다른 경로**로 유도하므로 맞춤이 틀리면 그대로 드러난다 — 단위 팔의 반증 두 판이 그 문의 판별력이다 (`zoom31_web2.json`의 `falsify_a_no_margin` · `falsify_b_lens`).",
+  "reachability_value": [
+   0.284556,
+   0.1
+  ],
+  "reachability_source": "orbited_dpr1/margin_before_after"
+ },
+ "selfcheck_flags_known": {
+  "device_pixel_ratio": "⚠ 이 판의 `dpr_dpr1.device_pixel_ratio`는 1이고, dpr1 판에서는 그것이 「정확히 1」로 selfcheck에 잡힌다 — **그 판의 정의다**. 이 필드가 재는 것은 「값이 1이 아니다」가 아니라 **「두 판의 배율이 실제로 갈렸다」**이고, 대조 상대는 짝 원장(1 ↔ 2)과 캔버스 뒷면 배수(1.000 ↔ 2.000)다.",
+  "errors_zero": "⚠ `empty_*.errors = 0`은 콘솔·페이지 오류 **개수**이고 0이 곧 통과 조건이다(임계를 따로 안 건다). 0이 아니면 그 칸이 빨개진다.",
+  "constants_snapshot_absent": "⚠ 상수·지표 스냅샷이 없다 — **web2 라인 전체의 구멍**이고 이 원장만의 것이 아니다(그 기계는 `web/test/constants.ts`에만 있다). 상수는 단위 원장 `zoom31_web2.json`의 `constants` 블록이 든다."
+ },
+ "pitfalls": [
+  "#88",
+  "#87",
+  "#71",
+  "#42",
+  "#21"
+ ]
+}

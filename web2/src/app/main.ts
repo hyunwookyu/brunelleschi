@@ -3,7 +3,7 @@
 import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc,
   pickDimTarget, pickTargetAt, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick,
   handwritingGroup, applyWrittenDim, dimTargetTie, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
-  measureTap, clearMeasure, type Tool } from './state'
+  measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
 import { initInput } from './input'
@@ -25,6 +25,8 @@ import { registerBox, closeOtherBoxes, openBoxIds, setBoxAwayModeForTest } from 
 import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
 import { C } from '../core/constants'
+import { lensAllowed, lensStops, lensF, lensK, hfovDeg, LENS_STOP_MIN, LENS_STOP_MAX } from '../core/lens'
+import { cubeLayoutFor } from '../core/viewcube'
 
 const W = window.innerWidth
 const H = window.innerHeight
@@ -441,7 +443,7 @@ inputApi = initInput(ink, app, {
       return true
     }
     if (app.dimEdit !== null) {
-      const to = pickTargetAt(app, p, app.osnap.radius / app.view.s * 2)
+      const to = pickTargetAt(app, p, app.osnap.radius / viewScale(app) * 2)
       if (to !== null && to !== app.dimEdit) {
         const r = moveDim(app, app.dimEdit, to)
         if (r === 'no3d') notify('아직 3D로 올라가지 않은 선이다 — 치수를 못 단다')
@@ -863,9 +865,36 @@ app.listeners.push(() => { if (!facePop.hidden) renderFacePop() })
  *  `C.NIB_PX_PER_MM` 하나뿐이고 촉 표기(`nibLabel`)가 쓰는 그 자다.
  *  넷이 `2 · 6 · 13 · 28`로 갈린다(정확한 값은 2.33 · 5.60 · 12.60 · 28.0 mm). */
 const eraserLabel = (r: number): string => String(Math.round(2 * r / C.NIB_PX_PER_MM))
-/** 접힌 지우개의 각인 창 폭(사용자단위) — 몸통 윗면의 폭 그대로다(정본은
- *  `docs/instrument-icons.md`). 두 글자는 이 폭에 맞춰 **가로로만** 좁힌다(34-2의 수). */
-const ERASE_MARK_W = 6.6
+/** **접힌 통의 각인을 창 안에 넣는다** — 셋(연필 `fold-lead-text` · 펜 `fold-nib-text` ·
+ *  지우개 둘)이 **한 함수를 쓴다**(#54 — 한 자리만 고치면 셋이 갈린다).
+ *
+ *  ⚠⚠ **폭의 출처는 창 `rect` 자신이다**(#88 — web2-31 마감 [2]). 옛 판은 창 폭을
+ *  `6.6`·`8.8`로 **옮겨 적었고**(index.html의 rect에서 손으로 베낀 수), 창을 넓히거나
+ *  좁히는 사람이 여기를 볼 이유가 없었다. 이제 rect를 DOM에서 읽으므로 결합이 코드에 보인다.
+ *
+ *  ⚠ **재는 것은 «잉크»이지 «전진폭»이 아니다**(web2-31 마감이 D-1로 잡았다). 옛 판은
+ *  `textLength = 창 폭`을 걸었는데 `textLength`가 묶는 것은 **글리프 전진폭의 합**이고
+ *  `getBBox()`가 내는 것은 **잉크 상자**다 — 글리프가 전진폭 밖으로 삐져나오는 글꼴에서는
+ *  전진폭이 정확히 6.600000이어도 잉크가 6.839225로 **창을 넘는다**(이 기기의
+ *  `system-ui`에서 "28"이 그랬다). 그래서 **잉크를 재고 그 비로 전진폭을 되민다**:
+ *  `spacingAndGlyphs`는 잉크도 같은 배수로 줄이므로 한 번에 맞는다.
+ *
+ *  ⚠ **들어가면 안 건드린다** — `textLength`를 늘리는 쪽으로는 안 쓴다(한 글자에 걸면
+ *  글자가 늘어난다). 높이는 어느 쪽도 안 건드리므로 `C.FOLD_MARK_MIN_RATIO`(연필 각인과
+ *  같은 대역)는 그대로다. */
+function fitMark(t: SVGTextElement, win: SVGGraphicsElement): void {
+  t.removeAttribute('textLength')
+  t.removeAttribute('lengthAdjust')
+  for (let pass = 0; pass < 3; pass++) {   // 되밈은 한 번에 맞는다 — 두 번째부터는 확인이다
+    let w = 0, ink = 0, adv = 0
+    try { w = win.getBBox().width; ink = t.getBBox().width; adv = t.getComputedTextLength() }
+    catch { return }                       // 안 그려진 상태(display:none 조상)에서는 잴 것이 없다
+    if (!(w > 0) || !(adv > 0)) return
+    if (ink <= w) return                   // 들어가면 안 건드린다(늘리지 않는다)
+    t.setAttribute('textLength', String(adv * w / ink))
+    t.setAttribute('lengthAdjust', 'spacingAndGlyphs')
+  }
+}
 
 /** 크기 줄 하나 — **그 크기의 지우개 자국을 1:1로 그린다.** 캔버스의 지우개 커서와
  *  같은 그림(반경 그대로의 원 · `COL.construction` 색 · 1px 선)이고, 자국이 화면 고정
@@ -938,13 +967,17 @@ const nibEl = document.getElementById('nib')!
 // 접힌 연필·펜(web2-19 3-b′)의 각인 — 옛 요소(#oldtools 안 lead/lead-text/nib)와 **같은
 // 배선을 둘 다** 갱신한다(옛 경로는 A-4 되돌리기 손잡이라 살아 있어야 한다)
 const foldLead = document.getElementById('fold-lead')!
-const foldLeadText = document.getElementById('fold-lead-text')!
 const foldNib = document.getElementById('fold-nib')!
-const foldNibText = document.getElementById('fold-nib-text')!
-// 접힌 지우개 둘의 크기 각인(web2-34 3번 · R6) — 값이 하나이므로 **표적이 둘**이다
-const foldEraseTexts = [
-  document.getElementById('fold-erase-pencil-text')!,
-  document.getElementById('fold-erase-ink-text')!,
+// **접힌 통 넷의 각인과 그 창** — 각인은 «글자, 창 rect» 짝으로 든다. 폭의 출처가
+// 그 rect이기 때문이다(#88 — web2-31 마감 [2]. 옛 판은 6.6·8.8을 손으로 옮겨 적었다).
+// 지우개는 값이 하나이므로 **표적이 둘**이다(web2-34 3번 · R6).
+const mark = (id: string) => document.getElementById(id) as unknown as SVGTextElement
+const winOf = (id: string) => document.getElementById(id) as unknown as SVGGraphicsElement
+const foldLeadText = mark('fold-lead-text'), foldLeadWin = winOf('fold-lead-win')
+const foldNibText = mark('fold-nib-text'), foldNibWin = winOf('fold-nib-win')
+const foldEraseMarks: [SVGTextElement, SVGGraphicsElement][] = [
+  [mark('fold-erase-pencil-text'), winOf('fold-erase-pencil-win')],
+  [mark('fold-erase-ink-text'), winOf('fold-erase-ink-win')],
 ]
 const pencilBtn = document.getElementById('btn-pencil-old')!   // 옛 경로(A-4) — 숨겨져 있어 안 눌린다
 let pencilDrag: { y: number; i: number } | null = null
@@ -968,6 +1001,7 @@ const nibLabel = (px: number): string => {
 }
 function syncFoldNib() {
   foldNibText.textContent = nibLabel(app.nib)
+  fitMark(foldNibText, foldNibWin)   // 창에 넣는 규약은 셋이 같다(#54 · #88)
   foldNib.setAttribute('width', String(app.nib))
   foldNib.setAttribute('x', String(13 - app.nib / 2))
 }
@@ -982,19 +1016,14 @@ function syncNib() {
 /** **접힌 지우개의 크기 각인**(web2-34 3번 · 화면 규칙 R6). 34-2가 접힌 펜에 세운 문법
  *  그대로다 — 접힌 아이콘의 창에 지금 고른 것을 적는다. **둘 다** 적는다: 크기는 두
  *  지우개가 나눠 쓰는 한 값이므로 어느 쪽을 보든 같은 말을 해야 한다(§⑤).
- *  ⚠ 두 글자짜리(`13`·`28`)만 `textLength`로 좁힌다 — 한 글자에 걸면 글자가 **늘어난다**.
- *  높이는 어느 쪽도 안 건드리므로 연필 각인과 같은 대역이다(`C.FOLD_MARK_MIN_RATIO`). */
+ *  ⚠ 창에 넣는 일은 `fitMark`가 한다 — 「두 글자면 좁힌다」가 아니라 **「잉크가 창을
+ *  넘으면 넘는 만큼 좁힌다」**이고 창 폭은 rect에서 읽는다(#88 — web2-31 마감 [2]).
+ *  높이는 안 건드리므로 연필 각인과 같은 대역이다(`C.FOLD_MARK_MIN_RATIO`). */
 function syncFoldErase() {
   const label = eraserLabel(app.eraserRadius)
-  for (const t of foldEraseTexts) {
+  for (const [t, win] of foldEraseMarks) {
     t.textContent = label
-    if (label.length >= 2) {
-      t.setAttribute('textLength', String(ERASE_MARK_W))
-      t.setAttribute('lengthAdjust', 'spacingAndGlyphs')
-    } else {
-      t.removeAttribute('textLength')
-      t.removeAttribute('lengthAdjust')
-    }
+    fitMark(t, win)
   }
   syncTray()   // 크기통의 선택 표시도 같은 값을 따라간다
 }
@@ -1004,6 +1033,7 @@ function syncGrade() {
   leadEl.setAttribute('fill', MAT[app.grade].color)
   // 접힌 연필(3-b′)의 경도 각인·심 색 — 옛 btn-pencil-old의 배선 그대로, 출처는 MAT(#54)
   foldLeadText.textContent = app.grade
+  fitMark(foldLeadText, foldLeadWin)   // 창에 넣는 규약은 셋이 같다(#54 · #88)
   foldLead.setAttribute('fill', MAT[app.grade].color)
   syncTray()   // 연필통(6번)의 선택 표시도 경도를 따라간다
   invalidate()
@@ -1028,6 +1058,24 @@ setTool('pencil')
 syncGrade()
 syncFoldNib()   // R6 — 부팅 직후(도구가 연필일 때)에도 접힌 펜이 지금 촉을 말한다
 syncFoldErase() // R6 — 접힌 지우개 둘도 같다(34-3). 부팅 값 C.ERASER_PX가 계단 위에 있다
+
+/** **각인 넷을 다시 맞춘다** — 글자는 그대로 두고 창에 넣는 일만 다시 한다.
+ *
+ *  ⚠⚠ **왜 필요한가**(web2-31 마감이 D-1로 잡았다): 같은 글자·같은 글꼴인데도
+ *  `getBBox()`가 내는 **잉크 상자가 «그려지는 배수»에 따라 달라진다**. `.tool.on svg`가
+ *  고른 도구에 `scale(1.14)`를 얹으므로(index.html) "28"의 잉크가 **고른 상태 9.364343 ↔
+ *  안 고른 상태 9.708766**으로 3.7% 갈린다(전진폭은 9.3643 ↔ 9.3692로 0.05%밖에 안 갈린다).
+ *  그래서 «고른 채로 맞춘 각인»이 «놓은 뒤»에는 창을 넘는다 — 34-3 ④가 그 자리에서
+ *  빨갰다. 배수가 **다 움직이고 난 뒤**(`transitionend`) 다시 맞추면 두 상태 모두 창 안이다.
+ *  (배수가 안 움직이면 이 자리는 안 돈다 — 다시 맞출 이유가 없다.) */
+function fitAllMarks() {
+  fitMark(foldLeadText, foldLeadWin)
+  fitMark(foldNibText, foldNibWin)
+  for (const [t, win] of foldEraseMarks) fitMark(t, win)
+}
+document.addEventListener('transitionend', (e) => {
+  if ((e as TransitionEvent).propertyName === 'transform') fitAllMarks()
+}, true)
 
 // 오스냅 설정 패널(임시 UI — 7단계에서 세로바로) — 종류별 토글·반경
 const osnapPanel = document.getElementById('osnap-kinds')!
@@ -1273,6 +1321,8 @@ const FOLD_PANELS: Panel[] = [
   popPanel('#display-pop', '#btn-display'),
   popPanel('#snap-pop', '#btn-snap', () => placeSnapPop()),
   popPanel('#face-pop', '#btn-face', () => showFacePop()),
+  // 렌즈(web2-31 2번) — 손잡이는 `state`라 만지는 동안 안 접히고, 「기본으로」는 `cmd`다.
+  popPanel('#lens-pop', '#btn-lens', () => placeLensPop()),
 ]
 /** 이름으로 찾는다 — 여닫이 단추가 이 표를 거쳐 열고 닫는다(직접 `hidden` 대입 ⛔) */
 const panelOf = (root: string): Panel => FOLD_PANELS.find(p => p.root === root)!
@@ -1732,6 +1782,62 @@ function gotoDrawView() {
 document.getElementById('btn-undo')!.addEventListener('click', () => undoOrExplain())
 document.getElementById('btn-redo')!.addEventListener('click', () => redo(app))
 document.getElementById('btn-draw-view')!.addEventListener('click', () => gotoDrawView())
+// 돋보기(web2-31 3번) — 대상에 맞춰 화면을 채운다. **화면 크기의 출처는 r3d 하나다**
+// (`resize3d`가 창 변화를 그리로 넣는다 — 여기 `W`/`H`는 첫 로드의 값이라 낡는다 · #88).
+// ⚠ `level.touch()`는 「조작이 아닌 포즈 변경」의 자리다(뷰 큐브·저장한 시점과 같은 급) —
+// 접기 지연만 다시 세고 붙잡지 않는다. 아무 일도 안 했으면(대상 0) 그것도 안 부른다.
+document.getElementById('btn-zoom-fit')!.addEventListener('click', () => {
+  const r = zoomFit(app, { W: r3d.W, H: r3d.H })
+  if (r.mode !== 'none') autolevel.touch()
+})
+// ── 렌즈(web2-31 2번) — **보기 전용 화각**. `Camera.f`·`fSource`는 못 건드린다 ──────
+// 손잡이의 눈금은 **스톱**(log2 배율)이다: 0이 확정된 f이고 ±1이 절반·두 배(렌즈 한 스톱).
+// ⚠ 화면에 내는 값은 **화각(도)** 하나다 — `fSource`를 안 낸다(2026-08-17 지시 3 · D-L55).
+// ⚠ 확정 전에는 단추가 꺼져 있고 팝오버도 안 열린다(지시 「확정 전에는 잠근다」).
+const lensBtn = document.getElementById('btn-lens') as HTMLButtonElement
+const lensRange = document.getElementById('lens-range') as HTMLInputElement
+const lensRead = document.getElementById('lens-read')!
+lensRange.min = String(LENS_STOP_MIN)
+lensRange.max = String(LENS_STOP_MAX)
+lensRange.step = String(C.LENS_STEP_LOG2)
+function placeLensPop() {
+  const pop = document.getElementById('lens-pop')!
+  const r = lensBtn.getBoundingClientRect()
+  pop.style.top = `${Math.round(Math.min(r.top, window.innerHeight - pop.offsetHeight - 6))}px`
+}
+/** 화면을 지금 상태로 맞춘다 — **값의 출처는 `app.viewF`와 `lift.an` 하나다**(#54:
+ *  손잡이가 자기 값을 따로 들면 승격이 렌즈를 버릴 때 화면만 옛 눈금에 남는다). */
+function syncLens() {
+  const an = app.lift.an
+  const on = lensAllowed(an)
+  lensBtn.disabled = !on
+  if (!on) {
+    if (!document.getElementById('lens-pop')!.hidden) panelOf('#lens-pop').setOpen(false)
+    lensRead.textContent = '카메라가 정해진 뒤에 쓴다'
+    lensRange.value = '0'
+    lensRange.disabled = true
+    return
+  }
+  lensRange.disabled = false
+  lensRange.value = String(lensStops(an, app.viewF))
+  const f = lensF(an, app.viewF)!
+  lensRead.textContent = `화각 ${hfovDeg(f, an.W).toFixed(1)}°${app.viewF === null ? ' (기본)' : ''}`
+}
+// 여닫이는 **표를 거친다**(직접 `hidden` 대입 ⛔ — 28-1의 규약: 배타·R7이 그 표에 걸려 있다)
+lensBtn.addEventListener('click', () => {
+  const p = panelOf('#lens-pop')
+  p.setOpen(!p.isOpen())
+})
+lensRange.addEventListener('input', () => {
+  setViewLensStops(app, Number(lensRange.value))
+  syncLens(); invalidate()
+})
+document.getElementById('btn-lens-reset')!.addEventListener('click', () => {
+  resetViewLens(app); syncLens(); invalidate()
+})
+app.listeners.push(syncLens)
+syncLens()
+
 window.addEventListener('keydown', (e) => {
   // Esc — 떠 있는 물음을 취소한다(줄이 비면 밑줄 단어가 사라져 못 누른다).
   // 물음이 없을 때는 줄을 비우는 것뿐이고, 다음 문서 변경이 안내를 다시 쓴다.
@@ -1749,7 +1855,7 @@ window.addEventListener('resize', () => {
   ctx = resize2d(ink, nw, nh, nd)
   resize3d(r3d, nw, nh, nd)
   brushLayer.resize(nw, nh, nd)
-  app.cubeLayout = { cx: nw - 110, cy: 60, size: 80 } // state.ts의 초기값과 같은 규칙
+  app.cubeLayout = cubeLayoutFor(nw) // state.ts의 초기값과 **같은 함수**(#54 — 규칙이 하나다)
   invalidate()
 })
 
@@ -2004,7 +2110,7 @@ const diag = {
   autosaveLast: () => lastAutosave,
   /** 오스냅 판정 그대로(web2-12 8번) — 넘김 꼬리가 스냅 대상이 아님을 팔이 잰다 */
   osnapAt: (x: number, y: number) =>
-    osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / app.view.s },
+    osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / viewScale(app) },
       undefined, undefined, app.extAcq.acquired),
   /** 연장선 **선언** 상태(web2-30 11번) — e2e가 «왕복 없이는 절대 안 선다»를 잰다.
    *  ⚠ `hover`는 없어졌다(머무름 획득이 왕복 선언으로 바뀌었다) — 대신 왕복의 진행을 준다. */
@@ -2078,6 +2184,18 @@ const diag = {
   /** 셔터 번쩍임의 길이(3-a) — 팔이 상수를 직접 안 읽고 **앱이 쓰는 값**을 읽는다(D-C4) */
   shutterMs: () => C.SHUTTER_FLASH_MS,
   showHidden: (v?: boolean) => { if (v !== undefined) { app.showHidden = v; invalidate() } return app.showHidden },
+  /** **보기 렌즈**(web2-31 2번) — 팔이 「문서 → 화면」을 손으로 펴지 않게 합성된 변환을 그대로 준다(#54).
+   *  ⚠ 이것은 **진단 통로**다(`S2S`) — 화면에 나가는 값이 아니다(D-L55는 `fSource`에 걸리고
+   *  그 값은 종전대로 `summary()`에만 있다). */
+  lens: () => ({
+    allowed: lensAllowed(app.lift.an),
+    viewF: app.viewF,
+    f: app.lift.an.f,
+    k: lensK(app.lift.an, app.viewF),
+    stops: lensStops(app.lift.an, app.viewF),
+    hfov: app.lift.an.f === null ? null : hfovDeg(lensF(app.lift.an, app.viewF)!, app.lift.an.W),
+    xf: viewXf(app),
+  }),
   summary: () => ({
     horizonY: app.lift.an.horizonY,
     screenHDeclared: app.lift.an.screenHDeclared,
