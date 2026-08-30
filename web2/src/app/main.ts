@@ -1535,6 +1535,11 @@ brushBtn.classList.toggle('on', app.renderer === 'brush')
 const sidebar = document.getElementById('sidebar')!
 document.getElementById('sidebar-toggle')!.addEventListener('click', () => {
   sidebar.classList.toggle('folded')
+  // ⚠ **통 넷은 세로바 «밖»이다**(34-6 후속 — 쌓임 맥락에서 꺼냈다). 종전에는
+  //   `#sidebar.folded #sidebar-body { display:none }` 한 줄이 열린 통까지 같이 덮었는데
+  //   이제 안 덮는다 — 접으면서 **닫는다**. 여는 단추가 사라졌는데 통만 떠 있으면
+  //   그 통은 미아다(28-1이 「비우기」에서 잡은 것과 같은 형태).
+  if (sidebar.classList.contains('folded')) closeOtherBoxes('#sidebar-toggle')
 })
 
 // 종이 탭(web2-19 2부) — 시점 저장·복귀·썸네일·삭제가 전부 **띠 하나**로 옮겨 왔다

@@ -144,6 +144,11 @@ describe('원장 — web2-34 8번', () => {
           + 'f에 안 반응한다. 그 칸에서 위약을 잡는 것은 점 축(드리프트 px)뿐이다.'
         ),
         reachability_value: splitFoldMax,
+        /** ⚠⚠ **이 수의 크기는 픽스처 상수가 정한다**(#46 ⚙️ · 리뷰어 [6]). 4.95는
+         *  f가 1044 → 134로 움직인 폭이 낸 값이고, 승격 폭이 작은 구도만 돌리면
+         *  1에 가까워진다(그러면 그 픽스처가 아무것도 안 재는 것이다). 부호는 기제가
+         *  정하고 **크기는 픽스처가 정한다** — 그래서 이 표시를 단다. */
+        reachability_value_fixture_determined: true,
         // ⚠ 구분자는 `/`다(selfcheck의 `_resolve`)
         reachability_source: 'totals/split_fold_max',
         reachability_note: (

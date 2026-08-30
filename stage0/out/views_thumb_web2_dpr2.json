@@ -3,7 +3,7 @@
  "def": "썸네일 = C.THUMB_W(px) 폭 JPEG(품질 0.72 — 동작점 AS-C39). add_ms = 「+」 click 왕복(굽기+띠 갱신 포함) · capture_ms = **굽기만**(diag.captureThumb) · regen_view_ms = **기각된 대안 ㉯**(열 때 다시 굽기 — web2-12 5번에서 기각)이 들었을 종이당 몫(이동+전량 재그리기+굽기) — 기각 근거를 매 실행 다시 재는 값이다(#57: 기각을 산 채로 재는 채널). brnl_bytes_*는 같은 문서(획 셋)에서 종이 수만 는 값(작도 종이 제외 수).",
  "baseline_622e9ac_thumb_bytes_median": 1499,
  "conditions": {
-  "workers": 1,
+  "workers": 2,
   "project": "dpr2",
   "time_validity": "⚠ 시간 칸(add_ms·capture_ms·regen_view_ms)은 이 conditions.workers에서 나온 값이다 — 워커가 1이 아니면 dpr 겹침 몫이 섞여 **전/후 비교로는 무효**다(#71 ㉠ — test_cost·cost18과 같은 규약). 시간 비교의 정본은 --workers=1 단독 실행이고, 여기 값은 대역 감각용이다"
  },
@@ -14,12 +14,12 @@
   "sheets_after": 1
  },
  "brnl_bytes_5": 9738,
- "capture_ms_median": 0.8,
- "regen_view_ms_median": 103.4,
- "regen_view_ms_max": 109.7,
+ "capture_ms_median": 1.3,
+ "regen_view_ms_median": 213,
+ "regen_view_ms_max": 272,
  "thumb_bytes_median": 1543,
- "add_ms_median": 110,
- "add_ms_max": 130,
+ "add_ms_median": 221,
+ "add_ms_max": 257,
  "brnl_bytes_1": 3036,
  "brnl_bytes_20": 34890
 }

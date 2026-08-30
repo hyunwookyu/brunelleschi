@@ -198,3 +198,85 @@ test('34-6 ⑤ R5 — 위 띠에서 내려오는 것이 치수 기둥을 안 가
   expect(was.ox, '반증: 옛 자리는 실제로 겹친다').toBeGreaterThan(0)
   expect(was.oy, '반증: 옛 자리는 실제로 겹친다').toBeGreaterThan(0)
 })
+
+// ── ⑥ R5 후속 — **겹치는 것이 «위»에 있는가**(리뷰어 [1]) ────────────────────
+//
+// ⚠⚠ **34-6 초판이 R5를 위 띠에서만 갈랐다.** 리뷰어가 세로바 길의 통들을 물었고
+// 재 보니 **여섯 전부** 치수 기둥과 겹쳤다(`#etray` 127×243 · `#snap-pop` 94×309 —
+// 34-6이 고친 표시 팝업의 158×103보다 작지 않다).
+//
+// 그런데 여기서 R5의 **적용 범위가 갈렸다**(측정이 정했다):
+//   · 위 띠에서 내려오는 것 ↔ 치수 기둥 — **둘 다 오래 떠 있는 것**이라 자리를 나눈다.
+//   · 세로바의 **펼침**(통) ↔ 치수 기둥 — 통은 **잠깐 얹히는 것**이고, 잠깐 얹히는 것이
+//     오래 있는 것 «위»에 오는 것은 모든 앱의 기본 거동이다(A-3). 자리를 나눌 것이 아니라
+//     **위에 있어야** 한다.
+// 그리고 **위에 있지 않았다**: `#sidebar`가 `position:fixed + z-index`라 **자기 쌓임
+// 맥락**을 만들고, 그 «안»의 `#tray { z-index: 12 }`가 맥락 **밖**의 `#dimpanel`(z 11)을
+// 못 넘는다. 실측(수리 전) — 겹치는 자리의 `elementFromPoint`가 **리본의 자식**을 냈다:
+//   연필통 (1077,314) → `pad-keys` · 촉통 (1077,399) → `dimpanel`
+//   크기통 (1041,547) → 리본의 div · 롤통 (1071,628) → 리본의 label
+// 즉 **넷이 통째로 리본 뒤로 깔려 있었다.** `#snap-pop`만 `#app`의 직계라 제 것을 냈다.
+//
+// ⚠ 답은 **z를 올린 것이 아니다**(#79) — 선언은 처음부터 12였고 맥락이 그것을 삼켰다.
+//   통 넷을 맥락에서 **꺼내** 적힌 순서가 실제로 서게 했다.
+test('34-6 ⑥ R5 후속 — 통은 치수 기둥 «위»에 온다 (+반증: 세로바 안에 두면 깔린다)', async ({ page }) => {
+  await boot(page)
+  await page.evaluate(() => document.getElementById('dimpanel')!.classList.remove('folded'))
+
+  /** 겹치는 자리의 한 점을 그 통이 실제로 받는가 */
+  const front = (sel: string) => page.evaluate((s) => {
+    const e = document.querySelector(s) as HTMLElement | null
+    if (!e) return { sel: s, ok: false, at: 'none', got: 'none' }
+    const b = e.getBoundingClientRect()
+    const d = document.getElementById('dimpanel')!.getBoundingClientRect()
+    const ox = Math.min(b.right, d.right) - Math.max(b.x, d.x)
+    const oy = Math.min(b.bottom, d.bottom) - Math.max(b.y, d.y)
+    if (!(ox > 0 && oy > 0)) return { sel: s, ok: true, at: '겹치지 않는다', got: '—' }
+    const x = (Math.max(b.x, d.x) + Math.min(b.right, d.right)) / 2
+    const y = (Math.max(b.y, d.y) + Math.min(b.bottom, d.bottom)) / 2
+    const top = document.elementFromPoint(x, y)
+    return { sel: s, ok: e.contains(top) || e === top,
+             at: `${Math.round(x)},${Math.round(y)} (겹침 ${Math.round(ox)}×${Math.round(oy)})`,
+             got: top ? ((top as HTMLElement).id || top.tagName) : 'null' }
+  }, sel)
+
+  const opens: [string, string][] = [
+    ['btn-pencil', '#tray'], ['btn-pen', '#pentray'], ['btn-eraser-pencil', '#etray'],
+    ['btn-roll', '#rolltray'], ['btn-snap', '#snap-pop'],
+  ]
+  const bad: string[] = []
+  for (const [btn, sel] of opens) {
+    await page.click(`#${btn}`)
+    const r = await front(sel)
+    console.log(`[34-6 ⑥] ${sel} ${r.at} → ${r.got} · 내 것 ${r.ok}`)
+    if (!r.ok) bad.push(`${sel}(${r.got})`)
+  }
+  expect(bad, '통이 치수 기둥 위에 온다').toEqual([])
+
+  // 세로바를 접으면 **통도 닫힌다** — 종전에는 `#sidebar.folded`가 같이 덮었다
+  await page.click('#btn-pencil')
+  await page.click('#sidebar-toggle')
+  const stillOpen = await page.locator('#tray.open, #pentray.open, #etray.open, #rolltray.open').count()
+  console.log(`[34-6 ⑥] 세로바를 접으면 열린 통 ${stillOpen}`)
+  expect(stillOpen, '접으면 통도 닫힌다 — 여는 단추가 사라졌는데 통만 뜨면 미아다').toBe(0)
+  await page.click('#sidebar-toggle')
+
+  // ── 반증(D-3) — 통을 세로바 «안»으로 되돌리면 실제로 깔린다 ─────────────────
+  const was = await page.evaluate(async () => {
+    const body = document.getElementById('sidebar-body')!
+    for (const id of ['tray', 'pentray', 'etray', 'rolltray']) body.append(document.getElementById(id)!)
+    ;(document.getElementById('btn-pencil') as HTMLElement).click()
+    await new Promise(r => setTimeout(r, 80))
+    const e = document.getElementById('tray')!
+    const b = e.getBoundingClientRect()
+    const d = document.getElementById('dimpanel')!.getBoundingClientRect()
+    const x = (Math.max(b.x, d.x) + Math.min(b.right, d.right)) / 2
+    const y = (Math.max(b.y, d.y) + Math.min(b.bottom, d.bottom)) / 2
+    const top = document.elementFromPoint(x, y)
+    const app = document.getElementById('app')!
+    for (const id of ['tray', 'pentray', 'etray', 'rolltray']) app.append(document.getElementById(id)!)
+    return { mine: e.contains(top) || e === top, got: top ? ((top as HTMLElement).id || top.tagName) : 'null' }
+  })
+  console.log(`[34-6 ⑥ 반증] 세로바 «안»으로 되돌린 연필통 — 그 자리는 ${was.got} · 내 것 ${was.mine}`)
+  expect(was.mine, '반증: 세로바 안에 두면 실제로 리본 뒤로 깔린다').toBe(false)
+})

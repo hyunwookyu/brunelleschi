@@ -255,3 +255,38 @@ test('34-1 종이 결 손잡이 — 기본 켜짐 · 껐다 켜기 왕복 · 다
   expect(await page.locator('#chk-grain').isChecked()).toBe(true)
   expect(await page.evaluate(() => localStorage.getItem('b2-grain'))).toBe('on')
 })
+
+// ── 34-1 후속(리뷰어 [4]) — **바탕 결이 로드마다 같은가** ─────────────────────
+//
+// 34-1이 dpr1 진폭에서 **여섯 실행 2.392~2.680(폭 12%)**을 보고 「원인은 안 쟀다」로
+// 남겼다. 리뷰어가 그 유보의 위험한 갈래를 물었다: **섬유가 매 로드 다시 뽑히면**
+// 사용자 화면에서도 진폭이 흔들리고, 그러면 조항 ①(> 2.1)의 하한 여유가 그대로 위험이 된다.
+//
+// 그 갈래를 **닫는다**: 씨는 `rng32(app.activeSheet + 1)`이라 로드에 안 흔들린다.
+// 실측 — 같은 브라우저에서 세 번 다시 열어 `#paperfilm`의 같은 자리를 긁으면
+// **해시도 sd도 소수 여섯째 자리까지 같다**(3157661233 · 2.808283).
+// 그러므로 12% 폭은 **제품의 성질이 아니라 재는 절차의 성질**이다(어느 단계인지는
+// 여전히 안 쟀다 — 그 유보만 남는다).
+test('34-1 후속 — 바탕 결이 로드마다 픽셀로 같다 (12% 폭이 제품의 것이 아님을 가른다)', async ({ page }) => {
+  const grab = async () => {
+    await page.goto('/')
+    await page.waitForFunction(() => (window as any).__b2)
+    await settle(page)
+    return page.evaluate(() => {
+      const c = document.getElementById('paperfilm') as HTMLCanvasElement
+      const d = c.getContext('2d')!.getImageData(200, 150, 120, 120).data
+      let h = 2166136261
+      for (let i = 0; i < d.length; i++) { h ^= d[i]!; h = Math.imul(h, 16777619) }
+      let s = 0, n = 0
+      for (let i = 0; i < d.length; i += 4) { s += 0.299 * d[i]! + 0.587 * d[i + 1]! + 0.114 * d[i + 2]!; n++ }
+      const m = s / n
+      let v = 0
+      for (let i = 0; i < d.length; i += 4) { const L = 0.299 * d[i]! + 0.587 * d[i + 1]! + 0.114 * d[i + 2]!; v += (L - m) * (L - m) }
+      return { hash: h >>> 0, sd: +Math.sqrt(v / n).toFixed(6) }
+    })
+  }
+  const a = await grab(), b = await grab(), c = await grab()
+  console.log(`[34-1 후속] 세 로드 — 해시 ${a.hash} · ${b.hash} · ${c.hash} / sd ${a.sd} · ${b.sd} · ${c.sd}`)
+  expect(b).toEqual(a)
+  expect(c).toEqual(a)
+})
