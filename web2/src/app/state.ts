@@ -91,6 +91,12 @@ export interface Op {
   textified?: number[]
   /** **도면에 남긴 재기**(web2-32 6번) — 사람이 한 것이므로 실행취소 대상이다(면과 같은 급) */
   measuresAdded?: Measure[]
+  /** **광선이 바뀌어 대기 획을 버린 op**(web2-37 4번)가 함께 싣는 시점.
+   *  ⚠⚠ 획만 되돌리면 «되살아난다»가 **쓸모없다**: 돌아온 대기 획의 내용은 「그 시점의
+   *  화면 위 어디」인데 지금 시점이 그 시점이 아니고, 그 다음 시점 변경에서 **또 버려진다**
+   *  (실측: 실행취소 → 작도 시점 버튼 → 도로 사라졌다). 그래서 이 op는 **그 궤도까지**
+   *  되돌린다 — 실행취소 한 번이 「방금 돌린 것」을 통째로 무른다. */
+  pose?: { before: CamPose; after: CamPose; viewFBefore: number | null; viewFAfter: number | null }
 }
 
 export interface App {
@@ -440,7 +446,9 @@ export function setViewF(app: App, f: number | null): boolean {
   if (!lensAllowed(app.lift.an)) { app.viewF = null; return false }
   const next = f === null ? null : clampViewF(app.lift.an, f)
   if (next === app.viewF) return f === null || next !== null
+  const prev = { pose: app.pose, viewF: app.viewF }
   app.viewF = next
+  dropWaitingOnRayChange(app, prev)   // 렌즈도 광선을 바꾼다(f가 달라지면 같은 화면점이 다른 광선이다)
   for (const l of app.listeners) l()
   return true
 }
@@ -1311,6 +1319,10 @@ export function undo(app: App) {
     const i = (app.doc.measures ?? []).findIndex(x => x.id === m.id)
     if (i >= 0) app.doc.measures!.splice(i, 1)
   }
+  // 광선이 바뀌어 버린 op는 **그 시점까지** 되돌린다(web2-37 4번 — 위 `Op.pose` 주석).
+  // ⚠ `setPose`를 안 부른다: 그것을 부르면 이 복원이 다시 «광선이 바뀌었다»로 읽혀
+  //    방금 돌려놓은 획을 그 자리에서 도로 버린다(자기 자신을 되돌리는 고리).
+  if (op.pose) { app.pose = op.pose.before; app.viewF = op.pose.viewFBefore }
   app.redoStack.push(op)
   recompute(app)
 }
@@ -1349,6 +1361,7 @@ export function redo(app: App) {
     if (t) t.text = 1
   }
   for (const m of op.measuresAdded ?? []) (app.doc.measures ??= []).push(m)
+  if (op.pose) { app.pose = op.pose.after; app.viewF = op.pose.viewFAfter }   // web2-37 4번
   app.undoStack.push(op)
   recompute(app)
 }
@@ -1496,8 +1509,50 @@ export function endErase(app: App) {
   }
 }
 
+/** ── 대기 획은 **광선이 바뀌면 버린다**(web2-37 4번) ─────────────────────────────
+ *
+ *  편의가 아니라 **정확성**의 문제다. 대기 획의 유일한 내용은 「그 시점의 화면 위 어디」다 —
+ *  3D가 없으니 공간에 자리가 없고 화면 좌표가 전부다. 시점이 바뀌면 그 좌표가 가리키던
+ *  **광선이 달라지므로 그 정보는 거짓이 된다.**
+ *
+ *  「애매하면 놓지 않되 버리지 않는다」와 안 부딪힌다(개정 2 §9.1): 그 원칙은 **아직 쓸 수
+ *  있는** 정보를 버리지 말라는 것이고, 시점이 바뀐 뒤의 대기 획은 쓸 수 있는 정보가 아니다.
+ *
+ *  ⚠ **가르는 기준은 「광선이 바뀌는가」 하나다** — 손잡이 이름이 아니다(#54):
+ *      버린다   포즈가 바뀌는 것(궤도 · 뷰 큐브 90° · 궤도 중의 팬/줌) · **렌즈 변경**
+ *      따라간다 작도 포즈의 이동·확대(`app.view`) — 화면평면이 미끄러질 뿐이다
+ *    그래서 이 함수를 부르는 자리는 `setPose`와 `setViewF` **둘뿐**이고, `setView`에는
+ *    안 걸린다. 그리려고 화면을 조금 밀었는데 긋던 것이 사라지면 못 쓴다.
+ *
+ *  **실행취소로 되살아난다** — 지우개와 같은 급의 op다. **경고는 안 띄운다**(조용해야 한다).
+ *  ⚠ 옐로·글씨·꺼진 겹의 획은 여기 안 걸린다 — 그것들은 `lift.waiting`에 아예 없다
+ *  (매체가 2D라 «대기»가 아니다. `lift.ts`가 `content`에서 거른다 — 별도 필터 ⛔ #54). */
+function dropWaitingOnRayChange(app: App, prev: { pose: CamPose; viewF: number | null }): void {
+  const ids = new Set(app.lift.waiting)
+  if (ids.size === 0) return
+  const removed: { stroke: Stroke; index: number }[] = []
+  for (let i = app.doc.strokes.length - 1; i >= 0; i--) {
+    const s = app.doc.strokes[i]!
+    if (!ids.has(s.id)) continue
+    removed.push({ stroke: s, index: i })
+    app.doc.strokes.splice(i, 1)
+  }
+  if (removed.length === 0) return
+  app.undoStack.push({
+    removed, added: [],
+    pose: { before: prev.pose, after: app.pose, viewFBefore: prev.viewF, viewFAfter: app.viewF },
+  })
+  app.redoStack = []
+  recompute(app)
+}
+
 export function setPose(app: App, pose: CamPose) {
+  const moved = app.pose.p.x !== pose.p.x || app.pose.p.y !== pose.p.y || app.pose.p.z !== pose.p.z
+    || app.pose.q.x !== pose.q.x || app.pose.q.y !== pose.q.y
+    || app.pose.q.z !== pose.q.z || app.pose.q.w !== pose.q.w
+  const prev = { pose: app.pose, viewF: app.viewF }
   app.pose = pose
+  if (moved) dropWaitingOnRayChange(app, prev)     // 광선이 바뀌었다(web2-37 4번)
   for (const l of app.listeners) l()
 }
 

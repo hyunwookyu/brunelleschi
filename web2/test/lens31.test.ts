@@ -149,13 +149,17 @@ function docPoints(app: App): Pt[] {
 }
 
 const segsOf = (app: App) => [...app.lift.lifted].map(([id, g]) => ({ id, g, axis: g.axis }))
-/** **정체 축**(#86) — 「무엇이 무엇으로 풀렸는가」. 값이 아니라 목록이다. */
+/** **정체 축**(#86) — 「무엇이 무엇으로 풀렸는가」. 값이 아니라 목록이다.
+ *  ⚠ **대기 목록은 여기 없다**(web2-37 4번): 렌즈를 바꾸면 광선이 바뀌므로 대기 획은
+ *  **버려진다** — 그것은 렌즈가 3D를 새게 한 것이 아니라 37-4가 정한 거동이다. 두 축을
+ *  한 문자열에 담으면 그 거동이 «렌즈가 정체를 바꿨다»로 잘못 읽힌다(#43 — 한 이름에
+ *  두 원인 ⛔). 대기 쪽은 `waitingOf`로 **따로** 잰다. */
 const identityOf = (app: App) => JSON.stringify({
   lifted: [...app.lift.lifted.keys()].sort((a, b) => a - b),
   axes: [...app.lift.lifted].map(([id, g]) => `${id}:${g.axis ?? '-'}`).sort(),
-  waiting: [...app.lift.waiting].sort((a, b) => a - b),
   anchor: app.lift.anchorId, scale: app.lift.scaleId,
 })
+const waitingOf = (app: App) => [...app.lift.waiting].sort((a, b) => a - b)
 
 describe('web2-31 2번 — 보기 렌즈', () => {
   it('① 손대지 않은 렌더는 **구성상 항등** — 그리고 렌즈를 넣으면 그 검사가 빨개진다 (D-3)', () => {
@@ -274,6 +278,7 @@ describe('web2-31 2번 — 보기 렌즈', () => {
       const app = sc.make().app
       const base = segsOf(app)
       const baseId = identityOf(app)
+      const baseWaiting = waitingOf(app)
       expect(base.length).toBeGreaterThan(0)   // 잴 것이 실제로 있다(0건 통과 ⛔)
 
       // ── 보장 칸: 렌즈를 양 끝으로 흔들어도 좌표가 **한 자리도** 안 움직인다 ──
@@ -290,7 +295,11 @@ describe('web2-31 2번 — 보기 렌즈', () => {
         guard[`k${k}`] = mx
         expect(mx).toBe(0)                       // 임계가 아니라 **보장**이다
         expect(identityOf(app)).toBe(baseId)
+        // web2-37 4번: 렌즈는 광선을 바꾸므로 대기 획은 버려진다. **승격된 것은 그대로다**
+        // (위 `mx === 0`이 그것을 잰다) — 그래서 이 줄은 렌즈의 결함이 아니라 37-4의 거동이다.
+        expect(waitingOf(app)).toEqual([])
       }
+      const droppedWaiting = baseWaiting.length
       resetViewLens(app)
 
       // ── 위약 판 ⓑ: `analyze`가 내는 f를 `viewF`로 바꾼다(= lift 경로까지 새는 판) ──
@@ -333,7 +342,11 @@ describe('web2-31 2번 — 보기 렌즈', () => {
         expect(dabs.length).toBeGreaterThan(0)
         expect(Math.max(...dabs), `${sc.key} k=${k} — 위약은 좌표를 실제로 움직여야 한다`).toBeGreaterThan(1e-6)
       }
-      rows.push({ scene: sc.key, label: sc.label, lifted: base.length, guard_max_units: guard, placebo })
+      rows.push({
+        // web2-37 4번 — 렌즈에서 버려진 대기 획 수(렌즈가 3D를 샌 것이 아니라 37-4의 거동이다)
+        dropped_waiting_on_lens: droppedWaiting,
+        scene: sc.key, label: sc.label, lifted: base.length, guard_max_units: guard, placebo,
+      })
       const p = placebo[`k${KS[1]}`] as { drift_units_max: number; length_fold_max: number; identity_changed: boolean }
       console.log(`[31-2 ③] ${sc.label} — 보장 0 · 위약(k=${KS[1]}) 좌표 최대 ${p.drift_units_max} 단위 · `
         + `길이 fold ${p.length_fold_max} · 정체 갈림 ${p.identity_changed}`)
