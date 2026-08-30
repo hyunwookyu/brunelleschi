@@ -210,9 +210,11 @@
     /* 자(삼각자) — 정사각 viewBox(32×32)라 지우개 급(ico-h 48px)이면 폭이 48이 된다.
        손 띠 폭 규약(39px — ①')에 맞는 전용 급: 높이 = 26px × 배수 = 39. */
     .ico-sq svg { height: calc(26px * var(--ui-scale)); width: auto; }
-    /* ── 전체 화면(3-d) — 크롬을 전부 숨긴다: 종이 띠·눈·손·서랍·굵기·치수 리본.
-       지평선·소실점 ✕·바닥 눈금은 캔버스 몫이라 그대로 남는다(작도의 뼈대). ── */
-    body.fs #topleft, body.fs #eyebar, body.fs #sidebar, body.fs #thick,
+    /* ── 전체 화면(3-d) — 크롬을 전부 숨긴다: 종이 띠·눈·손·서랍·치수 리본.
+       지평선·소실점 ✕·바닥 눈금은 캔버스 몫이라 그대로 남는다(작도의 뼈대).
+       ⚠ web2-34 3번에 **굵기 막대(#thick)가 사라졌다** — 지우개 크기는 이제 통이고,
+       통 셋(#tray·#pentray·#etray)은 세로바 «안»에 있어 이 줄 하나로 같이 숨는다. */
+    body.fs #topleft, body.fs #eyebar, body.fs #sidebar,
     body.fs #dimpanel, body.fs #display-pop, body.fs #snap-pop, body.fs #layer-pop, body.fs #face-pop { display: none; }
     #fs-exit {
       display: none; position: fixed; right: 6px; bottom: 34px; z-index: 12;
@@ -312,22 +314,27 @@
        (사람 관측). 펼침은 전부 **왼쪽으로 겹쳐 뜬다**(overlay) — 자리는 main.ts가
        누른 버튼의 줄에 맞춘다. 선례(A-3): 프로크리에이트 브러시·크기 팝오버, 크리타
        팝업 팔레트, 스케치업 플라이아웃 — 전부 겹쳐 뜨지 밀어내지 않는다. */
-    #tray, #pentray {
+    #tray, #pentray, #etray {
       display: none; position: fixed; z-index: 12;
       flex-direction: column; gap: var(--btn-gap); align-items: flex-end;
     }
-    #tray.open, #pentray.open { display: flex; }
+    #tray.open, #pentray.open, #etray.open { display: flex; }
     .trow svg { height: calc(15px * var(--ui-scale)); width: auto; }
     /* 펜 촉 줄(web2-30 2번) — **그 굵기의 실제 선 견본**이 1:1로 그려진다(원칙 e:
        선폭이 화면 고정이므로 견본과 그은 선이 같은 px다). 아이콘 문법은 연필통 줄과
        같은 자리·같은 크기이고, 앞의 촉 도형만 펜의 것이다. */
     .nrow svg { height: calc(15px * var(--ui-scale)); width: auto; }
-    /* 굵기 막대 — **세로바 흐름 밖**(왼쪽 옆 고정. web2-12 3번): 흐름 안에 두면 펜을
-       고른 순간 막대 높이(129px)가 세로바를 화면 밖으로 민다 — 자리 실측이 잡은 잠복
-       결함(사람 관측 「화면 높이를 넘지 않는지」의 실제 사례). e2e가 펜 상태로도 잰다. */
-    #thick {
-      position: fixed; right: 112px; top: 50%; transform: translateY(-50%); z-index: 9;
-    }
+    /* 지우개 크기 줄(web2-34 3번 · 화면 규칙 R1) — **1:1이라 배수를 안 건다.**
+       ⚠⚠ 다른 줄들은 `--ui-scale`로 키우는데(`.trow`·`.nrow`) 이 줄만 안 키운다:
+       지우개 자국은 **화면 고정 px 원**이므로 줄의 원을 조금이라도 늘리거나 줄이면
+       그 순간 견본이 «비율만 보이는 동그라미»로 되돌아간다(그것이 34-3의 병이었다 —
+       옛 막대의 동그라미는 실제의 27.5~112.5%였다). svg에 width/height를 viewBox와
+       같은 px로 박고 CSS는 아무 배수도 안 건다.
+       ⚠ 그래서 `.tool`(선택 시 svg를 1.14배로 키운다)도 **안 붙인다** — 고른 줄의
+       견본만 1.14배가 되면 그 줄에서 1:1이 깨진다. 고른 표시는 크기가 아니라
+       **아주 옅은 바탕**이다(4-a: 「배경이 필요하면 아주 옅게」). */
+    .erow { touch-action: none; line-height: 0; border-radius: 6px; }
+    .erow.on { opacity: 1; background: rgba(60, 56, 49, .10); }
     /* **선택된 도구가 앞으로 나온다** — 강조 박스가 아니라 위치와 크기다(4-d).
        ⚠ 변형은 **svg에만** 건다(web2-12 3번) — 버튼 상자에 걸면 누름 사각형이 이웃을
        파고들어 겹침 0이 깨진다. 시각은 나오고 누름 자리는 제자리다. */
@@ -789,32 +796,35 @@
         </button>
         </div>
 
-        <!-- 지우개 둘 — 연필 지우개는 흑연만, 펜 지우개는 잉크만(선따기·4-h) -->
-        <button id="btn-eraser-pencil" class="t tool ico-h" title="연필 지우개 — 흑연만 지운다" aria-label="연필 지우개">
+        <!-- 지우개 둘 — 연필 지우개는 흑연만, 펜 지우개는 잉크만(선따기·4-h)
+             ⚠ **각인 창 + 글자는 web2-34 3번**(화면 규칙 R6 — 접힌 통은 지금 고른 것을
+             말한다). 34-2가 접힌 펜에 붙인 것과 **같은 문법**이고, 몸통이 기울어 있으므로
+             창과 글자를 `skewX(-26.565)` 한 무리에 담아 **윗면에 얹는다**(윗면의 기울기가
+             dx/dy = −0.5 = tan(−26.565°)이라 그 무리 안에서 윗면은 `x 16..23`의 사각형이
+             된다). 지우개 몸통 path는 **한 글자도 안 바뀌었다** — 정본은
+             `docs/instrument-icons.md`의 「접힌 지우개 — 크기 각인이 붙는다」. -->
+        <button id="btn-eraser-pencil" class="t tool ico-h" title="연필 지우개 — 흑연만 지운다. 누르면 크기통이 열린다" aria-label="연필 지우개">
           <svg width="39" height="48" viewBox="0 0 26 32">
             <path d="M6 20 13 6h7l-7 14z" fill="#e4ddcd" stroke="#b3ab9a" stroke-width="1" />
             <path d="M6 20h7v6H6z" fill="#d5cdbb" stroke="#b3ab9a" stroke-width="1" />
             <path d="M13 20h7l-7 6z" fill="#c9c0ad" stroke="#b3ab9a" stroke-width="1" />
+            <g transform="skewX(-26.565)"><rect x="16.2" y="8.5" width="6.6" height="11" fill="#faf8f3" /><text id="fold-erase-pencil-text" x="19.5" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#3c3831">6</text></g>
           </svg>
         </button>
-        <button id="btn-eraser-ink" class="t tool ico-h" title="펜 지우개 — 잉크만 지운다" aria-label="펜 지우개">
+        <button id="btn-eraser-ink" class="t tool ico-h" title="펜 지우개 — 잉크만 지운다. 누르면 크기통이 열린다" aria-label="펜 지우개">
           <svg width="39" height="48" viewBox="0 0 26 32">
             <path d="M6 20 13 6h7l-7 14z" fill="#e4ddcd" stroke="#8b857a" stroke-width="1" />
             <path d="M6 20h7v6H6z" fill="#3a3833" stroke="#8b857a" stroke-width="1" />
             <path d="M13 20h7l-7 6z" fill="#2b2925" stroke="#8b857a" stroke-width="1" />
+            <g transform="skewX(-26.565)"><rect x="16.2" y="8.5" width="6.6" height="11" fill="#faf8f3" /><text id="fold-erase-ink-text" x="19.5" y="17" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#3c3831">6</text></g>
           </svg>
         </button>
-
-        <!-- 지우개 크기 — **숫자가 없다.** 막대를 위아래로 끌면 그 자리에 그 크기의 원이 그려진다(4-f).
-             ⚠ **web2-30 2번부터 펜에서는 안 뜬다** — 펜의 굵기는 슬라이더가 아니라 촉통이
-             정한다(제도 펜의 굵기는 연속값이 아니다). 연필도 종전대로 안 뜬다(심이 정한다).
-             지우개는 그대로 막대다: 지우개의 크기는 실물에서도 «닿는 넓이»라 연속값이다. -->
-        <div id="thick" style="cursor:ns-resize;touch-action:none;display:none">
-          <svg width="39" height="129" viewBox="0 0 39 129">
-            <line id="thick-line" x1="4.5" y1="64.5" x2="34.5" y2="64.5" stroke="#3c3831" stroke-width="1.5" />
-            <circle id="thick-dot" cx="19.5" cy="64.5" r="9" fill="none" stroke="#3c3831" stroke-width="1" style="display:none" />
-          </svg>
-        </div>
+        <!-- 지우개 크기통(web2-34 3번) — 네 줄(지름 2·6·13·28 mm = 반경 5·12·27·60 px).
+             줄은 main.ts가 C.ERASER_R_PX에서 짓는다(#54). 하나를 고르면 접힌다(R3).
+             ⚠ **막대(#thick)를 지운 자리다** — 「동그라미가 허공에 떠 있기만 하다」(사람)의
+             원인은 그 동그라미가 실제 지우개의 27.5~112.5%를 그리고 있던 것이고, 답은
+             **줄마다 그 크기의 자국을 1:1로 그리는 것**이다(R1). -->
+        <div id="etray"></div>
 
         <!-- web2-28 4번 — 한 띠 «안»의 순서: 자 → 연필 → 펜 → 지우개 둘 → 치수 →
              롤 둘 → 면. 위쪽이 손이 자주 가는 자리다: 늘 쓰는 작도 도구가 위, 가끔 쓰는

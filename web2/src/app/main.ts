@@ -637,7 +637,7 @@ for (const mm of C.NIB_MM) {
   b.addEventListener('click', () => {
     app.nib = nibPx(mm)
     setTool('pen')
-    syncThick()
+    syncNib()
     syncTray()
     setPentrayOpen(false)
   })
@@ -670,12 +670,12 @@ let pentrayOpen = false
 function setTrayOpen(v: boolean) {
   trayOpen = v
   trayEl.classList.toggle('open', v)
-  if (v) { setPentrayOpen(false); placeFlyout(trayEl, pencilFoldBtn) }
+  if (v) { setPentrayOpen(false); setEtrayOpen(false); placeFlyout(trayEl, pencilFoldBtn) }
 }
 function setPentrayOpen(v: boolean) {
   pentrayOpen = v
   pentrayEl.classList.toggle('open', v)
-  if (v) { setTrayOpen(false); placeFlyout(pentrayEl, penBtn) }
+  if (v) { setTrayOpen(false); setEtrayOpen(false); placeFlyout(pentrayEl, penBtn) }
 }
 pencilFoldBtn.addEventListener('click', () => {
   setTool('pencil')
@@ -689,6 +689,7 @@ penBtn.addEventListener('click', () => {
 window.addEventListener('resize', () => {
   if (trayOpen) placeFlyout(trayEl, pencilFoldBtn)
   if (pentrayOpen) placeFlyout(pentrayEl, penBtn)
+  if (etrayOpen && etrayAnchor) placeFlyout(etrayEl, etrayAnchor)   // 크기통도 같다(34-3)
 })
 if (!TRAY) {   // 되돌리기(A-4) — 옛 세로 버튼·슬라이더로
   trayEl.hidden = true
@@ -712,9 +713,6 @@ const toolBtn: Record<Exclude<Tool, 'pencil' | 'pen'>, HTMLElement> = {
   // 선례는 web2-29의 `btn-dim-write`(같은 이유로 이 패널에 있다). 잰 값도 여기 뜬다.
   'measure': document.getElementById('btn-measure')!,
 }
-const thick = document.getElementById('thick')!
-const thickLine = document.getElementById('thick-line')!
-const thickDot = document.getElementById('thick-dot')!
 
 /** 선택 표시 — 연필통이 펼쳐져 있으면 «지금 경도의 행»이 나와 있고(도구이면서 경도
  *  표시), 접힌 연필·펜 버튼도 도구 상태를 따른다(3-b′). */
@@ -723,6 +721,11 @@ function syncTray() {
   // 촉 줄도 같은 규약 — 지금 고른 촉이 앞으로 나온다(web2-30 2번)
   for (const mm of C.NIB_MM) {
     nibRow.get(mm)!.classList.toggle('on', app.tool === 'pen' && Math.abs(app.nib - nibPx(mm)) < 1e-6)
+  }
+  // 지우개 크기 줄도 같은 규약(web2-34 3번) — **도구를 안 본다**: 크기는 두 지우개가
+  // 나눠 쓰는 한 값이라(app.eraserRadius) «어느 지우개를 들었나»와 무관하다(§⑤).
+  for (const r of C.ERASER_R_PX) {
+    eraserRow.get(r)!.classList.toggle('on', Math.abs(app.eraserRadius - r) < 1e-6)
   }
   pencilFoldBtn.classList.toggle('on', app.tool === 'pencil')
   penBtn.classList.toggle('on', app.tool === 'pen')
@@ -747,10 +750,11 @@ function setTool(t: Tool) {
     cancelCandidates(app)
     document.getElementById('face-pop')!.hidden = true
   }
-  // 굵기 막대는 **지우개에만** 뜬다(web2-30 2번). 연필의 굵기는 심이, 펜의 굵기는
-  // **촉**이 정한다 — 제도 펜의 굵기는 연속값이 아니므로 슬라이더가 틀린 물건이었다.
-  thick.style.display = isEraser(t) ? 'block' : 'none'
-  syncThick()
+  // ⚠ **굵기 막대는 web2-34 3번에 사라졌다**(화면 규칙 R1) — 연필의 굵기는 심이,
+  // 펜의 굵기는 **촉**이, 지우개의 크기는 **크기통**이 정한다. 셋 다 «고르는 것»이다.
+  // 도구를 떠나면 그 통은 접는다(연필통·촉통과 같은 규약).
+  if (!isEraser(t)) setEtrayOpen(false)
+  syncNib()
   invalidate()
 }
 for (const k of Object.keys(toolBtn) as (keyof typeof toolBtn)[]) {
@@ -760,6 +764,16 @@ for (const k of Object.keys(toolBtn) as (keyof typeof toolBtn)[]) {
     if (k === 'face' && app.tool === 'face') { toggleFacePop(); return }
     // 재기는 **토글**이다 — 다시 누르면 연필로 돌아온다(재는 일은 잠깐 하는 일이다)
     if (k === 'measure' && app.tool === 'measure') { setTool('pencil'); return }
+    // 지우개 둘 — **도구를 먼저 바꾸고 크기통을 연다**(web2-34 3번). 연필·펜 단추가
+    // 이미 그 형태다(같은 순서). ⚠ 뜻을 하나 더 얹는 자리이므로 옛 뜻(도구 선택)이
+    // 먼저 서고 그 뒤에 통이 온다(#77 ㉠) — 다른 지우개에서 넘어오면 **연다**,
+    // 같은 지우개를 다시 누르면 **여닫는다**.
+    if (isEraser(k)) {
+      const again = app.tool === k
+      setTool(k)
+      setEtrayOpen(again ? !etrayOpen : true, toolBtn[k])
+      return
+    }
     setTool(k)
   })
 }
@@ -820,58 +834,76 @@ function toggleFacePop() {
 // 후보 수가 변하면(탭 배제·문서 변화로 무효화) 열린 팝오버가 따라온다
 app.listeners.push(() => { if (!facePop.hidden) renderFacePop() })
 
-// ── 굵기는 미리보기다 (4-f) — 숫자가 없다 ────────────────────────────────
-// 세로 막대를 위아래로 끌면 **그 자리에** 그 굵기의 선(펜)이나 그 크기의 원(지우개)이 그려진다.
-const THICK_H = 129, THICK_PAD = 12 // 1.5배(web2-10 지시 5) — SVG viewBox도 39×129로 함께 커졌다
-/** 값 → 막대 위 y (위가 가늘다) */
-const thickY = (v: number, lo: number, hi: number) =>
-  THICK_PAD + (1 - (v - lo) / (hi - lo)) * (THICK_H - 2 * THICK_PAD)
-/** 막대 위 y → 값 */
-const thickV = (y: number, lo: number, hi: number) => {
-  const t = 1 - (y - THICK_PAD) / (THICK_H - 2 * THICK_PAD)
-  return lo + Math.min(1, Math.max(0, t)) * (hi - lo)
-}
-const thickRange = (): [number, number] =>
-  app.tool === 'pen' ? [C.NIB_MIN, C.NIB_MAX] : [C.ERASER_MIN, C.ERASER_MAX]
+// ── 굵기·크기는 **고르는 것**이다 (web2-34 3번 · 화면 규칙 R1) ─────────────
+// 옛 자리에는 세로 막대(#thick)가 있었다 — 끌면 그 자리에 «그 굵기의 선»(펜)이나
+// «그 크기의 원»(지우개)이 그려지는 미리보기(4-f). 펜은 30-2가 촉통으로 바꿨고,
+// **지우개는 이 항목이 크기통으로 바꾼다.** 막대가 남긴 병은 값으로 찍혀 있다:
+// 그 동그라미는 막대 폭 안에 들어가려고 `r = 4.5 + (v−4)/56×12`로 줄여 그렸으므로
+// 실제 지우개의 **27.5%(최대) ~ 112.5%(최소)**였다 — 「동그라미가 허공에 떠 있기만
+// 하다」(사람)가 그 자리를 정확히 가리킨다. 새 줄은 **줄이지 않는다**(1:1).
 
-function syncThick() {
-  if (app.tool === 'pencil') return
-  const pen = app.tool === 'pen'
-  const [lo, hi] = thickRange()
-  const v = pen ? app.nib : app.eraserRadius
-  const y = thickY(v, lo, hi)
-  thickLine.style.display = pen ? '' : 'none'
-  thickDot.style.display = pen ? 'none' : ''
-  if (pen) {
-    thickLine.setAttribute('y1', String(y))
-    thickLine.setAttribute('y2', String(y))
-    thickLine.setAttribute('stroke-width', String(v))
-    nibEl.setAttribute('width', String(v))
-    nibEl.setAttribute('x', String(13 - v / 2))
-    // 접힌 펜(3-b′)의 니브·각인도 같은 값 — 옛 nib 배선의 복제가 아니라 같은 함수의 두 표적
-    syncFoldNib()
-  } else {
-    // 지우개는 반경이 커서 막대 폭을 넘는다 — 원의 반지름을 막대 안으로 줄여 **비율만** 보인다
-    const r = 4.5 + (v - C.ERASER_MIN) / (C.ERASER_MAX - C.ERASER_MIN) * 12 // 1.5배(지시 5)
-    thickDot.setAttribute('cy', String(y))
-    thickDot.setAttribute('r', String(r))
-  }
+/** 지우개 자국의 이름 — **지름 mm의 반올림**. 자는 하나다(#54): 화면 px ↔ mm 환산은
+ *  `C.NIB_PX_PER_MM` 하나뿐이고 촉 표기(`nibLabel`)가 쓰는 그 자다.
+ *  넷이 `2 · 6 · 13 · 28`로 갈린다(정확한 값은 2.33 · 5.60 · 12.60 · 28.0 mm). */
+const eraserLabel = (r: number): string => String(Math.round(2 * r / C.NIB_PX_PER_MM))
+/** 접힌 지우개의 각인 창 폭(사용자단위) — 몸통 윗면의 폭 그대로다(정본은
+ *  `docs/instrument-icons.md`). 두 글자는 이 폭에 맞춰 **가로로만** 좁힌다(34-2의 수). */
+const ERASE_MARK_W = 6.6
+
+/** 크기 줄 하나 — **그 크기의 지우개 자국을 1:1로 그린다.** 캔버스의 지우개 커서와
+ *  같은 그림(반경 그대로의 원 · `COL.construction` 색 · 1px 선)이고, 자국이 화면 고정
+ *  px이므로 이 원의 렌더 px가 **곧 지워질 넓이**다(원칙 e — 촉통 줄의 「견본 == 그은 선」과
+ *  같은 수). ⚠ 그래서 이 svg만 `--ui-scale` 배수를 안 탄다: width/height를 viewBox와
+ *  같은 px로 박는다(index.html `.erow`의 주석이 그 짝). */
+const ERASE_ROW_LABEL_W = 34
+function eraserRowSvg(r: number): string {
+  const rmax = Math.max(...C.ERASER_R_PX)
+  const w = ERASE_ROW_LABEL_W + 2 * rmax + 8
+  const h = Math.max(2 * r + 8, 30)
+  const cx = ERASE_ROW_LABEL_W + 4 + rmax
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`
+    + `<text x="${ERASE_ROW_LABEL_W - 6}" y="${(h / 2 + 4).toFixed(1)}" text-anchor="end"`
+    + ` font-family="system-ui, sans-serif" font-size="11" fill="#3c3831">${eraserLabel(r)}</text>`
+    + `<circle class="esample" cx="${cx}" cy="${(h / 2).toFixed(1)}" r="${r}"`
+    + ` fill="none" stroke="#8a7f6a" stroke-width="1" />`
+    + '</svg>'
 }
-// ⚠ 끄는 동안의 이동은 **창에서 받는다.** `setPointerCapture`/`hasPointerCapture`로
-// 갈랐던 초판은 손가락이 막대 밖으로 나가면 값이 멈췄다 — 26px 폭이라 늘 나간다.
-let thickDrag = false
-thick.addEventListener('pointerdown', (e) => { thickDrag = true; dragThick(e) })
-window.addEventListener('pointermove', (e) => { if (thickDrag) dragThick(e) })
-window.addEventListener('pointerup', () => { thickDrag = false })
-window.addEventListener('pointercancel', () => { thickDrag = false })
-function dragThick(e: PointerEvent) {
-  const [lo, hi] = thickRange()
-  const y = e.clientY - thick.getBoundingClientRect().top
-  const v = thickV(y, lo, hi)
-  if (app.tool === 'pen') app.nib = Math.round(v * 10) / 10
-  else app.eraserRadius = Math.round(v)
-  syncThick()
-  invalidate()
+const etrayEl = document.getElementById('etray')!
+const eraserRow = new Map<number, HTMLElement>()
+for (const r of C.ERASER_R_PX) {
+  const b = document.createElement('button')
+  b.id = `erase-${String(r).replace('.', '_')}`
+  b.className = 't erow'
+  b.dataset.eraserPx = String(r)
+  b.dataset.eraserMm = eraserLabel(r)
+  b.title = `지름 ${eraserLabel(r)} mm 지우개`
+  b.setAttribute('aria-label', `지름 ${eraserLabel(r)} mm 지우개`)
+  b.innerHTML = eraserRowSvg(r)
+  // 하나를 고르면 **통이 접힌다**(R3 — 고르면 끝나는 선택). 통을 여는 길이 지우개
+  // 단추뿐이므로 이 자리에서는 도구가 이미 지우개다 — 도구를 안 건드린다.
+  b.addEventListener('click', () => {
+    app.eraserRadius = r
+    syncFoldErase()
+    setEtrayOpen(false)
+    invalidate()
+  })
+  etrayEl.append(b)
+  eraserRow.set(r, b)
+}
+let etrayOpen = false
+let etrayAnchor: HTMLElement | null = null
+/** 연필통·촉통과 **같은 규약**이다(#54 — 새 기제를 안 만든다): 열면 나머지가 닫히고,
+ *  자리는 `placeFlyout`이 누른 단추의 줄에 맞춰 왼쪽으로 겹쳐 띄운다(R2).
+ *  ⚠ 앵커가 **둘**인 유일한 통이다 — 지우개가 둘이고 크기는 그 둘이 나눠 쓰는 한 값이라
+ *  통은 하나이고 **누른 쪽에 붙는다**(§⑤의 근거). */
+function setEtrayOpen(v: boolean, anchor?: HTMLElement) {
+  etrayOpen = v
+  etrayEl.classList.toggle('open', v)
+  if (v) {
+    setTrayOpen(false); setPentrayOpen(false)
+    if (anchor) etrayAnchor = anchor
+    if (etrayAnchor) placeFlyout(etrayEl, etrayAnchor)
+  }
 }
 
 // ── 홀더펜 인디케이터 (4-e) — 연필 몸통의 창이 곧 슬라이더다 ──────────────
@@ -885,15 +917,21 @@ const foldLead = document.getElementById('fold-lead')!
 const foldLeadText = document.getElementById('fold-lead-text')!
 const foldNib = document.getElementById('fold-nib')!
 const foldNibText = document.getElementById('fold-nib-text')!
+// 접힌 지우개 둘의 크기 각인(web2-34 3번 · R6) — 값이 하나이므로 **표적이 둘**이다
+const foldEraseTexts = [
+  document.getElementById('fold-erase-pencil-text')!,
+  document.getElementById('fold-erase-ink-text')!,
+]
 const pencilBtn = document.getElementById('btn-pencil-old')!   // 옛 경로(A-4) — 숨겨져 있어 안 눌린다
 let pencilDrag: { y: number; i: number } | null = null
 
 /** **접힌 펜의 촉 각인**(web2-34 2번 · 화면 규칙 R6 — 접힌 통은 지금 고른 것을 말한다).
  *  연필의 `syncGrade`와 **같은 규약**이다: 접힌 아이콘의 창에 지금 고른 것을 적는다.
  *
- *  ⚠ **`syncThick`이 아니라 여기서 부르는 이유**(D-2로 잡았다): `syncThick`은 첫 줄에서
- *  `app.tool === 'pencil'`이면 **그냥 돌아간다**. 부팅 직후 도구는 연필이므로 거기에만
+ *  ⚠ **부팅에서도 부르는 이유**(34-2가 D-2로 잡았다): 옛 `syncThick`은 첫 줄에서
+ *  `app.tool === 'pencil'`이면 **그냥 돌아갔다**. 부팅 직후 도구는 연필이므로 거기에만
  *  걸어 두면 «펜을 한 번 눌러야 말한다»가 되어 R6을 못 지킨다 — 그래서 부팅에서도 부른다.
+ *  (web2-34 3번이 막대를 지우면서 그 이른 반환도 같이 없앴다 — `syncNib`은 도구를 안 본다.)
  *
  *  ⚠ **표기는 mm이고 새 표를 안 짓는다**(#54): `app.nib`은 **px**로 들고 있으므로
  *  `C.NIB_MM`을 `nibPx()`로 되짚어 이름을 찾는다(촉통 줄을 짓는 코드와 같은 대조식).
@@ -908,6 +946,33 @@ function syncFoldNib() {
   foldNibText.textContent = nibLabel(app.nib)
   foldNib.setAttribute('width', String(app.nib))
   foldNib.setAttribute('x', String(13 - app.nib / 2))
+}
+/** 펜의 촉이 바뀌면 따라오는 것 전부 — 옛 `syncThick`이 하던 일에서 **막대만 뺀 것**이다
+ *  (옛 니브 사각형 `#nib`은 `#oldtools`의 되돌리기 손잡이라 그대로 갱신한다 — A-4). */
+function syncNib() {
+  nibEl.setAttribute('width', String(app.nib))
+  nibEl.setAttribute('x', String(13 - app.nib / 2))
+  syncFoldNib()
+}
+
+/** **접힌 지우개의 크기 각인**(web2-34 3번 · 화면 규칙 R6). 34-2가 접힌 펜에 세운 문법
+ *  그대로다 — 접힌 아이콘의 창에 지금 고른 것을 적는다. **둘 다** 적는다: 크기는 두
+ *  지우개가 나눠 쓰는 한 값이므로 어느 쪽을 보든 같은 말을 해야 한다(§⑤).
+ *  ⚠ 두 글자짜리(`13`·`28`)만 `textLength`로 좁힌다 — 한 글자에 걸면 글자가 **늘어난다**.
+ *  높이는 어느 쪽도 안 건드리므로 연필 각인과 같은 대역이다(`C.FOLD_MARK_MIN_RATIO`). */
+function syncFoldErase() {
+  const label = eraserLabel(app.eraserRadius)
+  for (const t of foldEraseTexts) {
+    t.textContent = label
+    if (label.length >= 2) {
+      t.setAttribute('textLength', String(ERASE_MARK_W))
+      t.setAttribute('lengthAdjust', 'spacingAndGlyphs')
+    } else {
+      t.removeAttribute('textLength')
+      t.removeAttribute('lengthAdjust')
+    }
+  }
+  syncTray()   // 크기통의 선택 표시도 같은 값을 따라간다
 }
 
 function syncGrade() {
@@ -938,6 +1003,7 @@ window.addEventListener('pointercancel', endPencilDrag)
 setTool('pencil')
 syncGrade()
 syncFoldNib()   // R6 — 부팅 직후(도구가 연필일 때)에도 접힌 펜이 지금 촉을 말한다
+syncFoldErase() // R6 — 접힌 지우개 둘도 같다(34-3). 부팅 값 C.ERASER_PX가 계단 위에 있다
 
 // 오스냅 설정 패널(임시 UI — 7단계에서 세로바로) — 종류별 토글·반경
 const osnapPanel = document.getElementById('osnap-kinds')!
