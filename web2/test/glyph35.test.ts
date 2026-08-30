@@ -434,6 +434,16 @@ describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
       plus_traj: { strict: trajStrict, matched: trajMatched, marginal_strict: trajStrict ? trajStrict.ok - pOnly.ok : null, marginal_matched: trajMatched ? trajMatched.ok - pOnly.ok : null },
       plus_shape_only: { strict: shapeStrict, matched: shapeMatched, marginal_strict: shapeStrict ? shapeStrict.ok - pOnly.ok : null, marginal_matched: shapeMatched ? shapeMatched.ok - pOnly.ok : null },
       shape_only_strict_empty: shapeStrict === null,
+      curves: {
+        note: '⚠ **두 팔의 훑기 전량을 싣는다**(「동등 자를 유리하게 골랐나」를 읽는 사람이 스스로 보게). ③ 자리의 문턱을 0.02~0.30으로 훑은 값이고 ④는 실린 0.10 고정이다.',
+        plus_traj: trajCurve, plus_shape_only: shapeCurve,
+      },
+      unconstrained_max: {
+        note: '⚠⚠ **「동등 자를 유리하게 골라서 0이 나온 것 아닌가」에 대한 답이다.** 두 팔에 **아무 제약도 안 걸고**(오답·잡음 무시) 곡선 전체의 최대 맞음을 낸다.',
+        plus_shape_only: (() => { const b = shapeCurve.reduce((x, y) => (y.ok > x.ok ? y : x)); return { th: b.th, ok: b.ok, wrong: b.wrong, noise: b.noise } })(),
+        plus_traj: (() => { const b = trajCurve.reduce((x, y) => (y.ok > x.ok ? y : x)); return { th: b.th, ok: b.ok, wrong: b.wrong, noise: b.noise } })(),
+        reading: '**제약을 통째로 풀어도** 궤적 끈 판의 최대는 735(그 대가가 오답 36)이고 궤적은 770(오답 2)이다. 그러므로 「한계 0」은 자를 고른 탓이 아니다 — 그 팔은 **어떤 문턱에서도** 궤적만큼 못 얹고, 얹는 시늉을 하는 문턱에서는 오답을 18배로 만든다.',
+      },
       per_seed_shape_matched: shapeMatched ? [0, 1, 2, 3, 4].map(k => {
         const sub = cells.filter(c => c.k === k)
         return score(sub, seqShape(shapeMatched.th)).ok - score(sub, withPdollar(PD_SHIPPED)).ok
@@ -578,6 +588,11 @@ describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
       .toBe(0)
     expect(attribution.plus_traj.marginal_matched!,
       '궤적은 ④ 위에 얹는다').toBeGreaterThan(attribution.plus_shape_only.marginal_matched!)
+    // ⚠⚠ **자를 고른 탓이 아니다** — 두 팔에 아무 제약도 안 걸어도 궤적이 위다(770 대 735).
+    //    이 줄이 「동등 자가 위약을 불리하게 만든 것 아닌가」의 반증 조건이다.
+    expect(attribution.unconstrained_max.plus_traj.ok,
+      '제약을 통째로 풀어도 궤적 쪽이 맞음이 높다 — 「한계 0」이 자를 고른 탓이 아니다')
+      .toBeGreaterThan(attribution.unconstrained_max.plus_shape_only.ok)
     // 궤적과 $P는 **서로를 못 덮는다** — 이어 붙이면 둘 다보다 낫다
     expect(A.ok, '네 시야가 세 시야보다 낫다($P가 세리프 1을 살린다)').toBeGreaterThan(A3.ok)
     expect(A.ok, '네 시야가 $P만 붙인 판보다 낫다').toBeGreaterThan(score(cells, withPdollar(PD_SHIPPED)).ok)

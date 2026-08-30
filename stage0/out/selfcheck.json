@@ -1,5 +1,5 @@
 {
-  "n_flags": 5841,
+  "n_flags": 5879,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -4261,6 +4261,196 @@
     },
     {
       "path": "glyph35_web2.json:attribution_fourth_view.plus_shape_only.marginal_matched",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[0].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[1].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[2].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[3].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[4].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[5].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[6].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[7].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[8].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[9].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[10].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[11].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[12].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[13].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[14].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[15].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[16].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[17].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[18].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[19].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[20].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[21].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[22].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[23].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[24].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[25].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_traj[26].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_shape_only[0].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_shape_only[1].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_shape_only[2].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_shape_only[3].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_shape_only[4].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_shape_only[5].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_shape_only[6].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_shape_only[7].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.curves.plus_shape_only[8].noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.unconstrained_max.plus_shape_only.noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.unconstrained_max.plus_traj.noise",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
