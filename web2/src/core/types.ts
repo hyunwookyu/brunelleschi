@@ -1,6 +1,7 @@
 import type { Pt, V3, Quat } from './vec'
 import type { Unit } from './dim'
 import type { PressCal } from './press'
+import type { Measure } from './measure'
 
 /** 뷰 포즈 — 획이 그려진 시점의 카메라. 파생이 아니라 입력 맥락이다.
  *  null/undefined = 작도 포즈(원점, 무회전). */
@@ -183,6 +184,12 @@ export interface Doc {
    *  「기본값은 현행 유지」가 지켜지려면 문서에 붙어야 한다. 파생이 아니라 설정이므로
    *  원칙 b에 안 걸린다(면·unit·scaleRef와 같은 급). 정의는 `core/press.ts`. */
   press?: PressCal
+  /** **도면에 남긴 재기**(web2-32 6번) — 재기의 두 결과 중 «치수선을 넣는다» 쪽만 여기
+   *  온다. 기본값(패널에 표시만)은 아무것도 안 남기므로 이 배열이 안 는다.
+   *  ⚠ **숫자가 없다**: 잰 값은 파생이라 저장하지 않고(원칙 b) 남는 것은 「어느 두 점을
+   *  재는가」뿐이다 — 면의 선례 그대로다(「저장하는 것은 경계의 정체이고 좌표가 아니다」).
+   *  옛 파일에는 없고 그때는 빈 배열과 같다. 정의는 `core/measure.ts`. */
+  measures?: Measure[]
   /** 표시 단위 — 기본 밀리미터(지시 4-6). 사용자의 결정이라 저장한다.
    *  ⚠ 스케일(mmPerUnit)은 여기 **없다** — 파생이다(원칙 b): 문서 순서상 첫 치수 획의
    *  `dim ÷ (무치수 풀이 길이)`로 `lift.ts`가 매번 계산한다. 저장하던 초판은 «2500»을

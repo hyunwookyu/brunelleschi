@@ -35,7 +35,7 @@ function synthLift(segs: { id: number; a3: V3; b3: V3 }[]): LiftResult {
     const a = project(an, DRAW_POSE, s.a3)!, b = project(an, DRAW_POSE, s.b3)!
     strokes.set(s.id, { id: s.id, a, b })
   }
-  return { an, lifted, waiting: [], waitWhy: new Map(), anchorId: null, strokes, mmPerUnit: null }
+  return { an, lifted, waiting: [], waitWhy: new Map(), anchorId: null, strokes, mmPerUnit: null, scaleId: null, dimGeom: new Map() }
 }
 
 /** 고리 하나를 선분 넷으로 — 이웃한 두 변의 3D 직선 교점이 정점이 된다(face.ts ③) */

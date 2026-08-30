@@ -18,6 +18,13 @@ export interface DimPanel {
   /** 확률적 입력(필기·음성)의 결과를 **적용하지 않고** 키패드 표시에 싣는다(web2-10
    *  지시 8-a ② — 확정 전 사람이 읽고 고칠 수 있어야 한다). 적용은 사람이 «적용»으로. */
   stage(text: string): void
+  /** **축척 줄**(web2-32 5번) — 「미정」인지 「1 : N」인지, 확정이면 어느 치수가 정했는지.
+   *  `set`이 팔이 읽는 자리다(`data-scale`) — 문면이 바뀌어도 판정이 안 흔들린다. */
+  scale(text: string, set: boolean): void
+  /** **어긋남 줄**(web2-32 7번) — 없으면 null(줄 자체가 사라진다). 표시만 한다. */
+  skew(text: string | null): void
+  /** **재기 줄**(web2-32 6번) — 잰 값(축척 확정) 또는 비율(축척 미정). */
+  measure(text: string, state: 'idle' | 'from' | 'value'): void
 }
 
 export function initDimPanel(
@@ -26,6 +33,9 @@ export function initDimPanel(
   const panel = document.getElementById('dimpanel')!
   const toggle = document.getElementById('dim-toggle')!
   const live = document.getElementById('dim-live')!
+  const scaleEl = document.getElementById('dim-scale')!
+  const skewEl = document.getElementById('dim-skew')!
+  const measureEl = document.getElementById('dim-measure')!
   const read = document.getElementById('dim-read')!
   const canvas = document.getElementById('dim-ink') as HTMLCanvasElement
   const ctx = canvas.getContext('2d')!
@@ -123,5 +133,18 @@ export function initDimPanel(
     clearInk,
     readout(t) { read.textContent = t },
     stage,
+    scale(text, set) {
+      scaleEl.textContent = text
+      scaleEl.dataset.scale = set ? 'set' : 'unset'
+    },
+    skew(text) {
+      skewEl.hidden = text === null
+      skewEl.textContent = text ?? ''
+      skewEl.dataset.skew = text === null ? '0' : '1'
+    },
+    measure(text, state) {
+      measureEl.textContent = text
+      measureEl.dataset.measure = state
+    },
   }
 }

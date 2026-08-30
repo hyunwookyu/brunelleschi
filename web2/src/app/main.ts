@@ -2,7 +2,8 @@
 
 import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc,
   pickDimTarget, pickTargetAt, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick,
-  handwritingGroup, applyWrittenDim, dimTargetTie, pickDimLabel, moveDim, endDimEdit, dimLabelPos, type Tool } from './state'
+  handwritingGroup, applyWrittenDim, dimTargetTie, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
+  measureTap, clearMeasure, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG } from './layerbar'
 import { initInput } from './input'
@@ -17,7 +18,8 @@ import { recognizeStrokes } from '../core/handwriting'
 import { OSNAP_ORDER, osnap, osnapCost, resetOsnapCost, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT, widthOfMat, gradeOf } from '../core/material'
 import type { Grade, Layer, Sheet, Stroke } from '../core/types'
-import { parseDim, formatMm, lenMm, UNITS, type Unit } from '../core/dim'
+import { parseDim, formatMm, lenMm, formatScale, formatUnits, dimSkew, skewOff, UNITS, type Unit } from '../core/dim'
+import { measureMm, measureUnits } from '../core/measure'
 import { initDimPanel } from './dimpanel'
 import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
@@ -366,6 +368,43 @@ function applyDimInput(text: string) {
 }
 
 const dimPanel = initDimPanel(applyDimInput)
+
+// ── 축척·어긋남·재기의 화면 줄(web2-32 5·6·7번) — **문서가 바뀌면 셋이 같이 갱신된다** ──
+// ⚠⚠ 셋 다 **새 경로를 안 만든다**(#54): 축척은 `app.lift.mmPerUnit`·`scaleId`(=`scaleOf`가
+// 고른 것)를 그대로 읽고, 어긋남은 `dimSkew`, 잰 값은 `measureMm`/`measureUnits`를
+// 그대로 부른다. 여기 있는 것은 «문구»뿐이고 판정은 하나도 안 한다.
+// 문구는 짧게(web2-28 3번의 규칙 — 이름이거나 짧은 문장 하나).
+function syncScaleLines() {
+  const mmu = app.lift.mmPerUnit
+  const ref = app.lift.scaleId === null ? undefined
+    : app.doc.strokes.find(x => x.id === app.lift.scaleId)
+  const by = ref?.dim !== undefined ? ` · 기준 ${formatMm(ref.dim, app.doc.unit, app.dimExact)}` : ''
+  dimPanel.scale(`축척 ${formatScale(mmu)}${by}`, mmu !== null)
+
+  // 어긋남 — **지금 고른 치수**(사후 수정으로 짚었거나 방금 매긴 것)의 것만 낸다.
+  // 전부 나열하면 그것이 「후보만 잔뜩」이다(32-3이 걷어낸 형태). 도면 쪽 표시는
+  // 치수 숫자 옆의 «≠» 하나이고(render2d) 여기 줄은 그 하나를 풀어 말한다.
+  const focus = app.dimEdit ?? dimTarget
+  const k = focus === null ? null : dimSkew(app.lift, focus)
+  dimPanel.skew(skewOff(k)
+    ? `적은 값과 잰 값이 다르다 — 잰 값 ${formatMm(k!.measured, app.doc.unit, app.dimExact)}`
+    : null)
+
+  // 재기 — 두 점이 서면 값, 한 점만 서면 기다림, 아니면 안내.
+  // **축척이 미정이면 숫자 대신 비율**이다(없는 축척을 있는 척하지 않는다).
+  if (app.measurePair) {
+    const mm = measureMm(app.lift, app.measurePair)
+    const u = measureUnits(app.lift, app.measurePair)
+    dimPanel.measure(
+      mm !== null ? `잰 값 ${formatMm(mm, app.doc.unit, app.dimExact)}`
+        : u !== null ? `잰 값 ${formatUnits(u)} (축척 미정)`
+        : '잰 값 — 그 점이 지금 안 풀린다',
+      'value')
+  } else if (app.measureFrom) dimPanel.measure('재기 — 둘째 점을 짚는다', 'from')
+  else dimPanel.measure('재기 — 두 점을 짚는다', 'idle')
+}
+app.listeners.push(syncScaleLines)
+syncScaleLines()
 // 음성도 확률적 입력이다(지시 8-a — 필기와 같은 규칙): 바로 적용하지 않고 스테이징한다.
 const voice = createVoice((t) => dimPanel.stage(t))
 
@@ -433,6 +472,15 @@ inputApi = initInput(ink, app, {
     invalidate()
     void recognizeDimInk()
   },
+  onMeasureTap(p) {
+    // 재기(web2-32 6번) — 판정은 `state.measureTap` 하나다(오스냅·정체·남기기까지).
+    // 여기는 배선과 «없을 때 이유를 말하는 것»뿐이다(알림은 오류가 있을 때만 — 4-b).
+    const r = measureTap(app, p)
+    if (r === 'none') notify('잴 점이 없다 — 3D로 올라간 선의 끝·중간을 짚는다')
+    else if (r === 'from') status('재기 — 둘째 점을 짚는다')
+    else status('재기 — 다시 짚으면 새로 잰다')
+    invalidate()
+  },
   onCandidateTap(excluded) {
     // 후보 모드(web2-21 4부) — 뺐으면 화면(테두리 하나 사라짐)이 말한다. 빗나감만 말한다.
     if (!excluded) notify('후보 밖이다 — 아닌 후보를 탭해서 뺀다')
@@ -492,6 +540,7 @@ unitSel.value = app.doc.unit
 unitSel.addEventListener('change', () => {
   if ((UNITS as string[]).includes(unitSel.value)) app.doc.unit = unitSel.value as Unit
   if (dimTarget !== null) dimPanel.show(liveLenOf(dimTarget))
+  syncScaleLines()                 // 축척·어긋남·잰 값도 같은 단위로 읽힌다
 })
 const dimSnapBox = document.getElementById('chk-dimsnap') as HTMLInputElement
 dimSnapBox.checked = app.dimSnap
@@ -504,7 +553,13 @@ exactBox.checked = app.dimExact
 exactBox.addEventListener('change', () => {
   app.dimExact = exactBox.checked
   if (dimTarget !== null) dimPanel.show(liveLenOf(dimTarget))
+  syncScaleLines()
 })
+// 재기의 둘째 결과(web2-32 6번) — 켜면 그 뒤로 잰 것이 **도면에 남는다**.
+// ⚠ 이미 잰 것을 소급해서 남기지 않는다(그러면 «몰래 생기는 치수선»이 된다).
+const measureKeepBox = document.getElementById('chk-measure-keep') as HTMLInputElement
+measureKeepBox.checked = app.measureKeep
+measureKeepBox.addEventListener('change', () => { app.measureKeep = measureKeepBox.checked })
 
 // ── 도구 — 연필통(web2-12 6번) · 지우개 둘 · 면 (4-h) ─────────────────────
 // **선택은 색이 아니라 위치와 크기로 보인다**(4-d) — `.tool.on`의 svg가 앞으로 나온다.
@@ -649,6 +704,13 @@ const toolBtn: Record<Exclude<Tool, 'pencil' | 'pen'>, HTMLElement> = {
   // 패널 여닫이라 도구 표시를 안 얹는다 — 그러면 «패널이 열렸다»와 «모드가 켜졌다»가
   // 화면에서 갈린다).
   'dim': document.getElementById('btn-dim-write')!,
+  // 재기(web2-32 6번) — **새 자리에서 들어간다**(#77 ㉠): 치수 단추에 뜻을 하나 더
+  // 얹으면 그 자리를 쓰던 옛 경로가 조용히 죽는다.
+  // ⚠⚠ **그 자리는 치수 패널 안이다**(세로바가 아니다) — 초판이 손 띠에 뒀다가 **전량
+  // e2e가 잡았다**: 세로바가 800px 화면을 12px 넘쳤다(`sidebar.spec` 812 ≤ 800).
+  // 높이 예산이 이미 꽉 차 있으므로 답은 임계를 무르는 것이 아니라 자리를 옮기는 것이고,
+  // 선례는 web2-29의 `btn-dim-write`(같은 이유로 이 패널에 있다). 잰 값도 여기 뜬다.
+  'measure': document.getElementById('btn-measure')!,
 }
 const thick = document.getElementById('thick')!
 const thickLine = document.getElementById('thick-line')!
@@ -675,6 +737,10 @@ function setTool(t: Tool) {
   if (!isEraser(t)) eraserPos = null
   // 치수 모드를 벗어나면 고른 대상·손글씨를 놓는다(모드가 남아 있지 않게 — web2-29)
   if (t !== 'dim') { endDimPick(app); dimInkLive = null }
+  // 재기도 같은 규약 — 도구를 떠나면 짚어 둔 점과 잰 값을 놓는다(도면에 남긴 것은 남는다).
+  // 들어올 때는 치수 패널을 편다: 잰 값이 뜨는 자리가 거기다(새 모서리를 안 만든다 — #79).
+  if (t !== 'measure') clearMeasure(app)
+  else document.getElementById('dimpanel')!.classList.remove('folded')
   if (t !== 'face') {
     facePrev = null
     // 면 일괄 후보는 면 도구의 상태다(web2-21 4부) — 도구를 떠나면 취소(op 없음)
@@ -692,6 +758,8 @@ for (const k of Object.keys(toolBtn) as (keyof typeof toolBtn)[]) {
     // 면 버튼을 **다시** 누르면 팝오버(web2-21 4부 — 「전부 찾기」). 손 띠에 버튼을 안
     // 늘린다(지시 4-e ⚠). 다른 도구는 종전 그대로다.
     if (k === 'face' && app.tool === 'face') { toggleFacePop(); return }
+    // 재기는 **토글**이다 — 다시 누르면 연필로 돌아온다(재는 일은 잠깐 하는 일이다)
+    if (k === 'measure' && app.tool === 'measure') { setTool('pencil'); return }
     setTool(k)
   })
 }
@@ -1585,6 +1653,19 @@ const diag = {
     dims: app.doc.strokes.filter(x => x.dim !== undefined).map(x => ({ id: x.id, dim: x.dim })),
     lenOf: Object.fromEntries([...app.lift.lifted].map(([id, g]) =>
       [id, lenMm(g.a3, g.b3, app.lift.mmPerUnit)])),
+    // 축척(web2-32 5번) — 어느 치수가 정했는가. 판정은 `scaleOf` 하나이고 여기는 읽기다.
+    scaleId: app.lift.scaleId,
+    // 어긋남(web2-32 7번) — 치수마다 「적은 값 ÷ 잰 값」. **잰 값은 적용 전 길이**다.
+    skew: app.doc.strokes.filter(x => x.dim !== undefined).map(x => {
+      const k = dimSkew(app.lift, x.id)
+      return { id: x.id, ratio: k?.ratio ?? null, measured: k?.measured ?? null, off: skewOff(k) }
+    }),
+    // 재기(web2-32 6번) — **도면에 남긴 것만** 문서에 있다(기본값은 아무것도 안 남긴다)
+    measures: (app.doc.measures ?? []).map(m => ({
+      id: m.id, a: m.a, b: m.b, mm: measureMm(app.lift, m), units: measureUnits(app.lift, m),
+    })),
+    measureFrom: app.measureFrom,
+    measurePair: app.measurePair,
   }),
   /** **겹 표식**(web2-18 1부) — `#gl`의 Line2가 몇 개이고 그중 잉크가 몇 개인가.
    *  판정은 **합성 화면**이 한다(#67) — 이것은 «왜 그런가»를 말하는 기전의 표식이다:

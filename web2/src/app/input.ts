@@ -56,6 +56,8 @@ export interface InputCallbacks {
   onDimTap: (p: Pt) => boolean
   /** 면 일괄 후보 모드(web2-21 4부)의 탭 — true = 후보 하나를 뺐다 */
   onCandidateTap: (excluded: boolean) => void
+  /** 재기(web2-32 6번)의 탭 — 문서 좌표. 오스냅·판정·알림은 main이 낸다(#54) */
+  onMeasureTap: (p: Pt) => void
 }
 
 export function initInput(
@@ -111,6 +113,8 @@ export function initInput(
   let faceDown: Pt | null = null
   /** 치수 대상 고르기 탭(web2-29) — 누른 자리. 뗄 때 «안 움직였으면» 고른다. */
   let dimTap: Pt | null = null
+  /** 재기(web2-32 6번)의 누름 자리 — 면 도구와 **같은 몸짓**이다(탭이고 끌면 취소) */
+  let measureDown: Pt | null = null
   /** 제안이 떠 있는 동안의 누름 자리(web2-29 2단계) — 안 움직이고 떼면 대상 바꾸기 */
   let suggestTap: Pt | null = null
   /** 쓰고 있는 손글씨 한 획 — 뗄 때 `cb.onDimStroke`로 넘긴다 */
@@ -418,7 +422,10 @@ export function initInput(
     // 그린다(그림이 기본이다). 판정은 뗄 때 «안 움직였는가»로 한다.
     // ⚠ **면 도구는 뺀다** — 그 탭은 이미 뜻이 있다(면 지정). 한 몸짓에 뜻을 둘 얹으면
     //   옛 뜻이 조용히 죽는다(#77 ㉠).
-    if (app.tool !== 'dim' && app.tool !== 'face' && !app.tipErase && !isEraser(app.tool)) {
+    // ⚠ **재기도 뺀다**(web2-32 6번 — 면·치수와 같은 이유): 그 탭은 이미 뜻이 있다
+    //   (재는 점을 짚는다). 한 몸짓에 뜻을 둘 얹으면 옛 뜻이 조용히 죽는다(#77 ㉠).
+    if (app.tool !== 'dim' && app.tool !== 'face' && app.tool !== 'measure'
+        && !app.tipErase && !isEraser(app.tool)) {
       suggestTap = toPt(e)
     }
     // ── 손글씨 치수(web2-29 1단계) — **모드가 있다** ──────────────────────────
@@ -432,6 +439,9 @@ export function initInput(
       return
     }
     if (app.tool === 'face' && !app.tipErase) { faceDown = toPt(e); return }
+    // 재기(web2-32 6번) — **탭 둘**이다(면과 같은 몸짓: 누를 때 아무것도 안 하고 뗄 때
+    // 판정한다). 끌면 취소이므로 잘못 짚은 것을 뗌으로 무를 수 있다.
+    if (app.tool === 'measure' && !app.tipErase) { measureDown = toPt(e); return }
     if (erasingNow()) {
       beginErase(app)
       eraseAt(app, toPt(e), eraseKind())
@@ -555,6 +565,14 @@ export function initInput(
         if (drawingPointer === e.pointerId) { drawingPointer = null; draft = null; cb.onDraftChange(null) }
         return
       }
+    }
+    if (measureDown) {
+      const d = measureDown
+      measureDown = null
+      const p = toPt(e)
+      // 끌었으면 취소다 — 면·치수와 같은 탭 대역(새 숫자 ⛔)
+      if (Math.hypot(p.x - d.x, p.y - d.y) <= C.TAP_MAX_PX / app.view.s) cb.onMeasureTap(d)
+      return
     }
     if (dimTap) {
       const d = dimTap

@@ -35,7 +35,7 @@ function synthLift(segs: { id: number; a3: V3; b3: V3 }[]): LiftResult {
     const a = project(an, DRAW_POSE, s.a3)!, b = project(an, DRAW_POSE, s.b3)!
     strokes.set(s.id, { id: s.id, a, b })
   }
-  return { an, lifted, waiting: [], waitWhy: new Map(), anchorId: null, strokes, mmPerUnit: null }
+  return { an, lifted, waiting: [], waitWhy: new Map(), anchorId: null, strokes, mmPerUnit: null, scaleId: null, dimGeom: new Map() }
 }
 const rect = (id0: number, c: V3[]) => c.map((a, i) => ({ id: id0 + i, a3: a, b3: c[(i + 1) % 4]! }))
 const groundRect = (id0: number, x0: number, x1: number, z0: number, z1: number) =>

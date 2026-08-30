@@ -7,6 +7,7 @@ import { horizonDocY } from './camera'
 import { GRADES } from './material'
 import { UNITS, type Unit } from './dim'
 import { validPressCal } from './press'
+import type { Measure } from './measure'
 import { C } from './constants'
 
 export interface BrnlData {
@@ -87,12 +88,18 @@ export function serializeBrnl(d: BrnlData, opt: SerializeOptions = {}): string {
     // components_utf8: 밑그림은 문서의 0.1% 대역이다). 그리고 web2-23이 세운
     // **왕복 동일성**(`underlay.test` ④)이 그 자리에 있다 — 얻는 것 없이 규약만 깬다.
     ...(d.doc.underlays.length > 0 ? { underlays: d.doc.underlays } : {}),
+    // **도면에 남긴 재기**(web2-32 6번) — 담기는 것은 「어느 두 점을 재는가」뿐이다.
+    // ⚠⚠ **잰 값(mm)은 안 담는다** — 파생이다(원칙 b). 축척이 바뀌면 따라 바뀌어야 하는데
+    // 숫자를 담으면 그 순간 굳어 «조용히 틀린 치수»가 된다(#61의 형태). 없으면 열쇠 없음.
+    ...(d.doc.measures && d.doc.measures.length > 0 ? { measures: d.doc.measures } : {}),
     // 작도 시점(web2-17 3-c) — 없으면 열쇠 자체를 안 쓴다(왕복 동일성 — 2-c ② 팔)
     ...(d.drawView ? { drawView: d.drawView } : {}),
   })
 }
 
 const isNum = (x: unknown): x is number => typeof x === 'number' && isFinite(x)
+/** 재는 점의 «정체» 모양 — 획 id와 그 선분 위 매개변수(0..1). `core/measure.ts` 참조. */
+const isMeasurePoint = (p: any): boolean => p && isNum(p.s) && isNum(p.t) && p.t >= 0 && p.t <= 1
 const isPt = (p: any): boolean => p && isNum(p.x) && isNum(p.y)
 const isV3 = (p: any): boolean => p && isNum(p.x) && isNum(p.y) && isNum(p.z)
 const isQuat = (q: any): boolean => q && isNum(q.x) && isNum(q.y) && isNum(q.z) && isNum(q.w)
@@ -271,12 +278,25 @@ export function parseBrnl(text: string): BrnlData | null {
     }
   }
 
-  // id는 획·면·종이·겹이 **한 통**이다(겹이 종이·획이 겹을 가리키므로 — 지시 1부)
+  // 재기(web2-32 6번) — 모양이 틀리면 **거부**하고(rawIn류), 가리키는 획이 없으면
+  // 그 재기만 버린다(면의 선례 그대로 — 문서를 거부하지 않는다). t는 선분 위 매개변수라
+  // 0..1 밖이면 정체가 아니다(무한 연장에 정체를 매기면 조용히 틀린 점이 된다).
+  const measures: Measure[] = []
+  if (raw.measures !== undefined) {
+    if (!Array.isArray(raw.measures)) return null
+    for (const m of raw.measures) {
+      if (!isNum(m?.id) || !isMeasurePoint(m?.a) || !isMeasurePoint(m?.b)) return null
+      measures.push({ id: m.id, a: { s: m.a.s, t: m.a.t }, b: { s: m.b.s, t: m.b.t } })
+    }
+  }
+
+  // id는 획·면·종이·겹·재기가 **한 통**이다(겹이 종이·획이 겹을 가리키므로 — 지시 1부)
   const maxId = Math.max(
     strokes.reduce((m, s) => Math.max(m, s.id), 0),
     faces.reduce((m, f) => Math.max(m, f.id), 0),
     rawSheets.reduce((m, s) => Math.max(m, s.id), 0),
     layers.reduce((m, l) => Math.max(m, l.id), 0),
+    measures.reduce((m, x) => Math.max(m, x.id), 0),
   )
   let nextId = isNum(raw.nextId) && raw.nextId > maxId ? raw.nextId : maxId + 1
   // 단위 — 없으면(옛 파일) mm. 모양이 틀리면 거부한다.
@@ -362,6 +382,11 @@ export function parseBrnl(text: string): BrnlData | null {
 
   const doc: Doc = { frame: { W: raw.frame.W, H: raw.frame.H }, strokes, faces, sheets, layers: keptLayers, underlays: keptUnderlays, unit }
   if (scaleRef !== undefined) doc.scaleRef = scaleRef
+  // 가리키는 획이 없는 재기는 그것만 버린다(면의 선례) — 빈 배열이면 열쇠를 안 만든다
+  // (왕복 동일성: 없던 파일이 열쇠를 얻고 돌아오지 않는다).
+  const strokeIds = new Set(strokes.map(x => x.id))
+  const keptMeasures = measures.filter(m => strokeIds.has(m.a.s) && strokeIds.has(m.b.s))
+  if (keptMeasures.length > 0) doc.measures = keptMeasures
   // 필압 보정(web2-26 6번) — **성립하는 값만 받는다**(`validPressCal`이 저장·복원·보정
   // 절차의 술어 하나다 #54). 깨진 값은 조용히 버린다: 그림은 그대로 열리고 옵션만 꺼진다
   // (문서를 거부하지 않는다 — scaleRef·면의 선례 그대로).

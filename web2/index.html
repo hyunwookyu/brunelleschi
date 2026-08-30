@@ -405,6 +405,12 @@
     #dimpanel.folded { display: none; }
     #dimpanel .head { color: var(--ui-faint); letter-spacing: .04em; }
     #dim-live { font: 20px/1.2 system-ui, sans-serif; color: #3c3831; min-height: 24px; }
+    /* 축척 줄(web2-32 5번) — 값이 아니라 **상태**라 옅다(제목과 같은 대역). */
+    #dim-scale { font: 11px/1.5 system-ui, sans-serif; color: var(--ui-faint); }
+    /* 어긋남(web2-32 7번) — **표시만 한다. 고치지 않는다.** 오류 대역을 쓰지 않는 이유:
+       사람이 적은 값은 틀린 것이 아니라 «다른 것»이다(#61 — 프로그램이 안 덮어쓴다). */
+    #dim-skew { font: 11px/1.5 system-ui, sans-serif; color: #a8763a; }
+    #dim-skew[hidden] { display: none; }
     /* ⚠ 전역 canvas 규칙(absolute·inset 0)이 여기도 걸린다 — 흐름 안으로 되돌린다.
        처음에 이것이 없어서 필기 칸이 패널 좌상단에 겹쳐 제목·숫자를 덮었다(스크린샷이 잡았다). */
     #dim-ink { position: static; inset: auto; width: 184px; height: 72px; background: #fff;
@@ -632,7 +638,19 @@
     <!-- 치수 리본(지시 4) — 화면에 쓰면 선인지 숫자인지 알 수 없으므로 쓰는 자리가 따로 있다 -->
     <div id="dimpanel" class="folded">
       <div class="head">치수</div>
+      <!-- 축척(web2-32 5번) — **미정인지 확정인지가 화면에 있어야 한다.** 규칙은 새로
+           만들지 않았다: 판정도 계산도 `lift.scaleOf`가 이미 하고 있었고(첫 치수의
+           dim ÷ 무치수 풀이 길이) 여기 없던 것은 **그것이 안 보이는 것**뿐이었다.
+           확정이면 «어느 치수가 정했는가»까지 낸다 — 다시 정하려면 그 치수를 지우거나
+           고친다(별도 조작 ⛔ — 지시 문면). `data-scale`은 팔이 읽는 자리다. -->
+      <div id="dim-scale" data-scale="unset">축척 미정</div>
       <div id="dim-live">—</div>
+      <!-- 어긋남(web2-32 7번) — 둘째 치수부터 «적은 값»과 «잰 값»이 갈릴 수 있다.
+           **표시하되 고치지 않는다**(사람이 적은 값을 프로그램이 덮어쓰지 않는다). -->
+      <div id="dim-skew" data-skew="0" hidden></div>
+      <!-- 재기(web2-32 6번) — **기본은 여기 표시만**이고 도면에는 아무것도 안 남는다.
+           치수선을 넣는 것은 선택이다(아래 체크). 축척이 미정이면 숫자 대신 비율이다. -->
+      <div id="dim-measure" data-measure="idle">재기 — 두 점을 짚는다</div>
       <!-- 키패드(지시 8-a) — 확정 경로. 적용 전에 값이 #pad-read에 보이고 ⌫로 고친다. -->
       <div id="pad-read">—</div>
       <div id="pad-keys">
@@ -646,6 +664,19 @@
            종전대로 **패널만** 연다: 그것이 도구까지 바꾸면 web2-10의 키패드·음성 경로가
            통째로 죽는다(전량 e2e `dim.spec` 둘이 그것을 잡았다). 모드는 여기서 켠다. -->
       <button id="btn-dim-write" data-act="state" title="종이 위에 손으로 숫자를 써서 치수를 넣는다">종이에 쓰기</button>
+      <!-- 재기(web2-32 6번) — **삼각 스케일**. ⛔ 아이콘을 새로 그리지 않았다:
+           `docs/instrument-icons.md`의 「삼각 스케일 — 축척」 정본 path 그대로다.
+           ⚠⚠ **자리는 세로바가 아니라 여기다.** 초판은 손 띠(세로바)에 뒀는데 **전량 e2e가
+           그것을 잡았다**: 세로바가 800px 화면을 **12px 넘쳤다**(812 — `sidebar.spec`).
+           높이 예산이 이미 꽉 차 있다(index.html 머리의 「--ui-scale」 주석이 그 사정을
+           적어 뒀다: 「요소가 늘어 800px 화면에 들어가야 했다」). 답은 임계를 무르는 것이
+           아니라 **자리를 옮기는 것**이고, 선례가 바로 위 줄이다 — web2-29도 같은 이유로
+           모드 단추를 이 패널에 뒀다. 잰 값이 뜨는 자리도 이 패널이라 손이 한 곳에 있다.
+           ⚠ 그래도 **새 자리**다(#77 ㉠) — 치수 단추(자)에 뜻을 얹지 않았다. -->
+      <button id="btn-measure" data-act="state" title="재기 — 두 점을 짚으면 길이가 나온다(도면에는 안 남는다)">
+        <svg width="15" height="15" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M 16.00 6.50 L 19.26 12.15 A 3.0 3.0 0 0 0 22.26 17.35 L 25.53 23.00 L 19.00 23.00 A 3.0 3.0 0 0 0 13.00 23.00 L 6.47 23.00 L 9.74 17.35 A 3.0 3.0 0 0 0 12.74 12.15 L 16.00 6.50 Z"/></svg>
+        재기
+      </button>
       <div style="display:flex;gap:10px;align-items:center">
         <span id="dim-read"></span>
         <button id="dim-clear" title="쓴 것을 지운다">지운다</button>
@@ -662,6 +693,9 @@
         </select> mm
       </label>
       <label><input id="chk-exact" data-act="state" type="checkbox"> 소수점 그대로</label>
+      <!-- 재기의 두 결과 중 둘째(web2-32 6번) — 켜면 잰 것이 **도면에 남는다**.
+           남는 것은 「어느 두 점을 재는가」뿐이고 숫자는 저장하지 않는다(파생 · 원칙 b). -->
+      <label><input id="chk-measure-keep" data-act="state" type="checkbox"> 잰 것을 도면에 남긴다</label>
     </div>
 
     <!-- 우측 세로바 -->

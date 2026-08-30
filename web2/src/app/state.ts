@@ -11,7 +11,8 @@ export type { ViewOffset }
 import { liftAll, closestOnLineToRay, type LiftResult } from '../core/lift'
 import { camSig, defineByTouch, emptyTouchStats, type TouchStats } from '../core/own3d'
 import { DRAW_POSE, rayThrough, project } from '../core/camera'
-import { defaultOsnap, type OsnapSettings, type OsnapKind } from '../core/osnap'
+import { defaultOsnap, osnap, type OsnapSettings, type OsnapKind } from '../core/osnap'
+import { identifyPoint, measurePoint3, type Measure, type MeasurePoint } from '../core/measure'
 import { newExtDwell, clearExtAcq, type ExtDwell } from '../core/extacq'
 import { rng32 } from '../core/material'
 import { pieces, distToPiece, type Piece } from '../core/pieces'
@@ -23,7 +24,7 @@ import { C } from '../core/constants'
 import { calFromMedians, median } from '../core/press'
 import { type Pt, type V3, v3, add3, sub3, mul3, dot3, len3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
 
-export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink' | 'face' | 'dim'
+export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink' | 'face' | 'dim' | 'measure'
 
 /** 지금 그으면 무슨 재료인가 — **한 자리에서만 정한다**(원칙 a의 재료판).
  *  펜은 언제나 잉크이고, 연필은 고른 경도다. */
@@ -84,6 +85,8 @@ export interface Op {
   /** **글씨로 재판정된 획들**(web2-32 1번) — 그 획을 그린 op에 실린다. 실행취소하면
    *  판정도 함께 풀린다(판정만 남아 «작도선인데 3D가 없는» 상태를 안 만든다). */
   textified?: number[]
+  /** **도면에 남긴 재기**(web2-32 6번) — 사람이 한 것이므로 실행취소 대상이다(면과 같은 급) */
+  measuresAdded?: Measure[]
 }
 
 export interface App {
@@ -239,6 +242,16 @@ export interface App {
    *  ⚠ 29-2의 «제안»(dimSuggest·dimIgnored)은 여기서 **사라졌다**: 즉시 바꾸고 나중에
    *  고친다 — 사후 수정이 승인을 대신한다(32-2의 근거 ①). */
   dimEdit: number | null
+  // ── 재기(web2-32 6번) — **두 결과 중 기본은 «패널에 표시만»이다** ────────────
+  // 도면에 아무것도 안 남는다. 남기려면 `measureKeep`을 켠다(그때도 숫자는 저장 ⛔).
+  /** 첫 점을 짚었다 — 둘째 점을 기다린다. 런타임(저장 ⛔). */
+  measureFrom: MeasurePoint | null
+  /** 방금 잰 두 점 — 패널이 이 값을 읽어 길이(또는 비율)를 낸다. 런타임(저장 ⛔).
+   *  ⚠ **숫자를 안 들고 있다**: 파생이라 읽을 때 계산한다(원칙 b). 축척이 바뀌면
+   *  같은 두 점이 다른 값을 낸다 — 그것이 «잰 값»의 성질이다. */
+  measurePair: { a: MeasurePoint; b: MeasurePoint } | null
+  /** **잰 것을 도면에 남기는가**(선택 ② — 기본 꺼짐). 기기 설정이지 그림의 성질이 아니다. */
+  measureKeep: boolean
   /** **옐로 머무름 직선화의 임계 시간 ms**(web2-26 4번 — 실기기 「조금 길다」 · D6).
    *  기본 `C.HOLD_MS`이고 사람이 `C.HOLD_MS_MIN`~`C.HOLD_MS_MAX`에서 고친다.
    *  ⚠ **문서가 아니라 기기 설정이다**(localStorage) — 손의 성질이지 그림의 성질이 아니다
@@ -313,6 +326,9 @@ export function createApp(W: number, H: number): App {
     dimInk: [],
     dimStaged: null,
     dimEdit: null,
+    measureFrom: null,
+    measurePair: null,
+    measureKeep: false,
     lastCamSig: null,
     touchStats: emptyTouchStats(),
     touchLast: null,
@@ -848,13 +864,59 @@ export function endDimEdit(app: App) {
   for (const l of app.listeners) l()
 }
 
-// ⚠⚠ **D-4 — 지시의 「두 점과 적힌 값이 크게 어긋나면 그 사실을 표시할 수는 있다」는
-//    이 모형에서 발화하지 않는다.** 여기서 `Stroke.dim`은 주석이 아니라 **그 획의 길이**이고
-//    리프팅이 그 값으로 길이를 **다시 세운다**(web2-08 4-2). 그러므로 「잰 값」은 언제나
-//    「적힌 값」이다 — 어긋남이 **구성상 0**이다(자기참조 유형 3 · CLAUDE.md §5.1).
-//    실측이 그것을 냈다: 9000이라 적으면 잰 값도 9000.0, 비 1.00.
-//    → **표시를 안 만든다**(발화 조건이 없는 안내는 군더더기다). 두 점을 «따로» 지정하는
-//    길(지시의 첫 갈래)이 생기면 그때 이 조항이 처음으로 뜻을 갖는다 — DEFERRED.
+// ── 재기(web2-32 6번) — 두 점을 짚으면 길이가 나온다 ────────────────────────
+//
+// ⚠⚠ **위에 있던 29-2의 판정을 web2-32가 뒤집었다.** 그 판정은 「어긋남이 구성상 0이라
+//    표시를 안 만든다」였고(AS-C107 · 실측 9000 ↔ 9000.0 · 비 1.00) 근거는 「`Stroke.dim`이
+//    그 획의 길이를 «다시 세운다»」였다. 그 관측 자체는 옳았는데 **표본이 하나**였다 —
+//    30-6이 그것을 잡았고, 32-5가 축척을 확정하면 **둘째 치수**부터 「적은 값」과
+//    「모델이 가진 값」이 갈린다. 판정은 `dim.ts`의 `dimSkew`이고 「잰 값」은 **치수를
+//    적용하기 전** 길이다(`LiftResult.dimGeom`) — 적용 뒤를 재면 그것이 다시 항등이다.
+//    그리고 29-2가 「그때 처음 뜻을 갖는다」고 적은 «두 점을 따로 지정하는 길»이 바로
+//    아래 재기다. 두 조항이 같은 회차에서 함께 성립했다.
+
+/** 잰 점 하나를 짚는다 — **오스냅이 걸린다**(그리기와 같은 함수 · #54). 첫 탭이 시작점,
+ *  둘째 탭이 끝점이고 그때 `measurePair`가 선다. 짚을 것이 없으면 아무 일도 안 한다
+ *  (「후보만 잔뜩」의 반대 — 없는 점을 지어내지 않는다). 돌아오는 값은 지금 상태다. */
+export function measureTap(app: App, p: Pt): 'from' | 'pair' | 'none' {
+  const hit = osnap(app.lift, app.pose, p, { ...app.osnap, radius: app.osnap.radius / app.view.s },
+    undefined, undefined, app.extAcq.acquired)
+  // 3D가 없는 후보(소실점·대기 획)는 잴 수 없다 — 길이는 3D의 성질이다
+  if (!hit || !hit.p3) return 'none'
+  const tol = C.MERGE_RATIO * Math.max(geomSize3(app.lift), 1e-9)
+  const mp = identifyPoint(app.lift, hit.p3, tol)
+  if (!mp) return 'none'
+  if (app.measureFrom === null) {
+    app.measureFrom = mp
+    app.measurePair = null
+  } else {
+    app.measurePair = { a: app.measureFrom, b: mp }
+    app.measureFrom = null
+    // **기본은 도면에 아무것도 안 남긴다**(지시 문면) — 남기는 것은 선택이다.
+    if (app.measureKeep) {
+      const m: Measure = { id: app.nextId++, a: app.measurePair.a, b: app.measurePair.b }
+      ;(app.doc.measures ??= []).push(m)
+      app.undoStack.push({ removed: [], added: [], measuresAdded: [m] })
+      app.redoStack.length = 0
+    }
+  }
+  for (const l of app.listeners) l()
+  return app.measurePair ? 'pair' : 'from'
+}
+
+/** 재기를 놓는다 — 도구를 벗어나거나 다시 시작할 때. 도면에 남긴 것은 안 건드린다. */
+export function clearMeasure(app: App) {
+  app.measureFrom = null
+  app.measurePair = null
+  for (const l of app.listeners) l()
+}
+
+/** 짚어 둔 점(또는 잰 두 점)의 지금 화면 좌표 — 렌더가 읽는다. 안 풀리면 뺀다. */
+export function measureScreen(app: App, mp: MeasurePoint): Pt | null {
+  const p3 = measurePoint3(app.lift, mp)
+  return p3 ? project(app.lift.an, app.pose, p3) : null
+}
+
 /** 자립 깃발 토글(4-f) — 설정·복원 경로가 이것 하나를 부른다(#54). */
 export function setOwn3d(app: App, on: boolean) {
   app.own3d = on
@@ -1128,6 +1190,11 @@ export function undo(app: App) {
     const t = app.doc.strokes.find(x => x.id === id)
     if (t) delete t.text
   }
+  // 도면에 남긴 재기(web2-32 6번) — 면과 같은 급이라 같은 자리에서 되돌린다
+  for (const m of op.measuresAdded ?? []) {
+    const i = (app.doc.measures ?? []).findIndex(x => x.id === m.id)
+    if (i >= 0) app.doc.measures!.splice(i, 1)
+  }
   app.redoStack.push(op)
   recompute(app)
 }
@@ -1165,6 +1232,7 @@ export function redo(app: App) {
     const t = app.doc.strokes.find(x => x.id === id)
     if (t) t.text = 1
   }
+  for (const m of op.measuresAdded ?? []) (app.doc.measures ??= []).push(m)
   app.undoStack.push(op)
   recompute(app)
 }
