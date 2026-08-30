@@ -1,0 +1,147 @@
+{
+  "what": "web2-32 5·6·7 — 축척의 왕복 · 어긋남의 발화 표 · 재기의 정체 왕복 · 파생을 안 담는 저장 대가.",
+  "why": "32-5는 «만드는 일이 아니라 드러내는 일»이므로(사람의 정정) 유일한 관측은 «있던 규칙이 실제로 왕복하는가»다. 32-7은 30-6이 뒤집은 AS-C107의 자리이고, 그 뒤집힘의 증거가 아래 두 열(적용 전 ↔ 적용 후)이다.",
+  "trap": "⚠⚠ **치수를 적용한 «뒤» 길이로 재면 비가 정확히 1이다**(ratio_after_dim 열) — 리프팅이 그 획의 길이를 dim으로 다시 세우기 때문이다(자기참조 유형 3 · PITFALLS #77 ㉡). 29-2가 그 자로 재고 「구성상 0」이라 기능을 걷었다(AS-C107). 「잰 값」은 **적용 전** 길이여야 한다(LiftResult.dimGeom).",
+  "conditions": {
+    "scene": "카메라가 닫힌 2점 장면 + **길이가 다른** 수직 기둥 둘(지시 32-7의 픽스처 「서로 다른 길이의 두 선」)",
+    "first_dim": "기둥 A에 2400 mm — 이것이 축척을 정한다",
+    "second_dim": "기둥 B에 «맞는 값 × factor» — factor가 1이면 안 갈리고 문턱 밖이면 갈린다",
+    "command": "npx vitest run test/scale32_measure.test.ts"
+  },
+  "constants_note": "`DIM_SKEW_RATIO`는 **비**다(|적은 값 ÷ 잰 값 − 1|). `MERGE_RATIO`는 재는 점의 «정체»를 찾을 때의 3D 허용(기하 크기 대비) — 새 숫자를 안 지었다(#54).",
+  "constants": {
+    "DIM_SKEW_RATIO": 0.02,
+    "MERGE_RATIO": 0.002
+  },
+  "scale_roundtrip": [
+    {
+      "stage": "치수 없음",
+      "mmPerUnit": null,
+      "scaleId": null,
+      "shown": "미정"
+    },
+    {
+      "stage": "첫 치수 2400",
+      "mmPerUnit": 1250,
+      "scaleId": 4,
+      "shown": "1 : 1250"
+    },
+    {
+      "stage": "첫 치수 삭제",
+      "mmPerUnit": null,
+      "scaleId": null,
+      "shown": "미정"
+    },
+    {
+      "stage": "다음 치수 1800",
+      "mmPerUnit": 1125,
+      "scaleId": 5,
+      "shown": "1 : 1125"
+    }
+  ],
+  "skew_table": [
+    {
+      "factor": 1,
+      "written_mm": 2000,
+      "measured_mm_before_dim": 2000,
+      "ratio_before_dim": 1,
+      "ratio_after_dim": 1,
+      "fires": false
+    },
+    {
+      "factor": 1.01,
+      "written_mm": 2020,
+      "measured_mm_before_dim": 2000,
+      "ratio_before_dim": 1.01,
+      "ratio_after_dim": 1,
+      "fires": false
+    },
+    {
+      "factor": 1.04,
+      "written_mm": 2080,
+      "measured_mm_before_dim": 2000,
+      "ratio_before_dim": 1.04,
+      "ratio_after_dim": 1,
+      "fires": true
+    },
+    {
+      "factor": 1.5,
+      "written_mm": 3000,
+      "measured_mm_before_dim": 2000,
+      "ratio_before_dim": 1.5,
+      "ratio_after_dim": 1,
+      "fires": true
+    },
+    {
+      "factor": 0.5,
+      "written_mm": 1000,
+      "measured_mm_before_dim": 2000,
+      "ratio_before_dim": 0.5,
+      "ratio_after_dim": 1,
+      "fires": true
+    }
+  ],
+  "skew_first_dim": {
+    "which": "첫 치수(축척의 분모)",
+    "ratio_before_dim": 1,
+    "fires": false
+  },
+  "measure_identity": [
+    {
+      "kind": "end(a)",
+      "t_found": 0,
+      "rel_err": 0
+    },
+    {
+      "kind": "mid",
+      "t_found": 0.5,
+      "rel_err": 0
+    },
+    {
+      "kind": "near/int(t=0.25)",
+      "t_found": 0.25,
+      "rel_err": 0
+    },
+    {
+      "kind": "end(b)",
+      "t_found": 1,
+      "rel_err": 0
+    }
+  ],
+  "measure_derived": {
+    "scale_x2_value_ratio": 2
+  },
+  "measure_unscaled": {
+    "mm": null,
+    "shown": "1 : 1.92"
+  },
+  "storage_cost": {
+    "bytes_without": 1056,
+    "bytes_with_one": 1117,
+    "per_measure": 61
+  },
+  "gate": {
+    "32-5": "치수 없음 → mmPerUnit null · 첫 치수 → 값과 scaleId · 삭제 → 다시 null · 다음 치수 → 그 획이 기준",
+    "32-6": "정체 왕복 상대오차 < 1e-9 · 축척 두 배 → 잰 값 두 배 · 미정이면 mm null(비만) · 저장에 숫자 없음",
+    "32-7": "첫 치수 비 = 1(구성상) · 문턱 절반 안 발화 · 문턱 두 배 발화 · ratio_after_dim은 모든 칸에서 1(그 자는 아무것도 안 잰다)",
+    "reachability": "**무엇이 이 기준을 넘을 수 있는가**(#35). 32-5: 넘는 것은 «축척 후보 집합이 바뀌는 것»이다 — 겹 규칙(web2-21 1-b)이나 물러남 규칙이 바뀌면 scaleId가 다른 획을 가리킨다. 팔이 그것을 잡는다. 32-6: 넘는 것은 «정체가 좌표로 바뀌는 것»이다 — 좌표를 저장하면 축척 두 배에서 비가 2가 아니라 1이 되고 그 칸이 빨개진다(실제로 그렇게 실패시킬 수 있다). 32-7: 넘는 것은 «잰 값을 적용 뒤 길이로 재는 것»이다 — 그러면 ratio_before_dim 열이 통째로 1이 되어 «문턱 두 배 발화» 칸 셋이 동시에 죽는다. ⚠ 세 갈래 다 **같은 실행 안에서** 반대 값을 보인다(D-3) — 반증이 가능하다.",
+    "reachability_value": 1.04,
+    "reachability_source": "skew_table[2].ratio_before_dim",
+    "reachability_note": "발화하는 가장 좁은 칸이다 — 문턱 0.02 대비 여유 **2배**(어긋남 0.04). 나머지 발화 칸 둘은 25배(0.5)라 경계에서 멀고, 안 발화하는 칸은 0.5배(0.01)와 0(구성상)이다. 경계에 걸친 칸이 없다(#14 — 변동폭이 결론의 여유보다 크면 결론이 없다). ⚠ 이 픽스처는 **결정론**이다(시드 없음 · Math.random ⛔) — 변동폭이 0이다."
+  },
+  "selfcheck_notes": {
+    "skew_table[*].ratio_after_dim = 1.000000": "⚠ **정상이다 — 이것이 이 원장의 관측 대상이다.** 리프팅이 그 획의 길이를 dim으로 다시 세우므로 «적용 뒤» 비는 **설계 보장**이지 측정이 아니다(자기참조 유형 3 · CLAUDE.md §5.1). 그래서 **이 열에는 임계를 안 건다** — 옆 열(ratio_before_dim)이 재는 값이고 임계는 거기 걸린다. 두 열을 나란히 두는 것이 이 원장의 요점이다.",
+    "skew_table[0].ratio_before_dim = 1 · skew_first_dim.ratio_before_dim = 1": "정상이다. 앞엣것은 «맞는 값을 적었다»(factor 1)이고, 뒤엣것은 **축척을 정한 획**이라 구성상 1이다(그 획이 분모였다 — 30-6이 본 그 0). 발화 조건은 **둘째 치수**가 세운다.",
+    "measure_identity[*].rel_err = 0": "**설계 보장이다** — 정체(획 id + t)를 좌표로 되돌리는 것은 같은 선형보간의 역이므로 부동소수 잔차가 없다. 임계를 걸 값이 아니다. 이 열이 재는 것은 «오차»가 아니라 **어느 오스냅 갈래에서 정체가 서는가**다(t_found 열이 그것을 낸다: 0 · 0.5 · 0.25 · 1). 반증: 어느 선분에도 안 붙는 점은 identifyPoint가 null을 낸다(scale32.test).",
+    "constants/metric_defs 스냅샷 없음": "**web2 라인 전체의 유보다** — 이 라인은 `constantsSnapshot()`을 안 쓰고 `constants` 블록을 손으로 적는다(`hold26.test`가 그 유보를 처음 적었다). 그래서 문서는 원장을 **이름으로** 가리킨다(@해시 인용 ⛔)."
+  },
+  "pitfalls": [
+    "#77",
+    "#61",
+    "#54",
+    "#42",
+    "#35",
+    "#14"
+  ],
+  "pitfalls_note": "#77은 **㉡**(값이 스스로를 정의하면 그 검증은 항등이다)이 걸리는 자리다. #14는 문턱 대비 여유를 적는 조항 — 발화하는 칸의 어긋남은 문턱의 **2배(0.04) · 25배(0.5) · 25배(0.5)**이고 안 발화하는 칸은 **0.5배(0.01) · 0배**다. 경계에 걸친 칸이 없다."
+}
