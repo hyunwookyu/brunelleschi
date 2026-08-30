@@ -39,9 +39,19 @@ export interface Box {
 const boxes: Box[] = []
 let listening = false
 
+/** **반증 손잡이**(D-3 — 팔은 `e2e/ui34r7.spec.ts` ⑥). 평상시는 `'on'`이고 다른 둘은
+ *  «틀린 판»을 실제로 만들어 검사를 빨갛게 만드는 데만 쓴다:
+ *   - `'off'`   — 바깥 누름을 안 듣는다(R7을 안 건 판). ①②③이 빨개진다.
+ *   - `'swallow'` — 바깥 누름을 **삼킨다**(#77 ㉠의 형태). ⚠⚠ **①③은 여전히 초록이고
+ *     ②만 빨개진다** — 「접힌다」와 「그 누름의 제 일이 산다」가 다른 축이라는 증거다. */
+let mode: 'on' | 'off' | 'swallow' = 'on'
+export function setBoxAwayModeForTest(m: 'on' | 'off' | 'swallow') { mode = m }
+
 function onDown(e: PointerEvent) {
+  if (mode === 'off') return                            // 반증 ㉠
   const t = e.target
   if (!(t instanceof Node)) return
+  if (mode === 'swallow') { e.stopPropagation(); e.preventDefault() }   // 반증 ㉡ — ⛔ 평상시 금지
   // ⚠ 사본을 돈다 — `close()`가 자기 등록을 지우는 통이 있다(동적 팝오버).
   for (const b of [...boxes]) {
     if (!b.isOpen()) continue
@@ -49,7 +59,7 @@ function onDown(e: PointerEvent) {
     if (b.zone().some(n => !!n && n.contains(t))) continue
     b.close()
   }
-  // ⛔ 여기서 e를 건드리지 않는다(위 ⚠⚠).
+  // ⛔ 여기서 e를 건드리지 않는다(위 ⚠⚠ — 반증 손잡이 밖에서는 삼키지 않는다).
 }
 
 /** 통 하나를 등록한다. 돌려주는 함수가 등록을 지운다(동적 팝오버가 닫힐 때 부른다). */

@@ -21,7 +21,7 @@ import type { Grade, Layer, Sheet, Stroke } from '../core/types'
 import { parseDim, formatMm, lenMm, formatScale, formatUnits, dimSkew, skewOff, UNITS, type Unit } from '../core/dim'
 import { measureMm, measureUnits } from '../core/measure'
 import { initDimPanel } from './dimpanel'
-import { registerBox, closeOtherBoxes, openBoxIds } from './boxes'
+import { registerBox, closeOtherBoxes, openBoxIds, setBoxAwayModeForTest } from './boxes'
 import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
 import { C } from '../core/constants'
@@ -1779,6 +1779,8 @@ const diag = {
   /** 지금 열려 있는 통(화면 규칙 R7 — web2-34 4번). 「동시에 둘이 안 열린다」를
    *  화면 형태(클래스·hidden·details.open)가 아니라 **등록부**에서 읽는 통로다. */
   openBoxes: () => openBoxIds(),
+  /** R7의 **반증 손잡이**(D-3) — 'off'(안 듣는다) · 'swallow'(삼킨다) · 'on'(제자리) */
+  boxAwayModeForTest: (m: 'on' | 'off' | 'swallow') => setBoxAwayModeForTest(m),
   /** 승격 획 전부의 현재 포즈 재사영 — 불변식 k 확인용 */
   projectAll(): Record<number, { a: Pt; b: Pt } | null> {
     const out: Record<number, { a: Pt; b: Pt } | null> = {}

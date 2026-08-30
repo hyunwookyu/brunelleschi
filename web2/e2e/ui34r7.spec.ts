@@ -280,3 +280,97 @@ test('34-4 ⑤ **예외** — 치수 리본은 작업대다: 캔버스를 눌러
   expect(s1, '첫 점을 짚었다').toBe('from')
   expect(s2, '둘째 점으로 값이 섰다').toBe('value')
 })
+
+test('34-4 ⑥ **반증** — away를 빼면 ①②③이, 삼키면 ②만 빨개진다 (D-3)', async ({ page }) => {
+  /** 통 전수에 대해 「바깥을 눌렀을 때 접혔나 · 그 누름의 제 일이 살았나」를 한 번에 낸다 */
+  async function sweep(mode: 'on' | 'off' | 'swallow') {
+    await page.evaluate(m => (window as any).__b2.diag.boxAwayModeForTest(m), mode)
+    const stuck: string[] = []
+    const swallowed: string[] = []
+    const opened: string[] = []
+    const scored: string[] = []      // 「제 일」을 잴 수 있는 칸 — 도구가 연필·펜·지우개인 칸
+    for (const b of BOXES) {
+      await page.evaluate(() => (window as any).__b2.diag.boxAwayModeForTest('on'))
+      await resetPencil(page)                       // 앞 칸의 통을 확실히 닫고 도구를 되돌린다
+      await page.evaluate(m => (window as any).__b2.diag.boxAwayModeForTest(m), mode)
+      await b.open(page)
+      await settle(page)
+      if (!(await isOpen(page, b.sel, b.kind))) continue   // 못 열렸으면 그 칸은 안 센다
+      opened.push(b.id)
+      const t0 = await tool(page)
+      const n0 = await strokes(page)
+      await drawLine(page, 200, 700, 420, 640)
+      const n1 = await strokes(page)
+      if (await isOpen(page, b.sel, b.kind)) stuck.push(b.id)
+      // 「제 일」 — 연필·펜은 획이 하나 늘고 지우개는 준다. 면 도구는 잴 것이 없어 안 센다.
+      if (t0 === 'pencil' || t0 === 'pen') {
+        scored.push(b.id)
+        if (n1 !== n0 + 1) swallowed.push(b.id)
+      } else if (t0 === 'eraser-pencil') {
+        scored.push(b.id)
+        if (n1 >= n0) swallowed.push(b.id)
+      }
+    }
+    await page.evaluate(() => (window as any).__b2.diag.boxAwayModeForTest('on'))
+    return { stuck, swallowed, opened, scored }
+  }
+
+  await boot(page)
+  // 지울 것을 미리 놓는다 — 지우개 칸의 «제 일»이 지우기다
+  for (let i = 0; i < 3; i++) await drawLine(page, 200, 700, 420, 640)
+
+  const on = await sweep('on')
+  const off = await sweep('off')
+  const sw = await sweep('swallow')
+  const line = (n: string, r: typeof on) =>
+    `  ${n} — 열린 칸 ${r.opened.length}/${BOXES.length} · 안 접힘 ${r.stuck.length}: ${r.stuck.join(', ') || '없음'}`
+    + ` · 잴 수 있는 칸 ${r.scored.length} 중 삼켜짐 ${r.swallowed.length}: ${r.swallowed.join(', ') || '없음'}`
+  console.log(`[34-4 ⑥] 통 ${BOXES.length}\n`
+    + line('제자리(on)  ', on) + '\n' + line('㉠ away 없음', off) + '\n' + line('㉡ 삼키는 판', sw))
+
+  // 제자리에서는 둘 다 0이어야 ①②가 초록인 이유가 선다
+  expect(on.opened.length, '제자리에서는 통 전부가 열린다').toBe(BOXES.length)
+  expect(on.stuck).toEqual([])
+  expect(on.swallowed).toEqual([])
+  // ㉠ away를 빼면 **접힘이 통째로 죽는다** — ①②③이 빨개지는 자리.
+  //   ⚠ `#layer-pop`만 예외로 걷힌다 — 획이 그어지면 겹 줄이 다시 그려지고 그때 닫힌다
+  //   (R7이 아니라 `render()`의 몫이다). 그래서 요구는 전부가 아니라 «하나 뺀 전부»다.
+  expect(off.stuck.length, 'away가 없으면 통이 열린 채 남는다').toBeGreaterThanOrEqual(BOXES.length - 1)
+  expect(off.swallowed, 'away가 없어도 그 누름의 제 일은 산다(삼키지 않으므로)').toEqual([])
+  // ㉡ 삼키면 **접힘은 여전히 산다** — 「접힌다」만 재는 팔로는 이 결함을 못 잡는다
+  expect(sw.stuck, '삼켜도 통은 접힌다(①③은 초록이다)').toEqual([])
+  // …그리고 **잴 수 있는 칸이 전부 죽는다** — ②만 빨개진다(#77 ㉠)
+  expect(sw.scored.length, '잴 수 있는 칸이 여럿 있다(#69 ㉣)').toBeGreaterThanOrEqual(6)
+  expect(sw.swallowed, '삼키면 캔버스의 획·지우기가 전부 죽는다').toEqual(sw.scored)
+})
+
+test('34-4 ⑦ **예외의 반증 짝** — 필압 보정 절차 중에만 설정 서랍이 안 접힌다 (D-4)', async ({ page }) => {
+  // ⚠ 지시문의 표는 `#pane-settings`를 그냥 R7 대상으로 들었는데, 그 서랍 안에
+  //   「캔버스에 두 획을 그으세요」라는 절차가 있고 **다음 지시와 그만두기 손잡이가
+  //   이 패널 안**이다(30-7). 바깥 누름에 접으면 첫 획에 그 수리가 죽는다(#77 ㉠).
+  //   예외를 **패널이 아니라 그 구간**에 걸었다는 것을 두 방향으로 잰다.
+  await boot(page)
+  const open = () => page.evaluate(() => (document.getElementById('pane-settings') as HTMLDetailsElement).open)
+  const busy = () => page.evaluate(() => (window as any).__b2.app.pressCalib !== null)
+
+  // ㉠ 절차 **중** — 캔버스에 그어도 안 접히고, 그만두기가 실제로 눌린다
+  await page.click('#pane-settings > summary'); await settle(page)
+  await page.click('#chk-press'); await settle(page)   // ⚠ check()는 못 쓴다(30-7 ④)
+  expect(await busy(), '절차가 시작됐다').toBe(true)
+  await drawLine(page, 200, 700, 420, 640)
+  const inProc = await open()
+  const step = await page.textContent('#press-calib-step')
+  const cancelVisible = await page.locator('#btn-press-cancel').isVisible()
+  expect(inProc, '절차 중에는 캔버스를 눌러도 안 접힌다').toBe(true)
+  expect(cancelVisible, '그만두기 손잡이가 화면에 남는다').toBe(true)
+  await page.click('#btn-press-cancel'); await settle(page)
+  expect(await busy(), '그만뒀다').toBe(false)
+
+  // ㉡ 절차 **밖** — 같은 서랍이 보통 통이다(바깥을 누르면 접힌다)
+  if (!(await open())) { await page.click('#pane-settings > summary'); await settle(page) }
+  expect(await open()).toBe(true)
+  await drawLine(page, 200, 700, 420, 640)
+  const outProc = await open()
+  console.log(`[34-4 ⑦] 절차 중 열림 ${inProc}(그만두기 보임 ${cancelVisible} · 「${step?.trim()}」) · 절차 밖 열림 ${outProc}`)
+  expect(outProc, '절차가 아니면 보통 통이다 — 바깥을 누르면 접힌다').toBe(false)
+})

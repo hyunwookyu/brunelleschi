@@ -365,11 +365,16 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   // 도구가 그림으로 보인다 — 고른 것이 **앞으로 나온다**(4-d: 박스 강조가 아니다)
   expect(await page.getAttribute('#btn-eraser-pencil', 'class')).toContain('on')
   expect(await page.getAttribute('#tray-HB', 'class')).not.toContain('on')
-  // 굵기 막대는 연필에서 사라지고 펜·지우개에서 뜬다(4-f · 4-e)
-  expect(await page.evaluate(() => getComputedStyle(document.getElementById('thick')!).display)).toBe('block')
+  // ⚠⚠ **굵기 막대(#thick)는 web2-34 3번에 사라졌다**(화면 규칙 R1 — 지우개의 크기도
+  //   이제 «고르는 것»이다). 그래서 이 줄이 묻는 것이 바뀌었다: 「연필에서 없고 지우개에서
+  //   뜨는가」가 아니라 **「어떤 상태에서도 없는가」**이고, 지금 크기는 **접힌 지우개의
+  //   각인**이 말한다(R6). 임계를 문 것이 아니라 팔이 무엇을 묻는지를 고친 것이다(#76 ㉣).
+  //   ⚠ 이 줄은 34-3이 요소를 지우면서 안 고쳐 **선재로 빨갰다**(34-4가 찾아 고쳤다 — #80).
+  expect(await page.locator('#thick').count(), '지우개 상태에서도 막대가 없다').toBe(0)
+  expect(await page.textContent('#fold-erase-pencil-text'), '접힌 지우개가 지금 크기를 말한다').toMatch(/^\d+$/)
   await page.click('#btn-pencil'); await page.click('#tray-HB')   // 연필통을 열어 고른다(3-b')
   await settle(page)
-  expect(await page.evaluate(() => getComputedStyle(document.getElementById('thick')!).display)).toBe('none')
+  expect(await page.locator('#thick').count(), '연필 상태에서도 없다').toBe(0)
   // 홀더펜 창 — 지금 심이 연필 몸통에 보인다(4-e)
   expect(await page.textContent('#lead-text')).toBe('HB')
   await settle(page)
@@ -413,9 +418,16 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   s = await summary(page)
   expect(s.strokes).toBe(beforeReload.strokes) // 하나도 안 지워졌다
   expect(await page.locator('#confirm-pop').count()).toBe(0)
+  // ⚠⚠ **web2-34 4번(화면 규칙 R7)이 이 자리를 뒤집었다.** 종전 주석은 「바깥 누름은
+  //   팝오버만 걷고 details는 안 닫는다」였는데, 사람의 말이 바로 그 구멍이었다
+  //   (「통을 열어놓고 다른 버튼을 누르면 접혀야 한다」) — 이제 **서랍도 접힌다.**
+  //   임계를 문 것이 아니라 팔이 묻는 것을 새 규칙으로 다시 적는다(#76 ㉣): 확인이
+  //   걷히는 것과 **서랍이 접히는 것**을 둘 다 단언한다.
+  expect(await page.evaluate(() => (document.getElementById('pane-file') as HTMLDetailsElement).open),
+    'R7 — 바깥(캔버스)을 누르면 서랍도 접힌다').toBe(false)
 
-  // 비운다 — 그림도 작도도 사라지고 지평선 단계로 돌아간다(패널은 열린 채다 —
-  // 바깥 누름은 팝오버만 걷고 details는 안 닫는다)
+  // 비운다 — 그림도 작도도 사라지고 지평선 단계로 돌아간다(서랍을 다시 연다)
+  await page.click('#pane-file > summary')
   await page.click('#btn-clear')
   await page.click('#confirm-pop u[data-pick="yes"]')
   await settle(page)

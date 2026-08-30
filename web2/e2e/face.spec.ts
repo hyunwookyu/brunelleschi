@@ -256,6 +256,13 @@ test('면 일괄(web2-21 4부) — 팝오버 「전부 찾기」 · 후보는 �
   // ③ 하나를 탭해 빼면 그것만 빠진다 — 왼 칸을 뺀다
   await tap(page, 455, 515)
   expect(await page.evaluate(() => (window as any).__b2.app.faceCandidates.length)).toBe(1)
+  // ⚠⚠ **web2-34 4번(화면 규칙 R7)** — 캔버스 탭은 이 팝오버의 «바깥»이므로 빼는 몸짓에
+  //   팝오버가 접힌다. 위 주석이 이미 판정한 그대로다(「후보를 빼는 몸짓은 캔버스 탭이므로
+  //   그때 팝오버가 덮고 있지 않은 편이 옳다」) — 28-1은 그것을 「전부 찾기」에서만 했고
+  //   R7이 **모든 캔버스 탭에** 걸어 준다. 확정을 누르려면 다시 연다(그 길이 `reopenFacePop`).
+  expect(await page.locator('#face-pop').evaluate(e => (e as HTMLElement).hidden),
+    'R7 — 캔버스 탭에 팝오버가 접힌다').toBe(true)
+  await reopenFacePop(page)
   // 확정 — 남은 오른 칸만 면이 된다(팝오버가 후보 수를 따라온다)
   await page.click('#btn-face-commit'); await settle(page)
   const st2 = await page.evaluate(() => {
