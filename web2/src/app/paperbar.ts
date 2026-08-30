@@ -17,6 +17,7 @@ import type { App } from './state'
 import { deleteSheet, renameSheet, gotoSheet, sheetUpdateBlock, updateSheet } from './state'
 import { DRAW_SHEET_ID, paperName, type Sheet } from '../core/types'
 import { C } from '../core/constants'
+import { registerBox, closeOtherBoxes } from './boxes'
 
 export interface PaperbarHooks {
   /** **지금 시점을 새 종이로 굳힌다** — 셔터(「+」)·롤(web2-25 2부)·시점 갱신이 **같은
@@ -133,14 +134,19 @@ export function initPaperbar(app: App, host: HTMLElement, hooks: PaperbarHooks):
       pop.append(del)
     }
     document.body.append(pop)
+    closeOtherBoxes('#paper-pop')     // 동시에 둘이 열리지 않는다(R7)
     const r = tab.getBoundingClientRect()
     pop.style.left = `${Math.round(Math.max(4, r.left))}px`
     pop.style.top = `${Math.round(r.bottom + 4)}px`
-    const away = (e: PointerEvent) => {
-      if (pop && !(e.target instanceof Node && (pop.contains(e.target) || tab.contains(e.target)))) closePop()
-    }
-    window.addEventListener('pointerdown', away, true)
-    popAway = () => window.removeEventListener('pointerdown', away, true)
+    // 바깥 누름 = 닫힘(화면 규칙 R7). ⚠ **이 세 줄이 R7의 선례였다** — web2-34 4번이
+    // 같은 규약을 `boxes.ts` 한 자리로 옮기고 나머지 통(연필통·촉통·크기통·자·표시·면·
+    // 서랍 둘)을 그리로 데려갔다(#54 — 새 기제를 안 만든다). 거동은 그대로다.
+    popAway = registerBox({
+      id: '#paper-pop',
+      isOpen: () => pop !== null,
+      close: () => closePop(),
+      zone: () => [pop, tab],
+    })
   }
 
   /** **되돌릴 수 없는 것을 묻는 자리의 예외**(web2-30 4번) — 화면의 말은 이름이거나 짧은

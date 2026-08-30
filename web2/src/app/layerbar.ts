@@ -19,6 +19,7 @@ import { addLayer, isSolo, removeLayer, setActiveLayer, setLayerOn, setLayerLock
 import type { Layer, Paper } from '../core/types'
 import { paperName } from '../core/types'
 import { C } from '../core/constants'
+import { registerBox, closeOtherBoxes } from './boxes'
 
 // Phosphor light(MIT · @phosphor-icons/core assets/light — path 그대로. web2-19 4부와 같은 이식)
 const EYE = 'M245.48,125.57c-.34-.78-8.66-19.23-27.24-37.81C201,70.54,171.38,50,128,50S55,70.54,37.76,87.76c-18.58,18.58-26.9,37-27.24,37.81a6,6,0,0,0,0,4.88c.34.77,8.66,19.22,27.24,37.8C55,185.47,84.62,206,128,206s73-20.53,90.24-37.75c18.58-18.58,26.9-37,27.24-37.8A6,6,0,0,0,245.48,125.57ZM128,194c-31.38,0-58.78-11.42-81.45-33.93A134.77,134.77,0,0,1,22.69,128,134.56,134.56,0,0,1,46.55,95.94C69.22,73.42,96.62,62,128,62s58.78,11.42,81.45,33.94A134.56,134.56,0,0,1,233.31,128C226.94,140.21,195,194,128,194Zm0-112a46,46,0,1,0,46,46A46.06,46.06,0,0,0,128,82Zm0,80a34,34,0,1,1,34-34A34,34,0,0,1,128,162Z'
@@ -70,14 +71,18 @@ export function initLayerbar(app: App, host: HTMLElement, hooks: LayerbarHooks):
     pop.id = 'layer-pop'
     build(pop)
     document.body.append(pop)
+    closeOtherBoxes('#layer-pop')     // 동시에 둘이 열리지 않는다(R7)
     const r = anchor.getBoundingClientRect()
     pop.style.left = `${Math.round(Math.max(4, r.left))}px`
     pop.style.top = `${Math.round(r.bottom + 4)}px`
-    const away = (e: PointerEvent) => {
-      if (pop && !(e.target instanceof Node && (pop.contains(e.target) || anchor.contains(e.target)))) closePop()
-    }
-    window.addEventListener('pointerdown', away, true)
-    popAway = () => window.removeEventListener('pointerdown', away, true)
+    // 바깥 누름 = 닫힘(화면 규칙 R7). ⚠ **이 세 줄이 R7의 선례였다** — web2-34 4번이
+    // 같은 규약을 `boxes.ts` 한 자리로 옮겼다(#54). 거동은 그대로다.
+    popAway = registerBox({
+      id: '#layer-pop',
+      isOpen: () => pop !== null,
+      close: () => closePop(),
+      zone: () => [pop, anchor],
+    })
   }
 
   /** 목록이 펼쳐졌는가 — **접으면 요약, 펼치면 목록**(web2-25 4-a). 연필통과 같은 어법이다.

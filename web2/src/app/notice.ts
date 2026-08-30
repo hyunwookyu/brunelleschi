@@ -1,6 +1,8 @@
 // 알림 — 화면 최상단 한 줄(원칙 g). 박스 없음. 평소에는 비어 있다.
 // 선택이 필요하면 그 줄에 **밑줄 단어**로 붙인다(캐드 명령줄 선례) — 대화상자를 안 띄운다.
 
+import { registerBox } from './boxes'
+
 let el: HTMLElement | null = null
 let timer: number | undefined
 
@@ -90,9 +92,16 @@ export function confirmNear(anchor: HTMLElement, msg: string,
   pop.style.top = `${Math.round(Math.max(6, r.top + r.height / 2 - pop.offsetHeight / 2))}px`
   // 바깥 누름 = 취소. 여는 것은 'click'(pointerdown·up이 이미 끝난 뒤)이므로
   // 지금 부착해도 이 열림의 pointerdown이 되돌아 닫는 일은 없다 — 즉시 단다.
-  const away = (e: PointerEvent) => {
-    if (pop && !(e.target instanceof Node && pop.contains(e.target))) dismissConfirm()
-  }
-  window.addEventListener('pointerdown', away, true)
-  awayRm = () => window.removeEventListener('pointerdown', away, true)
+  // ⚠ 규약은 `boxes.ts` 한 자리로 옮겼다(web2-34 4번 · R7 · #54). 거동은 그대로다:
+  //   «안»은 이 팝오버뿐이고 **앵커는 안 넣는다** — 같은 버튼을 다시 눌러도 걷힌다
+  //   (같은 자리 연타로 지워지지 않게 하는 방어의 일부다 — web2-12 4번 · flow.spec).
+  // ⚠⚠ `exclusive: false` — 이것은 «통»이 아니라 **열린 서랍 안의 단추에 곁딸린 확인**이라
+  //   그 서랍과 **함께 떠 있는 것이 설계**다(#69 ㉣ · `data-fold="late"`의 짝).
+  awayRm = registerBox({
+    id: '#confirm-pop',
+    isOpen: () => pop !== null,
+    close: () => dismissConfirm(),
+    zone: () => [pop],
+    exclusive: false,
+  })
 }

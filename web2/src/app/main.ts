@@ -21,6 +21,7 @@ import type { Grade, Layer, Sheet, Stroke } from '../core/types'
 import { parseDim, formatMm, lenMm, formatScale, formatUnits, dimSkew, skewOff, UNITS, type Unit } from '../core/dim'
 import { measureMm, measureUnits } from '../core/measure'
 import { initDimPanel } from './dimpanel'
+import { registerBox, closeOtherBoxes, openBoxIds } from './boxes'
 import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
 import { C } from '../core/constants'
@@ -667,16 +668,28 @@ function placeFlyout(el: HTMLElement, anchor: HTMLElement) {
 
 let trayOpen = false
 let pentrayOpen = false
+// ⚠ **web2-34 4번(R7)**: 「열면 나머지가 닫힌다」를 세 통이 서로 부르던 것을 그만두고
+//   `closeOtherBoxes` 한 자리로 모았다 — 통이 늘 때마다 이 세 줄을 손보던 자리다(#54).
+//   서랍·팝오버까지 같은 등록부에 들어 있어 이제 **전부**가 서로를 닫는다.
 function setTrayOpen(v: boolean) {
   trayOpen = v
   trayEl.classList.toggle('open', v)
-  if (v) { setPentrayOpen(false); setEtrayOpen(false); placeFlyout(trayEl, pencilFoldBtn) }
+  if (v) { closeOtherBoxes('#tray'); placeFlyout(trayEl, pencilFoldBtn) }
 }
 function setPentrayOpen(v: boolean) {
   pentrayOpen = v
   pentrayEl.classList.toggle('open', v)
-  if (v) { setTrayOpen(false); setEtrayOpen(false); placeFlyout(pentrayEl, penBtn) }
+  if (v) { closeOtherBoxes('#pentray'); placeFlyout(pentrayEl, penBtn) }
 }
+// 바깥 누름으로 접힌다(R7) — 통의 «안»은 통 자신과 **그것을 여는 단추**다.
+registerBox({
+  id: '#tray', isOpen: () => trayOpen, close: () => setTrayOpen(false),
+  zone: () => [trayEl, pencilFoldBtn],
+})
+registerBox({
+  id: '#pentray', isOpen: () => pentrayOpen, close: () => setPentrayOpen(false),
+  zone: () => [pentrayEl, penBtn],
+})
 pencilFoldBtn.addEventListener('click', () => {
   setTool('pencil')
   setTrayOpen(!trayOpen)
@@ -823,13 +836,15 @@ function runFindAll() {
   }
   invalidate()
 }
+/** 면 팝오버를 열 때 하는 일 — 내용을 짓고 자리를 잡는다(여닫이는 `FOLD_PANELS`가 진다) */
+function showFacePop() {
+  renderFacePop()
+  const r = toolBtn.face.getBoundingClientRect()
+  facePop.style.top = `${Math.round(Math.min(r.top, window.innerHeight - facePop.offsetHeight - 6))}px`
+}
 function toggleFacePop() {
-  facePop.hidden = !facePop.hidden
-  if (!facePop.hidden) {
-    renderFacePop()
-    const r = toolBtn.face.getBoundingClientRect()
-    facePop.style.top = `${Math.round(Math.min(r.top, window.innerHeight - facePop.offsetHeight - 6))}px`
-  }
+  const p = panelOf('#face-pop')
+  p.setOpen(!p.isOpen())
 }
 // 후보 수가 변하면(탭 배제·문서 변화로 무효화) 열린 팝오버가 따라온다
 app.listeners.push(() => { if (!facePop.hidden) renderFacePop() })
@@ -900,11 +915,18 @@ function setEtrayOpen(v: boolean, anchor?: HTMLElement) {
   etrayOpen = v
   etrayEl.classList.toggle('open', v)
   if (v) {
-    setTrayOpen(false); setPentrayOpen(false)
+    closeOtherBoxes('#etray')
     if (anchor) etrayAnchor = anchor
     if (etrayAnchor) placeFlyout(etrayEl, etrayAnchor)
   }
 }
+// R7 — ⚠ 이 통만 **여는 단추가 둘**이다(지우개 둘이 크기 하나를 나눠 쓴다). 둘 다
+// 안으로 친다: 다른 지우개를 누르면 통이 그쪽으로 **옮겨 붙는** 것이 종전 거동이고
+// (`setEtrayOpen(true, 그 단추)`), 접었다 다시 여는 깜빡임을 만들지 않는다.
+registerBox({
+  id: '#etray', isOpen: () => etrayOpen, close: () => setEtrayOpen(false),
+  zone: () => [etrayEl, toolBtn['eraser-pencil'], toolBtn['eraser-ink']],
+})
 
 // ── 홀더펜 인디케이터 (4-e) — 연필 몸통의 창이 곧 슬라이더다 ──────────────
 // 창에 지금 심이 보이고, 연필을 위아래로 밀면 바뀐다. 별도 컨트롤이 없다.
@@ -1202,19 +1224,72 @@ for (const ev of ['pointerdown', 'pointerup', 'pointercancel', 'pointerleave', '
 //    틀린다). 항목마다 `data-act="cmd" | "state"`를 **명시**하고 접힘은 **그 표시만** 본다.
 // ⚠ 오스냅은 한 번에 여러 개를 켜고 끄는 자리라 **절대 안 접는다**(전부 state).
 //   연필통은 「하나를 고르면 끝나는 선택」이라 접힌다 — 그쪽은 종전 배선이 이미 접는다.
-const FOLD_PANELS: { root: string; close: () => void }[] = [
-  { root: '#pane-file', close: () => { (document.getElementById('pane-file') as HTMLDetailsElement).open = false } },
+//
+// ⚠⚠ **web2-34 4번(화면 규칙 R7)이 이 표를 그대로 이어 쓴다.** 28-1은 「패널 **안**에서
+//   명령을 실행했을 때」만 다뤘고 **바깥이 비어 있었다** — 이제 같은 표가
+//   ① 안의 접힘(R3) ② 바깥 누름의 접힘(R7) ③ 「동시에 둘이 안 열린다」 셋을 다 든다.
+//   **한 자리다**(#54): 목록이 늘면 여기 한 줄이 늘고 셋이 동시에 따라온다.
+//   R3과 R7은 안 부딪힌다 — 오스냅 체크는 R3에서 안 접히지만(전부 `state`)
+//   R7에서는 바깥을 누르면 접힌다.
+interface Panel {
+  root: string
+  /** 이 통을 여는 단추 — 통의 «안»으로 친다(여닫이가 살게). 서랍은 summary가 안에 있다. */
+  anchor?: string
+  isOpen: () => boolean
+  setOpen: (v: boolean) => void
+  /** 참인 동안 바깥 누름에 안 접힌다 — R7 예외(근거는 `DECISIONS.md`의 R7 절) */
+  pinned?: () => boolean
+}
+const byId = (s: string) => document.getElementById(s.slice(1)) as HTMLElement | null
+/** 서랍(`<details>`) — 여닫이는 브라우저가 한다. 배타는 `toggle`에서 건다(아래). */
+const drawerPanel = (root: string, pinned?: () => boolean): Panel => ({
+  root, pinned,
+  isOpen: () => !!(byId(root) as HTMLDetailsElement | null)?.open,
+  setOpen: (v) => { const d = byId(root) as HTMLDetailsElement | null; if (d) d.open = v },
+})
+/** 팝오버 — `hidden` 하나가 상태다. 열 때 자리를 잡는 몫은 `onShow`가 진다. */
+const popPanel = (root: string, anchor: string, onShow?: () => void): Panel => ({
+  root, anchor,
+  isOpen: () => { const e = byId(root); return !!e && !e.hidden },
+  setOpen: (v) => {
+    const e = byId(root)
+    if (!e) return
+    e.hidden = !v
+    if (v) { closeOtherBoxes(root); onShow?.() }
+  },
+})
+const FOLD_PANELS: Panel[] = [
+  drawerPanel('#pane-file'),
   // 설정(web2-30 10번) — **상태 토글(필압 보정)은 안 접고 명령(진단)만 접는다**(28-1 그대로).
   // 진단을 접는 실질적 이유: 서랍과 진단 패널·자립 깃발이 **같은 우하단 모서리**를 쓴다.
-  { root: '#pane-settings', close: () => { (document.getElementById('pane-settings') as HTMLDetailsElement).open = false } },
-  { root: '#display-pop', close: () => { (document.getElementById('display-pop') as HTMLElement).hidden = true } },
-  { root: '#snap-pop', close: () => { (document.getElementById('snap-pop') as HTMLElement).hidden = true } },
-  { root: '#face-pop', close: () => { (document.getElementById('face-pop') as HTMLElement).hidden = true } },
+  // ⚠⚠ **R7 예외 하나가 여기 있다**(web2-34 4번 · D-4로 잡았다): 필압 보정 **절차 중에는**
+  //   바깥 누름에 안 접는다. 그 절차는 「캔버스에 두 획을 그으세요」이고 다음 지시와
+  //   그만두기 손잡이가 **이 패널 안**에 있다(30-7이 알림 한 줄에서 여기로 옮긴 것이
+  //   그 항목의 전부다) — 첫 획에 접히면 그 수리가 통째로 죽는다(#77 ㉠).
+  //   판정 문면은 `#dimpanel`과 같다: **바깥을 눌러야 그 패널의 일이 된다.**
+  drawerPanel('#pane-settings', () => app.pressCalib !== null),
+  popPanel('#display-pop', '#btn-display'),
+  popPanel('#snap-pop', '#btn-snap', () => placeSnapPop()),
+  popPanel('#face-pop', '#btn-face', () => showFacePop()),
 ]
+/** 이름으로 찾는다 — 여닫이 단추가 이 표를 거쳐 열고 닫는다(직접 `hidden` 대입 ⛔) */
+const panelOf = (root: string): Panel => FOLD_PANELS.find(p => p.root === root)!
 function initPanelFold() {
   for (const p of FOLD_PANELS) {
     const root = document.querySelector(p.root)
     if (!root) continue
+    // R7 — 바깥 누름으로 접힌다. 통의 «안»은 통 자신과 그것을 여는 단추다.
+    registerBox({
+      id: p.root,
+      isOpen: p.isOpen,
+      close: () => p.setOpen(false),
+      zone: () => [byId(p.root), p.anchor ? byId(p.anchor) : null],
+      pinned: p.pinned,
+    })
+    // 서랍은 summary를 눌러도 열리고 코드로도 열린다 — 배타는 **열린 사실**에 건다
+    if (root instanceof HTMLDetailsElement) {
+      root.addEventListener('toggle', () => { if (root.open) closeOtherBoxes(p.root) })
+    }
     // 캡처가 아니라 **버블**이다 — 그 항목의 제 동작이 먼저 돌고 나서 접는다(접힘은 뒤끝).
     root.addEventListener('click', (e) => {
       const el = (e.target as HTMLElement | null)?.closest('[data-act]') as HTMLElement | null
@@ -1223,7 +1298,7 @@ function initPanelFold() {
       //    확인이 뜨는 자리(비우기 — web2-12 4번). 바로 접으면 **앵커가 사라져 확인이
       //    미아가 된다**(전량 e2e `flow.spec`이 잡았다). 접힘은 그 명령이 스스로 부른다.
       if (el.dataset.fold === 'late') return
-      p.close()
+      p.setOpen(false)
     })
   }
 }
@@ -1327,18 +1402,24 @@ radius.addEventListener('input', () => { app.osnap.radius = Number(radius.value)
 // 설정 자루에서 나왔다 — id·배선은 위 그대로다(동작 불변 ④). 여닫기만 이 버튼이 진다.
 const snapBtn = document.getElementById('btn-snap')!
 const snapPop = document.getElementById('snap-pop')!
+/** 자 통의 자리 — 누른 단추의 줄에 맞추되 화면 아래로 안 넘치게(선언이 위, 쓰임은 표) */
+function placeSnapPop() {
+  const r = snapBtn.getBoundingClientRect()
+  snapPop.style.top = `${Math.round(Math.min(r.top, window.innerHeight - snapPop.offsetHeight - 6))}px`
+}
+// 여닫이는 **표를 거친다**(직접 `hidden` 대입 ⛔) — 여는 쪽에서 R7의 「하나만」이 걸린다
 snapBtn.addEventListener('click', () => {
-  snapPop.hidden = !snapPop.hidden
-  if (!snapPop.hidden) {
-    const r = snapBtn.getBoundingClientRect()
-    snapPop.style.top = `${Math.round(Math.min(r.top, window.innerHeight - snapPop.offsetHeight - 6))}px`
-  }
+  const p = panelOf('#snap-pop')
+  p.setOpen(!p.isOpen())
 })
 
 // ── 눈(3-a) — 표시 팝업(지평선·지면 격자·대기 획 감쇠)·전체 화면 ─────────────
 const displayBtn = document.getElementById('btn-display')!
 const displayPop = document.getElementById('display-pop')!
-displayBtn.addEventListener('click', () => { displayPop.hidden = !displayPop.hidden })
+displayBtn.addEventListener('click', () => {
+  const p = panelOf('#display-pop')
+  p.setOpen(!p.isOpen())
+})
 
 // 전체 화면(3-d) — 크롬만 숨긴다(CSS body.fs). 작도의 뼈대(지평선·✕·격자)는 캔버스
 // 몫이라 그대로다. **상태는 저장하지 않는다**(세션 한정 — 새로 고치면 꺼져 있다).
@@ -1482,7 +1563,8 @@ function afterAddLayer(lay: Layer) {
   ask('면이 없어 뒤엣선이 다 보인다', [{
     key: 'faces',
     label: '면 만들기',
-    onPick: () => { setTool('face'); facePop.hidden = false; runFindAll() },
+    // 팝오버를 여는 길은 **표 하나**다(직접 `hidden` 대입 ⛔ — R7의 「하나만」이 여기서 걸린다)
+    onPick: () => { setTool('face'); panelOf('#face-pop').setOpen(true); runFindAll() },
   }])
 }
 
@@ -1694,6 +1776,9 @@ import { loopAt, buildGraph, cyclesOf, planesOf, faceScreen } from '../core/face
 import { geomSize3 } from '../core/osnap'
 
 const diag = {
+  /** 지금 열려 있는 통(화면 규칙 R7 — web2-34 4번). 「동시에 둘이 안 열린다」를
+   *  화면 형태(클래스·hidden·details.open)가 아니라 **등록부**에서 읽는 통로다. */
+  openBoxes: () => openBoxIds(),
   /** 승격 획 전부의 현재 포즈 재사영 — 불변식 k 확인용 */
   projectAll(): Record<number, { a: Pt; b: Pt } | null> {
     const out: Record<number, { a: Pt; b: Pt } | null> = {}
