@@ -23681,12 +23681,12 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "sidebar_layout_web2.json:overlap.pen_with_thick.overlaps",
+      "path": "sidebar_layout_web2.json:overlap.pen_with_pentray.overlaps",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "sidebar_layout_web2_dpr2.json:overlap.pen_with_thick.overlaps",
+      "path": "sidebar_layout_web2_dpr2.json:overlap.pen_with_pentray.overlaps",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -29934,7 +29934,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 500,
+      "files_scanned": 501,
       "exts_declared": [
         ".md",
         ".py",
@@ -29958,7 +29958,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 500,
+      "files_scanned": 501,
       "exts_declared": [
         ".md",
         ".py",
