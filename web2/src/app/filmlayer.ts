@@ -80,9 +80,24 @@ export const PAPER_STYLE: Record<Surface, {
    *  섬유는 옐로보다 짧고 촘촘하다(제도지의 결은 트레이싱지보다 곱고 옐로보다 잘다). */
   paper: {
     tint: [245, 243, 238],
-    fiber: { count: 470, lenMin: 6, lenMax: 17, wMin: 1.5, wMax: 2.8, aMin: 0.078, aMax: 0.186 },
+    // ⚠⚠ **web2-34 1번이 알파만 내렸다**(30-9의 0.078~0.186 → 여기). 값이 틀렸던 것이
+    // 아니라 **자리가 다르다**(화면 규칙 R8): 겹은 사람이 «한 장 얹은» 것이라 잠깐 있고
+    // 바탕 종이는 **화면 전체를 늘 덮는다**. 같은 진폭이 두 자리에서 같게 안 읽힌다 —
+    // 실측이 그것을 수치로 냈다(30-9 뒤 dpr1 종이 3.973 > 트레이싱 3.920 > 옐로 3.914 ·
+    // dpr2 종이 4.837 > 4.416 > 4.179 — **두 dpr 모두에서 늘 보이는 쪽이 최댓값**).
+    // **개수·길이·굵기는 안 건드린다** — 그쪽은 «제도지의 결»이라는 종이의 정체이고
+    // 사람이 과하다고 한 것은 «세기»다(30-9가 트레이싱지에서 한 판단과 같은 가름).
+    // 하한은 web2-26 2번의 지각 문턱(웨버 1% ≈ 2.1계조)이고 상한은 겹의 최소값 ÷ 1.2다
+    // (`C.PAPER_GRAIN_RATIO`) — dpr1에서 그 창이 (2.1, 2.86]이라 가운데를 겨눴다.
+    fiber: { count: 470, lenMin: 6, lenMax: 17, wMin: 1.5, wMax: 2.8, aMin: 0.044, aMax: 0.106 },
   },
 }
+
+/** 반증 전용(D-3 · web2-34 1번) — **30-9의 바탕 알파**. 이걸 켜면 「바탕이 겹보다
+ *  뚜렷하게 약하다」가 **같은 실행에서 실제로 실패해야 한다**. 안 실패하면 그 조항은
+ *  아무것도 안 잰다(#69 ㉣). 알파 말고는 전부 지금 값 그대로다 — 갈린 축이 하나뿐이어야
+ *  그 실패가 «알파를 내린 덕»이라고 읽힌다. */
+const PAPER_FIBER_309 = { aMin: 0.078, aMax: 0.186 }
 
 /** 타일 한 장이 덮는 **CSS px**(= 결의 반복 주기). 화면에서의 크기는 dpr과 무관하다.
  *  종전 값(타일 256 device px × 패턴 배율 0.5)과 같은 128을 그대로 쓴다 — 주기는
@@ -97,11 +112,18 @@ export const tilePxFor = (dpr: number): number =>
 let FILM_ALPHA = false
 export const setFilmAlphaForTest = (v: boolean) => { FILM_ALPHA = v }
 
-/** D-3 반증 손잡이(web2-30 9번) — **바탕 종이의 결을 끈다**. 끄면 그 판이 종이색 단색이
- *  되어 30-9의 게이트가 같은 실행에서 실패한다(그리고 web2-20 3부의 옛 상태로 돌아간다).
- *  UI 없음 — `diag.paperFiberForTest`만. */
+/** **바탕 종이의 결 켬/끔** — 끄면 그 판이 종이색 단색이 된다(web2-20 3부의 옛 상태).
+ *  ⚠ web2-30 9번에서는 e2e 전용 반증 손잡이였는데 **web2-34 1번이 화면의 손잡이로
+ *  승격시켰다**(설정 서랍의 `#chk-grain` · 기본 켜짐). 반증으로서의 쓰임은 그대로다 —
+ *  끄면 「셋 다 지각 대역 위」가 같은 실행에서 실패한다. **손잡이는 하나다**(#54):
+ *  `diag.paperFiberForTest`도 화면 체크상자도 이 함수 하나를 부른다. */
 let PAPER_FIBER = true
-export const setPaperFiberForTest = (v: boolean) => { PAPER_FIBER = v }
+export const setPaperFiber = (v: boolean) => { PAPER_FIBER = v }
+
+/** D-3 반증 손잡이(web2-34 1번) — 바탕 종이의 알파를 **30-9 값으로 되돌린다**.
+ *  UI 없음 — `diag.paperGrain309ForTest`만. */
+let PAPER_309 = false
+export const setPaperGrain309ForTest = (v: boolean) => { PAPER_309 = v }
 
 /** D-3 반증 손잡이(web2-26 2번) — **결을 dpr에 도로 묶는다**(타일 256 device px 고정 +
  *  섬유 배율 dpr/2 + 패턴 배율 0.5·s·dpr). 이걸 켜면 「dpr 1과 3의 결 표준편차 비가
@@ -122,7 +144,12 @@ const LEGACY_FIBER: Record<Surface, { count: number; lenMin: number; lenMax: num
  *  같은 (id, paper, dpr)이면 같은 픽셀이다(⑥ 저장·복원 뒤 결이 같다의 근거). */
 export function bakeFiberTile(id: number, paper: Surface, dpr: number, wrap = true): HTMLCanvasElement {
   // wrap=false는 **반증 전용**(3-e ⑤' — 감싸 그리기를 빼면 이음매 팔이 실패해야 한다)
-  const st = { ...PAPER_STYLE[paper], fiber: FIBER_LEGACY ? LEGACY_FIBER[paper] : PAPER_STYLE[paper].fiber }
+  const base = FIBER_LEGACY ? LEGACY_FIBER[paper] : PAPER_STYLE[paper].fiber
+  // 반증(web2-34 1번) — 바탕 종이일 때만, 알파만 30-9 값으로. 다른 면은 안 건드린다.
+  const st = {
+    ...PAPER_STYLE[paper],
+    fiber: PAPER_309 && paper === 'paper' && !FIBER_LEGACY ? { ...base, ...PAPER_FIBER_309 } : base,
+  }
   const TP = tilePxFor(dpr)
   const c = document.createElement('canvas')
   c.width = TP
@@ -258,7 +285,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
   // 타일 캐시 — (layer.id|paper|dpr) → 캔버스. 파생이라 저장 안 함(문서에는 Layer만).
   const tileCache = new Map<string, HTMLCanvasElement>()
   const tileFor = (id: number, surface: Surface): HTMLCanvasElement => {
-    const key = `${id}|${surface}|${cd}|${FIBER_LEGACY ? 'L' : 'N'}`
+    const key = `${id}|${surface}|${cd}|${FIBER_LEGACY ? 'L' : 'N'}|${PAPER_309 ? '9' : '-'}`
     let t = tileCache.get(key)
     if (!t) { t = bakeFiberTile(id, surface, cd); tileCache.set(key, t) }
     return t
@@ -285,7 +312,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
   let paperKey = ''
   function drawPaperFilm(app: App) {
     const v = app.view
-    const key = `${app.activeSheet}|${v.s}|${v.ox}|${v.oy}|${cd}|${cw}x${ch}|${FIBER_LEGACY ? 'L' : 'N'}|${PAPER_FIBER ? 'F' : '-'}`
+    const key = `${app.activeSheet}|${v.s}|${v.ox}|${v.oy}|${cd}|${cw}x${ch}|${FIBER_LEGACY ? 'L' : 'N'}|${PAPER_FIBER ? 'F' : '-'}|${PAPER_309 ? '9' : '-'}`
     if (key === paperKey) return
     paperKey = key
     const g = paperfilm.getContext('2d')!
