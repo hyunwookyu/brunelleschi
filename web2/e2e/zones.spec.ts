@@ -224,17 +224,24 @@ test("①'' 접힌 펜 각인 — 다섯 촉 왕복 · 부팅 초기값 · 연�
         return { h: r.height, w: r.width, bw: b.width,
                  on: (e.closest('button') as HTMLElement).classList.contains('on') }
       }
-      return { pencil: m('fold-lead-text'), pen: m('fold-nib-text') }
+      // ⚠ 창 폭은 **창 rect에서 읽는다**(#88 — web2-31 마감 [2]. 옛 판은 8.8을 팔이 들었다)
+      const win = (id: string) => (document.getElementById(id) as unknown as SVGGraphicsElement).getBBox().width
+      return { pencil: m('fold-lead-text'), pen: m('fold-nib-text'),
+               penWin: win('fold-nib-win'), leadWin: win('fold-lead-win') }
     })
     expect(h.pencil.on || h.pen.on, '둘 다 «안 고른» 상태에서 잰다').toBe(false)
     console.log(`[34-2] 각인 렌더(둘 다 비활성) — 연필 ${h.pencil.w.toFixed(2)}×${h.pencil.h.toFixed(2)} px · `
       + `펜 ${h.pen.w.toFixed(2)}×${h.pen.h.toFixed(2)} px · 높이비 ${(h.pen.h / h.pencil.h).toFixed(3)} · `
-      + `펜 글자 상자 ${h.pen.bw.toFixed(2)} 사용자단위(몸통 8.8)`)
+      + `펜 글자 상자 ${h.pen.bw.toFixed(6)} 사용자단위(창 ${h.penWin.toFixed(6)}) · `
+      + `연필 글자 상자 ${h.pencil.bw.toFixed(6)}(창 ${h.leadWin.toFixed(6)})`)
     expect(h.pen.h / h.pencil.h, '펜 각인이 연필 각인과 같은 대역')
       .toBeGreaterThanOrEqual(C.FOLD_MARK_MIN_RATIO)
-    // 그리고 **몸통 밖으로 안 넘친다** — 글자 상자가 몸통 폭 8.8 안에 든다(연필은 10에
-    // 12.23이라 넘치는데, 펜은 몸통이 좁아 넘치면 회색 위의 검은 글자가 된다)
-    expect(h.pen.bw, '각인이 펜 몸통 폭(8.8) 안에 든다').toBeLessThanOrEqual(8.8 + 1e-3)
+    // 그리고 **창 밖으로 안 넘친다** — 글자의 **잉크 상자**가 창 폭 안에 든다.
+    // ⚠ 폭의 출처는 창 rect다(#88 — web2-31 마감 [2]이 8.8을 팔에서 뺐다).
+    // ⚠⚠ **연필도 같이 잰다** — 34-2는 「연필은 10에 12.23이라 넘친다」를 적고 넘어갔는데,
+    //    web2-31 마감이 `fitMark`로 셋을 한 규약에 넣었으므로 이제 연필도 창 안이다(#54).
+    expect(h.pen.bw, '펜 각인이 창 폭 안에 든다').toBeLessThanOrEqual(h.penWin + 1e-3)
+    expect(h.pencil.bw, '연필 각인도 창 폭 안에 든다').toBeLessThanOrEqual(h.leadWin + 1e-3)
   })
 
 // **반증(D-3)** — 위 팔이 «무엇이든 하나 더 둔 것»에 통과 도장을 찍는 팔이 아님을 보인다.
