@@ -1,5 +1,5 @@
 {
-  "n_flags": 5754,
+  "n_flags": 5756,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -20442,7 +20442,12 @@
     },
     {
       "path": "paper_grain26_web2.json:gate.current[1].bare_sd",
-      "val": 4.0472514228895307e-11,
+      "val": 8.421352504228707e-11,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "paper_grain26_web2.json:gate.current[2].bare_sd",
+      "val": 7.247535904753022e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -20467,12 +20472,12 @@
     },
     {
       "path": "paper_grain30_web2.json:gate.current[4].bare",
-      "val": 7.02016222930979e-12,
+      "val": 8.421352504228707e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "paper_grain30_web2.json:gate.current[5].bare",
-      "val": 4.0472514228895307e-11,
+      "val": 7.347011887759436e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -22767,6 +22772,11 @@
     },
     {
       "path": "scale32_web2.json:measure_identity[3].rel_err",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "scale32_web2.json:measure_identity[4].rel_err",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },

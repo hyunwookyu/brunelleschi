@@ -22,7 +22,7 @@ import { setDimension, addLayer, setLayerOn } from '../src/app/state'
 import { lenMm, dimSkew, skewOff, formatScale, formatUnits } from '../src/core/dim'
 import { measureMm, measureUnits, identifyPoint, measurePoint3, type MeasurePoint } from '../src/core/measure'
 import { liftAll } from '../src/core/lift'
-import { serializeBrnl } from '../src/core/file'
+import { serializeBrnl, parseBrnl } from '../src/core/file'
 import { geomSize3 } from '../src/core/osnap'
 import { C } from '../src/core/constants'
 import { dist3 } from '../src/core/vec'
@@ -138,34 +138,57 @@ describe('원장 — web2-32 5·6·7', () => {
     const v1 = measureMm(C2.app.lift, m)!
     setDimension(C2.app, C2.post.id, 4800)
     const v2 = measureMm(C2.app.lift, m)!
-    // **위약**(리뷰어 [5]) — 「숫자를 담았다면」 축척을 바꿔도 그 값이 안 따라온다.
-    // v1을 «담긴 숫자»로 흉내낸다: 2.000000 ↔ 1.000000이 갈리는 것이 이 칸의 뜻이다
-    // (2 자체는 곱셈의 항등이라 혼자서는 아무것도 안 가른다).
     const derived = {
       scale_x2_value_ratio: r6(v2 / v1),
-      placebo_stored_number_ratio: r6(v1 / v1),
-      note: '왼쪽은 파생(따라 온다) · 오른쪽은 담았을 때(굳는다). 2 하나만으로는 안 갈린다.',
+      note: (
+        '⚠ 이 2는 **대수적 귀결**이다(값 = 길이 × mmPerUnit) — 혼자서는 «담았는가»를 못 가른다. '
+        + '2차 리뷰어 [5]가 초판의 위약(v1/v1 = 1)을 «어떤 구현에서도 1인 산술 항등»으로 '
+        + '반박했다. 가르는 것은 아래 `storage_cost.schema`와 `format_ignores_number`다.'
+      ),
     }
     console.log(`[32-6 파생] ${JSON.stringify(derived)}`)
     expect(derived.scale_x2_value_ratio).toBe(2)
 
-    // 게이트 ①(리뷰어 [3]) — **잰 값이 실제 거리와 일치한다**. 참값은 그 획에 «적은 값»이다
-    // (그 획이 축척의 기준이므로 참값이 그것으로 정의된다 — 자기참조가 아니라 정의다.
-    //  자기참조가 아닌 짝은 둘째 획이다: 그쪽은 적은 값이 없고 모델이 푼 길이가 참값이다).
+    // ── 게이트 ①(리뷰어 [3]) — **잰 값이 실제 거리와 일치한다** ─────────────────
+    // ⚠⚠ **2차 리뷰어 [2]가 초판을 반박했다**: 초판은 「기준 획을 재면 2400이 나온다」를
+    //   참값 대조로 썼는데, 그 획은 **축척의 분모**라 리프팅이 길이를 dim으로 다시 세운다 —
+    //   **언제나 2400이다.** 그것은 `ratio_after_dim` 열과 **같은 항등**이고, 이 회차가
+    //   32-7에서 잡은 바로 그 형태다(#77 ㉡). 같은 세션에서 두 번째였다.
+    //
+    // 그래서 참값을 **재기 밖에서** 세운 셋으로 바꾼다:
+    //   ㉠ **산술** — 선분 위 t의 반 토막은 전체의 정확히 절반이다(선형보간의 성질이고
+    //      dim·mmPerUnit과 **무관**하다). 기준 획이 2400 mm면 t 0→0.5는 **1200 mm**여야 한다.
+    //   ㉡ **가법성** — (0→0.5) + (0.5→1) == (0→1). 어느 한 토막이 틀리면 깨진다.
+    //   ㉢ **교차 획** — 서로 다른 두 획의 점 사이 거리. 참값은 이 팔이 `dist3`로 **직접**
+    //      계산한다(`core/measure.ts`를 안 지난다 — 그래서 독립이다).
     const C3 = two()
     setDimension(C3.app, C3.post.id, 2400)
-    const g3 = C3.app.lift.lifted.get(C3.post2.id)!
+    const mmU = C3.app.lift.mmPerUnit!
+    const M = (a: MeasurePoint, b: MeasurePoint) => r6(measureMm(C3.app.lift, { a, b })!)
+    const P = (mp: MeasurePoint) => measurePoint3(C3.app.lift, mp)!
     const truth = {
-      ref_written_mm: 2400,
-      ref_measured_mm: r6(measureMm(C3.app.lift,
-        { a: { s: C3.post.id, t: 0 }, b: { s: C3.post.id, t: 1 } })!),
-      other_lift_mm: r6(lenMm(g3.a3, g3.b3, C3.app.lift.mmPerUnit)!),
-      other_measured_mm: r6(measureMm(C3.app.lift,
-        { a: { s: C3.post2.id, t: 0 }, b: { s: C3.post2.id, t: 1 } })!),
+      // ㉠ 산술 참값 — 2400의 절반
+      half_expected_mm: 1200,
+      half_measured_mm: M({ s: C3.post.id, t: 0 }, { s: C3.post.id, t: 0.5 }),
+      quarter_expected_mm: 600,
+      quarter_measured_mm: M({ s: C3.post.id, t: 0.25 }, { s: C3.post.id, t: 0.5 }),
+      // ㉡ 가법성
+      additive_sum_mm: r6(M({ s: C3.post.id, t: 0 }, { s: C3.post.id, t: 0.5 })
+        + M({ s: C3.post.id, t: 0.5 }, { s: C3.post.id, t: 1 })),
+      additive_whole_mm: M({ s: C3.post.id, t: 0 }, { s: C3.post.id, t: 1 }),
+      // ㉢ 교차 획 — 참값은 이 팔이 직접 계산한다(measure.ts를 안 지난다)
+      cross_independent_mm: r6(dist3(P({ s: C3.post.id, t: 1 }), P({ s: C3.post2.id, t: 0 })) * mmU),
+      cross_measured_mm: M({ s: C3.post.id, t: 1 }, { s: C3.post2.id, t: 0 }),
+      // ⚠ 참고(**증거가 아니다**): 기준 획을 통째로 재면 적은 값이 그대로 나온다 — 항등이다
+      ref_identity_mm: M({ s: C3.post.id, t: 0 }, { s: C3.post.id, t: 1 }),
+      ref_identity_note: '2400은 **구성상** 나온다(그 획이 축척의 분모다) — 참값 대조가 아니다',
     }
     console.log(`[32-6 참값] ${JSON.stringify(truth)}`)
-    expect(truth.ref_measured_mm).toBe(2400)
-    expect(truth.other_measured_mm).toBe(truth.other_lift_mm)
+    expect(truth.half_measured_mm).toBe(truth.half_expected_mm)
+    expect(truth.quarter_measured_mm).toBe(truth.quarter_expected_mm)
+    expect(truth.additive_sum_mm).toBe(truth.additive_whole_mm)
+    expect(truth.cross_measured_mm).toBe(truth.cross_independent_mm)
+    expect(truth.cross_measured_mm).not.toBe(truth.additive_whole_mm)   // 다른 양이다
 
     // 게이트 ③(리뷰어 [3]) — **표시만 한 경우 도면에 아무것도 안 남는다**. 획 수·치수 수·
     // 남긴 재기 수를 재기 전후로 센다(원장에 그 수가 없다는 지적).
@@ -229,6 +252,22 @@ describe('원장 — web2-32 5·6·7', () => {
     expect(measuresBlock).not.toContain(String(Math.round(mm)))
     // (`"mm"`은 파일 어딘가에 있다 — 그것은 **표시 단위**(doc.unit)이지 잰 값이 아니다)
 
+    // **진짜 반증**(2차 리뷰어 [5]) — 「담으면 굳는다」의 반쪽을 **제품 경로로** 낸다:
+    // 파일에 `mm` 열쇠를 손으로 넣고 열면 파서가 그 열쇠를 **버린다**(형식에 자리가 없다).
+    // 그러므로 누가 숫자를 써 넣어도 그것을 읽는 길이 없다 — 굳을 수가 없다.
+    const tampered = JSON.parse(json1)
+    tampered.measures[0].mm = 99999
+    const reopened = parseBrnl(JSON.stringify(tampered))!
+    const ignores = {
+      injected_key: 'measures[0].mm = 99999',
+      after_parse: JSON.stringify(reopened.doc.measures),
+      recomputed_mm: r6(measureMm(liftAll(reopened.doc), reopened.doc.measures![0]!)!),
+    }
+    console.log(`[32-6 형식] ${JSON.stringify(ignores)}`)
+    expect(ignores.after_parse).not.toContain('99999')
+    expect(ignores.recomputed_mm).toBeCloseTo(mm, 6)
+    ;(cost as Record<string, unknown>).format_ignores_number = ignores
+
     const out = resolve(HERE, '../../stage0/out/scale32_web2.json')
     mkdirSync(dirname(out), { recursive: true })
     writeFileSync(out, JSON.stringify({
@@ -258,7 +297,9 @@ describe('원장 — web2-32 5·6·7', () => {
         '32-5': '치수 없음 → mmPerUnit null · 첫 치수 → 값과 scaleId · 삭제 → 다시 null · 다음 치수 → 그 획이 기준',
         '32-6': (
           '지시의 여섯을 그대로 적는다(1차 리뷰어 [3] — 초판은 넷만 적었다). '
-          + '① 축척 정해짐 → 잰 값이 실제 거리와 일치(`truth`) · '
+          + '① 축척 정해짐 → 잰 값이 실제 거리와 일치. **참값은 재기 밖에서 세운다**(2차 리뷰어 [2]): '
+          + '산술(반 토막 1200) · 가법성 · 교차 획(`dist3` 직접 계산). '
+          + '기준 획을 통째로 재는 것은 **항등이라 증거가 아니다**(`measure_truth.ref_identity_mm`) · '
           + '② 축척 미정 → mm는 null이고 표기에 mm가 없다(`measure_unscaled`) · '
           + '③ 표시만 → 획 수·치수 수·남긴 재기 수 불변(`display_only`) · '
           + '④ 축척이 바뀌면 잰 값이 따라 바뀐다(`measure_derived` — **위약과 짝**) · '
@@ -293,7 +334,10 @@ describe('원장 — web2-32 5·6·7', () => {
           '발화하는 가장 좁은 칸이다 — 문턱 0.02 대비 여유 **2배**(어긋남 0.04). '
           + '나머지 발화 칸 둘은 25배(0.5)라 경계에서 멀고, 안 발화하는 칸은 0.5배(0.01)와 '
           + '0(구성상)이다. 경계에 걸친 칸이 없다(#14 — 변동폭이 결론의 여유보다 크면 결론이 없다). '
-          + '⚠ 이 픽스처는 **결정론**이다(시드 없음 · Math.random ⛔) — 변동폭이 0이다.'
+          + '⚠⚠ **그러나 이것은 «여유가 확보됐다»가 아니다**(2차 리뷰어 [8]): 이 픽스처는 '
+          + '결정론이고(시드 없음 · Math.random ⛔) **잰 값의 잡음 폭이 0**이다 — 같은 기하에 '
+          + '«적은 값»만 곱해 넣었다. 실사용의 손획·카메라 풀이 오차가 2% 아래라는 증거는 '
+          + '**아직 없다**(`DEFERRED.md`의 「문턱 0.02의 여유를 못 쟀다」 행이 그 자리다).'
         ),
       },
       selfcheck_notes: {
@@ -312,6 +356,23 @@ describe('원장 — web2-32 5·6·7', () => {
           + '부동소수 잔차가 없다. 임계를 걸 값이 아니다. 이 열이 재는 것은 «오차»가 아니라 '
           + '**어느 오스냅 갈래에서 정체가 서는가**다(t_found 열이 그것을 낸다: 0 · 0.5 · 0.25 · 1). '
           + '반증: 어느 선분에도 안 붙는 점은 identifyPoint가 null을 낸다(scale32.test).'
+        ),
+        'display_only.before == after (5·1·0 불변)': (
+          '**불변이 곧 결론이다** — 「표시만 한 경우 도면에 아무것도 안 남는다」가 이 항목의 '
+          + '게이트이므로 «안 변했다»가 재는 값이다. 분해능의 짝은 `storage_cost`다: 「남긴다」를 '
+          + '켜면 같은 몸짓이 measures를 **0 → 1**로 만든다(그 칸이 이 0을 «죽은 계수»가 아니게 한다).'
+        ),
+        'layer_visibility.back_on == layer_on': (
+          '**같아야 옳다** — 겹을 껐다 켜면 같은 두 점이 같은 값을 낸다(26-1 회귀의 왕복). '
+          + '가르는 칸은 가운데의 `layer_off: null`이다: 셋이 «값 → null → 같은 값»이라야 '
+          + '「끄면 사라지고 켜면 돌아온다」가 서고, 셋 중 하나만 봐서는 아무것도 안 갈린다.'
+        ),
+        'measure_truth.ref_identity_mm = 2400': (
+          '⚠ **항등이다 — 증거가 아니다**(2차 리뷰어 [2]). 그 획은 축척의 분모라 리프팅이 길이를 '
+          + 'dim으로 다시 세운다. 참값 대조는 옆의 셋이 진다: **산술**(반 토막 = 1200) · '
+          + '**가법성**(0→0.5 + 0.5→1 == 0→1) · **교차 획**(참값을 이 팔이 `dist3`로 직접 계산 — '
+          + '`core/measure.ts`를 안 지난다). 이 줄은 그 항등이 원장에 남아 «참값»으로 '
+          + '다시 읽히지 않게 하려고 둔다.'
         ),
         'constants/metric_defs 스냅샷 없음': (
           '**web2 라인 전체의 유보다** — 이 라인은 `constantsSnapshot()`을 안 쓰고 `constants` '
