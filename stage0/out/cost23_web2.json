@@ -34,8 +34,8 @@
       "pieces": 139,
       "segs": 80,
       "hidden": 55,
-      "med_ms": 0.17,
-      "max_ms": 0.21
+      "med_ms": 0.15,
+      "max_ms": 0.2
     },
     {
       "strokes": 50,
@@ -44,8 +44,8 @@
       "pieces": 292,
       "segs": 105,
       "hidden": 77,
-      "med_ms": 0.33,
-      "max_ms": 0.7
+      "med_ms": 0.32,
+      "max_ms": 0.42
     },
     {
       "strokes": 50,
@@ -54,8 +54,8 @@
       "pieces": 737,
       "segs": 146,
       "hidden": 117,
-      "med_ms": 0.76,
-      "max_ms": 1.02
+      "med_ms": 0.79,
+      "max_ms": 1.38
     },
     {
       "strokes": 50,
@@ -64,8 +64,8 @@
       "pieces": 2022,
       "segs": 227,
       "hidden": 197,
-      "med_ms": 1.96,
-      "max_ms": 2.24
+      "med_ms": 2.05,
+      "max_ms": 2.58
     },
     {
       "strokes": 100,
@@ -74,8 +74,8 @@
       "pieces": 240,
       "segs": 134,
       "hidden": 103,
-      "med_ms": 0.26,
-      "max_ms": 0.3
+      "med_ms": 0.27,
+      "max_ms": 0.76
     },
     {
       "strokes": 100,
@@ -84,8 +84,8 @@
       "pieces": 449,
       "segs": 160,
       "hidden": 125,
-      "med_ms": 0.45,
-      "max_ms": 0.72
+      "med_ms": 0.51,
+      "max_ms": 1.1
     },
     {
       "strokes": 100,
@@ -94,8 +94,8 @@
       "pieces": 1025,
       "segs": 203,
       "hidden": 166,
-      "med_ms": 0.99,
-      "max_ms": 1.5
+      "med_ms": 1.07,
+      "max_ms": 1.61
     },
     {
       "strokes": 100,
@@ -104,8 +104,8 @@
       "pieces": 2526,
       "segs": 281,
       "hidden": 243,
-      "med_ms": 2.79,
-      "max_ms": 3.19
+      "med_ms": 2.95,
+      "max_ms": 3.59
     },
     {
       "strokes": 200,
@@ -114,8 +114,8 @@
       "pieces": 450,
       "segs": 243,
       "hidden": 191,
-      "med_ms": 0.51,
-      "max_ms": 0.91
+      "med_ms": 0.56,
+      "max_ms": 0.96
     },
     {
       "strokes": 200,
@@ -124,8 +124,8 @@
       "pieces": 776,
       "segs": 270,
       "hidden": 213,
-      "med_ms": 0.85,
-      "max_ms": 1.22
+      "med_ms": 0.9,
+      "max_ms": 1.46
     },
     {
       "strokes": 200,
@@ -134,8 +134,8 @@
       "pieces": 1611,
       "segs": 313,
       "hidden": 254,
-      "med_ms": 1.79,
-      "max_ms": 2.22
+      "med_ms": 1.85,
+      "max_ms": 3.11
     },
     {
       "strokes": 200,
@@ -144,8 +144,8 @@
       "pieces": 3462,
       "segs": 391,
       "hidden": 330,
-      "med_ms": 3.72,
-      "max_ms": 4.38
+      "med_ms": 3.95,
+      "max_ms": 4.62
     },
     {
       "strokes": 400,
@@ -154,8 +154,8 @@
       "pieces": 824,
       "segs": 454,
       "hidden": 366,
-      "med_ms": 0.85,
-      "max_ms": 1.18
+      "med_ms": 1.01,
+      "max_ms": 1.7
     },
     {
       "strokes": 400,
@@ -164,8 +164,8 @@
       "pieces": 1372,
       "segs": 486,
       "hidden": 390,
-      "med_ms": 1.38,
-      "max_ms": 1.84
+      "med_ms": 1.6,
+      "max_ms": 2.7
     },
     {
       "strokes": 400,
@@ -174,8 +174,8 @@
       "pieces": 2609,
       "segs": 529,
       "hidden": 431,
-      "med_ms": 2.57,
-      "max_ms": 2.9
+      "med_ms": 2.91,
+      "max_ms": 3.55
     },
     {
       "strokes": 400,
@@ -184,40 +184,40 @@
       "pieces": 5024,
       "segs": 609,
       "hidden": 507,
-      "med_ms": 4.87,
-      "max_ms": 5.2
+      "med_ms": 6.29,
+      "max_ms": 6.74
     }
   ],
   "worst": {
     "strokes": 400,
     "faces": 40,
-    "med_ms": 4.87,
-    "max_ms": 5.2
+    "med_ms": 6.29,
+    "max_ms": 6.74
   },
   "over_budget": [],
   "resolution": {
     "note": "#71 ㉢ — 두 축이 실제로 값을 가르는가. 하네스가 둘 다 단언한다: ① 획 축(면 40 고정): 400획 med > 50획 med ② 면 축(획 400 고정): 40면 med > 5면 med×2. ⚠ 두 축의 무게가 다르다 — **동인은 면 수**다(배수는 아래 열들이 값으로 낸다). ⚠⚠ **차수 예측이 실측에 진다**(D-4의 형태 — 리뷰 [2-b]): 「조각마다 면 전부를 훑으니 O(N·M²)」이면 M 8배에 64배를 예상해야 하는데 실측은 face_axis_ratio 대역이고 **pieces와 거의 같은 배수**다(pieces_face_axis_ratio와 나란히 읽는다). 조기 반환(첫 가림에서 true)과 포함 판정의 빠른 기각이 M 항을 접는다 — **비용은 조각 수에 거의 선형**으로 읽는 것이 이 원장이 실제로 지지하는 문장이다. 그래서 500ms 도달 대역의 외삽도 pieces로 한다(면 수 자체가 아니라).",
-    "face_axis_ratio": 5.73,
-    "stroke_axis_ratio": 2.48,
+    "face_axis_ratio": 6.23,
+    "stroke_axis_ratio": 3.07,
     "pieces_face_axis_ratio": 6.1,
     "stroke_axis": {
-      "low_med": 1.96,
-      "high_med": 4.87
+      "low_med": 2.05,
+      "high_med": 6.29
     },
     "face_axis": {
-      "low_med": 0.85,
-      "high_med": 4.87
+      "low_med": 1.01,
+      "high_med": 6.29
     },
     "max_overlap": false,
     "max_overlap_note": "참이면 그 두 행의 **최대값 대역이 겹친다** — 한 번의 굽기로는 획 축을 못 가른다는 뜻이고, 그래서 판정은 중앙값으로 한다(잡음의 실측 기록)",
     "seed_check": {
       "seedA": {
-        "face": 5.73,
-        "stroke": 2.48
+        "face": 6.23,
+        "stroke": 3.07
       },
       "seedB": {
-        "face": 5.01,
-        "stroke": 3.04
+        "face": 6.13,
+        "stroke": 3.09
       },
       "note": "#14 — 배치 시드 둘째(771103)로 세 모서리 칸을 다시 잰다. 「동인은 면 수」가 배치 하나의 일화가 아님을 보인다(하네스가 두 시드 모두에서 face > stroke를 단언). ⚠ 유효 자릿수는 두 자리로 읽는다(시드·GC 변동폭 — CLAUDE.md §5).",
       "rows_seedB": [
@@ -228,8 +228,8 @@
           "pieces": 5222,
           "segs": 600,
           "hidden": 521,
-          "med_ms": 4.96,
-          "max_ms": 5.82
+          "med_ms": 6.31,
+          "max_ms": 6.66
         },
         {
           "strokes": 400,
@@ -238,8 +238,8 @@
           "pieces": 839,
           "segs": 450,
           "hidden": 378,
-          "med_ms": 0.99,
-          "max_ms": 1.63
+          "med_ms": 1.03,
+          "max_ms": 1.75
         },
         {
           "strokes": 50,
@@ -248,8 +248,8 @@
           "pieces": 2036,
           "segs": 224,
           "hidden": 199,
-          "med_ms": 1.63,
-          "max_ms": 2.81
+          "med_ms": 2.04,
+          "max_ms": 2.79
         }
       ]
     }
@@ -271,9 +271,9 @@
       "note": "최악 칸의 **segs**(pieces 아님 — 저장은 이어 붙인 뒤의 마디 수다)로 외삽한 밑그림 하나의 크기. ⚠ pieces로 외삽하면 8배 넘게 부푼다(첫 판이 그 오류였고 리뷰 [3]이 잡았다). ⚠ 바이트/마디는 **좌표 문자열의 길이**에 달렸다 — 아래 autosave_serialize_ms의 worst_doc_bytes_utf8은 짧은 좌표로 만든 합성 밑그림이라 이 외삽보다 작다. 두 값을 다 남긴다(실사용은 그 사이)."
     },
     "autosave_serialize_ms": {
-      "with_underlay_min_scene": 0.012,
-      "without_underlay": 0.006,
-      "with_worst_size_underlay": 0.303,
+      "with_underlay_min_scene": 0.015,
+      "without_underlay": 0.008,
+      "with_worst_size_underlay": 0.423,
       "worst_doc_bytes_utf8": 45649,
       "worst_doc_pct_of_autosave": 0.871,
       "bytes_per_seg_utf8_large_sample": 73.6,
@@ -291,11 +291,11 @@
         "faces_used": 5,
         "dropped": 0,
         "pieces": 101,
-        "med_ms": 0.11,
+        "med_ms": 0.15,
         "faces_used_noclip": 0,
         "dropped_noclip": 5,
         "pieces_noclip": 65,
-        "med_ms_noclip": 0.05
+        "med_ms_noclip": 0.07
       },
       {
         "strokes": 50,
@@ -303,11 +303,11 @@
         "faces_used": 40,
         "dropped": 0,
         "pieces": 1142,
-        "med_ms": 1.53,
+        "med_ms": 1.88,
         "faces_used_noclip": 0,
         "dropped_noclip": 40,
         "pieces_noclip": 170,
-        "med_ms_noclip": 0.15
+        "med_ms_noclip": 0.21
       },
       {
         "strokes": 400,
@@ -315,11 +315,11 @@
         "faces_used": 5,
         "dropped": 0,
         "pieces": 662,
-        "med_ms": 0.69,
+        "med_ms": 0.94,
         "faces_used_noclip": 0,
         "dropped_noclip": 5,
         "pieces_noclip": 415,
-        "med_ms_noclip": 0.3
+        "med_ms_noclip": 0.48
       },
       {
         "strokes": 400,
@@ -327,18 +327,18 @@
         "faces_used": 40,
         "dropped": 0,
         "pieces": 3253,
-        "med_ms": 4.28,
+        "med_ms": 5.69,
         "faces_used_noclip": 0,
         "dropped_noclip": 40,
         "pieces_noclip": 520,
-        "med_ms_noclip": 0.4
+        "med_ms_noclip": 0.6
       }
     ],
     "worst": {
       "strokes": 400,
       "faces": 40,
-      "med_ms": 4.28,
-      "med_ms_noclip": 0.4,
+      "med_ms": 5.69,
+      "med_ms_noclip": 0.6,
       "pieces": 3253,
       "pieces_noclip": 520
     },

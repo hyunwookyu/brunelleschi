@@ -156,6 +156,13 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
     // 전역 예열 — 첫 행이 JIT 값을 뒤집어쓰지 않게(초판에서 50획 행이 100획 행보다
     // 컸다: 축이 아니라 실행 순서를 재고 있었다 #14의 형태)
     for (let k = 0; k < 3; k++) measure(400, 40)
+    // ⚠⚠ **격자 전체를 한 번 돌고 버린다**(web2-32 — GitHub 러너가 그 값을 냈다):
+    //   400×40 세 번만 예열하면 **다른 크기의 장면**은 여전히 차갑다. CI에서 그 자국이
+    //   그대로 나왔다 — 「50획×40면 9.91 · 100획 4.3 · 200획 6.57 · 400획 9.69」로
+    //   **그 열의 첫 칸만 부풀고 나머지는 단조**였고, 아래 분해능 단언(400 > 50)이 그
+    //   한 칸 때문에 빨개졌다(같은 자국으로 web2-28·web2-32의 Pages 실행이 죽었다).
+    //   임계를 무르지 않고 **재는 순서**를 고친다 — 축의 주장은 그대로다.
+    for (const n of NS) for (const m of MS) measure(n, m)
     const rows: Row[] = []
     for (const n of NS) for (const m of MS) rows.push(measure(n, m))
     const at = (n: number, m: number) => rows.find(r => r.strokes === n && r.faces === m)!
