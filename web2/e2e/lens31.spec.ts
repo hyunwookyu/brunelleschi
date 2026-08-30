@@ -99,6 +99,18 @@ test('31-2 ① 자리와 급 — 손 띠의 시점 묶음 · 돋보기 바로 �
       right: +(window.innerWidth - rb.right).toFixed(1),
       zoomRight: +(window.innerWidth - rz.right).toFixed(1),
       barBottomSlack: +(window.innerHeight - document.getElementById('sidebar')!.getBoundingClientRect().bottom).toFixed(1),
+      // ⚠ **34-6의 예산을 이 회차 원장에도 남긴다**(1차 리뷰어 [17] — 105px이 남의 원장 값이었다).
+      //   「31이 먹은 자리」를 실측해 되돌린 것이 34-6이 물었던 여유이고, 단위는 이 앱에서 가장 큰
+      //   정사각 단추다. 그리고 **다음 단추가 들어가는지**를 값으로 낸다(#88 ⚠⚠ — 팔이 「예약이
+      //   실제 폭과 같은가」를 재게: 이름을 더해 되돌리는 셈은 언제나 통과하므로 그 옆에 이 수를 둔다).
+      unitButton: +(document.getElementById('btn-snap')!.getBoundingClientRect().height.toFixed(1)),
+      gap: parseFloat(getComputedStyle(body).rowGap) || 0,
+      taken31: +(['btn-zoom-fit', 'btn-lens'].reduce((sum, id) => {
+        const e = document.getElementById(id)
+        return e ? sum + e.getBoundingClientRect().height + (parseFloat(getComputedStyle(body).rowGap) || 0) : sum
+      }, 0).toFixed(1)),
+      dpr: window.devicePixelRatio,
+      inkBacking: (() => { const c = document.getElementById('ink') as HTMLCanvasElement | null; return c ? `${c.width}x${c.height}` : null })(),
     }
   })
   console.log(`[31-2 ①] 손 띠: ${place.order.join(' · ')}`)
@@ -112,7 +124,12 @@ test('31-2 ① 자리와 급 — 손 띠의 시점 묶음 · 돋보기 바로 �
   expect(place.box.h).toBeGreaterThanOrEqual(30)
   expect(place.svgH).toBeGreaterThanOrEqual(27)     // 아이콘 크기 대역(sidebar.spec ①)
   expect(place.barBottomSlack, '띠가 화면 안이다').toBeGreaterThanOrEqual(0)
-  ledger['place'] = place
+  const slackWithout31 = +(place.barBottomSlack + place.taken31).toFixed(1)
+  const nextFits = place.barBottomSlack >= place.unitButton + place.gap
+  console.log(`[31-2 ①] 31이 먹은 자리 ${place.taken31}px(zoom-fit·lens) → 되돌린 여유 ${slackWithout31}px · `
+    + `지금 남은 여유 ${place.barBottomSlack}px · 단추 하나 ${place.unitButton}px → **다음 단추가 들어가는가: ${nextFits}**`)
+  expect(slackWithout31, '34-6이 물은 여유 — 버튼 두 개분 이상').toBeGreaterThanOrEqual(place.unitButton * 2 + place.gap * 2)
+  ledger['place'] = { ...place, slackWithout31, nextButtonFits: nextFits }
 })
 
 test('31-2 ② 확정 전에는 꺼져 있다 — 눌러도 안 열린다 (+확정 뒤에는 열린다)', async ({ page }) => {
@@ -128,7 +145,8 @@ test('31-2 ② 확정 전에는 꺼져 있다 — 눌러도 안 열린다 (+확�
   expect(before.allowed).toBe(false)
   // 눌러도 안 열린다(disabled라 click이 안 간다 — force로 눌러도 마찬가지여야 한다)
   await page.click('#btn-lens', { force: true }).catch(() => {})
-  expect(await page.locator('#lens-pop').isVisible()).toBe(false)
+  const openedWhileLocked = await page.locator('#lens-pop').isVisible()
+  expect(openedWhileLocked).toBe(false)
 
   await construct(page)
   const after = await page.evaluate(() => ({
@@ -143,7 +161,7 @@ test('31-2 ② 확정 전에는 꺼져 있다 — 눌러도 안 열린다 (+확�
   await page.click('#btn-lens')
   expect(await page.locator('#lens-pop').isVisible()).toBe(true)
   console.log(`[31-2 ②] 확정 전 disabled ${before.disabled} → 뒤 ${after.disabled} · 읽음 「${after.read}」`)
-  ledger['lock'] = { before, after }
+  ledger['lock'] = { before, after, openedWhileLocked, openedAfterStanding: await page.locator('#lens-pop').isVisible() }
 })
 
 test('31-2 ③ 팝오버가 안 깔린다 — `#app`의 직계 · 그 자리의 elementFromPoint가 제 것 (#87)', async ({ page }) => {
@@ -171,10 +189,20 @@ test('31-2 ③ 팝오버가 안 깔린다 — `#app`의 직계 · 그 자리의 
   expect(z.mine, '그 자리를 누르면 내 것이 나온다').toBe(true)
   expect(z.inViewport).toBe(true)
   // R7 — 바깥(캔버스)을 누르면 접힌다
-  await page.mouse.click(300, 700)
+  // ⚠ **두 축을 같이 낸다**(#85 ㉡ · 1차 리뷰어 [8]): 「접혔나」와 「그 누름이 죽었나」.
+  //   캔버스를 누르면 획이 하나 는다 — 접히기만 하고 그 누름이 삼켜지면 그 수가 안 는다.
+  const before = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
+  await page.mouse.move(300, 700)
+  await page.mouse.down()
+  for (let i = 1; i <= 8; i++) await page.mouse.move(300 + 12 * i, 700 - 1.5 * i)
+  await page.mouse.up()
   await settle(page)
-  expect(await page.locator('#lens-pop').isVisible(), 'R7 — 바깥 누름에 접힌다').toBe(false)
-  ledger['pop'] = z
+  const folded = !(await page.locator('#lens-pop').isVisible())
+  const strokesAfter = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
+  console.log(`[31-2 ③] R7 — 접혔나 ${folded} · 그 획이 살았나 ${strokesAfter > before} (${before} → ${strokesAfter})`)
+  expect(folded, 'R7 — 바깥 누름에 접힌다').toBe(true)
+  expect(strokesAfter, '#85 ㉡ — 그 누름이 죽지 않는다(캔버스의 획이다)').toBeGreaterThan(before)
+  ledger['pop'] = { ...z, r7: { folded, strokesBefore: before, strokesAfter, swallowed: strokesAfter === before } }
 })
 
 test('31-2 ④⑤ 슬라이더가 그림을 움직인다 — 그동안 3D 좌표·f·fSource는 그대로 · 「기본으로」가 되돌린다', async ({ page }, testInfo) => {
@@ -230,6 +258,11 @@ test('31-2 ④⑤ 슬라이더가 그림을 움직인다 — 그동안 3D 좌표
         + '슬라이더가 그림을 움직이는 동안 3D 좌표·`Camera.f`·`fSource`가 그대로 · 「기본으로」의 왕복.',
       dpr: testInfo.project.name,
       viewport: { w: 1200, h: 800 },
+      dpr_note: '⚠ **이 원장의 두 판(dpr1·dpr2)은 값이 한 자리도 안 다르다**(1차 리뷰어 [7]). '
+        + '재는 것이 전부 **CSS px 상자 · 문서 좌표 · 세계 좌표**라 device px를 안 지나기 때문이다 — '
+        + '보기 렌즈는 «문서 → 화면(CSS)» 닮음에 합성되고 dpr은 그 아래의 캔버스 변환이 진다. '
+        + '실행에서 dpr이 실제로 갈렸다는 것은 `place.dpr`·`place.inkBacking`이 값으로 든다(1 ↔ 2 · 뒷면 픽셀 2배). '
+        + '즉 **값이 같은 것이 「안 쟀다」가 아니라 같아야 맞는 것**이고, dpr에 반응하는 자리는 이 항목에 없다.',
       ...ledger,
       gate: {
         for: 'web2-31 2번 — 화면 몫',
@@ -238,7 +271,7 @@ test('31-2 ④⑤ 슬라이더가 그림을 움직인다 — 그동안 3D 좌표
           '확정 전에는 꺼져 있고 눌러도 안 열린다 · 확정 뒤에는 열린다',
           '팝오버가 `#app`의 직계라 그 자리의 elementFromPoint가 제 것이다(#87) · 바깥 누름에 접힌다(R7)',
           '슬라이더가 그림을 실제로 움직인다(화면 드리프트 · 폭 배수) — 그동안 3D 좌표 전수·f·fSource 불변',
-          '「기본으로」가 처음 화면으로 되돌린다(어긋남 < 1e-6 px)',
+          '「기본으로」가 처음 화면으로 되돌린다 — 어긋남 0 (⚠ **되돌리기는 구성상 보장이라 임계가 아니다**)',
         ],
         reachability: '**「움직였나」와 「안 움직였나」를 한 실행에서 나란히 낸다**: 같은 조작이 화면(px)은 '
           + '수백 px 움직이고 3D 좌표 문자열은 **글자 하나도** 안 바꾼다. 렌즈가 lift로 새면 뒤쪽이 깨지고, '

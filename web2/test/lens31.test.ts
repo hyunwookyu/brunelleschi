@@ -336,6 +336,11 @@ describe('web2-31 2번 — 보기 렌즈', () => {
     ledger['gate3_coords_frozen'] = {
       what: '**구성상 보장이다 — 임계를 안 건다**: `liftAll`은 `viewF`를 읽는 자리가 없다. '
         + '판별력은 `placebo`(analyze가 내는 f를 viewF로 바꾼 판)가 준다.',
+      placebo_what_it_establishes: '⚠ **이 위약이 세우는 것은 「보기 렌즈 기제가 이득이다」가 아니라 '
+        + '「이 구현이 그 누수를 실제로 막고 있다」이다**(1차 리뷰어 [9] · #83 ㉠ 후단). '
+        + '「f가 깊이 배율이다」는 이 저장소가 이미 못 박은 사실이고(CLAUDE.md §1 · D-L53 — 특히 `p1_locked`의 '
+        + 'f는 임의 게이지라 그 칸의 fold 1.5·2는 «게이지를 바꾼 값»이다). 그래서 이 판이 재는 축은 '
+        + '**「viewF가 lift에 닿는가」 하나**이고, 물음은 크기가 아니라 **갈리는가**다.',
       placebo_how: "vi.mock으로 `core/camera`의 `analyze`를 감싸 `f → f·k`로 낸다 — 「보기값이 lift 경로까지 새는 판」이 하는 일 그대로다. 기본 k=1이라 다른 팔은 진짜 analyze를 지난다.",
       two_axes_note: '#86 — 값 축과 정체 축을 따로 잰다. **실측은 둘 다 갈렸다**(여섯 칸 전부 `identity_changed: true`) — '
         + '사전 예상(「f 배율은 주점 기준 균등 배율이라 소실점의 화면 자리가 안 움직이므로 축 배정도 그대로일 것」)이 '
@@ -507,6 +512,29 @@ describe('web2-31 2번 — 보기 렌즈', () => {
     expect(r6(app2.lift.an.f!)).toBe(r6(f0))
     expect(app2.viewF).not.toBe(null)
 
+    // 길 ⑥ **P1 잠금(확정 · 렌즈 켬)에서 둘째 소실점을 시도한다** — 1차 리뷰어 [1]이 물은 자리다:
+    //   `p1_locked`는 소실점이 **하나**인데 확정이라 렌즈가 켜진다(게이트 ② 마지막 행). 그러면
+    //   「거기서 두 번째 소실점이 서면」 그것이 렌즈를 켠 채의 P1→P2다. **서지 않는다**를 값으로 낸다.
+    const s4 = sceneP1Locked()
+    const app4 = s4.app
+    const f4 = app4.lift.an.f!
+    expect(setViewF(app4, f4 * C.LENS_K_MAX)).toBe(true)
+    const dia = s4.draw(300, 700, 200, 500)     // lock1pt.test.ts의 그 대각선(잠금 전이면 vp=(150,400))
+    routes['second_vp_while_p1_locked'] = {
+      vps: app4.lift.an.vps.length, fSource: app4.lift.an.fSource, f: r6(app4.lift.an.f!),
+      p1Locked: app4.lift.an.p1Locked, stroke_committed: dia !== null,
+      reject_reason: dia === null ? null : (app4.lift.an.rejects.get(dia.id) ?? null),
+      viewF_kept: app4.viewF !== null,
+      note: '**서지 않는다** — 화면 수평이 선언된 순간 1점으로 잠기므로(`p1Locked` · 이론서 2.2) '
+        + '그 뒤의 대각선은 둘째 소실점을 못 만든다. 즉 **렌즈가 켜진 확정 국면(소실점 하나)에서 '
+        + 'P1→P2로 가는 길이 없다** — 게이트 ⑤의 「문면이 공허하다」가 이 칸으로 닫힌다.',
+    }
+    expect(app4.lift.an.p1Locked).toBe(true)
+    expect(app4.lift.an.vps.length).toBe(1)
+    expect(app4.lift.an.fSource).toBe('default')
+    expect(r6(app4.lift.an.f!)).toBe(r6(f4))
+    expect(app4.viewF).not.toBe(null)
+
     // 길 ⑤ **파일 열기** — 다른 카메라의 문서가 들어오면 서명이 바뀐다. **여기서 버린다.**
     const other = sceneP2Wide().app
     const fOther = other.lift.an.f!
@@ -558,14 +586,17 @@ describe('web2-31 2번 — 보기 렌즈', () => {
     const g1 = ledger['gate1_pixel_identity'] as { rows: { falsify_a_lens: Record<string, { max: number }> }[] }
     const g3 = ledger['gate3_coords_frozen'] as { rows: { placebo: Record<string, { drift_units_max: number; length_fold_max: number }> }[] }
     const g4 = ledger['gate4_principle_d'] as { rows: { falsify_c_ignore_lens: { max_px: number } }[] }
-    // **최댓값이 어느 칸인지 경로로 가리킨다**(#40 · selfcheck의 `_resolve`가 그 자리를 다시 읽는다)
-    let leakMax = 0, leakPath = ''
+    // **최댓값이 어느 칸인지 경로로 가리킨다**(#40 · selfcheck의 `_resolve`가 그 자리를 다시 읽는다).
+    // ⚠ 1차 리뷰어 [5]: 도달 가능성 값은 **등록 지표와 같은 자**여야 한다 — 게이트 ③의 등록문이
+    //   「좌표 전수 비교」이므로 **좌표 드리프트**를 든다. 길이 fold는 부차값으로 내린다
+    //   (이 회차가 스스로 「fold만 보면 통과할 뻔한 칸이 있다」고 적었다).
+    let leakMax = 0, leakPath = '', foldMax = 0, foldPath = ''
     g3.rows.forEach((r, i) => {
       for (const [kk, v] of Object.entries(r.placebo)) {
-        if (v.length_fold_max > leakMax) { leakMax = v.length_fold_max; leakPath = `gate3_coords_frozen/rows/${i}/placebo/${kk}/length_fold_max` }
+        if (v.drift_units_max > leakMax) { leakMax = v.drift_units_max; leakPath = `gate3_coords_frozen/rows/${i}/placebo/${kk}/drift_units_max` }
+        if (v.length_fold_max > foldMax) { foldMax = v.length_fold_max; foldPath = `gate3_coords_frozen/rows/${i}/placebo/${kk}/length_fold_max` }
       }
     })
-    const leakUnits = Math.max(...g3.rows.flatMap(r => Object.values(r.placebo).map(p => p.drift_units_max)))
     const lensPx = Math.max(...g1.rows.flatMap(r => Object.values(r.falsify_a_lens).map(x => x.max)))
     let ignorePx = 0, ignorePath = ''
     g4.rows.forEach((r, i) => {
@@ -605,6 +636,13 @@ describe('web2-31 2번 — 보기 렌즈', () => {
       constants_note: '**배율(비)이지 mm가 아니다**(#88 — mm로 적으면 「그때 쓰던 센서 크기」와 말없이 묶인다). '
         + '0.5·2는 렌즈 한 스톱이고 손잡이는 log2 위에서 등간격이다.',
       scenes: SCENES.map(s => ({ key: s.key, label: s.label })),
+      theory_18_4_band: '⚠ **대역의 양 끝이 이론서 18.4의 어느 칸에 앉는지 적는다**(1차 리뷰어 [12] — '
+        + '「화각 상한」은 폐기된 넷 중 하나이므로 **상한을 두라는 말이 아니고**, 어디에 앉는지 말하지 않는 것이 지적이다). '
+        + '18.4의 자: 60° = f 0.87W · 90° = f 0.5W. 이 회차의 장면은 f/W 2.74(19.9°)·0.87(59.9°)이고 '
+        + 'k 0.5를 걸면 각각 1.37W·0.435W가 된다 — **넓은 화각 장면의 아래 끝은 90°를 넘는다**(97.9°). '
+        + '화면 팔의 장면은 더 극단이다(기본 114.3° → k 0.5에서 144.2°). 그것을 **막지 않는다**: '
+        + '보기 렌즈는 해를 안 건드리므로 「지각과 어긋나는 그림」이 아니라 「지각과 어긋나게 «보는 것»」이고 '
+        + '되돌리는 손잡이가 그 자리에 있다(「기본으로」).',
       lens_band_note: '#86 ㉠ — `viewF`를 f와 **같은 값**으로 두고 재면 위약 판도 초록이다. 그래서 대역의 '
         + `**양 끝**(k = ${C.LENS_K_MIN} · ${C.LENS_K_MAX})에서 돈다. 장면도 화각의 양 끝을 덮는다(f/W 2.74 ↔ 0.87).`,
       ...ledger,
@@ -614,7 +652,8 @@ describe('web2-31 2번 — 보기 렌즈', () => {
           '렌즈를 손대지 않은 상태의 렌더가 지금과 **픽셀 단위로 동일** — 세 장면 전부 0.000000 px (**구성상 항등**)',
           '확정 전에는 조작이 없다 — 국면 넷 전부 `lensAllowed false` · `setViewF` 거절 (반증 짝: 확정된 셋은 먹는다)',
           '렌즈를 바꿔도 이미 올라간 3D 좌표가 변하지 않는다 — 좌표 전수 비교 0 (**구성상 보장**)',
-          '렌즈를 바꾼 상태에서 그은 획이 화면에서 본 자리에 놓인다 — 왕복 < 1e-6 px · 잉크 심판 < 0.01 px',
+          '렌즈를 바꾼 상태에서 그은 획이 화면에서 본 자리에 놓인다 — 왕복 0 · 잉크 심판 0 '
+          + '(⚠ **둘 다 구성상 항등이라 임계가 아니다** — 판별력은 판 ⓒ가 낸다. 1차 리뷰어 [4])',
           '차수 승격 후 보기 렌즈가 초기값으로 돌아간다 — 문면은 **공허**(그 국면은 렌즈가 잠겨 있다)이고, '
           + '렌즈를 켠 채 도달 가능한 재확정(two-vp → default)에서 null로 돌아간다',
         ],
@@ -627,11 +666,16 @@ describe('web2-31 2번 — 보기 렌즈', () => {
         reachability_value: r6(leakMax),
         reachability_value_fixture_determined: true,
         reachability_source: leakPath,
-        reachability_note: `**위약 판 ⓑ가 3D 길이를 ${r6(leakMax)}배로 만든다**(좌표 최대 ${r6(leakUnits)} 세계 단위). `
-          + `그것이 「보기값이 lift로 새면 무엇이 굳는가」의 크기다. 다른 두 축의 값: 판 ⓐ ${r6(lensPx)} px(픽셀 동일) · `
-          + `판 ⓒ ${r6(ignorePx)} px(원칙 d).`,
-        reachability_value_secondary: r6(ignorePx),
-        reachability_source_secondary: ignorePath,
+        reachability_note: `**위약 판 ⓑ가 3D 좌표를 최대 ${r6(leakMax)} 세계 단위 옮긴다** — 게이트 ③의 등록 지표와 `
+          + `같은 자(좌표)다. 같은 판의 길이 fold는 최대 ${r6(foldMax)}배인데 거기에는 fold 1.003 대의 칸도 있으므로 `
+          + `(값 축의 맹점) 도달 가능성 값으로는 좌표를 든다. 다른 두 축: 판 ⓐ ${r6(lensPx)} px(픽셀 동일) · `
+          + `판 ⓒ ${r6(ignorePx)} px(원칙 d). ⚠ **이 좌표 드리프트에서 강체·닮음 성분을 안 뺐다**(1차 리뷰어 [10]) — `
+          + `「형태가 얼마나 갈렸나」는 같은 칸의 length_fold_*가 들고, 이 수는 「같은 문서를 다른 f로 풀면 3D가 `
+          + `어디에 앉는가」의 크기다.`,
+        reachability_value_secondary: r6(foldMax),
+        reachability_source_secondary: foldPath,
+        reachability_value_tertiary: r6(ignorePx),
+        reachability_source_tertiary: ignorePath,
       },
       selfcheck_flags_known: {
         zeros_are_the_claim: '⚠ `untouched_max_px` · `guard_max_units` · `roundtrip_max_px` · `ink_judge_max_px`가 **0**으로 '
@@ -654,8 +698,9 @@ describe('web2-31 2번 — 보기 렌즈', () => {
       },
       pitfalls: ['#86', '#83', '#77', '#54', '#42', '#40', '#35', '#88', '#87'],
       pitfalls_note: '#77 ㉡(항등인 검증을 남기지 않는다 — 남기면 그 자리에 「쟀다」가 서 버린다)이 이 항목의 뼈대다: '
-        + '게이트 다섯 중 둘이 구성상 참이라 **그 사실을 적고 임계를 뺐다**. #86은 값 축·정체 축을 따로 잰 자리이고 '
-        + '여기서는 **정체 축이 안 갈리는 쪽**이었다. #77 ㉠은 손잡이 자리(기존 확대·궤도에 안 얹었다), '
+        + '게이트 다섯 중 둘이 구성상 참이라 **그 사실을 적고 임계를 뺐다**. #86은 값 축·정체 축을 따로 잰 자리다 — '
+        + '⚠ **실측은 둘 다 갈렸고**(여섯 칸 전부 `identity_changed: true`) 사전 예상이 반증됐다(`two_axes_note`). '
+        + '그래도 값 축에는 fold 1.003 대의 칸이 있어 도달 가능성 값은 **좌표**로 든다. #77 ㉠은 손잡이 자리(기존 확대·궤도에 안 얹었다), '
         + '#87·#88은 그 손잡이의 DOM 자리(`#app` 직계 · 예약 px 상수 ⛔)다.',
       command: 'LEDGER=1 npx vitest run test/lens31.test.ts',
     }, null, 2)
