@@ -231,3 +231,109 @@ test('⑥ 이름이 바뀐 것이 같은 동작을 한다 — 문자열만 바�
   // 종이 질감 — 배선 불변(renderer 왕복은 waitfade.spec 3-c 팔이 잰다). title에 내부 이름이 없다.
   expect(await page.evaluate(() => document.getElementById('btn-brush')!.title)).not.toContain('brush')
 })
+
+// ── web2-34 5번 — 설정 톱니(선 문법) ──────────────────────────────────────────
+// ⚠ 위 ②는 **「채웠는지」를 못 가른다**: `fill="none"`도 `fill="currentColor"`도 무채색이라
+//    둘 다 통과한다(회색조 판정이다). 그래서 이 팔이 따로 선다 — 묻는 것은 채도가 아니라
+//    **문법**이다(docs/instrument-icons.md 「규칙」: fill:none · stroke:currentColor ·
+//    stroke-width 1.6/32 · round cap/join).
+// 반증 조건(D-3)은 **옛 아이콘 그 자체**다: 아래 OLD_GEAR 는 이 회차 직전 커밋의
+// `#pane-settings > summary` 안에 있던 Phosphor light gear(`fill="currentColor"` · 뷰박스 256)
+// **그대로**이고, 같은 검사 함수에 넣어 **실제로 위반이 나오는 것**을 값으로 확인한다.
+// 그 확인이 없으면 이 검사는 아무것도 안 잰다.
+const OLD_GEAR = '<svg width="26" height="26" viewBox="0 0 256 256" fill="currentColor"><path d="M128,82a46,46,0,1,0,46,46A46.06,46.06,0,0,0,128,82Zm0,80a34,34,0,1,1,34-34A34,34,0,0,1,128,162Zm82-31.62c0-.79.05-1.58.05-2.38s0-1.59-.05-2.38l14.16-17.71a6,6,0,0,0,1.11-5.29A102.68,102.68,0,0,0,214.68,85a6,6,0,0,0-4.24-3.33l-22.35-3.72q-1.57-1.87-3.27-3.63L181.1,52a6,6,0,0,0-3.33-4.24,102.68,102.68,0,0,0-17.61-10.55,6,6,0,0,0-5.29,1.11L137.16,52.48c-.79,0-1.58-.05-2.38-.05h-13.56c-.8,0-1.59,0-2.38.05L101.13,38.32A6,6,0,0,0,95.84,37.2,102.68,102.68,0,0,0,78.23,47.75,6,6,0,0,0,74.9,52L71.18,74.35q-1.87,1.57-3.63,3.27L45.2,81.34A6,6,0,0,0,41,84.67a102.68,102.68,0,0,0-10.55,17.61,6,6,0,0,0,1.11,5.29L45.68,125.3c0,.79-.05,1.58-.05,2.38s0,1.59.05,2.38L31.52,147.77a6,6,0,0,0-1.11,5.29A102.68,102.68,0,0,0,41,170.67a6,6,0,0,0,4.24,3.33l22.35,3.72q1.57,1.87,3.27,3.63l3.72,22.35A6,6,0,0,0,77.9,208a102.68,102.68,0,0,0,17.61,10.55,6,6,0,0,0,5.29-1.11l17.71-14.16c.79,0,1.58.05,2.38.05h13.56c.8,0,1.59,0,2.38-.05l17.71,14.16a6,6,0,0,0,5.29,1.11A102.68,102.68,0,0,0,177.44,208a6,6,0,0,0,3.33-4.24l3.72-22.35q1.87-1.57,3.63-3.27l22.35-3.72a6,6,0,0,0,4.24-3.33,102.68,102.68,0,0,0,10.55-17.61,6,6,0,0,0-1.11-5.29Z"/></svg>'
+
+/** 선 문법 검사 — 셀렉터가 가리키는 svg 안의 «그리는 요소» 전부를 계산값으로 잰다.
+ *  계산값을 쓰는 이유: 속성은 루트 svg에 한 번 적히고 자식이 **상속**받으므로
+ *  자식에서 getAttribute 는 null 이 된다(SVG 표현 속성은 상속되는 CSS 속성이다). */
+const LINT = (page: Page, sel: string): Promise<string[]> =>
+  page.evaluate((s: string) => (window as any).__lintLine(s), sel)
+function installLint(page: Page) {
+  return page.evaluate(() => {
+    (window as any).__lintLine = (sel: string): string[] => {
+      const svg = document.querySelector(sel) as SVGSVGElement | null
+      if (!svg) return [`${sel}: svg가 없다`]
+      const out: string[] = []
+      if (svg.getAttribute('viewBox') !== '0 0 32 32') out.push(`viewBox=${svg.getAttribute('viewBox')}`)
+      const shapes = [...svg.querySelectorAll('path,circle,rect,ellipse,line,polygon,polyline')]
+      if (shapes.length === 0) out.push('그리는 요소가 없다')
+      for (const el of shapes) {
+        const cs = getComputedStyle(el as Element)
+        const tag = el.tagName
+        // ① 채우지 않는다 — 이 줄 하나가 「채운 아이콘」을 떨어뜨린다
+        if (cs.fill !== 'none') out.push(`${tag}:fill=${cs.fill}`)
+        // ② stroke 는 currentColor — 계산값이 그 요소의 color 와 같다
+        if (cs.stroke === 'none' || cs.stroke !== cs.color) out.push(`${tag}:stroke=${cs.stroke} color=${cs.color}`)
+        // ③ round cap/join
+        if (cs.strokeLinecap !== 'round') out.push(`${tag}:cap=${cs.strokeLinecap}`)
+        if (cs.strokeLinejoin !== 'round') out.push(`${tag}:join=${cs.strokeLinejoin}`)
+        // ④ 굵기 1.6 (뷰박스 32 기준 — 사용자 단위로 잰다)
+        if (cs.strokeWidth !== '1.6px') out.push(`${tag}:width=${cs.strokeWidth}`)
+      }
+      return out
+    }
+  })
+}
+
+test('34-5 설정 톱니 — 선 문법이고 채우지 않았다 · 바깥 톱니 + 중앙 원 (+옛 채운 아이콘으로 반증)', async ({ page }) => {
+  await boot(page)
+  await installLint(page)
+  const SEL = '#pane-settings > summary svg'
+
+  // (1) 지금 아이콘이 선 문법을 지킨다
+  const bad = await LINT(page, SEL)
+  expect(bad, '설정 톱니가 선 문법을 지킨다(fill:none · currentColor · round · 1.6)').toEqual([])
+
+  // (1') 크기 급 무회귀 — `.ico-f`(19px × --ui-scale)다. 뷰박스가 256 → 32 로 바뀌면서
+  //      width/height 속성을 뺐으므로(높이는 CSS가 준다) **실제 높이를 값으로 잰다**:
+  //      파일 서랍과 같은 급이고 e2e/sidebar.spec 이 그 급에 25px 하한을 건다.
+  const h = await page.evaluate((sel: string) => document.querySelector(sel)!.getBoundingClientRect().height, SEL)
+  console.log(`[측정] 설정 톱니 높이 ${h.toFixed(1)}px (.ico-f 급 — 파일 서랍과 같다)`)
+  expect(h, '크기 급이 안 줄었다(.ico-f)').toBeGreaterThanOrEqual(25)
+
+  // (2) 실루엣이 «바깥 톱니 + 중앙 원» 둘이다 — 요소로 확인한다
+  const shape = await page.evaluate((sel: string) => {
+    const svg = document.querySelector(sel) as SVGSVGElement
+    const paths = [...svg.querySelectorAll('path')]
+    const circles = [...svg.querySelectorAll('circle')]
+    const gear = paths[0]!, hub = circles[0]!
+    const gb = (gear as unknown as SVGGraphicsElement).getBBox()
+    const hb = (hub as unknown as SVGGraphicsElement).getBBox()
+    const d = gear.getAttribute('d') || ''
+    return {
+      paths: paths.length, circles: circles.length,
+      closed: /z\s*$/i.test(d.trim()),
+      teeth: (d.match(/A/g) || []).length,          // 뿌리 호 하나 = 톱니 하나
+      gear: { x: +gb.x.toFixed(2), y: +gb.y.toFixed(2), w: +gb.width.toFixed(2), h: +gb.height.toFixed(2) },
+      hub: { x: +hb.x.toFixed(2), y: +hb.y.toFixed(2), w: +hb.width.toFixed(2), h: +hb.height.toFixed(2) },
+    }
+  }, SEL)
+  expect(shape.paths, '톱니 실루엣 하나').toBe(1)
+  expect(shape.circles, '중앙 원 하나').toBe(1)
+  expect(shape.closed, '닫힌 실루엣이다').toBe(true)
+  expect(shape.teeth, '톱니 여덟').toBe(8)
+  // 중앙 원이 **안쪽에 있고 가운데**다 — 이름값을 기하로 확인한다(bbox 중심 일치 · 더 작다)
+  const c = (b: { x: number; y: number; w: number; h: number }): [number, number] => [b.x + b.w / 2, b.y + b.h / 2]
+  const [gx, gy] = c(shape.gear), [hx, hy] = c(shape.hub)
+  expect(Math.abs(gx - hx), '중앙 원의 x 중심이 톱니와 같다').toBeLessThan(0.2)
+  expect(Math.abs(gy - hy), '중앙 원의 y 중심이 톱니와 같다').toBeLessThan(0.2)
+  expect(shape.hub.w).toBeLessThan(shape.gear.w * 0.5)
+  console.log(`[측정] 톱니 bbox ${JSON.stringify(shape.gear)} · 중앙 원 ${JSON.stringify(shape.hub)} · 톱니 ${shape.teeth}`)
+
+  // (3) ⚠⚠ 반증(D-3) — **옛 채운 아이콘**을 같은 자리에 넣으면 같은 검사가 떨어진다.
+  //     떨어뜨리는 항목까지 값으로 낸다(무엇을 재는 검사인지가 그 목록이다).
+  const before = await page.evaluate(sel => document.querySelector(sel)!.parentElement!.innerHTML, SEL)
+  await page.evaluate(([sel, old]) => {
+    document.querySelector(sel as string)!.parentElement!.innerHTML = old as string
+  }, [SEL, OLD_GEAR])
+  const oldBad = await LINT(page, SEL)
+  console.log(`[반증] 옛 채운 아이콘의 위반 ${oldBad.length}건 — ${JSON.stringify(oldBad)}`)
+  expect(oldBad.length, '옛 채운 아이콘은 이 검사에 걸린다').toBeGreaterThan(0)
+  expect(oldBad.join(' '), '떨어지는 이유에 «채웠다»가 있다').toContain('fill=')
+  expect(oldBad.join(' '), '뷰박스도 걸린다(256 → 32)').toContain('viewBox=')
+  // 원상복구 — 뒤 팔이 옛 아이콘을 보지 않는다
+  await page.evaluate(([sel, html]) => {
+    document.querySelector(sel as string)!.parentElement!.innerHTML = html as string
+  }, [SEL, before])
+  expect(await LINT(page, SEL), '복구 뒤 다시 선 문법이다').toEqual([])
+})
