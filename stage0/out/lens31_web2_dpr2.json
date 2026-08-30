@@ -1,0 +1,129 @@
+{
+  "what": "web2-31 2번 — 보기 렌즈를 **화면에서** 잰다: 손잡이 자리 · 확정 전 잠금 · 팝오버가 안 깔린다 · 슬라이더가 그림을 움직이는 동안 3D 좌표·`Camera.f`·`fSource`가 그대로 · 「기본으로」의 왕복.",
+  "dpr": "dpr2",
+  "viewport": {
+    "w": 1200,
+    "h": 800
+  },
+  "place": {
+    "order": [
+      "btn-draw-view",
+      "btn-zoom-fit",
+      "btn-lens",
+      "btn-undo",
+      "btn-redo",
+      "btn-snap",
+      "btn-pencil",
+      "btn-pen",
+      "oldtools",
+      "btn-eraser-pencil",
+      "btn-eraser-ink",
+      "dim-toggle",
+      "btn-roll",
+      "btn-face"
+    ],
+    "parentIsBody": true,
+    "afterZoom": true,
+    "box": {
+      "w": 36,
+      "h": 36
+    },
+    "zoomBox": {
+      "w": 36,
+      "h": 36
+    },
+    "svgH": 30,
+    "right": 2,
+    "zoomRight": 2,
+    "barBottomSlack": 31
+  },
+  "lock": {
+    "before": {
+      "disabled": true,
+      "done": false,
+      "allowed": false,
+      "read": "카메라가 정해진 뒤에 쓴다"
+    },
+    "after": {
+      "disabled": false,
+      "allowed": true,
+      "read": "화각 114.3° (기본)"
+    }
+  },
+  "pop": {
+    "parent": "app",
+    "box": {
+      "x": 1008,
+      "y": 120,
+      "w": 138,
+      "h": 114
+    },
+    "hitId": "lens-pop",
+    "mine": true,
+    "overlapWithDimPanel": 0,
+    "inViewport": true
+  },
+  "slider": {
+    "base": {
+      "n": 8,
+      "w": 200.648379,
+      "hfov": 114.315739
+    },
+    "rows": [
+      {
+        "stops": -1,
+        "k": 0.5,
+        "hfov_deg": 144.225174,
+        "width_fold": 0.5,
+        "max_screen_drift_px": 106.800047,
+        "read": "화각 144.2°",
+        "f_unchanged": true,
+        "fSource": "two-vp",
+        "coords_unchanged": true
+      },
+      {
+        "stops": 1,
+        "k": 2,
+        "hfov_deg": 75.522488,
+        "width_fold": 2,
+        "max_screen_drift_px": 213.600094,
+        "read": "화각 75.5°",
+        "f_unchanged": true,
+        "fSource": "two-vp",
+        "coords_unchanged": true
+      }
+    ],
+    "reset": {
+      "k": 1,
+      "drift_px": 0
+    }
+  },
+  "gate": {
+    "for": "web2-31 2번 — 화면 몫",
+    "registered": [
+      "손잡이가 손 띠의 시점 묶음(돋보기 바로 아래)이고 이웃과 **같은 급**이다 — 자리는 34-6의 여유에서 실측으로 유도한다(#88)",
+      "확정 전에는 꺼져 있고 눌러도 안 열린다 · 확정 뒤에는 열린다",
+      "팝오버가 `#app`의 직계라 그 자리의 elementFromPoint가 제 것이다(#87) · 바깥 누름에 접힌다(R7)",
+      "슬라이더가 그림을 실제로 움직인다(화면 드리프트 · 폭 배수) — 그동안 3D 좌표 전수·f·fSource 불변",
+      "「기본으로」가 처음 화면으로 되돌린다(어긋남 < 1e-6 px)"
+    ],
+    "reachability": "**「움직였나」와 「안 움직였나」를 한 실행에서 나란히 낸다**: 같은 조작이 화면(px)은 수백 px 움직이고 3D 좌표 문자열은 **글자 하나도** 안 바꾼다. 렌즈가 lift로 새면 뒤쪽이 깨지고, 렌더가 렌즈를 안 읽으면 앞쪽이 깨진다 — 두 방향이 서로의 반증이다. 크기는 단위 원장 `lens31_web2.json`의 위약 판 셋이 든다.",
+    "reachability_value": [
+      106.800047,
+      213.600094
+    ],
+    "reachability_source": "slider/rows[]/max_screen_drift_px"
+  },
+  "selfcheck_flags_known": {
+    "coords_unchanged_all_true": "⚠ `coords_unchanged`가 전부 true이고 `reset.drift_px`가 0이다 — **그 칸의 주장 자체다**(렌즈는 렌더만 바꾼다 · 되돌리면 처음 자리다). 값이 다르면 그 칸이 틀린 것이다.",
+    "no_constants_snapshot": "web2 라인 전체의 유보 — `constantsSnapshot()`을 안 쓴다(`hold26.test`가 처음 적었다)."
+  },
+  "pitfalls": [
+    "#87",
+    "#88",
+    "#77",
+    "#54",
+    "#42"
+  ],
+  "command": "LEDGER=1 npx playwright test e2e/lens31.spec.ts"
+}

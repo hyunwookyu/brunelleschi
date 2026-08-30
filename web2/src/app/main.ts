@@ -3,7 +3,7 @@
 import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc,
   pickDimTarget, pickTargetAt, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick,
   handwritingGroup, applyWrittenDim, dimTargetTie, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
-  measureTap, clearMeasure, zoomFit, viewScale, setViewLensStops, resetViewLens, type Tool } from './state'
+  measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
 import { initInput } from './input'
@@ -25,7 +25,7 @@ import { registerBox, closeOtherBoxes, openBoxIds, setBoxAwayModeForTest } from 
 import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
 import { C } from '../core/constants'
-import { lensAllowed, lensStops, lensF, hfovDeg, LENS_STOP_MIN, LENS_STOP_MAX } from '../core/lens'
+import { lensAllowed, lensStops, lensF, lensK, hfovDeg, LENS_STOP_MIN, LENS_STOP_MAX } from '../core/lens'
 import { cubeLayoutFor } from '../core/viewcube'
 
 const W = window.innerWidth
@@ -1777,6 +1777,11 @@ function syncLens() {
   const f = lensF(an, app.viewF)!
   lensRead.textContent = `화각 ${hfovDeg(f, an.W).toFixed(1)}°${app.viewF === null ? ' (기본)' : ''}`
 }
+// 여닫이는 **표를 거친다**(직접 `hidden` 대입 ⛔ — 28-1의 규약: 배타·R7이 그 표에 걸려 있다)
+lensBtn.addEventListener('click', () => {
+  const p = panelOf('#lens-pop')
+  p.setOpen(!p.isOpen())
+})
 lensRange.addEventListener('input', () => {
   setViewLensStops(app, Number(lensRange.value))
   syncLens(); invalidate()
@@ -2133,6 +2138,18 @@ const diag = {
   /** 셔터 번쩍임의 길이(3-a) — 팔이 상수를 직접 안 읽고 **앱이 쓰는 값**을 읽는다(D-C4) */
   shutterMs: () => C.SHUTTER_FLASH_MS,
   showHidden: (v?: boolean) => { if (v !== undefined) { app.showHidden = v; invalidate() } return app.showHidden },
+  /** **보기 렌즈**(web2-31 2번) — 팔이 「문서 → 화면」을 손으로 펴지 않게 합성된 변환을 그대로 준다(#54).
+   *  ⚠ 이것은 **진단 통로**다(`S2S`) — 화면에 나가는 값이 아니다(D-L55는 `fSource`에 걸리고
+   *  그 값은 종전대로 `summary()`에만 있다). */
+  lens: () => ({
+    allowed: lensAllowed(app.lift.an),
+    viewF: app.viewF,
+    f: app.lift.an.f,
+    k: lensK(app.lift.an, app.viewF),
+    stops: lensStops(app.lift.an, app.viewF),
+    hfov: app.lift.an.f === null ? null : hfovDeg(lensF(app.lift.an, app.viewF)!, app.lift.an.W),
+    xf: viewXf(app),
+  }),
   summary: () => ({
     horizonY: app.lift.an.horizonY,
     screenHDeclared: app.lift.an.screenHDeclared,
