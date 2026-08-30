@@ -389,11 +389,19 @@ test('⑥ 전체 화면 — 크롬 0 · 뼈대 그대로 · 손잡이로 나온�
   expect(vpBefore, '소실점 ✕가 섰다').toBeGreaterThan(4)
 
   await page.click('#btn-fullscreen'); await settle(page)
-  // 크롬 픽셀 0 — 종이 띠·눈·손·서랍·굵기·치수 리본이 전부 사라졌다(값: 보이는 크기 0)
-  for (const id of ['topleft', 'eyebar', 'sidebar', 'thick', 'dimpanel']) {
+  // 크롬 픽셀 0 — 종이 띠·눈·손·서랍·치수 리본이 전부 사라졌다(값: 보이는 크기 0)
+  // ⚠ **`thick`이 목록에서 빠졌다**(web2-34 3번) — 굵기 막대가 통째로 사라졌고, 지우개
+  //   크기는 이제 **크기통**이다(R1). 통 셋은 세로바 «안»에 있어 `sidebar` 한 줄로 같이
+  //   숨으므로 이 표에 따로 안 든다 — 그래도 «전부 사라졌다»를 값으로 지키려고 통 셋의
+  //   보이는 크기를 아래에서 따로 잰다(#75 ㉣: 요구는 그대로, 표만 갈렸다).
+  for (const id of ['topleft', 'eyebar', 'sidebar', 'dimpanel']) {
     expect(await page.evaluate((i) =>
       getComputedStyle(document.getElementById(i)!).display, id), `#${id} 숨김`).toBe('none')
   }
+  // 통 셋(연필통·촉통·크기통)도 화면에 없다 — 세로바가 숨으면 그 안의 펼침도 없다
+  expect(await page.evaluate(() =>
+    ['tray', 'pentray', 'etray'].map(i => document.getElementById(i)!.getBoundingClientRect().width)),
+  '통 셋의 보이는 폭 0').toEqual([0, 0, 0])
   // 작도의 뼈대는 남는다 — 지평선·소실점 ✕ 픽셀이 그대로다
   expect(await inkPixels(page, 150, 397, 750, 404)).toBe(hzBefore)
   expect(await inkPixels(page, 1090, 390, 1110, 410)).toBe(vpBefore)

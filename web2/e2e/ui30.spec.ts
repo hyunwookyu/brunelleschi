@@ -159,9 +159,13 @@ test('30-2 슬라이더가 사라졌다 · 다섯 촉 · 견본 == 그은 선 ·
   await boot(page)
   await page.click('#btn-pen')
   await settle(page)
-  const thickShown = await page.evaluate(() => getComputedStyle(document.getElementById('thick')!).display)
-  console.log(`[30-2] 펜에서 #thick display = ${thickShown}`)
-  expect(thickShown, '펜에는 굵기 슬라이더가 없다').toBe('none')
+  // ⚠ **web2-34 3번이 막대를 통째로 지웠다**(화면 규칙 R1을 지우개로 쓸어냈다) — 30-2가
+  //   지키던 요구(「펜에는 굵기 슬라이더가 없다」)는 그대로 유효하고 **더 세졌다**:
+  //   `display:none`을 묻던 자리에서 이제 **DOM에 없다**를 묻는다(#75 ㉣ — 그 팔이
+  //   무엇을 묻고 있었는지를 다시 적는다). 지우개 판은 `ui34.spec` ①이 잰다.
+  const thickCount = await page.locator('#thick').count()
+  console.log(`[30-2] #thick 요소 수 = ${thickCount} (web2-34 3번에 사라졌다)`)
+  expect(thickCount, '굵기 슬라이더가 어디에도 없다').toBe(0)
 
   const nibs = await page.evaluate(() =>
     [...document.querySelectorAll('#pentray button')].map(e => ({

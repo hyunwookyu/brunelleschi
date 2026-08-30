@@ -12,19 +12,28 @@
  },
  "sidebar_pencil": {
   "w": 45,
-  "h": 728,
-  "bottom": 740
+  "h": 763,
+  "bottom": 775
  },
  "sidebar_pen": {
   "w": 45,
-  "h": 728,
-  "bottom": 740
+  "h": 763,
+  "bottom": 775
+ },
+ "sidebar_eraser": {
+  "w": 45,
+  "h": 763,
+  "bottom": 775
  },
  "tray": {
   "w": 96,
   "h": 176
  },
- "thick_right_x": 1088,
+ "etray_right_x": 1145,
+ "etray": {
+  "w": 168,
+  "h": 279
+ },
  "overlap": {
   "pencil": {
    "overlaps": 0,
@@ -48,9 +57,30 @@
     "btn-face"
    ]
   },
-  "pen_with_thick": {
+  "pen_with_pentray": {
    "overlaps": 0,
-   "n": 11,
+   "n": 15,
+   "ids": [
+    "sidebar-toggle",
+    "dim-toggle",
+    "btn-undo",
+    "btn-redo",
+    "btn-snap",
+    "btn-pencil",
+    "btn-pen",
+    "nib-0_18",
+    "nib-0_25",
+    "nib-0_35",
+    "nib-0_5",
+    "nib-0_7",
+    "btn-eraser-pencil",
+    "btn-eraser-ink",
+    "btn-face"
+   ]
+  },
+  "eraser_with_etray": {
+   "overlaps": 0,
+   "n": 14,
    "ids": [
     "sidebar-toggle",
     "dim-toggle",
@@ -62,12 +92,15 @@
     "btn-eraser-pencil",
     "btn-eraser-ink",
     "btn-face",
-    "thick"
+    "erase-5",
+    "erase-12",
+    "erase-27",
+    "erase-60"
    ]
   }
  },
  "right_edge_x": 1195,
  "hit_pad_css": "3px",
- "clip_boundary_css_h": 740,
+ "clip_boundary_css_h": 775,
  "note": "판정(겹침 0·화면 안·오른쪽 축·크기 대역)은 팔의 단언이 정본이고 이 원장은 그 실측값의 기록이다."
 }

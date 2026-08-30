@@ -99,7 +99,12 @@ test('② 선 아이콘 무채색 — 직접 그리는 도구 밖의 svg에 채�
       // ⚠ **`#pentray`가 들어왔다**(web2-30 2번) — 펜 촉통의 줄은 연필통 줄과 **같은 범주**다:
       //    누운 제도 펜의 그림(몸통·촉·그 굵기의 실제 선 견본)이라 «직접 그리는 도구»의
       //    재료색이 정체다. 예외를 넓힌 것이 아니라 **같은 무리에 새 자리가 하나 는 것**이다.
-      if (svg.closest('#btn-pencil, #btn-pen, #tray, #pentray, #oldtools, #btn-eraser-pencil, #btn-eraser-ink, #btn-face, #thick, #boot, #btn-roll-yellow')) continue
+      // ⚠ **`#etray`가 들어왔다**(web2-34 3번) — 지우개 크기통의 줄은 «직접 그리는 도구»의
+      //    자국을 1:1로 그린 것이라 캔버스의 지우개 커서와 **같은 색**(`COL.construction`
+      //    #8a7f6a)이어야 한다. 예외를 넓힌 것이 아니라 **같은 무리에 새 자리가 하나 는
+      //    것**이다(#pentray가 30-2에 들어온 것과 같은 수). ⚠ `#thick`은 목록에서 빠졌다 —
+      //    그 요소가 이제 없다(같은 항목이 지웠다).
+      if (svg.closest('#btn-pencil, #btn-pen, #tray, #pentray, #etray, #oldtools, #btn-eraser-pencil, #btn-eraser-ink, #btn-face, #boot, #btn-roll-yellow')) continue
       for (const el of [svg, ...svg.querySelectorAll('*')]) {
         for (const attr of ['fill', 'stroke']) {
           const v = el.getAttribute(attr)
@@ -123,7 +128,7 @@ test('② 선 아이콘 무채색 — 직접 그리는 도구 밖의 svg에 채�
       // ⚠ **`#pentray`가 들어왔다**(web2-30 2번) — 펜 촉통의 줄은 연필통 줄과 **같은 범주**다:
       //    누운 제도 펜의 그림(몸통·촉·그 굵기의 실제 선 견본)이라 «직접 그리는 도구»의
       //    재료색이 정체다. 예외를 넓힌 것이 아니라 **같은 무리에 새 자리가 하나 는 것**이다.
-      if (svg.closest('#btn-pencil, #btn-pen, #tray, #pentray, #oldtools, #btn-eraser-pencil, #btn-eraser-ink, #btn-face, #thick, #boot, #btn-roll-yellow')) continue
+      if (svg.closest('#btn-pencil, #btn-pen, #tray, #pentray, #etray, #oldtools, #btn-eraser-pencil, #btn-eraser-ink, #btn-face, #boot, #btn-roll-yellow')) continue
       const m = /rgba?\((\d+), (\d+), (\d+)/.exec(getComputedStyle(svg).color)
       if (m && Math.max(+m[1]!, +m[2]!, +m[3]!) - Math.min(+m[1]!, +m[2]!, +m[3]!) > 40) out.push(`${(svg.parentElement as HTMLElement).id}:color=${getComputedStyle(svg).color}`)
     }

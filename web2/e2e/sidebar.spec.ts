@@ -4,6 +4,7 @@
 // 이동량·파일 패널의 이름 가름·성공 알림. **「손에 맞는가」는 실기기 축**이다(DEFERRED).
 // 임계는 전부 옛 값과 새 값 사이다 — 크기를 되돌리면 실패한다(반증: 실행으로 확인).
 import { test, expect, type Page } from '@playwright/test'
+import { C } from '../src/core/constants'
 
 const box = async (page: Page, sel: string) => {
   const b = await page.locator(sel).boundingBox()
@@ -16,12 +17,18 @@ const box = async (page: Page, sel: string) => {
 // 겹침 실측 — 첫 팔이 재고 자리 실측 팔이 원장에 싣는다(한 파일은 한 워커에서 차례로 돈다)
 let ovPencil = { overlaps: -1, n: 0, ids: [] as string[] }
 let ovPen = { overlaps: -1, n: 0, ids: [] as string[] }
+// 지우개 상태(web2-34 3번) — 옛 굵기 막대(#thick)가 있던 자리에 **크기통**이 뜬다
+let ovErase = { overlaps: -1, n: 0, ids: [] as string[] }
+/** 크기 줄의 id — main.ts가 짓는 규칙 그대로(표를 팔에 복제하지 않는다 — #54) */
+const ERASE_ROW_IDS = C.ERASER_R_PX.map(r => `erase-${String(r).replace('.', '_')}`)
 const ALL = ['sidebar-toggle', 'dim-toggle',   // btn-save-view: 종이 탭 「+」가, btn-draw-view: 눈(#eyebar)이 대신한다(web2-19)
   'btn-undo', 'btn-redo', 'btn-snap', 'btn-pencil',
   'tray-2H', 'tray-H', 'tray-F', 'tray-HB', 'tray-B', 'tray-2B', 'btn-pen',
   // 펜 촉통 다섯(web2-30 2번) — 펜 상태에서만 뜬다. `overlapCount`가 display:none을 거른다.
   'nib-0_18', 'nib-0_25', 'nib-0_35', 'nib-0_5', 'nib-0_7',
-  'btn-eraser-pencil', 'btn-eraser-ink', 'btn-face'] // btn-brush는 서랍 안(web2-19 3-a) — 세로바 목록에서 뺀다
+  'btn-eraser-pencil', 'btn-eraser-ink', 'btn-face', // btn-brush는 서랍 안(web2-19 3-a) — 세로바 목록에서 뺀다
+  // 지우개 크기통 네 줄(web2-34 3번) — 지우개 상태에서만 뜬다. `overlapCount`가 display:none을 거른다.
+  ...ERASE_ROW_IDS]
 
 test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형·쌍별 겹침 0 (web2-12 3번)', async ({ page }) => {
   await page.goto('/')
@@ -59,7 +66,9 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
     return { id, right: el.getBoundingClientRect().right }
   // ⚠ `nib-`도 뺀다(web2-30 2번) — 촉통은 **흐름 밖 겹침(overlay)**이라 리본의 오른쪽
   // 정렬 규칙을 안 탄다(30-3: 펼침은 왼쪽으로 겹쳐 뜬다). 연필통 줄이 빠지는 것과 같은 이유다.
-  }), ALL.filter(id => !id.startsWith('tray-') && !id.startsWith('nib-') && id !== 'btn-pen' && id !== 'btn-pencil'))
+  // ⚠ `erase-`도 같다(web2-34 3번) — 크기통도 왼쪽으로 겹쳐 뜨는 펼침이다.
+  }), ALL.filter(id => !id.startsWith('tray-') && !id.startsWith('nib-') && !id.startsWith('erase-')
+    && id !== 'btn-pen' && id !== 'btn-pencil'))
   const r0 = rights[0]!.right
   for (const r of rights) expect(Math.abs(r.right - r0), `#${r.id} 오른쪽 가장자리`).toBeLessThanOrEqual(1)
 
@@ -108,11 +117,21 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
   // ⚠⚠ **web2-30 2번으로 펜 상태가 갈렸다**: 굵기 막대(#thick)는 이제 **지우개에만** 뜨고,
   //    펜에는 **촉통(#pentray) 다섯 줄**이 펼쳐진다(펜 단추를 누르면 열린다).
   ovPen = await overlapCount(ALL)
+  // ⚠⚠ **web2-34 3번으로 지우개 상태가 갈렸다**: 굵기 막대(#thick)가 사라지고 **크기통
+  //    (#etray) 네 줄**이 펼쳐진다(지우개 단추를 누르면 열린다 — 연필·펜과 같은 규약).
+  //    가장 큰 줄이 **지름 120 px**이라 이 상태가 통 셋 중 가장 넓다.
+  await page.click('#btn-eraser-pencil')
+  await page.waitForTimeout(200)
+  ovErase = await overlapCount(ALL)
   await page.click('#btn-pencil'); await page.click('#tray-HB')
   await page.waitForTimeout(200)
-  console.log(`[측정] 쌍별 겹침 — 연필(통 열림) ${ovPencil.overlaps}(요소 ${ovPencil.n}) · 펜(촉통 열림) ${ovPen.overlaps}(요소 ${ovPen.n})`)
+  console.log(`[측정] 쌍별 겹침 — 연필(통 열림) ${ovPencil.overlaps}(요소 ${ovPencil.n}) · 펜(촉통 열림) ${ovPen.overlaps}(요소 ${ovPen.n})`
+    + ` · 지우개(크기통 열림) ${ovErase.overlaps}(요소 ${ovErase.n})`)
   expect(ovPencil.overlaps).toBe(0)
   expect(ovPen.overlaps).toBe(0)
+  expect(ovErase.overlaps).toBe(0)
+  expect([...ovErase.ids].filter(id => id.startsWith('erase-')).length, '크기통 네 줄이 실제로 펼쳐져 있다')
+    .toBe(C.ERASER_R_PX.length)
   // 펜 상태 = 연필통 여섯 줄이 접히고 **촉통 다섯 줄**이 든다. ⚠ 수 관계식이 아니라
   // **id 목록의 차**로 단언한다(#72 규칙 ② — 수만 보면 수수께끼가 남는다):
   const nibIds = [...ovPen.ids].filter(id => id.startsWith('nib-'))
@@ -221,10 +240,11 @@ test('연필통 — 진하기 순 세로 배열·행 선택이 도구+경도·�
   const barPencil = await measure()          // 지금 연필(HB) 상태다
   await page.click('#btn-pen'); await page.waitForTimeout(150)
   const barPen = await measure()
-  // ⚠ **굵기 막대는 이제 지우개 상태에서만 있다**(web2-30 2번 — 펜의 굵기는 촉이 정한다).
-  //    막대의 «세로바 왼쪽» 규칙은 그대로 유효하므로 **그 상태에서** 잰다.
+  // ⚠⚠ **굵기 막대는 web2-34 3번에 사라졌다** — 지우개의 크기도 이제 **통**이다(R1).
+  //    이 팔이 지키던 요구(「펼쳐지는 것이 세로바를 안 밀고 **왼쪽**에 뜬다」)는 그대로
+  //    유효하고 **대상만 갈렸다**(#75 ㉣): 막대 → 크기통. 지우개 단추를 누르면 열린다.
   await page.click('#btn-eraser-pencil'); await page.waitForTimeout(150)
-  const thick = (await page.locator('#thick').boundingBox())!
+  const etray = (await page.locator('#etray').boundingBox())!
   const barEraser = await measure()
   await page.click('#btn-pen'); await page.waitForTimeout(150)
   // **펜 상태에서도** 화면 안이다 — 굵기 막대가 흐름 안에 있던 초판은 펜을 고른 순간
@@ -233,7 +253,9 @@ test('연필통 — 진하기 순 세로 배열·행 선택이 도구+경도·�
   expect(barPen.bottom, '펜 상태 세로바가 화면 안').toBeLessThanOrEqual(vw.h)
   expect(barPencil.bottom, '연필 상태 세로바가 화면 안').toBeLessThanOrEqual(vw.h)
   expect(barEraser.bottom, '지우개 상태 세로바가 화면 안').toBeLessThanOrEqual(vw.h)
-  expect(thick.x + thick.width, '굵기 막대가 세로바 왼쪽').toBeLessThanOrEqual(vw.w - barEraser.w - 2)
+  expect(etray.x + etray.width, '크기통이 세로바 왼쪽').toBeLessThanOrEqual(vw.w - barEraser.w - 2)
+  expect(etray.y, '크기통이 화면 위 안').toBeGreaterThanOrEqual(0)
+  expect(etray.y + etray.height, '크기통이 화면 아래 안').toBeLessThanOrEqual(vw.h)
   // 펜 상태에서는 촉통이 **왼쪽으로 겹쳐** 뜬다(30-3) — 세로바를 안 민다
   const pentray = (await page.locator('#pentray').boundingBox())!
   expect(pentray.x + pentray.width, '촉통이 세로바 왼쪽').toBeLessThanOrEqual(vw.w - barPen.w - 2)
@@ -258,10 +280,12 @@ test('연필통 — 진하기 순 세로 배열·행 선택이 도구+경도·�
     what: `web2-12 3·6번 — 세로바·연필통 자리·겹침·정렬 실측(CSS px·뷰포트 1200×800 헤드리스·${testInfo.project.name}). e2e sidebar.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47). 실기기(가림·누르기)는 DEFERRED.`,
     viewport: vw,
     sidebar_pencil: barPencil,
-    sidebar_pen: barPen,               // 굵기 막대는 흐름 밖 — 두 상태 높이가 같은 것이 그 증거다
+    sidebar_pen: barPen,               // 통은 흐름 밖 — 세 상태 높이가 같은 것이 그 증거다
+    sidebar_eraser: barEraser,
     tray: { w: Math.round(tray.width), h: Math.round(tray.height) },
-    thick_right_x: Math.round(thick.x + thick.width),
-    overlap: { pencil: ovPencil, pen_with_thick: ovPen },
+    etray_right_x: Math.round(etray.x + etray.width),      // web2-34 3번: thick_right_x를 대신한다
+    etray: { w: Math.round(etray.width), h: Math.round(etray.height) },
+    overlap: { pencil: ovPencil, pen_with_pentray: ovPen, eraser_with_etray: ovErase },
     right_edge_x: Math.round(rightEdge),
     hit_pad_css: hitPad,
     clip_boundary_css_h: 12 + Math.max(barPencil.h, barPen.h),   // 상단 고정 12px + 최대 높이 — 이 아래면 잘린다(AS-C30 갱신의 근거 필드)
