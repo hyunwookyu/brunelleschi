@@ -17,7 +17,9 @@ import { resolveStart, resolveEnd, resolveCommit, isStray } from '../core/draft'
 import { newHoldGate, tickHold, yellowEnd } from '../core/hold'
 import { filmSplit } from './filmlayer'
 import { C } from '../core/constants'
-import { cubeGeom, cubeHit, poseForElem } from '../core/viewcube'
+import {
+  cubeGeom, cubeHit, poseForElem, cubeBasis, arrowHit, orientIn, turnOrient, poseForOrient,
+} from '../core/viewcube'
 import type { Draft } from './render2d'
 import type { RawInput } from '../core/types'
 import { type Pt, pt } from '../core/vec'
@@ -367,11 +369,21 @@ export function initInput(
     const geom = cubeGeom(app.lift.an, app.pose, app.cubeLayout)
     if (!geom) return false
     if (Math.hypot(sp.x - app.cubeLayout.cx, sp.y - app.cubeLayout.cy) > app.cubeLayout.size) return false
-    const elem = cubeHit(geom, sp)
-    if (!elem) return false
     const pivot = orbitPivot(app)
     const dist = Math.max(1, Math.hypot(
       app.pose.p.x - pivot.x, app.pose.p.y - pivot.y, app.pose.p.z - pivot.z))
+    // 90° 화살표가 먼저다(web2-31 1번) — 큐브 폴리곤 밖에 있으므로 서로 안 먹지만,
+    // 순서를 정해 두면 대역이 겹치게 바뀌어도 판정이 안 흔들린다.
+    // **틀은 화면이 아니라 축이다**: 지금 자세를 축 틀의 면으로 읽고 그 안에서 90° 돈다.
+    const turn = arrowHit(app.cubeLayout, sp)
+    const basis = cubeBasis(app.lift.an)
+    if (turn && basis) {
+      const to = poseForOrient(basis, turnOrient(orientIn(basis, app.pose), turn), pivot, dist)
+      level.glide(to)   // 보간한다 — 즉시 튀면 어디로 갔는지 잃는다
+      return true
+    }
+    const elem = cubeHit(geom, sp)
+    if (!elem) return false
     const pose = poseForElem(app.lift.an, elem, pivot, dist)
     if (pose) { setPose(app, pose); level.touch() }
     return true

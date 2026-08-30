@@ -25,6 +25,7 @@ import { registerBox, closeOtherBoxes, openBoxIds, setBoxAwayModeForTest } from 
 import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
 import { C } from '../core/constants'
+import { cubeLayoutFor } from '../core/viewcube'
 
 const W = window.innerWidth
 const H = window.innerHeight
@@ -1749,7 +1750,7 @@ window.addEventListener('resize', () => {
   ctx = resize2d(ink, nw, nh, nd)
   resize3d(r3d, nw, nh, nd)
   brushLayer.resize(nw, nh, nd)
-  app.cubeLayout = { cx: nw - 110, cy: 60, size: 80 } // state.ts의 초기값과 같은 규칙
+  app.cubeLayout = cubeLayoutFor(nw) // state.ts의 초기값과 **같은 함수**(#54 — 규칙이 하나다)
   invalidate()
 })
 

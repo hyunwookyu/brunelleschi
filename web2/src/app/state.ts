@@ -21,6 +21,7 @@ import { loopAt, faceAt, faceScreen, resolveFaces, resolveFace, allLoops, inPoly
 import { bakeUnderlay } from '../core/make2d'
 import { geomSize3 } from '../core/osnap'
 import { C } from '../core/constants'
+import { cubeLayoutFor } from '../core/viewcube'
 import { calFromMedians, median } from '../core/press'
 import { type Pt, type V3, v3, add3, sub3, mul3, dot3, len3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
 
@@ -334,7 +335,7 @@ export function createApp(W: number, H: number): App {
     touchLast: null,
     faceCandidates: null,
     rectHover: null,
-    cubeLayout: { cx: W - 110, cy: 60, size: 80 }, // 우측 상단 — 1.5배 세로바(x W−45..)와 안 겹치게 왼쪽으로(web2-10 지시 5)
+    cubeLayout: cubeLayoutFor(W), // 우측 상단 — 자리 계산은 viewcube.ts 하나다(#54 · web2-31 1번)
     listeners: [],
   }
 }
