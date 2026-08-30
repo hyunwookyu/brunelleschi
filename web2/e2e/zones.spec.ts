@@ -2,6 +2,7 @@
 //   ① 네 자리의 요소가 정확히 표대로다(각 자리의 id 목록을 값으로)
 //   ①' 연필이 접혀 있다 — 평소 손 띠 버튼이 39px 폭 · 펼침/고름 · 각인 왕복(2H·2B) ·
 //      펜은 접기 없음·연필통에 펜 줄 없음
+//   ①'' 접힌 펜이 지금 촉을 말한다 — 다섯 촉 왕복·부팅 초기값·연필 각인과 같은 대역 (34-2 · R6)
 //   ② 치수 트리거가 손 띠에 있고 리본이 종전대로 열린다
 //   ③ 표시 토글 셋이 눈에 있고 동작은 그대로(켰다 끄기 왕복)
 //   ④ 자 아이콘 → 오스냅 종류·반경이 열리고 동작은 그대로
@@ -12,6 +13,7 @@
 // 조건(#71): 뷰포트 1200×800 · dpr 둘 다 · 기본 도구 연필.
 
 import { test, expect, type Page } from '@playwright/test'
+import { C } from '../src/core/constants'
 
 /** 진단 패널을 연다 — **web2-30 3번 별건으로 여닫이가 옮겨졌다**: 빌드 식별자는
  *  `pointer-events: none`인 표시가 됐고, 여는 자리는 **설정 패널의 「진단」**이다. */
@@ -162,6 +164,142 @@ test("①' 연필 접힘 — 39px 폭 · 펼침/고름 · 각인 왕복(2H·2B) 
   expect(await page.locator('#tray.open').count()).toBe(0)
   expect(await page.locator('#tray #btn-pen').count()).toBe(0)
 })
+
+// ── 34-2 (R6) — **접힌 통은 지금 고른 것을 말한다** ───────────────────────
+// 연필은 처음부터 지켰다(각인 `HB`). 펜은 안 지켰다 — 촉이 니브 사각형의 **폭**으로만
+// 있어서(0.77~3.00 사용자단위 = 렌더 1.16~4.50 px, 이웃 칸 차 0.45~1.29 px) 화면에서
+// 안 읽힌다. ①' 의 「각인 왕복」과 **같은 어법**으로 다섯 촉을 왕복시킨다.
+//
+// mm 표기의 출처는 `C.NIB_MM` 하나다(#54) — 팔도 그 목록에서 이름을 짓는다(표 복제 ⛔).
+const NIB_LABEL = (mm: number) => mm.toFixed(2).replace(/^0/, '')
+const NIB_ID = (mm: number) => `nib-${String(mm).replace('.', '_')}`
+
+test("①'' 접힌 펜 각인 — 다섯 촉 왕복 · 부팅 초기값 · 연필 각인과 같은 대역 (34-2 · R6)",
+  async ({ page }) => {
+    await boot(page)
+
+    // ② **문서를 새로 열어도 맞는다** — 부팅 초기 촉(C.NIB_PX = 0.35 mm)이 글자에 실린다.
+    //    ⚠ 부팅 직후 도구는 연필이다 — 「펜을 한 번 눌러야 말한다」면 R6을 못 지킨 것이다.
+    expect(await page.evaluate(() => (window as any).__b2.app.tool)).toBe('pencil')
+    expect(await page.locator('#btn-pen #fold-nib-text').count(), '접힌 펜에 각인이 있다').toBe(1)
+    expect(await page.locator('#fold-nib-text').textContent(), '부팅 초기 촉').toBe(NIB_LABEL(0.35))
+
+    // ① **다섯 촉 전부** — 고를 때마다 접힌 아이콘의 글자가 그 값을 따라간다
+    const seen: string[] = []
+    for (const mm of C.NIB_MM) {
+      await page.click('#btn-pen'); await settle(page)
+      expect(await page.locator('#pentray.open').count(), '촉통이 펼쳐진다').toBe(1)
+      await page.click(`#${NIB_ID(mm)}`); await settle(page)
+      const t = (await page.locator('#fold-nib-text').textContent()) ?? ''
+      seen.push(`${mm}→${t}`)
+      expect(t, `${mm} mm 촉의 각인`).toBe(NIB_LABEL(mm))
+      // 니브 사각형(옛 유일 채널)도 그대로 따라간다 — 채널을 더한 것이지 바꾼 것이 아니다
+      expect(await page.evaluate(() => Number(document.getElementById('fold-nib')!.getAttribute('width'))))
+        .toBeCloseTo(await page.evaluate(() => (window as any).__b2.app.nib), 6)
+    }
+    console.log(`[34-2] 촉 각인 왕복 — ${seen.join(' · ')}`)
+    expect(new Set(seen.map(s => s.split('→')[1])).size, '다섯이 서로 다른 글자다').toBe(5)
+
+    // ③ **읽히는가** — 글자의 렌더 높이가 연필 각인과 **같은 대역**인가(px 실측).
+    //    ⚠⚠ **상태를 맞춰서 잰다**(D-5의 형태): `.tool.on svg`가 «고른» 도구의 아이콘을
+    //    `scale(1.14)`로 키우므로(index.html), 연필을 안 고른 채로 펜만 고르고 재면
+    //    **펜에만 1.14배가 얹힌 수**를 비로 적게 된다. 둘 다 «안 고른» 상태에서 잰다.
+    //    그리고 그 변형에는 `.12s` 트랜지션이 붙어 있어 **중간값이 잡힌다** — 실제로
+    //    잡혔다(같은 상태에서 13.20 → 14.15로 흔들렸다). 그래서 기다린 뒤 잰다.
+    await page.click('#btn-eraser-ink')
+    await page.waitForTimeout(250)
+    await settle(page)
+    const h = await page.evaluate(() => {
+      const m = (id: string) => {
+        const e = document.getElementById(id) as unknown as SVGTextElement
+        const r = e.getBoundingClientRect(), b = e.getBBox()
+        return { h: r.height, w: r.width, bw: b.width,
+                 on: (e.closest('button') as HTMLElement).classList.contains('on') }
+      }
+      return { pencil: m('fold-lead-text'), pen: m('fold-nib-text') }
+    })
+    expect(h.pencil.on || h.pen.on, '둘 다 «안 고른» 상태에서 잰다').toBe(false)
+    console.log(`[34-2] 각인 렌더(둘 다 비활성) — 연필 ${h.pencil.w.toFixed(2)}×${h.pencil.h.toFixed(2)} px · `
+      + `펜 ${h.pen.w.toFixed(2)}×${h.pen.h.toFixed(2)} px · 높이비 ${(h.pen.h / h.pencil.h).toFixed(3)} · `
+      + `펜 글자 상자 ${h.pen.bw.toFixed(2)} 사용자단위(몸통 8.8)`)
+    expect(h.pen.h / h.pencil.h, '펜 각인이 연필 각인과 같은 대역')
+      .toBeGreaterThanOrEqual(C.FOLD_MARK_MIN_RATIO)
+    // 그리고 **몸통 밖으로 안 넘친다** — 글자 상자가 몸통 폭 8.8 안에 든다(연필은 10에
+    // 12.23이라 넘치는데, 펜은 몸통이 좁아 넘치면 회색 위의 검은 글자가 된다)
+    expect(h.pen.bw, '각인이 펜 몸통 폭(8.8) 안에 든다').toBeLessThanOrEqual(8.8 + 1e-3)
+  })
+
+// **반증(D-3)** — 위 팔이 «무엇이든 하나 더 둔 것»에 통과 도장을 찍는 팔이 아님을 보인다.
+// 셋을 실제로 빨갛게 만들고 그 수를 적는다. ⚠ 34-5의 어법과 같다(옛 아이콘을 같은 자리에
+// 넣어 같은 검사에 걸리는 것을 값으로 확인한다).
+test("①'' 반증 — 옛 마크업 · 끊긴 배선 · font-size로 맞춘 판이 전부 빨개진다 (34-2 · D-3)",
+  async ({ page }) => {
+    await boot(page)
+
+    // 반증 ㉠ **옛 마크업**(34-2 이전 그대로 — 창도 글자도 없다). 촉의 유일한 채널이었던
+    //   니브 사각형의 «폭»이 무엇이었는지 값으로 남긴다.
+    const before = await page.evaluate(() => {
+      const w: number[] = []
+      const b2 = (window as any).__b2
+      const rect = document.getElementById('fold-nib')!
+      for (const mm of [0.18, 0.25, 0.35, 0.5, 0.7]) {
+        b2.app.nib = Math.round(mm * (1.5 / 0.35) * 100) / 100
+        // 옛 배선과 같은 계산(syncThick) — 값만 확인한다
+        w.push(b2.app.nib)
+      }
+      const scale = document.querySelector('#btn-pen svg')!.getBoundingClientRect().width / 26
+      rect.setAttribute('width', '1.5')
+      return { user: w, rendered: w.map(v => +(v * scale).toFixed(2)), scale }
+    })
+    console.log(`[34-2 반증 ㉠] 옛 유일 채널(니브 폭) — 사용자단위 ${before.user.join(' · ')}`
+      + ` = 렌더 ${before.rendered.join(' · ')} px (이웃 칸 차 `
+      + `${before.rendered.slice(1).map((v, i) => (v - before.rendered[i]!).toFixed(2)).join(' · ')} px)`)
+    await page.reload(); await page.waitForFunction(() => (window as any).__b2)
+    const gone = await page.evaluate(() => {
+      const svg = document.querySelector('#btn-pen svg')!
+      svg.querySelector('#fold-nib-text')!.remove()
+      svg.querySelector('rect[width="8.8"]')!.remove()
+      return document.querySelectorAll('#btn-pen #fold-nib-text').length
+    })
+    console.log(`[34-2 반증 ㉠] 옛 마크업으로 되돌리면 #fold-nib-text 개수 = ${gone} (팔의 요구는 1)`)
+    expect(gone, '옛 마크업이면 ①의 첫 단언이 빨개진다').toBe(0)
+
+    // 반증 ㉡ **끊긴 배선** — 요소는 있는데 갱신이 안 닿는다(main.ts가 든 참조를 떼어낸다).
+    //   ⚠ 이것이 「글자를 하나 그려 놓기만 해도 통과한다」를 막는 자리다.
+    await page.reload(); await page.waitForFunction(() => (window as any).__b2)
+    await page.evaluate(() => {
+      const el = document.getElementById('fold-nib-text')!
+      el.replaceWith(el.cloneNode(true))     // 화면의 것은 복제본 · main.ts는 떨어져 나간 원본을 쥔다
+    })
+    const stuck: string[] = []
+    for (const mm of C.NIB_MM) {
+      await page.click('#btn-pen'); await settle(page)
+      await page.click(`#${NIB_ID(mm)}`); await settle(page)
+      stuck.push((await page.locator('#fold-nib-text').textContent()) ?? '')
+    }
+    console.log(`[34-2 반증 ㉡] 배선을 끊으면 다섯 촉이 전부 "${stuck.join('/')}" — `
+      + `서로 다른 글자 ${new Set(stuck).size}가지 (팔의 요구는 5)`)
+    expect(new Set(stuck).size, '배선이 끊기면 ①의 왕복이 빨개진다').toBe(1)
+
+    // 반증 ㉢ **font-size로 맞춘 판** — 지시문이 든 다른 길이다(「font-size를 줄여라」).
+    //   ".35"가 몸통 8.8에 들어가려면 6.5까지 내려야 하고, 그러면 **높이를 잃는다**.
+    await page.reload(); await page.waitForFunction(() => (window as any).__b2)
+    await page.click('#btn-eraser-ink'); await page.waitForTimeout(250); await settle(page)
+    const alt = await page.evaluate(() => {
+      const t = document.getElementById('fold-nib-text')!
+      const h = (id: string) => document.getElementById(id)!.getBoundingClientRect().height
+      const keep = h('fold-nib-text') / h('fold-lead-text')
+      t.setAttribute('font-size', '6.5')
+      t.removeAttribute('textLength'); t.removeAttribute('lengthAdjust')
+      const b = (t as unknown as SVGTextElement).getBBox()
+      return { keep, ratio: h('fold-nib-text') / h('fold-lead-text'), bw: b.width }
+    })
+    console.log(`[34-2 반증 ㉢] font-size 8.5+textLength 높이비 ${alt.keep.toFixed(3)} → `
+      + `font-size 6.5 무압축 높이비 ${alt.ratio.toFixed(3)} · 글자 상자 ${alt.bw.toFixed(2)} `
+      + `사용자단위(문턱 C.FOLD_MARK_MIN_RATIO = ${C.FOLD_MARK_MIN_RATIO})`)
+    expect(alt.keep, '지금 판은 문턱 위').toBeGreaterThanOrEqual(C.FOLD_MARK_MIN_RATIO)
+    expect(alt.ratio, 'font-size로 맞춘 판은 ③이 빨개진다').toBeLessThan(C.FOLD_MARK_MIN_RATIO)
+  })
 
 test('②④⑤ — 치수 트리거(손) · 자 팝업(오스냅) · own3d(진단) 동작 그대로', async ({ page }) => {
   await boot(page)
