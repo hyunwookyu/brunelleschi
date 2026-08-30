@@ -1,279 +1,279 @@
 {
-  "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "web2-35 (2026-08-30)",
-  "unit": {
-    "command": "npx vitest run (web2/)",
-    "files": 92,
-    "tests": 712,
-    "wall_s": 38.0,
-    "passed": 712,
+ "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
+ "measured_at": "web2-35 병합 (2026-08-30)",
+ "unit": {
+  "command": "npx vitest run (web2/)",
+  "files": 94,
+  "tests": 728,
+  "wall_s": 31.8,
+  "passed": 728,
+  "failed": 0,
+  "note": "web2-35 병합 트리 실측 — web2-32 5·6·7(파일 93·팔 727)과 web2-35(파일 92·팔 712)를 합친 값이다. 두 갈래가 평행으로 돌아 각자의 원장이 상대의 파일을 안 세고 있었다. 신설은 `glyph35.test.ts` 하나(web2-35)이고 `scale32`·`scale32_measure`(web2-32)가 그 옆에 선다. 폐기 없음.",
+  "wall_s_note": "병합 뒤 한 번 돌린 값이다(31.8s). web2-35가 네 번 돌려 낸 폭 25.9~38.0s 안이다 — 그 폭은 팔의 몫이 아니라 컨테이너 부하다."
+ },
+ "e2e": {
+  "command": "npx playwright test --workers=1 (dpr1+dpr2)",
+  "cases": 394,
+  "arms": 197,
+  "wall_s": 2880,
+  "passed": 393,
+  "failed": 1,
+  "arms_source": "실행 요약 「1 failed · 393 passed (48.0m)」 — dpr1+dpr2 두 벌이라 팔은 197",
+  "note": "⚠⚠ **병합 트리에서 처음 돈 전량이다** — web2-35는 전량을 안 돌렸고(20케이스만) web2-32의 수를 그대로 실었다. 이 값이 둘을 합친 첫 실측이다. **실패 하나는 부하다**: `gesture.spec ①②③`가 **dpr2에서만** 180s 상한에 걸렸고(`page.screenshot` 타임아웃 — 팔의 단언이 아니다) dpr1은 통과했다. 같은 파일을 **혼자 다시 돌리자 dpr2 다섯 팔 전부 통과**(3.1m). #80의 「전량에서만 나는 실패는 가른다」 그대로 갈랐다.",
+  "wall_clock_unexplained": {
+   "this_round_s": 2718,
+   "web2_30_s": 1716,
+   "delta_pct": 58,
+   "note": "⚠ **모른다**(A-4의 「느려졌다는 보고를 받으면 디스크 여유부터 본다」를 따라 봤다): 디스크 여유 **30GB**(9차의 «여유 0»과 다르다). 케이스는 380 → 378로 줄었는데 벽시계가 늘었다. 후보 둘 — ① 이 세션의 컨테이너 성능이 web2-30 세션과 다르다 ② 브라우저 실행 파일이 다르다(이 세션은 `PW_CHROMIUM_EXE=/opt/pw-browsers/chromium`을 쓴다). **둘 다 안 쟀다** — 다음 회차가 같은 환경에서 두 번 돌리면 그때 갈린다."
+  },
+  "web2_35_partial": {
+   "command": "PW_PORT=5331 npx playwright test static_deploy | dimwrite29 boot --project=dpr1",
+   "cases": 20,
+   "passed": 20,
+   "failed": 0,
+   "wall_s": 24.6,
+   "note": "⚠ PW_PORT는 web2-35가 연 통로다 — `reuseExistingServer: true`가 고정 포트에 걸리면 **평행 세션의 트리를 잰다**(#70의 평행 판). 기본 5301은 안 바꿨다."
+  }
+ },
+ "typecheck_build": {
+  "command": "tsc --noEmit · vite build",
+  "build_s": 2.47,
+  "note": "web2-35 병합 실측 — 타입 오류 0."
+ },
+ "history": [
+  {
+   "at": "web2-09",
+   "unit": 348,
+   "e2e": 60,
+   "e2e_wall_s": 55.7
+  },
+  {
+   "at": "web2-10 배포 ①",
+   "unit": 348,
+   "e2e": 68
+  },
+  {
+   "at": "web2-10 배포 ②",
+   "unit": 348,
+   "e2e": 78,
+   "e2e_wall_s": 57.1
+  },
+  {
+   "at": "web2-10 배포 ③",
+   "unit": 348,
+   "e2e": 82,
+   "e2e_wall_s": 59.4
+  },
+  {
+   "at": "web2-10 최종",
+   "unit": 352,
+   "e2e": 88,
+   "e2e_wall_s": 63
+  },
+  {
+   "at": "web2-11 1부",
+   "unit": 358,
+   "e2e": 100,
+   "e2e_wall_s": 66
+  },
+  {
+   "at": "web2-11 2부",
+   "unit": 366,
+   "e2e": 116,
+   "e2e_wall_s": 114
+  },
+  {
+   "at": "web2-12 1부",
+   "unit": 366,
+   "e2e": 128,
+   "e2e_wall_s": 150
+  },
+  {
+   "at": "web2-12 2부",
+   "unit": 370,
+   "e2e": 134,
+   "e2e_wall_s": 156
+  },
+  {
+   "at": "web2-12 3부",
+   "unit": 373,
+   "e2e": 146,
+   "e2e_wall_s": 198
+  },
+  {
+   "at": "web2-13 4부",
+   "unit": 403,
+   "e2e": 156
+  },
+  {
+   "at": "web2-14 마감",
+   "unit": 416,
+   "e2e": 164,
+   "e2e_wall_s": 258
+  },
+  {
+   "at": "web2-15 마감",
+   "unit": 426,
+   "e2e": 174,
+   "e2e_passed": 172,
+   "e2e_wall_s": 264,
+   "note": "e2e 통과 172 — dim.spec 인식기 감지 1팔×2dpr이 선행 결함으로 실패. ⚠ 당시 「380c3f9에서 재현」의 워크트리 실행은 잔존 dev 서버 오염으로 증거 무효(PITFALLS #70) — 결론 자체는 web2-16이 깨끗한 서버로 재확인(380c3f9=c0faaaf+문서 커밋이고 c0faaaf 실패 실측)"
+  },
+  {
+   "at": "web2-16 1부",
+   "unit": 426,
+   "e2e": 176,
+   "e2e_passed": 176,
+   "e2e_failed": 0,
+   "e2e_wall_s": 258
+  },
+  {
+   "at": "web2-16 2부",
+   "unit": 437,
+   "e2e": 178,
+   "e2e_passed": 178,
+   "e2e_failed": 0,
+   "e2e_wall_s": 258
+  },
+  {
+   "at": "web2-16 3부",
+   "unit": 437,
+   "e2e": 180,
+   "e2e_passed": 180,
+   "e2e_failed": 0,
+   "e2e_wall_s": 282
+  },
+  {
+   "at": "web2-16 3부",
+   "unit": {
+    "command": "npm test (vitest)",
+    "files": 46,
+    "tests": 437,
+    "wall_s": 4.2,
+    "note": "web2-16 2부 +11팔(axisproj.test — 사영 6·규칙 불변 짝 2·계수 3)"
+   },
+   "e2e": {
+    "command": "npm run e2e (playwright, dpr1+dpr2)",
+    "cases": 180,
+    "arms": 90,
+    "wall_s": 282,
+    "arms_source": "npx playwright test --list → 「Total: 180 tests in 22 files」(90팔). --list 출력이 정본(#69 ㉤)",
+    "passed": 180,
     "failed": 0,
-    "note": "web2-35 — 파일 +1·팔 +1(`glyph35.test.ts` 하나 안에 이 회차의 게이트 전부). ⚠⚠ **팔 수는 하나인데 계산량이 크다**: 그 한 팔이 880칸을 한 번 굽고(래스터 두 시야 + 궤적 셋 + $P + 런타임) 팔 다섯 × 문턱 곡선 57점 + 2차원 29×29 훑기 + 씨별 다섯 벌을 그 표에서 파생시킨다. 그래서 **팔 수가 아니라 벽시계가 비용의 자다**(2차 리뷰어 [9]). 그 파일 단독 벽시계는 **~2.3s**.",
-    "wall_s_runs": [
-      38.0,
-      28.3,
-      32.1,
-      25.9
-    ],
-    "wall_s_note": "⚠ **같은 트리·같은 팔을 네 번 돌린 값이다**(2차 리뷰어의 낮음 ㉡: 초판이 **빠른 쪽 하나만** 실었다 — §5 「비율보다 분자/분모」·#14의 정신). 최댓값을 `wall_s`로 둔다(보수적). 신설 파일 단독은 2.3s뿐이므로 **이 폭은 팔의 몫이 아니라 컨테이너 부하다.**"
+    "note": "web2-16 3부 +1팔(waitfade.spec 3-b 즉시 끊김·복귀). ⚠ 이 회차에 «tail이 4 failed를 잘라 176을 전량으로 읽을 뻔»한 사건이 있었다 — --list 총수 대조가 잡았다(NOTES 3부 절)"
+   }
   },
-  "e2e": {
-    "command": "npx playwright test --workers=1 (dpr1+dpr2)",
-    "cases": 378,
-    "arms": 189,
-    "wall_s": 2718,
-    "passed": 378,
-    "failed": 0,
-    "arms_source": "실행 요약 「378 passed (45.3m)」 — dpr1+dpr2 두 벌이라 팔은 189",
-    "note": "⚠ **web2-35는 전량 e2e를 안 돌렸다** — 이 회차의 변경은 인식기(순수 함수)이고 CI 게이트인 `static_deploy.spec`(12케이스 · dpr1+dpr2)와 손글씨 경로 `dimwrite29.spec`+`boot.spec`(8케이스 · dpr1)만 돌려 **20케이스 전부 초록**이었다(각각 12.4s · 12.2s). 아래 수치는 **web2-32의 것 그대로**다. web2-32 — writedim32.spec 3팔 신설 · dimsuggest29.spec 2팔 폐기. ⚠⚠ 이 회차의 교훈(PITFALLS #80): 전량을 돌리는 동안 tsc·vitest를 같이 돌리면 픽셀·타이밍 팔이 흔들린다(첫 실행이 그렇게 셋 빨개졌고, 부하 없이 다시 돌리자 하나만 남았다). 그리고 **실행 중에 소스를 고치면 그 실행은 무효다**(dev 서버가 디스크를 읽는다). 마지막 실행은 아무것도 같이 안 돌린 깨끗한 실행이다. ⚠ **팔 수 산술**(2차 리뷰어): dimsuggest29.spec은 **4팔**이었다(케이스로는 8) — 190 + 3 − 4 = 189팔 = 378케이스로 맞는다. 초판 note가 「2팔 폐기」라 적어 넷이 떴다.",
-    "wall_clock_unexplained": {
-      "this_round_s": 2718,
-      "web2_30_s": 1716,
-      "delta_pct": 58,
-      "note": "⚠ **모른다**(A-4의 「느려졌다는 보고를 받으면 디스크 여유부터 본다」를 따라 봤다): 디스크 여유 **30GB**(9차의 «여유 0»과 다르다). 케이스는 380 → 378로 줄었는데 벽시계가 늘었다. 후보 둘 — ① 이 세션의 컨테이너 성능이 web2-30 세션과 다르다 ② 브라우저 실행 파일이 다르다(이 세션은 `PW_CHROMIUM_EXE=/opt/pw-browsers/chromium`을 쓴다). **둘 다 안 쟀다** — 다음 회차가 같은 환경에서 두 번 돌리면 그때 갈린다."
-    },
-    "web2_35_partial": {
-      "command": "PW_PORT=5331 npx playwright test static_deploy | dimwrite29 boot --project=dpr1",
-      "cases": 20,
-      "passed": 20,
-      "failed": 0,
-      "wall_s": 24.6,
-      "note": "⚠ PW_PORT는 web2-35가 연 통로다 — `reuseExistingServer: true`가 고정 포트에 걸리면 **평행 세션의 트리를 잰다**(#70의 평행 판). 기본 5301은 안 바꿨다."
-    }
+  {
+   "at": "web2-17 1~3부(배포 ① efe6202)",
+   "unit": {
+    "files": 49,
+    "tests": 467,
+    "wall_s": 4.5
+   },
+   "e2e": {
+    "cases": 188,
+    "arms": 94,
+    "passed": 188,
+    "failed": 0
+   }
   },
-  "typecheck_build": {
-    "command": "tsc --noEmit · vite build",
-    "build_s": 2.7,
-    "note": "web2-35 실측."
+  {
+   "at": "web2-17 4·5부",
+   "unit": 480,
+   "e2e": 190,
+   "e2e_wall_s": 330
   },
-  "history": [
-    {
-      "at": "web2-09",
-      "unit": 348,
-      "e2e": 60,
-      "e2e_wall_s": 55.7
-    },
-    {
-      "at": "web2-10 배포 ①",
-      "unit": 348,
-      "e2e": 68
-    },
-    {
-      "at": "web2-10 배포 ②",
-      "unit": 348,
-      "e2e": 78,
-      "e2e_wall_s": 57.1
-    },
-    {
-      "at": "web2-10 배포 ③",
-      "unit": 348,
-      "e2e": 82,
-      "e2e_wall_s": 59.4
-    },
-    {
-      "at": "web2-10 최종",
-      "unit": 352,
-      "e2e": 88,
-      "e2e_wall_s": 63
-    },
-    {
-      "at": "web2-11 1부",
-      "unit": 358,
-      "e2e": 100,
-      "e2e_wall_s": 66
-    },
-    {
-      "at": "web2-11 2부",
-      "unit": 366,
-      "e2e": 116,
-      "e2e_wall_s": 114
-    },
-    {
-      "at": "web2-12 1부",
-      "unit": 366,
-      "e2e": 128,
-      "e2e_wall_s": 150
-    },
-    {
-      "at": "web2-12 2부",
-      "unit": 370,
-      "e2e": 134,
-      "e2e_wall_s": 156
-    },
-    {
-      "at": "web2-12 3부",
-      "unit": 373,
-      "e2e": 146,
-      "e2e_wall_s": 198
-    },
-    {
-      "at": "web2-13 4부",
-      "unit": 403,
-      "e2e": 156
-    },
-    {
-      "at": "web2-14 마감",
-      "unit": 416,
-      "e2e": 164,
-      "e2e_wall_s": 258
-    },
-    {
-      "at": "web2-15 마감",
-      "unit": 426,
-      "e2e": 174,
-      "e2e_passed": 172,
-      "e2e_wall_s": 264,
-      "note": "e2e 통과 172 — dim.spec 인식기 감지 1팔×2dpr이 선행 결함으로 실패. ⚠ 당시 「380c3f9에서 재현」의 워크트리 실행은 잔존 dev 서버 오염으로 증거 무효(PITFALLS #70) — 결론 자체는 web2-16이 깨끗한 서버로 재확인(380c3f9=c0faaaf+문서 커밋이고 c0faaaf 실패 실측)"
-    },
-    {
-      "at": "web2-16 1부",
-      "unit": 426,
-      "e2e": 176,
-      "e2e_passed": 176,
-      "e2e_failed": 0,
-      "e2e_wall_s": 258
-    },
-    {
-      "at": "web2-16 2부",
-      "unit": 437,
-      "e2e": 178,
-      "e2e_passed": 178,
-      "e2e_failed": 0,
-      "e2e_wall_s": 258
-    },
-    {
-      "at": "web2-16 3부",
-      "unit": 437,
-      "e2e": 180,
-      "e2e_passed": 180,
-      "e2e_failed": 0,
-      "e2e_wall_s": 282
-    },
-    {
-      "at": "web2-16 3부",
-      "unit": {
-        "command": "npm test (vitest)",
-        "files": 46,
-        "tests": 437,
-        "wall_s": 4.2,
-        "note": "web2-16 2부 +11팔(axisproj.test — 사영 6·규칙 불변 짝 2·계수 3)"
-      },
-      "e2e": {
-        "command": "npm run e2e (playwright, dpr1+dpr2)",
-        "cases": 180,
-        "arms": 90,
-        "wall_s": 282,
-        "arms_source": "npx playwright test --list → 「Total: 180 tests in 22 files」(90팔). --list 출력이 정본(#69 ㉤)",
-        "passed": 180,
-        "failed": 0,
-        "note": "web2-16 3부 +1팔(waitfade.spec 3-b 즉시 끊김·복귀). ⚠ 이 회차에 «tail이 4 failed를 잘라 176을 전량으로 읽을 뻔»한 사건이 있었다 — --list 총수 대조가 잡았다(NOTES 3부 절)"
-      }
-    },
-    {
-      "at": "web2-17 1~3부(배포 ① efe6202)",
-      "unit": {
-        "files": 49,
-        "tests": 467,
-        "wall_s": 4.5
-      },
-      "e2e": {
-        "cases": 188,
-        "arms": 94,
-        "passed": 188,
-        "failed": 0
-      }
-    },
-    {
-      "at": "web2-17 4·5부",
-      "unit": 480,
-      "e2e": 190,
-      "e2e_wall_s": 330
-    },
-    {
-      "at": "web2-18",
-      "unit": {
-        "files": 52,
-        "tests": 487,
-        "wall_s": 7.1
-      },
-      "e2e": {
-        "cases": 202,
-        "wall_s": 894
-      }
-    },
-    {
-      "at": "web2-19",
-      "unit": 511,
-      "e2e": 234,
-      "note": "⚠ 그 회차가 이 원장을 안 갱신했다 — web2-25가 채웠다(수는 HANDOFF web2-19 절의 마감 보고: 단위 511/0/511·56파일 · e2e 234/0/234·30파일·7.8m)",
-      "e2e_wall_s": 468
-    },
-    {
-      "at": "web2-20",
-      "unit": 532,
-      "unit_files": 59,
-      "e2e": 252,
-      "e2e_wall_s": 1152
-    },
-    {
-      "at": "web2-21",
-      "unit": 555,
-      "unit_files": 63,
-      "e2e": 258,
-      "e2e_wall_s": 1134
-    },
-    {
-      "at": "web2-22",
-      "unit": 568,
-      "e2e": 270,
-      "e2e_wall_s": 1224
-    },
-    {
-      "at": "web2-24",
-      "unit": 578,
-      "e2e": 276,
-      "e2e_wall_s": 1236
-    },
-    {
-      "at": "web2-23",
-      "unit": 595,
-      "e2e": 290,
-      "e2e_wall_s": 1260,
-      "note": "⚠ 그 회차가 이 원장을 안 갱신했다 — web2-25가 마감 보고(HANDOFF web2-23 절)에서 옮겨 적었다"
-    },
-    {
-      "at": "web2-25",
-      "unit": 626,
-      "e2e": 310,
-      "e2e_wall_s": 1458
-    },
-    {
-      "at": "web2-30",
-      "unit": 703,
-      "e2e": 380,
-      "e2e_wall_s": 1716,
-      "note": "HANDOFF web2-30 ④의 보고에서 채웠다(그 회차가 이 원장을 안 갱신했다 — #42 ⑨). web2-26~29는 여전히 결번이다."
-    },
-    {
-      "at": "web2-32",
-      "unit": 711,
-      "e2e": 378,
-      "e2e_wall_s": 2718
-    },
-    {
-      "at": "web2-35",
-      "unit": 712,
-      "unit_files": 92,
-      "e2e": "미실행(부분 20케이스만 — e2e.web2_35_partial)",
-      "note": "인식기 순수 함수 변경이라 전량 e2e를 안 돌렸다. CI 게이트 spec은 돌렸다."
-    }
-  ],
-  "environment": {
-    "disk_avail_bytes": 10421108736,
-    "note": "#45 규약 — «느려졌다» 보고가 오면 이 값(bavail·판정용)부터 본다. 값 출처는 df의 Available 열.",
-    "disk_free_bytes_note": "옛 필드명 disk_free_bytes는 #45 후속이 판정 금지로 못 박아 이름을 바로잡았다(값 자체가 Available 열이었다 — 이름만 틀렸던 것).",
-    "web2_18": "시간 측정 원장(cost18)은 `--workers=1` 전용이다(#71 ㉠) — 워커 둘이면 dpr1·dpr2가 CPU를 다퉈 값이 배 가까이 부푼다."
+  {
+   "at": "web2-18",
+   "unit": {
+    "files": 52,
+    "tests": 487,
+    "wall_s": 7.1
+   },
+   "e2e": {
+    "cases": 202,
+    "wall_s": 894
+   }
   },
-  "history_note": "⚠ **실제로 돈 차례**다 — `web2-23`은 `web2-24` **다음에** 돌았다(HANDOFF web2-23 절 머리 · 그래서 단위 수가 578 → 595로 올라간다). ⚠ web2-19·22·24 행은 그 회차들이 이 원장을 안 갱신해 **web2-25가 채웠다** — 수는 HANDOFF 각 절의 마감 보고이고 벽시계는 없는 것도 있다(A-4의 «비용을 원장에 남긴다»가 그 회차들에서 안 지켜졌다).",
-  "unit_wall_note": "⚠ **벽시계가 17.0 → 28.3s로 늘었다**(#47 · 2차 리뷰어 [9]가 이 원장의 낡음을 잡았다). A-4의 「느려졌다는 보고를 받으면 디스크 여유부터 본다」를 돌렸다 — 여유는 아래 `disk_avail_bytes`이고 9차의 «여유 0»과 다르다. 신설 파일 단독은 2.3s뿐이므로 **증가분이 신설 팔의 몫이 아니다**(같은 세션에서 같은 트리를 두 번 돌렸을 때도 38.0s와 28.3s로 갈렸다 — 컨테이너 부하의 몫이다). **팔의 비용으로 읽지 않는다.**"
+  {
+   "at": "web2-19",
+   "unit": 511,
+   "e2e": 234,
+   "note": "⚠ 그 회차가 이 원장을 안 갱신했다 — web2-25가 채웠다(수는 HANDOFF web2-19 절의 마감 보고: 단위 511/0/511·56파일 · e2e 234/0/234·30파일·7.8m)",
+   "e2e_wall_s": 468
+  },
+  {
+   "at": "web2-20",
+   "unit": 532,
+   "unit_files": 59,
+   "e2e": 252,
+   "e2e_wall_s": 1152
+  },
+  {
+   "at": "web2-21",
+   "unit": 555,
+   "unit_files": 63,
+   "e2e": 258,
+   "e2e_wall_s": 1134
+  },
+  {
+   "at": "web2-22",
+   "unit": 568,
+   "e2e": 270,
+   "e2e_wall_s": 1224
+  },
+  {
+   "at": "web2-24",
+   "unit": 578,
+   "e2e": 276,
+   "e2e_wall_s": 1236
+  },
+  {
+   "at": "web2-23",
+   "unit": 595,
+   "e2e": 290,
+   "e2e_wall_s": 1260,
+   "note": "⚠ 그 회차가 이 원장을 안 갱신했다 — web2-25가 마감 보고(HANDOFF web2-23 절)에서 옮겨 적었다"
+  },
+  {
+   "at": "web2-25",
+   "unit": 626,
+   "e2e": 310,
+   "e2e_wall_s": 1458
+  },
+  {
+   "at": "web2-30",
+   "unit": 703,
+   "e2e": 380,
+   "e2e_wall_s": 1716,
+   "note": "HANDOFF web2-30 ④의 보고에서 채웠다(그 회차가 이 원장을 안 갱신했다 — #42 ⑨). web2-26~29는 여전히 결번이다."
+  },
+  {
+   "at": "web2-32",
+   "unit": 711,
+   "e2e": 378,
+   "e2e_wall_s": 2718
+  },
+  {
+   "at": "web2-35",
+   "unit": 712,
+   "unit_files": 92,
+   "e2e": "미실행(부분 20케이스만 — e2e.web2_35_partial)",
+   "note": "인식기 순수 함수 변경이라 전량 e2e를 안 돌렸다. CI 게이트 spec은 돌렸다."
+  },
+  {
+   "at": "web2-35 병합",
+   "unit": 728,
+   "e2e": 394,
+   "e2e_wall_s": 2880
+  }
+ ],
+ "environment": {
+  "disk_avail_bytes": 10421108736,
+  "note": "#45 규약 — «느려졌다» 보고가 오면 이 값(bavail·판정용)부터 본다. 값 출처는 df의 Available 열.",
+  "disk_free_bytes_note": "옛 필드명 disk_free_bytes는 #45 후속이 판정 금지로 못 박아 이름을 바로잡았다(값 자체가 Available 열이었다 — 이름만 틀렸던 것).",
+  "web2_18": "시간 측정 원장(cost18)은 `--workers=1` 전용이다(#71 ㉠) — 워커 둘이면 dpr1·dpr2가 CPU를 다퉈 값이 배 가까이 부푼다."
+ },
+ "history_note": "⚠ **실제로 돈 차례**다 — `web2-23`은 `web2-24` **다음에** 돌았다(HANDOFF web2-23 절 머리 · 그래서 단위 수가 578 → 595로 올라간다). ⚠ web2-19·22·24 행은 그 회차들이 이 원장을 안 갱신해 **web2-25가 채웠다** — 수는 HANDOFF 각 절의 마감 보고이고 벽시계는 없는 것도 있다(A-4의 «비용을 원장에 남긴다»가 그 회차들에서 안 지켜졌다).",
+ "unit_wall_note": "⚠ **벽시계가 17.0 → 28.3s로 늘었다**(#47 · 2차 리뷰어 [9]가 이 원장의 낡음을 잡았다). A-4의 「느려졌다는 보고를 받으면 디스크 여유부터 본다」를 돌렸다 — 여유는 아래 `disk_avail_bytes`이고 9차의 «여유 0»과 다르다. 신설 파일 단독은 2.3s뿐이므로 **증가분이 신설 팔의 몫이 아니다**(같은 세션에서 같은 트리를 두 번 돌렸을 때도 38.0s와 28.3s로 갈렸다 — 컨테이너 부하의 몫이다). **팔의 비용으로 읽지 않는다.**"
 }

@@ -1,5 +1,5 @@
 {
-  "n_flags": 5892,
+  "n_flags": 5894,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -21256,8 +21256,18 @@
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
+      "path": "paper_grain26_web2.json:gate.current[0].bare_sd",
+      "val": 1.617195266589988e-11,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
       "path": "paper_grain26_web2.json:gate.current[1].bare_sd",
-      "val": 4.0472514228895307e-11,
+      "val": 7.02016222930979e-12,
+      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "paper_grain26_web2.json:gate.current[2].bare_sd",
+      "val": 5.5223381423274986e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -21272,7 +21282,7 @@
     },
     {
       "path": "paper_grain30_web2.json:gate.current[2].bare",
-      "val": 1.617195266589988e-11,
+      "val": 6.707523425575346e-12,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -21282,12 +21292,12 @@
     },
     {
       "path": "paper_grain30_web2.json:gate.current[4].bare",
-      "val": 8.421352504228707e-11,
+      "val": 4.013145371573046e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
       "path": "paper_grain30_web2.json:gate.current[5].bare",
-      "val": 8.421352504228707e-11,
+      "val": 4.0472514228895307e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
@@ -29927,7 +29937,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 498,
+      "files_scanned": 500,
       "exts_declared": [
         ".md",
         ".py",
@@ -29951,7 +29961,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 498,
+      "files_scanned": 500,
       "exts_declared": [
         ".md",
         ".py",
@@ -30402,7 +30412,7 @@
       47,
       76,
       77,
-      82
+      83
     ],
     "graphite_web2.json": [
       40,
@@ -30956,7 +30966,6 @@
       49
     ],
     "test_cost_web2.json": [
-      14,
       42,
       45,
       47,
