@@ -44,7 +44,45 @@
       0.2,
       0.25
     ],
-    "reachability_note": "⚠ **이 게이트는 실제로 실패시킬 수 있다**(D-3). **런타임 그대로의 축**에서 잰다($P는 실린 0.10 고정, 궤적 문턱만 올린다): 채택값 0.11에서 오답 2이고 0.125부터 오른다. 「오답 ≤ 2」는 항등이 아니라 **좁은 띠**다(폭 0.026 = 문턱의 24%)."
+    "reachability_rows": [
+      {
+        "th": 0.11,
+        "ok": 770,
+        "wrong": 2,
+        "noise": 0
+      },
+      {
+        "th": 0.125,
+        "ok": 770,
+        "wrong": 3,
+        "noise": 0
+      },
+      {
+        "th": 0.13,
+        "ok": 770,
+        "wrong": 5,
+        "noise": 0
+      },
+      {
+        "th": 0.15,
+        "ok": 767,
+        "wrong": 24,
+        "noise": 0
+      },
+      {
+        "th": 0.2,
+        "ok": 733,
+        "wrong": 72,
+        "noise": 1
+      },
+      {
+        "th": 0.25,
+        "ok": 732,
+        "wrong": 148,
+        "noise": 2
+      }
+    ],
+    "reachability_note": "⚠ **이 게이트는 실제로 실패시킬 수 있다**(D-3). **런타임 축**에서 잰다(④ $P를 실린 0.10으로 켠 채 궤적 문턱만 올린다 — `reachability_rows`가 `ok`까지 낸다): 채택값 0.11에서 오답 2이고 0.125부터 오른다. ⚠⚠ **2차 리뷰어 [12] 정정**: 초판은 이 좁은 띠(0.026)를 「「오답 ≤ 2」의 폭」이라고 적었는데 **틀렸다** — 「오답 ≤ 2」 자체는 0.02~0.12의 넓은 구간에서 성립한다(폭 ≈ 0.10). 0.026은 **「맞는 구제의 최악 거리 0.098」과 「첫 오답 0.124」 사이**, 곧 «맞음이 최대이면서 오답이 안 느는» 띠다. 두 문장은 다른 말이다."
   },
   "constants": {
     "TRAJ_ACCEPT": 0.11,
@@ -84,10 +122,14 @@
     "1_plus_p_dollar_only": 695,
     "2_plus_traj_only": 707,
     "3_plus_both (런타임)": 770,
+    "1b_plus_p_dollar_at_shipped_0.10": 725,
+    "1b_wrong": 3,
     "third_view_at_all (0→1)": 189,
-    "traj_over_p_dollar (1→2 대신)": 12,
-    "traj_marginal_given_p_dollar (1→3)": 75,
-    "p_dollar_marginal_given_traj (2→3)": 63
+    "traj_over_p_dollar (머리끼리 · 1→2 대신)": 12,
+    "traj_marginal_given_p_dollar_at_0.095 (1→3)": 75,
+    "traj_marginal_given_p_dollar_at_shipped_0.10 (1b→3)": 45,
+    "p_dollar_marginal_given_traj (2→3)": 63,
+    "note2": "⚠⚠ 2차 리뷰어 [3]: `traj_marginal_given_p_dollar` 75는 **$P 문턱을 0.095 → 0.10으로 옮긴 몫까지 포함**한 값이다. $P를 실린 0.10에 고정하고 ③만 더한 한계 이득은 **45**다 — 그쪽이 「궤적이 더 얹는 몫」의 정직한 수이고, 씨 변동폭도 그쪽에서만 선다(seed_variance)."
   },
   "four_all_forms": {
     "before": 77,
@@ -2544,44 +2586,270 @@
     }
   },
   "traj_vs_p_dollar_by_form": {
-    "note": "래스터가 거부한 칸에서만. 「궤적만」이 궤적의 고유 몫이고 「$P만」이 그 반대다 — 둘의 차가 trajectory_alone.vs_p_dollar이다.",
-    "rows": {
-      "4·열린·2획 (현행 템플릿)": {
-        "traj_only": 0,
-        "pdollar_only": 0,
-        "both": 44,
-        "neither": 0
+    "note": "⚠⚠ **동작점을 맞춰 다시 냈다**(2차 리뷰어 [1][2][3] — 이 회차가 세운 #82 ㉡의 재발). 초판은 $P를 **제 최선 문턱 0.095**로 둔 표를 만들고 그것을 **런타임($P 0.10)**의 총계 770 옆에 세워 「770의 근거」로 썼다. 두 표의 자가 달랐다: 0.095 표가 「둘 다 못 살린다」로 적은 25칸을 런타임은 실제로 살린다. **인용은 `at_runtime`으로 한다.**",
+    "at_runtime": {
+      "p_threshold": 0.1,
+      "sum": {
+        "traj_only": 45,
+        "pdollar_only": 63,
+        "both": 156,
+        "neither": 108
       },
-      "4·닫힌·2획 (세로가 꼭짓점에서)": {
-        "traj_only": 50,
-        "pdollar_only": 0,
-        "both": 27,
-        "neither": 0
-      },
-      "4·닫힌·1획 (되짚어 내려긋기)": {
-        "traj_only": 0,
-        "pdollar_only": 0,
-        "both": 80,
-        "neither": 0
-      },
-      "4·열린·1획 (세로 먼저 · 사선 나중)": {
-        "traj_only": 0,
-        "pdollar_only": 0,
-        "both": 0,
-        "neither": 42
-      },
-      "1·위 세리프 (1획 꺾임)": {
-        "traj_only": 0,
-        "pdollar_only": 6,
-        "both": 0,
-        "neither": 66
-      },
-      "1·위 세리프 + 밑줄 (2획)": {
-        "traj_only": 0,
-        "pdollar_only": 32,
-        "both": 0,
-        "neither": 25
+      "rows": {
+        "4·열린·2획 (현행 템플릿)": {
+          "traj_only": 0,
+          "pdollar_only": 0,
+          "both": 44,
+          "neither": 0
+        },
+        "4·닫힌·2획 (세로가 꼭짓점에서)": {
+          "traj_only": 45,
+          "pdollar_only": 0,
+          "both": 32,
+          "neither": 0
+        },
+        "4·닫힌·1획 (되짚어 내려긋기)": {
+          "traj_only": 0,
+          "pdollar_only": 0,
+          "both": 80,
+          "neither": 0
+        },
+        "4·열린·1획 (세로 먼저 · 사선 나중)": {
+          "traj_only": 0,
+          "pdollar_only": 0,
+          "both": 0,
+          "neither": 42
+        },
+        "1·위 세리프 (1획 꺾임)": {
+          "traj_only": 0,
+          "pdollar_only": 26,
+          "both": 0,
+          "neither": 46
+        },
+        "1·위 세리프 + 밑줄 (2획)": {
+          "traj_only": 0,
+          "pdollar_only": 37,
+          "both": 0,
+          "neither": 20
+        }
       }
+    },
+    "at_p_dollar_best": {
+      "p_threshold": 0.095,
+      "sum": {
+        "traj_only": 50,
+        "pdollar_only": 38,
+        "both": 151,
+        "neither": 133
+      },
+      "rows": {
+        "4·열린·2획 (현행 템플릿)": {
+          "traj_only": 0,
+          "pdollar_only": 0,
+          "both": 44,
+          "neither": 0
+        },
+        "4·닫힌·2획 (세로가 꼭짓점에서)": {
+          "traj_only": 50,
+          "pdollar_only": 0,
+          "both": 27,
+          "neither": 0
+        },
+        "4·닫힌·1획 (되짚어 내려긋기)": {
+          "traj_only": 0,
+          "pdollar_only": 0,
+          "both": 80,
+          "neither": 0
+        },
+        "4·열린·1획 (세로 먼저 · 사선 나중)": {
+          "traj_only": 0,
+          "pdollar_only": 0,
+          "both": 0,
+          "neither": 42
+        },
+        "1·위 세리프 (1획 꺾임)": {
+          "traj_only": 0,
+          "pdollar_only": 6,
+          "both": 0,
+          "neither": 66
+        },
+        "1·위 세리프 + 밑줄 (2획)": {
+          "traj_only": 0,
+          "pdollar_only": 32,
+          "both": 0,
+          "neither": 25
+        }
+      },
+      "note": "초판이 쓰던 자. 대조용으로 남긴다 — 지우면 정정이 안 보인다."
+    },
+    "reconciles": "런타임 구제 수 = 45 + 63 + 156 = 264 = 770 − 506 ✔ · 합 = 372 = 기준선 거부 수 ✔ (초판 표는 239만 설명해 25칸이 떠 있었다)."
+  },
+  "seed_variance": {
+    "note": "씨 5개를 각각 176칸으로 따로 낸다. 「12칸」은 전량(880) 기준이므로 씨당으로는 12/5 ≈ 2.4칸이다.",
+    "per_seed": [
+      {
+        "k": 0,
+        "n": 176,
+        "base": 95,
+        "traj": 136,
+        "traj_wrong": 0,
+        "pdollar_095": 137,
+        "pdollar_095_wrong": 0,
+        "pdollar_010": 144,
+        "pdollar_010_wrong": 0,
+        "runtime": 153,
+        "runtime_wrong": 0,
+        "traj_minus_pdollar095": -1,
+        "traj_marginal_given_pdollar": 9,
+        "pdollar_marginal_given_traj": 17
+      },
+      {
+        "k": 1,
+        "n": 176,
+        "base": 107,
+        "traj": 141,
+        "traj_wrong": 0,
+        "pdollar_095": 141,
+        "pdollar_095_wrong": 0,
+        "pdollar_010": 147,
+        "pdollar_010_wrong": 0,
+        "runtime": 155,
+        "runtime_wrong": 0,
+        "traj_minus_pdollar095": 0,
+        "traj_marginal_given_pdollar": 8,
+        "pdollar_marginal_given_traj": 14
+      },
+      {
+        "k": 2,
+        "n": 176,
+        "base": 106,
+        "traj": 147,
+        "traj_wrong": 1,
+        "pdollar_095": 140,
+        "pdollar_095_wrong": 1,
+        "pdollar_010": 147,
+        "pdollar_010_wrong": 1,
+        "runtime": 157,
+        "runtime_wrong": 1,
+        "traj_minus_pdollar095": 7,
+        "traj_marginal_given_pdollar": 10,
+        "pdollar_marginal_given_traj": 10
+      },
+      {
+        "k": 3,
+        "n": 176,
+        "base": 100,
+        "traj": 144,
+        "traj_wrong": 0,
+        "pdollar_095": 140,
+        "pdollar_095_wrong": 0,
+        "pdollar_010": 146,
+        "pdollar_010_wrong": 0,
+        "runtime": 155,
+        "runtime_wrong": 0,
+        "traj_minus_pdollar095": 4,
+        "traj_marginal_given_pdollar": 9,
+        "pdollar_marginal_given_traj": 11
+      },
+      {
+        "k": 4,
+        "n": 176,
+        "base": 98,
+        "traj": 139,
+        "traj_wrong": 1,
+        "pdollar_095": 137,
+        "pdollar_095_wrong": 1,
+        "pdollar_010": 141,
+        "pdollar_010_wrong": 2,
+        "runtime": 150,
+        "runtime_wrong": 1,
+        "traj_minus_pdollar095": 2,
+        "traj_marginal_given_pdollar": 9,
+        "pdollar_marginal_given_traj": 11
+      }
+    ],
+    "spread_traj_minus_pdollar095": 8,
+    "pdollar_010_wrong_per_seed": [
+      0,
+      0,
+      1,
+      0,
+      2
+    ],
+    "pdollar_010_wrong_seeds_over_2": 0,
+    "traj_wrong_per_seed": [
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    "runtime_wrong_per_seed": [
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    "head_to_head": {
+      "per_seed": [
+        -1,
+        0,
+        7,
+        4,
+        2
+      ],
+      "spread": 8,
+      "sign_flips": 2,
+      "verdict": "⚠⚠ **결론이 안 선다**(#14). 전량 12칸인데 씨별 폭이 8이고 **씨 하나에서는 부호가 뒤집힌다**. 「궤적이 $P보다 낫다」를 이 표본으로 주장하지 않는다."
+    },
+    "marginal_traj_given_pdollar": {
+      "per_seed": [
+        9,
+        8,
+        10,
+        9,
+        9
+      ],
+      "spread": 2,
+      "total": 45,
+      "verdict": "**선다.** 씨마다 거의 같고 부호가 안 바뀐다 — 「사슬에 ③이 있으면 없을 때보다 낫다」는 이 표본에서 유효하다."
+    },
+    "marginal_pdollar_given_traj": {
+      "per_seed": [
+        17,
+        14,
+        10,
+        11,
+        11
+      ],
+      "spread": 7,
+      "total": 63
+    }
+  },
+  "headroom_normalized": {
+    "note": "⚠ 원수 이득(220 vs 44)은 **분모가 다르다**(#11). 남은 여유 대비 몫을 함께 낸다 — 그 자로 보면 표본 «안»이 더 높다(100% vs 66.7%).",
+    "in_sample": {
+      "before": 276,
+      "after": 320,
+      "n": 320,
+      "headroom": 44,
+      "gain": 44,
+      "filled": 1
+    },
+    "held_out": {
+      "before": 230,
+      "after": 450,
+      "n": 560,
+      "headroom": 330,
+      "gain": 220,
+      "filled": 0.6666666666666666
+    }
+  },
+  "stroke_merge_by_form": {
+    "note": "`mergeTolerant`(획 병합)를 끄면 잃는 칸이 어느 자형인가 — 2차 리뷰어 [6]이 물은 자리다.",
+    "rows": {
+      "4·닫힌·1획 (되짚어 내려긋기)": 80
     }
   },
   "traj_on_accepted": {

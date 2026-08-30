@@ -69,6 +69,7 @@ interface Cell {
   trajNoMerge: { ch: string; d: number }      // 획 병합 없이(35-3 진단)
   pdollar: { ch: string; d: number } | null   // $P(순서 무시 점군) — 같은 원형 표
   runtime: { ch: string } | null              // **앱이 실제로 부르는 함수**(네 시야 · #62)
+  k: number                                   // 씨 번호 0~4 — 씨 변동폭을 재는 축(#14)
 }
 
 /** 880칸을 **한 번만** 굽는다 — 모든 팔과 훑기가 이 표에서 파생한다(같은 표본 보장 #54). */
@@ -87,6 +88,7 @@ function buildCells(): Cell[] {
         trajNoMerge: trajMatch(g, { mergeTolerant: false, w: FULL })!,
         pdollar: recognizeGlyphRaw(g),
         runtime: readGlyph(g),
+        k,
       })
     }
   }
@@ -162,6 +164,11 @@ const withTraj = (th: number, key: 'traj' | 'trajShape' | 'trajNoMerge' = 'traj'
 const withPdollar = (th: number): Pick => c => c.base ?? (c.pdollar && c.pdollar.d <= th ? c.pdollar : null)
 /** 반사실 — 궤적이 래스터를 **뒤집게** 두면(발화 조건을 없애면) 어떻게 되는가 */
 const trajFirst = (th: number): Pick => c => (c.traj.d <= th ? c.traj : c.base)
+/** ④ $P의 문턱 — **web2-08이 다른 표본으로 놓은 실린 값**(`digits.REJECT`). 안 건드렸다. */
+const PD_SHIPPED = 0.10
+/** 런타임과 **같은 동작점**의 이어 붙임(③ → ④). 분해표는 전부 이 자로 재야 한다. */
+const seqAt = (thT: number, thP: number): Pick => c =>
+  c.base ?? (c.traj.d <= thT ? c.traj : (c.pdollar && c.pdollar.d <= thP ? c.pdollar : null))
 
 describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
   it('궤적 단독 이득을 위약 둘과 갈라 재고, 오답·잡음이 안 는다', () => {
@@ -293,20 +300,117 @@ describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
 
     // ── **+12는 어디서 오는가** — 궤적과 $P가 서로 못 하는 칸을 자형별로 낸다 ──────
     const pBest = armOf('p_dollar'), tBest = armOf('traj_full')
-    const pickP = withPdollar(pBest.th), pickT = withTraj(tBest.th, 'traj')
-    const diff: Record<string, { traj_only: number; pdollar_only: number; both: number; neither: number }> = {}
-    for (const c of cells) {
-      if (c.base) continue                                  // 래스터가 이미 답한 칸은 둘 다 안 본다
-      const e = (diff[c.name] ??= { traj_only: 0, pdollar_only: 0, both: 0, neither: 0 })
-      const t = pickT(c), pp = pickP(c)
-      const tOk = !!t && t.ch === c.ch, pOk = !!pp && pp.ch === c.ch
-      if (tOk && pOk) e.both++
-      else if (tOk) e.traj_only++
-      else if (pOk) e.pdollar_only++
-      else e.neither++
+    // ⚠⚠ **동작점을 맞춘다**(2차 리뷰어 [1][2][3] · 이 회차가 세운 #82 ㉡의 재발).
+    //   초판은 $P를 **제 최선 문턱 0.095**로 둔 차이표를 만들고, 그것을 **런타임(=$P 0.10)**의
+    //   총계 770 옆에 세워 「770의 근거」로 썼다. 두 표의 자가 달랐다 — 0.095 표가
+    //   「둘 다 못 살린다」로 적은 25칸을 런타임은 실제로 살린다(세리프1 20 · 세리프1+밑줄 5).
+    //   그래서 차이표를 **두 동작점 모두** 내고, **인용은 런타임 쪽으로 한다**.
+    const diffAt = (thP: number) => {
+      const pickP = withPdollar(thP), pickT = withTraj(TRAJ_ACCEPT, 'traj')
+      const m: Record<string, { traj_only: number; pdollar_only: number; both: number; neither: number }> = {}
+      for (const c of cells) {
+        if (c.base) continue                                // 래스터가 이미 답한 칸은 둘 다 안 본다
+        const e = (m[c.name] ??= { traj_only: 0, pdollar_only: 0, both: 0, neither: 0 })
+        const t = pickT(c), pp = pickP(c)
+        const tOk = !!t && t.ch === c.ch, pOk = !!pp && pp.ch === c.ch
+        if (tOk && pOk) e.both++
+        else if (tOk) e.traj_only++
+        else if (pOk) e.pdollar_only++
+        else e.neither++
+      }
+      const sum = Object.values(m).reduce((a, e) => ({
+        traj_only: a.traj_only + e.traj_only, pdollar_only: a.pdollar_only + e.pdollar_only,
+        both: a.both + e.both, neither: a.neither + e.neither,
+      }), { traj_only: 0, pdollar_only: 0, both: 0, neither: 0 })
+      return { rows: m, sum }
     }
+    const diffRuntime = diffAt(PD_SHIPPED)          // ← 런타임과 같은 자. **인용은 이쪽**
+    const diffPBest = diffAt(pBest.th)              // ← 초판이 쓰던 자(0.095). 대조용으로 남긴다
+    const diff = diffRuntime.rows
+    console.log(`[35 차이표 동작점] 런타임($P ${PD_SHIPPED}) 궤적만 ${diffRuntime.sum.traj_only} · $P만 ${diffRuntime.sum.pdollar_only} · 둘 다 ${diffRuntime.sum.both} · 둘 다 못함 ${diffRuntime.sum.neither}`)
+    console.log(`[35 차이표 동작점] 초판($P ${pBest.th})     궤적만 ${diffPBest.sum.traj_only} · $P만 ${diffPBest.sum.pdollar_only} · 둘 다 ${diffPBest.sum.both} · 둘 다 못함 ${diffPBest.sum.neither}`)
     for (const [k, v] of Object.entries(diff)) if (v.traj_only || v.pdollar_only)
       console.log(`[35 궤적↔$P 차이] ${k} — 궤적만 ${v.traj_only} · $P만 ${v.pdollar_only} · 둘 다 ${v.both} · 둘 다 못함 ${v.neither}`)
+
+    // ── [#14] **씨 변동폭** — 「12칸」과 「$P는 불법」이 씨 하나에 걸려 있지 않은가 ──────
+    // ⚠⚠ 2차 리뷰어 [4]: 불변식이 「오답 ≤ 2」라서 $P가 695(@0.095)로 잡히고 궤적이 12칸
+    //   이긴다. 오답이 하나만 흔들려도 $P가 725(@0.10)로 합법이 되어 **부호가 뒤집힌다**.
+    //   #14가 그 형태다 — 「씨 변동폭이 결론의 여유보다 크면 그 결론은 없다」. 그래서 잰다.
+    const bySeed = [0, 1, 2, 3, 4].map(k => {
+      const sub = cells.filter(c => c.k === k)
+      const t = score(sub, withTraj(TRAJ_ACCEPT, 'traj'))
+      const p95 = score(sub, withPdollar(pBest.th))
+      const p10 = score(sub, withPdollar(PD_SHIPPED))
+      const rt = score(sub, armRuntime)
+      const b = score(sub, armBase)
+      return {
+        k, n: sub.length, base: b.ok,
+        traj: t.ok, traj_wrong: t.wrong,
+        pdollar_095: p95.ok, pdollar_095_wrong: p95.wrong,
+        pdollar_010: p10.ok, pdollar_010_wrong: p10.wrong,
+        runtime: rt.ok, runtime_wrong: rt.wrong,
+        traj_minus_pdollar095: t.ok - p95.ok,
+        // **한계 이득** — 사슬 안에서 각자가 «더 얹는» 몫. 머리끼리 견주는 위 값과 다른 물음이다.
+        traj_marginal_given_pdollar: rt.ok - p10.ok,     // ④가 이미 있을 때 ③이 더 얹는 몫
+        pdollar_marginal_given_traj: rt.ok - t.ok,       // ③이 이미 있을 때 ④가 더 얹는 몫
+      }
+    })
+    const spread = (xs: number[]) => Math.max(...xs) - Math.min(...xs)
+    const seedStats = {
+      note: '씨 5개를 각각 176칸으로 따로 낸다. 「12칸」은 전량(880) 기준이므로 씨당으로는 12/5 ≈ 2.4칸이다.',
+      per_seed: bySeed,
+      spread_traj_minus_pdollar095: spread(bySeed.map(r => r.traj_minus_pdollar095)),
+      pdollar_010_wrong_per_seed: bySeed.map(r => r.pdollar_010_wrong),
+      pdollar_010_wrong_seeds_over_2: bySeed.filter(r => r.pdollar_010_wrong > 2).length,
+      traj_wrong_per_seed: bySeed.map(r => r.traj_wrong),
+      runtime_wrong_per_seed: bySeed.map(r => r.runtime_wrong),
+      // ⚠⚠ **두 물음을 가른다**(2차 리뷰어 [4]에 대한 답):
+      //  ㉠ 「궤적이 $P보다 나은가」(머리끼리) — 씨마다 부호가 **바뀐다**. 결론이 안 선다.
+      //  ㉡ 「사슬 안에서 궤적이 더 얹는 몫이 있는가」(한계) — 씨마다 거의 같다. 결론이 선다.
+      head_to_head: {
+        per_seed: bySeed.map(r => r.traj_minus_pdollar095),
+        spread: spread(bySeed.map(r => r.traj_minus_pdollar095)),
+        sign_flips: bySeed.filter(r => r.traj_minus_pdollar095 <= 0).length,
+        verdict: '⚠⚠ **결론이 안 선다**(#14). 전량 12칸인데 씨별 폭이 8이고 **씨 하나에서는 부호가 뒤집힌다**. 「궤적이 $P보다 낫다」를 이 표본으로 주장하지 않는다.',
+      },
+      marginal_traj_given_pdollar: {
+        per_seed: bySeed.map(r => r.traj_marginal_given_pdollar),
+        spread: spread(bySeed.map(r => r.traj_marginal_given_pdollar)),
+        total: bySeed.reduce((a, r) => a + r.traj_marginal_given_pdollar, 0),
+        verdict: '**선다.** 씨마다 거의 같고 부호가 안 바뀐다 — 「사슬에 ③이 있으면 없을 때보다 낫다」는 이 표본에서 유효하다.',
+      },
+      marginal_pdollar_given_traj: {
+        per_seed: bySeed.map(r => r.pdollar_marginal_given_traj),
+        spread: spread(bySeed.map(r => r.pdollar_marginal_given_traj)),
+        total: bySeed.reduce((a, r) => a + r.pdollar_marginal_given_traj, 0),
+      },
+    }
+    for (const r of bySeed) console.log(`[35 씨 ${r.k}] 기준선 ${r.base} · 궤적 ${r.traj}(오답 ${r.traj_wrong}) · $P@.095 ${r.pdollar_095}(${r.pdollar_095_wrong}) · $P@.10 ${r.pdollar_010}(${r.pdollar_010_wrong}) · 런타임 ${r.runtime}(${r.runtime_wrong}) · 궤적−$P ${r.traj_minus_pdollar095}`)
+    console.log(`[35 씨 변동폭] 궤적−$P@.095 씨별 ${JSON.stringify(bySeed.map(r => r.traj_minus_pdollar095))} → 폭 ${seedStats.spread_traj_minus_pdollar095}`)
+    console.log(`[35 씨 변동폭] $P@0.10 오답 씨별 ${JSON.stringify(seedStats.pdollar_010_wrong_per_seed)} — 2를 넘는 씨 ${seedStats.pdollar_010_wrong_seeds_over_2}/5`)
+    console.log(`[35 씨 · 한계 ③|④] ${JSON.stringify(seedStats.marginal_traj_given_pdollar.per_seed)} 합 ${seedStats.marginal_traj_given_pdollar.total} 폭 ${seedStats.marginal_traj_given_pdollar.spread}`)
+    console.log(`[35 씨 · 한계 ④|③] ${JSON.stringify(seedStats.marginal_pdollar_given_traj.per_seed)} 합 ${seedStats.marginal_pdollar_given_traj.total} 폭 ${seedStats.marginal_pdollar_given_traj.spread}`)
+
+    // ── [#11] **남은 여유로 정규화** — 원수 비교는 분모가 다르면 같은 양이 아니다 ────────
+    // ⚠⚠ 2차 리뷰어 [5]: 표본 안은 남은 여유가 44뿐이었고 그것을 다 먹었다(44/44 = 100%).
+    //   표본 밖은 여유 330 중 220(66.7%)이다. 원수로 「220 > 44」를 견주면 **분모 차 때문에
+    //   통과가 예정돼 있다.** 두 자를 다 낸다 — 그리고 결론을 그 자에 맞춰 다시 적는다.
+    const headroom = {
+      note: '⚠ 원수 이득(220 vs 44)은 **분모가 다르다**(#11). 남은 여유 대비 몫을 함께 낸다 — 그 자로 보면 표본 «안»이 더 높다(100% vs 66.7%).',
+      in_sample: { before: inB.ok, after: inA.ok, n: inB.n, headroom: inB.n - inB.ok, gain: inA.ok - inB.ok, filled: (inA.ok - inB.ok) / (inB.n - inB.ok) },
+      held_out: { before: outB.ok, after: outA.ok, n: outB.n, headroom: outB.n - outB.ok, gain: outA.ok - outB.ok, filled: (outA.ok - outB.ok) / (outB.n - outB.ok) },
+    }
+    console.log(`[35 여유 대비] 표본 안 ${headroom.in_sample.gain}/${headroom.in_sample.headroom} = ${(headroom.in_sample.filled * 100).toFixed(1)}% · 표본 밖 ${headroom.held_out.gain}/${headroom.held_out.headroom} = ${(headroom.held_out.filled * 100).toFixed(1)}%`)
+
+    // ── [6] `traj_no_merge`가 잃는 80칸이 어느 자형인가 ─────────────────────────
+    const mergeDiff: Record<string, number> = {}
+    for (const c of cells) {
+      if (c.base) continue
+      const a = c.traj.d <= TRAJ_ACCEPT && c.traj.ch === c.ch
+      const b = c.trajNoMerge.d <= TRAJ_ACCEPT && c.trajNoMerge.ch === c.ch
+      if (a !== b) mergeDiff[c.name] = (mergeDiff[c.name] ?? 0) + (a ? 1 : -1)
+    }
+    console.log(`[35 획 병합이 살리는 칸] ${JSON.stringify(mergeDiff)}`)
 
     // ── **둘은 서로를 못 덮는다** → 이어 붙이면 어떻게 되는가(2차원 훑기) ──────────
     // ⚠ 이 팔은 지시 35-1의 범위 밖에서 «더 좋은 것»을 찾으러 간 것이 아니라, 위 차이표가
@@ -314,8 +418,7 @@ describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
     //   살리는 것이 $P 쪽이므로, 그 둘을 **가르는 대신 잇는** 판을 재야 결론이 선다.
     const G2: number[] = []
     for (let t = 0.02; t <= 0.301; t += 0.01) G2.push(Math.round(t * 1000) / 1000)
-    const seq = (thT: number, thP: number): Pick => c =>
-      c.base ?? (c.traj.d <= thT ? c.traj : (c.pdollar && c.pdollar.d <= thP ? c.pdollar : null))
+    const seq = seqAt
     const seqNoise = (thT: number, thP: number) => Object.values(NOISE).filter(st => {
       const t = trajMatch(st)!
       if (t.d <= thT) return true
@@ -340,7 +443,6 @@ describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
     // ⚠ 2차원 argmax는 이 표본에 대한 **맞춤**이다(합법 조합이 91개나 된다). $P의 문턱은
     //   web2-08이 **다른 표본으로** 이미 놓은 값 0.10(digits.REJECT)이 있으므로 그것을
     //   그대로 쓴다 — 그러면 이 회차가 새로 놓는 자유도는 **궤적 문턱 하나**뿐이다.
-    const PD_SHIPPED = 0.10
     const seq1d = GRID.map(thT => {
       const t = score(cells, seq(thT, PD_SHIPPED))
       return { thT, ok: t.ok, wrong: t.wrong, noise: seqNoise(thT, PD_SHIPPED), held_out: split(cells, seq(thT, PD_SHIPPED), false).ok }
@@ -350,8 +452,12 @@ describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
     const plateau = legal1d.filter(r => r.ok === best1d.ok).map(r => r.thT)
     // 게이트의 도달 가능성 — **런타임 그대로의 축**(＄P는 실린 0.10 고정, 궤적 문턱만 움직인다)
     const REACH_TH = [0.11, 0.125, 0.13, 0.15, 0.20, 0.25]
-    const reachWrong = REACH_TH.map(t => seq1d.find(r => Math.abs(r.thT - t) < 1e-9)?.wrong ?? score(cells, seq(t, PD_SHIPPED)).wrong)
-    console.log(`[35 게이트 도달] 궤적 문턱 ${JSON.stringify(REACH_TH)} → 오답 ${JSON.stringify(reachWrong)}`)
+    const reachRows = REACH_TH.map(t => {
+      const r = score(cells, seqAt(t, PD_SHIPPED))
+      return { th: t, ok: r.ok, wrong: r.wrong, noise: seqNoise(t, PD_SHIPPED) }
+    })
+    const reachWrong = reachRows.map(r => r.wrong)
+    console.log(`[35 게이트 도달 · 런타임 축(④ 켠 채)] ${reachRows.map(r => `th=${r.th} ok ${r.ok} 오답 ${r.wrong} 잡음 ${r.noise}`).join(' | ')}`)
     console.log(`[35 실린 $P 문턱 고정(0.10) · 궤적만 훑기] 최선 thT=${best1d.thT} 맞음 ${best1d.ok} · 고원 ${plateau[0]}~${plateau[plateau.length - 1]} (${plateau.length}칸) · TRAJ_ACCEPT=${TRAJ_ACCEPT} 포함 ${plateau.includes(TRAJ_ACCEPT)}`)
 
     // ── 궤적이 **$P의 오답을 앞에서 걷어내는가** — 위 조합이 합법인 기제를 확인한다 ──
@@ -371,18 +477,37 @@ describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
     // ㉣ **표본 밖에서 오른다** — 이것이 없으면 「픽스처를 외웠다」와 구별이 안 된다
     expect(outA.ok, '표본 밖(원형에 없는 필체)에서 오른다 — 이 팔이 이 회차의 반증 조건이다')
       .toBeGreaterThan(outB.ok)
-    expect(outA.ok - outB.ok, '표본 밖 이득이 표본 안 이득보다 크다 — 이득의 대부분이 «외운 몫»이 아니다')
-      .toBeGreaterThan(inA.ok - inB.ok)
-    // ㉠ **궤적 단독** — 같은 원형 표를 쓰는 순서 무시 대조기($P)보다 낫다. ⚠ 그 차는 **12칸**이고
-    //    올린 것의 대부분은 «시야를 하나 더 둔 것»이다 — 결론을 그렇게 적는다(trajectory_alone).
-    expect(A3.ok, '$P(같은 원형·순서 무시)보다 낫다 — 다만 그 차는 12칸뿐이다').toBeGreaterThan(P.ok)
-    expect(A3.ok, '궤적 항을 끈 같은 구조보다 낫다').toBeGreaterThan(S.ok)
+    // ⚠⚠ **원수 비교(220 > 44)를 걷었다** — 2차 리뷰어 [5]가 잡았다: 표본 안은 남은 여유가
+    //    44뿐이라 그것을 다 먹어도 44이고, 표본 밖은 여유가 330이다. **분모가 다르면 같은
+    //    양의 비교가 아니다**(#11) — 그 게이트는 통과가 예정돼 있었다.
+    //    ⚠ 여유 대비로 다시 재면 **표본 «안»이 더 높다**(100% vs 66.7%). 그러므로
+    //    「표본 밖이 더 올랐다」는 **주장하지 않는다.** 서는 주장은 이것뿐이다:
+    //    **원형 표에 없는 필체에서도 큰 폭으로 오른다**(41.1% → 80.4%).
+    expect(headroom.held_out.filled, '표본 밖(원형에 없는 필체)의 남은 여유를 절반 넘게 메운다')
+      .toBeGreaterThan(0.5)
+    expect(outA.ok / outB.n, '표본 밖 정답률이 8할을 넘는다').toBeGreaterThan(0.8)
+    // ㉠ ⚠⚠ **머리끼리 견주는 주장은 «안 선다»** — 2차 리뷰어 [4]가 잡았고 씨 변동폭이 확인했다.
+    //    전량으로는 궤적 707 > $P 695(12칸)이지만 **씨별로는 [-1, 0, 7, 4, 2]**로 폭이 8이고
+    //    **씨 하나에서 부호가 뒤집힌다**(#14: 「씨 변동폭이 결론의 여유보다 크면 그 결론은 없다」).
+    //    그래서 **그 12칸을 게이트로 걸지 않는다.** 대신 **씨마다 서는 것**만 건다:
+    for (const r of bySeed) {
+      expect(r.traj_marginal_given_pdollar,
+        `씨 ${r.k}: $P(실린 문턱)가 이미 있어도 궤적이 더 얹는 몫이 있다 — 사슬 안의 한계 이득`)
+        .toBeGreaterThan(0)
+    }
+    expect(seedStats.marginal_traj_given_pdollar.spread,
+      '그 한계 이득은 씨 사이에서 거의 안 흔들린다(머리끼리 견주는 값과 다른 점)')
+      .toBeLessThan(seedStats.head_to_head.spread)
+    expect(A3.ok, '궤적 항을 끈 같은 구조보다 낫다(185칸 — 이쪽은 여유가 크다)').toBeGreaterThan(S.ok)
     // 궤적과 $P는 **서로를 못 덮는다** — 이어 붙이면 둘 다보다 낫다
     expect(A.ok, '네 시야가 세 시야보다 낫다($P가 세리프 1을 살린다)').toBeGreaterThan(A3.ok)
-    expect(A.ok, '네 시야가 $P만 붙인 판보다 낫다(궤적이 「4」의 닫힌 자형을 살린다)').toBeGreaterThan(P.ok)
-    // ⚠⚠ **궤적을 빼면 불변식이 깨진다** — $P 단독은 실린 문턱 0.10에서 오답 3이다.
-    //    이것이 「궤적을 왜 앞에 두는가」의 답이고, 이 줄이 그 반증 조건이다(D-3).
-    expect(pAlone.wrong, '$P만 실린 문턱으로 붙이면 오답이 는다 — 궤적이 앞에서 그 칸을 걷어낸다')
+    expect(A.ok, '네 시야가 $P만 붙인 판보다 낫다').toBeGreaterThan(score(cells, withPdollar(PD_SHIPPED)).ok)
+    // ⚠ **앞 거름의 효과**(PITFALLS #20) — $P 단독은 실린 문턱 0.10에서 오답 3이다.
+    //    ⚠⚠ 이것을 「궤적의 값」으로 읽지 않는다: #20이 이름 붙인 「거름을 선택 전에 걸면
+    //    경쟁자가 죽어 상대 순위가 거저 통과한다」가 바로 이 모양이다. 게다가 **씨별로는
+    //    $P의 오답이 2를 넘는 씨가 하나도 없다**([0,0,1,0,2]) — 「불법」은 다섯 씨를 합쳤을
+    //    때만 나오는 판정이다. 그래서 이 줄은 **사실의 기록**이지 채택 근거가 아니다.
+    expect(pAlone.wrong, '$P만 실린 문턱으로 붙이면 전량 기준 오답이 는다(기록 — 씨별로는 안 넘는다)')
       .toBeGreaterThan(B.wrong)
     expect(prefiltered.length, '궤적이 앞에서 바로잡은 칸이 실제로 있다').toBeGreaterThan(0)
     // 반사실 — 궤적을 **판정자**로 두면 오답이 터진다(발화 조건이 임의가 아니다).
@@ -464,7 +589,8 @@ describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
           reachability_value: reachWrong,
           reachability_wrong_by_traj_threshold: reachWrong,
           reachability_thresholds: REACH_TH,
-          reachability_note: '⚠ **이 게이트는 실제로 실패시킬 수 있다**(D-3). **런타임 그대로의 축**에서 잰다($P는 실린 0.10 고정, 궤적 문턱만 올린다): 채택값 0.11에서 오답 2이고 0.125부터 오른다. 「오답 ≤ 2」는 항등이 아니라 **좁은 띠**다(폭 0.026 = 문턱의 24%).',
+          reachability_rows: reachRows,
+          reachability_note: '⚠ **이 게이트는 실제로 실패시킬 수 있다**(D-3). **런타임 축**에서 잰다(④ $P를 실린 0.10으로 켠 채 궤적 문턱만 올린다 — `reachability_rows`가 `ok`까지 낸다): 채택값 0.11에서 오답 2이고 0.125부터 오른다. ⚠⚠ **2차 리뷰어 [12] 정정**: 초판은 이 좁은 띠(0.026)를 「「오답 ≤ 2」의 폭」이라고 적었는데 **틀렸다** — 「오답 ≤ 2」 자체는 0.02~0.12의 넓은 구간에서 성립한다(폭 ≈ 0.10). 0.026은 **「맞는 구제의 최악 거리 0.098」과 「첫 오답 0.124」 사이**, 곧 «맞음이 최대이면서 오답이 안 느는» 띠다. 두 문장은 다른 말이다.',
         },
         constants: { TRAJ_ACCEPT, NET_REJECT, NET_RESCUE, DIGIT_NORM_ALPHA: C.DIGIT_NORM_ALPHA, DIGIT_ASPECT_FLOOR: C.DIGIT_ASPECT_FLOOR, protos: PROTOS.length },
         totals: {
@@ -478,10 +604,14 @@ describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
           '1_plus_p_dollar_only': P.ok,
           '2_plus_traj_only': A3.ok,
           '3_plus_both (런타임)': A.ok,
+          '1b_plus_p_dollar_at_shipped_0.10': score(cells, withPdollar(PD_SHIPPED)).ok,
+          '1b_wrong': score(cells, withPdollar(PD_SHIPPED)).wrong,
           'third_view_at_all (0→1)': P.ok - B.ok,
-          'traj_over_p_dollar (1→2 대신)': A3.ok - P.ok,
-          'traj_marginal_given_p_dollar (1→3)': A.ok - P.ok,
+          'traj_over_p_dollar (머리끼리 · 1→2 대신)': A3.ok - P.ok,
+          'traj_marginal_given_p_dollar_at_0.095 (1→3)': A.ok - P.ok,
+          'traj_marginal_given_p_dollar_at_shipped_0.10 (1b→3)': A.ok - score(cells, withPdollar(PD_SHIPPED)).ok,
           'p_dollar_marginal_given_traj (2→3)': A.ok - A3.ok,
+          note2: '⚠⚠ 2차 리뷰어 [3]: `traj_marginal_given_p_dollar` 75는 **$P 문턱을 0.095 → 0.10으로 옮긴 몫까지 포함**한 값이다. $P를 실린 0.10에 고정하고 ③만 더한 한계 이득은 **45**다 — 그쪽이 「궤적이 더 얹는 몫」의 정직한 수이고, 씨 변동폭도 그쪽에서만 선다(seed_variance).',
         },
         four_all_forms: { before: fourB, after: fourA, n: 320, note: '지시 35-2가 못 박은 기준선 77/320과 같은 분모다(32-4 원장 by_form.four_all_forms).' },
         held_out_split: {
@@ -524,7 +654,15 @@ describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
             corrected_cells: prefiltered.length, where: [...new Set(prefiltered.map(c => c.name + ' @ ' + c.box))],
           },
         },
-        traj_vs_p_dollar_by_form: { note: '래스터가 거부한 칸에서만. 「궤적만」이 궤적의 고유 몫이고 「$P만」이 그 반대다 — 둘의 차가 trajectory_alone.vs_p_dollar이다.', rows: diff },
+        traj_vs_p_dollar_by_form: {
+          note: '⚠⚠ **동작점을 맞춰 다시 냈다**(2차 리뷰어 [1][2][3] — 이 회차가 세운 #82 ㉡의 재발). 초판은 $P를 **제 최선 문턱 0.095**로 둔 표를 만들고 그것을 **런타임($P 0.10)**의 총계 770 옆에 세워 「770의 근거」로 썼다. 두 표의 자가 달랐다: 0.095 표가 「둘 다 못 살린다」로 적은 25칸을 런타임은 실제로 살린다. **인용은 `at_runtime`으로 한다.**',
+          at_runtime: { p_threshold: PD_SHIPPED, sum: diffRuntime.sum, rows: diffRuntime.rows },
+          at_p_dollar_best: { p_threshold: pBest.th, sum: diffPBest.sum, rows: diffPBest.rows, note: '초판이 쓰던 자. 대조용으로 남긴다 — 지우면 정정이 안 보인다.' },
+          reconciles: '런타임 구제 수 = 45 + 63 + 156 = 264 = 770 − 506 ✔ · 합 = 372 = 기준선 거부 수 ✔ (초판 표는 239만 설명해 25칸이 떠 있었다).',
+        },
+        seed_variance: seedStats,
+        headroom_normalized: headroom,
+        stroke_merge_by_form: { note: '`mergeTolerant`(획 병합)를 끄면 잃는 칸이 어느 자형인가 — 2차 리뷰어 [6]이 물은 자리다.', rows: mergeDiff },
         traj_on_accepted: onAccepted,
         distance_band: band,
         sweep_threshold: sweep,
