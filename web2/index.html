@@ -850,6 +850,15 @@
             <path d="M3 9.4 10 3.6l7 5.8" /><path d="M5.2 8.6V16h9.6V8.6" />
           </svg>
         </button>
+        <!-- 돋보기(web2-31 3번) — **대상에 맞춰 화면을 채운다**(라이노 Zoom Selected/Extents).
+             고른 것이 있으면 그것, 없으면 전체. 여백은 사방 `C.ZOOM_FIT_MARGIN`(10%)이고
+             ⚠ **이동만 한다** — `Camera.f`·`fSource`를 안 건드린다(화각을 몰래 바꾸면 31-2와
+             뒤섞인다). 자리는 34-6이 남긴 여유이고 급은 이웃(작도 시점·되돌리기 둘)과 같은
+             `.ico-m`이다 — 여유 px를 여기 다시 적지 않는다(#88: 팔이 실측에서 유도한다).
+             SVG는 docs/instrument-icons.md 「돋보기」 정본 그대로다(path 수정 금지). -->
+        <button id="btn-zoom-fit" class="t ico-m" title="돋보기 — 대상에 맞춰 화면을 채운다" aria-label="돋보기">
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="14" r="9"/><path d="M20.36 20.36 L27 27"/></svg>
+        </button>
         <!-- 되돌리기·다시실행(3-a) — 은유가 없어 손 띠 **맨 위**에 두고 도구와
              **구분선**으로 가른다(제도판에서는 지우개가 이 역할이었다 — 서랍은 너무 멀다).
              ⚠ web2-34 6번이 「작도 시점으로」를 **이 묶음 안**에 넣었다: 구분선을 하나 더

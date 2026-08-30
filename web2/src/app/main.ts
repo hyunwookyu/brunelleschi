@@ -3,7 +3,7 @@
 import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc,
   pickDimTarget, pickTargetAt, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick,
   handwritingGroup, applyWrittenDim, dimTargetTie, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
-  measureTap, clearMeasure, type Tool } from './state'
+  measureTap, clearMeasure, zoomFit, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
 import { initInput } from './input'
@@ -1733,6 +1733,14 @@ function gotoDrawView() {
 document.getElementById('btn-undo')!.addEventListener('click', () => undoOrExplain())
 document.getElementById('btn-redo')!.addEventListener('click', () => redo(app))
 document.getElementById('btn-draw-view')!.addEventListener('click', () => gotoDrawView())
+// 돋보기(web2-31 3번) — 대상에 맞춰 화면을 채운다. **화면 크기의 출처는 r3d 하나다**
+// (`resize3d`가 창 변화를 그리로 넣는다 — 여기 `W`/`H`는 첫 로드의 값이라 낡는다 · #88).
+// ⚠ `level.touch()`는 「조작이 아닌 포즈 변경」의 자리다(뷰 큐브·저장한 시점과 같은 급) —
+// 접기 지연만 다시 세고 붙잡지 않는다. 아무 일도 안 했으면(대상 0) 그것도 안 부른다.
+document.getElementById('btn-zoom-fit')!.addEventListener('click', () => {
+  const r = zoomFit(app, { W: r3d.W, H: r3d.H })
+  if (r.mode !== 'none') autolevel.touch()
+})
 window.addEventListener('keydown', (e) => {
   // Esc — 떠 있는 물음을 취소한다(줄이 비면 밑줄 단어가 사라져 못 누른다).
   // 물음이 없을 때는 줄을 비우는 것뿐이고, 다음 문서 변경이 안내를 다시 쓴다.

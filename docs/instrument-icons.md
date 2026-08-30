@@ -15,7 +15,8 @@
   `fill:none · stroke:currentColor · stroke-width 1.6/32 · round cap/join · 닫힌 실루엣`.
 - **소스**(Phosphor light · MIT): 오스냅 = `compass-tool` · 치수 = `ruler` ·
   격자 = `grid-four` · 동작 = `arrows-out`(전체 화면) · `plus` · `eye` · `eye-slash` ·
-  `lock-simple`. ⚠ mdi `set-square` 는 **폐기**(채운 면 스타일) — npm 은 Phosphor 하나다.
+  `lock-simple` · **돋보기 = `magnifying-glass`**(web2-31 3번 — 아래 절이 좌표의 정본).
+  ⚠ mdi `set-square` 는 **폐기**(채운 면 스타일) — npm 은 Phosphor 하나다.
 - **자작**(아래): 축 스냅 = 삼각자 · 축척 = 삼각 스케일 · 겹 = 트레이싱지 롤 / 옐로 롤 ·
   T자(예비, 지금 쓸 자리 없음).
 
@@ -257,3 +258,22 @@
 
 ⚠ **크기 급은 `.ico-f`**(19px × `--ui-scale`)다 — 파일 서랍과 같은 급이고 안 바꾼다.
 뷰박스가 256 → 32 로 바뀌므로 `width`/`height` 속성은 두지 않는다(CSS 가 높이를 준다).
+
+### 돋보기 — 대상에 맞춰 화면 채우기 (2026-08-30 · web2-31 3번)
+
+지시 문면: 「**아이콘: 돋보기.** 실물이고 즉시 읽힌다.」 위 「규칙」의 선 문법 하나만 받는다:
+`fill:none · stroke:currentColor · stroke-width 1.6/32 · round cap/join`.
+바탕은 Phosphor light `magnifying-glass`(MIT)이고 32 뷰박스에 맞춰 다시 잡은 좌표다.
+
+- 실루엣은 **렌즈 원 + 손잡이** 둘뿐이다. 손잡이는 원의 45° 접점에서 시작한다 —
+  `14 + 9/√2 = 20.36`. 겉돌지 않고 원에 **붙어** 나온다(트레이싱지 롤의 축과 같은 문법:
+  선 아이콘의 열린 자루는 이 파일에 이미 있다).
+- 바깥 끝은 손잡이 끝 27 + 선 반폭 0.8 = **27.8** 이라 32 뷰박스 안이다.
+  왼·위 끝은 14 − 9 − 0.8 = **4.2** 로 대칭이 아니다(손잡이가 오른아래로 나가므로 맞다).
+- **크기 급은 `.ico-m`**(20px × `--ui-scale`)다 — 시점 묶음의 이웃(작도 시점·되돌리기 둘)이
+  전부 그 급이고, 34-6이 남긴 여유에 들어가는 급도 그것이다.
+  뷰박스가 32이므로 `width`/`height` 속성은 두지 않는다(CSS 가 높이를 준다 — 톱니와 같다).
+
+```svg
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="14" r="9"/><path d="M20.36 20.36 L27 27"/></svg>
+```
