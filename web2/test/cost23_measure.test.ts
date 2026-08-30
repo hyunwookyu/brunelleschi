@@ -178,6 +178,14 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
       face: Number((rs[0]!.med_ms / rs[1]!.med_ms).toFixed(2)),
       stroke: Number((rs[0]!.med_ms / rs[2]!.med_ms).toFixed(2)),
     })
+    // 고정 몫의 대역 — 가장 작은 칸이 그 하한이다(기계가 느릴수록 크다). 비가 왜
+    // 기계마다 무너지는지를 이 값이 말한다(위 단언의 근거).
+    const axis_gains = {
+      face_5_to_40_at_400: Number((at(400, 40).med_ms - at(400, 5).med_ms).toFixed(2)),
+      stroke_50_to_400_at_5: Number((at(400, 5).med_ms - at(50, 5).med_ms).toFixed(2)),
+      smallest_cell_ms: at(50, 5).med_ms,
+      note: '러너(GitHub Actions)에서는 smallest_cell_ms가 3~4ms 대역이라 **비**가 1.98까지 내려간다 — 그래서 판정은 차로 한다(web2-32 · PITFALLS #81).',
+    }
     const seedA_ratios = { face: Number((at(400, 40).med_ms / at(400, 5).med_ms).toFixed(2)),
       stroke: Number((at(400, 40).med_ms / at(50, 40).med_ms).toFixed(2)) }
     const seedB_ratios = ratioOf(seedB)
@@ -309,6 +317,7 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
       grid: { strokes: NS, faces: MS },
       rows,
       worst: { strokes: worst.strokes, faces: worst.faces, med_ms: worst.med_ms, max_ms: worst.max_ms },
+      axis_gains,
       over_budget: rows.filter(r => r.med_ms > C.BAKE_BUDGET_MS).map(r => `${r.strokes}획×${r.faces}면 ${r.med_ms}ms`),
       resolution: {
         note: '#71 ㉢ — 두 축이 실제로 값을 가르는가. 하네스가 둘 다 단언한다: '
@@ -420,7 +429,17 @@ describe('web2-23 1-b — 굽기 비용 원장(cost23)', () => {
     // 분해능(#71 ㉢) — 두 축이 값을 가른다. **중앙값끼리** 견준다(max는 GC 이상치라
     // 축이 아니라 잡음을 재게 된다 — 그 겹침 자체는 아래 max_overlap에 값으로 남긴다).
     expect(at(400, 40).med_ms).toBeGreaterThan(at(50, 40).med_ms)
-    expect(at(400, 40).med_ms).toBeGreaterThan(at(400, 5).med_ms * 2)
+    // ⚠⚠ **면 축은 «비»가 아니라 «차»로 묻는다**(web2-32 — CI가 그 이유를 냈다):
+    //   러너에는 한 번의 굽기마다 **고정 몫**이 3~4ms 있다. 이 컨테이너의 (400,5)는
+    //   1.01ms인데 러너는 **4.92ms**였다 — 같은 셈에서 (400,40)은 6.29 ↔ 9.73이다.
+    //   그러면 비는 6.2배 ↔ **1.98배**로 무너지고, 옛 단언(×2)은 그 고정 몫 때문에
+    //   0.02 차이로 빨개진다. 고정 몫은 **차를 빼면 사라진다** — 그래서 같은 주장
+    //   (「동인은 면 수다」)을 차로 다시 쓴다: **면을 5→40으로 늘리는 값이 획을
+    //   50→400으로 늘리는 값보다 크다.** 이 컨테이너 5.28 > 0.86 · 러너 4.81 > 1.4 대역.
+    //   ⛔ 임계를 낮추는 것이 아니다 — 같은 축을 **고정 몫에 안 물리는 형태로** 묻는다.
+    const faceGain = at(400, 40).med_ms - at(400, 5).med_ms
+    const strokeGain = at(400, 5).med_ms - at(50, 5).med_ms
+    expect(faceGain).toBeGreaterThan(strokeGain)
     expect(at(400, 40).med_ms).toBeGreaterThan(0.05)                // 시계 분해능 위
     // ⑦ — 밑그림이 실제로 파일을 늘렸다
     expect(bytes.after_utf8).toBeGreaterThan(bytes.before_utf8)
