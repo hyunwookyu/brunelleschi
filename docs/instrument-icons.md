@@ -74,10 +74,34 @@
 <svg viewBox="0 0 26 62"><path d="M8 3h10v40H8z" fill="#cfc7b6"/><path d="M8 3h3.4v40H8z" fill="#e0d9ca"/><path d="M14.6 3H18v40h-3.4z" fill="#bbb2a0"/><rect x="8" y="11" width="10" height="13" fill="#faf8f3"/><text x="13" y="21" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" fill="#3c3831">2B</text><path d="M8 43 L13 57 L18 43 Z" fill="#e6dfd0"/><path d="M11.75 53.5 L13 57 L14.25 53.5 Z" fill="#3f3f3f"/></svg>
 ```
 
-### 접힌 펜 — 지금 것 그대로 (참고)
+### 접힌 펜 — 촉 각인이 붙는다 (2026-08-30 · web2-34 2번 · 화면 규칙 R6)
+
+⚠ **몸통·물림쇠·원뿔·촉 path는 한 글자도 안 바뀌었다.** 바뀐 것은 **연필과 같은 문법의
+«각인 창 + 글자» 하나를 얹은 것**이다(다시 그린 것이 아니다 — 「펜·지우개 둘·면은 손대지
+않는다」는 그대로 선다). 종전 판은 촉 굵기가 **니브 사각형의 폭**으로만 있었고
+(0.77~3.00 사용자단위 = 렌더 1.16~4.50 px · 이웃 칸 차 0.45~1.29 px) 그 채널은 글자가
+아니라 **화면에서 안 읽혔다** — R6 위반. 니브 사각형은 그대로 두고 채널을 **더한다**.
+
+연필과 **같은 것**: 창의 세로 자리(`y=11 h=13`) · 글자의 기준선(`y=21`) ·
+`text-anchor=middle` · `font-family` · **`font-size=8.5`** · `fill=#3c3831`.
+연필과 **다른 것 둘**, 그리고 그 근거:
+
+- **창 폭이 몸통 폭이다**(연필 10 → 펜 **8.8**). 연필의 창도 «몸통 폭 그대로»이므로
+  규칙이 같고 수만 다르다(연필 몸통 `x 8..18`, 펜 몸통 `x 8.6..17.4`).
+- **`textLength="8.8" lengthAdjust="spacingAndGlyphs"`** — 좁은 몸통에 맞춰 **가로로만**
+  좁힌다. `font-size`를 줄이는 길(6.5까지 내려야 들어간다)은 **글자 높이를 27% 잃는다**
+  (렌더 15.00 → 11.00 px). 각인은 **높이로 읽히므로** 높이를 지키고 폭을 좁혔다:
+  실측 렌더 15.00 px로 연필 각인과 **같다**(비 1.000 · `C.FOLD_MARK_MIN_RATIO` 0.9).
+- **표기는 mm이고 소수점 앞 0을 뗀다** — `.18 · .25 · .35 · .50 · .70`.
+  펼친 촉통의 줄이 `0.18`처럼 적으므로 **같은 `toFixed(2)`의 앞 0만 떼는 것**이다
+  (새 표를 안 만든다 — 출처는 `C.NIB_MM` 하나 · #54). 다섯이 전부 **세 글자**라 폭이
+  한 값으로 고정되고, 그래서 `textLength` 하나가 다섯을 다 덮는다.
+
+글자(`fold-nib-text`)는 **main.ts가 지금 촉으로 갱신한다** — 연필의 `fold-lead-text`와
+같은 자리·같은 규약이다. 아래는 기본 촉 `.35` 예시이고 **글자만** 다르다.
 
 ```svg
-<svg viewBox="0 0 26 62"><path d="M8.6 3h8.8v32H8.6z" fill="#7f7a72"/><path d="M8.6 3h3v32h-3z" fill="#98938a"/><path d="M9.4 35h7.2v6H9.4z" fill="#5d5952"/><path d="M10.2 36.4h5.6M10.2 38.2h5.6" stroke="#837f78" stroke-width=".7"/><path d="M9.4 41h7.2l-3.6 8z" fill="#6e6a63"/><rect x="12.2" y="49" width="1.6" height="7" fill="#101014"/></svg>
+<svg viewBox="0 0 26 62"><path d="M8.6 3h8.8v32H8.6z" fill="#7f7a72"/><path d="M8.6 3h3v32h-3z" fill="#98938a"/><rect x="8.6" y="11" width="8.8" height="13" fill="#faf8f3"/><text x="13" y="21" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" textLength="8.8" lengthAdjust="spacingAndGlyphs" fill="#3c3831">.35</text><path d="M9.4 35h7.2v6H9.4z" fill="#5d5952"/><path d="M10.2 36.4h5.6M10.2 38.2h5.6" stroke="#837f78" stroke-width=".7"/><path d="M9.4 41h7.2l-3.6 8z" fill="#6e6a63"/><rect x="12.2" y="49" width="1.6" height="7" fill="#101014"/></svg>
 ```
 
 ### 펼친 연필통 줄 — 앞을 원뿔로 깎고 심이 노출된다
