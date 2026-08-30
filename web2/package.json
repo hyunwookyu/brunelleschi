@@ -14,7 +14,8 @@
     "e2e": "playwright test",
     "deploy:check": "node tools/deploy-check.mjs",
     "dev:alt": "vite --port 5311 --strictPort",
-    "dev:face": "vite --port 5321 --strictPort"
+    "dev:face": "vite --port 5321 --strictPort",
+    "dev:traj": "vite --port 5331 --strictPort"
   },
   "devDependencies": {
     "@phosphor-icons/core": "^2.1.1",
