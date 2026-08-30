@@ -15334,8 +15334,11 @@ python selfcheck.py                  아래 「셀프체크」
 
 ### 완료 대조 (#42 ⑦)
 
-`selfcheck.json`의 `pitfall_citations`가 이 회차 원장에서 읽은 번호: **`[5, 26, 40]`**
-(`papericon31_web2_dpr1.json` · `_dpr2.json` 둘 다). 착수 표의 번호는 그보다 넓다 —
+`selfcheck.json`의 `pitfall_citations`가 이 회차 원장에서 읽은 번호: **`[5, 12, 26, 40, 77]`**
+(`papericon31_web2_dpr1.json` · `_dpr2.json` 둘 다).
+⚠ **마감 [11]이 `gate.red_without_planting`을 넣으면서 #77이 늘었고, 그 김에 다시 읽으니
+`threshold_provenance.caveat`의 #12도 원래 있었다** — 초판이 적은 `[5, 26, 40]`이 그만큼
+좁았다(#42 ⑥·⑦: 원장을 다시 쓰면 그 셈도 다시 읽는다). 착수 표의 번호는 그보다 넓다 —
 원장 «전문»에 안 적힌 것(#88·#87·#86·#85·#84·#77·#71·#54·#58)은 **코드와 이 절**에 산다:
 #88·#87은 게이트 ①의 자리·`elementFromPoint` 줄, #86은 반증의 두 축, #85 ㉣·#54는
 `__lintLine` 재사용, #84 ㉢·#75 ㉣은 `test/icons.test.ts`의 부호 뒤집기, #77 ㉠은 이름,
