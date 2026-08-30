@@ -136,6 +136,61 @@ test('롤 둘(web2-21 3-a) — 닫히기 전 비활성+안내 · 누르면 그 �
   await expect(page.locator('#layer-summary .lsum-n')).toHaveText('2')
 })
 
+// ── web2-34 2번 전수 점검이 찾은 둘째 R6 위반 ────────────────────────────────
+// 34-0 전수 대조표와 DECISIONS의 R6 절이 둘 다 「겹 요약은 **이미 지킨다**」로 적어 뒀는데
+// **실측이 뒤집었다**(D-4 — 사람이 준 근거는 확인 대상이지 결론이 아니다): 요약의 롤은
+// **맨 위 겹**을 그리고 있었고, 아래 겹을 골라 두면 접힌 통이 「지금 무엇에 그리는가」를
+// 틀리게 말했다. 연필의 각인·펜의 촉 각인과 같은 요구다.
+test('R6 접힌 겹 요약 — 롤이 **지금 그리는 겹**을 말한다(맨 위가 아니다) · 반증 포함',
+  async ({ page }) => {
+    await boot(page)
+    await closeCamera(page)
+    // 아래=트레이싱지 · 위=옐로. 얹은 직후의 활성은 맨 위(옐로)다.
+    await page.click('#layer-add')
+    await page.click('#layer-pop .lpick[data-paper="tracing"]'); await settle(page)
+    await page.click('#layer-add')
+    await page.click('#layer-pop .lpick[data-paper="yellow"]'); await settle(page)
+    const read = () => page.evaluate(() => {
+      const sum = document.getElementById('layer-summary')!
+      return {
+        active: (window as any).__b2.app.activeLayer as number | null,
+        shown: sum.dataset.paper!, n: sum.dataset.active!,
+        // 옐로 롤만 고리를 `#e9d98a`로 채운다 — 그림 자체가 어느 종이인지 말한다
+        yellowInk: sum.querySelector('svg')!.outerHTML.includes('e9d98a'),
+        count: sum.querySelector('.lsum-n')!.textContent,
+      }
+    })
+    const a = await read()
+    console.log(`[34-2 겹] 얹은 직후 — ${JSON.stringify(a)}`)
+    expect(a.shown).toBe('yellow'); expect(a.yellowInk).toBe(true); expect(a.n).toBe('2')
+
+    // **아래 겹(트레이싱지)을 고르고 통을 접는다** — 여기가 종전에 틀리던 자리다
+    await openList(page)
+    const bottomId = await page.evaluate(() => (window as any).__b2.app.doc.layers[0]!.id as number)
+    await page.click(`#layer-list .lrow[data-layer="${bottomId}"]`); await settle(page)
+    await page.click('#layer-summary'); await settle(page)          // 다시 접는다
+    expect(await page.locator('#layer-list').count(), '접혔다').toBe(0)
+    const b = await read()
+    console.log(`[34-2 겹] 아래 겹을 고른 뒤 — ${JSON.stringify(b)}`)
+    expect(b.active, '활성이 실제로 아래 겹이다').toBe(bottomId)
+    expect(b.shown, '접힌 요약이 지금 그리는 겹을 말한다').toBe('tracing')
+    expect(b.yellowInk, '그림도 따라간다 — 옐로의 색이 빠진다').toBe(false)
+    expect(b.n).toBe('1')
+    expect(b.count, '수는 그대로 «장수»다(다른 채널 — #77 ㉠)').toBe('2')
+    expect(await page.getAttribute('#layer-summary', 'title'))
+      .toContain('1번에 그린다')
+
+    // **반증(D-3)** — 옛 배선(맨 위 겹을 그린다)을 같은 자리에 되돌리면 빨개진다
+    const old = await page.evaluate(() => {
+      const layers = (window as any).__b2.app.doc.layers
+      const top = layers[layers.length - 1]
+      return { paper: top.paper as string, n: layers.length }
+    })
+    console.log(`[34-2 겹 반증] 옛 배선(맨 위 겹)이 그렸을 값 = ${old.paper}/${old.n}번 · `
+      + `지금 값 = ${b.shown}/${b.n}번 — 둘이 갈린다`)
+    expect(old.paper, '반증: 옛 배선이면 이 팔이 실제로 빨개진다').not.toBe(b.shown)
+  })
+
 test('⑤ 겹 삭제(줄의 × → 확인 — 획 수 알림) → 실행취소로 돌아온다', async ({ page }) => {
   await boot(page)
   await closeCamera(page)

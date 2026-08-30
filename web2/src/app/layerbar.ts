@@ -93,13 +93,26 @@ export function initLayerbar(app: App, host: HTMLElement, hooks: LayerbarHooks):
     // ⚠ 종이 탭(배타적)과의 차이가 여기서도 형태로 남는다: 종이는 **탭이 여럿**이고
     //   겹은 **하나에 수가 붙는다**(가산적임을 그 수가 말한다).
     if (layers.length > 0) {
+      // ⚠⚠ **web2-34 2번(화면 규칙 R6 — 접힌 통은 지금 고른 것을 말한다)**: 요약의 롤은
+      //   **지금 그리는 겹**(활성)이다. 종전에는 **맨 위 겹**을 그렸고, 아래 겹을 골라
+      //   두면 접힌 요약이 «지금 무엇에 그리는지»를 **틀리게 말했다** — 실측으로 잡았다
+      //   (활성 3 = 트레이싱지인데 요약은 옐로를 그렸다). 34-0 전수 대조표와 DECISIONS의
+      //   「겹 요약은 이미 지킨다」가 **짐작이었고 측정이 뒤집었다**(D-4).
+      // ⚠ **수(`.lsum-n`)는 그대로 «장수»다** — 그 수는 «겹은 가산적»을 말하는 다른
+      //   채널이고 layerbar·layerlist의 팔이 그 뜻으로 읽는다. 한 손잡이에 뜻을 하나 더
+      //   얹으면 옛 뜻이 조용히 죽는다(#77 ㉠) — 그래서 **그림만** 활성을 따른다.
       const top = layers[layers.length - 1]!
+      const cur = layers.find(l => l.id === app.activeLayer) ?? top
+      const curN = layers.indexOf(cur) + 1
       const sum = document.createElement('button')
       sum.id = 'layer-summary'
       sum.className = 'lsum' + (open ? ' open' : '') + (app.solo ? ' solo' : '')
-      sum.innerHTML = (top.paper === 'yellow' ? ROLL_YELLOW : ROLL_TRACING)
+      sum.dataset.active = String(curN)
+      sum.dataset.paper = cur.paper
+      sum.innerHTML = (cur.paper === 'yellow' ? ROLL_YELLOW : ROLL_TRACING)
         + `<span class="lsum-n">${layers.length}</span>`
-      sum.title = open ? '겹 목록을 접는다' : `얹은 종이 ${layers.length}장 — 눌러서 목록`
+      sum.title = open ? '겹 목록을 접는다'
+        : `${paperName(cur.paper)} ${curN}번에 그린다 — 얹은 종이 ${layers.length}장, 눌러서 목록`
       sum.addEventListener('click', () => { open = !open; render() })
       host.append(sum)
     } else {
