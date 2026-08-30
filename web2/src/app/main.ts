@@ -848,9 +848,8 @@ function syncThick() {
     thickLine.setAttribute('stroke-width', String(v))
     nibEl.setAttribute('width', String(v))
     nibEl.setAttribute('x', String(13 - v / 2))
-    // 접힌 펜(3-b′)의 니브도 같은 값 — 옛 nib 배선의 복제가 아니라 같은 함수의 두 표적
-    foldNib.setAttribute('width', String(v))
-    foldNib.setAttribute('x', String(13 - v / 2))
+    // 접힌 펜(3-b′)의 니브·각인도 같은 값 — 옛 nib 배선의 복제가 아니라 같은 함수의 두 표적
+    syncFoldNib()
   } else {
     // 지우개는 반경이 커서 막대 폭을 넘는다 — 원의 반지름을 막대 안으로 줄여 **비율만** 보인다
     const r = 4.5 + (v - C.ERASER_MIN) / (C.ERASER_MAX - C.ERASER_MIN) * 12 // 1.5배(지시 5)
@@ -885,8 +884,31 @@ const nibEl = document.getElementById('nib')!
 const foldLead = document.getElementById('fold-lead')!
 const foldLeadText = document.getElementById('fold-lead-text')!
 const foldNib = document.getElementById('fold-nib')!
+const foldNibText = document.getElementById('fold-nib-text')!
 const pencilBtn = document.getElementById('btn-pencil-old')!   // 옛 경로(A-4) — 숨겨져 있어 안 눌린다
 let pencilDrag: { y: number; i: number } | null = null
+
+/** **접힌 펜의 촉 각인**(web2-34 2번 · 화면 규칙 R6 — 접힌 통은 지금 고른 것을 말한다).
+ *  연필의 `syncGrade`와 **같은 규약**이다: 접힌 아이콘의 창에 지금 고른 것을 적는다.
+ *
+ *  ⚠ **`syncThick`이 아니라 여기서 부르는 이유**(D-2로 잡았다): `syncThick`은 첫 줄에서
+ *  `app.tool === 'pencil'`이면 **그냥 돌아간다**. 부팅 직후 도구는 연필이므로 거기에만
+ *  걸어 두면 «펜을 한 번 눌러야 말한다»가 되어 R6을 못 지킨다 — 그래서 부팅에서도 부른다.
+ *
+ *  ⚠ **표기는 mm이고 새 표를 안 짓는다**(#54): `app.nib`은 **px**로 들고 있으므로
+ *  `C.NIB_MM`을 `nibPx()`로 되짚어 이름을 찾는다(촉통 줄을 짓는 코드와 같은 대조식).
+ *  **가장 가까운 것**을 고른다 — 다섯 중 하나가 아닌 값은 지금 경로에 없지만(촉통이
+ *  유일한 입구다) 그때도 접힌 펜은 **무엇인가는 말해야 한다**(R6은 «비어 있음»을 허용하지
+ *  않는다). 소수점 앞 0을 떼는 것은 몸통이 좁아서다 — 정본은 `docs/instrument-icons.md`. */
+const nibLabel = (px: number): string => {
+  const mm = C.NIB_MM.reduce((a, b) => Math.abs(nibPx(b) - px) < Math.abs(nibPx(a) - px) ? b : a)
+  return mm.toFixed(2).replace(/^0/, '')
+}
+function syncFoldNib() {
+  foldNibText.textContent = nibLabel(app.nib)
+  foldNib.setAttribute('width', String(app.nib))
+  foldNib.setAttribute('x', String(13 - app.nib / 2))
+}
 
 function syncGrade() {
   leadText.textContent = app.grade
@@ -915,6 +937,7 @@ window.addEventListener('pointercancel', endPencilDrag)
 
 setTool('pencil')
 syncGrade()
+syncFoldNib()   // R6 — 부팅 직후(도구가 연필일 때)에도 접힌 펜이 지금 촉을 말한다
 
 // 오스냅 설정 패널(임시 UI — 7단계에서 세로바로) — 종류별 토글·반경
 const osnapPanel = document.getElementById('osnap-kinds')!

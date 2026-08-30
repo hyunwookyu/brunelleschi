@@ -748,10 +748,14 @@
         <div id="tray"></div>
         <!-- 펜 — **web2-30 2번부터 펼치는 통이 있다**(web2-19의 「펜은 하나뿐이니 아이콘
              하나」를 뒤집었다). 슬라이더가 아니라 **촉을 고른다** — 연필은 등급으로,
-             펜은 촉으로. 둘 다 실물의 선택이라 두 도구의 문법이 같아진다. -->
+             펜은 촉으로. 둘 다 실물의 선택이라 두 도구의 문법이 같아진다.
+             ⚠ **각인 창 + 글자는 web2-34 2번**(화면 규칙 R6 — 접힌 통은 지금 고른 것을
+             말한다). 연필의 `fold-lead-text`와 같은 문법이고 몸통이 좁은 만큼(10 → 8.8)
+             `textLength`로 가로만 좁혔다 — 정본은 `docs/instrument-icons.md`의
+             「접힌 펜 — 촉 각인이 붙는다」. 몸통·물림쇠·원뿔·촉 path는 안 바뀌었다. -->
         <button id="btn-pen" class="t tool ico-t" title="펜 — 누르면 촉통이 열린다" aria-label="펜">
           <svg width="39" height="93" viewBox="0 0 26 62">
-            <path d="M8.6 3h8.8v32H8.6z" fill="#7f7a72"/><path d="M8.6 3h3v32h-3z" fill="#98938a"/><path d="M9.4 35h7.2v6H9.4z" fill="#5d5952"/><path d="M10.2 36.4h5.6M10.2 38.2h5.6" stroke="#837f78" stroke-width=".7"/><path d="M9.4 41h7.2l-3.6 8z" fill="#6e6a63"/><rect id="fold-nib" x="12.2" y="49" width="1.6" height="7" fill="#101014"/>
+            <path d="M8.6 3h8.8v32H8.6z" fill="#7f7a72"/><path d="M8.6 3h3v32h-3z" fill="#98938a"/><rect x="8.6" y="11" width="8.8" height="13" fill="#faf8f3"/><text id="fold-nib-text" x="13" y="21" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8.5" textLength="8.8" lengthAdjust="spacingAndGlyphs" fill="#3c3831">.35</text><path d="M9.4 35h7.2v6H9.4z" fill="#5d5952"/><path d="M10.2 36.4h5.6M10.2 38.2h5.6" stroke="#837f78" stroke-width=".7"/><path d="M9.4 41h7.2l-3.6 8z" fill="#6e6a63"/><rect id="fold-nib" x="12.2" y="49" width="1.6" height="7" fill="#101014"/>
           </svg>
         </button>
         <!-- 펜 촉통(web2-30 2번) — 다섯 줄(0.18·0.25·0.35·0.5·0.7 mm). 행은 main.ts가
