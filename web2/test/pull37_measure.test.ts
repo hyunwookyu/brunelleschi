@@ -129,12 +129,17 @@ describe('원장 — web2-37 6번(오스냅의 당김)', () => {
           + '`app.osnap.radius / viewScale(app)`으로 나눠서 넘긴다 — 그 결과 **줌·보기 렌즈와 '
           + '무관하게 「화면에서 8px」**이 유지된다. `viewScale = view.s × lensK`(state.ts).'
         ),
+        conversion_sites_count: 8,
         conversion_sites: [
-          'app/input.ts — `osnapSet()` (그리기 시작점·끝점 · 호버) : `/ viewScale(app)`',
-          'app/input.ts — `resolveCommit(..., app.osnap.radius / viewScale(app), ...)` (지평선 탭)',
-          'app/main.ts — `diag.osnapAt` · `pickTargetAt(..., radius / viewScale(app) * 2)` : `/ viewScale(app)`',
-          'test/session.ts — `set()` (하네스 · 앱과 같은 식)',
-          '⚠ app/state.ts — `measureTap` · `pickDimTarget` · `defineByTouch` 세 자리는 `/ app.view.s`다(아래 `divergence`)',
+          'app/input.ts `osnapSet()` — 그리기 시작점·끝점·호버 : `/ viewScale(app)`',
+          'app/input.ts `endDraft` — `C.OSNAP_RADIUS_PX / viewScale(app)`(연장 획득의 자) : `/ viewScale(app)`',
+          'app/input.ts `endDraft` — `resolveCommit(..., app.osnap.radius / viewScale(app), ...)`(지평선 탭) : `/ viewScale(app)`',
+          'app/main.ts — `pickTargetAt(..., radius / viewScale(app) * 2)` : `/ viewScale(app)`',
+          'app/main.ts — `diag.osnapAt` : `/ viewScale(app)`',
+          '⚠ app/state.ts `pickDimTarget` — `/ app.view.s`(아래 `divergence`)',
+          '⚠ app/state.ts `measureTap` — `/ app.view.s`',
+          '⚠ app/state.ts `defineByTouch` — `/ app.view.s`',
+          '(하네스) test/session.ts `set()` — 앱과 **같은 식**이다',
         ],
         divergence: (
           '⚠ **`state.ts`의 세 자리는 `viewScale`이 아니라 `app.view.s`로 나눈다** — 보기 렌즈'
@@ -314,7 +319,7 @@ describe('원장 — web2-37 6번(오스냅의 당김)', () => {
           + '문서는 이 원장을 **이름으로** 가리킨다(@해시 인용 ⛔).'
         ),
       },
-      pitfalls: ['#88', '#71', '#54', '#42', '#40', '#35', '#36', '#14', '#12', '#47'],
+      pitfalls: ['#88', '#86', '#85', '#84', '#71', '#54', '#42', '#40', '#35', '#36', '#14', '#12', '#47'],
       pitfalls_note: (
         '#88 — 팔이 반경·좌표를 손에 안 든다. 반경은 `app.osnap.radius`에서, 훑기는 그 값의 '
         + '**배수**로, 대역은 그린 획의 bbox에서, 문은 `C.TAP_MAX_PX`에서 읽는다. '
@@ -324,7 +329,10 @@ describe('원장 — web2-37 6번(오스냅의 당김)', () => {
         + '#36 — 후보가 없는 칸의 중앙값은 분모가 0이라 **null**이다(1로 안 바꾼다). '
         + '#14 — 비율이 아니라 분자/분모로 적고 시드 셋을 나란히 낸다. '
         + '#12 — 반경은 동작점 하나가 아니다: 배수 여섯 줄을 낸다. '
-        + '#47 — 문서가 인용하는 수는 낡는다. 정본은 이 파일이다.'
+        + '#47 — 문서가 인용하는 수는 낡는다. 정본은 이 파일이다. '
+        + '#86 — 축을 둘로 갈랐다(획득 ↔ 실제로 옮겨졌는가): 비율 하나로는 두 방향을 못 가른다. '
+        + '#85 — 위약만으로는 「팔이 죽은 판」과 안 갈린다. 그래서 대조군(겨냥한 손)을 **같은 실행**에 넣었다. '
+        + '#84 ㉡ — 반증을 한 칸으로 안 한다: 손잡이 둘로 각각 무너뜨리고 되돌린 뒤 복원까지 본다.'
       ),
     }, null, 2)
 

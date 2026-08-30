@@ -145,7 +145,10 @@ describe('지시 5 — 궤도 반경', () => {
     const depth0 = app.undoStack.length
     foldNow(app, () => {
       orbitBy(app, 90, 8)
-      for (let k = app.undoStack.length; k > depth0; k--) undo(app)   // 37-4가 쌓은 것
+      // ⚠ **되돌려서 걷으면 안 된다**: 그 op는 «그 궤도까지» 무르므로(web2-37 4번의
+      //    `Op.pose`) 기울어진 상태 자체가 풀려 이 팔이 재려는 국면이 안 만들어진다.
+      //    이 팔의 대상은 «펜 획을 되돌리면 pivot이 튄다»이므로 그 op만 스택에서 걷는다.
+      app.undoStack.splice(depth0)
       undo(app)                                                        // 펜 획
     })
     // 실측: 반경 7.448 → (실행취소로 pivot이 튄다) 6.783 → 접은 뒤 6.783 · 눈높이 1.600 → 1.598

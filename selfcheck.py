@@ -540,7 +540,7 @@ def scan_dead_ledger(root: Path) -> list[dict]:
 
 
 def scan_ledger_guard(root: Path) -> list[dict]:
-    """**원장 쓰기 관문이 배선돼 있는가**(2026-08-31 · RUN.md §1 · #89).
+    """**원장 쓰기 관문이 배선돼 있는가**(2026-08-31 · RUN.md §1 · #90).
 
     web2-31 회차에서 전량 e2e가 원장 아홉을 `LEDGER=1` 없이 덮어썼고, 같은 날 측정에서
     `npm test`가 원장 **24개**를 덮어쓰는 것이 확인됐다. 원인은 규칙이 아니라 **자리**다 —
@@ -576,11 +576,11 @@ def scan_ledger_guard(root: Path) -> list[dict]:
             txt = path.read_text(encoding="utf-8")
         except Exception:
             flags.append({"path": str(path.relative_to(root)), "val": "없음",
-                          "flag": f"**원장 쓰기 관문**(#89) — {why}"})
+                          "flag": f"**원장 쓰기 관문**(#90) — {why}"})
             continue
         if needle not in txt:
             flags.append({"path": str(path.relative_to(root)), "val": f"'{needle}' 없음",
-                          "flag": f"**원장 쓰기 관문**(#89) — {why}"})
+                          "flag": f"**원장 쓰기 관문**(#90) — {why}"})
     return flags + _cover("scan_ledger_guard", "배선 자리", n, len(flags))
 
 
@@ -1137,7 +1137,7 @@ def main():
     flags += scan_stray_progress(ROOT)             # 루트 밖 progress.md (세 번째 재발)
     flags += scan_dead_ledger(ROOT)               # #38: 깨지지 않고 죽은 원장
     flags += scan_pitfalls_table_last(ROOT)        # #55: 「최근 다섯」 표가 파일 끝에 있는가
-    flags += scan_ledger_guard(ROOT)              # #89: 원장 쓰기 관문(LEDGER=1)이 배선돼 있는가
+    flags += scan_ledger_guard(ROOT)              # #90: 원장 쓰기 관문(LEDGER=1)이 배선돼 있는가
     flags += scan_citation_hashes(ROOT, reports)   # #33 값 대조: 인용 해시 ↔ 원장 현재 해시
     flags += scan_cited_values(ROOT, reports)  # #42 ⑥ 존재 대조: 인용한 수치가 원장에 있는가
     PITFALL_CITATIONS.clear()
