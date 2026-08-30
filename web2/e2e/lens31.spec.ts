@@ -244,8 +244,12 @@ test('31-2 ④⑤ 슬라이더가 그림을 움직인다 — 그동안 3D 좌표
           + '수백 px 움직이고 3D 좌표 문자열은 **글자 하나도** 안 바꾼다. 렌즈가 lift로 새면 뒤쪽이 깨지고, '
           + '렌더가 렌즈를 안 읽으면 앞쪽이 깨진다 — 두 방향이 서로의 반증이다. 크기는 단위 원장 '
           + '`lens31_web2.json`의 위약 판 셋이 든다.',
-        reachability_value: rows.map(r => r.max_screen_drift_px),
-        reachability_source: 'slider/rows[]/max_screen_drift_px',
+        // 값 하나와 **풀리는 경로 하나**를 적는다(#40 — selfcheck의 `_resolve`가 그 자리를 다시 읽는다)
+        reachability_value: rows[1]!.max_screen_drift_px,
+        reachability_source: 'slider/rows/1/max_screen_drift_px',
+        reachability_note: `한 스톱 좁히면(k 2) 같은 모델이 화면에서 ${rows[1]!.max_screen_drift_px} px 옮겨 그려진다 — `
+          + `그동안 3D 좌표 문자열은 글자 하나도 안 바뀐다(같은 행 \`coords_unchanged\`). 반대 끝(k 0.5)은 `
+          + `${rows[0]!.max_screen_drift_px} px다. 이 수가 0으로 내려오면 렌더가 렌즈를 안 읽는 것이다.`,
       },
       selfcheck_flags_known: {
         coords_unchanged_all_true: '⚠ `coords_unchanged`가 전부 true이고 `reset.drift_px`가 0이다 — '
