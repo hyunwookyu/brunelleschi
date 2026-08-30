@@ -220,6 +220,7 @@ function runCell(c: Cell): Row {
 }
 
 let misacq: unknown = null
+const falsif: Record<string, unknown> = {}
 let coordProof: unknown = null
 let principleD: unknown = null
 let threeChoice: unknown = null
@@ -390,6 +391,9 @@ describe('37-1 — 조합 전수 표(명시 점 × 축 × 교차)', () => {
     const placebo = endDrift(r, s, { a3: g.a3, b3: placeboB })
     console.log(`[37-1 반증] 실제 끝 드리프트 a=${real.a.toExponential(3)} b=${real.b.toExponential(3)} `
       + `· 위약(축이 이김) b=${placebo.b.toFixed(4)} px`)
+    falsif.two_named_vs_axis = { real_a_px: real.a, real_b_px: real.b,
+      placebo_b_px: +placebo.b.toFixed(4),
+      note: '위약은 「축이 이긴다」로 짠 기하다 — 같은 단언을 걸면 실패한다(판별력의 출처).' }
     expect(placebo.b, '위약 판은 끝점이 떨어진다 — 그래서 이 단언은 판별력이 있다')
       .toBeGreaterThan(1)
     // 같은 단언을 위약에 걸면 실패한다(그것이 반증이다)
@@ -414,8 +418,19 @@ describe('37-1 — 조합 전수 표(명시 점 × 축 × 교차)', () => {
   it('교차가 셋일 때 raw에 가장 가까운 것이 선택된다 (편차를 수치로)', () => {
     // 세로 넷 중 셋을 가로지르되 **축이 없는** 획을 raw 점열로 긋는다.
     // raw는 «둘째 교차(x=900)를 지나는 3D 선»에 붙도록 만든다 — 고르기가 그 자를 쓰는지 본다.
+    // ⚠⚠ **재는 갈래를 바로잡았다**(2차 리뷰어 [9]): 초판은 «명시 점 0 · 축 없음» 획을 썼는데
+    //    그 줄은 **첫 교차 + 끝 교차**를 쓰므로 raw 자를 아예 안 부른다 — 세 후보의 편차가
+    //    전부 ~1e-26(동점)으로 나온 것이 그 증거였다. 자가 실제로 도는 줄은 **«명시 점 0 + 축»**이다.
+    //    그리고 **정확히 축이면 그 줄도 동점이다**(AS-C137 ㉠) — 손처럼 조금 틀어 긋는다.
     const b = scaffold()
-    const a: Pt = { x: 560, y: 330 }, z: Pt = { x: 1120, y: 330 + 560 * 0.32 }
+    const P0: Pt = { x: 620, y: 330 }
+    const q0 = away(P0, VP1, 500)
+    const th = 0.012                       // 손의 각도 오차(축 판정 대역 안)
+    const rot = (p: Pt): Pt => ({
+      x: P0.x + (p.x - P0.x) * Math.cos(th) - (p.y - P0.y) * Math.sin(th),
+      y: P0.y + (p.x - P0.x) * Math.sin(th) + (p.y - P0.y) * Math.cos(th),
+    })
+    const a: Pt = P0, z: Pt = rot(q0)
     const s = b.add(a.x, a.y, z.x, z.y)
     s.raw = Array.from({ length: 21 }, (_, i) => {
       const t = i / 20
@@ -503,6 +518,9 @@ describe('37-1 — 조합 전수 표(명시 점 × 축 × 교차)', () => {
     const moved = len3(sub3(placeboB, g.b3))
     console.log(`[37-1 축우선] 후보 ${use.length}개 · 축 방향과 «교차가 이긴» 방향의 |cos| = `
       + `${cosPlacebo.toFixed(6)} · 먼 끝이 움직인 거리(세계 단위) = ${moved.toFixed(6)}`)
+    falsif.axis_beats_offplane_crossing = { candidates: use.length,
+      placebo_dir_abs_cos_vs_axis: +cosPlacebo.toFixed(6), far_end_moved_world: +moved.toFixed(6),
+      note: '발판의 세로 넷은 전부 vp1 평면이라 거기서는 두 답이 우연히 같다 — 판을 따로 지어 얻은 판별력이다.' }
     expect(cosPlacebo, '교차가 낸 방향은 축이 아니다').toBeLessThan(1 - 1e-6)
     expect(moved, '두 답이 갈리는 폭').toBeGreaterThan(1e-3)
   })
@@ -556,26 +574,39 @@ describe('37-1 — 조합 전수 표(명시 점 × 축 × 교차)', () => {
     expect(nScaffold + trials.length, '획 40개 이상이어야 이 시험이 성립한다')
       .toBeGreaterThanOrEqual(40)
 
-    let stood = 0, byCross = 0, wrong = 0, waited = 0, spread = 0
+    // ⚠⚠ **분모를 «교차가 있다»가 아니라 «교차가 정했다»로 잡는다**(2차 리뷰어 [13]).
+    //    초판은 `usable > 0`을 분모로 썼는데 그 안에는 **다른 패스가 세운 획**이 섞인다
+    //    (끝점이 우연히 옛 선 위에 떨어지면 사슬이 먼저 세운다). 실측으로 24 중 **일곱**이
+    //    그 경우였고 「고른 교차가 없다」인데 오획득으로 세어졌다 — **분자가 부풀어 있었다**.
+    //    이제 「명시 점이 없고 그 3D 선이 자기 교차 중 하나를 지나는가」로 «교차가 정했다»를 가른다.
+    let stood = 0, byCross = 0, wrong = 0, waited = 0, spread = 0, otherPass = 0
     const hist: Record<number, number> = {}
-    const detail: { id: number; crossings: number; target: string; picked: string; ok: boolean }[] = []
+    const detail: { id: number; named: number; crossings: number; target: string;
+      picked: string; decided_by: string; ok: boolean | null }[] = []
     for (const { s, target } of trials) {
       const g = r.lifted.get(s.id)
       if (!g) { waited++; continue }
       stood++
       const use = usableCrossings(r, b.doc, s)
-      if (use.length === 0) continue
+      const named = namedEnds(r, b.doc, s)
+      const hit = use.filter(x => passesThrough(r, s, x.p3))
+      if (!(named === 0 && use.length > 0 && hit.length > 0)) {
+        otherPass++
+        detail.push({ id: s.id, named, crossings: use.length,
+          target: `${target.x.toFixed(0)},${target.y.toFixed(0)}`, picked: '—',
+          decided_by: named > 0 ? '사슬(명시 점)' : '교차 아님(지면·확대 패스)', ok: null })
+        continue
+      }
       byCross++
       hist[use.length] = (hist[use.length] ?? 0) + 1
-      const hit = use.filter(x => passesThrough(r, s, x.p3))
       const ok = hit.some(x => Math.hypot(x.q.x - target.x, x.q.y - target.y) < 1)
       if (!ok) wrong++
-      // **노출 폭** — 후보가 갈릴 때 3D가 얼마나 벌어지는가(고른 것 ↔ 가장 먼 후보)
-      for (const x of use) spread = Math.max(spread, len3(sub3(x.p3, hit[0]?.p3 ?? x.p3)))
+      for (const x of use) spread = Math.max(spread, len3(sub3(x.p3, hit[0]!.p3)))
       detail.push({
-        id: s.id, crossings: use.length,
+        id: s.id, named, crossings: use.length,
         target: `${target.x.toFixed(0)},${target.y.toFixed(0)}`,
-        picked: hit.map(x => `${x.q.x.toFixed(0)},${x.q.y.toFixed(0)}`).join(' | ') || '—', ok,
+        picked: hit.map(x => `${x.q.x.toFixed(0)},${x.q.y.toFixed(0)}`).join(' | '),
+        decided_by: '교차', ok,
       })
     }
     const rate = byCross > 0 ? wrong / byCross : null
@@ -589,6 +620,7 @@ describe('37-1 — 조합 전수 표(명시 점 × 축 × 교차)', () => {
     misacq = {
       scaffold_strokes: nScaffold, scaffold_lifted: before.lifted.size,
       trials: trials.length, stood, by_crossing: byCross, wrong, waited,
+      decided_by_other_pass: otherPass,   // 분모에서 뺐다 — 교차가 아닌 패스가 세운 획(2차 [13])
       candidates_histogram: hist, rate, depth_spread_world: spread, detail,
       angle_error_rad_max: 0.03,
       // ⚠ **표본의 한계와 자의 분모**(1차 리뷰어 [7]) — 이 수를 인용하는 사람이 크기를 읽게.
@@ -607,6 +639,7 @@ describe('37-1 — 조합 전수 표(명시 점 × 축 × 교차)', () => {
     }
     console.log(`[37-1 오획득] 발판 ${nScaffold}획(자립 ${before.lifted.size}) · 시험 ${trials.length}획 `
       + `· 자립 ${stood} · 교차로 선 것 ${byCross} · 오획득 ${wrong} · 대기 ${waited} `
+      + `· 다른 패스 ${otherPass}(분모에서 뺐다) `
       + `· 오획득률 ${rate === null ? 'null(분모 0)' : rate.toFixed(4)} `
       + `· 후보 수 분포 ${JSON.stringify(hist)} · 깊이 노출 폭 ${spread.toFixed(4)} `
       + `(장면 최장 선분 ${sceneSize.toFixed(4)} → 상대 ${(spread / sceneSize).toFixed(4)}) `
@@ -637,6 +670,21 @@ describe('37-1 — 조합 전수 표(명시 점 × 축 × 교차)', () => {
       coordinate_proof: coordProof,
       three_crossing_choice: threeChoice,
       misacquisition: misacq,
+      falsification: falsif,
+      pitfalls: ['#42', '#54', '#71', '#84', '#85', '#86', '#88', '#16', '#26', '#5'],
+      selfcheck_notes: {
+        exact_zero_ends_kept: '`rows[].ends_kept_px`의 0과 `principle_d.worst_px` 2.5e-13은 '
+          + '**측정이 아니라 구성상 보장의 확인**이다(§5.1 유형 3) — 명시 점을 그대로 쓰고 나머지 '
+          + '끝만 그 화면점의 광선 위에서 풀기 때문이다. **임계로 안 쓴다**. 판별력은 '
+          + '`falsification.two_named_vs_axis.placebo_b_px`(4.9337 px)가 든다.',
+        tie_at_1e_26: '`three_crossing_choice`가 «명시 점 0 + 축» 갈래를 재므로 tie는 거짓이고 '
+          + '편차가 실제로 갈린다(117.3 / 32.57 / 51.25 px²). 「명시 점 0 · 축 없음」 갈래는 '
+          + '자를 안 부르므로 그 줄로 재면 ~1e-26 동점이 나온다(AS-C137 ㉢).',
+        misacquisition_denominator: '분모는 「교차가 **정했다**」이지 「교차가 **있다**」가 아니다 — '
+          + '다른 패스가 세운 획을 `decided_by_other_pass`로 뺀다(2차 리뷰어 [13]).',
+        single_seed: '`seeds: 1` · `fixtures: 1`이고 `reachability_value_fixture_determined: true`다 — '
+          + '후보 수 분포는 픽스처가 정한다. 시드 변동폭을 안 쟀다(#14의 미측정).',
+      },
       what_this_does_not_say: '이 표는 **작도 포즈**의 것이고 획이 직선 하나인 경우만 본다. '
         + '오획득률(붐비는 장면에서 엉뚱한 교차를 고르는 비율)은 `xint37_measure`가 따로 잰다.',
     }, null, 2))
