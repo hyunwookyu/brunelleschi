@@ -22,6 +22,7 @@ import { bakeUnderlay } from '../core/make2d'
 import { geomSize3 } from '../core/osnap'
 import { C } from '../core/constants'
 import { cubeLayoutFor } from '../core/viewcube'
+import { fitPose, fitView, type Screen as FitScreen } from '../core/zoomfit'
 import { calFromMedians, median } from '../core/press'
 import { type Pt, type V3, v3, add3, sub3, mul3, dot3, len3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
 
@@ -1865,7 +1866,8 @@ export function dollyBy(app: App, scale: number, center: Pt) {
     // 두 번째 선언(화각)을 조용히 끼워 넣지 않는다. 첫 획 뒤에는 종전대로 줌이 산다.
     if (app.doc.strokes.length === 0) return
     const v = app.view
-    const s = Math.min(8, Math.max(0.2, v.s * scale))
+    // 대역은 `C.VIEW_S_MIN/MAX` 하나다 — 돋보기(작도 시점 갈래)도 같은 것을 읽는다(#54)
+    const s = Math.min(C.VIEW_S_MAX, Math.max(C.VIEW_S_MIN, v.s * scale))
     const k = s / v.s
     setView(app, { s, ox: center.x - k * (center.x - v.ox), oy: center.y - k * (center.y - v.oy) })
     return
@@ -1941,4 +1943,71 @@ export function orbitPivot(app: App): V3 {
     }
   }
   return v3((lo.x + hi.x) / 2, (lo.y + hi.y) / 2, (lo.z + hi.z) / 2)
+}
+
+// ── 돋보기(web2-31 3번) — 대상에 맞춰 화면을 채운다 ─────────────────────────────
+// 라이노의 Zoom Selected / Zoom Extents. **이동만 한다** — `Camera.f`·`fSource`를 안
+// 건드린다(계산은 `core/zoomfit.ts`이고 여기는 «무엇을 대상으로 하는가»와 «어느 것을
+// 움직이는가»만 정한다).
+
+/** **고른 것** — 돋보기의 대상.
+ *
+ *  ⚠⚠ **이 앱에는 «획 여러 개를 고르는» 선택이 없다**(D-4 — 지시문의 「고른 것」을 저장소에서
+ *  확인한 결과다. #86 ㉢: 지시가 적은 것이 저장소에 없으면 **있는 것을 잰다**). 실재하는
+ *  「고른 것」은 치수 사후 수정으로 고른 획(`dimEdit`)과 치수 대상(`dimPick`) 둘이고,
+ *  **솔로·꺼진 겹은 이미 `lift.lifted`에서 빠지므로**(web2-20 4-b) 「전체」가 자동으로
+ *  그 범위다 — 갈래를 따로 안 만든다(A-3: 단순한 쪽).
+ *
+ *  면(`app.faces`)을 따로 안 담는다: 면의 꼭짓점은 그 경계 획의 끝점이라 **이미 이 목록
+ *  안**이다(같은 점을 두 번 담으면 계산만 늘고 결과가 같다). */
+export function zoomTarget(app: App): { ids: number[]; scope: 'picked' | 'all' } {
+  const pick = app.dimEdit ?? app.dimPick
+  if (pick !== null && app.lift.lifted.has(pick)) return { ids: [pick], scope: 'picked' }
+  return { ids: [...app.lift.lifted.keys()], scope: 'all' }
+}
+
+/** 대상의 세계 점들 — 승격된 선분의 두 끝점. 3D가 없으면 빈 배열이다. */
+export function zoomTargetPoints(app: App, ids: number[]): V3[] {
+  const out: V3[] = []
+  for (const id of ids) {
+    const g = app.lift.lifted.get(id)
+    if (g) out.push(g.a3, g.b3)
+  }
+  return out
+}
+
+export interface ZoomFitResult {
+  /** `pose` = 카메라를 옮겼다 · `view` = 화면(뷰 오프셋)을 옮겼다 · `none` = 할 일이 없었다 */
+  mode: 'pose' | 'view' | 'none'
+  scope: 'picked' | 'all'
+  ids: number[]
+  points: number
+}
+
+/** **대상에 맞춰 화면을 채운다** — 지시 문면의 넷을 그대로 한다.
+ *
+ *  · 고른 것이 있으면 그것이, 없으면 전체가 차도록 한다(`zoomTarget`)
+ *  · 여백은 `C.ZOOM_FIT_MARGIN`(사방 10%)
+ *  · **이동만 한다** — `an.f`·`an.fSource`는 이 경로에서 읽기만 한다
+ *  · 아무것도 없으면 **아무 일도 안 한다**(`mode: 'none'` — 예외를 던지지 않는다)
+ *
+ *  ⚠ 갈래가 둘인 이유는 `dollyBy`·`panBy`와 **같다**: 작도 시점에서는 카메라를 옮기면
+ *  종이(2D 획)와 3D의 1:1이 깨진다 — 그 국면의 「이동」은 뷰 오프셋이다. 판정은
+ *  `isDrawPose` 하나이고 그 둘과 **같은 술어**다(#54). 어느 갈래든 렌즈는 안 바뀐다. */
+export function zoomFit(app: App, sc: FitScreen): ZoomFitResult {
+  const { ids, scope } = zoomTarget(app)
+  const pts = zoomTargetPoints(app, ids)
+  const base: ZoomFitResult = { mode: 'none', scope, ids, points: pts.length }
+  if (pts.length === 0) return base
+  if (isDrawPose(app.pose)) {
+    const v = fitView(app.lift.an, app.pose, pts, sc, C.ZOOM_FIT_MARGIN,
+      { min: C.VIEW_S_MIN, max: C.VIEW_S_MAX })
+    if (!v) return base
+    setView(app, v)
+    return { ...base, mode: 'view' }
+  }
+  const p = fitPose(app.lift.an, app.pose, app.view, pts, sc, C.ZOOM_FIT_MARGIN)
+  if (!p) return base
+  setPose(app, p)
+  return { ...base, mode: 'pose' }
 }
