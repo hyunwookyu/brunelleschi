@@ -84,6 +84,20 @@ const marginNow = (page: Page) => page.evaluate(() => {
   }
 })
 
+/** ⚠ **dpr 축이 실제로 돌았는가를 값으로 남긴다**(리뷰어 [9] · #21) — 프로젝트 «이름»만으로는
+ *  「둘 다 돌렸다」가 안 선다. CSS px 값이 dpr에 안 변하는 것은 **맞는 결과**이고, 그것이
+ *  맞는 결과이려면 **배율이 실제로 달랐다**는 값이 같이 있어야 한다. */
+const dprNow = (page: Page) => page.evaluate(() => {
+  const c = document.getElementById('ink') as HTMLCanvasElement
+  const r = c.getBoundingClientRect()
+  return {
+    device_pixel_ratio: window.devicePixelRatio,
+    ink_backing_px: { w: c.width, h: c.height },        // dpr 배 — **여기가 dpr에 반응한다**
+    ink_css_px: { w: +r.width.toFixed(1), h: +r.height.toFixed(1) },
+    backing_over_css: +(c.width / Math.max(1, r.width)).toFixed(3),
+  }
+})
+
 const camState = (page: Page) => page.evaluate(() => {
   const app = (window as any).__b2.app
   return {
@@ -281,6 +295,12 @@ test('31-3 ⑤ 자리 — 34-6이 남긴 여유 안이다 (여유는 실측에�
   })
   console.log(`[31-3 ⑤] 세로바 ${place.bar.h}px / 뷰포트 ${place.vh} — 남는 여유 ${place.slack}px · 돋보기가 먹은 자리 ${place.taken}px`)
   console.log(`[31-3 ⑤] 손 띠 순서: ${place.order.join(' · ')}`)
+  // dpr 축이 실제로 돌았다는 값 — 이름이 아니라 수로 남긴다(#21 · 리뷰어 [9])
+  const dpr = await dprNow(page)
+  console.log(`[31-3 dpr] devicePixelRatio ${dpr.device_pixel_ratio} · 캔버스 뒷면 ${dpr.ink_backing_px.w}×${dpr.ink_backing_px.h} / CSS ${dpr.ink_css_px.w}×${dpr.ink_css_px.h} → 배수 ${dpr.backing_over_css}`)
+  expect(dpr.backing_over_css, 'dpr이 실제로 캔버스 뒷면에 실렸다')
+    .toBeCloseTo(testInfo.project.name === 'dpr2' ? 2 : 1, 2)
+  ledger[`dpr_${testInfo.project.name}`] = dpr
   expect(place.bar.bottom, '세로바가 화면 안이다').toBeLessThanOrEqual(place.vh)
   expect(place.slack, '남는 여유가 0 이상').toBeGreaterThanOrEqual(0)
   // 자리는 시점 묶음 안 — 「작도 시점으로」 **바로 아래**다
@@ -300,6 +320,12 @@ test('31-3 ⑤ 자리 — 34-6이 남긴 여유 안이다 (여유는 실측에�
       canonical_command: `LEDGER=1 npx playwright test e2e/zoom31.spec.ts --project=${dpr}`,
       viewport: { w: 1200, h: place.vh }, dpr,
       note_rederive: '여백은 제품의 맞춤 코드가 아니라 `diag.projectAll()` + `app.view`로 **다시 유도**한 값이다 — 재는 자와 맞추는 자가 갈려 있다.',
+      note_dpr: (
+        '⚠ CSS px 값(자리·여백·elementFromPoint)이 dpr 1·2에서 **글자 그대로 같다** — 그것이 맞는 '
+        + '결과다(CSS 좌표계는 dpr과 무관하다). 다만 그 사실이 「dpr 축을 잰다」가 되려면 **배율이 '
+        + '실제로 달랐다**는 값이 있어야 하므로 `dpr_*`에 `devicePixelRatio`와 캔버스 뒷면 배수를 '
+        + '함께 남긴다(리뷰어 [9] · #21). 이 회차에서 dpr에 실제로 반응하는 것은 캔버스 뒷면 픽셀이다.'
+      ),
       note_88: '여유·예약 px를 이 파일에 상수로 안 적는다 — `#sidebar`의 실측 상자에서 그 자리에 뺀다(#88).',
       ...ledger,
       gate: {
@@ -322,7 +348,22 @@ test('31-3 ⑤ 자리 — 34-6이 남긴 여유 안이다 (여유는 실측에�
         reachability_value: (ledger[`orbited_${dpr}`] as { margin_before_after: number[] }).margin_before_after,
         reachability_source: `orbited_${dpr}/margin_before_after`,
       },
-      pitfalls: ['#88', '#87', '#71', '#42'],
+      selfcheck_flags_known: {
+        device_pixel_ratio_one: (
+          '⚠ `dpr_dpr1.device_pixel_ratio = 1`이 「정확히 1」로 잡힌다 — **그 판의 정의다**(dpr1 판은 배율 1이다). '
+          + '이 필드가 재는 것은 「값이 1이 아니다」가 아니라 「두 판의 배율이 실제로 갈렸다」이고, '
+          + '그 대조 상대는 같은 이름의 dpr2 원장(2)과 캔버스 뒷면 배수(1.000 ↔ 2.000)다.'
+        ),
+        errors_zero: (
+          '⚠ `empty_*.errors = 0`은 콘솔·페이지 오류 **개수**이고 0이 곧 통과 조건이다(임계를 따로 안 건다). '
+          + '0이 아니면 그 칸이 빨개진다.'
+        ),
+        constants_snapshot_absent: (
+          '⚠ 상수·지표 스냅샷이 없다 — **web2 라인 전체의 구멍**이고 이 원장만의 것이 아니다'
+          + '(그 기계는 `web/test/constants.ts`에만 있다). 상수는 단위 원장 `zoom31_web2.json`의 `constants` 블록이 든다.'
+        ),
+      },
+      pitfalls: ['#88', '#87', '#71', '#42', '#21'],
     }, null, 1) + '\n')
   }
 })

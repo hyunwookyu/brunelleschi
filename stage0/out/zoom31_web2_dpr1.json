@@ -7,6 +7,7 @@
  },
  "dpr": "dpr1",
  "note_rederive": "여백은 제품의 맞춤 코드가 아니라 `diag.projectAll()` + `app.view`로 **다시 유도**한 값이다 — 재는 자와 맞추는 자가 갈려 있다.",
+ "note_dpr": "⚠ CSS px 값(자리·여백·elementFromPoint)이 dpr 1·2에서 **글자 그대로 같다** — 그것이 맞는 결과다(CSS 좌표계는 dpr과 무관하다). 다만 그 사실이 「dpr 축을 잰다」가 되려면 **배율이 실제로 달랐다**는 값이 있어야 하므로 `dpr_*`에 `devicePixelRatio`와 캔버스 뒷면 배수를 함께 남긴다(리뷰어 [9] · #21). 이 회차에서 dpr에 실제로 반응하는 것은 캔버스 뒷면 픽셀이다.",
  "note_88": "여유·예약 px를 이 파일에 상수로 안 적는다 — `#sidebar`의 실측 상자에서 그 자리에 뺀다(#88).",
  "button_dpr1": {
   "drawn": {
@@ -135,6 +136,18 @@
   "lifted_before": 0,
   "lifted_after": 3
  },
+ "dpr_dpr1": {
+  "device_pixel_ratio": 1,
+  "ink_backing_px": {
+   "w": 1200,
+   "h": 800
+  },
+  "ink_css_px": {
+   "w": 1200,
+   "h": 800
+  },
+  "backing_over_css": 1
+ },
  "place_dpr1": {
   "vh": 800,
   "bar": {
@@ -187,10 +200,16 @@
   ],
   "reachability_source": "orbited_dpr1/margin_before_after"
  },
+ "selfcheck_flags_known": {
+  "device_pixel_ratio_one": "⚠ `dpr_dpr1.device_pixel_ratio = 1`이 「정확히 1」로 잡힌다 — **그 판의 정의다**(dpr1 판은 배율 1이다). 이 필드가 재는 것은 「값이 1이 아니다」가 아니라 「두 판의 배율이 실제로 갈렸다」이고, 그 대조 상대는 같은 이름의 dpr2 원장(2)과 캔버스 뒷면 배수(1.000 ↔ 2.000)다.",
+  "errors_zero": "⚠ `empty_*.errors = 0`은 콘솔·페이지 오류 **개수**이고 0이 곧 통과 조건이다(임계를 따로 안 건다). 0이 아니면 그 칸이 빨개진다.",
+  "constants_snapshot_absent": "⚠ 상수·지표 스냅샷이 없다 — **web2 라인 전체의 구멍**이고 이 원장만의 것이 아니다(그 기계는 `web/test/constants.ts`에만 있다). 상수는 단위 원장 `zoom31_web2.json`의 `constants` 블록이 든다."
+ },
  "pitfalls": [
   "#88",
   "#87",
   "#71",
-  "#42"
+  "#42",
+  "#21"
  ]
 }

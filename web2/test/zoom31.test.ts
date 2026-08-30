@@ -30,7 +30,7 @@ import { session, type Session } from './session'
 import { fitPlan, fitPose, fitView, marginOf, fitRectDoc } from '../src/core/zoomfit'
 import { zoomFit, zoomTarget, zoomTargetPoints, setPose, type App } from '../src/app/state'
 import { C } from '../src/core/constants'
-import { v3, sub3, cross3, norm3, quatFromBasis, type V3 } from '../src/core/vec'
+import { v3, sub3, cross3, norm3, quatFromBasis, quatRotate, type V3 } from '../src/core/vec'
 import type { CamPose, ViewOffset } from '../src/core/types'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -78,6 +78,21 @@ function sceneNormal(): Session {
   return s
 }
 
+/** **실무선** — 소실점을 ±1W에 찍는다. f = 1200 = 1.00W → 수평 화각 **61.0°**로,
+ *  이론서 18.4가 적은 실무 관행(`d ≥ W`)의 바로 그 자리다. 대역의 **가운데**를 덮는다
+ *  (리뷰어 [2]: 양 끝만 재면 「면제가 극단의 성질인가 일반인가」를 못 가른다). */
+function sceneMid(): Session {
+  const s = session(W, H)
+  s.draw(100, 400, 1100, 400)      // 지평선
+  s.draw(1800, 400, 1800, 400)     // vp0 찍기 (+1200 = 1W)
+  s.draw(-600, 400, -600, 400)     // vp1 찍기 (−1200 = 1W)
+  s.draw(500, 500, 620, 480)
+  s.draw(500, 500, 380, 480)
+  s.draw(500, 500, 500, 380)
+  s.draw(500, 380, 620, 360)
+  return s
+}
+
 /** **초광각** — 저장소 표준 픽스처(`constructedDoc`)의 구도. f ≈ 387 = 0.32W. */
 function sceneWide(): Session {
   const s = session(W, H)
@@ -90,19 +105,30 @@ function sceneWide(): Session {
 }
 
 interface Cell { name: string; pts: V3[]; pose: CamPose; view: ViewOffset }
-interface Lens { key: 'normal' | 'wide'; label: string; app: App; an: Analysis; ids: number[]; all: V3[]; cells: Cell[] }
+type LensKey = 'tele' | 'mid' | 'wide'
+interface Lens { key: LensKey; label: string; app: App; an: Analysis; ids: number[]; all: V3[]; pickId: number; cells: Cell[] }
+
+/** 수평 화각(도) — 이론서 18.4의 자와 같은 것(`2·atan(W/2f)`). 렌즈 이름을 **값으로** 적는다. */
+const hfovDeg = (f: number) => 2 * Math.atan(W / (2 * f)) * 180 / Math.PI
 
 /** 팬·줌이 얹힌 화면 — `fitRectDoc`이 뷰 오프셋을 실제로 셈에 넣는가(#71: 조건이 값의 절반) */
 const SKEW_VIEW: ViewOffset = { s: 1.4, ox: -160, oy: 90 }
 
-function lens(key: 'normal' | 'wide'): Lens {
-  const s = key === 'normal' ? sceneNormal() : sceneWide()
+function lens(key: LensKey): Lens {
+  const s = key === 'tele' ? sceneNormal() : key === 'mid' ? sceneMid() : sceneWide()
   const app = s.app
   const an = app.lift.an
   const ids = [...app.lift.lifted.keys()]
   const all = zoomTargetPoints(app, ids)
   const bb = bboxOf(all)
-  const one = zoomTargetPoints(app, [ids[ids.length - 1]!])
+  // 「고른 것이 하나」는 **가장 짧은 획**이다(리뷰어 [7]) — 전체와 겨우 1.15배 차이 나는
+  // 획을 고르면 「고른 것이 더 크게 보인다」가 무엇을 재는지 흐려진다.
+  const lenOf = (id: number) => {
+    const g = app.lift.lifted.get(id)!
+    return Math.hypot(g.b3.x - g.a3.x, g.b3.y - g.a3.y, g.b3.z - g.a3.z)
+  }
+  const pickId = [...ids].sort((a, b2) => lenOf(a) - lenOf(b2))[0]!
+  const one = zoomTargetPoints(app, [pickId])
   const orbit = lookFrom(v3(bb.c.x + bb.size * 1.4, bb.c.y + bb.size * 0.8, bb.c.z + bb.size * 1.2), bb.c)
   const k = bb.size
   // **화면평행으로 납작한 대상** — 깊이가 한 값이다(z 고정). 작도 포즈가 −z를 보므로
@@ -115,9 +141,9 @@ function lens(key: 'normal' | 'wide'): Lens {
   ]
   // **대상이 카메라 뒤** — 작도 포즈는 −z를 보므로 +z가 뒤다. 같은 장면을 뒤로 옮긴 것.
   const behind: V3[] = all.map(p => v3(p.x, p.y, -p.z + k * 0.5))
+  const label = `f/W ${(an.f! / W).toFixed(2)} · 수평 화각 ${hfovDeg(an.f!).toFixed(1)}°`
   return {
-    key, label: key === 'normal' ? '실사용 렌즈 f/W 2.74' : '초광각 f/W 0.32',
-    app, an, ids, all,
+    key, label, app, an, ids, all, pickId,
     cells: [
       { name: '고른 것이 하나 (획 한 개)', pts: one, pose: orbit, view: IDENT },
       { name: '고른 것이 여럿 (전체)', pts: all, pose: orbit, view: IDENT },
@@ -128,9 +154,11 @@ function lens(key: 'normal' | 'wide'): Lens {
   }
 }
 
-const NORMAL = lens('normal')
-const WIDE = lens('wide')
-const LENSES = [NORMAL, WIDE]
+const TELE = lens('tele')     // f/W 2.74 — 소실점 2.5·3W 밖(망원 쪽 끝)
+const MID = lens('mid')       // f/W 1.00 — 이론서 18.4의 실무 관행선
+const WIDE = lens('wide')     // f/W 0.32 — 저장소 표준 픽스처(초광각 쪽 끝)
+const LENSES = [TELE, MID, WIDE]
+const NORMAL = TELE           // (아래 팔이 «가장 여유 있는 렌즈»를 가리키는 이름)
 
 const measure = (L: Lens, pose: CamPose, view: ViewOffset, pts: V3[]) => marginOf(L.an, pose, view, pts, SC)
 
@@ -162,6 +190,14 @@ describe('web2-31 3번 — 돋보기', () => {
           before: { inside: before.inside, margin_min: Number.isNaN(before.min) ? null : r6(before.min) },
           after: { inside: after.inside, margin_min: r6(after.min), margin_x: r6(after.mx), margin_y: r6(after.my) },
           tight_axis: after.mx <= after.my ? 'x' : 'y',
+          // **대상이 커졌는가**(리뷰어 [6]) — 여백의 «최솟값»만 보면 «가운데로 모으느라
+          // 한 축의 틈이 넓어진 것»과 «대상이 작아진 것»이 구별되지 않는다.
+          // ⚠ 자는 «넓이»가 아니라 **화면 상자의 대각선**이다: 세로 기둥 한 획은 상자의 폭이
+          //   0이라 넓이가 0이고, 넓이로 재면 그 칸에서 재는 자가 죽는다(게이트 ④와 같은 자).
+          screen_span_fold: before.inside || Number.isFinite(before.box.x0) ? r6(
+            Math.hypot(after.box.x1 - after.box.x0, after.box.y1 - after.box.y0)
+            / Math.max(1e-9, Math.hypot(before.box.x1 - before.box.x0, before.box.y1 - before.box.y0)),
+          ) : null,
           d_exact: r6(plan!.dExact), d_near: r6(plan!.dNear), d_used: r6(plan!.d),
           nearest_depth: r6(plan!.nearestDepth),
           moved: r6(Math.hypot(plan!.pose.p.x - c.pose.p.x, plan!.pose.p.y - c.pose.p.y, plan!.pose.p.z - c.pose.p.z)),
@@ -172,9 +208,17 @@ describe('web2-31 3번 — 돋보기', () => {
       }
       out[L.key] = { lens: L.label, f: r6(L.an.f!), f_over_W: r6(L.an.f! / W), rows }
     }
-    // **실사용 렌즈에서는 다섯 칸 전부 채워진다** — ±3% 문이 그 대역 전체에 걸린다
-    const normalRows = (out['normal'] as { rows: { framable: boolean }[] }).rows
-    expect(normalRows.every(r => r.framable), '실사용 렌즈의 다섯 칸이 전부 framable').toBe(true)
+    // **망원 쪽 끝에서는 다섯 칸 전부 채워진다** — ±3% 문이 그 대역 전체에 걸린다
+    const teleRows = (out['tele'] as { rows: { framable: boolean }[] }).rows
+    expect(teleRows.every(r => r.framable), 'f/W 2.74의 다섯 칸이 전부 framable').toBe(true)
+    // **실무선(f/W 1.00)에서도 문이 다섯 칸 전부에 선다** — framable이 아닌 칸이 하나 있어도
+    // 그 칸의 여백이 문 안이다(리뷰어 [2]: 면제가 극단의 성질인지 일반인지를 여기서 가른다).
+    const midRows = (out['mid'] as { rows: { framable: boolean; after: { margin_min: number } }[] }).rows
+    expect(midRows.filter(r => r.framable).length, '실무선에서 대부분이 framable').toBeGreaterThanOrEqual(4)
+    for (const r of midRows) {
+      expect(Math.abs(r.after.margin_min - M), `실무선 / ${(r as unknown as { cell: string }).cell} — framable 여부와 무관하게 문 안이다`)
+        .toBeLessThanOrEqual(TOL)
+    }
     ledger['gate1_margin'] = {
       what: '카메라를 옮겨 채운 뒤의 실측 여백 — 좁은 축이 정확히 지정값이고 넓은 축은 그 이상이다.',
       margin_target: M, tolerance: TOL, render_near_units: C.RENDER_NEAR_UNITS,
@@ -251,8 +295,10 @@ describe('web2-31 3번 — 돋보기', () => {
     const all = zoomTarget(app)
     expect(all.scope).toBe('all')
     expect(all.ids.length).toBe(app.lift.lifted.size)
-    // 치수 사후 수정으로 고른 획 하나 — 이 앱에 실재하는 「고른 것」이다(D-4)
-    const pick = [...app.lift.lifted.keys()][0]!
+    // 치수 사후 수정으로 고른 획 하나 — 이 앱에 실재하는 「고른 것」이다(D-4).
+    // **가장 짧은 획**을 고른다(리뷰어 [7] — 전체와 겨우 1.15배 차이 나는 획으로 재면
+    // 「고른 것이 더 크게 보인다」가 무엇을 재는지 흐려진다).
+    const pick = NORMAL.pickId
     app.dimEdit = pick
     const one = zoomTarget(app)
     expect(one.scope).toBe('picked')
@@ -269,19 +315,113 @@ describe('web2-31 3번 — 돋보기', () => {
     const toAll = fitPose(NORMAL.an, pose, IDENT, NORMAL.all, SC, M)!
     const gap = Math.hypot(toOne.p.x - toAll.p.x, toOne.p.y - toAll.p.y, toOne.p.z - toAll.p.z)
     expect(gap, '고른 것 하나 ↔ 전체는 다른 자리다').toBeGreaterThan(1e-3)
-    // 그리고 고른 것은 **더 크게** 보인다(화면에서 차지하는 넓이가 는다)
-    const areaOf = (p: CamPose) => {
+    // 그리고 고른 것은 **더 크게** 보인다. ⚠ 넓이로 재면 안 된다 — 가장 짧은 획은 세로
+    // 기둥이라 화면 상자의 폭이 0이고 넓이가 0이다(재는 자가 그 칸에서 죽는다).
+    // **화면 상자의 대각선**으로 잰다: 선분에도 뜻이 있는 유일한 자다.
+    const spanOf = (p: CamPose) => {
       const m = marginOf(NORMAL.an, p, IDENT, onePts, SC)!
-      return (m.box.x1 - m.box.x0) * (m.box.y1 - m.box.y0)
+      return Math.hypot(m.box.x1 - m.box.x0, m.box.y1 - m.box.y0)
     }
-    const grow = areaOf(toOne) / areaOf(toAll)
+    const grow = spanOf(toOne) / spanOf(toAll)
     expect(grow, '고른 것이 화면에서 더 크게 보인다').toBeGreaterThan(1)
-    console.log(`[31-3 ④] 전체 ${all.ids.length}획 ↔ 고른 것 1획 — 두 자리 차 ${gap.toFixed(6)} · 그 획의 화면 넓이 ${grow.toFixed(2)}배`)
+    console.log(`[31-3 ④] 전체 ${all.ids.length}획 ↔ 고른 것 1획(id ${pick}, 가장 짧은 획) — 두 자리 차 ${gap.toFixed(6)} · 그 획의 화면 길이 ${grow.toFixed(2)}배`)
     ledger['gate4_target'] = {
       what: '「고른 것」의 정본 — `dimEdit ?? dimPick`이고 그것이 3D일 때만. 솔로·꺼진 겹은 이미 lifted에서 빠지므로 「전체」가 자동으로 그 범위다.',
-      all_ids: all.ids.length, picked: pick, picked_scope: one.scope,
-      not_lifted_falls_back: 'all',
-      pose_gap_picked_vs_all: r6(gap), screen_area_fold: r6(grow),
+      all_count: all.ids.length, picked_count: one.ids.length, picked_stroke_id: pick,
+      picked_scope: one.scope, not_lifted_falls_back: 'all',
+      pose_gap_picked_vs_all: r6(gap),
+      /** 고른 획이 화면에서 몇 배 커지는가 — **가장 짧은 획**으로 잰다(리뷰어 [7]).
+       *  ⚠ 자는 «넓이»가 아니라 **화면 상자의 대각선**이다: 그 획이 세로 기둥이라 넓이가 0이고,
+       *  넓이로 재면 재는 자가 그 칸에서 죽는다(0/0). */
+      screen_span_fold: r6(grow),
+    }
+  })
+
+  // ── **#12 — 동작점을 하나로 말하지 않는다**(리뷰어 [8]) ──────────────────────
+  it('여백은 «시킨 대로» 나온다 — 0.05·0.10·0.15·0.20 네 동작점', () => {
+    const rows = [0.05, 0.10, 0.15, 0.20].map(m => {
+      const L = TELE
+      const per = L.cells.map(c => {
+        const plan = fitPlan(L.an, c.pose, c.view, c.pts, SC, m)!
+        const got = measure(L, plan.pose, c.view, c.pts)!
+        return { cell: c.name, framable: plan.framable, margin_min: r6(got.min) }
+      })
+      for (const q of per) {
+        if (q.framable) expect(Math.abs(q.margin_min - m), `여백 ${m} / ${q.cell}`).toBeLessThanOrEqual(1e-9)
+      }
+      return { asked: m, got: per.map(q => q.margin_min) }
+    })
+    console.log(`[31-3 #12] 여백 동작점 넷: ${rows.map(r => `${r.asked}→${r.got[0]}`).join(' · ')}`)
+    // **단조**다 — 더 넓게 시키면 대상이 더 작아진다(문 하나만 보면 이것을 못 잰다)
+    for (let i = 1; i < rows.length; i++) {
+      expect(rows[i]!.got[1]!, '더 넓게 시키면 여백이 는다').toBeGreaterThan(rows[i - 1]!.got[1]!)
+    }
+    ledger['margin_operating_points'] = {
+      what: '**#12 — 동작점 하나로 말하지 않는다.** 여백을 넷으로 훑어 「시킨 값이 그대로 나오는가」와 「단조인가」를 함께 낸다. 문(10%)은 그중 한 점이다.',
+      lens: TELE.label, rows,
+    }
+  })
+
+  // ── **작도 갈래의 문**(리뷰어 [3]) — 거기서 무엇이 지켜져야 하는가 ───────────
+  it('작도 시점 갈래 — 종이와 3D의 1:1이 «유지된다» (+반증: 렌즈로 채우면 깨진다)', () => {
+    const app = sceneNormal().app
+    /** 2D 획 끝점과 그 획의 3D 사영이 **화면에서** 얼마나 벌어지는가(px) */
+    const inkDrift = (an: Analysis, pose: CamPose, view: ViewOffset) => {
+      let worst = 0
+      for (const [id, g] of app.lift.lifted) {
+        const st = app.lift.strokes.get(id)!
+        for (const [P, q] of [[g.a3, st.a], [g.b3, st.b]] as const) {
+          const pr = project(an, pose, P)
+          if (!pr) return Infinity
+          worst = Math.max(worst, Math.hypot((pr.x - q.x) * view.s, (pr.y - q.y) * view.s))
+        }
+      }
+      return worst
+    }
+    const an = app.lift.an
+    const before = inkDrift(an, app.pose, app.view)
+    const r = zoomFit(app, SC)
+    expect(r.mode).toBe('view')
+    const after = inkDrift(an, app.pose, app.view)
+    // ⚠⚠ **이것이 작도 갈래의 문이다**: 뷰 오프셋은 2D와 3D를 **같이** 옮기므로 1:1이 산다.
+    expect(before).toBeLessThan(1e-9)
+    expect(after, '채운 뒤에도 종이와 3D가 붙어 있다').toBeLessThan(1e-9)
+    // ── 반증 — **같은 배율을 «렌즈»로 넣은 판**. 화면에서는 비슷해 보이는데 1:1이 깨진다 ──
+    const k = app.view.s
+    const lensBoard: Analysis = { ...an, f: an.f! * k }
+    const drifted = inkDrift(lensBoard, app.pose, IDENT)
+    expect(drifted, '반증: 같은 배수를 렌즈로 넣으면 종이와 3D가 갈린다').toBeGreaterThan(1)
+    console.log(`[31-3 작도 갈래] 뷰 오프셋으로 채운 뒤 어긋남 ${after.toFixed(6)} px · 같은 배수(${k.toFixed(3)}×)를 렌즈로 넣으면 ${drifted.toFixed(3)} px`)
+    ledger['draw_branch_lock'] = {
+      what: (
+        '**작도 갈래에서 지켜야 하는 것은 «화면 배율이 안 변한다»가 아니라 «종이와 3D의 1:1»이다**'
+        + '(리뷰어 [3]). 뷰 오프셋은 2D 획과 3D 사영을 **같은 닮음**으로 옮기므로 그 1:1이 구성상 산다 — '
+        + '그래서 화각을 «몰래» 바꾼 것이 아니다. **같은 배수를 렌즈(f)로 넣은 판**은 그 자리에서 깨진다.'
+      ),
+      view_s_after: r6(k),
+      ink_drift_px: { before: r6(before), after_view_fit: r6(after), lens_board: r6(drifted) },
+      note: '31-2가 보기 렌즈(viewF)를 들이면 그 값이 이 문을 넘는 쪽이다 — 그때 이 팔이 그 사실을 낸다.',
+    }
+  })
+
+  // ── **화면 배율 대역의 끝**(리뷰어 [4]) ─────────────────────────────────────
+  it('작도 갈래가 배율 대역(C.VIEW_S_MAX)에 걸리면 — 채우다 만다, 그러나 안 깨진다', () => {
+    const L = TELE
+    // 아주 작은 대상 — 채우려면 배율이 상한을 넘어야 한다
+    const bb = bboxOf(L.all)
+    const tiny: V3[] = [
+      v3(bb.c.x - 0.002, bb.c.y, bb.c.z), v3(bb.c.x + 0.002, bb.c.y, bb.c.z),
+      v3(bb.c.x, bb.c.y + 0.002, bb.c.z),
+    ]
+    const v = fitView(L.an, L.app.pose, tiny, SC, M, CLAMP)!
+    const m = marginOf(L.an, L.app.pose, v, tiny, SC)!
+    expect(v.s, '상한에 걸린다').toBe(C.VIEW_S_MAX)
+    expect(m.inside, '그래도 화면 안이다').toBe(true)
+    expect(m.min, '못 채웠으니 여백이 크다').toBeGreaterThan(M)
+    console.log(`[31-3 배율 대역] 아주 작은 대상 — view.s ${v.s}(상한) · 여백 ${(m.min * 100).toFixed(2)}% · 화면 안 ${m.inside}`)
+    ledger['view_scale_clamp'] = {
+      what: '작도 갈래도 `C.VIEW_S_MIN/MAX` 대역을 쓴다 — 상한에 걸리면 **채우다 만다**. 그때도 화면 안이고 가운데에 온다(못 채운 것은 여백이 커지는 쪽으로만 틀린다).',
+      view_s: v.s, clamp: CLAMP, margin_min: r6(m.min), inside: m.inside,
     }
   })
 
@@ -359,10 +499,10 @@ describe('web2-31 3번 — 돋보기', () => {
       out[L.key] = rows
       out[`${L.key}_margin_min`] = rows.map(r => r.margin_min)
     }
-    // 실사용 렌즈에서는 **다섯 칸 전부** 판이 움직이고 전부 빨개진다
-    const nr = out['normal'] as { board_framable: boolean; passes: boolean }[]
-    expect(nr.every(r => r.board_framable), '실사용 렌즈에서는 반증 판이 다섯 칸 다 움직인다').toBe(true)
-    expect(nr.every(r => !r.passes), '실사용 렌즈에서는 다섯 칸 다 빨개진다').toBe(true)
+    // 망원 쪽 끝에서는 **다섯 칸 전부** 판이 움직이고 전부 빨개진다
+    const nr = out['tele'] as { board_framable: boolean; passes: boolean }[]
+    expect(nr.every(r => r.board_framable), 'f/W 2.74에서는 반증 판이 다섯 칸 다 움직인다').toBe(true)
+    expect(nr.every(r => !r.passes), 'f/W 2.74에서는 다섯 칸 다 빨개진다').toBe(true)
     // 초광각에서도 **판이 움직이는 칸**은 빨개진다(대역의 반대 끝에서도 반증이 산다)
     const wr = (out['wide'] as { board_framable: boolean; passes: boolean }[]).filter(r => r.board_framable)
     expect(wr.length, '초광각에도 판이 움직이는 칸이 있다').toBeGreaterThan(0)
@@ -440,6 +580,63 @@ describe('web2-31 3번 — 돋보기', () => {
     }
   })
 
+  // ── **반증 ⓓ — 「그럴듯한 틀린 구현」**(리뷰어 [5]) ─────────────────────────
+  // 반증 ⓐ·ⓑ는 «같은 닫힌 식에 다른 인자»라 식 자체가 틀렸을 때를 안 잰다. 그래서
+  // **다른 식**을 나란히 돌린다: 대상의 **경계 구(球)**를 시야뿔에 넣는 흔한 방법이다
+  // (라이노·많은 뷰어가 그렇게 한다). 이것은 언제나 «화면 안»이지만 **여백이 안 맞는다** —
+  // 특히 납작한 대상에서 크게 틀린다(구의 반지름이 대각선의 절반이라서다).
+  it('반증 ⓓ 「구 경계로 맞추는 판」 — 화면 안이지만 여백이 문 밖이다', () => {
+    const out: Record<string, unknown> = {}
+    for (const L of LENSES) {
+      const rows = L.cells.map(c => {
+        const bb = bboxOf(c.pts)
+        const R = Math.max(...c.pts.map(p => Math.hypot(p.x - bb.c.x, p.y - bb.c.y, p.z - bb.c.z)))
+        const r = fitRectDoc(c.view, SC, M)
+        const f = L.an.f!, px = L.an.principal!.x, py = L.an.principal!.y
+        const th = Math.min(
+          Math.atan((px - r.x0) / f), Math.atan((r.x1 - px) / f),
+          Math.atan((py - r.y0) / f), Math.atan((r.y1 - py) / f),
+        )
+        const d = R / Math.sin(th)
+        const fwd = quatRotate(c.pose.q, v3(0, 0, -1))
+        const pose: CamPose = { p: v3(bb.c.x - fwd.x * d, bb.c.y - fwd.y * d, bb.c.z - fwd.z * d), q: { ...c.pose.q } }
+        const m = measure(L, pose, c.view, c.pts)!
+        return { cell: c.name, sphere_r: r6(R), d: r6(d), margin_min: r6(m.min), inside: m.inside,
+                 passes: m.inside && Math.abs(m.min - M) <= TOL }
+      })
+      console.log(`[31-3 반증ⓓ] ${L.label} — 구 경계 판의 여백: ${rows.map(x => `${(x.margin_min * 100).toFixed(2)}%`).join(' · ')}`)
+      out[L.key] = rows
+      out[`${L.key}_margin_min`] = rows.map(x => x.margin_min)
+    }
+    // **납작한 대상**에서 반드시 빨개진다 — 구가 대각선을 감싸므로 여백이 크게 남는다
+    for (const L of LENSES) {
+      const flat = (out[L.key] as { cell: string; passes: boolean; margin_min: number }[])
+        .find(x => x.cell === '화면평행으로 납작한 대상')!
+      expect(flat.passes, `${L.label} — 구 경계 판이 납작한 대상에서 문을 못 넘는다`).toBe(false)
+      expect(flat.margin_min, '구 경계 판은 여백이 «남는» 쪽으로 틀린다').toBeGreaterThan(M + TOL)
+    }
+    // 그리고 「전체」 칸도 반드시 빨개진다. ⚠ **다섯 칸 전부는 아니다** — 아주 짧은 획 하나는
+    // 구와 상자가 거의 같아 우연히 문 안에 든다(f/W 2.74에서 12.01% · 1.00에서 10.49%).
+    // 그 사실을 값으로 적는다(#26: 못 잡는 것을 잡는다고 적지 않는다).
+    for (const L of LENSES) {
+      const rows = out[L.key] as { cell: string; passes: boolean }[]
+      expect(rows.find(x => x.cell === '고른 것이 여럿 (전체)')!.passes,
+        `${L.label} — 구 경계 판이 「전체」에서 문을 못 넘는다`).toBe(false)
+      expect(rows.filter(x => x.passes).length,
+        `${L.label} — 구 경계 판이 넘는 칸은 많아야 하나다`).toBeLessThanOrEqual(1)
+    }
+    ledger['falsify_d_sphere'] = {
+      what: (
+        '**「그럴듯한 틀린 구현」** — 대상의 경계 구를 시야뿔에 넣는 흔한 방법을 나란히 돌린다. '
+        + '반증 ⓐ·ⓑ가 «같은 식에 다른 인자»인 것과 달리 이쪽은 **다른 식**이므로, '
+        + '게이트 ①이 「닫힌 식의 자기 확인」이 아니라는 증거가 된다(리뷰어 [5]). '
+        + '⚠ 재는 자(`marginOf`)는 어느 판에서도 같다 — 그것은 `camera.ts`의 `project` 하나를 쓰고 '
+        + '맞춤의 대수(`fitPlan`)를 한 줄도 안 읽는다.'
+      ),
+      red_gate: 'gate1_margin', ...out,
+    }
+  })
+
   it('뷰 오프셋을 셈에 넣는다 — 팬·줌이 얹힌 화면에서도 여백이 같다', () => {
     const r = fitRectDoc(SKEW_VIEW, SC, M)
     const back = { x0: r.x0 * SKEW_VIEW.s + SKEW_VIEW.ox, x1: r.x1 * SKEW_VIEW.s + SKEW_VIEW.ox }
@@ -494,10 +691,18 @@ describe('web2-31 3번 — 돋보기', () => {
         W, H,
         lenses: LENSES.map(L => ({
           key: L.key, label: L.label, f: r6(L.an.f!), f_over_W: r6(L.an.f! / W),
+          hfov_deg: r6(hfovDeg(L.an.f!)),
           fSource: L.an.fSource, vps: L.an.vps.map(v => v.x), principal: L.an.principal,
           lifted: L.ids.length, points: L.all.length,
         })),
-        cells: NORMAL.cells.map(c => ({ name: c.name, points: c.pts.length, view: c.view })),
+        cells: TELE.cells.map(c => ({ name: c.name, points: c.pts.length, view: c.view })),
+        lens_band_note: (
+          '**렌즈가 픽스처의 한 축이다**(#84 ㉡ · 리뷰어 [1][2]): 「채운다」가 가능한지 자체를 화각이 '
+          + '정한다. 이론서 18.4의 자(60° → d ≥ 0.87W · 90° → d ≥ 0.5W · 실무 관행 d ≥ W)로 읽으면 '
+          + '세 픽스처는 **망원 쪽 끝(20.7°) · 실무 관행선(53.1°) · 초광각 쪽 끝(114.3°)**이다. '
+          + '⚠ 이름을 «실사용»처럼 짓지 않고 **값(f/W · 화각)으로** 적는다 — 어느 것이 실사용인지는 '
+          + '이 회차가 잰 것이 아니다.'
+        ),
         d5_note: (
           '지시가 이름 붙인 다섯 칸을 전부 만들었다(D-5): 하나 · 여럿 · 없음(게이트 ③) · '
           + '**화면평행 납작** · **카메라 뒤**. 그리고 «팬·줌이 얹힌 화면»을 여섯째로 더했다 — '
@@ -524,7 +729,7 @@ describe('web2-31 3번 — 돋보기', () => {
       gate: {
         for: 'web2-31 3번 — 여백 10%±3% · 렌즈 불변 · 빈 상태 무동작',
         registered: [
-          '고른 대상이 화면 안에 전부 들어오고, 좁은 축의 여백이 10% ± 3% (실사용 렌즈의 다섯 칸 전부 · framable)',
+          '고른 대상이 화면 안에 전부 들어오고, 좁은 축의 여백이 10% ± 3% — **f/W 2.74와 1.00에서 다섯 칸 전부**',
           '어느 렌즈에서든 근평면을 안 침범한다 — 못 채우는 구도에서는 여백이 커질 뿐 잘리지 않는다',
           '렌즈 값이 안 변한다 — f·fSource·주점이 전후 동일하고 카메라 갈래는 화면 배율도 안 건드린다',
           '아무것도 없을 때 눌러도 안 깨진다 (빈 문서 · 작도 획만 · 빈 목록 · 한 점으로 뭉친 대상)',
@@ -541,18 +746,20 @@ describe('web2-31 3번 — 돋보기', () => {
          *  몇 배로 바꿔 놓고도 여백을 10.000000%로 맞추는가 — 이 배수가 곧 「여백만 재는 팔이
          *  못 보는 것」의 크기다. ⚠ 값 축(반증 ⓐ)의 값은 **정확히 0**이라 여기 못 쓴다
          *  (#40 ②: 0/1은 대개 보장이라 정보량이 0이다) — 그 값은 아래 secondary에 적는다. */
-        reachability_value: (ledger['falsify_b_lens'] as { normal_screen_f_fold: number[] }).normal_screen_f_fold,
-        reachability_source: 'falsify_b_lens/normal_screen_f_fold',
-        reachability_value_secondary: (ledger['falsify_a_no_margin'] as { normal_margin_min: number[] }).normal_margin_min,
-        reachability_source_secondary: 'falsify_a_no_margin/normal_margin_min',
+        reachability_value: (ledger['falsify_b_lens'] as { tele_screen_f_fold: number[] }).tele_screen_f_fold,
+        reachability_source: 'falsify_b_lens/tele_screen_f_fold',
+        reachability_value_secondary: (ledger['falsify_d_sphere'] as { tele_margin_min: number[] }).tele_margin_min,
+        reachability_source_secondary: 'falsify_d_sphere/tele_margin_min',
       },
       selfcheck_flags_known: {
         exact_margin: (
-          '⚠ 실사용 렌즈의 `margin_min`이 다섯 칸 모두 **정확히 0.100000**으로 나온다 — 「분포 전체가 한 값」이 잡힌다. '
+          '⚠ f/W 2.74·1.00의 `margin_min`이 다섯 칸 모두 **정확히 0.100000**으로 나온다 — 「분포 전체가 한 값」이 잡힌다. '
           + '**설계 보장이 맞다**(CLAUDE.md §5.1 자기참조 유형 3): 닫힌 식이라 좁은 축의 허용 구간 폭이 '
           + '구성상 0이고, 그러면 여백이 지정값과 부동소수 오차 안에서 같다. **그래서 이 값 자체는 '
           + '아무것도 안 잰다** — 문의 판별력은 반증 판 ⓐ가 준다(실제로 돌렸다). '
-          + '⚠⚠ 그리고 값 축만으로는 반증 판 ⓑ를 못 가른다 — 정체 축이 그래서 따로 있다.'
+          + '⚠⚠ 그리고 값 축만으로는 반증 판 ⓑ를 못 가른다 — 정체 축이 그래서 따로 있다. '
+          + '⚠⚠⚠ 반증 ⓐ·ⓑ는 «같은 닫힌 식에 다른 인자»라 **식 자체가 틀렸을 때**를 안 잰다 — '
+          + '그 자리는 반증 ⓓ(구 경계로 맞추는 다른 식)와 e2e의 재유도(diag.projectAll)가 진다(리뷰어 [5]).'
         ),
         counters_zero: (
           '⚠ `falsify_a_no_margin`의 `margin_min` 0들과 `gate3_empty.construction_only.lifted = 0`이 '
@@ -574,7 +781,7 @@ describe('web2-31 3번 — 돋보기', () => {
           + '그대로 적는 것까지만 한다 — 기계를 세우는 것은 web2 전역 작업이라 범위 밖이다.'
         ),
       },
-      pitfalls: ['#88', '#87', '#86', '#84', '#54', '#71', '#42', '#40'],
+      pitfalls: ['#88', '#87', '#86', '#84', '#54', '#71', '#42', '#40', '#12', '#26'],
       pitfalls_note: (
         '#88 — 여백을 px가 아니라 **비**로 두고, 단추 자리의 여유도 상수로 안 적는다(e2e가 실측에서 유도한다). '
         + '#87 — 새 단추가 실제로 «눌리는가»를 `elementFromPoint`로 잰다(e2e ②, dpr 1·2). '
@@ -582,6 +789,8 @@ describe('web2-31 3번 — 돋보기', () => {
         + '#84 ㉡ — 반증을 **렌즈 대역의 양 끝**에서 돌렸다(한 칸으로 반증하면 잘못 판정한다). '
         + '#54 — `isDrawPose` 하나로 갈래를 가르고(dollyBy·panBy와 같은 술어) 화면 배율 대역·근평면을 `C`로 꺼냈다. '
         + '#71 — 재는 조건(뷰포트·렌즈·포즈·뷰 오프셋)을 원장에 싣는다. '
+        + '#12 — 여백을 **동작점 하나로 말하지 않는다**: 0.05·0.10·0.15·0.20 네 점을 훑고 단조까지 낸다(`margin_operating_points`). 렌즈도 세 점이다. '
+        + '#26 — 반증 ⓓ가 **못 잡는 칸**을 값으로 적는다(아주 짧은 획 하나는 구와 상자가 거의 같아 우연히 문 안이다). '
         + '#42 — 착수 표의 번호를 완료 시 다시 대조했다(web2/NOTES.md 31-3 절).'
       ),
     }, null, 2)

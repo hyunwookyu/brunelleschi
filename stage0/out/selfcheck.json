@@ -1,5 +1,5 @@
 {
-  "n_flags": 5977,
+  "n_flags": 5988,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -29004,52 +29004,102 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "zoom31_web2.json:falsify_a_no_margin.normal[0].margin_min",
+      "path": "zoom31_web2.json:falsify_a_no_margin.tele[0].margin_min",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "zoom31_web2.json:falsify_a_no_margin.normal[1].margin_min",
+      "path": "zoom31_web2.json:falsify_a_no_margin.tele[1].margin_min",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "zoom31_web2.json:falsify_a_no_margin.normal[2].margin_min",
+      "path": "zoom31_web2.json:falsify_a_no_margin.tele[2].margin_min",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "zoom31_web2.json:falsify_a_no_margin.normal[3].margin_min",
+      "path": "zoom31_web2.json:falsify_a_no_margin.tele[3].margin_min",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "zoom31_web2.json:falsify_a_no_margin.normal[4].margin_min",
+      "path": "zoom31_web2.json:falsify_a_no_margin.tele[4].margin_min",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "zoom31_web2.json:falsify_a_no_margin.normal_margin_min[0]",
+      "path": "zoom31_web2.json:falsify_a_no_margin.tele_margin_min[0]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "zoom31_web2.json:falsify_a_no_margin.normal_margin_min[1]",
+      "path": "zoom31_web2.json:falsify_a_no_margin.tele_margin_min[1]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "zoom31_web2.json:falsify_a_no_margin.normal_margin_min[2]",
+      "path": "zoom31_web2.json:falsify_a_no_margin.tele_margin_min[2]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "zoom31_web2.json:falsify_a_no_margin.normal_margin_min[3]",
+      "path": "zoom31_web2.json:falsify_a_no_margin.tele_margin_min[3]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "zoom31_web2.json:falsify_a_no_margin.normal_margin_min[4]",
+      "path": "zoom31_web2.json:falsify_a_no_margin.tele_margin_min[4]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "zoom31_web2.json:falsify_a_no_margin.mid[0].margin_min",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "zoom31_web2.json:falsify_a_no_margin.mid[1].margin_min",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "zoom31_web2.json:falsify_a_no_margin.mid[2].margin_min",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "zoom31_web2.json:falsify_a_no_margin.mid[3].margin_min",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "zoom31_web2.json:falsify_a_no_margin.mid[4].margin_min",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "zoom31_web2.json:falsify_a_no_margin.mid_margin_min[0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "zoom31_web2.json:falsify_a_no_margin.mid_margin_min[1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "zoom31_web2.json:falsify_a_no_margin.mid_margin_min[2]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "zoom31_web2.json:falsify_a_no_margin.mid_margin_min[3]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "zoom31_web2.json:falsify_a_no_margin.mid_margin_min[4]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -29077,6 +29127,11 @@
       "path": "zoom31_web2_dpr1.json:empty_dpr1.errors",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "zoom31_web2_dpr1.json:dpr_dpr1.device_pixel_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "zoom31_web2_dpr2.json:empty_dpr2.errors",
@@ -31586,6 +31641,8 @@
       71
     ],
     "zoom31_web2.json": [
+      12,
+      26,
       40,
       42,
       54,
@@ -31596,12 +31653,14 @@
       88
     ],
     "zoom31_web2_dpr1.json": [
+      21,
       42,
       71,
       87,
       88
     ],
     "zoom31_web2_dpr2.json": [
+      21,
       42,
       71,
       87,
