@@ -349,10 +349,11 @@ test('31-3 ⑤ 자리 — 34-6이 남긴 여유 안이다 (여유는 실측에�
         reachability_source: `orbited_${dpr}/margin_before_after`,
       },
       selfcheck_flags_known: {
-        device_pixel_ratio_one: (
-          '⚠ `dpr_dpr1.device_pixel_ratio = 1`이 「정확히 1」로 잡힌다 — **그 판의 정의다**(dpr1 판은 배율 1이다). '
-          + '이 필드가 재는 것은 「값이 1이 아니다」가 아니라 「두 판의 배율이 실제로 갈렸다」이고, '
-          + '그 대조 상대는 같은 이름의 dpr2 원장(2)과 캔버스 뒷면 배수(1.000 ↔ 2.000)다.'
+        device_pixel_ratio: (
+          `⚠ 이 판의 \`dpr_${dpr}.device_pixel_ratio\`는 ${dpr === 'dpr2' ? 2 : 1}이고, dpr1 판에서는 그것이 `
+          + '「정확히 1」로 selfcheck에 잡힌다 — **그 판의 정의다**. 이 필드가 재는 것은 「값이 1이 아니다」가 '
+          + '아니라 **「두 판의 배율이 실제로 갈렸다」**이고, 대조 상대는 짝 원장(1 ↔ 2)과 '
+          + '캔버스 뒷면 배수(1.000 ↔ 2.000)다.'
         ),
         errors_zero: (
           '⚠ `empty_*.errors = 0`은 콘솔·페이지 오류 **개수**이고 0이 곧 통과 조건이다(임계를 따로 안 건다). '

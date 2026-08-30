@@ -222,6 +222,12 @@ describe('web2-31 3번 — 돋보기', () => {
     ledger['gate1_margin'] = {
       what: '카메라를 옮겨 채운 뒤의 실측 여백 — 좁은 축이 정확히 지정값이고 넓은 축은 그 이상이다.',
       margin_target: M, tolerance: TOL, render_near_units: C.RENDER_NEAR_UNITS,
+      span_fold_rule: (
+        '`screen_span_fold`는 **문이 아니라 사실이다**(리뷰어 [6][12]). 1보다 크면 대상이 화면에서 커진 '
+        + '것이고, **1보다 작을 수 있다** — 누르기 전이 «화면 밖»이었던 칸이 그렇다(tele[4] 0.809568: '
+        + '전 −45.32%). 그 칸에서 줄어드는 것이 옳다. 그래서 판정 문면은 「fold > 1」이 아니라 '
+        + '**「여백의 최솟값만으로 «작아졌다»를 말하지 않는다」**이고, 문은 여백 쪽이 진다.'
+      ),
       framable_note: (
         '`framable: false`는 **그 렌즈로는 그 여백이 물리적으로 안 나온다**는 뜻이다 — 채우려면 '
         + '가장 가까운 점이 눈에 닿아야 한다. 그때는 근평면까지만 다가가므로 여백이 커지고 '
@@ -330,35 +336,54 @@ describe('web2-31 3번 — 돋보기', () => {
       all_count: all.ids.length, picked_count: one.ids.length, picked_stroke_id: pick,
       picked_scope: one.scope, not_lifted_falls_back: 'all',
       pose_gap_picked_vs_all: r6(gap),
-      /** 고른 획이 화면에서 몇 배 커지는가 — **가장 짧은 획**으로 잰다(리뷰어 [7]).
+      /** 고른 획이 화면에서 몇 배 커지는가 — **가장 짧은 획**으로 잰다.
        *  ⚠ 자는 «넓이»가 아니라 **화면 상자의 대각선**이다: 그 획이 세로 기둥이라 넓이가 0이고,
-       *  넓이로 재면 재는 자가 그 칸에서 죽는다(0/0). */
+       *  넓이로 재면 재는 자가 그 칸에서 죽는다(0/0).
+       *  ⚠⚠ **이 배수에는 문이 없다**(리뷰어 [8] — 문턱을 지어 붙이지 않는다). 게이트가 요구하는 것은
+       *  「두 자리가 다르다」와 「fold > 1」 둘뿐이고, 1.23이 1.15보다 «충분히 크다»는 근거는 없다.
+       *  그 획이 화면 **세로 기둥**이라 가로 제약이 퇴화하는 것(`picked_margin_x`가 정확히 0.5)이
+       *  배수가 작게 나오는 이유다 — 종횡비가 화면과 극단으로 다르면 채워도 한 축만 찬다. */
       screen_span_fold: r6(grow),
+      picked_margin_x: r6(marginOf(NORMAL.an, toOne, IDENT, onePts, SC)!.mx),
     }
   })
 
   // ── **#12 — 동작점을 하나로 말하지 않는다**(리뷰어 [8]) ──────────────────────
   it('여백은 «시킨 대로» 나온다 — 0.05·0.10·0.15·0.20 네 동작점', () => {
-    const rows = [0.05, 0.10, 0.15, 0.20].map(m => {
-      const L = TELE
-      const per = L.cells.map(c => {
-        const plan = fitPlan(L.an, c.pose, c.view, c.pts, SC, m)!
-        const got = measure(L, plan.pose, c.view, c.pts)!
-        return { cell: c.name, framable: plan.framable, margin_min: r6(got.min) }
+    const out: Record<string, unknown> = {}
+    for (const L of LENSES) {
+      const rows = [0.05, 0.10, 0.15, 0.20].map(m => {
+        const per = L.cells.map(c => {
+          const plan = fitPlan(L.an, c.pose, c.view, c.pts, SC, m)!
+          const got = measure(L, plan.pose, c.view, c.pts)!
+          return { cell: c.name, framable: plan.framable, margin_min: r6(got.min) }
+        })
+        for (const q of per) {
+          if (q.framable) expect(Math.abs(q.margin_min - m), `${L.label} / 여백 ${m} / ${q.cell}`).toBeLessThanOrEqual(1e-9)
+        }
+        return { asked: m, framable: per.map(q => q.framable), got: per.map(q => q.margin_min) }
       })
-      for (const q of per) {
-        if (q.framable) expect(Math.abs(q.margin_min - m), `여백 ${m} / ${q.cell}`).toBeLessThanOrEqual(1e-9)
+      // **단조**는 어느 칸에서든 선다 — 못 채우는 칸에서도 「더 넓게 시키면 안 좁아진다」다
+      for (let i = 1; i < rows.length; i++) {
+        for (let k = 0; k < rows[i]!.got.length; k++) {
+          expect(rows[i]!.got[k]!, `${L.label} / ${L.cells[k]!.name} — 더 넓게 시키면 여백이 안 준다`)
+            .toBeGreaterThanOrEqual(rows[i - 1]!.got[k]! - 1e-9)
+        }
       }
-      return { asked: m, got: per.map(q => q.margin_min) }
-    })
-    console.log(`[31-3 #12] 여백 동작점 넷: ${rows.map(r => `${r.asked}→${r.got[0]}`).join(' · ')}`)
-    // **단조**다 — 더 넓게 시키면 대상이 더 작아진다(문 하나만 보면 이것을 못 잰다)
-    for (let i = 1; i < rows.length; i++) {
-      expect(rows[i]!.got[1]!, '더 넓게 시키면 여백이 는다').toBeGreaterThan(rows[i - 1]!.got[1]!)
+      console.log(`[31-3 #12] ${L.label} — 시킨 값 → 실측(다섯 칸): ${rows.map(r => `${r.asked}→[${r.got.join(' ')}]`).join(' · ')}`)
+      out[L.key] = rows
     }
     ledger['margin_operating_points'] = {
-      what: '**#12 — 동작점 하나로 말하지 않는다.** 여백을 넷으로 훑어 「시킨 값이 그대로 나오는가」와 「단조인가」를 함께 낸다. 문(10%)은 그중 한 점이다.',
-      lens: TELE.label, rows,
+      what: '**#12 — 동작점 하나로 말하지 않는다.** 여백을 넷 × 렌즈 셋 × 칸 다섯으로 훑는다.',
+      what_it_measures: (
+        '⚠⚠ **framable 칸의 「시킨 값 = 실측」은 아무것도 안 잰다** — 닫힌 식의 구성 보장이고 '
+        + '`selfcheck_flags_known.exact_margin`이 적은 그 0.100000과 같은 것이다(리뷰어 [5]). '
+        + '**이 훑기가 실제로 재는 것은 못 채우는 칸이다**: 거기서는 값이 시킨 대로 안 나오고 '
+        + '(f/W 0.32의 세 칸) 그 흩어짐이 곧 「어느 대역에서 문이 성립하는가」의 지도다. '
+        + '그리고 **단조**(더 넓게 시키면 여백이 안 준다)는 framable·비framable 칸 **전부**에서 잰다 — '
+        + '그쪽은 보장이 아니라 클램프가 낀 경로라서 확인할 값이 있다.'
+      ),
+      ...out,
     }
   })
 
@@ -399,7 +424,19 @@ describe('web2-31 3번 — 돋보기', () => {
         + '그래서 화각을 «몰래» 바꾼 것이 아니다. **같은 배수를 렌즈(f)로 넣은 판**은 그 자리에서 깨진다.'
       ),
       view_s_after: r6(k),
+      /** ⚠ **반증 ⓑ의 정체 축과 같은 이름·같은 양이다**(리뷰어 [9]) — 작도 갈래도 화면 f를
+       *  이만큼 바꾼다. 그래서 «서명»으로는 판 ⓑ와 안 갈리고, **가르는 것은 아래 1:1뿐**이다. */
+      screen_f_fold: r6(k),
       ink_drift_px: { before: r6(before), after_view_fit: r6(after), lens_board: r6(drifted) },
+      zero_is_guarantee: (
+        '⚠⚠ **0.000000 px는 «측정»이 아니라 구성 보장이다** — 이 저장소가 자기참조의 대표 사례로 '
+        + '이미 못 박은 그 값이다(CLAUDE.md §2 D-3: 「작도 시점 0.000000 px는 f가 무엇이든 그렇다」 · '
+        + '§5.1 유형 3 · 리뷰어 [1]). **그래서 이 0 자체는 아무것도 안 잰다** — 문의 판별력은 '
+        + '**719.094 px**가 준다. ⚠ 그 「f가 무엇이든 0이다」와 이 반증이 어긋나지 않는 이유: 그 문장은 '
+        + '**재리프팅**을 지난 뒤의 이야기다(f가 바뀌면 사슬이 2D에서 3D를 다시 올리므로 사영이 다시 '
+        + '획 위에 앉는다). 여기 반증 판은 **이미 올라간 3D를 그대로 두고 f만** 바꾼 것이라 그 되돌림이 '
+        + '없다 — 그것이 곧 「보기 렌즈」가 하는 일이고(31-2), 그래서 이 판이 그 자리의 대역이다.'
+      ),
       note: '31-2가 보기 렌즈(viewF)를 들이면 그 값이 이 문을 넘는 쪽이다 — 그때 이 팔이 그 사실을 낸다.',
     }
   })
@@ -511,9 +548,13 @@ describe('web2-31 3번 — 돋보기', () => {
       what: '**여백을 안 두는 판** — `margin`을 0으로 두고 같은 식을 돌린다. 「채운다」는 만족하지만 게이트 ①의 값 축이 넘는다.',
       red_gate: 'gate1_margin',
       board_framable_note: (
-        '⚠⚠ `board_framable: false`인 칸에서는 **반증 판이 제품과 같은 자리에 선다**(둘 다 근평면에 걸린다) — '
-        + '거기서 돌린 반증은 아무것도 안 잰다(#86 ㉠: 판이 안 갈리는 축에서 돌린 팔은 아무것도 안 잰다). '
-        + '그래서 문은 그 칸에 안 걸고, 대신 **판이 움직이는 칸이 두 렌즈 모두에 있다**는 것을 값으로 낸다.'
+        '⚠⚠ `board_framable: false`인 칸에서는 **두 판이 «둘 다 근평면에 걸려» 거의 같은 자리에 선다** — '
+        + '여백을 0으로 시키든 0.10으로 시키든 갈 수 있는 데까지 갔기 때문이다. **그래서 그 칸에서 돌린 '
+        + '반증은 아무것도 안 잰다**(#86 ㉠). ⚠ 「같은 자리」는 **정확히 같지 않다**(리뷰어 [2]): 여백이 '
+        + '가로놓임(a·b)을 바꾸므로 wide[0] 0.150034 ↔ 제품 0.171692 · wide[4] 0.116738 ↔ 제품 0.152957로 '
+        + '조금 다르고, **wide[4]는 그 차 때문에 우연히 문 안(11.67%)에 든다** — 반증이 «통과»한 것이 아니라 '
+        + '그 칸이 반증을 못 재는 칸이라는 증거다. 문은 그래서 그 칸에 안 걸고, 대신 **판이 실제로 움직이는 '
+        + '칸이 세 렌즈 모두에 있다**(f/W 2.74·1.00은 다섯 칸 전부)는 것을 값으로 낸다.'
       ),
       ...out,
     }
@@ -633,6 +674,16 @@ describe('web2-31 3번 — 돋보기', () => {
         + '⚠ 재는 자(`marginOf`)는 어느 판에서도 같다 — 그것은 `camera.ts`의 `project` 하나를 쓰고 '
         + '맞춤의 대수(`fitPlan`)를 한 줄도 안 읽는다.'
       ),
+      what_it_does_not_cover: (
+        '⚠⚠ **덮는 방향이 하나다**(리뷰어 [7]) — 구 경계 판은 **구성상 더 물러나는** 판이라 15칸 전부 '
+        + '`inside: true`이고 여백이 전부 목표 **이상**이다. 즉 이 판이 잡는 오식은 **«과여백» 방향**뿐이고, '
+        + '«덜 채워 잘리는» 방향의 오식은 여전히 ⓐ(같은 식에 인자 0)만 잡는다. 그 방향의 «다른 식» 반증은 '
+        + '이 회차에 없다 — `DEFERRED.md`.'
+      ),
+      not_caught: (
+        '**못 잡는 칸 3/15**(#26 · 리뷰어 [11]): 「고른 것이 하나」가 **세 렌즈 모두**에서 우연히 문 안이다 '
+        + '(tele 0.120123 · mid 0.104922 · wide 0.121044). 그 획이 짧아 구와 상자가 거의 같기 때문이다.'
+      ),
       red_gate: 'gate1_margin', ...out,
     }
   })
@@ -696,6 +747,15 @@ describe('web2-31 3번 — 돋보기', () => {
           lifted: L.ids.length, points: L.all.length,
         })),
         cells: TELE.cells.map(c => ({ name: c.name, points: c.pts.length, view: c.view })),
+        framable_scope_note: (
+          '⚠⚠ **「면제는 초광각의 성질이다」로 넓히지 않는다**(리뷰어 [6]). `framable`은 `d*`와 '
+          + '`d_near`(= 근평면 1 − minG)의 비교이므로 **화각 · 대상의 깊이 대 가로 비 · 대상 크기 대 '
+          + '근평면 · 자세**가 함께 정한다. 이 회차가 잰 것은 «이 대상 · 이 자세 · 세 화각»이고, 그 안에서 '
+          + 'f/W 2.74·1.00은 5/5 framable, f/W 0.32는 3칸 면제였다. **자세가 같이 정한다는 반례가 같은 '
+          + '회차 안에 있다**: e2e ②는 같은 f/W 0.32 구도인데 궤도 80px에서 framable이다. '
+          + '⚠ 이론서 18.4가 이름 붙인 경계(60° = 0.87W · 90° = 0.5W)는 **한 점도 안 돌았다** — '
+          + '면제가 어디서 시작하는지는 f/W 1.00과 0.32 사이가 비어 있고 `DEFERRED.md`에 있다.'
+        ),
         lens_band_note: (
           '**렌즈가 픽스처의 한 축이다**(#84 ㉡ · 리뷰어 [1][2]): 「채운다」가 가능한지 자체를 화각이 '
           + '정한다. 이론서 18.4의 자(60° → d ≥ 0.87W · 90° → d ≥ 0.5W · 실무 관행 d ≥ W)로 읽으면 '
@@ -735,6 +795,8 @@ describe('web2-31 3번 — 돋보기', () => {
           '아무것도 없을 때 눌러도 안 깨진다 (빈 문서 · 작도 획만 · 빈 목록 · 한 점으로 뭉친 대상)',
           '「고른 것」이 있으면 그것, 없으면 전체 — 둘이 실제로 다른 자리로 가고 고른 것이 더 크게 보인다',
           '갈래 둘이 각자의 것만 움직인다(작도 시점 = 화면 · 궤도 뒤 = 카메라)',
+          '**작도 갈래는 종이와 3D의 1:1을 유지한다** — 그 갈래에서 「렌즈를 안 바꿨다」의 뜻이 그것이다(`draw_branch_lock`)',
+          '못 채우는 구도에서도 근평면을 안 침범하고 화면 안이다 — 여백이 **커지는 쪽으로만** 틀린다',
         ],
         reachability: (
           '**두 축이 각각 다른 판에서 빨개진다**(#86). ⓐ 「여백을 안 두는 판」(margin 0)은 '
