@@ -1,5 +1,5 @@
 {
-  "n_flags": 5831,
+  "n_flags": 5841,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -4236,6 +4236,56 @@
     },
     {
       "path": "glyph35_web2.json:arm_sequential_traj_then_p_dollar.shipped_p_threshold_arm.best.noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:headroom_normalized.held_out_per_seed[0].k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.plus_traj.strict.noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.plus_traj.matched.noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.plus_shape_only.matched.noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.plus_shape_only.marginal_matched",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.per_seed_shape_matched[0]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.per_seed_shape_matched[1]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.per_seed_shape_matched[2]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.per_seed_shape_matched[3]",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:attribution_fourth_view.per_seed_shape_matched[4]",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -30092,6 +30142,9 @@
     "glyph35_web2.json": [
       11,
       14,
+      20,
+      42,
+      47,
       76,
       77,
       82
@@ -30640,6 +30693,7 @@
       49
     ],
     "test_cost_web2.json": [
+      14,
       42,
       45,
       47,
