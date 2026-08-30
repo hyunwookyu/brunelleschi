@@ -428,7 +428,8 @@ describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
     })
     const trajStrict = pick(trajCurve, B.wrong), trajMatched = pick(trajCurve, pOnly.wrong)
     const attribution = {
-      note: '⚠⚠ **이 회차의 마지막 물음**(2차 리뷰어 [21]): 사슬의 +45가 «궤적이라서»인가 «네 번째 시야라서»인가. 초판은 「얹어 볼 다른 대조기가 저장소에 없다」고 적었는데 **틀렸다** — `traj_shape_only`(같은 구조에서 궤적 항만 끈 판)가 그 위약이고 **같은 원장 안에 있었다.** ④($P, 실린 문턱)를 켠 채 ③ 자리에 그것을 넣어 견준다.',
+      note: '④($P, 실린 문턱)를 켠 채 ③ 자리에 **궤적 항만 끈 판**(`traj_shape_only` — 같은 구조·같은 원형 표)을 넣어 견준다. 2차 리뷰어 [21]이 「그 위약이 이미 원장에 있다」를 지적해 세운 팔이다.',
+      scope: '⚠⚠ **이 팔이 답하는 물음의 범위를 좁혀 적는다**(3차 리뷰어 [23]). 위약에서 궤적 항을 끄면 남는 것은 **같은 GLYPHS에 대한 방향·순서를 안 보는 모양 거리**이고, ④($P)도 `arms.p_dollar.note`가 적듯 **같은 원형 표를 쓰는 순서·방향을 안 보는** 점군이다 — **둘은 같은 계열이다.** 그러므로 이 팔이 실제로 답한 것은 **「+45가 «방향·순서를 보는 항»에서 오는가」**(→ 그렇다)이고, **「임의의 네 번째 시야를 얹어도 0인가」는 아직 안 갈렸다** — 모양 계열이 아닌 네 번째 대조기가 저장소에 없다(초판의 그 문장은 **반쯤 참이었다**). 후자는 DEFERRED다. **인용은 앞엣것으로만 한다.**',
       caps: '두 자로 뽑는다 — ㉠ **엄격**(오답 ≤ 기준선 2) ㉡ **동등**(오답 ≤ $P 단독의 3). ㉡가 「맞는 답을 더 얹는가」의 자다: 오답 수를 confound로 쓰지 않는다.',
       p_dollar_only: { ok: pOnly.ok, wrong: pOnly.wrong },
       plus_traj: { strict: trajStrict, matched: trajMatched, marginal_strict: trajStrict ? trajStrict.ok - pOnly.ok : null, marginal_matched: trajMatched ? trajMatched.ok - pOnly.ok : null },
@@ -449,10 +450,16 @@ describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
         return score(sub, seqShape(shapeMatched.th)).ok - score(sub, withPdollar(PD_SHIPPED)).ok
       }) : null,
       verdict: null as string | null,
+      legal_band_reading: null as string | null,
     }
     attribution.verdict = shapeStrict === null
-      ? '⚠⚠ **궤적 항을 끈 판은 «엄격» 자에서 어느 문턱에서도 못 선다**(오답이 3 아래로 안 내려간다 — $P@0.10이 내는 그 한 칸을 못 걷는다). 그러므로 엄격 자로는 두 팔을 견줄 수 없다. **동등 자**의 두 값이 비교의 정본이다.'
+      ? '⚠⚠ **궤적 항을 끈 판은 «엄격» 자에서 어느 문턱에서도 못 선다**(오답이 3 아래로 안 내려간다 — $P@0.10이 내는 그 한 칸을 못 걷는다). 그러므로 엄격 자로는 두 팔을 견줄 수 없다. **동등 자**의 두 값이 비교의 정본이다. ⚠ 동등 자는 **위약 쪽에 여유를 주는** 자다(궤적은 그 자에서 오답 2로 여유를 안 쓴다).'
       : '두 자 모두에서 견줄 수 있다.'
+    attribution.legal_band_reading = (() => {
+      const legal = shapeCurve.filter(r => r.wrong <= pOnly.wrong && r.noise === 0)
+      const beyond = shapeCurve.filter(r => r.th > 0.025 && r.th <= 0.04).map(r => `${r.th}:ok ${r.ok}/오답 ${r.wrong}`)
+      return `⚠ **위약의 합법 대역이 좁다**(3차 리뷰어 [24]): 동등 자에서 합법인 문턱은 ${legal.map(r => r.th).join('·')} 뿐이다. **그 전부에서 얹는 몫이 0이고**(ok ${legal.map(r => r.ok).join('·')} = $P 단독 ${pOnly.ok}), 대역 밖으로 나가면 맞음이 **되레 준다** — ${beyond.join(' · ')}. 그러므로 「0」은 대역이 좁아서 못 잰 것이 아니라 **어느 문턱에서도 못 얹는다**는 뜻이다(곡선 57점 전량이 curves에 있다).`
+    })()
     console.log(`[35 귀속] ④만 ${pOnly.ok}(오답 ${pOnly.wrong})`)
     console.log(`[35 귀속] ④+궤적        엄격 ${trajStrict ? `${trajStrict.ok}@${trajStrict.th}(한계 ${trajStrict.ok - pOnly.ok})` : '없음'} · 동등 ${trajMatched ? `${trajMatched.ok}@${trajMatched.th}(한계 ${trajMatched.ok - pOnly.ok})` : '없음'}`)
     console.log(`[35 귀속] ④+«궤적 끈 판» 엄격 ${shapeStrict ? `${shapeStrict.ok}@${shapeStrict.th}(한계 ${shapeStrict.ok - pOnly.ok})` : '**없음**'} · 동등 ${shapeMatched ? `${shapeMatched.ok}@${shapeMatched.th}(한계 ${shapeMatched.ok - pOnly.ok})` : '없음'} · 씨별 ${JSON.stringify(attribution.per_seed_shape_matched)}`)
@@ -575,17 +582,21 @@ describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
         `씨 ${r.k}: $P(실린 문턱)가 이미 있어도 궤적이 더 얹는 몫이 있다 — 사슬 안의 한계 이득`)
         .toBeGreaterThan(0)
     }
-    expect(seedStats.marginal_traj_given_pdollar.spread,
-      '그 한계 이득은 씨 사이에서 거의 안 흔들린다(머리끼리 견주는 값과 다른 점)')
-      .toBeLessThan(seedStats.head_to_head.spread)
+    // ⚠ **「폭 2 < 폭 8」 단언을 걷었다**(3차 리뷰어 [25]): 비교 대상이 **철회된 값**
+    //    (`trajectory_alone.vs_p_dollar` 12)의 분산이고, 시스템의 불변식이 아니라 같은 실행에서
+    //    나온 두 기술통계의 대소라 **실패시킬 조건을 못 적는다**(D-3: 「실패 못 시키면 그 검사는
+    //    아무것도 안 잰다」). 두 수는 `seed_variance`에 그대로 남는다 — 게이트에서만 뺐다.
     expect(A3.ok, '궤적 항을 끈 같은 구조보다 낫다(185칸 — 이쪽은 여유가 크다)').toBeGreaterThan(S.ok)
     // ⚠⚠ **+45가 «궤적이라서»인가 «네 번째 시야라서»인가**(2차 리뷰어 [21]).
     //    ④를 켠 채 ③ 자리에 **궤적 항을 끈 판**을 넣으면 한계 이득이 **0**이다(씨별 [0,0,0,0,0]).
     //    같은 구조·같은 원형 표·같은 자리인데 **궤적 항만 끄면 아무것도 못 얹는다** —
     //    이 줄이 그 귀속의 반증 조건이다(이것이 0보다 크면 「네 번째 시야면 아무거나 된다」가 된다).
-    expect(attribution.plus_shape_only.marginal_matched,
-      '궤적 항을 끈 판은 ④ 위에 아무것도 못 얹는다 — 그러므로 +45는 «네 번째 시야»의 몫이 아니다')
-      .toBe(0)
+    // ⚠ **씨별로 건다**(3차 리뷰어 [26]): `per_seed_shape_matched`가 원장에 있는데 전량으로
+    //    걸었던 것을 고친다 — ㉩(「새 게이트에도 방금 쓴 자를 대라」)를 세운 대응이 그 자를 안 댔다.
+    for (const [k, v] of (attribution.per_seed_shape_matched ?? []).entries()) {
+      expect(v, `씨 ${k}: 궤적 항을 끈 판은 ④ 위에 한 칸도 못 얹는다`).toBe(0)
+    }
+    expect(attribution.plus_shape_only.marginal_matched, '전량으로도 0이다').toBe(0)
     expect(attribution.plus_traj.marginal_matched!,
       '궤적은 ④ 위에 얹는다').toBeGreaterThan(attribution.plus_shape_only.marginal_matched!)
     // ⚠⚠ **자를 고른 탓이 아니다** — 두 팔에 아무 제약도 안 걸어도 궤적이 위다(770 대 735).
@@ -681,13 +692,14 @@ describe('35 궤적 — 래스터가 거부한 칸만 본다', () => {
             '틀림 ≤ 2(기준선과 같다)',
             '잡음 8종 수용 0 — 앱과 같은 함수(recognizeDigitsNet)로',
             '**씨 다섯 각각**에서 ④가 있어도 ③이 더 얹는 몫 > 0 (한계 이득 · [9,8,10,9,9])',
-            '그 한계 이득의 씨별 폭 < 머리끼리 견주는 값의 폭 (2 < 8)',
-            '**씨 다섯 각각**에서 표본 밖의 남은 여유를 절반 넘게 메운다 (최저 씨 76.8% 정답률)',
-            '③ 자리에 **궤적 항을 끈 판**을 넣으면 ④ 위에 얹는 몫이 **0**이다 — +45의 귀속',
+            '**씨 다섯 각각**에서 표본 밖의 남은 여유를 절반 넘게 메운다 (최저 씨 filled 0.623)',
+            '**씨 다섯 각각**에서 ③ 자리에 **궤적 항을 끈 판**을 넣으면 ④ 위에 얹는 몫이 **0**이다 — +45가 «방향·순서를 보는 항»에서 온다는 것',
+            '제약을 통째로 풀어도 궤적 쪽 최대(770·오답 2)가 위약 쪽 최대(735·오답 36)보다 높다',
             '채택 문턱이 고원 안($P는 실린 값 고정)',
           ],
+          registered_note_3: '⚠ **3차 대응에서 두 줄이 더 움직였다**: ㉠ 「한계 이득의 씨별 폭 < 머리끼리 견주는 값의 폭(2 < 8)」을 **걷었다**(리뷰어 [25]) — 비교 대상이 **철회된 값**의 분산이고 실패시킬 조건을 못 적는다(D-3). 두 수는 `seed_variance`에 그대로 있다. ㉡ 위약 조항을 **씨별**로 바꿨다(리뷰어 [26]) — `per_seed_shape_matched`가 원장에 있는데 전량으로 걸려 있었다. ⚠⚠ 그리고 그 조항의 문장을 **좁혔다**(리뷰어 [23]): 위약이 ④와 같은 계열이므로 이 게이트가 말하는 것은 「+45가 **방향·순서를 보는 항**에서 온다」이지 「임의의 네 번째 시야를 얹어도 0」이 아니다.',
           registered_note: '⚠⚠ **2차 리뷰어 [13]이 잡은 자리**: 1차 대응에서 문서의 게이트만 고치고 **이 배열을 안 고쳤다**(#47 · #42 ⑥ — 정본은 원장이다). 걷어낸 두 줄은 「표본 밖 이득 > 표본 안 이득」(원수 비교라 분모가 다르다 · #11)과 「$P 단독은 실린 문턱에서 불법」(씨 하나의 한 칸 · #20)이다. 그리고 「표본 밖 정답률 8할 초과」는 **새로 세웠다가 같은 회차에서 걷었다** — 여유가 2칸이고 씨별 최저가 76.8%였다(#14의 재발 · 리뷰어 [14]).',
-          reachability: '**궤적 문턱을 올리면 넘는다.** $P를 실린 0.10에 고정하고 궤적 문턱만 0.11 → 0.125 → 0.13 → 0.15 → 0.20 → 0.25로 올리면 오답이 2 → 3 → 5 → 24 → 72 → 148로 오른다(0.20부터 잡음 수용도 시작된다). 그리고 **궤적 시야를 빼면** $P가 실린 문턱에서 오답 3을 내어 그것만으로 기준을 넘는다(traj_prefilters_p_dollar).',
+          reachability: '**궤적 문턱을 올리면 넘는다.** $P를 실린 0.10에 고정하고 궤적 문턱만 0.11 → 0.125 → 0.13 → 0.15 → 0.20 → 0.25로 올리면 오답이 2 → 3 → 5 → 24 → 72 → 148로 오른다(0.20부터 잡음 수용도 시작된다). ⚠ **다음 경로는 도달 목록에서 뺀다**(3차 리뷰어 [27]): 「궤적 시야를 빼면 $P가 실린 문턱에서 오답 3을 낸다」는 사실이지만 그 3은 **씨 하나의 한 칸**에 걸린 값이고([0,0,1,0,2]) 같은 원장이 그 줄을 채택 근거와 게이트 단언에서 **뺐다**(#20). 도달 경로로도 세지 않는다 — 문턱 축 하나로 충분히 실패시킬 수 있다.',
           reachability_source: 'gate/reachability_wrong_by_traj_threshold',
           reachability_value: reachWrong,
           reachability_wrong_by_traj_threshold: reachWrong,
