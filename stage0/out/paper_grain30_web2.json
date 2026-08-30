@@ -1,9 +1,9 @@
 {
-  "what": "web2-30 9번 — 종이·트레이싱지·옐로 셋의 결 진폭. 판정은 spec의 expect가 정본.",
+  "what": "web2-30 9번 → **web2-34 1번이 물음을 고쳐 적었다**: 셋 다 지각 대역 위(>2.1)이고 «늘 보이는» 바탕 종이가 «잠깐 얹히는» 겹보다 뚜렷하게 약한가(R8). 판정은 spec의 expect가 정본.",
   "conditions": {
     "viewport": "1200x800",
     "dpr": "이 파일이 chromium.newContext로 1·2를 직접 만든다(프로젝트 dpr 무관)",
-    "command": "npx playwright test e2e/grain30.spec.ts --project=dpr1 --workers=1",
+    "command": "LEDGER=1 PW_PORT=5301 npx playwright test e2e/grain30.spec.ts --project=dpr1 --workers=1",
     "patch": "(300,200) 60x60 CSS px — 획이 없는 빈 자리",
     "metric": "휘도 sd. 결의 몫 = sqrt(면sd^2 − 무결바닥sd^2) — 독립 성분이라 분산이 더해진다(web2-26 2번의 산술 그대로)"
   },
@@ -12,15 +12,15 @@
       {
         "dpr": 1,
         "surface": "paper",
-        "fibers": true,
+        "mode": "on",
         "bare": 1.617195266589988e-11,
-        "mean": 237.3980997222262,
-        "grain": 3.972815608859787
+        "mean": 239.58922805556313,
+        "grain": 2.4817816890607802
       },
       {
         "dpr": 1,
         "surface": "tracing",
-        "fibers": true,
+        "mode": "on",
         "bare": 1.617195266589988e-11,
         "mean": 218.2226569444575,
         "grain": 3.9204399882512475
@@ -28,23 +28,23 @@
       {
         "dpr": 1,
         "surface": "yellow",
-        "fibers": true,
-        "bare": 6.707523425575346e-12,
+        "mode": "on",
+        "bare": 1.617195266589988e-11,
         "mean": 211.0368133333251,
         "grain": 3.913797728711438
       },
       {
         "dpr": 2,
         "surface": "paper",
-        "fibers": true,
+        "mode": "on",
         "bare": 4.0472514228895307e-11,
-        "mean": 237.69065284720887,
-        "grain": 4.837477709951599
+        "mean": 239.5238288888654,
+        "grain": 3.1349831578759284
       },
       {
         "dpr": 2,
         "surface": "tracing",
-        "fibers": true,
+        "mode": "on",
         "bare": 4.013145371573046e-11,
         "mean": 218.30020916666132,
         "grain": 4.416151367062188
@@ -52,20 +52,61 @@
       {
         "dpr": 2,
         "surface": "yellow",
-        "fibers": true,
+        "mode": "on",
         "bare": 4.0472514228895307e-11,
         "mean": 211.19578812497852,
         "grain": 4.179396293912187
       }
     ],
+    "overlay_min_over_paper": {
+      "dpr1": 1.5770112842570767,
+      "dpr2": 1.333147925663463
+    },
+    "ratio_threshold": 1.2,
+    "perceptual_floor_levels": 2.1,
     "falsify_paper_fiber_off": {
       "dpr": 1,
       "surface": "paper",
-      "fibers": false,
+      "mode": "off",
+      "bare": 1.617195266589988e-11,
+      "mean": 242.63991666665902,
+      "grain": 0.08263923435969069
+    },
+    "falsify_legacy_309_alpha": {
+      "dpr1": 0.9851445710148911,
+      "dpr2": 0.863961871145036
+    },
+    "legacy_309_ratios": [
+      0.9851445710148911,
+      0.863961871145036
+    ],
+    "falsify_ui_toggle_off": {
+      "dpr": 1,
+      "surface": "paper",
+      "mode": "uiOff",
       "bare": 1.617195266589988e-11,
       "mean": 243.02800000001616,
       "grain": 0
-    }
+    },
+    "reachability": {
+      "how": "diag.paperGrain309ForTest(true) — 바탕 종이의 알파만 30-9 값(0.078~0.186)으로 되돌린다. 개수·길이·굵기는 지금 값 그대로라 갈린 축이 하나다",
+      "ratio_gate_is_ge_1_2": {
+        "current": {
+          "dpr1": 1.5770112842570767,
+          "dpr2": 1.333147925663463
+        },
+        "legacy_309": {
+          "dpr1": 0.9851445710148911,
+          "dpr2": 0.863961871145036
+        }
+      },
+      "note": "30-9 알파에서는 두 dpr 모두 임계 아래다 — 이 게이트는 통과할 수도 실패할 수도 있다(#69 ㉣ · D-3)."
+    },
+    "reachability_value": [
+      0.9851445710148911,
+      0.863961871145036
+    ],
+    "reachability_source": "gate/legacy_309_ratios"
   },
   "flags_explained": {
     "bare가 near-zero(1e-11 대역)": "**측정이다** — 결을 끈 종이 조각은 dpr1에서도 한 색이다(web2-30 9번 전까지 바탕 종이가 그랬다). 이 값은 임계가 아니라 «그 실행의 바닥»으로만 쓰이고, 빼는 산술이 sqrt(신호²−바닥²)라 0이어도 안전하다(web2-26 2번의 같은 플래그와 같은 자리).",
