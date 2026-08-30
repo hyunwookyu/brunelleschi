@@ -3,7 +3,7 @@
 // 손으로 좌표를 계산해 doc.strokes에 밀어넣으면 스냅·오스냅을 안 거치므로
 // **앱이 실제로 만드는 기하를 안 재게 된다** — 그래서 이 경로로만 잰다.
 
-import { createApp, commitStroke, yellowActive, type App } from '../src/app/state'
+import { createApp, commitStroke, yellowActive, viewScale, type App } from '../src/app/state'
 import { resolveStart, resolveEnd, resolveCommit } from '../src/core/draft'
 import type { Stroke } from '../src/core/types'
 import type { Pt } from '../src/core/vec'
@@ -19,7 +19,7 @@ export interface Session {
 
 export function session(W: number, H: number): Session {
   const app = createApp(W, H)
-  const set = () => ({ ...app.osnap, radius: app.osnap.radius / app.view.s })
+  const set = () => ({ ...app.osnap, radius: app.osnap.radius / viewScale(app) })
   // 치수 옵션도 앱(input.ts)과 같은 자리에서 읽는다 — 하네스가 앱을 재게(web2-08 지시 4)
   const dims = () => ({
     mmPerUnit: app.lift.mmPerUnit,
@@ -62,7 +62,7 @@ export function session(W: number, H: number): Session {
         if (z.y < y0) y0 = z.y; if (z.y > y1) y1 = z.y
       }
       // 입력과 **같은 인자**다(web2-32 1번 — 닫힌 한 붓이 탭으로 안 읽히게 bbox를 넘긴다)
-      const c = resolveCommit(app.lift.an, start, r.end, set().radius, Math.hypot(x1 - x0, y1 - y0) * app.view.s)
+      const c = resolveCommit(app.lift.an, start, r.end, set().radius, Math.hypot(x1 - x0, y1 - y0) * viewScale(app))
       if (!c) return null
       return commitStroke(app, c.a, c.b, pts.map(z => ({ ...z })))
     },

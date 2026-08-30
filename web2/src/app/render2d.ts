@@ -5,7 +5,7 @@
 // 선 굵기·표식 크기는 화면 고정(배율로 나눈다).
 
 import type { App, ViewOffset } from './state'
-import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive, dimLabelPos } from './state'
+import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive, dimLabelPos, viewXf } from './state'
 import { vpMarks, project, projectSeg, groundAxes, horizonScreenY } from '../core/camera'
 import { cubeGeom, cubeArrows } from '../core/viewcube'
 import { C } from '../core/constants'
@@ -209,7 +209,7 @@ export function draw2d(
 ) {
   const an = app.lift.an
   const dpr = window.devicePixelRatio || 1
-  const v = app.view
+  const v = viewXf(app)   // **보기 렌즈가 합성된 변환**(web2-31 2번) — 손대지 않았으면 app.view 그대로
   const is = 1 / v.s // 화면 고정 크기 보정
   const cw = ctx.canvas.width / dpr, ch = ctx.canvas.height / dpr
 

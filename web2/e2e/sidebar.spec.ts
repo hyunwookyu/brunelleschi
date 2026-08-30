@@ -22,7 +22,7 @@ let ovErase = { overlaps: -1, n: 0, ids: [] as string[] }
 /** 크기 줄의 id — main.ts가 짓는 규칙 그대로(표를 팔에 복제하지 않는다 — #54) */
 const ERASE_ROW_IDS = C.ERASER_R_PX.map(r => `erase-${String(r).replace('.', '_')}`)
 const ALL = ['sidebar-toggle', 'dim-toggle',   // btn-save-view: 종이 탭 「+」가, btn-draw-view: 눈(#eyebar)이 대신한다(web2-19)
-  'btn-zoom-fit', 'btn-undo', 'btn-redo', 'btn-snap', 'btn-pencil',
+  'btn-zoom-fit', 'btn-lens', 'btn-undo', 'btn-redo', 'btn-snap', 'btn-pencil',
   'tray-2H', 'tray-H', 'tray-F', 'tray-HB', 'tray-B', 'tray-2B', 'btn-pen',
   // 펜 촉통 다섯(web2-30 2번) — 펜 상태에서만 뜬다. `overlapCount`가 display:none을 거른다.
   'nib-0_18', 'nib-0_25', 'nib-0_35', 'nib-0_5', 'nib-0_7',
@@ -36,7 +36,7 @@ test('세로바 한 규칙 — 크기 대역·오른쪽 정렬·누름 사각형
   // 크기 — 전 요소가 같은 배수(--ui-scale) 대역이다. 임계는 옛 값(괄호)과 새 값 사이:
   // 되돌리면 깨진다. **시점·치수 묶음도 같은 대역**이다(관측 ① — 종전 20px가 30px 대역으로).
   expect((await box(page, '#sidebar-toggle svg')).height).toBeGreaterThanOrEqual(24) // (18→27)
-  for (const id of ['btn-undo', 'btn-redo', 'btn-draw-view', 'btn-zoom-fit', 'dim-toggle']) { // btn-brush: 3-c로 설정 안(svg 아이콘도 아님)
+  for (const id of ['btn-undo', 'btn-redo', 'btn-draw-view', 'btn-zoom-fit', 'btn-lens', 'dim-toggle']) { // btn-brush: 3-c로 설정 안(svg 아이콘도 아님)
     expect((await box(page, `#${id} svg`)).height, `#${id} 크기 대역`).toBeGreaterThanOrEqual(27) // (20→30)
   }
   // 연필통(web2-12 6번 → 3-b' 접힘) — 여섯 줄은 **연필을 눌러 연 동안만** 넓다.

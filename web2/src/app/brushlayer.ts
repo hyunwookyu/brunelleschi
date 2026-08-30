@@ -30,7 +30,7 @@
 
 import * as brush from 'p5.brush/standalone'
 import type { App } from './state'
-import { docToScreen, isDrawPose, activeGrade, draftBrushed, fadeRef } from './state'
+import { docToScreen, isDrawPose, activeGrade, draftBrushed, fadeRef, viewXf } from './state'
 import { filmSplit, yellowVisible } from './filmlayer'
 import { atOwnPose, waitFadeFactor } from '../core/waitfade'
 import { project } from '../core/camera'
@@ -161,7 +161,8 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
   applyPaper(canvas)
   applyPaper(snap)
   const paperPhase = (app: App) => {
-    const pos = `${Math.round(app.view.ox) % 128}px ${Math.round(app.view.oy) % 128}px`
+    const vx = viewXf(app)
+    const pos = `${Math.round(vx.ox) % 128}px ${Math.round(vx.oy) % 128}px`
     if (canvas.style.maskPosition !== pos) {
       canvas.style.maskPosition = pos
       canvas.style.webkitMaskPosition = pos
@@ -183,12 +184,12 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
   let last: { renderer: string; docVersion: number; pose: unknown; hold: unknown; s: number; ox: number; oy: number; w: number; waitFade: boolean; lsig: string } | null = null
   const dirty = (app: App): boolean =>
     !last || last.renderer !== app.renderer || last.docVersion !== app.docVersion ||
-    last.pose !== app.pose || last.hold !== app.fadePose || last.s !== app.view.s ||
-    last.ox !== app.view.ox || last.oy !== app.view.oy || last.w !== cw || last.waitFade !== app.waitFade ||
+    last.pose !== app.pose || last.hold !== app.fadePose || last.s !== viewXf(app).s ||
+    last.ox !== viewXf(app).ox || last.oy !== viewXf(app).oy || last.w !== cw || last.waitFade !== app.waitFade ||
     last.lsig !== layersSig(app)
   const remember = (app: App) => {
     last = { renderer: app.renderer, docVersion: app.docVersion, pose: app.pose, hold: app.fadePose,
-      s: app.view.s, ox: app.view.ox, oy: app.view.oy, w: cw, waitFade: app.waitFade, lsig: layersSig(app) }
+      s: viewXf(app).s, ox: viewXf(app).ox, oy: viewXf(app).oy, w: cw, waitFade: app.waitFade, lsig: layersSig(app) }
   }
 
   function drawStroke(app: App, s: Stroke, a: Pt, b: Pt) {
@@ -655,7 +656,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
       if (gesture) {
         // 굽는 조건: 문서·렌더러·배율이 그대로면 다시 안 굽는다(제스처 내내 한 번).
         // ⚠ 배율(줌)이 바뀌면 다시 굽는다 — 화면 고정 굵기가 배율에 안 실려야 한다.
-        const sig = `${app.docVersion}|${app.renderer}|${app.view.s}|${cw}x${ch}|${app.waitFade}`
+        const sig = `${app.docVersion}|${app.renderer}|${viewXf(app).s}|${cw}x${ch}|${app.waitFade}`
         if (!tiled || sig !== tileSig) {
           bakeTiles(app)
           tileSig = sig

@@ -3,7 +3,7 @@
 import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc,
   pickDimTarget, pickTargetAt, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick,
   handwritingGroup, applyWrittenDim, dimTargetTie, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
-  measureTap, clearMeasure, zoomFit, type Tool } from './state'
+  measureTap, clearMeasure, zoomFit, viewScale, setViewLensStops, resetViewLens, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
 import { initInput } from './input'
@@ -25,6 +25,7 @@ import { registerBox, closeOtherBoxes, openBoxIds, setBoxAwayModeForTest } from 
 import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
 import { C } from '../core/constants'
+import { lensAllowed, lensStops, lensF, hfovDeg, LENS_STOP_MIN, LENS_STOP_MAX } from '../core/lens'
 import { cubeLayoutFor } from '../core/viewcube'
 
 const W = window.innerWidth
@@ -442,7 +443,7 @@ inputApi = initInput(ink, app, {
       return true
     }
     if (app.dimEdit !== null) {
-      const to = pickTargetAt(app, p, app.osnap.radius / app.view.s * 2)
+      const to = pickTargetAt(app, p, app.osnap.radius / viewScale(app) * 2)
       if (to !== null && to !== app.dimEdit) {
         const r = moveDim(app, app.dimEdit, to)
         if (r === 'no3d') notify('아직 3D로 올라가지 않은 선이다 — 치수를 못 단다')
@@ -1274,6 +1275,8 @@ const FOLD_PANELS: Panel[] = [
   popPanel('#display-pop', '#btn-display'),
   popPanel('#snap-pop', '#btn-snap', () => placeSnapPop()),
   popPanel('#face-pop', '#btn-face', () => showFacePop()),
+  // 렌즈(web2-31 2번) — 손잡이는 `state`라 만지는 동안 안 접히고, 「기본으로」는 `cmd`다.
+  popPanel('#lens-pop', '#btn-lens', () => placeLensPop()),
 ]
 /** 이름으로 찾는다 — 여닫이 단추가 이 표를 거쳐 열고 닫는다(직접 `hidden` 대입 ⛔) */
 const panelOf = (root: string): Panel => FOLD_PANELS.find(p => p.root === root)!
@@ -1741,6 +1744,49 @@ document.getElementById('btn-zoom-fit')!.addEventListener('click', () => {
   const r = zoomFit(app, { W: r3d.W, H: r3d.H })
   if (r.mode !== 'none') autolevel.touch()
 })
+// ── 렌즈(web2-31 2번) — **보기 전용 화각**. `Camera.f`·`fSource`는 못 건드린다 ──────
+// 손잡이의 눈금은 **스톱**(log2 배율)이다: 0이 확정된 f이고 ±1이 절반·두 배(렌즈 한 스톱).
+// ⚠ 화면에 내는 값은 **화각(도)** 하나다 — `fSource`를 안 낸다(2026-08-17 지시 3 · D-L55).
+// ⚠ 확정 전에는 단추가 꺼져 있고 팝오버도 안 열린다(지시 「확정 전에는 잠근다」).
+const lensBtn = document.getElementById('btn-lens') as HTMLButtonElement
+const lensRange = document.getElementById('lens-range') as HTMLInputElement
+const lensRead = document.getElementById('lens-read')!
+lensRange.min = String(LENS_STOP_MIN)
+lensRange.max = String(LENS_STOP_MAX)
+lensRange.step = String(C.LENS_STEP_LOG2)
+function placeLensPop() {
+  const pop = document.getElementById('lens-pop')!
+  const r = lensBtn.getBoundingClientRect()
+  pop.style.top = `${Math.round(Math.min(r.top, window.innerHeight - pop.offsetHeight - 6))}px`
+}
+/** 화면을 지금 상태로 맞춘다 — **값의 출처는 `app.viewF`와 `lift.an` 하나다**(#54:
+ *  손잡이가 자기 값을 따로 들면 승격이 렌즈를 버릴 때 화면만 옛 눈금에 남는다). */
+function syncLens() {
+  const an = app.lift.an
+  const on = lensAllowed(an)
+  lensBtn.disabled = !on
+  if (!on) {
+    if (!document.getElementById('lens-pop')!.hidden) panelOf('#lens-pop').setOpen(false)
+    lensRead.textContent = '카메라가 정해진 뒤에 쓴다'
+    lensRange.value = '0'
+    lensRange.disabled = true
+    return
+  }
+  lensRange.disabled = false
+  lensRange.value = String(lensStops(an, app.viewF))
+  const f = lensF(an, app.viewF)!
+  lensRead.textContent = `화각 ${hfovDeg(f, an.W).toFixed(1)}°${app.viewF === null ? ' (기본)' : ''}`
+}
+lensRange.addEventListener('input', () => {
+  setViewLensStops(app, Number(lensRange.value))
+  syncLens(); invalidate()
+})
+document.getElementById('btn-lens-reset')!.addEventListener('click', () => {
+  resetViewLens(app); syncLens(); invalidate()
+})
+app.listeners.push(syncLens)
+syncLens()
+
 window.addEventListener('keydown', (e) => {
   // Esc — 떠 있는 물음을 취소한다(줄이 비면 밑줄 단어가 사라져 못 누른다).
   // 물음이 없을 때는 줄을 비우는 것뿐이고, 다음 문서 변경이 안내를 다시 쓴다.
@@ -2013,7 +2059,7 @@ const diag = {
   autosaveLast: () => lastAutosave,
   /** 오스냅 판정 그대로(web2-12 8번) — 넘김 꼬리가 스냅 대상이 아님을 팔이 잰다 */
   osnapAt: (x: number, y: number) =>
-    osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / app.view.s },
+    osnap(app.lift, app.pose, { x, y }, { ...app.osnap, radius: app.osnap.radius / viewScale(app) },
       undefined, undefined, app.extAcq.acquired),
   /** 연장선 **선언** 상태(web2-30 11번) — e2e가 «왕복 없이는 절대 안 선다»를 잰다.
    *  ⚠ `hover`는 없어졌다(머무름 획득이 왕복 선언으로 바뀌었다) — 대신 왕복의 진행을 준다. */

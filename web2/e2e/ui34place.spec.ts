@@ -43,7 +43,7 @@ test('34-6 ① 자리 표 — 「그리는 중에 쓰는가」로 갈렸다 (값
   // 위 띠 = 그리는 중에 **안** 쓰는 것. 「작도 시점으로」는 여기서 빠졌다.
   expect(zones.top).toEqual(['btn-fullscreen', 'btn-display', 'pane-file', 'pane-settings'])
   // 손 띠 = 그리는 중에 쓰는 것. **시점이 맨 위**이고 롤 둘이 롤통 하나가 됐다.
-  expect(zones.hand).toEqual(['btn-draw-view', 'btn-zoom-fit', 'btn-undo', 'btn-redo', 'btn-snap',
+  expect(zones.hand).toEqual(['btn-draw-view', 'btn-zoom-fit', 'btn-lens', 'btn-undo', 'btn-redo', 'btn-snap',
     'btn-pencil', 'btn-pen', 'btn-eraser-pencil', 'btn-eraser-ink',
     'dim-toggle', 'btn-roll', 'btn-face'])
   // 뷰 큐브는 **단추가 아니다** — 이미 캔버스 그림쇠다(자리를 안 먹는다).
@@ -73,7 +73,10 @@ test('34-6 ②③ 높이 예산 — 여유가 버튼 두 개분 이상이고, 31
   //   내주고도 빨개진다.** 그래서 재는 것을 **대상에서 유도한다**: 「31이 이미 먹은 자리」를
   //   실측해 되돌린 것이 34-6이 물었던 그 여유다(임계 92px은 **한 톨도 안 무른다**).
   //   ⚠ 목록에 **이름**을 적지 px를 적지 않는다 — 급이 바뀌면 실측이 따라온다.
-  const PLACED_BY_31 = ['btn-zoom-fit']
+  // ⚠⚠ **31의 둘이 이제 다 실물이다**(web2-31 2번이 렌즈를 넣었다) — 그래서 아래 ③의
+  //   시험 삽입은 **0개**가 되고, 그것이 이 팔의 «둘을 넣어 본다»가 끝났다는 뜻이다.
+  //   문면(임계 92px)은 한 톨도 안 무른다: 되돌린 여유 `slack0`가 여전히 버튼 두 개분 이상인가.
+  const PLACED_BY_31 = ['btn-zoom-fit', 'btn-lens']
   const taken31 = await page.evaluate((ids) => ids.reduce((sum, id) => {
     const e = document.getElementById(id)
     if (!e) return sum
@@ -106,11 +109,15 @@ test('34-6 ②③ 높이 예산 — 여유가 버튼 두 개분 이상이고, 31
     const r = document.getElementById('sidebar')!.getBoundingClientRect()
     const out = { h: +r.height.toFixed(1), bottom: +r.bottom.toFixed(1),
                   slack: +(window.innerHeight - r.bottom).toFixed(1),
-                  probe: +(document.getElementById('zz-probe-cube') ?? document.getElementById('zz-probe-zoom'))!.getBoundingClientRect().height.toFixed(1) }
+                  // 실물이 둘 다 서면 시험 삽입이 **0개**다 — 그때 이 칸은 null이고
+                  // 그것이 「둘을 넣어 본다」가 끝났다는 사실이다(#88: 실측에서 유도한다).
+                  probe: ((e) => e ? +e.getBoundingClientRect().height.toFixed(1) : null)(
+                    document.getElementById('zz-probe-cube') ?? document.getElementById('zz-probe-zoom')) }
     for (const id of ['zz-probe-cube', 'zz-probe-zoom']) document.getElementById(id)?.remove()
     return out
   }, PLACED_BY_31.length)
-  console.log(`[34-6 ③] 31의 둘(각 ${after.probe}px)을 넣으면 — 띠 ${after.h} · 남는 여유 ${after.slack}px`)
+  console.log(`[34-6 ③] 시험 삽입 ${2 - PLACED_BY_31.length}개(각 ${after.probe ?? '—'}px) → 띠 ${after.h} · 남는 여유 ${after.slack}px`
+    + `${after.probe === null ? ' · **31의 둘이 실물로 다 섰다**(zoom-fit · lens)' : ''}`)
   expect(after.slack, '31의 두 버튼을 넣어도 화면 안이다').toBeGreaterThanOrEqual(0)
   // 되돌아왔는가(계측이 화면을 안 남긴다)
   const back = await budget(page)
