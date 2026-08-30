@@ -1,5 +1,67 @@
 {
  "what": "web2-14 4번 — 스냅샷 겹 고스트(dpr1): 긋는 도중, 그리는 자리에서 떨어진 두 상자(원격=고스트 대역·원본=양성 증인)의 idle 대비 diff(채널 차 8 초과 픽셀 수)와 겹 CSS 기하. e2e snapghost.spec가 매 실행 다시 쓴다 — 문서는 필드 이름만 인용한다(#47).",
  "def": "remote_box=[285,406,430,109] CSS(고스트 대역 — 좌상단 획의 dpr배 자리 y 400~496을 덮되, 상단은 지평선·따라긋기 파선 행(400±파선 브러시 폭) 아래로 web2-17이 내렸다 — 그 행은 draft 스냅샷의 WebGL 픽셀 복사 반올림(±10ch)이 실려 무변화 단언의 대상이 아니다) · near_box=[140,190,230,70] CSS(그 획 자체). 분모 box_px는 상자 실픽셀(CSS w×h×dpr²). 판정 0은 임계가 아니라 항등 단언(무변화)이다 — 동작점·스윕 없음(#12): 상자는 기하(획 위치×dpr배)로 도출했고 0은 «아무 일도 없다»의 문면이다. 수리 전 재현값(falsification)은 web2-17에서 새 상자로 다시 쟀다.",
- "falsification": "수리(fitSnap CSS 크기) 이전 실행: dpr2 remote mid_diff 5101 · snap CSS 2400×1600(뷰포트의 2배) — 수리 커밋(7a8b5ae) 직전 로그(옛 상자 [285,380,430,135] 기준). ⚙ web2-17이 상자를 [285,406,430,109]로 옮긴 뒤 **되살림을 다시 실행**했다: fitSnap CSS 명시를 빼면 dpr2 두 팔이 실패한다(기하 단언 snap CSS 2400 — mid_diff 이전에 걸린다). 새 상자에서도 팔이 결함을 잡는다(#69 ㉢)."
+ "falsification": "수리(fitSnap CSS 크기) 이전 실행: dpr2 remote mid_diff 5101 · snap CSS 2400×1600(뷰포트의 2배) — 수리 커밋(7a8b5ae) 직전 로그(옛 상자 [285,380,430,135] 기준). ⚙ web2-17이 상자를 [285,406,430,109]로 옮긴 뒤 **되살림을 다시 실행**했다: fitSnap CSS 명시를 빼면 dpr2 두 팔이 실패한다(기하 단언 snap CSS 2400 — mid_diff 이전에 걸린다). 새 상자에서도 팔이 결함을 잡는다(#69 ㉢).",
+ "view_identity": {
+  "remote_box": [
+   285,
+   406,
+   430,
+   109
+  ],
+  "near_box": [
+   140,
+   190,
+   230,
+   70
+  ],
+  "remote_box_px": 46870,
+  "near_box_px": 16100,
+  "remote_mid_diff": 0,
+  "remote_after_diff": 0,
+  "near_mid_diff": 0,
+  "snap_css": [
+   1200,
+   800
+  ],
+  "brushc_css": [
+   1200,
+   800
+  ],
+  "app_css": [
+   1200,
+   800
+  ]
+ },
+ "view_fit": {
+  "remote_box": [
+   285,
+   406,
+   430,
+   109
+  ],
+  "near_box": [
+   140,
+   190,
+   230,
+   70
+  ],
+  "remote_box_px": 46870,
+  "near_box_px": 16100,
+  "remote_mid_diff": 0,
+  "remote_after_diff": 0,
+  "near_mid_diff": 0,
+  "snap_css": [
+   1200,
+   800
+  ],
+  "brushc_css": [
+   1200,
+   800
+  ],
+  "app_css": [
+   1200,
+   800
+  ]
+ }
 }
