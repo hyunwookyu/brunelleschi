@@ -80,9 +80,15 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#sidebar-body > details.pane')].map(e => e.id)))
     .toEqual(['pane-file', 'pane-settings'])
+  // ⚠ **web2-34 1번이 `chk-grain`(종이 결)을 더했다** — 자리를 옮긴 것이 아니라 **표가
+  //   늘어난 것**이다(#75 ㉣ / #76 ㉣의 어법 그대로: 이 팔이 지키던 요구 「자리마다
+  //   무엇이 있는지가 값으로 못 박혀 있다」는 그대로 유효하고, 갈린 것은 목록뿐이다).
+  //   자리를 «설정»으로 고른 근거는 30-10과 같다 — 결을 끄고 켜는 것은 **손의 설정**이
+  //   아니라 «이 기기에서 종이를 어떻게 보는가»이고, 눈 팝업(`#display-pop`)이 아니라
+  //   여기인 이유는 그것이 **문서를 안 건드리는 기기 취향**이기 때문이다(localStorage).
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#pane-settings input, #pane-settings button')].map(e => e.id)))
-    .toEqual(['chk-press', 'btn-press-cancel', 'btn-diag'])
+    .toEqual(['chk-press', 'btn-press-cancel', 'chk-grain', 'btn-diag'])
   // 손(오른쪽 세로) — 되돌리기 둘(맨 위·구분선으로 가름) → 자 → 연필(접힘) → 펜 →
   // 지우개 둘 → **치수 → 롤 둘 → 면** → 서랍. #oldtools(hidden)·#tray(접힘)는 A-4/3-b' 구조물.
   // ⚠ **web2-28 4번이 한 띠 «안»의 순서를 바꿨다**: 면(면 찾기)이 롤·치수보다 **아래**로
