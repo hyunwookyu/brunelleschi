@@ -1,5 +1,5 @@
 {
-  "n_flags": 6006,
+  "n_flags": 6018,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -21311,6 +21311,16 @@
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
+      "path": "papericon31_web2_dpr1.json:sweep_dpr1.place_new_vs_old.new.btn.y",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "papericon31_web2_dpr1.json:sweep_dpr1.place_new_vs_old.old_camera.btn.y",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "papericon31_web2_dpr1.json:sweep_dpr1.iou_top5[0].shapes",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -21322,6 +21332,11 @@
     },
     {
       "path": "papericon31_web2_dpr1.json:sweep_dpr1.falsify_a_old_camera.paper_add_iou",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "papericon31_web2_dpr1.json:sweep_dpr1.falsify_a_old_camera.restyled_solid.paper_add_iou_all",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -21346,6 +21361,31 @@
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
+      "path": "papericon31_web2_dpr1.json:roundtrip_dpr1.add_not_update.kept_sheet_drift",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "papericon31_web2_dpr1.json:roundtrip_dpr1.add_not_update.new_sheet_is_now",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "papericon31_web2_dpr1.json:falsify_b_wiring_dpr1.update_cut.intact_stored_vs_now",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "papericon31_web2_dpr2.json:sweep_dpr2.place_new_vs_old.new.btn.y",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "papericon31_web2_dpr2.json:sweep_dpr2.place_new_vs_old.old_camera.btn.y",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "papericon31_web2_dpr2.json:sweep_dpr2.iou_top5[0].shapes",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -21357,6 +21397,11 @@
     },
     {
       "path": "papericon31_web2_dpr2.json:sweep_dpr2.falsify_a_old_camera.paper_add_iou",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "papericon31_web2_dpr2.json:sweep_dpr2.falsify_a_old_camera.restyled_solid.paper_add_iou_all",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -21379,6 +21424,21 @@
       "path": "papericon31_web2_dpr2.json:roundtrip_dpr2.saved_pose.q.z",
       "val": -3.469446951953614e-18,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "papericon31_web2_dpr2.json:roundtrip_dpr2.add_not_update.kept_sheet_drift",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "papericon31_web2_dpr2.json:roundtrip_dpr2.add_not_update.new_sheet_is_now",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "papericon31_web2_dpr2.json:falsify_b_wiring_dpr2.update_cut.intact_stored_vs_now",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "passthru24_web2.json:aggregate.endGap3dMax",
