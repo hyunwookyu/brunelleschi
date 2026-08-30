@@ -280,6 +280,10 @@ test('31-4 ① 화면에 카메라 도형이 없다 — DOM 전수 훑기 (+옛 
   test.setTimeout(300_000)
   const corpus = cameraCorpus()
   await construct(page)
+  // [12] **닫힌 상태의 svg 수**와 **관측 dpr**을 먼저 값으로 남긴다 — 「열든 안 열든 같다」가
+  // 산문이 아니라 수가 되고, dpr 축이 실제로 갈렸다는 것도 값으로 남는다(2차 리뷰어 [12]).
+  const closedCount = await page.evaluate(() => document.querySelectorAll('svg').length)
+  const dprObserved = await page.evaluate(() => window.devicePixelRatio)
   // **숨은 것도 화면이다** — 겹쳐 뜨는 것 **전부**를 열어 놓고 잰다(1차 리뷰어 [4] —
   // 초판은 넷을 안 열었고 그 중 `#paper-pop`은 **이 항목의 툴팁이 가리키는 자리**였다).
   // 목록의 출처는 AS-C128(이 앱의 겹쳐 뜨는 것)이다.
@@ -292,7 +296,9 @@ test('31-4 ① 화면에 카메라 도형이 없다 — DOM 전수 훑기 (+옛 
     + `· 출처 적중 ${before.hits.length} · 형태 IoU 최대 ${before.rows[0]!.iou} (${before.rows[0]!.where} ↔ ${before.rows[0]!.iou_ref}) · 말 ${before.said.length}`)
   console.log(`[31-4 ①] 윤곽 견본 IoU 상위 다섯: ${before.rows.slice(0, 5).map(r => `${r.where} ${r.iou}(${r.iou_ref})`).join(' · ')}`)
   console.log(`[31-4 ①] 견본 전부(나2 · 문 ${CAMERA_IOU_ALL}) 상위 다섯: ${allTop.slice(0, 5).map(r => `${r.where} ${r.iou_all}(${r.iou_all_ref})`).join(' · ')}`)
-  console.log(`[31-4 ①] 연 것 ${before.opened.length}자리: ${before.opened.join(' · ')}`)
+  console.log(`[31-4 ①] 연 것 ${before.opened.length}자리: ${before.opened.join(' · ')} · 닫힌 상태 svg ${closedCount} → 연 뒤 ${before.svgs} · devicePixelRatio ${dprObserved}`)
+  expect(before.svgs, '접힌 통의 svg도 DOM에 산다 — 열든 안 열든 같은 수다').toBe(closedCount)
+  expect(dprObserved, 'dpr 축이 실제로 갈렸다').toBeCloseTo(testInfo.project.name === 'dpr2' ? 2 : 1, 3)
   console.log(`[31-4 ①] 새 아이콘 자신 — 윤곽 ${paperRow.iou}(${paperRow.iou_ref}) · 채운 견본까지 ${paperRow.iou_all}(${paperRow.iou_all_ref})`)
   expect(before.svgs, '훑은 svg가 실제로 여럿이다').toBeGreaterThan(10)
   expect(before.refs, '카메라 견본이 스물넷 이상 구워졌다').toBeGreaterThanOrEqual(24)
@@ -330,6 +336,7 @@ test('31-4 ① 화면에 카메라 도형이 없다 — DOM 전수 훑기 (+옛 
   // 초판은 「16×16이다」를 단언만 했는데 그 16은 **옛 아이콘에서 옮겨 적은 수**라
   // 자기참조였다(#88의 판별 ①). 여기서는 **옛 아이콘을 그 자리에 넣어** 띠의 실측
   // 상자를 견준다 — 같으면 「띠의 자리가 안 변한다」가 값으로 선다.
+  await page.evaluate(() => { (window as any).__paperIconHTML = document.getElementById('paper-add')!.innerHTML })
   const barBox = () => page.evaluate(() => {
     const bar = document.getElementById('paperbar')!.getBoundingClientRect()
     const btn = document.getElementById('paper-add')!.getBoundingClientRect()
@@ -341,6 +348,15 @@ test('31-4 ① 화면에 카메라 도형이 없다 — DOM 전수 훑기 (+옛 
     }
   })
   const placeNew = await barBox()
+  // 반증(D-3 · 2차 리뷰어 [7]) — **상자가 다른 아이콘**을 심으면 이 견줌이 실제로 갈린다.
+  // 없으면 이 검사는 「CSS가 고정이라 무엇을 넣어도 같다」와 구별되지 않는다.
+  await page.evaluate(() => { document.getElementById('paper-add')!.innerHTML =
+    '<svg viewBox="0 0 32 32" width="40" height="40" fill="none" stroke="currentColor"><circle cx="16" cy="16" r="12"/></svg>' })
+  const placeBig = await barBox()
+  console.log(`[31-4 자리 반증] 40×40을 심은 판 ${JSON.stringify(placeBig)}`)
+  expect(JSON.stringify(placeBig) === JSON.stringify(placeNew), '상자가 다른 아이콘을 넣으면 견줌이 갈린다').toBe(false)
+  await page.evaluate(html => { document.getElementById('paper-add')!.innerHTML = html as string },
+    await page.evaluate(() => (window as any).__paperIconHTML))
 
   // ── 반증 ㉠(D-3) — **옛 카메라를 그 자리에 되돌리면** 같은 훑기가 빨개진다 ──────
   // 판 둘을 돌린다: ㉠1 **옛 아이콘 그대로**(light · 채운 그림) · ㉠2 **다른 굵기**(bold 윤곽).
@@ -398,11 +414,18 @@ test('31-4 ① 화면에 카메라 도형이 없다 — DOM 전수 훑기 (+옛 
         + '그것이 `#paper-pop`(탭 길게 누르기 — 이 항목의 툴팁이 가리키는 자리)이다. 그 팝업에는 '
         + 'svg가 없다(썸네일 `img` + 글자 `u` 셋) — 그 사실도 이 훑기가 낸 값이다.',
     },
-    place_new_vs_old: { new: placeNew, old_camera: placeOld, same: JSON.stringify(placeNew) === JSON.stringify(placeOld) },
+    place_new_vs_old: {
+      new: placeNew, old_camera: placeOld, same: JSON.stringify(placeNew) === JSON.stringify(placeOld),
+      falsify_big_icon: { box: placeBig, same: JSON.stringify(placeBig) === JSON.stringify(placeNew),
+        def: '40×40 아이콘을 같은 자리에 심은 판 — 이 견줌이 실제로 갈리는 것을 값으로 보인다(2차 리뷰어 [7]).' },
+    },
+    dpr_observed: dprObserved,
+    svgs_closed: closedCount,
     source_hits: before.hits.length,
     iou_top5: before.rows.slice(0, 5),
     iou_max: before.rows[0]!.iou,
-    iou_all_top5: allTop.slice(0, 5),
+    iou_all_top10: allTop.slice(0, 10),   // 2차 리뷰어 [6] — top5가 연필통 줄 여섯으로 포화돼
+                                          // 면·지우개 값이 원장에서 안 보였다. 열 줄로 늘린다.
     paper_add_row: paperRow,
     words_found: before.said,
     icon: { ...icon },
@@ -410,14 +433,19 @@ test('31-4 ① 화면에 카메라 도형이 없다 — DOM 전수 훑기 (+옛 
       source_hits: after.hits.length,
       paper_add_iou: camRow.iou, paper_add_ref: camRow.iou_ref,
       gate: CAMERA_IOU,
-      restyled: { source_hits: after2.hits.length, paper_add_iou: camRow2.iou, paper_add_ref: camRow2.iou_ref },
+      restyled: {
+        source_hits: after2.hits.length, paper_add_iou: camRow2.iou, paper_add_ref: camRow2.iou_ref,
+        // 2차 리뷰어 [2] — (나2) 축의 **항등이 아닌** 도달 값이 여기다(윤곽 글리프를 심었으므로
+        // 견본 전부에 대해서도 1.0이 아니다). 이 값이 없으면 (나2)의 도달 가능성이 항등뿐이었다.
+        paper_add_iou_all: camRow2.iou_all, paper_add_ref_all: camRow2.iou_all_ref,
+      },
       restyled_solid: {
         source_hits: after3.hits.length,
         paper_add_iou_outline: camRow3.iou, paper_add_iou_all: camRow3.iou_all, paper_add_ref_all: camRow3.iou_all_ref,
         note: '채운 글리프 + 문자열 변형 — **(가)는 빠져나간다**(적중 0). 형태 쪽은 **둘 다 잡되 여유가 다르다**: '
           + '(나1) 윤곽 견본 0.7321로 문 0.700을 **0.032 차로 아슬하게** 넘고, (나2) 견본 전부 1.0으로 **결정적으로** 넘는다. '
           + '⚠ 그러므로 「(나2)만 잡는다」가 아니다 — 실측이 그렇게 말한다(초판 문면을 이 값으로 고쳤다). '
-          + '문으로 삼은 것은 여유가 큰 (나2)이고, (나1)의 0.032는 **기록만** 한다(그 얇은 여유에 문을 걸지 않는다). '
+          + '⚠ 두 문 **모두 등록된 문이다**(화면 쪽에). 여기서 «문을 안 건다»고 한 것은 **이 반증 판이 어느 문을 넘어야 하는가**이고, 그 단언은 여유가 큰 (나2)에만 건다 — (나1)의 0.032는 넘긴 하지만 얇아서 **기록만** 한다(팔이 그것을 단언하면 래스터가 한 픽셀만 흔들려도 빨개진다). '
           + '초판에는 이 칸이 아예 없었다(1차 리뷰어 [2]).',
       },
     },
@@ -617,7 +645,12 @@ test('31-4 ③ 반증 ㉡ — 배선을 끊으면 ②가 빨개진다 (저장 ·
     const sw = ledger[`sweep_${dpr}`] as any
     const fb = ledger[`falsify_b_wiring_${dpr}`] as any
     /** 게이트의 값 대조가 가리키는 **한 자리**(#40 ③) — 화면 최대 · 심은 판 · 끊은 판 */
-    const reachPoints = [sw.iou_max, sw.falsify_a_old_camera.restyled.paper_add_iou, fb.goto_cut.back_dist_to_saved]
+    const reachPoints = [
+      sw.iou_max,                                             // (나1) 성한 화면의 최대
+      sw.falsify_a_old_camera.restyled.paper_add_iou,         // (나1) 심은 판 — 문 위
+      sw.falsify_a_old_camera.restyled.paper_add_iou_all,     // (나2) 심은 판 — **항등이 아닌** 값(2차 [2])
+      fb.goto_cut.back_dist_to_saved,                         // 배선 축
+    ]
     mkdirSync(OUT, { recursive: true })
     writeFileSync(resolve(OUT, `papericon31_web2_${dpr}.json`), JSON.stringify({
       what: 'web2-31 4번 — 종이 띠 단추의 카메라 도형을 떼고 «종이 + 갱신 화살표»로 바꿨다. '
@@ -640,11 +673,26 @@ test('31-4 ③ 반증 ㉡ — 배선을 끊으면 ②가 빨개진다 (저장 ·
         + '㉡ **(나2)의 문 0.75는 화면의 자연 분포에서 0.057 위다** — 채운 견본은 이 앱의 실물 도구 그림과 '
         + '가깝다(연필통 줄 0.693). 실물 도구 그림이 늘거나 뭉툭해지면 그 문이 먼저 흔들린다. 둘 다 DEFERRED에 있다. '
         + '⚠ **초판은 ㉠만 적었고 ㉡의 칸(채운 글리프 + 문자열 변형)은 아예 안 돌았다** — 반증 ㉠3이 그 칸이다.',
-      thresholds: { CAMERA_IOU },
+      // [4] 임계 **둘 다** 싣는다 — 하나만 실으면 다른 하나가 산문에서 조용히 낡는다(#47)
+      thresholds: { CAMERA_IOU, CAMERA_IOU_ALL },
+      // [1] ⚠⚠ **문의 출처를 정직하게 적는다**: 두 값은 **관측 분포를 보고 사후로** 놓였다.
+      // 규칙은 「자연 최대와 심은 판 사이의 넓은 자리」이고, 각 문의 양쪽 값이 아래에 있다.
+      // 사전에 정한 값이 아니므로 ㉠3이 (나1)을 0.032로 넘는 것은 **설계가 아니라 관측**이다.
+      threshold_provenance: {
+        when: 'post-hoc — 성한 화면의 분포를 먼저 재고 그 위에 놓았다(2차 리뷰어 [1]에 답한다)',
+        rule: '자연 최대 < 문 < 심은 판의 값. 문을 «넓은 골»의 가운데 쪽에 둔다.',
+        gate_nun1: { natural_max: 0.5787, gate: CAMERA_IOU, planted: 0.8238 },
+        gate_nun2: { natural_max: 0.693, gate: CAMERA_IOU_ALL, planted_identity: 1 },
+        caveat: '⚠ (나2)의 여유는 0.057뿐이고 그 아래쪽은 **이 앱의 실물 도구 그림**이다 — '
+          + '실물 그림이 늘거나 뭉툭해지면 이 문이 먼저 흔들린다(DEFERRED). '
+          + '그리고 두 문 모두 **한 실행의 분포 한 점**에서 나왔다(#12의 형태).',
+      },
       reach_points: reachPoints,
-      reach_points_def: '① 성한 화면의 IoU 최대(문 아래여야 한다) ② **문자열을 바꿔 심은 카메라**의 '
-        + 'IoU(문 위여야 한다 — 형태 채널이 혼자 잡는 칸) ③ 배선을 끊은 판의 복귀 거리(0이 아니어야 한다). '
-        + '⚠ 옛 아이콘 그대로를 되돌린 판의 IoU 1.0은 **항등**이라 이 셋에 안 넣는다(#40 ② · #5).',
+      reach_points_def: '① 성한 화면의 (나1) IoU 최대(문 아래여야 한다) ② **문자열을 바꿔 심은 카메라**의 '
+        + '(나1) IoU(문 0.7 위여야 한다) ③ **같은 판의 (나2) IoU**(문 0.75 위 — 이 축의 «항등이 아닌» 도달 값이다. '
+        + '2차 리뷰어 [2]로 더했다: 그전에는 (나2) 축의 도달 값이 채운 글리프의 항등 1.0뿐이었다) '
+        + '④ 배선을 끊은 판의 복귀 거리(0이 아니어야 한다). '
+        + '⚠ 옛 아이콘 그대로를 되돌린 판의 IoU 1.0은 **항등**이라 이 넷에 안 넣는다(#40 ② · #5).',
       ...ledger,
       gate: {
         for: 'web2-31 4번 — ① 화면에 카메라 도형이 없다(출처 0 · 형태 IoU < 문 · 말 0) '
@@ -655,16 +703,19 @@ test('31-4 ③ 반증 ㉡ — 배선을 끊으면 ②가 빨개진다 (저장 ·
           '화면 언어에 사진 계열 낱말 0',
           '새 아이콘: viewBox 0 0 32 32 · path 넷 · 호 · elementFromPoint가 제 것을 낸다',
           '띠·단추·탭의 실측 상자가 **옛 아이콘을 넣은 판과 같다**(자기참조 아님 — 전/후 견줌)',
-          '한 번 더 눌렀을 때 **먼저 만든 장의 좌표 드리프트 0** · 새 장이 지금을 담는다 (Add이지 Update가 아니다)',
+          '한 번 더 눌렀을 때 **먼저 만든 장의 좌표 드리프트 0**이고 장이 하나 더 는다 (Add이지 Update가 아니다)',
+          '띠·단추·탭 상자의 전/후 견줌이 **갈릴 수 있다** — 40×40을 심은 판에서 실제로 갈린다',
           '떠난 거리 > 1e-6 (탭 왕복이 실제로 자리를 옮긴다)',
           '⚠ **문이 아니라 «보장 기술»**: 저장·복귀 좌표 차가 0인 것은 같은 좌표를 복사하는 '
             + '경로의 **구성 보장**이다(CLAUDE.md §5.1 유형 3 — 임계를 안 건다). 그 자리의 '
             + '판별력은 반증 ㉡ⓐⓑⓒ가 준다',
-          '⚠ 같은 뜻으로 「탭 길게 눌러 갱신이 돈다」도 보장 쪽이고, 그 문의 판별력은 ㉡ⓒ다',
+          '⚠ 같은 뜻으로 「탭 길게 눌러 갱신이 돈다」와 「새 장이 지금을 담는다」(`new_sheet_is_now` 0)도 '
+            + '**보장 쪽**이다 — 같은 좌표를 복사하는 경로다(2차 리뷰어 [8]). 판별력은 ㉡ⓒ·㉡ⓐ다',
         ],
         reachability: '**둘 다 실제로 실패시켰다**(D-3). ㉠ 옛 카메라(Phosphor light camera · 채운 그림)를 '
           + `같은 자리에 되돌리면 (가) 출처 적중이 0 → ${(ledger[`sweep_${dpr}`] as any).falsify_a_old_camera.source_hits}건이 되고 `
-          + `(나) 그 자리의 IoU가 ${sw.iou_max} → ${sw.falsify_a_old_camera.paper_add_iou}로 문을 넘는다`
+          + `(나1) **그 자리(#paper-add)**의 IoU가 ${sw.paper_add_row.iou} → ${sw.falsify_a_old_camera.paper_add_iou}로 문을 넘는다`
+          + `(화면 최대 ${sw.iou_max}은 다른 아이콘의 값이다 — 섞어 적지 않는다)`
           + `(그 1.0은 같은 글리프라 **항등**이므로, 값 대조에는 «굵기·색·좌표 문자열을 바꿔 심은 판»의 `
           + `${sw.falsify_a_old_camera.restyled.paper_add_iou}을 쓴다 — 그 판은 출처 채널을 빠져나간다). `
           + `㉠3 **채운 글리프를 문자열만 바꿔 심으면** (가)는 빠져나가고 형태 쪽이 잡는다`
@@ -696,6 +747,9 @@ test('31-4 ③ 반증 ㉡ — 배선을 끊으면 ②가 빨개진다 (저장 ·
         restyled_solid_iou_1: '⚠ `restyled_solid.paper_add_iou_all = 1`도 **항등**이다 — 채운 글리프를 그대로 '
           + '심었으니 래스터가 견본과 같다(바꾼 것은 문자열뿐이다). 그 판이 재는 것은 IoU의 크기가 아니라 '
           + '**(가)가 0건인데 (나2)가 잡는다**는 사실이다.',
+        new_sheet_is_now_0: '⚠ `add_not_update.new_sheet_is_now = 0`은 **보장**이다(새 장에 지금 좌표를 '
+          + '복사하는 같은 경로 — `save_diff`와 같은 부류). 그래서 게이트에서 문이 아니라 보장 쪽에 적었다'
+          + '(2차 리뷰어 [8]). 이 회차가 «잰» 것은 그 옆의 `kept_sheet_drift`다.',
         kept_sheet_drift_0: '⚠ `add_not_update.kept_sheet_drift = 0`은 **이 회차가 실제로 잰 답**이고 보장이 아니다 — '
           + '그 값이 0이 아닐 수 있다는 증거가 같은 원장 안에 있다: 갱신(Update Scene)을 부르면 같은 장의 좌표가 '
           + '`update_moved_from_A`만큼 움직인다. 「Add이지 Update가 아니다」(AS-C133)를 떠받치는 값이 이것이다.',

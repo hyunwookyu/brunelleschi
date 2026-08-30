@@ -1,5 +1,5 @@
 {
-  "n_flags": 6018,
+  "n_flags": 6022,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -21321,12 +21321,22 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "papericon31_web2_dpr1.json:sweep_dpr1.place_new_vs_old.falsify_big_icon.box.btn.y",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "papericon31_web2_dpr1.json:sweep_dpr1.iou_top5[0].shapes",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "papericon31_web2_dpr1.json:sweep_dpr1.iou_top5[3].shapes",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "papericon31_web2_dpr1.json:sweep_dpr1.iou_all_top10[7].shapes",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -21386,12 +21396,22 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "papericon31_web2_dpr2.json:sweep_dpr2.place_new_vs_old.falsify_big_icon.box.btn.y",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "papericon31_web2_dpr2.json:sweep_dpr2.iou_top5[0].shapes",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
       "path": "papericon31_web2_dpr2.json:sweep_dpr2.iou_top5[3].shapes",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "papericon31_web2_dpr2.json:sweep_dpr2.iou_all_top10[7].shapes",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
@@ -31376,11 +31396,13 @@
     ],
     "papericon31_web2_dpr1.json": [
       5,
+      12,
       26,
       40
     ],
     "papericon31_web2_dpr2.json": [
       5,
+      12,
       26,
       40
     ],
