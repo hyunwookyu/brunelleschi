@@ -1,5 +1,5 @@
 {
-  "n_flags": 5743,
+  "n_flags": 5833,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -3678,6 +3678,574 @@
         "9": 20
       },
       "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[4].got",
+      "val": {
+        "?": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[5].got",
+      "val": {
+        "?": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[7].got",
+      "val": {
+        "?": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[8].got",
+      "val": {
+        "?": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[9].got",
+      "val": {
+        "?": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[10].got",
+      "val": {
+        "?": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[11].got",
+      "val": {
+        "?": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[14].got",
+      "val": {
+        "4": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[16].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[17].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[18].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[19].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[20].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[21].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[22].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[23].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[24].got",
+      "val": {
+        "1": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[25].got",
+      "val": {
+        "1": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[26].got",
+      "val": {
+        "1": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[27].got",
+      "val": {
+        "1": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[29].got",
+      "val": {
+        "?": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[36].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[37].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[38].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[39].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[40].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[41].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[42].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.before[43].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[0].got",
+      "val": {
+        "4": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[1].got",
+      "val": {
+        "4": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[2].got",
+      "val": {
+        "4": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[3].got",
+      "val": {
+        "4": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[4].got",
+      "val": {
+        "4": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[5].got",
+      "val": {
+        "4": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[6].got",
+      "val": {
+        "4": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[7].got",
+      "val": {
+        "4": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[8].got",
+      "val": {
+        "4": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[9].got",
+      "val": {
+        "4": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[10].got",
+      "val": {
+        "4": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[11].got",
+      "val": {
+        "4": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[14].got",
+      "val": {
+        "4": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[16].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[17].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[18].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[19].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[20].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[21].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[22].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[23].got",
+      "val": {
+        "7": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[24].got",
+      "val": {
+        "1": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[25].got",
+      "val": {
+        "1": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[26].got",
+      "val": {
+        "1": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[27].got",
+      "val": {
+        "1": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[32].got",
+      "val": {
+        "1": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[35].got",
+      "val": {
+        "1": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[36].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[37].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[38].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[39].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[40].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[41].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[42].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:per_form_box.after[43].got",
+      "val": {
+        "9": 20
+      },
+      "flag": "단일 범주 분포(n=20) → 변별력 없음/단위 불일치 의심"
+    },
+    {
+      "path": "glyph35_web2.json:held_out_split.in_sample.before.wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:held_out_split.in_sample.after.wrong",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[4].before",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[4].before",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[5].before",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[5].before",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[7].before",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[7].before",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[8].before",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[8].before",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[9].before",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[9].before",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[10].before",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[10].before",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[11].before",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[11].before",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[13].before",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[13].before",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[13].after",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "glyph35_web2.json:gain_concentration.cells[16].before",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "glyph35_web2.json:arm_sequential_traj_then_p_dollar.shipped_p_threshold_arm.best.noise",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:traj_on_accepted.4·열린·1획 (세로 먼저 · 사선 나중).agree",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:traj_on_accepted.7·가로줄 있음 (유럽식 · 2획).agree",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "glyph35_web2.json:traj_on_accepted.1·위 세리프 + 밑줄 (2획).agree",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "graphite_web2.json:horizontal.byErr.0",
@@ -28064,6 +28632,11 @@
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
     },
     {
+      "path": "glyph35_web2.json",
+      "val": null,
+      "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
+    },
+    {
       "path": "graphite_web2.json",
       "val": null,
       "flag": "상수 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 constantsSnapshot()을 넣는다"
@@ -28484,6 +29057,11 @@
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
     },
     {
+      "path": "glyph35_web2.json",
+      "val": null,
+      "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
+    },
+    {
       "path": "graphite_web2.json",
       "val": null,
       "flag": "지표 정의 스냅샷 없음 → 낡았는지 판정 불가. 하네스에 metric_defs: metricsSnapshot()을 넣는다"
@@ -28719,32 +29297,32 @@
       "flag": "**쓰기만 하고 읽지 않는 필드** → 배선 누락 의심 (Stroke.color가 실제로 그랬다, S-8c)"
     },
     {
-      "path": "web/e2e/fixture.ts:92:wiringGapPx",
+      "path": "web\\e2e\\fixture.ts:92:wiringGapPx",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/e2e/restore_pose.spec.ts:230:diff",
+      "path": "web\\e2e\\restore_pose.spec.ts:230:diff",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/e2e/stage.spec.ts:57:pixelGap",
+      "path": "web\\e2e\\stage.spec.ts:57:pixelGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/src/s3d/lift.ts:467:transitionGap",
+      "path": "web\\src\\s3d\\lift.ts:467:transitionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web/src/s3d/stroke.ts:313:reprojectionGap",
+      "path": "web\\src\\s3d\\stroke.ts:313:reprojectionGap",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
     {
-      "path": "web2/test/level.test.ts:82:foldAfterRelease",
+      "path": "web2\\test\\level.test.ts:82:foldAfterRelease",
       "val": "project(",
       "flag": "오차 지표가 스스로 변환을 수행한다 → 설계 보장을 측정으로 오인하는지 확인(자기참조 3). 보장이면 임계를 걸지 않는다"
     },
@@ -28771,8 +29349,8 @@
     {
       "path": "scan_citation_hashes",
       "val": [
-        "DEFERRED.md:946 test_cost.json",
         "assumptions.md:199 test_cost.json",
+        "DEFERRED.md:946 test_cost.json",
         "progress.md:11820 test_cost.json",
         "progress.md:13857 test_cost.json",
         "progress.md:14037 test_cost.json"
@@ -28780,13 +29358,13 @@
       "flag": "**없는 원장을 인용한다**(8건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
     },
     {
-      "path": "stage0/out/dimtarget32_web2.json",
-      "val": "#78",
+      "path": "stage0/out/cost23_web2.json",
+      "val": "#81",
       "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
     },
     {
-      "path": "stage0/out/glyph32_web2.json",
-      "val": "#77",
+      "path": "stage0/out/dimtarget32_web2.json",
+      "val": "#78",
       "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
     },
     {
@@ -28939,57 +29517,57 @@
       "flag": "**출처 경로가 이 원장에서 안 풀린다**(#40) — 값 대조를 못 한다"
     },
     {
-      "path": "web/test/axis_live.test.ts",
+      "path": "web\\test\\axis_live.test.ts",
       "val": "18건 (줄 [111, 119, 137, 142, 145])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/lift_grade.test.ts",
+      "path": "web\\test\\lift_grade.test.ts",
       "val": "1건 (줄 [104])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/metrics.ts",
+      "path": "web\\test\\metrics.ts",
       "val": "1건 (줄 [135])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/order_promote.test.ts",
+      "path": "web\\test\\order_promote.test.ts",
       "val": "3건 (줄 [127, 252, 260])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/order_signal.test.ts",
+      "path": "web\\test\\order_signal.test.ts",
       "val": "3건 (줄 [322, 323, 346])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/order_undo.test.ts",
+      "path": "web\\test\\order_undo.test.ts",
       "val": "1건 (줄 [251])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/persist.test.ts",
+      "path": "web\\test\\persist.test.ts",
       "val": "1건 (줄 [363])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/promote.test.ts",
+      "path": "web\\test\\promote.test.ts",
       "val": "35건 (줄 [161, 189, 211, 212, 217])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/snap_measure.test.ts",
+      "path": "web\\test\\snap_measure.test.ts",
       "val": "3건 (줄 [92, 93, 537])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/stage_measure.test.ts",
+      "path": "web\\test\\stage_measure.test.ts",
       "val": "2건 (줄 [179, 221])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     },
     {
-      "path": "web/test/tube_measure.test.ts",
+      "path": "web\\test\\tube_measure.test.ts",
       "val": "1건 (줄 [176])",
       "flag": "**분모 0이 1로 바뀐다**(#36) → 관측이면 `metrics.rate()`로 `null`을 낸다. 표시용 보호면 그렇게 적는다"
     }
@@ -29052,7 +29630,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 490,
+      "files_scanned": 494,
       "exts_declared": [
         ".md",
         ".py",
@@ -29060,8 +29638,8 @@
       ],
       "hits_by_ext": {
         ".md": 11,
-        ".ts": 9,
-        ".py": 2
+        ".py": 2,
+        ".ts": 9
       }
     },
     {
@@ -29076,17 +29654,17 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 490,
+      "files_scanned": 494,
       "exts_declared": [
         ".md",
         ".py",
         ".ts"
       ],
       "hits_by_ext": {
-        ".md": 38,
+        ".md": 39,
         ".py": 4,
-        ".ts": 89,
-        ".html": 1
+        ".html": 1,
+        ".ts": 91
       }
     },
     {
@@ -29118,7 +29696,7 @@
     {
       "scan": "scan_dead_ledger",
       "unit": "원장",
-      "targets": 180,
+      "targets": 181,
       "hits": 3,
       "note": null
     },
@@ -29146,16 +29724,16 @@
     {
       "scan": "scan_pitfall_citations",
       "unit": "원장",
-      "targets": 150,
+      "targets": 151,
       "hits": 6,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 73,
+      "targets": 74,
       "hits": 16,
-      "note": "값 대조를 **지난 것 33** · **픽스처가 정한 값 10** · **면제 28**(`reachability_absent`) · 원장 180개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, ledger_gate24_web2.json:gate, lens_roll_osnap.json:gate, one_point_direct.json:gate, opening21_web2.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, passthru24_web2.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, restore_pose.json:gate, shutter25_web2.json:gate, shutter25_web2_dpr2.json:gate, snap_cache.json:gate, snap_stage.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, osnap_kinds.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "note": "값 대조를 **지난 것 34** · **픽스처가 정한 값 10** · **면제 28**(`reachability_absent`) · 원장 181개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, glyph35_web2.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, ledger_gate24_web2.json:gate, lens_roll_osnap.json:gate, one_point_direct.json:gate, opening21_web2.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, passthru24_web2.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, restore_pose.json:gate, shutter25_web2.json:gate, shutter25_web2_dpr2.json:gate, snap_cache.json:gate, snap_stage.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, osnap_kinds.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -29355,7 +29933,8 @@
       14,
       28,
       69,
-      71
+      71,
+      81
     ],
     "cube_frame.json": [
       5,
@@ -29515,6 +30094,10 @@
     ],
     "glyph32_web2.json": [
       61,
+      77
+    ],
+    "glyph35_web2.json": [
+      76,
       77
     ],
     "graphite_web2.json": [
@@ -30289,6 +30872,7 @@
     "gesture_tiles_web2_dpr2.json",
     "glyph30_web2.json",
     "glyph32_web2.json",
+    "glyph35_web2.json",
     "graphite_web2.json",
     "ground_anchor.json",
     "ground_rule_web2.json",

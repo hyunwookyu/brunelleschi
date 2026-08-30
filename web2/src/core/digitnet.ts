@@ -95,6 +95,33 @@ export function rasterize(strokes: Pt[][], alpha = 0): Float32Array | null {
 const K = W.arch[2]!   // 11 — 0~9 + **잡음 클래스 10**(softmax 확신만으로는 거부가 안
                        // 갈렸다: 옳은 최악 0.584 vs 잡음 최선 0.547. 비숫자를 명시적으로 배웠다)
 
+
+/** 확률 벡터 그대로 — 11칸(0~9 + 잡음 10). `classifyGlyph`가 이것을 줄여 쓴다.
+ *  ⚠ 내보내는 이유(web2-35): **잡음 클래스가 이겨서 null이 된 것**과 **확신이 얕아서
+ *  거부된 것**을 부르는 쪽이 갈라야 한다 — 궤적 구제의 안전 규칙이 그 구별 위에 선다. */
+export function glyphProbs(strokes: Pt[][], alpha = 0): Float32Array | null {
+  const x = rasterize(strokes, alpha)
+  if (!x) return null
+  const h = new Float32Array(H)
+  for (let j = 0; j < H; j++) {
+    let a = W.b1[j]!
+    for (let i = 0; i < IN * IN; i++) a += x[i]! * w1[i * H + j]! * W.s1
+    h[j] = a > 0 ? a : 0
+  }
+  const z = new Float32Array(K)
+  let zmax = -Infinity
+  for (let k = 0; k < K; k++) {
+    let a = W.b2[k]!
+    for (let j = 0; j < H; j++) a += h[j]! * w2[j * K + k]! * W.s2
+    z[k] = a
+    if (a > zmax) zmax = a
+  }
+  let sum = 0
+  for (let k = 0; k < K; k++) { z[k] = Math.exp(z[k]! - zmax); sum += z[k]! }
+  for (let k = 0; k < K; k++) z[k] = z[k]! / sum
+  return z
+}
+
 /** 글리프 하나 → { ch, p(softmax 확신) }. 잡음 클래스(10)가 이기면 null(거부).
  *  남은 거부는 부르는 쪽이 임계(NET_REJECT)로 가른다. */
 export function classifyGlyph(strokes: Pt[][], alpha = 0): { ch: string; p: number } | null {
