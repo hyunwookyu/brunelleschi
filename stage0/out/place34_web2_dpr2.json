@@ -1,0 +1,42 @@
+{
+ "what": "web2-34 6번 — 세로바 높이 예산과 31의 시험 삽입. 뷰포트 1200×800에서만 같은 값이 나온다(#71).",
+ "measured_at": "web2-34 6번 (2026-08-30)",
+ "viewport": {
+  "w": 1200,
+  "h": 800
+ },
+ "dpr": "dpr2",
+ "before_this_round": {
+  "slack_px": 25,
+  "note": "재편 전 실측(같은 하네스·같은 뷰포트). DEFERRED가 적은 「37px」은 web2-32 시점의 값이고 34-3까지 오면서 25px로 줄어 있었다."
+ },
+ "after": {
+  "vh": 800,
+  "top": 12,
+  "h": 683,
+  "bottom": 695,
+  "slack": 105
+ },
+ "unit_button_px": 45,
+ "two_buttons_px": 92,
+ "slack_before_after": [
+  25,
+  105
+ ],
+ "probe_insert": {
+  "h": 775,
+  "bottom": 787,
+  "slack": 13,
+  "probe": 45
+ },
+ "gate": {
+  "slack_ge_two_buttons": true,
+  "insert_fits": true,
+  "reachability": "여유 px — 재편 전 **25** ↔ 후 **105**. 통과선은 «버튼 두 개분» 92px이고 둘 사이에 있다. 시험 삽입 뒤 여유도 전 −67(25 − 92) ↔ 후 13로 부호가 갈린다.",
+  "reachability_value": [
+   25,
+   105
+  ],
+  "reachability_source": "slack_before_after"
+ }
+}

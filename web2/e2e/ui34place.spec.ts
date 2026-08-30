@@ -113,11 +113,21 @@ test('34-6 ②③ 높이 예산 — 여유가 버튼 두 개분 이상이고, 31
       viewport: { w: 1200, h: before.vh }, dpr,
       before_this_round: { slack_px: 25, note: '재편 전 실측(같은 하네스·같은 뷰포트). DEFERRED가 적은 「37px」은 web2-32 시점의 값이고 34-3까지 오면서 25px로 줄어 있었다.' },
       after: before, unit_button_px: unit, two_buttons_px: two,
+      /** 값 대조의 자리(#33) — `gate.reachability_source`가 이 경로를 가리킨다. */
+      slack_before_after: [25, before.slack],
       probe_insert: after,
       gate: {
         slack_ge_two_buttons: before.slack >= two,
         insert_fits: after.slack >= 0,
-        reachability_source: '반증(D-3) — 재편 전 트리(같은 하네스)에서 이 팔은 여유 25px < 두 개분 92px로 실패한다. 그 수치는 NOTES의 34-6 소절.',
+        /** 이 기준을 **넘을 수 있는 값**(#35) — 재편 전 실측이 그 반대쪽이다. */
+        /** **무엇이 이 기준을 넘을 수 있는가**(#35) — 이 팔은 «자리가 있는가»를 묻고
+         *  넘는 것은 **재편을 되돌리는 것**이다. 셋 중 하나만 되돌려도 통과선 아래로 간다:
+         *  파일·설정을 손 띠로 되돌리면 −71px · 롤통을 단추 둘로 되돌리면 −46px ·
+         *  작도 시점을 위 띠로 되돌리면 +37px(이쪽만 늘어난다). 재편 전 실측이 25px이고
+         *  통과선(버튼 두 개분)이 92px이므로 **그 상태에서 이 팔은 실제로 실패한다.** */
+        reachability: `여유 px — 재편 전 **25** ↔ 후 **${before.slack}**. 통과선은 «버튼 두 개분» ${two}px이고 둘 사이에 있다. 시험 삽입 뒤 여유도 전 −67(25 − 92) ↔ 후 ${after.slack}로 부호가 갈린다.`,
+        reachability_value: [25, before.slack],
+        reachability_source: 'slack_before_after',
       },
     }, null, 1) + '\n')
   }
