@@ -220,6 +220,32 @@ function runCell(c: Cell): Row {
 }
 
 let misacq: unknown = null
+let coordProof: unknown = null
+let principleD: unknown = null
+let threeChoice: unknown = null
+
+/** 후보 X를 지나는 «획 방향» 3D 선을 지어 구간을 낸다 — 후보별 편차를 재려고 밖에서 다시 짓는다. */
+function spanOnAxisFree(r: LiftResult, s: Stroke, X: V3): { a3: V3; b3: V3 } | null {
+  const rA = rayThrough(r.an, DRAW_POSE, s.a), rB = rayThrough(r.an, DRAW_POSE, s.b)
+  if (!rA || !rB) return null
+  const g = r.lifted.get(s.id)
+  if (!g) return null
+  const dir = norm3(sub3(g.b3, g.a3))
+  const a3 = closestOnLineToRay(X, dir, rA), b3 = closestOnLineToRay(X, dir, rB)
+  return a3 && b3 ? { a3, b3 } : null
+}
+
+/** 그 3D 선이 raw 점열과 얼마나 어긋나는가 — px²(제곱 편차 합) */
+function rawDevOf(r: LiftResult, s: Stroke, g: { a3: V3; b3: V3 }): number {
+  const pa = project(r.an, DRAW_POSE, g.a3), pb = project(r.an, DRAW_POSE, g.b3)
+  if (!pa || !pb) return Infinity
+  const dx = pb.x - pa.x, dy = pb.y - pa.y, L = Math.hypot(dx, dy)
+  if (L < 1e-9) return Infinity
+  const pts = s.raw && s.raw.length >= 2 ? s.raw : [s.a, s.b]
+  let sum = 0
+  for (const q of pts) { const d = ((q.x - pa.x) * dy - (q.y - pa.y) * dx) / L; sum += d * d }
+  return sum
+}
 
 describe('37-1 — 조합 전수 표(명시 점 × 축 × 교차)', () => {
   const rows = CELLS.map(runCell)
@@ -277,6 +303,50 @@ describe('37-1 — 조합 전수 표(명시 점 × 축 × 교차)', () => {
     expect(r.standing).toBe(true)
     expect(r.through_cross, '그 교차의 3D 점을 지난다').toBe(true)
     expect(r.dir_is_axis).toBe(true)
+    // **좌표를 실제로 낸다**(지시문 게이트 문면 — 1차 리뷰어 [9]): 「자립했다」만으로는
+    // 그 획이 «어디에» 섰는지 아무도 모른다.
+    const c = CELLS.find(x => x.name === '0점·축있음·교차1')!
+    const b = scaffold(); const st = b.add(c.a.x, c.a.y, c.b.x, c.b.y)
+    const lr = liftAll(b.doc)
+    const g = lr.lifted.get(st.id)!
+    const x = usableCrossings(lr, b.doc, st)[0]!
+    coordProof = {
+      cell: c.name,
+      drawn_2d: { a: c.a, b: c.b },
+      crossing_screen: x.q,
+      crossing_3d: { x: +x.p3.x.toFixed(6), y: +x.p3.y.toFixed(6), z: +x.p3.z.toFixed(6) },
+      lifted_3d: {
+        a3: { x: +g.a3.x.toFixed(6), y: +g.a3.y.toFixed(6), z: +g.a3.z.toFixed(6) },
+        b3: { x: +g.b3.x.toFixed(6), y: +g.b3.y.toFixed(6), z: +g.b3.z.toFixed(6) },
+      },
+      axis: g.axis,
+      reprojection_drift_px: endDrift(lr, st),
+    }
+    console.log(`[37-1 좌표] ${JSON.stringify(coordProof)}`)
+    // 그 3D 선이 교차의 3D 점을 지난다 — 거리로 확인한다(참/거짓이 아니라 값)
+    const d = norm3(sub3(g.b3, g.a3))
+    const w = sub3(x.p3, g.a3)
+    const off = len3(sub3(w, mul3(d, dot3(w, d))))
+    expect(off, '교차점까지의 수직거리(세계 단위)').toBeLessThan(1e-9)
+  })
+
+  it('원칙 d — 승격 좌표의 재사영이 **확정 2D와 같다**, 자립한 칸 전부', () => {
+    // ⚠ 이것은 **구성상 보장**이다(CLAUDE.md §5.1 유형 3 — 1차 리뷰어 [8]): 명시 점은 그대로
+    //    쓰고 나머지 끝은 그 화면점의 광선 위에서 풀므로 재사영이 원래 점으로 돌아온다.
+    //    **임계가 아니라 «같은가/다른가»를 센다** — 값을 원장에 남기되 문으로 안 쓴다.
+    //    판별력은 위약 판(축이 이기는 판 4.9337 px)이 든다.
+    let worst = 0
+    for (const c of CELLS) {
+      const b = scaffold(); const st = b.add(c.a.x, c.a.y, c.b.x, c.b.y)
+      const lr = liftAll(b.doc)
+      if (!lr.lifted.has(st.id)) continue
+      const dd = endDrift(lr, st)
+      worst = Math.max(worst, dd.a, dd.b)
+    }
+    principleD = { worst_px: worst, kind: '구성상 보장의 확인(측정 아님)' }
+    console.log(`[37-1 원칙 d] 자립한 칸 전부의 최대 재사영 이탈 ${worst.toExponential(3)} px `
+      + `— **보장의 확인이다**(임계 ⛔)`)
+    expect(worst).toBeLessThan(1e-6)
   })
 
   it('명시 점 0 · 축 없음 — 교차 둘이면 자립, 하나면 대기', () => {
@@ -355,15 +425,40 @@ describe('37-1 — 조합 전수 표(명시 점 × 축 × 교차)', () => {
     const use = usableCrossings(r, b.doc, s)
     expect(use.length, '교차가 셋 이상이어야 이 시험이 성립한다').toBeGreaterThanOrEqual(3)
     expect(r.lifted.has(s.id)).toBe(true)
-    // 고른 것과 안 고른 것의 편차를 나란히 낸다(하나만 적으면 «고른 이유»가 안 보인다)
-    const g = r.lifted.get(s.id)!
-    const devs = use.map(x => ({
-      q: x.q, through: passesThrough(r, s, x.p3),
-    }))
-    console.log(`[37-1 셋] 교차 ${use.length}개 · 지나는 것 `
-      + JSON.stringify(devs.filter(d => d.through).map(d => d.q)))
-    void g
-    expect(devs.filter(d => d.through).length, '지나는 교차가 있다').toBeGreaterThanOrEqual(1)
+    // 고른 것과 **안 고른 것**의 편차를 나란히 낸다 — 하나만 적으면 «고른 이유»가 안 보인다.
+    // ⚠ 단위는 **px²**(화면 제곱 편차의 합)다. 각 후보로 3D 선을 지어 다시 사영해 잰다.
+    const devs = use.map(x => {
+      const cand = spanOnAxisFree(r, s, x.p3)
+      return { q: x.q, dev_px2: cand ? rawDevOf(r, s, cand) : Infinity, through: passesThrough(r, s, x.p3) }
+    })
+    const chosen = devs.filter(d => d.through)
+    const minDev = Math.min(...devs.map(d => d.dev_px2))
+    console.log(`[37-1 셋] 교차 ${use.length}개 · 편차(px²) `
+      + JSON.stringify(devs.map(d => ({ q: `${d.q.x.toFixed(0)},${d.q.y.toFixed(0)}`,
+        dev: d.dev_px2.toExponential(3), through: d.through }))))
+    const maxDev = Math.max(...devs.map(d => d.dev_px2))
+    // ⚠⚠ **동점인지 먼저 판정한다.** 이 픽스처에서 세 후보의 편차는 전부 ~1e-26 px²
+    //    (수치적으로 0)이라 「최소가 뽑혔다」를 절대오차로 단언하면 **아무것도 안 재는 줄**이
+    //    된다(초판이 `toBeCloseTo(minDev, 6)`으로 그랬다 — 1e-26끼리는 무조건 통과다).
+    //    그래서 **갈리는가**를 먼저 보고, 갈리면 「최소가 뽑혔다」를, 안 갈리면
+    //    「동점 규칙(첫 교차)이 뽑았다」를 단언한다. 어느 쪽이든 판별력이 있다(#5·D-3).
+    const tie = maxDev - minDev <= Math.max(maxDev, 1e-12) * 1e-6
+    threeChoice = { candidates: devs.length, min_dev_px2: minDev, max_dev_px2: maxDev,
+      chosen_dev_px2: chosen[0]?.dev_px2 ?? null, tie, unit: 'px²(화면 제곱 편차 합)',
+      note: tie ? '이 픽스처에서는 후보가 **전부 동점**이다(≈0) — 자가 못 가르므로 '
+        + '동점 규칙(t 오름차순의 첫 교차)이 뽑는다. 자가 실제로 가르는 판은 축 갈래다'
+        + '(같은 획에서 1.09e5 / 4.13e4 / 6.48e4 — AS-C137 ㉠).'
+        : '후보가 갈린다 — 최소 편차가 뽑혔다.' }
+    console.log(`[37-1 셋] 동점 ${tie} · 최소 ${minDev.toExponential(3)} · 최대 ${maxDev.toExponential(3)} px²`)
+    expect(chosen.length, '지나는 교차가 있다').toBeGreaterThanOrEqual(1)
+    if (tie) {
+      // 동점 — **첫 교차**(획을 따라간 순서의 처음)가 뽑혀야 한다
+      const first = use[0]!
+      expect(passesThrough(r, s, first.p3), '동점이면 첫 교차가 뽑힌다').toBe(true)
+    } else {
+      const best = devs.reduce((a, b) => (b.dev_px2 < a.dev_px2 ? b : a))
+      expect(best.through, '갈리면 최소 편차가 뽑힌다').toBe(true)
+    }
   })
 
   it('⚠ 반증: 명시 점 1 + 교차 1 + 축 — **다른 평면**의 교차라도 축이 이긴다', () => {
@@ -484,11 +579,27 @@ describe('37-1 — 조합 전수 표(명시 점 × 축 × 교차)', () => {
       })
     }
     const rate = byCross > 0 ? wrong / byCross : null
+    // 균일 무작위 선택의 기대 오획득 — 후보 k개면 맞힐 확률 1/k
+    let expHit = 0, nHist = 0
+    for (const [k, n] of Object.entries(hist)) { expHit += (n as number) / Number(k); nHist += n as number }
+    const randomBaseline = nHist > 0 ? 1 - expHit / nHist : null
+    // 장면의 3D 크기 — 3.141의 분모(#16: 비를 쓸 때 분모를 적는다)
+    let sceneSize = 0
+    for (const [, o] of r.lifted) sceneSize = Math.max(sceneSize, len3(sub3(o.b3, o.a3)))
     misacq = {
       scaffold_strokes: nScaffold, scaffold_lifted: before.lifted.size,
       trials: trials.length, stood, by_crossing: byCross, wrong, waited,
       candidates_histogram: hist, rate, depth_spread_world: spread, detail,
       angle_error_rad_max: 0.03,
+      // ⚠ **표본의 한계와 자의 분모**(1차 리뷰어 [7]) — 이 수를 인용하는 사람이 크기를 읽게.
+      fixtures: 1, seeds: 1, seed: 20260831,
+      reachability_value_fixture_determined: true,
+      scene_longest_segment_world: +sceneSize.toFixed(6),
+      depth_spread_relative: sceneSize > 0 ? +(spread / sceneSize).toFixed(6) : null,
+      random_baseline_rate: randomBaseline === null ? null : +randomBaseline.toFixed(4),
+      what_the_rate_does_not_say: '이 비는 «자가 잘 고른다»를 못 말한다 — n=24에서 균일 무작위 '
+        + '기준선과 구별되지 않는다. 이 팔이 하는 주장은 「고르기가 의도를 못 맞힌다」 하나이고 '
+        + '그 방향은 두 수 어느 쪽으로도 같다.',
       what_this_does_not_say: '이 비는 «자가 의도한 교차를 고르는가»만 잰다. 실기기의 손 '
         + '각도 오차 분포는 아직 표본이 없다(AS-C1) — 여기 각도는 축 판정 대역의 절반을 '
         + '균등으로 깐 것이다. 또 **정확히 축으로 그은 획은 후보가 전부 동점**이라 이 자가 '
@@ -497,7 +608,9 @@ describe('37-1 — 조합 전수 표(명시 점 × 축 × 교차)', () => {
     console.log(`[37-1 오획득] 발판 ${nScaffold}획(자립 ${before.lifted.size}) · 시험 ${trials.length}획 `
       + `· 자립 ${stood} · 교차로 선 것 ${byCross} · 오획득 ${wrong} · 대기 ${waited} `
       + `· 오획득률 ${rate === null ? 'null(분모 0)' : rate.toFixed(4)} `
-      + `· 후보 수 분포 ${JSON.stringify(hist)} · 깊이 노출 폭 ${spread.toFixed(4)}`)
+      + `· 후보 수 분포 ${JSON.stringify(hist)} · 깊이 노출 폭 ${spread.toFixed(4)} `
+      + `(장면 최장 선분 ${sceneSize.toFixed(4)} → 상대 ${(spread / sceneSize).toFixed(4)}) `
+      + `· 무작위 기준선 ${randomBaseline === null ? 'null' : randomBaseline.toFixed(4)}`)
     for (const d of detail.slice(0, 8)) console.log(`[37-1 오획득·상세] ${JSON.stringify(d)}`)
     // 분모가 0이면 이 팔은 아무것도 안 잰다 — 그것부터 막는다(#32 · #36)
     expect(byCross, '교차로 선 획이 있어야 오획득률에 뜻이 있다').toBeGreaterThan(0)
@@ -520,6 +633,9 @@ describe('37-1 — 조합 전수 표(명시 점 × 축 × 교차)', () => {
         note: '칸의 전제(명시 점 수·축·교차 수)는 **결과에서 다시 잰 값**이다 — 주석이 아니다.',
       },
       rows,
+      principle_d: principleD,
+      coordinate_proof: coordProof,
+      three_crossing_choice: threeChoice,
       misacquisition: misacq,
       what_this_does_not_say: '이 표는 **작도 포즈**의 것이고 획이 직선 하나인 경우만 본다. '
         + '오획득률(붐비는 장면에서 엉뚱한 교차를 고르는 비율)은 `xint37_measure`가 따로 잰다.',

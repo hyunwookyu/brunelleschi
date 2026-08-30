@@ -261,6 +261,13 @@ test('⑤⑤\'⑥ — 층마다 결이 다르고(게이트) · 이음매가 없�
 test('⑦⑧⑨ — rect 성장에 결 불변 · 세 장에도 아래 획 읽힘 · 위/아래 겹 순서(게이트 ⑨ + 반증)', async ({ page }) => {
   await boot(page)
   await closeCamera(page)
+  // ⚠⚠ **잉크를 흑연으로 못 박는다**(web2-37 2번 뒤): 이 팔의 대상은 **막(film)의 기전**이지
+  //    획의 «상태 색»이 아니다. 37-2가 대기 획을 옅은 청색으로 칠하므로, 그대로 두면
+  //    이 픽스처의 아래 획(허공의 자유 획 = 대기)이 옅어져 「세 장 아래에서 읽힌다」가
+  //    **막이 아니라 색 때문에** 빨개진다(실측: 바닥−획 30 → **25**).
+  //    임계를 무는 대신 **축을 하나로 고정한다** — 색 축은 `waitink37`이 따로 진다(#86).
+  await page.evaluate(() => (window as never as { __b2: { diag: { waitInk: (m: string) => unknown } } })
+    .__b2.diag.waitInk('off'))
   // 아래 획(종이 직접) 하나 — 막 아래에 남을 대상
   await drawLine(page, 350, 250, 560, 250)
   await addPaper(page, 'yellow')

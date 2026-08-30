@@ -72,6 +72,35 @@ const boxOf = (a: [number, number], b: [number, number], pad = 8) => ({
 
 /** 겹의 상자에서 **그려진 픽셀의 평균 색상 이동**(파랑−빨강)과 그 픽셀 수.
  *  알파로 가중한다 — 반투명 가장자리가 평균을 종이 쪽으로 안 끈다. */
+/** **픽셀과 상태를 한 번에** 뜬다(web2-37 마감 · dpr2에서 창을 놓쳤다).
+ *  둘을 두 번의 `evaluate`로 나누면 그 사이에 300ms 창이 닫힐 수 있다 — dpr2는 픽셀 읽기가
+ *  네 배라 실제로 닫혔다(`settling` 빈 배열). 읽는 «순서»를 정하는 것으로는 못 막는다:
+ *  **같은 시각의 두 값이어야** 「이 픽셀은 그 창 안의 것이다」가 성립한다. */
+function hueAndInk(page: Page, layer: string, r: { x: number; y: number; w: number; h: number }, id: number) {
+  return page.evaluate(([lid, x, y, w, h, sid]) => {
+    const b = (window as never as { __b2: { app: { lift: { lifted: Map<number, unknown> } }; diag: { waitInk: () => { settling: { id: number }[]; settleMs: number } } } }).__b2
+    const ink = b.diag.waitInk()
+    const lifted = b.app.lift.lifted.has(sid as number)
+    const src = document.getElementById(lid as string) as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const t = document.createElement('canvas')
+    t.width = Math.max(1, Math.round((w as number) * dpr))
+    t.height = Math.max(1, Math.round((h as number) * dpr))
+    const g = t.getContext('2d')!
+    g.drawImage(src, Math.round((x as number) * dpr), Math.round((y as number) * dpr),
+      t.width, t.height, 0, 0, t.width, t.height)
+    const d = g.getImageData(0, 0, t.width, t.height).data
+    let wsum = 0, shift = 0, n = 0
+    for (let i = 0; i < d.length; i += 4) {
+      const a = d[i + 3]! / 255
+      if (a <= 0) continue
+      n++; wsum += a; shift += (d[i + 2]! - d[i]!) * a
+    }
+    return { painted: n, shift: wsum > 0 ? shift / wsum : 0, lifted,
+      settlingIds: ink.settling.map(z => z.id), settleMs: ink.settleMs }
+  }, [layer, r.x, r.y, r.w, r.h, id] as const)
+}
+
 function hueOf(page: Page, layer: string, r: { x: number; y: number; w: number; h: number }) {
   return page.evaluate(([id, x, y, w, h]) => {
     const src = document.getElementById(id as string) as HTMLCanvasElement
@@ -217,14 +246,11 @@ test('37-2 ③ 정착 전이 — 청색이 사라지고 흑연 하나만 남는�
   // 나중에 읽는다. 나중 시각에 창이 아직 열려 있었다면 **먼저 뜬 픽셀은 반드시 그 창
   // 안**이다 — 반대 순서로 읽으면 느린 기기에서 창이 닫힌 뒤의 픽셀을 «전이 중»이라
   // 부르게 된다(그 팔은 조용히 아무것도 안 재게 된다).
-  const midHue = await hueOf(page, 'brushc', box)
-  const post = await page.evaluate((i) => {
-    const b = (window as any).__b2
-    return { lifted: b.app.lift.lifted.has(i), ink: b.diag.waitInk() }
-  }, id)
-  const lifted = post.lifted
-  const during = post.ink
-  expect(lifted).toBe(true)
+  // ⚠ **한 evaluate 안에서** 픽셀과 상태를 함께 뜬다 — 읽는 «순서»로는 못 막는다(위 주석).
+  const mid = await hueAndInk(page, 'brushc', box, id)
+  const midHue = { shift: mid.shift, painted: mid.painted }
+  const during = { settling: mid.settlingIds.map(z => ({ id: z })), settleMs: mid.settleMs }
+  expect(mid.lifted).toBe(true)
 
   // 창이 닫히기를 기다린다 — **길이도 앱에서 읽는다**(팔이 ms를 안 든다 · #88)
   await page.waitForFunction(() => (window as any).__b2.diag.waitInk().settling.length === 0,
