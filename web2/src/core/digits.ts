@@ -23,8 +23,10 @@ const REJECT = 0.10
 
 interface Cloud { pts: { x: number; y: number; id: number }[] }
 
-/** 템플릿 — 정규 좌표(0..1, y 아래로)의 획 폴리라인들 */
-const GLYPHS: Record<string, Pt[][]> = {
+/** 템플릿 — 정규 좌표(0..1, y 아래로)의 획 폴리라인들.
+ *  ⚠ **내보내는 이유**(web2-35): 궤적 원형의 출처가 «이 회차가 만든 것»이 아니라
+ *  **web2-08이 이미 적어 둔 이 표**임을 코드로 못 박는다(픽스처 맞춤 방지 — traj_rec.ts). */
+export const GLYPHS: Record<string, Pt[][]> = {
   '0': [[{ x: .5, y: 0 }, { x: .18, y: .12 }, { x: .05, y: .5 }, { x: .18, y: .88 }, { x: .5, y: 1 }, { x: .82, y: .88 }, { x: .95, y: .5 }, { x: .82, y: .12 }, { x: .5, y: 0 }]],
   '1': [[{ x: .5, y: 0 }, { x: .5, y: 1 }]],
   '2': [[{ x: .12, y: .28 }, { x: .22, y: .06 }, { x: .5, y: 0 }, { x: .78, y: .08 }, { x: .88, y: .3 }, { x: .62, y: .56 }, { x: .32, y: .76 }, { x: .1, y: 1 }, { x: .9, y: 1 }]],
@@ -102,8 +104,11 @@ function cloudDist(a: Cloud, b: Cloud): number {
 const TEMPLATES: { ch: string; cloud: Cloud }[] = Object.entries(GLYPHS)
   .map(([ch, strokes]) => ({ ch, cloud: toCloud(strokes)! }))
 
-/** 글리프 하나(획 묶음) → 숫자 또는 null(못 읽음) */
-export function recognizeGlyph(strokes: Pt[][]): { ch: string; d: number } | null {
+/** 글리프 하나 → **문턱 없이** 가장 가까운 자리와 그 거리.
+ *  ⚠ 내보내는 이유(web2-35): `recognizeGlyph`는 REJECT가 박혀 있어 **훑을 수가 없다**.
+ *  「궤적이 올렸는가, 아니면 대조기를 하나 더 붙인 것이 올렸는가」를 가르려면 이 팔의
+ *  문턱도 궤적과 같은 자유도로 훑어야 한다(#12·#13 — 값 하나로 결론을 만들지 않는다). */
+export function recognizeGlyphRaw(strokes: Pt[][]): { ch: string; d: number } | null {
   const c = toCloud(strokes)
   if (!c) return null
   let best: { ch: string; d: number } | null = null
@@ -111,6 +116,12 @@ export function recognizeGlyph(strokes: Pt[][]): { ch: string; d: number } | nul
     const d = cloudDist(c, t.cloud)
     if (!best || d < best.d) best = { ch: t.ch, d }
   }
+  return best
+}
+
+/** 글리프 하나(획 묶음) → 숫자 또는 null(못 읽음) */
+export function recognizeGlyph(strokes: Pt[][]): { ch: string; d: number } | null {
+  const best = recognizeGlyphRaw(strokes)
   if (!best || best.d > REJECT) return null
   return best
 }

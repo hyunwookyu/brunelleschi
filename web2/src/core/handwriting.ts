@@ -14,8 +14,9 @@
 // ①을 지난 잡음 최선 0.497. ⚠ 여유가 ±0.023으로 얇다 — 표본이 커지면 다시 놓는다).
 
 import type { Pt } from './vec'
-import { splitGlyphs, isDot } from './digits'
+import { splitGlyphs, isDot, recognizeGlyph } from './digits'
 import { classifyGlyph } from './digitnet'
+import { trajMatch } from './traj_rec'
 import { C } from './constants'
 
 export const NET_REJECT = 0.52
@@ -68,6 +69,66 @@ export function classifyGlyphNorm(strokes: Pt[][]): { ch: string; p: number } | 
   return b && b.p >= NET_RESCUE ? b : null
 }
 
+/** **궤적 시야의 채택 거리**(web2-35 1번). 이 회차가 새로 놓는 문턱은 **이것 하나**다 —
+ *  네 번째 시야($P)의 문턱은 web2-08이 **다른 표본으로** 이미 놓은 `digits.REJECT`(0.10)를
+ *  그대로 쓰고 건드리지 않았다. 자유도를 하나로 묶어야 「표본에 맞춘 값」이 안 된다.
+ *
+ *  값의 근거는 `glyph35_web2.json`의 `shipped_p_threshold_arm`이다. $P 문턱을 0.10에
+ *  고정하고 이 값만 훑으면 **0.10~0.12에서 맞음이 770으로 같다**(고원 5칸) — 0.11은 그
+ *  가운데다. 거리 띠의 실측:
+ *
+ *    맞게 구제되는 201칸의 **최악 거리** 0.098
+ *    ─────────── 이 사이 어디를 잘라도 결과가 같다 ───────────
+ *    **첫 오답** 거리                  0.124   (세리프1+밑줄 → 「2」)
+ *    잡음 8종의 **최선 거리**           0.151   (삼각형 → 「0」)
+ *
+ *  ⚠ **띠가 얇다**(폭 0.026 = 문턱의 24%) — NET_RESCUE와 같은 성질의 값이고 **합성
+ *  표본에서 놓았다**. 실기기에서 다시 놓는다(DEVICE-CHECK).
+ *  ⚠⚠ 이 문턱이 지키는 것은 **오답이 안 느는 것**이지 맞음의 최대가 아니다(#61 비용
+ *  비대칭 — 32-2가 승인 층을 걷었고 첫 치수는 축척을 정한다). */
+export const TRAJ_ACCEPT = 0.11
+
+/** 글리프 하나 → 답. **네 시야를 이 순서로** 본다. 모양이 먼저이고 궤적은 더한 것이다.
+ *
+ *  ① **비 보존 래스터**(digitnet · web2-10)   — 확신 ≥ NET_REJECT면 그대로
+ *  ② **비를 편 래스터**(web2-32 4번)          — 확신 ≥ NET_RESCUE면 구제
+ *  ③ **궤적**(web2-35 · traj_rec)            — 거리 ≤ TRAJ_ACCEPT면 구제
+ *  ④ **$P 점군**(web2-08 · digits)           — 거리 ≤ digits.REJECT면 구제
+ *
+ *  ⚠⚠ **③④가 ①②를 뒤집는 길은 없다**(발화 조건이 «앞이 거부»다). 그렇게 둔 근거는
+ *  실측이다: 래스터가 **맞게 수용한** 칸에서 궤적은 자주 다른 답을 낸다(7·가로줄 있음
+ *  0/80 일치 · 4·열린·1획 0/38 · 세리프1+밑줄 0/22 — 원장 `traj_on_accepted`). 원형 표가
+ *  자리마다 **한 가지 필체**뿐이라 그렇다. 궤적을 **판정자**로 두면 오답이 2 → 295로
+ *  터진다(`arm_traj_only`). 그러므로 궤적은 «판정자»가 아니라 **«거부를 되살리는 시야»**다.
+ *
+ *  ⚠⚠⚠ **③과 ④를 둘 다 두는 근거**는 둘이 **서로 다른 자형을 살리고 그 몫이 씨마다
+ *  서기** 때문이다(런타임과 **같은 자**로 잰 값 · `traj_vs_p_dollar_by_form.at_runtime`):
+ *  ④가 이미 있어도 ③이 **+45**(전부 「4·닫힌·2획」 · 씨별 [9,8,10,9,9] 폭 2) ·
+ *  ③이 있어도 ④가 **+63**(세리프 「1」). 45 + 63 + 156 = 264 = 770 − 506으로 맞는다.
+ *
+ *  ⚠ **「궤적이 $P보다 낫다」는 이 표본으로 못 가른다**(2차 리뷰어 · #14): 전량으로는
+ *  707 대 695지만 **씨별로 [-1, 0, 7, 4, 2]**라 폭 8에 부호가 뒤집힌다. 그 12칸을
+ *  게이트에서도 결론에서도 뺐다 — 올린 것의 대부분은 «궤적»이 아니라 **«시야를 하나 더
+ *  둔 것»**이다(506 → 695가 $P만으로 난다 · `decomposition`).
+ *  ⚠ 「궤적이 앞에 서면 $P의 오답이 3 → 2로 내려간다」는 **채택 근거가 아니다** —
+ *  PITFALLS #20(거름을 선택 전에 걸면 상대 순위가 거저 통과)의 모양이고, 씨별로는
+ *  $P의 오답이 [0,0,1,0,2]로 2를 넘는 씨가 없다. 사실로만 남긴다. */
+export type GlyphAnswer =
+  | { ch: string; via: 'preserved' | 'rescued'; p: number }
+  | { ch: string; via: 'traj' | 'pdollar'; d: number }
+
+export function readGlyph(strokes: Pt[][]): GlyphAnswer | null {
+  const a = classifyGlyph(strokes, 0)
+  if (a && a.p >= NET_REJECT) return { ch: a.ch, via: 'preserved', p: a.p }
+  const b = classifyGlyph(strokes, C.DIGIT_NORM_ALPHA)
+  if (b && b.p >= NET_RESCUE) return { ch: b.ch, via: 'rescued', p: b.p }
+  const t = trajMatch(strokes)
+  if (t && t.d <= TRAJ_ACCEPT) return { ch: t.ch, via: 'traj', d: t.d }
+  const q = recognizeGlyph(strokes)                    // 문턱은 digits.REJECT가 안에서 건다
+  if (q) return { ch: q.ch, via: 'pdollar', d: q.d }
+  return null
+}
+
 /** 번들 모형 경로 — 동기·순수(시험이 앱과 같은 함수를 부른다) */
 export function recognizeDigitsNet(strokes: Pt[][]): string {
   if (strokes.length === 0) return ''
@@ -75,8 +136,8 @@ export function recognizeDigitsNet(strokes: Pt[][]): string {
   let out = ''
   for (const g of glyphs) {
     if (isDot(g, tallest)) { out += '.'; continue }
-    const r = classifyGlyphNorm(g.strokes)
-    out += r && r.p >= NET_REJECT ? r.ch : '?'
+    const r = readGlyph(g.strokes)
+    out += r ? r.ch : '?'          // 문턱은 세 시야가 각자 안에서 이미 걸었다
   }
   return out
 }

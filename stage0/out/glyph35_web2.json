@@ -1,0 +1,4939 @@
+{
+  "what": "web2-35 — 손글씨 인식에 **궤적**을 더한다. 32-4와 같은 표본(glyphforms 11자형 × 4상자 × 4흔들기 × 5씨 = 880칸)·같은 하네스.",
+  "headline": "⚠⚠ **506 → 770을 «궤적의 승리»로 읽지 마라.** 이 회차의 실제 결론은 셋이다: ① 32-4 원장이 낸 실패 구조가 «틀림 2 · 거부 372»였으므로 할 일은 재순위가 아니라 **거부 되살리기**였고, ② 그 자리에 **어떤 대조기든** 하나 붙이면 506 → 695($P@0.095) / 725($P@실린 0.10 · 오답 3) / 707(궤적)로 오른다 — 즉 **오른 것의 대부분(+189)은 «궤적»이 아니라 «시야를 하나 더 둔 것»**이다. ⚠⚠ **그리고 「궤적이 $P보다 낫다」는 이 표본으로 못 가른다**(2차 리뷰어 [4] · #14): 전량 12칸이지만 씨별로 [-1, 0, 7, 4, 2](폭 8 · 둘은 0 이하)라 **부호가 뒤집힌다**. 초판이 그 12칸을 「+1.4%p」로 헤드라인에 썼고 **걷었다**. ③ 서는 것은 **사슬 안의 한계 이득**이다 — 둘이 서로 다른 자형을 살린다: ④가 있어도 ③이 **+45**(전부 「4·닫힌·2획」 · 씨별 [9,8,10,9,9] 폭 2) · ③이 있어도 ④가 **+63**(세리프 「1」). 45+63+156 = 264 = 770−506 ✔. 그 조합이 채택된 판이다. decomposition과 seed_variance가 정본이다.",
+  "bias": "⚠⚠ **합성 표본이다.** 자형 하나를 흔들어 스무 번 낸 것이고 사람이 실제로 쓴 획이 아니다. 이 수치는 **어느 축이 약한지**를 가리키는 데까지만 쓴다 — 인식률 자체를 결론으로 쓰지 않는다. 진짜 값은 실기기이고 사용자가 자기 글씨로 열 개를 센다(DEVICE-CHECK).",
+  "canonical_command": "LEDGER=1 npx vitest run test/glyph35.test.ts",
+  "design": {
+    "where": "궤적은 모형 **밖**의 세 번째 시야다. digitnet은 MNIST(스캔 이미지) 래스터 MLP이고 MNIST에는 궤적 표본이 없다 — 모형 안에 못 넣는다(web2-32 원장 trajectory_not_added).",
+    "fires_when": "래스터 두 시야가 **둘 다 거부**한 글리프에서만. 그러므로 궤적이 맞던 답을 뒤집는 길이 없고, 이 계층이 만들 수 있는 해악은 «거부 → 오답» 하나뿐이다.",
+    "why_not_judge": "실측이 그렇게 못 박았다 — 래스터가 **맞게 수용한** 칸에서 궤적은 자주 다른 답을 낸다(traj_on_accepted). 원형 표가 자리마다 필체 하나뿐이라 그렇다. 반사실 팔(arm_traj_first / arm_traj_only)이 그 대가를 낸다.",
+    "features": "지시 35-1의 여섯 — 시작/끝 방향 · 방향 전환(개수·자리) · 획 순서 · 획 수 · 붓 뗀 자리 · 공중 경로. 더한 둘: 방향 히스토그램(8방위 길이가중) · 되짚기(같은 자리를 다시 지나는 몫 — 래스터에서 정보가 통째로 사라지는 몸짓).",
+    "proto_source": "⚠⚠ **원형은 `digits.ts`의 GLYPHS다 — web2-08이 적은 $P 템플릿 표이고 이 회차가 만든 것이 아니다.** 평가 픽스처를 보고 원형을 지으면 「궤적이 올렸다」가 아니라 「픽스처를 외웠다」가 된다. 그래서 표를 in_sample/held_out으로 가른다."
+  },
+  "gate": {
+    "for": "web2-35 — 궤적을 더한 뒤에도 **오답이 안 늘고 잡음 수용이 0**이며, 이득이 **원형 표를 외운 몫이 아닌** 자형에서 나온다",
+    "registered": [
+      "틀림 ≤ 2(기준선과 같다)",
+      "잡음 8종 수용 0 — 앱과 같은 함수(recognizeDigitsNet)로",
+      "**씨 다섯 각각**에서 ④가 있어도 ③이 더 얹는 몫 > 0 (한계 이득 · [9,8,10,9,9])",
+      "**씨 다섯 각각**에서 표본 밖의 남은 여유를 절반 넘게 메운다 (최저 씨 filled 0.623)",
+      "**씨 다섯 각각**에서 ③ 자리에 **궤적 항을 끈 판**을 넣으면 ④ 위에 얹는 몫이 **0**이다 — +45가 «방향·순서를 보는 항»에서 온다는 것",
+      "제약을 통째로 풀어도 궤적 쪽 최대(770·오답 2)가 위약 쪽 최대(735·오답 36)보다 높다",
+      "채택 문턱이 고원 안($P는 실린 값 고정)"
+    ],
+    "registered_note_3": "⚠ **3차 대응에서 두 줄이 더 움직였다**: ㉠ 「한계 이득의 씨별 폭 < 머리끼리 견주는 값의 폭(2 < 8)」을 **걷었다**(리뷰어 [25]) — 비교 대상이 **철회된 값**의 분산이고 실패시킬 조건을 못 적는다(D-3). 두 수는 `seed_variance`에 그대로 있다. ㉡ 위약 조항을 **씨별**로 바꿨다(리뷰어 [26]) — `per_seed_shape_matched`가 원장에 있는데 전량으로 걸려 있었다. ⚠⚠ 그리고 그 조항의 문장을 **좁혔다**(리뷰어 [23]): 위약이 ④와 같은 계열이므로 이 게이트가 말하는 것은 「+45가 **방향·순서를 보는 항**에서 온다」이지 「임의의 네 번째 시야를 얹어도 0」이 아니다.",
+    "registered_note": "⚠⚠ **2차 리뷰어 [13]이 잡은 자리**: 1차 대응에서 문서의 게이트만 고치고 **이 배열을 안 고쳤다**(#47 · #42 ⑥ — 정본은 원장이다). 걷어낸 두 줄은 「표본 밖 이득 > 표본 안 이득」(원수 비교라 분모가 다르다 · #11)과 「$P 단독은 실린 문턱에서 불법」(씨 하나의 한 칸 · #20)이다. 그리고 「표본 밖 정답률 8할 초과」는 **새로 세웠다가 같은 회차에서 걷었다** — 여유가 2칸이고 씨별 최저가 76.8%였다(#14의 재발 · 리뷰어 [14]).",
+    "reachability": "**궤적 문턱을 올리면 넘는다.** $P를 실린 0.10에 고정하고 궤적 문턱만 0.11 → 0.125 → 0.13 → 0.15 → 0.20 → 0.25로 올리면 오답이 2 → 3 → 5 → 24 → 72 → 148로 오른다(0.20부터 잡음 수용도 시작된다). ⚠ **다음 경로는 도달 목록에서 뺀다**(3차 리뷰어 [27]): 「궤적 시야를 빼면 $P가 실린 문턱에서 오답 3을 낸다」는 사실이지만 그 3은 **씨 하나의 한 칸**에 걸린 값이고([0,0,1,0,2]) 같은 원장이 그 줄을 채택 근거와 게이트 단언에서 **뺐다**(#20). 도달 경로로도 세지 않는다 — 문턱 축 하나로 충분히 실패시킬 수 있다.",
+    "reachability_source": "gate/reachability_wrong_by_traj_threshold",
+    "reachability_value": [
+      2,
+      3,
+      5,
+      24,
+      72,
+      148
+    ],
+    "reachability_wrong_by_traj_threshold": [
+      2,
+      3,
+      5,
+      24,
+      72,
+      148
+    ],
+    "reachability_thresholds": [
+      0.11,
+      0.125,
+      0.13,
+      0.15,
+      0.2,
+      0.25
+    ],
+    "reachability_rows": [
+      {
+        "th": 0.11,
+        "ok": 770,
+        "wrong": 2,
+        "noise": 0
+      },
+      {
+        "th": 0.125,
+        "ok": 770,
+        "wrong": 3,
+        "noise": 0
+      },
+      {
+        "th": 0.13,
+        "ok": 770,
+        "wrong": 5,
+        "noise": 0
+      },
+      {
+        "th": 0.15,
+        "ok": 767,
+        "wrong": 24,
+        "noise": 0
+      },
+      {
+        "th": 0.2,
+        "ok": 733,
+        "wrong": 72,
+        "noise": 1
+      },
+      {
+        "th": 0.25,
+        "ok": 732,
+        "wrong": 148,
+        "noise": 2
+      }
+    ],
+    "reachability_note": "⚠ **이 게이트는 실제로 실패시킬 수 있다**(D-3). **런타임 축**에서 잰다(④ $P를 실린 0.10으로 켠 채 궤적 문턱만 올린다 — `reachability_rows`가 `ok`까지 낸다): 채택값 0.11에서 오답 2이고 0.125부터 오른다. ⚠ **오답 열이 `arms.traj_full`(④ 없음)과 여섯 자리 전부 같은 것은 우연이 아니다**(2차 리뷰어의 낮음 ㉣이 물었다): ④가 더하는 오답은 궤적 문턱과 **무관하게 언제나 같은 한 칸**이고(궤적이 그 칸을 문턱 0.12까지 먼저 맞게 답하므로 ④가 못 본다), 문턱을 올려 생기는 오답은 전부 ③이 낸다. **갈리는 것은 `ok` 열이다** — 770/770/770/767/733/732 대 707/707/707/707/707/732. ⚠⚠ **2차 리뷰어 [12] 정정**: 초판은 이 좁은 띠(0.026)를 「「오답 ≤ 2」의 폭」이라고 적었는데 **틀렸다** — 「오답 ≤ 2」 자체는 0.02~0.12의 넓은 구간에서 성립한다(폭 ≈ 0.10). 0.026은 **「맞는 구제의 최악 거리 0.098」과 「첫 오답 0.124」 사이**, 곧 «맞음이 최대이면서 오답이 안 느는» 띠다. 두 문장은 다른 말이다."
+  },
+  "constants": {
+    "TRAJ_ACCEPT": 0.11,
+    "NET_REJECT": 0.52,
+    "NET_RESCUE": 0.8,
+    "DIGIT_NORM_ALPHA": 0.5,
+    "DIGIT_ASPECT_FLOOR": 0.35,
+    "protos": 10
+  },
+  "totals": {
+    "baseline_raster_two_views": {
+      "ok": 506,
+      "wrong": 2,
+      "reject": 372,
+      "n": 880
+    },
+    "with_trajectory_three_views": {
+      "ok": 707,
+      "wrong": 2,
+      "reject": 171,
+      "n": 880
+    },
+    "runtime_four_views": {
+      "ok": 770,
+      "wrong": 2,
+      "reject": 108,
+      "n": 880,
+      "wrong_of_accepted": [
+        2,
+        772
+      ]
+    }
+  },
+  "decomposition": {
+    "note": "⚠⚠ **이 표가 결론이다. 770을 «궤적의 승리»로 읽지 마라.**",
+    "0_baseline_raster_x2": 506,
+    "1_plus_p_dollar_only": 695,
+    "2_plus_traj_only": 707,
+    "3_plus_both (런타임)": 770,
+    "1b_plus_p_dollar_at_shipped_0.10": 725,
+    "1b_wrong": 3,
+    "third_view_at_all (0→1)": 189,
+    "traj_over_p_dollar (머리끼리 · 1→2 대신)": 12,
+    "traj_marginal_given_p_dollar_at_0.095 (1→3)": 75,
+    "traj_marginal_given_p_dollar_at_shipped_0.10 (1b→3)": 45,
+    "p_dollar_marginal_given_traj (2→3)": 63,
+    "note2": "⚠⚠ 2차 리뷰어 [3]: `traj_marginal_given_p_dollar` 75는 **$P 문턱을 0.095 → 0.10으로 옮긴 몫까지 포함**한 값이다. $P를 실린 0.10에 고정하고 ③만 더한 한계 이득은 **45**다 — 그쪽이 「궤적이 더 얹는 몫」의 정직한 수이고, 씨 변동폭도 그쪽에서만 선다(seed_variance)."
+  },
+  "four_all_forms": {
+    "before": 77,
+    "after": 278,
+    "n": 320,
+    "note": "지시 35-2가 못 박은 기준선 77/320과 같은 분모다(32-4 원장 by_form.four_all_forms)."
+  },
+  "held_out_split": {
+    "note": "표본 안 = 자형의 획이 원형 표(GLYPHS)와 **좌표로 같은** 것. 이름이 아니라 JSON 비교로 판정한다.",
+    "in_sample_forms": [
+      "4·열린·2획 (현행 템플릿)",
+      "7·가로줄 없음 (현행 템플릿)",
+      "1·수직선만 (현행 템플릿)",
+      "9·곧은 꼬리 (현행 템플릿 · 2획)"
+    ],
+    "in_sample": {
+      "before": {
+        "ok": 276,
+        "wrong": 0,
+        "n": 320
+      },
+      "after": {
+        "ok": 320,
+        "wrong": 0,
+        "n": 320
+      }
+    },
+    "held_out": {
+      "before": {
+        "ok": 230,
+        "wrong": 2,
+        "n": 560
+      },
+      "after": {
+        "ok": 450,
+        "wrong": 2,
+        "n": 560
+      }
+    },
+    "gain_in_sample": 44,
+    "gain_held_out": 220
+  },
+  "arms": {
+    "note": "⚠⚠ **거리의 자가 팔마다 다르므로 한 문턱으로 나란히 세우지 않는다**(#76 ㉣). 팔마다 문턱을 0.02~0.30으로 훑고 **불변식(오답 ≤ 기준선 2 · 잡음 수용 0)을 지키는 최대 맞음**을 그 팔의 값으로 쓴다. curve가 그 훑기 전량이다.",
+    "rows": [
+      {
+        "key": "traj_full",
+        "note": "궤적 — 전 항(방향·전환·순서·획수·붓 뗀 자리·공중 경로 + 히스토그램·되짚기)",
+        "best": {
+          "th": 0.1,
+          "ok": 707,
+          "wrong": 2,
+          "noise": 0,
+          "held_out": 387
+        },
+        "curve": [
+          {
+            "th": 0.02,
+            "ok": 510,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.025,
+            "ok": 516,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.03,
+            "ok": 519,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.035,
+            "ok": 522,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 231
+          },
+          {
+            "th": 0.04,
+            "ok": 542,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 231
+          },
+          {
+            "th": 0.045,
+            "ok": 561,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 247
+          },
+          {
+            "th": 0.05,
+            "ok": 574,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 259
+          },
+          {
+            "th": 0.055,
+            "ok": 583,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 268
+          },
+          {
+            "th": 0.06,
+            "ok": 630,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 311
+          },
+          {
+            "th": 0.065,
+            "ok": 642,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 322
+          },
+          {
+            "th": 0.07,
+            "ok": 658,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 338
+          },
+          {
+            "th": 0.075,
+            "ok": 665,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 345
+          },
+          {
+            "th": 0.08,
+            "ok": 668,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 348
+          },
+          {
+            "th": 0.085,
+            "ok": 671,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 351
+          },
+          {
+            "th": 0.09,
+            "ok": 684,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 364
+          },
+          {
+            "th": 0.095,
+            "ok": 703,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 383
+          },
+          {
+            "th": 0.1,
+            "ok": 707,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 387
+          },
+          {
+            "th": 0.105,
+            "ok": 707,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 387
+          },
+          {
+            "th": 0.11,
+            "ok": 707,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 387
+          },
+          {
+            "th": 0.115,
+            "ok": 707,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 387
+          },
+          {
+            "th": 0.12,
+            "ok": 707,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 387
+          },
+          {
+            "th": 0.125,
+            "ok": 707,
+            "wrong": 3,
+            "noise": 0,
+            "held_out": 387
+          },
+          {
+            "th": 0.13,
+            "ok": 707,
+            "wrong": 5,
+            "noise": 0,
+            "held_out": 387
+          },
+          {
+            "th": 0.135,
+            "ok": 707,
+            "wrong": 11,
+            "noise": 0,
+            "held_out": 387
+          },
+          {
+            "th": 0.14,
+            "ok": 707,
+            "wrong": 15,
+            "noise": 0,
+            "held_out": 387
+          },
+          {
+            "th": 0.145,
+            "ok": 707,
+            "wrong": 20,
+            "noise": 0,
+            "held_out": 387
+          },
+          {
+            "th": 0.15,
+            "ok": 707,
+            "wrong": 24,
+            "noise": 0,
+            "held_out": 387
+          },
+          {
+            "th": 0.155,
+            "ok": 707,
+            "wrong": 32,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.16,
+            "ok": 707,
+            "wrong": 37,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.165,
+            "ok": 707,
+            "wrong": 47,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.17,
+            "ok": 707,
+            "wrong": 52,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.175,
+            "ok": 707,
+            "wrong": 56,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.18,
+            "ok": 707,
+            "wrong": 59,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.185,
+            "ok": 707,
+            "wrong": 59,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.19,
+            "ok": 707,
+            "wrong": 59,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.195,
+            "ok": 707,
+            "wrong": 61,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.2,
+            "ok": 707,
+            "wrong": 72,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.205,
+            "ok": 707,
+            "wrong": 98,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.21,
+            "ok": 707,
+            "wrong": 101,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.215,
+            "ok": 707,
+            "wrong": 101,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.22,
+            "ok": 707,
+            "wrong": 101,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.225,
+            "ok": 707,
+            "wrong": 104,
+            "noise": 1,
+            "held_out": 387
+          },
+          {
+            "th": 0.23,
+            "ok": 709,
+            "wrong": 110,
+            "noise": 1,
+            "held_out": 389
+          },
+          {
+            "th": 0.235,
+            "ok": 712,
+            "wrong": 122,
+            "noise": 2,
+            "held_out": 392
+          },
+          {
+            "th": 0.24,
+            "ok": 715,
+            "wrong": 137,
+            "noise": 2,
+            "held_out": 395
+          },
+          {
+            "th": 0.245,
+            "ok": 732,
+            "wrong": 145,
+            "noise": 2,
+            "held_out": 412
+          },
+          {
+            "th": 0.25,
+            "ok": 732,
+            "wrong": 148,
+            "noise": 2,
+            "held_out": 412
+          },
+          {
+            "th": 0.255,
+            "ok": 732,
+            "wrong": 148,
+            "noise": 3,
+            "held_out": 412
+          },
+          {
+            "th": 0.26,
+            "ok": 732,
+            "wrong": 148,
+            "noise": 3,
+            "held_out": 412
+          },
+          {
+            "th": 0.265,
+            "ok": 732,
+            "wrong": 148,
+            "noise": 4,
+            "held_out": 412
+          },
+          {
+            "th": 0.27,
+            "ok": 732,
+            "wrong": 148,
+            "noise": 4,
+            "held_out": 412
+          },
+          {
+            "th": 0.275,
+            "ok": 732,
+            "wrong": 148,
+            "noise": 4,
+            "held_out": 412
+          },
+          {
+            "th": 0.28,
+            "ok": 732,
+            "wrong": 148,
+            "noise": 5,
+            "held_out": 412
+          },
+          {
+            "th": 0.285,
+            "ok": 732,
+            "wrong": 148,
+            "noise": 5,
+            "held_out": 412
+          },
+          {
+            "th": 0.29,
+            "ok": 732,
+            "wrong": 148,
+            "noise": 5,
+            "held_out": 412
+          },
+          {
+            "th": 0.295,
+            "ok": 732,
+            "wrong": 148,
+            "noise": 6,
+            "held_out": 412
+          },
+          {
+            "th": 0.3,
+            "ok": 732,
+            "wrong": 148,
+            "noise": 6,
+            "held_out": 412
+          }
+        ]
+      },
+      {
+        "key": "traj_no_merge",
+        "note": "궤적 — 획 병합 없이(획 수가 다르면 이어 붙여 견주지 않는다)",
+        "best": {
+          "th": 0.1,
+          "ok": 627,
+          "wrong": 2,
+          "noise": 0,
+          "held_out": 307
+        },
+        "curve": [
+          {
+            "th": 0.02,
+            "ok": 509,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.025,
+            "ok": 509,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.03,
+            "ok": 515,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.035,
+            "ok": 515,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.04,
+            "ok": 519,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.045,
+            "ok": 528,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 238
+          },
+          {
+            "th": 0.05,
+            "ok": 535,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 244
+          },
+          {
+            "th": 0.055,
+            "ok": 540,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 246
+          },
+          {
+            "th": 0.06,
+            "ok": 565,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 249
+          },
+          {
+            "th": 0.065,
+            "ok": 569,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 250
+          },
+          {
+            "th": 0.07,
+            "ok": 580,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 260
+          },
+          {
+            "th": 0.075,
+            "ok": 587,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 267
+          },
+          {
+            "th": 0.08,
+            "ok": 589,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 269
+          },
+          {
+            "th": 0.085,
+            "ok": 592,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 272
+          },
+          {
+            "th": 0.09,
+            "ok": 604,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 284
+          },
+          {
+            "th": 0.095,
+            "ok": 622,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 302
+          },
+          {
+            "th": 0.1,
+            "ok": 627,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 307
+          },
+          {
+            "th": 0.105,
+            "ok": 627,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 307
+          },
+          {
+            "th": 0.11,
+            "ok": 627,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 307
+          },
+          {
+            "th": 0.115,
+            "ok": 627,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 307
+          },
+          {
+            "th": 0.12,
+            "ok": 627,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 307
+          },
+          {
+            "th": 0.125,
+            "ok": 627,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 307
+          },
+          {
+            "th": 0.13,
+            "ok": 627,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 307
+          },
+          {
+            "th": 0.135,
+            "ok": 627,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 307
+          },
+          {
+            "th": 0.14,
+            "ok": 627,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 307
+          },
+          {
+            "th": 0.145,
+            "ok": 627,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 307
+          },
+          {
+            "th": 0.15,
+            "ok": 627,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 307
+          },
+          {
+            "th": 0.155,
+            "ok": 627,
+            "wrong": 2,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.16,
+            "ok": 627,
+            "wrong": 2,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.165,
+            "ok": 627,
+            "wrong": 2,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.17,
+            "ok": 627,
+            "wrong": 3,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.175,
+            "ok": 627,
+            "wrong": 5,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.18,
+            "ok": 627,
+            "wrong": 8,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.185,
+            "ok": 627,
+            "wrong": 11,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.19,
+            "ok": 627,
+            "wrong": 39,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.195,
+            "ok": 627,
+            "wrong": 59,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.2,
+            "ok": 627,
+            "wrong": 89,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.205,
+            "ok": 627,
+            "wrong": 120,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.21,
+            "ok": 627,
+            "wrong": 124,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.215,
+            "ok": 627,
+            "wrong": 124,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.22,
+            "ok": 627,
+            "wrong": 124,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.225,
+            "ok": 627,
+            "wrong": 127,
+            "noise": 1,
+            "held_out": 307
+          },
+          {
+            "th": 0.23,
+            "ok": 629,
+            "wrong": 133,
+            "noise": 1,
+            "held_out": 309
+          },
+          {
+            "th": 0.235,
+            "ok": 632,
+            "wrong": 145,
+            "noise": 1,
+            "held_out": 312
+          },
+          {
+            "th": 0.24,
+            "ok": 635,
+            "wrong": 160,
+            "noise": 1,
+            "held_out": 315
+          },
+          {
+            "th": 0.245,
+            "ok": 652,
+            "wrong": 168,
+            "noise": 1,
+            "held_out": 332
+          },
+          {
+            "th": 0.25,
+            "ok": 652,
+            "wrong": 171,
+            "noise": 1,
+            "held_out": 332
+          },
+          {
+            "th": 0.255,
+            "ok": 652,
+            "wrong": 171,
+            "noise": 1,
+            "held_out": 332
+          },
+          {
+            "th": 0.26,
+            "ok": 652,
+            "wrong": 171,
+            "noise": 2,
+            "held_out": 332
+          },
+          {
+            "th": 0.265,
+            "ok": 652,
+            "wrong": 171,
+            "noise": 3,
+            "held_out": 332
+          },
+          {
+            "th": 0.27,
+            "ok": 652,
+            "wrong": 171,
+            "noise": 3,
+            "held_out": 332
+          },
+          {
+            "th": 0.275,
+            "ok": 652,
+            "wrong": 171,
+            "noise": 3,
+            "held_out": 332
+          },
+          {
+            "th": 0.28,
+            "ok": 652,
+            "wrong": 171,
+            "noise": 3,
+            "held_out": 332
+          },
+          {
+            "th": 0.285,
+            "ok": 652,
+            "wrong": 174,
+            "noise": 3,
+            "held_out": 332
+          },
+          {
+            "th": 0.29,
+            "ok": 652,
+            "wrong": 192,
+            "noise": 3,
+            "held_out": 332
+          },
+          {
+            "th": 0.295,
+            "ok": 652,
+            "wrong": 201,
+            "noise": 4,
+            "held_out": 332
+          },
+          {
+            "th": 0.3,
+            "ok": 652,
+            "wrong": 212,
+            "noise": 4,
+            "held_out": 332
+          }
+        ]
+      },
+      {
+        "key": "traj_shape_only",
+        "note": "위약① — 같은 구조에서 **궤적 항만 끈** 판",
+        "best": {
+          "th": 0.025,
+          "ok": 522,
+          "wrong": 2,
+          "noise": 0,
+          "held_out": 232
+        },
+        "curve": [
+          {
+            "th": 0.02,
+            "ok": 520,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 231
+          },
+          {
+            "th": 0.025,
+            "ok": 522,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 232
+          },
+          {
+            "th": 0.03,
+            "ok": 561,
+            "wrong": 7,
+            "noise": 0,
+            "held_out": 243
+          },
+          {
+            "th": 0.035,
+            "ok": 569,
+            "wrong": 10,
+            "noise": 0,
+            "held_out": 249
+          },
+          {
+            "th": 0.04,
+            "ok": 577,
+            "wrong": 11,
+            "noise": 0,
+            "held_out": 257
+          },
+          {
+            "th": 0.045,
+            "ok": 590,
+            "wrong": 17,
+            "noise": 0,
+            "held_out": 270
+          },
+          {
+            "th": 0.05,
+            "ok": 621,
+            "wrong": 29,
+            "noise": 0,
+            "held_out": 301
+          },
+          {
+            "th": 0.055,
+            "ok": 648,
+            "wrong": 35,
+            "noise": 0,
+            "held_out": 328
+          },
+          {
+            "th": 0.06,
+            "ok": 666,
+            "wrong": 35,
+            "noise": 0,
+            "held_out": 346
+          },
+          {
+            "th": 0.065,
+            "ok": 685,
+            "wrong": 41,
+            "noise": 1,
+            "held_out": 365
+          },
+          {
+            "th": 0.07,
+            "ok": 695,
+            "wrong": 52,
+            "noise": 1,
+            "held_out": 375
+          },
+          {
+            "th": 0.075,
+            "ok": 696,
+            "wrong": 58,
+            "noise": 1,
+            "held_out": 376
+          },
+          {
+            "th": 0.08,
+            "ok": 697,
+            "wrong": 59,
+            "noise": 1,
+            "held_out": 377
+          },
+          {
+            "th": 0.085,
+            "ok": 701,
+            "wrong": 61,
+            "noise": 1,
+            "held_out": 381
+          },
+          {
+            "th": 0.09,
+            "ok": 701,
+            "wrong": 61,
+            "noise": 1,
+            "held_out": 381
+          },
+          {
+            "th": 0.095,
+            "ok": 702,
+            "wrong": 61,
+            "noise": 1,
+            "held_out": 382
+          },
+          {
+            "th": 0.1,
+            "ok": 703,
+            "wrong": 61,
+            "noise": 2,
+            "held_out": 383
+          },
+          {
+            "th": 0.105,
+            "ok": 704,
+            "wrong": 61,
+            "noise": 2,
+            "held_out": 384
+          },
+          {
+            "th": 0.11,
+            "ok": 704,
+            "wrong": 62,
+            "noise": 2,
+            "held_out": 384
+          },
+          {
+            "th": 0.115,
+            "ok": 706,
+            "wrong": 63,
+            "noise": 3,
+            "held_out": 386
+          },
+          {
+            "th": 0.12,
+            "ok": 707,
+            "wrong": 64,
+            "noise": 4,
+            "held_out": 387
+          },
+          {
+            "th": 0.125,
+            "ok": 709,
+            "wrong": 65,
+            "noise": 4,
+            "held_out": 389
+          },
+          {
+            "th": 0.13,
+            "ok": 709,
+            "wrong": 71,
+            "noise": 4,
+            "held_out": 389
+          },
+          {
+            "th": 0.135,
+            "ok": 711,
+            "wrong": 84,
+            "noise": 4,
+            "held_out": 391
+          },
+          {
+            "th": 0.14,
+            "ok": 727,
+            "wrong": 93,
+            "noise": 4,
+            "held_out": 407
+          },
+          {
+            "th": 0.145,
+            "ok": 729,
+            "wrong": 108,
+            "noise": 5,
+            "held_out": 409
+          },
+          {
+            "th": 0.15,
+            "ok": 729,
+            "wrong": 109,
+            "noise": 5,
+            "held_out": 409
+          },
+          {
+            "th": 0.155,
+            "ok": 729,
+            "wrong": 109,
+            "noise": 5,
+            "held_out": 409
+          },
+          {
+            "th": 0.16,
+            "ok": 729,
+            "wrong": 109,
+            "noise": 5,
+            "held_out": 409
+          },
+          {
+            "th": 0.165,
+            "ok": 729,
+            "wrong": 109,
+            "noise": 5,
+            "held_out": 409
+          },
+          {
+            "th": 0.17,
+            "ok": 729,
+            "wrong": 109,
+            "noise": 5,
+            "held_out": 409
+          },
+          {
+            "th": 0.175,
+            "ok": 729,
+            "wrong": 109,
+            "noise": 5,
+            "held_out": 409
+          },
+          {
+            "th": 0.18,
+            "ok": 729,
+            "wrong": 109,
+            "noise": 5,
+            "held_out": 409
+          },
+          {
+            "th": 0.185,
+            "ok": 729,
+            "wrong": 109,
+            "noise": 5,
+            "held_out": 409
+          },
+          {
+            "th": 0.19,
+            "ok": 729,
+            "wrong": 109,
+            "noise": 5,
+            "held_out": 409
+          },
+          {
+            "th": 0.195,
+            "ok": 729,
+            "wrong": 110,
+            "noise": 5,
+            "held_out": 409
+          },
+          {
+            "th": 0.2,
+            "ok": 729,
+            "wrong": 111,
+            "noise": 5,
+            "held_out": 409
+          },
+          {
+            "th": 0.205,
+            "ok": 729,
+            "wrong": 113,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.21,
+            "ok": 729,
+            "wrong": 115,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.215,
+            "ok": 729,
+            "wrong": 123,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.22,
+            "ok": 729,
+            "wrong": 127,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.225,
+            "ok": 729,
+            "wrong": 127,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.23,
+            "ok": 729,
+            "wrong": 135,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.235,
+            "ok": 729,
+            "wrong": 141,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.24,
+            "ok": 729,
+            "wrong": 148,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.245,
+            "ok": 729,
+            "wrong": 149,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.25,
+            "ok": 729,
+            "wrong": 150,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.255,
+            "ok": 729,
+            "wrong": 151,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.26,
+            "ok": 729,
+            "wrong": 151,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.265,
+            "ok": 729,
+            "wrong": 151,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.27,
+            "ok": 729,
+            "wrong": 151,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.275,
+            "ok": 729,
+            "wrong": 151,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.28,
+            "ok": 729,
+            "wrong": 151,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.285,
+            "ok": 729,
+            "wrong": 151,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.29,
+            "ok": 729,
+            "wrong": 151,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.295,
+            "ok": 729,
+            "wrong": 151,
+            "noise": 7,
+            "held_out": 409
+          },
+          {
+            "th": 0.3,
+            "ok": 729,
+            "wrong": 151,
+            "noise": 7,
+            "held_out": 409
+          }
+        ]
+      },
+      {
+        "key": "p_dollar",
+        "note": "위약② — **같은 원형 표(GLYPHS)**를 쓰는 $P 점군. 순서·방향을 안 본다. 저장소에 web2-08부터 있던 것이다",
+        "best": {
+          "th": 0.095,
+          "ok": 695,
+          "wrong": 2,
+          "noise": 0,
+          "held_out": 375
+        },
+        "curve": [
+          {
+            "th": 0.02,
+            "ok": 506,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.025,
+            "ok": 506,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.03,
+            "ok": 506,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.035,
+            "ok": 506,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.04,
+            "ok": 513,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 236
+          },
+          {
+            "th": 0.045,
+            "ok": 520,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 243
+          },
+          {
+            "th": 0.05,
+            "ok": 528,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 245
+          },
+          {
+            "th": 0.055,
+            "ok": 537,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 253
+          },
+          {
+            "th": 0.06,
+            "ok": 546,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 260
+          },
+          {
+            "th": 0.065,
+            "ok": 551,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 264
+          },
+          {
+            "th": 0.07,
+            "ok": 567,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 276
+          },
+          {
+            "th": 0.075,
+            "ok": 585,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 291
+          },
+          {
+            "th": 0.08,
+            "ok": 613,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 319
+          },
+          {
+            "th": 0.085,
+            "ok": 657,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 338
+          },
+          {
+            "th": 0.09,
+            "ok": 673,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 353
+          },
+          {
+            "th": 0.095,
+            "ok": 695,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 375
+          },
+          {
+            "th": 0.1,
+            "ok": 725,
+            "wrong": 3,
+            "noise": 0,
+            "held_out": 405
+          },
+          {
+            "th": 0.105,
+            "ok": 736,
+            "wrong": 11,
+            "noise": 0,
+            "held_out": 416
+          },
+          {
+            "th": 0.11,
+            "ok": 751,
+            "wrong": 41,
+            "noise": 0,
+            "held_out": 431
+          },
+          {
+            "th": 0.115,
+            "ok": 764,
+            "wrong": 43,
+            "noise": 0,
+            "held_out": 444
+          },
+          {
+            "th": 0.12,
+            "ok": 776,
+            "wrong": 44,
+            "noise": 0,
+            "held_out": 456
+          },
+          {
+            "th": 0.125,
+            "ok": 792,
+            "wrong": 50,
+            "noise": 0,
+            "held_out": 472
+          },
+          {
+            "th": 0.13,
+            "ok": 803,
+            "wrong": 56,
+            "noise": 1,
+            "held_out": 483
+          },
+          {
+            "th": 0.135,
+            "ok": 814,
+            "wrong": 65,
+            "noise": 1,
+            "held_out": 494
+          },
+          {
+            "th": 0.14,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 3,
+            "held_out": 495
+          },
+          {
+            "th": 0.145,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 3,
+            "held_out": 495
+          },
+          {
+            "th": 0.15,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 3,
+            "held_out": 495
+          },
+          {
+            "th": 0.155,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 3,
+            "held_out": 495
+          },
+          {
+            "th": 0.16,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 3,
+            "held_out": 495
+          },
+          {
+            "th": 0.165,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 5,
+            "held_out": 495
+          },
+          {
+            "th": 0.17,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 6,
+            "held_out": 495
+          },
+          {
+            "th": 0.175,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 6,
+            "held_out": 495
+          },
+          {
+            "th": 0.18,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 7,
+            "held_out": 495
+          },
+          {
+            "th": 0.185,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 7,
+            "held_out": 495
+          },
+          {
+            "th": 0.19,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.195,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.2,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.205,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.21,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.215,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.22,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.225,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.23,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.235,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.24,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.245,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.25,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.255,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.26,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.265,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.27,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.275,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.28,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.285,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.29,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.295,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          },
+          {
+            "th": 0.3,
+            "ok": 815,
+            "wrong": 65,
+            "noise": 8,
+            "held_out": 495
+          }
+        ]
+      },
+      {
+        "key": "p_dollar_traj_veto",
+        "note": "$P가 답하고 **궤적이 거부권**을 갖는다(둘의 답이 같을 때만 받는다)",
+        "best": {
+          "th": 0.105,
+          "ok": 686,
+          "wrong": 2,
+          "noise": 0,
+          "held_out": 366
+        },
+        "curve": [
+          {
+            "th": 0.02,
+            "ok": 506,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.025,
+            "ok": 506,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.03,
+            "ok": 506,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.035,
+            "ok": 506,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 230
+          },
+          {
+            "th": 0.04,
+            "ok": 513,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 236
+          },
+          {
+            "th": 0.045,
+            "ok": 520,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 243
+          },
+          {
+            "th": 0.05,
+            "ok": 528,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 245
+          },
+          {
+            "th": 0.055,
+            "ok": 537,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 253
+          },
+          {
+            "th": 0.06,
+            "ok": 546,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 260
+          },
+          {
+            "th": 0.065,
+            "ok": 551,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 264
+          },
+          {
+            "th": 0.07,
+            "ok": 567,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 276
+          },
+          {
+            "th": 0.075,
+            "ok": 580,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 286
+          },
+          {
+            "th": 0.08,
+            "ok": 601,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 307
+          },
+          {
+            "th": 0.085,
+            "ok": 638,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 319
+          },
+          {
+            "th": 0.09,
+            "ok": 651,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 331
+          },
+          {
+            "th": 0.095,
+            "ok": 663,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 343
+          },
+          {
+            "th": 0.1,
+            "ok": 685,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 365
+          },
+          {
+            "th": 0.105,
+            "ok": 686,
+            "wrong": 2,
+            "noise": 0,
+            "held_out": 366
+          },
+          {
+            "th": 0.11,
+            "ok": 687,
+            "wrong": 3,
+            "noise": 0,
+            "held_out": 367
+          },
+          {
+            "th": 0.115,
+            "ok": 690,
+            "wrong": 3,
+            "noise": 0,
+            "held_out": 370
+          },
+          {
+            "th": 0.12,
+            "ok": 691,
+            "wrong": 3,
+            "noise": 0,
+            "held_out": 371
+          },
+          {
+            "th": 0.125,
+            "ok": 691,
+            "wrong": 8,
+            "noise": 0,
+            "held_out": 371
+          },
+          {
+            "th": 0.13,
+            "ok": 691,
+            "wrong": 9,
+            "noise": 0,
+            "held_out": 371
+          },
+          {
+            "th": 0.135,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 0,
+            "held_out": 371
+          },
+          {
+            "th": 0.14,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 0,
+            "held_out": 371
+          },
+          {
+            "th": 0.145,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 0,
+            "held_out": 371
+          },
+          {
+            "th": 0.15,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 0,
+            "held_out": 371
+          },
+          {
+            "th": 0.155,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 0,
+            "held_out": 371
+          },
+          {
+            "th": 0.16,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 0,
+            "held_out": 371
+          },
+          {
+            "th": 0.165,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 0,
+            "held_out": 371
+          },
+          {
+            "th": 0.17,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.175,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.18,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.185,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.19,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.195,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.2,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.205,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.21,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.215,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.22,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.225,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.23,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.235,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.24,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.245,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.25,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.255,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.26,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.265,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.27,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.275,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.28,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.285,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.29,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.295,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          },
+          {
+            "th": 0.3,
+            "ok": 691,
+            "wrong": 14,
+            "noise": 1,
+            "held_out": 371
+          }
+        ]
+      }
+    ]
+  },
+  "trajectory_alone": {
+    "note": "⚠⚠⚠ **이 블록은 «머리끼리» 견주는 값이고, 이 회차의 결론이 아니다.** `vs_p_dollar` 12는 **철회됐다**(2차 리뷰어 [4] · #14): 씨별로 [-1, 0, 7, 4, 2]라 폭 8에 부호가 뒤집힌다. **결론이 나오는 자리는 `seed_variance.marginal_traj_given_pdollar`(사슬 안의 한계 이득 45 · 씨별 폭 2)와 `attribution_fourth_view`(그 45가 «궤적이라서»임을 위약이 낸다)다.** 이 블록은 그 철회의 근거로만 남긴다.",
+    "vs_baseline": 201,
+    "vs_p_dollar": 12,
+    "vs_shape_only": 185
+  },
+  "arm_traj_first": {
+    "note": "반사실 — 궤적이 래스터를 뒤집게 두면",
+    "ok": 707,
+    "wrong": 2
+  },
+  "arm_traj_only": {
+    "note": "반사실 — 궤적만으로 판정하면",
+    "ok": 585,
+    "wrong": 295
+  },
+  "by_ratio": {
+    "before": {
+      "0.65": {
+        "hit": 249,
+        "n": 440
+      },
+      "0.82": {
+        "hit": 116,
+        "n": 220
+      },
+      "1.00": {
+        "hit": 141,
+        "n": 220
+      }
+    },
+    "after": {
+      "0.65": {
+        "hit": 405,
+        "n": 440
+      },
+      "0.82": {
+        "hit": 185,
+        "n": 220
+      },
+      "1.00": {
+        "hit": 180,
+        "n": 220
+      }
+    },
+    "max_gap_before": 0.11363636363636365,
+    "max_gap_after": 0.10227272727272718
+  },
+  "by_form": {
+    "before": {
+      "4·열린·2획 (현행 템플릿)": {
+        "hit": 36,
+        "n": 80,
+        "in_sample": true
+      },
+      "4·닫힌·2획 (세로가 꼭짓점에서)": {
+        "hit": 3,
+        "n": 80,
+        "in_sample": false
+      },
+      "4·닫힌·1획 (되짚어 내려긋기)": {
+        "hit": 0,
+        "n": 80,
+        "in_sample": false
+      },
+      "4·열린·1획 (세로 먼저 · 사선 나중)": {
+        "hit": 38,
+        "n": 80,
+        "in_sample": false
+      },
+      "7·가로줄 없음 (현행 템플릿)": {
+        "hit": 80,
+        "n": 80,
+        "in_sample": true
+      },
+      "7·가로줄 있음 (유럽식 · 2획)": {
+        "hit": 80,
+        "n": 80,
+        "in_sample": false
+      },
+      "1·수직선만 (현행 템플릿)": {
+        "hit": 80,
+        "n": 80,
+        "in_sample": true
+      },
+      "1·위 세리프 (1획 꺾임)": {
+        "hit": 7,
+        "n": 80,
+        "in_sample": false
+      },
+      "1·위 세리프 + 밑줄 (2획)": {
+        "hit": 22,
+        "n": 80,
+        "in_sample": false
+      },
+      "9·곧은 꼬리 (현행 템플릿 · 2획)": {
+        "hit": 80,
+        "n": 80,
+        "in_sample": true
+      },
+      "9·굽은 꼬리 (1획 연속)": {
+        "hit": 80,
+        "n": 80,
+        "in_sample": false
+      }
+    },
+    "after": {
+      "4·열린·2획 (현행 템플릿)": {
+        "hit": 80,
+        "n": 80,
+        "in_sample": true
+      },
+      "4·닫힌·2획 (세로가 꼭짓점에서)": {
+        "hit": 80,
+        "n": 80,
+        "in_sample": false
+      },
+      "4·닫힌·1획 (되짚어 내려긋기)": {
+        "hit": 80,
+        "n": 80,
+        "in_sample": false
+      },
+      "4·열린·1획 (세로 먼저 · 사선 나중)": {
+        "hit": 38,
+        "n": 80,
+        "in_sample": false
+      },
+      "7·가로줄 없음 (현행 템플릿)": {
+        "hit": 80,
+        "n": 80,
+        "in_sample": true
+      },
+      "7·가로줄 있음 (유럽식 · 2획)": {
+        "hit": 80,
+        "n": 80,
+        "in_sample": false
+      },
+      "1·수직선만 (현행 템플릿)": {
+        "hit": 80,
+        "n": 80,
+        "in_sample": true
+      },
+      "1·위 세리프 (1획 꺾임)": {
+        "hit": 33,
+        "n": 80,
+        "in_sample": false
+      },
+      "1·위 세리프 + 밑줄 (2획)": {
+        "hit": 59,
+        "n": 80,
+        "in_sample": false
+      },
+      "9·곧은 꼬리 (현행 템플릿 · 2획)": {
+        "hit": 80,
+        "n": 80,
+        "in_sample": true
+      },
+      "9·굽은 꼬리 (1획 연속)": {
+        "hit": 80,
+        "n": 80,
+        "in_sample": false
+      }
+    }
+  },
+  "gain_concentration": {
+    "note": "⚠ 32-4에서 2차 리뷰어가 잡은 자리다 — **먼저 확인해서 적는다**. 아래 오른 칸 목록이 정본이고, totals·by_ratio·by_form의 개선은 서로 독립한 증거가 아니라 **같은 칸들의 다른 표기**다.",
+    "gained_cells": 18,
+    "gained_forms": [
+      "4·열린·2획 (현행 템플릿)",
+      "4·닫힌·2획 (세로가 꼭짓점에서)",
+      "4·닫힌·1획 (되짚어 내려긋기)",
+      "1·위 세리프 (1획 꺾임)",
+      "1·위 세리프 + 밑줄 (2획)"
+    ],
+    "cells": [
+      {
+        "name": "4·열린·2획 (현행 템플릿)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "in_sample": true,
+        "before": 6,
+        "after": 20
+      },
+      {
+        "name": "4·열린·2획 (현행 템플릿)",
+        "box": "28x34 보통 (비 0.82)",
+        "in_sample": true,
+        "before": 10,
+        "after": 20
+      },
+      {
+        "name": "4·열린·2획 (현행 템플릿)",
+        "box": "34x34 넓음 (비 1.00)",
+        "in_sample": true,
+        "before": 18,
+        "after": 20
+      },
+      {
+        "name": "4·열린·2획 (현행 템플릿)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "in_sample": true,
+        "before": 2,
+        "after": 20
+      },
+      {
+        "name": "4·닫힌·2획 (세로가 꼭짓점에서)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "in_sample": false,
+        "before": 0,
+        "after": 20
+      },
+      {
+        "name": "4·닫힌·2획 (세로가 꼭짓점에서)",
+        "box": "28x34 보통 (비 0.82)",
+        "in_sample": false,
+        "before": 0,
+        "after": 20
+      },
+      {
+        "name": "4·닫힌·2획 (세로가 꼭짓점에서)",
+        "box": "34x34 넓음 (비 1.00)",
+        "in_sample": false,
+        "before": 3,
+        "after": 20
+      },
+      {
+        "name": "4·닫힌·2획 (세로가 꼭짓점에서)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "in_sample": false,
+        "before": 0,
+        "after": 20
+      },
+      {
+        "name": "4·닫힌·1획 (되짚어 내려긋기)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "in_sample": false,
+        "before": 0,
+        "after": 20
+      },
+      {
+        "name": "4·닫힌·1획 (되짚어 내려긋기)",
+        "box": "28x34 보통 (비 0.82)",
+        "in_sample": false,
+        "before": 0,
+        "after": 20
+      },
+      {
+        "name": "4·닫힌·1획 (되짚어 내려긋기)",
+        "box": "34x34 넓음 (비 1.00)",
+        "in_sample": false,
+        "before": 0,
+        "after": 20
+      },
+      {
+        "name": "4·닫힌·1획 (되짚어 내려긋기)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "in_sample": false,
+        "before": 0,
+        "after": 20
+      },
+      {
+        "name": "1·위 세리프 (1획 꺾임)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "in_sample": false,
+        "before": 5,
+        "after": 16
+      },
+      {
+        "name": "1·위 세리프 (1획 꺾임)",
+        "box": "28x34 보통 (비 0.82)",
+        "in_sample": false,
+        "before": 0,
+        "after": 1
+      },
+      {
+        "name": "1·위 세리프 (1획 꺾임)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "in_sample": false,
+        "before": 2,
+        "after": 16
+      },
+      {
+        "name": "1·위 세리프 + 밑줄 (2획)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "in_sample": false,
+        "before": 9,
+        "after": 20
+      },
+      {
+        "name": "1·위 세리프 + 밑줄 (2획)",
+        "box": "28x34 보통 (비 0.82)",
+        "in_sample": false,
+        "before": 1,
+        "after": 19
+      },
+      {
+        "name": "1·위 세리프 + 밑줄 (2획)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "in_sample": false,
+        "before": 12,
+        "after": 20
+      }
+    ]
+  },
+  "arm_sequential_traj_then_p_dollar": {
+    "note": "⚠ **차이표가 가리켜서 잰 팔이다**(A-3). 궤적과 $P는 서로를 못 덮는다 — 궤적은 「4」의 닫힌 자형을, $P는 세리프 「1」을 살린다. 이어 붙이고 두 문턱을 2차원으로 훑어 **불변식을 지키는 최대**를 낸다.",
+    "best": {
+      "thT": 0.1,
+      "thP": 0.1,
+      "ok": 770,
+      "wrong": 2,
+      "held_out": 450
+    },
+    "gain_over_traj_only": 63,
+    "gain_over_p_dollar_only": 75,
+    "gain_over_p_dollar_only_note": "⚠ **75는 $P 문턱을 0.095 → 0.10으로 옮긴 몫을 포함한다**(2차 리뷰어 [3][16]). $P를 **실린 0.10에 고정**하고 ③만 더한 한계 이득은 **45**이고 그쪽이 인용값이다(`decomposition` · `seed_variance.marginal_traj_given_pdollar`).",
+    "serif_1": {
+      "ok": 92,
+      "wrong": 2,
+      "n": 160
+    },
+    "legal_combinations": 91,
+    "shipped_p_threshold_arm": {
+      "note": "⚠⚠ **채택은 이쪽이다.** 2차원 argmax는 합법 조합이 91개나 되는 맞춤이므로, $P의 문턱은 web2-08이 **다른 표본으로** 놓은 실린 값 0.10(digits.REJECT)에 못 박고 **궤적 문턱 하나만** 훑었다. ⚠ **그러나 «자유도가 하나»는 아니다**(2차 리뷰어 [7]): 새로 놓는 것은 **문턱** 하나이고, **구조**는 같은 880칸에서 팔 다섯(traj_first · traj_only · p_dollar_traj_veto · sequential · traj_no_merge)을 재고 고른 것이다. 정확히는 **문턱 자유도 하나 · 구조 선택은 다섯 중 하나**다.",
+      "p_threshold": 0.1,
+      "best": {
+        "thT": 0.1,
+        "ok": 770,
+        "wrong": 2,
+        "noise": 0,
+        "held_out": 450
+      },
+      "plateau_traj_threshold": [
+        0.1,
+        0.12
+      ],
+      "plateau_cells": 5,
+      "adopted_traj_threshold": 0.11,
+      "adopted_is_in_plateau": true
+    },
+    "traj_prefilters_p_dollar": {
+      "note": "⚠⚠ **채택 근거가 아니다 — 사실 기록이다**(2차 리뷰어 [8][19]). $P 단독은 문턱 0.10에서 전량 기준 오답 3이고, 이어 붙이면 2로 내려간다(궤적이 그 칸을 앞에서 맞게 답한다). **그러나 그것을 «궤적의 값»으로 읽지 않는다**: PITFALLS **#20**(거름을 선택 전에 걸면 경쟁자가 죽어 상대 순위가 거저 통과한다)이 이 모양이고, 씨별로는 $P의 오답이 [0, 0, 1, 0, 2]로 **2를 넘는 씨가 하나도 없다** — 「불법」은 다섯 씨를 합쳤을 때만 나오는, **씨 하나의 한 칸**에 걸린 판정이다. 초판이 이 자리에 적었던 「«맞음 +12»만이 아닌 자리」의 그 12도 철회됐다(#14). **게이트의 단언에서도 뺐다.**",
+      "p_alone_wrong": 3,
+      "sequential_wrong": 2,
+      "corrected_cells": 1,
+      "where": [
+        "4·닫힌·2획 (세로가 꼭짓점에서) @ 22x34 좁음 (29-1 픽스처 · 비 0.65)"
+      ]
+    }
+  },
+  "traj_vs_p_dollar_by_form": {
+    "note": "⚠⚠ **동작점을 맞춰 다시 냈다**(2차 리뷰어 [1][2][3] — 이 회차가 세운 #83 ㉡의 재발). 초판은 $P를 **제 최선 문턱 0.095**로 둔 표를 만들고 그것을 **런타임($P 0.10)**의 총계 770 옆에 세워 「770의 근거」로 썼다. 두 표의 자가 달랐다: 0.095 표가 「둘 다 못 살린다」로 적은 25칸을 런타임은 실제로 살린다. **인용은 `at_runtime`으로 한다.**",
+    "at_runtime": {
+      "p_threshold": 0.1,
+      "sum": {
+        "traj_only": 45,
+        "pdollar_only": 63,
+        "both": 156,
+        "neither": 108
+      },
+      "rows": {
+        "4·열린·2획 (현행 템플릿)": {
+          "traj_only": 0,
+          "pdollar_only": 0,
+          "both": 44,
+          "neither": 0
+        },
+        "4·닫힌·2획 (세로가 꼭짓점에서)": {
+          "traj_only": 45,
+          "pdollar_only": 0,
+          "both": 32,
+          "neither": 0
+        },
+        "4·닫힌·1획 (되짚어 내려긋기)": {
+          "traj_only": 0,
+          "pdollar_only": 0,
+          "both": 80,
+          "neither": 0
+        },
+        "4·열린·1획 (세로 먼저 · 사선 나중)": {
+          "traj_only": 0,
+          "pdollar_only": 0,
+          "both": 0,
+          "neither": 42
+        },
+        "1·위 세리프 (1획 꺾임)": {
+          "traj_only": 0,
+          "pdollar_only": 26,
+          "both": 0,
+          "neither": 46
+        },
+        "1·위 세리프 + 밑줄 (2획)": {
+          "traj_only": 0,
+          "pdollar_only": 37,
+          "both": 0,
+          "neither": 20
+        }
+      }
+    },
+    "at_p_dollar_best": {
+      "p_threshold": 0.095,
+      "sum": {
+        "traj_only": 50,
+        "pdollar_only": 38,
+        "both": 151,
+        "neither": 133
+      },
+      "rows": {
+        "4·열린·2획 (현행 템플릿)": {
+          "traj_only": 0,
+          "pdollar_only": 0,
+          "both": 44,
+          "neither": 0
+        },
+        "4·닫힌·2획 (세로가 꼭짓점에서)": {
+          "traj_only": 50,
+          "pdollar_only": 0,
+          "both": 27,
+          "neither": 0
+        },
+        "4·닫힌·1획 (되짚어 내려긋기)": {
+          "traj_only": 0,
+          "pdollar_only": 0,
+          "both": 80,
+          "neither": 0
+        },
+        "4·열린·1획 (세로 먼저 · 사선 나중)": {
+          "traj_only": 0,
+          "pdollar_only": 0,
+          "both": 0,
+          "neither": 42
+        },
+        "1·위 세리프 (1획 꺾임)": {
+          "traj_only": 0,
+          "pdollar_only": 6,
+          "both": 0,
+          "neither": 66
+        },
+        "1·위 세리프 + 밑줄 (2획)": {
+          "traj_only": 0,
+          "pdollar_only": 32,
+          "both": 0,
+          "neither": 25
+        }
+      },
+      "note": "초판이 쓰던 자. 대조용으로 남긴다 — 지우면 정정이 안 보인다."
+    },
+    "reconciles": "런타임 구제 수 = 45 + 63 + 156 = 264 = 770 − 506 ✔ · 합 = 372 = 기준선 거부 수 ✔ (초판 표는 239만 설명해 25칸이 떠 있었다)."
+  },
+  "seed_variance": {
+    "note": "씨 5개를 각각 176칸으로 따로 낸다. 「12칸」은 전량(880) 기준이므로 씨당으로는 12/5 ≈ 2.4칸이다.",
+    "independence_caveat": "⚠⚠ **씨는 독립 표본이 아니다**(2차 리뷰어 [15]). 표본은 「11자형 × 4상자 × 4흔들기 × 5씨」이므로 씨가 바꾸는 것은 **흔들기의 난수 실현뿐**이고, 씨마다 **같은 11자형 × 4상자**가 반드시 들어 있다. 그리고 이 회차의 궤적 고유 이득은 **자형 하나에 통째로 몰려 있다**(traj_only 45가 전부 「4·닫힌·2획」). 그러므로 [9,8,10,9,9]·폭 2는 **«효과가 자형을 넘어 일반적이다»의 증거가 아니라 «그 한 자형이 흔들기에 강하다»의 증거**다. 반대로 head_to_head가 흔들린 것은 서로 다른 두 자형 효과(45 대 63)가 거의 상쇄되는 **차**여서다. **이 표본으로 「사슬 안의 한계 이득은 일반적으로 씨에 강하다」를 주장할 수 없다** — 자형을 씨마다 뽑는 팔이 서야 그 말을 할 수 있다(DEFERRED).",
+    "per_seed": [
+      {
+        "k": 0,
+        "n": 176,
+        "base": 95,
+        "traj": 136,
+        "traj_wrong": 0,
+        "pdollar_095": 137,
+        "pdollar_095_wrong": 0,
+        "pdollar_010": 144,
+        "pdollar_010_wrong": 0,
+        "runtime": 153,
+        "runtime_wrong": 0,
+        "traj_minus_pdollar095": -1,
+        "traj_marginal_given_pdollar": 9,
+        "pdollar_marginal_given_traj": 17
+      },
+      {
+        "k": 1,
+        "n": 176,
+        "base": 107,
+        "traj": 141,
+        "traj_wrong": 0,
+        "pdollar_095": 141,
+        "pdollar_095_wrong": 0,
+        "pdollar_010": 147,
+        "pdollar_010_wrong": 0,
+        "runtime": 155,
+        "runtime_wrong": 0,
+        "traj_minus_pdollar095": 0,
+        "traj_marginal_given_pdollar": 8,
+        "pdollar_marginal_given_traj": 14
+      },
+      {
+        "k": 2,
+        "n": 176,
+        "base": 106,
+        "traj": 147,
+        "traj_wrong": 1,
+        "pdollar_095": 140,
+        "pdollar_095_wrong": 1,
+        "pdollar_010": 147,
+        "pdollar_010_wrong": 1,
+        "runtime": 157,
+        "runtime_wrong": 1,
+        "traj_minus_pdollar095": 7,
+        "traj_marginal_given_pdollar": 10,
+        "pdollar_marginal_given_traj": 10
+      },
+      {
+        "k": 3,
+        "n": 176,
+        "base": 100,
+        "traj": 144,
+        "traj_wrong": 0,
+        "pdollar_095": 140,
+        "pdollar_095_wrong": 0,
+        "pdollar_010": 146,
+        "pdollar_010_wrong": 0,
+        "runtime": 155,
+        "runtime_wrong": 0,
+        "traj_minus_pdollar095": 4,
+        "traj_marginal_given_pdollar": 9,
+        "pdollar_marginal_given_traj": 11
+      },
+      {
+        "k": 4,
+        "n": 176,
+        "base": 98,
+        "traj": 139,
+        "traj_wrong": 1,
+        "pdollar_095": 137,
+        "pdollar_095_wrong": 1,
+        "pdollar_010": 141,
+        "pdollar_010_wrong": 2,
+        "runtime": 150,
+        "runtime_wrong": 1,
+        "traj_minus_pdollar095": 2,
+        "traj_marginal_given_pdollar": 9,
+        "pdollar_marginal_given_traj": 11
+      }
+    ],
+    "spread_traj_minus_pdollar095": 8,
+    "pdollar_010_wrong_per_seed": [
+      0,
+      0,
+      1,
+      0,
+      2
+    ],
+    "pdollar_010_wrong_seeds_over_2": 0,
+    "traj_wrong_per_seed": [
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    "runtime_wrong_per_seed": [
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    "head_to_head": {
+      "per_seed": [
+        -1,
+        0,
+        7,
+        4,
+        2
+      ],
+      "spread": 8,
+      "sign_flips": 2,
+      "verdict": "⚠⚠ **결론이 안 선다**(#14). 전량 12칸인데 씨별 폭이 8이고 **씨 하나에서는 부호가 뒤집힌다**. 「궤적이 $P보다 낫다」를 이 표본으로 주장하지 않는다."
+    },
+    "marginal_traj_given_pdollar": {
+      "per_seed": [
+        9,
+        8,
+        10,
+        9,
+        9
+      ],
+      "spread": 2,
+      "total": 45,
+      "verdict": "**선다.** 씨마다 거의 같고 부호가 안 바뀐다 — 「사슬에 ③이 있으면 없을 때보다 낫다」는 이 표본에서 유효하다."
+    },
+    "marginal_pdollar_given_traj": {
+      "per_seed": [
+        17,
+        14,
+        10,
+        11,
+        11
+      ],
+      "spread": 7,
+      "total": 63
+    }
+  },
+  "headroom_normalized": {
+    "note": "⚠ 원수 이득(220 vs 44)은 **분모가 다르다**(#11). 남은 여유 대비 몫을 함께 낸다 — 그 자로 보면 표본 «안»이 더 높다(100% vs 66.7%).",
+    "in_sample": {
+      "before": 276,
+      "after": 320,
+      "n": 320,
+      "headroom": 44,
+      "gain": 44,
+      "filled": 1
+    },
+    "held_out": {
+      "before": 230,
+      "after": 450,
+      "n": 560,
+      "headroom": 330,
+      "gain": 220,
+      "filled": 0.6666666666666666
+    },
+    "held_out_per_seed": [
+      {
+        "k": 0,
+        "n": 112,
+        "before": 40,
+        "after": 89,
+        "rate": 0.7946428571428571,
+        "filled": 0.6805555555555556
+      },
+      {
+        "k": 1,
+        "n": 112,
+        "before": 47,
+        "after": 91,
+        "rate": 0.8125,
+        "filled": 0.676923076923077
+      },
+      {
+        "k": 2,
+        "n": 112,
+        "before": 51,
+        "after": 93,
+        "rate": 0.8303571428571429,
+        "filled": 0.6885245901639344
+      },
+      {
+        "k": 3,
+        "n": 112,
+        "before": 49,
+        "after": 91,
+        "rate": 0.8125,
+        "filled": 0.6666666666666666
+      },
+      {
+        "k": 4,
+        "n": 112,
+        "before": 43,
+        "after": 86,
+        "rate": 0.7678571428571429,
+        "filled": 0.6231884057971014
+      }
+    ],
+    "held_out_rate_min": 0.7678571428571429,
+    "held_out_rate_spread": 0.0625,
+    "note2": "⚠⚠ 2차 리뷰어 [14]: 초판의 새 게이트 「표본 밖 정답률 8할 초과」는 450/560 = 80.36%로 **여유가 2칸**뿐이었고 씨 분해가 없었다 — **이 회차가 방금 폐기한 판단 기준을 그대로 되쓴 것**이다(#14). 씨별로 냈고 게이트를 **씨별 최저**에 건다."
+  },
+  "attribution_fourth_view": {
+    "note": "④($P, 실린 문턱)를 켠 채 ③ 자리에 **궤적 항만 끈 판**(`traj_shape_only` — 같은 구조·같은 원형 표)을 넣어 견준다. 2차 리뷰어 [21]이 「그 위약이 이미 원장에 있다」를 지적해 세운 팔이다.",
+    "scope": "⚠⚠ **이 팔이 답하는 물음의 범위를 좁혀 적는다**(3차 리뷰어 [23]). 위약에서 궤적 항을 끄면 남는 것은 **같은 GLYPHS에 대한 방향·순서를 안 보는 모양 거리**이고, ④($P)도 `arms.p_dollar.note`가 적듯 **같은 원형 표를 쓰는 순서·방향을 안 보는** 점군이다 — **둘은 같은 계열이다.** 그러므로 이 팔이 실제로 답한 것은 **「+45가 «방향·순서를 보는 항»에서 오는가」**(→ 그렇다)이고, **「임의의 네 번째 시야를 얹어도 0인가」는 아직 안 갈렸다** — 모양 계열이 아닌 네 번째 대조기가 저장소에 없다(초판의 그 문장은 **반쯤 참이었다**). 후자는 DEFERRED다. **인용은 앞엣것으로만 한다.**",
+    "caps": "두 자로 뽑는다 — ㉠ **엄격**(오답 ≤ 기준선 2) ㉡ **동등**(오답 ≤ $P 단독의 3). ㉡가 「맞는 답을 더 얹는가」의 자다: 오답 수를 confound로 쓰지 않는다.",
+    "p_dollar_only": {
+      "ok": 725,
+      "wrong": 3
+    },
+    "plus_traj": {
+      "strict": {
+        "th": 0.1,
+        "ok": 770,
+        "wrong": 2,
+        "noise": 0
+      },
+      "matched": {
+        "th": 0.1,
+        "ok": 770,
+        "wrong": 2,
+        "noise": 0
+      },
+      "marginal_strict": 45,
+      "marginal_matched": 45
+    },
+    "plus_shape_only": {
+      "strict": null,
+      "matched": {
+        "th": 0.02,
+        "ok": 725,
+        "wrong": 3,
+        "noise": 0
+      },
+      "marginal_strict": null,
+      "marginal_matched": 0
+    },
+    "shape_only_strict_empty": true,
+    "curves": {
+      "note": "⚠ **두 팔의 훑기 전량을 싣는다**(「동등 자를 유리하게 골랐나」를 읽는 사람이 스스로 보게). ③ 자리의 문턱을 0.02~0.30으로 훑은 값이고 ④는 실린 0.10 고정이다.",
+      "plus_traj": [
+        {
+          "th": 0.02,
+          "ok": 725,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.025,
+          "ok": 725,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.03,
+          "ok": 725,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.035,
+          "ok": 725,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.04,
+          "ok": 725,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.045,
+          "ok": 725,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.05,
+          "ok": 725,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.055,
+          "ok": 725,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.06,
+          "ok": 726,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.065,
+          "ok": 727,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.07,
+          "ok": 728,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.075,
+          "ok": 730,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.08,
+          "ok": 732,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.085,
+          "ok": 735,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.09,
+          "ok": 748,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.095,
+          "ok": 766,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.1,
+          "ok": 770,
+          "wrong": 2,
+          "noise": 0
+        },
+        {
+          "th": 0.105,
+          "ok": 770,
+          "wrong": 2,
+          "noise": 0
+        },
+        {
+          "th": 0.11,
+          "ok": 770,
+          "wrong": 2,
+          "noise": 0
+        },
+        {
+          "th": 0.115,
+          "ok": 770,
+          "wrong": 2,
+          "noise": 0
+        },
+        {
+          "th": 0.12,
+          "ok": 770,
+          "wrong": 2,
+          "noise": 0
+        },
+        {
+          "th": 0.125,
+          "ok": 770,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.13,
+          "ok": 770,
+          "wrong": 5,
+          "noise": 0
+        },
+        {
+          "th": 0.135,
+          "ok": 770,
+          "wrong": 11,
+          "noise": 0
+        },
+        {
+          "th": 0.14,
+          "ok": 770,
+          "wrong": 15,
+          "noise": 0
+        },
+        {
+          "th": 0.145,
+          "ok": 770,
+          "wrong": 20,
+          "noise": 0
+        },
+        {
+          "th": 0.15,
+          "ok": 767,
+          "wrong": 24,
+          "noise": 0
+        },
+        {
+          "th": 0.155,
+          "ok": 759,
+          "wrong": 32,
+          "noise": 1
+        },
+        {
+          "th": 0.16,
+          "ok": 754,
+          "wrong": 37,
+          "noise": 1
+        },
+        {
+          "th": 0.165,
+          "ok": 745,
+          "wrong": 47,
+          "noise": 1
+        },
+        {
+          "th": 0.17,
+          "ok": 740,
+          "wrong": 52,
+          "noise": 1
+        },
+        {
+          "th": 0.175,
+          "ok": 736,
+          "wrong": 56,
+          "noise": 1
+        },
+        {
+          "th": 0.18,
+          "ok": 733,
+          "wrong": 59,
+          "noise": 1
+        },
+        {
+          "th": 0.185,
+          "ok": 733,
+          "wrong": 59,
+          "noise": 1
+        },
+        {
+          "th": 0.19,
+          "ok": 733,
+          "wrong": 59,
+          "noise": 1
+        },
+        {
+          "th": 0.195,
+          "ok": 733,
+          "wrong": 61,
+          "noise": 1
+        },
+        {
+          "th": 0.2,
+          "ok": 733,
+          "wrong": 72,
+          "noise": 1
+        },
+        {
+          "th": 0.205,
+          "ok": 733,
+          "wrong": 98,
+          "noise": 1
+        },
+        {
+          "th": 0.21,
+          "ok": 733,
+          "wrong": 101,
+          "noise": 1
+        },
+        {
+          "th": 0.215,
+          "ok": 733,
+          "wrong": 101,
+          "noise": 1
+        },
+        {
+          "th": 0.22,
+          "ok": 733,
+          "wrong": 101,
+          "noise": 1
+        },
+        {
+          "th": 0.225,
+          "ok": 733,
+          "wrong": 104,
+          "noise": 1
+        },
+        {
+          "th": 0.23,
+          "ok": 734,
+          "wrong": 110,
+          "noise": 1
+        },
+        {
+          "th": 0.235,
+          "ok": 735,
+          "wrong": 122,
+          "noise": 2
+        },
+        {
+          "th": 0.24,
+          "ok": 735,
+          "wrong": 137,
+          "noise": 2
+        },
+        {
+          "th": 0.245,
+          "ok": 735,
+          "wrong": 145,
+          "noise": 2
+        },
+        {
+          "th": 0.25,
+          "ok": 732,
+          "wrong": 148,
+          "noise": 2
+        },
+        {
+          "th": 0.255,
+          "ok": 732,
+          "wrong": 148,
+          "noise": 3
+        },
+        {
+          "th": 0.26,
+          "ok": 732,
+          "wrong": 148,
+          "noise": 3
+        },
+        {
+          "th": 0.265,
+          "ok": 732,
+          "wrong": 148,
+          "noise": 4
+        },
+        {
+          "th": 0.27,
+          "ok": 732,
+          "wrong": 148,
+          "noise": 4
+        },
+        {
+          "th": 0.275,
+          "ok": 732,
+          "wrong": 148,
+          "noise": 4
+        },
+        {
+          "th": 0.28,
+          "ok": 732,
+          "wrong": 148,
+          "noise": 5
+        },
+        {
+          "th": 0.285,
+          "ok": 732,
+          "wrong": 148,
+          "noise": 5
+        },
+        {
+          "th": 0.29,
+          "ok": 732,
+          "wrong": 148,
+          "noise": 5
+        },
+        {
+          "th": 0.295,
+          "ok": 732,
+          "wrong": 148,
+          "noise": 6
+        },
+        {
+          "th": 0.3,
+          "ok": 732,
+          "wrong": 148,
+          "noise": 6
+        }
+      ],
+      "plus_shape_only": [
+        {
+          "th": 0.02,
+          "ok": 725,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.025,
+          "ok": 725,
+          "wrong": 3,
+          "noise": 0
+        },
+        {
+          "th": 0.03,
+          "ok": 720,
+          "wrong": 8,
+          "noise": 0
+        },
+        {
+          "th": 0.035,
+          "ok": 718,
+          "wrong": 11,
+          "noise": 0
+        },
+        {
+          "th": 0.04,
+          "ok": 719,
+          "wrong": 12,
+          "noise": 0
+        },
+        {
+          "th": 0.045,
+          "ok": 714,
+          "wrong": 18,
+          "noise": 0
+        },
+        {
+          "th": 0.05,
+          "ok": 706,
+          "wrong": 30,
+          "noise": 0
+        },
+        {
+          "th": 0.055,
+          "ok": 721,
+          "wrong": 36,
+          "noise": 0
+        },
+        {
+          "th": 0.06,
+          "ok": 735,
+          "wrong": 36,
+          "noise": 0
+        },
+        {
+          "th": 0.065,
+          "ok": 734,
+          "wrong": 41,
+          "noise": 1
+        },
+        {
+          "th": 0.07,
+          "ok": 733,
+          "wrong": 52,
+          "noise": 1
+        },
+        {
+          "th": 0.075,
+          "ok": 733,
+          "wrong": 58,
+          "noise": 1
+        },
+        {
+          "th": 0.08,
+          "ok": 733,
+          "wrong": 59,
+          "noise": 1
+        },
+        {
+          "th": 0.085,
+          "ok": 731,
+          "wrong": 61,
+          "noise": 1
+        },
+        {
+          "th": 0.09,
+          "ok": 731,
+          "wrong": 61,
+          "noise": 1
+        },
+        {
+          "th": 0.095,
+          "ok": 731,
+          "wrong": 61,
+          "noise": 1
+        },
+        {
+          "th": 0.1,
+          "ok": 731,
+          "wrong": 61,
+          "noise": 2
+        },
+        {
+          "th": 0.105,
+          "ok": 731,
+          "wrong": 61,
+          "noise": 2
+        },
+        {
+          "th": 0.11,
+          "ok": 730,
+          "wrong": 62,
+          "noise": 2
+        },
+        {
+          "th": 0.115,
+          "ok": 731,
+          "wrong": 63,
+          "noise": 3
+        },
+        {
+          "th": 0.12,
+          "ok": 731,
+          "wrong": 64,
+          "noise": 4
+        },
+        {
+          "th": 0.125,
+          "ok": 732,
+          "wrong": 65,
+          "noise": 4
+        },
+        {
+          "th": 0.13,
+          "ok": 732,
+          "wrong": 71,
+          "noise": 4
+        },
+        {
+          "th": 0.135,
+          "ok": 732,
+          "wrong": 84,
+          "noise": 4
+        },
+        {
+          "th": 0.14,
+          "ok": 732,
+          "wrong": 93,
+          "noise": 4
+        },
+        {
+          "th": 0.145,
+          "ok": 729,
+          "wrong": 108,
+          "noise": 5
+        },
+        {
+          "th": 0.15,
+          "ok": 729,
+          "wrong": 109,
+          "noise": 5
+        },
+        {
+          "th": 0.155,
+          "ok": 729,
+          "wrong": 109,
+          "noise": 5
+        },
+        {
+          "th": 0.16,
+          "ok": 729,
+          "wrong": 109,
+          "noise": 5
+        },
+        {
+          "th": 0.165,
+          "ok": 729,
+          "wrong": 109,
+          "noise": 5
+        },
+        {
+          "th": 0.17,
+          "ok": 729,
+          "wrong": 109,
+          "noise": 5
+        },
+        {
+          "th": 0.175,
+          "ok": 729,
+          "wrong": 109,
+          "noise": 5
+        },
+        {
+          "th": 0.18,
+          "ok": 729,
+          "wrong": 109,
+          "noise": 5
+        },
+        {
+          "th": 0.185,
+          "ok": 729,
+          "wrong": 109,
+          "noise": 5
+        },
+        {
+          "th": 0.19,
+          "ok": 729,
+          "wrong": 109,
+          "noise": 5
+        },
+        {
+          "th": 0.195,
+          "ok": 729,
+          "wrong": 110,
+          "noise": 5
+        },
+        {
+          "th": 0.2,
+          "ok": 729,
+          "wrong": 111,
+          "noise": 5
+        },
+        {
+          "th": 0.205,
+          "ok": 729,
+          "wrong": 113,
+          "noise": 7
+        },
+        {
+          "th": 0.21,
+          "ok": 729,
+          "wrong": 115,
+          "noise": 7
+        },
+        {
+          "th": 0.215,
+          "ok": 729,
+          "wrong": 123,
+          "noise": 7
+        },
+        {
+          "th": 0.22,
+          "ok": 729,
+          "wrong": 127,
+          "noise": 7
+        },
+        {
+          "th": 0.225,
+          "ok": 729,
+          "wrong": 127,
+          "noise": 7
+        },
+        {
+          "th": 0.23,
+          "ok": 729,
+          "wrong": 135,
+          "noise": 7
+        },
+        {
+          "th": 0.235,
+          "ok": 729,
+          "wrong": 141,
+          "noise": 7
+        },
+        {
+          "th": 0.24,
+          "ok": 729,
+          "wrong": 148,
+          "noise": 7
+        },
+        {
+          "th": 0.245,
+          "ok": 729,
+          "wrong": 149,
+          "noise": 7
+        },
+        {
+          "th": 0.25,
+          "ok": 729,
+          "wrong": 150,
+          "noise": 7
+        },
+        {
+          "th": 0.255,
+          "ok": 729,
+          "wrong": 151,
+          "noise": 7
+        },
+        {
+          "th": 0.26,
+          "ok": 729,
+          "wrong": 151,
+          "noise": 7
+        },
+        {
+          "th": 0.265,
+          "ok": 729,
+          "wrong": 151,
+          "noise": 7
+        },
+        {
+          "th": 0.27,
+          "ok": 729,
+          "wrong": 151,
+          "noise": 7
+        },
+        {
+          "th": 0.275,
+          "ok": 729,
+          "wrong": 151,
+          "noise": 7
+        },
+        {
+          "th": 0.28,
+          "ok": 729,
+          "wrong": 151,
+          "noise": 7
+        },
+        {
+          "th": 0.285,
+          "ok": 729,
+          "wrong": 151,
+          "noise": 7
+        },
+        {
+          "th": 0.29,
+          "ok": 729,
+          "wrong": 151,
+          "noise": 7
+        },
+        {
+          "th": 0.295,
+          "ok": 729,
+          "wrong": 151,
+          "noise": 7
+        },
+        {
+          "th": 0.3,
+          "ok": 729,
+          "wrong": 151,
+          "noise": 7
+        }
+      ]
+    },
+    "unconstrained_max": {
+      "note": "⚠⚠ **「동등 자를 유리하게 골라서 0이 나온 것 아닌가」에 대한 답이다.** 두 팔에 **아무 제약도 안 걸고**(오답·잡음 무시) 곡선 전체의 최대 맞음을 낸다.",
+      "plus_shape_only": {
+        "th": 0.06,
+        "ok": 735,
+        "wrong": 36,
+        "noise": 0
+      },
+      "plus_traj": {
+        "th": 0.1,
+        "ok": 770,
+        "wrong": 2,
+        "noise": 0
+      },
+      "reading": "**제약을 통째로 풀어도** 궤적 끈 판의 최대는 735(그 대가가 오답 36)이고 궤적은 770(오답 2)이다. 그러므로 「한계 0」은 자를 고른 탓이 아니다 — 그 팔은 **어떤 문턱에서도** 궤적만큼 못 얹고, 얹는 시늉을 하는 문턱에서는 오답을 18배로 만든다."
+    },
+    "per_seed_shape_matched": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "verdict": "⚠⚠ **궤적 항을 끈 판은 «엄격» 자에서 어느 문턱에서도 못 선다**(오답이 3 아래로 안 내려간다 — $P@0.10이 내는 그 한 칸을 못 걷는다). 그러므로 엄격 자로는 두 팔을 견줄 수 없다. **동등 자**의 두 값이 비교의 정본이다. ⚠ 동등 자는 **위약 쪽에 여유를 주는** 자다(궤적은 그 자에서 오답 2로 여유를 안 쓴다).",
+    "legal_band_reading": "⚠ **위약의 합법 대역이 좁다**(3차 리뷰어 [24]): 동등 자에서 합법인 문턱은 0.02·0.025 뿐이다. **그 전부에서 얹는 몫이 0이고**(ok 725·725 = $P 단독 725), 대역 밖으로 나가면 맞음이 **되레 준다** — 0.03:ok 720/오답 8 · 0.035:ok 718/오답 11 · 0.04:ok 719/오답 12. 그러므로 「0」은 대역이 좁아서 못 잰 것이 아니라 **어느 문턱에서도 못 얹는다**는 뜻이다(곡선 57점 전량이 curves에 있다)."
+  },
+  "stroke_merge_by_form": {
+    "note": "`mergeTolerant`(획 병합)를 끄면 잃는 칸이 어느 자형인가 — 2차 리뷰어 [6]이 물은 자리다.",
+    "rows": {
+      "4·닫힌·1획 (되짚어 내려긋기)": 80
+    }
+  },
+  "traj_on_accepted": {
+    "4·열린·2획 (현행 템플릿)": {
+      "agree": 36,
+      "n": 36
+    },
+    "4·닫힌·2획 (세로가 꼭짓점에서)": {
+      "agree": 3,
+      "n": 3
+    },
+    "4·열린·1획 (세로 먼저 · 사선 나중)": {
+      "agree": 0,
+      "n": 38
+    },
+    "7·가로줄 없음 (현행 템플릿)": {
+      "agree": 80,
+      "n": 80
+    },
+    "7·가로줄 있음 (유럽식 · 2획)": {
+      "agree": 0,
+      "n": 80
+    },
+    "1·수직선만 (현행 템플릿)": {
+      "agree": 80,
+      "n": 80
+    },
+    "1·위 세리프 (1획 꺾임)": {
+      "agree": 6,
+      "n": 7
+    },
+    "1·위 세리프 + 밑줄 (2획)": {
+      "agree": 0,
+      "n": 22
+    },
+    "9·곧은 꼬리 (현행 템플릿 · 2획)": {
+      "agree": 80,
+      "n": 80
+    },
+    "9·굽은 꼬리 (1획 연속)": {
+      "agree": 74,
+      "n": 80
+    }
+  },
+  "distance_band": {
+    "note": "고원 = [맞는 구제의 최악, 첫 오답 거리) — 이 사이 어디를 잘라도 결과가 같다",
+    "correct_worst_below_first_wrong": 0.09812902158727105,
+    "rescued_below": 201,
+    "wrong_best": 0.12412603258356751,
+    "noise_best": 0.15106507652910256,
+    "threshold": 0.11
+  },
+  "sweep_threshold": [
+    {
+      "th": 0.06,
+      "ok": 630,
+      "wrong": 2,
+      "reject": 248,
+      "wrong_partners": {
+        "1→7": 1,
+        "1→2": 1
+      },
+      "four": 201,
+      "fired": 124,
+      "fired_correct": 124,
+      "held_out_ok": 311,
+      "noise_accepted": 0,
+      "gained_forms": 3
+    },
+    {
+      "th": 0.08,
+      "ok": 668,
+      "wrong": 2,
+      "reject": 210,
+      "wrong_partners": {
+        "1→7": 1,
+        "1→2": 1
+      },
+      "four": 239,
+      "fired": 162,
+      "fired_correct": 162,
+      "held_out_ok": 348,
+      "noise_accepted": 0,
+      "gained_forms": 3
+    },
+    {
+      "th": 0.09,
+      "ok": 684,
+      "wrong": 2,
+      "reject": 194,
+      "wrong_partners": {
+        "1→7": 1,
+        "1→2": 1
+      },
+      "four": 255,
+      "fired": 178,
+      "fired_correct": 178,
+      "held_out_ok": 364,
+      "noise_accepted": 0,
+      "gained_forms": 3
+    },
+    {
+      "th": 0.1,
+      "ok": 707,
+      "wrong": 2,
+      "reject": 171,
+      "wrong_partners": {
+        "1→7": 1,
+        "1→2": 1
+      },
+      "four": 278,
+      "fired": 201,
+      "fired_correct": 201,
+      "held_out_ok": 387,
+      "noise_accepted": 0,
+      "gained_forms": 3
+    },
+    {
+      "th": 0.105,
+      "ok": 707,
+      "wrong": 2,
+      "reject": 171,
+      "wrong_partners": {
+        "1→7": 1,
+        "1→2": 1
+      },
+      "four": 278,
+      "fired": 201,
+      "fired_correct": 201,
+      "held_out_ok": 387,
+      "noise_accepted": 0,
+      "gained_forms": 3
+    },
+    {
+      "th": 0.11,
+      "ok": 707,
+      "wrong": 2,
+      "reject": 171,
+      "wrong_partners": {
+        "1→7": 1,
+        "1→2": 1
+      },
+      "four": 278,
+      "fired": 201,
+      "fired_correct": 201,
+      "held_out_ok": 387,
+      "noise_accepted": 0,
+      "gained_forms": 3
+    },
+    {
+      "th": 0.115,
+      "ok": 707,
+      "wrong": 2,
+      "reject": 171,
+      "wrong_partners": {
+        "1→7": 1,
+        "1→2": 1
+      },
+      "four": 278,
+      "fired": 201,
+      "fired_correct": 201,
+      "held_out_ok": 387,
+      "noise_accepted": 0,
+      "gained_forms": 3
+    },
+    {
+      "th": 0.12,
+      "ok": 707,
+      "wrong": 2,
+      "reject": 171,
+      "wrong_partners": {
+        "1→7": 1,
+        "1→2": 1
+      },
+      "four": 278,
+      "fired": 201,
+      "fired_correct": 201,
+      "held_out_ok": 387,
+      "noise_accepted": 0,
+      "gained_forms": 3
+    },
+    {
+      "th": 0.125,
+      "ok": 707,
+      "wrong": 3,
+      "reject": 170,
+      "wrong_partners": {
+        "1→7": 1,
+        "1→2": 2
+      },
+      "four": 278,
+      "fired": 202,
+      "fired_correct": 201,
+      "held_out_ok": 387,
+      "noise_accepted": 0,
+      "gained_forms": 3
+    },
+    {
+      "th": 0.13,
+      "ok": 707,
+      "wrong": 5,
+      "reject": 168,
+      "wrong_partners": {
+        "1→7": 1,
+        "1→2": 4
+      },
+      "four": 278,
+      "fired": 204,
+      "fired_correct": 201,
+      "held_out_ok": 387,
+      "noise_accepted": 0,
+      "gained_forms": 3
+    },
+    {
+      "th": 0.15,
+      "ok": 707,
+      "wrong": 24,
+      "reject": 149,
+      "wrong_partners": {
+        "1→7": 1,
+        "1→2": 23
+      },
+      "four": 278,
+      "fired": 223,
+      "fired_correct": 201,
+      "held_out_ok": 387,
+      "noise_accepted": 0,
+      "gained_forms": 3
+    },
+    {
+      "th": 0.2,
+      "ok": 707,
+      "wrong": 72,
+      "reject": 101,
+      "wrong_partners": {
+        "4→0": 13,
+        "1→7": 1,
+        "1→2": 51,
+        "1→9": 7
+      },
+      "four": 278,
+      "fired": 271,
+      "fired_correct": 201,
+      "held_out_ok": 387,
+      "noise_accepted": 1,
+      "gained_forms": 3
+    },
+    {
+      "th": 0.25,
+      "ok": 732,
+      "wrong": 148,
+      "reject": 0,
+      "wrong_partners": {
+        "4→0": 42,
+        "1→7": 48,
+        "1→2": 51,
+        "1→9": 7
+      },
+      "four": 278,
+      "fired": 372,
+      "fired_correct": 226,
+      "held_out_ok": 412,
+      "noise_accepted": 2,
+      "gained_forms": 4
+    }
+  ],
+  "noise_8": {
+    "accepted_by_app": 0,
+    "rows": [
+      {
+        "name": "가로선",
+        "traj": "1",
+        "d": 0.2916666666666667,
+        "second": 0.33701423604254255,
+        "accepted_by_app": false
+      },
+      {
+        "name": "W",
+        "traj": "9",
+        "d": 0.2792497226783443,
+        "second": 0.3049967817139308,
+        "accepted_by_app": false
+      },
+      {
+        "name": "N",
+        "traj": "2",
+        "d": 0.35274963612129967,
+        "second": 0.3578482889696983,
+        "accepted_by_app": false
+      },
+      {
+        "name": "X",
+        "traj": "6",
+        "d": 0.23265383841759232,
+        "second": 0.2350672569599385,
+        "accepted_by_app": false
+      },
+      {
+        "name": "ㄷ자",
+        "traj": "9",
+        "d": 0.25001628410608406,
+        "second": 0.25423522323208286,
+        "accepted_by_app": false
+      },
+      {
+        "name": "체크",
+        "traj": "7",
+        "d": 0.33718077526036705,
+        "second": 0.3573163149548047,
+        "accepted_by_app": false
+      },
+      {
+        "name": "대각선",
+        "traj": "1",
+        "d": 0.26290711880002166,
+        "second": 0.3706590974388371,
+        "accepted_by_app": false
+      },
+      {
+        "name": "삼각형",
+        "traj": "0",
+        "d": 0.15106507652910256,
+        "second": 0.32577583532876087,
+        "accepted_by_app": false
+      }
+    ]
+  },
+  "serif_1_root": {
+    "question": "35-3 — 세리프 1이 안 오르면 왜인가. 「획 수가 다르므로 궤적으로 갈려야 정상이다. 안 갈리면 추출을 의심하라」",
+    "baseline": {
+      "ok": 29,
+      "wrong": 2,
+      "n": 160
+    },
+    "with_traj": {
+      "ok": 92,
+      "wrong": 2,
+      "n": 160
+    },
+    "with_traj_no_merge": 29,
+    "stroke_counts": {
+      "1·수직선만 (현행 템플릿)": 1,
+      "1·위 세리프 (1획 꺾임)": 1,
+      "1·위 세리프 + 밑줄 (2획)": 2,
+      "7·가로줄 없음 (현행 템플릿)": 1
+    },
+    "turns": {
+      "1·수직선만": 0,
+      "1·위 세리프": 1
+    },
+    "verdict": "**추출은 돈다.** 획 수가 1/2로 정확히 갈리고 깃발이 방향 전환으로 잡힌다. 그리고 시험 안에서 세리프 원형을 세우면 거리가 문턱 **안**으로 들어온다(d_to_serif_proto). 못 살린 원인은 **원형 표의 덮개**다 — 실린 표는 자리마다 필체가 하나이고 「1」의 그 하나가 «맨 세로선»이다. 세리프 1은 그것과 궤적이 다른 글자이고, 그것이 정상이다.",
+    "d_to_serif_proto": 0.016033371695211216,
+    "d_to_shipped_table": {
+      "ch": "7",
+      "d": 0.22381819988900462
+    },
+    "why_not_fixed_here": "⚠⚠ 세리프 원형을 **런타임에 넣지 않았다**. 넣으면 이 원장의 평가 픽스처를 외우는 것이 되어 held_out 팔이 무의미해진다(같은 회차에서 원형을 짓고 그 원형으로 채점할 수 없다). 원형 표를 넓히는 것은 **표본이 다른 회차**의 일이다 — DEFERRED."
+  },
+  "selfcheck_flags_known": {
+    "constants_snapshot_absent": "⚠ `constantsSnapshot()` / `metric_defs` 스냅샷이 없다 — **web2 라인 전체의 구멍**이고 이 원장만의 것이 아니다(같은 표본의 `glyph32_web2.json`도 같은 플래그를 낸다). 그 기계는 `web/test/constants.ts`에만 있고 web2에는 대응물이 없다. 이 회차는 상수를 `constants` 블록에 그대로 적는 것까지만 한다 — 기계를 세우는 것은 web2 전역 작업이라 **DEFERRED**이고, 병렬 세션이 같은 파일을 만지는 동안 혼자 세우지 않는다.",
+    "dead_pitfall_reference_76": "⚠ selfcheck가 「#76은 PITFALLS에 없는 번호」로 잡는다. **번호가 틀린 것이 아니라 제목 줄의 형식이 등록부를 벗어난 것**이다 — #76·#77은 `## #76 — …`인데 등록부가 읽는 형식은 `### #76.` 또는 `76. **…`이다(selfcheck의 그 자리 주석이 「고칠 곳은 검사가 아니라 기록하는 쪽」이라고 못 박아 두었다). `glyph32_web2.json`이 #77로 같은 플래그를 이미 내고 있다. **고치는 자리는 PITFALLS.md의 그 두 줄**이고, 병렬 세션이 그 파일을 동시에 만지므로 **이 갈래에서 기존 줄을 다시 쓰지 않았다** — 사람이 병합할 때 두 줄을 `### #76.` / `### #77.`로 바꾸면 둘 다 사라진다."
+  },
+  "flags_explained": {
+    "「4」 세 자형이 0/80·0/80 같은 한 값이었다": "**측정이다**(§5 «의심≠오류»). 32-4 원장의 per_form_box가 그 자리이고, 880칸 중 **틀림이 2**뿐이고 **거부가 372**였다 — 클래스끼리 헷갈리는 자리가 사실상 없고 실패가 전부 «거부»였다. 이 회차의 설계(궤적을 판정자가 아니라 구제자로 둔다)가 그 구조에서 나왔다.",
+    "이득이 「4」에 몰린다": "**그대로 적는다** — gain_concentration이 정본이다. 세리프 「1」은 안 올랐고 그 이유는 serif_1_root에 있다. 「궤적을 넣으면 전반이 오른다」가 아니라 「궤적은 **획 수·되짚기가 원형과 통하는 필체**를 살린다」가 이 표의 결론이다.",
+    "표본 안 자형의 이득": "원형 표와 **같은 획**이므로 그 칸의 이득은 «외운 몫»이다. 그래서 held_out_split을 따로 낸다 — 인용은 gain_held_out으로 한다.",
+    "after 표에 20/20이 많아졌다(단일 범주 분포 플래그)": "**측정이다.** before에서 0/20·?20이던 칸이 20/20이 된 것이고, 그 «갈리지 않음»이 결론의 절반이다. 분해능이 서 있다는 증거는 같은 표 안에 **안 오른 칸이 그대로 남아 있는 것**이다 — 4·열린·1획 38/80 · 세리프1 @28x34 1/20 · 세리프1 전체 92/160.",
+    "held_out_split.in_sample.*.wrong = 0(카운터 0)": "**측정이다.** 표본 안 넷(현행 템플릿 자형)은 전·후 모두 오답이 하나도 없다 — 880칸의 오답 2는 **둘 다 세리프 「1」**이고 그 자형은 표본 밖이다(sweep의 wrong_partners가 1→7 하나 · 1→2 하나로 낸다).",
+    "gain_concentration.cells[*].before = 0": "**측정이다.** 「4·닫힌·1획(되짚어 내려긋기)」은 네 상자 전부에서 **0/20**이었다(32-4 원장 per_form_box.after의 그 행). 래스터가 그 자형을 한 번도 못 읽었다는 뜻이고, 궤적이 그것을 80/80으로 올린 것이 이 회차에서 가장 큰 한 칸이다.",
+    "traj_on_accepted의 agree = 0(세 자형)": "⚠⚠ **측정이고, 설계의 근거다.** 래스터가 **맞게 수용한** 칸에서 궤적이 **한 번도 같은 답을 안 낸다**(7·가로줄 있음 0/80 · 4·열린·1획 0/38 · 세리프1+밑줄 0/22). 원형 표가 자리마다 필체 하나뿐이라 그렇다. 그래서 궤적을 **판정자로 두지 않았고**, 두면 어떻게 되는지는 arm_traj_only가 낸다(오답 2 → 295)."
+  },
+  "per_form_box": {
+    "before": [
+      {
+        "ch": "4",
+        "name": "4·열린·2획 (현행 템플릿)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 6,
+        "total": 20,
+        "got": {
+          "4": 6,
+          "?": 14
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·열린·2획 (현행 템플릿)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 10,
+        "total": 20,
+        "got": {
+          "4": 10,
+          "?": 10
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·열린·2획 (현행 템플릿)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 18,
+        "total": 20,
+        "got": {
+          "4": 18,
+          "?": 2
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·열린·2획 (현행 템플릿)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 2,
+        "total": 20,
+        "got": {
+          "4": 2,
+          "?": 18
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·2획 (세로가 꼭짓점에서)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 0,
+        "total": 20,
+        "got": {
+          "?": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·2획 (세로가 꼭짓점에서)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 0,
+        "total": 20,
+        "got": {
+          "?": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·2획 (세로가 꼭짓점에서)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 3,
+        "total": 20,
+        "got": {
+          "4": 3,
+          "?": 17
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·2획 (세로가 꼭짓점에서)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 0,
+        "total": 20,
+        "got": {
+          "?": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·1획 (되짚어 내려긋기)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 0,
+        "total": 20,
+        "got": {
+          "?": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·1획 (되짚어 내려긋기)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 0,
+        "total": 20,
+        "got": {
+          "?": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·1획 (되짚어 내려긋기)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 0,
+        "total": 20,
+        "got": {
+          "?": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·1획 (되짚어 내려긋기)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 0,
+        "total": 20,
+        "got": {
+          "?": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·열린·1획 (세로 먼저 · 사선 나중)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 8,
+        "total": 20,
+        "got": {
+          "4": 8,
+          "?": 12
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·열린·1획 (세로 먼저 · 사선 나중)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 5,
+        "total": 20,
+        "got": {
+          "4": 5,
+          "?": 15
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·열린·1획 (세로 먼저 · 사선 나중)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "4": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·열린·1획 (세로 먼저 · 사선 나중)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 5,
+        "total": 20,
+        "got": {
+          "4": 5,
+          "?": 15
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 없음 (현행 템플릿)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 없음 (현행 템플릿)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 없음 (현행 템플릿)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 없음 (현행 템플릿)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 있음 (유럽식 · 2획)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 있음 (유럽식 · 2획)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 있음 (유럽식 · 2획)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 있음 (유럽식 · 2획)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·수직선만 (현행 템플릿)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "1": 20
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·수직선만 (현행 템플릿)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "1": 20
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·수직선만 (현행 템플릿)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "1": 20
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·수직선만 (현행 템플릿)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "1": 20
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 (1획 꺾임)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 5,
+        "total": 20,
+        "got": {
+          "1": 5,
+          "?": 15
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 (1획 꺾임)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 0,
+        "total": 20,
+        "got": {
+          "?": 20
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 (1획 꺾임)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 0,
+        "total": 20,
+        "got": {
+          "7": 1,
+          "?": 19
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 (1획 꺾임)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 2,
+        "total": 20,
+        "got": {
+          "1": 2,
+          "?": 18
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 + 밑줄 (2획)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 9,
+        "total": 20,
+        "got": {
+          "1": 9,
+          "?": 11
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 + 밑줄 (2획)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 1,
+        "total": 20,
+        "got": {
+          "1": 1,
+          "?": 19
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 + 밑줄 (2획)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 0,
+        "total": 20,
+        "got": {
+          "2": 1,
+          "?": 19
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 + 밑줄 (2획)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 12,
+        "total": 20,
+        "got": {
+          "1": 12,
+          "?": 8
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·곧은 꼬리 (현행 템플릿 · 2획)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·곧은 꼬리 (현행 템플릿 · 2획)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·곧은 꼬리 (현행 템플릿 · 2획)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·곧은 꼬리 (현행 템플릿 · 2획)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·굽은 꼬리 (1획 연속)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·굽은 꼬리 (1획 연속)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·굽은 꼬리 (1획 연속)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·굽은 꼬리 (1획 연속)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      }
+    ],
+    "after": [
+      {
+        "ch": "4",
+        "name": "4·열린·2획 (현행 템플릿)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "4": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·열린·2획 (현행 템플릿)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "4": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·열린·2획 (현행 템플릿)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "4": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·열린·2획 (현행 템플릿)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "4": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·2획 (세로가 꼭짓점에서)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "4": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·2획 (세로가 꼭짓점에서)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "4": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·2획 (세로가 꼭짓점에서)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "4": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·2획 (세로가 꼭짓점에서)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "4": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·1획 (되짚어 내려긋기)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "4": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·1획 (되짚어 내려긋기)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "4": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·1획 (되짚어 내려긋기)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "4": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·닫힌·1획 (되짚어 내려긋기)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "4": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·열린·1획 (세로 먼저 · 사선 나중)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 8,
+        "total": 20,
+        "got": {
+          "4": 8,
+          "?": 12
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·열린·1획 (세로 먼저 · 사선 나중)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 5,
+        "total": 20,
+        "got": {
+          "4": 5,
+          "?": 15
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·열린·1획 (세로 먼저 · 사선 나중)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "4": 20
+        }
+      },
+      {
+        "ch": "4",
+        "name": "4·열린·1획 (세로 먼저 · 사선 나중)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 5,
+        "total": 20,
+        "got": {
+          "4": 5,
+          "?": 15
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 없음 (현행 템플릿)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 없음 (현행 템플릿)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 없음 (현행 템플릿)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 없음 (현행 템플릿)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 있음 (유럽식 · 2획)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 있음 (유럽식 · 2획)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 있음 (유럽식 · 2획)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "7",
+        "name": "7·가로줄 있음 (유럽식 · 2획)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "7": 20
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·수직선만 (현행 템플릿)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "1": 20
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·수직선만 (현행 템플릿)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "1": 20
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·수직선만 (현행 템플릿)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "1": 20
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·수직선만 (현행 템플릿)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "1": 20
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 (1획 꺾임)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 16,
+        "total": 20,
+        "got": {
+          "1": 16,
+          "?": 4
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 (1획 꺾임)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 1,
+        "total": 20,
+        "got": {
+          "1": 1,
+          "?": 19
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 (1획 꺾임)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 0,
+        "total": 20,
+        "got": {
+          "7": 1,
+          "?": 19
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 (1획 꺾임)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 16,
+        "total": 20,
+        "got": {
+          "1": 16,
+          "?": 4
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 + 밑줄 (2획)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "1": 20
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 + 밑줄 (2획)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 19,
+        "total": 20,
+        "got": {
+          "1": 19,
+          "?": 1
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 + 밑줄 (2획)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 0,
+        "total": 20,
+        "got": {
+          "2": 1,
+          "?": 19
+        }
+      },
+      {
+        "ch": "1",
+        "name": "1·위 세리프 + 밑줄 (2획)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "1": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·곧은 꼬리 (현행 템플릿 · 2획)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·곧은 꼬리 (현행 템플릿 · 2획)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·곧은 꼬리 (현행 템플릿 · 2획)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·곧은 꼬리 (현행 템플릿 · 2획)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·굽은 꼬리 (1획 연속)",
+        "box": "22x34 좁음 (29-1 픽스처 · 비 0.65)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·굽은 꼬리 (1획 연속)",
+        "box": "28x34 보통 (비 0.82)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·굽은 꼬리 (1획 연속)",
+        "box": "34x34 넓음 (비 1.00)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      },
+      {
+        "ch": "9",
+        "name": "9·굽은 꼬리 (1획 연속)",
+        "box": "44x68 큼 (비 0.65 · 29-1의 2배)",
+        "correct": 20,
+        "total": 20,
+        "got": {
+          "9": 20
+        }
+      }
+    ]
+  }
+}
