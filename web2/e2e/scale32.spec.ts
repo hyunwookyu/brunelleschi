@@ -57,7 +57,7 @@ test('32-5 ② 첫 치수가 확정으로 바꾼다 — 비가 수치로 · 어�
   await settle(page)
   expect(await page.getAttribute('#dim-scale', 'data-scale')).toBe('set')
   const text = (await page.textContent('#dim-scale'))!
-  expect(text).toMatch(/^축척 1 : [0-9.]+ · 기준 2400 mm$/)     // 비 + 「어느 치수」
+  expect(text).toMatch(/^축척 1단위 = [0-9.]+ mm · 기준 2400 mm$/)   // 값 + 「어느 치수」
   const st = await dimState(page)
   expect(st.scaleId).toBe(post)
   expect(st.mmPerUnit).toBeGreaterThan(0)
@@ -192,7 +192,7 @@ test('32-6 ③ 축척이 미정이면 숫자 대신 비율이다 — 없는 축�
   await tap(page, A.a.x, A.a.y)
   await tap(page, A.b.x, A.b.y)
   const text = (await page.textContent('#dim-measure'))!
-  expect(text).toMatch(/^잰 값 1 : [0-9.]+ \(축척 미정\)$/)
+  expect(text).toMatch(/^잰 값 [0-9.]+ 단위 \(축척 미정\)$/)
   expect(text).not.toContain('mm')
 })
 

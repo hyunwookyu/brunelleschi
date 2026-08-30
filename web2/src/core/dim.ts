@@ -85,17 +85,26 @@ export function formatMm(mm: number, unit: Unit, exact = false): string {
  *  규칙이고, 이쪽은 **단위가 없는 비**라 크기가 어디든 네 자리가 읽을 만하다. */
 const num4 = (v: number): string => Number(v.toPrecision(4)).toString()
 
-/** **축척 표기**(web2-32 5번) — 「세계 1단위 : 몇 mm」의 비를 수치로. null이면 «미정».
+/** **축척 표기**(web2-32 5번) — 「세계 **1단위 = 몇 mm**」. null이면 «미정».
  *  ⚠ 없는 축척을 있는 척하지 않는다(지시 문면) — 미정일 때 숫자가 나가지 않는다.
  *  축척을 정할 수 있는 것은 **사람이 적은 첫 치수**뿐이고(29-1: 「도면의 치수는 잰 값이
- *  아니라 정한 값이다」), 그 판정은 `lift.scaleOf` 하나가 한다 — 여기는 표기뿐이다. */
+ *  아니라 정한 값이다」), 그 판정은 `lift.scaleOf` 하나가 한다 — 여기는 표기뿐이다.
+ *
+ *  ⚠⚠ **초판은 「1 : 1250」으로 냈다가 1차 리뷰어 [8]에게 걸렸다**: 도면의 「1 : N」은
+ *  **도면 길이 : 실제 길이**인데 여기 N은 그 양이 아니다 — 분모가 **임의 모델 단위**다
+ *  (모델 단위는 임의값이다 — CLAUDE.md §1 · AS-C4/C5 계열). 단위가 다른 두 양이 같은
+ *  표기를 쓰면 그것이 조용히 틀린 표시다. 그래서 **단위를 문면에 적는다**. */
 export function formatScale(mmPerUnit: number | null): string {
-  return mmPerUnit === null || !(mmPerUnit > 0) ? '미정' : `1 : ${num4(mmPerUnit)}`
+  return mmPerUnit === null || !(mmPerUnit > 0) ? '미정' : `1단위 = ${num4(mmPerUnit)} mm`
 }
 
-/** **축척 미정일 때 재기가 내는 값**(web2-32 6번) — 세계 단위 길이를 «단위 없는 비»로.
- *  「1 : n」 = 세계 1단위의 n배. 숫자에 mm를 붙이면 그것이 «없는 축척을 있는 척»이다. */
-export const formatRatio = (units: number): string => `1 : ${num4(units)}`
+/** **축척 미정일 때 재기가 내는 값**(web2-32 6번) — **모델 단위** 길이를 그대로, 단위를
+ *  밝혀서 낸다. mm를 붙이면 그것이 «없는 축척을 있는 척»이다.
+ *  ⚠ **이 수는 전역 배율에 불변이 아니다**(리뷰어 [8]) — 모델 전체가 k배로 풀리면 이 값도
+ *  k배가 된다. 축척 없이 참인 유일한 진술은 **두 잰 값의 비**이고 그것은 재기가 둘 이상
+ *  있어야 선다(`DEFERRED.md`). 그래서 「비」인 척하는 «1 : n» 표기를 안 쓴다 — 이 수가
+ *  «모델 단위 길이»임을 문면이 그대로 말한다. */
+export const formatUnits = (units: number): string => `${num4(units)} 단위`
 
 // ── 어긋남 (web2-32 7번 = web2-30의 30-6) ────────────────────────────────
 //

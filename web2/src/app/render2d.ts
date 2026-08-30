@@ -15,7 +15,7 @@ import { waitFadeFactor, atOwnPose } from '../core/waitfade'
 import type { OsnapHit } from '../core/osnap'
 import { dist2, type Pt, type V3 } from '../core/vec'
 import { filmSplit } from './filmlayer'
-import { formatMm, formatRatio, dimSkew, skewOff } from '../core/dim'
+import { formatMm, formatUnits, dimSkew, skewOff } from '../core/dim'
 import { measurePoint3, measureMm, measureUnits } from '../core/measure'
 
 /** D-3 반증 손잡이(web2-19 1부) — e2e만 켠다(diag.forceConstructing). 본문 주석 참조. */
@@ -846,7 +846,7 @@ function drawMeasures(ctx: CanvasRenderingContext2D, app: App, is: number) {
     const mm = measureMm(app.lift, m)
     const u = measureUnits(app.lift, m)
     const text = mm !== null ? formatMm(mm, app.doc.unit, app.dimExact)
-      : u !== null ? formatRatio(u) : ''
+      : u !== null ? formatUnits(u) : ''
     if (text) label({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, text, COL.construction)
   }
   // 짚는 중 — 첫 점 하나. 문서에 아무것도 안 들어간다.

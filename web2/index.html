@@ -664,6 +664,19 @@
            종전대로 **패널만** 연다: 그것이 도구까지 바꾸면 web2-10의 키패드·음성 경로가
            통째로 죽는다(전량 e2e `dim.spec` 둘이 그것을 잡았다). 모드는 여기서 켠다. -->
       <button id="btn-dim-write" data-act="state" title="종이 위에 손으로 숫자를 써서 치수를 넣는다">종이에 쓰기</button>
+      <!-- 재기(web2-32 6번) — **삼각 스케일**. ⛔ 아이콘을 새로 그리지 않았다:
+           `docs/instrument-icons.md`의 「삼각 스케일 — 축척」 정본 path 그대로다.
+           ⚠⚠ **자리는 세로바가 아니라 여기다.** 초판은 손 띠(세로바)에 뒀는데 **전량 e2e가
+           그것을 잡았다**: 세로바가 800px 화면을 **12px 넘쳤다**(812 — `sidebar.spec`).
+           높이 예산이 이미 꽉 차 있다(index.html 머리의 「--ui-scale」 주석이 그 사정을
+           적어 뒀다: 「요소가 늘어 800px 화면에 들어가야 했다」). 답은 임계를 무르는 것이
+           아니라 **자리를 옮기는 것**이고, 선례가 바로 위 줄이다 — web2-29도 같은 이유로
+           모드 단추를 이 패널에 뒀다. 잰 값이 뜨는 자리도 이 패널이라 손이 한 곳에 있다.
+           ⚠ 그래도 **새 자리**다(#77 ㉠) — 치수 단추(자)에 뜻을 얹지 않았다. -->
+      <button id="btn-measure" data-act="state" title="재기 — 두 점을 짚으면 길이가 나온다(도면에는 안 남는다)">
+        <svg width="15" height="15" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M 16.00 6.50 L 19.26 12.15 A 3.0 3.0 0 0 0 22.26 17.35 L 25.53 23.00 L 19.00 23.00 A 3.0 3.0 0 0 0 13.00 23.00 L 6.47 23.00 L 9.74 17.35 A 3.0 3.0 0 0 0 12.74 12.15 L 16.00 6.50 Z"/></svg>
+        재기
+      </button>
       <div style="display:flex;gap:10px;align-items:center">
         <span id="dim-read"></span>
         <button id="dim-clear" title="쓴 것을 지운다">지운다</button>
@@ -809,15 +822,6 @@
         <button id="dim-toggle" class="t ico-m" title="치수 — 리본 패널" aria-label="치수">
           <!-- Phosphor light ruler (MIT · @phosphor-icons/core assets/light/ruler-light.svg 그대로) -->
           <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M233.91,74.79,181.22,22.1a14,14,0,0,0-19.8,0L22.09,161.41a14,14,0,0,0,0,19.8L74.78,233.9a14,14,0,0,0,19.8,0L233.91,94.59A14,14,0,0,0,233.91,74.79ZM225.42,86.1,86.1,225.41h0a2,2,0,0,1-2.83,0L30.58,172.73a2,2,0,0,1,0-2.83L64,136.48l27.76,27.76a6,6,0,1,0,8.48-8.48L72.48,128,96,104.48l27.76,27.76a6,6,0,0,0,8.48-8.48L104.48,96,128,72.49l27.76,27.75a6,6,0,0,0,8.48-8.48L136.49,64,169.9,30.59a2,2,0,0,1,2.83,0l52.69,52.68A2,2,0,0,1,225.42,86.1Z"/></svg>
-        </button>
-
-        <!-- 재기(web2-32 6번) — **삼각 스케일**. ⛔ 아이콘을 새로 그리지 않았다:
-             `docs/instrument-icons.md`의 「삼각 스케일 — 축척」 정본 path 그대로다.
-             ⚠ **새 자리에서 들어간다**(#77 ㉠) — 치수 단추(자)에 뜻을 하나 더 얹으면
-             그 자리를 쓰던 옛 경로가 조용히 죽는다. 누르면 치수 패널이 펴지고(잰 값이
-             거기 뜬다) 도구가 재기로 바뀐다. 다시 누르면 연필로 돌아온다. -->
-        <button id="btn-measure" class="t tool ico-m" title="재기 — 두 점을 짚으면 길이가 나온다(도면에는 안 남는다)" aria-label="재기">
-          <svg width="26" height="26" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M 16.00 6.50 L 19.26 12.15 A 3.0 3.0 0 0 0 22.26 17.35 L 25.53 23.00 L 19.00 23.00 A 3.0 3.0 0 0 0 13.00 23.00 L 6.47 23.00 L 9.74 17.35 A 3.0 3.0 0 0 0 12.74 12.15 L 16.00 6.50 Z"/></svg>
         </button>
 
         <div class="bar-gap"></div>

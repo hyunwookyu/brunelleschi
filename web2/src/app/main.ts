@@ -18,7 +18,7 @@ import { recognizeStrokes } from '../core/handwriting'
 import { OSNAP_ORDER, osnap, osnapCost, resetOsnapCost, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT, widthOfMat, gradeOf } from '../core/material'
 import type { Grade, Layer, Sheet, Stroke } from '../core/types'
-import { parseDim, formatMm, lenMm, formatScale, formatRatio, dimSkew, skewOff, UNITS, type Unit } from '../core/dim'
+import { parseDim, formatMm, lenMm, formatScale, formatUnits, dimSkew, skewOff, UNITS, type Unit } from '../core/dim'
 import { measureMm, measureUnits } from '../core/measure'
 import { initDimPanel } from './dimpanel'
 import { createVoice } from './voice'
@@ -397,7 +397,7 @@ function syncScaleLines() {
     const u = measureUnits(app.lift, app.measurePair)
     dimPanel.measure(
       mm !== null ? `잰 값 ${formatMm(mm, app.doc.unit, app.dimExact)}`
-        : u !== null ? `잰 값 ${formatRatio(u)} (축척 미정)`
+        : u !== null ? `잰 값 ${formatUnits(u)} (축척 미정)`
         : '잰 값 — 그 점이 지금 안 풀린다',
       'value')
   } else if (app.measureFrom) dimPanel.measure('재기 — 둘째 점을 짚는다', 'from')
@@ -705,7 +705,11 @@ const toolBtn: Record<Exclude<Tool, 'pencil' | 'pen'>, HTMLElement> = {
   // 화면에서 갈린다).
   'dim': document.getElementById('btn-dim-write')!,
   // 재기(web2-32 6번) — **새 자리에서 들어간다**(#77 ㉠): 치수 단추에 뜻을 하나 더
-  // 얹으면 그 자리를 쓰던 옛 경로가 조용히 죽는다. 손 띠의 삼각 스케일이 그 자리다.
+  // 얹으면 그 자리를 쓰던 옛 경로가 조용히 죽는다.
+  // ⚠⚠ **그 자리는 치수 패널 안이다**(세로바가 아니다) — 초판이 손 띠에 뒀다가 **전량
+  // e2e가 잡았다**: 세로바가 800px 화면을 12px 넘쳤다(`sidebar.spec` 812 ≤ 800).
+  // 높이 예산이 이미 꽉 차 있으므로 답은 임계를 무르는 것이 아니라 자리를 옮기는 것이고,
+  // 선례는 web2-29의 `btn-dim-write`(같은 이유로 이 패널에 있다). 잰 값도 여기 뜬다.
   'measure': document.getElementById('btn-measure')!,
 }
 const thick = document.getElementById('thick')!

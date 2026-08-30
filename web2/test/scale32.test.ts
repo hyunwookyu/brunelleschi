@@ -13,7 +13,7 @@ import { describe, it, expect } from 'vitest'
 import { session } from './session'
 import { W, H } from './fixtures'
 import { setDimension, addLayer, setLayerOn, type App } from '../src/app/state'
-import { formatScale, formatRatio, dimSkew, skewOff, lenMm } from '../src/core/dim'
+import { formatScale, formatUnits, dimSkew, skewOff, lenMm } from '../src/core/dim'
 import { measureUnits, measureMm, identifyPoint, measurePoint3 } from '../src/core/measure'
 import { liftAll } from '../src/core/lift'
 import { serializeBrnl, parseBrnl } from '../src/core/file'
@@ -56,7 +56,7 @@ describe('32-5 축척 — 첫 치수가 정한다(있던 것을 화면에 드러
     // 비의 수치 — 「2400 mm ÷ 무치수 풀이 길이」 그대로다(새 경로 ⛔ · #54)
     const geom = app.lift.dimGeom.get(post.id)!
     expect(app.lift.mmPerUnit!).toBeCloseTo(2400 / geom, 9)
-    expect(formatScale(app.lift.mmPerUnit)).toMatch(/^1 : [0-9.]+$/)
+    expect(formatScale(app.lift.mmPerUnit)).toMatch(/^1단위 = [0-9.]+ mm$/)
     // 기준 획의 dim이 화면 문구의 「기준」이다
     expect(app.doc.strokes.find(x => x.id === app.lift.scaleId)!.dim).toBe(2400)
   })
@@ -82,7 +82,10 @@ describe('32-5 축척 — 첫 치수가 정한다(있던 것을 화면에 드러
   it('반증(D-3): 축척이 미정인데 숫자가 나오면 이 표기는 아무것도 안 재는 것이다', () => {
     expect(formatScale(null)).toBe('미정')
     expect(formatScale(0)).toBe('미정')       // 퇴화도 미정이다(있는 척하지 않는다)
-    expect(formatScale(2.5)).toBe('1 : 2.5')
+    // ⚠ 「1 : N」이 아니다(1차 리뷰어 [8]) — 도면의 「1 : N」은 도면 길이 : 실제 길이인데
+    //   여기 분모는 **임의 모델 단위**다. 단위를 문면에 적어 두 양이 안 섞이게 한다.
+    expect(formatScale(2.5)).toBe('1단위 = 2.5 mm')
+    expect(formatScale(1250)).not.toMatch(/^1 : /)
   })
 })
 
@@ -157,8 +160,8 @@ describe('32-6 재기 — 잰 값은 파생이다', () => {
     expect(measureMm(app.lift, m)).toBeNull()
     const u = measureUnits(app.lift, m)!
     expect(u).toBeGreaterThan(0)
-    expect(formatRatio(u)).toMatch(/^1 : [0-9.]+$/)
-    expect(formatRatio(u)).not.toMatch(/mm|cm|m$/)
+    expect(formatUnits(u)).toMatch(/^[0-9.]+ 단위$/)
+    expect(formatUnits(u)).not.toContain('mm')   // 없는 축척을 있는 척하지 않는다
   })
 
   it('축척이 바뀌면 잰 값이 따라 바뀐다 — 저장된 숫자가 아니다', () => {
