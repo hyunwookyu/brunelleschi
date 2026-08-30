@@ -21262,7 +21262,7 @@
     },
     {
       "path": "paper_grain26_web2.json:gate.current[1].bare_sd",
-      "val": 4.0472514228895307e-11,
+      "val": 4.013145371573046e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {

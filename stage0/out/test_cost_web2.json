@@ -1,25 +1,25 @@
 {
  "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
- "measured_at": "web2-35 병합 (2026-08-30)",
+ "measured_at": "web2-34 (2026-08-30)",
  "unit": {
   "command": "npx vitest run (web2/)",
-  "files": 94,
-  "tests": 728,
-  "wall_s": 31.8,
-  "passed": 728,
+  "files": 98,
+  "tests": 741,
+  "wall_s": 30.7,
+  "passed": 741,
   "failed": 0,
-  "note": "web2-35 병합 트리 실측 — web2-32 5·6·7(파일 93·팔 727)과 web2-35(파일 92·팔 712)를 합친 값이다. 두 갈래가 평행으로 돌아 각자의 원장이 상대의 파일을 안 세고 있었다. 신설은 `glyph35.test.ts` 하나(web2-35)이고 `scale32`·`scale32_measure`(web2-32)가 그 옆에 선다. 폐기 없음.",
-  "wall_s_note": "병합 뒤 한 번 돌린 값이다(31.8s). web2-35가 네 번 돌려 낸 폭 25.9~38.0s 안이다 — 그 폭은 팔의 몫이 아니라 컨테이너 부하다."
+  "note": "web2-34 — 파일 +4 · 팔 +13(병합 트리 94/728 기준). 신설: `skew34.test`·`skew34_measure`(34-7 어긋남 문턱) · `measure34.test`·`measure34_measure`(34-8 재기의 정체). 폐기 없음.",
+  "wall_s_note": "병합 트리 31.8s → 34-8 뒤 30.7s. 팔이 열셋 늘었는데 벽시계가 안 늘었다 — 그 폭(25.9~38.0s)이 컨테이너 부하의 몫이라는 web2-35의 판단과 같은 방향이다."
  },
  "e2e": {
   "command": "npx playwright test --workers=1 (dpr1+dpr2)",
-  "cases": 394,
-  "arms": 197,
-  "wall_s": 2880,
-  "passed": 393,
+  "cases": 438,
+  "arms": 219,
+  "wall_s": 3138,
+  "passed": 437,
   "failed": 1,
-  "arms_source": "실행 요약 「1 failed · 393 passed (48.0m)」 — dpr1+dpr2 두 벌이라 팔은 197",
-  "note": "⚠⚠ **병합 트리에서 처음 돈 전량이다** — web2-35는 전량을 안 돌렸고(20케이스만) web2-32의 수를 그대로 실었다. 이 값이 둘을 합친 첫 실측이다. **실패 하나는 부하다**: `gesture.spec ①②③`가 **dpr2에서만** 180s 상한에 걸렸고(`page.screenshot` 타임아웃 — 팔의 단언이 아니다) dpr1은 통과했다. 같은 파일을 **혼자 다시 돌리자 dpr2 다섯 팔 전부 통과**(3.1m). #80의 「전량에서만 나는 실패는 가른다」 그대로 갈랐다.",
+  "arms_source": "실행 요약 「1 failed · 437 passed (52.3m)」 — dpr1+dpr2 두 벌이라 팔은 219",
+  "note": "web2-34 — 케이스 394 → 438(팔 197 → 219 · **+22**). 신설: `ui34.spec`(34-3 크기통 다섯) · `ui34r7.spec`(34-4 R7 일곱) · `ui34place.spec`(34-6 배치 여섯) · `grain30`에 34-1의 손잡이·로드 결정론 둘 · `icons`에 34-5의 선 문법 하나. ⚠⚠ **실패 하나는 부하다 — 병합 회차와 같은 자국이다**: `gesture.spec ①②③`가 **dpr2에서만** 180s 상한에 걸렸고(`page.screenshot` 타임아웃 — 팔의 단언이 아니다) dpr1은 통과했다. **같은 파일을 혼자 다시 돌리자 dpr2 다섯 팔 전부 통과**(3.1m). 두 회차 연속 같은 칸이므로 **부하에 약한 팔로 보고 DEFERRED에 올린다**(#80대로 갈랐다).",
   "wall_clock_unexplained": {
    "this_round_s": 2718,
    "web2_30_s": 1716,
@@ -37,8 +37,8 @@
  },
  "typecheck_build": {
   "command": "tsc --noEmit · vite build",
-  "build_s": 2.47,
-  "note": "web2-35 병합 실측 — 타입 오류 0."
+  "build_s": 2.43,
+  "note": "web2-34 마감 실측 — 타입 오류 0."
  },
  "history": [
   {
@@ -266,6 +266,12 @@
    "unit": 728,
    "e2e": 394,
    "e2e_wall_s": 2880
+  },
+  {
+   "at": "web2-34",
+   "unit": 741,
+   "e2e": 438,
+   "e2e_wall_s": 3138
   }
  ],
  "environment": {
