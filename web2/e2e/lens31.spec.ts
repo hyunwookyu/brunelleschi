@@ -129,7 +129,12 @@ test('31-2 ① 자리와 급 — 손 띠의 시점 묶음 · 돋보기 바로 �
   console.log(`[31-2 ①] 31이 먹은 자리 ${place.taken31}px(zoom-fit·lens) → 되돌린 여유 ${slackWithout31}px · `
     + `지금 남은 여유 ${place.barBottomSlack}px · 단추 하나 ${place.unitButton}px → **다음 단추가 들어가는가: ${nextFits}**`)
   expect(slackWithout31, '34-6이 물은 여유 — 버튼 두 개분 이상').toBeGreaterThanOrEqual(place.unitButton * 2 + place.gap * 2)
-  ledger['place'] = { ...place, slackWithout31, nextButtonFits: nextFits }
+  ledger['place'] = { ...place, slackWithout31, nextButtonFits: nextFits,
+    budgetNote: '⚠ **자가 둘이다**(2차 리뷰어 [5] · #88 ⚠⚠). 34-6의 예산 92px은 «이 앱에서 가장 큰 '
+      + '정사각 단추»(`btn-snap` 45 + 사이 1)를 자로 잡은 수이고, 31이 실제로 넣은 둘은 `.ico-m`(36 + 사이 1 = '
+      + '**37**)이라 **74px**을 먹었다 — 예산이 18px 보수적이었다는 뜻이지 임계를 무른 것이 아니다. '
+      + '그리고 **지금 남은 여유 31px은 두 자 어느 쪽으로도 단추 하나가 안 들어간다**(45도 37도 넘는다) — '
+      + '`nextButtonFits: false`가 그 값이고, 이 예산은 **포화됐다**.' }
 })
 
 test('31-2 ② 확정 전에는 꺼져 있다 — 눌러도 안 열린다 (+확정 뒤에는 열린다)', async ({ page }) => {

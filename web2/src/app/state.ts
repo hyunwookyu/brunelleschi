@@ -461,7 +461,11 @@ function recompute(app: App) {
   // 옛 화각이 앉는다 — 부분 유지가 만드는 그 상태다(CLAUDE.md §1 · §6.1).
   // 확정이 «풀린» 경우(되돌리기 등)도 같이 버린다 — 렌즈가 없는 국면이다.
   {
-    const lsig = camSig(app.lift.an)
+    // ⚠⚠ **서명에 소실점 «개수»를 넣는다**(2026-08-31 · 2차 리뷰어 [1]). `camSig`는 f·주점·fSource라
+    // 셋째 소실점(축만 더하고 카메라를 안 바꾼다)에서 안 움직이는데, **차수는 소실점 개수다**
+    // (이론서 2.3 · CLAUDE.md §1). 지시 문면이 「**차수 승격**이 일어나면 초기화한다」이므로
+    // 굳힌 3D의 판정자(`camSig` — 그쪽은 좌표가 깨지는가를 묻는다)와 **다른 자**를 쓴다.
+    const lsig = `${camSig(app.lift.an)}|${app.lift.an.vps.length}`
     if (!lensAllowed(app.lift.an) || (app.lensSig !== null && lsig !== app.lensSig)) resetViewLens(app)
     app.lensSig = lsig
   }
