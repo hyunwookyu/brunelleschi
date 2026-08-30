@@ -46,7 +46,7 @@ try {
   if (r === 'classic' || r === 'brush') app.renderer = r
 } catch { /* 저장소가 없으면 기본값(brush) */ }
 const brushLayer = initBrushLayer(W, H, dpr)
-import { initFilmLayer, bakeFiberTile, setFilmAlphaForTest, setFiberLegacyForTest, setPaperFiberForTest } from './filmlayer'
+import { initFilmLayer, bakeFiberTile, setFilmAlphaForTest, setFiberLegacyForTest, setPaperFiber, setPaperGrain309ForTest } from './filmlayer'
 const filmLayer = initFilmLayer(W, H, dpr)
 
 // 빌드 식별자 — 배포됐는지 화면에서 바로 안다.
@@ -967,6 +967,24 @@ own3dBox.addEventListener('change', () => {
   invalidate()
 })
 
+// ── 종이 결(web2-34 1번 · 설정 서랍 · 기본 켜짐) ───────────────────────────────
+// 저장은 **localStorage**다 — `RENDERER_KEY`·`HOLD_KEY`와 같은 자리이고, 그 줄이 적은
+// 근거가 그대로 선다: 「문서의 값이 아니라 «보는 방식»이다(원칙 b의 표시판)」. 결은
+// 획을 한 픽셀도 안 건드리므로 남의 그림을 열어도 **내 기기의 취향**이 유지되는 것이 맞다.
+// ⚠ 필압 보정(`doc.press`)이 **문서**로 간 것과 갈리는 지점이 이것이다: 그쪽은 켜는
+//   순간 «예전 그림의 농도»가 바뀌어 그림의 성질이 되지만, 종이 결에는 그 사정이 없다.
+// **손잡이는 하나다**(#54) — 화면 체크상자도 `diag.paperFiberForTest`도 이 함수를 부른다.
+const GRAIN_KEY = 'b2-grain'
+const grainBox = document.getElementById('chk-grain') as HTMLInputElement
+function applyPaperGrain(on: boolean, persist: boolean) {
+  grainBox.checked = on                      // 프로그램 대입 — change를 안 낸다(되먹임 없음)
+  setPaperFiber(on)
+  if (persist) { try { localStorage.setItem(GRAIN_KEY, on ? 'on' : 'off') } catch { /* 세션 한정 */ } }
+  invalidate()
+}
+try { if (localStorage.getItem(GRAIN_KEY) === 'off') applyPaperGrain(false, false) } catch { /* 기본값(켜짐) */ }
+grainBox.addEventListener('change', () => applyPaperGrain(grainBox.checked, true))
+
 
 
 
@@ -1732,9 +1750,14 @@ const diag = {
     return h
   },
   fiberTile: (id: number, paper: 'tracing' | 'yellow' | 'paper', wrap = true) => bakeFiberTile(id, paper, dpr, wrap),
-  /** D-3 반증(web2-30 9번) — **바탕 종이의 결을 끈다**(web2-20 3부의 옛 상태로).
-   *  끄면 「셋의 진폭이 서로 20% 이내」가 같은 실행에서 실패한다. e2e 전용. */
-  paperFiberForTest: (v: boolean) => { setPaperFiberForTest(v); invalidate() },
+  /** 바탕 종이의 결 켬/끔 — **화면의 `#chk-grain`과 같은 손잡이다**(web2-34 1번 · #54).
+   *  이름은 30-9 때 그대로 둔다(그 팔들이 이 이름을 부른다). 끄면 「셋 다 지각 대역
+   *  위」가 같은 실행에서 실패한다(web2-20 3부의 옛 상태로). **저장은 안 한다** —
+   *  e2e가 부르는 자리라 사람의 취향(localStorage)을 덮으면 안 된다. */
+  paperFiberForTest: (v: boolean) => applyPaperGrain(v, false),
+  /** D-3 반증(web2-34 1번) — 바탕 종이의 알파를 **30-9 값으로 되돌린다**. 그 상태에서
+   *  「바탕이 겹보다 뚜렷하게 약하다」가 같은 실행에서 실패해야 한다. e2e 전용. */
+  paperGrain309ForTest: (v: boolean) => { setPaperGrain309ForTest(v); invalidate() },
   /** D-3 반증(3-e ④) — 곱→알파로 바꿔 합성 곡선 붕괴를 본다. e2e 전용. */
   filmAlphaForTest: (v: boolean) => { setFilmAlphaForTest(v); invalidate() },
   /** 손글씨 치수(web2-29 1단계) — **화면 팔의 손잡이**: 인식은 확률적이라 e2e가 값을

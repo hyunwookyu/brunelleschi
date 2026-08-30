@@ -912,6 +912,18 @@
               <span id="press-calib-step"></span>
               <button id="btn-press-cancel" data-act="state" title="보정을 그만둔다 — 옵션은 꺼진 채로 남는다">그만둔다</button>
             </div>
+            <div class="head" style="margin-top:6px">종이</div>
+            <!-- web2-34 1번 — **종이 결**(기본 켜짐). 사람의 말은 「종이 질감이 너무
+                 과하다. 사실 없는 게 나을 수도」였고, 답은 ① 진폭을 겹보다 낮추고
+                 ② 아예 끌 수 있게 하는 것이다(화면 규칙 R8). 「없는 게 나을 수도」는
+                 **처방이지 진단이 아니다**(D-4) — 30-9가 「종이만 결이 없는 것이
+                 결함이다」로 판정한 관측은 그대로 유효하므로 기본은 켜짐이다.
+                 ⚠ `data-act="state"` — 상태 토글이라 **패널이 안 접힌다**(R3 · 28-1).
+                 ⚠ 저장 자리는 **localStorage**다(문서가 아니다 — 원칙 b의 표시판):
+                 결은 «보는 방식»이고 획을 안 건드린다. 필압 보정(`doc.press`)이 문서로
+                 간 것은 켜는 순간 **예전 그림의 농도**가 바뀌기 때문인데, 종이 결에는
+                 그 사정이 없다 — 끄고 켜도 획은 한 픽셀도 안 바뀐다. -->
+            <label><input id="chk-grain" data-act="state" type="checkbox" checked> 종이 결</label>
             <div class="head" style="margin-top:6px">기기</div>
             <!-- web2-30 3번 별건 — 빌드 식별자가 **입력을 안 받게** 되면서(배포를 판정하는
                  표시지 단추가 아니다) 진단 패널의 여닫이가 여기로 왔다. 콘솔 없는 태블릿의
