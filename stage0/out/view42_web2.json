@@ -334,6 +334,15 @@
     },
     "note": "아이소메트릭에 가까운 자세에서 **앞 꼭짓점 하나**가 화면 중심에 사영되므로 그 하나가 덮인다 — 그 꼭짓점의 시점은 «지금 보고 있는 그 자세»라 누를 이유가 없다. 나머지는 종전 그대로다."
   },
+  "gate13_waiting_dropped_on_proj": {
+    "what": "투영만 바뀌어도(눈 불변) 대기 획을 버린다 — 37-4의 조항에 투영이 든다",
+    "stroke_was_waiting": true,
+    "waiting_before": 1,
+    "waiting_after": 0,
+    "strokes_before": 5,
+    "strokes_after": 4,
+    "undo_stack": 2
+  },
   "gate12_lens_dropped": {
     "what": "평행 → 원근 왕복에서 보기 렌즈(viewF)의 운명 — **버린다**(되살리지 않는다)",
     "viewF_before": 774.596669,
