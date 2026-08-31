@@ -136,8 +136,17 @@ export function fitPlan(
   const b = ((minB + e1 * d) + (maxB - e0 * d)) / 2
   const p = add3(add3(C, mul3(fwd, -d)), add3(mul3(right, a), mul3(up, b)))
   if (!Number.isFinite(p.x) || !Number.isFinite(p.y) || !Number.isFinite(p.z)) return null
+  // **평행이면 기준 깊이도 그 거리로 간다**(web2-42): 평행의 배율이 `f/D`이므로 눈만
+  // 옮기면 상이 한 톨도 안 바뀐다 — 그러면 돋보기가 정투상 뷰에서 조용히 죽는다.
+  // `d`는 「그 거리에서 대상이 화면을 채운다」의 답이고, 그 거리를 D로 쓰면 **평행에서도
+  // 같은 크기로 채워진다**(pivot 면에서 두 사영이 같은 배율이라는 그 성질이다).
+  // ⚠ 새 식이 아니다 — `parallelPose`가 「D = 눈에서 대상까지의 축방향 거리」이고
+  //    이 눈은 정확히 C에서 `d`만큼 뒤에 있다(위 `p`의 정의).
+  // ⚠⚠ **기준면이 pivot에서 «맞춘 대상»으로 옮겨간다** — 그 둘은 다른 점이다(pivot은
+  //    잉크 bbox 중심). 배율의 기준면은 지금 채우려는 그 대상이 맞으므로 그것이 옳고,
+  //    「D = pivot까지의 거리」는 **평행에 들어갈 때의 규약**이지 상시 불변식이 아니다.
   return {
-    pose: { p, q: { ...pose.q }, ...(pose.proj ? { proj: { ...pose.proj } } : {}) },
+    pose: { p, q: { ...pose.q }, ...(pose.proj ? { proj: { w: pose.proj.w, D: d } } : {}) },
     d, dExact, dNear, framable: dExact >= dNear, nearestDepth: d + minG,
   }
 }

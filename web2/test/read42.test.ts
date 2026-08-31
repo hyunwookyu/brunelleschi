@@ -212,6 +212,15 @@ it('원장', () => {
         '원근에서 화면 배율이 null이다 — 축척이 정의되지 않는다는 것의 코드 판',
         '렌즈를 바꾸면 mm가 비례해 바뀐다(31-2 무회귀)',
       ],
+      reachability: (
+        '**무엇이 이 기준을 넘는가**(#35): 자를 대각에서 **가로(W)**로 바꾼 판이 넘는다 — '
+        + '같은 f에서 환산 mm가 알려진 값에서 최대 `falsify_worst_err_mm_using_width` 만큼 벗어난다. '
+        + '문이 0.5 mm이므로 그 판은 한참 밖이다. ⚠ 프레임 비가 3:2면 W와 대각이 상수배라 **그 위약이 '
+        + '안 갈린다** — 그래서 4:3과 세로 판을 같이 돌린다(그 칸이 넘는 값을 낸다).'
+      ),
+      reachability_source: 'gate1_focal35/falsify_worst_err_mm_using_width',
+      reachability_value: (ledger['gate1_focal35'] as { falsify_worst_err_mm_using_width: number })
+        .falsify_worst_err_mm_using_width,
     },
     selfcheck_flags_known: {
       ratio_exactly_2: (

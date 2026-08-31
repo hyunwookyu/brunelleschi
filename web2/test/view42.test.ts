@@ -30,7 +30,7 @@ import { lerpPose, levelPose } from '../src/core/level'
 import { createAutoLevel } from '../src/app/autolevel'
 import {
   createApp, setPose, orbitPivot, orbitBy, dollyBy, panBy, undo, parallelPxPerUnit,
-  beginErase, eraseAt, endErase, commitStroke, type App,
+  beginErase, eraseAt, endErase, commitStroke, zoomFit, type App,
 } from '../src/app/state'
 import { session } from './session'
 import { liftAll } from '../src/core/lift'
@@ -153,6 +153,8 @@ describe('42-1 ① 여섯 면 — 투영이 평행이고 자세가 그 면이다
     ledger['gate1_six_faces'] = {
       what: '여섯 면 각각에서 ① 평행인가(재사영으로) ② 자세가 그 면인가 ③ 이름이 그 면인가',
       how: '같은 3D 방향의 선분 넷을 깊이만 달리해 재사영 — 방향 최대 차(도)와 길이 최대/최소',
+      // 도달 가능성이 가리키는 자리 — **한 경로로 풀리게** 따로 낸다(#40: `rows[*]`는 안 풀린다)
+      falsify_perspective_spread_deg: rows.map(r => (r.falsify_perspective as { spread_deg: number }).spread_deg),
       rows,
     }
   })
@@ -213,9 +215,12 @@ describe('42-1 ③ 손으로 돌려도 평행이 유지되고 이름이 「축�
     const D0 = app.pose.proj!.D
     const px0 = parallelPxPerUnit(app)!
     dollyBy(app, 2, { x: 600, y: 400 })
+    // ⚠ **그 자리에서 받아 둔다** — 아래에서 팬·돋보기가 D를 또 움직이므로, 원장을 쓰는
+    //   시점에 다시 계산하면 그 수는 「줌이 만든 비」가 아니다(#25의 형태).
+    const dollyRatio = parallelPxPerUnit(app)! / px0
     expect(isParallel(app.pose)).toBe(true)
     expect(app.pose.proj!.D).toBeCloseTo(D0 / 2, 9)
-    expect(parallelPxPerUnit(app)!).toBeCloseTo(px0 * 2, 6)
+    expect(dollyRatio).toBeCloseTo(2, 6)
     // **D의 정의가 계속 성립한다** — 눈에서 pivot까지의 축방향 거리
     const pv = orbitPivot(app)
     expect(dot3(sub3(pv, app.pose.p), fwdOf(app.pose))).toBeCloseTo(app.pose.proj!.D, 6)
@@ -238,13 +243,44 @@ describe('42-1 ③ 손으로 돌려도 평행이 유지되고 이름이 「축�
     const folded = levelPose(app.pose, app.pose, pv)
     expect(folded.proj).toEqual(app.pose.proj)
 
+    // ── 돋보기 — 평행에서는 **기준 깊이가 그 거리로 간다** ────────────────────
+    // 평행에서 눈만 옮기면 상이 한 톨도 안 바뀐다 — D를 안 옮기면 돋보기가 조용히 죽는다.
+    // 그래서 재는 것은 D 자체가 아니라 **화면이 채워졌는가**다(#92: 결과의 자리).
+    // ⚠ 여기서 D의 기준면은 pivot이 아니라 **돋보기가 잡은 대상의 중심**이다 — 그 둘은
+    //   다른 점이고(pivot은 잉크 bbox 중심), 배율의 기준면은 «맞춘 대상»이 맞다.
+    const fill = () => {
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity
+      for (const g of app.lift.lifted.values()) for (const p3 of [g.a3, g.b3]) {
+        const q = project(app.lift.an, app.pose, p3)
+        if (!q) continue
+        x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y)
+      }
+      return { w: (x1 - x0) / W, h: (y1 - y0) / H }
+    }
+    const fillBefore = fill()
+    const Dbefore = app.pose.proj!.D
+    const zf = zoomFit(app, { W, H })
+    const fillAfter = fill()
+    const zoomed = {
+      mode: zf.mode, parallel: isParallel(app.pose),
+      D_before: r6(Dbefore), D_after: r6(app.pose.proj?.D ?? NaN),
+      fill_before: { w: r6(fillBefore.w), h: r6(fillBefore.h) },
+      fill_after: { w: r6(fillAfter.w), h: r6(fillAfter.h) },
+    }
+    expect(zoomed.parallel, '돋보기가 평행을 안 버린다').toBe(true)
+    expect(app.pose.proj!.D, '기준 깊이가 실제로 움직인다').not.toBe(Dbefore)
+    // 한 축이 화면을 채운다(여백 규약 안) — 눈만 옮겼으면 이 값이 안 움직인다
+    expect(Math.max(fillAfter.w, fillAfter.h)).toBeGreaterThan(0.5)
+    expect(Math.max(fillAfter.w, fillAfter.h)).toBeLessThanOrEqual(1.0)
+
     ledger['gate3_hand_rotate'] = {
+      zoom_fit: zoomed,
       what: '정투상 뷰에서 손으로 돌리면 평행이 유지되고 이름이 축측이 된다 — 다섯 경로',
       orbit_1px: afterOrbit1,
       orbit_1px_rad: ORBIT_RAD_PER_PX,
       name_tolerance_rad: VIEW_NAME_ALIGN_RAD,
       axonometric: { spread_deg: r6(m.spreadDeg), len_ratio: r6(m.lenRatio) },
-      dolly: { D_before: r6(D0), D_after: r6(D0 / 2), px_per_unit_ratio: r6(parallelPxPerUnit(app)! / px0) },
+      dolly: { D_before: r6(D0), D_after: r6(D0 / 2), px_per_unit_ratio: r6(dollyRatio) },
       pan_keeps_D: true,
       turn_keeps_parallel: true,
       fold_keeps_parallel: true,
@@ -684,6 +720,16 @@ it('원장', () => {
         '② 저장본에서 `view.proj`를 지우면 그 획의 3D 좌표가 **달라진다** — gate10',
         '③ 이름 허용 각: 궤도 1 px에서 「축측」으로 **실제로 바뀐다** — gate3_name_threshold',
       ],
+      reachability: (
+        '**무엇이 이 기준을 넘는가**(#35): 같은 여섯 자세에서 투영만 원근으로 둔 판이 넘는다. '
+        + '그 판의 방향 차가 1.97~2.03°이고 길이 비가 1.94~2.56이므로, 문(방향 차 1e-9 · 길이 비 '
+        + '1±1e-9)은 **아홉 자릿수 밖**에서 갈린다 — 즉 이 게이트는 「배선이 됐는가」를 가른다. '
+        + '⚠ 중간 프레임(w=0.5)이 그 사이에 실제로 앉는다(0.888° · 1.453) — 문이 **연속인 축** 위에 '
+        + '있고 «0/1 이름표»가 아니라는 증거가 그 값이다(#40).'
+      ),
+      reachability_source: 'gate1_six_faces/falsify_perspective_spread_deg',
+      reachability_value: (ledger['gate1_six_faces'] as { falsify_perspective_spread_deg: number[] })
+        .falsify_perspective_spread_deg,
     },
     selfcheck_flags_known: {
       exact_zeros: (
@@ -691,6 +737,17 @@ it('원장', () => {
         + '평행 사영에서 분모가 상수이므로 아핀이고, 아핀은 평행을 보존한다. **그래서 그 0 자체는 '
         + '아무것도 안 잰다** — 판별력은 같은 자세의 원근 위약 판이 준다(그 값이 나란히 있다). '
         + '그리고 그 0은 **배선을 잰다**: 이름표만 붙고 사영이 안 갈리면 이 0이 안 나온다.'
+      ),
+      align_deg_zero: (
+        '⚠ `align_deg`의 0(평면·저면)도 보장이다 — 면 자세가 **정수 축 벡터의 외적**이라 '
+        + '오차가 구성상 안 쌓인다(31-1이 같은 자리에 같은 주석을 달았다). 나머지 넷의 1e-6은 '
+        + '반올림 자리(r6)이지 실측 오차가 아니다.'
+      ),
+      reproject_err_zero: (
+        '⚠ `reproject_err_px = 0`(원칙 d)은 **절반이 보장이다**: 「명시 점 2」 칸에서 획의 끝점이 '
+        + '이미 그 3D 점의 사영이므로, 리프팅이 **그 점을 고르면** 왕복이 부동소수까지 같다. '
+        + '**그래서 이 0이 재는 것은 «어느 후보를 골랐는가»다** — 다른 후보(교차·축)를 고르면 0이 '
+        + '아니다. 여섯 면에서 전부 0이라는 것은 「명시 점이 이겼다」의 값이고, 그것이 37-1 표의 첫 줄이다.'
       ),
       constants_snapshot_absent: (
         '⚠ `constantsSnapshot()` / `metric_defs`가 없다 — **web2 라인 전체의 구멍**이고 이 원장만의 '

@@ -1,0 +1,465 @@
+{
+  "what": "web2-42 1번·2번 — 일곱 개의 이름 붙은 뷰와 평행 투영. 「평행인가」를 **재사영**으로 잰다.",
+  "canonical_command": "LEDGER=1 npx vitest run test/view42.test.ts",
+  "why": "평행은 이름표가 아니라 **그림의 성질**이다 — 평행선이 평행하게 찍히고 깊이가 크기를 안 바꾼다. 그래서 게이트가 `pose.proj`를 세지 않고 같은 3D 선분 넷을 깊이만 달리해 재사영한 뒤 방향 차와 길이 비를 낸다(#92: 이름표를 바꿔도 자리가 안 움직이면 안 잰 것이다).",
+  "design": {
+    "where": "투영은 `CamPose.proj = {w, D}`에 산다 — 앱 상태가 아니라 **포즈**다(#54).",
+    "why_pose": "리프팅이 «획이 그려진 시점»(`s.view`)으로 광선을 되짚기 때문이다. 투영이 앱 상태면 평행에서 그은 획을 나중에 원근으로 되풀어 **조용히 틀린 좌표**가 난다.",
+    "formula": "den = (1−w)(−z) + wD · 화면 = 주점 + f(x,−y)/den. w=0이면 종전 식과 문자 그대로 같다.",
+    "scale": "평행의 배율은 `f/D`이고 D는 눈에서 pivot까지의 축방향 거리 — pivot 면에서 크기가 보존된다(#88).",
+    "untouched": "`Camera.f`·`fSource`는 안 건드린다(지시 문면). 투영은 별도 축이다."
+  },
+  "fixtures": {
+    "doc": "test/fixtures.ts constructedDoc() + 기둥 둘 — 2점(vp0 900 · vp1 100)",
+    "W": 1200,
+    "H": 800,
+    "f": 387.298335,
+    "fSource": "two-vp"
+  },
+  "constants": {
+    "CUBE_CENTER_R": 0.2,
+    "CUBE_SIZE_PX": 80,
+    "VIEW_NAME_ALIGN_RAD": 0.0025,
+    "ORBIT_RAD_PER_PX": 0.005,
+    "CUBE_ALIGN_MAX_DEG": 0.01,
+    "TURN_ANIM_MS": 300
+  },
+  "constants_note": "새 값 둘: `CUBE_CENTER_R`(크기의 배수 — px ⛔ #88)와 `VIEW_NAME_ALIGN_RAD`. 뒤쪽은 **숫자를 새로 안 짓는다** — 궤도 한 픽셀의 절반이다(그래서 한 픽셀은 넘고 잡음은 안 넘는다). 전환 길이는 31-1의 TURN_ANIM_MS(300)를 그대로 가리킨다(#54).",
+  "gate1_six_faces": {
+    "what": "여섯 면 각각에서 ① 평행인가(재사영으로) ② 자세가 그 면인가 ③ 이름이 그 면인가",
+    "how": "같은 3D 방향의 선분 넷을 깊이만 달리해 재사영 — 방향 최대 차(도)와 길이 최대/최소",
+    "falsify_perspective_spread_deg": [
+      1.974537,
+      1.974537,
+      2.026905,
+      1.974537,
+      2.026905,
+      2.026905
+    ],
+    "rows": [
+      {
+        "name": "정면",
+        "view_name": "정면",
+        "align_deg": 0.000001,
+        "parallel": {
+          "n": 4,
+          "spread_deg": 0,
+          "len_ratio": 1
+        },
+        "falsify_perspective": {
+          "n": 4,
+          "spread_deg": 1.974537,
+          "len_ratio": 2.084358
+        },
+        "w": 1,
+        "D": 6.791353
+      },
+      {
+        "name": "후면",
+        "view_name": "후면",
+        "align_deg": 0.000001,
+        "parallel": {
+          "n": 4,
+          "spread_deg": 0,
+          "len_ratio": 1
+        },
+        "falsify_perspective": {
+          "n": 4,
+          "spread_deg": 1.974537,
+          "len_ratio": 2.559737
+        },
+        "w": 1,
+        "D": 6.791353
+      },
+      {
+        "name": "평면",
+        "view_name": "평면",
+        "align_deg": 0,
+        "parallel": {
+          "n": 4,
+          "spread_deg": 0,
+          "len_ratio": 1
+        },
+        "falsify_perspective": {
+          "n": 4,
+          "spread_deg": 2.026905,
+          "len_ratio": 2.387165
+        },
+        "w": 1,
+        "D": 6.791353
+      },
+      {
+        "name": "저면",
+        "view_name": "저면",
+        "align_deg": 0,
+        "parallel": {
+          "n": 4,
+          "spread_deg": 0,
+          "len_ratio": 1
+        },
+        "falsify_perspective": {
+          "n": 4,
+          "spread_deg": 1.974537,
+          "len_ratio": 2.084358
+        },
+        "w": 1,
+        "D": 6.791353
+      },
+      {
+        "name": "우측면",
+        "view_name": "우측면",
+        "align_deg": 0.000001,
+        "parallel": {
+          "n": 4,
+          "spread_deg": 0,
+          "len_ratio": 1
+        },
+        "falsify_perspective": {
+          "n": 4,
+          "spread_deg": 2.026905,
+          "len_ratio": 2.387165
+        },
+        "w": 1,
+        "D": 6.791353
+      },
+      {
+        "name": "좌측면",
+        "view_name": "좌측면",
+        "align_deg": 0.000001,
+        "parallel": {
+          "n": 4,
+          "spread_deg": 0,
+          "len_ratio": 1
+        },
+        "falsify_perspective": {
+          "n": 4,
+          "spread_deg": 2.026905,
+          "len_ratio": 1.943835
+        },
+        "w": 1,
+        "D": 6.791353
+      }
+    ]
+  },
+  "gate2_center_perspective": {
+    "what": "가운데 = 투시. 자세 불변 · 투영만 원근 · 이름 「투시」",
+    "hit_kind": "center",
+    "center_radius_px": 16,
+    "parallel_spread_deg": 0,
+    "perspective_spread_deg": 1.974537,
+    "identity_when_already_perspective": true
+  },
+  "gate3_hand_rotate": {
+    "zoom_fit": {
+      "mode": "pose",
+      "parallel": true,
+      "D_before": 3.395677,
+      "D_after": 2.135874,
+      "fill_before": {
+        "w": 0.503199,
+        "h": 0.291166
+      },
+      "fill_after": {
+        "w": 0.8,
+        "h": 0.462904
+      }
+    },
+    "what": "정투상 뷰에서 손으로 돌리면 평행이 유지되고 이름이 축측이 된다 — 다섯 경로",
+    "orbit_1px": {
+      "parallel": true,
+      "name": "축측"
+    },
+    "orbit_1px_rad": 0.005,
+    "name_tolerance_rad": 0.0025,
+    "axonometric": {
+      "spread_deg": 0,
+      "len_ratio": 1
+    },
+    "dolly": {
+      "D_before": 6.791353,
+      "D_after": 3.395677,
+      "px_per_unit_ratio": 2
+    },
+    "pan_keeps_D": true,
+    "turn_keeps_parallel": true,
+    "fold_keeps_parallel": true
+  },
+  "gate3_name_threshold": {
+    "tolerance_rad": 0.0025,
+    "one_orbit_px_rad": 0.005,
+    "noise_px": 2.0000000000000002e-7,
+    "note": "허용 각은 궤도 반 픽셀이다 — 숫자를 새로 안 짓고 ORBIT_RAD_PER_PX에서 유도한다(#88)"
+  },
+  "gate4_interpolation": {
+    "what": "원근 → 평행 전환의 중간 프레임 — 평행도와 그때의 재사영 지표",
+    "anim_ms": 300,
+    "w_mid_frame": 0.5,
+    "spread_deg": {
+      "perspective": 1.974537,
+      "mid": 0.888195,
+      "parallel": 0
+    },
+    "len_ratio": {
+      "perspective": 2.084358,
+      "mid": 1.453337,
+      "parallel": 1
+    },
+    "note": "사이 값도 «눈을 뒤로 빼며 조인» 원근이라 넷 다 사영된다(camera.ts projDen 주석)"
+  },
+  "gate5_no_vp": {
+    "vp_marks_parallel": 0,
+    "vp_marks_perspective": 1,
+    "horizon_parallel": null,
+    "horizon_draw_pose": 400,
+    "axes_all_directional": true
+  },
+  "gate6_locked_before_confirm": {
+    "what": "확정 전에는 평행이 잠긴다 — 조건은 31-2(렌즈)와 **같은 술어**(lensAllowed)",
+    "vps0": {
+      "allowed": false,
+      "cube": null
+    },
+    "vps1": {
+      "allowed": false,
+      "cube": null
+    },
+    "vps2": {
+      "allowed": true,
+      "cube": "geom"
+    },
+    "note": "문이 둘이 아니다 — `cubeGeom`이 null이면 면을 짚을 길 자체가 없고, 그 위에 술어가 한 겹 더 있다"
+  },
+  "gate7_table_in_parallel": {
+    "what": "37-1 조합 표를 **여섯 면 전부**에서 돌렸다(한 자세만 돌면 #12에 걸린다)",
+    "table": {
+      "원근_정면": [
+        {
+          "row": "명시 점 2",
+          "lifted": true,
+          "waiting": 0
+        },
+        {
+          "row": "명시 점 1 + 축",
+          "lifted": true,
+          "axis": "vp1"
+        },
+        {
+          "row": "허공 · 축 없음",
+          "lifted": false,
+          "waiting_has_it": true
+        },
+        {
+          "row": "원칙 d 재사영 오차 px",
+          "reproject_err_px": 0
+        }
+      ],
+      "정면": [
+        {
+          "row": "명시 점 2",
+          "lifted": true,
+          "waiting": 0
+        },
+        {
+          "row": "명시 점 1 + 축",
+          "lifted": true,
+          "axis": "vp1"
+        },
+        {
+          "row": "허공 · 축 없음",
+          "lifted": false,
+          "waiting_has_it": true
+        },
+        {
+          "row": "원칙 d 재사영 오차 px",
+          "reproject_err_px": 0
+        }
+      ],
+      "후면": [
+        {
+          "row": "명시 점 2",
+          "lifted": true,
+          "waiting": 0
+        },
+        {
+          "row": "명시 점 1 + 축",
+          "lifted": true,
+          "axis": "vp1"
+        },
+        {
+          "row": "허공 · 축 없음",
+          "lifted": false,
+          "waiting_has_it": true
+        },
+        {
+          "row": "원칙 d 재사영 오차 px",
+          "reproject_err_px": 0
+        }
+      ],
+      "평면": [
+        {
+          "row": "명시 점 2",
+          "lifted": true,
+          "waiting": 0
+        },
+        {
+          "row": "명시 점 1 + 축",
+          "lifted": true,
+          "axis": "vp0"
+        },
+        {
+          "row": "허공 · 축 없음",
+          "lifted": false,
+          "waiting_has_it": true
+        },
+        {
+          "row": "원칙 d 재사영 오차 px",
+          "reproject_err_px": 0
+        }
+      ],
+      "저면": [
+        {
+          "row": "명시 점 2",
+          "lifted": true,
+          "waiting": 0
+        },
+        {
+          "row": "명시 점 1 + 축",
+          "lifted": true,
+          "axis": "vp0"
+        },
+        {
+          "row": "허공 · 축 없음",
+          "lifted": false,
+          "waiting_has_it": true
+        },
+        {
+          "row": "원칙 d 재사영 오차 px",
+          "reproject_err_px": 0
+        }
+      ],
+      "우측면": [
+        {
+          "row": "명시 점 2",
+          "lifted": true,
+          "waiting": 0
+        },
+        {
+          "row": "명시 점 1 + 축",
+          "lifted": true,
+          "axis": "vp0"
+        },
+        {
+          "row": "허공 · 축 없음",
+          "lifted": false,
+          "waiting_has_it": true
+        },
+        {
+          "row": "원칙 d 재사영 오차 px",
+          "reproject_err_px": 0
+        }
+      ],
+      "좌측면": [
+        {
+          "row": "명시 점 2",
+          "lifted": true,
+          "waiting": 0
+        },
+        {
+          "row": "명시 점 1 + 축",
+          "lifted": true,
+          "axis": "vp0"
+        },
+        {
+          "row": "허공 · 축 없음",
+          "lifted": false,
+          "waiting_has_it": true
+        },
+        {
+          "row": "원칙 d 재사영 오차 px",
+          "reproject_err_px": 0
+        }
+      ]
+    }
+  },
+  "gate8_coords_unchanged": {
+    "what": "평행 ↔ 원근 · 그 사이의 궤도·줌 — 승격 좌표 전수 대조",
+    "n_segments": 4,
+    "identical": true,
+    "note": "리프팅은 획이 그려진 그 시점(`s.view`)만 보고 «지금 어떻게 보는가»를 안 본다"
+  },
+  "gate9_drop_on_unconfirm": {
+    "what": "「확정이 풀리면 원근으로」 — **앱에서 도달 불가**임을 먼저 재고, 기제만 합성으로 확인한다",
+    "undo_stack_depth": 4,
+    "after_5_undo": {
+      "vps": 2,
+      "done": true
+    },
+    "eraser_refuses_construction": true,
+    "reachability": "되돌리기는 작도 획을 안 싣고(`undoOrExplain`) 지우개는 작도 획을 거부한다(`eraseAt`). 남는 길은 비우기뿐이고 그것은 포즈를 작도 포즈로 되돌린다 — 즉 이 조항은 **안전망**이다. 31-2의 `!lensAllowed`가 같은 성질이고 **같은 줄에 있다**(#54: 조건을 새로 안 지었다).",
+    "synthetic": {
+      "parallel_after": false,
+      "allowed_after": false
+    }
+  },
+  "gate9_drop_on_promotion": {
+    "what": "차수 승격(소실점 개수 변화) → 평행을 버린다. **렌즈를 버리는 그 사건과 같은 서명**이다(#54)",
+    "vps": 3,
+    "unreachable_in_app": "평행 뷰에서 그은 획은 `analyze`가 내용으로 돌린다(「작도는 작도 포즈에서만」) — 그래서 **평행에 있는 동안 승격이 일어날 길이 실제로는 없다.** 여기서 재는 것은 기제다."
+  },
+  "gate10_roundtrip": {
+    "what": "평행 뷰에서 그은 획의 투영이 저장·복원을 지난다 + 그것을 버린 위약 판",
+    "lifted_before": 3,
+    "proj_saved": {
+      "w": 1,
+      "D": 7.2253928083231465
+    },
+    "identical_after_roundtrip": true,
+    "falsify_strip_proj_changes_coords": true
+  },
+  "gate": {
+    "for": "web2-42 1번·2번",
+    "registered": [
+      "여섯 면 각각에서 평행이다 — 방향 차 0.000000° · 길이 비 1.000000 (원근 위약 판은 둘 다 크다)",
+      "여섯 면 각각에서 자세가 그 면이고 이름이 그 면이다",
+      "가운데를 누르면 원근으로 돌아온다 — 자세는 안 바뀐다",
+      "정투상 뷰에서 손으로 돌려도 평행이 유지되고(궤도·줌·팬·90°·접기) 이름이 축측이 된다",
+      "전환의 중간 프레임이 0과 1 사이이고 그 사이도 정당한 사영이다(넷 다 사영된다)",
+      "확정 전에는 여섯 면이 잠긴다(술어 + 큐브 부재)",
+      "37-1 조합 표가 여섯 면 전부에서 원근과 같은 답을 낸다 · 재사영 오차 < 0.01 px",
+      "평행 ↔ 원근을 오가도 승격 좌표가 **비트 단위로** 같다",
+      "확정이 풀리거나 승격이 일어나면 원근으로 돌아온다",
+      "평행 뷰에서 그은 획의 투영이 저장·복원을 지난다(버린 위약 판은 좌표가 달라진다)"
+    ],
+    "falsification": [
+      "① 같은 자세에서 `pose.proj`를 떼면(w=0) 방향 차와 길이 비가 **실제로 움직인다** — gate1의 `falsify_perspective`",
+      "② 저장본에서 `view.proj`를 지우면 그 획의 3D 좌표가 **달라진다** — gate10",
+      "③ 이름 허용 각: 궤도 1 px에서 「축측」으로 **실제로 바뀐다** — gate3_name_threshold"
+    ],
+    "reachability": "**무엇이 이 기준을 넘는가**(#35): 같은 여섯 자세에서 투영만 원근으로 둔 판이 넘는다. 그 판의 방향 차가 1.97~2.03°이고 길이 비가 1.94~2.56이므로, 문(방향 차 1e-9 · 길이 비 1±1e-9)은 **아홉 자릿수 밖**에서 갈린다 — 즉 이 게이트는 「배선이 됐는가」를 가른다. ⚠ 중간 프레임(w=0.5)이 그 사이에 실제로 앉는다(0.888° · 1.453) — 문이 **연속인 축** 위에 있고 «0/1 이름표»가 아니라는 증거가 그 값이다(#40).",
+    "reachability_source": "gate1_six_faces/falsify_perspective_spread_deg",
+    "reachability_value": [
+      1.974537,
+      1.974537,
+      2.026905,
+      1.974537,
+      2.026905,
+      2.026905
+    ]
+  },
+  "selfcheck_flags_known": {
+    "exact_zeros": "⚠ 「방향 차 0.000000 · 길이 비 1.000000」은 **설계 보장이다**(§5.1 자기참조 유형 3): 평행 사영에서 분모가 상수이므로 아핀이고, 아핀은 평행을 보존한다. **그래서 그 0 자체는 아무것도 안 잰다** — 판별력은 같은 자세의 원근 위약 판이 준다(그 값이 나란히 있다). 그리고 그 0은 **배선을 잰다**: 이름표만 붙고 사영이 안 갈리면 이 0이 안 나온다.",
+    "align_deg_zero": "⚠ `align_deg`의 0(평면·저면)도 보장이다 — 면 자세가 **정수 축 벡터의 외적**이라 오차가 구성상 안 쌓인다(31-1이 같은 자리에 같은 주석을 달았다). 나머지 넷의 1e-6은 반올림 자리(r6)이지 실측 오차가 아니다.",
+    "reproject_err_zero": "⚠ `reproject_err_px = 0`(원칙 d)은 **절반이 보장이다**: 「명시 점 2」 칸에서 획의 끝점이 이미 그 3D 점의 사영이므로, 리프팅이 **그 점을 고르면** 왕복이 부동소수까지 같다. **그래서 이 0이 재는 것은 «어느 후보를 골랐는가»다** — 다른 후보(교차·축)를 고르면 0이 아니다. 여섯 면에서 전부 0이라는 것은 「명시 점이 이겼다」의 값이고, 그것이 37-1 표의 첫 줄이다.",
+    "constants_snapshot_absent": "⚠ `constantsSnapshot()` / `metric_defs`가 없다 — **web2 라인 전체의 구멍**이고 이 원장만의 것이 아니다. 그 기계는 `web/test/constants.ts`에만 있다(DEFERRED)."
+  },
+  "pitfalls": [
+    "#92",
+    "#94",
+    "#88",
+    "#54",
+    "#77",
+    "#42",
+    "#12"
+  ],
+  "pitfalls_note": "#92 — 「평행인가」를 이름표가 아니라 **결과의 자리**(재사영)로 잰다. #94 — 「확정 전에는 잠긴다」를 문면이 아니라 **그 자리를 짚어** 잰다(e2e가 실제 클릭으로 한 번 더). #88 — 배율을 상수로 안 두고 `f/D`로 유도한다 · 가운데 반지름은 크기의 배수다. #54 — 투영의 출처가 포즈 하나 · 잠금 술어가 `lensAllowed` 하나 · 버리는 자리가 렌즈와 같은 자리. #77 ㉡ — w=0이 종전 식과 같은 것은 **구성상 항등**이라 임계를 안 건다. #12 — 조합 표를 한 자세가 아니라 여섯 면 전부에서 돈다."
+}
