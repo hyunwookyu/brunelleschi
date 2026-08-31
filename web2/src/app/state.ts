@@ -730,8 +730,14 @@ export interface WriteMode {
   box: WBox | null
   /** **고치기 진입인가**(39-5) — 치수 숫자를 꾹 눌러 들어왔다. 그 자리에 다시 쓴다 */
   edit: boolean
-  /** 들어올 때 그 획이 갖고 있던 치수(고치기의 되돌림 몫 · 없으면 undefined) */
-  prevDim?: number
+  /** **이 상태가 쌓고 있는 실행취소 한 칸**(32-2의 규약: 획 걷기와 값 싣기가 한 op다).
+   *  글씨 획마다 새 op를 쌓으면 「실행취소 한 번에 손글씨로」가 깨진다 — 여기 하나에 모은다. */
+  op: Op | null
+  /** 들어올 때 그 획이 갖고 있던 값 — 실행취소가 되돌릴 자리(고치기든 새 치수든 같다) */
+  prevDim: number | undefined
+  prevScaleRef: number | undefined
+  /** 지금까지 실린 값(mm) — 안 실렸으면 undefined. 상태가 끝날 때 op가 이것을 든다 */
+  applied?: number
 }
 
 export const writeActive = (app: App): boolean => app.write !== null
@@ -781,8 +787,10 @@ export function beginWriting(app: App, p: Pt, now: number): 'dim' | 'line' | nul
   app.write = {
     target: hit.id, ids: [], last: now,
     box: inflate(boxOfPts([p])!, C.DIM_GLYPH_MAX_PX / app.view.s / 2),
-    edit: hit.via === 'dim', ...(prevDim !== undefined ? { prevDim } : {}),
+    edit: hit.via === 'dim', op: null,
+    prevDim: t?.dim, prevScaleRef: app.doc.scaleRef,
   }
+  void prevDim
   // 사후 수정(32-2)의 고르기는 놓는다 — 진입 동작이 하나로 통일됐다(39-5 문면).
   app.dimEdit = null
   for (const l of app.listeners) l()
@@ -790,11 +798,32 @@ export function beginWriting(app: App, p: Pt, now: number): 'dim' | 'line' | nul
 }
 
 /** **종료**(39-3) — 사유를 받는다. 안 쓰고 나갔으면(글씨 획 0) **아무 일도 없던 것**이다.
- *  ⚠ 쓰다 만 글씨(읽혔지만 안 읽히는 것)는 **종이에 그대로 남는다** — 32-2의 그 규약
- *  그대로이고(#61 ⚠⚠ 조용히 틀린 치수보다 다시 쓰기가 싸다), 지우개로 지운다. */
+ *
+ *  ⚠⚠ **손글씨를 걷는 자리가 여기다**(적용 시점이 아니라). 32-2는 읽히는 즉시 획을
+ *  걷었는데, 그러면 **여러 자리 수가 못 선다**: 「2」가 실리며 잉크가 사라지고, 이어 쓴
+ *  「5」가 **혼자 남아** 25가 아니라 5가 된다(화면 팔이 실제로 그 값을 냈다 — `dim 5`).
+ *  32-2의 주석이 적어 둔 «2»→«25»→«2500»은 잉크가 **쌓여 있어야** 성립한다.
+ *  그래서 이 회차는 갈랐다: **값은 획마다 다시 실리고**(읽는 것은 늘 뭉치 전체다)
+ *  **잉크는 상태가 끝날 때 한 번 걷힌다**. 32-2의 규약(획 걷기와 값 싣기가 **한 op**이고
+ *  실행취소 한 번에 손글씨로 돌아간다)은 그대로 산다 — 그 op가 `w.op`다.
+ *  ⚠ 못 읽은 글씨는 **종이에 그대로 남는다**(#61 ⚠⚠ 조용히 틀린 치수보다 다시 쓰기가
+ *  싸다). 그때 op는 «획을 더한 것»으로 남아 실행취소가 그 획들을 걷는다. */
 export function endWriting(app: App, _why: WriteEnd) {
-  if (!app.write) return
+  const w = app.write
+  if (!w) return
   app.write = null
+  if (w.applied !== undefined && w.op) {
+    // 쌓아 둔 op를 32-2의 모양으로 바꾼다 — 더한 획들이 «걷힌 획»이 되고 값이 붙는다
+    const removed: Op['removed'] = []
+    for (let i = app.doc.strokes.length - 1; i >= 0; i--) {
+      if (w.ids.includes(app.doc.strokes[i]!.id)) removed.push({ stroke: app.doc.strokes[i]!, index: i })
+    }
+    for (const rm of removed) app.doc.strokes.splice(rm.index, 1)
+    w.op.added = []
+    w.op.removed = removed
+    w.op.dim = { id: w.target, mm: w.applied, prev: w.prevDim, prevScaleRef: w.prevScaleRef }
+    recompute(app)
+  }
   for (const l of app.listeners) l()
 }
 
@@ -856,16 +885,6 @@ export function writingStrokes(app: App, ids: number[]): Pt[][] {
   return out
 }
 
-/** 그 뭉치의 획들을 문서에서 걷는다 — 반환은 실행취소가 되돌릴 목록(자리 포함). */
-function removeWritingInk(app: App, ids: number[]): Op['removed'] {
-  const removed: Op['removed'] = []
-  for (let i = app.doc.strokes.length - 1; i >= 0; i--) {
-    if (ids.includes(app.doc.strokes[i]!.id)) removed.push({ stroke: app.doc.strokes[i]!, index: i })
-  }
-  for (const rm of removed) app.doc.strokes.splice(rm.index, 1)
-  return removed
-}
-
 // ── 즉시 변환(web2-32 2번) — **제안을 걷어냈다** · 그리고 **대상은 추정이 아니다**(39-1)
 //
 // 29-2는 「먼저 바꾸고 되돌리게 하면 방해가 된다」를 근거로 제안을 택했다. 사용자가 그
@@ -877,47 +896,27 @@ function removeWritingInk(app: App, ids: number[]): Op['removed'] {
 // ①만 남고, 39가 고친 것은 **«언제 읽는가»**다: 글씨 상태 안에서만 읽는다.
 // **즉시 변환 자체는 그대로 산다** — 상태 안에서 숫자로 읽히면 그 자리에서 치수가 된다.
 
-/** 글씨 뭉치를 **즉시 치수로 바꾼다** — 값이 대상 획에 실리고 손글씨는 걷힌다.
- *  **실행취소 한 번에 손글씨 상태로 돌아간다**: 획 걷기와 값 싣기가 **한 op**다.
- *
- *  ⚠⚠ **대상을 인자로 받는다**(web2-39 1번). 32-3은 이 자리에서 `dimTargetFor`로
- *  «숫자의 위치가 어느 선을 가리키는가»를 맞혔는데, **꾹 눌러 고른 그 선이 대상**이므로
- *  맞힐 일이 없어졌다. 그 층(근접·정렬·선상 위치의 가중합)은 통째로 걷혔다. */
-export function applyWrittenDim(app: App, ids: number[], mm: number, target: number): DimResult {
-  if (ids.length === 0) return 'none'
-  const t = app.doc.strokes.find(x => x.id === target)
-  if (!t) return 'none'
-  const prev = t.dim
-  const prevScaleRef = app.doc.scaleRef
-  const r = setDimension(app, target, mm)
-  // ⚠ `'baseScale'`도 **값은 실렸다**(겹 획이라 축척 기준이 못 됐을 뿐이다 — web2-21 1-b).
-  //   그때 손글씨를 안 걷으면 치수와 글씨가 겹쳐 남는다. 안내는 부르는 쪽이 한 줄 띄운다.
-  if (r !== 'applied' && r !== 'scale' && r !== 'baseScale') return r
-  const removed = removeWritingInk(app, ids)
-  app.undoStack.push({ removed, added: [], dim: { id: target, mm, prev, prevScaleRef } })
-  app.redoStack = []
-  recompute(app)
-  return r
-}
-
 /** **읽은 문자열 → 치수**(web2-39). `main.ts`의 비동기 껍데기와 팔이 **같은 자리**를
  *  부른다(#54 · #62 — 32-2는 이 사슬이 `main.ts` 안에만 있어서 단위 팔이 못 닿았다).
- *  못 읽으면 `'unread'`이고 그때 **글씨는 종이에 그대로 남는다**(#61 ⚠⚠). */
+ *  못 읽으면 `'unread'`이고 그때 **글씨는 종이에 그대로 남는다**(#61 ⚠⚠).
+ *
+ *  ⚠⚠ **획마다 «뭉치 전체»를 다시 읽고 값을 다시 싣는다** — 32-2의 주석이 적어 둔
+ *  «2»→«25»→«2500»이 그것이다. 잉크는 **안 걷는다**(걷는 자리는 `endWriting` 하나다):
+ *  실릴 때마다 걷으면 이어 쓴 자리가 혼자 남아 25가 5가 된다(화면 팔이 그 값을 냈다).
+ *
+ *  ⚠ **대상은 인자가 아니라 상태가 든다**(web2-39 1번). 32-3은 이 자리에서 `dimTargetFor`로
+ *  «숫자의 위치가 어느 선을 가리키는가»를 맞혔는데, **꾹 눌러 고른 그 선이 대상**이므로
+ *  맞힐 일이 없어졌다. 그 층(근접·정렬·선상 위치의 가중합)은 통째로 걷혔다. */
 export function applyRecognized(app: App, text: string): DimResult | 'unread' {
   const w = app.write
   if (!w) return 'none'
-  const ids = handwritingGroup(app)
-  if (ids.length === 0) return 'none'
+  if (handwritingGroup(app).length === 0) return 'none'
   const mm = parseDim(text, app.doc.unit)
   if (mm === null) return 'unread'
-  const r = applyWrittenDim(app, ids, mm, w.target)
-  // 실렸으면 이 뭉치는 소진됐다 — 이어 쓰는 다음 획은 **새 뭉치**다(같은 상태 안에서
-  // 「2500」을 쓰고 이어서 또 쓰면 앞의 것이 두 번 실리지 않는다).
-  if (r === 'applied' || r === 'scale' || r === 'baseScale') {
-    w.ids = []
-    w.box = null
-    delete w.prevDim          // 고치기가 완료됐다 — 되돌릴 옛 값이 없다
-  }
+  const r = setDimension(app, w.target, mm)
+  // ⚠ `'baseScale'`도 **값은 실렸다**(겹 획이라 축척 기준이 못 됐을 뿐이다 — web2-21 1-b).
+  //   안내는 부르는 쪽이 한 줄 띄운다.
+  if (r === 'applied' || r === 'scale' || r === 'baseScale') w.applied = mm
   return r
 }
 
@@ -1280,13 +1279,19 @@ export function commitWriting(app: App, pts: Pt[], now: number): Stroke | null {
   const b = { ...pts[pts.length - 1]! }
   const s = commitStroke(app, a, b, pts.map(p => ({ ...p })))
   s.text = 1
-  // 실행취소는 **획 하나**다(`commitStroke`가 이미 쌓았다 — 내용 획일 때만). 글씨는
-  // 3D가 없어 role이 content가 아닐 수 있으므로 그 자리를 여기서 채운다.
+  // **실행취소는 이 상태 전체가 한 칸이다**(32-2의 규약 그대로 — 획 걷기와 값 싣기가 한
+  // op다). 글씨 획마다 op를 쌓으면 「실행취소 한 번에 손글씨로」가 획 수만큼 갈라진다.
+  // ⚠ `commitStroke`가 **내용 획일 때만** op를 쌓는다(글씨는 3D가 없어 role이 갈릴 수
+  //   있다) — 그래서 쌓았으면 그것을 흡수하고 안 쌓았으면 여기서 만든다.
   const top = app.undoStack[app.undoStack.length - 1]
-  if (!top || top.added[0]?.id !== s.id) {
-    app.undoStack.push({ removed: [], added: [s] })
-    app.redoStack = []
+  const mine = top && top.added.length === 1 && top.added[0]!.id === s.id ? app.undoStack.pop()! : null
+  if (!app.write.op) {
+    app.write.op = mine ?? { removed: [], added: [s] }
+    app.undoStack.push(app.write.op)
+  } else {
+    app.write.op.added.push(s)
   }
+  app.redoStack = []
   noteWriting(app, s, now)
   recompute(app)        // text 표식이 붙었으니 리프팅에서 빠진다
   return s

@@ -273,6 +273,44 @@ describe('39-1 ② 누른 그 선의 치수가 된다', () => {
     expect(differ.length, '두 답이 갈리는 칸이 있어야 이 팔이 무언가를 잰다').toBeGreaterThan(0)
   })
 
+  it('**여러 자리 수가 자란다** — 「2500」이 네 획을 지나며 2 → 25 → 250 → 2500 (39-2′)', () => {
+    // ⚠⚠ 이 팔이 없어서 32-2의 결함이 안 보였다. 32 회차의 단위 팔은 네 획을 **다 그은
+    //    뒤에** 한 번만 읽었는데 **앱은 획마다 읽는다**(#62의 형태: 팔이 앱과 다른 순서로
+    //    부르면 그 순서의 결함이 안 보인다). 화면 팔이 「25」에서 **`dim 5`**를 냈다.
+    const sc = scene()
+    const at = midOf(sc.s, sc.bot.id)
+    const spot = { x: at.x - 40, y: at.y - 42 }
+    expect(pressNear(sc.s, sc.bot.id, spot, 0)).toBe('line')
+    const steps: { strokes: number; read: string; dim: number | undefined; ink: number }[] = []
+    let t = 0
+    for (const st of glyphStrokes('2500', spot.x, spot.y)) {
+      sc.s.write(st, (t += 100))
+      const g = handwritingGroup(sc.s.app)
+      const read = recognizeDigitsNet(writingStrokes(sc.s.app, g))
+      applyRecognized(sc.s.app, read)
+      steps.push({
+        strokes: g.length, read,
+        dim: sc.s.app.doc.strokes.find(x => x.id === sc.bot.id)?.dim,
+        ink: sc.s.app.doc.strokes.filter(x => isText(x)).length,
+      })
+    }
+    const inkWhile = sc.s.app.doc.strokes.filter(x => isText(x)).length
+    endWriting(sc.s.app, 'idle')
+    const inkAfter = sc.s.app.doc.strokes.filter(x => isText(x)).length
+    L['gate2_multidigit'] = {
+      what: '「2500」을 **획마다 읽으며** 값이 자라는 것을 낸다(앱이 실제로 하는 순서).',
+      steps,
+      ink_while_writing: inkWhile, ink_after_end: inkAfter,
+      final_dim: sc.s.app.doc.strokes.find(x => x.id === sc.bot.id)?.dim,
+      regression_it_catches: '32-2는 **값이 실리는 즉시 잉크를 걷었다** — 그러면 이어 쓴 '
+        + '자리가 혼자 남아 25가 **5**가 된다(화면 팔 `writedim32.spec` ㉡이 그 값을 냈다). '
+        + '이제 잉크는 **상태가 끝날 때** 걷힌다.',
+    }
+    expect(steps[steps.length - 1]!.dim).toBe(2500)
+    expect(inkWhile).toBeGreaterThan(0)     // 쓰는 동안은 남아 있다
+    expect(inkAfter).toBe(0)                // 멈추면 걷힌다
+  })
+
   it('빈 곳을 꾹 눌러 들어가는 길이 **없다** (지시문 ⛔)', () => {
     const { s } = scene()
     const empty: Pt[] = [{ x: 60, y: 120 }, { x: 1150, y: 90 }, { x: 640, y: 250 }]
@@ -582,6 +620,8 @@ describe('39 ⑧⑨ 옐로 무회귀 · 즉시 변환 유지', () => {
     const before = sc.s.app.doc.strokes.length
     applyRecognized(sc.s.app, recognizeDigitsNet(writingStrokes(sc.s.app, handwritingGroup(sc.s.app))))
     const applied = dimsOf(sc.s)
+    const whileWriting = sc.s.app.doc.strokes.length   // 쓰는 동안은 잉크가 **남아 있다**
+    endWriting(sc.s.app, 'idle')                       // 손이 멈춘다 — 여기서 걷힌다
     const afterApply = sc.s.app.doc.strokes.length
     undo(sc.s.app)
     const afterUndo = dimsOf(sc.s)
@@ -593,13 +633,17 @@ describe('39 ⑧⑨ 옐로 무회귀 · 즉시 변환 유지', () => {
     let t2 = 0
     for (const st of glyphStrokes('25', at2.x, at2.y - 40)) sc2.s.write(st, (t2 += 100))
     applyRecognized(sc2.s.app, recognizeDigitsNet(writingStrokes(sc2.s.app, handwritingGroup(sc2.s.app))))
+    endWriting(sc2.s.app, 'idle')
     const round = parseBrnl(serializeBrnl({ doc: sc2.s.app.doc, nextId: sc2.s.app.nextId, drawView: sc2.s.app.drawView }))!
     const roundDims = round.doc.strokes.filter(x => x.dim !== undefined).map(x => x.dim)
     L['gate9_instant'] = {
       what: '「즉시 변환」은 32-2가 만든 그대로다 — 바뀐 것은 **언제 읽는가**이지 '
         + '**읽고 나서 무엇을 하는가**가 아니다(지시문 게이트 마지막 줄).',
       approval_step: null,
-      strokes: { before, after_apply: afterApply, ink_removed: before - afterApply },
+      strokes: { before, while_writing: whileWriting, after_end: afterApply, ink_removed: whileWriting - afterApply },
+      ink_removed_at: '**적용이 아니라 «상태 종료»다**(web2-39) — 그래야 「2500」이 네 획을 '
+        + '지나며 2 → 25 → 250 → 2500으로 자란다. 32-2처럼 적용마다 걷으면 이어 쓴 자리가 '
+        + '혼자 남아 25가 **5**가 된다(화면 팔이 그 값을 냈다).',
       applied, after_undo: afterUndo, ink_back: backIds.length,
       roundtrip_dims: roundDims,
     }
@@ -639,7 +683,25 @@ describe('원장', () => {
       why: '사라진 것은 **판정**이지 자료구조도 인식기도 아니다. 「인식기를 손대지 마라 — '
         + '이건 인식의 문제가 아니다」(지시문 하지 말 것).',
     }
-    L['pitfalls'] = ['#92', '#54', '#61', '#62', '#12', '#82', '#90', '#91', '#42', '#77', '#73']
+    L['selfcheck_notes'] = {
+      'gate4_idle.rows[0].gapMs = 0': '**입력이지 오차가 아니다** — 「멈춤」 문턱을 훑는 '
+        + '축의 한 칸(쉼 0 ms = 이어 쓴다)이다. 임계를 안 건다.',
+      'gate5_no_axis_snap.as_writing.moved_px = 0': '⚠ **설계 보장이다**(CLAUDE.md §5.1 '
+        + '자기참조 유형 3): 글씨 갈래는 `resolveCommit`을 안 지나고 `commitWriting`이 '
+        + '`pts[0]`·`pts[last]`를 **그대로** 싣는다 — 옮겨질 길이 없다. 그러므로 이 0은 '
+        + '**측정이 아니라 보장**이고, 이 팔이 재는 값은 옆 칸(`as_construction.moved_px` '
+        + '= 3.9590 px)이다. 0을 «임계»로 읽지 마라 — 그 단언은 **회귀 문**이다(누가 글씨를 '
+        + '다시 확정 경로로 돌리면 빨개진다).',
+      'constants_snapshot_absent': '⚠ `constantsSnapshot()` / `metric_defs` 스냅샷이 없다 — '
+        + '**web2 라인 전체의 구멍**이고 이 원장만의 것이 아니다(`glyph35`·`turn31`·`lens31`·'
+        + '`skew34`가 같은 플래그를 낸다). 그 기계는 `web/test/constants.ts`에만 있고 web2에는 '
+        + '대응물이 없다. 이 회차도 상수를 `constants` 블록에 그대로 적는 것까지만 한다 — '
+        + '기계를 세우는 것은 web2 전역 작업이라 **DEFERRED**다.',
+      'retired_ledgers': '`scribble32_web2.json`·`dimtarget32_web2.json`은 **하네스가 사라진 '
+        + '원장**이다(이 회차가 그 기제를 걷었다). 지우지 않았다 — 원장은 기록이다. 그 값을 '
+        + '인용하는 문서는 이제 「그때 그랬다」로 읽는다.',
+    }
+    L['pitfalls'] = ['#92', '#54', '#61', '#62', '#12', '#82', '#90', '#91', '#42', '#77', '#73', '#19', '#5', '#88']
     L['what_this_does_not_say'] = '누름 시간(450ms)·멈춤 시간(1000ms)·강조 굵기는 **동작점**이고 '
       + '손 표본이 0이다(#12 · AS-C1 계열). 합성 자형 픽스처(`glyphs.ts`)로 돌았고 실기기 '
       + '필체·필압 표본은 여전히 0이다. 그리고 이 표는 **작도 포즈**의 것이다.'

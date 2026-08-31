@@ -19,7 +19,7 @@ import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { session, type Session } from './session'
 import {
-  handwritingGroup, writingStrokes, applyRecognized,
+  handwritingGroup, writingStrokes, applyRecognized, endWriting,
   pickTargetAt, dimLabelPos, pickDimLabel, moveDim, setDimension, undo, redo,
   addLayer, setActiveLayer, writeTargetAt,
 } from '../src/app/state'
@@ -133,6 +133,9 @@ describe('32-2 즉시 치수선 — 승인 단계가 없다', () => {
     writeAlong(s, '2500', line.id, { off: 26, rot: false, seed: 7, jit: 0.5 })
     const wrote = s.app.doc.strokes.length
     const r = writeDim(s)
+    // ⚠⚠ **web2-39**: 잉크가 걷히는 자리는 «적용»이 아니라 **«상태 종료»**다(그래야
+    //    「2500」이 네 획을 지나며 2 → 25 → 250 → 2500으로 자란다). 손이 멈추면 끝난다.
+    endWriting(s.app, 'idle')
     console.log(`[32-2 ①] 읽음 "${r.text}" → ${r.mm}mm · 결과 ${r.result} · 획 ${before}→${wrote}→${s.app.doc.strokes.length}`)
     expect(r.mm, '「2500」이 읽힌다').toBe(2500)
     expect(r.result === 'scale' || r.result === 'applied', '승인 없이 적용된다').toBe(true)
@@ -153,6 +156,7 @@ describe('32-2 즉시 치수선 — 승인 단계가 없다', () => {
     expect(enter(s, line.id)).toBe('line')
     writeAlong(s, '2500', line.id, { off: 26, rot: false, seed: 7, jit: 0.5 })
     expect(writeDim(s).mm).toBe(2500)
+    endWriting(s.app, 'idle')          // 잉크가 걷히는 자리(web2-39)
 
     const pos = dimLabelPos(s.app, line.id)!
     expect(pos, '치수 숫자에 자리가 있다').toBeTruthy()

@@ -2,7 +2,7 @@
 
 import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc,
   pickDimTarget, pickTargetAt, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick,
-  handwritingGroup, applyWrittenDim, applyRecognized, writingStrokes, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
+  handwritingGroup, applyRecognized, writingStrokes, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
   writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, settleActive, type Tool } from './state'
 import { initPaperbar } from './paperbar'

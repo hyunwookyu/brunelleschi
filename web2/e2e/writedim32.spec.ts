@@ -116,9 +116,19 @@ test('㉡ 승인 단계가 없다 — 제안 줄이 화면에 없다 (진입은 
     { x: 595, y: 612 }, { x: 588, y: 621 }, { x: 576, y: 619 },
   ])
   await page.waitForTimeout(400)          // 인식은 비동기다(있으면 그 사이에 끝난다)
+  const mid = await state(page)
+  // ⚠⚠ **web2-39 2′**: 값이 실려도 잉크는 **아직 남아 있다** — 그래야 「25」가 두 획을
+  //    지나며 2 → 25로 자란다. 32-2는 실리는 즉시 걷어서 이어 쓴 「5」가 혼자 남았고,
+  //    그 결과가 **`dim 5`**였다(이 팔이 그 값을 냈다). 이제 25다.
+  console.log(`[32-2 화면 ㉡ 쓰는 중] 글씨 ${JSON.stringify(mid.text)} · 치수 ${JSON.stringify(mid.dims)}`)
+  expect(mid.dims.length, '값이 실렸다').toBe(1)
+  expect(mid.dims[0].dim, '두 획이 «25»로 자란다(«5»가 아니다)').toBe(25)
+  expect(mid.text.length, '잉크는 아직 남아 있다').toBe(2)
+  await page.waitForTimeout(1400)         // 손이 멈춘다 — 여기서 잉크가 걷힌다
   const st = await state(page)
-  console.log(`[32-2 화면 ㉡] 글씨 ${JSON.stringify(st.text)} · 치수 ${JSON.stringify(st.dims)}`)
-  expect(st.text.length + st.dims.length, '글씨로 남거나 치수가 되거나 — 둘 중 하나다').toBeGreaterThan(0)
+  console.log(`[32-2 화면 ㉡ 멈춘 뒤] 글씨 ${JSON.stringify(st.text)} · 치수 ${JSON.stringify(st.dims)}`)
+  expect(st.text.length, '멈추면 손글씨가 걷힌다').toBe(0)
+  expect(st.dims.length + st.text.length, '글씨로 남거나 치수가 되거나 — 둘 중 하나다').toBeGreaterThan(0)
   expect(await page.locator('#dimsuggest').count()).toBe(0)
   const notice = (await page.textContent('#notice')) ?? ''
   expect(notice, '「받는다/무시」를 묻지 않는다').not.toContain('받는다')
