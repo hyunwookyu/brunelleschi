@@ -34,9 +34,9 @@
     "fixture": "`test/pull37scene.ts`의 `busy37()` — 상자로 카메라를 닫고 격자·대각을 쌓은 도면. 30-11(`ext30.test.ts`의 `busy()`)과 같은 형태다: 지시가 「획 40개 이상의 장면에서 잰다. 깨끗한 장면으로 재면 아무것도 못 본다」를 못 박았다(#71 · D-5).",
     "density": {
       "strokes": 41,
-      "lifted": 35,
-      "waiting": 6,
-      "intersections3": 83,
+      "lifted": 29,
+      "waiting": 12,
+      "intersections3": 116,
       "ink_box": {
         "x0": 280,
         "y0": 360,
@@ -83,22 +83,22 @@
         "seed": 14241,
         "radius_px": 8,
         "trials": 1200,
-        "acquired": 563,
-        "pulled": 394,
-        "moved_median_px": 3.501631,
-        "moved_p90_px": 7.295376,
+        "acquired": 568,
+        "pulled": 413,
+        "moved_median_px": 3.824941,
+        "moved_p90_px": 7.296418,
         "moved_max_px": 7.999148,
         "by_kind": {
-          "mid": 50,
-          "near": 405,
-          "end": 72,
-          "vertex": 14,
-          "int": 22
+          "mid": 45,
+          "end": 69,
+          "near": 391,
+          "int": 48,
+          "vertex": 15
         },
         "bins": {
-          "le_tap": 169,
-          "tap_to_half": 146,
-          "half_to_r": 248
+          "le_tap": 155,
+          "tap_to_half": 143,
+          "half_to_r": 270
         }
       },
       {
@@ -107,21 +107,21 @@
         "radius_px": 8,
         "trials": 1200,
         "acquired": 574,
-        "pulled": 421,
-        "moved_median_px": 3.877382,
-        "moved_p90_px": 7.184652,
-        "moved_max_px": 7.983717,
+        "pulled": 430,
+        "moved_median_px": 4.000615,
+        "moved_p90_px": 7.153131,
+        "moved_max_px": 7.991707,
         "by_kind": {
-          "end": 79,
-          "near": 403,
-          "mid": 50,
-          "int": 31,
-          "vertex": 11
+          "end": 74,
+          "near": 392,
+          "int": 46,
+          "mid": 49,
+          "vertex": 13
         },
         "bins": {
-          "le_tap": 153,
-          "tap_to_half": 147,
-          "half_to_r": 274
+          "le_tap": 144,
+          "tap_to_half": 143,
+          "half_to_r": 287
         }
       },
       {
@@ -129,22 +129,22 @@
         "seed": 40199,
         "radius_px": 8,
         "trials": 1200,
-        "acquired": 560,
-        "pulled": 414,
-        "moved_median_px": 3.866638,
-        "moved_p90_px": 7.119391,
+        "acquired": 562,
+        "pulled": 431,
+        "moved_median_px": 4.143547,
+        "moved_p90_px": 7.176801,
         "moved_max_px": 7.988047,
         "by_kind": {
-          "near": 411,
-          "end": 61,
-          "mid": 53,
-          "int": 26,
-          "vertex": 9
+          "near": 388,
+          "end": 56,
+          "int": 57,
+          "mid": 49,
+          "vertex": 12
         },
         "bins": {
-          "le_tap": 146,
+          "le_tap": 131,
           "tap_to_half": 140,
-          "half_to_r": 274
+          "half_to_r": 291
         }
       },
       {
@@ -152,21 +152,21 @@
         "seed": 14241,
         "radius_px": 8,
         "trials": 1200,
-        "acquired": 108,
-        "pulled": 77,
-        "moved_median_px": 3.465669,
-        "moved_p90_px": 7.364655,
+        "acquired": 107,
+        "pulled": 80,
+        "moved_median_px": 4.023463,
+        "moved_p90_px": 7.3611,
         "moved_max_px": 7.966489,
         "by_kind": {
+          "near": 67,
+          "int": 15,
           "mid": 12,
-          "near": 80,
-          "end": 13,
-          "int": 3
+          "end": 13
         },
         "bins": {
-          "le_tap": 31,
-          "tap_to_half": 27,
-          "half_to_r": 50
+          "le_tap": 27,
+          "tap_to_half": 26,
+          "half_to_r": 54
         }
       },
       {
@@ -174,23 +174,23 @@
         "seed": 23595,
         "radius_px": 8,
         "trials": 1200,
-        "acquired": 114,
-        "pulled": 94,
-        "moved_median_px": 4.782228,
-        "moved_p90_px": 7.095959,
+        "acquired": 113,
+        "pulled": 90,
+        "moved_median_px": 4.677536,
+        "moved_p90_px": 6.936678,
         "moved_max_px": 7.96709,
         "by_kind": {
-          "near": 80,
-          "int": 7,
+          "near": 79,
           "end": 16,
           "mid": 7,
+          "int": 7,
           "vertex": 2,
           "vp": 2
         },
         "bins": {
-          "le_tap": 20,
-          "tap_to_half": 26,
-          "half_to_r": 68
+          "le_tap": 23,
+          "tap_to_half": 24,
+          "half_to_r": 66
         }
       },
       {
@@ -199,9 +199,9 @@
         "radius_px": 8,
         "trials": 1200,
         "acquired": 104,
-        "pulled": 69,
-        "moved_median_px": 3.358879,
-        "moved_p90_px": 7.625632,
+        "pulled": 71,
+        "moved_median_px": 3.350208,
+        "moved_p90_px": 7.531794,
         "moved_max_px": 7.908467,
         "by_kind": {
           "near": 73,
@@ -212,8 +212,8 @@
           "vertex": 1
         },
         "bins": {
-          "le_tap": 35,
-          "tap_to_half": 24,
+          "le_tap": 33,
+          "tap_to_half": 26,
           "half_to_r": 45
         }
       }
@@ -221,22 +221,22 @@
     "pooled": [
       {
         "band": "ink",
-        "acquired": "1697/3600",
-        "pulled": "1229/3600"
+        "acquired": "1704/3600",
+        "pulled": "1274/3600"
       },
       {
         "band": "screen",
-        "acquired": "326/3600",
-        "pulled": "240/3600"
+        "acquired": "324/3600",
+        "pulled": "241/3600"
       }
     ],
-    "seed_spread": "⚠ **분자/분모로 읽는다**(#14). 시드 변동폭 때문에 유효 자릿수는 2자리다 — ink 대역 세 시드의 당김은 394/1200 · 421/1200 · 414/1200이고 screen 대역은 77/1200 · 94/1200 · 69/1200이다.",
+    "seed_spread": "⚠ **분자/분모로 읽는다**(#14). 시드 변동폭 때문에 유효 자릿수는 2자리다 — ink 대역 세 시드의 당김은 413/1200 · 430/1200 · 431/1200이고 screen 대역은 80/1200 · 90/1200 · 71/1200이다.",
     "reference": {
       "band": "ink",
       "seed": 14241,
       "trials": 1200,
-      "acquired": 563,
-      "pulled": 394
+      "acquired": 568,
+      "pulled": 413
     }
   },
   "falsification": {
@@ -357,8 +357,8 @@
     },
     "restore": {
       "what": "위약을 되돌린 뒤 같은 시드로 다시 돌려 기준선이 **글자 그대로 복원**되는지 본다(갈아 끼움이 새면 위 수가 전부 오염이다).",
-      "before": "394/1200",
-      "after": "394/1200",
+      "before": "413/1200",
+      "after": "413/1200",
       "radius_after": 8
     }
   },
@@ -402,45 +402,45 @@
         "k": 0.5,
         "radius_px": 4,
         "trials": 1200,
-        "acquired": 373,
-        "pulled": 170
+        "acquired": 371,
+        "pulled": 178
       },
       {
         "k": 1,
         "radius_px": 8,
         "trials": 1200,
-        "acquired": 563,
-        "pulled": 394
+        "acquired": 568,
+        "pulled": 413
       },
       {
         "k": 1.5,
         "radius_px": 12,
         "trials": 1200,
-        "acquired": 703,
-        "pulled": 593
+        "acquired": 707,
+        "pulled": 611
       },
       {
         "k": 2,
         "radius_px": 16,
         "trials": 1200,
-        "acquired": 819,
-        "pulled": 742
+        "acquired": 821,
+        "pulled": 758
       },
       {
         "k": 2.5,
         "radius_px": 20,
         "trials": 1200,
         "acquired": 905,
-        "pulled": 854
+        "pulled": 873
       }
     ]
   },
   "totals": {
-    "ink_acquired": 1697,
-    "ink_pulled": 1229,
+    "ink_acquired": 1704,
+    "ink_pulled": 1274,
     "ink_trials": 3600,
-    "screen_acquired": 326,
-    "screen_pulled": 240,
+    "screen_acquired": 324,
+    "screen_pulled": 241,
     "screen_trials": 3600,
     "placebo_r0_total": 0,
     "placebo_off_total": 0,
@@ -451,12 +451,12 @@
   },
   "gate": {
     "①반경": "시작점 오스냅의 획득 반경은 **8 화면 css px**이고 자리는 `core/constants.ts`의 `OSNAP_RADIUS_PX` 하나다. 줌은 부르는 자리에서 `/ viewScale(app)`로 나뉜다(위 `radius`).",
-    "②기준선": "획 41개 도면의 작도 영역에서 허공 시작 3600칸 중 **1229칸**이 «같은 점» 문보다 멀리 끌려갔고(획득은 1697칸), 화면 전체 대역에서는 240/3600이다. 대역을 안 적은 수는 뜻이 없다(#71).",
-    "③반증": "반경 0 판 0 · 오스냅 끔 판 0 — 둘 다 정확히 0이고, 되돌리면 394/1200로 복원된다.",
+    "②기준선": "획 41개 도면의 작도 영역에서 허공 시작 3600칸 중 **1274칸**이 «같은 점» 문보다 멀리 끌려갔고(획득은 1704칸), 화면 전체 대역에서는 241/3600이다. 대역을 안 적은 수는 뜻이 없다(#71).",
+    "③반증": "반경 0 판 0 · 오스냅 끔 판 0 — 둘 다 정확히 0이고, 되돌리면 413/1200로 복원된다.",
     "④대조군": "겨냥한 손은 82/82 전량 획득된다 — 팔이 «획득»을 못 재는 것이 아니다.",
     "⑤탐침": "24/24칸에서 확정 획의 시작점이 탐침과 **정확히 같다**(최악 0 px).",
-    "reachability": "**무엇이 이 기준선을 움직이는가**(#35). 셋이다: ㉠ `OSNAP_RADIUS_PX`(위 `radius_sweep`이 그 곡선이다 — k=0에서 0, k=2.5에서 854/1200) ㉡ **오스냅 종류 목록**(전부 끄면 0 — `placebo_kinds_off`. 실제로 물어 가는 것의 대부분은 `near`다: {\"mid\":50,\"near\":405,\"end\":72,\"vertex\":14,\"int\":22}) ㉢ **장면의 밀도**(같은 앱·같은 반경인데 화면 전체 대역에서는 240/3600로 내려간다). ⚠ 그래서 이 수의 «크기»는 픽스처가 정한다 — 부호(당김이 실재한다)만 기제의 것이다.",
-    "reachability_value": 1229,
+    "reachability": "**무엇이 이 기준선을 움직이는가**(#35). 셋이다: ㉠ `OSNAP_RADIUS_PX`(위 `radius_sweep`이 그 곡선이다 — k=0에서 0, k=2.5에서 873/1200) ㉡ **오스냅 종류 목록**(전부 끄면 0 — `placebo_kinds_off`. 실제로 물어 가는 것의 대부분은 `near`다: {\"mid\":45,\"end\":69,\"near\":391,\"int\":48,\"vertex\":15}) ㉢ **장면의 밀도**(같은 앱·같은 반경인데 화면 전체 대역에서는 241/3600로 내려간다). ⚠ 그래서 이 수의 «크기»는 픽스처가 정한다 — 부호(당김이 실재한다)만 기제의 것이다.",
+    "reachability_value": 1274,
     "reachability_source": "totals/ink_pulled",
     "reachability_value_fixture_determined": true,
     "reachability_note": "분모는 `totals/ink_trials`(3600 = 시드 3 × 1200)다 — 비율로 안 적는다(#14). 이 값이 0으로 내려오면 그것은 「당김이 없어졌다」일 수도 있고 **픽스처가 비었다**일 수도 있다. 그 둘을 가르는 것이 `aimed_control`(겨냥한 손이 여전히 82/82인가)이다."

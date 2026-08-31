@@ -10,37 +10,37 @@
       "strokes": 50,
       "cells": 47,
       "candidates": 47,
-      "med_ms": 3.3,
-      "max_ms": 7.5
+      "med_ms": 5,
+      "max_ms": 12.5
     },
     {
       "strokes": 100,
       "cells": 97,
       "candidates": 97,
-      "med_ms": 5,
-      "max_ms": 6.2
+      "med_ms": 8.3,
+      "max_ms": 8.7
     },
     {
       "strokes": 200,
       "cells": 197,
       "candidates": 197,
-      "med_ms": 17.3,
-      "max_ms": 19.8
+      "med_ms": 23,
+      "max_ms": 28.8
     },
     {
       "strokes": 400,
       "cells": 397,
       "candidates": 397,
-      "med_ms": 63.4,
-      "max_ms": 68.8
+      "med_ms": 84.5,
+      "max_ms": 95.7
     }
   ],
   "two_axis_control": {
     "strokes": 40,
     "cells": 361,
     "candidates": 361,
-    "med_ms": 20.8,
-    "max_ms": 21.8
+    "med_ms": 29.6,
+    "max_ms": 35.6
   },
   "resolution": {
     "note": "#71 ㉢ — 축이 값을 가르는가: 400획 med > 100획 max를 하네스가 단언. 저역(50↔100)의 겹침 여부는 단언 없이 값으로 남긴다(겹치면 그 두 행은 분해 못 한 것)",

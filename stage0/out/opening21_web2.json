@@ -72,14 +72,14 @@
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=24.3)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=24.3)"
         },
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=15.2)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=15.2)"
         },
         {
           "axis": "vp0",
@@ -138,14 +138,14 @@
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=24.3)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=24.3)"
         },
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=15.3)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=15.3)"
         },
         {
           "axis": "vp0",
@@ -204,14 +204,14 @@
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=24.2)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=24.2)"
         },
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=14.9)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=14.9)"
         },
         {
           "axis": "vp0",
@@ -270,14 +270,14 @@
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=22.0)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=22.0)"
         },
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=14.0)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=14.0)"
         },
         {
           "axis": "vp0",
@@ -336,14 +336,14 @@
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=26.6)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=26.6)"
         },
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=16.6)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=16.6)"
         },
         {
           "axis": "vp0",
@@ -402,14 +402,14 @@
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=24.4)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=24.4)"
         },
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=15.3)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=15.3)"
         },
         {
           "axis": "vp0",
@@ -468,14 +468,14 @@
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=21.8)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=21.8)"
         },
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=13.7)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=13.7)"
         },
         {
           "axis": "vp0",
@@ -534,14 +534,14 @@
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=19.9)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=19.9)"
         },
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=13.3)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=13.3)"
         },
         {
           "axis": "vp0",
@@ -600,14 +600,14 @@
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=20.0)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=20.0)"
         },
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=13.4)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=13.4)"
         },
         {
           "axis": "vp0",
@@ -666,14 +666,14 @@
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=19.9)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=19.9)"
         },
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=13.1)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=13.1)"
         },
         {
           "axis": "vp1",
@@ -732,14 +732,14 @@
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=17.7)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=17.7)"
         },
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=11.9)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=11.9)"
         },
         {
           "axis": "vp0",
@@ -798,14 +798,14 @@
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=22.3)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=22.3)"
         },
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=14.9)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=14.9)"
         },
         {
           "axis": "vp0",
@@ -864,14 +864,14 @@
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=20.0)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=20.0)"
         },
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=13.4)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=13.4)"
         },
         {
           "axis": "vp0",
@@ -930,14 +930,14 @@
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=17.4)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=17.4)"
         },
         {
           "axis": "V",
           "lifted": false,
-          "why": "none",
-          "whyProbe": "noSeed(d=11.7)"
+          "why": "noPoint",
+          "whyProbe": "noPoint(d=11.7)"
         },
         {
           "axis": "vp0",
@@ -1226,7 +1226,7 @@
   ],
   "why_counts": {
     "hasHeight": 28,
-    "none": 28
+    "noPoint": 28
   },
   "aNot3d_distribution": {
     "1": 11,
