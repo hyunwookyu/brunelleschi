@@ -342,32 +342,6 @@ test('⑦⑧⑨ — rect 성장에 결 불변 · 세 장에도 아래 획 읽힘
   // 빈 자리 바닥값과의 차**로 한다. 분해능 단언(#71 ㉢)이 짝이다 — 두 값이 실제로 갈린다.
   expect(mech.filmBare.mn - mech.filmBelow.mn,
     `아래 획이 바닥보다 어둡다(바닥 ${mech.filmBare.mn.toFixed(1)} · 획 ${mech.filmBelow.mn.toFixed(1)})`).toBeGreaterThan(30)
-  // ⚠⚠ **출하 색에서도 잰다**(2차 리뷰어 [6] — 「위약 판에서만 초록인 게이트」를 안 만든다).
-  //    이 팔의 문(30)은 **막의 기전**에 걸린 것이고 그 축을 고정하려고 위에서 잉크를 흑연으로
-  //    못 박았다. 그런데 **출하되는 화면에서 그 아래 획은 대기 획이라 옅은 청색**이다(37-2) —
-  //    그 판의 값을 안 재면 「세 장을 겹쳐도 읽힌다」를 **아무 팔도 안 지키게** 된다.
-  //    ⛔ 여기에는 문을 안 건다: 「얼마여야 읽히는가」는 이 회차가 정할 것이 아니다(실기기 몫).
-  //    수를 남기고 사람이 보게 한다.
-  await page.evaluate(() => (window as never as { __b2: { diag: { waitInk: (m: string) => unknown } } })
-    .__b2.diag.waitInk('on'))
-  await settle(page)
-  const shipped = await page.evaluate(() => {
-    const rowMin = (c: HTMLCanvasElement, y: number) => {
-      const dpr = window.devicePixelRatio || 1
-      const g = c.getContext('2d')!
-      const d = g.getImageData(Math.round(300 * dpr), Math.round(y * dpr), Math.round(300 * dpr), 1).data
-      let mn = 255
-      for (let i = 0; i < d.length; i += 4) mn = Math.min(mn, (d[i]! + d[i + 1]! + d[i + 2]!) / 3)
-      return mn
-    }
-    const film = document.getElementById('film') as HTMLCanvasElement
-    return { below: rowMin(film, 250), bare: rowMin(film, 290) }
-  })
-  const shippedContrast = shipped.bare - shipped.below
-  console.log(`[측정] 세 장 아래 대비 — 흑연(축 고정) ${(mech.filmBare.mn - mech.filmBelow.mn).toFixed(1)} `
-    + `· **출하 색(대기 = 옅은 청색)** ${shippedContrast.toFixed(1)} (바닥 ${shipped.bare.toFixed(1)} · 획 ${shipped.below.toFixed(1)})`)
-  expect(shippedContrast, '출하 색에서도 아래 획이 바닥보다는 어둡다(0 초과 — 문이 아니라 하한)')
-    .toBeGreaterThan(0)
   expect(Math.abs(mech.filmBare.mn - mech.filmAbove.mn),
     `위 획 자리는 바닥과 같다(바닥 ${mech.filmBare.mn.toFixed(1)} · 자리 ${mech.filmAbove.mn.toFixed(1)})`).toBeLessThan(10)
   expect(mech.layercAbove.alpha).toBeGreaterThan(0)        // 위 획이 #layerc에
@@ -406,4 +380,30 @@ test('⑦⑧⑨ — rect 성장에 결 불변 · 세 장에도 아래 획 읽힘
   record(test.info().project.name, 'order_mech_and_visible', {
     mech, above_contrast: aboveContrast, broken_contrast: lightness(brokenSide) - lightness(brokenRow),
   })
+  // ⚠⚠ **출하 색에서도 잰다**(2차 리뷰어 [6] — 「위약 판에서만 초록인 게이트」를 안 만든다).
+  //    이 팔의 문(30)은 **막의 기전**에 걸린 것이고 그 축을 고정하려고 위에서 잉크를 흑연으로
+  //    못 박았다. 그런데 **출하되는 화면에서 그 아래 획은 대기 획이라 옅은 청색**이다(37-2) —
+  //    그 판의 값을 안 재면 「세 장을 겹쳐도 읽힌다」를 **아무 팔도 안 지키게** 된다.
+  //    ⛔ 여기에는 문을 안 건다: 「얼마여야 읽히는가」는 이 회차가 정할 것이 아니다(실기기 몫).
+  //    수를 남기고 사람이 보게 한다.
+  await page.evaluate(() => (window as never as { __b2: { diag: { waitInk: (m: string) => unknown } } })
+    .__b2.diag.waitInk('on'))
+  await settle(page)
+  const shipped = await page.evaluate(() => {
+    const rowMin = (c: HTMLCanvasElement, y: number) => {
+      const dpr = window.devicePixelRatio || 1
+      const g = c.getContext('2d')!
+      const d = g.getImageData(Math.round(300 * dpr), Math.round(y * dpr), Math.round(300 * dpr), 1).data
+      let mn = 255
+      for (let i = 0; i < d.length; i += 4) mn = Math.min(mn, (d[i]! + d[i + 1]! + d[i + 2]!) / 3)
+      return mn
+    }
+    const film = document.getElementById('film') as HTMLCanvasElement
+    return { below: rowMin(film, 250), bare: rowMin(film, 290) }
+  })
+  const shippedContrast = shipped.bare - shipped.below
+  console.log(`[측정] 세 장 아래 대비 — 흑연(축 고정) ${(mech.filmBare.mn - mech.filmBelow.mn).toFixed(1)} `
+    + `· **출하 색(대기 = 옅은 청색)** ${shippedContrast.toFixed(1)} (바닥 ${shipped.bare.toFixed(1)} · 획 ${shipped.below.toFixed(1)})`)
+  expect(shippedContrast, '출하 색에서도 아래 획이 바닥보다는 어둡다(0 초과 — 문이 아니라 하한)')
+    .toBeGreaterThan(0)
 })
