@@ -219,14 +219,21 @@ describe('39 ① 세로 작도선 여럿 — 치수가 안 생긴다 (이 라운
       //    움직인다). 그래서 **같은 27칸을 수리 «전» 트리에서 돌렸다.**
       before_repair: {
         tree: '00e6edc (제품 코드는 main c48b9e4와 같다 — §0은 문서만 고쳤다)',
-        how: 'git archive 00e6edc web2/src web2/test/session.ts web2/test/glyphs.ts | tar -x -C web2/_old39'
-          + ' 뒤 그 트리를 가리키는 팔을 돌린다(임시 · 커밋 ⛔ · 원장은 이 값을 든다)',
-        cells: 27, cells_with_text: 18, cells_with_dim: 18, text_total: 44, dims_total: 20,
+        arm_source: 'web2/tools/before39-arm.ts.txt — **팔의 소스를 저장소에 남겼다**'
+          + '(2차 리뷰어 [8]). 그 파일 머리에 다시 돌리는 명령이 그대로 있다. `.txt`인 이유는 '
+          + '그 팔이 **없어진 기제**를 부르므로 지금 트리에서 컴파일되지 않기 때문이다 — '
+          + '지우면 아래 수를 지키는 기계가 하나도 없다.',
+        cells: 27, cells_with_text: 18, cells_with_dim: 18,
+        strokes_drawn: 81, strokes_committed: 81, text_total: 44, dims_total: 20,
+        denominators: '**분모 셋을 갈라 적는다**(2차 리뷰어 [10]): 그은 획 81 = 남은 획 81'
+          + '(이 픽스처는 버려지는 획이 없다) · 그중 글씨가 된 획 **44**. 글씨가 난 18칸의 '
+          + '획 합이 **54**이므로 44는 그 18칸 안에서도 **전부는 아니다** — 그것이 사용자가 '
+          + '보고한 「획마다 다르게 처리된다」의 자국이다(뭉치에 못 든 획이 작도선으로 남는다).',
         zero_cells: 9,
         zero_cells_axis: '**전부 `len: 90` 행이다** — 획 상자가 `DIM_GLYPH_MAX_PX`(60)를 넘어 '
-          + '32-1의 뭉치가 안 섰다. 즉 이 27칸은 그 문을 **양쪽으로 실제로 넘나든다**'
-          + '(18 안 · 9 밖). 「대역을 덮는다」는 이 값이 근거이고, 수리 후의 0/27은 그 대역에서 '
-          + '**하나도 안 남았다**는 뜻이다.',
+          + '32-1의 뭉치가 안 섰다. ⚠ **넘나든 것은 «크기» 문 하나다**(2차 리뷰어 [7]): '
+          + '간격 12·30·55는 전부 문(72) 안쪽이고 개수 2·3·4는 전부 최소 2 이상이라 '
+          + '그 두 문은 **한쪽만** 훑었다. 「대역을 덮는다」는 크기 축에 대해서만 관측이다.',
       },
     }
     expect(rows.every(r => r.text === 0 && r.dims === 0)).toBe(true)
@@ -297,8 +304,12 @@ describe('39-1 ② 누른 그 선의 치수가 된다', () => {
         hit_on_intended: '1/4',
         note: '**32-3은 네 칸 모두 획 6에 실었다** — 뜻한 선과 갈린 칸이 **3/4**다'
           + '(근접 대리물의 2/4보다 세다). 39는 네 칸 전부 뜻한 선에 싣는다(4/4).'
-          + ' ⚠ 이 넷은 **32-3이 지도록 고른 자리**다 — 32-3의 일반 적중률이 아니다'
-          + '(그 값은 `dimtarget32_web2.json`에 있고 이 회차가 다시 재지 않았다).',
+          + ' ⚠⚠ **고른 기준은 «근접 대리물(`pickTargetAt`)이 갈리는 자리» 하나다** — «32-3이 지는 자리»로 고르지 않았다(고를 수도 없었다: 32-3은 이 트리에 없다). '
+          + '32-3의 3/4은 고른 결과가 아니라 **관측**이다. ⚠ 다만 **무관하지도 않다** — 32-3의 '
+          + '무게는 근접이 0.5로 가장 크므로 «근접이 갈리는 자리»를 고르면 32-3도 갈릴 '
+          + '확률이 올라간다(선정과 결과가 **상관된다**). 그래서 n=4인 이 표를 '
+          + '**32-3의 일반 적중률로 읽지 마라**(그 값은 `dimtarget32_web2.json`에 있고 '
+          + '이 회차가 다시 재지 않았다).',
       },
       note: '`dimTargetFor`·`dimTargetScores`·`dimTargetTie`는 **이 회차에 사라졌다** — '
         + '맞힐 일이 없으므로 맞히는 층을 안 남긴다(쓰이지 않는 예외 ⛔).',
@@ -438,7 +449,13 @@ describe('39-2 ③ 상태 밖 = 전부 작도선 (조합 전수)', () => {
       what: '자형 8 × 자리 4 × 흔들기 3 = **96칸**을 상태 밖과 안에서 각각 돌렸다. '
         + '⚠ **칸과 획은 다른 분모다**(#11·#16) — 한 칸의 획 수는 자형이 정한다(1획 ~ 6획).',
       cells: outRows.length,
-      strokes_total: strokesOf(outRows),
+      strokes_drawn: strokesOf(inRows),          // 글씨 갈래는 아무 획도 안 버린다 = 그은 수
+      strokes_committed_outside: strokesOf(outRows),
+      strokes_dropped_outside: strokesOf(inRows) - strokesOf(outRows),
+      dropped_note: '⚠ **뺄셈으로 만든 한계 집합을 안 남긴다**(#10 · 2차 리뷰어 [9]): '
+        + '버려진 12획은 **전부 자형 「3.5」의 소수점**이고 `resolveCommit`이 «찍은 점»으로 '
+        + '버린다(수리 전 판이 `dropped_by_form`으로 그것을 확인했다). 그러므로 게이트 문장의 '
+        + '정직한 분모는 **그은 216**이고, 12획은 작도선도 글씨도 아닌 «버려진 획»이다.',
       outside: {
         cells_with_text: outRows.filter(r => r.marked > 0).length,
         cells_with_dim: outRows.filter(r => r.dims > 0).length,
@@ -465,10 +482,17 @@ describe('39-2 ③ 상태 밖 = 전부 작도선 (조합 전수)', () => {
       //    회고다. **같은 96칸을 수리 «전» 트리에서** 돌렸다(`gate1_band.before_repair`와 같은 방법).
       before_repair: {
         tree: '00e6edc',
+        arm_source: 'web2/tools/before39-arm.ts.txt (gate1_band.before_repair와 같은 팔)',
         cells: 96, cells_with_text: 84, cells_with_dim: 69,
-        marked_strokes: 180, dims_total: 69,
+        strokes_drawn: 216, strokes_committed: 204, marked_strokes: 180, dims_total: 69,
         note: '**수리 전에는 96칸 중 84칸에서 획이 글씨가 됐고 69칸에서 치수가 섰다.** '
           + '지금은 0/96·0/96이다. 그러므로 이 전수는 «결과를 바꿀 수 있는 축»에서 돈 것이다.',
+        dropped_by_form: { '0': 0, '1': 0, '4': 0, '11': 0, '25': 0, '111': 0, '2500': 0, '3.5': 12 },
+        dropped_note: '⚠ **216 − 204 = 12는 전부 자형 「3.5」의 소수점이다**(2차 리뷰어 [9]가 '
+          + '추측했고 이 실행이 값으로 확인했다). `resolveCommit`이 그 작은 점을 «찍은 점»으로 '
+          + '버린다 — **수리 전후가 같다**(글씨 갈래는 그 문을 안 지나므로 안에서는 216이 '
+          + '다 남는다). 그러므로 「상태 밖에서 그은 획은 예외 없이 작도선이다」의 정직한 '
+          + '분모는 **216**이고, 그중 12획은 작도선도 글씨도 아닌 **버려진 획**이다.',
       },
       outside_rows: outRows,
       inside_rows: inRows,
@@ -560,30 +584,46 @@ describe('39-3 ④ 종료 — 멈춤과 먼 곳, 둘 다', () => {
     // ⚠ **선언을 되읽지 않는다**(1차 리뷰어 [13] · #40 ②): 「종료가 셋뿐이다」를 타입
     //   합집합에서 읽으면 자명한 값이다. **제품 경로를 훑어** `endWriting`을 부르는 자리와
     //   그 사유를 센다 — 새 몸짓이 늘면 이 수가 는다.
+    // ⚠⚠ **2차 리뷰어 [3]**: 초판은 호출 «자리»만 세고 «사유 집합»은 여전히 타입 선언에서
+    //    읽었다 — 그러면 새 몸짓을 같은 `why` 변수로 흘려도 표가 안 는다(고친 이유가 그대로
+    //    남았다 · #40 ②). 이제 **사유도 경로에서 유도한다**: `endWriting(app, …)`과 그
+    //    간접 전달자(`onWriteEnd(…)`)에 실제로 적힌 **문자열 리터럴**을 모은다.
     const SRC = ['../src/app/state.ts', '../src/app/main.ts', '../src/app/input.ts']
-    const calls: { file: string; why: string }[] = []
+    const calls: { file: string; call: string; literals: string[] }[] = []
     for (const f of SRC) {
       for (const line of readFileSync(resolve(HERE, f), 'utf8').split(/\r?\n/)) {
         const t = line.trim()
         if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*')) continue
-        const m = t.match(/endWriting\(app,\s*(?:_?why|'(\w+)'|(\w+)\s*\?)/)
+        const m = t.match(/(endWriting|onWriteEnd)\(([^)]*)\)/)
         if (!m) continue
-        if (/export function endWriting/.test(t)) continue
-        calls.push({ file: f.replace('../', ''), why: m[1] ?? (t.includes('idle') ? "idle|far" : 'why') })
+        if (/export function endWriting|onWriteEnd:\s*\(/.test(t)) continue   // 선언은 뺀다
+        calls.push({
+          file: f.replace('../', ''), call: m[1]!,
+          literals: [...m[2]!.matchAll(/'(\w+)'/g)].map(x => x[1]!),
+        })
       }
     }
+    const reasons = [...new Set(calls.flatMap(c => c.literals))].sort()
     L['gate4_no_gesture'] = {
       what: '**경로 훑기**다(선언 되읽기 ⛔). 제품에서 `endWriting`을 부르는 자리를 세고 '
         + '그 사유를 낸다 — 새 종료 몸짓이 생기면 이 표가 는다.',
       call_sites: calls,
-      distinct_reasons: ['idle', 'far', 'left'],
+      // **경로에서 유도한 집합**(선언 되읽기 ⛔). 새 사유를 쓰면 여기 뜨고, 새 몸짓이
+      // 기존 사유를 재활용해도 **호출 자리 수**가 는다 — 두 축이 함께 지킨다.
+      distinct_reasons: reasons,
+      declared_reasons: ['far', 'idle', 'left'],
+      matches_declaration: reasons.join(',') === 'far,idle,left',
       reason_meanings: {
         idle: '손이 멈췄다(WRITE_IDLE_MS) — 어차피 하는 동작',
         far: '먼 곳에 새 획이 왔다 — 작도로 돌아간 것이다',
         left: '도구·종이·문서를 떠났다 — **몸짓이 아니다**(그 조작 자체의 부수 효과다)',
       },
-      falsification: '**새 종료 몸짓을 만들면** 이 표에 «사유»가 하나 더 뜨거나 호출 자리가 '
-        + '늘어난다. 지금은 셋 다 사람이 어차피 하는 동작이라 배울 것이 0이다(지시문 ⛔).',
+      falsification: '**새 종료 몸짓을 만들면** 두 축 중 하나가 반드시 움직인다 — 새 사유를 '
+        + '쓰면 `distinct_reasons`가 늘고, 기존 사유를 재활용해도 **호출 자리가 는다**. '
+        + '⚠ `matches_declaration`이 false면 «선언에 있는데 경로에 없는 사유»가 있는 것이다'
+        + '(죽은 값). 지금은 셋 다 **경로에서** 나오고 사람이 어차피 하는 동작이다.',
+      not_falsified_yet: '⚠ **새 몸짓을 실제로 만들어 발화시켜 본 적은 없다**(2차 리뷰어 [3]). '
+        + '이 팔이 지키는 것은 «앞으로 늘면 보인다»이고 그 발화는 그때 일어난다.',
     }
   })
 })
@@ -681,15 +721,15 @@ describe('39-1 ⑦ 누름 시간은 설정 값이다', () => {
       // 「그 값이 실제로 먹힌다」를 재는 것은 **화면 팔**이다 — 시계가 `input.ts`(DOM)에
       // 있어서 단위 팔이 못 닿는다. 아래는 `e2e/writeenter39.spec.ts` ㉢의 실측이다.
       screen_arm: {
-        where: 'e2e/writeenter39.spec.ts ㉢ (dpr1 · dpr2 둘 다)',
-        default_ms: 450,
-        press_225ms_at_450: 'write = null   (문의 절반 — 안 들어간다)',
-        press_600ms_at_450: 'write = {target:3}  (문 + 150 — 들어간다)',
-        after_setting_1200: 'app.writeHoldMs 1200 · 화면 읽기 «1.20s»',
-        press_650ms_at_1200: 'write = null   (**옛 문 + 200인데 안 들어간다**)',
-        press_1400ms_at_1200: 'write = {target:3}  (새 문 + 200 — 들어간다)',
-        why_this_measures_it: '같은 누름 시간(650 ms)이 **설정 값에 따라 답을 뒤집는다** — '
-          + '그것이 「먹힌다」의 관측량이다. 산술 귀결이 아니라 **진입 여부**를 잰다.',
+        where: 'e2e/writeenter39.spec.ts ㉢ (dpr1 · dpr2)',
+        // ⚠⚠ **값을 여기 옮겨 적지 않는다**(2차 리뷰어 [6] · #88 · #40 ④). 초판은 e2e
+        //    출력을 손으로 옮겨 이 원장에 넣었는데, 그러면 e2e가 바뀌어도 이 수가 조용히
+        //    안 따라온다. **그 실행이 스스로 쓰는 원장**을 이름으로 가리킨다.
+        ledger: 'stage0/out/writeenter39_screen_web2_dpr1.json (그리고 _dpr2)',
+        command: 'LEDGER=1 npx playwright test e2e/writeenter39.spec.ts',
+        what_it_measures: '**같은 누름 시간(650 ms)을 두 설정에서** 눌러 답이 뒤집히는 것 — '
+          + '`same_press_two_settings`의 두 줄이 `entered: true` / `entered: false`다. '
+          + '⚠ 초판은 450에서 650을 누른 칸 없이 그 문장을 썼다(2차 리뷰어 [2]) — 지금은 잰다.',
       },
       falsification: '**설정을 올려도 옛 문 시간에 여전히 들어가면** 손잡이가 안 먹는 것이다 '
         + '— 화면 팔의 `press_650ms_at_1200`이 그 칸이고 실제로 `null`이다(D-3 ㉣).',
@@ -818,10 +858,18 @@ describe('원장', () => {
         + '기계를 세우는 것은 web2 전역 작업이라 **DEFERRED**다.',
       'retired_ledgers': '`scribble32_web2.json`·`dimtarget32_web2.json`은 **하네스가 사라진 '
         + '원장**이다(이 회차가 그 기제를 걷었다). 지우지 않았다 — 원장은 기록이다. 그 값을 '
-        + '인용하는 문서는 이제 「그때 그랬다」로 읽는다.',
+        + '인용하는 문서에는 **제자리 사멸 블록**을 넣었다: NOTES의 32-1·32-2·32-3 절 머리 · '
+        + '`assumptions.md`의 AS-C112·C113·C115 · `DEFERRED.md`의 파생 행 하나(닫았다).',
+      'before_repair_is_not_re_runnable_by_a_committed_arm': '⚠⚠ `*.before_repair`의 값들은 '
+        + '**커밋된 팔이 다시 못 낸다**(2차 리뷰어 [8]) — 그 팔이 없어진 기제를 부르므로 지금 '
+        + '트리에서 컴파일되지 않는다. 그래서 **소스를 `web2/tools/before39-arm.ts.txt`에 '
+        + '남겼다**(그 파일 머리에 다시 돌리는 명령 다섯 줄이 있다). 오타를 잡을 기계가 '
+        + '없는 것은 아니지만 **자동으로 다시 도는 팔은 아니다** — 이 수들이 지금 네 주장을 '
+        + '떠받치므로(D-5의 대역 · #92의 「결과를 바꿀 수 있는 축」 · AS-C112의 사멸 근거 · '
+        + '잔여 위험의 「줄어든 것」) 그 사실을 여기 적는다.',
     }
     L['pitfalls'] = ['#92', '#54', '#61', '#62', '#12', '#82', '#90', '#91', '#42', '#77', '#73',
-      '#19', '#5', '#88', '#46', '#11', '#16', '#40', '#47']
+      '#19', '#5', '#88', '#46', '#11', '#16', '#40', '#47', '#34', '#10']
     L['what_this_does_not_say'] = '누름 시간(450ms)·멈춤 시간(1000ms)·강조 굵기는 **동작점**이고 '
       + '손 표본이 0이다(#12 · AS-C1 계열). 합성 자형 픽스처(`glyphs.ts`)로 돌았고 실기기 '
       + '필체·필압 표본은 여전히 0이다. 그리고 이 표는 **작도 포즈**의 것이다.'

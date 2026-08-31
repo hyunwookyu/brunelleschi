@@ -1,0 +1,40 @@
+{
+  "what": "web2-39 1번 — **누름 시간 손잡이가 실제로 먹히는가**를 화면에서 잰다. 단위 팔은 여기 못 닿는다(시계가 `input.ts`의 DOM에 있다).",
+  "why_its_own_ledger": "⚠⚠ **초판은 이 값을 손으로 옮겨 적어 단위 팔의 원장에 넣었다**(2차 리뷰어 [6] — #88 「팔이 상수를 손으로 들지 마라」·#40 ④의 형태). 이제 **이 실행이 스스로 쓴다** — e2e가 바뀌면 값이 따라온다. 원장 관문(#90 ㉢)은 playwright 배선(`playwright.config.ts` 최상단 `import ./tools/ledgerguard`)이 진다.",
+  "dpr": "dpr1",
+  "default_ms": 450,
+  "probe_ms": 650,
+  "same_press_two_settings": [
+    {
+      "setting_ms": 450,
+      "press_ms": 650,
+      "entered": true,
+      "write": {
+        "target": 3,
+        "ids": [],
+        "edit": false
+      }
+    },
+    {
+      "setting_ms": 1200,
+      "press_ms": 650,
+      "entered": false,
+      "write": null
+    }
+  ],
+  "above_new_threshold": {
+    "setting_ms": 1200,
+    "press_ms": 1400,
+    "entered": true
+  },
+  "reading": {
+    "at_default": "0.45s",
+    "at_1200": "1.20s"
+  },
+  "falsification": "**설정을 올려도 같은 650 ms에 여전히 들어가면** 손잡이가 안 먹는 것이다. 두 줄이 `entered: true` / `entered: false`로 갈리는 것이 「먹힌다」의 관측량이고, `driftAllowPx`(= `holdMs`의 산술 귀결)는 **근거로 안 쓴다**.",
+  "what_this_does_not_say": "⚠ 문턱 자체를 훑지 않았다 — 잰 것은 **한 쌍의 뒤집힘**이고 「450과 1200 사이 어디서 뒤집히는가」는 재지 않았다. 그리고 마우스 누름이다(펜 표본 0 · AS-C1 계열).",
+  "selfcheck_notes": {
+    "constants_snapshot_absent": "⚠ `constantsSnapshot()` / `metric_defs`가 없다 — **web2 라인 전체의 구멍**이고 이 원장만의 것이 아니다(`lens31`·`turn31`·`glyph35`가 같은 플래그를 낸다). 그 기계는 `web/test/constants.ts`에만 있다. DEFERRED.",
+    "dpr_note": "두 판(dpr1·dpr2)을 따로 낸다 — 값이 갈리는지 **원장이 스스로 보이게** 한다(#89 계열: 「둘 다 돌았다」를 한 벌로 적으면 갈렸는지 안 보인다)."
+  }
+}

@@ -10,6 +10,12 @@
 //      `app.writeHoldMs`가 따라오고, 그 값이 실제 누름 판정에 먹힌다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { writeFileSync, mkdirSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const HERE = dirname(fileURLToPath(import.meta.url))
+const OUT = resolve(HERE, '../../stage0/out')
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -92,29 +98,78 @@ test('㉡ 진입한 몸짓은 획을 안 만든다 — 그리고 상태 밖 세�
   expect(held.n, '누름은 획을 안 만든다').toBe(hatched.n)
 })
 
-test('㉢ 설정 손잡이가 화면에 있고 그 값이 실제로 먹힌다 (사용자 요청)', async ({ page }) => {
+test('㉢ 설정 손잡이가 화면에 있고 그 값이 실제로 먹힌다 (사용자 요청)', async ({ page }, testInfo) => {
   await boot(page)
   const rng = page.locator('#rng-whold')
   await expect(rng, '설정에 손잡이가 있다').toHaveCount(1)
-  // 값을 크게 올린다 — 그러면 «종전이면 들어갔을 시간»에 안 들어가야 한다
   const base = await state(page)
-  await rng.evaluate((el: HTMLInputElement) => {
-    el.value = '1200'
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  })
-  const after = await state(page)
-  console.log(`[39 화면 ㉢] holdMs ${base.holdMs} → ${after.holdMs} · 읽기 «${await page.textContent('#whold-read')}»`)
-  expect(after.holdMs, '앱이 그 값을 든다').toBe(1200)
-  expect(await page.textContent('#whold-read')).toBe('1.20s')
 
-  // **그 값이 판정에 먹히는가** — 옛 값(+여유)만큼 눌러도 안 들어간다
-  await pressFor(page, 500, 610, base.holdMs + 200)
-  const shortNow = await state(page)
-  console.log(`[39 화면 ㉢ 옛 값만큼] write=${JSON.stringify(shortNow.write)}`)
-  expect(shortNow.write, '올린 문 아래라 안 들어간다').toBeNull()
-  // 새 값만큼 누르면 들어간다(반증판이 실제로 선다 — D-3)
+  // ⚠⚠ **같은 누름 시간을 두 설정에서 잰다**(2차 리뷰어 [2]). 초판은 450에서 225·600을,
+  //    1200에서 650·1400을 재고 「**같은 650 ms**가 설정에 따라 뒤집힌다」고 적었는데
+  //    **450에서 650을 누른 칸이 없었다** — 두 칸을 잇는 것은 「문턱이 시간에 단조」라는
+  //    가정이었다. 여기서 **650을 두 설정 모두에서** 눌러 그 문장을 잰 것으로 만든다.
+  const PROBE = 650
+  const set = async (ms: number) => {
+    await rng.evaluate((el: HTMLInputElement, v: string) => {
+      el.value = v
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+    }, String(ms))
+    return (await state(page)).holdMs
+  }
+  const at450 = { setting: base.holdMs, read: await page.textContent('#whold-read') }
+  await pressFor(page, 500, 610, PROBE)
+  const probe450 = (await state(page)).write
+  await page.reload()                       // 상태를 놓고 다시 연다(설정은 localStorage에 산다)
+  await page.waitForFunction(() => (window as any).__b2)
+  await line(page, 280, 560, 700, 560); await line(page, 500, 560, 800, 480); await line(page, 500, 560, 500, 660)
+
+  const set1200 = await set(1200)
+  const read1200 = await page.textContent('#whold-read')
+  await pressFor(page, 500, 610, PROBE)
+  const probe1200 = (await state(page)).write
   await pressFor(page, 500, 610, 1200 + 200)
-  const longNow = await state(page)
-  console.log(`[39 화면 ㉢ 새 값만큼] write=${JSON.stringify(longNow.write)}`)
-  expect(longNow.write, '새 문 위에서는 들어간다').not.toBeNull()
+  const long1200 = (await state(page)).write
+
+  console.log(`[39 화면 ㉢] holdMs ${at450.setting} → ${set1200} · 읽기 «${read1200}»`)
+  console.log(`[39 화면 ㉢] 같은 ${PROBE}ms — 450에서 ${JSON.stringify(probe450)} · 1200에서 ${JSON.stringify(probe1200)}`)
+
+  expect(set1200, '앱이 그 값을 든다').toBe(1200)
+  expect(read1200).toBe('1.20s')
+  expect(probe450, `${PROBE}ms는 문 450 위라 들어간다`).not.toBeNull()
+  expect(probe1200, `**같은 ${PROBE}ms**가 문 1200 아래라 안 들어간다`).toBeNull()
+  expect(long1200, '새 문 위에서는 들어간다').not.toBeNull()
+
+  if (process.env.LEDGER === '1') {
+    mkdirSync(OUT, { recursive: true })
+    writeFileSync(resolve(OUT, `writeenter39_screen_web2_${testInfo.project.name}.json`), JSON.stringify({
+      what: 'web2-39 1번 — **누름 시간 손잡이가 실제로 먹히는가**를 화면에서 잰다. '
+        + '단위 팔은 여기 못 닿는다(시계가 `input.ts`의 DOM에 있다).',
+      why_its_own_ledger: '⚠⚠ **초판은 이 값을 손으로 옮겨 적어 단위 팔의 원장에 넣었다**'
+        + '(2차 리뷰어 [6] — #88 「팔이 상수를 손으로 들지 마라」·#40 ④의 형태). '
+        + '이제 **이 실행이 스스로 쓴다** — e2e가 바뀌면 값이 따라온다. 원장 관문(#90 ㉢)은 '
+        + 'playwright 배선(`playwright.config.ts` 최상단 `import ./tools/ledgerguard`)이 진다.',
+      dpr: testInfo.project.name,
+      default_ms: at450.setting,
+      probe_ms: PROBE,
+      same_press_two_settings: [
+        { setting_ms: at450.setting, press_ms: PROBE, entered: probe450 !== null, write: probe450 },
+        { setting_ms: 1200, press_ms: PROBE, entered: probe1200 !== null, write: probe1200 },
+      ],
+      above_new_threshold: { setting_ms: 1200, press_ms: 1400, entered: long1200 !== null },
+      reading: { at_default: at450.read, at_1200: read1200 },
+      falsification: '**설정을 올려도 같은 650 ms에 여전히 들어가면** 손잡이가 안 먹는 것이다. '
+        + '두 줄이 `entered: true` / `entered: false`로 갈리는 것이 「먹힌다」의 관측량이고, '
+        + '`driftAllowPx`(= `holdMs`의 산술 귀결)는 **근거로 안 쓴다**.',
+      what_this_does_not_say: '⚠ 문턱 자체를 훑지 않았다 — 잰 것은 **한 쌍의 뒤집힘**이고 '
+        + '「450과 1200 사이 어디서 뒤집히는가」는 재지 않았다. 그리고 마우스 누름이다'
+        + '(펜 표본 0 · AS-C1 계열).',
+      selfcheck_notes: {
+        constants_snapshot_absent: '⚠ `constantsSnapshot()` / `metric_defs`가 없다 — '
+          + '**web2 라인 전체의 구멍**이고 이 원장만의 것이 아니다(`lens31`·`turn31`·`glyph35`가 '
+          + '같은 플래그를 낸다). 그 기계는 `web/test/constants.ts`에만 있다. DEFERRED.',
+        dpr_note: '두 판(dpr1·dpr2)을 따로 낸다 — 값이 갈리는지 **원장이 스스로 보이게** 한다'
+          + '(#89 계열: 「둘 다 돌았다」를 한 벌로 적으면 갈렸는지 안 보인다).',
+      },
+    }, null, 2))
+  }
 })
