@@ -41,7 +41,7 @@ function record(key: string, val: unknown) {
   cur.conditions = {
     viewport: '1200x800',
     dpr: '이 파일이 chromium.newContext로 1·2·3을 직접 만든다(프로젝트 dpr 무관)',
-    command: 'npx playwright test e2e/grain26.spec.ts --project=dpr1 --workers=1',
+    command: 'LEDGER=1 npx playwright test e2e/grain26.spec.ts --project=dpr1 --workers=1',   // ⚠ LEDGER=1이 없으면 한 바이트도 안 쓴다(#90 · #94)
     patch: '(300,200) 60x60 CSS px — 획이 없는 빈 자리',
     metric: '휘도 L=0.299R+0.587G+0.114B의 픽셀 표준편차(기기 픽셀 격자). 결의 몫 = sqrt(막sd^2 − 바닥sd^2) — 독립 성분이라 분산이 더해진다(#74 ㉡: 절대 임계 대신 그 실행의 바닥값. 다만 빼는 방법은 제곱)',
   }
@@ -286,8 +286,13 @@ test('①-훑기 — K에 따라 dpr3/dpr1 결 비가 어디서 문(1.15)에 닿
     repeat_at_shipped_k: { ratio: repRatio, dpr1: rep1, dpr3: rep3 },
     run_to_run_spread_at_shipped_k: spread,
     headroom_to_gate: 1.15 - shipped.ratio,
-    conclusion: 'K를 내릴수록 비가 오른다 — 짧은 섬유일수록 dpr1에서 안티에일리어싱이 먹는 몫이 상대적으로 커진다. 그러므로 「더 곱게」의 실질 상한을 정하는 것은 grain40의 바닥(반감 지연)이 아니라 **이 문**이다.',
-    reachability: {
+    conclusion: `K를 내리면 비가 오르되 **아래로 갈수록 덜 오른다**: ${rows.map(r => `${r.k} → ${r.ratio.toFixed(4)}`).join(' · ')}. `
+      + `마지막 구간(${rows[rows.length - 2]!.k} → ${rows[rows.length - 1]!.k})의 증분이 **${(rows[rows.length - 1]!.ratio - rows[rows.length - 2]!.ratio).toFixed(5)}**이고 `
+      + `같은 K를 두 번 잰 폭이 **${spread.toFixed(5)}**, 문까지 남은 여유가 **${(1.15 - shipped.ratio).toFixed(4)}**다. `
+      + `⚠ **훑은 것은 ${KS[KS.length - 1]}까지다** — 그 아래 비는 안 쟀다. 값으로 말할 수 있는 것은 「훑은 대역 안에서는 문 안이고 여유가 남는다」까지이고, `
+      + `「K를 더 내려도 안 닿는다」는 **외삽**이다. 그러므로 이 문은 훑은 대역에서 K의 하한을 정하지 않는다 — 제품 값 0.5는 **눈이 고른 값**이다(지시 게이트 넷째). `
+      + `⚠⚠ **${rows[rows.length - 1]!.k} 칸은 진폭이 다르다**: dpr1 결이 ${shipped.d1.toFixed(3)} → ${rows[rows.length - 1]!.d1.toFixed(3)}(${((rows[rows.length - 1]!.d1 / shipped.d1 - 1) * 100).toFixed(1)}%)로 뛴다 — `
+      + `면적 밀도 보존이 그 자리에서 깨진다. 그 칸으로 내리려면 **주기 비·이웃차 이득·34-1 겹최소÷바탕을 그 자리에서 다시 재야 한다**(이 회차는 0.5에서만 쟀다).`,    reachability: {
       how: 'diag.grainLenKForTest(k) — 제품과 같은 유도식으로 길이·개수를 다시 낸다. K = 1.0이 web2-34까지의 값이므로 **기준선이 같은 실행 안에 있다**(원장 밖 인용 ⛔ · #25).',
       ratio_by_k: rows.map(r => r.ratio),
     },

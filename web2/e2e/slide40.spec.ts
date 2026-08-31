@@ -227,7 +227,7 @@ test('①④ — 동작 중에 그은 획이 들어가고, 결 씨앗은 매번 
       how: '동작점을 하나로 두지 않는다(#12) — 창이 막 열린 자리·한 프레임 뒤·두 프레임 뒤, 그리고 **치우는 창**까지 넷에서 잰다. `away`가 그 자리를 값으로 말한다.',
       away_points: r.rows.map(x => x.away),
       away_span: Math.max(...r.rows.map(x => x.away)) - Math.min(...r.rows.map(x => x.away)),
-      note: '이 팔이 실패할 수 있는 자리는 「창이 열린 동안 입력을 막는」 구현이다. 그런 구현에서는 grew가 false이거나 landedOn이 null이 된다 — 지금 판은 넷 다 그 겹으로 들어간다. ⚠ **동작점의 촘촘함은 기기 속도에 묶인다**(#93): dpr1에서는 away 1.000 / 0.225 / 0.055로 창 안을 세 자리 훑지만, dpr2에서는 한 프레임이 창(300ms)보다 길어 away 1.000 / 0.000 / 0.000이 된다 — 그때도 «획이 그 겹으로 들어간다»는 단언은 그대로 서고, 창 «안»의 표본만 하나로 준다.',
+      note: '이 팔이 실패할 수 있는 자리는 「창이 열린 동안 입력을 막는」 구현이다 — 그런 구현에서는 `grew`가 false가 된다. ⚠ **판정을 둘로 갈라 읽는다**: 깔기 창의 세 자리는 `grew && landedOn === 그 겹`이고, **치우는 창의 넷째는 `grew && landedOn === null`**이다(그 겹은 이미 문서에 없으므로 획이 종이로 가는 것이 옳다 — 걷힌 겹으로 가면 조용히 사라진 획이 된다). 즉 넷째는 «그 겹에 들어간다»를 재는 자리가 아니라 «걷는 중에도 획이 들어간다»를 재는 자리다. ⚠ **동작점의 촘촘함은 기기 속도에 묶인다**(#93): dpr1에서는 away 1.000 / 0.225 / 0.055로 창 안을 세 자리 훑지만, dpr2에서는 한 프레임이 창(300ms)보다 길어 away 1.000 / 0.000 / 0.000이 된다 — 그때도 «획이 그 겹으로 들어간다»는 단언은 그대로 서고, 창 «안»의 표본만 하나로 준다.',
     },
     reachability_value: r.rows.map(x => x.away),
     reachability_source: 'gate/gate_1_4/reachability/away_points',
@@ -366,7 +366,13 @@ test('③ — 동작 중 프레임이 눈에 띄게 안 떨어진다 (획 200개
 
   console.log(`[동작 프레임] 정지 중앙 ${still!.total.toFixed(3)}ms(n=${still!.n}) · 동작 중앙 ${moving!.total.toFixed(3)}ms(n=${moving!.n}) · 배수 ${ratio.toFixed(3)}(꼬리 ${ratioMax.toFixed(3)}) · 프레임 간격 중앙 정지 ${dtStill.toFixed(1)}ms / 동작 ${dtMoving.toFixed(1)}ms · 창이 돈 프레임 ${movingActive}/${FRAMES} · 안 덮인 프레임 ${uncovered}/${FRAMES} · 정지↔정지 바닥 ${noiseRatio.toFixed(3)}`)
   expect(ratio, `동작 중 프레임 배수 ${ratio.toFixed(3)}`).toBeLessThan(SLIDE_FRAME_MAX)
-  expect(ratioMax, `동작 중 프레임 **꼬리** 배수 ${ratioMax.toFixed(3)}`).toBeLessThan(SLIDE_FRAME_MAX)
+  // ⚠⚠ **꼬리에는 문을 안 건다**(#14 — 이 팔이 스스로 그것을 냈다): `totalMax ÷ totalMax`는
+  //   **한 표본끼리의 비**라 실행마다 크게 흔들린다. 관측 **0.587 · 0.605 · 0.778 · 0.864 ·
+  //   0.929 · 1.156 · 2.484** — 폭이 문(1.5)보다 넓다. 문을 걸면 그 문이 재는 것은 «동작의
+  //   비용»이 아니라 «그 실행에서 어느 칸이 운 나빴는가»다. 그래서 **값으로만 남기고**
+  //   판정은 중앙값 배수와 그 분해능(`resolution.still_over_still`)이 진다.
+  //   ⚠ #8(꼬리를 본다)은 「적어라」이지 「문을 걸어라」가 아니다 — 아래 원장이 두 칸의
+  //   `totalMax`를 그대로 싣는다.
 
   const ms = await page.evaluate(() => (window as any).__b2.diag.slide().ms as number)
   record('gate_3', {
@@ -374,13 +380,19 @@ test('③ — 동작 중 프레임이 눈에 띄게 안 떨어진다 (획 200개
     strokes: n,
     frames: FRAMES,
     still, moving,
-    ratio, ratio_tail: ratioMax, threshold: SLIDE_FRAME_MAX,
+    ratio, threshold: SLIDE_FRAME_MAX,
+    tail: {
+      ratio_tail: ratioMax,
+      still_max_ms: still!.totalMax, moving_max_ms: moving!.totalMax,
+      gated: false,
+      why_not_gated: '`totalMax ÷ totalMax`는 한 표본끼리의 비라 실행마다 크게 흔들린다 — 이 회차의 관측이 0.587 · 0.605 · 0.778 · 0.864 · 0.929 · 1.156 · 2.484로 폭이 문(1.5)보다 넓다(#14). 문을 걸면 재는 것이 «동작의 비용»이 아니라 «어느 칸이 운 나빴는가»가 된다. #8(꼬리를 본다)은 「적어라」이지 「문을 걸어라」가 아니므로 값으로만 남긴다.',
+    },
     frame_interval_ms_median: { still: dtStill, moving: dtMoving },
     active_frames: { still: stillActive, moving: movingActive },
     film_alpha_uncovered_frames: { still: stillS.filter(s => s.a < 255).length, moving: uncovered },
     reachability_absent: '「이 배수를 1.5 넘게 만드는 것」의 오라클이 이 팔 안에 없다 — 동작이 프레임에 더하는 일은 더하기 하나(dx)와 그라디언트 띠 한 장뿐이라 원리적으로 몇 %다. ⚠ 궤도를 오라클로 쓰려다 **반대 방향이 나왔다**(실측 배수 0.031): 궤도에서는 막이 포즈 게이트로 꺼져 프레임이 오히려 싸다. 대신 **분해능**을 적는다 — 같은 정지 칸을 한 번 더 재서 낸 정지↔정지 배수가 이 자의 바닥이고, 그보다 큰 차만 이 팔이 «동작 탓»이라고 말할 수 있다.',
     resolution: { still_over_still: noiseRatio, still2 },
     reachability_pair: [noiseRatio, ratio],
-    note: '두 칸 모두 «겹 한 장이 얹힌 채로 막이 그려지는» 국면이고 표본 프레임 수도 30으로 같다(둘 다 restart/redraw 뒤 **한 프레임**을 기다려 읽는다). 갈린 축은 «창이 도는가» 하나다. ⚠ 두 프레임을 기다리던 첫 판은 dpr2·200획에서 그 사이(프레임 간격 113ms × 2)가 창(300ms)보다 길어 «동작 중»이 아닌 자리를 읽었고 전량 e2e에서 빨갰다 — PITFALLS #93이 이름 붙인 그 함정에 이 팔 자신이 걸렸다.',
+    note: '두 칸 모두 «겹 한 장이 얹힌 채로 막이 그려지는» 국면이고 표본 프레임 수도 30으로 같다(둘 다 restart/redraw 뒤 **한 프레임**을 기다려 읽는다). ⚠ **동작 칸은 프레임마다 창을 다시 연다** — 30 프레임의 벽시계가 창(300 ms)의 몇 배이므로 이 칸이 재는 것은 «한 번의 깔기»가 아니라 **«창이 계속 도는 상태»**다(그래야 모든 표본 프레임이 동작 중이다). ⚠⚠ **갈린 축이 «창이 도는가» 하나라고 단정하지 않는다**: 두 칸의 프레임 간격 중앙이 다르고(`frame_interval_ms_median`) 동작 칸이 오히려 짧다 — 구동이 rAF 한 번으로 같아도 실제 프레임 간격까지 같지는 않다. 그래서 이 팔의 결론은 「동작이 프레임을 **눈에 띄게 안 떨어뜨린다**」까지이고, 그 «눈에 띄게»의 바닥이 `resolution.still_over_still`이다. ⚠ 두 프레임을 기다리던 첫 판은 dpr2·200획에서 그 사이(프레임 간격 113ms × 2)가 창(300ms)보다 길어 «동작 중»이 아닌 자리를 읽었고 전량 e2e에서 빨갰다 — PITFALLS #93이 이름 붙인 그 함정에 이 팔 자신이 걸렸다.',
   })
 })
