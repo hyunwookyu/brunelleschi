@@ -60,6 +60,36 @@ const roundStroke = (s: Stroke): Stroke =>
 let roundDefault = true
 export const setSaveRoundForTest = (v: boolean): void => { roundDefault = v }
 
+/** **열쇠 차례**(web2-43 1번) — 저장물의 열쇠 순서를 **쓰는 쪽이 정한다**.
+ *
+ *  왜 필요한가: 43-1의 게이트는 「저장 → 로드 → 재저장이 **바이트로 동일**」인데, 열쇠
+ *  차례가 «그 객체를 누가 만들었는가»에 딸려 있으면 그것이 성립하지 않는다. 실측(초판):
+ *  앱이 만든 획은 `…,mat,own3`이고 파서가 만든 획은 `…,own3,mat`이라 **같은 문서가 다른
+ *  바이트로 나갔다**. 값은 하나도 안 다른데 바이트가 달랐다.
+ *
+ *  ⚠ **형식 «개선»이 아니다**(지시문 「하지 말 것」): 열쇠 이름도 값도 구조도 안 바뀐다 —
+ *  같은 열쇠의 **차례**만 고정한다. 옛 저장물은 그대로 열리고(파서는 차례를 안 본다),
+ *  이 판으로 다시 나갈 때 차례가 정규형이 된다. 38이 바꿀 «이름»과 겹치지 않는다.
+ *
+ *  ⚠⚠ **이 목록에 없는 열쇠는 저장에서 사라진다**(`JSON.stringify`의 배열 replacer 규약).
+ *  그것이 이 방식의 값이자 위험이다 — 그래서 짝으로 **`test/roundtrip43.test.ts`의 게이트 ②**가
+ *  있다: `types.ts`·`measure.ts`·`press.ts`의 인터페이스 필드를 소스에서 긁어 픽스처의
+ *  저장물과 대조하므로, 새 필드를 여기 안 적으면 **그 팔이 빨개진다**(조용히 안 사라진다).
+ *
+ *  차례는 **선언 차례**다(types.ts를 그대로 따른다). 한 벌뿐이므로 안쪽 모양의 열쇠도
+ *  같은 목록에 산다 — 위상 정렬이 서는 것을 그 팔이 값으로 지킨다. */
+const KEY_ORDER: string[] = [
+  'format', 'version', 'frame', 'W', 'H',
+  'strokes', 'id', 'a', 'b', 'x', 'y', 'z', 'raw', 'rawIn',
+  'name', 'pose', 'p', 'q', 'proj', 'view', 'mat', 'dim', 'layer', 'own3', 'axis', 'text',
+  'faces', 'loops', 'edges', 'kind', 's', 't', 'ox', 'oy',
+  'unit', 'scaleRef', 'grade', 'press', 'w', 'h', 'D', 'tiltX', 'tiltY', 'twist',
+  'nextId', 'sheets', 'thumb',
+  'layers', 'sheet', 'paper', 'rect', 'on', 'locked', 'p0', 'p1', 'gamma',
+  'underlays', 'segs', 'hidden',
+  'measures', 'drawView',
+]
+
 export function serializeBrnl(d: BrnlData, opt: SerializeOptions = {}): string {
   const round = opt.round ?? roundDefault
   const strokes = round ? d.doc.strokes.map(roundStroke) : d.doc.strokes
@@ -94,7 +124,7 @@ export function serializeBrnl(d: BrnlData, opt: SerializeOptions = {}): string {
     ...(d.doc.measures && d.doc.measures.length > 0 ? { measures: d.doc.measures } : {}),
     // 작도 시점(web2-17 3-c) — 없으면 열쇠 자체를 안 쓴다(왕복 동일성 — 2-c ② 팔)
     ...(d.drawView ? { drawView: d.drawView } : {}),
-  })
+  }, KEY_ORDER)
 }
 
 const isNum = (x: unknown): x is number => typeof x === 'number' && isFinite(x)
@@ -414,4 +444,153 @@ export function parseBrnl(text: string): BrnlData | null {
     }
   }
   return { doc, nextId, drawView }
+}
+
+// ── web2-43 1번 · **깨진 파일 읽기** ──────────────────────────────────────────
+//
+// 지시문: 「저장물이 잘렸거나 필드가 빠졌을 때 **조용히 빈 문서를 열지 마라.** 읽을 수
+// 있는 데까지 읽고, 무엇을 못 읽었는지 알린다. **전부 버리는 것과 조용히 일부만 여는 것
+// 둘 다 금지**다.」
+//
+// ⚠⚠ **`parseBrnl`은 안 건드린다.** 그 함수의 «거부» 규약은 앞 회차들이 자리마다 근거를
+// 적어 세운 것이고(`mat.w`·`rawIn`·`layers`: 「모르는 값으로 조용히 틀리게 그리지 않는다」),
+// 팔 열다섯이 그 거부를 값으로 지킨다. 여기서 여는 것은 **그 다음 층**이다:
+//
+//     readBrnl(text) = ① 엄격 파서를 먼저 부른다 → 되면 그대로다(왕복 동일성 불변)
+//                      ② 안 되면 **건져 읽는다**(salvage) — 못 읽은 것을 세어 **알린다**
+//
+// 이 배치의 값: «성한 파일»의 경로가 한 바이트도 안 바뀌므로 43-1의 바이트 동일성 게이트가
+// 이 기능 때문에 흔들리지 않는다. 그리고 건지기는 **엄격 파서를 판정자로 재사용한다**
+// (획 하나만 담은 최소 문서를 만들어 통과하는지 본다) — 규칙을 두 벌 적지 않는다(#54).
+
+/** 무엇을 못 읽었는가 — 화면에 그대로 나가는 값이다(조용히 잃지 않는다). */
+export interface BrnlReport {
+  /** 문서가 열리는가 */
+  ok: boolean
+  /** 못 열었으면 까닭 — `json`(아무것도 못 건졌다) · `shape`(형식·판이 아니다) */
+  reason?: 'json' | 'shape'
+  /** 엄격 파서가 실패해 **건져 읽었다** */
+  salvaged: boolean
+  /** JSON 자체가 안 풀렸다(잘린 저장물) */
+  truncated: boolean
+  /** 버린 획 수 */
+  droppedStrokes: number
+  /** 통째로 버린 항목의 이름들(예: `measures` · `layers`) */
+  droppedKeys: string[]
+  /** 살린 획 수 */
+  keptStrokes: number
+}
+
+const cleanReport = (n: number): BrnlReport =>
+  ({ ok: true, salvaged: false, truncated: false, droppedStrokes: 0, droppedKeys: [], keptStrokes: n })
+
+/** 값 하나의 끝 — `i`가 값의 첫 글자일 때 그 값 **다음** 자리를 낸다. 잘렸으면 −1.
+ *  문자열 안의 괄호·역슬래시를 센다(잘린 파일에는 닫히지 않은 문자열이 있다). */
+function endOfValue(t: string, i: number): number {
+  const open = t[i]
+  if (open !== '{' && open !== '[') return -1
+  const close = open === '{' ? '}' : ']'
+  let depth = 0
+  let inStr = false
+  for (let k = i; k < t.length; k++) {
+    const c = t[k]!
+    if (inStr) {
+      if (c === '\\') { k++; continue }
+      if (c === '"') inStr = false
+      continue
+    }
+    if (c === '"') { inStr = true; continue }
+    if (c === open) depth++
+    else if (c === close) { depth--; if (depth === 0) return k + 1 }
+  }
+  return -1
+}
+
+/** **잘린 저장물에서 건진다** — 완결된 것만 취한다(반쯤 쓰인 획은 안 읽는다).
+ *  머리(format·version·frame)와 `strokes` 배열의 **온전한 원소들**이 건지는 대상이다. */
+function salvageTruncated(text: string): any | null {
+  const fmt = /"format"\s*:\s*"brnl"/.exec(text)
+  const ver = /"version"\s*:\s*(\d+)/.exec(text)
+  if (!fmt || !ver) return null
+  const out: any = { format: 'brnl', version: Number(ver[1]) }
+  const frameAt = text.indexOf('"frame":')
+  if (frameAt < 0) return null
+  const fs = text.indexOf('{', frameAt)
+  const fe = fs < 0 ? -1 : endOfValue(text, fs)
+  if (fe < 0) return null
+  try { out.frame = JSON.parse(text.slice(fs, fe)) } catch { return null }
+  out.strokes = []
+  const sAt = text.indexOf('"strokes":')
+  if (sAt >= 0) {
+    let k = text.indexOf('[', sAt) + 1
+    while (k > 0 && k < text.length) {
+      while (k < text.length && (text[k] === ',' || text[k] === ' ' || text[k] === '\n' || text[k] === '\r' || text[k] === '\t')) k++
+      if (text[k] !== '{') break
+      const e = endOfValue(text, k)
+      if (e < 0) break                       // 여기서 잘렸다 — 이 원소는 안 읽는다
+      try { out.strokes.push(JSON.parse(text.slice(k, e))) } catch { break }
+      k = e
+    }
+  }
+  return out
+}
+
+/** 이 획 하나가 엄격 파서를 통과하는가 — **판정자를 재사용한다**(규칙을 두 벌 안 적는다). */
+function strokeOk(frame: unknown, s: unknown): boolean {
+  return parseBrnl(JSON.stringify({ format: 'brnl', version: 6, frame, strokes: [s] })) !== null
+}
+
+/** 통째로 버릴 수 있는 항목 — **값이 낮은 것부터**. 획과 화지는 여기 없다(그것이 문서다). */
+const OPTIONAL_KEYS = ['measures', 'underlays', 'layers', 'faces', 'sheets', 'press',
+  'scaleRef', 'unit', 'drawView', 'savedViews', 'nextId', 'rawIn'] as const
+
+/** **문서를 여는 유일한 통로**(앱의 두 자리 — 파일 열기·자동 저장 복원 — 이 이것을 부른다).
+ *  성한 파일이면 `parseBrnl` 그대로이고, 아니면 건져 읽고 **무엇을 못 읽었는지** 낸다. */
+export function readBrnl(text: string): { data: BrnlData | null; report: BrnlReport } {
+  const strict = parseBrnl(text)
+  if (strict) return { data: strict, report: cleanReport(strict.doc.strokes.length) }
+
+  const rep: BrnlReport = { ok: false, salvaged: true, truncated: false, droppedStrokes: 0, droppedKeys: [], keptStrokes: 0 }
+  let raw: any = null
+  try { raw = JSON.parse(text) } catch { rep.truncated = true }
+  if (rep.truncated) raw = salvageTruncated(text)
+  if (!raw || raw.format !== 'brnl' || !Array.isArray(raw.strokes)) {
+    rep.reason = rep.truncated ? 'json' : 'shape'
+    return { data: null, report: rep }
+  }
+  // 판이 미래면 못 읽는다 — 흉내내지 않는다(web2-19 2-c ③ 그대로)
+  if (![1, 2, 3, 4, 5, 6].includes(raw.version)) { rep.reason = 'shape'; return { data: null, report: rep } }
+
+  // ① 획을 하나씩 판정한다 — 못 읽는 획만 버린다(문서를 안 버린다)
+  const kept = raw.strokes.filter((s: unknown) => strokeOk(raw.frame, s))
+  rep.droppedStrokes = raw.strokes.length - kept.length
+  const body: any = { ...raw, strokes: kept }
+
+  // ② 그래도 안 열리면 **값이 낮은 항목부터** 하나씩 버리며 다시 시도한다
+  let data = parseBrnl(JSON.stringify(body))
+  for (const key of OPTIONAL_KEYS) {
+    if (data) break
+    if (body[key] === undefined) continue
+    delete body[key]
+    rep.droppedKeys.push(key)
+    data = parseBrnl(JSON.stringify(body))
+  }
+  if (!data) { rep.reason = 'shape'; return { data: null, report: rep } }
+  rep.ok = true
+  rep.keptStrokes = data.doc.strokes.length
+  return { data, report: rep }
+}
+
+/** 화면에 나갈 한 줄 — **무엇을 못 읽었는지 말한다**(R4: 짧은 서술).
+ *  성한 파일이면 `null`이다(알림은 오류만 — web2-10 4-b). */
+export function reportNotice(r: BrnlReport): string | null {
+  if (r.ok && !r.salvaged) return null
+  if (!r.ok) return r.truncated ? '파일이 잘렸다 — 건질 획이 없다' : '.brnl 파일이 아니거나 손상됐다'
+  const lost: string[] = []
+  if (r.droppedStrokes > 0) lost.push(`획 ${r.droppedStrokes}`)
+  if (r.droppedKeys.length > 0) lost.push(r.droppedKeys.join('·'))
+  const head = r.truncated ? '파일이 잘렸다' : '파일이 손상됐다'
+  return lost.length > 0
+    ? `${head} — 획 ${r.keptStrokes}개까지 읽었다. 못 읽은 것: ${lost.join(' · ')}`
+    : `${head} — 획 ${r.keptStrokes}개까지 읽었다`
 }
