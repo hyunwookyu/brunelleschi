@@ -878,8 +878,12 @@
              (`dollyBy`) 렌즈는 이 자리에서만 들어간다. 자리는 34-6이 남긴 여유이고 급은
              이웃과 같은 `.ico-m`이다 — 여유 px를 여기 다시 적지 않는다(#88).
              아이콘: 렌즈 단면(양볼록) + 축 — `docs/instrument-icons.md`의 선 문법 그대로
-             (fill:none · stroke:currentColor · 1.6/32 · round cap/join · 닫힌 실루엣). -->
-        <button id="btn-lens" class="t ico-m" title="렌즈 — 화각을 바꾼다 (보기 전용)" aria-label="렌즈">
+             (fill:none · stroke:currentColor · 1.6/32 · round cap/join · 닫힌 실루엣).
+             ⚠ **web2-42 3번이 «읽는 값»을 이 자리에서 갈랐다**: 투시면 「렌즈 N mm」(35mm 판형
+             환산) · 평행이면 「축척 1:N」. 한 자리에 하나만 뜬다 — 원근에서 축척은 정의되지
+             않고 평행에서 렌즈길이는 무의미하므로 서로를 대신하는 것이 정직하다.
+             평행에서는 손잡이도 잠긴다(`lensRange.disabled`). -->
+        <button id="btn-lens" class="t ico-m" title="렌즈 — 화각을 바꾼다 (보기 전용) · 평행에서는 축척을 읽는다" aria-label="렌즈">
           <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 6 C17 10.5 17 21.5 11 26 C5 21.5 5 10.5 11 6 Z"/><path d="M19 11 L27 11 M19 16 L27 16 M19 21 L27 21" stroke-width="1.2"/></svg>
         </button>
         <!-- 되돌리기·다시실행(3-a) — 은유가 없어 손 띠 **맨 위**에 두고 도구와
