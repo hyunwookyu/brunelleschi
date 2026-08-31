@@ -16,6 +16,7 @@
 //   여기서는 **빈 줄의 바닥값**을 그 실행에서 재고 그것을 기준으로 읽는다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { settleSlide } from './slidesettle'
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -97,6 +98,11 @@ const Y_VIS = 300, Y_HID = 360, Y_BLANK = 330
 /** 옐로 한 장을 얹고 밑그림을 **알려진 자리**로 심는다 — 보이는 선 / 가린 선 한 줄씩 */
 async function yellowWithUnderlay(page: Page) {
   await page.click('#btn-roll'); await page.click('#btn-roll-yellow')
+  // ⚠⚠ **동작이 끝난 뒤에 읽는다**(web2-40 2번 · HANDOFF 0-b · PITFALLS #93): 겹은 이제
+  //    300 ms 동안 왼쪽에서 밀려 들어오므로, 얹고 곧바로 막을 읽으면 **덜 온 종이**를 읽는다 —
+  //    그러면 이 팔의 「선이 안 끊긴다」가 **기기 속도에 묶인다**(실측: 같은 코드에서 잉크가
+  //    끊기는 칸이 실행마다 240 ↔ 333으로 옮겨 다녔다). 이 팔이 재는 것은 «얹힌 뒤의 화면»이다.
+  await settleSlide(page)
   await settle(page)
   const info = await page.evaluate(([yv, yh, x0, x1]) => {
     const b2 = (window as any).__b2
