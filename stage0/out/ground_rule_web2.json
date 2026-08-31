@@ -33,7 +33,8 @@
  "mixed_scene": {
   "waiting": 2,
   "reasons": [
-   "mixedWait"
+   "mixedWait",
+   "noPoint"
   ]
  }
 }

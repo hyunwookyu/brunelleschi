@@ -13,7 +13,7 @@
 import type { CamPose } from './types'
 import { C } from './constants'
 import { project, rayThrough, vpMarks } from './camera'
-import type { LiftResult } from './lift'
+import { geomSizeOf, type LiftResult } from './lift'
 import { type ExtAcq } from './extacq'
 import {
   type Pt, type V3, pt, add3, sub3, mul3, dot3, dist2, dist3, len3,
@@ -121,19 +121,11 @@ export function lineRayT(P0: V3, dir: V3, ro: V3, rd: V3): number | null {
   return ((B * E - D) / denom) / dl // 원래 dir 단위의 t
 }
 
-/** 승격 기하의 3D 크기(bbox 대각) — 병합·교차 임계의 기준 */
+/** 승격 기하의 3D 크기(bbox 대각) — 병합·교차 임계의 기준.
+ *  ⚠ **식은 `lift.geomSizeOf` 하나다**(#54 — web2-41 1번이 옮겼다): 리프팅 도중에도
+ *  같은 크기가 필요해졌는데 이 서명은 완성된 `LiftResult`를 요구한다. 여기는 그 껍데기다. */
 export function geomSize3(lift: LiftResult): number {
-  let minX = Infinity, minY = Infinity, minZ = Infinity
-  let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity
-  for (const seg of lift.lifted.values()) {
-    for (const p of [seg.a3, seg.b3]) {
-      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x)
-      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y)
-      minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z)
-    }
-  }
-  if (!isFinite(minX)) return 0
-  return Math.hypot(maxX - minX, maxY - minY, maxZ - minZ)
+  return geomSizeOf(lift.lifted)
 }
 
 /** 3D 실제 교차점들 — 간격 ≤ 0.01·기하 크기 (3단계 자동 분할도 이 목록을 쓴다) */

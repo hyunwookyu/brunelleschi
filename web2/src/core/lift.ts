@@ -4,7 +4,7 @@
 // 대기 획은 조건이 갖춰지면 승격하고, 승격은 연쇄한다.
 
 import { onPaper, yellowIds, isFlat2d, type Doc, type Stroke, type CamPose } from './types'
-import { C } from './constants'
+import { C, XINT_AMBIG_RATIO } from './constants'
 import {
   analyze, type Analysis, type AxisId, DRAW_POSE,
   screenAxes, project, rayThrough, pointOnGround, pointOnCeiling, vpDeviation, type Ray,
@@ -17,14 +17,87 @@ import {
  *  뒤의 셋은 web2-37 1번이 더했다 — 가상 교차까지 보고도 못 세운 자리들이다:
  *  `noPoint` = 명시 점도 교차도 없다(그은 자리에 아무 3D도 안 지났다) ·
  *  `onePoint` = 점이 하나뿐이라 방향이 안 선다(명시 1 + 교차 0 · 또는 명시 0 + 교차 1) ·
- *  `nearCross` = 교차는 둘인데 **화면에서 너무 가까워** 방향을 믿을 수 없다(퇴화). */
+ *  `nearCross` = 교차는 둘인데 **화면에서 너무 가까워** 방향을 믿을 수 없다(퇴화).
+ *  `ambiguous`(web2-41 1번) = 교차 후보가 여럿인데 **그것들이 만드는 3D 선이 서로
+ *  멀다** — 그림 안에 어느 것을 뜻했는지가 안 적혀 있으므로 고르지 않고 대기한다. */
 export type WaitWhy = 'aboveHorizon' | 'onHorizon' | 'hasHeight' | 'mixedWait' | 'straddle'
-  | 'noPoint' | 'onePoint' | 'nearCross'
+  | 'noPoint' | 'onePoint' | 'nearCross' | 'ambiguous'
+
+// ── web2-41 1번 «애매하면 대기한다»의 손잡이 ──────────────────────────────────
+// 제품 값은 `constants.XINT_AMBIG_RATIO` 하나이고, 이 두 함수는 **팔의 반증 손잡이**다
+// (37-2의 `setWaitInkMode`가 낸 선례 — D-3: 검사가 실패하는 조건을 실제로 만든다).
+// `Infinity`를 넣으면 37의 규칙(«언제나 raw에 가장 가까운 것을 고른다»)이 그대로 되살아나고,
+// 0을 넣으면 후보가 여럿인 획이 전부 대기한다. 화면에는 아무 길도 안 낸다.
+/** 애매함 판정이 **실제로 무엇을 보고 무엇을 정했는가** — 진단 표식(D-1).
+ *  ⚠⚠ 이 표를 «밖에서 다시 재는 것»으로 대신하면 안 된다: web2-41이 처음에 그렇게 했고
+ *  후보 목록을 밖에서 재구성한 수가 앱이 실제로 본 것과 달랐다. 원장은 이 표를 쓴다. */
+export interface XintAmbigRow {
+  id: number
+  /** 후보 3D 선의 개수 */
+  n: number
+  /** 후보들이 만드는 3D 선들이 서로 벌어진 폭(세계 단위) */
+  spread: number
+  /** 분모 — 그 시점의 승격 기하 bbox 대각(세계 단위) */
+  scale: number
+  /** `spread / scale` — 문과 견주는 값 */
+  rel: number
+  decided: 'stand' | 'ambiguous' | 'pressed'
+}
+let ambigTrace: XintAmbigRow[] = []
+/** 마지막 리프팅 패스가 남긴 표식. 화면은 안 읽는다 — 팔과 원장의 것이다. */
+export function xintAmbigTrace(): readonly XintAmbigRow[] { return ambigTrace }
+
+let ambigRatioOverride: number | null = null
+export function setXintAmbigRatio(r: number | null): void { ambigRatioOverride = r }
+export function xintAmbigRatio(): number {
+  return ambigRatioOverride === null ? XINT_AMBIG_RATIO : ambigRatioOverride
+}
+
+/** ── **«누른 자리»**(web2-41 2번) — 애매함을 푸는 유일한 손잡이 ────────────────
+ *  이 획의 raw 점열 중 필압이 **이 획의 평균보다 문턱 배 이상 높은** 자리. 없으면 null.
+ *
+ *  ⚠ **절대값으로 안 잰다**(지시문): 획 안의 상대값(최대÷평균)이라 사람마다 힘이 달라도
+ *  같은 자로 읽힌다. **필압 보정과도 무관하다** — 여기서 보는 것은 저장된 원값이고
+ *  `PressCal`은 그릴 때만 걸린다(리프팅은 `doc.press`를 아예 안 읽는다: 구성상 보장).
+ *  ⚠ **제1 단서가 아니다.** 신호가 없으면(펜이 아니거나·평평하거나) 41-1 그대로다 —
+ *  마우스·손가락은 `rawIn`을 아예 안 싣는다(`input.ts` 1-c). */
+export function pressedPoint(s: Stroke): Pt | null {
+  const raw = s.raw, pr = s.rawIn?.press
+  if (!raw || !pr || pr.length < 2 || pr.length !== raw.length) return null
+  let sum = 0, mx = -Infinity, at = -1
+  for (let i = 0; i < pr.length; i++) {
+    const v = pr[i]!
+    if (!Number.isFinite(v) || v < 0) return null
+    sum += v
+    if (v > mx) { mx = v; at = i }
+  }
+  const mean = sum / pr.length
+  if (!(mean > 0) || at < 0) return null
+  return mx / mean >= C.PRESS_PEAK_RATIO ? raw[at]! : null
+}
 
 export interface LiftedSeg {
   a3: V3
   b3: V3
   axis: AxisId | null
+}
+
+/** **승격 기하의 3D 크기**(bbox 대각) — 병합·교차·평면성 임계의 공통 분모(#16: 분모를 적는다).
+ *  ⚠ 자리를 여기로 옮긴 것은 web2-41 1번이다: 리프팅 **도중에도** 이 크기가 필요해졌는데
+ *  (애매함의 분모) `osnap.geomSize3`는 `LiftResult` 하나를 받으므로 아직 없는 것을 요구한다.
+ *  식은 **한 자리**다(#54) — `osnap.geomSize3`가 이 함수를 부른다. */
+export function geomSizeOf(lifted: Map<number, LiftedSeg>): number {
+  let minX = Infinity, minY = Infinity, minZ = Infinity
+  let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity
+  for (const seg of lifted.values()) {
+    for (const p of [seg.a3, seg.b3]) {
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x)
+      minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y)
+      minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z)
+    }
+  }
+  if (!isFinite(minX)) return 0
+  return Math.hypot(maxX - minX, maxY - minY, maxZ - minZ)
 }
 
 export interface LiftResult {
@@ -168,12 +241,13 @@ function scaleOf(doc: Doc): { mm: number | null; id: number | null } {
 
 function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: number | null = null): LiftResult {
   const an = analyze(doc)
+  ambigTrace = []                    // 표식은 **이 패스의 것**이다(마지막 패스가 남는다)
   const lifted = new Map<number, LiftedSeg>()
   const waitWhy = new Map<number, WaitWhy>()
   /** 가상 교차 패스가 본 «왜 못 세웠나» — **`waitWhy`에 바로 안 적는다**(우선순위 때문이다):
    *  소실점 축 획의 사유(`hasHeight`·`mixedWait`)가 더 구체적이라 그쪽이 먼저 간다.
    *  맨 끝에서 **아직 사유가 없는 획에만** 옮겨 적는다(#43 — 한 이름에 두 원인 ⛔). */
-  const crossWhy = new Map<number, 'noPoint' | 'onePoint' | 'nearCross'>()
+  const crossWhy = new Map<number, 'noPoint' | 'onePoint' | 'nearCross' | 'ambiguous'>()
   const dimGeom = new Map<number, number>()
   let anchorId: number | null = null
 
@@ -581,9 +655,15 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: n
    *      선은 둘 다 그은 선 위의 점이라 사영이 늘 그은 선이다(원칙 d의 딸린 결과).
    *  동점이면 **`xs`가 t 오름차순이므로 «첫 교차»가 뽑힌다**(`dev < bestDev`가 엄격 부등호다).
    *  그 규칙을 여기 적어 둔다 — 「어쩌다 그렇게 되는 것」과 「그렇게 하기로 한 것」은 다르다.
-   *  ⚠ 붐비는 장면에서 이 고르기가 **의도한 교차와 갈리는 비율은 0.875**(24칸 · 후보 2~6개 ·
-   *  깊이 갈림 폭 3.14 세계 단위)다. 그림에 «어느 교차를 뜻했는지»가 안 적혀 있기 때문이고,
-   *  지시문이 그 자리에 놓은 답이 **37-5(끝의 필압)**다. */
+   *  ⚠⚠ **web2-41 1번이 이 자를 «고르는 자»에서 «동점 처리»로 강등했다.** 붐비는 장면에서
+   *  이 고르기가 의도한 교차와 갈리는 비율은 **13/16 = 0.8125**였고 균일 무작위 기준선이
+   *  0.7333이다 — **자가 무작위에 붙어 나왔다**(원장 `xint37_web2.json`). 왜 그런지가
+   *  근거다: 축이 고정되면 후보 3D 선들은 전부 **평행**이고 측면 오프셋만 다른데, 손으로
+   *  그은 획의 떨림이 그 오프셋 차이보다 크다. 즉 **획 안에 어느 교차를 의도했는지가
+   *  애초에 안 들어 있다** — 정보가 없는 것을 고르고 있었으므로 어떤 순위 규칙으로도
+   *  못 살린다. 그래서 41-1은 «다른 순위 규칙»으로 안 바꾸고 **애매하면 대기**로 바꿨다.
+   *  이 자가 남아 있는 자리는 **후보들이 사실상 같은 자리에 놓일 때**뿐이고, 거기서는
+   *  어느 쪽을 골라도 무해하므로 «고르기»가 아니라 결정론적 동점 처리다. */
   const rawDev = (a3: V3, b3: V3, s: Stroke, pose: CamPose): number => {
     const pa = project(an, pose, a3), pb = project(an, pose, b3)
     if (!pa || !pb) return Infinity
@@ -609,6 +689,89 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: n
     return a3 && b3 ? { a3, b3 } : null
   }
 
+  /** ── **원칙 d의 관문**(web2-41 1번) — 「그릴 수 없는 배치는 배치가 아니다」 ────────
+   *  가상 교차가 낸 3D의 양 끝이 **화면으로 되돌아오는가**. 카메라 뒤로 가거나 무한원에
+   *  걸리면 `project`가 null을 내고, 그 획은 화면에 몸이 없는데 «자립»으로 세어진다 —
+   *  오스냅·면·교차가 전부 그것을 참조하므로 **가장 조용한 형태의 틀린 배치**다.
+   *
+   *  ⚠⚠ **실측이 잡았다**(2026-08-31 · D-1의 표식이 낸 것): 41-1이 들어간 뒤 `busy37`
+   *  장면에서 자립 획 넷(16·17·19·20)의 `a3.z`가 **+83.52**(카메라 뒤)였고 재사영이
+   *  null이었다. 41-1 이전에도 같은 길이 열려 있었고 다만 그 장면에서 안 걸렸을 뿐이다
+   *  (그리기 중 오스냅이 붙던 점이 대기로 바뀌면서 다른 갈래로 들어갔다).
+   *  ⚠ **문턱이 아니다** — 「되는가/안 되는가」이므로 값을 안 짓는다(#54).
+   *  드리프트의 «크기»에는 문을 안 건다: 축 갈래는 그은 선과 후보 선이 어긋난 만큼
+   *  구성상 드리프트가 생기고, 그 크기의 통과선은 아직 아무도 모른다(원장이 분포를 낸다). */
+  const reprojects = (a3: V3, b3: V3, pose: CamPose): boolean =>
+    project(an, pose, a3) !== null && project(an, pose, b3) !== null
+
+  /** ── **애매함의 자**(web2-41 1번) ────────────────────────────────────────────
+   *  후보들이 만드는 3D 선들이 서로 얼마나 떨어지는가 — 양 끝의 최대 거리를 전 쌍에서 뗀다.
+   *  ⚠ **후보의 «개수»가 아니다**(지시문이 못 박았다): 긴 선은 무엇이든 여러 개를
+   *  지나가므로 개수로 재면 거의 전부가 애매해진다. */
+  const candSpread = (cs: { a3: V3; b3: V3 }[]): number => {
+    let m = 0
+    for (let i = 0; i < cs.length; i++) {
+      for (let j = i + 1; j < cs.length; j++) {
+        m = Math.max(m, len3(sub3(cs[i]!.a3, cs[j]!.a3)), len3(sub3(cs[i]!.b3, cs[j]!.b3)))
+      }
+    }
+    return m
+  }
+
+  /** 분모(#16) — **지금까지 선 3D의 bbox 대각**. 「장면에 상대적으로」의 그 장면이고,
+   *  앱이 이미 «같은 자리인가»를 잴 때 쓰는 그 분모다(`INTERSECT_GAP_RATIO`·`PLANAR_RATIO`).
+   *  ⚠ 이 값은 리프팅이 진행되며 **자란다**. 그래도 출처는 하나이고(같은 `lifted`) 패스
+   *  순서가 결정론이라 결과도 결정론이다. 3D가 하나도 없으면 교차 자체가 없다. */
+  const sceneSpan = (): number => geomSizeOf(lifted)
+
+  /** ── **후보가 여럿일 때의 답**(web2-41 1번·2번) ───────────────────────────────
+   *
+   *      전:  교차가 여럿 → raw에 가장 가까운 것을 고른다
+   *      후:  누른 자리가 있으면            → 그 교차로 정한다        (41-2)
+   *           없고 후보가 벌어져 있으면     → **대기**                (41-1)
+   *           없고 후보가 사실상 한자리면   → 그 하나로 정한다
+   *
+   *  **조용히 틀린 것이 대기보다 나쁘다**(A-3 · 지시문). 잘못 놓인 선은 옳은 선과 똑같이
+   *  보이고 사용자는 그 위에 계속 그린다 — 대기 획은 적어도 청색 파선으로 «아직»이라고
+   *  말한다(37-2). 「그 장면에서 전부 대기로 남는다」는 값이 싸다: 애매함이 생기는 구간은
+   *  사용자가 오스냅으로 출발하는 구간이고 성긴 장면은 영향이 없다(그 무회귀가 게이트다). */
+  type Cand = { a3: V3; b3: V3; q: Pt }
+  const pickCandidate = (cs: Cand[], s: Stroke, pose: CamPose): Cand | 'ambiguous' | null => {
+    if (cs.length === 0) return null
+    // ⚠ **후보가 하나인 칸도 표식에 남긴다**(D-1): 이 표가 「가상 교차가 이 획을 정했다」의
+    //    유일한 판정자다. 밖에서 「명시 점이 없고 어떤 교차를 지난다」로 다시 세면 사슬이
+    //    세운 획이 섞이고, 그러면 오획득률의 **분자가 부푼다**(37 2차 리뷰어 [13]이 잡은 형태).
+    const scale = sceneSpan()
+    const spread = candSpread(cs)
+    const rel = scale > 1e-12 ? spread / scale : Infinity
+    const mark = (decided: XintAmbigRow['decided']) => {
+      ambigTrace.push({ id: s.id, n: cs.length, spread, scale, rel, decided })
+    }
+    if (cs.length === 1) { mark('stand'); return cs[0]! }
+    // 41-2 — **누른 자리가 애매함을 푼다.** 신호가 없으면 아래로 그대로 내려간다(무회귀).
+    // 「그 교차」의 자는 새로 안 짓는다(#54): 「방향을 믿는 최소 길이」가 이미 이 화면
+    // 대역의 «같은 자리»를 재는 자다. 그보다 멀면 그 누름은 어느 교차의 것도 아니다.
+    const pressed = pressedPoint(s)
+    if (pressed) {
+      let near: Cand | null = null, nd = Infinity
+      for (const c of cs) {
+        const d = Math.hypot(c.q.x - pressed.x, c.q.y - pressed.y)
+        if (d < nd) { nd = d; near = c }
+      }
+      if (near && nd <= C.MIN_DIR_LEN_RATIO * an.diag) { mark('pressed'); return near }
+    }
+    // 분모가 없으면 `rel`이 ∞라 여기서 걸린다 — 안전한 쪽으로 넘어진다.
+    if (rel > xintAmbigRatio()) { mark('ambiguous'); return 'ambiguous' }
+    mark('stand')
+    // 벌어짐이 문 아래 — 어느 것을 골라도 무해하다. 결정론을 위한 동점 처리다.
+    let best = cs[0]!, bestDev = rawDev(best.a3, best.b3, s, pose)
+    for (let i = 1; i < cs.length; i++) {
+      const d = rawDev(cs[i]!.a3, cs[i]!.b3, s, pose)
+      if (d < bestDev) { best = cs[i]!; bestDev = d }
+    }
+    return best
+  }
+
   /** 표의 아래 세 줄을 **한 자리**에서 푼다(특수 분기 ⛔ — 지시문). */
   function solveByCrossing(s: Stroke, pose: CamPose):
     { a3: V3; b3: V3; axis: AxisId | null } | null {
@@ -627,7 +790,10 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: n
       // ── 명시 점 1, 축 없음 → 교차 하나를 더해 둘로 만든다 ──────────────────────
       const P = (pA ?? pB)!
       const Pq = pA ? s.a : s.b          // 그 명시 점의 **화면** 자리(원칙 d: 확정 2D다)
-      let best: { a3: V3; b3: V3 } | null = null, bestDev = Infinity
+      // ⚠⚠ **이 갈래는 raw 편차가 언제나 동점이다**(AS-C137 ㉡ — 명시 점과 임의의 교차를
+      //    이은 선은 둘 다 그은 선 위의 점이라 사영이 늘 그은 선이다). 곧 37의 자가
+      //    여기서는 «첫 교차»를 뽑고 있었을 뿐이다 — 41-1의 애매함 판정이 그 자리를 받는다.
+      const cands: Cand[] = []
       let tooNear = false
       for (const x of xs) {
         // ⚠⚠ **두 점이 화면에서 너무 가까우면 방향을 못 믿는다** — 아래 「교차 둘」 갈래와
@@ -644,32 +810,39 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: n
         // **명시 점은 그 자리에 그대로 둔다**(원칙 d) — 반대쪽 끝만 광선으로 내린다.
         const other = closestOnLineToRay(P, dir, rayThrough(an, pose, pA ? s.b : s.a)!)
         if (!other) continue
-        const cand = pA ? { a3: P, b3: other } : { a3: other, b3: P }
-        const dev = rawDev(cand.a3, cand.b3, s, pose)
-        if (dev < bestDev) { best = cand; bestDev = dev }
+        const c = pA ? { a3: P, b3: other, q: x.q } : { a3: other, b3: P, q: x.q }
+        if (reprojects(c.a3, c.b3, pose)) cands.push(c)
       }
-      if (!best) { crossWhy.set(s.id, tooNear ? 'nearCross' : 'onePoint'); return null }
-      return { ...best, axis }
+      const got = pickCandidate(cands, s, pose)
+      if (got === 'ambiguous') { crossWhy.set(s.id, 'ambiguous'); return null }
+      if (!got) { crossWhy.set(s.id, tooNear ? 'nearCross' : 'onePoint'); return null }
+      return { a3: got.a3, b3: got.b3, axis }
     }
 
     if (axis) {
       // ── 명시 점 0 + 축 → 교차 하나 + 축 ────────────────────────────────────────
       const dir = axisDir(an, axis)
       if (!dir) { crossWhy.set(s.id, 'noPoint'); return null }
-      let best: { a3: V3; b3: V3 } | null = null, bestDev = Infinity
+      // ⚠⚠ **41-1의 진단이 사는 자리다**: 축이 고정되면 후보 선들은 전부 **평행**이고
+      //    측면 오프셋만 다르다. 손 떨림이 그 오프셋보다 크므로 raw 편차는 의도를 못 짚는다
+      //    (실측 13/16 · 무작위 기준선 0.7333). 벌어짐이 문 위면 고르지 않고 대기한다.
+      const cands: Cand[] = []
       for (const x of xs) {
         const cand = spanOn(x.p3, dir, s, pose)
-        if (!cand) continue
-        const dev = rawDev(cand.a3, cand.b3, s, pose)
-        if (dev < bestDev) { best = cand; bestDev = dev }
+        if (cand && reprojects(cand.a3, cand.b3, pose)) cands.push({ ...cand, q: x.q })
       }
-      if (!best) { crossWhy.set(s.id, 'noPoint'); return null }
-      return { ...best, axis }
+      const got = pickCandidate(cands, s, pose)
+      if (got === 'ambiguous') { crossWhy.set(s.id, 'ambiguous'); return null }
+      if (!got) { crossWhy.set(s.id, 'noPoint'); return null }
+      return { a3: got.a3, b3: got.b3, axis }
     }
 
     // ── 명시 점 0, 축 없음 → 첫 교차 + 끝 교차 ──────────────────────────────────
     // 둘이 가장 멀어 방향이 가장 안정적이다. **화면 최소 간격**으로 퇴화를 막는다 —
     // 자는 여기서도 「방향을 믿는 최소 길이」다(새 숫자 ⛔ #54).
+    // ⚠ **41-1의 애매함 판정이 여기 안 걸린다**(범위를 안 넓힌다 — A-3): 이 갈래는
+    //    후보 중 «하나를 고르는» 자리가 아니라 양 끝 둘을 **둘 다 쓰는** 자리다.
+    //    고르기가 없으므로 「어느 것을 뜻했는가」라는 물음 자체가 없다.
     const first = xs[0]!, last = xs[xs.length - 1]!
     if (xs.length < 2 || Math.hypot(last.q.x - first.q.x, last.q.y - first.q.y)
       < C.MIN_DIR_LEN_RATIO * an.diag) {
@@ -679,6 +852,8 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: n
     if (len3(d) < 1e-9) { crossWhy.set(s.id, 'nearCross'); return null }
     const span = spanOn(first.p3, norm3(d), s, pose)
     if (!span) { crossWhy.set(s.id, 'noPoint'); return null }
+    // 원칙 d의 관문 — 이 갈래는 고르기가 없어도 **그릴 수 없는 답**은 낼 수 있다.
+    if (!reprojects(span.a3, span.b3, pose)) { crossWhy.set(s.id, 'noPoint'); return null }
     return { ...span, axis }
   }
 
@@ -702,6 +877,14 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: n
       const pose = s.view ?? DRAW_POSE
       const axis = axisOfStroke(an, pose, s.a, s.b)
       if (axis === 'vp0' || axis === 'vp1') waitWhy.set(s.id, hh ? 'hasHeight' : 'mixedWait')
+    }
+    // ⚠⚠ **`ambiguous`만은 위를 덮는다**(web2-41 1번 · #43 — 한 이름에 두 원인 ⛔).
+    //    `hasHeight`/`mixedWait`는 「지면 규칙이 왜 안 걸렸나」이고, 그 뒤에 교차 패스가
+    //    실제로 후보를 보고 **고르기를 거부했다**면 그것이 이 획의 진짜 사유다. 안 덮으면
+    //    41-1이 만든 대기가 전부 「높이 있음」으로 읽혀 진단이 원인을 오귀속한다
+    //    (실측으로 잡았다 — 문턱을 무는 획 여섯이 전부 `hasHeight`로 나왔다).
+    for (const [id, why] of crossWhy) {
+      if (pending.has(id) && why === 'ambiguous') waitWhy.set(id, 'ambiguous')
     }
     // 가상 교차가 본 사유는 **여기서** 들어간다 — 위의 더 구체적인 사유를 안 덮는다.
     for (const [id, why] of crossWhy) {
