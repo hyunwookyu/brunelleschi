@@ -157,7 +157,10 @@ export function levelPose(anchor: CamPose, pose: CamPose, pivot: V3, yaw?: V3): 
   )
   const back = mul3(bNew, -1)
   const right = norm3(cross3(WORLD_UP, back))
-  return { p, q: quatFromBasis(right, WORLD_UP, back) }
+  // 투영은 **지금 것을 그대로 들고 간다**(web2-42) — 접기는 자세를 되돌리는 일이지
+  // 「평행을 껐다 켜는」 일이 아니다. 앵커의 것이 아니라 `pose`의 것을 쓴다:
+  // 정투상 뷰에서 접혀도 정투상으로 남는다(지시: 손으로 돌려도 평행이 유지된다).
+  return { p, q: quatFromBasis(right, WORLD_UP, back), ...(pose.proj ? { proj: { ...pose.proj } } : {}) }
 }
 
 /** **피치가 임계 안인가** — 이 자세는 놓으면(또는 누르면) 정렬로 접힌다.
@@ -206,10 +209,23 @@ export function foldTarget(
   return levelPose(anchor, pose, pivot, snap ?? undefined)
 }
 
-/** 접히는 중의 중간 포즈 — 자세는 최단호, 위치는 직선. t는 0…1. */
+/** 접히는 중의 중간 포즈 — 자세는 최단호, 위치는 직선. t는 0…1.
+ *
+ *  **투영도 보간한다**(web2-42 1번 — 「원근 ↔ 평행 전환은 시각적으로 크므로 튀면 어디로
+ *  갔는지 잃는다」). 보간하는 것은 **평행도 w** 하나다: 기준 깊이 D는 한쪽에만 있으면
+ *  그쪽 값을 그대로 쓴다(원근 쪽에서는 D가 식에 안 들어가므로 «없는 값»이지 0이 아니다).
+ *  중간 w도 정당한 사영이라는 근거는 `camera.ts`의 `projDen` 주석이다. */
 export function lerpPose(a: CamPose, b: CamPose, t: number): CamPose {
-  return {
+  const out: CamPose = {
     p: add3(a.p, mul3(v3(b.p.x - a.p.x, b.p.y - a.p.y, b.p.z - a.p.z), t)),
     q: quatSlerp(a.q, b.q, t),
   }
+  const wa = a.proj?.w ?? 0, wb = b.proj?.w ?? 0
+  const w = wa + (wb - wa) * t
+  if (w > 0) {
+    const Da = a.proj?.D, Db = b.proj?.D
+    const D = Da === undefined ? Db! : Db === undefined ? Da : Da + (Db - Da) * t
+    out.proj = { w, D }
+  }
+  return out
 }

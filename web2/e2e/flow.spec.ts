@@ -306,9 +306,15 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   //   자리는 `app.cubeLayout`에서 읽는다 — 큐브를 옮기면 팔이 따라온다.
   const cube = await page.evaluate(() => (window as any).__b2.app.cubeLayout)
   expect(await inkPixels(page, cube.cx - 50, cube.cy - 50, cube.cx + 50, cube.cy + 50)).toBeGreaterThan(10)
-  await page.mouse.move(cube.cx, cube.cy)
+  // ⚠⚠ **가운데는 이제 「투시」다**(web2-42 1번 — 일곱 뷰의 가운데): 자세를 안 바꾸고
+  //   투영만 원근으로 되돌린다. 그래서 «면을 클릭한다»는 이 칸은 **면 자리**를 짚는다 —
+  //   가운데 원(`C.CUBE_CENTER_R`) 밖이고 실루엣 안이다. 배수는 앱에서 읽는다(#88).
+  //   그리고 면 전환은 **보간한다**(TURN_ANIM_MS) — 끝날 때까지 기다린 뒤 자세를 읽는다.
+  const cr = await page.evaluate(() => (window as any).__b2.diag.view42().centerR)
+  await page.mouse.move(cube.cx + cube.size * (cr + 0.13), cube.cy)
   await page.mouse.down()
   await page.mouse.up()
+  await page.waitForTimeout(500)
   await settle(page)
   s = await summary(page)
   const movedDist = Math.hypot(s.pose.p.x, s.pose.p.y, s.pose.p.z)
@@ -330,7 +336,20 @@ test('1단계 전체 흐름 — 지평선→소실점 둘→3D→궤도→이어
   const markIds = () => page.evaluate(() => (window as any).__b2.diag.vpMarks().map((m: any) => m.id))
   // 큐브 면을 눌러 선 시점은 vp0 정면이라 vp1이 무한원으로 간다 → 표식 하나(실측).
   // **요점은 개수가 아니라 «H가 없다»는 것**이다 — 고치기 전에는 여기에 H가 함께 찍혔다.
-  expect(await markIds()).toEqual(['vp0'])
+  // ⚠⚠ 면은 이제 **평행**이라(web2-42 1번) 소실점이 아예 없다 — 그 상태에서 이 칸을
+  //    재면 «H가 없다»가 **거저 통과**한다(#86). 그래서 가운데 「투시」로 원근을 되돌린 뒤
+  //    같은 자세에서 잰다: 재는 것은 종전 그대로 «그 자세의 표식 목록»이다.
+  expect(await markIds(), '평행에는 소실점이 없다').toEqual([])
+  await page.mouse.move(cube.cx, cube.cy)
+  await page.mouse.down()
+  await page.mouse.up()
+  await page.waitForTimeout(500)
+  await settle(page)
+  // ⚠ **어느 축의 정면인지는 짚은 면이 정한다**(42-1로 짚는 자리가 가운데 밖으로 옮겨졌다) —
+  //   재는 것은 「하나뿐이고 그것이 사람이 만든 소실점이다」이지 그 이름이 아니다.
+  const faceMarks = await markIds()
+  expect(faceMarks.length, '축 정면 — 나머지 가로축은 무한원으로 간다').toBe(1)
+  expect(['vp0', 'vp1'], 'H가 아니다 — 그것이 이 칸의 요점이다').toContain(faceMarks[0])
 
   // 일반 궤도(면 정렬이 아닌 자세)에서도 마찬가지다 — 가운데 버튼 끌기
   await page.mouse.move(600, 400)

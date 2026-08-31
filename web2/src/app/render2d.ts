@@ -7,7 +7,7 @@
 import type { App, ViewOffset } from './state'
 import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive, dimLabelPos, viewXf, inkMix } from './state'
 import { vpMarks, project, projectSeg, groundAxes, horizonScreenY } from '../core/camera'
-import { cubeGeom, cubeArrows } from '../core/viewcube'
+import { cubeGeom, cubeArrows, viewName } from '../core/viewcube'
 import { C } from '../core/constants'
 import { MAT, gradeOf, rng32, widthOf, widthOfMat } from '../core/material'
 import { overshootEnds } from '../core/overshoot'
@@ -671,6 +671,17 @@ export function draw2d(
       ctx.fill()
       ctx.stroke()
     }
+    // ── **지금 무엇을 보고 있는가**(web2-42 1번) — 큐브 아래에 이름 하나 ────────
+    // 「도면」이라고 안 쓴다(지시 문면 — 도면은 잘라내고 주기까지 붙은 것이다).
+    // 자리는 **화살표 밖**이다(아래 화살표 끝이 `0.90·size`) — 겹치면 둘 다 안 읽힌다.
+    // 이름의 출처는 `viewName` 하나다(#54: 진단·팔·화면이 같은 함수를 읽는다).
+    ctx.fillStyle = COL.axisGuide
+    ctx.font = `${C.DIM_TEXT_PX}px system-ui, sans-serif`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'top'
+    ctx.fillText(viewName(an, app.pose), app.cubeLayout.cx, app.cubeLayout.cy + app.cubeLayout.size * 0.98)
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'alphabetic'
   }
 }
 

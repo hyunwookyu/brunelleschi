@@ -4,8 +4,24 @@
     {
       "name": "web2",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "web2"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "web2"
+      ],
       "port": 5301
+    },
+    {
+      "name": "web2-alt",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:alt",
+        "--prefix",
+        "web2"
+      ],
+      "port": 5311
     }
   ]
 }

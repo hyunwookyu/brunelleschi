@@ -294,15 +294,20 @@ export interface ScreenAxis {
 export function screenAxes(an: Analysis, pose: CamPose): ScreenAxis[] {
   if (!an.principal || an.f === null) return []
   const out: ScreenAxis[] = []
+  // **평행에는 소실점이 없다**(web2-42) — 모든 축이 무한원이고 화면 «방향»만 남는다.
+  // 사이 값(w<1)에서는 소실점이 `f/(1−w)`배로 밀려난다(z→∞ 극한이 그 값이다) —
+  // 전환 동안 ✕가 화면 밖으로 «날아가는» 것이 그래서 이 식의 결과다.
+  const w = projW(pose)
   for (const ax of an.axes) {
     let d = quatRotate(quatConj(pose.q), ax.dir)
-    if (Math.abs(d.z) < 1e-9) {
+    if (w >= 1 || Math.abs(d.z) < 1e-9) {
       out.push({ id: ax.id, vp: null, dir: pt(d.x, -d.y) })
     } else {
       if (d.z > 0) d = mul3(d, -1)
+      const fw = an.f / (1 - w)
       out.push({
         id: ax.id,
-        vp: pt(an.principal.x + an.f * d.x / -d.z, an.principal.y - an.f * d.y / -d.z),
+        vp: pt(an.principal.x + fw * d.x / -d.z, an.principal.y - fw * d.y / -d.z),
         dir: null,
       })
     }
@@ -359,16 +364,61 @@ export function vpAt(an: Analysis, pose: CamPose, p: Pt): AxisId | null {
  *  그 일반형은 범위 밖이고 `DEFERRED.md`에 있다. */
 export function horizonScreenY(an: Analysis, pose: CamPose): number | null {
   if (!an.principal) return null
+  // **평행에는 지평선이 없다**(web2-42) — 지평선은 «수평 방향들이 모이는 자리»인데
+  // 평행에서는 아무것도 안 모인다. 눈이 없으므로 눈높이를 그릴 자리도 없다.
+  if (isParallel(pose)) return null
   if (!isLevel(pose)) return null
   return an.principal.y
 }
 
-/** 세계 점 → 화면 (뒤에 있으면 null) */
+// ── 평행 사영(web2-42 2번) — **사영의 분모 하나만 바뀐다** ────────────────────
+//
+// 원근:  화면 = 주점 + f·(x, −y) / (−z)
+// 평행:  화면 = 주점 + (f/D)·(x, −y)          — 분모가 깊이가 아니라 **상수 D**다
+//
+// 둘을 한 식으로 적으면 **분모만 갈린다**:
+//
+//     den(w, z) = (1−w)·(−z) + w·D            w = 0 원근 · w = 1 평행
+//     화면      = 주점 + f·(x, −y) / den
+//
+// ⚠⚠ **사이 값도 정당한 사영이다** — den이 z의 1차식이므로 위 식은
+//        f/den = [f/(1−w)] / (−z + wD/(1−w))
+//     로 접힌다. 즉 **눈을 wD/(1−w)만큼 뒤로 빼고 초점거리를 1/(1−w)배 한 원근**이다
+//     (사진의 「돌리 줌」 그 족이고, w→1에서 눈이 무한히 멀어지는 극한이 평행이다).
+//     그래서 전환 애니메이션의 매 프레임이 **일관된 카메라**이고, 그 프레임에서 그은
+//     획도 `rayThrough`가 정확히 되짚는다(아래).
+//
+// ⚠ **w = 0이면 종전 식과 «같은 식»이다**(구성상 항등 — #77 ㉡): den = −z 이므로
+//   아래 네 함수가 문자 그대로 옛 코드가 된다. 그래서 그 자리에는 임계를 안 건다 —
+//   재는 것은 「w=1에서 무엇이 달라지는가」 쪽이다.
+//
+// ⚠ **잘라내기도 den이 한다.** 원근에서 「카메라 뒤」는 den ≤ 0이고, 평행에서는
+//   den ≡ D > 0이라 **아무것도 안 잘린다** — 정투상에서 눈 뒤의 기하가 사라지면 결함이다.
+
+/** 평행도 — 포즈가 든 값(없으면 0 = 원근). 0…1로 물린다. */
+export const projW = (pose: CamPose): number =>
+  pose.proj ? Math.max(0, Math.min(1, pose.proj.w)) : 0
+
+/** **완전 평행인가** — 이름·표시·소실점 유무가 이 술어 하나를 읽는다(#54) */
+export const isParallel = (pose: CamPose): boolean => projW(pose) >= 1
+
+/** **사영의 분모**(#54 — 사영이 네 자리에 있고 갈리는 것은 이것뿐이다).
+ *  `zc`는 카메라 좌표의 z(앞이 음수). 원근이면 깊이 그대로, 평행이면 상수 D. */
+export function projDen(pose: CamPose, zc: number): number {
+  const w = projW(pose)
+  return w === 0 ? -zc : (1 - w) * -zc + w * pose.proj!.D
+}
+
+/** 사영이 서는 최소 분모 — 원근의 «카메라 앞»이 여기서 나온다(옛 `pc.z >= -1e-9`와 같다). */
+const DEN_EPS = 1e-9
+
+/** 세계 점 → 화면 (분모가 0 이하면 null — 원근에서는 «뒤에 있다»와 같은 말이다) */
 export function project(an: Analysis, pose: CamPose, P: V3): Pt | null {
   if (!an.principal || an.f === null) return null
   const pc = quatRotate(quatConj(pose.q), sub3(P, pose.p))
-  if (pc.z >= -1e-9) return null
-  return pt(an.principal.x + an.f * pc.x / -pc.z, an.principal.y - an.f * pc.y / -pc.z)
+  const den = projDen(pose, pc.z)
+  if (den <= DEN_EPS) return null
+  return pt(an.principal.x + an.f * pc.x / den, an.principal.y - an.f * pc.y / den)
 }
 
 /** 세계 방향 → 카메라 프레임 — 사영이 아닌 방향 변환(뷰 큐브 위젯 등)도
@@ -379,11 +429,26 @@ export function dirInCamera(pose: CamPose, d: V3): V3 {
 
 export interface Ray { o: V3; d: V3 }
 
-/** 화면 점 → 세계 광선 */
+/** 화면 점 → 세계 광선.
+ *
+ *  평행에서는 **원점이 눈이 아니다** — 화면 점마다 다른 자리에서 같은 방향으로 나간다.
+ *  위 den 식을 z로 풀면 그대로 나온다(카메라 좌표, u = (sx−px)/f · v = (py−sy)/f):
+ *
+ *      P(z) = ( u·den, v·den, −z ),  den = (1−w)·z + w·D
+ *      ⇒ 원점 = (u·wD, v·wD, 0)   방향 = ( u(1−w), v(1−w), −1 )
+ *
+ *  w=0이면 원점이 눈이고 방향이 (u, v, −1) — **종전과 같은 광선**이다. 그 갈래는 옛
+ *  식을 그대로 둔다(부동소수 마지막 자리까지 같게 — 원근 경로에 회귀를 안 만든다). */
 export function rayThrough(an: Analysis, pose: CamPose, s: Pt): Ray | null {
   if (!an.principal || an.f === null) return null
-  const dc = v3(s.x - an.principal.x, an.principal.y - s.y, -an.f)
-  return { o: pose.p, d: norm3(quatRotate(pose.q, dc)) }
+  const dx = s.x - an.principal.x, dy = an.principal.y - s.y
+  const w = projW(pose)
+  if (w === 0) return { o: pose.p, d: norm3(quatRotate(pose.q, v3(dx, dy, -an.f))) }
+  const k = w * pose.proj!.D / an.f
+  return {
+    o: add3(pose.p, quatRotate(pose.q, v3(dx * k, dy * k, 0))),
+    d: norm3(quatRotate(pose.q, v3(dx * (1 - w), dy * (1 - w), -an.f))),
+  }
 }
 
 /** 화면 점 → **지면(Y=0) 위의 점** — 첫 앵커의 자리.
@@ -440,15 +505,18 @@ export function projectSeg(an: Analysis, pose: CamPose, A: V3, B: V3): [Pt, Pt] 
   const q = quatConj(pose.q)
   let a = quatRotate(q, sub3(A, pose.p))
   let b = quatRotate(q, sub3(B, pose.p))
-  const NEAR = NEAR_Z
-  if (a.z > NEAR && b.z > NEAR) return null
-  if (a.z > NEAR || b.z > NEAR) {
-    const t = (NEAR - a.z) / (b.z - a.z)
-    const m = v3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, NEAR)
-    if (a.z > NEAR) a = m; else b = m
+  // 자르는 자는 **분모**다 — 원근이면 `den = −z`라 옛 조건과 문자 그대로 같고
+  // (`den < DEN_MIN` ⟺ `z > NEAR_Z`), 평행이면 den ≡ D라 아무것도 안 잘린다.
+  const DEN_MIN = -NEAR_Z
+  let da = projDen(pose, a.z), db = projDen(pose, b.z)
+  if (da < DEN_MIN && db < DEN_MIN) return null
+  if (da < DEN_MIN || db < DEN_MIN) {
+    const t = (DEN_MIN - da) / (db - da)
+    const m = v3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t)
+    if (da < DEN_MIN) { a = m; da = DEN_MIN } else { b = m; db = DEN_MIN }
   }
-  const to = (c: V3) => pt(an.principal!.x + an.f! * c.x / -c.z, an.principal!.y - an.f! * c.y / -c.z)
-  return [to(a), to(b)]
+  const to = (c: V3, d: number) => pt(an.principal!.x + an.f! * c.x / d, an.principal!.y - an.f! * c.y / d)
+  return [to(a, da), to(b, db)]
 }
 
 /** 세계 **다각형** → 화면 다각형. **근평면에서 잘라낸 뒤 사영한다**(web2-25 1부).
@@ -472,18 +540,23 @@ export function projectPolyNear(an: Analysis, pose: CamPose, poly3: V3[]): Pt[] 
   if (poly3.length < 3) return null
   const q = quatConj(pose.q)
   const cam = poly3.map(P => quatRotate(q, sub3(P, pose.p)))
+  const DEN_MIN = -NEAR_Z
   const out: V3[] = []
   for (let i = 0; i < cam.length; i++) {
     const a = cam[i]!, b = cam[(i + 1) % cam.length]!
-    const ain = a.z <= NEAR_Z, bin = b.z <= NEAR_Z
+    const da = projDen(pose, a.z), db = projDen(pose, b.z)
+    const ain = da >= DEN_MIN, bin = db >= DEN_MIN
     if (ain) out.push(a)
     if (ain !== bin) {
-      const t = (NEAR_Z - a.z) / (b.z - a.z)
-      out.push(v3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, NEAR_Z))
+      const t = (DEN_MIN - da) / (db - da)
+      out.push(v3(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t))
     }
   }
   if (out.length < 3) return null
-  const to = (c: V3) => pt(an.principal!.x + an.f! * c.x / -c.z, an.principal!.y - an.f! * c.y / -c.z)
+  const to = (c: V3) => {
+    const d = Math.max(DEN_MIN, projDen(pose, c.z))
+    return pt(an.principal!.x + an.f! * c.x / d, an.principal!.y - an.f! * c.y / d)
+  }
   return out.map(to)
 }
 

@@ -11,6 +11,7 @@ import type { App } from './state'
 import { viewXf } from './state'
 import { MAT, gradeOf, widthOf } from '../core/material'
 import { C } from '../core/constants'
+import { projW } from '../core/camera'
 import type { Grade } from '../core/types'
 
 export interface R3D {
@@ -152,11 +153,32 @@ export function syncCamera(r: R3D, app: App) {
   const py = an.principal.y * v.s + v.oy
   const f = an.f * v.s
   const near = C.RENDER_NEAR_UNITS, far = 1e6   // 근평면의 출처는 `C` 하나다 — 돋보기가 같은 값을 읽는다(#54)
+  // ── 평행 사영(web2-42 2번) — **`core/camera.ts`의 den 식을 그대로 행렬에 옮긴다** ──
+  //
+  // 그 파일이 화면 좌표를 `주점 + f·(x,−y)/den`으로 내고 `den = (1−w)(−z) + wD`이므로,
+  // 클립 좌표의 w 성분을 **den으로 두면** 나머지 행이 종전 식 그대로 따라온다:
+  //
+  //     w_clip = −(1−w)·z + w·D·1        ← 마지막 행
+  //     x_clip = (2f/W)·x + (1−2px/W)·w_clip
+  //     y_clip = (2f/H)·y + (2py/H−1)·w_clip
+  //
+  // (나누면 ndc = 2·화면/크기 ∓ 1이 된다 — 옛 행렬이 하던 그 계산이다.)
+  // **w=0이면 계수가 문자 그대로 옛 값**이라 원근 경로가 한 톨도 안 바뀐다(불변식 k 유지).
+  //
+  // ⚠ 깊이 행은 **따로 섞는다**: 원근의 (far+near) 식을 평행에 그대로 쓰면 pivot 뒤의
+  //   기하가 `|ndc_z| > 1`로 **잘려 나간다**. 평행 갈래는 근평면을 눈 뒤 `far`에 두는
+  //   대칭 정투상(`ndc_z = −z/far`)이고, 그래서 정투상 뷰에서 **눈 뒤도 안 잘린다** —
+  //   `project`의 「평행에서는 den ≡ D > 0이라 아무것도 안 잘린다」와 같은 규약이다.
+  const w = projW(app.pose)
+  const D = w > 0 ? app.pose.proj!.D : 0
+  const kz = 1 - w                                  // z 계수의 몫
+  const A = kz * (-(far + near) / (far - near)) + w * (-D / far)
+  const B = kz * (-2 * far * near / (far - near))
   r.camera.projectionMatrix.set(
-    2 * f / W, 0, 1 - 2 * px / W, 0,
-    0, 2 * f / H, 2 * py / H - 1, 0,
-    0, 0, -(far + near) / (far - near), -2 * far * near / (far - near),
-    0, 0, -1, 0,
+    2 * f / W, 0, (1 - 2 * px / W) * kz, (2 * px / W - 1) * w * D,
+    0, 2 * f / H, (2 * py / H - 1) * kz, (1 - 2 * py / H) * w * D,
+    0, 0, A, B,
+    0, 0, -kz, w * D,
   )
   r.camera.projectionMatrixInverse.copy(r.camera.projectionMatrix).invert()
 

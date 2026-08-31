@@ -8,7 +8,7 @@ import type { App } from './state'
 import {
   orbitPivot, orbitBy, dollyBy, panBy, setPose, beginErase, eraseAt, endErase, fingerPans,
   screenToDoc, isEraser, yellowActive, toggleFaceAt, facePreview, excludeCandidateAt, beginNavHold, endNavHold,
-  viewScale, writeActive, writeTargetAt, writeFarPts, writeIdleNow,
+  viewScale, writeActive, writeTargetAt, writeFarPts, writeIdleNow, resetViewLens,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
 import { updateExtTrip, beginExtTrip } from '../core/extacq'
@@ -18,8 +18,10 @@ import { resolveStart, resolveEnd, resolveCommit, isStray } from '../core/draft'
 import { newHoldGate, tickHold, yellowEnd, driftAllowPx } from '../core/hold'
 import { filmSplit } from './filmlayer'
 import { C } from '../core/constants'
+import { isParallel } from '../core/camera'
 import {
   cubeGeom, cubeHit, poseForElem, cubeBasis, arrowHit, orientIn, turnOrient, poseForOrient,
+  parallelAllowed, parallelPose, perspectivePose,
 } from '../core/viewcube'
 import type { Draft } from './render2d'
 import type { RawInput } from '../core/types'
@@ -434,14 +436,36 @@ export function initInput(
     const turn = arrowHit(app.cubeLayout, sp)
     const basis = cubeBasis(app.lift.an)
     if (turn && basis) {
-      const to = poseForOrient(basis, turnOrient(orientIn(basis, app.pose), turn), pivot, dist)
+      const t = poseForOrient(basis, turnOrient(orientIn(basis, app.pose), turn), pivot, dist)
+      // **투영은 그대로 간다**(web2-42) — 90°는 «자세»의 일이다. 거리(dist)를 그대로 쓰므로
+      // 기준 깊이 D도 그대로 맞다. 정투상 뷰에서 화살표를 눌러도 평행이 유지된다.
+      const to = app.pose.proj ? { ...t, proj: { ...app.pose.proj } } : t
       level.glide(to)   // 보간한다 — 즉시 튀면 어디로 갔는지 잃는다
       return true
     }
     const elem = cubeHit(geom, sp)
     if (!elem) return false
+    // ── 일곱 개의 이름 붙은 뷰(web2-42 1번) ────────────────────────────────
+    // **가운데 = 「투시」** — 자세는 그대로 두고 투영만 원근으로 되돌린다.
+    if (elem.kind === 'center') {
+      if (isParallel(app.pose)) level.glide(perspectivePose(app.pose))
+      return true   // 이미 원근이면 할 일이 없다(구성상 항등 — 애니메이션도 안 건다)
+    }
     const pose = poseForElem(app.lift.an, elem, pivot, dist)
-    if (pose) { setPose(app, pose); level.touch() }
+    if (!pose) return true
+    if (elem.kind === 'face') {
+      // **면을 누르면 자세와 투영이 같이 정해진다** — 「평행을 켜고 정면으로 간다」가
+      // 아니라 그냥 정면으로 간다(지시 문면). 확정 전에는 평행이 잠기므로(31-2와 같은
+      // 조건) 그때는 자세만 간다 — 하지만 그 국면에서는 `cubeGeom`이 이미 null이라
+      // 여기까지 오지도 않는다(문이 둘이 아니라 하나다).
+      const to = parallelAllowed(app.lift.an) ? parallelPose(pose, pivot) : pose
+      // 렌즈는 평행에서 뜻이 없다 — 들어가면서 버린다(42-3: 읽는 값이 축척으로 갈린다).
+      if (to.proj) resetViewLens(app)
+      level.glide(to)   // **보간한다** — 원근↔평행은 시각적으로 커서 튀면 어디로 갔는지 잃는다
+      return true
+    }
+    // 모서리·꼭짓점은 **31-1의 범위 그대로**다(즉시 이동 · 원근 유지 — 지시: 안 되살린다)
+    setPose(app, pose); level.touch()
     return true
   }
 

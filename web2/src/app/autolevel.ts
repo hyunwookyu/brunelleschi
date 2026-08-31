@@ -14,7 +14,7 @@
 
 import { type App, setPose, orbitPivot, beginNavHold, endNavHold } from './state'
 import { isLevel, foldTarget, lerpPose } from '../core/level'
-import type { CamPose } from '../core/types'
+import { clonePose, type CamPose } from '../core/types'
 import { C, TURN_ANIM_MS } from '../core/constants'
 
 /** 입력이 부르는 갈고리 — 조작의 국면만 알린다(무엇으로 접는지는 안 본다) */
@@ -64,9 +64,9 @@ export function createAutoLevel(
    *
    *  ⚠ 사용자가 정렬 상태에서 팬·줌으로 높이·거리를 바꾸면 그것이 **의도**이므로
    *  앵커가 따라간다. 궤도로 바뀐 값만 안 남는다 — 그것이 이 회차의 내용이다. */
-  let anchor: CamPose = { p: { ...app.pose.p }, q: { ...app.pose.q } }
+  let anchor: CamPose = clonePose(app.pose)
   app.listeners.push(() => {
-    if (!anim && isLevel(app.pose)) anchor = { p: { ...app.pose.p }, q: { ...app.pose.q } }
+    if (!anim && isLevel(app.pose)) anchor = clonePose(app.pose)
   })
 
   const grab = () => { held = true; last = now(); anim = null }
@@ -80,7 +80,7 @@ export function createAutoLevel(
       { axes: an.axes.map(a => a.dir), f: an.f, W: an.W })
     if (!to) return false
     anim = {
-      from: { p: { ...app.pose.p }, q: { ...app.pose.q } },
+      from: clonePose(app.pose),
       to,
       t0: now(),
       ms: C.FOLD_ANIM_MS,
@@ -123,8 +123,8 @@ export function createAutoLevel(
       held = false
       last = now()
       anim = {
-        from: { p: { ...app.pose.p }, q: { ...app.pose.q } },
-        to: { p: { ...to.p }, q: { ...to.q } },
+        from: clonePose(app.pose),
+        to: clonePose(to),
         t0: now(),
         ms: TURN_ANIM_MS,
       }

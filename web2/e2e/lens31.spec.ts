@@ -161,7 +161,9 @@ test('31-2 ② 확정 전에는 꺼져 있다 — 눌러도 안 열린다 (+확�
   }))
   expect(after.disabled, '확정 뒤에는 켜진다').toBe(false)
   expect(after.allowed).toBe(true)
-  expect(after.read).toMatch(/화각 [\d.]+°/)
+  // ⚠ **읽는 값이 web2-42 3번으로 갈렸다**: 투시에서는 「렌즈 N mm」(35mm 판형 환산),
+  //   평행에서는 「축척 1:N」. 이 칸이 재는 것은 「확정 뒤에 값이 뜬다」이므로 그대로 산다.
+  expect(after.read).toMatch(/렌즈 \d+mm/)
   expect(after.read).toContain('기본')
   await page.click('#btn-lens')
   expect(await page.locator('#lens-pop').isVisible()).toBe(true)
@@ -317,7 +319,7 @@ test('31-2 ⑥ `fSource`가 화면에 안 나온다 (2026-08-17 지시 3 · D-L5
     }
   })
   console.log(`[31-2 ⑥] 팝오버 문면 「${seen.popText}」 · 화면에 fSource ${seen.bodyHasFSource} · 진단에 fSource ${seen.diagHasFSource}`)
-  expect(seen.popText).toMatch(/화각 [\d.]+°/)
+  expect(seen.popText).toMatch(/렌즈 \d+mm/)   // web2-42 3번으로 화각 → 렌즈길이(mm)
   expect(seen.popText).not.toMatch(/fSource|two-vp|default/i)
   expect(seen.bodyHasFSource, '화면 어디에도 안 나온다').toBe(false)
   expect(seen.diagHasFSource, '진단 통로에는 그대로 있다 — 그 자리는 D-L55가 허락한 곳이다').toBe(true)

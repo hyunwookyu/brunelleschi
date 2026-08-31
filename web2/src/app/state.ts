@@ -3,7 +3,7 @@
 // 실행취소는 op 단위다: 획 추가 op, 지우개 한 번의 드래그 op.
 // 그림만 되돌린다 — 작도(카메라)는 op에 들어가지 않는다.
 
-import { emptyDoc, DRAW_SHEET_ID, onPaper, yellowIds, isText, type Doc, type Stroke, type Face, type Sheet, type Layer, type Underlay, type Paper, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
+import { emptyDoc, DRAW_SHEET_ID, onPaper, yellowIds, isText, clonePose, type Doc, type Stroke, type Face, type Sheet, type Layer, type Underlay, type Paper, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
 // 글씨 판정(web2-32 1번) — 규칙과 특징 뽑기는 순수 함수다(앱 상태를 안 읽는다)
 import { boxOfPts, unionBox, inflate, writeFar, writeIdle, type WBox, type WriteEnd } from '../core/writing'
 import { parseDim } from '../core/dim'
@@ -11,7 +11,7 @@ import { isInk, widthOfMat } from '../core/material'
 export type { ViewOffset }
 import { liftAll, closestOnLineToRay, type LiftResult } from '../core/lift'
 import { camSig, defineByTouch, emptyTouchStats, type TouchStats } from '../core/own3d'
-import { DRAW_POSE, rayThrough, project } from '../core/camera'
+import { DRAW_POSE, rayThrough, project, isParallel } from '../core/camera'
 import { defaultOsnap, osnap, type OsnapSettings, type OsnapKind } from '../core/osnap'
 import { identifyPoint, measurePoint3, type Measure, type MeasurePoint } from '../core/measure'
 import { newExtDwell, clearExtAcq, type ExtDwell } from '../core/extacq'
@@ -21,7 +21,7 @@ import { rdpIndices, distToPolyline } from '../core/freehand'
 import { loopAt, faceAt, faceScreen, resolveFaces, resolveFace, allLoops, inPoly, type ResolvedFace, type LoopCandidate } from '../core/face'
 import { bakeUnderlay } from '../core/make2d'
 import { geomSize3 } from '../core/osnap'
-import { C, SETTLE_ANIM_MS, LAY_SLIDE_MS } from '../core/constants'
+import { C, SETTLE_ANIM_MS, LAY_SLIDE_MS, ORBIT_RAD_PER_PX } from '../core/constants'
 import { settleFade, waitInkMode } from '../core/waitfade'
 import { slideAway, slideRunning, type Slide, type SlideDir } from '../core/slide'
 import { cubeLayoutFor } from '../core/viewcube'
@@ -511,7 +511,14 @@ function recompute(app: App) {
     // (이론서 2.3 · CLAUDE.md §1). 지시 문면이 「**차수 승격**이 일어나면 초기화한다」이므로
     // 굳힌 3D의 판정자(`camSig` — 그쪽은 좌표가 깨지는가를 묻는다)와 **다른 자**를 쓴다.
     const lsig = `${camSig(app.lift.an)}|${app.lift.an.vps.length}`
-    if (!lensAllowed(app.lift.an) || (app.lensSig !== null && lsig !== app.lensSig)) resetViewLens(app)
+    if (!lensAllowed(app.lift.an) || (app.lensSig !== null && lsig !== app.lensSig)) {
+      resetViewLens(app)
+      // **평행도 같이 버린다**(web2-42 2번 — 「차수 승격이 일어나면 원근으로 돌린다」).
+      // 조건을 새로 안 짓는다(#54): 렌즈를 버리는 그 사건이 곧 이 사건이다 —
+      // 승격은 전부 다시 올리는 경로이고 확정이 풀리면 평행으로 볼 자격 자체가 없다.
+      // ⚠ `setPose`를 안 쓴다 — recompute 안이라 부르는 쪽이 이미 listeners를 돌린다.
+      if (app.pose.proj) app.pose = { p: app.pose.p, q: app.pose.q }
+    }
     app.lensSig = lsig
   }
   // ── 자립(web2-13 4부) — 깃발 켜짐에서만. 꺼짐이면 위 한 줄이 종전과 동일하다 ──
@@ -1210,7 +1217,7 @@ export function commitStroke(app: App, a: Pt, b: Pt, raw?: Pt[], press?: number,
     // (캡처 쪽 결함이지 문서 손상이 아니다. file.ts의 «거부»와 다른 자리다).
     if (rawIn && Object.values(rawIn).every(arr => !arr || arr.length === raw.length)) s.rawIn = rawIn
   }
-  if (!isDrawPose(app.pose)) s.view = { p: { ...app.pose.p }, q: { ...app.pose.q } }
+  if (!isDrawPose(app.pose)) s.view = clonePose(app.pose)
   // 겹 소속(web2-20 2부) — 활성 겹이 있으면 새 획이 그리로 간다. 잠긴·꺼진 겹으로는
   // 안 간다(잠금 = 편집 막힘·끔 = 3D 밖 — setActiveLayer가 그 상태를 안 만들지만
   // 문서를 연 직후 등 경계에서 한 번 더 지킨다).
@@ -1494,7 +1501,7 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
     if (!rm) continue
     const newStrokes: Stroke[] = kept.map(k => {
       const s: Stroke = { id: app.nextId++, a: k.a, b: k.b }
-      if (!isDrawPose(app.pose)) s.view = { p: { ...app.pose.p }, q: { ...app.pose.q } }
+      if (!isDrawPose(app.pose)) s.view = clonePose(app.pose)
       // **조각은 어버이의 층을 승계한다**(web2-26 1번 — 소유권은 획에 붙는다).
       // 빠져 있어서 겹 획을 잘라낸 조각이 `layer === undefined`가 됐고, 그것이 곧
       // «종이에 직접 그린 획»(onPaper)이라 **아래 종이가 오염됐다**: 겹을 꺼도 남고
@@ -1649,7 +1656,7 @@ export function addSheet(app: App, thumb?: string): Sheet {
   const s: Sheet = {
     id: app.nextId++,
     name: `종이 ${app.doc.sheets.length + 1}`,
-    pose: { p: { ...app.pose.p }, q: { ...app.pose.q } },
+    pose: clonePose(app.pose),
     view: { ...app.view },
     ...(thumb ? { thumb } : {}),
   }
@@ -1957,7 +1964,7 @@ export function sheetUpdateBlock(app: App, id: number): SheetUpdateBlock {
 export function updateSheet(app: App, id: number, thumb?: string): boolean {
   if (sheetUpdateBlock(app, id) !== null) return false
   const s = app.doc.sheets.find(x => x.id === id)!
-  if (s.pose) s.pose = { p: { ...app.pose.p }, q: { ...app.pose.q } }
+  if (s.pose) s.pose = clonePose(app.pose)
   s.view = { ...app.view }
   if (thumb) s.thumb = thumb
   gotoSheet(app, id)   // 지금 보고 있는 것이 이 종이다 — 포즈·뷰가 이미 같으므로 무변화다
@@ -1986,7 +1993,7 @@ export function gotoSheet(app: App, id: number) {
   app.activeSheet = id
   if (s.pose && s.view) {
     app.view = { ...s.view }
-    setPose(app, { p: { ...s.pose.p }, q: { ...s.pose.q } })
+    setPose(app, clonePose(s.pose))
   } else {
     resetPose(app)
   }
@@ -2060,13 +2067,27 @@ export const fadeRef = (app: Pick<App, 'fadePose' | 'pose'>): CamPose => app.fad
 export const fadeRefView = (app: Pick<App, 'fadeView' | 'view' | 'viewF' | 'lift'>): ViewOffset =>
   app.viewF == null ? (app.fadeView ?? app.view) : lensView(app.lift.an, app.viewF, app.fadeView ?? app.view)
 
-/** 궤도 한 픽셀이 도는 각(rad) — 데스크톱·터치가 같은 값을 쓴다 */
-export const ORBIT_RAD_PER_PX = 0.005
+/** **평행에서 세계 1단위가 화면에서 차지하는 CSS px**(web2-42 3번) — 축척이 읽는 값.
+ *
+ *  평행의 상 배율이 `f/D`이고 거기에 화면 변환(`viewXf` — 팬·줌·렌즈 합성)이 곱해진다.
+ *  **원근이면 null**이다: 깊이마다 배율이 다르고, 그것이 곧 「원근에서 축척은 정의되지
+ *  않는다」는 말이다(지시 문면). 출처가 하나여야 하므로(#54) 화면·진단·팔이 이것을 읽는다. */
+export function parallelPxPerUnit(app: Pick<App, 'pose' | 'lift' | 'view' | 'viewF'>): number | null {
+  if (!isParallel(app.pose) || app.lift.an.f === null) return null
+  return app.lift.an.f / app.pose.proj!.D * viewXf(app).s
+}
+
+/** 궤도 한 픽셀이 도는 각(rad) — 데스크톱·터치가 같은 값을 쓴다.
+ *  ⚠ **정의는 `core/constants.ts`에 있다**(web2-42): core가 그 값에서 「이름이 그 면으로
+ *  읽히는 허용 각」을 유도해야 하는데 app을 못 들여오기 때문이다. 부르는 자리는 안 바뀐다. */
+export { ORBIT_RAD_PER_PX }
 
 function rotateAroundPivot(app: App, axis: V3, angle: number, pivot: V3) {
   const R = quatAxisAngle(axis, angle)
   const p = add3(pivot, quatRotate(R, sub3(app.pose.p, pivot)))
-  setPose(app, { p, q: quatMul(R, app.pose.q) })
+  // **투영은 그대로 간다**(web2-42 1번 게이트: 정투상 뷰에서 손으로 돌려도 평행이 유지된다).
+  // 궤도는 pivot 둘레의 회전이라 **거리를 구성상 보존하므로** 기준 깊이 D도 그대로 맞다.
+  setPose(app, { p, q: quatMul(R, app.pose.q), ...(app.pose.proj ? { proj: { ...app.pose.proj } } : {}) })
 }
 
 /** **궤도** — 화면 이동량만큼 돈다. 세로는 세계 수직축, 가로는 카메라 오른쪽 축.
@@ -2133,7 +2154,11 @@ export function dollyBy(app: App, scale: number, center: Pt) {
   if (app.lift.lifted.size === 0) return
   const pivot = orbitPivot(app)
   const p = add3(pivot, mul3(sub3(app.pose.p, pivot), 1 / scale))
-  setPose(app, { p, q: app.pose.q })
+  // **평행에서는 눈을 옮겨도 상이 안 커진다** — 배율이 `f/D`이므로 D를 같이 줄여야
+  // 휠이 원근과 같은 뜻을 갖는다(그러지 않으면 정투상 뷰에서 휠이 죽는다).
+  // 눈도 함께 옮기므로 「D = 눈에서 pivot까지의 축방향 거리」가 계속 성립한다(#54).
+  const proj = app.pose.proj ? { w: app.pose.proj.w, D: app.pose.proj.D / scale } : undefined
+  setPose(app, { p, q: app.pose.q, ...(proj ? { proj } : {}) })
 }
 
 /** **팬** — 작도 포즈에서는 화면 이동, 궤도 후에는 카메라를 옆으로 옮긴다.
@@ -2153,7 +2178,9 @@ export function panBy(app: App, dx: number, dy: number) {
   const right = quatRotate(app.pose.q, v3(1, 0, 0))
   const up = quatRotate(app.pose.q, v3(0, 1, 0))
   const p = add3(app.pose.p, add3(mul3(right, -dx * k), mul3(up, dy * k)))
-  setPose(app, { p, q: app.pose.q })
+  // 옆으로 옮기는 것은 **시선에 수직**이라 pivot까지의 축방향 거리가 안 변한다 —
+  // 그래서 평행의 기준 깊이 D도 그대로다(`k`도 이미 D/f가 되어 있다: depth = D).
+  setPose(app, { p, q: app.pose.q, ...(app.pose.proj ? { proj: { ...app.pose.proj } } : {}) })
 }
 
 /** **궤도 중심 — 펜으로 딴 선의 경계 상자 중심**(web2-06 지시 4). 펜이 없으면 연필로 대신한다.

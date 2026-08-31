@@ -3,10 +3,11 @@
 // 큐브의 기준 좌표계는 그린 공간의 축(vp0·수직·그 외적)이다. 세계 축이 아니다.
 
 import type { CamPose } from './types'
-import { dirInCamera, type Analysis } from './camera'
-import { C } from './constants'
+import { dirInCamera, isParallel, type Analysis } from './camera'
+import { lensAllowed } from './lens'
+import { C, VIEW_NAME_ALIGN_RAD } from './constants'
 import {
-  type Pt, type V3, type Quat, pt, v3, add3, mul3, norm3, cross3, dot3, len3,
+  type Pt, type V3, type Quat, pt, v3, add3, sub3, mul3, norm3, cross3, dot3, len3,
   quatFromBasis, quatRotate, dist2,
 } from './vec'
 
@@ -25,7 +26,10 @@ export function cubeBasis(an: Analysis): CubeBasis | null {
 
 export interface CubeLayout { cx: number; cy: number; size: number }
 
-export type CubeElem = { kind: 'face' | 'edge' | 'corner'; dirLocal: V3 }
+/** 큐브에서 짚은 것. **`center`가 「투시」다**(web2-42 1번 — 일곱 뷰의 가운데).
+ *  ⚠ 꼭짓점·모서리는 **31-1의 범위 그대로**다(지시: 「꼭짓점 방향을 되살리지 마라」 —
+ *  90° 화살표가 면만 쓰는 그 결정을 안 건드린다). */
+export type CubeElem = { kind: 'face' | 'edge' | 'corner' | 'center'; dirLocal: V3 }
 
 export interface CubeGeom {
   layout: CubeLayout
@@ -87,6 +91,15 @@ function distToSeg(p: Pt, a: Pt, b: Pt): number {
 
 /** 화면 점 → 큐브 요소. 꼭짓점 > 모서리 > 면 (정확한 것이 앞선다). */
 export function cubeHit(geom: CubeGeom, p: Pt): CubeElem | null {
+  // ── 가운데 = 「투시」(web2-42 1번) — **꼭짓점보다 먼저 본다** ─────────────────
+  // ⚠ 아이소메트릭에 가까운 자세에서는 **앞 꼭짓점이 정확히 화면 중심에 사영된다**
+  //   (국소 (1,1,1)이 카메라를 향하면 c ≈ (0,0,1) → 화면 (0,0)). 그래서 순서를 정해야
+  //   하고, 「투시」가 이긴다: 투시로 돌아가는 길은 **언제나 열려 있어야 한다**(지시 문면).
+  //   잃는 것은 그 자세에서 «앞 꼭짓점 하나»뿐이고 그 꼭짓점의 시점은 **지금 보고 있는
+  //   바로 그 자세**라 누를 이유가 없다. 나머지 꼭짓점·모서리는 종전 그대로다.
+  if (dist2(p, pt(geom.layout.cx, geom.layout.cy)) <= geom.layout.size * C.CUBE_CENTER_R) {
+    return { kind: 'center', dirLocal: v3(0, 0, 0) }
+  }
   const visCorner = new Set<number>()
   const visEdges: [number, number][] = []
   for (const f of geom.faces) {
@@ -125,6 +138,8 @@ export function cubeHit(geom: CubeGeom, p: Pt): CubeElem | null {
 export function poseForElem(
   an: Analysis, elem: CubeElem, pivot: V3, dist: number,
 ): CamPose | null {
+  // 가운데(투시)는 **자세를 안 바꾼다** — 바꾸는 것은 투영뿐이다(`perspectivePose`).
+  if (elem.kind === 'center') return null
   const basis = cubeBasis(an)
   if (!basis) return null
   const d = elem.dirLocal
@@ -284,4 +299,70 @@ export function arrowHit(layout: CubeLayout, p: Pt): CubeTurn | null {
     if (along >= r0 && along <= r1 && side <= h) return turn
   }
   return null
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// 일곱 개의 이름 붙은 뷰(web2-42 1번) — **면을 누르면 자세와 투영이 같이 정해진다**
+//
+//   여섯 면   평면 · 저면 · 정면 · 후면 · 좌측면 · 우측면   → 평행이 따라온다
+//   가운데    투시                                        → 원근으로 돌아온다
+//
+// 「평행을 켜고 정면으로 간다」가 아니라 그냥 **정면으로 간다**. 이름이 곧 상태다.
+// 그래서 «평행 토글»이라는 것이 이 앱에 없다(지시 「하지 말 것」).
+//
+// ⚠ 이름은 **큐브의 틀**로 읽는다(`cubeBasis` — vp0 방향 · 수직 · 그 외적). 세계 축이
+//   아니다. 1점 그림에서 그 X가 정확히 깊이 방향이 되므로 「정면」이 사람이 그린 그
+//   정면이다(31-1 머리주석의 그 성질을 그대로 쓴다).
+
+/** **평행으로 볼 수 있는가** — 31-2(보기 렌즈)와 **같은 조건**이다(지시 문면).
+ *  평행에는 소실점이 없으므로 첫 획으로 카메라를 못 푼다 → 카메라가 닫힌 뒤에만.
+ *  술어를 새로 안 짓는다(#54) — `lensAllowed` 하나가 「카메라가 닫혔는가」의 답이다. */
+export const parallelAllowed = lensAllowed
+
+/** **평행으로 본 같은 자리** — 배율은 `f / D`이고 `D`는 **눈에서 pivot까지의 축방향 거리**다.
+ *
+ *  ⚠ 배율을 상수로 안 둔다(#88 — 예약값은 대상에서 유도한다): `f/D`이므로 **pivot 면에서
+ *  원근과 크기가 정확히 같다**. 그래서 전환이 그 면을 기준으로 «펴지는» 것으로 보이고
+ *  대상이 화면에서 안 튄다. 눈은 그대로 둔다(평행에서 눈의 «거리»는 상이 아니라 D가 정한다). */
+export function parallelPose(pose: CamPose, pivot: V3): CamPose {
+  const fwd = quatRotate(pose.q, v3(0, 0, -1))
+  const D = Math.max(1e-6, dot3(sub3(pivot, pose.p), fwd))
+  return { p: pose.p, q: pose.q, proj: { w: 1, D } }
+}
+
+/** **원근으로 되돌린 같은 자리** — 자세는 그대로다(가운데 「투시」가 이것이다).
+ *  이미 원근이면 **같은 객체를 그대로 돌려준다**(구성상 항등 — 전환할 것이 없다). */
+export const perspectivePose = (pose: CamPose): CamPose =>
+  pose.proj ? { p: pose.p, q: pose.q } : pose
+
+/** 화면에 쓰는 이름. **「도면」이라는 말을 안 쓴다**(지시: 도면은 잘라내고 주기까지 붙은 것이다). */
+export type ViewName = '투시' | '평면' | '저면' | '정면' | '후면' | '좌측면' | '우측면' | '축측'
+
+/** 큐브 국소 축 → 이름. 시선의 **반대**(back = 눈이 있는 쪽)로 읽는다.
+ *  X = vp0 방향이므로 **그 축을 마주 보는 것이 정면**이다(back = −X). */
+function nameOfBack(b: V3): ViewName | null {
+  if (b.y > 0.5) return '평면'
+  if (b.y < -0.5) return '저면'
+  if (b.x < -0.5) return '정면'
+  if (b.x > 0.5) return '후면'
+  if (b.z > 0.5) return '우측면'
+  if (b.z < -0.5) return '좌측면'
+  return null
+}
+
+/** **지금 무엇을 보고 있는가**(web2-42 1번 — 화면에 이름으로 표시한다).
+ *
+ *  · 원근이면 **투시**다 — 자세와 무관하다(원근에서 「정면」은 이 앱에서 그냥 1점 그림이다).
+ *  · 평행이면 축에 **정렬됐는지**로 갈린다: 정렬이면 그 면 이름, 아니면 **축측**.
+ *    허용 각은 `VIEW_NAME_ALIGN_RAD`(궤도 반 픽셀) — 손으로 한 픽셀만 돌려도 축측이 되고
+ *    부동소수 잡음으로는 안 바뀐다. */
+export function viewName(an: Analysis, pose: CamPose): ViewName {
+  if (!isParallel(pose)) return '투시'
+  const basis = cubeBasis(an)
+  if (!basis) return '축측'
+  const back = toCubeLocal(basis, quatRotate(pose.q, v3(0, 0, 1)))
+  const near = nearestAxis(back)
+  const cos = Math.min(1, Math.max(-1, dot3(norm3(back), near)))
+  if (Math.acos(cos) > VIEW_NAME_ALIGN_RAD) return '축측'
+  return nameOfBack(near) ?? '축측'
 }

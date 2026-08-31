@@ -102,3 +102,57 @@ export function lensAn(an: Analysis, viewF: number | null): Analysis {
   const f = lensF(an, viewF)
   return f === an.f ? an : { ...an, f }
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+// 읽는 값(web2-42 3번) — **투영에 따라 대체된다. 한 자리에 하나만 뜬다.**
+//
+//     투시일 때   렌즈길이 mm   (35mm 판형 환산 — 라이노가 그렇다)
+//     평행일 때   축척 1:100
+//
+// 원근에서 축척은 정의되지 않고(같은 선이 깊이마다 다른 길이로 찍힌다) 평행에서
+// 렌즈길이는 무의미하므로(눈이 없다), **서로를 대신하는 것이 정직하다**(지시 문면).
+// ⚠ `fSource`는 여전히 화면에 안 나온다(2026-08-17 지시 3 · D-L55).
+
+/** **35mm 판형의 대각(mm)** — 36 × 24에서 **유도한다**(#88: 43.27을 상수로 옮겨 적지 않는다.
+ *  판형을 바꿔 적는 사람이 이 줄을 볼 이유가 생긴다). 값은 43.2666…이고 지시문의 43.27이다. */
+export const FILM35_DIAG_MM = Math.hypot(36, 24)
+
+/** **35mm 판형 환산 초점거리(mm)** — 화면(문서 프레임)의 **대각**을 그 판의 대각으로 본다:
+ *  같은 **대각 화각**을 내는 렌즈의 mm다.
+ *
+ *      mm = f · 43.27 / diag        (f·diag는 같은 단위 — 문서 px)
+ *
+ *  ⚠ 대각이 기준인 것이 요점이다: 가로(W)를 자로 쓰면 같은 화각이 다른 mm로 읽힌다
+ *  (프레임 비가 3:2가 아니면 어긋난다 — 팔이 그 위약 판을 실제로 돌려 수치를 낸다). */
+export const focal35mm = (f: number, diag: number): number => f * FILM35_DIAG_MM / diag
+
+/** **CSS px 하나의 실물 크기(mm)** — CSS 명세가 `96 px = 1 in`으로 못 박은 값이다.
+ *  기기의 진짜 화면 크기가 아니라 **웹이 약속한 길이**이고, 축척은 그 약속 위에 선다. */
+export const MM_PER_CSS_PX = 25.4 / 96
+
+/** **축척의 분모** — 「화면에서 1 잰 것이 실물에서 몇 배인가」. 1:100의 그 100이다.
+ *
+ *  `mmPerUnit` 세계 1단위의 실물 mm — **32-5의 `doc.scaleRef`가 정한 값 그대로**다
+ *              (`lift.mmPerUnit`. 새 기제를 안 만든다 — 지시 문면).
+ *  `pxPerUnit` 세계 1단위가 화면에서 차지하는 CSS px — 평행이면 `f/D · view.s`.
+ *
+ *  축척이 미정(치수 획이 없다)이면 **null**이고 화면에는 「미정」이 뜬다. */
+export function scaleDenom(mmPerUnit: number | null, pxPerUnit: number): number | null {
+  if (mmPerUnit === null || !(mmPerUnit > 0) || !(pxPerUnit > 0)) return null
+  return mmPerUnit / pxPerUnit / MM_PER_CSS_PX
+}
+
+/** 축척의 화면 문자열 — 1보다 크면 `1:N`, 작으면(확대해 본다) `N:1`.
+ *  ⚠ **표준 축척으로 안 붙인다**(1:98을 1:100으로 적으면 조용히 틀린 값이다 — #61의 형태).
+ *  자릿수는 크기에 따라 준다: 100 이상은 정수, 그 아래는 소수 한 자리. */
+export function scaleText(denom: number | null): string {
+  if (denom === null) return '축척 미정'
+  const [n, one] = denom >= 1 ? [denom, false] : [1 / denom, true]
+  const t = n >= 100 ? String(Math.round(n)) : n.toFixed(1)
+  return one ? `축척 ${t}:1` : `축척 1:${t}`
+}
+
+/** 렌즈길이의 화면 문자열 — 35mm 환산 mm. 정수로 읽는다(사진의 관례이고, 소수 첫째
+ *  자리는 화각 0.1° 아래라 사람이 못 가른다). */
+export const focalText = (f: number, diag: number): string =>
+  `렌즈 ${Math.round(focal35mm(f, diag))}mm`

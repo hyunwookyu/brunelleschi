@@ -4,7 +4,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   pickDimTarget, pickTargetAt, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick,
   handwritingGroup, applyRecognized, writingStrokes, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
   writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
-  measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
+  measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
 import { initInput } from './input'
@@ -27,8 +27,11 @@ import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
 import { C, SETTLE_ANIM_MS, LAY_SLIDE_MS, WRITE_HOLD_MS_MIN, WRITE_HOLD_MS_MAX } from '../core/constants'
 import { WAIT_INK, setWaitInkMode, waitInkMode, type WaitInkMode } from '../core/waitfade'
-import { lensAllowed, lensStops, lensF, lensK, hfovDeg, LENS_STOP_MIN, LENS_STOP_MAX } from '../core/lens'
-import { cubeLayoutFor } from '../core/viewcube'
+import {
+  lensAllowed, lensStops, lensF, lensK, hfovDeg, LENS_STOP_MIN, LENS_STOP_MAX,
+  focalText, focal35mm, scaleText, scaleDenom,
+} from '../core/lens'
+import { cubeLayoutFor, viewName, parallelAllowed } from '../core/viewcube'
 
 const W = window.innerWidth
 const H = window.innerHeight
@@ -1894,10 +1897,19 @@ function syncLens() {
     lensRange.disabled = true
     return
   }
+  // ── 읽는 값은 **투영에 따라 대체된다**(web2-42 3번) — 한 자리에 하나만 뜬다 ──
+  // 평행에서는 렌즈길이가 무의미하므로(눈이 없다) 손잡이를 잠그고 **축척**을 낸다.
+  // 축척의 출처는 32-5의 `doc.scaleRef`가 정한 `lift.mmPerUnit` 하나다(새 기제 ⛔).
+  if (isParallel(app.pose)) {
+    lensRange.disabled = true
+    lensRange.value = '0'
+    lensRead.textContent = scaleText(scaleDenom(app.lift.mmPerUnit, parallelPxPerUnit(app) ?? 0))
+    return
+  }
   lensRange.disabled = false
   lensRange.value = String(lensStops(an, app.viewF))
   const f = lensF(an, app.viewF)!
-  lensRead.textContent = `화각 ${hfovDeg(f, an.W).toFixed(1)}°${app.viewF === null ? ' (기본)' : ''}`
+  lensRead.textContent = `${focalText(f, an.diag)}${app.viewF === null ? ' (기본)' : ''}`
 }
 // 여닫이는 **표를 거친다**(직접 `hidden` 대입 ⛔ — 28-1의 규약: 배타·R7이 그 표에 걸려 있다)
 lensBtn.addEventListener('click', () => {
@@ -2013,7 +2025,7 @@ requestAnimationFrame(() => {
 })
 
 // e2e 진단 통로 — 앱과 같은 함수·같은 상태를 본다(측정 경로와 앱 경로를 가르지 않는다)
-import { project, screenAxes, vpMarks, frameAxes } from '../core/camera'
+import { project, screenAxes, vpMarks, frameAxes, isParallel, projW, horizonScreenY } from '../core/camera'
 import { forwardOf, yawDir } from '../core/level'
 import { loopAt, buildGraph, cyclesOf, planesOf, faceScreen } from '../core/face'
 import { geomSize3 } from '../core/osnap'
@@ -2310,6 +2322,27 @@ const diag = {
   /** **보기 렌즈**(web2-31 2번) — 팔이 「문서 → 화면」을 손으로 펴지 않게 합성된 변환을 그대로 준다(#54).
    *  ⚠ 이것은 **진단 통로**다(`S2S`) — 화면에 나가는 값이 아니다(D-L55는 `fSource`에 걸리고
    *  그 값은 종전대로 `summary()`에만 있다). */
+  /** **일곱 뷰와 투영**(web2-42) — 화면이 읽는 것과 **같은 함수**를 팔이 읽는다(#88:
+   *  팔이 이름표·배율을 손으로 다시 짓지 않는다). `read`가 화면에 실제로 뜨는 문자열이다. */
+  view42: () => {
+    const an = app.lift.an
+    const px = parallelPxPerUnit(app)
+    return {
+      name: viewName(an, app.pose),
+      parallel: isParallel(app.pose),
+      centerR: C.CUBE_CENTER_R,   // 팔이 가운데 대역을 **앱에서** 읽는다(#88)
+      w: projW(app.pose),
+      D: app.pose.proj?.D ?? null,
+      allowed: parallelAllowed(an),
+      pxPerUnit: px,
+      mmPerUnit: app.lift.mmPerUnit,
+      denom: scaleDenom(app.lift.mmPerUnit, px ?? 0),
+      focal35: an.f === null ? null : focal35mm(lensF(an, app.viewF)!, an.diag),
+      read: document.getElementById('lens-read')!.textContent,
+      horizon: horizonScreenY(an, app.pose),
+      vpMarks: vpMarks(an, app.pose).length,
+    }
+  },
   lens: () => ({
     allowed: lensAllowed(app.lift.an),
     viewF: app.viewF,

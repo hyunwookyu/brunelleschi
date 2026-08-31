@@ -1,7 +1,7 @@
 // .brnl 저장·복원 — 문서(획·프레임)와 시점만 담는다.
 // 카메라·소실점·리프팅은 파생이므로 저장하지 않는다(원칙 b) — 복원 후 다시 계산된다.
 
-import type { Doc, Stroke, Face, Sheet, Layer, Paper, ViewOffset, Grade, RawInput, Underlay, UnderlaySegment } from './types'
+import type { Doc, Stroke, Face, Sheet, Layer, Paper, ViewOffset, Grade, RawInput, Underlay, UnderlaySegment, CamPose } from './types'
 import { drawSheet, DRAW_SHEET_ID } from './types'
 import { horizonDocY } from './camera'
 import { GRADES } from './material'
@@ -104,6 +104,22 @@ const isPt = (p: any): boolean => p && isNum(p.x) && isNum(p.y)
 const isV3 = (p: any): boolean => p && isNum(p.x) && isNum(p.y) && isNum(p.z)
 const isQuat = (q: any): boolean => q && isNum(q.x) && isNum(q.y) && isNum(q.z) && isNum(q.w)
 
+/** **평행 사영 필드**(web2-42 2번) — 포즈에 붙는 선택 값. 없으면 원근이다(옛 파일 그대로).
+ *  모양이 틀리면 **그 필드만 버린다**(own3·layer의 규약): 잃어도 «원근으로 본다»일 뿐이라
+ *  조용히 틀린 좌표가 안 난다 — 문서를 거부하면 잃는 것이 더 크다.
+ *  ⚠ `w`는 0…1, `D`는 양수다. 저장되는 것은 **완전 평행(w=1)뿐**이지만(전환 중에는
+ *  아무도 저장을 안 한다) 사이 값도 정당한 사영이라 받아서 그대로 둔다. */
+function takeProj(raw: any): CamPose['proj'] | undefined {
+  const j = raw?.proj
+  if (!j || !isNum(j.w) || !isNum(j.D)) return undefined
+  if (j.w < 0 || j.w > 1 || j.D <= 0) return undefined
+  return { w: j.w, D: j.D }
+}
+const withProj = (pose: CamPose, raw: any): CamPose => {
+  const proj = takeProj(raw)
+  return proj ? { ...pose, proj } : pose
+}
+
 export function parseBrnl(text: string): BrnlData | null {
   let raw: any
   try { raw = JSON.parse(text) } catch { return null }
@@ -140,7 +156,7 @@ export function parseBrnl(text: string): BrnlData | null {
     }
     if (s.view) {
       if (!isV3(s.view.p) || !isQuat(s.view.q)) return null
-      st.view = { p: { ...s.view.p }, q: { ...s.view.q } }
+      st.view = withProj({ p: { ...s.view.p }, q: { ...s.view.q } }, s.view)
     }
     // 치수 mm — 0 이하·비수는 거부한다(길이 0 획은 lift가 조용히 못 푼다)
     if (s.dim !== undefined) {
@@ -215,7 +231,7 @@ export function parseBrnl(text: string): BrnlData | null {
       if (!v || !isV3(v.pose?.p) || !isQuat(v.pose?.q)) continue
       if (!isNum(v.view?.s) || !isNum(v.view?.ox) || !isNum(v.view?.oy)) continue
       const sv: (typeof savedViews)[number] =
-        { pose: { p: { ...v.pose.p }, q: { ...v.pose.q } }, view: { s: v.view.s, ox: v.view.ox, oy: v.view.oy } }
+        { pose: withProj({ p: { ...v.pose.p }, q: { ...v.pose.q } }, v.pose), view: { s: v.view.s, ox: v.view.ox, oy: v.view.oy } }
       const th = takeThumb(v.thumb)
       if (th) sv.thumb = th
       savedViews.push(sv)
@@ -233,7 +249,7 @@ export function parseBrnl(text: string): BrnlData | null {
       if (hasPose) {
         if (!isV3(s.pose?.p) || !isQuat(s.pose?.q)) continue
         if (!isNum(s.view?.s) || !isNum(s.view?.ox) || !isNum(s.view?.oy)) continue
-        entry.pose = { p: { ...s.pose.p }, q: { ...s.pose.q } }
+        entry.pose = withProj({ p: { ...s.pose.p }, q: { ...s.pose.q } }, s.pose)
         entry.view = { s: s.view.s, ox: s.view.ox, oy: s.view.oy }
       }
       const th = takeThumb(s.thumb)

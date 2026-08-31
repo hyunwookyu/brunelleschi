@@ -137,7 +137,7 @@ export function fitPlan(
   const p = add3(add3(C, mul3(fwd, -d)), add3(mul3(right, a), mul3(up, b)))
   if (!Number.isFinite(p.x) || !Number.isFinite(p.y) || !Number.isFinite(p.z)) return null
   return {
-    pose: { p, q: { ...pose.q } },
+    pose: { p, q: { ...pose.q }, ...(pose.proj ? { proj: { ...pose.proj } } : {}) },
     d, dExact, dNear, framable: dExact >= dNear, nearestDepth: d + minG,
   }
 }
