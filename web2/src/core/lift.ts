@@ -44,8 +44,19 @@ export interface XintAmbigRow {
   decided: 'stand' | 'ambiguous' | 'pressed'
 }
 let ambigTrace: XintAmbigRow[] = []
-/** 마지막 리프팅 패스가 남긴 표식. 화면은 안 읽는다 — 팔과 원장의 것이다. */
+/** 마지막 리프팅 패스가 남긴 표식. 화면은 안 읽는다 — 팔과 원장의 것이다.
+ *  ⚠⚠ **한 획이 여러 줄을 낼 수 있다**(1차 리뷰어 [11]이 잡았다): `crossOnce`는 하나를
+ *  올릴 때마다 남은 대기를 **처음부터 다시 훑으므로** 같은 획이 여러 번 판정된다(후보 수가
+ *  그 사이에 늘기도 한다). 「몇 획인가」를 세려면 **id로 접어야** 하고 그때 유효한 것은
+ *  **마지막 줄**이다 — 그것이 그 획의 최종 답이다. 접어 주는 손잡이가 아래 `xintAmbigFinal`. */
 export function xintAmbigTrace(): readonly XintAmbigRow[] { return ambigTrace }
+
+/** 획별 **최종** 판정 — id → 마지막 줄. 「후보≥2인 획이 몇인가」의 분모는 이것이다. */
+export function xintAmbigFinal(): Map<number, XintAmbigRow> {
+  const m = new Map<number, XintAmbigRow>()
+  for (const r of ambigTrace) m.set(r.id, r)
+  return m
+}
 
 let ambigRatioOverride: number | null = null
 export function setXintAmbigRatio(r: number | null): void { ambigRatioOverride = r }

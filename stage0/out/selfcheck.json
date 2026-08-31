@@ -1,5 +1,5 @@
 {
-  "n_flags": 6102,
+  "n_flags": 6106,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -29312,6 +29312,16 @@
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "xint41_web2.json:ambiguous_rate_by_density[0].stood_by_crossing",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "xint41_web2.json:ambiguous_rate_by_density[0].correctly_placed",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "xint41_web2.json:ambiguous_rate_by_density[0].misplaced",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -29387,6 +29397,16 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "xint41_web2.json:ambiguous_rate_by_density[2].stood_by_crossing",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "xint41_web2.json:ambiguous_rate_by_density[2].correctly_placed",
+      "val": 0,
+      "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "xint41_web2.json:ambiguous_rate_by_density[2].misplaced",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
@@ -29400,6 +29420,11 @@
       "path": "xint41_web2.json:ambiguous_rate_by_density[2].worst_error_rel",
       "val": 0,
       "flag": "정확히 0 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "xint41_web2.json:press_position_falsification.onTarget",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "xint_web2.json:inside.before.by_pair.C_먼VP|L40",
@@ -30737,11 +30762,6 @@
       "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
     },
     {
-      "path": "stage0/out/xint41_web2.json",
-      "val": "#90",
-      "flag": "**원장이 `PITFALLS.md`에 없는 번호를 인용한다** — 죽은 참조다. 번호가 틀렸거나 항목이 사라졌다(#42 ④)"
-    },
-    {
       "path": "aux_vp.json:gate.reachability_value",
       "val": [
         2,
@@ -31078,7 +31098,7 @@
       "scan": "scan_pitfall_citations",
       "unit": "원장",
       "targets": 172,
-      "hits": 4,
+      "hits": 3,
       "note": "`#N`을 하나라도 인용한 원장 수. **판정이 아니라 대조 자료다** — 어느 원장이 이번 항목의 것인지는 이 검사가 모른다"
     },
     {
@@ -32295,6 +32315,7 @@
       12,
       14,
       16,
+      28,
       42,
       43,
       47,
@@ -32305,7 +32326,8 @@
       85,
       86,
       88,
-      90
+      90,
+      91
     ],
     "xint_web2.json": [
       46,

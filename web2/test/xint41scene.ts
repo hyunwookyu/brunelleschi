@@ -68,7 +68,10 @@ export interface Trial { s: Stroke; target: Pt }
 // ── ② 37이 쓴 붐비는 장면 ───────────────────────────────────────────────────
 /** 세로 여덟(밑이 **한** vp1 지면선 위) + vp1 가로 여덟 + 시험 획 24 = 43획.
  *  시험 획은 의도한 교차 T를 **정확히 지나고** 축에서 손만큼(≤1.7°) 돌아 있다. */
-export function crowdedFlat(): { b: DocBuilder; trials: Trial[]; scaffoldN: number } {
+/** ⚠ `angleMax`(rad)는 **손의 각오차 대역**이다. 기본 0.03은 37이 쓴 값
+ *  (`VP_DIR_RATIO` 0.06 = 3.4°의 절반). 1차 리뷰어 [2]가 「이 대역을 키우면 이 픽스처도
+ *  애매해지는가」를 물어 **인자로 뺐다** — 그 답이 「무해하다」의 조건을 정한다. */
+export function crowdedFlat(angleMax = 0.03): { b: DocBuilder; trials: Trial[]; scaffoldN: number } {
   const b = builder()
   b.add(100, 400, 1100, 400)
   b.add(500, 500, 600, 475)
@@ -85,7 +88,7 @@ export function crowdedFlat(): { b: DocBuilder; trials: Trial[]; scaffoldN: numb
   const trials: Trial[] = []
   for (let i = 0; i < 24; i++) {
     const T: Pt = { x: xs[2 + (i % 5)]!, y: 250 + (i % 6) * 22 + Math.floor(i / 6) * 5 }
-    const th = (rnd() - 0.5) * 2 * 0.03
+    const th = (rnd() - 0.5) * 2 * angleMax
     const a = rot(away(T, VP1, -150), T, th), z = rot(away(T, VP1, 210), T, th)
     const s = b.add(a.x, a.y, z.x, z.y)
     s.raw = rawOf(a, z)
@@ -149,6 +152,11 @@ export function pressProfile(shape: PressShape, n: number, seed: number, at = -1
     const jit = shape === 'flat' ? 1 : 1 + (g() - 0.5) * 0.4
     return q(v * jit)
   })
+}
+
+/** 두 화면점의 **중간**에 가장 가까운 raw 색인 — 「누름이 두 교차 사이에 있을 때」의 반증(1차 [14]) */
+export function midRawIndex(s: Stroke, P: Pt, Q: Pt): number {
+  return nearestRawIndex(s, { x: (P.x + Q.x) / 2, y: (P.y + Q.y) / 2 })
 }
 
 /** 획의 raw 중 화면점 `P`에 가장 가까운 색인 — 「거기서 눌렀다」의 자리를 **유도**한다(#88) */
