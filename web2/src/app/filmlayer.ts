@@ -94,14 +94,21 @@ const OVERLAY_FIBER_PRE40 = {
 } as const
 
 /** 그 배수를 먹인 값 — 개수는 10 단위로 끊는다(시드 변동폭이 그보다 크다 — CLAUDE.md §5). */
-function fineFiber(p: 'yellow' | 'tracing'): { count: number; lenMin: number; lenMax: number } {
+function fineFiberK(p: 'yellow' | 'tracing', k: number): { count: number; lenMin: number; lenMax: number } {
   const o = OVERLAY_FIBER_PRE40[p]
   return {
-    count: Math.round(o.count / OVERLAY_LEN_K / 10) * 10,
-    lenMin: Number((o.lenMin * OVERLAY_LEN_K).toFixed(2)),
-    lenMax: Number((o.lenMax * OVERLAY_LEN_K).toFixed(2)),
+    count: Math.round(o.count / k / 10) * 10,
+    lenMin: Number((o.lenMin * k).toFixed(2)),
+    lenMax: Number((o.lenMax * k).toFixed(2)),
   }
 }
+const fineFiber = (p: 'yellow' | 'tracing') => fineFiberK(p, OVERLAY_LEN_K)
+
+/** 팔 전용 — **K를 갈아 끼운다**(#12: 동작점 하나로 안 정한다). null이면 제품 값.
+ *  같은 유도식(`fineFiberK`)을 쓰므로 갈린 축이 여전히 **길이 하나**다.
+ *  `web2-40`이 이것으로 K 훑기를 내고 「어디가 바닥인가」를 값으로 적는다. */
+let LEN_K_OVERRIDE: number | null = null
+export const setOverlayLenKForTest = (k: number | null) => { LEN_K_OVERRIDE = k }
 
 export const PAPER_STYLE: Record<Surface, {
   tint: [number, number, number]
@@ -210,12 +217,16 @@ export function bakeFiberTile(id: number, paper: Surface, dpr: number, wrap = tr
   // 반증(web2-40 1번) — 겹일 때만, **길이·개수만** pre-40으로. 옛 규칙(FIBER_LEGACY)이
   // 켜져 있으면 그쪽이 이미 다른 단위의 표라 안 겹친다.
   const pre40 = GRAIN_PRE40 && !FIBER_LEGACY && paper !== 'paper' ? OVERLAY_FIBER_PRE40[paper] : null
+  // K 훑기(팔 전용) — pre-40이 켜져 있으면 그쪽이 이긴다(둘을 같이 켜지 않는다)
+  const kOver = !pre40 && LEN_K_OVERRIDE !== null && !FIBER_LEGACY && paper !== 'paper'
+    ? fineFiberK(paper, LEN_K_OVERRIDE) : null
   const st = {
     ...PAPER_STYLE[paper],
     fiber: {
       ...base,
       ...(PAPER_309 && paper === 'paper' && !FIBER_LEGACY ? PAPER_FIBER_309 : {}),
       ...(pre40 ?? {}),
+      ...(kOver ?? {}),
     },
   }
   const TP = tilePxFor(dpr)
@@ -353,7 +364,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
   // 타일 캐시 — (layer.id|paper|dpr) → 캔버스. 파생이라 저장 안 함(문서에는 Layer만).
   const tileCache = new Map<string, HTMLCanvasElement>()
   const tileFor = (id: number, surface: Surface): HTMLCanvasElement => {
-    const key = `${id}|${surface}|${cd}|${FIBER_LEGACY ? 'L' : 'N'}|${PAPER_309 ? '9' : '-'}|${GRAIN_PRE40 ? '4' : '-'}`
+    const key = `${id}|${surface}|${cd}|${FIBER_LEGACY ? 'L' : 'N'}|${PAPER_309 ? '9' : '-'}|${GRAIN_PRE40 ? '4' : '-'}|${LEN_K_OVERRIDE ?? '-'}`
     let t = tileCache.get(key)
     if (!t) { t = bakeFiberTile(id, surface, cd); tileCache.set(key, t) }
     return t
@@ -382,7 +393,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
   let paperKey = ''
   function drawPaperFilm(app: App) {
     const v = viewXf(app)
-    const key = `${app.activeSheet}|${v.s}|${v.ox}|${v.oy}|${cd}|${cw}x${ch}|${FIBER_LEGACY ? 'L' : 'N'}|${PAPER_FIBER ? 'F' : '-'}|${PAPER_309 ? '9' : '-'}|${GRAIN_PRE40 ? '4' : '-'}`
+    const key = `${app.activeSheet}|${v.s}|${v.ox}|${v.oy}|${cd}|${cw}x${ch}|${FIBER_LEGACY ? 'L' : 'N'}|${PAPER_FIBER ? 'F' : '-'}|${PAPER_309 ? '9' : '-'}|${GRAIN_PRE40 ? '4' : '-'}|${LEN_K_OVERRIDE ?? '-'}`
     if (key === paperKey) return
     paperKey = key
     const g = paperfilm.getContext('2d')!

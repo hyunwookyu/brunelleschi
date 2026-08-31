@@ -51,7 +51,7 @@ try {
   if (r === 'classic' || r === 'brush') app.renderer = r
 } catch { /* 저장소가 없으면 기본값(brush) */ }
 const brushLayer = initBrushLayer(W, H, dpr)
-import { initFilmLayer, bakeFiberTile, setFilmAlphaForTest, setFiberLegacyForTest, setGrainPre40ForTest, setPaperFiber, setPaperGrain309ForTest } from './filmlayer'
+import { initFilmLayer, bakeFiberTile, setFilmAlphaForTest, setFiberLegacyForTest, setGrainPre40ForTest, setOverlayLenKForTest, setPaperFiber, setPaperGrain309ForTest } from './filmlayer'
 const filmLayer = initFilmLayer(W, H, dpr)
 
 // 빌드 식별자 — 배포됐는지 화면에서 바로 안다.
@@ -2196,6 +2196,9 @@ const diag = {
   /** D-3 반증(web2-40 1번) — 겹의 결을 **web2-34까지의 주기**로 되돌린다(길이·개수만).
    *  그 상태에서 「겹의 결 주기가 pre-40보다 짧다」가 같은 실행에서 실패한다. e2e 전용. */
   grainPre40ForTest: (v: boolean) => { setGrainPre40ForTest(v); invalidate() },
+  /** 팔 전용(web2-40 · #12) — 겹 결의 «길이 배수 K»를 갈아 끼운다. null이면 제품 값(0.5).
+   *  훑기가 「K를 더 내리면 어디가 먼저 걸리는가」를 값으로 낸다. */
+  grainLenKForTest: (k: number | null) => { setOverlayLenKForTest(k); invalidate() },
   /** **깔고 치우는 동작의 지금 상태**(web2-40 2번) — 화면 팔이 「동작 중인가」와
    *  「덜 온 정도」를 값으로 읽는다. 앱이 그리는 데 쓰는 **같은 함수**다(측정 경로를
    *  따로 안 만든다 — 원칙 a). `awayOf`가 0이면 그 겹은 제자리다. */

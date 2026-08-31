@@ -66,7 +66,9 @@ function record(key: string, val: unknown) {
     viewport: '1200x800',
     dpr: '이 파일이 chromium.newContext로 1·2·3을 직접 만든다(프로젝트 dpr 무관)',
     command: 'LEDGER=1 npx playwright test e2e/grain40.spec.ts --project=dpr1 --workers=1',
-    metric_period: '섬유 타일 휘도의 **순환 자기상관**이 0.5로 떨어지는 지연(선형 보간) ÷ dpr → CSS px. 가로·세로 평균 · 씨앗 여섯(101..106)의 중앙값.',
+    metric_period: '**상관 길이** = 섬유 타일 휘도의 순환 자기상관 r(k)의 Σ_{k≥1} max(r(k), 0) (기기 px) ÷ dpr → CSS px. 가로·세로 평균 곡선에서 재고 씨앗 여섯(101..106)의 중앙값을 쓴다. **이것이 이 팔의 «주기»다.**',
+    metric_half_lag: '**반감 지연** = 같은 곡선이 r = 0.5를 처음 지나는 지연(선형 보간 · 기기 px). 섬유 «굵기»가 정하는 미세 구조이고 이 회차의 **바닥**이 여기 걸린다 — 줄면 안 된다.',
+    metric_rejected: '⚠ **첫 판은 반감 지연을 «주기»로 썼고 그것이 틀렸다**(#92 · #87): 길이를 줄여도 굵기가 그대로면 r의 어깨가 안 움직여 그 값이 거의 안 변한다. 실측이 아래 `rejected_metric`에 있다 — 기각한 자와 채택한 자를 **같은 실행에서** 나란히 낸다.',
     metric_neighbor: '합성 화면 조각 (300,200) 60x60의 이웃 픽셀 절대차 평균 ÷ 그 조각의 sd — 같은 진폭에서 무늬가 고울수록 커진다(무차원).',
     falsify: 'diag.grainPre40ForTest(true) — 겹의 길이·개수만 web2-34 값으로. 굵기·알파·색조는 그대로라 갈린 축이 하나다.',
   }
@@ -95,7 +97,9 @@ async function closeCamera(page: Page) {
 }
 
 /** 타일 하나의 상관 길이(기기 px) — 페이지 안에서 돈다(타일이 거기 있다). */
+const TILE_CSS_IN_PAGE = 128     // filmlayer.TILE_CSS — 페이지 안 함수가 dpr을 그것으로 되돌린다
 const CORR_IN_PAGE = `(id, surface) => {
+  const TILE_CSS_IN_PAGE = 128
   const t = window.__b2.diag.fiberTile(id, surface, true)
   const N = t.width
   const im = t.getContext('2d').getImageData(0, 0, N, N).data
@@ -136,7 +140,10 @@ const CORR_IN_PAGE = `(id, surface) => {
   for (let k = 1; k <= half; k++) {
     if (r[k] <= 0.5) { halfLag = k - 1 + (r[k - 1] - 0.5) / (r[k - 1] - r[k]); break }
   }
-  return { px: N, corr, halfLag }
+  // ㉢ 꼬리의 한 점 — CSS 8 px에 해당하는 지연에서의 r. 「무늬가 얼마나 이어지는가」를
+  //    한 수로 보여 준다(기각한 자와 채택한 자가 어디서 갈리는지가 여기서 보인다).
+  const k8 = Math.max(1, Math.min(half, Math.round(8 * (N / TILE_CSS_IN_PAGE))))
+  return { px: N, corr, halfLag, r8: r[k8], k8 }
 }`
 
 /** 합성 화면 조각 — 이웃차와 sd. 사람이 보는 자리(grain26의 patch와 같은 식·같은 자리). */
@@ -175,7 +182,7 @@ const median = (v: number[]): number => {
 const SEEDS = [101, 102, 103, 104, 105, 106]
 
 /** 재는 판 셋 — 지금 / pre-40(반증) / 26-2 이전 규칙(바닥의 값) */
-type Variant = 'now' | 'pre40' | 'legacy'
+type Variant = 'now' | 'pre40' | 'legacy' | number
 
 /** 한 조건(dpr × 판)에서 겹 둘의 상관 길이·반감 지연.
  *  씨앗 여섯의 **중앙값**을 쓴다 — 평균은 한 씨앗의 극단에 끌린다(유효 자릿수 2자리
@@ -187,21 +194,24 @@ async function periods(browser: Browser, dpr: number, variant: Variant) {
   await page.waitForFunction(() => (window as any).__b2)
   if (variant === 'pre40') await page.evaluate(() => (window as any).__b2.diag.grainPre40ForTest(true))
   if (variant === 'legacy') await page.evaluate(() => (window as any).__b2.diag.fiberLegacyForTest(true))
-  type P = { cssPx: number; devicePx: number; halfLagDevicePx: number; per: number[] }
+  if (typeof variant === 'number') await page.evaluate(k => (window as any).__b2.diag.grainLenKForTest(k), variant)
+  type P = { cssPx: number; devicePx: number; halfLagDevicePx: number; r8: number; per: number[] }
   const out = {} as { yellow: P; tracing: P }
   for (const surface of ['yellow', 'tracing'] as const) {
     const corrs: number[] = []
     const halves: number[] = []
+    const r8s: number[] = []
     for (const id of SEEDS) {
       const r = await page.evaluate(
-        ([fn, i, s]) => (new Function('return ' + fn)())(i, s) as { px: number; corr: number; halfLag: number },
+        ([fn, i, s]) => (new Function('return ' + fn)())(i, s) as { px: number; corr: number; halfLag: number; r8: number },
         [CORR_IN_PAGE, id, surface] as [string, number, string],
       )
       corrs.push(r.corr)
       halves.push(r.halfLag)
+      r8s.push(r.r8)
     }
     const devicePx = median(corrs)
-    out[surface] = { cssPx: devicePx / dpr, devicePx, halfLagDevicePx: median(halves), per: corrs }
+    out[surface] = { cssPx: devicePx / dpr, devicePx, halfLagDevicePx: median(halves), r8: median(r8s), per: corrs }
   }
   await ctx.close()
   return out
@@ -280,7 +290,29 @@ test('①② — 겹의 결 주기가 줄었고 바닥 위에 있다 (+반증: p
   }
 
   record('gate', {
-    thresholds: { PERIOD_DROP_MAX, PERIOD_FLOOR_DEVICE_PX, NEIGHBOR_GAIN_MIN },
+    thresholds: {
+      PERIOD_DROP_MAX, PERIOD_FLOOR_DEVICE_PX, NEIGHBOR_GAIN_MIN,
+      // 표에만 있고 원장에 없던 문(#47 · 1차 리뷰어 [15]) — 이제 팔이 스스로 쓴다
+      CSS_INVARIANCE_BAND: [0.85, 1.15],
+    },
+    css_invariance_dpr3_over_dpr1: {
+      yellow: now[3]!.yellow.cssPx / now[1]!.yellow.cssPx,
+      tracing: now[3]!.tracing.cssPx / now[1]!.tracing.cssPx,
+    },
+    // ⚠ **기각한 자를 같은 실행에서 나란히 낸다**(#25 — 원장 밖 측정 ⛔ · 1차 리뷰어 [2]).
+    //   「길이를 줄였는데 이 값이 거의 안 움직인다」가 이 회차가 자를 갈아 끼운 근거다.
+    rejected_metric: {
+      what: '반감 지연(r = 0.5) — 첫 판이 «주기»로 쓴 자. 굵기가 정하므로 이 회차가 안 건드린 축이다.',
+      dpr1: {
+        yellow: { now: now[1]!.yellow.halfLagDevicePx, pre40: old[1]!.yellow.halfLagDevicePx, ratio: now[1]!.yellow.halfLagDevicePx / old[1]!.yellow.halfLagDevicePx },
+        tracing: { now: now[1]!.tracing.halfLagDevicePx, pre40: old[1]!.tracing.halfLagDevicePx, ratio: now[1]!.tracing.halfLagDevicePx / old[1]!.tracing.halfLagDevicePx },
+      },
+      tail_r_at_css_lag_8: {
+        yellow: { now: now[1]!.yellow.r8, pre40: old[1]!.yellow.r8 },
+        tracing: { now: now[1]!.tracing.r8, pre40: old[1]!.tracing.r8 },
+      },
+      note: '반감 지연의 비는 1에 가깝고(안 건드린 축) 꼬리(r at CSS lag 8)는 절반 대역으로 준다 — 그 둘의 차이가 «무늬의 크기는 꼬리에 있다»의 값이다.',
+    },
     period_css: Object.fromEntries([1, 2, 3].map(d => [`dpr${d}`, {
       yellow: { now: now[d]!.yellow.cssPx, pre40: old[d]!.yellow.cssPx, ratio: now[d]!.yellow.cssPx / old[d]!.yellow.cssPx },
       tracing: { now: now[d]!.tracing.cssPx, pre40: old[d]!.tracing.cssPx, ratio: now[d]!.tracing.cssPx / old[d]!.tracing.cssPx },
@@ -309,5 +341,64 @@ test('①② — 겹의 결 주기가 줄었고 바닥 위에 있다 (+반증: p
     reachability_value: [old[1]!.yellow.cssPx, old[1]!.tracing.cssPx],
     reachability_source: 'gate/reachability/period_pre40_dpr1',
     note: '실기기 눈 확인(「곱다/굵다」는 사람 눈이 판정한다 — 지시 게이트 넷째)은 헤드리스가 못 잰다. DEVICE-CHECK G4가 그 자리다.',
+  })
+})
+
+
+/** **K 훑기**(#12 — 동작점 하나로 안 정한다 · 1차 리뷰어 [4][5]).
+ *
+ *  「K = 0.5가 더 못 내리는 자리인가」를 **값으로** 답한다. 두 자를 K마다 낸다:
+ *    · 상관 길이(주기) ..... K를 내리면 줄어야 한다(내리는 쪽의 이득)
+ *    · 반감 지연(바닥) ..... K로는 거의 안 움직인다는 것을 **보이는 것**이 목적이다
+ *      → 그러면 「이 문이 지키는 축은 굵기뿐이고 K는 안 지킨다」가 짐작이 아니라 실측이다.
+ *  ⚠ 진폭·dpr 비 쪽 훑기는 `grain26.spec`이 진다(그 게이트의 주인이 거기다).
+ */
+test('①-훑기 — K를 갈아 끼우며 주기와 바닥이 어떻게 움직이는가 (동작점 하나로 안 정한다)', async () => {
+  const browser = await chromium.launch()
+  const KS = [1.0, 0.7, 0.5, 0.35, 0.2]
+  const rows: { k: number; yellow: { corr: number; half: number }; tracing: { corr: number; half: number } }[] = []
+  for (const k of KS) {
+    const p = await periods(browser, 1, k)
+    rows.push({
+      k,
+      yellow: { corr: p.yellow.cssPx, half: p.yellow.halfLagDevicePx },
+      tracing: { corr: p.tracing.cssPx, half: p.tracing.halfLagDevicePx },
+    })
+  }
+  await browser.close()
+  for (const r of rows) {
+    console.log(`[K 훑기] K=${r.k.toFixed(2)} — 옐로 주기 ${r.yellow.corr.toFixed(3)} / 반감 ${r.yellow.half.toFixed(3)} · 트레이싱 주기 ${r.tracing.corr.toFixed(3)} / 반감 ${r.tracing.half.toFixed(3)}`)
+  }
+  const first = rows[0]!, last = rows[rows.length - 1]!
+  // ① 주기는 K를 따라 **단조로 준다** — 이 자가 K에 반응한다는 값
+  for (let i = 1; i < rows.length; i++) {
+    expect(rows[i]!.yellow.corr, `K=${rows[i]!.k} 옐로 주기가 K=${rows[i - 1]!.k}보다 작다`).toBeLessThan(rows[i - 1]!.yellow.corr)
+  }
+  // ② **반감 지연은 K로 거의 안 움직인다** — 「바닥 문이 지키는 축은 굵기뿐」의 값이다.
+  //    K를 5배 내려도(1.0 → 0.2) 반감 지연의 변화가 주기의 변화보다 훨씬 작다.
+  const dCorr = (first.yellow.corr - last.yellow.corr) / first.yellow.corr
+  const dHalf = (first.yellow.half - last.yellow.half) / first.yellow.half
+  console.log(`[K 훑기] K 1.0 → 0.2에서 옐로 — 주기 −${(dCorr * 100).toFixed(1)}% · 반감 지연 −${(dHalf * 100).toFixed(1)}%`)
+  expect(dCorr, 'K는 주기를 크게 움직인다').toBeGreaterThan(0.3)
+  expect(dHalf, 'K는 바닥(반감 지연)을 거의 안 움직인다 — 그 문이 지키는 축은 굵기다').toBeLessThan(dCorr / 2)
+
+  record('k_sweep', {
+    what: 'K(섬유 길이 배수)를 갈아 끼우며 dpr1에서 두 자를 낸다 — 주기(상관 길이 · CSS px)와 바닥(반감 지연 · 기기 px).',
+    rows,
+    shipped_k: 0.5,
+    yellow_change_1_0_to_0_2: { period: -dCorr, half_lag: -dHalf },
+    floor_touch: {
+      what: '반감 지연이 문(PERIOD_FLOOR_DEVICE_PX = 1.2)에 닿는 K — 훑은 칸 안에서.',
+      tracing_half_lag_by_k: rows.map(r => ({ k: r.k, half: r.tracing.half })),
+      yellow_half_lag_by_k: rows.map(r => ({ k: r.k, half: r.yellow.half })),
+    },
+    conclusion: '주기는 K를 따라 단조로 줄고(1.0 → 0.2에서 −41%) 반감 지연은 훨씬 덜 움직인다(−14%). 그래도 **끝에서는 닿는다** — 훑기의 K = 0.2에서 트레이싱의 반감 지연이 1.200으로 문(1.2)에 붙는다. 즉 이 바닥이 정하는 K의 하한이 **≈ 0.2**다. ⚠ **grain26의 dpr 비 쪽은 포화한다**(그쪽 k_sweep 실측: 1.0 → 1.1073 · 0.7 → 1.1250 · 0.5 → 1.1366 · 0.35 → 1.1369) — K를 더 내려도 그 문에 안 닿는다. 그러므로 「K = 0.5가 게이트에 막힌 값」이라는 읽기는 **틀렸고**, 0.5는 **눈이 고른 값**이다(지시 게이트 넷째).',
+    reachability: {
+      how: 'diag.grainLenKForTest(k) — 제품과 **같은 유도식**(fineFiberK)으로 길이·개수를 다시 낸다. 갈린 축은 여전히 길이 하나다.',
+      k_span: [KS[0], KS[KS.length - 1]],
+    },
+    reachability_value: rows.map(r => r.yellow.corr),
+    reachability_source: 'k_sweep/yellow_corr_by_k',
+    yellow_corr_by_k: rows.map(r => r.yellow.corr),
   })
 })

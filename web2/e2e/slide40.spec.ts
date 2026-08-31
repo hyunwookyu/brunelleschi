@@ -46,7 +46,8 @@ function record(key: string, val: unknown) {
   cur.conditions = {
     viewport: '1200x800',
     command: 'LEDGER=1 npx playwright test e2e/slide40.spec.ts --workers=1',
-    sampling: '페이지 안에서 requestAnimationFrame마다 #film 캔버스의 알파를 읽는다 — 왕복 지연이 값에 안 실린다',
+    sampling: '페이지 안에서 requestAnimationFrame마다 #film 캔버스의 알파를 읽는다 — 왕복 지연이 값에 안 실린다. 창을 다시 열고 **한 프레임**을 기다려 읽는다(두 프레임이면 dpr2에서 그 사이가 창보다 길다 — PITFALLS #93).',
+    dpr: '팔은 playwright 프로젝트 둘(dpr1·dpr2)에서 각각 돈다. 아래 값은 이 원장을 마지막으로 쓴 프로젝트의 것이다(gate_2만 자기 컨텍스트를 dpr1로 직접 만든다).',
     perf_note: '절대 ms는 결론이 아니다(cost18·cost20과 같은 규율 — 이 컨테이너의 시간은 흔들린다). 판별값은 **같은 실행 안의 배수**다.',
   }
   cur.flags_explained = {
@@ -121,13 +122,20 @@ const SAMPLE_IN_PAGE = `async (mode, layId, probeX, probeY, frames) => {
   const out = []
   const t0 = performance.now()
   for (let i = 0; i < frames; i++) {
+    const tRestart = performance.now()
     if (mode === 'slide') b.diag.slideRestartForTest(layId)
     else b.diag.redrawForTest()
-    await new Promise(res => requestAnimationFrame(() => res(null)))
+    // ⚠ **한 프레임만 기다린다**(web2-40 후속 · PITFALLS #93): 두 프레임을 기다리면
+    //   dpr2·200획 장면에서 그 사이가 창(300 ms)보다 길어져 «동작 중»이 아닌 자리에서
+    //   읽는다 — 실제로 그렇게 빨갰다. 재는 것이 「창이 도는 프레임」이므로 기다림도
+    //   한 프레임이다. 그 프레임 간격을 함께 낸다(이 팔이 기기 속도에 묶인 자리다).
     await new Promise(res => requestAnimationFrame(() => res(null)))
     const shown = f.style.display !== 'none'
     const d = shown ? g.getImageData(px, py, 1, 1).data : [0, 0, 0, 0]
-    out.push({ t: performance.now() - t0, a: d[3], active: b.diag.slide().active, away: b.diag.slide().awayOf[layId] })
+    out.push({
+      t: performance.now() - t0, dt: performance.now() - tRestart,
+      a: d[3], active: b.diag.slide().active, away: b.diag.slide().awayOf[layId],
+    })
   }
   return out
 }`
@@ -145,21 +153,55 @@ test('①④ — 동작 중에 그은 획이 들어가고, 결 씨앗은 매번 
   await fixture(page)
 
   // ① **창이 열린 채로** 획을 긋는다 — 그 획이 그 겹으로 들어가야 한다.
-  const r = await page.evaluate(() => {
+  //   ⚠ **동작점 하나로 안 잰다**(#12 · 1차 리뷰어 [8]): 지시 문면은 「동작 중에 그은 획」이지
+  //   「동작 **시작**에 그은 획」이 아니다. 창이 막 열린 자리(away ≈ 1) · 종이가 반쯤 들어온
+  //   자리 · 거의 다 온 자리 셋에서 재고, **치우는 창**에서도 잰다(그때는 그 겹이 이미
+  //   문서에 없으므로 획이 «종이로» 가는 것이 옳다 — 그것도 「막지 않는다」의 한 얼굴이다).
+  const r = await page.evaluate(async () => {
     const b = (window as any).__b2
+    const frame = () => new Promise(res => requestAnimationFrame(() => res(null)))
     const id = b.diag.layerAdd('tracing') as number
+    const rows: { at: string; away: number; active: boolean; landedOn: number | null; grew: boolean }[] = []
+    const shot = async (at: string, waitFrames: number, x: number) => {
+      b.diag.slideRestartForTest(id)
+      for (let i = 0; i < waitFrames; i++) await frame()
+      const away = b.diag.slide().awayOf[id]
+      const active = b.diag.slide().active
+      const before = b.app.doc.strokes.length
+      b.diag.commitStroke(x, 300, x + 120, 330)              // 앱과 같은 확정 경로
+      const last = b.app.doc.strokes[b.app.doc.strokes.length - 1]
+      rows.push({ at, away, active, landedOn: last.layer ?? null, grew: b.app.doc.strokes.length === before + 1 })
+    }
     const openBefore = b.diag.slide().active                 // 반증 짝: 부르기 전엔 열려 있다
     const away0 = b.diag.slide().awayOf[id]
-    const before = b.app.doc.strokes.length
-    b.diag.commitStroke(300, 300, 480, 330)                  // 앱과 같은 확정 경로
-    const after = b.app.doc.strokes.length
-    const last = b.app.doc.strokes[b.app.doc.strokes.length - 1]
-    return { id, openBefore, away0, before, after, layerOfLast: last.layer }
+    await shot('창이 막 열림', 0, 300)
+    await shot('한 프레임 뒤', 1, 440)
+    await shot('두 프레임 뒤', 2, 580)
+    // 치우는 창 — 겹은 이미 문서에 없다. 획은 «종이»로 가야 하고 그래도 들어가야 한다.
+    b.diag.layerRemove(id)
+    const outAway = b.diag.slide().awayOf[id]
+    const outActive = b.diag.slide().active
+    const beforeOut = b.app.doc.strokes.length
+    b.diag.commitStroke(300, 420, 420, 450)
+    const lastOut = b.app.doc.strokes[b.app.doc.strokes.length - 1]
+    return {
+      id, openBefore, away0, rows,
+      out: { away: outAway, active: outActive, grew: b.app.doc.strokes.length === beforeOut + 1, landedOn: lastOut.layer ?? null },
+    }
   })
   expect(r.openBefore, '창이 실제로 열려 있었다(반증 짝 — 아니면 ①이 아무것도 안 잰다)').toBe(true)
   expect(r.away0, '겹이 아직 덜 왔다').toBeGreaterThan(0)
-  expect(r.after, '동작 중에 그은 획이 들어갔다').toBe(r.before + 1)
-  expect(r.layerOfLast, '그 획이 **그 겹**으로 갔다').toBe(r.id)
+  for (const row of r.rows) {
+    expect(row.grew, `${row.at}(away ${row.away.toFixed(3)})에 그은 획이 들어갔다`).toBe(true)
+    expect(row.landedOn, `${row.at}에 그은 획이 **그 겹**으로 갔다`).toBe(r.id)
+  }
+  // 동작점이 실제로 갈렸다 — 하나로 재지 않았다는 값(#12)
+  const aways = r.rows.map(x => x.away)
+  expect(Math.max(...aways) - Math.min(...aways), `잰 동작점의 폭 ${(Math.max(...aways) - Math.min(...aways)).toFixed(3)}`).toBeGreaterThan(0.1)
+  // 치우는 창 — 겹이 이미 문서에 없으므로 획은 종이로 간다. 그래도 **들어간다**.
+  expect(r.out.grew, '치우는 창에서도 획이 들어갔다').toBe(true)
+  expect(r.out.landedOn, '그 획은 종이로 간다(걷힌 겹으로 가면 조용히 사라진 획이 된다)').toBeNull()
+  console.log(`[① 동작 중 획] ${r.rows.map(x => `${x.at} away ${x.away.toFixed(3)}→겹 ${x.landedOn}`).join(' · ')} · 치우는 창 away ${r.out.away.toFixed(3)}→종이`)
 
   // ④ **결 씨앗은 동작과 무관하다**(web2-20 무회귀) — 걷었다가 다시 꺼내면 무늬가 다르다.
   const seeds = await page.evaluate(() => {
@@ -179,7 +221,17 @@ test('①④ — 동작 중에 그은 획이 들어가고, 결 씨앗은 매번 
   expect(new Set(seeds.hashes).size, '겹마다 결 무늬가 다르다 — 롤을 다시 꺼내면 달라야 한다').toBe(3)
 
   const ms = await page.evaluate(() => (window as any).__b2.diag.slide().ms as number)
-  record('gate_1_4', { slide_ms: ms, stroke_during_slide: r, seeds })
+  record('gate_1_4', {
+    slide_ms: ms, stroke_during_slide: r, seeds,
+    reachability: {
+      how: '동작점을 하나로 두지 않는다(#12) — 창이 막 열린 자리·한 프레임 뒤·두 프레임 뒤, 그리고 **치우는 창**까지 넷에서 잰다. `away`가 그 자리를 값으로 말한다.',
+      away_points: r.rows.map(x => x.away),
+      away_span: Math.max(...r.rows.map(x => x.away)) - Math.min(...r.rows.map(x => x.away)),
+      note: '이 팔이 실패할 수 있는 자리는 「창이 열린 동안 입력을 막는」 구현이다. 그런 구현에서는 grew가 false이거나 landedOn이 null이 된다 — 지금 판은 넷 다 그 겹으로 들어간다. ⚠ **동작점의 촘촘함은 기기 속도에 묶인다**(#93): dpr1에서는 away 1.000 / 0.225 / 0.055로 창 안을 세 자리 훑지만, dpr2에서는 한 프레임이 창(300ms)보다 길어 away 1.000 / 0.000 / 0.000이 된다 — 그때도 «획이 그 겹으로 들어간다»는 단언은 그대로 서고, 창 «안»의 표본만 하나로 준다.',
+    },
+    reachability_value: r.rows.map(x => x.away),
+    reachability_source: 'gate/gate_1_4/reachability/away_points',
+  })
 })
 
 test('② — 동작이 끝난 화면이 «동작 없이 얹은» 화면과 픽셀로 같다 (+분해능: 얹기 전과는 다르다)', async () => {
@@ -221,7 +273,7 @@ test('② — 동작이 끝난 화면이 «동작 없이 얹은» 화면과 픽�
     identical: natural.end === forced.end,
     resolution_bare_differs: natural.end !== natural.bare,
     bytes: { natural_end: natural.end.length, forced_end: forced.end.length, bare: natural.bare.length },
-    note: '비교는 화면 전체(1200x800 dpr1) PNG의 바이트다. 두 판은 다른 컨텍스트에서 같은 픽스처를 돌려 같은 겹 id를 얻는다.',
+    note: '비교는 화면 전체(1200x800 dpr1) PNG의 **내용**이다 — base64 문자열의 `===`이므로 길이가 아니라 바이트 전부가 같아야 한다(`bytes`는 그 길이를 함께 남긴 것뿐이다). 두 판은 다른 컨텍스트에서 같은 픽스처를 돌려 같은 겹 id를 얻는다.',
     history: '이 단언은 만들자마자 실제로 빨갰다(322824 B ↔ 307280 B) — 창이 닫히는 프레임을 안 그려 «덜 온 종이»가 굳었다. main.ts 프레임 고리를 고쳐 초록이 됐다.',
   })
   // #35·#40 — **무엇이 이 기준을 넘을 수 있는가.** 이 팔의 기준은 「두 화면이 바이트로
@@ -269,7 +321,7 @@ test('③ — 동작 중 프레임이 눈에 띄게 안 떨어진다 (획 200개
   const sample = (mode: 'still' | 'slide') => page.evaluate(([fn, m, id, fr]) => {
     (window as any).__b2.diag.frameCostReset()
     return (new Function('return ' + fn)())(m, id, 600, 400, fr) as
-      Promise<{ t: number; a: number; active: boolean; away: number }[]>
+      Promise<{ t: number; dt: number; a: number; active: boolean; away: number }[]>
   }, [SAMPLE_IN_PAGE, mode, layId!, FRAMES] as [string, string, number, number])
   const cost = () => page.evaluate(() => (window as any).__b2.diag.frameCost()) as
     Promise<{ n: number; total: number; totalMax: number } | null>
@@ -295,8 +347,26 @@ test('③ — 동작 중 프레임이 눈에 띄게 안 떨어진다 (획 200개
   expect(stillS.every(s => s.a === 255), '정지 칸에서는 그 자리가 늘 덮여 있다').toBe(true)
 
   const ratio = moving!.total / Math.max(still!.total, 1e-6)
-  console.log(`[동작 프레임] 정지 중앙 ${still!.total.toFixed(3)}ms(n=${still!.n}) · 동작 중앙 ${moving!.total.toFixed(3)}ms(n=${moving!.n}) · 배수 ${ratio.toFixed(3)} · 창이 돈 프레임 ${movingActive}/${FRAMES} · 안 덮인 프레임 ${uncovered}/${FRAMES}`)
+  // ⚠ **꼬리도 낸다**(#8) — 중앙값만 적으면 「가끔 한 프레임이 길다」가 안 보인다.
+  const ratioMax = moving!.totalMax / Math.max(still!.totalMax, 1e-6)
+  const med = (v: number[]) => [...v].sort((a, b) => a - b)[Math.floor(v.length / 2)]!
+  const dtStill = med(stillS.map(x => x.dt))
+  const dtMoving = med(movingS.map(x => x.dt))
+
+  // 도달 가능성 대신 **분해능**을 낸다(#40 — 오라클이 없으면 그 사실을 적는다).
+  // 「이 자가 1.5를 넘게 만드는 것」은 이 팔 안에 없다: 동작이 프레임에 더하는 일은
+  // 더하기 하나와 그라디언트 띠 한 장뿐이라 원리적으로 몇 %다. ⚠ 궤도를 오라클로
+  // 쓰려다 **반대 방향이 나왔다**(실측 배수 0.031) — 궤도에서는 막이 포즈 게이트로
+  // 꺼져 프레임이 오히려 싸다. 그래서 오라클이 아니라 **같은 칸을 한 번 더 재서
+  // «이 자가 얼마나 작은 차를 가르는가»**를 적는다: 정지↔정지 배수가 그 바닥이다.
+  const stillS2 = await sample('still')
+  const still2 = await cost()
+  const noiseRatio = (still2?.total ?? 0) / Math.max(still!.total, 1e-6)
+  void stillS2
+
+  console.log(`[동작 프레임] 정지 중앙 ${still!.total.toFixed(3)}ms(n=${still!.n}) · 동작 중앙 ${moving!.total.toFixed(3)}ms(n=${moving!.n}) · 배수 ${ratio.toFixed(3)}(꼬리 ${ratioMax.toFixed(3)}) · 프레임 간격 중앙 정지 ${dtStill.toFixed(1)}ms / 동작 ${dtMoving.toFixed(1)}ms · 창이 돈 프레임 ${movingActive}/${FRAMES} · 안 덮인 프레임 ${uncovered}/${FRAMES} · 정지↔정지 바닥 ${noiseRatio.toFixed(3)}`)
   expect(ratio, `동작 중 프레임 배수 ${ratio.toFixed(3)}`).toBeLessThan(SLIDE_FRAME_MAX)
+  expect(ratioMax, `동작 중 프레임 **꼬리** 배수 ${ratioMax.toFixed(3)}`).toBeLessThan(SLIDE_FRAME_MAX)
 
   const ms = await page.evaluate(() => (window as any).__b2.diag.slide().ms as number)
   record('gate_3', {
@@ -304,9 +374,13 @@ test('③ — 동작 중 프레임이 눈에 띄게 안 떨어진다 (획 200개
     strokes: n,
     frames: FRAMES,
     still, moving,
-    ratio, threshold: SLIDE_FRAME_MAX,
+    ratio, ratio_tail: ratioMax, threshold: SLIDE_FRAME_MAX,
+    frame_interval_ms_median: { still: dtStill, moving: dtMoving },
     active_frames: { still: stillActive, moving: movingActive },
     film_alpha_uncovered_frames: { still: stillS.filter(s => s.a < 255).length, moving: uncovered },
-    note: '두 칸 모두 «겹 한 장이 얹힌 채로 막이 그려지는» 국면이고 프레임 수도 같다. 갈린 축은 «창이 도는가» 하나다.',
+    reachability_absent: '「이 배수를 1.5 넘게 만드는 것」의 오라클이 이 팔 안에 없다 — 동작이 프레임에 더하는 일은 더하기 하나(dx)와 그라디언트 띠 한 장뿐이라 원리적으로 몇 %다. ⚠ 궤도를 오라클로 쓰려다 **반대 방향이 나왔다**(실측 배수 0.031): 궤도에서는 막이 포즈 게이트로 꺼져 프레임이 오히려 싸다. 대신 **분해능**을 적는다 — 같은 정지 칸을 한 번 더 재서 낸 정지↔정지 배수가 이 자의 바닥이고, 그보다 큰 차만 이 팔이 «동작 탓»이라고 말할 수 있다.',
+    resolution: { still_over_still: noiseRatio, still2 },
+    reachability_pair: [noiseRatio, ratio],
+    note: '두 칸 모두 «겹 한 장이 얹힌 채로 막이 그려지는» 국면이고 표본 프레임 수도 30으로 같다(둘 다 restart/redraw 뒤 **한 프레임**을 기다려 읽는다). 갈린 축은 «창이 도는가» 하나다. ⚠ 두 프레임을 기다리던 첫 판은 dpr2·200획에서 그 사이(프레임 간격 113ms × 2)가 창(300ms)보다 길어 «동작 중»이 아닌 자리를 읽었고 전량 e2e에서 빨갰다 — PITFALLS #93이 이름 붙인 그 함정에 이 팔 자신이 걸렸다.',
   })
 })

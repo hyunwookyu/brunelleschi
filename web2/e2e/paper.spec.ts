@@ -302,16 +302,44 @@ test('⑦⑧⑨ — rect 성장에 결 불변 · 세 장에도 아래 획 읽힘
     const dn = await avgRGB(page, 420, 258, 60, 6)
     return [(up[0] + dn[0]) / 2, (up[1] + dn[1]) / 2, (up[2] + dn[2]) / 2] as [number, number, number]
   }
-  const on0 = await avgRGB(page, 420, 247, 60, 6)
-  const beside0 = await beside()
-  const contrast0 = lightness(beside0) - lightness(on0)
+  // ⚠⚠⚠ **곁을 바로 옆에서 읽어도 결의 몫이 남는다 — 그것을 «같은 픽셀»에서 뺀다**
+  //   (web2-40이 실측으로 잡았다 · #87 «재는 대상» · 이 절이 이미 한 번 배운 것의 끝).
+  //   증상: web2-40 1번이 겹의 결을 곱게 하자 이 팔이 **dpr2에서만** 빨개졌다(c0 0.0137 → 0.0070).
+  //   진단: 두 상자(획 위 ↔ 곁)는 결의 **다른 대목**을 표본하므로, 결 무늬가 바뀌면 그 차가
+  //   통째로 움직인다 — 재던 것은 «획의 대비»가 아니라 **«결의 표본 차 + 획의 대비»**였다.
+  //   처방: 획을 **실행취소로 잠시 걷고**(제품의 길이다 — 새 손잡이 ⛔) 같은 상자를 다시 읽어
+  //   그 차를 «결의 몫»으로 빼고, 다시 실행하여 되돌린다. 그러면 남는 것이 획의 몫뿐이다.
+  //   ⚠ **임계는 안 건드렸다** — 보정한 값이 결 매개변수에 무관해지기 때문이다(실측):
+  //       지금 결   c0 raw 0.0070 · 결 몫 −0.0020 → **보정 0.0090** / c3 raw 0.0024 → **보정 0.0070**
+  //       pre-40 결 c0 raw 0.0137 · 결 몫 +0.0047 → **보정 0.0089** / c3 raw 0.0061 → **보정 0.0069**
+  //   두 결에서 보정값이 소수 넷째 자리까지 같다 — 그것이 이 보정이 «결을 뺐다»의 증거다.
+  const pair = async () => {
+    const on = await avgRGB(page, 420, 247, 60, 6)
+    const bs = await beside()
+    return lightness(bs) - lightness(on)
+  }
+  /** 그 자리의 **결의 몫** — 획을 실행취소로 걷고 같은 상자를 읽은 뒤 되돌린다. */
+  const grainOnly = async () => {
+    await page.click('#btn-undo')       // 화면의 단추 — 제품의 길이다(새 손잡이 ⛔)
+    await settle(page)
+    const g = await pair()
+    await page.click('#btn-redo')
+    await settle(page)
+    return g
+  }
+  const raw0 = await pair()
+  const grain0 = await grainOnly()
+  const contrast0 = raw0 - grain0
+  const back0 = await pair()          // 되돌림 확인(#71 ㉢) — 왕복이 같은 화면을 낸다
   await addPaper(page, 'yellow')
   await addPaper(page, 'tracing')
-  const on3 = await avgRGB(page, 420, 247, 60, 6)
-  const beside3 = await beside()
-  console.log(`[⑧] on0 ${on0.map(x=>x.toFixed(1))} beside0 ${beside0.map(x=>x.toFixed(1))} on3 ${on3.map(x=>x.toFixed(1))} beside3 ${beside3.map(x=>x.toFixed(1))} c0 ${contrast0.toFixed(4)} c3 ${(lightness(beside3)-lightness(on3)).toFixed(4)}`)
-  expect(contrast0).toBeGreaterThan(0.008)                      // 분해능(#71 ㉢) — 막 전에 실제로 갈린다(dpr2 AA로 준다 — 실측 0.013)
-  expect(lightness(beside3) - lightness(on3)).toBeGreaterThan(contrast0 * 0.35)
+  const raw3 = await pair()
+  const grain3 = await grainOnly()
+  const contrast3 = raw3 - grain3
+  console.log(`[⑧] c0 raw ${raw0.toFixed(4)} − 결 ${grain0.toFixed(4)} = **${contrast0.toFixed(4)}** · c3 raw ${raw3.toFixed(4)} − 결 ${grain3.toFixed(4)} = **${contrast3.toFixed(4)}** · 왕복 ${back0.toFixed(4)}`)
+  expect(back0, '실행취소·다시실행 왕복이 같은 화면을 낸다(보정이 화면을 안 바꾼다)').toBeCloseTo(raw0, 4)
+  expect(contrast0).toBeGreaterThan(0.008)                      // 분해능(#71 ㉢) — 막 전에 실제로 갈린다(보정 실측 0.0090)
+  expect(contrast3).toBeGreaterThan(contrast0 * 0.35)
   // ⑨ 게이트 — 활성 겹 획은 막 **위** · 아래 획은 막 **아래**. 합성 상자는 1.4px 획을
   // 희석하므로(첫 판 실측), **기전 판독**(막 사본·#layerc — #67의 표식 채널)과
   // **가시 판독**(합성 대비·반증)을 짝으로 한다.
@@ -376,8 +404,13 @@ test('⑦⑧⑨ — rect 성장에 결 불변 · 세 장에도 아래 획 읽힘
   })
   record(test.info().project.name, 'rect_growth', { patch_equal: true, patch_bytes: before.length })
   record(test.info().project.name, 'readability', {
-    contrast_before_films: contrast0, contrast_under_three: lightness(beside3) - lightness(on3),
+    contrast_before_films: contrast0, contrast_under_three: contrast3,
     retention_threshold: 0.35,
+    // ⚠ 원시값과 «결의 몫»을 함께 남긴다(web2-40) — 보정 전 수를 인용하던 문서가
+    //   무엇을 보고 있었는지 값으로 남는다. 보정 = raw − 결.
+    raw_before_films: raw0, grain_share_before_films: grain0,
+    raw_under_three: raw3, grain_share_under_three: grain3,
+    undo_redo_roundtrip: back0,
   })
   record(test.info().project.name, 'order_mech_and_visible', {
     mech, above_contrast: aboveContrast, broken_contrast: lightness(brokenSide) - lightness(brokenRow),
