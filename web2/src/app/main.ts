@@ -2,7 +2,8 @@
 
 import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc,
   pickDimTarget, pickTargetAt, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick,
-  handwritingGroup, applyWrittenDim, dimTargetTie, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
+  handwritingGroup, applyWrittenDim, applyRecognized, writingStrokes, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
+  writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, settleActive, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
@@ -24,7 +25,7 @@ import { initDimPanel } from './dimpanel'
 import { registerBox, closeOtherBoxes, openBoxIds, setBoxAwayModeForTest } from './boxes'
 import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
-import { C, SETTLE_ANIM_MS } from '../core/constants'
+import { C, SETTLE_ANIM_MS, WRITE_HOLD_MS_MIN, WRITE_HOLD_MS_MAX } from '../core/constants'
 import { WAIT_INK, setWaitInkMode, waitInkMode, type WaitInkMode } from '../core/waitfade'
 import { lensAllowed, lensStops, lensF, lensK, hfovDeg, LENS_STOP_MIN, LENS_STOP_MAX } from '../core/lens'
 import { cubeLayoutFor } from '../core/viewcube'
@@ -461,6 +462,32 @@ inputApi = initInput(ink, app, {
     // 알림은 **오류가 있을 때만**이다(4-b) — 만들어졌으면 화면이 이미 말한다.
     if (r === 'none') notify('닫힌 루프가 아니다 — 둘러싸인 자리를 탭한다')
   },
+  // ── 글씨는 선을 꾹 눌러 시작한다(web2-39) ────────────────────────────────
+  onWriteHold(p) {
+    const via = beginWriting(app, p, performance.now())
+    if (via === null) return false          // 잡히는 것이 없다 — 아무 일도 안 한다
+    // **알림은 오류가 있을 때만**이다(4-b) — 들어간 것은 화면이 말한다(고른 선 강조 +
+    // 다음 획이 축에 안 붙는 것). 무엇을 하는 자리인지 한 줄만 상태 줄에 둔다.
+    status(via === 'dim' ? '글씨 — 그 자리에 다시 쓴다' : '글씨 — 이 선의 치수를 쓴다')
+    armWriteIdle()
+    invalidate()
+    return true
+  },
+  onWriteStroke(pts) {
+    // ⚠ **종료 판정은 여기가 아니라 «획이 시작될 때»다**(`input.ts`) — 그래야 작도로
+    //    돌아간 획이 **오스냅·축을 지나** 보통 획으로 확정된다. 여기 오는 것은 이미
+    //    「글씨다」로 판정된 획뿐이다.
+    commitWriting(app, pts, performance.now())
+    armWriteIdle()
+    invalidate()
+    void maybeWriteDim()
+  },
+  onWriteEnd(why) {
+    endWriting(app, why)
+    clearWriteIdle()
+    clearNotice()
+    invalidate()
+  },
   // ── 손글씨 치수(web2-29 1단계) ──────────────────────────────────────────
   // 인식·파싱·적용은 **이미 있는 것을 그대로 부른다**(#54): `recognizeStrokes` →
   // `parseDim` → `setDimension`. 여기는 배선과 «확정 전에 보여주기»뿐이다.
@@ -494,8 +521,8 @@ inputApi = initInput(ink, app, {
     const s = commitStroke(app, a, b, raw, press, rawIn)
     // 필압 보정 절차(web2-26 6번) — 절차 중이면 이 획이 표본이다. 절차 밖이면 무해하다.
     pressCalibStep(s)
-    // 즉시 변환(web2-32 2번) — 글씨 뭉치가 숫자로 읽히면 그 자리에서 치수가 된다.
-    void maybeWriteDim(s)
+    // ⚠ **여기서 글씨를 안 읽는다**(web2-39). 이 자리는 **작도선**이 지나는 길이고,
+    //    글씨는 `onWriteStroke`가 따로 진다 — 「이 획이 글씨인가」를 묻는 자리가 없다.
     const an = app.lift.an
     // **알림은 오류가 있을 때만**이다(4-b). 「소실점 N」은 차수이고 「대기한다」는 상태다 —
     // 둘 다 화면이 이미 말하고 있다(소실점 표식 · 대기 획의 점선). 거부 사유만 남긴다.
@@ -758,6 +785,10 @@ function setTool(t: Tool) {
   if (!isEraser(t)) eraserPos = null
   // 치수 모드를 벗어나면 고른 대상·손글씨를 놓는다(모드가 남아 있지 않게 — web2-29)
   if (t !== 'dim') { endDimPick(app); dimInkLive = null }
+  // 글씨 상태도 도구를 떠나면 놓는다(web2-39) — 「상태 밖에서는 모든 획이 작도선」이
+  // 서려면 상태가 도구를 넘어 살아남으면 안 된다. 사유는 «사람이 떠났다»이지 종료
+  // 제스처가 아니다(⛔ 39-3 — 배울 것을 안 늘린다).
+  if (writeActive(app)) { endWriting(app, 'left'); clearWriteIdle(); dimInkLive = null }
   // 재기도 같은 규약 — 도구를 떠나면 짚어 둔 점과 잰 값을 놓는다(도면에 남긴 것은 남는다).
   // 들어올 때는 치수 패널을 편다: 잰 값이 뜨는 자리가 거기다(새 모서리를 안 만든다 — #79).
   if (t !== 'measure') clearMeasure(app)
@@ -1151,34 +1182,51 @@ grainBox.addEventListener('change', () => applyPaperGrain(grainBox.checked, true
 
 
 
-// ── 즉시 변환(web2-32 2번) — **승인 단계가 없다** ─────────────────────────────
-// 종이에 숫자를 쓰면 그 뭉치가 글씨로 판정되고(32-1 · commitStroke), 숫자로 읽히면
-// **즉시** 치수선이 된다. 되돌리기는 실행취소 한 번이고 값·대상은 사후에 고친다.
-// 29-2의 제안 줄(#dimsuggest)·후보 목록·오른쪽 위 알림은 **전부 사라졌다**.
+// ── 즉시 변환(web2-32 2번) — **승인 단계가 없다** · 진입은 명시적이다(web2-39) ────
+// **글씨 상태 안에서** 숫자를 쓰면 그 뭉치가 숫자로 읽히고, 읽히면 **즉시** 치수선이
+// 된다. 되돌리기는 실행취소 한 번이고 값·대상은 사후에 고친다.
+// ⛔ 29-2의 제안 줄(#dimsuggest)·후보 목록·오른쪽 위 알림은 web2-32가 걷었다.
+// ⛔⛔ **web2-39가 걷은 것 둘**: ① 「이 획이 글씨인가」의 추측(상태가 답한다)
+//     ② 「어느 선의 치수인가」의 추정(꾹 눌러 고른 그 선이다).
 let writeSeq = 0
 
-/** 획을 확정한 뒤 — 글씨 뭉치를 숫자로 읽어 보고, 읽히면 그 자리에서 치수로 바꾼다. */
-async function maybeWriteDim(s: Stroke | null) {
-  if (!s || app.tool === 'dim') return             // 1단계(치수 도구) 경로는 그쪽이 진다
+/** 글씨 획을 확정한 뒤 — 지금 뭉치를 숫자로 읽어 보고, 읽히면 그 자리에서 치수로 바꾼다.
+ *  **읽기 사슬은 `state.applyRecognized` 하나다**(#54 · #62 — 단위 팔이 같은 자리를 부른다).
+ *  여기 남는 것은 «비동기 껍데기»와 «알림»뿐이다. */
+async function maybeWriteDim() {
+  if (!writeActive(app)) return
   const ids = handwritingGroup(app)
   if (ids.length === 0) return
   const my = ++writeSeq
-  const strokes = ids.map(id => {
-    const st = app.doc.strokes.find(x => x.id === id)!
-    return st.raw && st.raw.length > 1 ? st.raw.map(p => ({ ...p })) : [{ ...st.a }, { ...st.b }]
-  })
-  const { text } = await recognizeStrokes(strokes)
-  if (my !== writeSeq) return
-  const mm = parseDim(text, app.doc.unit)
-  if (mm === null) return                          // 안 읽히면 **글씨로 남는다**(2D 잉크)
-  const tie = dimTargetTie(app, ids)
-  const r = applyWrittenDim(app, ids, mm)
+  const { text } = await recognizeStrokes(writingStrokes(app, ids))
+  if (my !== writeSeq || !writeActive(app)) return
+  const r = applyRecognized(app, text)
+  if (r === 'unread') return                       // 안 읽히면 **글씨로 남는다**(2D 잉크)
   if (r === 'no3d') notify('아직 3D로 올라가지 않은 선이다 — 치수를 못 단다')
   else if (r === 'baseScale') notify('축척은 바탕 종이의 치수가 정한다')
-  // **하나로 정해지면 아무 말도 안 한다**(4-b — 화면이 이미 말한다). 정말로 겹칠 때만
-  // 한 줄: 기본은 이미 잡혀 있고 사람은 숫자를 눌러 바꾼다(32-3 문면).
-  else if (tie) notify('선 둘이 겹친다 — 치수 숫자를 눌러 다른 선을 고른다')
+  // **정해지면 아무 말도 안 한다**(4-b — 화면이 이미 말한다). 「선 둘이 겹친다」 알림은
+  // 대상 추정과 함께 사라졌다 — 겹칠 일이 없다(누른 그 선이다).
   invalidate()
+}
+
+// ── 글씨 상태의 «멈춤» 종료(web2-39 3번) ──────────────────────────────────────
+// 포인터가 멈추면 이벤트도 멈춘다 — 그래서 타이머가 `C.WRITE_IDLE_MS` 뒤에 판정을 한 번
+// 더 돌린다(옐로 머무름의 `holdTimer`와 **같은 형태** · #54). 판정 자체는 `writeIdleNow`
+// 하나이고 `input.ts`의 획 시작 갈래도 그것을 부른다 — 출처가 하나다.
+let writeIdleTimer: number | undefined
+function clearWriteIdle() {
+  if (writeIdleTimer !== undefined) { clearTimeout(writeIdleTimer); writeIdleTimer = undefined }
+}
+function armWriteIdle() {
+  clearWriteIdle()
+  writeIdleTimer = window.setTimeout(() => {
+    writeIdleTimer = undefined
+    if (!writeActive(app)) return
+    if (!writeIdleNow(app, performance.now())) { armWriteIdle(); return }
+    endWriting(app, 'idle')
+    clearNotice()
+    invalidate()
+  }, C.WRITE_IDLE_MS + 16)
 }
 
 // ── 손글씨 치수(web2-29 1단계) — 인식과 «확정 전 보여주기» ────────────────────
@@ -1451,6 +1499,29 @@ holdRng.addEventListener('input', () => {
   app.holdMs = clampHold(Number(holdRng.value))
   showHold()
   try { localStorage.setItem(HOLD_KEY, String(app.holdMs)) } catch { /* 세션 한정 */ }
+})
+
+// ── 글씨 꾹 누르기 시간(web2-39 1번) — **사용자가 요청한 손잡이**다.
+// 위 머무름과 **같은 갈래**(기기 설정 · localStorage · 같은 대역·같은 눈금 — #54):
+// 남의 그림을 열어도 내 손에 맞는 값이 유지된다. 문서에 안 들어간다.
+const WHOLD_KEY = 'b2-writeholdms'
+const wholdRng = document.getElementById('rng-whold') as HTMLInputElement
+const wholdRead = document.getElementById('whold-read')!
+const clampWHold = (v: number) =>
+  Math.min(WRITE_HOLD_MS_MAX, Math.max(WRITE_HOLD_MS_MIN, Math.round(v / 50) * 50))
+const showWHold = () => { wholdRead.textContent = `${(app.writeHoldMs / 1000).toFixed(2)}s` }
+wholdRng.min = String(WRITE_HOLD_MS_MIN)
+wholdRng.max = String(WRITE_HOLD_MS_MAX)
+try {
+  const saved = Number(localStorage.getItem(WHOLD_KEY))
+  if (Number.isFinite(saved) && saved > 0) app.writeHoldMs = clampWHold(saved)
+} catch { /* 기본값 */ }
+wholdRng.value = String(app.writeHoldMs)
+showWHold()
+wholdRng.addEventListener('input', () => {
+  app.writeHoldMs = clampWHold(Number(wholdRng.value))
+  showWHold()
+  try { localStorage.setItem(WHOLD_KEY, String(app.writeHoldMs)) } catch { /* 세션 한정 */ }
 })
 
 const radius = document.getElementById('osnap-radius') as HTMLInputElement

@@ -746,6 +746,12 @@
       <label class="rowv"><span>머무름 직선화 <b id="hold-read">0.35s</b></span>
         <input id="rng-hold" data-act="state" type="range" min="100" max="1500" step="50" value="350"
                title="옐로에서 끝에 머무르면 획이 반듯해진다 — 그 대기 시간"></label>
+      <!-- web2-39 1번 — 치수를 매길 선을 «꾹 누르는» 시간. **사용자가 조절 가능하게
+           해 달라고 요청했다.** 대역은 위 머무름과 같다(A-3 · 새 숫자 ⛔ — 「사람이 손에
+           맞게 고치는 머무름 시간」이라는 같은 물음이다). 손잡이라 눌러도 패널이 안 접힌다. -->
+      <label class="rowv"><span>글씨 꾹 누르기 <b id="whold-read">0.45s</b></span>
+        <input id="rng-whold" data-act="state" type="range" min="100" max="1500" step="50" value="450"
+               title="치수를 매길 선을 이만큼 누르면 글씨를 쓰는 상태가 된다"></label>
     </div>
     <!-- 전체 화면 나가는 손잡이(3-d) — 우하단. 안 보이면 고장으로 읽힌다(지시 문면). -->
     <button id="fs-exit" title="전체 화면에서 나온다" aria-label="전체 화면 나가기">

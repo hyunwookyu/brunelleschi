@@ -31006,7 +31006,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 543,
+      "files_scanned": 544,
       "exts_declared": [
         ".md",
         ".py",
@@ -31030,7 +31030,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 543,
+      "files_scanned": 544,
       "exts_declared": [
         ".md",
         ".py",
