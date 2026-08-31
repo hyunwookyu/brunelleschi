@@ -1,5 +1,5 @@
 {
-  "n_flags": 6159,
+  "n_flags": 6175,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -25492,6 +25492,36 @@
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
     },
     {
+      "path": "view42_web2.json:gate1b_one_point.rows[0].len_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view42_web2.json:gate1b_one_point.rows[1].len_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view42_web2.json:gate1b_one_point.rows[2].len_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view42_web2.json:gate1b_one_point.rows[3].len_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view42_web2.json:gate1b_one_point.rows[4].len_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
+      "path": "view42_web2.json:gate1b_one_point.rows[5].len_ratio",
+      "val": 1,
+      "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
+    },
+    {
       "path": "view42_web2.json:gate3_hand_rotate.axonometric.len_ratio",
       "val": 1,
       "flag": "정확히 1 비율 → 측정 대상/자기참조 확인"
@@ -25527,6 +25557,16 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "view42_web2.json:gate7_table_in_parallel.table.원근_정면[4].reproject_err_px",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view42_web2.json:gate7_table_in_parallel.table.원근_정면[4].reproject_err_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "view42_web2.json:gate7_table_in_parallel.table.정면[0].waiting",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -25538,6 +25578,16 @@
     },
     {
       "path": "view42_web2.json:gate7_table_in_parallel.table.정면[3].reproject_err_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view42_web2.json:gate7_table_in_parallel.table.정면[4].reproject_err_px",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view42_web2.json:gate7_table_in_parallel.table.정면[4].reproject_err_px",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -25557,6 +25607,16 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "view42_web2.json:gate7_table_in_parallel.table.후면[4].reproject_err_px",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view42_web2.json:gate7_table_in_parallel.table.후면[4].reproject_err_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "view42_web2.json:gate7_table_in_parallel.table.평면[0].waiting",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -25568,6 +25628,16 @@
     },
     {
       "path": "view42_web2.json:gate7_table_in_parallel.table.평면[3].reproject_err_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "view42_web2.json:gate7_table_in_parallel.table.평면[4].reproject_err_px",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view42_web2.json:gate7_table_in_parallel.table.평면[4].reproject_err_px",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -25587,17 +25657,27 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "view42_web2.json:gate7_table_in_parallel.table.저면[4].reproject_err_px",
+      "val": 0,
+      "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
+    },
+    {
+      "path": "view42_web2.json:gate7_table_in_parallel.table.저면[4].reproject_err_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "view42_web2.json:gate7_table_in_parallel.table.우측면[0].waiting",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "view42_web2.json:gate7_table_in_parallel.table.우측면[3].reproject_err_px",
+      "path": "view42_web2.json:gate7_table_in_parallel.table.우측면[4].reproject_err_px",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
-      "path": "view42_web2.json:gate7_table_in_parallel.table.우측면[3].reproject_err_px",
+      "path": "view42_web2.json:gate7_table_in_parallel.table.우측면[4].reproject_err_px",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -25607,12 +25687,12 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "view42_web2.json:gate7_table_in_parallel.table.좌측면[3].reproject_err_px",
+      "path": "view42_web2.json:gate7_table_in_parallel.table.좌측면[4].reproject_err_px",
       "val": 0,
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
-      "path": "view42_web2.json:gate7_table_in_parallel.table.좌측면[3].reproject_err_px",
+      "path": "view42_web2.json:gate7_table_in_parallel.table.좌측면[4].reproject_err_px",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -31261,7 +31341,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 555,
+      "files_scanned": 561,
       "exts_declared": [
         ".md",
         ".py",
@@ -31285,7 +31365,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 555,
+      "files_scanned": 561,
       "exts_declared": [
         ".md",
         ".py",
@@ -31295,7 +31375,7 @@
         ".md": 41,
         ".py": 4,
         ".html": 1,
-        ".ts": 111
+        ".ts": 112
       }
     },
     {
@@ -31376,9 +31456,9 @@
     {
       "scan": "scan_gate_reachability",
       "unit": "게이트 블록",
-      "targets": 94,
+      "targets": 96,
       "hits": 14,
-      "note": "값 대조를 **지난 것 53** · **픽스처가 정한 값 13** · **면제 28**(`reachability_absent`) · 원장 210개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, glyph35_web2.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, lay_slide40_web2.json:gate, ledger_gate24_web2.json:gate, lens31_web2_dpr1.json:gate, lens31_web2_dpr2.json:gate, lens_roll_osnap.json:gate, one_point_direct.json:gate, opening21_web2.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, paper_grain26_web2.json:gate, paper_grain30_web2.json:gate, paper_grain40_web2.json:gate, papericon31_web2_dpr1.json:gate, papericon31_web2_dpr2.json:gate, passthru24_web2.json:gate, place34_web2_dpr1.json:gate, place34_web2_dpr2.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, read42_web2.json:gate, restore_pose.json:gate, scale32_web2.json:gate, shutter25_web2.json:gate, shutter25_web2_dpr2.json:gate, skew34_web2.json:gate, snap_cache.json:gate, snap_stage.json:gate, turn31_web2.json:gate, view42_web2.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate, xint41_web2.json:gate, zoom31_web2.json:gate, zoom31_web2_dpr1.json:gate, zoom31_web2_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, lens31_web2.json:gate, measure34_web2.json:gate, osnap_kinds.json:gate, osnappull37_web2.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
+      "note": "값 대조를 **지난 것 55** · **픽스처가 정한 값 13** · **면제 28**(`reachability_absent`) · 원장 210개 훑음. ⚠ 면제는 통과가 아니다 — 그 게이트의 도달 가능성은 **미상**이고 근거로 쓰지 않는다. ⚠⚠ **픽스처가 정한 값도 통과가 아니다**(#46) — 크기가 픽스처 상수라 정보량이 0이고, 그 원장이 실제로 재는 양은 산문이 따로 든다. 검증: axis_snap.json:gate, axis_warn.json:gate, basic_flow.json:gate, camera_gate.json:gate, classify_leak.json:gate, confirm_link.json:gate, confirm_link_e2e.json:gate, confirm_rules.json:vp_rule_three.gate, dir_state.json:gate, elevation_flow.json:gate, first_anchor.json:gate, glyph35_web2.json:gate, horizon.json:gate, horizon_first.json:gate, hover_lock.json:gate, lay_slide40_web2.json:gate, ledger_gate24_web2.json:gate, lens31_web2_dpr1.json:gate, lens31_web2_dpr2.json:gate, lens_roll_osnap.json:gate, one_point_direct.json:gate, opening21_web2.json:gate, order_lock.json:gate, order_signal.json:gate, osnap_two_sided.json:gate, paper_grain26_web2.json:gate, paper_grain30_web2.json:gate, paper_grain40_web2.json:gate, papericon31_web2_dpr1.json:gate, papericon31_web2_dpr2.json:gate, passthru24_web2.json:gate, place34_web2_dpr1.json:gate, place34_web2_dpr2.json:gate, post_confirm_trace.json:gate, procedure_repair.json:gate, read42_web2.json:gate, restore_pose.json:gate, scale32_web2.json:gate, shutter25_web2.json:gate, shutter25_web2_dpr2.json:gate, skew34_web2.json:gate, snap_cache.json:gate, snap_stage.json:gate, turn31_web2.json:gate, view42_web2.json:gate, view42_web2_dpr1.json:gate, view42_web2_dpr2.json:gate, view_axes.json:gate, view_pan.json:gate, vp_source.json:gate, vp_source_dpr2.json:gate, xint41_web2.json:gate, zoom31_web2.json:gate, zoom31_web2_dpr1.json:gate, zoom31_web2_dpr2.json:gate / 픽스처 결정: aux_vp.json:gate, confirm_rules.json:fov_gate.gate, cube_frame.json:gate, delta_conflict.json:gate, draft_return.json:gate, extension_snap.json:gate, ground_anchor.json:gate, horizon_drag.json:gate, lens31_web2.json:gate, measure34_web2.json:gate, osnap_kinds.json:gate, osnappull37_web2.json:gate, post_confirm_invariant.json:gate / 면제: aux_tap.json:gate, confirm_dir.json:gate, coords.json:gate, eraser.json:gate, eraser_size.json:gate, guide_budget.json:gate, horizon_chip.json:gate, horizon_flow.json:gate, horizon_pitch.json:gate, lift_gate.json:gate, orbit_begin_invariance.json:gate, orbit_center.json:gate, osnap.json:gate, osnap_config.json:gate, p1_invariance.json:gate, pick_vp.json:gate, preview_gap.json:gate, rel_snap_flow.json:gate, rule_camera.json:gate, segment_gate.json:gate, snap2d_flow.json:gate, snap_declare.json:gate, stage_browser.json:l_b3.gate, trace_hidden.json:gate, view_cube.json:gate, viewpoint_undo.json:gate, vp_dir_flow.json:gate, vp_two_lines.json:gate"
     },
     {
       "scan": "scan_zero_denominator",
@@ -32494,6 +32574,7 @@
       35,
       40,
       42,
+      43,
       54,
       71,
       77,
@@ -32502,12 +32583,18 @@
       94
     ],
     "view42_web2_dpr1.json": [
+      35,
+      40,
+      71,
       88,
       89,
       93,
       94
     ],
     "view42_web2_dpr2.json": [
+      35,
+      40,
+      71,
       88,
       89,
       93,
