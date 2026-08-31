@@ -25,12 +25,14 @@ import {
 import { project, rayThrough, DRAW_POSE } from '../src/core/camera'
 import { C, XINT_AMBIG_RATIO } from '../src/core/constants'
 import { defaultPressCal } from '../src/core/press'
+import { rng32 } from '../src/core/material'
 import type { Doc, Stroke } from '../src/core/types'
 import { sub3, norm3, len3, type Pt, type V3 } from '../src/core/vec'
 import {
   sparse, crowdedFlat, crowdedDeep, pressProfile, nearestRawIndex, midRawIndex, rawOf,
   VP1, away, SPARSE_VERT_X, DEEP_GL, DEEP_VERT_X, type Trial, type PressShape,
 } from './xint41scene'
+import { busy37 } from './pull37scene'
 
 // ── 밖에서 다시 재는 자 ──────────────────────────────────────────────────────
 // ⚠ **앱의 셈을 베끼지 않는다**: 「의도한 교차가 냈을 답」은 여기서 독립으로 짓는다.
@@ -155,19 +157,34 @@ describe('41-1 애매하면 대기한다', () => {
     const rows: Record<string, unknown>[] = []
     for (const ratio of [OLD_RULE, TH, TH / 2, TH * 2]) {
       setXintAmbigRatio(ratio)
+      // ⚠ **한 획으로 안 잰다**(2차 리뷰어 [4] — 표본 1이면 「영향이 없다」가 그 획의 사정이다).
+      //    자리 넷 × 각오차 셋 = **열두 획**을 같은 발판 위에 긋는다.
       const b = sparse()
-      const T: Pt = { x: 700, y: 300 }
-      const a = away(T, VP1, -150), z = away(T, VP1, 210)
-      const s = b.add(a.x, a.y, z.x, z.y)
-      s.raw = rawOf(a, z)
+      const rnd = rng32(20260831)
+      const ids: number[] = []
+      for (const ty of [260, 300, 340, 380]) {
+        for (const k of [0, 1, 2]) {
+          const T: Pt = { x: 700, y: ty }
+          const th = (rnd() - 0.5) * 2 * (0.01 + k * 0.01)
+          const rot2 = (q: Pt): Pt => ({
+            x: T.x + (q.x - T.x) * Math.cos(th) - (q.y - T.y) * Math.sin(th),
+            y: T.y + (q.x - T.x) * Math.sin(th) + (q.y - T.y) * Math.cos(th),
+          })
+          const a = rot2(away(T, VP1, -150)), z = rot2(away(T, VP1, 210))
+          const st = b.add(a.x, a.y, z.x, z.y)
+          st.raw = rawOf(a, z)
+          ids.push(st.id)
+        }
+      }
       const r = liftAll(b.doc)
       const trace = [...xintAmbigFinal().values()]
       rows.push({
         ratio: label(ratio), lifted: r.lifted.size, waiting: r.waiting.length,
         // 이 팔이 **무엇을 재는지**를 그 자리에 적는다 — 「교차로 그은 그 획이 섰는가」다.
         // 이것이 false면 위의 자립 수가 같은 것은 아무것도 안 말한다(#85의 형태).
-        crossing_stroke_stood: r.lifted.has(s.id),
-        decided_by_crossing: trace.some(x => x.id === s.id),
+        trial_strokes: ids.length,
+        crossing_strokes_stood: ids.filter(i => r.lifted.has(i)).length,
+        decided_by_crossing: ids.filter(i => trace.some(x => x.id === i)).length,
         multi_candidate: trace.filter(x => x.n >= 2).length,
         spread_rel: trace.length ? +Math.max(...trace.map(x => x.rel)).toFixed(9) : null,
       })
@@ -179,9 +196,21 @@ describe('41-1 애매하면 대기한다', () => {
     expect(new Set(rows.map(x => x.lifted)).size, '성긴 장면의 자립률은 문턱과 무관하다').toBe(1)
     // 그리고 그 이유가 **벌어짐 0**이라는 것까지 잰다(「우연히 같다」와 가른다)
     for (const x of rows) {
-      expect(x.crossing_stroke_stood, '교차로 그은 획이 실제로 선다').toBe(true)
-      expect(x.decided_by_crossing, '그 획을 «교차 패스»가 정했다').toBe(true)
-      if (x.spread_rel !== null) expect(x.spread_rel as number).toBeLessThan(1e-9)
+      expect(x.crossing_strokes_stood, '교차로 그은 획이 전부 선다').toBe(x.trial_strokes)
+      expect(x.decided_by_crossing as number, '그 획들을 «교차 패스»가 정했다').toBeGreaterThan(0)
+      // ⚠⚠ **표본을 열둘로 늘리자 「벌어짐 0」이 «한 획의 사정»이었던 것이 드러났다**
+      //    (2차 리뷰어 [4]가 표본 1을 잡아서 나온 값이다): 열두 획의 최대 벌어짐은
+      //    **0.002996**이다. 0이 아니지만 문(0.01)의 **3분의 1**이고 ×0.5(0.005)로 내려도
+      //    아래다 — 그래서 네 문턱에서 자립이 안 움직인다. 「무회귀」의 근거는 «0»이 아니라
+      //    **«문과 3.3배 떨어져 있다»**로 다시 적는다.
+      expect(x.spread_rel as number, '성긴 장면의 벌어짐은 문의 절반 아래다')
+        .toBeLessThan(TH / 2)
+    }
+    ledger['sparse_spread_vs_threshold'] = {
+      spread_max_rel: rows[0]!.spread_rel, threshold: TH,
+      ratio_to_threshold: +(TH / (rows[0]!.spread_rel as number)).toFixed(2),
+      note: '표본 1일 때는 0.000000이었다 — 그 값은 그 한 획이 발판의 공면과 정확히 같은 '
+        + '평면을 지난 사정이었다. 열둘로 늘리니 0.002996이 나온다(2차 리뷰어 [4]).',
     }
   })
 
@@ -287,6 +316,69 @@ describe('41-1 애매하면 대기한다', () => {
     ledger['principle_d_drift_px'] = rows
     for (const x of rows) console.log('[41-1 원칙 d 좌표] ' + JSON.stringify(x))
     expect(rows.every(x => x.n !== null)).toBe(true)
+  })
+
+  it('세 번째 표본 — 앱 경로로 그린 41획 도면(`busy37`)', () => {
+    // ⚠⚠ **이 판만 «앱 경로»다**(`session().draw` — 오스냅·축 스냅·리프팅을 전부 지난다).
+    //    위 셋은 `builder()`로 `a`·`b`를 직접 놓으므로 축 스냅을 안 지난다(D-5의 남은 구멍).
+    //    그래서 여기 값이 **실사용에 가장 가깝다** — 붐빔①과 붐빔② 사이에 있다.
+    const rows: Record<string, unknown>[] = []
+    for (const ratio of [OLD_RULE, TH]) {
+      setXintAmbigRatio(ratio)
+      const sess = busy37()
+      const t = [...xintAmbigFinal().values()]
+      const rels = t.map(x => x.rel).sort((p, q) => p - q)
+      const why = [...sess.app.lift.waitWhy.values()]
+        .reduce((a: Record<string, number>, w) => (a[w] = (a[w] ?? 0) + 1, a), {})
+      // 원칙 d — 자립 획이 화면으로 돌아오는가(관문이 막은 그 자리)
+      let unproj = 0
+      for (const [, g] of sess.app.lift.lifted) {
+        if (!project(sess.app.lift.an, DRAW_POSE, g.a3) || !project(sess.app.lift.an, DRAW_POSE, g.b3)) unproj++
+      }
+      // ⚠⚠ **2차 리뷰어 [3]** — 지시문 게이트 ⑤의 좌표 축을 **앱 경로에서** 잰다.
+      //    위 픽스처들은 `a`·`b`를 직접 놓아 축 스냅을 안 지나므로 그 수는 상한이었다.
+      //    여기 확정 2D는 앱이 스냅해 넣은 것이다 — 이것이 실사용의 값이다.
+      const dr: number[] = []
+      for (const st of sess.app.doc.strokes) {
+        const g = sess.app.lift.lifted.get(st.id)
+        if (!g) continue
+        const pa = project(sess.app.lift.an, DRAW_POSE, g.a3)
+        const pb = project(sess.app.lift.an, DRAW_POSE, g.b3)
+        if (!pa || !pb) { dr.push(Infinity); continue }
+        dr.push(Math.max(Math.hypot(pa.x - st.a.x, pa.y - st.a.y),
+          Math.hypot(pb.x - st.b.x, pb.y - st.b.y)))
+      }
+      dr.sort((x, y) => x - y)
+      rows.push({ ratio: label(ratio), strokes: sess.app.doc.strokes.length,
+        lifted: sess.app.lift.lifted.size, waiting: sess.app.lift.waiting.length,
+        drift_median_px: dr.length ? +dr[dr.length >> 1]!.toFixed(6) : null,
+        drift_p90_px: dr.length ? +dr[Math.floor(dr.length * 0.9)]!.toFixed(6) : null,
+        drift_max_px: dr.length ? +dr[dr.length - 1]!.toFixed(6) : null,
+        drift_over_tap: dr.filter(x => x > C.TAP_MAX_PX).length,
+        multi_candidate: t.filter(x => x.n >= 2).length,
+        spread_min_rel: rels.length ? +rels[0]!.toFixed(6) : null,
+        spread_max_rel: rels.length ? +rels[rels.length - 1]!.toFixed(6) : null,
+        wait_reasons: why, unprojectable_lifted: unproj })
+      setXintAmbigRatio(null)
+    }
+    ledger['app_path_busy37'] = {
+      what: '`test/pull37scene.ts`의 `busy37` — 앱 경로(`session().draw`)로 그린 41획 도면. '
+        + '37-6이 오스냅 당김을 잰 그 장면이다.',
+      principle_d_note: '⚠⚠ **지시문 게이트 ⑤(좌표 축)의 답이 여기 있다**(2차 리뷰어 [3]) — '
+        + '앱 경로의 확정 2D는 이미 축에 붙어 있으므로 합성 픽스처의 3.3~4.1 px가 아니라 '
+        + '**이 값이 실사용의 것**이다. 그리고 이 판은 41이 판정을 **실제로 바꾼** 판이므로 '
+        + '「41 전후」 비교가 여기서만 뜻이 있다(2차 [4] — 합성 판의 «전후 동일»은 41이 '
+        + '아무것도 안 한 픽스처의 사정이었다).',
+      note: '벌어짐이 붐빔①(≤0.0088)과 붐빔②(≥0.3495) **사이**다 — 실사용 도면에서 애매함이 '
+        + '실재한다는 뜻이고, 그래서 41-1이 이 장면의 자립을 실제로 줄인다. '
+        + '그 감소가 `osnappull37_web2.json`의 당김 수치를 움직인 원인이다(자립 35 → 29).',
+      rows,
+    }
+    for (const x of rows) console.log('[41-1 앱 경로] ' + JSON.stringify(x))
+    // **원칙 d의 관문이 실제로 무는 자리** — 관문 전에 넷이었다(AS-C141). 지금은 0이다.
+    for (const x of rows) expect(x.unprojectable_lifted, '자립인데 화면에 몸이 없는 획').toBe(0)
+    expect(rows[1]!.lifted as number, '41-1이 이 장면의 자립을 줄인다')
+      .toBeLessThan(rows[0]!.lifted as number)
   })
 
   it('반증 손잡이 — 문턱 0이면 후보가 여럿인 획이 전부 대기한다', () => {
@@ -428,17 +520,27 @@ describe('41-2 누른 자리 — 애매함을 푸는 손잡이', () => {
       const r = liftAll(b.doc)
       const size = geomSizeOf(r.lifted)
       const byCross = new Set(xintAmbigFinal().keys())
-      let stood = 0, byCrossStood = 0, onTarget = 0, otherPass = 0
+      let stood = 0, byCrossStood = 0, onTarget = 0, otherPass = 0, mis = 0, worst = 0
+      const ids: number[] = []
       for (const { s, target } of trials) {
         if (!r.lifted.has(s.id)) continue
         stood++
+        ids.push(s.id)                                      // 2차 [4]㉠ — 무회귀를 **id 목록**으로 견준다
         if (!byCross.has(s.id)) { otherPass++; continue }   // 사슬이 세운 획 — 분모 밖(#13)
         byCrossStood++
         const e = placementError(r, b.doc, s, target)
-        if (e !== null && size > 0 && e / size <= C.INTERSECT_GAP_RATIO) onTarget++
+        if (e === null || !(size > 0)) continue
+        const rel = e / size
+        worst = Math.max(worst, rel)
+        // ⚠⚠ **2차 리뷰어 [1][2]** — 누름 판에서도 「잘못 놓임」을 잰다. 제품 거동은
+        //    누름이 들어간 쪽이고, 거기서 붐빔②는 실제로 선다. 안 재면 게이트가
+        //    「41-1만 돌린 판」에만 걸린 것이다.
+        if (rel <= C.INTERSECT_GAP_RATIO) onTarget++
+        else mis++
       }
-      return { stood, by_crossing: byCrossStood, onTarget, decided_by_other_pass: otherPass,
-        trials: trials.length }
+      return { stood, by_crossing: byCrossStood, onTarget, misplaced: mis,
+        worst_error_rel: +worst.toFixed(6), decided_by_other_pass: otherPass,
+        stood_ids: ids.join(','), trials: trials.length }
     }
     const none = run(null), flat = run('flat'), arc = run('naturalArc'), pressed = run('pressAt')
     const rows = [
@@ -447,9 +549,11 @@ describe('41-2 누른 자리 — 애매함을 푸는 손잡이', () => {
     ]
     ledger['press_effect'] = rows
     for (const x of rows) console.log('[41-2 효과] ' + JSON.stringify(x))
-    // 무회귀 — 신호가 없거나 안 누른 결이면 41-1과 **글자 그대로 같다**
-    expect(flat.stood, '평평한 결은 41-1과 같다').toBe(none.stood)
-    expect(arc.stood, '안 누른 자연 결은 41-1과 같다').toBe(none.stood)
+    // 무회귀 — 신호가 없거나 안 누른 결이면 41-1과 **글자 그대로 같다**.
+    // ⚠⚠ **개수가 아니라 id 목록으로 견준다**(2차 리뷰어 [4]㉠ · #91): 「다른 획이 대신 섰다」는
+    //    개수를 안 바꾸고도 일어난다 — 그것이 이 회차가 세운 #91의 판별 물음 그대로다.
+    expect(flat.stood_ids, '평평한 결은 41-1과 같다(같은 획이 선다)').toBe(none.stood_ids)
+    expect(arc.stood_ids, '안 누른 자연 결은 41-1과 같다(같은 획이 선다)').toBe(none.stood_ids)
     // 있으면 선다 — 그리고 **의도한 그 교차**로 선다
     expect(pressed.stood, '누른 획은 대기하지 않는다').toBeGreaterThan(none.stood)
     // 교차가 정한 획은 **전부** 누른 자리의 교차로 섰다(오차 0.000000).
@@ -471,16 +575,20 @@ describe('41-2 누른 자리 — 애매함을 푸는 손잡이', () => {
       const r = liftAll(b.doc)
       const size = geomSizeOf(r.lifted)
       const byCross = new Set(xintAmbigFinal().keys())
-      let stood = 0, byC = 0, onT = 0
+      let stood = 0, byC = 0, onT = 0, mis = 0, worst = 0
       for (const { s, target } of trials) {
         if (!r.lifted.has(s.id)) continue
         stood++
         if (!byCross.has(s.id)) continue
         byC++
         const e = placementError(r, b.doc, s, target)
-        if (e !== null && size > 0 && e / size <= C.INTERSECT_GAP_RATIO) onT++
+        if (e === null || !(size > 0)) continue
+        const rel = e / size
+        worst = Math.max(worst, rel)
+        if (rel <= C.INTERSECT_GAP_RATIO) onT++; else mis++
       }
-      return { stood, by_crossing: byC, onTarget: onT, trials: trials.length }
+      return { stood, by_crossing: byC, onTarget: onT, misplaced: mis,
+        worst_error_rel: +worst.toFixed(6), trials: trials.length }
     })()
     console.log('[41-2 자리 반증] ' + JSON.stringify(mid))
     ledger['press_position_falsification'] = {
@@ -488,6 +596,10 @@ describe('41-2 누른 자리 — 애매함을 푸는 손잡이', () => {
       ...mid,
       reading: '목표로 선 것이 «의도한 누름» 판보다 적으면 이 자는 **자리를 실제로 읽고 있다**. '
         + '같으면 그 판의 14/14는 자리가 아니라 다른 것이 낸 값이다(§5.1 유형 3).',
+      cost: '⚠⚠ **이 판의 `misplaced`가 41-2의 대가다**(2차 리뷰어 [1][2]) — 어긋난 자리에서 '
+        + '누르면 그 획은 대기하지 않고 **엉뚱한 교차로 선다**. 41-1만 돌리면 그 획들은 '
+        + '대기였다. 즉 누름은 「나빠질 수가 없다」가 아니고(37-5의 문면은 기본이 «고르기»일 '
+        + '때의 것이다), 여기 값이 그 대가의 크기다.',
     }
     expect(mid.onTarget, '중간에 누르면 목표 적중이 줄어든다 — 자를 자리가 정한다')
       .toBeLessThan(pressed.onTarget)
@@ -510,7 +622,12 @@ describe('41-2 누른 자리 — 애매함을 푸는 손잡이', () => {
       .filter(k => src.includes(k))
     console.log(`[41-2 보정·행위] lift.ts의 보정 참조 ${refs.length}건 ${JSON.stringify(refs)}`)
     ledger['press_calibration_not_read'] = {
-      what: '**행위로 잰다**(#91) — `src/core/lift.ts` 원문에 보정으로 가는 이름이 있는가.',
+      what: '`src/core/lift.ts` **원문**에 보정으로 가는 이름이 있는가(주석은 걷는다).',
+      what_axis_this_really_is: '⚠⚠ **정직하게 적는다**(2차 리뷰어 [4]㉡): 이것은 «행위»를 '
+        + '직접 잰 것이 아니라 **원문의 이름 부재라는 «상태»로 행위를 대리**한 것이다. '
+        + '「안 읽는다」의 참 판정자는 실행 중의 접근이고 이 팔은 그것을 안 본다. '
+        + '그래도 결과 대조보다 나은 이유: 결과는 **보정을 읽고도 같을 수 있지만** 이름이 '
+        + '없으면 읽는 코드가 없다(우회를 뺀 대부분의 경로에서). #91의 개선이지 해결이 아니다.',
       names_checked: 8, found: refs,
       comments_stripped: true,
       falsification: '주석을 안 걷고 돌리면 두 건이 잡힌다(`PressCal`·`doc.press` — 둘 다 '
@@ -627,15 +744,20 @@ describe('41 원장', () => {
           + '어느 후보를 골라도 같은 선이므로(AS-C140) 이 16은 **고르기의 정확도가 아니라 '
           + '«세운다»의 무회귀**를 잰다.',
       },
+      // ⚠ 착수 표(`web2/NOTES.md`)와 **같은 목록이어야 한다**(#42 ⑦ — 완료 대조가
+      //    `selfcheck.json`의 `pitfall_citations`다). 2차 리뷰어가 여섯이 빠진 것을 잡았다.
       pitfalls: ['#42', '#54', '#71', '#82', '#84', '#85', '#86', '#88',
-        '#12', '#14', '#16', '#43', '#5', '#47', '#90'],
+        '#12', '#14', '#16', '#43', '#5', '#47', '#90',
+        '#87', '#89', '#28', '#25', '#13', '#11', '#91'],
       selfcheck_notes: {
         misplaced_zero_after: '`crowded_*`의 고친 뒤 `misplaced: 0`은 **일부가 구성상 보장**이다'
           + '(§5.1 유형 3): 문턱이 `INTERSECT_GAP_RATIO`와 같은 값이므로, 자립한 획의 벌어짐이 '
           + '문 아래면 어느 후보와의 거리도 그 문 아래다. **판별력은 «고치기 전» 줄이 든다** — '
           + '`crowded_deep`의 ∞ 행에서 misplaced > 0이고 worst_error_rel이 문의 열 배를 넘는다.',
-        sparse_spread_zero: '`sparse_no_regression`의 `spread_rel` 0은 측정이다 — 발판의 세로 넷이 '
-          + '3D에서 한 평면에 있어 후보들이 **같은 선**을 낸다. 임계로 안 쓴다.',
+        sparse_spread: '`sparse_no_regression`의 `spread_rel`은 **0이 아니다**(0.002996) — '
+          + '표본 1이던 초판에서만 0이었고 그것은 그 한 획의 사정이었다(2차 리뷰어 [4]). '
+          + '열두 획에서 최대 0.002996이고 문(0.01)의 3분의 1이라 네 문턱에서 자립이 안 움직인다. '
+          + '무회귀의 근거는 «0»이 아니라 «문과 3.3배 떨어져 있다»이다.',
         single_seed: '시드 하나(20260831) · 픽스처 셋. 필압 결만 300 시드를 돈다. '
           + '후보 수와 깊이 분포는 픽스처가 정한다(#14의 미측정 — 시드 변동폭을 안 쟀다).',
         scene_size_varies_by_row: '같은 픽스처인데 `scene_size_world`가 행마다 다르다'
@@ -682,6 +804,12 @@ describe('41 원장', () => {
           + '유보**이고 이 원장만의 사정이 아니다(web2-31 절이 같은 셋을 적었다). 그동안 '
           + 'STALE 판정은 사람이 「원장을 재실행했는가」로 해 왔고, 이 회차도 그렇게 했다'
           + '(git stash로 귀속 — NOTES 「원장 귀속」).',
+        multi_candidate_equals_seen: '전 행에서 `multi_candidate` == `crossing_pass_seen`이다'
+          + '(2차 리뷰어 [6]) — 이 픽스처들에서는 **교차 패스에 온 획이 전부 후보 2개 이상**이라 '
+          + '두 수가 같다. 축이 둘로 보이지만 실은 하나이고, 픽스처가 바뀌면 갈릴 수 있다.',
+        waiting_vs_waited: '`sparse_no_regression`의 `waiting`은 **장면 전체**의 대기 수이고 '
+          + '`ambiguous_rate_by_density`·`crowded_*`의 `waited`는 **시험 획**의 것이다'
+          + '(2차 리뷰어 [6] · #28의 형태). 분모가 다르므로 두 수를 견주지 마라.',
         density_row0_n1: '`ambiguous_rate_by_density[0]`은 **획 하나짜리** 성긴 판이다(분모 1) — '
           + '거기 있는 0/1은 비율이 아니라 그 한 획의 상태다. 이 줄이 재는 것은 「성긴 장면에서 '
           + '교차로 그은 획이 선다」 하나이고, 그 판별력은 같은 시험의 `crossing_stroke_stood`가 든다.',

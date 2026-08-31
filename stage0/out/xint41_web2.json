@@ -17,41 +17,51 @@
   "sparse_no_regression": [
     {
       "ratio": "∞(37의 규칙)",
-      "lifted": 7,
+      "lifted": 18,
       "waiting": 1,
-      "crossing_stroke_stood": true,
-      "decided_by_crossing": true,
-      "multi_candidate": 1,
-      "spread_rel": 0
+      "trial_strokes": 12,
+      "crossing_strokes_stood": 12,
+      "decided_by_crossing": 6,
+      "multi_candidate": 6,
+      "spread_rel": 0.002995765
     },
     {
       "ratio": 0.01,
-      "lifted": 7,
+      "lifted": 18,
       "waiting": 1,
-      "crossing_stroke_stood": true,
-      "decided_by_crossing": true,
-      "multi_candidate": 1,
-      "spread_rel": 0
+      "trial_strokes": 12,
+      "crossing_strokes_stood": 12,
+      "decided_by_crossing": 6,
+      "multi_candidate": 6,
+      "spread_rel": 0.002995765
     },
     {
       "ratio": 0.005,
-      "lifted": 7,
+      "lifted": 18,
       "waiting": 1,
-      "crossing_stroke_stood": true,
-      "decided_by_crossing": true,
-      "multi_candidate": 1,
-      "spread_rel": 0
+      "trial_strokes": 12,
+      "crossing_strokes_stood": 12,
+      "decided_by_crossing": 6,
+      "multi_candidate": 6,
+      "spread_rel": 0.002995765
     },
     {
       "ratio": 0.02,
-      "lifted": 7,
+      "lifted": 18,
       "waiting": 1,
-      "crossing_stroke_stood": true,
-      "decided_by_crossing": true,
-      "multi_candidate": 1,
-      "spread_rel": 0
+      "trial_strokes": 12,
+      "crossing_strokes_stood": 12,
+      "decided_by_crossing": 6,
+      "multi_candidate": 6,
+      "spread_rel": 0.002995765
     }
   ],
+  "sparse_spread_vs_threshold": {
+    "spread_max_rel": 0.002995765,
+    "threshold": 0.01,
+    "ratio_to_threshold": 3.34,
+    "note": "표본 1일 때는 0.000000이었다 — 그 값은 그 한 획이 발판의 공면과 정확히 같은 평면을 지난 사정이었다. 열둘로 늘리니 0.002996이 나온다(2차 리뷰어 [4])."
+  },
   "crowded_flat": [
     {
       "ratio": "∞(37의 규칙)",
@@ -376,6 +386,48 @@
       "tap_max_px": 2
     }
   ],
+  "app_path_busy37": {
+    "what": "`test/pull37scene.ts`의 `busy37` — 앱 경로(`session().draw`)로 그린 41획 도면. 37-6이 오스냅 당김을 잰 그 장면이다.",
+    "principle_d_note": "⚠⚠ **지시문 게이트 ⑤(좌표 축)의 답이 여기 있다**(2차 리뷰어 [3]) — 앱 경로의 확정 2D는 이미 축에 붙어 있으므로 합성 픽스처의 3.3~4.1 px가 아니라 **이 값이 실사용의 것**이다. 그리고 이 판은 41이 판정을 **실제로 바꾼** 판이므로 「41 전후」 비교가 여기서만 뜻이 있다(2차 [4] — 합성 판의 «전후 동일»은 41이 아무것도 안 한 픽스처의 사정이었다).",
+    "note": "벌어짐이 붐빔①(≤0.0088)과 붐빔②(≥0.3495) **사이**다 — 실사용 도면에서 애매함이 실재한다는 뜻이고, 그래서 41-1이 이 장면의 자립을 실제로 줄인다. 그 감소가 `osnappull37_web2.json`의 당김 수치를 움직인 원인이다(자립 35 → 29).",
+    "rows": [
+      {
+        "ratio": "∞(37의 규칙)",
+        "strokes": 41,
+        "lifted": 35,
+        "waiting": 6,
+        "drift_median_px": 0,
+        "drift_p90_px": 0,
+        "drift_max_px": 4.000544,
+        "drift_over_tap": 1,
+        "multi_candidate": 0,
+        "spread_min_rel": null,
+        "spread_max_rel": null,
+        "wait_reasons": {
+          "noPoint": 6
+        },
+        "unprojectable_lifted": 0
+      },
+      {
+        "ratio": 0.01,
+        "strokes": 41,
+        "lifted": 29,
+        "waiting": 12,
+        "drift_median_px": 0,
+        "drift_p90_px": 0,
+        "drift_max_px": 4.000544,
+        "drift_over_tap": 1,
+        "multi_candidate": 5,
+        "spread_min_rel": 0.340532,
+        "spread_max_rel": 0.407493,
+        "wait_reasons": {
+          "ambiguous": 5,
+          "noPoint": 7
+        },
+        "unprojectable_lifted": 0
+      }
+    ]
+  },
   "falsification_zero_threshold": {
     "multi_candidate": 23,
     "stood": 1
@@ -510,7 +562,10 @@
       "stood": 1,
       "by_crossing": 0,
       "onTarget": 0,
+      "misplaced": 0,
+      "worst_error_rel": 0,
       "decided_by_other_pass": 1,
+      "stood_ids": "12",
       "trials": 24
     },
     {
@@ -518,7 +573,10 @@
       "stood": 1,
       "by_crossing": 0,
       "onTarget": 0,
+      "misplaced": 0,
+      "worst_error_rel": 0,
       "decided_by_other_pass": 1,
+      "stood_ids": "12",
       "trials": 24
     },
     {
@@ -526,7 +584,10 @@
       "stood": 1,
       "by_crossing": 0,
       "onTarget": 0,
+      "misplaced": 0,
+      "worst_error_rel": 0,
       "decided_by_other_pass": 1,
+      "stood_ids": "12",
       "trials": 24
     },
     {
@@ -534,7 +595,10 @@
       "stood": 24,
       "by_crossing": 14,
       "onTarget": 14,
+      "misplaced": 0,
+      "worst_error_rel": 0,
       "decided_by_other_pass": 10,
+      "stood_ids": "12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35",
       "trials": 24
     }
   ],
@@ -543,11 +607,15 @@
     "stood": 6,
     "by_crossing": 3,
     "onTarget": 0,
+    "misplaced": 3,
+    "worst_error_rel": 0.105532,
     "trials": 24,
-    "reading": "목표로 선 것이 «의도한 누름» 판보다 적으면 이 자는 **자리를 실제로 읽고 있다**. 같으면 그 판의 14/14는 자리가 아니라 다른 것이 낸 값이다(§5.1 유형 3)."
+    "reading": "목표로 선 것이 «의도한 누름» 판보다 적으면 이 자는 **자리를 실제로 읽고 있다**. 같으면 그 판의 14/14는 자리가 아니라 다른 것이 낸 값이다(§5.1 유형 3).",
+    "cost": "⚠⚠ **이 판의 `misplaced`가 41-2의 대가다**(2차 리뷰어 [1][2]) — 어긋난 자리에서 누르면 그 획은 대기하지 않고 **엉뚱한 교차로 선다**. 41-1만 돌리면 그 획들은 대기였다. 즉 누름은 「나빠질 수가 없다」가 아니고(37-5의 문면은 기본이 «고르기»일 때의 것이다), 여기 값이 그 대가의 크기다."
   },
   "press_calibration_not_read": {
-    "what": "**행위로 잰다**(#91) — `src/core/lift.ts` 원문에 보정으로 가는 이름이 있는가.",
+    "what": "`src/core/lift.ts` **원문**에 보정으로 가는 이름이 있는가(주석은 걷는다).",
+    "what_axis_this_really_is": "⚠⚠ **정직하게 적는다**(2차 리뷰어 [4]㉡): 이것은 «행위»를 직접 잰 것이 아니라 **원문의 이름 부재라는 «상태»로 행위를 대리**한 것이다. 「안 읽는다」의 참 판정자는 실행 중의 접근이고 이 팔은 그것을 안 본다. 그래도 결과 대조보다 나은 이유: 결과는 **보정을 읽고도 같을 수 있지만** 이름이 없으면 읽는 코드가 없다(우회를 뺀 대부분의 경로에서). #91의 개선이지 해결이 아니다.",
     "names_checked": 8,
     "found": [],
     "comments_stripped": true,
@@ -591,11 +659,18 @@
     "#43",
     "#5",
     "#47",
-    "#90"
+    "#90",
+    "#87",
+    "#89",
+    "#28",
+    "#25",
+    "#13",
+    "#11",
+    "#91"
   ],
   "selfcheck_notes": {
     "misplaced_zero_after": "`crowded_*`의 고친 뒤 `misplaced: 0`은 **일부가 구성상 보장**이다(§5.1 유형 3): 문턱이 `INTERSECT_GAP_RATIO`와 같은 값이므로, 자립한 획의 벌어짐이 문 아래면 어느 후보와의 거리도 그 문 아래다. **판별력은 «고치기 전» 줄이 든다** — `crowded_deep`의 ∞ 행에서 misplaced > 0이고 worst_error_rel이 문의 열 배를 넘는다.",
-    "sparse_spread_zero": "`sparse_no_regression`의 `spread_rel` 0은 측정이다 — 발판의 세로 넷이 3D에서 한 평면에 있어 후보들이 **같은 선**을 낸다. 임계로 안 쓴다.",
+    "sparse_spread": "`sparse_no_regression`의 `spread_rel`은 **0이 아니다**(0.002996) — 표본 1이던 초판에서만 0이었고 그것은 그 한 획의 사정이었다(2차 리뷰어 [4]). 열두 획에서 최대 0.002996이고 문(0.01)의 3분의 1이라 네 문턱에서 자립이 안 움직인다. 무회귀의 근거는 «0»이 아니라 «문과 3.3배 떨어져 있다»이다.",
     "single_seed": "시드 하나(20260831) · 픽스처 셋. 필압 결만 300 시드를 돈다. 후보 수와 깊이 분포는 픽스처가 정한다(#14의 미측정 — 시드 변동폭을 안 쟀다).",
     "scene_size_varies_by_row": "같은 픽스처인데 `scene_size_world`가 행마다 다르다(∞ 118.1431 ↔ 고친 뒤 95.21 — 1차 리뷰어 [9]). **분모는 그 실행이 끝난 시점의 장면**이고, 37의 규칙이 세운 «잘못 놓인 획»이 bbox를 부풀리기 때문이다. 절대 벌어짐은 두 행에서 같다(33.27 = 0.281645×118.1431 = 0.349484×95.21) — 그래서 **행을 섞어 비를 읽으면 안 된다**(#42 ⑨). ⚠ 판정 시점의 분모는 또 다르다(리프팅이 진행되며 자란다) — 그 값은 `xintAmbigTrace`의 `scale`이 든다.",
     "flat_worst_error_above_its_threshold": "`crowded_flat`의 ×0.5 행에서 `worst_error_rel` 0.006079가 그 행의 문 0.005보다 크다(1차 리뷰어 [10]). 순환 논증이 **거기서 깨지는 것이 정상**이다: 벌어짐은 «판정 시점의 후보 집합»에서 재고, 배치 오차는 «실행이 끝난 뒤 존재하는 의도한 교차»와 견준다 — 뒤엣것은 그 획이 선 뒤에 올라온 선일 수 있어 후보 집합 밖이다. 즉 두 수의 프레임이 다르고, 그래서 이 원장의 `misplaced`는 **완전한 구성상 보장이 아니다**(그 점이 판별력의 남은 몫이다).",
@@ -606,6 +681,8 @@
     "unprojectable_zero": "`principle_d_unprojectable: 0`은 **관문을 넣은 뒤의 값**이라 보장에 가깝다(1차 리뷰어 [15]). 판별력은 관문 «전»의 실측이 든다 — `busy37`에서 자립 획 넷의 a3.z가 +83.52였다(AS-C141 · 그 수는 이 원장 밖의 진단 로그다).",
     "placement_error_uses_rays": "`placementError`가 `rayThrough`를 부르므로 selfcheck의 **자기참조 유형 3** 탐지에 걸린다(오차류 이름의 함수가 스스로 변환을 수행한다). 확인했다 — **자기참조가 아니다**: 이 함수는 앱이 놓은 3D와 «의도한 교차가 냈을 3D»를 **둘 다 밖에서 지어** 견주고, 광선은 두 답을 같은 방식으로 내리는 데만 쓴다(둘 중 하나를 상대의 변환으로 만들지 않는다). 판별력은 `crowded_deep`의 ∞ 행이 0.167082를 내는 것이 든다 — 자기참조면 그 값이 0이어야 한다.",
     "snapshots_absent": "`constantsSnapshot()`·`metric_defs`가 없다 — **web2 라인 전체의 유보**이고 이 원장만의 사정이 아니다(web2-31 절이 같은 셋을 적었다). 그동안 STALE 판정은 사람이 「원장을 재실행했는가」로 해 왔고, 이 회차도 그렇게 했다(git stash로 귀속 — NOTES 「원장 귀속」).",
+    "multi_candidate_equals_seen": "전 행에서 `multi_candidate` == `crossing_pass_seen`이다(2차 리뷰어 [6]) — 이 픽스처들에서는 **교차 패스에 온 획이 전부 후보 2개 이상**이라 두 수가 같다. 축이 둘로 보이지만 실은 하나이고, 픽스처가 바뀌면 갈릴 수 있다.",
+    "waiting_vs_waited": "`sparse_no_regression`의 `waiting`은 **장면 전체**의 대기 수이고 `ambiguous_rate_by_density`·`crowded_*`의 `waited`는 **시험 획**의 것이다(2차 리뷰어 [6] · #28의 형태). 분모가 다르므로 두 수를 견주지 마라.",
     "density_row0_n1": "`ambiguous_rate_by_density[0]`은 **획 하나짜리** 성긴 판이다(분모 1) — 거기 있는 0/1은 비율이 아니라 그 한 획의 상태다. 이 줄이 재는 것은 「성긴 장면에서 교차로 그은 획이 선다」 하나이고, 그 판별력은 같은 시험의 `crossing_stroke_stood`가 든다."
   },
   "what_this_does_not_say": "이 표는 **작도 포즈**의 것이고 획이 직선 하나인 경우만 본다. 실기기의 손 필압 결과 각도 오차 분포는 표본이 0이다(AS-C1 계열) — 여기 결은 반사인 + 떨림 ±20%의 합성이다."
