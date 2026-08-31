@@ -263,6 +263,22 @@ it('원장', () => {
       scale: '분모 = mmPerUnit ÷ (화면 CSS px per 세계단위) ÷ (25.4/96) — CSS 명세가 96px = 1in',
       scale_source: '`lift.mmPerUnit` = 32-5의 `doc.scaleRef`가 정한 값. **새 기제를 안 만들었다**',
     },
+    constants: {
+      // **팔의 문**(제품 상수가 아니다 — 1차 [16]의 자리를 read42에도 둔다 · 2차 [9])
+      arm_thresholds: {
+        focal_err_mm_max: 0.5,
+        falsify_worst_err_mm_min: 5,
+        note: '0.5 mm는 «표의 자릿수 안에서 맞는가»의 문이다 — 그 표의 반올림 폭은 행마다 `table_rounding_band_mm`에 있다',
+      },
+      dim_input_mm: 3000,
+      film35_diag_mm: r6(FILM35_DIAG_MM),
+      mm_per_css_px: r6(MM_PER_CSS_PX),
+    },
+    arm_independence: (
+      '⚠ **이 팔과 화면 팔은 독립 관측 둘이 아니다**(2차 리뷰어 [3]): 같은 발판에 같은 치수'
+      + '(3000 mm)를 넣으므로 `mm_per_unit`이 열 자리까지 같다(1148.198317). 갈리는 것은 '
+      + '**무엇을 재는가**다 — 여기는 셈(분모의 정의), 화면 팔은 **그 문자열이 그 자리에 뜨는가**다.'
+    ),
     ...ledger,
     gate: {
       for: 'web2-42 3번',

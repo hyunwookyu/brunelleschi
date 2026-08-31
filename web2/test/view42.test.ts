@@ -155,6 +155,12 @@ describe('42-1 ① 여섯 면 — 투영이 평행이고 자세가 그 면이다
       how: '같은 3D 방향의 선분 넷을 깊이만 달리해 재사영 — 방향 최대 차(도)와 길이 최대/최소',
       // 도달 가능성이 가리키는 자리 — **한 경로로 풀리게** 따로 낸다(#40: `rows[*]`는 안 풀린다)
       falsify_perspective_spread_deg: rows.map(r => (r.falsify_perspective as { spread_deg: number }).spread_deg),
+      falsify_channel_note: (
+        '⚠ **반증 채널의 독립 관측은 여섯이 아니다**(2차 리뷰어 [11] · 1차 [4]와 같은 형태): '
+        + '위 여섯 값에서 서로 다른 것은 **둘**(1.974537 · 2.026905)이고 길이 비는 **넷**이다 — '
+        + '큐브 틀의 대칭 때문에 마주 보는 면들이 같은 깊이 배치를 준다. '
+        + '즉 이 게이트가 재는 축은 **자세 여섯**이고, 반증 채널은 **둘**이다.'
+      ),
       rows,
     }
   })
@@ -448,14 +454,34 @@ describe('42-1 ⑥ 가운데 원이 덮는 것 — 꼭짓점·모서리의 무�
       return { i, dist_from_center: r6(Math.hypot(p.x - L.cx, p.y - L.cy)), covered: inCenter(p), kind: hit.kind }
     }).sort((a, b) => a.i - b.i)
     const covered = rows.filter(r => r.covered)
-    // 모서리 중점도 같이 본다 — 31-1의 거동이 그대로인가
-    const edges: { a: number; b: number; kind: string }[] = []
+    // ── 모서리 — **중점 하나가 아니라 «짚을 수 있는가»를 잰다**(2차 리뷰어 [1] · #43) ──
+    // ⚠⚠ 초판은 중점만 보고 「모서리 전부 edge」라고 적었는데 **그것이 틀렸다**: 앞 꼭짓점에
+    //   닿는 모서리들은 중점이 가운데 원 안에 들어온다. 물음은 「중점이 무엇으로 읽히는가」가
+    //   아니라 **「그 모서리를 여전히 짚을 수 있는가」**다 — 모서리는 «선»이라 한 점이 먹혀도
+    //   나머지에서 잡힌다(꼭짓점은 «점»이라 먹히면 끝이다. 그래서 둘을 갈라 센다).
+    const edges: { a: number; b: number; midKind: string; reachable: boolean; covered_frac: number }[] = []
+    const seenE = new Set<string>()
     for (const f of geom.faces) {
       if (!f.visible) continue
       for (let i = 0; i < f.poly.length; i++) {
         const a = f.poly[i]!, b = f.poly[(i + 1) % f.poly.length]!
-        const m = { x: (geom.corners[a]!.p.x + geom.corners[b]!.p.x) / 2, y: (geom.corners[a]!.p.y + geom.corners[b]!.p.y) / 2 }
-        edges.push({ a, b, kind: cubeHit(geom, m)!.kind })
+        const key = `${Math.min(a, b)}-${Math.max(a, b)}`
+        if (seenE.has(key)) continue
+        seenE.add(key)
+        const A = geom.corners[a]!.p, B = geom.corners[b]!.p
+        const m = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 }
+        let hits = 0, inDisc = 0
+        const N = 41
+        for (let k = 0; k <= N; k++) {
+          const t = k / N
+          const q = { x: A.x + (B.x - A.x) * t, y: A.y + (B.y - A.y) * t }
+          if (inCenter(q)) inDisc++
+          if (cubeHit(geom, q)?.kind === 'edge') hits++
+        }
+        edges.push({
+          a, b, midKind: cubeHit(geom, m)!.kind,
+          reachable: hits > 0, covered_frac: r6(inDisc / (N + 1)),
+        })
       }
     }
     // ⚠⚠ **표준 2점 구도에서는 덮이는 꼭짓점이 0이다**(가장 가까운 것이 31.7 px · 원은 16 px).
@@ -477,7 +503,8 @@ describe('42-1 ⑥ 가운데 원이 덮는 것 — 꼭짓점·모서리의 무�
 
     expect(covered.length, '덮이는 꼭짓점은 많아야 하나다').toBeLessThanOrEqual(1)
     expect(rows.filter(r => !r.covered).every(r => r.kind === 'corner'), '나머지 꼭짓점은 종전대로 corner다').toBe(true)
-    expect(edges.every(e => e.kind === 'edge' || e.kind === 'center'), '모서리도 종전대로다').toBe(true)
+    // **모든 모서리가 여전히 짚힌다** — 그것이 「31-1의 거동이 그대로다」의 뜻이다
+    expect(edges.every(e => e.reachable), '모서리는 전부 어딘가에서 짚힌다').toBe(true)
     ledger['gate11_center_covers'] = {
       what: '가운데 원(크기의 %s배)이 덮는 큐브 요소 — 31-1의 corner/edge 무회귀를 값으로'.replace('%s', String(C.CUBE_CENTER_R)),
       center_radius_px: L.size * C.CUBE_CENTER_R,
@@ -485,7 +512,10 @@ describe('42-1 ⑥ 가운데 원이 덮는 것 — 꼭짓점·모서리의 무�
       covered_corners: covered.length,
       covered_detail: covered,
       corners: rows,
-      edges_kind: edges.map(e => e.kind),
+      edges: edges.map(e => ({ e: `${e.a}-${e.b}`, mid_kind: e.midKind, reachable: e.reachable, covered_frac: e.covered_frac })),
+      edges_mid_covered: edges.filter(e => e.midKind === 'center').length,
+      edges_unreachable: edges.filter(e => !e.reachable).length,
+      edges_max_covered_frac: r6(Math.max(...edges.map(e => e.covered_frac))),
       isometric: {
         what: '앞 꼭짓점이 화면 중심에 사영되는 자세 — **덮이는 국면이 실재하는가**(#40 도달 가능성)',
         visible_corners: isoRows.length,
@@ -495,7 +525,15 @@ describe('42-1 ⑥ 가운데 원이 덮는 것 — 꼭짓점·모서리의 무�
       },
       note: (
         '아이소메트릭에 가까운 자세에서 **앞 꼭짓점 하나**가 화면 중심에 사영되므로 그 하나가 덮인다 — '
-        + '그 꼭짓점의 시점은 «지금 보고 있는 그 자세»라 누를 이유가 없다. 나머지는 종전 그대로다.'
+        + '그 꼭짓점의 시점은 «지금 보고 있는 그 자세»라 누를 이유가 없다.'
+      ),
+      corner_vs_edge: (
+        '⚠⚠ **꼭짓점과 모서리를 갈라 센다**(2차 리뷰어 [1] · #43): 꼭짓점은 «점»이라 덮이면 끝이고, '
+        + '모서리는 «선»이라 한 자리가 덮여도 나머지에서 잡힌다. 그래서 모서리의 판정자는 '
+        + '`reachable`(41 표본 중 하나라도 `edge`로 읽히는가)이고 중점 하나가 아니다. '
+        + '초판은 중점만 보고 「모서리 전부 edge」라고 적었는데 **그것이 틀렸다** — '
+        + '표준 2점 구도에서 모서리 하나(1-3)는 **중점이 원 안**이고 길이의 **47.6%**가 덮인다. '
+        + '그래도 **짚을 수 없게 된 모서리는 0**이다.'
       ),
     }
   })
@@ -649,6 +687,45 @@ describe('42-2 ② 평행에서 그은 획이 정상적으로 자립한다 — 3
       const g = st ? s.app.lift.lifted.get(st.id) : undefined
       rows.push({ row: '허공 · 축 없음', lifted: !!g, waiting_has_it: st ? s.app.lift.waiting.includes(st.id) : false })
     }
+    // ㉤ **가상 교차 둘 · 명시 점 0 · 축 없음** — 표의 다섯째 줄(「첫 교차 + 끝 교차」).
+    //    평행에서는 광선의 «원점»이 화면 점마다 달라지므로 이 줄이 평행의 진짜 시험이다.
+    {
+      const s = mk()
+      // 승격 선분 둘의 화면 중점을 지나는 획 — 그 둘 밖에서 시작해 밖에서 끝난다
+      const segs2 = [...s.app.lift.lifted.values()]
+        .map(g => ({ a: P(g.a3), b: P(g.b3) }))
+        .filter(e => e.a && e.b && Math.hypot(e.b!.x - e.a!.x, e.b!.y - e.a!.y) > 40)
+      let best: { p: { x: number; y: number }; q: { x: number; y: number } } | null = null
+      let bd = -1
+      for (let i = 0; i < segs2.length; i++) for (let j = i + 1; j < segs2.length; j++) {
+        const m1 = { x: (segs2[i]!.a!.x + segs2[i]!.b!.x) / 2, y: (segs2[i]!.a!.y + segs2[i]!.b!.y) / 2 }
+        const m2 = { x: (segs2[j]!.a!.x + segs2[j]!.b!.x) / 2, y: (segs2[j]!.a!.y + segs2[j]!.b!.y) / 2 }
+        const d = Math.hypot(m2.x - m1.x, m2.y - m1.y)
+        if (d > bd) { bd = d; best = { p: m1, q: m2 } }
+      }
+      if (best && bd > 60) {
+        const ux = (best.q.x - best.p.x) / bd, uy = (best.q.y - best.p.y) / bd
+        const a = { x: best.p.x - ux * 40, y: best.p.y - uy * 40 }
+        const b = { x: best.q.x + ux * 40, y: best.q.y + uy * 40 }
+        const st = s.draw(a.x, a.y, b.x, b.y)
+        const g = st ? s.app.lift.lifted.get(st.id) : undefined
+        // **놓았으면 원칙 d를 지키고, 안 놓았으면 대기다** — 이 줄은 뷰마다 «어느 두 선분이
+        // 화면에서 벌어지는가»가 달라 자립 여부를 뷰끼리 견줄 수 없다(같은 획이 아니다).
+        // 그래서 견주는 것은 **규칙**이다: 조용히 틀린 배치를 안 만든다.
+        let err = NaN
+        if (g && st) {
+          const ra = project(s.app.lift.an, pose, g.a3)!, rb = project(s.app.lift.an, pose, g.b3)!
+          err = Math.max(Math.hypot(ra.x - st.a.x, ra.y - st.a.y), Math.hypot(rb.x - st.b.x, rb.y - st.b.y))
+        }
+        rows.push({
+          row: '교차 둘 · 명시 점 0', lifted: !!g, span_px: r6(bd), axis: g?.axis ?? null,
+          reproject_err_px: g ? r6(err) : null,
+          waiting_has_it: st ? s.app.lift.waiting.includes(st.id) : false,
+        })
+      } else {
+        rows.push({ row: '교차 둘 · 명시 점 0', lifted: null, span_px: r6(bd), note: '그 뷰에서는 두 선분이 화면에서 안 벌어진다' })
+      }
+    }
     // ㉣ 원칙 d — 자립한 획의 재사영이 확정 2D와 같다
     {
       const s = mk()
@@ -676,7 +753,12 @@ describe('42-2 ② 평행에서 그은 획이 정상적으로 자립한다 — 3
       expect((rows[0] as any).lifted, `${f.n} — 명시 점 2는 자립한다`).toBe(true)
       expect((rows[1] as any).lifted, `${f.n} — 명시 점 1 + 축은 자립한다`).toBe(true)
       expect((rows[2] as any).lifted, `${f.n} — 허공·축 없음은 대기다(조용히 놓지 않는다)`).toBe(false)
-      expect((rows[3] as any).reproject_err_px, `${f.n} — 원칙 d`).toBeLessThan(0.01)
+      expect((rows[4] as any).reproject_err_px, `${f.n} — 원칙 d`).toBeLessThan(0.01)
+      // ㉤(교차 둘)은 **뷰마다 다른 획**이라 자립 여부를 견주지 않는다 — 규칙만 견준다:
+      // 놓았으면 원칙 d를 지키고(≤ 0.01 px) 안 놓았으면 **대기**다(조용히 안 버린다).
+      const x = rows[3] as any
+      if (x.lifted === true) expect(x.reproject_err_px, `${f.n} 교차 — 원칙 d`).toBeLessThan(0.01)
+      else if (x.lifted === false) expect(x.waiting_has_it, `${f.n} 교차 — 안 놓았으면 대기다`).toBe(true)
       // 원근과 **같은 답**이다 — 그것이 「평행에서도 작도가 된다」의 내용이다
       for (let i = 0; i < 3; i++) {
         expect((rows[i] as any).lifted, `${f.n} ${i} — 원근과 같은 칸`).toBe((persp[i] as any).lifted)
@@ -928,7 +1010,7 @@ it('원장', () => {
         '**확정이 풀리면** 원근으로 돌아온다 — ⚠ 앱에서 도달 불가(되돌리기·지우개 둘 다 작도 획을 거부한다). 기제만 합성으로 잰다',
         '**승격이 일어나면** 원근으로 돌아온다 — ⚠ 평행에 있는 동안은 도달 불가(`analyze`가 궤도 후 획을 내용으로 돌린다). 기제만 합성으로 잰다',
         '돋보기가 평행에서 안 죽는다 — 화면 채움 0.503 → 0.800(맞춤 목표), 눈만 옮겼으면 안 움직인다',
-        '가운데 원이 덮는 것은 «화면 중심에 사영된» 꼭짓점 하나뿐이고 나머지 꼭짓점·모서리는 31-1 그대로다',
+        '가운데 원이 덮는 것 — 꼭짓점은 «화면 중심에 사영된» 하나(아이소메트릭에서만) · 모서리는 **짚을 수 없게 된 것이 0**이다(하나가 길이의 47.6%까지 덮이지만 나머지에서 잡힌다)',
         '평행 왕복은 보기 렌즈를 **버린다** — 그 대가를 값으로 남겼다(되살리지 않는다)',
         '평행 뷰에서 그은 획의 투영이 저장·복원을 지난다(버린 위약 판은 좌표가 달라진다)',
       ],

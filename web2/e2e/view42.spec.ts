@@ -126,10 +126,17 @@ test('42 ① 면을 누르면 평행으로 가고 이름이 뜬다 · 가운데�
   expect(back.horizon, '원근에서는 지평선이 돌아온다').not.toBeNull()
 
   ledger['gate1_face_and_center'] = {
-    before: { name: before.name, parallel: before.parallel },
+    before: { name: before.name, parallel: before.parallel, horizon: before.horizon },
     mid_w: r6(mid.w),
-    after: { name: after.name, parallel: after.parallel, w: after.w, D: r6(after.D) },
-    center: { name: back.name, parallel: back.parallel, pose_unchanged: poseAfter === poseBefore },
+    mid_w_note: (
+      '⚠ 이 값은 **벽시계에 묶여 매 실행 다르다**(300 ms 애니 중 언제 읽혔는가) — '
+      + '재는 것은 크기가 아니라 **「0도 1도 아니다」**이다(2차 리뷰어 [2]).'
+    ),
+    after: { name: after.name, parallel: after.parallel, w: after.w, D: r6(after.D), horizon: after.horizon, vp_marks: after.vpMarks },
+    center: {
+      name: back.name, parallel: back.parallel, pose_unchanged: poseAfter === poseBefore,
+      horizon: back.horizon, vp_marks: back.vpMarks,
+    },
   }
 })
 
@@ -396,7 +403,28 @@ test.afterAll(async ({}, testInfo) => {
     canonical_command: 'LEDGER=1 npx playwright test e2e/view42.spec.ts',
     project: dpr,
     ...ledger,
-    pitfalls: ['#94', '#93', '#88', '#89'],
+    gate: {
+      for: 'web2-42 — 화면(브라우저)에서만 설 수 있는 판정 여섯',
+      registered: [
+        '면을 누르면 평행으로 가고(w → 1) 이름이 그 면이다 · 누른 직후에는 0도 1도 아니다(보간)',
+        '가운데를 누르면 원근으로 돌아온다 — **자세 문자열이 불변**이고 지평선·✕가 되살아난다',
+        '**확정 전에는 큐브 대역 아홉 자리를 실제로 눌러도** 평행으로 안 가고 포즈가 한 톨도 안 움직인다(#94)',
+        '정투상에서 중버튼 궤도 뒤에도 평행이 유지되고 이름이 「축측」이 된다',
+        '읽는 값이 대체된다 — 「렌즈 N mm」 ↔ 「축척 1:N」/「축척 미정」 · 평행에서 손잡이가 잠긴다 · 두 값이 **한 문자열에 같이 안 뜬다**',
+        '이름이 캔버스에 그려진다(픽셀) · DOM 어디에도 「도면」이 없다',
+        '`#gl`(three.js 행렬)이 `core/camera.project`와 같은 자리에 그린다 — 원근·평행 둘 다(불변식 k)',
+      ],
+      reachability: (
+        '**무엇이 이 기준을 넘는가**: GL 팔에서 `render3d.syncCamera`의 평행도를 `0 * projW(pose)`로 '
+        + '바꿔 **행렬만 원근으로** 되돌리면 창 안 불투명 화소가 **64 → 0**으로 떨어진다(실행했다 · 되돌렸다). '
+        + '그 판별이 서려면 두 사영이 갈리는 폭이 커야 하고, 그래서 팔이 그 폭(`split_px`)을 먼저 재서 '
+        + '가장 갈리는 획을 고른다 — **57.062 px**. ⚠ 폭이 작은 획을 고르면(2.484 px) 같은 위약이 '
+        + '초록으로 남는다(그 실패를 실제로 겪었다 — `gate6_gl_matches_projection.falsification_history`).'
+      ),
+      reachability_source: 'gate6_gl_matches_projection/split_px',
+      reachability_value: (ledger['gate6_gl_matches_projection'] as { split_px: number } | undefined)?.split_px ?? null,
+    },
+    pitfalls: ['#94', '#93', '#88', '#89', '#35', '#40', '#71'],
     pitfalls_note: (
       '#94 — 「확정 전에는 잠긴다」를 **그 런타임에서 실제로 눌러** 잰다(아홉 자리 · 포즈 문자열 비교). '
       + '#93 — 큐브는 누르고 바로 뗀다(끌기 ⛔ — 누름 진입에 안 걸린다) · 전환은 300 ms 기다린다. '
