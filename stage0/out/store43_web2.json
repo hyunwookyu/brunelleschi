@@ -1,0 +1,34 @@
+{
+  "what": "web2-43 §0 — 저장소 현황 실측. localStorage 상한(실제로 부딪혀서) · 문서·썸네일 바이트 · storage.estimate.",
+  "run": {
+    "note": "정본 명령: LEDGER=1 npx playwright test store43 --workers=1",
+    "project": "dpr1"
+  },
+  "conditions": {
+    "browser": "playwright chromium (playwright.config의 그것)",
+    "unit": "units = UTF-16 코드 유닛(문자열 length) · bytes_utf8 = TextEncoder 바이트",
+    "note_quota": "localStorage는 열쇠+값이 함께 예산을 먹는다 — key_units가 그 몫이다"
+  },
+  "localstorage_limit": {
+    "chunks": 79,
+    "tail_units": 64512,
+    "value_units": 5241856,
+    "key_units": 472,
+    "error": "QuotaExceededError"
+  },
+  "doc": {
+    "strokes": 15,
+    "autosave_units": 7144,
+    "autosave_bytes_utf8": 7148,
+    "thumb_units": 1691,
+    "thumb_bytes_utf8": 1691
+  },
+  "storage_estimate": {
+    "quota": 6442450944,
+    "usage": 0
+  },
+  "assumed_limit_bytes": 5242880,
+  "flags_explained": {
+    "value_units가 라운드 수": "setItem을 64K 눈금으로 채우고 마지막 칸만 1K로 좁혔다 — 분해능이 1K다(상한 자체의 성질이 아니다)"
+  }
+}
