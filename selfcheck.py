@@ -587,7 +587,7 @@ def scan_ledger_guard(root: Path) -> list[dict]:
 
 def scan_unbounded_wait(root: Path) -> list[dict]:
     """**상한 없는 대기를 만들지 않는다 · 세션 끝에 도는 백그라운드가 있으면 결함이다**
-    (2026-09-01 · 사람 지시 · PITFALLS **#81 확대**).
+    (2026-09-01 · 사람 지시 · PITFALLS **#95** — 그 규칙이 자란 자리는 **#81 확대** 절이다).
 
     #81 ㉡은 처음부터 「**모든** 대기에 상한과 «상한에 걸렸을 때 볼 목록»을 함께 적는다」였다.
     그런데 그 규칙이 «배포 확인» 이야기 안에 들어 있어서 **배포 대기의 규칙으로 읽혔고**,
@@ -636,13 +636,15 @@ def scan_unbounded_wait(root: Path) -> list[dict]:
         if DECL not in body:
             flags.append({
                 "path": f"{rel}:마감 — {m.group(1)}", "val": "「도는 백그라운드」 줄 없음",
-                "flag": "**마감 보고가 「도는 백그라운드 없음」을 값으로 안 적었다**(#81 ㉤) — "
+                "flag": "**마감 보고가 「도는 백그라운드 없음」을 값으로 안 적었다**(#95 · #81 ㉤) — "
                         "세션 끝에 도는 대기가 있으면 그 자체가 결함이다. "
                         "12시간 51분짜리 배포 대기가 그렇게 남았다",
             })
 
     # ── ② 저장소의 스크립트에 상한 없는 대기 고리가 있는가 ────────────────────
-    LOOP = re.compile(r"(until .*;\s*do\s+sleep|while\s+true.*\n.*sleep|while\s*\(\s*true\s*\).*\n.*sleep)")
+    # #95가 **이름으로** 금지한 형태 둘(`until [ -s <파일> ]` · `until ! pgrep …`)도 든다 —
+    # 그 둘은 `; do sleep`이 안 붙는 꼴로도 쓰여서 앞 갈래에 안 걸릴 수 있다.
+    LOOP = re.compile(r"until .*;\s*do\s+sleep" r"|until\s+\[\s+-s\s" r"|until\s+!\s*pgrep" r"|while\s+true.*\n.*sleep" r"|while\s*\(\s*true\s*\).*\n.*sleep")
     for f in sorted((root / "web2" / "tools").glob("*")) + sorted((root / "web2" / "tools").glob("*/*")):
         if not f.is_file() or f.suffix not in (".mjs", ".js", ".ts", ".sh"):
             continue
@@ -654,7 +656,7 @@ def scan_unbounded_wait(root: Path) -> list[dict]:
         if LOOP.search(txt) and "timeout" not in txt.lower() and "상한" not in txt:
             flags.append({
                 "path": str(f.relative_to(root)), "val": "상한 없는 대기 고리",
-                "flag": "**상한도 «상한에 걸리면 볼 것»도 없는 대기 고리다**(#81 ㉣) — "
+                "flag": "**상한도 «상한에 걸리면 볼 것»도 «대상이 살아 있는가»도 없는 대기 고리다**(#95) — "
                         "상한이 없으면 그것은 대기가 아니라 **잠금**이다",
             })
 
