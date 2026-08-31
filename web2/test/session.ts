@@ -3,7 +3,11 @@
 // 손으로 좌표를 계산해 doc.strokes에 밀어넣으면 스냅·오스냅을 안 거치므로
 // **앱이 실제로 만드는 기하를 안 재게 된다** — 그래서 이 경로로만 잰다.
 
-import { createApp, commitStroke, yellowActive, viewScale, type App } from '../src/app/state'
+import {
+  createApp, commitStroke, yellowActive, viewScale,
+  writeActive, beginWriting, endWriting, commitWriting, writeFarPts, writeIdleNow,
+  type App,
+} from '../src/app/state'
 import { resolveStart, resolveEnd, resolveCommit } from '../src/core/draft'
 import type { OsnapHit, OsnapSettings } from '../src/core/osnap'
 import type { Stroke } from '../src/core/types'
@@ -11,6 +15,15 @@ import type { Pt } from '../src/core/vec'
 
 export interface Session {
   app: App
+  /** **선을 꾹 눌러 글씨 상태로 들어간다**(web2-39 1번) — `input.ts`의 누름 갈래가
+   *  타이머 뒤에 부르는 **바로 그 함수**다(`beginWriting`). 반환은 무엇이 잡혔는가.
+   *  ⚠ 시각은 주입한다(#73 ㉡) — 팔이 가짜 시계로 「멈춤」 양끝을 잰다. */
+  hold: (p: Pt, now?: number) => 'dim' | 'line' | null
+  /** **글씨 한 획**(web2-39 2번) — `input.ts`의 글씨 갈래와 **같은 순서**다:
+   *  ① 종료 판정(멈춤·먼 곳)을 **획이 시작될 때** 한다 ② 안 끝났으면 글씨로 확정하고
+   *  ③ 끝났으면 그 획을 **보통 작도 경로**(`stroke`)로 흘린다.
+   *  반환: 확정된 획과 그 획이 글씨였는가. */
+  write: (pts: Pt[], now?: number) => { s: Stroke | null; asText: boolean }
   /** 한 획 — 화면에서 (ax,ay)를 눌러 (bx,by)에서 뗀다 */
   draw: (ax: number, ay: number, bx: number, by: number) => Stroke | null
   /** **점렬 한 획**(web2-32 — 글씨·프리핸드). 끝점 판정은 `draw`와 **같은 경로**이고
@@ -36,10 +49,27 @@ export function session(W: number, H: number): Session {
   })
   const startHit = (p: Pt): OsnapHit | null =>
     resolveStart(app.lift, app.pose, p, set(), app.extAcq.acquired)
-  return {
+  const self: Session = {
     app,
     startHit,
     osnapSet: set,
+    hold(p, now = 0) {
+      // `input.ts`는 시계가 다 돌고 나서 이것을 부른다 — 팔은 그 «다 돌았다»를 건너뛴다
+      // (시간 자체는 `hold.tickHold`가 이미 재는 것이고 여기서 다시 재면 두 벌이 된다).
+      return beginWriting(app, p, now)
+    },
+    write(pts, now = 0) {
+      if (!writeActive(app)) return { s: self.stroke(pts), asText: false }
+      const p0 = pts[0]!
+      // ① 종료 판정이 **먼저**다(input.ts의 순서 그대로 — 이 순서가 규칙이다)
+      const idle = writeIdleNow(app, now)
+      const far = writeFarPts(app, [p0])
+      if (idle || far) {
+        endWriting(app, idle ? 'idle' : 'far')
+        return { s: self.stroke(pts), asText: false }
+      }
+      return { s: commitWriting(app, pts, now), asText: true }
+    },
     draw(ax, ay, bx, by) {
       const p: Pt = { x: ax, y: ay }
       // 옐로(web2-22 1부) — 입력(input.ts)과 같은 우회: 오스냅·축·소실점 없이 그대로 확정
@@ -80,6 +110,7 @@ export function session(W: number, H: number): Session {
       return commitStroke(app, c.a, c.b, pts.map(z => ({ ...z })))
     },
   }
+  return self
 }
 
 /** 화면점 p에서 소실점 v를 향해 비율 t 만큼 간 점 — 사람이 «소실점을 향해» 긋는 것 */

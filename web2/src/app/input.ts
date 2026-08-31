@@ -8,14 +8,14 @@ import type { App } from './state'
 import {
   orbitPivot, orbitBy, dollyBy, panBy, setPose, beginErase, eraseAt, endErase, fingerPans,
   screenToDoc, isEraser, yellowActive, toggleFaceAt, facePreview, excludeCandidateAt, beginNavHold, endNavHold,
-  viewScale,
+  viewScale, writeActive, writeTargetAt, writeFarPts, writeIdleNow,
 } from './state'
 import { osnap, type OsnapHit } from '../core/osnap'
 import { updateExtTrip, beginExtTrip } from '../core/extacq'
 import { isLevel, pitchSnaps } from '../core/level'
 import type { LevelHooks } from './autolevel'
 import { resolveStart, resolveEnd, resolveCommit, isStray } from '../core/draft'
-import { newHoldGate, tickHold, yellowEnd } from '../core/hold'
+import { newHoldGate, tickHold, yellowEnd, driftAllowPx } from '../core/hold'
 import { filmSplit } from './filmlayer'
 import { C } from '../core/constants'
 import {
@@ -61,6 +61,15 @@ export interface InputCallbacks {
   onCandidateTap: (excluded: boolean) => void
   /** 재기(web2-32 6번)의 탭 — 문서 좌표. 오스냅·판정·알림은 main이 낸다(#54) */
   onMeasureTap: (p: Pt) => void
+  /** **선을 꾹 눌렀다**(web2-39 1번) — 문서 좌표. 진입 판정·알림은 main이 낸다(#54).
+   *  반환 = 실제로 글씨 상태로 들어갔는가(들어갔으면 이 몸짓은 그리기가 아니다). */
+  onWriteHold: (p: Pt) => boolean
+  /** **글씨 한 획이 끝났다**(web2-39 2번) — 문서 좌표 점렬. 확정·인식은 main이 부른다
+   *  (비동기라 출처가 하나여야 한다 — 29-2의 `onDimStroke`와 같은 갈래). */
+  onWriteStroke: (pts: Pt[]) => void
+  /** **글씨 상태가 끝났다**(web2-39 3번) — 사유는 「멈춤」이거나 「먼 곳의 새 획」이다.
+   *  ⛔ 종료 «제스처»가 아니다: 둘 다 사람이 어차피 하는 동작이라 배울 것이 없다. */
+  onWriteEnd: (why: 'idle' | 'far') => void
 }
 
 export function initInput(
@@ -122,6 +131,52 @@ export function initInput(
   let suggestTap: Pt | null = null
   /** 쓰고 있는 손글씨 한 획 — 뗄 때 `cb.onDimStroke`로 넘긴다 */
   let dimInk: Pt[] | null = null
+  // ── 선을 꾹 눌러 글씨 상태로 들어간다(web2-39 1번) ──────────────────────────
+  // **누를 때 아무것도 안 하고 시계를 켠다.** `app.writeHoldMs` 동안 누른 자리를 안
+  // 벗어나면 그때 진입 판정이 돈다(`cb.onWriteHold`). 움직이면 그리기이고, 그 전에
+  // 떼면 종전 경로(탭·획)로 그대로 간다 — **죽은 클릭을 안 만든다**.
+  // ⚠ 이동 허용은 옐로 머무름의 `driftAllowPx`를 그대로 쓴다(#54 — 「누른 자리에서
+  //   안 벗어났다」는 같은 물음이다. 새 숫자 ⛔).
+  // ⚠⚠ 선례는 종이 탭의 길게 누르기(`PAPER_LONGPRESS_MS` · `paperbar.ts`)다 — 타이머
+  //   하나 + 이동 취소. 같은 몸짓을 두 벌로 짓지 않는다(A-3).
+  /** 누른 자리(문서 좌표)와 시계 — 진입이 성립하면 `writeEntered`가 선다 */
+  let holdPress: { p: Pt; sp: Pt } | null = null
+  let holdTimerId: number | undefined
+  /** 이 몸짓이 글씨 진입으로 소진됐는가 — 뗌이 그리기로 흘러가지 않게 한다 */
+  let writeEntered = false
+  /** 쓰고 있는 글씨 한 획(web2-39) — 뗄 때 `cb.onWriteStroke`로 넘긴다 */
+  let writeInk: Pt[] | null = null
+
+  function cancelHoldPress() {
+    if (holdTimerId !== undefined) { clearTimeout(holdTimerId); holdTimerId = undefined }
+    holdPress = null
+  }
+  /** 누름 시계를 켠다 — 이미 글씨 상태면 안 켠다(상태 안에서는 획이 곧 글씨다). */
+  function armHoldPress(p: Pt, sp: Pt) {
+    cancelHoldPress()
+    if (writeActive(app)) return
+    // **잡히는 것이 없으면 시계를 안 켠다**(빈 곳 경로 ⛔ — 39-1 문면). 판정을 여기서
+    // 미리 한 번 하는 이유는 그리기 도중에 아무 일도 안 일어나게 하기 위해서다.
+    if (!writeTargetAt(app, p)) return
+    holdPress = { p, sp }
+    holdTimerId = window.setTimeout(() => {
+      holdTimerId = undefined
+      if (!holdPress) return
+      const q = holdPress.p
+      holdPress = null
+      if (!cb.onWriteHold(q)) return
+      // 들어갔다 — 그리던 초안을 버린다(이 몸짓은 그리기가 아니었다).
+      writeEntered = true
+      draft = null
+      suggestTap = null
+      cb.onDraftChange(null)
+    }, app.writeHoldMs)
+  }
+  /** 포인터가 움직였다 — 허용 밖이면 그리기다(시계를 끈다) */
+  function moveHoldPress(sp: Pt) {
+    if (!holdPress) return
+    if (Math.hypot(sp.x - holdPress.sp.x, sp.y - holdPress.sp.y) > driftAllowPx(app.writeHoldMs)) cancelHoldPress()
+  }
 
   /** 화면 좌표 (뷰 오프셋 적용 전) */
   const toScreen = (e: PointerEvent | WheelEvent): Pt => {
@@ -440,6 +495,12 @@ export function initInput(
     if (app.tool !== 'dim' && app.tool !== 'face' && app.tool !== 'measure'
         && !app.tipErase && !isEraser(app.tool)) {
       suggestTap = toPt(e)
+      // **꾹 누르면 글씨다**(web2-39 1번) — 탭(사후 수정)·끌기(그리기)와 **같은 몸짓의
+      // 세 번째 갈래**이고 셋을 가르는 것은 «얼마나 오래·얼마나 움직였는가»뿐이다.
+      // ⚠ 옐로에서는 대상이 없다 — `writeTargetAt`이 3D 내용 획만 보므로 자동으로 안 걸린다
+      //   (별도의 문을 안 세운다 — #54. 「옐로에서 자유 스케치」가 그 근거다).
+      writeEntered = false
+      armHoldPress(toPt(e), toScreen(e))
     }
     // ── 손글씨 치수(web2-29 1단계) — **모드가 있다** ──────────────────────────
     // 대상을 안 골랐으면 탭이 대상을 고르고, 고른 뒤에는 종이 위의 획이 **손글씨**다
@@ -450,6 +511,26 @@ export function initInput(
       drawingPointer = e.pointerId
       canvas.setPointerCapture(e.pointerId)
       return
+    }
+    // ── 글씨 상태(web2-39 2번) — **상태 안에서는 모든 획이 글씨다** ─────────────
+    // 축·오스냅·소실점을 아예 안 지난다(39-4: 「곧게 안 펴진다」가 곧 상태 표시다).
+    // ⚠ 상태에 들어간 뒤에는 꾹 누름 시계를 안 켠다 — 이미 대상이 정해져 있다.
+    if (writeActive(app) && !app.tipErase && !isEraser(app.tool)) {
+      const wp = toPt(e)
+      // **종료 판정은 여기서 한다**(39-3) — 둘 중 **먼저 오는 것**이고, 둘 다 「이 획이
+      // 글씨인가」를 묻기 **전에** 답이 난다. 그래야 작도로 돌아간 획이 아래 보통 경로로
+      // 흘러가 오스냅·축을 지난다(끝난 뒤에 판정하면 그 획은 아무데도 안 붙은 선이 된다).
+      const idle = writeIdleNow(app, performance.now())
+      const far = writeFarPts(app, [wp])
+      if (idle || far) {
+        cb.onWriteEnd(idle ? 'idle' : 'far')
+        // 상태가 끝났다 — **아래로 흘려보낸다**(이 획은 작도선이다)
+      } else {
+        writeInk = [wp]
+        suggestTap = null
+        cb.onDimInk(writeInk)               // 미리보기 통로 재사용(#54 — 새 채널 ⛔)
+        return
+      }
     }
     if (app.tool === 'face' && !app.tipErase) { faceDown = toPt(e); return }
     // 재기(web2-32 6번) — **탭 둘**이다(면과 같은 몸짓: 누를 때 아무것도 안 하고 뗄 때
@@ -507,11 +588,14 @@ export function initInput(
       return
     }
     if (drawingPointer === e.pointerId) {
+      moveHoldPress(toScreen(e))     // 움직였으면 그리기다 — 꾹 누름 시계를 끈다(web2-39)
+      if (writeEntered) return       // 이 몸짓은 글씨 진입으로 소진됐다
       if (erasingNow()) {
         eraseAt(app, toPt(e), eraseKind())
         cb.onEraserMove(toPt(e))
         return
       }
+      if (writeInk) { writeInk.push(toPt(e)); cb.onDimInk(writeInk); return }
       if (app.tool === 'dim' && dimInk) { dimInk.push(toPt(e)); cb.onDimInk(dimInk); return }
       if (app.tool === 'face') { cb.onFacePreview(app.faceCandidates ? null : facePreview(app, toPt(e))); return }
       if (draft) {
@@ -552,6 +636,21 @@ export function initInput(
   })
 
   const release = (e: PointerEvent) => {
+    cancelHoldPress()                // 뗐으면 꾹 누름은 성립 안 한다(web2-39)
+    if (writeEntered) {              // 진입으로 소진된 몸짓 — 그리기·탭으로 안 흘러간다
+      writeEntered = false
+      drawingPointer = null
+      suggestTap = null
+      return
+    }
+    if (writeInk) {                  // 글씨 한 획이 끝났다(web2-39 2번)
+      const pts = writeInk
+      writeInk = null
+      drawingPointer = null
+      cb.onDimInk(null)
+      if (pts.length >= 2) cb.onWriteStroke(pts)
+      return
+    }
     if (rectDrag) {
       rectDrag = null
       for (const l of app.listeners) l()   // 자동 저장 — rect는 문서의 값이다

@@ -590,6 +590,8 @@ export function draw2d(
   //    같은 술어(`s.dim !== undefined` + 그 획이 지금 3D로 보인다)를 읽는다(#75 ㉠).
   //    소유는 **26-1 그대로**다: 치수는 그 획의 것이므로 획이 안 보이면 치수도 안 보인다
   //    (겹의 치수가 아래 종이에 안 나타나는 것이 그 귀결이다 — 새 규칙 ⛔).
+  // **글씨를 받는 선**(web2-39 4번)은 치수선 **밑에** 깐다 — 강조이지 덮개가 아니다.
+  drawWriteTarget(ctx, app, is)
   drawDimensions(ctx, app, is)
 
   // ── 재기(web2-32 6번) ─────────────────────────────────────────────────────
@@ -781,6 +783,32 @@ function mark(ctx: CanvasRenderingContext2D, h: OsnapHit, is: number) {
   }
   ctx.stroke()
   } finally { ctx.globalAlpha = 1 }
+}
+
+// ── 글씨 상태의 «고른 선»(web2-39 4번) ───────────────────────────────────────
+// 피드백은 **거의 공짜로 있다**: 작도 상태에서는 획이 축에 붙는데 글씨 상태에서는 안
+// 붙는다 — 「1」을 그었는데 곧게 안 펴지고 손으로 그은 그대로 남으면 그 순간 상태가 읽힌다.
+// 여기 더하는 것은 **고른 선 강조 하나**뿐이다.
+// ⛔ **새 상태 표시를 안 짓는다**(지시문): 새 색을 지으면 37-2의 청색(대기/확정)과 뜻이
+//    겹쳐 헷갈린다. 그래서 **이미 뜻이 있는 채널**을 쓴다 — `COL.snap`은 「지금 짚은 것」이고
+//    사후 수정으로 고른 치수(`app.dimEdit`)가 쓰는 바로 그 색이다. 같은 뜻이므로 같은 색이다.
+function drawWriteTarget(ctx: CanvasRenderingContext2D, app: App, is: number) {
+  const w = app.write
+  if (!w) return
+  const seg = app.lift.lifted.get(w.target)
+  if (!seg) return
+  const a = project(app.lift.an, app.pose, seg.a3)
+  const b = project(app.lift.an, app.pose, seg.b3)
+  if (!a || !b) return
+  ctx.save()
+  ctx.strokeStyle = COL.snap
+  ctx.lineWidth = C.WRITE_TARGET_PX * is
+  ctx.lineCap = 'round'
+  ctx.globalAlpha = C.WRITE_TARGET_ALPHA
+  ctx.beginPath()
+  ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y)
+  ctx.stroke()
+  ctx.restore()
 }
 
 // ── 치수선(web2-29 1단계) ─────────────────────────────────────────────────────

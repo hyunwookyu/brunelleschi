@@ -1,0 +1,170 @@
+// ── web2-39의 «수리 전» 대조판 팔 — **소스를 여기 남긴다** ─────────────────────
+//
+// ⚠⚠ **왜 `.txt`인가**: 이 팔은 **없어진 기제**(32-1 분류기 · 32-3 대상 판정)를 부르므로
+// 지금 트리에서 컴파일되지 않는다. 그렇다고 지우면 `writeenter39_web2.json`의
+// `*.before_repair` 값 셋이 **아무 기계도 지키지 않는 수**가 된다(2차 리뷰어 [8]:
+// 그 셋이 지금 네 주장을 떠받친다 — D-5의 대역 · #92의 「결과를 바꿀 수 있는 축」 ·
+// AS-C112의 사멸 근거 · 잔여 위험의 「줄어든 것」). **소스가 있으면 오타를 다시 잡을 수 있다.**
+// vitest·tsc가 안 건드리는 확장자를 골랐다(`test/**/*.test.ts`도 `tsconfig`의 include도 아니다).
+//
+// ── 다시 돌리는 법(정확히 이 셋) ─────────────────────────────────────────────
+//
+//   cd <repo>
+//   rm -rf web2/_old39 && mkdir -p web2/_old39
+//   git archive 00e6edc web2/src web2/test/session.ts web2/test/glyphs.ts | tar -x -C web2/_old39
+//   sed -e "s#from './session'#from '../_old39/web2/test/session'#" \
+//       -e "s#from '../src/#from '../_old39/web2/src/#g" \
+//       -e "s#from './glyphs'#from '../_old39/web2/test/glyphs'#" \
+//       web2/tools/before39-arm.ts.txt > web2/test/_before39.test.ts
+//   cd web2 && npx vitest run test/_before39.test.ts   # BEFORE_JSON … 한 줄이 나온다
+//   rm -rf _old39 test/_before39.test.ts               # **커밋 ⛔**
+//
+// `00e6edc`는 이 회차 §0의 커밋이고 **제품 코드가 `main c48b9e4`와 같다**(§0은 문서만 고쳤다).
+// 아래 소스는 `./session`·`../src/*`·`./glyphs`를 그대로 쓴다 — 위 sed가 그것을 옛 트리로 돌린다.
+
+import { describe, it, expect } from 'vitest'
+import { session, type Session } from './session'
+import { handwritingGroup, applyWrittenDim, dimTargetFor, pickTargetAt } from '../src/app/state'
+import { recognizeDigitsNet } from '../src/core/handwriting'
+import { isText } from '../src/core/types'
+import { write as writeGlyphs } from './glyphs'
+import { parseDim } from '../src/core/dim'
+import type { Pt } from '../src/core/vec'
+
+const W = 1200, H = 800
+function closed(): Session {
+  const s = session(W, H)
+  s.draw(280, 560, 700, 560)
+  s.draw(500, 560, 800, 480)
+  expect(s.app.lift.an.constructionDone).toBe(true)
+  return s
+}
+function scene() {
+  const s = closed()
+  const v1 = s.draw(380, 560, 380, 740)!
+  const v2 = s.draw(820, 560, 820, 700)!
+  const bot = s.draw(380, 740, 820, 700)!
+  const rec = s.draw(380, 740, 600, 650)!
+  return { s, v1, v2, bot, rec }
+}
+const HATCH = (x0: number, y: number, n: number, dx: number, len: number): Pt[][] =>
+  Array.from({ length: n }, (_, i) => [
+    { x: x0 + i * dx, y }, { x: x0 + i * dx, y: y + len / 2 }, { x: x0 + i * dx, y: y + len },
+  ])
+const dimsOf = (s: Session) =>
+  s.app.doc.strokes.filter(x => x.dim !== undefined).map(x => ({ id: x.id, mm: x.dim! }))
+const glyphStrokes = (t: string, x: number, y: number, jit = 0.6) => writeGlyphs(t, x, y, 39, jit)
+
+/** 32 회차의 **앱 순서 그대로** — 획마다 뭉치를 읽고 즉시 적용한다(main.maybeWriteDim). */
+function stepApply(s: Session) {
+  const ids = handwritingGroup(s.app)
+  if (ids.length === 0) return
+  const strokes = ids.map(id => {
+    const st = s.app.doc.strokes.find(x => x.id === id)!
+    return st.raw && st.raw.length > 1 ? st.raw : [st.a, st.b]
+  })
+  const mm = parseDim(recognizeDigitsNet(strokes), s.app.doc.unit)
+  if (mm !== null) applyWrittenDim(s.app, ids, mm)
+}
+
+describe('BEFORE(00e6edc)', () => {
+  it('대조판 셋', () => {
+    // ① 해칭 27칸 — **그은 획 / 남은 획 / 글씨가 된 획**을 갈라 센다(2차 리뷰어 [10])
+    const band: { n: number; dx: number; len: number; drawn: number; committed: number; text: number; dims: number }[] = []
+    for (const n of [2, 3, 4]) for (const dx of [12, 30, 55]) for (const len of [14, 40, 90]) {
+      const s = scene().s
+      const ids: number[] = []
+      let drawn = 0
+      for (const st of HATCH(500, 640, n, dx, len)) {
+        drawn++
+        const r = s.stroke(st)
+        if (r) ids.push(r.id)
+        stepApply(s)
+      }
+      band.push({
+        n, dx, len, drawn, committed: ids.length,
+        text: ids.filter(id => {
+          const z = s.app.doc.strokes.find(q => q.id === id)
+          return z === undefined || isText(z)   // 실려서 걷힌 획도 «글씨였다»
+        }).length,
+        dims: dimsOf(s).length,
+      })
+    }
+    // ② 자형 전수 96칸 — 같은 세 분모
+    const TEXTS = ['1', '11', '111', '4', '25', '2500', '3.5', '0']
+    const SPOTS: [number, number][] = [[380, 430], [520, 620], [700, 690], [860, 520]]
+    const JITS = [0, 0.6, 1.4]
+    const full: { text: string; spot: string; jit: number; drawn: number; committed: number; marked: number; dims: number }[] = []
+    for (const txt of TEXTS) for (const [x, y] of SPOTS) for (const jit of JITS) {
+      const s = scene().s
+      const ids: number[] = []
+      let drawn = 0
+      for (const st of glyphStrokes(txt, x, y, jit)) {
+        drawn++
+        const r = s.stroke(st)
+        if (r) ids.push(r.id)
+        stepApply(s)
+      }
+      full.push({
+        text: txt, spot: `${x},${y}`, jit, drawn, committed: ids.length,
+        marked: ids.filter(id => {
+          const z = s.app.doc.strokes.find(q => q.id === id)
+          return z === undefined || isText(z)
+        }).length,
+        dims: dimsOf(s).length,
+      })
+    }
+    // ③ web2-39 ②의 네 칸 — **진짜 32-3**(`dimTargetFor`)의 답
+    const CASES: { line: 'bot' | 'v1' | 'rec'; at: Pt }[] = [
+      { line: 'bot', at: { x: 398, y: 716 } },
+      { line: 'v1', at: { x: 400, y: 726 } },
+      { line: 'rec', at: { x: 392, y: 734 } },
+      { line: 'bot', at: { x: 404, y: 706 } },
+    ]
+    const t32: { intended: number; nearest: number | null; dimTarget32_3: number | null; applied: number | null }[] = []
+    for (const c of CASES) {
+      const sc = scene()
+      const target = (sc[c.line] as { id: number }).id
+      const nearest = pickTargetAt(sc.s.app, c.at, sc.s.app.osnap.radius / sc.s.app.view.s * 2)
+      for (const st of glyphStrokes('25', c.at.x, c.at.y - 34)) sc.s.stroke(st)
+      const ids = handwritingGroup(sc.s.app)
+      const t3 = ids.length > 0 ? dimTargetFor(sc.s.app, ids) : null
+      if (ids.length > 0) {
+        const strokes = ids.map(id => {
+          const st = sc.s.app.doc.strokes.find(x => x.id === id)!
+          return st.raw && st.raw.length > 1 ? st.raw : [st.a, st.b]
+        })
+        const mm = parseDim(recognizeDigitsNet(strokes), sc.s.app.doc.unit)
+        if (mm !== null) applyWrittenDim(sc.s.app, ids, mm)
+      }
+      const got = dimsOf(sc.s)
+      t32.push({ intended: target, nearest, dimTarget32_3: t3, applied: got.length === 1 ? got[0]!.id : null })
+    }
+    const sum = (rs: { drawn: number; committed: number; dims: number }[], k: 'drawn' | 'committed' | 'dims') =>
+      rs.reduce((a, r) => a + r[k], 0)
+    console.log('BEFORE_JSON ' + JSON.stringify({
+      hatch_band: {
+        cells: band.length,
+        cells_with_text: band.filter(r => r.text > 0).length,
+        cells_with_dim: band.filter(r => r.dims > 0).length,
+        strokes_drawn: sum(band, 'drawn'), strokes_committed: sum(band, 'committed'),
+        text_total: band.reduce((a, r) => a + r.text, 0),
+        dims_total: sum(band, 'dims'),
+        rows: band,
+      },
+      glyph_sweep: {
+        cells: full.length,
+        cells_with_text: full.filter(r => r.marked > 0).length,
+        cells_with_dim: full.filter(r => r.dims > 0).length,
+        strokes_drawn: sum(full, 'drawn'), strokes_committed: sum(full, 'committed'),
+        marked_total: full.reduce((a, r) => a + r.marked, 0),
+        dims_total: sum(full, 'dims'),
+        // 그은 획 ↔ 남은 획이 갈리는 칸(= `resolveCommit`이 «찍은 점·잡음»으로 버린 자리)
+        dropped_by_form: Object.fromEntries(TEXTS.map(t => [
+          t, full.filter(r => r.text === t).reduce((a, r) => a + (r.drawn - r.committed), 0),
+        ])),
+      },
+      target_32_3: t32,
+    }))
+  })
+})
