@@ -31026,7 +31026,7 @@
   "sweeps": [
     {
       "sweep": "ledger_citation",
-      "files_scanned": 546,
+      "files_scanned": 545,
       "exts_declared": [
         ".md",
         ".py",
@@ -31050,7 +31050,7 @@
     },
     {
       "sweep": "pitfall_reference",
-      "files_scanned": 546,
+      "files_scanned": 545,
       "exts_declared": [
         ".md",
         ".py",
@@ -32328,14 +32328,22 @@
       47
     ],
     "writeenter39_web2.json": [
+      5,
+      11,
       12,
+      16,
+      19,
+      40,
       42,
+      46,
+      47,
       54,
       61,
       62,
       73,
       77,
       82,
+      88,
       90,
       91,
       92

@@ -36,7 +36,7 @@
 //   ⑨ 32-2의 즉시 변환 자체는 유지된다(바뀌는 것은 «언제 읽는가»다)
 
 import { describe, it, expect } from 'vitest'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync, readFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { session, type Session } from './session'
@@ -209,12 +209,25 @@ describe('39 ① 세로 작도선 여럿 — 치수가 안 생긴다 (이 라운
       }
     }
     L['gate1_band'] = {
-      what: '개수 × 간격 × 길이 = 27칸. 32-1의 뭉치 문(크기 60px · 간격 1.2배 · 최소 2획)을 '
-        + '**양쪽으로** 넘나드는 대역이다(D-5: 픽스처가 실사용 대역을 덮는가).',
+      what: '개수 × 간격 × 길이 = 27칸(D-5: 픽스처가 실사용 대역을 덮는가).',
       cells: rows.length,
       text_marked_total: rows.reduce((a, r) => a + r.text, 0),
       dims_total: rows.reduce((a, r) => a + r.dims, 0),
       rows,
+      // ⚠⚠ **1차 리뷰어 [7]**: 수리 «후»에는 27칸이 전부 0이라 그 표만으로는 「대역을
+      //    덮는다」가 **사라진 기제에 대한 회고**다(#92의 판별 ②: 축을 바꿔도 결과가 안
+      //    움직인다). 그래서 **같은 27칸을 수리 «전» 트리에서 돌렸다.**
+      before_repair: {
+        tree: '00e6edc (제품 코드는 main c48b9e4와 같다 — §0은 문서만 고쳤다)',
+        how: 'git archive 00e6edc web2/src web2/test/session.ts web2/test/glyphs.ts | tar -x -C web2/_old39'
+          + ' 뒤 그 트리를 가리키는 팔을 돌린다(임시 · 커밋 ⛔ · 원장은 이 값을 든다)',
+        cells: 27, cells_with_text: 18, cells_with_dim: 18, text_total: 44, dims_total: 20,
+        zero_cells: 9,
+        zero_cells_axis: '**전부 `len: 90` 행이다** — 획 상자가 `DIM_GLYPH_MAX_PX`(60)를 넘어 '
+          + '32-1의 뭉치가 안 섰다. 즉 이 27칸은 그 문을 **양쪽으로 실제로 넘나든다**'
+          + '(18 안 · 9 밖). 「대역을 덮는다」는 이 값이 근거이고, 수리 후의 0/27은 그 대역에서 '
+          + '**하나도 안 남았다**는 뜻이다.',
+      },
     }
     expect(rows.every(r => r.text === 0 && r.dims === 0)).toBe(true)
   })
@@ -267,6 +280,26 @@ describe('39-1 ② 누른 그 선의 치수가 된다', () => {
       falsification: '**갈리는 칸이 0이면 이 팔은 아무것도 안 잰다** — 그때는 「누른 선이 '
         + '이겼다」가 「가까운 선이 이겼다」와 우연히 같다(#92의 형태). 그래서 그 수를 '
         + '원장에 적고 게이트로도 건다.',
+      null_rule: '`nearestToWriting: null`(대역 안에 3D 획이 없다)은 **«갈림»에서 뺀다** — '
+        + '비교할 답이 없으므로 「두 답이 갈렸다」고 말할 수 없다. 넣으면 3/4가 된다.',
+      // ⚠⚠ **1차 리뷰어 [6]**: 위 반사실은 «근접 하나»(`pickTargetAt`)이고 **진짜 32-3이
+      //    아니다**(정렬·선상 위치 항이 빠진다). 32-3은 수리 «전» 트리에 그대로 있으므로
+      //    **같은 네 칸을 거기서 돌려** 실제 답을 냈다. 대리물이 아니라 원본이다.
+      before_repair_32_3: {
+        tree: '00e6edc',
+        how: 'gate1_band.before_repair와 같은 방법 — 그 트리의 `dimTargetFor`를 직접 부른다',
+        cases: [
+          { intended: 5, nearest: 6, dimTarget32_3: 6, applied: 6 },
+          { intended: 3, nearest: 6, dimTarget32_3: 6, applied: 6 },
+          { intended: 6, nearest: 6, dimTarget32_3: 6, applied: 6 },
+          { intended: 5, nearest: null, dimTarget32_3: 6, applied: 6 },
+        ],
+        hit_on_intended: '1/4',
+        note: '**32-3은 네 칸 모두 획 6에 실었다** — 뜻한 선과 갈린 칸이 **3/4**다'
+          + '(근접 대리물의 2/4보다 세다). 39는 네 칸 전부 뜻한 선에 싣는다(4/4).'
+          + ' ⚠ 이 넷은 **32-3이 지도록 고른 자리**다 — 32-3의 일반 적중률이 아니다'
+          + '(그 값은 `dimtarget32_web2.json`에 있고 이 회차가 다시 재지 않았다).',
+      },
       note: '`dimTargetFor`·`dimTargetScores`·`dimTargetTie`는 **이 회차에 사라졌다** — '
         + '맞힐 일이 없으므로 맞히는 층을 안 남긴다(쓰이지 않는 예외 ⛔).',
     }
@@ -281,7 +314,8 @@ describe('39-1 ② 누른 그 선의 치수가 된다', () => {
     const at = midOf(sc.s, sc.bot.id)
     const spot = { x: at.x - 40, y: at.y - 42 }
     expect(pressNear(sc.s, sc.bot.id, spot, 0)).toBe('line')
-    const steps: { strokes: number; read: string; dim: number | undefined; ink: number }[] = []
+    const steps: { strokes: number; read: string; dim: number | undefined; ink: number;
+      scaleRef: number | null; mmPerUnit: number | null }[] = []
     let t = 0
     for (const st of glyphStrokes('2500', spot.x, spot.y)) {
       sc.s.write(st, (t += 100))
@@ -292,6 +326,11 @@ describe('39-1 ② 누른 그 선의 치수가 된다', () => {
         strokes: g.length, read,
         dim: sc.s.app.doc.strokes.find(x => x.id === sc.bot.id)?.dim,
         ink: sc.s.app.doc.strokes.filter(x => isText(x)).length,
+        // ⚠⚠ **1차 리뷰어 [11]**: 중간값(2 mm)이 잠깐이라도 **축척**을 정하면 2500과
+        //    1250배 차이다. 축척은 파생이므로(`lift.scaleOf` — 32-5) 값이 자랄 때마다
+        //    **따라 다시 풀린다**. 그 사실을 여기서 값으로 낸다.
+        scaleRef: sc.s.app.doc.scaleRef ?? null,
+        mmPerUnit: sc.s.app.lift.mmPerUnit,
       })
     }
     const inkWhile = sc.s.app.doc.strokes.filter(x => isText(x)).length
@@ -305,6 +344,14 @@ describe('39-1 ② 누른 그 선의 치수가 된다', () => {
       regression_it_catches: '32-2는 **값이 실리는 즉시 잉크를 걷었다** — 그러면 이어 쓴 '
         + '자리가 혼자 남아 25가 **5**가 된다(화면 팔 `writedim32.spec` ㉡이 그 값을 냈다). '
         + '이제 잉크는 **상태가 끝날 때** 걷힌다.',
+      scale_note: '⚠ **중간값도 축척을 정한다**(1차 리뷰어 [11]) — `scaleRef`가 첫 획에서 '
+        + '그 획으로 서고 `mmPerUnit`이 2 → 25 → 250 → 2500을 따라 **1250배 움직인다**. '
+        + '그것이 결함이 아닌 근거: 축척은 **저장되는 값이 아니라 파생**이고(32-5·32-6의 [5][6]) '
+        + '값이 자랄 때마다 `lift.scaleOf`가 다시 푼다 — 마지막 값이 곧 축척이다. '
+        + '⚠⚠ **다만 자동 저장이 중간 상태를 잡으면 그 파일의 축척은 중간값의 것이다** — '
+        + '저장되는 것은 `Stroke.dim`(2 mm)이고 축척은 그것에서 다시 나온다. 위험은 '
+        + '「축척이 굳는다」가 아니라 「쓰다 만 값이 저장된다」이고, 그것은 32-2의 즉시 '
+        + '변환이 원래 지고 있던 성질이다(승인 단계가 없다). 이 회차가 늘리지 않았다.',
     }
     expect(steps[steps.length - 1]!.dim).toBe(2500)
     expect(inkWhile).toBeGreaterThan(0)     // 쓰는 동안은 남아 있다
@@ -334,8 +381,9 @@ describe('39-2 ③ 상태 밖 = 전부 작도선 (조합 전수)', () => {
     const TEXTS = ['1', '11', '111', '4', '25', '2500', '3.5', '0']
     const SPOTS: [number, number][] = [[380, 430], [520, 620], [700, 690], [860, 520]]
     const JITS = [0, 0.6, 1.4]
-    const outRows: { text: string; spot: string; jit: number; marked: number; dims: number }[] = []
-    const inRows: { text: string; spot: string; jit: number; marked: number; dims: number }[] = []
+    type Row = { text: string; spot: string; jit: number; strokes: number; marked: number; dims: number }
+    const outRows: Row[] = []
+    const inRows: Row[] = []
     for (const txt of TEXTS) {
       for (const [x, y] of SPOTS) {
         for (const jit of JITS) {
@@ -348,7 +396,7 @@ describe('39-2 ③ 상태 밖 = 전부 작도선 (조합 전수)', () => {
               if (r) ids.push(r.id)
             }
             outRows.push({
-              text: txt, spot: `${x},${y}`, jit,
+              text: txt, spot: `${x},${y}`, jit, strokes: ids.length,
               marked: ids.filter(id => isText(sc.s.app.doc.strokes.find(z => z.id === id)!)).length,
               dims: dimsOf(sc.s).length,
             })
@@ -371,6 +419,7 @@ describe('39-2 ③ 상태 밖 = 전부 작도선 (조합 전수)', () => {
             applyRecognized(sc.s.app, recognizeDigitsNet(writingStrokes(sc.s.app, g)))
             inRows.push({
               text: txt, spot: `${near.x.toFixed(0)},${near.y.toFixed(0)}(누른 자리 곁)`, jit,
+              strokes: ids.length,
               // 실린 뒤에는 글씨 획이 **걷혀서** 문서에 없다 — 그것도 「글씨였다」의 증거다
               marked: ids.filter(id => {
                 const z = sc.s.app.doc.strokes.find(q => q.id === id)
@@ -382,21 +431,47 @@ describe('39-2 ③ 상태 밖 = 전부 작도선 (조합 전수)', () => {
         }
       }
     }
+    // **분모를 갈라 적는다**(1차 리뷰어 [5] — 칸과 획이 섞여 있었다).
+    const strokesOf = (rs: typeof outRows) => rs.reduce((a, r) => a + r.strokes, 0)
+    const noDim = inRows.filter(r => r.dims === 0)
     L['gate3_outside_is_construction'] = {
-      what: '자형 8 × 자리 4 × 흔들기 3 = 96칸을 **상태 밖과 안에서 각각** 돌렸다.',
+      what: '자형 8 × 자리 4 × 흔들기 3 = **96칸**을 상태 밖과 안에서 각각 돌렸다. '
+        + '⚠ **칸과 획은 다른 분모다**(#11·#16) — 한 칸의 획 수는 자형이 정한다(1획 ~ 6획).',
       cells: outRows.length,
+      strokes_total: strokesOf(outRows),
       outside: {
-        marked_total: outRows.reduce((a, r) => a + r.marked, 0),
+        cells_with_text: outRows.filter(r => r.marked > 0).length,
+        cells_with_dim: outRows.filter(r => r.dims > 0).length,
+        marked_strokes: outRows.reduce((a, r) => a + r.marked, 0),
+        of_strokes: strokesOf(outRows),
         dims_total: outRows.reduce((a, r) => a + r.dims, 0),
       },
       inside: {
-        marked_total: inRows.reduce((a, r) => a + r.marked, 0),
-        of_strokes: inRows.length,
+        cells_with_text: inRows.filter(r => r.marked > 0).length,
+        cells_with_dim: inRows.filter(r => r.dims > 0).length,
+        marked_strokes: inRows.reduce((a, r) => a + r.marked, 0),
+        of_strokes: strokesOf(inRows),
         dims_total: inRows.reduce((a, r) => a + r.dims, 0),
+        // ⚠⚠ **안 선 칸을 감추지 않는다**(1차 리뷰어 [5]). 안쪽 판에서도 치수가 안 서는
+        //    칸이 있고 그것은 **인식·파싱의 몫**이지 상태의 몫이 아니다 — 글씨는 다 됐다.
+        cells_without_dim: noDim.length,
+        cells_without_dim_forms: [...new Set(noDim.map(r => r.text))],
+        why: '글씨 판정(`marked`)은 안쪽에서 **전 칸 전부**다 — 안 선 것은 «읽히지 않았다»이고 '
+          + '그때 글씨는 종이에 남는다(#61). 상태와 인식은 다른 층이다.',
       },
       falsification: '**상태 안에서는 같은 96칸이 전부 글씨다** — 「예외 없이 작도선」이 '
         + '재는 것이 상태이지 자형이 아님을 이 대조가 낸다(#92: 세는 차이가 무엇을 바꾸는가).',
+      // ⚠⚠ **1차 리뷰어 [7]**: 밖의 96칸도 수리 후에는 전부 0이라 그것만으로는 대역 주장이
+      //    회고다. **같은 96칸을 수리 «전» 트리에서** 돌렸다(`gate1_band.before_repair`와 같은 방법).
+      before_repair: {
+        tree: '00e6edc',
+        cells: 96, cells_with_text: 84, cells_with_dim: 69,
+        marked_strokes: 180, dims_total: 69,
+        note: '**수리 전에는 96칸 중 84칸에서 획이 글씨가 됐고 69칸에서 치수가 섰다.** '
+          + '지금은 0/96·0/96이다. 그러므로 이 전수는 «결과를 바꿀 수 있는 축»에서 돈 것이다.',
+      },
       outside_rows: outRows,
+      inside_rows: inRows,
     }
     expect(outRows.every(r => r.marked === 0 && r.dims === 0)).toBe(true)
     // 반증판이 실제로 서는가 — 안 서면 위 전수는 아무것도 안 잰다(D-3)
@@ -482,10 +557,33 @@ describe('39-3 ④ 종료 — 멈춤과 먼 곳, 둘 다', () => {
     expect(writeActive(sc.s.app)).toBe(true)
     endWriting(sc.s.app, 'left')
     expect(writeActive(sc.s.app)).toBe(false)
+    // ⚠ **선언을 되읽지 않는다**(1차 리뷰어 [13] · #40 ②): 「종료가 셋뿐이다」를 타입
+    //   합집합에서 읽으면 자명한 값이다. **제품 경로를 훑어** `endWriting`을 부르는 자리와
+    //   그 사유를 센다 — 새 몸짓이 늘면 이 수가 는다.
+    const SRC = ['../src/app/state.ts', '../src/app/main.ts', '../src/app/input.ts']
+    const calls: { file: string; why: string }[] = []
+    for (const f of SRC) {
+      for (const line of readFileSync(resolve(HERE, f), 'utf8').split(/\r?\n/)) {
+        const t = line.trim()
+        if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*')) continue
+        const m = t.match(/endWriting\(app,\s*(?:_?why|'(\w+)'|(\w+)\s*\?)/)
+        if (!m) continue
+        if (/export function endWriting/.test(t)) continue
+        calls.push({ file: f.replace('../', ''), why: m[1] ?? (t.includes('idle') ? "idle|far" : 'why') })
+      }
+    }
     L['gate4_no_gesture'] = {
-      what: '`WriteEnd`의 값은 셋뿐이다 — `idle`(멈춤) · `far`(먼 곳의 새 획) · `left`'
-        + '(도구·종이·문서를 떠났다). **새로 배울 몸짓이 하나도 없다**(지시문 ⛔).',
-      ends: ['idle', 'far', 'left'],
+      what: '**경로 훑기**다(선언 되읽기 ⛔). 제품에서 `endWriting`을 부르는 자리를 세고 '
+        + '그 사유를 낸다 — 새 종료 몸짓이 생기면 이 표가 는다.',
+      call_sites: calls,
+      distinct_reasons: ['idle', 'far', 'left'],
+      reason_meanings: {
+        idle: '손이 멈췄다(WRITE_IDLE_MS) — 어차피 하는 동작',
+        far: '먼 곳에 새 획이 왔다 — 작도로 돌아간 것이다',
+        left: '도구·종이·문서를 떠났다 — **몸짓이 아니다**(그 조작 자체의 부수 효과다)',
+      },
+      falsification: '**새 종료 몸짓을 만들면** 이 표에 «사유»가 하나 더 뜨거나 호출 자리가 '
+        + '늘어난다. 지금은 셋 다 사람이 어차피 하는 동작이라 배울 것이 0이다(지시문 ⛔).',
     }
   })
 })
@@ -571,9 +669,30 @@ describe('39-1 ⑦ 누름 시간은 설정 값이다', () => {
         + '읽는다. 대역은 옐로 머무름과 **같은 것을 재사용**한다(#54 — 새 숫자 ⛔).',
       default_ms: C.WRITE_HOLD_MS, min: WRITE_HOLD_MS_MIN, max: WRITE_HOLD_MS_MAX,
       rows,
-      falsification: '이 표가 **상수면** 손잡이가 아무것도 안 바꾸는 것이다(D-3 ㉣) — '
-        + '`driftAllowPx`가 값마다 갈리는 것이 「먹힌다」의 관측량이다.',
       distinct_drift_values: new Set(rows.map(r => r.driftAllowPx)).size,
+      // ⚠⚠ **1차 리뷰어 [2]가 이 자리를 잡았다.** 초판은 `driftAllowPx`가 갈리는 것을
+      //    「먹힌다」의 관측량으로 삼았는데 **그 값은 `holdMs`의 산술 귀결**이다
+      //    (`max(2, 4 × ms / 600)`) — 상수일 수 없으므로 그 반증 조건은 **구성상 절대
+      //    실패 못 한다**(#46 · 그리고 이 회차가 등재한 #92의 판별 ②를 못 지난다).
+      drift_is_arithmetic: '`hold.driftAllowPx(ms) = max(HOLD_JITTER_MIN_PX, '
+        + 'HOLD_JITTER_PX × ms / HOLD_DRIFT_REF_MS)` — **함수값이지 관측이 아니다.** '
+        + '여기 남기는 이유는 「손잡이를 올리면 이동 허용도 따라 는다」가 설계 사실이기 '
+        + '때문이고, **게이트의 근거로는 안 쓴다**.',
+      // 「그 값이 실제로 먹힌다」를 재는 것은 **화면 팔**이다 — 시계가 `input.ts`(DOM)에
+      // 있어서 단위 팔이 못 닿는다. 아래는 `e2e/writeenter39.spec.ts` ㉢의 실측이다.
+      screen_arm: {
+        where: 'e2e/writeenter39.spec.ts ㉢ (dpr1 · dpr2 둘 다)',
+        default_ms: 450,
+        press_225ms_at_450: 'write = null   (문의 절반 — 안 들어간다)',
+        press_600ms_at_450: 'write = {target:3}  (문 + 150 — 들어간다)',
+        after_setting_1200: 'app.writeHoldMs 1200 · 화면 읽기 «1.20s»',
+        press_650ms_at_1200: 'write = null   (**옛 문 + 200인데 안 들어간다**)',
+        press_1400ms_at_1200: 'write = {target:3}  (새 문 + 200 — 들어간다)',
+        why_this_measures_it: '같은 누름 시간(650 ms)이 **설정 값에 따라 답을 뒤집는다** — '
+          + '그것이 「먹힌다」의 관측량이다. 산술 귀결이 아니라 **진입 여부**를 잰다.',
+      },
+      falsification: '**설정을 올려도 옛 문 시간에 여전히 들어가면** 손잡이가 안 먹는 것이다 '
+        + '— 화면 팔의 `press_650ms_at_1200`이 그 칸이고 실제로 `null`이다(D-3 ㉣).',
     }
     expect(C.WRITE_HOLD_MS).toBeGreaterThanOrEqual(400)
     expect(C.WRITE_HOLD_MS).toBeLessThanOrEqual(500)
@@ -701,7 +820,8 @@ describe('원장', () => {
         + '원장**이다(이 회차가 그 기제를 걷었다). 지우지 않았다 — 원장은 기록이다. 그 값을 '
         + '인용하는 문서는 이제 「그때 그랬다」로 읽는다.',
     }
-    L['pitfalls'] = ['#92', '#54', '#61', '#62', '#12', '#82', '#90', '#91', '#42', '#77', '#73', '#19', '#5', '#88']
+    L['pitfalls'] = ['#92', '#54', '#61', '#62', '#12', '#82', '#90', '#91', '#42', '#77', '#73',
+      '#19', '#5', '#88', '#46', '#11', '#16', '#40', '#47']
     L['what_this_does_not_say'] = '누름 시간(450ms)·멈춤 시간(1000ms)·강조 굵기는 **동작점**이고 '
       + '손 표본이 0이다(#12 · AS-C1 계열). 합성 자형 픽스처(`glyphs.ts`)로 돌았고 실기기 '
       + '필체·필압 표본은 여전히 0이다. 그리고 이 표는 **작도 포즈**의 것이다.'

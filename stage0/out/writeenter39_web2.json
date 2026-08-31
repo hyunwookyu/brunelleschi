@@ -34,7 +34,7 @@
     }
   },
   "gate1_band": {
-    "what": "개수 × 간격 × 길이 = 27칸. 32-1의 뭉치 문(크기 60px · 간격 1.2배 · 최소 2획)을 **양쪽으로** 넘나드는 대역이다(D-5: 픽스처가 실사용 대역을 덮는가).",
+    "what": "개수 × 간격 × 길이 = 27칸(D-5: 픽스처가 실사용 대역을 덮는가).",
     "cells": 27,
     "text_marked_total": 0,
     "dims_total": 0,
@@ -228,7 +228,18 @@
         "text": 0,
         "dims": 0
       }
-    ]
+    ],
+    "before_repair": {
+      "tree": "00e6edc (제품 코드는 main c48b9e4와 같다 — §0은 문서만 고쳤다)",
+      "how": "git archive 00e6edc web2/src web2/test/session.ts web2/test/glyphs.ts | tar -x -C web2/_old39 뒤 그 트리를 가리키는 팔을 돌린다(임시 · 커밋 ⛔ · 원장은 이 값을 든다)",
+      "cells": 27,
+      "cells_with_text": 18,
+      "cells_with_dim": 18,
+      "text_total": 44,
+      "dims_total": 20,
+      "zero_cells": 9,
+      "zero_cells_axis": "**전부 `len: 90` 행이다** — 획 상자가 `DIM_GLYPH_MAX_PX`(60)를 넘어 32-1의 뭉치가 안 섰다. 즉 이 27칸은 그 문을 **양쪽으로 실제로 넘나든다**(18 안 · 9 밖). 「대역을 덮는다」는 이 값이 근거이고, 수리 후의 0/27은 그 대역에서 **하나도 안 남았다**는 뜻이다."
+    }
   },
   "gate2_target_is_pressed_line": {
     "what": "누른 선과 «글씨를 쓴 자리에서 가장 가까운 3D 획»이 갈리는 칸을 골랐다. 32-3(근접·정렬·선상 위치의 가중합)이었다면 근접 항이 다른 선을 밀었을 자리다.",
@@ -262,6 +273,39 @@
     "of": 4,
     "hit_on_pressed_line": 4,
     "falsification": "**갈리는 칸이 0이면 이 팔은 아무것도 안 잰다** — 그때는 「누른 선이 이겼다」가 「가까운 선이 이겼다」와 우연히 같다(#92의 형태). 그래서 그 수를 원장에 적고 게이트로도 건다.",
+    "null_rule": "`nearestToWriting: null`(대역 안에 3D 획이 없다)은 **«갈림»에서 뺀다** — 비교할 답이 없으므로 「두 답이 갈렸다」고 말할 수 없다. 넣으면 3/4가 된다.",
+    "before_repair_32_3": {
+      "tree": "00e6edc",
+      "how": "gate1_band.before_repair와 같은 방법 — 그 트리의 `dimTargetFor`를 직접 부른다",
+      "cases": [
+        {
+          "intended": 5,
+          "nearest": 6,
+          "dimTarget32_3": 6,
+          "applied": 6
+        },
+        {
+          "intended": 3,
+          "nearest": 6,
+          "dimTarget32_3": 6,
+          "applied": 6
+        },
+        {
+          "intended": 6,
+          "nearest": 6,
+          "dimTarget32_3": 6,
+          "applied": 6
+        },
+        {
+          "intended": 5,
+          "nearest": null,
+          "dimTarget32_3": 6,
+          "applied": 6
+        }
+      ],
+      "hit_on_intended": "1/4",
+      "note": "**32-3은 네 칸 모두 획 6에 실었다** — 뜻한 선과 갈린 칸이 **3/4**다(근접 대리물의 2/4보다 세다). 39는 네 칸 전부 뜻한 선에 싣는다(4/4). ⚠ 이 넷은 **32-3이 지도록 고른 자리**다 — 32-3의 일반 적중률이 아니다(그 값은 `dimtarget32_web2.json`에 있고 이 회차가 다시 재지 않았다)."
+    },
     "note": "`dimTargetFor`·`dimTargetScores`·`dimTargetTie`는 **이 회차에 사라졌다** — 맞힐 일이 없으므로 맞히는 층을 안 남긴다(쓰이지 않는 예외 ⛔)."
   },
   "gate2_multidigit": {
@@ -271,31 +315,40 @@
         "strokes": 1,
         "read": "2",
         "dim": 2,
-        "ink": 1
+        "ink": 1,
+        "scaleRef": 5,
+        "mmPerUnit": 0.45267873021259303
       },
       {
         "strokes": 2,
         "read": "25",
         "dim": 25,
-        "ink": 2
+        "ink": 2,
+        "scaleRef": 5,
+        "mmPerUnit": 5.658484127657413
       },
       {
         "strokes": 3,
         "read": "250",
         "dim": 250,
-        "ink": 3
+        "ink": 3,
+        "scaleRef": 5,
+        "mmPerUnit": 56.584841276574124
       },
       {
         "strokes": 4,
         "read": "2500",
         "dim": 2500,
-        "ink": 4
+        "ink": 4,
+        "scaleRef": 5,
+        "mmPerUnit": 565.8484127657413
       }
     ],
     "ink_while_writing": 4,
     "ink_after_end": 0,
     "final_dim": 2500,
-    "regression_it_catches": "32-2는 **값이 실리는 즉시 잉크를 걷었다** — 그러면 이어 쓴 자리가 혼자 남아 25가 **5**가 된다(화면 팔 `writedim32.spec` ㉡이 그 값을 냈다). 이제 잉크는 **상태가 끝날 때** 걷힌다."
+    "regression_it_catches": "32-2는 **값이 실리는 즉시 잉크를 걷었다** — 그러면 이어 쓴 자리가 혼자 남아 25가 **5**가 된다(화면 팔 `writedim32.spec` ㉡이 그 값을 냈다). 이제 잉크는 **상태가 끝날 때** 걷힌다.",
+    "scale_note": "⚠ **중간값도 축척을 정한다**(1차 리뷰어 [11]) — `scaleRef`가 첫 획에서 그 획으로 서고 `mmPerUnit`이 2 → 25 → 250 → 2500을 따라 **1250배 움직인다**. 그것이 결함이 아닌 근거: 축척은 **저장되는 값이 아니라 파생**이고(32-5·32-6의 [5][6]) 값이 자랄 때마다 `lift.scaleOf`가 다시 푼다 — 마지막 값이 곧 축척이다. ⚠⚠ **다만 자동 저장이 중간 상태를 잡으면 그 파일의 축척은 중간값의 것이다** — 저장되는 것은 `Stroke.dim`(2 mm)이고 축척은 그것에서 다시 나온다. 위험은 「축척이 굳는다」가 아니라 「쓰다 만 값이 저장된다」이고, 그것은 32-2의 즉시 변환이 원래 지고 있던 성질이다(승인 단계가 없다). 이 회차가 늘리지 않았다."
   },
   "gate2_no_empty_entry": {
     "what": "빈 곳 셋을 꾹 눌러 본다. 대상 없는 글씨는 **옐로에서** 한다(지시문).",
@@ -324,23 +377,44 @@
     ]
   },
   "gate3_outside_is_construction": {
-    "what": "자형 8 × 자리 4 × 흔들기 3 = 96칸을 **상태 밖과 안에서 각각** 돌렸다.",
+    "what": "자형 8 × 자리 4 × 흔들기 3 = **96칸**을 상태 밖과 안에서 각각 돌렸다. ⚠ **칸과 획은 다른 분모다**(#11·#16) — 한 칸의 획 수는 자형이 정한다(1획 ~ 6획).",
     "cells": 96,
+    "strokes_total": 204,
     "outside": {
-      "marked_total": 0,
+      "cells_with_text": 0,
+      "cells_with_dim": 0,
+      "marked_strokes": 0,
+      "of_strokes": 204,
       "dims_total": 0
     },
     "inside": {
-      "marked_total": 216,
-      "of_strokes": 96,
-      "dims_total": 84
+      "cells_with_text": 96,
+      "cells_with_dim": 84,
+      "marked_strokes": 216,
+      "of_strokes": 216,
+      "dims_total": 84,
+      "cells_without_dim": 12,
+      "cells_without_dim_forms": [
+        "0"
+      ],
+      "why": "글씨 판정(`marked`)은 안쪽에서 **전 칸 전부**다 — 안 선 것은 «읽히지 않았다»이고 그때 글씨는 종이에 남는다(#61). 상태와 인식은 다른 층이다."
     },
     "falsification": "**상태 안에서는 같은 96칸이 전부 글씨다** — 「예외 없이 작도선」이 재는 것이 상태이지 자형이 아님을 이 대조가 낸다(#92: 세는 차이가 무엇을 바꾸는가).",
+    "before_repair": {
+      "tree": "00e6edc",
+      "cells": 96,
+      "cells_with_text": 84,
+      "cells_with_dim": 69,
+      "marked_strokes": 180,
+      "dims_total": 69,
+      "note": "**수리 전에는 96칸 중 84칸에서 획이 글씨가 됐고 69칸에서 치수가 섰다.** 지금은 0/96·0/96이다. 그러므로 이 전수는 «결과를 바꿀 수 있는 축»에서 돈 것이다."
+    },
     "outside_rows": [
       {
         "text": "1",
         "spot": "380,430",
         "jit": 0,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -348,6 +422,7 @@
         "text": "1",
         "spot": "380,430",
         "jit": 0.6,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -355,6 +430,7 @@
         "text": "1",
         "spot": "380,430",
         "jit": 1.4,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -362,6 +438,7 @@
         "text": "1",
         "spot": "520,620",
         "jit": 0,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -369,6 +446,7 @@
         "text": "1",
         "spot": "520,620",
         "jit": 0.6,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -376,6 +454,7 @@
         "text": "1",
         "spot": "520,620",
         "jit": 1.4,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -383,6 +462,7 @@
         "text": "1",
         "spot": "700,690",
         "jit": 0,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -390,6 +470,7 @@
         "text": "1",
         "spot": "700,690",
         "jit": 0.6,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -397,6 +478,7 @@
         "text": "1",
         "spot": "700,690",
         "jit": 1.4,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -404,6 +486,7 @@
         "text": "1",
         "spot": "860,520",
         "jit": 0,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -411,6 +494,7 @@
         "text": "1",
         "spot": "860,520",
         "jit": 0.6,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -418,6 +502,7 @@
         "text": "1",
         "spot": "860,520",
         "jit": 1.4,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -425,6 +510,7 @@
         "text": "11",
         "spot": "380,430",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -432,6 +518,7 @@
         "text": "11",
         "spot": "380,430",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -439,6 +526,7 @@
         "text": "11",
         "spot": "380,430",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -446,6 +534,7 @@
         "text": "11",
         "spot": "520,620",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -453,6 +542,7 @@
         "text": "11",
         "spot": "520,620",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -460,6 +550,7 @@
         "text": "11",
         "spot": "520,620",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -467,6 +558,7 @@
         "text": "11",
         "spot": "700,690",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -474,6 +566,7 @@
         "text": "11",
         "spot": "700,690",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -481,6 +574,7 @@
         "text": "11",
         "spot": "700,690",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -488,6 +582,7 @@
         "text": "11",
         "spot": "860,520",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -495,6 +590,7 @@
         "text": "11",
         "spot": "860,520",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -502,6 +598,7 @@
         "text": "11",
         "spot": "860,520",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -509,6 +606,7 @@
         "text": "111",
         "spot": "380,430",
         "jit": 0,
+        "strokes": 3,
         "marked": 0,
         "dims": 0
       },
@@ -516,6 +614,7 @@
         "text": "111",
         "spot": "380,430",
         "jit": 0.6,
+        "strokes": 3,
         "marked": 0,
         "dims": 0
       },
@@ -523,6 +622,7 @@
         "text": "111",
         "spot": "380,430",
         "jit": 1.4,
+        "strokes": 3,
         "marked": 0,
         "dims": 0
       },
@@ -530,6 +630,7 @@
         "text": "111",
         "spot": "520,620",
         "jit": 0,
+        "strokes": 3,
         "marked": 0,
         "dims": 0
       },
@@ -537,6 +638,7 @@
         "text": "111",
         "spot": "520,620",
         "jit": 0.6,
+        "strokes": 3,
         "marked": 0,
         "dims": 0
       },
@@ -544,6 +646,7 @@
         "text": "111",
         "spot": "520,620",
         "jit": 1.4,
+        "strokes": 3,
         "marked": 0,
         "dims": 0
       },
@@ -551,6 +654,7 @@
         "text": "111",
         "spot": "700,690",
         "jit": 0,
+        "strokes": 3,
         "marked": 0,
         "dims": 0
       },
@@ -558,6 +662,7 @@
         "text": "111",
         "spot": "700,690",
         "jit": 0.6,
+        "strokes": 3,
         "marked": 0,
         "dims": 0
       },
@@ -565,6 +670,7 @@
         "text": "111",
         "spot": "700,690",
         "jit": 1.4,
+        "strokes": 3,
         "marked": 0,
         "dims": 0
       },
@@ -572,6 +678,7 @@
         "text": "111",
         "spot": "860,520",
         "jit": 0,
+        "strokes": 3,
         "marked": 0,
         "dims": 0
       },
@@ -579,6 +686,7 @@
         "text": "111",
         "spot": "860,520",
         "jit": 0.6,
+        "strokes": 3,
         "marked": 0,
         "dims": 0
       },
@@ -586,6 +694,7 @@
         "text": "111",
         "spot": "860,520",
         "jit": 1.4,
+        "strokes": 3,
         "marked": 0,
         "dims": 0
       },
@@ -593,6 +702,7 @@
         "text": "4",
         "spot": "380,430",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -600,6 +710,7 @@
         "text": "4",
         "spot": "380,430",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -607,6 +718,7 @@
         "text": "4",
         "spot": "380,430",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -614,6 +726,7 @@
         "text": "4",
         "spot": "520,620",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -621,6 +734,7 @@
         "text": "4",
         "spot": "520,620",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -628,6 +742,7 @@
         "text": "4",
         "spot": "520,620",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -635,6 +750,7 @@
         "text": "4",
         "spot": "700,690",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -642,6 +758,7 @@
         "text": "4",
         "spot": "700,690",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -649,6 +766,7 @@
         "text": "4",
         "spot": "700,690",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -656,6 +774,7 @@
         "text": "4",
         "spot": "860,520",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -663,6 +782,7 @@
         "text": "4",
         "spot": "860,520",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -670,6 +790,7 @@
         "text": "4",
         "spot": "860,520",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -677,6 +798,7 @@
         "text": "25",
         "spot": "380,430",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -684,6 +806,7 @@
         "text": "25",
         "spot": "380,430",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -691,6 +814,7 @@
         "text": "25",
         "spot": "380,430",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -698,6 +822,7 @@
         "text": "25",
         "spot": "520,620",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -705,6 +830,7 @@
         "text": "25",
         "spot": "520,620",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -712,6 +838,7 @@
         "text": "25",
         "spot": "520,620",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -719,6 +846,7 @@
         "text": "25",
         "spot": "700,690",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -726,6 +854,7 @@
         "text": "25",
         "spot": "700,690",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -733,6 +862,7 @@
         "text": "25",
         "spot": "700,690",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -740,6 +870,7 @@
         "text": "25",
         "spot": "860,520",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -747,6 +878,7 @@
         "text": "25",
         "spot": "860,520",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -754,6 +886,7 @@
         "text": "25",
         "spot": "860,520",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -761,6 +894,7 @@
         "text": "2500",
         "spot": "380,430",
         "jit": 0,
+        "strokes": 4,
         "marked": 0,
         "dims": 0
       },
@@ -768,6 +902,7 @@
         "text": "2500",
         "spot": "380,430",
         "jit": 0.6,
+        "strokes": 4,
         "marked": 0,
         "dims": 0
       },
@@ -775,6 +910,7 @@
         "text": "2500",
         "spot": "380,430",
         "jit": 1.4,
+        "strokes": 4,
         "marked": 0,
         "dims": 0
       },
@@ -782,6 +918,7 @@
         "text": "2500",
         "spot": "520,620",
         "jit": 0,
+        "strokes": 4,
         "marked": 0,
         "dims": 0
       },
@@ -789,6 +926,7 @@
         "text": "2500",
         "spot": "520,620",
         "jit": 0.6,
+        "strokes": 4,
         "marked": 0,
         "dims": 0
       },
@@ -796,6 +934,7 @@
         "text": "2500",
         "spot": "520,620",
         "jit": 1.4,
+        "strokes": 4,
         "marked": 0,
         "dims": 0
       },
@@ -803,6 +942,7 @@
         "text": "2500",
         "spot": "700,690",
         "jit": 0,
+        "strokes": 4,
         "marked": 0,
         "dims": 0
       },
@@ -810,6 +950,7 @@
         "text": "2500",
         "spot": "700,690",
         "jit": 0.6,
+        "strokes": 4,
         "marked": 0,
         "dims": 0
       },
@@ -817,6 +958,7 @@
         "text": "2500",
         "spot": "700,690",
         "jit": 1.4,
+        "strokes": 4,
         "marked": 0,
         "dims": 0
       },
@@ -824,6 +966,7 @@
         "text": "2500",
         "spot": "860,520",
         "jit": 0,
+        "strokes": 4,
         "marked": 0,
         "dims": 0
       },
@@ -831,6 +974,7 @@
         "text": "2500",
         "spot": "860,520",
         "jit": 0.6,
+        "strokes": 4,
         "marked": 0,
         "dims": 0
       },
@@ -838,6 +982,7 @@
         "text": "2500",
         "spot": "860,520",
         "jit": 1.4,
+        "strokes": 4,
         "marked": 0,
         "dims": 0
       },
@@ -845,6 +990,7 @@
         "text": "3.5",
         "spot": "380,430",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -852,6 +998,7 @@
         "text": "3.5",
         "spot": "380,430",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -859,6 +1006,7 @@
         "text": "3.5",
         "spot": "380,430",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -866,6 +1014,7 @@
         "text": "3.5",
         "spot": "520,620",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -873,6 +1022,7 @@
         "text": "3.5",
         "spot": "520,620",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -880,6 +1030,7 @@
         "text": "3.5",
         "spot": "520,620",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -887,6 +1038,7 @@
         "text": "3.5",
         "spot": "700,690",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -894,6 +1046,7 @@
         "text": "3.5",
         "spot": "700,690",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -901,6 +1054,7 @@
         "text": "3.5",
         "spot": "700,690",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -908,6 +1062,7 @@
         "text": "3.5",
         "spot": "860,520",
         "jit": 0,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -915,6 +1070,7 @@
         "text": "3.5",
         "spot": "860,520",
         "jit": 0.6,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -922,6 +1078,7 @@
         "text": "3.5",
         "spot": "860,520",
         "jit": 1.4,
+        "strokes": 2,
         "marked": 0,
         "dims": 0
       },
@@ -929,6 +1086,7 @@
         "text": "0",
         "spot": "380,430",
         "jit": 0,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -936,6 +1094,7 @@
         "text": "0",
         "spot": "380,430",
         "jit": 0.6,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -943,6 +1102,7 @@
         "text": "0",
         "spot": "380,430",
         "jit": 1.4,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -950,6 +1110,7 @@
         "text": "0",
         "spot": "520,620",
         "jit": 0,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -957,6 +1118,7 @@
         "text": "0",
         "spot": "520,620",
         "jit": 0.6,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -964,6 +1126,7 @@
         "text": "0",
         "spot": "520,620",
         "jit": 1.4,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -971,6 +1134,7 @@
         "text": "0",
         "spot": "700,690",
         "jit": 0,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -978,6 +1142,7 @@
         "text": "0",
         "spot": "700,690",
         "jit": 0.6,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -985,6 +1150,7 @@
         "text": "0",
         "spot": "700,690",
         "jit": 1.4,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -992,6 +1158,7 @@
         "text": "0",
         "spot": "860,520",
         "jit": 0,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -999,6 +1166,7 @@
         "text": "0",
         "spot": "860,520",
         "jit": 0.6,
+        "strokes": 1,
         "marked": 0,
         "dims": 0
       },
@@ -1006,7 +1174,778 @@
         "text": "0",
         "spot": "860,520",
         "jit": 1.4,
+        "strokes": 1,
         "marked": 0,
+        "dims": 0
+      }
+    ],
+    "inside_rows": [
+      {
+        "text": "1",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 1
+      },
+      {
+        "text": "1",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 1
+      },
+      {
+        "text": "1",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 1
+      },
+      {
+        "text": "1",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 1
+      },
+      {
+        "text": "1",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 1
+      },
+      {
+        "text": "1",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 1
+      },
+      {
+        "text": "1",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 1
+      },
+      {
+        "text": "1",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 1
+      },
+      {
+        "text": "1",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 1
+      },
+      {
+        "text": "1",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 1
+      },
+      {
+        "text": "1",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 1
+      },
+      {
+        "text": "1",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 1
+      },
+      {
+        "text": "11",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "11",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "11",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "11",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "11",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "11",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "11",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "11",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "11",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "11",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "11",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "11",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "111",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "111",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "111",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "111",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "111",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "111",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "111",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "111",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "111",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "111",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "111",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "111",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "4",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "4",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "4",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "4",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "4",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "4",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "4",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "4",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "4",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "4",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "4",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "4",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "25",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "25",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "25",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "25",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "25",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "25",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "25",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "25",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "25",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "25",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "25",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "25",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 2,
+        "marked": 2,
+        "dims": 1
+      },
+      {
+        "text": "2500",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 4,
+        "marked": 4,
+        "dims": 1
+      },
+      {
+        "text": "2500",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 4,
+        "marked": 4,
+        "dims": 1
+      },
+      {
+        "text": "2500",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 4,
+        "marked": 4,
+        "dims": 1
+      },
+      {
+        "text": "2500",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 4,
+        "marked": 4,
+        "dims": 1
+      },
+      {
+        "text": "2500",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 4,
+        "marked": 4,
+        "dims": 1
+      },
+      {
+        "text": "2500",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 4,
+        "marked": 4,
+        "dims": 1
+      },
+      {
+        "text": "2500",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 4,
+        "marked": 4,
+        "dims": 1
+      },
+      {
+        "text": "2500",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 4,
+        "marked": 4,
+        "dims": 1
+      },
+      {
+        "text": "2500",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 4,
+        "marked": 4,
+        "dims": 1
+      },
+      {
+        "text": "2500",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 4,
+        "marked": 4,
+        "dims": 1
+      },
+      {
+        "text": "2500",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 4,
+        "marked": 4,
+        "dims": 1
+      },
+      {
+        "text": "2500",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 4,
+        "marked": 4,
+        "dims": 1
+      },
+      {
+        "text": "3.5",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "3.5",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "3.5",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "3.5",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "3.5",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "3.5",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "3.5",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "3.5",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "3.5",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "3.5",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "3.5",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "3.5",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 3,
+        "marked": 3,
+        "dims": 1
+      },
+      {
+        "text": "0",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 0
+      },
+      {
+        "text": "0",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 0
+      },
+      {
+        "text": "0",
+        "spot": "408,737(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 0
+      },
+      {
+        "text": "0",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 0
+      },
+      {
+        "text": "0",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 0
+      },
+      {
+        "text": "0",
+        "spot": "530,726(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 0
+      },
+      {
+        "text": "0",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 0
+      },
+      {
+        "text": "0",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 0
+      },
+      {
+        "text": "0",
+        "spot": "702,711(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 0
+      },
+      {
+        "text": "0",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 0
+      },
+      {
+        "text": "0",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 0.6,
+        "strokes": 1,
+        "marked": 1,
+        "dims": 0
+      },
+      {
+        "text": "0",
+        "spot": "820,700(누른 자리 곁)",
+        "jit": 1.4,
+        "strokes": 1,
+        "marked": 1,
         "dims": 0
       }
     ]
@@ -1077,12 +2016,44 @@
     "note": "**먼 획은 글씨가 아니라 작도선이 된다** — 판정이 «획이 시작될 때» 나므로 그 획이 오스냅·축을 그대로 지난다. 끝난 뒤에 판정하면 「아무데도 안 붙은 작도선」이 된다."
   },
   "gate4_no_gesture": {
-    "what": "`WriteEnd`의 값은 셋뿐이다 — `idle`(멈춤) · `far`(먼 곳의 새 획) · `left`(도구·종이·문서를 떠났다). **새로 배울 몸짓이 하나도 없다**(지시문 ⛔).",
-    "ends": [
+    "what": "**경로 훑기**다(선언 되읽기 ⛔). 제품에서 `endWriting`을 부르는 자리를 세고 그 사유를 낸다 — 새 종료 몸짓이 생기면 이 표가 는다.",
+    "call_sites": [
+      {
+        "file": "src/app/state.ts",
+        "why": "left"
+      },
+      {
+        "file": "src/app/state.ts",
+        "why": "left"
+      },
+      {
+        "file": "src/app/state.ts",
+        "why": "left"
+      },
+      {
+        "file": "src/app/main.ts",
+        "why": "why"
+      },
+      {
+        "file": "src/app/main.ts",
+        "why": "left"
+      },
+      {
+        "file": "src/app/main.ts",
+        "why": "idle"
+      }
+    ],
+    "distinct_reasons": [
       "idle",
       "far",
       "left"
-    ]
+    ],
+    "reason_meanings": {
+      "idle": "손이 멈췄다(WRITE_IDLE_MS) — 어차피 하는 동작",
+      "far": "먼 곳에 새 획이 왔다 — 작도로 돌아간 것이다",
+      "left": "도구·종이·문서를 떠났다 — **몸짓이 아니다**(그 조작 자체의 부수 효과다)"
+    },
+    "falsification": "**새 종료 몸짓을 만들면** 이 표에 «사유»가 하나 더 뜨거나 호출 자리가 늘어난다. 지금은 셋 다 사람이 어차피 하는 동작이라 배울 것이 0이다(지시문 ⛔)."
   },
   "gate5_no_axis_snap": {
     "what": "**같은 점렬**을 작도선으로 한 번, 글씨로 한 번 확정한다. 잰 값은 «확정 끝점이 손이 뗀 자리에서 얼마나 옮겨졌는가»(문서 px)다.",
@@ -1148,8 +2119,19 @@
         "driftAllowPx": 10
       }
     ],
-    "falsification": "이 표가 **상수면** 손잡이가 아무것도 안 바꾸는 것이다(D-3 ㉣) — `driftAllowPx`가 값마다 갈리는 것이 「먹힌다」의 관측량이다.",
-    "distinct_drift_values": 4
+    "distinct_drift_values": 4,
+    "drift_is_arithmetic": "`hold.driftAllowPx(ms) = max(HOLD_JITTER_MIN_PX, HOLD_JITTER_PX × ms / HOLD_DRIFT_REF_MS)` — **함수값이지 관측이 아니다.** 여기 남기는 이유는 「손잡이를 올리면 이동 허용도 따라 는다」가 설계 사실이기 때문이고, **게이트의 근거로는 안 쓴다**.",
+    "screen_arm": {
+      "where": "e2e/writeenter39.spec.ts ㉢ (dpr1 · dpr2 둘 다)",
+      "default_ms": 450,
+      "press_225ms_at_450": "write = null   (문의 절반 — 안 들어간다)",
+      "press_600ms_at_450": "write = {target:3}  (문 + 150 — 들어간다)",
+      "after_setting_1200": "app.writeHoldMs 1200 · 화면 읽기 «1.20s»",
+      "press_650ms_at_1200": "write = null   (**옛 문 + 200인데 안 들어간다**)",
+      "press_1400ms_at_1200": "write = {target:3}  (새 문 + 200 — 들어간다)",
+      "why_this_measures_it": "같은 누름 시간(650 ms)이 **설정 값에 따라 답을 뒤집는다** — 그것이 「먹힌다」의 관측량이다. 산술 귀결이 아니라 **진입 여부**를 잰다."
+    },
+    "falsification": "**설정을 올려도 옛 문 시간에 여전히 들어가면** 손잡이가 안 먹는 것이다 — 화면 팔의 `press_650ms_at_1200`이 그 칸이고 실제로 `null`이다(D-3 ㉣)."
   },
   "gate8_yellow": {
     "what": "옐로에서 꾹 눌러 본다. **문이 하나 필요했다**(`writeTargetAt`의 `yellowActive`) — 초판은 「3D 내용 획만 보므로 자동으로 안 걸린다」고 적었고 **이 팔이 그것을 빨갛게 잡았다**: 종이의 획은 옐로가 활성이어도 그대로 3D라 누르면 잡힌다. 그러면 옐로에 쓴 글씨가 **종이 획의 치수**가 되어 32-8의 갈림이 무너진다. 32-1은 그 문을 `writingCluster` 안에 갖고 있었고, 판정이 진입으로 옮겨졌으므로 문도 함께 옮겨 왔다(#54가 「새 문 ⛔」이지 「있던 문을 버려라」가 아니다).",
@@ -1263,7 +2245,12 @@
     "#73",
     "#19",
     "#5",
-    "#88"
+    "#88",
+    "#46",
+    "#11",
+    "#16",
+    "#40",
+    "#47"
   ],
   "what_this_does_not_say": "누름 시간(450ms)·멈춤 시간(1000ms)·강조 굵기는 **동작점**이고 손 표본이 0이다(#12 · AS-C1 계열). 합성 자형 픽스처(`glyphs.ts`)로 돌았고 실기기 필체·필압 표본은 여전히 0이다. 그리고 이 표는 **작도 포즈**의 것이다."
 }
