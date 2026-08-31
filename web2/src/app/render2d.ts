@@ -5,13 +5,13 @@
 // 선 굵기·표식 크기는 화면 고정(배율로 나눈다).
 
 import type { App, ViewOffset } from './state'
-import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive, dimLabelPos, viewXf } from './state'
+import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive, dimLabelPos, viewXf, inkMix } from './state'
 import { vpMarks, project, projectSeg, groundAxes, horizonScreenY } from '../core/camera'
 import { cubeGeom, cubeArrows } from '../core/viewcube'
 import { C } from '../core/constants'
 import { MAT, gradeOf, rng32, widthOf, widthOfMat } from '../core/material'
 import { overshootEnds } from '../core/overshoot'
-import { waitFadeFactor, atOwnPose } from '../core/waitfade'
+import { waitFadeFactor, atOwnPose, bodyHex } from '../core/waitfade'
 import type { OsnapHit } from '../core/osnap'
 import { dist2, type Pt, type V3 } from '../core/vec'
 import { filmSplit } from './filmlayer'
@@ -111,8 +111,11 @@ const COL = {
   // 격자(0.18)보다는 서고(작도의 뼈대) 종전 2H(알파 0.5)보다 옅다. 토글이 하한을 푼다.
   horizon: 'rgba(150,147,141,0.32)',
   construction: '#8a7f6a',
-  waiting: '#555',
-  waitingDim: 'rgba(85,85,85,0.25)',
+  // ⚙️ **대기 획의 몸체 색은 여기 없다** — `core/waitfade.ts`의 `WAIT_INK`(논포토 블루)가
+  // 그 자리다(web2-37 2번). 세 겹(#brushc·#ink·#layerc)이 다 읽어야 하는데 이 객체는
+  // render2d 안에만 있고 filmlayer가 못 읽는다(순환) — 그래서 core로 갔다.
+  // 종전의 `waiting: '#555'`·`waitingDim`은 **한 번도 안 쓰였다**(죽은 항목이라 걷었다):
+  // 대기 몸체는 web2-16 3-a부터 재료색이었고 이제 상태색이다.
   preview: '#1a6ac2',
   // ⚠ 붉은색이었다 — 화면에 **상시** 떠 있는 표식이라 그림보다 눈에 띄었다(지시 3-c 대조표).
   // 소실점은 지평선과 같은 급의 작도 표식이므로 같은 색으로 물러난다.
@@ -222,6 +225,7 @@ export function draw2d(
   const y0 = -v.oy * is, y1 = (ch - v.oy) * is
 
   const atDraw = isDrawPose(app.pose)
+  const now = performance.now()   // 정착 전이(web2-37 2번) — 한 프레임 안에서 한 시각
 
   // 지면 격자 — **공간의 정사각형을 투영한 것**이다(이론서 9.5). 화면 각도 균등 분할이 아니다.
   // 아주 연하게, 무채색 — 사용자가 그린 선이 가장 눈에 띄어야 한다(6-h 「선 우선순위」).
@@ -299,7 +303,9 @@ export function draw2d(
     // C.WAIT_DASH_* — brushlayer와 같은 값을 읽는다).
     const brushBody = app.renderer === 'brush' && app.waitFade
     if (!brushBody) {
-      ctx.strokeStyle = m.color
+      // 색상 = 상태(web2-37 2번 · 논포토 블루) · 알파·굵기 = 재료 그대로.
+      // 등급 축과 상태 축이 직교한다 — 「농도만으로 하면 2H 확정선과 2B 대기선이 섞인다」.
+      ctx.strokeStyle = bodyHex(gradeOf(s), inkMix(app, true, s.id, now))
       ctx.globalAlpha = m.alpha * factor
       ctx.lineWidth = widthOf(s) * is
       ctx.setLineDash([C.WAIT_DASH_ON_PX * is, C.WAIT_DASH_OFF_PX * is])
@@ -344,7 +350,9 @@ export function draw2d(
     const b = project(an, app.pose, seg.b3)
     if (!a || !b) continue
     const m = MAT.INK
-    ctx.strokeStyle = m.color
+    // 정착 전이(web2-37 2번) — 창 밖이면 `inkMix`가 0이고 `bodyHex(_, 0)`은 `m.color`
+    // **그 문자열**이라 평소 픽셀이 안 움직인다.
+    ctx.strokeStyle = bodyHex('INK', inkMix(app, false, id, now))
     ctx.globalAlpha = m.alpha
     ctx.lineWidth = widthOf(s) * is
     ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke()

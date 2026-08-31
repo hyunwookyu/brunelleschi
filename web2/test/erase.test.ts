@@ -4,6 +4,7 @@ import {
   beginErase, eraseAt, endErase, type App,
 } from '../src/app/state'
 import { pieces } from '../src/core/pieces'
+import { screenCross } from '../src/core/lift'
 import { DRAW_POSE } from '../src/core/camera'
 import { pt } from '../src/core/vec'
 
@@ -33,10 +34,24 @@ describe('조각 — 교차·접촉 지점에서 나뉜다 (계산, 무저장)',
   })
 
   it('반례: 화면 교차(다른 깊이)는 안 나뉜다', () => {
+    // ⚠⚠ **픽스처를 다시 지었다**(web2-37 1번). 옛 판은 E가 «끝점 하나만 물린 자유 방향»
+    //    이라 **대기선**이었고, 그래서 「다른 깊이의 3D 선 둘」이 아니라 「3D 선 하나와
+    //    2D 획 하나」를 재고 있었다. 37-1이 그 E를 **B와의 교차로** 세우자(그것이 이 회차의
+    //    목적이다) 둘은 3D에서 **진짜로** 만나 각각 둘로 갈렸다 — 규칙이 깨진 것이 아니라
+    //    **픽스처가 재려던 상태를 더 못 만드는 것**이다(#71의 형태 · D-5).
+    //    새 판은 E의 **양 끝을 다 물린다**(명시 점 둘 → 축도 교차도 물러난다: 37-1 표 첫 줄):
+    //    A(vp0·vp1 두 평면이 만나는 모서리 수직) ↔ D(vp1 평면의 수직). B는 vp0 평면이므로
+    //    **E와 B는 서로 다른 수직 평면**에 있고 화면에서만 가로지른다(실측 z −4.131 ↔ −12.394).
     const app = appWithConstruction()
-    commitStroke(app, pt(500, 500), pt(500, 300))
-    const B = commitStroke(app, pt(500, 300), pt(700, 350)) // 깊이 획
-    const E = commitStroke(app, pt(500, 325), pt(700, 325)) // z=−387 평면 — B와 화면에서만 교차
+    const A = commitStroke(app, pt(500, 500), pt(500, 250))   // 모서리 수직
+    const B = commitStroke(app, pt(500, 300), pt(700, 350))   // vp0 평면의 깊이 획
+    const D = commitStroke(app, pt(700, 550), pt(700, 250))   // vp1 평면의 수직(밑이 vp1 선 위)
+    const E = commitStroke(app, pt(500, 325), pt(700, 300))   // A ↔ D — 명시 점 둘
+    // 픽스처가 «재려는 상태»를 실제로 만들었는지부터 확인한다(#88 — 좌표를 믿지 말고 대상에서 읽는다)
+    for (const s of [A, B, D, E]) expect(app.lift.lifted.has(s.id), `${s.id} 자립`).toBe(true)
+    expect(screenCross(E.a, E.b, B.a, B.b), '화면에서 가로지른다').not.toBeNull()
+    const gE = app.lift.lifted.get(E.id)!, gB = app.lift.lifted.get(B.id)!
+    expect(Math.abs(gE.b3.z - gB.b3.z), '깊이가 다르다').toBeGreaterThan(1)
     const ps = pieces(app.lift, DRAW_POSE)
     expect(ps.filter(x => x.strokeId === B.id)).toHaveLength(1)
     expect(ps.filter(x => x.strokeId === E.id)).toHaveLength(1)

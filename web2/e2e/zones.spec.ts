@@ -430,6 +430,13 @@ test('⑥ 전체 화면 — 크롬 0 · 뼈대 그대로 · 손잡이로 나온�
   for (let i = 1; i <= 6; i++) await page.mouse.move(600 + i * 10, 300)
   await page.mouse.up({ button: 'middle' }); await settle(page)
   expect(await page.evaluate(() => (window as any).__b2.app.pose.q.y)).not.toBe(q0)
+  // ⚠⚠ **궤도가 방금 그은 획을 버렸다**(web2-37 4번 — 그 획은 허공의 자유 획이라 대기다).
+  //    이 팔이 재려는 것은 「크롬 없이도 손은 산다」(그리기·궤도·지우기)이지 대기 획의
+  //    수명이 아니므로, **실행취소로 되돌려** 지울 대상을 되살린다 — 그 되돌림이 37-4의
+  //    거동(획 + 그 궤도를 함께 무른다)을 이 자리에서 실제로 쓰는 것이기도 하다.
+  await page.keyboard.press('Control+z'); await settle(page)
+  expect(await page.evaluate(() => (window as any).__b2.app.doc.strokes.length),
+    '실행취소로 그 획이 돌아왔다').toBe(n0 + 1)
   await page.click('#fs-exit'); await settle(page)      // 지우개를 고르러 잠시 나온다
   await page.click('#btn-eraser-pencil')
   await page.click('#btn-fullscreen'); await settle(page)

@@ -63,13 +63,24 @@ describe('점별 입력 저장 비용(1-c 원장)', () => {
 
     // 「판정·렌더는 raw를 안 읽는다」의 수(2차 리뷰어 [7] — 산문 grep을 원장 칸으로).
     // file.ts(직렬화)·types.ts(정의)를 뺀 src/core 전체에서 raw/rawIn 참조를 센다.
+    //
+    // ⚠⚠ **권한 있는 예외가 하나 생겼다**(web2-37 1번 · 2026-08-31): `lift.ts`의 가상 교차가
+    //    후보 여럿 중 하나를 고를 때 **그은 획의 raw 점열과의 제곱 편차**를 자로 쓴다
+    //    (지시문 문면 그대로 — 「각 후보로 미리보기를 만들고, 그은 획의 raw 점열에 가장
+    //    가까운 것을 고른다」). raw가 없는 옛 파일에서는 **양 끝점으로 물러난다**(같은 자·
+    //    다른 표본) — 그래서 raw 유무가 «되는가»를 안 가르고 «어느 후보인가»만 가른다.
+    // ⛔ **문을 없애지 않는다**: 권한 밖은 여전히 0이고, 예외가 «죽으면»(0이 되면) 그것도
+    //    빨개진다 — 규칙이 남아 있는데 아무도 안 쓰는 자리를 남기지 않기 위해서다.
+    const RAW_READERS = new Set(['lift.ts'])
     const coreDir = resolve(__dirname, '../src/core')
-    let coreRawRefs = 0
+    let coreRawRefs = 0, authorizedRawRefs = 0
     for (const f of readdirSync(coreDir)) {
       if (f === 'file.ts' || f === 'types.ts' || !f.endsWith('.ts')) continue
-      coreRawRefs += (readFileSync(resolve(coreDir, f), 'utf8').match(/\.raw\b|rawIn/g) ?? []).length
+      const n = (readFileSync(resolve(coreDir, f), 'utf8').match(/\.raw\b|rawIn/g) ?? []).length
+      if (RAW_READERS.has(f)) authorizedRawRefs += n; else coreRawRefs += n
     }
-    expect(coreRawRefs).toBe(0)
+    expect(coreRawRefs).toBe(0)                       // 권한 밖은 그대로 0이다
+    expect(authorizedRawRefs).toBeGreaterThan(0)      // 예외가 죽으면 이 줄이 잡는다
 
     // 옛 파서 스냅샷의 정규화 해시 — 스냅샷 파일이 수정되면 이 값이 원장에서 갈린다.
     // b6980c9 원본과의 동일성은 2026-08-26에 `git show b6980c9:web2/src/core/file.ts`
@@ -106,7 +117,8 @@ describe('점별 입력 저장 비용(1-c 원장)', () => {
       press_q: C.PRESS_Q,
       press_q_note: 'C.PRESS_Q를 바꾸면 이 원장을 재실행하고 AS-C33·DEFERRED web2-11 표의 인용을 고친다(상수 스냅샷 등록부 밖이라 STALE이 자동으로 안 잡힌다 — web2 구조적).',
       core_raw_refs: coreRawRefs,
-      core_raw_refs_note: 'src/core(file.ts·types.ts 제외)의 .raw/rawIn 참조 수 — 0이면 획 판정·리프팅이 coalesced 점을 안 읽는다(설계 보장의 수. 팔이 0을 강제한다).',
+      core_raw_refs_authorized: authorizedRawRefs,
+      core_raw_refs_note: 'src/core(file.ts·types.ts 제외)에서 **권한 밖** 파일의 .raw/rawIn 참조 수 — 0이어야 한다. ⚠ **web2-37 1번부터 `lift.ts`가 권한 있는 예외다**(가상 교차의 후보 고르기가 raw 점열을 자로 쓴다 — 지시문 문면). 그 수는 `core_raw_refs_authorized`에 따로 있고, **0이 되면 그것도 빨개진다**(죽은 예외 금지). 예외의 단위는 **파일**이다 — `lift.ts` 안의 새 raw 사용은 이 문이 안 잡는다(알려진 한계).',
       legacy_snapshot_sha256_12: snapshotHash,
       legacy_snapshot_note: 'test/legacy_web2_10.ts parseBrnlLegacy 본문의 정규화 해시(주석 제거·공백 접기) — 스냅샷이 수정되면 재실행에서 이 값이 갈린다. b6980c9 원본과의 동일성은 2026-08-26 git show 정규화 비교 1회로 확인.',
       strokes_per_quota: quota,

@@ -385,11 +385,14 @@ describe('web2-31 1번 — 90° 화살표의 틀은 축이다', () => {
     s.draw(500, 500, 400, 475)
     s.draw(500, 500, 500, 380)
     const app: App = s.app
-    const before = app.doc.strokes.length
     const basis = cubeBasis(app.lift.an)!
     const pivot = orbitPivot(app)
     const plan = poseForOrient(basis, turnOrient(orientIn(basis, app.pose), 'up'), pivot, 500)
     setPose(app, plan)
+    // ⚠ 세는 자리는 **돌린 뒤**다(web2-37 4번): 시점이 바뀌면 대기 획이 버려지므로
+    //    돌리기 전 수와 견주면 이 팔이 「그리기가 막혔다」로 잘못 읽는다. 재려는 것은
+    //    「평면에서 그은 획이 들어가는가」이지 「대기 획이 남는가」가 아니다.
+    const before = app.doc.strokes.length
     expect(Math.abs(fwdOf(app.pose).y + 1)).toBeLessThan(1e-9)   // 정확히 평면
     const st = s.draw(400, 300, 700, 320)                        // 평면에서 한 획
     expect(st).not.toBeNull()

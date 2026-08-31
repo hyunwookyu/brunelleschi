@@ -3,7 +3,7 @@
 import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc,
   pickDimTarget, pickTargetAt, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick,
   handwritingGroup, applyWrittenDim, dimTargetTie, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
-  measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, type Tool } from './state'
+  measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, settleActive, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
 import { initInput } from './input'
@@ -24,7 +24,8 @@ import { initDimPanel } from './dimpanel'
 import { registerBox, closeOtherBoxes, openBoxIds, setBoxAwayModeForTest } from './boxes'
 import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
-import { C } from '../core/constants'
+import { C, SETTLE_ANIM_MS } from '../core/constants'
+import { WAIT_INK, setWaitInkMode, waitInkMode, type WaitInkMode } from '../core/waitfade'
 import { lensAllowed, lensStops, lensF, lensK, hfovDeg, LENS_STOP_MIN, LENS_STOP_MAX } from '../core/lens'
 import { cubeLayoutFor } from '../core/viewcube'
 
@@ -1880,6 +1881,9 @@ function frameCostQ() {
 
 function frame() {
   autolevel.tick()   // 접힐 때가 됐으면 여기서 포즈가 움직인다(setPose가 다시 그리게 한다)
+  // 정착 전이(web2-37 2번) — 색이 시간의 함수인 «그 창 동안만» 계속 그린다. 창이 닫히면
+  // 이 항은 false라 프레임 고리가 평소의 «바뀔 때만»으로 돌아간다(평소에는 조용하다).
+  if (settleActive(app, performance.now())) invalidate()
   if (dirty) {
     dirty = false
     const fc0 = performance.now()
@@ -2196,6 +2200,21 @@ const diag = {
     hfov: app.lift.an.f === null ? null : hfovDeg(lensF(app.lift.an, app.viewF)!, app.lift.an.W),
     xf: viewXf(app),
   }),
+  /** **대기의 색**(web2-37 2번) — 값과 D-3 반증 손잡이가 같은 자리에 있다.
+   *  인자 없이 부르면 읽기다. `off`(청색 끔) · `all`(확정에도 칠함)이 위약 판이고,
+   *  팔은 **여기서 색을 읽어** 기대값을 만든다(#88 — 팔이 색을 손으로 안 든다). */
+  waitInk: (mode?: WaitInkMode) => {
+    if (mode !== undefined) { setWaitInkMode(mode); bumpDoc(app); invalidate() }
+    const now = performance.now()
+    return {
+      mode: waitInkMode(),
+      ink: WAIT_INK,
+      settleMs: SETTLE_ANIM_MS,
+      settling: [...app.settledAt.entries()]
+        .filter(([, t]) => now - t < SETTLE_ANIM_MS)
+        .map(([id, t]) => ({ id, elapsed: now - t })),
+    }
+  },
   summary: () => ({
     horizonY: app.lift.an.horizonY,
     screenHDeclared: app.lift.an.screenHDeclared,

@@ -1,0 +1,662 @@
+{
+  "what": "web2-37 1번 — 명시 점(오스냅) × 축 × 가상 교차의 조합 전수 표. 「자립/대기」와 「무엇이 이겼는가」가 우선순위 표와 일치하는지.",
+  "run": {
+    "canonical": "LEDGER=1 npx vitest run test/xint37.test.ts",
+    "scaffold": "세로 넷(x=500·700·860·1050) + 지평선 + 깊이선 둘 = 7획",
+    "note": "칸의 전제(명시 점 수·축·교차 수)는 **결과에서 다시 잰 값**이다 — 주석이 아니다."
+  },
+  "rows": [
+    {
+      "cell": "0점·축없음·교차0",
+      "named": 0,
+      "axis": null,
+      "crossings": 0,
+      "usable": 0,
+      "standing": false,
+      "waitWhy": "noPoint",
+      "ends_kept_px": {
+        "a": null,
+        "b": null
+      },
+      "dir_is_axis": false,
+      "through_cross": false,
+      "won": "—"
+    },
+    {
+      "cell": "0점·축없음·교차1",
+      "named": 0,
+      "axis": null,
+      "crossings": 1,
+      "usable": 1,
+      "standing": false,
+      "waitWhy": "onePoint",
+      "ends_kept_px": {
+        "a": null,
+        "b": null
+      },
+      "dir_is_axis": false,
+      "through_cross": false,
+      "won": "—"
+    },
+    {
+      "cell": "0점·축없음·교차2",
+      "named": 0,
+      "axis": null,
+      "crossings": 2,
+      "usable": 2,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 1.1368683772161603e-13,
+        "b": 1.1368683772161603e-13
+      },
+      "dir_is_axis": false,
+      "through_cross": true,
+      "won": "교차 둘"
+    },
+    {
+      "cell": "0점·축있음·교차0",
+      "named": 0,
+      "axis": null,
+      "crossings": 0,
+      "usable": 0,
+      "standing": false,
+      "waitWhy": "hasHeight",
+      "ends_kept_px": {
+        "a": null,
+        "b": null
+      },
+      "dir_is_axis": false,
+      "through_cross": false,
+      "won": "—"
+    },
+    {
+      "cell": "0점·축있음·교차1",
+      "named": 0,
+      "axis": "vp1",
+      "crossings": 1,
+      "usable": 1,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 0,
+        "b": 0
+      },
+      "dir_is_axis": true,
+      "through_cross": true,
+      "won": "교차 + 축"
+    },
+    {
+      "cell": "0점·축있음·교차2",
+      "named": 0,
+      "axis": "vp1",
+      "crossings": 2,
+      "usable": 2,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 0,
+        "b": 5.684341886080802e-14
+      },
+      "dir_is_axis": true,
+      "through_cross": true,
+      "won": "교차 + 축"
+    },
+    {
+      "cell": "1점·축없음·교차0",
+      "named": 1,
+      "axis": null,
+      "crossings": 1,
+      "usable": 0,
+      "standing": false,
+      "waitWhy": "nearCross",
+      "ends_kept_px": {
+        "a": null,
+        "b": null
+      },
+      "dir_is_axis": false,
+      "through_cross": false,
+      "won": "—"
+    },
+    {
+      "cell": "1점·축없음·교차1",
+      "named": 1,
+      "axis": null,
+      "crossings": 2,
+      "usable": 1,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 0,
+        "b": 2.5421149729252077e-13
+      },
+      "dir_is_axis": false,
+      "through_cross": true,
+      "won": "점 + 교차"
+    },
+    {
+      "cell": "1점·축없음·교차2",
+      "named": 1,
+      "axis": null,
+      "crossings": 3,
+      "usable": 2,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 0,
+        "b": 2.2737367544323206e-13
+      },
+      "dir_is_axis": false,
+      "through_cross": true,
+      "won": "점 + 교차"
+    },
+    {
+      "cell": "1점·축있음·교차0",
+      "named": 1,
+      "axis": "vp1",
+      "crossings": 1,
+      "usable": 0,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 0,
+        "b": 1.1368683772161603e-13
+      },
+      "dir_is_axis": true,
+      "through_cross": false,
+      "won": "점 + 축"
+    },
+    {
+      "cell": "1점·축있음·교차1",
+      "named": 1,
+      "axis": "vp1",
+      "crossings": 2,
+      "usable": 1,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 0,
+        "b": 1.2710574864626038e-13
+      },
+      "dir_is_axis": true,
+      "through_cross": true,
+      "won": "점 + 축"
+    },
+    {
+      "cell": "1점·축있음·교차2",
+      "named": 1,
+      "axis": "vp1",
+      "crossings": 3,
+      "usable": 2,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 0,
+        "b": 1.1368683772161603e-13
+      },
+      "dir_is_axis": true,
+      "through_cross": true,
+      "won": "점 + 축"
+    },
+    {
+      "cell": "1점(끝)·축있음·교차0",
+      "named": 1,
+      "axis": "vp1",
+      "crossings": 0,
+      "usable": 0,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 1.1368683772161603e-13,
+        "b": 1.1368683772161603e-13
+      },
+      "dir_is_axis": true,
+      "through_cross": false,
+      "won": "점 + 축"
+    },
+    {
+      "cell": "1점(끝)·축없음·교차0",
+      "named": 1,
+      "axis": null,
+      "crossings": 0,
+      "usable": 0,
+      "standing": false,
+      "waitWhy": "onePoint",
+      "ends_kept_px": {
+        "a": null,
+        "b": null
+      },
+      "dir_is_axis": false,
+      "through_cross": false,
+      "won": "—"
+    },
+    {
+      "cell": "2점·축없음·교차0",
+      "named": 2,
+      "axis": null,
+      "crossings": 1,
+      "usable": 0,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 0,
+        "b": 1.1368683772161603e-13
+      },
+      "dir_is_axis": false,
+      "through_cross": false,
+      "won": "두 점"
+    },
+    {
+      "cell": "2점·축없음·교차1",
+      "named": 2,
+      "axis": null,
+      "crossings": 2,
+      "usable": 1,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 0,
+        "b": 1.1368683772161603e-13
+      },
+      "dir_is_axis": false,
+      "through_cross": true,
+      "won": "두 점"
+    },
+    {
+      "cell": "2점·축없음·교차2",
+      "named": 2,
+      "axis": null,
+      "crossings": 3,
+      "usable": 2,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 0,
+        "b": 2.2737367544323206e-13
+      },
+      "dir_is_axis": false,
+      "through_cross": true,
+      "won": "두 점"
+    },
+    {
+      "cell": "2점·축있음·교차0",
+      "named": 2,
+      "axis": "vp0",
+      "crossings": 1,
+      "usable": 0,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 0,
+        "b": 1.1368683772161603e-13
+      },
+      "dir_is_axis": false,
+      "through_cross": false,
+      "won": "두 점"
+    },
+    {
+      "cell": "2점·축있음·교차1",
+      "named": 2,
+      "axis": "vp1",
+      "crossings": 2,
+      "usable": 1,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 0,
+        "b": 1.1368683772161603e-13
+      },
+      "dir_is_axis": true,
+      "through_cross": true,
+      "won": "두 점"
+    },
+    {
+      "cell": "2점·축있음·교차2",
+      "named": 2,
+      "axis": "vp1",
+      "crossings": 3,
+      "usable": 2,
+      "standing": true,
+      "waitWhy": null,
+      "ends_kept_px": {
+        "a": 0,
+        "b": 2.2914314707516465e-13
+      },
+      "dir_is_axis": true,
+      "through_cross": true,
+      "won": "두 점"
+    }
+  ],
+  "principle_d": {
+    "worst_px": 2.5421149729252077e-13,
+    "kind": "구성상 보장의 확인(측정 아님)"
+  },
+  "coordinate_proof": {
+    "cell": "0점·축있음·교차1",
+    "drawn_2d": {
+      "a": {
+        "x": 620,
+        "y": 330
+      },
+      "b": {
+        "x": 818.2121323245724,
+        "y": 303.31759757169215
+      }
+    },
+    "crossing_screen": {
+      "x": 700.0000000000001,
+      "y": 319.2307692307692
+    },
+    "crossing_3d": {
+      "x": 1.066667,
+      "y": 2.461538,
+      "z": -4.131182
+    },
+    "lifted_3d": {
+      "a3": {
+        "x": 0.246154,
+        "y": 2.461538,
+        "z": -4.766749
+      },
+      "b3": {
+        "x": 1.944492,
+        "y": 2.461538,
+        "z": -3.451222
+      }
+    },
+    "axis": "vp1",
+    "reprojection_drift_px": {
+      "a": 0,
+      "b": 0
+    }
+  },
+  "three_crossing_choice": {
+    "candidates": 3,
+    "min_dev_px2": 32.56890604184969,
+    "max_dev_px2": 117.27842166754212,
+    "chosen_dev_px2": 32.56890604184969,
+    "tie": false,
+    "unit": "px²(화면 제곱 편차 합)",
+    "note": "후보가 갈린다 — 최소 편차가 뽑혔다."
+  },
+  "misacquisition": {
+    "scaffold_strokes": 19,
+    "scaffold_lifted": 18,
+    "trials": 24,
+    "stood": 24,
+    "by_crossing": 16,
+    "wrong": 13,
+    "waited": 0,
+    "decided_by_other_pass": 8,
+    "candidates_histogram": {
+      "2": 1,
+      "3": 4,
+      "4": 6,
+      "5": 3,
+      "6": 2
+    },
+    "rate": 0.8125,
+    "depth_spread_world": 3.1409810107441962,
+    "detail": [
+      {
+        "id": 20,
+        "named": 0,
+        "crossings": 4,
+        "target": "620,250",
+        "picked": "680,232",
+        "decided_by": "교차",
+        "ok": false
+      },
+      {
+        "id": 21,
+        "named": 0,
+        "crossings": 4,
+        "target": "680,272",
+        "picked": "740,260",
+        "decided_by": "교차",
+        "ok": false
+      },
+      {
+        "id": 22,
+        "named": 0,
+        "crossings": 3,
+        "target": "740,294",
+        "picked": "800,284",
+        "decided_by": "교차",
+        "ok": false
+      },
+      {
+        "id": 23,
+        "named": 0,
+        "crossings": 3,
+        "target": "800,316",
+        "picked": "800,316",
+        "decided_by": "교차",
+        "ok": true
+      },
+      {
+        "id": 24,
+        "named": 0,
+        "crossings": 3,
+        "target": "920,338",
+        "picked": "980,334",
+        "decided_by": "교차",
+        "ok": false
+      },
+      {
+        "id": 25,
+        "named": 0,
+        "crossings": 6,
+        "target": "620,360",
+        "picked": "680,354",
+        "decided_by": "교차",
+        "ok": false
+      },
+      {
+        "id": 26,
+        "named": 0,
+        "crossings": 4,
+        "target": "680,255",
+        "picked": "740,241",
+        "decided_by": "교차",
+        "ok": false
+      },
+      {
+        "id": 27,
+        "named": 1,
+        "crossings": 3,
+        "target": "740,277",
+        "picked": "—",
+        "decided_by": "사슬(명시 점)",
+        "ok": null
+      },
+      {
+        "id": 28,
+        "named": 0,
+        "crossings": 4,
+        "target": "800,299",
+        "picked": "800,299",
+        "decided_by": "교차",
+        "ok": true
+      },
+      {
+        "id": 29,
+        "named": 0,
+        "crossings": 3,
+        "target": "920,321",
+        "picked": "980,316",
+        "decided_by": "교차",
+        "ok": false
+      },
+      {
+        "id": 30,
+        "named": 0,
+        "crossings": 6,
+        "target": "620,343",
+        "picked": "680,336",
+        "decided_by": "교차",
+        "ok": false
+      },
+      {
+        "id": 31,
+        "named": 0,
+        "crossings": 5,
+        "target": "680,365",
+        "picked": "740,361",
+        "decided_by": "교차",
+        "ok": false
+      },
+      {
+        "id": 32,
+        "named": 0,
+        "crossings": 4,
+        "target": "740,260",
+        "picked": "800,245",
+        "decided_by": "교차",
+        "ok": false
+      },
+      {
+        "id": 33,
+        "named": 0,
+        "crossings": 4,
+        "target": "800,282",
+        "picked": "883,270",
+        "decided_by": "교차",
+        "ok": false
+      },
+      {
+        "id": 34,
+        "named": 2,
+        "crossings": 3,
+        "target": "920,304",
+        "picked": "—",
+        "decided_by": "사슬(명시 점)",
+        "ok": null
+      },
+      {
+        "id": 35,
+        "named": 0,
+        "crossings": 5,
+        "target": "620,326",
+        "picked": "664,319",
+        "decided_by": "교차",
+        "ok": false
+      },
+      {
+        "id": 36,
+        "named": 2,
+        "crossings": 5,
+        "target": "680,348",
+        "picked": "—",
+        "decided_by": "사슬(명시 점)",
+        "ok": null
+      },
+      {
+        "id": 37,
+        "named": 1,
+        "crossings": 6,
+        "target": "740,370",
+        "picked": "—",
+        "decided_by": "사슬(명시 점)",
+        "ok": null
+      },
+      {
+        "id": 38,
+        "named": 1,
+        "crossings": 3,
+        "target": "800,265",
+        "picked": "—",
+        "decided_by": "사슬(명시 점)",
+        "ok": null
+      },
+      {
+        "id": 39,
+        "named": 0,
+        "crossings": 2,
+        "target": "920,287",
+        "picked": "980,277",
+        "decided_by": "교차",
+        "ok": false
+      },
+      {
+        "id": 40,
+        "named": 1,
+        "crossings": 4,
+        "target": "620,309",
+        "picked": "—",
+        "decided_by": "사슬(명시 점)",
+        "ok": null
+      },
+      {
+        "id": 41,
+        "named": 2,
+        "crossings": 5,
+        "target": "680,331",
+        "picked": "—",
+        "decided_by": "사슬(명시 점)",
+        "ok": null
+      },
+      {
+        "id": 42,
+        "named": 1,
+        "crossings": 5,
+        "target": "740,353",
+        "picked": "—",
+        "decided_by": "사슬(명시 점)",
+        "ok": null
+      },
+      {
+        "id": 43,
+        "named": 0,
+        "crossings": 5,
+        "target": "800,375",
+        "picked": "800,375",
+        "decided_by": "교차",
+        "ok": true
+      }
+    ],
+    "angle_error_rad_max": 0.03,
+    "fixtures": 1,
+    "seeds": 1,
+    "seed": 20260831,
+    "reachability_value_fixture_determined": true,
+    "scene_longest_segment_world": 5.377829,
+    "depth_spread_relative": 0.584061,
+    "random_baseline_rate": 0.7333,
+    "what_the_rate_does_not_say": "이 비는 «자가 잘 고른다»를 못 말한다 — n=24에서 균일 무작위 기준선과 구별되지 않는다. 이 팔이 하는 주장은 「고르기가 의도를 못 맞힌다」 하나이고 그 방향은 두 수 어느 쪽으로도 같다.",
+    "what_this_does_not_say": "이 비는 «자가 의도한 교차를 고르는가»만 잰다. 실기기의 손 각도 오차 분포는 아직 표본이 없다(AS-C1) — 여기 각도는 축 판정 대역의 절반을 균등으로 깐 것이다. 또 **정확히 축으로 그은 획은 후보가 전부 동점**이라 이 자가 아무것도 안 가른다 — 그때는 첫 교차가 결정론으로 뽑힌다(`lift.ts`의 동점 규칙)."
+  },
+  "falsification": {
+    "two_named_vs_axis": {
+      "real_a_px": 0,
+      "real_b_px": 1.1368683772161603e-13,
+      "placebo_b_px": 4.9337,
+      "note": "위약은 「축이 이긴다」로 짠 기하다 — 같은 단언을 걸면 실패한다(판별력의 출처)."
+    },
+    "axis_beats_offplane_crossing": {
+      "candidates": 2,
+      "placebo_dir_abs_cos_vs_axis": 0.345053,
+      "far_end_moved_world": 22.085803,
+      "note": "발판의 세로 넷은 전부 vp1 평면이라 거기서는 두 답이 우연히 같다 — 판을 따로 지어 얻은 판별력이다."
+    }
+  },
+  "pitfalls": [
+    "#42",
+    "#54",
+    "#71",
+    "#84",
+    "#85",
+    "#86",
+    "#88",
+    "#16",
+    "#26",
+    "#5"
+  ],
+  "selfcheck_notes": {
+    "exact_zero_ends_kept": "`rows[].ends_kept_px`의 0과 `principle_d.worst_px` 2.5e-13은 **측정이 아니라 구성상 보장의 확인**이다(§5.1 유형 3) — 명시 점을 그대로 쓰고 나머지 끝만 그 화면점의 광선 위에서 풀기 때문이다. **임계로 안 쓴다**. 판별력은 `falsification.two_named_vs_axis.placebo_b_px`(4.9337 px)가 든다.",
+    "tie_at_1e_26": "`three_crossing_choice`가 «명시 점 0 + 축» 갈래를 재므로 tie는 거짓이고 편차가 실제로 갈린다(117.3 / 32.57 / 51.25 px²). 「명시 점 0 · 축 없음」 갈래는 자를 안 부르므로 그 줄로 재면 ~1e-26 동점이 나온다(AS-C137 ㉢).",
+    "misacquisition_denominator": "분모는 「교차가 **정했다**」이지 「교차가 **있다**」가 아니다 — 다른 패스가 세운 획을 `decided_by_other_pass`로 뺀다(2차 리뷰어 [13]).",
+    "single_seed": "`seeds: 1` · `fixtures: 1`이고 `reachability_value_fixture_determined: true`다 — 후보 수 분포는 픽스처가 정한다. 시드 변동폭을 안 쟀다(#14의 미측정)."
+  },
+  "what_this_does_not_say": "이 표는 **작도 포즈**의 것이고 획이 직선 하나인 경우만 본다. 오획득률(붐비는 장면에서 엉뚱한 교차를 고르는 비율)은 `xint37_measure`가 따로 잰다."
+}

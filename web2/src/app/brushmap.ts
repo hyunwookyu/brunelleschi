@@ -6,6 +6,7 @@ import { MAT, gradeOf, widthOf } from '../core/material'
 import { pressAlpha, pressWidthFactor } from '../core/press'
 import type { Grade, Stroke } from '../core/types'
 import { C } from '../core/constants'
+import { bodyHex } from '../core/waitfade'
 
 // ── 매핑(2-c) — GRADES → 내장 브러시 ─────────────────────────────────────
 // 2H·HB·2B·rotring(INK)은 이름 그대로다. **H·F·B는 내장에 없다** — brush.add로 새 질감을
@@ -45,11 +46,22 @@ export const weightOf = (s: Stroke): number => widthOf(s)
  *  이 함수를 «brush 모드의 획 색 자리»로 가리킨다(#65 — 정본에서 안 갈라지게 한 줄로). */
 export const strokeColor = (g: Grade): string => alphaColor(MAT[g].color, MAT[g].alpha)
 
+/** **대기·정착의 몸체 색**(web2-37 2번) — 색상만 `bodyHex`가 정하고 **알파는 재료 그대로**다.
+ *  그래서 등급 축(농도)과 상태 축(색상)이 안 섞인다: 2H 대기선은 옅은 청색이고
+ *  2B 대기선은 진한 청색이며, 둘 다 «아직 진짜가 아님»을 같은 채널로 말한다.
+ *  `mix === 0`이면 `strokeColor`와 **같은 문자열**이다(확정 픽셀 무회귀 — bodyHex 주석). */
+export const strokeColorMix = (g: Grade, mix: number): string =>
+  alphaColor(bodyHex(g, mix), MAT[g].alpha)
+
 /** **보정 켠 획의 색**(web2-26 6번) — 같은 색상, **알파만** 압력이 정한다.
  *  ⛔ 새 색을 안 짓는다(#54): 천장은 `MAT[g].alpha` 그대로이고 아래로만 내려간다.
  *  `pMapped`는 이미 재매핑된 표현 압력(0..1)이다 — 재매핑은 `core/press.ts`의 몫. */
 export const strokeColorAt = (g: Grade, pMapped: number): string =>
   alphaColor(MAT[g].color, pressAlpha(g, pMapped))
+
+/** 보정 켠 획의 **대기·정착 색** — 위 둘의 곱이다(색상은 상태 · 알파는 압력). */
+export const strokeColorAtMix = (g: Grade, pMapped: number, mix: number): string =>
+  alphaColor(bodyHex(g, mix), pressAlpha(g, pMapped))
 
 /** 보정 켠 획의 굵기 — 기본 굵기 × 압력 배수(농도보다 완만하다 · 지시 3) */
 export const weightAt = (s: Stroke, pMapped: number): number => widthOf(s) * pressWidthFactor(pMapped)

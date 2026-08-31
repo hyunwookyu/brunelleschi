@@ -122,88 +122,81 @@ async function setup(page: Page) {
 
 const BOX = { x0: 225, y0: 575, x1: 255, y1: 705 } as const
 
-test('3-a — 대기 획은 자기 시점에서만: 작도 포즈 잉크 > 0 → 궤도(>창) 후 0 → 되돌리면 다시 보인다(반증)', async ({ page }) => {
+test('3-a → **37-4로 바뀌었다**: 대기 획은 궤도에서 «옅어지는» 것이 아니라 **버려진다**', async ({ page }) => {
+  // ⚠⚠ **규칙이 대체됐다**(web2-37 4번 · 사용자 문면): 「시점을 돌렸을 때 대기선은 아예
+  //    사라지는 게 맞다. 비슷한 구도라도 자꾸 다시 생기니 불편하다.」
+  //    web2-14/16의 감쇠(자기 시점에서만 보인다 · 돌아오면 다시 보인다)가 **바로 그
+  //    「자꾸 다시 생긴다」**였다. 그러므로 옛 문면을 지우지 않고 **뒤집힌 자리에 그대로
+  //    둔다**(#57 — 지우면 그 자리가 조용해진다): 창 밖에서 0인 것은 같고, **돌아와도 0**인
+  //    것이 달라진 점이다.
   await setup(page)
-  // 허공의 **미연결 세로 획** — 대기로 남는다(게이지는 한 번뿐 — 두 번째 화면 평행
-  // 미연결 획은 대기다, NOTES 「첫 앵커」). ⚠ 자유 대각선은 안 된다 — 지평선과 만나
-  // 두 번째 소실점을 만들어 버린다(첫 실행이 그랬다 — vpx −75·f²>0로 승격 발화).
-  await drawLine(page, 240, 590, 240, 690)
+  await drawLine(page, 240, 590, 240, 690)           // 미연결 세로 획 — 대기
   const waiting = await page.evaluate(() => (window as any).__b2.app.lift.waiting.length)
-  expect(waiting).toBeGreaterThan(0)                 // 대기가 실제로 있다(#38 — 대상 0 방지)
-  // web2-16 3-a: 몸체가 **흑연 파선**으로 #brushc에 그려진다 — 잉크 겹의 벡터 점선은
-  // 없어야 한다(«벡터 점선을 버리고 brush 흑연으로»의 직접 판).
+  expect(waiting, '대기가 실제로 있다(#38 — 대상 0 방지)').toBeGreaterThan(0)
+  const strokes0 = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
   const atDraw = await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
-  expect(atDraw.count, '잉크 겹 벡터 점선이 없다(3-a)').toBe(0)
-  const atDrawBrush = await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
-  expect(atDrawBrush, '흑연 파선 몸체가 «보이는» 흑연 겹에 있다').toBeGreaterThan(0)
+  expect(atDraw.count, '잉크 겹 벡터 점선이 없다(web2-16 3-a는 그대로다)').toBe(0)
+  expect(await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1),
+    '흑연 파선 몸체가 «보이는» 흑연 겹에 있다').toBeGreaterThan(0)
 
-  // 궤도 — 감쇠 창(WAIT_FADE_DEG=30°)을 확실히 넘긴다. 회전량은 앱의 사원수로 확인.
   await page.mouse.move(600, 400)
   await page.mouse.down({ button: 'middle' })
   await page.mouse.move(900, 470, { steps: 10 })
   await page.mouse.up({ button: 'middle' })
   await settle(page)
-  expect(await poseDeg(page)).toBeGreaterThan(35)    // 창 밖이다
+  expect(await poseDeg(page)).toBeGreaterThan(35)
 
-  const afterOrbit = await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
-  expect(afterOrbit.count).toBe(0)                   // «자기 시점에서만 보인다» — 0 도달
-  // 겹 ② — brush 질감 몸체도 비어 있다(#67 · [26]: 대기 획을 그리는 겹은 둘 다 재야 한다)
+  expect((await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)).count).toBe(0)
   expect(await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)).toBe(0)
-  // 합성 기준 — 사람이 보는 화면(스크린샷)의 이 상자. 아래 되돌림과의 diff가
-  // «합성 채널이 이 획을 실제로 본다»의 증인이다(겹별 0 + 합성 감도 = 합성에서 사라짐).
-  const fadedShot = await shot(page, BOX.x0, BOX.y0, BOX.x1 - BOX.x0, BOX.y1 - BOX.y0)
+  // **문서에서도 갔다** — 옛 규칙과 갈리는 자리가 여기다(옛 판은 대기가 남아 있었다)
+  const after = await page.evaluate(() => ({
+    waiting: (window as any).__b2.app.lift.waiting.length,
+    strokes: (window as any).__b2.app.doc.strokes.length,
+  }))
+  expect(after.waiting, '대기가 문서에서 갔다').toBe(0)
+  expect(after.strokes).toBe(strokes0 - waiting)
 
-  // ── 반증(D-3): 설정을 꺼서(옛 동작) 같은 자리에서 잉크가 «남는» 것을 본다 ──
+  // 돌아와도 **안 돌아온다** — 그것이 사용자가 요구한 것이다
+  await page.click('#btn-draw-view')
+  await settle(page)
+  expect(await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1), '돌아와도 0').toBe(0)
+
+  // ⚠ 감쇠 설정을 꺼도(옛 동작) **안 돌아온다** — 획 자체가 없기 때문이다.
+  //    옛 반증(설정을 끄면 잉크가 남는다)이 여기서 뒤집힌 것을 그대로 적어 둔다.
   await page.evaluate(() => (document.getElementById('chk-waitfade') as HTMLInputElement).click())
   await settle(page)
-  const oldBehavior = await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
-  expect(oldBehavior.count).toBeGreaterThan(0)       // 옛 동작(A-4) — 벡터 점선이 흐림 0.3으로 눌어붙는다
-  expect(oldBehavior.alphaSum).toBeGreaterThan(0)    // (0.3 대역의 알파 비교 기준이던 atDraw 잉크가
-                                                     //  3-a로 0이 됐다 — 옛 경로 생존만 잰다)
-  // 합성 감도 증인 — 되돌리자 합성 화면이 그 상자에서 실제로 달라진다(스크린샷 diff > 0).
-  const unfadedShot = await shot(page, BOX.x0, BOX.y0, BOX.x1 - BOX.x0, BOX.y1 - BOX.y0)
-  const d = diffCount(fadedShot, unfadedShot)
-  console.log(`[측정] waitfade 합성 diff(감쇠 ↔ 옛 동작) ${d}px`)
-  expect(d).toBeGreaterThan(0)
+  expect((await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)).count,
+    '감쇠를 꺼도 안 돌아온다 — 감쇠의 문제가 아니라 획이 버려졌기 때문이다').toBe(0)
 })
 
-test('3-b — 즉시 끊김·복귀: 창 안 어디서든 같은 파선(페이드 없음) · 나가면 0 · 돌아오면 다시 보인다', async ({ page }) => {
+test('3-b → **37-4로 바뀌었다**: 창(WAIT_FADE_DEG)은 이제 대기 획에 안 걸린다 · 실행취소로 되살아난다', async ({ page }) => {
+  // 옛 문면은 「창 안 어디서든 같은 파선 · 나가면 0 · 돌아오면 다시 보인다」였다.
+  // 37-4는 **창을 안 본다** — 광선이 바뀌면 그 순간 버린다. 창 «안»의 작은 궤도에서도 간다.
+  // 대신 **실행취소로 되살아난다**(지시 문면) — 그것이 이 팔의 둘째 절반이다.
   await setup(page)
-  await drawLine(page, 240, 590, 240, 690)           // 미연결 세로 획 — 대기
+  await drawLine(page, 240, 590, 240, 690)
   const at0 = await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
   expect(at0).toBeGreaterThan(0)
-  // 창 **안** 중간 각도로 궤도 — 파선이 «같은 픽셀»로 남아야 한다(페이드 없음 — 3-b 반증:
-  // 그라디언트가 되살아나면 중간 각도의 표시가 옅어져/줄어 이 등식이 깨진다).
   await page.mouse.move(600, 400)
   await page.mouse.down({ button: 'middle' })
-  await page.mouse.move(700, 425, { steps: 6 })      // 작은 궤도
+  await page.mouse.move(700, 425, { steps: 6 })      // **창 안**의 작은 궤도
   await page.mouse.up({ button: 'middle' })
   await settle(page)
   const deg1 = await poseDeg(page)
-  expect(deg1).toBeGreaterThan(3)                    // 실제로 돌았고
-  expect(deg1).toBeLessThan(30)                      // 창 안이다
-  const atMid = await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
-  // ⚠ 픽셀 «수»는 알파 감쇠에 둔감하다(수는 면적이다 — 3부 리뷰 [2]). 이 등식의 판별력은
-  // «옛 brushc 조건(atOwnPose에서만 그림)»에 대해서다 — 그 조건이면 atMid가 0이다.
-  // 그 반증을 실제로 실행했다(brushlayer 조건을 atOwnPose로 임시 되돌림 → 이 줄 실패 —
-  // NOTES 3부). 알파 감쇠형 페이드의 반증은 단위 팔(「창 안 어디든 1」 — 그라디언트 복원
-  // 실행으로 실패 확인)이 든다 — 두 반증이 두 손잡이를 나눠 든다.
-  expect(atMid, '창 안 — 원래 파선 그대로(옛 조건이면 0이 된다)').toBe(at0)
-  // 창 밖으로 — 즉시 0
-  await page.mouse.move(600, 400)
-  await page.mouse.down({ button: 'middle' })
-  await page.mouse.move(950, 480, { steps: 8 })
-  await page.mouse.up({ button: 'middle' })
+  expect(deg1).toBeGreaterThan(3)
+  expect(deg1, '창 안이다 — 옛 규칙이면 여기서 파선이 그대로 남는다').toBeLessThan(30)
+  expect(await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1),
+    '창 안이어도 간다 — 기준은 각도가 아니라 «광선이 바뀌었는가»다').toBe(0)
+  expect(await page.evaluate(() => (window as any).__b2.app.lift.waiting.length)).toBe(0)
+
+  // 실행취소로 되살아난다 — ⚠ **그 궤도까지** 무른다(그래서 작도 시점 버튼이 필요 없다).
+  // 획만 되돌리는 판에서는 이 다음 시점 변경에서 도로 사라졌다(실측 — `Op.pose` 주석).
+  await page.keyboard.press('Control+z')
   await settle(page)
-  expect(await poseDeg(page)).toBeGreaterThan(35)
-  expect(await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1), '창 밖 — 즉시 0').toBe(0)
-  // 돌아오면 다시 보인다(사람 문면 «돌아오면 보이도록») — 작도 시점 버튼이 정확 복귀의 앱 경로다
-  await page.click('#btn-draw-view')
-  await settle(page)
-  const back = await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
-  expect(back, '돌아오면 다시 보인다').toBeGreaterThan(0)
-  const nWaiting = await page.evaluate(() => (window as any).__b2.app.lift.waiting.length)
-  expect(nWaiting).toBeGreaterThan(0)                // 문서에서 안 지워졌다(3-b ⚠⚠)
+  expect(await page.evaluate(() => (window as any).__b2.app.lift.waiting.length),
+    '실행취소로 대기 획이 문서에 돌아온다').toBeGreaterThan(0)
+  expect(await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1),
+    '화면에도 돌아온다').toBeGreaterThan(0)
 })
 
 test('3-a — 승격된 획은 영향이 없다: 궤도를 돌려도 3D가 제자리를 댄다(#gl 몫 — 문서로 확인)', async ({ page }) => {
@@ -283,73 +276,50 @@ test.afterAll(async ({ }, testInfo) => {
   }, null, 1))
 })
 
-test('web2-14 3번 — 제스처 동안 판정 동결: 왕복 궤도에서 표시 변화 0회 · 놓으면 재판정', async ({ page }) => {
-  // 실기기 판정 「돌리면 서서히 사라지고 돌아오면 다시 생겨 성가시다」의 수리 배선 팔.
-  // 감쇠 자체는 그대로다(위 3-a 팔이 지킨다 — 뗀 뒤에는 창 밖 0). 여기는 **드래그 중**
-  // 표본이다: 동결이 배선됐으면 드래그 내내 상수다(수리 전에는 표본마다 줄었다 —
-  // falsification 실행). ⚠ 두 겹을 다 잰다(#67 — 3번 2차 [6/3]): #ink(점선)와
-  // #brushc(질감 몸체 — 기본 렌더러의 사람이 보는 몸체) 둘 다 동결값으로 상수여야 한다.
+test('web2-14 3번 → **37-4로 바뀌었다**: 왕복 궤도에서 표시가 «한 번도 안 돌아온다» · op는 하나', async ({ page }) => {
+  // 옛 문면: 「드래그 중 감쇠 판정을 동결해 표시 변화 0회」. 그 수리는 실기기 판정
+  // 「돌리면 서서히 사라지고 **돌아오면 다시 생겨** 성가시다」의 앞 절반이었다.
+  // 37-4가 뒷 절반을 없앤다 — **다시 생기지 않는다**(획이 버려졌다).
+  // 그래서 이 팔이 재는 것이 바뀐다: 변화 0회는 그대로인데 그 값이 «동결된 파선»이 아니라
+  // **0**이고, 왕복해 돌아와도 0이다. 그리고 드래그 12표본이 **op를 하나만** 쌓는다
+  // (프레임마다 쌓으면 실행취소가 궤도 픽셀 수만큼 필요해진다).
   await setup(page)
   await drawLine(page, 240, 590, 240, 690)           // 대기 획(3-a와 같은 자리)
-  // web2-16 3-a: 몸체는 흑연 파선(#brushc)이다 — 잉크 겹은 구조적으로 0이고, 그 0이
-  // 드래그 내내 유지되는 것 자체가 «벡터 점선이 안 돌아온다»의 증인이다.
   const atDraw = await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
-  expect(atDraw.count, '잉크 겹 벡터 점선 없음(3-a)').toBe(0)
+  expect(atDraw.count, '잉크 겹 벡터 점선 없음(web2-16 3-a는 그대로다)').toBe(0)
   const atDrawBrush = await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
   expect(atDrawBrush, 'brush 겹 판별력 — 파선 몸체가 실제로 있다').toBeGreaterThan(0)
+  const undo0 = await page.evaluate(() => (window as any).__b2.app.undoStack.length)
 
   await page.mouse.move(600, 400)
   await page.mouse.down({ button: 'middle' })
-  const samples: number[] = []
   const brushSamples: number[] = []
   for (let i = 1; i <= 6; i++) {                     // 왕복 — 가고
     await page.mouse.move(600 + i * 40, 400); await settle(page)
-    samples.push((await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)).alphaSum)
     brushSamples.push(await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1))
   }
-  // 최원점의 회전량 — 감쇠 창(30°)을 실제로 넘는 왕복이다(3번 2차 [6]: 팔이 말해야 한다)
   const farDeg = await poseDeg(page)
   expect(farDeg, '왕복의 판별력 — 창 밖까지 갔다').toBeGreaterThan(30)
   expect(await page.evaluate(() => (window as any).__b2.app.fadePose !== null),
-    '드래그 중 — 판정이 동결돼 있다').toBe(true)
-  for (let i = 5; i >= 0; i--) {                     // 오고 — **정확 재추적이 아니다**(#68):
-    await page.mouse.move(600 + i * 40, 406); await settle(page)   // y를 6px 어긋나게
-    samples.push((await inkStat(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)).alphaSum)
+    '드래그 중 — 판정 동결 배선은 그대로다(승격 획의 질감이 그것을 쓴다)').toBe(true)
+  for (let i = 5; i >= 0; i--) {                     // 오고 — 정확 재추적이 아니다(#68)
+    await page.mouse.move(600 + i * 40, 406); await settle(page)
     brushSamples.push(await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1))
   }
   await page.mouse.up({ button: 'middle' })
   await settle(page)
-  const count = (arr: number[], base: number) => {
-    let n = 0
-    for (let i = 1; i < arr.length; i++) if (Math.abs(arr[i]! - arr[i - 1]!) > base * FREEZE.DEADBAND) n++
-    return n
-  }
-  const changes = count(samples, atDraw.alphaSum)
-  const brushChanges = count(brushSamples, Math.max(1, atDrawBrush))
-  console.log(`[측정] 감쇠 동결 — 드래그 12표본 변화 ink ${changes}회 · brush ${brushChanges}회 · 최원점 ${farDeg.toFixed(1)}°`)
-  freezeLedger['samples'] = { ink_alpha: samples, brush_px: brushSamples,
-    base_ink_alpha: atDraw.alphaSum, base_brush_px: atDrawBrush,
-    changes_ink: changes, changes_brush: brushChanges, far_deg: farDeg }
-  expect(changes, '돌리는 동안 아무 일도 안 일어난다(ink — 0이 0으로 유지)').toBe(0)
-  expect(brushChanges, '돌리는 동안 아무 일도 안 일어난다(brush 몸체 — #67 두 겹)').toBe(0)
-  // ⚠ **web2-18 3부에서 이 단언이 «동일»에서 «같은 대역»으로 바뀌었다.** 제스처 동안
-  //    흑연은 «가로로 누워 구운 타일을 회전·신축해 붙인 것»이라(3-c ㉢) 그 자리에서 바로
-  //    그린 것과 픽셀이 같지 않다 — 붓의 입자 무늬가 회전 불변이 아니기 때문이다.
-  //    **동결의 주장은 그대로 산다**: 위 `brushChanges === 0`이 「돌리는 동안 아무 일도
-  //    안 일어난다」를 재고, 아래 `after === atDrawBrush`가 「놓으면 정확히 원래대로」를 잰다.
-  //    여기서는 그 대가의 **크기**를 값으로 남긴다(임계를 만져 옛 판정을 되살리지 않는다).
-  const tileVsRedraw = brushSamples[0]! - atDrawBrush
-  freezeLedger['tile_vs_redraw_px'] = {
-    grab_redraw: atDrawBrush, gesture_tile: brushSamples[0]!, delta: tileVsRedraw,
-    ratio: +(brushSamples[0]! / Math.max(1, atDrawBrush)).toFixed(3),
-    note: 'web2-18 3-c ㉢의 대가. 알파>0 칸 수는 **늘어난다**(아핀 재표본이 입자를 옅게 퍼뜨린다) — 어두운 칸 수는 반대로 준다(gesture_tiles_web2.json의 release_diff). 정본은 놓은 뒤 화면이다.',
-  }
-  expect(brushSamples[0]!, '동결값이 잡는 순간과 같은 대역이다(타일 대가는 ±40% 안)')
-    .toBeGreaterThan(atDrawBrush * 0.6)
-  expect(brushSamples[0]!).toBeLessThan(atDrawBrush * 1.6)
-  // 놓았다 — 재판정 한 번: 근사 복귀(6px 오차)여도 창 안이라(이진) 원래 파선 그대로다
   const after = await brushPix(page, BOX.x0, BOX.y0, BOX.x1, BOX.y1)
-  expect(after, '뗀 뒤 — 창 안 복귀는 원 파선(이진 1)').toBe(atDrawBrush)
+  const undo1 = await page.evaluate(() => (window as any).__b2.app.undoStack.length)
+  console.log(`[측정] 37-4 왕복 — 12표본 ${JSON.stringify(brushSamples)} · 뗀 뒤 ${after} `
+    + `· 최원점 ${farDeg.toFixed(1)}° · op ${undo1 - undo0}개`)
+  freezeLedger['samples'] = {
+    brush_px: brushSamples, base_brush_px: atDrawBrush, after_release: after,
+    far_deg: farDeg, ops_pushed: undo1 - undo0,
+    note: 'web2-37 4번으로 규칙이 바뀌었다 — 값이 «동결된 파선»이 아니라 0이고, 돌아와도 0이다.',
+  }
+  expect(brushSamples.every(v => v === 0), '드래그 내내 0 — 한 번도 안 돌아온다').toBe(true)
+  expect(after, '뗀 뒤에도 0').toBe(0)
+  expect(undo1 - undo0, '12표본이 op를 하나만 쌓는다').toBe(1)
   expect(await page.evaluate(() => (window as any).__b2.app.fadePose === null),
     '뗀 뒤 — 동결이 풀렸다').toBe(true)
 })

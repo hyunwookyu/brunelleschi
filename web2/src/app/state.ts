@@ -20,7 +20,8 @@ import { rdpIndices, distToPolyline } from '../core/freehand'
 import { loopAt, faceAt, faceScreen, resolveFaces, resolveFace, allLoops, inPoly, type ResolvedFace, type LoopCandidate } from '../core/face'
 import { bakeUnderlay } from '../core/make2d'
 import { geomSize3 } from '../core/osnap'
-import { C } from '../core/constants'
+import { C, SETTLE_ANIM_MS } from '../core/constants'
+import { settleFade, waitInkMode } from '../core/waitfade'
 import { cubeLayoutFor } from '../core/viewcube'
 import { fitPose, fitView, type Screen as FitScreen } from '../core/zoomfit'
 import { lensAllowed, lensAn, lensF, lensK, lensView, clampViewF, lensFromStops } from '../core/lens'
@@ -90,6 +91,12 @@ export interface Op {
   textified?: number[]
   /** **도면에 남긴 재기**(web2-32 6번) — 사람이 한 것이므로 실행취소 대상이다(면과 같은 급) */
   measuresAdded?: Measure[]
+  /** **광선이 바뀌어 대기 획을 버린 op**(web2-37 4번)가 함께 싣는 시점.
+   *  ⚠⚠ 획만 되돌리면 «되살아난다»가 **쓸모없다**: 돌아온 대기 획의 내용은 「그 시점의
+   *  화면 위 어디」인데 지금 시점이 그 시점이 아니고, 그 다음 시점 변경에서 **또 버려진다**
+   *  (실측: 실행취소 → 작도 시점 버튼 → 도로 사라졌다). 그래서 이 op는 **그 궤도까지**
+   *  되돌린다 — 실행취소 한 번이 「방금 돌린 것」을 통째로 무른다. */
+  pose?: { before: CamPose; after: CamPose; viewFBefore: number | null; viewFAfter: number | null }
 }
 
 export interface App {
@@ -197,6 +204,11 @@ export interface App {
    *  에서 0 도달). 끄면 종전 동작(항상 그리되 흐림 0.3) **그대로**다(A-4 — 되돌릴 길.
    *  실기기 판정은 DEFERRED web2-13 표). 설정 「대기 획은 그린 시점에서만」. */
   waitFade: boolean
+  /** **정착 시각**(web2-37 2번) — 획 id → 대기가 확정이 된 `performance.now()`.
+   *  청색이 흑연으로 바뀌는 짧은 전이(`SETTLE_ANIM_MS`)의 시작점이고, **표현만** 든다:
+   *  저장하지 않고(런타임), 판정·좌표·실행취소 어느 것도 이 표를 안 읽는다.
+   *  갱신은 `recompute` 한 자리다 — 「직전 대기 집합에 있었고 지금 확정인 획」. */
+  settledAt: Map<number, number>
   /** **밑그림의 가린 선을 보이는가**(web2-23 2-a) — 기본 **켜짐**: 은선이 보이는 편이
    *  제도에 가깝고(가린 선 = H), 빼는 것은 정리된 그림을 원할 때다(사람의 문면
    *  「옵션에 따라」). 표시 팝오버의 「가린 선(은선)」. ⚠ **표시 손잡이일 뿐이다** —
@@ -329,6 +341,7 @@ export function createApp(W: number, H: number): App {
     horizonPref: null,
     grid: false,
     waitFade: true,
+    settledAt: new Map(),
     showHidden: true,       // 기본은 H로 표시(2-a — 은선이 보이는 편이 제도에 가깝다)
     underlayNoticed: false,
     extAcq: newExtDwell(),
@@ -433,7 +446,9 @@ export function setViewF(app: App, f: number | null): boolean {
   if (!lensAllowed(app.lift.an)) { app.viewF = null; return false }
   const next = f === null ? null : clampViewF(app.lift.an, f)
   if (next === app.viewF) return f === null || next !== null
+  const prev = { pose: app.pose, viewF: app.viewF }
   app.viewF = next
+  dropWaitingOnRayChange(app, prev)   // 렌즈도 광선을 바꾼다(f가 달라지면 같은 화면점이 다른 광선이다)
   for (const l of app.listeners) l()
   return true
 }
@@ -454,6 +469,9 @@ function recompute(app: App) {
   // 문서가 바뀌면 면 일괄 후보는 낡는다(4부) — 조용히 낡은 폴리곤을 들고 있지 않는다.
   // commitCandidates는 recompute 뒤에 볼일이 없으므로 이 무효화가 확정도 겸해 닫는다.
   app.faceCandidates = null
+  // 정착 사건(web2-37 2번)의 «직전» 쪽 — 다시 올리기 **전에** 읽는다. 아래에서 새 결과와
+  // 견줘 「대기였다가 확정이 된 획」을 낸다(그 획 하나가 색을 바꾼다 — 두 선이 안 남는다).
+  const wasWaiting = new Set(app.lift.waiting)
   app.lift = liftAll(app.doc, app.own3d)
   // ── 보기 렌즈(web2-31 2번) — **승격이 일어나면 버린다** ──────────────────────
   // 카메라 서명(f·주점·fSource)이 움직인 것이 승격이고(web2에 실재하는 것은 P1→P2 하나 —
@@ -490,8 +508,44 @@ function recompute(app: App) {
     }
   } else app.lastCamSig = null
   app.faces = resolveFaces(app.lift, app.doc.faces)
+  markSettled(app, wasWaiting)
   app.docVersion++
   for (const l of app.listeners) l()
+}
+
+// ── 정착 전이(web2-37 2번) — **표현만**. 기하·판정·저장 어느 것도 안 읽는다 ──────────
+//
+// ⚠ `app.lift`가 이 함수 위에서 **두 번** 세워질 수 있다(자립 굳힘의 재리프팅) —
+// 그래서 판정을 마지막 결과 하나로만 한다. 「직전에 대기였고 지금 확정」이 정착이다.
+// 되돌리기로 확정이 **풀리면** 그 획의 전이도 지운다(청색으로 돌아간 획에 전이가
+// 남아 있으면 다음 정착에서 창이 이미 지나 있다).
+function markSettled(app: App, wasWaiting: Set<number>) {
+  const now = performance.now()
+  for (const id of app.lift.lifted.keys()) if (wasWaiting.has(id)) app.settledAt.set(id, now)
+  for (const id of app.lift.waiting) app.settledAt.delete(id)
+  // 창을 지난 것은 버린다 — 표가 문서 크기로 자라지 않는다(전이는 순간의 것이다)
+  for (const [id, t] of app.settledAt) if (now - t >= SETTLE_ANIM_MS) app.settledAt.delete(id)
+}
+
+/** **획 몸체의 대기 혼합비**(web2-37 2번) — 1 = 대기(논포토 블루) · 0 = 확정(흑연).
+ *  `waiting`은 부르는 쪽이 이미 만든 판정을 받는다(`Set.has` — 겹마다 `waiting` 집합을
+ *  한 번 세우므로 여기서 배열을 다시 훑으면 O(n²)가 된다).
+ *  반증 손잡이(`off`/`all`)는 `bodyHex`가 아니라 **여기서도** 답한다 — 브러시 겹은
+ *  색을 `alphaColor`로 다시 섞으므로 혼합비 자체가 갈려야 위약 판이 성립한다. */
+export function inkMix(app: Pick<App, 'settledAt'>, waiting: boolean, id: number, now: number): number {
+  const mode = waitInkMode()
+  if (mode === 'off') return 0
+  if (mode === 'all') return 1
+  if (waiting) return 1
+  const t0 = app.settledAt.get(id)
+  return t0 === undefined ? 0 : settleFade(now - t0)
+}
+
+/** 지금 전이 중인 획이 있는가 — 프레임 고리가 이것을 보고 계속 다시 그린다.
+ *  없으면 평소처럼 «바뀔 때만» 그린다(평소에는 조용하다 — 지시 문면). */
+export function settleActive(app: Pick<App, 'settledAt'>, now: number): boolean {
+  for (const t of app.settledAt.values()) if (now - t < SETTLE_ANIM_MS) return true
+  return false
 }
 
 // ── 필압 보정(web2-26 6번 · 옵션 · 기본 꺼짐) ────────────────────────────────
@@ -1265,6 +1319,10 @@ export function undo(app: App) {
     const i = (app.doc.measures ?? []).findIndex(x => x.id === m.id)
     if (i >= 0) app.doc.measures!.splice(i, 1)
   }
+  // 광선이 바뀌어 버린 op는 **그 시점까지** 되돌린다(web2-37 4번 — 위 `Op.pose` 주석).
+  // ⚠ `setPose`를 안 부른다: 그것을 부르면 이 복원이 다시 «광선이 바뀌었다»로 읽혀
+  //    방금 돌려놓은 획을 그 자리에서 도로 버린다(자기 자신을 되돌리는 고리).
+  if (op.pose) { app.pose = op.pose.before; app.viewF = op.pose.viewFBefore }
   app.redoStack.push(op)
   recompute(app)
 }
@@ -1303,6 +1361,7 @@ export function redo(app: App) {
     if (t) t.text = 1
   }
   for (const m of op.measuresAdded ?? []) (app.doc.measures ??= []).push(m)
+  if (op.pose) { app.pose = op.pose.after; app.viewF = op.pose.viewFAfter }   // web2-37 4번
   app.undoStack.push(op)
   recompute(app)
 }
@@ -1450,8 +1509,50 @@ export function endErase(app: App) {
   }
 }
 
+/** ── 대기 획은 **광선이 바뀌면 버린다**(web2-37 4번) ─────────────────────────────
+ *
+ *  편의가 아니라 **정확성**의 문제다. 대기 획의 유일한 내용은 「그 시점의 화면 위 어디」다 —
+ *  3D가 없으니 공간에 자리가 없고 화면 좌표가 전부다. 시점이 바뀌면 그 좌표가 가리키던
+ *  **광선이 달라지므로 그 정보는 거짓이 된다.**
+ *
+ *  「애매하면 놓지 않되 버리지 않는다」와 안 부딪힌다(개정 2 §9.1): 그 원칙은 **아직 쓸 수
+ *  있는** 정보를 버리지 말라는 것이고, 시점이 바뀐 뒤의 대기 획은 쓸 수 있는 정보가 아니다.
+ *
+ *  ⚠ **가르는 기준은 「광선이 바뀌는가」 하나다** — 손잡이 이름이 아니다(#54):
+ *      버린다   포즈가 바뀌는 것(궤도 · 뷰 큐브 90° · 궤도 중의 팬/줌) · **렌즈 변경**
+ *      따라간다 작도 포즈의 이동·확대(`app.view`) — 화면평면이 미끄러질 뿐이다
+ *    그래서 이 함수를 부르는 자리는 `setPose`와 `setViewF` **둘뿐**이고, `setView`에는
+ *    안 걸린다. 그리려고 화면을 조금 밀었는데 긋던 것이 사라지면 못 쓴다.
+ *
+ *  **실행취소로 되살아난다** — 지우개와 같은 급의 op다. **경고는 안 띄운다**(조용해야 한다).
+ *  ⚠ 옐로·글씨·꺼진 겹의 획은 여기 안 걸린다 — 그것들은 `lift.waiting`에 아예 없다
+ *  (매체가 2D라 «대기»가 아니다. `lift.ts`가 `content`에서 거른다 — 별도 필터 ⛔ #54). */
+function dropWaitingOnRayChange(app: App, prev: { pose: CamPose; viewF: number | null }): void {
+  const ids = new Set(app.lift.waiting)
+  if (ids.size === 0) return
+  const removed: { stroke: Stroke; index: number }[] = []
+  for (let i = app.doc.strokes.length - 1; i >= 0; i--) {
+    const s = app.doc.strokes[i]!
+    if (!ids.has(s.id)) continue
+    removed.push({ stroke: s, index: i })
+    app.doc.strokes.splice(i, 1)
+  }
+  if (removed.length === 0) return
+  app.undoStack.push({
+    removed, added: [],
+    pose: { before: prev.pose, after: app.pose, viewFBefore: prev.viewF, viewFAfter: app.viewF },
+  })
+  app.redoStack = []
+  recompute(app)
+}
+
 export function setPose(app: App, pose: CamPose) {
+  const moved = app.pose.p.x !== pose.p.x || app.pose.p.y !== pose.p.y || app.pose.p.z !== pose.p.z
+    || app.pose.q.x !== pose.q.x || app.pose.q.y !== pose.q.y
+    || app.pose.q.z !== pose.q.z || app.pose.q.w !== pose.q.w
+  const prev = { pose: app.pose, viewF: app.viewF }
   app.pose = pose
+  if (moved) dropWaitingOnRayChange(app, prev)     // 광선이 바뀌었다(web2-37 4번)
   for (const l of app.listeners) l()
 }
 

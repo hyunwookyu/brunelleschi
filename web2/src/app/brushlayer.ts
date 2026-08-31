@@ -30,7 +30,7 @@
 
 import * as brush from 'p5.brush/standalone'
 import type { App } from './state'
-import { docToScreen, isDrawPose, activeGrade, draftBrushed, fadeRef, viewXf } from './state'
+import { docToScreen, isDrawPose, activeGrade, draftBrushed, fadeRef, viewXf, inkMix, settleActive } from './state'
 import { filmSplit, yellowVisible } from './filmlayer'
 import { atOwnPose, waitFadeFactor } from '../core/waitfade'
 import { project } from '../core/camera'
@@ -40,7 +40,7 @@ import { isFlat2d, type Stroke } from '../core/types'
 import { pt, type Pt } from '../core/vec'
 import type { Draft } from './render2d'
 // 매핑·색·필압 계수는 순수 모듈이다 — 단위가 WebGL 없이 잰다(test/brushmap.test.ts)
-import { BRUSH_OF, strokeColor, weightOf, pressureProfile, strokeColorAt, weightAt, rawPressProfile } from './brushmap'
+import { BRUSH_OF, strokeColor, weightOf, pressureProfile, strokeColorAt, weightAt, rawPressProfile, strokeColorMix, strokeColorAtMix } from './brushmap'
 import { remapPress } from '../core/press'
 
 export interface BrushLayer {
@@ -186,21 +186,26 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     !last || last.renderer !== app.renderer || last.docVersion !== app.docVersion ||
     last.pose !== app.pose || last.hold !== app.fadePose || last.s !== viewXf(app).s ||
     last.ox !== viewXf(app).ox || last.oy !== viewXf(app).oy || last.w !== cw || last.waitFade !== app.waitFade ||
-    last.lsig !== layersSig(app)
+    last.lsig !== layersSig(app) ||
+    // 정착 전이(web2-37 2번) — 색이 시간의 함수인 동안만 캐시를 연다. 창이 닫히면
+    // 이 항은 다시 false 고정이라 평소 프레임 수는 종전 그대로다.
+    settleActive(app, performance.now())
   const remember = (app: App) => {
     last = { renderer: app.renderer, docVersion: app.docVersion, pose: app.pose, hold: app.fadePose,
       s: viewXf(app).s, ox: viewXf(app).ox, oy: viewXf(app).oy, w: cw, waitFade: app.waitFade, lsig: layersSig(app) }
   }
 
-  function drawStroke(app: App, s: Stroke, a: Pt, b: Pt) {
+  /** `mix`(web2-37 2번) — 1이면 논포토 블루(대기) · 0이면 재료 그대로(확정).
+   *  기본값 0이라 **이 인자를 안 주는 호출은 종전과 한 비트도 안 다르다**. */
+  function drawStroke(app: App, s: Stroke, a: Pt, b: Pt, mix = 0) {
     const g = gradeOf(s)
     // ── 필압 보정(web2-26 6번 · 옵션) — **꺼짐이면 이 갈래에 한 번도 안 들어온다** ──
     // p5.brush는 **획당 한 색**이라 농도를 점별로 못 싣는다. 그래서 켠 획만 마디로 나눠
     // 마디마다 색·굵기를 다시 준다(마디 수 `C.PRESS_SEGMENTS` — 새 숫자 ⛔, PRESS_N 급).
-    if (drawStrokeCalibrated(app, s, a, b)) return
+    if (drawStrokeCalibrated(app, s, a, b, mix)) return
     brush.seed(s.id)          // 결정론 — 획마다 같은 시드(계약 3)
     brush.noiseSeed(s.id)
-    brush.set(BRUSH_OF[g], strokeColor(g), weightOf(s))
+    brush.set(BRUSH_OF[g], strokeColorMix(g, mix), weightOf(s))
     const prof = pressureProfile(s)
     if (!prof) {
       brush.line(a.x, a.y, b.x, b.y)
@@ -217,7 +222,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
    *  **아무것도 안 하고 false**를 돌려준다(종전 경로가 그대로 돈다 — 픽셀 무회귀의 근거).
    *  시드는 **획당 한 번**이다(계약 3) — 마디마다 `brush.line`을 불러도 시퀀스가 결정론이다
    *  (`drawWaitingDashed`가 이미 같은 규약으로 조각을 긋는다 — 선례를 따른다). */
-  function drawStrokeCalibrated(app: App, s: Stroke, a: Pt, b: Pt): boolean {
+  function drawStrokeCalibrated(app: App, s: Stroke, a: Pt, b: Pt, mix = 0): boolean {
     const cal = app.doc.press
     if (!cal || !cal.on) return false
     const raw = rawPressProfile(s)
@@ -231,7 +236,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
       const tm = (t0 + t1) / 2
       const pr = raw[Math.min(raw.length - 1, Math.round(tm * (raw.length - 1)))]!
       const pm = remapPress(pr, cal)
-      brush.set(BRUSH_OF[g], strokeColorAt(g, pm), weightAt(s, pm))
+      brush.set(BRUSH_OF[g], strokeColorAtMix(g, pm, mix), weightAt(s, pm))
       brush.line(a.x + (b.x - a.x) * t0, a.y + (b.y - a.y) * t0,
         a.x + (b.x - a.x) * t1, a.y + (b.y - a.y) * t1)
     }
@@ -274,11 +279,11 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
    *  패턴은 종전 벡터 점선의 규격 그대로(C.WAIT_DASH_* — 상태 채널의 연속성. #65:
    *  정보를 지우지 않는다 — 채널의 «재질»만 바뀐다). 좌표는 화면 px(계약 1).
    *  시드는 획당 한 번 — 조각마다 brush.line을 불러도 시퀀스가 결정론이다(계약 3). */
-  function drawWaitingDashed(s: Stroke, a: Pt, b: Pt) {
+  function drawWaitingDashed(s: Stroke, a: Pt, b: Pt, mix: number) {
     const g = gradeOf(s)
     brush.seed(s.id)
     brush.noiseSeed(s.id)
-    brush.set(BRUSH_OF[g], strokeColor(g), weightOf(s))
+    brush.set(BRUSH_OF[g], strokeColorMix(g, mix), weightOf(s))
     const L = Math.hypot(b.x - a.x, b.y - a.y)
     if (L < 1e-6) return
     const ux = (b.x - a.x) / L, uy = (b.y - a.y) / L
@@ -331,6 +336,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
       brush.translate(-cw / 2, -ch / 2)
       const atDraw = isDrawPose(app.pose)
       const waiting = new Set(app.lift.waiting)
+      const nowMs = performance.now()   // 정착 전이(web2-37 2번) — 한 프레임 안에서 한 시각
       const split = filmSplit(app)   // 위 획(활성 겹과 그 위)은 #layerc 몫(web2-20 3부)
       const yset = yellowVisible(app)  // 옐로 겹의 2D 획(web2-22 1부 — 그 종이·그 시점만)
       for (const s of app.doc.strokes) {
@@ -371,14 +377,14 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
             const wa = docToScreen(app, s.a), wb = docToScreen(app, s.b)
             if (offScreen(wa, wb)) { clipped++; continue }
             drawn++
-            drawWaitingDashed(s, wa, wb)
+            drawWaitingDashed(s, wa, wb, inkMix(app, true, id, nowMs))
           } else {
             const own = s.view ? !atDraw : atDraw
             if (!own) continue
             const oa = docToScreen(app, s.a), ob = docToScreen(app, s.b)
             if (offScreen(oa, ob)) { clipped++; continue }
             drawn++
-            drawStroke(app, s, oa, ob)
+            drawStroke(app, s, oa, ob, inkMix(app, true, id, nowMs))
           }
         } else {
           const seg = app.lift.lifted.get(id)
@@ -390,7 +396,7 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
           const sa = docToScreen(app, a), sb = docToScreen(app, b)
           if (offScreen(sa, sb)) { clipped++; continue }
           drawn++
-          drawStroke(app, s, sa, sb)
+          drawStroke(app, s, sa, sb, inkMix(app, false, id, nowMs))
         }
       }
       brush.pop()
@@ -539,9 +545,13 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
       const a = pt(x + TILE_PAD_PX, midY)
       const b = pt(x + TILE_PAD_PX + it.L, midY)
       // **확정 그리기와 같은 함수**를 부른다 — 타일이 «다른 붓»으로 구워지면 안 된다
-      const dashed = app.lift.waiting.includes(it.s.id) && app.waitFade
-      if (dashed) drawWaitingDashed(it.s, a, b)
-      else drawStroke(app, it.s, a, b)
+      const waiting = app.lift.waiting.includes(it.s.id)
+      const dashed = waiting && app.waitFade
+      // 색은 확정 그리기와 **같은 함수**에서 나온다 — 타일이 «다른 색»으로 구워지면
+      // 제스처 중에만 대기선이 흑연이 된다(그 결함은 조용하다).
+      const mix = inkMix(app, waiting, it.s.id, performance.now())
+      if (dashed) drawWaitingDashed(it.s, a, b, mix)
+      else drawStroke(app, it.s, a, b, mix)
       placed.push({ s: it.s, x, y, w: tw, h: it.h, L: it.L })
       x += tw
       rowH = Math.max(rowH, it.h)
