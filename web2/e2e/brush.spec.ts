@@ -5,7 +5,7 @@
 // 실기기만 아는 것: 「종이 같은가」 — 지시 문면대로 헤드리스가 못 잰다(DEFERRED 표).
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 

@@ -6,7 +6,7 @@
 // 썸네일 비용 원장(㉮/㉯ — web2-12 5번)은 그대로 잇는다: views_thumb_web2.json.
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 

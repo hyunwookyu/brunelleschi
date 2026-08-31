@@ -14,7 +14,8 @@
 // ⚠ `--workers=1`로 돌린다(cost18과 같은 규율 — 워커 둘이면 값이 배 가까이 부푼다).
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync, readFileSync } from 'node:fs'
+import { settleSlide } from './slidesettle'
+import { writeFileSync, mkdirSync, readFileSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
@@ -120,6 +121,7 @@ test('⑩ 3-b(영역 재조립)의 400획 프레임 비용 — 겹 없음/겹+�
 
   // ── 비교 칸: 트레이싱지 한 장 + 그 위 획 20 — 막이 보이는 상태로 같은 몸짓 ──────
   const layId = await page.evaluate(() => (window as any).__b2.diag.layerAdd('tracing'))
+  await settleSlide(page)     // web2-40 2번 — 동작 중 프레임은 slide40 ③의 몫이다
   expect(layId, '겹이 실제로 얹혔다(카메라 닫힘 게이트 통과)').not.toBeNull()
   await page.evaluate(() => {
     const b = (window as any).__b2
@@ -144,6 +146,7 @@ test('⑩ 3-b(영역 재조립)의 400획 프레임 비용 — 겹 없음/겹+�
   await page.evaluate(() => {
     const b = (window as any).__b2
     b.diag.layerAdd('yellow'); b.diag.layerAdd('yellow')
+    b.diag.slideSettleForTest()   // web2-40 2번 — 페이지 안이라 `settleSlide`와 같은 함수를 직접
     for (let i = 0; i < 80; i++) b.diag.commitStroke(100 + (i % 26) * 42, 200 + Math.floor(i / 26) * 90, 100 + (i % 26) * 42, 260 + Math.floor(i / 26) * 90)
   })
   // **활성을 맨 아래 겹으로 내린다**(2차 리뷰 [5] — 활성이 맨 위면 above가 그 한 장이라

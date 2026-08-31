@@ -12,8 +12,22 @@
 // ⚠ 조건(#71 ㉠): 이 파일은 dpr을 **스스로 만든다**(chromium.newContext) — playwright
 //   프로젝트의 dpr과 무관하게 1·2·3을 같은 실행에서 낸다.
 
+// ⚠⚠ **작도 픽스처가 web2-40에서 (500,560) → (500,620)로 옮겨졌다**(값이 아니라 **자리**다).
+//    증상: **dpr3에서만** 두 번째 획이 통째로 사라지고(`doc.strokes` 1개) `#layer-add`가
+//    「소실점 작도가 끝나야 얹을 수 있다」로 남아 `page.click`이 멎었다. 표식을 심어 보니
+//    화면 알림이 **「글씨 — 이 선의 치수를 쓴다」**였다(D-1: 후보부터 보지 않고 경로에
+//    표식을 심었다). 원인은 **web2-39의 누름 진입**이다: 두 번째 획의 시작점이 첫 획
+//    **위**(y=560)라 `writeTargetAt`이 그것을 잡는데, dpr3에서는 3600×2400 캔버스라
+//    `mouse.down` 다음 첫 `mouse.move`가 오기까지 **337 ms**가 걸려 `writeHoldMs`(450)의
+//    문턱에 붙는다. 느린 기기에서 «누르고 끄는» 것이 실제로 그렇게 보인다 —
+//    **제품 결함이 아니라 픽스처가 그 진입을 밟고 있던 것**이고, 시작점을 선에서
+//    60 px(잡히는 반경 `DIM_LABEL_HIT_PX`/`osnap.radius*2` ≈ 16 px의 네 배) 떼면 사라진다.
+//    ⚠ 재는 조각은 (300,200) 60×60이고 두 획은 y ≥ 480이라 **측정값에는 안 닿는다** —
+//    이 두 획의 일은 「카메라를 닫아 겹을 얹을 수 있게 한다」 하나다.
+
 import { test, expect, chromium, type Page, type Browser } from '@playwright/test'
-import { writeFileSync, mkdirSync, readFileSync } from 'node:fs'
+import { settleSlide } from './slidesettle'
+import { writeFileSync, mkdirSync, readFileSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
@@ -27,12 +41,12 @@ function record(key: string, val: unknown) {
   cur.conditions = {
     viewport: '1200x800',
     dpr: '이 파일이 chromium.newContext로 1·2·3을 직접 만든다(프로젝트 dpr 무관)',
-    command: 'npx playwright test e2e/grain26.spec.ts --project=dpr1 --workers=1',
+    command: 'LEDGER=1 npx playwright test e2e/grain26.spec.ts --project=dpr1 --workers=1',   // ⚠ LEDGER=1이 없으면 한 바이트도 안 쓴다(#90 · #94)
     patch: '(300,200) 60x60 CSS px — 획이 없는 빈 자리',
     metric: '휘도 L=0.299R+0.587G+0.114B의 픽셀 표준편차(기기 픽셀 격자). 결의 몫 = sqrt(막sd^2 − 바닥sd^2) — 독립 성분이라 분산이 더해진다(#74 ㉡: 절대 임계 대신 그 실행의 바닥값. 다만 빼는 방법은 제곱)',
   }
   cur.flags_explained = {
-    'bare_sd가 near-zero(1e-11 대역)': '**측정이다** — 획도 겹도 없는 종이 조각은 dpr2·3에서 실제로 한 색이다(dpr1만 0.162 — 그 차의 근거는 안티에일리어싱). 이 값은 임계가 아니라 «그 실행의 바닥»으로만 쓰이고, 빼는 산술이 sqrt(신호²−바닥²)라 0이어도 안전하다.',
+    'bare_sd가 near-zero(1e-11 대역)': '**측정이다** — 획도 겹도 없는 종이 조각은 세 dpr 모두에서 한 색이다. 이 값은 임계가 아니라 «그 실행의 바닥»으로만 쓰이고, 빼는 산술이 sqrt(신호²−바닥²)라 0이어도 안전하다. ⚠ **web2-26 당시에는 dpr1만 0.162였고 지금은 셋 다 1e-11 대역이다**(web2-40 1차 리뷰어 [9]가 이 문장이 자기 수치와 어긋난 것을 잡았다). 그 사이 무엇이 바닥을 내렸는지는 **안 쟀다** — 이 값이 판정에 안 쓰이므로(빼는 산술이 0에서 안전하다) 유보로 둔다.',
     '상수·지표 정의 스냅샷 없음': 'web2 라인 전체의 유보다(e2e 하네스라 web/test의 공유 상수를 안 쓴다) — 대신 constants 블록을 손으로 적는다. 이 원장의 상수는 filmlayer.PAPER_STYLE·TILE_CSS이고 그 값은 spec이 직접 굽는 타일에서 나온다.',
   }
   cur[key] = val
@@ -101,9 +115,10 @@ async function measure(browser: Browser, dpr: number, legacy: boolean) {
   })
   const bare = await patch(page)
   await drawLine(page, 280, 560, 700, 560)
-  await drawLine(page, 500, 560, 800, 480)
+  await drawLine(page, 500, 620, 800, 500)
   await page.click('#layer-add')
   await page.click('#layer-pop .lpick[data-paper="yellow"]')
+  await settleSlide(page)     // web2-40 2번 — 덜 온 종이를 재지 않는다(그 파일 머리주석)
   await settle(page)
   const film = await patch(page)
   await ctx.close()
@@ -193,8 +208,95 @@ test('①②③ — 결이 지각 대역에 있고 dpr에 안 묶인다 (+반증
       ratio_gate_is_1_0_pm_0_15: { current: ratio, legacy: legacyRatio },
       amplitude_gate_is_gt_2_1: { current_dpr1: g1.grain, legacy_dpr1: l1.grain },
       note: '둘 다 legacy에서 실제로 게이트 밖이다 — 이 게이트는 통과할 수도 실패할 수도 있다(#69 ㉣).',
+      // 값 대조용(#40 · web2-40 1차 리뷰어 [13]) — 산문뿐이던 자리를 값으로 채운다.
+      legacy_probe: [l1.grain, legacyRatio],
     },
+    reachability_value: [l1.grain, legacyRatio],
+    reachability_source: 'gate/reachability/legacy_probe',
     hashes: h,
     note: '실기기 눈 확인(게이트 셋째)은 헤드리스가 못 잰다 — DEVICE-CHECK G3이 그 자리다.',
+  })
+})
+
+
+/** **K 훑기 — dpr 비가 어디서 문에 닿는가**(web2-40 · #12 · #14 · 1차 리뷰어 [3][4]).
+ *
+ *  web2-40 1번이 「K를 더 못 내린다 — dpr 비 여유가 1.2%뿐」이라고 적었는데, 그 주장이
+ *  선 근거는 **동작점 둘**(제품 K=0.5의 1.136과 다른 실행의 1.107)이었고 **기준선이 원장
+ *  밖**이었다. 여기서 셋을 고친다:
+ *    ㉠ 기준선(K = 1.0 = web2-34까지의 길이)을 **같은 실행에서** 낸다
+ *    ㉡ K를 여럿 갈아 끼워 **비가 K를 따라 오르는 것**을 값으로 본다
+ *    ㉢ 같은 K를 **두 번** 재서 실행 간 폭을 낸다 — 「여유가 폭 밖인가」(#14)를 답할 수 있게
+ *
+ *  ⚠ 재는 것은 이 파일의 `measure`와 **같은 자·같은 자리**다(옐로 막 조각의 결 sd).
+ */
+test('①-훑기 — K에 따라 dpr3/dpr1 결 비가 어디서 문(1.15)에 닿는가 (+같은 K 두 번)', async () => {
+  test.setTimeout(900_000)
+  const browser = await chromium.launch()
+  const at = async (dpr: number, k: number | null) => {
+    const ctx = await browser.newContext({ viewport: { width: 1200, height: 800 }, deviceScaleFactor: dpr })
+    const page = await ctx.newPage()
+    await page.goto('http://localhost:5301/')
+    await page.waitForFunction(() => (window as any).__b2)
+    await page.evaluate(() => (window as any).__b2.diag.paperFiberForTest(false))
+    if (k !== null) await page.evaluate(kk => (window as any).__b2.diag.grainLenKForTest(kk), k)
+    const bare = await patch(page)
+    await drawLine(page, 280, 560, 700, 560)
+    await drawLine(page, 500, 620, 800, 500)
+    await page.click('#layer-add')
+    await page.click('#layer-pop .lpick[data-paper="yellow"]')
+    await settleSlide(page)
+    await settle(page)
+    const film = await patch(page)
+    await ctx.close()
+    return Math.sqrt(Math.max(0, film.sd * film.sd - bare.sd * bare.sd))
+  }
+  const KS = [1.0, 0.7, 0.5, 0.35]
+  const rows: { k: number; d1: number; d3: number; ratio: number }[] = []
+  for (const k of KS) {
+    const d1 = await at(1, k)
+    const d3 = await at(3, k)
+    rows.push({ k, d1, d3, ratio: d3 / d1 })
+  }
+  // ㉢ 같은 K를 한 번 더 — 실행 간 폭(#14). 제품 값에서 잰다.
+  const rep1 = await at(1, 0.5)
+  const rep3 = await at(3, 0.5)
+  await browser.close()
+  const repRatio = rep3 / rep1
+  const shipped = rows.find(r => r.k === 0.5)!
+  const spread = Math.abs(repRatio - shipped.ratio)
+
+  for (const r of rows) console.log(`[K 훑기·dpr 비] K=${r.k.toFixed(2)} — dpr1 ${r.d1.toFixed(3)} · dpr3 ${r.d3.toFixed(3)} · 비 ${r.ratio.toFixed(4)}`)
+  console.log(`[K 훑기·dpr 비] 같은 K=0.5 두 번 — ${shipped.ratio.toFixed(4)} ↔ ${repRatio.toFixed(4)} · 폭 ${spread.toFixed(4)} / 문까지 여유 ${(1.15 - shipped.ratio).toFixed(4)}`)
+
+  // ① 비가 K를 따라 **오른다** — 이 자가 K에 반응한다(짐작이 아니다)
+  expect(rows[0]!.ratio, 'K=1.0(옛 길이)의 비가 제품 K보다 낮다').toBeLessThan(shipped.ratio)
+  // ② 제품 값은 문 안이다
+  expect(shipped.ratio, `K=0.5 비 ${shipped.ratio.toFixed(4)}`).toBeLessThan(1.15)
+  // ③ 같은 K 두 번의 폭이 문까지의 여유보다 **작다** — 여유가 폭 밖이라는 진술의 근거(#14).
+  //    ⚠ 폭이 여유보다 크면 이 단언이 빨개지고, 그때는 「여유 1.2%」를 쓸 수 없다.
+  expect(spread, `같은 K 두 번의 폭 ${spread.toFixed(4)} < 문까지 여유 ${(1.15 - shipped.ratio).toFixed(4)}`)
+    .toBeLessThan(1.15 - shipped.ratio)
+
+  record('k_sweep', {
+    what: 'K(섬유 길이 배수)에 따른 dpr3/dpr1 결 비 — 26-2의 게이트가 K에 어떻게 반응하는가. 재는 자와 자리는 이 파일의 measure와 같다(옐로 막 조각).',
+    gate_band: [0.85, 1.15],
+    rows,
+    shipped_k: 0.5,
+    repeat_at_shipped_k: { ratio: repRatio, dpr1: rep1, dpr3: rep3 },
+    run_to_run_spread_at_shipped_k: spread,
+    headroom_to_gate: 1.15 - shipped.ratio,
+    conclusion: `K를 내리면 비가 오르되 **아래로 갈수록 덜 오른다**: ${rows.map(r => `${r.k} → ${r.ratio.toFixed(4)}`).join(' · ')}. `
+      + `마지막 구간(${rows[rows.length - 2]!.k} → ${rows[rows.length - 1]!.k})의 증분이 **${(rows[rows.length - 1]!.ratio - rows[rows.length - 2]!.ratio).toFixed(5)}**이고 `
+      + `같은 K를 두 번 잰 폭이 **${spread.toFixed(5)}**, 문까지 남은 여유가 **${(1.15 - shipped.ratio).toFixed(4)}**다. `
+      + `⚠ **훑은 것은 ${KS[KS.length - 1]}까지다** — 그 아래 비는 안 쟀다. 값으로 말할 수 있는 것은 「훑은 대역 안에서는 문 안이고 여유가 남는다」까지이고, `
+      + `「K를 더 내려도 안 닿는다」는 **외삽**이다. 그러므로 이 문은 훑은 대역에서 K의 하한을 정하지 않는다 — 제품 값 0.5는 **눈이 고른 값**이다(지시 게이트 넷째). `
+      + `⚠⚠ **${rows[rows.length - 1]!.k} 칸은 진폭이 다르다**: dpr1 결이 ${shipped.d1.toFixed(3)} → ${rows[rows.length - 1]!.d1.toFixed(3)}(${((rows[rows.length - 1]!.d1 / shipped.d1 - 1) * 100).toFixed(1)}%)로 뛴다 — `
+      + `면적 밀도 보존이 그 자리에서 깨진다. 그 칸으로 내리려면 **주기 비·이웃차 이득·34-1 겹최소÷바탕을 그 자리에서 다시 재야 한다**(이 회차는 0.5에서만 쟀다).`,    reachability: {
+      how: 'diag.grainLenKForTest(k) — 제품과 같은 유도식으로 길이·개수를 다시 낸다. K = 1.0이 web2-34까지의 값이므로 **기준선이 같은 실행 안에 있다**(원장 밖 인용 ⛔ · #25).',
+      ratio_by_k: rows.map(r => r.ratio),
+    },
+    reachability_value: rows.map(r => r.ratio),
+    reachability_source: 'k_sweep/reachability/ratio_by_k',
   })
 })

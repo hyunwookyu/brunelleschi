@@ -194,7 +194,7 @@ test('파일 묶음 — 「원본」과 「내보내기」가 이름에서 갈�
 })
 
 // web2-12 6번 — 연필통: 행이 도구이자 경도다. 선택 표시·니브 표기·차지하는 자리 실측.
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 const HERE = dirname(fileURLToPath(import.meta.url))

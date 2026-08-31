@@ -4,7 +4,7 @@
 // 접히는가 · **임계 밖은 머물고 거기서 그려지는가**.
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 const __HERE = dirname(fileURLToPath(import.meta.url))

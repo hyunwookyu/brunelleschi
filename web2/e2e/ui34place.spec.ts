@@ -13,7 +13,7 @@
 // ⚠ 조건(#71): 뷰포트 1200×800 · dpr 둘 다. 예산은 **뷰포트가 정하는 수**라 이 크기에서만
 //   같은 값이 나온다 — 원장에 뷰포트를 같이 싣는다.
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 

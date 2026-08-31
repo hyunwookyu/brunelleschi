@@ -14,6 +14,7 @@
 //   그것이 말하던 «가산적»은 이제 **요약의 수**가 말한다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { settleSlide } from './slidesettle'
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -58,7 +59,7 @@ test('①② 얹기 문 — 닫히기 전 비활성+안내 · 닫힌 뒤 트레�
   await expect(page.locator('#layer-add')).not.toHaveClass(/disabled/)
   await page.click('#layer-add'); await settle(page)
   await expect(page.locator('#layer-pop .lpick')).toHaveCount(2)   // 종이 종류 **둘**뿐(지시 0)
-  await page.click('#layer-pop .lpick[data-paper="tracing"]'); await settle(page)
+  await page.click('#layer-pop .lpick[data-paper="tracing"]'); await settleSlide(page); await settle(page)
   const st = await page.evaluate(() => {
     const a = (window as any).__b2.app
     return { n: a.doc.layers.length, active: a.activeLayer, on: a.doc.layers[0]?.on }
@@ -75,7 +76,7 @@ test('③④ rect 기본값(값으로) · 새 획이 활성 겹으로 · 켬/끔
   await boot(page)
   await closeCamera(page)
   await page.click('#layer-add')
-  await page.click('#layer-pop .lpick[data-paper="yellow"]'); await settle(page)
+  await page.click('#layer-pop .lpick[data-paper="yellow"]'); await settleSlide(page); await settle(page)
   // ③ rect = 지금 화면에서 **짧은 변 5% 인셋 + 층별 흔들림**(web2-21 3-b — 종전 «화면
   // 전체»는 필터로 보였다). 값 정본은 layerops.test — 여기서는 배선이 그 규약에 닿는지
   // (뷰 항등 s1·o0: 인셋 40 · 이동 ±6 · 크기 ±4).
@@ -147,9 +148,9 @@ test('R6 접힌 겹 요약 — 롤이 **지금 그리는 겹**을 말한다(맨 
     await closeCamera(page)
     // 아래=트레이싱지 · 위=옐로. 얹은 직후의 활성은 맨 위(옐로)다.
     await page.click('#layer-add')
-    await page.click('#layer-pop .lpick[data-paper="tracing"]'); await settle(page)
+    await page.click('#layer-pop .lpick[data-paper="tracing"]'); await settleSlide(page); await settle(page)
     await page.click('#layer-add')
-    await page.click('#layer-pop .lpick[data-paper="yellow"]'); await settle(page)
+    await page.click('#layer-pop .lpick[data-paper="yellow"]'); await settleSlide(page); await settle(page)
     const read = () => page.evaluate(() => {
       const sum = document.getElementById('layer-summary')!
       return {
@@ -195,7 +196,7 @@ test('⑤ 겹 삭제(줄의 × → 확인 — 획 수 알림) → 실행취소�
   await boot(page)
   await closeCamera(page)
   await page.click('#layer-add')
-  await page.click('#layer-pop .lpick[data-paper="tracing"]'); await settle(page)
+  await page.click('#layer-pop .lpick[data-paper="tracing"]'); await settleSlide(page); await settle(page)
   await drawLine(page, 300, 620, 500, 640)
   const before = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
   // 지우기의 자리가 **목록의 줄 안**으로 옮겨 왔다(확인 한 번의 규약은 그대로 — 획 수를 알린다)
@@ -215,9 +216,9 @@ test('⑥ 종이를 바꾸면 겹 목록이 바뀐다 · 형태 — 종이는 �
   await closeCamera(page)
   // 겹 둘(트레이싱지·옐로) — 자식 탭의 겹침을 잰다
   await page.click('#layer-add')
-  await page.click('#layer-pop .lpick[data-paper="tracing"]'); await settle(page)
+  await page.click('#layer-pop .lpick[data-paper="tracing"]'); await settleSlide(page); await settle(page)
   await page.click('#layer-add')
-  await page.click('#layer-pop .lpick[data-paper="yellow"]'); await settle(page)
+  await page.click('#layer-pop .lpick[data-paper="yellow"]'); await settleSlide(page); await settle(page)
   // **형태가 가른다**(web2-25 4-a로 갈렸다): 겹은 «가산적»이라 **요약 하나에 수**가 붙고,
   // 종이는 «배타적»이라 **탭이 여럿이고 서로 안 겹친다**. 옛 판의 「자식 탭이 겹친다」가
   // 말하던 것을 이 수가 이어받는다.

@@ -7,7 +7,7 @@
 import { test, expect } from '@playwright/test'
 import { createServer, type Server } from 'node:http'
 import { readFile } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
+import { existsSync } from '../tools/ledgerfs'
 import { resolve, dirname, extname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 

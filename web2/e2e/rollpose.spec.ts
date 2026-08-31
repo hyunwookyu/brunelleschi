@@ -11,6 +11,7 @@
 // 여기서 겹쳐 재지 않는다 — 여기서 재는 것은 **화면에 보이는가** 하나다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { settleSlide } from './slidesettle'
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -75,6 +76,7 @@ test('⓪ 재현(D-2) — 굳히지 않고 얹으면 겹은 늘고 막 픽셀은
   // 굳히지 않는 경로 — 원장 하네스가 쓰는 `diag.layerAdd`(앱과 같은 `addLayer`를 부르되
   // 앞처리 없이). 이것이 web2-25 이전의 롤이 하던 일 그대로다.
   await page.evaluate(() => (window as any).__b2.diag.layerAdd('yellow'))
+  await settleSlide(page)     // web2-40 2번 — 덜 온 종이를 재지 않는다(그 파일 머리주석)
   await settle(page)
   const after = await state(page)
   expect(after.layers.length).toBe(before.layers.length + 1)   // «추가는 된다»

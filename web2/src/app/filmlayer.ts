@@ -38,11 +38,12 @@
 // 아무것도 안 가리므로 곱과 보통 그리기가 같은 결과이고, 재조립 비용이 0이다.
 
 import type { App } from './state'
-import { atSheetPose, fadeRef, underlayOf, viewXf, inkMix } from './state'
+import { atSheetPose, fadeRef, underlayOf, viewXf, inkMix, slideAwayOf } from './state'
 import { isFlat2d, type Layer, type Paper, type Surface, type CamPose, type Underlay } from '../core/types'
 import { rng32, MAT, gradeOf, widthOf, widthOfMat } from '../core/material'
 import { project } from '../core/camera'
 import { waitFadeFactor, bodyHex } from '../core/waitfade'
+import { slideCurl } from '../core/slide'
 import { C } from '../core/constants'
 
 // ── 막의 색·섬유 매개변수 — 값의 근거는 assumptions(AS-C68·C69) ────────────────
@@ -54,6 +55,61 @@ import { C } from '../core/constants'
 // dpr3에서는 세 배 굵어졌다. 실측(D-1 표식 · `paper_grain26_web2.json`)이
 // **막 sd 0.134 ↔ 1.361 — 열 배**를 냈다. 지금 값은 전부 CSS px이고 `bakeFiberTile`이
 // dpr을 곱해 굽는다 — 「주기는 CSS 픽셀(≈물리 길이) 기준, 진폭은 실제 DPR에서」.
+// ── 겹의 결을 «얼마나 곱게» — web2-40 1번 ─────────────────────────────────────
+// 사람: 「롤 텍스쳐가 너무 크다.」 34-1이 내린 것은 **바탕 종이의 진폭**이고 이번 지적은
+// **겹의 주기**다(무늬가 굵게 읽힌다). 그래서 갈린 축은 **섬유 길이 하나**다:
+//
+//   길이 ×K · 개수 ÷K · **굵기·알파는 안 건드린다**
+//
+// ⚠ **굵기를 안 건드리는 것이 «바닥»이다**(지시문 ⚠ · web2-26 2번): 26-2에서 결이 안
+//   보였던 원인은 굵기가 dpr1에서 «한 기기 픽셀보다 가늘어» 안티에일리어싱에 먹힌
+//   것이었다. 주기를 굵기로 줄이면 그 상태로 되돌아간다 — 길이는 dpr1에서도 4.8 CSS px가
+//   남으므로 그 바닥에 안 닿는다.
+// ⚠ **개수를 ÷K로 올리는 것은 진폭 보존이다**: 면적 밀도 ∝ 개수 × 길이 × 굵기이므로
+//   길이를 K배 줄이고 개수를 1/K배 올리면 밀도가 그대로다. 그래야 26-2의 지각 문턱
+//   게이트(> 2.1계조)와 34-1의 「바탕 < 겹」이 같이 선다 — 실측은 `paper_grain40_web2.json`
+//   (화면 sd가 **3.914 → 3.913**으로 사실상 안 움직였다: 보정이 실제로 듣는다).
+// ⚠⚠ **주기의 비는 K가 아니다**(실측이 그것을 냈다): 굵기를 안 건드렸으므로 자기상관의
+//   «어깨»(미세 구조)는 그대로 남고 줄어드는 것은 **꼬리**뿐이다 — 상관 길이의 비가
+//   **0.743~0.827**(세 dpr × 겹 둘)이지 0.5가 아니다. 그래서 K를 더 내리는 것은
+//   «주기»에 대한 지렛대가 생각보다 짧다 — 더 내리려면 굵기를 건드려야 하고 그것이
+//   **26-2의 바닥**이다. 그 교환은 실기기 눈이 판정한다(DEVICE-CHECK G4).
+// ⚠ **K는 «측정이 고른 값»이 아니라 사람 눈이 판정할 값이다**(지시 게이트 넷째):
+//   여기서 값으로 잴 수 있는 것은 ①실제로 주기가 줄었는가 ②줄이면서 26-2·34-1이 살아
+//   있는가 둘뿐이고, 「곱다/굵다」는 사람 눈이 판정한다.
+//   **0.5를 고른 방법**: 헤드리스에서 타일을 384×256으로 깔아 pre-40과 나란히 보고
+//   골랐다(0.6과 0.5 둘을 나란히 냈다). 0.6은 pre-40의 «긴 힘줄»을 절반쯤만 걷어
+//   차이가 옅었고, 0.5는 겹 둘 다 결이 분명히 잘아지면서 **아직 섬유로 읽힌다**
+//   (그보다 내리면 옐로의 짧은 쪽 길이가 굵기의 두 배 아래로 내려가 «점»이 된다:
+//    K=0.5에서 옐로 4~11 CSS px · 굵기 1.5~2.8 · 트레이싱 1.75~5 · 굵기 1~2).
+//   실기기 확인이 오면 그 답으로 다시 고른다(DEVICE-CHECK G4).
+const OVERLAY_LEN_K = 0.5
+
+/** **web2-34까지의 겹 섬유**(길이·개수만) — 아래 값의 **출처**이자 D-3 반증 손잡이의 값이다.
+ *  ⚠ 두 자리에 손으로 옮겨 적지 않는다(PITFALLS #88): 지금 값이 이 표에서 **유도되므로**
+ *  「반증판과 지금 판이 길이 축 하나만 다르다」가 코드에 보인다. */
+const OVERLAY_FIBER_PRE40 = {
+  yellow: { count: 420, lenMin: 8, lenMax: 22 },
+  tracing: { count: 560, lenMin: 3.5, lenMax: 10 },
+} as const
+
+/** 그 배수를 먹인 값 — 개수는 10 단위로 끊는다(시드 변동폭이 그보다 크다 — CLAUDE.md §5). */
+function fineFiberK(p: 'yellow' | 'tracing', k: number): { count: number; lenMin: number; lenMax: number } {
+  const o = OVERLAY_FIBER_PRE40[p]
+  return {
+    count: Math.round(o.count / k / 10) * 10,
+    lenMin: Number((o.lenMin * k).toFixed(2)),
+    lenMax: Number((o.lenMax * k).toFixed(2)),
+  }
+}
+const fineFiber = (p: 'yellow' | 'tracing') => fineFiberK(p, OVERLAY_LEN_K)
+
+/** 팔 전용 — **K를 갈아 끼운다**(#12: 동작점 하나로 안 정한다). null이면 제품 값.
+ *  같은 유도식(`fineFiberK`)을 쓰므로 갈린 축이 여전히 **길이 하나**다.
+ *  `web2-40`이 이것으로 K 훑기를 내고 「어디가 바닥인가」를 값으로 적는다. */
+let LEN_K_OVERRIDE: number | null = null
+export const setOverlayLenKForTest = (k: number | null) => { LEN_K_OVERRIDE = k }
+
 export const PAPER_STYLE: Record<Surface, {
   tint: [number, number, number]
   /** 전부 **CSS px**(alpha 제외) — count는 타일 한 장(TILE_CSS×TILE_CSS CSS px)당 개수 */
@@ -61,10 +117,12 @@ export const PAPER_STYLE: Record<Surface, {
 }> = {
   yellow: {
     tint: [242, 227, 179],   // 옐로 트레이스 — 이름 자체가 색이다
-    // 길이는 종전 dpr2의 물리 크기 그대로(타일 px 16~44 = CSS 8~22). **굵기와 알파만 올렸다**:
-    // 굵기는 dpr1에서 «한 기기 픽셀보다 가늘다»를 벗어나야 dpr 사이에서 같은 결이 되고
-    // (아래 dpr 비 게이트), 알파는 진폭이 지각 문턱 아래였다(㉢ — 실측 sd 0.77/255).
-    fiber: { count: 420, lenMin: 8, lenMax: 22, wMin: 1.5, wMax: 2.8, aMin: 0.075, aMax: 0.18 },
+    // 굵기·알파는 web2-26 2번이 정한 값 그대로다: 굵기는 dpr1에서 «한 기기 픽셀보다
+    // 가늘다»를 벗어나야 dpr 사이에서 같은 결이 되고(아래 dpr 비 게이트), 알파는
+    // 진폭이 지각 문턱 아래였다(㉢ — 실측 sd 0.77/255).
+    // ⚠⚠ **web2-40 1번이 «길이»와 «개수»만 갈았다**(주기 — 진폭이 아니다) —
+    //     값은 `fineFiber`가 `OVERLAY_FIBER_PRE40`에서 유도한다(위 절이 근거다).
+    fiber: { ...fineFiber('yellow'), wMin: 1.5, wMax: 2.8, aMin: 0.075, aMax: 0.18 },
   },
   tracing: {
     tint: [230, 233, 237],   // 벨럼 — 거의 무색·살짝 한색(중성이 아니면 옐로와 섞일 때
@@ -73,7 +131,9 @@ export const PAPER_STYLE: Record<Surface, {
     // → 0.072~0.172). 30-9의 게이트가 「셋의 진폭이 서로 20% 이내」라 옛 값으로는 못 선다
     // (실측이 그 차를 냈다 — NOTES의 표). **길이·굵기는 안 건드렸다** — 그쪽이 벨럼과
     // 옐로를 «다른 종이»로 만드는 채널이고, 사람이 바꾸라 한 것은 «보이느냐»다.
-    fiber: { count: 560, lenMin: 3.5, lenMax: 10, wMin: 1.0, wMax: 2.0, aMin: 0.115, aMax: 0.277 },
+    // ⚠⚠ **web2-40 1번이 «길이»와 «개수»만 갈았다** — 옐로와 **같은 배수**다(둘이
+    // 같은 롤에서 나오는 «결의 곱기»이므로 축을 하나로 둔다). 값은 `fineFiber` 유도.
+    fiber: { ...fineFiber('tracing'), wMin: 1.0, wMax: 2.0, aMin: 0.115, aMax: 0.277 },
   },
   /** **바탕 종이**(web2-30 9번) — 제도지. tint는 화면의 종이색(`--paper` #f5f3ee)과 같은
    *  값이어야 한다: 이 판이 **곧 종이**이므로 색이 갈리면 결이 아니라 «판»이 보인다.
@@ -125,6 +185,14 @@ export const setPaperFiber = (v: boolean) => { PAPER_FIBER = v }
 let PAPER_309 = false
 export const setPaperGrain309ForTest = (v: boolean) => { PAPER_309 = v }
 
+/** D-3 반증 손잡이(web2-40 1번) — 겹의 결을 **web2-34까지의 주기로 되돌린다**
+ *  (`OVERLAY_FIBER_PRE40` — 길이·개수만. 굵기·알파·색조는 지금 값 그대로라 **갈린 축이
+ *  하나**다). 이걸 켜면 「겹의 결 주기가 pre-40보다 짧다」가 **같은 실행에서 실제로
+ *  실패해야 한다** — 안 실패하면 그 게이트는 아무것도 안 잰다(#69 ㉣ · D-3).
+ *  UI 없음 — `diag.grainPre40ForTest`만. */
+let GRAIN_PRE40 = false
+export const setGrainPre40ForTest = (v: boolean) => { GRAIN_PRE40 = v }
+
 /** D-3 반증 손잡이(web2-26 2번) — **결을 dpr에 도로 묶는다**(타일 256 device px 고정 +
  *  섬유 배율 dpr/2 + 패턴 배율 0.5·s·dpr). 이걸 켜면 「dpr 1과 3의 결 표준편차 비가
  *  1.0 ± 0.15」 게이트가 **실제로 실패해야 한다** — 안 실패하면 그 게이트는 아무것도
@@ -146,9 +214,20 @@ export function bakeFiberTile(id: number, paper: Surface, dpr: number, wrap = tr
   // wrap=false는 **반증 전용**(3-e ⑤' — 감싸 그리기를 빼면 이음매 팔이 실패해야 한다)
   const base = FIBER_LEGACY ? LEGACY_FIBER[paper] : PAPER_STYLE[paper].fiber
   // 반증(web2-34 1번) — 바탕 종이일 때만, 알파만 30-9 값으로. 다른 면은 안 건드린다.
+  // 반증(web2-40 1번) — 겹일 때만, **길이·개수만** pre-40으로. 옛 규칙(FIBER_LEGACY)이
+  // 켜져 있으면 그쪽이 이미 다른 단위의 표라 안 겹친다.
+  const pre40 = GRAIN_PRE40 && !FIBER_LEGACY && paper !== 'paper' ? OVERLAY_FIBER_PRE40[paper] : null
+  // K 훑기(팔 전용) — pre-40이 켜져 있으면 그쪽이 이긴다(둘을 같이 켜지 않는다)
+  const kOver = !pre40 && LEN_K_OVERRIDE !== null && !FIBER_LEGACY && paper !== 'paper'
+    ? fineFiberK(paper, LEN_K_OVERRIDE) : null
   const st = {
     ...PAPER_STYLE[paper],
-    fiber: PAPER_309 && paper === 'paper' && !FIBER_LEGACY ? { ...base, ...PAPER_FIBER_309 } : base,
+    fiber: {
+      ...base,
+      ...(PAPER_309 && paper === 'paper' && !FIBER_LEGACY ? PAPER_FIBER_309 : {}),
+      ...(pre40 ?? {}),
+      ...(kOver ?? {}),
+    },
   }
   const TP = tilePxFor(dpr)
   const c = document.createElement('canvas')
@@ -285,7 +364,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
   // 타일 캐시 — (layer.id|paper|dpr) → 캔버스. 파생이라 저장 안 함(문서에는 Layer만).
   const tileCache = new Map<string, HTMLCanvasElement>()
   const tileFor = (id: number, surface: Surface): HTMLCanvasElement => {
-    const key = `${id}|${surface}|${cd}|${FIBER_LEGACY ? 'L' : 'N'}|${PAPER_309 ? '9' : '-'}`
+    const key = `${id}|${surface}|${cd}|${FIBER_LEGACY ? 'L' : 'N'}|${PAPER_309 ? '9' : '-'}|${GRAIN_PRE40 ? '4' : '-'}|${LEN_K_OVERRIDE ?? '-'}`
     let t = tileCache.get(key)
     if (!t) { t = bakeFiberTile(id, surface, cd); tileCache.set(key, t) }
     return t
@@ -294,14 +373,16 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
 
   /** **패턴의 원점을 문서 좌표에 못 박는다** — 막·바탕이 같은 규칙을 쓴다(#54).
    *  배율은 뷰 줌 `v.s`뿐이다(타일 1px = 기기 1px — web2-26 2번). 위상은 씨앗별로 다르다. */
-  function fiberPattern(g: CanvasRenderingContext2D, tile: HTMLCanvasElement, seed: number, v: { s: number; ox: number; oy: number }) {
+  function fiberPattern(g: CanvasRenderingContext2D, tile: HTMLCanvasElement, seed: number, v: { s: number; ox: number; oy: number }, dx = 0) {
     const pat = g.createPattern(tile, 'repeat')!
     const rnd = rng32(seed + 7)                   // 위상 — 결 내용과 다른 흐름
     const TP = tilePxFor(cd)
     const phx = rnd() * TP
     const phy = rnd() * TP
     const k = FIBER_LEGACY ? 0.5 * v.s * cd : v.s
-    pat.setTransform(new DOMMatrix().translate(v.ox * cd, v.oy * cd).scale(k).translate(phx, phy))
+    // `dx`는 깔고 치우는 동작의 밀림(web2-40 2번 · 기기 px). **결이 종이와 함께 움직인다** —
+    // 섬유는 그 종이의 것이므로 종이가 밀려 들어오는데 결만 제자리면 종이가 «창»이 된다.
+    pat.setTransform(new DOMMatrix().translate(v.ox * cd + dx, v.oy * cd).scale(k).translate(phx, phy))
     return pat
   }
 
@@ -312,7 +393,7 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
   let paperKey = ''
   function drawPaperFilm(app: App) {
     const v = viewXf(app)
-    const key = `${app.activeSheet}|${v.s}|${v.ox}|${v.oy}|${cd}|${cw}x${ch}|${FIBER_LEGACY ? 'L' : 'N'}|${PAPER_FIBER ? 'F' : '-'}|${PAPER_309 ? '9' : '-'}`
+    const key = `${app.activeSheet}|${v.s}|${v.ox}|${v.oy}|${cd}|${cw}x${ch}|${FIBER_LEGACY ? 'L' : 'N'}|${PAPER_FIBER ? 'F' : '-'}|${PAPER_309 ? '9' : '-'}|${GRAIN_PRE40 ? '4' : '-'}|${LEN_K_OVERRIDE ?? '-'}`
     if (key === paperKey) return
     paperKey = key
     const g = paperfilm.getContext('2d')!
@@ -344,14 +425,15 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
    *  「가린 선 빼기」에서도 **지우기는 한다** — 안 그러면 원래 획이 그대로 남아 옵션이
    *  아무 일도 안 한다. 지우는 굵기는 «그 자리에 있을 수 있는 가장 굵은 선»
    *  (`C.NIB_MAX`)이다 — 새 숫자를 안 짓는다(#54). */
-  function drawUnderlay(g: CanvasRenderingContext2D, app: App, lay: Layer, u: Underlay) {
+  function drawUnderlay(g: CanvasRenderingContext2D, app: App, lay: Layer, u: Underlay, dx = 0) {
     const v = viewXf(app)
     g.save()
     g.beginPath()
-    g.rect((lay.rect.x * v.s + v.ox) * cd, (lay.rect.y * v.s + v.oy) * cd,
+    g.rect((lay.rect.x * v.s + v.ox) * cd + dx, (lay.rect.y * v.s + v.oy) * cd,
       lay.rect.w * v.s * cd, lay.rect.h * v.s * cd)
     g.clip()
-    g.setTransform(cd * v.s, 0, 0, cd * v.s, cd * v.ox, cd * v.oy)   // 문서 좌표
+    // 밑그림도 종이와 함께 밀린다(web2-40 2번) — 종이에 눌러 놓은 그림이므로 따로 못 논다
+    g.setTransform(cd * v.s, 0, 0, cd * v.s, cd * v.ox + dx, cd * v.oy)   // 문서 좌표
     const is = 1 / v.s           // 화면 고정 굵기(render2d 규약 그대로)
     g.lineCap = 'round'
     g.setLineDash([])            // 파선 아님 — 명시한다(위 ⛔)
@@ -381,12 +463,37 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
     g.restore()
   }
 
+  /** 그리는 막 한 장 — 겹이거나 «치우는 중인 유령»이다(web2-40 2번). 유령은 문서에
+   *  없으므로 밑그림을 함께 들고 온다(`underlayOf`가 못 찾는다). */
+  interface FilmItem { lay: Layer; underlay: Underlay | null }
+
+  /** 그 막의 **밀림**(기기 px) — 왼쪽 밖으로. 제자리면 0이고, 0이면 아래 셈이 전부
+   *  종전 경로와 **비트 단위로 같다**(게이트 ②: 동작이 끝난 화면이 동작 없이 얹은 화면과
+   *  픽셀로 같다 — 곱하는 값이 아니라 **더하는 0**이라 반올림도 안 생긴다). */
+  function slideDx(app: App, lay: Layer, now: number, x: number, w: number): number {
+    const away = slideAwayOf(app, lay.id, now)
+    if (away === 0) return 0
+    // 다 갔을 때 오른쪽 변이 화면 왼쪽 밖 — 말린 그림자 폭까지 더 밀어야 그것도 안 남는다.
+    // `Math.max(…, w)`: 이미 화면 왼쪽 밖에 있는 종이는 자기 폭만큼만 더 가면 된다.
+    const span = Math.max(x + w, w) + C.LAY_CURL_PX * cd
+    return -away * span
+  }
+
   function drawFilms(app: App) {
     const split = filmSplit(app)
+    const now = performance.now()
+    const items: FilmItem[] = (split?.films ?? []).map(lay => ({ lay, underlay: underlayOf(app.doc, lay.id) }))
+    // 치우는 중인 유령 — **맨 위**다(마지막에 얹은 것이 걷히는 것이 보통이고, 물러나는
+    // 종이가 남은 종이 아래로 파고들면 «치운다»로 안 읽힌다). 막과 같은 포즈 게이트를 쓴다.
+    if (atSheetPose(app)) {
+      for (const gh of app.slideGhosts) {
+        if (gh.layer.sheet === app.activeSheet) items.push({ lay: gh.layer, underlay: gh.underlay })
+      }
+    }
     const g = film.getContext('2d')!
     g.setTransform(1, 0, 0, 1, 0, 0)
     g.clearRect(0, 0, film.width, film.height)
-    if (!split || split.films.length === 0) { film.style.display = 'none'; return }
+    if (items.length === 0) { film.style.display = 'none'; return }
     film.style.display = ''
     // ── 곱의 자리(3-a) — **캔버스 안에서 곱한다** ─────────────────────────────
     // 초판은 CSS `mix-blend-mode: multiply`였는데 **이 앱의 합성 트리에서 발화하지
@@ -405,13 +512,17 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
     const gl = document.getElementById('gl') as HTMLCanvasElement | null
     const brushc = document.getElementById('brushc') as HTMLCanvasElement | null
     const brushsnap = document.getElementById('brushsnap') as HTMLCanvasElement | null
-    g.save()
-    g.beginPath()
-    for (const lay of split.films) {
+    // 자리를 **한 번만** 센다 — 클립·재조립·곱·말린 가장자리가 같은 수를 읽는다(#54).
+    const boxes = items.map(({ lay }) => {
       const x = (lay.rect.x * v.s + v.ox) * cd
       const y = (lay.rect.y * v.s + v.oy) * cd
-      g.rect(x, y, lay.rect.w * v.s * cd, lay.rect.h * v.s * cd)
-    }
+      const w = lay.rect.w * v.s * cd
+      const h = lay.rect.h * v.s * cd
+      return { x, y, w, h, dx: slideDx(app, lay, now, x, w) }
+    })
+    g.save()
+    g.beginPath()
+    for (const b of boxes) g.rect(b.x + b.dx, b.y, b.w, b.h)
     g.clip()
     // ① 막 영역(합집합)에 아래 화면을 재조립 — 종이색 + #gl + 흑연(제스처면 스냅샷)
     g.fillStyle = '#f5f3ee'
@@ -429,24 +540,37 @@ export function initFilmLayer(W: number, H: number, dpr: number): FilmLayer {
     // 것이 화면에 실제로 나타난다(안 도려내면 원래 획이 그대로 비쳐 2-a의 옵션이 아무
     // 일도 안 한다). **그 선 자리 밖은 종전대로 비친다** — 대기 획도 아래 겹의 획도
     // 남는다(web2-20 3부 게이트 ⑧). 곱(②)은 이 위에 얹힌다 — 밑그림도 결에 물든다.
-    for (const lay of split.films) {
-      const u = underlayOf(app.doc, lay.id)
-      if (u) drawUnderlay(g, app, lay, u)
-    }
+    items.forEach(({ lay, underlay: u }, i) => {
+      if (u) drawUnderlay(g, app, lay, u, boxes[i]!.dx)
+    })
     // ② 막들을 순서대로 곱한다 — 겹치는 자리는 누적 곱(더 어두워진다 — 3-a)
-    for (const lay of split.films) {
-      const pat = fiberPattern(g, tileOf(lay), lay.id, v)
+    items.forEach(({ lay }, i) => {
+      const b = boxes[i]!
+      const pat = fiberPattern(g, tileOf(lay), lay.id, v, b.dx)
       // **원점을 문서 좌표에 못 박는다**(3-c ⚠ — rect가 자라도 결이 안 미끄러진다):
       // 패턴 변환 = 뷰 변환 × 층별 위상. 배율은 «타일 1px = 0.5 doc 단위»(k = 0.5·s·dpr —
       // dpr2에서 원해상도·dpr1에서 절반의 고운 결). 줌은 그대로(종이의 성질 — 큰 배율의
       // 뭉개짐 상한은 재서 정한다: assumptions).
       g.globalCompositeOperation = FILM_ALPHA ? 'source-over' : 'multiply'
       g.fillStyle = pat
-      const x = (lay.rect.x * v.s + v.ox) * cd
-      const y = (lay.rect.y * v.s + v.oy) * cd
-      g.fillRect(x, y, lay.rect.w * v.s * cd, lay.rect.h * v.s * cd)
+      g.fillRect(b.x + b.dx, b.y, b.w, b.h)
+      // ②′ **말린 앞 가장자리**(web2-40 2번) — 전자책에서 가져오는 것은 이것 하나다:
+      //    앞선 변에 지는 짧은 그늘이 종이의 «두께»를 읽히게 한다. 앞 가장자리는
+      //    **오른쪽 변**이다(들어올 때 앞섰던 변이고 물러날 때도 같은 변 — 종이의
+      //    성질이지 진행 방향의 성질이 아니다: `SLIDE_FROM`이 왼쪽이므로).
+      //    ⚠ **제자리에서는 알파가 정확히 0이라 이 블록이 통째로 안 돈다**(게이트 ②).
+      const curl = slideCurl(slideAwayOf(app, lay.id, now))
+      if (curl > 0) {
+        const cwp = C.LAY_CURL_PX * cd
+        const x1 = b.x + b.dx + b.w
+        const grad = g.createLinearGradient(x1 - cwp, 0, x1, 0)
+        grad.addColorStop(0, 'rgba(0,0,0,0)')
+        grad.addColorStop(1, `rgba(0,0,0,${C.LAY_CURL_ALPHA * curl})`)
+        g.fillStyle = grad
+        g.fillRect(x1 - cwp, b.y, cwp, b.h)
+      }
       g.globalCompositeOperation = 'source-over'
-    }
+    })
     g.restore()
   }
 

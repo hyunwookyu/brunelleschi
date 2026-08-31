@@ -17,7 +17,7 @@
 //   «달라졌는가»는 그 혼동에 걸리지 않는다 — 덮여 있으면 안 달라지고, 위에 오면 달라진다.
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { PIXEL_DIFF_CH } from './thresholds'
