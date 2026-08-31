@@ -66,34 +66,96 @@ describe('42-3 ① 렌즈길이 — 35mm 판형 환산이 알려진 값과 맞�
     // 위약 판이 「자를 바꿔도 같다」로 나와 아무것도 안 잰다(#92의 형태).
     const FW = 1200, FH = 800                     // 3:2 — 아래에서 4:3 판도 같이 돈다
     const rows: Record<string, unknown>[] = []
-    let worst = 0, worstFalse = 0
+    let worst = 0, worstFalse = 0, bandWorst = 0
     for (const { W: fw, H: fh } of [{ W: FW, H: FH }, { W: 1200, H: 900 }, { W: 900, H: 1200 }]) {
       const diag = Math.hypot(fw, fh)
       for (const k of KNOWN) {
         // 그 대각 화각을 내는 f(문서 px) — **각에서 f를 만든다**(mm에서 만들면 항등이다)
         const f = diag / 2 / Math.tan(k.diagDeg / 2 * Math.PI / 180)
         const got = focal35mm(f, diag)
-        const bad = focal35mm(f, fw)              // 반증 — 자를 «가로»로 바꾼 판
+        // **반증 — 자를 «가로»로 바꾼 판**(1차 리뷰어 [3]): 초판은 `f·43.27/W`였는데 그것은
+        // «자를 바꾼 것»이 아니라 **판형 대각과 프레임 가로를 어긋나게 짝지은 것**이라 모든
+        // 프레임에서 참값의 정확히 (diag/W)배가 됐다 — 그러면 「3:2에서는 안 갈린다」는 이 팔의
+        // 주의문이 성립하지 않는다. 일관된 «가로 자»는 **판형 가로 36 mm ↔ 프레임 가로 W**이고,
+        // 그때만 3:2에서 두 자가 상쇄된다(36/1200 = 43.2666/1442.22). 그것이 프레임 셋의 근거다.
+        const bad = f * 36 / fw
         worst = Math.max(worst, Math.abs(got - k.mm))
         worstFalse = Math.max(worstFalse, Math.abs(bad - k.mm))
+        // [5] **표 자신의 자릿수가 주는 폭** — 표가 0.1° 자리이므로 ±0.05°가 mm로 얼마인가.
+        // 잔차가 그 폭 안이면 이 팔이 낸 것은 「구현이 그만큼 정확하다」가 아니라
+        // **「식이 표와, 표의 자릿수 안에서 맞다」**이다(1차 리뷰어 [5]).
+        const band = (d: number) => {
+          const mmOf = (t: number) => FILM35_DIAG_MM / 2 / Math.tan(t / 2 * Math.PI / 180)
+          return Math.abs(mmOf(k.diagDeg - d) - mmOf(k.diagDeg + d)) / 2
+        }
         rows.push({
           frame: `${fw}x${fh}`, known_mm: k.mm, known_diag_deg: k.diagDeg,
           f_doc_px: r6(f), got_mm: r6(got), falsify_using_width_mm: r6(bad),
-          hfov_deg: r6(hfovDeg(f, fw)),
+          hfov_deg: r6(hfovDeg(f, fw)), table_rounding_band_mm: r6(band(0.05)),
         })
+        bandWorst = Math.max(bandWorst, band(0.05))
         expect(Math.abs(got - k.mm), `${k.mm}mm ↔ ${k.diagDeg}°`).toBeLessThan(0.5)
       }
     }
     // 반증이 **실제로 벗어난다** — 안 벗어나면 위 대조는 자를 안 재는 것이다
     expect(worstFalse).toBeGreaterThan(5)
     expect(FILM35_DIAG_MM).toBeCloseTo(43.27, 2)
+    // [3] 3:2에서는 두 자가 상쇄된다 — **그 사실을 값으로 낸다**(주의문을 말로 안 둔다)
+    const diag32 = Math.hypot(FW, FH)
+    const ruler32 = { film_diag_over_frame_diag: r6(FILM35_DIAG_MM / diag32), film_w_over_frame_w: r6(36 / FW) }
     ledger['gate1_focal35'] = {
       what: '알려진 35mm 렌즈-대각화각 표 ↔ 환산 mm. 프레임 비 셋(3:2 · 4:3 · 세로)에서 돌린다',
       film35_diag_mm: r6(FILM35_DIAG_MM),
       worst_err_mm: r6(worst),
       falsify_worst_err_mm_using_width: r6(worstFalse),
+      table_rounding_band_worst_mm: r6(bandWorst),
+      rulers_coincide_at_3_2: ruler32,
       rows,
       note: 'f를 **화각에서** 만든다 — mm에서 만들면 같은 식을 두 번 적는 항등이 된다(#77 ㉡)',
+      got_mm_is_frame_invariant: (
+        '⚠ **참 지표는 프레임에 대해 항등이다**(1차 리뷰어 [4]): f를 화각에서 만들면 '
+        + 'mm = (43.2666/2)/tan(θ/2)로 접혀 diag가 상쇄된다 — 그래서 프레임 축은 **위약에만** '
+        + '정보를 준다(같은 known_mm의 세 행에서 got_mm이 자릿수까지 같은 것이 그 증거다). '
+        + '독립 관측은 **일곱**이고 스물하나가 아니다.'
+      ),
+      table_precision: (
+        '⚠ **문(0.5 mm)이 표 자신의 자릿수보다 좁다**(1차 리뷰어 [5]): 표가 0.1° 자리이므로 '
+        + `±0.05°가 주는 폭이 최악 ${bandWorst.toFixed(3)} mm다(135 mm 칸). 실측 잔차 ${worst.toFixed(6)} mm는 `
+        + '그 폭 **안**이다 — 즉 이 팔이 낸 것은 「구현이 그만큼 정확하다」가 아니라 '
+        + '**「식이 표와, 표의 자릿수 안에서 맞다」**이다. 판별력은 위약(자를 바꾼 판)이 준다.'
+      ),
+    }
+  })
+
+  it('표시 동작점이 하나가 아니다 — 1점(기본 f)과 2점(풀린 f) 둘을 낸다 (#12)', () => {
+    // ⚠⚠ **1점의 f는 «임의 게이지»다**(CLAUDE.md §1 · D-L53 — 깊이 배율일 뿐이다).
+    //    그 상태의 「렌즈 N mm」는 **측정이 아니라 기본값의 환산**이고, 그 사실을 여기 값으로 남긴다.
+    const one = session(W, H)
+    one.draw(100, 400, 1100, 400)      // 지평선(퇴화)
+    one.draw(800, 400, 800, 400)       // 깊이 소실점 찍기
+    one.draw(300, 600, 700, 600)       // 화면 수평 획 → 1점 잠금
+    const a1 = one.app.lift.an
+    const a2 = app2().lift.an
+    const rows = [
+      { state: '1점(P1 잠금)', fSource: a1.fSource, f_over_W: r6(a1.f! / a1.W), mm: r6(focal35mm(a1.f!, a1.diag)), text: focalText(a1.f!, a1.diag) },
+      { state: '2점', fSource: a2.fSource, f_over_W: r6(a2.f! / a2.W), mm: r6(focal35mm(a2.f!, a2.diag)), text: focalText(a2.f!, a2.diag) },
+    ]
+    expect(a1.fSource).toBe('default')
+    expect(a2.fSource).toBe('two-vp')
+    expect(rows[0]!.mm).not.toBe(rows[1]!.mm)
+    ledger['gate2b_operating_points'] = {
+      what: '「렌즈 N mm」가 뜨는 두 국면 — 1점(기본 f · **임의 게이지**)과 2점(소실점 둘이 푼 f)',
+      rows,
+      caveat: (
+        '⚠ 1점의 f는 `DEFAULT_F_RATIO·W`이고 **임의값이다**(깊이 배율 게이지 — CLAUDE.md §1). '
+        + '그 상태의 mm는 «그 게이지를 35mm 판형으로 환산한 값»이지 잰 화각이 아니다. '
+        + '`fSource`를 화면에 안 내는 규약(D-L55)은 그대로이고, 이 사실은 여기와 NOTES에 적는다.'
+      ),
+      fixture_f_ratio_note: (
+        '⚠ 2점 픽스처의 f/W = 0.3227은 앱 자신의 구도 경고에서 **severe 대역**이다'
+        + '(`confirm_rules.json`의 `fov_gate.thresholds.severe_f_ratio` 0.5 — 1차 리뷰어 [6]). '
+        + '그래서 「12 mm」는 **그 픽스처의 성질**이지 앱의 대표값이 아니다.'
+      ),
     }
   })
 
@@ -206,7 +268,8 @@ it('원장', () => {
       for: 'web2-42 3번',
       registered: [
         '알려진 35mm 렌즈-화각 일곱 칸 × 프레임 비 셋에서 환산 오차 < 0.5 mm',
-        '**반증**: 자를 대각 대신 가로(W)로 바꾸면 그 표에서 크게 벗어난다',
+        '**반증**: 자를 «판형 가로 36 ↔ 프레임 가로 W»로 바꾸면 4:3·세로에서 그 표를 벗어난다 (3:2에서는 두 자가 상쇄돼 안 갈린다 — 그 값도 낸다)',
+        '표시 동작점 둘(1점 기본 f · 2점 풀린 f)에서 각각의 mm를 낸다 — 하나만 내면 동작점 하나다(#12)',
         '축척이 미정이면 「축척 미정」이 뜬다',
         '치수를 주면 분모가 `mmPerUnit`에서 서고, 줌하면 그만큼 바뀐다',
         '원근에서 화면 배율이 null이다 — 축척이 정의되지 않는다는 것의 코드 판',
@@ -217,6 +280,11 @@ it('원장', () => {
         + '같은 f에서 환산 mm가 알려진 값에서 최대 `falsify_worst_err_mm_using_width` 만큼 벗어난다. '
         + '문이 0.5 mm이므로 그 판은 한참 밖이다. ⚠ 프레임 비가 3:2면 W와 대각이 상수배라 **그 위약이 '
         + '안 갈린다** — 그래서 4:3과 세로 판을 같이 돌린다(그 칸이 넘는 값을 낸다).'
+      ),
+      reachability_note: (
+        '⚠ 이것은 «기준을 달성할 수 있는가»(오라클)가 아니라 **«기준에서 떨어지는 판»**이다 — '
+        + '1차 리뷰어가 그 범주 차이를 지적했다. 이 게이트의 기준(0.5 mm)은 달성 가능성이 자명하므로'
+        + '(식이 맞으면 통과) 여기 적는 값은 **판별력**이다.'
       ),
       reachability_source: 'gate1_focal35/falsify_worst_err_mm_using_width',
       reachability_value: (ledger['gate1_focal35'] as { falsify_worst_err_mm_using_width: number })

@@ -22,7 +22,14 @@
     "VIEW_NAME_ALIGN_RAD": 0.0025,
     "ORBIT_RAD_PER_PX": 0.005,
     "CUBE_ALIGN_MAX_DEG": 0.01,
-    "TURN_ANIM_MS": 300
+    "TURN_ANIM_MS": 300,
+    "arm_thresholds": {
+      "parallel_spread_deg_max": 1e-9,
+      "parallel_len_ratio_tol": 1e-9,
+      "reproject_err_px_max": 0.01,
+      "falsify_perspective_spread_deg_min": 1,
+      "falsify_perspective_len_ratio_min": 1.5
+    }
   },
   "constants_note": "새 값 둘: `CUBE_CENTER_R`(크기의 배수 — px ⛔ #88)와 `VIEW_NAME_ALIGN_RAD`. 뒤쪽은 **숫자를 새로 안 짓는다** — 궤도 한 픽셀의 절반이다(그래서 한 픽셀은 넘고 잡음은 안 넘는다). 전환 길이는 31-1의 TURN_ANIM_MS(300)를 그대로 가리킨다(#54).",
   "gate1_six_faces": {
@@ -209,9 +216,130 @@
   "gate5_no_vp": {
     "vp_marks_parallel": 0,
     "vp_marks_perspective": 1,
+    "vp_marks_draw_pose": 2,
     "horizon_parallel": null,
     "horizon_draw_pose": 400,
     "axes_all_directional": true
+  },
+  "gate11_center_covers": {
+    "what": "가운데 원(크기의 0.2배)이 덮는 큐브 요소 — 31-1의 corner/edge 무회귀를 값으로",
+    "center_radius_px": 16,
+    "visible_corners": 6,
+    "covered_corners": 0,
+    "covered_detail": [],
+    "corners": [
+      {
+        "i": 0,
+        "dist_from_center": 53.713452,
+        "covered": false,
+        "kind": "corner"
+      },
+      {
+        "i": 1,
+        "dist_from_center": 31.668045,
+        "covered": false,
+        "kind": "corner"
+      },
+      {
+        "i": 2,
+        "dist_from_center": 53.713452,
+        "covered": false,
+        "kind": "corner"
+      },
+      {
+        "i": 3,
+        "dist_from_center": 31.668045,
+        "covered": false,
+        "kind": "corner"
+      },
+      {
+        "i": 5,
+        "dist_from_center": 53.713452,
+        "covered": false,
+        "kind": "corner"
+      },
+      {
+        "i": 7,
+        "dist_from_center": 53.713452,
+        "covered": false,
+        "kind": "corner"
+      }
+    ],
+    "edges_kind": [
+      "edge",
+      "center",
+      "edge",
+      "edge",
+      "center",
+      "edge",
+      "edge",
+      "edge"
+    ],
+    "isometric": {
+      "what": "앞 꼭짓점이 화면 중심에 사영되는 자세 — **덮이는 국면이 실재하는가**(#40 도달 가능성)",
+      "visible_corners": 7,
+      "covered_corners": 1,
+      "covered_detail": [
+        {
+          "i": 7,
+          "dist_from_center": 0,
+          "covered": true,
+          "kind": "center"
+        }
+      ],
+      "corners": [
+        {
+          "i": 1,
+          "dist_from_center": 50.911688,
+          "covered": false,
+          "kind": "corner"
+        },
+        {
+          "i": 2,
+          "dist_from_center": 50.911688,
+          "covered": false,
+          "kind": "corner"
+        },
+        {
+          "i": 3,
+          "dist_from_center": 50.911688,
+          "covered": false,
+          "kind": "corner"
+        },
+        {
+          "i": 4,
+          "dist_from_center": 50.911688,
+          "covered": false,
+          "kind": "corner"
+        },
+        {
+          "i": 5,
+          "dist_from_center": 50.911688,
+          "covered": false,
+          "kind": "corner"
+        },
+        {
+          "i": 6,
+          "dist_from_center": 50.911688,
+          "covered": false,
+          "kind": "corner"
+        },
+        {
+          "i": 7,
+          "dist_from_center": 0,
+          "covered": true,
+          "kind": "center"
+        }
+      ]
+    },
+    "note": "아이소메트릭에 가까운 자세에서 **앞 꼭짓점 하나**가 화면 중심에 사영되므로 그 하나가 덮인다 — 그 꼭짓점의 시점은 «지금 보고 있는 그 자세»라 누를 이유가 없다. 나머지는 종전 그대로다."
+  },
+  "gate12_lens_dropped": {
+    "what": "평행 → 원근 왕복에서 보기 렌즈(viewF)의 운명 — **버린다**(되살리지 않는다)",
+    "viewF_before": 774.596669,
+    "viewF_in_parallel": null,
+    "viewF_after_return": null,
+    "cost": "사용자가 맞춰 둔 화각이 평행을 한 번 다녀오면 기본으로 돌아온다. DEFERRED에 올렸다."
   },
   "gate6_locked_before_confirm": {
     "what": "확정 전에는 평행이 잠긴다 — 조건은 31-2(렌즈)와 **같은 술어**(lensAllowed)",
@@ -403,6 +531,12 @@
   },
   "gate9_drop_on_promotion": {
     "what": "차수 승격(소실점 개수 변화) → 평행을 버린다. **렌즈를 버리는 그 사건과 같은 서명**이다(#54)",
+    "vps_before": 2,
+    "vps_after": 3,
+    "parallel_before": true,
+    "parallel_after": false,
+    "allowed_after": true,
+    "lens_sig_changed": true,
     "vps": 3,
     "unreachable_in_app": "평행 뷰에서 그은 획은 `analyze`가 내용으로 돌린다(「작도는 작도 포즈에서만」) — 그래서 **평행에 있는 동안 승격이 일어날 길이 실제로는 없다.** 여기서 재는 것은 기제다."
   },
@@ -414,7 +548,9 @@
       "D": 7.2253928083231465
     },
     "identical_after_roundtrip": true,
-    "falsify_strip_proj_changes_coords": true
+    "falsify_strip_proj_changes_coords": true,
+    "falsify_max_coord_shift_world": 0.169078,
+    "geometry_depth_span_world": 2.065591
   },
   "gate": {
     "for": "web2-42 1번·2번",
@@ -427,7 +563,11 @@
       "확정 전에는 여섯 면이 잠긴다(술어 + 큐브 부재)",
       "37-1 조합 표가 여섯 면 전부에서 원근과 같은 답을 낸다 · 재사영 오차 < 0.01 px",
       "평행 ↔ 원근을 오가도 승격 좌표가 **비트 단위로** 같다",
-      "확정이 풀리거나 승격이 일어나면 원근으로 돌아온다",
+      "**확정이 풀리면** 원근으로 돌아온다 — ⚠ 앱에서 도달 불가(되돌리기·지우개 둘 다 작도 획을 거부한다). 기제만 합성으로 잰다",
+      "**승격이 일어나면** 원근으로 돌아온다 — ⚠ 평행에 있는 동안은 도달 불가(`analyze`가 궤도 후 획을 내용으로 돌린다). 기제만 합성으로 잰다",
+      "돋보기가 평행에서 안 죽는다 — 화면 채움 0.503 → 0.800(맞춤 목표), 눈만 옮겼으면 안 움직인다",
+      "가운데 원이 덮는 것은 «화면 중심에 사영된» 꼭짓점 하나뿐이고 나머지 꼭짓점·모서리는 31-1 그대로다",
+      "평행 왕복은 보기 렌즈를 **버린다** — 그 대가를 값으로 남겼다(되살리지 않는다)",
       "평행 뷰에서 그은 획의 투영이 저장·복원을 지난다(버린 위약 판은 좌표가 달라진다)"
     ],
     "falsification": [
@@ -449,8 +589,20 @@
   "selfcheck_flags_known": {
     "exact_zeros": "⚠ 「방향 차 0.000000 · 길이 비 1.000000」은 **설계 보장이다**(§5.1 자기참조 유형 3): 평행 사영에서 분모가 상수이므로 아핀이고, 아핀은 평행을 보존한다. **그래서 그 0 자체는 아무것도 안 잰다** — 판별력은 같은 자세의 원근 위약 판이 준다(그 값이 나란히 있다). 그리고 그 0은 **배선을 잰다**: 이름표만 붙고 사영이 안 갈리면 이 0이 안 나온다.",
     "align_deg_zero": "⚠ `align_deg`의 0(평면·저면)도 보장이다 — 면 자세가 **정수 축 벡터의 외적**이라 오차가 구성상 안 쌓인다(31-1이 같은 자리에 같은 주석을 달았다). 나머지 넷의 1e-6은 반올림 자리(r6)이지 실측 오차가 아니다.",
+    "dolly_ratio_exactly_2": "⚠ 「D가 절반이면 화면 배율이 정확히 2배」는 **대수적 귀결이다**(배율이 f/D에 반비례한다) — 그 2는 아무것도 안 잰다. 재는 것은 **줌이 D를 건드리는가**(안 건드리면 평행에서 휠이 죽는다)이고 그 판별은 「D_before ≠ D_after」가 준다(1차 리뷰어 [11]).",
+    "zoom_fit_fill_is_the_target": "⚠ `zoom_fit.fill_after.w = 0.8`은 **맞춤의 목표 상수**다(여백 10%씩) — 항등이다. 재는 것은 **0.503에서 움직였는가**이고, 눈만 옮겼으면(D를 안 건드리면) 그 값이 한 톨도 안 움직인다 — 그것이 이 칸의 판별력이다(1차 리뷰어 [8]).",
     "reproject_err_zero": "⚠ `reproject_err_px = 0`(원칙 d)은 **절반이 보장이다**: 「명시 점 2」 칸에서 획의 끝점이 이미 그 3D 점의 사영이므로, 리프팅이 **그 점을 고르면** 왕복이 부동소수까지 같다. **그래서 이 0이 재는 것은 «어느 후보를 골랐는가»다** — 다른 후보(교차·축)를 고르면 0이 아니다. 여섯 면에서 전부 0이라는 것은 「명시 점이 이겼다」의 값이고, 그것이 37-1 표의 첫 줄이다.",
     "constants_snapshot_absent": "⚠ `constantsSnapshot()` / `metric_defs`가 없다 — **web2 라인 전체의 구멍**이고 이 원장만의 것이 아니다. 그 기계는 `web/test/constants.ts`에만 있다(DEFERRED)."
+  },
+  "turn31_regression": {
+    "what": "지시문 42-1의 다섯째 게이트(31-1의 90° 회전 무회귀 — 축 기준 · 정면 구도 반증)는 **31-1의 팔이 그대로 지킨다**: `test/turn31.test.ts`가 이 회차의 코드 위에서 돌고 같은 원장을 다시 쓴다(`turn31_web2.json`). 42가 큐브에 더한 것은 «가운데 원 · 이름 · 투영»이고 `cubeBasis`·`orientIn`·`turnOrient`·`poseForOrient`는 **한 줄도 안 바꿨다**.",
+    "ledger": "stage0/out/turn31_web2.json (같은 명령으로 이 회차에 재실행)",
+    "keys": [
+      "gate1_cycle",
+      "gate2_axis_align",
+      "gate3_falsification"
+    ],
+    "here": "이 파일이 더하는 것은 «그 90°가 평행을 들고 가는가» 하나다(gate3_hand_rotate.turn_keeps_parallel)"
   },
   "pitfalls": [
     "#92",
@@ -459,7 +611,10 @@
     "#54",
     "#77",
     "#42",
-    "#12"
+    "#12",
+    "#35",
+    "#40",
+    "#71"
   ],
   "pitfalls_note": "#92 — 「평행인가」를 이름표가 아니라 **결과의 자리**(재사영)로 잰다. #94 — 「확정 전에는 잠긴다」를 문면이 아니라 **그 자리를 짚어** 잰다(e2e가 실제 클릭으로 한 번 더). #88 — 배율을 상수로 안 두고 `f/D`로 유도한다 · 가운데 반지름은 크기의 배수다. #54 — 투영의 출처가 포즈 하나 · 잠금 술어가 `lensAllowed` 하나 · 버리는 자리가 렌즈와 같은 자리. #77 ㉡ — w=0이 종전 식과 같은 것은 **구성상 항등**이라 임계를 안 건다. #12 — 조합 표를 한 자세가 아니라 여섯 면 전부에서 돈다."
 }

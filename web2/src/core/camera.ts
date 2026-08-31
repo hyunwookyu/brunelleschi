@@ -295,7 +295,8 @@ export function screenAxes(an: Analysis, pose: CamPose): ScreenAxis[] {
   if (!an.principal || an.f === null) return []
   const out: ScreenAxis[] = []
   // **평행에는 소실점이 없다**(web2-42) — 모든 축이 무한원이고 화면 «방향»만 남는다.
-  // 사이 값(w<1)에서는 소실점이 `f/(1−w)`배로 밀려난다(z→∞ 극한이 그 값이다) —
+  // 사이 값(w<1)에서는 소실점이 **`1/(1−w)`배**로 밀려난다(z→∞ 극한에서 f가 f/(1−w)이 되므로
+  // 주점에서의 «거리»가 그 비로 는다 — 배수에 f를 곱하면 차원이 안 맞는다) —
   // 전환 동안 ✕가 화면 밖으로 «날아가는» 것이 그래서 이 식의 결과다.
   const w = projW(pose)
   for (const ax of an.axes) {

@@ -30,7 +30,7 @@ import { lerpPose, levelPose } from '../src/core/level'
 import { createAutoLevel } from '../src/app/autolevel'
 import {
   createApp, setPose, orbitPivot, orbitBy, dollyBy, panBy, undo, parallelPxPerUnit,
-  beginErase, eraseAt, endErase, commitStroke, zoomFit, type App,
+  beginErase, eraseAt, endErase, commitStroke, zoomFit, setViewLensStops, resetViewLens, type App,
 } from '../src/app/state'
 import { session } from './session'
 import { liftAll } from '../src/core/lift'
@@ -358,12 +358,17 @@ describe('42-1 ⑤ 평행에는 소실점도 지평선도 없다', () => {
     const marksPer = vpMarks(app.lift.an, per).length
     const axesPar = screenAxes(app.lift.an, pose)
     expect(marksPar, '평행에는 소실점이 없다').toBe(0)
+    expect(vpMarks(app.lift.an, DRAW_POSE).length, '작도 포즈에서는 둘이다 — 대조가 0 ↔ 2다').toBe(2)
     expect(axesPar.every(a => a.vp === null && a.dir !== null), '모든 축이 무한원이다').toBe(true)
     expect(horizonScreenY(app.lift.an, pose)).toBeNull()
     expect(horizonScreenY(app.lift.an, DRAW_POSE)).toBe(app.lift.an.principal!.y)
     ledger['gate5_no_vp'] = {
       vp_marks_parallel: marksPar,
       vp_marks_perspective: marksPer,
+      // ⚠ 정면 뷰의 원근 판이 **하나**인 것은 그 자세가 vp0 축을 마주 보기 때문이다(vp1이
+      //   무한원으로 간다 — flow.spec이 같은 자리를 잰다). 대조 폭을 넓히려고 **작도 포즈**의
+      //   개수를 같이 낸다: 이 픽스처는 2점이므로 거기서 둘이다(1차 리뷰어 [9]).
+      vp_marks_draw_pose: vpMarks(app.lift.an, DRAW_POSE).length,
       horizon_parallel: horizonScreenY(app.lift.an, pose),
       horizon_draw_pose: horizonScreenY(app.lift.an, DRAW_POSE),
       axes_all_directional: true,
@@ -372,6 +377,98 @@ describe('42-1 ⑤ 평행에는 소실점도 지평선도 없다', () => {
 })
 
 // ══════════════════════════════════════════════════════════════════════════
+describe('42-1 ⑥ 가운데 원이 덮는 것 — 꼭짓점·모서리의 무회귀', () => {
+  it('덮이는 것은 «화면 중심에 사영된» 꼭짓점 하나뿐이고, 나머지는 종전 그대로 짚힌다', () => {
+    const app = app2()
+    const geom = cubeGeom(app.lift.an, app.pose, app.cubeLayout)!
+    const L = app.cubeLayout
+    const inCenter = (p: { x: number; y: number }) =>
+      Math.hypot(p.x - L.cx, p.y - L.cy) <= L.size * C.CUBE_CENTER_R
+    // 보이는 꼭짓점 — 그 자리를 짚었을 때 무엇이 나오는가
+    const vis = new Set<number>()
+    for (const f of geom.faces) if (f.visible) for (const i of f.poly) vis.add(i)
+    const rows = [...vis].map(i => {
+      const p = geom.corners[i]!.p
+      const hit = cubeHit(geom, p)!
+      return { i, dist_from_center: r6(Math.hypot(p.x - L.cx, p.y - L.cy)), covered: inCenter(p), kind: hit.kind }
+    }).sort((a, b) => a.i - b.i)
+    const covered = rows.filter(r => r.covered)
+    // 모서리 중점도 같이 본다 — 31-1의 거동이 그대로인가
+    const edges: { a: number; b: number; kind: string }[] = []
+    for (const f of geom.faces) {
+      if (!f.visible) continue
+      for (let i = 0; i < f.poly.length; i++) {
+        const a = f.poly[i]!, b = f.poly[(i + 1) % f.poly.length]!
+        const m = { x: (geom.corners[a]!.p.x + geom.corners[b]!.p.x) / 2, y: (geom.corners[a]!.p.y + geom.corners[b]!.p.y) / 2 }
+        edges.push({ a, b, kind: cubeHit(geom, m)!.kind })
+      }
+    }
+    // ⚠⚠ **표준 2점 구도에서는 덮이는 꼭짓점이 0이다**(가장 가까운 것이 31.7 px · 원은 16 px).
+    //    덮이는 국면은 **아이소메트릭에 가까운 자세**뿐이므로 그 자세를 따로 만들어 잰다 —
+    //    안 만들면 「하나가 덮인다」는 주장이 이 픽스처에서 **한 번도 발화하지 않는다**(#40).
+    const pivot = orbitPivot(app)
+    const isoPose = poseForElem(app.lift.an, { kind: 'corner', dirLocal: norm3(v3(1, 1, 1)) }, pivot, 500)!
+    const isoGeom = cubeGeom(app.lift.an, isoPose, L)!
+    const isoVis = new Set<number>()
+    for (const f of isoGeom.faces) if (f.visible) for (const i of f.poly) isoVis.add(i)
+    const isoRows = [...isoVis].map(i => {
+      const p = isoGeom.corners[i]!.p
+      return { i, dist_from_center: r6(Math.hypot(p.x - L.cx, p.y - L.cy)), covered: inCenter(p), kind: cubeHit(isoGeom, p)!.kind }
+    }).sort((a, b) => a.i - b.i)
+    const isoCovered = isoRows.filter(r => r.covered)
+    expect(isoCovered.length, '아이소메트릭에서는 앞 꼭짓점 하나가 덮인다').toBe(1)
+    expect(isoCovered[0]!.kind, '그 자리는 「투시」로 읽힌다').toBe('center')
+    expect(isoRows.filter(r => !r.covered).every(r => r.kind === 'corner'), '나머지는 종전대로다').toBe(true)
+
+    expect(covered.length, '덮이는 꼭짓점은 많아야 하나다').toBeLessThanOrEqual(1)
+    expect(rows.filter(r => !r.covered).every(r => r.kind === 'corner'), '나머지 꼭짓점은 종전대로 corner다').toBe(true)
+    expect(edges.every(e => e.kind === 'edge' || e.kind === 'center'), '모서리도 종전대로다').toBe(true)
+    ledger['gate11_center_covers'] = {
+      what: '가운데 원(크기의 %s배)이 덮는 큐브 요소 — 31-1의 corner/edge 무회귀를 값으로'.replace('%s', String(C.CUBE_CENTER_R)),
+      center_radius_px: L.size * C.CUBE_CENTER_R,
+      visible_corners: rows.length,
+      covered_corners: covered.length,
+      covered_detail: covered,
+      corners: rows,
+      edges_kind: edges.map(e => e.kind),
+      isometric: {
+        what: '앞 꼭짓점이 화면 중심에 사영되는 자세 — **덮이는 국면이 실재하는가**(#40 도달 가능성)',
+        visible_corners: isoRows.length,
+        covered_corners: isoCovered.length,
+        covered_detail: isoCovered,
+        corners: isoRows,
+      },
+      note: (
+        '아이소메트릭에 가까운 자세에서 **앞 꼭짓점 하나**가 화면 중심에 사영되므로 그 하나가 덮인다 — '
+        + '그 꼭짓점의 시점은 «지금 보고 있는 그 자세»라 누를 이유가 없다. 나머지는 종전 그대로다.'
+      ),
+    }
+  })
+
+  it('평행 왕복이 보기 렌즈를 버린다 — **되돌려 주지 않는다**(값으로 남긴다)', () => {
+    // 지시문이 말이 없는 자리다. 평행에서 렌즈길이는 무의미하므로 들어갈 때 버리고,
+    // 나올 때 **되살리지 않는다** — 되살리려면 «버린 값»을 어딘가 들고 있어야 하고
+    // 그것이 곧 상태를 하나 더 만드는 일이다(#54). 대가를 값으로 적는다.
+    const app = app2()
+    setViewLensStops(app, 1)
+    const before = app.viewF
+    expect(before).not.toBeNull()
+    const { pose } = facePose(app, FACES[0]!)
+    // 입력 경로가 하는 그대로: 평행으로 들어가면서 렌즈를 버린다
+    resetViewLens(app)
+    setPose(app, pose)
+    const inPar = app.viewF
+    setPose(app, perspectivePose(app.pose))
+    ledger['gate12_lens_dropped'] = {
+      what: '평행 → 원근 왕복에서 보기 렌즈(viewF)의 운명 — **버린다**(되살리지 않는다)',
+      viewF_before: r6(before!), viewF_in_parallel: inPar, viewF_after_return: app.viewF,
+      cost: '사용자가 맞춰 둔 화각이 평행을 한 번 다녀오면 기본으로 돌아온다. DEFERRED에 올렸다.',
+    }
+    expect(inPar).toBeNull()
+    expect(app.viewF, '돌아와도 기본이다 — 그 사실을 값으로 박는다').toBeNull()
+  })
+})
+
 describe('42-2 ① 카메라 확정 전에는 여섯 면이 잠긴다', () => {
   it('확정 전에는 평행이 안 허용되고 큐브 자체가 없다 — 그 자리를 실제로 짚어도 아무 일이 없다', () => {
     const s = session(W, H)
@@ -608,6 +705,12 @@ describe('42-2 ④ 확정이 풀리거나 승격이 일어나면 원근으로 �
     expect(isParallel(s.app.pose), '승격 뒤에는 원근이다').toBe(false)
     ledger['gate9_drop_on_promotion'] = {
       what: '차수 승격(소실점 개수 변화) → 평행을 버린다. **렌즈를 버리는 그 사건과 같은 서명**이다(#54)',
+      vps_before: 2,
+      vps_after: s.app.lift.an.vps.length,
+      parallel_before: true,
+      parallel_after: isParallel(s.app.pose),
+      allowed_after: parallelAllowed(s.app.lift.an),
+      lens_sig_changed: s.app.lensSig !== sig0,
       vps: 3,
       unreachable_in_app: (
         '평행 뷰에서 그은 획은 `analyze`가 내용으로 돌린다(「작도는 작도 포즈에서만」) — '
@@ -653,12 +756,29 @@ describe('42-2 ⑤ 저장·복원이 투영을 들고 간다', () => {
     for (const x of stripped.doc.strokes) if (x.view) delete x.view.proj
     const l2 = liftAll(stripped.doc)
     expect(k(l2), '투영을 잃으면 좌표가 달라진다 — 그래서 저장한다').not.toBe(k(l0))
+    // **얼마나** 달라지는가(1차 리뷰어 [10]) — 불리언은 1e-12도 참으로 만든다
+    let worldMax = 0
+    for (const [id, g] of l0.lifted) {
+      const h = l2.lifted.get(id)
+      if (!h) { worldMax = Infinity; break }
+      for (const [u, v] of [[g.a3, h.a3], [g.b3, h.b3]] as const) {
+        worldMax = Math.max(worldMax, Math.hypot(u.x - v.x, u.y - v.y, u.z - v.z))
+      }
+    }
+    const geomSpan = (() => {
+      let lo = Infinity, hi = -Infinity
+      for (const g of l0.lifted.values()) for (const q of [g.a3, g.b3]) { lo = Math.min(lo, q.z); hi = Math.max(hi, q.z) }
+      return hi - lo
+    })()
+    expect(worldMax, '차이가 «있다»가 아니라 «크다»').toBeGreaterThan(1e-3)
     ledger['gate10_roundtrip'] = {
       what: '평행 뷰에서 그은 획의 투영이 저장·복원을 지난다 + 그것을 버린 위약 판',
       lifted_before: before,
       proj_saved: rt.view!.proj,
       identical_after_roundtrip: true,
       falsify_strip_proj_changes_coords: true,
+      falsify_max_coord_shift_world: worldMax === Infinity ? 'lifted 집합 자체가 달라졌다' : r6(worldMax),
+      geometry_depth_span_world: r6(geomSpan),
     }
   })
 })
@@ -694,6 +814,15 @@ it('원장', () => {
       ORBIT_RAD_PER_PX,
       CUBE_ALIGN_MAX_DEG,
       TURN_ANIM_MS,
+      // **팔의 문**(제품 상수가 아니다 — 1차 리뷰어 [16]). web2 라인에는 `web/test/constants.ts`에
+      // 대응하는 자리가 없어(라인 전체의 구멍 · DEFERRED) 여기 적는다.
+      arm_thresholds: {
+        parallel_spread_deg_max: 1e-9,
+        parallel_len_ratio_tol: 1e-9,
+        reproject_err_px_max: 0.01,
+        falsify_perspective_spread_deg_min: 1,
+        falsify_perspective_len_ratio_min: 1.5,
+      },
     },
     constants_note: (
       '새 값 둘: `CUBE_CENTER_R`(크기의 배수 — px ⛔ #88)와 `VIEW_NAME_ALIGN_RAD`. '
@@ -712,7 +841,11 @@ it('원장', () => {
         '확정 전에는 여섯 면이 잠긴다(술어 + 큐브 부재)',
         '37-1 조합 표가 여섯 면 전부에서 원근과 같은 답을 낸다 · 재사영 오차 < 0.01 px',
         '평행 ↔ 원근을 오가도 승격 좌표가 **비트 단위로** 같다',
-        '확정이 풀리거나 승격이 일어나면 원근으로 돌아온다',
+        '**확정이 풀리면** 원근으로 돌아온다 — ⚠ 앱에서 도달 불가(되돌리기·지우개 둘 다 작도 획을 거부한다). 기제만 합성으로 잰다',
+        '**승격이 일어나면** 원근으로 돌아온다 — ⚠ 평행에 있는 동안은 도달 불가(`analyze`가 궤도 후 획을 내용으로 돌린다). 기제만 합성으로 잰다',
+        '돋보기가 평행에서 안 죽는다 — 화면 채움 0.503 → 0.800(맞춤 목표), 눈만 옮겼으면 안 움직인다',
+        '가운데 원이 덮는 것은 «화면 중심에 사영된» 꼭짓점 하나뿐이고 나머지 꼭짓점·모서리는 31-1 그대로다',
+        '평행 왕복은 보기 렌즈를 **버린다** — 그 대가를 값으로 남겼다(되살리지 않는다)',
         '평행 뷰에서 그은 획의 투영이 저장·복원을 지난다(버린 위약 판은 좌표가 달라진다)',
       ],
       falsification: [
@@ -743,6 +876,16 @@ it('원장', () => {
         + '오차가 구성상 안 쌓인다(31-1이 같은 자리에 같은 주석을 달았다). 나머지 넷의 1e-6은 '
         + '반올림 자리(r6)이지 실측 오차가 아니다.'
       ),
+      dolly_ratio_exactly_2: (
+        '⚠ 「D가 절반이면 화면 배율이 정확히 2배」는 **대수적 귀결이다**(배율이 f/D에 반비례한다) — '
+        + '그 2는 아무것도 안 잰다. 재는 것은 **줌이 D를 건드리는가**(안 건드리면 평행에서 휠이 죽는다)이고 '
+        + '그 판별은 「D_before ≠ D_after」가 준다(1차 리뷰어 [11]).'
+      ),
+      zoom_fit_fill_is_the_target: (
+        '⚠ `zoom_fit.fill_after.w = 0.8`은 **맞춤의 목표 상수**다(여백 10%씩) — 항등이다. '
+        + '재는 것은 **0.503에서 움직였는가**이고, 눈만 옮겼으면(D를 안 건드리면) 그 값이 '
+        + '한 톨도 안 움직인다 — 그것이 이 칸의 판별력이다(1차 리뷰어 [8]).'
+      ),
       reproject_err_zero: (
         '⚠ `reproject_err_px = 0`(원칙 d)은 **절반이 보장이다**: 「명시 점 2」 칸에서 획의 끝점이 '
         + '이미 그 3D 점의 사영이므로, 리프팅이 **그 점을 고르면** 왕복이 부동소수까지 같다. '
@@ -754,7 +897,18 @@ it('원장', () => {
         + '것이 아니다. 그 기계는 `web/test/constants.ts`에만 있다(DEFERRED).'
       ),
     },
-    pitfalls: ['#92', '#94', '#88', '#54', '#77', '#42', '#12'],
+    turn31_regression: {
+      what: (
+        '지시문 42-1의 다섯째 게이트(31-1의 90° 회전 무회귀 — 축 기준 · 정면 구도 반증)는 '
+        + '**31-1의 팔이 그대로 지킨다**: `test/turn31.test.ts`가 이 회차의 코드 위에서 돌고 '
+        + '같은 원장을 다시 쓴다(`turn31_web2.json`). 42가 큐브에 더한 것은 «가운데 원 · 이름 · 투영»이고 '
+        + '`cubeBasis`·`orientIn`·`turnOrient`·`poseForOrient`는 **한 줄도 안 바꿨다**.'
+      ),
+      ledger: 'stage0/out/turn31_web2.json (같은 명령으로 이 회차에 재실행)',
+      keys: ['gate1_cycle', 'gate2_axis_align', 'gate3_falsification'],
+      here: '이 파일이 더하는 것은 «그 90°가 평행을 들고 가는가» 하나다(gate3_hand_rotate.turn_keeps_parallel)',
+    },
+    pitfalls: ['#92', '#94', '#88', '#54', '#77', '#42', '#12', '#35', '#40', '#71'],
     pitfalls_note: (
       '#92 — 「평행인가」를 이름표가 아니라 **결과의 자리**(재사영)로 잰다. '
       + '#94 — 「확정 전에는 잠긴다」를 문면이 아니라 **그 자리를 짚어** 잰다(e2e가 실제 클릭으로 한 번 더). '

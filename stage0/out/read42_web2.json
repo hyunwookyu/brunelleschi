@@ -13,7 +13,12 @@
     "what": "알려진 35mm 렌즈-대각화각 표 ↔ 환산 mm. 프레임 비 셋(3:2 · 4:3 · 세로)에서 돌린다",
     "film35_diag_mm": 43.266615,
     "worst_err_mm": 0.129153,
-    "falsify_worst_err_mm_using_width": 90.102088,
+    "falsify_worst_err_mm_using_width": 52.296258,
+    "table_rounding_band_worst_mm": 0.377364,
+    "rulers_coincide_at_3_2": {
+      "film_diag_over_frame_diag": 0.03,
+      "film_w_over_frame_w": 0.03
+    },
     "rows": [
       {
         "frame": "1200x800",
@@ -21,8 +26,9 @@
         "known_diag_deg": 110.5,
         "f_doc_px": 500.251984,
         "got_mm": 15.00756,
-        "falsify_using_width_mm": 18.036842,
-        "hfov_deg": 100.360462
+        "falsify_using_width_mm": 15.00756,
+        "hfov_deg": 100.360462,
+        "table_rounding_band_mm": 0.013982
       },
       {
         "frame": "1200x800",
@@ -30,8 +36,9 @@
         "known_diag_deg": 84.1,
         "f_doc_px": 799.469946,
         "got_mm": 23.984098,
-        "falsify_using_width_mm": 28.825299,
-        "hfov_deg": 73.776255
+        "falsify_using_width_mm": 23.984098,
+        "hfov_deg": 73.776255,
+        "table_rounding_band_mm": 0.021042
       },
       {
         "frame": "1200x800",
@@ -39,8 +46,9 @@
         "known_diag_deg": 75.4,
         "f_doc_px": 933.007645,
         "got_mm": 27.990229,
-        "falsify_using_width_mm": 33.640069,
-        "hfov_deg": 65.488646
+        "falsify_using_width_mm": 27.990229,
+        "hfov_deg": 65.488646,
+        "table_rounding_band_mm": 0.025241
       },
       {
         "frame": "1200x800",
@@ -48,8 +56,9 @@
         "known_diag_deg": 63.4,
         "f_doc_px": 1167.577004,
         "got_mm": 35.02731,
-        "falsify_using_width_mm": 42.097588,
-        "hfov_deg": 54.395879
+        "falsify_using_width_mm": 35.02731,
+        "hfov_deg": 54.395879,
+        "table_rounding_band_mm": 0.034186
       },
       {
         "frame": "1200x800",
@@ -57,8 +66,9 @@
         "known_diag_deg": 46.8,
         "f_doc_px": 1666.387479,
         "got_mm": 49.991624,
-        "falsify_using_width_mm": 60.082455,
-        "hfov_deg": 39.603871
+        "falsify_using_width_mm": 49.991624,
+        "hfov_deg": 39.603871,
+        "table_rounding_band_mm": 0.059846
       },
       {
         "frame": "1200x800",
@@ -66,8 +76,9 @@
         "known_diag_deg": 28.6,
         "f_doc_px": 2829.028236,
         "got_mm": 84.870847,
-        "falsify_using_width_mm": 102.002064,
-        "hfov_deg": 23.948509
+        "falsify_using_width_mm": 84.870847,
+        "hfov_deg": 23.948509,
+        "table_rounding_band_mm": 0.154722
       },
       {
         "frame": "1200x800",
@@ -75,8 +86,9 @@
         "known_diag_deg": 18.2,
         "f_doc_px": 4502.041751,
         "got_mm": 135.061253,
-        "falsify_using_width_mm": 162.323424,
-        "hfov_deg": 15.182478
+        "falsify_using_width_mm": 135.061253,
+        "hfov_deg": 15.182478,
+        "table_rounding_band_mm": 0.377364
       },
       {
         "frame": "1200x900",
@@ -84,8 +96,9 @@
         "known_diag_deg": 110.5,
         "f_doc_px": 520.293513,
         "got_mm": 15.00756,
-        "falsify_using_width_mm": 18.759449,
-        "hfov_deg": 98.139229
+        "falsify_using_width_mm": 15.608805,
+        "hfov_deg": 98.139229,
+        "table_rounding_band_mm": 0.013982
       },
       {
         "frame": "1200x900",
@@ -93,8 +106,9 @@
         "known_diag_deg": 84.1,
         "f_doc_px": 831.499005,
         "got_mm": 23.984098,
-        "falsify_using_width_mm": 29.980123,
-        "hfov_deg": 71.627555
+        "falsify_using_width_mm": 24.94497,
+        "hfov_deg": 71.627555,
+        "table_rounding_band_mm": 0.021042
       },
       {
         "frame": "1200x900",
@@ -102,8 +116,9 @@
         "known_diag_deg": 75.4,
         "f_doc_px": 970.386607,
         "got_mm": 27.990229,
-        "falsify_using_width_mm": 34.987787,
-        "hfov_deg": 63.457855
+        "falsify_using_width_mm": 29.111598,
+        "hfov_deg": 63.457855,
+        "table_rounding_band_mm": 0.025241
       },
       {
         "frame": "1200x900",
@@ -111,8 +126,9 @@
         "known_diag_deg": 63.4,
         "f_doc_px": 1214.353488,
         "got_mm": 35.02731,
-        "falsify_using_width_mm": 43.784138,
-        "hfov_deg": 52.58704
+        "falsify_using_width_mm": 36.430605,
+        "hfov_deg": 52.58704,
+        "table_rounding_band_mm": 0.034186
       },
       {
         "frame": "1200x900",
@@ -120,8 +136,9 @@
         "known_diag_deg": 46.8,
         "f_doc_px": 1733.14774,
         "got_mm": 49.991624,
-        "falsify_using_width_mm": 62.48953,
-        "hfov_deg": 38.190777
+        "falsify_using_width_mm": 51.994432,
+        "hfov_deg": 38.190777,
+        "table_rounding_band_mm": 0.059846
       },
       {
         "frame": "1200x900",
@@ -129,8 +146,9 @@
         "known_diag_deg": 28.6,
         "f_doc_px": 2942.367221,
         "got_mm": 84.870847,
-        "falsify_using_width_mm": 106.088559,
-        "hfov_deg": 23.051178
+        "falsify_using_width_mm": 88.271017,
+        "hfov_deg": 23.051178,
+        "table_rounding_band_mm": 0.154722
       },
       {
         "frame": "1200x900",
@@ -138,8 +156,9 @@
         "known_diag_deg": 18.2,
         "f_doc_px": 4682.406455,
         "got_mm": 135.061253,
-        "falsify_using_width_mm": 168.826566,
-        "hfov_deg": 14.604091
+        "falsify_using_width_mm": 140.472194,
+        "hfov_deg": 14.604091,
+        "table_rounding_band_mm": 0.377364
       },
       {
         "frame": "900x1200",
@@ -147,8 +166,9 @@
         "known_diag_deg": 110.5,
         "f_doc_px": 520.293513,
         "got_mm": 15.00756,
-        "falsify_using_width_mm": 25.012599,
-        "hfov_deg": 81.712822
+        "falsify_using_width_mm": 20.811741,
+        "hfov_deg": 81.712822,
+        "table_rounding_band_mm": 0.013982
       },
       {
         "frame": "900x1200",
@@ -156,8 +176,9 @@
         "known_diag_deg": 84.1,
         "f_doc_px": 831.499005,
         "got_mm": 23.984098,
-        "falsify_using_width_mm": 39.973497,
-        "hfov_deg": 56.84373
+        "falsify_using_width_mm": 33.25996,
+        "hfov_deg": 56.84373,
+        "table_rounding_band_mm": 0.021042
       },
       {
         "frame": "900x1200",
@@ -165,8 +186,9 @@
         "known_diag_deg": 75.4,
         "f_doc_px": 970.386607,
         "got_mm": 27.990229,
-        "falsify_using_width_mm": 46.650382,
-        "hfov_deg": 49.757394
+        "falsify_using_width_mm": 38.815464,
+        "hfov_deg": 49.757394,
+        "table_rounding_band_mm": 0.025241
       },
       {
         "frame": "900x1200",
@@ -174,8 +196,9 @@
         "known_diag_deg": 63.4,
         "f_doc_px": 1214.353488,
         "got_mm": 35.02731,
-        "falsify_using_width_mm": 58.37885,
-        "hfov_deg": 40.666142
+        "falsify_using_width_mm": 48.57414,
+        "hfov_deg": 40.666142,
+        "table_rounding_band_mm": 0.034186
       },
       {
         "frame": "900x1200",
@@ -183,8 +206,9 @@
         "known_diag_deg": 46.8,
         "f_doc_px": 1733.14774,
         "got_mm": 49.991624,
-        "falsify_using_width_mm": 83.319374,
-        "hfov_deg": 29.11013
+        "falsify_using_width_mm": 69.32591,
+        "hfov_deg": 29.11013,
+        "table_rounding_band_mm": 0.059846
       },
       {
         "frame": "900x1200",
@@ -192,8 +216,9 @@
         "known_diag_deg": 28.6,
         "f_doc_px": 2942.367221,
         "got_mm": 84.870847,
-        "falsify_using_width_mm": 141.451412,
-        "hfov_deg": 17.390659
+        "falsify_using_width_mm": 117.694689,
+        "hfov_deg": 17.390659,
+        "table_rounding_band_mm": 0.154722
       },
       {
         "frame": "900x1200",
@@ -201,11 +226,35 @@
         "known_diag_deg": 18.2,
         "f_doc_px": 4682.406455,
         "got_mm": 135.061253,
-        "falsify_using_width_mm": 225.102088,
-        "hfov_deg": 10.979038
+        "falsify_using_width_mm": 187.296258,
+        "hfov_deg": 10.979038,
+        "table_rounding_band_mm": 0.377364
       }
     ],
-    "note": "f를 **화각에서** 만든다 — mm에서 만들면 같은 식을 두 번 적는 항등이 된다(#77 ㉡)"
+    "note": "f를 **화각에서** 만든다 — mm에서 만들면 같은 식을 두 번 적는 항등이 된다(#77 ㉡)",
+    "got_mm_is_frame_invariant": "⚠ **참 지표는 프레임에 대해 항등이다**(1차 리뷰어 [4]): f를 화각에서 만들면 mm = (43.2666/2)/tan(θ/2)로 접혀 diag가 상쇄된다 — 그래서 프레임 축은 **위약에만** 정보를 준다(같은 known_mm의 세 행에서 got_mm이 자릿수까지 같은 것이 그 증거다). 독립 관측은 **일곱**이고 스물하나가 아니다.",
+    "table_precision": "⚠ **문(0.5 mm)이 표 자신의 자릿수보다 좁다**(1차 리뷰어 [5]): 표가 0.1° 자리이므로 ±0.05°가 주는 폭이 최악 0.377 mm다(135 mm 칸). 실측 잔차 0.129153 mm는 그 폭 **안**이다 — 즉 이 팔이 낸 것은 「구현이 그만큼 정확하다」가 아니라 **「식이 표와, 표의 자릿수 안에서 맞다」**이다. 판별력은 위약(자를 바꾼 판)이 준다."
+  },
+  "gate2b_operating_points": {
+    "what": "「렌즈 N mm」가 뜨는 두 국면 — 1점(기본 f · **임의 게이지**)과 2점(소실점 둘이 푼 f)",
+    "rows": [
+      {
+        "state": "1점(P1 잠금)",
+        "fSource": "default",
+        "f_over_W": 0.87,
+        "mm": 31.32,
+        "text": "렌즈 31mm"
+      },
+      {
+        "state": "2점",
+        "fSource": "two-vp",
+        "f_over_W": 0.322749,
+        "mm": 11.61895,
+        "text": "렌즈 12mm"
+      }
+    ],
+    "caveat": "⚠ 1점의 f는 `DEFAULT_F_RATIO·W`이고 **임의값이다**(깊이 배율 게이지 — CLAUDE.md §1). 그 상태의 mm는 «그 게이지를 35mm 판형으로 환산한 값»이지 잰 화각이 아니다. `fSource`를 화면에 안 내는 규약(D-L55)은 그대로이고, 이 사실은 여기와 NOTES에 적는다.",
+    "fixture_f_ratio_note": "⚠ 2점 픽스처의 f/W = 0.3227은 앱 자신의 구도 경고에서 **severe 대역**이다(`confirm_rules.json`의 `fov_gate.thresholds.severe_f_ratio` 0.5 — 1차 리뷰어 [6]). 그래서 「12 mm」는 **그 픽스처의 성질**이지 앱의 대표값이 아니다."
   },
   "gate2_focal_text": {
     "f_doc_px": 387.298335,
@@ -235,15 +284,17 @@
     "for": "web2-42 3번",
     "registered": [
       "알려진 35mm 렌즈-화각 일곱 칸 × 프레임 비 셋에서 환산 오차 < 0.5 mm",
-      "**반증**: 자를 대각 대신 가로(W)로 바꾸면 그 표에서 크게 벗어난다",
+      "**반증**: 자를 «판형 가로 36 ↔ 프레임 가로 W»로 바꾸면 4:3·세로에서 그 표를 벗어난다 (3:2에서는 두 자가 상쇄돼 안 갈린다 — 그 값도 낸다)",
+      "표시 동작점 둘(1점 기본 f · 2점 풀린 f)에서 각각의 mm를 낸다 — 하나만 내면 동작점 하나다(#12)",
       "축척이 미정이면 「축척 미정」이 뜬다",
       "치수를 주면 분모가 `mmPerUnit`에서 서고, 줌하면 그만큼 바뀐다",
       "원근에서 화면 배율이 null이다 — 축척이 정의되지 않는다는 것의 코드 판",
       "렌즈를 바꾸면 mm가 비례해 바뀐다(31-2 무회귀)"
     ],
     "reachability": "**무엇이 이 기준을 넘는가**(#35): 자를 대각에서 **가로(W)**로 바꾼 판이 넘는다 — 같은 f에서 환산 mm가 알려진 값에서 최대 `falsify_worst_err_mm_using_width` 만큼 벗어난다. 문이 0.5 mm이므로 그 판은 한참 밖이다. ⚠ 프레임 비가 3:2면 W와 대각이 상수배라 **그 위약이 안 갈린다** — 그래서 4:3과 세로 판을 같이 돌린다(그 칸이 넘는 값을 낸다).",
+    "reachability_note": "⚠ 이것은 «기준을 달성할 수 있는가»(오라클)가 아니라 **«기준에서 떨어지는 판»**이다 — 1차 리뷰어가 그 범주 차이를 지적했다. 이 게이트의 기준(0.5 mm)은 달성 가능성이 자명하므로(식이 맞으면 통과) 여기 적는 값은 **판별력**이다.",
     "reachability_source": "gate1_focal35/falsify_worst_err_mm_using_width",
-    "reachability_value": 90.102088
+    "reachability_value": 52.296258
   },
   "selfcheck_flags_known": {
     "ratio_exactly_2": "⚠ 「한 스톱이면 mm가 정확히 2배」·「D가 절반이면 분모가 정확히 절반」은 **대수적 귀결**이다 (환산과 분모가 f·1/D에 선형이다). 그 2와 0.5는 아무것도 안 잰다 — 재는 것은 위의 **밖에서 온 표**와의 대조이고, 판별력은 반증 판(가로 W)이 준다.",
