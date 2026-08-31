@@ -21301,11 +21301,6 @@
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
     },
     {
-      "path": "paper_grain26_web2.json:gate.current[0].bare_sd",
-      "val": 1.617195266589988e-11,
-      "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
-    },
-    {
       "path": "paper_grain26_web2.json:gate.current[1].bare_sd",
       "val": 4.0472514228895307e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
@@ -21314,6 +21309,11 @@
       "path": "paper_grain26_web2.json:gate.current[2].bare_sd",
       "val": 5.5223381423274986e-11,
       "flag": "near-zero(<1e-10) → 무노이즈/자기참조 검증 의심"
+    },
+    {
+      "path": "paper_grain26_web2.json:k_sweep.run_to_run_spread_at_shipped_k",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "paper_grain30_web2.json:gate.current[0].bare",
@@ -31670,7 +31670,9 @@
       47
     ],
     "lay_slide40_web2.json": [
+      8,
       12,
+      14,
       71,
       93
     ],
@@ -32197,7 +32199,7 @@
       69,
       70,
       71,
-      80
+      93
     ],
     "touch_route.json": [
       6,
