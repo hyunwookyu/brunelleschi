@@ -445,6 +445,35 @@ describe('42-1 ⑥ 가운데 원이 덮는 것 — 꼭짓점·모서리의 무�
     }
   })
 
+  it('투영만 바뀌어도 대기 획을 버린다 — 37-4의 「광선이 바뀌면」에 투영이 든다', () => {
+    // 가운데 「투시」는 **눈을 한 톨도 안 움직인다**. 그래도 광선은 통째로 달라진다
+    // (평행은 화면 점마다 원점이 다르다) — 그러니 대기 획은 옛 사영의 것이다.
+    const app = app2()
+    const { pose } = facePose(app, FACES[0]!)
+    setPose(app, pose)
+    // 대기 획 하나 — 허공에서 축 없이 그으면 대기다(37-1 표의 그 칸)
+    const s2 = session(W, H)
+    s2.app.doc = app.doc; s2.app.nextId = app.nextId; s2.app.pose = app.pose
+    const st = s2.draw(60, 720, 150, 690)
+    const waitingBefore = s2.app.lift.waiting.length
+    const strokesBefore = s2.app.doc.strokes.length
+    // 자세는 그대로 두고 **투영만** 되돌린다
+    const same = perspectivePose(s2.app.pose)
+    expect(same.p).toBe(s2.app.pose.p)          // 눈이 안 움직인다(같은 객체다)
+    setPose(s2.app, same)
+    const after = { waiting: s2.app.lift.waiting.length, strokes: s2.app.doc.strokes.length }
+    ledger['gate13_waiting_dropped_on_proj'] = {
+      what: '투영만 바뀌어도(눈 불변) 대기 획을 버린다 — 37-4의 조항에 투영이 든다',
+      stroke_was_waiting: st !== null && waitingBefore > 0,
+      waiting_before: waitingBefore, waiting_after: after.waiting,
+      strokes_before: strokesBefore, strokes_after: after.strokes,
+      undo_stack: s2.app.undoStack.length,
+    }
+    expect(waitingBefore, '대기 획이 실제로 있었다').toBeGreaterThan(0)
+    expect(after.strokes, '그 획이 문서에서 빠졌다').toBeLessThan(strokesBefore)
+    expect(s2.app.undoStack.length, '되돌릴 수 있다(37-4의 규약 그대로)').toBeGreaterThan(0)
+  })
+
   it('평행 왕복이 보기 렌즈를 버린다 — **되돌려 주지 않는다**(값으로 남긴다)', () => {
     // 지시문이 말이 없는 자리다. 평행에서 렌즈길이는 무의미하므로 들어갈 때 버리고,
     // 나올 때 **되살리지 않는다** — 되살리려면 «버린 값»을 어딘가 들고 있어야 하고

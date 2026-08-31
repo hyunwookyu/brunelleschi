@@ -516,7 +516,9 @@ function recompute(app: App) {
       // **평행도 같이 버린다**(web2-42 2번 — 「차수 승격이 일어나면 원근으로 돌린다」).
       // 조건을 새로 안 짓는다(#54): 렌즈를 버리는 그 사건이 곧 이 사건이다 —
       // 승격은 전부 다시 올리는 경로이고 확정이 풀리면 평행으로 볼 자격 자체가 없다.
-      // ⚠ `setPose`를 안 쓴다 — recompute 안이라 부르는 쪽이 이미 listeners를 돌린다.
+      // ⚠ `setPose`를 안 쓴다 — 이 함수가 끝에서 listeners를 돌리고, `setPose`의 대기 획
+      //   버리기(37-4)는 그 함수가 다시 `recompute`를 부르므로 여기서는 재귀가 된다.
+      //   그리고 이 자리는 **이미 문서가 바뀌어 전부 다시 올라가는 중**이다.
       if (app.pose.proj) app.pose = { p: app.pose.p, q: app.pose.q }
     }
     app.lensSig = lsig
@@ -1585,7 +1587,14 @@ function dropWaitingOnRayChange(app: App, prev: { pose: CamPose; viewF: number |
 }
 
 export function setPose(app: App, pose: CamPose) {
-  const moved = app.pose.p.x !== pose.p.x || app.pose.p.y !== pose.p.y || app.pose.p.z !== pose.p.z
+  // **투영이 바뀌는 것도 «광선이 바뀌는 것»이다**(web2-42 · web2-37 4번의 조항 그대로):
+  // 평행에서는 화면 점마다 광선의 «원점»이 다르므로, 눈이 한 톨도 안 움직여도(가운데
+  // 「투시」가 그 경우다) 대기 획의 2D가 가리키는 3D 자리가 통째로 달라진다.
+  // 그것을 안 세면 대기 획만 옛 사영에 남아 **조용히 다른 것을 가리킨다**.
+  const projChanged = (app.pose.proj?.w ?? 0) !== (pose.proj?.w ?? 0)
+    || (app.pose.proj?.D ?? 0) !== (pose.proj?.D ?? 0)
+  const moved = projChanged
+    || app.pose.p.x !== pose.p.x || app.pose.p.y !== pose.p.y || app.pose.p.z !== pose.p.z
     || app.pose.q.x !== pose.q.x || app.pose.q.y !== pose.q.y
     || app.pose.q.z !== pose.q.z || app.pose.q.w !== pose.q.w
   const prev = { pose: app.pose, viewF: app.viewF }
