@@ -160,6 +160,61 @@ describe('42-1 ① 여섯 면 — 투영이 평행이고 자세가 그 면이다
   })
 })
 
+describe('42-1 ①′ 1점 문서에서도 여섯 면이 선다 (#12 — 차수를 둘 다 돈다)', () => {
+  it('1점(P1 잠금) 구도에서 여섯 면이 평행이고 이름이 그 면이다', () => {
+    // ⚠ 31-1이 같은 이유로 픽스처를 둘 뒀다 — **1점은 초기 화면이 «마침» 정면과 일치한다**.
+    //   그 성질 때문에 2점에서만 보이는 것이 있고(그것이 31-1의 논지) 반대로 1점에서만
+    //   드러나는 것도 있다: `cubeBasis`의 X가 정확히 (0,0,−1)이 되는 퇴화 대역이다.
+    const s1 = session(W, H)
+    s1.draw(100, 400, 1100, 400)      // 지평선(퇴화)
+    s1.draw(800, 400, 800, 400)       // 깊이 소실점 찍기
+    s1.draw(300, 600, 700, 600)       // 화면 수평 획 → 1점 잠금
+    s1.draw(400, 600, 400, 480)       // 세로 — 돌 것
+    s1.draw(400, 480, 700, 500)
+    const app = s1.app
+    const an = app.lift.an
+    expect(an.p1Locked, '1점으로 잠겼다').toBe(true)
+    expect(an.vps.length).toBe(1)
+    expect(app.lift.lifted.size, '돌 기하가 있다').toBeGreaterThan(0)
+    const basis1 = cubeBasis(an)!
+    const rows: Record<string, unknown>[] = []
+    for (const f of FACES) {
+      const pivot = orbitPivot(app)
+      const dist = Math.max(1, Math.hypot(
+        app.pose.p.x - pivot.x, app.pose.p.y - pivot.y, app.pose.p.z - pivot.z))
+      const pose = parallelPose(poseForElem(an, { kind: 'face', dirLocal: f.dir }, pivot, dist)!, pivot)
+      // 측정자는 이 문서의 틀을 써야 한다 — 위 `parallelMeasure`는 2점 틀(BASIS)에 묶여 있다
+      const d = norm3(add3(add3(basis1.X, basis1.Y), basis1.Z))
+      const fwd = fwdOf(pose)
+      const D = Math.max(1, dot3(sub3(pivot, pose.p), fwd))
+      const side = quatRotate(pose.q, v3(1, 0, 0))
+      const dirs: number[] = [], lens: number[] = []
+      for (let k = 0; k < 4; k++) {
+        const base = add3(add3(pivot, mul3(fwd, (k - 1.5) * D * 0.25)), mul3(side, (k - 1.5) * D * 0.02))
+        const a = project(an, pose, base), b = project(an, pose, add3(base, mul3(d, D * 0.2)))
+        if (!a || !b) continue
+        dirs.push(Math.atan2(b.y - a.y, b.x - a.x) * DEG)
+        lens.push(Math.hypot(b.x - a.x, b.y - a.y))
+      }
+      let spread = 0
+      for (const x of dirs) for (const y of dirs) spread = Math.max(spread, Math.abs(x - y))
+      const ratio = Math.max(...lens) / Math.min(...lens)
+      rows.push({ name: f.n, view_name: viewName(an, pose), n: dirs.length, spread_deg: r6(spread), len_ratio: r6(ratio) })
+      expect(dirs.length).toBe(4)
+      expect(spread, `1점 ${f.n} — 평행하다`).toBeLessThan(1e-9)
+      expect(Math.abs(ratio - 1)).toBeLessThan(1e-9)
+      expect(viewName(an, pose)).toBe(f.n)
+    }
+    ledger['gate1b_one_point'] = {
+      what: '**1점 문서**에서도 여섯 면이 선다 — 차수를 둘 다 돈다(#12: 2점 하나면 동작점 하나다)',
+      p1_locked: true, vps: 1, fSource: an.fSource,
+      cube_basis_X: { x: r6(basis1.X.x), y: r6(basis1.X.y), z: r6(basis1.X.z) },
+      rows,
+      note: '1점에서 `cubeBasis`의 X는 정확히 (0,0,−1)이다(주점 = 깊이 소실점) — 31-1 머리주석의 그 성질',
+    }
+  })
+})
+
 describe('42-1 ② 가운데 = 「투시」 — 원근으로 돌아온다', () => {
   it('가운데를 짚으면 center이고, 그 자리는 자세를 안 바꾸고 투영만 되돌린다', () => {
     const app = app2()

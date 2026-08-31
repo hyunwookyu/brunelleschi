@@ -148,6 +148,62 @@
       }
     ]
   },
+  "gate1b_one_point": {
+    "what": "**1점 문서**에서도 여섯 면이 선다 — 차수를 둘 다 돈다(#12: 2점 하나면 동작점 하나다)",
+    "p1_locked": true,
+    "vps": 1,
+    "fSource": "default",
+    "cube_basis_X": {
+      "x": 0,
+      "y": 0,
+      "z": -1
+    },
+    "rows": [
+      {
+        "name": "정면",
+        "view_name": "정면",
+        "n": 4,
+        "spread_deg": 0,
+        "len_ratio": 1
+      },
+      {
+        "name": "후면",
+        "view_name": "후면",
+        "n": 4,
+        "spread_deg": 0,
+        "len_ratio": 1
+      },
+      {
+        "name": "평면",
+        "view_name": "평면",
+        "n": 4,
+        "spread_deg": 0,
+        "len_ratio": 1
+      },
+      {
+        "name": "저면",
+        "view_name": "저면",
+        "n": 4,
+        "spread_deg": 0,
+        "len_ratio": 1
+      },
+      {
+        "name": "우측면",
+        "view_name": "우측면",
+        "n": 4,
+        "spread_deg": 0,
+        "len_ratio": 1
+      },
+      {
+        "name": "좌측면",
+        "view_name": "좌측면",
+        "n": 4,
+        "spread_deg": 0,
+        "len_ratio": 1
+      }
+    ],
+    "note": "1점에서 `cubeBasis`의 X는 정확히 (0,0,−1)이다(주점 = 깊이 소실점) — 31-1 머리주석의 그 성질"
+  },
   "gate2_center_perspective": {
     "what": "가운데 = 투시. 자세 불변 · 투영만 원근 · 이름 「투시」",
     "hit_kind": "center",
