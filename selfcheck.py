@@ -584,6 +584,86 @@ def scan_ledger_guard(root: Path) -> list[dict]:
     return flags + _cover("scan_ledger_guard", "배선 자리", n, len(flags))
 
 
+
+def scan_unbounded_wait(root: Path) -> list[dict]:
+    """**상한 없는 대기를 만들지 않는다 · 세션 끝에 도는 백그라운드가 있으면 결함이다**
+    (2026-09-01 · 사람 지시 · PITFALLS **#81 확대**).
+
+    #81 ㉡은 처음부터 「**모든** 대기에 상한과 «상한에 걸렸을 때 볼 목록»을 함께 적는다」였다.
+    그런데 그 규칙이 «배포 확인» 이야기 안에 들어 있어서 **배포 대기의 규칙으로 읽혔고**,
+    그 뒤로 만든 대기들이 그것을 안 지났다. 사람이 잡아서 보고한 것 둘:
+
+      · web2-39 마감 뒤의 배포 대기가 **12시간 51분** 돌았다(사람이 끊었다).
+        그 사이 배포는 이미 끝나 있었다 — 조건이 «내 HEAD»에 묶였고 그 HEAD가 낡았다.
+      · 같은 세션의 개발 서버가 **14시간 37분** 떠 있었다(#70과 만난다).
+
+    보는 것 둘:
+      ① **마감 블록이 「도는 백그라운드 없음」을 값으로 적었는가**(#81 ㉤).
+         「없다고 생각한다」가 아니라 **센 값**이어야 한다(#89의 형태).
+      ② **저장소의 스크립트에 상한 없는 대기 고리가 있는가**(`until …; do sleep`,
+         `while true` + `sleep`). 도구에 박히면 그것은 **매번** 도는 잠금이다.
+
+    ⚠⚠ **이 검사가 못 보는 것**(#26 — 못 잡는 것을 잡는다고 적지 않는다):
+      · **세션 안에서 즉석으로 만든 대기는 저장소에 없으므로 안 보인다.** 12시간 51분짜리가
+        정확히 그것이었다. 그것을 지키는 것은 검사가 아니라 **마감 보고의 ①번 줄**이다.
+      · 도는 프로세스를 **세지 않는다**(포트·PID를 안 본다). 「없음」이 참인지는 사람이 센다.
+    반증 조건: 마감 블록에서 그 줄을 지우면 ①이 빨개진다(실제로 지워서 확인했다).
+    """
+    flags: list[dict] = []
+    n = 0
+
+    # ── ① 마감 블록이 「도는 백그라운드 없음」을 값으로 적었는가 ──────────────
+    #    web2 라인의 마감은 `web2/NOTES.md`·`web2/HANDOFF.md`의 「마감 — web2-NN」 절이다.
+    DECL = "도는 백그라운드"
+    # ⚠ **«가장 최근»의 자리가 파일마다 다르다** — `NOTES.md`는 회차를 **뒤에 잇고**
+    #   `HANDOFF.md`는 마감 블록을 **앞에 끼운다**. 그 규약을 여기 적어 둔다(#88의 결:
+    #   자리를 손으로 옮겨 적지 말고 **그 파일의 규약에서** 고른다).
+    NEWEST = {"web2/NOTES.md": -1, "web2/HANDOFF.md": 0}
+    for rel, which in NEWEST.items():
+        f = root / rel
+        try:
+            txt = f.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        heads = [m for m in re.finditer(r"^#{2,3} 마감 — \*?\*?(web2-\d+)\*?\*?.*$", txt, re.M)]
+        if not heads:
+            continue
+        m = heads[which]
+        nxt = [h for h in heads if h.start() > m.start()]
+        j = nxt[0].start() if nxt else len(txt)
+        body = txt[m.start():j]
+        n += 1
+        if DECL not in body:
+            flags.append({
+                "path": f"{rel}:마감 — {m.group(1)}", "val": "「도는 백그라운드」 줄 없음",
+                "flag": "**마감 보고가 「도는 백그라운드 없음」을 값으로 안 적었다**(#81 ㉤) — "
+                        "세션 끝에 도는 대기가 있으면 그 자체가 결함이다. "
+                        "12시간 51분짜리 배포 대기가 그렇게 남았다",
+            })
+
+    # ── ② 저장소의 스크립트에 상한 없는 대기 고리가 있는가 ────────────────────
+    LOOP = re.compile(r"(until .*;\s*do\s+sleep|while\s+true.*\n.*sleep|while\s*\(\s*true\s*\).*\n.*sleep)")
+    for f in sorted((root / "web2" / "tools").glob("*")) + sorted((root / "web2" / "tools").glob("*/*")):
+        if not f.is_file() or f.suffix not in (".mjs", ".js", ".ts", ".sh"):
+            continue
+        n += 1
+        try:
+            txt = f.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        if LOOP.search(txt) and "timeout" not in txt.lower() and "상한" not in txt:
+            flags.append({
+                "path": str(f.relative_to(root)), "val": "상한 없는 대기 고리",
+                "flag": "**상한도 «상한에 걸리면 볼 것»도 없는 대기 고리다**(#81 ㉣) — "
+                        "상한이 없으면 그것은 대기가 아니라 **잠금**이다",
+            })
+
+    return flags + _cover("scan_unbounded_wait", "마감 블록·도구 파일", n, len(flags),
+                          note="⚠ **세션 안에서 즉석으로 만든 대기는 안 보인다** — "
+                               "저장소에 없기 때문이다. 그 자리를 지키는 것은 "
+                               "**마감 보고의 「도는 백그라운드 없음」 한 줄**이다")
+
+
 def scan_pitfalls_table_last(root: Path) -> list[dict]:
     """**「최근 다섯」 표가 `PITFALLS.md`의 마지막 절인가**(2026-08-20 17차 후속 · #55).
 
@@ -1138,6 +1218,7 @@ def main():
     flags += scan_dead_ledger(ROOT)               # #38: 깨지지 않고 죽은 원장
     flags += scan_pitfalls_table_last(ROOT)        # #55: 「최근 다섯」 표가 파일 끝에 있는가
     flags += scan_ledger_guard(ROOT)              # #90: 원장 쓰기 관문(LEDGER=1)이 배선돼 있는가
+    flags += scan_unbounded_wait(ROOT)            # #81 ㉤: 마감이 「도는 백그라운드 없음」을 적었는가
     flags += scan_citation_hashes(ROOT, reports)   # #33 값 대조: 인용 해시 ↔ 원장 현재 해시
     flags += scan_cited_values(ROOT, reports)  # #42 ⑥ 존재 대조: 인용한 수치가 원장에 있는가
     PITFALL_CITATIONS.clear()
