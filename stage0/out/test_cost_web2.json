@@ -1,31 +1,31 @@
 {
   "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "web2-40 마감 (2026-08-31)",
+  "measured_at": "web2-42 (2026-09-01)",
   "unit": {
     "command": "npx vitest run (web2/)",
-    "files": 110,
-    "tests": 870,
-    "wall_s": 54.3,
-    "passed": 870,
+    "files": 112,
+    "tests": 893,
+    "wall_s": 32.4,
+    "passed": 893,
     "failed": 0,
-    "note": "web2-40 — 파일 109 → 110 · 팔 869 → 870(신설 `test/slide40.test.ts` 15건이 들어오고, 그 전 회차 대비 수는 회차마다 조금씩 다르다). 폐기 없음.",
-    "wall_s_note": "앞 회차 28.3s → 54.3s. ⚠ **팔의 몫이 아니다** — 이 컨테이너가 앞 회차보다 느리다(같은 전량 e2e가 39.5분 → 1.5시간 · 2.3배). 신설 파일 단독은 0.8s다. A-4의 「느려졌다는 보고를 받으면 디스크 여유부터 본다」를 돌렸고 여유는 아래 environment에 있다."
+    "note": "web2-42 — 파일 110 → 112 · 팔 870 → 893(신설 `test/view42.test.ts` 17건 · `test/read42.test.ts` 7건. 그 전 회차 대비 수는 회차마다 조금씩 다르다). 폐기 없음.",
+    "wall_s_note": "앞 회차 54.3s → 32.4s. ⚠ **이 회차가 빨라진 것이 아니라 기기가 놀고 있었다** — 같은 트리에서 배치를 돌리는 동안 잰 값이 아니다(아래 e2e의 두 실행이 그 차를 보인다)."
   },
   "e2e": {
     "command": "npx playwright test --workers=1 (dpr1+dpr2)",
-    "cases": 506,
-    "arms": 253,
-    "wall_s": 5760,
-    "passed": 499,
-    "failed": 7,
-    "arms_source": "실행 요약 「7 failed · 499 passed (1.6h)」 — dpr1+dpr2 두 벌이라 팔은 253",
-    "note": "web2-40 — 케이스 502 → 506(팔 251 → 253 · **+2**). 신설: `grain40.spec`(40-1 주기 · 게이트 + K 훑기 둘) · `slide40.spec`(40-2 셋) · `ledgergate.spec`(원장 관문이 그 런타임에서 실제로 막는가 둘). ⚠ 502는 이미 grain40·slide40·ledgergate를 포함한 수다(1차 전량) — +4는 이 회차의 리뷰어 대응이 더한 훑기 둘(×2 프로젝트)이다.",
-    "failed_note": "**일곱 전부 이 회차의 변경과 무관하다** — `git stash`로 HEAD에서 돌려 같은 값으로 빨간 것을 확인했다: ui34 ④′(dpr1·dpr2 · 잉크 6.6000004 ↔ 창 6.6009999) · turn31 ②③④(52.2388) · waitink37 ③(settling 빈 배열) · writedim32 ㉡(25 → 2) · gesture 3부(180s 초과) · roundsave ③(180s 초과). 여섯이 **시간에 묶인 팔**이고 이 컨테이너가 2.3배 느리다(PITFALLS #93). ⚠ 1차 전량(수리 전 트리)에서는 **9 failed / 493 passed**였고 사라진 둘이 이 회차의 것이었다 — `paper` ⑦⑧⑨(결 표본 차를 재던 자리 · 팔을 고쳤다) · `slide40` ③(두 프레임 대기가 창보다 길었다 · 한 프레임으로 고쳤다)."
+    "cases": 518,
+    "arms": 259,
+    "wall_s": 2532,
+    "passed": 517,
+    "failed": 1,
+    "arms_source": "실행 요약 「1 failed · 517 passed (42.2m)」 — dpr1+dpr2 두 벌이라 팔은 259",
+    "note": "web2-42 — 케이스 506 → 518(팔 253 → 259 · **+6**). 신설 `e2e/view42.spec.ts` 여섯(면·가운데 / 확정 전 아홉 자리 클릭 / 축측 / 읽는 값 / 이름 픽셀 / GL ↔ 사영).",
+    "failed_note": "**그 하나는 이 회차의 것이었고 고쳤다** — `underlay ①`(dpr1)이 web2-40의 겹 슬라이드(300 ms)를 안 기다리고 막을 읽고 있었다(`settleSlide` 미호출). 끊기는 칸이 실행마다 240 ↔ 333으로 옮겨 다닌 것이 그 증거다. 고친 뒤 그 스펙 dpr1+dpr2 14/14. ⚠ 위 517/1은 **고치기 전** 전량이고, 고친 뒤 전량은 마감 블록이 낸다."
   },
   "typecheck_build": {
     "command": "tsc --noEmit · vite build",
-    "build_s": 3.3,
-    "note": "web2-40 마감 실측 — 타입 오류 0."
+    "build_s": 2.8,
+    "note": "web2-42 마감 실측 — 타입 오류 0."
   },
   "history": [
     {
@@ -285,6 +285,12 @@
       "e2e": 506,
       "e2e_wall_s": 5760,
       "note": "**마감 행**(`history_note`의 규약대로 회차를 닫는 쪽이 그 자리에서 다시 쟀다). 신설 팔: 단위 `slide40.test`(15) · e2e `grain40`(2) · `slide40`(3) · `ledgergate`(2). 고친 팔: `paper`(⑧의 읽는 자리) · `grain26`·`grain30`(작도 픽스처 · PITFALLS #93) · 스펙 아홉에 `settleSlide` 한 줄. ⚠ **e2e 벽시계 5760s는 팔의 몫이 아니다** — 같은 전량이 앞 회차 3138s였고 이 컨테이너가 2.3배 느리다."
+    },
+    {
+      "at": "web2-42",
+      "unit": 893,
+      "e2e": 518,
+      "e2e_wall_s": 2532
     }
   ],
   "environment": {
