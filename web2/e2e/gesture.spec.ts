@@ -15,7 +15,7 @@
 // 판독으로는 「사람이 보는 것」을 못 잰다. 3부는 겹을 **바꾸는** 회차라 더욱 그렇다.
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync, readFileSync } from 'node:fs'
+import { writeFileSync, mkdirSync, readFileSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { PIXEL_DIFF_CH } from './thresholds'

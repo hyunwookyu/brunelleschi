@@ -5,7 +5,7 @@
 
 import { test, expect, type Page } from '@playwright/test'
 import { PIXEL_DIFF_CH } from './thresholds'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 const HERE = dirname(fileURLToPath(import.meta.url))

@@ -10,6 +10,7 @@
 //   (204,192,151 → 244.7,242.7,237.8). ③이 그 자리를 지킨다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { settleSlide } from './slidesettle'
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -32,6 +33,7 @@ async function drawLine(page: Page, ax: number, ay: number, bx: number, by: numb
 async function addPaper(page: Page, paper: 'tracing' | 'yellow') {
   await page.click('#layer-add')
   await page.click(`#layer-pop .lpick[data-paper="${paper}"]`)
+  await settleSlide(page)     // web2-40 2번 — 덜 온 종이를 재지 않는다(그 파일 머리주석)
   await settle(page)
 }
 

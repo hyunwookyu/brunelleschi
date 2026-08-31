@@ -13,7 +13,7 @@
 // ⚠⚠ `--workers=1`로 돌린다(cost18과 같은 규율 — 명령: npx playwright test cost22 --workers=1).
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs'
+import { writeFileSync, readFileSync, mkdirSync, existsSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 

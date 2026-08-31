@@ -13,7 +13,7 @@
 // 겹쳐 재지 않는다 — 여기서 재는 것은 **화면에서 그렇게 되는가**다.
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 

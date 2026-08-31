@@ -8,6 +8,7 @@
 //   실행에서 **종이의 치수는 실제로 보인다**를 분해능으로 짝지운다.
 
 import { test, expect, type Page } from '@playwright/test'
+import { settleSlide } from './slidesettle'
 
 const settle = (page: Page) =>
   page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null)))))
@@ -143,6 +144,7 @@ test('④ 겹에서 쓴 치수가 아래 종이에 안 나타난다 (26-1 회귀
   // 겹을 얹고 그 위에 선을 그어 치수를 준다
   await page.click('#layer-add')
   await page.click('#layer-pop .lpick[data-paper="tracing"]')
+  await settleSlide(page)     // web2-40 2번 — 덜 온 종이를 재지 않는다(그 파일 머리주석)
   await settle(page)
   await drawLine(page, 620, 560, 620, 680)
   const layId = await page.evaluate(() => {

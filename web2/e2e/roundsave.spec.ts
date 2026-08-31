@@ -9,7 +9,7 @@
 // ⚠⚠ 절대 밝기 임계를 안 쓴다(#74 ㉡) — **두 화면의 차**로만 판정한다.
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 

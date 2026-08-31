@@ -1,0 +1,95 @@
+{
+  "what": "web2-40 2번 — 겹을 깔고 치우는 동작. slide40.spec이 시험마다 그 자리에서 쓴다(#71 ㉡). 판정은 spec의 expect가 정본.",
+  "conditions": {
+    "viewport": "1200x800",
+    "command": "LEDGER=1 npx playwright test e2e/slide40.spec.ts --workers=1",
+    "sampling": "페이지 안에서 requestAnimationFrame마다 #film 캔버스의 알파를 읽는다 — 왕복 지연이 값에 안 실린다",
+    "perf_note": "절대 ms는 결론이 아니다(cost18·cost20과 같은 규율 — 이 컨테이너의 시간은 흔들린다). 판별값은 **같은 실행 안의 배수**다."
+  },
+  "flags_explained": {
+    "상수·지표 정의 스냅샷 없음": "web2 라인 전체의 유보다(e2e 하네스라 web/test의 공유 상수를 안 쓴다 — grain26·grain30·grain40이 같은 자리에 같은 유보를 적었다). 이 팔의 상수는 e2e/thresholds.ts의 SLIDE_FRAME_MAX와 core/constants.ts의 LAY_SLIDE_MS이고, 뒤엣것은 gate.gate_3와 gate.gate_1_4가 diag.slide().ms로 그 실행에서 그대로 읽는다.",
+    "gate_2의 두 판이 다른 컨텍스트다": "측정이다 — 「동작 없이 얹은 화면」을 같은 페이지에서 만들 수 없다(한 번 얹으면 되돌릴 수 없고, 다시 얹으면 겹 id가 달라 결의 씨앗이 갈린다). 문서가 결정론이라 같은 픽스처는 같은 nextId를 내고, 팔이 그 id가 같은 것을 먼저 단언한다."
+  },
+  "gate": {
+    "gate_1_4": {
+      "slide_ms": 300,
+      "stroke_during_slide": {
+        "id": 4,
+        "openBefore": true,
+        "away0": 0.9821077840018402,
+        "before": 3,
+        "after": 4,
+        "layerOfLast": 4
+      },
+      "seeds": {
+        "ids": [
+          6,
+          7,
+          8
+        ],
+        "hashes": [
+          1945460491,
+          3044886602,
+          1125447982
+        ]
+      }
+    },
+    "gate_2": {
+      "layer_id": 4,
+      "identical": true,
+      "resolution_bare_differs": true,
+      "bytes": {
+        "natural_end": 308192,
+        "forced_end": 308192,
+        "bare": 211396
+      },
+      "note": "비교는 화면 전체(1200x800 dpr1) PNG의 바이트다. 두 판은 다른 컨텍스트에서 같은 픽스처를 돌려 같은 겹 id를 얻는다.",
+      "history": "이 단언은 만들자마자 실제로 빨갰다(322824 B ↔ 307280 B) — 창이 닫히는 프레임을 안 그려 «덜 온 종이»가 굳었다. main.ts 프레임 고리를 고쳐 초록이 됐다."
+    },
+    "reachability": {
+      "how": "겹을 얹기 **전** 화면(bare)과 얹힌 뒤 화면(natural_end)을 같은 실행·같은 컨텍스트에서 재서 바이트로 견준다 — 비교자가 «늘 같다»를 내지 않는다는 값.",
+      "byte_span": [
+        211396,
+        308192
+      ],
+      "history": "②는 실제로 실패한 적이 있다 — 창이 닫히는 프레임을 안 그려 «덜 온 종이»가 굳었을 때. 그때 두 판의 바이트 수가 322824 ↔ 307280이었다."
+    },
+    "reachability_value": [
+      211396,
+      308192
+    ],
+    "reachability_source": "gate/reachability/byte_span",
+    "gate_3": {
+      "slide_ms": 300,
+      "strokes": 200,
+      "frames": 30,
+      "still": {
+        "n": 30,
+        "r3": 0.5,
+        "bs": 0,
+        "d2": 22.59999999962747,
+        "total": 23.09999999962747,
+        "totalMax": 26.700000000186265
+      },
+      "moving": {
+        "n": 60,
+        "r3": 0.2999999998137355,
+        "bs": 0,
+        "d2": 22.899999999441206,
+        "total": 23.199999999254942,
+        "totalMax": 30.700000000186265
+      },
+      "ratio": 1.0043290043129474,
+      "threshold": 1.5,
+      "active_frames": {
+        "still": 0,
+        "moving": 30
+      },
+      "film_alpha_uncovered_frames": {
+        "still": 0,
+        "moving": 29
+      },
+      "note": "두 칸 모두 «겹 한 장이 얹힌 채로 막이 그려지는» 국면이고 프레임 수도 같다. 갈린 축은 «창이 도는가» 하나다."
+    }
+  }
+}

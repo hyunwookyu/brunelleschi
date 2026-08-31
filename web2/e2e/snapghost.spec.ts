@@ -27,7 +27,7 @@
 // 수리 커밋 이전 실행이 그것이다(원장 falsification 블록·NOTES 4번 절).
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { PIXEL_DIFF_CH } from './thresholds'

@@ -21,8 +21,9 @@ import { rdpIndices, distToPolyline } from '../core/freehand'
 import { loopAt, faceAt, faceScreen, resolveFaces, resolveFace, allLoops, inPoly, type ResolvedFace, type LoopCandidate } from '../core/face'
 import { bakeUnderlay } from '../core/make2d'
 import { geomSize3 } from '../core/osnap'
-import { C, SETTLE_ANIM_MS } from '../core/constants'
+import { C, SETTLE_ANIM_MS, LAY_SLIDE_MS } from '../core/constants'
 import { settleFade, waitInkMode } from '../core/waitfade'
+import { slideAway, slideRunning, type Slide, type SlideDir } from '../core/slide'
 import { cubeLayoutFor } from '../core/viewcube'
 import { fitPose, fitView, type Screen as FitScreen } from '../core/zoomfit'
 import { lensAllowed, lensAn, lensF, lensK, lensView, clampViewF, lensFromStops } from '../core/lens'
@@ -210,6 +211,18 @@ export interface App {
    *  저장하지 않고(런타임), 판정·좌표·실행취소 어느 것도 이 표를 안 읽는다.
    *  갱신은 `recompute` 한 자리다 — 「직전 대기 집합에 있었고 지금 확정인 획」. */
   settledAt: Map<number, number>
+  /** **겹을 깔고 치우는 동작**(web2-40 2번) — 겹 id → 시작 시각·방향. `settledAt`과
+   *  **같은 급**이다: 표현만 들고, 저장하지 않고(런타임), 판정·좌표·저장 어느 것도 이
+   *  표를 안 읽는다. 창이 지난 항목은 `pruneSlides`가 버린다(표가 문서 크기로 안 자란다). */
+  slides: Map<number, Slide>
+  /** **치우는 동안만 사는 «유령»** — 문서에서 **이미 빠진** 겹의 사본이다.
+   *  ⚠ 겹을 걷는 순간 `doc`은 바로 옳아야 한다(실행취소·저장·3D가 그것을 읽는다).
+   *  그래서 «지우기를 미루는» 길을 안 간다 — 문서에서 즉시 빼고, **화면에만** 이
+   *  사본이 남아 물러난다. 창이 지나면 `pruneSlides`가 버린다.
+   *  ⚠⚠ **획은 안 싣는다**(알려진 강등 — NOTES 40-2): 겹의 획은 걷는 순간 함께 가고
+   *  물러나는 것은 종이와 밑그림뿐이다. 3D 획을 유령에 실으려면 이미 버려진
+   *  `lift` 결과를 붙들어야 하는데 그것은 «파생 상태 무저장»(원칙 b)을 깬다. */
+  slideGhosts: { layer: Layer; underlay: Underlay | null }[]
   /** **밑그림의 가린 선을 보이는가**(web2-23 2-a) — 기본 **켜짐**: 은선이 보이는 편이
    *  제도에 가깝고(가린 선 = H), 빼는 것은 정리된 그림을 원할 때다(사람의 문면
    *  「옵션에 따라」). 표시 팝오버의 「가린 선(은선)」. ⚠ **표시 손잡이일 뿐이다** —
@@ -352,6 +365,8 @@ export function createApp(W: number, H: number): App {
     grid: false,
     waitFade: true,
     settledAt: new Map(),
+    slides: new Map(),
+    slideGhosts: [],
     showHidden: true,       // 기본은 H로 표시(2-a — 은선이 보이는 편이 제도에 가깝다)
     underlayNoticed: false,
     extAcq: newExtDwell(),
@@ -1645,6 +1660,50 @@ export function addSheet(app: App, thumb?: string): Sheet {
   return s
 }
 
+// ── 깔고 치우는 동작(web2-40 2번) — **표현만** ────────────────────────────────
+//
+// 순수 수학은 `core/slide.ts`에 있고(단위 시험이 앱과 같은 함수를 부른다 — #62),
+// 여기 있는 것은 **표 하나와 그 표를 여닫는 다섯 줄**이다. `settledAt`(web2-37 2번)이
+// 낸 선례를 그대로 따른다 — 표현 창은 앱 상태에 살되 문서에 안 실린다.
+
+/** 그 겹의 동작을 연다 — 겹을 얹는 자리(`addLayer`)와 걷는 자리(`removeLayer`)에서만 부른다. */
+export function startSlide(app: App, id: number, dir: SlideDir, now: number): void {
+  app.slides.set(id, { t0: now, dir })
+}
+
+/** **덜 온 정도** 0..1 — 0이면 제자리다(동작이 없거나 끝났다). 그리는 자리가 이것만 읽는다. */
+export function slideAwayOf(app: Pick<App, 'slides'>, id: number, now: number): number {
+  const s = app.slides.get(id)
+  return s === undefined ? 0 : slideAway(s, now, LAY_SLIDE_MS)
+}
+
+/** 지금 도는 동작이 있는가 — 프레임 고리가 이것을 보고 계속 다시 그린다(`settleActive`와 같은 꼴).
+ *  없으면 평소처럼 «바뀔 때만» 그린다. */
+export function slidesActive(app: Pick<App, 'slides'>, now: number): boolean {
+  for (const s of app.slides.values()) if (slideRunning(s, now, LAY_SLIDE_MS)) return true
+  return false
+}
+
+/** **즉시 자리를 잡는다**(지시: 「획이 들어오면 동작을 끝까지 기다리지 말고」) — 창을
+ *  통째로 닫는다. 유령도 그 자리에서 걷는다(물러나던 종이는 이미 문서에 없다).
+ *  ⚠ 이것이 「동작이 입력을 막지 않는다」의 구현 **전부**다 — 어디에도 «막는» 코드가
+ *  없으므로 이 함수는 **화면을 앞당길 뿐** 입력 경로를 안 건드린다. */
+export function settleSlides(app: App): void {
+  if (app.slides.size === 0 && app.slideGhosts.length === 0) return
+  app.slides.clear()
+  app.slideGhosts.length = 0
+}
+
+/** 창이 지난 항목을 버린다 — 표가 문서 크기로 자라지 않는다(`markSettled`의 마지막 줄과 같은 근거).
+ *  ⚠ **되살아난 겹의 유령도 버린다**: 실행취소가 걷은 겹을 도로 꽂으면 같은 id가 문서에
+ *  다시 있으므로, 유령을 남기면 한 겹이 두 번 그려진다. */
+export function pruneSlides(app: App, now: number): void {
+  for (const [id, s] of app.slides) if (!slideRunning(s, now, LAY_SLIDE_MS)) app.slides.delete(id)
+  if (app.slideGhosts.length === 0) return
+  const live = new Set(app.doc.layers.map(l => l.id))
+  app.slideGhosts = app.slideGhosts.filter(g => app.slides.has(g.layer.id) && !live.has(g.layer.id))
+}
+
 // ── 겹(web2-20 2부) — 종이 위에 얹은 것. 여럿 동시·가산적 ─────────────────────
 
 /** 「+」·롤 버튼 = 새 겹을 **맨 위에** 얹고 활성으로(지시 2부). ⚠ **카메라가 닫히기
@@ -1684,6 +1743,9 @@ export function addLayer(app: App, paper: Paper, viewport: { W: number; H: numbe
   }
   app.doc.layers.push(lay)
   app.activeLayer = lay.id
+  // 깔기(web2-40 2번) — **표현만**이다. 겹은 이 줄 위에서 이미 문서에 있고 활성이므로
+  // 동작이 도는 동안에도 획이 그대로 이리로 들어온다(게이트 ①).
+  startSlide(app, lay.id, 'in', performance.now())
   // ── 굽기(web2-23 1부·2-c) — **옐로를 얹는 그 순간 한 번**. 다른 계기는 없다 ──────
   // 트레이싱지는 안 굽는다(3D가 살아 있어 그냥 보인다 — 2-c ⚠). 굽기는 **지금 이
   // 포즈**에서 돈다: 겹은 그 종이의 시점에서만 뜻이 있으므로(web2-20 3-d) 그 시점의
@@ -1732,8 +1794,13 @@ export function removeLayer(app: App, id: number) {
   for (const r of removed) app.doc.strokes.splice(r.index, 1)
   const op: Op = { removed, added: [], layersRemoved: [{ layer: app.doc.layers[li]!, index: li }],
     underlaysRemoved: takeUnderlays(app, new Set([id])) }
+  // 치우기(web2-40 2번) — **문서에서 먼저 빼고**(아래) 화면에만 사본을 남긴다.
+  // 사본은 종이와 밑그림뿐이다(획은 이미 위에서 걷혔다 — `slideGhosts` 주석).
+  const ghost = { layer: app.doc.layers[li]!, underlay: op.underlaysRemoved?.[0]?.underlay ?? null }
   app.doc.layers.splice(li, 1)
   if (app.activeLayer === id) app.activeLayer = null
+  app.slideGhosts.push(ghost)
+  startSlide(app, id, 'out', performance.now())
   app.undoStack.push(op)
   app.redoStack = []
   recompute(app)
@@ -1930,6 +1997,7 @@ export function gotoSheet(app: App, id: number) {
  *  프레임 ≠ 창의 합성은 호출부의 `fitViewToFrame`이 얹는다(`composeView`). */
 export function loadDoc(app: App, data: { doc: Doc; nextId: number; drawView?: ViewOffset | null }) {
   endWriting(app, 'left')   // 문서가 갈리면 상태도 간다(web2-39 — 상태는 저장 ⛔)
+  settleSlides(app)         // 깔던·치우던 동작도 간다(web2-40 2번) — 새 문서의 겹은 «이미 있던» 것이다
   app.doc = data.doc
   app.nextId = data.nextId
   app.activeSheet = data.doc.sheets[0]!.id   // 연 문서는 작도 종이에서 시작한다
@@ -1952,6 +2020,7 @@ export function loadDoc(app: App, data: { doc: Doc; nextId: number; drawView?: V
  *  없고, 다른 크기에서 그린 파일을 열었다 비운 경우 주점이 화면 가운데를 벗어난다. */
 export function clearAll(app: App, W: number, H: number) {
   endWriting(app, 'left')   // 문서가 갈리면 상태도 간다(web2-39)
+  settleSlides(app)         // 깔던·치우던 동작도 간다(web2-40 2번)
   app.doc = emptyDoc(W, H)
   app.nextId = 1
   app.undoStack = []

@@ -1,10 +1,10 @@
 // 배선 — 상태·입력·렌더를 잇는다. 계산은 전부 core에 있다.
 
-import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc,
+import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, clearAll, isEraser, isDrawPose, orbitRadius, orbitPivot, setDimension, activeGrade, draftBrushed, setOwn3d, composeView, addLayer, addSheet, freezePoseForLayer, setActiveLayer, removeLayer, findAllFaces, commitCandidates, cancelCandidates, underlayOf, underlayBakeCount, pressOn, beginPressCalib, setPressOff, feedPressCalib, bumpDoc,
   pickDimTarget, pickTargetAt, addDimInk, stageDim, acceptDim, clearDimInk, endDimPick,
   handwritingGroup, applyRecognized, writingStrokes, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
   writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
-  measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, settleActive, type Tool } from './state'
+  measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
 import { initInput } from './input'
@@ -25,7 +25,7 @@ import { initDimPanel } from './dimpanel'
 import { registerBox, closeOtherBoxes, openBoxIds, setBoxAwayModeForTest } from './boxes'
 import { createVoice } from './voice'
 import type { Pt } from '../core/vec'
-import { C, SETTLE_ANIM_MS, WRITE_HOLD_MS_MIN, WRITE_HOLD_MS_MAX } from '../core/constants'
+import { C, SETTLE_ANIM_MS, LAY_SLIDE_MS, WRITE_HOLD_MS_MIN, WRITE_HOLD_MS_MAX } from '../core/constants'
 import { WAIT_INK, setWaitInkMode, waitInkMode, type WaitInkMode } from '../core/waitfade'
 import { lensAllowed, lensStops, lensF, lensK, hfovDeg, LENS_STOP_MIN, LENS_STOP_MAX } from '../core/lens'
 import { cubeLayoutFor } from '../core/viewcube'
@@ -51,7 +51,7 @@ try {
   if (r === 'classic' || r === 'brush') app.renderer = r
 } catch { /* 저장소가 없으면 기본값(brush) */ }
 const brushLayer = initBrushLayer(W, H, dpr)
-import { initFilmLayer, bakeFiberTile, setFilmAlphaForTest, setFiberLegacyForTest, setPaperFiber, setPaperGrain309ForTest } from './filmlayer'
+import { initFilmLayer, bakeFiberTile, setFilmAlphaForTest, setFiberLegacyForTest, setGrainPre40ForTest, setPaperFiber, setPaperGrain309ForTest } from './filmlayer'
 const filmLayer = initFilmLayer(W, H, dpr)
 
 // 빌드 식별자 — 배포됐는지 화면에서 바로 안다.
@@ -421,6 +421,10 @@ inputApi = initInput(ink, app, {
         dimTarget = null
         pendingDimText = null
         dimPanel.clearInk()
+        // **획이 들어오면 겹은 즉시 자리를 잡는다**(web2-40 2번 · 지시 문면: 「동작을
+        // 끝까지 기다리지 말고」). 여기가 «새 획이 시작됐다»의 단일 지점이다 —
+        // 동작은 이미 입력을 안 막고 있고(막는 코드가 없다) 이 줄은 **화면만 앞당긴다**.
+        settleSlides(app)
       }
       // 실시간 표시(4-5) — resolveEnd가 계산한 값 그대로(한 곳 계산·셋이 읽기)
       dimPanel.show(d.lenMm !== null ? formatMm(d.lenMm, app.doc.unit, app.dimExact) : null)
@@ -1955,6 +1959,19 @@ function frame() {
   // 정착 전이(web2-37 2번) — 색이 시간의 함수인 «그 창 동안만» 계속 그린다. 창이 닫히면
   // 이 항은 false라 프레임 고리가 평소의 «바뀔 때만»으로 돌아간다(평소에는 조용하다).
   if (settleActive(app, performance.now())) invalidate()
+  // 겹을 깔고 치우는 동작(web2-40 2번) — 정착 전이와 **같은 꼴**이다: 창이 열려 있는
+  // 동안만 계속 그리고, 닫히면 표를 비워 평소의 «바뀔 때만»으로 돌아간다.
+  //
+  // ⚠⚠ **닫히는 그 순간에 한 번 더 그린다**(화면 팔이 빨갛게 잡았다 — NOTES 40-2 D-2):
+  //    창이 열린 마지막 프레임은 아직 `away > 0`인 프레임이다. 다음 프레임에서 «안 돈다»만
+  //    보고 그냥 넘기면 **덜 온 종이가 화면에 그대로 굳는다** — 「끝난 화면이 동작 없이
+  //    얹은 화면과 픽셀로 같다」가 그 자리에서 깨진다. 표를 비우면서 `invalidate` 한 번을
+  //    같이 낸다(비울 것이 있을 때만이라 평소에는 여전히 조용하다).
+  if (slidesActive(app, performance.now())) invalidate()
+  else if (app.slides.size > 0 || app.slideGhosts.length > 0) {
+    pruneSlides(app, performance.now())
+    invalidate()
+  }
   if (dirty) {
     dirty = false
     const fc0 = performance.now()
@@ -2126,6 +2143,9 @@ const diag = {
     if (l) { setActiveLayer(app, l.id); layerbarRef?.sync() }
     return l ? l.id : null
   },
+  /** 겹을 걷는다 — 화면의 「×」와 **같은 함수**다(#54). 팔이 「걷었다 다시 꺼내면 무늬가
+   *  달라야 한다」(web2-20 무회귀)를 재는 데 쓴다. */
+  layerRemove: (id: number) => { removeLayer(app, id); layerbarRef?.sync(); invalidate() },
   /** ④ osnap 호출당 비용의 3몫 분해 — 4부의 문턱을 이 값이 정한다 */
   osnapCost: () => ({ ...osnapCost }),
   osnapCostReset: () => resetOsnapCost(),
@@ -2173,6 +2193,31 @@ const diag = {
   dimLabelPosForTest: (id: number) => dimLabelPos(app, id),
   /** D-3 반증(web2-26 2번) — 결을 dpr에 도로 묶어 「dpr 비 1.0 ± 0.15」를 깨뜨린다. e2e 전용. */
   fiberLegacyForTest: (v: boolean) => { setFiberLegacyForTest(v); invalidate() },
+  /** D-3 반증(web2-40 1번) — 겹의 결을 **web2-34까지의 주기**로 되돌린다(길이·개수만).
+   *  그 상태에서 「겹의 결 주기가 pre-40보다 짧다」가 같은 실행에서 실패한다. e2e 전용. */
+  grainPre40ForTest: (v: boolean) => { setGrainPre40ForTest(v); invalidate() },
+  /** **깔고 치우는 동작의 지금 상태**(web2-40 2번) — 화면 팔이 「동작 중인가」와
+   *  「덜 온 정도」를 값으로 읽는다. 앱이 그리는 데 쓰는 **같은 함수**다(측정 경로를
+   *  따로 안 만든다 — 원칙 a). `awayOf`가 0이면 그 겹은 제자리다. */
+  slide: () => ({
+    ms: LAY_SLIDE_MS,
+    active: slidesActive(app, performance.now()),
+    ghosts: app.slideGhosts.map(g => g.layer.id),
+    awayOf: Object.fromEntries(
+      [...app.doc.layers.map(l => l.id), ...app.slideGhosts.map(g => g.layer.id)]
+        .map(id => [id, slideAwayOf(app, id, performance.now())]),
+    ),
+  }),
+  /** 동작을 **그 자리에서 끝낸다** — 앱이 「획이 들어오면」 부르는 것과 같은 함수다(#54).
+   *  팔이 「끝난 화면이 동작 없이 얹은 화면과 픽셀로 같다」를 재는 데 쓴다. */
+  slideSettleForTest: () => { settleSlides(app); invalidate() },
+  /** 팔 전용 — 그 겹의 창을 **다시 연다**(앱과 **같은** `startSlide`다 — 새 경로 ⛔).
+   *  창이 300 ms라 200획 장면에서는 한 창이 프레임 두어 개밖에 안 된다: 「동작 중
+   *  프레임」을 표본 수만큼 모으려면 창을 다시 열어야 한다(#71 ㉠ — 조건을 만든다). */
+  slideRestartForTest: (id: number) => { startSlide(app, id, 'in', performance.now()); invalidate() },
+  /** 팔 전용 — 다음 프레임을 그리게 한다. «바뀔 때만» 고리를 깨우는 것뿐이고 **그리는
+   *  경로는 그대로**다(정지 칸과 동작 칸이 같은 수의 프레임을 돌게 하는 데 쓴다). */
+  redrawForTest: () => invalidate(),
   /** 필압 보정을 값으로 세운다(web2-26 6번) — 두 획을 받는 절차는 단위 팔이 재고,
    *  화면 팔은 **값만** 필요하다. null이면 끈다(= `doc.press`를 지운다). e2e 전용. */
   pressCalForTest: (p0: number | null, p1?: number) => {

@@ -15,7 +15,7 @@
 // 판별력은 «두 렌더러의 비», «획 수·국면에 따른 변화»에 있다(환경이 양쪽에 같이 걸린다).
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync, readdirSync, statSync } from 'node:fs'
+import { writeFileSync, mkdirSync, readdirSync, statSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve, join } from 'node:path'
 

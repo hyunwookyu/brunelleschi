@@ -20,7 +20,7 @@
 // DEFERRED의 실기기 표가 그 자리다. 이 파일이 내는 것은 헤드리스 표다.
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 

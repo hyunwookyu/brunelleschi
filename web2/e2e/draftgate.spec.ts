@@ -16,7 +16,7 @@
 // 임계는 thresholds.ts(단일 출처 D-C4)에서 오고 원장 thresholds 블록으로 그대로 나간다.
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { PIXEL_DIFF_CH, GATE } from './thresholds'

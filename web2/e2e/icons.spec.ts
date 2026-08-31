@@ -11,7 +11,7 @@
 //   ⑥ 이름이 바뀐 것이 같은 동작을 한다(문자열만 바뀌었다).
 
 import { test, expect, type Page } from '@playwright/test'
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 

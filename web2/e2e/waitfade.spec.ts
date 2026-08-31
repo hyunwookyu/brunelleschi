@@ -7,7 +7,7 @@
 //        경계 아래(4px)는 획 0 + 카운터 +1.
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { FREEZE } from './thresholds'

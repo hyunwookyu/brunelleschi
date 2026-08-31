@@ -10,7 +10,8 @@
 //   반증(D-3 — 셋 다 실제 실행): 알파 합성↔④ · 상수 시드↔⑤ · 막을 위로↔⑨
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync, readFileSync } from 'node:fs'
+import { settleSlide } from './slidesettle'
+import { writeFileSync, mkdirSync, readFileSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
@@ -56,6 +57,7 @@ async function closeCamera(page: Page) {
 async function addPaper(page: Page, paper: 'tracing' | 'yellow') {
   await page.click('#layer-add')
   await page.click(`#layer-pop .lpick[data-paper="${paper}"]`)
+  await settleSlide(page)     // web2-40 2번 — 덜 온 종이를 재지 않는다(그 파일 머리주석)
   await settle(page)
 }
 

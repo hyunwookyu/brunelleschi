@@ -12,8 +12,22 @@
 // ⚠ 조건(#71 ㉠): 이 파일은 dpr을 **스스로 만든다**(chromium.newContext) — playwright
 //   프로젝트의 dpr과 무관하게 1·2·3을 같은 실행에서 낸다.
 
+// ⚠⚠ **작도 픽스처가 web2-40에서 (500,560) → (500,620)로 옮겨졌다**(값이 아니라 **자리**다).
+//    증상: **dpr3에서만** 두 번째 획이 통째로 사라지고(`doc.strokes` 1개) `#layer-add`가
+//    「소실점 작도가 끝나야 얹을 수 있다」로 남아 `page.click`이 멎었다. 표식을 심어 보니
+//    화면 알림이 **「글씨 — 이 선의 치수를 쓴다」**였다(D-1: 후보부터 보지 않고 경로에
+//    표식을 심었다). 원인은 **web2-39의 누름 진입**이다: 두 번째 획의 시작점이 첫 획
+//    **위**(y=560)라 `writeTargetAt`이 그것을 잡는데, dpr3에서는 3600×2400 캔버스라
+//    `mouse.down` 다음 첫 `mouse.move`가 오기까지 **337 ms**가 걸려 `writeHoldMs`(450)의
+//    문턱에 붙는다. 느린 기기에서 «누르고 끄는» 것이 실제로 그렇게 보인다 —
+//    **제품 결함이 아니라 픽스처가 그 진입을 밟고 있던 것**이고, 시작점을 선에서
+//    60 px(잡히는 반경 `DIM_LABEL_HIT_PX`/`osnap.radius*2` ≈ 16 px의 네 배) 떼면 사라진다.
+//    ⚠ 재는 조각은 (300,200) 60×60이고 두 획은 y ≥ 480이라 **측정값에는 안 닿는다** —
+//    이 두 획의 일은 「카메라를 닫아 겹을 얹을 수 있게 한다」 하나다.
+
 import { test, expect, chromium, type Page, type Browser } from '@playwright/test'
-import { writeFileSync, mkdirSync, readFileSync } from 'node:fs'
+import { settleSlide } from './slidesettle'
+import { writeFileSync, mkdirSync, readFileSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
@@ -101,9 +115,10 @@ async function measure(browser: Browser, dpr: number, legacy: boolean) {
   })
   const bare = await patch(page)
   await drawLine(page, 280, 560, 700, 560)
-  await drawLine(page, 500, 560, 800, 480)
+  await drawLine(page, 500, 620, 800, 500)
   await page.click('#layer-add')
   await page.click('#layer-pop .lpick[data-paper="yellow"]')
+  await settleSlide(page)     // web2-40 2번 — 덜 온 종이를 재지 않는다(그 파일 머리주석)
   await settle(page)
   const film = await patch(page)
   await ctx.close()

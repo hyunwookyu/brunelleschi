@@ -6,7 +6,7 @@
 //   ③ 실제 실패 시 종전 알림 그대로(회귀)  ④ 작은 문서에서는 아무것도 안 뜬다
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 

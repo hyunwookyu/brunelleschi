@@ -11,7 +11,7 @@
 // 원장: LEDGER=1 npx playwright test e2e/lens31.spec.ts → stage0/out/lens31_web2_dpr*.json
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 

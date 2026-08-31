@@ -16,7 +16,7 @@
 
 import { test, expect, type Page } from '@playwright/test'
 import { WAIT_HUE } from './thresholds'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 

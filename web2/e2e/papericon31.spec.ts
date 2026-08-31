@@ -31,7 +31,7 @@
 // (34-5가 세운 `__lintLine` 하나 — 여기서 새로 안 짓는다 · #54).
 
 import { test, expect, type Page } from '@playwright/test'
-import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs'
+import { readFileSync, readdirSync, writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { CAMERA_IOU, CAMERA_IOU_ALL } from './thresholds'

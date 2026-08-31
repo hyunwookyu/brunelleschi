@@ -10,7 +10,7 @@
 //      `app.writeHoldMs`가 따라오고, 그 값이 실제 누름 판정에 먹힌다.
 
 import { test, expect, type Page } from '@playwright/test'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from '../tools/ledgerfs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
