@@ -18,7 +18,7 @@ import { initNotice, notify, status, ask, clearNotice, confirmNear } from './not
 import { recognizeStrokes } from '../core/handwriting'
 import { OSNAP_ORDER, osnap, osnapCost, resetOsnapCost, type OsnapHit } from '../core/osnap'
 import { PENCIL_GRADES, MAT, widthOfMat, gradeOf } from '../core/material'
-import type { Grade, Layer, Sheet, Stroke } from '../core/types'
+import type { Grade, Layer, Sheet, Stroke, CamPose } from '../core/types'
 import { parseDim, formatMm, lenMm, formatScale, formatUnits, dimSkew, skewOff, UNITS, type Unit } from '../core/dim'
 import { measureMm, measureUnits } from '../core/measure'
 import { initDimPanel } from './dimpanel'
@@ -2036,6 +2036,11 @@ const diag = {
   openBoxes: () => openBoxIds(),
   /** R7의 **반증 손잡이**(D-3) — 'off'(안 듣는다) · 'swallow'(삼킨다) · 'on'(제자리) */
   boxAwayModeForTest: (m: 'on' | 'off' | 'swallow') => setBoxAwayModeForTest(m),
+  /** **임의의 포즈로 한 점을 사영한다**(web2-42) — 팔이 「원근 판과 얼마나 갈리는가」를
+   *  재는 자리다. 사영의 출처는 `camera.project` 하나이고 여기서 식을 다시 안 적는다(#54). */
+  projectWith(pose: CamPose, P: { x: number; y: number; z: number }) {
+    return project(app.lift.an, pose, P)
+  },
   /** 승격 획 전부의 현재 포즈 재사영 — 불변식 k 확인용 */
   projectAll(): Record<number, { a: Pt; b: Pt } | null> {
     const out: Record<number, { a: Pt; b: Pt } | null> = {}

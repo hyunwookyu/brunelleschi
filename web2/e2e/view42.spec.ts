@@ -261,6 +261,134 @@ test('42 ⑤ 이름이 화면에 그려지고, 「도면」이라는 말이 화�
   ledger['gate5_label'] = { pixels: px, names, no_domyeon_in_dom: !body.includes('도면') }
 })
 
+test('42 ⑥ 3D 겹(#gl)이 사영과 같은 자리에 그린다 — 원근과 평행 둘 다 (불변식 k)', async ({ page }) => {
+  await construct(page)
+  // **깊이가 있는 장면을 만든다** — 기본 발판은 pivot 면에 몰려 있어 두 사영이 1.75 px밖에
+  // 안 갈린다(실측). 그 장면에서 재면 행렬을 원근으로 되돌려도 팔이 초록으로 남는다(아래 D-3).
+  // 모서리에서 vp0 쪽으로 **깊게** 한 획 — 끝이 지평선에 가까울수록 깊다.
+  await drawLine(page, 500, 500, 850, 412)
+
+  /** 그 획의 **사영 선분**(화면 CSS 좌표)과 `#gl`에서 그 둘레의 불투명 픽셀 무게중심의
+   *  **수직거리**. 창 안에 아무것도 없으면 null — 「어긋났다」와 「없다」를 가른다. */
+  const probe = (id: number, R = 16) => page.evaluate(([id, R]) => {
+    const b2 = (window as any).__b2
+    const pr = b2.diag.projectAll()[id!]
+    if (!pr) return { off: null as number | null, n: 0, seg: null as unknown }
+    const v = b2.diag.lens().xf
+    const to = (q: { x: number; y: number }) => ({ x: q.x * v.s + v.ox, y: q.y * v.s + v.oy })
+    const a = to(pr.a), b = to(pr.b)
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+    const gl = document.getElementById('gl') as HTMLCanvasElement
+    const t = document.createElement('canvas')
+    t.width = gl.width; t.height = gl.height
+    t.getContext('2d')!.drawImage(gl, 0, 0)
+    const dpr = window.devicePixelRatio || 1
+    const ox = Math.round(mid.x - R!), oy = Math.round(mid.y - R!)
+    const w = Math.round(R! * 2), h = Math.round(R! * 2)
+    if (ox < 0 || oy < 0 || (ox + w) * dpr > t.width || (oy + h) * dpr > t.height) {
+      return { off: null, n: -1, seg: { a, b } }   // 창이 화면 밖 — 못 잰다
+    }
+    const d = t.getContext('2d')!.getImageData(
+      Math.round(ox * dpr), Math.round(oy * dpr), Math.round(w * dpr), Math.round(h * dpr)).data
+    let sx = 0, sy = 0, n = 0
+    const pw = Math.round(w * dpr)
+    for (let i = 3, k = 0; i < d.length; i += 4, k++) {
+      if (d[i]! === 0) continue
+      sx += (k % pw) / dpr + ox; sy += Math.floor(k / pw) / dpr + oy; n++
+    }
+    if (n === 0) return { off: null, n: 0, seg: { a, b } }
+    const p = { x: sx / n, y: sy / n }
+    const dx = b.x - a.x, dy = b.y - a.y
+    const L = Math.hypot(dx, dy)
+    const off = L < 1e-9 ? Math.hypot(p.x - a.x, p.y - a.y)
+      : Math.abs((p.x - a.x) * dy - (p.y - a.y) * dx) / L
+    return { off: +off.toFixed(3), n, seg: { a, b } }
+  }, [id, R] as [number, number])
+
+  // 대상 — 승격된 연필 획 하나(잉크는 #ink에 산다 · web2-18 1부)
+  const id = await page.evaluate(() => [...(window as any).__b2.app.lift.lifted.keys()][0] as number)
+  const persp = await probe(id)
+  console.log(`[42 ⑥] 원근 — 화소 ${persp.n} · 수직 어긋남 ${persp.off}`)
+  expect(persp.n, '원근에서 그 자리에 3D 픽셀이 있다').toBeGreaterThan(0)
+  expect(persp.off!).toBeLessThanOrEqual(2)
+
+  const fp = await facePoint(page)
+  await tap(page, fp.x, fp.y)
+  await page.waitForTimeout(500)
+  await settle(page)
+  // **축측으로 조금 돌린다** — 정면에서는 깊이가 시선과 나란해 두 사영이 화면에서
+  // 거의 «선을 따라» 갈리고, 그러면 수직거리를 재는 이 팔이 못 가른다(위 D-3의 이유).
+  // 돌리면 깊이 차가 화면의 **수직 방향**으로 나와 팔의 축과 같은 축이 된다.
+  await page.mouse.move(400, 500)
+  await page.mouse.down({ button: 'middle' })
+  for (let i = 1; i <= 10; i++) await page.mouse.move(400 + i * 9, 500 + i * 3)
+  await page.mouse.up({ button: 'middle' })
+  await settle(page)
+  const v = await view42(page)
+  expect(v.parallel).toBe(true)
+
+  // ⚠⚠ **가를 수 있는 획을 골라야 한다**(#71 — 재는 조건 · D-3의 실패한 첫 판):
+  //    설계상 **pivot 면에서는 두 사영이 같은 배율**이라(그것이 전환이 안 튀는 이유다)
+  //    그 면 근처의 획은 원근이든 평행이든 **같은 자리에 찍힌다** — 거기서 재면 행렬을
+  //    원근으로 되돌려도 팔이 초록으로 남는다. 실제로 그 판을 돌려 봤고 **안 빨개졌다**.
+  //    그래서 「두 사영이 실제로 갈리는 폭」(`split`)을 먼저 재서 **가장 갈리는 획**을 고르고,
+  //    그 폭이 문(2 px)의 두 배를 넘는 것을 **게이트로 박는다**.
+  const pick = await page.evaluate(() => {
+    const b2 = (window as any).__b2
+    const app = b2.app, an = app.lift.an
+    const pose = app.pose
+    const persp = { p: pose.p, q: pose.q }          // 같은 자세 · 원근
+    const v2 = b2.diag.lens().xf
+    const to = (q: { x: number; y: number }) => ({ x: q.x * v2.s + v2.ox, y: q.y * v2.s + v2.oy })
+    let best = -1, bd = -1
+    for (const [id, g] of app.lift.lifted) {
+      const mid = { x: (g.a3.x + g.b3.x) / 2, y: (g.a3.y + g.b3.y) / 2, z: (g.a3.z + g.b3.z) / 2 }
+      const A = b2.diag.projectWith(pose, mid), B = b2.diag.projectWith(persp, mid)
+      const a2 = b2.diag.projectWith(pose, g.a3), b2p = b2.diag.projectWith(pose, g.b3)
+      if (!A || !B || !a2 || !b2p) continue
+      const pa = to(A), pb = to(B), qa = to(a2), qb = to(b2p)
+      if (Math.hypot(qb.x - qa.x, qb.y - qa.y) < 40) continue   // 화면에서 점에 가까운 획 제외
+      // 창(16 px)이 캔버스 안이어야 잰다 — 밖이면 «어긋남»이 아니라 «못 잼»이다
+      const M = 24
+      if (pa.x < M || pa.y < M || pa.x > innerWidth - M || pa.y > innerHeight - M) continue
+      // ⚠ **팔이 재는 축과 같은 축으로 갈라야 한다**: 아래 `probe`는 사영 선분까지의
+      //   **수직거리**를 재므로, 원근 판이 그 선 «위»로 어긋나면(깊이선처럼) 팔이 못 가른다.
+      //   그래서 split도 **원근 판의 점에서 평행 판의 선까지의 수직거리**로 잰다.
+      const dx = qb.x - qa.x, dy = qb.y - qa.y
+      const L = Math.hypot(dx, dy)
+      const d = Math.abs((pb.x - qa.x) * dy - (pb.y - qa.y) * dx) / L
+      if (d > bd) { bd = d; best = Number(id) }
+    }
+    return { id: best, split: +bd.toFixed(3) }
+  })
+  console.log(`[42 ⑥] 두 사영이 갈리는 폭(수직) ${pick.split} px (획 ${pick.id})`)
+  expect(pick.split, '이 팔이 가를 수 있는가 — 원근 판과의 폭이 문의 두 배를 넘는다').toBeGreaterThan(4)
+  const id2 = pick.id
+  const par = await probe(id2)
+  console.log(`[42 ⑥] 평행 — 화소 ${par.n} · 수직 어긋남 ${par.off}`)
+  expect(par.n, '평행에서도 그 자리에 3D 픽셀이 있다 — 행렬이 사영과 같다').toBeGreaterThan(0)
+  expect(par.off!, 'GL과 core가 같은 사영을 쓴다(불변식 k)').toBeLessThanOrEqual(2)
+
+  ledger['gate6_gl_matches_projection'] = {
+    what: '`#gl`(three.js 행렬)과 `core/camera.project`가 같은 자리에 그리는가 — 원근·평행 둘 다',
+    perspective: { id, px: persp.n, off_px: persp.off },
+    parallel: { id: id2, px: par.n, off_px: par.off, name: v.name },
+    split_px: pick.split,
+    falsification_executed: (
+      '**실행했다**(D-3): `render3d.syncCamera`의 `w`를 `0 * projW(pose)`로 바꿔 **행렬만 원근으로** '
+      + '되돌리고 이 팔을 돌렸다 → 창 안 불투명 화소 **64 → 0**(빨강). 되돌렸다.'
+    ),
+    falsification_history: (
+      '**첫 판은 못 갈랐다**(D-3): ① 아무 획이나 고르면 pivot 면 근처라 두 사영이 같은 자리에 '
+      + '찍힌다 — 행렬을 원근으로 되돌려도 팔이 **초록으로 남았다**(실행 확인) ② 정면 뷰에서는 '
+      + '두 사영이 «선을 따라» 갈려 **수직거리를 재는 이 팔의 축과 어긋난다**(수직 폭 2.484 px). '
+      + '그래서 ㉠ 깊은 획을 하나 더 긋고 ㉡ **축측으로 돌린 뒤** ㉢ split을 팔과 **같은 축**(수직)으로 '
+      + '재서 가장 갈리는 획을 고른다 — 그때 57.062 px다.'
+    ),
+    note: '창(16 CSS px) 안 불투명 화소의 무게중심 ↔ 사영 선분의 **수직거리**. 창이 비면 null이라 「어긋남」과 「없음」이 갈린다',
+  }
+})
+
 test.afterAll(async ({}, testInfo) => {
   const dpr = testInfo.project.name
   const payload = JSON.stringify({

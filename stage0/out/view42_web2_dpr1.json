@@ -1,0 +1,83 @@
+{
+  "what": "web2-42 — 화면에서 재는 다섯(면·가운데·확정 전 잠금·축측·읽는 값·이름).",
+  "canonical_command": "LEDGER=1 npx playwright test e2e/view42.spec.ts",
+  "project": "dpr1",
+  "gate1_face_and_center": {
+    "before": {
+      "name": "투시",
+      "parallel": false
+    },
+    "mid_w": 0.036025,
+    "after": {
+      "name": "우측면",
+      "parallel": true,
+      "w": 1,
+      "D": 6.791353
+    },
+    "center": {
+      "name": "투시",
+      "parallel": false,
+      "pose_unchanged": true
+    }
+  },
+  "gate2_locked_before_confirm": {
+    "taps": 9,
+    "allowed": false,
+    "parallel_after": false,
+    "pose_unchanged": true
+  },
+  "gate3_axonometric": {
+    "named": "우측면",
+    "after_orbit": "축측",
+    "parallel": true
+  },
+  "gate4_readout": {
+    "perspective": "렌즈 12mm (기본)",
+    "perspective_zoomed": "렌즈 23mm",
+    "parallel": "축척 미정",
+    "parallel_after_dim": "축척 1:76.1",
+    "mm_per_unit": 1148.1983169296152,
+    "denom": 76.09657300145406,
+    "px_per_unit": 57.02815528911218,
+    "slider_disabled_in_parallel": true
+  },
+  "gate5_label": {
+    "pixels": 97,
+    "names": [
+      "투시",
+      "평면",
+      "저면",
+      "정면",
+      "후면",
+      "좌측면",
+      "우측면",
+      "축측"
+    ],
+    "no_domyeon_in_dom": true
+  },
+  "gate6_gl_matches_projection": {
+    "what": "`#gl`(three.js 행렬)과 `core/camera.project`가 같은 자리에 그리는가 — 원근·평행 둘 다",
+    "perspective": {
+      "id": 2,
+      "px": 64,
+      "off_px": 0.606
+    },
+    "parallel": {
+      "id": 4,
+      "px": 64,
+      "off_px": 0.412,
+      "name": "축측"
+    },
+    "split_px": 57.062,
+    "falsification_executed": "**실행했다**(D-3): `render3d.syncCamera`의 `w`를 `0 * projW(pose)`로 바꿔 **행렬만 원근으로** 되돌리고 이 팔을 돌렸다 → 창 안 불투명 화소 **64 → 0**(빨강). 되돌렸다.",
+    "falsification_history": "**첫 판은 못 갈랐다**(D-3): ① 아무 획이나 고르면 pivot 면 근처라 두 사영이 같은 자리에 찍힌다 — 행렬을 원근으로 되돌려도 팔이 **초록으로 남았다**(실행 확인) ② 정면 뷰에서는 두 사영이 «선을 따라» 갈려 **수직거리를 재는 이 팔의 축과 어긋난다**(수직 폭 2.484 px). 그래서 ㉠ 깊은 획을 하나 더 긋고 ㉡ **축측으로 돌린 뒤** ㉢ split을 팔과 **같은 축**(수직)으로 재서 가장 갈리는 획을 고른다 — 그때 57.062 px다.",
+    "note": "창(16 CSS px) 안 불투명 화소의 무게중심 ↔ 사영 선분의 **수직거리**. 창이 비면 null이라 「어긋남」과 「없음」이 갈린다"
+  },
+  "pitfalls": [
+    "#94",
+    "#93",
+    "#88",
+    "#89"
+  ],
+  "pitfalls_note": "#94 — 「확정 전에는 잠긴다」를 **그 런타임에서 실제로 눌러** 잰다(아홉 자리 · 포즈 문자열 비교). #93 — 큐브는 누르고 바로 뗀다(끌기 ⛔ — 누름 진입에 안 걸린다) · 전환은 300 ms 기다린다. #88 — 자리를 `app.cubeLayout`에서 읽는다. #89 — 이 원장은 **dpr 한 판**의 값이다(파일 이름에 판이 들어간다)."
+}
