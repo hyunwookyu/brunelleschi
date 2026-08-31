@@ -17538,6 +17538,13 @@ main 5afb498 · cd web2 && node tools/deploy-check.mjs
 `in_progress`였고 3분 뒤에도 그랬다 — #81대로 **기다리지 않고 실행 상태를 봤고** 살아 있는
 것을 확인한 뒤 다시 쟀다. 위 블록이 그 두 번째 판정이다.
 
+⚠ **그 뒤의 커밋은 문서뿐이다** — `git diff --name-only 5afb498..eaabbaa`가
+`web2/NOTES.md` · `web2/HANDOFF.md` · `stage0/out/selfcheck.json` 셋이고
+**`web2/src`·`e2e`·`test`·`index.html`은 0개**다. 즉 화면에 있는 앱은 이 회차의 제품 코드
+그대로이고, 뒤따르는 Pages 실행이 바꾸는 것은 **빌드 식별자 문자열 하나**다.
+(그래서 이 블록의 판정 해시는 `5afb498`로 둔다 — 판정자가 확인한 것이 그 앱이다. 41이
+같은 자리에서 같은 규약을 썼다.)
+
 **⚠ 무엇이 초록인가**(#89 — 세 줄이 **다른 것**을 말한다):
 
 | 무엇이 돌았나 | 어디서 | 결과 |
