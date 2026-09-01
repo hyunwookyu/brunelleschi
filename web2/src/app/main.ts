@@ -3027,7 +3027,7 @@ const diag = {
       order: h.renderOrder,
       segs: ((h as unknown as { geometry: { getAttribute(n: string): { count: number } } }).geometry.getAttribute('position')?.count ?? 0) / 2,
     })),
-    constants: { REP_MIN_PX: C.REP_MIN_PX, REP_BRICK_COURSE_MM: C.REP_BRICK_COURSE_MM, REP_BRICK_MODULE_W_MM: C.REP_BRICK_MODULE_W_MM, REP_FRAME_BUDGET_MS: C.REP_FRAME_BUDGET_MS },
+    constants: { REP_MIN_PX: C.REP_MIN_PX, REP_BRICK_COURSE_MM: C.REP_BRICK_COURSE_MM, REP_BRICK_MODULE_W_MM: C.REP_BRICK_MODULE_W_MM, REP_FRAME_BUDGET_MS: C.REP_FRAME_BUDGET_MS, REP_ZOOM_RETENTION_TOL: C.REP_ZOOM_RETENTION_TOL },
   }),
   cycleRep49: (faceId: number) => cycleFaceRep(app, faceId),
   /** **안 실린 수리를 손으로 걸어 보는 손잡이**(web2-48 48-1 — 수리는 되돌렸다).

@@ -4,19 +4,19 @@
   "unit": {
     "command": "npx vitest run (web2/)",
     "files": 123,
-    "tests": 1008,
-    "wall_s": 28.7,
-    "passed": 1008,
+    "tests": 1010,
+    "wall_s": 32.9,
+    "passed": 1010,
     "failed": 0,
-    "note": "web2-49 — 파일 121 → 123(rep49 9 · rep49_measure 6) · 팔 993 → 1008. roundtrip43 게이트 ②가 rep 필드 누락을 실제로 잡았다(그 기계의 세 번째 발화)."
+    "note": "web2-49 — 파일 121 → 123(rep49 9 · rep49_measure 8) · 팔 993 → 1010. roundtrip43 게이트 ②가 rep 필드 누락을 실제로 잡았다(그 기계의 세 번째 발화)."
   },
   "e2e": {
     "command": "npx playwright test --workers=1 (dpr1+dpr2)",
-    "cells": 606,
+    "cells": 608,
     "passed": null,
     "failed": null,
     "wall_s": null,
-    "note": "web2-49 — 596 → 606(rep49 5칸 × dpr 둘). 마감 전량 실행의 값이 이 칸에 들어간다 — 비워 두지 않고 null로 적어 «안 재음»을 드러낸다(#43)."
+    "note": "web2-49 — 596 → 608(rep49 6칸 × dpr 둘). 마감 전량 실행의 값이 이 칸에 들어간다 — 비워 두지 않고 null로 적어 «안 재음»을 드러낸다(#43)."
   },
   "typecheck_build": {
     "command": "tsc --noEmit · vite build",
@@ -321,8 +321,8 @@
     },
     {
       "at": "web2-49",
-      "unit": 1008,
-      "e2e": 606,
+      "unit": 1010,
+      "e2e": 608,
       "e2e_wall_s": null,
       "note": "벽시계는 마감 전량 실행으로 채운다(null = 안 재음 · #43)"
     }

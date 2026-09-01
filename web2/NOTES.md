@@ -20976,3 +20976,39 @@ C158)과 수리의 존재(곱을 걸면 0 — AS-C163)는 원장 `paint48_e2e_we
 - **[14] 17/17의 무정보**: 측정 표의 판정자를 «게이트가 실제로 빨개졌다»로 바꿨다.
 - **[15] DEFERRED의 @필드 표기**: `원장.json@필드` → «`원장.json`의 `필드`»로 고쳤다
   (@는 해시 인용에만 쓴다).
+
+### 검증 (49 · 2차 대응 후 최종 트리 — #69 ㉤: passed/failed/total + 명령 원문)
+
+| 무엇 | 명령 | 결과 |
+|---|---|---|
+| 타입 | `npx tsc --noEmit` (web2/) | **0** |
+| 단위 전량 | `npx vitest run` (web2/) | **1010 / 0 / 1010**(123파일 · 32.9s) |
+| 빌드 | `npm run build` | 통과 |
+| rep49 e2e | `LEDGER=1 npx playwright test e2e/rep49.spec.ts --workers=1` | **12 / 0 / 12**(dpr1+dpr2 · 2.4m) |
+| rep49 하네스 | `LEDGER=1 npx vitest run test/rep49_measure.test.ts` | **8 / 0 / 8** |
+
+**#94의 행위 확인**(착수 표의 약속 — 값): `LEDGER` 없이 하네스를 돌리고
+`stage0/out/rep49_web2.json`의 mtime이 **1788277524 → 1788277524**(불변)임을 쟀다 —
+관문이 그 런타임에서 실제로 막는다.
+
+**selfcheck** — rep49 원장 셋이 `scanned`에 들었고, 플래그의 정체는 전부 원장 안에 있다:
+카운터 0 여섯(`note_zero` — 단면 장면의 renderOrder·결함 0/1 분자) · «정확히 1»
+(`degenerate_n` — 비율이 아니라 개수) · 상수 스냅샷 없음(`no_constants_snapshot` —
+라인 유보) · frame20.gate(#35)는 reachability 필드로 대응.
+
+**#42 ⑦ — pitfall_citations 대조**(착수 표 예상 ↔ 원장 실인용):
+
+```
+원장 실인용   rep49_web2.json = [5, 82, 92] · rep49_e2e_*.json = [28, 82, 96, 97]
+착수 표 예상  #5 ✓(원장) · #92 ✓(원장) · #54·#12·#61·#88·#79 — 원장이 아니라
+              NOTES·코드 주석에서 인용됐다(#54 = paintSideAt·clipLine 재사용의 근거 ·
+              #12 = LOD 경계 양쪽·축척 두 값의 근거 · #61·#88·#79 = 설계 서술).
+              어긋남이 아니라 «인용의 자리가 갈린 것»이다 — 원장 인용은 측정 규약의
+              번호(#5·#28·#82·#92·#96·#97)가 차지했다.
+```
+
+**최종 실행의 판정값**(원장이 정본 — 여기는 그 자리를 가리키는 손가락이다):
+쪽 귀속 `far_children[].gate.side` 전부 거짓 + `sd 7.11 → far_sd2 −8.53`(부호 반전) ·
+프레임 차는 잡음 바닥(`noise_floor_ms` 0.1~0.3) 대역 · 줌 유지 정규화 0.977/0.963
+(문 0.2 · 화면 고정이면 0.69) · 덮개 반증 `whileCovered false → restored true` ·
+근/원 켜 간격 평균 3.22 > 2.41.
