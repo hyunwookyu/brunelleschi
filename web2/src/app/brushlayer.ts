@@ -67,7 +67,7 @@ export interface BrushLayer {
    *  draft 한 획 재그리기는 draftStats가 따로 센다(섞으면 «그리는 중 0회»가 안 재진다). */
   stats(): { syncs: number; redraws: number }
   /** ㉢ 제스처 타일 원장(web2-18 3-c) — 굽기 비용·판 수·붙이기 프레임 ms */
-  tileStats(): { active: boolean; tiles: number; frames: number; bakeMs: number; bakePasses: number; bakeClamped: number; frameMsMedian: number; frameMsMax: number }
+  tileStats(): { active: boolean; tiles: number; frames: number; bakeMs: number; bakePasses: number; bakeClamped: number; frameMsMedian: number; frameMsMax: number; paintFrames: number; paintMsMedian: number; paintMsMax: number }
   resetTileStats(): void
   /** draft 재그리기 원장(web2-12 2번) — 이동당 비용의 분자/분모와 ms 표본.
    *  ⚠ 표본은 **국면별로 리셋해서 읽는다**(resetDraftStats) — 누산기를 국면·렌더러
@@ -717,7 +717,66 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     if (tileFrameMs.length < 400) tileFrameMs.push(performance.now() - t0)
   }
 
-  /** 제스처 경로를 켜고 끈다 — `#brushc`는 아틀라스를 들고 숨는다 */
+  // ── **칠은 타일에 안 들어간다 — 살려서 그린다**(web2-48 48-6) ──────────
+  //
+  // 증상(사람): 「돌리는 동안 칠이 사라지고 멈추면 돌아온다 — **데이터가 아니라
+  // 표시 문제**」. D-1로 경로에 표식을 심을 것도 없이 `gestureList`가 이유를 문면으로
+  // 들고 있었다: 칠 획은 ① 2D도 아니고 ② 대기도 아니고 ③ `lift.lifted`에도 없다
+  // (칠은 리프팅에 안 낀다 — `isPaint`가 거른다). 그래서 그 자리에서 `continue`했고
+  // 제스처 내내 한 획도 안 그려졌다. **37-4(광선이 바뀌면 대기 획을 버린다)와는
+  // 무관하다** — 칠은 애초에 대기 획이 아니라 그 경로를 밟지 않는다(확인만 하고 넘어간다).
+  //
+  // ⚠⚠ **타일에 «넣을» 수가 없다**(지시문은 「캡시에 포함시켜라」였으나 그것이 기하적으로
+  //   안 된다 — D-4: 사람이 준 근거도 확인 대상이다). 타일은 한 획을 **누운 직선**(길이 L ×
+  //   굵기 w)으로 굽고 두 끝점으로 **아핀 변환**해 붙인다. 그것이 성립하는 근거는 「확정
+  //   기하가 직선이므로 사영도 직선」이다(3-c ㉓). 칠은 **점렬**이고 한 평면 위에 누워
+  //   있으므로 포즈가 바뀔 때의 변환이 **호모그래피**다 — 아핀으로 못 적는다.
+  //   두 끝점으로 타일을 만들면 굴곡이 펌진 **곱은 막대**가 된다(조용히 틀린 그림 ⛔).
+  //
+  // 그래서: 제스처 동안 **칠만 살려서 그린다**. 선은 타일(#brushsnap)이 들고,
+  // #brushc는 숨는 대신 **칠 획만** 들고 떠 있는다. 비용은 O(칠 획)이고 칠은 몇
+  // 획이라 프레임 예산 밖이 아니다 — 그 값을 `tileStats.paintMs`가 직접 재서 원장에 낸다
+  // (문면으로 「쌀 것」이라 적지 않는다 — #12). **칠이 없는 문서는 종전 그대로**
+  // #brushc가 숨고 이 경로가 한 번도 안 돌아간다(무회귀).
+  let paintMs: number[] = []
+  /** 제스처 프레임의 칠 한 장 — `redraw`의 칠 갈래와 **같은 함수들**을 부른다(#54).
+   *  그린 획 수를 돌려준다 — 0이면 부른 쪽이 #brushc를 숨긴다. */
+  function drawPaintsOnly(app: App): number {
+    const t0 = performance.now()
+    let n = 0
+    brush.clear()
+    brush.push()
+    brush.translate(-cw / 2, -ch / 2)
+    for (const s of app.doc.strokes) {
+      if (s.paint === undefined) continue
+      const g3 = app.paintGeo.get(s.id)
+      if (!g3) continue
+      if (!paintVisible(app.faces, s, app.pose)) continue        // 48-5 — 같은 문
+      const spts: Pt[] = []
+      for (const P of g3) {
+        const q = project(app.lift.an, app.pose, P)
+        if (q) spts.push(docToScreen(app, q))
+      }
+      if (spts.length < 2) continue
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
+      for (const q of spts) {
+        if (q.x < x0) x0 = q.x; if (q.x > x1) x1 = q.x
+        if (q.y < y0) y0 = q.y; if (q.y > y1) y1 = q.y
+      }
+      if (offScreen({ x: x0, y: y0 }, { x: x1, y: y1 })) continue
+      const hex = paintHexOf(s)
+      if (hex && s.paint.i !== undefined) drawPaintRaw(s, spts, hex, s.paint.i)
+      else drawPaintGraphite(s, spts)
+      n++
+    }
+    brush.pop()
+    brush.render()
+    if (paintMs.length < 400) paintMs.push(performance.now() - t0)
+    return n
+  }
+
+  /** 제스처 경로를 켜고 끔다 — `#brushc`는 아틀라스를 들고 숨는다
+   *  (48-6이 단서 하나를 더했다: 칠이 있으면 그 겹이 **칠만 들고** 떠 있는다). */
   function setTiled(on: boolean) {
     if (tiled === on) return
     tiled = on
@@ -748,6 +807,9 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
           setTiled(true)
         }
         drawTiled(app)
+        // 48-6 — 칠은 타일에 안 들어가므로 살려서 그린다. 한 획도 안 그렸으면
+        // #brushc를 다시 숨긴다 — 칠 없는 문서의 화면은 종전과 한 톨도 안 다르다(무회귀).
+        canvas.style.visibility = drawPaintsOnly(app) > 0 ? '' : 'hidden'
         paperPhase(app)
         last = null            // 놓으면 전량 재그리기가 정확히 다시 굽는다(정본은 놓은 뒤 화면)
         return true
@@ -792,14 +854,19 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
     lastFull: () => ({ ms: lastFullMs, drawn: lastDrawn, clipped: lastClipped }),
     tileStats: () => {
       const v = [...tileFrameMs].sort((a, b) => a - b)
+      const p = [...paintMs].sort((a, b) => a - b)
       return {
         active: tiled, tiles: tiles.size, frames: tileFrames,
         bakeMs: +bakeMs.toFixed(2), bakePasses, bakeClamped,
         frameMsMedian: v.length ? +v[Math.floor(v.length / 2)]!.toFixed(3) : 0,
         frameMsMax: v.length ? +v[v.length - 1]!.toFixed(3) : 0,
+        // 48-6 — 제스처 중 칠 한 장의 비용. 칠이 없는 문서에서는 0 표본이다.
+        paintFrames: paintMs.length,
+        paintMsMedian: p.length ? +p[Math.floor(p.length / 2)]!.toFixed(3) : 0,
+        paintMsMax: p.length ? +p[p.length - 1]!.toFixed(3) : 0,
       }
     },
-    resetTileStats: () => { tileFrames = 0; tileFrameMs = [] },
+    resetTileStats: () => { tileFrames = 0; tileFrameMs = []; paintMs = [] },
     draftStats: () => {
       const s = [...draftMs].sort((a, b) => a - b)
       return {

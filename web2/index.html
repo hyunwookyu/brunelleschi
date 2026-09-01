@@ -399,6 +399,22 @@
               padding: 0; cursor: pointer; touch-action: none; }
     .swatch.on { border: 1.5px solid #3a362f; outline: 1.5px solid rgba(58,54,47,.35); outline-offset: 1px; }
     .prow-name { min-width: 52px; text-align: left; }
+    /* ── 칠통의 색상 휠·크기 트레이(web2-48 48-7 · 48-2) ────────────────────────
+       ⚠ `.prow`는 **줄이지 버튼이 아니다**(div) — `.rrow`의 배경·여백만 물려받고
+       누름 문법은 안 받는다. 46의 재료 줄이 쓰던 그 자리를 그대로 쓴다. */
+    .prow { cursor: default; }
+    #paint-wheel { flex-direction: column; gap: 4px; padding: 7px 9px; }
+    #paint-wheel-cv { display: block; touch-action: none; cursor: crosshair; }
+    #paint-hex { min-width: 0; font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: #4a463f; }
+    /* 크기 트레이 — **줄마다 그 굵기의 실제 자국**이다(1:1). 자국은 SVG 선 하나이고
+       `stroke-width`가 곧 그 굵기 px라, 「1:1」이 문면이 아니라 기하로 참이다.
+       칸은 세로로 쌓는다 — 펜 촉통(#pentray)·지우개 크기통(#etray)과 같은 배열이다. */
+    #paint-sizes { flex-direction: column; align-items: stretch; gap: 2px; padding: 5px 9px; }
+    .sizebtn { display: flex; align-items: center; justify-content: flex-start;
+               background: transparent; border: 0; padding: 2px 3px; margin: 0;
+               color: #4a463f; cursor: pointer; touch-action: none; border-radius: 3px; }
+    .sizebtn svg { display: block; height: auto; }
+    .sizebtn.on { background: rgba(60, 56, 49, .16); }
     /* 롤통 줄(web2-34 6번) — 연필통·촉통 줄과 같은 크기·같은 어법. 앞의 롤 그림 +
        이름. 옐로의 색 예외는 **통 안**에만 산다(`instrument-icons.md` 정본). */
     .rrow { display: flex; flex-direction: row; align-items: center; gap: 7px;
@@ -844,9 +860,9 @@
       <label title="해칭이 면에 붙는다 — 끄면 종이(화면)에 붙는다"><input id="chk-hatchface" data-act="state" type="checkbox"> 해칭을 면에 붙인다</label>
       <!-- 숫자와 표시(web2-47) — 명령 둘: 바닥면적·부피(근거 면이 밝아진다 — 숫자는 근거와
            같이 간다 #61) · 사람 놓기(다음 지면 탭이 그 자리 — 자동으로 안 세운다, 지시). -->
-      <button id="btn-floor-area" data-act="cmd">바닥면적 · 부피</button>
+      <button id="btn-floor-area" data-act="cmd" title="바닥면적·부피 — 근거가 된 면이 밝아진다. 축척이 없으면 숫자를 안 낸다">바닥면적 · 부피</button>
       <label title="벽으로 닫힌 영역(실)의 버블·연결 — 축척이 있으면 면적도"><input id="chk-rooms" data-act="state" type="checkbox"> 실 다이어그램</label>
-      <button id="btn-person" data-act="cmd">사람 놓기</button>
+      <button id="btn-person" data-act="cmd" title="사람 놓기 — 다음으로 지면을 탭한 자리에 선다(한 번 놓으면 풀린다)">사람 놓기</button>
       <!-- web2-26 4번 — 옐로에서 «끝에 머무르면 반듯해지는» 시간. 실기기가 「조금 길다」로
            냈고(DEVICE-CHECK D6) 기본을 0.35s로 내렸다. 대역은 프로크리에이트 QuickShape가
            사용자에게 여는 범위와 같다(A-3). 상태 손잡이라 눌러도 패널이 안 접힌다(28-1). -->
@@ -909,7 +925,7 @@
         <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="del" title="한 자리 지운다">⌫</button>
         <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button><button data-k="clear" title="전부 지운다">C</button>
         <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="apply" title="이 값을 지금 선의 치수로" style="grid-row: span 2">적용</button>
-        <button data-k="0" style="grid-column: span 2">0</button><button data-k=".">.</button>
+        <button data-k="0" style="grid-column: span 2" title="0">0</button><button data-k="." title="소수점">.</button>
       </div>
       <canvas id="dim-ink" width="184" height="72"></canvas>
       <!-- web2-29 1단계 — **모드로 들어가는 자리**. ⚠ 리본의 치수 단추(#dim-toggle)는
@@ -1229,9 +1245,9 @@
         <div class="stencil-hint">가로선이 <b>눈높이</b>다 — 눈을 거기 맞추고, 발이 바닥에 닿게 그린다</div>
         <canvas id="stencil-canvas" width="180" height="360"></canvas>
         <div class="stencil-row">
-          <button id="stencil-save" data-act="cmd">저장</button>
-          <button id="stencil-clear" data-act="cmd">지움</button>
-          <button id="stencil-close" data-act="cmd">닫기</button>
+          <button id="stencil-save" data-act="cmd" title="그린 스텐실을 이 기기에 저장한다">저장</button>
+          <button id="stencil-clear" data-act="cmd" title="판을 비운다 — 저장된 스텐실은 저장을 다시 누를 때 바뀜다">지움</button>
+          <button id="stencil-close" data-act="cmd" title="닫는다 — 저장하지 않은 변경은 버린다">닫기</button>
         </div>
       </div>
     </div>
@@ -1252,7 +1268,7 @@
       <div class="head">렌즈</div>
       <input id="lens-range" data-act="state" type="range" aria-label="화각" style="width:110px">
       <div id="lens-read">—</div>
-      <button id="btn-lens-reset" class="lens-reset" data-act="cmd">기본으로</button>
+      <button id="btn-lens-reset" class="lens-reset" data-act="cmd" title="보기 렌즈를 기본값으로 되돌린다">기본으로</button>
     </div>
     <div id="snap-pop" hidden>
       <div class="head"><svg viewBox="0 0 256 256" fill="currentColor" width="13" height="13" style="vertical-align:-2px"><path d="M213.34,122.73a6,6,0,1,0-10.68-5.46,81.79,81.79,0,0,1-35.81,35.36l-18.14-40.8A38,38,0,0,0,134,42.48V24a6,6,0,0,0-12,0V42.48a38,38,0,0,0-14.71,69.35L58.52,221.56a6,6,0,1,0,11,4.88l25.9-58.26A93.37,93.37,0,0,0,128,174a97,97,0,0,0,32.68-5.69l25.84,58.13a6,6,0,1,0,11-4.88l-25.77-58A93.92,93.92,0,0,0,213.34,122.73ZM128,54a26,26,0,1,1-26,26A26,26,0,0,1,128,54Zm0,108a81.51,81.51,0,0,1-27.73-4.83l18-40.45a37.85,37.85,0,0,0,19.52,0l18,40.6A85.34,85.34,0,0,1,128,162Z"/></svg> 오스냅</div>

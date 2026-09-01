@@ -1334,7 +1334,12 @@ function showTipAt(el: HTMLElement, text: string) {
 }
 document.addEventListener('pointermove', (e) => {
   if (e.pointerType !== 'pen') { hideTip(); return }        // 펜에서만(손가락 ⛔)
-  const el = (e.target as HTMLElement | null)?.closest('button, summary, [role="button"]') as HTMLElement | null
+  // ⚠ **web2-48 48-10이 `label`을 더했다.** 45의 `chk-hatchface`와 47의 `chk-rooms`는
+  // 설명을 감싼 `<label>`에 달았는데 그 태그가 이 선택자 밖이라 **펜 툴팁이 안 떴다**
+  // (데스크톱의 브라우저 기본 툴팁으로만 보여서 안 드러났다 — 실기기가 펜이다).
+  // 고치는 자리는 요소가 아니라 **규칙**이다(#38·#19의 요지 · 48-10이 세운 그 규칙):
+  // 토글을 감싼 라벨도 «손잡이»이므로 선택자에 든다. 낱낱으로 두 요소를 고치면 셋째가 샌다.
+  const el = (e.target as HTMLElement | null)?.closest('button, summary, label, [role="button"]') as HTMLElement | null
   if (!el || !tipTextOf(el)) { hideTip(); return }
   if (el === tipTarget) return                              // 같은 자리 — 시계를 다시 안 돌린다
   hideTip()
@@ -1868,19 +1873,20 @@ syncRolls()
 // 누르면 이유가 보인다(롤통의 2-a 문법). 그림 정본은 docs/instrument-icons.md.
 const gripBtn = document.getElementById('btn-grip')!
 const griptrayEl = document.getElementById('griptray')!
+// ⚠ web2-48 48-10 — 줄마다 `tip`이 있다(28-2의 규칙: 손잡이에는 설명이 붙는다).
 const GRIP_ROWS = [
-  { key: 'dup', name: '복제', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="15" height="15"/><rect x="12" y="12" width="15" height="15"/></svg>' },
-  { key: 'lock', name: '잠금', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="14" width="18" height="13" rx="1.5"/><path d="M11 14 V10 a5 5 0 0 1 10 0 V14"/></svg>' },
-  { key: 'join', name: '맺기', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 26 H23 V9"/><path d="M23 26 l3 3 M23 9 l-3 -3" stroke-width="1.1"/></svg>' },
-  { key: 'front', name: '정면', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16"/><path d="M16 3 v3 M16 26 v3 M3 16 h3 M26 16 h3" stroke-width="1.1"/></svg>' },
+  { key: 'dup', name: '복제', tip: '복제 — 잡은 선을 같은 자리에 하나 더 놓는다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="15" height="15"/><rect x="12" y="12" width="15" height="15"/></svg>' },
+  { key: 'lock', name: '잠금', tip: '잠금 — 잡은 선을 보호한다(안 잡히고 안 지워진다)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="14" width="18" height="13" rx="1.5"/><path d="M11 14 V10 a5 5 0 0 1 10 0 V14"/></svg>' },
+  { key: 'join', name: '맺기', tip: '맺기 — 잡은 두 선을 만나게 연장한다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 26 H23 V9"/><path d="M23 26 l3 3 M23 9 l-3 -3" stroke-width="1.1"/></svg>' },
+  { key: 'front', name: '정면', tip: '정면 — 잡은 면을 정면으로 보는 평행 투영으로 간다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16"/><path d="M16 3 v3 M16 26 v3 M3 16 h3 M26 16 h3" stroke-width="1.1"/></svg>' },
   // web2-45 — 면을 잡았을 때의 손잡이 둘(45-2 분류 정정 · 45-4 채움). 그림 정본은
   // docs/instrument-icons.md 「붓(칠 도구)」 절의 줄 둘.
-  { key: 'cls', name: '분류', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 24 L26 24"/><path d="M16 24 V8 M16 8 l-4 5 M16 8 l4 5" stroke-width="1.2"/></svg>' },
-  { key: 'fill', name: '채움', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="20" height="16"/><path d="M9 24 L23 8 M6 19 L17 8 M15 24 L26 13" stroke-width="1.1"/></svg>' },
+  { key: 'cls', name: '분류', tip: '분류 — 잡은 면의 분류를 돌린다(자동·슬라브·벽·경사)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 24 L26 24"/><path d="M16 24 V8 M16 8 l-4 5 M16 8 l4 5" stroke-width="1.2"/></svg>' },
+  { key: 'fill', name: '채움', tip: '채움 — 잡은 면의 채움을 돌린다(없음·해칭·단색)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="20" height="16"/><path d="M9 24 L23 8 M6 19 L17 8 M15 24 L26 13" stroke-width="1.1"/></svg>' },
   // web2-46 — 면 재료(벽돌 쌓기 그림). 채움 해칭의 무늬·색이 이 값에서 나온다.
-  { key: 'fmat', name: '재료', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="22" height="14"/><path d="M5 16 H27 M13 9 V16 M20 16 V23" stroke-width="1.1"/></svg>' },
+  { key: 'fmat', name: '재료', tip: '재료 — 잡은 면의 재료를 돌린다(채움의 무늬·색을 정한다)', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="22" height="14"/><path d="M5 16 H27 M13 9 V16 M20 16 V23" stroke-width="1.1"/></svg>' },
   // web2-47 — 잡은 면의 면적(근거 = 잡힌 그 면이 이미 밝다). 축척 미정이면 이유가 뜬다.
-  { key: 'farea', name: '면적', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="20" height="16"/><path d="M10 20 h6 M10 20 v-4" stroke-width="1.1"/></svg>' },
+  { key: 'farea', name: '면적', tip: '면적 — 잡은 면의 면적. 축척이 없으면 숫자를 안 낸다', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="20" height="16"/><path d="M10 20 h6 M10 20 v-4" stroke-width="1.1"/></svg>' },
 ] as const
 const gripRow = new Map<string, HTMLButtonElement>()
 for (const r of GRIP_ROWS) {
@@ -1919,7 +1925,10 @@ function syncGripRows() {
     const why = gripRowGate(r.key)
     const b = gripRow.get(r.key)!
     b.classList.toggle('disabled', why !== null)
-    b.title = why ?? ''
+    // ⚠ **web2-48 48-10** — 종전에는 `why ?? ''`였다: 쓸 수 있는 줄은 title이 **빈
+    // 문자열**이라 툴팁이 안 떴다(뒤집힌 거동 — «못 쓸 때만» 설명이 뜬다). 이제 둘 다
+    // 뜬다: 쓸 수 있으면 «무엇을 하는가», 못 쓰면 «왜 못 쓰는가».
+    b.title = why ?? r.tip
   }
   gripBtn.classList.toggle('disabled', !app.grip || app.grip.ids.length === 0)
 }
