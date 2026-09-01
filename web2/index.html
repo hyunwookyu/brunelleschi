@@ -389,6 +389,16 @@
     .rrow.disabled { opacity: .38; }
     /* 칠통(web2-46) — 고른 도구·자동 줄의 표시(지우개 크기 줄 .erow.on의 문법 그대로) */
     .rrow.on { background: rgba(60, 56, 49, .10); }
+    /* 사람 스텐실 모달(web2-47) — 설정에서만 열리는 그리기 판 */
+    #stencil-modal { position: fixed; inset: 0; z-index: 30; display: flex;
+      align-items: center; justify-content: center; background: rgba(40,38,34,.25); }
+    #stencil-modal[hidden] { display: none; }
+    #stencil-box { background: #fcfbf8; padding: 12px; box-shadow: 0 4px 30px rgba(0,0,0,.2);
+      font: 12px/1.5 system-ui, sans-serif; color: #4a463f; }
+    #stencil-canvas { border: 1px solid #c9c4bb; background: #fff; display: block;
+      margin: 8px 0; touch-action: none; cursor: crosshair; }
+    .stencil-row { display: flex; gap: 8px; }
+    .stencil-row button { font: 12px system-ui, sans-serif; padding: 4px 10px; }
     .trow svg { height: calc(15px * var(--ui-scale)); width: auto; }
     /* 펜 촉 줄(web2-30 2번) — **그 굵기의 실제 선 견본**이 1:1로 그려진다(원칙 e:
        선폭이 화면 고정이므로 견본과 그은 선이 같은 px다). 아이콘 문법은 연필통 줄과
@@ -794,6 +804,9 @@
                모서리**를 쓰므로, 서랍이 열린 채면 진단 곁줄(#diagctl)을 못 누른다
                (전량 e2e가 잡았다 — sidebar subtree intercepts pointer events). -->
           <button id="btn-diag" data-act="cmd" title="진단 — 기기 값·최근 획·파일 크기">진단</button>
+          <!-- 사람 스텐실(web2-47 47-2) — 직접 그리는 기능은 설정 안에 숨긴다(지시:
+               찾는 사람만 찾는다 — 사무소마다 고유 인물을 쓰는 관습). 기기에 저장된다. -->
+          <button id="btn-stencil" data-act="cmd" title="사람 스텐실 — 가로선이 눈높이다. 눈을 거기 맞춰 그리면 놓았을 때 눈이 지평선에 얹힌다">사람 스텐실 그리기</button>
         </div>
       </details>
     </div>
@@ -809,6 +822,11 @@
            해칭 — 제도답되 시점을 돌리면 무늬가 미끄러진다) · 켬 = 면 고정(면에 붙어 돌되
            3D 렌더처럼 보일 수 있다). **둘 다 만들어 두고 이 토글이 그 물음이다.** -->
       <label title="해칭이 면에 붙는다 — 끄면 종이(화면)에 붙는다"><input id="chk-hatchface" data-act="state" type="checkbox"> 해칭을 면에 붙인다</label>
+      <!-- 숫자와 표시(web2-47) — 명령 둘: 바닥면적·부피(근거 면이 밝아진다 — 숫자는 근거와
+           같이 간다 #61) · 사람 놓기(다음 지면 탭이 그 자리 — 자동으로 안 세운다, 지시). -->
+      <button id="btn-floor-area" data-act="cmd">바닥면적 · 부피</button>
+      <label title="벽으로 닫힌 영역(실)의 버블·연결 — 축척이 있으면 면적도"><input id="chk-rooms" data-act="state" type="checkbox"> 실 다이어그램</label>
+      <button id="btn-person" data-act="cmd">사람 놓기</button>
       <!-- web2-26 4번 — 옐로에서 «끝에 머무르면 반듯해지는» 시간. 실기기가 「조금 길다」로
            냈고(DEVICE-CHECK D6) 기본을 0.35s로 내렸다. 대역은 프로크리에이트 QuickShape가
            사용자에게 여는 범위와 같다(A-3). 상태 손잡이라 눌러도 패널이 안 접힌다(28-1). -->
@@ -1181,6 +1199,20 @@
          재료 다섯 줄(이름 + 톤 견본 둘셋) + 톤 「자동」(분류의 제안을 따른다 — 제안이지
          기본값이 아니다: 사람이 견본을 고르면 그 값이 남는다). 행은 main.ts가 짓는다. -->
     <div id="painttray"></div>
+
+    <!-- 사람 스텐실 그리기(web2-47 47-2) — 설정에서 연다. 가로선 = 눈높이(그 규칙이 이
+         앱의 근본 사실이다 — 카메라가 눈높이에 있어 지평선 = 눈높이). 기기 저장. -->
+    <div id="stencil-modal" hidden>
+      <div id="stencil-box">
+        <div class="stencil-hint">가로선이 <b>눈높이</b>다 — 눈을 거기 맞추고, 발이 바닥에 닿게 그린다</div>
+        <canvas id="stencil-canvas" width="180" height="360"></canvas>
+        <div class="stencil-row">
+          <button id="stencil-save" data-act="cmd">저장</button>
+          <button id="stencil-clear" data-act="cmd">지움</button>
+          <button id="stencil-close" data-act="cmd">닫기</button>
+        </div>
+      </div>
+    </div>
 
     <div id="pentray"></div>
 

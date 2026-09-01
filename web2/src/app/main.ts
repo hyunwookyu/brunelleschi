@@ -6,13 +6,15 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
   beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
   commitPaint, cycleFaceClass, faceClassNow, toggleFaceFill, cycleFaceMat, paintActive, docToScreen,
+  placePersonAt, gripFaceArea, floorAreaNow, volumeNow, flashFaces, screenToDoc, roomsNow,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
 import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
-import { resize2d, draw2d, horizonVisible, setForceConstructing, type Draft } from './render2d'
+import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, type Draft } from './render2d'
+import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
 import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, type FilePanel } from './filepanel'
@@ -1875,6 +1877,8 @@ const GRIP_ROWS = [
   { key: 'fill', name: '채움', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="20" height="16"/><path d="M9 24 L23 8 M6 19 L17 8 M15 24 L26 13" stroke-width="1.1"/></svg>' },
   // web2-46 — 면 재료(벽돌 쌓기 그림). 채움 해칭의 무늬·색이 이 값에서 나온다.
   { key: 'fmat', name: '재료', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="9" width="22" height="14"/><path d="M5 16 H27 M13 9 V16 M20 16 V23" stroke-width="1.1"/></svg>' },
+  // web2-47 — 잡은 면의 면적(근거 = 잡힌 그 면이 이미 밝다). 축척 미정이면 이유가 뜬다.
+  { key: 'farea', name: '면적', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="20" height="16"/><path d="M10 20 h6 M10 20 v-4" stroke-width="1.1"/></svg>' },
 ] as const
 const gripRow = new Map<string, HTMLButtonElement>()
 for (const r of GRIP_ROWS) {
@@ -1903,8 +1907,8 @@ function gripRowGate(key: string): string | null {
   const g = app.grip
   if (!g || g.ids.length === 0) return '선을 꾹 눌러 잡은 뒤에 쓴다'
   if (key === 'join' && g.ids.length !== 2) return '맺기는 **두 선**을 잡아야 한다'
-  if ((key === 'front' || key === 'cls' || key === 'fill' || key === 'fmat') && g.faceId === null) {
-    return `${key === 'front' ? '정면' : key === 'cls' ? '분류' : key === 'fill' ? '채움' : '재료'}은 **면**을 잡아야 한다(면 안을 꾹 누른다)`
+  if ((key === 'front' || key === 'cls' || key === 'fill' || key === 'fmat' || key === 'farea') && g.faceId === null) {
+    return `${key === 'front' ? '정면' : key === 'cls' ? '분류' : key === 'fill' ? '채움' : key === 'fmat' ? '재료' : '면적'}은 **면**을 잡아야 한다(면 안을 꾹 누른다)`
   }
   return null
 }
@@ -1950,6 +1954,11 @@ function doGripAction(key: string) {
   } else if (key === 'fill') {
     const on = toggleFaceFill(app, app.grip!.faceId!)
     if (on !== null) status(on ? '채움 — 해칭이 얹혔다(면의 성질이다 — 경계를 따라간다)' : '채움을 걷었다')
+  } else if (key === 'farea') {
+    // 47-3 — 근거는 잡힌 면 그 자체(잡기 표시가 밝힘이다). 축척 미정이면 숫자를 안 낸다(#61).
+    const r = gripFaceArea(app)
+    if (r === null) { notify('축척이 아직 없다 — 치수를 하나 매기면 면적이 선다'); return }
+    status(`이 면 ${r.m2.toFixed(2)} m² — 잡힌 면(밝음)이 그 근거다`)
   } else if (key === 'fmat') {
     // 면 재료(web2-46) — 없음→벽돌→…→금속→없음. 채움이 꺼져 있으면 무늬가 안 보이므로
     // 그 사실을 함께 말한다(값은 저장된다 — 조용히 사라지지 않는다).
@@ -2044,6 +2053,129 @@ registerBox({
   id: '#painttray', isOpen: () => painttrayOpen, close: () => setPainttrayOpen(false),
   zone: () => [painttrayEl, toolBtn['paint']],
 })
+
+// ── 숫자와 표시(web2-47) ────────────────────────────────────────────────────
+
+// 47-3 바닥면적·부피 — 숫자는 근거와 같이 간다(#61): 값이 뜨는 순간 그 면들이 밝아진다.
+document.getElementById('btn-floor-area')!.addEventListener('click', () => {
+  const fa = floorAreaNow(app)
+  if (!fa) {
+    notify(app.lift.mmPerUnit === null
+      ? '축척이 아직 없다 — 치수를 하나 매기면 면적이 선다'
+      : '슬라브로 분류된 면이 없다 — 면을 지정하고(분류는 손통) 다시')
+    return
+  }
+  const vo = volumeNow(app)
+  const vTxt = vo.report
+    ? ` · 부피 ${vo.report.m3.toFixed(1)} m³ (벽 높이 ${vo.report.hM.toFixed(2)} m)`
+    : vo.why === 'uneven' ? ' · 부피는 안 낸다(벽 높이가 균일하지 않다 — 틀린 숫자보다 없는 숫자)'
+    : vo.why === 'no-wall' ? ' · 부피는 안 낸다(벽이 없다)'
+    : ''
+  status(`바닥면적 ${fa.m2.toFixed(2)} m² — 슬라브 ${fa.ids.length}면의 합(밝은 면들)${vTxt}`)
+  flashFaces(app, fa.ids, performance.now())
+  invalidate()
+  setTimeout(invalidate, 1700)   // 하이라이트가 스스로 꺼지는 프레임
+})
+
+// 47-4 실 다이어그램 토글 — 표시(파생)다. 실이 0이면 그 사실을 말한다(조용히 빈 화면 ⛔).
+{
+  const box = document.getElementById('chk-rooms') as HTMLInputElement
+  box.addEventListener('change', () => {
+    app.showRooms = box.checked
+    if (box.checked) {
+      const g = roomsNow(app)
+      status(g.rooms.length > 0
+        ? `실 ${g.rooms.length} · 연결 ${g.links.length} — 버블이 실, 선이 개구부다`
+        : '닫힌 실이 없다 — 벽(분류)으로 둘러싸인 영역이 서면 버블이 뜬다')
+    }
+    invalidate()
+  })
+}
+
+// 47-2 사람 놓기 — 자동으로 안 세운다: 누르고, 다음 지면 탭 하나가 그 자리다.
+document.getElementById('btn-person')!.addEventListener('click', () => {
+  refreshStencil()   // 기기 저장은 밖(다른 탭·e2e 주입)에서도 바뀐다 — 캐시를 새로 읽는다
+  if (!loadStencil()) {
+    notify('사람 스텐실이 아직 없다 — 설정 「사람 스텐실 그리기」에서 그린다(기기에 저장된다)')
+    return
+  }
+  app.placePerson = true
+  status('지면을 짚으면 그 자리에 선다(지평선 아래) — 한 번 놓으면 풀린다')
+})
+// 놓기 탭 — 창 포획 단계에서 가로챈다(그리기 기계보다 먼저 · 무장 상태에서만 한 번).
+window.addEventListener('pointerdown', (ev) => {
+  if (!app.placePerson) return
+  const cv = document.getElementById('ink') as HTMLCanvasElement | null
+  const r = (cv ?? document.body).getBoundingClientRect()
+  const sp = { x: ev.clientX - r.left, y: ev.clientY - r.top }
+  // 화면 밖·UI 위 탭은 그냥 두는가? — UI(버튼) 탭이면 놓기가 아니라 그 버튼이다:
+  // 대상이 캔버스 계열이 아닐 때는 통과시킨다(무장은 유지 — 설정을 만지고 와도 된다).
+  const t = ev.target as HTMLElement
+  if (t.closest('button, input, label, #sidebar, #dimpanel, #display-pop')) return
+  const q = placePersonAt(app, screenToDoc(app, sp))
+  if (q) {
+    ev.preventDefault(); ev.stopPropagation()
+    status('섰다 — 눈이 지평선에 얹혀 있다(그 높이가 이 그림의 자다)')
+  } else {
+    notify('지면과 안 만난다 — 지평선 아래를 짚는다')
+    app.placePerson = false
+  }
+  invalidate()
+}, { capture: true })
+
+// 47-2 스텐실 그리기(설정 안 — 찾는 사람만 찾는다)
+{
+  const modal = document.getElementById('stencil-modal')!
+  const cv = document.getElementById('stencil-canvas') as HTMLCanvasElement
+  const g = cv.getContext('2d')!
+  const EYE_Y = 72, FOOT_Y = 348      // 캔버스 180×360 — 눈높이 행·발끝 행(그리기 규약)
+  let lines: { x: number; y: number }[][] = []
+  const paint = () => {
+    g.clearRect(0, 0, cv.width, cv.height)
+    g.strokeStyle = '#b8b2a6'; g.setLineDash([4, 3]); g.lineWidth = 1
+    g.beginPath(); g.moveTo(0, EYE_Y); g.lineTo(cv.width, EYE_Y); g.stroke()   // 눈높이
+    g.beginPath(); g.moveTo(0, FOOT_Y); g.lineTo(cv.width, FOOT_Y); g.stroke() // 바닥
+    g.setLineDash([])
+    g.fillStyle = '#b8b2a6'; g.font = '10px system-ui'
+    g.fillText('눈높이', 4, EYE_Y - 3); g.fillText('바닥', 4, FOOT_Y - 3)
+    g.strokeStyle = '#3c3833'; g.lineWidth = 1.6; g.lineJoin = 'round'; g.lineCap = 'round'
+    for (const ln of lines) {
+      if (ln.length < 2) continue
+      g.beginPath()
+      ln.forEach((pt0, i) => { if (i === 0) g.moveTo(pt0.x, pt0.y); else g.lineTo(pt0.x, pt0.y) })
+      g.stroke()
+    }
+  }
+  let cur: { x: number; y: number }[] | null = null
+  cv.addEventListener('pointerdown', (e) => {
+    const r = cv.getBoundingClientRect()
+    cur = [{ x: e.clientX - r.left, y: e.clientY - r.top }]
+    lines.push(cur)
+    cv.setPointerCapture(e.pointerId)
+  })
+  cv.addEventListener('pointermove', (e) => {
+    if (!cur) return
+    const r = cv.getBoundingClientRect()
+    cur.push({ x: e.clientX - r.left, y: e.clientY - r.top })
+    paint()
+  })
+  cv.addEventListener('pointerup', () => { cur = null; paint() })
+  document.getElementById('btn-stencil')!.addEventListener('click', () => {
+    const st = loadStencil()
+    lines = st ? st.lines.map(l => [...l]) : []
+    modal.hidden = false
+    paint()
+  })
+  document.getElementById('stencil-save')!.addEventListener('click', () => {
+    saveStencil({ lines, eyeY: EYE_Y, footY: FOOT_Y })
+    refreshStencil()
+    modal.hidden = true
+    notify('스텐실이 이 기기에 저장됐다 — 표시 팝업 「사람 놓기」로 세운다')
+    invalidate()
+  })
+  document.getElementById('stencil-clear')!.addEventListener('click', () => { lines = []; paint() })
+  document.getElementById('stencil-close')!.addEventListener('click', () => { modal.hidden = true })
+}
 
 let lastSheetForYellow = app.activeSheet
 const paperbar = initPaperbar(app, document.getElementById('paperbar')!, {
@@ -2693,6 +2825,17 @@ const diag = {
       id: f.id, cls: f.cls ?? null, now: faceClassNow(app, f.id), fill: f.fill === 1,
       resolved: app.faces.some(x => x.id === f.id),
     })),
+  }),
+  /** **숫자와 표시**(web2-47) — 팔이 화면과 같은 상태를 읽는다(#88). */
+  nums47: () => ({
+    persons: (app.doc.persons ?? []).map(q => ({ id: q.id, g: { ...q.g } })),
+    placePerson: app.placePerson,
+    floor: floorAreaNow(app),
+    volume: volumeNow(app),
+    gripArea: gripFaceArea(app),
+    hl: app.hlFaces,
+    rooms: (() => { const g = roomsNow(app); return { n: g.rooms.length, links: g.links.length, areas: g.rooms.map(r => +r.areaU2.toFixed(6)) } })(),
+    showRooms: app.showRooms,
   }),
   /** **재료**(web2-46) — 칠 선택·면 재료·순서 반증 손잡이. */
   mats46: () => ({

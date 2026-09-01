@@ -1,0 +1,239 @@
+{
+  "what": "web2-47 — ①스케일바(깊이 스윕·평행 균일·끝점 검산) ②사람(눈-지평선·거부) ③면적·부피(검산·놓침·반증) ④실(합성+앱 경로 — ⚑ 판정 자료). 픽셀 몫은 nums47_e2e_web2_*.json",
+  "note_f": "⚠ 이 회차의 절대 수치(mm·m²·m³·eye_height_mm) 전부가 mmPerUnit과 f 위에 있다(2차 [H1] — AS-C4: f 오차는 연쇄를 안 타는 전역 배율 편향). fixtures 블록이 그 출처를 든다. 1점 문서(f 임의)의 f 감도 스윕은 DEFERRED",
+  "when_cmd": "npx vitest run test/nums47_measure.test.ts",
+  "note_61": "#61이 이 회차의 중심 — 축척 미정 null·부피 전제 미성립 null이 각 팔의 반증 짝이다",
+  "fixtures": {
+    "W": 1200,
+    "H": 800,
+    "f": 387.298335,
+    "fSource": "two-vp",
+    "mmPerUnit": 765.465545
+  },
+  "scalebar_noscale": {
+    "def": "치수 없는 같은 장면의 scaleBarAt 반환(2차 [M9] — 게이트 ① 반증의 값)",
+    "result": "null"
+  },
+  "scalebar_depth": {
+    "def": "닻 y 스윕(아래=가깝다) — 고른 값(mm)·화면 폭(px)·끝점 검산(화면 끝을 지면으로 되쏘아 잰 길이의 상대 오차). 목표 폭 100px",
+    "rows": [
+      {
+        "anchor_y": 760,
+        "mm": 200,
+        "px": 58.79,
+        "err_rel": 1.99e-15
+      },
+      {
+        "anchor_y": 700,
+        "mm": 200,
+        "px": 48.99,
+        "err_rel": 5.68e-16
+      },
+      {
+        "anchor_y": 640,
+        "mm": 500,
+        "px": 97.98,
+        "err_rel": 7.96e-16
+      },
+      {
+        "anchor_y": 580,
+        "mm": 500,
+        "px": 73.48,
+        "err_rel": 1.14e-16
+      }
+    ],
+    "note_5": "검산(err_rel)은 같은 카메라의 사영↔역사영 왕복이라 구성에 가깝다 — 재는 것은 «막대가 그 왕복 위에 배선돼 있는가»다(paint_roundtrip의 그 규약). 측정의 몫은 mm·px가 깊이에서 어떻게 움직이는가"
+  },
+  "scalebar_parallel": {
+    "def": "평행(바닥 정면 — faceFrontPose∘parallelPose) 세 닻 — 값·폭 균일. buggy_spread = 수리 전 원점(pose.p) 재현판의 접지 퍼짐(0 = 모든 닻이 같은 점 — 붕괴) ↔ fixed_spread(수리 후)",
+    "rows": [
+      {
+        "anchor": [
+          300,
+          500
+        ],
+        "mm": 1000,
+        "px": 50.6
+      },
+      {
+        "anchor": [
+          700,
+          300
+        ],
+        "mm": 1000,
+        "px": 50.6
+      },
+      {
+        "anchor": [
+          500,
+          650
+        ],
+        "mm": 1000,
+        "px": 50.6
+      }
+    ],
+    "buggy_spread_u": 0,
+    "fixed_spread_u": 11.547,
+    "note_d2": "D-2를 값으로 — 수리 전 실패(퍼짐 0)와 수리 후(닻마다 다른 접지)가 같은 실행에 나란히 있다. 파급 점검: view42_web2.json 재실행이 바이트 동일(17/17 — 그 픽스처의 값은 이 경로에 안 실렸다 · #42⑨)"
+  },
+  "scalebar_ceil_probe": {
+    "def": "내림(1·2·5 floor) 대신 한 단 올림이면 폭이 목표를 넘는다 — rows[0](anchor_y 760) 행의 실측 px × (윗단/고른 값 — 2차 [L19]). registered ≤100px가 실제로 실패 가능함의 산술 짝(같은 실행 값에서 유도)",
+    "px_if_ceil": 146.97,
+    "target": 100
+  },
+  "gate_scalebar_band": {
+    "registered": "고른 값이 1·2·5×10ⁿ · 화면 폭 ≤ 목표(constants_used.SCALEBAR_TARGET_PX — 상수 결합은 그 필드가 스냅샷 대용) · 깊이가 깊어질수록 mm 비감소(원근) · 평행은 값·폭 균일. ⚠ 목표폭·1·2·5는 사전 상수·설계값이고, 평행 균일 팔은 1차 리뷰 «후» 신설이다(사후 명기 #26 · 2차 [H2])",
+    "value": "scalebar_depth.rows · scalebar_parallel.rows",
+    "reachability": "셋이 같은 실행에 있다 — ① 무축척 null(뜨기 실패 가능) ② 올림 위약(폭 상한 실패 가능 — scalebar_ceil_probe) ③ 수리 전 원점 위약(평행 균일 실패 가능 — buggy_spread 0)",
+    "reachability_value": "scalebar_noscale.result = null · scalebar_ceil_probe.px_if_ceil > target · scalebar_parallel.buggy_spread_u = 0",
+    "reachability_source": "nums47_web2.json/scalebar_noscale · /scalebar_ceil_probe · /scalebar_parallel/buggy_spread_u"
+  },
+  "person_eye": {
+    "def": "접지 탭 y 스윕(+지평선 2px 아래 꼬리) — 눈점 사영과 지평선의 차(px)·눈까지의 지면 거리(단위). 지평선 위 탭은 거부(rejected). eye_height_mm = 이 문서 축척에서의 관찰자·사람 눈높이(절대)",
+    "rows": [
+      {
+        "tap_y": 760,
+        "eye_dy": 0,
+        "dist_u": 1.94
+      },
+      {
+        "tap_y": 680,
+        "eye_dy": 0,
+        "dist_u": 2.49
+      },
+      {
+        "tap_y": 600,
+        "eye_dy": 0,
+        "dist_u": 3.49
+      },
+      {
+        "tap_y": 540,
+        "eye_dy": 0,
+        "dist_u": 4.98
+      },
+      {
+        "tap_y": 402,
+        "eye_dy": 0,
+        "dist_u": 348.71
+      }
+    ],
+    "rejected_above_horizon": true,
+    "eye_height_mm": 1224.7,
+    "note_height": "사람 키(mm)는 축척의 함수다 — 이 픽스처(깊이선 2 m)의 눈높이는 eye_height_mm. 사람 대역(1.4~1.8 m) 밖이면 그 투시가 사람 눈높이가 아닌 데서 그려졌다는 뜻이고, 세운 사람이 그것을 «드러낸다»(#61의 방향 — 조용히 틀리게 두지 않는다). 실기기 확인 항목의 자료",
+    "note_5": "eye_dy ≈ 0은 구성이다(카메라 높이 평면의 사영 = 지평선 — 원근의 성질). 재는 것은 «배선이 그 구성 위에 있는가»(placePersonAt→eyeAbove→project의 사슬)와 거부 갈래다"
+  },
+  "gate_person_grounded": {
+    "registered": "지평선 위 탭 거부(좌표를 임의로 짓지 않는다) · 접지·눈-지평선은 구성(#5 — 임계를 안 건다, 1차 [L17]) · 문턱 사전(설계값 — #26)",
+    "value": "person_eye.rejected_above_horizon · rows(배선 확인)",
+    "reachability": "거부 행이 실제로 있다 — 지평선 위(y=100) 탭이 null. 접지가 죽으면(광선이 지면을 못 맞으면) rows가 비어 이 팔이 실패한다",
+    "reachability_value": true,
+    "reachability_source": "nums47_web2.json/person_eye/rejected_above_horizon"
+  },
+  "area": {
+    "def": "방 픽스처(깊이선 2 m 치수) — 바닥 슬라브의 삼각합·신발끈 검산·m²·근거 id. 놓침 = 그 슬라브가 후보에서 빠진 판(숫자를 안 낸다 — null). 부피 = 바닥×균일 벽고 · 반증 = 3배 벽 합성 시 uneven으로 거부",
+    "floor_m2": 5.164,
+    "evidence_ids": [
+      9
+    ],
+    "tri_vs_shoelace_rel": 0,
+    "volume_m3": 7.5895,
+    "wall_h_m": 1.4697,
+    "missing_slab_result": "null(숫자 없음)",
+    "uneven_refusal": "uneven",
+    "note_45": "신뢰 구간의 근거는 45 기준선이다 — faces45_web2.json의 장면별 놓침(scene_*): 면 찾기가 놓친 슬라브는 이 합에 못 들고, 그때 이 값은 그 몫만큼 모자란다(놓침이 0인 픽스처라 여기 수치는 만점 — 실사용의 신뢰는 그 기준선이 말한다)"
+  },
+  "area_expected": {
+    "def": "바닥 네 변 실측(mm — lenMm) · 꼭짓점 코사인 최대(직각도) · 직사각 기대값(두 변 곱) 대 floor_m2의 상대차. 자가 다른 기제다(변 길이 자 ↔ 삼각분할 합)",
+    "edges_mm": [
+      2000,
+      2582,
+      2000,
+      2582
+    ],
+    "max_corner_cos": 2.72e-15,
+    "expected_m2_if_rect": 5.164,
+    "got_m2": 5.164,
+    "rel_diff": -8.6e-16
+  },
+  "area_sweep": {
+    "def": "순수 자 스윕(#12 — 크기·기울기·면 수): 1×1(기대 1) · 3×3(기대 9) · 30° 기운 1×1(기대 1 — 기울기가 넓이를 안 바꾼다) · 두 판 합(기대 10)",
+    "unit_1x1": 1,
+    "big_3x3": 9,
+    "tilted_30deg": 1,
+    "sum_two": 10
+  },
+  "area_confidence": {
+    "def": "45 기준선 인용(faces45_web2.json@070d8895) — 이 기준선은 «면 후보»의 놓침·과잉이지 바닥 슬라브 면적의 오차 분포가 아니다(2차 [H3] — 기준선에 «바닥 슬라브가 후보에서 빠진» 장면은 0이다: 참 분자/분모 장면은 DEFERRED). 여기 적는 것은 «오차가 실리는 경로»다",
+    "baseline": {
+      "scene_room": "바닥·벽 2/2(후보에 있음)",
+      "scene_busy": "격자 9/9 · 과잉 후보 extra 5/14",
+      "scene_window": "벽 리프팅 0/4(noPoint·hasHeight — 그 원장 note_43: 이 놓침은 리프팅 몫이지 면 찾기 몫이 아니다. 벽이 대기면 그 벽의 실·부피가 못 선다 — 바닥면적 직접 몫은 아니다)"
+    },
+    "direction": "놓침 → 못 든 면의 몫만큼 모자람(합에 못 듦) · 과잉 → 사람이 지정+슬라브 분류일 때만 과대(이중 관문). «구간»이라 부를 분포는 아직 없다 — 경로와 기준선 값뿐"
+  },
+  "gate_area_evidence": {
+    "registered": "값은 근거 id 목록과 같이 나간다 · 축척 미정/후보 없음이면 null(#61) · 직사각 기대값과 일치(area_expected) · 설계 참값 스윕 일치(area_sweep: 1·9·1·10 — 2차 [M10]). ⚠ expected·sweep 팔은 1차 리뷰 «후» 신설(사후 명기 #26 · 2차 [H2]) · rel_diff 0 대역은 정확 산술의 귀결(구성 — 임계 아님, 2차 [M6])",
+    "value": "area.evidence_ids · area.missing_slab_result · area.uneven_refusal",
+    "reachability": "반증 둘이 같은 실행에 있다 — 놓침 판이 null을, 비균일 벽 합성이 uneven 거부를 실제로 낸다",
+    "reachability_value": "null(숫자 없음) · uneven",
+    "reachability_source": "nums47_web2.json/area/missing_slab_result · /area/uneven_refusal"
+  },
+  "rooms_app_positive": {
+    "def": "앱 경로(획 13 → 리프팅 → 면 5 지정 — 그리는 차례대로, 겹침 사영 탓에 탭은 미지정 틈으로) — 실 1이 실제로 선다. 교차 대조 = 실 넓이(벽 자취 신발끈) ↔ 바닥 슬라브 넓이(삼각합) — ⚠ 두 자는 같은 그래프 꼭짓점을 공유하므로 rel_diff ≈ 0은 구성이다(#5 · 2차 [M6]): 재는 것은 배선(자취 추출·순환·부호)이지 크기가 아니다",
+    "expected": 1,
+    "found": 1,
+    "phantom": 0,
+    "area_u2": 7.8007,
+    "slab_u2": 7.8007,
+    "rel_diff": 2.28e-16,
+    "note_fixture": "먼 모서리를 (520,458)로 비껴 세웠다 — 첫 픽스처는 먼 기둥이 앞 기둥과 화면 공선(x=500)이라 순환이 죽었다(faces45의 공선 실패 모드 실측 재확인 · 그 한계는 그 원장의 note_collinear가 정본). ⚠ 위약(회전 idx−1)은 이 장면에선 안 갈린다 — 전 정점이 2가라 회전 방향이 무의미(그 사실도 값이다). 위약이 실제로 무는 판은 3가 정점이 있는 두-실 판(rooms.two_rooms_bad_rot)"
+  },
+  "rooms": {
+    "def": "⚑ 판정 자료(지시 「재야 할 것」): 찾아야 할 실 / 찾음 / 헛것. 합성 벽 시나리오 셋 + 앱 경로(방 픽스처 — 벽 하나라 닫힌 영역 없음 = 참)",
+    "closed_square": {
+      "expected": 1,
+      "found": 1,
+      "phantom": 0,
+      "area_u2": 12,
+      "area_expected_u2": 12
+    },
+    "two_rooms": {
+      "expected": 2,
+      "found": 2,
+      "phantom": 0,
+      "links_expected": 1,
+      "links": 1
+    },
+    "open_three_walls": {
+      "expected": 0,
+      "found": 0
+    },
+    "app_room_fixture": {
+      "expected": 0,
+      "found": 0
+    },
+    "two_rooms_bad_rot": {
+      "def": "위약(회전 idx−1) — 이 실행의 값(1차 [M9])",
+      "found": 1,
+      "areas": [
+        24
+      ]
+    },
+    "verdict": "⚑ — 실 인식이 섰다: 합성 전수 일치 · 헛것 0 · 앱 경로 **2 시도 중 1 성공**(실패 모드 = 화면 공선 — faces45 note_collinear의 그 한계 · 2차 [M11]). 접속 조건(면적의 신뢰)은 area_expected(직사각 기대와 1e-15 일치)와 «오차 경로» 기록(area_confidence — 분포는 아직 없다)이 근거다 — 연결·다이어그램을 얹었다(멈춤 조건 비발동). 앱 경로 표본이 1이고 연결·개구부의 앱 판이 없는 것은 한계로 남긴다(DEFERRED)",
+    "note_first_fail": "D-2 — 첫 판(회전 규칙 idx−1)은 두-실 판을 한 덩어리(24)로 감았고 그 실측이 규칙을 idx+1로 고쳤다(수리 전 실패·수리 후 통과)"
+  },
+  "gate_rooms": {
+    "registered": "기대 실 수와 일치 · 헛것 0 · 열린 판은 0(헛것을 안 만든다) · 앱 경로 양성 1(⚠ 이 팔·«교차 2%»는 1차 리뷰 «후» 신설 — 사후 명기 #26 · 2차 [H2]. 교차 rel_diff 자체는 꼭짓점 공유의 구성 — 임계가 아니라 배선 확인이다, 2차 [M6])",
+    "value": "rooms.* · rooms_app_positive",
+    "reachability": "이 실행의 위약이 있다(1차 [M9]) — 회전 규칙을 첫 판(idx−1)으로 되돌리면 **합성 두-실 판**이 실제로 죽는다(rooms.two_rooms_bad_rot — 3가 정점이 있어야 무는 위약이다). ⚠ 앱 경로 양성 팔 자체의 반증은 미실시(그 장면은 전 정점 2가라 이 위약이 안 문다 — note_fixture · 2차 [H4]): 그 팔이 확인하는 것은 «앱 경로가 도달한다»이고 실패 가능성은 공선 픽스처의 죽음(note_fixture 첫 판)이 이웃 증거다",
+    "reachability_value": "rooms.two_rooms_bad_rot.found ≠ 2",
+    "reachability_source": "nums47_web2.json/rooms/two_rooms_bad_rot"
+  },
+  "constants_used": {
+    "SCALEBAR_X_PX": 24,
+    "SCALEBAR_Y_PX": 34,
+    "SCALEBAR_TARGET_PX": 100,
+    "EYE_HEIGHT": 1.6,
+    "FACE_CLASS_DEG": 10
+  }
+}

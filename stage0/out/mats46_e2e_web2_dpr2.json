@@ -208,15 +208,15 @@
     "def": "전량 재그리기 ms(5회 min/median/max) — plain: 재료 없는 197획 / with_mats: 같은 장면 + 마커 칠 3(콘크리트) ≥200획. 같은 페이지 연속 실측이라 환경이 같다. 헤드리스 소프트웨어 GL의 수(실기기 판정은 사람 — **관측이지 판정이 아니다**: 통과선을 안 건다)",
     "plain": {
       "strokes": 197,
-      "min": 55.7,
-      "median": 59.9,
-      "max": 76.5
+      "min": 78.4,
+      "median": 99.6,
+      "max": 107.6
     },
     "with_mats": {
       "strokes": 200,
-      "min": 51.9,
-      "median": 64.1,
-      "max": 99.1
+      "min": 50,
+      "median": 56.9,
+      "max": 81.7
     }
   },
   "dpr_project": "dpr2"

@@ -5,8 +5,18 @@
 // 선 굵기·표식 크기는 화면 고정(배율로 나눈다).
 
 import type { App, ViewOffset } from './state'
-import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive, dimLabelPos, viewXf, inkMix, manipLabel } from './state'
-import { vpMarks, project, projectSeg, groundAxes, horizonScreenY } from '../core/camera'
+import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive, dimLabelPos, viewXf, inkMix, manipLabel, screenToDoc, docToScreen, roomsNow } from './state'
+import { scaleBarAt } from '../core/scalebar'
+import { loadStencil, type Stencil } from '../core/stencil'
+
+// 스텐실 캐시(웹2-47) — localStorage를 프레임마다 안 읽는다. 저장·지움이 refreshStencil을 부른다.
+let _stencil: Stencil | null | undefined
+export const refreshStencil = (): void => { _stencil = undefined }
+const stencilCache = (): Stencil | null => {
+  if (_stencil === undefined) _stencil = loadStencil()
+  return _stencil
+}
+import { vpMarks, project, projectSeg, groundAxes, horizonScreenY, eyeAbove } from '../core/camera'
 import { cubeGeom, cubeArrows, viewName } from '../core/viewcube'
 import { C } from '../core/constants'
 import { MAT, gradeOf, rng32, widthOf, widthOfMat } from '../core/material'
@@ -642,6 +652,87 @@ export function draw2d(
   // 지우개 커서 — 반경은 화면 px.
   // `tipErase`도 센다(web2-15 2-b) — 펜의 지우개 끝은 도구를 안 바꾸므로 도구만 보면
   // 커서가 안 뜬다. ⚠ 끝은 **닿아야** 뜬다(호버에 신호가 없다 — 실기기 관측).
+  // ── 실 다이어그램(web2-47 47-4) — 버블(실 중심·면적) + 연결(개구부) ─────────────
+  // 건축가의 버블 다이어그램을 스케치에서 역으로 뽑은 것(지시). 표시 토글이고 파생이다.
+  if (app.showRooms) {
+    const g = roomsNow(app)
+    const centers: (Pt | null)[] = g.rooms.map(r => {
+      const c = r.poly.reduce((a, p) => ({ x: a.x + p.x / r.poly.length, z: a.z + p.z / r.poly.length }), { x: 0, z: 0 })
+      return project(an, app.pose, { x: c.x, y: 0, z: c.z })
+    })
+    ctx.strokeStyle = COL.snap
+    ctx.lineWidth = 1.2 * is
+    for (const l of g.links) {
+      const a = centers[l.a], b = centers[l.b]
+      if (!a || !b) continue
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke()
+    }
+    const mmPer = app.lift.mmPerUnit
+    for (let i = 0; i < g.rooms.length; i++) {
+      const c = centers[i]
+      if (!c) continue
+      const r = g.rooms[i]!
+      // 버블 반경 — 면적의 제곱근에 비례(버블 다이어그램의 어법 · 화면 px로 죄어 둔다)
+      const rad = Math.min(60, 14 + Math.sqrt(r.areaU2) * 4) * is
+      ctx.fillStyle = 'rgba(122, 162, 247, 0.15)'
+      ctx.beginPath(); ctx.arc(c.x, c.y, rad, 0, Math.PI * 2); ctx.fill()
+      ctx.stroke()
+      const m2 = mmPer !== null && mmPer > 0 ? r.areaU2 * (mmPer / 1000) ** 2 : null
+      ctx.fillStyle = COL.axisGuide
+      ctx.font = `${C.DIM_TEXT_PX * is}px system-ui, sans-serif`
+      ctx.textAlign = 'center'
+      // 축척 미정이면 숫자를 안 낸다(#61) — 실의 «존재»만 말한다
+      ctx.fillText(m2 !== null ? `${m2.toFixed(1)} m²` : '실', c.x, c.y + 4 * is)
+      ctx.textAlign = 'left'
+    }
+  }
+
+  // ── 놓은 사람(web2-47 47-2) — 기기 스텐실 × 접지·눈높이의 정확한 사영 ─────────
+  // 세로: 발끝 행 ↔ project(g) · 눈높이 행 ↔ project(eyeAbove(g)) — 눈이
+  // 지평선에 얹히는 것이 구성이 된다(스텐실 머리주석). 가로: 화면 평행(빌보드 — 지시).
+  {
+    const st = stencilCache()
+    const persons = app.doc.persons ?? []
+    if (st && persons.length > 0) {
+      for (const q of persons) {
+        const a2 = project(an, app.pose, q.g)
+        const e2 = project(an, app.pose, eyeAbove(q.g))
+        if (!a2 || !e2) continue
+        const k = (a2.y - e2.y) / (st.footY - st.eyeY)     // 캔버스 px → 문서 px
+        if (!(k > 0)) continue                              // 뒤집힘·퇴화 — 안 그린다
+        const cx = 90                                       // 스텐실 캔버스 가로 중심(180px 판)
+        ctx.strokeStyle = '#3c3833'
+        ctx.lineWidth = Math.max(0.6 * is, 1.3 * k)
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round'
+        for (const line of st.lines) {
+          if (line.length < 2) continue
+          ctx.beginPath()
+          line.forEach((pt0, i) => {
+            const x = a2.x + (pt0.x - cx) * k
+            const y = a2.y - (st.footY - pt0.y) * k
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
+          })
+          ctx.stroke()
+        }
+      }
+    }
+  }
+
+  // ── 근거 하이라이트(web2-47 47-3) — 숫자를 누르면 그 면들이 밝아진다(#61) ──────
+  if (app.hlFaces && performance.now() < app.hlFaces.until) {
+    ctx.fillStyle = 'rgba(233, 191, 82, 0.28)'
+    for (const fid of app.hlFaces.ids) {
+      const rf = app.faces.find(f => f.id === fid)
+      if (!rf) continue
+      const poly = rf.outer.map(p3 => project(an, app.pose, p3)).filter((p): p is Pt => !!p)
+      if (poly.length < 3) continue
+      ctx.beginPath()
+      poly.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y) })
+      ctx.closePath()
+      ctx.fill()
+    }
+  }
+
   if (eraser && (isEraser(app.tool) || app.tipErase)) {
     ctx.strokeStyle = COL.construction
     ctx.lineWidth = 1 * is
@@ -691,6 +782,34 @@ export function draw2d(
     ctx.fillText(viewName(an, app.pose), app.cubeLayout.cx, app.cubeLayout.cy + app.cubeLayout.size * 0.98)
     ctx.textAlign = 'left'
     ctx.textBaseline = 'alphabetic'
+  }
+
+  // ── 스케일바(web2-47 47-1) — 공간에 놓인 자 ────────────────────────────────
+  // 닻은 화면 좌하(빌드 식별자는 우하 · 뷰 큐브는 상단 — 빈 모서리다). 계산은
+  // core/scalebar 하나(#54)이고 여기는 그리기뿐이다. 축척 미정·지면 이탈이면 안 뜬다.
+  {
+    const bar = scaleBarAt(an, app.pose, app.lift.mmPerUnit,
+      screenToDoc(app, { x: C.SCALEBAR_X_PX, y: ch - C.SCALEBAR_Y_PX }),
+      C.SCALEBAR_TARGET_PX, app.doc.unit)
+    if (bar) {
+      const a = docToScreen(app, bar.a), b = docToScreen(app, bar.b)
+      ctx.strokeStyle = COL.axisGuide
+      ctx.fillStyle = COL.axisGuide
+      ctx.lineWidth = 1.4
+      ctx.beginPath()
+      ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y)
+      // 끝 눈금 둘 — 막대에 수직으로 짧게(제도 스케일바의 어법)
+      const dx = b.x - a.x, dy = b.y - a.y
+      const L = Math.hypot(dx, dy) || 1
+      const nx = -dy / L * 4, ny = dx / L * 4
+      ctx.moveTo(a.x - nx, a.y - ny); ctx.lineTo(a.x + nx, a.y + ny)
+      ctx.moveTo(b.x - nx, b.y - ny); ctx.lineTo(b.x + nx, b.y + ny)
+      ctx.stroke()
+      ctx.font = `${C.DIM_TEXT_PX}px system-ui, sans-serif`
+      ctx.textBaseline = 'bottom'
+      ctx.fillText(bar.label, Math.min(a.x, b.x), Math.min(a.y, b.y) - 4)
+      ctx.textBaseline = 'alphabetic'
+    }
   }
 }
 

@@ -81,8 +81,9 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
   //   (#75 ㉣). ⚠ 그리고 이 팔이 **실제로 그 추가를 잡았다** — 전량 e2e에서 빨갰다.
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#display-pop input')].map(e => e.id)))
-    // web2-45가 해칭 판 토글(chk-hatchface — ⚑의 그 물음)을 더했다(#75 ㉣ — 표를 고친다)
-    .toEqual(['chk-horizon', 'chk-grid', 'chk-waitfade', 'chk-hidden', 'chk-hatchface', 'rng-hold', 'rng-whold'])
+    // web2-45가 해칭 판 토글(chk-hatchface)을, web2-47이 실 다이어그램(chk-rooms — 표시
+    // 토글이라 이 자리가 맞다)을 더했다(#75 ㉣ — 표를 고친다. 이 팔이 실제로 그 추가를 잡았다)
+    .toEqual(['chk-horizon', 'chk-grid', 'chk-waitfade', 'chk-hidden', 'chk-hatchface', 'chk-rooms', 'rng-hold', 'rng-whold'])
   // 시스템(세로바 아래 묶음) — 파일 서랍 + **설정**(web2-30 10번 · 톱니바퀴).
   // web2-19 3-a가 「설정 자루」를 해체하면서 둘 곳이 없어졌던 자리를 되세운 것이다.
   // ⚠⚠ **web2-34 6번이 표를 갈랐다** — 시스템 묶음(파일·설정 서랍)이 **위 띠로 올라왔다.**
@@ -105,7 +106,8 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
   //   여기인 이유는 그것이 **문서를 안 건드리는 기기 취향**이기 때문이다(localStorage).
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#pane-settings input, #pane-settings button')].map(e => e.id)))
-    .toEqual(['chk-press', 'btn-press-cancel', 'chk-grain', 'btn-diag'])
+    // web2-47이 btn-stencil(사람 스텐실 그리기 — 지시 문면 「설정 안에 숨긴다」)을 더했다(#75 ㉣)
+    .toEqual(['chk-press', 'btn-press-cancel', 'chk-grain', 'btn-diag', 'btn-stencil'])
   // 손(오른쪽 세로) — 되돌리기 둘(맨 위·구분선으로 가름) → 자 → 연필(접힘) → 펜 →
   // 지우개 둘 → **치수 → 롤 둘 → 면** → 서랍. #oldtools(hidden)·#tray(접힘)는 A-4/3-b' 구조물.
   // ⚠ **web2-28 4번이 한 띠 «안»의 순서를 바꿨다**: 면(면 찾기)이 롤·치수보다 **아래**로

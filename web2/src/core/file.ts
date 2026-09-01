@@ -1,7 +1,7 @@
 // .brnl 저장·복원 — 문서(획·프레임)와 시점만 담는다.
 // 카메라·소실점·리프팅은 파생이므로 저장하지 않는다(원칙 b) — 복원 후 다시 계산된다.
 
-import type { Doc, Stroke, Face, Sheet, Layer, Paper, ViewOffset, Grade, RawInput, Underlay, UnderlaySegment, CamPose } from './types'
+import type { Doc, Stroke, Face, Sheet, Layer, Paper, ViewOffset, Grade, RawInput, Underlay, UnderlaySegment, CamPose, Person } from './types'
 import { drawSheet, DRAW_SHEET_ID } from './types'
 import { horizonDocY } from './camera'
 import { GRADES } from './material'
@@ -90,6 +90,7 @@ const KEY_ORDER: string[] = [
   'layers', 'sheet', 'paper', 'rect', 'on', 'locked', 'p0', 'p1', 'gamma',
   'underlays', 'segs', 'hidden',
   'measures', 'drawView',
+  'persons', 'g',
 ]
 
 export function serializeBrnl(d: BrnlData, opt: SerializeOptions = {}): string {
@@ -124,6 +125,8 @@ export function serializeBrnl(d: BrnlData, opt: SerializeOptions = {}): string {
     // ⚠⚠ **잰 값(mm)은 안 담는다** — 파생이다(원칙 b). 축척이 바뀌면 따라 바뀌어야 하는데
     // 숫자를 담으면 그 순간 굳어 «조용히 틀린 치수»가 된다(#61의 형태). 없으면 열쇠 없음.
     ...(d.doc.measures && d.doc.measures.length > 0 ? { measures: d.doc.measures } : {}),
+    // 놓은 사람(web2-47) — 접지점뿐이다(모습은 기기의 스텐실 — 원칙 b). 없으면 열쇠 없음.
+    ...(d.doc.persons && d.doc.persons.length > 0 ? { persons: d.doc.persons } : {}),
     // 작도 시점(web2-17 3-c) — 없으면 열쇠 자체를 안 쓴다(왕복 동일성 — 2-c ② 팔)
     ...(d.drawView ? { drawView: d.drawView } : {}),
   }, KEY_ORDER)
@@ -359,6 +362,15 @@ export function parseBrnl(text: string): BrnlData | null {
     }
   }
 
+  // 놓은 사람(web2-47) — 접지점. 모양이 틀린 항은 **그 항만 버린다**(layer의 규약 —
+  // 사람 하나를 잃어도 문서가 살아야 한다. 접지는 다시 짚으면 된다).
+  const persons: Person[] = []
+  if (Array.isArray(raw.persons)) {
+    for (const q of raw.persons) {
+      if (isNum(q?.id) && isV3(q?.g)) persons.push({ id: q.id, g: { x: q.g.x, y: q.g.y, z: q.g.z } })
+    }
+  }
+
   // id는 획·면·종이·겹·재기가 **한 통**이다(겹이 종이·획이 겹을 가리키므로 — 지시 1부)
   const maxId = Math.max(
     strokes.reduce((m, s) => Math.max(m, s.id), 0),
@@ -366,6 +378,7 @@ export function parseBrnl(text: string): BrnlData | null {
     rawSheets.reduce((m, s) => Math.max(m, s.id), 0),
     layers.reduce((m, l) => Math.max(m, l.id), 0),
     measures.reduce((m, x) => Math.max(m, x.id), 0),
+    persons.reduce((m, x) => Math.max(m, x.id), 0),
   )
   let nextId = isNum(raw.nextId) && raw.nextId > maxId ? raw.nextId : maxId + 1
   // 단위 — 없으면(옛 파일) mm. 모양이 틀리면 거부한다.
@@ -456,6 +469,7 @@ export function parseBrnl(text: string): BrnlData | null {
   const strokeIds = new Set(strokes.map(x => x.id))
   const keptMeasures = measures.filter(m => strokeIds.has(m.a.s) && strokeIds.has(m.b.s))
   if (keptMeasures.length > 0) doc.measures = keptMeasures
+  if (persons.length > 0) doc.persons = persons   // 빈 배열이면 열쇠 없음(왕복 동일성)
   // 필압 보정(web2-26 6번) — **성립하는 값만 받는다**(`validPressCal`이 저장·복원·보정
   // 절차의 술어 하나다 #54). 깨진 값은 조용히 버린다: 그림은 그대로 열리고 옵션만 꺼진다
   // (문서를 거부하지 않는다 — scaleRef·면의 선례 그대로).

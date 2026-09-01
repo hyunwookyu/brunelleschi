@@ -131,6 +131,8 @@ export function fullDocPlus() {
     paint: { f: d.faces[0]!.id, m: 'brick', t: 1, i: 1 }, mat: { grade: 'HB' },
   })
   d.faces[0]!.mat = 'conc'
+  // 놓은 사람(web2-47) — 같은 기계가 Doc.persons·Person.g를 빨강으로 잡았다(실측).
+  d.persons = [{ id: app.nextId++, g: { x: 1.25, y: 0, z: -6.5 } }]
   // 평행 사영이 실린 포즈로 그린 획(web2-42) — `view.proj` · 잉크 니브 굵기
   const par: Stroke = {
     id: app.nextId++, a: pt(960, 300), b: pt(1040, 340),
