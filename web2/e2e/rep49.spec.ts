@@ -206,7 +206,7 @@ test('①② 무늬가 선다(켬/끔 차) — 그리고 무늬도 면의 한쪽
     far_children: farRows.children, far_sd2: farRows.sd2, rep_s: farRows.rep_s,
     far_whole_ink_strokes_visible: wholeFar,
     note_ruler: 'before/after는 벽 «상자»의 잉크이고 far_whole_ink는 «화면 전체»의 잉크다 — 같은 자(알파>8 물리 px 수), 다른 창(2차 [4]의 24배는 창 크기 차다). lookat_center_px는 문서 CSS px(project의 좌표 — dpr 무관)이고 frame(1200×800)이 그 자다',
-    note_zero: 'diag_children[].order 0의 정체(selfcheck 카운터 0 대응): 이 장면은 면이 하나라 sortFaces가 이르게 반환한다(정렬은 둘부터 — render3d의 그 조건). 미작동이 아니라 설계다',
+    note_zero: '⚠ 문면 정정(web2-50): 49 시점의 이 자리는 «면이 하나라 sortFaces가 이르게 반환(정렬은 둘부터) — 미작동이 아니라 설계다»였는데, **50이 그 이르기 반환을 결함으로 수리했다**(면 하나여도 층(면0·무늬+1·칠+2)이 서야 한다 — 곱 합성이 무늬 아래에 깔리는 실측이 잡았다). 그러므로 order는 이제 0이 아니라 음수 대역의 배정값이다 — 49가 selfcheck 0 플래그를 «설계»로 닫은 판단은 뒤집혔다(그 기록은 NOTES 50 대응 절)',
   }
   // 되돌림 — 저장한 원 포즈를 복원하면 픽셀이 돌아온다(관측을 렌더 결정에만 안 맡긴다)
   await page.evaluate(() => {

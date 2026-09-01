@@ -3036,7 +3036,8 @@ const diag = {
   paintTex: () => paintTexStats(),
   paint50Constants: () => ({ FACETEX_MIN_PX: C.FACETEX_MIN_PX, FACETEX_MAX_PX: C.FACETEX_MAX_PX,
     PAINT_MARKER_ALPHA: C.PAINT_MARKER_ALPHA, PAINT_CP_ALPHA: C.PAINT_CP_ALPHA,
-    PAINT_W_FALLBACK_UNITS: C.PAINT_W_FALLBACK_UNITS }),
+    PAINT_W_FALLBACK_UNITS: C.PAINT_W_FALLBACK_UNITS,
+    PAINT50_LUM_TOL: C.PAINT50_LUM_TOL, PAINT50_FORESHORTEN_TOL: C.PAINT50_FORESHORTEN_TOL }),
   /** 저장물 원문(파일 저장과 같은 함수 — #54) — paint50 팔이 «텍스처가 파일에 없다»를 잰다 */
   serialize: () => serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView }),
   corruptPaintTex: () => { const n = corruptPaintTexForTest(); invalidate(); return n },

@@ -1,5 +1,5 @@
 {
-  "n_flags": 6285,
+  "n_flags": 6277,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -21485,11 +21485,6 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
-      "path": "paint50_web2_dpr1.json:tex_budget.delta_median_ms",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
       "path": "paint50_web2_dpr2.json:foreshorten_clip.left_out_px",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
@@ -22560,22 +22555,7 @@
       "flag": "오차류 지표가 **정확히 0** → 설계 보장인지 확인(보장이면 원장에 그렇게 적고 임계를 걸지 않는다)"
     },
     {
-      "path": "rep49_e2e_web2_dpr1.json:on_off_side.diag_children[0].order",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "rep49_e2e_web2_dpr1.json:on_off_side.diag_children[1].order",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "rep49_e2e_web2_dpr1.json:on_off_side.far_children[0].order",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "rep49_e2e_web2_dpr1.json:on_off_side.far_children[1].order",
+      "path": "rep49_e2e_web2_dpr1.json:frame20.delta_median_ms",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -22591,26 +22571,6 @@
     },
     {
       "path": "rep49_e2e_web2_dpr1.json:ui_path.tooltip_counts.out_of_selector",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "rep49_e2e_web2_dpr2.json:on_off_side.diag_children[0].order",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "rep49_e2e_web2_dpr2.json:on_off_side.diag_children[1].order",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "rep49_e2e_web2_dpr2.json:on_off_side.far_children[0].order",
-      "val": 0,
-      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
-    },
-    {
-      "path": "rep49_e2e_web2_dpr2.json:on_off_side.far_children[1].order",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -31583,12 +31543,12 @@
       "path": "scan_citation_hashes",
       "val": [
         "assumptions.md:199 test_cost.json",
-        "assumptions.md:383 mats46_e2e_web2_dpr1.json",
-        "DECISIONS.md:3632 mats46_web2.json",
+        "DECISIONS.md:3633 mats46_web2.json",
         "DEFERRED.md:946 test_cost.json",
-        "progress.md:11820 test_cost.json"
+        "progress.md:11820 test_cost.json",
+        "progress.md:13857 test_cost.json"
       ],
-      "flag": "**없는 원장을 인용한다**(19건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
+      "flag": "**없는 원장을 인용한다**(18건, #40) — 그 인용은 값 대조를 **한 번도 안 지난다**. 원장 이름이 낡았거나 오타다"
     },
     {
       "path": "stage0/out/inklayer_web2_before.json",
@@ -32029,7 +31989,7 @@
       "unit": "인용",
       "targets": 377,
       "hits": 1,
-      "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 19건"
+      "note": "`tests/`·`docs/archive/`는 뺀다. 안 풀린 인용 18건"
     },
     {
       "scan": "scan_cited_values",
@@ -32677,11 +32637,13 @@
     "mats46_e2e_web2_dpr1.json": [
       8,
       26,
+      80,
       92
     ],
     "mats46_e2e_web2_dpr2.json": [
       8,
       26,
+      80,
       92
     ],
     "mats46_web2.json": [
@@ -32880,10 +32842,20 @@
       94
     ],
     "paint50_web2_dpr1.json": [
-      82
+      5,
+      12,
+      16,
+      82,
+      88,
+      94
     ],
     "paint50_web2_dpr2.json": [
-      82
+      5,
+      12,
+      16,
+      82,
+      88,
+      94
     ],
     "paper_grain26_web2.json": [
       25,

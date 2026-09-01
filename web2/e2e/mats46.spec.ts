@@ -315,6 +315,16 @@ test('④ 색연필 — 같은 길이 획의 잉크 띠가 마커보다 가늘�
   const crossed = await rgbAt(541, 405, 8, 10)      // 교차(마커 위 색연필)
   const dist = Math.hypot(cpOnly.r - crossed.r, cpOnly.g - crossed.g, cpOnly.b - crossed.b)
   expect(dist, '겹친 자리가 색연필 단독과 다른 색 — 아래 마커가 비친다(«완전히 덮이지 않는다»)').toBeGreaterThan(8)
+  // **잃은 거동의 실측**(50 리뷰어 [15] — 조용히 빼지 않는다): 같은 트레이 값의 마커·색연필
+  // 띠 두께가 새 구조에서 **안 갈린다** — 46의 «가늘다»는 p5 촉의 성질이었고 여기서 잃었다.
+  // 단언하지 않고 값으로 남긴다(단언하면 늘 빨갛다 — 51이 되세울 때 이 값이 «전»이다).
+  const markerRows = await inkRowCount(page, 535, 396, 30, 28)
+  const cpRows = await inkRowCount(page, 528, 380, 34, 70)   // 세로획 — 열 대신 행이 아니라 두께의 자로 못 쓴다
+  OUT.cp_thin_lost = {
+    def: '같은 트레이 값(기본)의 마커 가로띠 두께(행 수) — 46은 cp가 ~1/3였다(그 팔의 «전» 값: 46 시점 원장). 50 구조에서 굵기는 트레이 값 하나가 정하므로 갈리지 않는다 — 잃은 거동의 기록(51의 «색연필: 결이 굵고…»가 되세울 자리). cpRows는 세로획이라 두께 자가 아니다 — 비교용이 아니라 존재 확인',
+    marker_rows: markerRows, cp_vertical_present_rows: cpRows,
+    lost: '«가늘다»(같은 트레이에서 도구별 두께 차) — 50에서 실측 소멸(mats46 초판 이관 시 17↔16 관측)',
+  }
   OUT.cp_vs_marker = {
     def: '마커(나무 톤) 가로띠를 색연필(벽돌 그림자 톤 — 다른 색)이 세로로 가로지른다 — 교차 상자 평균 RGB ↔ 색연필 단독 상자 평균 RGB의 거리. 0에 가까우면 «완전히 덮는다»(계약 위반)',
     cp_only: cpOnly, crossed, rgb_dist: +dist.toFixed(1),
@@ -440,8 +450,8 @@ test('⑥ 깊이 순서 «픽셀» — 이색 해칭 겹침의 위 색이 앞 �
     note_45: '45 DEFERRED 「픽셀 순서 판별은 46 몫」의 그 팔이다 — 같은 색 반투명은 over 합성이 교환이라 45는 못 쟀다',
   }
   OUT.gate_depth_pixel = {
-    registered: '문턱 2·4·8 전부에서 다툰 픽셀 >15 (to_front는 기록 — 구성적 귀결이라 임계 없음 · th16은 Δ 상한 관측)',
-    value: 'threshold_sweep',
+    registered: '⚠ 문면 갱신(web2-50 리뷰어 [3]): 46 시점의 «문턱 2·4·8 전부에서 다툰 픽셀 >15»는 48-9(칠한 면의 깊이 쓰기)가 죽였고, **현행 판정은 depth_pixel_48**(r_gt_b > b_gt_r · r_gt_b > 15)이다. threshold_sweep은 기록이다 — th8·th16의 0은 48-9 이후의 화면이고 **50의 회귀가 아니다**(#80 — main(=49 마감) 트리에서 같은 값 71/22/0 실측 · 2026-09-02)',
+    value: 'depth_pixel_48.r_gt_b · b_gt_r (threshold_sweep은 기록)',
     reachability: 'D-3 짝(정렬 끔)이 다툰 픽셀 그 자체를 만든다 — 순서가 픽셀에 안 실리면(45의 동색 상태) 다툰 픽셀이 0이 되어 이 게이트가 실패한다. 45 원장 depth_after.note_pixel이 그 «못 재는 상태»의 기록이다',
     reachability_value: 'threshold_sweep.th4.contested',
     reachability_source: '이 파일의 threshold_sweep — 동색(순서가 픽셀에 안 실리는) 상태의 기록은 paint45_e2e depth_after.note_pixel',

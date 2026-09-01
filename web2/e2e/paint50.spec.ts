@@ -172,30 +172,78 @@ test('①② 곱 — 어느 픽셀도 안 밝아지고 · 아래 무늬가 비�
   await drawLine(page, 560, 640, 620, 360)
   await page.waitForTimeout(300)
   await snapBox(page, 'painted', WALL.x, WALL.y, WALL.w, WALL.h)
-  // ① 밝기 불증가 — 문턱 3/255(AA·반올림 잡음 위, 흰 뜸(수십) 아래)
-  const d1 = await diffBoxes(page, 'base', 'painted', 3)
+  // ① 밝기 불증가 — 문턱 C.PAINT50_LUM_TOL(등재 — AA·반올림 잡음 위, 흰 뜸(수십) 아래)
+  const lumTol = (await page.evaluate(() => (window as any).__b2.diag.paint50Constants())).PAINT50_LUM_TOL
+  const d1 = await diffBoxes(page, 'base', 'painted', lumTol)
   expect(d1.brighter, '곱은 어둡게만 한다 — 밝아진 픽셀 0').toBe(0)
   expect(d1.darkSum, '칠이 실제로 얹혔다(어두워진 잉크가 있다)').toBeGreaterThan(3000)
-  // ② 아래 무늬(벽돌)가 칠 아래에서 살아 있다 — 칠 띠 안에서 무늬 선 픽셀(무채색·어두움)이 남는다
+  // ①-램프(지시 문면 그대로): 획 가장자리를 **가로질러** 알파·RGB를 뽑는다 — 알파가
+  // 어떻게 변하든 RGB(종이 위 밝기)가 흰색 쪽으로 가지 않는 것을 «수치»로 남긴다.
+  // 세로획(x≈725 대역)을 y=500에서 수평으로 가로지른다 — 띠 밖 → 가장자리 → 안 → 가장자리 → 밖.
+  const ramp = await page.evaluate(() => {
+    const src = document.getElementById('gl') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const y = Math.round(500 * dpr)
+    const x0 = Math.round(695 * dpr), n = Math.round(46 * dpr)
+    const t = document.createElement('canvas')
+    t.width = n; t.height = 1
+    const g = t.getContext('2d')!
+    g.drawImage(src, x0, y, n, 1, 0, 0, n, 1)
+    const d = g.getImageData(0, 0, n, 1).data
+    const rows: { a: number; r: number; g: number; b: number; lum: number }[] = []
+    for (let i = 0; i < n; i++) {
+      const a = d[i * 4 + 3]! / 255
+      const lum = (0.299 * d[i * 4]! + 0.587 * d[i * 4 + 1]! + 0.114 * d[i * 4 + 2]!) * a + 255 * (1 - a)
+      rows.push({ a: +a.toFixed(3), r: d[i * 4]!, g: d[i * 4 + 1]!, b: d[i * 4 + 2]!, lum: +lum.toFixed(1) })
+    }
+    return rows
+  })
+  const paperLum = 0.299 * 245 + 0.587 * 243 + 0.114 * 238   // PAPER_HEX의 종이 위 밝기
+  const rampMax = Math.max(...ramp.map(r => r.lum))
+  expect(rampMax, '램프 어느 자리도 종이보다 밝지 않다 — 흰쪽으로 안 간다').toBeLessThanOrEqual(paperLum + lumTol)
+  expect(Math.min(...ramp.map(r => r.lum)), '램프가 실제로 획 안을 지난다(어두운 자리가 있다)').toBeLessThan(paperLum - 20)
+  // ② 아래 무늬(벽돌)·선이 칠 아래에서 살아 있다 — 분자/분모로 센다(#16 — 2차 대응 [12])
   const under = await page.evaluate(() => {
     const w2 = window as any
     const A = w2.__p50.base as ImageData, B = w2.__p50.painted as ImageData
-    let repBase = 0, repUnderPaint = 0
+    let repBase = 0, bandPx = 0, repInBandBefore = 0, repUnderPaint = 0
     for (let i = 0; i < A.data.length; i += 4) {
       const aA = A.data[i + 3]!, aB = B.data[i + 3]!
       const grayA = aA > 40 && Math.abs(A.data[i]! - A.data[i + 2]!) < 25       // 무늬·선(무채색)
       const blueB = aB > 16 && B.data[i + 2]! - B.data[i]! > 30                 // 칠 띠
       if (grayA) repBase++
+      if (blueB) bandPx++
       if (grayA && blueB) {
-        // 칠 아래의 무늬 자리 — 여전히 주변(칠만 있는 자리)보다 어두운가는 아래 diff가
-        // 이미 «안 밝아졌다»로 잡았다. 여기서는 그 자리가 잉크를 유지하는 것만 센다.
-        if (aB > 40) repUnderPaint++
+        repInBandBefore++                       // 분모 — 칠 «전» 그 자리에 있던 무늬 픽셀
+        if (aB > 40) repUnderPaint++            // 분자 — 칠 «후»에도 잉크를 유지하는 자리
       }
     }
-    return { repBase, repUnderPaint }
+    return { repBase, bandPx, repInBandBefore, repUnderPaint }
   })
   expect(under.repBase, '벽돌 무늬가 깔려 있었다').toBeGreaterThan(500)
-  expect(under.repUnderPaint, '칠 띠 안에서도 무늬 자리가 잉크를 유지한다(덮어 지워지지 않았다)').toBeGreaterThan(50)
+  expect(under.repInBandBefore, '띠 안에 무늬가 실제로 있었다(분모)').toBeGreaterThan(100)
+  expect(under.repUnderPaint / under.repInBandBefore, '칠 띠 안 무늬 유지 비(분자/분모)').toBeGreaterThan(0.8)
+  // ②-선: 지시 문면의 «아래 선» — 벽 위 모서리(3D 획 y=330 대역)를 칠 띠가 가로지른다.
+  // 선의 어두운 픽셀이 칠 뒤에도 남는 것을 전/후 «수»로 잰다(선은 renderOrder 0 — 칠 위).
+  // 화면에서 «선»으로 읽히는 잉크는 흑연 질감(#brushc — #gl 위 겹)이다. 칠은 #gl 안이라
+  // 구성상 그 위를 못 덮지만(#5 — 겹 차례), 값으로 남긴다: 칠 뒤에도 그 상자의 선 잉크 > 0.
+  // ⚠ #gl의 Line2 몸체는 칠한 면의 깊이 쓰기(48-9)와 같은 평면이라 z-싸움으로 얇아진다 —
+  //   그것은 48-9 시점부터의 거동이고(선의 화면 잉크는 질감 겹이 든다) 50의 몫이 아니다.
+  const lineBox = { x: 703, y: 326, w: 44, h: 9 }
+  const lineAfter = await page.evaluate((bx) => {
+    const src = document.getElementById('brushc') as HTMLCanvasElement
+    const dpr = window.devicePixelRatio || 1
+    const b = bx as { x: number; y: number; w: number; h: number }
+    const t = document.createElement('canvas')
+    t.width = Math.round(b.w * dpr); t.height = Math.round(b.h * dpr)
+    const g = t.getContext('2d')!
+    g.drawImage(src, Math.round(b.x * dpr), Math.round(b.y * dpr), t.width, t.height, 0, 0, t.width, t.height)
+    const d = g.getImageData(0, 0, t.width, t.height).data
+    let ink = 0
+    for (let i = 3; i < d.length; i += 4) if (d[i]! > 8) ink++
+    return ink
+  }, lineBox as unknown)
+  expect(lineAfter, '칠 띠가 지나가는 위 모서리의 «선» 잉크(#brushc — 칠 위 겹)가 살아 있다').toBeGreaterThan(20)
   // D-3 반증 — 보통(over) 합성으로 되돌리면 흰 바탕이 아래를 덮어 밝아진다
   await page.evaluate(() => (window as any).__b2.diag.setPaintBlendForTest(true))
   await page.waitForTimeout(200)
@@ -208,9 +256,19 @@ test('①② 곱 — 어느 픽셀도 안 밝아지고 · 아래 무늬가 비�
   const domCanvasAfter = await page.evaluate(() => document.querySelectorAll('canvas').length)
   expect(domCanvasAfter, '#97 — DOM 캔버스 수 불변(텍스처는 화면 밖)').toBe(domCanvasBefore)
   OUT.multiply = {
-    def: '벽(무늬 벽돌) 상자 — 칠 전/후 픽셀 밝기(알파 미리곱을 종이 위 밝기로 편 값). 문턱 3/255. 반증 = NormalBlending 스위치(같은 실행)',
-    no_brighter: d1, under_pattern: under, falsify_over: d2,
+    def: '벽(무늬 벽돌) 상자 — 칠 전/후 픽셀 밝기(알파 미리곱을 종이 위 밝기로 편 값 · 문턱 C.PAINT50_LUM_TOL). 램프 = 세로획을 y=500에서 수평으로 가로지른 픽셀별 {a,r,g,b,lum}(지시 ①의 형식 그대로). under = 분자/분모(#16). 선 = 위 모서리 상자의 어두운 픽셀 수(칠 뒤). 반증 = NormalBlending 스위치(같은 실행)',
+    no_brighter: d1, edge_ramp: ramp, ramp_max_lum: rampMax, paper_lum: +paperLum.toFixed(1),
+    under_pattern: under, line_under_band_dark: lineAfter,
+    falsify_over: d2,
     dom_canvas: { before: domCanvasBefore, after: domCanvasAfter },
+    note_alpha: '이 구조의 칠은 알파가 안 떨어진다(불투명 텍스처 + 곱) — «알파가 떨어질 때 RGB가 흰색으로»의 그 병리는 대역 자체가 소멸했고, 램프가 남기는 것은 «가장자리 어디에서도 종이보다 밝지 않다»다',
+  }
+  OUT.gate_multiply = {
+    registered: 'C.PAINT50_LUM_TOL — ① brighter == 0(문턱 그 값) ② ramp_max_lum ≤ paper_lum + 문턱 ③ 띠 안 무늬 유지 비 > 0.8 ④ 선 상자 어두운 픽셀 > 20',
+    value: 'no_brighter.brighter · ramp_max_lum · under_pattern · line_under_band_dark',
+    reachability: '반증 스위치(setPaintBlendForTest — over)가 같은 실행에서 brighter를 십만 대역으로 낸다',
+    reachability_value: 'falsify_over.brighter',
+    reachability_source: '이 파일의 falsify_over ↔ no_brighter',
   }
 })
 
@@ -237,7 +295,10 @@ test('③ 돌리는 동안 칠이 남는다 — 칠은 #gl의 3D라 제스처가
     expect(during[i], `궤도 프레임 ${i}에 칠이 있다`).toBeGreaterThan(100)
   }
   expect(after, '놓은 뒤에도 있다').toBeGreaterThan(100)
-  OUT.orbit = { before, during, after }
+  OUT.orbit = {
+    before, during, after,
+    note_d3: 'D-3 반증 스위치 없음 — «궤도 중 소실»을 되살릴 옛 경로(48-6의 타일 제외)가 삭제됐다. 이 팔이 재는 것은 궤도 «행위» 중의 픽셀이고(문면 아님 — #94), 부정 대조는 paint48 ⑥의 tileStats.paintFrames == 0(옛 절이 안 도는 것)이다',
+  }
 })
 
 test('④⑤ 원근 폭(가까운 끝 > 먼 끝) · 면 경계 절단(밖은 0)', async ({ page }) => {
@@ -257,18 +318,53 @@ test('④⑤ 원근 폭(가까운 끝 > 먼 끝) · 면 경계 절단(밖은 0)'
   const near = at(545), far = at(855)
   expect(near, '가까운 끝에 띠가 있다').toBeGreaterThan(0)
   expect(far, '먼 끝에 띠가 있다').toBeGreaterThan(0)
-  // ④ — 면 고정 굵기: 가까운 끝이 굵다. 화면 고정(옛 구조)이면 비 1.0이 나온다(분석 경계)
-  expect(near / far, '원근 — 가까운 끝이 굵다').toBeGreaterThan(1.1)
+  // ④ — 기대 비를 **픽스처에서 유도한다**(#88 · 1차 [4]): 면 고정 굵기의 화면 두께는
+  // 그 자리의 «px/세계단위»(세로축)에 비례하고, 그것은 벽의 투영 높이에 비례한다.
+  // 기대 비 = 벽 화면 높이(near x) ÷ 벽 화면 높이(far x) — 벽 외곽의 실제 투영에서 계산.
+  const expected = await page.evaluate(([nearX, farX]) => {
+    const w = window as any
+    const rf = w.__b2.app.faces[0]
+    const pr = (P: any) => w.__b2.diag.projectWith(w.__b2.app.pose, P)
+    const pts = rf.outer.map(pr)
+    // 벽 외곽 4점 — 위 모서리 둘·아래 모서리 둘을 x로 정렬해 높이를 선형 보간
+    const xs = pts.map((p: any) => p.x)
+    const x0 = Math.min(...xs), x1 = Math.max(...xs)
+    const top = (x: number) => {
+      const t = (x - x0) / (x1 - x0)
+      const tops = pts.filter((p: any) => p.y < 500).sort((a: any, b: any) => a.x - b.x)
+      return tops[0].y + (tops[tops.length - 1].y - tops[0].y) * t
+    }
+    const bot = (x: number) => {
+      const t = (x - x0) / (x1 - x0)
+      const bots = pts.filter((p: any) => p.y >= 500).sort((a: any, b: any) => a.x - b.x)
+      return bots[0].y + (bots[bots.length - 1].y - bots[0].y) * t
+    }
+    const h = (x: number) => bot(x) - top(x)
+    return h(nearX as number) / h(farX as number)
+  }, [545, 855] as unknown[])
+  const tol = (await page.evaluate(() => (window as any).__b2.diag.paint50Constants())).PAINT50_FORESHORTEN_TOL
+  const ratio = near / far
+  expect(Math.abs(ratio / expected - 1), `원근 — 실측 비(${ratio.toFixed(3)})가 유도 기대 비(${expected.toFixed(3)})의 허용 안`).toBeLessThan(tol)
+  expect(ratio, '판별 — 화면 고정(비 1.0)이 아니다(기대와 1의 중간보다 크다)').toBeGreaterThan((1 + expected) / 2)
   // ⑤ — 경계 밖 절단: 벽 왼 모서리(x=500) 왼쪽·오른 모서리(x=900) 오른쪽에 칠이 없다
   const leftOut = at(488), rightOut = at(915)
   expect(leftOut, '왼 경계 밖 0').toBe(0)
   expect(rightOut, '오른 경계 밖 0').toBe(0)
   OUT.foreshorten_clip = {
-    def: '경계를 일부러 지나는 마커 획 — 열별 파란 띠 두께(물리 px · ±2열 평균). near=545css · far=855css · 밖=488/915css',
-    near_px: +near.toFixed(1), far_px: +far.toFixed(1), ratio: +(near / far).toFixed(3),
+    def: '경계를 일부러 지나는 마커 획 — 열별 파란 띠 두께(물리 px · ±2열 평균). near=545css · far=855css · 밖=488/915css. 기대 비 = 벽 투영 높이 비(픽스처에서 유도 — #88)',
+    near_px: +near.toFixed(1), far_px: +far.toFixed(1), ratio: +ratio.toFixed(3),
+    expected_ratio: +expected.toFixed(3), tol_registered: 'C.PAINT50_FORESHORTEN_TOL',
     screen_fixed_would_give: 1.0,
     left_out_px: leftOut, right_out_px: rightOut,
-    note_hole: '개구부 «구멍»의 픽셀 팔은 없다 — 기하는 단위(facetex.test 개구부)가 잰다. 경계 절단이 같은 기제(메시가 텍스처를 문다)의 바깥판이다',
+    note_hole: '개구부 «구멍»의 픽셀 팔은 없다 — 기하는 단위(facetex.test 개구부)가 잰다. 경계 절단이 같은 기제(메시가 텍스처를 문다)의 바깥판이다. ⚠ #5의 지위: 메시 밖 래스터화는 구성상 없다 — 이 0/0이 재는 것은 «splitByFace·메시·uv 배선이 경계를 같은 자리에 긋는가»다',
+    note_rebake: '⚠ «면 경계가 바뀌면 다시 굽는다»(지시 문면)의 픽셀 실측은 없다 — 재굽기 캐시 키가 docVersion이라 경계 변경이 재굽기를 지나는 것은 구성이고(#5), 그 실측 픽스처(경계 획 이동)는 DEFERRED다',
+  }
+  OUT.gate_foreshorten_clip = {
+    registered: 'C.PAINT50_FORESHORTEN_TOL — |실측/기대 − 1| < 그 값 · 실측 > (1+기대)/2(화면 고정 배제) · 경계 밖 두 자리 0',
+    value: 'ratio · expected_ratio · left_out_px · right_out_px',
+    reachability: '화면 고정(옛 구조)이면 비 1.0 — 기대에서 −19% 대역이라 두 문 다 밖이다(분석 경계 — 스위치 없음: 옛 경로가 삭제됐다)',
+    reachability_value: 'screen_fixed_would_give',
+    reachability_source: '이 파일의 ratio ↔ expected_ratio',
   }
 })
 
@@ -327,8 +423,12 @@ test('⑥ 면의 한쪽(48-5) — 건너편에서 돌아보면 장면은 보이�
     return ink
   })
   const behind = await blueInk(page, 0, 0, 1200, 800)
+  // 귀속 — 건너편 0의 이유가 «쪽»이다: 텍스처는 서 있고(level > 0) visible만 거짓
+  const behindTex = await page.evaluate(() => (window as any).__b2.diag.paintTex())
   expect(sceneInk, '건너편에서 장면(획·면)이 보인다 — «안 그려져서 0»과 가른다').toBeGreaterThan(2000)
   expect(behind, '칠만 없다').toBe(0)
+  expect(behindTex.length, '텍스처는 살아 있다(버리지 않고 접혔다)').toBeGreaterThan(0)
+  expect(behindTex.every((t: any) => t.visible === false), '접힌 이유가 쪽이다(visible 거짓)').toBe(true)
   // 복원 — 원 포즈 통째로(한 번 더 뒤집기 ⛔)
   await page.evaluate((sv) => {
     const w = window as any
@@ -338,7 +438,16 @@ test('⑥ 면의 한쪽(48-5) — 건너편에서 돌아보면 장면은 보이�
   await page.waitForTimeout(250)
   const restored = await blueInk(page, WALL.x, WALL.y, WALL.w, WALL.h)
   expect(restored, '돌아오면 칠이 돌아온다').toBeGreaterThan(200)
-  OUT.side = { before, behind, scene_ink_behind: sceneInk, restored }
+  // 귀속(rep49 2차 [4]의 그 규약) — «왜 안 보였나»가 쪽이었음을 판정 내역으로.
+  // 건너편 프레임에서 이미 원 포즈로 돌아왔으므로 지금 것은 «보임» 확인이고,
+  // 건너편의 귀속은 behindGate가 든다(위에서 읽어 뒀어야 한다 — 다음 편집에서 읽는다).
+  const texNow = await page.evaluate(() => (window as any).__b2.diag.paintTex())
+  OUT.side = {
+    before, behind, scene_ink_behind: sceneInk, restored,
+    tex_behind: behindTex, tex_after_restore: texNow,
+    note_identity: 'restored == before(정확 일치가 나올 수 있다)는 **설계 보장**이다(§5.1 유형 3 — 같은 포즈·같은 문서의 재렌더). 이 팔의 측정은 behind == 0(쪽이 접는다)이고 복원은 그 대조의 닫음일 뿐 임계를 안 건다(rep49 [12]의 그 표기)',
+    note_d3: 'D-3 — 반증 스위치 없음: 쪽 게이트를 끄는 손잡이를 안 만들었다(paintVisible 계열의 단위 반증은 test/mats46 ④가 든다). 건너편 0의 귀속(쪽 때문 — 밀도·미배치 아님)은 장면 잉크 > 0과 tex의 visible=false가 가른다',
+  }
 })
 
 test('파생 증명 — 오염이 보이고 · 재굽기가 정본에서 지운다 · 저장에 텍스처가 없다', async ({ page }) => {
@@ -376,7 +485,10 @@ test('파생 증명 — 오염이 보이고 · 재굽기가 정본에서 지운�
   expect(paintStroke.paint.uv.length).toBeGreaterThanOrEqual(4)
   expect(paintStroke.paint.s === 1 || paintStroke.paint.s === -1).toBe(true)
   expect(paintStroke.raw, '칠 획은 raw를 안 싣는다(정본은 uv 하나 — #54)').toBeUndefined()
-  OUT.derived = { hash_base: base, hash_corrupted: corrupted, hash_rebaked: rebaked, textures: n, file_bytes: txt.length }
+  OUT.derived = {
+    hash_base: base, hash_corrupted: corrupted, hash_rebaked: rebaked, textures: n, file_bytes: txt.length,
+    note_identity: 'rebaked == base(정확 일치)는 **설계 보장**이다(§5.1 유형 3 — 결정론 굽기의 항등 · 임계 아님). 이 팔의 측정은 가운데 단계다: corrupted ≠ base(오염이 화면에 실제로 보였다 — 이것이 없으면 회복 항등은 아무것도 안 잰다 · D-3)',
+  }
 })
 
 test('⚑ 성능 — 스무 면 · 칠 40획: 프레임(#82 — 차)과 텍스처 바이트(tex_budget)', async ({ page }) => {
@@ -444,16 +556,53 @@ test('⚑ 성능 — 스무 면 · 칠 40획: 프레임(#82 — 차)과 텍스�
   const cMax = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
   expect(maxLevel, '해상도 상한이 서 있다').toBeLessThanOrEqual(cMax.FACETEX_MAX_PX)
   expect(paintN, '칠이 실제로 여러 획 얹혔다').toBeGreaterThanOrEqual(30)
+  // 하향 양자화의 실측(1차 [8] — levels가 전부 같은 값이면 «작으면 낮게»를 이 장면이
+  // 안 시험한 것이다): 종이 줌 아웃(휠)으로 화면 투영을 줄이고 단계가 실제로 내려가는가.
+  await page.mouse.move(600, 450)
+  for (let i = 0; i < 6; i++) { await page.mouse.wheel(0, 240); await page.waitForTimeout(60) }
+  await page.waitForTimeout(300)
+  const texesOut = await page.evaluate(() => (window as any).__b2.diag.paintTex())
+  const maxOut = Math.max(...texesOut.map((t: any) => t.level))
+  expect(maxOut, '줌 아웃에서 단계가 실제로 내려간다(하향 양자화 실측)').toBeLessThan(maxLevel)
   OUT.tex_budget = {
-    def: '분할 두 벽(면 faceN) + 칠 40붓 — 텍스처 수·단계 분포·합계 바이트(w·h·4). 프레임은 같은 장면 전/후 «차»(#82) — 잡음 바닥(before↔before2)과 함께 읽는다',
+    def: '분할 두 벽(면 faceN — ⚠ 지시 목표 «20 이상»에 셋 모자란다: rep49 frame20의 그 픽스처 그대로다. note_89 참조) + 칠 40붓 — 텍스처 수·단계 분포·합계 바이트(w·h·4). 프레임은 같은 장면 전/후 «차»(#82) — 잡음 바닥(before↔before2)과 함께 읽는다',
     faces: faceN, paint_strokes: paintN,
     textures: texes.length, levels: texes.map((t: any) => t.level), bytes_total: bytes,
+    levels_zoomed_out: texesOut.map((t: any) => t.level), max_level_zoomed_out: maxOut,
     max_level: maxLevel, cap: cMax.FACETEX_MAX_PX, min: cMax.FACETEX_MIN_PX,
     before_ms: before, before2_ms: before2, noise_floor_ms: noise, after_ms: after,
     delta_median_ms: +(after.median - before2.median).toFixed(2),
     delta_p90_ms: +(after.p90 - before2.p90).toFixed(2),
-    note_cap: '상한 1024의 근거 — 이 장면(칠한 면 ~수십)의 합계 바이트가 이 필드다. 2048이면 장당 4배(16MB)라 같은 장면이 수백 MB 대역으로 뛴다',
-    note_82: '중앙값이 vsync 바닥(16.7ms)에 붙은 실행에서는 차의 해상도가 눈금뿐이다(rep49 frame20의 그 유보 그대로)',
+    note_cap: '상한 1024의 근거 — 이 장면의 합계 바이트가 bytes_total이다(장당 평균은 정사각이 아니라 긴 변만 단계라 4.19MB보다 작다 — 2차 대응 [9]가 초판의 «수백 MB» 산술을 지웠다). 2048이면 면적 4배 — 이 장면 기준 ~4×bytes_total(dpr2 ~60MB 대역)이고, 실장면(면 수·양쪽 칠)이 그 위로 곱해진다',
+    note_89: '목표 «스무 면»에 못 미치면 faces 값이 그 사실이다 — 상한을 조용히 줄이지 않는다(rep49 note_89 그대로 · 같은 픽스처가 세운 면이 17이다)',
+    note_levels: '기본 줌의 levels가 전부 같은 값인 것은 이 장면의 셀들이 비슷한 화면 크기라서다 — «작으면 낮게»의 실측은 levels_zoomed_out(줌 아웃에서 단계 하강)이 든다',
+    note_82: '중앙값이 vsync 바닥(16.7ms)에 붙은 실행에서는 차의 해상도가 눈금뿐이다(rep49 frame20의 그 유보 그대로). ⚠ dpr2의 delta_median_ms가 잡음 바닥 밖인 것은 헤드리스 소프트웨어 GL의 채움 비용 의심 — DEFERRED web2-50 행 · 실기기 관측 판정자',
+  }
+})
+
+test('옛 칠 알림 — 45~48 형식의 문서를 «열면» 화면에 한 줄이 실제로 뜬다(#94 — 행위)', async ({ page }) => {
+  // 파서 단위(mats46 ②)는 셈까지고, 지시 문면은 「문서를 **열 때** 알려라」다 — 여는
+  // 행위(자동 저장 복원)를 실제로 일으켜 #notice의 문구를 읽는다.
+  await bigBox(page)
+  await pickMarker(page, '#1e7fd0', 14)
+  await drawLine(page, 560, 640, 620, 360)
+  await page.waitForTimeout(300)
+  const txt: string = await page.evaluate(() => (window as any).__b2.diag.serialize())
+  const j = JSON.parse(txt)
+  const jp = j.strokes.find((s: any) => s.paint !== undefined)
+  jp.paint = { f: jp.paint.f, s: jp.paint.s, c: '#c07a5b', i: 1, w: 10 }   // 48 형식(uv 없음)
+  const { putSaved, bootDone } = await import('./store43')
+  await putSaved(page, JSON.stringify(j))
+  await page.goto('/')                       // ⚠ reload면 ?reset이 다시 붙어 저장소가 비워진다
+  await bootDone(page)
+  await page.waitForTimeout(400)
+  const noticeText = await page.evaluate(() => document.getElementById('notice')?.textContent ?? '')
+  expect(noticeText, '여는 순간 화면의 한 줄이 «옛 칠»을 말한다').toContain('옛 칠')
+  const kept = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
+  expect(kept, '나머지(선·면)는 그대로 열렸다').toBe(j.strokes.length - 1)
+  OUT.old_paint_notice = {
+    def: '48 형식(uv 없음) 칠 1획이 든 저장물을 자동 저장 자리에 넣고 새로 고침 — #notice의 문구(행위 판 · #94)와 살아남은 획 수',
+    notice: noticeText, strokes_saved: j.strokes.length, strokes_kept: kept,
   }
 })
 
@@ -461,7 +610,10 @@ test('원장', async ({}, info) => {
   const dpr = info.project.name === 'dpr2' ? 2 : 1
   OUT.constants_used = { note: 'web2 라인은 constantsSnapshot 기계가 없다(라인 유보 — lens31의 no_constants_snapshot이 정본)' }
   ;(OUT as any).no_constants_snapshot = true
-  ;(OUT as any).pitfall_citations = [5, 54, 82, 92, 97]
+  ;(OUT as any).pitfall_citations = [5, 12, 16, 54, 80, 82, 88, 92, 94, 97]
+  ;(OUT as any).fixture_axes = {
+    note_12: 'D-5의 축 배분(#12): dpr 1·2 = 이 파일 둘 다 · 도구 = 마커(이 파일)·붓(paint45 ①)·색연필(mats46 ④) · 면 분류(벽·슬라브·경사)와 축척 유/무 = 단위(facetex.test — uv 왕복이 세 분류를 돈다 · uv는 축척 무관이 설계) · 개구부 = 단위(삼각분할) + 경계 절단(e2e ⑤)',
+  }
   const dir = resolve(HERE, '../../stage0/out')
   mkdirSync(dir, { recursive: true })
   writeFileSync(resolve(dir, `paint50_web2_dpr${dpr}.json`), JSON.stringify(OUT, null, 2))
