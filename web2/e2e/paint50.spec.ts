@@ -591,7 +591,7 @@ test('⚑ 성능 — 스무 면 · 칠 40획: 프레임(#82 — 차)과 텍스�
     before_ms: before, before2_ms: before2, noise_floor_ms: noise, after_ms: after,
     delta_median_ms: +(after.median - before2.median).toFixed(2),
     delta_p90_ms: +(after.p90 - before2.p90).toFixed(2),
-    note_cap: '상한 1024의 근거 — 이 장면의 합계 바이트가 bytes_total이다(장당 평균은 정사각이 아니라 긴 변만 단계라 1024²×4=4.19MB보다 작다). ⚠ «상한을 올리면 4×»는 **포화한 실행에만** 걸리는 산술이다(2차 [8] — clamped가 참인 장들만 상한을 따라 커진다): dpr2는 전 장 포화라 ~4×bytes_total(~60MB 대역), dpr1은 전 장 미포화(512)라 상한을 올려도 이 장면 바이트는 불변이다. 실장면(면 수·양쪽 칠·dpr)이 그 위로 곱해진다',
+    note_cap: '상한 1024의 근거 — 장당 최악 1024²×4=4.19MB(2048이면 16.7MB — 4배)이고 이 장면의 실제 합은 bytes_total이다(긴 변만 단계라 장당 그보다 작다). «상한을 올리면 커진다»는 **clamped가 참인 장에만** 걸리는 산술이다(2차 [8]) — 이 장면은 clamped 합이 그 판정이다(0이면 상한 증설에 불변 · dpr2의 단일 1024도 포화가 아니라 올림 양자화일 수 있다 — screen_px_prequant가 가른다). 상한을 실제로 누르는 것은 큰 면·줌 인 장면이고 실기기 관측 판정자다(DEFERRED)',
     note_89: '목표 «스무 면»에 못 미치면 faces 값이 그 사실이다 — 상한을 조용히 줄이지 않는다(rep49 note_89 그대로 · 같은 픽스처가 세운 면이 17이다)',
     note_levels: '기본 줌의 levels가 전부 같은 값인 것은 이 장면의 셀들이 비슷한 화면 크기라서다 — «작으면 낮게»의 실측은 levels_zoomed_out(줌 아웃에서 단계 하강)이 든다',
     note_82: '중앙값이 vsync 바닥(16.7ms)에 붙은 실행에서는 차의 해상도가 눈금뿐이다(rep49 frame20의 그 유보 그대로). ⚠ dpr2의 delta_median_ms가 잡음 바닥 밖인 것은 헤드리스 소프트웨어 GL의 채움 비용 의심 — DEFERRED web2-50 행 · 실기기 관측 판정자',

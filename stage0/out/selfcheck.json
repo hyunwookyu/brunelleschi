@@ -1,5 +1,5 @@
 {
-  "n_flags": 6277,
+  "n_flags": 6280,
   "flags": [
     {
       "path": "_e2e_timing.json:suites[3].specs[0].tests[0].results[0].duration",
@@ -21475,12 +21475,27 @@
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
+      "path": "paint50_web2_dpr1.json:multiply.under_pattern_over.contrastPx",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
       "path": "paint50_web2_dpr1.json:foreshorten_clip.left_out_px",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
     {
       "path": "paint50_web2_dpr1.json:foreshorten_clip.right_out_px",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint50_web2_dpr1.json:tex_budget.delta_median_ms",
+      "val": 0,
+      "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
+    },
+    {
+      "path": "paint50_web2_dpr2.json:multiply.under_pattern_over.contrastPx",
       "val": 0,
       "flag": "카운터 0 → 집계 로직 미작동 의심(또는 정상)"
     },
@@ -32636,13 +32651,11 @@
     ],
     "mats46_e2e_web2_dpr1.json": [
       8,
-      26,
       80,
       92
     ],
     "mats46_e2e_web2_dpr2.json": [
       8,
-      26,
       80,
       92
     ],
