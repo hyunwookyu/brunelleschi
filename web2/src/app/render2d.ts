@@ -5,7 +5,7 @@
 // 선 굵기·표식 크기는 화면 고정(배율로 나눈다).
 
 import type { App, ViewOffset } from './state'
-import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive, dimLabelPos, viewXf, inkMix } from './state'
+import { isDrawPose, isEraser, activeGrade, draftBrushed, fadeRef, fadeRefView, yellowActive, dimLabelPos, viewXf, inkMix, manipLabel } from './state'
 import { vpMarks, project, projectSeg, groundAxes, horizonScreenY } from '../core/camera'
 import { cubeGeom, cubeArrows, viewName } from '../core/viewcube'
 import { C } from '../core/constants'
@@ -592,6 +592,7 @@ export function draw2d(
   //    (겹의 치수가 아래 종이에 안 나타나는 것이 그 귀결이다 — 새 규칙 ⛔).
   // **글씨를 받는 선**(web2-39 4번)은 치수선 **밑에** 깐다 — 강조이지 덮개가 아니다.
   drawWriteTarget(ctx, app, is)
+  drawGrip(ctx, app, is)
   drawDimensions(ctx, app, is)
 
   // ── 재기(web2-32 6번) ─────────────────────────────────────────────────────
@@ -819,6 +820,50 @@ function drawWriteTarget(ctx: CanvasRenderingContext2D, app: App, is: number) {
   ctx.beginPath()
   ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y)
   ctx.stroke()
+  ctx.restore()
+}
+
+// ── 잡기(web2-44) — 잡힌 것의 강조 + 조작 값 표찰 ────────────────────────────
+// ⛔ 새 색을 안 짓는다 — 잡힘도 「지금 짚은 것」이라 `COL.snap` 그대로다(write 대상·
+// dimEdit과 같은 뜻·같은 채널). write 대상 강조와 겹치면 같은 색이 두 번 — 무해하다.
+function drawGrip(ctx: CanvasRenderingContext2D, app: App, is: number) {
+  const g = app.grip
+  if (!g) return
+  ctx.save()
+  ctx.strokeStyle = COL.snap
+  ctx.lineWidth = C.WRITE_TARGET_PX * is
+  ctx.lineCap = 'round'
+  ctx.globalAlpha = C.WRITE_TARGET_ALPHA
+  for (const id of g.ids) {
+    const seg = app.lift.lifted.get(id)
+    if (!seg) continue
+    const a = project(app.lift.an, app.pose, seg.a3)
+    const b = project(app.lift.an, app.pose, seg.b3)
+    if (!a || !b) continue
+    ctx.beginPath()
+    ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y)
+    ctx.stroke()
+    // 끝점 고리 — «끝을 끌면 돌린다»의 자리를 눈이 안다(#43: 점과 선은 다른 판정자다)
+    for (const p of [a, b]) {
+      ctx.beginPath()
+      ctx.arc(p.x, p.y, C.WRITE_TARGET_PX * is * 0.9, 0, Math.PI * 2)
+      ctx.stroke()
+    }
+  }
+  // 값 표찰 — 끌기 중(live)이거나 조작이 끝난 뒤(manip). 치수 글자와 같은 크기.
+  const label = g.live ?? (g.manip?.labelAt ? { label: manipLabel(app) ?? '', at: g.manip.labelAt } : null)
+  if (label && label.label) {
+    ctx.globalAlpha = 1
+    ctx.save()
+    ctx.translate(label.at.x, label.at.y)
+    ctx.scale(is, is)
+    ctx.fillStyle = COL.snap
+    ctx.font = `${C.DIM_TEXT_PX}px system-ui, sans-serif`
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'bottom'
+    ctx.fillText(label.label, 10, -10)
+    ctx.restore()
+  }
   ctx.restore()
 }
 

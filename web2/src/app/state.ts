@@ -6,10 +6,10 @@
 import { emptyDoc, DRAW_SHEET_ID, onPaper, yellowIds, isText, clonePose, type Doc, type Stroke, type Face, type Sheet, type Layer, type Underlay, type Paper, type CamPose, type ViewOffset, type Grade, type RawInput } from '../core/types'
 // 글씨 판정(web2-32 1번) — 규칙과 특징 뽑기는 순수 함수다(앱 상태를 안 읽는다)
 import { boxOfPts, unionBox, inflate, writeFar, writeIdle, type WBox, type WriteEnd } from '../core/writing'
-import { parseDim } from '../core/dim'
+import { parseDim, formatMm, formatUnits } from '../core/dim'
 import { isInk, widthOfMat } from '../core/material'
 export type { ViewOffset }
-import { liftAll, closestOnLineToRay, type LiftResult } from '../core/lift'
+import { liftAll, closestOnLineToRay, axisOfStroke, type LiftResult } from '../core/lift'
 import { camSig, defineByTouch, emptyTouchStats, type TouchStats } from '../core/own3d'
 import { DRAW_POSE, rayThrough, project, isParallel } from '../core/camera'
 import { defaultOsnap, osnap, type OsnapSettings, type OsnapKind } from '../core/osnap'
@@ -24,7 +24,7 @@ import { geomSize3 } from '../core/osnap'
 import { C, SETTLE_ANIM_MS, LAY_SLIDE_MS, ORBIT_RAD_PER_PX } from '../core/constants'
 import { settleFade, waitInkMode } from '../core/waitfade'
 import { slideAway, slideRunning, type Slide, type SlideDir } from '../core/slide'
-import { cubeLayoutFor } from '../core/viewcube'
+import { cubeLayoutFor, parallelAllowed, parallelPose } from '../core/viewcube'
 import { fitPose, fitView, type Screen as FitScreen } from '../core/zoomfit'
 import { lensAllowed, lensAn, lensF, lensK, lensView, clampViewF, lensFromStops } from '../core/lens'
 import { calFromMedians, median } from '../core/press'
@@ -93,6 +93,12 @@ export interface Op {
   //    보통 획 하나로 되돌아간다(자료구조가 아니라 **판정**이 사라진 것이다).
   /** **도면에 남긴 재기**(web2-32 6번) — 사람이 한 것이므로 실행취소 대상이다(면과 같은 급) */
   measuresAdded?: Measure[]
+  /** **옮김·돌림·맺음**(web2-44) — 획이 제자리에서 기하만 바뀐다. 지우개의 removed/added로
+   *  적으면 획의 정체(id)가 끊기므로(문서 순서도 흔들린다) 갈래를 따로 둔다.
+   *  before/after는 **깊은 사본**이다 — 획 객체를 참조로 들면 다음 조작이 op를 오염시킨다. */
+  moved?: { id: number; before: GripGeom; after: GripGeom }[]
+  /** **잠금 토글**(web2-44) — 사람이 한 것이므로 실행취소 대상이다 */
+  lockChanged?: { id: number; to: boolean }[]
   /** **광선이 바뀌어 대기 획을 버린 op**(web2-37 4번)가 함께 싣는 시점.
    *  ⚠⚠ 획만 되돌리면 «되살아난다»가 **쓸모없다**: 돌아온 대기 획의 내용은 「그 시점의
    *  화면 위 어디」인데 지금 시점이 그 시점이 아니고, 그 다음 시점 변경에서 **또 버려진다**
@@ -325,6 +331,10 @@ export interface App {
    *  채운다) 그 변을 옅게 그린다 — 순간 피드백이라 상시 표시와 대역이 다르다(색 규칙
    *  그대로). 런타임 상태 — 저장 안 함. */
   rectHover: { id: number; edges: { l: boolean; r: boolean; t: boolean; b: boolean } } | null
+  /** **잡기**(web2-44) — 잡힌 획·면과 마지막 조작. 출처는 이 필드 하나다(#54).
+   *  런타임(저장 ⛔ — 손의 상태이지 그림의 성질이 아니다). 글씨 상태와 **함께 살고 함께
+   *  끝난다**(진입이 같은 꾹 누름이고, 끝(`endWriting`)이 둘 다 놓는다). */
+  grip: GripState | null
   cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
 }
@@ -389,6 +399,7 @@ export function createApp(W: number, H: number): App {
     touchStats: emptyTouchStats(),
     touchLast: null,
     faceCandidates: null,
+    grip: null,
     rectHover: null,
     cubeLayout: cubeLayoutFor(W), // 우측 상단 — 자리 계산은 viewcube.ts 하나다(#54 · web2-31 1번)
     listeners: [],
@@ -659,6 +670,7 @@ export function pickTargetAt(app: App, p: Pt, maxD: number): number | null {
     const s = app.lift.strokes.get(id)
     if (!s) continue
     if (app.lift.an.roles.get(id) !== 'content') continue   // 작도 획에는 치수를 안 단다
+    if (s.lock === 1) continue   // 잠긴 획(web2-44) — 치수도 기하를 바꾸므로 보호가 막는다
     const a = project(app.lift.an, app.pose, seg.a3)
     const b = project(app.lift.an, app.pose, seg.b3)
     if (!a || !b) continue
@@ -762,6 +774,11 @@ export interface WriteMode {
   prevScaleRef: number | undefined
   /** 지금까지 실린 값(mm) — 안 실렸으면 undefined. 상태가 끝날 때 op가 이것을 든다 */
   applied?: number
+  /** **조작 값 수정 상태**(web2-44) — 값 표찰을 꾹 눌러 들어왔다. 이때 읽힌 숫자는
+   *  치수(setDimension)가 아니라 조작 값(applyManipValue)으로 간다. */
+  manip?: 1
+  /** 조작 값이 실렸다 — 상태가 끝날 때 잉크를 걷는다(치수의 규약 준용) */
+  manipDone?: 1
 }
 
 export const writeActive = (app: App): boolean => app.write !== null
@@ -836,6 +853,22 @@ export function endWriting(app: App, _why: WriteEnd) {
   const w = app.write
   if (!w) return
   app.write = null
+  app.grip = null            // 잡기 세션 = 글씨 세션(web2-44) — 함께 끝난다
+  // 조작 값의 손글씨(web2-44) — 값은 이미 실렸다(applyManipValue). 잉크만 걷는다.
+  // op는 «걷힌 획»으로 남아 실행취소가 잉크를 되살린다(조작 자체의 칸은 따로 있다 —
+  // finishManip이 쌓은 moved op. 잉크 한 번 · 기하 한 번, 두 칸이다).
+  if (w.manipDone === 1 && w.op) {
+    const removed: Op['removed'] = []
+    for (let i = app.doc.strokes.length - 1; i >= 0; i--) {
+      if (w.ids.includes(app.doc.strokes[i]!.id)) removed.push({ stroke: app.doc.strokes[i]!, index: i })
+    }
+    for (const rm of removed) app.doc.strokes.splice(rm.index, 1)
+    w.op.added = []
+    w.op.removed = removed
+    recompute(app)
+    for (const l of app.listeners) l()
+    return
+  }
   if (w.applied !== undefined && w.op) {
     // 쌓아 둔 op를 32-2의 모양으로 바꾼다 — 더한 획들이 «걷힌 획»이 되고 값이 붙는다
     const removed: Op['removed'] = []
@@ -935,6 +968,15 @@ export function applyRecognized(app: App, text: string): DimResult | 'unread' {
   const w = app.write
   if (!w) return 'none'
   if (handwritingGroup(app).length === 0) return 'none'
+  // 조작 값(web2-44) — 치수가 아니라 조작으로 간다. 단위 없는 수다(move는 mm — 축척이
+  // 없으면 세계 단위 · rotate는 도). 부호·방향은 지금 조작의 것을 그대로 쓴다.
+  if (w.manip === 1) {
+    const v = Number.parseFloat(text)
+    if (!Number.isFinite(v) || v < 0) return 'unread'
+    if (!applyManipValue(app, v)) return 'unread'
+    w.manipDone = 1
+    return 'applied'
+  }
   const mm = parseDim(text, app.doc.unit)
   if (mm === null) return 'unread'
   const r = setDimension(app, w.target, mm)
@@ -1004,6 +1046,539 @@ export function moveDim(app: App, from: number, to: number): DimResult {
 export function endDimEdit(app: App) {
   app.dimEdit = null
   for (const l of app.listeners) l()
+}
+
+// ── 잡기(web2-44) — 그린 것을 잡고 다룬다 ────────────────────────────────────
+//
+// **새 제스처가 없다**(지시): 39의 꾹 누름이 잡는다. 같은 몸짓에 뜻이 둘이 되는 자리라
+// 가르는 규칙을 여기 못 박는다(지시 「어떻게 갈랐는지 반드시 보고하라」):
+//
+//   꾹 누름의 대상      →  치수 숫자(39-5 그대로) > 조작 값 표찰 > 선 > 잠긴 선 > 면
+//   선을 처음 누르면    →  잡힘 + 글씨 상태(39 그대로 — 숫자를 쓰면 그 선의 치수다)
+//   잡힌 선을 또 누르면 →  이어진 것까지 잡는다(연결 성분)
+//   다른 선을 누르면    →  잡음에 더한다(여럿 잡기)
+//   잡힌 것 위에서 끌면 →  손이다(옮기기·돌리기) — 글씨가 아니다
+//   잡힌 것 밖에서 긋면 →  글씨다(39 그대로)
+//
+// 잡기와 글씨 상태는 **함께 살고 함께 끝난다** — 진입이 같은 몸짓이고 종료(`endWriting`)가
+// 둘 다 놓는다. 따로 놓으면 「글씨는 끝났는데 잡힘이 남아 다음 획이 조작으로 먹히는」
+// 자리가 생긴다(39의 «작도로 돌아간 획» 규약이 깨진다).
+
+import {
+  gripHitAt, lockedHitAt, connectedIds, solveMove, planePointAt, yawOf, rotY,
+  solveJoin, extendTo, faceFrontPose, mapRawSimilarity, type MoveSolve,
+} from '../core/grip'
+import { geomSizeOf } from '../core/lift'
+import type { AxisId } from '../core/camera'
+
+/** 획 하나의 «움직일 수 있는 기하» — 옮김·돌림·맺음이 바꾸는 전부다(깊은 사본으로 든다). */
+export interface GripGeom {
+  a: Pt; b: Pt
+  raw?: Pt[]
+  view?: CamPose
+  own3?: NonNullable<Stroke['own3']>
+}
+
+const geomOf = (s: Stroke): GripGeom => ({
+  a: { ...s.a }, b: { ...s.b },
+  ...(s.raw ? { raw: s.raw.map(p => ({ ...p })) } : {}),
+  ...(s.view ? { view: clonePose(s.view) } : {}),
+  ...(s.own3 ? { own3: { a: { ...s.own3.a }, b: { ...s.own3.b }, axis: s.own3.axis } } : {}),
+})
+
+const putGeom = (s: Stroke, g: GripGeom): void => {
+  s.a = { ...g.a }; s.b = { ...g.b }
+  if (g.raw) s.raw = g.raw.map(p => ({ ...p })); else delete s.raw
+  if (g.view) s.view = clonePose(g.view); else delete s.view
+  if (g.own3) s.own3 = { a: { ...g.own3.a }, b: { ...g.own3.b }, axis: g.own3.axis }
+  else delete s.own3
+}
+
+/** 마지막 조작 — 값 표찰과 손글씨 수정(39의 기제)이 읽는다. */
+export interface Manip {
+  kind: 'move' | 'rotate'
+  ids: number[]
+  /** move — 고른 축·단위 방향 */
+  axis: AxisId | null
+  dir: V3 | null
+  /** rotate — 축점(수직축 둘레) */
+  pivot: V3 | null
+  /** 총량 — move: 세계 단위 · rotate: 라디안 */
+  amount: number
+  /** 조작 «전» 기하와 3D — 값을 다시 쓰면 **여기서부터** 다시 적용한다(누적 오차 ⛔) */
+  base: Map<number, GripGeom>
+  base3: Map<number, { a3: V3; b3: V3 }>
+  /** 값 표찰의 문서 좌표 — 꾹 누르면 값을 고친다(39-5의 문법 그대로) */
+  labelAt: Pt | null
+  /** 이 조작의 실행취소 칸 — 값 수정이 같은 칸의 after를 덮는다(끌기+수정 = 한 조작) */
+  op: Op
+}
+
+export interface GripState {
+  ids: number[]
+  /** 잡은 면(면 안을 꾹 눌렀을 때) — 정면 뷰의 대상 */
+  faceId: number | null
+  manip: Manip | null
+  /** 끌기 실황 — 표시만(render2d의 값 표찰). 입력이 쓰고 놓을 때 비운다. */
+  live: { label: string; at: Pt } | null
+}
+
+export const gripActive = (app: App): boolean => app.grip !== null
+
+/** 꾹 누름의 대상 — 순서가 규칙이다(위 머리주석). 없으면 null(시계를 안 켠다). */
+export type HoldHit =
+  | { kind: 'dim'; id: number }
+  | { kind: 'manip' }
+  | { kind: 'line'; id: number; where: 'end' | 'body'; end?: 0 | 1 }
+  | { kind: 'locked'; id: number }
+  | { kind: 'face'; id: number }
+
+export function holdTargetAt(app: App, p: Pt): HoldHit | null {
+  if (yellowActive(app)) return null                       // 옐로 = 자를 치운 종이(32-8)
+  // ① 치수 숫자(39-5) — 그 자리에 이미 뜻이 있다
+  {
+    const r = C.DIM_LABEL_HIT_PX / app.view.s
+    let best: number | null = null
+    let bestD = r
+    for (const s of app.doc.strokes) {
+      if (s.dim === undefined) continue
+      const q = dimLabelPos(app, s.id)
+      if (!q) continue
+      const d = Math.hypot(p.x - q.x, p.y - q.y)
+      if (d <= bestD) { bestD = d; best = s.id }
+    }
+    if (best !== null) return { kind: 'dim', id: best }
+  }
+  // ② 조작 값 표찰 — 잡은 채로 값을 고친다(같은 반경 — 새 숫자 ⛔)
+  const m = app.grip?.manip
+  if (m?.labelAt && Math.hypot(p.x - m.labelAt.x, p.y - m.labelAt.y) <= C.DIM_LABEL_HIT_PX / app.view.s) {
+    return { kind: 'manip' }
+  }
+  // ③ 선 — 잡기(치수 고르기와 같은 대역 · 끝점은 오스냅 반경 — 새 숫자 ⛔)
+  const bodyR = app.osnap.radius / app.view.s * 2
+  const g = gripHitAt(app.lift, app.pose, p, bodyR, app.osnap.radius / app.view.s)
+  if (g) return { kind: 'line', id: g.id, where: g.where, ...(g.end !== undefined ? { end: g.end } : {}) }
+  // ④ 잠긴 선 — 안 잡히되 **사유를 말한다**(조용히 안 잡히면 고장으로 읽힌다)
+  const lk = lockedHitAt(app.lift, app.pose, p, bodyR)
+  if (lk !== null) return { kind: 'locked', id: lk }
+  // ⑤ 면 — 안(구멍 제외)을 눌렀다
+  for (const f of app.faces) {
+    const poly = faceScreen(app.lift, app.pose, f.outer)
+    if (!poly || !inPoly(p, poly)) continue
+    let inHole = false
+    for (const h of f.holes) {
+      const hp = faceScreen(app.lift, app.pose, h)
+      if (hp && inPoly(p, hp)) { inHole = true; break }
+    }
+    if (!inHole) return { kind: 'face', id: f.id }
+  }
+  return null
+}
+
+export type HoldResult =
+  | { kind: 'write'; via: 'dim' | 'line' }
+  | { kind: 'grip-add'; n: number }
+  | { kind: 'grip-connect'; n: number }
+  | { kind: 'face'; n: number }
+  | { kind: 'manip-edit' }
+  | { kind: 'locked'; id: number }
+  | null
+
+/** 잡은 면의 경계 획 id들 — 잠긴 경계는 못 잡으므로 뺀다(잡기 규칙 그대로) */
+function faceStrokeIds(app: App, faceId: number): number[] {
+  const f = app.doc.faces.find(x => x.id === faceId)
+  if (!f) return []
+  const out = new Set<number>()
+  for (const loop of f.loops) {
+    for (const e of loop.edges) {
+      if (e.kind !== 'stroke') continue
+      const s = app.doc.strokes.find(x => x.id === e.s)
+      // ⚠ 소실점을 만든 획(role 'vp')은 경계라도 안 잡는다 — 카메라가 그 잉크에서
+      // 나오므로(잡기 규칙 ⑩ 그대로). 벽의 밑변이 깊이선이면 그 변만 빠진 채 잡힌다.
+      if (s && s.lock !== 1 && app.lift.lifted.has(e.s)
+        && app.lift.an.roles.get(e.s) === 'content') out.add(e.s)
+    }
+  }
+  return [...out]
+}
+
+/** **꾹 누름의 배선 하나**(#54) — input의 시계가 다 돌면 이것이 불린다.
+ *  39의 진입(beginWriting)을 **대체하지 않는다** — 선을 처음 누르는 갈래가 그것을 그대로
+ *  부른다(치수 쓰기 보존). 잡기·여럿·이어짐·면·값 수정이 그 곁에 얹힌 갈래들이다. */
+export function beginHold(app: App, p: Pt, now: number): HoldResult {
+  const hit = holdTargetAt(app, p)
+  if (!hit) return null
+  if (hit.kind === 'dim') {
+    const via = beginWriting(app, p, now)
+    return via === null ? null : { kind: 'write', via }
+  }
+  if (hit.kind === 'manip') {
+    if (!app.grip?.manip) return null
+    // 값 수정 — 글씨 상태를 (다시) 연다. 대상 획은 조작의 첫 획(강조는 잡힘이 이미 한다).
+    const target = app.grip.manip.ids[0] ?? app.grip.ids[0]
+    if (target === undefined) return null
+    if (!app.write) {
+      app.write = {
+        target, ids: [], last: now,
+        box: inflate(boxOfPts([p])!, C.DIM_GLYPH_MAX_PX / app.view.s / 2),
+        edit: false, op: null, prevDim: undefined, prevScaleRef: app.doc.scaleRef,
+      }
+    }
+    app.write.manip = 1
+    for (const l of app.listeners) l()
+    return { kind: 'manip-edit' }
+  }
+  if (hit.kind === 'locked') return { kind: 'locked', id: hit.id }
+  if (hit.kind === 'face') {
+    const ids = faceStrokeIds(app, hit.id)
+    if (ids.length === 0) return null
+    if (!app.grip) app.grip = { ids: [], faceId: null, manip: null, live: null }
+    for (const id of ids) if (!app.grip.ids.includes(id)) app.grip.ids.push(id)
+    app.grip.faceId = hit.id
+    // 글씨 상태도 연다(잡기 세션 = 글씨 세션 — 위 머리주석) · 대상은 첫 경계 획
+    if (!app.write) {
+      app.write = {
+        target: ids[0]!, ids: [], last: now,
+        box: inflate(boxOfPts([p])!, C.DIM_GLYPH_MAX_PX / app.view.s / 2),
+        edit: false, op: null,
+        prevDim: app.doc.strokes.find(x => x.id === ids[0])?.dim,
+        prevScaleRef: app.doc.scaleRef,
+      }
+    }
+    for (const l of app.listeners) l()
+    return { kind: 'face', n: app.grip.ids.length }
+  }
+  // 선
+  if (!app.grip) {
+    app.grip = { ids: [hit.id], faceId: null, manip: null, live: null }
+    const via = beginWriting(app, p, now)      // 39 그대로 — 숫자를 쓰면 그 선의 치수다
+    for (const l of app.listeners) l()
+    return via === null ? { kind: 'grip-add', n: 1 } : { kind: 'write', via }
+  }
+  if (app.grip.ids.includes(hit.id)) {
+    app.grip.ids = connectedIds(app.lift, app.grip.ids, geomSizeOf(app.lift.lifted))
+    for (const l of app.listeners) l()
+    return { kind: 'grip-connect', n: app.grip.ids.length }
+  }
+  app.grip.ids.push(hit.id)
+  if (app.write) app.write.target = hit.id     // 숫자는 마지막 누른 선의 치수다(39의 대상 규칙)
+  for (const l of app.listeners) l()
+  return { kind: 'grip-add', n: app.grip.ids.length }
+}
+
+/** 잡음을 놓는다 — endWriting이 부른다(한 세션 규약). */
+export function releaseGrip(app: App) {
+  app.grip = null
+}
+
+/** 잡힌 것 위인가 — 글씨 상태 안에서 «이 끌기가 손인가 글씨인가»를 가르는 문(#43:
+ *  점(끝)과 선(몸통)을 갈라 낸다 — 끝은 돌리기, 몸통은 옮기기). */
+export function gripDragStartAt(app: App, p: Pt):
+  { kind: 'move'; id: number; anchor3: V3 } | { kind: 'rotate'; id: number; pivot: V3 } | null {
+  const g = app.grip
+  if (!g || g.ids.length === 0) return null
+  const bodyR = app.osnap.radius / app.view.s * 2
+  const endR = app.osnap.radius / app.view.s
+  // ⚠ **잡힌 획 안에서만** 찾는다 — 전체에서 찾으면 잡힌 획과 끝점을 공유하는 «안 잡힌»
+  // 획이 그 자리를 가로채 끌기가 조용히 죽는다(팔이 실제로 그랬다: 기둥 꼭대기에서 뻗은
+  // 보를 잡고 그 끝을 끌었는데 기둥이 먼저 걸렸다 — 같은 점을 공유한다).
+  let best: { id: number; where: 'end' | 'body'; end: 0 | 1; d: number } | null = null
+  for (const id of g.ids) {
+    const seg2 = app.lift.lifted.get(id)
+    if (!seg2) continue
+    const a = project(app.lift.an, app.pose, seg2.a3)
+    const b = project(app.lift.an, app.pose, seg2.b3)
+    if (!a || !b) continue
+    const dl = distToSeg2(p, a, b)
+    if (dl >= bodyR) continue
+    const da = Math.hypot(p.x - a.x, p.y - a.y)
+    const db = Math.hypot(p.x - b.x, p.y - b.y)
+    const isEnd = da <= endR || db <= endR
+    if (!best || dl < best.d) best = { id, where: isEnd ? 'end' : 'body', end: da <= db ? 0 : 1, d: dl }
+  }
+  if (!best) return null
+  const seg = app.lift.lifted.get(best.id)
+  if (!seg) return null
+  if (best.where === 'end') {
+    // 끝을 잡았다 — **반대 끝**이 축점이다(제도: 끝을 쥐고 돌린다)
+    const pivot = best.end === 0 ? seg.b3 : seg.a3
+    return { kind: 'rotate', id: best.id, pivot: { ...pivot } }
+  }
+  // 몸통 — 눌린 자리의 3D(그 선 위 최근접점)가 앵커다
+  const ray = rayThrough(app.lift.an, app.pose, p)
+  if (!ray) return null
+  const d = sub3(seg.b3, seg.a3)
+  const L = len3(d)
+  const anchor3 = L > 1e-12
+    ? closestOnLineToRay(seg.a3, mul3(d, 1 / L), ray) ?? seg.a3
+    : seg.a3
+  return { kind: 'move', id: best.id, anchor3: { ...anchor3 } }
+}
+
+/** 조작 «전» 기하를 뜬다 — 끌기 시작 시점. */
+export function gripBase(app: App): { base: Map<number, GripGeom>; base3: Map<number, { a3: V3; b3: V3 }> } {
+  const base = new Map<number, GripGeom>()
+  const base3 = new Map<number, { a3: V3; b3: V3 }>()
+  for (const id of app.grip?.ids ?? []) {
+    const s = app.lift.strokes.get(id)
+    const seg = app.lift.lifted.get(id)
+    if (!s || !seg) continue
+    base.set(id, geomOf(s))
+    base3.set(id, { a3: { ...seg.a3 }, b3: { ...seg.b3 } })
+  }
+  return { base, base3 }
+}
+
+/** 3D 목표에서 획 기하를 다시 짓는다 — **원칙 d의 자리**: 2D는 «자기 시점»의 사영이고
+ *  own3가 그 3D를 든다. 사영이 안 서면(카메라 뒤) 지금 시점으로 갈아탄다 — 그래도 안 서면
+ *  null(조작 전체가 중단된다 — 반은 옮기고 반은 남기지 않는다). */
+function geomAt(app: App, base: GripGeom, a3: V3, b3: V3): GripGeom | null {
+  const an = app.lift.an
+  let view = base.view
+  let pose: CamPose = view ?? DRAW_POSE
+  let pa = project(an, pose, a3)
+  let pb = project(an, pose, b3)
+  if (!pa || !pb) {
+    view = isDrawPose(app.pose) ? undefined : clonePose(app.pose)
+    pose = view ?? DRAW_POSE
+    pa = project(an, pose, a3)
+    pb = project(an, pose, b3)
+    if (!pa || !pb) return null
+  }
+  const g: GripGeom = { a: pa, b: pb }
+  if (view) g.view = view
+  if (base.raw && base.raw.length > 1) g.raw = mapRawSimilarity(base.raw, base.a, base.b, pa, pb)
+  // 축은 새 2D에서 다시 배정한다(돌림이 축을 벗어날 수 있다 — 정직하게 null로 간다)
+  const axis = axisOfStroke(an, pose, pa, pb)
+  g.own3 = { a: { ...a3 }, b: { ...b3 }, axis }
+  return g
+}
+
+/** 조작을 적용한다 — base3의 각 획에 `f`를 걸어 새 3D를 얻고 통째로 갈아 끼운다.
+ *  하나라도 못 세우면 **아무것도 안 바꾼다**(원자적 — 조용히 반만 옮기지 않는다). */
+function applyTransform(
+  app: App, base: Map<number, GripGeom>, base3: Map<number, { a3: V3; b3: V3 }>,
+  f: (p: V3) => V3,
+): Map<number, GripGeom> | null {
+  const out = new Map<number, GripGeom>()
+  for (const [id, b3] of base3) {
+    const bg = base.get(id)
+    if (!bg) return null
+    const g = geomAt(app, bg, f(b3.a3), f(b3.b3))
+    if (!g) return null
+    out.set(id, g)
+  }
+  for (const [id, g] of out) {
+    const s = app.doc.strokes.find(x => x.id === id)
+    if (s) putGeom(s, g)
+  }
+  recompute(app)
+  return out
+}
+
+/** **옮김**(축 제한) — base에서 dir·t 만큼. 성공하면 적용된 기하를 돌려준다. */
+export function applyMove(
+  app: App, base: Map<number, GripGeom>, base3: Map<number, { a3: V3; b3: V3 }>,
+  dir: V3, t: number,
+): Map<number, GripGeom> | null {
+  const d = mul3(dir, t)
+  return applyTransform(app, base, base3, p => add3(p, d))
+}
+
+/** **돌림**(수직축) — base에서 pivot 둘레 ang 라디안. */
+export function applyRotate(
+  app: App, base: Map<number, GripGeom>, base3: Map<number, { a3: V3; b3: V3 }>,
+  pivot: V3, ang: number,
+): Map<number, GripGeom> | null {
+  return applyTransform(app, base, base3, p => rotY(p, pivot, ang))
+}
+
+/** 끌기가 끝났다 — 실행취소 칸을 쌓고 조작을 기록한다(값 표찰이 여기서 선다). */
+export function finishManip(
+  app: App, kind: 'move' | 'rotate',
+  base: Map<number, GripGeom>, base3: Map<number, { a3: V3; b3: V3 }>,
+  after: Map<number, GripGeom>,
+  detail: { axis?: AxisId | null; dir?: V3 | null; pivot?: V3 | null; amount: number; labelAt: Pt | null },
+) {
+  const moved: NonNullable<Op['moved']> = []
+  for (const [id, b] of base) {
+    const a = after.get(id)
+    if (a) moved.push({ id, before: b, after: a })
+  }
+  if (moved.length === 0) return
+  const op: Op = { removed: [], added: [], moved }
+  app.undoStack.push(op)
+  app.redoStack = []
+  if (app.grip) {
+    app.grip.manip = {
+      kind, ids: [...base.keys()],
+      axis: detail.axis ?? null, dir: detail.dir ?? null, pivot: detail.pivot ?? null,
+      amount: detail.amount, base, base3, labelAt: detail.labelAt, op,
+    }
+  }
+  for (const l of app.listeners) l()
+}
+
+/** 조작 값의 표시 문자열 — 화면(표찰)과 팔이 같은 것을 읽는다(#54).
+ *  move: mm(축척이 서 있으면) 또는 «N 단위» · rotate: 도. */
+export function manipLabel(app: App): string | null {
+  const m = app.grip?.manip
+  if (!m) return null
+  return manipLabelOf(app, m.kind, m.amount)
+}
+export function manipLabelOf(app: App, kind: 'move' | 'rotate', amount: number): string {
+  if (kind === 'rotate') return `${(Math.abs(amount) * 180 / Math.PI).toFixed(1)}°`
+  const mmPer = app.lift.mmPerUnit
+  if (mmPer === null) return formatUnits(Math.abs(amount))
+  return formatMm(Math.abs(amount) * mmPer, app.doc.unit, app.dimExact)
+}
+
+/** **손글씨가 조작 값을 고친다**(39의 기제 그대로) — base에서 다시 적용한다.
+ *  move: 값은 mm(축척 없으면 세계 단위) · 부호는 지금 방향 그대로.
+ *  rotate: 값은 도 · 부호는 지금 방향 그대로. */
+export function applyManipValue(app: App, value: number): boolean {
+  const m = app.grip?.manip
+  if (!m) return false
+  const sign = m.amount < 0 ? -1 : 1
+  let after: Map<number, GripGeom> | null = null
+  let amount = m.amount
+  if (m.kind === 'move') {
+    if (!m.dir) return false
+    const mmPer = app.lift.mmPerUnit
+    amount = sign * (mmPer === null ? value : value / mmPer)
+    after = applyMove(app, m.base, m.base3, m.dir, amount)
+  } else {
+    if (!m.pivot) return false
+    amount = sign * value * Math.PI / 180
+    after = applyRotate(app, m.base, m.base3, m.pivot, amount)
+  }
+  if (!after) return false
+  m.amount = amount
+  // 실행취소 칸의 after를 덮는다 — 끌기+수정이 «한 조작»이다
+  for (const row of m.op.moved ?? []) {
+    const g = after.get(row.id)
+    if (g) row.after = g
+  }
+  for (const l of app.listeners) l()
+  return true
+}
+
+/** **복제** — 잡힌 획의 사본을 만들고 잡음이 사본으로 옮겨 간다(끌어서 자리를 준다).
+ *  치수(dim)는 베끼지 않는다: 값은 그 획에 «입력된 것»이고 사본은 새 획이다 —
+ *  베끼면 사본마다 축척 후보가 늘고 scaleRef 규칙이 흐려진다. */
+export function duplicateGrip(app: App): number {
+  const g = app.grip
+  if (!g || g.ids.length === 0) return 0
+  const copies: Stroke[] = []
+  for (const id of g.ids) {
+    const s = app.doc.strokes.find(x => x.id === id)
+    if (!s) continue
+    const c: Stroke = { id: app.nextId++, a: { ...s.a }, b: { ...s.b } }
+    if (s.raw) c.raw = s.raw.map(p => ({ ...p }))
+    if (s.rawIn?.press) c.rawIn = { press: [...s.rawIn.press] }
+    if (s.view) c.view = clonePose(s.view)
+    if (s.mat) c.mat = { ...s.mat }
+    if (s.layer !== undefined) c.layer = s.layer
+    if (s.own3) c.own3 = { a: { ...s.own3.a }, b: { ...s.own3.b }, axis: s.own3.axis }
+    copies.push(c)
+  }
+  if (copies.length === 0) return 0
+  app.doc.strokes.push(...copies)
+  app.undoStack.push({ removed: [], added: copies })
+  app.redoStack = []
+  g.ids = copies.map(c => c.id)
+  g.faceId = null          // 면은 원본의 것이다 — 사본 경계는 아직 면이 아니다
+  g.manip = null
+  recompute(app)
+  return copies.length
+}
+
+/** **잠금** — 잡힌 획을 잠근다(그 순간 잡음이 풀린다: 잠긴 것은 안 잡힌다). */
+export function lockGrip(app: App): number {
+  const g = app.grip
+  if (!g || g.ids.length === 0) return 0
+  const changed: { id: number; to: boolean }[] = []
+  for (const id of g.ids) {
+    const s = app.doc.strokes.find(x => x.id === id)
+    if (s && s.lock !== 1) { s.lock = 1; changed.push({ id, to: true }) }
+  }
+  if (changed.length === 0) return 0
+  app.undoStack.push({ removed: [], added: [], lockChanged: changed })
+  app.redoStack = []
+  g.ids = []
+  g.manip = null
+  for (const l of app.listeners) l()
+  return changed.length
+}
+
+/** 잠금 해제 — 잠긴 선을 꾹 눌렀을 때의 답(알림의 밑줄 단어가 부른다). */
+export function unlockStroke(app: App, id: number): boolean {
+  const s = app.doc.strokes.find(x => x.id === id)
+  if (!s || s.lock !== 1) return false
+  delete s.lock
+  app.undoStack.push({ removed: [], added: [], lockChanged: [{ id, to: false }] })
+  app.redoStack = []
+  for (const l of app.listeners) l()
+  return true
+}
+
+export type JoinResult =
+  | { ok: true; P: V3; rel: number; changed: number }
+  | { ok: false; why: 'count' | 'notLifted' | 'parallel' | 'skew' | 'dim'; rel?: number }
+
+/** **맺기(R=0)** — 잡힌 두 선을 3D에서 만나도록 **연장한다**(자르기 ⛔).
+ *  같은 평면 판정: 두 직선의 간격 ÷ 기하 크기 ≤ `C.PLANAR_RATIO`(면 평면성과 같은 자 —
+ *  같은 물음이다 #54). 치수가 길이를 쥔 획은 거부한다 — 연장해도 다음 리프팅에서 치수가
+ *  길이를 도로 세워 조용히 풀린다(조용히 틀리느니 거부하고 이유를 말한다). */
+export function joinGrip(app: App): JoinResult {
+  const g = app.grip
+  if (!g || g.ids.length !== 2) return { ok: false, why: 'count' }
+  const [i1, i2] = [g.ids[0]!, g.ids[1]!]
+  const s1 = app.doc.strokes.find(x => x.id === i1)
+  const s2 = app.doc.strokes.find(x => x.id === i2)
+  const g1 = app.lift.lifted.get(i1)
+  const g2 = app.lift.lifted.get(i2)
+  if (!s1 || !s2 || !g1 || !g2) return { ok: false, why: 'notLifted' }
+  if (s1.dim !== undefined || s2.dim !== undefined) return { ok: false, why: 'dim' }
+  const j = solveJoin(g1, g2)
+  if ('reject' in j) return { ok: false, why: 'parallel' }
+  const size3 = geomSizeOf(app.lift.lifted)
+  const rel = size3 > 0 ? j.gap / size3 : 0
+  if (rel > C.PLANAR_RATIO) return { ok: false, why: 'skew', rel }
+  const base = new Map<number, GripGeom>([[i1, geomOf(s1)], [i2, geomOf(s2)]])
+  const moved: NonNullable<Op['moved']> = []
+  let changed = 0
+  for (const [id, s, seg] of [[i1, s1, g1], [i2, s2, g2]] as const) {
+    const e = extendTo(seg, j.P)
+    if (e.changed === null) continue
+    const ng = geomAt(app, base.get(id)!, e.a3, e.b3)
+    if (!ng) continue
+    putGeom(s, ng)
+    moved.push({ id, before: base.get(id)!, after: ng })
+    changed++
+  }
+  if (changed > 0) {
+    app.undoStack.push({ removed: [], added: [], moved })
+    app.redoStack = []
+    recompute(app)
+  }
+  for (const l of app.listeners) l()
+  return { ok: true, P: j.P, rel, changed }
+}
+
+/** **면 정면 뷰**의 목표 자세 — 잡은 면이 있어야 선다. 평행이 허용되면 평행으로
+ *  (지시: 원근이면 정면이라도 여전히 줄어든다). 전환·보간은 호출자(main)가 42의 길로. */
+export function faceFrontTarget(app: App): CamPose | null {
+  const g = app.grip
+  if (!g || g.faceId === null) return null
+  const f = app.faces.find(x => x.id === g.faceId)
+  if (!f) return null
+  let cx = 0, cy = 0, cz = 0
+  for (const p of f.outer) { cx += p.x; cy += p.y; cz += p.z }
+  const center = v3(cx / f.outer.length, cy / f.outer.length, cz / f.outer.length)
+  const dist = Math.max(1e-6, len3(sub3(app.pose.p, center)))
+  const pose = faceFrontPose(center, f.normal, app.pose, dist)
+  return parallelAllowed(app.lift.an) ? parallelPose(pose, center) : pose
 }
 
 // ── 재기(web2-32 6번) — 두 점을 짚으면 길이가 나온다 ────────────────────────
@@ -1363,6 +1938,16 @@ export function undo(app: App) {
     const i = (app.doc.measures ?? []).findIndex(x => x.id === m.id)
     if (i >= 0) app.doc.measures!.splice(i, 1)
   }
+  // 옮김·돌림·맺음(web2-44) — 기하를 «전»으로 되돌린다(획의 정체는 그대로다)
+  for (const mv of op.moved ?? []) {
+    const s = app.doc.strokes.find(x => x.id === mv.id)
+    if (s) putGeom(s, mv.before)
+  }
+  // 잠금 토글(web2-44)
+  for (const lc of op.lockChanged ?? []) {
+    const s = app.doc.strokes.find(x => x.id === lc.id)
+    if (s) { if (lc.to) delete s.lock; else s.lock = 1 }
+  }
   // 광선이 바뀌어 버린 op는 **그 시점까지** 되돌린다(web2-37 4번 — 위 `Op.pose` 주석).
   // ⚠ `setPose`를 안 부른다: 그것을 부르면 이 복원이 다시 «광선이 바뀌었다»로 읽혀
   //    방금 돌려놓은 획을 그 자리에서 도로 버린다(자기 자신을 되돌리는 고리).
@@ -1397,6 +1982,15 @@ export function redo(app: App) {
       app.doc.sheets.splice(i, 1)
       if (app.activeSheet === op.sheetRemoved.sheet.id) gotoSheet(app, app.doc.sheets[0]!.id)
     }
+  }
+  // 옮김·돌림·맺음(web2-44) — 기하를 «후»로 되민다
+  for (const mv of op.moved ?? []) {
+    const s = app.doc.strokes.find(x => x.id === mv.id)
+    if (s) putGeom(s, mv.after)
+  }
+  for (const lc of op.lockChanged ?? []) {
+    const s = app.doc.strokes.find(x => x.id === lc.id)
+    if (s) { if (lc.to) s.lock = 1; else delete s.lock }
   }
   // 다시 실행 — 값 싣기는 **만든 자리와 같은 함수**를 다시 부른다(#54)
   if (op.dim) setDimension(app, op.dim.id, op.dim.mm)
@@ -1433,6 +2027,7 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
     let removedAny = false
     for (const st of [...app.doc.strokes]) {
       if (st.layer !== app.activeLayer) continue
+      if (st.lock === 1) continue                 // 잠긴 획(web2-44) — 안 지워진다
       if (ek === 'eraser-pencil' && isInk(st)) continue
       if (ek === 'eraser-ink' && !isInk(st)) continue
       if (distToPolyline(p, st.raw ?? [st.a, st.b]) > rad) continue
@@ -1454,6 +2049,7 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
     let removedText = false
     for (const st of [...app.doc.strokes]) {
       if (!isText(st)) continue
+      if (st.lock === 1) continue                 // 잠긴 획(web2-44) — 안 지워진다
       if ((st.layer ?? null) !== app.activeLayer) continue
       if (ek === 'eraser-pencil' && isInk(st)) continue
       if (ek === 'eraser-ink' && !isInk(st)) continue
@@ -1496,6 +2092,7 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
     // 재료 필터 — 연필 지우개는 흑연만, 펜 지우개는 잉크만. 겹쳐 있어도 서로 안 건드린다.
     const target = app.lift.strokes.get(id)
     if (!target) continue
+    if (target.lock === 1) continue               // 잠긴 획(web2-44) — 안 지워진다
     if (ek === 'eraser-pencil' && isInk(target)) continue
     if (ek === 'eraser-ink' && !isInk(target)) continue
     const kept = ps.filter(x => x.strokeId === id && !hit.includes(x))
