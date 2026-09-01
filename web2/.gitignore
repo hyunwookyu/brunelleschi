@@ -3,3 +3,4 @@ playwright-report/
 dist/
 .vite/
 e2e_full.log
+e2e_48_*.log
