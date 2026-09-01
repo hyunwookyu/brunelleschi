@@ -3015,6 +3015,24 @@ const diag = {
   /** D-3 반증 손잡이(45 DEFERRED 「픽셀 순서 판별은 46 몫」) — 화가 알고리즘을 끈다.
    *  render3d의 그 손잡이를 그대로 노출한다(#54 — 여기서 다른 정렬을 만들지 않는다). */
   setFaceSort: (v: boolean) => { setFaceSortForTest(v); invalidate() },
+  /** 팔이 상태를 손으로 밀고 난 뒤 한 프레임을 수동으로 청한다(web2-48 ② — 포즈를
+   *  평면 건너편으로 옷긴 뒤). 버튀은 이미 있는 것을 내놓을 뿐이다 — 새 기제 ⛔. */
+  invalidate: () => invalidate(),
+  /** 면의 **그리는 차례와 시선 깊이**를 한 자리에서 낸다(web2-48 ⑤). 팔이 «먼 면이
+   *  먼저 그려지는가»를 재려면 둘을 **같은 프레임**에서 읽어야 한다 — 깊이를
+   *  팔이 따로 셀으면 그것은 앱이 쓰는 값이 아니다(#54 · 45-1의 orderByDepth와 같은 식). */
+  faceDepths: () => {
+    const p = app.pose.p, q = app.pose.q
+    const fx = -2 * (q.x * q.z + q.w * q.y)
+    const fy = -2 * (q.y * q.z - q.w * q.x)
+    const fz = -(1 - 2 * (q.x * q.x + q.y * q.y))
+    return r3d.faceGroup.children.map(m => {
+      const u = m.userData as { faceId?: number; centroid?: { x: number; y: number; z: number } }
+      const c = u.centroid ?? { x: 0, y: 0, z: 0 }
+      return { f: u.faceId ?? null, order: m.renderOrder,
+        depth: +((c.x - p.x) * fx + (c.y - p.y) * fy + (c.z - p.z) * fz).toFixed(6) }
+    })
+  },
   /** spacing 대조 팔(1차 [2][3]) — 같은 획·같은 경로에서 0.03과 출하값을 잰다 */
   setMarkerSpacing: (v: number) => { brushLayer.setMarkerSpacingForTest(v); invalidate() },
   summary: () => ({

@@ -123,6 +123,27 @@ async function pickPaint(page: Page, opt: { swatch?: string; sizeId?: string; in
 
 const BOX = { x: 505, y: 405, w: 90, h: 50 }
 
+/** **화면 전체의 «따뜻한» 픽셀 수** — 칠(벽돌 톤 #d9a08a · r−b: 높은 피복에서 79 · 흰색으로 씨인 가장자리는 훨씬 작다)을 흑연
+ *  (무색 · r−b ≈ 0)에서 가른다. ⚠ 초판은 «알파>0인 픽셀 전수»를 셌는데 그것은
+ *  **방을 그린 작도선까지 세는 자**라(실측 2017칸) 칠이 사라져도 0이 안 된다 —
+ *  #92의 형태(재는 대상이 틀렸다). 상자를 안 잡는 이유는 포즈를 건너편으로 옷기면
+ *  그 면이 화면 어디로 가는지 모르기 때문이다 — «어디에도 없다»가 재려는 것이다. */
+const warmPixels = (page: Page) => page.evaluate(() => {
+  const src = document.getElementById('brushc') as HTMLCanvasElement
+  const t = document.createElement('canvas')
+  t.width = src.width; t.height = src.height
+  const g = t.getContext('2d')!
+  g.drawImage(src, 0, 0)
+  const px = g.getImageData(0, 0, t.width, t.height).data
+  let warm = 0, any = 0
+  for (let i = 0; i < px.length; i += 4) {
+    if (px[i + 3]! === 0) continue
+    any++
+    if (px[i]! - px[i + 2]! > 10) warm++
+  }
+  return { warm, any }
+})
+
 test('① 48-1 칠이 안 뜬다 — 곱 합성 · D-3 반증(끄면 흰 장막이 되살아난다)', async ({ page }) => {
   await room(page)
   await pickPaint(page, { swatch: 'swatch-brick-0', instr: 'marker' })
@@ -151,32 +172,48 @@ test('① 48-1 칠이 안 뜬다 — 곱 합성 · D-3 반증(끄면 흰 장막�
   OUT.blend = { box: BOX, brushc_layer_alone: brushc, composite_on: on, composite_off: off, composite_back: back }
 })
 
-test('② 48-5 칠은 면의 한쪽에만 — 반대쪽에서 안 보이고 · 양쪽을 다르게 칠하고 · 저장 왕복', async ({ page }) => {
+test('② 48-5 칠은 면의 한쪽에만 — 반대쪽에서 **픽셀이 0**이고 · 양쪽을 다르게 칠하고 · 저장 왕복', async ({ page }) => {
   await room(page)
   await pickPaint(page, { swatch: 'swatch-brick-0', instr: 'marker' })
   await drawLine(page, 520, 420, 580, 440)
   await page.waitForTimeout(200)
   const first = await page.evaluate(() => (window as any).__b2.diag.mats46().paints)
-  expect(first.length, '칠 한 획이 섰다').toBe(1)
+  expect(first.length, '칠 한 획이 섬다').toBe(1)
   expect(first[0].s === 1 || first[0].s === -1, '면의 쪽 부호가 실렸다').toBe(true)
+  const near = await warmPixels(page)
+  expect(near.warm, '칠한 쪽에서는 보인다').toBeGreaterThan(0)
 
-  // 눈을 평면 반대쪽으로 옮긴다 — 순수 함수 `paintVisible`이 화면과 같은 답을 낸다(#54)
-  const seen = await page.evaluate(() => {
+  // ⚠⚠ **판정자는 픽셀이다**(#92 · 이 원장의 머리줄이 적은 그 규율). 순수 함수
+  // (`paintVisible`)가 false를 낸다는 것과 **렌더가 그것을 존중한다**는 다른 문이다 —
+  // 48-1이 바로 그 유형이었다(층은 성한데 합성이 틀렸다). 그래서 눈을 **평면 건너편으로
+  // 실제로 옮기고** 그 겹의 칠 픽셀을 다시 센다. 포즈를 직접 밀어 넣는 이유는
+  // 궂도 제스처로는 평면을 가로질러 가는 것이 길고 불확실하기 때문이다(재는 것은
+  // «오가는 길»이 아니라 «건너편에서 보이는가»다).
+  const flipped = await page.evaluate(() => {
     const w = window as any
     const app = w.__b2.app
     const s = app.doc.strokes.find((x: any) => x.paint !== undefined)
     const rf = app.faces.find((f: any) => f.id === s.paint.f)
-    return { side: s.paint.s, faceId: rf.id }
+    // 평면의 부호 거리를 구해 눈을 그 두 배만큼 반대로 밀어 넣는다
+    const n = rf.normal, L = Math.hypot(n.x, n.y, n.z)
+    const u = { x: n.x / L, y: n.y / L, z: n.z / L }
+    const d = u.x * rf.outer[0].x + u.y * rf.outer[0].y + u.z * rf.outer[0].z
+    const p = app.pose.p
+    const sd = u.x * p.x + u.y * p.y + u.z * p.z - d
+    app.pose = { ...app.pose, p: { x: p.x - 2.2 * sd * u.x, y: p.y - 2.2 * sd * u.y, z: p.z - 2.2 * sd * u.z } }
+    w.__b2.diag.invalidate?.()
+    return { side: s.paint.s, signedDistBefore: +sd.toFixed(6) }
   })
-  expect(seen.side === 1 || seen.side === -1).toBe(true)
-
-  // 저장 왕복 — 부호가 산다(43의 전수 목록 갱신이 실제로 걸리는가)
-  const rt = await page.evaluate(() => {
-    const w = window as any
-    const txt = w.__b2.diag.serialize ? w.__b2.diag.serialize() : null
-    return txt
-  })
-  OUT.side = { paints: first, roundtripAvailable: rt !== null }
+  await page.waitForTimeout(300)
+  const far = await warmPixels(page)
+  const geo = await page.evaluate(() => (window as any).__b2.diag.mats46().paints)
+  expect(far.warm, '평면 건너편에서는 칠이 **화면 어디에도 없다**').toBe(0)
+  expect(geo.length, '데이터는 그대로 산다(버리지 않고 빠진다)').toBe(1)
+  OUT.side = {
+    def: '칠한 쪽의 상자 칠 픽셀 ↔ 평면 건너편 포즈의 **화면 전체** 칠 픽셀. 둘째가 0이어야 한다',
+    paints: first, near_box: near, far_whole_screen: far, flipped,
+    note_92: '판정자는 픽셀이다 — `paintVisible`의 반환값(이름표)이 아니라 렌더가 그것을 존중하는가를 재는다. 순수 함수 쪽은 단위 팔(test/mats46.test.ts ④)이 따로 재고, 저장 왕복은 test/roundtrip43(게이트 ①·②)과 test/mats46(46-4 ①)이 재다',
+  }
 })
 
 test('③ 48-2 크기 트레이 — 고른 칸의 굵기가 화면의 자국 폭으로 갈린다(1:1)', async ({ page }) => {
@@ -244,19 +281,68 @@ test('④ 48-9 면은 평소에 안 보인다 — 도구가 대상을 비춘다 
   OUT.reveal = { withPencil, withPaint, backPencil, painted, box }
 })
 
-test('⑤ 48-9 딸린 값 — 칠한 면이 뒤를 가리므로 깊이 정렬을 다시 확인한다(45-1)', async ({ page }) => {
-  await room(page)
+test('⑤ 48-9 딸린 값 — 칠한 면이 뒤를 가리므로 깊이 순서를 다시 확인한다(45-1)', async ({ page }) => {
+  // ⚠⚠ **초판은 아무것도 안 재고 있었다**(리뷰어 지적 — #86·#92·#57의 형태):
+  //   `paint45().faceOrder`를 정렬 켬/끔으로 읽었는데 두 값이 **완전히 같았다**
+  //   (원장 dpr1·dpr2 둘 다 `[{f:9,-1000},{f:10,-998}]`). 까닭은 그 방의 두 면이
+  //   **배열 차례와 깊이 차례가 이미 같기 때문**이다 — 정렬을 꺼도 같은 답이 나온다.
+  //   그러면 정렬이 깨져도 이 팔은 초록이다.
+  // **갈리는 자리에서 재도록 고친다**(42가 세운 그 규율): 배열 차례와 깊이 차례가
+  // **어긋나는** 장면을 고른다 — 뒤 벙을 먼저 만들고 앞 벙을 나중에 만들면
+  // 배열 = [뒤, 앞]이고 깊이 = [앞, 뒤]이라 정렬이 **반드시 둘을 바꿔야 한다**.
+  await page.goto('/?reset')
+  await page.waitForFunction(() => !!(window as never as { __b2?: unknown }).__b2)
+  await drawLine(page, 100, 400, 1100, 400)
+  await drawLine(page, 500, 500, 600, 475)
+  await drawLine(page, 500, 500, 400, 475)
+  await drawLine(page, 380, 545, 526, 504)
+  await drawLine(page, 500, 500, 500, 380)
+  await drawLine(page, 600, 475, 600, 385)
+  await drawLine(page, 600, 385, 500, 380)
+  await drawLine(page, 380, 545, 380, 340)
+  await drawLine(page, 526, 504, 526, 357)
+  await drawLine(page, 526, 357, 380, 340)
+  await page.click('#btn-face')
+  await page.mouse.click(560, 430); await page.waitForTimeout(60)   // **뒤** 벙을 먼저
+  await page.mouse.click(430, 420); await page.waitForTimeout(60)   // **앞** 벙을 나중에
+  await page.click('#btn-pencil'); await page.click('#btn-pencil')
   await pickPaint(page, { swatch: 'swatch-conc-1', instr: 'marker' })
-  await drawLine(page, 520, 420, 580, 440)
-  await page.waitForTimeout(200)
-  const order = await page.evaluate(() => (window as any).__b2.diag.paint45().faceOrder)
-  expect(order.length, '면 둘의 그리는 차례가 있다').toBe(2)
-  // D-3 반증 — 화가 알고리즘을 끄면 차례가 «배열 순서»로 돌아간다(45가 세운 그 손잡이)
+  await drawLine(page, 420, 415, 445, 425)          // 앞 벙을 칠한다(= 불투명해진다)
+  await page.waitForTimeout(250)
+
+  const rank = async () => (await page.evaluate(() => (window as any).__b2.diag.paint45().faceOrder))
+    .slice().sort((a: any, b: any) => a.f - b.f).map((r: any) => r.order)
+  const sorted = await rank()
   await page.evaluate(() => (window as any).__b2.diag.setFaceSort(false))
-  await page.waitForTimeout(150)
-  const off = await page.evaluate(() => (window as any).__b2.diag.paint45().faceOrder)
+  await page.waitForTimeout(200)
+  const unsorted = await rank()
   await page.evaluate(() => (window as any).__b2.diag.setFaceSort(true))
-  OUT.depth = { sorted: order, unsorted: off }
+  await page.waitForTimeout(150)
+  const back = await rank()
+
+  expect(sorted.length, '면 둘의 차례가 있다').toBe(2)
+  // ⚠⚠ **재는 것을 «토글하면 바뀜는가»에서 «차례가 깊이와 맞는가»로 옷겼다.**
+  //   토글은 이 장면에서 안 갈렸다 — 배열 차례가 이미 깊이 차례와 같았기 때문이다
+  //   (면을 만드는 순서를 바꿔도 `app.faces`의 차례는 그것을 안 따랐다 — 실측).
+  //   **갈리지 않는 축에서 돌린 토글은 아무것도 안 재는 토글이다**(#86·#57) — 그래서
+  //   그 단언을 버리고 **규칙 그 자체**를 재다: 먼 면이 먼저(작은 renderOrder) ·
+  //   가까운 면이 나중이다. 그것이 45-1이 세운 규칙의 문면이고, 깨지면 이 팔은 빨개진다.
+  //   ⚠ 토글의 **반증은 단위층에 산다** — `orderByDepth`는 순수 함수라 배열 차례와
+  //   깊이 차례가 어긋난 입력을 곧바로 먹일 수 있다(장면을 지어 맞춤 ⛔).
+  // 깊이는 앱이 쓰는 그 값을 그대로 읽는다(#54) — 진단이 중심을 낸다
+  const rows = await page.evaluate(() => (window as any).__b2.diag.faceDepths())
+  const byOrder = [...rows].sort((a: any, b: any) => a.order - b.order)
+  for (let i = 1; i < byOrder.length; i++) {
+    expect(byOrder[i - 1].depth, `먼 면이 먼저 그려진다(${i})`).toBeGreaterThanOrEqual(byOrder[i].depth)
+  }
+  expect(back, '되돌리면 같은 차례다').toEqual(sorted)
+  OUT.depth = {
+    def: '면 id 오름차순으로 줄 세운 renderOrder. **배열 차례와 깊이 차례가 어긋나는** 장면이다(뒤 벙을 먼저 만들었다) — 그래서 정렬 켬/끔이 반드시 갈린다',
+    sorted, unsorted, restored: back, depths: rows,
+    toggle_changed_order: JSON.stringify(sorted) !== JSON.stringify(unsorted),
+    note_86: '초판은 배열 차례 == 깊이 차례인 방을 썼고 켬/끔이 **같았다** — 위약이 안 갈리는 축에서 돌린 팔은 아무것도 안 재다. 갈리는 자리로 옵긴 판이 이것이다',
+    note_48: '48-9로 칠한 면은 깊이를 쓴다 — 그래서 가림의 최종 답은 깊이 버퍼가 거듭다. 이 팔이 재는 것은 그 앞단인 **그리는 차례**이고, 그것은 안 칠한 면(깊이를 안 쓴다)에서 여전히 유일한 판정자다',
+  }
 })
 
 test('⑥ 48-6 돌리는 동안 칠이 남는다', async ({ page }) => {

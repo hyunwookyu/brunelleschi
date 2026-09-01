@@ -117,15 +117,27 @@ test('① 칠통 — 재누름이 열고 · 견본이 화면과 같은 상태에
   await page.click('#btn-paint')
   expect(await page.locator('#painttray.open').count(), '재누름이 연다').toBe(1)
   const rows = await page.locator('#painttray .rrow').count()
-  expect(rows, '도구 셋 + 자동 + 재료 다섯').toBe(9)
+  // ⚠ **web2-48이 이 수를 바꿨다**: 「톤 자동」이 사라지고(48-8) 크기 트레이(48-2)와
+  // 색상 휠(48-7)이 들어왔다 — 도구 셋 + 크기 + 휠 + 재료 다섯 = **열**.
+  expect(rows, '도구 셋 + 크기 트레이 + 색상 휠 + 재료 다섯(48-8이 «자동»을 뺀 자리)').toBe(10)
   await page.click('#swatch-wood-2')
   const sel = await page.evaluate(() => (window as any).__b2.diag.mats46().paintSel)
-  expect(sel).toEqual({ m: 'wood', t: 2, i: 'marker' })   // 견본 = 재료+톤, 도구는 마커로
+  // ⚠⚠ **web2-48 48-7이 상태의 모양을 바꿨다**: (재료, 톤) 쌀이 아니라 **색 hex 하나**다
+  // (색의 출처가 둘이면 「고른 색」과 「나가는 색」이 갈린다 — #54). 견본은 **그 색을
+  // 휠에 실는 여러 길 중 하나**가 됐고, 견본이 가리키던 값은 그대로다(무손실).
+  expect(sel.hex, '견본 = 그 톤의 색(나무 · 그림자)').toBe('#8a6238')
+  expect(sel.i, '재료를 고르면 재료 도구로(주력 마커)').toBe('marker')
+  expect(sel.w, '굵기는 크기 트레이의 값이다(48-2)').toBeGreaterThan(0)
+  expect((sel as Record<string, unknown>).m, '⛔ (재료, 톤) 쌀은 상태에 안 남는다').toBeUndefined()
   await page.click('#btn-paint-cp')
   const sel2 = await page.evaluate(() => (window as any).__b2.diag.mats46().paintSel)
   expect(sel2.i).toBe('cp')
-  await page.click('#btn-paint-auto')
-  expect((await page.evaluate(() => (window as any).__b2.diag.mats46().paintSel)).t).toBe('auto')
+  // ⛔ `#btn-paint-auto`(「톤 자동」)는 **48-8이 기능째 없앨다** — 단추가 없는 것을 재는 것이
+  // 이제 이 줄의 일이다(남기면 다음 회차가 «있으니 쓴다»로 되살린다 — #65).
+  expect(await page.locator('#btn-paint-auto').count(), '「톤 자동」은 없다(48-8)').toBe(0)
+  // 그 자리에 들어온 것 둘이 실제로 서 있다
+  expect(await page.locator('#paint-wheel-cv').count(), '색상 휠이 기본이다(48-7)').toBe(1)
+  expect(await page.locator('#paint-sizes .sizebtn').count(), '크기 트레이 다섯 칸(48-2)').toBe(5)
   OUT.tray = { rows, sel_after_swatch: sel, sel_after_cp: sel2.i }
   OUT.constants_used = await page.evaluate(() => (window as any).__b2.diag.mats46().constants)
 })
@@ -409,8 +421,23 @@ test('⑥ 깊이 순서 «픽셀» — 이색 해칭 겹침의 위 색이 앞 �
     reachability_value: 'threshold_sweep.th4.contested',
     reachability_source: '이 파일의 threshold_sweep — 동색(순서가 픽셀에 안 실리는) 상태의 기록은 paint45_e2e depth_after.note_pixel',
   }
-  expect(verdictAll, '문턱 2·4·8 어디서든: 다툰 픽셀 >15').toBe(true)
-  expect(sweep['th16']!.contested, 'Δ 상한 관측 — 16을 넘는 Δ가 없다(실측 최대는 delta_stats.max)').toBe(0)
+  // ⚠⚠ **web2-48 48-9가 이 팔의 반증 손잡이를 죽였다 — 그리고 그것이 좋은 소식이다.**
+  // 46은 «화가 알고리즘을 끄면 교차의 위 색이 뒤집힌다»로 순서를 재셔다. 48-9로
+  // **칠한 면이 깊이를 쓴다**(`depthWrite`) — 채움을 준 두 면은 둘 다 «칠한 면»이므로,
+  // 정렬을 끔 판에서 **뒤 면을 나중에 그려도 깊이 검사가 그것을 버린다**. 그래서
+  // 켬/끔의 화면이 **같아지고**(다텀 픽셀 0) 반증이 발화하지 않는다.
+  // 재던 양이 사라졌으므로 문면을 남기면 **아무것도 안 재는 초록**이 된다(#92) —
+  // 견눠을 옮긴다: 순서가 맞는가를 **절대값**으로 묻는다.
+  // «앞 벙(벽돌 — r>b)»이 겹침 띄에서 이긴다: 양수 픽셀이 음수보다 많다.
+  const posPx = onV.filter(v => v > 2).length, negPx = onV.filter(v => v < -2).length
+  OUT.depth_pixel_48 = {
+    def: '**web2-48 48-9 뒤의 재겨짐** — 칠한 면이 깊이를 쓰므로 화가 알고리즘 온/오프가 화면을 안 바꿔 반증이 죽었다(다텀 픽셀 0). 대신 겹침 띄에서 «앞 면 색»이 이기는가를 절대값으로 재다',
+    r_gt_b: posPx, b_gt_r: negPx,
+    note_48: '순서가 틀리면 이 둘이 뒤집힌다 — 그것이 이제의 판정자다. 깊이 버퍼가 들어온 것은 45-1을 대체한 것이 아니라 **검사가 둘이 된 것**이다: 안 칠한 면은 여전히 깊이를 안 쓰고 화가 알고리즘만이 그 순서를 정한다',
+    note_92: '46의 verdictAll(다텀 픽셀 >15)은 48-9 뒤에 구조적으로 0이다 — 그 문면을 남기면 «재는 양이 결과를 안 바꾸는» 팔이 된다',
+  }
+  expect(posPx, '겹침 띄에서 앞 면(벽돌 — r>b)의 색이 이긴다').toBeGreaterThan(negPx)
+  expect(posPx, '그 자리에 실제로 무언가가 그려져 있다').toBeGreaterThan(15)
 })
 
 test('⑦ 성능 — 획 200 장면: 재료 없이 vs 재료 칠 포함(대조군 — 1차 [10])', async ({ page }) => {

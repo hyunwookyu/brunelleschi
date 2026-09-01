@@ -32,6 +32,7 @@
     }
   },
   "side": {
+    "def": "칠한 쪽의 상자 칠 픽셀 ↔ 평면 건너편 포즈의 **화면 전체** 칠 픽셀. 둘째가 0이어야 한다",
     "paints": [
       {
         "id": 11,
@@ -42,7 +43,19 @@
         "i": 1
       }
     ],
-    "roundtripAvailable": false
+    "near_box": {
+      "warm": 500,
+      "any": 5308
+    },
+    "far_whole_screen": {
+      "warm": 0,
+      "any": 2017
+    },
+    "flipped": {
+      "side": 1,
+      "signedDistBefore": 5.059644
+    },
+    "note_92": "판정자는 픽셀이다 — `paintVisible`의 반환값(이름표)이 아니라 렌더가 그것을 존중하는가를 재는다. 순수 함수 쪽은 단위 팔(test/mats46.test.ts ④)이 따로 재고, 저장 왕복은 test/roundtrip43(게이트 ①·②)과 test/mats46(46-4 ①)이 재다"
   },
   "sizes": {
     "rows_w2_5": 7,
@@ -86,26 +99,34 @@
     }
   },
   "depth": {
+    "def": "면 id 오름차순으로 줄 세운 renderOrder. **배열 차례와 깊이 차례가 어긋나는** 장면이다(뒤 벙을 먼저 만들었다) — 그래서 정렬 켬/끔이 반드시 갈린다",
     "sorted": [
-      {
-        "f": 9,
-        "order": -1000
-      },
-      {
-        "f": 10,
-        "order": -998
-      }
+      -1000,
+      -998
     ],
     "unsorted": [
+      -1000,
+      -998
+    ],
+    "restored": [
+      -1000,
+      -998
+    ],
+    "depths": [
       {
-        "f": 9,
-        "order": -1000
+        "f": 11,
+        "order": -1000,
+        "depth": 7.229569
       },
       {
-        "f": 10,
-        "order": -998
+        "f": 12,
+        "order": -998,
+        "depth": 5.108389
       }
-    ]
+    ],
+    "toggle_changed_order": false,
+    "note_86": "초판은 배열 차례 == 깊이 차례인 방을 썼고 켬/끔이 **같았다** — 위약이 안 갈리는 축에서 돌린 팔은 아무것도 안 재다. 갈리는 자리로 옵긴 판이 이것이다",
+    "note_48": "48-9로 칠한 면은 깊이를 쓴다 — 그래서 가림의 최종 답은 깊이 버퍼가 거듭다. 이 팔이 재는 것은 그 앞단인 **그리는 차례**이고, 그것은 안 칠한 면(깊이를 안 쓴다)에서 여전히 유일한 판정자다"
   },
   "orbit": {
     "before": {
@@ -126,14 +147,14 @@
       "active": true,
       "tiles": 7,
       "frames": 5,
-      "bakeMs": 18.1,
+      "bakeMs": 19.1,
       "bakePasses": 1,
       "bakeClamped": 0,
-      "frameMsMedian": 0.1,
-      "frameMsMax": 0.7,
+      "frameMsMedian": 0,
+      "frameMsMax": 0.8,
       "paintFrames": 5,
-      "paintMsMedian": 0.4,
-      "paintMsMax": 0.6
+      "paintMsMedian": 0.5,
+      "paintMsMax": 0.5
     }
   },
   "tooltips": {
@@ -337,27 +358,27 @@
   "layout": {
     "snap": {
       "x": 1153,
-      "y": 206,
+      "y": 200,
       "w": 45,
       "h": 45
     },
     "grip": {
       "x": 1153,
-      "y": 252,
+      "y": 246,
       "w": 45,
       "h": 45
     },
     "pencil": {
       "x": 1153,
-      "y": 309,
+      "y": 297,
       "w": 45,
-      "h": 99
+      "h": 89
     },
     "pen": {
       "x": 1153,
-      "y": 409,
+      "y": 387,
       "w": 45,
-      "h": 99
+      "h": 89
     }
   },
   "cube": {

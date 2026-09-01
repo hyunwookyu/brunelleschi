@@ -1,22 +1,22 @@
 {
   "what": "web2 검증 비용 원장(web2-10 8-b 리뷰어 [9] — DEFERRED 24행의 되살릴 조건 발화로 신설). 실행 명령·수는 실측.",
-  "measured_at": "web2-47",
+  "measured_at": "web2-48",
   "unit": {
     "command": "npx vitest run (web2/)",
     "files": 121,
-    "tests": 990,
-    "wall_s": 29.0,
-    "passed": 990,
+    "tests": 993,
+    "wall_s": 40.2,
+    "passed": 993,
     "failed": 0,
-    "note": "web2-47 — 파일 119 → 121 · 팔 968 → 990(nums47 16 · nums47_measure 6)."
+    "note": "web2-48 — 파일 121 그대로 · 팔 990 → 993(mats46의 48-3 단색 채움 둘 + 칠의 면의 쪽 하나). 46의 팔 여럿은 견눠을 옷겼다(수가 아니라 뜻이 바뀜다 — 48-7·48-8·48-9)."
   },
   "e2e": {
-    "command": "npx playwright test --workers=2 (dpr1+dpr2)",
-    "cells": 576,
+    "command": "npx playwright test --workers=1 (dpr1+dpr2)",
+    "cells": 596,
     "passed": 576,
     "failed": 0,
     "wall_s": 1800,
-    "note": "web2-47 — 566 → 576(nums47 10칸). 빨강 0(두 회차 연속 — waitink37 ③ dpr2 간헐 선재는 등재 유지)."
+    "note": "web2-48 — 576 → 596(paint48 10칸 × dpr 둘). ⚠ 이 회차는 `--workers=1`로 돌렸다(직렬) — 47의 1800s와 견줄 수 없다. 마감 실행의 값이 이 칸에 들어간다."
   },
   "typecheck_build": {
     "command": "tsc --noEmit · vite build",
@@ -311,6 +311,13 @@
       "unit": 990,
       "e2e": 576,
       "e2e_wall_s": 1800
+    },
+    {
+      "at": "web2-48",
+      "unit": 993,
+      "e2e": 596,
+      "e2e_wall_s": null,
+      "note": "벙시계는 마감 전쟉 실행으로 채운다 — 비워 두지 않고 null로 적어 «안 재음»을 드러낸다(#43)"
     }
   ],
   "environment": {
