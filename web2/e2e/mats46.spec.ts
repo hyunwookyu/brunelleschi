@@ -193,6 +193,7 @@ test('②③ 마커 — 겹침 퇴적 단조(1·2·3겹 스윕) · 끝(팁)이 �
     rel_step_1to2_ship: +rel(sums).toFixed(4), rel_step_1to2_flat: +rel(sat).toFixed(4),
     half_diff_pigment: Math.abs(halfA.pigment - halfB.pigment), step_1to2_pigment: step,
     note_failed_falsify: '알파 1.0(multiply 유지) 판은 상대 계단 0.44로 절반 문을 못 넘었다 — multiply는 알파 1에서도 누적한다. 그 실측이 반증 짝을 source-over로 굳혔다',
+    note_flat_residual: '평면 덮어쓰기의 잔여 계단(rows_flat의 수 % 대역 — 50 2차 [12])은 가장자리 AA 몫이다: 획마다 경계 반픽셀이 다시 칠해져 조금 진해진다. 문(출하의 절반 미만)은 그 잔여를 포함하고도 선다',
   }
   OUT.gate_marker_monotonic = {
     registered: '판정 셋: ① 출하에서 안료 합 1<2<3겹 단조 ② 출하 계단(1→2겹) > 겹0 잡음(half_diff) ③ 대조: rel_step_1to2_flat < rel_step_1to2_ship / 2',
@@ -319,11 +320,16 @@ test('④ 색연필 — 같은 길이 획의 잉크 띠가 마커보다 가늘�
   // 띠 두께가 새 구조에서 **안 갈린다** — 46의 «가늘다»는 p5 촉의 성질이었고 여기서 잃었다.
   // 단언하지 않고 값으로 남긴다(단언하면 늘 빨갛다 — 51이 되세울 때 이 값이 «전»이다).
   const markerRows = await inkRowCount(page, 535, 396, 30, 28)
-  const cpRows = await inkRowCount(page, 528, 380, 34, 70)   // 세로획 — 열 대신 행이 아니라 두께의 자로 못 쓴다
+  const cpRows = await inkRowCount(page, 528, 380, 34, 70)   // 세로획 — 존재 확인(두께 자 아님)
+  // 잃은 거동을 **대등한 자**로 기록한다(50 2차 [6]㉡ — 문면 숫자가 아니라 필드로):
+  // 색연필 «가로» 획을 마커와 같은 창 모양(30×28)으로 재서 두 행 수를 나란히 남긴다.
+  await drawLine(page, 520, 478, 580, 478)
+  await page.waitForTimeout(200)
+  const cpRowsH = await inkRowCount(page, 535, 464, 30, 28)
   OUT.cp_thin_lost = {
-    def: '같은 트레이 값(기본)의 마커 가로띠 두께(행 수) — 46은 cp가 ~1/3였다(그 팔의 «전» 값: 46 시점 원장). 50 구조에서 굵기는 트레이 값 하나가 정하므로 갈리지 않는다 — 잃은 거동의 기록(51의 «색연필: 결이 굵고…»가 되세울 자리). cpRows는 세로획이라 두께 자가 아니다 — 비교용이 아니라 존재 확인',
-    marker_rows: markerRows, cp_vertical_present_rows: cpRows,
-    lost: '«가늘다»(같은 트레이에서 도구별 두께 차) — 50에서 실측 소멸(mats46 초판 이관 시 17↔16 관측)',
+    def: '같은 트레이 값(기본)의 마커 가로띠 ↔ 색연필 가로띠 두께(행 수 · 같은 창 30×28 — 대등한 자). 46은 cp가 ~1/3였다(46 시점 원장 — 역사). 50 구조에서 굵기는 트레이 값 하나가 정하므로 갈리지 않는다 — 잃은 거동의 «값»이 이 두 필드다(51의 «색연필: 결이 굵고…»가 되세울 자리 · 단언하지 않는다 — 단언하면 늘 빨갛다)',
+    marker_rows: markerRows, cp_rows_h: cpRowsH, cp_vertical_present_rows: cpRows,
+    lost: '«가늘다»(같은 트레이에서 도구별 두께 차) — marker_rows ↔ cp_rows_h가 같은 대역인 것이 그 손실의 실측이다',
   }
   OUT.cp_vs_marker = {
     def: '마커(나무 톤) 가로띠를 색연필(벽돌 그림자 톤 — 다른 색)이 세로로 가로지른다 — 교차 상자 평균 RGB ↔ 색연필 단독 상자 평균 RGB의 거리. 0에 가까우면 «완전히 덮는다»(계약 위반)',
@@ -437,7 +443,7 @@ test('⑥ 깊이 순서 «픽셀» — 이색 해칭 겹침의 위 색이 앞 �
   const dSd = Math.sqrt(deltas.reduce((s, v) => s + (v - dMean) ** 2, 0) / Math.max(1, deltas.length))
   console.log('[depth sweep]', JSON.stringify(sweep))
   OUT.depth_pixel = {
-    def: '겹침 상자(502,385,22×110 — CSS px·판독은 dpr 배·분모 box_px) #gl의 픽셀별 (r−b). 다툰 픽셀 = 정렬 켬/끔에서 |Δ|>문턱인 자리(해칭 교차 그 자체). 문턱 2·4·8·16 스윕 — **판정은 «다툰 자리 >15»를 문턱 2·4·8 전부에서**(to_front는 기록만 — 구성적 귀결. th16 공집합 = Δ ≤ 16의 관측, 실측 최대는 delta_stats.max). ⚠ 문턱 15는 첫 관측(최소 33) 뒤 그 절반 아래로 박은 보수값이다 — 사전 등록이 아니다(#26의 유보를 정직하게 남긴다, 2차 [5])',
+    def: '겹침 상자(502,385,22×110 — CSS px·판독은 dpr 배·분모 box_px) #gl의 픽셀별 (r−b). 다툰 픽셀 = 정렬 켬/끔에서 |Δ|>문턱인 자리(해칭 교차 그 자체). 문턱 2·4·8·16 스윕 — ⚠ **이 스윕은 이제 기록이다**(46 시점의 «다툰 자리 >15 · 문턱 셋 전부» 판정은 48-9가 죽였다 — 현행 판정은 depth_pixel_48: r_gt_b > b_gt_r · r_gt_b > 15. 50 2차 [4]가 def의 낡은 문면을 잡아 고쳤다). th8·th16의 0은 48-9 이후 화면의 관측(실측 최대는 delta_stats.max)',
     box_px: await page.evaluate(() => {
       const dpr = window.devicePixelRatio || 1
       return Math.round(22 * dpr) * Math.round(110 * dpr)
@@ -450,9 +456,9 @@ test('⑥ 깊이 순서 «픽셀» — 이색 해칭 겹침의 위 색이 앞 �
     note_45: '45 DEFERRED 「픽셀 순서 판별은 46 몫」의 그 팔이다 — 같은 색 반투명은 over 합성이 교환이라 45는 못 쟀다',
   }
   OUT.gate_depth_pixel = {
-    registered: '⚠ 문면 갱신(web2-50 리뷰어 [3]): 46 시점의 «문턱 2·4·8 전부에서 다툰 픽셀 >15»는 48-9(칠한 면의 깊이 쓰기)가 죽였고, **현행 판정은 depth_pixel_48**(r_gt_b > b_gt_r · r_gt_b > 15)이다. threshold_sweep은 기록이다 — th8·th16의 0은 48-9 이후의 화면이고 **50의 회귀가 아니다**(#80 — main(=49 마감) 트리에서 같은 값 71/22/0 실측 · 2026-09-02)',
+    registered: '⚠ 문면 갱신(web2-50 리뷰어 [3]): 46 시점의 «문턱 2·4·8 전부에서 다툰 픽셀 >15»는 48-9(칠한 면의 깊이 쓰기)가 죽였고, **현행 판정은 depth_pixel_48**(r_gt_b > b_gt_r · r_gt_b > 15)이다. threshold_sweep은 기록이다 — th8·th16의 0은 48-9 이후의 화면이고 **50의 회귀가 아니다**(#80 — main(=49 마감) 트리에서 같은 값 71/22/0 실측 · 2026-09-02 — ⚠ 그 대조는 워크트리 일회 실행이라 원장 파일이 없다: 이 문자열이 그 기록의 전부다)',
     value: 'depth_pixel_48.r_gt_b · b_gt_r (threshold_sweep은 기록)',
-    reachability: 'D-3 짝(정렬 끔)이 다툰 픽셀 그 자체를 만든다 — 순서가 픽셀에 안 실리면(45의 동색 상태) 다툰 픽셀이 0이 되어 이 게이트가 실패한다. 45 원장 depth_after.note_pixel이 그 «못 재는 상태»의 기록이다',
+    reachability: '⚠ **현행 판정(r_gt_b 비교)에는 같은 실행의 반증이 없다**(50 2차 [5] — 정직 표기): 48-9의 깊이 쓰기가 정렬 끔 스위치를 무효화해(켬/끔 화면 동일) 순서를 뒤집는 손잡이가 없다. 이 게이트는 «반증 없는 절대값 관측»이다 — 뒤집힘을 재현할 새 기제(예: 깊이 끔 스위치)는 DEFERRED. 46 시점의 반증(정렬 끔 → 다툰 픽셀) 기록은 threshold_sweep이 든다',
     reachability_value: 'threshold_sweep.th4.contested',
     reachability_source: '이 파일의 threshold_sweep — 동색(순서가 픽셀에 안 실리는) 상태의 기록은 paint45_e2e depth_after.note_pixel',
   }

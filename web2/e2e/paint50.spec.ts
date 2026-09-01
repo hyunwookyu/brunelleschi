@@ -202,27 +202,34 @@ test('①② 곱 — 어느 픽셀도 안 밝아지고 · 아래 무늬가 비�
   const rampMax = Math.max(...ramp.map(r => r.lum))
   expect(rampMax, '램프 어느 자리도 종이보다 밝지 않다 — 흰쪽으로 안 간다').toBeLessThanOrEqual(paperLum + lumTol)
   expect(Math.min(...ramp.map(r => r.lum)), '램프가 실제로 획 안을 지난다(어두운 자리가 있다)').toBeLessThan(paperLum - 20)
-  // ② 아래 무늬(벽돌)·선이 칠 아래에서 살아 있다 — 분자/분모로 센다(#16 — 2차 대응 [12])
-  const under = await page.evaluate(() => {
+  // ② 아래 무늬(벽돌)·선이 칠 아래에서 살아 있다 — 판정 지표는 **띠 안 대비**다(2차 [2]):
+  // 칠 띠(파란 픽셀)의 75분위 밝기보다 12 이상 어두운 픽셀 수. 곱이면 무늬 선이 띠 몸통보다
+  // 어둡게 남고, over(반증)면 띠가 균일해져 0 대역으로 죽는다 — 그것이 판별력이다.
+  // (초판의 «유지 비»는 실측이 정확히 1.000이라 아무것도 안 갈랐다 — 그 실패가 이 지표를 골랐다.)
+  const bandContrast = (key: string) => page.evaluate((k) => {
     const w2 = window as any
-    const A = w2.__p50.base as ImageData, B = w2.__p50.painted as ImageData
-    let repBase = 0, bandPx = 0, repInBandBefore = 0, repUnderPaint = 0
-    for (let i = 0; i < A.data.length; i += 4) {
-      const aA = A.data[i + 3]!, aB = B.data[i + 3]!
-      const grayA = aA > 40 && Math.abs(A.data[i]! - A.data[i + 2]!) < 25       // 무늬·선(무채색)
-      const blueB = aB > 16 && B.data[i + 2]! - B.data[i]! > 30                 // 칠 띠
-      if (grayA) repBase++
-      if (blueB) bandPx++
-      if (grayA && blueB) {
-        repInBandBefore++                       // 분모 — 칠 «전» 그 자리에 있던 무늬 픽셀
-        if (aB > 40) repUnderPaint++            // 분자 — 칠 «후»에도 잉크를 유지하는 자리
+    const B = w2.__p50[k as string] as ImageData
+    const lums: number[] = []
+    const idx: number[] = []
+    for (let i = 0; i < B.data.length; i += 4) {
+      const a = B.data[i + 3]!
+      if (a > 16 && B.data[i + 2]! - B.data[i]! > 30) {
+        const al = a / 255
+        lums.push((0.299 * B.data[i]! + 0.587 * B.data[i + 1]! + 0.114 * B.data[i + 2]!) * al + 255 * (1 - al))
+        idx.push(i)
       }
     }
-    return { repBase, bandPx, repInBandBefore, repUnderPaint }
-  })
-  expect(under.repBase, '벽돌 무늬가 깔려 있었다').toBeGreaterThan(500)
-  expect(under.repInBandBefore, '띠 안에 무늬가 실제로 있었다(분모)').toBeGreaterThan(100)
-  expect(under.repUnderPaint / under.repInBandBefore, '칠 띠 안 무늬 유지 비(분자/분모)').toBeGreaterThan(0.8)
+    if (lums.length === 0) return { bandPx: 0, contrastPx: 0 }
+    const sorted = [...lums].sort((a, b) => a - b)
+    const p75 = sorted[Math.floor(sorted.length * 0.75)]!
+    let contrastPx = 0
+    for (const L of lums) if (L < p75 - 12) contrastPx++
+    return { bandPx: lums.length, contrastPx }
+  }, key)
+  const under = await bandContrast('painted')
+  const cs = await page.evaluate(() => (window as any).__b2.diag.paint50Constants())
+  expect(under.bandPx, '칠 띠가 실제로 있다(분모)').toBeGreaterThan(1000)
+  expect(under.contrastPx, '띠 안에 아래 무늬의 대비가 남는다(비친다)').toBeGreaterThan(cs.PAINT50_PATTERN_MIN_PX)
   // ②-선: 지시 문면의 «아래 선» — 벽 위 모서리(3D 획 y=330 대역)를 칠 띠가 가로지른다.
   // 선의 어두운 픽셀이 칠 뒤에도 남는 것을 전/후 «수»로 잰다(선은 renderOrder 0 — 칠 위).
   // 화면에서 «선»으로 읽히는 잉크는 흑연 질감(#brushc — #gl 위 겹)이다. 칠은 #gl 안이라
@@ -243,13 +250,17 @@ test('①② 곱 — 어느 픽셀도 안 밝아지고 · 아래 무늬가 비�
     for (let i = 3; i < d.length; i += 4) if (d[i]! > 8) ink++
     return ink
   }, lineBox as unknown)
-  expect(lineAfter, '칠 띠가 지나가는 위 모서리의 «선» 잉크(#brushc — 칠 위 겹)가 살아 있다').toBeGreaterThan(20)
+  expect(lineAfter, '칠 띠가 지나가는 위 모서리의 «선» 잉크(#brushc — 칠 위 겹)가 살아 있다').toBeGreaterThan(cs.PAINT50_LINE_INK_MIN_PX)
   // D-3 반증 — 보통(over) 합성으로 되돌리면 흰 바탕이 아래를 덮어 밝아진다
   await page.evaluate(() => (window as any).__b2.diag.setPaintBlendForTest(true))
   await page.waitForTimeout(200)
   await snapBox(page, 'over', WALL.x, WALL.y, WALL.w, WALL.h)
   const d2 = await diffBoxes(page, 'base', 'over', 3)
   expect(d2.brighter, '반증 — over 합성은 밝아지는 픽셀을 실제로 낸다').toBeGreaterThan(200)
+  // 반증 조건에서 ②의 지표도 같이 잰다(2차 [2] — 지표가 실제로 갈리는가): over면 띠가
+  // 균일해져 대비 픽셀이 출하의 소수 대역으로 죽는다.
+  const underOver = await bandContrast('over')
+  expect(underOver.contrastPx, '반증 — over에서는 띠 안 대비가 죽는다(지표의 판별력)').toBeLessThan(under.contrastPx * 0.5)
   await page.evaluate(() => (window as any).__b2.diag.setPaintBlendForTest(false))
   await page.waitForTimeout(120)
   // #97 — 텍스처 캔버스는 DOM에 안 붙는다(전역 canvas 규칙에 안 걸린다 — 값으로)
@@ -258,17 +269,21 @@ test('①② 곱 — 어느 픽셀도 안 밝아지고 · 아래 무늬가 비�
   OUT.multiply = {
     def: '벽(무늬 벽돌) 상자 — 칠 전/후 픽셀 밝기(알파 미리곱을 종이 위 밝기로 편 값 · 문턱 C.PAINT50_LUM_TOL). 램프 = 세로획을 y=500에서 수평으로 가로지른 픽셀별 {a,r,g,b,lum}(지시 ①의 형식 그대로). under = 분자/분모(#16). 선 = 위 모서리 상자의 어두운 픽셀 수(칠 뒤). 반증 = NormalBlending 스위치(같은 실행)',
     no_brighter: d1, edge_ramp: ramp, ramp_max_lum: rampMax, paper_lum: +paperLum.toFixed(1),
-    under_pattern: under, line_under_band_dark: lineAfter,
+    under_pattern: under, under_pattern_over: underOver, line_under_band_dark: lineAfter,
     falsify_over: d2,
     dom_canvas: { before: domCanvasBefore, after: domCanvasAfter },
+    constants_used: {
+      PAINT50_LUM_TOL: cs.PAINT50_LUM_TOL, PAINT50_PATTERN_MIN_PX: cs.PAINT50_PATTERN_MIN_PX,
+      PAINT50_LINE_INK_MIN_PX: cs.PAINT50_LINE_INK_MIN_PX, PAINT50_FORESHORTEN_TOL: cs.PAINT50_FORESHORTEN_TOL,
+    },
     note_alpha: '이 구조의 칠은 알파가 안 떨어진다(불투명 텍스처 + 곱) — «알파가 떨어질 때 RGB가 흰색으로»의 그 병리는 대역 자체가 소멸했고, 램프가 남기는 것은 «가장자리 어디에서도 종이보다 밝지 않다»다',
   }
   OUT.gate_multiply = {
-    registered: 'C.PAINT50_LUM_TOL — ① brighter == 0(문턱 그 값) ② ramp_max_lum ≤ paper_lum + 문턱 ③ 띠 안 무늬 유지 비 > 0.8 ④ 선 상자 어두운 픽셀 > 20',
-    value: 'no_brighter.brighter · ramp_max_lum · under_pattern · line_under_band_dark',
-    reachability: '반증 스위치(setPaintBlendForTest — over)가 같은 실행에서 brighter를 십만 대역으로 낸다',
-    reachability_value: 'falsify_over.brighter',
-    reachability_source: '이 파일의 falsify_over ↔ no_brighter',
+    registered: '① brighter == 0(문턱 C.PAINT50_LUM_TOL) ② ramp_max_lum ≤ paper_lum + 그 문턱 ③ 띠 안 대비 픽셀 > C.PAINT50_PATTERN_MIN_PX ④ 선 잉크 > C.PAINT50_LINE_INK_MIN_PX — 값은 constants_used가 든다(2차 [3])',
+    value: 'no_brighter.brighter · ramp_max_lum · under_pattern.contrastPx · line_under_band_dark',
+    reachability: '반증 스위치(setPaintBlendForTest — over)가 같은 실행에서 ①을 brighter 십만 대역으로, ③을 대비 소수 대역(under_pattern_over)으로 뒤집는다(2차 [2] — 지표별 판별력)',
+    reachability_value: 'falsify_over.brighter · under_pattern_over.contrastPx',
+    reachability_source: '이 파일의 falsify_over ↔ no_brighter · under_pattern_over ↔ under_pattern',
   }
 })
 
@@ -353,7 +368,8 @@ test('④⑤ 원근 폭(가까운 끝 > 먼 끝) · 면 경계 절단(밖은 0)'
   OUT.foreshorten_clip = {
     def: '경계를 일부러 지나는 마커 획 — 열별 파란 띠 두께(물리 px · ±2열 평균). near=545css · far=855css · 밖=488/915css. 기대 비 = 벽 투영 높이 비(픽스처에서 유도 — #88)',
     near_px: +near.toFixed(1), far_px: +far.toFixed(1), ratio: +ratio.toFixed(3),
-    expected_ratio: +expected.toFixed(3), tol_registered: 'C.PAINT50_FORESHORTEN_TOL',
+    expected_ratio: +expected.toFixed(3), tol_registered: 'C.PAINT50_FORESHORTEN_TOL', tol_value: tol,
+    note_dpr_bias: '실측/기대 잔차가 두 dpr 다 양의 방향(2차 [9]) — 띠 두께 계수(채널 차 문턱·±2열 평균·AA)의 dpr 의존 편의로 본다. 유보로 남긴다 — 문 안이고 방향이 판정(화면 고정 1.0과의 판별)을 돕는 쪽이다',
     screen_fixed_would_give: 1.0,
     left_out_px: leftOut, right_out_px: rightOut,
     note_hole: '개구부 «구멍»의 픽셀 팔은 없다 — 기하는 단위(facetex.test 개구부)가 잰다. 경계 절단이 같은 기제(메시가 텍스처를 문다)의 바깥판이다. ⚠ #5의 지위: 메시 밖 래스터화는 구성상 없다 — 이 0/0이 재는 것은 «splitByFace·메시·uv 배선이 경계를 같은 자리에 긋는가»다',
@@ -568,12 +584,14 @@ test('⚑ 성능 — 스무 면 · 칠 40획: 프레임(#82 — 차)과 텍스�
     def: '분할 두 벽(면 faceN — ⚠ 지시 목표 «20 이상»에 셋 모자란다: rep49 frame20의 그 픽스처 그대로다. note_89 참조) + 칠 40붓 — 텍스처 수·단계 분포·합계 바이트(w·h·4). 프레임은 같은 장면 전/후 «차»(#82) — 잡음 바닥(before↔before2)과 함께 읽는다',
     faces: faceN, paint_strokes: paintN,
     textures: texes.length, levels: texes.map((t: any) => t.level), bytes_total: bytes,
+    screen_px_prequant: texes.map((t: any) => t.screenPx),      // 양자화 «전» 값(2차 [8])
+    clamped: texes.map((t: any) => t.clamped),                  // 상한 포화 여부 — 단일 levels의 정체를 가른다
     levels_zoomed_out: texesOut.map((t: any) => t.level), max_level_zoomed_out: maxOut,
     max_level: maxLevel, cap: cMax.FACETEX_MAX_PX, min: cMax.FACETEX_MIN_PX,
     before_ms: before, before2_ms: before2, noise_floor_ms: noise, after_ms: after,
     delta_median_ms: +(after.median - before2.median).toFixed(2),
     delta_p90_ms: +(after.p90 - before2.p90).toFixed(2),
-    note_cap: '상한 1024의 근거 — 이 장면의 합계 바이트가 bytes_total이다(장당 평균은 정사각이 아니라 긴 변만 단계라 4.19MB보다 작다 — 2차 대응 [9]가 초판의 «수백 MB» 산술을 지웠다). 2048이면 면적 4배 — 이 장면 기준 ~4×bytes_total(dpr2 ~60MB 대역)이고, 실장면(면 수·양쪽 칠)이 그 위로 곱해진다',
+    note_cap: '상한 1024의 근거 — 이 장면의 합계 바이트가 bytes_total이다(장당 평균은 정사각이 아니라 긴 변만 단계라 1024²×4=4.19MB보다 작다). ⚠ «상한을 올리면 4×»는 **포화한 실행에만** 걸리는 산술이다(2차 [8] — clamped가 참인 장들만 상한을 따라 커진다): dpr2는 전 장 포화라 ~4×bytes_total(~60MB 대역), dpr1은 전 장 미포화(512)라 상한을 올려도 이 장면 바이트는 불변이다. 실장면(면 수·양쪽 칠·dpr)이 그 위로 곱해진다',
     note_89: '목표 «스무 면»에 못 미치면 faces 값이 그 사실이다 — 상한을 조용히 줄이지 않는다(rep49 note_89 그대로 · 같은 픽스처가 세운 면이 17이다)',
     note_levels: '기본 줌의 levels가 전부 같은 값인 것은 이 장면의 셀들이 비슷한 화면 크기라서다 — «작으면 낮게»의 실측은 levels_zoomed_out(줌 아웃에서 단계 하강)이 든다',
     note_82: '중앙값이 vsync 바닥(16.7ms)에 붙은 실행에서는 차의 해상도가 눈금뿐이다(rep49 frame20의 그 유보 그대로). ⚠ dpr2의 delta_median_ms가 잡음 바닥 밖인 것은 헤드리스 소프트웨어 GL의 채움 비용 의심 — DEFERRED web2-50 행 · 실기기 관측 판정자',
@@ -600,9 +618,17 @@ test('옛 칠 알림 — 45~48 형식의 문서를 «열면» 화면에 한 줄�
   expect(noticeText, '여는 순간 화면의 한 줄이 «옛 칠»을 말한다').toContain('옛 칠')
   const kept = await page.evaluate(() => (window as any).__b2.app.doc.strokes.length)
   expect(kept, '나머지(선·면)는 그대로 열렸다').toBe(j.strokes.length - 1)
+  // 부정 대조(D-3 · 2차 [11] — «뜬다»만 세면 있는 쪽으로 세어진다 #96): 현행 형식(성한
+  // 저장물)에서는 그 문구가 **안** 뜬다.
+  await putSaved(page, txt)
+  await page.goto('/')
+  await bootDone(page)
+  await page.waitForTimeout(400)
+  const noticeClean = await page.evaluate(() => document.getElementById('notice')?.textContent ?? '')
+  expect(noticeClean, '부정 대조 — 성한 파일에서는 그 줄이 없다').not.toContain('옛 칠')
   OUT.old_paint_notice = {
-    def: '48 형식(uv 없음) 칠 1획이 든 저장물을 자동 저장 자리에 넣고 새로 고침 — #notice의 문구(행위 판 · #94)와 살아남은 획 수',
-    notice: noticeText, strokes_saved: j.strokes.length, strokes_kept: kept,
+    def: '48 형식(uv 없음) 칠 1획이 든 저장물을 자동 저장 자리에 넣고 새로 고침 — #notice의 문구(행위 판 · #94)와 살아남은 획 수. 부정 대조 = 현행 형식 저장물의 같은 절차(문구 없음)',
+    notice: noticeText, notice_clean: noticeClean, strokes_saved: j.strokes.length, strokes_kept: kept,
   }
 })
 

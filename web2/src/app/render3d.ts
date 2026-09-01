@@ -567,7 +567,9 @@ function gatePaintTex(r: R3D, app: App) {
       e.level = lv
     }
     e.mesh.visible = sideOk
-    e.mesh.userData.gate = { side: sideOk, level: e.level }
+    // screenPx(양자화 «전» 값)와 포화 여부를 기록한다(2차 [8] — 상한 포화와 «비슷한
+    // 크기»를 팔이 가르는 재료. 같은 계산의 기록이지 두 벌 계산이 아니다 #54).
+    e.mesh.userData.gate = { side: sideOk, level: e.level, screenPx: Math.round(screenPx), clamped: screenPx > C.FACETEX_MAX_PX }
   }
 }
 
@@ -584,13 +586,15 @@ export function setPaintBlendForTest(v: boolean) {
   }
 }
 
-/** 진단·팔용 — 지금 서 있는 텍스처들의 요약(자리·단계·굽힌 크기·합성). */
-export function paintTexStats(): { key: string; level: number; w: number; h: number; visible: boolean; blending: number }[] {
-  const out: { key: string; level: number; w: number; h: number; visible: boolean; blending: number }[] = []
+/** 진단·팔용 — 지금 서 있는 텍스처들의 요약(자리·단계·양자화 전 크기·포화·합성). */
+export function paintTexStats(): { key: string; level: number; w: number; h: number; visible: boolean; blending: number; screenPx: number | null; clamped: boolean }[] {
+  const out: { key: string; level: number; w: number; h: number; visible: boolean; blending: number; screenPx: number | null; clamped: boolean }[] = []
   for (const [k, e] of paintTexes) {
+    const gate = e.mesh.userData.gate as { screenPx?: number; clamped?: boolean } | undefined
     out.push({
       key: k, level: e.level, w: e.canvas.width, h: e.canvas.height, visible: e.mesh.visible,
       blending: (e.mesh.material as THREE.MeshBasicMaterial).blending,
+      screenPx: gate?.screenPx ?? null, clamped: gate?.clamped ?? false,
     })
   }
   return out
