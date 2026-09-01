@@ -81,7 +81,8 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
   //   (#75 ㉣). ⚠ 그리고 이 팔이 **실제로 그 추가를 잡았다** — 전량 e2e에서 빨갰다.
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#display-pop input')].map(e => e.id)))
-    .toEqual(['chk-horizon', 'chk-grid', 'chk-waitfade', 'chk-hidden', 'rng-hold', 'rng-whold'])
+    // web2-45가 해칭 판 토글(chk-hatchface — ⚑의 그 물음)을 더했다(#75 ㉣ — 표를 고친다)
+    .toEqual(['chk-horizon', 'chk-grid', 'chk-waitfade', 'chk-hidden', 'chk-hatchface', 'rng-hold', 'rng-whold'])
   // 시스템(세로바 아래 묶음) — 파일 서랍 + **설정**(web2-30 10번 · 톱니바퀴).
   // web2-19 3-a가 「설정 자루」를 해체하면서 둘 곳이 없어졌던 자리를 되세운 것이다.
   // ⚠⚠ **web2-34 6번이 표를 갈랐다** — 시스템 묶음(파일·설정 서랍)이 **위 띠로 올라왔다.**
@@ -116,8 +117,9 @@ test('① 네 자리 — 각 자리의 id 목록이 정확히 표대로다(값�
   //   **표와 선택자가 갈렸다**(#75 ㉣): 줄 안의 버튼도 문서 순서 그대로 전수에 든다.
   expect(await page.evaluate(() =>
     [...document.querySelectorAll('#sidebar-body > button, #sidebar-body > details, #sidebar-body > .bar-row > button')].map(e => e.id)))
+    // web2-45가 붓(btn-paint — 칠하기)을 면 아래에 더했다(#75 ㉣)
     .toEqual(['btn-draw-view', 'btn-zoom-fit', 'btn-lens', 'btn-undo', 'btn-redo', 'btn-snap', 'btn-grip', 'btn-pencil', 'btn-pen',
-      'btn-eraser-pencil', 'btn-eraser-ink', 'dim-toggle', 'btn-roll', 'btn-face'])
+      'btn-eraser-pencil', 'btn-eraser-ink', 'dim-toggle', 'btn-roll', 'btn-face', 'btn-paint'])
   // 되돌리기와 도구 사이에 **구분선**이 실제로 있다(공백이 아니라 채널 — 3-c)
   expect(await page.evaluate(() => {
     const d = document.querySelector('#sidebar-body .bar-divider')

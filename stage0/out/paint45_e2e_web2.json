@@ -1,0 +1,28 @@
+{
+  "what": "web2-45 — 화면 몫: 붓 픽셀 · 시점 추종 · 채움 두 판 · 깊이 정렬 후 · 정면 칠",
+  "note_92": "#92 — 칠·채움의 판정자는 픽셀·선분 수(결과의 자리)다. ink_after_orbit 같은 픽셀 계수는 분포가 아니라 «잉크가 있다»의 수다(#40 대상 아님)",
+  "note_47": "#47 — 깊이 기준선(전 33/33)은 faces45_web2.json scene_depth가 정본이다",
+  "brush": {
+    "ink_before": 560,
+    "ink_after": 1147,
+    "paints": 3
+  },
+  "orbit": {
+    "ink_after_orbit": 1826
+  },
+  "fill": {
+    "segs_screen": 13,
+    "segs_face": 11,
+    "toggled": true
+  },
+  "depth_after": {
+    "front_order": -998,
+    "back_order": -1000,
+    "inversions_after": 0,
+    "baseline": "faces45_web2.json scene_depth — 지정 순서가 나쁘면 33/33 뒤집힘이던 자리"
+  },
+  "front_paint": {
+    "face": 10,
+    "runs": 1
+  }
+}

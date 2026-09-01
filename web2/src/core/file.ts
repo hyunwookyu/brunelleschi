@@ -82,7 +82,8 @@ const KEY_ORDER: string[] = [
   'format', 'version', 'frame', 'W', 'H',
   'strokes', 'id', 'a', 'b', 'x', 'y', 'z', 'raw', 'rawIn',
   'name', 'pose', 'p', 'q', 'proj', 'view', 'mat', 'dim', 'layer', 'own3', 'axis', 'text', 'lock',
-  'faces', 'loops', 'edges', 'kind', 's', 't', 'ox', 'oy',
+  'paint', 'f',
+  'faces', 'loops', 'edges', 'kind', 's', 't', 'ox', 'oy', 'cls', 'fill',
   'unit', 'scaleRef', 'grade', 'press', 'w', 'h', 'D', 'tiltX', 'tiltY', 'twist',
   'nextId', 'sheets', 'thumb',
   'layers', 'sheet', 'paper', 'rect', 'on', 'locked', 'p0', 'p1', 'gamma',
@@ -210,6 +211,9 @@ export function parseBrnl(text: string): BrnlData | null {
     // 잠금(web2-44) — text와 같은 규격(값 1 하나 · 모양이 틀리면 그 필드만 버린다:
     // 잃어도 «안 잠김»일 뿐이라 조용히 틀린 기하가 안 난다).
     if (s.lock === 1) st.lock = 1
+    // 칠 획(web2-45) — 면 id 하나. 모양이 틀리면 그 필드만 버린다(그 획은 «면 없는
+    // 잉크»가 되어 안 보인다 — 면이 못 풀린 것과 같은 상태라 조용히 틀리지 않는다).
+    if (s.paint && isNum(s.paint.f)) st.paint = { f: s.paint.f }
     if (s.own3 && isV3(s.own3.a) && isV3(s.own3.b) &&
         (s.own3.axis === null || typeof s.own3.axis === 'string')) {
       st.own3 = { a: { ...s.own3.a }, b: { ...s.own3.b }, axis: s.own3.axis ?? null }
@@ -248,7 +252,12 @@ export function parseBrnl(text: string): BrnlData | null {
         loops.push({ edges })
       }
       if (!ok) return null
-      faces.push({ id: f.id, loops })
+      const face: Face = { id: f.id, loops }
+      // 분류 정정·채움(web2-45) — 모양이 틀리면 **그 필드만 버린다**(own3의 규약:
+      // 잃어도 «자동 분류»·«채움 없음»일 뿐이라 조용히 틀린 기하가 안 난다).
+      if (f.cls === 'slab' || f.cls === 'wall' || f.cls === 'slope') face.cls = f.cls
+      if (f.fill === 1) face.fill = 1
+      faces.push(face)
     }
   }
 

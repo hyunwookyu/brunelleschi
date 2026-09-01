@@ -8,10 +8,11 @@ import { Line2 } from 'three/addons/lines/Line2.js'
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js'
 import type { App } from './state'
-import { viewXf } from './state'
+import { viewXf, viewScale } from './state'
 import { MAT, gradeOf, widthOf } from '../core/material'
 import { C } from '../core/constants'
 import { projW } from '../core/camera'
+import { hatchSegments, type HatchMode } from '../core/hatch'
 import type { Grade } from '../core/types'
 
 export interface R3D {
@@ -27,6 +28,7 @@ export interface R3D {
    *  키가 `경도:굵기`인 이유는 제도펜 니브다(4-f) — 같은 잉크라도 굵기가 다르면 다른 재질이다.
    *  경도 기본 굵기는 처음부터 넣어 둔다(옛 문서·연필은 그 자리에서 맞는다). */
   materials: Map<string, LineMaterial>
+  hatchGroup: THREE.Group
   /** 캔버스 CSS 크기 — NDC 매핑 기준 (문서 프레임과 다를 수 있다) */
   W: number
   H: number
@@ -53,11 +55,15 @@ export function initR3D(canvas: HTMLCanvasElement, W: number, H: number, dpr: nu
     side: THREE.DoubleSide, depthTest: false, depthWrite: false,
   })
   scene.add(faceGroup)
+  // 해칭(web2-45 45-4) — 면과 선 «사이» 겹이다(톤은 선 아래 — 지시: 선이 위에 얹힌다).
+  // 자리는 sortFaces가 제 면 바로 위(order+1)로 잡는다.
+  const hatchGroup = new THREE.Group()
+  scene.add(hatchGroup)
   scene.add(group)
   const materials = new Map<string, LineMaterial>()
   // 재질은 **쓰이는 그 자리에서** 만든다(matFor). 경도별로 미리 만들어 두면 굵기 기본값을
   // 여기서도 정하게 되고, 그러면 굵기의 출처가 둘이 된다(PITFALLS #54).
-  return { renderer, scene, camera, group, faceGroup, faceMat, materials, W, H }
+  return { renderer, scene, camera, group, faceGroup, faceMat, hatchGroup, materials, W, H }
 }
 
 const matKey = (g: Grade, w: number) => `${g}:${w.toFixed(3)}`
@@ -109,11 +115,23 @@ export function syncStrokes(r: R3D, app: App) {
   for (const f of app.faces) {
     if (f.tris.length < 3) continue
     const pos = new Float32Array(f.tris.length * 3)
-    f.tris.forEach((p, i) => { pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z })
+    let cx = 0, cy = 0, cz = 0
+    f.tris.forEach((p, i) => {
+      pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z
+      cx += p.x; cy += p.y; cz += p.z
+    })
     const g = new THREE.BufferGeometry()
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-    r.faceGroup.add(new THREE.Mesh(g, r.faceMat))
+    const mesh = new THREE.Mesh(g, r.faceMat)
+    // 깊이 정렬(web2-45 45-1)의 재료 — 자리는 sortFaces가 매 프레임 잡는다(포즈의 함수라
+    // 여기(docVersion)서 굳히면 궤도에서 낡는다). 중심은 삼각분할 정점 평균으로 충분하다 —
+    // 겹치는 면들은 서로 다른 평면이라 중심 깊이가 순서를 가른다(같은 평면 겹침은 없다:
+    // planesOf가 한 평면의 순환을 서로 소로 낸다).
+    mesh.userData.centroid = { x: cx / f.tris.length, y: cy / f.tris.length, z: cz / f.tris.length }
+    mesh.userData.faceId = f.id
+    r.faceGroup.add(mesh)
   }
+  hatchKey = ''   // 문서가 바뀌었다 — 해칭도 다시 짓는다(syncHatch가 다음 렌더에서)
   for (const [id, seg] of app.lift.lifted) {
     const stroke = app.lift.strokes.get(id)
     const grade = stroke ? gradeOf(stroke) : 'HB'
@@ -223,7 +241,91 @@ export function setDraftLine(r: R3D, app: App,
 
 interface Pt2 { x: number; y: number }
 
+// ── 해칭(web2-45 45-4) — 두 판(⚑ — 사람이 눈으로 고른다) ────────────────────────
+// 모드의 출처는 이 모듈 하나다(#54) — 표시 계층의 «보는 방식»이라 localStorage 몫은
+// main이 진다(renderer 토글의 규약 그대로).
+let hatchMode: HatchMode = 'screen'
+export const getHatchMode = (): HatchMode => hatchMode
+export function setHatchMode(m: HatchMode) { hatchMode = m; hatchKey = '' }
+let hatchKey = ''
+const hatchMat = new THREE.LineBasicMaterial({
+  color: 0x8d8880, transparent: true, opacity: C.HATCH_ALPHA,
+  depthTest: false, depthWrite: false,
+})
+
+/** 해칭 다시 짓기 — 문서·모드가 바뀌면, 그리고 **화면 판은 시점·줌이 바뀌면**(정의가
+ *  화면의 것이라서다 — 그것이 곧 ⚑의 「무늬가 면 위에서 미끄러진다」다). */
+function syncHatch(r: R3D, app: App) {
+  const filled = app.doc.faces.filter(f => f.fill === 1)
+  const p = app.pose.p, q = app.pose.q
+  const poseSig = hatchMode === 'screen'
+    ? `${p.x.toFixed(4)},${p.y.toFixed(4)},${p.z.toFixed(4)},${q.x.toFixed(5)},${q.y.toFixed(5)},${q.z.toFixed(5)},${viewScale(app).toFixed(4)}`
+    : ''
+  const key = `${app.docVersion}|${hatchMode}|${filled.length}|${poseSig}`
+  if (key === hatchKey) return
+  hatchKey = key
+  for (const child of [...r.hatchGroup.children]) {
+    r.hatchGroup.remove(child)
+    ;(child as THREE.LineSegments).geometry?.dispose()
+  }
+  for (const face of filled) {
+    const rf = app.faces.find(x => x.id === face.id)
+    if (!rf) continue                                  // 못 풀린 면 — 채움도 쉰다(면의 규약)
+    const spacing = hatchMode === 'screen'
+      ? C.HATCH_SPACING_PX / viewScale(app)            // 화면 px 정의 — 줌을 되돌려 문서 px로
+      : C.HATCH_SPACING_PX
+    const segs = hatchSegments(app.lift.an, app.pose, rf, hatchMode, spacing, C.HATCH_ANGLE_DEG)
+    if (segs.length === 0) continue
+    const pos = new Float32Array(segs.length * 6)
+    segs.forEach((s, i) => {
+      pos[i * 6] = s.a.x; pos[i * 6 + 1] = s.a.y; pos[i * 6 + 2] = s.a.z
+      pos[i * 6 + 3] = s.b.x; pos[i * 6 + 4] = s.b.y; pos[i * 6 + 5] = s.b.z
+    })
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+    const ls = new THREE.LineSegments(g, hatchMat)
+    ls.userData.faceId = face.id
+    r.hatchGroup.add(ls)
+  }
+}
+
+/** **면 깊이 정렬**(web2-45 45-1) — 겹친 화면 자리에서 **앞 면이 위에** 그려진다.
+ *  기준선 실측(faces45_web2.json scene_depth): 배열 순서 렌더는 지정 순서가 나쁘면
+ *  뒤집힘 33/33이었다. depthTest가 없으므로(선을 가리지 않는 설계) 순서가 전부다 —
+ *  중심의 시선 방향 깊이로 renderOrder를 매 프레임 배정한다(먼 것 먼저 · 화가 알고리즘).
+ *  전부 **음수 대역**이라 선(0)은 여전히 면 위다(6-h 「선 우선순위」 불변). */
+function sortFaces(r: R3D, app: App) {
+  const kids = r.faceGroup.children
+  if (kids.length < 2) return
+  const p = app.pose.p, q = app.pose.q
+  // 시선 방향(앞) — quatRotate(q, (0,0,−1))을 손으로 편다(진단이 아니라 렌더 몫 —
+  // vec.ts를 여기 들여오면 three와 좌표계가 두 벌이 된다. 식은 camera.ts와 같다).
+  const fx = -2 * (q.x * q.z + q.w * q.y)
+  const fy = -2 * (q.y * q.z - q.w * q.x)
+  const fz = -(1 - 2 * (q.x * q.x + q.y * q.y))
+  const rows = kids.map(k => {
+    const c = (k.userData as { centroid?: { x: number; y: number; z: number } }).centroid
+    const d = c ? (c.x - p.x) * fx + (c.y - p.y) * fy + (c.z - p.z) * fz : 0
+    return { k, d }
+  })
+  rows.sort((a, b) => b.d - a.d)                 // 먼 것 먼저
+  // 면은 짝수 자리, 그 면의 해칭은 바로 위 홀수 자리 — 해칭이 «자기 면» 위·«앞 면» 아래에
+  // 선다(뒤 면의 해칭이 앞 면 채움을 뚫고 나오면 깊이 정렬이 무의미해진다).
+  const orderOf = new Map<number, number>()
+  rows.forEach((row, i) => {
+    row.k.renderOrder = -1000 + 2 * i
+    const fid = (row.k.userData as { faceId?: number }).faceId
+    if (fid !== undefined) orderOf.set(fid, -1000 + 2 * i)
+  })
+  for (const h of r.hatchGroup.children) {
+    const fid = (h.userData as { faceId?: number }).faceId
+    h.renderOrder = (fid !== undefined ? orderOf.get(fid) ?? -1000 : -1000) + 1
+  }
+}
+
 export function render3d(r: R3D, app: App) {
   syncCamera(r, app)
+  syncHatch(r, app)
+  sortFaces(r, app)
   r.renderer.render(r.scene, r.camera)
 }

@@ -333,3 +333,16 @@
 - **잠금** — Phosphor `lock-simple`의 선 판(몸통 사각 + 고리): `<svg viewBox="0 0 32 32" …><rect x="7" y="14" width="18" height="13" rx="1.5"/><path d="M11 14 V10 a5 5 0 0 1 10 0 V14"/></svg>`
 - **맺기** — R=0으로 만나는 두 선(ㄴ 모서리): `<svg viewBox="0 0 32 32" …><path d="M6 26 H23 V9"/><path d="M23 26 l3 3 M23 9 l-3 -3" stroke-width="1.1"/></svg>`
 - **정면** — 면과 법선 눈금: `<svg viewBox="0 0 32 32" …><rect x="8" y="8" width="16" height="16"/><path d="M16 3 v3 M16 26 v3 M3 16 h3 M26 16 h3" stroke-width="1.1"/></svg>`
+
+## 붓(칠 도구) — web2-45 추가 (자작 · 선 문법)
+
+칠하기(면 위 톤) 도구. 실물은 평붓이다. 선 문법 그대로.
+
+```html
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3 V14"/><path d="M12.5 14 h7 v4 h-7 z"/><path d="M12.5 18 C12.5 23 11.5 25.5 10.5 27.5 C13.5 26.6 18.5 26.6 21.5 27.5 C20.5 25.5 19.5 23 19.5 18 Z"/></svg>
+```
+
+손통 줄 둘(web2-45 · `.rrow` 문법):
+
+- **분류** — 법선 화살과 면: `<svg viewBox="0 0 32 32" …><path d="M6 24 L26 24"/><path d="M16 24 V8 M16 8 l-4 5 M16 8 l4 5" stroke-width="1.2"/></svg>`
+- **채움** — 해칭 든 사각: `<svg viewBox="0 0 32 32" …><rect x="6" y="8" width="20" height="16"/><path d="M9 24 L23 8 M6 19 L17 8 M15 24 L26 13" stroke-width="1.1"/></svg>`

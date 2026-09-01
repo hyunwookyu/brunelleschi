@@ -3,7 +3,7 @@
 // 시작점이 3D에 없으면 그 획은 2D로 대기한다 — 거부가 아니라 상태다.
 // 대기 획은 조건이 갖춰지면 승격하고, 승격은 연쇄한다.
 
-import { onPaper, yellowIds, isFlat2d, type Doc, type Stroke, type CamPose } from './types'
+import { onPaper, yellowIds, isFlat2d, isPaint, type Doc, type Stroke, type CamPose } from './types'
 import { C, XINT_AMBIG_RATIO } from './constants'
 import {
   analyze, type Analysis, type AxisId, DRAW_POSE,
@@ -302,7 +302,9 @@ function liftPass(doc: Doc, mmPerUnit: number | null, useOwn = false, scaleId: n
   // 글씨 획도 같은 자리에서 빠진다(web2-32 1번) — **옐로와 같은 규격**이라 술어가 하나다
   // (`isFlat2d`). 여기서 빠지면 오스냅·조각·면·waiting 계수가 전부 자동으로 빠진다.
   const yellow = yellowIds(doc)
-  const content = doc.strokes.filter(s => !isMark(s) && !isFlat2d(s, yellow)
+  // 칠 획(web2-45)도 같은 자리에서 빠진다 — 매체가 «면 위 잉크»라 세그먼트 승격이 아니다
+  // (3D는 core/paint.liftPaint의 파생 — 별도 필터를 안 만든다는 규약 그대로 이 한 줄이다).
+  const content = doc.strokes.filter(s => !isMark(s) && !isFlat2d(s, yellow) && !isPaint(s)
     && !(s.layer !== undefined && offLayers.has(s.layer)))
   if (!an.principal || an.f === null) {
     return { an, lifted, waiting: content.map(s => s.id), waitWhy, anchorId, strokes, mmPerUnit, scaleId, dimGeom }

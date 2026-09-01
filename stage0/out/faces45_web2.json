@@ -1,0 +1,129 @@
+{
+  "what": "web2-45 45-1 — 면 찾기 기준선(놓침·과잉·구멍·깊이 정렬) · 수리 «전» 값",
+  "when_cmd": "npx vitest run test/faces45_measure.test.ts",
+  "scene_room": {
+    "strokes": 8,
+    "lifted": 7,
+    "expected": [
+      "floor",
+      "wall"
+    ],
+    "candidates": 2,
+    "missing": [],
+    "extra_sigs": [],
+    "found_ratio": "2/2",
+    "extra_ratio": "0/2"
+  },
+  "scene_door": {
+    "candidates": 3,
+    "door_found": true,
+    "wall_outline_still_candidate": false,
+    "note": "문이 밑변에 닿으면 벽은 «문 + 오목 나머지»로 갈린다 — 외곽 전체는 최소 순환이 아니어야 한다(loopAt의 규칙)"
+  },
+  "scene_window": {
+    "drawn": 4,
+    "waiting": 4,
+    "lifted": 0,
+    "why": [
+      "noPoint",
+      "hasHeight",
+      "noPoint",
+      "hasHeight"
+    ],
+    "note_43": "#43 — 이 놓침의 사유는 «리프팅»(대기)이다. 면 찾기(allLoops)는 lifted만 보므로 여기 몫이 없다. 합성 lift의 구멍 경로는 face.test.ts 「개구부」가 이미 잠근다(loops[1] 구멍·resolveFace holes 1)"
+  },
+  "scene_depth": {
+    "overlap_samples": 33,
+    "inversions": 33,
+    "inversion_ratio": "33/33",
+    "order_now": "배열 순서(faces[] — 지정 순서)가 그리는 순서다 · renderOrder −1 고정 · depthTest 없음",
+    "samples": [
+      {
+        "x": 500,
+        "y": 390,
+        "front": 0,
+        "drawnTop": 1
+      },
+      {
+        "x": 500,
+        "y": 400,
+        "front": 0,
+        "drawnTop": 1
+      },
+      {
+        "x": 500,
+        "y": 410,
+        "front": 0,
+        "drawnTop": 1
+      },
+      {
+        "x": 500,
+        "y": 420,
+        "front": 0,
+        "drawnTop": 1
+      }
+    ],
+    "note": "기준선 — 뒤집힘이 0이 아니면 «칠하면 바로 드러난다»(지시 45-1)의 그 자리다",
+    "note_graze": "⚠ 픽스처 구축이 하나 더 찾았다: 획이 기존 모서리를 «수 px로 스치면» 3D 마디 병합(MERGE_RATIO)이 두 벽을 이어 붙여 한 평면 12변 그래프가 되고 순환이 벽을 가로질러 짜깁힌다(초판 실측 — 6획 루프 · loopAt(550,430) 실패). 사용자 위험: 스침이 만드는 조용한 면 오귀속 — DEFERRED에 행이 있다"
+  },
+  "scene_busy": {
+    "strokes_drawn": 39,
+    "lifted": 38,
+    "candidates": 2,
+    "allLoops_ms": 1,
+    "note_46": "#46 — 후보 수는 이 격자(지면 교차 다수)의 값이다. 격자 셀은 실제 닫힌 영역이라 «과잉»이 아니다 — 과잉의 정의는 장면 1·2의 extra가 든다"
+  },
+  "class_sweep": {
+    "gate_deg": 10,
+    "rows": [
+      {
+        "tilt_deg": 0,
+        "cls": "slab"
+      },
+      {
+        "tilt_deg": 9.9,
+        "cls": "slab"
+      },
+      {
+        "tilt_deg": 10.1,
+        "cls": "slope"
+      },
+      {
+        "tilt_deg": 45,
+        "cls": "slope"
+      },
+      {
+        "tilt_deg": 79.9,
+        "cls": "slope"
+      },
+      {
+        "tilt_deg": 80.1,
+        "cls": "wall"
+      },
+      {
+        "tilt_deg": 90,
+        "cls": "wall"
+      }
+    ],
+    "note": "경계 양옆(±0.1°)이 실제로 갈린다 — paint45.test ①이 게이트"
+  },
+  "paint_roundtrip": {
+    "points": 13,
+    "placed": 1,
+    "max_err_px": 0,
+    "note_5": "#5 — 광선→평면→재사영은 같은 카메라에서 구성상 항등이다. 재는 것은 배선(면 배정·평면식·포즈 규약)이고, 자의 판별력은 paint45.test ②의 D-3 팔(1px 틀면 값)이 확인한다"
+  },
+  "hatch_hole": {
+    "screen": {
+      "with_hole": 38.766,
+      "no_hole": 42.3129,
+      "cut": 3.5469
+    },
+    "face": {
+      "with_hole": 38.812,
+      "no_hole": 42.3589,
+      "cut": 3.5469
+    },
+    "note": "두 판 다 구멍만큼 잉크가 준다 — 개구부 추종이 값으로"
+  }
+}

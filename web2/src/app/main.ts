@@ -5,6 +5,7 @@ import { createApp, commitStroke, undo, redo, resetPose, gotoSheet, loadDoc, cle
   handwritingGroup, applyRecognized, writingStrokes, pickDimLabel, moveDim, endDimEdit, dimLabelPos,
   writeActive, beginWriting, endWriting, commitWriting, writeIdleNow,
   beginHold, unlockStroke, manipLabel, duplicateGrip, lockGrip, joinGrip, faceFrontTarget, gripActive,
+  commitPaint, cycleFaceClass, faceClassNow, toggleFaceFill, paintActive,
   measureTap, clearMeasure, zoomFit, viewScale, viewXf, setViewLensStops, resetViewLens, parallelPxPerUnit, settleActive, slidesActive, pruneSlides, settleSlides, slideAwayOf, startSlide, type Tool } from './state'
 import { initPaperbar } from './paperbar'
 import { initLayerbar, LAYER_GATE_MSG, ROLL_TRACING, ROLL_YELLOW } from './layerbar'
@@ -12,7 +13,7 @@ import { initInput } from './input'
 import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, type Draft } from './render2d'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -476,6 +477,13 @@ inputApi = initInput(ink, app, {
     armWriteIdle()
     invalidate()
   },
+  // ── 칠 한 붓(web2-45) — 면 배정·분할·확정은 state.commitPaint 하나다(#54) ──────
+  onPaint(pts) {
+    const r = commitPaint(app, pts)
+    // 알림은 오류가 있을 때만(4-b) — 얹혔으면 화면이 말한다. 통째로 허공이면 이유를.
+    if (r.placed === 0) notify('칠할 면이 없다 — 면을 먼저 지정한다(칠은 면 위에만 얹힌다)')
+    invalidate()
+  },
   onWriteStroke(pts) {
     // ⚠ **종료 판정은 여기가 아니라 «획이 시작될 때»다**(`input.ts`) — 그래야 작도로
     //    돌아간 획이 **오스냅·축을 지나** 보통 획으로 확정된다. 여기 오는 것은 이미
@@ -750,6 +758,8 @@ const toolBtn: Record<Exclude<Tool, 'pencil' | 'pen'>, HTMLElement> = {
   'eraser-pencil': document.getElementById('btn-eraser-pencil')!,
   'eraser-ink': document.getElementById('btn-eraser-ink')!,
   'face': document.getElementById('btn-face')!,
+  // 붓(web2-45) — 칠하기. 톤의 재료는 지금 연필 경도다(45는 기제만 — 재료는 46).
+  'paint': document.getElementById('btn-paint')!,
   // 치수(web2-29 1단계) — 선택 표시는 **패널 안의 그 단추**가 진다(리본의 치수 단추는
   // 패널 여닫이라 도구 표시를 안 얹는다 — 그러면 «패널이 열렸다»와 «모드가 켜졌다»가
   // 화면에서 갈린다).
@@ -1137,6 +1147,20 @@ gridBox.addEventListener('change', () => { app.grid = gridBox.checked; invalidat
 // 비춘다(자동으로 꺼지면 체크가 풀린다 — 그래야 켜는 법이 보인다). 사람이 만지면
 // `horizonPref`가 굳고 자동이 더는 안 건드린다 — 판별자는 `change` 사건이다(프로그램
 // 대입은 change를 안 낸다). 비우기(clearAll)가 null(자동)로 되돌린다.
+// 해칭 판(web2-45 45-4 · ⚑) — «보는 방식»이라 기기 설정이다(renderer의 규약 그대로).
+const hatchFaceBox = document.getElementById('chk-hatchface') as HTMLInputElement
+const HATCH_KEY = 'b2-hatch'
+try {
+  const m = localStorage.getItem(HATCH_KEY)
+  if (m === 'face' || m === 'screen') setHatchMode(m)
+} catch { /* 저장소가 없으면 기본(화면 고정) */ }
+hatchFaceBox.checked = getHatchMode() === 'face'
+hatchFaceBox.addEventListener('change', () => {
+  setHatchMode(hatchFaceBox.checked ? 'face' : 'screen')
+  try { localStorage.setItem(HATCH_KEY, getHatchMode()) } catch { /* 표시만 */ }
+  invalidate()
+})
+
 const horizonBox = document.getElementById('chk-horizon') as HTMLInputElement
 horizonBox.checked = horizonVisible(app, window.innerWidth, window.innerHeight)
 horizonBox.addEventListener('change', () => { app.horizonPref = horizonBox.checked; invalidate() })
@@ -1842,6 +1866,10 @@ const GRIP_ROWS = [
   { key: 'lock', name: '잠금', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="14" width="18" height="13" rx="1.5"/><path d="M11 14 V10 a5 5 0 0 1 10 0 V14"/></svg>' },
   { key: 'join', name: '맺기', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 26 H23 V9"/><path d="M23 26 l3 3 M23 9 l-3 -3" stroke-width="1.1"/></svg>' },
   { key: 'front', name: '정면', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16"/><path d="M16 3 v3 M16 26 v3 M3 16 h3 M26 16 h3" stroke-width="1.1"/></svg>' },
+  // web2-45 — 면을 잡았을 때의 손잡이 둘(45-2 분류 정정 · 45-4 채움). 그림 정본은
+  // docs/instrument-icons.md 「붓(칠 도구)」 절의 줄 둘.
+  { key: 'cls', name: '분류', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 24 L26 24"/><path d="M16 24 V8 M16 8 l-4 5 M16 8 l4 5" stroke-width="1.2"/></svg>' },
+  { key: 'fill', name: '채움', svg: '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="20" height="16"/><path d="M9 24 L23 8 M6 19 L17 8 M15 24 L26 13" stroke-width="1.1"/></svg>' },
 ] as const
 const gripRow = new Map<string, HTMLButtonElement>()
 for (const r of GRIP_ROWS) {
@@ -1870,7 +1898,9 @@ function gripRowGate(key: string): string | null {
   const g = app.grip
   if (!g || g.ids.length === 0) return '선을 꾹 눌러 잡은 뒤에 쓴다'
   if (key === 'join' && g.ids.length !== 2) return '맺기는 **두 선**을 잡아야 한다'
-  if (key === 'front' && g.faceId === null) return '정면은 **면**을 잡아야 한다(면 안을 꾹 누른다)'
+  if ((key === 'front' || key === 'cls' || key === 'fill') && g.faceId === null) {
+    return `${key === 'front' ? '정면' : key === 'cls' ? '분류' : '채움'}은 **면**을 잡아야 한다(면 안을 꾹 누른다)`
+  }
   return null
 }
 function syncGripRows() {
@@ -1905,6 +1935,16 @@ function doGripAction(key: string) {
     const to = faceFrontTarget(app)
     if (!to) { notify('정면은 면을 잡아야 한다'); return }
     autolevel.glide(to)   // 42와 같은 길로 보간한다(즉시 튀면 어디로 갔는지 잃는다)
+  } else if (key === 'cls') {
+    // 분류 정정(45-2) — 자동은 틀리므로 사람이 돌린다: 자동 → 슬라브 → 벽 → 경사 → 자동
+    const r = cycleFaceClass(app, app.grip!.faceId!)
+    if (r) {
+      const name = r.cls === 'slab' ? '슬라브' : r.cls === 'wall' ? '벽' : '경사'
+      status(`분류 — ${name}${r.auto ? ' (자동)' : ''} · 다시 누르면 돌린다`)
+    }
+  } else if (key === 'fill') {
+    const on = toggleFaceFill(app, app.grip!.faceId!)
+    if (on !== null) status(on ? '채움 — 해칭이 얹혔다(면의 성질이다 — 경계를 따라간다)' : '채움을 걷었다')
   }
   invalidate()
 }
@@ -2523,6 +2563,26 @@ const diag = {
       bar: { top: sb.top, bottom: sb.bottom, left: sb.left, right: sb.right, winH: window.innerHeight, winW: window.innerWidth },
     }
   },
+  /** **면·칠·해칭**(web2-45) — 팔이 화면과 같은 상태를 읽는다(#88). */
+  paint45: () => ({
+    tool: app.tool,
+    paints: app.doc.strokes.filter(s => s.paint !== undefined)
+      .map(s => ({ id: s.id, f: s.paint!.f, n: (s.raw ?? []).length, grade: s.mat?.grade ?? 'HB' })),
+    geoIds: [...app.paintGeo.keys()],
+    hatchMode: getHatchMode(),
+    hatch: r3d.hatchGroup.children.map(h => ({
+      f: (h.userData as { faceId?: number }).faceId ?? null,
+      order: h.renderOrder,
+      segs: ((h as unknown as { geometry: { getAttribute(n: string): { count: number } } }).geometry.getAttribute('position')?.count ?? 0) / 2,
+    })),
+    faceOrder: r3d.faceGroup.children.map(m => ({
+      f: (m.userData as { faceId?: number }).faceId ?? null, order: m.renderOrder,
+    })),
+    faces: app.doc.faces.map(f => ({
+      id: f.id, cls: f.cls ?? null, now: faceClassNow(app, f.id), fill: f.fill === 1,
+      resolved: app.faces.some(x => x.id === f.id),
+    })),
+  }),
   summary: () => ({
     horizonY: app.lift.an.horizonY,
     screenHDeclared: app.lift.an.screenHDeclared,

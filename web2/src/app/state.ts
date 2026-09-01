@@ -30,7 +30,7 @@ import { lensAllowed, lensAn, lensF, lensK, lensView, clampViewF, lensFromStops 
 import { calFromMedians, median } from '../core/press'
 import { type Pt, type V3, v3, add3, sub3, mul3, dot3, len3, quatAxisAngle, quatMul, quatRotate } from '../core/vec'
 
-export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink' | 'face' | 'dim' | 'measure'
+export type Tool = 'pencil' | 'pen' | 'eraser-pencil' | 'eraser-ink' | 'face' | 'dim' | 'measure' | 'paint'
 
 /** 지금 그으면 무슨 재료인가 — **한 자리에서만 정한다**(원칙 a의 재료판).
  *  펜은 언제나 잉크이고, 연필은 고른 경도다. */
@@ -52,6 +52,9 @@ export const activeGrade = (app: Pick<App, 'tool' | 'grade'>): Grade =>
  *  카메라 미확정(f 없음) 제외 — Line2 역사영이 설 수 없다(그때는 종전 벡터 미리보기). */
 export const draftBrushed = (app: Pick<App, 'tool' | 'grade' | 'renderer' | 'lift' | 'activeLayer'>): boolean =>
   app.renderer === 'brush' && activeGrade(app) !== 'INK' &&
+  // 칠 draft(web2-45)는 점렬이 정본이라 벡터 미리보기(render2d의 옐로 갈래)로 간다 —
+  // brush 겹의 draft 몸체는 두 점 보간(setDraftLine)이라 곡선 칠이 직선으로 보인다.
+  app.tool !== 'paint' &&
   // 활성 겹 위의 draft(web2-20 3부)는 벡터 미리보기(#ink — 막 **위**)로 간다: brush 겹
   // (#brushc)은 막 아래라 긋는 동안 막에 물들고 떼는 순간 위로 튄다. 질감은 뗄 때
   // #layerc 경로로(지금은 몸체만 — 알려진 강등, filmlayer 머리주석).
@@ -99,6 +102,10 @@ export interface Op {
   moved?: { id: number; before: GripGeom; after: GripGeom }[]
   /** **잠금 토글**(web2-44) — 사람이 한 것이므로 실행취소 대상이다 */
   lockChanged?: { id: number; to: boolean }[]
+  /** **분류 정정**(web2-45 45-2) — 사람이 한 것이므로 실행취소 대상이다 */
+  clsChanged?: { id: number; before: Face['cls']; after: Face['cls'] }[]
+  /** **채움 토글**(web2-45 45-4) — 사람이 한 것이므로 실행취소 대상이다 */
+  fillChanged?: { id: number; to: boolean }[]
   /** **광선이 바뀌어 대기 획을 버린 op**(web2-37 4번)가 함께 싣는 시점.
    *  ⚠⚠ 획만 되돌리면 «되살아난다»가 **쓸모없다**: 돌아온 대기 획의 내용은 「그 시점의
    *  화면 위 어디」인데 지금 시점이 그 시점이 아니고, 그 다음 시점 변경에서 **또 버려진다**
@@ -335,6 +342,9 @@ export interface App {
    *  런타임(저장 ⛔ — 손의 상태이지 그림의 성질이 아니다). 글씨 상태와 **함께 살고 함께
    *  끝난다**(진입이 같은 꾹 누름이고, 끝(`endWriting`)이 둘 다 놓는다). */
   grip: GripState | null
+  /** **칠 획의 3D 점렬**(web2-45 45-3) — **파생 캐시**다(원칙 b: 저장 ⛔ · 문서와 면에서만
+   *  나온다). recompute가 매번 다시 짓는다 — 면이 못 풀리면 그 획의 항이 없다(안 보인다). */
+  paintGeo: Map<number, V3[]>
   cubeLayout: { cx: number; cy: number; size: number }
   listeners: (() => void)[]
 }
@@ -400,6 +410,7 @@ export function createApp(W: number, H: number): App {
     touchLast: null,
     faceCandidates: null,
     grip: null,
+    paintGeo: new Map(),
     rectHover: null,
     cubeLayout: cubeLayoutFor(W), // 우측 상단 — 자리 계산은 viewcube.ts 하나다(#54 · web2-31 1번)
     listeners: [],
@@ -555,6 +566,13 @@ function recompute(app: App) {
     }
   } else app.lastCamSig = null
   app.faces = resolveFaces(app.lift, app.doc.faces)
+  // 칠 획의 3D(web2-45) — 면이 풀린 뒤에야 선다(파생 · 원칙 b). 면이 빠지면 항도 빠진다.
+  app.paintGeo = new Map()
+  for (const s of app.doc.strokes) {
+    if (s.paint === undefined) continue
+    const g = liftPaint(app.lift, app.faces, s)
+    if (g) app.paintGeo.set(s.id, g)
+  }
   markSettled(app, wasWaiting)
   app.docVersion++
   for (const l of app.listeners) l()
@@ -1581,6 +1599,78 @@ export function faceFrontTarget(app: App): CamPose | null {
   return parallelAllowed(app.lift.an) ? parallelPose(pose, center) : pose
 }
 
+// ── 칠하기(web2-45 45-3) — 면 위에서의 lift ──────────────────────────────────
+//
+// 판정·역투영은 core/paint.ts가 든다(#54). 여기는 상태 배선뿐이다:
+// 한 붓 → 면별 조각 → 획 여럿(paint 태그) → 한 op(붓 하나가 실행취소 한 칸이다).
+
+import { splitByFace, liftPaint, frontFaceAt, classOf, faceClassOf, FACE_CLASSES, type FaceClass } from '../core/paint'
+
+export const paintActive = (app: Pick<App, 'tool'>): boolean => app.tool === 'paint'
+
+/** 한 붓을 확정한다 — 지나간 면마다 나뉘어 얹힌다(지시 문면 · 사용자는 의식하지 않는다).
+ *  면 밖 점은 센다(조용히 버리지 않는다 — 진단이 읽는다). */
+export function commitPaint(app: App, pts: Pt[]): { placed: number; offFace: number } {
+  const { runs, offFace } = splitByFace(app.lift, app.pose, app.faces, pts)
+  const added: Stroke[] = []
+  for (const r of runs) {
+    const s: Stroke = {
+      id: app.nextId++,
+      a: { ...r.pts[0]! }, b: { ...r.pts[r.pts.length - 1]! },
+      raw: r.pts,
+      paint: { f: r.f },
+      mat: { grade: activeGrade(app) },
+    }
+    if (!isDrawPose(app.pose)) s.view = clonePose(app.pose)
+    app.doc.strokes.push(s)
+    added.push(s)
+  }
+  if (added.length > 0) {
+    app.undoStack.push({ removed: [], added })
+    app.redoStack = []
+    recompute(app)
+  } else {
+    for (const l of app.listeners) l()
+  }
+  return { placed: added.length, offFace }
+}
+
+/** **분류를 돌린다**(45-2 — 자동은 틀리므로 사람이 고친다): 자동 → slab → wall → slope → 자동.
+ *  대상은 잡은 면(44의 잡기). 반환 = 새 유효 분류(자동이면 계산값)와 «자동인가». */
+export function cycleFaceClass(app: App, faceId: number): { cls: FaceClass; auto: boolean } | null {
+  const face = app.doc.faces.find(f => f.id === faceId)
+  const rf = app.faces.find(f => f.id === faceId)
+  if (!face || !rf) return null
+  const before = face.cls
+  const seq: (FaceClass | undefined)[] = [undefined, ...FACE_CLASSES]
+  const next = seq[(seq.indexOf(before) + 1) % seq.length]
+  if (next === undefined) delete face.cls; else face.cls = next
+  app.undoStack.push({ removed: [], added: [], clsChanged: [{ id: faceId, before, after: next }] })
+  app.redoStack = []
+  for (const l of app.listeners) l()
+  return { cls: classOf(face, rf, C.FACE_CLASS_DEG), auto: next === undefined }
+}
+
+/** 면의 유효 분류 — 화면·팔이 같은 자리를 읽는다(#54). */
+export function faceClassNow(app: App, faceId: number): FaceClass | null {
+  const face = app.doc.faces.find(f => f.id === faceId)
+  const rf = app.faces.find(f => f.id === faceId)
+  if (!rf) return null
+  return classOf(face, rf, C.FACE_CLASS_DEG)
+}
+
+/** **채움 토글**(45-4) — 면의 성질이다(픽셀로 굽지 않는다). */
+export function toggleFaceFill(app: App, faceId: number): boolean | null {
+  const face = app.doc.faces.find(f => f.id === faceId)
+  if (!face) return null
+  const to = face.fill !== 1
+  if (to) face.fill = 1; else delete face.fill
+  app.undoStack.push({ removed: [], added: [], fillChanged: [{ id: faceId, to }] })
+  app.redoStack = []
+  recompute(app)
+  return to
+}
+
 // ── 재기(web2-32 6번) — 두 점을 짚으면 길이가 나온다 ────────────────────────
 //
 // ⚠⚠ **위에 있던 29-2의 판정을 web2-32가 뒤집었다.** 그 판정은 「어긋남이 구성상 0이라
@@ -1948,6 +2038,15 @@ export function undo(app: App) {
     const s = app.doc.strokes.find(x => x.id === lc.id)
     if (s) { if (lc.to) delete s.lock; else s.lock = 1 }
   }
+  // 분류 정정·채움(web2-45)
+  for (const cc of op.clsChanged ?? []) {
+    const f = app.doc.faces.find(x => x.id === cc.id)
+    if (f) { if (cc.before === undefined) delete f.cls; else f.cls = cc.before }
+  }
+  for (const fc of op.fillChanged ?? []) {
+    const f = app.doc.faces.find(x => x.id === fc.id)
+    if (f) { if (fc.to) delete f.fill; else f.fill = 1 }
+  }
   // 광선이 바뀌어 버린 op는 **그 시점까지** 되돌린다(web2-37 4번 — 위 `Op.pose` 주석).
   // ⚠ `setPose`를 안 부른다: 그것을 부르면 이 복원이 다시 «광선이 바뀌었다»로 읽혀
   //    방금 돌려놓은 획을 그 자리에서 도로 버린다(자기 자신을 되돌리는 고리).
@@ -1991,6 +2090,15 @@ export function redo(app: App) {
   for (const lc of op.lockChanged ?? []) {
     const s = app.doc.strokes.find(x => x.id === lc.id)
     if (s) { if (lc.to) s.lock = 1; else delete s.lock }
+  }
+  // 분류 정정·채움(web2-45)
+  for (const cc of op.clsChanged ?? []) {
+    const f = app.doc.faces.find(x => x.id === cc.id)
+    if (f) { if (cc.after === undefined) delete f.cls; else f.cls = cc.after }
+  }
+  for (const fc of op.fillChanged ?? []) {
+    const f = app.doc.faces.find(x => x.id === fc.id)
+    if (f) { if (fc.to) f.fill = 1; else delete f.fill }
   }
   // 다시 실행 — 값 싣기는 **만든 자리와 같은 함수**를 다시 부른다(#54)
   if (op.dim) setDimension(app, op.dim.id, op.dim.mm)
@@ -2054,6 +2162,29 @@ export function eraseAt(app: App, p: Pt, kind?: EraserKind) {
       if (ek === 'eraser-pencil' && isInk(st)) continue
       if (ek === 'eraser-ink' && !isInk(st)) continue
       if (distToPolyline(p, st.raw ?? [st.a, st.b]) > rad) continue
+      const rm = removeById(app.doc, st.id)
+      if (!rm) continue
+      removedText = true
+      const i = op0.added.findIndex(x => x.id === st.id)
+      if (i >= 0) op0.added.splice(i, 1)
+      else op0.removed.push(rm)
+    }
+    // 칠 획(web2-45) — 통째 규약(2D 획의 선례). ⚠ raw는 **그은 시점**의 문서 좌표라
+    // 지금 시점과 갈릴 수 있다 — 판정은 3D(파생 paintGeo)를 **지금 포즈로 사영**해 잰다.
+    for (const st of [...app.doc.strokes]) {
+      if (st.paint === undefined) continue
+      if (st.lock === 1) continue
+      if ((st.layer ?? null) !== app.activeLayer) continue
+      if (ek === 'eraser-pencil' && isInk(st)) continue
+      if (ek === 'eraser-ink' && !isInk(st)) continue
+      const g3 = app.paintGeo.get(st.id)
+      if (!g3) continue                                 // 면이 안 풀려 안 보인다 — 안 지운다
+      const spts: Pt[] = []
+      for (const P of g3) {
+        const q = project(app.lift.an, app.pose, P)
+        if (q) spts.push(q)
+      }
+      if (spts.length < 2 || distToPolyline(p, spts) > rad) continue
       const rm = removeById(app.doc, st.id)
       if (!rm) continue
       removedText = true

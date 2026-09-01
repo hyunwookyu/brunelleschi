@@ -346,6 +346,28 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
         // **정본 기하는 raw 점렬이다**(web2-24 4-b — 프리핸드). 머무름 갈음·짧은 획은
         // 두 점이라 종전 경로 그대로다. 잘라내기는 점렬 bbox의 두 모서리로 판정
         // (offScreen은 두 점이 같은 변 밖일 때만 참이라 bbox 모서리 대입이 보수적으로 옳다).
+        // 칠 획(web2-45) — 면 위 잉크: 파생 3D(paintGeo)를 **지금 시점으로 사영**해 점렬
+        // 몸체로 긋는다(drawStrokeRaw — 옐로의 그 경로·같은 흑연 질감). 면이 안 풀리면
+        // paintGeo에 항이 없어 안 그린다(면의 규약 — 버리지 않고 빠진다).
+        if (s.paint !== undefined) {
+          const g3 = app.paintGeo.get(id)
+          if (!g3) continue
+          const spts: { x: number; y: number }[] = []
+          for (const P of g3) {
+            const q = project(app.lift.an, app.pose, P)
+            if (q) spts.push(docToScreen(app, q))
+          }
+          if (spts.length < 2) continue
+          let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
+          for (const p of spts) {
+            if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x
+            if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y
+          }
+          if (offScreen({ x: x0, y: y0 }, { x: x1, y: y1 })) { clipped++; continue }
+          drawn++
+          drawStrokeRaw(app, s, spts)
+          continue
+        }
         // 글씨 획(web2-32 1번)도 이 갈래다 — **같은 규격**이므로 술어가 하나다(isFlat2d)
         if (isFlat2d(s, yset)) {
           if (s.raw && s.raw.length > 2) {

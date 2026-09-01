@@ -46,7 +46,7 @@ test('34-6 ① 자리 표 — 「그리는 중에 쓰는가」로 갈렸다 (값
   // 손 띠 = 그리는 중에 쓰는 것. **시점이 맨 위**이고 롤 둘이 롤통 하나가 됐다.
   expect(zones.hand).toEqual(['btn-draw-view', 'btn-zoom-fit', 'btn-lens', 'btn-undo', 'btn-redo', 'btn-snap',
     'btn-grip', 'btn-pencil', 'btn-pen', 'btn-eraser-pencil', 'btn-eraser-ink',
-    'dim-toggle', 'btn-roll', 'btn-face'])
+    'dim-toggle', 'btn-roll', 'btn-face', 'btn-paint'])
   // 뷰 큐브는 **단추가 아니다** — 이미 캔버스 그림쇠다(자리를 안 먹는다).
   expect(await page.locator('#btn-viewcube').count(), '뷰 큐브 단추는 없다(캔버스 그림쇠다)').toBe(0)
   const cube = await page.evaluate(() => (window as any).__b2.app.cubeLayout)

@@ -9,6 +9,7 @@ import {
   screenToDoc, isEraser, yellowActive, toggleFaceAt, facePreview, excludeCandidateAt, beginNavHold, endNavHold,
   viewScale, writeActive, writeFarPts, writeIdleNow, resetViewLens,
   holdTargetAt, gripDragStartAt, gripBase, applyMove, applyRotate, finishManip, manipLabelOf,
+  paintActive,
   type App, type GripGeom,
 } from './state'
 import { solveMove, solveAlong, planePointAt, yawOf } from '../core/grip'
@@ -78,6 +79,8 @@ export interface InputCallbacks {
   onWriteEnd: (why: 'idle' | 'far') => void
   /** **조작이 끝났다**(web2-44) — 옮김·돌림 끌기가 값을 남겼다. 알림은 main이 낸다(#54). */
   onManip: (kind: 'move' | 'rotate') => void
+  /** **칠 한 붓이 끝났다**(web2-45) — 문서 좌표 점렬. 면 배정·확정은 main이 부른다(#54). */
+  onPaint: (pts: Pt[]) => void
 }
 
 export function initInput(
@@ -301,6 +304,17 @@ export function initInput(
     }
     capStats.points = draft.raw.length
     const cur = toPt(e)
+    // 칠(web2-45) — 자유 점렬 그대로다: 오스냅·축·머무름 직선화 전부 없음(칠은 톤이지
+    // 선이 아니다). 정본은 raw이고 미리보기는 render2d의 점렬 갈래가 그린다.
+    if (paintActive(app)) {
+      draft.end = cur
+      draft.label = null
+      draft.endSnap = null
+      draft.lenMm = null
+      draft.vp = undefined
+      cb.onDraftChange(draft)
+      return
+    }
     // 옐로(web2-22 1부) — 오스냅·축 스냅·소실점 예고 전부 우회: 자유 방향 그대로.
     // 2부(후행 확정): 끝에서 머무르면(tickHold — 살아 있는 시각) 미리보기가 반듯해진다
     // (yellowEnd — 직선화 + 화면 수평·수직 붙임). 그 상태로 떼면 그대로 확정(원칙 d).
@@ -409,7 +423,9 @@ export function initInput(
     capStats = { pointerType: e.pointerType, events: 1, points: 1, extra: 0 }
     holdGate = newHoldGate()   // 획마다 새로 — 지난 획의 머무름이 안 샌다(2부)
     // 옐로(web2-22 1부) — 자가 치워졌다: 시작점 오스냅 없음(자유의 정의 — 지시 1-c)
-    const oh = yellowActive(app) ? null : resolveStart(app.lift, app.pose, p, osnapSet(), app.extAcq.acquired)
+    // 칠(web2-45)도 같다 — 칠은 톤이라 아무것에도 안 붙는다.
+    const oh = yellowActive(app) || paintActive(app)
+      ? null : resolveStart(app.lift, app.pose, p, osnapSet(), app.extAcq.acquired)
     draft = {
       start: oh ? oh.p : p,
       end: oh ? oh.p : p,
@@ -473,6 +489,12 @@ export function initInput(
     // 버린다」의 명시판: 반듯해진 획의 raw 곡선이 남으면 표현·23 밑그림이 그 곡선을
     // 되살린다). 반듯 미리보기의 end가 그대로 확정된다(원칙 d — 2-b 순서).
     if (holdTimer !== undefined) { clearTimeout(holdTimer); holdTimer = undefined }
+    // 칠(web2-45) — 탭은 잡음이고, 점렬이 그대로 한 붓이다(면 배정은 main → state).
+    if (paintActive(app)) {
+      if (Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) * viewScale(app) <= C.TAP_MAX_PX) return
+      cb.onPaint(d.raw)
+      return
+    }
     if (yellowActive(app)) {
       if (Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) * viewScale(app) <= C.TAP_MAX_PX) return
       app.lastSnap = { start: null, end: null }
@@ -597,7 +619,7 @@ export function initInput(
     //   옛 뜻이 조용히 죽는다(#77 ㉠).
     // ⚠ **재기도 뺀다**(web2-32 6번 — 면·치수와 같은 이유): 그 탭은 이미 뜻이 있다
     //   (재는 점을 짚는다). 한 몸짓에 뜻을 둘 얹으면 옛 뜻이 조용히 죽는다(#77 ㉠).
-    if (app.tool !== 'dim' && app.tool !== 'face' && app.tool !== 'measure'
+    if (app.tool !== 'dim' && app.tool !== 'face' && app.tool !== 'measure' && app.tool !== 'paint'
         && !app.tipErase && !isEraser(app.tool)) {
       suggestTap = toPt(e)
       // **꾹 누르면 글씨다**(web2-39 1번) — 탭(사후 수정)·끌기(그리기)와 **같은 몸짓의
@@ -747,7 +769,7 @@ export function initInput(
       // 넘어, 옐로에서 그릴 때 아무것에도 안 붙는다(사람 문면). 밑그림의 3D 점에도
       // 안 붙고 표식도 안 뜬다 — 「자를 치운 종이」의 정의. 연장선 획득(ext)도 같은
       // 자(치운 그 자)의 일부라 같이 쉰다.
-      if (yellowActive(app)) { cb.onHover(null); return }
+      if (yellowActive(app) || paintActive(app)) { cb.onHover(null); return }
       // ⚠ **호버에서는 왕복이 안 돈다**(web2-30 11번) — 선언은 «획의 시작점에서 나갔다
       //    돌아왔다»는 몸짓이라 획이 없으면 잴 것이 없다(종전 머무름 획득은 여기서도 돌았다).
       cb.onHover(osnap(app.lift, app.pose, hp, osnapSet(), undefined, undefined, app.extAcq.acquired))
