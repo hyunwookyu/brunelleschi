@@ -90,15 +90,17 @@ export function frontFaceAt(
  *  버리지 않는다 — 3-b 규약의 칠판). 두 점 미만 조각은 못 선다(버린 수에 든다). */
 export function splitByFace(
   lift: LiftResult, pose: CamPose, faces: ResolvedFace[], pts: Pt[],
-): { runs: { f: number; pts: Pt[] }[]; offFace: number } {
-  const runs: { f: number; pts: Pt[] }[] = []
+): { runs: { f: number; pts: Pt[]; idx: number[] }[]; offFace: number } {
+  const runs: { f: number; pts: Pt[]; idx: number[] }[] = []
   let offFace = 0
-  let cur: { f: number; pts: Pt[] } | null = null
-  for (const p of pts) {
+  let cur: { f: number; pts: Pt[]; idx: number[] } | null = null
+  // idx = 원래 점렬에서의 자리(web2-50) — 점별 필압을 조각에 나눠 실을 때 정렬이 필요하다
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i]!
     const f = frontFaceAt(lift, pose, faces, p)
     if (f === null) { offFace++; cur = null; continue }
-    if (cur && cur.f === f) cur.pts.push({ ...p })
-    else { cur = { f, pts: [{ ...p }] }; runs.push(cur) }
+    if (cur && cur.f === f) { cur.pts.push({ ...p }); cur.idx.push(i) }
+    else { cur = { f, pts: [{ ...p }], idx: [i] }; runs.push(cur) }
   }
   const kept = runs.filter(r => r.pts.length >= 2)
   for (const r of runs) if (r.pts.length < 2) offFace += r.pts.length

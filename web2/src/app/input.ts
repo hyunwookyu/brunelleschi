@@ -80,7 +80,8 @@ export interface InputCallbacks {
   /** **조작이 끝났다**(web2-44) — 옮김·돌림 끌기가 값을 남겼다. 알림은 main이 낸다(#54). */
   onManip: (kind: 'move' | 'rotate') => void
   /** **칠 한 붓이 끝났다**(web2-45) — 문서 좌표 점렬. 면 배정·확정은 main이 부른다(#54). */
-  onPaint: (pts: Pt[]) => void
+  /** 칠 한 붓 — press는 점별 필압(펜만 · raw와 같은 길이 · web2-50 정본 목록의 «압력») */
+  onPaint: (pts: Pt[], press?: number[]) => void
 }
 
 export function initInput(
@@ -492,7 +493,7 @@ export function initInput(
     // 칠(web2-45) — 탭은 잡음이고, 점렬이 그대로 한 붓이다(면 배정은 main → state).
     if (paintActive(app)) {
       if (Math.hypot(d.end.x - d.start.x, d.end.y - d.start.y) * viewScale(app) <= C.TAP_MAX_PX) return
-      cb.onPaint(d.raw)
+      cb.onPaint(d.raw, d.press && d.press.length === d.raw.length ? d.press : undefined)
       return
     }
     if (yellowActive(app)) {

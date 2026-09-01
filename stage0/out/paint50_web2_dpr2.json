@@ -1,0 +1,117 @@
+{
+  "what": "web2-50 — 면 텍스처 칠의 픽셀 판: 곱(밝기 불증가·아래가 비침·반증) · 회전 유지 · 원근 폭 · 경계 절단 · 쪽 · 파생 증명 · 저장 · 스무 면/40획 성능",
+  "note_92": "판정자는 픽셀(밝기 차·색 띠 폭·수)·프레임 ms·바이트다. 「텍스처를 만들었다」는 이름표라 안 센다",
+  "note_5": "곱이 어둡게만 하는 것은 합성식의 구성이다 — 그래서 판은 «합성 화면»(#gl)에서 재고, 반증 스위치(보통 합성)가 같은 실행에서 밝기 증가를 실제로 낸다(D-3)",
+  "multiply": {
+    "def": "벽(무늬 벽돌) 상자 — 칠 전/후 픽셀 밝기(알파 미리곱을 종이 위 밝기로 편 값). 문턱 3/255. 반증 = NormalBlending 스위치(같은 실행)",
+    "no_brighter": {
+      "brighter": 0,
+      "maxUp": 0,
+      "darkSum": 2899277
+    },
+    "under_pattern": {
+      "repBase": 497819,
+      "repUnderPaint": 38336
+    },
+    "falsify_over": {
+      "brighter": 458059,
+      "maxUp": 87.5,
+      "darkSum": 2442689
+    },
+    "dom_canvas": {
+      "before": 10,
+      "after": 10
+    }
+  },
+  "orbit": {
+    "before": 20946,
+    "during": [
+      18934,
+      16938,
+      14964,
+      13044,
+      11195
+    ],
+    "after": 11195
+  },
+  "foreshorten_clip": {
+    "def": "경계를 일부러 지나는 마커 획 — 열별 파란 띠 두께(물리 px · ±2열 평균). near=545css · far=855css · 밖=488/915css",
+    "near_px": 35.8,
+    "far_px": 27.4,
+    "ratio": 1.307,
+    "screen_fixed_would_give": 1,
+    "left_out_px": 0,
+    "right_out_px": 0,
+    "note_hole": "개구부 «구멍»의 픽셀 팔은 없다 — 기하는 단위(facetex.test 개구부)가 잰다. 경계 절단이 같은 기제(메시가 텍스처를 문다)의 바깥판이다"
+  },
+  "side": {
+    "before": 20946,
+    "behind": 0,
+    "scene_ink_behind": 683511,
+    "restored": 20946
+  },
+  "derived": {
+    "hash_base": 1450155533,
+    "hash_corrupted": 1735610704,
+    "hash_rebaked": 1450155533,
+    "textures": 1,
+    "file_bytes": 4003
+  },
+  "tex_budget": {
+    "def": "분할 두 벽(면 faceN) + 칠 40붓 — 텍스처 수·단계 분포·합계 바이트(w·h·4). 프레임은 같은 장면 전/후 «차»(#82) — 잡음 바닥(before↔before2)과 함께 읽는다",
+    "faces": 17,
+    "paint_strokes": 44,
+    "textures": 17,
+    "levels": [
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024
+    ],
+    "bytes_total": 15077376,
+    "max_level": 1024,
+    "cap": 1024,
+    "min": 64,
+    "before_ms": {
+      "median": 28.699999809265137,
+      "p90": 31.90000009536743
+    },
+    "before2_ms": {
+      "median": 28.200000286102295,
+      "p90": 31.100000381469727
+    },
+    "noise_floor_ms": 0.5,
+    "after_ms": {
+      "median": 47.89999961853027,
+      "p90": 51.59999990463257
+    },
+    "delta_median_ms": 19.7,
+    "delta_p90_ms": 20.5,
+    "note_cap": "상한 1024의 근거 — 이 장면(칠한 면 ~수십)의 합계 바이트가 이 필드다. 2048이면 장당 4배(16MB)라 같은 장면이 수백 MB 대역으로 뛴다",
+    "note_82": "중앙값이 vsync 바닥(16.7ms)에 붙은 실행에서는 차의 해상도가 눈금뿐이다(rep49 frame20의 그 유보 그대로)"
+  },
+  "constants_used": {
+    "note": "web2 라인은 constantsSnapshot 기계가 없다(라인 유보 — lens31의 no_constants_snapshot이 정본)"
+  },
+  "no_constants_snapshot": true,
+  "pitfall_citations": [
+    5,
+    54,
+    82,
+    92,
+    97
+  ]
+}

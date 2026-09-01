@@ -15,7 +15,7 @@ import { createAutoLevel } from './autolevel'
 import { isLevel, pitchSnaps } from '../core/level'
 import { resize2d, draw2d, horizonVisible, setForceConstructing, refreshStencil, type Draft } from './render2d'
 import { loadStencil, saveStencil, clearStencil } from '../core/stencil'
-import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest } from './render3d'
+import { initR3D, syncStrokes, render3d, resize3d, setDraftLine, syncCost, resetSyncCost, getHatchMode, setHatchMode, setFaceSortForTest, paintTexStats, corruptPaintTexForTest, rebakePaintTexForTest, setPaintBlendForTest } from './render3d'
 import { serializeBrnl, setSaveRoundForTest, parseBrnl, readBrnl, reportNotice } from '../core/file'
 import { initFilePanel, type FilePanel } from './filepanel'
 import { setStoreFailForTest, listDocs, getDoc, putDoc, newDocId, migrateFromLocal } from '../core/store'
@@ -483,8 +483,8 @@ inputApi = initInput(ink, app, {
     invalidate()
   },
   // ── 칠 한 붓(web2-45) — 면 배정·분할·확정은 state.commitPaint 하나다(#54) ──────
-  onPaint(pts) {
-    const r = commitPaint(app, pts)
+  onPaint(pts, press) {
+    const r = commitPaint(app, pts, press)
     // 알림은 오류가 있을 때만(4-b) — 얹혔으면 화면이 말한다. 통째로 허공이면 이유를.
     if (r.placed === 0) notify('칠할 면이 없다 — 면을 먼저 지정한다(칠은 면 위에만 얹힌다)')
     invalidate()
@@ -3030,6 +3030,17 @@ const diag = {
     constants: { REP_MIN_PX: C.REP_MIN_PX, REP_BRICK_COURSE_MM: C.REP_BRICK_COURSE_MM, REP_BRICK_MODULE_W_MM: C.REP_BRICK_MODULE_W_MM, REP_FRAME_BUDGET_MS: C.REP_FRAME_BUDGET_MS, REP_ZOOM_RETENTION_TOL: C.REP_ZOOM_RETENTION_TOL },
   }),
   cycleRep49: (faceId: number) => cycleFaceRep(app, faceId),
+  /** 면 텍스처(web2-50) — 팔의 판정 통로 셋: 요약(자리·단계·보임) · 파생 증명의 오염 ·
+   *  합성 반증(곱 → 보통 — 켜면 증상 ①②가 되살아나야 한다 · D-3 · #30) */
+  paintTex: () => paintTexStats(),
+  paint50Constants: () => ({ FACETEX_MIN_PX: C.FACETEX_MIN_PX, FACETEX_MAX_PX: C.FACETEX_MAX_PX,
+    PAINT_MARKER_ALPHA: C.PAINT_MARKER_ALPHA, PAINT_CP_ALPHA: C.PAINT_CP_ALPHA,
+    PAINT_W_FALLBACK_UNITS: C.PAINT_W_FALLBACK_UNITS }),
+  /** 저장물 원문(파일 저장과 같은 함수 — #54) — paint50 팔이 «텍스처가 파일에 없다»를 잰다 */
+  serialize: () => serializeBrnl({ doc: app.doc, nextId: app.nextId, drawView: app.drawView }),
+  corruptPaintTex: () => { const n = corruptPaintTexForTest(); invalidate(); return n },
+  rebakePaintTex: () => { rebakePaintTexForTest(); invalidate() },
+  setPaintBlendForTest: (v: boolean) => { setPaintBlendForTest(v); invalidate() },
   /** **안 실린 수리를 손으로 걸어 보는 손잡이**(web2-48 48-1 — 수리는 되돌렸다).
    *  `true` = 잉크 겹을 **곱**으로 얹는다(흰 장막이 사라진다) · `false` = **출하 상태**.
    *  왜 안 실었는가: 이 겹은 «종이 위의 잉크»가 아니라 **#gl의 몸체 위에 얹히는 질감**

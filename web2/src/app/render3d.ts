@@ -17,7 +17,9 @@ import { hatchSpecOf, hatchHexOf, solidHexOf } from '../core/palette'
 import { repSegments, repBasis, repVisibleFamilies, isRepId, type Seg3 } from '../core/matrep'
 import { project } from '../core/camera'
 import { paintSideAt } from '../core/paint'
-import type { Grade } from '../core/types'
+import { uvBoxOf, texLevel, bakeFaceTex, type UvBox } from '../core/facetex'
+import { faceHatchSpacingWorld } from '../core/hatch'
+import type { Grade, Stroke, Face } from '../core/types'
 
 export interface R3D {
   renderer: THREE.WebGLRenderer
@@ -36,6 +38,10 @@ export interface R3D {
   /** 재료 표현(web2-49) — 면 고정 실치수 무늬. 해칭과 같은 겹 층위(면 위·선 아래)이고
    *  자리는 sortFaces가 해칭과 같은 규칙(order+1)으로 잡는다. */
   repGroup: THREE.Group
+  /** 면 텍스처(web2-50) — 칠·면 고정 해칭이 사는 겹. 면 위 · 무늬(rep) 위 · 선(0) 아래
+   *  (52-4의 차례 «톤·무늬가 아래, 손으로 그은 것이 위» — sortFaces가 order+2로 잡는다).
+   *  합성은 **곱하기**(MultiplyBlending) — 흰 텍셀이 항등이라 아래 선·면이 언제나 비친다. */
+  paintGroup: THREE.Group
   /** 캔버스 CSS 크기 — NDC 매핑 기준 (문서 프레임과 다를 수 있다) */
   W: number
   H: number
@@ -77,11 +83,13 @@ export function initR3D(canvas: HTMLCanvasElement, W: number, H: number, dpr: nu
   scene.add(hatchGroup)
   const repGroup = new THREE.Group()     // 재료 표현(web2-49) — 해칭과 같은 층위
   scene.add(repGroup)
+  const paintGroup = new THREE.Group()   // 면 텍스처(web2-50) — 칠·면 고정 해칭
+  scene.add(paintGroup)
   scene.add(group)
   const materials = new Map<string, LineMaterial>()
   // 재질은 **쓰이는 그 자리에서** 만든다(matFor). 경도별로 미리 만들어 두면 굵기 기본값을
   // 여기서도 정하게 되고, 그러면 굵기의 출처가 둘이 된다(PITFALLS #54).
-  return { renderer, scene, camera, group, faceGroup, faceMat, hatchGroup, repGroup, materials, W, H }
+  return { renderer, scene, camera, group, faceGroup, faceMat, hatchGroup, repGroup, paintGroup, materials, W, H }
 }
 
 const matKey = (g: Grade, w: number) => `${g}:${w.toFixed(3)}`
@@ -320,9 +328,11 @@ function hatchMatOf(hex: string): THREE.LineBasicMaterial {
 }
 
 /** 해칭 다시 짓기 — 문서·모드가 바뀌면, 그리고 **화면 판은 시점·줌이 바뀌면**(정의가
- *  화면의 것이라서다 — 그것이 곧 ⚑의 「무늬가 면 위에서 미끄러진다」다). */
+ *  화면의 것이라서다 — 그것이 곧 ⚑의 「무늬가 면 위에서 미끄러진다」다).
+ *  ⚠ web2-50: **면 고정 판은 이제 여기가 아니라 면 텍스처에 산다**(지시 「면 고정 판만
+ *  텍스처로 옮긴다」 — syncPaintTex). 화면 고정 판은 한 줄도 안 바뀌었다. */
 function syncHatch(r: R3D, app: App) {
-  const filled = app.doc.faces.filter(f => f.fill === 1)
+  const filled = hatchMode === 'face' ? [] : app.doc.faces.filter(f => f.fill === 1)
   const p = app.pose.p, q = app.pose.q
   const poseSig = hatchMode === 'screen'
     ? `${p.x.toFixed(4)},${p.y.toFixed(4)},${p.z.toFixed(4)},${q.x.toFixed(5)},${q.y.toFixed(5)},${q.z.toFixed(5)},${viewScale(app).toFixed(4)}`
@@ -420,6 +430,192 @@ function syncRep(r: R3D, app: App) {
   }
 }
 
+// ── 면 텍스처(web2-50) — 칠은 텍스처에 그리고, 텍스처를 입은 면이 3D에 놓인다 ───────
+//
+// 정본은 획 목록(Stroke.paint.uv)이고 텍스처는 파생이다(core/facetex.ts — 원칙 b).
+// 굽는 때: ① 문서가 바뀌면(syncPaintTex — docVersion) ② 해상도 단계가 바뀌면
+// (gatePaintTex — 화면 투영 크기의 2^n 양자화 · 단계가 같으면 줌이 움직여도 안 굽는다).
+// 쪽(48-5)은 매 프레임 gatePaintTex가 visible로 켜고 끈다(gateRep과 같은 자리·같은 술어).
+//
+// 메시의 형태: 면의 삼각분할(rf.tris — **개구부가 이미 빠져 있다**: 증상 ⑤의 절단이
+// 구성에서 나온다) + uv 속성. 재질은 곱하기(MultiplyBlending) — 흰 텍셀이 항등.
+// 면 고정 해칭(45의 둘째 판)은 같은 텍스처의 바닥에 깔린다(52-4의 차례를 지금부터).
+
+interface PaintTexEntry {
+  canvas: HTMLCanvasElement
+  tex: THREE.CanvasTexture
+  mesh: THREE.Mesh
+  box: UvBox
+  faceId: number
+  /** ±1 = 칠의 쪽(카메라가 그 쪽일 때만 보임) · 0 = 해칭 전용(양쪽 — 평면 위 무늬는
+   *  뒤에서 봐도 같은 세계 자리다 — 옛 LineSegments와 같은 거동) */
+  side: 1 | -1 | 0
+  level: number
+}
+let paintTexes = new Map<string, PaintTexEntry>()
+let paintKey = ''
+
+/** 이 (면, 쪽)의 칠 획들 — 굽기 입력. 차례는 문서 차례(그린 차례 = 쌓인 차례)다. */
+function paintStrokesOf(app: App, faceId: number, side: 1 | -1): Stroke[] {
+  return app.doc.strokes.filter(s =>
+    s.paint !== undefined && s.paint.f === faceId && s.paint.s === side &&
+    s.paint.uv !== undefined && s.paint.uv.length >= 4)
+}
+
+function syncPaintTex(r: R3D, app: App) {
+  const key = `${app.docVersion}|${getHatchMode()}`
+  if (key === paintKey) return
+  paintKey = key
+  for (const e of paintTexes.values()) {
+    r.paintGroup.remove(e.mesh)
+    e.mesh.geometry.dispose()
+    ;(e.mesh.material as THREE.Material).dispose()
+    e.tex.dispose()
+  }
+  paintTexes = new Map()
+  // 어느 (면, 쪽)에 텍스처가 서는가 — ① 칠 획이 있는 쪽 ② 면 고정 해칭(fill=1 ·
+  // hatchMode 'face')은 칠이 있으면 그 쪽 텍스처들에 깔리고, 칠이 없으면 쪽 0 하나.
+  const hatchFaceMode = getHatchMode() === 'face'
+  const wants = new Map<string, { faceId: number; side: 1 | -1 | 0 }>()
+  for (const s of app.doc.strokes) {
+    if (s.paint?.uv === undefined || s.paint.uv.length < 4) continue
+    if (s.paint.s !== 1 && s.paint.s !== -1) continue
+    wants.set(`${s.paint.f}:${s.paint.s}`, { faceId: s.paint.f, side: s.paint.s })
+  }
+  if (hatchFaceMode) {
+    for (const f of app.doc.faces) {
+      if (f.fill !== 1) continue
+      if (!wants.has(`${f.id}:1`) && !wants.has(`${f.id}:-1`)) {
+        wants.set(`${f.id}:0`, { faceId: f.id, side: 0 })
+      }
+    }
+  }
+  for (const w of wants.values()) {
+    const rf = app.faces.find(x => x.id === w.faceId)
+    if (!rf || rf.tris.length < 3) continue               // 못 풀린 면 — 칠도 쉰다(면의 규약)
+    const box = uvBoxOf(rf)
+    const pos = new Float32Array(rf.tris.length * 3)
+    const uv = new Float32Array(rf.tris.length * 2)
+    const su = Math.max(1e-9, box.u1 - box.u0), sv = Math.max(1e-9, box.v1 - box.v0)
+    let cx = 0, cy = 0, cz = 0
+    rf.tris.forEach((p, i) => {
+      pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z
+      cx += p.x; cy += p.y; cz += p.z
+      const dx = p.x - box.basis.origin.x, dy = p.y - box.basis.origin.y, dz = p.z - box.basis.origin.z
+      const uu = dx * box.basis.u.x + dy * box.basis.u.y + dz * box.basis.u.z
+      const vv = dx * box.basis.v.x + dy * box.basis.v.y + dz * box.basis.v.z
+      uv[i * 2] = (uu - box.u0) / su
+      uv[i * 2 + 1] = (vv - box.v0) / sv
+    })
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+    g.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
+    const canvas = document.createElement('canvas')     // 화면 밖 — DOM에 안 붙는다(#97)
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.colorSpace = THREE.SRGBColorSpace
+    // ⚠⚠ three r185: MultiplyBlending은 **premultipliedAlpha: true를 요구한다** — 없으면
+    // WebGLState가 blend 상태를 안 세팅하고 조용히 over로 그려진다(콘솔 error 한 줄뿐).
+    // 실측으로 잡았다: 곱/보통 스위치가 픽셀에 안 실렸고 벽 패치가 두 모드 다 순백이었다.
+    // premultiplied 규약의 곱은 blendFuncSeparate(DST_COLOR, 1-SRC_A, ZERO, ONE) —
+    // 불투명 텍셀(a=1)에서 정확히 dst×src이고 알파는 dst 그대로다.
+    const mat = new THREE.MeshBasicMaterial({
+      map: tex, premultipliedAlpha: true,
+      blending: paintBlendNormalForTest ? THREE.NormalBlending : THREE.MultiplyBlending,
+      transparent: true, depthTest: false, depthWrite: false, side: THREE.DoubleSide,
+    })
+    const mesh = new THREE.Mesh(g, mat)
+    mesh.userData.faceId = w.faceId
+    mesh.userData.centroid = { x: cx / rf.tris.length, y: cy / rf.tris.length, z: cz / rf.tris.length }
+    r.paintGroup.add(mesh)
+    paintTexes.set(`${w.faceId}:${w.side}`, {
+      canvas, tex, mesh, box, faceId: w.faceId, side: w.side, level: 0,
+    })
+  }
+}
+
+/** 시점의 몫 — 매 프레임: ① 쪽(48-5) ② 해상도 단계(투영 크기 → 2^n · 바뀌면 재굽기).
+ *  판정 내역을 userData.gate에 남긴다(rep의 규약 — 같은 계산의 기록 · #54). */
+function gatePaintTex(r: R3D, app: App) {
+  if (paintTexes.size === 0) return
+  const vs = viewScale(app)
+  const dpr = r.renderer.getPixelRatio()
+  const hatchFaceMode = getHatchMode() === 'face'
+  for (const e of paintTexes.values()) {
+    const rf = app.faces.find(x => x.id === e.faceId)
+    const face = app.doc.faces.find(f => f.id === e.faceId)
+    if (!rf) { e.mesh.visible = false; continue }
+    const sideOk = e.side === 0 ? true : paintSideAt(rf, app.pose) === e.side
+    // 투영 크기 — 외곽 정점의 화면 bbox(문서 px) × 줌 × dpr. 사영 안 되는 정점은 뺀다.
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, n = 0
+    for (const P of rf.outer) {
+      const q = project(app.lift.an, app.pose, P)
+      if (!q) continue
+      n++
+      if (q.x < x0) x0 = q.x
+      if (q.y < y0) y0 = q.y
+      if (q.x > x1) x1 = q.x
+      if (q.y > y1) y1 = q.y
+    }
+    const screenPx = n >= 2 ? Math.max(x1 - x0, y1 - y0) * vs * dpr : C.FACETEX_MIN_PX
+    const lv = texLevel(screenPx)
+    if (lv !== e.level) {
+      const hatch = hatchFaceMode && face?.fill === 1 && face
+        ? { face, spacingWorld: faceHatchSpacingWorld(app.lift.an, rf, hatchSpecOf(face).spacingPx) } : null
+      const strokes = e.side === 0 ? [] : paintStrokesOf(app, e.faceId, e.side)
+      bakeFaceTex(e.canvas, rf, e.box, lv, strokes, e.side === 0 ? 1 : e.side, hatch)
+      e.tex.needsUpdate = true
+      e.level = lv
+    }
+    e.mesh.visible = sideOk
+    e.mesh.userData.gate = { side: sideOk, level: e.level }
+  }
+}
+
+/** **반증 스위치**(D-3 · #30) — 곱 합성을 보통(over) 합성으로 되돌린다. 켜면 흰 바탕
+ *  텍셀이 아래를 덮어 증상 ①(흰 뜸)·②(블렌드 불가)가 **되살아나야 한다** — e2e가
+ *  같은 실행에서 밝기 증가를 실제로 내는 데 쓴다. 제품 경로는 안 부른다. */
+let paintBlendNormalForTest = false
+export function setPaintBlendForTest(v: boolean) {
+  paintBlendNormalForTest = v
+  for (const e of paintTexes.values()) {
+    const m = e.mesh.material as THREE.MeshBasicMaterial
+    m.blending = v ? THREE.NormalBlending : THREE.MultiplyBlending
+    m.needsUpdate = true
+  }
+}
+
+/** 진단·팔용 — 지금 서 있는 텍스처들의 요약(자리·단계·굽힌 크기·합성). */
+export function paintTexStats(): { key: string; level: number; w: number; h: number; visible: boolean; blending: number }[] {
+  const out: { key: string; level: number; w: number; h: number; visible: boolean; blending: number }[] = []
+  for (const [k, e] of paintTexes) {
+    out.push({
+      key: k, level: e.level, w: e.canvas.width, h: e.canvas.height, visible: e.mesh.visible,
+      blending: (e.mesh.material as THREE.MeshBasicMaterial).blending,
+    })
+  }
+  return out
+}
+
+/** 파생 증명 팔용(web2-50 게이트) — 두 단계로 가른다(오염이 **화면에 실제로 보인 뒤**
+ *  재굽기가 지우는 것을 재야 반증이 선다 — D-3):
+ *  ① corrupt — 텍스처에 검은 사각을 찍는다(단계는 그대로 → 재굽기가 안 돈다 · 오염이 보인다)
+ *  ② rebake — 단계를 0으로 → 다음 프레임 gate가 정본(획 목록)에서 다시 굽는다.
+ *  제품 경로는 어느 쪽도 안 부른다. */
+export function corruptPaintTexForTest(): number {
+  let n = 0
+  for (const e of paintTexes.values()) {
+    const g = e.canvas.getContext('2d')!
+    g.fillStyle = '#000000'
+    g.fillRect(0, 0, Math.max(8, e.canvas.width >> 2), Math.max(8, e.canvas.height >> 2))
+    e.tex.needsUpdate = true
+    n++
+  }
+  return n
+}
+export function rebakePaintTexForTest(): void {
+  for (const e of paintTexes.values()) e.level = 0
+}
+
 /** 시점의 몫 — 매 프레임. ① **쪽**(48-5 무회귀): 카메라가 붙인 쪽일 때만 보인다.
  *  ② **밀도 하한**: 면 중심에서 잰 무늬 간격의 투영 px가 `C.REP_MIN_PX` 아래면 그 계열을
  *  숨긴다(작은 축척에서 재료 표현 생략 — 제도 관례). 굵기는 화면 고정, 간격은 면 고정. */
@@ -486,7 +682,10 @@ export function setFaceSortForTest(v: boolean) { faceSortOn = v }
 
 function sortFaces(r: R3D, app: App) {
   const kids = r.faceGroup.children
-  if (kids.length < 2) return
+  // ⚠ web2-50 이전에는 «면이 둘부터»였다 — 칠 텍스처가 오면서 면 «하나»여도 층
+  // (면 0 · 해칭/무늬 +1 · 칠 +2)이 서야 한다. 이르게 돌아가면 전부 renderOrder 0이라
+  // 곱 합성이 무늬 «아래»에 깔려 픽셀에 안 실린다(paint50 반증 팔이 실제로 잡았다).
+  if (kids.length === 0) return
   const rows = kids.map((k, i) => {
     const u = k.userData as { centroid?: { x: number; y: number; z: number }; faceId?: number }
     return { k, id: u.faceId ?? -i - 1, centroid: u.centroid ?? { x: 0, y: 0, z: 0 } }
@@ -509,6 +708,10 @@ function sortFaces(r: R3D, app: App) {
   for (const h of r.repGroup.children) {  // 재료 표현(49) — 해칭과 같은 자리(제 면 위)
     const fid = (h.userData as { faceId?: number }).faceId
     h.renderOrder = (fid !== undefined ? orderOf.get(fid) ?? -1000 : -1000) + 1
+  }
+  for (const h of r.paintGroup.children) { // 면 텍스처(50) — 무늬 위·선 아래(52-4의 차례)
+    const fid = (h.userData as { faceId?: number }).faceId
+    h.renderOrder = (fid !== undefined ? orderOf.get(fid) ?? -1000 : -1000) + 2
   }
 }
 
@@ -533,6 +736,8 @@ export function render3d(r: R3D, app: App) {
   syncHatch(r, app)
   syncRep(r, app)      // 재료 표현(49) — 문서가 바뀌었을 때만 다시 만든다(면 고정)
   gateRep(r, app)      // 시점의 몫 — 쪽(48-5)·밀도 하한은 매 프레임
+  syncPaintTex(r, app) // 면 텍스처(50) — 문서가 바뀌었을 때만 메시를 다시 세운다
+  gatePaintTex(r, app) // 시점의 몫 — 쪽 · 해상도 단계(단계가 바뀔 때만 굽는다)
   revealFaces(r, app)
   sortFaces(r, app)
   r.renderer.render(r.scene, r.camera)

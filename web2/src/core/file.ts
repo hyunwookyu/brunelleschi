@@ -7,7 +7,7 @@ import { horizonDocY } from './camera'
 import { GRADES } from './material'
 import { UNITS, type Unit } from './dim'
 import { validPressCal } from './press'
-import { isMatId, isHex6, toneHex } from './palette'
+import { isMatId, isHex6 } from './palette'
 import { isRepId } from './matrep'
 import type { Measure } from './measure'
 import { C } from './constants'
@@ -52,8 +52,15 @@ export interface SerializeOptions {
  *  끝점은 획당 두 점이고 바이트의 큰 몫은 `raw`다(`filesize25_web2.json`). */
 const r1 = (v: number): number => Math.round(v * 10) / 10
 const roundPt = (p: { x: number; y: number }) => ({ ...p, x: r1(p.x), y: r1(p.y) })
-const roundStroke = (s: Stroke): Stroke =>
-  s.raw ? { ...s, raw: s.raw.map(roundPt) } : s
+/** 칠 uv의 반올림 — **세계 단위**라 0.1이 아니라 1e-4다(면 폭 O(1) 단위 · 텍스처
+ *  1024px에서 1e-4 단위 ≈ 0.02px — 픽셀 아래). raw와 같은 이유(바이트의 큰 몫)다. */
+const r4 = (v: number): number => Math.round(v * 1e4) / 1e4
+const roundStroke = (s: Stroke): Stroke => {
+  let out = s
+  if (out.raw) out = { ...out, raw: out.raw.map(roundPt) }
+  if (out.paint?.uv) out = { ...out, paint: { ...out.paint, uv: out.paint.uv.map(r4) } }
+  return out
+}
 
 /** 반증 손잡이(e2e 전용 — `diag.saveRound`) — 저장 반올림의 **기본값**을 끈다.
  *  앱에는 UI가 없다. 팔이 「반올림 있는 문서」와 「없는 문서」를 **같은 재그리기 경로로**
@@ -88,7 +95,8 @@ const KEY_ORDER: string[] = [
   // w 자국 굵기(48-2). ⚠ `m`은 **면 재료**(Face.mat)가 아직 쓰고, `s`·`t`·`w`는 아래
   // 면·치수 줄에도 있는 이름이라 여기서 새로 안 적는다(이 배열은 열쇠 «차례»의 전역
   // 목록이고 이름이 겹치는 것은 정상이다 — 43-1 ①이 바이트로 지킨다).
-  'paint', 'f', 'm', 'i', 'c',
+  // web2-50: uv(면 위 좌표 — 정본)가 늘었다. press는 아래 줄에 이미 있다(전역 차례 목록).
+  'paint', 'f', 'uv', 'm', 'i', 'c',
   // rep(web2-49 — 재료 표현 {m, s}: 열쇠 m·s는 위 칠 줄과 면 줄에 이미 있다)
   'faces', 'loops', 'edges', 'kind', 's', 't', 'ox', 'oy', 'cls', 'fill', 'rep',
   'unit', 'scaleRef', 'grade', 'press', 'w', 'h', 'D', 'tiltX', 'tiltY', 'twist',
@@ -161,7 +169,11 @@ const withProj = (pose: CamPose, raw: any): CamPose => {
   return proj ? { ...pose, proj } : pose
 }
 
-export function parseBrnl(text: string): BrnlData | null {
+/** 파서가 버린 것의 셈 — web2-50: uv 없는 옛 칠 획(45~48)을 획째 버리고 센다.
+ *  부른 쪽(readBrnl)이 이 수를 보고문에 실어 **여는 순간 한 줄**로 말한다(43-1 규약). */
+export interface ParseInfo { droppedPaint: number }
+
+export function parseBrnl(text: string, info?: ParseInfo): BrnlData | null {
   let raw: any
   try { raw = JSON.parse(text) } catch { return null }
   // 1~6을 받는다(1~3은 savedViews 형식·4는 sheets·5는 layers·6은 underlays).
@@ -221,29 +233,32 @@ export function parseBrnl(text: string): BrnlData | null {
     // 잠금(web2-44) — text와 같은 규격(값 1 하나 · 모양이 틀리면 그 필드만 버린다:
     // 잃어도 «안 잠김»일 뿐이라 조용히 틀린 기하가 안 난다).
     if (s.lock === 1) st.lock = 1
-    // 칠 획(web2-45) — 면 id 하나. 모양이 틀리면 그 필드만 버린다(그 획은 «면 없는
-    // 잉크»가 되어 안 보인다 — 면이 못 풀린 것과 같은 상태라 조용히 틀리지 않는다).
-    if (s.paint && isNum(s.paint.f)) {
-      st.paint = { f: s.paint.f }
+    // 칠 획 — ⚠⚠ **web2-50: 정본이 면 위 좌표(uv)다.** uv(짝수 길이 ≥4 유한수)와
+    // 쪽(±1)이 **같이 서야** 받는다(쪽 없는 칠 = 양쪽에 보이는 칠 ⛔ — rep의 규약 그대로).
+    // **uv 없는 칠(45~48 형식)은 획째 버리고 센다** — 사용자 확정 「잃어도 상관없다」
+    // (50 지시 · 마이그레이션 ⛔). 조용하면 안 되므로(43-1) 센 수가 여는 순간 알림이 된다.
+    if (s.paint !== undefined && s.paint !== null) {
       const p = s.paint
-      // ⚠⚠ **면의 쪽**(web2-48 48-5) — ±1만 받는다. 모양이 틀리면 **그 필드만 버린다**:
-      // 잃으면 45·46과 같은 «양쪽에서 보임»이라 칠이 조용히 사라지지 않는다(그 반대로
-      // 골랐다면 파일이 조금 상했을 때 칠이 통째로 안 보이게 된다 — 못 고른다).
-      if (p.s === 1 || p.s === -1) st.paint.s = p.s
-      // 색(web2-48 48-7) — 도구(i)와 **같이** 성해야 받는다: 색만 있고 도구가 없으면
-      // 어떤 촉으로 그릴지 모른다(46의 «셋이 같이» 규약을 둘로 줄인 것뿐이다).
+      const uvOk = Array.isArray(p.uv) && p.uv.length >= 4 && p.uv.length % 2 === 0 &&
+        p.uv.every((v: unknown) => isNum(v))
+      if (!isNum(p.f) || !uvOk || !(p.s === 1 || p.s === -1)) {
+        if (info) info.droppedPaint++
+        continue                             // 이 획을 통째로 버린다(다음 획으로)
+      }
+      st.paint = { f: p.f, s: p.s, uv: p.uv.map(Number) }
+      // 점별 필압(50 — 정본 목록의 «압력») — 길이가 uv 점 수와 같아야 받는다. 틀리면
+      // 그 필드만 버린다(질은 51의 몫이라 잃어도 조용히 틀린 기하가 안 난다).
+      if (Array.isArray(p.press) && p.press.length === p.uv.length / 2 &&
+        p.press.every((v: unknown) => isNum(v) && (v as number) >= 0 && (v as number) <= C.PRESS_Q)) {
+        st.paint.press = p.press.map(Number)
+      }
+      // 색 — 도구(i)와 **같이** 성해야 받는다(48-7의 규약 그대로).
       if (isHex6(p.c) && (p.i === 1 || p.i === 2)) {
         st.paint.c = p.c; st.paint.i = p.i
-      } else if (isMatId(p.m) && isNum(p.t) && p.t >= 0 && p.t <= 2 && Number.isInteger(p.t)
-        && (p.i === 1 || p.i === 2)) {
-        // **옛 파일의 (재료, 톤)을 색으로 옮겨 받는다**(web2-46 → 48-7). 상태에도 저장에도
-        // (m,t)를 남기지 않는 이유는 #54다 — 색의 출처가 둘이면 「고른 색」과 「나가는
-        // 색」이 갈린다. 옮김은 **무손실**이다: 그 쌍이 가리키던 값이 곧 이 hex다.
-        st.paint.c = toneHex(p.m, p.t); st.paint.i = p.i
       }
-      // 굵기(web2-48 48-2) — 양수 유한값만. 대역 밖이면 그 필드만 버린다(도구 기본값으로
-      // 물러난다 — `brushmap.paintWeightOf`. 0·음수는 라이브러리가 조용히 안 그린다).
-      if (isNum(p.w) && p.w > 0 && p.w <= 200) st.paint.w = p.w
+      // 굵기 — **세계 단위**(50 — px에서 바뀌었다. 옛 px 값은 위에서 획째 버려져 여기
+      // 안 닿는다). 양수 유한값만, 터무니없는 값은 그 필드만 버린다(대체 폭으로 물러난다).
+      if (isNum(p.w) && p.w > 0 && p.w <= 1e6) st.paint.w = p.w
     }
     if (s.own3 && isV3(s.own3.a) && isV3(s.own3.b) &&
         (s.own3.axis === null || typeof s.own3.axis === 'string')) {
@@ -540,10 +555,12 @@ export interface BrnlReport {
   droppedKeys: string[]
   /** 살린 획 수 */
   keptStrokes: number
+  /** web2-50 — uv 없는 옛 칠 획을 획째 버린 수(구조 전환 · 사용자 확정 「잃어도 상관없다」) */
+  droppedPaint: number
 }
 
-const cleanReport = (n: number): BrnlReport =>
-  ({ ok: true, salvaged: false, truncated: false, droppedStrokes: 0, droppedKeys: [], keptStrokes: n })
+const cleanReport = (n: number, droppedPaint: number): BrnlReport =>
+  ({ ok: true, salvaged: false, truncated: false, droppedStrokes: 0, droppedKeys: [], keptStrokes: n, droppedPaint })
 
 /** 값 하나의 끝 — `i`가 값의 첫 글자일 때 그 값 **다음** 자리를 낸다. 잘렸으면 −1.
  *  문자열 안의 괄호·역슬래시를 센다(잘린 파일에는 닫히지 않은 문자열이 있다). */
@@ -608,10 +625,11 @@ const OPTIONAL_KEYS = ['measures', 'underlays', 'layers', 'faces', 'sheets', 'pr
 /** **문서를 여는 유일한 통로**(앱의 두 자리 — 파일 열기·자동 저장 복원 — 이 이것을 부른다).
  *  성한 파일이면 `parseBrnl` 그대로이고, 아니면 건져 읽고 **무엇을 못 읽었는지** 낸다. */
 export function readBrnl(text: string): { data: BrnlData | null; report: BrnlReport } {
-  const strict = parseBrnl(text)
-  if (strict) return { data: strict, report: cleanReport(strict.doc.strokes.length) }
+  const pinfo: ParseInfo = { droppedPaint: 0 }
+  const strict = parseBrnl(text, pinfo)
+  if (strict) return { data: strict, report: cleanReport(strict.doc.strokes.length, pinfo.droppedPaint) }
 
-  const rep: BrnlReport = { ok: false, salvaged: true, truncated: false, droppedStrokes: 0, droppedKeys: [], keptStrokes: 0 }
+  const rep: BrnlReport = { ok: false, salvaged: true, truncated: false, droppedStrokes: 0, droppedKeys: [], keptStrokes: 0, droppedPaint: 0 }
   let raw: any = null
   try { raw = JSON.parse(text) } catch { rep.truncated = true }
   if (rep.truncated) raw = salvageTruncated(text)
@@ -628,30 +646,37 @@ export function readBrnl(text: string): { data: BrnlData | null; report: BrnlRep
   const body: any = { ...raw, strokes: kept }
 
   // ② 그래도 안 열리면 **값이 낮은 항목부터** 하나씩 버리며 다시 시도한다
-  let data = parseBrnl(JSON.stringify(body))
+  const salvInfo: ParseInfo = { droppedPaint: 0 }
+  const tryParse = () => { salvInfo.droppedPaint = 0; return parseBrnl(JSON.stringify(body), salvInfo) }
+  let data = tryParse()
   for (const key of OPTIONAL_KEYS) {
     if (data) break
     if (body[key] === undefined) continue
     delete body[key]
     rep.droppedKeys.push(key)
-    data = parseBrnl(JSON.stringify(body))
+    data = tryParse()
   }
   if (!data) { rep.reason = 'shape'; return { data: null, report: rep } }
   rep.ok = true
   rep.keptStrokes = data.doc.strokes.length
+  rep.droppedPaint = salvInfo.droppedPaint
   return { data, report: rep }
 }
 
 /** 화면에 나갈 한 줄 — **무엇을 못 읽었는지 말한다**(R4: 짧은 서술).
  *  성한 파일이면 `null`이다(알림은 오류만 — web2-10 4-b). */
 export function reportNotice(r: BrnlReport): string | null {
-  if (r.ok && !r.salvaged) return null
+  // web2-50 — 옛 칠을 버렸으면 성한 파일이어도 말한다(「버린다는 사실이 조용하면 안 된다」).
+  const paintMsg = r.droppedPaint > 0
+    ? `옛 칠 ${r.droppedPaint}획을 버렸다 — 칠 구조가 바뀌었다(선·면은 그대로다)` : null
+  if (r.ok && !r.salvaged) return paintMsg
   if (!r.ok) return r.truncated ? '파일이 잘렸다 — 건질 획이 없다' : '.brnl 파일이 아니거나 손상됐다'
   const lost: string[] = []
   if (r.droppedStrokes > 0) lost.push(`획 ${r.droppedStrokes}`)
   if (r.droppedKeys.length > 0) lost.push(r.droppedKeys.join('·'))
   const head = r.truncated ? '파일이 잘렸다' : '파일이 손상됐다'
-  return lost.length > 0
+  const base = lost.length > 0
     ? `${head} — 획 ${r.keptStrokes}개까지 읽었다. 못 읽은 것: ${lost.join(' · ')}`
     : `${head} — 획 ${r.keptStrokes}개까지 읽었다`
+  return paintMsg ? `${base} · ${paintMsg}` : base
 }

@@ -42,8 +42,9 @@ export function clipLine(o: Pt, d: Pt, loops: Pt[][]): [number, number][] {
   return out
 }
 
-/** 2D 평면(어느 좌표든)에서 다각형+구멍을 덮는 해칭 구간을 낸다. */
-function hatch2d(
+/** 2D 평면(어느 좌표든)에서 다각형+구멍을 덮는 해칭 구간을 낸다.
+ *  web2-50이 면 고정 판을 텍스처로 옮기며 내보낸다(#54 — 생성 코드는 그대로 산다). */
+export function hatch2d(
   loops: Pt[][], spacing: number, angleDeg: number,
 ): { a: Pt; b: Pt }[] {
   if (loops.length === 0 || loops[0]!.length < 3) return []
@@ -65,6 +66,21 @@ function hatch2d(
     }
   }
   return out
+}
+
+/** 면 고정 해칭의 **세계 간격** — 45의 환산(작도 포즈 화면 px → 세계 길이) 그대로다.
+ *  web2-50이 면 고정 판을 텍스처로 옮기며 굽는 쪽(render3d)이 부른다(#54 — 환산 한 자리).
+ *  사영이 안 서면 화면 px 값을 그대로 쓴다(그 면은 어차피 화면에 못 선다 — 안전한 대체). */
+export function faceHatchSpacingWorld(an: Analysis, f: ResolvedFace, spacingPx: number): number {
+  const pl = facePlane(f)
+  let u = cross3(pl.n, { x: 0, y: 1, z: 0 })
+  if (len3(u) < 1e-6) u = cross3(pl.n, { x: 1, y: 0, z: 0 })
+  u = norm3(u)
+  let cx = 0, cy = 0, cz = 0
+  for (const p of f.outer) { cx += p.x; cy += p.y; cz += p.z }
+  const center: V3 = { x: cx / f.outer.length, y: cy / f.outer.length, z: cz / f.outer.length }
+  const ppu = pxPerUnitAt(an, center, u)
+  return ppu && ppu > 0 ? spacingPx / ppu : spacingPx
 }
 
 /** 작도 포즈에서 면 중심의 «세계 1단위 = 화면 px» — 면 고정 판의 간격 환산(결정론:

@@ -115,11 +115,14 @@ export function fullDocPlus() {
   // 잠금(web2-44) — text와 같은 규격(값 1 하나). 게이트 ②가 이 줄이 없으면 빨개진다 —
   // 그것이 43-1이 세운 그 기계다(새 필드는 픽스처·KEY_ORDER에 같이 적는다).
   d.strokes[0]!.lock = 1
-  // 칠 획·분류 정정·채움(web2-45) — 같은 기계가 그대로 잡았다(paint.f · cls · fill).
+  // 칠 획·분류 정정·채움(web2-45 → **50**) — 정본이 uv(면 위 좌표 · 세계 단위)가 됐다.
+  // 쪽(s)·uv가 필수이고 press(점별 필압)·w(세계 단위 굵기)가 늘었다 — 게이트 ②가
+  // 이 필드들이 픽스처에 없으면 빨개진다(43-1의 그 기계 · 50에서도 실제로 빨개져 잡았다).
   const pw = hand(37, pt(700, 500), pt(760, 520), 5)
   d.strokes.push({
-    id: app.nextId++, a: pw[0]!, b: pw[pw.length - 1]!, raw: pw,
-    paint: { f: d.faces[0]!.id }, mat: { grade: 'HB' },
+    id: app.nextId++, a: pw[0]!, b: pw[pw.length - 1]!,
+    paint: { f: d.faces[0]!.id, s: 1, uv: [0.1, 0.2, 0.5, 0.25, 0.9, 0.3], press: [40, 200, 120], w: 0.02 },
+    mat: { grade: 'HB' },
   })
   d.faces[0]!.cls = 'wall'
   d.faces[0]!.fill = 1
@@ -131,8 +134,9 @@ export function fullDocPlus() {
   // 이 줄이 낙으면 빨개진다(그것이 43-1이 세운 기계다).
   const mw = hand(41, pt(640, 470), pt(710, 495), 5)
   d.strokes.push({
-    id: app.nextId++, a: mw[0]!, b: mw[mw.length - 1]!, raw: mw,
-    paint: { f: d.faces[0]!.id, s: -1, c: '#c07a5b', i: 1, w: 10 }, mat: { grade: 'HB' },
+    id: app.nextId++, a: mw[0]!, b: mw[mw.length - 1]!,
+    paint: { f: d.faces[0]!.id, s: -1, uv: [0.05, 0.1, 0.4, 0.18, 0.8, 0.22], c: '#c07a5b', i: 1, w: 0.05 },
+    mat: { grade: 'HB' },
   })
   d.faces[0]!.mat = 'conc'
   // 단색 채움(web2-48 48-3) — `fill`이 1·2 둘을 다 밟게 두번째 면에 2를 준다.

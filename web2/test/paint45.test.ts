@@ -77,17 +77,20 @@ describe('45-3 칠하기 — 면 배정·분할·왕복', () => {
     expect(r.placed).toBe(1)
     const p = s.app.doc.strokes.find(x => x.paint !== undefined)!
     expect(p.paint!.f).toBe(wallId)
+    // web2-50 — 정본이 uv다(raw는 더 안 실린다). 왕복의 자는 «그은 화면 점렬» 그대로:
+    // 화면 → uv(정본) → 3D(파생 paintGeo) → 같은 시점 재사영 == 그은 잉크.
+    expect(p.raw).toBeUndefined()
     const g3 = s.app.paintGeo.get(p.id)!
-    expect(g3.length).toBe(p.raw!.length)
+    expect(g3.length).toBe(pts.length)
     let maxErr = 0
     for (let i = 0; i < g3.length; i++) {
       const q = project(s.app.lift.an, DRAW_POSE, g3[i]!)!
-      maxErr = Math.max(maxErr, Math.hypot(q.x - p.raw![i]!.x, q.y - p.raw![i]!.y))
+      maxErr = Math.max(maxErr, Math.hypot(q.x - pts[i]!.x, q.y - pts[i]!.y))
     }
     expect(maxErr).toBeLessThan(1e-6)
     // D-3 — 자가 실제로 잰다: 딴 점과 견주면 값이 난다
     const q0 = project(s.app.lift.an, DRAW_POSE, g3[0]!)!
-    expect(Math.hypot(q0.x - (p.raw![0]!.x + 1), q0.y - p.raw![0]!.y)).toBeGreaterThan(0.9)
+    expect(Math.hypot(q0.x - (pts[0]!.x + 1), q0.y - pts[0]!.y)).toBeGreaterThan(0.9)
   })
 
   it('③ 지우개 — 칠 획은 통째로 지워지고 잠그면 안 지워진다', () => {

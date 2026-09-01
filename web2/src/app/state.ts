@@ -599,11 +599,13 @@ function recompute(app: App) {
     }
   } else app.lastCamSig = null
   app.faces = resolveFaces(app.lift, app.doc.faces)
-  // 칠 획의 3D(web2-45) — 면이 풀린 뒤에야 선다(파생 · 원칙 b). 면이 빠지면 항도 빠진다.
+  // 칠 획의 3D — 면이 풀린 뒤에야 선다(파생 · 원칙 b). 면이 빠지면 항도 빠진다.
+  // web2-50: 정본이 uv이므로 파생도 uv에서 온다(paintGeoOf — 광선 역투영이 아니다).
   app.paintGeo = new Map()
   for (const s of app.doc.strokes) {
     if (s.paint === undefined) continue
-    const g = liftPaint(app.lift, app.faces, s)
+    const rf = app.faces.find(x => x.id === s.paint!.f)
+    const g = rf ? paintGeoOf(rf, s) : null
     if (g) app.paintGeo.set(s.id, g)
   }
   markSettled(app, wasWaiting)
@@ -1637,40 +1639,64 @@ export function faceFrontTarget(app: App): CamPose | null {
 // 판정·역투영은 core/paint.ts가 든다(#54). 여기는 상태 배선뿐이다:
 // 한 붓 → 면별 조각 → 획 여럿(paint 태그) → 한 op(붓 하나가 실행취소 한 칸이다).
 
-import { splitByFace, liftPaint, frontFaceAt, classOf, faceClassOf, FACE_CLASSES, paintSideAt, type FaceClass } from '../core/paint'
+import { splitByFace, frontFaceAt, classOf, faceClassOf, FACE_CLASSES, paintSideAt, type FaceClass } from '../core/paint'
+import { uvFromScreen, paintGeoOf } from '../core/facetex'
 import { cycleMat, isMatId, materialOf, type MatId, type Instr } from '../core/palette'
-import { cycleRep, isRepId, REP_NAMES } from '../core/matrep'
+import { cycleRep, isRepId, REP_NAMES, repBasis } from '../core/matrep'
+
+/** 이 면 중심에서의 «화면 px / 세계 단위»(지금 포즈·줌) — 칠 굵기의 px→세계 환산이
+ *  이 자다(gateRep의 pxPerMm와 같은 식 · 축척(mm)만 안 낀다 — #54: 자를 새로 안 만든다). */
+function pxPerUnitOnScreen(app: App, rf: ResolvedFace): number | null {
+  let cx = 0, cy = 0, cz = 0
+  for (const p of rf.outer) { cx += p.x; cy += p.y; cz += p.z }
+  const c = v3(cx / rf.outer.length, cy / rf.outer.length, cz / rf.outer.length)
+  const u = repBasis(rf).u
+  const p0 = project(app.lift.an, app.pose, c)
+  const p1 = project(app.lift.an, app.pose, add3(c, mul3(u, 0.01)))
+  if (!p0 || !p1) return null
+  const v = Math.hypot(p1.x - p0.x, p1.y - p0.y) / 0.01 * viewScale(app)
+  return v > 1e-9 ? v : null
+}
 import type { Person } from '../core/types'
 
 export const paintActive = (app: Pick<App, 'tool'>): boolean => app.tool === 'paint'
 
 /** 한 붓을 확정한다 — 지나간 면마다 나뉘어 얹힌다(지시 문면 · 사용자는 의식하지 않는다).
  *  면 밖 점은 센다(조용히 버리지 않는다 — 진단이 읽는다). */
-export function commitPaint(app: App, pts: Pt[]): { placed: number; offFace: number } {
+export function commitPaint(app: App, pts: Pt[], press?: number[]): { placed: number; offFace: number } {
   const { runs, offFace } = splitByFace(app.lift, app.pose, app.faces, pts)
   const added: Stroke[] = []
   for (const r of runs) {
+    // ⚠⚠ **web2-50 — 정본이 면 위 좌표(uv)다**(「자국의 뿌리」). 그은 순간의 광선을 그
+    // 면의 평면에 떨어뜨려 기저 좌표로 굳힌다 — 이후 시점·줌은 이 값에 안 실린다.
+    // 면이 못 풀렸으면(frontFaceAt이 풀린 면만 내므로 구성상 없지만) 조각을 버린다 —
+    // 쪽 없는 칠·uv 없는 칠은 이제 존재하지 않는다(파서도 같은 문이다).
+    const rf = app.faces.find(x => x.id === r.f)
+    if (!rf) { continue }
+    const uv = uvFromScreen(app.lift.an, app.pose, rf, r.pts)
+    if (!uv) continue
     const s: Stroke = {
       id: app.nextId++,
       a: { ...r.pts[0]! }, b: { ...r.pts[r.pts.length - 1]! },
-      raw: r.pts,
-      paint: { f: r.f },
+      paint: { f: r.f, s: paintSideAt(rf, app.pose), uv },
       mat: { grade: activeGrade(app) },
     }
-    // 재료 칠(web2-46 → web2-48 48-7) — 도구가 마커·색연필이면 **지금 색**이 실린다.
-    // 46은 (재료, 톤) 쌍을 실었는데 48-7이 그 좁힘을 정정했다 — 실리는 것은 hex 하나다.
-    // ⛔ 「톤 자동」(46의 분류 제안)은 48-8이 없앴다 — 여기 갈래가 하나 줄었다.
-    if (app.paintSel.i !== 'brush') {
-      s.paint = { f: r.f, c: app.paintSel.hex, i: app.paintSel.i === 'marker' ? 1 : 2 }
+    // 점별 필압(50 — 정본 목록의 «압력») — 펜이 준 값만, 조각의 원래 자리(idx)로 정렬.
+    // ⚠ uv가 점 일부를 건너뛸 수 있으므로(평면 뒤) 길이가 갈리면 안 싣는다(조용히 어긋난
+    // 프로필 ⛔ — 질은 51의 몫이라 잃는 것은 지금 없다).
+    if (press && press.length === pts.length && uv.length / 2 === r.idx.length) {
+      s.paint!.press = r.idx.map(i => press[i]!)
     }
-    // 굵기(48-2) — 크기 트레이가 정한 자국 폭. **붓(흑연)에도 실린다**: 세 도구 전부
-    // 두께가 없다는 것이 지시의 증상이었다(슬라이더 ⛔ · 트레이의 값 그대로).
-    s.paint!.w = app.paintSel.w
-    // ⚠⚠ **면의 어느 쪽인가**(48-5) — 칠할 때 카메라가 있던 쪽이 정한다. 사용자는
-    // 의식하지 않는다(보고 있는 쪽을 칠하는 것이다). 면이 못 풀렸으면 부호를 안 단다 —
-    // 그때는 옛 규약(양쪽에서 보임)으로 남고, 조용히 틀린 쪽에 붙이지 않는다.
-    const rf = app.faces.find(x => x.id === r.f)
-    if (rf) s.paint!.s = paintSideAt(rf, app.pose)
+    // 재료 칠(46 → 48-7) — 도구가 마커·색연필이면 지금 색이 실린다(hex 하나 — #54).
+    if (app.paintSel.i !== 'brush') {
+      s.paint!.c = app.paintSel.hex
+      s.paint!.i = app.paintSel.i === 'marker' ? 1 : 2
+    }
+    // 굵기(48-2 → 50) — 트레이 값은 화면 px이고 저장은 **세계 단위**다: 칠은 면 위
+    // 안료라 원근을 받는다(원칙 e의 «다름» — 선폭은 화면 고정, 칠폭은 면 고정).
+    // 환산은 그은 순간 그 면의 «화면 px / 세계 단위»다(pxPerUnitOnScreen — gateRep의 자).
+    const ppu = pxPerUnitOnScreen(app, rf)
+    s.paint!.w = ppu ? app.paintSel.w / ppu : C.PAINT_W_FALLBACK_UNITS
     if (!isDrawPose(app.pose)) s.view = clonePose(app.pose)
     app.doc.strokes.push(s)
     added.push(s)

@@ -392,34 +392,10 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
         // **정본 기하는 raw 점렬이다**(web2-24 4-b — 프리핸드). 머무름 갈음·짧은 획은
         // 두 점이라 종전 경로 그대로다. 잘라내기는 점렬 bbox의 두 모서리로 판정
         // (offScreen은 두 점이 같은 변 밖일 때만 참이라 bbox 모서리 대입이 보수적으로 옳다).
-        // 칠 획(web2-45) — 면 위 잉크: 파생 3D(paintGeo)를 **지금 시점으로 사영**해 점렬
-        // 몸체로 긋는다(drawStrokeRaw — 옐로의 그 경로·같은 흑연 질감). 면이 안 풀리면
-        // paintGeo에 항이 없어 안 그린다(면의 규약 — 버리지 않고 빠진다).
-        if (s.paint !== undefined) {
-          const g3 = app.paintGeo.get(id)
-          if (!g3) continue
-          // ⚠⚠ **면의 한쪽에만 붙는다**(web2-48 48-5) — 카메라가 칠한 쪽에 있을 때만
-          // 그린다. 부호가 없는 옛 획(45·46)은 이 문을 그냥 지난다(옛 거동 그대로).
-          if (!paintVisible(app.faces, s, app.pose)) continue
-          const spts: { x: number; y: number }[] = []
-          for (const P of g3) {
-            const q = project(app.lift.an, app.pose, P)
-            if (q) spts.push(docToScreen(app, q))
-          }
-          if (spts.length < 2) continue
-          let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
-          for (const p of spts) {
-            if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x
-            if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y
-          }
-          if (offScreen({ x: x0, y: y0 }, { x: x1, y: y1 })) { clipped++; continue }
-          drawn++
-          // 재료 칠(web2-46) — m·t·i가 성하면 마커/색연필로, 아니면 45의 흑연 그대로.
-          const hex = paintHexOf(s)
-          if (hex && s.paint!.i !== undefined) drawPaintRaw(s, spts, hex, s.paint!.i)
-          else drawPaintGraphite(s, spts)
-          continue
-        }
+        // ⚠⚠ 칠 획은 **이 겹에서 나갔다**(web2-50 「자국의 뿌리」) — 면 텍스처(#gl의
+        // paintGroup — render3d)가 그린다. 45~48의 화면 겹 경로(사영 점렬 + p5.brush)가
+        // 여섯 증상의 뿌리였다(흰 뜸·블렌드 불가·회전 소실·원근 미적용·개구부·양면).
+        if (s.paint !== undefined) continue
         // 글씨 획(web2-32 1번)도 이 갈래다 — **같은 규격**이므로 술어가 하나다(isFlat2d)
         if (isFlat2d(s, yset)) {
           if (s.raw && s.raw.length > 2) {
@@ -807,9 +783,8 @@ export function initBrushLayer(W: number, H: number, dpr: number): BrushLayer {
           setTiled(true)
         }
         drawTiled(app)
-        // 48-6 — 칠은 타일에 안 들어가므로 살려서 그린다. 한 획도 안 그렸으면
-        // #brushc를 다시 숨긴다 — 칠 없는 문서의 화면은 종전과 한 톨도 안 다르다(무회귀).
-        canvas.style.visibility = drawPaintsOnly(app) > 0 ? '' : 'hidden'
+        // 48-6(제스처 중 칠 살리기)은 web2-50으로 **소멸했다** — 칠이 #gl의 면 텍스처에
+        // 살므로 궤도 중에도 그냥 있다(증상 ③의 구조적 답). #brushc는 종전대로 숨는다.
         paperPhase(app)
         last = null            // 놓으면 전량 재그리기가 정확히 다시 굽는다(정본은 놓은 뒤 화면)
         return true

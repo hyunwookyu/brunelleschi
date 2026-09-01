@@ -317,9 +317,10 @@ describe('분류·칠·채움의 수(45-2·45-3·45-4 「재야 할 것」)', ()
     const pStroke = s.app.doc.strokes.find(x => x.paint !== undefined)!
     const g3 = s.app.paintGeo.get(pStroke.id)!
     let maxErr = 0
+    // web2-50 — 정본이 uv라 raw가 안 실린다. 자는 «그은 화면 점렬»(pts) 그대로다.
     for (let i = 0; i < g3.length; i++) {
       const q = project(s.app.lift.an, DRAW_POSE, g3[i]!)!
-      maxErr = Math.max(maxErr, Math.hypot(q.x - pStroke.raw![i]!.x, q.y - pStroke.raw![i]!.y))
+      maxErr = Math.max(maxErr, Math.hypot(q.x - pts[i]!.x, q.y - pts[i]!.y))
     }
     // ③ 해칭 — 구멍 추종(잉크 길이 차 — D-3의 그 반증 짝을 수로)
     const wall = { id: 999, outer: [v3(-2, 0, -8), v3(2, 0, -8), v3(2, 2.4, -8), v3(-2, 2.4, -8)],
@@ -345,13 +346,16 @@ describe('분류·칠·채움의 수(45-2·45-3·45-4 「재야 할 것」)', ()
     const r2 = commitPaint(s.app, pts2)
     let maxErr2 = 0
     if (r2.placed > 0) {
+      // 조각의 원래 화면 점렬은 splitByFace가 다시 낸다(결정론 — 같은 문서·같은 포즈)
+      const { splitByFace } = await import('../src/core/paint')
+      const { runs } = splitByFace(s.app.lift, s.app.pose, s.app.faces, pts2)
       const p2s = s.app.doc.strokes.filter(x => x.paint !== undefined).slice(-r2.placed)
-      for (const ps of p2s) {
-        const g2 = s.app.paintGeo.get(ps.id)
+      for (let k = 0; k < p2s.length && k < runs.length; k++) {
+        const g2 = s.app.paintGeo.get(p2s[k]!.id)
         if (!g2) continue
         for (let i = 0; i < g2.length; i++) {
           const q = project(s.app.lift.an, s.app.pose, g2[i]!)!
-          maxErr2 = Math.max(maxErr2, Math.hypot(q.x - ps.raw![i]!.x, q.y - ps.raw![i]!.y))
+          maxErr2 = Math.max(maxErr2, Math.hypot(q.x - runs[k]!.pts[i]!.x, q.y - runs[k]!.pts[i]!.y))
         }
       }
     }
@@ -362,7 +366,7 @@ describe('분류·칠·채움의 수(45-2·45-3·45-4 「재야 할 것」)', ()
       note_5: '#5 — 0은 구성상 항등(광선→평면→재사영 · 같은 카메라)이다. 재는 것은 배선(면 배정·평면식·포즈 규약 — 돌린 포즈 행이 s.view 규약을 문다)이고, 자의 판별력 확인값은 ruler_check_px다. ⚠ 그 1.0도 항등이다(1px 틀면 1px — #40②) — 확인하는 것은 «자가 움직인다»는 사실 하나이지 크기가 아니다(2차 [R12])',
       ruler_check_px: (() => {   // D-3 — 자를 1px 틀면 실제로 값이 난다(원장 안으로 — [6]⑤)
         const q0 = project(s.app.lift.an, DRAW_POSE, g3[0]!)!
-        return Math.hypot(q0.x - (pStroke.raw![0]!.x + 1), q0.y - pStroke.raw![0]!.y)
+        return Math.hypot(q0.x - (pts[0]!.x + 1), q0.y - pts[0]!.y)
       })(),
     }
     // ── 분할·허공 수(45 리뷰어 [6]① — 원장 안으로) ─────────────────────────────

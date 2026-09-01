@@ -16,7 +16,7 @@ import {
   MATERIALS, MAT_IDS, isMatId, materialOf, clampTone, toneHex, isHex6, solidHexOf,
   hatchSpecOf, hatchHexOf, paintHexOf, cycleMat, HATCH_DEFAULT_HEX, SOLID_DEFAULT_HEX, type MatId,
 } from '../src/core/palette'
-import { serializeBrnl, parseBrnl } from '../src/core/file'
+import { serializeBrnl, parseBrnl, readBrnl, reportNotice } from '../src/core/file'
 import { lumaOf } from '../src/app/brushmap'
 import { C } from '../src/core/constants'
 import type { Pt } from '../src/core/vec'
@@ -130,19 +130,24 @@ describe('46-2 → 48 칠 — 도구·색·굵기·면의 쪽', () => {
     expect(paintHexOf(onFloor)).toBe('#1e7fd0')
   })
 
-  it('③ 굵기(48-2) — 크기 트레이의 값이 획에 실리고, 붓에도 실린다', () => {
+  it('③ 굵기(48-2 → 50) — 트레이의 px가 세계 단위로 환산돼 실리고, 붓에도 실린다', () => {
+    // ⚠ web2-50: 저장 단위가 px → **세계 단위**다(칠은 면 위 안료 — 원근을 받는다).
+    // 트레이 계약 «견본 굵기 == 자국 굵기»의 픽셀 판정은 e2e(paint50 ③)가 하고, 여기는
+    // 환산의 **비례**를 잰다: 같은 면·같은 시점에서 트레이 값을 k배 하면 w도 k배다.
     const { s } = roomSession()
     s.app.paintSel = { hex: '#8a6238', i: 'cp', w: C.PAINT_W_PX[0]! }
     commitPaint(s.app, wallPts())
     const p1 = s.app.doc.strokes.find(x => x.paint !== undefined)!
-    expect(p1.paint!.w).toBe(C.PAINT_W_PX[0])
+    expect(p1.paint!.w).toBeGreaterThan(0)
     expect(p1.paint!.i).toBe(2)
     // 붓(흑연)도 같은 트레이를 쓴다 — 세 도구 전부 두께가 없다는 것이 48-2의 증상이었다
     s.app.paintSel = { hex: '#8a6238', i: 'brush', w: C.PAINT_W_PX[4]! }
-    commitPaint(s.app, floorPts())
+    commitPaint(s.app, wallPts())
     const p2 = s.app.doc.strokes.filter(x => x.paint !== undefined).at(-1)!
-    expect(p2.paint!.w).toBe(C.PAINT_W_PX[4])
     expect(p2.paint!.c).toBeUndefined()             // 붓은 색이 안 나간다(흑연)
+    // 같은 면(같은 환산)에서의 비례 — px 비 == 세계 단위 비
+    const ratio = C.PAINT_W_PX[4]! / C.PAINT_W_PX[0]!
+    expect(p2.paint!.w! / p1.paint!.w!).toBeCloseTo(ratio, 6)
   })
 
   it('④ 면의 쪽(48-5) — 칠할 때 카메라가 있던 쪽의 부호가 실린다', () => {
@@ -221,14 +226,17 @@ describe('46-4 → 48 저장 왕복 — paint.s/c/i/w · Face.fill · Face.mat',
     const { s, wallId } = roomSession()
     s.app.paintSel = { hex: '#666d75', i: 'marker', w: 20 }
     commitPaint(s.app, wallPts())
+    const w0 = s.app.doc.strokes.find(x => x.paint !== undefined)!.paint!.w!   // 세계 단위(50)
     cycleFaceMat(s.app, wallId)                       // 벽 = 벽돌
     cycleFaceFill(s.app, wallId); cycleFaceFill(s.app, wallId)   // 벽 = 단색(2)
     const txt = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, drawView: s.app.drawView })
     const back = parseBrnl(txt)!
     expect(back).not.toBeNull()
     const p = back.doc.strokes.find(x => x.paint !== undefined)!
-    expect(p.paint).toEqual(expect.objectContaining({ c: '#666d75', i: 1, w: 20 }))
+    expect(p.paint).toEqual(expect.objectContaining({ c: '#666d75', i: 1 }))
+    expect(p.paint!.w).toBeCloseTo(w0, 10)            // 왕복 — 세계 단위 그대로
     expect(p.paint!.s === 1 || p.paint!.s === -1).toBe(true)
+    expect(Array.isArray(p.paint!.uv) && p.paint!.uv.length >= 4).toBe(true)  // 정본(50)
     expect(back.doc.faces.find(f => f.id === wallId)!.mat).toBe('brick')
     expect(back.doc.faces.find(f => f.id === wallId)!.fill).toBe(2)
     // 두 번째 저장이 바이트로 같다(43-1의 규약이 새 필드에도 선다)
@@ -243,10 +251,13 @@ describe('46-4 → 48 저장 왕복 — paint.s/c/i/w · Face.fill · Face.mat',
     expect(p2.paint!.f).toBe(wallId)                  // 칠 자체는 산다(흑연 강등)
     expect(p2.paint!.c).toBeUndefined()
     expect(p2.paint!.i).toBeUndefined()
-    // 면의 쪽 — 대역 밖이면 그 필드만 버린다(양쪽에서 보임 = 45·46 거동)
+    // ⚠⚠ 쪽(s) — web2-50부터 **획째 버린다**(uv·s가 정본의 필수 짝 — 쪽 없는 칠은
+    // «양쪽에 보이는 칠»이라 존재하지 않는다. 45~48의 «그 필드만 강등»이 뒤집힌 자리).
     jp.paint.c = '#666d75'; jp.paint.s = 0
-    expect(parseBrnl(JSON.stringify(j))!.doc.strokes.find(x => x.paint !== undefined)!.paint!.s).toBeUndefined()
-    // 굵기 — 0·음수·대역 밖은 그 필드만 버린다(three/p5가 조용히 안 그리는 값)
+    const info0 = { droppedPaint: 0 }
+    expect(parseBrnl(JSON.stringify(j), info0)!.doc.strokes.find(x => x.paint !== undefined)).toBeUndefined()
+    expect(info0.droppedPaint).toBe(1)
+    // 굵기 — 0·음수·대역 밖은 그 필드만 버린다(대체 폭으로 물러난다)
     jp.paint.s = 1
     for (const bad of [0, -3, 1e9]) {
       jp.paint.w = bad
@@ -262,35 +273,38 @@ describe('46-4 → 48 저장 왕복 — paint.s/c/i/w · Face.fill · Face.mat',
     expect(b3.doc.strokes.find(x => x.paint !== undefined)!.paint!.c).toBe('#666d75')
   })
 
-  it('② 옛 파일(45 이전 모양)이 그대로 열린다 — paint.f만', () => {
-    const { s } = roomSession()
-    s.app.paintSel = { hex: '#a8a29a', i: 'brush', w: 10 }
-    commitPaint(s.app, wallPts())                     // 붓 — 색 없음
-    const txt = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, drawView: s.app.drawView })
-    expect(txt).not.toContain('"c"')                  // 안 쓰는 열쇠는 파일에 없다(왕복 동일성)
-    const back = parseBrnl(txt)!
-    expect(back.doc.strokes.find(x => x.paint !== undefined)!.paint!.f)
-      .toBe(s.app.doc.strokes.find(x => x.paint !== undefined)!.paint!.f)
-  })
-
-  it('③ **web2-46 파일의 (재료, 톤)이 색으로 옮겨 열린다**(48-7 — 무손실)', () => {
+  it('② ⚠ 계약 반전(web2-50) — 옛 칠(45~48 · uv 없음)은 **획째 버려지고 세어진다**', () => {
+    // 사용자 확정 「잃어도 상관없다」(50 지시) — 마이그레이션 ⛔ · 조용하면 안 된다(43-1).
     const { s, wallId } = roomSession()
+    s.app.paintSel = { hex: '#a8a29a', i: 'brush', w: 10 }
     commitPaint(s.app, wallPts())
     const txt = serializeBrnl({ doc: s.app.doc, nextId: s.app.nextId, drawView: s.app.drawView })
     const j = JSON.parse(txt)
     const jp = j.strokes.find((x: any) => x.paint !== undefined)
-    // 46이 쓰던 그 모양 그대로 밀어 넣는다(그때의 파일에는 c도 s도 w도 없다)
-    jp.paint = { f: wallId, m: 'brick', t: 1, i: 1 }
-    const back = parseBrnl(JSON.stringify(j))!
-    const p = back.doc.strokes.find(x => x.paint !== undefined)!
-    expect(p.paint!.c).toBe(toneHex('brick', 1))      // 그 쌍이 가리키던 값 그대로
-    expect(isHex6(p.paint!.c)).toBe(true)
-    expect(p.paint!.i).toBe(1)
-    expect(p.paint!.s).toBeUndefined()                // 옛 파일 = 양쪽에서 보인다
-    expect(paintHexOf(p)).toBe(materialOf('brick').tones[1])
-    // ⚠ 반증(D-3): 재료가 모르는 값이면 옮기지 않는다(흑연 강등 — 조용히 틀린 색 ⛔)
-    jp.paint = { f: wallId, m: 'gold', t: 1, i: 1 }
-    expect(parseBrnl(JSON.stringify(j))!.doc.strokes.find(x => x.paint !== undefined)!.paint!.c)
-      .toBeUndefined()
+    const nAll = j.strokes.length
+    // 45 형식(paint.f만) · 46 형식((m,t) 쌍) · 48 형식(s/c/i/w · uv 없음) — 셋 다 버려진다
+    for (const old of [
+      { f: wallId },
+      { f: wallId, m: 'brick', t: 1, i: 1 },
+      { f: wallId, s: 1, c: '#c07a5b', i: 1, w: 10 },
+    ]) {
+      jp.paint = old
+      const info = { droppedPaint: 0 }
+      const back = parseBrnl(JSON.stringify(j), info)!
+      expect(back).not.toBeNull()                     // 문서는 산다 — 그 획만 버린다
+      expect(back.doc.strokes.find(x => x.paint !== undefined)).toBeUndefined()
+      expect(back.doc.strokes.length).toBe(nAll - 1)
+      expect(info.droppedPaint).toBe(1)
+    }
+    // readBrnl → 보고문 — 성한 파일이어도 버린 수를 말한다(「버림이 조용하면 안 된다」)
+    jp.paint = { f: wallId }
+    const { data, report } = readBrnl(JSON.stringify(j))
+    expect(data).not.toBeNull()
+    expect(report.droppedPaint).toBe(1)
+    expect(reportNotice(report)).toContain('옛 칠 1획')
+    // ⚠ 반증(D-3): 새 형식(uv·s 있음)은 이 문을 그냥 지난다 — 셈 0 · 알림 없음
+    const clean = readBrnl(txt)
+    expect(clean.report.droppedPaint).toBe(0)
+    expect(reportNotice(clean.report)).toBeNull()
   })
 })
