@@ -16,8 +16,8 @@ import { dirname, resolve } from 'node:path'
 const HERE = dirname(fileURLToPath(import.meta.url))
 const OUT: Record<string, unknown> = {
   what: 'web2-45 — 화면 몫: 붓 픽셀 · 시점 추종 · 채움 두 판 · 깊이 정렬 후 · 정면 칠',
-  note_92: '#92 — 칠·채움의 판정자는 픽셀·선분 수(결과의 자리)다. ink_after_orbit 같은 픽셀 계수는 분포가 아니라 «잉크가 있다»의 수다(#40 대상 아님)',
-  note_47: '#47 — 깊이 기준선(전 33/33)은 faces45_web2.json scene_depth가 정본이다',
+  note_92: '#92 — 칠·채움의 판정자는 픽셀·선분 수(결과의 자리)다. ink_after_orbit 같은 픽셀 계수는 분포가 아니라 «잉크가 있다»의 수다',
+  note_47: '#47 — 깊이의 정본은 faces45_web2.json scene_depth다(전 = 차례 의존: 나쁜 차례 33/33 · 좋은 차례 0/33 · 후 = 0/33)',
 }
 
 async function drawLine(page: Page, x0: number, y0: number, x1: number, y1: number) {
@@ -130,6 +130,8 @@ test('③ 채움 — 손통 「채움」이 해칭을 만들고 · 표시 토글
   //   초판이 그대로 밟았다: lifted false — 그 획은 text가 돼 있었다).
   await page.click('#btn-pencil'); await page.click('#btn-pencil')
   const inkBefore = await inkCount(page, 505, 390, 90, 100)
+  const segsBefore = await page.evaluate(() =>
+    (window as any).__b2.diag.paint45().hatch.reduce((s: number, h: { segs: number }) => s + h.segs, 0))
   await drawLine(page, 520, 490, 520, 400)               // 채운 벽 위를 지나는 세로선
   const lineState = await page.evaluate(() => {
     const app = (window as any).__b2.app
@@ -137,10 +139,17 @@ test('③ 채움 — 손통 「채움」이 해칭을 만들고 · 표시 토글
     return { lifted: app.lift.lifted.has(last.id), fillStill: app.doc.faces.some((f: any) => f.fill === 1) }
   })
   const inkAfter = await inkCount(page, 505, 390, 90, 100)
+  const segsAfter = await page.evaluate(() =>
+    (window as any).__b2.diag.paint45().hatch.reduce((s: number, h: { segs: number }) => s + h.segs, 0))
   expect(lineState.lifted, '선이 정상으로 3D에 선다').toBe(true)
   expect(lineState.fillStill, '채움은 안 바뀐다').toBe(true)
+  expect(segsAfter, '채움 선분 수가 안 바뀐다(2차 [R5] — «아무 일도 없어야 한다»의 본 판정)').toBe(segsBefore)
   expect(inkAfter, '선의 잉크가 실제로 얹혔다').toBeGreaterThan(inkBefore + 30)
-  OUT.line_over_fill = { ink_before: inkBefore, ink_after: inkAfter, lifted: lineState.lifted }
+  OUT.line_over_fill = {
+    ink_before: inkBefore, ink_after: inkAfter, lifted: lineState.lifted,
+    hatch_segs_before: segsBefore, hatch_segs_after: segsAfter,
+    note_5: '#5(2차 [R6]) — «선이 톤 위»의 겹 차례는 renderOrder 음수 대역·캔버스 더미의 구성상 귀결이다. 이 팔이 재는 것은 승격·잉크·채움 불변 셋이다',
+  }
 })
 
 test('④ 깊이 정렬 «후» — 참 앞 면의 renderOrder가 언제나 더 높다(기준선 33/33의 수리)', async ({ page }) => {
@@ -175,7 +184,7 @@ test('④ 깊이 정렬 «후» — 참 앞 면의 renderOrder가 언제나 더 
   OUT.depth_after = {
     front_order: order[front], back_order: order[back],
     note: '이 팔은 «렌더 인스턴스의 배선»(faceOrder가 실제 mesh renderOrder다)만 잰다 — 분모 있는 «후» 값(0/33 · 같은 장면·같은 하네스)은 faces45_web2.json scene_depth.after가 정본이다(45 리뷰어 [3] 대응)',
-    note_pixel: '#92 ② — renderOrder(이름표)가 픽셀(자리)을 바꾸는 것은 **색이 갈릴 때**다: 지금은 면·해칭이 전부 같은 색(#8d8880 반투명)이라 순서가 픽셀에 안 실린다(같은 색 반투명 over 합성은 교환법칙이 성립한다 — 대수적 사실). 픽셀 판별 팔은 46(색·재료)이 첫 이색 겹을 만드는 순간 세운다 — DEFERRED 행',
+    note_pixel: '#92 ② — renderOrder(이름표)가 픽셀(자리)을 바꾸는 것은 **색이 갈릴 때**다: 지금은 면·해칭이 전부 같은 색(0x8d8880 회색 반투명)이라 순서가 픽셀에 안 실린다(같은 색 반투명 over 합성은 교환법칙이 성립한다 — 대수적 사실). 픽셀 판별 팔은 46(색·재료)이 첫 이색 겹을 만드는 순간 세운다 — DEFERRED 행',
   }
 })
 

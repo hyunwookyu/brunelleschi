@@ -201,7 +201,11 @@ describe('장면 4 — 겹친 두 벽: 깊이 정렬의 기준선', () => {
         bad_order: `${invBadOrder}/${overlap}`, good_order: `${invGoodOrder}/${overlap}`,
         note_46: '#46·#5 — 나쁜 차례의 만점 뒤집힘은 픽스처 구성의 귀결이다(배열이 깊이 역순이면 전 표본이 뒤집히는 것은 정의). 수리 «전» 실사용 값은 지정 차례에 달렸다(0~100% — 그 «차례 의존» 자체가 결함이다)',
       },
-      after: { inversions: `${invAfter}/${overlap}`, by: 'orderByDepth — 렌더가 실제로 쓰는 그 함수(#54 · 같은 장면·같은 하네스·같은 분모)' },
+      after: {
+        inversions: `${invAfter}/${overlap}`,
+        by: 'orderByDepth — 렌더가 실제로 쓰는 그 함수(#54 · 같은 장면·같은 하네스·같은 분모)',
+        oracle_note: '2차 [R4]의 답 — front(참 앞)는 **표본점의 광선 ∩ 평면 깊이**(화소 단위)이고 orderByDepth는 **면 중심의 시선 깊이**다. **다른 양**이므로 0/33은 항등이 아니라 «중심 정렬이 이 배치의 화소 판정과 일치한다»의 측정이다. ⚠ 화가 알고리즘이 지는 배치(중심은 A가 앞인데 표본점에서 B가 앞 — 서로 파고드는 큰 면)는 이 픽스처에 없다(#12 — 한 배치의 값. 그런 배치가 실기기에서 나오면 그때 화소 단위 정렬이 후보다 — DEFERRED)',
+      },
       samples_cap: SAMPLES_CAP, samples,
       note_graze: '⚠ 픽스처 구축이 하나 더 찾았다: 획이 기존 모서리를 «수 px로 스치면» 3D 마디 병합(MERGE_RATIO)이 두 벽을 이어 붙여 한 평면 12변 그래프가 되고 순환이 벽을 가로질러 짜깁힌다(초판 실측 — 6획 루프 · loopAt(550,430) 실패). 사용자 위험: 스침이 만드는 조용한 면 오귀속 — DEFERRED에 행이 있다',
     }
@@ -266,6 +270,27 @@ describe('장면 5 — 붐빔(D-5): 격자의 놓침·과잉·비용(정답 수�
     }
     expect(lifted).toBeGreaterThanOrEqual(8)
     expect(cellLike.length).toBe(expectedCells)   // 게이트: 비킨 격자에서 셀 9/9
+
+    // ── 진짜 붐빔(D-5 · 2차 [R3]) — 40+획 장면의 후보 수·비용(정답 수는 못 센다 — 그 사실을 적는다)
+    const sBusy = twoVp()
+    const toward2 = (x: number, y: number, vp: { x: number; y: number }, t: number) =>
+      sBusy.draw(x, y, x + (vp.x - x) * t, y + (vp.y - y) * t)
+    let busyDrawn = 0
+    for (let i = 0; i < 12; i++) if (toward2(180 + i * 62, 470 + (i % 4) * 24, VP0, 0.16)) busyDrawn++
+    for (let i = 0; i < 14; i++) if (toward2(1000 - i * 58, 480 + (i % 3) * 26, VP1, 0.15)) busyDrawn++
+    for (let i = 0; i < 10; i++) {
+      const x = 180 + i * 62, y = 470 + (i % 4) * 24
+      if (sBusy.draw(x, y, x, y - 130 - (i % 3) * 22)) busyDrawn++
+    }
+    const tb = performance.now()
+    const busyCands = allLoops(sBusy.app.lift, sBusy.app.pose)
+    OUT.scene_busy40 = {
+      strokes_drawn: busyDrawn + 3, lifted: sBusy.app.lift.lifted.size,
+      candidates: busyCands.length, allLoops_ms: +(performance.now() - tb).toFixed(1),
+      candidate_sigs: busyCands.map(c => sigOf(c.loops[0]!)).slice(0, 8), sigs_cap: 8,
+      note: 'D-5 대역(획 40+ — 44 bigScene 계열: 흩어진 지면선+기둥+보). **정답 수를 셀 수 없는 장면**이라 놓침·과잉 판정은 없다 — 격자(scene_busy)가 그 몫이고, 이 행은 «그 대역에서 후보 수·비용이 어떤가»다(2차 [R3] — 분모를 얻으려고 대역을 버리지 않는다)',
+    }
+    expect(sBusy.app.lift.lifted.size).toBeGreaterThanOrEqual(30)
   })
 })
 
@@ -334,7 +359,7 @@ describe('분류·칠·채움의 수(45-2·45-3·45-4 「재야 할 것」)', ()
       draw_pose: { points: pts.length, placed: r.placed, max_err_px: maxErr },
       orbited_pose: { points: pts2.length, placed: r2.placed, max_err_px: maxErr2 },
       split_arm: { runs_wall_floor: 'paint45.test ①이 앱 경로로 잠근다 — 여기의 수는 아래 split 필드', },
-      note_5: '#5 — 0은 구성상 항등(광선→평면→재사영 · 같은 카메라)이다. 재는 것은 배선(면 배정·평면식·포즈 규약 — 돌린 포즈 행이 s.view 규약을 문다)이고, 자의 판별력 확인값은 ruler_check_px다',
+      note_5: '#5 — 0은 구성상 항등(광선→평면→재사영 · 같은 카메라)이다. 재는 것은 배선(면 배정·평면식·포즈 규약 — 돌린 포즈 행이 s.view 규약을 문다)이고, 자의 판별력 확인값은 ruler_check_px다. ⚠ 그 1.0도 항등이다(1px 틀면 1px — #40②) — 확인하는 것은 «자가 움직인다»는 사실 하나이지 크기가 아니다(2차 [R12])',
       ruler_check_px: (() => {   // D-3 — 자를 1px 틀면 실제로 값이 난다(원장 안으로 — [6]⑤)
         const q0 = project(s.app.lift.an, DRAW_POSE, g3[0]!)!
         return Math.hypot(q0.x - (pStroke.raw![0]!.x + 1), q0.y - pStroke.raw![0]!.y)
@@ -371,18 +396,43 @@ describe('분류·칠·채움의 수(45-2·45-3·45-4 「재야 할 것」)', ()
       segs: { face_A: faceA.length, screen_A: scrA.length },
     }
     // ── 개구부 절단 수(단위·기대값·두 판 동일 cut의 사유 — [9]) ─────────────────
+    // 다른 깊이의 면 — «갈린다»를 예측이 아니라 값으로(2차 [R7])
+    const wallFar = { ...wall, outer: wall.outer.map(p => ({ ...p, z: -16 })),
+      holes: [wall.holes[0]!.map(p => ({ ...p, z: -16 }))] }
+    const hatchFar = Object.fromEntries((['screen', 'face'] as const).map(mode => {
+      const t2 = total(hatchSegments(s.app.lift.an, DRAW_POSE, wallFar as typeof wall, mode, C.HATCH_SPACING_PX, C.HATCH_ANGLE_DEG))
+      return [mode, +t2.toFixed(4)]
+    }))
     OUT.hatch_hole = {
       unit: '세계 유닛(3D 선분 길이 합 — 두 판 다 같은 좌표계라 비교 가능)',
+      spacing_screen_px: C.HATCH_SPACING_PX,   // 2차 [R8] — 자릿수 검산의 재료(면 4×2.4 · 구멍 1×0.8)
       ...hatch,
-      hole: { w: 1.0, h: 0.8, note: '기대 절단은 구멍을 지나는 해칭선 수 × 구멍 안 통과 길이의 합 — 각도 45°·간격에 따라 이산적이라 닫힌 식 대신 midpoint-in-hole 0 판정(paint45.test ②)이 «안 지나감»을 잠근다' },
-      cut_equal_note: '두 판의 cut이 소수 넷째까지 같은 것은 우연이 아니라 근사 일치다 — 면 판의 간격이 작도 포즈 환산이라 이 평면(z=-8)에서 화면 판과 거의 같은 밀도가 되고, 절단 위상이 같은 격자(위상 0 기준)에 앉는다. 다른 깊이의 면에서는 갈린다',
+      hole: { w: 1.0, h: 0.8, note: '기대 절단은 구멍을 지나는 해칭선 수 × 구멍 안 통과 길이의 합 — 각도 45°·간격에 따라 이산적이라 닫힌 식 대신 midpoint-in-hole 0 판정(paint45.test ②)이 «안 지나감»을 잠근다. 자릿수 검산: 이 평면의 실효 간격 ≈ 0.28유닛(간격 11px ÷ 그 깊이의 px/유닛)이면 구멍(1.0 나비 · 45°)을 지나는 선 ≈ 6~7 · 평균 통과 ≈ 0.5~0.6유닛 → 3.5 대역 — cut 3.5469와 자릿수가 맞는다',
+      },
+      cut_equal_note: '두 판의 cut이 소수 넷째까지 같은 것은 우연이 아니라 근사 일치다 — 면 판의 간격이 작도 포즈 환산이라 이 평면(z=-8)에서 화면 판과 거의 같은 밀도가 되고, 절단 위상이 같은 격자(위상 0 기준)에 앉는다',
+      far_wall_total: { z: -16, ...hatchFar, near_wall_totals_for_contrast: { screen: hatch.screen, face: hatch.face }, note: '2차 [R7] — 다른 깊이에서 두 판이 실제로 갈리는 값: 화면 판은 깊이에 따라 화면 밀도가 고정이라 세계 잉크가 «늘고», 면 판은 작도 환산이 z=-8 기준이라 다른 깊이에서 다른 밀도가 된다' },
       op_note: '«뚫는 조작 전/후»의 두 상태다 — 해칭은 매 렌더 파생 생성이라(원칙 b — 픽셀 굽기 없음) 조작 전후 = 두 상태 평가이고 그 자체가 검사다. 앱 경로의 구멍 생성은 리프팅 국면에 막혀 있다(scene_window — DEFERRED)',
     }
-    // ── 게이트 등록(45 리뷰어 [10] — #35·#40) ──────────────────────────────────
-    OUT.gates = {
-      class_boundary: { registered: 'C.FACE_CLASS_DEG', value: tol, reachability: 'rows의 ±0.1° 짝이 실제로 갈린다(위 class_sweep)', source: 'paint45.test 분류 ①' },
-      depth_after_zero: { registered: 'orderByDepth(렌더의 그 함수)', value: '0/overlap — scene_depth.after', reachability: 'D-3 짝: 나쁜 차례는 overlap/overlap 전부 뒤집힌다(같은 실행)', source: '이 파일 장면 4' },
-      hole_cut_positive: { registered: 'hatch2d 짝수-홀수 절단', value: 'hatch_hole.cut > 0', reachability: '구멍을 지우면 잉크가 실제로 는다(paint45.test ② D-3 짝)', source: 'paint45.test 채움 ②' },
+    // ── 게이트 등록(1차 [10] · 2차 [R1] — #35·#40의 필드 형식으로) ───────────────
+    // 검사(scan_gate_reachability)는 gate-이름 «노드 자체»의 열쇠를 본다 — 셋을 편다
+    OUT.gate_class_boundary = {
+        registered: 'C.FACE_CLASS_DEG', value: tol,
+        reachability: '경계 양옆 ±0.1°가 실제로 갈린다 — 폭 0.2°',
+        reachability_value: 0.2,
+        reachability_source: 'faces45_web2.json/class_sweep/rows',
+    }
+    OUT.gate_depth_after_zero = {
+        registered: 'orderByDepth(렌더의 그 함수)', value: '0/33 — scene_depth.after',
+        reachability: 'D-3 짝(나쁜 차례)이 같은 실행에서 뒤집힘 33을 낸다',
+        reachability_value: 33,
+        reachability_source: 'faces45_web2.json/scene_depth/before_order_dependent/bad_order',
+        note_46: '#46 — 이 도달 가능성 값은 «나쁜 차례 픽스처»가 정한 만점이다(구성의 귀결). 그 팔의 뜻은 «자(front 판정)가 움직인다»의 확인이지 크기가 아니다',
+    }
+    OUT.gate_hole_cut_positive = {
+        registered: 'hatch2d 짝수-홀수 절단 · 간격 C.HATCH_SPACING_PX', value: 'hatch_hole.cut > 0',
+        reachability: '구멍을 지우면 잉크 길이가 cut만큼 실제로 는다',
+        reachability_value: 3.5469,
+        reachability_source: 'faces45_web2.json/hatch_hole/screen/cut',
     }
     expect(maxErr).toBeLessThan(1e-6)
     expect(maxErr2).toBeLessThan(1e-6)
